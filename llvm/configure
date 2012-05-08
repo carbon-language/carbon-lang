@@ -741,17 +741,13 @@ INSTALL_DATA
 BZIP2
 CAT
 DOXYGEN
-GROFF
 GZIPBIN
-PDFROFF
-RUNTEST
 TCLSH
 ZIP
 OCAMLC
 OCAMLOPT
 OCAMLDEP
 OCAMLDOC
-GAS
 HAVE_LINK_VERSION_SCRIPT
 INSTALL_LTDL_TRUE
 INSTALL_LTDL_FALSE
@@ -7117,46 +7113,6 @@ echo "${ECHO_T}no" >&6; }
 fi
 
 
-# Extract the first word of "groff", so it can be a program name with args.
-set dummy groff; ac_word=$2
-{ echo "$as_me:$LINENO: checking for $ac_word" >&5
-echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6; }
-if test "${ac_cv_path_GROFF+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  case $GROFF in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_GROFF="$GROFF" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; }; then
-    ac_cv_path_GROFF="$as_dir/$ac_word$ac_exec_ext"
-    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-IFS=$as_save_IFS
-
-  ;;
-esac
-fi
-GROFF=$ac_cv_path_GROFF
-if test -n "$GROFF"; then
-  { echo "$as_me:$LINENO: result: $GROFF" >&5
-echo "${ECHO_T}$GROFF" >&6; }
-else
-  { echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6; }
-fi
-
-
 # Extract the first word of "gzip", so it can be a program name with args.
 set dummy gzip; ac_word=$2
 { echo "$as_me:$LINENO: checking for $ac_word" >&5
@@ -7191,86 +7147,6 @@ GZIPBIN=$ac_cv_path_GZIPBIN
 if test -n "$GZIPBIN"; then
   { echo "$as_me:$LINENO: result: $GZIPBIN" >&5
 echo "${ECHO_T}$GZIPBIN" >&6; }
-else
-  { echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6; }
-fi
-
-
-# Extract the first word of "pdfroff", so it can be a program name with args.
-set dummy pdfroff; ac_word=$2
-{ echo "$as_me:$LINENO: checking for $ac_word" >&5
-echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6; }
-if test "${ac_cv_path_PDFROFF+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  case $PDFROFF in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_PDFROFF="$PDFROFF" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; }; then
-    ac_cv_path_PDFROFF="$as_dir/$ac_word$ac_exec_ext"
-    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-IFS=$as_save_IFS
-
-  ;;
-esac
-fi
-PDFROFF=$ac_cv_path_PDFROFF
-if test -n "$PDFROFF"; then
-  { echo "$as_me:$LINENO: result: $PDFROFF" >&5
-echo "${ECHO_T}$PDFROFF" >&6; }
-else
-  { echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6; }
-fi
-
-
-# Extract the first word of "runtest", so it can be a program name with args.
-set dummy runtest; ac_word=$2
-{ echo "$as_me:$LINENO: checking for $ac_word" >&5
-echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6; }
-if test "${ac_cv_path_RUNTEST+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  case $RUNTEST in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_RUNTEST="$RUNTEST" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; }; then
-    ac_cv_path_RUNTEST="$as_dir/$ac_word$ac_exec_ext"
-    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-IFS=$as_save_IFS
-
-  ;;
-esac
-fi
-RUNTEST=$ac_cv_path_RUNTEST
-if test -n "$RUNTEST"; then
-  { echo "$as_me:$LINENO: result: $RUNTEST" >&5
-echo "${ECHO_T}$RUNTEST" >&6; }
 else
   { echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6; }
@@ -7585,51 +7461,6 @@ fi
 
 
   test -n "$OCAMLDOC" && break
-done
-
-for ac_prog in gas as
-do
-  # Extract the first word of "$ac_prog", so it can be a program name with args.
-set dummy $ac_prog; ac_word=$2
-{ echo "$as_me:$LINENO: checking for $ac_word" >&5
-echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6; }
-if test "${ac_cv_path_GAS+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  case $GAS in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_GAS="$GAS" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; }; then
-    ac_cv_path_GAS="$as_dir/$ac_word$ac_exec_ext"
-    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-IFS=$as_save_IFS
-
-  ;;
-esac
-fi
-GAS=$ac_cv_path_GAS
-if test -n "$GAS"; then
-  { echo "$as_me:$LINENO: result: $GAS" >&5
-echo "${ECHO_T}$GAS" >&6; }
-else
-  { echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6; }
-fi
-
-
-  test -n "$GAS" && break
 done
 
 
@@ -10324,7 +10155,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 10327 "configure"
+#line 10158 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -22144,17 +21975,13 @@ INSTALL_DATA!$INSTALL_DATA$ac_delim
 BZIP2!$BZIP2$ac_delim
 CAT!$CAT$ac_delim
 DOXYGEN!$DOXYGEN$ac_delim
-GROFF!$GROFF$ac_delim
 GZIPBIN!$GZIPBIN$ac_delim
-PDFROFF!$PDFROFF$ac_delim
-RUNTEST!$RUNTEST$ac_delim
 TCLSH!$TCLSH$ac_delim
 ZIP!$ZIP$ac_delim
 OCAMLC!$OCAMLC$ac_delim
 OCAMLOPT!$OCAMLOPT$ac_delim
 OCAMLDEP!$OCAMLDEP$ac_delim
 OCAMLDOC!$OCAMLDOC$ac_delim
-GAS!$GAS$ac_delim
 HAVE_LINK_VERSION_SCRIPT!$HAVE_LINK_VERSION_SCRIPT$ac_delim
 INSTALL_LTDL_TRUE!$INSTALL_LTDL_TRUE$ac_delim
 INSTALL_LTDL_FALSE!$INSTALL_LTDL_FALSE$ac_delim
@@ -22194,7 +22021,7 @@ LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 90; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 86; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5
