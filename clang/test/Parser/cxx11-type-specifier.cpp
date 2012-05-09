@@ -18,3 +18,10 @@ void f() {
   (void) new struct S {}; // expected-error{{'S' can not be defined in a type specifier}}
   (void) new enum E { e }; // expected-error{{'E' can not be defined in a type specifier}}
 }
+
+// And for trailing-type-specifier-seq
+
+// FIXME: Don't treat an ill-formed trailing-return-type the same as no
+//        trailing-return-type, and avoid the second diagnostic.
+auto f() -> unknown; // expected-error{{unknown type name 'unknown'}} \
+                        expected-error{{'auto' return without trailing return type}}

@@ -13,3 +13,5 @@ void foo() {
   __extension__ throw 1;    // expected-error {{expected expression}}
   (void)throw;              // expected-error {{expected expression}}
 }
+
+void f() throw(static); // expected-error {{expected a type}} expected-error {{does not allow storage class}}

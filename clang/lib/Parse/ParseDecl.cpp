@@ -38,6 +38,8 @@ TypeResult Parser::ParseTypeName(SourceRange *Range,
                                  AccessSpecifier AS,
                                  Decl **OwnedType) {
   DeclSpecContext DSC = getDeclSpecContextFromDeclaratorContext(Context);
+  if (DSC == DSC_normal)
+    DSC = DSC_type_specifier;
 
   // Parse the common declaration-specifiers piece.
   DeclSpec DS(AttrFactory);
@@ -1543,7 +1545,8 @@ void Parser::ParseSpecifierQualifierList(DeclSpec &DS, AccessSpecifier AS,
 
   // Validate declspec for type-name.
   unsigned Specs = DS.getParsedSpecifiers();
-  if (DSC == DSC_type_specifier && !DS.hasTypeSpecifier()) {
+  if ((DSC == DSC_type_specifier || DSC == DSC_trailing) &&
+      !DS.hasTypeSpecifier()) {
     Diag(Tok, diag::err_expected_type);
     DS.SetTypeSpecError();
   } else if (Specs == DeclSpec::PQ_None && !DS.getNumProtocolQualifiers() &&
@@ -1640,7 +1643,7 @@ bool Parser::ParseImplicitInt(DeclSpec &DS, CXXScopeSpec *SS,
   // FIXME: Don't bail out here in languages with no implicit int (like
   // C++ with no -fms-extensions). This is much more likely to be an undeclared
   // type or typo than a use of implicit int.
-  if (DSC != DSC_type_specifier &&
+  if (DSC != DSC_type_specifier && DSC != DSC_trailing &&
       isValidAfterIdentifierInDeclarator(NextToken())) {
     // If this token is valid for implicit int, e.g. "static x = 4", then
     // we just avoid eating the identifier, so it will be parsed as the

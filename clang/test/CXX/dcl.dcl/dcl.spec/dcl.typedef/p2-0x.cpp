@@ -124,9 +124,7 @@ namespace TagName {
 }
 
 namespace CWG1044 {
-  // FIXME: this diagnostic isn't ideal. one diagnostic is enough.
-  using T = T; // expected-error {{type name requires a specifier}} \
-                  expected-error {{expected ';' after alias declaration}}
+  using T = T; // expected-error {{unknown type name 'T'}}
 }
 
 namespace StdExample {
