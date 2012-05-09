@@ -464,44 +464,36 @@ static bool SuggestInitializationFixit(Sema &S, const VarDecl *VD) {
 static bool DiagnoseUninitializedUse(Sema &S, const VarDecl *VD,
                                      const Expr *E, bool isAlwaysUninit,
                                      bool alwaysReportSelfInit = false) {
-  bool isSelfInit = false;
 
   if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E)) {
-    if (isAlwaysUninit) {
-      // Inspect the initializer of the variable declaration which is
-      // being referenced prior to its initialization. We emit
-      // specialized diagnostics for self-initialization, and we
-      // specifically avoid warning about self references which take the
-      // form of:
-      //
-      //   int x = x;
-      //
-      // This is used to indicate to GCC that 'x' is intentionally left
-      // uninitialized. Proven code paths which access 'x' in
-      // an uninitialized state after this will still warn.
-      //
-      // TODO: Should we suppress maybe-uninitialized warnings for
-      // variables initialized in this way?
-      if (const Expr *Initializer = VD->getInit()) {
-        if (!alwaysReportSelfInit && DRE == Initializer->IgnoreParenImpCasts())
-          return false;
+    // Inspect the initializer of the variable declaration which is
+    // being referenced prior to its initialization. We emit
+    // specialized diagnostics for self-initialization, and we
+    // specifically avoid warning about self references which take the
+    // form of:
+    //
+    //   int x = x;
+    //
+    // This is used to indicate to GCC that 'x' is intentionally left
+    // uninitialized. Proven code paths which access 'x' in
+    // an uninitialized state after this will still warn.
+    if (const Expr *Initializer = VD->getInit()) {
+      if (!alwaysReportSelfInit && DRE == Initializer->IgnoreParenImpCasts())
+        return false;
 
-        ContainsReference CR(S.Context, DRE);
-        CR.Visit(const_cast<Expr*>(Initializer));
-        isSelfInit = CR.doesContainReference();
-      }
-      if (isSelfInit) {
+      ContainsReference CR(S.Context, DRE);
+      CR.Visit(const_cast<Expr*>(Initializer));
+      if (CR.doesContainReference()) {
         S.Diag(DRE->getLocStart(),
                diag::warn_uninit_self_reference_in_init)
-        << VD->getDeclName() << VD->getLocation() << DRE->getSourceRange();
-      } else {
-        S.Diag(DRE->getLocStart(), diag::warn_uninit_var)
-          << VD->getDeclName() << DRE->getSourceRange();
+          << VD->getDeclName() << VD->getLocation() << DRE->getSourceRange();
+        return true;
       }
-    } else {
-      S.Diag(DRE->getLocStart(), diag::warn_maybe_uninit_var)
-        << VD->getDeclName() << DRE->getSourceRange();
     }
+
+    S.Diag(DRE->getLocStart(), isAlwaysUninit ? diag::warn_uninit_var
+                                              : diag::warn_maybe_uninit_var)
+      << VD->getDeclName() << DRE->getSourceRange();
   } else {
     const BlockExpr *BE = cast<BlockExpr>(E);
     if (VD->getType()->isBlockPointerType() &&
@@ -518,7 +510,7 @@ static bool DiagnoseUninitializedUse(Sema &S, const VarDecl *VD,
   // Report where the variable was declared when the use wasn't within
   // the initializer of that declaration & we didn't already suggest
   // an initialization fixit.
-  if (!isSelfInit && !SuggestInitializationFixit(S, VD))
+  if (!SuggestInitializationFixit(S, VD))
     S.Diag(VD->getLocStart(), diag::note_uninit_var_def)
       << VD->getDeclName();
 
