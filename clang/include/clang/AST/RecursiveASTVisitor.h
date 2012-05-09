@@ -1451,10 +1451,11 @@ bool RecursiveASTVisitor<Derived>::TraverseFunctionInstantiations(
       TRY_TO(TraverseDecl(FD));
       break;
 
-    // No need to visit explicit instantiations, we'll find the node
-    // eventually.
+    // FIXME: For now traverse explicit instantiations here. Change that
+    // once they are represented as dedicated nodes in the AST.
     case TSK_ExplicitInstantiationDeclaration:
     case TSK_ExplicitInstantiationDefinition:
+      TRY_TO(TraverseDecl(FD));
       break;
 
     case TSK_ExplicitSpecialization:

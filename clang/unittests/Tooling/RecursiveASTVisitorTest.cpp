@@ -301,6 +301,19 @@ TEST(RecursiveASTVisitor, VisitsCallInPartialTemplateSpecialization) {
     "}\n"));
 }
 
+TEST(RecursiveASTVisitor, VisitsExplicitTemplateSpecialization) {
+  CXXMemberCallVisitor Visitor;
+  Visitor.ExpectMatch("A::f", 4, 5);
+  EXPECT_TRUE(Visitor.runOver(
+    "struct A {\n"
+    "  void f() const {}\n"
+    "  template<class T> void g(const T& t) const {\n"
+    "    t.f();\n"
+    "  }\n"
+    "};\n"
+    "template void A::g(const A& a) const;\n"));
+}
+
 TEST(RecursiveASTVisitor, VisitsPartialTemplateSpecialization) {
   // From cfe-commits/Week-of-Mon-20100830/033998.html
   // Contrary to the approach sugggested in that email, we visit all
