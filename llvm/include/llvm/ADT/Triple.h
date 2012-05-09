@@ -196,6 +196,11 @@ public:
   bool getMacOSXVersion(unsigned &Major, unsigned &Minor,
                         unsigned &Micro) const;
 
+  /// getiOSVersion - Parse the version number as with getOSVersion.  This should
+  /// only be called with IOS triples.
+  void getiOSVersion(unsigned &Major, unsigned &Minor,
+                     unsigned &Micro) const;
+
   /// @}
   /// @name Direct Component Access
   /// @{
