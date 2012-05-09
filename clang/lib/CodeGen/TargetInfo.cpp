@@ -2411,6 +2411,64 @@ PPC32TargetCodeGenInfo::initDwarfEHRegSizeTable(CodeGen::CodeGenFunction &CGF,
   return false;
 }
 
+// PowerPC-64
+
+namespace {
+class PPC64TargetCodeGenInfo : public DefaultTargetCodeGenInfo {
+public:
+  PPC64TargetCodeGenInfo(CodeGenTypes &CGT) : DefaultTargetCodeGenInfo(CGT) {}
+
+  int getDwarfEHStackPointer(CodeGen::CodeGenModule &M) const {
+    // This is recovered from gcc output.
+    return 1; // r1 is the dedicated stack pointer
+  }
+
+  bool initDwarfEHRegSizeTable(CodeGen::CodeGenFunction &CGF,
+                               llvm::Value *Address) const;
+};
+
+}
+
+bool
+PPC64TargetCodeGenInfo::initDwarfEHRegSizeTable(CodeGen::CodeGenFunction &CGF,
+                                                llvm::Value *Address) const {
+  // This is calculated from the LLVM and GCC tables and verified
+  // against gcc output.  AFAIK all ABIs use the same encoding.
+
+  CodeGen::CGBuilderTy &Builder = CGF.Builder;
+
+  llvm::IntegerType *i8 = CGF.Int8Ty;
+  llvm::Value *Four8 = llvm::ConstantInt::get(i8, 4);
+  llvm::Value *Eight8 = llvm::ConstantInt::get(i8, 8);
+  llvm::Value *Sixteen8 = llvm::ConstantInt::get(i8, 16);
+
+  // 0-31: r0-31, the 8-byte general-purpose registers
+  AssignToArrayRange(Builder, Address, Eight8, 0, 31);
+
+  // 32-63: fp0-31, the 8-byte floating-point registers
+  AssignToArrayRange(Builder, Address, Eight8, 32, 63);
+
+  // 64-76 are various 4-byte special-purpose registers:
+  // 64: mq
+  // 65: lr
+  // 66: ctr
+  // 67: ap
+  // 68-75 cr0-7
+  // 76: xer
+  AssignToArrayRange(Builder, Address, Four8, 64, 76);
+
+  // 77-108: v0-31, the 16-byte vector registers
+  AssignToArrayRange(Builder, Address, Sixteen8, 77, 108);
+
+  // 109: vrsave
+  // 110: vscr
+  // 111: spe_acc
+  // 112: spefscr
+  // 113: sfp
+  AssignToArrayRange(Builder, Address, Four8, 109, 113);
+
+  return false;
+}
 
 //===----------------------------------------------------------------------===//
 // ARM ABI Implementation
@@ -3634,6 +3692,8 @@ const TargetCodeGenInfo &CodeGenModule::getTargetCodeGenInfo() {
 
   case llvm::Triple::ppc:
     return *(TheTargetCodeGenInfo = new PPC32TargetCodeGenInfo(Types));
+  case llvm::Triple::ppc64:
+    return *(TheTargetCodeGenInfo = new PPC64TargetCodeGenInfo(Types));
 
   case llvm::Triple::ptx32:
   case llvm::Triple::ptx64:
