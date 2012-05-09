@@ -117,6 +117,9 @@ def main():
         print "This script expects to reside in lldb's test directory."
         sys.exit(-1)
 
+    if not len(sys.argv) > 1:
+        usage()
+
     index = 1
     while index < len(sys.argv):
         if sys.argv[index].startswith('-h'):
@@ -135,10 +138,10 @@ def main():
             if index >= len(sys.argv) or sys.argv[index].startswith('-'):
                 usage()
             filename_components.append(sys.argv[index])
-            index += 1
         elif sys.argv[index] == '-n':
             no_trace = True
-            index += 1
+
+        index += 1
 
     if index < len(sys.argv):
         # Get the specified session directory.
@@ -147,6 +150,9 @@ def main():
         # Use heuristic to find the latest session directory.
         name = datetime.datetime.now().strftime("%Y-%m-%d-")
         dirs = [d for d in os.listdir(os.getcwd()) if d.startswith(name)]
+        if len(dirs) == 0:
+            print "No default session directory found, please specify it explicitly."
+            usage()
         session_dir = max(dirs, key=os.path.getmtime)
         if not session_dir or not os.path.exists(session_dir):
             print "No default session directory found, please specify it explicitly."
