@@ -61,7 +61,7 @@ Darwin::Darwin(const Driver &D, const llvm::Triple& Triple)
   DarwinVersion[2] = 0;
 
   // Compute the initial iOS version from the triple
-  getTriple().getiOSVersion(Major, Minor, Micro);
+  Triple.getiOSVersion(Major, Minor, Micro);
   llvm::raw_string_ostream(iOSVersionMin)
     << Major << '.' << Minor << '.' << Micro;
 }
