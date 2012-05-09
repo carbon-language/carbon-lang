@@ -210,7 +210,7 @@ asm(
     ".text\n"
     ".align 2\n"
     ".globl PPC64CompilationCallback\n"
-    ".section \".opd\",\"aw\"\n"
+    ".section \".opd\",\"aw\",@progbits\n"
     ".align 3\n"
 "PPC64CompilationCallback:\n"
     ".quad .L.PPC64CompilationCallback,.TOC.@tocbase,0\n"
