@@ -42,7 +42,7 @@ define i32 @f() nounwind {
 
 define i1 @baz() nounwind {
 ; CHECK: @baz
-; CHECK-NEXT: ret i1 true
+; CHECK-NEXT: objectsize
   %1 = tail call i32 @llvm.objectsize.i32(i8* getelementptr inbounds ([0 x i8]* @window, i32 0, i32 0), i1 false, i32 0)
   %2 = icmp eq i32 %1, -1
   ret i1 %2
@@ -166,15 +166,5 @@ define i32 @test8() {
   %gep = getelementptr inbounds i8* %alloc, i32 5
   %objsize = call i32 @llvm.objectsize.i32(i8* %gep, i1 false, i32 0) nounwind readonly
 ; CHECK-NEXT: ret i32 30
-  ret i32 %objsize
-}
-
-; test for overflow in calloc
-define i32 @test9() {
-; CHECK: @test9
-  %alloc = call noalias i8* @calloc(i32 100000000, i32 100000000) nounwind
-  %gep = getelementptr inbounds i8* %alloc, i32 2
-  %objsize = call i32 @llvm.objectsize.i32(i8* %gep, i1 true, i32 0) nounwind readonly
-; CHECK-NEXT: ret i32 0
   ret i32 %objsize
 }

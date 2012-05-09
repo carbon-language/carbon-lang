@@ -165,6 +165,72 @@ Instruction *InstCombiner::SimplifyMemSet(MemSetInst *MI) {
   return 0;
 }
 
+/// computeAllocSize - compute the object size allocated by an allocation
+/// site. Returns 0 if the size is not constant (in SizeValue), 1 if the size
+/// is constant (in Size), and 2 if the size could not be determined within the
+/// given maximum Penalty that the computation would incurr at run-time.
+static int computeAllocSize(Value *Alloc, uint64_t &Size, Value* &SizeValue,
+                            uint64_t Penalty, TargetData *TD,
+                            InstCombiner::BuilderTy *Builder) {
+  if (GlobalVariable *GV = dyn_cast<GlobalVariable>(Alloc)) {
+    if (GV->hasUniqueInitializer()) {
+      Constant *C = GV->getInitializer();
+      Size = TD->getTypeAllocSize(C->getType());
+      return 1;
+    }
+    // Can't determine size of the GV.
+    return 2;
+
+  } else if (AllocaInst *AI = dyn_cast<AllocaInst>(Alloc)) {
+    if (!AI->getAllocatedType()->isSized())
+      return 2;
+
+    Size = TD->getTypeAllocSize(AI->getAllocatedType());
+    if (!AI->isArrayAllocation())
+      return 1; // we are done
+
+    Value *ArraySize = AI->getArraySize();
+    if (const ConstantInt *C = dyn_cast<ConstantInt>(ArraySize)) {
+      Size *= C->getZExtValue();
+      return 1;
+    }
+
+    if (Penalty < 2)
+      return 2;
+
+    SizeValue = Builder->CreateMul(Builder->getInt64(Size), ArraySize);
+    return 0;
+
+  } else if (CallInst *MI = extractMallocCall(Alloc)) {
+    SizeValue = MI->getArgOperand(0);
+    if (ConstantInt *CI = dyn_cast<ConstantInt>(SizeValue)) {
+      Size = CI->getZExtValue();
+      return 1;
+    }
+    return 0;
+
+  } else if (CallInst *MI = extractCallocCall(Alloc)) {
+    Value *Arg1 = MI->getArgOperand(0);
+    Value *Arg2 = MI->getArgOperand(1);
+    if (ConstantInt *CI1 = dyn_cast<ConstantInt>(Arg1)) {
+      if (ConstantInt *CI2 = dyn_cast<ConstantInt>(Arg2)) {
+        Size = (CI1->getValue() * CI2->getValue()).getZExtValue();
+        return 1;
+      }
+    }
+
+    if (Penalty < 2)
+      return 2;
+
+    SizeValue = Builder->CreateMul(Arg1, Arg2);
+    return 0;
+  }
+
+  DEBUG(errs() << "computeAllocSize failed:\n");
+  DEBUG(Alloc->dump());
+  return 2;
+}
+
 /// visitCallInst - CallInst simplification.  This mostly only handles folding
 /// of intrinsic instructions.  For normal calls, it allows visitCallSite to do
 /// the heavy lifting.
@@ -250,13 +316,14 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     if (!TD) return 0;
 
     Type *ReturnTy = CI.getType();
-    uint64_t DontKnow = II->getArgOperand(1) == Builder->getTrue() ? 0 : -1ULL;
+    uint64_t Penalty = cast<ConstantInt>(II->getArgOperand(2))->getZExtValue();
 
     // Get to the real allocated thing and offset as fast as possible.
     Value *Op1 = II->getArgOperand(0)->stripPointerCasts();
 
     uint64_t Offset = 0;
-    uint64_t Size = -1ULL;
+    Value *OffsetValue;
+    bool ConstOffset = true;
 
     // Try to look through constant GEPs.
     if (GEPOperator *GEP = dyn_cast<GEPOperator>(Op1)) {
@@ -270,66 +337,40 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
       Offset = TD->getIndexedOffset(GEP->getPointerOperandType(), Ops);
 
       Op1 = GEP->getPointerOperand()->stripPointerCasts();
-
-      // Make sure we're not a constant offset from an external
-      // global.
-      if (GlobalVariable *GV = dyn_cast<GlobalVariable>(Op1))
-        if (!GV->hasDefinitiveInitializer()) return 0;
     }
 
-    // If we've stripped down to a single global variable that we
-    // can know the size of then just return that.
-    if (GlobalVariable *GV = dyn_cast<GlobalVariable>(Op1)) {
-      if (GV->hasDefinitiveInitializer()) {
-        Constant *C = GV->getInitializer();
-        Size = TD->getTypeAllocSize(C->getType());
-      } else {
-        // Can't determine size of the GV.
-        Constant *RetVal = ConstantInt::get(ReturnTy, DontKnow);
-        return ReplaceInstUsesWith(CI, RetVal);
-      }
-    } else if (AllocaInst *AI = dyn_cast<AllocaInst>(Op1)) {
-      // Get alloca size.
-      if (AI->getAllocatedType()->isSized()) {
-        Size = TD->getTypeAllocSize(AI->getAllocatedType());
-        if (AI->isArrayAllocation()) {
-          const ConstantInt *C = dyn_cast<ConstantInt>(AI->getArraySize());
-          if (!C) return 0;
-          Size *= C->getZExtValue();
-        }
-      }
-    } else if (CallInst *MI = extractMallocCall(Op1)) {
-      // Get allocation size.
-      Value *Arg = MI->getArgOperand(0);
-      if (ConstantInt *CI = dyn_cast<ConstantInt>(Arg))
-          Size = CI->getZExtValue();
-
-    } else if (CallInst *MI = extractCallocCall(Op1)) {
-      // Get allocation size.
-      Value *Arg1 = MI->getArgOperand(0);
-      Value *Arg2 = MI->getArgOperand(1);
-      if (ConstantInt *CI1 = dyn_cast<ConstantInt>(Arg1))
-        if (ConstantInt *CI2 = dyn_cast<ConstantInt>(Arg2)) {
-          bool overflow;
-          APInt SizeAP = CI1->getValue().umul_ov(CI2->getValue(), overflow);
-          if (!overflow)
-            Size = SizeAP.getZExtValue();
-          else
-            return ReplaceInstUsesWith(CI, ConstantInt::get(ReturnTy, DontKnow));
-        }
-    }
+    uint64_t Size;
+    Value *SizeValue;
+    int ConstAlloc = computeAllocSize(Op1, Size, SizeValue, Penalty, TD,
+                                      Builder);
 
     // Do not return "I don't know" here. Later optimization passes could
     // make it possible to evaluate objectsize to a constant.
-    if (Size == -1ULL)
+    if (ConstAlloc == 2)
       return 0;
 
-    if (Size < Offset) {
-      // Out of bound reference? Negative index normalized to large
-      // index? Just return "I don't know".
-      return ReplaceInstUsesWith(CI, ConstantInt::get(ReturnTy, DontKnow));
-    }
-    return ReplaceInstUsesWith(CI, ConstantInt::get(ReturnTy, Size-Offset));
+    if (ConstOffset && ConstAlloc) {
+      if (Size < Offset) {
+        // Out of bounds
+        return ReplaceInstUsesWith(CI, ConstantInt::get(ReturnTy, 0));
+      }
+      return ReplaceInstUsesWith(CI, ConstantInt::get(ReturnTy, Size-Offset));
+
+    } else if (Penalty >= 2) {
+      if (ConstOffset)
+        OffsetValue = Builder->getInt64(Offset);
+      if (ConstAlloc)
+        SizeValue = Builder->getInt64(Size);
+
+      Value *Val = Builder->CreateSub(SizeValue, OffsetValue);
+      Val = Builder->CreateTrunc(Val, ReturnTy);
+      // return 0 if there's an overflow
+      Value *Cmp = Builder->CreateICmpULT(SizeValue, OffsetValue);
+      Val = Builder->CreateSelect(Cmp, ConstantInt::get(ReturnTy, 0), Val);
+      return ReplaceInstUsesWith(CI, Val);
+
+    } else
+      return 0;
   }
   case Intrinsic::bswap:
     // bswap(bswap(x)) -> x
