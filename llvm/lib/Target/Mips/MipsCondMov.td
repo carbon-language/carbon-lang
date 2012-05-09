@@ -83,6 +83,12 @@ multiclass MovzPats1<RegisterClass CRC, RegisterClass DRC,
             (MOVZInst DRC:$T, CRC:$lhs, DRC:$F)>;
 }
 
+multiclass MovzPats2<RegisterClass CRC, RegisterClass DRC,
+                     Instruction MOVZInst, Instruction XORiOp> {
+  def : Pat<(select (i32 (seteq CRC:$lhs, immZExt16:$uimm16)), DRC:$T, DRC:$F),
+            (MOVZInst DRC:$T, (XORiOp CRC:$lhs, immZExt16:$uimm16), DRC:$F)>;
+}
+
 multiclass MovnPats<RegisterClass CRC, RegisterClass DRC, Instruction MOVNInst,
                     Instruction XOROp> {
   def : Pat<(select (i32 (setne CRC:$lhs, CRC:$rhs)), DRC:$T, DRC:$F),
@@ -170,6 +176,7 @@ let Predicates = [IsFP64bit], DecoderNamespace = "Mips64" in {
 // Instantiation of conditional move patterns.
 defm : MovzPats0<CPURegs, CPURegs, MOVZ_I_I, SLT, SLTu, SLTi, SLTiu>;
 defm : MovzPats1<CPURegs, CPURegs, MOVZ_I_I, XOR>;
+defm : MovzPats2<CPURegs, CPURegs, MOVZ_I_I, XORi>;
 let Predicates = [HasMips64] in {
   defm : MovzPats0<CPURegs, CPU64Regs, MOVZ_I_I64, SLT, SLTu, SLTi, SLTiu>;
   defm : MovzPats0<CPU64Regs, CPURegs, MOVZ_I_I, SLT64, SLTu64, SLTi64,
@@ -179,6 +186,9 @@ let Predicates = [HasMips64] in {
   defm : MovzPats1<CPURegs, CPU64Regs, MOVZ_I_I64, XOR>;
   defm : MovzPats1<CPU64Regs, CPURegs, MOVZ_I64_I, XOR64>;
   defm : MovzPats1<CPU64Regs, CPU64Regs, MOVZ_I64_I64, XOR64>;
+  defm : MovzPats2<CPURegs, CPU64Regs, MOVZ_I_I64, XORi>;
+  defm : MovzPats2<CPU64Regs, CPURegs, MOVZ_I64_I, XORi64>;
+  defm : MovzPats2<CPU64Regs, CPU64Regs, MOVZ_I64_I64, XORi64>;
 }
 
 defm : MovnPats<CPURegs, CPURegs, MOVN_I_I, XOR>;

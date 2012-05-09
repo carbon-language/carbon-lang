@@ -37,3 +37,23 @@ entry:
   ret i32 %cond
 }
 
+; O32: cmov3:
+; O32: xori $[[R0:[0-9]+]], ${{[0-9]+}}, 234
+; O32: movz ${{[0-9]+}}, ${{[0-9]+}}, $[[R0]]
+define i32 @cmov3(i32 %a, i32 %b, i32 %c) nounwind readnone {
+entry:
+  %cmp = icmp eq i32 %a, 234
+  %cond = select i1 %cmp, i32 %b, i32 %c
+  ret i32 %cond
+}
+
+; N64: cmov4:
+; N64: xori $[[R0:[0-9]+]], ${{[0-9]+}}, 234
+; N64: movz ${{[0-9]+}}, ${{[0-9]+}}, $[[R0]]
+define i64 @cmov4(i32 %a, i64 %b, i64 %c) nounwind readnone {
+entry:
+  %cmp = icmp eq i32 %a, 234
+  %cond = select i1 %cmp, i64 %b, i64 %c
+  ret i64 %cond
+}
+
