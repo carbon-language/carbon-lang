@@ -19,3 +19,21 @@ void pr11594(struct S *s) {
   int a[10];
   int *p = a - s->n;
 }
+
+// Test case reduced from <rdar://problem/11387038>.  This resulted in
+// an assertion failure because of the typedef instead of an explicit
+// constant array type.
+struct RDar11387038 {};
+typedef struct RDar11387038 RDar11387038Array[1];
+struct RDar11387038_Table {
+  RDar11387038Array z;
+};
+typedef struct RDar11387038_Table * TPtr;
+typedef TPtr *TabHandle;
+struct RDar11387038_B { TabHandle x; };
+typedef struct RDar11387038_B RDar11387038_B;
+
+void radar11387038() {
+  RDar11387038_B *pRDar11387038_B;
+  struct RDar11387038* y = &(*pRDar11387038_B->x)->z[4];
+}
