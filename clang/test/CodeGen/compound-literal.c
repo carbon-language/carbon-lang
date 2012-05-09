@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm %s -o - | FileCheck %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin -emit-llvm %s -o - | FileCheck %s
 
 int* a = &(int){1};
 struct s {int a, b, c;} * b = &(struct s) {1, 2, 3};
