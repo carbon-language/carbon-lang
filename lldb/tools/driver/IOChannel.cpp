@@ -50,6 +50,13 @@ IOChannel::GetPrompt ()
     return pos->second.c_str();
 }
 
+void
+IOChannel::EraseCharsBeforeCursor ()
+{
+    const LineInfo *line_info  = el_line(m_edit_line);
+    el_deletestr(m_edit_line, line_info->cursor - line_info->buffer);
+}
+
 unsigned char
 IOChannel::ElCompletionFn (EditLine *e, int ch)
 {

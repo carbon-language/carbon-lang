@@ -1081,6 +1081,8 @@ Driver::EditLineInputReaderCallback
         if (driver->m_io_channel_ap.get() != NULL)
         {
             driver->m_io_channel_ap->OutWrite ("^C\n", 3, NO_ASYNC);
+            // I wish I could erase the entire input line, but there's no public API for that.
+            driver->m_io_channel_ap->EraseCharsBeforeCursor();
             driver->m_io_channel_ap->RefreshPrompt();
         }
         break;
