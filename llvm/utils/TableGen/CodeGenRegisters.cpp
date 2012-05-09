@@ -157,7 +157,8 @@ bool CodeGenRegister::inheritRegUnits(CodeGenRegBank &RegBank) {
     // Only create a unit if no other subregs have units.
     CodeGenRegister *SR = I->second;
     if (SR == this) {
-      // RegUnits are only empty during getSubRegs, prior to computing weight.
+      // RegUnits are only empty during computeSubRegs, prior to computing
+      // weight.
       if (RegUnits.empty())
         RegUnits.push_back(RegBank.newRegUnit(0));
       continue;
@@ -169,7 +170,7 @@ bool CodeGenRegister::inheritRegUnits(CodeGenRegBank &RegBank) {
 }
 
 const CodeGenRegister::SubRegMap &
-CodeGenRegister::getSubRegs(CodeGenRegBank &RegBank) {
+CodeGenRegister::computeSubRegs(CodeGenRegBank &RegBank) {
   // Only compute this map once.
   if (SubRegsComplete)
     return SubRegs;
@@ -199,11 +200,11 @@ CodeGenRegister::getSubRegs(CodeGenRegBank &RegBank) {
   // Here the order is important - earlier subregs take precedence.
   for (unsigned i = 0, e = SubList.size(); i != e; ++i) {
     CodeGenRegister *SR = RegBank.getReg(SubList[i]);
-    const SubRegMap &Map = SR->getSubRegs(RegBank);
+    const SubRegMap &Map = SR->computeSubRegs(RegBank);
 
     // Add this as a super-register of SR now all sub-registers are in the list.
     // This creates a topological ordering, the exact order depends on the
-    // order getSubRegs is called on all registers.
+    // order computeSubRegs is called on all registers.
     SR->SuperRegs.push_back(this);
 
     for (SubRegMap::const_iterator SI = Map.begin(), SE = Map.end(); SI != SE;
@@ -225,7 +226,7 @@ CodeGenRegister::getSubRegs(CodeGenRegBank &RegBank) {
     CodeGenSubRegIndex *Idx = Indices[i];
     const CodeGenSubRegIndex::CompMap &Comps = Idx->getComposites();
     CodeGenRegister *SR = SubRegs[Idx];
-    const SubRegMap &Map = SR->getSubRegs(RegBank);
+    const SubRegMap &Map = SR->computeSubRegs(RegBank);
 
     // Look at the possible compositions of Idx.
     // They may not all be supported by SR.
@@ -267,7 +268,7 @@ CodeGenRegister::getSubRegs(CodeGenRegBank &RegBank) {
         throw TGError(TheDef->getLoc(), "Invalid SubClassIndex in " +
                       Pat->getAsString());
       CodeGenSubRegIndex *Idx = RegBank.getSubRegIdx(IdxInit->getDef());
-      const SubRegMap &R2Subs = R2->getSubRegs(RegBank);
+      const SubRegMap &R2Subs = R2->computeSubRegs(RegBank);
       SubRegMap::const_iterator ni = R2Subs.find(Idx);
       if (ni == R2Subs.end())
         throw TGError(TheDef->getLoc(), "Composite " + Pat->getAsString() +
@@ -301,7 +302,7 @@ CodeGenRegister::getSubRegs(CodeGenRegBank &RegBank) {
   while (!Indices.empty() && !Orphans.empty()) {
     CodeGenSubRegIndex *Idx = Indices.pop_back_val();
     CodeGenRegister *SR = SubRegs[Idx];
-    const SubRegMap &Map = SR->getSubRegs(RegBank);
+    const SubRegMap &Map = SR->computeSubRegs(RegBank);
     for (SubRegMap::const_iterator SI = Map.begin(), SE = Map.end(); SI != SE;
          ++SI)
       if (Orphans.erase(SI->second))
@@ -753,7 +754,7 @@ CodeGenRegBank::CodeGenRegBank(RecordKeeper &Records) : Records(Records) {
   // This will create Composite entries for all inferred sub-register indices.
   NumRegUnits = 0;
   for (unsigned i = 0, e = Registers.size(); i != e; ++i)
-    Registers[i]->getSubRegs(*this);
+    Registers[i]->computeSubRegs(*this);
 
   // Native register units are associated with a leaf register. They've all been
   // discovered now.

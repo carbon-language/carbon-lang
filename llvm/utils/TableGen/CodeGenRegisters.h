@@ -100,9 +100,9 @@ namespace llvm {
 
     const std::string &getName() const;
 
-    // Get a map of sub-registers computed lazily.
+    // Lazily compute a map of all sub-registers.
     // This includes unique entries for all sub-sub-registers.
-    const SubRegMap &getSubRegs(CodeGenRegBank&);
+    const SubRegMap &computeSubRegs(CodeGenRegBank&);
 
     const SubRegMap &getSubRegs() const {
       assert(SubRegsComplete && "Must precompute sub-registers");
