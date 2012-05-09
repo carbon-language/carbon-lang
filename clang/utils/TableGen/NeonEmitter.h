@@ -23,6 +23,7 @@
 
 enum OpKind {
   OpNone,
+  OpUnavailable,
   OpAdd,
   OpAddl,
   OpAddw,
@@ -130,6 +131,7 @@ namespace llvm {
   public:
     NeonEmitter(RecordKeeper &R) : Records(R) {
       OpMap["OP_NONE"]  = OpNone;
+      OpMap["OP_UNAVAILABLE"] = OpUnavailable;
       OpMap["OP_ADD"]   = OpAdd;
       OpMap["OP_ADDL"]  = OpAddl;
       OpMap["OP_ADDW"]  = OpAddw;

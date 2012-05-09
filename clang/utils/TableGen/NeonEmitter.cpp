@@ -1012,7 +1012,7 @@ static std::string GenIntrinsic(const std::string &name,
                                 StringRef outTypeStr, StringRef inTypeStr,
                                 OpKind kind, ClassKind classKind) {
   assert(!proto.empty() && "");
-  bool define = UseMacro(proto);
+  bool define = UseMacro(proto) && kind != OpUnavailable;
   std::string s;
 
   // static always inline + return type
@@ -1040,9 +1040,11 @@ static std::string GenIntrinsic(const std::string &name,
   if (define) {
     s += " __extension__ ({ \\\n  ";
     s += GenMacroLocals(proto, inTypeStr);
-  } else {
+  } else if (kind == OpUnavailable) {
+    s += " __attribute__((unavailable));\n";
+    return s;
+  } else
     s += " { \\\n  ";
-  }
 
   if (kind != OpNone)
     s += GenOpString(kind, proto, outTypeStr);
@@ -1238,7 +1240,7 @@ static unsigned RangeFromType(const char mod, StringRef typestr) {
 /// runHeader - Emit a file with sections defining:
 /// 1. the NEON section of BuiltinsARM.def.
 /// 2. the SemaChecking code for the type overload checking.
-/// 3. the SemaChecking code for validation of intrinsic immedate arguments.
+/// 3. the SemaChecking code for validation of intrinsic immediate arguments.
 void NeonEmitter::runHeader(raw_ostream &OS) {
   std::vector<Record*> RV = Records.getAllDerivedDefinitions("Inst");
 
@@ -1551,6 +1553,8 @@ void NeonEmitter::runTests(raw_ostream &OS) {
     ParseTypes(R, Types, TypeVec);
 
     OpKind kind = OpMap[R->getValueAsDef("Operand")->getName()];
+    if (kind == OpUnavailable)
+      continue;
     for (unsigned ti = 0, te = TypeVec.size(); ti != te; ++ti) {
       if (kind == OpReinterpret) {
         bool outQuad = false;

@@ -15,6 +15,7 @@
 class Op;
 
 def OP_NONE  : Op;
+def OP_UNAVAILABLE : Op;
 def OP_ADD   : Op;
 def OP_ADDL  : Op;
 def OP_ADDW  : Op;
