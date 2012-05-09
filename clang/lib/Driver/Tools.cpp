@@ -958,7 +958,7 @@ void Clang::AddX86TargetArgs(const ArgList &Args,
       // FIXME: We should also incorporate the detected target features for use
       // with -native.
       std::string CPU = llvm::sys::getHostCPUName();
-      if (!CPU.empty())
+      if (!CPU.empty() && CPU != "generic")
         CPUName = Args.MakeArgString(CPU);
     } else
       CPUName = A->getValue(Args);
