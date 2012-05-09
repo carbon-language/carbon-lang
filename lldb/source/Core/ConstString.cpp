@@ -167,12 +167,32 @@ protected:
 // initializers so we hide the string pool in a static function so
 // that it will get initialized on the first call to this static
 // function.
+//
+// Note, for now we make the string pool a pointer to the pool, because
+// we can't guarantee that some objects won't get destroyed after the
+// global destructor chain is run, and trying to make sure no destructors
+// touch ConstStrings is difficult.  So we leak the pool instead.
+//
+// FIXME: If we are going to keep it this way we should come up with some
+// abstraction to "pthread_once" so we don't have to check the pointer
+// every time.
 //----------------------------------------------------------------------
 static Pool &
 StringPool()
 {
-    static Pool string_pool;
-    return string_pool;
+    static Mutex g_pool_initialization_mutex;
+    static Pool *g_string_pool = NULL;
+
+    if (g_string_pool == NULL)
+    {
+        Mutex::Locker initialization_locker(g_pool_initialization_mutex);
+        if (g_string_pool == NULL)
+        {
+            g_string_pool = new Pool();
+        }
+    }
+    
+    return *g_string_pool;
 }
 
 ConstString::ConstString (const char *cstr) :
