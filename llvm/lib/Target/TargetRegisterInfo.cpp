@@ -154,7 +154,6 @@ TargetRegisterInfo::getMatchingSuperRegClass(const TargetRegisterClass *A,
   assert(Idx && "Bad sub-register index");
 
   // Find Idx in the list of super-register indices.
-  const uint32_t *Mask = 0;
   for (SuperRegClassIterator RCI(B, this); RCI.isValid(); ++RCI)
     if (RCI.getSubReg() == Idx)
       // The bit mask contains all register classes that are projected into B
