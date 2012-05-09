@@ -8,7 +8,7 @@ target triple = "x86_64-apple-macosx10.6.0"
 
 @aux_temp = external global %struct.dfa, align 8
 
-declare i64 @llvm.objectsize.i64(i8*, i1) nounwind readnone
+declare i64 @llvm.objectsize.i64(i8*, i1, i32) nounwind readnone
 
 declare void @__memset_chk() nounwind
 
@@ -21,12 +21,12 @@ if.end.i:                                         ; preds = %entry
   br i1 undef, label %land.end.thread.i, label %land.end.i
 
 land.end.thread.i:                                ; preds = %if.end.i
-  %0 = call i64 @llvm.objectsize.i64(i8* undef, i1 false) nounwind
+  %0 = call i64 @llvm.objectsize.i64(i8* undef, i1 false, i32 0) nounwind
   %cmp1710.i = icmp eq i64 %0, -1
   br i1 %cmp1710.i, label %cond.false156.i, label %cond.true138.i
 
 land.end.i:                                       ; preds = %if.end.i
-  %1 = call i64 @llvm.objectsize.i64(i8* undef, i1 false) nounwind
+  %1 = call i64 @llvm.objectsize.i64(i8* undef, i1 false, i32 0) nounwind
   %cmp17.i = icmp eq i64 %1, -1
   br i1 %cmp17.i, label %cond.false156.i, label %cond.true138.i
 

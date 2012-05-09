@@ -52,6 +52,20 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
     }
     break;
   }
+  case 'o': {
+    // FIXME: remove in LLVM 3.3
+    if (Name.startswith("objectsize.") && F->arg_size() == 2) {
+      Type *Tys[] = {F->getReturnType(),
+                     F->arg_begin()->getType(),
+                     Type::getInt1Ty(F->getContext()),
+                     Type::getInt32Ty(F->getContext())};
+      NewFn = Intrinsic::getDeclaration(F->getParent(), Intrinsic::objectsize,
+                                        Tys);
+      NewFn->takeName(F);
+      return true;
+    }
+    break;
+  }
   case 'x': {
     if (Name.startswith("x86.sse2.pcmpeq.") ||
         Name.startswith("x86.sse2.pcmpgt.") ||
@@ -195,7 +209,7 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
     llvm_unreachable("Unknown function for CallInst upgrade.");
 
   case Intrinsic::ctlz:
-  case Intrinsic::cttz:
+  case Intrinsic::cttz: {
     assert(CI->getNumArgOperands() == 1 &&
            "Mismatch between function args and call args");
     StringRef Name = CI->getName();
@@ -204,6 +218,16 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
                                                Builder.getFalse(), Name));
     CI->eraseFromParent();
     return;
+  }
+  case Intrinsic::objectsize: {
+    StringRef Name = CI->getName();
+    CI->setName(Name + ".old");
+    CI->replaceAllUsesWith(Builder.CreateCall3(NewFn, CI->getArgOperand(0),
+                                               CI->getArgOperand(1),
+                                               Builder.getInt32(0), Name));
+    CI->eraseFromParent();
+    return;
+  }
   }
 }
 

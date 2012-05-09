@@ -23,7 +23,7 @@ bb32:                                             ; preds = %bb6
 %3 = load double* %1, align 4
 %4 = load double* %0, align 4
 call void @Parse_Vector(double* %0) nounwind
-%5 = call i32 @llvm.objectsize.i32(i8* undef, i1 false)
+%5 = call i32 @llvm.objectsize.i32(i8* undef, i1 false, i32 0)
 %6 = icmp eq i32 %5, -1
 br i1 %6, label %bb34, label %bb33
 
@@ -36,7 +36,7 @@ unreachable
 }
 
 declare void @Parse_Vector(double*)
-declare i32 @llvm.objectsize.i32(i8*, i1)
+declare i32 @llvm.objectsize.i32(i8*, i1, i32)
 
 
 ; PR9578

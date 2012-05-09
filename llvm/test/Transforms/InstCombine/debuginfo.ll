@@ -2,7 +2,7 @@
 
 declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 
-declare i64 @llvm.objectsize.i64(i8*, i1) nounwind readnone
+declare i64 @llvm.objectsize.i64(i8*, i1, i32) nounwind readnone
 
 declare i8* @foo(i8*, i32, i64, i64) nounwind
 
@@ -23,7 +23,7 @@ entry:
   %tmp1 = load i32* %__val.addr, align 4, !dbg !21, !tbaa !17
   %tmp2 = load i64* %__len.addr, align 8, !dbg !21, !tbaa !19
   %tmp3 = load i8** %__dest.addr, align 8, !dbg !21, !tbaa !13
-  %0 = call i64 @llvm.objectsize.i64(i8* %tmp3, i1 false), !dbg !21
+  %0 = call i64 @llvm.objectsize.i64(i8* %tmp3, i1 false, i32 0), !dbg !21
   %call = call i8* @foo(i8* %tmp, i32 %tmp1, i64 %tmp2, i64 %0), !dbg !21
   ret i8* %call, !dbg !21
 }
