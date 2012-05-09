@@ -25,6 +25,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Transforms/Utils/ValueMapper.h"
+#include "llvm-c/Linker.h"
 #include <cctype>
 using namespace llvm;
 
@@ -1334,4 +1335,18 @@ bool Linker::LinkModules(Module *Dest, Module *Src, unsigned Mode,
   }
 
   return false;
+}
+
+//===----------------------------------------------------------------------===//
+// C API.
+//===----------------------------------------------------------------------===//
+
+LLVMBool LLVMLinkModules(LLVMModuleRef Dest, LLVMModuleRef Src,
+                         LLVMLinkerMode Mode, char **OutMessages) {
+  std::string Messages;
+  LLVMBool Result = Linker::LinkModules(unwrap(Dest), unwrap(Src),
+                                        Mode, OutMessages? &Messages : 0);
+  if (OutMessages)
+    *OutMessages = strdup(Messages.c_str());
+  return Result;
 }
