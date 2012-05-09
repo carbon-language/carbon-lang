@@ -2882,6 +2882,10 @@ namespace {
     }
     void VisitObjCInterfaceTypeLoc(ObjCInterfaceTypeLoc TL) {
       TL.setNameLoc(DS.getTypeSpecTypeLoc());
+      // FIXME. We should have DS.getTypeSpecTypeEndLoc(). But, it requires
+      // addition field. What we have is good enough for dispay of location
+      // of 'fixit' on interface name.
+      TL.setNameEndLoc(DS.getLocEnd());
     }
     void VisitObjCObjectTypeLoc(ObjCObjectTypeLoc TL) {
       // Handle the base type, which might not have been written explicitly.

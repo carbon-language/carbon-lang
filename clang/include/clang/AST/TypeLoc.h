@@ -831,6 +831,7 @@ public:
 
 struct ObjCInterfaceLocInfo {
   SourceLocation NameLoc;
+  SourceLocation NameEndLoc;
 };
 
 /// \brief Wrapper for source info for ObjC interfaces.
@@ -850,9 +851,17 @@ public:
   void setNameLoc(SourceLocation Loc) {
     getLocalData()->NameLoc = Loc;
   }
-
+                                                    
   SourceRange getLocalSourceRange() const {
-    return SourceRange(getNameLoc());
+    return SourceRange(getNameLoc(), getNameEndLoc());
+  }
+  
+  SourceLocation getNameEndLoc() const {
+    return getLocalData()->NameEndLoc;
+  }
+
+  void setNameEndLoc(SourceLocation Loc) {
+    getLocalData()->NameEndLoc = Loc;
   }
 
   void initializeLocal(ASTContext &Context, SourceLocation Loc) {

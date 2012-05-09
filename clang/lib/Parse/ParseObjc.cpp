@@ -894,6 +894,7 @@ ParsedType Parser::ParseObjCTypeName(ObjCDeclSpec &DS,
     DeclSpec declSpec(AttrFactory);
     declSpec.setObjCQualifiers(&DS);
     ParseSpecifierQualifierList(declSpec);
+    declSpec.SetRangeEnd(Tok.getLocation().getLocWithOffset(-1));
     Declarator declarator(declSpec, context);
     ParseDeclarator(declarator);
 
