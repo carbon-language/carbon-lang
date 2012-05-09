@@ -59,7 +59,7 @@ entry:
   ret void
 }
 
-; Don't do this if there's a use of the old pointer vlaue between the store
+; Don't do this if there's a use of the old pointer value between the store
 ; and the release.
 
 ; CHECK:      define void @test3(i8* %newValue) {
