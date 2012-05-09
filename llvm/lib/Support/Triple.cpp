@@ -609,7 +609,7 @@ void Triple::getiOSVersion(unsigned &Major, unsigned &Minor,
     Major = 0;
     Minor = 0;
     Micro = 0;
-    return true;
+    break;
   case IOS:
     getOSVersion(Major, Minor, Micro);
     // Default to 0.0.
