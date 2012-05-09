@@ -15,7 +15,10 @@ set(LLVM_VERSION_MINOR 2)
 
 set(PACKAGE_VERSION "${LLVM_VERSION_MAJOR}.${LLVM_VERSION_MINOR}svn")
 
-set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+option(LLVM_USE_FOLDERS "Enable solution folders in Visual Studio. Disable for Express versions." ON)
+if ( LLVM_USE_FOLDERS )
+  set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+endif()
 
 include(VersionFromVCS)
 
