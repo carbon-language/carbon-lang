@@ -132,7 +132,7 @@ def main():
             # End of option processing.
             break
 
-        if sys.argv[index].startswith('-F'):
+        if sys.argv[index] == '-F':
             # Increment by 1 to fetch the filename component spec.
             index += 1
             if index >= len(sys.argv) or sys.argv[index].startswith('-'):
