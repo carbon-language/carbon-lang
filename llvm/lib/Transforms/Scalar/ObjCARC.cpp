@@ -3902,12 +3902,15 @@ void ObjCARCContract::ContractRelease(Instruction *Release,
   if (Load->getParent() != BB) return;
 
   // Walk down to find the store and the release, which may be in either order.
-  BasicBlock::iterator I = Load;
+  BasicBlock::iterator I = Load, End = BB->end();
   ++I;
   AliasAnalysis::Location Loc = AA->getLocation(Load);
   StoreInst *Store = 0;
   bool SawRelease = false;
   for (; !Store || !SawRelease; ++I) {
+    if (I == End)
+      return;
+
     Instruction *Inst = I;
     if (Inst == Release) {
       SawRelease = true;
