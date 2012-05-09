@@ -17,6 +17,9 @@
 namespace clang {
 namespace tooling {
 
+void ArgumentsAdjuster::anchor() {
+}
+
 /// Add -fsyntax-only option to the commnand line arguments.
 CommandLineArguments
 ClangSyntaxOnlyAdjuster::Adjust(const CommandLineArguments &Args) {

@@ -32,6 +32,7 @@ typedef std::vector<std::string> CommandLineArguments;
 /// which is responsible for command line arguments modification before
 /// the arguments are used to run a frontend action.
 class ArgumentsAdjuster {
+  virtual void anchor();
 public:
   /// \brief Returns adjusted command line arguments.
   ///
@@ -39,6 +40,8 @@ public:
   ///
   /// \returns Modified sequence of command line arguments.
   virtual CommandLineArguments Adjust(const CommandLineArguments &Args) = 0;
+  virtual ~ArgumentsAdjuster() {
+  }
 };
 
 /// \brief Syntax check only command line adjuster.
