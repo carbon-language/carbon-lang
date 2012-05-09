@@ -6083,55 +6083,73 @@ namespace {
       }
     }
 
-    void VisitExpr(Expr *E) {
-      if (isa<ObjCMessageExpr>(*E)) return;
-      if (isRecordType) {
-        Expr *expr = E;
-        if (MemberExpr *ME = dyn_cast<MemberExpr>(E)) {
-          ValueDecl *VD = ME->getMemberDecl();
-          if (isa<EnumConstantDecl>(VD) || isa<VarDecl>(VD)) return;
-          expr = ME->getBase();
-        }
-        if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(expr)) {
+    // Sometimes, the expression passed in lacks the casts that are used
+    // to determine which DeclRefExpr's to check.  Assume that the casts
+    // are present and continue visiting the expression.
+    void HandleExpr(Expr *E) {
+      // Skip checking T a = a where T is not a record type.  Doing so is a
+      // way to silence uninitialized warnings.
+      if (isRecordType)
+        if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E))
           HandleDeclRefExpr(DRE);
-          return;
-        }
+
+      if (ConditionalOperator *CO = dyn_cast<ConditionalOperator>(E)) {
+        HandleValue(CO->getTrueExpr());
+        HandleValue(CO->getFalseExpr());
       }
-      Inherited::VisitExpr(E);
+
+      Visit(E);
+    }
+
+    // For most expressions, the cast is directly above the DeclRefExpr.
+    // For conditional operators, the cast can be outside the conditional
+    // operator if both expressions are DeclRefExpr's.
+    void HandleValue(Expr *E) {
+      E = E->IgnoreParenImpCasts();
+      if (DeclRefExpr* DRE = dyn_cast<DeclRefExpr>(E)) {
+        HandleDeclRefExpr(DRE);
+        return;
+      }
+
+      if (ConditionalOperator *CO = dyn_cast<ConditionalOperator>(E)) {
+        HandleValue(CO->getTrueExpr());
+        HandleValue(CO->getFalseExpr());
+      }
+    }
+
+    void VisitImplicitCastExpr(ImplicitCastExpr *E) {
+      if ((!isRecordType && E->getCastKind() == CK_LValueToRValue) ||
+          (isRecordType && E->getCastKind() == CK_NoOp))
+        HandleValue(E->getSubExpr());
+
+      Inherited::VisitImplicitCastExpr(E);
     }
 
     void VisitMemberExpr(MemberExpr *E) {
+      // Don't warn on arrays since they can be treated as pointers.
       if (E->getType()->canDecayToPointerType()) return;
+
       ValueDecl *VD = E->getMemberDecl();
-      if (isa<FieldDecl>(VD) || isa<CXXMethodDecl>(VD))
+      CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(VD);
+      if (isa<FieldDecl>(VD) || (MD && !MD->isStatic()))
         if (DeclRefExpr *DRE
               = dyn_cast<DeclRefExpr>(E->getBase()->IgnoreParenImpCasts())) {
           HandleDeclRefExpr(DRE);
           return;
         }
-      Inherited::VisitMemberExpr(E);
-    }
 
-    void VisitImplicitCastExpr(ImplicitCastExpr *E) {
-      if ((!isRecordType &&E->getCastKind() == CK_LValueToRValue) ||
-          (isRecordType && E->getCastKind() == CK_NoOp)) {
-        Expr* SubExpr = E->getSubExpr()->IgnoreParenImpCasts();
-        if (MemberExpr *ME = dyn_cast<MemberExpr>(SubExpr))
-          SubExpr = ME->getBase()->IgnoreParenImpCasts();
-        if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(SubExpr)) {
-          HandleDeclRefExpr(DRE);
-          return;
-        }
-      }
-      Inherited::VisitImplicitCastExpr(E);
+      Inherited::VisitMemberExpr(E);
     }
 
     void VisitUnaryOperator(UnaryOperator *E) {
       // For POD record types, addresses of its own members are well-defined.
-      if (isRecordType && isPODType) return;
+      if (E->getOpcode() == UO_AddrOf && isRecordType && isPODType &&
+          isa<MemberExpr>(E->getSubExpr())) return;
       Inherited::VisitUnaryOperator(E);
     } 
-    
+
+    void VisitObjCMessageExpr(ObjCMessageExpr *E) { return; }
+
     void HandleDeclRefExpr(DeclRefExpr *DRE) {
       Decl* ReferenceDecl = DRE->getDecl(); 
       if (OrigDecl != ReferenceDecl) return;
@@ -6148,7 +6166,7 @@ namespace {
 
 /// CheckSelfReference - Warns if OrigDecl is used in expression E.
 void Sema::CheckSelfReference(Decl* OrigDecl, Expr *E) {
-  SelfReferenceChecker(*this, OrigDecl).VisitExpr(E);
+  SelfReferenceChecker(*this, OrigDecl).HandleExpr(E);
 }
 
 /// AddInitializerToDecl - Adds the initializer Init to the
