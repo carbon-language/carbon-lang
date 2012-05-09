@@ -891,7 +891,7 @@ void CodeGenRegBank::computeComposites() {
           if (i1d->second == Reg3) {
             // Conflicting composition? Emit a warning but allow it.
             if (CodeGenSubRegIndex *Prev = Idx1->addComposite(Idx2, i1d->first))
-              PrintWarning(Twine("SubRegIndex") + Idx1->getQualifiedName() +
+              PrintWarning(Twine("SubRegIndex ") + Idx1->getQualifiedName() +
                      " and " + Idx2->getQualifiedName() +
                      " compose ambiguously as " + Prev->getQualifiedName() +
                      " or " + i1d->first->getQualifiedName());
