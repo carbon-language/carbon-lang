@@ -21,10 +21,10 @@
 // CHECK: 10.7.0
 // CHECK: {{ld(.exe)?"}}
 // CHECK: -iphoneos_version_min
-// CHECK: 0.0.0
+// CHECK: 3.0.0
 // CHECK: {{ld(.exe)?"}}
 // CHECK: -iphoneos_version_min
-// CHECK: 0.0.0
+// CHECK: 3.0.0
 // CHECK: {{ld(.exe)?"}}
 // CHECK: -iphoneos_version_min
 // CHECK: 1.2.3
