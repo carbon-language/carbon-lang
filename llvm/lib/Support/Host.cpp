@@ -239,7 +239,7 @@ std::string sys::getHostCPUName() {
       case 39: // 32 nm Atom Medfield
         return "atom";
 
-      default: return "i686";
+      default: return (Em64T) ? "x86-64" : "i686";
       }
     case 15: {
       switch (Model) {
