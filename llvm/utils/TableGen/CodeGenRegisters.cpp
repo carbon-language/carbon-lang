@@ -191,6 +191,9 @@ CodeGenRegister::computeSubRegs(CodeGenRegBank &RegBank) {
     if (!SubRegs.insert(std::make_pair(Idx, SR)).second)
       throw TGError(TheDef->getLoc(), "SubRegIndex " + Idx->getName() +
                     " appears twice in Register " + getName());
+    // Map explicit sub-registers first, so the names take precedence.
+    // The inherited sub-registers are mapped below.
+    SubReg2Idx.insert(std::make_pair(SR, Idx));
   }
 
   // Keep track of inherited subregs and how they can be reached.
@@ -307,6 +310,19 @@ CodeGenRegister::computeSubRegs(CodeGenRegBank &RegBank) {
          ++SI)
       if (Orphans.erase(SI->second))
         SubRegs[RegBank.getCompositeSubRegIndex(Idx, SI->first)] = SI->second;
+  }
+
+  // Compute the inverse SubReg -> Idx map.
+  for (SubRegMap::const_iterator SI = SubRegs.begin(), SE = SubRegs.end();
+       SI != SE; ++SI) {
+    // Ignore idempotent sub-register indices.
+    if (SI->second == this)
+      continue;
+    // Is is possible to have multiple names for the same sub-register.
+    // For example, XMM0 appears as sub_xmm, sub_sd, and sub_ss in YMM0.
+    // Eventually, this degeneration should go away, but for now we simply give
+    // precedence to the explicit sub-register index over the inherited ones.
+    SubReg2Idx.insert(std::make_pair(SI->second, SI->first));
   }
 
   // Initialize RegUnitList. A register with no subregisters creates its own

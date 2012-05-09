@@ -113,6 +113,12 @@ namespace llvm {
     void addSubRegsPreOrder(SetVector<const CodeGenRegister*> &OSet,
                             CodeGenRegBank&) const;
 
+    // Return the sub-register index naming Reg as a sub-register of this
+    // register. Returns NULL if Reg is not a sub-register.
+    CodeGenSubRegIndex *getSubRegIndex(const CodeGenRegister *Reg) const {
+      return SubReg2Idx.lookup(Reg);
+    }
+
     // List of super-registers in topological order, small to large.
     typedef std::vector<const CodeGenRegister*> SuperRegList;
 
@@ -157,6 +163,7 @@ namespace llvm {
     bool SubRegsComplete;
     SubRegMap SubRegs;
     SuperRegList SuperRegs;
+    DenseMap<const CodeGenRegister*, CodeGenSubRegIndex*> SubReg2Idx;
     RegUnitList RegUnits;
   };
 
