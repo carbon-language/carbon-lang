@@ -346,11 +346,12 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     assert(CI);
     uint64_t val = CI->getZExtValue();
     CI = ConstantInt::get(Builder.getInt1Ty(), (val & 0x2) >> 1);    
+    Value *Runtime = Builder.getInt32(0);  // FIXME: use BoundsChecking here?
     
     Value *F = CGM.getIntrinsic(Intrinsic::objectsize, ResType);
-    return RValue::get(Builder.CreateCall2(F,
+    return RValue::get(Builder.CreateCall3(F,
                                            EmitScalarExpr(E->getArg(0)),
-                                           CI));
+                                           CI, Runtime));
   }
   case Builtin::BI__builtin_prefetch: {
     Value *Locality, *RW, *Address = EmitScalarExpr(E->getArg(0));
