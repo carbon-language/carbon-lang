@@ -12,6 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "clang/Tooling/ArgumentsAdjusters.h"
 #include "clang/Tooling/Tooling.h"
 #include "clang/Tooling/CompilationDatabase.h"
 #include "clang/Driver/Compilation.h"
@@ -253,7 +254,8 @@ void ToolInvocation::addFileMappingsTo(SourceManager &Sources) {
 
 ClangTool::ClangTool(const CompilationDatabase &Compilations,
                      ArrayRef<std::string> SourcePaths)
-    : Files((FileSystemOptions())) {
+    : Files((FileSystemOptions())),
+      ArgsAdjuster(new ClangSyntaxOnlyAdjuster()) {
   llvm::SmallString<1024> BaseDirectory;
   if (const char *PWD = ::getenv("PWD"))
     BaseDirectory = PWD;
@@ -285,6 +287,10 @@ void ClangTool::mapVirtualFile(StringRef FilePath, StringRef Content) {
   MappedFileContents.push_back(std::make_pair(FilePath, Content));
 }
 
+void ClangTool::setArgumentsAdjuster(ArgumentsAdjuster *Adjuster) {
+  ArgsAdjuster.reset(Adjuster);
+}
+
 int ClangTool::run(FrontendActionFactory *ActionFactory) {
   bool ProcessingFailed = false;
   for (unsigned I = 0; I < CompileCommands.size(); ++I) {
@@ -299,8 +305,8 @@ int ClangTool::run(FrontendActionFactory *ActionFactory) {
     if (chdir(CompileCommands[I].second.Directory.c_str()))
       llvm::report_fatal_error("Cannot chdir into \"" +
                                CompileCommands[I].second.Directory + "\n!");
-    std::vector<std::string> &CommandLine =
-      CompileCommands[I].second.CommandLine;
+    std::vector<std::string> CommandLine =
+      ArgsAdjuster->Adjust(CompileCommands[I].second.CommandLine);
     llvm::outs() << "Processing: " << File << ".\n";
     ToolInvocation Invocation(CommandLine, ActionFactory->create(), &Files);
     for (int I = 0, E = MappedFileContents.size(); I != E; ++I) {

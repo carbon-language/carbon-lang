@@ -35,6 +35,7 @@
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/LLVM.h"
 #include "clang/Driver/Util.h"
+#include "clang/Tooling/ArgumentsAdjusters.h"
 #include "clang/Tooling/CompilationDatabase.h"
 #include <string>
 #include <vector>
@@ -138,6 +139,10 @@ class ToolInvocation {
 /// \brief Utility to run a FrontendAction over a set of files.
 ///
 /// This class is written to be usable for command line utilities.
+/// By default the class uses ClangSyntaxOnlyAdjuster to modify
+/// command line arguments before the arguments are used to run
+/// a frontend action. One could install another command line
+/// arguments adjuster by call setArgumentsAdjuster() method.
 class ClangTool {
  public:
   /// \brief Constructs a clang tool to run over a list of files.
@@ -154,6 +159,11 @@ class ClangTool {
   /// \param FilePath The path at which the content will be mapped.
   /// \param Content A null terminated buffer of the file's content.
   void mapVirtualFile(StringRef FilePath, StringRef Content);
+
+  /// \brief Install command line arguments adjuster.
+  ///
+  /// \param Adjuster Command line arguments adjuster.
+  void setArgumentsAdjuster(ArgumentsAdjuster *Adjuster);
 
   /// Runs a frontend action over all files specified in the command line.
   ///
@@ -174,6 +184,8 @@ class ClangTool {
   FileManager Files;
   // Contains a list of pairs (<file name>, <file content>).
   std::vector< std::pair<StringRef, StringRef> > MappedFileContents;
+
+  llvm::OwningPtr<ArgumentsAdjuster> ArgsAdjuster;
 };
 
 template <typename T>
