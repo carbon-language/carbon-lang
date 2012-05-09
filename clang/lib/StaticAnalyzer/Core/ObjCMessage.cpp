@@ -94,7 +94,9 @@ bool CallOrObjCMessage::isCallbackArg(unsigned Idx, const Type *T) const {
     return false;
     
   // If a parameter is a block or a callback, assume it can modify pointer.
-  if (T->isBlockPointerType() || T->isFunctionPointerType())
+  if (T->isBlockPointerType() ||
+      T->isFunctionPointerType() ||
+      T->isObjCSelType())
     return true;
 
   // Check if a callback is passed inside a struct (for both, struct passed by

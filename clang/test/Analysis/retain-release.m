@@ -222,8 +222,10 @@ typedef struct CGLayer *CGLayerRef;
 @end @protocol NSValidatedUserInterfaceItem - (SEL)action;
 @end   @protocol NSUserInterfaceValidations - (BOOL)validateUserInterfaceItem:(id <NSValidatedUserInterfaceItem>)anItem;
 @end  @class NSDate, NSDictionary, NSError, NSException, NSNotification;
+@class NSTextField, NSPanel, NSArray, NSWindow, NSImage, NSButton, NSError;
 @interface NSApplication : NSResponder <NSUserInterfaceValidations> {
 }
+- (void)beginSheet:(NSWindow *)sheet modalForWindow:(NSWindow *)docWindow modalDelegate:(id)modalDelegate didEndSelector:(SEL)didEndSelector contextInfo:(void *)contextInfo;
 @end   enum {
 NSTerminateCancel = 0,         NSTerminateNow = 1,         NSTerminateLater = 2 };
 typedef NSUInteger NSApplicationTerminateReply;
@@ -231,7 +233,7 @@ typedef NSUInteger NSApplicationTerminateReply;
 @end  @class NSAttributedString, NSEvent, NSFont, NSFormatter, NSImage, NSMenu, NSText, NSView, NSTextView;
 @interface NSCell : NSObject <NSCopying, NSCoding> {
 }
-@end @class NSTextField, NSPanel, NSArray, NSWindow, NSImage, NSButton, NSError;
+@end 
 typedef struct {
 }
 CVTimeStamp;
@@ -1712,6 +1714,32 @@ int IOClose(void *context);
 }
 @end
 
+// Object escapes through a selector callback: radar://11398514
+extern id NSApp;
+@interface MySheetController
+- (id<SInS>)inputS;
+- (void)showDoSomethingSheetAction:(id)action;
+- (void)sheetDidEnd:(NSWindow *)sheet returnCode:(int)returnCode contextInfo:(void *)contextInfo;
+@end
+
+@implementation MySheetController
+- (id<SInS>)inputS {
+    return 0;
+}
+- (void)showDoSomethingSheetAction:(id)action {
+  id<SInS> inputS = [[self inputS] retain]; 
+  [NSApp beginSheet:0
+         modalForWindow:0
+         modalDelegate:0
+         didEndSelector:@selector(sheetDidEnd:returnCode:contextInfo:)
+         contextInfo:(void *)inputS]; // no - warning
+}
+- (void)sheetDidEnd:(NSWindow *)sheet returnCode:(int)returnCode contextInfo:(void *)contextInfo {
+   
+      id contextObject = (id)contextInfo;
+      [contextObject release];
+}
+@end
 //===----------------------------------------------------------------------===//
 // Test returning allocated memory in a struct.
 // 
