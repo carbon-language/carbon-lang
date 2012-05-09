@@ -1704,12 +1704,16 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
   }
   
   // Access declarations.
+  bool MalformedTypeSpec = false;
   if (!TemplateInfo.Kind &&
-      (Tok.is(tok::identifier) || Tok.is(tok::coloncolon)) &&
-      !TryAnnotateCXXScopeToken() &&
-      Tok.is(tok::annot_cxxscope)) {
-    bool isAccessDecl = false;
-    if (NextToken().is(tok::identifier))
+      (Tok.is(tok::identifier) || Tok.is(tok::coloncolon))) {
+    if (TryAnnotateCXXScopeToken())
+      MalformedTypeSpec = true;
+
+    bool isAccessDecl;
+    if (Tok.isNot(tok::annot_cxxscope))
+      isAccessDecl = false;
+    else if (NextToken().is(tok::identifier))
       isAccessDecl = GetLookAheadToken(2).is(tok::semi);
     else
       isAccessDecl = NextToken().is(tok::kw_operator);
@@ -1806,6 +1810,8 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
   // Parse the common declaration-specifiers piece.
   ParsingDeclSpec DS(*this, TemplateDiags);
   DS.takeAttributesFrom(attrs);
+  if (MalformedTypeSpec)
+    DS.SetTypeSpecError();
   ParseDeclarationSpecifiers(DS, TemplateInfo, AS, DSC_class,
                              &CommonLateParsedAttrs);
 

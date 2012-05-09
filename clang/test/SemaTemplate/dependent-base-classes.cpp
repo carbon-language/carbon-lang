@@ -32,8 +32,7 @@ namespace PR6031 {
   template <class TT>
   struct FI2
   {
-    C<typename FI2::type> a; // expected-error{{no type named 'type' in 'FI2<TT>'}} \
-        // expected-error{{C++ requires a type specifier for all declarations}}
+    C<typename FI2::type> a; // expected-error{{no type named 'type' in 'FI2<TT>'}}
   };
 
   template<typename T>

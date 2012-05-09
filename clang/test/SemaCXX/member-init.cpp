@@ -28,7 +28,7 @@ template<> struct T<2> { template<int C, int D> using B = int; };
 const int C = 0, D = 0;
 struct S {
   int as[] = { decltype(x)::B<C, D>(0) }; // expected-error {{array bound cannot be deduced from an in-class initializer}}
-  T<sizeof(as) / sizeof(int)> x; // expected-error {{requires a type specifier}}
+  T<sizeof(as) / sizeof(int)> x;
   // test that we handle invalid array bound deductions without crashing when the declarator name is itself invalid
   operator int[](){}; // expected-error {{'operator int' cannot be the name of a variable or data member}} \
                       // expected-error {{array bound cannot be deduced from an in-class initializer}}
