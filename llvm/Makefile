@@ -102,11 +102,6 @@ endif
 ifeq ($(LLVM_CROSS_COMPILING),1)
 all:: cross-compile-build-tools
 
-install:: $(DESTDIR)$(PROJ_bindir)
-	$(Echo) Installing llvm-config-host
-	$(Verb) $(ProgInstall) $(BuildLLVMToolDir)/llvm-config \
-	  $(DESTDIR)$(PROJ_bindir)/llvm-config-host
-
 clean::
 	$(Verb) rm -rf BuildTools
 

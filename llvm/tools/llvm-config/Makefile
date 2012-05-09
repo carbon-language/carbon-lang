@@ -57,3 +57,11 @@ $(ObjDir)/BuildVariables.inc: $(BUILDVARIABLES_SRCPATH) Makefile $(ObjDir)/.dir
 	  >> temp.sed
 	$(Verb) $(SED) -f temp.sed < $< > $@
 	$(Verb) $(RM) temp.sed
+
+# When cross-compiling, install a version of llvm-config that runs on the host.
+ifeq ($(LLVM_CROSS_COMPILING),1)
+install:: $(DESTDIR)$(PROJ_bindir)
+	$(Echo) Installing llvm-config-host
+	$(Verb) $(ProgInstall) $(BuildLLVMToolDir)/llvm-config \
+	  $(DESTDIR)$(PROJ_bindir)/llvm-config-host
+endif
