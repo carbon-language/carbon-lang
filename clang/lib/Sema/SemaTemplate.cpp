@@ -6923,6 +6923,42 @@ Sema::ActOnTypenameType(Scope *S,
 }
 
 
+/// Determine whether this failed name lookup should be treated as being
+/// disabled by a usage of std::enable_if.
+static bool isEnableIf(NestedNameSpecifierLoc NNS, const IdentifierInfo &II,
+                       SourceRange &CondRange) {
+  // We must be looking for a ::type...
+  if (!II.isStr("type"))
+    return false;
+
+  // ... within an explicitly-written template specialization...
+  if (!NNS || !NNS.getNestedNameSpecifier()->getAsType())
+    return false;
+  TypeLoc EnableIfTy = NNS.getTypeLoc();
+  TemplateSpecializationTypeLoc *EnableIfTSTLoc =
+    dyn_cast<TemplateSpecializationTypeLoc>(&EnableIfTy);
+  if (!EnableIfTSTLoc || EnableIfTSTLoc->getNumArgs() == 0)
+    return false;
+  const TemplateSpecializationType *EnableIfTST =
+    cast<TemplateSpecializationType>(EnableIfTSTLoc->getTypePtr());
+
+  // ... which names a complete class template declaration...
+  const TemplateDecl *EnableIfDecl =
+    EnableIfTST->getTemplateName().getAsTemplateDecl();
+  if (!EnableIfDecl || EnableIfTST->isIncompleteType())
+    return false;
+
+  // ... called "enable_if".
+  const IdentifierInfo *EnableIfII =
+    EnableIfDecl->getDeclName().getAsIdentifierInfo();
+  if (!EnableIfII || !EnableIfII->isStr("enable_if"))
+    return false;
+
+  // Assume the first template argument is the condition.
+  CondRange = EnableIfTSTLoc->getArgLoc(0).getSourceRange();
+  return true;
+}
+
 /// \brief Build the type that describes a C++ typename specifier,
 /// e.g., "typename T::type".
 QualType
@@ -6959,9 +6995,19 @@ Sema::CheckTypenameType(ElaboratedTypeKeyword Keyword,
   unsigned DiagID = 0;
   Decl *Referenced = 0;
   switch (Result.getResultKind()) {
-  case LookupResult::NotFound:
+  case LookupResult::NotFound: {
+    // If we're looking up 'type' within a template named 'enable_if', produce
+    // a more specific diagnostic.
+    SourceRange CondRange;
+    if (isEnableIf(QualifierLoc, II, CondRange)) {
+      Diag(CondRange.getBegin(), diag::err_typename_nested_not_found_enable_if)
+        << Ctx << CondRange;
+      return QualType();
+    }
+
     DiagID = diag::err_typename_nested_not_found;
     break;
+  }
 
   case LookupResult::FoundUnresolvedValue: {
     // We found a using declaration that is a value. Most likely, the using
