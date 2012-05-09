@@ -22,7 +22,9 @@
    <p><b>highlights:</b></p>
 
 <p>This release contains a fix for a major crasher introduced in checker-264, and various refinements to
-improve the precision of the analyzer in general.</p>
+improve the precision and reduce the false positive rate of the analyzer. It also enables a new unix.MallocSizeof check, which reports 
+inconsistencies between the casted type of the return value of a 'malloc/calloc/realloc' call and the operand 
+of sizeof expressions contained within its argument(s).</p>
 
 <h4 id="checker_264">checker-264</h4>
 

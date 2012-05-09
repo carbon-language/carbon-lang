@@ -74,9 +74,11 @@
 <tr>
 <td><b>deadcode.DeadStores</b></td><td>Check for values stored to variables that are never read afterwards.</td>
 </tr>
+<!-- 
 <tr>
 <td><b>deadcode.IdempotentOperations</b></td><td>Warn about idempotent operations.</td>
 </tr>
+-->
 <tr>
 <td><b>osx.API</b></td><td>Check for proper uses of various Mac OS X APIs.</td>
 </tr>
@@ -108,6 +110,9 @@
 <td><b>osx.cocoa.RetainCount</b></td><td>Check for leaks and improper reference count management.</td>
 </tr>
 <tr>
+<td><b>osx.cocoa.SelfInit</b></td><td>Check that 'self' is properly initialized inside an initializer method.</td>
+</tr>
+<tr>
 <td><b>osx.cocoa.UnusedIvars</b></td><td>Warn about private ivars that are never used.</td>
 </tr>
 <tr>
@@ -122,9 +127,52 @@
 <tr>
 <td><b>osx.coreFoundation.CFRetainRelease</b></td><td>Check for null arguments to CFRetain/CFRelease.</td>
 </tr>
+<td><b>osx.coreFoundation.containers.OutOfBounds</b></td><td>Checks for index out-of-bounds when using 'CFArray' API.</td>
+</tr>
+<tr>
+<td><b>osx.coreFoundation.containers.PointerSizedValues</b></td><td>Warns if 'CFArray', 'CFDictionary', 'CFSet' are created with non-pointer-size values.</td>
+</tr>
+<tr>
+<td><b>security.FloatLoopCounter</b></td><td>Warn on using a floating point value as a loop counter (CERT: FLP30-C, FLP30-CPP).</td>
+</tr>
+<tr>
+<td><b>security.insecureAPI.UncheckedReturn</b></td><td>Warn on uses of functions whose return values must be always checked.</td>
+</tr>
+<tr>
+<td><b>security.insecureAPI.getpw</b></td><td>Warn on uses of the 'getpw' function.</td>
+</tr>
+<tr>
+<td><b>security.insecureAPI.gets</b></td><td>Warn on uses of the 'gets' function.</td>
+</tr>
+<tr>
+<td><b>security.insecureAPI.mkstemp</b></td><td>Warn when 'mkstemp' is passed fewer than 6 X's in the format string.</td>
+</tr>
+<tr>
+<td><b>security.insecureAPI.mktemp</b></td><td>Warn on uses of the 'mktemp' function.</td>
+</tr>
+<tr>
+<td><b>security.insecureAPI.rand</b></td><td>Warn on uses of the 'rand', 'random', and related functions.</td>
+</tr>
+<tr>
+<td><b>security.insecureAPI.strcpy</b></td><td>Warn on uses of the 'strcpy' and 'strcat' functions.</td>
+</tr>
+<tr>
+<td><b>security.insecureAPI.vfork</b></td><td>Warn on uses of the 'vfork' function.</td>
+</tr>
 <tr>
 <td><b>unix.API</b></td><td>Check calls to various UNIX/Posix functions.</td>
 </tr>
+<tr>
+<td><b>unix.Malloc</b></td><td>Check for memory leaks, double free, and use-after-free problems.</td>
+</tr>
+<tr>
+<td><b>unix.MallocSizeof</b></td><td>Check for dubious malloc arguments involving sizeof.</td>
+</tr>
+<tr>
+<td><b>unix.cstring.BadSizeArg</b></td><td>Check the size argument passed into C string functions for common erroneous patterns.</td>
+</tr>
+<tr>
+<td><b>unix.cstring.NullArg</b></td><td>Check for null pointers being passed as arguments to C string functions.</td>
 </table>
 
 <p>In addition to these the analyzer contains numerous experimental (beta) checkers.</p>
