@@ -76,6 +76,16 @@ vector bool unsigned int v_bsc2;     // expected-error {{cannot use 'unsigned' w
 vector bool long v_bl;               // expected-error {{cannot use 'long' with '__vector bool'}}
 vector bool long long v_bll;         // expected-error {{cannot use 'long long' with '__vector bool'}}
 
+typedef char i8;
+typedef short i16;
+typedef int i32;
+struct S {
+  // i8, i16, i32 here are field names, not type names.
+  vector bool i8;                    // expected-error {{requires a specifier or qualifier}}
+  vector pixel i16;
+  vector long i32;                   // expected-warning {{deprecated}}
+};
+
 void f() {
   __vector unsigned int v = {0,0,0,0};
   __vector int v__cast = (__vector int)v;

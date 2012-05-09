@@ -1921,7 +1921,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       continue;
 
     case tok::annot_cxxscope: {
-      if (DS.hasTypeSpecifier())
+      if (DS.hasTypeSpecifier() || DS.isTypeAltiVecVector())
         goto DoneWithDeclSpec;
 
       CXXScopeSpec SS;
@@ -2118,6 +2118,11 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       // Check for need to substitute AltiVec keyword tokens.
       if (TryAltiVecToken(DS, Loc, PrevSpec, DiagID, isInvalid))
         break;
+
+      // [AltiVec] 2.2: [If the 'vector' specifier is used] The syntax does not
+      //                allow the use of a typedef name as a type specifier.
+      if (DS.isTypeAltiVecVector())
+        goto DoneWithDeclSpec;
 
       ParsedType TypeRep =
         Actions.getTypeName(*Tok.getIdentifierInfo(),
