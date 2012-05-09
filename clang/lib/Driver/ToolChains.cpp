@@ -524,8 +524,14 @@ void Darwin::AddDeploymentTarget(DerivedArgList &Args) const {
     // If no OSX or iOS target has been specified and we're compiling for armv7,
     // go ahead as assume we're targeting iOS.
     if (OSXTarget.empty() && iOSTarget.empty())
-      if (getDarwinArchName(Args) == "armv7")
-        iOSTarget = "0.0";
+      if (getDarwinArchName(Args) == "armv7") {
+        std::string iOSVersionMin;
+        unsigned Major, Minor, Micro;
+        getTriple().getiOSVersion(Major, Minor, Micro);
+        llvm::raw_string_ostream(iOSVersionMin)
+          << Major << '.' << Minor << '.' << Micro;
+        iOSTarget = iOSVersionMin;
+      }
 
     // Handle conflicting deployment targets
     //
