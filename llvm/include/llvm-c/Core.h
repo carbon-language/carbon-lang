@@ -478,6 +478,15 @@ void LLVMSetTarget(LLVMModuleRef M, const char *Triple);
 void LLVMDumpModule(LLVMModuleRef M);
 
 /**
+ * Print a representation of a module to a file. The ErrorMessage needs to be
+ * disposed with LLVMDisposeMessage. Returns 0 on success, 1 otherwise.
+ *
+ * @see Module::print()
+ */
+LLVMBool LLVMPrintModuleToFile(LLVMModuleRef M, const char *Filename,
+                               char **ErrorMessage);
+
+/**
  * Set inline assembly for a module.
  *
  * @see Module::setModuleInlineAsm()
