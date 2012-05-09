@@ -59,6 +59,11 @@ Darwin::Darwin(const Driver &D, const llvm::Triple& Triple)
   DarwinVersion[0] = Minor + 4;
   DarwinVersion[1] = Micro;
   DarwinVersion[2] = 0;
+
+  // Compute the initial iOS version from the triple
+  getTriple().getiOSVersion(Major, Minor, Micro);
+  llvm::raw_string_ostream(iOSVersionMin)
+    << Major << '.' << Minor << '.' << Micro;
 }
 
 types::ID Darwin::LookupTypeForExtension(const char *Ext) const {
@@ -525,10 +530,6 @@ void Darwin::AddDeploymentTarget(DerivedArgList &Args) const {
     // go ahead as assume we're targeting iOS.
     if (OSXTarget.empty() && iOSTarget.empty())
       if (getDarwinArchName(Args) == "armv7") {
-        unsigned Major, Minor, Micro;
-        getTriple().getiOSVersion(Major, Minor, Micro);
-        llvm::raw_string_ostream(iOSVersionMin)
-          << Major << '.' << Minor << '.' << Micro;
         iOSTarget = iOSVersionMin;
       }
 
