@@ -187,7 +187,7 @@ let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1,
   def TCRETURNdi : PseudoI<(outs),
                      (ins i32imm_pcrel:$dst, i32imm:$offset, variable_ops), []>;
   def TCRETURNri : PseudoI<(outs),
-                     (ins GR32_TC:$dst, i32imm:$offset, variable_ops), []>;
+                     (ins ptr_rc_tailcall:$dst, i32imm:$offset, variable_ops), []>;
   let mayLoad = 1 in
   def TCRETURNmi : PseudoI<(outs),
                      (ins i32mem_TC:$dst, i32imm:$offset, variable_ops), []>;
@@ -198,7 +198,7 @@ let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1,
                            (ins i32imm_pcrel:$dst, variable_ops),
                            "jmp\t$dst  # TAILCALL",
                            [], IIC_JMP_REL>;
-  def TAILJMPr : I<0xFF, MRM4r, (outs), (ins GR32_TC:$dst, variable_ops),
+  def TAILJMPr : I<0xFF, MRM4r, (outs), (ins ptr_rc_tailcall:$dst, variable_ops),
                    "", [], IIC_JMP_REG>;  // FIXME: Remove encoding when JIT is dead.
   let mayLoad = 1 in
   def TAILJMPm : I<0xFF, MRM4m, (outs), (ins i32mem_TC:$dst, variable_ops),

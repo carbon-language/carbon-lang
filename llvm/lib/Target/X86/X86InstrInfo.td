@@ -332,7 +332,7 @@ def i8mem_NOREX : Operand<i64> {
 }
 
 // GPRs available for tailcall.
-// It represents GR64_TC or GR64_TCW64.
+// It represents GR32_TC, GR64_TC or GR64_TCW64.
 def ptr_rc_tailcall : PointerLikeRegClass<2>;
 
 // Special i32mem for addresses of load folding tail calls. These are not
@@ -340,7 +340,8 @@ def ptr_rc_tailcall : PointerLikeRegClass<2>;
 // after callee-saved register are popped.
 def i32mem_TC : Operand<i32> {
   let PrintMethod = "printi32mem";
-  let MIOperandInfo = (ops GR32_TC, i8imm, GR32_TC, i32imm, i8imm);
+  let MIOperandInfo = (ops ptr_rc_tailcall, i8imm, ptr_rc_tailcall,
+                       i32imm, i8imm);
   let ParserMatchClass = X86Mem32AsmOperand;
   let OperandType = "OPERAND_MEMORY";
 }
