@@ -85,12 +85,12 @@ BitVector MipsRegisterInfo::
 getReservedRegs(const MachineFunction &MF) const {
   static const uint16_t ReservedCPURegs[] = {
     Mips::ZERO, Mips::AT, Mips::K0, Mips::K1,
-    Mips::SP, Mips::FP, Mips::RA
+    Mips::SP, Mips::RA
   };
 
   static const uint16_t ReservedCPU64Regs[] = {
     Mips::ZERO_64, Mips::AT_64, Mips::K0_64, Mips::K1_64,
-    Mips::SP_64, Mips::FP_64, Mips::RA_64
+    Mips::SP_64, Mips::RA_64
   };
 
   BitVector Reserved(getNumRegs());
@@ -122,6 +122,12 @@ getReservedRegs(const MachineFunction &MF) const {
   if (MF.getInfo<MipsFunctionInfo>()->globalBaseRegFixed()) {
     Reserved.set(Mips::GP);
     Reserved.set(Mips::GP_64);
+  }
+
+  // If this function has dynamic allocas, reserve FP.
+  if (MF.getTarget().getFrameLowering()->hasFP(MF)) {
+    Reserved.set(Mips::FP);
+    Reserved.set(Mips::FP_64);
   }
 
   // Reserve hardware registers.
