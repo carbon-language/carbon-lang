@@ -205,6 +205,10 @@ private:
   /// initialized.
   std::string MacosxVersionMin;
 
+  /// The default ios-version-min of this tool chain; empty until
+  /// initialized.
+  std::string iOSVersionMin;
+
   bool hasARCRuntime() const;
   bool hasSubscriptingRuntime() const;
 

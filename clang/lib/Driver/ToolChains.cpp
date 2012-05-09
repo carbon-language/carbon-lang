@@ -525,7 +525,6 @@ void Darwin::AddDeploymentTarget(DerivedArgList &Args) const {
     // go ahead as assume we're targeting iOS.
     if (OSXTarget.empty() && iOSTarget.empty())
       if (getDarwinArchName(Args) == "armv7") {
-        std::string iOSVersionMin;
         unsigned Major, Minor, Micro;
         getTriple().getiOSVersion(Major, Minor, Micro);
         llvm::raw_string_ostream(iOSVersionMin)
