@@ -168,3 +168,28 @@ define i32 @test8() {
 ; CHECK-NEXT: ret i32 30
   ret i32 %objsize
 }
+
+; CHECK: @test9
+define i32 @test9(i32 %x, i32 %y) nounwind {
+  %a = alloca [3 x [4 x double]], align 8
+  %1 = getelementptr inbounds [3 x [4 x double]]* %a, i32 0, i32 %x
+  %2 = getelementptr inbounds [4 x double]* %1, i32 0, i32 %y
+  %3 = bitcast double* %2 to i8*
+  %objsize = call i32 @llvm.objectsize.i32(i8* %3, i1 false, i32 2)
+  ret i32 %objsize
+; CHECK-NEXT: shl i32 %x, 5
+; CHECK-NEXT: shl i32 %y, 3
+; CHECK-NEXT: add i32
+; CHECK-NEXT: sub i32 96,
+; CHECK-NEXT: icmp ugt i32 {{.*}}, 96
+; CHECK-NEXT: select i1 {{.*}}, i32 0, 
+}
+
+; CHECK: @overflow
+define i32 @overflow() {
+  %alloc = call noalias i8* @malloc(i32 21) nounwind
+  %gep = getelementptr inbounds i8* %alloc, i32 50
+  %objsize = call i32 @llvm.objectsize.i32(i8* %gep, i1 false, i32 0) nounwind readonly
+; CHECK-NEXT: ret i32 0
+  ret i32 %objsize
+}

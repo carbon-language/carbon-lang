@@ -173,7 +173,7 @@ static int computeAllocSize(Value *Alloc, uint64_t &Size, Value* &SizeValue,
                             uint64_t Penalty, TargetData *TD,
                             InstCombiner::BuilderTy *Builder) {
   if (GlobalVariable *GV = dyn_cast<GlobalVariable>(Alloc)) {
-    if (GV->hasUniqueInitializer()) {
+    if (GV->hasDefinitiveInitializer()) {
       Constant *C = GV->getInitializer();
       Size = TD->getTypeAllocSize(C->getType());
       return 1;
@@ -198,7 +198,8 @@ static int computeAllocSize(Value *Alloc, uint64_t &Size, Value* &SizeValue,
     if (Penalty < 2)
       return 2;
 
-    SizeValue = Builder->CreateMul(Builder->getInt64(Size), ArraySize);
+    SizeValue = ConstantInt::get(ArraySize->getType(), Size);
+    SizeValue = Builder->CreateMul(SizeValue, ArraySize);
     return 0;
 
   } else if (CallInst *MI = extractMallocCall(Alloc)) {
@@ -320,22 +321,12 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
 
     // Get to the real allocated thing and offset as fast as possible.
     Value *Op1 = II->getArgOperand(0)->stripPointerCasts();
+    GEPOperator *GEP;
 
-    uint64_t Offset = 0;
-    Value *OffsetValue;
-    bool ConstOffset = true;
-
-    // Try to look through constant GEPs.
-    if (GEPOperator *GEP = dyn_cast<GEPOperator>(Op1)) {
-      if (!GEP->hasAllConstantIndices()) return 0;
-
-      // Get the current byte offset into the thing. Use the original
-      // operand in case we're looking through a bitcast.
-      SmallVector<Value*, 8> Ops(GEP->idx_begin(), GEP->idx_end());
-      if (!GEP->getPointerOperandType()->isPointerTy())
+    if ((GEP = dyn_cast<GEPOperator>(Op1))) {
+      // check if we will be able to get the offset
+      if (!GEP->hasAllConstantIndices() && Penalty < 2)
         return 0;
-      Offset = TD->getIndexedOffset(GEP->getPointerOperandType(), Ops);
-
       Op1 = GEP->getPointerOperand()->stripPointerCasts();
     }
 
@@ -349,28 +340,36 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     if (ConstAlloc == 2)
       return 0;
 
-    if (ConstOffset && ConstAlloc) {
+    uint64_t Offset = 0;
+    Value *OffsetValue = 0;
+
+    if (GEP) {
+      if (GEP->hasAllConstantIndices()) {
+        SmallVector<Value*, 8> Ops(GEP->idx_begin(), GEP->idx_end());
+        assert(GEP->getPointerOperandType()->isPointerTy());
+        Offset = TD->getIndexedOffset(GEP->getPointerOperandType(), Ops);
+      } else
+        OffsetValue = EmitGEPOffset(GEP, true /*NoNUW*/);
+    }
+
+    if (!OffsetValue && ConstAlloc) {
       if (Size < Offset) {
         // Out of bounds
         return ReplaceInstUsesWith(CI, ConstantInt::get(ReturnTy, 0));
       }
       return ReplaceInstUsesWith(CI, ConstantInt::get(ReturnTy, Size-Offset));
+    }
 
-    } else if (Penalty >= 2) {
-      if (ConstOffset)
-        OffsetValue = Builder->getInt64(Offset);
-      if (ConstAlloc)
-        SizeValue = Builder->getInt64(Size);
+    if (!OffsetValue)
+      OffsetValue = ConstantInt::get(ReturnTy, Offset);
+    if (ConstAlloc)
+      SizeValue = ConstantInt::get(ReturnTy, Size);
 
-      Value *Val = Builder->CreateSub(SizeValue, OffsetValue);
-      Val = Builder->CreateTrunc(Val, ReturnTy);
-      // return 0 if there's an overflow
-      Value *Cmp = Builder->CreateICmpULT(SizeValue, OffsetValue);
-      Val = Builder->CreateSelect(Cmp, ConstantInt::get(ReturnTy, 0), Val);
-      return ReplaceInstUsesWith(CI, Val);
-
-    } else
-      return 0;
+    Value *Val = Builder->CreateSub(SizeValue, OffsetValue);
+    // return 0 if there's an overflow
+    Value *Cmp = Builder->CreateICmpULT(SizeValue, OffsetValue);
+    Val = Builder->CreateSelect(Cmp, ConstantInt::get(ReturnTy, 0), Val);
+    return ReplaceInstUsesWith(CI, Val);
   }
   case Intrinsic::bswap:
     // bswap(bswap(x)) -> x
