@@ -424,14 +424,14 @@ bool RegPressureTracker::recede() {
 
   // Kill liveness at live defs.
   // TODO: consider earlyclobbers?
-  for (unsigned i = 0; i < PhysRegOpers.Defs.size(); ++i) {
+  for (unsigned i = 0, e = PhysRegOpers.Defs.size(); i < e; ++i) {
     unsigned Reg = PhysRegOpers.Defs[i];
     if (LivePhysRegs.erase(Reg))
       decreasePhysRegPressure(Reg);
     else
       discoverPhysLiveOut(Reg);
   }
-  for (unsigned i = 0; i < VirtRegOpers.Defs.size(); ++i) {
+  for (unsigned i = 0, e = VirtRegOpers.Defs.size(); i < e; ++i) {
     unsigned Reg = VirtRegOpers.Defs[i];
     if (LiveVirtRegs.erase(Reg))
       decreaseVirtRegPressure(Reg);
@@ -440,14 +440,14 @@ bool RegPressureTracker::recede() {
   }
 
   // Generate liveness for uses.
-  for (unsigned i = 0; i < PhysRegOpers.Uses.size(); ++i) {
+  for (unsigned i = 0, e = PhysRegOpers.Uses.size(); i < e; ++i) {
     unsigned Reg = PhysRegOpers.Uses[i];
     if (!hasRegAlias(Reg, LivePhysRegs, TRI)) {
       increasePhysRegPressure(Reg);
       LivePhysRegs.insert(Reg);
     }
   }
-  for (unsigned i = 0; i < VirtRegOpers.Uses.size(); ++i) {
+  for (unsigned i = 0, e = VirtRegOpers.Uses.size(); i < e; ++i) {
     unsigned Reg = VirtRegOpers.Uses[i];
     if (!LiveVirtRegs.count(Reg)) {
       // Adjust liveouts if LiveIntervals are available.
@@ -490,7 +490,7 @@ bool RegPressureTracker::advance() {
   collectOperands(CurrPos, PhysRegOpers, VirtRegOpers, TRI, RCI);
 
   // Kill liveness at last uses.
-  for (unsigned i = 0; i < PhysRegOpers.Uses.size(); ++i) {
+  for (unsigned i = 0, e = PhysRegOpers.Uses.size(); i < e; ++i) {
     unsigned Reg = PhysRegOpers.Uses[i];
     if (!hasRegAlias(Reg, LivePhysRegs, TRI))
       discoverPhysLiveIn(Reg);
@@ -500,7 +500,7 @@ bool RegPressureTracker::advance() {
       LivePhysRegs.erase(Reg);
     }
   }
-  for (unsigned i = 0; i < VirtRegOpers.Uses.size(); ++i) {
+  for (unsigned i = 0, e = VirtRegOpers.Uses.size(); i < e; ++i) {
     unsigned Reg = VirtRegOpers.Uses[i];
     if (RequireIntervals) {
       const LiveInterval *LI = &LIS->getInterval(Reg);
@@ -518,14 +518,14 @@ bool RegPressureTracker::advance() {
   }
 
   // Generate liveness for defs.
-  for (unsigned i = 0; i < PhysRegOpers.Defs.size(); ++i) {
+  for (unsigned i = 0, e = PhysRegOpers.Defs.size(); i < e; ++i) {
     unsigned Reg = PhysRegOpers.Defs[i];
     if (!hasRegAlias(Reg, LivePhysRegs, TRI)) {
       increasePhysRegPressure(Reg);
       LivePhysRegs.insert(Reg);
     }
   }
-  for (unsigned i = 0; i < VirtRegOpers.Defs.size(); ++i) {
+  for (unsigned i = 0, e = VirtRegOpers.Defs.size(); i < e; ++i) {
     unsigned Reg = VirtRegOpers.Defs[i];
     if (LiveVirtRegs.insert(Reg).second)
       increaseVirtRegPressure(Reg);
