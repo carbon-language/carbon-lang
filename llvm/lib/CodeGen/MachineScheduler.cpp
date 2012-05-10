@@ -643,6 +643,10 @@ struct ReadyQ {
 
   bool empty() const { return Queue.empty(); }
 
+  iterator begin() { return Queue.begin(); }
+
+  iterator end() { return Queue.end(); }
+
   iterator find(SUnit *SU) {
     return std::find(Queue.begin(), Queue.end(), SU);
   }
@@ -705,10 +709,12 @@ public:
   }
 
   virtual void releaseTopNode(SUnit *SU) {
-    TopQueue.push(SU);
+    if (!SU->isScheduled)
+      TopQueue.push(SU);
   }
   virtual void releaseBottomNode(SUnit *SU) {
-    BotQueue.push(SU);
+    if (!SU->isScheduled)
+      BotQueue.push(SU);
   }
 };
 } // namespace
