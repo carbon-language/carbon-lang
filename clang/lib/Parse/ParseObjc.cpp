@@ -2598,7 +2598,10 @@ Parser::ParseObjCBoxedExpr(SourceLocation AtLoc) {
   ExprResult ValueExpr(ParseAssignmentExpression());
   if (T.consumeClose())
     return ExprError();
-  
+
+  if (ValueExpr.isInvalid())
+    return ExprError();
+
   // Wrap the sub-expression in a parenthesized expression, to distinguish
   // a boxed expression from a literal.
   SourceLocation LPLoc = T.getOpenLocation(), RPLoc = T.getCloseLocation();

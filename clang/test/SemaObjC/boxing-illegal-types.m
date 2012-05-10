@@ -15,3 +15,7 @@ void testPointers() {
     int numbers[] = { 0, 1, 2 };
     id boxed_numbers = @(numbers);  // expected-error {{illegal type 'int *' used in a boxed expression}}
 }
+
+void testInvalid() {
+  @(not_defined); // expected-error {{use of undeclared identifier 'not_defined'}}
+}
