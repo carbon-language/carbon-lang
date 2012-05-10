@@ -23,6 +23,7 @@ namespace llvm {
 
 class LiveIntervals;
 class RegisterClassInfo;
+class MachineInstr;
 
 /// Base class for register pressure results.
 struct RegisterPressure {
@@ -77,6 +78,30 @@ struct RegionPressure : RegisterPressure {
   void openTop(MachineBasicBlock::const_iterator PrevTop);
 
   void openBottom(MachineBasicBlock::const_iterator PrevBottom);
+};
+
+/// Store the results of a change in pressure.
+///
+/// ExcessUnits is the value of the largest difference in register units beyond
+/// the target's pressure limits across the affected pressure sets, where
+/// largest is defined as the absolute value of the difference. Negative
+/// ExcessUnits indicates a reduction in pressure that had already exceeded the
+/// target's limits.
+///
+/// MaxUnitIncrease is the largest increase in register units required across
+/// the scheduled region across the affected pressure sets, regardless of the
+/// target's pressure limits.
+///
+/// If ExcessUnits == 0, then ExcessSetID is invalid.
+/// If MaxUnitIncrease == 0, then MaxSetID is invalid.
+struct RegPressureDelta {
+  int ExcessUnits;
+  unsigned ExcessSetID;
+  int MaxUnitIncrease;
+  unsigned MaxSetID;
+
+  RegPressureDelta():
+    ExcessUnits(0), ExcessSetID(~0U), MaxUnitIncrease(0), MaxSetID(~0U) {}
 };
 
 /// Track the current register pressure at some position in the instruction
@@ -150,6 +175,30 @@ public:
   /// This result is complete if either advance() or recede() has returned true,
   /// or if closeRegion() was explicitly invoked.
   RegisterPressure &getPressure() { return P; }
+
+  /// Consider the pressure increase caused by traversing this instruction
+  /// bottom-up. Find the pressure set with the most change beyond its pressure
+  /// limit based on the tracker's current pressure, and record the number of
+  /// excess register units of that pressure set introduced by this instruction.
+  void getMaxUpwardPressureDelta(const MachineInstr *MI,
+                                 RegPressureDelta &Delta);
+
+  /// Consider the pressure increase caused by traversing this instruction
+  /// top-down. Find the pressure set with the most change beyond its pressure
+  /// limit based on the tracker's current pressure, and record the number of
+  /// excess register units of that pressure set introduced by this instruction.
+  void getMaxDownwardPressureDelta(const MachineInstr *MI,
+                                   RegPressureDelta &Delta);
+
+  /// Find the pressure set with the most change beyond its pressure limit after
+  /// traversing this instruction either upward or downward depending on the
+  /// closed end of the current region.
+  void getMaxPressureDelta(const MachineInstr *MI, RegPressureDelta &Delta) {
+    if (isTopClosed())
+      return getMaxDownwardPressureDelta(MI, Delta);
+    assert(isBottomClosed() && "Uninitialized pressure tracker");
+    return getMaxUpwardPressureDelta(MI, Delta);
+  }
 
 protected:
   bool isTopClosed() const;

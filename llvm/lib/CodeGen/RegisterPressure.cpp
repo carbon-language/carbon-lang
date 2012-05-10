@@ -30,8 +30,10 @@ static void increaseSetPressure(std::vector<unsigned> &CurrSetPressure,
   for (const int *PSet = TRI->getRegClassPressureSets(RC);
        *PSet != -1; ++PSet) {
     CurrSetPressure[*PSet] += Weight;
-    if (CurrSetPressure[*PSet] > MaxSetPressure[*PSet])
+    if (&CurrSetPressure != &MaxSetPressure
+        && CurrSetPressure[*PSet] > MaxSetPressure[*PSet]) {
       MaxSetPressure[*PSet] = CurrSetPressure[*PSet];
+    }
   }
 }
 
@@ -542,4 +544,181 @@ bool RegPressureTracker::advance() {
     ++CurrPos;
   while (CurrPos != MBB->end() && CurrPos->isDebugValue());
   return true;
+}
+
+// Find the max change in excess pressure across all sets.
+static int computeMaxPressureDelta(ArrayRef<unsigned> OldPressureVec,
+                                   ArrayRef<unsigned> NewPressureVec,
+                                   unsigned &PSetID,
+                                   const TargetRegisterInfo *TRI) {
+  int ExcessUnits = 0;
+  for (unsigned i = 0, e = OldPressureVec.size(); i < e; ++i) {
+    unsigned POld = OldPressureVec[i];
+    unsigned PNew = NewPressureVec[i];
+    int PDiff = (int)PNew - (int)POld;
+    if (!PDiff) // No change in this set in the common case.
+      continue;
+    // Only consider change beyond the limit.
+    unsigned Limit = TRI->getRegPressureSetLimit(i);
+    if (Limit > POld) {
+      if (Limit > PNew)
+        PDiff = 0;          // Under the limit
+      else
+        PDiff = PNew - Limit; // Just exceeded limit.
+    }
+    else if (Limit > PNew)
+      PDiff = Limit - POld; // Just obeyed limit.
+
+    if (std::abs(PDiff) > std::abs(ExcessUnits)) {
+      ExcessUnits = PDiff;
+      PSetID = i;
+    }
+  }
+  return ExcessUnits;
+}
+
+/// Consider the pressure increase caused by traversing this instruction
+/// bottom-up. Find the pressure set with the most change beyond its pressure
+/// limit based on the tracker's current pressure, and return the change in
+/// number of register units of that pressure set introduced by this
+/// instruction.
+///
+/// This assumes that the current LiveOut set is sufficient.
+///
+/// FIXME: This is expensive for an on-the-fly query. We need to cache the
+/// result per-SUnit with enough information to adjust for the current
+/// scheduling position. But this works as a proof of concept.
+void RegPressureTracker::
+getMaxUpwardPressureDelta(const MachineInstr *MI, RegPressureDelta &Delta) {
+  // Account for register pressure similar to RegPressureTracker::recede().
+  PhysRegOperands PhysRegOpers;
+  VirtRegOperands VirtRegOpers;
+  collectOperands(MI, PhysRegOpers, VirtRegOpers, TRI, RCI);
+
+  // Snapshot Pressure.
+  std::vector<unsigned> SavedPressure = CurrSetPressure;
+  std::vector<unsigned> SavedMaxPressure = P.MaxSetPressure;
+
+  // Boost max pressure for all dead defs together.
+  // Since CurrSetPressure and MaxSetPressure
+  increasePhysRegPressure(PhysRegOpers.DeadDefs);
+  increaseVirtRegPressure(VirtRegOpers.DeadDefs);
+  decreasePhysRegPressure(PhysRegOpers.DeadDefs);
+  decreaseVirtRegPressure(VirtRegOpers.DeadDefs);
+
+  // Kill liveness at live defs.
+  // TODO: consider earlyclobbers?
+  for (unsigned i = 0; i < PhysRegOpers.Defs.size(); ++i) {
+    unsigned Reg = PhysRegOpers.Defs[i];
+    if (LivePhysRegs.erase(Reg))
+      decreasePhysRegPressure(Reg);
+    else
+      discoverPhysLiveOut(Reg);
+  }
+  for (unsigned i = 0; i < VirtRegOpers.Defs.size(); ++i) {
+    unsigned Reg = VirtRegOpers.Defs[i];
+    if (LiveVirtRegs.erase(Reg))
+      decreaseVirtRegPressure(Reg);
+    else
+      discoverVirtLiveOut(Reg);
+  }
+
+  // Generate liveness for uses.
+  for (unsigned i = 0, e = PhysRegOpers.Uses.size(); i < e; ++i) {
+    unsigned Reg = PhysRegOpers.Uses[i];
+    if (!hasRegAlias(Reg, LivePhysRegs, TRI)) {
+      increasePhysRegPressure(Reg);
+      LivePhysRegs.insert(Reg);
+    }
+  }
+  for (unsigned i = 0, e = VirtRegOpers.Uses.size(); i < e; ++i) {
+    unsigned Reg = VirtRegOpers.Uses[i];
+    if (!LiveVirtRegs.count(Reg)) {
+      increaseVirtRegPressure(Reg);
+    }
+  }
+  Delta.ExcessUnits =
+    computeMaxPressureDelta(SavedPressure, CurrSetPressure,
+                            Delta.ExcessSetID, TRI);
+  Delta.MaxUnitIncrease =
+    computeMaxPressureDelta(SavedMaxPressure, P.MaxSetPressure,
+                            Delta.MaxSetID, TRI);
+  assert(Delta.MaxUnitIncrease >= 0 && "cannot increase max pressure");
+
+  // Restore the tracker's state.
+  P.MaxSetPressure.swap(SavedMaxPressure);
+  CurrSetPressure.swap(SavedPressure);
+}
+
+/// Helper to find a vreg use between two indices [PriorUseIdx, NextUseIdx).
+static bool findUseBetween(unsigned Reg,
+                           SlotIndex PriorUseIdx, SlotIndex NextUseIdx,
+                           const MachineRegisterInfo *MRI,
+                           const LiveIntervals *LIS) {
+  for (MachineRegisterInfo::use_nodbg_iterator
+         UI = MRI->use_nodbg_begin(Reg), UE = MRI->use_nodbg_end();
+         UI != UE; UI.skipInstruction()) {
+      const MachineInstr* MI = &*UI;
+      SlotIndex InstSlot = LIS->getInstructionIndex(MI).getRegSlot();
+      if (InstSlot >= PriorUseIdx && InstSlot < NextUseIdx)
+        return true;
+  }
+  return false;
+}
+
+/// Consider the pressure increase caused by traversing this instruction
+/// top-down. Find the register class with the most change in its pressure limit
+/// based on the tracker's current pressure, and return the number of excess
+/// register units of that pressure set introduced by this instruction.
+///
+/// This assumes that the current LiveIn set is sufficient.
+void RegPressureTracker::
+getMaxDownwardPressureDelta(const MachineInstr *MI, RegPressureDelta &Delta) {
+  // Account for register pressure similar to RegPressureTracker::recede().
+  PhysRegOperands PhysRegOpers;
+  VirtRegOperands VirtRegOpers;
+  collectOperands(MI, PhysRegOpers, VirtRegOpers, TRI, RCI);
+
+  // Snapshot Pressure.
+  std::vector<unsigned> SavedPressure = CurrSetPressure;
+  std::vector<unsigned> SavedMaxPressure = P.MaxSetPressure;
+
+  // Kill liveness at last uses. Assume allocatable physregs are single-use
+  // rather than checking LiveIntervals.
+  decreasePhysRegPressure(PhysRegOpers.Uses);
+  if (RequireIntervals) {
+    SlotIndex SlotIdx = LIS->getInstructionIndex(MI).getRegSlot();
+    for (unsigned i = 0, e = VirtRegOpers.Uses.size(); i < e; ++i) {
+      unsigned Reg = VirtRegOpers.Uses[i];
+      const LiveInterval *LI = &LIS->getInterval(Reg);
+      // FIXME: allow the caller to pass in the list of vreg uses that remain to
+      // be top-scheduled to avoid searching uses at each query.
+      SlotIndex CurrIdx = LIS->getInstructionIndex(CurrPos).getRegSlot();
+      if (LI->killedAt(SlotIdx)
+          && !findUseBetween(Reg, CurrIdx, SlotIdx, MRI, LIS)) {
+        decreaseVirtRegPressure(Reg);
+      }
+    }
+  }
+
+  // Generate liveness for defs.
+  increasePhysRegPressure(PhysRegOpers.Defs);
+  increaseVirtRegPressure(VirtRegOpers.Defs);
+
+  // Boost pressure for all dead defs together.
+  increasePhysRegPressure(PhysRegOpers.DeadDefs);
+  increaseVirtRegPressure(VirtRegOpers.DeadDefs);
+  decreasePhysRegPressure(PhysRegOpers.DeadDefs);
+  decreaseVirtRegPressure(VirtRegOpers.DeadDefs);
+
+  Delta.ExcessUnits =
+    computeMaxPressureDelta(SavedPressure, CurrSetPressure,
+                            Delta.ExcessSetID, TRI);
+  Delta.MaxUnitIncrease =
+    computeMaxPressureDelta(SavedMaxPressure, P.MaxSetPressure,
+                            Delta.MaxSetID, TRI);
+
+  // Restore the tracker's state.
+  P.MaxSetPressure.swap(SavedMaxPressure);
+  CurrSetPressure.swap(SavedPressure);
 }
