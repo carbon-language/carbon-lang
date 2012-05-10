@@ -65,3 +65,11 @@ void pr6013_6035_test(void *p) {
   foo = ((long)(p));
   (void) foo;
 }
+
+// PR12511 and radar://11215362 - Test that we support SymCastExpr, which represents symbolic int to float cast.
+char ttt(int intSeconds) {
+  double seconds = intSeconds;
+  if (seconds)
+    return 0;
+  return 0;
+}
