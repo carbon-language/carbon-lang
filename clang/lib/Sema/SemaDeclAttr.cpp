@@ -1857,6 +1857,10 @@ static void handleAvailabilityAttr(Sema &S, Decl *D,
 bool Sema::mergeVisibilityAttr(Decl *D, SourceRange Range,
                                bool Inherited,
                                VisibilityAttr::VisibilityType Vis) {
+  if (isa<TypedefNameDecl>(D)) {
+    Diag(Range.getBegin(), diag::warn_attribute_ignored) << "visibility";
+    return false;
+  }
   VisibilityAttr *ExistingAttr = D->getAttr<VisibilityAttr>();
   if (ExistingAttr) {
     VisibilityAttr::VisibilityType ExistingVis = ExistingAttr->getVisibility();

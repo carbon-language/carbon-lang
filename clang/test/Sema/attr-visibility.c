@@ -20,3 +20,5 @@ void test6() __attribute__((visibility("hidden"), // expected-note {{previous at
 
 extern int test7 __attribute__((visibility("default"))); // expected-note {{previous attribute is here}}
 extern int test7 __attribute__((visibility("hidden"))); // expected-error {{visibility does not match previous declaration}}
+
+typedef int __attribute__((visibility("default"))) bar; // expected-warning {{visibility attribute ignored}}
