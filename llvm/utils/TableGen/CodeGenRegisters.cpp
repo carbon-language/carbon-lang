@@ -86,6 +86,20 @@ CodeGenRegister::CodeGenRegister(Record *R, unsigned Enum)
     SubRegsComplete(false)
 {}
 
+void CodeGenRegister::buildObjectGraph(CodeGenRegBank &RegBank) {
+  std::vector<Record*> SRIs = TheDef->getValueAsListOfDefs("SubRegIndices");
+  std::vector<Record*> SRs = TheDef->getValueAsListOfDefs("SubRegs");
+
+  if (SRIs.size() != SRs.size())
+    throw TGError(TheDef->getLoc(),
+                  "SubRegs and SubRegIndices must have the same size");
+
+  for (unsigned i = 0, e = SRIs.size(); i != e; ++i) {
+    ExplicitSubRegIndices.push_back(RegBank.getSubRegIdx(SRIs[i]));
+    ExplicitSubRegs.push_back(RegBank.getReg(SRs[i]));
+  }
+}
+
 const std::string &CodeGenRegister::getName() const {
   return TheDef->getName();
 }
@@ -176,18 +190,10 @@ CodeGenRegister::computeSubRegs(CodeGenRegBank &RegBank) {
     return SubRegs;
   SubRegsComplete = true;
 
-  std::vector<Record*> SubList = TheDef->getValueAsListOfDefs("SubRegs");
-  std::vector<Record*> IdxList = TheDef->getValueAsListOfDefs("SubRegIndices");
-  if (SubList.size() != IdxList.size())
-    throw TGError(TheDef->getLoc(), "Register " + getName() +
-                  " SubRegIndices doesn't match SubRegs");
-
-  // First insert the direct subregs and make sure they are fully indexed.
-  SmallVector<CodeGenSubRegIndex*, 8> Indices;
-  for (unsigned i = 0, e = SubList.size(); i != e; ++i) {
-    CodeGenRegister *SR = RegBank.getReg(SubList[i]);
-    CodeGenSubRegIndex *Idx = RegBank.getSubRegIdx(IdxList[i]);
-    Indices.push_back(Idx);
+  // First insert the explicit subregs and make sure they are fully indexed.
+  for (unsigned i = 0, e = ExplicitSubRegs.size(); i != e; ++i) {
+    CodeGenRegister *SR = ExplicitSubRegs[i];
+    CodeGenSubRegIndex *Idx = ExplicitSubRegIndices[i];
     if (!SubRegs.insert(std::make_pair(Idx, SR)).second)
       throw TGError(TheDef->getLoc(), "SubRegIndex " + Idx->getName() +
                     " appears twice in Register " + getName());
@@ -201,8 +207,8 @@ CodeGenRegister::computeSubRegs(CodeGenRegBank &RegBank) {
 
   // Clone inherited subregs and place duplicate entries in Orphans.
   // Here the order is important - earlier subregs take precedence.
-  for (unsigned i = 0, e = SubList.size(); i != e; ++i) {
-    CodeGenRegister *SR = RegBank.getReg(SubList[i]);
+  for (unsigned i = 0, e = ExplicitSubRegs.size(); i != e; ++i) {
+    CodeGenRegister *SR = ExplicitSubRegs[i];
     const SubRegMap &Map = SR->computeSubRegs(RegBank);
 
     // Add this as a super-register of SR now all sub-registers are in the list.
@@ -225,6 +231,7 @@ CodeGenRegister::computeSubRegs(CodeGenRegBank &RegBank) {
   // If dsub_2 has ComposedOf = [qsub_1, dsub_0], and this register has a
   // qsub_1 subreg, add a dsub_2 subreg.  Keep growing Indices and process
   // expanded subreg indices recursively.
+  SmallVector<CodeGenSubRegIndex*, 8> Indices = ExplicitSubRegIndices;
   for (unsigned i = 0; i != Indices.size(); ++i) {
     CodeGenSubRegIndex *Idx = Indices[i];
     const CodeGenSubRegIndex::CompMap &Comps = Idx->getComposites();
@@ -346,10 +353,8 @@ void
 CodeGenRegister::addSubRegsPreOrder(SetVector<const CodeGenRegister*> &OSet,
                                     CodeGenRegBank &RegBank) const {
   assert(SubRegsComplete && "Must precompute sub-registers");
-  std::vector<Record*> Indices = TheDef->getValueAsListOfDefs("SubRegIndices");
-  for (unsigned i = 0, e = Indices.size(); i != e; ++i) {
-    CodeGenSubRegIndex *Idx = RegBank.getSubRegIdx(Indices[i]);
-    CodeGenRegister *SR = SubRegs.find(Idx)->second;
+  for (unsigned i = 0, e = ExplicitSubRegs.size(); i != e; ++i) {
+    CodeGenRegister *SR = ExplicitSubRegs[i];
     if (OSet.insert(SR))
       SR->addSubRegsPreOrder(OSet, RegBank);
   }
@@ -766,7 +771,12 @@ CodeGenRegBank::CodeGenRegBank(RecordKeeper &Records) : Records(Records) {
       getReg((*TupRegs)[j]);
   }
 
-  // Precompute all sub-register maps now all the registers are known.
+  // Now all the registers are known. Build the object graph of explicit
+  // register-register references.
+  for (unsigned i = 0, e = Registers.size(); i != e; ++i)
+    Registers[i]->buildObjectGraph(*this);
+
+  // Precompute all sub-register maps.
   // This will create Composite entries for all inferred sub-register indices.
   NumRegUnits = 0;
   for (unsigned i = 0, e = Registers.size(); i != e; ++i)

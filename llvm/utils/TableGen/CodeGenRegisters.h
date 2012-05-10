@@ -100,6 +100,10 @@ namespace llvm {
 
     const std::string &getName() const;
 
+    // Extract more information from TheDef. This is used to build an object
+    // graph after all CodeGenRegister objects have been created.
+    void buildObjectGraph(CodeGenRegBank&);
+
     // Lazily compute a map of all sub-registers.
     // This includes unique entries for all sub-sub-registers.
     const SubRegMap &computeSubRegs(CodeGenRegBank&);
@@ -161,6 +165,11 @@ namespace llvm {
 
   private:
     bool SubRegsComplete;
+
+    // The sub-registers explicit in the .td file form a tree.
+    SmallVector<CodeGenSubRegIndex*, 8> ExplicitSubRegIndices;
+    SmallVector<CodeGenRegister*, 8> ExplicitSubRegs;
+
     SubRegMap SubRegs;
     SuperRegList SuperRegs;
     DenseMap<const CodeGenRegister*, CodeGenSubRegIndex*> SubReg2Idx;
