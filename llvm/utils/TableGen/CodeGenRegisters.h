@@ -67,6 +67,7 @@ namespace llvm {
     // Return a conflicting composite, or NULL
     CodeGenSubRegIndex *addComposite(CodeGenSubRegIndex *A,
                                      CodeGenSubRegIndex *B) {
+      assert(A && B);
       std::pair<CompMap::iterator, bool> Ins =
         Composed.insert(std::make_pair(A, B));
       return (Ins.second || Ins.first->second == B) ? 0 : Ins.first->second;
@@ -108,6 +109,9 @@ namespace llvm {
     // This includes unique entries for all sub-sub-registers.
     const SubRegMap &computeSubRegs(CodeGenRegBank&);
 
+    // Compute extra sub-registers by combining the existing sub-registers.
+    void computeSecondarySubRegs(CodeGenRegBank&);
+
     const SubRegMap &getSubRegs() const {
       assert(SubRegsComplete && "Must precompute sub-registers");
       return SubRegs;
@@ -123,11 +127,11 @@ namespace llvm {
       return SubReg2Idx.lookup(Reg);
     }
 
-    // List of super-registers in topological order, small to large.
     typedef std::vector<const CodeGenRegister*> SuperRegList;
 
-    // Get the list of super-registers. This is valid after getSubReg
-    // visits all registers during RegBank construction.
+    // Get the list of super-registers in topological order, small to large.
+    // This is valid after computeSubRegs visits all registers during RegBank
+    // construction.
     const SuperRegList &getSuperRegs() const {
       assert(SubRegsComplete && "Must precompute sub-registers");
       return SuperRegs;
@@ -169,6 +173,9 @@ namespace llvm {
     // The sub-registers explicit in the .td file form a tree.
     SmallVector<CodeGenSubRegIndex*, 8> ExplicitSubRegIndices;
     SmallVector<CodeGenRegister*, 8> ExplicitSubRegs;
+
+    // Super-registers where this is the first explicit sub-register.
+    SuperRegList LeadingSuperRegs;
 
     SubRegMap SubRegs;
     SuperRegList SuperRegs;
@@ -349,6 +356,10 @@ namespace llvm {
     DenseMap<Record*, CodeGenSubRegIndex*> Def2SubRegIdx;
     unsigned NumNamedIndices;
 
+    typedef std::map<SmallVector<CodeGenSubRegIndex*, 8>,
+                     CodeGenSubRegIndex*> ConcatIdxMap;
+    ConcatIdxMap ConcatIdx;
+
     // Registers.
     std::vector<CodeGenRegister*> Registers;
     DenseMap<Record*, CodeGenRegister*> Def2Reg;
@@ -418,6 +429,17 @@ namespace llvm {
     // Find or create a sub-register index representing the A+B composition.
     CodeGenSubRegIndex *getCompositeSubRegIndex(CodeGenSubRegIndex *A,
                                                 CodeGenSubRegIndex *B);
+
+    // Find or create a sub-register index representing the concatenation of
+    // non-overlapping sibling indices.
+    CodeGenSubRegIndex *
+      getConcatSubRegIndex(const SmallVector<CodeGenSubRegIndex*, 8>&);
+
+    void
+    addConcatSubRegIndex(const SmallVector<CodeGenSubRegIndex*, 8> &Parts,
+                         CodeGenSubRegIndex *Idx) {
+      ConcatIdx.insert(std::make_pair(Parts, Idx));
+    }
 
     const std::vector<CodeGenRegister*> &getRegisters() { return Registers; }
 

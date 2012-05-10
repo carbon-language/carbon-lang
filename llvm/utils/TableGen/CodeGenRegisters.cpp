@@ -98,6 +98,14 @@ void CodeGenRegister::buildObjectGraph(CodeGenRegBank &RegBank) {
     ExplicitSubRegIndices.push_back(RegBank.getSubRegIdx(SRIs[i]));
     ExplicitSubRegs.push_back(RegBank.getReg(SRs[i]));
   }
+
+  // Also compute leading super-registers. Each register has a list of
+  // covered-by-subregs super-registers where it appears as the first explicit
+  // sub-register.
+  //
+  // This is used by computeSecondarySubRegs() to find candidates.
+  if (CoveredBySubRegs && !ExplicitSubRegs.empty())
+    ExplicitSubRegs.front()->LeadingSuperRegs.push_back(this);
 }
 
 const std::string &CodeGenRegister::getName() const {
@@ -332,6 +340,24 @@ CodeGenRegister::computeSubRegs(CodeGenRegBank &RegBank) {
     SubReg2Idx.insert(std::make_pair(SI->second, SI->first));
   }
 
+  // Derive possible names for sub-register concatenations from any explicit
+  // sub-registers. By doing this before computeSecondarySubRegs(), we ensure
+  // that getConcatSubRegIndex() won't invent any concatenated indices that the
+  // user already specified.
+  for (unsigned i = 0, e = ExplicitSubRegs.size(); i != e; ++i) {
+    CodeGenRegister *SR = ExplicitSubRegs[i];
+    if (!SR->CoveredBySubRegs || SR->ExplicitSubRegs.size() <= 1)
+      continue;
+
+    // SR is composed of multiple sub-regs. Find their names in this register.
+    SmallVector<CodeGenSubRegIndex*, 8> Parts;
+    for (unsigned j = 0, e = SR->ExplicitSubRegs.size(); j != e; ++j)
+      Parts.push_back(getSubRegIndex(SR->ExplicitSubRegs[j]));
+
+    // Offer this as an existing spelling for the concatenation of Parts.
+    RegBank.addConcatSubRegIndex(Parts, ExplicitSubRegIndices[i]);
+  }
+
   // Initialize RegUnitList. A register with no subregisters creates its own
   // unit. Otherwise, it inherits all its subregister's units. Because
   // getSubRegs is called recursively, this processes the register hierarchy in
@@ -349,6 +375,88 @@ CodeGenRegister::computeSubRegs(CodeGenRegBank &RegBank) {
   return SubRegs;
 }
 
+// In a register that is covered by its sub-registers, try to find redundant
+// sub-registers. For example:
+//
+//   QQ0 = {Q0, Q1}
+//   Q0 = {D0, D1}
+//   Q1 = {D2, D3}
+//
+// We can infer that D1_D2 is also a sub-register, even if it wasn't named in
+// the register definition.
+//
+// The explicitly specified registers form a tree. This function discovers
+// sub-register relationships that would force a DAG.
+//
+void CodeGenRegister::computeSecondarySubRegs(CodeGenRegBank &RegBank) {
+  // Collect new sub-registers first, add them later.
+  SmallVector<SubRegMap::value_type, 8> NewSubRegs;
+
+  // Look at the leading super-registers of each sub-register. Those are the
+  // candidates for new sub-registers, assuming they are fully contained in
+  // this register.
+  for (SubRegMap::iterator I = SubRegs.begin(), E = SubRegs.end(); I != E; ++I){
+    const CodeGenRegister *SubReg = I->second;
+    const CodeGenRegister::SuperRegList &Leads = SubReg->LeadingSuperRegs;
+    for (unsigned i = 0, e = Leads.size(); i != e; ++i) {
+      CodeGenRegister *Cand = const_cast<CodeGenRegister*>(Leads[i]);
+      // Already got this sub-register?
+      if (Cand == this || getSubRegIndex(Cand))
+        continue;
+      // Check if each component of Cand is already a sub-register.
+      // We know that the first component is I->second, and is present with the
+      // name I->first.
+      SmallVector<CodeGenSubRegIndex*, 8> Parts(1, I->first);
+      assert(!Cand->ExplicitSubRegs.empty() &&
+             "Super-register has no sub-registers");
+      for (unsigned j = 1, e = Cand->ExplicitSubRegs.size(); j != e; ++j) {
+        if (CodeGenSubRegIndex *Idx = getSubRegIndex(Cand->ExplicitSubRegs[j]))
+          Parts.push_back(Idx);
+        else {
+          // Sub-register doesn't exist.
+          Parts.clear();
+          break;
+        }
+      }
+      // If some Cand sub-register is not part of this register, or if Cand only
+      // has one sub-register, there is nothing to do.
+      if (Parts.size() <= 1)
+        continue;
+
+      // Each part of Cand is a sub-register of this. Make the full Cand also
+      // a sub-register with a concatenated sub-register index.
+      CodeGenSubRegIndex *Concat= RegBank.getConcatSubRegIndex(Parts);
+      NewSubRegs.push_back(std::make_pair(Concat, Cand));
+    }
+  }
+
+  // Now add all the new sub-registers.
+  for (unsigned i = 0, e = NewSubRegs.size(); i != e; ++i) {
+    // Don't add Cand if another sub-register is already using the index.
+    if (!SubRegs.insert(NewSubRegs[i]).second)
+      continue;
+
+    CodeGenSubRegIndex *NewIdx = NewSubRegs[i].first;
+    CodeGenRegister *NewSubReg = NewSubRegs[i].second;
+    SubReg2Idx.insert(std::make_pair(NewSubReg, NewIdx));
+    NewSubReg->SuperRegs.push_back(this);
+  }
+
+  // Create sub-register index composition maps for the synthesized indices.
+  for (unsigned i = 0, e = NewSubRegs.size(); i != e; ++i) {
+    CodeGenSubRegIndex *NewIdx = NewSubRegs[i].first;
+    CodeGenRegister *NewSubReg = NewSubRegs[i].second;
+    for (SubRegMap::const_iterator SI = NewSubReg->SubRegs.begin(),
+           SE = NewSubReg->SubRegs.end(); SI != SE; ++SI) {
+      CodeGenSubRegIndex *SubIdx = getSubRegIndex(SI->second);
+      if (!SubIdx)
+        throw TGError(TheDef->getLoc(), "No SubRegIndex for " +
+                      SI->second->getName() + " in " + getName());
+      NewIdx->addComposite(SI->first, SubIdx);
+    }
+  }
+}
+
 void
 CodeGenRegister::addSubRegsPreOrder(SetVector<const CodeGenRegister*> &OSet,
                                     CodeGenRegBank &RegBank) const {
@@ -358,6 +466,11 @@ CodeGenRegister::addSubRegsPreOrder(SetVector<const CodeGenRegister*> &OSet,
     if (OSet.insert(SR))
       SR->addSubRegsPreOrder(OSet, RegBank);
   }
+  // Add any secondary sub-registers that weren't part of the explicit tree.
+  for (SubRegMap::const_iterator I = SubRegs.begin(), E = SubRegs.end();
+       I != E; ++I)
+    if (I->second != this)
+      OSet.insert(I->second);
 }
 
 // Get the sum of this register's unit weights.
@@ -782,6 +895,11 @@ CodeGenRegBank::CodeGenRegBank(RecordKeeper &Records) : Records(Records) {
   for (unsigned i = 0, e = Registers.size(); i != e; ++i)
     Registers[i]->computeSubRegs(*this);
 
+  // Infer even more sub-registers by combining leading super-registers.
+  for (unsigned i = 0, e = Registers.size(); i != e; ++i)
+    if (Registers[i]->CoveredBySubRegs)
+      Registers[i]->computeSecondarySubRegs(*this);
+
   // Native register units are associated with a leaf register. They've all been
   // discovered now.
   NumNativeRegUnits = NumRegUnits;
@@ -873,6 +991,24 @@ CodeGenRegBank::getCompositeSubRegIndex(CodeGenSubRegIndex *A,
   Comp = getSubRegIdx(new Record(Name, SMLoc(), Records));
   A->addComposite(B, Comp);
   return Comp;
+}
+
+CodeGenSubRegIndex *CodeGenRegBank::
+getConcatSubRegIndex(const SmallVector<CodeGenSubRegIndex*, 8> &Parts) {
+  assert(Parts.size() > 1 && "Need two parts to concatenate");
+
+  // Look for an existing entry.
+  CodeGenSubRegIndex *&Idx = ConcatIdx[Parts];
+  if (Idx)
+    return Idx;
+
+  // None exists, synthesize one.
+  std::string Name = Parts.front()->getName();
+  for (unsigned i = 1, e = Parts.size(); i != e; ++i) {
+    Name += '_';
+    Name += Parts[i]->getName();
+  }
+  return Idx = getSubRegIdx(new Record(Name, SMLoc(), Records));
 }
 
 void CodeGenRegBank::computeComposites() {
