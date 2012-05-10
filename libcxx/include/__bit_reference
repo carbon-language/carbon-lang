@@ -1242,6 +1242,10 @@ private:
                                                                           typename _Dp::size_type);
     template <class _Dp> friend __bit_iterator<_Dp, false> __find_bool_false(__bit_iterator<_Dp, false>,
                                                                            typename _Dp::size_type);
+    template <class _Dp> friend typename __bit_iterator<_Dp, false>::difference_type
+                   __count_bool_true(__bit_iterator<_Dp, false>, typename _Dp::size_type);
+    template <class _Dp> friend typename __bit_iterator<_Dp, false>::difference_type
+                   __count_bool_false(__bit_iterator<_Dp, false>, typename _Dp::size_type);
 };
 
 _LIBCPP_END_NAMESPACE_STD
