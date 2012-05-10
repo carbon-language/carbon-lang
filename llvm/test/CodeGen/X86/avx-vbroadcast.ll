@@ -129,3 +129,15 @@ entry:
   ret <4 x float> %vecinit6.i
 }
 
+
+; CHECK: _RR2
+; CHECK: vbroadcastss (%
+; CHECK: ret
+define <4 x float> @_RR2(float* %ptr, i32* %k) nounwind uwtable readnone ssp {
+entry:
+  %q = load float* %ptr, align 4
+  %v = insertelement <4 x float> undef, float %q, i32 0
+  %t = shufflevector <4 x float> %v, <4 x float> undef, <4 x i32> zeroinitializer
+  ret <4 x float> %t
+}
+
