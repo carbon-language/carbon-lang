@@ -10,3 +10,14 @@
 #include STRINGIZE(INC)
 
 CAKE;
+
+#define DIR 1
+#define FNM(x) x
+
+FNM(
+#if DIR
+    int a;
+#else
+    int b;
+#endif
+)

@@ -242,9 +242,27 @@ bool Preprocessor::HandleMacroExpandedIdentifier(Token &Identifier,
 
   // Remember where the token is expanded.
   SourceLocation ExpandLoc = Identifier.getLocation();
+  SourceRange ExpansionRange(ExpandLoc, ExpansionEnd);
 
-  if (Callbacks) Callbacks->MacroExpands(Identifier, MI,
-                                         SourceRange(ExpandLoc, ExpansionEnd));
+  if (Callbacks) {
+    if (InMacroArgs) {
+      // We can have macro expansion inside a conditional directive while
+      // reading the function macro arguments. To ensure, in that case, that
+      // MacroExpands callbacks still happen in source order, queue this
+      // callback to have it happen after the function macro callback.
+      DelayedMacroExpandsCallbacks.push_back(
+                              MacroExpandsInfo(Identifier, MI, ExpansionRange));
+    } else {
+      Callbacks->MacroExpands(Identifier, MI, ExpansionRange);
+      if (!DelayedMacroExpandsCallbacks.empty()) {
+        for (unsigned i=0, e = DelayedMacroExpandsCallbacks.size(); i!=e; ++i) {
+          MacroExpandsInfo &Info = DelayedMacroExpandsCallbacks[i];
+          Callbacks->MacroExpands(Info.Tok, Info.MI, Info.Range);
+        }
+        DelayedMacroExpandsCallbacks.clear();
+      }
+    }
+  }
   
   // If we started lexing a macro, enter the macro expansion body.
 

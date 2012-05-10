@@ -254,6 +254,15 @@ class Preprocessor : public RefCountedBase<Preprocessor> {
   /// encountered (e.g. a file is #included, etc).
   PPCallbacks *Callbacks;
 
+  struct MacroExpandsInfo {
+    Token Tok;
+    MacroInfo *MI;
+    SourceRange Range;
+    MacroExpandsInfo(Token Tok, MacroInfo *MI, SourceRange Range)
+      : Tok(Tok), MI(MI), Range(Range) { }
+  };
+  SmallVector<MacroExpandsInfo, 2> DelayedMacroExpandsCallbacks;
+
   /// Macros - For each IdentifierInfo with 'HasMacro' set, we keep a mapping
   /// to the actual definition of the macro.
   llvm::DenseMap<IdentifierInfo*, MacroInfo*> Macros;
