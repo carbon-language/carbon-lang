@@ -173,6 +173,8 @@ nextIfDebug(MachineBasicBlock::iterator I, MachineBasicBlock::iterator End) {
 /// design would be to split blocks at scheduling boundaries, but LLVM has a
 /// general bias against block splitting purely for implementation simplicity.
 bool MachineScheduler::runOnMachineFunction(MachineFunction &mf) {
+  DEBUG(dbgs() << "Before MISsched:\n"; mf.print(dbgs()));
+
   // Initialize the context of the pass.
   MF = &mf;
   MLI = &getAnalysis<MachineLoopInfo>();
