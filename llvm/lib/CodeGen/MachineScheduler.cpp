@@ -629,15 +629,46 @@ void ScheduleDAGMI::placeDebugValues() {
 //===----------------------------------------------------------------------===//
 
 namespace {
+struct ReadyQ {
+  typedef std::vector<SUnit*>::iterator iterator;
+
+  unsigned ID;
+  std::vector<SUnit*> Queue;
+
+  ReadyQ(unsigned id): ID(id) {}
+
+  bool isInQueue(SUnit *SU) const {
+    return SU->NodeQueueId & ID;
+  }
+
+  bool empty() const { return Queue.empty(); }
+
+  iterator find(SUnit *SU) {
+    return std::find(Queue.begin(), Queue.end(), SU);
+  }
+
+  void push(SUnit *SU) {
+    Queue.push_back(SU);
+  }
+
+  void remove(iterator I) {
+    *I = Queue.back();
+    Queue.pop_back();
+  }
+};
+
 /// ConvergingScheduler shrinks the unscheduled zone using heuristics to balance
 /// the schedule.
 class ConvergingScheduler : public MachineSchedStrategy {
   ScheduleDAGMI *DAG;
 
-  unsigned NumTopReady;
-  unsigned NumBottomReady;
+  ReadyQ TopQueue;
+  ReadyQ BotQueue;
 
 public:
+  // NodeQueueId = 0 (none), = 1 (top), = 2 (bottom), = 3 (both)
+  ConvergingScheduler(): TopQueue(1), BotQueue(2) {}
+
   virtual void initialize(ScheduleDAGMI *dag) {
     DAG = dag;
 
@@ -646,13 +677,15 @@ public:
   }
 
   virtual SUnit *pickNode(bool &IsTopNode) {
-    if (DAG->top() == DAG->bottom())
+    if (DAG->top() == DAG->bottom()) {
+      assert(TopQueue.empty() && BotQueue.empty() && "ReadyQ garbage");
       return NULL;
-
+    }
     // As an initial placeholder heuristic, schedule in the direction that has
     // the fewest choices.
     SUnit *SU;
-    if (ForceTopDown || (!ForceBottomUp && NumTopReady <= NumBottomReady)) {
+    if (ForceTopDown
+        || (!ForceBottomUp && TopQueue.Queue.size() <= BotQueue.Queue.size())) {
       SU = DAG->getSUnit(DAG->top());
       IsTopNode = true;
     }
@@ -661,21 +694,21 @@ public:
       IsTopNode = false;
     }
     if (SU->isTopReady()) {
-      assert(NumTopReady > 0 && "bad ready count");
-      --NumTopReady;
+      assert(!TopQueue.empty() && "bad ready count");
+      TopQueue.remove(TopQueue.find(SU));
     }
     if (SU->isBottomReady()) {
-      assert(NumBottomReady > 0 && "bad ready count");
-      --NumBottomReady;
+      assert(!BotQueue.empty() && "bad ready count");
+      BotQueue.remove(BotQueue.find(SU));
     }
     return SU;
   }
 
   virtual void releaseTopNode(SUnit *SU) {
-    ++NumTopReady;
+    TopQueue.push(SU);
   }
   virtual void releaseBottomNode(SUnit *SU) {
-    ++NumBottomReady;
+    BotQueue.push(SU);
   }
 };
 } // namespace
