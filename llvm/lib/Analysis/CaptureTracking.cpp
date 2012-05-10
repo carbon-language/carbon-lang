@@ -34,7 +34,7 @@ namespace {
 
     bool captured(Use *U) {
       if (isa<ReturnInst>(U->getUser()) && !ReturnCaptures)
-	return false;
+        return false;
 
       Captured = true;
       return true;
