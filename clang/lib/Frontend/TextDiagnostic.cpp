@@ -602,10 +602,9 @@ static bool printWordWrapped(raw_ostream &OS, StringRef Str,
 }
 
 TextDiagnostic::TextDiagnostic(raw_ostream &OS,
-                               const SourceManager &SM,
                                const LangOptions &LangOpts,
                                const DiagnosticOptions &DiagOpts)
-  : DiagnosticRenderer(SM, LangOpts, DiagOpts), OS(OS) {}
+  : DiagnosticRenderer(LangOpts, DiagOpts), OS(OS) {}
 
 TextDiagnostic::~TextDiagnostic() {}
 
@@ -615,11 +614,13 @@ TextDiagnostic::emitDiagnosticMessage(SourceLocation Loc,
                                       DiagnosticsEngine::Level Level,
                                       StringRef Message,
                                       ArrayRef<clang::CharSourceRange> Ranges,
+                                      const SourceManager *SM,
                                       DiagOrStoredDiag D) {
   uint64_t StartOfLocationInfo = OS.tell();
 
   // Emit the location of this particular diagnostic.
-  emitDiagnosticLoc(Loc, PLoc, Level, Ranges);
+  if (Loc.isValid())
+    emitDiagnosticLoc(Loc, PLoc, Level, Ranges, *SM);
   
   if (DiagOpts.ShowColors)
     OS.resetColor();
@@ -693,7 +694,8 @@ TextDiagnostic::printDiagnosticMessage(raw_ostream &OS,
 /// ranges necessary.
 void TextDiagnostic::emitDiagnosticLoc(SourceLocation Loc, PresumedLoc PLoc,
                                        DiagnosticsEngine::Level Level,
-                                       ArrayRef<CharSourceRange> Ranges) {
+                                       ArrayRef<CharSourceRange> Ranges,
+                                       const SourceManager &SM) {
   if (PLoc.isInvalid()) {
     // At least print the file name if available:
     FileID FID = SM.getFileID(Loc);
@@ -799,7 +801,8 @@ void TextDiagnostic::emitBasicNote(StringRef Message) {
 }
 
 void TextDiagnostic::emitIncludeLocation(SourceLocation Loc,
-                                         PresumedLoc PLoc) {
+                                         PresumedLoc PLoc,
+                                         const SourceManager &SM) {
   if (DiagOpts.ShowLocation)
     OS << "In file included from " << PLoc.getFilename() << ':'
        << PLoc.getLine() << ":\n";
@@ -817,7 +820,8 @@ void TextDiagnostic::emitIncludeLocation(SourceLocation Loc,
 void TextDiagnostic::emitSnippetAndCaret(
     SourceLocation Loc, DiagnosticsEngine::Level Level,
     SmallVectorImpl<CharSourceRange>& Ranges,
-    ArrayRef<FixItHint> Hints) {
+    ArrayRef<FixItHint> Hints,
+    const SourceManager &SM) {
   assert(!Loc.isInvalid() && "must have a valid source location here");
   assert(Loc.isFileID() && "must have a file location here");
 
@@ -878,7 +882,7 @@ void TextDiagnostic::emitSnippetAndCaret(
   for (SmallVectorImpl<CharSourceRange>::iterator I = Ranges.begin(),
                                                   E = Ranges.end();
        I != E; ++I)
-    highlightRange(*I, LineNo, FID, sourceColMap, CaretLine);
+    highlightRange(*I, LineNo, FID, sourceColMap, CaretLine, SM);
 
   // Next, insert the caret itself.
   ColNo = sourceColMap.byteToColumn(ColNo-1);
@@ -888,7 +892,7 @@ void TextDiagnostic::emitSnippetAndCaret(
 
   std::string FixItInsertionLine = buildFixItInsertionLine(LineNo,
                                                            sourceColMap,
-                                                           Hints);
+                                                           Hints, SM);
 
   // If the source line is too long for our terminal, select only the
   // "interesting" source region within that line.
@@ -931,7 +935,7 @@ void TextDiagnostic::emitSnippetAndCaret(
   }
 
   // Print out any parseable fixit information requested by the options.
-  emitParseableFixits(Hints);
+  emitParseableFixits(Hints, SM);
 }
 
 void TextDiagnostic::emitSnippet(StringRef line) {
@@ -974,7 +978,8 @@ void TextDiagnostic::emitSnippet(StringRef line) {
 void TextDiagnostic::highlightRange(const CharSourceRange &R,
                                     unsigned LineNo, FileID FID,
                                     const SourceColumnMap &map,
-                                    std::string &CaretLine) {
+                                    std::string &CaretLine,
+                                    const SourceManager &SM) {
   if (!R.isValid()) return;
 
   SourceLocation Begin = SM.getExpansionLoc(R.getBegin());
@@ -1059,7 +1064,8 @@ void TextDiagnostic::highlightRange(const CharSourceRange &R,
 std::string TextDiagnostic::buildFixItInsertionLine(
   unsigned LineNo,
   const SourceColumnMap &map,
-  ArrayRef<FixItHint> Hints) {
+  ArrayRef<FixItHint> Hints,
+  const SourceManager &SM) {
 
   std::string FixItInsertionLine;
   if (Hints.empty() || !DiagOpts.ShowFixits)
@@ -1114,7 +1120,8 @@ std::string TextDiagnostic::buildFixItInsertionLine(
   return FixItInsertionLine;
 }
 
-void TextDiagnostic::emitParseableFixits(ArrayRef<FixItHint> Hints) {
+void TextDiagnostic::emitParseableFixits(ArrayRef<FixItHint> Hints,
+                                         const SourceManager &SM) {
   if (!DiagOpts.ShowParseableFixits)
     return;
 

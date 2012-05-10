@@ -26,9 +26,7 @@ class TextDiagnostic;
 
 class TextDiagnosticPrinter : public DiagnosticConsumer {
   raw_ostream &OS;
-  const LangOptions *LangOpts;
   const DiagnosticOptions *DiagOpts;
-  const SourceManager *SM;
 
   /// \brief Handle to the currently active text diagnostic emitter.
   OwningPtr<TextDiagnostic> TextDiag;

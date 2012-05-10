@@ -43,7 +43,6 @@ typedef llvm::PointerUnion<const Diagnostic *,
 /// class.
 class DiagnosticRenderer {
 protected:
-  const SourceManager &SM;
   const LangOptions &LangOpts;
   const DiagnosticOptions &DiagOpts;
   
@@ -66,8 +65,7 @@ protected:
   /// which change the amount of information displayed.
   DiagnosticsEngine::Level LastLevel;
 
-  DiagnosticRenderer(const SourceManager &SM,
-                     const LangOptions &LangOpts,
+  DiagnosticRenderer(const LangOptions &LangOpts,
                      const DiagnosticOptions &DiagOpts);
   
   virtual ~DiagnosticRenderer();
@@ -76,20 +74,24 @@ protected:
                                      DiagnosticsEngine::Level Level,
                                      StringRef Message,
                                      ArrayRef<CharSourceRange> Ranges,
+                                     const SourceManager *SM,
                                      DiagOrStoredDiag Info) = 0;
   
   virtual void emitDiagnosticLoc(SourceLocation Loc, PresumedLoc PLoc,
                                  DiagnosticsEngine::Level Level,
-                                 ArrayRef<CharSourceRange> Ranges) = 0;
+                                 ArrayRef<CharSourceRange> Ranges,
+                                 const SourceManager &SM) = 0;
   
   virtual void emitBasicNote(StringRef Message) = 0;
   
   virtual void emitCodeContext(SourceLocation Loc,
                                DiagnosticsEngine::Level Level,
                                SmallVectorImpl<CharSourceRange>& Ranges,
-                               ArrayRef<FixItHint> Hints) = 0;
+                               ArrayRef<FixItHint> Hints,
+                               const SourceManager &SM) = 0;
   
-  virtual void emitIncludeLocation(SourceLocation Loc, PresumedLoc PLoc) = 0;
+  virtual void emitIncludeLocation(SourceLocation Loc, PresumedLoc PLoc,
+                                   const SourceManager &SM) = 0;
   
   virtual void beginDiagnostic(DiagOrStoredDiag D,
                                DiagnosticsEngine::Level Level) {}
@@ -98,12 +100,14 @@ protected:
 
   
 private:
-  void emitIncludeStack(SourceLocation Loc, DiagnosticsEngine::Level Level);
-  void emitIncludeStackRecursively(SourceLocation Loc);
+  void emitIncludeStack(SourceLocation Loc, DiagnosticsEngine::Level Level,
+                        const SourceManager &SM);
+  void emitIncludeStackRecursively(SourceLocation Loc, const SourceManager &SM);
   void emitMacroExpansionsAndCarets(SourceLocation Loc,
                                     DiagnosticsEngine::Level Level,
                                     SmallVectorImpl<CharSourceRange>& Ranges,
                                     ArrayRef<FixItHint> Hints,
+                                    const SourceManager &SM,
                                     unsigned &MacroDepth,
                                     unsigned OnMacroInst = 0);
 public:
@@ -119,9 +123,12 @@ public:
   /// \param Message The diagnostic message to emit.
   /// \param Ranges The underlined ranges for this code snippet.
   /// \param FixItHints The FixIt hints active for this diagnostic.
+  /// \param SM The SourceManager; will be null if the diagnostic came from the
+  ///        frontend, thus \param Loc will be invalid.
   void emitDiagnostic(SourceLocation Loc, DiagnosticsEngine::Level Level,
                       StringRef Message, ArrayRef<CharSourceRange> Ranges,
                       ArrayRef<FixItHint> FixItHints,
+                      const SourceManager *SM,
                       DiagOrStoredDiag D = (Diagnostic *)0);
 
   void emitStoredDiagnostic(StoredDiagnostic &Diag);
@@ -131,19 +138,20 @@ public:
 /// notes.  It is up to subclasses to further define the behavior.
 class DiagnosticNoteRenderer : public DiagnosticRenderer {
 public:
-  DiagnosticNoteRenderer(const SourceManager &SM,
-                         const LangOptions &LangOpts,
+  DiagnosticNoteRenderer(const LangOptions &LangOpts,
                          const DiagnosticOptions &DiagOpts)
-    : DiagnosticRenderer(SM, LangOpts, DiagOpts) {}
+    : DiagnosticRenderer(LangOpts, DiagOpts) {}
   
   virtual ~DiagnosticNoteRenderer();
   
   virtual void emitBasicNote(StringRef Message);
     
   virtual void emitIncludeLocation(SourceLocation Loc,
-                                   PresumedLoc PLoc);
+                                   PresumedLoc PLoc,
+                                   const SourceManager &SM);
   
-  virtual void emitNote(SourceLocation Loc, StringRef Message) = 0;
+  virtual void emitNote(SourceLocation Loc, StringRef Message,
+                        const SourceManager *SM) = 0;
 };
 } // end clang namespace
 #endif

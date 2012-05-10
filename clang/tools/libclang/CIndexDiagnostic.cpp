@@ -86,11 +86,10 @@ public:
     
 class CXDiagnosticRenderer : public DiagnosticNoteRenderer {
 public:  
-  CXDiagnosticRenderer(const SourceManager &SM,
-                       const LangOptions &LangOpts,
+  CXDiagnosticRenderer(const LangOptions &LangOpts,
                        const DiagnosticOptions &DiagOpts,
                        CXDiagnosticSetImpl *mainSet)
-  : DiagnosticNoteRenderer(SM, LangOpts, DiagOpts),
+  : DiagnosticNoteRenderer(LangOpts, DiagOpts),
     CurrentSet(mainSet), MainSet(mainSet) {}
   
   virtual ~CXDiagnosticRenderer() {}
@@ -116,26 +115,38 @@ public:
                                      DiagnosticsEngine::Level Level,
                                      StringRef Message,
                                      ArrayRef<CharSourceRange> Ranges,
+                                     const SourceManager *SM,
                                      DiagOrStoredDiag D) {
     if (!D.isNull())
       return;
     
-    CXSourceLocation L = translateSourceLocation(SM, LangOpts, Loc);
+    CXSourceLocation L;
+    if (SM)
+      L = translateSourceLocation(*SM, LangOpts, Loc);
+    else
+      L = clang_getNullLocation();
     CXDiagnosticImpl *CD = new CXDiagnosticCustomNoteImpl(Message, L);
     CurrentSet->appendDiagnostic(CD);
   }
   
   virtual void emitDiagnosticLoc(SourceLocation Loc, PresumedLoc PLoc,
                                  DiagnosticsEngine::Level Level,
-                                 ArrayRef<CharSourceRange> Ranges) {}
+                                 ArrayRef<CharSourceRange> Ranges,
+                                 const SourceManager &SM) {}
 
   virtual void emitCodeContext(SourceLocation Loc,
                                DiagnosticsEngine::Level Level,
                                SmallVectorImpl<CharSourceRange>& Ranges,
-                               ArrayRef<FixItHint> Hints) {}
+                               ArrayRef<FixItHint> Hints,
+                               const SourceManager &SM) {}
   
-  virtual void emitNote(SourceLocation Loc, StringRef Message) {
-    CXSourceLocation L = translateSourceLocation(SM, LangOpts, Loc);
+  virtual void emitNote(SourceLocation Loc, StringRef Message,
+                        const SourceManager *SM) {
+    CXSourceLocation L;
+    if (SM)
+      L = translateSourceLocation(*SM, LangOpts, Loc);
+    else
+      L = clang_getNullLocation();
     CurrentSet->appendDiagnostic(new CXDiagnosticCustomNoteImpl(Message,
                                                                 L));
   }
@@ -181,8 +192,7 @@ CXDiagnosticSetImpl *cxdiag::lazyCreateDiags(CXTranslationUnit TU,
     CXDiagnosticSetImpl *Set = new CXDiagnosticSetImpl();
     TU->Diagnostics = Set;
     DiagnosticOptions DOpts;
-    CXDiagnosticRenderer Renderer(AU->getSourceManager(),
-                                  AU->getASTContext().getLangOpts(),
+    CXDiagnosticRenderer Renderer(AU->getASTContext().getLangOpts(),
                                   DOpts, Set);
     
     for (ASTUnit::stored_diag_iterator it = AU->stored_diag_begin(),
