@@ -25,7 +25,10 @@ def HasV3TOnly                  : Predicate<"Subtarget.hasV3TOpsOnly()">;
 def NoV3T                       : Predicate<"!Subtarget.hasV3TOps()">;
 def HasV4T                      : Predicate<"Subtarget.hasV4TOps()">;
 def NoV4T                       : Predicate<"!Subtarget.hasV4TOps()">;
+def HasV5T                      : Predicate<"Subtarget.hasV5TOps()">;
+def NoV5T                       : Predicate<"!Subtarget.hasV5TOps()">;
 def UseMEMOP                    : Predicate<"Subtarget.useMemOps()">;
+def IEEERndNearV5T              : Predicate<"Subtarget.modeIEEERndNear()">;
 
 // Addressing modes.
 def ADDRrr : ComplexPattern<i32, 2, "SelectADDRrr", [], []>;
@@ -241,7 +244,6 @@ let neverHasSideEffects = 1, isPredicable = 1 in
 def TFR64 : ALU32_ri<(outs DoubleRegs:$dst), (ins DoubleRegs:$src1),
           "$dst = $src1",
           []>;
-
 
 // Transfer control register.
 let neverHasSideEffects = 1 in
@@ -1861,7 +1863,7 @@ def POST_STdri_cPt : STInst2PI<(outs IntRegs:$dst),
             "$src3 = $dst">;
 
 // if (!Pv) memd(Rx++#s4:3)=Rtt
-let AddedComplexity = 10, neverHasSideEffects = 1,
+let AddedComplexity = 10, neverHasSideEffects = 1, isPredicated = 1,
     isPredicated = 1 in
 def POST_STdri_cNotPt : STInst2PI<(outs IntRegs:$dst),
             (ins PredRegs:$src1, DoubleRegs:$src2, IntRegs:$src3,
@@ -2169,28 +2171,49 @@ def SXTW : ALU64_rr<(outs DoubleRegs:$dst), (ins IntRegs:$src1),
 //===----------------------------------------------------------------------===//
 // STYPE/BIT +
 //===----------------------------------------------------------------------===//
-//===----------------------------------------------------------------------===//
-// STYPE/BIT -
-//===----------------------------------------------------------------------===//
+// clrbit.
+def CLRBIT : ALU64_rr<(outs IntRegs:$dst), (ins IntRegs:$src1, u5Imm:$src2),
+            "$dst = clrbit($src1, #$src2)",
+            [(set (i32 IntRegs:$dst), (and (i32 IntRegs:$src1),
+                                           (not
+                                              (shl 1, u5ImmPred:$src2))))]>;
 
+def CLRBIT_31 : ALU64_rr<(outs IntRegs:$dst), (ins IntRegs:$src1, u5Imm:$src2),
+            "$dst = clrbit($src1, #$src2)",
+            []>;
 
-//===----------------------------------------------------------------------===//
-// STYPE/COMPLEX +
-//===----------------------------------------------------------------------===//
-//===----------------------------------------------------------------------===//
-// STYPE/COMPLEX -
-//===----------------------------------------------------------------------===//
+// Map from r0 = and(r1, 2147483647) to r0 = clrbit(r1, #31).
+def : Pat <(and (i32 IntRegs:$src1), 2147483647),
+      (CLRBIT_31 (i32 IntRegs:$src1), 31)>;
 
-//===----------------------------------------------------------------------===//
-// STYPE/PERM +
-//===----------------------------------------------------------------------===//
-//===----------------------------------------------------------------------===//
-// STYPE/PERM -
-//===----------------------------------------------------------------------===//
+// setbit.
+def SETBIT : ALU64_rr<(outs IntRegs:$dst), (ins IntRegs:$src1, u5Imm:$src2),
+            "$dst = setbit($src1, #$src2)",
+            [(set (i32 IntRegs:$dst), (or (i32 IntRegs:$src1),
+                                          (shl 1, u5ImmPred:$src2)))]>;
 
-//===----------------------------------------------------------------------===//
-// STYPE/PRED +
-//===----------------------------------------------------------------------===//
+// Map from r0 = or(r1, -2147483648) to r0 = setbit(r1, #31).
+def SETBIT_31 : ALU64_rr<(outs IntRegs:$dst), (ins IntRegs:$src1, u5Imm:$src2),
+            "$dst = setbit($src1, #$src2)",
+            []>;
+
+def : Pat <(or (i32 IntRegs:$src1), -2147483648),
+      (SETBIT_31 (i32 IntRegs:$src1), 31)>;
+
+// togglebit.
+def TOGBIT : ALU64_rr<(outs IntRegs:$dst), (ins IntRegs:$src1, u5Imm:$src2),
+            "$dst = setbit($src1, #$src2)",
+            [(set (i32 IntRegs:$dst), (xor (i32 IntRegs:$src1),
+                                          (shl 1, u5ImmPred:$src2)))]>;
+
+// Map from r0 = xor(r1, -2147483648) to r0 = togglebit(r1, #31).
+def TOGBIT_31 : ALU64_rr<(outs IntRegs:$dst), (ins IntRegs:$src1, u5Imm:$src2),
+            "$dst = togglebit($src1, #$src2)",
+            []>;
+
+def : Pat <(xor (i32 IntRegs:$src1), -2147483648),
+      (TOGBIT_31 (i32 IntRegs:$src1), 31)>;
+
 // Predicate transfer.
 let neverHasSideEffects = 1 in
 def TFR_RsPd : SInst<(outs IntRegs:$dst), (ins PredRegs:$src1),
@@ -3518,4 +3541,15 @@ include "HexagonInstrInfoV4.td"
 //===----------------------------------------------------------------------===//
 // V4 Instructions -
 //===----------------------------------------------------------------------===//
+
+//===----------------------------------------------------------------------===//
+// V5 Instructions +
+//===----------------------------------------------------------------------===//
+
+include "HexagonInstrInfoV5.td"
+
+//===----------------------------------------------------------------------===//
+// V5 Instructions -
+//===----------------------------------------------------------------------===//
+
 

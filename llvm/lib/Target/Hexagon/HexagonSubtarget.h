@@ -22,16 +22,18 @@
 #include "HexagonGenSubtargetInfo.inc"
 
 #define Hexagon_SMALL_DATA_THRESHOLD 8
+#define Hexagon_SLOTS 4
 
 namespace llvm {
 
 class HexagonSubtarget : public HexagonGenSubtargetInfo {
 
   bool UseMemOps;
+  bool ModeIEEERndNear;
 
 public:
   enum HexagonArchEnum {
-    V1, V2, V3, V4
+    V1, V2, V3, V4, V5
   };
 
   HexagonArchEnum HexagonArchVersion;
@@ -55,7 +57,11 @@ public:
   bool hasV3TOps () const { return HexagonArchVersion >= V3; }
   bool hasV3TOpsOnly () const { return HexagonArchVersion == V3; }
   bool hasV4TOps () const { return HexagonArchVersion >= V4; }
+  bool hasV4TOpsOnly () const { return HexagonArchVersion == V4; }
   bool useMemOps () const { return HexagonArchVersion >= V4 && UseMemOps; }
+  bool hasV5TOps () const { return HexagonArchVersion >= V5; }
+  bool hasV5TOpsOnly () const { return HexagonArchVersion == V5; }
+  bool modeIEEERndNear () const { return ModeIEEERndNear; }
 
   bool isSubtargetV2() const { return HexagonArchVersion == V2;}
   const std::string &getCPUString () const { return CPUString; }

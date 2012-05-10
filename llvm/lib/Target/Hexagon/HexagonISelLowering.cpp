@@ -103,12 +103,12 @@ CC_Hexagon_VarArg (unsigned ValNo, MVT ValVT,
     State.addLoc(CCValAssign::getMem(ValNo, ValVT, ofst, LocVT, LocInfo));
     return false;
   }
-  if (LocVT == MVT::i32) {
+  if (LocVT == MVT::i32 || LocVT == MVT::f32) {
     ofst = State.AllocateStack(4, 4);
     State.addLoc(CCValAssign::getMem(ValNo, ValVT, ofst, LocVT, LocInfo));
     return false;
   }
-  if (LocVT == MVT::i64) {
+  if (LocVT == MVT::i64 || LocVT == MVT::f64) {
     ofst = State.AllocateStack(8, 8);
     State.addLoc(CCValAssign::getMem(ValNo, ValVT, ofst, LocVT, LocInfo));
     return false;
@@ -142,12 +142,12 @@ CC_Hexagon (unsigned ValNo, MVT ValVT,
       LocInfo = CCValAssign::AExt;
   }
 
-  if (LocVT == MVT::i32) {
+  if (LocVT == MVT::i32 || LocVT == MVT::f32) {
     if (!CC_Hexagon32(ValNo, ValVT, LocVT, LocInfo, ArgFlags, State))
       return false;
   }
 
-  if (LocVT == MVT::i64) {
+  if (LocVT == MVT::i64 || LocVT == MVT::f64) {
     if (!CC_Hexagon64(ValNo, ValVT, LocVT, LocInfo, ArgFlags, State))
       return false;
   }
@@ -217,12 +217,12 @@ static bool RetCC_Hexagon(unsigned ValNo, MVT ValVT,
       LocInfo = CCValAssign::AExt;
   }
 
-  if (LocVT == MVT::i32) {
+  if (LocVT == MVT::i32 || LocVT == MVT::f32) {
     if (!RetCC_Hexagon32(ValNo, ValVT, LocVT, LocInfo, ArgFlags, State))
     return false;
   }
 
-  if (LocVT == MVT::i64) {
+  if (LocVT == MVT::i64 || LocVT == MVT::f64) {
     if (!RetCC_Hexagon64(ValNo, ValVT, LocVT, LocInfo, ArgFlags, State))
     return false;
   }
@@ -234,7 +234,7 @@ static bool RetCC_Hexagon32(unsigned ValNo, MVT ValVT,
                             MVT LocVT, CCValAssign::LocInfo LocInfo,
                             ISD::ArgFlagsTy ArgFlags, CCState &State) {
 
-  if (LocVT == MVT::i32) {
+  if (LocVT == MVT::i32 || LocVT == MVT::f32) {
     if (unsigned Reg = State.AllocateReg(Hexagon::R0)) {
       State.addLoc(CCValAssign::getReg(ValNo, ValVT, Reg, LocVT, LocInfo));
       return false;
@@ -249,7 +249,7 @@ static bool RetCC_Hexagon32(unsigned ValNo, MVT ValVT,
 static bool RetCC_Hexagon64(unsigned ValNo, MVT ValVT,
                             MVT LocVT, CCValAssign::LocInfo LocInfo,
                             ISD::ArgFlagsTy ArgFlags, CCState &State) {
-  if (LocVT == MVT::i64) {
+  if (LocVT == MVT::i64 || LocVT == MVT::f64) {
     if (unsigned Reg = State.AllocateReg(Hexagon::D0)) {
       State.addLoc(CCValAssign::getReg(ValNo, ValVT, Reg, LocVT, LocInfo));
       return false;
@@ -839,7 +839,8 @@ const {
       // 1. int, long long, ptr args that get allocated in register.
       // 2. Large struct that gets an register to put its address in.
       EVT RegVT = VA.getLocVT();
-      if (RegVT == MVT::i8 || RegVT == MVT::i16 || RegVT == MVT::i32) {
+      if (RegVT == MVT::i8 || RegVT == MVT::i16 ||
+          RegVT == MVT::i32 || RegVT == MVT::f32) {
         unsigned VReg =
           RegInfo.createVirtualRegister(&Hexagon::IntRegsRegClass);
         RegInfo.addLiveIn(VA.getLocReg(), VReg);
@@ -918,14 +919,33 @@ HexagonTargetLowering::LowerVASTART(SDValue Op, SelectionDAG &DAG) const {
 
 SDValue
 HexagonTargetLowering::LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const {
+  SDValue LHS = Op.getOperand(0);
+  SDValue RHS = Op.getOperand(1);
+  SDValue CC = Op.getOperand(4);
+  SDValue TrueVal = Op.getOperand(2);
+  SDValue FalseVal = Op.getOperand(3);
+  DebugLoc dl = Op.getDebugLoc();
   SDNode* OpNode = Op.getNode();
+  EVT SVT = OpNode->getValueType(0);
 
-  SDValue Cond = DAG.getNode(ISD::SETCC, Op.getDebugLoc(), MVT::i1,
-                             Op.getOperand(2), Op.getOperand(3),
-                             Op.getOperand(4));
-  return DAG.getNode(ISD::SELECT, Op.getDebugLoc(), OpNode->getValueType(0),
-                     Cond, Op.getOperand(0),
-                     Op.getOperand(1));
+  SDValue Cond = DAG.getNode(ISD::SETCC, dl, MVT::i1, LHS, RHS, CC);
+  return DAG.getNode(ISD::SELECT, dl, SVT, Cond, TrueVal, FalseVal);
+}
+
+SDValue
+HexagonTargetLowering::LowerConstantPool(SDValue Op, SelectionDAG &DAG) const {
+  EVT ValTy = Op.getValueType();
+
+  DebugLoc dl = Op.getDebugLoc();
+  ConstantPoolSDNode *CP = cast<ConstantPoolSDNode>(Op);
+  SDValue Res;
+  if (CP->isMachineConstantPoolEntry())
+    Res = DAG.getTargetConstantPool(CP->getMachineCPVal(), ValTy,
+                                    CP->getAlignment());
+  else
+    Res = DAG.getTargetConstantPool(CP->getConstVal(), ValTy,
+                                    CP->getAlignment());
+  return DAG.getNode(HexagonISD::CONST32, dl, ValTy, Res);
 }
 
 SDValue
@@ -1010,9 +1030,16 @@ HexagonTargetLowering::HexagonTargetLowering(HexagonTargetMachine
   : TargetLowering(targetmachine, new HexagonTargetObjectFile()),
     TM(targetmachine) {
 
+    const HexagonRegisterInfo* QRI = TM.getRegisterInfo();
+
     // Set up the register classes.
     addRegisterClass(MVT::i32, &Hexagon::IntRegsRegClass);
     addRegisterClass(MVT::i64, &Hexagon::DoubleRegsRegClass);
+
+    if (QRI->Subtarget.hasV5TOps()) {
+      addRegisterClass(MVT::f32, &Hexagon::IntRegsRegClass);
+      addRegisterClass(MVT::f64, &Hexagon::DoubleRegsRegClass);
+    }
 
     addRegisterClass(MVT::i1, &Hexagon::PredRegsRegClass);
 
@@ -1028,31 +1055,15 @@ HexagonTargetLowering::HexagonTargetLowering(HexagonTargetMachine
     //
     // Library calls for unsupported operations
     //
-    setLibcallName(RTLIB::OGT_F64, "__hexagon_gtdf2");
 
-    setLibcallName(RTLIB::SINTTOFP_I64_F64, "__hexagon_floatdidf");
     setLibcallName(RTLIB::SINTTOFP_I128_F64, "__hexagon_floattidf");
     setLibcallName(RTLIB::SINTTOFP_I128_F32, "__hexagon_floattisf");
-    setLibcallName(RTLIB::UINTTOFP_I32_F32, "__hexagon_floatunsisf");
-    setLibcallName(RTLIB::UINTTOFP_I64_F32, "__hexagon_floatundisf");
-    setLibcallName(RTLIB::SINTTOFP_I64_F32, "__hexagon_floatdisf");
-    setLibcallName(RTLIB::UINTTOFP_I64_F64, "__hexagon_floatundidf");
 
-    setLibcallName(RTLIB::FPTOUINT_F32_I32, "__hexagon_fixunssfsi");
-    setLibcallName(RTLIB::FPTOUINT_F32_I64, "__hexagon_fixunssfdi");
     setLibcallName(RTLIB::FPTOUINT_F32_I128, "__hexagon_fixunssfti");
-
-    setLibcallName(RTLIB::FPTOUINT_F64_I32, "__hexagon_fixunsdfsi");
-    setLibcallName(RTLIB::FPTOUINT_F64_I64, "__hexagon_fixunsdfdi");
     setLibcallName(RTLIB::FPTOUINT_F64_I128, "__hexagon_fixunsdfti");
 
-    setLibcallName(RTLIB::UINTTOFP_I32_F64, "__hexagon_floatunsidf");
-    setLibcallName(RTLIB::FPTOSINT_F32_I64, "__hexagon_fixsfdi");
     setLibcallName(RTLIB::FPTOSINT_F32_I128, "__hexagon_fixsfti");
-    setLibcallName(RTLIB::FPTOSINT_F64_I64, "__hexagon_fixdfdi");
     setLibcallName(RTLIB::FPTOSINT_F64_I128, "__hexagon_fixdfti");
-
-    setLibcallName(RTLIB::OGT_F64, "__hexagon_gtdf2");
 
     setLibcallName(RTLIB::SDIV_I32, "__hexagon_divsi3");
     setOperationAction(ISD::SDIV,  MVT::i32, Expand);
@@ -1082,92 +1093,184 @@ HexagonTargetLowering::HexagonTargetLowering(HexagonTargetMachine
     setLibcallName(RTLIB::DIV_F64, "__hexagon_divdf3");
     setOperationAction(ISD::FDIV,  MVT::f64, Expand);
 
-    setLibcallName(RTLIB::FPEXT_F32_F64, "__hexagon_extendsfdf2");
-    setOperationAction(ISD::FP_EXTEND,  MVT::f32, Expand);
+    setOperationAction(ISD::FSQRT,  MVT::f32, Expand);
+    setOperationAction(ISD::FSQRT,  MVT::f64, Expand);
+    setOperationAction(ISD::FSIN,  MVT::f32, Expand);
+    setOperationAction(ISD::FSIN,  MVT::f64, Expand);
 
-    setLibcallName(RTLIB::SINTTOFP_I32_F32, "__hexagon_floatsisf");
-    setOperationAction(ISD::SINT_TO_FP,  MVT::i32, Expand);
+    if (QRI->Subtarget.hasV5TOps()) {
+      // Hexagon V5 Support.
+      setOperationAction(ISD::FADD,       MVT::f32, Legal);
+      setOperationAction(ISD::FADD,       MVT::f64, Legal);
+      setOperationAction(ISD::FP_EXTEND,  MVT::f32, Legal);
+      setCondCodeAction(ISD::SETOEQ,      MVT::f32, Legal);
+      setCondCodeAction(ISD::SETOEQ,      MVT::f64, Legal);
+      setCondCodeAction(ISD::SETUEQ,      MVT::f32, Legal);
+      setCondCodeAction(ISD::SETUEQ,      MVT::f64, Legal);
 
-    setLibcallName(RTLIB::ADD_F64, "__hexagon_adddf3");
-    setOperationAction(ISD::FADD,  MVT::f64, Expand);
+      setCondCodeAction(ISD::SETOGE,      MVT::f32, Legal);
+      setCondCodeAction(ISD::SETOGE,      MVT::f64, Legal);
+      setCondCodeAction(ISD::SETUGE,      MVT::f32, Legal);
+      setCondCodeAction(ISD::SETUGE,      MVT::f64, Legal);
 
-    setLibcallName(RTLIB::ADD_F32, "__hexagon_addsf3");
-    setOperationAction(ISD::FADD,  MVT::f32, Expand);
+      setCondCodeAction(ISD::SETOGT,      MVT::f32, Legal);
+      setCondCodeAction(ISD::SETOGT,      MVT::f64, Legal);
+      setCondCodeAction(ISD::SETUGT,      MVT::f32, Legal);
+      setCondCodeAction(ISD::SETUGT,      MVT::f64, Legal);
 
-    setLibcallName(RTLIB::ADD_F32, "__hexagon_addsf3");
-    setOperationAction(ISD::FADD,  MVT::f32, Expand);
+      setCondCodeAction(ISD::SETOLE,      MVT::f32, Legal);
+      setCondCodeAction(ISD::SETOLE,      MVT::f64, Legal);
+      setCondCodeAction(ISD::SETOLT,      MVT::f32, Legal);
+      setCondCodeAction(ISD::SETOLT,      MVT::f64, Legal);
 
-    setLibcallName(RTLIB::OEQ_F32, "__hexagon_eqsf2");
-    setCondCodeAction(ISD::SETOEQ, MVT::f32, Expand);
+      setOperationAction(ISD::ConstantFP,  MVT::f32, Legal);
+      setOperationAction(ISD::ConstantFP,  MVT::f64, Legal);
 
-    setLibcallName(RTLIB::FPTOSINT_F64_I32, "__hexagon_fixdfsi");
-    setOperationAction(ISD::FP_TO_SINT, MVT::f64, Expand);
+      setOperationAction(ISD::FP_TO_UINT, MVT::i1, Promote);
+      setOperationAction(ISD::FP_TO_SINT, MVT::i1, Promote);
+      setOperationAction(ISD::UINT_TO_FP, MVT::i1, Promote);
+      setOperationAction(ISD::SINT_TO_FP, MVT::i1, Promote);
 
-    setLibcallName(RTLIB::FPTOSINT_F32_I32, "__hexagon_fixsfsi");
-    setOperationAction(ISD::FP_TO_SINT, MVT::f32, Expand);
+      setOperationAction(ISD::FP_TO_UINT, MVT::i8, Promote);
+      setOperationAction(ISD::FP_TO_SINT, MVT::i8, Promote);
+      setOperationAction(ISD::UINT_TO_FP, MVT::i8, Promote);
+      setOperationAction(ISD::SINT_TO_FP, MVT::i8, Promote);
 
-    setLibcallName(RTLIB::SINTTOFP_I32_F64, "__hexagon_floatsidf");
-    setOperationAction(ISD::SINT_TO_FP, MVT::i32, Expand);
+      setOperationAction(ISD::FP_TO_UINT, MVT::i16, Promote);
+      setOperationAction(ISD::FP_TO_SINT, MVT::i16, Promote);
+      setOperationAction(ISD::UINT_TO_FP, MVT::i16, Promote);
+      setOperationAction(ISD::SINT_TO_FP, MVT::i16, Promote);
 
-    setLibcallName(RTLIB::OGE_F64, "__hexagon_gedf2");
-    setCondCodeAction(ISD::SETOGE, MVT::f64, Expand);
+      setOperationAction(ISD::FP_TO_UINT, MVT::i32, Legal);
+      setOperationAction(ISD::FP_TO_SINT, MVT::i32, Legal);
+      setOperationAction(ISD::UINT_TO_FP, MVT::i32, Legal);
+      setOperationAction(ISD::SINT_TO_FP, MVT::i32, Legal);
 
-    setLibcallName(RTLIB::OGE_F32, "__hexagon_gesf2");
-    setCondCodeAction(ISD::SETOGE, MVT::f32, Expand);
+      setOperationAction(ISD::FP_TO_UINT, MVT::i64, Legal);
+      setOperationAction(ISD::FP_TO_SINT, MVT::i64, Legal);
+      setOperationAction(ISD::UINT_TO_FP, MVT::i64, Legal);
+      setOperationAction(ISD::SINT_TO_FP, MVT::i64, Legal);
 
-    setLibcallName(RTLIB::OGT_F32, "__hexagon_gtsf2");
-    setCondCodeAction(ISD::SETOGT, MVT::f32, Expand);
+      setOperationAction(ISD::FABS,  MVT::f32, Legal);
+      setOperationAction(ISD::FABS,  MVT::f64, Expand);
 
-    setLibcallName(RTLIB::OLE_F64, "__hexagon_ledf2");
-    setCondCodeAction(ISD::SETOLE, MVT::f64, Expand);
+      setOperationAction(ISD::FNEG,  MVT::f32, Legal);
+      setOperationAction(ISD::FNEG,  MVT::f64, Expand);
+    } else {
 
-    setLibcallName(RTLIB::OLE_F32, "__hexagon_lesf2");
-    setCondCodeAction(ISD::SETOLE, MVT::f32, Expand);
+      // Expand fp<->uint.
+      setOperationAction(ISD::FP_TO_SINT,  MVT::i32, Expand);
+      setOperationAction(ISD::FP_TO_UINT,  MVT::i32, Expand);
 
-    setLibcallName(RTLIB::OLT_F64, "__hexagon_ltdf2");
-    setCondCodeAction(ISD::SETOLT, MVT::f64, Expand);
+      setOperationAction(ISD::SINT_TO_FP,  MVT::i32, Expand);
+      setOperationAction(ISD::UINT_TO_FP,  MVT::i32, Expand);
 
-    setLibcallName(RTLIB::OLT_F32, "__hexagon_ltsf2");
-    setCondCodeAction(ISD::SETOLT, MVT::f32, Expand);
+      setLibcallName(RTLIB::SINTTOFP_I64_F32, "__hexagon_floatdisf");
+      setLibcallName(RTLIB::UINTTOFP_I64_F32, "__hexagon_floatundisf");
+
+      setLibcallName(RTLIB::UINTTOFP_I32_F32, "__hexagon_floatunsisf");
+      setLibcallName(RTLIB::SINTTOFP_I32_F32, "__hexagon_floatsisf");
+
+      setLibcallName(RTLIB::SINTTOFP_I64_F64, "__hexagon_floatdidf");
+      setLibcallName(RTLIB::UINTTOFP_I64_F64, "__hexagon_floatundidf");
+
+      setLibcallName(RTLIB::UINTTOFP_I32_F64, "__hexagon_floatunsidf");
+      setLibcallName(RTLIB::SINTTOFP_I32_F64, "__hexagon_floatsidf");
+
+      setLibcallName(RTLIB::FPTOUINT_F32_I32, "__hexagon_fixunssfsi");
+      setLibcallName(RTLIB::FPTOUINT_F32_I64, "__hexagon_fixunssfdi");
+
+      setLibcallName(RTLIB::FPTOSINT_F64_I64, "__hexagon_fixdfdi");
+      setLibcallName(RTLIB::FPTOSINT_F32_I64, "__hexagon_fixsfdi");
+
+      setLibcallName(RTLIB::FPTOUINT_F64_I32, "__hexagon_fixunsdfsi");
+      setLibcallName(RTLIB::FPTOUINT_F64_I64, "__hexagon_fixunsdfdi");
+
+      setLibcallName(RTLIB::ADD_F64, "__hexagon_adddf3");
+      setOperationAction(ISD::FADD,  MVT::f64, Expand);
+
+      setLibcallName(RTLIB::ADD_F32, "__hexagon_addsf3");
+      setOperationAction(ISD::FADD,  MVT::f32, Expand);
+
+      setLibcallName(RTLIB::FPEXT_F32_F64, "__hexagon_extendsfdf2");
+      setOperationAction(ISD::FP_EXTEND,  MVT::f32, Expand);
+
+      setLibcallName(RTLIB::OEQ_F32, "__hexagon_eqsf2");
+      setCondCodeAction(ISD::SETOEQ, MVT::f32, Expand);
+
+      setLibcallName(RTLIB::OEQ_F64, "__hexagon_eqdf2");
+      setCondCodeAction(ISD::SETOEQ, MVT::f64, Expand);
+
+      setLibcallName(RTLIB::OGE_F32, "__hexagon_gesf2");
+      setCondCodeAction(ISD::SETOGE, MVT::f32, Expand);
+
+      setLibcallName(RTLIB::OGE_F64, "__hexagon_gedf2");
+      setCondCodeAction(ISD::SETOGE, MVT::f64, Expand);
+
+      setLibcallName(RTLIB::OGT_F32, "__hexagon_gtsf2");
+      setCondCodeAction(ISD::SETOGT, MVT::f32, Expand);
+
+      setLibcallName(RTLIB::OGT_F64, "__hexagon_gtdf2");
+      setCondCodeAction(ISD::SETOGT, MVT::f64, Expand);
+
+      setLibcallName(RTLIB::FPTOSINT_F64_I32, "__hexagon_fixdfsi");
+      setOperationAction(ISD::FP_TO_SINT, MVT::f64, Expand);
+
+      setLibcallName(RTLIB::FPTOSINT_F32_I32, "__hexagon_fixsfsi");
+      setOperationAction(ISD::FP_TO_SINT, MVT::f32, Expand);
+
+      setLibcallName(RTLIB::OLE_F64, "__hexagon_ledf2");
+      setCondCodeAction(ISD::SETOLE, MVT::f64, Expand);
+
+      setLibcallName(RTLIB::OLE_F32, "__hexagon_lesf2");
+      setCondCodeAction(ISD::SETOLE, MVT::f32, Expand);
+
+      setLibcallName(RTLIB::OLT_F64, "__hexagon_ltdf2");
+      setCondCodeAction(ISD::SETOLT, MVT::f64, Expand);
+
+      setLibcallName(RTLIB::OLT_F32, "__hexagon_ltsf2");
+      setCondCodeAction(ISD::SETOLT, MVT::f32, Expand);
+
+      setLibcallName(RTLIB::MUL_F64, "__hexagon_muldf3");
+      setOperationAction(ISD::FMUL, MVT::f64, Expand);
+
+      setLibcallName(RTLIB::MUL_F32, "__hexagon_mulsf3");
+      setOperationAction(ISD::MUL, MVT::f32, Expand);
+
+      setLibcallName(RTLIB::UNE_F64, "__hexagon_nedf2");
+      setCondCodeAction(ISD::SETUNE, MVT::f64, Expand);
+
+      setLibcallName(RTLIB::UNE_F32, "__hexagon_nesf2");
+
+      setLibcallName(RTLIB::SUB_F64, "__hexagon_subdf3");
+      setOperationAction(ISD::SUB, MVT::f64, Expand);
+
+      setLibcallName(RTLIB::SUB_F32, "__hexagon_subsf3");
+      setOperationAction(ISD::SUB, MVT::f32, Expand);
+
+      setLibcallName(RTLIB::FPROUND_F64_F32, "__hexagon_truncdfsf2");
+      setOperationAction(ISD::FP_ROUND, MVT::f64, Expand);
+
+      setLibcallName(RTLIB::UO_F64, "__hexagon_unorddf2");
+      setCondCodeAction(ISD::SETUO, MVT::f64, Expand);
+
+      setLibcallName(RTLIB::O_F64, "__hexagon_unorddf2");
+      setCondCodeAction(ISD::SETO, MVT::f64, Expand);
+
+      setLibcallName(RTLIB::O_F32, "__hexagon_unordsf2");
+      setCondCodeAction(ISD::SETO, MVT::f32, Expand);
+
+      setLibcallName(RTLIB::UO_F32, "__hexagon_unordsf2");
+      setCondCodeAction(ISD::SETUO, MVT::f32, Expand);
+
+      setOperationAction(ISD::FABS,  MVT::f32, Expand);
+      setOperationAction(ISD::FABS,  MVT::f64, Expand);
+      setOperationAction(ISD::FNEG,  MVT::f32, Expand);
+      setOperationAction(ISD::FNEG,  MVT::f64, Expand);
+    }
 
     setLibcallName(RTLIB::SREM_I32, "__hexagon_modsi3");
     setOperationAction(ISD::SREM, MVT::i32, Expand);
-
-    setLibcallName(RTLIB::MUL_F64, "__hexagon_muldf3");
-    setOperationAction(ISD::FMUL, MVT::f64, Expand);
-
-    setLibcallName(RTLIB::MUL_F32, "__hexagon_mulsf3");
-    setOperationAction(ISD::MUL, MVT::f32, Expand);
-
-    setLibcallName(RTLIB::UNE_F64, "__hexagon_nedf2");
-    setCondCodeAction(ISD::SETUNE, MVT::f64, Expand);
-
-    setLibcallName(RTLIB::UNE_F32, "__hexagon_nesf2");
-
-
-    setLibcallName(RTLIB::SUB_F64, "__hexagon_subdf3");
-    setOperationAction(ISD::SUB, MVT::f64, Expand);
-
-    setLibcallName(RTLIB::SUB_F32, "__hexagon_subsf3");
-    setOperationAction(ISD::SUB, MVT::f32, Expand);
-
-    setLibcallName(RTLIB::FPROUND_F64_F32, "__hexagon_truncdfsf2");
-    setOperationAction(ISD::FP_ROUND, MVT::f64, Expand);
-
-    setLibcallName(RTLIB::UO_F64, "__hexagon_unorddf2");
-    setCondCodeAction(ISD::SETUO, MVT::f64, Expand);
-
-    setLibcallName(RTLIB::O_F64, "__hexagon_unorddf2");
-    setCondCodeAction(ISD::SETO, MVT::f64, Expand);
-
-    setLibcallName(RTLIB::OEQ_F64, "__hexagon_eqdf2");
-    setCondCodeAction(ISD::SETOEQ, MVT::f64, Expand);
-
-    setLibcallName(RTLIB::O_F32, "__hexagon_unordsf2");
-    setCondCodeAction(ISD::SETO, MVT::f32, Expand);
-
-    setLibcallName(RTLIB::UO_F32, "__hexagon_unordsf2");
-    setCondCodeAction(ISD::SETUO, MVT::f32, Expand);
 
     setIndexedLoadAction(ISD::POST_INC, MVT::i8, Legal);
     setIndexedLoadAction(ISD::POST_INC, MVT::i16, Legal);
@@ -1208,20 +1311,33 @@ HexagonTargetLowering::HexagonTargetLowering(HexagonTargetMachine
 
     setOperationAction(ISD::BSWAP, MVT::i64, Expand);
 
-    // Expand fp<->uint.
-    setOperationAction(ISD::FP_TO_UINT, MVT::i32, Expand);
-    setOperationAction(ISD::UINT_TO_FP, MVT::i32, Expand);
-
-    // Hexagon has no select or setcc: expand to SELECT_CC.
-    setOperationAction(ISD::SELECT, MVT::f32, Expand);
-    setOperationAction(ISD::SELECT, MVT::f64, Expand);
-
     // Lower SELECT_CC to SETCC and SELECT.
     setOperationAction(ISD::SELECT_CC, MVT::i32,   Custom);
     setOperationAction(ISD::SELECT_CC, MVT::i64,   Custom);
-    // This is a workaround documented in DAGCombiner.cpp:2892 We don't
-    // support SELECT_CC on every type.
-    setOperationAction(ISD::SELECT_CC, MVT::Other,   Expand);
+
+    if (QRI->Subtarget.hasV5TOps()) {
+
+      // We need to make the operation type of SELECT node to be Custom,
+      // such that we don't go into the infinite loop of
+      // select ->  setcc -> select_cc -> select loop.
+      setOperationAction(ISD::SELECT, MVT::f32, Custom);
+      setOperationAction(ISD::SELECT, MVT::f64, Custom);
+
+      setOperationAction(ISD::SELECT_CC, MVT::f32, Expand);
+      setOperationAction(ISD::SELECT_CC, MVT::f64, Expand);
+      setOperationAction(ISD::SELECT_CC, MVT::Other, Expand);
+
+    } else {
+
+      // Hexagon has no select or setcc: expand to SELECT_CC.
+      setOperationAction(ISD::SELECT, MVT::f32, Expand);
+      setOperationAction(ISD::SELECT, MVT::f64, Expand);
+
+      // This is a workaround documented in DAGCombiner.cpp:2892 We don't
+      // support SELECT_CC on every type.
+      setOperationAction(ISD::SELECT_CC, MVT::Other,   Expand);
+
+    }
 
     setOperationAction(ISD::BR_CC, MVT::Other, Expand);
     setOperationAction(ISD::BRIND, MVT::Other, Expand);
@@ -1307,22 +1423,22 @@ const char*
 HexagonTargetLowering::getTargetNodeName(unsigned Opcode) const {
   switch (Opcode) {
     default: return 0;
-    case HexagonISD::CONST32:    return "HexagonISD::CONST32";
+    case HexagonISD::CONST32:     return "HexagonISD::CONST32";
     case HexagonISD::ADJDYNALLOC: return "HexagonISD::ADJDYNALLOC";
-    case HexagonISD::CMPICC:     return "HexagonISD::CMPICC";
-    case HexagonISD::CMPFCC:     return "HexagonISD::CMPFCC";
-    case HexagonISD::BRICC:      return "HexagonISD::BRICC";
-    case HexagonISD::BRFCC:      return "HexagonISD::BRFCC";
-    case HexagonISD::SELECT_ICC: return "HexagonISD::SELECT_ICC";
-    case HexagonISD::SELECT_FCC: return "HexagonISD::SELECT_FCC";
-    case HexagonISD::Hi:         return "HexagonISD::Hi";
-    case HexagonISD::Lo:         return "HexagonISD::Lo";
-    case HexagonISD::FTOI:       return "HexagonISD::FTOI";
-    case HexagonISD::ITOF:       return "HexagonISD::ITOF";
-    case HexagonISD::CALL:       return "HexagonISD::CALL";
-    case HexagonISD::RET_FLAG:   return "HexagonISD::RET_FLAG";
-    case HexagonISD::BR_JT:      return "HexagonISD::BR_JT";
-    case HexagonISD::TC_RETURN:  return "HexagonISD::TC_RETURN";
+    case HexagonISD::CMPICC:      return "HexagonISD::CMPICC";
+    case HexagonISD::CMPFCC:      return "HexagonISD::CMPFCC";
+    case HexagonISD::BRICC:       return "HexagonISD::BRICC";
+    case HexagonISD::BRFCC:       return "HexagonISD::BRFCC";
+    case HexagonISD::SELECT_ICC:  return "HexagonISD::SELECT_ICC";
+    case HexagonISD::SELECT_FCC:  return "HexagonISD::SELECT_FCC";
+    case HexagonISD::Hi:          return "HexagonISD::Hi";
+    case HexagonISD::Lo:          return "HexagonISD::Lo";
+    case HexagonISD::FTOI:        return "HexagonISD::FTOI";
+    case HexagonISD::ITOF:        return "HexagonISD::ITOF";
+    case HexagonISD::CALL:        return "HexagonISD::CALL";
+    case HexagonISD::RET_FLAG:    return "HexagonISD::RET_FLAG";
+    case HexagonISD::BR_JT:       return "HexagonISD::BR_JT";
+    case HexagonISD::TC_RETURN:   return "HexagonISD::TC_RETURN";
   }
 }
 
@@ -1347,9 +1463,10 @@ SDValue
 HexagonTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   switch (Op.getOpcode()) {
     default: llvm_unreachable("Should not custom lower this!");
+    case ISD::ConstantPool:       return LowerConstantPool(Op, DAG);
       // Frame & Return address.  Currently unimplemented.
-    case ISD::RETURNADDR: return LowerRETURNADDR(Op, DAG);
-    case ISD::FRAMEADDR:  return LowerFRAMEADDR(Op, DAG);
+    case ISD::RETURNADDR:         return LowerRETURNADDR(Op, DAG);
+    case ISD::FRAMEADDR:          return LowerFRAMEADDR(Op, DAG);
     case ISD::GlobalTLSAddress:
                           llvm_unreachable("TLS not implemented for Hexagon.");
     case ISD::MEMBARRIER:         return LowerMEMBARRIER(Op, DAG);
@@ -1359,9 +1476,10 @@ HexagonTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
     case ISD::BR_JT:              return LowerBR_JT(Op, DAG);
 
     case ISD::DYNAMIC_STACKALLOC: return LowerDYNAMIC_STACKALLOC(Op, DAG);
-    case ISD::SELECT_CC:        return LowerSELECT_CC(Op, DAG);
+    case ISD::SELECT_CC:          return LowerSELECT_CC(Op, DAG);
+    case ISD::SELECT:             return Op;
     case ISD::INTRINSIC_WO_CHAIN: return LowerINTRINSIC_WO_CHAIN(Op, DAG);
-  case ISD::INLINEASM:          return LowerINLINEASM(Op, DAG);
+    case ISD::INLINEASM:          return LowerINLINEASM(Op, DAG);
 
   }
 }
@@ -1404,8 +1522,10 @@ HexagonTargetLowering::getRegForInlineAsmConstraint(const
        case MVT::i32:
        case MVT::i16:
        case MVT::i8:
+       case MVT::f32:
          return std::make_pair(0U, &Hexagon::IntRegsRegClass);
        case MVT::i64:
+       case MVT::f64:
          return std::make_pair(0U, &Hexagon::DoubleRegsRegClass);
       }
     default:
@@ -1414,6 +1534,14 @@ HexagonTargetLowering::getRegForInlineAsmConstraint(const
   }
 
   return TargetLowering::getRegForInlineAsmConstraint(Constraint, VT);
+}
+
+/// isFPImmLegal - Returns true if the target can instruction select the
+/// specified FP immediate natively. If false, the legalizer will
+/// materialize the FP immediate as a load from a constant pool.
+bool HexagonTargetLowering::isFPImmLegal(const APFloat &Imm, EVT VT) const {
+  const HexagonRegisterInfo* QRI = TM.getRegisterInfo();
+  return QRI->Subtarget.hasV5TOps();
 }
 
 /// isLegalAddressingMode - Return true if the addressing mode represented by
