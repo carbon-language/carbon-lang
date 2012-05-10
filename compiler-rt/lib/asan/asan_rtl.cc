@@ -86,7 +86,7 @@ size_t ReadFileToBuffer(const char *file_name, char **buff,
   // The files we usually open are not seekable, so try different buffer sizes.
   for (size_t size = kMinFileLen; size <= max_len; size *= 2) {
     int fd = AsanOpenReadonly(file_name);
-    if (fd < 0) return -1;
+    if (fd < 0) return 0;
     AsanUnmapOrDie(*buff, *buff_size);
     *buff = (char*)AsanMmapSomewhereOrDie(size, __FUNCTION__);
     *buff_size = size;
