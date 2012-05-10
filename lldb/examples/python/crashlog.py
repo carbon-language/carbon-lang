@@ -213,8 +213,14 @@ class CrashLog(symbolication.Symbolicator):
                 elif line.startswith ('Identifier:'):
                     self.process_identifier = line[11:].strip()
                 elif line.startswith ('Version:'):
-                    (self.process_version, compatability_version) = line[8:].strip().split()
-                    self.process_compatability_version = compatability_version.strip('()')
+                    version_string = line[8:].strip()
+                    matched_pair = re.search("(.+)\((.+)\)", version_string)
+                    if matched_pair:
+                        self.process_version = matched_pair.group(1)
+                        self.process_compatability_version = matched_pair.group(2)
+                    else:
+                        self.process = version_string
+                        self.process_compatability_version = version_string
                 elif line.startswith ('Parent Process:'):
                     (self.parent_process_name, pid_with_brackets) = line[15:].strip().split()
                     self.parent_process_id = pid_with_brackets.strip('[]') 
