@@ -260,7 +260,7 @@ bool llvm::isInstructionTriviallyDead(Instruction *I) {
       return isa<UndefValue>(II->getArgOperand(1));
   }
 
-  if (extractMallocCall(I)) return true;
+  if (extractMallocCall(I) || extractCallocCall(I)) return true;
 
   if (CallInst *CI = isFreeCall(I))
     if (Constant *C = dyn_cast<Constant>(CI->getArgOperand(0)))

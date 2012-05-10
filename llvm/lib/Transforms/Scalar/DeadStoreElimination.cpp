@@ -282,6 +282,12 @@ static uint64_t getPointerSize(const Value *V, AliasAnalysis &AA) {
       return C->getZExtValue();
   }
 
+  if (const CallInst *CI = extractCallocCall(V)) {
+    if (const ConstantInt *C1 = dyn_cast<ConstantInt>(CI->getArgOperand(0)))
+      if (const ConstantInt *C2 = dyn_cast<ConstantInt>(CI->getArgOperand(1)))
+       return (C1->getValue() * C2->getValue()).getZExtValue();
+  }
+
   if (TD == 0)
     return AliasAnalysis::UnknownSize;
 
@@ -704,9 +710,11 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
 
     // Okay, so these are dead heap objects, but if the pointer never escapes
     // then it's leaked by this function anyways.
-    if (CallInst *CI = extractMallocCall(I))
-      if (!PointerMayBeCaptured(CI, true, true))
-        DeadStackObjects.insert(CI);
+    CallInst *CI = extractMallocCall(I);
+    if (!CI)
+      CI = extractCallocCall(I);
+    if (CI && !PointerMayBeCaptured(CI, true, true))
+      DeadStackObjects.insert(CI);
   }
 
   // Treat byval arguments the same, stores to them are dead at the end of the
@@ -755,6 +763,11 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
     }
 
     if (CallInst *CI = extractMallocCall(BBI)) {
+      DeadStackObjects.erase(CI);
+      continue;
+    }
+
+    if (CallInst *CI = extractCallocCall(BBI)) {
       DeadStackObjects.erase(CI);
       continue;
     }
