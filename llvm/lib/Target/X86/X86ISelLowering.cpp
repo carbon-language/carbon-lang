@@ -4980,11 +4980,9 @@ X86TargetLowering::LowerVectorBroadcast(SDValue &Op, SelectionDAG &DAG) const {
         return SDValue();
 
       SDValue Sc = Op.getOperand(0);
-      if (Sc.getOpcode() == ISD::SCALAR_TO_VECTOR)
-        Ld = Sc.getOperand(0);
-      else if (Sc.getOpcode() == ISD::BUILD_VECTOR)
-        Ld = Sc.getOperand(0);
-      else return SDValue();
+      if (Sc.getOpcode() != ISD::SCALAR_TO_VECTOR &&
+          Sc.getOpcode() != ISD::BUILD_VECTOR)
+        return SDValue();
 
       Ld = Sc.getOperand(0);
       ConstSplatVal = (Ld.getOpcode() == ISD::Constant ||
