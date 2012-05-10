@@ -1753,12 +1753,6 @@ AnalyzeCompare(const MachineInstr *MI, unsigned &SrcReg, int &CmpMask,
     CmpMask = ~0;
     CmpValue = MI->getOperand(1).getImm();
     return true;
-  case ARM::CMPrr:
-  case ARM::t2CMPrr:
-    SrcReg = MI->getOperand(0).getReg();
-    CmpMask = ~0;
-    CmpValue = 0;
-    return true;
   case ARM::TSTri:
   case ARM::t2TSTri:
     SrcReg = MI->getOperand(0).getReg();
@@ -1800,13 +1794,12 @@ static bool isSuitableForMask(MachineInstr *&MI, unsigned SrcReg,
 }
 
 /// OptimizeCompareInstr - Convert the instruction supplying the argument to the
-/// comparison into one that sets the zero bit in the flags register. Convert
-/// the SUBrr(r1,r2)|Subri(r1,CmpValue) instruction into one that sets the flags
-/// register and remove the CMPrr(r1,r2)|CMPrr(r2,r1)|CMPri(r1,CmpValue)
-/// instruction.
+/// comparison into one that sets the zero bit in the flags register.
 bool ARMBaseInstrInfo::
 OptimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg, int CmpMask,
                      int CmpValue, const MachineRegisterInfo *MRI) const {
+  if (CmpValue != 0)
+    return false;
 
   MachineRegisterInfo::def_iterator DI = MRI->def_begin(SrcReg);
   if (llvm::next(DI) != MRI->def_end())
@@ -1832,36 +1825,18 @@ OptimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg, int CmpMask,
     }
   }
 
-  // Get ready to iterate backward from CmpInstr.
-  MachineBasicBlock::iterator I = CmpInstr,E = MI,
-                              B = CmpInstr->getParent()->begin();
+  // Conservatively refuse to convert an instruction which isn't in the same BB
+  // as the comparison.
+  if (MI->getParent() != CmpInstr->getParent())
+    return false;
+
+  // Check that CPSR isn't set between the comparison instruction and the one we
+  // want to change.
+  MachineBasicBlock::iterator I = CmpInstr,E = MI, B = MI->getParent()->begin();
 
   // Early exit if CmpInstr is at the beginning of the BB.
   if (I == B) return false;
 
-  // There are two possible candidates which can be changed to set CPSR:
-  // One is MI, the other is a SUB instruction.
-  // For CMPrr(r1,r2), we are looking for SUB(r1,r2) or SUB(r2,r1).
-  // For CMPri(r1, CmpValue), we are looking for SUBri(r1, CmpValue).
-  MachineInstr *Sub = NULL;
-  unsigned SrcReg2 = 0;
-  if (CmpInstr->getOpcode() == ARM::CMPrr ||
-      CmpInstr->getOpcode() == ARM::t2CMPrr) {
-    SrcReg2 = CmpInstr->getOperand(1).getReg();
-    // MI is not a candidate for CMPrr.
-    MI = NULL;
-  } else if (MI->getParent() != CmpInstr->getParent() || CmpValue != 0)
-    // Conservatively refuse to convert an instruction which isn't in the same
-    // BB as the comparison.
-    // For CMPri, we need to check Sub, thus we can't return here.
-    if(CmpInstr->getOpcode() == ARM::CMPri ||
-       CmpInstr->getOpcode() == ARM::t2CMPri)
-      MI = NULL;
-    else
-      return false;
-
-  // Check that CPSR isn't set between the comparison instruction and the one we
-  // want to change. At the same time, search for Sub.
   --I;
   for (; I != E; --I) {
     const MachineInstr &Instr = *I;
@@ -1878,38 +1853,12 @@ OptimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg, int CmpMask,
         return false;
     }
 
-    // Check whether the current instruction is SUB(r1,r2) or SUB(r2,r1).
-    if (SrcReg2 != 0 && Instr.getOpcode() == ARM::SUBrr &&
-        ((Instr.getOperand(1).getReg() == SrcReg &&
-          Instr.getOperand(2).getReg() == SrcReg2) ||
-         (Instr.getOperand(1).getReg() == SrcReg2 &&
-          Instr.getOperand(2).getReg() == SrcReg))) {
-      Sub = &*I;
-      break;
-    }
-
-    // Check whether the current instruction is SUBri(r1,CmpValue).
-    if ((CmpInstr->getOpcode() == ARM::CMPri ||
-         CmpInstr->getOpcode() == ARM::t2CMPri) &&
-        Instr.getOpcode() == ARM::SUBri && CmpValue != 0 &&
-        Instr.getOperand(1).getReg() == SrcReg &&
-        Instr.getOperand(2).getImm() == CmpValue) {
-      Sub = &*I;
-      break;
-    }
-
     if (I == B)
       // The 'and' is below the comparison instruction.
       return false;
   }
 
-  // Return false if no candidates exist.
-  if (!MI && !Sub)
-    return false;
-
-  // The single candidate is called MI.
-  if (!MI) MI = Sub;
-
+  // Set the "zero" bit in CPSR.
   switch (MI->getOpcode()) {
   default: break;
   case ARM::RSBrr:
@@ -1945,16 +1894,13 @@ OptimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg, int CmpMask,
   case ARM::EORri:
   case ARM::t2EORrr:
   case ARM::t2EORri: {
-    // Scan forward for the use of CPSR
-    // When checking against MI: if it's a conditional code requires
+    // Scan forward for the use of CPSR, if it's a conditional code requires
     // checking of V bit, then this is not safe to do. If we can't find the
     // CPSR use (i.e. used in another block), then it's not safe to perform
     // the optimization.
-    // When checking against Sub, we handle the condition codes GE, LT, GT, LE.
-    SmallVector<MachineOperand*, 4> OpndsToUpdate;
     bool isSafe = false;
     I = CmpInstr;
-    E = CmpInstr->getParent()->end();
+    E = MI->getParent()->end();
     while (!isSafe && ++I != E) {
       const MachineInstr &Instr = *I;
       for (unsigned IO = 0, EO = Instr.getNumOperands();
@@ -1972,65 +1918,28 @@ OptimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg, int CmpMask,
         }
         // Condition code is after the operand before CPSR.
         ARMCC::CondCodes CC = (ARMCC::CondCodes)Instr.getOperand(IO-1).getImm();
-        if (Sub)
-          switch (CC) {
-          default:
-            return false;
-          case ARMCC::GE:
-          case ARMCC::LT:
-          case ARMCC::GT:
-          case ARMCC::LE:
-            // If we have SUB(r1, r2) and CMP(r2, r1), the condition code based
-            // on CMP needs to be updated to be based on SUB.
-            // Push the condition code operands to OpndsToUpdate.
-            // If it is safe to remove CmpInstr, the condition code of these
-            // operands will be modified.
-            if (SrcReg2 != 0 && Sub->getOperand(1).getReg() == SrcReg2 &&
-                Sub->getOperand(2).getReg() == SrcReg)
-              OpndsToUpdate.push_back(&((*I).getOperand(IO-1)));
-            break;
-          }
-        else
-          switch (CC) {
-          default:
-            isSafe = true;
-            break;
-          case ARMCC::VS:
-          case ARMCC::VC:
-          case ARMCC::GE:
-          case ARMCC::LT:
-          case ARMCC::GT:
-          case ARMCC::LE:
-            return false;
-          }
+        switch (CC) {
+        default:
+          isSafe = true;
+          break;
+        case ARMCC::VS:
+        case ARMCC::VC:
+        case ARMCC::GE:
+        case ARMCC::LT:
+        case ARMCC::GT:
+        case ARMCC::LE:
+          return false;
+        }
       }
     }
 
-    // If the candidate is Sub, we may exit the loop at end of the basic block.
-    // In that case, it is still safe to remove CmpInstr.
-    if (!isSafe && !Sub)
+    if (!isSafe)
       return false;
 
     // Toggle the optional operand to CPSR.
     MI->getOperand(5).setReg(ARM::CPSR);
     MI->getOperand(5).setIsDef(true);
     CmpInstr->eraseFromParent();
-
-    // Modify the condition code of operands in OpndsToUpdate.
-    // Since we have SUB(r1, r2) and CMP(r2, r1), the condition code needs to
-    // be changed from r2 > r1 to r1 < r2, from r2 < r1 to r1 > r2, etc.
-    for (unsigned i = 0; i < OpndsToUpdate.size(); i++) {
-      ARMCC::CondCodes CC = (ARMCC::CondCodes)OpndsToUpdate[i]->getImm();
-      ARMCC::CondCodes NewCC;
-      switch(CC) {
-      default: break;
-      case ARMCC::GE: NewCC = ARMCC::LE; break;
-      case ARMCC::LT: NewCC = ARMCC::GT; break;
-      case ARMCC::GT: NewCC = ARMCC::LT; break;
-      case ARMCC::LE: NewCC = ARMCC::GT; break;
-      }
-      OpndsToUpdate[i]->setImm(NewCC);
-    }
     return true;
   }
   }
