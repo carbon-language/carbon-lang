@@ -302,6 +302,9 @@ public: // Part of public interface to class.
   /// BindStruct - Bind a compound value to a structure.
   StoreRef BindStruct(Store store, const TypedValueRegion* R, SVal V);
 
+  /// BindVector - Bind a compound value to a vector.
+  StoreRef BindVector(Store store, const TypedValueRegion* R, SVal V);
+
   StoreRef BindArray(Store store, const TypedValueRegion* R, SVal V);
 
   /// KillStruct - Set the entire struct to unknown.
@@ -372,7 +375,8 @@ public: // Part of public interface to class.
   /// Get the state and region whose binding this region R corresponds to.
   std::pair<Store, const MemRegion*>
   GetLazyBinding(RegionBindings B, const MemRegion *R,
-                 const MemRegion *originalRegion);
+                 const MemRegion *originalRegion,
+                 bool includeSuffix = false);
 
   StoreRef CopyLazyBindings(nonloc::LazyCompoundVal V, Store store,
                             const TypedRegion *R);
@@ -1108,7 +1112,8 @@ SVal RegionStoreManager::getBinding(Store store, Loc L, QualType T) {
 
 std::pair<Store, const MemRegion *>
 RegionStoreManager::GetLazyBinding(RegionBindings B, const MemRegion *R,
-                                   const MemRegion *originalRegion) {
+                                   const MemRegion *originalRegion,
+                                   bool includeSuffix) {
   
   if (originalRegion != R) {
     if (Optional<SVal> OV = getDefaultBinding(B, R)) {
@@ -1130,9 +1135,13 @@ RegionStoreManager::GetLazyBinding(RegionBindings B, const MemRegion *R,
     const std::pair<Store, const MemRegion *> &X =
       GetLazyBinding(B, FR->getSuperRegion(), originalRegion);
 
-    if (X.second)
-      return std::make_pair(X.first,
-                            MRMgr.getFieldRegionWithSuper(FR, X.second));
+    if (X.second) {
+      if (includeSuffix)
+        return std::make_pair(X.first,
+                              MRMgr.getFieldRegionWithSuper(FR, X.second));
+      return X;
+    }
+        
   }
   // C++ base object region is another kind of region that we should blast
   // through to look for lazy compound value. It is like a field region.
@@ -1141,9 +1150,13 @@ RegionStoreManager::GetLazyBinding(RegionBindings B, const MemRegion *R,
     const std::pair<Store, const MemRegion *> &X =
       GetLazyBinding(B, baseReg->getSuperRegion(), originalRegion);
     
-    if (X.second)
-      return std::make_pair(X.first,
-                     MRMgr.getCXXBaseObjectRegionWithSuper(baseReg, X.second));
+    if (X.second) {
+      if (includeSuffix)
+        return std::make_pair(X.first,
+                              MRMgr.getCXXBaseObjectRegionWithSuper(baseReg,
+                                                                    X.second));
+      return X;
+    }
   }
 
   // The NULL MemRegion indicates an non-existent lazy binding. A NULL Store is
@@ -1492,9 +1505,13 @@ StoreRef RegionStoreManager::Bind(Store store, Loc L, SVal V) {
   const MemRegion *R = cast<loc::MemRegionVal>(L).getRegion();
 
   // Check if the region is a struct region.
-  if (const TypedValueRegion* TR = dyn_cast<TypedValueRegion>(R))
-    if (TR->getValueType()->isStructureOrClassType())
+  if (const TypedValueRegion* TR = dyn_cast<TypedValueRegion>(R)) {
+    QualType Ty = TR->getValueType();
+    if (Ty->isStructureOrClassType())
       return BindStruct(store, TR, V);
+    if (Ty->isVectorType())
+      return BindVector(store, TR, V);
+  }
 
   if (const ElementRegion *ER = dyn_cast<ElementRegion>(R)) {
     if (ER->getIndex().isZeroConstant()) {
@@ -1635,6 +1652,47 @@ StoreRef RegionStoreManager::BindArray(Store store, const TypedValueRegion* R,
   if (Size.hasValue() && i < Size.getValue())
     newStore = setImplicitDefaultValue(newStore.getStore(), R, ElementTy);
 
+  return newStore;
+}
+
+StoreRef RegionStoreManager::BindVector(Store store, const TypedValueRegion* R,
+                                        SVal V) {
+  QualType T = R->getValueType();
+  assert(T->isVectorType());
+  const VectorType *VT = T->getAs<VectorType>(); // Use getAs for typedefs.
+ 
+  // Handle lazy compound values.
+  if (nonloc::LazyCompoundVal *LCV = dyn_cast<nonloc::LazyCompoundVal>(&V))
+    return CopyLazyBindings(*LCV, store, R);
+  
+  // We may get non-CompoundVal accidentally due to imprecise cast logic or
+  // that we are binding symbolic struct value. Kill the field values, and if
+  // the value is symbolic go and bind it as a "default" binding.
+  if (V.isUnknown() || !isa<nonloc::CompoundVal>(V)) {
+    SVal SV = isa<nonloc::SymbolVal>(V) ? V : UnknownVal();
+    return KillStruct(store, R, SV);
+  }
+
+  QualType ElemType = VT->getElementType();
+  nonloc::CompoundVal& CV = cast<nonloc::CompoundVal>(V);
+  nonloc::CompoundVal::iterator VI = CV.begin(), VE = CV.end();
+  unsigned index = 0, numElements = VT->getNumElements();
+  StoreRef newStore(store, *this);
+  
+  for ( ; index != numElements ; ++index) {
+    if (VI == VE)
+      break;
+    
+    NonLoc Idx = svalBuilder.makeArrayIndex(index);
+    const ElementRegion *ER = MRMgr.getElementRegion(ElemType, Idx, R, Ctx);
+    
+    if (ElemType->isArrayType())
+      newStore = BindArray(newStore.getStore(), ER, *VI);
+    else if (ElemType->isStructureOrClassType())
+      newStore = BindStruct(newStore.getStore(), ER, *VI);
+    else
+      newStore = Bind(newStore.getStore(), svalBuilder.makeLoc(ER), *VI);
+  }
   return newStore;
 }
 
