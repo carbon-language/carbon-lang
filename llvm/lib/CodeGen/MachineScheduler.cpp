@@ -355,15 +355,6 @@ public:
   MachineBasicBlock::iterator top() const { return CurrentTop; }
   MachineBasicBlock::iterator bottom() const { return CurrentBottom; }
 
-  /// Get current register pressure for the top scheduled instructions.
-  const IntervalPressure &getTopPressure() const { return TopPressure; }
-
-  /// Get current register pressure for the bottom scheduled instructions.
-  const IntervalPressure &getBotPressure() const { return BotPressure; }
-
-  /// Get register pressure for the entire scheduling region before scheduling.
-  const IntervalPressure &getRegPressure() const { return RegPressure; }
-
   /// Implement the ScheduleDAGInstrs interface for handling the next scheduling
   /// region. This covers all instructions in a block, while schedule() may only
   /// cover a subset.
@@ -375,6 +366,17 @@ public:
   /// Implement ScheduleDAGInstrs interface for scheduling a sequence of
   /// reorderable instructions.
   void schedule();
+
+  /// Get current register pressure for the top scheduled instructions.
+  const IntervalPressure &getTopPressure() const { return TopPressure; }
+  const RegPressureTracker &getTopRPTracker() const { return TopRPTracker; }
+
+  /// Get current register pressure for the bottom scheduled instructions.
+  const IntervalPressure &getBotPressure() const { return BotPressure; }
+  const RegPressureTracker &getBotRPTracker() const { return BotRPTracker; }
+
+  /// Get register pressure for the entire scheduling region before scheduling.
+  const IntervalPressure &getRegPressure() const { return RegPressure; }
 
 protected:
   void initRegPressure();
@@ -629,6 +631,7 @@ void ScheduleDAGMI::placeDebugValues() {
 //===----------------------------------------------------------------------===//
 
 namespace {
+/// Wrapper around a vector of SUnits with some basic convenience methods.
 struct ReadyQ {
   typedef std::vector<SUnit*>::iterator iterator;
 
@@ -653,9 +656,11 @@ struct ReadyQ {
 
   void push(SUnit *SU) {
     Queue.push_back(SU);
+    SU->NodeQueueId |= ID;
   }
 
   void remove(iterator I) {
+    (*I)->NodeQueueId &= ~ID;
     *I = Queue.back();
     Queue.pop_back();
   }
@@ -664,49 +669,51 @@ struct ReadyQ {
 /// ConvergingScheduler shrinks the unscheduled zone using heuristics to balance
 /// the schedule.
 class ConvergingScheduler : public MachineSchedStrategy {
+
+  /// Store the state used by ConvergingScheduler heuristics, required for the
+  /// lifetime of one invocation of pickNode().
+  struct SchedCandidate {
+    // The best SUnit candidate.
+    SUnit *SU;
+
+    // Register pressure values for the best candidate.
+    RegPressureDelta RPDelta;
+
+    SchedCandidate(): SU(NULL) {}
+  };
+
   ScheduleDAGMI *DAG;
+  const TargetRegisterInfo *TRI;
 
   ReadyQ TopQueue;
   ReadyQ BotQueue;
 
 public:
-  // NodeQueueId = 0 (none), = 1 (top), = 2 (bottom), = 3 (both)
-  ConvergingScheduler(): TopQueue(1), BotQueue(2) {}
+  /// SUnit::NodeQueueId = 0 (none), = 1 (top), = 2 (bottom), = 3 (both)
+  enum {
+    TopQID = 1,
+    BotQID = 2
+  };
+
+  ConvergingScheduler(): DAG(0), TRI(0), TopQueue(TopQID), BotQueue(BotQID) {}
+
+  static const char *getQName(unsigned ID) {
+    switch(ID) {
+    default: return "NoQ";
+    case TopQID: return "TopQ";
+    case BotQID: return "BotQ";
+    };
+  }
 
   virtual void initialize(ScheduleDAGMI *dag) {
     DAG = dag;
+    TRI = DAG->TRI;
 
     assert((!ForceTopDown || !ForceBottomUp) &&
            "-misched-topdown incompatible with -misched-bottomup");
   }
 
-  virtual SUnit *pickNode(bool &IsTopNode) {
-    if (DAG->top() == DAG->bottom()) {
-      assert(TopQueue.empty() && BotQueue.empty() && "ReadyQ garbage");
-      return NULL;
-    }
-    // As an initial placeholder heuristic, schedule in the direction that has
-    // the fewest choices.
-    SUnit *SU;
-    if (ForceTopDown
-        || (!ForceBottomUp && TopQueue.Queue.size() <= BotQueue.Queue.size())) {
-      SU = DAG->getSUnit(DAG->top());
-      IsTopNode = true;
-    }
-    else {
-      SU = DAG->getSUnit(priorNonDebug(DAG->bottom(), DAG->top()));
-      IsTopNode = false;
-    }
-    if (SU->isTopReady()) {
-      assert(!TopQueue.empty() && "bad ready count");
-      TopQueue.remove(TopQueue.find(SU));
-    }
-    if (SU->isBottomReady()) {
-      assert(!BotQueue.empty() && "bad ready count");
-      BotQueue.remove(BotQueue.find(SU));
-    }
-    return SU;
-  }
+  virtual SUnit *pickNode(bool &IsTopNode);
 
   virtual void releaseTopNode(SUnit *SU) {
     if (!SU->isScheduled)
@@ -716,8 +723,107 @@ public:
     if (!SU->isScheduled)
       BotQueue.push(SU);
   }
+protected:
+  bool pickNodeFromQueue(ReadyQ &Q, const RegPressureTracker &RPTracker,
+                         SchedCandidate &Candidate);
 };
 } // namespace
+
+/// Pick the best candidate from the top queue.
+///
+/// TODO: getMaxPressureDelta results can be mostly cached for each SUnit during
+/// DAG building. To adjust for the current scheduling location we need to
+/// maintain the number of vreg uses remaining to be top-scheduled.
+bool ConvergingScheduler::pickNodeFromQueue(ReadyQ &Q,
+                                            const RegPressureTracker &RPTracker,
+                                            SchedCandidate &Candidate) {
+  // getMaxPressureDelta temporarily modifies the tracker.
+  RegPressureTracker &TempTracker = const_cast<RegPressureTracker&>(RPTracker);
+
+  // BestSU remains NULL if no top candidates beat the best existing candidate.
+  bool FoundCandidate = false;
+  for (ReadyQ::iterator I = Q.begin(), E = Q.end(); I != E; ++I) {
+
+    RegPressureDelta RPDelta;
+    TempTracker.getMaxPressureDelta((*I)->getInstr(), RPDelta);
+
+    // Avoid exceeding the target's limit.
+    if (!Candidate.SU || RPDelta.ExcessUnits < Candidate.RPDelta.ExcessUnits) {
+      Candidate.SU = *I;
+      Candidate.RPDelta = RPDelta;
+      FoundCandidate = true;
+      continue;
+    }
+    if (RPDelta.ExcessUnits > Candidate.RPDelta.ExcessUnits)
+      continue;
+
+    // Avoid increasing the max pressure.
+    if (RPDelta.MaxUnitIncrease < Candidate.RPDelta.MaxUnitIncrease) {
+      Candidate.SU = *I;
+      Candidate.RPDelta = RPDelta;
+      FoundCandidate = true;
+
+      DEBUG(dbgs() << "CAND " << getQName(Q.ID) << " ";
+            if (RPDelta.MaxUnitIncrease)
+              dbgs() << TRI->getRegPressureSetName(RPDelta.MaxSetID) << ":"
+                     << RPDelta.MaxUnitIncrease << " ";
+            (*I)->dump(DAG); dbgs() << "\n");
+      continue;
+    }
+    if (RPDelta.MaxUnitIncrease > Candidate.RPDelta.MaxUnitIncrease)
+      continue;
+
+    // Fall through to original instruction order.
+    // Only consider node order if BestSU was chosen from this Q.
+    if (!FoundCandidate)
+      continue;
+
+    if ((Q.ID == TopQID && (*I)->NodeNum < Candidate.SU->NodeNum)
+        || (Q.ID == BotQID && (*I)->NodeNum > Candidate.SU->NodeNum)) {
+      Candidate.SU = *I;
+      Candidate.RPDelta = RPDelta;
+      FoundCandidate = true;
+    }
+  }
+  return FoundCandidate;
+}
+
+/// Pick the best node from either the top or bottom queue to balance the
+/// schedule.
+SUnit *ConvergingScheduler::pickNode(bool &IsTopNode) {
+  if (DAG->top() == DAG->bottom()) {
+    assert(TopQueue.empty() && BotQueue.empty() && "ReadyQ garbage");
+    return NULL;
+  }
+  // As an initial placeholder heuristic, schedule in the direction that has
+  // the fewest choices.
+  SUnit *SU;
+  if (ForceTopDown) {
+    SU = DAG->getSUnit(DAG->top());
+    IsTopNode = true;
+  }
+  else if (ForceBottomUp) {
+    SU = DAG->getSUnit(priorNonDebug(DAG->bottom(), DAG->top()));
+    IsTopNode = false;
+  }
+  else {
+    SchedCandidate Candidate;
+    // Prefer picking from the bottom.
+    pickNodeFromQueue(BotQueue, DAG->getBotRPTracker(), Candidate);
+    IsTopNode =
+      pickNodeFromQueue(TopQueue, DAG->getTopRPTracker(), Candidate);
+    SU = Candidate.SU;
+  }
+  if (SU->isTopReady()) {
+    assert(!TopQueue.empty() && "bad ready count");
+    TopQueue.remove(TopQueue.find(SU));
+  }
+  if (SU->isBottomReady()) {
+    assert(!BotQueue.empty() && "bad ready count");
+    BotQueue.remove(BotQueue.find(SU));
+  }
+  return SU;
+}
 
 /// Create the standard converging machine scheduler. This will be used as the
 /// default scheduler if the target does not set a default.
