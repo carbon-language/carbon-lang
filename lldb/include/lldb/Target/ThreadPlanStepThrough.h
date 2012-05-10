@@ -37,6 +37,7 @@ public:
 
 protected:
     ThreadPlanStepThrough (Thread &thread,
+                           StackID &return_stack_id,
                            bool stop_others);
 
     void
@@ -47,14 +48,17 @@ protected:
 
 private:
     friend ThreadPlan *
-    Thread::QueueThreadPlanForStepThrough (bool abort_other_plans,
+    Thread::QueueThreadPlanForStepThrough (StackID &return_stack_id,
+                                           bool abort_other_plans,
                                            bool stop_others);
+                                           
+    void ClearBackstopBreakpoint();
 
     lldb::ThreadPlanSP m_sub_plan_sp;
     lldb::addr_t      m_start_address;
     lldb::break_id_t  m_backstop_bkpt_id;
     lldb::addr_t      m_backstop_addr;
-    StackID           m_stack_id;
+    StackID           m_return_stack_id;
     bool              m_stop_others;
 
     DISALLOW_COPY_AND_ASSIGN (ThreadPlanStepThrough);

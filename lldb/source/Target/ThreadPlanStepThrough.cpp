@@ -32,11 +32,12 @@ using namespace lldb_private;
 // FIXME: At present only handles DYLD trampolines.
 //----------------------------------------------------------------------
 
-ThreadPlanStepThrough::ThreadPlanStepThrough (Thread &thread, bool stop_others) :
+ThreadPlanStepThrough::ThreadPlanStepThrough (Thread &thread, StackID &m_stack_id, bool stop_others) :
     ThreadPlan (ThreadPlan::eKindStepThrough, "Step through trampolines and prologues", thread, eVoteNoOpinion, eVoteNoOpinion),
     m_start_address (0),
     m_backstop_bkpt_id (LLDB_INVALID_BREAK_ID),
     m_backstop_addr(LLDB_INVALID_ADDRESS),
+    m_return_stack_id (m_stack_id),
     m_stop_others (stop_others)
 {
 
@@ -46,12 +47,11 @@ ThreadPlanStepThrough::ThreadPlanStepThrough (Thread &thread, bool stop_others) 
     if (m_sub_plan_sp)
     {
         m_start_address = GetThread().GetRegisterContext()->GetPC(0);
-        m_stack_id = m_thread.GetStackFrameAtIndex(0)->GetStackID();
                 
         // We are going to return back to the concrete frame 1, we might pass by some inlined code that we're in 
         // the middle of by doing this, but it's easier than trying to figure out where the inlined code might return to.
             
-        StackFrameSP return_frame_sp (m_thread.GetFrameWithConcreteFrameIndex(1));
+        StackFrameSP return_frame_sp = m_thread.GetFrameWithStackID (m_stack_id);
         
         if (return_frame_sp)
         {
@@ -73,11 +73,7 @@ ThreadPlanStepThrough::ThreadPlanStepThrough (Thread &thread, bool stop_others) 
 
 ThreadPlanStepThrough::~ThreadPlanStepThrough ()
 {
-    if (m_backstop_bkpt_id != LLDB_INVALID_BREAK_ID)
-    {
-        m_thread.GetProcess()->GetTarget().RemoveBreakpointByID (m_backstop_bkpt_id);
-        m_backstop_bkpt_id = LLDB_INVALID_BREAK_ID;
-    }
+    ClearBackstopBreakpoint ();
 }
 
 void
@@ -161,6 +157,13 @@ ThreadPlanStepThrough::ShouldStop (Event *event_ptr)
     if (IsPlanComplete())
         return true;
         
+    // First, did we hit the backstop breakpoint?
+    if (HitOurBackstopBreakpoint())
+    {
+        SetPlanComplete(false);
+        return true;
+    }
+
     // If we don't have a sub-plan, then we're also done (can't see how we would ever get here
     // without a plan, but just in case.
     
@@ -170,20 +173,27 @@ ThreadPlanStepThrough::ShouldStop (Event *event_ptr)
         return true;
     }
     
-    // First, did we hit the backstop breakpoint?
-    if (HitOurBackstopBreakpoint())
-    {
-        SetPlanComplete();
-        return true;
-    }
-
-
     // If the current sub plan is not done, we don't want to stop.  Actually, we probably won't
     // ever get here in this state, since we generally won't get asked any questions if out
     // current sub-plan is not done...
     if (!m_sub_plan_sp->IsPlanComplete())
+        return false;
+    
+    // If our current sub plan failed, then let's just run to our backstop.  If we can't do that then just stop.
+    if (!m_sub_plan_sp->PlanSucceeded())
+    {
+        if (m_backstop_bkpt_id != LLDB_INVALID_BREAK_ID)
+        {
+            m_sub_plan_sp.reset();
             return false;
-            
+        }
+        else
+        {
+            SetPlanComplete(false);
+            return true;
+        }
+    }
+        
     // Next see if there is a specific step through plan at our current pc (these might 
     // chain, for instance stepping through a dylib trampoline to the objc dispatch function...)
     LookForPlanToStepThroughFromCurrentPC();
@@ -208,7 +218,7 @@ ThreadPlanStepThrough::StopOthers ()
 StateType
 ThreadPlanStepThrough::GetPlanRunState ()
 {
-    return eStateStepping;
+    return eStateRunning;
 }
 
 bool
@@ -224,13 +234,20 @@ ThreadPlanStepThrough::WillStop ()
     return true;
 }
 
+void
+ThreadPlanStepThrough::ClearBackstopBreakpoint ()
+{
+    if (m_backstop_bkpt_id != LLDB_INVALID_BREAK_ID)
+    {
+        m_thread.GetProcess()->GetTarget().RemoveBreakpointByID (m_backstop_bkpt_id);
+        m_backstop_bkpt_id = LLDB_INVALID_BREAK_ID;
+    }
+}
+
 bool
 ThreadPlanStepThrough::MischiefManaged ()
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
-
-    // ShouldStop will call HappyToStopHere, which will set the plan to complete if
-    // we're done.  So we can just check that here.
 
     if (!IsPlanComplete())
     {
@@ -240,12 +257,9 @@ ThreadPlanStepThrough::MischiefManaged ()
     {
         if (log)
             log->Printf("Completed step through step plan.");
+            
+        ClearBackstopBreakpoint ();
         ThreadPlan::MischiefManaged ();
-        if (m_backstop_bkpt_id != LLDB_INVALID_BREAK_ID)
-        {
-            m_thread.GetProcess()->GetTarget().RemoveBreakpointByID (m_backstop_bkpt_id);
-            m_backstop_bkpt_id = LLDB_INVALID_BREAK_ID;
-        }
         return true;
     }
 }
@@ -262,7 +276,7 @@ ThreadPlanStepThrough::HitOurBackstopBreakpoint()
         {
             StackID cur_frame_zero_id = m_thread.GetStackFrameAtIndex(0)->GetStackID();
             
-            if (cur_frame_zero_id == m_stack_id)
+            if (cur_frame_zero_id == m_return_stack_id)
             {
                 LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
                 if (log)

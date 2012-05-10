@@ -125,9 +125,10 @@ AppleThreadPlanStepThroughObjCTrampoline::ValidatePlan (Stream *error)
 bool
 AppleThreadPlanStepThroughObjCTrampoline::PlanExplainsStop ()
 {
-    // This plan should actually never stop when it is on the top of the plan
-    // stack, since it does all it's running in client plans.
-    return false;
+    // If we get asked to explain the stop it will be because something went
+    // wrong (like the implementation for selector function crashed...  We're going
+    // to figure out what to do about that, so we do explain the stop.
+    return true;
 }
 
 lldb::StateType
@@ -139,66 +140,83 @@ AppleThreadPlanStepThroughObjCTrampoline::GetPlanRunState ()
 bool
 AppleThreadPlanStepThroughObjCTrampoline::ShouldStop (Event *event_ptr)
 {
-    if (m_func_sp.get() == NULL || m_thread.IsThreadPlanDone(m_func_sp.get()))
+    // First stage: we are still handling the "call a function to get the target of the dispatch"
+    if (m_func_sp)
     {
-        m_func_sp.reset();
-        if (!m_run_to_sp) 
+        if (!m_func_sp->IsPlanComplete())
         {
-            Value target_addr_value;
-            ExecutionContext exc_ctx;
-            m_thread.CalculateExecutionContext(exc_ctx);
-            m_impl_function->FetchFunctionResults (exc_ctx, m_args_addr, target_addr_value);
-            m_impl_function->DeallocateFunctionResults(exc_ctx, m_args_addr);
-            lldb::addr_t target_addr = target_addr_value.GetScalar().ULongLong();
-            Address target_so_addr;
-            target_so_addr.SetOpcodeLoadAddress(target_addr, exc_ctx.GetTargetPtr());
-            LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
-            if (target_addr == 0)
+            return false;
+        }
+        else
+        {
+            if (!m_func_sp->PlanSucceeded())
             {
-                if (log)
-                    log->Printf("Got target implementation of 0x0, stopping.");
-                SetPlanComplete();
+                SetPlanComplete(false);
                 return true;
             }
-            if (m_trampoline_handler->AddrIsMsgForward(target_addr))
-            {
-                if (log)
-                    log->Printf ("Implementation lookup returned msgForward function: 0x%llx, stopping.", target_addr);
-
-                SymbolContext sc = m_thread.GetStackFrameAtIndex(0)->GetSymbolContext(eSymbolContextEverything);
-                m_run_to_sp.reset(new ThreadPlanStepOut (m_thread, 
-                                                         &sc, 
-                                                         true, 
-                                                         m_stop_others, 
-                                                         eVoteNoOpinion, 
-                                                         eVoteNoOpinion,
-                                                         0));
-                m_thread.QueueThreadPlan(m_run_to_sp, false);
-                m_run_to_sp->SetPrivate(true);
-                return false;
-            }
-            
+            m_func_sp.reset();
+        }
+    }
+    
+    // Second stage, if all went well with the function calling, then fetch the target address, and
+    // queue up a "run to that address" plan.
+    if (!m_run_to_sp) 
+    {
+        Value target_addr_value;
+        ExecutionContext exc_ctx;
+        m_thread.CalculateExecutionContext(exc_ctx);
+        m_impl_function->FetchFunctionResults (exc_ctx, m_args_addr, target_addr_value);
+        m_impl_function->DeallocateFunctionResults(exc_ctx, m_args_addr);
+        lldb::addr_t target_addr = target_addr_value.GetScalar().ULongLong();
+        Address target_so_addr;
+        target_so_addr.SetOpcodeLoadAddress(target_addr, exc_ctx.GetTargetPtr());
+        LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
+        if (target_addr == 0)
+        {
             if (log)
-                log->Printf("Running to ObjC method implementation: 0x%llx", target_addr);
-            
-            ObjCLanguageRuntime *objc_runtime = GetThread().GetProcess()->GetObjCLanguageRuntime();
-            assert (objc_runtime != NULL);
-            objc_runtime->AddToMethodCache (m_isa_addr, m_sel_addr, target_addr);
+                log->Printf("Got target implementation of 0x0, stopping.");
+            SetPlanComplete();
+            return true;
+        }
+        if (m_trampoline_handler->AddrIsMsgForward(target_addr))
+        {
             if (log)
-                log->Printf("Adding {isa-addr=0x%llx, sel-addr=0x%llx} = addr=0x%llx to cache.", m_isa_addr, m_sel_addr, target_addr);
+                log->Printf ("Implementation lookup returned msgForward function: 0x%llx, stopping.", target_addr);
 
-            // Extract the target address from the value:
-            
-            m_run_to_sp.reset(new ThreadPlanRunToAddress(m_thread, target_so_addr, m_stop_others));
+            SymbolContext sc = m_thread.GetStackFrameAtIndex(0)->GetSymbolContext(eSymbolContextEverything);
+            m_run_to_sp.reset(new ThreadPlanStepOut (m_thread, 
+                                                     &sc, 
+                                                     true, 
+                                                     m_stop_others, 
+                                                     eVoteNoOpinion, 
+                                                     eVoteNoOpinion,
+                                                     0));
             m_thread.QueueThreadPlan(m_run_to_sp, false);
             m_run_to_sp->SetPrivate(true);
             return false;
         }
-        else if (m_thread.IsThreadPlanDone(m_run_to_sp.get()))
-        {
-            SetPlanComplete();
-            return true;
-        }
+        
+        if (log)
+            log->Printf("Running to ObjC method implementation: 0x%llx", target_addr);
+        
+        ObjCLanguageRuntime *objc_runtime = GetThread().GetProcess()->GetObjCLanguageRuntime();
+        assert (objc_runtime != NULL);
+        objc_runtime->AddToMethodCache (m_isa_addr, m_sel_addr, target_addr);
+        if (log)
+            log->Printf("Adding {isa-addr=0x%llx, sel-addr=0x%llx} = addr=0x%llx to cache.", m_isa_addr, m_sel_addr, target_addr);
+
+        // Extract the target address from the value:
+        
+        m_run_to_sp.reset(new ThreadPlanRunToAddress(m_thread, target_so_addr, m_stop_others));
+        m_thread.QueueThreadPlan(m_run_to_sp, false);
+        m_run_to_sp->SetPrivate(true);
+        return false;
+    }
+    else if (m_thread.IsThreadPlanDone(m_run_to_sp.get()))
+    {
+        // Third stage, work the run to target plan.
+        SetPlanComplete();
+        return true;
     }
     return false;
 }

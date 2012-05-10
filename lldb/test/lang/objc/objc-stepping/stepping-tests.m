@@ -127,7 +127,12 @@ int main ()
   ret_val = [mySource returnsStruct];   // Set fourth breakpoint here.
   [mySource setProperty: 5];            // Set fifth breakpoint here.
 
-  [pool release];
+  // We also had a bug where stepping into a method dispatch to nil turned
+  // into continue.  So make sure that works here:
+
+  mySource = nil;
+  [mySource randomMethod];             // Set nil step breakpoint here.
+  [pool release];                      // Step over nil should stop here.
   return 0;
 
 }

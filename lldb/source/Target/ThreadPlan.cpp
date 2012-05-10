@@ -69,6 +69,7 @@ bool
 ThreadPlan::MischiefManaged ()
 {
     Mutex::Locker locker(m_plan_complete_mutex);
+    // Mark the plan is complete, but don't override the success flag.
     m_plan_complete = true;
     return true;
 }

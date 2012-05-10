@@ -976,9 +976,9 @@ Thread::QueueThreadPlanForStepOut
 }
 
 ThreadPlan *
-Thread::QueueThreadPlanForStepThrough (bool abort_other_plans, bool stop_other_threads)
+Thread::QueueThreadPlanForStepThrough (StackID &return_stack_id, bool abort_other_plans, bool stop_other_threads)
 {
-    ThreadPlanSP thread_plan_sp(new ThreadPlanStepThrough (*this, stop_other_threads));
+    ThreadPlanSP thread_plan_sp(new ThreadPlanStepThrough (*this, return_stack_id, stop_other_threads));
     if (!thread_plan_sp || !thread_plan_sp->ValidatePlan (NULL))
         return NULL;
 

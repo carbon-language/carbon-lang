@@ -34,6 +34,7 @@ class TestObjCStepping(TestBase):
         self.sourceBase_randomMethod_line = line_number (self.main_source, '// SourceBase randomMethod start line.')
         self.source_returnsStruct_start_line = line_number (self.main_source, '// Source returnsStruct start line.')
         self.sourceBase_returnsStruct_start_line = line_number (self.main_source, '// SourceBase returnsStruct start line.')
+        self.stepped_past_nil_line = line_number (self.main_source, '// Step over nil should stop here.')
 
     def objc_stepping(self):
         """Use Python APIs to test stepping into ObjC methods."""
@@ -43,23 +44,35 @@ class TestObjCStepping(TestBase):
         self.assertTrue(target, VALID_TARGET)
 
         self.main_source_spec = lldb.SBFileSpec (self.main_source)
+
+        breakpoints_to_disable = []
+
         break1 = target.BreakpointCreateBySourceRegex ("// Set first breakpoint here.", self.main_source_spec)
         self.assertTrue(break1, VALID_BREAKPOINT)
+        breakpoints_to_disable.append (break1)
 
         break2 = target.BreakpointCreateBySourceRegex ("// Set second breakpoint here.", self.main_source_spec)
         self.assertTrue(break2, VALID_BREAKPOINT)
+        breakpoints_to_disable.append (break2)
 
         break3 = target.BreakpointCreateBySourceRegex ('// Set third breakpoint here.', self.main_source_spec)
         self.assertTrue(break3, VALID_BREAKPOINT)
+        breakpoints_to_disable.append (break3)
 
         break4 = target.BreakpointCreateBySourceRegex ('// Set fourth breakpoint here.', self.main_source_spec)
         self.assertTrue(break4, VALID_BREAKPOINT)
+        breakpoints_to_disable.append (break4)
 
         break5 = target.BreakpointCreateBySourceRegex ('// Set fifth breakpoint here.', self.main_source_spec)
         self.assertTrue(break5, VALID_BREAKPOINT)
+        breakpoints_to_disable.append (break5)
 
         break_returnStruct_call_super = target.BreakpointCreateBySourceRegex ('// Source returnsStruct call line.', self.main_source_spec)
         self.assertTrue(break_returnStruct_call_super, VALID_BREAKPOINT)
+        breakpoints_to_disable.append (break_returnStruct_call_super)
+
+        break_step_nil = target.BreakpointCreateBySourceRegex ('// Set nil step breakpoint here.', self.main_source_spec)
+        self.assertTrue(break_step_nil, VALID_BREAKPOINT)
 
         # Now launch the process, and do not stop at entry point.
         process = target.LaunchSimple (None, None, os.getcwd())
@@ -155,6 +168,15 @@ class TestObjCStepping(TestBase):
         line_number = thread.GetFrameAtIndex(0).GetLineEntry().GetLine()
         self.assertTrue (line_number == self.sourceBase_returnsStruct_start_line, "Stepped through super into SourceBase returnsStruct in swizzled object.")
 
+        for bkpt in breakpoints_to_disable:
+            bkpt.SetEnabled(False)
+
+        threads = lldbutil.continue_to_breakpoint (process, break_step_nil)
+        self.assertTrue (len(threads) == 1, "Continued to step nil breakpoint.")
+
+        thread.StepInto()
+        line_number = thread.GetFrameAtIndex(0).GetLineEntry().GetLine()
+        self.assertTrue (line_number == self.stepped_past_nil_line, "Step in over dispatch to nil stepped over.")
 
 if __name__ == '__main__':
     import atexit

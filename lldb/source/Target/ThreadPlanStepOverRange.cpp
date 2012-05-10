@@ -95,7 +95,7 @@ ThreadPlanStepOverRange::ShouldStop (Event *event_ptr)
         // in a trampoline we think the frame is older because the trampoline confused the backtracer.
         // As below, we step through first, and then try to figure out how to get back out again.
         
-        new_plan = m_thread.QueueThreadPlanForStepThrough (false, stop_others);
+        new_plan = m_thread.QueueThreadPlanForStepThrough (m_stack_id, false, stop_others);
 
         if (new_plan != NULL && log)
             log->Printf("Thought I stepped out, but in fact arrived at a trampoline.");
@@ -122,7 +122,7 @@ ThreadPlanStepOverRange::ShouldStop (Event *event_ptr)
             }
             else 
             {
-                new_plan = m_thread.QueueThreadPlanForStepThrough (false, stop_others);
+                new_plan = m_thread.QueueThreadPlanForStepThrough (m_stack_id, false, stop_others);
                 
             }
         }
@@ -143,7 +143,7 @@ ThreadPlanStepOverRange::ShouldStop (Event *event_ptr)
             // in which case we need to get out of there.  But if we are in a stub then it's 
             // likely going to be hard to get out from here.  It is probably easiest to step into the
             // stub, and then it will be straight-forward to step out.        
-            new_plan = m_thread.QueueThreadPlanForStepThrough (false, stop_others);
+            new_plan = m_thread.QueueThreadPlanForStepThrough (m_stack_id, false, stop_others);
         }
     }
 

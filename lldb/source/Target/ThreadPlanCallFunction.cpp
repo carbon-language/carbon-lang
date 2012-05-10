@@ -228,7 +228,7 @@ ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
 
 ThreadPlanCallFunction::~ThreadPlanCallFunction ()
 {
-    DoTakedown();
+    DoTakedown(true);
 }
 
 void
@@ -260,7 +260,7 @@ ThreadPlanCallFunction::ReportRegisterState (const char *message)
 }
 
 void
-ThreadPlanCallFunction::DoTakedown ()
+ThreadPlanCallFunction::DoTakedown (bool success)
 {
     LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_STEP));
     
@@ -274,21 +274,23 @@ ThreadPlanCallFunction::DoTakedown ()
     
     if (!m_takedown_done)
     {
-        ProcessSP process_sp (m_thread.GetProcess());
-        const ABI *abi = process_sp ? process_sp->GetABI().get() : NULL;
-        if (abi && m_return_type.IsValid())
+        if (success)
         {
-            const bool persistent = false;
-            m_return_valobj_sp = abi->GetReturnValueObject (m_thread, m_return_type, persistent);
+            ProcessSP process_sp (m_thread.GetProcess());
+            const ABI *abi = process_sp ? process_sp->GetABI().get() : NULL;
+            if (abi && m_return_type.IsValid())
+            {
+                const bool persistent = false;
+                m_return_valobj_sp = abi->GetReturnValueObject (m_thread, m_return_type, persistent);
+            }
         }
-
         if (log)
             log->Printf ("ThreadPlanCallFunction(%p): DoTakedown called for thread 0x%4.4llx, m_valid: %d complete: %d.\n", this, m_thread.GetID(), m_valid, IsPlanComplete());
         m_takedown_done = true;
         m_stop_address = m_thread.GetStackFrameAtIndex(0)->GetRegisterContext()->GetPC();
         m_real_stop_info_sp = GetPrivateStopReason();
         m_thread.RestoreThreadStateFromCheckpoint(m_stored_thread_state);
-        SetPlanComplete();
+        SetPlanComplete(success);
         ClearBreakpoints();
         if (log && log->GetVerbose())
             ReportRegisterState ("Restoring thread state after function call.  Restored register state:");
@@ -304,7 +306,7 @@ ThreadPlanCallFunction::DoTakedown ()
 void
 ThreadPlanCallFunction::WillPop ()
 {
-    DoTakedown();
+    DoTakedown(true);
 }
 
 void
@@ -342,7 +344,13 @@ ThreadPlanCallFunction::PlanExplainsStop ()
     
     // Check if the breakpoint is one of ours.
     
-    if (BreakpointsExplainStop())
+    StopReason stop_reason;
+    if (!m_real_stop_info_sp)
+        stop_reason = eStopReasonNone;
+    else
+        stop_reason = m_real_stop_info_sp->GetStopReason();
+
+    if (stop_reason == eStopReasonBreakpoint && BreakpointsExplainStop())
         return true;
     
     // If we don't want to discard this plan, than any stop we don't understand should be propagated up the stack.
@@ -352,7 +360,8 @@ ThreadPlanCallFunction::PlanExplainsStop ()
     // Otherwise, check the case where we stopped for an internal breakpoint, in that case, continue on.
     // If it is not an internal breakpoint, consult OkayToDiscard.
     
-    if (m_real_stop_info_sp && m_real_stop_info_sp->GetStopReason() == eStopReasonBreakpoint)
+    
+    if (stop_reason == eStopReasonBreakpoint)
     {
         ProcessSP process_sp (m_thread.CalculateProcess());
         uint64_t break_site_id = m_real_stop_info_sp->GetValue();
@@ -385,7 +394,18 @@ ThreadPlanCallFunction::PlanExplainsStop ()
         // If we want to discard the plan, then we say we explain the stop
         // but if we are going to be discarded, let whoever is above us
         // explain the stop.
-        return ((m_subplan_sp.get() != NULL) && !OkayToDiscard());
+        if (m_subplan_sp != NULL)
+        {
+            if (OkayToDiscard())
+            {
+                DoTakedown(false);
+                return true;
+            }
+            else
+                return false;
+        }
+        else
+            return false;
     }
 }
 
@@ -396,7 +416,7 @@ ThreadPlanCallFunction::ShouldStop (Event *event_ptr)
     {
         ReportRegisterState ("Function completed.  Register state was:");
         
-        DoTakedown();
+        DoTakedown(true);
         
         return true;
     }

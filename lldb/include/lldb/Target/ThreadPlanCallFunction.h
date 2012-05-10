@@ -139,7 +139,7 @@ private:
                       lldb::addr_t &function_load_addr);
 
     void
-    DoTakedown ();
+    DoTakedown (bool success);
     
     void
     SetBreakpoints ();
