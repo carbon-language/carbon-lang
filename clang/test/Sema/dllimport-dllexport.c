@@ -38,3 +38,6 @@ void foo12(){} // expected-warning {{'foo12' redeclared without dllimport attrib
 
 void __attribute__((dllimport)) foo13(); // expected-warning{{dllimport attribute ignored}}
 void __attribute__((dllexport)) foo13();
+
+extern int foo14 __attribute__((dllexport));
+extern int foo14 __attribute__((dllimport));  // expected-warning{{dllimport attribute ignored}}

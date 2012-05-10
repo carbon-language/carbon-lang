@@ -1658,6 +1658,32 @@ DeclHasAttr(const Decl *D, const Attr *A) {
   return false;
 }
 
+bool Sema::mergeDeclAttribute(Decl *D, InheritableAttr *Attr) {
+  if (AvailabilityAttr *AA = dyn_cast<AvailabilityAttr>(Attr))
+    return mergeAvailabilityAttr(D, AA->getRange(), true, AA->getPlatform(),
+                                 AA->getIntroduced(), AA->getDeprecated(),
+                                 AA->getObsoleted(), AA->getUnavailable(),
+                                 AA->getMessage());
+
+  if (VisibilityAttr *VA = dyn_cast<VisibilityAttr>(Attr))
+    return mergeVisibilityAttr(D, VA->getRange(), true, VA->getVisibility());
+
+  if (DLLImportAttr *ImportA = dyn_cast<DLLImportAttr>(Attr))
+    return mergeDLLImportAttr(D, ImportA->getRange(), true);
+
+  if (DLLExportAttr *ExportA = dyn_cast<DLLExportAttr>(Attr))
+    return mergeDLLExportAttr(D, ExportA->getRange(), true);
+
+  if (!DeclHasAttr(D, Attr)) {
+    InheritableAttr *NewAttr = cast<InheritableAttr>(Attr->clone(Context));
+    NewAttr->setInherited(true);
+    D->addAttr(NewAttr);
+    return true;
+  }
+
+  return false;
+}
+
 /// mergeDeclAttributes - Copy attributes from the Old decl to the New one.
 void Sema::mergeDeclAttributes(Decl *New, Decl *Old,
                                bool MergeDeprecation) {
@@ -1681,12 +1707,8 @@ void Sema::mergeDeclAttributes(Decl *New, Decl *Old,
          isa<AvailabilityAttr>(*i)))
       continue;
 
-    if (!DeclHasAttr(New, *i)) {
-      InheritableAttr *newAttr = cast<InheritableAttr>((*i)->clone(Context));
-      newAttr->setInherited(true);
-      New->addAttr(newAttr);
+    if (mergeDeclAttribute(New, *i))
       foundAny = true;
-    }
   }
 
   if (!foundAny) New->dropAttrs();
@@ -5376,6 +5398,10 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
     NewFD->setInvalidDecl();
   }
 
+  // Handle attributes.
+  ProcessDeclAttributes(S, NewFD, D,
+                        /*NonInheritable=*/false, /*Inheritable=*/true);
+
   if (!getLangOpts().CPlusPlus) {
     // Perform semantic checking on the function declaration.
     bool isExplicitSpecialization=false;
@@ -5623,14 +5649,6 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
         << D.getCXXScopeSpec().getRange();
     }
   }
- 
- 
-  // Handle attributes. We need to have merged decls when handling attributes
-  // (for example to check for conflicts, etc).
-  // FIXME: This needs to happen before we merge declarations. Then,
-  // let attribute merging cope with attribute conflicts.
-  ProcessDeclAttributes(S, NewFD, D,
-                        /*NonInheritable=*/false, /*Inheritable=*/true);
 
   // attributes declared post-definition are currently ignored
   // FIXME: This should happen during attribute merging
@@ -8714,6 +8732,9 @@ CreateNewDecl:
   if (S->isFunctionPrototypeScope() && !getLangOpts().CPlusPlus &&
       InFunctionDeclarator && Name)
     DeclsInPrototypeScope.push_back(New);
+
+  if (PrevDecl)
+    mergeDeclAttributes(New, PrevDecl);
 
   OwnedDecl = true;
   return New;

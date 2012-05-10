@@ -1729,76 +1729,101 @@ static bool checkAvailabilityAttr(Sema &S, SourceRange Range,
   return false;
 }
 
-static void mergeAvailabilityAttr(Sema &S, Decl *D, SourceRange Range,
-                                  IdentifierInfo *Platform,
-                                  VersionTuple Introduced,
-                                  VersionTuple Deprecated,
-                                  VersionTuple Obsoleted,
-                                  bool IsUnavailable,
-                                  StringRef Message) {
-  VersionTuple MergedIntroduced;
-  VersionTuple MergedDeprecated;
-  VersionTuple MergedObsoleted;
+bool Sema::mergeAvailabilityAttr(Decl *D, SourceRange Range,
+                                 bool Inherited,
+                                 IdentifierInfo *Platform,
+                                 VersionTuple Introduced,
+                                 VersionTuple Deprecated,
+                                 VersionTuple Obsoleted,
+                                 bool IsUnavailable,
+                                 StringRef Message) {
+  VersionTuple MergedIntroduced = Introduced;
+  VersionTuple MergedDeprecated = Deprecated;
+  VersionTuple MergedObsoleted = Obsoleted;
   bool FoundAny = false;
 
-  for (specific_attr_iterator<AvailabilityAttr>
-         i = D->specific_attr_begin<AvailabilityAttr>(),
-         e = D->specific_attr_end<AvailabilityAttr>();
-       i != e ; ++i) {
-    const AvailabilityAttr *OldAA = *i;
-    IdentifierInfo *OldPlatform = OldAA->getPlatform();
-    if (OldPlatform != Platform)
-      continue;
-    FoundAny = true;
-    VersionTuple OldIntroduced = OldAA->getIntroduced();
-    VersionTuple OldDeprecated = OldAA->getDeprecated();
-    VersionTuple OldObsoleted = OldAA->getObsoleted();
-    bool OldIsUnavailable = OldAA->getUnavailable();
-    StringRef OldMessage = OldAA->getMessage();
+  if (D->hasAttrs()) {
+    AttrVec &Attrs = D->getAttrs();
+    for (unsigned i = 0, e = Attrs.size(); i != e;) {
+      const AvailabilityAttr *OldAA = dyn_cast<AvailabilityAttr>(Attrs[i]);
+      if (!OldAA) {
+        ++i;
+        continue;
+      }
 
-    if ((!OldIntroduced.empty() && !Introduced.empty() &&
-         OldIntroduced != Introduced) ||
-        (!OldDeprecated.empty() && !Deprecated.empty() &&
-         OldDeprecated != Deprecated) ||
-        (!OldObsoleted.empty() && !Obsoleted.empty() &&
-         OldObsoleted != Obsoleted) ||
-        (OldIsUnavailable != IsUnavailable) ||
-        (OldMessage != Message)) {
-      S.Diag(Range.getBegin(), diag::warn_mismatched_availability);
-      S.Diag(OldAA->getLocation(), diag::note_previous_attribute);
-      return;
+      IdentifierInfo *OldPlatform = OldAA->getPlatform();
+      if (OldPlatform != Platform) {
+        ++i;
+        continue;
+      }
+
+      FoundAny = true;
+      VersionTuple OldIntroduced = OldAA->getIntroduced();
+      VersionTuple OldDeprecated = OldAA->getDeprecated();
+      VersionTuple OldObsoleted = OldAA->getObsoleted();
+      bool OldIsUnavailable = OldAA->getUnavailable();
+      StringRef OldMessage = OldAA->getMessage();
+
+      if ((!OldIntroduced.empty() && !Introduced.empty() &&
+           OldIntroduced != Introduced) ||
+          (!OldDeprecated.empty() && !Deprecated.empty() &&
+           OldDeprecated != Deprecated) ||
+          (!OldObsoleted.empty() && !Obsoleted.empty() &&
+           OldObsoleted != Obsoleted) ||
+          (OldIsUnavailable != IsUnavailable) ||
+          (OldMessage != Message)) {
+        Diag(OldAA->getLocation(), diag::warn_mismatched_availability);
+        Diag(Range.getBegin(), diag::note_previous_attribute);
+        Attrs.erase(Attrs.begin() + i);
+        --e;
+        continue;
+      }
+
+      VersionTuple MergedIntroduced2 = MergedIntroduced;
+      VersionTuple MergedDeprecated2 = MergedDeprecated;
+      VersionTuple MergedObsoleted2 = MergedObsoleted;
+
+      if (MergedIntroduced2.empty())
+        MergedIntroduced2 = OldIntroduced;
+      if (MergedDeprecated2.empty())
+        MergedDeprecated2 = OldDeprecated;
+      if (MergedObsoleted2.empty())
+        MergedObsoleted2 = OldObsoleted;
+
+      if (checkAvailabilityAttr(*this, OldAA->getRange(), Platform,
+                                MergedIntroduced2, MergedDeprecated2,
+                                MergedObsoleted2)) {
+        Attrs.erase(Attrs.begin() + i);
+        --e;
+        continue;
+      }
+
+      MergedIntroduced = MergedIntroduced2;
+      MergedDeprecated = MergedDeprecated2;
+      MergedObsoleted = MergedObsoleted2;
+      ++i;
     }
-    if (MergedIntroduced.empty())
-      MergedIntroduced = OldIntroduced;
-    if (MergedDeprecated.empty())
-      MergedDeprecated = OldDeprecated;
-    if (MergedObsoleted.empty())
-      MergedObsoleted = OldObsoleted;
   }
 
   if (FoundAny &&
       MergedIntroduced == Introduced &&
       MergedDeprecated == Deprecated &&
       MergedObsoleted == Obsoleted)
-    return;
+    return false;
 
-  if (MergedIntroduced.empty())
-    MergedIntroduced = Introduced;
-  if (MergedDeprecated.empty())
-    MergedDeprecated = Deprecated;
-  if (MergedObsoleted.empty())
-    MergedObsoleted = Obsoleted;
-
-  if (!checkAvailabilityAttr(S, Range, Platform, MergedIntroduced,
+  if (!checkAvailabilityAttr(*this, Range, Platform, MergedIntroduced,
                              MergedDeprecated, MergedObsoleted)) {
-    D->addAttr(::new (S.Context) AvailabilityAttr(Range, S.Context,
-                                                  Platform,
-                                                  Introduced,
-                                                  Deprecated,
-                                                  Obsoleted,
-                                                  IsUnavailable,
-                                                  Message));
+    AvailabilityAttr *Attr =
+      ::new (Context) AvailabilityAttr(Range, Context, Platform,
+                                       Introduced, Deprecated,
+                                       Obsoleted, IsUnavailable, Message);
+
+    if (Inherited)
+      Attr->setInherited(true);
+    D->addAttr(Attr);
+    return true;
   }
+  return false;
 }
 
 static void handleAvailabilityAttr(Sema &S, Decl *D,
@@ -1820,13 +1845,32 @@ static void handleAvailabilityAttr(Sema &S, Decl *D,
   if (SE)
     Str = SE->getString();
 
-  mergeAvailabilityAttr(S, D, Attr.getRange(),
-                        Platform,
-                        Introduced.Version,
-                        Deprecated.Version,
-                        Obsoleted.Version,
-                        IsUnavailable,
-                        Str);
+  S.mergeAvailabilityAttr(D, Attr.getRange(),
+                          false, Platform,
+                          Introduced.Version,
+                          Deprecated.Version,
+                          Obsoleted.Version,
+                          IsUnavailable,
+                          Str);
+}
+
+bool Sema::mergeVisibilityAttr(Decl *D, SourceRange Range,
+                               bool Inherited,
+                               VisibilityAttr::VisibilityType Vis) {
+  VisibilityAttr *ExistingAttr = D->getAttr<VisibilityAttr>();
+  if (ExistingAttr) {
+    VisibilityAttr::VisibilityType ExistingVis = ExistingAttr->getVisibility();
+    if (ExistingVis == Vis)
+      return false;
+    Diag(ExistingAttr->getLocation(), diag::err_mismatched_visibility);
+    Diag(Range.getBegin(), diag::note_previous_attribute);
+    D->dropAttr<VisibilityAttr>();
+  }
+  VisibilityAttr *Attr = ::new (Context) VisibilityAttr(Range, Context, Vis);
+  if (Inherited)
+    Attr->setInherited(true);
+  D->addAttr(Attr);
+  return true;
 }
 
 static void handleVisibilityAttr(Sema &S, Decl *D, const AttributeList &Attr) {
@@ -1867,25 +1911,7 @@ static void handleVisibilityAttr(Sema &S, Decl *D, const AttributeList &Attr) {
     return;
   }
 
-  // Find the last Decl that has an attribute.
-  VisibilityAttr *PrevAttr = 0;
-  assert(D->redecls_begin() == D);
-  for (Decl::redecl_iterator I = D->redecls_begin(), E = D->redecls_end();
-       I != E; ++I) {
-    PrevAttr = I->getAttr<VisibilityAttr>() ;
-    if (PrevAttr)
-      break;
-  }
-
-  if (PrevAttr) {
-    VisibilityAttr::VisibilityType PrevVisibility = PrevAttr->getVisibility();
-    if (PrevVisibility != type) {
-      S.Diag(Attr.getLoc(), diag::err_mismatched_visibility);
-      S.Diag(PrevAttr->getLocation(), diag::note_previous_attribute);
-      return;
-    }
-  }
-  D->addAttr(::new (S.Context) VisibilityAttr(Attr.getRange(), S.Context, type));
+  S.mergeVisibilityAttr(D, Attr.getRange(), false, type);
 }
 
 static void handleObjCMethodFamilyAttr(Sema &S, Decl *decl,
@@ -3988,10 +4014,8 @@ void Sema::ProcessDeclAttributeList(Scope *S, Decl *D,
                                     bool NonInheritable, bool Inheritable) {
   SmallVector<const AttributeList*, 4> attrs;
   for (const AttributeList* l = AttrList; l; l = l->getNext()) {
+    ProcessDeclAttribute(*this, S, D, *l, NonInheritable, Inheritable);
     attrs.push_back(l);
-  }
-  for (int i = attrs.size() - 1; i >= 0; --i) {
-    ProcessDeclAttribute(*this, S, D, *attrs[i], NonInheritable, Inheritable);
   }
 
   // GCC accepts

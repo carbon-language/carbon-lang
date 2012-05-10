@@ -151,6 +151,24 @@ static void HandleX86ForceAlignArgPointerAttr(Decl *D,
                                                            S.Context));
 }
 
+bool Sema::mergeDLLImportAttr(Decl *D, SourceRange Range, bool Inherited) {
+  if (D->hasAttr<DLLExportAttr>()) {
+    Diag(Range.getBegin(), diag::warn_attribute_ignored) << "dllimport";
+    return false;
+  }
+
+  if (D->hasAttr<DLLImportAttr>())
+    return false;
+
+  DLLImportAttr *Attr =
+    ::new (Context) DLLImportAttr(Range, Context);
+  if (Inherited)
+    Attr->setInherited(true);
+  D->addAttr(Attr);
+
+  return true;
+}
+
 static void HandleDLLImportAttr(Decl *D, const AttributeList &Attr, Sema &S) {
   // check the attribute arguments.
   if (Attr.getNumArgs() != 0) {
@@ -159,13 +177,8 @@ static void HandleDLLImportAttr(Decl *D, const AttributeList &Attr, Sema &S) {
   }
 
   // Attribute can be applied only to functions or variables.
-  if (isa<VarDecl>(D)) {
-    D->addAttr(::new (S.Context) DLLImportAttr(Attr.getLoc(), S.Context));
-    return;
-  }
-
   FunctionDecl *FD = dyn_cast<FunctionDecl>(D);
-  if (!FD) {
+  if (!FD && !isa<VarDecl>(D)) {
     // Apparently Visual C++ thinks it is okay to not emit a warning
     // in this case, so only emit a warning when -fms-extensions is not
     // specified.
@@ -177,17 +190,30 @@ static void HandleDLLImportAttr(Decl *D, const AttributeList &Attr, Sema &S) {
 
   // Currently, the dllimport attribute is ignored for inlined functions.
   // Warning is emitted.
-  if (FD->isInlineSpecified()) {
+  if (FD && FD->isInlineSpecified()) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << "dllimport";
     return;
   }
 
-  if (D->getAttr<DLLExportAttr>()) {
-    S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << "dllimport";
-    return;
+  S.mergeDLLImportAttr(D, Attr.getRange(), false);
+}
+
+bool Sema::mergeDLLExportAttr(Decl *D, SourceRange Range, bool Inherited) {
+  if (DLLImportAttr *Import = D->getAttr<DLLImportAttr>()) {
+    Diag(Import->getLocation(), diag::warn_attribute_ignored) << "dllimport";
+    D->dropAttr<DLLImportAttr>();
   }
 
-  D->addAttr(::new (S.Context) DLLImportAttr(Attr.getLoc(), S.Context));
+  if (D->hasAttr<DLLExportAttr>())
+    return false;
+
+  DLLExportAttr *Attr =
+    ::new (Context) DLLExportAttr(Range, Context);
+  if (Inherited)
+    Attr->setInherited(true);
+  D->addAttr(Attr);
+
+  return true;
 }
 
 static void HandleDLLExportAttr(Decl *D, const AttributeList &Attr, Sema &S) {
@@ -198,13 +224,8 @@ static void HandleDLLExportAttr(Decl *D, const AttributeList &Attr, Sema &S) {
   }
 
   // Attribute can be applied only to functions or variables.
-  if (isa<VarDecl>(D)) {
-    D->addAttr(::new (S.Context) DLLExportAttr(Attr.getLoc(), S.Context));
-    return;
-  }
-
   FunctionDecl *FD = dyn_cast<FunctionDecl>(D);
-  if (!FD) {
+  if (!FD && !isa<VarDecl>(D)) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
       << Attr.getName() << 2 /*variable and function*/;
     return;
@@ -212,18 +233,13 @@ static void HandleDLLExportAttr(Decl *D, const AttributeList &Attr, Sema &S) {
 
   // Currently, the dllexport attribute is ignored for inlined functions, unless
   // the -fkeep-inline-functions flag has been used. Warning is emitted;
-  if (FD->isInlineSpecified()) {
+  if (FD && FD->isInlineSpecified()) {
     // FIXME: ... unless the -fkeep-inline-functions flag has been used.
     S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << "dllexport";
     return;
   }
 
-  if (DLLImportAttr *Import = D->getAttr<DLLImportAttr>()) {
-    S.Diag(Import->getLocation(), diag::warn_attribute_ignored) << "dllimport";
-    D->dropAttr<DLLImportAttr>();
-  }
-
-  D->addAttr(::new (S.Context) DLLExportAttr(Attr.getLoc(), S.Context));
+  S.mergeDLLExportAttr(D, Attr.getRange(), false);
 }
 
 namespace {

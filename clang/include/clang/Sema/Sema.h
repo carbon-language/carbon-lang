@@ -1560,6 +1560,18 @@ public:
   TypedefDecl *ParseTypedefDecl(Scope *S, Declarator &D, QualType T,
                                 TypeSourceInfo *TInfo);
   bool isIncompatibleTypedef(TypeDecl *Old, TypedefNameDecl *New);
+
+  /// Attribute merging methods. Return true if a new attribute was added.
+  bool mergeAvailabilityAttr(Decl *D, SourceRange Range, bool Inherited,
+                             IdentifierInfo *Platform, VersionTuple Introduced,
+                             VersionTuple Deprecated, VersionTuple Obsoleted,
+                             bool IsUnavailable, StringRef Message);
+  bool mergeVisibilityAttr(Decl *D, SourceRange Range,
+                           bool Inherited, VisibilityAttr::VisibilityType Vis);
+  bool mergeDLLImportAttr(Decl *D, SourceRange Range, bool Inherited);
+  bool mergeDLLExportAttr(Decl *D, SourceRange Range, bool Inherited);
+  bool mergeDeclAttribute(Decl *New, InheritableAttr *Attr);
+
   void mergeDeclAttributes(Decl *New, Decl *Old, bool MergeDeprecation = true);
   void MergeTypedefNameDecl(TypedefNameDecl *New, LookupResult &OldDecls);
   bool MergeFunctionDecl(FunctionDecl *New, Decl *Old, Scope *S);
