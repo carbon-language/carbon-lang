@@ -226,7 +226,14 @@ bool Instruction::isIdenticalToWhenDefined(const Instruction *I) const {
            RMWI->isVolatile() == cast<AtomicRMWInst>(I)->isVolatile() &&
            RMWI->getOrdering() == cast<AtomicRMWInst>(I)->getOrdering() &&
            RMWI->getSynchScope() == cast<AtomicRMWInst>(I)->getSynchScope();
-
+  if (const PHINode *thisPHI = dyn_cast<PHINode>(this)) {
+    const PHINode *otherPHI = cast<PHINode>(I);
+    for (unsigned i = 0, e = thisPHI->getNumOperands(); i != e; ++i) {
+      if (thisPHI->getIncomingBlock(i) != otherPHI->getIncomingBlock(i))
+        return false;
+    }
+    return true;
+  }
   return true;
 }
 
