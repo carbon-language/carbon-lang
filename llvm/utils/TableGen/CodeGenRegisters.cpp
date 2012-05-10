@@ -1053,17 +1053,21 @@ static void computeUberWeights(std::vector<UberRegSet> &UberSets,
 static bool normalizeWeight(CodeGenRegister *Reg,
                             std::vector<UberRegSet> &UberSets,
                             std::vector<UberRegSet*> &RegSets,
+                            std::set<unsigned> &NormalRegs,
                             CodeGenRegister::RegUnitList &NormalUnits,
                             CodeGenRegBank &RegBank) {
   bool Changed = false;
+  if (!NormalRegs.insert(Reg->EnumValue).second)
+    return Changed;
+
   const CodeGenRegister::SubRegMap &SRM = Reg->getSubRegs();
   for (CodeGenRegister::SubRegMap::const_iterator SRI = SRM.begin(),
          SRE = SRM.end(); SRI != SRE; ++SRI) {
     if (SRI->second == Reg)
       continue; // self-cycles happen
 
-    Changed |=
-      normalizeWeight(SRI->second, UberSets, RegSets, NormalUnits, RegBank);
+    Changed |= normalizeWeight(SRI->second, UberSets, RegSets,
+                               NormalRegs, NormalUnits, RegBank);
   }
   // Postorder register normalization.
 
@@ -1128,8 +1132,9 @@ void CodeGenRegBank::computeRegUnitWeights() {
     Changed = false;
     for (unsigned i = 0, e = Registers.size(); i != e; ++i) {
       CodeGenRegister::RegUnitList NormalUnits;
-      Changed |=
-        normalizeWeight(Registers[i], UberSets, RegSets, NormalUnits, *this);
+      std::set<unsigned> NormalRegs;
+      Changed |= normalizeWeight(Registers[i], UberSets, RegSets,
+                                 NormalRegs, NormalUnits, *this);
     }
   }
 }
