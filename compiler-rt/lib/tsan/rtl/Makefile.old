@@ -1,10 +1,6 @@
-CXXFLAGS=-Wall -fPIE -Werror -g $(CFLAGS) -fno-builtin
-DEBUG=1
-
+CXXFLAGS = -fPIE -g -Wall -Werror -fno-builtin -DTSAN_DEBUG=$(DEBUG)
 ifeq ($(DEBUG), 0)
-	CXXFLAGS+=-DTSAN_DEBUG=0 -O3
-else
-	CXXFLAGS+=-DTSAN_DEBUG=1
+	CXXFLAGS += -O3
 endif
 
 # For interception. FIXME: move interception one level higher.

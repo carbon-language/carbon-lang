@@ -1,0 +1,95 @@
+DEBUG=0
+LDFLAGS=-ldl -lpthread -pie
+CXXFLAGS = -fPIE -g -Wall -Werror  -DTSAN_DEBUG=$(DEBUG)
+ifeq ($(DEBUG), 0)
+	CXXFLAGS += -O3
+endif
+
+
+LIBTSAN=rtl/libtsan.a
+GTEST_ROOT=third_party/googletest
+GTEST_INCLUDE=-I$(GTEST_ROOT)/include
+GTEST_BUILD_DIR=$(GTEST_ROOT)/build
+GTEST_LIB=$(GTEST_BUILD_DIR)/gtest-all.o
+
+RTL_TEST_SRC=$(wildcard rtl_tests/*.cc)
+RTL_TEST_OBJ=$(patsubst %.cc,%.o,$(RTL_TEST_SRC))
+UNIT_TEST_SRC=$(wildcard unit_tests/*_test.cc)
+UNIT_TEST_OBJ=$(patsubst %.cc,%.o,$(UNIT_TEST_SRC))
+UNIT_TEST_HDR=$(wildcard rtl/*.h)
+
+INCLUDES=-Irtl $(GTEST_INCLUDE)
+
+all: $(LIBTSAN) test
+
+help:
+	@ echo "A little help is always welcome!"
+	@ echo "The most useful targets are:"
+	@ echo "  make install_deps  # Install third-party dependencies required for building"
+	@ echo "  make presubmit     # Run it every time before committing"
+	@ echo "  make lint          # Run the style checker"
+	@ echo
+	@ echo "For more info, see http://code.google.com/p/data-race-test/wiki/ThreadSanitizer2"
+
+$(LIBTSAN):
+	$(MAKE) -C rtl -f Makefile.old DEBUG=$(DEBUG)
+
+unit_tests/%_test.o: unit_tests/%_test.cc $(UNIT_TEST_HDR)
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -o $@ -c $<
+
+rtl_tests/%.o: rtl_tests/%.cc $(LIBTSAN_HEADERS)
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -o $@ -c $<
+
+#%.o: %.c $(LIBTSAN_HEADERS)
+#	$(CC) $(CXXFLAGS) $(INCLUDES) -c $<
+
+tsan_test: $(TEST_OBJ) $(UNIT_TEST_OBJ) $(RTL_TEST_OBJ) $(LIBTSAN) $(GTEST_LIB)
+	$(CXX) $^ -o $@ $(LDFLAGS)
+
+test: $(LIBTSAN) tsan_test
+
+run: all
+	(ulimit -s 8192; ./tsan_test)
+
+presubmit:
+	$(MAKE) -f Makefile.old lint -j 4
+	# Debug build with clang.
+	$(MAKE) -f Makefile.old clean
+	$(MAKE) -f Makefile.old run DEBUG=1 -j 16 CC=clang CXX=clang++
+	./output_tests/test_output.sh
+	# Release build gcc
+	$(MAKE) -f Makefile.old clean
+	$(MAKE) -f Makefile.old run DEBUG=0 -j 16 CC=gcc CXX=g++
+	./check_analyze.sh
+	./output_tests/test_output.sh
+	@ echo PRESUBMIT PASSED
+
+RTL_LINT_FITLER=-legal/copyright,-build/include,-readability/casting,-build/header_guard
+
+lint: lint_tsan lint_tests
+lint_tsan:
+	third_party/cpplint/cpplint.py --filter=$(RTL_LINT_FITLER) rtl/*.{cc,h}
+lint_tests:
+	third_party/cpplint/cpplint.py --filter=$(RTL_LINT_FITLER) rtl_tests/*.{cc,h}
+
+install_deps:
+	rm -rf third_party
+	mkdir third_party
+	(cd third_party && \
+	svn co -r613 http://googletest.googlecode.com/svn/trunk googletest && \
+	svn co -r82 http://google-styleguide.googlecode.com/svn/trunk/cpplint cpplint \
+        )
+
+# Remove verbose printf from lint. Not strictly necessary.
+hack_cpplint:
+	sed -i "s/  sys.stderr.write('Done processing.*//g" third_party/cpplint/cpplint.py
+
+$(GTEST_LIB):
+	mkdir -p $(GTEST_BUILD_DIR) && \
+	cd $(GTEST_BUILD_DIR) && \
+	$(MAKE) -f ../make/Makefile CXXFLAGS="$(CXXFLAGS)" CFLAGS="$(CFLAGS)" CC=$(CC) CXX=$(CXX)
+
+clean:
+	rm -f asm_*.s libtsan.nm libtsan.objdump */*.o tsan_test
+	rm -rf $(GTEST_BUILD_DIR)
+	$(MAKE) clean -C rtl -f Makefile.old

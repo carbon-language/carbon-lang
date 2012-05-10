@@ -11,7 +11,7 @@ CXX=clang++
 
 # TODO: add testing for all of -O0...-O3
 CFLAGS="-fthread-sanitizer -fPIE -O1 -g -fno-builtin -Wall -Werror=return-type"
-LDFLAGS="-pie -lpthread -ldl $ROOTDIR/tsan/libtsan.a"
+LDFLAGS="-pie -lpthread -ldl $ROOTDIR/rtl/libtsan.a"
 if [ "$LLDB" != "" ]; then
   LDFLAGS+=" -L$LLDB -llldb"
 fi
