@@ -54,6 +54,9 @@ int main(int argc, const char *argv[]) {
   NSNumber *piFloat = @(3.141592654F);    // equivalent to [NSNumber numberWithFloat:(3.141592654F)]
   NSNumber *piDouble = @(3.1415926535);   // equivalent to [NSNumber numberWithDouble:(3.1415926535)]
 
+  BOOL b;
+  NSNumber *nsb = @(b);
+
   // Strings.
   NSString *duplicateString = @(strdup("Hello"));
 }
@@ -65,4 +68,5 @@ int main(int argc, const char *argv[]) {
 // CHECK:  NSNumber *fortyTwoLongLong = ((NSNumber *(*)(id, SEL, long long))(void *)objc_msgSend)(objc_getClass("NSNumber"), sel_registerName("numberWithLongLong:"), (42LL));
 // CHECK:  NSNumber *piFloat = ((NSNumber *(*)(id, SEL, float))(void *)objc_msgSend)(objc_getClass("NSNumber"), sel_registerName("numberWithFloat:"), (3.1415927));
 // CHECK:  NSNumber *piDouble = ((NSNumber *(*)(id, SEL, double))(void *)objc_msgSend)(objc_getClass("NSNumber"), sel_registerName("numberWithDouble:"), (3.1415926535));
+// CHECK:  NSNumber *nsb = ((NSNumber *(*)(id, SEL, BOOL))(void *)objc_msgSend)(objc_getClass("NSNumber"), sel_registerName("numberWithBool:"), (BOOL)(b));
 // CHECK:  NSString *duplicateString = ((NSString *(*)(id, SEL, const char *))(void *)objc_msgSend)(objc_getClass("NSString"), sel_registerName("stringWithUTF8String:"), (const char *)(strdup("Hello")));

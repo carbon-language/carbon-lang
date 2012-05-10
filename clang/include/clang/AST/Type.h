@@ -1750,9 +1750,9 @@ public:
   friend class ASTWriter;
 };
 
-template <> inline const TypedefType *Type::getAs() const {
-  return dyn_cast<TypedefType>(this);
-}
+/// \brief This will check for a TypedefType by removing any existing sugar
+/// until it reaches a TypedefType or a non-sugared type.
+template <> const TypedefType *Type::getAs() const;
 
 // We can do canonical leaf types faster, because we don't have to
 // worry about preserving child type decoration.

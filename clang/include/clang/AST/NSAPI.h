@@ -126,10 +126,19 @@ public:
 
   /// \brief Determine the appropriate NSNumber factory method kind for a
   /// literal of the given type.
-  static llvm::Optional<NSNumberLiteralMethodKind>
-      getNSNumberFactoryMethodKind(QualType T);
+  llvm::Optional<NSNumberLiteralMethodKind>
+      getNSNumberFactoryMethodKind(QualType T) const;
+
+  /// \brief Returns true if \param T is a typedef of "BOOL" in objective-c.
+  bool isObjCBOOLType(QualType T) const;
+  /// \brief Returns true if \param T is a typedef of "NSInteger" in objective-c.
+  bool isObjCNSIntegerType(QualType T) const;
+  /// \brief Returns true if \param T is a typedef of "NSUInteger" in objective-c.
+  bool isObjCNSUIntegerType(QualType T) const;
 
 private:
+  bool isObjCTypedef(QualType T, StringRef name, IdentifierInfo *&II) const;
+
   ASTContext &Ctx;
 
   mutable IdentifierInfo *ClassIds[NumClassIds];
@@ -145,6 +154,8 @@ private:
   /// \brief The Objective-C NSNumber selectors used to create NSNumber literals.
   mutable Selector NSNumberClassSelectors[NumNSNumberLiteralMethods];
   mutable Selector NSNumberInstanceSelectors[NumNSNumberLiteralMethods];
+
+  mutable IdentifierInfo *BOOLId, *NSIntegerId, *NSUIntegerId;
 };
 
 }  // end namespace clang

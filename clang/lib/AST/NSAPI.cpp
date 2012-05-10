@@ -13,7 +13,7 @@
 using namespace clang;
 
 NSAPI::NSAPI(ASTContext &ctx)
-  : Ctx(ctx), ClassIds() {
+  : Ctx(ctx), ClassIds(), BOOLId(0), NSIntegerId(0), NSUIntegerId(0) {
 }
 
 IdentifierInfo *NSAPI::getNSClassId(NSClassIdKindKind K) const {
@@ -251,11 +251,22 @@ NSAPI::getNSNumberLiteralMethodKind(Selector Sel) const {
 }
 
 llvm::Optional<NSAPI::NSNumberLiteralMethodKind>
-NSAPI::getNSNumberFactoryMethodKind(QualType T) {
+NSAPI::getNSNumberFactoryMethodKind(QualType T) const {
   const BuiltinType *BT = T->getAs<BuiltinType>();
   if (!BT)
     return llvm::Optional<NSAPI::NSNumberLiteralMethodKind>();
-  
+
+  const TypedefType *TDT = T->getAs<TypedefType>();
+  if (TDT) {
+    QualType TDTTy = QualType(TDT, 0);
+    if (isObjCBOOLType(TDTTy))
+      return NSAPI::NSNumberWithBool;
+    if (isObjCNSIntegerType(TDTTy))
+      return NSAPI::NSNumberWithInteger;
+    if (isObjCNSUIntegerType(TDTTy))
+      return NSAPI::NSNumberWithUnsignedInteger;
+  }
+
   switch (BT->getKind()) {
   case BuiltinType::Char_S:
   case BuiltinType::SChar:
@@ -309,4 +320,36 @@ NSAPI::getNSNumberFactoryMethodKind(QualType T) {
   }
   
   return llvm::Optional<NSAPI::NSNumberLiteralMethodKind>();
+}
+
+/// \brief Returns true if \param T is a typedef of "BOOL" in objective-c.
+bool NSAPI::isObjCBOOLType(QualType T) const {
+  return isObjCTypedef(T, "BOOL", BOOLId);
+}
+/// \brief Returns true if \param T is a typedef of "NSInteger" in objective-c.
+bool NSAPI::isObjCNSIntegerType(QualType T) const {
+  return isObjCTypedef(T, "NSInteger", NSIntegerId);
+}
+/// \brief Returns true if \param T is a typedef of "NSUInteger" in objective-c.
+bool NSAPI::isObjCNSUIntegerType(QualType T) const {
+  return isObjCTypedef(T, "NSUInteger", NSUIntegerId);
+}
+
+bool NSAPI::isObjCTypedef(QualType T,
+                          StringRef name, IdentifierInfo *&II) const {
+  if (!Ctx.getLangOpts().ObjC1)
+    return false;
+  if (T.isNull())
+    return false;
+
+  if (!II)
+    II = &Ctx.Idents.get(name);
+
+  while (const TypedefType *TDT = T->getAs<TypedefType>()) {
+    if (TDT->getDecl()->getDeclName().getAsIdentifierInfo() == II)
+      return true;
+    T = TDT->desugar();
+  }
+
+  return false;
 }
