@@ -166,6 +166,7 @@ namespace  {
     void VisitObjCAtCatchStmt(ObjCAtCatchStmt *Node);
     void VisitObjCEncodeExpr(ObjCEncodeExpr *Node);
     void VisitObjCMessageExpr(ObjCMessageExpr* Node);
+    void VisitObjCBoxedExpr(ObjCBoxedExpr* Node);
     void VisitObjCSelectorExpr(ObjCSelectorExpr *Node);
     void VisitObjCProtocolExpr(ObjCProtocolExpr *Node);
     void VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *Node);
@@ -635,6 +636,11 @@ void StmtDumper::VisitObjCMessageExpr(ObjCMessageExpr* Node) {
     OS << " super (class)";
     break;
   }
+}
+
+void StmtDumper::VisitObjCBoxedExpr(ObjCBoxedExpr* Node) {
+  DumpExpr(Node);
+  OS << " selector=" << Node->getBoxingMethod()->getSelector().getAsString();
 }
 
 void StmtDumper::VisitObjCAtCatchStmt(ObjCAtCatchStmt *Node) {
