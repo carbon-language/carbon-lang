@@ -266,3 +266,13 @@ define void @test21() {
 ; CHECK-NEXT: ret void
   ret void
 }
+
+; CHECK: @test22(
+define void @test22(i1 %i, i32 %k, i32 %m) nounwind {
+  %k.addr = alloca i32
+  %m.addr = alloca i32
+  %k.addr.m.addr = select i1 %i, i32* %k.addr, i32* %m.addr
+  store i32 0, i32* %k.addr.m.addr, align 4
+; CHECK-NEXT: ret void
+  ret void
+}

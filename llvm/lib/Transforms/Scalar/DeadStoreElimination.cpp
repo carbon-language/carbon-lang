@@ -731,14 +731,30 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
     // If we find a store, check to see if it points into a dead stack value.
     if (hasMemoryWrite(BBI) && isRemovable(BBI)) {
       // See through pointer-to-pointer bitcasts
-      Value *Pointer = GetUnderlyingObject(getStoredPointerOperand(BBI));
+      SmallVector<Value *, 4> Pointers;
+      GetUnderlyingObjects(getStoredPointerOperand(BBI), Pointers);
 
       // Stores to stack values are valid candidates for removal.
-      if (DeadStackObjects.count(Pointer)) {
+      bool AllDead = true;
+      for (SmallVectorImpl<Value *>::iterator I = Pointers.begin(),
+           E = Pointers.end(); I != E; ++I)
+        if (!DeadStackObjects.count(*I)) {
+          AllDead = false;
+          break;
+        }
+
+      if (AllDead) {
         Instruction *Dead = BBI++;
 
         DEBUG(dbgs() << "DSE: Dead Store at End of Block:\n  DEAD: "
-                     << *Dead << "\n  Object: " << *Pointer << '\n');
+                     << *Dead << "\n  Objects: ";
+              for (SmallVectorImpl<Value *>::iterator I = Pointers.begin(),
+                   E = Pointers.end(); I != E; ++I) {
+                dbgs() << **I;
+                if (llvm::next(I) != E)
+                  dbgs() << ", ";
+              }
+              dbgs() << '\n');
 
         // DCE instructions only used to calculate that store.
         DeleteDeadInstruction(Dead, *MD, &DeadStackObjects);

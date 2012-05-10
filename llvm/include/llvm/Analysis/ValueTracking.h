@@ -151,6 +151,14 @@ namespace llvm {
     return GetUnderlyingObject(const_cast<Value *>(V), TD, MaxLookup);
   }
 
+  /// GetUnderlyingObjects - This method is similar to GetUnderlyingObject
+  /// except that it can look through phi and select instructions and return
+  /// multiple objects.
+  void GetUnderlyingObjects(Value *V,
+                            SmallVectorImpl<Value *> &Objects,
+                            const TargetData *TD = 0,
+                            unsigned MaxLookup = 6);
+
   /// onlyUsedByLifetimeMarkers - Return true if the only users of this pointer
   /// are lifetime markers.
   bool onlyUsedByLifetimeMarkers(const Value *V);

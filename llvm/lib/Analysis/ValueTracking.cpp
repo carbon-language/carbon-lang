@@ -1796,6 +1796,37 @@ llvm::GetUnderlyingObject(Value *V, const TargetData *TD, unsigned MaxLookup) {
   return V;
 }
 
+void
+llvm::GetUnderlyingObjects(Value *V,
+                           SmallVectorImpl<Value *> &Objects,
+                           const TargetData *TD,
+                           unsigned MaxLookup) {
+  SmallPtrSet<Value *, 4> Visited;
+  SmallVector<Value *, 4> Worklist;
+  Worklist.push_back(V);
+  do {
+    Value *P = Worklist.pop_back_val();
+    P = GetUnderlyingObject(P, TD, MaxLookup);
+
+    if (!Visited.insert(P))
+      continue;
+
+    if (SelectInst *SI = dyn_cast<SelectInst>(P)) {
+      Worklist.push_back(SI->getTrueValue());
+      Worklist.push_back(SI->getFalseValue());
+      continue;
+    }
+
+    if (PHINode *PN = dyn_cast<PHINode>(P)) {
+      for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
+        Worklist.push_back(PN->getIncomingValue(i));
+      continue;
+    }
+
+    Objects.push_back(P);
+  } while (!Worklist.empty());
+}
+
 /// onlyUsedByLifetimeMarkers - Return true if the only users of this pointer
 /// are lifetime markers.
 ///
