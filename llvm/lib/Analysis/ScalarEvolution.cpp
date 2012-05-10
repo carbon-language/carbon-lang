@@ -6860,43 +6860,58 @@ bool ScalarEvolution::properlyDominates(const SCEV *S, const BasicBlock *BB) {
 }
 
 bool ScalarEvolution::hasOperand(const SCEV *S, const SCEV *Op) const {
-  switch (S->getSCEVType()) {
-  case scConstant:
-    return false;
-  case scTruncate:
-  case scZeroExtend:
-  case scSignExtend: {
-    const SCEVCastExpr *Cast = cast<SCEVCastExpr>(S);
-    const SCEV *CastOp = Cast->getOperand();
-    return Op == CastOp || hasOperand(CastOp, Op);
-  }
-  case scAddRecExpr:
-  case scAddExpr:
-  case scMulExpr:
-  case scUMaxExpr:
-  case scSMaxExpr: {
-    const SCEVNAryExpr *NAry = cast<SCEVNAryExpr>(S);
-    for (SCEVNAryExpr::op_iterator I = NAry->op_begin(), E = NAry->op_end();
-         I != E; ++I) {
-      const SCEV *NAryOp = *I;
-      if (NAryOp == Op || hasOperand(NAryOp, Op))
+  SmallVector<const SCEV *, 8> Worklist;
+  Worklist.push_back(S);
+  do {
+    S = Worklist.pop_back_val();
+
+    switch (S->getSCEVType()) {
+    case scConstant:
+      break;
+    case scTruncate:
+    case scZeroExtend:
+    case scSignExtend: {
+      const SCEVCastExpr *Cast = cast<SCEVCastExpr>(S);
+      const SCEV *CastOp = Cast->getOperand();
+      if (Op == CastOp)
         return true;
+      Worklist.push_back(CastOp);
+      break;
     }
-    return false;
-  }
-  case scUDivExpr: {
-    const SCEVUDivExpr *UDiv = cast<SCEVUDivExpr>(S);
-    const SCEV *LHS = UDiv->getLHS(), *RHS = UDiv->getRHS();
-    return LHS == Op || hasOperand(LHS, Op) ||
-           RHS == Op || hasOperand(RHS, Op);
-  }
-  case scUnknown:
-    return false;
-  case scCouldNotCompute:
-    llvm_unreachable("Attempt to use a SCEVCouldNotCompute object!");
-  default:
-    llvm_unreachable("Unknown SCEV kind!");
-  }
+    case scAddRecExpr:
+    case scAddExpr:
+    case scMulExpr:
+    case scUMaxExpr:
+    case scSMaxExpr: {
+      const SCEVNAryExpr *NAry = cast<SCEVNAryExpr>(S);
+      for (SCEVNAryExpr::op_iterator I = NAry->op_begin(), E = NAry->op_end();
+           I != E; ++I) {
+        const SCEV *NAryOp = *I;
+        if (NAryOp == Op)
+          return true;
+        Worklist.push_back(NAryOp);
+      }
+      break;
+    }
+    case scUDivExpr: {
+      const SCEVUDivExpr *UDiv = cast<SCEVUDivExpr>(S);
+      const SCEV *LHS = UDiv->getLHS(), *RHS = UDiv->getRHS();
+      if (LHS == Op || RHS == Op)
+        return true;
+      Worklist.push_back(LHS);
+      Worklist.push_back(RHS);
+      break;
+    }
+    case scUnknown:
+      break;
+    case scCouldNotCompute:
+      llvm_unreachable("Attempt to use a SCEVCouldNotCompute object!");
+    default:
+      llvm_unreachable("Unknown SCEV kind!");
+    }
+  } while (!Worklist.empty());
+
+  return false;
 }
 
 void ScalarEvolution::forgetMemoizedResults(const SCEV *S) {
