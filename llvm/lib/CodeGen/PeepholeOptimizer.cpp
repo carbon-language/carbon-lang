@@ -31,6 +31,15 @@
 //     same flag that the "cmp" instruction sets and that "bz" uses, then we can
 //     eliminate the "cmp" instruction.
 //
+//     Another instance, in this code:
+//
+//       sub r1, r3 | sub r1, imm
+//       cmp r3, r1 or cmp r1, r3 | cmp r1, imm
+//       bge L1
+//
+//     If the branch instruction can use flag from "sub", then we can replace
+//     "sub" with "subs" and eliminate the "cmp" instruction.
+//
 // - Optimize Bitcast pairs:
 //
 //     v1 = bitcast v0
