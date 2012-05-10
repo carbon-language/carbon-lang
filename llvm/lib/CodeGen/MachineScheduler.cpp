@@ -724,10 +724,27 @@ public:
       BotQueue.push(SU);
   }
 protected:
+#ifndef NDEBUG
+  void traceCandidate(const char *Label, unsigned QID, SUnit *SU,
+                      int RPDiff, unsigned PSetID);
+#endif
   bool pickNodeFromQueue(ReadyQ &Q, const RegPressureTracker &RPTracker,
                          SchedCandidate &Candidate);
 };
 } // namespace
+
+#ifndef NDEBUG
+void ConvergingScheduler::
+traceCandidate(const char *Label, unsigned QID, SUnit *SU,
+               int RPDiff, unsigned PSetID) {
+  dbgs() << Label << getQName(QID) << " ";
+  if (RPDiff)
+    dbgs() << TRI->getRegPressureSetName(PSetID) << ":" << RPDiff << " ";
+  else
+    dbgs() << "     ";
+  SU->dump(DAG);
+}
+#endif
 
 /// Pick the best candidate from the top queue.
 ///
@@ -749,6 +766,8 @@ bool ConvergingScheduler::pickNodeFromQueue(ReadyQ &Q,
 
     // Avoid exceeding the target's limit.
     if (!Candidate.SU || RPDelta.ExcessUnits < Candidate.RPDelta.ExcessUnits) {
+      DEBUG(traceCandidate(Candidate.SU ? "PCAND" : "ACAND", Q.ID, *I,
+                           RPDelta.ExcessUnits, RPDelta.ExcessSetID));
       Candidate.SU = *I;
       Candidate.RPDelta = RPDelta;
       FoundCandidate = true;
@@ -759,15 +778,11 @@ bool ConvergingScheduler::pickNodeFromQueue(ReadyQ &Q,
 
     // Avoid increasing the max pressure.
     if (RPDelta.MaxUnitIncrease < Candidate.RPDelta.MaxUnitIncrease) {
+      DEBUG(traceCandidate("MCAND", Q.ID, *I,
+                           RPDelta.ExcessUnits, RPDelta.ExcessSetID));
       Candidate.SU = *I;
       Candidate.RPDelta = RPDelta;
       FoundCandidate = true;
-
-      DEBUG(dbgs() << "CAND " << getQName(Q.ID) << " ";
-            if (RPDelta.MaxUnitIncrease)
-              dbgs() << TRI->getRegPressureSetName(RPDelta.MaxSetID) << ":"
-                     << RPDelta.MaxUnitIncrease << " ";
-            (*I)->dump(DAG); dbgs() << "\n");
       continue;
     }
     if (RPDelta.MaxUnitIncrease > Candidate.RPDelta.MaxUnitIncrease)
@@ -780,6 +795,7 @@ bool ConvergingScheduler::pickNodeFromQueue(ReadyQ &Q,
 
     if ((Q.ID == TopQID && (*I)->NodeNum < Candidate.SU->NodeNum)
         || (Q.ID == BotQID && (*I)->NodeNum > Candidate.SU->NodeNum)) {
+      DEBUG(traceCandidate("NCAND", Q.ID, *I, 0, 0));
       Candidate.SU = *I;
       Candidate.RPDelta = RPDelta;
       FoundCandidate = true;
