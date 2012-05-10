@@ -264,7 +264,7 @@ get_stack_for_address_enumerator(mach_stack_logging_record_t stack_record, void 
                                                                        MAX_FRAMES,
                                                                        &num_frames);    
     g_malloc_stack_history.resize(g_malloc_stack_history.size() + 1);
-    g_malloc_stack_history.back().addr = (void *)stack_record.address;
+    g_malloc_stack_history.back().address = (void *)stack_record.address;
     g_malloc_stack_history.back().type_flags = stack_record.type_flags;
     g_malloc_stack_history.back().argument = stack_record.argument;
     if (num_frames > 0)
@@ -292,7 +292,7 @@ get_stack_history_for_address (const void * addr)
     if (g_malloc_stack_history.empty())
         return NULL;
     g_malloc_stack_history.resize(g_malloc_stack_history.size() + 1);
-    g_malloc_stack_history.back().addr = 0;
+    g_malloc_stack_history.back().address = 0;
     g_malloc_stack_history.back().type_flags = 0;
     g_malloc_stack_history.back().argument = 0;
     return g_malloc_stack_history.data();
