@@ -112,3 +112,20 @@ entry:
   %vecinit2.i = insertelement <2 x double> %vecinit.i, double %q, i32 1
   ret <2 x double> %vecinit2.i
 }
+
+; CHECK: _RR
+; CHECK: vbroadcastss (%
+; CHECK: ret
+define <4 x float> @_RR(float* %ptr, i32* %k) nounwind uwtable readnone ssp {
+entry:
+  %q = load float* %ptr, align 4
+  %vecinit.i = insertelement <4 x float> undef, float %q, i32 0
+  %vecinit2.i = insertelement <4 x float> %vecinit.i, float %q, i32 1
+  %vecinit4.i = insertelement <4 x float> %vecinit2.i, float %q, i32 2
+  %vecinit6.i = insertelement <4 x float> %vecinit4.i, float %q, i32 3
+  ; force a chain
+  %j = load i32* %k, align 4
+  store i32 %j, i32* undef
+  ret <4 x float> %vecinit6.i
+}
+

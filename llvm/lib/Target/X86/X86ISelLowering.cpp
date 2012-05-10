@@ -5029,10 +5029,6 @@ X86TargetLowering::LowerVectorBroadcast(SDValue &Op, SelectionDAG &DAG) const {
   if (!ISD::isNormalLoad(Ld.getNode()))
     return SDValue();
 
-  // Reject loads that have uses of the chain result
-  if (Ld->hasAnyUseOfValue(1))
-    return SDValue();
-
   unsigned ScalarSize = Ld.getValueType().getSizeInBits();
 
   if (ScalarSize == 32 || (Is256 && ScalarSize == 64))
