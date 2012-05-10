@@ -106,8 +106,8 @@
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "/Volumes/work/gclayton/Documents/devb/attach/a.out"
-            isEnabled = "NO">
+            argument = "~/Documents/src/args/a.out"
+            isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "/bin/cat"

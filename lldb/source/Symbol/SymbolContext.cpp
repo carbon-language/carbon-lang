@@ -203,6 +203,8 @@ SymbolContext::DumpStopContext
         if (symbol->GetMangled().GetName())
         {
             dumped_something = true;
+            if (symbol->GetType() == eSymbolTypeTrampoline)
+                s->PutCString("symbol stub for: ");
             symbol->GetMangled().GetName().Dump(s);
         }
 

@@ -105,7 +105,7 @@ SBInstructionList::GetDescription (lldb::SBStream &description)
                 Instruction *inst = m_opaque_sp->GetInstructionList().GetInstructionAtIndex (i).get();
                 if (inst == NULL)
                     break;
-                inst->Dump (&sref, max_opcode_byte_size, true, false, NULL, false);
+                inst->Dump (&sref, max_opcode_byte_size, true, false, NULL);
                 sref.EOL();
             }
             return true;

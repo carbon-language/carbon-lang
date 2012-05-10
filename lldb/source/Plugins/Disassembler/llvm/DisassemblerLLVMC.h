@@ -100,27 +100,25 @@ protected:
                                             const char **ReferenceName);
     
     void Lock(InstructionLLVMC *inst, 
-              lldb_private::ExecutionContextScope *exe_scope)
+              const lldb_private::ExecutionContext *exe_ctx)
     {
         m_mutex.Lock();
-        
         m_inst = inst;
-        m_exe_scope = exe_scope;
+        m_exe_ctx = exe_ctx;
     }
     
     void Unlock()
     {
-        m_exe_scope = NULL;
         m_inst = NULL;
-        
+        m_exe_ctx = NULL;
         m_mutex.Unlock();
     }
     
-    lldb_private::ExecutionContextScope    *m_exe_scope;
-    InstructionLLVMC                       *m_inst;
-    lldb_private::Mutex                     m_mutex;
-    ::LLVMDisasmContextRef                  m_disasm_context;
-    ::LLVMDisasmContextRef                  m_alternate_disasm_context;
+    const lldb_private::ExecutionContext *m_exe_ctx;
+    InstructionLLVMC *m_inst;
+    lldb_private::Mutex m_mutex;
+    ::LLVMDisasmContextRef m_disasm_context;
+    ::LLVMDisasmContextRef m_alternate_disasm_context;
 };
 
 #endif  // liblldb_DisassemblerLLVM_h_

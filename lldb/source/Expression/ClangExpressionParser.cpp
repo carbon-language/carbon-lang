@@ -793,8 +793,7 @@ ClangExpressionParser::DisassembleFunction (Stream &stream, ExecutionContext &ex
                            max_opcode_byte_size,
                            true,
                            true,
-                           &exe_ctx, 
-                           true);
+                           &exe_ctx);
         stream.PutChar('\n');
     }
     

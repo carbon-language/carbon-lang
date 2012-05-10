@@ -1,4 +1,4 @@
-//===-- Baton.cpp -----------------------------------------------*- C++ -*-===//
+//===-- Opcode.cpp ----------------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -12,11 +12,14 @@
 // C Includes
 // C++ Includes
 // Other libraries and framework includes
+#include "llvm/ADT/Triple.h"
 // Project includes
+#include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Core/DataExtractor.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Host/Endian.h"
+
 
 using namespace lldb;
 using namespace lldb_private;
@@ -82,9 +85,10 @@ Opcode::GetDataByteOrder () const
 }
 
 uint32_t
-Opcode::GetData (DataExtractor &data) const
+Opcode::GetData (DataExtractor &data, lldb::AddressClass address_class) const
 {
     uint32_t byte_size = GetByteSize ();
+    
     DataBufferSP buffer_sp;
     if (byte_size > 0)
     {
@@ -95,7 +99,27 @@ Opcode::GetData (DataExtractor &data) const
                 
             case Opcode::eType8:    buffer_sp.reset (new DataBufferHeap (&m_data.inst8,  byte_size)); break;
             case Opcode::eType16:   buffer_sp.reset (new DataBufferHeap (&m_data.inst16, byte_size)); break;
-            case Opcode::eType32:   buffer_sp.reset (new DataBufferHeap (&m_data.inst32, byte_size)); break;
+            case Opcode::eType32:
+                {
+                    // The only thing that uses eAddressClassCodeAlternateISA currently
+                    // is Thumb. If this ever changes, we will need to pass in more
+                    // information like an additional "const ArchSpec &arch". For now
+                    // this will do
+                    if (address_class == eAddressClassCodeAlternateISA)
+                    {
+                        // 32 bit thumb instruction, we need to sizzle this a bit
+                        uint8_t buf[4];
+                        buf[0] = m_data.inst.bytes[2];
+                        buf[1] = m_data.inst.bytes[3];
+                        buf[2] = m_data.inst.bytes[0];
+                        buf[3] = m_data.inst.bytes[1];
+                        buffer_sp.reset (new DataBufferHeap (buf, byte_size));
+                        break;
+                    }
+                    buffer_sp.reset (new DataBufferHeap (&m_data.inst32, byte_size));
+                }
+                break;
+
             case Opcode::eType64:   buffer_sp.reset (new DataBufferHeap (&m_data.inst64, byte_size)); break;
             case Opcode::eTypeBytes:buffer_sp.reset (new DataBufferHeap (GetOpcodeBytes(), byte_size)); break;
                 break;

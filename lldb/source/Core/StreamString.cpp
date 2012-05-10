@@ -71,3 +71,24 @@ StreamString::GetString() const
     return m_packet;
 }
 
+void
+StreamString::FillLastLineToColumn (uint32_t column, char fill_char)
+{
+    const size_t length = m_packet.size();
+    size_t last_line_begin_pos = m_packet.find_last_of("\r\n");
+    if (last_line_begin_pos == std::string::npos)
+    {
+        last_line_begin_pos = 0;
+    }
+    else
+    {
+        ++last_line_begin_pos;
+    }
+    
+    const size_t line_columns = length - last_line_begin_pos;
+    if (column > line_columns)
+    {
+        m_packet.append(column - line_columns, fill_char);
+    }
+}
+

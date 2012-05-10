@@ -36,8 +36,6 @@ public:
         Instruction(address, addr_class),
         m_is_valid(false),
         m_disasm(disasm),
-        m_no_comments(true),
-        m_comment_stream(),
         m_does_branch(eLazyBoolCalculate)
     {
     }
@@ -58,93 +56,7 @@ public:
             ss.Printf("%*s", new_width - old_width, "");
         }
     }
-    
-    virtual void
-    Dump (lldb_private::Stream *s,
-          uint32_t max_opcode_byte_size,
-          bool show_address,
-          bool show_bytes,
-          const lldb_private::ExecutionContext* exe_ctx,
-          bool raw)
-    {
-        const size_t opcode_column_width = 7;
-        const size_t operand_column_width = 25;
-             
-        StreamString ss;
         
-        ExecutionContextScope *exe_scope = NULL;
-        
-        if ((!raw) && exe_ctx)
-        {
-            exe_scope = exe_ctx->GetBestExecutionContextScope();
-
-            DataExtractor extractor(m_raw_bytes.data(),
-                                    m_raw_bytes.size(),
-                                    m_disasm.GetArchitecture().GetByteOrder(),
-                                    m_disasm.GetArchitecture().GetAddressByteSize());
-            
-            Parse <true> (m_address,
-                          m_address_class,
-                          extractor,
-                          0,
-                          exe_scope);
-        }
-        
-        if (show_address)
-        {
-            m_address.Dump(&ss,
-                           exe_scope,
-                           Address::DumpStyleLoadAddress,
-                           Address::DumpStyleModuleWithFileAddress,
-                           0);
-            
-            ss.PutCString(":  ");
-        }
-        
-        if (show_bytes)
-        {
-            if (m_opcode.GetType() == Opcode::eTypeBytes)
-            {
-                // x86_64 and i386 are the only ones that use bytes right now so
-                // pad out the byte dump to be able to always show 15 bytes (3 chars each) 
-                // plus a space
-                if (max_opcode_byte_size > 0)
-                    m_opcode.Dump (&ss, max_opcode_byte_size * 3 + 1);
-                else
-                    m_opcode.Dump (&ss, 15 * 3 + 1);
-            }
-            else
-            {
-                // Else, we have ARM which can show up to a uint32_t 0x00000000 (10 spaces)
-                // plus two for padding...
-                if (max_opcode_byte_size > 0)
-                    m_opcode.Dump (&ss, max_opcode_byte_size * 3 + 1);
-                else
-                    m_opcode.Dump (&ss, 12);
-            }        
-        }
-        
-        int size_before_inst = ss.GetSize();
-        
-        ss.PutCString(m_opcode_name.c_str());
-        
-        PadToWidth(ss, size_before_inst + opcode_column_width);
-        
-        ss.PutCString(m_mnemocics.c_str());
-        
-        PadToWidth(ss, size_before_inst + opcode_column_width + operand_column_width);
-        
-        if (!m_comment.empty())
-        {
-            ss.PutCString(" ; ");
-            ss.PutCString(m_comment.c_str());
-        }
-        
-        ss.Flush();
-        
-        s->PutCString(ss.GetData());
-    }
-    
     virtual bool
     DoesBranch () const
     {
@@ -156,39 +68,254 @@ public:
             const lldb_private::DataExtractor &data,
             uint32_t data_offset)
     {
-        Parse <false> (m_address, 
-                       m_address_class, 
-                       data,
-                       data_offset,
-                       NULL);
+        // All we have to do is read the opcode which can be easy for some
+        // architetures
+        bool got_op = false;
+        const ArchSpec &arch = m_disasm.GetArchitecture();
         
+        const uint32_t min_op_byte_size = arch.GetMinimumOpcodeByteSize();
+        const uint32_t max_op_byte_size = arch.GetMaximumOpcodeByteSize();
+        if (min_op_byte_size == max_op_byte_size)
+        {
+            // Fixed size instructions, just read that amount of data.
+            if (!data.ValidOffsetForDataOfSize(data_offset, min_op_byte_size))
+                return false;
+            
+            switch (min_op_byte_size)
+            {
+                case 1:
+                    m_opcode.SetOpcode8  (data.GetU8  (&data_offset));
+                    got_op = true;
+                    break;
+
+                case 2:
+                    m_opcode.SetOpcode16 (data.GetU16 (&data_offset));
+                    got_op = true;
+                    break;
+
+                case 4:
+                    m_opcode.SetOpcode32 (data.GetU32 (&data_offset));
+                    got_op = true;
+                    break;
+
+                case 8:
+                    m_opcode.SetOpcode64 (data.GetU64 (&data_offset));
+                    got_op = true;
+                    break;
+
+                default:
+                    m_opcode.SetOpcodeBytes(data.PeekData(data_offset, min_op_byte_size), min_op_byte_size);
+                    got_op = true;
+                    break;
+            }
+        }
+        if (!got_op)
+        {
+            ::LLVMDisasmContextRef disasm_context = m_disasm.m_disasm_context;
+            
+            bool is_altnernate_isa = false;
+            if (m_disasm.m_alternate_disasm_context)
+            {
+                const AddressClass address_class = GetAddressClass ();
+            
+                if (address_class == eAddressClassCodeAlternateISA)
+                {
+                    disasm_context = m_disasm.m_alternate_disasm_context;
+                    is_altnernate_isa = true;
+                }
+            }
+            const llvm::Triple::ArchType machine = arch.GetMachine();
+            if (machine == llvm::Triple::arm || machine == llvm::Triple::thumb)
+            {
+                if (machine == llvm::Triple::thumb || is_altnernate_isa)
+                {
+                    uint32_t thumb_opcode = data.GetU16(&data_offset);
+                    if ((thumb_opcode & 0xe000) != 0xe000 || ((thumb_opcode & 0x1800u) == 0))
+                    {
+                        m_opcode.SetOpcode16 (thumb_opcode);
+                    }
+                    else
+                    {
+                        thumb_opcode <<= 16;
+                        thumb_opcode |= data.GetU16(&data_offset);
+                        m_opcode.SetOpcode32 (thumb_opcode);
+                        m_is_valid = true;
+                    }
+                }
+                else
+                {
+                    m_opcode.SetOpcode32 (data.GetU32(&data_offset));
+                }
+            }
+            else
+            {
+                // The opcode isn't evenly sized, so we need to actually use the llvm
+                // disassembler to parse it and get the size.
+                char out_string[512];
+                m_disasm.Lock(this, NULL);
+                uint8_t *opcode_data = const_cast<uint8_t *>(data.PeekData (data_offset, 1));
+                const size_t opcode_data_len = data.GetByteSize() - data_offset;
+                const addr_t pc = m_address.GetFileAddress();
+                const size_t inst_size = ::LLVMDisasmInstruction (disasm_context,
+                                                                  opcode_data,
+                                                                  opcode_data_len,
+                                                                  pc, // PC value
+                                                                  out_string,
+                                                                  sizeof(out_string));
+                // The address lookup function could have caused us to fill in our comment
+                m_comment.clear();
+                m_disasm.Unlock();
+                if (inst_size == 0)
+                    m_opcode.Clear();
+                else
+                {
+                    m_opcode.SetOpcodeBytes(opcode_data, inst_size);
+                    m_is_valid = true;
+                }
+            }
+        }
         return m_opcode.GetByteSize();
     }
     
     void
-    AddReferencedAddress (std::string &description)
+    AppendComment (std::string &description)
     {
-        if (m_no_comments)
-            m_comment_stream.PutCString(", ");
+        if (m_comment.empty())
+            m_comment.swap (description);
         else
-            m_no_comments = true;
-        
-        m_comment_stream.PutCString(description.c_str());
+        {
+            m_comment.append(", ");
+            m_comment.append(description);
+        }
     }
     
     virtual void
-    CalculateMnemonicOperandsAndComment (lldb_private::ExecutionContextScope *exe_scope)
+    CalculateMnemonicOperandsAndComment (const lldb_private::ExecutionContext *exe_ctx)
     {
-        DataExtractor extractor(m_raw_bytes.data(),
-                                m_raw_bytes.size(),
-                                m_disasm.GetArchitecture().GetByteOrder(),
-                                m_disasm.GetArchitecture().GetAddressByteSize());
-        
-        Parse <true> (m_address,
-                      m_address_class,
-                      extractor,
-                      0,
-                      exe_scope);
+        DataExtractor data;
+        const AddressClass address_class = GetAddressClass ();
+
+        if (m_opcode.GetData(data, address_class))
+        {
+            char out_string[512];
+            
+            ::LLVMDisasmContextRef disasm_context;
+            
+            if (address_class == eAddressClassCodeAlternateISA)
+                disasm_context = m_disasm.m_alternate_disasm_context;
+            else
+                disasm_context = m_disasm.m_disasm_context;
+            
+            lldb::addr_t pc = LLDB_INVALID_ADDRESS;
+            
+            if (exe_ctx)
+            {
+                Target *target = exe_ctx->GetTargetPtr();
+                if (target)
+                    pc = m_address.GetLoadAddress(target);
+            }
+            
+            if (pc == LLDB_INVALID_ADDRESS)
+                pc = m_address.GetFileAddress();
+            
+            m_disasm.Lock(this, exe_ctx);
+            uint8_t *opcode_data = const_cast<uint8_t *>(data.PeekData (0, 1));
+            const size_t opcode_data_len = data.GetByteSize();
+            size_t inst_size = ::LLVMDisasmInstruction (disasm_context,
+                                                        opcode_data,
+                                                        opcode_data_len,
+                                                        pc,
+                                                        out_string,
+                                                        sizeof(out_string));
+            
+            m_disasm.Unlock();
+            
+            if (inst_size == 0)
+            {
+                m_comment.assign ("unknown opcode");
+                inst_size = m_opcode.GetByteSize();
+                StreamString mnemonic_strm;
+                uint32_t offset = 0;
+                switch (inst_size)
+                {
+                    case 1:
+                        {
+                            const uint8_t uval8 = data.GetU8 (&offset);
+                            m_opcode.SetOpcode8 (uval8);
+                            m_opcode_name.assign (".byte");
+                            mnemonic_strm.Printf("0x%2.2x", uval8);
+                        }
+                        break;
+                    case 2:
+                        {
+                            const uint16_t uval16 = data.GetU16(&offset);
+                            m_opcode.SetOpcode16(uval16);
+                            m_opcode_name.assign (".short");
+                            mnemonic_strm.Printf("0x%4.4x", uval16);
+                        }
+                        break;
+                    case 4:
+                        {
+                            const uint32_t uval32 = data.GetU32(&offset);
+                            m_opcode.SetOpcode32(uval32);
+                            m_opcode_name.assign (".long");
+                            mnemonic_strm.Printf("0x%8.8x", uval32);
+                        }
+                        break;
+                    case 8:
+                        {
+                            const uint64_t uval64 = data.GetU64(&offset);
+                            m_opcode.SetOpcode64(uval64);
+                            m_opcode_name.assign (".quad");
+                            mnemonic_strm.Printf("0x%16.16llx", uval64);
+                        }
+                        break;
+                    default:
+                        if (inst_size == 0)
+                            return;
+                        else
+                        {
+                            const uint8_t *bytes = data.PeekData(offset, inst_size);
+                            if (bytes == NULL)
+                                return;
+                            m_opcode_name.assign (".byte");
+                            m_opcode.SetOpcodeBytes(bytes, inst_size);
+                            mnemonic_strm.Printf("0x%2.2x", bytes[0]);
+                            for (uint32_t i=1; i<inst_size; ++i)
+                                mnemonic_strm.Printf(" 0x%2.2x", bytes[i]);
+                        }
+                        break;
+                }
+                m_mnemocics.swap(mnemonic_strm.GetString());
+                return;
+            }
+            else
+            {
+                if (m_does_branch == eLazyBoolCalculate)
+                {
+                    if (StringRepresentsBranch (out_string, strlen(out_string)))
+                        m_does_branch = eLazyBoolYes;
+                    else
+                        m_does_branch = eLazyBoolNo;
+                }
+            }
+            
+            if (!s_regex_compiled)
+            {
+                ::regcomp(&s_regex, "[ \t]*([^ ^\t]+)[ \t]*([^ ^\t].*)?", REG_EXTENDED);
+                s_regex_compiled = true;
+            }
+            
+            ::regmatch_t matches[3];
+            
+            if (!::regexec(&s_regex, out_string, sizeof(matches) / sizeof(::regmatch_t), matches, 0))
+            {
+                if (matches[1].rm_so != -1)
+                    m_opcode_name.assign(out_string + matches[1].rm_so, matches[1].rm_eo - matches[1].rm_so);
+                if (matches[2].rm_so != -1)
+                    m_mnemocics.assign(out_string + matches[2].rm_so, matches[2].rm_eo - matches[2].rm_so);
+            }
+        }
     }
     
     bool
@@ -203,69 +330,6 @@ public:
         return m_opcode.GetByteSize();
     }
 protected:
-    void PopulateOpcode (const DataExtractor &extractor,
-                         uint32_t offset,
-                         size_t inst_size)
-    {
-        const ArchSpec &arch = m_disasm.GetArchitecture();
-        llvm::Triple::ArchType machine = arch.GetMachine();
-        
-        switch (machine)
-        {
-        case llvm::Triple::x86:
-        case llvm::Triple::x86_64:
-            m_opcode.SetOpcodeBytes(extractor.PeekData(offset, inst_size), inst_size);
-            return;
-
-        case llvm::Triple::arm:
-        case llvm::Triple::thumb:
-            switch (inst_size)
-            {
-                case 2:
-                    m_opcode.SetOpcode16 (extractor.GetU16 (&offset));
-                    break;
-                case 4:
-                    if (machine == llvm::Triple::arm && m_address_class == eAddressClassCodeAlternateISA)
-                    {
-                        // If it is a 32-bit THUMB instruction, we need to swap the upper & lower halves.
-                        uint32_t orig_bytes = extractor.GetU32 (&offset);
-                        uint16_t upper_bits = (orig_bytes >> 16) & ((1u << 16) - 1);
-                        uint16_t lower_bits = orig_bytes & ((1u << 16) - 1);
-                        uint32_t swapped = (lower_bits << 16) | upper_bits;
-                        m_opcode.SetOpcode32 (swapped);
-                    }
-                    else
-                    {
-                        m_opcode.SetOpcode32 (extractor.GetU32 (&offset));
-                    }
-                    break;
-                default:
-                    assert (!"Invalid ARM opcode size");
-                    break;
-            }
-            return;
-
-        default:
-            break;
-        }
-        // Handle the default cases here.
-        const uint32_t min_op_byte_size = arch.GetMinimumOpcodeByteSize();
-        const uint32_t max_op_byte_size = arch.GetMaximumOpcodeByteSize();
-        if (min_op_byte_size == max_op_byte_size)
-        {
-            assert (inst_size == min_op_byte_size);
-            switch (inst_size)
-            {
-                case 1: m_opcode.SetOpcode8  (extractor.GetU8  (&offset)); return;
-                case 2: m_opcode.SetOpcode16 (extractor.GetU16 (&offset)); return;
-                case 4: m_opcode.SetOpcode32 (extractor.GetU32 (&offset)); return;
-                case 8: m_opcode.SetOpcode64 (extractor.GetU64 (&offset)); return;
-                default:
-                    break;
-            }
-        }
-        m_opcode.SetOpcodeBytes(extractor.PeekData(offset, inst_size), inst_size);
-    }
     
     bool StringRepresentsBranch (const char *data, size_t size)
     {
@@ -349,99 +413,8 @@ protected:
         return false;
     }
     
-    template <bool Reparse> bool Parse (const lldb_private::Address &address, 
-                                        AddressClass addr_class,
-                                        const DataExtractor &extractor,
-                                        uint32_t data_offset,
-                                        lldb_private::ExecutionContextScope *exe_scope)
-    {
-        std::vector<char> out_string(256);
-        
-        const uint8_t *data_start = extractor.GetDataStart();
-        
-        m_disasm.Lock(this, exe_scope);
-        
-        ::LLVMDisasmContextRef disasm_context;
-        
-        if (addr_class == eAddressClassCodeAlternateISA)
-            disasm_context = m_disasm.m_alternate_disasm_context;
-        else
-            disasm_context = m_disasm.m_disasm_context;
-        
-        m_comment_stream.Clear();
-        
-        lldb::addr_t pc = LLDB_INVALID_ADDRESS;
-        
-        if (exe_scope)
-            if (TargetSP target_sp = exe_scope->CalculateTarget())
-                pc = m_address.GetLoadAddress(target_sp.get());
-        
-        if (pc == LLDB_INVALID_ADDRESS)
-            pc = m_address.GetFileAddress();
-                              
-        size_t inst_size = ::LLVMDisasmInstruction(disasm_context,
-                                                   const_cast<uint8_t*>(data_start) + data_offset,
-                                                   extractor.GetByteSize() - data_offset,
-                                                   pc, 
-                                                   out_string.data(), 
-                                                   out_string.size());
-        
-        if (m_does_branch == eLazyBoolCalculate)
-            m_does_branch = (StringRepresentsBranch (out_string.data(), out_string.size()) ?
-                             eLazyBoolYes : eLazyBoolNo);
-        
-        m_comment_stream.Flush();
-        m_no_comments = false;
-        
-        m_comment.swap(m_comment_stream.GetString());
-
-        m_disasm.Unlock();
-        
-        if (Reparse)
-        {
-            if (inst_size != m_raw_bytes.size())
-                return false;
-        }
-        else
-        {
-            if (!inst_size)
-                return false;
-        }
-            
-        PopulateOpcode(extractor, data_offset, inst_size);
-        
-        m_raw_bytes.resize(inst_size);
-        memcpy(m_raw_bytes.data(), data_start + data_offset, inst_size);
-        
-        if (!s_regex_compiled)
-        {
-            ::regcomp(&s_regex, "[ \t]*([^ ^\t]+)[ \t]*([^ ^\t].*)?", REG_EXTENDED);
-            s_regex_compiled = true;
-        }
-        
-        ::regmatch_t matches[3];
-        
-        const char *out_data = out_string.data();
-        
-        if (!::regexec(&s_regex, out_data, sizeof(matches) / sizeof(::regmatch_t), matches, 0))
-        {
-            if (matches[1].rm_so != -1)
-                m_opcode_name.assign(out_data + matches[1].rm_so, matches[1].rm_eo - matches[1].rm_so);
-            if (matches[2].rm_so != -1)
-                m_mnemocics.assign(out_data + matches[2].rm_so, matches[2].rm_eo - matches[2].rm_so);
-        }
-                    
-        m_is_valid = true;
-    
-        return true;
-    }
-                 
     bool                    m_is_valid;
     DisassemblerLLVMC      &m_disasm;
-    std::vector<uint8_t>    m_raw_bytes;
-    
-    bool                    m_no_comments;
-    StreamString            m_comment_stream;
     LazyBool                m_does_branch;
     
     static bool             s_regex_compiled;
@@ -464,8 +437,10 @@ DisassemblerLLVMC::CreateInstance (const ArchSpec &arch)
 
 DisassemblerLLVMC::DisassemblerLLVMC (const ArchSpec &arch) :
     Disassembler(arch),
-    m_disasm_context(NULL),
-    m_alternate_disasm_context(NULL)
+    m_exe_ctx (NULL),
+    m_inst (NULL),
+    m_disasm_context (NULL),
+    m_alternate_disasm_context (NULL)
 {
     m_disasm_context = ::LLVMCreateDisasm(arch.GetTriple().getTriple().c_str(), 
                                           (void*)this, 
@@ -475,7 +450,11 @@ DisassemblerLLVMC::DisassemblerLLVMC (const ArchSpec &arch) :
     
     if (arch.GetTriple().getArch() == llvm::Triple::arm)
     {
-        m_alternate_disasm_context = ::LLVMCreateDisasm("thumbv7-apple-darwin", 
+        ArchSpec thumb_arch(arch);
+        thumb_arch.GetTriple().setArchName(llvm::StringRef("thumbv7"));
+        std::string thumb_triple(thumb_arch.GetTriple().getTriple());
+
+        m_alternate_disasm_context = ::LLVMCreateDisasm(thumb_triple.c_str(),
                                                         (void*)this, 
                                                         /*TagType=*/1,
                                                         NULL,
@@ -511,39 +490,33 @@ DisassemblerLLVMC::DecodeInstructions (const Address &base_addr,
         return 0;
     
     uint32_t data_cursor = data_offset;
-    size_t data_byte_size = data.GetByteSize();
+    const size_t data_byte_size = data.GetByteSize();
     uint32_t instructions_parsed = 0;
+    Address inst_addr(base_addr);
     
-    uint64_t instruction_pointer = base_addr.GetFileAddress();
-        
-    std::vector<char> out_string(256);
-    
-    while (data_offset < data_byte_size && instructions_parsed < num_instructions)
+    while (data_cursor < data_byte_size && instructions_parsed < num_instructions)
     {
-        Address instr_address = base_addr;
-        instr_address.Slide(data_cursor);
         
-        AddressClass address_class = eAddressClassUnknown;
+        AddressClass address_class = eAddressClassCode;
         
         if (m_alternate_disasm_context)
-            address_class = instr_address.GetAddressClass ();
+            address_class = inst_addr.GetAddressClass ();
         
         InstructionSP inst_sp(new InstructionLLVMC(*this,
-                                                   instr_address, 
+                                                   inst_addr, 
                                                    address_class));
         
         if (!inst_sp)
-            return data_cursor - data_offset;
-            
+            break;
+        
         uint32_t inst_size = inst_sp->Decode(*this, data, data_cursor);
                 
-        if (!inst_size)
-            return data_cursor - data_offset;
-        
+        if (inst_size == 0)
+            break;
+
         m_instruction_list.Append(inst_sp);
-        
-        instruction_pointer += inst_size;
         data_cursor += inst_size;
+        inst_addr.Slide(inst_size);
         instructions_parsed++;
     }
     
@@ -582,73 +555,72 @@ DisassemblerLLVMC::GetPluginDescriptionStatic()
     return "Disassembler that uses LLVM MC to disassemble i386, x86_64 and ARM.";
 }
 
-int DisassemblerLLVMC::OpInfoCallback (void *DisInfo,
-                                       uint64_t PC,
-                                       uint64_t Offset,
-                                       uint64_t Size,
-                                       int TagType,
-                                       void *TagBug)
+int DisassemblerLLVMC::OpInfoCallback (void *disassembler,
+                                       uint64_t pc,
+                                       uint64_t offset,
+                                       uint64_t size,
+                                       int tag_type,
+                                       void *tag_bug)
 {
-    return static_cast<DisassemblerLLVMC*>(DisInfo)->OpInfo(PC,
-                                                            Offset,
-                                                            Size,
-                                                            TagType,
-                                                            TagBug);
+    return static_cast<DisassemblerLLVMC*>(disassembler)->OpInfo (pc,
+                                                                  offset,
+                                                                  size,
+                                                                  tag_type,
+                                                                  tag_bug);
 }
 
-const char *DisassemblerLLVMC::SymbolLookupCallback(void *DisInfo,
-                                                    uint64_t ReferenceValue,
-                                                    uint64_t *ReferenceType,
-                                                    uint64_t ReferencePC,
-                                                    const char **ReferenceName)
+const char *DisassemblerLLVMC::SymbolLookupCallback (void *disassembler,
+                                                     uint64_t value,
+                                                     uint64_t *type,
+                                                     uint64_t pc,
+                                                     const char **name)
 {
-    return static_cast<DisassemblerLLVMC*>(DisInfo)->SymbolLookup(ReferenceValue,
-                                                                  ReferenceType,
-                                                                  ReferencePC,
-                                                                  ReferenceName);
+    return static_cast<DisassemblerLLVMC*>(disassembler)->SymbolLookup(value,
+                                                                       type,
+                                                                       pc,
+                                                                       name);
 }
 
 int DisassemblerLLVMC::OpInfo (uint64_t PC,
                                uint64_t Offset,
                                uint64_t Size,
-                               int TagType,
-                               void *TagBug)
+                               int tag_type,
+                               void *tag_bug)
 {
-    switch (TagType)
+    switch (tag_type)
     {
     default:
         break;
     case 1:
-        bzero (TagBug, sizeof(::LLVMOpInfo1));
+        bzero (tag_bug, sizeof(::LLVMOpInfo1));
         break;
     }
     return 0;
 }
 
-const char *DisassemblerLLVMC::SymbolLookup (uint64_t ReferenceValue,
-                                             uint64_t *ReferenceType,
-                                             uint64_t ReferencePC,
-                                             const char **ReferenceName)
+const char *DisassemblerLLVMC::SymbolLookup (uint64_t value,
+                                             uint64_t *type_ptr,
+                                             uint64_t pc,
+                                             const char **name)
 {
-    const char *result_name = NULL;
-    uint64_t result_reference_type = LLVMDisassembler_ReferenceType_InOut_None;
-    const char *result_referred_name = NULL;
-    
-    if (m_exe_scope && m_inst)
-    {        
-        Address reference_address;
-        
-        TargetSP target_sp (m_exe_scope->CalculateTarget());
-        Target *target = target_sp.get();
-        
-        if (target)
-        {
-            if (!target->GetSectionLoadList().ResolveLoadAddress(ReferenceValue, reference_address))
-            {
-                if (ModuleSP module_sp = m_inst->GetAddress().GetModule())
-                    module_sp->ResolveFileAddress(ReferenceValue, reference_address);
-            }
+    if (*type_ptr)
+    {
+        if (m_exe_ctx && m_inst)
+        {        
+            //std::string remove_this_prior_to_checkin;
+            Address reference_address;
             
+            Target *target = m_exe_ctx ? m_exe_ctx->GetTargetPtr() : NULL;
+            
+            if (target && !target->GetSectionLoadList().IsEmpty())
+                target->GetSectionLoadList().ResolveLoadAddress(value, reference_address);
+            else
+            {
+                ModuleSP module_sp(m_inst->GetAddress().GetModule());
+                if (module_sp)
+                    module_sp->ResolveFileAddress(value, reference_address);
+            }
+                
             if (reference_address.IsValid() && reference_address.GetSection())
             {
                 StreamString ss;
@@ -659,15 +631,19 @@ const char *DisassemblerLLVMC::SymbolLookup (uint64_t ReferenceValue,
                                         Address::DumpStyleSectionNameOffset);
                 
                 if (!ss.GetString().empty())
-                    m_inst->AddReferencedAddress(ss.GetString());
+                {
+                    //remove_this_prior_to_checkin = ss.GetString();
+                    //if (*type_ptr)
+                    m_inst->AppendComment(ss.GetString());
+                }
             }
+            //printf ("DisassemblerLLVMC::SymbolLookup (value=0x%16.16llx, type=%llu, pc=0x%16.16llx, name=\"%s\") m_exe_ctx=%p, m_inst=%p\n", value, *type_ptr, pc, remove_this_prior_to_checkin.c_str(), m_exe_ctx, m_inst);
         }
     }
-        
-    *ReferenceType = result_reference_type;
-    *ReferenceName = result_referred_name;
-        
-    return result_name;
+
+    *type_ptr = LLVMDisassembler_ReferenceType_InOut_None;
+    *name = NULL;
+    return NULL;
 }
 
 //------------------------------------------------------------------

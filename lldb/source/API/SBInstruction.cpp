@@ -82,7 +82,7 @@ SBInstruction::GetMnemonic(SBTarget target)
             target_sp->CalculateExecutionContext (exe_ctx);
             exe_ctx.SetProcessSP(target_sp->GetProcessSP());
         }
-        return m_opaque_sp->GetMnemonic(exe_ctx.GetBestExecutionContextScope());
+        return m_opaque_sp->GetMnemonic(&exe_ctx);
     }
     return NULL;
 }
@@ -101,7 +101,7 @@ SBInstruction::GetOperands(SBTarget target)
             target_sp->CalculateExecutionContext (exe_ctx);
             exe_ctx.SetProcessSP(target_sp->GetProcessSP());
         }
-        return m_opaque_sp->GetOperands(exe_ctx.GetBestExecutionContextScope());
+        return m_opaque_sp->GetOperands(&exe_ctx);
     }
     return NULL;
 }
@@ -120,7 +120,7 @@ SBInstruction::GetComment(SBTarget target)
             target_sp->CalculateExecutionContext (exe_ctx);
             exe_ctx.SetProcessSP(target_sp->GetProcessSP());
         }
-        return m_opaque_sp->GetComment(exe_ctx.GetBestExecutionContextScope());
+        return m_opaque_sp->GetComment(&exe_ctx);
     }
     return NULL;
 }
@@ -140,7 +140,7 @@ SBInstruction::GetData (SBTarget target)
     if (m_opaque_sp)
     {
         DataExtractorSP data_extractor_sp (new DataExtractor());
-        if (m_opaque_sp->GetOpcode().GetData (*data_extractor_sp))
+        if (m_opaque_sp->GetData (*data_extractor_sp))
         {
             sb_data.SetOpaque (data_extractor_sp);
         }
@@ -171,7 +171,7 @@ SBInstruction::GetDescription (lldb::SBStream &s)
     {
         // Use the "ref()" instead of the "get()" accessor in case the SBStream 
         // didn't have a stream already created, one will get created...
-        m_opaque_sp->Dump (&s.ref(), 0, true, false, NULL, false);
+        m_opaque_sp->Dump (&s.ref(), 0, true, false, NULL);
         return true;
     }
     return false;
@@ -186,7 +186,7 @@ SBInstruction::Print (FILE *out)
     if (m_opaque_sp)
     {
         StreamFile out_stream (out, false);
-        m_opaque_sp->Dump (&out_stream, 0, true, false, NULL, false);
+        m_opaque_sp->Dump (&out_stream, 0, true, false, NULL);
     }
 }
 

@@ -49,6 +49,9 @@ public:
     const std::string &
     GetString() const;
 
+    void
+    FillLastLineToColumn (uint32_t column, char fill_char);
+
 protected:
     std::string m_packet;
 

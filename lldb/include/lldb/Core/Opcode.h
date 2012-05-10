@@ -67,6 +67,11 @@ namespace lldb_private {
             SetOpcodeBytes (bytes, length);
         }
 
+        void
+        Clear()
+        {
+            m_type = Opcode::eTypeInvalid;
+        }
         Opcode::Type
         GetType () const
         {
@@ -205,9 +210,10 @@ namespace lldb_private {
             return 0;
         }
         
+        // Get the opcode exactly as it would be laid out in memory.
         uint32_t
-        GetData (DataExtractor &data) const;
-
+        GetData (DataExtractor &data,
+                 lldb::AddressClass address_class) const;
 
     protected:
 
@@ -240,8 +246,8 @@ namespace lldb_private {
             uint64_t inst64;
             struct 
             {
-                uint8_t length;
                 uint8_t bytes[16]; // This must be big enough to handle any opcode for any supported target.
+                uint8_t length;
             } inst;
         } m_data;
     };

@@ -448,8 +448,7 @@ Disassembler::PrintInstructions
                 strm.PutCString(inst_is_at_pc ? "-> " : "   ");
             }
             const bool show_bytes = (options & eOptionShowBytes) != 0;
-            const bool raw = (options & eOptionRawOuput) != 0;
-            inst->Dump(&strm, max_opcode_byte_size, true, show_bytes, &exe_ctx, raw);
+            inst->Dump(&strm, max_opcode_byte_size, true, show_bytes, &exe_ctx);
             strm.EOL();            
         }
         else
@@ -527,6 +526,69 @@ Instruction::GetAddressClass ()
     if (m_address_class == eAddressClassInvalid)
         m_address_class = m_address.GetAddressClass();
     return m_address_class;
+}
+
+void
+Instruction::Dump (lldb_private::Stream *s,
+                   uint32_t max_opcode_byte_size,
+                   bool show_address,
+                   bool show_bytes,
+                   const ExecutionContext* exe_ctx)
+{
+    const size_t opcode_column_width = 7;
+    const size_t operand_column_width = 25;
+    
+    CalculateMnemonicOperandsAndCommentIfNeeded (exe_ctx);
+
+    StreamString ss;
+    
+    if (show_address)
+    {
+        m_address.Dump(&ss,
+                       exe_ctx ? exe_ctx->GetBestExecutionContextScope() : NULL,
+                       Address::DumpStyleLoadAddress,
+                       Address::DumpStyleModuleWithFileAddress,
+                       0);
+        
+        ss.PutCString(":  ");
+    }
+    
+    if (show_bytes)
+    {
+        if (m_opcode.GetType() == Opcode::eTypeBytes)
+        {
+            // x86_64 and i386 are the only ones that use bytes right now so
+            // pad out the byte dump to be able to always show 15 bytes (3 chars each) 
+            // plus a space
+            if (max_opcode_byte_size > 0)
+                m_opcode.Dump (&ss, max_opcode_byte_size * 3 + 1);
+            else
+                m_opcode.Dump (&ss, 15 * 3 + 1);
+        }
+        else
+        {
+            // Else, we have ARM which can show up to a uint32_t 0x00000000 (10 spaces)
+            // plus two for padding...
+            if (max_opcode_byte_size > 0)
+                m_opcode.Dump (&ss, max_opcode_byte_size * 3 + 1);
+            else
+                m_opcode.Dump (&ss, 12);
+        }        
+    }
+    
+    const size_t opcode_pos = ss.GetSize();
+    
+    ss.PutCString (m_opcode_name.c_str());
+    ss.FillLastLineToColumn (opcode_pos + opcode_column_width, ' ');
+    ss.PutCString (m_mnemocics.c_str());
+    
+    if (!m_comment.empty())
+    {
+        ss.FillLastLineToColumn (opcode_pos + opcode_column_width + operand_column_width, ' ');        
+        ss.PutCString (" ; ");
+        ss.PutCString (m_comment.c_str());
+    }
+    s->Write (ss.GetData(), ss.GetSize());
 }
 
 bool
@@ -828,6 +890,13 @@ Instruction::Emulate (const ArchSpec &arch,
     return false;
 }
 
+
+uint32_t
+Instruction::GetData (DataExtractor &data)
+{
+    return m_opcode.GetData(data, GetAddressClass ());
+}
+
 InstructionList::InstructionList() :
     m_instructions()
 {
@@ -884,7 +953,7 @@ InstructionList::Dump (Stream *s,
     {
         if (pos != begin)
             s->EOL();
-        (*pos)->Dump(s, max_opcode_byte_size, show_address, show_bytes, exe_ctx, false);
+        (*pos)->Dump(s, max_opcode_byte_size, show_address, show_bytes, exe_ctx);
     }
 }
 
@@ -1065,27 +1134,6 @@ PseudoInstruction::~PseudoInstruction ()
 {
 }
      
-void
-PseudoInstruction::Dump (lldb_private::Stream *s,
-                        uint32_t max_opcode_byte_size,
-                        bool show_address,
-                        bool show_bytes,
-                        const lldb_private::ExecutionContext* exe_ctx,
-                        bool raw)
-{
-    if (!s)
-        return;
-        
-    if (show_bytes)
-        m_opcode.Dump (s, max_opcode_byte_size);
-    
-    if (m_description.size() > 0)
-        s->Printf ("%s", m_description.c_str());
-    else
-        s->Printf ("<unknown>");
-        
-}
-    
 bool
 PseudoInstruction::DoesBranch () const
 {

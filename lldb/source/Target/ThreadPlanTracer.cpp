@@ -219,8 +219,7 @@ ThreadPlanAssemblyTracer::Log ()
                                    max_opcode_byte_size,
                                    show_address,
                                    show_bytes,
-                                   NULL, 
-                                   true);
+                                   NULL);
             }
         }
     }
