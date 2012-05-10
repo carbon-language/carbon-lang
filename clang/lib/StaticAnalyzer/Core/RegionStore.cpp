@@ -1304,7 +1304,8 @@ SVal RegionStoreManager::getBindingForFieldOrElementCommon(Store store,
   // Lazy binding?
   Store lazyBindingStore = NULL;
   const MemRegion *lazyBindingRegion = NULL;
-  llvm::tie(lazyBindingStore, lazyBindingRegion) = GetLazyBinding(B, R, R);
+  llvm::tie(lazyBindingStore, lazyBindingRegion) = GetLazyBinding(B, R, R,
+                                                                  true);
   
   if (lazyBindingRegion)
     return getLazyBinding(lazyBindingRegion, lazyBindingStore);
