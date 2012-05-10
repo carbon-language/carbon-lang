@@ -1,0 +1,332 @@
+.Dd May 3, 2012
+.Os [clang] [3.1]
+.Dt SCAN-BUILD 1
+.Sh NAME
+.Nm scan-build
+.Nd Clang static analyzer
+.Sh SYNOPSIS
+.Nm
+.Op Fl ohkvV
+.Op Fl analyze-headers
+.Op Fl enable-checker Op Ar checker_name
+.Op Fl disable-checker Op Ar checker_name
+.Op Fl -help
+.Op Fl -html-title Op Ar =title 
+.Op Fl -keep-going
+.Op Fl -plist
+.Op Fl -plist-html
+.Op Fl -status-bugs
+.Op Fl -use-c++ Op Ar =compiler_path
+.Op Fl -use-cc Op Ar =compiler_path
+.Op Fl -view
+.Op Fl constraints Op Ar model
+.Op Fl maxloop Ar N
+.Op Fl no-failure-reports
+.Op Fl stats
+.Op Fl store Op Ar model
+.Ar build_command
+.Op build_options
+.\"
+.\" Sh DESCRIPTION
+.Sh OPTIONS
+.Bl -tag -width indent
+.It Fl analyze-headers
+Also analyze functions in #included files.
+.It Fl enable-checker Op Ar checker_name
+.It Fl disable-checker Op Ar checker_name
+Enable/disable
+.Ar checker_name .
+See 
+.Sx CONTROLLING CHECKERS
+below. 
+.It Fl h
+.It Fl -help
+Display this message
+.It Fl -html-title Ns Op = Ns Ar title 
+Specify the title used on generated HTML pages.
+If 
+.Ar title 
+is not specified, a default title is used.	
+.It Fl k
+.It Fl -keep-going
+Add a 
+.Dq keep on going
+option to the specified build command.  Currently supports
+make and xcodebuild.  This is a convenience option; one can specify
+this behavior directly using build options.
+.It Fl o
+Target directory for HTML report files.  Subdirectories will be
+created as needed to represent separate 
+.Dq runs
+of the analyzer.  If this option is not specified, a directory is
+created in /tmp (TMPDIR on Mac OS X) to store the reports.
+.It Fl -plist
+Output the results as a set of 
+.Li
+\.plist
+files. (By default the output of
+.Nm
+is a set of HTML files.)
+.It Fl -plist-html
+Output the results as a set of HTML and .plist files
+.It Fl -status-bugs
+Set exit status to 1 if it found potential bugs and 0 otherwise. By
+default the exit status of
+.Nm
+is the same as the executed build command.
+.It Fl -use-c++ Ns Op = Ns Ar compiler_path
+Guess the default compiler for your C++ and Objective-C++ code. Use this
+option to specify an alternate compiler.
+.It Fl -use-cc Ns Op = Ns Ar compiler_path
+Guess the default compiler for your C and Objective-C code. Use this
+option to specify an alternate compiler.
+.It Fl v
+Verbose output from
+.Nm
+and the analyzer. A second and
+third 
+.Ar v
+increases verbosity.
+.It Fl V
+.It Fl -view
+View analysis results in a web browser when the build completes.
+.It Fl constraints Op Ar model
+Specify the contraint engine used by the analyzer.  By default the
+.Ql range
+model is used.  Specifying 
+.Ql basic
+uses a simpler, less powerful constraint model used by checker-0.160
+and earlier.
+.It Fl maxloop Ar N
+Specifiy the number of times a block can be visited before giving
+up. Default is 4. Increase for more comprehensive coverage at a
+cost of speed.
+.It Fl no-failure-reports
+Do not create a
+.Ql failures
+subdirectory that includes analyzer crash reports and preprocessed
+source files.
+.It Fl stats
+Generates visitation statistics for the project being analyzed.
+.It Fl store Op Ar model
+Specify the store model used by the analyzer. By default, the
+.Ql region
+store model is used.
+.Ql region
+specifies a field-
+sensitive store model. Users can also specify
+.Ql basic
+ which is far less precise but can more quickly analyze code.
+.Ql basic
+was the default store model for checker-0.221 and earlier.
+.\" 
+.El
+.Sh RETURN VALUES
+.Nm
+returns the value returned by the called compiler unless 
+.Fl -status-bugs
+is used.
+.\"
+.\" Other sections not yet used ...
+.\" .Sh ENVIRONMENT
+.\" .Sh FILES
+.\" .Sh DIAGNOSTICS
+.\" .Sh COMPATIBILITY
+.\" .Sh HISTORY
+.\" .Sh AUTHORS
+.\" .Sh BUGS
+.\"
+.Sh CONTROLLING CHECKERS
+A default group of checkers are always run unless explicitly disabled.
+The checkers listed below may be enabled/disabled using the
+.Fl enable-checker
+and 
+.Fl disable-checker
+options. 
+.Bl -tag -width indent
+.It core.AdjustedReturnValue
+Check to see if the return value of a function call is different than
+the caller expects (e.g., from calls through function pointers)
+.Bq on
+.It core.AttributeNonNull
+Check for null pointers passed as arguments to a function whose arguments are marked with the
+.Qlnonnull' attribute
+.Bq on
+.It core.CallAndMessage
+Check for logical errors for function calls and Objective-C message expressions (e.g., uninitialized arguments, null function pointers)
+.Bq on
+.It core.DivideZero
+Check for division by zero
+.Bq on
+.It core.NullDereference
+Check for dereferences of null pointers
+.Bq on
+.It core.StackAddressEscape
+Check that addresses to stack memory do not escape the function
+.Bq on
+.It core.UndefinedBinaryOperatorResult
+Check for undefined results of binary operators
+.Bq on
+.It core.VLASize
+Check for declarations of VLA of undefined or zero size
+.Bq on
+.It core.builtin.BuiltinFunctions
+Evaluate compiler builtin functions (e.g., alloca())
+.Bq on
+.It core.builtin.NoReturnFunctions  Evaluate "panic" functions that are known to not return to the caller
+.Bq on
+.It core.uninitialized.ArraySubscript
+Check for uninitialized values used as array subscripts
+.Bq on
+.It core.uninitialized.Assign
+Check for assigning uninitialized values
+.Bq on
+.It core.uninitialized.Bqanch
+Check for uninitialized values used as branch conditions
+.Bq on
+.It core.uninitialized.CapturedBlockVariable
+Check for blocks that capture uninitialized values
+.Bq on
+.It core.uninitialized.UndefReturn  Check for uninitialized values being returned to the caller
+.Bq on
+.It deadcode.DeadStores
+Check for values stored to variables that are never read afterwards
+.Bq off
+.It debug.DumpCFG
+Display Control-Flow Graphs
+.Bq off
+.It debug.DumpCallGraph
+Display Call Graph
+.Bq off
+.It debug.DumpDominators
+Print the dominance tree for a given CFG
+.Bq off
+.It debug.DumpLiveVars
+Print results of live variable analysis
+.Bq off
+.It debug.Stats
+Emit warnings with analyzer statistics
+.Bq off
+.It debug.TaintTest
+Mark tainted symbols as such.
+.Bq off
+.It debug.ViewCFG
+View Control-Flow Graphs using GraphViz
+.Bq off
+.It debug.ViewCallGraph
+View Call Graph using GraphViz
+.Bq off
+.It llvm.Conventions
+Check code for LLVM codebase conventions
+.Bq off
+.It osx.API
+Check for proper uses of various Mac OS X APIs
+.Bq off
+.It osx.AtomicCAS
+Evaluate calls to OSAtomic functions
+.Bq off
+.It osx.SecKeychainAPI
+Check for proper uses of Secure Keychain APIs
+.Bq off
+.It osx.cocoa.AtSync
+Check for null pointers used as mutexes for @synchronized
+.Bq off
+.It osx.cocoa.ClassRelease
+Check for sending 'retain', 'release', or 'autorelease' directly to a Class
+.Bq off
+.It osx.cocoa.IncompatibleMethodTypes
+Warn about Objective-C method signatures with type incompatibilities
+.Bq off
+.It osx.cocoa.NSAutoreleasePool
+Warn for suboptimal uses of NSAutoreleasePool in Objective-C GC mode
+.Bq off
+.It osx.cocoa.NSError
+Check usage of NSError** parameters
+.Bq off
+.It osx.cocoa.NilArg
+Check for prohibited nil arguments to ObjC method calls
+.Bq off
+.It osx.cocoa.RetainCount
+Check for leaks and improper reference count management
+.Bq off
+.It osx.cocoa.SelfInit
+Check that 'self' is properly initialized inside an initializer method
+.Bq off
+.It osx.cocoa.UnusedIvars
+Warn about private ivars that are never used
+.Bq off
+.It osx.cocoa.VariadicMethodTypes
+Check for passing non-Objective-C types to variadic methods that expect only Objective-C types
+.Bq off
+.It osx.coreFoundation.CFError
+Check usage of CFErrorRef* parameters
+.Bq off
+.It osx.coreFoundation.CFNumber
+Check for proper uses of CFNumberCreate
+.Bq off
+.It osx.coreFoundation.CFRetainRelease
+Check for null arguments to CFRetain/CFRelease
+.Bq off
+.It osx.coreFoundation.containers.OutOfBounds
+Checks for index out-of-bounds when using 'CFArray' API
+.Bq off
+.It osx.coreFoundation.containers.PointerSizedValues
+Warns if 'CFArray', 'CFDictionary', 'CFSet' are created with non-pointer-size values
+.Bq off
+.It security.FloatLoopCounter
+Warn on using a floating point value as a loop counter (CERT: FLP30-C, FLP30-CPP)
+.Bq off
+.It security.insecureAPI.UncheckedReturn
+Warn on uses of functions whose return values must be always checked
+.Bq off
+.It security.insecureAPI.getpw
+Warn on uses of the 'getpw' function
+.Bq off
+.It security.insecureAPI.gets
+Warn on uses of the 'gets' function
+.Bq off
+.It security.insecureAPI.mkstemp
+Warn when 'mkstemp' is passed fewer than 6 X's in the format string
+.Bq off
+.It security.insecureAPI.mktemp
+Warn on uses of the 'mktemp' function
+.Bq off
+.It security.insecureAPI.rand
+Warn on uses of the 'rand', 'random', and related functions
+.Bq off
+.It security.insecureAPI.strcpy
+Warn on uses of the 'strcpy' and 'strcat' functions
+.Bq off
+.It security.insecureAPI.vfork
+Warn on uses of the 'vfork' function
+.Bq off
+.It unix.API
+Check calls to various UNIX/Posix functions
+.Bq off
+.It unix.Malloc
+Check for memory leaks, double free, and use-after-free problems.
+.Bq off
+.It unix.cstring.BadSizeArg
+Check the size argument passed into C string functions for common erroneous patterns
+.Bq off
+.It unix.cstring.NullArg
+Check for null pointers being passed as arguments to C string functions
+.Bq off
+.El
+.\"
+.Sh EXAMPLE
+.Ic scan-build -o /tmp/myhtmldir make -j4
+.Pp
+The above example causes analysis reports to be deposited into
+a subdirectory of
+.Ql /tmp/myhtmldir
+and to run
+.Ql make
+with the
+.Ql -j4
+option.
+A different subdirectory is created each time
+.Nm
+analyzes a project.
+The analyzer should support most parallel builds, but not distributed builds.
+
