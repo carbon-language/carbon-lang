@@ -124,7 +124,7 @@ struct malloc_stack_entry
     void *address;
     uint64_t argument;
     uint32_t type_flags;
-    std::vector<mach_vm_address_t> frames;
+    std::vector<uintptr_t> frames;
 };
 
 

@@ -84,13 +84,17 @@ def add_common_options(parser):
 type_flag_strings = [ 'free', 'generic', 'alloc', 'dealloc' ];
 
 def dump_stack_history_entry(stack_history_entry, idx):
-    if stack_history_entry.addr != 0:
+    address = int(stack_history_entry.address)
+    if address:
+        type_flags = int(stack_history_entry.type_flags)
+        argument = int(stack_history_entry.argument)
         symbolicator = lldb.utils.symbolication.Symbolicator()
         symbolicator.target = lldb.target
         global type_flag_strings
-        print 'stack_history_entry[%u]: addr = 0x%x, type=%s, arg=%u, frames=' % (idx, stack_history_entry.address, type_flag_strings[stack_history_entry.type_flags], stack_history_entry.argument)
+        print 'stack_history_entry[%u]: addr = 0x%x, type=%s, arg=%u, frames=' % (idx, address, type_flag_strings[type_flags], argument)
         frame_idx = 0
-        pc = int(stack_history_entry.frames[frame_idx])
+        idx = 0
+        pc = int(stack_history_entry.frames[idx])
         while pc != 0:
             if pc >= 0x1000:
                 frames = symbolicator.symbolicate(pc)
@@ -101,22 +105,24 @@ def dump_stack_history_entry(stack_history_entry, idx):
                 else:
                     print '[%3u] 0x%x' % (frame_idx, pc)
                     frame_idx += 1
-                frame_idx = frame_idx + 1
-                pc = int(stack_history_entry.frames[frame_idx])
+                idx = idx + 1
+                pc = int(stack_history_entry.frames[idx])
             else:
                 pc = 0
             
 def dump_stack_history_entries(addr):
     # malloc_stack_entry *get_stack_history_for_address (const void * addr)
     
-    expr = 'get_stack_history_for_address((void *)%s)' % addr    
+    expr = 'get_stack_history_for_address((void *)0x%x)' % (addr)
+    print 'expr = "%s"' % (expr)
     expr_sbvalue = lldb.frame.EvaluateExpression (expr)
     if expr_sbvalue.error.Success():
         if expr_sbvalue.unsigned:
             expr_value = lldb.value(expr_sbvalue)  
+            #print 'expr_value = ', expr_value
             idx = 0;
             stack_history_entry = expr_value[idx]
-            while stack_history_entry.address:
+            while int(stack_history_entry.address) != 0:
                 dump_stack_history_entry(stack_history_entry, idx)
                 idx = idx + 1
                 stack_history_entry = expr_value[idx]
