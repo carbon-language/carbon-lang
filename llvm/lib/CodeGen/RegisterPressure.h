@@ -159,8 +159,18 @@ public:
             const LiveIntervals *lis, const MachineBasicBlock *mbb,
             MachineBasicBlock::const_iterator pos);
 
-  // Get the MI position corresponding to this register pressure.
+  /// Force liveness of registers. Particularly useful to initialize the
+  /// livein/out state of the tracker before the first call to advance/recede.
+  void addLiveRegs(ArrayRef<unsigned> Regs);
+
+  /// Get the MI position corresponding to this register pressure.
   MachineBasicBlock::const_iterator getPos() const { return CurrPos; }
+
+  // Reset the MI position corresponding to the register pressure. This allows
+  // schedulers to move instructions above the RegPressureTracker's
+  // CurrPos. Since the pressure is computed before CurrPos, the iterator
+  // position changes while pressure does not.
+  void setPos(MachineBasicBlock::const_iterator Pos) { CurrPos = Pos; }
 
   /// Recede across the previous instruction.
   bool recede();
@@ -175,6 +185,18 @@ public:
   /// This result is complete if either advance() or recede() has returned true,
   /// or if closeRegion() was explicitly invoked.
   RegisterPressure &getPressure() { return P; }
+
+  void discoverPhysLiveIn(unsigned Reg);
+  void discoverPhysLiveOut(unsigned Reg);
+
+  void discoverVirtLiveIn(unsigned Reg);
+  void discoverVirtLiveOut(unsigned Reg);
+
+  bool isTopClosed() const;
+  bool isBottomClosed() const;
+
+  void closeTop();
+  void closeBottom();
 
   /// Consider the pressure increase caused by traversing this instruction
   /// bottom-up. Find the pressure set with the most change beyond its pressure
@@ -201,23 +223,11 @@ public:
   }
 
 protected:
-  bool isTopClosed() const;
-  bool isBottomClosed() const;
-
-  void closeTop();
-  void closeBottom();
-
   void increasePhysRegPressure(ArrayRef<unsigned> Regs);
   void decreasePhysRegPressure(ArrayRef<unsigned> Regs);
 
   void increaseVirtRegPressure(ArrayRef<unsigned> Regs);
   void decreaseVirtRegPressure(ArrayRef<unsigned> Regs);
-
-  void discoverPhysLiveIn(unsigned Reg);
-  void discoverPhysLiveOut(unsigned Reg);
-
-  void discoverVirtLiveIn(unsigned Reg);
-  void discoverVirtLiveOut(unsigned Reg);
 };
 } // end namespace llvm
 

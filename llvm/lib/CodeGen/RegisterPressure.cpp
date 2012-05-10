@@ -337,6 +337,22 @@ static void collectOperands(const MachineInstr *MI,
   }
 }
 
+/// Force liveness of registers.
+void RegPressureTracker::addLiveRegs(ArrayRef<unsigned> Regs) {
+  for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
+    if (TargetRegisterInfo::isVirtualRegister(Regs[i])) {
+      if (LiveVirtRegs.insert(Regs[i]).second)
+        increaseVirtRegPressure(Regs[i]);
+    }
+    else  {
+      if (!hasRegAlias(Regs[i], LivePhysRegs, TRI)) {
+        LivePhysRegs.insert(Regs[i]);
+        increasePhysRegPressure(Regs[i]);
+      }
+    }
+  }
+}
+
 /// Add PhysReg to the live in set and increase max pressure.
 void RegPressureTracker::discoverPhysLiveIn(unsigned Reg) {
   assert(!LivePhysRegs.count(Reg) && "avoid bumping max pressure twice");
@@ -607,28 +623,14 @@ getMaxUpwardPressureDelta(const MachineInstr *MI, RegPressureDelta &Delta) {
   decreaseVirtRegPressure(VirtRegOpers.DeadDefs);
 
   // Kill liveness at live defs.
-  // TODO: consider earlyclobbers?
-  for (unsigned i = 0; i < PhysRegOpers.Defs.size(); ++i) {
-    unsigned Reg = PhysRegOpers.Defs[i];
-    if (LivePhysRegs.erase(Reg))
-      decreasePhysRegPressure(Reg);
-    else
-      discoverPhysLiveOut(Reg);
-  }
-  for (unsigned i = 0; i < VirtRegOpers.Defs.size(); ++i) {
-    unsigned Reg = VirtRegOpers.Defs[i];
-    if (LiveVirtRegs.erase(Reg))
-      decreaseVirtRegPressure(Reg);
-    else
-      discoverVirtLiveOut(Reg);
-  }
+  decreasePhysRegPressure(PhysRegOpers.Defs);
+  decreaseVirtRegPressure(VirtRegOpers.Defs);
 
   // Generate liveness for uses.
   for (unsigned i = 0, e = PhysRegOpers.Uses.size(); i < e; ++i) {
     unsigned Reg = PhysRegOpers.Uses[i];
     if (!hasRegAlias(Reg, LivePhysRegs, TRI)) {
       increasePhysRegPressure(Reg);
-      LivePhysRegs.insert(Reg);
     }
   }
   for (unsigned i = 0, e = VirtRegOpers.Uses.size(); i < e; ++i) {
