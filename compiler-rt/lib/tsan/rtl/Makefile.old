@@ -1,0 +1,95 @@
+CXXFLAGS=-Wall -fPIE -Werror -g $(CFLAGS) -fno-builtin
+DEBUG=1
+
+ifeq ($(DEBUG), 0)
+	CXXFLAGS+=-DTSAN_DEBUG=0 -O3
+else
+	CXXFLAGS+=-DTSAN_DEBUG=1
+endif
+
+# For interception. FIXME: move interception one level higher.
+INCLUDES= -I../../asan
+EXTRA_CXXFLAGS=-fno-exceptions
+NO_SYSROOT=--sysroot=.
+CXXFLAGS+=$(EXTRA_CXXFLAGS)
+ifeq ($(DEBUG), 0)
+  CXXFLAGS+=-fomit-frame-pointer
+endif
+ifeq ($(CXX), clang++)
+  # Global constructors are banned.
+  CXXFLAGS+=-Wglobal-constructors
+else
+  CXXFLAGS+=-Wframe-larger-than=512
+endif
+
+
+all: libtsan.a
+
+LIBTSAN_HEADERS=tsan_allocator.h \
+                tsan_atomic.h \
+                tsan_clock.h \
+                tsan_compiler.h \
+                tsan_defs.h \
+		tsan_interface.h \
+		tsan_interface_ann.h \
+		tsan_interface_inl.h \
+	        tsan_mman.h \
+                tsan_platform.h \
+                tsan_mutex.h \
+                tsan_report.h \
+		tsan_placement_new.h \
+                tsan_rtl.h \
+		tsan_suppressions.h \
+		tsan_symbolize.h \
+		tsan_sync.h \
+		tsan_trace.h \
+                tsan_vector.h
+
+LIBTSAN_OBJ=tsan_allocator.o \
+            tsan_clock.o \
+            tsan_flags.o \
+            tsan_mutex.o \
+            tsan_interceptors.o \
+            tsan_interface.o \
+            tsan_interface_ann.o \
+            tsan_interface_atomic.o \
+            tsan_md5.o \
+            tsan_mman.o \
+	    tsan_platform_linux.o \
+            tsan_report.o \
+            tsan_printf.o \
+            tsan_rtl.o \
+            tsan_rtl_amd64.o \
+            tsan_rtl_mutex.o \
+            tsan_rtl_report.o \
+            tsan_rtl_thread.o \
+            tsan_stat.o \
+            tsan_suppressions.o \
+            tsan_sync.o \
+            interception_linux.o
+
+ifneq ($(TSAN_SYMB_NULL), )
+  LIBTSAN_OBJ+=tsan_symbolize_null.o
+else ifneq ($(TSAN_SYMB_LLDB), )
+  LIBTSAN_OBJ+=tsan_symbolize_lldb_linux.o
+else
+  LIBTSAN_OBJ+=tsan_symbolize_addr2line_linux.o
+endif
+
+%_linux.o: %_linux.cc Makefile.old $(LIBTSAN_HEADERS)
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $<
+
+%.o: %.cc Makefile.old $(LIBTSAN_HEADERS)
+	$(CXX) $(CXXFLAGS) $(INCLUDES) $(NO_SYSROOT) -c $<
+
+%.o: ../../asan/interception/%.cc
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@ 
+
+libtsan.a: $(LIBTSAN_OBJ)
+	ar ru $@ $(LIBTSAN_OBJ)
+
+libtsan_dummy.a: tsan_dummy_rtl.o
+	ar ru $@ $<
+
+clean:
+	rm -f *.o *.a
