@@ -210,15 +210,17 @@ private:
     // The allocated region symbol tracked by the main analysis.
     SymbolRef Sym;
 
-     // The mode we are in, i.e. what kind of diagnostics will be emitted.
-     NotificationMode Mode;
+    // The mode we are in, i.e. what kind of diagnostics will be emitted.
+    NotificationMode Mode;
 
-     // A symbol from when the primary region should have been reallocated.
-     SymbolRef FailedReallocSymbol;
+    // A symbol from when the primary region should have been reallocated.
+    SymbolRef FailedReallocSymbol;
 
-   public:
-     MallocBugVisitor(SymbolRef S)
-       : Sym(S), Mode(Normal), FailedReallocSymbol(0) {}
+    bool IsLeak;
+
+  public:
+    MallocBugVisitor(SymbolRef S, bool isLeak = false)
+       : Sym(S), Mode(Normal), FailedReallocSymbol(0), IsLeak(isLeak) {}
 
     virtual ~MallocBugVisitor() {}
 
@@ -256,6 +258,20 @@ private:
                                    const ExplodedNode *PrevN,
                                    BugReporterContext &BRC,
                                    BugReport &BR);
+
+    PathDiagnosticPiece* getEndPath(BugReporterContext &BRC,
+                                    const ExplodedNode *EndPathNode,
+                                    BugReport &BR) {
+      if (!IsLeak)
+        return 0;
+
+      PathDiagnosticLocation L =
+        PathDiagnosticLocation::createEndOfPath(EndPathNode,
+                                                BRC.getSourceManager());
+      // Do not add the statement itself as a range in case of leak.
+      return new PathDiagnosticEventPiece(L, BR.getDescription(), false);
+    }
+
   private:
     class StackHintGeneratorForReallocationFailed
         : public StackHintGeneratorForSymbol {
@@ -895,7 +911,7 @@ void MallocChecker::reportLeak(SymbolRef Sym, ExplodedNode *N,
 
   BugReport *R = new BugReport(*BT_Leak, os.str(), N, LocUsedForUniqueing);
   R->markInteresting(Sym);
-  R->addVisitor(new MallocBugVisitor(Sym));
+  R->addVisitor(new MallocBugVisitor(Sym, true));
   C.EmitReport(R);
 }
 
