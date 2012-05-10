@@ -36,7 +36,8 @@ ListApplications(std::string& plist, bool opt_runningApps, bool opt_debuggable)
     CFReleaser<CFStringRef> sbsFrontAppID (::SBSCopyFrontmostApplicationDisplayIdentifier ());
     CFReleaser<CFArrayRef> sbsAppIDs (::SBSCopyApplicationDisplayIdentifiers (opt_runningApps, opt_debuggable));
 
-    CFIndex count = ::CFArrayGetCount (sbsAppIDs.get());
+    // Need to check the return value from SBSCopyApplicationDisplayIdentifiers.
+    CFIndex count = sbsAppIDs.get() ? ::CFArrayGetCount (sbsAppIDs.get()) : 0;
     CFIndex i = 0;
     for (i = 0; i < count; i++)
     {
