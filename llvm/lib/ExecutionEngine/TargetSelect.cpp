@@ -56,8 +56,9 @@ TargetMachine *EngineBuilder::selectTarget(const Triple &TargetTriple,
     }
 
     if (!TheTarget) {
-      *ErrorStr = "No available targets are compatible with this -march, "
-        "see -version for the available targets.\n";
+      if (ErrorStr)
+        *ErrorStr = "No available targets are compatible with this -march, "
+                    "see -version for the available targets.\n";
       return 0;
     }
 
