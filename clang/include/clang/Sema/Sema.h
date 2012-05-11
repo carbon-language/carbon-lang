@@ -1570,6 +1570,8 @@ public:
                            bool Inherited, VisibilityAttr::VisibilityType Vis);
   bool mergeDLLImportAttr(Decl *D, SourceRange Range, bool Inherited);
   bool mergeDLLExportAttr(Decl *D, SourceRange Range, bool Inherited);
+  bool mergeFormatAttr(Decl *D, SourceRange Range, bool Inherited,
+                       StringRef Format, int FormatIdx, int FirstArg);
   bool mergeDeclAttribute(Decl *New, InheritableAttr *Attr);
 
   void mergeDeclAttributes(Decl *New, Decl *Old, bool MergeDeprecation = true);

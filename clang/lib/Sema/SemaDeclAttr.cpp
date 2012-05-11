@@ -2535,6 +2535,31 @@ static void handleInitPriorityAttr(Sema &S, Decl *D,
                                                 prioritynum));
 }
 
+bool Sema::mergeFormatAttr(Decl *D, SourceRange Range, bool Inherited,
+                           StringRef Format, int FormatIdx, int FirstArg) {
+  // Check whether we already have an equivalent format attribute.
+  for (specific_attr_iterator<FormatAttr>
+         i = D->specific_attr_begin<FormatAttr>(),
+         e = D->specific_attr_end<FormatAttr>();
+       i != e ; ++i) {
+    FormatAttr *f = *i;
+    if (f->getType() == Format &&
+        f->getFormatIdx() == FormatIdx &&
+        f->getFirstArg() == FirstArg) {
+      // If we don't have a valid location for this attribute, adopt the
+      // location.
+      if (f->getLocation().isInvalid())
+        f->setRange(Range);
+      return false;
+    }
+  }
+
+  FormatAttr *Attr = ::new (Context) FormatAttr(Range, Context, Format,
+                                               FormatIdx, FirstArg);
+  D->addAttr(Attr);
+  return true;
+}
+
 /// Handle __attribute__((format(type,idx,firstarg))) attributes based on
 /// http://gcc.gnu.org/onlinedocs/gcc/Function-Attributes.html
 static void handleFormatAttr(Sema &S, Decl *D, const AttributeList &Attr) {
@@ -2670,26 +2695,8 @@ static void handleFormatAttr(Sema &S, Decl *D, const AttributeList &Attr) {
     return;
   }
 
-  // Check whether we already have an equivalent format attribute.
-  for (specific_attr_iterator<FormatAttr>
-         i = D->specific_attr_begin<FormatAttr>(),
-         e = D->specific_attr_end<FormatAttr>();
-       i != e ; ++i) {
-    FormatAttr *f = *i;
-    if (f->getType() == Format &&
-        f->getFormatIdx() == (int)Idx.getZExtValue() &&
-        f->getFirstArg() == (int)FirstArg.getZExtValue()) {
-      // If we don't have a valid location for this attribute, adopt the
-      // location.
-      if (f->getLocation().isInvalid())
-        f->setRange(Attr.getRange());
-      return;
-    }
-  }
-  
-  D->addAttr(::new (S.Context) FormatAttr(Attr.getRange(), S.Context, Format,
-                                          Idx.getZExtValue(),
-                                          FirstArg.getZExtValue()));
+  S.mergeFormatAttr(D, Attr.getRange(), false, Format, Idx.getZExtValue(),
+                    FirstArg.getZExtValue());
 }
 
 static void handleTransparentUnionAttr(Sema &S, Decl *D,

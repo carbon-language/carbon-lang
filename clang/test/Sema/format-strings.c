@@ -536,3 +536,20 @@ void pr12761(char c) {
   // This should not warn even with -fno-signed-char.
   printf("%hhx", c);
 }
+
+
+// Test that we correctly merge the format in both orders.
+extern void test14_foo(const char *, const char *, ...)
+     __attribute__((__format__(__printf__, 1, 3)));
+extern void test14_foo(const char *, const char *, ...)
+     __attribute__((__format__(__scanf__, 2, 3)));
+
+extern void test14_bar(const char *, const char *, ...)
+     __attribute__((__format__(__scanf__, 2, 3)));
+extern void test14_bar(const char *, const char *, ...)
+     __attribute__((__format__(__printf__, 1, 3)));
+
+void test14_zed(int *p) {
+  test14_foo("%", "%d", p); // expected-warning{{incomplete format specifier}}
+  test14_bar("%", "%d", p); // expected-warning{{incomplete format specifier}}
+}

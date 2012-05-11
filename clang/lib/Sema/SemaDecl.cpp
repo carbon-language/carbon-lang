@@ -1674,6 +1674,10 @@ bool Sema::mergeDeclAttribute(Decl *D, InheritableAttr *Attr) {
   if (DLLExportAttr *ExportA = dyn_cast<DLLExportAttr>(Attr))
     return mergeDLLExportAttr(D, ExportA->getRange(), true);
 
+  if (FormatAttr *FA = dyn_cast<FormatAttr>(Attr))
+    return mergeFormatAttr(D, FA->getRange(), true, FA->getType(),
+                           FA->getFormatIdx(), FA->getFirstArg());
+
   if (!DeclHasAttr(D, Attr)) {
     InheritableAttr *NewAttr = cast<InheritableAttr>(Attr->clone(Context));
     NewAttr->setInherited(true);
