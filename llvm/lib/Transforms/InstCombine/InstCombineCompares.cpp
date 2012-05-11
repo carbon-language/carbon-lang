@@ -1035,7 +1035,7 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
       if ((KnownZero|KnownOne).countLeadingOnes() >= SrcBits-DstBits) {
         // Pull in the high bits from known-ones set.
         APInt NewRHS = RHS->getValue().zext(SrcBits);
-        NewRHS |= KnownOne;
+        NewRHS |= KnownOne & APInt::getHighBitsSet(SrcBits, SrcBits-DstBits);
         return new ICmpInst(ICI.getPredicate(), LHSI->getOperand(0),
                             ConstantInt::get(ICI.getContext(), NewRHS));
       }

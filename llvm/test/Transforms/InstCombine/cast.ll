@@ -679,3 +679,18 @@ define i64 @test_mmx_const(<2 x i32> %c) nounwind {
 ; CHECK: @test_mmx_const
 ; CHECK-NOT: x86_mmx
 }
+
+; PR12514
+define i1 @test67(i1 %a, i32 %b) {
+  %tmp2 = zext i1 %a to i32
+  %conv6 = xor i32 %tmp2, 1
+  %and = and i32 %b, %conv6
+  %sext = shl nuw nsw i32 %and, 24
+  %neg.i = xor i32 %sext, -16777216
+  %conv.i.i = ashr exact i32 %neg.i, 24
+  %trunc = trunc i32 %conv.i.i to i8
+  %tobool.i = icmp eq i8 %trunc, 0
+  ret i1 %tobool.i
+; CHECK: @test67
+; CHECK: ret i1 false
+}
