@@ -70,7 +70,7 @@ lint: lint_tsan lint_tests
 lint_tsan:
 	third_party/cpplint/cpplint.py --filter=$(RTL_LINT_FITLER) rtl/*.{cc,h}
 lint_tests:
-	third_party/cpplint/cpplint.py --filter=$(RTL_LINT_FITLER) rtl_tests/*.{cc,h}
+	third_party/cpplint/cpplint.py --filter=$(RTL_LINT_FITLER) rtl_tests/*.{cc,h} unit_tests/*.cc
 
 install_deps:
 	rm -rf third_party
