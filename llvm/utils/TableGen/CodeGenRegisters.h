@@ -112,6 +112,10 @@ namespace llvm {
     // Compute extra sub-registers by combining the existing sub-registers.
     void computeSecondarySubRegs(CodeGenRegBank&);
 
+    // Add this as a super-register to all sub-registers after the sub-register
+    // graph has been built.
+    void computeSuperRegs();
+
     const SubRegMap &getSubRegs() const {
       assert(SubRegsComplete && "Must precompute sub-registers");
       return SubRegs;
@@ -169,6 +173,7 @@ namespace llvm {
 
   private:
     bool SubRegsComplete;
+    bool SuperRegsComplete;
 
     // The sub-registers explicit in the .td file form a tree.
     SmallVector<CodeGenSubRegIndex*, 8> ExplicitSubRegIndices;

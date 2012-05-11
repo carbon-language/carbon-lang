@@ -83,7 +83,8 @@ CodeGenRegister::CodeGenRegister(Record *R, unsigned Enum)
     EnumValue(Enum),
     CostPerUse(R->getValueAsInt("CostPerUse")),
     CoveredBySubRegs(R->getValueAsBit("CoveredBySubRegs")),
-    SubRegsComplete(false)
+    SubRegsComplete(false),
+    SuperRegsComplete(false)
 {}
 
 void CodeGenRegister::buildObjectGraph(CodeGenRegBank &RegBank) {
@@ -219,19 +220,10 @@ CodeGenRegister::computeSubRegs(CodeGenRegBank &RegBank) {
     CodeGenRegister *SR = ExplicitSubRegs[i];
     const SubRegMap &Map = SR->computeSubRegs(RegBank);
 
-    // Add this as a super-register of SR now all sub-registers are in the list.
-    // This creates a topological ordering, the exact order depends on the
-    // order computeSubRegs is called on all registers.
-    SR->SuperRegs.push_back(this);
-
     for (SubRegMap::const_iterator SI = Map.begin(), SE = Map.end(); SI != SE;
          ++SI) {
       if (!SubRegs.insert(*SI).second)
         Orphans.insert(SI->second);
-
-      // Noop sub-register indexes are possible, so avoid duplicates.
-      if (SI->second != SR)
-        SI->second->SuperRegs.push_back(this);
     }
   }
 
@@ -439,7 +431,6 @@ void CodeGenRegister::computeSecondarySubRegs(CodeGenRegBank &RegBank) {
     CodeGenSubRegIndex *NewIdx = NewSubRegs[i].first;
     CodeGenRegister *NewSubReg = NewSubRegs[i].second;
     SubReg2Idx.insert(std::make_pair(NewSubReg, NewIdx));
-    NewSubReg->SuperRegs.push_back(this);
   }
 
   // Create sub-register index composition maps for the synthesized indices.
@@ -454,6 +445,30 @@ void CodeGenRegister::computeSecondarySubRegs(CodeGenRegBank &RegBank) {
                       SI->second->getName() + " in " + getName());
       NewIdx->addComposite(SI->first, SubIdx);
     }
+  }
+}
+
+void CodeGenRegister::computeSuperRegs() {
+  // Only visit each register once.
+  if (SuperRegsComplete)
+    return;
+  SuperRegsComplete = true;
+
+  // Make sure all sub-registers have been visited first, so the super-reg
+  // lists will be topologically ordered.
+  for (SubRegMap::const_iterator I = SubRegs.begin(), E = SubRegs.end();
+       I != E; ++I)
+    I->second->computeSuperRegs();
+
+  // Now add this as a super-register on all sub-registers.
+  for (SubRegMap::const_iterator I = SubRegs.begin(), E = SubRegs.end();
+       I != E; ++I) {
+    if (I->second == this)
+      continue;
+    // Don't add duplicate entries.
+    if (!I->second->SuperRegs.empty() && I->second->SuperRegs.back() == this)
+      continue;
+    I->second->SuperRegs.push_back(this);
   }
 }
 
@@ -899,6 +914,11 @@ CodeGenRegBank::CodeGenRegBank(RecordKeeper &Records) : Records(Records) {
   for (unsigned i = 0, e = Registers.size(); i != e; ++i)
     if (Registers[i]->CoveredBySubRegs)
       Registers[i]->computeSecondarySubRegs(*this);
+
+  // After the sub-register graph is complete, compute the topologically
+  // ordered SuperRegs list.
+  for (unsigned i = 0, e = Registers.size(); i != e; ++i)
+    Registers[i]->computeSuperRegs();
 
   // Native register units are associated with a leaf register. They've all been
   // discovered now.
