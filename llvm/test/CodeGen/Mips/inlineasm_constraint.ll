@@ -5,7 +5,7 @@ entry:
 
 ; First I with short
 ; CHECK: #APP
-; CHECK: addi $3,$2,4096
+; CHECK: addi ${{[0-9]+}},${{[0-9]+}},4096
 ; CHECK: #NO_APP
   tail call i16 asm sideeffect "addi $0,$1,$2", "=r,r,I"(i16 7, i16 4096) nounwind
 
