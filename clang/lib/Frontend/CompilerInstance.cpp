@@ -560,7 +560,8 @@ CompilerInstance::createOutputFile(StringRef OutputPath,
       TempPath += "-%%%%%%%%";
       int fd;
       if (llvm::sys::fs::unique_file(TempPath.str(), fd, TempPath,
-                               /*makeAbsolute=*/false) == llvm::errc::success) {
+                                     /*makeAbsolute=*/false, 0664)
+          == llvm::errc::success) {
         OS.reset(new llvm::raw_fd_ostream(fd, /*shouldClose=*/true));
         OSFile = TempFile = TempPath.str();
       }
