@@ -570,9 +570,10 @@ bool FastISel::SelectCall(const User *I) {
   // Handle selected intrinsic function calls.
   switch (F->getIntrinsicID()) {
   default: break;
-    // At -O0 we don't care about the lifetime intrinsics.
+    // At -O0 we don't care about the lifetime or expect intrinsics.
   case Intrinsic::lifetime_start:
   case Intrinsic::lifetime_end:
+  case Intrinsic::expect:
     return true;
   case Intrinsic::dbg_declare: {
     const DbgDeclareInst *DI = cast<DbgDeclareInst>(Call);
