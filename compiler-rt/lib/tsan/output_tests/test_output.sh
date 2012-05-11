@@ -3,7 +3,7 @@
 ulimit -s 8192;
 set -e # fail on any error
 
-ROOTDIR=`dirname $0`/..
+ROOTDIR=$(dirname $0)/..
 
 # Assuming clang is in path.
 CC=clang
@@ -16,46 +16,38 @@ if [ "$LLDB" != "" ]; then
   LDFLAGS+=" -L$LLDB -llldb"
 fi
 
-strip() {
-  grep -v "$1" test.out > test.out2
-  mv -f test.out2 test.out
-}
-
 test_file() {
   SRC=$1
   COMPILER=$2
-  echo ----- TESTING $1
+  echo ----- TESTING $(basename $1)
   OBJ=$SRC.o
   EXE=$SRC.exe
   $COMPILER $SRC $CFLAGS -c -o $OBJ
   # Link with CXX, because lldb and suppressions require C++.
   $CXX $OBJ $LDFLAGS -o $EXE
-  LD_LIBRARY_PATH=$LLDB TSAN_OPTIONS="atexit_sleep_ms=0" $EXE 2> test.out || echo -n
+  RES=$(LD_LIBRARY_PATH=$LLDB TSAN_OPTIONS="atexit_sleep_ms=0" $EXE 2>&1 || true)
   if [ "$3" != "" ]; then
-    cat test.out
+    printf "%s\n" "$RES"
   fi
-  echo >>test.out  # FileCheck fails on empty files
-  FileCheck < test.out $SRC
+  printf "%s\n" "$RES" | FileCheck $SRC
   if [ "$3" == "" ]; then
-    rm -f $EXE $OBJ test.out *.tmp *.tmp2
+    rm -f $EXE $OBJ
   fi
 }
 
 if [ "$1" == "" ]; then
-  for c in $ROOTDIR/output_tests/*.c; do
+  for c in $ROOTDIR/output_tests/*.{c,cc}; do
     if [[ $c == */failing_* ]]; then
       echo SKIPPING FAILING TEST $c
       continue
     fi
-    test_file $c $CC
+    COMPILER=$CXX
+    case $c in
+      *.c) COMPILER=$CC
+    esac
+    test_file $c $COMPILER &
   done
-  for c in $ROOTDIR/output_tests/*.cc; do
-    if [[ $c == */failing_* ]]; then
-      echo SKIPPING FAILING TEST $c
-      continue
-    fi
-    test_file $c $CXX
-  done
+  wait
 else
   test_file $ROOTDIR/output_tests/$1 $CXX "DUMP"
 fi
