@@ -11,7 +11,7 @@
 // from a base address plus an offset.  Register indirection can be specified by
 // using an offset of zero.
 //
-// The MachineMove class is used to represent abstract move operations in the 
+// The MachineMove class is used to represent abstract move operations in the
 // prolog/epilog of a compiled function.  A collection of these objects can be
 // used by a debug consumer to track the location of values when unwinding stack
 // frames.
@@ -23,7 +23,7 @@
 
 namespace llvm {
   class MCSymbol;
-  
+
 class MachineLocation {
 private:
   bool IsRegister;                      // True if location is a register.
@@ -46,7 +46,7 @@ public:
       return IsRegister == Other.IsRegister && Register == Other.Register &&
         Offset == Other.Offset;
   }
-  
+
   // Accessors
   bool isReg()           const { return IsRegister; }
   unsigned getReg()      const { return Register; }
@@ -77,7 +77,7 @@ private:
   /// Label - Symbol for post-instruction address when result of move takes
   /// effect.
   MCSymbol *Label;
-  
+
   // Move to & from location.
   MachineLocation Destination, Source;
 public:
@@ -86,7 +86,7 @@ public:
   MachineMove(MCSymbol *label, const MachineLocation &D,
               const MachineLocation &S)
   : Label(label), Destination(D), Source(S) {}
-  
+
   // Accessors
   MCSymbol *getLabel()                    const { return Label; }
   const MachineLocation &getDestination() const { return Destination; }

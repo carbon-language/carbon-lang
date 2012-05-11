@@ -18,7 +18,7 @@ struct MCFixupKindInfo {
     /// Is this fixup kind PCrelative? This is used by the assembler backend to
     /// evaluate fixup values in a target independent manner when possible.
     FKF_IsPCRel = (1 << 0),
-    
+
     /// Should this fixup kind force a 4-byte aligned effective PC value?
     FKF_IsAlignedDownTo32Bits = (1 << 1)
   };

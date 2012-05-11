@@ -13,13 +13,13 @@
 #include "llvm-c/Disassembler.h"
 
 namespace llvm {
-  
+
 class MCInst;
 class MCSubtargetInfo;
 class MemoryObject;
 class raw_ostream;
 class MCContext;
-  
+
 struct EDInstInfo;
 
 /// MCDisassembler - Superclass for all disassemblers.  Consumes a memory region
@@ -58,12 +58,12 @@ public:
   MCDisassembler(const MCSubtargetInfo &STI) : GetOpInfo(0), SymbolLookUp(0),
                                                DisInfo(0), Ctx(0),
                                                STI(STI), CommentStream(0) {}
-  
+
   virtual ~MCDisassembler();
-  
+
   /// getInstruction  - Returns the disassembly of a single instruction.
   ///
-  /// @param instr    - An MCInst to populate with the contents of the 
+  /// @param instr    - An MCInst to populate with the contents of the
   ///                   instruction.
   /// @param size     - A value to populate with the size of the instruction, or
   ///                   the number of bytes consumed while attempting to decode
@@ -74,7 +74,7 @@ public:
   /// @param vStream  - The stream to print warnings and diagnostic messages on.
   /// @param cStream  - The stream to print comments and annotations on.
   /// @return         - MCDisassembler::Success if the instruction is valid,
-  ///                   MCDisassembler::SoftFail if the instruction was 
+  ///                   MCDisassembler::SoftFail if the instruction was
   ///                                            disassemblable but invalid,
   ///                   MCDisassembler::Fail if the instruction was invalid.
   virtual DecodeStatus  getInstruction(MCInst& instr,
