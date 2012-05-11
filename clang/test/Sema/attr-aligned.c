@@ -32,7 +32,7 @@ struct D { int member __attribute__((aligned(2))) __attribute__((packed)); } d;
 char d1[__alignof__(d) == 2 ?: -1] = {0};
 char d2[__alignof__(d.member) == 2 ?: -1] = {0};
 
-struct E { int member __attribute__((aligned(2))); } __attribute__((packed));
+struct E { int member __attribute__((align(2))); } __attribute__((packed));
 struct E e;
 char e1[__alignof__(e) == 2 ?: -1] = {0};
 char e2[__alignof__(e.member) == 2 ?: -1] = {0};
