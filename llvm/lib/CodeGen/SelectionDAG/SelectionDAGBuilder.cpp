@@ -5087,6 +5087,10 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
     DAG.setRoot(Result.second);
     return 0;
   }
+  case Intrinsic::debugger: {
+    DAG.setRoot(DAG.getNode(ISD::DEBUGGER, dl,MVT::Other, getRoot()));
+    return 0;
+  }
   case Intrinsic::uadd_with_overflow:
   case Intrinsic::sadd_with_overflow:
   case Intrinsic::usub_with_overflow:

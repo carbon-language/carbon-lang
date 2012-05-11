@@ -399,6 +399,8 @@ def int_flt_rounds : Intrinsic<[llvm_i32_ty]>,
                      GCCBuiltin<"__builtin_flt_rounds">;
 def int_trap : Intrinsic<[]>,
                GCCBuiltin<"__builtin_trap">;
+def int_debugger : Intrinsic<[]>,
+                   GCCBuiltin<"__builtin_debugger">;
 
 // Intrisics to support half precision floating point format
 let Properties = [IntrNoMem] in {

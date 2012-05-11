@@ -307,6 +307,8 @@
             '<tt>llvm.annotation.*</tt>' Intrinsic</a></li>
           <li><a href="#int_trap">
             '<tt>llvm.trap</tt>' Intrinsic</a></li>
+          <li><a href="#int_debugger">
+            '<tt>llvm.debugger</tt>' Intrinsic</a></li>
           <li><a href="#int_stackprotector">
             '<tt>llvm.stackprotector</tt>' Intrinsic</a></li>
 	  <li><a href="#int_objectsize">
@@ -8395,6 +8397,30 @@ LLVM</a>.</p>
 <p>This intrinsics is lowered to the target dependent trap instruction. If the
    target does not have a trap instruction, this intrinsic will be lowered to
    the call of the <tt>abort()</tt> function.</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<h4>
+  <a name="int_debugger">'<tt>llvm.debugger</tt>' Intrinsic</a>
+</h4>
+
+<div>
+
+<h5>Syntax:</h5>
+<pre>
+  declare void @llvm.debugger()
+</pre>
+
+<h5>Overview:</h5>
+<p>The '<tt>llvm.debugger</tt>' intrinsic.</p>
+
+<h5>Arguments:</h5>
+<p>None.</p>
+
+<h5>Semantics:</h5>
+<p>This intrinsic is lowered to code which is intended to cause an execution
+   trap with the intention of requesting the attention of a debugger.</p>
 
 </div>
 
