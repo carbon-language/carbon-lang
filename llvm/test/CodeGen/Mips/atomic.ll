@@ -242,3 +242,19 @@ entry:
 ; CHECK:   sync 0
 }
 
+; make sure that this assertion in
+; TwoAddressInstructionPass::TryInstructionTransform does not fail:
+;
+; line 1203: assert(TargetRegisterInfo::isVirtualRegister(regB) &&
+;
+; it failed when MipsDAGToDAGISel::ReplaceUsesWithZeroReg replaced an
+; operand of an atomic instruction with register $zero. 
+@a = external global i32
+
+define i32 @zeroreg() nounwind {
+entry:
+  %0 = cmpxchg i32* @a, i32 1, i32 0 seq_cst
+  %1 = icmp eq i32 %0, 1
+  %conv = zext i1 %1 to i32
+  ret i32 %conv
+}

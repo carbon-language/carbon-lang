@@ -213,7 +213,8 @@ bool MipsDAGToDAGISel::ReplaceUsesWithZeroReg(MachineRegisterInfo *MRI,
     MachineInstr *MI = MO.getParent();
 
     // Do not replace if it is a phi's operand or is tied to def operand.
-    if (MI->isPHI() || MI->isRegTiedToDefOperand(U.getOperandNo()))
+    if (MI->isPHI() || MI->isRegTiedToDefOperand(U.getOperandNo()) ||
+        MI->isPseudo())
       continue;
 
     MO.setReg(ZeroReg);
