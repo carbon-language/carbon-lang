@@ -3360,7 +3360,7 @@ ABIArgInfo MipsABIInfo::classifyReturnType(QualType RetTy) const {
   if (RetTy->isVoidType() || Size == 0)
     return ABIArgInfo::getIgnore();
 
-  if (isAggregateTypeForABI(RetTy)) {
+  if (isAggregateTypeForABI(RetTy) || RetTy->isVectorType()) {
     if (Size <= 128) {
       if (RetTy->isAnyComplexType())
         return ABIArgInfo::getDirect();
