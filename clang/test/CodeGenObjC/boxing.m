@@ -76,6 +76,8 @@ int main() {
   // CHECK: load i8** [[WithBoolSEL]]
   typeof(b) b2; @(b2);
   // CHECK: load i8** [[WithBoolSEL]]
+  typedef const typeof(b) MyBOOL; MyBOOL b3; @(b3);
+  // CHECK: load i8** [[WithBoolSEL]]
   @((BOOL)i);
   // CHECK: load i8** [[WithIntegerSEL]]
   @((NSInteger)i);
