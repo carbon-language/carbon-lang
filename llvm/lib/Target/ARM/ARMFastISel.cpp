@@ -2014,7 +2014,8 @@ bool ARMFastISel::FinishCall(MVT RetVT, SmallVectorImpl<unsigned> &UsedRegs,
 
       // Finally update the result.
       UpdateValueMap(I, ResultReg);
-    } else if (RVLocs.size() == 1) {
+    } else {
+      assert(RVLocs.size() == 1 &&"Can't handle non-double multi-reg retvals!");
       EVT CopyVT = RVLocs[0].getValVT();
 
       // Special handling for extended integers.
@@ -2030,9 +2031,6 @@ bool ARMFastISel::FinishCall(MVT RetVT, SmallVectorImpl<unsigned> &UsedRegs,
 
       // Finally update the result.
       UpdateValueMap(I, ResultReg);
-    } else {
-      // Can't handle non-double multi-reg retvals.
-      return false;
     }
   }
 
@@ -2144,6 +2142,15 @@ bool ARMFastISel::ARMEmitLibcall(const Instruction *I, RTLIB::Libcall Call) {
   // TODO: For now if we have long calls specified we don't handle the call.
   if (EnableARMLongCalls) return false;
 
+  // Can't handle non-double multi-reg retvals.
+  if (RetVT != MVT::isVoid && RetVT != MVT::i32) {  
+    SmallVector<CCValAssign, 16> RVLocs;
+    CCState CCInfo(CC, false, *FuncInfo.MF, TM, RVLocs, *Context);
+    CCInfo.AnalyzeCallResult(RetVT, CCAssignFnForCall(CC, true));
+    if (RVLocs.size() >= 2 && RetVT != MVT::f64)
+      return false;
+  }
+
   // Set up the argument vectors.
   SmallVector<Value*, 8> Args;
   SmallVector<unsigned, 8> ArgRegs;
@@ -2246,6 +2253,16 @@ bool ARMFastISel::SelectCall(const Instruction *I,
 
   // TODO: For now if we have long calls specified we don't handle the call.
   if (EnableARMLongCalls) return false;
+
+  // Can't handle non-double multi-reg retvals.
+  if (RetVT != MVT::isVoid && RetVT != MVT::i1 && RetVT != MVT::i8 &&
+      RetVT != MVT::i16 && RetVT != MVT::i32) {
+    SmallVector<CCValAssign, 16> RVLocs;
+    CCState CCInfo(CC, false, *FuncInfo.MF, TM, RVLocs, *Context);
+    CCInfo.AnalyzeCallResult(RetVT, CCAssignFnForCall(CC, true));
+    if (RVLocs.size() >= 2 && RetVT != MVT::f64)
+      return false;
+  }
 
   // Set up the argument vectors.
   SmallVector<Value*, 8> Args;
