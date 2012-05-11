@@ -1569,10 +1569,16 @@ bool Sema::SemaCheckStringLiteral(const Expr *E, Expr **Args,
       }
 
       if (isConstant) {
-        if (const Expr *Init = VD->getAnyInitializer())
+        if (const Expr *Init = VD->getAnyInitializer()) {
+          // Look through initializers like const char c[] = { "foo" }
+          if (const InitListExpr *InitList = dyn_cast<InitListExpr>(Init)) {
+            if (InitList->isStringLiteralInit())
+              Init = InitList->getInit(0)->IgnoreParenImpCasts();
+          }
           return SemaCheckStringLiteral(Init, Args, NumArgs,
                                         HasVAListArg, format_idx, firstDataArg,
                                         Type, /*inFunctionCall*/false);
+        }
       }
 
       // For vprintf* functions (i.e., HasVAListArg==true), we add a
