@@ -253,6 +253,42 @@ def IIC_SSE_CVT_SS2SI64_RR : InstrItinClass;
 def IIC_SSE_CVT_SD2SI_RM : InstrItinClass;
 def IIC_SSE_CVT_SD2SI_RR : InstrItinClass;
 
+// MMX
+def IIC_MMX_MOV_MM_RM : InstrItinClass;
+def IIC_MMX_MOV_REG_MM : InstrItinClass;
+def IIC_MMX_MOVQ_RM : InstrItinClass;
+def IIC_MMX_MOVQ_RR : InstrItinClass;
+
+def IIC_MMX_ALU_RM : InstrItinClass;
+def IIC_MMX_ALU_RR : InstrItinClass;
+def IIC_MMX_ALUQ_RM : InstrItinClass;
+def IIC_MMX_ALUQ_RR : InstrItinClass;
+def IIC_MMX_PHADDSUBW_RM : InstrItinClass;
+def IIC_MMX_PHADDSUBW_RR : InstrItinClass;
+def IIC_MMX_PHADDSUBD_RM : InstrItinClass;
+def IIC_MMX_PHADDSUBD_RR : InstrItinClass;
+def IIC_MMX_PMUL : InstrItinClass;
+def IIC_MMX_MISC_FUNC_MEM : InstrItinClass;
+def IIC_MMX_MISC_FUNC_REG : InstrItinClass;
+def IIC_MMX_PSADBW : InstrItinClass;
+def IIC_MMX_SHIFT_RI : InstrItinClass;
+def IIC_MMX_SHIFT_RM : InstrItinClass;
+def IIC_MMX_SHIFT_RR : InstrItinClass;
+def IIC_MMX_UNPCK_H_RM : InstrItinClass;
+def IIC_MMX_UNPCK_H_RR : InstrItinClass;
+def IIC_MMX_UNPCK_L : InstrItinClass;
+def IIC_MMX_PCK_RM : InstrItinClass;
+def IIC_MMX_PCK_RR : InstrItinClass;
+def IIC_MMX_PSHUF : InstrItinClass;
+def IIC_MMX_PEXTR : InstrItinClass;
+def IIC_MMX_PINSRW : InstrItinClass;
+def IIC_MMX_MASKMOV : InstrItinClass;
+
+def IIC_MMX_CVT_PD_RR : InstrItinClass;
+def IIC_MMX_CVT_PD_RM : InstrItinClass;
+def IIC_MMX_CVT_PS_RR : InstrItinClass;
+def IIC_MMX_CVT_PS_RM : InstrItinClass;
+
 def IIC_CMPX_LOCK : InstrItinClass;
 def IIC_CMPX_LOCK_8 : InstrItinClass;
 def IIC_CMPX_LOCK_8B : InstrItinClass;

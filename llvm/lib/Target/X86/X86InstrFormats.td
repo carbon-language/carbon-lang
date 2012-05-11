@@ -379,7 +379,7 @@ class SDIi8<bits<8> o, Format F, dag outs, dag ins, string asm,
             list<dag> pattern, InstrItinClass itin = IIC_DEFAULT>
       : Ii8<o, F, outs, ins, asm, pattern, itin>, XD, Requires<[HasSSE2]>;
 class SSDIi8<bits<8> o, Format F, dag outs, dag ins, string asm,
-             list<dag> pattern>
+             list<dag> pattern, InstrItinClass itin = IIC_DEFAULT>
       : Ii8<o, F, outs, ins, asm, pattern>, XS, Requires<[HasSSE2]>;
 class PDI<bits<8> o, Format F, dag outs, dag ins, string asm,
           list<dag> pattern, InstrItinClass itin = IIC_DEFAULT>
