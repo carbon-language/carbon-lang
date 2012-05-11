@@ -86,3 +86,39 @@ int symbolic_index2(int a) {
   }
   return 0;
 }
+
+int overflow_binary_search(double in) {
+  int eee = 16;
+  if (in < 1e-8 || in > 1e23) {
+    return 0;
+  } else {
+    static const double ins[] = {1e-8, 1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1,
+                                 1e0, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6, 1e7,
+                                 1e8, 1e9, 1e10, 1e11, 1e12, 1e13, 1e14, 1e15,
+                                 1e16, 1e17, 1e18, 1e19, 1e20, 1e21, 1e22};
+    if (in < ins[eee]) {
+      eee -= 8;
+    } else {
+      eee += 8;
+    }
+    if (in < ins[eee]) {
+      eee -= 4;
+    } else {
+      eee += 4;
+    }
+    if (in < ins[eee]) {
+      eee -= 2;
+    } else {
+      eee += 2;
+    }
+    if (in < ins[eee]) {
+      eee -= 1;
+    } else {
+      eee += 1;
+    }
+    if (in < ins[eee]) { // expected-warning {{Access out-of-bound array element (buffer overflow)}}
+      eee -= 1;
+    }
+  }
+  return eee;
+}
