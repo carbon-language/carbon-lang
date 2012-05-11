@@ -375,7 +375,7 @@ Thread::ShouldStop (Event* event_ptr)
                     
                     if (plan_ptr->MischiefManaged())
                     {
-                        // We're going to pop the plans up to the plan that explains the stop.
+                        // We're going to pop the plans up to and including the plan that explains the stop.
                         ThreadPlan *prev_plan_ptr = GetPreviousPlan (plan_ptr);
                         
                         do 
