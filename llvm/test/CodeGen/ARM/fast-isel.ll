@@ -226,3 +226,15 @@ define i32 @urem_fold(i32 %a) nounwind {
   %rem = urem i32 %a, 32
   ret i32 %rem
 }
+
+define i32 @test7() noreturn nounwind  {
+entry:
+; ARM: @test7
+; THUMB: @test7
+; ARM: trap
+; THUMB: trap
+  tail call void @llvm.trap( )
+  unreachable
+}
+
+declare void @llvm.trap() nounwind
