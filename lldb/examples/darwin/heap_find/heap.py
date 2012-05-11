@@ -20,6 +20,7 @@ import lldb.utils.symbolication
 
 g_libheap_dylib_dir = None
 g_libheap_dylib_dict = dict()
+g_verbose = False
 
 def load_dylib():
     if lldb.target:
@@ -72,6 +73,9 @@ def load_dylib():
         return 'error: invalid target'
         
     debugger.HandleCommand('process load "%s"' % libheap_dylib_path)
+    if lldb.target.FindModule(libheap_dylib_spec):
+        return None # success, 'libheap.dylib' already loaded
+    return 'error: failed to load "%s"' % libheap_dylib_path
     
 def add_common_options(parser):
     parser.add_option('-v', '--verbose', action='store_true', dest='verbose', help='display verbose debug info', default=False)
@@ -81,17 +85,25 @@ def add_common_options(parser):
     parser.add_option('-s', '--stack', action='store_true', dest='stack', help='gets the stack that allocated each malloc block if MallocStackLogging is enabled', default=False)
     parser.add_option('-S', '--stack-history', action='store_true', dest='stack_history', help='gets the stack history for all allocations whose start address matches each malloc block if MallocStackLogging is enabled', default=False)
 
-type_flag_strings = [ 'free', 'generic', 'alloc', 'dealloc' ];
-
 def dump_stack_history_entry(stack_history_entry, idx):
     address = int(stack_history_entry.address)
     if address:
         type_flags = int(stack_history_entry.type_flags)
-        argument = int(stack_history_entry.argument)
         symbolicator = lldb.utils.symbolication.Symbolicator()
         symbolicator.target = lldb.target
-        global type_flag_strings
-        print 'stack_history_entry[%u]: addr = 0x%x, type=%s, arg=%u, frames=' % (idx, address, type_flag_strings[type_flags], argument)
+        type_str = ''
+        if type_flags == 0:
+            type_str = 'free'
+        else:
+            if type_flags & 2:
+                type_str = 'alloc'
+            elif type_flags & 4:
+                type_str = 'free'
+            elif type_flags & 1:
+                type_str = 'generic'
+            else:
+                type_str = hex(type_flags)
+        print 'stack[%u]: addr = 0x%x, type=%s, frames:' % (idx, address, type_str)
         frame_idx = 0
         idx = 0
         pc = int(stack_history_entry.frames[idx])
@@ -100,20 +112,20 @@ def dump_stack_history_entry(stack_history_entry, idx):
                 frames = symbolicator.symbolicate(pc)
                 if frames:
                     for frame in frames:
-                        print '[%3u] %s' % (frame_idx, frame)
+                        print '     [%u] %s' % (frame_idx, frame)
                         frame_idx += 1
                 else:
-                    print '[%3u] 0x%x' % (frame_idx, pc)
+                    print '     [%u] 0x%x' % (frame_idx, pc)
                     frame_idx += 1
                 idx = idx + 1
                 pc = int(stack_history_entry.frames[idx])
             else:
                 pc = 0
+        print
             
-def dump_stack_history_entries(addr):
+def dump_stack_history_entries(addr, history):
     # malloc_stack_entry *get_stack_history_for_address (const void * addr)
-    
-    expr = 'get_stack_history_for_address((void *)0x%x)' % (addr)
+    expr = 'get_stack_history_for_address((void *)0x%x, %u)' % (addr, history)
     print 'expr = "%s"' % (expr)
     expr_sbvalue = lldb.frame.EvaluateExpression (expr)
     if expr_sbvalue.error.Success():
@@ -126,6 +138,10 @@ def dump_stack_history_entries(addr):
                 dump_stack_history_entry(stack_history_entry, idx)
                 idx = idx + 1
                 stack_history_entry = expr_value[idx]
+        else:
+            print 'error: expression returned => %s' % (expr_sbvalue)
+    else:
+        print 'error: expression failed "%s" => %s' % (expr, expr_sbvalue.error)
     
     
 def heap_search(options, arg_str):
@@ -234,42 +250,9 @@ def heap_search(options, arg_str):
                     lldb.debugger.GetCommandInterpreter().HandleCommand(memory_command, cmd_result)
                     print cmd_result.GetOutput()
                 if options.stack_history:
-                    dump_stack_history_entries(malloc_addr)
+                    dump_stack_history_entries(malloc_addr, 1)
                 elif options.stack:
-                    symbolicator = lldb.utils.symbolication.Symbolicator()
-                    symbolicator.target = lldb.target
-                    expr_str = "g_stack_frames_count = sizeof(g_stack_frames)/sizeof(uint64_t); (int)__mach_stack_logging_get_frames((unsigned)mach_task_self(), 0x%xull, g_stack_frames, g_stack_frames_count, &g_stack_frames_count)" % (malloc_addr)
-                    #print expr_str
-                    expr = lldb.frame.EvaluateExpression (expr_str);
-                    expr_error = expr.GetError()
-                    if expr_error.Success():
-                        err = expr.unsigned
-                        if err:
-                            print 'error: __mach_stack_logging_get_frames() returned error %i' % (err)
-                        else:
-                            count_expr = lldb.frame.EvaluateExpression ("g_stack_frames_count")
-                            count = count_expr.unsigned
-                            #print 'g_stack_frames_count is %u' % (count)
-                            if count > 0:
-                                frame_idx = 0
-                                frames_expr = lldb.value(lldb.frame.EvaluateExpression ("g_stack_frames"))
-                                done = False
-                                for stack_frame_idx in range(count):
-                                    if not done:
-                                        frame_load_addr = int(frames_expr[stack_frame_idx])
-                                        if frame_load_addr >= 0x1000:
-                                            frames = symbolicator.symbolicate(frame_load_addr)
-                                            if frames:
-                                                for frame in frames:
-                                                    print '[%3u] %s' % (frame_idx, frame)
-                                                    frame_idx += 1
-                                            else:
-                                                print '[%3u] 0x%x' % (frame_idx, frame_load_addr)
-                                                frame_idx += 1
-                                        else:
-                                            done = True
-                    else:
-                        print 'error: %s' % (expr_error)
+                    dump_stack_history_entries(malloc_addr, 0)
         else:
             print '%s %s was not found in any malloc blocks' % (options.type, arg_str)
     else:
@@ -278,7 +261,7 @@ def heap_search(options, arg_str):
     
 def ptr_refs(debugger, command, result, dict):
     command_args = shlex.split(command)
-    usage = "usage: %prog [options] <PTR> [PTR ...]"
+    usage = "usage: %prog [options] <EXPR> [EXPR ...]"
     description='''Searches the heap for pointer references on darwin user space programs. 
     
     Any matches that were found will dump the malloc blocks that contain the pointers 
@@ -326,7 +309,7 @@ def cstr_refs(debugger, command, result, dict):
 
 def malloc_info(debugger, command, result, dict):
     command_args = shlex.split(command)
-    usage = "usage: %prog [options] <ADDR> [ADDR ...]"
+    usage = "usage: %prog [options] <EXPR> [EXPR ...]"
     description='''Searches the heap a malloc block that contains the addresses specified as arguments. 
 
     Any matches that were found will dump the malloc blocks that match or contain
@@ -338,15 +321,36 @@ def malloc_info(debugger, command, result, dict):
         (options, args) = parser.parse_args(command_args)
     except:
         return
-
     options.type = 'addr'
-
     if args:
-
         for data in args:
             heap_search (options, data)
     else:
         print 'error: no c string arguments were given to search for'
+
+def malloc_history(debugger, command, result, dict):
+    command_args = shlex.split(command)
+    usage = "usage: %prog [options] <EXPR> [EXPR ...]"
+    description='''Gets the allocation history for an expression whose result is an address.
+
+    Programs should set the MallocStackLoggingNoCompact=1 in the environment to enable stack history. This can be done
+    with "process launch -v MallocStackLoggingNoCompact=1 -- [arg1 ...]"'''
+
+    dylid_load_err = load_dylib()
+    if dylid_load_err:
+        print dylid_load_err
+    else:
+        if command_args:
+            for addr_expr_str in command_args:
+                expr_sbvalue = lldb.frame.EvaluateExpression (addr_expr_str)
+                if expr_sbvalue.error.Success():
+                    addr = expr_sbvalue.unsigned
+                    if addr != 0:
+                        dump_stack_history_entries (addr, 1)
+                else:
+                    print 'error: expression error for "%s": %s' % (addr_expr_str, expr_sbvalue.error)
+        else:
+            print 'error: no address expressions were specified'
 
 if __name__ == '__main__':
     lldb.debugger = lldb.SBDebugger.Create()
@@ -356,7 +360,8 @@ if __name__ == '__main__':
 lldb.debugger.HandleCommand('command script add -f lldb.macosx.heap.ptr_refs ptr_refs')
 lldb.debugger.HandleCommand('command script add -f lldb.macosx.heap.cstr_refs cstr_refs')
 lldb.debugger.HandleCommand('command script add -f lldb.macosx.heap.malloc_info malloc_info')
-print '"ptr_refs", "cstr_refs", and "malloc_info" commands have been installed, use the "--help" options on these commands for detailed help.'
+lldb.debugger.HandleCommand('command script add -f lldb.macosx.heap.malloc_history malloc_history')
+print '"ptr_refs", "cstr_refs", "malloc_info", and "malloc_history" commands have been installed, use the "--help" options on these commands for detailed help.'
 
 
 
