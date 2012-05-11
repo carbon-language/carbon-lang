@@ -2014,8 +2014,7 @@ bool ARMFastISel::FinishCall(MVT RetVT, SmallVectorImpl<unsigned> &UsedRegs,
 
       // Finally update the result.
       UpdateValueMap(I, ResultReg);
-    } else {
-      assert(RVLocs.size() == 1 &&"Can't handle non-double multi-reg retvals!");
+    } else if (RVLocs.size() == 1) {
       EVT CopyVT = RVLocs[0].getValVT();
 
       // Special handling for extended integers.
@@ -2031,6 +2030,9 @@ bool ARMFastISel::FinishCall(MVT RetVT, SmallVectorImpl<unsigned> &UsedRegs,
 
       // Finally update the result.
       UpdateValueMap(I, ResultReg);
+    } else {
+      // Can't handle non-double multi-reg retvals.
+      return false;
     }
   }
 
