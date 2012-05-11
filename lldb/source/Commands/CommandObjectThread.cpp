@@ -946,7 +946,7 @@ public:
                 return false;
             }
 
-            const bool abort_other_plans = true;
+            const bool abort_other_plans = false;
 
             StackFrame *frame = thread->GetStackFrameAtIndex(m_options.m_frame_idx).get();
             if (frame == NULL)

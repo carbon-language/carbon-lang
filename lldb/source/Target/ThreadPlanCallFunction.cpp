@@ -416,7 +416,7 @@ ThreadPlanCallFunction::PlanExplainsStop ()
 bool
 ThreadPlanCallFunction::ShouldStop (Event *event_ptr)
 {
-    if (PlanExplainsStop())
+    if (IsPlanComplete() || PlanExplainsStop())
     {
         ReportRegisterState ("Function completed.  Register state was:");
         

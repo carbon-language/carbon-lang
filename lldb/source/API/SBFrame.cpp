@@ -1028,6 +1028,12 @@ SBFrame::EvaluateExpression (const char *expr)
 SBValue
 SBFrame::EvaluateExpression (const char *expr, lldb::DynamicValueType fetch_dynamic_value)
 {
+    return EvaluateExpression (expr, fetch_dynamic_value, true);
+}
+
+SBValue
+SBFrame::EvaluateExpression (const char *expr, lldb::DynamicValueType fetch_dynamic_value, bool unwind_on_error)
+{
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     
     LogSP expr_log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
@@ -1056,7 +1062,6 @@ SBFrame::EvaluateExpression (const char *expr, lldb::DynamicValueType fetch_dyna
                                                  expr, fetch_dynamic_value, frame_description.GetString().c_str());
 
             const bool coerce_to_id = false;
-            const bool unwind_on_error = true;
             const bool keep_in_memory = false;
 
             exe_results = target->EvaluateExpression (expr, 

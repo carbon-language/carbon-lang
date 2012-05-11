@@ -14,12 +14,18 @@ int c(int);
 
 int a(int val)
 {
-    if (val <= 1)
-        return b(val);
-    else if (val >= 3)
-        return c(val);
+    int return_value = val;
 
-    return val;
+    if (val <= 1)
+    {
+        return_value =  b(val); // break here to stop in a before calling b
+    }
+    else if (val >= 3)
+    {
+        return_value = c(val);
+    }
+
+    return return_value;
 }
 
 int b(int val)

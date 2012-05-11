@@ -531,7 +531,7 @@ SBThread::StepOver (lldb::RunMode stop_other_threads)
     {
         Mutex::Locker api_locker (exe_ctx.GetTargetPtr()->GetAPIMutex());
         Thread *thread = exe_ctx.GetThreadPtr();
-        bool abort_other_plans = true;
+        bool abort_other_plans = false;
         StackFrameSP frame_sp(thread->GetStackFrameAtIndex (0));
         ThreadPlan *new_plan = NULL;
 
@@ -574,7 +574,7 @@ SBThread::StepInto (lldb::RunMode stop_other_threads)
     if (exe_ctx.HasThreadScope())
     {
         Mutex::Locker api_locker (exe_ctx.GetTargetPtr()->GetAPIMutex());
-        bool abort_other_plans = true;
+        bool abort_other_plans = false;
 
         Thread *thread = exe_ctx.GetThreadPtr();
         StackFrameSP frame_sp(thread->GetStackFrameAtIndex (0));
@@ -616,7 +616,7 @@ SBThread::StepOut ()
     if (exe_ctx.HasThreadScope())
     {
         Mutex::Locker api_locker (exe_ctx.GetTargetPtr()->GetAPIMutex());
-        bool abort_other_plans = true;
+        bool abort_other_plans = false;
         bool stop_other_threads = true;
 
         Thread *thread = exe_ctx.GetThreadPtr();
@@ -651,7 +651,7 @@ SBThread::StepOutOfFrame (lldb::SBFrame &sb_frame)
     if (exe_ctx.HasThreadScope())
     {
         Mutex::Locker api_locker (exe_ctx.GetTargetPtr()->GetAPIMutex());
-        bool abort_other_plans = true;
+        bool abort_other_plans = false;
         bool stop_other_threads = true;
         Thread *thread = exe_ctx.GetThreadPtr();
 
@@ -703,7 +703,7 @@ SBThread::RunToAddress (lldb::addr_t addr)
     if (exe_ctx.HasThreadScope())
     {
         Mutex::Locker api_locker (exe_ctx.GetTargetPtr()->GetAPIMutex());
-        bool abort_other_plans = true;
+        bool abort_other_plans = false;
         bool stop_other_threads = true;
 
         Address target_addr (addr);
@@ -806,7 +806,7 @@ SBThread::StepOverUntil (lldb::SBFrame &sb_frame,
         AddressRange fun_range = frame_sc.function->GetAddressRange();
         
         std::vector<addr_t> step_over_until_addrs;
-        const bool abort_other_plans = true;
+        const bool abort_other_plans = false;
         const bool stop_other_threads = true;
         const bool check_inlines = true;
         const bool exact = false;

@@ -103,6 +103,9 @@ public:
     lldb::SBValue
     EvaluateExpression (const char *expr, lldb::DynamicValueType use_dynamic);
 
+    lldb::SBValue
+    EvaluateExpression (const char *expr, lldb::DynamicValueType use_dynamic, bool unwind_on_error);
+
     /// Gets the lexical block that defines the stack frame. Another way to think
     /// of this is it will return the block that contains all of the variables
     /// for a stack frame. Inlined functions are represented as SBBlock objects

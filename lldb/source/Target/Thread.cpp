@@ -375,8 +375,8 @@ Thread::ShouldStop (Event* event_ptr)
                     
                     if (plan_ptr->MischiefManaged())
                     {
-                        // We're going to pop the plans up to AND INCLUDING the plan that explains the stop.
-                        plan_ptr = GetPreviousPlan(plan_ptr);
+                        // We're going to pop the plans up to the plan that explains the stop.
+                        ThreadPlan *prev_plan_ptr = GetPreviousPlan (plan_ptr);
                         
                         do 
                         {
@@ -384,8 +384,13 @@ Thread::ShouldStop (Event* event_ptr)
                                 current_plan->WillStop();
                             PopPlan();
                         }
-                        while ((current_plan = GetCurrentPlan()) != plan_ptr);
-                        done_processing_current_plan = false;
+                        while ((current_plan = GetCurrentPlan()) != prev_plan_ptr);
+                        // Now, if the responsible plan was not "Okay to discard" then we're done,
+                        // otherwise we forward this to the next plan in the stack below.
+                        if (plan_ptr->IsMasterPlan() && !plan_ptr->OkayToDiscard())
+                            done_processing_current_plan = true;
+                        else
+                            done_processing_current_plan = false;
                     }
                     else
                         done_processing_current_plan = true;
