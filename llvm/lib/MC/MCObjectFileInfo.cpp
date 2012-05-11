@@ -169,7 +169,7 @@ void MCObjectFileInfo::InitMachOMCObjectFileInfo(Triple T) {
     Ctx->getMachOSection("__DWARF", "__apple_types",
                          MCSectionMachO::S_ATTR_DEBUG,
                          SectionKind::getMetadata());
-    
+
   DwarfAbbrevSection =
     Ctx->getMachOSection("__DWARF", "__debug_abbrev",
                          MCSectionMachO::S_ATTR_DEBUG,

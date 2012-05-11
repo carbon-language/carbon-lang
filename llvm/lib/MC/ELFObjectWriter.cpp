@@ -627,7 +627,7 @@ void ELFObjectWriter::WriteSymbolTable(MCDataFragment *SymtabF,
 
 const MCSymbol *ELFObjectWriter::SymbolToReloc(const MCAssembler &Asm,
                                                const MCValue &Target,
-                                               const MCFragment &F, 
+                                               const MCFragment &F,
                                                const MCFixup &Fixup,
                                                bool IsPCRel) const {
   const MCSymbol &Symbol = Target.getSymA()->getSymbol();

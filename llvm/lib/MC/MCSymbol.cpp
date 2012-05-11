@@ -30,7 +30,7 @@ static bool isAcceptableChar(char C) {
 /// syntactically correct.
 static bool NameNeedsQuoting(StringRef Str) {
   assert(!Str.empty() && "Cannot create an empty MCSymbol");
-  
+
   // If any of the characters in the string is an unacceptable character, force
   // quotes.
   for (unsigned i = 0, e = Str.size(); i != e; ++i)
@@ -72,7 +72,7 @@ void MCSymbol::print(raw_ostream &OS) const {
     OS << getName();
     return;
   }
-    
+
   OS << '"' << getName() << '"';
 }
 

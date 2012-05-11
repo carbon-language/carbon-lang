@@ -22,7 +22,7 @@ MCSectionELF::~MCSectionELF() {} // anchor.
 // should be printed before the section name
 bool MCSectionELF::ShouldOmitSectionDirective(StringRef Name,
                                               const MCAsmInfo &MAI) const {
-  
+
   // FIXME: Does .section .bss/.data/.text work everywhere??
   if (Name == ".text" || Name == ".data" ||
       (Name == ".bss" && !MAI.usesELFSectionDirectiveForBSS()))
@@ -33,7 +33,7 @@ bool MCSectionELF::ShouldOmitSectionDirective(StringRef Name,
 
 void MCSectionELF::PrintSwitchToSection(const MCAsmInfo &MAI,
                                         raw_ostream &OS) const {
-   
+
   if (ShouldOmitSectionDirective(SectionName, MAI)) {
     OS << '\t' << getSectionName() << '\n';
     return;
@@ -62,7 +62,7 @@ void MCSectionELF::PrintSwitchToSection(const MCAsmInfo &MAI,
   }
 
   // Handle the weird solaris syntax if desired.
-  if (MAI.usesSunStyleELFSectionSwitchSyntax() && 
+  if (MAI.usesSunStyleELFSectionSwitchSyntax() &&
       !(Flags & ELF::SHF_MERGE)) {
     if (Flags & ELF::SHF_ALLOC)
       OS << ",#alloc";
@@ -75,7 +75,7 @@ void MCSectionELF::PrintSwitchToSection(const MCAsmInfo &MAI,
     OS << '\n';
     return;
   }
-  
+
   OS << ",\"";
   if (Flags & ELF::SHF_ALLOC)
     OS << 'a';
@@ -91,13 +91,13 @@ void MCSectionELF::PrintSwitchToSection(const MCAsmInfo &MAI,
     OS << 'S';
   if (Flags & ELF::SHF_TLS)
     OS << 'T';
-  
+
   // If there are target-specific flags, print them.
   if (Flags & ELF::XCORE_SHF_CP_SECTION)
     OS << 'c';
   if (Flags & ELF::XCORE_SHF_DP_SECTION)
     OS << 'd';
-  
+
   OS << '"';
 
   OS << ',';

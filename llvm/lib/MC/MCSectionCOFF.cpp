@@ -20,7 +20,7 @@ MCSectionCOFF::~MCSectionCOFF() {} // anchor.
 // should be printed before the section name
 bool MCSectionCOFF::ShouldOmitSectionDirective(StringRef Name,
                                                const MCAsmInfo &MAI) const {
-  
+
   // FIXME: Does .section .bss/.data/.text work everywhere??
   if (Name == ".text" || Name == ".data" || Name == ".bss")
     return true;
@@ -30,7 +30,7 @@ bool MCSectionCOFF::ShouldOmitSectionDirective(StringRef Name,
 
 void MCSectionCOFF::PrintSwitchToSection(const MCAsmInfo &MAI,
                                          raw_ostream &OS) const {
-  
+
   // standard sections don't require the '.section'
   if (ShouldOmitSectionDirective(SectionName, MAI)) {
     OS << '\t' << getSectionName() << '\n';
@@ -47,7 +47,7 @@ void MCSectionCOFF::PrintSwitchToSection(const MCAsmInfo &MAI,
   if (getCharacteristics() & COFF::IMAGE_SCN_MEM_DISCARDABLE)
     OS << 'n';
   OS << "\"\n";
-  
+
   if (getCharacteristics() & COFF::IMAGE_SCN_LNK_COMDAT) {
     switch (Selection) {
       case COFF::IMAGE_COMDAT_SELECT_NODUPLICATES:

@@ -18,7 +18,7 @@
 #include "llvm/MC/MCStreamer.h"
 using namespace llvm;
 
-void MCAsmInfoDarwin::anchor() { } 
+void MCAsmInfoDarwin::anchor() { }
 
 MCAsmInfoDarwin::MCAsmInfoDarwin() {
   // Common settings for all Darwin targets.
@@ -61,7 +61,7 @@ MCAsmInfoDarwin::MCAsmInfoDarwin() {
 
   // Doesn't support protected visibility.
   ProtectedVisibilityAttr = MCSA_Invalid;
-  
+
   HasDotTypeDotSizeDirective = false;
   HasNoDeadStrip = true;
   HasSymbolResolver = true;

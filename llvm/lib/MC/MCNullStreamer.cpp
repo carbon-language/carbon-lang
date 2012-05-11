@@ -82,7 +82,7 @@ namespace {
 
     virtual bool EmitValueToOffset(const MCExpr *Offset,
                                    unsigned char Value = 0) { return false; }
-    
+
     virtual void EmitFileDirective(StringRef Filename) {}
     virtual bool EmitDwarfFileDirective(unsigned FileNo, StringRef Directory,
                                         StringRef Filename) {
@@ -99,12 +99,12 @@ namespace {
     virtual void EmitCFIEndProcImpl(MCDwarfFrameInfo &Frame) {
       RecordProcEnd(Frame);
     }
-    
+
     /// @}
   };
 
 }
-    
+
 MCStreamer *llvm::createNullStreamer(MCContext &Context) {
   return new MCNullStreamer(Context);
 }
