@@ -47,11 +47,6 @@
 #include "llvm/Target/TargetOptions.h"
 using namespace llvm;
 
-static cl::opt<bool>
-DisableARMFastISel("disable-arm-fast-isel",
-                    cl::desc("Turn off experimental ARM fast-isel support"),
-                    cl::init(false), cl::Hidden);
-
 extern cl::opt<bool> EnableARMLongCalls;
 
 namespace {
@@ -2114,11 +2109,7 @@ bool ARMFastISel::SelectRet(const Instruction *I) {
 }
 
 unsigned ARMFastISel::ARMSelectCallOp(const GlobalValue *GV) {
-  if (isThumb2) {
-    return ARM::tBL;
-  } else  {
-    return ARM::BL;
-  }
+  return isThumb2 ? ARM::tBL : ARM::BL;
 }
 
 // A quick function that will emit a call for a named libcall in F with the
@@ -2662,8 +2653,7 @@ namespace llvm {
 
     // Darwin and thumb1 only for now.
     const ARMSubtarget *Subtarget = &TM.getSubtarget<ARMSubtarget>();
-    if (Subtarget->isTargetIOS() && !Subtarget->isThumb1Only() &&
-        !DisableARMFastISel)
+    if (Subtarget->isTargetIOS() && !Subtarget->isThumb1Only())
       return new ARMFastISel(funcInfo);
     return 0;
   }
