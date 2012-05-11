@@ -347,9 +347,10 @@ error_code status(const Twine &path, file_status &result) {
   return error_code::success();
 }
 
+// Since this is most often used for temporary files, mode defaults to 0600.
 error_code unique_file(const Twine &model, int &result_fd,
-                             SmallVectorImpl<char> &result_path,
-                             bool makeAbsolute) {
+                       SmallVectorImpl<char> &result_path,
+                       bool makeAbsolute, unsigned mode) {
   SmallString<128> Model;
   model.toVector(Model);
   // Null terminate.
@@ -379,7 +380,7 @@ retry_random_path:
 
   // Try to open + create the file.
 rety_open_create:
-  int RandomFD = ::open(RandomPath.c_str(), O_RDWR | O_CREAT | O_EXCL, 0600);
+  int RandomFD = ::open(RandomPath.c_str(), O_RDWR | O_CREAT | O_EXCL, mode);
   if (RandomFD == -1) {
     // If the file existed, try again, otherwise, error.
     if (errno == errc::file_exists)

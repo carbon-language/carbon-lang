@@ -422,8 +422,8 @@ error_code status_known(const Twine &path, bool &result);
 /// @results errc::success if result_{fd,path} have been successfully set,
 ///          otherwise a platform specific error_code.
 error_code unique_file(const Twine &model, int &result_fd,
-                             SmallVectorImpl<char> &result_path,
-                             bool makeAbsolute = true);
+                       SmallVectorImpl<char> &result_path,
+                       bool makeAbsolute = true, unsigned mode = 0600);
 
 /// @brief Canonicalize path.
 ///

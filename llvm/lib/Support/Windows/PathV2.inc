@@ -497,9 +497,11 @@ handle_status_error:
   return error_code::success();
 }
 
+// FIXME: mode should be used here and default to user r/w only,
+// it currently comes in as a UNIX mode.
 error_code unique_file(const Twine &model, int &result_fd,
-                             SmallVectorImpl<char> &result_path,
-                             bool makeAbsolute) {
+                       SmallVectorImpl<char> &result_path,
+                       bool makeAbsolute, unsigned mode) {
   // Use result_path as temp storage.
   result_path.set_size(0);
   StringRef m = model.toStringRef(result_path);
