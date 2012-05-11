@@ -124,7 +124,7 @@ getReservedRegs(const MachineFunction &MF) const {
     Reserved.set(Mips::GP_64);
   }
 
-  // If this function has dynamic allocas, reserve FP.
+  // Reserve FP if this function should have a dedicated frame pointer register.
   if (MF.getTarget().getFrameLowering()->hasFP(MF)) {
     Reserved.set(Mips::FP);
     Reserved.set(Mips::FP_64);
