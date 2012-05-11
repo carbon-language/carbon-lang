@@ -50,18 +50,23 @@ test: $(LIBTSAN) tsan_test
 
 run: all
 	(ulimit -s 8192; ./tsan_test)
+	./output_tests/test_output.sh
 
 presubmit:
 	$(MAKE) -f Makefile.old lint -j 4
 	# Debug build with clang.
 	$(MAKE) -f Makefile.old clean
 	$(MAKE) -f Makefile.old run DEBUG=1 -j 16 CC=clang CXX=clang++
-	./output_tests/test_output.sh
-	# Release build gcc
+	# Release build with clang.
+	$(MAKE) -f Makefile.old clean
+	$(MAKE) -f Makefile.old run DEBUG=0 -j 16 CC=clang CXX=clang++
+	# Debug build with gcc
+	$(MAKE) -f Makefile.old clean
+	$(MAKE) -f Makefile.old run DEBUG=1 -j 16 CC=gcc CXX=g++
+	# Release build with gcc
 	$(MAKE) -f Makefile.old clean
 	$(MAKE) -f Makefile.old run DEBUG=0 -j 16 CC=gcc CXX=g++
 	./check_analyze.sh
-	./output_tests/test_output.sh
 	@ echo PRESUBMIT PASSED
 
 RTL_LINT_FITLER=-legal/copyright,-build/include,-readability/casting,-build/header_guard

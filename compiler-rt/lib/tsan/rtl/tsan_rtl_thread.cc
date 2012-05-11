@@ -40,7 +40,7 @@ void ThreadFinalize(ThreadState *thr) {
     return;
   Context *ctx = CTX();
   Lock l(&ctx->thread_mtx);
-  for (int i = 0; i < kMaxTid; i++) {
+  for (unsigned i = 0; i < kMaxTid; i++) {
     ThreadContext *tctx = ctx->threads[i];
     if (tctx == 0)
       continue;
@@ -230,7 +230,7 @@ int ThreadTid(ThreadState *thr, uptr pc, uptr uid) {
   CHECK_GT(thr->in_rtl, 0);
   DPrintf("#%d: ThreadTid uid=%lu\n", thr->tid, uid);
   Lock l(&CTX()->thread_mtx);
-  for (int tid = 0; tid < kMaxTid; tid++) {
+  for (unsigned tid = 0; tid < kMaxTid; tid++) {
     if (CTX()->threads[tid] != 0
         && CTX()->threads[tid]->user_id == uid
         && CTX()->threads[tid]->status != ThreadStatusInvalid)

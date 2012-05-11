@@ -30,7 +30,7 @@ typedef unsigned long uptr;  // NOLINT
 
 const uptr kPageSize = 4096;
 const int kTidBits = 16;
-const int kMaxTid = 1 << kTidBits;
+const unsigned kMaxTid = 1 << kTidBits;
 const int kClkBits = 40;
 
 #ifdef TSAN_SHADOW_COUNT

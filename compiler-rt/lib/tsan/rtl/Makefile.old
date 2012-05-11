@@ -10,13 +10,16 @@ NO_SYSROOT=--sysroot=.
 CXXFLAGS+=$(EXTRA_CXXFLAGS)
 ifeq ($(DEBUG), 0)
   CXXFLAGS+=-fomit-frame-pointer
-endif
+ifeq ($(CXX), g++)
+  CXXFLAGS+=-Wframe-larger-than=512
+endif  # CXX=g++
+endif  # DEBUG=0
+
 ifeq ($(CXX), clang++)
   # Global constructors are banned.
   CXXFLAGS+=-Wglobal-constructors
-else
-  CXXFLAGS+=-Wframe-larger-than=512
 endif
+
 
 
 all: libtsan.a

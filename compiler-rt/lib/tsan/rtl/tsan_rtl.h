@@ -307,8 +307,8 @@ struct Context {
   int nmissed_expected;
 
   Mutex thread_mtx;
-  int thread_seq;
-  int unique_thread_seq;
+  unsigned thread_seq;
+  unsigned unique_thread_seq;
   int alive_threads;
   int max_alive_threads;
   ThreadContext *threads[kMaxTid];

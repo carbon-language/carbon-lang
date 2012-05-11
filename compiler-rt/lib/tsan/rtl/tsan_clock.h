@@ -41,23 +41,23 @@ struct ThreadClock {
  public:
   ThreadClock();
 
-  u64 get(int tid) const {
+  u64 get(unsigned tid) const {
     DCHECK(tid < kMaxTid);
     return clk_[tid];
   }
 
-  void set(int tid, u64 v) {
+  void set(unsigned tid, u64 v) {
     DCHECK(tid < kMaxTid);
     DCHECK(v >= clk_[tid]);
     clk_[tid] = v;
-    if ((int)nclk_ <= tid)
+    if (nclk_ <= tid)
       nclk_ = tid + 1;
   }
 
-  void tick(int tid) {
+  void tick(unsigned tid) {
     DCHECK(tid < kMaxTid);
     clk_[tid]++;
-    if ((int)nclk_ <= tid)
+    if (nclk_ <= tid)
       nclk_ = tid + 1;
   }
 
