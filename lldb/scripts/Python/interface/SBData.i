@@ -156,7 +156,7 @@ public:
                 else:
                     return my_data
             def __len__(self):
-                return self.sbdata.GetByteSize()/self.item_size
+                return int(self.sbdata.GetByteSize()/self.item_size)
             def all(self):
                 return self[0:len(self)]
         

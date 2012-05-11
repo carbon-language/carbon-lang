@@ -691,7 +691,7 @@ public:
         
             def __len__(self):
                 if self.sbtarget:
-                    return self.sbtarget.GetNumModules()
+                    return int(self.sbtarget.GetNumModules())
                 return 0
         
             def __getitem__(self, key):

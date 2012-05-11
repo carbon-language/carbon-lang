@@ -259,7 +259,7 @@ public:
         
             def __len__(self):
                 if self.sbmodule:
-                    return self.sbmodule.GetNumSymbols()
+                    return int(self.sbmodule.GetNumSymbols())
                 return 0
         
             def __getitem__(self, key):
@@ -315,7 +315,7 @@ public:
         
             def __len__(self):
                 if self.sbmodule:
-                    return self.sbmodule.GetNumSections()
+                    return int(self.sbmodule.GetNumSections())
                 return 0
         
             def __getitem__(self, key):

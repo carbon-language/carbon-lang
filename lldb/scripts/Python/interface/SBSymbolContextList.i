@@ -62,7 +62,7 @@ public:
     
     %pythoncode %{
         def __len__(self):
-            return self.GetSize()
+            return int(self.GetSize())
 
         def __getitem__(self, key):
             count = len(self)

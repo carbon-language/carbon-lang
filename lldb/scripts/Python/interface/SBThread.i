@@ -182,7 +182,7 @@ public:
 
             def __len__(self):
                 if self.sbthread:
-                    return self.sbthread.GetNumFrames()
+                    return int(self.sbthread.GetNumFrames())
                 return 0
             
             def __getitem__(self, key):

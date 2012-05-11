@@ -62,7 +62,7 @@ public:
     %pythoncode %{
         def __len__(self):
             '''Access len of the instruction list.'''
-            return self.GetSize();
+            return int(self.GetSize())
 
         def __getitem__(self, key):
             '''Access instructions by integer index.'''

@@ -116,7 +116,7 @@ public:
         
             def __len__(self):
                 if self.sbblock:
-                    return self.sbblock.GetNumRanges()
+                    return int(self.sbblock.GetNumRanges())
                 return 0
         
             def __getitem__(self, key):

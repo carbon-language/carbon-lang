@@ -321,7 +321,8 @@ public:
                 self.sbprocess = sbprocess
         
             def __len__(self):
-                if self.sbprocess: return self.sbprocess.GetNumThreads()
+                if self.sbprocess:
+                    return int(self.sbprocess.GetNumThreads())
                 return 0
         
             def __getitem__(self, key):
