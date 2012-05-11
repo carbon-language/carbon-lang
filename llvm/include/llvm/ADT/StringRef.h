@@ -490,14 +490,20 @@ namespace llvm {
       return std::make_pair(slice(0, Idx), slice(Idx+1, npos));
     }
 
+    /// ltrim - Return string with consecutive characters in \arg Chars starting
+    /// from the left removed.
     StringRef ltrim(StringRef Chars = " \t\n\v\f\r") const {
       return drop_front(std::min(Length, find_first_not_of(Chars)));
     }
 
+    /// rtrim - Return string with consecutive characters in \arg Chars starting
+    /// from the right removed.
     StringRef rtrim(StringRef Chars = " \t\n\v\f\r") const {
       return drop_back(Length - std::min(Length, find_last_not_of(Chars) + 1));
     }
 
+    /// trim - Return string with consecutive characters in \arg Chars starting
+    /// from the left and right removed.
     StringRef trim(StringRef Chars = " \t\n\v\f\r") const {
       return ltrim(Chars).rtrim(Chars);
     }
