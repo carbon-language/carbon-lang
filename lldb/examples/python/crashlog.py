@@ -121,14 +121,15 @@ class CrashLog(symbolication.Symbolicator):
             if self.resolved_path:
                 # Don't load a module twice...
                 return True
-            print 'Getting symbols for %s %s...' % (self.uuid, self.path),
+            uuid_str = self.get_normalized_uuid_string()
+            print 'Getting symbols for %s %s...' % (uuid_str, self.path),
             if os.path.exists(self.dsymForUUIDBinary):
-                dsym_for_uuid_command = '%s %s' % (self.dsymForUUIDBinary, self.uuid)
+                dsym_for_uuid_command = '%s %s' % (self.dsymForUUIDBinary, uuid_str)
                 s = commands.getoutput(dsym_for_uuid_command)
                 if s:
                     plist_root = plistlib.readPlistFromString (s)
                     if plist_root:
-                        plist = plist_root[self.uuid]
+                        plist = plist_root[uuid_str]
                         if plist:
                             if 'DBGArchitecture' in plist:
                                 self.arch = plist['DBGArchitecture']
@@ -138,7 +139,7 @@ class CrashLog(symbolication.Symbolicator):
                                 self.resolved_path = os.path.expanduser (plist['DBGSymbolRichExecutable'])
             if not self.resolved_path and os.path.exists(self.path):
                 dwarfdump_cmd_output = commands.getoutput('dwarfdump --uuid "%s"' % self.path)
-                self_uuid = uuid.UUID(self.uuid)
+                self_uuid = self.get_uuid()
                 for line in dwarfdump_cmd_output.splitlines():
                     match = self.dwarfdump_uuid_regex.search (line)
                     if match:
@@ -149,7 +150,7 @@ class CrashLog(symbolication.Symbolicator):
                             self.arch = match.group(2)
                             break;
                 if not self.resolved_path:
-                    print "error: file %s '%s' doesn't match the UUID in the installed file" % (self.uuid, self.path)
+                    print "error: file %s '%s' doesn't match the UUID in the installed file" % (uuid_str, self.path)
                     return False
             if (self.resolved_path and os.path.exists(self.resolved_path)) or (self.path and os.path.exists(self.path)):
                 print 'ok'
@@ -267,6 +268,8 @@ class CrashLog(symbolication.Symbolicator):
                     continue
                 self.info_lines.append(line.strip())
             elif parse_mode == PARSE_MODE_THREAD:
+                if line.startswith ('Thread'):
+                    continue
                 frame_match = self.frame_regex.search(line)
                 if frame_match:
                     ident = frame_match.group(2)
@@ -282,7 +285,7 @@ class CrashLog(symbolication.Symbolicator):
                                                   int(image_match.group(2),0), 
                                                   image_match.group(3).strip(), 
                                                   image_match.group(4).strip(), 
-                                                  image_match.group(5), 
+                                                  uuid.UUID(image_match.group(5)), 
                                                   image_match.group(6))
                     self.images.append (image)
                 else:
@@ -300,9 +303,12 @@ class CrashLog(symbolication.Symbolicator):
 
             elif parse_mode == PARSE_MODE_THREGS:
                 stripped_line = line.strip()
-                reg_values = stripped_line.split('  ')
+                reg_values = re.split('  +', stripped_line);
                 for reg_value in reg_values:
+                    #print 'reg_value = "%s"' % reg_value
                     (reg, value) = reg_value.split(': ')
+                    #print 'reg = "%s"' % reg
+                    #print 'value = "%s"' % value
                     thread.registers[reg.strip()] = int(value, 0)
             elif parse_mode == PARSE_MODE_SYSTEM:
                 self.system_profile.append(line)
@@ -398,24 +404,29 @@ class Interactive(cmd.Cmd):
         except:
             return
         
-        for image_path in args:
-            fullpath_search = image_path[0] == '/'
-            for crash_log in self.crash_logs:
-                matches_found = 0
-                for (image_idx, image) in enumerate(crash_log.images):
-                    if fullpath_search:
-                        if image.get_resolved_path() == image_path:
-                            matches_found += 1
-                            print image
-                    else:
-                        image_basename = image.get_resolved_path_basename()
-                        if image_basename == image_path:
-                            matches_found += 1
-                            print image
-                if matches_found == 0:
+        if args:
+            for image_path in args:
+                fullpath_search = image_path[0] == '/'
+                for crash_log in self.crash_logs:
+                    matches_found = 0
                     for (image_idx, image) in enumerate(crash_log.images):
-                        if string.find(image.get_resolved_path(), image_path) >= 0:
-                            print image                            
+                        if fullpath_search:
+                            if image.get_resolved_path() == image_path:
+                                matches_found += 1
+                                print image
+                        else:
+                            image_basename = image.get_resolved_path_basename()
+                            if image_basename == image_path:
+                                matches_found += 1
+                                print image
+                    if matches_found == 0:
+                        for (image_idx, image) in enumerate(crash_log.images):
+                            if string.find(image.get_resolved_path(), image_path) >= 0:
+                                print image
+        else:
+            for crash_log in self.crash_logs:
+                for (image_idx, image) in enumerate(crash_log.images):
+                    print '[%u] %s' % (image_idx, image)            
         return False
 
 

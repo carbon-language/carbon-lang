@@ -283,12 +283,13 @@ class Image:
         '''Add the Image described in this object to "target" and load the sections if "load" is True.'''
         if target:
             # Try and find using UUID only first so that paths need not match up
-            if self.uuid:
-                self.module = target.AddModule (None, None, str(self.uuid))
+            uuid_str = self.get_normalized_uuid_string()
+            if uuid_str:
+                self.module = target.AddModule (None, None, uuid_str)
             if not self.module:
                 self.locate_module_and_debug_symbols ()
                 resolved_path = self.get_resolved_path()
-                self.module = target.AddModule (resolved_path, self.arch, self.uuid)#, self.symfile)
+                self.module = target.AddModule (resolved_path, self.arch, uuid_str, self.symfile)
             if not self.module:
                 return 'error: unable to get module for (%s) "%s"' % (self.arch, self.get_resolved_path())
             if self.has_section_load_info():
@@ -308,9 +309,14 @@ class Image:
         return True
     
     def get_uuid(self):
-        if not self.uuid:
+        if not self.uuid and self.module:
             self.uuid = uuid.UUID(self.module.GetUUIDString())
         return self.uuid
+
+    def get_normalized_uuid_string(self):
+        if self.uuid:
+            return str(self.uuid).upper()
+        return None
 
     def create_target(self):
         '''Create a target using the information in this Image object.'''
