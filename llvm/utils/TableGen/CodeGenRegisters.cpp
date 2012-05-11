@@ -132,7 +132,7 @@ public:
 
   bool isValid() const { return UnitI != UnitE; }
 
-  unsigned operator* () const { assert(isValid()); return *UnitI; };
+  unsigned operator* () const { assert(isValid()); return *UnitI; }
 
   const CodeGenRegister *getReg() const { assert(isValid()); return *RegI; }
 
