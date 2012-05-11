@@ -1854,7 +1854,7 @@ OptimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg, int CmpMask,
     // Conservatively refuse to convert an instruction which isn't in the same
     // BB as the comparison.
     // For CMPri, we need to check Sub, thus we can't return here.
-    if(CmpInstr->getOpcode() == ARM::CMPri ||
+    if (CmpInstr->getOpcode() == ARM::CMPri ||
        CmpInstr->getOpcode() == ARM::t2CMPri)
       MI = NULL;
     else
@@ -2023,7 +2023,7 @@ OptimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg, int CmpMask,
     for (unsigned i = 0; i < OperandsToUpdate.size(); i++) {
       ARMCC::CondCodes CC = (ARMCC::CondCodes)OperandsToUpdate[i]->getImm();
       ARMCC::CondCodes NewCC;
-      switch(CC) {
+      switch (CC) {
       default: break;
       case ARMCC::GE: NewCC = ARMCC::LE; break;
       case ARMCC::LT: NewCC = ARMCC::GT; break;
