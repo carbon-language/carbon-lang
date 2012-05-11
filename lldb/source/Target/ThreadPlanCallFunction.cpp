@@ -36,15 +36,12 @@ using namespace lldb_private;
 //----------------------------------------------------------------------
 bool
 ThreadPlanCallFunction::ConstructorSetup (Thread &thread,
-                                          bool discard_on_error,
                                           ABI *& abi,
                                           lldb::addr_t &start_load_addr,
                                           lldb::addr_t &function_load_addr)
 {
-    // Call function thread plans need to be master plans so that they can potentially stay on the stack when
-    // a breakpoint is hit during the function call.
     SetIsMasterPlan (true);
-    SetOkayToDiscard (discard_on_error);
+    SetOkayToDiscard (false);
 
     ProcessSP process_sp (thread.GetProcess());
     if (!process_sp)
@@ -136,12 +133,13 @@ ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
     m_function_sp (NULL),
     m_return_type (return_type),
     m_takedown_done (false),
-    m_stop_address (LLDB_INVALID_ADDRESS)
+    m_stop_address (LLDB_INVALID_ADDRESS),
+    m_discard_on_error (discard_on_error)
 {
     lldb::addr_t start_load_addr;
     ABI *abi;
     lldb::addr_t function_load_addr;
-    if (!ConstructorSetup (thread, discard_on_error, abi, start_load_addr, function_load_addr))
+    if (!ConstructorSetup (thread, abi, start_load_addr, function_load_addr))
         return;
         
     if (this_arg && cmd_arg)
@@ -204,7 +202,7 @@ ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
     lldb::addr_t start_load_addr;
     ABI *abi;
     lldb::addr_t function_load_addr;
-    if (!ConstructorSetup (thread, discard_on_error, abi, start_load_addr, function_load_addr))
+    if (!ConstructorSetup (thread, abi, start_load_addr, function_load_addr))
         return;
     
     if (!abi->PrepareTrivialCall (thread, 
@@ -354,7 +352,7 @@ ThreadPlanCallFunction::PlanExplainsStop ()
         return true;
     
     // If we don't want to discard this plan, than any stop we don't understand should be propagated up the stack.
-    if (!OkayToDiscard())
+    if (!m_discard_on_error)
         return false;
             
     // Otherwise, check the case where we stopped for an internal breakpoint, in that case, continue on.
@@ -386,7 +384,13 @@ ThreadPlanCallFunction::PlanExplainsStop ()
                 return false;
         }
         
-        return OkayToDiscard();
+        if (m_discard_on_error)
+        {
+            DoTakedown(false);
+            return true;
+        }
+        else
+            return false;
     }
     else
     {
@@ -396,7 +400,7 @@ ThreadPlanCallFunction::PlanExplainsStop ()
         // explain the stop.
         if (m_subplan_sp != NULL)
         {
-            if (OkayToDiscard())
+            if (m_discard_on_error)
             {
                 DoTakedown(false);
                 return true;

@@ -447,7 +447,6 @@ Thread::ShouldStop (Event* event_ptr)
                             break;
                         }
                     }
-
                 }
                 else
                 {

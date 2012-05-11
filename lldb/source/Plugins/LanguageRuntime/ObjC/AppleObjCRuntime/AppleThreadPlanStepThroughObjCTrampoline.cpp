@@ -65,12 +65,8 @@ AppleThreadPlanStepThroughObjCTrampoline::~AppleThreadPlanStepThroughObjCTrampol
 void
 AppleThreadPlanStepThroughObjCTrampoline::DidPush ()
 {
-//    StreamString errors;
-//    ExecutionContext exc_ctx;
-//    m_thread.CalculateExecutionContext(exc_ctx);
-//    m_func_sp.reset(m_impl_function->GetThreadPlanToCallFunction (exc_ctx, m_args_addr, errors, m_stop_others));
-//    m_func_sp->SetPrivate(true);
-//    m_thread.QueueThreadPlan (m_func_sp, false);
+    // Setting up the memory space for the called function text might require allocations,
+    // i.e. a nested function call.  This needs to be done as a PreResumeAction.
     m_thread.GetProcess()->AddPreResumeAction (PreResumeInitializeClangFunction, (void *) this);
 }
 
@@ -91,6 +87,7 @@ AppleThreadPlanStepThroughObjCTrampoline::InitializeClangFunction ()
         m_thread.CalculateExecutionContext(exc_ctx);
         m_func_sp.reset(m_impl_function->GetThreadPlanToCallFunction (exc_ctx, m_args_addr, errors, m_stop_others));
         m_func_sp->SetPrivate(true);
+        m_func_sp->SetOkayToDiscard(true);
         m_thread.QueueThreadPlan (m_func_sp, false);
     }
     return true;

@@ -410,6 +410,8 @@ ClangFunction::GetThreadPlanToCallFunction (ExecutionContext &exe_ctx,
                                                        discard_on_error,
                                                        this_arg,
                                                        cmd_arg);
+    new_plan->SetIsMasterPlan(true);
+    new_plan->SetOkayToDiscard (false);
     return new_plan;
 }
 

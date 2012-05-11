@@ -133,7 +133,6 @@ private:
 
     bool
     ConstructorSetup (Thread &thread,
-                      bool discard_on_error,
                       ABI *& abi,
                       lldb::addr_t &start_load_addr,
                       lldb::addr_t &function_load_addr);
@@ -170,6 +169,7 @@ private:
     lldb::ValueObjectSP                             m_return_valobj_sp;  // If this contains a valid pointer, use the ABI to extract values when complete
     bool                                            m_takedown_done;    // We want to ensure we only do the takedown once.  This ensures that.
     lldb::addr_t                                    m_stop_address;     // This is the address we stopped at.  Also set in DoTakedown;
+    bool                                            m_discard_on_error;
 
     DISALLOW_COPY_AND_ASSIGN (ThreadPlanCallFunction);
 };
