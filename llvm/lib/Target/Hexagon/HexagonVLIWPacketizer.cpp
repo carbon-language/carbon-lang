@@ -3295,9 +3295,9 @@ bool HexagonPacketizerList::CanPromoteToNewValueStore( MachineInstr *MI,
 
     // Check to make sure that they both will have their predicates
     // evaluate identically
-    unsigned predRegNumSrc;
-    unsigned predRegNumDst;
-    const TargetRegisterClass* predRegClass;
+    unsigned predRegNumSrc = 0;
+    unsigned predRegNumDst = 0;
+    const TargetRegisterClass* predRegClass = NULL;
 
     // Get predicate register used in the source instruction
     for(unsigned opNum = 0; opNum < PacketMI->getNumOperands(); opNum++) {
