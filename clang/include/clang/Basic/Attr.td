@@ -101,6 +101,8 @@ class Attr {
   bit SemaHandler = 1;
   // Set to true for attributes that are completely ignored.
   bit Ignored = 0;
+  // Set to true if each of the spellings is a distinct attribute.
+  bit DistinctSpellings = 0;
   // Any additional text that should be included verbatim in the class.  
   code AdditionalMembers = [{}];
 }
@@ -530,6 +532,7 @@ def Override : InheritableAttr {
 
 def Ownership : InheritableAttr {
   let Spellings = ["ownership_holds", "ownership_returns", "ownership_takes"];
+  let DistinctSpellings = 1;
   let Args = [EnumArgument<"OwnKind", "OwnershipKind",
                     ["ownership_holds", "ownership_returns", "ownership_takes"],
                     ["Holds", "Returns", "Takes"]>,

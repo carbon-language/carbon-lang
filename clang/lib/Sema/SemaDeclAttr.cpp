@@ -3792,7 +3792,6 @@ static void ProcessInheritableDeclAttr(Sema &S, Scope *scope, Decl *D,
     // by ProcessNonInheritableDeclAttr.
     break;
   case AttributeList::AT_alias:       handleAliasAttr       (S, D, Attr); break;
-  case AttributeList::AT_align:
   case AttributeList::AT_aligned:     handleAlignedAttr     (S, D, Attr); break;
   case AttributeList::AT_always_inline:
     handleAlwaysInlineAttr  (S, D, Attr); break;
