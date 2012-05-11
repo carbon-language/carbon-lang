@@ -120,17 +120,30 @@ Release Notes</a>.</h1>
 <div>
 <p><a href="http://dragonegg.llvm.org/">DragonEgg</a> is a
    <a href="http://gcc.gnu.org/wiki/plugins">gcc plugin</a> that replaces GCC's
-   optimizers and code generators with LLVM's. It works with gcc-4.5 or gcc-4.6,
-   targets the x86-32 and x86-64 processor families, and has been successfully
-   used on the Darwin, FreeBSD, KFreeBSD, Linux and OpenBSD platforms.  It fully
-   supports Ada, C, C++ and Fortran.  It has partial support for Go, Java, Obj-C
-   and Obj-C++.</p>
+   optimizers and code generators with LLVM's. It works with gcc-4.5 and gcc-4.6
+   (and partially with gcc-4.7), can target the x86-32/x86-64 and ARM processor
+   families, and has been successfully used on the Darwin, FreeBSD, KFreeBSD,
+   Linux and OpenBSD platforms.  It fully supports Ada, C, C++ and Fortran.  It
+   has partial support for Go, Java, Obj-C and Obj-C++.</p>
 
 <p>The 3.1 release has the following notable changes:</p>
 
   <ul>
 
-  <li>...</li>
+  <li>Partial support for gcc-4.7. Ada support is poor, but other languages work
+      fairly well.</li>
+
+  <li>Support for ARM processors. Some essential gcc headers that are needed to
+      build DragonEgg for ARM are not installed by gcc. To work around this,
+      copy the missing headers from the gcc source tree.</li>
+
+  <li>Better optimization for Fortran by exploiting the fact that Fortran scalar
+      arguments have 'restrict' semantics.</li>
+
+  <li>Better optimization for all languages by passing information about type
+      aliasing and type ranges to the LLVM optimizers.</li>
+
+  <li>A regression test-suite was added.</li>
 
 </ul>
 
