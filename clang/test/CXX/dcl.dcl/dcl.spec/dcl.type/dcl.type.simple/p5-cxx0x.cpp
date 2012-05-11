@@ -21,7 +21,7 @@ void r() {
 
 class PD {
   friend struct A;
-  ~PD(); // expected-note 4{{here}}
+  ~PD(); // expected-note 5{{here}}
 public:
   typedef int n;
 };
@@ -37,8 +37,14 @@ struct A {
 };
 
 // Two errors here: one for the decltype, one for the variable.
-decltype(PD(), PD()) pd1; // expected-error 2{{private destructor}}
-decltype(DD(), DD()) dd1; // expected-error 2{{deleted function}}
+decltype(
+    PD(), // expected-error {{private destructor}}
+    PD()) pd1; // expected-error {{private destructor}}
+decltype(DD(), // expected-error {{deleted function}}
+         DD()) dd1; // expected-error {{deleted function}}
+decltype(
+    PD(), // expected-error {{temporary of type 'PD' has private destructor}}
+    0) pd2;
 
 decltype(((13, ((DD())))))::n dd_parens; // ok
 decltype(((((42)), PD())))::n pd_parens_comma; // ok
