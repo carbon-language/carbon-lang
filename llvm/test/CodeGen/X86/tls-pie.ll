@@ -40,7 +40,7 @@ define i32 @f3() {
 ; X32-NEXT: popl %eax
 ; X32-NEXT: .Ltmp{{[0-9]+}}:
 ; X32-NEXT: addl $_GLOBAL_OFFSET_TABLE_+(.Ltmp{{[0-9]+}}-.L{{[0-9]+}}$pb), %eax
-; X32-NEXT: leal %gs:i2@GOTNTPOFF(%eax), %eax
+; X32-NEXT: movl %gs:i2@GOTNTPOFF(%eax), %eax
 ; X32-NEXT: ret
 ; X64: f3:
 ; X64:      movq i2@GOTTPOFF(%rip), %rax
