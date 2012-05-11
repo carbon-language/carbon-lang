@@ -7286,11 +7286,10 @@ LowerToTLSGeneralDynamicModel64(GlobalAddressSDNode *GA, SelectionDAG &DAG,
                     X86::RAX, X86II::MO_TLSGD);
 }
 
-// Lower ISD::GlobalTLSAddress using the "initial exec" (for no-pic) or
-// "local exec" model.
+// Lower ISD::GlobalTLSAddress using the "initial exec" or "local exec" model.
 static SDValue LowerToTLSExecModel(GlobalAddressSDNode *GA, SelectionDAG &DAG,
                                    const EVT PtrVT, TLSModel::Model model,
-                                   bool is64Bit) {
+                                   bool is64Bit, bool isPIC) {
   DebugLoc dl = GA->getDebugLoc();
 
   // Get the Thread Pointer, which is %gs:0 (32-bit) or %fs:0 (64-bit).
@@ -7308,25 +7307,36 @@ static SDValue LowerToTLSExecModel(GlobalAddressSDNode *GA, SelectionDAG &DAG,
   unsigned WrapperKind = X86ISD::Wrapper;
   if (model == TLSModel::LocalExec) {
     OperandFlags = is64Bit ? X86II::MO_TPOFF : X86II::MO_NTPOFF;
-  } else if (is64Bit) {
-    assert(model == TLSModel::InitialExec);
-    OperandFlags = X86II::MO_GOTTPOFF;
-    WrapperKind = X86ISD::WrapperRIP;
+  } else if (model == TLSModel::InitialExec) {
+    if (is64Bit) {
+      OperandFlags = X86II::MO_GOTTPOFF;
+      WrapperKind = X86ISD::WrapperRIP;
+    } else {
+      OperandFlags = isPIC ? X86II::MO_GOTNTPOFF : X86II::MO_INDNTPOFF;
+    }
   } else {
-    assert(model == TLSModel::InitialExec);
-    OperandFlags = X86II::MO_INDNTPOFF;
+    llvm_unreachable("Unexpected model");
   }
 
-  // emit "addl x@ntpoff,%eax" (local exec) or "addl x@indntpoff,%eax" (initial
-  // exec)
+  // emit "addl x@ntpoff,%eax" (local exec)
+  // or "addl x@indntpoff,%eax" (initial exec)
+  // or "addl x@gotntpoff(%ebx) ,%eax" (initial exec, 32-bit pic)
   SDValue TGA = DAG.getTargetGlobalAddress(GA->getGlobal(), dl,
                                            GA->getValueType(0),
                                            GA->getOffset(), OperandFlags);
   SDValue Offset = DAG.getNode(WrapperKind, dl, PtrVT, TGA);
 
-  if (model == TLSModel::InitialExec)
-    Offset = DAG.getLoad(PtrVT, dl, DAG.getEntryNode(), Offset,
-                         MachinePointerInfo::getGOT(), false, false, false, 0);
+  if (model == TLSModel::InitialExec) {
+    if (isPIC && !is64Bit) {
+      Offset = DAG.getNode(ISD::ADD, dl, PtrVT,
+                          DAG.getNode(X86ISD::GlobalBaseReg, DebugLoc(), PtrVT),
+                           Offset);
+    } else {
+      Offset = DAG.getLoad(PtrVT, dl, DAG.getEntryNode(), Offset,
+                           MachinePointerInfo::getGOT(), false, false, false,
+                           0);
+    }
+  }
 
   // The address of the thread local variable is the add of the thread
   // pointer with the offset of the variable.
@@ -7341,7 +7351,6 @@ X86TargetLowering::LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const {
 
   if (Subtarget->isTargetELF()) {
     // TODO: implement the "local dynamic" model
-    // TODO: implement the "initial exec"model for pic executables
 
     // If GV is an alias then use the aliasee for determining
     // thread-localness.
@@ -7360,7 +7369,8 @@ X86TargetLowering::LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const {
       case TLSModel::InitialExec:
       case TLSModel::LocalExec:
         return LowerToTLSExecModel(GA, DAG, getPointerTy(), model,
-                                   Subtarget->is64Bit());
+                                   Subtarget->is64Bit(),
+                         getTargetMachine().getRelocationModel() == Reloc::PIC_);
     }
     llvm_unreachable("Unknown TLS model.");
   }
