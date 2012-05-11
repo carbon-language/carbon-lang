@@ -8149,9 +8149,14 @@ void DiagnoseArityMismatch(Sema &S, OverloadCandidate *Cand,
   std::string Description;
   OverloadCandidateKind FnKind = ClassifyOverloadCandidate(S, Fn, Description);
 
-  S.Diag(Fn->getLocation(), diag::note_ovl_candidate_arity)
-    << (unsigned) FnKind << (Fn->getDescribedFunctionTemplate() != 0) << mode
-    << modeCount << NumFormalArgs;
+  if (modeCount == 1 && Fn->getParamDecl(0)->getDeclName())
+    S.Diag(Fn->getLocation(), diag::note_ovl_candidate_arity_one)
+      << (unsigned) FnKind << (Fn->getDescribedFunctionTemplate() != 0) << mode
+      << Fn->getParamDecl(0) << NumFormalArgs;
+  else
+    S.Diag(Fn->getLocation(), diag::note_ovl_candidate_arity)
+      << (unsigned) FnKind << (Fn->getDescribedFunctionTemplate() != 0) << mode
+      << modeCount << NumFormalArgs;
   MaybeEmitInheritedConstructorNote(S, Fn);
 }
 

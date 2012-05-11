@@ -2039,6 +2039,17 @@ def note_ovl_candidate_arity : Note<"candidate "
     "not viable: requires%select{ at least| at most|}2 %3 argument%s3, but %4 "
     "%plural{1:was|:were}4 provided">;
 
+def note_ovl_candidate_arity_one : Note<"candidate "
+    "%select{function|function|constructor|function|function|constructor|"
+    "constructor (the implicit default constructor)|"
+    "constructor (the implicit copy constructor)|"
+    "constructor (the implicit move constructor)|"
+    "function (the implicit copy assignment operator)|"
+    "function (the implicit move assignment operator)|"
+    "constructor (inherited)}0 %select{|template }1"
+    "not viable: requires%select{ at least| at most|}2 argument %3, but "
+    "%plural{0:none|:%4}4 were provided">;
+
 def note_ovl_candidate_deleted : Note<
     "candidate %select{function|function|constructor|"
     "function |function |constructor |"
@@ -4558,10 +4569,18 @@ def err_typecheck_call_too_few_args : Error<
   "too few %select{|||execution configuration }0arguments to "
   "%select{function|block|method|kernel function}0 call, "
   "expected %1, have %2">;
+def err_typecheck_call_too_few_args_one : Error<
+  "too few %select{|||execution configuration }0arguments to "
+  "%select{function|block|method|kernel function}0 call, "
+  "argument %1 was not specified">;
 def err_typecheck_call_too_few_args_at_least : Error<
   "too few %select{|||execution configuration }0arguments to "
   "%select{function|block|method|kernel function}0 call, "
   "expected at least %1, have %2">;
+def err_typecheck_call_too_few_args_at_least_one : Error<
+  "too few %select{|||execution configuration }0arguments to "
+  "%select{function|block|method|kernel function}0 call, "
+  "at least argument %1 must be specified">;
 def err_typecheck_call_too_many_args : Error<
   "too many %select{|||execution configuration }0arguments to "
   "%select{function|block|method|kernel function}0 call, "

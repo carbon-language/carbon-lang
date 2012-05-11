@@ -3380,11 +3380,18 @@ Sema::ConvertArgumentsForCall(CallExpr *Call, Expr *Fn,
   // arguments for the remaining parameters), don't make the call.
   if (NumArgs < NumArgsInProto) {
     if (NumArgs < MinArgs) {
-      Diag(RParenLoc, MinArgs == NumArgsInProto
-                        ? diag::err_typecheck_call_too_few_args
-                        : diag::err_typecheck_call_too_few_args_at_least)
-        << FnKind
-        << MinArgs << NumArgs << Fn->getSourceRange();
+      if (MinArgs == 1 && FDecl && FDecl->getParamDecl(0)->getDeclName())
+        Diag(RParenLoc, MinArgs == NumArgsInProto && !Proto->isVariadic()
+                          ? diag::err_typecheck_call_too_few_args_one
+                          : diag::err_typecheck_call_too_few_args_at_least_one)
+          << FnKind
+          << FDecl->getParamDecl(0) << Fn->getSourceRange();
+      else
+        Diag(RParenLoc, MinArgs == NumArgsInProto && !Proto->isVariadic()
+                          ? diag::err_typecheck_call_too_few_args
+                          : diag::err_typecheck_call_too_few_args_at_least)
+          << FnKind
+          << MinArgs << NumArgs << Fn->getSourceRange();
 
       // Emit the location of the prototype.
       if (FDecl && !FDecl->getBuiltinID() && !IsExecConfig)

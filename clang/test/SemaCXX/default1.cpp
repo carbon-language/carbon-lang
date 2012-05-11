@@ -47,6 +47,6 @@ int i () {
   void j (int f = 4);
   {
     void j (int f); // expected-note{{'j' declared here}}
-    j(); // expected-error{{too few arguments to function call, expected 1, have 0}}
+    j(); // expected-error{{too few arguments to function call, argument 'f' was not specified}}
   }
 }
