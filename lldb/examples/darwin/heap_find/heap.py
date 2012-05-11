@@ -126,12 +126,10 @@ def dump_stack_history_entry(stack_history_entry, idx):
 def dump_stack_history_entries(addr, history):
     # malloc_stack_entry *get_stack_history_for_address (const void * addr)
     expr = 'get_stack_history_for_address((void *)0x%x, %u)' % (addr, history)
-    print 'expr = "%s"' % (expr)
     expr_sbvalue = lldb.frame.EvaluateExpression (expr)
     if expr_sbvalue.error.Success():
         if expr_sbvalue.unsigned:
             expr_value = lldb.value(expr_sbvalue)  
-            #print 'expr_value = ', expr_value
             idx = 0;
             stack_history_entry = expr_value[idx]
             while int(stack_history_entry.address) != 0:
