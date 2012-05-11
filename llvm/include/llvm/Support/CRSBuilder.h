@@ -19,7 +19,7 @@
 #ifndef CRSBUILDER_H_
 #define CRSBUILDER_H_
 
-#include "llvm/ConstantRangesSet.h"
+#include "llvm/Support/ConstantRangesSet.h"
 #include <list>
 #include <map>
 #include <vector>
