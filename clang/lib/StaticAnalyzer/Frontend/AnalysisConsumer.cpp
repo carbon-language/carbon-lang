@@ -246,6 +246,7 @@ public:
                         SetOfConstDecls *VisitedCallees);
 
   /// Visitors for the RecursiveASTVisitor.
+  bool shouldWalkTypesOfTypeLocs() const { return false; }
 
   /// Handle callbacks for arbitrary Decls.
   bool VisitDecl(Decl *D) {
