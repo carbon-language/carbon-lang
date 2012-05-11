@@ -27,6 +27,7 @@
 #define GET_INSTRINFO_CTOR
 #include "HexagonGenInstrInfo.inc"
 #include "HexagonGenDFAPacketizer.inc"
+#include "HexagonConstExtInfo.h"
 
 using namespace llvm;
 
@@ -95,6 +96,7 @@ unsigned HexagonInstrInfo::isStoreToStackSlot(const MachineInstr *MI,
                                             int &FrameIndex) const {
   switch (MI->getOpcode()) {
   default: break;
+  case Hexagon::STriw_indexed:
   case Hexagon::STriw:
   case Hexagon::STrid:
   case Hexagon::STrih:
@@ -364,7 +366,7 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                       Align);
 
   if (Hexagon::IntRegsRegClass.hasSubClassEq(RC)) {
-    BuildMI(MBB, I, DL, get(Hexagon::STriw))
+    BuildMI(MBB, I, DL, get(Hexagon::STriw_indexed))
           .addFrameIndex(FI).addImm(0)
           .addReg(SrcReg, getKillRegState(isKill)).addMemOperand(MMO);
   } else if (Hexagon::DoubleRegsRegClass.hasSubClassEq(RC)) {
@@ -1312,72 +1314,85 @@ bool HexagonInstrInfo::isPredicable(MachineInstr *MI) const {
     return false;
 
   const int Opc = MI->getOpcode();
+  int NumOperands = MI->getNumOperands();
+
+  // Keep a flag for upto 4 operands in the instructions, to indicate if
+  // that operand has been constant extended.
+  bool OpCExtended[4];
+  if (NumOperands > 4)
+    NumOperands = 4;
+
+  for (int i=0; i<NumOperands; i++)
+    OpCExtended[i] = (HexagonConstExt::isOperandExtended(Opc, 1) &&
+                      isConstExtended(MI));
 
   switch(Opc) {
   case Hexagon::TFRI:
-    return isInt<12>(MI->getOperand(1).getImm());
+   // Return true if MI is constant extended as predicated form will also be
+   // extended so immediate value doesn't have to fit within range.
+   return OpCExtended[1] ||  isInt<12>(MI->getOperand(1).getImm());
 
   case Hexagon::STrid:
   case Hexagon::STrid_indexed:
-    return isShiftedUInt<6,3>(MI->getOperand(1).getImm());
+    return OpCExtended[1] || isShiftedUInt<6,3>(MI->getOperand(1).getImm());
 
   case Hexagon::STriw:
   case Hexagon::STriw_indexed:
   case Hexagon::STriw_nv_V4:
-    return isShiftedUInt<6,2>(MI->getOperand(1).getImm());
+    return OpCExtended[1] || isShiftedUInt<6,2>(MI->getOperand(1).getImm());
 
   case Hexagon::STrih:
   case Hexagon::STrih_indexed:
   case Hexagon::STrih_nv_V4:
-    return isShiftedUInt<6,1>(MI->getOperand(1).getImm());
+    return OpCExtended[1] || isShiftedUInt<6,1>(MI->getOperand(1).getImm());
 
   case Hexagon::STrib:
   case Hexagon::STrib_indexed:
   case Hexagon::STrib_nv_V4:
-    return isUInt<6>(MI->getOperand(1).getImm());
+    return OpCExtended[1] || isUInt<6>(MI->getOperand(1).getImm());
 
   case Hexagon::LDrid:
   case Hexagon::LDrid_indexed:
-    return isShiftedUInt<6,3>(MI->getOperand(2).getImm());
+    return OpCExtended[2] || isShiftedUInt<6,3>(MI->getOperand(2).getImm());
 
   case Hexagon::LDriw:
   case Hexagon::LDriw_indexed:
-    return isShiftedUInt<6,2>(MI->getOperand(2).getImm());
+    return OpCExtended[2] || isShiftedUInt<6,2>(MI->getOperand(2).getImm());
 
   case Hexagon::LDrih:
   case Hexagon::LDriuh:
   case Hexagon::LDrih_indexed:
   case Hexagon::LDriuh_indexed:
-    return isShiftedUInt<6,1>(MI->getOperand(2).getImm());
+    return OpCExtended[2] || isShiftedUInt<6,1>(MI->getOperand(2).getImm());
 
   case Hexagon::LDrib:
   case Hexagon::LDriub:
   case Hexagon::LDrib_indexed:
   case Hexagon::LDriub_indexed:
-    return isUInt<6>(MI->getOperand(2).getImm());
+    return OpCExtended[2] || isUInt<6>(MI->getOperand(2).getImm());
 
   case Hexagon::POST_LDrid:
-    return isShiftedInt<4,3>(MI->getOperand(3).getImm());
+    return OpCExtended[3] || isShiftedInt<4,3>(MI->getOperand(3).getImm());
 
   case Hexagon::POST_LDriw:
-    return isShiftedInt<4,2>(MI->getOperand(3).getImm());
+    return OpCExtended[3] || isShiftedInt<4,2>(MI->getOperand(3).getImm());
 
   case Hexagon::POST_LDrih:
   case Hexagon::POST_LDriuh:
-    return isShiftedInt<4,1>(MI->getOperand(3).getImm());
+    return OpCExtended[3] || isShiftedInt<4,1>(MI->getOperand(3).getImm());
 
   case Hexagon::POST_LDrib:
   case Hexagon::POST_LDriub:
-    return isInt<4>(MI->getOperand(3).getImm());
+    return OpCExtended[3] || isInt<4>(MI->getOperand(3).getImm());
 
   case Hexagon::STrib_imm_V4:
   case Hexagon::STrih_imm_V4:
   case Hexagon::STriw_imm_V4:
-    return (isUInt<6>(MI->getOperand(1).getImm()) &&
-            isInt<6>(MI->getOperand(2).getImm()));
+    return ((OpCExtended[1] || isUInt<6>(MI->getOperand(1).getImm())) &&
+            (OpCExtended[2] || isInt<6>(MI->getOperand(2).getImm())));
 
   case Hexagon::ADD_ri:
-    return isInt<8>(MI->getOperand(2).getImm());
+    return OpCExtended[2] || isInt<8>(MI->getOperand(2).getImm());
 
   case Hexagon::ASLH:
   case Hexagon::ASRH:
@@ -2190,6 +2205,73 @@ getMatchingCondBranchOpcode(int Opc, bool invertPredicate) const {
   case Hexagon::DEALLOC_RET_V4:
     return !invertPredicate ? Hexagon::DEALLOC_RET_cPt_V4 :
                               Hexagon::DEALLOC_RET_cNotPt_V4;
+
+  // Load Absolute Addressing -- global address.
+  case Hexagon::LDrib_abs_V4:
+    return !invertPredicate ? Hexagon::LDrib_abs_cPt_V4 :
+                              Hexagon::LDrib_abs_cNotPt_V4;
+  case Hexagon::LDriub_abs_V4:
+    return !invertPredicate ? Hexagon::LDriub_abs_cPt_V4 :
+                              Hexagon::LDriub_abs_cNotPt_V4;
+  case Hexagon::LDrih_abs_V4:
+    return !invertPredicate ? Hexagon::LDrih_abs_cPt_V4 :
+                              Hexagon::LDrih_abs_cNotPt_V4;
+  case Hexagon::LDriuh_abs_V4:
+    return !invertPredicate ? Hexagon::LDriuh_abs_cPt_V4 :
+                              Hexagon::LDriuh_abs_cNotPt_V4;
+  case Hexagon::LDriw_abs_V4:
+    return !invertPredicate ? Hexagon::LDriw_abs_cPt_V4 :
+                              Hexagon::LDriw_abs_cNotPt_V4;
+  case Hexagon::LDrid_abs_V4:
+    return !invertPredicate ? Hexagon::LDrid_abs_cPt_V4 :
+                              Hexagon::LDrid_abs_cNotPt_V4;
+
+  // Load Absolute Addressing -- immediate value.
+  case Hexagon::LDrib_imm_abs_V4:
+    return !invertPredicate ? Hexagon::LDrib_imm_abs_cPt_V4 :
+                              Hexagon::LDrib_imm_abs_cNotPt_V4;
+  case Hexagon::LDriub_imm_abs_V4:
+    return !invertPredicate ? Hexagon::LDriub_imm_abs_cPt_V4 :
+                              Hexagon::LDriub_imm_abs_cNotPt_V4;
+  case Hexagon::LDrih_imm_abs_V4:
+    return !invertPredicate ? Hexagon::LDrih_imm_abs_cPt_V4 :
+                              Hexagon::LDrih_imm_abs_cNotPt_V4;
+  case Hexagon::LDriuh_imm_abs_V4:
+    return !invertPredicate ? Hexagon::LDriuh_imm_abs_cPt_V4 :
+                              Hexagon::LDriuh_imm_abs_cNotPt_V4;
+  case Hexagon::LDriw_imm_abs_V4:
+    return !invertPredicate ? Hexagon::LDriw_imm_abs_cPt_V4 :
+                              Hexagon::LDriw_imm_abs_cNotPt_V4;
+
+  // Store Absolute Addressing.
+  case Hexagon::STrib_abs_V4:
+    return !invertPredicate ? Hexagon::STrib_abs_cPt_V4 :
+                              Hexagon::STrib_abs_cNotPt_V4;
+  case Hexagon::STrih_abs_V4:
+    return !invertPredicate ? Hexagon::STrih_abs_cPt_V4 :
+                              Hexagon::STrih_abs_cNotPt_V4;
+  case Hexagon::STriw_abs_V4:
+    return !invertPredicate ? Hexagon::STriw_abs_cPt_V4 :
+                              Hexagon::STriw_abs_cNotPt_V4;
+  case Hexagon::STrid_abs_V4:
+    return !invertPredicate ? Hexagon::STrid_abs_cPt_V4 :
+                              Hexagon::STrid_abs_cNotPt_V4;
+
+  // Store Absolute Addressing - global address.
+  case Hexagon::STrib_imm_abs_V4:
+    return !invertPredicate ? Hexagon::STrib_imm_abs_cPt_V4 :
+                              Hexagon::STrib_imm_abs_cNotPt_V4;
+  case Hexagon::STrih_imm_abs_V4:
+    return !invertPredicate ? Hexagon::STrih_imm_abs_cPt_V4 :
+                              Hexagon::STrih_imm_abs_cNotPt_V4;
+  case Hexagon::STriw_imm_abs_V4:
+    return !invertPredicate ? Hexagon::STriw_imm_abs_cPt_V4 :
+                              Hexagon::STriw_imm_abs_cNotPt_V4;
+
+  // Transfer
+  case Hexagon::TFRI_V4:
+    return !invertPredicate ? Hexagon::TFRI_cPt_V4 :
+                              Hexagon::TFRI_cNotPt_V4;
   }
   llvm_unreachable("Unexpected predicable instruction");
 }
@@ -2340,6 +2422,7 @@ isValidOffset(const int Opcode, const int Offset) const {
 
   case Hexagon::LDriw:
   case Hexagon::LDriw_f:
+  case Hexagon::STriw_indexed:
   case Hexagon::STriw:
   case Hexagon::STriw_f:
     assert((Offset % 4 == 0) && "Offset has incorrect alignment");
@@ -2804,4 +2887,72 @@ bool HexagonInstrInfo::isSchedulingBoundary(const MachineInstr *MI,
     return true;
 
   return false;
+}
+
+bool HexagonInstrInfo::isExpr(unsigned OpType) const {
+  switch(OpType) {
+  case MachineOperand::MO_MachineBasicBlock:
+  case MachineOperand::MO_GlobalAddress:
+  case MachineOperand::MO_ExternalSymbol:
+  case MachineOperand::MO_JumpTableIndex:
+  case MachineOperand::MO_ConstantPoolIndex:
+  case MachineOperand::MO_BlockAddress:
+    return true;
+  default:
+    return false;
+  }
+}
+
+bool HexagonInstrInfo::isConstExtended(MachineInstr *MI) const {
+  unsigned short Opcode = MI->getOpcode();
+  short ExtOpNum = HexagonConstExt::getCExtOpNum(Opcode);
+
+  // Instruction has no constant extended operand.
+  if (ExtOpNum == -1)
+    return false;
+
+
+  int MinValue = HexagonConstExt::getMinValue(Opcode);
+  int MaxValue = HexagonConstExt::getMaxValue(Opcode);
+  const MachineOperand &MO = MI->getOperand(ExtOpNum);
+  if (!MO.isImm()) // no range check if the operand is non-immediate.
+    return true;
+
+  int ImmValue =MO.getImm();
+  return (ImmValue < MinValue || ImmValue > MaxValue);
+
+}
+
+// Returns true if a particular operand is extended for an instruction.
+bool HexagonConstExt::isOperandExtended(unsigned short Opcode,
+                                  unsigned short OperandNum) {
+  return HexagonCExt[Opcode].CExtOpNum == OperandNum;
+}
+
+// Returns Operand Index for the constant extended instruction.
+unsigned short HexagonConstExt::getCExtOpNum(unsigned short Opcode)  {
+  return HexagonCExt[Opcode].CExtOpNum;
+}
+
+// Returns the min value that doesn't need to be extended.
+int HexagonConstExt::getMinValue(unsigned short Opcode) {
+  return HexagonCExt[Opcode].MinValue;
+}
+
+// Returns the max value that doesn't need to be extended.
+int HexagonConstExt::getMaxValue(unsigned short Opcode) {
+  return HexagonCExt[Opcode].MaxValue;
+}
+
+// Returns true if an instruction can be converted into a non-extended
+// equivalent instruction.
+bool HexagonConstExt::NonExtEquivalentExists (unsigned short Opcode) {
+  if (HexagonCExt[Opcode].NonExtOpcode < 0 )
+    return false;
+  return true;
+}
+
+// Returns opcode of the non-extended equivalent instruction.
+int HexagonConstExt::getNonExtOpcode (unsigned short Opcode) {
+  return HexagonCExt[Opcode].NonExtOpcode;
 }

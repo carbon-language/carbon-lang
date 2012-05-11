@@ -257,7 +257,7 @@ void HexagonPacketizerList::reserveResourcesForConstExt(MachineInstr* MI) {
 
 bool HexagonPacketizerList::canReserveResourcesForConstExt(MachineInstr *MI) {
   const HexagonInstrInfo *QII = (const HexagonInstrInfo *) TII;
-  assert(QII->isExtended(MI) &&
+  assert((QII->isExtended(MI) || QII->isConstExtended(MI)) &&
          "Should only be called for constant extended instructions");
   MachineFunction *MF = MI->getParent()->getParent();
   MachineInstr *PseudoMI = MF->CreateMachineInstr(QII->get(Hexagon::IMMEXT),
@@ -394,6 +394,16 @@ bool HexagonPacketizerList::IsNewifyStore (MachineInstr* MI) {
     case Hexagon::POST_STbri_cdnPt_V4:
     case Hexagon::POST_STbri_cNotPt:
     case Hexagon::POST_STbri_cdnNotPt_V4:
+    case Hexagon::STrib_abs_V4:
+    case Hexagon::STrib_abs_cPt_V4:
+    case Hexagon::STrib_abs_cdnPt_V4:
+    case Hexagon::STrib_abs_cNotPt_V4:
+    case Hexagon::STrib_abs_cdnNotPt_V4:
+    case Hexagon::STrib_imm_abs_V4:
+    case Hexagon::STrib_imm_abs_cPt_V4:
+    case Hexagon::STrib_imm_abs_cdnPt_V4:
+    case Hexagon::STrib_imm_abs_cNotPt_V4:
+    case Hexagon::STrib_imm_abs_cdnNotPt_V4:
     case Hexagon::STb_GP_cPt_V4:
     case Hexagon::STb_GP_cNotPt_V4:
     case Hexagon::STb_GP_cdnPt_V4:
@@ -427,6 +437,16 @@ bool HexagonPacketizerList::IsNewifyStore (MachineInstr* MI) {
     case Hexagon::POST_SThri_cdnPt_V4:
     case Hexagon::POST_SThri_cNotPt:
     case Hexagon::POST_SThri_cdnNotPt_V4:
+    case Hexagon::STrih_abs_V4:
+    case Hexagon::STrih_abs_cPt_V4:
+    case Hexagon::STrih_abs_cdnPt_V4:
+    case Hexagon::STrih_abs_cNotPt_V4:
+    case Hexagon::STrih_abs_cdnNotPt_V4:
+    case Hexagon::STrih_imm_abs_V4:
+    case Hexagon::STrih_imm_abs_cPt_V4:
+    case Hexagon::STrih_imm_abs_cdnPt_V4:
+    case Hexagon::STrih_imm_abs_cNotPt_V4:
+    case Hexagon::STrih_imm_abs_cdnNotPt_V4:
     case Hexagon::STh_GP_cPt_V4:
     case Hexagon::STh_GP_cNotPt_V4:
     case Hexagon::STh_GP_cdnPt_V4:
@@ -460,6 +480,16 @@ bool HexagonPacketizerList::IsNewifyStore (MachineInstr* MI) {
     case Hexagon::POST_STwri_cdnPt_V4:
     case Hexagon::POST_STwri_cNotPt:
     case Hexagon::POST_STwri_cdnNotPt_V4:
+    case Hexagon::STriw_abs_V4:
+    case Hexagon::STriw_abs_cPt_V4:
+    case Hexagon::STriw_abs_cdnPt_V4:
+    case Hexagon::STriw_abs_cNotPt_V4:
+    case Hexagon::STriw_abs_cdnNotPt_V4:
+    case Hexagon::STriw_imm_abs_V4:
+    case Hexagon::STriw_imm_abs_cPt_V4:
+    case Hexagon::STriw_imm_abs_cdnPt_V4:
+    case Hexagon::STriw_imm_abs_cNotPt_V4:
+    case Hexagon::STriw_imm_abs_cdnNotPt_V4:
     case Hexagon::STw_GP_cPt_V4:
     case Hexagon::STw_GP_cNotPt_V4:
     case Hexagon::STw_GP_cdnPt_V4:
@@ -751,6 +781,98 @@ static int GetDotNewOp(const int opc) {
 
   case Hexagon::POST_STwri_cdnNotPt_V4:
     return Hexagon::POST_STwri_cdnNotPt_nv_V4;
+
+// Absolute addressing mode -- global address
+  case Hexagon::STrib_abs_V4:
+    return Hexagon::STrib_abs_nv_V4;
+
+  case Hexagon::STrib_abs_cPt_V4:
+    return Hexagon::STrib_abs_cPt_nv_V4;
+
+  case Hexagon::STrib_abs_cdnPt_V4:
+    return Hexagon::STrib_abs_cdnPt_nv_V4;
+
+  case Hexagon::STrib_abs_cNotPt_V4:
+    return Hexagon::STrib_abs_cNotPt_nv_V4;
+
+  case Hexagon::STrib_abs_cdnNotPt_V4:
+    return Hexagon::STrib_abs_cdnNotPt_nv_V4;
+
+  case Hexagon::STrih_abs_V4:
+    return Hexagon::STrih_abs_nv_V4;
+
+  case Hexagon::STrih_abs_cPt_V4:
+    return Hexagon::STrih_abs_cPt_nv_V4;
+
+  case Hexagon::STrih_abs_cdnPt_V4:
+    return Hexagon::STrih_abs_cdnPt_nv_V4;
+
+  case Hexagon::STrih_abs_cNotPt_V4:
+    return Hexagon::STrih_abs_cNotPt_nv_V4;
+
+  case Hexagon::STrih_abs_cdnNotPt_V4:
+    return Hexagon::STrih_abs_cdnNotPt_nv_V4;
+
+  case Hexagon::STriw_abs_V4:
+    return Hexagon::STriw_abs_nv_V4;
+
+  case Hexagon::STriw_abs_cPt_V4:
+    return Hexagon::STriw_abs_cPt_nv_V4;
+
+  case Hexagon::STriw_abs_cdnPt_V4:
+    return Hexagon::STriw_abs_cdnPt_nv_V4;
+
+  case Hexagon::STriw_abs_cNotPt_V4:
+    return Hexagon::STriw_abs_cNotPt_nv_V4;
+
+  case Hexagon::STriw_abs_cdnNotPt_V4:
+    return Hexagon::STriw_abs_cdnNotPt_nv_V4;
+
+// Absolute addressing mode -- immediate value
+  case Hexagon::STrib_imm_abs_V4:
+    return Hexagon::STrib_imm_abs_nv_V4;
+
+  case Hexagon::STrib_imm_abs_cPt_V4:
+    return Hexagon::STrib_imm_abs_cPt_nv_V4;
+
+  case Hexagon::STrib_imm_abs_cdnPt_V4:
+    return Hexagon::STrib_imm_abs_cdnPt_nv_V4;
+
+  case Hexagon::STrib_imm_abs_cNotPt_V4:
+    return Hexagon::STrib_imm_abs_cNotPt_nv_V4;
+
+  case Hexagon::STrib_imm_abs_cdnNotPt_V4:
+    return Hexagon::STrib_imm_abs_cdnNotPt_nv_V4;
+
+  case Hexagon::STrih_imm_abs_V4:
+    return Hexagon::STrih_imm_abs_nv_V4;
+
+  case Hexagon::STrih_imm_abs_cPt_V4:
+    return Hexagon::STrih_imm_abs_cPt_nv_V4;
+
+  case Hexagon::STrih_imm_abs_cdnPt_V4:
+    return Hexagon::STrih_imm_abs_cdnPt_nv_V4;
+
+  case Hexagon::STrih_imm_abs_cNotPt_V4:
+    return Hexagon::STrih_imm_abs_cNotPt_nv_V4;
+
+  case Hexagon::STrih_imm_abs_cdnNotPt_V4:
+    return Hexagon::STrih_imm_abs_cdnNotPt_nv_V4;
+
+  case Hexagon::STriw_imm_abs_V4:
+    return Hexagon::STriw_imm_abs_nv_V4;
+
+  case Hexagon::STriw_imm_abs_cPt_V4:
+    return Hexagon::STriw_imm_abs_cPt_nv_V4;
+
+  case Hexagon::STriw_imm_abs_cdnPt_V4:
+    return Hexagon::STriw_imm_abs_cdnPt_nv_V4;
+
+  case Hexagon::STriw_imm_abs_cNotPt_V4:
+    return Hexagon::STriw_imm_abs_cNotPt_nv_V4;
+
+  case Hexagon::STriw_imm_abs_cdnNotPt_V4:
+    return Hexagon::STriw_imm_abs_cdnNotPt_nv_V4;
 
   case Hexagon::STw_GP_cPt_V4:
     return Hexagon::STw_GP_cPt_nv_V4;
@@ -1404,6 +1526,103 @@ static int GetDotNewPredOp(const int opc) {
     return Hexagon::ZXTH_cdnPt_V4;
   case Hexagon::ZXTH_cNotPt_V4 :
     return Hexagon::ZXTH_cdnNotPt_V4;
+
+  // Load Absolute Addressing.
+  case Hexagon::LDrib_abs_cPt_V4 :
+    return Hexagon::LDrib_abs_cdnPt_V4;
+  case Hexagon::LDrib_abs_cNotPt_V4 :
+    return Hexagon::LDrib_abs_cdnNotPt_V4;
+
+  case Hexagon::LDriub_abs_cPt_V4 :
+    return Hexagon::LDriub_abs_cdnPt_V4;
+  case Hexagon::LDriub_abs_cNotPt_V4 :
+    return Hexagon::LDriub_abs_cdnNotPt_V4;
+
+  case Hexagon::LDrih_abs_cPt_V4 :
+    return Hexagon::LDrih_abs_cdnPt_V4;
+  case Hexagon::LDrih_abs_cNotPt_V4 :
+    return Hexagon::LDrih_abs_cdnNotPt_V4;
+
+  case Hexagon::LDriuh_abs_cPt_V4 :
+    return Hexagon::LDriuh_abs_cdnPt_V4;
+  case Hexagon::LDriuh_abs_cNotPt_V4 :
+    return Hexagon::LDriuh_abs_cdnNotPt_V4;
+
+  case Hexagon::LDriw_abs_cPt_V4 :
+    return Hexagon::LDriw_abs_cdnPt_V4;
+  case Hexagon::LDriw_abs_cNotPt_V4 :
+    return Hexagon::LDriw_abs_cdnNotPt_V4;
+
+  case Hexagon::LDrid_abs_cPt_V4 :
+    return Hexagon::LDrid_abs_cdnPt_V4;
+  case Hexagon::LDrid_abs_cNotPt_V4 :
+    return Hexagon::LDrid_abs_cdnNotPt_V4;
+
+  case Hexagon::LDrib_imm_abs_cPt_V4:
+    return Hexagon::LDrib_imm_abs_cdnPt_V4;
+  case Hexagon::LDrib_imm_abs_cNotPt_V4:
+    return Hexagon::LDrib_imm_abs_cdnNotPt_V4;
+
+  case Hexagon::LDriub_imm_abs_cPt_V4:
+    return Hexagon::LDriub_imm_abs_cdnPt_V4;
+  case Hexagon::LDriub_imm_abs_cNotPt_V4:
+    return Hexagon::LDriub_imm_abs_cdnNotPt_V4;
+
+  case Hexagon::LDrih_imm_abs_cPt_V4:
+    return Hexagon::LDrih_imm_abs_cdnPt_V4;
+  case Hexagon::LDrih_imm_abs_cNotPt_V4:
+    return Hexagon::LDrih_imm_abs_cdnNotPt_V4;
+
+  case Hexagon::LDriuh_imm_abs_cPt_V4:
+    return Hexagon::LDriuh_imm_abs_cdnPt_V4;
+  case Hexagon::LDriuh_imm_abs_cNotPt_V4:
+    return Hexagon::LDriuh_imm_abs_cdnNotPt_V4;
+
+  case Hexagon::LDriw_imm_abs_cPt_V4:
+    return Hexagon::LDriw_imm_abs_cdnPt_V4;
+  case Hexagon::LDriw_imm_abs_cNotPt_V4:
+    return Hexagon::LDriw_imm_abs_cdnNotPt_V4;
+
+  // Store Absolute Addressing.
+  case Hexagon::STrib_abs_cPt_V4 :
+    return Hexagon::STrib_abs_cdnPt_V4;
+  case Hexagon::STrib_abs_cNotPt_V4 :
+    return Hexagon::STrib_abs_cdnNotPt_V4;
+
+  case Hexagon::STrih_abs_cPt_V4 :
+    return Hexagon::STrih_abs_cdnPt_V4;
+  case Hexagon::STrih_abs_cNotPt_V4 :
+    return Hexagon::STrih_abs_cdnNotPt_V4;
+
+  case Hexagon::STriw_abs_cPt_V4 :
+    return Hexagon::STriw_abs_cdnPt_V4;
+  case Hexagon::STriw_abs_cNotPt_V4 :
+    return Hexagon::STriw_abs_cdnNotPt_V4;
+
+  case Hexagon::STrid_abs_cPt_V4 :
+    return Hexagon::STrid_abs_cdnPt_V4;
+  case Hexagon::STrid_abs_cNotPt_V4 :
+    return Hexagon::STrid_abs_cdnNotPt_V4;
+
+  case Hexagon::STrib_imm_abs_cPt_V4:
+    return Hexagon::STrib_imm_abs_cdnPt_V4;
+  case Hexagon::STrib_imm_abs_cNotPt_V4:
+    return Hexagon::STrib_imm_abs_cdnNotPt_V4;
+
+  case Hexagon::STrih_imm_abs_cPt_V4:
+    return Hexagon::STrih_imm_abs_cdnPt_V4;
+  case Hexagon::STrih_imm_abs_cNotPt_V4:
+    return Hexagon::STrih_imm_abs_cdnNotPt_V4;
+
+  case Hexagon::STriw_imm_abs_cPt_V4:
+    return Hexagon::STriw_imm_abs_cdnPt_V4;
+  case Hexagon::STriw_imm_abs_cNotPt_V4:
+    return Hexagon::STriw_imm_abs_cdnNotPt_V4;
+
+  case Hexagon::TFRI_cPt_V4:
+    return Hexagon::TFRI_cdnPt_V4;
+  case Hexagon::TFRI_cNotPt_V4:
+    return Hexagon::TFRI_cdnNotPt_V4;
   }
 }
 
@@ -1430,7 +1649,6 @@ bool HexagonPacketizerList::isCondInst (MachineInstr* MI) {
   }
   return false;
 }
-
 
 // Promote an instructiont to its .new form.
 // At this time, we have already made a call to CanPromoteToDotNew
@@ -2140,6 +2358,159 @@ static int GetDotOldOp(const int opc) {
   case Hexagon::POST_STdri_cdnNotPt_V4 :
     return Hexagon::POST_STdri_cNotPt;
 
+// Absolute addressing mode - global address
+  case Hexagon::STrib_abs_nv_V4:
+    return Hexagon::STrib_abs_V4;
+
+  case Hexagon::STrib_abs_cdnPt_V4:
+  case Hexagon::STrib_abs_cPt_nv_V4:
+  case Hexagon::STrib_abs_cdnPt_nv_V4:
+    return Hexagon::STrib_abs_cPt_V4;
+
+  case Hexagon::STrib_abs_cdnNotPt_V4:
+  case Hexagon::STrib_abs_cNotPt_nv_V4:
+  case Hexagon::STrib_abs_cdnNotPt_nv_V4:
+    return Hexagon::STrib_abs_cNotPt_V4;
+
+  case Hexagon::STrih_abs_nv_V4:
+    return Hexagon::STrih_abs_V4;
+
+  case Hexagon::STrih_abs_cdnPt_V4:
+  case Hexagon::STrih_abs_cPt_nv_V4:
+  case Hexagon::STrih_abs_cdnPt_nv_V4:
+    return Hexagon::STrih_abs_cPt_V4;
+
+  case Hexagon::STrih_abs_cdnNotPt_V4:
+  case Hexagon::STrih_abs_cNotPt_nv_V4:
+  case Hexagon::STrih_abs_cdnNotPt_nv_V4:
+    return Hexagon::STrih_abs_cNotPt_V4;
+
+  case Hexagon::STriw_abs_nv_V4:
+    return Hexagon::STriw_abs_V4;
+
+  case Hexagon::STriw_abs_cdnPt_V4:
+  case Hexagon::STriw_abs_cPt_nv_V4:
+  case Hexagon::STriw_abs_cdnPt_nv_V4:
+    return Hexagon::STriw_abs_cPt_V4;
+
+  case Hexagon::STriw_abs_cdnNotPt_V4:
+  case Hexagon::STriw_abs_cNotPt_nv_V4:
+  case Hexagon::STriw_abs_cdnNotPt_nv_V4:
+    return Hexagon::STriw_abs_cNotPt_V4;
+
+  case Hexagon::STrid_abs_cdnPt_V4:
+    return Hexagon::STrid_abs_cPt_V4;
+
+  case Hexagon::STrid_abs_cdnNotPt_V4:
+    return Hexagon::STrid_abs_cNotPt_V4;
+
+// Absolute addressing mode - immediate values
+  case Hexagon::STrib_imm_abs_nv_V4:
+    return Hexagon::STrib_imm_abs_V4;
+
+  case Hexagon::STrib_imm_abs_cdnPt_V4:
+  case Hexagon::STrib_imm_abs_cPt_nv_V4:
+  case Hexagon::STrib_imm_abs_cdnPt_nv_V4:
+    return Hexagon::STrib_imm_abs_cPt_V4;
+
+  case Hexagon::STrib_imm_abs_cdnNotPt_V4:
+  case Hexagon::STrib_imm_abs_cNotPt_nv_V4:
+  case Hexagon::STrib_imm_abs_cdnNotPt_nv_V4:
+    return Hexagon::STrib_imm_abs_cNotPt_V4;
+
+  case Hexagon::STrih_imm_abs_nv_V4:
+    return Hexagon::STrih_imm_abs_V4;
+
+  case Hexagon::STrih_imm_abs_cdnPt_V4:
+  case Hexagon::STrih_imm_abs_cPt_nv_V4:
+  case Hexagon::STrih_imm_abs_cdnPt_nv_V4:
+    return Hexagon::STrih_imm_abs_cPt_V4;
+
+  case Hexagon::STrih_imm_abs_cdnNotPt_V4:
+  case Hexagon::STrih_imm_abs_cNotPt_nv_V4:
+  case Hexagon::STrih_imm_abs_cdnNotPt_nv_V4:
+    return Hexagon::STrih_imm_abs_cNotPt_V4;
+
+  case Hexagon::STriw_imm_abs_nv_V4:
+    return Hexagon::STriw_imm_abs_V4;
+
+  case Hexagon::STriw_imm_abs_cdnPt_V4:
+  case Hexagon::STriw_imm_abs_cPt_nv_V4:
+  case Hexagon::STriw_imm_abs_cdnPt_nv_V4:
+    return Hexagon::STriw_imm_abs_cPt_V4;
+
+  case Hexagon::STriw_imm_abs_cdnNotPt_V4:
+  case Hexagon::STriw_imm_abs_cNotPt_nv_V4:
+  case Hexagon::STriw_imm_abs_cdnNotPt_nv_V4:
+    return Hexagon::STriw_imm_abs_cNotPt_V4;
+
+  // Load - absolute set addressing
+  case Hexagon::LDrib_abs_cdnPt_V4:
+    return Hexagon::LDrib_abs_cPt_V4;
+
+  case Hexagon::LDrib_abs_cdnNotPt_V4:
+    return Hexagon::LDrib_abs_cNotPt_V4;
+
+  case Hexagon::LDriub_abs_cdnPt_V4:
+    return Hexagon::LDriub_abs_cPt_V4;
+
+  case Hexagon::LDriub_abs_cdnNotPt_V4:
+    return Hexagon::LDriub_abs_cNotPt_V4;
+
+  case Hexagon::LDrih_abs_cdnPt_V4:
+    return Hexagon::LDrih_abs_cPt_V4;
+
+  case Hexagon::LDrih_abs_cdnNotPt_V4:
+    return Hexagon::LDrih_abs_cNotPt_V4;
+
+  case Hexagon::LDriuh_abs_cdnPt_V4:
+    return Hexagon::LDriuh_abs_cPt_V4;
+
+  case Hexagon::LDriuh_abs_cdnNotPt_V4:
+    return Hexagon::LDriuh_abs_cNotPt_V4;
+
+  case Hexagon::LDriw_abs_cdnPt_V4:
+    return Hexagon::LDriw_abs_cPt_V4;
+
+  case Hexagon::LDriw_abs_cdnNotPt_V4:
+    return Hexagon::LDriw_abs_cNotPt_V4;
+
+  case Hexagon::LDrid_abs_cdnPt_V4:
+    return Hexagon::LDrid_abs_cPt_V4;
+
+  case Hexagon::LDrid_abs_cdnNotPt_V4:
+    return Hexagon::LDrid_abs_cNotPt_V4;
+
+   case Hexagon::LDrib_imm_abs_cdnPt_V4:
+    return Hexagon::LDrib_imm_abs_cPt_V4;
+
+  case Hexagon::LDrib_imm_abs_cdnNotPt_V4:
+    return Hexagon::LDrib_imm_abs_cNotPt_V4;
+
+  case Hexagon::LDriub_imm_abs_cdnPt_V4:
+    return Hexagon::LDriub_imm_abs_cPt_V4;
+
+  case Hexagon::LDriub_imm_abs_cdnNotPt_V4:
+    return Hexagon::LDriub_imm_abs_cNotPt_V4;
+
+  case Hexagon::LDrih_imm_abs_cdnPt_V4:
+    return Hexagon::LDrih_imm_abs_cPt_V4;
+
+  case Hexagon::LDrih_imm_abs_cdnNotPt_V4:
+    return Hexagon::LDrih_imm_abs_cNotPt_V4;
+
+  case Hexagon::LDriuh_imm_abs_cdnPt_V4:
+    return Hexagon::LDriuh_imm_abs_cPt_V4;
+
+  case Hexagon::LDriuh_imm_abs_cdnNotPt_V4:
+    return Hexagon::LDriuh_imm_abs_cNotPt_V4;
+
+  case Hexagon::LDriw_imm_abs_cdnPt_V4:
+    return Hexagon::LDriw_imm_abs_cPt_V4;
+
+  case Hexagon::LDriw_imm_abs_cdnNotPt_V4:
+    return Hexagon::LDriw_imm_abs_cNotPt_V4;
+
   case Hexagon::STd_GP_cdnPt_V4 :
     return Hexagon::STd_GP_cPt_V4;
 
@@ -2298,6 +2669,46 @@ static bool GetPredicateSense(MachineInstr* MI,
   case Hexagon::ZXTB_cdnPt_V4 :
   case Hexagon::ZXTH_cPt_V4 :
   case Hexagon::ZXTH_cdnPt_V4 :
+
+  case Hexagon::LDrib_abs_cPt_V4 :
+  case Hexagon::LDrib_abs_cdnPt_V4:
+  case Hexagon::LDriub_abs_cPt_V4 :
+  case Hexagon::LDriub_abs_cdnPt_V4:
+  case Hexagon::LDrih_abs_cPt_V4 :
+  case Hexagon::LDrih_abs_cdnPt_V4:
+  case Hexagon::LDriuh_abs_cPt_V4 :
+  case Hexagon::LDriuh_abs_cdnPt_V4:
+  case Hexagon::LDriw_abs_cPt_V4 :
+  case Hexagon::LDriw_abs_cdnPt_V4:
+  case Hexagon::LDrid_abs_cPt_V4 :
+  case Hexagon::LDrid_abs_cdnPt_V4:
+
+  case Hexagon::LDrib_imm_abs_cPt_V4 :
+  case Hexagon::LDrib_imm_abs_cdnPt_V4:
+  case Hexagon::LDriub_imm_abs_cPt_V4 :
+  case Hexagon::LDriub_imm_abs_cdnPt_V4:
+  case Hexagon::LDrih_imm_abs_cPt_V4 :
+  case Hexagon::LDrih_imm_abs_cdnPt_V4:
+  case Hexagon::LDriuh_imm_abs_cPt_V4 :
+  case Hexagon::LDriuh_imm_abs_cdnPt_V4:
+  case Hexagon::LDriw_imm_abs_cPt_V4 :
+  case Hexagon::LDriw_imm_abs_cdnPt_V4:
+
+  case Hexagon::STrib_abs_cPt_V4:
+  case Hexagon::STrib_abs_cdnPt_V4:
+  case Hexagon::STrih_abs_cPt_V4:
+  case Hexagon::STrih_abs_cdnPt_V4:
+  case Hexagon::STriw_abs_cPt_V4:
+  case Hexagon::STriw_abs_cdnPt_V4:
+  case Hexagon::STrid_abs_cPt_V4:
+  case Hexagon::STrid_abs_cdnPt_V4:
+  case Hexagon::STrib_imm_abs_cPt_V4:
+  case Hexagon::STrib_imm_abs_cdnPt_V4:
+  case Hexagon::STrih_imm_abs_cPt_V4:
+  case Hexagon::STrih_imm_abs_cdnPt_V4:
+  case Hexagon::STriw_imm_abs_cPt_V4:
+  case Hexagon::STriw_imm_abs_cdnPt_V4:
+
   case Hexagon::LDrid_GP_cPt_V4 :
   case Hexagon::LDrib_GP_cPt_V4 :
   case Hexagon::LDriub_GP_cPt_V4 :
@@ -2469,6 +2880,45 @@ static bool GetPredicateSense(MachineInstr* MI,
   case Hexagon::ZXTB_cdnNotPt_V4 :
   case Hexagon::ZXTH_cNotPt_V4 :
   case Hexagon::ZXTH_cdnNotPt_V4 :
+
+  case Hexagon::LDrib_abs_cNotPt_V4:
+  case Hexagon::LDrib_abs_cdnNotPt_V4:
+  case Hexagon::LDriub_abs_cNotPt_V4 :
+  case Hexagon::LDriub_abs_cdnNotPt_V4:
+  case Hexagon::LDrih_abs_cNotPt_V4 :
+  case Hexagon::LDrih_abs_cdnNotPt_V4:
+  case Hexagon::LDriuh_abs_cNotPt_V4 :
+  case Hexagon::LDriuh_abs_cdnNotPt_V4:
+  case Hexagon::LDriw_abs_cNotPt_V4 :
+  case Hexagon::LDriw_abs_cdnNotPt_V4:
+  case Hexagon::LDrid_abs_cNotPt_V4 :
+  case Hexagon::LDrid_abs_cdnNotPt_V4:
+
+  case Hexagon::LDrib_imm_abs_cNotPt_V4:
+  case Hexagon::LDrib_imm_abs_cdnNotPt_V4:
+  case Hexagon::LDriub_imm_abs_cNotPt_V4 :
+  case Hexagon::LDriub_imm_abs_cdnNotPt_V4:
+  case Hexagon::LDrih_imm_abs_cNotPt_V4 :
+  case Hexagon::LDrih_imm_abs_cdnNotPt_V4:
+  case Hexagon::LDriuh_imm_abs_cNotPt_V4 :
+  case Hexagon::LDriuh_imm_abs_cdnNotPt_V4:
+  case Hexagon::LDriw_imm_abs_cNotPt_V4 :
+  case Hexagon::LDriw_imm_abs_cdnNotPt_V4:
+
+  case Hexagon::STrib_abs_cNotPt_V4:
+  case Hexagon::STrib_abs_cdnNotPt_V4:
+  case Hexagon::STrih_abs_cNotPt_V4:
+  case Hexagon::STrih_abs_cdnNotPt_V4:
+  case Hexagon::STriw_abs_cNotPt_V4:
+  case Hexagon::STriw_abs_cdnNotPt_V4:
+  case Hexagon::STrid_abs_cNotPt_V4:
+  case Hexagon::STrid_abs_cdnNotPt_V4:
+  case Hexagon::STrib_imm_abs_cNotPt_V4:
+  case Hexagon::STrib_imm_abs_cdnNotPt_V4:
+  case Hexagon::STrih_imm_abs_cNotPt_V4:
+  case Hexagon::STrih_imm_abs_cdnNotPt_V4:
+  case Hexagon::STriw_imm_abs_cNotPt_V4:
+  case Hexagon::STriw_imm_abs_cdnNotPt_V4:
 
   case Hexagon::LDrid_GP_cNotPt_V4 :
   case Hexagon::LDrib_GP_cNotPt_V4 :
@@ -3503,6 +3953,7 @@ bool HexagonPacketizerList::isLegalToPacketizeTogether(SUnit *SUI, SUnit *SUJ) {
                && QRI->Subtarget.hasV4TOps()
                && J->getOpcode() == Hexagon::ALLOCFRAME
                && (I->getOpcode() == Hexagon::STrid
+                   || I->getOpcode() == Hexagon::STriw_indexed
                    || I->getOpcode() == Hexagon::STriw
                    || I->getOpcode() == Hexagon::STrib)
                && I->getOperand(0).getReg() == QRI->getStackRegister()
@@ -3580,7 +4031,7 @@ HexagonPacketizerList::addToPacket(MachineInstr *MI) {
       MachineInstr *nvjMI = MII;
       assert(ResourceTracker->canReserveResources(MI));
       ResourceTracker->reserveResources(MI);
-      if (QII->isExtended(MI) &&
+      if ((QII->isExtended(MI) || QII->isConstExtended(MI)) &&
           !tryAllocateResourcesForConstExt(MI)) {
         endPacket(MBB, MI);
         ResourceTracker->reserveResources(MI);
@@ -3616,7 +4067,7 @@ HexagonPacketizerList::addToPacket(MachineInstr *MI) {
       CurrentPacketMIs.push_back(MI);
       CurrentPacketMIs.push_back(nvjMI);
     } else {
-      if (   QII->isExtended(MI)
+      if (   (QII->isExtended(MI) || QII->isConstExtended(MI))
           && (   !tryAllocateResourcesForConstExt(MI)
               || !ResourceTracker->canReserveResources(MI)))
       {

@@ -67,10 +67,14 @@ def FrameIndex : Operand<i32> {
 let PrintMethod = "printGlobalOperand" in
   def globaladdress : Operand<i32>;
 
+let PrintMethod = "printGlobalOperand" in
+  def globaladdressExt : Operand<i32>;
+
 let PrintMethod = "printJumpTable" in
  def jumptablebase : Operand<i32>;
 
 def brtarget : Operand<OtherVT>;
+def brtargetExt : Operand<OtherVT>;
 def calltarget : Operand<i32>;
 
 def bblabel : Operand<i32>;
@@ -115,10 +119,10 @@ multiclass CMP32_rr_ri_s10<string OpcStr, PatFrag OpNode> {
                  !strconcat("$dst = ", !strconcat(OpcStr, "($b, $c)")),
                  [(set (i1 PredRegs:$dst),
                        (OpNode (i32 IntRegs:$b), (i32 IntRegs:$c)))]>;
-  def ri : ALU32_ri<(outs PredRegs:$dst), (ins IntRegs:$b, s10Imm:$c),
+  def ri : ALU32_ri<(outs PredRegs:$dst), (ins IntRegs:$b, s10Ext:$c),
                  !strconcat("$dst = ", !strconcat(OpcStr, "($b, #$c)")),
                  [(set (i1 PredRegs:$dst),
-                       (OpNode (i32 IntRegs:$b), s10ImmPred:$c))]>;
+                       (OpNode (i32 IntRegs:$b), s10ExtPred:$c))]>;
 }
 
 multiclass CMP32_rr_ri_u9<string OpcStr, PatFrag OpNode> {
@@ -126,24 +130,24 @@ multiclass CMP32_rr_ri_u9<string OpcStr, PatFrag OpNode> {
                  !strconcat("$dst = ", !strconcat(OpcStr, "($b, $c)")),
                  [(set (i1 PredRegs:$dst),
                        (OpNode (i32 IntRegs:$b), (i32 IntRegs:$c)))]>;
-  def ri : ALU32_ri<(outs PredRegs:$dst), (ins IntRegs:$b, u9Imm:$c),
+  def ri : ALU32_ri<(outs PredRegs:$dst), (ins IntRegs:$b, u9Ext:$c),
                  !strconcat("$dst = ", !strconcat(OpcStr, "($b, #$c)")),
                  [(set (i1 PredRegs:$dst),
-                       (OpNode (i32 IntRegs:$b), u9ImmPred:$c))]>;
+                       (OpNode (i32 IntRegs:$b), u9ExtPred:$c))]>;
 }
 
 multiclass CMP32_ri_u8<string OpcStr, PatFrag OpNode> {
-  def ri : ALU32_ri<(outs PredRegs:$dst), (ins IntRegs:$b, u8Imm:$c),
+  def ri : ALU32_ri<(outs PredRegs:$dst), (ins IntRegs:$b, u8Ext:$c),
                  !strconcat("$dst = ", !strconcat(OpcStr, "($b, #$c)")),
                  [(set (i1 PredRegs:$dst), (OpNode (i32 IntRegs:$b),
-                                                   u8ImmPred:$c))]>;
+                                                   u8ExtPred:$c))]>;
 }
 
 multiclass CMP32_ri_s8<string OpcStr, PatFrag OpNode> {
-  def ri : ALU32_ri<(outs PredRegs:$dst), (ins IntRegs:$b, s8Imm:$c),
+  def ri : ALU32_ri<(outs PredRegs:$dst), (ins IntRegs:$b, s8Ext:$c),
                  !strconcat("$dst = ", !strconcat(OpcStr, "($b, #$c)")),
                  [(set (i1 PredRegs:$dst), (OpNode (i32 IntRegs:$b),
-                                                   s8ImmPred:$c))]>;
+                                                   s8ExtPred:$c))]>;
 }
 }
 
@@ -160,10 +164,10 @@ def ADD_rr : ALU32_rr<(outs IntRegs:$dst),
 
 let isPredicable = 1 in
 def ADD_ri : ALU32_ri<(outs IntRegs:$dst),
-            (ins IntRegs:$src1, s16Imm:$src2),
+            (ins IntRegs:$src1, s16Ext:$src2),
             "$dst = add($src1, #$src2)",
             [(set (i32 IntRegs:$dst), (add (i32 IntRegs:$src1),
-                                           s16ImmPred:$src2))]>;
+                                           s16ExtPred:$src2))]>;
 
 // Logical operations.
 let isPredicable = 1 in
@@ -181,10 +185,10 @@ def AND_rr : ALU32_rr<(outs IntRegs:$dst),
                                            (i32 IntRegs:$src2)))]>;
 
 def OR_ri : ALU32_ri<(outs IntRegs:$dst),
-            (ins IntRegs:$src1, s10Imm:$src2),
+            (ins IntRegs:$src1, s10Ext:$src2),
             "$dst = or($src1, #$src2)",
             [(set (i32 IntRegs:$dst), (or (i32 IntRegs:$src1),
-                                          s10ImmPred:$src2))]>;
+                                          s10ExtPred:$src2))]>;
 
 def NOT_rr : ALU32_rr<(outs IntRegs:$dst),
             (ins IntRegs:$src1),
@@ -192,10 +196,10 @@ def NOT_rr : ALU32_rr<(outs IntRegs:$dst),
             [(set (i32 IntRegs:$dst), (not (i32 IntRegs:$src1)))]>;
 
 def AND_ri : ALU32_ri<(outs IntRegs:$dst),
-            (ins IntRegs:$src1, s10Imm:$src2),
+            (ins IntRegs:$src1, s10Ext:$src2),
             "$dst = and($src1, #$src2)",
             [(set (i32 IntRegs:$dst), (and (i32 IntRegs:$src1),
-                                           s10ImmPred:$src2))]>;
+                                           s10ExtPred:$src2))]>;
 
 let isCommutable = 1, isPredicable = 1 in
 def OR_rr : ALU32_rr<(outs IntRegs:$dst),
@@ -224,15 +228,15 @@ def SUB_rr : ALU32_rr<(outs IntRegs:$dst),
 
 // Rd32=sub(#s10,Rs32)
 def SUB_ri : ALU32_ri<(outs IntRegs:$dst),
-            (ins s10Imm:$src1, IntRegs:$src2),
+            (ins s10Ext:$src1, IntRegs:$src2),
             "$dst = sub(#$src1, $src2)",
-            [(set IntRegs:$dst, (sub s10ImmPred:$src1, IntRegs:$src2))]>;
+            [(set IntRegs:$dst, (sub s10ExtPred:$src1, IntRegs:$src2))]>;
 
 // Transfer immediate.
 let isMoveImm = 1, isReMaterializable = 1, isPredicable = 1 in
-def TFRI : ALU32_ri<(outs IntRegs:$dst), (ins s16Imm:$src1),
+def TFRI : ALU32_ri<(outs IntRegs:$dst), (ins s16Ext:$src1),
            "$dst = #$src1",
-           [(set (i32 IntRegs:$dst), s16ImmPred:$src1)]>;
+           [(set (i32 IntRegs:$dst), s16ExtPred:$src1)]>;
 
 // Transfer register.
 let neverHasSideEffects = 1, isPredicable = 1 in
@@ -286,25 +290,25 @@ def MUX_rr : ALU32_rr<(outs IntRegs:$dst), (ins PredRegs:$src1,
                                                     (i32 IntRegs:$src2),
                                                     (i32 IntRegs:$src3))))]>;
 
-def MUX_ir : ALU32_ir<(outs IntRegs:$dst), (ins PredRegs:$src1, s8Imm:$src2,
+def MUX_ir : ALU32_ir<(outs IntRegs:$dst), (ins PredRegs:$src1, s8Ext:$src2,
                                                 IntRegs:$src3),
              "$dst = mux($src1, #$src2, $src3)",
              [(set (i32 IntRegs:$dst), (i32 (select (i1 PredRegs:$src1),
-                                                    s8ImmPred:$src2,
+                                                    s8ExtPred:$src2,
                                                     (i32 IntRegs:$src3))))]>;
 
 def MUX_ri : ALU32_ri<(outs IntRegs:$dst), (ins PredRegs:$src1, IntRegs:$src2,
-                                                s8Imm:$src3),
+                                                s8Ext:$src3),
              "$dst = mux($src1, $src2, #$src3)",
              [(set (i32 IntRegs:$dst), (i32 (select (i1 PredRegs:$src1),
                                                     (i32 IntRegs:$src2),
-                                                    s8ImmPred:$src3)))]>;
+                                                    s8ExtPred:$src3)))]>;
 
-def MUX_ii : ALU32_ii<(outs IntRegs:$dst), (ins PredRegs:$src1, s8Imm:$src2,
+def MUX_ii : ALU32_ii<(outs IntRegs:$dst), (ins PredRegs:$src1, s8Ext:$src2,
                                                 s8Imm:$src3),
              "$dst = mux($src1, #$src2, #$src3)",
              [(set (i32 IntRegs:$dst), (i32 (select (i1 PredRegs:$src1),
-                                                    s8ImmPred:$src2,
+                                                    s8ExtPred:$src2,
                                                     s8ImmPred:$src3)))]>;
 
 // Shift halfword.
@@ -351,25 +355,25 @@ def ZXTH : ALU32_rr<(outs IntRegs:$dst), (ins IntRegs:$src1),
 // Conditional add.
 let neverHasSideEffects = 1, isPredicated = 1 in
 def ADD_ri_cPt : ALU32_ri<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, IntRegs:$src2, s8Imm:$src3),
+            (ins PredRegs:$src1, IntRegs:$src2, s8Ext:$src3),
             "if ($src1) $dst = add($src2, #$src3)",
             []>;
 
 let neverHasSideEffects = 1, isPredicated = 1 in
 def ADD_ri_cNotPt : ALU32_ri<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, IntRegs:$src2, s8Imm:$src3),
+            (ins PredRegs:$src1, IntRegs:$src2, s8Ext:$src3),
             "if (!$src1) $dst = add($src2, #$src3)",
             []>;
 
 let neverHasSideEffects = 1, isPredicated = 1 in
 def ADD_ri_cdnPt : ALU32_ri<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, IntRegs:$src2, s8Imm:$src3),
+            (ins PredRegs:$src1, IntRegs:$src2, s8Ext:$src3),
             "if ($src1.new) $dst = add($src2, #$src3)",
             []>;
 
 let neverHasSideEffects = 1, isPredicated = 1 in
 def ADD_ri_cdnNotPt : ALU32_ri<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, IntRegs:$src2, s8Imm:$src3),
+            (ins PredRegs:$src1, IntRegs:$src2, s8Ext:$src3),
             "if (!$src1.new) $dst = add($src2, #$src3)",
             []>;
 
@@ -551,13 +555,13 @@ def TFR64_cNotPt : ALU32_rr<(outs DoubleRegs:$dst), (ins PredRegs:$src1,
                  []>;
 
 let neverHasSideEffects = 1, isPredicated = 1 in
-def TFRI_cPt : ALU32_ri<(outs IntRegs:$dst), (ins PredRegs:$src1, s12Imm:$src2),
+def TFRI_cPt : ALU32_ri<(outs IntRegs:$dst), (ins PredRegs:$src1, s12Ext:$src2),
                "if ($src1) $dst = #$src2",
                []>;
 
 let neverHasSideEffects = 1, isPredicated = 1 in
 def TFRI_cNotPt : ALU32_ri<(outs IntRegs:$dst), (ins PredRegs:$src1,
-                                                     s12Imm:$src2),
+                                                     s12Ext:$src2),
                   "if (!$src1) $dst = #$src2",
                   []>;
 
@@ -575,13 +579,13 @@ def TFR_cdnNotPt : ALU32_rr<(outs IntRegs:$dst), (ins PredRegs:$src1,
 
 let neverHasSideEffects = 1, isPredicated = 1 in
 def TFRI_cdnPt : ALU32_ri<(outs IntRegs:$dst), (ins PredRegs:$src1,
-                                                    s12Imm:$src2),
+                                                    s12Ext:$src2),
                  "if ($src1.new) $dst = #$src2",
                  []>;
 
 let neverHasSideEffects = 1, isPredicated = 1 in
 def TFRI_cdnNotPt : ALU32_ri<(outs IntRegs:$dst), (ins PredRegs:$src1,
-                                                       s12Imm:$src2),
+                                                       s12Ext:$src2),
                     "if (!$src1.new) $dst = #$src2",
                     []>;
 
@@ -923,6 +927,7 @@ let isReturn = 1, isTerminator = 1, isBarrier = 1, isPredicated = 1,
 /// increment operand.
 ///
 // Load doubleword.
+// Rdd=memd(Rs)"
 let isPredicable = 1 in
 def LDrid : LDInst<(outs DoubleRegs:$dst),
             (ins MEMri:$addr),
@@ -931,11 +936,11 @@ def LDrid : LDInst<(outs DoubleRegs:$dst),
 
 let isPredicable = 1, AddedComplexity = 20 in
 def LDrid_indexed : LDInst<(outs DoubleRegs:$dst),
-            (ins IntRegs:$src1, s11_3Imm:$offset),
+            (ins IntRegs:$src1, s11_3Ext:$offset),
             "$dst = memd($src1+#$offset)",
             [(set (i64 DoubleRegs:$dst),
                   (i64 (load (add (i32 IntRegs:$src1),
-                                  s11_3ImmPred:$offset))))]>;
+                                  s11_3ExtPred:$offset))))]>;
 
 let neverHasSideEffects = 1 in
 def LDrid_GP : LDInst2<(outs DoubleRegs:$dst),
@@ -974,13 +979,13 @@ def LDrid_cNotPt : LDInst2<(outs DoubleRegs:$dst),
 
 let neverHasSideEffects = 1, isPredicated = 1 in
 def LDrid_indexed_cPt : LDInst2<(outs DoubleRegs:$dst),
-            (ins PredRegs:$src1, IntRegs:$src2, u6_3Imm:$src3),
+            (ins PredRegs:$src1, IntRegs:$src2, u6_3Ext:$src3),
             "if ($src1) $dst = memd($src2+#$src3)",
             []>;
 
 let neverHasSideEffects = 1, isPredicated = 1 in
 def LDrid_indexed_cNotPt : LDInst2<(outs DoubleRegs:$dst),
-            (ins PredRegs:$src1, IntRegs:$src2, u6_3Imm:$src3),
+            (ins PredRegs:$src1, IntRegs:$src2, u6_3Ext:$src3),
             "if (!$src1) $dst = memd($src2+#$src3)",
             []>;
 
@@ -1012,13 +1017,13 @@ def LDrid_cdnNotPt : LDInst2<(outs DoubleRegs:$dst),
 
 let neverHasSideEffects = 1, isPredicated = 1 in
 def LDrid_indexed_cdnPt : LDInst2<(outs DoubleRegs:$dst),
-            (ins PredRegs:$src1, IntRegs:$src2, u6_3Imm:$src3),
+            (ins PredRegs:$src1, IntRegs:$src2, u6_3Ext:$src3),
             "if ($src1.new) $dst = memd($src2+#$src3)",
             []>;
 
 let neverHasSideEffects = 1, isPredicated = 1 in
 def LDrid_indexed_cdnNotPt : LDInst2<(outs DoubleRegs:$dst),
-            (ins PredRegs:$src1, IntRegs:$src2, u6_3Imm:$src3),
+            (ins PredRegs:$src1, IntRegs:$src2, u6_3Ext:$src3),
             "if (!$src1.new) $dst = memd($src2+#$src3)",
             []>;
 
@@ -1037,11 +1042,11 @@ def : Pat < (i32 (extloadi8 ADDRriS11_0:$addr)),
 // Indexed load byte.
 let isPredicable = 1, AddedComplexity = 20 in
 def LDrib_indexed : LDInst<(outs IntRegs:$dst),
-            (ins IntRegs:$src1, s11_0Imm:$offset),
+            (ins IntRegs:$src1, s11_0Ext:$offset),
             "$dst = memb($src1+#$offset)",
             [(set (i32 IntRegs:$dst),
                   (i32 (sextloadi8 (add (i32 IntRegs:$src1),
-                                        s11_0ImmPred:$offset))))]>;
+                                        s11_0ExtPred:$offset))))]>;
 
 // Indexed load byte any-extend.
 let AddedComplexity = 20 in
@@ -1091,13 +1096,13 @@ def LDrib_cNotPt : LDInst2<(outs IntRegs:$dst),
 
 let neverHasSideEffects = 1, isPredicated = 1 in
 def LDrib_indexed_cPt : LDInst2<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, IntRegs:$src2, u6_0Imm:$src3),
+            (ins PredRegs:$src1, IntRegs:$src2, u6_0Ext:$src3),
             "if ($src1) $dst = memb($src2+#$src3)",
             []>;
 
 let neverHasSideEffects = 1, isPredicated = 1 in
 def LDrib_indexed_cNotPt : LDInst2<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, IntRegs:$src2, u6_0Imm:$src3),
+            (ins PredRegs:$src1, IntRegs:$src2, u6_0Ext:$src3),
             "if (!$src1) $dst = memb($src2+#$src3)",
             []>;
 
@@ -1129,13 +1134,13 @@ def LDrib_cdnNotPt : LDInst2<(outs IntRegs:$dst),
 
 let neverHasSideEffects = 1, isPredicated = 1 in
 def LDrib_indexed_cdnPt : LDInst2<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, IntRegs:$src2, u6_0Imm:$src3),
+            (ins PredRegs:$src1, IntRegs:$src2, u6_0Ext:$src3),
             "if ($src1.new) $dst = memb($src2+#$src3)",
             []>;
 
 let neverHasSideEffects = 1, isPredicated = 1 in
 def LDrib_indexed_cdnNotPt : LDInst2<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, IntRegs:$src2, u6_0Imm:$src3),
+            (ins PredRegs:$src1, IntRegs:$src2, u6_0Ext:$src3),
             "if (!$src1.new) $dst = memb($src2+#$src3)",
             []>;
 
@@ -1149,11 +1154,11 @@ def LDrih : LDInst<(outs IntRegs:$dst),
 
 let isPredicable = 1, AddedComplexity = 20 in
 def LDrih_indexed : LDInst<(outs IntRegs:$dst),
-            (ins IntRegs:$src1, s11_1Imm:$offset),
+            (ins IntRegs:$src1, s11_1Ext:$offset),
             "$dst = memh($src1+#$offset)",
             [(set (i32 IntRegs:$dst),
                   (i32 (sextloadi16 (add (i32 IntRegs:$src1),
-                                         s11_1ImmPred:$offset))))]>;
+                                         s11_1ExtPred:$offset))))]>;
 
 def : Pat < (i32 (extloadi16 ADDRriS11_1:$addr)),
             (i32 (LDrih ADDRriS11_1:$addr))>;
@@ -1205,13 +1210,13 @@ def LDrih_cNotPt : LDInst2<(outs IntRegs:$dst),
 
 let neverHasSideEffects = 1, isPredicated = 1 in
 def LDrih_indexed_cPt : LDInst2<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, IntRegs:$src2, u6_1Imm:$src3),
+            (ins PredRegs:$src1, IntRegs:$src2, u6_1Ext:$src3),
             "if ($src1) $dst = memh($src2+#$src3)",
             []>;
 
 let neverHasSideEffects = 1, isPredicated = 1 in
 def LDrih_indexed_cNotPt : LDInst2<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, IntRegs:$src2, u6_1Imm:$src3),
+            (ins PredRegs:$src1, IntRegs:$src2, u6_1Ext:$src3),
             "if (!$src1) $dst = memh($src2+#$src3)",
             []>;
 
@@ -1243,13 +1248,13 @@ def LDrih_cdnNotPt : LDInst2<(outs IntRegs:$dst),
 
 let neverHasSideEffects = 1, isPredicated = 1 in
 def LDrih_indexed_cdnPt : LDInst2<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, IntRegs:$src2, u6_1Imm:$src3),
+            (ins PredRegs:$src1, IntRegs:$src2, u6_1Ext:$src3),
             "if ($src1.new) $dst = memh($src2+#$src3)",
             []>;
 
 let neverHasSideEffects = 1, isPredicated = 1 in
 def LDrih_indexed_cdnNotPt : LDInst2<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, IntRegs:$src2, u6_1Imm:$src3),
+            (ins PredRegs:$src1, IntRegs:$src2, u6_1Ext:$src3),
             "if (!$src1.new) $dst = memh($src2+#$src3)",
             []>;
 
@@ -1265,11 +1270,11 @@ def : Pat < (i32 (zextloadi1 ADDRriS11_0:$addr)),
 
 let isPredicable = 1, AddedComplexity = 20 in
 def LDriub_indexed : LDInst<(outs IntRegs:$dst),
-            (ins IntRegs:$src1, s11_0Imm:$offset),
+            (ins IntRegs:$src1, s11_0Ext:$offset),
             "$dst = memub($src1+#$offset)",
             [(set (i32 IntRegs:$dst),
                   (i32 (zextloadi8 (add (i32 IntRegs:$src1),
-                                        s11_0ImmPred:$offset))))]>;
+                                        s11_0ExtPred:$offset))))]>;
 
 let AddedComplexity = 20 in
 def : Pat < (i32 (zextloadi1 (add IntRegs:$src1, s11_0ImmPred:$offset))),
@@ -1304,13 +1309,13 @@ def LDriub_cNotPt : LDInst2<(outs IntRegs:$dst),
 
 let neverHasSideEffects = 1, isPredicated = 1 in
 def LDriub_indexed_cPt : LDInst2<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, IntRegs:$src2, u6_0Imm:$src3),
+            (ins PredRegs:$src1, IntRegs:$src2, u6_0Ext:$src3),
             "if ($src1) $dst = memub($src2+#$src3)",
             []>;
 
 let neverHasSideEffects = 1, isPredicated = 1 in
 def LDriub_indexed_cNotPt : LDInst2<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, IntRegs:$src2, u6_0Imm:$src3),
+            (ins PredRegs:$src1, IntRegs:$src2, u6_0Ext:$src3),
             "if (!$src1) $dst = memub($src2+#$src3)",
             []>;
 
@@ -1342,13 +1347,13 @@ def LDriub_cdnNotPt : LDInst2<(outs IntRegs:$dst),
 
 let neverHasSideEffects = 1, isPredicated = 1 in
 def LDriub_indexed_cdnPt : LDInst2<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, IntRegs:$src2, u6_0Imm:$src3),
+            (ins PredRegs:$src1, IntRegs:$src2, u6_0Ext:$src3),
             "if ($src1.new) $dst = memub($src2+#$src3)",
             []>;
 
 let neverHasSideEffects = 1, isPredicated = 1 in
 def LDriub_indexed_cdnNotPt : LDInst2<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, IntRegs:$src2, u6_0Imm:$src3),
+            (ins PredRegs:$src1, IntRegs:$src2, u6_0Ext:$src3),
             "if (!$src1.new) $dst = memub($src2+#$src3)",
             []>;
 
@@ -1362,11 +1367,11 @@ def LDriuh : LDInst<(outs IntRegs:$dst),
 // Indexed load unsigned halfword.
 let isPredicable = 1, AddedComplexity = 20 in
 def LDriuh_indexed : LDInst<(outs IntRegs:$dst),
-            (ins IntRegs:$src1, s11_1Imm:$offset),
+            (ins IntRegs:$src1, s11_1Ext:$offset),
             "$dst = memuh($src1+#$offset)",
             [(set (i32 IntRegs:$dst),
                   (i32 (zextloadi16 (add (i32 IntRegs:$src1),
-                                         s11_1ImmPred:$offset))))]>;
+                                         s11_1ExtPred:$offset))))]>;
 
 let neverHasSideEffects = 1 in
 def LDriuh_GP : LDInst2<(outs IntRegs:$dst),
@@ -1397,13 +1402,13 @@ def LDriuh_cNotPt : LDInst2<(outs IntRegs:$dst),
 
 let neverHasSideEffects = 1, isPredicated = 1 in
 def LDriuh_indexed_cPt : LDInst2<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, IntRegs:$src2, u6_1Imm:$src3),
+            (ins PredRegs:$src1, IntRegs:$src2, u6_1Ext:$src3),
             "if ($src1) $dst = memuh($src2+#$src3)",
             []>;
 
 let neverHasSideEffects = 1, isPredicated = 1 in
 def LDriuh_indexed_cNotPt : LDInst2<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, IntRegs:$src2, u6_1Imm:$src3),
+            (ins PredRegs:$src1, IntRegs:$src2, u6_1Ext:$src3),
             "if (!$src1) $dst = memuh($src2+#$src3)",
             []>;
 
@@ -1435,13 +1440,13 @@ def LDriuh_cdnNotPt : LDInst2<(outs IntRegs:$dst),
 
 let neverHasSideEffects = 1, isPredicated = 1 in
 def LDriuh_indexed_cdnPt : LDInst2<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, IntRegs:$src2, u6_1Imm:$src3),
+            (ins PredRegs:$src1, IntRegs:$src2, u6_1Ext:$src3),
             "if ($src1.new) $dst = memuh($src2+#$src3)",
             []>;
 
 let neverHasSideEffects = 1, isPredicated = 1 in
 def LDriuh_indexed_cdnNotPt : LDInst2<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, IntRegs:$src2, u6_1Imm:$src3),
+            (ins PredRegs:$src1, IntRegs:$src2, u6_1Ext:$src3),
             "if (!$src1.new) $dst = memuh($src2+#$src3)",
             []>;
 
@@ -1462,10 +1467,10 @@ def LDriw_pred : LDInst<(outs PredRegs:$dst),
 // Indexed load.
 let isPredicable = 1, AddedComplexity = 20 in
 def LDriw_indexed : LDInst<(outs IntRegs:$dst),
-            (ins IntRegs:$src1, s11_2Imm:$offset),
+            (ins IntRegs:$src1, s11_2Ext:$offset),
             "$dst = memw($src1+#$offset)",
             [(set IntRegs:$dst, (i32 (load (add IntRegs:$src1,
-                                           s11_2ImmPred:$offset))))]>;
+                                           s11_2ExtPred:$offset))))]>;
 
 let neverHasSideEffects = 1 in
 def LDriw_GP : LDInst2<(outs IntRegs:$dst),
@@ -1504,13 +1509,13 @@ def LDriw_cNotPt : LDInst2<(outs IntRegs:$dst),
 
 let neverHasSideEffects = 1, isPredicated = 1 in
 def LDriw_indexed_cPt : LDInst2<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, IntRegs:$src2, u6_2Imm:$src3),
+            (ins PredRegs:$src1, IntRegs:$src2, u6_2Ext:$src3),
             "if ($src1) $dst = memw($src2+#$src3)",
             []>;
 
 let neverHasSideEffects = 1, isPredicated = 1 in
 def LDriw_indexed_cNotPt : LDInst2<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, IntRegs:$src2, u6_2Imm:$src3),
+            (ins PredRegs:$src1, IntRegs:$src2, u6_2Ext:$src3),
             "if (!$src1) $dst = memw($src2+#$src3)",
             []>;
 
@@ -1542,13 +1547,13 @@ def LDriw_cdnNotPt : LDInst2<(outs IntRegs:$dst),
 
 let neverHasSideEffects = 1, isPredicated = 1 in
 def LDriw_indexed_cdnPt : LDInst2<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, IntRegs:$src2, u6_2Imm:$src3),
+            (ins PredRegs:$src1, IntRegs:$src2, u6_2Ext:$src3),
             "if ($src1.new) $dst = memw($src2+#$src3)",
             []>;
 
 let neverHasSideEffects = 1, isPredicated = 1 in
 def LDriw_indexed_cdnNotPt : LDInst2<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, IntRegs:$src2, u6_2Imm:$src3),
+            (ins PredRegs:$src1, IntRegs:$src2, u6_2Ext:$src3),
             "if (!$src1.new) $dst = memw($src2+#$src3)",
             []>;
 
@@ -1583,10 +1588,10 @@ let Defs = [R29, R30, R31], Uses = [R29], neverHasSideEffects = 1 in {
 //===----------------------------------------------------------------------===//
 // Multiply and use lower result.
 // Rd=+mpyi(Rs,#u8)
-def MPYI_riu : MInst<(outs IntRegs:$dst), (ins IntRegs:$src1, u8Imm:$src2),
+def MPYI_riu : MInst<(outs IntRegs:$dst), (ins IntRegs:$src1, u8Ext:$src2),
               "$dst =+ mpyi($src1, #$src2)",
               [(set (i32 IntRegs:$dst), (mul (i32 IntRegs:$src1),
-                                             u8ImmPred:$src2))]>;
+                                             u8ExtPred:$src2))]>;
 
 // Rd=-mpyi(Rs,#u8)
 def MPYI_rin : MInst<(outs IntRegs:$dst), (ins IntRegs:$src1, n8Imm:$src2),
@@ -1598,10 +1603,10 @@ def MPYI_rin : MInst<(outs IntRegs:$dst), (ins IntRegs:$src1, n8Imm:$src2),
 // s9 is NOT the same as m9 - but it works.. so far.
 // Assembler maps to either Rd=+mpyi(Rs,#u8 or Rd=-mpyi(Rs,#u8)
 // depending on the value of m9. See Arch Spec.
-def MPYI_ri : MInst<(outs IntRegs:$dst), (ins IntRegs:$src1, s9Imm:$src2),
+def MPYI_ri : MInst<(outs IntRegs:$dst), (ins IntRegs:$src1, s9Ext:$src2),
               "$dst = mpyi($src1, #$src2)",
               [(set (i32 IntRegs:$dst), (mul (i32 IntRegs:$src1),
-                                             s9ImmPred:$src2))]>;
+                                             s9ExtPred:$src2))]>;
 
 // Rd=mpyi(Rs,Rt)
 def MPYI : MInst<(outs IntRegs:$dst), (ins IntRegs:$src1, IntRegs:$src2),
@@ -1611,10 +1616,10 @@ def MPYI : MInst<(outs IntRegs:$dst), (ins IntRegs:$src1, IntRegs:$src2),
 
 // Rx+=mpyi(Rs,#u8)
 def MPYI_acc_ri : MInst_acc<(outs IntRegs:$dst),
-            (ins IntRegs:$src1, IntRegs:$src2, u8Imm:$src3),
+            (ins IntRegs:$src1, IntRegs:$src2, u8Ext:$src3),
             "$dst += mpyi($src2, #$src3)",
             [(set (i32 IntRegs:$dst),
-                  (add (mul (i32 IntRegs:$src2), u8ImmPred:$src3),
+                  (add (mul (i32 IntRegs:$src2), u8ExtPred:$src3),
                        (i32 IntRegs:$src1)))],
             "$src1 = $dst">;
 
@@ -1629,11 +1634,11 @@ def MPYI_acc_rr : MInst_acc<(outs IntRegs:$dst),
 
 // Rx-=mpyi(Rs,#u8)
 def MPYI_sub_ri : MInst_acc<(outs IntRegs:$dst),
-            (ins IntRegs:$src1, IntRegs:$src2, u8Imm:$src3),
+            (ins IntRegs:$src1, IntRegs:$src2, u8Ext:$src3),
             "$dst -= mpyi($src2, #$src3)",
             [(set (i32 IntRegs:$dst),
                   (sub (i32 IntRegs:$src1), (mul (i32 IntRegs:$src2),
-                                                 u8ImmPred:$src3)))],
+                                                 u8ExtPred:$src3)))],
             "$src1 = $dst">;
 
 // Multiply and use upper result.
@@ -1719,10 +1724,10 @@ def ADDrr_acc : MInst_acc<(outs IntRegs: $dst), (ins IntRegs:$src1,
              "$src1 = $dst">;
 
 def ADDri_acc : MInst_acc<(outs IntRegs: $dst), (ins IntRegs:$src1,
-                            IntRegs:$src2, s8Imm:$src3),
+                            IntRegs:$src2, s8Ext:$src3),
              "$dst += add($src2, #$src3)",
              [(set (i32 IntRegs:$dst), (add (add (i32 IntRegs:$src2),
-                                                 s8ImmPred:$src3),
+                                                 s8_16ExtPred:$src3),
                                             (i32 IntRegs:$src1)))],
              "$src1 = $dst">;
 
@@ -1735,11 +1740,11 @@ def SUBrr_acc : MInst_acc<(outs IntRegs: $dst), (ins IntRegs:$src1,
              "$src1 = $dst">;
 
 def SUBri_acc : MInst_acc<(outs IntRegs: $dst), (ins IntRegs:$src1,
-                            IntRegs:$src2, s8Imm:$src3),
+                            IntRegs:$src2, s8Ext:$src3),
              "$dst -= add($src2, #$src3)",
              [(set (i32 IntRegs:$dst), (sub (i32 IntRegs:$src1),
                                             (add (i32 IntRegs:$src2),
-                                                 s8ImmPred:$src3)))],
+                                                 s8_16ExtPred:$src3)))],
              "$src1 = $dst">;
 
 //===----------------------------------------------------------------------===//
@@ -1787,10 +1792,10 @@ def STrid : STInst<(outs),
 // Indexed store double word.
 let AddedComplexity = 10, isPredicable = 1 in
 def STrid_indexed : STInst<(outs),
-            (ins IntRegs:$src1, s11_3Imm:$src2,  DoubleRegs:$src3),
+            (ins IntRegs:$src1, s11_3Ext:$src2,  DoubleRegs:$src3),
             "memd($src1+#$src2) = $src3",
             [(store (i64 DoubleRegs:$src3),
-                    (add (i32 IntRegs:$src1), s11_3ImmPred:$src2))]>;
+                    (add (i32 IntRegs:$src1), s11_3ExtPred:$src2))]>;
 
 let neverHasSideEffects = 1 in
 def STrid_GP : STInst2<(outs),
@@ -1837,7 +1842,7 @@ def STrid_cNotPt : STInst2<(outs),
 let AddedComplexity = 10, neverHasSideEffects = 1,
     isPredicated = 1 in
 def STrid_indexed_cPt : STInst2<(outs),
-            (ins PredRegs:$src1, IntRegs:$src2, u6_3Imm:$src3,
+            (ins PredRegs:$src1, IntRegs:$src2, u6_3Ext:$src3,
                  DoubleRegs:$src4),
             "if ($src1) memd($src2+#$src3) = $src4",
             []>;
@@ -1846,7 +1851,7 @@ def STrid_indexed_cPt : STInst2<(outs),
 let AddedComplexity = 10, neverHasSideEffects = 1,
     isPredicated = 1 in
 def STrid_indexed_cNotPt : STInst2<(outs),
-            (ins PredRegs:$src1, IntRegs:$src2, u6_3Imm:$src3,
+            (ins PredRegs:$src1, IntRegs:$src2, u6_3Ext:$src3,
                  DoubleRegs:$src4),
             "if (!$src1) memd($src2+#$src3) = $src4",
             []>;
@@ -1883,10 +1888,10 @@ def STrib : STInst<(outs),
 
 let AddedComplexity = 10, isPredicable = 1 in
 def STrib_indexed : STInst<(outs),
-            (ins IntRegs:$src1, s11_0Imm:$src2, IntRegs:$src3),
+            (ins IntRegs:$src1, s11_0Ext:$src2, IntRegs:$src3),
             "memb($src1+#$src2) = $src3",
             [(truncstorei8 (i32 IntRegs:$src3), (add (i32 IntRegs:$src1),
-                                                     s11_0ImmPred:$src2))]>;
+                                                     s11_0ExtPred:$src2))]>;
 
 // memb(gp+#u16:0)=Rt
 let neverHasSideEffects = 1 in
@@ -1934,14 +1939,14 @@ def STrib_cNotPt : STInst2<(outs),
 // if (Pv) memb(Rs+#u6:0)=Rt
 let neverHasSideEffects = 1, isPredicated = 1 in
 def STrib_indexed_cPt : STInst2<(outs),
-            (ins PredRegs:$src1, IntRegs:$src2, u6_0Imm:$src3, IntRegs:$src4),
+            (ins PredRegs:$src1, IntRegs:$src2, u6_0Ext:$src3, IntRegs:$src4),
             "if ($src1) memb($src2+#$src3) = $src4",
             []>;
 
 // if (!Pv) memb(Rs+#u6:0)=Rt
 let neverHasSideEffects = 1, isPredicated = 1 in
 def STrib_indexed_cNotPt : STInst2<(outs),
-            (ins PredRegs:$src1, IntRegs:$src2, u6_0Imm:$src3, IntRegs:$src4),
+            (ins PredRegs:$src1, IntRegs:$src2, u6_0Ext:$src3, IntRegs:$src4),
             "if (!$src1) memb($src2+#$src3) = $src4",
             []>;
 
@@ -1972,10 +1977,10 @@ def STrih : STInst<(outs),
 
 let AddedComplexity = 10, isPredicable = 1 in
 def STrih_indexed : STInst<(outs),
-            (ins IntRegs:$src1, s11_1Imm:$src2,  IntRegs:$src3),
+            (ins IntRegs:$src1, s11_1Ext:$src2,  IntRegs:$src3),
             "memh($src1+#$src2) = $src3",
             [(truncstorei16 (i32 IntRegs:$src3), (add (i32 IntRegs:$src1),
-                                                      s11_1ImmPred:$src2))]>;
+                                                      s11_1ExtPred:$src2))]>;
 
 let neverHasSideEffects = 1 in
 def STrih_GP : STInst2<(outs),
@@ -2021,14 +2026,14 @@ def STrih_cNotPt : STInst2<(outs),
 // if (Pv) memh(Rs+#u6:1)=Rt
 let neverHasSideEffects = 1, isPredicated = 1 in
 def STrih_indexed_cPt : STInst2<(outs),
-            (ins PredRegs:$src1, IntRegs:$src2, u6_1Imm:$src3, IntRegs:$src4),
+            (ins PredRegs:$src1, IntRegs:$src2, u6_1Ext:$src3, IntRegs:$src4),
             "if ($src1) memh($src2+#$src3) = $src4",
             []>;
 
 // if (!Pv) memh(Rs+#u6:1)=Rt
 let neverHasSideEffects = 1, isPredicated = 1 in
 def STrih_indexed_cNotPt : STInst2<(outs),
-            (ins PredRegs:$src1, IntRegs:$src2, u6_1Imm:$src3, IntRegs:$src4),
+            (ins PredRegs:$src1, IntRegs:$src2, u6_1Ext:$src3, IntRegs:$src4),
             "if (!$src1) memh($src2+#$src3) = $src4",
             []>;
 
@@ -2065,10 +2070,10 @@ def STriw : STInst<(outs),
 
 let AddedComplexity = 10, isPredicable = 1 in
 def STriw_indexed : STInst<(outs),
-            (ins IntRegs:$src1, s11_2Imm:$src2, IntRegs:$src3),
+            (ins IntRegs:$src1, s11_2Ext:$src2, IntRegs:$src3),
             "memw($src1+#$src2) = $src3",
             [(store (i32 IntRegs:$src3),
-                    (add (i32 IntRegs:$src1), s11_2ImmPred:$src2))]>;
+                    (add (i32 IntRegs:$src1), s11_2ExtPred:$src2))]>;
 
 let neverHasSideEffects = 1 in
 def STriw_GP : STInst2<(outs),
@@ -2112,14 +2117,14 @@ def STriw_cNotPt : STInst2<(outs),
 // if (Pv) memw(Rs+#u6:2)=Rt
 let neverHasSideEffects = 1, isPredicated = 1 in
 def STriw_indexed_cPt : STInst2<(outs),
-            (ins PredRegs:$src1, IntRegs:$src2, u6_2Imm:$src3, IntRegs:$src4),
+            (ins PredRegs:$src1, IntRegs:$src2, u6_2Ext:$src3, IntRegs:$src4),
             "if ($src1) memw($src2+#$src3) = $src4",
             []>;
 
 // if (!Pv) memw(Rs+#u6:2)=Rt
 let neverHasSideEffects = 1, isPredicated = 1 in
 def STriw_indexed_cNotPt : STInst2<(outs),
-            (ins PredRegs:$src1, IntRegs:$src2, u6_2Imm:$src3, IntRegs:$src4),
+            (ins PredRegs:$src1, IntRegs:$src2, u6_2Ext:$src3, IntRegs:$src4),
             "if (!$src1) memw($src2+#$src3) = $src4",
             []>;
 
@@ -2410,8 +2415,20 @@ def LOOP0_i : CRInst<(outs), (ins brtarget:$offset, u10Imm:$src2),
 }
 
 let neverHasSideEffects = 1, Defs = [SA0, LC0] in {
+def LOOP0_iext : CRInst<(outs), (ins brtargetExt:$offset, u10Imm:$src2),
+                      "loop0(##$offset, #$src2)",
+                      []>;
+}
+
+let neverHasSideEffects = 1, Defs = [SA0, LC0] in {
 def LOOP0_r : CRInst<(outs), (ins brtarget:$offset, IntRegs:$src2),
                       "loop0($offset, $src2)",
+                      []>;
+}
+
+let neverHasSideEffects = 1, Defs = [SA0, LC0] in {
+def LOOP0_rext : CRInst<(outs), (ins brtargetExt:$offset, IntRegs:$src2),
+                      "loop0(##$offset, $src2)",
                       []>;
 }
 
@@ -3150,8 +3167,8 @@ def : Pat<(i64 (anyext (i32 IntRegs:$src1))),
 
 // Map cmple -> cmpgt.
 // rs <= rt -> !(rs > rt).
-def : Pat<(i1 (setle (i32 IntRegs:$src1), s10ImmPred:$src2)),
-      (i1 (NOT_p (CMPGTri (i32 IntRegs:$src1), s10ImmPred:$src2)))>;
+def : Pat<(i1 (setle (i32 IntRegs:$src1), s10ExtPred:$src2)),
+      (i1 (NOT_p (CMPGTri (i32 IntRegs:$src1), s10ExtPred:$src2)))>;
 
 // rs <= rt -> !(rs > rt).
 def : Pat<(i1 (setle (i32 IntRegs:$src1), (i32 IntRegs:$src2))),
@@ -3164,8 +3181,8 @@ def : Pat<(i1 (setle (i64 DoubleRegs:$src1), (i64 DoubleRegs:$src2))),
 // Map cmpne -> cmpeq.
 // Hexagon_TODO: We should improve on this.
 // rs != rt -> !(rs == rt).
-def : Pat <(i1 (setne (i32 IntRegs:$src1), s10ImmPred:$src2)),
-      (i1 (NOT_p(i1 (CMPEQri (i32 IntRegs:$src1), s10ImmPred:$src2))))>;
+def : Pat <(i1 (setne (i32 IntRegs:$src1), s10ExtPred:$src2)),
+      (i1 (NOT_p(i1 (CMPEQri (i32 IntRegs:$src1), s10ExtPred:$src2))))>;
 
 // Map cmpne(Rs) -> !cmpeqe(Rs).
 // rs != rt -> !(rs == rt).
@@ -3187,8 +3204,8 @@ def : Pat <(i1 (setne (i64 DoubleRegs:$src1), (i64 DoubleRegs:$src2))),
 def : Pat <(i1 (setge (i32 IntRegs:$src1), (i32 IntRegs:$src2))),
       (i1 (NOT_p (i1 (CMPGTrr (i32 IntRegs:$src2), (i32 IntRegs:$src1)))))>;
 
-def : Pat <(i1 (setge (i32 IntRegs:$src1), s8ImmPred:$src2)),
-      (i1 (CMPGEri (i32 IntRegs:$src1), s8ImmPred:$src2))>;
+def : Pat <(i1 (setge (i32 IntRegs:$src1), s8ExtPred:$src2)),
+      (i1 (CMPGEri (i32 IntRegs:$src1), s8ExtPred:$src2))>;
 
 // Map cmpge(Rss, Rtt) -> !cmpgt(Rtt, Rss).
 // rss >= rtt -> !(rtt > rss).
@@ -3198,8 +3215,8 @@ def : Pat <(i1 (setge (i64 DoubleRegs:$src1), (i64 DoubleRegs:$src2))),
 
 // Map cmplt(Rs, Imm) -> !cmpge(Rs, Imm).
 // rs < rt -> !(rs >= rt).
-def : Pat <(i1 (setlt (i32 IntRegs:$src1), s8ImmPred:$src2)),
-      (i1 (NOT_p (CMPGEri (i32 IntRegs:$src1), s8ImmPred:$src2)))>;
+def : Pat <(i1 (setlt (i32 IntRegs:$src1), s8ExtPred:$src2)),
+      (i1 (NOT_p (CMPGEri (i32 IntRegs:$src1), s8ExtPred:$src2)))>;
 
 // Map cmplt(Rs, Rt) -> cmpgt(Rt, Rs).
 // rs < rt -> rt > rs.
@@ -3224,12 +3241,12 @@ def : Pat <(i1 (setult (i64 DoubleRegs:$src1), (i64 DoubleRegs:$src2))),
       (i1 (CMPGTU64rr (i64 DoubleRegs:$src2), (i64 DoubleRegs:$src1)))>;
 
 // Generate cmpgeu(Rs, #u8)
-def : Pat <(i1 (setuge (i32 IntRegs:$src1), u8ImmPred:$src2)),
-      (i1 (CMPGEUri (i32 IntRegs:$src1), u8ImmPred:$src2))>;
+def : Pat <(i1 (setuge (i32 IntRegs:$src1), u8ExtPred:$src2)),
+      (i1 (CMPGEUri (i32 IntRegs:$src1), u8ExtPred:$src2))>;
 
 // Generate cmpgtu(Rs, #u9)
-def : Pat <(i1 (setugt (i32 IntRegs:$src1), u9ImmPred:$src2)),
-      (i1 (CMPGTUri (i32 IntRegs:$src1), u9ImmPred:$src2))>;
+def : Pat <(i1 (setugt (i32 IntRegs:$src1), u9ExtPred:$src2)),
+      (i1 (CMPGTUri (i32 IntRegs:$src1), u9ExtPred:$src2))>;
 
 // Map from Rs >= Rt -> !(Rt > Rs).
 // rs >= rt -> !(rt > rs).

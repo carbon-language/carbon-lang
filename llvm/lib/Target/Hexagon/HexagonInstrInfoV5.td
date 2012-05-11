@@ -27,20 +27,20 @@ def CONST32_Float_Real : LDInst<(outs IntRegs:$dst), (ins f32imm:$src1),
 // For double precision, use CONST64_float_real, as 64bit transfer
 // can only hold 40-bit values - 32 from const ext + 8 bit immediate.
 let isMoveImm = 1, isReMaterializable = 1, isPredicable = 1 in
-def TFRI_f : ALU32_ri<(outs IntRegs:$dst), (ins f32imm:$src1),
+def TFRI_f : ALU32_ri<(outs IntRegs:$dst), (ins f32Ext:$src1),
            "$dst = ##$src1",
            [(set IntRegs:$dst, fpimm:$src1)]>,
           Requires<[HasV5T]>;
 
 def TFRI_cPt_f : ALU32_ri<(outs IntRegs:$dst),
-                          (ins PredRegs:$src1, f32imm:$src2),
+                          (ins PredRegs:$src1, f32Ext:$src2),
            "if ($src1) $dst = ##$src2",
            []>,
           Requires<[HasV5T]>;
 
 let isPredicated = 1 in
 def TFRI_cNotPt_f : ALU32_ri<(outs IntRegs:$dst),
-                             (ins PredRegs:$src1, f32imm:$src2),
+                             (ins PredRegs:$src1, f32Ext:$src2),
            "if (!$src1) $dst = ##$src2",
            []>,
           Requires<[HasV5T]>;
@@ -67,10 +67,10 @@ def LDrid_f : LDInst<(outs DoubleRegs:$dst),
 
 let AddedComplexity = 20 in
 def LDrid_indexed_f : LDInst<(outs DoubleRegs:$dst),
-            (ins IntRegs:$src1, s11_3Imm:$offset),
+            (ins IntRegs:$src1, s11_3Ext:$offset),
             "$dst = memd($src1+#$offset)",
             [(set DoubleRegs:$dst, (f64 (load (add IntRegs:$src1,
-                                              s11_3ImmPred:$offset))))]>,
+                                              s11_3ExtPred:$offset))))]>,
           Requires<[HasV5T]>;
 
 def LDriw_f : LDInst<(outs IntRegs:$dst),
@@ -81,10 +81,10 @@ def LDriw_f : LDInst<(outs IntRegs:$dst),
 
 let AddedComplexity = 20 in
 def LDriw_indexed_f : LDInst<(outs IntRegs:$dst),
-            (ins IntRegs:$src1, s11_2Imm:$offset),
+            (ins IntRegs:$src1, s11_2Ext:$offset),
             "$dst = memw($src1+#$offset)",
             [(set IntRegs:$dst, (f32 (load (add IntRegs:$src1,
-                                           s11_2ImmPred:$offset))))]>,
+                                           s11_2ExtPred:$offset))))]>,
           Requires<[HasV5T]>;
 
 // Store.
@@ -96,10 +96,10 @@ def STriw_f : STInst<(outs),
 
 let AddedComplexity = 10 in
 def STriw_indexed_f : STInst<(outs),
-            (ins IntRegs:$src1, s11_2Imm:$src2, IntRegs:$src3),
+            (ins IntRegs:$src1, s11_2Ext:$src2, IntRegs:$src3),
             "memw($src1+#$src2) = $src3",
             [(store (f32 IntRegs:$src3),
-                (add IntRegs:$src1, s11_2ImmPred:$src2))]>,
+                (add IntRegs:$src1, s11_2ExtPred:$src2))]>,
           Requires<[HasV5T]>;
 
 def STrid_f : STInst<(outs),
@@ -111,10 +111,10 @@ def STrid_f : STInst<(outs),
 // Indexed store double word.
 let AddedComplexity = 10 in
 def STrid_indexed_f : STInst<(outs),
-            (ins IntRegs:$src1, s11_3Imm:$src2,  DoubleRegs:$src3),
+            (ins IntRegs:$src1, s11_3Ext:$src2,  DoubleRegs:$src3),
             "memd($src1+#$src2) = $src3",
             [(store (f64 DoubleRegs:$src3),
-                                (add IntRegs:$src1, s11_3ImmPred:$src2))]>,
+                                (add IntRegs:$src1, s11_3ExtPred:$src2))]>,
           Requires<[HasV5T]>;
 
 
