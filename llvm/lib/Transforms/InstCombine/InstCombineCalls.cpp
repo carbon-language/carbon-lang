@@ -208,7 +208,7 @@ static int computeAllocSize(Value *Alloc, uint64_t &Size, Value* &SizeValue,
       Size = CI->getZExtValue();
       return 1;
     }
-    return 0;
+    return Penalty >= 2 ? 0 : 2;
 
   } else if (CallInst *MI = extractCallocCall(Alloc)) {
     Value *Arg1 = MI->getArgOperand(0);

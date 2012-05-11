@@ -185,6 +185,61 @@ define i32 @test9(i32 %x, i32 %y) nounwind {
 ; CHECK-NEXT: select i1 {{.*}}, i32 0, 
 }
 
+; CHECK: @test10
+define i32 @test10(i32 %x, i32 %y) nounwind {
+  %alloc = call noalias i8* @calloc(i32 %x, i32 %y) nounwind
+  %gep = getelementptr inbounds i8* %alloc, i32 5
+  %objsize = call i32 @llvm.objectsize.i32(i8* %gep, i1 false, i32 2)
+  ret i32 %objsize
+; CHECK-NEXT: mul i32
+; CHECK-NEXT: add i32 {{.*}}, -5
+; CHECK-NEXT: icmp ult i32 {{.*}}, 5
+; CHECK-NEXT: select i1
+; CHECK-NEXT: ret
+}
+
+; CHECK: @test11
+define i32 @test11(i32 %x, i32 %y) nounwind {
+  %alloc = call i8* @malloc(i32 %x)
+  %allocd = bitcast i8* %alloc to double*
+  %gep = getelementptr double* %allocd, i32 %y
+  %gepi8 = bitcast double* %gep to i8*
+  %objsize = call i32 @llvm.objectsize.i32(i8* %gepi8, i1 false, i32 2)
+  ret i32 %objsize
+; CHECK-NEXT: shl i32
+; CHECK-NEXT: sub i32 
+; CHECK-NEXT: icmp ugt i32
+; CHECK-NEXT: select i1
+; CHECK-NEXT: ret
+}
+
+; CHECK: @test12
+define i32 @test12(i32 %x) nounwind {
+  %alloc =  alloca i32, i32 %x, align 16
+  %gep = getelementptr i32* %alloc, i32 7
+  %gepi8 = bitcast i32* %gep to i8*
+  %objsize = call i32 @llvm.objectsize.i32(i8* %gepi8, i1 false, i32 2)
+  ret i32 %objsize
+; CHECK-NEXT: shl i32
+; CHECK-NEXT: add i32 {{.*}}, -28
+; CHECK-NEXT: icmp ult i32 {{.*}}, 28
+; CHECK-NEXT: select i1
+; CHECK-NEXT: ret
+}
+
+; CHECK: @test13
+define i32 @test13(i32 %x, i32 %y) nounwind {
+  %alloc = call i8* @calloc(i32 %x, i32 %y)
+  %alloc2 = call i8* @malloc(i32 %x)
+  %objsize = call i32 @llvm.objectsize.i32(i8* %alloc, i1 false, i32 1)
+  %objsize2 = call i32 @llvm.objectsize.i32(i8* %alloc2, i1 false, i32 1)
+  %add = add i32 %objsize, %objsize2
+  ret i32 %add
+; CHECK: objectsize
+; CHECK: objectsize
+; CHECK: add
+}
+
 ; CHECK: @overflow
 define i32 @overflow() {
   %alloc = call noalias i8* @malloc(i32 21) nounwind
