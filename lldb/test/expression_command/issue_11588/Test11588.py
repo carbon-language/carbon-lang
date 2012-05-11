@@ -59,13 +59,13 @@ class Issue11581TestCase(TestBase):
                 addr = addr - 1
                 self.runCmd("register write r14 %d" % addr)
                 self.expect("register read r14",
-                    substrs = ["0x",hex(addr)[2:]])
+                    substrs = ["0x",hex(addr)[2:].rstrip("L")])  # Remove trailing 'L' if it exists
                 self.expect("print *(StgClosure*)$r14",
                     substrs = ["(StgClosure) $",
                     "(StgClosure *) &$","0x",
                     "(long) addr = ",
                     "(long) load_address = ",
-                    hex(addr)[2:],
+                    hex(addr)[2:].rstrip("L"),
                     str(addr)])
 
 
