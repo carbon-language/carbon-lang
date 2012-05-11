@@ -708,8 +708,8 @@ getLocationOfByte(unsigned ByteNo, const SourceManager &SM,
     LangOpts.Trigraphs = true;
     
     // Create a lexer starting at the beginning of this token.
-    Lexer TheLexer(StrTokSpellingLoc, Features, Buffer.begin(), StrData,
-                   Buffer.end());
+    Lexer TheLexer(SM.getLocForStartOfFile(LocInfo.first), Features,
+                   Buffer.begin(), StrData, Buffer.end());
     Token TheTok;
     TheLexer.LexFromRawLexer(TheTok);
     
