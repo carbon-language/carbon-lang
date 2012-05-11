@@ -1424,7 +1424,7 @@ bool X86FastISel::X86VisitIntrinsicCall(const IntrinsicInst &I) {
     return DoSelectCall(&I, "memset");
   }
   case Intrinsic::stackprotector: {
-    // Emit code inline code to store the stack guard onto the stack.
+    // Emit code to store the stack guard onto the stack.
     EVT PtrTy = TLI.getPointerTy();
 
     const Value *Op1 = I.getArgOperand(0); // The guard's value.
