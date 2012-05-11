@@ -1614,6 +1614,8 @@ def SEL : AI<(outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm), DPFrm, NoItinerary, "sel",
   let Inst{27-20} = 0b01101000;
   let Inst{7-4} = 0b1011;
   let Inst{11-8} = 0b1111;
+  
+  let Unpredictable{11-8} = 0b1111;
 }
 
 def SEV : AI<(outs), (ins), MiscFrm, NoItinerary, "sev", "",
@@ -2429,6 +2431,7 @@ multiclass AI2_stridx<bit isByte, string opc,
      let Inst{23} = offset{12};
      let Inst{19-16} = addr;
      let Inst{11-0} = offset{11-0};
+     let Inst{4} = 0;
 
     let DecoderMethod = "DecodeAddrMode2IdxInstruction";
    }

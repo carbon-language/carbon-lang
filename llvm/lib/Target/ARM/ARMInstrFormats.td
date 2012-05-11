@@ -827,6 +827,8 @@ class AExtI<bits<8> opcod, dag oops, dag iops, InstrItinClass itin,
   let Inst{7-4}   = 0b0111;
   let Inst{9-8}   = 0b00;
   let Inst{27-20} = opcod;
+
+  let Unpredictable{9-8} = 0b11;
 }
 
 // Misc Arithmetic instructions.
