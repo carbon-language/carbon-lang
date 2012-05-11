@@ -221,6 +221,30 @@ TEST(StringRefTest, Split2) {
   EXPECT_TRUE(parts == expected);
 }
 
+TEST(StringRefTest, Trim) {
+  StringRef Str0("hello");
+  StringRef Str1(" hello ");
+  StringRef Str2("  hello  ");
+
+  EXPECT_EQ(StringRef("hello"), Str0.rtrim());
+  EXPECT_EQ(StringRef(" hello"), Str1.rtrim());
+  EXPECT_EQ(StringRef("  hello"), Str2.rtrim());
+  EXPECT_EQ(StringRef("hello"), Str0.ltrim());
+  EXPECT_EQ(StringRef("hello "), Str1.ltrim());
+  EXPECT_EQ(StringRef("hello  "), Str2.ltrim());
+  EXPECT_EQ(StringRef("hello"), Str0.trim());
+  EXPECT_EQ(StringRef("hello"), Str1.trim());
+  EXPECT_EQ(StringRef("hello"), Str2.trim());
+
+  EXPECT_EQ(StringRef("ello"), Str0.trim("hhhhhhhhhhh"));
+
+  EXPECT_EQ(StringRef(""), StringRef("").trim());
+  EXPECT_EQ(StringRef(""), StringRef(" ").trim());
+  EXPECT_EQ(StringRef("\0", 1), StringRef(" \0 ", 3).trim());
+  EXPECT_EQ(StringRef("\0\0", 2), StringRef("\0\0", 2).trim());
+  EXPECT_EQ(StringRef("x"), StringRef("\0\0x\0\0", 5).trim(StringRef("\0", 1)));
+}
+
 TEST(StringRefTest, StartsWith) {
   StringRef Str("hello");
   EXPECT_TRUE(Str.startswith("he"));
@@ -267,6 +291,10 @@ TEST(StringRefTest, Find) {
   EXPECT_EQ(1U, Str.find_first_not_of('h'));
   EXPECT_EQ(4U, Str.find_first_not_of("hel"));
   EXPECT_EQ(StringRef::npos, Str.find_first_not_of("hello"));
+
+  EXPECT_EQ(3U, Str.find_last_not_of('o'));
+  EXPECT_EQ(1U, Str.find_last_not_of("lo"));
+  EXPECT_EQ(StringRef::npos, Str.find_last_not_of("helo"));
 }
 
 TEST(StringRefTest, Count) {

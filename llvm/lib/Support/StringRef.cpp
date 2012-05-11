@@ -12,6 +12,7 @@
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/Hashing.h"
 #include "llvm/ADT/edit_distance.h"
+
 #include <bitset>
 
 using namespace llvm;
@@ -226,6 +227,31 @@ StringRef::size_type StringRef::find_last_of(StringRef Chars,
 
   for (size_type i = min(From, Length) - 1, e = -1; i != e; --i)
     if (CharBits.test((unsigned char)Data[i]))
+      return i;
+  return npos;
+}
+
+/// find_last_not_of - Find the last character in the string that is not
+/// \arg C, or npos if not found.
+StringRef::size_type StringRef::find_last_not_of(char C, size_t From) const {
+  for (size_type i = min(From, Length) - 1, e = -1; i != e; --i)
+    if (Data[i] != C)
+      return i;
+  return npos;
+}
+
+/// find_last_not_of - Find the last character in the string that is not in
+/// \arg Chars, or npos if not found.
+///
+/// Note: O(size() + Chars.size())
+StringRef::size_type StringRef::find_last_not_of(StringRef Chars,
+                                                 size_t From) const {
+  std::bitset<1 << CHAR_BIT> CharBits;
+  for (size_type i = 0, e = Chars.size(); i != e; ++i)
+    CharBits.set((unsigned char)Chars[i]);
+
+  for (size_type i = min(From, Length) - 1, e = -1; i != e; --i)
+    if (!CharBits.test((unsigned char)Data[i]))
       return i;
   return npos;
 }
