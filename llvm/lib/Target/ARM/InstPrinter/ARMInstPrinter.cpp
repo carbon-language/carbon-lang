@@ -426,9 +426,13 @@ void ARMInstPrinter::printAM3PreOrOffsetIndexOp(const MCInst *MI, unsigned Op,
     return;
   }
 
-  if (unsigned ImmOffs = ARM_AM::getAM3Offset(MO3.getImm()))
+  //If the op is sub we have to print the immediate even if it is 0 
+  unsigned ImmOffs = ARM_AM::getAM3Offset(MO3.getImm());
+  ARM_AM::AddrOpc op = ARM_AM::getAM3Op(MO3.getImm());
+ 
+  if (ImmOffs || (op == ARM_AM::sub))
     O << ", #"
-      << ARM_AM::getAddrOpcStr(ARM_AM::getAM3Op(MO3.getImm()))
+      << ARM_AM::getAddrOpcStr(op)
       << ImmOffs;
   O << ']';
 }

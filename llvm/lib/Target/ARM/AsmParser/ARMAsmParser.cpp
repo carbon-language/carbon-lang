@@ -914,7 +914,9 @@ public:
     // Immediate offset in range [-255, 255].
     if (!Memory.OffsetImm) return true;
     int64_t Val = Memory.OffsetImm->getValue();
-    return Val > -256 && Val < 256;
+    // The #-0 offset is encoded as INT32_MIN, and we have to check 
+    // for this too.
+    return (Val > -256 && Val < 256) || Val == INT32_MIN;
   }
   bool isAM3Offset() const {
     if (Kind != k_Immediate && Kind != k_PostIndexRegister)

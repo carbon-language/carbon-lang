@@ -74,3 +74,6 @@
 @ CHECK: cpsie none, #0                @ encoding: [0x00,0x00,0x0a,0xf1]
         cpsie none, #0
 
+@ CHECK: strh r3, [r2, #-0]            @ encoding: [0xb0,0x30,0x42,0xe1]
+        strh r3, [r2, #-0]
+
