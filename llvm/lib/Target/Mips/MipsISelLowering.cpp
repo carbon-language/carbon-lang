@@ -2455,11 +2455,6 @@ MipsTargetLowering::LowerCall(SDValue InChain, SDValue Callee,
   Chain = CallSeqStart = DAG.getCALLSEQ_START(InChain, NextStackOffsetVal);
   ByValChain = InChain;
 
-  // If this is the first call, create a stack frame object that points to
-  // a location to which .cprestore saves $gp.
-  if (IsO32 && IsPIC && MipsFI->globalBaseRegFixed() && !MipsFI->getGPFI())
-    MipsFI->setGPFI(MFI->CreateFixedObject(4, 0, true));
-
   // Get the frame index of the stack frame object that points to the location
   // of dynamically allocated area on the stack.
   int DynAllocFI = MipsFI->getDynAllocFI();
@@ -2481,9 +2476,6 @@ MipsTargetLowering::LowerCall(SDValue InChain, SDValue Callee,
     unsigned StackAlignment = TFL->getStackAlignment();
     NextStackOffset = (NextStackOffset + StackAlignment - 1) /
                       StackAlignment * StackAlignment;
-
-    if (MipsFI->needGPSaveRestore())
-      MFI->setObjectOffset(MipsFI->getGPFI(), NextStackOffset);
 
     MFI->setObjectOffset(DynAllocFI, NextStackOffset);
   }
@@ -2654,6 +2646,14 @@ MipsTargetLowering::LowerCall(SDValue InChain, SDValue Callee,
     Chain = DAG.getCopyToReg(Chain, dl, T9Reg, Callee, SDValue(0, 0));
     InFlag = Chain.getValue(1);
     Callee = DAG.getRegister(T9Reg, getPointerTy());
+  }
+
+  // Insert node "GP copy globalreg" before call to function.
+  // Lazy-binding stubs require GP to point to the GOT.
+  if (IsPICCall) {
+    unsigned GPReg = IsN64 ? Mips::GP_64 : Mips::GP;
+    EVT Ty = IsN64 ? MVT::i64 : MVT::i32;
+    RegsToPass.push_back(std::make_pair(GPReg, GetGlobalReg(DAG, Ty)));
   }
 
   // Build a sequence of copy-to-reg nodes chained together with token
