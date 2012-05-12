@@ -105,7 +105,6 @@ public:
   }
 
   virtual bool addInstSelector();
-  virtual bool addPreRegAlloc();
   virtual bool addPreSched2();
   virtual bool addPreEmitPass();
 };
@@ -127,14 +126,6 @@ bool MipsPassConfig::addInstSelector() {
 // print out the code after the passes.
 bool MipsPassConfig::addPreEmitPass() {
   PM->add(createMipsDelaySlotFillerPass(getMipsTargetMachine()));
-  return true;
-}
-
-bool MipsPassConfig::addPreRegAlloc() {
-  // Do not restore $gp if target is Mips64.
-  // In N32/64, $gp is a callee-saved register.
-  if (!getMipsSubtarget().hasMips64())
-    PM->add(createMipsEmitGPRestorePass(getMipsTargetMachine()));
   return true;
 }
 
