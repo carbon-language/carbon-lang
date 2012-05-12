@@ -140,6 +140,30 @@ ExprResult Sema::BuildObjCStringLiteral(SourceLocation AtLoc, StringLiteral *S){
   return new (Context) ObjCStringLiteral(S, Ty, AtLoc);
 }
 
+/// \brief Emits an error if the given method does not exist, or if the return
+/// type is not an Objective-C object.
+static bool validateBoxingMethod(Sema &S, SourceLocation Loc,
+                                 const ObjCInterfaceDecl *Class,
+                                 Selector Sel, const ObjCMethodDecl *Method) {
+  if (!Method) {
+    // FIXME: Is there a better way to avoid quotes than using getName()?
+    S.Diag(Loc, diag::err_undeclared_boxing_method) << Sel << Class->getName();
+    return false;
+  }
+
+  // Make sure the return type is reasonable.
+  QualType ReturnType = Method->getResultType();
+  if (!ReturnType->isObjCObjectPointerType()) {
+    S.Diag(Loc, diag::err_objc_literal_method_sig)
+      << Sel;
+    S.Diag(Method->getLocation(), diag::note_objc_literal_method_return)
+      << ReturnType;
+    return false;
+  }
+
+  return true;
+}
+
 /// \brief Retrieve the NSNumber factory method that should be used to create
 /// an Objective-C literal for the given type.
 static ObjCMethodDecl *getNSNumberFactoryMethod(Sema &S, SourceLocation Loc,
@@ -213,21 +237,8 @@ static ObjCMethodDecl *getNSNumberFactoryMethod(Sema &S, SourceLocation Loc,
     Method->setMethodParams(S.Context, value, ArrayRef<SourceLocation>());
   }
 
-  if (!Method) {
-    // FIXME: Is there a better way to avoid quotes than using getName()?
-    S.Diag(Loc, diag::err_undeclared_boxing_method)
-      << Sel << S.NSNumberDecl->getName();
+  if (!validateBoxingMethod(S, Loc, S.NSNumberDecl, Sel, Method))
     return 0;
-  }
-  
-  // Make sure the return type is reasonable.
-  if (!Method->getResultType()->isObjCObjectPointerType()) {
-    S.Diag(Loc, diag::err_objc_literal_method_sig)
-      << Sel;
-    S.Diag(Method->getLocation(), diag::note_objc_literal_method_return)
-      << Method->getResultType();
-    return 0;
-  }
 
   // Note: if the parameter type is out-of-line, we'll catch it later in the
   // implicit conversion.
@@ -449,8 +460,8 @@ ExprResult Sema::BuildObjCBoxedExpr(SourceRange SR, Expr *ValueExpr) {
         Selector stringWithUTF8String = Context.Selectors.getUnarySelector(II);
 
         // Look for the appropriate method within NSString.
-        StringWithUTF8StringMethod = NSStringDecl->lookupClassMethod(stringWithUTF8String);
-        if (!StringWithUTF8StringMethod && getLangOpts().DebuggerObjCLiteral) {
+        BoxingMethod = NSStringDecl->lookupClassMethod(stringWithUTF8String);
+        if (!BoxingMethod && getLangOpts().DebuggerObjCLiteral) {
           // Debugger needs to work even if NSString hasn't been defined.
           TypeSourceInfo *ResultTInfo = 0;
           ObjCMethodDecl *M =
@@ -471,27 +482,14 @@ ExprResult Sema::BuildObjCBoxedExpr(SourceRange SR, Expr *ValueExpr) {
                                 /*TInfo=*/0,
                                 SC_None, SC_None, 0);
           M->setMethodParams(Context, value, ArrayRef<SourceLocation>());
-          StringWithUTF8StringMethod = M;
+          BoxingMethod = M;
         }
 
-        // FIXME: Copied from getNSNumberFactoryMethod().
-        if (!StringWithUTF8StringMethod) {
-          // FIXME: Is there a better way to avoid quotes than using getName()?
-          Diag(SR.getBegin(), diag::err_undeclared_boxing_method)
-            << stringWithUTF8String << NSStringDecl->getName();
-          return ExprError();
-        }
-  
-        // Make sure the return type is reasonable.
-        QualType ResultType = StringWithUTF8StringMethod->getResultType();
-        if (!ResultType->isObjCObjectPointerType()) {
-          Diag(SR.getBegin(), diag::err_objc_literal_method_sig)
-            << stringWithUTF8String;
-          Diag(StringWithUTF8StringMethod->getLocation(),
-               diag::note_objc_literal_method_return)
-            << ResultType;
-          return ExprError();
-        }
+        if (!validateBoxingMethod(*this, SR.getBegin(), NSStringDecl,
+                                  stringWithUTF8String, BoxingMethod))
+           return ExprError();
+
+        StringWithUTF8StringMethod = BoxingMethod;
       }
       
       BoxingMethod = StringWithUTF8StringMethod;
@@ -612,11 +610,10 @@ ExprResult Sema::BuildObjCArrayLiteral(SourceRange SR, MultiExprArg Elements) {
   if (!ArrayWithObjectsMethod) {
     Selector
       Sel = NSAPIObj->getNSArraySelector(NSAPI::NSArr_arrayWithObjectsCount);
-    ArrayWithObjectsMethod = NSArrayDecl->lookupClassMethod(Sel);
-    if (!ArrayWithObjectsMethod && getLangOpts().DebuggerObjCLiteral) {
+    ObjCMethodDecl *Method = NSArrayDecl->lookupClassMethod(Sel);
+    if (!Method && getLangOpts().DebuggerObjCLiteral) {
       TypeSourceInfo *ResultTInfo = 0;
-      ArrayWithObjectsMethod =
-                         ObjCMethodDecl::Create(Context,
+      Method = ObjCMethodDecl::Create(Context,
                            SourceLocation(), SourceLocation(), Sel,
                            IdT,
                            ResultTInfo,
@@ -627,7 +624,7 @@ ExprResult Sema::BuildObjCArrayLiteral(SourceRange SR, MultiExprArg Elements) {
                            ObjCMethodDecl::Required,
                            false);
       SmallVector<ParmVarDecl *, 2> Params;
-      ParmVarDecl *objects = ParmVarDecl::Create(Context, ArrayWithObjectsMethod,
+      ParmVarDecl *objects = ParmVarDecl::Create(Context, Method,
                                                 SourceLocation(), SourceLocation(),
                                                 &Context.Idents.get("objects"),
                                                 Context.getPointerType(IdT),
@@ -636,7 +633,7 @@ ExprResult Sema::BuildObjCArrayLiteral(SourceRange SR, MultiExprArg Elements) {
                                                 SC_None,
                                                 0);
       Params.push_back(objects);
-      ParmVarDecl *cnt = ParmVarDecl::Create(Context, ArrayWithObjectsMethod,
+      ParmVarDecl *cnt = ParmVarDecl::Create(Context, Method,
                                                 SourceLocation(), SourceLocation(),
                                                 &Context.Idents.get("cnt"),
                                                 Context.UnsignedLongTy,
@@ -645,28 +642,15 @@ ExprResult Sema::BuildObjCArrayLiteral(SourceRange SR, MultiExprArg Elements) {
                                                 SC_None,
                                                 0);
       Params.push_back(cnt);
-      ArrayWithObjectsMethod->setMethodParams(Context, Params,
-                                              ArrayRef<SourceLocation>());
+      Method->setMethodParams(Context, Params, ArrayRef<SourceLocation>());
 
 
     }
 
-    if (!ArrayWithObjectsMethod) {
-      // FIXME: Is there a better way to avoid quotes than using getName()?
-      Diag(SR.getBegin(), diag::err_undeclared_boxing_method)
-        << Sel << NSArrayDecl->getName();
+    if (!validateBoxingMethod(*this, SR.getBegin(), NSArrayDecl, Sel, Method))
       return ExprError();
-    }
-  }
-  
-  // Make sure the return type is reasonable.
-  if (!ArrayWithObjectsMethod->getResultType()->isObjCObjectPointerType()) {
-    Diag(SR.getBegin(), diag::err_objc_literal_method_sig)
-      << ArrayWithObjectsMethod->getSelector();
-    Diag(ArrayWithObjectsMethod->getLocation(),
-         diag::note_objc_literal_method_return)
-      << ArrayWithObjectsMethod->getResultType();
-    return ExprError();
+
+    ArrayWithObjectsMethod = Method;
   }
 
   // Dig out the type that all elements should be converted to.
@@ -748,10 +732,9 @@ ExprResult Sema::BuildObjCDictionaryLiteral(SourceRange SR,
   if (!DictionaryWithObjectsMethod) {
     Selector Sel = NSAPIObj->getNSDictionarySelector(
                                     NSAPI::NSDict_dictionaryWithObjectsForKeysCount);
-    DictionaryWithObjectsMethod = NSDictionaryDecl->lookupClassMethod(Sel);
-    if (!DictionaryWithObjectsMethod && getLangOpts().DebuggerObjCLiteral) {
-      DictionaryWithObjectsMethod = 
-                         ObjCMethodDecl::Create(Context,  
+    ObjCMethodDecl *Method = NSDictionaryDecl->lookupClassMethod(Sel);
+    if (!Method && getLangOpts().DebuggerObjCLiteral) {
+      Method = ObjCMethodDecl::Create(Context,  
                            SourceLocation(), SourceLocation(), Sel,
                            IdT,
                            0 /*TypeSourceInfo */,
@@ -762,7 +745,7 @@ ExprResult Sema::BuildObjCDictionaryLiteral(SourceRange SR,
                            ObjCMethodDecl::Required,
                            false);
       SmallVector<ParmVarDecl *, 3> Params;
-      ParmVarDecl *objects = ParmVarDecl::Create(Context, DictionaryWithObjectsMethod,
+      ParmVarDecl *objects = ParmVarDecl::Create(Context, Method,
                                                 SourceLocation(), SourceLocation(),
                                                 &Context.Idents.get("objects"),
                                                 Context.getPointerType(IdT),
@@ -771,7 +754,7 @@ ExprResult Sema::BuildObjCDictionaryLiteral(SourceRange SR,
                                                 SC_None,
                                                 0);
       Params.push_back(objects);
-      ParmVarDecl *keys = ParmVarDecl::Create(Context, DictionaryWithObjectsMethod,
+      ParmVarDecl *keys = ParmVarDecl::Create(Context, Method,
                                                 SourceLocation(), SourceLocation(),
                                                 &Context.Idents.get("keys"),
                                                 Context.getPointerType(IdT),
@@ -780,7 +763,7 @@ ExprResult Sema::BuildObjCDictionaryLiteral(SourceRange SR,
                                                 SC_None,
                                                 0);
       Params.push_back(keys);
-      ParmVarDecl *cnt = ParmVarDecl::Create(Context, DictionaryWithObjectsMethod,
+      ParmVarDecl *cnt = ParmVarDecl::Create(Context, Method,
                                                 SourceLocation(), SourceLocation(),
                                                 &Context.Idents.get("cnt"),
                                                 Context.UnsignedLongTy,
@@ -789,26 +772,14 @@ ExprResult Sema::BuildObjCDictionaryLiteral(SourceRange SR,
                                                 SC_None,
                                                 0);
       Params.push_back(cnt);
-      DictionaryWithObjectsMethod->setMethodParams(Context, Params, 
-                                                   ArrayRef<SourceLocation>());
+      Method->setMethodParams(Context, Params, ArrayRef<SourceLocation>());
     }
 
-    if (!DictionaryWithObjectsMethod) {
-      // FIXME: Is there a better way to avoid quotes than using getName()?
-      Diag(SR.getBegin(), diag::err_undeclared_boxing_method)
-        << Sel << NSDictionaryDecl->getName();
-      return ExprError();    
-    }
-  }
-  
-  // Make sure the return type is reasonable.
-  if (!DictionaryWithObjectsMethod->getResultType()->isObjCObjectPointerType()){
-    Diag(SR.getBegin(), diag::err_objc_literal_method_sig)
-    << DictionaryWithObjectsMethod->getSelector();
-    Diag(DictionaryWithObjectsMethod->getLocation(),
-         diag::note_objc_literal_method_return)
-    << DictionaryWithObjectsMethod->getResultType();
-    return ExprError();
+    if (!validateBoxingMethod(*this, SR.getBegin(), NSDictionaryDecl, Sel,
+                              Method))
+       return ExprError();
+
+    DictionaryWithObjectsMethod = Method;
   }
 
   // Dig out the type that all values should be converted to.
