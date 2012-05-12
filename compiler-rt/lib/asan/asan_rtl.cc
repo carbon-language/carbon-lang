@@ -321,7 +321,7 @@ void NOINLINE __asan_set_death_callback(void (*callback)(void)) {
 void NOINLINE __asan_set_error_report_callback(void (*callback)(const char*)) {
   error_report_callback = callback;
   if (callback) {
-    error_message_buffer_size = 1 << 14;
+    error_message_buffer_size = 1 << 16;
     error_message_buffer =
         (char*)AsanMmapSomewhereOrDie(error_message_buffer_size, __FUNCTION__);
     error_message_buffer_pos = 0;
