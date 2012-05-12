@@ -31,6 +31,7 @@ td {
       <li><a href="#cxxchanges">C++ Language Changes</a></li>
       <li><a href="#objcchanges">Objective-C Language Changes</a></li>
       <li><a href="#apichanges">Internal API Changes</a></li>
+      <li><a href="#pythonchanges">Python Binding Changes</a></li>
     </ul>
   </li>
   <li><a href="#knownproblems">Known Problems</a></li>
@@ -155,6 +156,40 @@ should help get you past the largest hurdles of upgrading.
 
 <h4 id="api1">API change 1</h4>
 ...
+
+<!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
+<h3 id="pythonchanges">Python Binding Changes</h3>
+<!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
+
+The following methods have been added:
+<ul>
+  <li>SourceLocation.from_position (static)</li>
+  <li>SourceLocation.__eq__ and SourceLocation.__ne__</li>
+  <li>SourceRange.__eq__ and SourceRange.__ne__</li>
+  <li>Diagnostic.category_number (property)</li>
+  <li>Diagnostic.category_name (property)</li>
+  <li>Diagnostic.option (property)</li>
+  <li>Diagnostic.disable_option (property)</li>
+  <li>CursorKind.is_translation_unit</li>
+  <li>CursorKind.is_preprocessing</li>
+  <li>CursorKind.is_unexposed</li>
+  <li>Cursor.from_location (static)</li>
+  <li>Cursor.underlying_typedef_type (property)</li>
+  <li>Cursor.enum_type (property)</li>
+  <li>Cursor.objc_type_encoding (property)</li>
+  <li>Cursor.hash</li>
+  <li>TypeKind.spelling</li>
+  <li>Type.argument_types</li>
+  <li>Type.element_type (property)</li>
+  <li>Type.element_count (property)</li>
+  <li>Type.is_function_variadic</li>
+  <li>Type.is_pod</li>
+  <li>Type.get_array_element_type</li>
+  <li>Type.get_array_size</li>
+  <li>Type.__eq__ and Type.__ne__</li>
+  <li>File.from_name (static)</li>
+  <li>File.__str__ and File.__repr__</li>
+</ul>
 
 <!-- ======================================================================= -->
 <h2 id="knownproblems">Significant Known Problems</h2>
