@@ -103,8 +103,8 @@ unsigned HexagonInstrInfo::isStoreToStackSlot(const MachineInstr *MI,
   case Hexagon::STrib:
     if (MI->getOperand(2).isFI() &&
         MI->getOperand(1).isImm() && (MI->getOperand(1).getImm() == 0)) {
-      FrameIndex = MI->getOperand(2).getIndex();
-      return MI->getOperand(0).getReg();
+      FrameIndex = MI->getOperand(0).getIndex();
+      return MI->getOperand(2).getReg();
     }
     break;
   }
@@ -323,7 +323,8 @@ void HexagonInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
             DestReg).addReg(SrcReg).addReg(SrcReg);
     return;
   }
-  if (Hexagon::DoubleRegsRegClass.contains(DestReg, SrcReg)) {
+  if (Hexagon::DoubleRegsRegClass.contains(DestReg) &&
+      Hexagon::IntRegsRegClass.contains(SrcReg)) {
     // We can have an overlap between single and double reg: r1:0 = r0.
     if(SrcReg == RI.getSubReg(DestReg, Hexagon::subreg_loreg)) {
         // r1:0 = r0
@@ -338,7 +339,8 @@ void HexagonInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
     }
     return;
   }
-  if (Hexagon::CRRegsRegClass.contains(DestReg, SrcReg)) {
+  if (Hexagon::CRRegsRegClass.contains(DestReg) &&
+      Hexagon::IntRegsRegClass.contains(SrcReg)) {
     BuildMI(MBB, I, DL, get(Hexagon::TFCR), DestReg).addReg(SrcReg);
     return;
   }
@@ -1400,7 +1402,7 @@ bool HexagonInstrInfo::isPredicable(MachineInstr *MI) const {
   case Hexagon::SXTH:
   case Hexagon::ZXTB:
   case Hexagon::ZXTH:
-    return Subtarget.getHexagonArchVersion() == HexagonSubtarget::V4;
+    return Subtarget.hasV4TOps();
 
   case Hexagon::JMPR:
     return false;
@@ -1409,6 +1411,24 @@ bool HexagonInstrInfo::isPredicable(MachineInstr *MI) const {
   return true;
 }
 
+// This function performs the following inversiones:
+//
+//  cPt    ---> cNotPt
+//  cNotPt ---> cPt
+//
+// however, these inversiones are NOT included:
+//
+//  cdnPt      -X-> cdnNotPt
+//  cdnNotPt   -X-> cdnPt
+//  cPt_nv     -X-> cNotPt_nv (new value stores)
+//  cNotPt_nv  -X-> cPt_nv    (new value stores)
+//
+// because only the following transformations are allowed:
+//
+//  cNotPt  ---> cdnNotPt
+//  cPt     ---> cdnPt
+//  cNotPt  ---> cNotPt_nv
+//  cPt     ---> cPt_nv
 unsigned HexagonInstrInfo::getInvertedPredicatedOpcode(const int Opc) const {
   switch(Opc) {
     default: llvm_unreachable("Unexpected predicated instruction");
@@ -2620,6 +2640,7 @@ isSpillPredRegOp(const MachineInstr *MI) const {
 
 bool HexagonInstrInfo::isNewValueJumpCandidate(const MachineInstr *MI) const {
   switch (MI->getOpcode()) {
+    default: return false;
     case Hexagon::CMPEQrr:
     case Hexagon::CMPEQri:
     case Hexagon::CMPLTrr:
@@ -2631,11 +2652,7 @@ bool HexagonInstrInfo::isNewValueJumpCandidate(const MachineInstr *MI) const {
     case Hexagon::CMPGEri:
     case Hexagon::CMPGEUri:
       return true;
-
-    default:
-      return false;
   }
-  return false;
 }
 
 bool HexagonInstrInfo::
@@ -2943,7 +2960,7 @@ bool HexagonInstrInfo::isConstExtended(MachineInstr *MI) const {
   if (!MO.isImm()) // no range check if the operand is non-immediate.
     return true;
 
-  int ImmValue =MO.getImm();
+  int ImmValue = MO.getImm();
   return (ImmValue < MinValue || ImmValue > MaxValue);
 
 }
