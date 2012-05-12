@@ -45,3 +45,16 @@ void nested_compound_literals_float(float rad) {
       vec[a][1] *= rad; // no-warning
   }
 }
+
+
+void struct_as_array() {
+  struct simple { int x; };
+  struct simple a;
+  struct simple *p = &a;
+  p->x = 5;
+  if (!p[0].x)
+    return; // expected-warning{{never executed}}
+  if (p[0].x)
+    return; // no-warning
+}
+
