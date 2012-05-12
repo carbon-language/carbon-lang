@@ -22,10 +22,6 @@ static cl::opt<bool>
 FixGlobalBaseReg("mips-fix-global-base-reg", cl::Hidden, cl::init(true),
                  cl::desc("Always use $gp as the global base register."));
 
-bool MipsFunctionInfo::globalBaseRegFixed() const {
-  return FixGlobalBaseReg;
-}
-
 bool MipsFunctionInfo::globalBaseRegSet() const {
   return GlobalBaseReg;
 }
@@ -36,9 +32,6 @@ unsigned MipsFunctionInfo::getGlobalBaseReg() {
     return GlobalBaseReg;
 
   const MipsSubtarget &ST = MF.getTarget().getSubtarget<MipsSubtarget>();
-
-  if (FixGlobalBaseReg && ST.isABI_O32()) // $gp is the global base register.
-    return GlobalBaseReg = Mips::GP;
 
   const TargetRegisterClass *RC = ST.isABI_N64() ?
     (const TargetRegisterClass*)&Mips::CPU64RegsRegClass :
