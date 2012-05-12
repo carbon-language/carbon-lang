@@ -136,7 +136,6 @@ void MipsFrameLowering::emitPrologue(MachineFunction &MF) const {
     *static_cast<const MipsInstrInfo*>(MF.getTarget().getInstrInfo());
   MachineBasicBlock::iterator MBBI = MBB.begin();
   DebugLoc dl = MBBI != MBB.end() ? MBBI->getDebugLoc() : DebugLoc();
-  bool isPIC = (MF.getTarget().getRelocationModel() == Reloc::PIC_);
   unsigned SP = STI.isABI_N64() ? Mips::SP_64 : Mips::SP;
   unsigned FP = STI.isABI_N64() ? Mips::FP_64 : Mips::FP;
   unsigned ZERO = STI.isABI_N64() ? Mips::ZERO_64 : Mips::ZERO;
@@ -144,34 +143,13 @@ void MipsFrameLowering::emitPrologue(MachineFunction &MF) const {
   unsigned ADDiu = STI.isABI_N64() ? Mips::DADDiu : Mips::ADDiu;
 
   // First, compute final stack size.
-  unsigned RegSize = STI.isGP32bit() ? 4 : 8;
   unsigned StackAlign = getStackAlignment();
-  unsigned LocalVarAreaOffset = MipsFI->needGPSaveRestore() ?
-    (MFI->getObjectOffset(MipsFI->getGPFI()) + RegSize) :
-    MipsFI->getMaxCallFrameSize();
-  uint64_t StackSize =  RoundUpToAlignment(LocalVarAreaOffset, StackAlign) +
-     RoundUpToAlignment(MFI->getStackSize(), StackAlign);
+  uint64_t StackSize =
+    RoundUpToAlignment(MipsFI->getMaxCallFrameSize(), StackAlign) +
+    RoundUpToAlignment(MFI->getStackSize(), StackAlign);
 
    // Update stack size
   MFI->setStackSize(StackSize);
-
-  // Emit instructions that set the global base register if the target ABI is
-  // O32.
-  if (isPIC && MipsFI->globalBaseRegSet() && STI.isABI_O32() &&
-      !MipsFI->globalBaseRegFixed()) {
-      // See MipsInstrInfo.td for explanation.
-    MachineBasicBlock *NewEntry = MF.CreateMachineBasicBlock();
-    MF.insert(&MBB, NewEntry);
-    NewEntry->addSuccessor(&MBB);
-
-    // Copy live in registers.
-    for (MachineBasicBlock::livein_iterator R = MBB.livein_begin();
-         R != MBB.livein_end(); ++R)
-      NewEntry->addLiveIn(*R);
-
-    BuildMI(*NewEntry, NewEntry->begin(), dl, TII.get(Mips:: SETGP01),
-            Mips::V0);
-  }
 
   // No need to allocate space on the stack.
   if (StackSize == 0 && !MFI->adjustsStack()) return;
@@ -250,13 +228,6 @@ void MipsFrameLowering::emitPrologue(MachineFunction &MF) const {
     DstML = MachineLocation(FP);
     SrcML = MachineLocation(MachineLocation::VirtualFP);
     Moves.push_back(MachineMove(SetFPLabel, DstML, SrcML));
-  }
-
-  // Restore GP from the saved stack location
-  if (MipsFI->needGPSaveRestore()) {
-    unsigned Offset = MFI->getObjectOffset(MipsFI->getGPFI());
-    BuildMI(MBB, MBBI, dl, TII.get(Mips::CPRESTORE)).addImm(Offset)
-      .addReg(Mips::GP);
   }
 }
 
