@@ -214,7 +214,9 @@ static ObjCMethodDecl *getNSNumberFactoryMethod(Sema &S, SourceLocation Loc,
   }
 
   if (!Method) {
-    S.Diag(Loc, diag::err_undeclared_nsnumber_method) << Sel;
+    // FIXME: Is there a better way to avoid quotes than using getName()?
+    S.Diag(Loc, diag::err_undeclared_boxing_method)
+      << Sel << S.NSNumberDecl->getName();
     return 0;
   }
   
@@ -471,8 +473,25 @@ ExprResult Sema::BuildObjCBoxedExpr(SourceRange SR, Expr *ValueExpr) {
           M->setMethodParams(Context, value, ArrayRef<SourceLocation>());
           StringWithUTF8StringMethod = M;
         }
-        assert(StringWithUTF8StringMethod &&
-               "StringWithUTF8StringMethod should not be NULL");
+
+        // FIXME: Copied from getNSNumberFactoryMethod().
+        if (!StringWithUTF8StringMethod) {
+          // FIXME: Is there a better way to avoid quotes than using getName()?
+          Diag(SR.getBegin(), diag::err_undeclared_boxing_method)
+            << stringWithUTF8String << NSStringDecl->getName();
+          return ExprError();
+        }
+  
+        // Make sure the return type is reasonable.
+        QualType ResultType = StringWithUTF8StringMethod->getResultType();
+        if (!ResultType->isObjCObjectPointerType()) {
+          Diag(SR.getBegin(), diag::err_objc_literal_method_sig)
+            << stringWithUTF8String;
+          Diag(StringWithUTF8StringMethod->getLocation(),
+               diag::note_objc_literal_method_return)
+            << ResultType;
+          return ExprError();
+        }
       }
       
       BoxingMethod = StringWithUTF8StringMethod;
@@ -633,7 +652,9 @@ ExprResult Sema::BuildObjCArrayLiteral(SourceRange SR, MultiExprArg Elements) {
     }
 
     if (!ArrayWithObjectsMethod) {
-      Diag(SR.getBegin(), diag::err_undeclared_arraywithobjects) << Sel;
+      // FIXME: Is there a better way to avoid quotes than using getName()?
+      Diag(SR.getBegin(), diag::err_undeclared_boxing_method)
+        << Sel << NSArrayDecl->getName();
       return ExprError();
     }
   }
@@ -773,7 +794,9 @@ ExprResult Sema::BuildObjCDictionaryLiteral(SourceRange SR,
     }
 
     if (!DictionaryWithObjectsMethod) {
-      Diag(SR.getBegin(), diag::err_undeclared_dictwithobjects) << Sel;
+      // FIXME: Is there a better way to avoid quotes than using getName()?
+      Diag(SR.getBegin(), diag::err_undeclared_boxing_method)
+        << Sel << NSDictionaryDecl->getName();
       return ExprError();    
     }
   }

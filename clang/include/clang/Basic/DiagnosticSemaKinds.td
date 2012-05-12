@@ -1545,12 +1545,8 @@ def err_undeclared_nsarray : Error<
 def err_undeclared_nsdictionary : Error<
   "NSDictionary must be available to use Objective-C dictionary "
   "literals">;
-def err_undeclared_arraywithobjects : Error<
-  "declaration of %0 is missing in NSArray class">;
-def err_undeclared_dictwithobjects : Error<
-  "declaration of %0 is missing in NSDictionary class">;
-def err_undeclared_nsnumber_method : Error<
-  "declaration of %0 is missing in NSNumber class">;
+def err_undeclared_boxing_method : Error<
+  "declaration of %0 is missing in %1 class">;
 def err_objc_literal_method_sig : Error<
   "literal construction method %0 has incompatible signature">;
 def note_objc_literal_method_param : Note<

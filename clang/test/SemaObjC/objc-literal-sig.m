@@ -19,6 +19,10 @@ typedef _Bool BOOL;
 + (int)numberWithBool:(BOOL)value; // expected-note{{method returns unexpected type 'int' (should be an object type)}}
 @end
 
+@interface NSString
++ (char)stringWithUTF8String:(const char *)value; // expected-note{{method returns unexpected type 'char' (should be an object type)}}
+@end
+
 @interface NSArray
 @end
 
@@ -37,4 +41,5 @@ void test_sig() {
   (void)@__objc_yes; // expected-error{{literal construction method 'numberWithBool:' has incompatible signature}}
   id array = @[ @17 ]; // expected-error{{literal construction method 'arrayWithObjects:count:' has incompatible signature}}
   id dict = @{ @"hello" : @17 }; // expected-error{{literal construction method 'dictionaryWithObjects:forKeys:count:' has incompatible signature}}
+  id str = @("hello"); // expected-error{{literal construction method 'stringWithUTF8String:' has incompatible signature}}
 }
