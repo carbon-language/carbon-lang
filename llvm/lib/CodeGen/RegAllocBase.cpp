@@ -69,11 +69,14 @@ void RegAllocBase::verify() {
   for (LiveIntervals::iterator liItr = LIS->begin(), liEnd = LIS->end();
        liItr != liEnd; ++liItr) {
     unsigned reg = liItr->first;
+    LiveInterval* li = liItr->second;
     if (TargetRegisterInfo::isPhysicalRegister(reg)) continue;
     if (!VRM->hasPhys(reg)) continue; // spilled?
+    if (li->empty()) continue; // unionVRegs will only be filled if li is
+                               // non-empty
     unsigned PhysReg = VRM->getPhys(reg);
     if (!unionVRegs[PhysReg].test(reg)) {
-      dbgs() << "LiveVirtReg " << reg << " not in union " <<
+      dbgs() << "LiveVirtReg " << PrintReg(reg, TRI) << " not in union " <<
         TRI->getName(PhysReg) << "\n";
       llvm_unreachable("unallocated live vreg");
     }
