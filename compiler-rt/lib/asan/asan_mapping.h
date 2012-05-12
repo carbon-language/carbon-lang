@@ -35,6 +35,7 @@ extern __attribute__((visibility("default"))) uintptr_t __asan_mapping_offset;
 
 #define SHADOW_GRANULARITY (1ULL << SHADOW_SCALE)
 #define MEM_TO_SHADOW(mem) (((mem) >> SHADOW_SCALE) | (SHADOW_OFFSET))
+#define SHADOW_TO_MEM(shadow) (((shadow) - SHADOW_OFFSET) << SHADOW_SCALE)
 
 #if __WORDSIZE == 64
   static const size_t kHighMemEnd = 0x00007fffffffffffUL;

@@ -116,17 +116,29 @@ const char *AsanThread::GetFrameNameByAddr(uintptr_t addr, uintptr_t *offset) {
     is_fake_stack = true;
   }
   uintptr_t aligned_addr = addr & ~(__WORDSIZE/8 - 1);  // align addr.
-  uintptr_t *ptr = (uintptr_t*)aligned_addr;
-  while (ptr >= (uintptr_t*)bottom) {
-    if (ptr[0] == kCurrentStackFrameMagic ||
-        (is_fake_stack && ptr[0] == kRetiredStackFrameMagic)) {
-      *offset = addr - (uintptr_t)ptr;
-      return (const char*)ptr[1];
-    }
-    ptr--;
+  uint8_t *shadow_ptr = (uint8_t*)MemToShadow(aligned_addr);
+  uint8_t *shadow_bottom = (uint8_t*)MemToShadow(bottom);
+
+  while (shadow_ptr >= shadow_bottom &&
+      *shadow_ptr != kAsanStackLeftRedzoneMagic) {
+    shadow_ptr--;
   }
-  *offset = 0;
-  return "UNKNOWN";
+
+  while (shadow_ptr >= shadow_bottom &&
+      *shadow_ptr == kAsanStackLeftRedzoneMagic) {
+    shadow_ptr--;
+  }
+
+  if (shadow_ptr < shadow_bottom) {
+    *offset = 0;
+    return "UNKNOWN";
+  }
+
+  uintptr_t* ptr = (uintptr_t*)SHADOW_TO_MEM((uintptr_t)(shadow_ptr + 1));
+  CHECK((ptr[0] == kCurrentStackFrameMagic) ||
+      (is_fake_stack && ptr[0] == kRetiredStackFrameMagic));
+  *offset = addr - (uintptr_t)ptr;
+  return (const char*)ptr[1];
 }
 
 }  // namespace __asan
