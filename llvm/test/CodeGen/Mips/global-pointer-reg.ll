@@ -1,4 +1,6 @@
-; RUN: llc < %s -march=mipsel -mips-fix-global-base-reg=false | FileCheck %s 
+; DISABLED: llc < %s -march=mipsel -mips-fix-global-base-reg=false | FileCheck %s 
+; RUN: false
+; XFAIL: *
 
 @g0 = external global i32
 @g1 = external global i32

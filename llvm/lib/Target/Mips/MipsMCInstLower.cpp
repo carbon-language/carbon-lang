@@ -317,16 +317,11 @@ void MipsMCInstLower::LowerUnalignedLoadStore(const MachineInstr *MI,
   if (!TwoInstructions) MCInsts.push_back(Instr3);
 }
 
-// Convert
-//  "setgp01 $reg"
-// to
-//  "lui   $reg, %hi(_gp_disp)"
-//  "addiu $reg, $reg, %lo(_gp_disp)"
-void MipsMCInstLower::LowerSETGP01(const MachineInstr *MI,
-                                   SmallVector<MCInst, 4>& MCInsts) {
-  const MachineOperand &MO = MI->getOperand(0);
-  assert(MO.isReg());
-  MCOperand RegOpnd = MCOperand::CreateReg(MO.getReg());
+// Create the following two instructions:
+//  "lui   $2, %hi(_gp_disp)"
+//  "addiu $2, $2, %lo(_gp_disp)"
+void MipsMCInstLower::LowerSETGP01(SmallVector<MCInst, 4>& MCInsts) {
+  MCOperand RegOpnd = MCOperand::CreateReg(Mips::V0);
   StringRef SymName("_gp_disp");
   const MCSymbol *Sym = Ctx->GetOrCreateSymbol(SymName);
   const MCSymbolRefExpr *MCSym;

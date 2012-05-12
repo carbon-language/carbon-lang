@@ -134,15 +134,6 @@ void MipsAsmPrinter::EmitInstruction(const MachineInstr *MI) {
 
     break;
   }
-  case Mips::SETGP01: {
-    MCInstLowering.LowerSETGP01(MI, MCInsts);
-
-    for (SmallVector<MCInst, 4>::iterator I = MCInsts.begin();
-         I != MCInsts.end(); ++I)
-      OutStreamer.EmitInstruction(*I);
-
-    return;
-  }
   default:
     break;
   }
@@ -295,10 +286,6 @@ void MipsAsmPrinter::EmitFunctionBodyStart() {
 
   emitFrameDirective();
 
-  bool EmitCPLoad = (MF->getTarget().getRelocationModel() == Reloc::PIC_) &&
-    Subtarget->isABI_O32() && MipsFI->globalBaseRegSet() &&
-    MipsFI->globalBaseRegFixed();
-
   if (OutStreamer.hasRawTextSupport()) {
     SmallString<128> Str;
     raw_svector_ostream OS(Str);
@@ -306,17 +293,15 @@ void MipsAsmPrinter::EmitFunctionBodyStart() {
     OutStreamer.EmitRawText(OS.str());
 
     OutStreamer.EmitRawText(StringRef("\t.set\tnoreorder"));
-
-    // Emit .cpload directive if needed.
-    if (EmitCPLoad)
-      OutStreamer.EmitRawText(StringRef("\t.cpload\t$25"));
-
     OutStreamer.EmitRawText(StringRef("\t.set\tnomacro"));
     if (MipsFI->getEmitNOAT())
       OutStreamer.EmitRawText(StringRef("\t.set\tnoat"));
-  } else if (EmitCPLoad) {
+  }
+
+  if ((MF->getTarget().getRelocationModel() == Reloc::PIC_) &&
+      Subtarget->isABI_O32() && MipsFI->globalBaseRegSet()) {
     SmallVector<MCInst, 4> MCInsts;
-    MCInstLowering.LowerCPLOAD(MCInsts);
+    MCInstLowering.LowerSETGP01(MCInsts);
     for (SmallVector<MCInst, 4>::iterator I = MCInsts.begin();
          I != MCInsts.end(); ++I)
       OutStreamer.EmitInstruction(*I);

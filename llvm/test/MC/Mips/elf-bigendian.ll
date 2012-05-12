@@ -1,4 +1,6 @@
-; RUN: llc -filetype=obj -mtriple mips-unknown-linux %s -o - | elf-dump --dump-section-data  | FileCheck %s
+; DISABLE: llc -filetype=obj -mtriple mips-unknown-linux %s -o - | elf-dump --dump-section-data  | FileCheck %s
+; RUN: false
+; XFAIL: *
 
 ; Check that this is big endian.
 ; CHECK: ('e_indent[EI_DATA]', 0x02)
