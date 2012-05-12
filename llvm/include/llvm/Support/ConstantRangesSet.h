@@ -48,8 +48,15 @@ class ConstantRangesSet {
   Constant *Array;
 public:
   
+  bool IsWide;
+  
   // implicit
-  ConstantRangesSet(Constant *V) : Array(V) {}
+  ConstantRangesSet(Constant *V) : Array(V) {
+    ArrayType *ArrTy = cast<ArrayType>(Array->getType());
+    VectorType *VecTy = cast<VectorType>(ArrTy->getElementType());
+    IntegerType *IntTy = cast<IntegerType>(VecTy->getElementType());
+    IsWide = IntTy->getBitWidth() > 64;    
+  }
   
   operator Constant*() { return Array; }
   operator const Constant*() const { return Array; }
@@ -228,6 +235,13 @@ public:
   /// Return number of items (ranges) stored in set.
   unsigned getNumItems() const {
     return cast<ArrayType>(Array->getType())->getNumElements();
+  }
+  
+  bool isWideNumberFormat() const { return IsWide; }
+  
+  bool isSingleNumber(unsigned idx) const {
+    Constant *CV = Array->getAggregateElement(idx);
+    return cast<VectorType>(CV->getType())->getNumElements() == 1;
   }
   
   /// Returns set the size, that equals number of all values + sizes of all
