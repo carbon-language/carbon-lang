@@ -1257,7 +1257,7 @@ bool AsmParser::ParseStatement() {
     if (IDVal == ".incbin")
       return ParseDirectiveIncbin();
 
-    if (IDVal == ".code16")
+    if (IDVal == ".code16" || IDVal == ".code16gcc")
       return TokError(Twine(IDVal) + " not supported yet");
 
     // Look up the handler in the handler table.
