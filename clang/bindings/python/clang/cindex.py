@@ -126,7 +126,7 @@ class TranslationUnitSaveError(Exception):
                             "value supported." % enumeration)
 
         self.save_error = enumeration
-        Exception.__init__(self, message)
+        Exception.__init__(self, 'Error %d: %s' % (enumeration, message))
 
 ### Structures and Utility Classes ###
 
@@ -1739,6 +1739,9 @@ class TranslationUnit(ClangObject):
         options is a bitwise or of TranslationUnit.PARSE_XXX flags which will
         control parsing behavior.
 
+        index is an Index instance to utilize. If not provided, a new Index
+        will be created for this TranslationUnit.
+
         To parse source from the filesystem, the filename of the file to parse
         is specified by the filename argument. Or, filename could be None and
         the args list would contain the filename(s) to parse.
@@ -1925,7 +1928,7 @@ class TranslationUnit(ClangObject):
             raise TranslationUnitSaveError(result,
                 'Error saving TranslationUnit.')
 
-    def codeComplete(self, path, line, column, unsaved_files=[], options=0):
+    def codeComplete(self, path, line, column, unsaved_files=None, options=0):
         """
         Code complete in this translation unit.
 
