@@ -1,4 +1,6 @@
-; RUN: llc -filetype=obj -mtriple mipsel-unknown-linux %s -o - | elf-dump --dump-section-data  | FileCheck %s
+; DISABLED: llc -filetype=obj -mtriple mipsel-unknown-linux %s -o - | elf-dump --dump-section-data  | FileCheck %s
+; RUN: false
+; XFAIL: *
 
 ; FIXME: use assembler instead of llc when it becomes available.
 

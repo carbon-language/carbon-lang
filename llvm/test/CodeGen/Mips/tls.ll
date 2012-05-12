@@ -43,8 +43,8 @@ entry:
 ; STATICGP: lui     $[[R0:[0-9]+]], %hi(__gnu_local_gp)
 ; STATICGP: addiu   $[[GP:[0-9]+]], $[[R0]], %lo(__gnu_local_gp)
 ; STATICGP: lw      ${{[0-9]+}}, %gottprel(t2)($[[GP]])
-; STATIC:   lui     $gp, %hi(__gnu_local_gp)
-; STATIC:   addiu   $gp, $gp, %lo(__gnu_local_gp)
+; STATIC:   lui     $[[R0:[0-9]+]], %hi(__gnu_local_gp)
+; STATIC:   addiu   ${{[a-z0-9]+}}, $[[R0]], %lo(__gnu_local_gp)
 ; STATIC:   rdhwr   $3, $29
 ; STATIC:   lw      $[[R0:[0-9]+]], %gottprel(t2)($gp)
 ; STATIC:   addu    $[[R1:[0-9]+]], $3, $[[R0]]
