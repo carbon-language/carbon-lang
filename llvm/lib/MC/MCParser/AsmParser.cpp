@@ -336,6 +336,7 @@ public:
     AddDirectiveHandler<&GenericAsmParser::ParseDirectiveMacro>(".macro");
     AddDirectiveHandler<&GenericAsmParser::ParseDirectiveEndMacro>(".endm");
     AddDirectiveHandler<&GenericAsmParser::ParseDirectiveEndMacro>(".endmacro");
+    AddDirectiveHandler<&GenericAsmParser::ParseDirectivePurgeMacro>(".purgem");
 
     AddDirectiveHandler<&GenericAsmParser::ParseDirectiveLEB128>(".sleb128");
     AddDirectiveHandler<&GenericAsmParser::ParseDirectiveLEB128>(".uleb128");
@@ -367,6 +368,7 @@ public:
   bool ParseDirectiveMacrosOnOff(StringRef, SMLoc DirectiveLoc);
   bool ParseDirectiveMacro(StringRef, SMLoc DirectiveLoc);
   bool ParseDirectiveEndMacro(StringRef, SMLoc DirectiveLoc);
+  bool ParseDirectivePurgeMacro(StringRef, SMLoc DirectiveLoc);
 
   bool ParseDirectiveLEB128(StringRef, SMLoc);
 };
@@ -3081,6 +3083,27 @@ bool GenericAsmParser::ParseDirectiveEndMacro(StringRef Directive,
   // .endmacro directives are handled during the macro definition parsing.
   return TokError("unexpected '" + Directive + "' in file, "
                   "no current macro definition");
+}
+
+/// ParseDirectivePurgeMacro
+/// ::= .purgem
+bool GenericAsmParser::ParseDirectivePurgeMacro(StringRef Directive,
+                                                SMLoc DirectiveLoc) {
+  StringRef Name;
+  if (getParser().ParseIdentifier(Name))
+    return TokError("expected identifier in '.purgem' directive");
+
+  if (getLexer().isNot(AsmToken::EndOfStatement))
+    return TokError("unexpected token in '.purgem' directive");
+
+  StringMap<Macro*>::iterator I = getParser().MacroMap.find(Name);
+  if (I == getParser().MacroMap.end())
+    return Error(DirectiveLoc, "macro '" + Name + "' is not defined");
+
+  // Undefine the macro.
+  delete I->getValue();
+  getParser().MacroMap.erase(I);
+  return false;
 }
 
 bool GenericAsmParser::ParseDirectiveLEB128(StringRef DirName, SMLoc) {
