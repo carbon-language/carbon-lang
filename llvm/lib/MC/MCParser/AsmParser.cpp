@@ -111,6 +111,9 @@ private:
   /// ActiveMacros - Stack of active macro instantiations.
   std::vector<MacroInstantiation*> ActiveMacros;
 
+  /// ActiveRept - Stack of active .rept directives.
+  std::vector<SMLoc> ActiveRept;
+
   /// Boolean tracking whether macro substitution is enabled.
   unsigned MacrosEnabled : 1;
 
@@ -265,6 +268,9 @@ private:
 
   const MCExpr *ApplyModifierToExpr(const MCExpr *E,
                                     MCSymbolRefExpr::VariantKind Variant);
+
+  bool ParseDirectiveRept(SMLoc DirectiveLoc);
+  bool ParseDirectiveEndRept(SMLoc DirectiveLoc);
 };
 
 /// \brief Generic implementations of directive handling, etc. which is shared
@@ -1261,6 +1267,11 @@ bool AsmParser::ParseStatement() {
 
     if (IDVal == ".code16" || IDVal == ".code16gcc")
       return TokError(Twine(IDVal) + " not supported yet");
+
+    if (IDVal == ".rept")
+      return ParseDirectiveRept(IDLoc);
+    if (IDVal == ".endr")
+      return ParseDirectiveEndRept(IDLoc);
 
     // Look up the handler in the handler table.
     std::pair<MCAsmParserExtension*, DirectiveHandler> Handler =
@@ -3125,6 +3136,86 @@ bool GenericAsmParser::ParseDirectiveLEB128(StringRef DirName, SMLoc) {
   return false;
 }
 
+bool AsmParser::ParseDirectiveRept(SMLoc DirectiveLoc) {
+  const MCExpr *Value;
+
+  if (ParseExpression(Value))
+    return true;
+
+  int64_t Count;
+  if (!Value->EvaluateAsAbsolute(Count))
+    return TokError("Cannot evaluate value");
+
+  if (Count < 0)
+    return TokError("Count is negative");
+
+  AsmToken EndToken, StartToken = getTok();
+  unsigned Nest = 1;
+
+  // Lex the macro definition.
+  for (;;) {
+    // Check whether we have reached the end of the file.
+    if (getLexer().is(AsmToken::Eof))
+      return Error(DirectiveLoc, "no matching '.endr' in definition");
+
+    // Chcek if we have a nested .rept.
+    if (getLexer().is(AsmToken::Identifier) &&
+        (getTok().getIdentifier() == ".rept")) {
+      Nest++;
+      EatToEndOfStatement();
+      continue;
+    }
+
+    // Otherwise, check whether we have reach the .endr.
+    if (getLexer().is(AsmToken::Identifier) &&
+        (getTok().getIdentifier() == ".endr")) {
+      Nest--;
+      if (Nest == 0) {
+        EndToken = getTok();
+        Lex();
+        if (getLexer().isNot(AsmToken::EndOfStatement))
+          return TokError("unexpected token in '.endr' directive");
+        break;
+      }
+    }
+
+    // Otherwise, scan til the end of the statement.
+    EatToEndOfStatement();
+  }
+
+  const char *BodyStart = StartToken.getLoc().getPointer();
+  const char *BodyEnd = EndToken.getLoc().getPointer();
+  StringRef Body = StringRef(BodyStart, BodyEnd - BodyStart);
+
+  SmallString<256> Buf;
+  raw_svector_ostream OS(Buf);
+  for (int i = 0; i < Count; i++)
+    OS << Body;
+  OS << ".endr\n";
+
+  MemoryBuffer *Instantiation =
+    MemoryBuffer::getMemBufferCopy(OS.str(), "<instantiation>");
+
+  CurBuffer = SrcMgr.AddNewSourceBuffer(Instantiation, SMLoc());
+  Lexer.setBuffer(SrcMgr.getMemoryBuffer(CurBuffer));
+
+  ActiveRept.push_back(getTok().getLoc());
+
+  return false;
+}
+
+bool AsmParser::ParseDirectiveEndRept(SMLoc DirectiveLoc) {
+  if (ActiveRept.empty())
+    return TokError("unexpected '.endr' directive, no current .rept");
+
+  // The only .repl that should get here are the ones created by
+  // ParseDirectiveRept.
+  assert(getLexer().is(AsmToken::EndOfStatement));
+
+  JumpToLoc(ActiveRept.back());
+  ActiveRept.pop_back();
+  return false;
+}
 
 /// \brief Create an MCAsmParser instance.
 MCAsmParser *llvm::createMCAsmParser(SourceMgr &SM,
