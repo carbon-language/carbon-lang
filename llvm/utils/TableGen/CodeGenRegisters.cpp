@@ -1046,23 +1046,21 @@ void CodeGenRegBank::computeComposites() {
       // Try composing Idx1 with another SubRegIndex.
       for (CodeGenRegister::SubRegMap::const_iterator i2 = SRM2.begin(),
            e2 = SRM2.end(); i2 != e2; ++i2) {
-      CodeGenSubRegIndex *Idx2 = i2->first;
+        CodeGenSubRegIndex *Idx2 = i2->first;
         CodeGenRegister *Reg3 = i2->second;
         // Ignore identity compositions.
         if (Reg2 == Reg3)
           continue;
         // OK Reg1:IdxPair == Reg3. Find the index with Reg:Idx == Reg3.
-        for (CodeGenRegister::SubRegMap::const_iterator i1d = SRM1.begin(),
-             e1d = SRM1.end(); i1d != e1d; ++i1d) {
-          if (i1d->second == Reg3) {
-            // Conflicting composition? Emit a warning but allow it.
-            if (CodeGenSubRegIndex *Prev = Idx1->addComposite(Idx2, i1d->first))
-              PrintWarning(Twine("SubRegIndex ") + Idx1->getQualifiedName() +
-                     " and " + Idx2->getQualifiedName() +
-                     " compose ambiguously as " + Prev->getQualifiedName() +
-                     " or " + i1d->first->getQualifiedName());
-          }
-        }
+        CodeGenSubRegIndex *Idx3 = Reg1->getSubRegIndex(Reg3);
+        assert(Idx3 && "Sub-register doesn't have an index");
+
+        // Conflicting composition? Emit a warning but allow it.
+        if (CodeGenSubRegIndex *Prev = Idx1->addComposite(Idx2, Idx3))
+          PrintWarning(Twine("SubRegIndex ") + Idx1->getQualifiedName() +
+                       " and " + Idx2->getQualifiedName() +
+                       " compose ambiguously as " + Prev->getQualifiedName() +
+                       " or " + Idx3->getQualifiedName());
       }
     }
   }
