@@ -1220,6 +1220,10 @@ bool AsmParser::ParseStatement() {
 
     // Symbol attribute directives
 
+    if (IDVal == ".extern") {
+      EatToEndOfStatement(); // .extern is the default, ignore it.
+      return false;
+    }
     if (IDVal == ".globl" || IDVal == ".global")
       return ParseDirectiveSymbolAttribute(MCSA_Global);
     if (IDVal == ".indirect_symbol")
