@@ -728,7 +728,7 @@ bool AsmParser::ParsePrimaryExpr(const MCExpr *&Res, SMLoc &EndLoc) {
                                                       IDVal == "f" ? 1 : 0);
         Res = MCSymbolRefExpr::Create(Sym, MCSymbolRefExpr::VK_None,
                                       getContext());
-        if(IDVal == "b" && Sym->isUndefined())
+        if (IDVal == "b" && Sym->isUndefined())
           return Error(Loc, "invalid reference to undefined symbol");
         EndLoc = Lexer.getLoc();
         Lex(); // Eat identifier.
@@ -2338,10 +2338,9 @@ bool AsmParser::ParseDirectiveIncbin() {
 bool AsmParser::ParseDirectiveIf(SMLoc DirectiveLoc) {
   TheCondStack.push_back(TheCondState);
   TheCondState.TheCond = AsmCond::IfCond;
-  if(TheCondState.Ignore) {
+  if (TheCondState.Ignore) {
     EatToEndOfStatement();
-  }
-  else {
+  } else {
     int64_t ExprValue;
     if (ParseAbsoluteExpression(ExprValue))
       return true;
@@ -2364,7 +2363,7 @@ bool AsmParser::ParseDirectiveIfb(SMLoc DirectiveLoc, bool ExpectBlank) {
   TheCondStack.push_back(TheCondState);
   TheCondState.TheCond = AsmCond::IfCond;
 
-  if(TheCondState.Ignore) {
+  if (TheCondState.Ignore) {
     EatToEndOfStatement();
   } else {
     StringRef Str = ParseStringToEndOfStatement();
@@ -2387,7 +2386,7 @@ bool AsmParser::ParseDirectiveIfc(SMLoc DirectiveLoc, bool ExpectEqual) {
   TheCondStack.push_back(TheCondState);
   TheCondState.TheCond = AsmCond::IfCond;
 
-  if(TheCondState.Ignore) {
+  if (TheCondState.Ignore) {
     EatToEndOfStatement();
   } else {
     StringRef Str1 = ParseStringToComma();
