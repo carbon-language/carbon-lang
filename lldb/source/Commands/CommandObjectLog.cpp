@@ -114,9 +114,9 @@ public:
     Execute (Args& args,
              CommandReturnObject &result)
     {
-        if (args.GetArgumentCount() < 1)
+        if (args.GetArgumentCount() < 2)
         {
-            result.AppendErrorWithFormat("Usage: %s\n", m_cmd_syntax.c_str());
+            result.AppendErrorWithFormat("%s takes a log channel and one or more log types.\n", m_cmd_name.c_str());
         }
         else
         {
@@ -264,7 +264,7 @@ public:
         const size_t argc = args.GetArgumentCount();
         if (argc == 0)
         {
-            result.AppendErrorWithFormat("Usage: %s\n", m_cmd_syntax.c_str());
+            result.AppendErrorWithFormat("%s takes a log channel and one or more log types.\n", m_cmd_name.c_str());
         }
         else
         {
