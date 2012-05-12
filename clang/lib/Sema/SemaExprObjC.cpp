@@ -655,35 +655,38 @@ ExprResult Sema::BuildObjCArrayLiteral(SourceRange SR, MultiExprArg Elements) {
     if (!validateBoxingMethod(*this, SR.getBegin(), NSArrayDecl, Sel, Method))
       return ExprError();
 
+    // Dig out the type that all elements should be converted to.
+    QualType T = Method->param_begin()[0]->getType();
+    const PointerType *PtrT = T->getAs<PointerType>();
+    if (!PtrT || 
+        !Context.hasSameUnqualifiedType(PtrT->getPointeeType(), IdT)) {
+      Diag(SR.getBegin(), diag::err_objc_literal_method_sig)
+        << Sel;
+      Diag(Method->param_begin()[0]->getLocation(),
+           diag::note_objc_literal_method_param)
+        << 0 << T 
+        << Context.getPointerType(IdT.withConst());
+      return ExprError();
+    }
+  
+    // Check that the 'count' parameter is integral.
+    if (!Method->param_begin()[1]->getType()->isIntegerType()) {
+      Diag(SR.getBegin(), diag::err_objc_literal_method_sig)
+        << Sel;
+      Diag(Method->param_begin()[1]->getLocation(),
+           diag::note_objc_literal_method_param)
+        << 1 
+        << Method->param_begin()[1]->getType()
+        << "integral";
+      return ExprError();
+    }
+
+    // We've found a good +arrayWithObjects:count: method. Save it!
     ArrayWithObjectsMethod = Method;
   }
 
-  // Dig out the type that all elements should be converted to.
-  QualType T = ArrayWithObjectsMethod->param_begin()[0]->getType();
-  const PointerType *PtrT = T->getAs<PointerType>();
-  if (!PtrT || 
-      !Context.hasSameUnqualifiedType(PtrT->getPointeeType(), IdT)) {
-    Diag(SR.getBegin(), diag::err_objc_literal_method_sig)
-      << ArrayWithObjectsMethod->getSelector();
-    Diag(ArrayWithObjectsMethod->param_begin()[0]->getLocation(),
-         diag::note_objc_literal_method_param)
-      << 0 << T 
-      << Context.getPointerType(IdT.withConst());
-    return ExprError();
-  }
-  T = PtrT->getPointeeType();
-  
-  // Check that the 'count' parameter is integral.
-  if (!ArrayWithObjectsMethod->param_begin()[1]->getType()->isIntegerType()) {
-    Diag(SR.getBegin(), diag::err_objc_literal_method_sig)
-      << ArrayWithObjectsMethod->getSelector();
-    Diag(ArrayWithObjectsMethod->param_begin()[1]->getLocation(),
-         diag::note_objc_literal_method_param)
-      << 1 
-      << ArrayWithObjectsMethod->param_begin()[1]->getType()
-      << "integral";
-    return ExprError();
-  }
+  QualType ObjectsType = ArrayWithObjectsMethod->param_begin()[0]->getType();
+  QualType RequiredType = ObjectsType->castAs<PointerType>()->getPointeeType();
 
   // Check that each of the elements provided is valid in a collection literal,
   // performing conversions as necessary.
@@ -691,7 +694,7 @@ ExprResult Sema::BuildObjCArrayLiteral(SourceRange SR, MultiExprArg Elements) {
   for (unsigned I = 0, N = Elements.size(); I != N; ++I) {
     ExprResult Converted = CheckObjCCollectionLiteralElement(*this,
                                                              ElementsBuffer[I],
-                                                             T);
+                                                             RequiredType);
     if (Converted.isInvalid())
       return ExprError();
     
@@ -781,72 +784,75 @@ ExprResult Sema::BuildObjCDictionaryLiteral(SourceRange SR,
                               Method))
        return ExprError();
 
-    DictionaryWithObjectsMethod = Method;
-  }
-
-  // Dig out the type that all values should be converted to.
-  QualType ValueT =  DictionaryWithObjectsMethod->param_begin()[0]->getType();
-  const PointerType *PtrValue = ValueT->getAs<PointerType>();
-  if (!PtrValue || 
-      !Context.hasSameUnqualifiedType(PtrValue->getPointeeType(), IdT)) {
-    Diag(SR.getBegin(), diag::err_objc_literal_method_sig)
-      << DictionaryWithObjectsMethod->getSelector();
-    Diag(DictionaryWithObjectsMethod->param_begin()[0]->getLocation(),
-         diag::note_objc_literal_method_param)
-      << 0 << ValueT
-      << Context.getPointerType(IdT.withConst());
-    return ExprError();
-  }
-  ValueT = PtrValue->getPointeeType();
-
-  // Dig out the type that all keys should be converted to.
-  QualType KeyT = DictionaryWithObjectsMethod->param_begin()[1]->getType();
-  const PointerType *PtrKey = KeyT->getAs<PointerType>();
-  if (!PtrKey || 
-      !Context.hasSameUnqualifiedType(PtrKey->getPointeeType(),
-                                      IdT)) {
-    bool err = true;
-    if (PtrKey) {
-      if (QIDNSCopying.isNull()) {
-        // key argument of selector is id<NSCopying>?
-        if (ObjCProtocolDecl *NSCopyingPDecl =
-            LookupProtocol(&Context.Idents.get("NSCopying"), SR.getBegin())) {
-          ObjCProtocolDecl *PQ[] = {NSCopyingPDecl};
-          QIDNSCopying = 
-            Context.getObjCObjectType(Context.ObjCBuiltinIdTy,
-                                      (ObjCProtocolDecl**) PQ,1);
-          QIDNSCopying = Context.getObjCObjectPointerType(QIDNSCopying);
-        }
-      }
-      if (!QIDNSCopying.isNull())
-        err = !Context.hasSameUnqualifiedType(PtrKey->getPointeeType(),
-                                              QIDNSCopying);
-    }
-    
-    if (err) {
+    // Dig out the type that all values should be converted to.
+    QualType ValueT = Method->param_begin()[0]->getType();
+    const PointerType *PtrValue = ValueT->getAs<PointerType>();
+    if (!PtrValue || 
+        !Context.hasSameUnqualifiedType(PtrValue->getPointeeType(), IdT)) {
       Diag(SR.getBegin(), diag::err_objc_literal_method_sig)
-        << DictionaryWithObjectsMethod->getSelector();
-      Diag(DictionaryWithObjectsMethod->param_begin()[1]->getLocation(),
+        << Sel;
+      Diag(Method->param_begin()[0]->getLocation(),
            diag::note_objc_literal_method_param)
-        << 1 << KeyT
+        << 0 << ValueT
         << Context.getPointerType(IdT.withConst());
       return ExprError();
     }
-  }
-  KeyT = PtrKey->getPointeeType();
 
-  // Check that the 'count' parameter is integral.
-  if (!DictionaryWithObjectsMethod->param_begin()[2]->getType()
-                                                            ->isIntegerType()) {
-    Diag(SR.getBegin(), diag::err_objc_literal_method_sig)
-      << DictionaryWithObjectsMethod->getSelector();
-    Diag(DictionaryWithObjectsMethod->param_begin()[2]->getLocation(),
-         diag::note_objc_literal_method_param)
-      << 2
-      << DictionaryWithObjectsMethod->param_begin()[2]->getType()
-      << "integral";
-    return ExprError();
+    // Dig out the type that all keys should be converted to.
+    QualType KeyT = Method->param_begin()[1]->getType();
+    const PointerType *PtrKey = KeyT->getAs<PointerType>();
+    if (!PtrKey || 
+        !Context.hasSameUnqualifiedType(PtrKey->getPointeeType(),
+                                        IdT)) {
+      bool err = true;
+      if (PtrKey) {
+        if (QIDNSCopying.isNull()) {
+          // key argument of selector is id<NSCopying>?
+          if (ObjCProtocolDecl *NSCopyingPDecl =
+              LookupProtocol(&Context.Idents.get("NSCopying"), SR.getBegin())) {
+            ObjCProtocolDecl *PQ[] = {NSCopyingPDecl};
+            QIDNSCopying = 
+              Context.getObjCObjectType(Context.ObjCBuiltinIdTy,
+                                        (ObjCProtocolDecl**) PQ,1);
+            QIDNSCopying = Context.getObjCObjectPointerType(QIDNSCopying);
+          }
+        }
+        if (!QIDNSCopying.isNull())
+          err = !Context.hasSameUnqualifiedType(PtrKey->getPointeeType(),
+                                                QIDNSCopying);
+      }
+    
+      if (err) {
+        Diag(SR.getBegin(), diag::err_objc_literal_method_sig)
+          << Sel;
+        Diag(Method->param_begin()[1]->getLocation(),
+             diag::note_objc_literal_method_param)
+          << 1 << KeyT
+          << Context.getPointerType(IdT.withConst());
+        return ExprError();
+      }
+    }
+
+    // Check that the 'count' parameter is integral.
+    QualType CountType = Method->param_begin()[2]->getType();
+    if (!CountType->isIntegerType()) {
+      Diag(SR.getBegin(), diag::err_objc_literal_method_sig)
+        << Sel;
+      Diag(Method->param_begin()[2]->getLocation(),
+           diag::note_objc_literal_method_param)
+        << 2 << CountType
+        << "integral";
+      return ExprError();
+    }
+
+    // We've found a good +dictionaryWithObjects:keys:count: method; save it!
+    DictionaryWithObjectsMethod = Method;
   }
+
+  QualType ValuesT = DictionaryWithObjectsMethod->param_begin()[0]->getType();
+  QualType ValueT = ValuesT->castAs<PointerType>()->getPointeeType();
+  QualType KeysT = DictionaryWithObjectsMethod->param_begin()[1]->getType();
+  QualType KeyT = KeysT->castAs<PointerType>()->getPointeeType();
 
   // Check that each of the keys and values provided is valid in a collection 
   // literal, performing conversions as necessary.
