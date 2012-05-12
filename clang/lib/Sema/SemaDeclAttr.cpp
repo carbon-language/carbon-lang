@@ -4023,10 +4023,8 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
 void Sema::ProcessDeclAttributeList(Scope *S, Decl *D,
                                     const AttributeList *AttrList,
                                     bool NonInheritable, bool Inheritable) {
-  SmallVector<const AttributeList*, 4> attrs;
   for (const AttributeList* l = AttrList; l; l = l->getNext()) {
     ProcessDeclAttribute(*this, S, D, *l, NonInheritable, Inheritable);
-    attrs.push_back(l);
   }
 
   // GCC accepts
