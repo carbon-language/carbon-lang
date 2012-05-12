@@ -420,8 +420,8 @@ public:
   void dropAllReferences();
 
   /// hasAddressTaken - returns true if there are any uses of this function
-  /// other than direct calls or invokes to it. Optionally passes back the
-  /// offending user for diagnostic purposes.
+  /// other than direct calls or invokes to it, or blockaddress expressions.
+  /// Optionally passes back an offending user for diagnostic purposes.
   ///
   bool hasAddressTaken(const User** = 0) const;
 

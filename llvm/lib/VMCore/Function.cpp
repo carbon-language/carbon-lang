@@ -400,7 +400,8 @@ Function *Intrinsic::getDeclaration(Module *M, ID id, ArrayRef<Type*> Tys) {
 bool Function::hasAddressTaken(const User* *PutOffender) const {
   for (Value::const_use_iterator I = use_begin(), E = use_end(); I != E; ++I) {
     const User *U = *I;
-    // FIXME: Check for blockaddress, which does not take the address.
+    if (isa<BlockAddress>(U))
+      continue;
     if (!isa<CallInst>(U) && !isa<InvokeInst>(U))
       return PutOffender ? (*PutOffender = U, true) : true;
     ImmutableCallSite CS(cast<Instruction>(U));
