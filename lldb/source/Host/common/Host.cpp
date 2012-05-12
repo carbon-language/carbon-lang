@@ -371,12 +371,9 @@ Host::GetVendorString()
     if (!g_vendor)
     {
 #if defined (__APPLE__)
-        char ostype[64];
-        size_t len = sizeof(ostype);
-        if (::sysctlbyname("kern.ostype", &ostype, &len, NULL, 0) == 0)
-            g_vendor.SetCString (ostype);
-        else
-            g_vendor.SetCString("apple");
+        const ArchSpec &host_arch = GetArchitecture (eSystemDefaultArchitecture);
+        const llvm::StringRef &str_ref = host_arch.GetTriple().getVendorName();
+        g_vendor.SetCStringWithLength(str_ref.data(), str_ref.size());
 #elif defined (__linux__)
         g_vendor.SetCString("gnu");
 #elif defined (__FreeBSD__)
@@ -393,7 +390,9 @@ Host::GetOSString()
     if (!g_os_string)
     {
 #if defined (__APPLE__)
-        g_os_string.SetCString("darwin");
+        const ArchSpec &host_arch = GetArchitecture (eSystemDefaultArchitecture);
+        const llvm::StringRef &str_ref = host_arch.GetTriple().getOSName();
+        g_os_string.SetCStringWithLength(str_ref.data(), str_ref.size());
 #elif defined (__linux__)
         g_os_string.SetCString("linux");
 #elif defined (__FreeBSD__)
@@ -409,18 +408,8 @@ Host::GetTargetTriple()
     static ConstString g_host_triple;
     if (!(g_host_triple))
     {
-        StreamString triple;
-        triple.Printf("%s-%s-%s", 
-                      GetArchitecture().GetArchitectureName(),
-                      GetVendorString().AsCString(),
-                      GetOSString().AsCString());
-
-        std::transform (triple.GetString().begin(), 
-                        triple.GetString().end(), 
-                        triple.GetString().begin(), 
-                        ::tolower);
-
-        g_host_triple.SetCString(triple.GetString().c_str());
+        const ArchSpec &host_arch = GetArchitecture (eSystemDefaultArchitecture);
+        g_host_triple.SetCString(host_arch.GetTriple().getTriple().c_str());
     }
     return g_host_triple;
 }
