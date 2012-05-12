@@ -193,17 +193,18 @@ static ObjCMethodDecl *getNSNumberFactoryMethod(Sema &S, SourceLocation Loc,
   // Look up the NSNumber class, if we haven't done so already. It's cached
   // in the Sema instance.
   if (!S.NSNumberDecl) {
-    IdentifierInfo *NSNumberId = S.NSAPIObj->getNSClassId(NSAPI::ClassId_NSNumber);
+    IdentifierInfo *NSNumberId =
+      S.NSAPIObj->getNSClassId(NSAPI::ClassId_NSNumber);
     NamedDecl *IF = S.LookupSingleName(S.TUScope, NSNumberId,
                                        Loc, Sema::LookupOrdinaryName);
     S.NSNumberDecl = dyn_cast_or_null<ObjCInterfaceDecl>(IF);
     if (!S.NSNumberDecl) {
       if (S.getLangOpts().DebuggerObjCLiteral) {
         // Create a stub definition of NSNumber.
-        S.NSNumberDecl =  ObjCInterfaceDecl::Create (CX,
-                                                     CX.getTranslationUnitDecl(),
-                                                     SourceLocation(),  NSNumberId,
-                                                     0, SourceLocation());
+        S.NSNumberDecl = ObjCInterfaceDecl::Create(CX,
+                                                   CX.getTranslationUnitDecl(),
+                                                   SourceLocation(), NSNumberId,
+                                                   0, SourceLocation());
       } else {
         // Otherwise, require a declaration of NSNumber.
         S.Diag(Loc, diag::err_undeclared_nsnumber);
@@ -215,25 +216,29 @@ static ObjCMethodDecl *getNSNumberFactoryMethod(Sema &S, SourceLocation Loc,
     }
     
     // generate the pointer to NSNumber type.
-    S.NSNumberPointer = CX.getObjCObjectPointerType(CX.getObjCInterfaceType(S.NSNumberDecl));
+    QualType NSNumberObject = CX.getObjCInterfaceType(S.NSNumberDecl);
+    S.NSNumberPointer = CX.getObjCObjectPointerType(NSNumberObject);
   }
   
   // Look for the appropriate method within NSNumber.
-  ObjCMethodDecl *Method = S.NSNumberDecl->lookupClassMethod(Sel);;
+  ObjCMethodDecl *Method = S.NSNumberDecl->lookupClassMethod(Sel);
   if (!Method && S.getLangOpts().DebuggerObjCLiteral) {
     // create a stub definition this NSNumber factory method.
     TypeSourceInfo *ResultTInfo = 0;
     Method = ObjCMethodDecl::Create(CX, SourceLocation(), SourceLocation(), Sel,
-                                    S.NSNumberPointer, ResultTInfo, S.NSNumberDecl,
+                                    S.NSNumberPointer, ResultTInfo,
+                                    S.NSNumberDecl,
                                     /*isInstance=*/false, /*isVariadic=*/false,
                                     /*isSynthesized=*/false,
                                     /*isImplicitlyDeclared=*/true,
-                                    /*isDefined=*/false, ObjCMethodDecl::Required,
+                                    /*isDefined=*/false,
+                                    ObjCMethodDecl::Required,
                                     /*HasRelatedResultType=*/false);
     ParmVarDecl *value = ParmVarDecl::Create(S.Context, Method,
                                              SourceLocation(), SourceLocation(),
                                              &CX.Idents.get("value"),
-                                             NumberType, /*TInfo=*/0, SC_None, SC_None, 0);
+                                             NumberType, /*TInfo=*/0, SC_None,
+                                             SC_None, 0);
     Method->setMethodParams(S.Context, value, ArrayRef<SourceLocation>());
   }
 
@@ -333,9 +338,11 @@ static ExprResult CheckObjCCollectionLiteralElement(Sema &S, Expr *Element,
   // type.
   if (S.getLangOpts().CPlusPlus && Element->getType()->isRecordType()) {
     InitializedEntity Entity
-      = InitializedEntity::InitializeParameter(S.Context, T, /*Consumed=*/false);
+      = InitializedEntity::InitializeParameter(S.Context, T,
+                                               /*Consumed=*/false);
     InitializationKind Kind
-      = InitializationKind::CreateCopy(Element->getLocStart(), SourceLocation());
+      = InitializationKind::CreateCopy(Element->getLocStart(),
+                                       SourceLocation());
     InitializationSequence Seq(S, Entity, Kind, &Element, 1);
     if (!Seq.Failed())
       return Seq.Perform(S, Entity, Kind, MultiExprArg(S, &Element, 1));
@@ -438,9 +445,10 @@ ExprResult Sema::BuildObjCBoxedExpr(SourceRange SR, Expr *ValueExpr) {
         if (!NSStringDecl) {
           if (getLangOpts().DebuggerObjCLiteral) {
             // Support boxed expressions in the debugger w/o NSString declaration.
-            NSStringDecl = ObjCInterfaceDecl::Create(Context,
-                                                     Context.getTranslationUnitDecl(),
-                                                     SourceLocation(), NSStringId,
+            DeclContext *TU = Context.getTranslationUnitDecl();
+            NSStringDecl = ObjCInterfaceDecl::Create(Context, TU,
+                                                     SourceLocation(),
+                                                     NSStringId,
                                                      0, SourceLocation());
           } else {
             Diag(SR.getBegin(), diag::err_undeclared_nsstring);
@@ -451,8 +459,8 @@ ExprResult Sema::BuildObjCBoxedExpr(SourceRange SR, Expr *ValueExpr) {
           return ExprError();
         }
         assert(NSStringDecl && "NSStringDecl should not be NULL");
-        NSStringPointer =
-          Context.getObjCObjectPointerType(Context.getObjCInterfaceType(NSStringDecl));
+        QualType NSStringObject = Context.getObjCInterfaceType(NSStringDecl);
+        NSStringPointer = Context.getObjCObjectPointerType(NSStringObject);
       }
       
       if (!StringWithUTF8StringMethod) {
@@ -474,11 +482,12 @@ ExprResult Sema::BuildObjCBoxedExpr(SourceRange SR, Expr *ValueExpr) {
                                    /*isDefined=*/false,
                                    ObjCMethodDecl::Required,
                                    /*HasRelatedResultType=*/false);
+          QualType ConstCharType = Context.CharTy.withConst();
           ParmVarDecl *value =
             ParmVarDecl::Create(Context, M,
                                 SourceLocation(), SourceLocation(),
                                 &Context.Idents.get("value"),
-                                Context.getPointerType(Context.CharTy.withConst()),
+                                Context.getPointerType(ConstCharType),
                                 /*TInfo=*/0,
                                 SC_None, SC_None, 0);
           M->setMethodParams(Context, value, ArrayRef<SourceLocation>());
@@ -625,26 +634,22 @@ ExprResult Sema::BuildObjCArrayLiteral(SourceRange SR, MultiExprArg Elements) {
                            false);
       SmallVector<ParmVarDecl *, 2> Params;
       ParmVarDecl *objects = ParmVarDecl::Create(Context, Method,
-                                                SourceLocation(), SourceLocation(),
-                                                &Context.Idents.get("objects"),
-                                                Context.getPointerType(IdT),
-                                                /*TInfo=*/0,
-                                                SC_None,
-                                                SC_None,
-                                                0);
+                                                 SourceLocation(),
+                                                 SourceLocation(),
+                                                 &Context.Idents.get("objects"),
+                                                 Context.getPointerType(IdT),
+                                                 /*TInfo=*/0, SC_None, SC_None,
+                                                 0);
       Params.push_back(objects);
       ParmVarDecl *cnt = ParmVarDecl::Create(Context, Method,
-                                                SourceLocation(), SourceLocation(),
-                                                &Context.Idents.get("cnt"),
-                                                Context.UnsignedLongTy,
-                                                /*TInfo=*/0,
-                                                SC_None,
-                                                SC_None,
-                                                0);
+                                             SourceLocation(),
+                                             SourceLocation(),
+                                             &Context.Idents.get("cnt"),
+                                             Context.UnsignedLongTy,
+                                             /*TInfo=*/0, SC_None, SC_None,
+                                             0);
       Params.push_back(cnt);
       Method->setMethodParams(Context, Params, ArrayRef<SourceLocation>());
-
-
     }
 
     if (!validateBoxingMethod(*this, SR.getBegin(), NSArrayDecl, Sel, Method))
@@ -731,7 +736,7 @@ ExprResult Sema::BuildObjCDictionaryLiteral(SourceRange SR,
   QualType IdT = Context.getObjCIdType();
   if (!DictionaryWithObjectsMethod) {
     Selector Sel = NSAPIObj->getNSDictionarySelector(
-                                    NSAPI::NSDict_dictionaryWithObjectsForKeysCount);
+                               NSAPI::NSDict_dictionaryWithObjectsForKeysCount);
     ObjCMethodDecl *Method = NSDictionaryDecl->lookupClassMethod(Sel);
     if (!Method && getLangOpts().DebuggerObjCLiteral) {
       Method = ObjCMethodDecl::Create(Context,  
@@ -746,31 +751,28 @@ ExprResult Sema::BuildObjCDictionaryLiteral(SourceRange SR,
                            false);
       SmallVector<ParmVarDecl *, 3> Params;
       ParmVarDecl *objects = ParmVarDecl::Create(Context, Method,
-                                                SourceLocation(), SourceLocation(),
-                                                &Context.Idents.get("objects"),
-                                                Context.getPointerType(IdT),
-                                                /*TInfo=*/0,
-                                                SC_None,
-                                                SC_None,
-                                                0);
+                                                 SourceLocation(),
+                                                 SourceLocation(),
+                                                 &Context.Idents.get("objects"),
+                                                 Context.getPointerType(IdT),
+                                                 /*TInfo=*/0, SC_None, SC_None,
+                                                 0);
       Params.push_back(objects);
       ParmVarDecl *keys = ParmVarDecl::Create(Context, Method,
-                                                SourceLocation(), SourceLocation(),
-                                                &Context.Idents.get("keys"),
-                                                Context.getPointerType(IdT),
-                                                /*TInfo=*/0,
-                                                SC_None,
-                                                SC_None,
-                                                0);
+                                              SourceLocation(),
+                                              SourceLocation(),
+                                              &Context.Idents.get("keys"),
+                                              Context.getPointerType(IdT),
+                                              /*TInfo=*/0, SC_None, SC_None,
+                                              0);
       Params.push_back(keys);
       ParmVarDecl *cnt = ParmVarDecl::Create(Context, Method,
-                                                SourceLocation(), SourceLocation(),
-                                                &Context.Idents.get("cnt"),
-                                                Context.UnsignedLongTy,
-                                                /*TInfo=*/0,
-                                                SC_None,
-                                                SC_None,
-                                                0);
+                                             SourceLocation(),
+                                             SourceLocation(),
+                                             &Context.Idents.get("cnt"),
+                                             Context.UnsignedLongTy,
+                                             /*TInfo=*/0, SC_None, SC_None,
+                                             0);
       Params.push_back(cnt);
       Method->setMethodParams(Context, Params, ArrayRef<SourceLocation>());
     }
@@ -1188,7 +1190,8 @@ bool Sema::CheckMessageArgumentTypes(QualType ReceiverType,
       if (Args[i]->isTypeDependent())
         continue;
 
-      ExprResult Arg = DefaultVariadicArgumentPromotion(Args[i], VariadicMethod, 0);
+      ExprResult Arg = DefaultVariadicArgumentPromotion(Args[i], VariadicMethod,
+                                                        0);
       IsError |= Arg.isInvalid();
       Args[i] = Arg.take();
     }
@@ -2137,7 +2140,7 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
                                                 receiverIsId);
       if (!Method)
         Method = LookupFactoryMethodInGlobalPool(Sel, 
-                                                 SourceRange(LBracLoc, RBracLoc),
+                                                 SourceRange(LBracLoc,RBracLoc),
                                                  receiverIsId);
     } else if (ReceiverType->isObjCClassType() ||
                ReceiverType->isObjCQualifiedClassType()) {
@@ -2249,7 +2252,7 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
             // compatibility. FIXME: should we deviate??
             if (OCIType->qual_empty()) {
               Method = LookupInstanceMethodInGlobalPool(Sel,
-                                                 SourceRange(LBracLoc, RBracLoc));
+                                              SourceRange(LBracLoc, RBracLoc));
               if (Method && !forwardClass)
                 Diag(Loc, diag::warn_maynot_respond)
                   << OCIType->getInterfaceDecl()->getIdentifier() << Sel;
@@ -2274,8 +2277,9 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
           // TODO: specialized warning on null receivers?
           bool IsNull = Receiver->isNullPointerConstant(Context,
                                               Expr::NPC_ValueDependentIsNull);
+          CastKind Kind = IsNull ? CK_NullToPointer : CK_IntegralToPointer;
           Receiver = ImpCastExprToType(Receiver, Context.getObjCIdType(),
-                            IsNull ? CK_NullToPointer : CK_IntegralToPointer).take();
+                                       Kind).take();
         }
         ReceiverType = Receiver->getType();
       } else {
