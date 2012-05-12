@@ -523,6 +523,10 @@ void CodeGenModule::SetLLVMFunctionAttributesForDefinition(const Decl *D,
       !F->hasFnAttr(llvm::Attribute::NoInline))
     F->addFnAttr(llvm::Attribute::AlwaysInline);
 
+  // FIXME: Communicate hot and cold attributes to LLVM more directly.
+  if (D->hasAttr<ColdAttr>())
+    F->addFnAttr(llvm::Attribute::OptimizeForSize);
+
   if (isa<CXXConstructorDecl>(D) || isa<CXXDestructorDecl>(D))
     F->setUnnamedAddr(true);
 

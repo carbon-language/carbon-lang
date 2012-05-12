@@ -1294,6 +1294,46 @@ static void handleAliasAttr(Sema &S, Decl *D, const AttributeList &Attr) {
                                          Str->getString()));
 }
 
+static void handleColdAttr(Sema &S, Decl *D, const AttributeList &Attr) {
+  // Check the attribute arguments.
+  if (!checkAttributeNumArgs(S, Attr, 0))
+    return;
+
+  if (!isa<FunctionDecl>(D)) {
+    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
+      << Attr.getName() << ExpectedFunction;
+    return;
+  }
+
+  if (D->hasAttr<HotAttr>()) {
+    S.Diag(Attr.getLoc(), diag::err_attributes_are_not_compatible)
+      << Attr.getName() << "hot";
+    return;
+  }
+
+  D->addAttr(::new (S.Context) ColdAttr(Attr.getRange(), S.Context));
+}
+
+static void handleHotAttr(Sema &S, Decl *D, const AttributeList &Attr) {
+  // Check the attribute arguments.
+  if (!checkAttributeNumArgs(S, Attr, 0))
+    return;
+
+  if (!isa<FunctionDecl>(D)) {
+    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
+      << Attr.getName() << ExpectedFunction;
+    return;
+  }
+
+  if (D->hasAttr<ColdAttr>()) {
+    S.Diag(Attr.getLoc(), diag::err_attributes_are_not_compatible)
+      << Attr.getName() << "cold";
+    return;
+  }
+
+  D->addAttr(::new (S.Context) HotAttr(Attr.getRange(), S.Context));
+}
+
 static void handleNakedAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   // Check the attribute arguments.
   if (!checkAttributeNumArgs(S, Attr, 0))
@@ -3825,6 +3865,8 @@ static void ProcessInheritableDeclAttr(Sema &S, Scope *scope, Decl *D,
   case AttributeList::AT_ownership_takes:
   case AttributeList::AT_ownership_holds:
       handleOwnershipAttr     (S, D, Attr); break;
+  case AttributeList::AT_cold:        handleColdAttr        (S, D, Attr); break;
+  case AttributeList::AT_hot:         handleHotAttr         (S, D, Attr); break;
   case AttributeList::AT_naked:       handleNakedAttr       (S, D, Attr); break;
   case AttributeList::AT_noreturn:    handleNoReturnAttr    (S, D, Attr); break;
   case AttributeList::AT_nothrow:     handleNothrowAttr     (S, D, Attr); break;

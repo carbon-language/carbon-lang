@@ -243,6 +243,10 @@ def Cleanup : InheritableAttr {
   let Args = [FunctionArgument<"FunctionDecl">];
 }
 
+def Cold : InheritableAttr {
+  let Spellings = ["cold"];
+}
+
 def Common : InheritableAttr {
   let Spellings = ["common"];
 }
@@ -346,6 +350,10 @@ def FormatArg : InheritableAttr {
 
 def GNUInline : InheritableAttr {
   let Spellings = ["gnu_inline"];
+}
+
+def Hot : InheritableAttr {
+  let Spellings = ["hot"];
 }
 
 def IBAction : InheritableAttr {
