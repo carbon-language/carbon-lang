@@ -588,7 +588,6 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
     case Stmt::ObjCIsaExprClass:
     case Stmt::ObjCProtocolExprClass:
     case Stmt::ObjCSelectorExprClass:
-    case Expr::ObjCBoxedExprClass:
     case Stmt::ParenListExprClass:
     case Stmt::PredefinedExprClass:
     case Stmt::ShuffleVectorExprClass:
@@ -628,22 +627,24 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
     }
 
     case Expr::ObjCArrayLiteralClass:
-    case Expr::ObjCDictionaryLiteralClass: {
+    case Expr::ObjCDictionaryLiteralClass:
+      // FIXME: explicitly model with a region and the actual contents
+      // of the container.  For now, conjure a symbol.
+    case Expr::ObjCBoxedExprClass: {
       Bldr.takeNodes(Pred);
 
       ExplodedNodeSet preVisit;
       getCheckerManager().runCheckersForPreStmt(preVisit, Pred, S, *this);
       
-      // FIXME: explicitly model with a region and the actual contents
-      // of the container.  For now, conjure a symbol.
       ExplodedNodeSet Tmp;
       StmtNodeBuilder Bldr2(preVisit, Tmp, *currentBuilderContext);
+
+      const Expr *Ex = cast<Expr>(S);
+      QualType resultType = Ex->getType();
 
       for (ExplodedNodeSet::iterator it = preVisit.begin(), et = preVisit.end();
            it != et; ++it) {      
         ExplodedNode *N = *it;
-        const Expr *Ex = cast<Expr>(S);
-        QualType resultType = Ex->getType();
         const LocationContext *LCtx = N->getLocationContext();
         SVal result =
           svalBuilder.getConjuredSymbolVal(0, Ex, LCtx, resultType, 

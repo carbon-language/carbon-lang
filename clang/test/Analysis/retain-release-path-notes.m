@@ -130,3 +130,51 @@ CFTypeRef CFGetRuleViolation () {
   return result; // expected-warning{{Object with a +0 retain count returned to caller where a +1 (owning) retain count is expected}} expected-note{{Object returned to caller with a +0 retain count}} expected-note{{Object with a +0 retain count returned to caller where a +1 (owning) retain count is expected}}
 }
 @end
+
+
+typedef unsigned long NSUInteger;
+
+@interface NSValue : NSObject
+@end
+
+@interface NSNumber : NSValue
++ (NSNumber *)numberWithInt:(int)i;
+@end
+
+@interface NSString : NSObject
++ (NSString *)stringWithUTF8String:(const char *)str;
+@end
+
+@interface NSArray : NSObject
++ (NSArray *)arrayWithObjects:(const id [])objects count:(NSUInteger)count;
+@end
+
+@interface NSDictionary : NSObject
++ (id)dictionaryWithObjects:(const id [])objects forKeys:(const id /* <NSCopying> */ [])keys count:(NSUInteger)count;
+@end
+
+
+void testNumericLiteral() {
+  id result = @1; // expected-note{{NSNumber literal is an object with a +0 retain count}}
+  [result release]; // expected-warning{{decrement}} expected-note{{Incorrect decrement of the reference count of an object that is not owned at this point by the caller}}
+}
+
+void testBoxedInt(int x) {
+  id result = @(x); // expected-note{{NSNumber boxed expression produces an object with a +0 retain count}}
+  [result release]; // expected-warning{{decrement}} expected-note{{Incorrect decrement of the reference count of an object that is not owned at this point by the caller}}
+}
+
+void testBoxedString(const char *str) {
+  id result = @(str); // expected-note{{NSString boxed expression produces an object with a +0 retain count}}
+  [result release]; // expected-warning{{decrement}} expected-note{{Incorrect decrement of the reference count of an object that is not owned at this point by the caller}}
+}
+
+void testArray(id obj) {
+  id result = @[obj]; // expected-note{{NSArray literal is an object with a +0 retain count}}
+  [result release]; // expected-warning{{decrement}} expected-note{{Incorrect decrement of the reference count of an object that is not owned at this point by the caller}}
+}
+
+void testDictionary(id key, id value) {
+  id result = @{key: value}; // expected-note{{NSDictionary literal is an object with a +0 retain count}}
+  [result release]; // expected-warning{{decrement}} expected-note{{Incorrect decrement of the reference count of an object that is not owned at this point by the caller}}
+}

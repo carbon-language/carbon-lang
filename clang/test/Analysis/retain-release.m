@@ -142,9 +142,13 @@ NSFastEnumerationState;
 @end
 @class NSString, NSDictionary;
 @interface NSValue : NSObject <NSCopying, NSCoding>  - (void)getValue:(void *)value;
-@end  @interface NSNumber : NSValue  - (char)charValue;
+@end
+@interface NSNumber : NSValue
+- (char)charValue;
 - (id)initWithInt:(int)value;
-@end   @class NSString;
++ (NSNumber *)numberWithInt:(int)value;
+@end
+@class NSString;
 @interface NSArray : NSObject <NSCopying, NSMutableCopying, NSCoding, NSFastEnumeration>
 - (NSUInteger)count;
 - (id)initWithObjects:(const id [])objects count:(NSUInteger)cnt;
@@ -1810,6 +1814,19 @@ void test_objc_arrays() {
         [a description];
         [o description];
     }
+}
+
+void test_objc_integer_literals() {
+  id value = [@1 retain]; // expected-warning {{leak}}
+  [value description];
+}
+
+void test_objc_boxed_expressions(int x, const char *y) {
+  id value = [@(x) retain]; // expected-warning {{leak}}
+  [value description];
+
+  value = [@(y) retain]; // expected-warning {{leak}}
+  [value description];
 }
 
 // Test NSLog doesn't escape tracked objects.
