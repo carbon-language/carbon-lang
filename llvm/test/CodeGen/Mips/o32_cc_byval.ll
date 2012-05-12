@@ -10,7 +10,7 @@
 
 define void @f1() nounwind {
 entry:
-; CHECK: lw  $[[R1:[0-9]+]], %got(f1.s1)($gp)
+; CHECK: lw  $[[R1:[0-9]+]], %got(f1.s1)
 ; CHECK: addiu $[[R0:[0-9]+]], $[[R1]], %lo(f1.s1)
 ; CHECK: lw  $[[R6:[0-9]+]], 28($[[R0]])
 ; CHECK: lw  $[[R5:[0-9]+]], 24($[[R0]])
@@ -43,16 +43,16 @@ declare void @callee3(float, %struct.S3* byval, %struct.S1* byval)
 
 define void @f2(float %f, %struct.S1* nocapture byval %s1) nounwind {
 entry:
-; CHECK: addiu $sp, $sp, -56
-; CHECK: sw  $7, 68($sp)
-; CHECK: sw  $6, 64($sp)
-; CHECK: lw  $4, 88($sp)
-; CHECK: ldc1 $f[[F0:[0-9]+]], 80($sp)
-; CHECK: lw  $[[R3:[0-9]+]], 72($sp)
-; CHECK: lw  $[[R4:[0-9]+]], 76($sp)
-; CHECK: lw  $[[R2:[0-9]+]], 68($sp)
-; CHECK: lh  $[[R1:[0-9]+]], 66($sp)
-; CHECK: lb  $[[R0:[0-9]+]], 64($sp)
+; CHECK: addiu $sp, $sp, -48
+; CHECK: sw  $7, 60($sp)
+; CHECK: sw  $6, 56($sp)
+; CHECK: lw  $4, 80($sp)
+; CHECK: ldc1 $f[[F0:[0-9]+]], 72($sp)
+; CHECK: lw  $[[R3:[0-9]+]], 64($sp)
+; CHECK: lw  $[[R4:[0-9]+]], 68($sp)
+; CHECK: lw  $[[R2:[0-9]+]], 60($sp)
+; CHECK: lh  $[[R1:[0-9]+]], 58($sp)
+; CHECK: lb  $[[R0:[0-9]+]], 56($sp)
 ; CHECK: sw  $[[R0]], 32($sp)
 ; CHECK: sw  $[[R1]], 28($sp)
 ; CHECK: sw  $[[R2]], 24($sp)
@@ -80,13 +80,13 @@ declare void @callee4(i32, double, i64, i32, i16 signext, i8 signext, float)
 
 define void @f3(%struct.S2* nocapture byval %s2) nounwind {
 entry:
-; CHECK: addiu $sp, $sp, -56
-; CHECK: sw  $7, 68($sp)
-; CHECK: sw  $6, 64($sp)
-; CHECK: sw  $5, 60($sp)
-; CHECK: sw  $4, 56($sp)
-; CHECK: lw  $4, 56($sp)
-; CHECK: lw  $[[R0:[0-9]+]], 68($sp)
+; CHECK: addiu $sp, $sp, -48
+; CHECK: sw  $7, 60($sp)
+; CHECK: sw  $6, 56($sp)
+; CHECK: sw  $5, 52($sp)
+; CHECK: sw  $4, 48($sp)
+; CHECK: lw  $4, 48($sp)
+; CHECK: lw  $[[R0:[0-9]+]], 60($sp)
 ; CHECK: sw  $[[R0]], 24($sp)
 
   %arrayidx = getelementptr inbounds %struct.S2* %s2, i32 0, i32 0, i32 0
@@ -99,13 +99,13 @@ entry:
 
 define void @f4(float %f, %struct.S3* nocapture byval %s3, %struct.S1* nocapture byval %s1) nounwind {
 entry:
-; CHECK: addiu $sp, $sp, -56
-; CHECK: sw  $7, 68($sp)
-; CHECK: sw  $6, 64($sp)
-; CHECK: sw  $5, 60($sp)
-; CHECK: lw  $4, 68($sp)
-; CHECK: lw  $[[R1:[0-9]+]], 88($sp)
-; CHECK: lb  $[[R0:[0-9]+]], 60($sp)
+; CHECK: addiu $sp, $sp, -48
+; CHECK: sw  $7, 60($sp)
+; CHECK: sw  $6, 56($sp)
+; CHECK: sw  $5, 52($sp)
+; CHECK: lw  $4, 60($sp)
+; CHECK: lw  $[[R1:[0-9]+]], 80($sp)
+; CHECK: lb  $[[R0:[0-9]+]], 52($sp)
 ; CHECK: sw  $[[R0]], 32($sp)
 ; CHECK: sw  $[[R1]], 24($sp)
 

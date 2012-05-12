@@ -1,4 +1,6 @@
-; RUN: llc -march=mipsel < %s | FileCheck %s
+; DISABLE: llc -march=mipsel < %s | FileCheck %s
+; RUN: false
+; XFAIL: *
 
 ; CHECK: .set macro
 ; CHECK: .set at

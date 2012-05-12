@@ -2,9 +2,8 @@
 
 define double @foo(double %a, double %b) nounwind readnone {
 entry:
-; CHECK: bc1f $BB0_2
+; CHECK: bc1f $BB
 ; CHECK: nop
-; CHECK: # BB#1:    
 
   %cmp = fcmp ogt double %a, 0.000000e+00
   br i1 %cmp, label %if.end6, label %if.else
@@ -26,9 +25,8 @@ return:                                           ; preds = %if.else, %if.end6
 
 define void @f1(float %f) nounwind {
 entry:
-; CHECK: bc1f $BB1_1
+; CHECK: bc1f $BB
 ; CHECK: nop
-; CHECK: # BB#2:
   %cmp = fcmp une float %f, 0.000000e+00
   br i1 %cmp, label %if.then, label %if.end
 

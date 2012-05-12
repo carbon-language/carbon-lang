@@ -15,7 +15,6 @@ entry:
 ; CHECK-EB:  .cfi_offset 53, -8
 ; CHECK-EB:  .cfi_offset 52, -4
 ; CHECK-EL:  .cfi_offset 31, -12
-; CHECK-EL:  .cprestore 
 
   %exception = tail call i8* @__cxa_allocate_exception(i32 8) nounwind
   %0 = bitcast i8* %exception to double*
@@ -25,7 +24,6 @@ entry:
 
 lpad:                                             ; preds = %entry
 ; CHECK-EL:  # %lpad
-; CHECK-EL:  lw  $gp
 ; CHECK-EL:  bne $5
 
   %exn.val = landingpad { i8*, i32 } personality i32 (...)* @__gxx_personality_v0

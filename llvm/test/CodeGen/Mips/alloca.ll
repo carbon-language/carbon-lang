@@ -8,7 +8,7 @@ entry:
 ; CHECK: subu  $[[T2:[0-9]+]], $sp, $[[SZ]]
 ; CHECK: addu  $sp, $zero, $[[T2]]
 ; CHECK: addiu $[[T3:[0-9]+]], $sp, [[OFF]]
-; CHECK: lw    $[[T4:[0-9]+]], %call16(foo)($gp)
+; CHECK: lw    $[[T4:[0-9]+]], %call16(foo)
 ; CHECK: addu  $25, $zero, $[[T4]]
 ; CHECK: addu  $4, $zero, $[[T1]]
 ; CHECK: jalr  $25
@@ -31,14 +31,10 @@ declare i32 @foo(i8*)
 
 define i32 @alloca2(i32 %size) nounwind {
 entry:
-; dynamic allocated stack area and $gp restore slot have the same offsets
-; relative to $sp.
-;
 ; CHECK: alloca2
-; CHECK: .cprestore [[OFF:[0-9]+]]
-; CHECK: subu  $[[T0:[0-9]+]], $sp, $[[SZ:[0-9]+]]
+; CHECK: subu  $[[T0:[0-9]+]], $sp
 ; CHECK: addu  $sp, $zero, $[[T0]]
-; CHECK: addiu $[[T1:[0-9]+]], $sp, [[OFF]]
+; CHECK: addiu $[[T1:[0-9]+]], $sp
 
   %tmp1 = alloca i8, i32 %size, align 4
   %0 = bitcast i8* %tmp1 to i32*
