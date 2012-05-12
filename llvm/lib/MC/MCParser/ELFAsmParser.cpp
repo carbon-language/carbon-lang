@@ -64,6 +64,7 @@ public:
     AddDirectiveHandler<&ELFAsmParser::ParseDirectiveType>(".type");
     AddDirectiveHandler<&ELFAsmParser::ParseDirectiveIdent>(".ident");
     AddDirectiveHandler<&ELFAsmParser::ParseDirectiveSymver>(".symver");
+    AddDirectiveHandler<&ELFAsmParser::ParseDirectiveVersion>(".version");
     AddDirectiveHandler<&ELFAsmParser::ParseDirectiveWeakref>(".weakref");
     AddDirectiveHandler<&ELFAsmParser::ParseDirectiveSymbolAttribute>(".weak");
     AddDirectiveHandler<&ELFAsmParser::ParseDirectiveSymbolAttribute>(".local");
@@ -141,6 +142,7 @@ public:
   bool ParseDirectiveType(StringRef, SMLoc);
   bool ParseDirectiveIdent(StringRef, SMLoc);
   bool ParseDirectiveSymver(StringRef, SMLoc);
+  bool ParseDirectiveVersion(StringRef, SMLoc);
   bool ParseDirectiveWeakref(StringRef, SMLoc);
   bool ParseDirectiveSymbolAttribute(StringRef, SMLoc);
 
@@ -545,6 +547,32 @@ bool ELFAsmParser::ParseDirectiveSymver(StringRef, SMLoc) {
   const MCExpr *Value = MCSymbolRefExpr::Create(Sym, getContext());
 
   getStreamer().EmitAssignment(Alias, Value);
+  return false;
+}
+
+/// ParseDirectiveVersion
+///  ::= .version string
+bool ELFAsmParser::ParseDirectiveVersion(StringRef, SMLoc) {
+  if (getLexer().isNot(AsmToken::String))
+    return TokError("unexpected token in '.version' directive");
+
+  StringRef Data = getTok().getIdentifier();
+
+  Lex();
+
+  const MCSection *Note =
+    getContext().getELFSection(".note", ELF::SHT_NOTE, 0,
+                               SectionKind::getReadOnly());
+
+  getStreamer().PushSection();
+  getStreamer().SwitchSection(Note);
+  getStreamer().EmitIntValue(Data.size()+1, 4); // namesz.
+  getStreamer().EmitIntValue(0, 4);             // descsz = 0 (no description).
+  getStreamer().EmitIntValue(1, 4);             // type = NT_VERSION.
+  getStreamer().EmitBytes(Data, 0);             // name.
+  getStreamer().EmitIntValue(0, 1);             // terminate the string.
+  getStreamer().EmitValueToAlignment(4);        // ensure 4 byte alignment.
+  getStreamer().PopSection();
   return false;
 }
 
