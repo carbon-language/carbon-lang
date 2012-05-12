@@ -209,6 +209,10 @@ private:
   /// will be either the EndOfStatement or EOF.
   StringRef ParseStringToEndOfStatement();
 
+  /// \brief Parse until the end of a statement or a comma is encountered,
+  /// return the contents from the current token up to the end or comma.
+  StringRef ParseStringToComma();
+
   bool ParseAssignment(StringRef Name, bool allow_redef);
 
   bool ParsePrimaryExpr(const MCExpr *&Res, SMLoc &EndLoc);
@@ -247,6 +251,8 @@ private:
   bool ParseDirectiveIf(SMLoc DirectiveLoc); // ".if"
   // ".ifb" or ".ifnb", depending on ExpectBlank.
   bool ParseDirectiveIfb(SMLoc DirectiveLoc, bool ExpectBlank);
+  // ".ifc" or ".ifnc", depending on ExpectEqual.
+  bool ParseDirectiveIfc(SMLoc DirectiveLoc, bool ExpectEqual);
   // ".ifdef" or ".ifndef", depending on expect_defined
   bool ParseDirectiveIfdef(SMLoc DirectiveLoc, bool expect_defined);
   bool ParseDirectiveElseIf(SMLoc DirectiveLoc); // ".elseif"
@@ -597,6 +603,18 @@ StringRef AsmParser::ParseStringToEndOfStatement() {
   const char *Start = getTok().getLoc().getPointer();
 
   while (Lexer.isNot(AsmToken::EndOfStatement) &&
+         Lexer.isNot(AsmToken::Eof))
+    Lex();
+
+  const char *End = getTok().getLoc().getPointer();
+  return StringRef(Start, End - Start);
+}
+
+StringRef AsmParser::ParseStringToComma() {
+  const char *Start = getTok().getLoc().getPointer();
+
+  while (Lexer.isNot(AsmToken::EndOfStatement) &&
+         Lexer.isNot(AsmToken::Comma) &&
          Lexer.isNot(AsmToken::Eof))
     Lex();
 
@@ -1048,6 +1066,10 @@ bool AsmParser::ParseStatement() {
     return ParseDirectiveIfb(IDLoc, true);
   if (IDVal == ".ifnb")
     return ParseDirectiveIfb(IDLoc, false);
+  if (IDVal == ".ifc")
+    return ParseDirectiveIfc(IDLoc, true);
+  if (IDVal == ".ifnc")
+    return ParseDirectiveIfc(IDLoc, false);
   if (IDVal == ".ifdef")
     return ParseDirectiveIfdef(IDLoc, true);
   if (IDVal == ".ifndef" || IDVal == ".ifnotdef")
@@ -2342,6 +2364,38 @@ bool AsmParser::ParseDirectiveIfb(SMLoc DirectiveLoc, bool ExpectBlank) {
   return false;
 }
 
+/// ParseDirectiveIfc
+/// ::= .ifc string1, string2
+bool AsmParser::ParseDirectiveIfc(SMLoc DirectiveLoc, bool ExpectEqual) {
+  TheCondStack.push_back(TheCondState);
+  TheCondState.TheCond = AsmCond::IfCond;
+
+  if(TheCondState.Ignore) {
+    EatToEndOfStatement();
+  } else {
+    StringRef Str1 = ParseStringToComma();
+
+    if (getLexer().isNot(AsmToken::Comma))
+      return TokError("unexpected token in '.ifc' directive");
+
+    Lex();
+
+    StringRef Str2 = ParseStringToEndOfStatement();
+
+    if (getLexer().isNot(AsmToken::EndOfStatement))
+      return TokError("unexpected token in '.ifc' directive");
+
+    Lex();
+
+    TheCondState.CondMet = ExpectEqual == (Str1 == Str2);
+    TheCondState.Ignore = !TheCondState.CondMet;
+  }
+
+  return false;
+}
+
+/// ParseDirectiveIfdef
+/// ::= .ifdef symbol
 bool AsmParser::ParseDirectiveIfdef(SMLoc DirectiveLoc, bool expect_defined) {
   StringRef Name;
   TheCondStack.push_back(TheCondState);
