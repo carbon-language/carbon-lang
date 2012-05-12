@@ -245,6 +245,8 @@ private:
   bool ParseDirectiveIncbin(); // ".incbin"
 
   bool ParseDirectiveIf(SMLoc DirectiveLoc); // ".if"
+  // ".ifb" or ".ifnb", depending on ExpectBlank.
+  bool ParseDirectiveIfb(SMLoc DirectiveLoc, bool ExpectBlank);
   // ".ifdef" or ".ifndef", depending on expect_defined
   bool ParseDirectiveIfdef(SMLoc DirectiveLoc, bool expect_defined);
   bool ParseDirectiveElseIf(SMLoc DirectiveLoc); // ".elseif"
@@ -1042,6 +1044,10 @@ bool AsmParser::ParseStatement() {
   // example.
   if (IDVal == ".if")
     return ParseDirectiveIf(IDLoc);
+  if (IDVal == ".ifb")
+    return ParseDirectiveIfb(IDLoc, true);
+  if (IDVal == ".ifnb")
+    return ParseDirectiveIfb(IDLoc, false);
   if (IDVal == ".ifdef")
     return ParseDirectiveIfdef(IDLoc, true);
   if (IDVal == ".ifndef" || IDVal == ".ifnotdef")
@@ -2307,6 +2313,29 @@ bool AsmParser::ParseDirectiveIf(SMLoc DirectiveLoc) {
     Lex();
 
     TheCondState.CondMet = ExprValue;
+    TheCondState.Ignore = !TheCondState.CondMet;
+  }
+
+  return false;
+}
+
+/// ParseDirectiveIfb
+/// ::= .ifb string
+bool AsmParser::ParseDirectiveIfb(SMLoc DirectiveLoc, bool ExpectBlank) {
+  TheCondStack.push_back(TheCondState);
+  TheCondState.TheCond = AsmCond::IfCond;
+
+  if(TheCondState.Ignore) {
+    EatToEndOfStatement();
+  } else {
+    StringRef Str = ParseStringToEndOfStatement();
+
+    if (getLexer().isNot(AsmToken::EndOfStatement))
+      return TokError("unexpected token in '.ifb' directive");
+
+    Lex();
+
+    TheCondState.CondMet = ExpectBlank == Str.empty();
     TheCondState.Ignore = !TheCondState.CondMet;
   }
 
