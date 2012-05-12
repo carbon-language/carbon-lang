@@ -172,6 +172,7 @@ public:
   bool isPostIncrement(const MachineInstr* MI) const;
   bool isNewValueStore(const MachineInstr* MI) const;
   bool isNewValueJump(const MachineInstr* MI) const;
+  bool isNewValueJumpCandidate(const MachineInstr *MI) const;
   unsigned getImmExtForm(const MachineInstr* MI) const;
   unsigned getNormalBranchForm(const MachineInstr* MI) const;
   bool isExpr(unsigned OpType) const;

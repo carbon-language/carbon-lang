@@ -1922,6 +1922,12 @@ getMatchingCondBranchOpcode(int Opc, bool invertPredicate) const {
   case Hexagon::JMP:
     return !invertPredicate ? Hexagon::JMP_c :
                               Hexagon::JMP_cNot;
+  case Hexagon::JMP_EQrrPt_nv_V4:
+    return !invertPredicate ? Hexagon::JMP_EQrrPt_nv_V4 :
+                              Hexagon::JMP_EQrrNotPt_nv_V4;
+  case Hexagon::JMP_EQriPt_nv_V4:
+    return !invertPredicate ? Hexagon::JMP_EQriPt_nv_V4 :
+                              Hexagon::JMP_EQriNotPt_nv_V4;
   case Hexagon::ADD_ri:
     return !invertPredicate ? Hexagon::ADD_ri_cPt :
                               Hexagon::ADD_ri_cNotPt;
@@ -2609,6 +2615,25 @@ isSpillPredRegOp(const MachineInstr *MI) const {
     case Hexagon::STriw_pred :
     case Hexagon::LDriw_pred :
       return true;
+  }
+}
+
+bool HexagonInstrInfo::isNewValueJumpCandidate(const MachineInstr *MI) const {
+  switch (MI->getOpcode()) {
+    case Hexagon::CMPEQrr:
+    case Hexagon::CMPEQri:
+    case Hexagon::CMPLTrr:
+    case Hexagon::CMPGTrr:
+    case Hexagon::CMPGTri:
+    case Hexagon::CMPLTUrr:
+    case Hexagon::CMPGTUrr:
+    case Hexagon::CMPGTUri:
+    case Hexagon::CMPGEri:
+    case Hexagon::CMPGEUri:
+      return true;
+
+    default:
+      return false;
   }
   return false;
 }

@@ -41,6 +41,8 @@ namespace llvm {
   FunctionPass *createHexagonPeephole();
   FunctionPass *createHexagonFixupHwLoops();
   FunctionPass *createHexagonPacketizer();
+  FunctionPass *createHexagonNewValueJump();
+
 
 /* TODO: object output.
   MCCodeEmitter *createHexagonMCCodeEmitter(const Target &,
@@ -48,7 +50,7 @@ namespace llvm {
                                             MCContext &Ctx);
 */
 /* TODO: assembler input.
-  TargetAsmBackend *createHexagonAsmBackend(const Target &, 
+  TargetAsmBackend *createHexagonAsmBackend(const Target &,
                                                   const std::string &);
 */
   void HexagonLowerToMC(const MachineInstr *MI, MCInst &MCI,
