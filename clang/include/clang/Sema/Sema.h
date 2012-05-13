@@ -1572,6 +1572,8 @@ public:
   bool mergeDLLExportAttr(Decl *D, SourceRange Range, bool Inherited);
   bool mergeFormatAttr(Decl *D, SourceRange Range, bool Inherited,
                        StringRef Format, int FormatIdx, int FirstArg);
+  bool mergeSectionAttr(Decl *D, SourceRange Range, bool Inherited,
+                        StringRef Name);
   bool mergeDeclAttribute(Decl *New, InheritableAttr *Attr);
 
   void mergeDeclAttributes(Decl *New, Decl *Old, bool MergeDeprecation = true);

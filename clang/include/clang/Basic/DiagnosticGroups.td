@@ -25,6 +25,7 @@ def AmbigMemberTemplate : DiagGroup<"ambiguous-member-template">;
 def : DiagGroup<"attributes">;
 def : DiagGroup<"bad-function-cast">;
 def Availability : DiagGroup<"availability">;
+def Section : DiagGroup<"section">;
 def AutoImport : DiagGroup<"auto-import">;
 def ConstantConversion : DiagGroup<"constant-conversion">;
 def LiteralConversion : DiagGroup<"literal-conversion">;

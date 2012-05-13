@@ -1678,6 +1678,9 @@ bool Sema::mergeDeclAttribute(Decl *D, InheritableAttr *Attr) {
     return mergeFormatAttr(D, FA->getRange(), true, FA->getType(),
                            FA->getFormatIdx(), FA->getFirstArg());
 
+  if (SectionAttr *SA = dyn_cast<SectionAttr>(Attr))
+    return mergeSectionAttr(D, SA->getRange(), true, SA->getName());
+
   if (!DeclHasAttr(D, Attr)) {
     InheritableAttr *NewAttr = cast<InheritableAttr>(Attr->clone(Context));
     NewAttr->setInherited(true);

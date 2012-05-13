@@ -13,3 +13,7 @@ void test() {
   __attribute__((section("NEAR,x"))) int n1; // expected-error {{'section' attribute is not valid on local variables}}
   __attribute__((section("NEAR,x"))) static int n2; // ok.
 }
+
+// pr9356
+void __attribute__((section("foo,zed"))) test2(void); // expected-note {{previous attribute is here}}
+void __attribute__((section("bar,zed"))) test2(void) {} // expected-warning {{section does not match previous declaration}}

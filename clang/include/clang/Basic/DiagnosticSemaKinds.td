@@ -1567,10 +1567,14 @@ def warn_objc_redundant_literal_use : Warning<
 
 def err_only_annotate_after_access_spec : Error<
   "access specifier can only have annotation attributes">;
+
 def err_attribute_section_invalid_for_target : Error<
   "argument to 'section' attribute is not valid for this target: %0">;
 def err_attribute_section_local_variable : Error<
   "'section' attribute is not valid on local variables">;
+def warn_mismatched_section : Warning<
+  "section does not match previous declaration">, InGroup<Section>;
+
 def err_attribute_aligned_not_power_of_two : Error<
   "requested alignment is not a power of 2">;
 def warn_redeclaration_without_attribute_prev_attribute_ignored : Warning<

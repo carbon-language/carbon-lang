@@ -2286,6 +2286,22 @@ static void handleReqdWorkGroupSize(Sema &S, Decl *D,
                                                      WGSize[2]));
 }
 
+bool Sema::mergeSectionAttr(Decl *D, SourceRange Range, bool Inherited,
+                            StringRef Name) {
+  if (SectionAttr *ExistingAttr = D->getAttr<SectionAttr>()) {
+    if (ExistingAttr->getName() == Name)
+      return false;
+    Diag(ExistingAttr->getLocation(), diag::warn_mismatched_section);
+    Diag(Range.getBegin(), diag::note_previous_attribute);
+    return false;
+  }
+  SectionAttr *Attr = ::new (Context) SectionAttr(Range, Context, Name);
+  if (Inherited)
+    Attr->setInherited(true);
+  D->addAttr(Attr);
+  return true;
+}
+
 static void handleSectionAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   // Attribute has no arguments.
   if (!checkAttributeNumArgs(S, Attr, 1))
@@ -2313,9 +2329,7 @@ static void handleSectionAttr(Sema &S, Decl *D, const AttributeList &Attr) {
     S.Diag(SE->getLocStart(), diag::err_attribute_section_local_variable);
     return;
   }
-  
-  D->addAttr(::new (S.Context) SectionAttr(Attr.getRange(), S.Context,
-                                           SE->getString()));
+  S.mergeSectionAttr(D, Attr.getRange(), false, SE->getString());
 }
 
 
