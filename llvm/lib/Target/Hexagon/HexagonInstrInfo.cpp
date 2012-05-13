@@ -171,6 +171,7 @@ bool HexagonInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
                                  MachineBasicBlock *&FBB,
                                  SmallVectorImpl<MachineOperand> &Cond,
                                  bool AllowModify) const {
+  TBB = NULL;
   FBB = NULL;
 
   // If the block has no terminators, it just falls into the block after it.
