@@ -130,7 +130,7 @@ void InitializeShadowMemory() {
       kLinuxShadowEnd - kLinuxShadowBeg,
       PROT_READ | PROT_WRITE,
       MAP_PRIVATE | MAP_ANON | MAP_FIXED | MAP_NORESERVE,
-      0, 0);
+      -1, 0);
   if (shadow != kLinuxShadowBeg) {
     Printf("FATAL: ThreadSanitizer can not mmap the shadow memory\n");
     Printf("FATAL: Make sure to compile with -fPIE and to link with -pie.\n");
