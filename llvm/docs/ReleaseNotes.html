@@ -308,6 +308,21 @@ Release Notes</a>.</h1>
 
 </div>
 
+<h3>Portable OpenCL (pocl)</h3>
+
+<div>
+
+<p>In addition to producing an easily portable open source OpenCL
+   implementation, another major goal pocl is improving performance portability
+   of OpenCL programs with compiler optimizations, reducing the need for
+   target-dependent manual optimizations. An important part of pocl is a set of
+   LLVM passes used to statically parallelize multiple work-items with the
+   kernel compiler, even in the presence of work-group barriers. This enables
+   static parallelization of the fine-grained static concurrency in the work
+   groups in multiple ways (SIMD, VLIW, superscalar,...).</p>
+
+</div>
+
 <h3>Pure</h3>
 
 <div>
@@ -326,6 +341,25 @@ Release Notes</a>.</h1>
 
 <p>Pure version 0.54 has been tested and is known to work with LLVM 3.1 (and
    continues to work with older LLVM releases >= 2.5).</p>
+
+</div>
+
+<h3>TTA-based Co-design Environment (TCE)</h3>
+
+<div>
+
+<p>TCE is a toolset for designing application-specific processors (ASP) based on
+   the Transport triggered architecture (TTA). The toolset provides a complete
+   co-design flow from C/C++ programs down to synthesizable VHDL/Verilog and
+   parallel program binaries. Processor customization points include the
+   register files, function units, supported operations, and the interconnection
+   network.</p>
+
+<p>TCE uses Clang and LLVM for C/C++ language support, target independent
+   optimizations and also for parts of code generation. It generates new
+   LLVM-based code generators "on the fly" for the designed TTA processors and
+   loads them in to the compiler backend as runtime libraries to avoid
+   per-target recompilation of larger parts of the compiler chain.</p>
 
 </div>
 
