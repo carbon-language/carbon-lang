@@ -151,22 +151,16 @@ static void HandleX86ForceAlignArgPointerAttr(Decl *D,
                                                            S.Context));
 }
 
-bool Sema::mergeDLLImportAttr(Decl *D, SourceRange Range, bool Inherited) {
+DLLImportAttr *Sema::mergeDLLImportAttr(Decl *D, SourceRange Range) {
   if (D->hasAttr<DLLExportAttr>()) {
     Diag(Range.getBegin(), diag::warn_attribute_ignored) << "dllimport";
-    return false;
+    return NULL;
   }
 
   if (D->hasAttr<DLLImportAttr>())
-    return false;
+    return NULL;
 
-  DLLImportAttr *Attr =
-    ::new (Context) DLLImportAttr(Range, Context);
-  if (Inherited)
-    Attr->setInherited(true);
-  D->addAttr(Attr);
-
-  return true;
+  return ::new (Context) DLLImportAttr(Range, Context);
 }
 
 static void HandleDLLImportAttr(Decl *D, const AttributeList &Attr, Sema &S) {
@@ -195,25 +189,21 @@ static void HandleDLLImportAttr(Decl *D, const AttributeList &Attr, Sema &S) {
     return;
   }
 
-  S.mergeDLLImportAttr(D, Attr.getRange(), false);
+  DLLImportAttr *NewAttr = S.mergeDLLImportAttr(D, Attr.getRange());
+  if (NewAttr)
+    D->addAttr(NewAttr);
 }
 
-bool Sema::mergeDLLExportAttr(Decl *D, SourceRange Range, bool Inherited) {
+DLLExportAttr *Sema::mergeDLLExportAttr(Decl *D, SourceRange Range) {
   if (DLLImportAttr *Import = D->getAttr<DLLImportAttr>()) {
     Diag(Import->getLocation(), diag::warn_attribute_ignored) << "dllimport";
     D->dropAttr<DLLImportAttr>();
   }
 
   if (D->hasAttr<DLLExportAttr>())
-    return false;
+    return NULL;
 
-  DLLExportAttr *Attr =
-    ::new (Context) DLLExportAttr(Range, Context);
-  if (Inherited)
-    Attr->setInherited(true);
-  D->addAttr(Attr);
-
-  return true;
+  return ::new (Context) DLLExportAttr(Range, Context);
 }
 
 static void HandleDLLExportAttr(Decl *D, const AttributeList &Attr, Sema &S) {
@@ -239,7 +229,9 @@ static void HandleDLLExportAttr(Decl *D, const AttributeList &Attr, Sema &S) {
     return;
   }
 
-  S.mergeDLLExportAttr(D, Attr.getRange(), false);
+  DLLExportAttr *NewAttr = S.mergeDLLExportAttr(D, Attr.getRange());
+  if (NewAttr)
+    D->addAttr(NewAttr);
 }
 
 namespace {

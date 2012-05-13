@@ -1659,30 +1659,27 @@ DeclHasAttr(const Decl *D, const Attr *A) {
 }
 
 bool Sema::mergeDeclAttribute(Decl *D, InheritableAttr *Attr) {
+  InheritableAttr *NewAttr = NULL;
   if (AvailabilityAttr *AA = dyn_cast<AvailabilityAttr>(Attr))
-    return mergeAvailabilityAttr(D, AA->getRange(), true, AA->getPlatform(),
-                                 AA->getIntroduced(), AA->getDeprecated(),
-                                 AA->getObsoleted(), AA->getUnavailable(),
-                                 AA->getMessage());
+    NewAttr = mergeAvailabilityAttr(D, AA->getRange(), AA->getPlatform(),
+                                    AA->getIntroduced(), AA->getDeprecated(),
+                                    AA->getObsoleted(), AA->getUnavailable(),
+                                    AA->getMessage());
+  else if (VisibilityAttr *VA = dyn_cast<VisibilityAttr>(Attr))
+    NewAttr = mergeVisibilityAttr(D, VA->getRange(), VA->getVisibility());
+  else if (DLLImportAttr *ImportA = dyn_cast<DLLImportAttr>(Attr))
+    NewAttr = mergeDLLImportAttr(D, ImportA->getRange());
+  else if (DLLExportAttr *ExportA = dyn_cast<DLLExportAttr>(Attr))
+    NewAttr = mergeDLLExportAttr(D, ExportA->getRange());
+  else if (FormatAttr *FA = dyn_cast<FormatAttr>(Attr))
+    NewAttr = mergeFormatAttr(D, FA->getRange(), FA->getType(),
+                              FA->getFormatIdx(), FA->getFirstArg());
+  else if (SectionAttr *SA = dyn_cast<SectionAttr>(Attr))
+    NewAttr = mergeSectionAttr(D, SA->getRange(), SA->getName());
+  else if (!DeclHasAttr(D, Attr))
+    NewAttr = cast<InheritableAttr>(Attr->clone(Context));
 
-  if (VisibilityAttr *VA = dyn_cast<VisibilityAttr>(Attr))
-    return mergeVisibilityAttr(D, VA->getRange(), true, VA->getVisibility());
-
-  if (DLLImportAttr *ImportA = dyn_cast<DLLImportAttr>(Attr))
-    return mergeDLLImportAttr(D, ImportA->getRange(), true);
-
-  if (DLLExportAttr *ExportA = dyn_cast<DLLExportAttr>(Attr))
-    return mergeDLLExportAttr(D, ExportA->getRange(), true);
-
-  if (FormatAttr *FA = dyn_cast<FormatAttr>(Attr))
-    return mergeFormatAttr(D, FA->getRange(), true, FA->getType(),
-                           FA->getFormatIdx(), FA->getFirstArg());
-
-  if (SectionAttr *SA = dyn_cast<SectionAttr>(Attr))
-    return mergeSectionAttr(D, SA->getRange(), true, SA->getName());
-
-  if (!DeclHasAttr(D, Attr)) {
-    InheritableAttr *NewAttr = cast<InheritableAttr>(Attr->clone(Context));
+  if (NewAttr) {
     NewAttr->setInherited(true);
     D->addAttr(NewAttr);
     return true;

@@ -1769,14 +1769,13 @@ static bool checkAvailabilityAttr(Sema &S, SourceRange Range,
   return false;
 }
 
-bool Sema::mergeAvailabilityAttr(Decl *D, SourceRange Range,
-                                 bool Inherited,
-                                 IdentifierInfo *Platform,
-                                 VersionTuple Introduced,
-                                 VersionTuple Deprecated,
-                                 VersionTuple Obsoleted,
-                                 bool IsUnavailable,
-                                 StringRef Message) {
+AvailabilityAttr *Sema::mergeAvailabilityAttr(Decl *D, SourceRange Range,
+                                              IdentifierInfo *Platform,
+                                              VersionTuple Introduced,
+                                              VersionTuple Deprecated,
+                                              VersionTuple Obsoleted,
+                                              bool IsUnavailable,
+                                              StringRef Message) {
   VersionTuple MergedIntroduced = Introduced;
   VersionTuple MergedDeprecated = Deprecated;
   VersionTuple MergedObsoleted = Obsoleted;
@@ -1849,21 +1848,15 @@ bool Sema::mergeAvailabilityAttr(Decl *D, SourceRange Range,
       MergedIntroduced == Introduced &&
       MergedDeprecated == Deprecated &&
       MergedObsoleted == Obsoleted)
-    return false;
+    return NULL;
 
   if (!checkAvailabilityAttr(*this, Range, Platform, MergedIntroduced,
                              MergedDeprecated, MergedObsoleted)) {
-    AvailabilityAttr *Attr =
-      ::new (Context) AvailabilityAttr(Range, Context, Platform,
-                                       Introduced, Deprecated,
-                                       Obsoleted, IsUnavailable, Message);
-
-    if (Inherited)
-      Attr->setInherited(true);
-    D->addAttr(Attr);
-    return true;
+    return ::new (Context) AvailabilityAttr(Range, Context, Platform,
+                                            Introduced, Deprecated,
+                                            Obsoleted, IsUnavailable, Message);
   }
-  return false;
+  return NULL;
 }
 
 static void handleAvailabilityAttr(Sema &S, Decl *D,
@@ -1885,36 +1878,32 @@ static void handleAvailabilityAttr(Sema &S, Decl *D,
   if (SE)
     Str = SE->getString();
 
-  S.mergeAvailabilityAttr(D, Attr.getRange(),
-                          false, Platform,
-                          Introduced.Version,
-                          Deprecated.Version,
-                          Obsoleted.Version,
-                          IsUnavailable,
-                          Str);
+  AvailabilityAttr *NewAttr = S.mergeAvailabilityAttr(D, Attr.getRange(),
+                                                      Platform,
+                                                      Introduced.Version,
+                                                      Deprecated.Version,
+                                                      Obsoleted.Version,
+                                                      IsUnavailable, Str);
+  if (NewAttr)
+    D->addAttr(NewAttr);
 }
 
-bool Sema::mergeVisibilityAttr(Decl *D, SourceRange Range,
-                               bool Inherited,
-                               VisibilityAttr::VisibilityType Vis) {
+VisibilityAttr *Sema::mergeVisibilityAttr(Decl *D, SourceRange Range,
+                                          VisibilityAttr::VisibilityType Vis) {
   if (isa<TypedefNameDecl>(D)) {
     Diag(Range.getBegin(), diag::warn_attribute_ignored) << "visibility";
-    return false;
+    return NULL;
   }
   VisibilityAttr *ExistingAttr = D->getAttr<VisibilityAttr>();
   if (ExistingAttr) {
     VisibilityAttr::VisibilityType ExistingVis = ExistingAttr->getVisibility();
     if (ExistingVis == Vis)
-      return false;
+      return NULL;
     Diag(ExistingAttr->getLocation(), diag::err_mismatched_visibility);
     Diag(Range.getBegin(), diag::note_previous_attribute);
     D->dropAttr<VisibilityAttr>();
   }
-  VisibilityAttr *Attr = ::new (Context) VisibilityAttr(Range, Context, Vis);
-  if (Inherited)
-    Attr->setInherited(true);
-  D->addAttr(Attr);
-  return true;
+  return ::new (Context) VisibilityAttr(Range, Context, Vis);
 }
 
 static void handleVisibilityAttr(Sema &S, Decl *D, const AttributeList &Attr) {
@@ -1955,7 +1944,9 @@ static void handleVisibilityAttr(Sema &S, Decl *D, const AttributeList &Attr) {
     return;
   }
 
-  S.mergeVisibilityAttr(D, Attr.getRange(), false, type);
+  VisibilityAttr *NewAttr = S.mergeVisibilityAttr(D, Attr.getRange(), type);
+  if (NewAttr)
+    D->addAttr(NewAttr);
 }
 
 static void handleObjCMethodFamilyAttr(Sema &S, Decl *decl,
@@ -2286,20 +2277,16 @@ static void handleReqdWorkGroupSize(Sema &S, Decl *D,
                                                      WGSize[2]));
 }
 
-bool Sema::mergeSectionAttr(Decl *D, SourceRange Range, bool Inherited,
-                            StringRef Name) {
+SectionAttr *Sema::mergeSectionAttr(Decl *D, SourceRange Range,
+                                    StringRef Name) {
   if (SectionAttr *ExistingAttr = D->getAttr<SectionAttr>()) {
     if (ExistingAttr->getName() == Name)
-      return false;
+      return NULL;
     Diag(ExistingAttr->getLocation(), diag::warn_mismatched_section);
     Diag(Range.getBegin(), diag::note_previous_attribute);
-    return false;
+    return NULL;
   }
-  SectionAttr *Attr = ::new (Context) SectionAttr(Range, Context, Name);
-  if (Inherited)
-    Attr->setInherited(true);
-  D->addAttr(Attr);
-  return true;
+  return ::new (Context) SectionAttr(Range, Context, Name);
 }
 
 static void handleSectionAttr(Sema &S, Decl *D, const AttributeList &Attr) {
@@ -2329,7 +2316,10 @@ static void handleSectionAttr(Sema &S, Decl *D, const AttributeList &Attr) {
     S.Diag(SE->getLocStart(), diag::err_attribute_section_local_variable);
     return;
   }
-  S.mergeSectionAttr(D, Attr.getRange(), false, SE->getString());
+  SectionAttr *NewAttr = S.mergeSectionAttr(D, Attr.getRange(),
+                                            SE->getString());
+  if (NewAttr)
+    D->addAttr(NewAttr);
 }
 
 
@@ -2589,8 +2579,8 @@ static void handleInitPriorityAttr(Sema &S, Decl *D,
                                                 prioritynum));
 }
 
-bool Sema::mergeFormatAttr(Decl *D, SourceRange Range, bool Inherited,
-                           StringRef Format, int FormatIdx, int FirstArg) {
+FormatAttr *Sema::mergeFormatAttr(Decl *D, SourceRange Range, StringRef Format,
+                                  int FormatIdx, int FirstArg) {
   // Check whether we already have an equivalent format attribute.
   for (specific_attr_iterator<FormatAttr>
          i = D->specific_attr_begin<FormatAttr>(),
@@ -2604,14 +2594,12 @@ bool Sema::mergeFormatAttr(Decl *D, SourceRange Range, bool Inherited,
       // location.
       if (f->getLocation().isInvalid())
         f->setRange(Range);
-      return false;
+      return NULL;
     }
   }
 
-  FormatAttr *Attr = ::new (Context) FormatAttr(Range, Context, Format,
-                                               FormatIdx, FirstArg);
-  D->addAttr(Attr);
-  return true;
+  return ::new (Context) FormatAttr(Range, Context, Format, FormatIdx,
+                                    FirstArg);
 }
 
 /// Handle __attribute__((format(type,idx,firstarg))) attributes based on
@@ -2749,8 +2737,11 @@ static void handleFormatAttr(Sema &S, Decl *D, const AttributeList &Attr) {
     return;
   }
 
-  S.mergeFormatAttr(D, Attr.getRange(), false, Format, Idx.getZExtValue(),
-                    FirstArg.getZExtValue());
+  FormatAttr *NewAttr = S.mergeFormatAttr(D, Attr.getRange(), Format,
+                                          Idx.getZExtValue(),
+                                          FirstArg.getZExtValue());
+  if (NewAttr)
+    D->addAttr(NewAttr);
 }
 
 static void handleTransparentUnionAttr(Sema &S, Decl *D,
