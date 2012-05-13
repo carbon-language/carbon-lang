@@ -660,6 +660,10 @@ syntax, there are still significant gaps in that support.</p>
    from the previous release.</p>
 
 <ul>
+  <li>The C backend has been removed.  It had numerous problems, to the point of
+      not being able to compile any nontrivial program.</li>
+  <li>The Alpha, Blackfin and SystemZ targets have been removed due to lack of
+      maintenance.</li>
   <li>LLVM 3.1 removes support for reading LLVM 2.9 bitcode files. Going
       forward, we aim for all future versions of LLVM to read bitcode files and
       <tt>.ll</tt> files produced by LLVM 3.0 and later.</li>
@@ -735,13 +739,11 @@ syntax, there are still significant gaps in that support.</p>
 
 
 <ul>
-  <li>llvm-stress is a command line tool for generating random .ll files to fuzz
-      different LLVM components. </li>
-  <li>llvm-ld has been removed.  Use llvm-link or Clang instead.</li>
-  <li>....</li>
-</ul>
-
-<ul>
+  <li><tt>llvm-stress</tt> is a command line tool for generating random
+      <tt>.ll</tt> files to fuzz different LLVM components. </li>
+  <li>The <tt>llvm-ld</tt> tool has been removed.  The clang driver provides a
+      more reliable solution for turning a set of bitcode files into a binary.
+      To merge bitcode files <tt>llvm-link</tt> can be used instead.</li>
   <li>....</li>
 </ul>
 
@@ -793,18 +795,13 @@ bindings, please express your intent on IRC or the developers list.</p>
   <p>Known problem areas include:</p>
 
 <ul>
-  <li>The Alpha, Blackfin, CellSPU, MSP430, PTX, SystemZ and
-      XCore backends are experimental, and the Alpha, Blackfin and SystemZ
-      targets have already been removed from mainline.</li>
+  <li>The CellSPU, MSP430, PTX and XCore backends are experimental.</li>
 
   <li>The integrated assembler, disassembler, and JIT is not supported by
       several targets.  If an integrated assembler is not supported, then a
       system assembler is required.  For more details, see the <a
       href="CodeGenerator.html#targetfeatures">Target Features Matrix</a>.
   </li>
-
-  <li>The C backend has numerous problems and is not being actively maintained.
-    Depending on it for anything serious is not advised.</li>
 </ul>
 
 </div>
