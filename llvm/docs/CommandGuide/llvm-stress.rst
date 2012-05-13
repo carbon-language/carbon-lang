@@ -6,7 +6,7 @@ SYNOPSIS
 --------
 
 
-**llvm-cov** [-gcno=filename] [-gcda=filename] [dump]
+**llvm-stress** [-size=filesize] [-seed=initialseed] [-o=outfile]
 
 
 DESCRIPTION
