@@ -448,15 +448,14 @@ Release Notes</a>.</h1>
    expose new optimization opportunities:</p>
 
   <ul>
-    <li>IR support for half float</li>
-    <li>IR support for vectors of pointers, including vector GEPs.</li>
+    <li>A new type representing 16 bit <i>half</i> floating point values has
+        been added.</li>
+    <li>IR now supports vectors of pointers, including vector GEPs.</li>
     <li>Module flags have been introduced. They convey information about the
-        module as a whole to LLVM subsystems.</li>
+        module as a whole to LLVM subsystems. This is currently used to encode
+        Objective C ABI information.</li>
     <li>Loads can now have range metadata attached to them to describe the
         possible values being loaded.</li>
-    <li>Inline cost heuristics have been completely overhauled and now closely
-        model constant propagation through call sites, disregard trivially dead
-        code costs, and can model C++ STL iterator patterns.</li>
     <li>....</li>
   </ul>
 </div>
@@ -481,6 +480,9 @@ Release Notes</a>.</h1>
       post-vectorization cleanup passes. For more information, see the EuroLLVM
       2012 slides: <a href="http://llvm.org/devmtg/2012-04-12/Slides/Hal_Finkel.pdf">
       Autovectorization with LLVM</a>.</li>
+  <li>Inline cost heuristics have been completely overhauled and now closely
+      model constant propagation through call sites, disregard trivially dead
+      code costs, and can model C++ STL iterator patterns.</li>
   <li>....</li>
 </ul>
 
@@ -501,6 +503,9 @@ Release Notes</a>.</h1>
     to the LLVM MC Project Blog Post</a>.</p>
 
 <ul>
+  <li>The integrated assembler can optionally emit debug information when
+      assembling a </tt>.s</tt> file. It can be enabled by passing the
+      <tt>-g</tt> option to <tt>llvm-mc</tt>.</li>
   <li>....</li>
 </ul>
 
