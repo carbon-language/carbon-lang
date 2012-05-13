@@ -456,6 +456,11 @@ Release Notes</a>.</h1>
         Objective C ABI information.</li>
     <li>Loads can now have range metadata attached to them to describe the
         possible values being loaded.</li>
+    <li>The <tt>llvm.ctlz</tt> and <tt>llvm.cttz</tt> intrinsics now have an
+      additional argument which indicates whether the behavior of the intrinsic
+      is undefined on a zero input. This can be used to generate more efficient
+      code on platforms that only have instructions which don't return the type
+      size when counting bits in 0.</li>
     <li>....</li>
   </ul>
 </div>
@@ -543,6 +548,9 @@ Release Notes</a>.</h1>
       representation of large clobber lists on call instructions.  The register
       mask operand references a bit mask of preserved registers. Everything else
       is clobbered.</li>
+  <li>The DWARF debug info writer gained support for emitting data for the
+      <a href="SourceLevelDebugging.html#acceltable">name accelerator tables
+      DWARF extension</a>. It is used by LLDB to speed up name lookup.</li>
 </ul>
 
 <p> We added new TableGen infrastructure to support bundling for
@@ -576,13 +584,14 @@ static heuristics as well as source code annotations such as
 <p>New features and major changes in the X86 target include:</p>
 
 <ul>
-  <li>Bug fixes and improved support for AVX1</li>
-  <li>Support for AVX2 (still incomplete at this point)</li>
+  <li>Greatly improved support for AVX2.</li>
+  <li>Lots of bug fixes and improvements for AVX1.</li>
+  <li>Support for the FMA4 and XOP instruction set extensions.</li>
   <li>Call instructions use the new register mask operands for faster compile
   times and better support for different calling conventions.  The old WINCALL
   instructions are no longer needed.</li>
   <li>DW2 Exception Handling is enabled on Cygwin and MinGW.</li>
-  <li>Support for implicit TLS model used with MS VC runtime</li>
+  <li>Support for implicit TLS model used with MSVC runtime.</li>
 </ul>
 
 </div>
