@@ -1518,12 +1518,22 @@ void Sema::MergeTypedefNameDecl(TypedefNameDecl *New, LookupResult &OldDecls) {
     switch (TypeID->getLength()) {
     default: break;
     case 2:
-      if (!TypeID->isStr("id"))
-        break;
-      Context.setObjCIdRedefinitionType(New->getUnderlyingType());
-      // Install the built-in type for 'id', ignoring the current definition.
-      New->setTypeForDecl(Context.getObjCIdType().getTypePtr());
-      return;
+      {
+        if (!TypeID->isStr("id"))
+          break;
+        QualType T = New->getUnderlyingType();
+        if (!T->isPointerType())
+          break;
+        if (!T->isVoidPointerType()) {
+          QualType PT = T->getAs<PointerType>()->getPointeeType();
+          if (!PT->isStructureType())
+            break;
+        }
+        Context.setObjCIdRedefinitionType(T);
+        // Install the built-in type for 'id', ignoring the current definition.
+        New->setTypeForDecl(Context.getObjCIdType().getTypePtr());
+        return;
+      }
     case 5:
       if (!TypeID->isStr("Class"))
         break;
