@@ -1630,9 +1630,7 @@ StringRef ScalarNode::getValue(SmallVectorImpl<char> &Storage) const {
     return UnquotedValue;
   }
   // Plain or block.
-  size_t trimtrail = Value.rfind(' ');
-  return Value.drop_back(
-    trimtrail == StringRef::npos ? 0 : Value.size() - trimtrail);
+  return Value.rtrim(" ");
 }
 
 StringRef ScalarNode::unescapeDoubleQuoted( StringRef UnquotedValue
