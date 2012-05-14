@@ -42,7 +42,8 @@ TEST(BitVectorTest, TrivialOperation) {
   EXPECT_FALSE(Vec.none());
   EXPECT_FALSE(Vec.empty());
 
-  BitVector Inv = ~Vec;
+  BitVector Inv = Vec;
+  Inv.flip();
   EXPECT_EQ(6U, Inv.count());
   EXPECT_EQ(11U, Inv.size());
   EXPECT_TRUE(Inv.any());
@@ -52,7 +53,7 @@ TEST(BitVectorTest, TrivialOperation) {
 
   EXPECT_FALSE(Inv == Vec);
   EXPECT_TRUE(Inv != Vec);
-  Vec = ~Vec;
+  Vec.flip();
   EXPECT_TRUE(Inv == Vec);
   EXPECT_FALSE(Inv != Vec);
 
@@ -131,7 +132,7 @@ TEST(BitVectorTest, TrivialOperation) {
   EXPECT_TRUE(Vec.none());
   EXPECT_FALSE(Vec.empty());
 
-  Inv = ~BitVector();
+  Inv = BitVector().flip();
   EXPECT_EQ(0U, Inv.count());
   EXPECT_EQ(0U, Inv.size());
   EXPECT_FALSE(Inv.any());

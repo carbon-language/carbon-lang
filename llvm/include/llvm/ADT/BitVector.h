@@ -251,11 +251,6 @@ public:
     return *this;
   }
 
-  // No argument flip.
-  BitVector operator~() const {
-    return BitVector(*this).flip();
-  }
-
   // Indexing.
   reference operator[](unsigned Idx) {
     assert (Idx < Size && "Out-of-bounds Bit access.");
