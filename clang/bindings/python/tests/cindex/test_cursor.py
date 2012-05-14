@@ -67,6 +67,18 @@ def test_get_children():
     assert tu_nodes[2].displayname == 'f0(int, int)'
     assert tu_nodes[2].is_definition() == True
 
+def test_canonical():
+    source = 'struct X; struct X; struct X { int member; };'
+    tu = get_tu(source)
+
+    cursors = []
+    for cursor in tu.cursor.get_children():
+        if cursor.spelling == 'X':
+            cursors.append(cursor)
+
+    assert len(cursors) == 3
+    assert cursors[1].canonical == cursors[2].canonical
+
 def test_underlying_type():
     tu = get_tu('typedef int foo;')
     typedef = get_cursor(tu, 'foo')
