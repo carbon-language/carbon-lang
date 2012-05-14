@@ -25,7 +25,7 @@ static void SignalUnsafeCall(ThreadState *thr, uptr pc) {
   stack.ObtainCurrent(thr, pc);
   ScopedReport rep(ReportTypeSignalUnsafe);
   rep.AddStack(&stack);
-  OutputReport(rep);
+  OutputReport(rep, rep.GetReport()->stacks[0]);
 }
 
 void *user_alloc(ThreadState *thr, uptr pc, uptr sz) {

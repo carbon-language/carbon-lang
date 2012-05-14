@@ -371,7 +371,8 @@ void InitializeDynamicAnnotations();
 void Die() NORETURN;
 
 void ReportRace(ThreadState *thr);
-bool OutputReport(const ScopedReport &srep, ReportStack *suppress_stack = 0);
+bool OutputReport(const ScopedReport &srep,
+                  const ReportStack *suppress_stack = 0);
 bool IsExpectedReport(uptr addr, uptr size);
 
 #if defined(TSAN_DEBUG_OUTPUT) && TSAN_DEBUG_OUTPUT >= 1

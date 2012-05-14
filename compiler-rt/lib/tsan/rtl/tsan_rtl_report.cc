@@ -273,7 +273,7 @@ static void AddRacyStacks(ThreadState *thr, const StackTrace (&traces)[2],
   }
 }
 
-bool OutputReport(const ScopedReport &srep, ReportStack *suppress_stack) {
+bool OutputReport(const ScopedReport &srep, const ReportStack *suppress_stack) {
   const ReportDesc *rep = srep.GetReport();
   bool suppressed = IsSuppressed(rep->typ, suppress_stack);
   suppressed = OnReport(rep, suppressed);
