@@ -15,7 +15,6 @@
 #include "tsan_rtl.h"
 
 #include <unistd.h>
-#include <dlfcn.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -23,101 +22,142 @@
 #include <link.h>
 #include <linux/limits.h>
 #include <sys/types.h>
-#include <sys/wait.h>
 
 namespace __tsan {
 
-static bool GetSymbolizerFd(int *infdp, int *outfdp) {
-  static int outfd[2];
-  static int infd[2];
-  static int pid = -1;
-  static int inited = 0;
-  if (inited == 0) {
-    inited = -1;
-    if (pipe(outfd)) {
-      Printf("ThreadSanitizer: pipe() failed (%d)\n", errno);
-      Die();
-    }
-    if (pipe(infd)) {
-      Printf("ThreadSanitizer: pipe() failed (%d)\n", errno);
-      Die();
-    }
-    pid = fork();
-    if (pid == 0) {
-      close(STDOUT_FILENO);
-      close(STDIN_FILENO);
-      dup2(outfd[0], STDIN_FILENO);
-      dup2(infd[1], STDOUT_FILENO);
-      close(outfd[0]);
-      close(outfd[1]);
-      close(infd[0]);
-      close(infd[1]);
-      InternalScopedBuf<char> exe(PATH_MAX);
-      ssize_t len = readlink("/proc/self/exe", exe, exe.Size() - 1);
-      exe.Ptr()[len] = 0;
-      execl("/usr/bin/addr2line", "/usr/bin/addr2line", "-Cfe", exe.Ptr(),
-          NULL);
-      _exit(0);
-    } else if (pid < 0) {
-      Printf("ThreadSanitizer: failed to fork symbolizer\n");
-      Die();
-    }
+struct ModuleDesc {
+  ModuleDesc *next;
+  const char *fullname;
+  const char *name;
+  uptr base;
+  uptr end;
+  int inp_fd;
+  int out_fd;
+};
+
+struct DlIteratePhdrCtx {
+  ModuleDesc *modules;
+  bool is_first;
+};
+
+static void InitModule(ModuleDesc *m) {
+  int outfd[2];
+  if (pipe(outfd)) {
+    Printf("ThreadSanitizer: pipe() failed (%d)\n", errno);
+    Die();
+  }
+  int infd[2];
+  if (pipe(infd)) {
+    Printf("ThreadSanitizer: pipe() failed (%d)\n", errno);
+    Die();
+  }
+  int pid = fork();
+  if (pid == 0) {
+    close(STDOUT_FILENO);
+    close(STDIN_FILENO);
+    dup2(outfd[0], STDIN_FILENO);
+    dup2(infd[1], STDOUT_FILENO);
     close(outfd[0]);
+    close(outfd[1]);
+    close(infd[0]);
     close(infd[1]);
-    inited = 1;
-  } else if (inited > 0) {
-    int status = 0;
-    if (pid == waitpid(pid, &status, WNOHANG)) {
-      Printf("ThreadSanitizer: symbolizer died with status %d\n",
-          WEXITSTATUS(status));
-      Die();
+    execl("/usr/bin/addr2line", "/usr/bin/addr2line", "-Cfe", m->fullname, 0);
+    _exit(0);
+  } else if (pid < 0) {
+    Printf("ThreadSanitizer: failed to fork symbolizer\n");
+    Die();
+  }
+  close(outfd[0]);
+  close(infd[1]);
+  m->inp_fd = infd[0];
+  m->out_fd = outfd[1];
+}
+
+static int dl_iterate_phdr_cb(dl_phdr_info *info, size_t size, void *arg) {
+  DlIteratePhdrCtx *ctx = (DlIteratePhdrCtx*)arg;
+  InternalScopedBuf<char> tmp(128);
+  if (ctx->is_first) {
+    Snprintf(tmp.Ptr(), tmp.Size(), "/proc/%d/exe", (int)getpid());
+    info->dlpi_name = tmp.Ptr();
+  }
+  ctx->is_first = false;
+  if (info->dlpi_name == 0 || info->dlpi_name[0] == 0)
+    return 0;
+  ModuleDesc *m = (ModuleDesc*)internal_alloc(MBlockReportStack,
+                                              sizeof(ModuleDesc));
+  m->next = ctx->modules;
+  ctx->modules = m;
+  m->fullname = internal_strdup(info->dlpi_name);
+  m->name = strrchr(m->fullname, '/');  // FIXME: internal_strrchr
+  if (m->name)
+    m->name += 1;
+  else
+    m->name = m->fullname;
+  m->base = (uptr)-1;
+  m->end = 0;
+  m->inp_fd = -1;
+  m->out_fd = -1;
+  for (int i = 0; i < info->dlpi_phnum; i++) {
+    uptr base1 = info->dlpi_addr + info->dlpi_phdr[i].p_vaddr;
+    uptr end1 = base1 + info->dlpi_phdr[i].p_memsz;
+    if (m->base > base1)
+      m->base = base1;
+    if (m->end < end1)
+      m->end = end1;
+  }
+  DPrintf("Module %s %lx-%lx\n", m->name, m->base, m->end);
+  return 0;
+}
+
+static ModuleDesc *InitModules() {
+  DlIteratePhdrCtx ctx = {0, true};
+  dl_iterate_phdr(dl_iterate_phdr_cb, &ctx);
+  return ctx.modules;
+}
+
+static ModuleDesc *GetModuleDesc(uptr addr) {
+  static ModuleDesc *modules = 0;
+  if (modules == 0)
+    modules = InitModules();
+  for (ModuleDesc *m = modules; m; m = m->next) {
+    if (addr >= m->base && addr < m->end) {
+      if (m->inp_fd == -1)
+        InitModule(m);
+      return m;
     }
   }
-  *infdp = infd[0];
-  *outfdp = outfd[1];
-  return inited > 0;
+  return 0;
 }
 
-static int dl_iterate_phdr_cb(dl_phdr_info *info, size_t size, void *ctx) {
-  *(uptr*)ctx = (uptr)info->dlpi_addr;
-  return 1;
-}
-
-static uptr GetImageBase() {
-  static uptr base = 0;
-  if (base == 0)
-    dl_iterate_phdr(dl_iterate_phdr_cb, &base);
-  return base;
+static ReportStack *NewFrame(uptr addr) {
+  ReportStack *ent = (ReportStack*)internal_alloc(MBlockReportStack,
+                                                  sizeof(ReportStack));
+  internal_memset(ent, 0, sizeof(*ent));
+  ent->pc = addr;
+  return ent;
 }
 
 ReportStack *SymbolizeCode(uptr addr) {
-  uptr base = GetImageBase();
-  uptr offset = addr - base;
-  int infd = -1;
-  int outfd = -1;
-  if (!GetSymbolizerFd(&infd, &outfd))
-    return 0;
+  ModuleDesc *m = GetModuleDesc(addr);
+  if (m == 0)
+    NewFrame(addr);
+  uptr offset = addr - m->base;
   char addrstr[32];
   Snprintf(addrstr, sizeof(addrstr), "%p\n", (void*)offset);
-  if (0 >= write(outfd, addrstr, internal_strlen(addrstr))) {
+  if (0 >= write(m->out_fd, addrstr, internal_strlen(addrstr))) {
     Printf("ThreadSanitizer: can't write from symbolizer\n");
     Die();
   }
   InternalScopedBuf<char> func(1024);
-  ssize_t len = read(infd, func, func.Size() - 1);
+  ssize_t len = read(m->inp_fd, func, func.Size() - 1);
   if (len <= 0) {
     Printf("ThreadSanitizer: can't read from symbolizer\n");
     Die();
   }
   func.Ptr()[len] = 0;
-  ReportStack *res = (ReportStack*)internal_alloc(MBlockReportStack,
-                                                  sizeof(ReportStack));
-  internal_memset(res, 0, sizeof(*res));
-  res->module = (char*)internal_alloc(MBlockReportStack, 4);
-  internal_memcpy(res->module, "exe", 4);
+  ReportStack *res = NewFrame(addr);
+  res->module = internal_strdup(m->name);
   res->offset = offset;
-  res->pc = addr;
-
   char *pos = strchr(func, '\n');
   if (pos && func[0] != '?') {
     res->func = (char*)internal_alloc(MBlockReportStack, pos - func + 1);
