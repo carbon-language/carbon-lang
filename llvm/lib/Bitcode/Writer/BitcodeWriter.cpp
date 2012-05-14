@@ -1159,7 +1159,7 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
       Code = bitc::FUNC_CODE_INST_SWITCH;
       SwitchInst &SI = cast<SwitchInst>(I);
       
-      uint32_t SwitchRecordHeader = SI.Hash() | (SWITCH_INST_MAGIC << 16); 
+      uint32_t SwitchRecordHeader = SI.hash() | (SWITCH_INST_MAGIC << 16); 
       Vals64.push_back(SwitchRecordHeader);      
       
       Vals64.push_back(VE.getTypeID(SI.getCondition()->getType()));

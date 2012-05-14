@@ -2733,7 +2733,7 @@ public:
     setOperand(idx*2+1, (Value*)NewSucc);
   }
   
-  uint16_t Hash() const {
+  uint16_t hash() const {
     uint32_t NumberOfCases = (uint32_t)getNumCases();
     uint16_t Hash = (0xFFFF & NumberOfCases) ^ (NumberOfCases >> 16);
     for (ConstCaseIt i = case_begin(), e = case_end();

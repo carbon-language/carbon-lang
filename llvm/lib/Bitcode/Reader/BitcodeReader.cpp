@@ -2280,7 +2280,7 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
           ConstantRangesSet Case = CaseBuilder.getCase(); 
           SI->addCase(Case, DestBB);
         }
-        uint16_t Hash = SI->Hash();
+        uint16_t Hash = SI->hash();
         if (Hash != (Record[0] & 0xFFFF))
           return Error("Invalid SWITCH record");
         I = SI;
