@@ -28,6 +28,10 @@ namespace reference {
     // CHECK-NEXT: store %{{.*}}* %{{.*}}, %{{.*}}** %
     A &ra1a = {a};
 
+    using T = A&;
+    // CHECK-NEXT: store %{{.*}}* %{{.*}}, %{{.*}}** %
+    A &ra1b = T{a};
+
     // CHECK-NEXT: ret
   }
 

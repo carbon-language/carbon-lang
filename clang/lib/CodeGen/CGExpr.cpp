@@ -671,10 +671,7 @@ LValue CodeGenFunction::EmitLValue(const Expr *E) {
   case Expr::PseudoObjectExprClass:
     return EmitPseudoObjectLValue(cast<PseudoObjectExpr>(E));
   case Expr::InitListExprClass:
-    assert(cast<InitListExpr>(E)->getNumInits() == 1 &&
-           "Only single-element init list can be lvalue.");
-    return EmitLValue(cast<InitListExpr>(E)->getInit(0));
-
+    return EmitInitListLValue(cast<InitListExpr>(E));
   case Expr::CXXTemporaryObjectExprClass:
   case Expr::CXXConstructExprClass:
     return EmitCXXConstructLValue(cast<CXXConstructExpr>(E));
@@ -2129,6 +2126,16 @@ LValue CodeGenFunction::EmitCompoundLiteralLValue(const CompoundLiteralExpr *E){
   return Result;
 }
 
+LValue CodeGenFunction::EmitInitListLValue(const InitListExpr *E) {
+  if (!E->isGLValue())
+    // Initializing an aggregate temporary in C++11: T{...}.
+    return EmitAggExprToLValue(E);
+
+  // An lvalue initializer list must be initializing a reference.
+  assert(E->getNumInits() == 1 && "reference init with multiple values");
+  return EmitLValue(E->getInit(0));
+}
+
 LValue CodeGenFunction::
 EmitConditionalOperatorLValue(const AbstractConditionalOperator *expr) {
   if (!expr->isGLValue()) {
@@ -2188,11 +2195,11 @@ EmitConditionalOperatorLValue(const AbstractConditionalOperator *expr) {
   return MakeAddrLValue(phi, expr->getType());
 }
 
-/// EmitCastLValue - Casts are never lvalues unless that cast is a dynamic_cast.
-/// If the cast is a dynamic_cast, we can have the usual lvalue result,
+/// EmitCastLValue - Casts are never lvalues unless that cast is to a reference
+/// type. If the cast is to a reference, we can have the usual lvalue result,
 /// otherwise if a cast is needed by the code generator in an lvalue context,
 /// then it must mean that we need the address of an aggregate in order to
-/// access one of its fields.  This can happen for all the reasons that casts
+/// access one of its members.  This can happen for all the reasons that casts
 /// are permitted with aggregate result, including noop aggregate casts, and
 /// cast from scalar to union.
 LValue CodeGenFunction::EmitCastLValue(const CastExpr *E) {
