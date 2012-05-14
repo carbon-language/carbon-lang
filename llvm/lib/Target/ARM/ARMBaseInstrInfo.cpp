@@ -2024,7 +2024,7 @@ OptimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg, int CmpMask,
       ARMCC::CondCodes CC = (ARMCC::CondCodes)OperandsToUpdate[i]->getImm();
       ARMCC::CondCodes NewCC;
       switch (CC) {
-      default: break;
+      default: llvm_unreachable("only expecting less/greater comparisons here");
       case ARMCC::GE: NewCC = ARMCC::LE; break;
       case ARMCC::LT: NewCC = ARMCC::GT; break;
       case ARMCC::GT: NewCC = ARMCC::LT; break;
