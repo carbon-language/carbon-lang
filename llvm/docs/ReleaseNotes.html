@@ -635,12 +635,18 @@ syntax, there are still significant gaps in that support.</p>
 </h3>
 
 <div>
-
-<p>This release has seen major new work on just about every aspect of the MIPS
-  backend.  Some of the major new features include:</p>
+New features and major changes in the MIPS target include:</p>
 
 <ul>
-  <li>....</li>
+  <li>MIPS32 little-endian direct object code emission is functional.</li>
+  <li>MIPS64 little-endian code generation is largely functional for N64 ABI in assembly printing mode with the exception of handling of long double (f128) type.</li>
+  <li>Support for new instructions has been added, which includes swap-bytes
+   instructions (WSBH and DSBH), floating point multiply-add/subtract and
+   negative multiply-add/subtract instructions, and floating
+   point load/store instructions with reg+reg addressing (LWXC1, etc.)</li>
+  <li>Various fixes to improve performance have been implemented.</li>
+  <li>Post-RA scheduling is now enabled at -O3.</li>
+  <li>Support for soft-float code generation has been added.</li>
 </ul>
 </div>
 
