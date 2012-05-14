@@ -15,6 +15,7 @@
 #define LLVM_PASSMANAGERS_H
 
 #include "llvm/Pass.h"
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/DenseMap.h"
@@ -184,7 +185,7 @@ public:
   void schedulePass(Pass *P);
 
   /// Set pass P as the last user of the given analysis passes.
-  void setLastUser(const SmallVectorImpl<Pass *> &AnalysisPasses, Pass *P);
+  void setLastUser(ArrayRef<Pass*> AnalysisPasses, Pass *P);
 
   /// Collect passes whose last user is P
   void collectLastUses(SmallVectorImpl<Pass *> &LastUses, Pass *P);

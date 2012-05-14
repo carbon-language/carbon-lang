@@ -478,8 +478,7 @@ PMTopLevelManager::PMTopLevelManager(PMDataManager *PMDM) {
 
 /// Set pass P as the last user of the given analysis passes.
 void
-PMTopLevelManager::setLastUser(const SmallVectorImpl<Pass *> &AnalysisPasses,
-                               Pass *P) {
+PMTopLevelManager::setLastUser(ArrayRef<Pass*> AnalysisPasses, Pass *P) {
   unsigned PDepth = 0;
   if (P->getResolver())
     PDepth = P->getResolver()->getPMDataManager().getDepth();
