@@ -1,5 +1,6 @@
-; RUN: llc < %s -O3 -regalloc=fast -mtriple=x86_64-apple-darwin10
+; RUN: llc < %s -regalloc=fast -verify-machineinstrs -mtriple=x86_64-apple-darwin10
 ; <rdar://problem/7755473>
+; PR12821
 
 %0 = type { i32, i8*, i8*, %1*, i8*, i64, i64, i32, i32, i32, i32, [1024 x i8] }
 %1 = type { i8*, i32, i32, i16, i16, %2, i32, i8*, i32 (i8*)*, i32 (i8*, i8*, i32)*, i64 (i8*, i64, i32)*, i32 (i8*, i8*, i32)*, %2, %3*, i32, [3 x i8], [1 x i8], %2, i32, i64 }
@@ -57,4 +58,35 @@ infloop:                                          ; preds = %infloop, %bb3
 
 infloop1:                                         ; preds = %infloop1, %bb5
   br label %infloop1
+}
+
+
+; RAFast would forget to add a super-register <imp-def> when rewriting:
+;  %vreg10:sub_32bit<def,read-undef> = COPY %R9D<kill>
+; This trips up the machine code verifier.
+define void @autogen_SD24657(i8*, i32*, i64*, i32, i64, i8) {
+BB:
+  %A4 = alloca <16 x i16>
+  %A3 = alloca double
+  %A2 = alloca <2 x i8>
+  %A1 = alloca i1
+  %A = alloca i32
+  %L = load i8* %0
+  store i8 -37, i8* %0
+  %E = extractelement <4 x i64> zeroinitializer, i32 2
+  %Shuff = shufflevector <4 x i64> zeroinitializer, <4 x i64> zeroinitializer, <4 x i32> <i32 5, i32 7, i32 1, i32 3>
+  %I = insertelement <2 x i8> <i8 -1, i8 -1>, i8 %5, i32 1
+  %B = fadd float 0x45CDF5B1C0000000, 0x45CDF5B1C0000000
+  %FC = uitofp i32 275048 to double
+  %Sl = select i1 true, <2 x i8> %I, <2 x i8> <i8 -1, i8 -1>
+  %Cmp = icmp slt i64 0, %E
+  br label %CF
+
+CF:                                               ; preds = %BB
+  store i8 %5, i8* %0
+  store <2 x i8> %I, <2 x i8>* %A2
+  store i8 %5, i8* %0
+  store i8 %5, i8* %0
+  store i8 %5, i8* %0
+  ret void
 }

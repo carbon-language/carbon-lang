@@ -674,6 +674,12 @@ bool RAFast::setPhysReg(MachineInstr *MI, unsigned OpNum, unsigned PhysReg) {
     MI->addRegisterKilled(PhysReg, TRI, true);
     return true;
   }
+
+  // A <def,read-undef> of a sub-register requires an implicit def of the full
+  // register.
+  if (MO.isDef() && MO.isUndef())
+    MI->addRegisterDefined(PhysReg, TRI);
+
   return MO.isDead();
 }
 
