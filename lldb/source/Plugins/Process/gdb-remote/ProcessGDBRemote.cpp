@@ -378,25 +378,28 @@ ProcessGDBRemote::BuildDynamicRegisterInfo (bool force)
         }
     }
 
-    if (reg_num == 0)
+    // We didn't get anything if the accumulated reg_num is zero.  See if we are
+    // debugging ARM and fill with a hard coded register set until we can get an
+    // updated debugserver down on the devices.
+    // On the other hand, if the accumulated reg_num is positive, see if we can
+    // add composite registers to the existing primordial ones.
+    bool from_scratch = (reg_num == 0);
+
+    const ArchSpec &target_arch = GetTarget().GetArchitecture();
+    const ArchSpec &remote_arch = m_gdb_comm.GetHostArchitecture();
+    if (!target_arch.IsValid())
     {
-        // We didn't get anything. See if we are debugging ARM and fill with
-        // a hard coded register set until we can get an updated debugserver
-        // down on the devices.
-        const ArchSpec &target_arch = GetTarget().GetArchitecture();
-        const ArchSpec &remote_arch = m_gdb_comm.GetHostArchitecture();
-        if (!target_arch.IsValid())
-        {
-            if (remote_arch.IsValid()
-                && remote_arch.GetMachine() == llvm::Triple::arm
-                && remote_arch.GetTriple().getVendor() == llvm::Triple::Apple)
-                m_register_info.HardcodeARMRegisters();
-        }
-        else if (target_arch.GetMachine() == llvm::Triple::arm)
-        {
-            m_register_info.HardcodeARMRegisters();
-        }
+        if (remote_arch.IsValid()
+              && remote_arch.GetMachine() == llvm::Triple::arm
+              && remote_arch.GetTriple().getVendor() == llvm::Triple::Apple)
+            m_register_info.HardcodeARMRegisters(from_scratch);
     }
+    else if (target_arch.GetMachine() == llvm::Triple::arm)
+    {
+        m_register_info.HardcodeARMRegisters(from_scratch);
+    }
+
+    // At this point, we can finalize our register info.
     m_register_info.Finalize ();
 }
 

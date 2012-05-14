@@ -154,7 +154,7 @@ public:
     }
 
     void
-    HardcodeARMRegisters();
+    HardcodeARMRegisters(bool from_scratch);
 
 protected:
     //------------------------------------------------------------------

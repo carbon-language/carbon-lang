@@ -18,6 +18,7 @@
 #include "lldb/Core/Scalar.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/Target/ExecutionContext.h"
+#include "lldb/Utility/Utils.h"
 // Project includes
 #include "Utility/StringExtractorGDBRemote.h"
 #include "ProcessGDBRemote.h"
@@ -691,7 +692,7 @@ GDBRemoteRegisterContext::ConvertRegisterKindToRegisterNumber (uint32_t kind, ui
 }
 
 void
-GDBRemoteDynamicRegisterInfo::HardcodeARMRegisters()
+GDBRemoteDynamicRegisterInfo::HardcodeARMRegisters(bool from_scratch)
 {
     // For Advanced SIMD and VFP register mapping.
     static uint32_t g_d0_regs[] =  { 26, 27, LLDB_INVALID_REGNUM }; // (s0, s1)
@@ -726,6 +727,14 @@ GDBRemoteDynamicRegisterInfo::HardcodeARMRegisters()
     static uint32_t g_q13_regs[] = { 69, 70, LLDB_INVALID_REGNUM }; // (d26, d27)
     static uint32_t g_q14_regs[] = { 71, 72, LLDB_INVALID_REGNUM }; // (d28, d29)
     static uint32_t g_q15_regs[] = { 73, 74, LLDB_INVALID_REGNUM }; // (d30, d31)
+
+    // This is our array of composite registers, with each element coming from the above register mappings.
+    static uint32_t *g_composites[] = {
+        g_d0_regs, g_d1_regs,  g_d2_regs,  g_d3_regs,  g_d4_regs,  g_d5_regs,  g_d6_regs,  g_d7_regs,
+        g_d8_regs, g_d9_regs, g_d10_regs, g_d11_regs, g_d12_regs, g_d13_regs, g_d14_regs, g_d15_regs,
+        g_q0_regs, g_q1_regs,  g_q2_regs,  g_q3_regs,  g_q4_regs,  g_q5_regs,  g_q6_regs,  g_q7_regs,
+        g_q8_regs, g_q9_regs, g_q10_regs, g_q11_regs, g_q12_regs, g_q13_regs, g_q14_regs, g_q15_regs
+    };
 
     static RegisterInfo g_register_infos[] = {
 //   NAME    ALT    SZ  OFF  ENCODING          FORMAT          COMPILER             DWARF                GENERIC                 GDB    LLDB      VALUE REGS    INVALIDATE REGS
@@ -839,51 +848,84 @@ GDBRemoteDynamicRegisterInfo::HardcodeARMRegisters()
     { "q15",  NULL,   16,  0, eEncodingVector,  eFormatVectorOfUInt8, { LLDB_INVALID_REGNUM, dwarf_q15,   LLDB_INVALID_REGNUM,   106,    106 },  g_q15_regs,              NULL}
     };
 
-    static const uint32_t num_registers = sizeof (g_register_infos)/sizeof (RegisterInfo);
+    static const uint32_t num_registers = arraysize(g_register_infos);
     static ConstString gpr_reg_set ("General Purpose Registers");
     static ConstString sfp_reg_set ("Software Floating Point Registers");
     static ConstString vfp_reg_set ("Floating Point Registers");
     uint32_t i;
-    // Calculate the offsets of the registers
-    // Note that the layout of the "composite" registers (d0-d15 and q0-q15) which comes after the
-    // "primordial" registers is important.  This enables us to calculate the offset of the composite
-    // register by using the offset of its first primordial register.  For example, to calculate the
-    // offset of q0, use s0's offset.
-    if (g_register_infos[2].byte_offset == 0)
+    if (from_scratch)
     {
-        uint32_t byte_offset = 0;
-        for (i=0; i<num_registers; ++i)
+        // Calculate the offsets of the registers
+        // Note that the layout of the "composite" registers (d0-d15 and q0-q15) which comes after the
+        // "primordial" registers is important.  This enables us to calculate the offset of the composite
+        // register by using the offset of its first primordial register.  For example, to calculate the
+        // offset of q0, use s0's offset.
+        if (g_register_infos[2].byte_offset == 0)
         {
-            // For primordial registers, increment the byte_offset by the byte_size to arrive at the
-            // byte_offset for the next register.  Otherwise, we have a composite register whose
-            // offset can be calculated by consulting the offset of its first primordial register.
-            if (!g_register_infos[i].value_regs)
+            uint32_t byte_offset = 0;
+            for (i=0; i<num_registers; ++i)
             {
-                g_register_infos[i].byte_offset = byte_offset;
-                byte_offset += g_register_infos[i].byte_size;
-            }
-            else
-            {
-                const uint32_t first_primordial_reg = g_register_infos[i].value_regs[0];
-                g_register_infos[i].byte_offset = g_register_infos[first_primordial_reg].byte_offset;
+                // For primordial registers, increment the byte_offset by the byte_size to arrive at the
+                // byte_offset for the next register.  Otherwise, we have a composite register whose
+                // offset can be calculated by consulting the offset of its first primordial register.
+                if (!g_register_infos[i].value_regs)
+                {
+                    g_register_infos[i].byte_offset = byte_offset;
+                    byte_offset += g_register_infos[i].byte_size;
+                }
+                else
+                {
+                    const uint32_t first_primordial_reg = g_register_infos[i].value_regs[0];
+                    g_register_infos[i].byte_offset = g_register_infos[first_primordial_reg].byte_offset;
+                }
             }
         }
-    }
-    for (i=0; i<num_registers; ++i)
-    {
-        ConstString name;
-        ConstString alt_name;
-        if (g_register_infos[i].name && g_register_infos[i].name[0])
-            name.SetCString(g_register_infos[i].name);
-        if (g_register_infos[i].alt_name && g_register_infos[i].alt_name[0])
-            alt_name.SetCString(g_register_infos[i].alt_name);
+        for (i=0; i<num_registers; ++i)
+        {
+            ConstString name;
+            ConstString alt_name;
+            if (g_register_infos[i].name && g_register_infos[i].name[0])
+                name.SetCString(g_register_infos[i].name);
+            if (g_register_infos[i].alt_name && g_register_infos[i].alt_name[0])
+                alt_name.SetCString(g_register_infos[i].alt_name);
 
-        if (i <= 15 || i == 25)
-            AddRegister (g_register_infos[i], name, alt_name, gpr_reg_set);
-        else if (i <= 24)
-            AddRegister (g_register_infos[i], name, alt_name, sfp_reg_set);
-        else
-            AddRegister (g_register_infos[i], name, alt_name, vfp_reg_set);
+            if (i <= 15 || i == 25)
+                AddRegister (g_register_infos[i], name, alt_name, gpr_reg_set);
+            else if (i <= 24)
+                AddRegister (g_register_infos[i], name, alt_name, sfp_reg_set);
+            else
+                AddRegister (g_register_infos[i], name, alt_name, vfp_reg_set);
+        }
+    }
+    else
+    {
+        // Add composite registers to our primordial registers, then.
+        const uint32_t num_composites = arraysize(g_composites);
+        const uint32_t num_primordials = GetNumRegisters();
+        RegisterInfo *g_comp_register_infos = g_register_infos + (num_registers - num_composites);
+        for (i=0; i<num_composites; ++i)
+        {
+            ConstString name;
+            ConstString alt_name;
+            const uint32_t first_primordial_reg = g_comp_register_infos[i].value_regs[0];
+            const char *reg_name = g_register_infos[first_primordial_reg].name;
+            if (reg_name && reg_name[0])
+            {
+                for (uint32_t j = 0; j < num_primordials; ++j)
+                {
+                    const RegisterInfo *reg_info = GetRegisterInfoAtIndex(j);
+                    // Find a matching primordial register info entry.
+                    if (reg_info && reg_info->name && ::strcasecmp(reg_info->name, reg_name) == 0)
+                    {
+                        // The name matches the existing primordial entry.
+                        // Find and assign the offset, and then add this composite register entry.
+                        g_comp_register_infos[i].byte_offset = reg_info->byte_offset;
+                        name.SetCString(g_comp_register_infos[i].name);
+                        AddRegister(g_comp_register_infos[i], name, alt_name, vfp_reg_set);
+                    }
+                }
+            }
+        }
     }
 }
 
