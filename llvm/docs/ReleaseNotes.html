@@ -74,9 +74,9 @@ Release Notes</a>.</h1>
 
 <p>The LLVM 3.1 distribution currently consists of code from the core LLVM
    repository (which roughly includes the LLVM optimizers, code generators and
-   supporting tools), and the Clang repository.  In
-   addition to this code, the LLVM Project includes other sub-projects that are
-   in development.  Here we include updates on these subprojects.</p>
+   supporting tools), and the Clang repository. In addition to this code, the
+   LLVM Project includes other sub-projects that are in development.  Here we
+   include updates on these subprojects.</p>
 
 <!--=========================================================================-->
 <h3>
@@ -107,10 +107,9 @@ Release Notes</a>.</h1>
       Objective C</a>.</li>
 </ul>
 
-  <p>For more details about the changes to Clang since the 3.0 release, see the
-<a href="http://clang.llvm.org/docs/ReleaseNotes.html">Clang release notes</a>
-</p>
-
+<p>For more details about the changes to Clang since the 3.0 release, see the
+   <a href="http://clang.llvm.org/docs/ReleaseNotes.html">Clang release
+   notes.</a></p>
 
 <p>If Clang rejects your code but another compiler accepts it, please take a
    look at the <a href="http://clang.llvm.org/compatibility.html">language
@@ -125,6 +124,7 @@ Release Notes</a>.</h1>
 </h3>
 
 <div>
+
 <p><a href="http://dragonegg.llvm.org/">DragonEgg</a> is a
    <a href="http://gcc.gnu.org/wiki/plugins">gcc plugin</a> that replaces GCC's
    optimizers and code generators with LLVM's. It works with gcc-4.5 and gcc-4.6
@@ -135,8 +135,7 @@ Release Notes</a>.</h1>
 
 <p>The 3.1 release has the following notable changes:</p>
 
-  <ul>
-
+<ul>
   <li>Partial support for gcc-4.7. Ada support is poor, but other languages work
       fairly well.</li>
 
@@ -151,7 +150,6 @@ Release Notes</a>.</h1>
       aliasing and type ranges to the LLVM optimizers.</li>
 
   <li>A regression test-suite was added.</li>
-
 </ul>
 
 </div>
@@ -172,8 +170,6 @@ Release Notes</a>.</h1>
    implementations of this and other low-level routines (some are 3x faster than
    the equivalent libgcc routines).</p>
 
-<p>....</p>
-
 </div>
 
 <!--=========================================================================-->
@@ -189,8 +185,6 @@ Release Notes</a>.</h1>
    expression parsing (particularly for C++) and uses the LLVM JIT for target
    support.</p>
 
-<p>...</p>
-
 </div>
 
 <!--=========================================================================-->
@@ -204,8 +198,6 @@ Release Notes</a>.</h1>
    licensed</a> under the MIT and UIUC license, allowing it to be used more
    permissively.</p>
 
-<p>...</p>
-
 </div>
 
 <!--=========================================================================-->
@@ -215,16 +207,12 @@ Release Notes</a>.</h1>
 
 <div>
 
-  <p>The <a href="http://vmkit.llvm.org/">VMKit project</a> is an
-  implementation of a Java Virtual Machine (Java VM or JVM) that uses LLVM for
-  static and just-in-time compilation.
+<p>The <a href="http://vmkit.llvm.org/">VMKit project</a> is an implementation
+  of a Java Virtual Machine (Java VM or JVM) that uses LLVM for static and
+  just-in-time compilation.</p>
 
-  <p>In the LLVM 3.1 time-frame, VMKit has had significant improvements on both
-  runtime and startup performance:</p>
-
-  <ul>
-  <li>...</li>
-  </ul>
+<p>In the LLVM 3.1 time-frame, VMKit has had significant improvements on both
+   runtime and startup performance.</p>
 
 </div>
 
@@ -236,25 +224,23 @@ Release Notes</a>.</h1>
 
 <div>
 
-  <p><a href="http://polly.llvm.org/">Polly</a> is an <em>experimental</em>
+<p><a href="http://polly.llvm.org/">Polly</a> is an <em>experimental</em>
   optimizer for data locality and parallelism. It currently provides high-level
   loop optimizations and automatic parallelisation (using the OpenMP run time).
   Work in the area of automatic SIMD and accelerator code generation was
-  started.
+  started.</p>
 
-  <p>Within the LLVM 3.1 time-frame there were the following highlights:</p>
+<p>Within the LLVM 3.1 time-frame there were the following highlights:</p>
 
-  <ul>
+<ul>
   <li>Polly became an official LLVM project</li>
-  <li>Polly can be loaded directly into clang (Enabled by '-O3 -mllvm -polly'
-  )</li>
-  <li>An automatic scheduling optimizer (derived from <a
-  href="http://pluto-compiler.sourceforge.net/">Pluto</a>) was integrated. It
-  performs loop transformations to optimize for data-locality and parallelism.
-  The transformations include, but are not limited to interchange, fusion,
-  fission, skewing and tiling.
-  </li>
-  </ul>
+  <li>Polly can be loaded directly into clang (enabled by '-O3 -mllvm -polly')</li>
+  <li>An automatic scheduling optimizer (derived
+      from <a href="http://pluto-compiler.sourceforge.net/">Pluto</a>) was
+      integrated. It performs loop transformations to optimize for data-locality
+      and parallelism.  The transformations include, but are not limited to
+      interchange, fusion, fission, skewing and tiling.</li>
+</ul>
 
 </div>
 
@@ -447,7 +433,6 @@ Release Notes</a>.</h1>
       A full featured assembler and direct-to-object support for ARM.</li>
   <li><a href="#blockplacement">Basic Block Placement</a>
       Probability driven basic block placement.</li>
-  <li>....</li>
 </ul>
 
 </div>
@@ -463,22 +448,22 @@ Release Notes</a>.</h1>
 <p>LLVM IR has several new features for better support of new targets and that
    expose new optimization opportunities:</p>
 
-  <ul>
-    <li>A new type representing 16 bit <i>half</i> floating point values has
-        been added.</li>
-    <li>IR now supports vectors of pointers, including vector GEPs.</li>
-    <li>Module flags have been introduced. They convey information about the
-        module as a whole to LLVM subsystems. This is currently used to encode
-        Objective C ABI information.</li>
-    <li>Loads can now have range metadata attached to them to describe the
-        possible values being loaded.</li>
-    <li>The <tt>llvm.ctlz</tt> and <tt>llvm.cttz</tt> intrinsics now have an
-      additional argument which indicates whether the behavior of the intrinsic
-      is undefined on a zero input. This can be used to generate more efficient
-      code on platforms that only have instructions which don't return the type
-      size when counting bits in 0.</li>
-    <li>....</li>
-  </ul>
+<ul>
+  <li>A new type representing 16 bit <i>half</i> floating point values has
+      been added.</li>
+  <li>IR now supports vectors of pointers, including vector GEPs.</li>
+  <li>Module flags have been introduced. They convey information about the
+      module as a whole to LLVM subsystems. This is currently used to encode
+      Objective C ABI information.</li>
+  <li>Loads can now have range metadata attached to them to describe the
+      possible values being loaded.</li>
+  <li>The <tt>llvm.ctlz</tt> and <tt>llvm.cttz</tt> intrinsics now have an
+    additional argument which indicates whether the behavior of the intrinsic
+    is undefined on a zero input. This can be used to generate more efficient
+    code on platforms that only have instructions which don't return the type
+    size when counting bits in 0.</li>
+</ul>
+
 </div>
 
 <!--=========================================================================-->
@@ -504,7 +489,6 @@ Release Notes</a>.</h1>
   <li>Inline cost heuristics have been completely overhauled and now closely
       model constant propagation through call sites, disregard trivially dead
       code costs, and can model C++ STL iterator patterns.</li>
-  <li>....</li>
 </ul>
 
 </div>
@@ -527,7 +511,6 @@ Release Notes</a>.</h1>
   <li>The integrated assembler can optionally emit debug information when
       assembling a </tt>.s</tt> file. It can be enabled by passing the
       <tt>-g</tt> option to <tt>llvm-mc</tt>.</li>
-  <li>....</li>
 </ul>
 
 </div>
@@ -683,12 +666,8 @@ syntax, there are still significant gaps in that support.</p>
 
 <div>
 
-<p>Support for Qualcomm's Hexagon VLIW processor has been added.</p>
-
 <ul>
-  <li>....</li>
-
-
+  <li>Support for Qualcomm's Hexagon VLIW processor has been added.</li>
 </ul>
 
 </div>
@@ -720,7 +699,6 @@ syntax, there are still significant gaps in that support.</p>
   <li>LLVM 3.0 and earlier automatically added the returns_twice fo functions
       like setjmp based on the name. This functionality was removed in 3.1.
       This affects Clang users, if -ffreestanding is used.</li>
-  <li>....</li>
 </ul>
 
 </div>
@@ -767,9 +745,9 @@ syntax, there are still significant gaps in that support.</p>
 <li><code>llvm::getTrapFunctionName()</code></li>
 <li><code>llvm::EnableSegmentedStacks</code></li>
 </ul></li>
-  <li>The MDBuilder class has been added to simplify the creation of
-      metadata.</li>
-  <li>....</li>
+
+  <li>The <code>MDBuilder</code> class has been added to simplify the creation
+      of metadata.</li>
 </ul>
 
 </div>
@@ -791,7 +769,6 @@ syntax, there are still significant gaps in that support.</p>
   <li>The <tt>llvm-ld</tt> tool has been removed.  The clang driver provides a
       more reliable solution for turning a set of bitcode files into a binary.
       To merge bitcode files <tt>llvm-link</tt> can be used instead.</li>
-  <li>....</li>
 </ul>
 
 </div>
