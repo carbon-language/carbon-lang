@@ -582,8 +582,8 @@ namespace ISD {
     // TRAP - Trapping instruction
     TRAP,
 
-    // DEBUGGER - Trap intented to get the attention of a debugger.
-    DEBUGGER,
+    // DEBUGTRAP - Trap intented to get the attention of a debugger.
+    DEBUGTRAP,
 
     // PREFETCH - This corresponds to a prefetch intrinsic. It takes chains are
     // their first operand. The other operands are the address to prefetch,

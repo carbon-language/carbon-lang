@@ -12,10 +12,10 @@ entry:
 ; CHECK: int3
 define i32 @test1() noreturn nounwind  {
 entry:
-	tail call void @llvm.debugger( )
+	tail call void @llvm.debugtrap( )
 	unreachable
 }
 
 declare void @llvm.trap() nounwind 
-declare void @llvm.debugger() nounwind 
+declare void @llvm.debugtrap() nounwind 
 
