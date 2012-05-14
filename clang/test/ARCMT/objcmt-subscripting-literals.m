@@ -1,9 +1,12 @@
 // RUN: rm -rf %t
 // RUN: %clang_cc1 -objcmt-migrate-literals -objcmt-migrate-subscripting -mt-migrate-directory %t %s -x objective-c -triple x86_64-apple-darwin11 
 // RUN: c-arcmt-test -mt-migrate-directory %t | arcmt-test -verify-transformed-files %s.result
+// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -fsyntax-only -x objective-c %s.result
 
 typedef signed char BOOL;
 #define nil ((void*) 0)
+
+typedef const struct __CFString * CFStringRef;
 
 @interface NSObject
 + (id)alloc;
@@ -135,3 +138,17 @@ typedef signed char BOOL;
   o = [*parr objectAtIndex:2];
 }
 @end
+
+extern const CFStringRef globStr;
+
+void test1(NSString *str) {
+  NSDictionary *dict = [NSDictionary dictionaryWithObjectsAndKeys: str, globStr, nil];
+  dict = [NSDictionary dictionaryWithObjectsAndKeys: globStr, str, nil];
+  dict = [NSDictionary dictionaryWithObject:str forKey:globStr];
+  dict = [NSDictionary dictionaryWithObject:globStr forKey:str];
+
+  NSArray *arr = [NSArray arrayWithObjects: globStr, globStr, nil];
+  arr = [NSArray arrayWithObjects: str, globStr, nil];
+  arr = [NSArray arrayWithObjects: globStr, str, nil];
+  arr = [NSArray arrayWithObject:globStr];
+}

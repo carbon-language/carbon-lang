@@ -100,8 +100,11 @@ bool EditedSource::commitInsertFromRange(SourceLocation OrigLoc,
     FileOffset B = I->first;
     FileOffset E = B.getWithOffset(FA.RemoveLen);
 
+    if (BeginOffs == B)
+      break;
+
     if (BeginOffs < E) {
-      if (BeginOffs >= B) {
+      if (BeginOffs > B) {
         BeginOffs = E;
         ++I;
       }

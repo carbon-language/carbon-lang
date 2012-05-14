@@ -229,6 +229,9 @@ bool edit::rewriteToObjCLiteralSyntax(const ObjCMessageExpr *Msg,
 // rewriteToArrayLiteral.
 //===----------------------------------------------------------------------===//
 
+/// \brief Adds an explicit cast to 'id' if the type is not objc object.
+static void objectifyExpr(const Expr *E, Commit &commit);
+
 static bool rewriteToArrayLiteral(const ObjCMessageExpr *Msg,
                                   const NSAPI &NS, Commit &commit) {
   Selector Sel = Msg->getSelector();
@@ -244,6 +247,7 @@ static bool rewriteToArrayLiteral(const ObjCMessageExpr *Msg,
   if (Sel == NS.getNSArraySelector(NSAPI::NSArr_arrayWithObject)) {
     if (Msg->getNumArgs() != 1)
       return false;
+    objectifyExpr(Msg->getArg(0), commit);
     SourceRange ArgRange = Msg->getArg(0)->getSourceRange();
     commit.replaceWithInner(MsgRange, ArgRange);
     commit.insertWrap("@[", ArgRange, "]");
@@ -256,6 +260,9 @@ static bool rewriteToArrayLiteral(const ObjCMessageExpr *Msg,
     const Expr *SentinelExpr = Msg->getArg(Msg->getNumArgs() - 1);
     if (!NS.getASTContext().isSentinelNullExpr(SentinelExpr))
       return false;
+
+    for (unsigned i = 0, e = Msg->getNumArgs() - 1; i != e; ++i)
+      objectifyExpr(Msg->getArg(i), commit);
 
     if (Msg->getNumArgs() == 1) {
       commit.replace(MsgRange, "@[]");
@@ -291,6 +298,10 @@ static bool rewriteToDictionaryLiteral(const ObjCMessageExpr *Msg,
                                     NSAPI::NSDict_dictionaryWithObjectForKey)) {
     if (Msg->getNumArgs() != 2)
       return false;
+
+    objectifyExpr(Msg->getArg(0), commit);
+    objectifyExpr(Msg->getArg(1), commit);
+
     SourceRange ValRange = Msg->getArg(0)->getSourceRange();
     SourceRange KeyRange = Msg->getArg(1)->getSourceRange();
     // Insert key before the value.
@@ -319,6 +330,9 @@ static bool rewriteToDictionaryLiteral(const ObjCMessageExpr *Msg,
     }
 
     for (unsigned i = 0; i < SentinelIdx; i += 2) {
+      objectifyExpr(Msg->getArg(i), commit);
+      objectifyExpr(Msg->getArg(i+1), commit);
+
       SourceRange ValRange = Msg->getArg(i)->getSourceRange();
       SourceRange KeyRange = Msg->getArg(i+1)->getSourceRange();
       // Insert value after key.
@@ -584,4 +598,53 @@ static bool rewriteToNumberLiteral(const ObjCMessageExpr *Msg,
       commit.insert(LitE, LitInfo.LL);
   }
   return true;
+}
+
+static bool castOperatorNeedsParens(const Expr *FullExpr) {
+  const Expr* Expr = FullExpr->IgnoreImpCasts();
+  if (isa<ArraySubscriptExpr>(Expr) ||
+      isa<CallExpr>(Expr) ||
+      isa<DeclRefExpr>(Expr) ||
+      isa<CastExpr>(Expr) ||
+      isa<CXXNewExpr>(Expr) ||
+      isa<CXXConstructExpr>(Expr) ||
+      isa<CXXDeleteExpr>(Expr) ||
+      isa<CXXNoexceptExpr>(Expr) ||
+      isa<CXXPseudoDestructorExpr>(Expr) ||
+      isa<CXXScalarValueInitExpr>(Expr) ||
+      isa<CXXThisExpr>(Expr) ||
+      isa<CXXTypeidExpr>(Expr) ||
+      isa<CXXUnresolvedConstructExpr>(Expr) ||
+      isa<ObjCMessageExpr>(Expr) ||
+      isa<ObjCPropertyRefExpr>(Expr) ||
+      isa<ObjCProtocolExpr>(Expr) ||
+      isa<MemberExpr>(Expr) ||
+      isa<ParenExpr>(FullExpr) ||
+      isa<ParenListExpr>(Expr) ||
+      isa<SizeOfPackExpr>(Expr) ||
+      isa<UnaryOperator>(Expr))
+    return false;
+
+  return true;
+}
+
+static void objectifyExpr(const Expr *E, Commit &commit) {
+  if (!E) return;
+
+  QualType T = E->getType();
+  if (T->isObjCObjectPointerType()) {
+    if (const ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(E)) {
+      if (ICE->getCastKind() != CK_CPointerToObjCPointerCast)
+        return;
+    } else {
+      return;
+    }
+  } else if (!T->isPointerType()) {
+    return;
+  }
+
+  SourceRange Range = E->getSourceRange();
+  if (castOperatorNeedsParens(E))
+    commit.insertWrap("(", Range, ")");
+  commit.insertBefore(Range.getBegin(), "(id)");
 }

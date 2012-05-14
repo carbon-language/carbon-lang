@@ -1,6 +1,7 @@
 // RUN: rm -rf %t
 // RUN: %clang_cc1 -objcmt-migrate-literals -objcmt-migrate-subscripting -mt-migrate-directory %t %s -x objective-c++ 
 // RUN: c-arcmt-test -mt-migrate-directory %t | arcmt-test -verify-transformed-files %s.result
+// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -fsyntax-only -x objective-c++ %s.result
 
 #define YES __objc_yes
 #define NO __objc_no
