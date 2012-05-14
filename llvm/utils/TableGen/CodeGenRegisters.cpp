@@ -360,20 +360,49 @@ CodeGenRegister::computeSubRegs(CodeGenRegBank &RegBank) {
     RegBank.addConcatSubRegIndex(Parts, ExplicitSubRegIndices[i]);
   }
 
-  // Initialize RegUnitList. A register with no subregisters creates its own
-  // unit. Otherwise, it inherits all its subregister's units. Because
-  // getSubRegs is called recursively, this processes the register hierarchy in
-  // postorder.
+  // Initialize RegUnitList. Because getSubRegs is called recursively, this
+  // processes the register hierarchy in postorder.
   //
-  // TODO: We currently assume all register units correspond to a named "leaf"
-  // register. We should also unify register units for ad-hoc register
-  // aliases. This can be done by iteratively merging units for aliasing
-  // registers using a worklist.
-  assert(RegUnits.empty() && "Should only initialize RegUnits once");
-  if (SubRegs.empty())
+  // Inherit all sub-register units. It is good enough to look at the explicit
+  // sub-registers, the other registers won't contribute any more units.
+  for (unsigned i = 0, e = ExplicitSubRegs.size(); i != e; ++i) {
+    CodeGenRegister *SR = ExplicitSubRegs[i];
+    // Explicit sub-registers are usually disjoint, so this is a good way of
+    // computing the union. We may pick up a few duplicates that will be
+    // eliminated below.
+    unsigned N = RegUnits.size();
+    RegUnits.append(SR->RegUnits.begin(), SR->RegUnits.end());
+    std::inplace_merge(RegUnits.begin(), RegUnits.begin() + N, RegUnits.end());
+  }
+  RegUnits.erase(std::unique(RegUnits.begin(), RegUnits.end()), RegUnits.end());
+
+  // Absent any ad hoc aliasing, we create one register unit per leaf register.
+  // These units correspond to the maximal cliques in the register overlap
+  // graph which is optimal.
+  //
+  // When there is ad hoc aliasing, we simply create one unit per edge in the
+  // undirected ad hoc aliasing graph. Technically, we could do better by
+  // identifying maximal cliques in the ad hoc graph, but cliques larger than 2
+  // are extremely rare anyway (I've never seen one), so we don't bother with
+  // the added complexity.
+  for (unsigned i = 0, e = ExplicitAliases.size(); i != e; ++i) {
+    CodeGenRegister *AR = ExplicitAliases[i];
+    // Only visit each edge once.
+    if (AR->SubRegsComplete)
+      continue;
+    // Create a RegUnit representing this alias edge, and add it to both
+    // registers.
+    unsigned Unit = RegBank.newRegUnit(0);
+    RegUnits.push_back(Unit);
+    AR->RegUnits.push_back(Unit);
+  }
+
+  // Finally, create units for leaf registers without ad hoc aliases. Note that
+  // a leaf register with ad hoc aliases doesn't get its own unit - it isn't
+  // necessary. This means the aliasing leaf registers can share a single unit.
+  if (RegUnits.empty())
     RegUnits.push_back(RegBank.newRegUnit(0));
-  else
-    inheritRegUnits(RegBank);
+
   return SubRegs;
 }
 
