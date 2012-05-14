@@ -136,6 +136,8 @@ typedef const struct __CFString * CFStringRef;
   mdict[dict[@[@"arrkey"]]] = dict[@"key1"];
   __strong NSArray **parr = 0;
   o = (*parr)[2];
+  void *hd;
+  o = ((NSArray*)hd)[2];
 }
 @end
 

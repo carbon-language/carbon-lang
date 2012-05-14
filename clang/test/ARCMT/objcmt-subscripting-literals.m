@@ -136,6 +136,8 @@ typedef const struct __CFString * CFStringRef;
   [mdict setObject:[dict objectForKey:@"key1"] forKey:[dict objectForKey:[NSArray arrayWithObject:@"arrkey"]]];
   __strong NSArray **parr = 0;
   o = [*parr objectAtIndex:2];
+  void *hd;
+  o = [(NSArray*)hd objectAtIndex:2];
 }
 @end
 

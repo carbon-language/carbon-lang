@@ -77,9 +77,10 @@ bool edit::rewriteObjCRedundantCallWithLiteral(const ObjCMessageExpr *Msg,
 // rewriteToObjCSubscriptSyntax.
 //===----------------------------------------------------------------------===//
 
+static bool subscriptOperatorNeedsParens(const Expr *FullExpr);
+
 static void maybePutParensOnReceiver(const Expr *Receiver, Commit &commit) {
-  Receiver = Receiver->IgnoreImpCasts();
-  if (isa<BinaryOperator>(Receiver) || isa<UnaryOperator>(Receiver)) {
+  if (subscriptOperatorNeedsParens(Receiver)) {
     SourceRange RecRange = Receiver->getSourceRange();
     commit.insertWrap("(", RecRange, ")");
   }
@@ -600,6 +601,29 @@ static bool rewriteToNumberLiteral(const ObjCMessageExpr *Msg,
   return true;
 }
 
+// FIXME: Make determination of operator precedence more general and
+// make it broadly available.
+static bool subscriptOperatorNeedsParens(const Expr *FullExpr) {
+  const Expr* Expr = FullExpr->IgnoreImpCasts();
+  if (isa<ArraySubscriptExpr>(Expr) ||
+      isa<CallExpr>(Expr) ||
+      isa<DeclRefExpr>(Expr) ||
+      isa<CXXNamedCastExpr>(Expr) ||
+      isa<CXXConstructExpr>(Expr) ||
+      isa<CXXThisExpr>(Expr) ||
+      isa<CXXTypeidExpr>(Expr) ||
+      isa<CXXUnresolvedConstructExpr>(Expr) ||
+      isa<ObjCMessageExpr>(Expr) ||
+      isa<ObjCPropertyRefExpr>(Expr) ||
+      isa<ObjCProtocolExpr>(Expr) ||
+      isa<MemberExpr>(Expr) ||
+      isa<ParenExpr>(FullExpr) ||
+      isa<ParenListExpr>(Expr) ||
+      isa<SizeOfPackExpr>(Expr))
+    return false;
+
+  return true;
+}
 static bool castOperatorNeedsParens(const Expr *FullExpr) {
   const Expr* Expr = FullExpr->IgnoreImpCasts();
   if (isa<ArraySubscriptExpr>(Expr) ||
