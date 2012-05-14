@@ -242,6 +242,34 @@ TEST(BitVectorTest, PortableBitMask) {
   A.clearBitsNotInMask(Mask1, 1);
   EXPECT_EQ(64-4u, A.count());
 }
-}
 
+TEST(BitVectorTest, BinOps) {
+  BitVector A;
+  BitVector B;
+
+  A.resize(65);
+  EXPECT_FALSE(A.anyCommon(B));
+  EXPECT_FALSE(B.anyCommon(B));
+
+  B.resize(64);
+  A.set(64);
+  EXPECT_FALSE(A.anyCommon(B));
+  EXPECT_FALSE(B.anyCommon(A));
+
+  B.set(63);
+  EXPECT_FALSE(A.anyCommon(B));
+  EXPECT_FALSE(B.anyCommon(A));
+
+  A.set(63);
+  EXPECT_TRUE(A.anyCommon(B));
+  EXPECT_TRUE(B.anyCommon(A));
+
+  B.resize(70);
+  B.set(64);
+  B.reset(63);
+  A.resize(64);
+  EXPECT_FALSE(A.anyCommon(B));
+  EXPECT_FALSE(B.anyCommon(A));
+}
+}
 #endif

@@ -272,6 +272,16 @@ public:
     return (*this)[Idx];
   }
 
+  /// Test if any common bits are set.
+  bool anyCommon(const BitVector &RHS) const {
+    unsigned ThisWords = NumBitWords(size());
+    unsigned RHSWords  = NumBitWords(RHS.size());
+    for (unsigned i = 0, e = std::min(ThisWords, RHSWords); i != e; ++i)
+      if (Bits[i] & RHS.Bits[i])
+        return true;
+    return false;
+  }
+
   // Comparison operators.
   bool operator==(const BitVector &RHS) const {
     unsigned ThisWords = NumBitWords(size());
