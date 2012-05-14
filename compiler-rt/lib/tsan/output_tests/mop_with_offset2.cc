@@ -17,14 +17,15 @@ void *Thread2(void *x) {
 }
 
 int main() {
-  int data = 42;
-  fprintf(stderr, "ptr1=%p\n", &data);
-  fprintf(stderr, "ptr2=%p\n", (char*)&data + 2);
+  int *data = new int(42);
+  fprintf(stderr, "ptr1=%p\n", data);
+  fprintf(stderr, "ptr2=%p\n", (char*)data + 2);
   pthread_t t[2];
-  pthread_create(&t[0], NULL, Thread1, &data);
-  pthread_create(&t[1], NULL, Thread2, &data);
+  pthread_create(&t[0], NULL, Thread1, data);
+  pthread_create(&t[1], NULL, Thread2, data);
   pthread_join(t[0], NULL);
   pthread_join(t[1], NULL);
+  delete data;
 }
 
 // CHECK: ptr1=[[PTR1:0x[0-9,a-f]+]]
