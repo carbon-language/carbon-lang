@@ -36,6 +36,13 @@ static cl::opt<bool> EnableDelaySlotFiller(
   cl::desc("Fill the Mips delay slots useful instructions."),
   cl::Hidden);
 
+// This option can be used to silence complaints by machine verifier passes.
+static cl::opt<bool> SkipDelaySlotFiller(
+  "skip-mips-delay-filler",
+  cl::init(false),
+  cl::desc("Skip MIPS' delay slot filling pass."),
+  cl::Hidden);
+
 namespace {
   struct Filler : public MachineFunctionPass {
 
@@ -53,6 +60,9 @@ namespace {
 
     bool runOnMachineBasicBlock(MachineBasicBlock &MBB);
     bool runOnMachineFunction(MachineFunction &F) {
+      if (SkipDelaySlotFiller)
+        return false;
+
       bool Changed = false;
       for (MachineFunction::iterator FI = F.begin(), FE = F.end();
            FI != FE; ++FI)
