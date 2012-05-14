@@ -1248,7 +1248,8 @@ TemplateIdAnnotation *Parser::takeTemplateIdAnnotation(const Token &tok) {
 bool Parser::TryAnnotateTypeOrScopeToken(bool EnteringContext, bool NeedType) {
   assert((Tok.is(tok::identifier) || Tok.is(tok::coloncolon)
           || Tok.is(tok::kw_typename) || Tok.is(tok::annot_cxxscope)
-          || Tok.is(tok::kw_decltype)) && "Cannot be a type or scope token!");
+          || Tok.is(tok::kw_decltype) || Tok.is(tok::annot_template_id))
+          && "Cannot be a type or scope token!");
 
   if (Tok.is(tok::kw_typename)) {
     // Parse a C++ typename-specifier, e.g., "typename T::type".
@@ -1264,10 +1265,21 @@ bool Parser::TryAnnotateTypeOrScopeToken(bool EnteringContext, bool NeedType) {
                                        0, /*IsTypename*/true))
       return true;
     if (!SS.isSet()) {
-      if (getLangOpts().MicrosoftExt)
-        Diag(Tok.getLocation(), diag::warn_expected_qualified_after_typename);
-      else
-        Diag(Tok.getLocation(), diag::err_expected_qualified_after_typename);
+      if (Tok.is(tok::identifier) || Tok.is(tok::annot_template_id)) {
+        // Attempt to recover by skipping the invalid 'typename'
+        if (!TryAnnotateTypeOrScopeToken(EnteringContext, NeedType) &&
+            Tok.isAnnotation()) {
+          unsigned DiagID = diag::err_expected_qualified_after_typename;
+          // MS compatibility: MSVC permits using known types with typename.
+          // e.g. "typedef typename T* pointer_type"
+          if (getLangOpts().MicrosoftExt)
+            DiagID = diag::warn_expected_qualified_after_typename;
+          Diag(Tok.getLocation(), DiagID);
+          return false;
+        }
+      }
+
+      Diag(Tok.getLocation(), diag::err_expected_qualified_after_typename);
       return true;
     }
 

@@ -151,11 +151,24 @@ void missing_template_keyword(){
 
 class AAAA { };
 
+template <typename T>
+class SimpleTemplate {};
+
 template <class T>
 void redundant_typename() {
    typename T t;// expected-warning {{expected a qualified name after 'typename'}}
    typename AAAA a;// expected-warning {{expected a qualified name after 'typename'}}
+
    t = 3;
+   
+   typedef typename T* pointerT;// expected-warning {{expected a qualified name after 'typename'}}
+   typedef typename SimpleTemplate<int> templateT;// expected-warning {{expected a qualified name after 'typename'}}
+
+   pointerT pT = &t;
+   *pT = 4;
+
+   int var;
+   int k = typename var;// expected-error {{expected a qualified name after 'typename'}}
 }
 
 
