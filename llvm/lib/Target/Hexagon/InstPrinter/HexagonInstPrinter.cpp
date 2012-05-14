@@ -13,7 +13,6 @@
 
 #define DEBUG_TYPE "asm-printer"
 #include "Hexagon.h"
-#include "HexagonConstExtInfo.h"
 #include "HexagonAsmPrinter.h"
 #include "HexagonInstPrinter.h"
 #include "HexagonMCInst.h"
@@ -108,10 +107,7 @@ void HexagonInstPrinter::printImmOperand(const MCInst *MI, unsigned OpNo,
 
 void HexagonInstPrinter::printExtOperand(const MCInst *MI, unsigned OpNo,
                                          raw_ostream &O) const {
-  if (isConstExtended(MI))
-    O << "#" << MI->getOperand(OpNo).getImm();
-  else
-    O << MI->getOperand(OpNo).getImm();
+  O << MI->getOperand(OpNo).getImm();
 }
 
 void HexagonInstPrinter::printUnsignedImmOperand(const MCInst *MI,
@@ -121,7 +117,7 @@ void HexagonInstPrinter::printUnsignedImmOperand(const MCInst *MI,
 
 void HexagonInstPrinter::printNegImmOperand(const MCInst *MI, unsigned OpNo,
                                             raw_ostream &O) const {
-    O << -MI->getOperand(OpNo).getImm();
+  O << -MI->getOperand(OpNo).getImm();
 }
 
 void HexagonInstPrinter::printNOneImmOperand(const MCInst *MI, unsigned OpNo,
@@ -135,10 +131,7 @@ void HexagonInstPrinter::printMEMriOperand(const MCInst *MI, unsigned OpNo,
   const MCOperand& MO1 = MI->getOperand(OpNo + 1);
 
   O << getRegisterName(MO0.getReg());
-  if (isConstExtended(MI))
-    O << " + ##" << MO1.getImm();
-  else
-    O << " + #" << MO1.getImm();
+  O << " + #" << MO1.getImm();
 }
 
 void HexagonInstPrinter::printFrameIndexOperand(const MCInst *MI, unsigned OpNo,
@@ -202,18 +195,4 @@ void HexagonInstPrinter::printSymbol(const MCInst *MI, unsigned OpNo,
     printOperand(MI, OpNo, O);
   }
   O << ')';
-}
-
-bool HexagonInstPrinter::isConstExtended(const MCInst *MI) const{
-  unsigned short Opcode = MI->getOpcode();
-  short ExtOpNum = HexagonConstExt::getCExtOpNum(Opcode);
-  int MinValue = HexagonConstExt::getMinValue(Opcode);
-  int MaxValue = HexagonConstExt::getMaxValue(Opcode);
-
-  // Instruction has no constant extended operand
-  if (ExtOpNum == -1)
-    return false;
-
-  int ImmValue = MI->getOperand(ExtOpNum).getImm();
-  return (ImmValue < MinValue || ImmValue > MaxValue);
 }

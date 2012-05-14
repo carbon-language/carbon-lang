@@ -175,8 +175,6 @@ public:
   bool isNewValueJumpCandidate(const MachineInstr *MI) const;
   unsigned getImmExtForm(const MachineInstr* MI) const;
   unsigned getNormalBranchForm(const MachineInstr* MI) const;
-  bool isExpr(unsigned OpType) const;
-  bool isConstExtended(MachineInstr *MI) const;
 
 private:
   int getMatchingCondBranchOpcode(int Opc, bool sense) const;

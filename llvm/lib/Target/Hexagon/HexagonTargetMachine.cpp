@@ -28,10 +28,6 @@ static cl::
 opt<bool> DisableHardwareLoops(
                         "disable-hexagon-hwloops", cl::Hidden,
                         cl::desc("Disable Hardware Loops for Hexagon target"));
-static cl::
-opt<bool> DisableCExtOpt(
-                        "disable-hexagon-cextopt", cl::Hidden,
-                        cl::desc("Disable Optimization of Constant Extenders"));
 
 /// HexagonTargetMachineModule - Note that this is used on hosts that
 /// cannot link in a library unless there are references into the
@@ -114,9 +110,6 @@ bool HexagonPassConfig::addInstSelector() {
 
 
 bool HexagonPassConfig::addPreRegAlloc() {
-  if (!DisableCExtOpt) {
-    PM->add(createHexagonOptimizeConstExt(getHexagonTargetMachine()));
-  }
   if (!DisableHardwareLoops) {
     PM->add(createHexagonHardwareLoops());
   }
