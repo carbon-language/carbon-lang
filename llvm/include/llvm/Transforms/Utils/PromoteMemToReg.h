@@ -21,7 +21,6 @@ namespace llvm {
 
 class AllocaInst;
 class DominatorTree;
-class DominanceFrontier;
 class AliasSetTracker;
 
 /// isAllocaPromotable - Return true if this alloca is legal for promotion.
