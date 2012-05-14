@@ -578,6 +578,17 @@ void strncpy_exactly_matching_buffer2(char *y) {
 		(void)*(int*)0; // no-warning
 }
 
+void strncpy_zero(char *src) {
+  char dst[] = "123";
+  strncpy(dst, src, 0); // no-warning
+}
+
+void strncpy_empty() {
+  char dst[] = "123";
+  char src[] = "";
+  strncpy(dst, src, 4); // no-warning
+}
+
 //===----------------------------------------------------------------------===
 // strncat()
 //===----------------------------------------------------------------------===
@@ -714,6 +725,17 @@ void strncat_too_big(char *dst, char *src) {
   if (strlen(src) != 2)
     return;
   strncat(dst, src, 2); // expected-warning{{This expression will create a string whose length is too big to be represented as a size_t}}
+}
+
+void strncat_zero(char *src) {
+  char dst[] = "123";
+  strncat(dst, src, 0); // no-warning
+}
+
+void strncat_empty() {
+  char dst[8] = "123";
+  char src[] = "";
+  strncat(dst, src, 4); // no-warning
 }
 
 //===----------------------------------------------------------------------===

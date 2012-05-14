@@ -1404,6 +1404,24 @@ void CStringChecker::evalStrcpyCommon(CheckerContext &C, const CallExpr *CE,
         // For strncpy, this is just checking that lenVal <= sizeof(dst)
         // (Yes, strncpy and strncat differ in how they treat termination.
         // strncat ALWAYS terminates, but strncpy doesn't.)
+
+        // We need a special case for when the copy size is zero, in which
+        // case strncpy will do no work at all. Our bounds check uses n-1
+        // as the last element accessed, so n == 0 is problematic.
+        ProgramStateRef StateZeroSize, StateNonZeroSize;
+        llvm::tie(StateZeroSize, StateNonZeroSize) =
+          assumeZero(C, state, *lenValNL, sizeTy);
+
+        // If the size is known to be zero, we're done.
+        if (StateZeroSize && !StateNonZeroSize) {
+          StateZeroSize = StateZeroSize->BindExpr(CE, LCtx, DstVal);
+          C.addTransition(StateZeroSize);
+          return;
+        }
+
+        // Otherwise, go ahead and figure out the last element we'll touch.
+        // We don't record the non-zero assumption here because we can't
+        // be sure. We won't warn on a possible zero.
         NonLoc one = cast<NonLoc>(svalBuilder.makeIntVal(1, sizeTy));
         maxLastElementIndex = svalBuilder.evalBinOpNN(state, BO_Sub, *lenValNL,
                                                       one, sizeTy);
