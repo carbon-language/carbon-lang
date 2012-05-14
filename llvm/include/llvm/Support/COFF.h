@@ -114,9 +114,9 @@ namespace COFF {
   struct symbol {
     char     Name[NameSize];
     uint32_t Value;
+    uint16_t SectionNumber;
     uint16_t Type;
     uint8_t  StorageClass;
-    uint16_t SectionNumber;
     uint8_t  NumberOfAuxSymbols;
   };
 
