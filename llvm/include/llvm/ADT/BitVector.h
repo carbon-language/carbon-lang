@@ -482,24 +482,6 @@ private:
   }
 };
 
-inline BitVector operator&(const BitVector &LHS, const BitVector &RHS) {
-  BitVector Result(LHS);
-  Result &= RHS;
-  return Result;
-}
-
-inline BitVector operator|(const BitVector &LHS, const BitVector &RHS) {
-  BitVector Result(LHS);
-  Result |= RHS;
-  return Result;
-}
-
-inline BitVector operator^(const BitVector &LHS, const BitVector &RHS) {
-  BitVector Result(LHS);
-  Result ^= RHS;
-  return Result;
-}
-
 } // End llvm namespace
 
 namespace std {
