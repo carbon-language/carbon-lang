@@ -172,3 +172,11 @@ def test_annotation_attribute():
             break
     else:
         assert False, "Couldn't find annotation"
+
+def test_result_type():
+    tu = get_tu('int foo();')
+    foo = get_cursor(tu, 'foo')
+
+    assert foo is not None
+    t = foo.result_type
+    assert t.kind == TypeKind.INT

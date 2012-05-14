@@ -1024,6 +1024,14 @@ class Cursor(Structure):
         return self._type
 
     @property
+    def result_type(self):
+        """Retrieve the Type of the result for this Cursor."""
+        if not hasattr(self, '_result_type'):
+            self._result_type = Type_get_result(self.type)
+
+        return self._result_type
+
+    @property
     def underlying_typedef_type(self):
         """Return the underlying type of a typedef declaration.
 
