@@ -35,9 +35,10 @@ namespace llvm {
   /// CodeGenSubRegIndex - Represents a sub-register index.
   class CodeGenSubRegIndex {
     Record *const TheDef;
-    const unsigned EnumValue;
 
   public:
+    const unsigned EnumValue;
+
     CodeGenSubRegIndex(Record *R, unsigned Enum);
 
     const std::string &getName() const;
@@ -114,7 +115,7 @@ namespace llvm {
 
     // Add this as a super-register to all sub-registers after the sub-register
     // graph has been built.
-    void computeSuperRegs();
+    void computeSuperRegs(CodeGenRegBank&);
 
     const SubRegMap &getSubRegs() const {
       assert(SubRegsComplete && "Must precompute sub-registers");
@@ -139,6 +140,16 @@ namespace llvm {
     const SuperRegList &getSuperRegs() const {
       assert(SubRegsComplete && "Must precompute sub-registers");
       return SuperRegs;
+    }
+
+    // Get the topological signature of this register. This is a small integer
+    // less than RegBank.getNumTopoSigs(). Registers with the same TopoSig have
+    // identical sub-register structure. That is, they support the same set of
+    // sub-register indices mapping to the same kind of sub-registers
+    // (TopoSig-wise).
+    unsigned getTopoSig() const {
+      assert(SuperRegsComplete && "TopoSigs haven't been computed yet.");
+      return TopoSig;
     }
 
     // List of register units in ascending order.
@@ -174,6 +185,7 @@ namespace llvm {
   private:
     bool SubRegsComplete;
     bool SuperRegsComplete;
+    unsigned TopoSig;
 
     // The sub-registers explicit in the .td file form a tree.
     SmallVector<CodeGenSubRegIndex*, 8> ExplicitSubRegIndices;
@@ -216,6 +228,10 @@ namespace llvm {
     //
     DenseMap<CodeGenSubRegIndex*,
              SmallPtrSet<CodeGenRegisterClass*, 8> > SuperRegClasses;
+
+    // Bit vector of TopoSigs for the registers in this class. This will be
+    // very sparse on regular architectures.
+    BitVector TopoSigs;
 
   public:
     unsigned EnumValue;
@@ -305,6 +321,9 @@ namespace llvm {
     // getOrder(0).
     const CodeGenRegister::Set &getMembers() const { return Members; }
 
+    // Get a bit vector of TopoSigs present in this register class.
+    const BitVector &getTopoSigs() const { return TopoSigs; }
+
     // Populate a unique sorted list of units from a register set.
     void buildRegUnitSet(std::vector<unsigned> &RegUnits) const;
 
@@ -350,6 +369,10 @@ namespace llvm {
     std::vector<unsigned> Units;
   };
 
+  // Base vector for identifying TopoSigs. The contents uniquely identify a
+  // TopoSig, only computeSuperRegs needs to know how.
+  typedef SmallVector<unsigned, 16> TopoSigId;
+
   // CodeGenRegBank - Represent a target's registers and the relations between
   // them.
   class CodeGenRegBank {
@@ -370,6 +393,8 @@ namespace llvm {
     DenseMap<Record*, CodeGenRegister*> Def2Reg;
     unsigned NumNativeRegUnits;
     unsigned NumRegUnits; // # native + adopted register units.
+
+    std::map<TopoSigId, unsigned> TopoSigs;
 
     // Map each register unit to a weight (for register pressure).
     // Includes native and adopted register units.
@@ -454,6 +479,19 @@ namespace llvm {
     // Get a Register's index into the Registers array.
     unsigned getRegIndex(const CodeGenRegister *Reg) const {
       return Reg->EnumValue - 1;
+    }
+
+    // Return the number of allocated TopoSigs. The first TopoSig representing
+    // leaf registers is allocated number 0.
+    unsigned getNumTopoSigs() const {
+      return TopoSigs.size();
+    }
+
+    // Find or create a TopoSig for the given TopoSigId.
+    // This function is only for use by CodeGenRegister::computeSuperRegs().
+    // Others should simply use Reg->getTopoSig().
+    unsigned getTopoSig(const TopoSigId &Id) {
+      return TopoSigs.insert(std::make_pair(Id, TopoSigs.size())).first->second;
     }
 
     // Create a new non-native register unit that can be adopted by a register

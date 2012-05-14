@@ -84,7 +84,8 @@ CodeGenRegister::CodeGenRegister(Record *R, unsigned Enum)
     CostPerUse(R->getValueAsInt("CostPerUse")),
     CoveredBySubRegs(R->getValueAsBit("CoveredBySubRegs")),
     SubRegsComplete(false),
-    SuperRegsComplete(false)
+    SuperRegsComplete(false),
+    TopoSig(~0u)
 {}
 
 void CodeGenRegister::buildObjectGraph(CodeGenRegBank &RegBank) {
@@ -448,7 +449,7 @@ void CodeGenRegister::computeSecondarySubRegs(CodeGenRegBank &RegBank) {
   }
 }
 
-void CodeGenRegister::computeSuperRegs() {
+void CodeGenRegister::computeSuperRegs(CodeGenRegBank &RegBank) {
   // Only visit each register once.
   if (SuperRegsComplete)
     return;
@@ -458,11 +459,18 @@ void CodeGenRegister::computeSuperRegs() {
   // lists will be topologically ordered.
   for (SubRegMap::const_iterator I = SubRegs.begin(), E = SubRegs.end();
        I != E; ++I)
-    I->second->computeSuperRegs();
+    I->second->computeSuperRegs(RegBank);
 
   // Now add this as a super-register on all sub-registers.
+  // Also compute the TopoSigId in post-order.
+  TopoSigId Id;
   for (SubRegMap::const_iterator I = SubRegs.begin(), E = SubRegs.end();
        I != E; ++I) {
+    // Topological signature computed from SubIdx, TopoId(SubReg).
+    // Loops and idempotent indices have TopoSig = ~0u.
+    Id.push_back(I->first->EnumValue);
+    Id.push_back(I->second->TopoSig);
+
     if (I->second == this)
       continue;
     // Don't add duplicate entries.
@@ -470,6 +478,7 @@ void CodeGenRegister::computeSuperRegs() {
       continue;
     I->second->SuperRegs.push_back(this);
   }
+  TopoSig = RegBank.getTopoSig(Id);
 }
 
 void
@@ -612,7 +621,10 @@ struct TupleExpander : SetTheory::Expander {
 //===----------------------------------------------------------------------===//
 
 CodeGenRegisterClass::CodeGenRegisterClass(CodeGenRegBank &RegBank, Record *R)
-  : TheDef(R), Name(R->getName()), EnumValue(-1) {
+  : TheDef(R),
+    Name(R->getName()),
+    TopoSigs(RegBank.getNumTopoSigs()),
+    EnumValue(-1) {
   // Rename anonymous register classes.
   if (R->getName().size() > 9 && R->getName()[9] == '.') {
     static unsigned AnonCounter = 0;
@@ -637,7 +649,9 @@ CodeGenRegisterClass::CodeGenRegisterClass(CodeGenRegBank &RegBank, Record *R)
   // Default allocation order always contains all registers.
   for (unsigned i = 0, e = Elements->size(); i != e; ++i) {
     Orders[0].push_back((*Elements)[i]);
-    Members.insert(RegBank.getReg((*Elements)[i]));
+    const CodeGenRegister *Reg = RegBank.getReg((*Elements)[i]);
+    Members.insert(Reg);
+    TopoSigs.set(Reg->getTopoSig());
   }
 
   // Alternative allocation orders may be subsets.
@@ -918,7 +932,7 @@ CodeGenRegBank::CodeGenRegBank(RecordKeeper &Records) : Records(Records) {
   // After the sub-register graph is complete, compute the topologically
   // ordered SuperRegs list.
   for (unsigned i = 0, e = Registers.size(); i != e; ++i)
-    Registers[i]->computeSuperRegs();
+    Registers[i]->computeSuperRegs(*this);
 
   // Native register units are associated with a leaf register. They've all been
   // discovered now.
@@ -1032,8 +1046,18 @@ getConcatSubRegIndex(const SmallVector<CodeGenSubRegIndex*, 8> &Parts) {
 }
 
 void CodeGenRegBank::computeComposites() {
+  // Keep track of TopoSigs visited. We only need to visit each TopoSig once,
+  // and many registers will share TopoSigs on regular architectures.
+  BitVector TopoSigs(getNumTopoSigs());
+
   for (unsigned i = 0, e = Registers.size(); i != e; ++i) {
     CodeGenRegister *Reg1 = Registers[i];
+
+    // Skip identical subreg structures already processed.
+    if (TopoSigs.test(Reg1->getTopoSig()))
+      continue;
+    TopoSigs.set(Reg1->getTopoSig());
+
     const CodeGenRegister::SubRegMap &SRM1 = Reg1->getSubRegs();
     for (CodeGenRegister::SubRegMap::const_iterator i1 = SRM1.begin(),
          e1 = SRM1.end(); i1 != e1; ++i1) {
@@ -1634,6 +1658,7 @@ void CodeGenRegBank::inferMatchingSuperRegClass(CodeGenRegisterClass *RC,
                                                 unsigned FirstSubRegRC) {
   SmallVector<std::pair<const CodeGenRegister*,
                         const CodeGenRegister*>, 16> SSPairs;
+  BitVector TopoSigs(getNumTopoSigs());
 
   // Iterate in SubRegIndex numerical order to visit synthetic indices last.
   for (unsigned sri = 0, sre = SubRegIndices.size(); sri != sre; ++sri) {
@@ -1646,12 +1671,14 @@ void CodeGenRegBank::inferMatchingSuperRegClass(CodeGenRegisterClass *RC,
 
     // Build list of (Super, Sub) pairs for this SubIdx.
     SSPairs.clear();
+    TopoSigs.reset();
     for (CodeGenRegister::Set::const_iterator RI = RC->getMembers().begin(),
          RE = RC->getMembers().end(); RI != RE; ++RI) {
       const CodeGenRegister *Super = *RI;
       const CodeGenRegister *Sub = Super->getSubRegs().find(SubIdx)->second;
       assert(Sub && "Missing sub-register");
       SSPairs.push_back(std::make_pair(Super, Sub));
+      TopoSigs.set(Sub->getTopoSig());
     }
 
     // Iterate over sub-register class candidates.  Ignore classes created by
@@ -1659,6 +1686,9 @@ void CodeGenRegBank::inferMatchingSuperRegClass(CodeGenRegisterClass *RC,
     for (unsigned rci = FirstSubRegRC, rce = RegClasses.size(); rci != rce;
          ++rci) {
       CodeGenRegisterClass *SubRC = RegClasses[rci];
+      // Topological shortcut: SubRC members have the wrong shape.
+      if (!TopoSigs.anyCommon(SubRC->getTopoSigs()))
+        continue;
       // Compute the subset of RC that maps into SubRC.
       CodeGenRegister::Set SubSet;
       for (unsigned i = 0, e = SSPairs.size(); i != e; ++i)
