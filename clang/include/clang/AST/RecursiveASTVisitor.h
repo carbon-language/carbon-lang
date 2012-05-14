@@ -1241,7 +1241,9 @@ bool RecursiveASTVisitor<Derived>::Traverse##DECL (DECL *D) {   \
 DEF_TRAVERSE_DECL(AccessSpecDecl, { })
 
 DEF_TRAVERSE_DECL(BlockDecl, {
-    TRY_TO(TraverseTypeLoc(D->getSignatureAsWritten()->getTypeLoc()));
+    TypeSourceInfo *TInfo = D->getSignatureAsWritten();
+    if (TInfo)
+      TRY_TO(TraverseTypeLoc(TInfo->getTypeLoc()));
     TRY_TO(TraverseStmt(D->getBody()));
     // This return statement makes sure the traversal of nodes in
     // decls_begin()/decls_end() (done in the DEF_TRAVERSE_DECL macro)
