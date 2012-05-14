@@ -108,6 +108,15 @@ void CodeGenRegister::buildObjectGraph(CodeGenRegBank &RegBank) {
   // This is used by computeSecondarySubRegs() to find candidates.
   if (CoveredBySubRegs && !ExplicitSubRegs.empty())
     ExplicitSubRegs.front()->LeadingSuperRegs.push_back(this);
+
+  // Add ad hoc alias links. This is a symmetric relationship betwen two
+  // registers, so build a symmetric graph by adding links in both ends.
+  std::vector<Record*> Aliases = TheDef->getValueAsListOfDefs("Aliases");
+  for (unsigned i = 0, e = Aliases.size(); i != e; ++i) {
+    CodeGenRegister *Reg = RegBank.getReg(Aliases[i]);
+    ExplicitAliases.push_back(Reg);
+    Reg->ExplicitAliases.push_back(this);
+  }
 }
 
 const std::string &CodeGenRegister::getName() const {
@@ -1529,16 +1538,13 @@ computeOverlaps(std::map<const CodeGenRegister*, CodeGenRegister::Set> &Map) {
     Overlaps.insert(Supers.begin(), Supers.end());
 
     // Form symmetrical relations from the special Aliases[] lists.
-    std::vector<Record*> RegList = Reg->TheDef->getValueAsListOfDefs("Aliases");
+    ArrayRef<CodeGenRegister*> RegList = Reg->getExplicitAliases();
     for (unsigned i2 = 0, e2 = RegList.size(); i2 != e2; ++i2) {
-      CodeGenRegister *Reg2 = getReg(RegList[i2]);
-      CodeGenRegister::Set &Overlaps2 = Map[Reg2];
+      CodeGenRegister *Reg2 = RegList[i2];
       const CodeGenRegister::SuperRegList &Supers2 = Reg2->getSuperRegs();
       // Reg overlaps Reg2 which implies it overlaps supers(Reg2).
       Overlaps.insert(Reg2);
       Overlaps.insert(Supers2.begin(), Supers2.end());
-      Overlaps2.insert(Reg);
-      Overlaps2.insert(Supers.begin(), Supers.end());
     }
   }
 

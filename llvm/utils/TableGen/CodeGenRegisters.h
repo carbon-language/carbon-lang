@@ -142,6 +142,13 @@ namespace llvm {
       return SuperRegs;
     }
 
+    // Get the list of ad hoc aliases. The graph is symmetric, so the list
+    // contains all registers in 'Aliases', and all registers that mention this
+    // register in 'Aliases'.
+    ArrayRef<CodeGenRegister*> getExplicitAliases() const {
+      return ExplicitAliases;
+    }
+
     // Get the topological signature of this register. This is a small integer
     // less than RegBank.getNumTopoSigs(). Registers with the same TopoSig have
     // identical sub-register structure. That is, they support the same set of
@@ -190,6 +197,9 @@ namespace llvm {
     // The sub-registers explicit in the .td file form a tree.
     SmallVector<CodeGenSubRegIndex*, 8> ExplicitSubRegIndices;
     SmallVector<CodeGenRegister*, 8> ExplicitSubRegs;
+
+    // Explicit ad hoc aliases, symmetrized to form an undirected graph.
+    SmallVector<CodeGenRegister*, 8> ExplicitAliases;
 
     // Super-registers where this is the first explicit sub-register.
     SuperRegList LeadingSuperRegs;
