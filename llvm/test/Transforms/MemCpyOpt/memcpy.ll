@@ -148,3 +148,25 @@ define void @test8() {
 }
 
 declare noalias i8* @malloc(i32)
+
+; rdar://11341081
+%struct.big = type { [50 x i32] }
+
+define void @test9() nounwind uwtable ssp {
+entry:
+; CHECK: test9
+; CHECK: f1
+; CHECK-NOT: memcpy
+; CHECK: f2
+  %b = alloca %struct.big, align 4
+  %tmp = alloca %struct.big, align 4
+  call void @f1(%struct.big* sret %tmp)
+  %0 = bitcast %struct.big* %b to i8*
+  %1 = bitcast %struct.big* %tmp to i8*
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %0, i8* %1, i64 200, i32 4, i1 false)
+  call void @f2(%struct.big* %b)
+  ret void
+}
+
+declare void @f1(%struct.big* sret)
+declare void @f2(%struct.big*)

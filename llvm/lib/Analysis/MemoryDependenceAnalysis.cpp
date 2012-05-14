@@ -16,13 +16,11 @@
 
 #define DEBUG_TYPE "memdep"
 #include "llvm/Analysis/MemoryDependenceAnalysis.h"
-#include "llvm/Analysis/ValueTracking.h"
 #include "llvm/Instructions.h"
 #include "llvm/IntrinsicInst.h"
 #include "llvm/Function.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/Analysis/AliasAnalysis.h"
-#include "llvm/Analysis/CaptureTracking.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/MemoryBuiltins.h"
@@ -339,88 +337,6 @@ getLoadLoadClobberFullWidthSize(const Value *MemLocBase, int64_t MemLocOffs,
   }
 }
 
-namespace {
-  /// Only find pointer captures which happen before the given instruction. Uses
-  /// the dominator tree to determine whether one instruction is before another.
-  struct CapturesBefore : public CaptureTracker {
-    CapturesBefore(const Instruction *I, DominatorTree *DT)
-      : BeforeHere(I), DT(DT), Captured(false) {}
-
-    void tooManyUses() { Captured = true; }
-
-    bool shouldExplore(Use *U) {
-      Instruction *I = cast<Instruction>(U->getUser());
-      BasicBlock *BB = I->getParent();
-      if (BeforeHere != I &&
-          (!DT->isReachableFromEntry(BB) || DT->dominates(BeforeHere, I)))
-        return false;
-      return true;
-    }
-
-    bool captured(Use *U) {
-      Instruction *I = cast<Instruction>(U->getUser());
-      BasicBlock *BB = I->getParent();
-      if (BeforeHere != I &&
-          (!DT->isReachableFromEntry(BB) || DT->dominates(BeforeHere, I)))
-        return false;
-      Captured = true;
-      return true;
-    }
-
-    const Instruction *BeforeHere;
-    DominatorTree *DT;
-
-    bool Captured;
-  };
-}
-
-AliasAnalysis::ModRefResult
-MemoryDependenceAnalysis::getModRefInfo(const Instruction *Inst,
-                                        const AliasAnalysis::Location &MemLoc) {
-  AliasAnalysis::ModRefResult MR = AA->getModRefInfo(Inst, MemLoc);
-  if (MR != AliasAnalysis::ModRef) return MR;
-
-  // FIXME: this is really just shoring-up a deficiency in alias analysis.
-  // BasicAA isn't willing to spend linear time determining whether an alloca
-  // was captured before or after this particular call, while we are. However,
-  // with a smarter AA in place, this test is just wasting compile time.
-  if (!DT) return AliasAnalysis::ModRef;
-  const Value *Object = GetUnderlyingObject(MemLoc.Ptr, TD);
-  if (!isIdentifiedObject(Object) || isa<GlobalValue>(Object) ||
-      isa<Constant>(Object))
-    return AliasAnalysis::ModRef;
-
-  ImmutableCallSite CS(Inst);
-  if (!CS.getInstruction() || CS.getInstruction() == Object)
-    return AliasAnalysis::ModRef;
-
-  CapturesBefore CB(Inst, DT);
-  llvm::PointerMayBeCaptured(Object, &CB);
-  if (CB.Captured)
-    return AliasAnalysis::ModRef;
-
-  unsigned ArgNo = 0;
-  for (ImmutableCallSite::arg_iterator CI = CS.arg_begin(), CE = CS.arg_end();
-       CI != CE; ++CI, ++ArgNo) {
-    // Only look at the no-capture or byval pointer arguments.  If this
-    // pointer were passed to arguments that were neither of these, then it
-    // couldn't be no-capture.
-    if (!(*CI)->getType()->isPointerTy() ||
-        (!CS.doesNotCapture(ArgNo) && !CS.isByValArgument(ArgNo)))
-      continue;
-
-    // If this is a no-capture pointer argument, see if we can tell that it
-    // is impossible to alias the pointer we're checking.  If not, we have to
-    // assume that the call could touch the pointer, even though it doesn't
-    // escape.
-    if (!AA->isNoAlias(AliasAnalysis::Location(*CI),
-                       AliasAnalysis::Location(Object))) {
-      return AliasAnalysis::ModRef;
-    }
-  }
-  return AliasAnalysis::NoModRef;
-}
-
 /// getPointerDependencyFrom - Return the instruction on which a memory
 /// location depends.  If isLoad is true, this routine ignores may-aliases with
 /// read-only operations.  If isLoad is false, this routine ignores may-aliases
@@ -568,7 +484,11 @@ getPointerDependencyFrom(const AliasAnalysis::Location &MemLoc, bool isLoad,
     }
 
     // See if this instruction (e.g. a call or vaarg) mod/ref's the pointer.
-    switch (getModRefInfo(Inst, MemLoc)) {
+    AliasAnalysis::ModRefResult MR = AA->getModRefInfo(Inst, MemLoc);
+    // If necessary, perform additional analysis.
+    if (MR == AliasAnalysis::ModRef)
+      MR = AA->callCapturesBefore(Inst, MemLoc, DT);
+    switch (MR) {
     case AliasAnalysis::NoModRef:
       // If the call has no effect on the queried pointer, just ignore it.
       continue;

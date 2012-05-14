@@ -662,7 +662,11 @@ bool MemCpyOpt::performCallSlotOptzn(Instruction *cpy,
   // the use analysis, we also need to know that it does not sneakily
   // access dest.  We rely on AA to figure this out for us.
   AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
-  if (AA.getModRefInfo(C, cpyDest, srcSize) != AliasAnalysis::NoModRef)
+  AliasAnalysis::ModRefResult MR = AA.getModRefInfo(C, cpyDest, srcSize);
+  // If necessary, perform additional analysis.
+  if (MR != AliasAnalysis::NoModRef)
+    MR = AA.callCapturesBefore(C, cpyDest, srcSize, &DT);
+  if (MR != AliasAnalysis::NoModRef)
     return false;
 
   // All the checks have passed, so do the transformation.

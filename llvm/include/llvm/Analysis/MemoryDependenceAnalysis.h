@@ -431,9 +431,6 @@ namespace llvm {
 
     void RemoveCachedNonLocalPointerDependencies(ValueIsLoadPair P);
     
-    AliasAnalysis::ModRefResult
-    getModRefInfo(const Instruction *Inst, const AliasAnalysis::Location &Loc);
-
     /// verifyRemoved - Verify that the specified instruction does not occur
     /// in our internal data structures.
     void verifyRemoved(Instruction *Inst) const;
