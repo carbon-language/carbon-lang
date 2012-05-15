@@ -112,7 +112,12 @@ modes.</p>
 
 <p>All warning and language selection flags which previously accepted
 <code>c1x</code> have been updated to accept <code>c11</code>. The old
-<code>c1x</code> forms have been removed.
+<code>c1x</code> forms have been removed.</p>
+
+<p>Clang 3.1 adds a family of <code>__c11_atomic</code> builtins corresponding
+   directly to the <code>_explict</code> versions of the C11 atomic functions.
+   This means that C11's <code>&lt;stdatomic.h&gt;</code> can be implemented in
+   a small set of trivial macros.  </p>
 
 <!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
 <h3 id="cxxchanges">C++ Language Changes in Clang</h3>
