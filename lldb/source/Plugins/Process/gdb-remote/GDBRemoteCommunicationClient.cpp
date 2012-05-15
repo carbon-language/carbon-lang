@@ -435,10 +435,10 @@ GDBRemoteCommunicationClient::SendContinuePacketAndWaitForResponse
 
                         const uint8_t signo = response.GetHexU8 (UINT8_MAX);
 
-                        bool continue_after_aync = false;
+                        bool continue_after_async = false;
                         if (m_async_signal != -1 || m_async_packet_predicate.GetValue())
                         {
-                            continue_after_aync = true;
+                            continue_after_async = true;
                             // We sent an interrupt packet to stop the inferior process
                             // for an async signal or to send an async packet while running
                             // but we might have been single stepping and received the
@@ -453,7 +453,7 @@ GDBRemoteCommunicationClient::SendContinuePacketAndWaitForResponse
                             // a lot of trouble for us!
                             if (signo != SIGINT && signo != SIGSTOP)
                             {
-                                continue_after_aync = false;
+                                continue_after_async = false;
 
                                 // We didn't get a a SIGINT or SIGSTOP, so try for a
                                 // very brief time (1 ms) to get another stop reply
@@ -470,7 +470,7 @@ GDBRemoteCommunicationClient::SendContinuePacketAndWaitForResponse
                                         // our interrupt didn't stop the target so we
                                         // shouldn't continue after the async signal
                                         // or packet is sent...
-                                        continue_after_aync = false;
+                                        continue_after_async = false;
                                         break;
                                     }
                                 }
@@ -514,7 +514,7 @@ GDBRemoteCommunicationClient::SendContinuePacketAndWaitForResponse
                                                        Host::GetSignalAsCString (async_signal));
 
                                 // Set the continue packet to resume even if the
-                                // interrupt didn't cause our stop (ignore continue_after_aync)
+                                // interrupt didn't cause our stop (ignore continue_after_async)
                                 continue_packet.assign(signal_packet, signal_packet_len);
                                 continue;
                             }
@@ -548,13 +548,13 @@ GDBRemoteCommunicationClient::SendContinuePacketAndWaitForResponse
                             m_async_packet_predicate.SetValue(false, eBroadcastAlways);
 
                             if (packet_log) 
-                                packet_log->Printf ("async: sent packet, continue_after_aync = %i", continue_after_aync);
+                                packet_log->Printf ("async: sent packet, continue_after_async = %i", continue_after_async);
 
                             // Set the continue packet to resume if our interrupt
                             // for the async packet did cause the stop
-                            if (continue_after_aync)
+                            if (continue_after_async)
                             {
-                                continue_packet.assign (1, 'c');
+                                //continue_packet.assign (1, 'c');
                                 continue;
                             }
                         }
