@@ -929,7 +929,12 @@ class Cursor(Structure):
 
     @staticmethod
     def from_location(tu, location):
-        return Cursor_get(tu, location)
+        # We store a reference to the TU in the instance so the TU won't get
+        # collected before the cursor.
+        cursor = Cursor_get(tu, location)
+        cursor._tu = tu
+
+        return cursor
 
     def __eq__(self, other):
         return Cursor_eq(self, other)
@@ -1127,6 +1132,13 @@ class Cursor(Structure):
 
         return self._lexical_parent
 
+    @property
+    def translation_unit(self):
+        """Returns the TranslationUnit to which this Cursor belongs."""
+        # If this triggers an AttributeError, the instance was not properly
+        # created.
+        return self._tu
+
     def get_children(self):
         """Return an iterator for accessing the children of this cursor."""
 
@@ -1135,6 +1147,9 @@ class Cursor(Structure):
             # FIXME: Document this assertion in API.
             # FIXME: There should just be an isNull method.
             assert child != Cursor_null()
+
+            # Create reference to TU so it isn't GC'd before Cursor.
+            child._tu = self._tu
             children.append(child)
             return 1 # continue
         children = []
@@ -1147,6 +1162,22 @@ class Cursor(Structure):
         # FIXME: There should just be an isNull method.
         if res == Cursor_null():
             return None
+
+        # Store a reference to the TU in the Python object so it won't get GC'd
+        # before the Cursor.
+        tu = None
+        for arg in args:
+            if isinstance(arg, TranslationUnit):
+                tu = arg
+                break
+
+            if hasattr(arg, 'translation_unit'):
+                tu = arg.translation_unit
+                break
+
+        assert tu is not None
+
+        res._tu = tu
         return res
 
 
@@ -1324,9 +1355,26 @@ class Type(Structure):
 
         return result
 
+    @property
+    def translation_unit(self):
+        """The TranslationUnit to which this Type is associated."""
+        # If this triggers an AttributeError, the instance was not properly
+        # instantiated.
+        return self._tu
+
     @staticmethod
     def from_result(res, fn, args):
         assert isinstance(res, Type)
+
+        tu = None
+        for arg in args:
+            if hasattr(arg, 'translation_unit'):
+                tu = arg.translation_unit
+                break
+
+        assert tu is not None
+        res._tu = tu
+
         return res
 
     def get_canonical(self):

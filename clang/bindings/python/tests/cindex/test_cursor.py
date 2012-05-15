@@ -1,4 +1,7 @@
+import gc
+
 from clang.cindex import CursorKind
+from clang.cindex import TranslationUnit
 from clang.cindex import TypeKind
 from .util import get_cursor
 from .util import get_cursors
@@ -38,6 +41,8 @@ def test_get_children():
     tu_nodes = list(it)
 
     assert len(tu_nodes) == 3
+    for cursor in tu_nodes:
+        assert cursor.translation_unit is not None
 
     assert tu_nodes[0] != tu_nodes[1]
     assert tu_nodes[0].kind == CursorKind.STRUCT_DECL
@@ -47,6 +52,7 @@ def test_get_children():
     assert tu_nodes[0].location.line == 4
     assert tu_nodes[0].location.column == 8
     assert tu_nodes[0].hash > 0
+    assert tu_nodes[0].translation_unit is not None
 
     s0_nodes = list(tu_nodes[0].get_children())
     assert len(s0_nodes) == 2
@@ -66,6 +72,23 @@ def test_get_children():
     assert tu_nodes[2].spelling == 'f0'
     assert tu_nodes[2].displayname == 'f0(int, int)'
     assert tu_nodes[2].is_definition() == True
+
+def test_references():
+    """Ensure that references to TranslationUnit are kept."""
+    tu = get_tu('int x;')
+    cursors = list(tu.cursor.get_children())
+    assert len(cursors) > 0
+
+    cursor = cursors[0]
+    assert isinstance(cursor.translation_unit, TranslationUnit)
+
+    # Delete reference to TU and perform a full GC.
+    del tu
+    gc.collect()
+    assert isinstance(cursor.translation_unit, TranslationUnit)
+
+    # If the TU was destroyed, this should cause a segfault.
+    parent = cursor.semantic_parent
 
 def test_canonical():
     source = 'struct X; struct X; struct X { int member; };'

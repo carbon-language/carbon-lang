@@ -1,4 +1,7 @@
+import gc
+
 from clang.cindex import CursorKind
+from clang.cindex import TranslationUnit
 from clang.cindex import TypeKind
 from nose.tools import raises
 from .util import get_cursor
@@ -28,6 +31,7 @@ def test_a_struct():
     assert teststruct is not None, "Could not find teststruct."
     fields = list(teststruct.get_children())
     assert all(x.kind == CursorKind.FIELD_DECL for x in fields)
+    assert all(x.translation_unit is not None for x in fields)
 
     assert fields[0].spelling == 'a'
     assert not fields[0].type.is_const_qualified()
@@ -71,6 +75,26 @@ def test_a_struct():
     assert fields[7].type.get_pointee().kind == TypeKind.POINTER
     assert fields[7].type.get_pointee().get_pointee().kind == TypeKind.POINTER
     assert fields[7].type.get_pointee().get_pointee().get_pointee().kind == TypeKind.INT
+
+def test_references():
+    """Ensure that a Type maintains a reference to a TranslationUnit."""
+
+    tu = get_tu('int x;')
+    children = list(tu.cursor.get_children())
+    assert len(children) > 0
+
+    cursor = children[0]
+    t = cursor.type
+
+    assert isinstance(t.translation_unit, TranslationUnit)
+
+    # Delete main TranslationUnit reference and force a GC.
+    del tu
+    gc.collect()
+    assert isinstance(t.translation_unit, TranslationUnit)
+
+    # If the TU was destroyed, this should cause a segfault.
+    decl = t.get_declaration()
 
 constarrayInput="""
 struct teststruct {
