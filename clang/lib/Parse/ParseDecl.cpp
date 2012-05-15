@@ -1707,7 +1707,10 @@ bool Parser::ParseImplicitInt(DeclSpec &DS, CXXScopeSpec *SS,
     }
   }
 
-  if (DSC != DSC_type_specifier && DSC != DSC_trailing) {
+  // Determine whether this identifier could plausibly be the name of something
+  // being declared (with a missign type).
+  if (DSC != DSC_type_specifier && DSC != DSC_trailing &&
+      (!SS || DSC == DSC_top_level || DSC == DSC_class)) {
     // Look ahead to the next token to try to figure out what this declaration
     // was supposed to be.
     switch (NextToken().getKind()) {
