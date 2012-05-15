@@ -1050,21 +1050,42 @@ Sema::DiagnosePropertyMismatch(ObjCPropertyDecl *Property,
 bool Sema::DiagnosePropertyAccessorMismatch(ObjCPropertyDecl *property,
                                             ObjCMethodDecl *GetterMethod,
                                             SourceLocation Loc) {
-  if (GetterMethod &&
-      !Context.hasSameType(GetterMethod->getResultType().getNonReferenceType(),
-                           property->getType().getNonReferenceType())) {
-    AssignConvertType result = Incompatible;
-    if (property->getType()->isObjCObjectPointerType())
-      result = CheckAssignmentConstraints(Loc, GetterMethod->getResultType(),
-                                          property->getType());
-    if (result != Compatible) {
-      Diag(Loc, diag::warn_accessor_property_type_mismatch)
-      << property->getDeclName()
-      << GetterMethod->getSelector();
-      Diag(GetterMethod->getLocation(), diag::note_declared_at);
-      return true;
+  if (!GetterMethod)
+    return false;
+  QualType GetterType = GetterMethod->getResultType().getNonReferenceType();
+  QualType PropertyIvarType = property->getType().getNonReferenceType();
+  bool compat = Context.hasSameType(PropertyIvarType, GetterType);
+  if (!compat) {
+    if (isa<ObjCObjectPointerType>(PropertyIvarType) && 
+        isa<ObjCObjectPointerType>(GetterType))
+      compat =
+        Context.canAssignObjCInterfaces(
+                                      PropertyIvarType->getAs<ObjCObjectPointerType>(),
+                                      GetterType->getAs<ObjCObjectPointerType>());
+    else if (CheckAssignmentConstraints(Loc, PropertyIvarType, GetterType) 
+              != Compatible) {
+          Diag(Loc, diag::error_property_accessor_type)
+            << property->getDeclName() << PropertyIvarType
+            << GetterMethod->getSelector() << GetterType;
+          Diag(GetterMethod->getLocation(), diag::note_declared_at);
+          return true;
+    } else {
+      compat = true;
+      QualType lhsType =Context.getCanonicalType(PropertyIvarType).getUnqualifiedType();
+      QualType rhsType =Context.getCanonicalType(GetterType).getUnqualifiedType();
+      if (lhsType != rhsType && lhsType->isArithmeticType())
+        compat = false;
     }
   }
+  
+  if (!compat) {
+    Diag(Loc, diag::warn_accessor_property_type_mismatch)
+    << property->getDeclName()
+    << GetterMethod->getSelector();
+    Diag(GetterMethod->getLocation(), diag::note_declared_at);
+    return true;
+  }
+
   return false;
 }
 

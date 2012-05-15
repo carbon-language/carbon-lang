@@ -34,3 +34,16 @@
     self.gradientStyle; // expected-error {{property 'gradientStyle' not found on object of type 'Class'}}
 }
 @end
+
+// rdar://1105153
+@interface rdar1105153
+@property int P; // expected-error {{type of property 'P' ('int') does not match type of accessor 'P' ('void')}}
+- (void)P; // expected-note {{declared here}}
+
+@property int P1; // expected-warning {{type of property 'P1' does not match type of accessor 'P1'}} 
+- (double) P1; // expected-note {{declared here}}
+
+@property int P2; // expected-error {{type of property 'P2' ('int') does not match type of accessor 'P2' ('double *')}}
+- (double*)P2; // expected-note {{declared here}}
+
+@end
