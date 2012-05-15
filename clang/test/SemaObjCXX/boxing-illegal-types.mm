@@ -48,7 +48,7 @@ enum MyEnum {
   ME_foo
 };
 
-enum ForwE;
+enum ForwE; // expected-error {{ISO C++ forbids forward references to 'enum' types}}
 
 void testEnum(void *p) {
   enum MyEnum myen;

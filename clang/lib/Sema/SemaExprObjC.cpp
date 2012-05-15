@@ -539,6 +539,17 @@ ExprResult Sema::BuildObjCBoxedExpr(SourceRange SR, Expr *ValueExpr) {
     // Look for the appropriate method within NSNumber.
     BoxingMethod = getNSNumberFactoryMethod(*this, SR.getBegin(), ValueType);
     BoxedType = NSNumberPointer;
+
+  } else if (const EnumType *ET = ValueType->getAs<EnumType>()) {
+    if (!ET->getDecl()->isComplete()) {
+      Diag(SR.getBegin(), diag::err_objc_incomplete_boxed_expression_type)
+        << ValueType << ValueExpr->getSourceRange();
+      return ExprError();
+    }
+
+    BoxingMethod = getNSNumberFactoryMethod(*this, SR.getBegin(),
+                                            ET->getDecl()->getIntegerType());
+    BoxedType = NSNumberPointer;
   }
 
   if (!BoxingMethod) {
