@@ -430,7 +430,7 @@ void llvm::DisassembleInputMachO(StringRef Filename) {
 
       // Stop disassembling either at the beginning of the next symbol or at
       // the end of the section.
-      bool containsNextSym = true;
+      bool containsNextSym = false;
       uint64_t NextSym = 0;
       uint64_t NextSymIdx = SymIdx+1;
       while (Symbols.size() > NextSymIdx) {
