@@ -1361,6 +1361,29 @@ DumpModuleSymbolVendor (Stream &strm, Module *module)
     return false;
 }
 
+static void
+DumpAddress (ExecutionContextScope *exe_scope, const Address &so_addr, bool verbose, Stream &strm)
+{
+    strm.IndentMore();
+    strm.Indent ("    Address: ");
+    so_addr.Dump (&strm, exe_scope, Address::DumpStyleModuleWithFileAddress);
+    strm.PutCString (" (");
+    so_addr.Dump (&strm, exe_scope, Address::DumpStyleSectionNameOffset);
+    strm.PutCString (")\n");
+    strm.Indent ("    Summary: ");
+    const uint32_t save_indent = strm.GetIndentLevel ();
+    strm.SetIndentLevel (save_indent + 13);
+    so_addr.Dump (&strm, exe_scope, Address::DumpStyleResolvedDescription);
+    strm.SetIndentLevel (save_indent);
+    // Print out detailed address information when verbose is enabled
+    if (verbose)
+    {
+        strm.EOL();
+        so_addr.Dump (&strm, exe_scope, Address::DumpStyleDetailedSymbolContext);
+    }
+    strm.IndentLess();
+}
+
 static bool
 LookupAddressInModule (CommandInterpreter &interpreter, 
                        Stream &strm, 
@@ -1390,24 +1413,25 @@ LookupAddressInModule (CommandInterpreter &interpreter,
         }
         
         ExecutionContextScope *exe_scope = interpreter.GetExecutionContext().GetBestExecutionContextScope();
-        strm.IndentMore();
-        strm.Indent ("    Address: ");
-        so_addr.Dump (&strm, exe_scope, Address::DumpStyleModuleWithFileAddress);
-        strm.PutCString (" (");
-        so_addr.Dump (&strm, exe_scope, Address::DumpStyleSectionNameOffset);
-        strm.PutCString (")\n");
-        strm.Indent ("    Summary: ");
-        const uint32_t save_indent = strm.GetIndentLevel ();
-        strm.SetIndentLevel (save_indent + 13);
-        so_addr.Dump (&strm, exe_scope, Address::DumpStyleResolvedDescription);
-        strm.SetIndentLevel (save_indent);
-        // Print out detailed address information when verbose is enabled
-        if (verbose)
-        {
-            strm.EOL();
-            so_addr.Dump (&strm, exe_scope, Address::DumpStyleDetailedSymbolContext);
-        }
-        strm.IndentLess();
+        DumpAddress (exe_scope, so_addr, verbose, strm);
+//        strm.IndentMore();
+//        strm.Indent ("    Address: ");
+//        so_addr.Dump (&strm, exe_scope, Address::DumpStyleModuleWithFileAddress);
+//        strm.PutCString (" (");
+//        so_addr.Dump (&strm, exe_scope, Address::DumpStyleSectionNameOffset);
+//        strm.PutCString (")\n");
+//        strm.Indent ("    Summary: ");
+//        const uint32_t save_indent = strm.GetIndentLevel ();
+//        strm.SetIndentLevel (save_indent + 13);
+//        so_addr.Dump (&strm, exe_scope, Address::DumpStyleResolvedDescription);
+//        strm.SetIndentLevel (save_indent);
+//        // Print out detailed address information when verbose is enabled
+//        if (verbose)
+//        {
+//            strm.EOL();
+//            so_addr.Dump (&strm, exe_scope, Address::DumpStyleDetailedSymbolContext);
+//        }
+//        strm.IndentLess();
         return true;
     }
     
@@ -1415,7 +1439,7 @@ LookupAddressInModule (CommandInterpreter &interpreter,
 }
 
 static uint32_t
-LookupSymbolInModule (CommandInterpreter &interpreter, Stream &strm, Module *module, const char *name, bool name_is_regex)
+LookupSymbolInModule (CommandInterpreter &interpreter, Stream &strm, Module *module, const char *name, bool name_is_regex, bool verbose)
 {
     if (module)
     {
@@ -1452,12 +1476,17 @@ LookupSymbolInModule (CommandInterpreter &interpreter, Stream &strm, Module *mod
                     DumpFullpath (strm, &module->GetFileSpec(), 0);
                     strm.PutCString(":\n");
                     strm.IndentMore ();
-                    Symtab::DumpSymbolHeader (&strm);
+                    //Symtab::DumpSymbolHeader (&strm);
                     for (i=0; i < num_matches; ++i)
                     {
                         Symbol *symbol = symtab->SymbolAtIndex(match_indexes[i]);
-                        strm.Indent ();
-                        symbol->Dump (&strm, interpreter.GetExecutionContext().GetTargetPtr(), i);
+                        DumpAddress (interpreter.GetExecutionContext().GetBestExecutionContextScope(),
+                                     symbol->GetAddress(),
+                                     verbose,
+                                     strm);
+
+//                        strm.Indent ();
+//                        symbol->Dump (&strm, interpreter.GetExecutionContext().GetTargetPtr(), i);
                     }
                     strm.IndentLess ();
                     return num_matches;
@@ -1470,7 +1499,7 @@ LookupSymbolInModule (CommandInterpreter &interpreter, Stream &strm, Module *mod
 
 
 static void
-DumpSymbolContextList (CommandInterpreter &interpreter, Stream &strm, SymbolContextList &sc_list, bool prepend_addr, bool verbose)
+DumpSymbolContextList (ExecutionContextScope *exe_scope, Stream &strm, SymbolContextList &sc_list, bool verbose)
 {
     strm.IndentMore ();
     uint32_t i;
@@ -1481,21 +1510,6 @@ DumpSymbolContextList (CommandInterpreter &interpreter, Stream &strm, SymbolCont
         SymbolContext sc;
         if (sc_list.GetContextAtIndex(i, sc))
         {
-            strm.Indent();
-            ExecutionContextScope *exe_scope = interpreter.GetExecutionContext().GetBestExecutionContextScope ();
-            
-            if (prepend_addr)
-            {
-                if (sc.line_entry.range.GetBaseAddress().IsValid())
-                {
-                    sc.line_entry.range.GetBaseAddress().Dump (&strm, 
-                                                               exe_scope,
-                                                               Address::DumpStyleLoadAddress, 
-                                                               Address::DumpStyleModuleWithFileAddress);
-                    strm.PutCString(" in ");
-                }
-            }
-            
             AddressRange range;
             
             sc.GetAddressRange(eSymbolContextEverything, 
@@ -1503,43 +1517,25 @@ DumpSymbolContextList (CommandInterpreter &interpreter, Stream &strm, SymbolCont
                                true, 
                                range);
             
-            sc.DumpStopContext(&strm, 
-                               exe_scope, 
-                               range.GetBaseAddress(), 
-                               true, 
-                               true, 
-                               false);
-
-            strm.EOL();
-            if (verbose)
-            {
-                if (sc.line_entry.range.GetBaseAddress().IsValid())
-                {
-                    if (sc.line_entry.range.GetBaseAddress().Dump (&strm, 
-                                                                   exe_scope, 
-                                                                   Address::DumpStyleDetailedSymbolContext))
-                        strm.PutCString("\n\n");
-                }
-                else if (sc.function->GetAddressRange().GetBaseAddress().IsValid())
-                {
-                    if (sc.function->GetAddressRange().GetBaseAddress().Dump (&strm, 
-                                                                              exe_scope, 
-                                                                              Address::DumpStyleDetailedSymbolContext))
-                        strm.PutCString("\n\n");
-                }
-            }
+            DumpAddress (exe_scope, range.GetBaseAddress(), verbose, strm);
         }
     }
     strm.IndentLess ();
 }
 
 static uint32_t
-LookupFunctionInModule (CommandInterpreter &interpreter, Stream &strm, Module *module, const char *name, bool name_is_regex, bool include_inlines, bool verbose)
+LookupFunctionInModule (CommandInterpreter &interpreter,
+                        Stream &strm,
+                        Module *module,
+                        const char *name,
+                        bool name_is_regex,
+                        bool include_inlines,
+                        bool include_symbols,
+                        bool verbose)
 {
     if (module && name && name[0])
     {
         SymbolContextList sc_list;
-        const bool include_symbols = false;
         const bool append = true;
         uint32_t num_matches = 0;
         if (name_is_regex)
@@ -1569,7 +1565,7 @@ LookupFunctionInModule (CommandInterpreter &interpreter, Stream &strm, Module *m
             strm.Printf("%u match%s found in ", num_matches, num_matches > 1 ? "es" : "");
             DumpFullpath (strm, &module->GetFileSpec(), 0);
             strm.PutCString(":\n");
-            DumpSymbolContextList (interpreter, strm, sc_list, true, verbose);
+            DumpSymbolContextList (interpreter.GetExecutionContext().GetBestExecutionContextScope(), strm, sc_list, verbose);
         }
         return num_matches;
     }
@@ -1643,7 +1639,7 @@ LookupFileAndLineInModule (CommandInterpreter &interpreter,
             strm << " in ";
             DumpFullpath (strm, &module->GetFileSpec(), 0);
             strm.PutCString(":\n");
-            DumpSymbolContextList (interpreter, strm, sc_list, true, verbose);
+            DumpSymbolContextList (interpreter.GetExecutionContext().GetBestExecutionContextScope(), strm, sc_list, verbose);
             return num_matches;
         }
     }
@@ -2837,13 +2833,43 @@ public:
                 return result.Succeeded();
             }
             
-            if (use_global_module_list)
+            ModuleList module_list;
+            ModuleList *module_list_ptr = NULL;
+            const size_t argc = command.GetArgumentCount();
+            if (argc == 0)
             {
-                locker.Lock (Module::GetAllocationModuleCollectionMutex());
-                num_modules = Module::GetNumberAllocatedModules();
+                if (use_global_module_list)
+                {
+                    locker.Lock (Module::GetAllocationModuleCollectionMutex());
+                    num_modules = Module::GetNumberAllocatedModules();
+                }
+                else
+                {
+                    module_list_ptr = &target->GetImages();
+                    num_modules = target->GetImages().GetSize();
+                }
             }
             else
-                num_modules = target->GetImages().GetSize();
+            {
+                for (size_t i=0; i<argc; ++i)
+                {
+                    // Dump specified images (by basename or fullpath)
+                    const char *arg_cstr = command.GetArgumentAtIndex(i);
+                    const size_t num_matches = FindModulesByName (target, arg_cstr, module_list, use_global_module_list);
+                    if (num_matches == 0)
+                    {
+                        if (argc == 1)
+                        {
+                            result.AppendErrorWithFormat ("no modules found that match '%s'", arg_cstr);
+                            result.SetStatus (eReturnStatusFailed);
+                            return false;
+                        }
+                    }
+                }
+                
+                num_modules = module_list.GetSize();
+                module_list_ptr = &module_list;
+            }
 
             if (num_modules > 0)
             {                
@@ -2851,15 +2877,15 @@ public:
                 {
                     ModuleSP module_sp;
                     Module *module;
-                    if (use_global_module_list)
+                    if (module_list_ptr)
                     {
-                        module = Module::GetAllocatedModuleAtIndex(image_idx);
-                        module_sp = module->shared_from_this();
+                        module_sp = module_list_ptr->GetModuleAtIndex(image_idx);
+                        module = module_sp.get();
                     }
                     else
                     {
-                        module_sp = target->GetImages().GetModuleAtIndex(image_idx);
-                        module = module_sp.get();
+                        module = Module::GetAllocatedModuleAtIndex(image_idx);
+                        module_sp = module->shared_from_this();
                     }
                     
                     int indent = strm.Printf("[%3u] ", image_idx);
@@ -2870,10 +2896,20 @@ public:
             }
             else
             {
-                if (use_global_module_list)
-                    result.AppendError ("the global module list is empty");
+                if (argc)
+                {
+                    if (use_global_module_list)
+                        result.AppendError ("the global module list has no matching modules");
+                    else
+                        result.AppendError ("the target has no matching modules");
+                }
                 else
-                    result.AppendError ("the target has no associated executable images");
+                {
+                    if (use_global_module_list)
+                        result.AppendError ("the global module list is empty");
+                    else
+                        result.AppendError ("the target has no associated executable images");
+                }
                 result.SetStatus (eReturnStatusFailed);
                 return false;
             }
@@ -3081,6 +3117,7 @@ public:
         eLookupTypeSymbol,
         eLookupTypeFileLine,    // Line is optional
         eLookupTypeFunction,
+        eLookupTypeFunctionOrSymbol,
         eLookupTypeType,
         kNumLookupTypes
     };
@@ -3145,11 +3182,16 @@ public:
                     m_type = eLookupTypeFileLine;
                     break;
                     
-                case 'n':
+                case 'F':
                     m_str = option_arg;
                     m_type = eLookupTypeFunction;
                     break;
-                    
+                
+                case 'n':
+                    m_str = option_arg;
+                    m_type = eLookupTypeFunctionOrSymbol;
+                    break;
+
                 case 't':
                     m_str = option_arg;
                     m_type = eLookupTypeType;
@@ -3260,7 +3302,12 @@ public:
             case eLookupTypeSymbol:
                 if (!m_options.m_str.empty())
                 {
-                    if (LookupSymbolInModule (m_interpreter, result.GetOutputStream(), module, m_options.m_str.c_str(), m_options.m_use_regex))
+                    if (LookupSymbolInModule (m_interpreter,
+                                              result.GetOutputStream(),
+                                              module,
+                                              m_options.m_str.c_str(),
+                                              m_options.m_use_regex,
+                                              m_options.m_verbose))
                     {
                         result.SetStatus(eReturnStatusSuccessFinishResult);
                         return true;
@@ -3285,7 +3332,8 @@ public:
                     }
                 }
                 break;
-                
+
+            case eLookupTypeFunctionOrSymbol:
             case eLookupTypeFunction:
                 if (!m_options.m_str.empty())
                 {
@@ -3295,6 +3343,7 @@ public:
                                                 m_options.m_str.c_str(),
                                                 m_options.m_use_regex,
                                                 m_options.m_include_inlines,
+                                                m_options.m_type == eLookupTypeFunctionOrSymbol, // include symbols
                                                 m_options.m_verbose))
                     {
                         result.SetStatus(eReturnStatusSuccessFinishResult);
@@ -3302,6 +3351,7 @@ public:
                     }
                 }
                 break;
+                
                 
             case eLookupTypeType:
                 if (!m_options.m_str.empty())
@@ -3416,18 +3466,19 @@ CommandObjectTargetModulesLookup::CommandOptions::g_option_table[] =
 {
     { LLDB_OPT_SET_1,   true,  "address",    'a', required_argument, NULL, 0, eArgTypeAddress,      "Lookup an address in one or more target modules."},
     { LLDB_OPT_SET_1,   false, "offset",     'o', required_argument, NULL, 0, eArgTypeOffset,       "When looking up an address subtract <offset> from any addresses before doing the lookup."},
-    { LLDB_OPT_SET_2| LLDB_OPT_SET_4  
-      /* FIXME: re-enable this for types when the LookupTypeInModule actually uses the regex option: | LLDB_OPT_SET_5 */ ,
+    { LLDB_OPT_SET_2| LLDB_OPT_SET_4 | LLDB_OPT_SET_5
+      /* FIXME: re-enable this for types when the LookupTypeInModule actually uses the regex option: | LLDB_OPT_SET_6 */ ,
                         false, "regex",      'r', no_argument,       NULL, 0, eArgTypeNone,         "The <name> argument for name lookups are regular expressions."},
     { LLDB_OPT_SET_2,   true,  "symbol",     's', required_argument, NULL, 0, eArgTypeSymbol,       "Lookup a symbol by name in the symbol tables in one or more target modules."},
     { LLDB_OPT_SET_3,   true,  "file",       'f', required_argument, NULL, 0, eArgTypeFilename,     "Lookup a file by fullpath or basename in one or more target modules."},
     { LLDB_OPT_SET_3,   false, "line",       'l', required_argument, NULL, 0, eArgTypeLineNum,      "Lookup a line number in a file (must be used in conjunction with --file)."},
     { LLDB_OPT_SET_3|
       LLDB_OPT_SET_4,   false, "no-inlines", 'i', no_argument,       NULL, 0, eArgTypeNone,         "Ignore inline entries (must be used in conjunction with --file or --function)."},
-    { LLDB_OPT_SET_4,   true,  "function",   'n', required_argument, NULL, 0, eArgTypeFunctionName, "Lookup a function by name in the debug symbols in one or more target modules."},
-    { LLDB_OPT_SET_5,   true,  "type",       't', required_argument, NULL, 0, eArgTypeName,         "Lookup a type by name in the debug symbols in one or more target modules."},
+    { LLDB_OPT_SET_4,   true,  "function",   'F', required_argument, NULL, 0, eArgTypeFunctionName, "Lookup a function by name in the debug symbols in one or more target modules."},
+    { LLDB_OPT_SET_5,   true,  "name",       'n', required_argument, NULL, 0, eArgTypeFunctionName, "Lookup a function or symbol by name in one or more target modules."},
+    { LLDB_OPT_SET_6,   true,  "type",       't', required_argument, NULL, 0, eArgTypeName,         "Lookup a type by name in the debug symbols in one or more target modules."},
     { LLDB_OPT_SET_ALL, false, "verbose",    'v', no_argument,       NULL, 0, eArgTypeNone,         "Enable verbose lookup information."},
-    { 0, false, NULL,           0, 0,                 NULL, 0, eArgTypeNone, NULL }
+    { 0,                false, NULL,           0, 0,                 NULL, 0, eArgTypeNone, NULL }
 };
 
 

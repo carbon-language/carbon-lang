@@ -707,7 +707,8 @@ Address::Dump (Stream *s, ExecutionContextScope *exe_scope, DumpStyle style, Dum
                         Variable *var = variable_list.GetVariableAtIndex (var_idx).get();
                         if (var && var->LocationIsValidForAddress (*this))
                         {
-                            s->Printf ("     Variable: id = {0x%8.8llx}, name = \"%s\", type= \"%s\", location =",
+                            s->Indent();
+                            s->Printf ("   Variable: id = {0x%8.8llx}, name = \"%s\", type= \"%s\", location =",
                                        var->GetID(),
                                        var->GetName().GetCString(),
                                        var->GetType()->GetName().GetCString());

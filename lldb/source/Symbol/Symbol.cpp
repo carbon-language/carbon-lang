@@ -179,7 +179,7 @@ Symbol::IsTrampoline () const
 void
 Symbol::GetDescription (Stream *s, lldb::DescriptionLevel level, Target *target) const
 {
-    s->Printf("uid={%6u}", m_uid);
+    s->Printf("id = {0x%8.8x}", m_uid);
     
     if (m_addr_range.GetBaseAddress().GetSection())
     {
