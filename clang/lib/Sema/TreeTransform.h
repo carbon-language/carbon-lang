@@ -9268,7 +9268,11 @@ TreeTransform<Derived>::RebuildCXXPseudoDestructorExpr(Expr *Base,
   DeclarationNameInfo NameInfo(Name, Destroyed.getLocation());
   NameInfo.setNamedTypeInfo(DestroyedType);
 
-  // FIXME: the ScopeType should be tacked onto SS.
+  // The scope type is now known to be a valid nested name specifier
+  // component. Tack it on to the end of the nested name specifier.
+  if (ScopeType)
+    SS.Extend(SemaRef.Context, SourceLocation(),
+              ScopeType->getTypeLoc(), CCLoc);
 
   SourceLocation TemplateKWLoc; // FIXME: retrieve it from caller.
   return getSema().BuildMemberReferenceExpr(Base, BaseType,

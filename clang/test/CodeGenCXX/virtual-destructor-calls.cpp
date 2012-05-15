@@ -46,3 +46,14 @@ C::~C() { }
 // CHECK: call void @_ZdlPv
 
 // Base dtor: just an alias to B's base dtor.
+
+namespace PR12798 {
+  // A qualified call to a base class destructor should not undergo virtual
+  // dispatch. Template instantiation used to lose the qualifier.
+  struct A { virtual ~A(); };
+  template<typename T> void f(T *p) { p->A::~A(); }
+
+  // CHECK: define {{.*}} @_ZN7PR127981fINS_1AEEEvPT_(
+  // CHECK: call void @_ZN7PR127981AD1Ev(
+  template void f(A*);
+}
