@@ -68,6 +68,21 @@ class ComponentInfo(object):
     def get_llvmbuild_fragment(self):
         abstract
 
+    def get_parent_target_group(self):
+        """get_parent_target_group() -> ComponentInfo or None
+
+        Return the nearest parent target group (if any), or None if the
+        component is not part of any target group.
+        """
+
+        # If this is a target group, return it.
+        if self.type_name == 'TargetGroup':
+            return self
+
+        # Otherwise recurse on the parent, if any.
+        if self.parent_instance:
+            return self.parent_instance.get_parent_target_group()
+
 class GroupComponentInfo(ComponentInfo):
     """
     Group components have no semantics as far as the build system are concerned,

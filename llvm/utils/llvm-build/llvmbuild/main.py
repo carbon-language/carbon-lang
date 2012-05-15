@@ -319,9 +319,14 @@ subdirectories = %s
         # dependencies for added library groups.
         entries = {}
         for c in self.ordered_component_infos:
-            # Skip optional components which are not enabled
+            # Skip optional components which are not enabled.
             if c.type_name == 'OptionalLibrary' \
                 and c.name not in enabled_optional_components:
+                continue
+
+            # Skip target groups which are not enabled.
+            tg = c.get_parent_target_group()
+            if tg and not tg.enabled:
                 continue
 
             # Only certain components are in the table.
