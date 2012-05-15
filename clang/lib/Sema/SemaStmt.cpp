@@ -2033,8 +2033,7 @@ Sema::PerformMoveOrCopyInitialization(const InitializedEntity &Entity,
   if (AllowNRVO &&
       (NRVOCandidate || getCopyElisionCandidate(ResultType, Value, true))) {
     ImplicitCastExpr AsRvalue(ImplicitCastExpr::OnStack,
-                              Value->getType(), CK_LValueToRValue,
-                              Value, VK_XValue);
+                              Value->getType(), CK_NoOp, Value, VK_XValue);
 
     Expr *InitExpr = &AsRvalue;
     InitializationKind Kind
@@ -2069,8 +2068,7 @@ Sema::PerformMoveOrCopyInitialization(const InitializedEntity &Entity,
         // Promote "AsRvalue" to the heap, since we now need this
         // expression node to persist.
         Value = ImplicitCastExpr::Create(Context, Value->getType(),
-                                         CK_LValueToRValue, Value, 0,
-                                         VK_XValue);
+                                         CK_NoOp, Value, 0, VK_XValue);
 
         // Complete type-checking the initialization of the return type
         // using the constructor we found.
