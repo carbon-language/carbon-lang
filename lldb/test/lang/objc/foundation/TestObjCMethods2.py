@@ -60,12 +60,14 @@ class FoundationTestCase2(TestBase):
         self.buildDwarf()
         self.MyString_dump()
 
+    @expectedFailurei386
     @dsym_test
     def test_NSError_po_with_dsym(self):
         """Test that po of the result of an unknown method doesn't require a cast."""
         self.buildDsym()
         self.NSError_po()
 
+    @expectedFailurei386
     @dwarf_test
     def test_NSError_po_with_dwarf(self):
         """Test that po of the result of an unknown method doesn't require a cast."""
