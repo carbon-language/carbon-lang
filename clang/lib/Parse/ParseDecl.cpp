@@ -1638,16 +1638,24 @@ bool Parser::ParseImplicitInt(DeclSpec &DS, CXXScopeSpec *SS,
   assert(!DS.hasTypeSpecifier() && "Type specifier checked above");
 
   // Since we know that this either implicit int (which is rare) or an
-  // error, do lookahead to try to do better recovery. This never applies within
-  // a type specifier.
-  // FIXME: Don't bail out here in languages with no implicit int (like
-  // C++ with no -fms-extensions). This is much more likely to be an undeclared
-  // type or typo than a use of implicit int.
+  // error, do lookahead to try to do better recovery. This never applies
+  // within a type specifier. Outside of C++, we allow this even if the
+  // language doesn't "officially" support implicit int -- we support
+  // implicit int as an extension in C99 and C11. Allegedly, MS also
+  // supports implicit int in C++ mode.
   if (DSC != DSC_type_specifier && DSC != DSC_trailing &&
+      (!getLangOpts().CPlusPlus || getLangOpts().MicrosoftExt) &&
       isValidAfterIdentifierInDeclarator(NextToken())) {
     // If this token is valid for implicit int, e.g. "static x = 4", then
     // we just avoid eating the identifier, so it will be parsed as the
     // identifier in the declarator.
+    return false;
+  }
+
+  if (getLangOpts().CPlusPlus &&
+      DS.getStorageClassSpec() == DeclSpec::SCS_auto) {
+    // Don't require a type specifier if we have the 'auto' storage class
+    // specifier in C++98 -- we'll promote it to a type specifier.
     return false;
   }
 
@@ -1696,6 +1704,47 @@ bool Parser::ParseImplicitInt(DeclSpec &DS, CXXScopeSpec *SS,
         ParseClassSpecifier(TagKind, Loc, DS, TemplateInfo, AS,
                             /*EnteringContext*/ false, DSC_normal);
       return true;
+    }
+  }
+
+  if (DSC != DSC_type_specifier && DSC != DSC_trailing) {
+    // Look ahead to the next token to try to figure out what this declaration
+    // was supposed to be.
+    switch (NextToken().getKind()) {
+    case tok::comma:
+    case tok::equal:
+    case tok::kw_asm:
+    case tok::l_brace:
+    case tok::l_square:
+    case tok::semi:
+      // This looks like a variable declaration. The type is probably missing.
+      // We're done parsing decl-specifiers.
+      return false;
+
+    case tok::l_paren: {
+      // static x(4); // 'x' is not a type
+      // x(int n);    // 'x' is not a type
+      // x (*p)[];    // 'x' is a type
+      //
+      // Since we're in an error case (or the rare 'implicit int in C++' MS
+      // extension), we can afford to perform a tentative parse to determine
+      // which case we're in.
+      TentativeParsingAction PA(*this);
+      ConsumeToken();
+      TPResult TPR = TryParseDeclarator(/*mayBeAbstract*/false);
+      PA.Revert();
+      if (TPR == TPResult::False())
+        return false;
+      // The identifier is followed by a parenthesized declarator.
+      // It's supposed to be a type.
+      break;
+    }
+
+    default:
+      // This is probably supposed to be a type. This includes cases like:
+      //   int f(itn);
+      //   struct S { unsinged : 4; };
+      break;
     }
   }
 

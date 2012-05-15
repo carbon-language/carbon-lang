@@ -190,3 +190,10 @@ namespace test1 {
   };
   test1::FooBar *b;  // expected-error{{no type named 'FooBar' in namespace 'test1'; did you mean 'Foobar'?}}
 }
+
+namespace ImplicitInt {
+  void f(int, unsinged); // expected-error{{did you mean 'unsigned'}}
+  struct S {
+    unsinged : 4; // expected-error{{did you mean 'unsigned'}}
+  };
+}
