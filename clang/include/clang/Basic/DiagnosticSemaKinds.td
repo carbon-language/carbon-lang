@@ -1781,8 +1781,7 @@ def warn_impcast_bitfield_precision_constant : Warning<
   "implicit truncation from %2 to bitfield changes value from %0 to %1">,
   InGroup<ConstantConversion>;
 def warn_impcast_literal_float_to_integer : Warning<
-  "implicit conversion turns literal floating-point number into integer: "
-  "%0 to %1">,
+  "implicit conversion from %0 to %1 changes value from %2 to %3">,
   InGroup<LiteralConversion>;
 def warn_impcast_string_literal_to_bool : Warning<
   "implicit conversion turns string literal into bool: %0 to %1">,

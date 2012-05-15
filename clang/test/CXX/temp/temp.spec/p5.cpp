@@ -14,7 +14,7 @@ struct X0 {
 };
 
 template<typename T>
-T X0<T>::value = 3.14; // expected-warning{{implicit conversion turns literal floating-point number into integer}}
+T X0<T>::value = 3.14; // expected-warning{{implicit conversion from 'double' to 'int' changes value from 3.14 to 3}}
 
 template struct X0<int>; // expected-note{{previous explicit instantiation}} \
                             expected-note{{requested here}}

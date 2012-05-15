@@ -22,6 +22,7 @@
 #include "clang/AST/CharUnits.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclObjC.h"
+#include "clang/AST/Expr.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/ExprObjC.h"
 #include "clang/AST/EvaluatedExprVisitor.h"
@@ -4081,8 +4082,17 @@ void DiagnoseFloatingLiteralImpCast(Sema &S, FloatingLiteral *FL, QualType T,
       == llvm::APFloat::opOK && isExact)
     return;
 
+  SmallString<16> PrettySourceValue;
+  Value.toString(PrettySourceValue);
+  std::string PrettyTargetValue;
+  if (T->isSpecificBuiltinType(BuiltinType::Bool))
+    PrettyTargetValue = IntegerValue == 0 ? "false" : "true";
+  else
+    PrettyTargetValue = IntegerValue.toString(10);
+
   S.Diag(FL->getExprLoc(), diag::warn_impcast_literal_float_to_integer)
-    << FL->getType() << T << FL->getSourceRange() << SourceRange(CContext);
+    << FL->getType() << T.getUnqualifiedType() << PrettySourceValue
+    << PrettyTargetValue << FL->getSourceRange() << SourceRange(CContext);
 }
 
 std::string PrettyPrintInRange(const llvm::APSInt &Value, IntRange Range) {
@@ -4149,7 +4159,6 @@ void CheckImplicitConversion(Sema &S, Expr *E, QualType T,
         }
       }
     }
-    return; // Other casts to bool are not checked.
   }
 
   // Strip vector types.
@@ -4213,7 +4222,7 @@ void CheckImplicitConversion(Sema &S, Expr *E, QualType T,
     }
 
     // If the target is integral, always warn.    
-    if ((TargetBT && TargetBT->isInteger())) {
+    if (TargetBT && TargetBT->isInteger()) {
       if (S.SourceMgr.isInSystemMacro(CC))
         return;
       
@@ -4246,6 +4255,11 @@ void CheckImplicitConversion(Sema &S, Expr *E, QualType T,
         << FixItHint::CreateReplacement(Loc, S.getFixItZeroLiteralForType(T));
     return;
   }
+
+  // TODO: remove this early return once the false positives for constant->bool
+  // in templates, macros, etc, are reduced or removed.
+  if (Target->isSpecificBuiltinType(BuiltinType::Bool))
+    return;
 
   IntRange SourceRange = GetExprRange(S.Context, E);
   IntRange TargetRange = IntRange::forTargetOfCanonicalType(S.Context, Target);

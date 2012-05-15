@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s 
+// RUN: %clang_cc1 -fsyntax-only -verify -Wno-constant-conversion %s
 
 void choice(int);
 int choice(bool);

@@ -87,7 +87,7 @@ struct {
   int x;
   float y;
 } designated_inits[3] = { [0].y = 17,
-                          [2].x = 12.3, // expected-warning {{implicit conversion turns literal floating-point number into integer}}
+                          [2].x = 12.3, // expected-warning {{implicit conversion from 'double' to 'int' changes value from 12.3 to 12}}
                           3.5 };
 
 // TypesCompatibleExpr

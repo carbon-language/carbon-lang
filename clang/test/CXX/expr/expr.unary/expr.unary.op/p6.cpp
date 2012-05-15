@@ -4,7 +4,7 @@
 
 bool b = !0;
 
-bool b2 = !1.2;
+bool b2 = !1.2; //expected-warning{{implicit conversion from 'double' to 'bool' changes value from 1.2 to true}}
 
 bool b3 = !4;
 
