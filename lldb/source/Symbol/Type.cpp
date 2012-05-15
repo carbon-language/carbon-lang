@@ -346,6 +346,21 @@ Type::IsAggregateType ()
     return false;
 }
 
+lldb::TypeSP
+Type::GetTypedefType()
+{
+    lldb::TypeSP type_sp;
+    if (IsTypedef())
+    {
+        Type *typedef_type = m_symbol_file->ResolveTypeUID(m_encoding_uid);
+        if (typedef_type)
+            type_sp = typedef_type->shared_from_this();
+    }
+    return type_sp;
+}
+
+
+
 lldb::Format
 Type::GetFormat ()
 {

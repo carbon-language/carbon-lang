@@ -1573,7 +1573,7 @@ LookupFunctionInModule (CommandInterpreter &interpreter,
 }
 
 static uint32_t
-LookupTypeInModule (CommandInterpreter &interpreter, 
+LookupTypeInModule (CommandInterpreter &interpreter,
                     Stream &strm, 
                     Module *module, 
                     const char *name_cstr, 
@@ -1606,6 +1606,18 @@ LookupTypeInModule (CommandInterpreter &interpreter,
                     // to types that haven't yet been parsed will get parsed.
                     type_sp->GetClangFullType ();
                     type_sp->GetDescription (&strm, eDescriptionLevelFull, true);
+                    // Print all typedef chains
+                    TypeSP typedef_type_sp (type_sp);
+                    TypeSP typedefed_type_sp (typedef_type_sp->GetTypedefType());
+                    while (typedefed_type_sp)
+                    {
+                        strm.EOL();
+                        strm.Printf("     typedef '%s': ", typedef_type_sp->GetName().GetCString());
+                        typedefed_type_sp->GetClangFullType ();
+                        typedefed_type_sp->GetDescription (&strm, eDescriptionLevelFull, true);
+                        typedef_type_sp = typedefed_type_sp;
+                        typedefed_type_sp = typedef_type_sp->GetTypedefType();
+                    }
                 }
                 strm.EOL();
             }

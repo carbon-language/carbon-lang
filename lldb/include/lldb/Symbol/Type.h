@@ -138,6 +138,15 @@ public:
         return m_encoding_uid_type != eEncodingInvalid;
     }
 
+    bool
+    IsTypedef ()
+    {
+        return m_encoding_uid_type == eEncodingIsTypedefUID;
+    }
+    
+    lldb::TypeSP
+    GetTypedefType();
+
     void
     SetByteSize(uint32_t byte_size);
 
