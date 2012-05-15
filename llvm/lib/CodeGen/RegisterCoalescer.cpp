@@ -155,7 +155,7 @@ namespace {
     /// physical register and the existing subregister number of the def / use
     /// being updated is not zero, make sure to set it to the correct physical
     /// subregister.
-    void updateRegDefsUses(const CoalescerPair &CP);
+    void updateRegDefsUses(unsigned SrcReg, unsigned DstReg, unsigned SubIdx);
 
     /// removeDeadDef - If a def of a live interval is now determined dead,
     /// remove the val# it defines. If the live interval becomes empty, remove
@@ -270,6 +270,10 @@ bool CoalescerPair::setRegisters(const MachineInstr *MI) {
 
     // Both registers have subreg indices.
     if (SrcSub && DstSub) {
+      // Copies between different sub-registers are never coalescable.
+      if (Src == Dst && SrcSub != DstSub)
+        return false;
+
       NewRC = TRI.getCommonSuperRegClass(SrcRC, SrcSub, DstRC, DstSub,
                                          SrcIdx, DstIdx);
       if (!NewRC)
@@ -912,11 +916,10 @@ bool RegisterCoalescer::eliminateUndefCopy(MachineInstr *CopyMI,
 /// physical register and the existing subregister number of the def / use
 /// being updated is not zero, make sure to set it to the correct physical
 /// subregister.
-void RegisterCoalescer::updateRegDefsUses(const CoalescerPair &CP) {
-  bool DstIsPhys = CP.isPhys();
-  unsigned SrcReg = CP.getSrcReg();
-  unsigned DstReg = CP.getDstReg();
-  unsigned SubIdx = CP.getSrcIdx();
+void RegisterCoalescer::updateRegDefsUses(unsigned SrcReg,
+                                          unsigned DstReg,
+                                          unsigned SubIdx) {
+  bool DstIsPhys = TargetRegisterInfo::isPhysicalRegister(DstReg);
 
   // Update LiveDebugVariables.
   LDV->renameRegister(SrcReg, DstReg, SubIdx);
@@ -1089,12 +1092,11 @@ bool RegisterCoalescer::joinCopy(MachineInstr *CopyMI, bool &Again) {
     return false;  // Not coalescable.
   }
 
-  DEBUG(dbgs() << "\tConsidering merging " << PrintReg(CP.getSrcReg(), TRI)
-               << " with " << PrintReg(CP.getDstReg(), TRI, CP.getSrcIdx())
-               << "\n");
-
   // Enforce policies.
   if (CP.isPhys()) {
+    DEBUG(dbgs() << "\tConsidering merging " << PrintReg(CP.getSrcReg(), TRI)
+                 << " with " << PrintReg(CP.getDstReg(), TRI, CP.getSrcIdx())
+                 << '\n');
     if (!shouldJoinPhys(CP)) {
       // Before giving up coalescing, if definition of source is defined by
       // trivial computation, try rematerializing it.
@@ -1106,12 +1108,20 @@ bool RegisterCoalescer::joinCopy(MachineInstr *CopyMI, bool &Again) {
     }
   } else {
     DEBUG({
-      if (CP.isCrossClass())
-        dbgs() << "\tCross-class to " << CP.getNewRC()->getName() << ".\n";
+      dbgs() << "\tConsidering merging to " << CP.getNewRC()->getName()
+             << " with ";
+      if (CP.getDstIdx() && CP.getSrcIdx())
+        dbgs() << PrintReg(CP.getDstReg()) << " in "
+               << TRI->getSubRegIndexName(CP.getDstIdx()) << " and "
+               << PrintReg(CP.getSrcReg()) << " in "
+               << TRI->getSubRegIndexName(CP.getSrcIdx()) << '\n';
+      else
+        dbgs() << PrintReg(CP.getSrcReg(), TRI) << " in "
+               << PrintReg(CP.getDstReg(), TRI, CP.getSrcIdx()) << '\n';
     });
 
     // When possible, let DstReg be the larger interval.
-    if (!CP.getSrcIdx() && LIS->getInterval(CP.getSrcReg()).ranges.size() >
+    if (!CP.isPartial() && LIS->getInterval(CP.getSrcReg()).ranges.size() >
                            LIS->getInterval(CP.getDstReg()).ranges.size())
       CP.flip();
   }
@@ -1156,7 +1166,11 @@ bool RegisterCoalescer::joinCopy(MachineInstr *CopyMI, bool &Again) {
   // Remember to delete the copy instruction.
   markAsJoined(CopyMI);
 
-  updateRegDefsUses(CP);
+  // Rewrite all SrcReg operands to DstReg.
+  // Also update DstReg operands to include DstIdx if it is set.
+  if (CP.getDstIdx())
+    updateRegDefsUses(CP.getDstReg(), CP.getDstReg(), CP.getDstIdx());
+  updateRegDefsUses(CP.getSrcReg(), CP.getDstReg(), CP.getSrcIdx());
 
   // If we have extended the live range of a physical register, make sure we
   // update live-in lists as well.
