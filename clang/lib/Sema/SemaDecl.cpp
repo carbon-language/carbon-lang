@@ -9540,7 +9540,11 @@ Decl *Sema::ActOnIvar(Scope *S,
     S->AddDecl(NewID);
     IdResolver.AddDecl(NewID);
   }
-
+  
+  if (LangOpts.ObjCNonFragileABI2 &&
+      !NewID->isInvalidDecl() && isa<ObjCInterfaceDecl>(EnclosingDecl))
+    Diag(Loc, diag::warn_ivar_in_interface_block);
+  
   return NewID;
 }
 
