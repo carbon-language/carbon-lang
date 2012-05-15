@@ -99,5 +99,5 @@ OptionGroupWatchpoint::GetDefinitions ()
 uint32_t
 OptionGroupWatchpoint::GetNumDefinitions ()
 {
-    return arraysize(g_option_table);
+    return llvm::array_lengthof(g_option_table);
 }

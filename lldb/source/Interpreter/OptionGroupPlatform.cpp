@@ -99,8 +99,8 @@ uint32_t
 OptionGroupPlatform::GetNumDefinitions ()
 {
     if (m_include_platform_option)
-        return arraysize(g_option_table);
-    return arraysize(g_option_table) - 1;
+        return llvm::array_lengthof(g_option_table);
+    return llvm::array_lengthof(g_option_table) - 1;
 }
 
 

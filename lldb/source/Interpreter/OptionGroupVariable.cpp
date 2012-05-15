@@ -107,9 +107,9 @@ OptionGroupVariable::GetNumDefinitions ()
     // Count the "--no-args", "--no-locals" and "--show-globals" 
     // options if we are showing frame specific options.
     if (include_frame_options)
-        return arraysize(g_option_table);
+        return llvm::array_lengthof(g_option_table);
     else
-        return arraysize(g_option_table) - NUM_FRAME_OPTS;
+        return llvm::array_lengthof(g_option_table) - NUM_FRAME_OPTS;
 }
 
 

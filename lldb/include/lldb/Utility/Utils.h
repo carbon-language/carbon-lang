@@ -10,11 +10,13 @@
 #ifndef utility_Utils_h_
 #define utility_Utils_h_
 
+// These utilities have llvm namespace.
+#include "llvm/ADT/STLExtras.h"
+
 namespace lldb_private {
 
-// Return the number of elements of a static array.
-template <typename T, unsigned size>
-inline unsigned arraysize(T (&v)[size]) { return size; }
+// Add lldb utilities here.
 
 } // namespace lldb_private
+
 #endif // utility_Utils

@@ -38,7 +38,7 @@ g_option_table[] =
 uint32_t
 OptionGroupOutputFile::GetNumDefinitions ()
 {
-    return arraysize(g_option_table);
+    return llvm::array_lengthof(g_option_table);
 }
 
 const OptionDefinition *

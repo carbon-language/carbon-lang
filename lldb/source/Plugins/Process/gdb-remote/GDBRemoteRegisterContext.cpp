@@ -848,7 +848,7 @@ GDBRemoteDynamicRegisterInfo::HardcodeARMRegisters(bool from_scratch)
     { "q15",  NULL,   16,  0, eEncodingVector,  eFormatVectorOfUInt8, { LLDB_INVALID_REGNUM, dwarf_q15,   LLDB_INVALID_REGNUM,   106,    106 },  g_q15_regs,              NULL}
     };
 
-    static const uint32_t num_registers = arraysize(g_register_infos);
+    static const uint32_t num_registers = llvm::array_lengthof(g_register_infos);
     static ConstString gpr_reg_set ("General Purpose Registers");
     static ConstString sfp_reg_set ("Software Floating Point Registers");
     static ConstString vfp_reg_set ("Floating Point Registers");
@@ -900,7 +900,7 @@ GDBRemoteDynamicRegisterInfo::HardcodeARMRegisters(bool from_scratch)
     else
     {
         // Add composite registers to our primordial registers, then.
-        const uint32_t num_composites = arraysize(g_composites);
+        const uint32_t num_composites = llvm::array_lengthof(g_composites);
         const uint32_t num_primordials = GetNumRegisters();
         RegisterInfo *g_comp_register_infos = g_register_infos + (num_registers - num_composites);
         for (i=0; i<num_composites; ++i)
