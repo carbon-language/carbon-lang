@@ -83,10 +83,10 @@ namespace test1 {
     void baz(int i); // expected-note {{candidate function not viable: no known conversion from 'const test1::A' to 'int' for 1st argument}} 
 
     // PR 11857
-    void foo(int n); // expected-note {{candidate function not viable: requires argument 'n', but 2 were provided}}
-    void foo(unsigned n = 10); // expected-note {{candidate function not viable: requires at most argument 'n', but 2 were provided}}
-    void rab(double n, int u = 0); // expected-note {{candidate function not viable: requires at least argument 'n', but none were provided}}
-    void rab(int n, int u = 0); // expected-note {{candidate function not viable: requires at least argument 'n', but none were provided}}
+    void foo(int n); // expected-note {{candidate function not viable: requires single argument 'n', but 2 arguments were provided}}
+    void foo(unsigned n = 10); // expected-note {{candidate function not viable: allows at most single argument 'n', but 2 arguments were provided}}
+    void rab(double n, int u = 0); // expected-note {{candidate function not viable: requires at least argument 'n', but no arguments were provided}}
+    void rab(int n, int u = 0); // expected-note {{candidate function not viable: requires at least argument 'n', but no arguments were provided}}
     void zab(double n = 0.0, int u = 0); // expected-note {{candidate function not viable: requires at most 2 arguments, but 3 were provided}}
     void zab(int n = 0, int u = 0); // expected-note {{candidate function not viable: requires at most 2 arguments, but 3 were provided}}
   };

@@ -165,14 +165,17 @@ void test17(int x) {
 // PR6501 & PR11857
 void test18_a(int a); // expected-note 2 {{'test18_a' declared here}}
 void test18_b(int); // expected-note {{'test18_b' declared here}}
-void test18_c(int a, int b); // expected-note {{'test18_c' declared here}}
+void test18_c(int a, int b); // expected-note 2 {{'test18_c' declared here}}
 void test18_d(int a, ...); // expected-note {{'test18_d' declared here}}
+void test18_e(int a, int b, ...); // expected-note {{'test18_e' declared here}}
 void test18(int b) {
-  test18_a(b, b); // expected-error {{too many arguments to function call, expected 1, have 2}}
-  test18_a(); // expected-error {{too few arguments to function call, argument 'a' was not specified}}
+  test18_a(b, b); // expected-error {{too many arguments to function call, expected single argument 'a', have 2}}
+  test18_a(); // expected-error {{too few arguments to function call, single argument 'a' was not specified}}
   test18_b(); // expected-error {{too few arguments to function call, expected 1, have 0}}
   test18_c(b); // expected-error {{too few arguments to function call, expected 2, have 1}}
+  test18_c(b, b, b); // expected-error {{too many arguments to function call, expected 2, have 3}}
   test18_d(); // expected-error {{too few arguments to function call, at least argument 'a' must be specified}}
+  test18_e(); // expected-error {{too few arguments to function call, expected at least 2, have 0}}
 }
 
 // PR7569

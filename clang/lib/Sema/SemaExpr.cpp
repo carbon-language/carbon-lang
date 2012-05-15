@@ -3407,14 +3407,24 @@ Sema::ConvertArgumentsForCall(CallExpr *Call, Expr *Fn,
   // them.
   if (NumArgs > NumArgsInProto) {
     if (!Proto->isVariadic()) {
-      Diag(Args[NumArgsInProto]->getLocStart(),
-           MinArgs == NumArgsInProto
-             ? diag::err_typecheck_call_too_many_args
-             : diag::err_typecheck_call_too_many_args_at_most)
-        << FnKind
-        << NumArgsInProto << NumArgs << Fn->getSourceRange()
-        << SourceRange(Args[NumArgsInProto]->getLocStart(),
-                       Args[NumArgs-1]->getLocEnd());
+      if (NumArgsInProto == 1 && FDecl && FDecl->getParamDecl(0)->getDeclName())
+        Diag(Args[NumArgsInProto]->getLocStart(),
+             MinArgs == NumArgsInProto
+               ? diag::err_typecheck_call_too_many_args_one
+               : diag::err_typecheck_call_too_many_args_at_most_one)
+          << FnKind
+          << FDecl->getParamDecl(0) << NumArgs << Fn->getSourceRange()
+          << SourceRange(Args[NumArgsInProto]->getLocStart(),
+                         Args[NumArgs-1]->getLocEnd());
+      else
+        Diag(Args[NumArgsInProto]->getLocStart(),
+             MinArgs == NumArgsInProto
+               ? diag::err_typecheck_call_too_many_args
+               : diag::err_typecheck_call_too_many_args_at_most)
+          << FnKind
+          << NumArgsInProto << NumArgs << Fn->getSourceRange()
+          << SourceRange(Args[NumArgsInProto]->getLocStart(),
+                         Args[NumArgs-1]->getLocEnd());
 
       // Emit the location of the prototype.
       if (FDecl && !FDecl->getBuiltinID() && !IsExecConfig)

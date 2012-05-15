@@ -2046,9 +2046,9 @@ def note_ovl_candidate_arity_one : Note<"candidate "
     "constructor (the implicit move constructor)|"
     "function (the implicit copy assignment operator)|"
     "function (the implicit move assignment operator)|"
-    "constructor (inherited)}0 %select{|template }1"
-    "not viable: requires%select{ at least| at most|}2 argument %3, but "
-    "%plural{0:none|:%4}4 were provided">;
+    "constructor (inherited)}0 %select{|template }1not viable: "
+    "%select{requires at least|allows at most single|requires single}2 "
+    "argument %3, but %plural{0:no|:%4}4 arguments were provided">;
 
 def note_ovl_candidate_deleted : Note<
     "candidate %select{function|function|constructor|"
@@ -4572,7 +4572,7 @@ def err_typecheck_call_too_few_args : Error<
 def err_typecheck_call_too_few_args_one : Error<
   "too few %select{|||execution configuration }0arguments to "
   "%select{function|block|method|kernel function}0 call, "
-  "argument %1 was not specified">;
+  "single argument %1 was not specified">;
 def err_typecheck_call_too_few_args_at_least : Error<
   "too few %select{|||execution configuration }0arguments to "
   "%select{function|block|method|kernel function}0 call, "
@@ -4585,10 +4585,18 @@ def err_typecheck_call_too_many_args : Error<
   "too many %select{|||execution configuration }0arguments to "
   "%select{function|block|method|kernel function}0 call, "
   "expected %1, have %2">;
+def err_typecheck_call_too_many_args_one : Error<
+  "too many %select{|||execution configuration }0arguments to "
+  "%select{function|block|method|kernel function}0 call, "
+  "expected single argument %1, have %2 arguments">;
 def err_typecheck_call_too_many_args_at_most : Error<
   "too many %select{|||execution configuration }0arguments to "
   "%select{function|block|method|kernel function}0 call, "
   "expected at most %1, have %2">;
+def err_typecheck_call_too_many_args_at_most_one : Error<
+  "too many %select{|||execution configuration }0arguments to "
+  "%select{function|block|method|kernel function}0 call, "
+  "expected at most single argument %1, have %2 arguments">;
 def note_callee_decl : Note<
   "%0 declared here">;
 def note_defined_here : Note<"%0 defined here">;

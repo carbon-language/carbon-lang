@@ -47,6 +47,13 @@ int i () {
   void j (int f = 4);
   {
     void j (int f); // expected-note{{'j' declared here}}
-    j(); // expected-error{{too few arguments to function call, argument 'f' was not specified}}
+    j(); // expected-error{{too few arguments to function call, single argument 'f' was not specified}}
+  }
+}
+
+int i2() {
+  void j(int f = 4); // expected-note{{'j' declared here}}
+  {
+    j(2, 3); // expected-error{{too many arguments to function call, expected at most single argument 'f', have 2}}
   }
 }
