@@ -18,6 +18,26 @@
 namespace clang {
 namespace tooling {
 
+static void expectFailure(StringRef JSONDatabase, StringRef Explanation) {
+  std::string ErrorMessage;
+  EXPECT_EQ(NULL, JSONCompilationDatabase::loadFromBuffer(JSONDatabase,
+                                                          ErrorMessage))
+    << "Expected an error because of: " << Explanation;
+}
+
+TEST(JSONCompilationDatabase, ErrsOnInvalidFormat) {
+  expectFailure("", "Empty database");
+  expectFailure("{", "Invalid JSON");
+  expectFailure("[[]]", "Array instead of object");
+  expectFailure("[{\"a\":[]}]", "Array instead of value");
+  expectFailure("[{\"a\":\"b\"}]", "Unknown key");
+  expectFailure("[{[]:\"\"}]", "Incorrectly typed entry");
+  expectFailure("[{}]", "Empty entry");
+  expectFailure("[{\"directory\":\"\",\"command\":\"\"}]", "Missing file");
+  expectFailure("[{\"directory\":\"\",\"file\":\"\"}]", "Missing command");
+  expectFailure("[{\"command\":\"\",\"file\":\"\"}]", "Missing directory");
+}
+
 static CompileCommand findCompileArgsInJsonDatabase(StringRef FileName,
                                                     StringRef JSONDatabase,
                                                     std::string &ErrorMessage) {

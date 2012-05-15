@@ -222,10 +222,9 @@ bool JSONCompilationDatabase::parse(std::string &ErrorMessage) {
       ErrorMessage = "Expected object.";
       return false;
     }
-    llvm::yaml::ScalarNode *Directory;
-    llvm::yaml::ScalarNode *Command;
-    llvm::SmallString<8> FileStorage;
-    llvm::StringRef File;
+    llvm::yaml::ScalarNode *Directory = NULL;
+    llvm::yaml::ScalarNode *Command = NULL;
+    llvm::yaml::ScalarNode *File = NULL;
     for (llvm::yaml::MappingNode::iterator KVI = Object->begin(),
                                            KVE = Object->end();
          KVI != KVE; ++KVI) {
@@ -242,20 +241,37 @@ bool JSONCompilationDatabase::parse(std::string &ErrorMessage) {
       }
       llvm::yaml::ScalarNode *KeyString =
         llvm::dyn_cast<llvm::yaml::ScalarNode>((*KVI).getKey());
+      if (KeyString == NULL) {
+        ErrorMessage = "Expected strings as key.";
+        return false;
+      }
       llvm::SmallString<8> KeyStorage;
       if (KeyString->getValue(KeyStorage) == "directory") {
         Directory = ValueString;
       } else if (KeyString->getValue(KeyStorage) == "command") {
         Command = ValueString;
       } else if (KeyString->getValue(KeyStorage) == "file") {
-        File = ValueString->getValue(FileStorage);
+        File = ValueString;
       } else {
         ErrorMessage = ("Unknown key: \"" +
                         KeyString->getRawValue() + "\"").str();
         return false;
       }
     }
-    IndexByFile[File].push_back(
+    if (!File) {
+      ErrorMessage = "Missing key: \"file\".";
+      return false;
+    }
+    if (!Command) {
+      ErrorMessage = "Missing key: \"command\".";
+      return false;
+    }
+    if (!Directory) {
+      ErrorMessage = "Missing key: \"directory\".";
+      return false;
+    }
+    llvm::SmallString<8> FileStorage;
+    IndexByFile[File->getValue(FileStorage)].push_back(
       CompileCommandRef(Directory, Command));
   }
   return true;
