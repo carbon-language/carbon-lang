@@ -187,15 +187,9 @@ bool CodeGenRegister::inheritRegUnits(CodeGenRegBank &RegBank) {
   for (SubRegMap::const_iterator I = SubRegs.begin(), E = SubRegs.end();
        I != E; ++I) {
     // Strangely a register may have itself as a subreg (self-cycle) e.g. XMM.
-    // Only create a unit if no other subregs have units.
     CodeGenRegister *SR = I->second;
-    if (SR == this) {
-      // RegUnits are only empty during computeSubRegs, prior to computing
-      // weight.
-      if (RegUnits.empty())
-        RegUnits.push_back(RegBank.newRegUnit(0));
+    if (SR == this)
       continue;
-    }
     // Merge the subregister's units into this register's RegUnits.
     mergeRegUnits(RegUnits, SR->RegUnits);
   }
@@ -392,7 +386,7 @@ CodeGenRegister::computeSubRegs(CodeGenRegBank &RegBank) {
       continue;
     // Create a RegUnit representing this alias edge, and add it to both
     // registers.
-    unsigned Unit = RegBank.newRegUnit(0);
+    unsigned Unit = RegBank.newRegUnit(this, AR);
     RegUnits.push_back(Unit);
     AR->RegUnits.push_back(Unit);
   }
@@ -401,7 +395,7 @@ CodeGenRegister::computeSubRegs(CodeGenRegBank &RegBank) {
   // a leaf register with ad hoc aliases doesn't get its own unit - it isn't
   // necessary. This means the aliasing leaf registers can share a single unit.
   if (RegUnits.empty())
-    RegUnits.push_back(RegBank.newRegUnit(0));
+    RegUnits.push_back(RegBank.newRegUnit(this));
 
   return SubRegs;
 }
@@ -540,7 +534,7 @@ unsigned CodeGenRegister::getWeight(const CodeGenRegBank &RegBank) const {
   unsigned Weight = 0;
   for (RegUnitList::const_iterator I = RegUnits.begin(), E = RegUnits.end();
        I != E; ++I) {
-    Weight += RegBank.getRegUnitWeight(*I);
+    Weight += RegBank.getRegUnit(*I).Weight;
   }
   return Weight;
 }
@@ -958,7 +952,6 @@ CodeGenRegBank::CodeGenRegBank(RecordKeeper &Records) : Records(Records) {
 
   // Precompute all sub-register maps.
   // This will create Composite entries for all inferred sub-register indices.
-  NumRegUnits = 0;
   for (unsigned i = 0, e = Registers.size(); i != e; ++i)
     Registers[i]->computeSubRegs(*this);
 
@@ -974,7 +967,7 @@ CodeGenRegBank::CodeGenRegBank(RecordKeeper &Records) : Records(Records) {
 
   // Native register units are associated with a leaf register. They've all been
   // discovered now.
-  NumNativeRegUnits = NumRegUnits;
+  NumNativeRegUnits = RegUnits.size();
 
   // Read in register class definitions.
   std::vector<Record*> RCs = Records.getAllDerivedDefinitions("RegisterClass");
@@ -1243,7 +1236,7 @@ static void computeUberWeights(std::vector<UberRegSet> &UberSets,
         Reg = UnitI.getReg();
         Weight = 0;
       }
-      unsigned UWeight = RegBank.getRegUnitWeight(*UnitI);
+      unsigned UWeight = RegBank.getRegUnit(*UnitI).Weight;
       if (!UWeight) {
         UWeight = 1;
         RegBank.increaseRegUnitWeight(*UnitI, UWeight);
@@ -1338,11 +1331,6 @@ static bool normalizeWeight(CodeGenRegister *Reg,
 // The goal is that two registers in the same class will have the same weight,
 // where each register's weight is defined as sum of its units' weights.
 void CodeGenRegBank::computeRegUnitWeights() {
-  assert(RegUnitWeights.empty() && "Only initialize RegUnitWeights once");
-
-  // Only allocatable units will be initialized to nonzero weight.
-  RegUnitWeights.resize(NumRegUnits);
-
   std::vector<UberRegSet> UberSets;
   std::vector<UberRegSet*> RegSets(Registers.size());
   computeUberSets(UberSets, RegSets, *this);

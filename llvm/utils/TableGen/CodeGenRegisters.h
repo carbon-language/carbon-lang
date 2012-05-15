@@ -371,6 +371,31 @@ namespace llvm {
     static void computeSubClasses(CodeGenRegBank&);
   };
 
+  // Register units are used to model interference and register pressure.
+  // Every register is assigned one or more register units such that two
+  // registers overlap if and only if they have a register unit in common.
+  //
+  // Normally, one register unit is created per leaf register. Non-leaf
+  // registers inherit the units of their sub-registers.
+  struct RegUnit {
+    // Weight assigned to this RegUnit for estimating register pressure.
+    // This is useful when equalizing weights in register classes with mixed
+    // register topologies.
+    unsigned Weight;
+
+    // Each native RegUnit corresponds to one or two root registers. The full
+    // set of registers containing this unit can be computed as the union of
+    // these two registers and their super-registers.
+    const CodeGenRegister *Roots[2];
+
+    RegUnit() : Weight(0) { Roots[0] = Roots[1] = 0; }
+
+    ArrayRef<const CodeGenRegister*> getRoots() const {
+      assert(!(Roots[1] && !Roots[0]) && "Invalid roots array");
+      return makeArrayRef(Roots, !!Roots[0] + !!Roots[1]);
+    }
+  };
+
   // Each RegUnitSet is a sorted vector with a name.
   struct RegUnitSet {
     typedef std::vector<unsigned>::const_iterator iterator;
@@ -402,13 +427,11 @@ namespace llvm {
     std::vector<CodeGenRegister*> Registers;
     DenseMap<Record*, CodeGenRegister*> Def2Reg;
     unsigned NumNativeRegUnits;
-    unsigned NumRegUnits; // # native + adopted register units.
 
     std::map<TopoSigId, unsigned> TopoSigs;
 
-    // Map each register unit to a weight (for register pressure).
-    // Includes native and adopted register units.
-    std::vector<unsigned> RegUnitWeights;
+    // Includes native (0..NumNativeRegUnits-1) and adopted register units.
+    SmallVector<RegUnit, 8> RegUnits;
 
     // Register classes.
     std::vector<CodeGenRegisterClass*> RegClasses;
@@ -504,15 +527,21 @@ namespace llvm {
       return TopoSigs.insert(std::make_pair(Id, TopoSigs.size())).first->second;
     }
 
+    // Create a native register unit that is associated with one or two root
+    // registers.
+    unsigned newRegUnit(CodeGenRegister *R0, CodeGenRegister *R1 = 0) {
+      RegUnits.resize(RegUnits.size() + 1);
+      RegUnits.back().Roots[0] = R0;
+      RegUnits.back().Roots[1] = R1;
+      return RegUnits.size() - 1;
+    }
+
     // Create a new non-native register unit that can be adopted by a register
     // to increase its pressure. Note that NumNativeRegUnits is not increased.
     unsigned newRegUnit(unsigned Weight) {
-      if (!RegUnitWeights.empty()) {
-        assert(Weight && "should only add allocatable units");
-        RegUnitWeights.resize(NumRegUnits+1);
-        RegUnitWeights[NumRegUnits] = Weight;
-      }
-      return NumRegUnits++;
+      RegUnits.resize(RegUnits.size() + 1);
+      RegUnits.back().Weight = Weight;
+      return RegUnits.size() - 1;
     }
 
     // Native units are the singular unit of a leaf register. Register aliasing
@@ -521,6 +550,9 @@ namespace llvm {
     bool isNativeUnit(unsigned RUID) {
       return RUID < NumNativeRegUnits;
     }
+
+    RegUnit &getRegUnit(unsigned RUID) { return RegUnits[RUID]; }
+    const RegUnit &getRegUnit(unsigned RUID) const { return RegUnits[RUID]; }
 
     ArrayRef<CodeGenRegisterClass*> getRegClasses() const {
       return RegClasses;
@@ -536,23 +568,18 @@ namespace llvm {
     /// return the superclass.  Otherwise return null.
     const CodeGenRegisterClass* getRegClassForRegister(Record *R);
 
-    // Get a register unit's weight. Zero for unallocatable registers.
-    unsigned getRegUnitWeight(unsigned RUID) const {
-      return RegUnitWeights[RUID];
-    }
-
     // Get the sum of unit weights.
     unsigned getRegUnitSetWeight(const std::vector<unsigned> &Units) const {
       unsigned Weight = 0;
       for (std::vector<unsigned>::const_iterator
              I = Units.begin(), E = Units.end(); I != E; ++I)
-        Weight += getRegUnitWeight(*I);
+        Weight += getRegUnit(*I).Weight;
       return Weight;
     }
 
     // Increase a RegUnitWeight.
     void increaseRegUnitWeight(unsigned RUID, unsigned Inc) {
-      RegUnitWeights[RUID] += Inc;
+      getRegUnit(RUID).Weight += Inc;
     }
 
     // Get the number of register pressure dimensions.
