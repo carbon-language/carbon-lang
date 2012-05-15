@@ -4084,11 +4084,11 @@ void DiagnoseFloatingLiteralImpCast(Sema &S, FloatingLiteral *FL, QualType T,
 
   SmallString<16> PrettySourceValue;
   Value.toString(PrettySourceValue);
-  std::string PrettyTargetValue;
+  SmallString<16> PrettyTargetValue;
   if (T->isSpecificBuiltinType(BuiltinType::Bool))
     PrettyTargetValue = IntegerValue == 0 ? "false" : "true";
   else
-    PrettyTargetValue = IntegerValue.toString(10);
+    IntegerValue.toString(PrettyTargetValue);
 
   S.Diag(FL->getExprLoc(), diag::warn_impcast_literal_float_to_integer)
     << FL->getType() << T.getUnqualifiedType() << PrettySourceValue
