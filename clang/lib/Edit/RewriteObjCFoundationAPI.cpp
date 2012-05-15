@@ -211,6 +211,8 @@ static bool rewriteToNumberLiteral(const ObjCMessageExpr *Msg,
                                   const NSAPI &NS, Commit &commit);
 static bool rewriteToNumericBoxedExpression(const ObjCMessageExpr *Msg,
                                             const NSAPI &NS, Commit &commit);
+static bool rewriteToStringBoxedExpression(const ObjCMessageExpr *Msg,
+                                           const NSAPI &NS, Commit &commit);
 
 bool edit::rewriteToObjCLiteralSyntax(const ObjCMessageExpr *Msg,
                                       const NSAPI &NS, Commit &commit) {
@@ -224,6 +226,8 @@ bool edit::rewriteToObjCLiteralSyntax(const ObjCMessageExpr *Msg,
     return rewriteToDictionaryLiteral(Msg, NS, commit);
   if (II == NS.getNSClassId(NSAPI::ClassId_NSNumber))
     return rewriteToNumberLiteral(Msg, NS, commit);
+  if (II == NS.getNSClassId(NSAPI::ClassId_NSString))
+    return rewriteToStringBoxedExpression(Msg, NS, commit);
 
   return false;
 }
@@ -791,7 +795,7 @@ static bool rewriteToNumericBoxedExpression(const ObjCMessageExpr *Msg,
     return false;
 
   SourceRange ArgRange = OrigArg->getSourceRange();
-  commit.replaceWithInner(Msg->getSourceRange(), OrigArg->getSourceRange());
+  commit.replaceWithInner(Msg->getSourceRange(), ArgRange);
 
   if (isa<ParenExpr>(OrigArg) || isa<IntegerLiteral>(OrigArg))
     commit.insertBefore(ArgRange.getBegin(), "@");
@@ -799,4 +803,69 @@ static bool rewriteToNumericBoxedExpression(const ObjCMessageExpr *Msg,
     commit.insertWrap("@(", ArgRange, ")");
 
   return true;
+}
+
+//===----------------------------------------------------------------------===//
+// rewriteToStringBoxedExpression.
+//===----------------------------------------------------------------------===//
+
+static bool doRewriteToUTF8StringBoxedExpressionHelper(
+                                              const ObjCMessageExpr *Msg,
+                                              const NSAPI &NS, Commit &commit) {
+  const Expr *Arg = Msg->getArg(0);
+  if (Arg->isTypeDependent())
+    return false;
+
+  const Expr *OrigArg = Arg->IgnoreImpCasts();
+  QualType OrigTy = OrigArg->getType();
+
+  if (const StringLiteral *
+        StrE = dyn_cast<StringLiteral>(OrigArg->IgnoreParens())) {
+    commit.replaceWithInner(Msg->getSourceRange(), StrE->getSourceRange());
+    commit.insert(StrE->getLocStart(), "@");
+    return true;
+  }
+
+  ASTContext &Ctx = NS.getASTContext();
+
+  if (const PointerType *PT = OrigTy->getAs<PointerType>()) {
+    QualType PointeeType = PT->getPointeeType();
+    if (Ctx.hasSameUnqualifiedType(PointeeType, Ctx.CharTy)) {
+      SourceRange ArgRange = OrigArg->getSourceRange();
+      commit.replaceWithInner(Msg->getSourceRange(), ArgRange);
+
+      if (isa<ParenExpr>(OrigArg) || isa<IntegerLiteral>(OrigArg))
+        commit.insertBefore(ArgRange.getBegin(), "@");
+      else
+        commit.insertWrap("@(", ArgRange, ")");
+      
+      return true;
+    }
+  }
+
+  return false;
+}
+
+static bool rewriteToStringBoxedExpression(const ObjCMessageExpr *Msg,
+                                           const NSAPI &NS, Commit &commit) {
+  Selector Sel = Msg->getSelector();
+
+  if (Sel == NS.getNSStringSelector(NSAPI::NSStr_stringWithUTF8String) ||
+      Sel == NS.getNSStringSelector(NSAPI::NSStr_stringWithCString)) {
+    if (Msg->getNumArgs() != 1)
+      return false;
+    return doRewriteToUTF8StringBoxedExpressionHelper(Msg, NS, commit);
+  }
+
+  if (Sel == NS.getNSStringSelector(NSAPI::NSStr_stringWithCStringEncoding)) {
+    if (Msg->getNumArgs() != 2)
+      return false;
+
+    const Expr *encodingArg = Msg->getArg(1);
+    if (NS.isNSUTF8StringEncodingConstant(encodingArg) ||
+        NS.isNSASCIIStringEncodingConstant(encodingArg))
+      return doRewriteToUTF8StringBoxedExpressionHelper(Msg, NS, commit);
+  }
+
+  return false;
 }

@@ -54,6 +54,22 @@ typedef signed char BOOL;
 + (NSNumber *)numberWithUnsignedInteger:(NSUInteger)value;
 @end
 
+enum {
+    NSASCIIStringEncoding = 1,
+    NSUTF8StringEncoding = 4,
+    NSUnicodeStringEncoding = 10
+};
+typedef NSUInteger NSStringEncoding;
+
+@interface NSString : NSObject
+@end
+
+@interface NSString (NSStringExtensionMethods)
++ (id)stringWithUTF8String:(const char *)nullTerminatedCString;
++ (id)stringWithCString:(const char *)cString encoding:(NSStringEncoding)enc;
++ (id)stringWithCString:(const char *)bytes;
+@end
+
 enum MyEnm {
   ME_foo
 };
@@ -65,4 +81,18 @@ void foo() {
   MyEnm myenum; 
   [NSNumber numberWithInteger:myenum];
   [NSNumber numberWithInteger:ME_foo];
+}
+
+void boxString() {
+  NSString *s = [NSString stringWithUTF8String:"box"];
+  const char *cstr1;
+  char *cstr2;
+  s = [NSString stringWithUTF8String:cstr1];
+  s = [NSString stringWithUTF8String:cstr2];
+  s = [NSString stringWithCString:cstr1 encoding:NSASCIIStringEncoding];
+  s = [NSString stringWithCString:cstr1 encoding:NSUTF8StringEncoding];
+  s = [NSString stringWithCString:cstr1 encoding: NSUnicodeStringEncoding];
+  NSStringEncoding encode;
+  s = [NSString stringWithCString:cstr1 encoding:encode];
+  s = [NSString stringWithCString:cstr1];
 }
