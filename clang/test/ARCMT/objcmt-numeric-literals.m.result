@@ -468,7 +468,7 @@ void foo() {
   [NSNumber numberWithInteger:NO];
   [NSNumber numberWithInteger:true];
   [NSNumber numberWithInteger:false];
-  [NSNumber numberWithInteger:VAL_INT];
+  @VAL_INT;
   [NSNumber numberWithInteger:VAL_UINT];
 
   [NSNumber numberWithUnsignedInteger:'a'];
@@ -498,5 +498,5 @@ void foo() {
   [NSNumber numberWithUnsignedInteger:true];
   [NSNumber numberWithUnsignedInteger:false];
   [NSNumber numberWithUnsignedInteger:VAL_INT];
-  [NSNumber numberWithUnsignedInteger:VAL_UINT];
+  @VAL_UINT;
 }

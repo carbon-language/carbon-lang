@@ -209,6 +209,8 @@ static bool rewriteToDictionaryLiteral(const ObjCMessageExpr *Msg,
                                   const NSAPI &NS, Commit &commit);
 static bool rewriteToNumberLiteral(const ObjCMessageExpr *Msg,
                                   const NSAPI &NS, Commit &commit);
+static bool rewriteToNumericBoxedExpression(const ObjCMessageExpr *Msg,
+                                            const NSAPI &NS, Commit &commit);
 
 bool edit::rewriteToObjCLiteralSyntax(const ObjCMessageExpr *Msg,
                                       const NSAPI &NS, Commit &commit) {
@@ -372,7 +374,7 @@ static bool rewriteToCharLiteral(const ObjCMessageExpr *Msg,
     return true;
   }
 
-  return false;
+  return rewriteToNumericBoxedExpression(Msg, NS, commit);
 }
 
 static bool rewriteToBoolLiteral(const ObjCMessageExpr *Msg,
@@ -386,7 +388,7 @@ static bool rewriteToBoolLiteral(const ObjCMessageExpr *Msg,
     return true;
   }
 
-  return false;
+  return rewriteToNumericBoxedExpression(Msg, NS, commit);
 }
 
 namespace {
@@ -488,10 +490,10 @@ static bool rewriteToNumberLiteral(const ObjCMessageExpr *Msg,
       literalE = UOE->getSubExpr();
   }
 
-  // Only integer and floating literals; non-literals or imaginary literal
-  // cannot be rewritten.
+  // Only integer and floating literals, otherwise try to rewrite to boxed
+  // expression.
   if (!isa<IntegerLiteral>(literalE) && !isa<FloatingLiteral>(literalE))
-    return false;
+    return rewriteToNumericBoxedExpression(Msg, NS, commit);
 
   ASTContext &Ctx = NS.getASTContext();
   Selector Sel = Msg->getSelector();
@@ -511,7 +513,7 @@ static bool rewriteToNumberLiteral(const ObjCMessageExpr *Msg,
   case NSAPI::NSNumberWithShort:
   case NSAPI::NSNumberWithUnsignedShort:
   case NSAPI::NSNumberWithBool:
-    return false;
+    return rewriteToNumericBoxedExpression(Msg, NS, commit);
 
   case NSAPI::NSNumberWithUnsignedInt:
   case NSAPI::NSNumberWithUnsignedInteger:
@@ -551,15 +553,16 @@ static bool rewriteToNumberLiteral(const ObjCMessageExpr *Msg,
   }
 
   // We will need to modify the literal suffix to get the same type as the call.
-  // Don't even try if it came from a macro.
+  // Try with boxed expression if it came from a macro.
   if (ArgRange.getBegin().isMacroID())
-    return false;
+    return rewriteToNumericBoxedExpression(Msg, NS, commit);
 
   bool LitIsFloat = ArgTy->isFloatingType();
-  // For a float passed to integer call, don't try rewriting. It is difficult
-  // and a very uncommon case anyway.
+  // For a float passed to integer call, don't try rewriting to objc literal.
+  // It is difficult and a very uncommon case anyway.
+  // But try with boxed expression.
   if (LitIsFloat && !CallIsFloating)
-    return false;
+    return rewriteToNumericBoxedExpression(Msg, NS, commit);
 
   // Try to modify the literal make it the same type as the method call.
   // -Modify the suffix, and/or
@@ -570,11 +573,11 @@ static bool rewriteToNumberLiteral(const ObjCMessageExpr *Msg,
   if (const IntegerLiteral *IntE = dyn_cast<IntegerLiteral>(literalE))
     isIntZero = !IntE->getValue().getBoolValue();
   if (!getLiteralInfo(ArgRange, LitIsFloat, isIntZero, Ctx, LitInfo))
-    return false;
+    return rewriteToNumericBoxedExpression(Msg, NS, commit);
 
   // Not easy to do int -> float with hex/octal and uncommon anyway.
   if (!LitIsFloat && CallIsFloating && (LitInfo.Hex || LitInfo.Octal))
-    return false;
+    return rewriteToNumericBoxedExpression(Msg, NS, commit);
   
   SourceLocation LitB = LitInfo.WithoutSuffRange.getBegin();
   SourceLocation LitE = LitInfo.WithoutSuffRange.getEnd();
@@ -671,4 +674,129 @@ static void objectifyExpr(const Expr *E, Commit &commit) {
   if (castOperatorNeedsParens(E))
     commit.insertWrap("(", Range, ")");
   commit.insertBefore(Range.getBegin(), "(id)");
+}
+
+//===----------------------------------------------------------------------===//
+// rewriteToNumericBoxedExpression.
+//===----------------------------------------------------------------------===//
+
+static bool rewriteToNumericBoxedExpression(const ObjCMessageExpr *Msg,
+                                            const NSAPI &NS, Commit &commit) {
+  if (Msg->getNumArgs() != 1)
+    return false;
+
+  const Expr *Arg = Msg->getArg(0);
+  if (Arg->isTypeDependent())
+    return false;
+
+  ASTContext &Ctx = NS.getASTContext();
+  Selector Sel = Msg->getSelector();
+  llvm::Optional<NSAPI::NSNumberLiteralMethodKind>
+    MKOpt = NS.getNSNumberLiteralMethodKind(Sel);
+  if (!MKOpt)
+    return false;
+  NSAPI::NSNumberLiteralMethodKind MK = *MKOpt;
+
+  const Expr *OrigArg = Arg->IgnoreImpCasts();
+  QualType FinalTy = Arg->getType();
+  QualType OrigTy = OrigArg->getType();
+  uint64_t FinalTySize = Ctx.getTypeSize(FinalTy);
+  uint64_t OrigTySize = Ctx.getTypeSize(OrigTy);
+
+  bool isTruncated = FinalTySize < OrigTySize; 
+  bool needsCast = false;
+
+  if (const ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(Arg)) {
+    switch (ICE->getCastKind()) {
+    case CK_LValueToRValue:
+    case CK_NoOp:
+    case CK_UserDefinedConversion:
+      break;
+
+    case CK_IntegralCast: {
+      if (MK == NSAPI::NSNumberWithBool && OrigTy->isBooleanType())
+        break;
+      // Be more liberal with Integer/UnsignedInteger which are very commonly
+      // used.
+      if ((MK == NSAPI::NSNumberWithInteger ||
+           MK == NSAPI::NSNumberWithUnsignedInteger) &&
+          !isTruncated) {
+        if (OrigTy->getAs<EnumType>())
+          break;
+        if ((MK==NSAPI::NSNumberWithInteger) == OrigTy->isSignedIntegerType() &&
+            OrigTySize >= Ctx.getTypeSize(Ctx.IntTy))
+          break;
+      }
+
+      needsCast = true;
+      break;
+    }
+
+    case CK_PointerToBoolean:
+    case CK_IntegralToBoolean:
+    case CK_IntegralToFloating:
+    case CK_FloatingToIntegral:
+    case CK_FloatingToBoolean:
+    case CK_FloatingCast:
+    case CK_FloatingComplexToReal:
+    case CK_FloatingComplexToBoolean:
+    case CK_IntegralComplexToReal:
+    case CK_IntegralComplexToBoolean:
+    case CK_AtomicToNonAtomic:
+      needsCast = true;
+      break;
+
+    case CK_Dependent:
+    case CK_BitCast:
+    case CK_LValueBitCast:
+    case CK_BaseToDerived:
+    case CK_DerivedToBase:
+    case CK_UncheckedDerivedToBase:
+    case CK_Dynamic:
+    case CK_ToUnion:
+    case CK_ArrayToPointerDecay:
+    case CK_FunctionToPointerDecay:
+    case CK_NullToPointer:
+    case CK_NullToMemberPointer:
+    case CK_BaseToDerivedMemberPointer:
+    case CK_DerivedToBaseMemberPointer:
+    case CK_MemberPointerToBoolean:
+    case CK_ReinterpretMemberPointer:
+    case CK_ConstructorConversion:
+    case CK_IntegralToPointer:
+    case CK_PointerToIntegral:
+    case CK_ToVoid:
+    case CK_VectorSplat:
+    case CK_CPointerToObjCPointerCast:
+    case CK_BlockPointerToObjCPointerCast:
+    case CK_AnyPointerToBlockPointerCast:
+    case CK_ObjCObjectLValueCast:
+    case CK_FloatingRealToComplex:
+    case CK_FloatingComplexCast:
+    case CK_FloatingComplexToIntegralComplex:
+    case CK_IntegralRealToComplex:
+    case CK_IntegralComplexCast:
+    case CK_IntegralComplexToFloatingComplex:
+    case CK_ARCProduceObject:
+    case CK_ARCConsumeObject:
+    case CK_ARCReclaimReturnedObject:
+    case CK_ARCExtendBlockObject:
+    case CK_NonAtomicToAtomic:
+    case CK_CopyAndAutoreleaseBlockObject:
+      return false;
+    }
+  }
+
+  if (needsCast)
+    return false;
+
+  SourceRange ArgRange = OrigArg->getSourceRange();
+  commit.replaceWithInner(Msg->getSourceRange(), OrigArg->getSourceRange());
+
+  if (isa<ParenExpr>(OrigArg) || isa<IntegerLiteral>(OrigArg))
+    commit.insertBefore(ArgRange.getBegin(), "@");
+  else
+    commit.insertWrap("@(", ArgRange, ")");
+
+  return true;
 }
