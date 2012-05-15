@@ -96,6 +96,9 @@ class Register<string n, list<string> altNames = []> {
   // x86 register AX is covered by its sub-registers AL and AH, but EAX is not
   // covered by its sub-register AX.
   bit CoveredBySubRegs = 0;
+
+  // HWEncoding - The target specific hardware encoding for this register.
+  bits<16> HWEncoding = 0;
 }
 
 // RegisterWithSubRegs - This can be used to define instances of Register which

@@ -636,6 +636,23 @@ RegisterInfoEmitter::runMCDesc(raw_ostream &OS, CodeGenTarget &Target,
 
   EmitRegMappingTables(OS, Regs, false);
 
+  // Emit Reg encoding table
+  OS << "extern const uint16_t " << TargetName;
+  OS << "RegEncodingTable[] = {\n";
+  // Add entry for NoRegister
+  OS << "  0,\n";
+  for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
+    Record *Reg = Regs[i]->TheDef;
+    BitsInit *BI = Reg->getValueAsBitsInit("HWEncoding");
+    uint64_t Value = 0;
+    for (unsigned b = 0, be = BI->getNumBits(); b != be; ++b) {
+      if (BitInit *B = dynamic_cast<BitInit*>(BI->getBit(b)))
+      Value |= (uint64_t)B->getValue() << b;
+    }
+    OS << "  " << Value << ",\n";
+  }
+  OS << "};\n";       // End of HW encoding table
+
   // MCRegisterInfo initialization routine.
   OS << "static inline void Init" << TargetName
      << "MCRegisterInfo(MCRegisterInfo *RI, unsigned RA, "
@@ -645,9 +662,11 @@ RegisterInfoEmitter::runMCDesc(raw_ostream &OS, CodeGenTarget &Target,
      << RegisterClasses.size() << ", " << TargetName << "RegLists, ";
   if (SubRegIndices.size() != 0)
     OS << "(uint16_t*)" << TargetName << "SubRegTable, "
-       << SubRegIndices.size() << ");\n\n";
+       << SubRegIndices.size() << ",\n";
   else
-    OS << "NULL, 0);\n\n";
+    OS << "NULL, 0,\n";
+
+  OS << "  " << TargetName << "RegEncodingTable);\n\n";
 
   EmitRegMapping(OS, Regs, false);
 
@@ -1001,6 +1020,7 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
   if (SubRegIndices.size() != 0)
     OS << "extern const uint16_t *get" << TargetName
        << "SubRegTable();\n";
+  OS << "extern const uint16_t " << TargetName << "RegEncodingTable[];\n";
 
   EmitRegMappingTables(OS, Regs, true);
 
@@ -1016,9 +1036,11 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
      << "                     ";
   if (SubRegIndices.size() != 0)
     OS << "get" << TargetName << "SubRegTable(), "
-       << SubRegIndices.size() << ");\n\n";
+       << SubRegIndices.size() << ",\n";
   else
-    OS << "NULL, 0);\n\n";
+    OS << "NULL, 0,\n";
+
+  OS << "                     " << TargetName << "RegEncodingTable);\n\n";
 
   EmitRegMapping(OS, Regs, true);
 

@@ -146,6 +146,8 @@ private:
   const uint16_t *SubRegIndices;              // Pointer to the subreg lookup
                                               // array.
   unsigned NumSubRegIndices;                  // Number of subreg indices.
+  const uint16_t *RegEncodingTable;           // Pointer to array of register
+                                              // encodings.
 
   unsigned L2DwarfRegsSize;
   unsigned EHL2DwarfRegsSize;
@@ -164,7 +166,8 @@ public:
                           const MCRegisterClass *C, unsigned NC,
                           const uint16_t *RL,
                           const uint16_t *SubIndices,
-                          unsigned NumIndices) {
+                          unsigned NumIndices,
+                          const uint16_t *RET) {
     Desc = D;
     NumRegs = NR;
     RAReg = RA;
@@ -173,6 +176,7 @@ public:
     NumClasses = NC;
     SubRegIndices = SubIndices;
     NumSubRegIndices = NumIndices;
+    RegEncodingTable = RET;
   }
 
   /// mapLLVMRegsToDwarfRegs - Used to initialize LLVM register to Dwarf
@@ -354,6 +358,14 @@ public:
     assert(i < getNumRegClasses() && "Register Class ID out of range");
     return Classes[i];
   }
+
+   /// getEncodingValue - Returns the encoding for RegNo
+  uint16_t getEncodingValue(unsigned RegNo) const {
+    assert(RegNo < NumRegs &&
+           "Attempting to get encoding for invalid register number!");
+    return RegEncodingTable[RegNo];
+  }
+
 };
 
 } // End llvm namespace
