@@ -721,7 +721,8 @@ renameRegister(unsigned OldReg, unsigned NewReg, unsigned SubIdx) {
 
   if (TargetRegisterInfo::isVirtualRegister(NewReg))
     mapVirtReg(NewReg, UV);
-  virtRegToEqClass.erase(OldReg);
+  if (OldReg != NewReg)
+    virtRegToEqClass.erase(OldReg);
 
   do {
     UV->renameRegister(OldReg, NewReg, SubIdx, TRI);
