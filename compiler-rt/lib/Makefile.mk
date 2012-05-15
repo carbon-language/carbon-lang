@@ -17,6 +17,7 @@ SubDirs += i386 ppc x86_64 arm
 SubDirs += asan
 SubDirs += interception
 SubDirs += profile
+SubDirs += tsan
 
 # FIXME: We don't currently support building an atomic library, and as it must
 # be a separate library from the runtime library, we need to remove its source
