@@ -712,3 +712,55 @@ namespace test36 {
   // CHECK: define weak_odr hidden void @_ZN6test363fooINS_2S1ENS_2S2EE3barEv
   // CHECK-HIDDEN: define weak_odr hidden void @_ZN6test363fooINS_2S1ENS_2S2EE3barEv
 }
+
+namespace test37 {
+  struct HIDDEN foo {
+  };
+  template<class T>
+  DEFAULT void bar() {}
+  template DEFAULT void bar<foo>();
+  // CHECK: define weak_odr void @_ZN6test373barINS_3fooEEEvv
+  // CHECK-HIDDEN: define weak_odr void @_ZN6test373barINS_3fooEEEvv
+}
+
+namespace test38 {
+  template<typename T>
+  class DEFAULT foo {
+    void bar() {}
+  };
+  struct HIDDEN zed {
+  };
+  template class foo<zed>;
+  // CHECK: define weak_odr hidden void @_ZN6test383fooINS_3zedEE3barEv
+  // CHECK-HIDDEN: define weak_odr hidden void @_ZN6test383fooINS_3zedEE3barEv
+}
+
+namespace test39 {
+  class DEFAULT default_t;
+  class HIDDEN hidden_t;
+  template <class T> class A {
+    template <class U> class B {
+      HIDDEN void hidden() {}
+      void noattr() {}
+      template <class V> void temp() {}
+    };
+  };
+  template class DEFAULT A<hidden_t>;
+  template class DEFAULT A<hidden_t>::B<hidden_t>;
+  template void A<hidden_t>::B<hidden_t>::temp<default_t>();
+  template void A<hidden_t>::B<hidden_t>::temp<hidden_t>();
+
+  // CHECK: define weak_odr hidden void @_ZN6test391AINS_8hidden_tEE1BIS1_E6hiddenEv
+  // CHECK: define weak_odr void @_ZN6test391AINS_8hidden_tEE1BIS1_E6noattrEv
+  // CHECK: define weak_odr void @_ZN6test391AINS_8hidden_tEE1BIS1_E4tempINS_9default_tEEEvv
+
+  // GCC produces a default for this one. Why?
+  // CHECK: define weak_odr hidden void @_ZN6test391AINS_8hidden_tEE1BIS1_E4tempIS1_EEvv
+
+  // CHECK-HIDDEN: define weak_odr hidden void @_ZN6test391AINS_8hidden_tEE1BIS1_E6hiddenEv
+  // CHECK-HIDDEN: define weak_odr void @_ZN6test391AINS_8hidden_tEE1BIS1_E6noattrEv
+  // CHECK-HIDDEN: define weak_odr void @_ZN6test391AINS_8hidden_tEE1BIS1_E4tempINS_9default_tEEEvv
+
+  // GCC produces a default for this one. Why?
+  // CHECK-HIDDEN: define weak_odr hidden void @_ZN6test391AINS_8hidden_tEE1BIS1_E4tempIS1_EEvv
+}

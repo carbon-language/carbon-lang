@@ -1004,6 +1004,14 @@ void ClangAttrTemplateInstantiateEmitter::run(raw_ostream &OS) {
       continue;
 
     OS << "    case attr::" << R.getName() << ": {\n";
+    bool ShouldClone = R.getValueAsBit("Clone");
+
+    if (!ShouldClone) {
+      OS << "      return NULL;\n";
+      OS << "    }\n";
+      continue;
+    }
+
     OS << "      const " << R.getName() << "Attr *A = cast<"
        << R.getName() << "Attr>(At);\n";
     bool TDependent = R.getValueAsBit("TemplateDependent");

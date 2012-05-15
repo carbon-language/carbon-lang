@@ -102,7 +102,8 @@ void Sema::InstantiateAttrs(const MultiLevelTemplateArgumentList &TemplateArgs,
     } else {
       Attr *NewAttr = sema::instantiateTemplateAttribute(TmplAttr, Context,
                                                          *this, TemplateArgs);
-      New->addAttr(NewAttr);
+      if (NewAttr)
+        New->addAttr(NewAttr);
     }
   }
 }
