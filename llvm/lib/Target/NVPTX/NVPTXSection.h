@@ -27,7 +27,7 @@ class NVPTXSection : public MCSection {
 
 public:
   NVPTXSection(SectionVariant V, SectionKind K) : MCSection(V, K) {}
-  ~NVPTXSection() {};
+  ~NVPTXSection() {}
 
   /// Override this as NVPTX has its own way of printing switching
   /// to a section.
