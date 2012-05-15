@@ -169,6 +169,8 @@ ifeq ($(ASAN_COMPILER), gcc)
   ASAN_LD_TAIL=$(LIBASAN_A)
 endif
 
+INTERCEPTION=../interception
+
 RTL_HDR=asan_allocator.h \
 	asan_internal.h \
 	asan_interceptors.h \
@@ -180,10 +182,10 @@ RTL_HDR=asan_allocator.h \
 	asan_stats.h \
 	asan_thread.h \
 	asan_thread_registry.h \
-	interception/interception.h \
-	interception/interception_linux.h \
-	interception/interception_mac.h \
-	interception/mach_override/mach_override.h
+	$(INTERCEPTION)/interception.h \
+	$(INTERCEPTION)/interception_linux.h \
+	$(INTERCEPTION)/interception_mac.h \
+	$(INTERCEPTION)/mach_override/mach_override.h
 
 LIBASAN_OBJ=$(BIN)/asan_rtl$(SUFF).o \
 	    $(BIN)/asan_allocator$(SUFF).o  \
@@ -255,7 +257,7 @@ install_clang: | $(INSTALL_DIR)
 #	cp -v $(CLANG_BUILD)/lib/libasan*.a $(INSTALL_DIR)/lib
 
 $(BIN)/asan_noinst_test$(SUFF).o: tests/asan_noinst_test.cc $(RTL_HDR) $(MAKEFILE)
-	$(CLEANROOM_CXX) $(PIE) $(CFLAGS) $(GTEST_INCLUDE) -I. -g -c $< -O2 -o $@
+	$(CLEANROOM_CXX) $(PIE) $(CFLAGS) $(GTEST_INCLUDE) -I. -I.. -g -c $< -O2 -o $@
 
 $(BIN)/asan_break_optimization$(SUFF).o: tests/asan_break_optimization.cc $(MAKEFILE)
 	$(CLEANROOM_CXX) $(PIE) $(CFLAGS) -c $< -O0 -o $@
@@ -266,13 +268,20 @@ $(BIN)/%_test$(SUFF).o: tests/%_test.cc $(RTL_HDR) $(MAKEFILE)
 $(BIN)/%_test$(SUFF).o: tests/%_test.mm $(RTL_HDR) $(MAKEFILE)
 	$(ASAN_CXX) $(GTEST_INCLUDE) -I. -g -c $< -O2 -o $@ -ObjC $(PIE) $(CFLAGS)
 
+RTL_COMMON=$(PIE) $(CFLAGS) -fPIC -c -O2 -fno-exceptions -funwind-tables \
+	   -Ithird_party -I.. $(ASAN_FLAGS)
+
+$(BIN)/interception/%$(SUFF).o: ../interception/%.cc $(MAKEFILE)
+	$(CXX) $(RTL_COMMON) -o $@ -g $<
+
+$(BIN)/interception/mach_override/%$(SUFF).o: ../interception/mach_override/%.c $(MAKEFILE)
+	$(CC) $(RTL_COMMON) -o $@ -g $<
+
 $(BIN)/%$(SUFF).o: %.cc $(RTL_HDR) $(MAKEFILE)
-	$(CXX) $(PIE) $(CFLAGS) -fPIC -c -O2 -fno-exceptions -funwind-tables \
-		-o $@ -g $< -Ithird_party \
+	$(CXX) $(RTL_COMMON) -o $@ -g $<  \
 		-DASAN_NEEDS_SEGV=$(ASAN_NEEDS_SEGV) \
 		-DASAN_HAS_EXCEPTIONS=$(ASAN_HAS_EXCEPTIONS) \
-		-DASAN_FLEXIBLE_MAPPING_AND_OFFSET=$(ASAN_FLEXIBLE_MAPPING_AND_OFFSET) \
-		$(ASAN_FLAGS)
+		-DASAN_FLEXIBLE_MAPPING_AND_OFFSET=$(ASAN_FLEXIBLE_MAPPING_AND_OFFSET)
 
 $(BIN)/%$(SUFF).o: %.c $(RTL_HDR) $(MAKEFILE)
 	$(CC) $(PIE) $(CFLAGS) -fPIC -c -O2 -o $@ -g $< -Ithird_party \
@@ -339,7 +348,7 @@ ADDRESS_SANITIZER_CPP=../../../../lib/Transforms/Instrumentation/AddressSanitize
 lint:
 	third_party/cpplint/cpplint.py --filter=$(LLVM_LINT_FILTER) $(ADDRESS_SANITIZER_CPP)
 	third_party/cpplint/cpplint.py --filter=$(RTL_LINT_FITLER) asan_*.cc asan_*.h
-	third_party/cpplint/cpplint.py --filter=$(RTL_LINT_FITLER) interception/interception*.h interception/interception*.cc
+	third_party/cpplint/cpplint.py --filter=$(RTL_LINT_FITLER) $(INTERCEPTION)/interception*.h $(INTERCEPTION)/interception*.cc
 	third_party/cpplint/cpplint.py --filter=$(TEST_LINT_FITLER) tests/*.cc output_tests/*.cc
 
 get_third_party:
