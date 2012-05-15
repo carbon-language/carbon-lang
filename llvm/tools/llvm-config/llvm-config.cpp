@@ -190,9 +190,9 @@ int main(int argc, char **argv) {
     sys::path::parent_path(CurrentPath)).str();
 
   // Check to see if we are inside a development tree by comparing to possible
-  // locations (prefix style or CMake style). This could be wrong in the face of
-  // symbolic links, but is good enough.
-  if (CurrentExecPrefix == std::string(LLVM_OBJ_ROOT) + "/" + LLVM_BUILDMODE) {
+  // locations (prefix style or CMake style).
+  if (sys::fs::equivalent(CurrentExecPrefix,
+                          Twine(LLVM_OBJ_ROOT) + "/" + LLVM_BUILDMODE)) {
     IsInDevelopmentTree = true;
     DevelopmentTreeLayout = MakefileStyle;
 
@@ -204,11 +204,12 @@ int main(int argc, char **argv) {
     } else {
       ActiveObjRoot = LLVM_OBJ_ROOT;
     }
-  } else if (CurrentExecPrefix == std::string(LLVM_OBJ_ROOT)) {
+  } else if (sys::fs::equivalent(CurrentExecPrefix, LLVM_OBJ_ROOT)) {
     IsInDevelopmentTree = true;
     DevelopmentTreeLayout = CMakeStyle;
     ActiveObjRoot = LLVM_OBJ_ROOT;
-  } else if (CurrentExecPrefix == std::string(LLVM_OBJ_ROOT) + "/bin") {
+  } else if (sys::fs::equivalent(CurrentExecPrefix,
+                                 Twine(LLVM_OBJ_ROOT) + "/bin")) {
     IsInDevelopmentTree = true;
     DevelopmentTreeLayout = CMakeBuildModeStyle;
     ActiveObjRoot = LLVM_OBJ_ROOT;
