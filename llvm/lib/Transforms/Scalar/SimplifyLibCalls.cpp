@@ -459,6 +459,50 @@ struct StrCpyOpt : public LibCallOptimization {
 };
 
 //===---------------------------------------===//
+// 'stpcpy' Optimizations
+
+struct StpCpyOpt: public LibCallOptimization {
+  bool OptChkCall;  // True if it's optimizing a __stpcpy_chk libcall.
+
+  StpCpyOpt(bool c) : OptChkCall(c) {}
+
+  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+    // Verify the "stpcpy" function prototype.
+    unsigned NumParams = OptChkCall ? 3 : 2;
+    FunctionType *FT = Callee->getFunctionType();
+    if (FT->getNumParams() != NumParams ||
+        FT->getReturnType() != FT->getParamType(0) ||
+        FT->getParamType(0) != FT->getParamType(1) ||
+        FT->getParamType(0) != B.getInt8PtrTy())
+      return 0;
+
+    // These optimizations require TargetData.
+    if (!TD) return 0;
+
+    Value *Dst = CI->getArgOperand(0), *Src = CI->getArgOperand(1);
+    if (Dst == Src)  // stpcpy(x,x)  -> x+strlen(x)
+      return B.CreateInBoundsGEP(Dst, EmitStrLen(Src, B, TD));
+
+    // See if we can get the length of the input string.
+    uint64_t Len = GetStringLength(Src);
+    if (Len == 0) return 0;
+
+    Value *LenV = ConstantInt::get(TD->getIntPtrType(*Context), Len);
+    Value *DstEnd = B.CreateGEP(Dst,
+                                ConstantInt::get(TD->getIntPtrType(*Context),
+                                                 Len - 1));
+
+    // We have enough information to now generate the memcpy call to do the
+    // copy for us.  Make a memcpy to copy the nul byte with align = 1.
+    if (OptChkCall)
+      EmitMemCpyChk(Dst, Src, LenV, CI->getArgOperand(2), B, TD);
+    else
+      B.CreateMemCpy(Dst, Src, LenV, 1);
+    return DstEnd;
+  }
+};
+
+//===---------------------------------------===//
 // 'strncpy' Optimizations
 
 struct StrNCpyOpt : public LibCallOptimization {
@@ -1474,8 +1518,11 @@ namespace {
     StringMap<LibCallOptimization*> Optimizations;
     // String and Memory LibCall Optimizations
     StrCatOpt StrCat; StrNCatOpt StrNCat; StrChrOpt StrChr; StrRChrOpt StrRChr;
-    StrCmpOpt StrCmp; StrNCmpOpt StrNCmp; StrCpyOpt StrCpy; StrCpyOpt StrCpyChk;
-    StrNCpyOpt StrNCpy; StrLenOpt StrLen; StrPBrkOpt StrPBrk;
+    StrCmpOpt StrCmp; StrNCmpOpt StrNCmp;
+    StrCpyOpt StrCpy; StrCpyOpt StrCpyChk;
+    StpCpyOpt StpCpy; StpCpyOpt StpCpyChk;
+    StrNCpyOpt StrNCpy;
+    StrLenOpt StrLen; StrPBrkOpt StrPBrk;
     StrToOpt StrTo; StrSpnOpt StrSpn; StrCSpnOpt StrCSpn; StrStrOpt StrStr;
     MemCmpOpt MemCmp; MemCpyOpt MemCpy; MemMoveOpt MemMove; MemSetOpt MemSet;
     // Math Library Optimizations
@@ -1491,7 +1538,8 @@ namespace {
     bool Modified;  // This is only used by doInitialization.
   public:
     static char ID; // Pass identification
-    SimplifyLibCalls() : FunctionPass(ID), StrCpy(false), StrCpyChk(true) {
+    SimplifyLibCalls() : FunctionPass(ID), StrCpy(false), StrCpyChk(true),
+                         StpCpy(false), StpCpyChk(true) {
       initializeSimplifyLibCallsPass(*PassRegistry::getPassRegistry());
     }
     void AddOpt(LibFunc::Func F, LibCallOptimization* Opt);
@@ -1542,6 +1590,7 @@ void SimplifyLibCalls::InitOptimizations() {
   Optimizations["strncmp"] = &StrNCmp;
   Optimizations["strcpy"] = &StrCpy;
   Optimizations["strncpy"] = &StrNCpy;
+  Optimizations["stpcpy"] = &StpCpy;
   Optimizations["strlen"] = &StrLen;
   Optimizations["strpbrk"] = &StrPBrk;
   Optimizations["strtol"] = &StrTo;
@@ -1561,6 +1610,7 @@ void SimplifyLibCalls::InitOptimizations() {
 
   // _chk variants of String and Memory LibCall Optimizations.
   Optimizations["__strcpy_chk"] = &StrCpyChk;
+  Optimizations["__stpcpy_chk"] = &StpCpyChk;
 
   // Math Library Optimizations
   Optimizations["cosf"] = &Cos;
@@ -1746,6 +1796,7 @@ void SimplifyLibCalls::inferPrototypeAttributes(Function &F) {
                Name == "strtold" ||
                Name == "strncat" ||
                Name == "strncpy" ||
+               Name == "stpncpy" ||
                Name == "strtoull") {
       if (FTy->getNumParams() < 2 ||
           !FTy->getParamType(1)->isPointerTy())
@@ -2405,10 +2456,6 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
 //   * sqrt(expN(x))  -> expN(x*0.5)
 //   * sqrt(Nroot(x)) -> pow(x,1/(2*N))
 //   * sqrt(pow(x,y)) -> pow(|x|,y*0.5)
-//
-// stpcpy:
-//   * stpcpy(str, "literal") ->
-//           llvm.memcpy(str,"literal",strlen("literal")+1,1)
 //
 // strchr:
 //   * strchr(p, 0) -> strlen(p)
