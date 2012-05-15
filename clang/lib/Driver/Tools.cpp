@@ -4224,7 +4224,9 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
     // This is more complicated in gcc...
     CmdArgs.push_back("-lgomp");
 
-  if (isObjCRuntimeLinked(Args)) {
+  if (isObjCRuntimeLinked(Args) &&
+      !Args.hasArg(options::OPT_nostdlib) &&
+      !Args.hasArg(options::OPT_nodefaultlibs)) {
     // Avoid linking compatibility stubs on i386 mac.
     if (!getDarwinToolChain().isTargetMacOS() ||
         getDarwinToolChain().getArchName() != "i386") {
