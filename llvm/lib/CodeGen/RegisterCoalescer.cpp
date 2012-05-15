@@ -408,6 +408,8 @@ void RegisterCoalescer::markAsJoined(MachineInstr *CopyMI) {
 ///
 bool RegisterCoalescer::adjustCopiesBackFrom(const CoalescerPair &CP,
                                              MachineInstr *CopyMI) {
+  assert(!CP.isPartial() && "This doesn't work for partial copies.");
+
   // Bail if there is no dst interval - can happen when merging physical subreg
   // operations.
   if (!LIS->hasInterval(CP.getDstReg()))
@@ -529,7 +531,7 @@ bool RegisterCoalescer::adjustCopiesBackFrom(const CoalescerPair &CP,
   // Rewrite the copy. If the copy instruction was killing the destination
   // register before the merge, find the last use and trim the live range. That
   // will also add the isKill marker.
-  CopyMI->substituteRegister(IntA.reg, IntB.reg, CP.getSrcIdx(), *TRI);
+  CopyMI->substituteRegister(IntA.reg, IntB.reg, 0, *TRI);
   if (ALR->end == CopyIdx)
     LIS->shrinkToUses(&IntA);
 
