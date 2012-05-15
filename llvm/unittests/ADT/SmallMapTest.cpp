@@ -144,4 +144,19 @@ TEST(SmallMapTest, GeneralTest) {
                 (i->first == &buf[1] && i->second == 1) ||
                 (i->first == &buf[2] && i->second == 2));
   }
+
+  // Check that iteration only visits elements that actually exist.
+  SmallMap<int, int, 8> d;
+  d[0] = 2;
+  d[1] = 3;
+  unsigned counts[2] = { 0, 0 };
+  for (SmallMap<int, int, 8>::iterator I = d.begin(), E = d.end(); I != E;
+       ++I) {
+    EXPECT_TRUE(I->first == 0 || I->first == 1);
+    EXPECT_TRUE(I->second == 2 || I->second == 3);
+    EXPECT_EQ(I->second, I->first + 2);
+    ++counts[I->first];
+  }
+  EXPECT_EQ(counts[0], 1);
+  EXPECT_EQ(counts[1], 1);   
 }

@@ -162,10 +162,10 @@ namespace llvm {
     }
 
     iterator end() {
-      return iterator(Array + MaxArraySize);
+      return iterator(Array + NumElements);
     }
     const_iterator end() const {
-      return const_iterator(Array + MaxArraySize);
+      return const_iterator(Array + NumElements);
     }
 
     // Modifiers
