@@ -1892,12 +1892,23 @@ void CXXNameMangler::mangleType(const BuiltinType *T) {
 }
 
 // <type>          ::= <function-type>
-// <function-type> ::= F [Y] <bare-function-type> E
+// <function-type> ::= [<CV-qualifiers>] F [Y]
+//                      <bare-function-type> [<ref-qualifier>] E
+// (Proposal to cxx-abi-dev, 2012-05-11)
 void CXXNameMangler::mangleType(const FunctionProtoType *T) {
+  // Mangle CV-qualifiers, if present.  These are 'this' qualifiers,
+  // e.g. "const" in "int (A::*)() const".
+  mangleQualifiers(Qualifiers::fromCVRMask(T->getTypeQuals()));
+
   Out << 'F';
+
   // FIXME: We don't have enough information in the AST to produce the 'Y'
   // encoding for extern "C" function types.
   mangleBareFunctionType(T, /*MangleReturnType=*/true);
+
+  // Mangle the ref-qualifier, if present.
+  mangleRefQualifier(T->getRefQualifier());
+
   Out << 'E';
 }
 void CXXNameMangler::mangleType(const FunctionNoProtoType *T) {
@@ -1990,8 +2001,6 @@ void CXXNameMangler::mangleType(const MemberPointerType *T) {
   mangleType(QualType(T->getClass(), 0));
   QualType PointeeType = T->getPointeeType();
   if (const FunctionProtoType *FPT = dyn_cast<FunctionProtoType>(PointeeType)) {
-    mangleQualifiers(Qualifiers::fromCVRMask(FPT->getTypeQuals()));
-    mangleRefQualifier(FPT->getRefQualifier());
     mangleType(FPT);
     
     // Itanium C++ ABI 5.1.8:
@@ -2005,9 +2014,11 @@ void CXXNameMangler::mangleType(const MemberPointerType *T) {
     //   which the function is a member is considered part of the type of 
     //   function.
 
+    // Given that we already substitute member function pointers as a
+    // whole, the net effect of this rule is just to unconditionally
+    // suppress substitution on the function type in a member pointer.
     // We increment the SeqID here to emulate adding an entry to the
-    // substitution table. We can't actually add it because we don't want this
-    // particular function type to be substituted.
+    // substitution table.
     ++SeqID;
   } else
     mangleType(PointeeType);
