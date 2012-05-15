@@ -341,8 +341,10 @@ subdirectories = %s
             # Get the library name, or None for LibraryGroups.
             if c.type_name == 'Library' or c.type_name == 'OptionalLibrary':
                 library_name = c.get_prefixed_library_name()
+                is_installed = c.installed
             else:
                 library_name = None
+                is_installed = True
 
             # Get the component names of all the required libraries.
             required_llvmconfig_component_names = [
@@ -355,7 +357,8 @@ subdirectories = %s
 
             # Add the entry.
             entries[c.name] = (llvmconfig_component_name, library_name,
-                               required_llvmconfig_component_names)
+                               required_llvmconfig_component_names,
+                               is_installed)
 
         # Convert to a list of entries and sort by name.
         entries = entries.values()
@@ -363,16 +366,16 @@ subdirectories = %s
         # Create an 'all' pseudo component. We keep the dependency list small by
         # only listing entries that have no other dependents.
         root_entries = set(e[0] for e in entries)
-        for _,_,deps in entries:
+        for _,_,deps,_ in entries:
             root_entries -= set(deps)
-        entries.append(('all', None, root_entries))
+        entries.append(('all', None, root_entries, True))
 
         entries.sort()
 
         # Compute the maximum number of required libraries, plus one so there is
         # always a sentinel.
         max_required_libraries = max(len(deps)
-                                     for _,_,deps in entries) + 1
+                                     for _,_,deps,_ in entries) + 1
 
         # Write out the library table.
         make_install_dir(os.path.dirname(output_path))
@@ -393,18 +396,21 @@ subdirectories = %s
         print >>f, '  /// The name of the library for this component (or NULL).'
         print >>f, '  const char *Library;'
         print >>f, ''
+        print >>f, '  /// Whether the component is installed.'
+        print >>f, '  bool IsInstalled;'
+        print >>f, ''
         print >>f, '\
   /// The list of libraries required when linking this component.'
         print >>f, '  const char *RequiredLibraries[%d];' % (
             max_required_libraries)
         print >>f, '} AvailableComponents[%d] = {' % len(entries)
-        for name,library_name,required_names in entries:
+        for name,library_name,required_names,is_installed in entries:
             if library_name is None:
                 library_name_as_cstr = '0'
             else:
                 library_name_as_cstr = '"lib%s.a"' % library_name
-            print >>f, '  { "%s", %s, { %s } },' % (
-                name, library_name_as_cstr,
+            print >>f, '  { "%s", %s, %d, { %s } },' % (
+                name, library_name_as_cstr, is_installed,
                 ', '.join('"%s"' % dep
                           for dep in required_names))
         print >>f, '};'
