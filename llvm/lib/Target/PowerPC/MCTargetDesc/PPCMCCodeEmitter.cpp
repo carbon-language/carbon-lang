@@ -77,6 +77,7 @@ public:
 } // end anonymous namespace
   
 MCCodeEmitter *llvm::createPPCMCCodeEmitter(const MCInstrInfo &MCII,
+                                            const MCRegisterInfo &MRI,
                                             const MCSubtargetInfo &STI,
                                             MCContext &Ctx) {
   return new PPCMCCodeEmitter(MCII, STI, Ctx);

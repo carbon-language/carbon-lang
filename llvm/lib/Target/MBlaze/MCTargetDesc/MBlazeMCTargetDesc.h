@@ -22,6 +22,7 @@ class MCContext;
 class MCCodeEmitter;
 class MCInstrInfo;
 class MCObjectWriter;
+class MCRegisterInfo;
 class MCSubtargetInfo;
 class Target;
 class StringRef;
@@ -30,6 +31,7 @@ class raw_ostream;
 extern Target TheMBlazeTarget;
 
 MCCodeEmitter *createMBlazeMCCodeEmitter(const MCInstrInfo &MCII,
+                                         const MCRegisterInfo &MRI,
                                          const MCSubtargetInfo &STI,
                                          MCContext &Ctx);
 

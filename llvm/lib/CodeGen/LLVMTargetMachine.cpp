@@ -165,6 +165,7 @@ bool LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
     Context->setAllowTemporaryLabels(false);
 
   const MCAsmInfo &MAI = *getMCAsmInfo();
+  const MCRegisterInfo &MRI = *getTarget().createMCRegInfo(getTargetTriple());
   const MCSubtargetInfo &STI = getSubtarget<MCSubtargetInfo>();
   OwningPtr<MCStreamer> AsmStreamer;
 
@@ -180,7 +181,8 @@ bool LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
     MCAsmBackend *MAB = 0;
     if (ShowMCEncoding) {
       const MCSubtargetInfo &STI = getSubtarget<MCSubtargetInfo>();
-      MCE = getTarget().createMCCodeEmitter(*getInstrInfo(), STI, *Context);
+      MCE = getTarget().createMCCodeEmitter(*getInstrInfo(), MRI, STI,
+                                            *Context);
       MAB = getTarget().createMCAsmBackend(getTargetTriple());
     }
 
@@ -198,8 +200,8 @@ bool LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
   case CGFT_ObjectFile: {
     // Create the code emitter for the target if it exists.  If not, .o file
     // emission fails.
-    MCCodeEmitter *MCE = getTarget().createMCCodeEmitter(*getInstrInfo(), STI,
-                                                         *Context);
+    MCCodeEmitter *MCE = getTarget().createMCCodeEmitter(*getInstrInfo(), MRI,
+                                                         STI, *Context);
     MCAsmBackend *MAB = getTarget().createMCAsmBackend(getTargetTriple());
     if (MCE == 0 || MAB == 0)
       return true;
@@ -271,9 +273,10 @@ bool LLVMTargetMachine::addPassesToEmitMC(PassManagerBase &PM,
 
   // Create the code emitter for the target if it exists.  If not, .o file
   // emission fails.
+  const MCRegisterInfo &MRI = *getTarget().createMCRegInfo(getTargetTriple());
   const MCSubtargetInfo &STI = getSubtarget<MCSubtargetInfo>();
-  MCCodeEmitter *MCE = getTarget().createMCCodeEmitter(*getInstrInfo(),STI,
-                                                       *Ctx);
+  MCCodeEmitter *MCE = getTarget().createMCCodeEmitter(*getInstrInfo(), MRI,
+                                                       STI, *Ctx);
   MCAsmBackend *MAB = getTarget().createMCAsmBackend(getTargetTriple());
   if (MCE == 0 || MAB == 0)
     return true;

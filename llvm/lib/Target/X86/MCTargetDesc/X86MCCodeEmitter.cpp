@@ -139,6 +139,7 @@ public:
 
 
 MCCodeEmitter *llvm::createX86MCCodeEmitter(const MCInstrInfo &MCII,
+                                            const MCRegisterInfo &MRI,
                                             const MCSubtargetInfo &STI,
                                             MCContext &Ctx) {
   return new X86MCCodeEmitter(MCII, STI, Ctx);

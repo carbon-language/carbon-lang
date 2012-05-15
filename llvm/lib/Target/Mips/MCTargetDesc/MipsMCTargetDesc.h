@@ -22,6 +22,7 @@ class MCCodeEmitter;
 class MCContext;
 class MCInstrInfo;
 class MCObjectWriter;
+class MCRegisterInfo;
 class MCSubtargetInfo;
 class StringRef;
 class Target;
@@ -33,9 +34,11 @@ extern Target TheMips64Target;
 extern Target TheMips64elTarget;
 
 MCCodeEmitter *createMipsMCCodeEmitterEB(const MCInstrInfo &MCII,
+                                         const MCRegisterInfo &MRI,
                                          const MCSubtargetInfo &STI,
                                          MCContext &Ctx);
 MCCodeEmitter *createMipsMCCodeEmitterEL(const MCInstrInfo &MCII,
+                                         const MCRegisterInfo &MRI,
                                          const MCSubtargetInfo &STI,
                                          MCContext &Ctx);
 

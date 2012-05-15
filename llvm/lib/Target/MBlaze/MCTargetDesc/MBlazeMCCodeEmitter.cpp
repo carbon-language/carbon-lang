@@ -98,6 +98,7 @@ public:
 
 
 MCCodeEmitter *llvm::createMBlazeMCCodeEmitter(const MCInstrInfo &MCII,
+                                               const MCRegisterInfo &MRI,
                                                const MCSubtargetInfo &STI,
                                                MCContext &Ctx) {
   return new MBlazeMCCodeEmitter(MCII, STI, Ctx);
