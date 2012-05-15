@@ -278,15 +278,6 @@ bool CoalescerPair::setRegisters(const MachineInstr *MI) {
                                          SrcIdx, DstIdx);
       if (!NewRC)
         return false;
-
-      // We cannot handle the case where both Src and Dst would be a
-      // sub-register. Yet.
-      if (SrcIdx && DstIdx) {
-        DEBUG(dbgs() << "\tCannot handle " << NewRC->getName()
-                     << " with subregs " << TRI.getSubRegIndexName(SrcIdx)
-                     << " and " << TRI.getSubRegIndexName(DstIdx) << '\n');
-        return false;
-      }
     } else if (DstSub) {
       // SrcReg will be merged with a sub-register of DstReg.
       SrcIdx = DstSub;
