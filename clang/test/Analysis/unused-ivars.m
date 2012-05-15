@@ -108,3 +108,24 @@ int radar_7254495(RDar7254495 *a) {
 
 @implementation RDar8481311
 @end
+
+@class NSString;
+@interface Radar11059352_1 {
+@private
+    NSString *_pathString;
+}
+@property (readonly, strong) NSString *pathString;
+@end
+
+@interface Radar11059352 {
+@private
+Radar11059352_1 *_workspacePath;
+}
+@end
+
+@implementation Radar11059352
+
+- (void)useWorkspace {
+    NSString *workspacePathString = _workspacePath.pathString;
+}
+@end
