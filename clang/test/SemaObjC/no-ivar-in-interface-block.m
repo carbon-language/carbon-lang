@@ -1,13 +1,13 @@
-// RUN: %clang_cc1  -fsyntax-only -verify -Winterface-block-ivar %s
+// RUN: %clang_cc1  -fsyntax-only -verify -Winterface-ivars %s
 // rdar://10763173
 
 @interface I
 {
-  @protected  int P_IVAR; // expected-warning {{declaration of ivar in the interface block is deprecated}}
+  @protected  int P_IVAR; // expected-warning {{declaration of ivars in the interface is deprecated}}
 
-  @public     int PU_IVAR; // expected-warning {{declaration of ivar in the interface block is deprecated}}
+  @public     int PU_IVAR; // expected-warning {{declaration of ivars in the interface is deprecated}}
 
-  @private    int PRV_IVAR; // expected-warning {{declaration of ivar in the interface block is deprecated}}
+  @private    int PRV_IVAR; // expected-warning {{declaration of ivars in the interface is deprecated}}
 }
 @end
 

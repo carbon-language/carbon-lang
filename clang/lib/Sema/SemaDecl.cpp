@@ -9543,7 +9543,7 @@ Decl *Sema::ActOnIvar(Scope *S,
   
   if (LangOpts.ObjCNonFragileABI2 &&
       !NewID->isInvalidDecl() && isa<ObjCInterfaceDecl>(EnclosingDecl))
-    Diag(Loc, diag::warn_ivar_in_interface_block);
+    Diag(Loc, diag::warn_ivars_in_interface);
   
   return NewID;
 }
