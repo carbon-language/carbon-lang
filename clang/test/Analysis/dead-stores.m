@@ -88,3 +88,23 @@ void rdar10591355() {
   RDar10591355 *p = rdar10591355_aux();
   ^{ (void) p.x; }();
 }
+
+@interface Radar11059352_1 {
+@private
+    int *_pathString;
+}
+@property int *pathString;
+@end
+@interface Radar11059352 {
+@private
+Radar11059352_1 *_Path;
+}
+@end
+@implementation Radar11059352
+
+- (int*)usePath {
+    Radar11059352_1 *xxxxx = _Path; // no warning
+    int *wp = xxxxx.pathString;
+    return wp;
+}
+@end
