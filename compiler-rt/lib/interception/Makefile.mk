@@ -1,4 +1,4 @@
-#===- lib/asan/interception/Makefile.mk --------------------*- Makefile -*--===#
+#===- lib/interception/Makefile.mk -------------------------*- Makefile -*--===#
 #
 #                     The LLVM Compiler Infrastructure
 #
@@ -7,7 +7,7 @@
 #
 #===------------------------------------------------------------------------===#
 
-ModuleName := asan
+ModuleName := interception
 SubDirs := mach_override
 
 Sources := $(foreach file,$(wildcard $(Dir)/*.cc),$(notdir $(file)))
@@ -19,5 +19,5 @@ Implementation := Generic
 Dependencies := $(wildcard $(Dir)/*.h)
 Dependencies += $(wildcard $(Dir)/mach_override/*.h)
 
-# Define a convenience variable for all the asan functions.
-AsanFunctions += $(Sources:%.cc=%)
+# Define a convenience variable for all the interception functions.
+InterceptionFunctions := $(Sources:%.cc=%)

@@ -15,6 +15,7 @@ SubDirs += i386 ppc x86_64 arm
 
 # Add other submodules.
 SubDirs += asan
+SubDirs += interception
 SubDirs += profile
 
 # FIXME: We don't currently support building an atomic library, and as it must

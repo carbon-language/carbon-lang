@@ -94,4 +94,4 @@ licenses, and/or restrictions:
 
 Program             Directory
 -------             ---------
-mach_override       lib/asan/interception/mach_override
+mach_override       lib/interception/mach_override

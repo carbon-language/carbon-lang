@@ -72,8 +72,8 @@ FUNCTIONS.full-i386 := $(CommonFunctions) $(ArchFunctions.i386)
 FUNCTIONS.full-x86_64 := $(CommonFunctions) $(ArchFunctions.x86_64)
 FUNCTIONS.profile-i386 := GCDAProfiling
 FUNCTIONS.profile-x86_64 := GCDAProfiling
-FUNCTIONS.asan-i386 := $(AsanFunctions)
-FUNCTIONS.asan-x86_64 := $(AsanFunctions)
+FUNCTIONS.asan-i386 := $(AsanFunctions) $(InterceptionFunctions)
+FUNCTIONS.asan-x86_64 := $(AsanFunctions) $(InterceptionFunctions)
 
 # Always use optimized variants.
 OPTIMIZED := 1
