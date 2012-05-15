@@ -1512,12 +1512,9 @@ ArchSpec
 Target::GetDefaultArchitecture ()
 {
     lldb::UserSettingsControllerSP settings_controller_sp (GetSettingsController());
-    ArchSpec default_arch;
     if (settings_controller_sp)
-        default_arch = static_cast<Target::SettingsController *>(settings_controller_sp.get())->GetArchitecture ();
-    if (!default_arch.IsValid())
-        default_arch = Host::GetArchitecture ();
-    return default_arch;
+        return static_cast<Target::SettingsController *>(settings_controller_sp.get())->GetArchitecture ();
+    return ArchSpec();
 }
 
 void

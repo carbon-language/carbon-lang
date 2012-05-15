@@ -1231,10 +1231,12 @@ Host::GetDummyTarget (lldb_private::Debugger &debugger)
     
     if (!g_dummy_target_sp)
     {
-        ArchSpec default_arch(Target::GetDefaultArchitecture());
+        ArchSpec arch(Target::GetDefaultArchitecture());
+        if (!arch.IsValid())
+            arch = Host::GetArchitecture ();
         Error err = debugger.GetTargetList().CreateTarget(debugger, 
                                                           FileSpec(), 
-                                                          default_arch.GetTriple().getTriple().c_str(),
+                                                          arch.GetTriple().getTriple().c_str(),
                                                           false, 
                                                           NULL, 
                                                           g_dummy_target_sp);
