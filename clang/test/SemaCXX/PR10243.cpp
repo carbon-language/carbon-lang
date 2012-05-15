@@ -9,12 +9,12 @@ struct T0 {
 
 struct T1 {
   S s; // expected-error{{field has incomplete type 'S'}}
-  T1(T1&) = default;
+  T1(const T1&) = default;
 };
 
 struct T2 {
   S s; // expected-error{{field has incomplete type 'S'}}
-  T2& operator=(T2&) = default;
+  T2& operator=(const T2&) = default;
 };
 
 struct T3 {

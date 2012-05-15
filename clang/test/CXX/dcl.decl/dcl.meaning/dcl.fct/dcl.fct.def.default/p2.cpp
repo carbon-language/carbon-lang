@@ -14,11 +14,11 @@ namespace move {
   };
 
   struct AssignmentRet1 {
-    AssignmentRet1&& operator=(AssignmentRet1&&) = default; // expected-error {{an explicitly-defaulted move assignment operator must return an unqualified lvalue reference to its class type}}
+    AssignmentRet1&& operator=(AssignmentRet1&&) = default; // expected-error {{explicitly-defaulted move assignment operator must return 'move::AssignmentRet1 &'}}
   };
 
   struct AssignmentRet2 {
-    const AssignmentRet2& operator=(AssignmentRet2&&) = default; // expected-error {{an explicitly-defaulted move assignment operator must return an unqualified lvalue reference to its class type}}
+    const AssignmentRet2& operator=(AssignmentRet2&&) = default; // expected-error {{explicitly-defaulted move assignment operator must return 'move::AssignmentRet2 &'}}
   };
 
   struct ConstAssignment {
@@ -38,22 +38,35 @@ namespace copy {
   };
 
   struct NonConst {
-    NonConst(NonConst&) = default;
-    NonConst& operator=(NonConst&) = default;
+    NonConst(NonConst&) = default; // expected-error {{must be defaulted outside the class}}
+    NonConst& operator=(NonConst&) = default; // expected-error {{must be defaulted outside the class}}
+  };
+
+  struct NonConst2 {
+    NonConst2(NonConst2&);
+    NonConst2& operator=(NonConst2&);
+  };
+  NonConst2::NonConst2(NonConst2&) = default;
+  NonConst2 &NonConst2::operator=(NonConst2&) = default;
+
+  struct NonConst3 {
+    NonConst3(NonConst3&) = default;
+    NonConst3& operator=(NonConst3&) = default;
+    NonConst nc;
   };
 
   struct BadConst {
-    NonConst nc; // makes implicit copy non-const
     BadConst(const BadConst&) = default; // expected-error {{is const, but}}
     BadConst& operator=(const BadConst&) = default; // expected-error {{is const, but}}
+    NonConst nc; // makes implicit copy non-const
   };
 
   struct AssignmentRet1 {
-    AssignmentRet1&& operator=(const AssignmentRet1&) = default; // expected-error {{an explicitly-defaulted copy assignment operator must return an unqualified lvalue reference to its class type}}
+    AssignmentRet1&& operator=(const AssignmentRet1&) = default; // expected-error {{explicitly-defaulted copy assignment operator must return 'copy::AssignmentRet1 &'}}
   };
 
   struct AssignmentRet2 {
-    const AssignmentRet2& operator=(const AssignmentRet2&) = default; // expected-error {{an explicitly-defaulted copy assignment operator must return an unqualified lvalue reference to its class type}}
+    const AssignmentRet2& operator=(const AssignmentRet2&) = default; // expected-error {{explicitly-defaulted copy assignment operator must return 'copy::AssignmentRet2 &'}}
   };
 
   struct ConstAssignment {

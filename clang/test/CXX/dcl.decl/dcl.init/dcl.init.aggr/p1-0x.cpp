@@ -72,7 +72,7 @@ struct DefaultedAggr {
   DefaultedAggr(const DefaultedAggr &) = default;
   DefaultedAggr(DefaultedAggr &&) = default;
   DefaultedAggr &operator=(const DefaultedAggr &) = default;
-  DefaultedAggr &operator=(DefaultedAggr &) = default;
+  DefaultedAggr &operator=(DefaultedAggr &&) = default;
   ~DefaultedAggr() = default;
 };
 DefaultedAggr da = { 42 } ;

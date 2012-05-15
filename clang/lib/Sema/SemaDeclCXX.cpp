@@ -3801,550 +3801,204 @@ void Sema::CheckCompletedCXXClass(CXXRecordDecl *Record) {
 void Sema::CheckExplicitlyDefaultedMethods(CXXRecordDecl *Record) {
   for (CXXRecordDecl::method_iterator MI = Record->method_begin(),
                                       ME = Record->method_end();
-       MI != ME; ++MI) {
-    if (!MI->isInvalidDecl() && MI->isExplicitlyDefaulted()) {
-      switch (getSpecialMember(&*MI)) {
-      case CXXDefaultConstructor:
-        CheckExplicitlyDefaultedDefaultConstructor(
-                                                cast<CXXConstructorDecl>(&*MI));
-        break;
-
-      case CXXDestructor:
-        CheckExplicitlyDefaultedDestructor(cast<CXXDestructorDecl>(&*MI));
-        break;
-
-      case CXXCopyConstructor:
-        CheckExplicitlyDefaultedCopyConstructor(cast<CXXConstructorDecl>(&*MI));
-        break;
-
-      case CXXCopyAssignment:
-        CheckExplicitlyDefaultedCopyAssignment(&*MI);
-        break;
-
-      case CXXMoveConstructor:
-        CheckExplicitlyDefaultedMoveConstructor(cast<CXXConstructorDecl>(&*MI));
-        break;
-
-      case CXXMoveAssignment:
-        CheckExplicitlyDefaultedMoveAssignment(&*MI);
-        break;
-
-      case CXXInvalid:
-        llvm_unreachable("non-special member explicitly defaulted!");
-      }
-    }
-  }
-
+       MI != ME; ++MI)
+    if (!MI->isInvalidDecl() && MI->isExplicitlyDefaulted())
+      CheckExplicitlyDefaultedSpecialMember(&*MI);
 }
 
-void Sema::CheckExplicitlyDefaultedDefaultConstructor(CXXConstructorDecl *CD) {
-  assert(CD->isExplicitlyDefaulted() && CD->isDefaultConstructor());
-  
-  // Whether this was the first-declared instance of the constructor.
-  // This affects whether we implicitly add an exception spec (and, eventually,
-  // constexpr). It is also ill-formed to explicitly default a constructor such
-  // that it would be deleted. (C++0x [decl.fct.def.default])
-  bool First = CD == CD->getCanonicalDecl();
+void Sema::CheckExplicitlyDefaultedSpecialMember(CXXMethodDecl *MD) {
+  CXXRecordDecl *RD = MD->getParent();
+  CXXSpecialMember CSM = getSpecialMember(MD);
 
-  bool HadError = false;
-  if (CD->getNumParams() != 0) {
-    Diag(CD->getLocation(), diag::err_defaulted_default_ctor_params)
-      << CD->getSourceRange();
-    HadError = true;
-  }
-
-  ImplicitExceptionSpecification Spec
-    = ComputeDefaultedDefaultCtorExceptionSpec(CD->getParent());
-  FunctionProtoType::ExtProtoInfo EPI = Spec.getEPI();
-  if (EPI.ExceptionSpecType == EST_Delayed) {
-    // Exception specification depends on some deferred part of the class. We'll
-    // try again when the class's definition has been fully processed.
-    return;
-  }
-  const FunctionProtoType *CtorType = CD->getType()->getAs<FunctionProtoType>(),
-                          *ExceptionType = Context.getFunctionType(
-                         Context.VoidTy, 0, 0, EPI)->getAs<FunctionProtoType>();
-
-  // C++11 [dcl.fct.def.default]p2:
-  //   An explicitly-defaulted function may be declared constexpr only if it
-  //   would have been implicitly declared as constexpr,
-  // Do not apply this rule to templates, since core issue 1358 makes such
-  // functions always instantiate to constexpr functions.
-  if (CD->isConstexpr() &&
-      CD->getTemplatedKind() == FunctionDecl::TK_NonTemplate) {
-    if (!CD->getParent()->defaultedDefaultConstructorIsConstexpr()) {
-      Diag(CD->getLocStart(), diag::err_incorrect_defaulted_constexpr)
-        << CXXDefaultConstructor;
-      HadError = true;
-    }
-  }
-  //   and may have an explicit exception-specification only if it is compatible
-  //   with the exception-specification on the implicit declaration.
-  if (CtorType->hasExceptionSpec()) {
-    if (CheckEquivalentExceptionSpec(
-          PDiag(diag::err_incorrect_defaulted_exception_spec)
-            << CXXDefaultConstructor,
-          PDiag(),
-          ExceptionType, SourceLocation(),
-          CtorType, CD->getLocation())) {
-      HadError = true;
-    }
-  }
-
-  //   If a function is explicitly defaulted on its first declaration,
-  if (First) {
-    //  -- it is implicitly considered to be constexpr if the implicit
-    //     definition would be,
-    CD->setConstexpr(CD->getParent()->defaultedDefaultConstructorIsConstexpr());
-
-    //  -- it is implicitly considered to have the same
-    //     exception-specification as if it had been implicitly declared
-    //
-    // FIXME: a compatible, but different, explicit exception specification
-    // will be silently overridden. We should issue a warning if this happens.
-    EPI.ExtInfo = CtorType->getExtInfo();
-
-    // Such a function is also trivial if the implicitly-declared function
-    // would have been.
-    CD->setTrivial(CD->getParent()->hasTrivialDefaultConstructor());
-  }
-
-  if (HadError) {
-    CD->setInvalidDecl();
-    return;
-  }
-
-  if (ShouldDeleteSpecialMember(CD, CXXDefaultConstructor)) {
-    if (First) {
-      CD->setDeletedAsWritten();
-    } else {
-      Diag(CD->getLocation(), diag::err_out_of_line_default_deletes)
-        << CXXDefaultConstructor;
-      CD->setInvalidDecl();
-    }
-  }
-}
-
-void Sema::CheckExplicitlyDefaultedCopyConstructor(CXXConstructorDecl *CD) {
-  assert(CD->isExplicitlyDefaulted() && CD->isCopyConstructor());
+  assert(MD->isExplicitlyDefaulted() && CSM != CXXInvalid &&
+         "not an explicitly-defaulted special member");
 
   // Whether this was the first-declared instance of the constructor.
-  bool First = CD == CD->getCanonicalDecl();
-
-  bool HadError = false;
-  if (CD->getNumParams() != 1) {
-    Diag(CD->getLocation(), diag::err_defaulted_copy_ctor_params)
-      << CD->getSourceRange();
-    HadError = true;
-  }
-
-  ImplicitExceptionSpecification Spec(*this);
-  bool Const;
-  llvm::tie(Spec, Const) =
-    ComputeDefaultedCopyCtorExceptionSpecAndConst(CD->getParent());
-  
-  FunctionProtoType::ExtProtoInfo EPI = Spec.getEPI();
-  const FunctionProtoType *CtorType = CD->getType()->getAs<FunctionProtoType>(),
-                          *ExceptionType = Context.getFunctionType(
-                         Context.VoidTy, 0, 0, EPI)->getAs<FunctionProtoType>();
-
-  // Check for parameter type matching.
-  // This is a copy ctor so we know it's a cv-qualified reference to T.
-  QualType ArgType = CtorType->getArgType(0);
-  if (ArgType->getPointeeType().isVolatileQualified()) {
-    Diag(CD->getLocation(), diag::err_defaulted_copy_ctor_volatile_param);
-    HadError = true;
-  }
-  if (ArgType->getPointeeType().isConstQualified() && !Const) {
-    Diag(CD->getLocation(), diag::err_defaulted_copy_ctor_const_param);
-    HadError = true;
-  }
-
-  // C++11 [dcl.fct.def.default]p2:
-  //   An explicitly-defaulted function may be declared constexpr only if it
-  //   would have been implicitly declared as constexpr,
-  // Do not apply this rule to templates, since core issue 1358 makes such
-  // functions always instantiate to constexpr functions.
-  if (CD->isConstexpr() &&
-      CD->getTemplatedKind() == FunctionDecl::TK_NonTemplate) {
-    if (!CD->getParent()->defaultedCopyConstructorIsConstexpr()) {
-      Diag(CD->getLocStart(), diag::err_incorrect_defaulted_constexpr)
-        << CXXCopyConstructor;
-      HadError = true;
-    }
-  }
-  //   and may have an explicit exception-specification only if it is compatible
-  //   with the exception-specification on the implicit declaration.
-  if (CtorType->hasExceptionSpec()) {
-    if (CheckEquivalentExceptionSpec(
-          PDiag(diag::err_incorrect_defaulted_exception_spec)
-            << CXXCopyConstructor,
-          PDiag(),
-          ExceptionType, SourceLocation(),
-          CtorType, CD->getLocation())) {
-      HadError = true;
-    }
-  }
-
-  //   If a function is explicitly defaulted on its first declaration,
-  if (First) {
-    //  -- it is implicitly considered to be constexpr if the implicit
-    //     definition would be,
-    CD->setConstexpr(CD->getParent()->defaultedCopyConstructorIsConstexpr());
-
-    //  -- it is implicitly considered to have the same
-    //     exception-specification as if it had been implicitly declared, and
-    //
-    // FIXME: a compatible, but different, explicit exception specification
-    // will be silently overridden. We should issue a warning if this happens.
-    EPI.ExtInfo = CtorType->getExtInfo();
-
-    //  -- [...] it shall have the same parameter type as if it had been
-    //     implicitly declared.
-    CD->setType(Context.getFunctionType(Context.VoidTy, &ArgType, 1, EPI));
-
-    // Such a function is also trivial if the implicitly-declared function
-    // would have been.
-    CD->setTrivial(CD->getParent()->hasTrivialCopyConstructor());
-  }
-
-  if (HadError) {
-    CD->setInvalidDecl();
-    return;
-  }
-
-  if (ShouldDeleteSpecialMember(CD, CXXCopyConstructor)) {
-    if (First) {
-      CD->setDeletedAsWritten();
-    } else {
-      Diag(CD->getLocation(), diag::err_out_of_line_default_deletes)
-        << CXXCopyConstructor;
-      CD->setInvalidDecl();
-    }
-  }
-}
-
-void Sema::CheckExplicitlyDefaultedCopyAssignment(CXXMethodDecl *MD) {
-  assert(MD->isExplicitlyDefaulted());
-
-  // Whether this was the first-declared instance of the operator
+  // This affects whether we implicitly add an exception spec and constexpr.
   bool First = MD == MD->getCanonicalDecl();
 
   bool HadError = false;
-  if (MD->getNumParams() != 1) {
-    Diag(MD->getLocation(), diag::err_defaulted_copy_assign_params)
-      << MD->getSourceRange();
+
+  // C++11 [dcl.fct.def.default]p1:
+  //   A function that is explicitly defaulted shall
+  //     -- be a special member function (checked elsewhere),
+  //     -- have the same type (except for ref-qualifiers, and except that a
+  //        copy operation can take a non-const reference) as an implicit
+  //        declaration, and
+  //     -- not have default arguments.
+  unsigned ExpectedParams = 1;
+  if (CSM == CXXDefaultConstructor || CSM == CXXDestructor)
+    ExpectedParams = 0;
+  if (MD->getNumParams() != ExpectedParams) {
+    // This also checks for default arguments: a copy or move constructor with a
+    // default argument is classified as a default constructor, and assignment
+    // operations and destructors can't have default arguments.
+    Diag(MD->getLocation(), diag::err_defaulted_special_member_params)
+      << CSM << MD->getSourceRange();
     HadError = true;
   }
 
-  QualType ReturnType =
-    MD->getType()->getAs<FunctionType>()->getResultType();
-  if (!ReturnType->isLValueReferenceType() ||
-      !Context.hasSameType(
-        Context.getCanonicalType(ReturnType->getPointeeType()),
-        Context.getCanonicalType(Context.getTypeDeclType(MD->getParent())))) {
-    Diag(MD->getLocation(), diag::err_defaulted_copy_assign_return_type);
-    HadError = true;
-  }
+  const FunctionProtoType *Type = MD->getType()->getAs<FunctionProtoType>();
 
+  // Compute implicit exception specification, argument constness, constexpr
+  // and triviality.
   ImplicitExceptionSpecification Spec(*this);
-  bool Const;
-  llvm::tie(Spec, Const) =
-    ComputeDefaultedCopyCtorExceptionSpecAndConst(MD->getParent());
-  
-  FunctionProtoType::ExtProtoInfo EPI = Spec.getEPI();
-  const FunctionProtoType *OperType = MD->getType()->getAs<FunctionProtoType>(),
-                          *ExceptionType = Context.getFunctionType(
-                         Context.VoidTy, 0, 0, EPI)->getAs<FunctionProtoType>();
+  bool Const = false;
+  bool Constexpr = false;
+  bool Trivial;
+  switch (CSM) {
+  case CXXDefaultConstructor:
+    Spec = ComputeDefaultedDefaultCtorExceptionSpec(RD);
+    if (Spec.isDelayed())
+      // Exception specification depends on some deferred part of the class.
+      // We'll try again when the class's definition has been fully processed.
+      return;
+    Constexpr = RD->defaultedDefaultConstructorIsConstexpr();
+    Trivial = RD->hasTrivialDefaultConstructor();
+    break;
+  case CXXCopyConstructor:
+    llvm::tie(Spec, Const) =
+      ComputeDefaultedCopyCtorExceptionSpecAndConst(RD);
+    Constexpr = RD->defaultedCopyConstructorIsConstexpr();
+    Trivial = RD->hasTrivialCopyConstructor();
+    break;
+  case CXXCopyAssignment:
+    llvm::tie(Spec, Const) =
+      ComputeDefaultedCopyAssignmentExceptionSpecAndConst(RD);
+    Trivial = RD->hasTrivialCopyAssignment();
+    break;
+  case CXXMoveConstructor:
+    Spec = ComputeDefaultedMoveCtorExceptionSpec(RD);
+    Constexpr = RD->defaultedMoveConstructorIsConstexpr();
+    Trivial = RD->hasTrivialMoveConstructor();
+    break;
+  case CXXMoveAssignment:
+    Spec = ComputeDefaultedMoveAssignmentExceptionSpec(RD);
+    Trivial = RD->hasTrivialMoveAssignment();
+    break;
+  case CXXDestructor:
+    Spec = ComputeDefaultedDtorExceptionSpec(RD);
+    Trivial = RD->hasTrivialDestructor();
+    break;
+  case CXXInvalid:
+    llvm_unreachable("non-special member explicitly defaulted!");
+  }
 
-  QualType ArgType = OperType->getArgType(0);
-  if (!ArgType->isLValueReferenceType()) {
+  QualType ReturnType = Context.VoidTy;
+  if (CSM == CXXCopyAssignment || CSM == CXXMoveAssignment) {
+    // Check for return type matching.
+    ReturnType = Type->getResultType();
+    QualType ExpectedReturnType =
+        Context.getLValueReferenceType(Context.getTypeDeclType(RD));
+    if (!Context.hasSameType(ReturnType, ExpectedReturnType)) {
+      Diag(MD->getLocation(), diag::err_defaulted_special_member_return_type)
+        << (CSM == CXXMoveAssignment) << ExpectedReturnType;
+      HadError = true;
+    }
+
+    // A defaulted special member cannot have cv-qualifiers.
+    if (Type->getTypeQuals()) {
+      Diag(MD->getLocation(), diag::err_defaulted_special_member_quals)
+        << (CSM == CXXMoveAssignment);
+      HadError = true;
+    }
+  }
+
+  // Check for parameter type matching.
+  QualType ArgType = ExpectedParams ? Type->getArgType(0) : QualType();
+  if (ExpectedParams && ArgType->isReferenceType()) {
+    // Argument must be reference to possibly-const T.
+    QualType ReferentType = ArgType->getPointeeType();
+
+    if (ReferentType.isVolatileQualified()) {
+      Diag(MD->getLocation(),
+           diag::err_defaulted_special_member_volatile_param) << CSM;
+      HadError = true;
+    }
+
+    if (ReferentType.isConstQualified() && !Const) {
+      if (CSM == CXXCopyConstructor || CSM == CXXCopyAssignment) {
+        Diag(MD->getLocation(),
+             diag::err_defaulted_special_member_copy_const_param)
+          << (CSM == CXXCopyAssignment);
+        // FIXME: Explain why this special member can't be const.
+      } else {
+        Diag(MD->getLocation(),
+             diag::err_defaulted_special_member_move_const_param)
+          << (CSM == CXXMoveAssignment);
+      }
+      HadError = true;
+    }
+
+    // If a function is explicitly defaulted on its first declaration, it shall
+    // have the same parameter type as if it had been implicitly declared.
+    // (Presumably this is to prevent it from being trivial?)
+    if (!ReferentType.isConstQualified() && Const && First)
+      Diag(MD->getLocation(),
+           diag::err_defaulted_special_member_copy_non_const_param)
+        << (CSM == CXXCopyAssignment);
+  } else if (ExpectedParams) {
+    // A copy assignment operator can take its argument by value, but a
+    // defaulted one cannot.
+    assert(CSM == CXXCopyAssignment && "unexpected non-ref argument");
     Diag(MD->getLocation(), diag::err_defaulted_copy_assign_not_ref);
     HadError = true;
-  } else {
-    if (ArgType->getPointeeType().isVolatileQualified()) {
-      Diag(MD->getLocation(), diag::err_defaulted_copy_assign_volatile_param);
-      HadError = true;
-    }
-    if (ArgType->getPointeeType().isConstQualified() && !Const) {
-      Diag(MD->getLocation(), diag::err_defaulted_copy_assign_const_param);
-      HadError = true;
-    }
   }
 
-  if (OperType->getTypeQuals()) {
-    Diag(MD->getLocation(), diag::err_defaulted_copy_assign_quals);
-    HadError = true;
-  }
-
-  if (OperType->hasExceptionSpec()) {
-    if (CheckEquivalentExceptionSpec(
-          PDiag(diag::err_incorrect_defaulted_exception_spec)
-            << CXXCopyAssignment,
-          PDiag(),
-          ExceptionType, SourceLocation(),
-          OperType, MD->getLocation())) {
-      HadError = true;
-    }
-  }
-  if (First) {
-    // We set the declaration to have the computed exception spec here.
-    // We duplicate the one parameter type.
-    EPI.RefQualifier = OperType->getRefQualifier();
-    EPI.ExtInfo = OperType->getExtInfo();
-    MD->setType(Context.getFunctionType(ReturnType, &ArgType, 1, EPI));
-
-    // Such a function is also trivial if the implicitly-declared function
-    // would have been.
-    MD->setTrivial(MD->getParent()->hasTrivialCopyAssignment());
-  }
-
-  if (HadError) {
-    MD->setInvalidDecl();
-    return;
-  }
-
-  if (ShouldDeleteSpecialMember(MD, CXXCopyAssignment)) {
-    if (First) {
-      MD->setDeletedAsWritten();
-    } else {
-      Diag(MD->getLocation(), diag::err_out_of_line_default_deletes)
-        << CXXCopyAssignment;
-      MD->setInvalidDecl();
-    }
-  }
-}
-
-void Sema::CheckExplicitlyDefaultedMoveConstructor(CXXConstructorDecl *CD) {
-  assert(CD->isExplicitlyDefaulted() && CD->isMoveConstructor());
-
-  // Whether this was the first-declared instance of the constructor.
-  bool First = CD == CD->getCanonicalDecl();
-
-  bool HadError = false;
-  if (CD->getNumParams() != 1) {
-    Diag(CD->getLocation(), diag::err_defaulted_move_ctor_params)
-      << CD->getSourceRange();
-    HadError = true;
-  }
-
-  ImplicitExceptionSpecification Spec(
-      ComputeDefaultedMoveCtorExceptionSpec(CD->getParent()));
-
-  FunctionProtoType::ExtProtoInfo EPI = Spec.getEPI();
-  const FunctionProtoType *CtorType = CD->getType()->getAs<FunctionProtoType>(),
-                          *ExceptionType = Context.getFunctionType(
-                         Context.VoidTy, 0, 0, EPI)->getAs<FunctionProtoType>();
-
-  // Check for parameter type matching.
-  // This is a move ctor so we know it's a cv-qualified rvalue reference to T.
-  QualType ArgType = CtorType->getArgType(0);
-  if (ArgType->getPointeeType().isVolatileQualified()) {
-    Diag(CD->getLocation(), diag::err_defaulted_move_ctor_volatile_param);
-    HadError = true;
-  }
-  if (ArgType->getPointeeType().isConstQualified()) {
-    Diag(CD->getLocation(), diag::err_defaulted_move_ctor_const_param);
-    HadError = true;
-  }
+  // Rebuild the type with the implicit exception specification added.
+  FunctionProtoType::ExtProtoInfo EPI = Type->getExtProtoInfo();
+  Spec.getEPI(EPI);
+  const FunctionProtoType *ImplicitType = cast<FunctionProtoType>(
+    Context.getFunctionType(ReturnType, &ArgType, ExpectedParams, EPI));
 
   // C++11 [dcl.fct.def.default]p2:
   //   An explicitly-defaulted function may be declared constexpr only if it
   //   would have been implicitly declared as constexpr,
-  // Do not apply this rule to templates, since core issue 1358 makes such
-  // functions always instantiate to constexpr functions.
-  if (CD->isConstexpr() &&
-      CD->getTemplatedKind() == FunctionDecl::TK_NonTemplate) {
-    if (!CD->getParent()->defaultedMoveConstructorIsConstexpr()) {
-      Diag(CD->getLocStart(), diag::err_incorrect_defaulted_constexpr)
-        << CXXMoveConstructor;
-      HadError = true;
-    }
+  // Do not apply this rule to members of class templates, since core issue 1358
+  // makes such functions always instantiate to constexpr functions. For
+  // non-constructors, this is checked elsewhere.
+  if (isa<CXXConstructorDecl>(MD) && MD->isConstexpr() && !Constexpr &&
+      MD->getTemplatedKind() == FunctionDecl::TK_NonTemplate) {
+    Diag(MD->getLocStart(), diag::err_incorrect_defaulted_constexpr) << CSM;
+    HadError = true;
   }
   //   and may have an explicit exception-specification only if it is compatible
   //   with the exception-specification on the implicit declaration.
-  if (CtorType->hasExceptionSpec()) {
-    if (CheckEquivalentExceptionSpec(
-          PDiag(diag::err_incorrect_defaulted_exception_spec)
-            << CXXMoveConstructor,
-          PDiag(),
-          ExceptionType, SourceLocation(),
-          CtorType, CD->getLocation())) {
-      HadError = true;
-    }
-  }
+  if (Type->hasExceptionSpec() &&
+      CheckEquivalentExceptionSpec(
+        PDiag(diag::err_incorrect_defaulted_exception_spec) << CSM,
+        PDiag(), ImplicitType, SourceLocation(), Type, MD->getLocation()))
+    HadError = true;
 
   //   If a function is explicitly defaulted on its first declaration,
   if (First) {
     //  -- it is implicitly considered to be constexpr if the implicit
     //     definition would be,
-    CD->setConstexpr(CD->getParent()->defaultedMoveConstructorIsConstexpr());
+    MD->setConstexpr(Constexpr);
 
-    //  -- it is implicitly considered to have the same
-    //     exception-specification as if it had been implicitly declared, and
-    //
-    // FIXME: a compatible, but different, explicit exception specification
-    // will be silently overridden. We should issue a warning if this happens.
-    EPI.ExtInfo = CtorType->getExtInfo();
-
-    //  -- [...] it shall have the same parameter type as if it had been
-    //     implicitly declared.
-    CD->setType(Context.getFunctionType(Context.VoidTy, &ArgType, 1, EPI));
+    //  -- it is implicitly considered to have the same exception-specification
+    //     as if it had been implicitly declared,
+    MD->setType(QualType(ImplicitType, 0));
 
     // Such a function is also trivial if the implicitly-declared function
     // would have been.
-    CD->setTrivial(CD->getParent()->hasTrivialMoveConstructor());
+    MD->setTrivial(Trivial);
   }
 
-  if (HadError) {
-    CD->setInvalidDecl();
-    return;
-  }
-
-  if (ShouldDeleteSpecialMember(CD, CXXMoveConstructor)) {
-    if (First) {
-      CD->setDeletedAsWritten();
-    } else {
-      Diag(CD->getLocation(), diag::err_out_of_line_default_deletes)
-        << CXXMoveConstructor;
-      CD->setInvalidDecl();
-    }
-  }
-}
-
-void Sema::CheckExplicitlyDefaultedMoveAssignment(CXXMethodDecl *MD) {
-  assert(MD->isExplicitlyDefaulted());
-
-  // Whether this was the first-declared instance of the operator
-  bool First = MD == MD->getCanonicalDecl();
-
-  bool HadError = false;
-  if (MD->getNumParams() != 1) {
-    Diag(MD->getLocation(), diag::err_defaulted_move_assign_params)
-      << MD->getSourceRange();
-    HadError = true;
-  }
-
-  QualType ReturnType =
-    MD->getType()->getAs<FunctionType>()->getResultType();
-  if (!ReturnType->isLValueReferenceType() ||
-      !Context.hasSameType(
-        Context.getCanonicalType(ReturnType->getPointeeType()),
-        Context.getCanonicalType(Context.getTypeDeclType(MD->getParent())))) {
-    Diag(MD->getLocation(), diag::err_defaulted_move_assign_return_type);
-    HadError = true;
-  }
-
-  ImplicitExceptionSpecification Spec(
-      ComputeDefaultedMoveCtorExceptionSpec(MD->getParent()));
-  
-  FunctionProtoType::ExtProtoInfo EPI = Spec.getEPI();
-  const FunctionProtoType *OperType = MD->getType()->getAs<FunctionProtoType>(),
-                          *ExceptionType = Context.getFunctionType(
-                         Context.VoidTy, 0, 0, EPI)->getAs<FunctionProtoType>();
-
-  QualType ArgType = OperType->getArgType(0);
-  if (!ArgType->isRValueReferenceType()) {
-    Diag(MD->getLocation(), diag::err_defaulted_move_assign_not_ref);
-    HadError = true;
-  } else {
-    if (ArgType->getPointeeType().isVolatileQualified()) {
-      Diag(MD->getLocation(), diag::err_defaulted_move_assign_volatile_param);
-      HadError = true;
-    }
-    if (ArgType->getPointeeType().isConstQualified()) {
-      Diag(MD->getLocation(), diag::err_defaulted_move_assign_const_param);
-      HadError = true;
-    }
-  }
-
-  if (OperType->getTypeQuals()) {
-    Diag(MD->getLocation(), diag::err_defaulted_move_assign_quals);
-    HadError = true;
-  }
-
-  if (OperType->hasExceptionSpec()) {
-    if (CheckEquivalentExceptionSpec(
-          PDiag(diag::err_incorrect_defaulted_exception_spec)
-            << CXXMoveAssignment,
-          PDiag(),
-          ExceptionType, SourceLocation(),
-          OperType, MD->getLocation())) {
-      HadError = true;
-    }
-  }
-  if (First) {
-    // We set the declaration to have the computed exception spec here.
-    // We duplicate the one parameter type.
-    EPI.RefQualifier = OperType->getRefQualifier();
-    EPI.ExtInfo = OperType->getExtInfo();
-    MD->setType(Context.getFunctionType(ReturnType, &ArgType, 1, EPI));
-
-    // Such a function is also trivial if the implicitly-declared function
-    // would have been.
-    MD->setTrivial(MD->getParent()->hasTrivialMoveAssignment());
-  }
-
-  if (HadError) {
-    MD->setInvalidDecl();
-    return;
-  }
-
-  if (ShouldDeleteSpecialMember(MD, CXXMoveAssignment)) {
+  if (ShouldDeleteSpecialMember(MD, CSM)) {
     if (First) {
       MD->setDeletedAsWritten();
     } else {
-      Diag(MD->getLocation(), diag::err_out_of_line_default_deletes)
-        << CXXMoveAssignment;
-      MD->setInvalidDecl();
+      // C++11 [dcl.fct.def.default]p4:
+      //   [For a] user-provided explicitly-defaulted function [...] if such a
+      //   function is implicitly defined as deleted, the program is ill-formed.
+      Diag(MD->getLocation(), diag::err_out_of_line_default_deletes) << CSM;
+      HadError = true;
     }
   }
-}
 
-void Sema::CheckExplicitlyDefaultedDestructor(CXXDestructorDecl *DD) {
-  assert(DD->isExplicitlyDefaulted());
-
-  // Whether this was the first-declared instance of the destructor.
-  bool First = DD == DD->getCanonicalDecl();
-
-  ImplicitExceptionSpecification Spec
-    = ComputeDefaultedDtorExceptionSpec(DD->getParent());
-  FunctionProtoType::ExtProtoInfo EPI = Spec.getEPI();
-  const FunctionProtoType *DtorType = DD->getType()->getAs<FunctionProtoType>(),
-                          *ExceptionType = Context.getFunctionType(
-                         Context.VoidTy, 0, 0, EPI)->getAs<FunctionProtoType>();
-
-  if (DtorType->hasExceptionSpec()) {
-    if (CheckEquivalentExceptionSpec(
-          PDiag(diag::err_incorrect_defaulted_exception_spec)
-            << CXXDestructor,
-          PDiag(),
-          ExceptionType, SourceLocation(),
-          DtorType, DD->getLocation())) {
-      DD->setInvalidDecl();
-      return;
-    }
-  }
-  if (First) {
-    // We set the declaration to have the computed exception spec here.
-    // There are no parameters.
-    EPI.ExtInfo = DtorType->getExtInfo();
-    DD->setType(Context.getFunctionType(Context.VoidTy, 0, 0, EPI));
-
-    // Such a function is also trivial if the implicitly-declared function
-    // would have been.
-    DD->setTrivial(DD->getParent()->hasTrivialDestructor());
-  }
-
-  if (ShouldDeleteSpecialMember(DD, CXXDestructor)) {
-    if (First) {
-      DD->setDeletedAsWritten();
-    } else {
-      Diag(DD->getLocation(), diag::err_out_of_line_default_deletes)
-        << CXXDestructor;
-      DD->setInvalidDecl();
-    }
-  }
+  if (HadError)
+    MD->setInvalidDecl();
 }
 
 namespace {
@@ -7021,7 +6675,7 @@ void Sema::ActOnFinishDelayedMemberInitializers(Decl *D) {
   // specification is deferred until now.
   if (!CtorDecl->isInvalidDecl() && CtorDecl->isExplicitlyDefaulted() &&
       !ClassDecl->isDependentType())
-    CheckExplicitlyDefaultedDefaultConstructor(CtorDecl);
+    CheckExplicitlyDefaultedSpecialMember(CtorDecl);
 }
 
 void Sema::DeclareInheritedConstructors(CXXRecordDecl *ClassDecl) {
@@ -7600,7 +7254,7 @@ std::pair<Sema::ImplicitExceptionSpecification, bool>
 Sema::ComputeDefaultedCopyAssignmentExceptionSpecAndConst(
                                                    CXXRecordDecl *ClassDecl) {
   if (ClassDecl->isInvalidDecl())
-    return std::make_pair(ImplicitExceptionSpecification(*this), false);
+    return std::make_pair(ImplicitExceptionSpecification(*this), true);
 
   // C++ [class.copy]p10:
   //   If the class definition does not explicitly declare a copy
@@ -8635,7 +8289,7 @@ void Sema::DefineImplicitMoveAssignment(SourceLocation CurrentLocation,
 std::pair<Sema::ImplicitExceptionSpecification, bool>
 Sema::ComputeDefaultedCopyCtorExceptionSpecAndConst(CXXRecordDecl *ClassDecl) {
   if (ClassDecl->isInvalidDecl())
-    return std::make_pair(ImplicitExceptionSpecification(*this), false);
+    return std::make_pair(ImplicitExceptionSpecification(*this), true);
 
   // C++ [class.copy]p5:
   //   The implicitly-declared copy constructor for a class X will
@@ -10546,7 +10200,7 @@ void Sema::SetDeclDefaulted(Decl *Dcl, SourceLocation DefaultLoc) {
     switch (Member) {
     case CXXDefaultConstructor: {
       CXXConstructorDecl *CD = cast<CXXConstructorDecl>(MD);
-      CheckExplicitlyDefaultedDefaultConstructor(CD);
+      CheckExplicitlyDefaultedSpecialMember(CD);
       if (!CD->isInvalidDecl())
         DefineImplicitDefaultConstructor(DefaultLoc, CD);
       break;
@@ -10554,14 +10208,14 @@ void Sema::SetDeclDefaulted(Decl *Dcl, SourceLocation DefaultLoc) {
 
     case CXXCopyConstructor: {
       CXXConstructorDecl *CD = cast<CXXConstructorDecl>(MD);
-      CheckExplicitlyDefaultedCopyConstructor(CD);
+      CheckExplicitlyDefaultedSpecialMember(CD);
       if (!CD->isInvalidDecl())
         DefineImplicitCopyConstructor(DefaultLoc, CD);
       break;
     }
 
     case CXXCopyAssignment: {
-      CheckExplicitlyDefaultedCopyAssignment(MD);
+      CheckExplicitlyDefaultedSpecialMember(MD);
       if (!MD->isInvalidDecl())
         DefineImplicitCopyAssignment(DefaultLoc, MD);
       break;
@@ -10569,7 +10223,7 @@ void Sema::SetDeclDefaulted(Decl *Dcl, SourceLocation DefaultLoc) {
 
     case CXXDestructor: {
       CXXDestructorDecl *DD = cast<CXXDestructorDecl>(MD);
-      CheckExplicitlyDefaultedDestructor(DD);
+      CheckExplicitlyDefaultedSpecialMember(DD);
       if (!DD->isInvalidDecl())
         DefineImplicitDestructor(DefaultLoc, DD);
       break;
@@ -10577,14 +10231,14 @@ void Sema::SetDeclDefaulted(Decl *Dcl, SourceLocation DefaultLoc) {
 
     case CXXMoveConstructor: {
       CXXConstructorDecl *CD = cast<CXXConstructorDecl>(MD);
-      CheckExplicitlyDefaultedMoveConstructor(CD);
+      CheckExplicitlyDefaultedSpecialMember(CD);
       if (!CD->isInvalidDecl())
         DefineImplicitMoveConstructor(DefaultLoc, CD);
       break;
     }
 
     case CXXMoveAssignment: {
-      CheckExplicitlyDefaultedMoveAssignment(MD);
+      CheckExplicitlyDefaultedSpecialMember(MD);
       if (!MD->isInvalidDecl())
         DefineImplicitMoveAssignment(DefaultLoc, MD);
       break;

@@ -3306,11 +3306,21 @@ public:
       ComputedEST = EST_Delayed;
     }
 
-    FunctionProtoType::ExtProtoInfo getEPI() const {
-      FunctionProtoType::ExtProtoInfo EPI;
+    /// \brief Have we been unable to compute this exception specification?
+    bool isDelayed() {
+      return ComputedEST == EST_Delayed;
+    }
+
+    /// \brief Overwrite an EPI's exception specification with this
+    /// computed exception specification.
+    void getEPI(FunctionProtoType::ExtProtoInfo &EPI) const {
       EPI.ExceptionSpecType = getExceptionSpecType();
       EPI.NumExceptions = size();
       EPI.Exceptions = data();
+    }
+    FunctionProtoType::ExtProtoInfo getEPI() const {
+      FunctionProtoType::ExtProtoInfo EPI;
+      getEPI(EPI);
       return EPI;
     }
   };
@@ -4276,12 +4286,7 @@ public:
   Decl *ActOnConversionDeclarator(CXXConversionDecl *Conversion);
 
   void CheckExplicitlyDefaultedMethods(CXXRecordDecl *Record);
-  void CheckExplicitlyDefaultedDefaultConstructor(CXXConstructorDecl *Ctor);
-  void CheckExplicitlyDefaultedCopyConstructor(CXXConstructorDecl *Ctor);
-  void CheckExplicitlyDefaultedCopyAssignment(CXXMethodDecl *Method);
-  void CheckExplicitlyDefaultedMoveConstructor(CXXConstructorDecl *Ctor);
-  void CheckExplicitlyDefaultedMoveAssignment(CXXMethodDecl *Method);
-  void CheckExplicitlyDefaultedDestructor(CXXDestructorDecl *Dtor);
+  void CheckExplicitlyDefaultedSpecialMember(CXXMethodDecl *MD);
 
   //===--------------------------------------------------------------------===//
   // C++ Derived Classes

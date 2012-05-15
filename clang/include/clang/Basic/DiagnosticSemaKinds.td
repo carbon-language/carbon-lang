@@ -4984,60 +4984,33 @@ def warn_cxx98_compat_explicit_conversion_functions : Warning<
   InGroup<CXX98Compat>, DefaultIgnore;
 
 // C++11 defaulted functions
-def err_defaulted_default_ctor_params : Error<
-  "an explicitly-defaulted default constructor must have no parameters">;
-def err_defaulted_copy_ctor_params : Error<
-  "an explicitly-defaulted copy constructor must have exactly one parameter">;
-def err_defaulted_copy_ctor_volatile_param : Error<
-  "the parameter for an explicitly-defaulted copy constructor may not be "
-  "volatile">;
-def err_defaulted_copy_ctor_const_param : Error<
-  "the parameter for this explicitly-defaulted copy constructor is const, but "
-  "a member or base requires it to be non-const">;
-def err_defaulted_copy_assign_params : Error<
-  "an explicitly-defaulted copy assignment operator must have exactly one "
-  "parameter">;
-def err_defaulted_copy_assign_return_type : Error<
-  "an explicitly-defaulted copy assignment operator must return an unqualified "
-  "lvalue reference to its class type">;
+def err_defaulted_special_member_params : Error<
+  "an explicitly-defaulted %select{|copy |move }0constructor cannot "
+  "have default arguments">;
+def err_defaulted_special_member_return_type : Error<
+  "explicitly-defaulted %select{copy|move}0 assignment operator must "
+  "return %1">;
+def err_defaulted_special_member_quals : Error<
+  "an explicitly-defaulted %select{copy|move}0 assignment operator may not "
+  "have 'const', 'constexpr' or 'volatile' qualifiers">;
+def err_defaulted_special_member_volatile_param : Error<
+  "the parameter for an explicitly-defaulted %select{<<ERROR>>|"
+  "copy constructor|move constructor|copy assignment operator|"
+  "move assignment operator|<<ERROR>>}0 may not be volatile">;
+def err_defaulted_special_member_move_const_param : Error<
+  "the parameter for an explicitly-defaulted move "
+  "%select{constructor|assignment operator}0 may not be const">;
+def err_defaulted_special_member_copy_const_param : Error<
+  "the parameter for this explicitly-defaulted copy "
+  "%select{constructor|assignment operator}0 is const, but a member or base "
+  "requires it to be non-const">;
+def err_defaulted_special_member_copy_non_const_param : Error<
+  "explicitly-defaulted copy %select{constructor|assignment operator}0 with "
+  "a non-const parameter must be defaulted outside the class, unless a base or "
+  "member requires the parameter to be non-const">;
 def err_defaulted_copy_assign_not_ref : Error<
   "the parameter for an explicitly-defaulted copy assignment operator must be an "
   "lvalue reference type">;
-def err_defaulted_copy_assign_volatile_param : Error<
-  "the parameter for an explicitly-defaulted copy assignment operator may not "
-  "be volatile">;
-def err_defaulted_copy_assign_const_param : Error<
-  "the parameter for this explicitly-defaulted copy assignment operator is "
-  "const, but a member or base requires it to be non-const">;
-def err_defaulted_copy_assign_quals : Error<
-  "an explicitly-defaulted copy assignment operator may not have 'const', "
-  "'constexpr' or 'volatile' qualifiers">;
-def err_defaulted_move_ctor_params : Error<
-  "an explicitly-defaulted move constructor must have exactly one parameter">;
-def err_defaulted_move_ctor_volatile_param : Error<
-  "the parameter for an explicitly-defaulted move constructor may not be "
-  "volatile">;
-def err_defaulted_move_ctor_const_param : Error<
-  "the parameter for an explicitly-defaulted move constructor may not be "
-  "const">;
-def err_defaulted_move_assign_params : Error<
-  "an explicitly-defaulted move assignment operator must have exactly one "
-  "parameter">;
-def err_defaulted_move_assign_return_type : Error<
-  "an explicitly-defaulted move assignment operator must return an unqualified "
-  "lvalue reference to its class type">;
-def err_defaulted_move_assign_not_ref : Error<
-  "the parameter for an explicitly-defaulted move assignment operator must be an "
-  "rvalue reference type">;
-def err_defaulted_move_assign_volatile_param : Error<
-  "the parameter for an explicitly-defaulted move assignment operator may not "
-  "be volatile">;
-def err_defaulted_move_assign_const_param : Error<
-  "the parameter for an explicitly-defaulted move assignment operator may not "
-  "be const">;
-def err_defaulted_move_assign_quals : Error<
-  "an explicitly-defaulted move assignment operator may not have 'const', "
-  "'constexpr' or 'volatile' qualifiers">;
 def err_incorrect_defaulted_exception_spec : Error<
   "exception specification of explicitly defaulted %select{default constructor|"
   "copy constructor|move constructor|copy assignment operator|move assignment "

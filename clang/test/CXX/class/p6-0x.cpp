@@ -19,7 +19,7 @@ struct Trivial2 {
   Trivial2(const Trivial2 &) = default;
   Trivial2(Trivial2 &&) = default;
   Trivial2 &operator=(const Trivial2 &) = default;
-  Trivial2 &operator=(Trivial2 &) = default;
+  Trivial2 &operator=(Trivial2 &&) = default;
   ~Trivial2() = default;
 };
 

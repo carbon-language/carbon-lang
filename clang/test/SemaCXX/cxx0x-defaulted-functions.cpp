@@ -6,26 +6,26 @@ struct foo {
 
   foo() = default;
   foo(const foo&) = default;
-  foo(foo&) = default;
+  foo(foo&&) = default;
   foo& operator = (const foo&) = default;
-  foo& operator = (foo&) = default;
+  foo& operator = (foo&&) = default;
   ~foo() = default;
 };
 
 struct bar {
   bar();
   bar(const bar&);
-  bar(bar&);
+  bar(bar&&);
   bar& operator = (const bar&);
-  bar& operator = (bar&);
+  bar& operator = (bar&&);
   ~bar();
 };
 
 bar::bar() = default;
 bar::bar(const bar&) = default;
-bar::bar(bar&) = default;
+bar::bar(bar&&) = default;
 bar& bar::operator = (const bar&) = default;
-bar& bar::operator = (bar&) = default;
+bar& bar::operator = (bar&&) = default;
 bar::~bar() = default;
 
 static_assert(__is_trivial(foo), "foo should be trivial");

@@ -7,11 +7,14 @@ struct non_copiable {
 };
 
 struct non_const_copy {
-  non_const_copy(non_const_copy&) = default; // expected-note {{not viable}}
-  non_const_copy& operator = (non_const_copy&) & = default; // expected-note {{not viable}}
-  non_const_copy& operator = (non_const_copy&) && = default; // expected-note {{not viable}}
+  non_const_copy(non_const_copy&);
+  non_const_copy& operator = (non_const_copy&) &;
+  non_const_copy& operator = (non_const_copy&) &&;
   non_const_copy() = default; // expected-note {{not viable}}
 };
+non_const_copy::non_const_copy(non_const_copy&) = default; // expected-note {{not viable}}
+non_const_copy& non_const_copy::operator = (non_const_copy&) & = default; // expected-note {{not viable}}
+non_const_copy& non_const_copy::operator = (non_const_copy&) && = default; // expected-note {{not viable}}
 
 void fn1 () {
   non_copiable nc;
@@ -32,9 +35,9 @@ struct non_const_derived : non_const_copy {
 };
 
 struct bad_decls {
-  bad_decls(volatile bad_decls&) = default; // expected-error {{may not be volatile}}
-  bad_decls&& operator = (bad_decls) = default; // expected-error 2{{lvalue reference}}
-  bad_decls& operator = (volatile bad_decls&) = default; // expected-error {{may not be volatile}}
+  bad_decls(volatile bad_decls&) = default; // expected-error {{may not be volatile}} expected-error {{must be defaulted outside the class}}
+  bad_decls&& operator = (bad_decls) = default; // expected-error {{lvalue reference}} expected-error {{must return 'bad_decls &'}}
+  bad_decls& operator = (volatile bad_decls&) = default; // expected-error {{may not be volatile}} expected-error {{must be defaulted outside the class}}
   bad_decls& operator = (const bad_decls&) const = default; // expected-error {{may not have 'const', 'constexpr' or 'volatile' qualifiers}}
 };
 
@@ -72,4 +75,3 @@ struct except_spec_d_match : except_spec_a, except_spec_b {
 // (but not normal definitions)
 struct S { S(); };
 S::S() __attribute((pure)) = default;
-
