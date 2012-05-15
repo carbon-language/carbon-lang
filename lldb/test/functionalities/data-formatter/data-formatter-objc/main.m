@@ -285,6 +285,8 @@ int main (int argc, const char * argv[])
 	    NSString* german = @"Über-Ich und aus den Ansprüchen der sozialen Umwelt";
 
 	    void* data_set[3] = {str1,str2,str3};
+	
+		NSString *hebrew = [NSString stringWithString:@"לילה טוב"];
 
 	    NSArray* newArray = [[NSMutableArray alloc] init];
 	    [newArray addObject:str1];

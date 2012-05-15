@@ -136,6 +136,8 @@ class ObjCDataFormatterTestCase(TestBase):
         self.expect('frame variable french', substrs = ['Que veut cette horde d\'esclaves, De traîtres, de rois conjurés?'])
         self.expect('frame variable german', substrs = ['Über-Ich und aus den Ansprüchen der sozialen Umwelt'])
         self.expect('frame variable japanese', substrs = ['色は匂へど散りぬるを'])
+        self.expect('frame variable hebrew', substrs = ['לילה טוב'])
+
 
     def plain_data_formatter_commands(self):
         """Test basic ObjC formatting behavior."""

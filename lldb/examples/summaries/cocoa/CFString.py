@@ -65,14 +65,14 @@ class CFStringSynthProvider:
 			return 0;
 		return 6;
 
-	def read_unicode(self, pointer):
+	def read_unicode(self, pointer,max_len=2048):
 		logger = lldb.formatters.Logger.Logger()
 		process = self.valobj.GetTarget().GetProcess()
 		error = lldb.SBError()
 		pystr = u''
 		# cannot do the read at once because the length value has
 		# a weird encoding. better play it safe here
-		while True:
+		while max_len > 0:
 			content = process.ReadMemory(pointer, 2, error)
 			new_bytes = bytearray(content)
 			b0 = new_bytes[0]
@@ -89,6 +89,8 @@ class CFStringSynthProvider:
 			else:
 				value = b0 * 256 + b1
 			pystr = pystr + unichr(value)
+			# read max_len unicode values, not max_len bytes
+			max_len = max_len - 1
 		return pystr
 
 	# handle the special case strings
@@ -150,8 +152,11 @@ class CFStringSynthProvider:
 		data = self.valobj.CreateChildAtOffset("content",
 			offset, self.valobj.GetType().GetBasicType(lldb.eBasicTypeChar).GetPointerType());
 		data_value = data.GetValueAsUnsigned(0)
-		data_value = data_value + 1
-		return self.valobj.CreateValueFromExpression("content", "(char*)(" + str(data_value) + ")")
+		if self.explicit and self.unicode:
+			return self.read_unicode(data_value).encode('utf-8')
+		else:
+			data_value = data_value + 1
+			return self.valobj.CreateValueFromExpression("content", "(char*)(" + str(data_value) + ")")
 
 	def handle_UTF8_inline(self):
 		logger = lldb.formatters.Logger.Logger()
