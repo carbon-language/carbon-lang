@@ -226,7 +226,8 @@ static bool isMoveInstr(const TargetRegisterInfo &tri, const MachineInstr *MI,
 }
 
 bool CoalescerPair::setRegisters(const MachineInstr *MI) {
-  SrcReg = DstReg = SubIdx = 0;
+  SrcReg = DstReg = 0;
+  SrcIdx = DstIdx = 0;
   NewRC = 0;
   Flipped = CrossClass = false;
 
@@ -269,45 +270,44 @@ bool CoalescerPair::setRegisters(const MachineInstr *MI) {
 
     // Both registers have subreg indices.
     if (SrcSub && DstSub) {
-      unsigned SrcPre, DstPre;
       NewRC = TRI.getCommonSuperRegClass(SrcRC, SrcSub, DstRC, DstSub,
-                                         SrcPre, DstPre);
+                                         SrcIdx, DstIdx);
       if (!NewRC)
         return false;
 
       // We cannot handle the case where both Src and Dst would be a
       // sub-register. Yet.
-      if (SrcPre && DstPre) {
+      if (SrcIdx && DstIdx) {
         DEBUG(dbgs() << "\tCannot handle " << NewRC->getName()
-                     << " with subregs " << TRI.getSubRegIndexName(SrcPre)
-                     << " and " << TRI.getSubRegIndexName(DstPre) << '\n');
+                     << " with subregs " << TRI.getSubRegIndexName(SrcIdx)
+                     << " and " << TRI.getSubRegIndexName(DstIdx) << '\n');
         return false;
       }
-
-      // One of these will be 0, so one register is a sub-register of the other.
-      SrcSub = DstPre;
-      DstSub = SrcPre;
+    } else if (DstSub) {
+      // SrcReg will be merged with a sub-register of DstReg.
+      SrcIdx = DstSub;
+      NewRC = TRI.getMatchingSuperRegClass(DstRC, SrcRC, DstSub);
+    } else if (SrcSub) {
+      // DstReg will be merged with a sub-register of SrcReg.
+      DstIdx = SrcSub;
+      NewRC = TRI.getMatchingSuperRegClass(SrcRC, DstRC, SrcSub);
+    } else {
+      // This is a straight copy without sub-registers.
+      NewRC = TRI.getCommonSubClass(DstRC, SrcRC);
     }
 
-    // There can be no SrcSub.
-    if (SrcSub) {
-      std::swap(Src, Dst);
-      std::swap(SrcRC, DstRC);
-      DstSub = SrcSub;
-      SrcSub = 0;
-      assert(!Flipped && "Unexpected flip");
-      Flipped = true;
-    }
-
-    // Find the new register class.
-    if (!NewRC) {
-      if (DstSub)
-        NewRC = TRI.getMatchingSuperRegClass(DstRC, SrcRC, DstSub);
-      else
-        NewRC = TRI.getCommonSubClass(DstRC, SrcRC);
-    }
+    // The combined constraint may be impossible to satisfy.
     if (!NewRC)
       return false;
+
+    // Prefer SrcReg to be a sub-register of DstReg.
+    // FIXME: Coalescer should support subregs symmetrically.
+    if (DstIdx && !SrcIdx) {
+      std::swap(Src, Dst);
+      std::swap(SrcIdx, DstIdx);
+      Flipped = !Flipped;
+    }
+
     CrossClass = NewRC != DstRC || NewRC != SrcRC;
   }
   // Check our invariants
@@ -316,14 +316,14 @@ bool CoalescerPair::setRegisters(const MachineInstr *MI) {
          "Cannot have a physical SubIdx");
   SrcReg = Src;
   DstReg = Dst;
-  SubIdx = DstSub;
   return true;
 }
 
 bool CoalescerPair::flip() {
-  if (SubIdx || TargetRegisterInfo::isPhysicalRegister(DstReg))
+  if (TargetRegisterInfo::isPhysicalRegister(DstReg))
     return false;
   std::swap(SrcReg, DstReg);
+  std::swap(SrcIdx, DstIdx);
   Flipped = !Flipped;
   return true;
 }
@@ -347,7 +347,7 @@ bool CoalescerPair::isCoalescable(const MachineInstr *MI) const {
   if (TargetRegisterInfo::isPhysicalRegister(DstReg)) {
     if (!TargetRegisterInfo::isPhysicalRegister(Dst))
       return false;
-    assert(!SubIdx && "Inconsistent CoalescerPair state.");
+    assert(!DstIdx && !SrcIdx && "Inconsistent CoalescerPair state.");
     // DstSub could be set for a physreg from INSERT_SUBREG.
     if (DstSub)
       Dst = TRI.getSubReg(Dst, DstSub);
@@ -361,7 +361,7 @@ bool CoalescerPair::isCoalescable(const MachineInstr *MI) const {
     if (DstReg != Dst)
       return false;
     // Registers match, do the subregisters line up?
-    return compose(TRI, SubIdx, SrcSub) == DstSub;
+    return compose(TRI, SrcIdx, SrcSub) == compose(TRI, DstIdx, DstSub);
   }
 }
 
@@ -529,8 +529,7 @@ bool RegisterCoalescer::adjustCopiesBackFrom(const CoalescerPair &CP,
   // Rewrite the copy. If the copy instruction was killing the destination
   // register before the merge, find the last use and trim the live range. That
   // will also add the isKill marker.
-  CopyMI->substituteRegister(IntA.reg, IntB.reg, CP.getSubIdx(),
-                             *TRI);
+  CopyMI->substituteRegister(IntA.reg, IntB.reg, CP.getSrcIdx(), *TRI);
   if (ALR->end == CopyIdx)
     LIS->shrinkToUses(&IntA);
 
@@ -915,7 +914,7 @@ void RegisterCoalescer::updateRegDefsUses(const CoalescerPair &CP) {
   bool DstIsPhys = CP.isPhys();
   unsigned SrcReg = CP.getSrcReg();
   unsigned DstReg = CP.getDstReg();
-  unsigned SubIdx = CP.getSubIdx();
+  unsigned SubIdx = CP.getSrcIdx();
 
   // Update LiveDebugVariables.
   LDV->renameRegister(SrcReg, DstReg, SubIdx);
@@ -1089,7 +1088,7 @@ bool RegisterCoalescer::joinCopy(MachineInstr *CopyMI, bool &Again) {
   }
 
   DEBUG(dbgs() << "\tConsidering merging " << PrintReg(CP.getSrcReg(), TRI)
-               << " with " << PrintReg(CP.getDstReg(), TRI, CP.getSubIdx())
+               << " with " << PrintReg(CP.getDstReg(), TRI, CP.getSrcIdx())
                << "\n");
 
   // Enforce policies.
@@ -1110,7 +1109,7 @@ bool RegisterCoalescer::joinCopy(MachineInstr *CopyMI, bool &Again) {
     });
 
     // When possible, let DstReg be the larger interval.
-    if (!CP.getSubIdx() && LIS->getInterval(CP.getSrcReg()).ranges.size() >
+    if (!CP.getSrcIdx() && LIS->getInterval(CP.getSrcReg()).ranges.size() >
                            LIS->getInterval(CP.getDstReg()).ranges.size())
       CP.flip();
   }

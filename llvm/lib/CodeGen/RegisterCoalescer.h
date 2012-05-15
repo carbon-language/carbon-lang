@@ -36,10 +36,13 @@ namespace llvm {
     /// SrcReg - the virtual register that will be coalesced into dstReg.
     unsigned SrcReg;
 
-    /// subReg_ - The subregister index of srcReg in DstReg. It is possible the
-    /// coalesce SrcReg into a subreg of the larger DstReg when DstReg is a
-    /// virtual register.
-    unsigned SubIdx;
+    /// DstIdx - The sub-register index of the old DstReg in the new coalesced
+    /// register.
+    unsigned DstIdx;
+
+    /// SrcIdx - The sub-register index of the old SrcReg in the new coalesced
+    /// register.
+    unsigned SrcIdx;
 
     /// Partial - True when the original copy was a partial subregister copy.
     bool Partial;
@@ -52,12 +55,13 @@ namespace llvm {
     bool Flipped;
 
     /// NewRC - The register class of the coalesced register, or NULL if DstReg
-    /// is a physreg.
+    /// is a physreg. This register class may be a super-register of both
+    /// SrcReg and DstReg.
     const TargetRegisterClass *NewRC;
 
   public:
     CoalescerPair(const TargetInstrInfo &tii, const TargetRegisterInfo &tri)
-      : TII(tii), TRI(tri), DstReg(0), SrcReg(0), SubIdx(0),
+      : TII(tii), TRI(tri), DstReg(0), SrcReg(0), DstIdx(0), SrcIdx(0),
         Partial(false), CrossClass(false), Flipped(false), NewRC(0) {}
 
     /// setRegisters - set registers to match the copy instruction MI. Return
@@ -94,9 +98,13 @@ namespace llvm {
     /// getSrcReg - Return the virtual register that will be coalesced away.
     unsigned getSrcReg() const { return SrcReg; }
 
-    /// getSubIdx - Return the subregister index in DstReg that SrcReg will be
-    /// coalesced into, or 0.
-    unsigned getSubIdx() const { return SubIdx; }
+    /// getDstIdx - Return the subregister index that DstReg will be coalesced
+    /// into, or 0.
+    unsigned getDstIdx() const { return DstIdx; }
+
+    /// getSrcIdx - Return the subregister index that SrcReg will be coalesced
+    /// into, or 0.
+    unsigned getSrcIdx() const { return SrcIdx; }
 
     /// getNewRC - Return the register class of the coalesced register.
     const TargetRegisterClass *getNewRC() const { return NewRC; }
