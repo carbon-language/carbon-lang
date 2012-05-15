@@ -170,6 +170,10 @@ Release Notes</a>.</h1>
    implementations of this and other low-level routines (some are 3x faster than
    the equivalent libgcc routines).</p>
 
+<p>As of 3.1, compiler-rt includes the helper functions for atomic operations,
+   allowing atomic operations on arbitrary-sized quantities to work.  These
+   functions follow the specification defined by gcc and are used by clang.</p>
+
 </div>
 
 <!--=========================================================================-->
@@ -197,6 +201,17 @@ Release Notes</a>.</h1>
 <p>Like compiler_rt, libc++ is now <a href="DeveloperPolicy.html#license">dual
    licensed</a> under the MIT and UIUC license, allowing it to be used more
    permissively.</p>
+
+<p>Within the LLVM 3.1 time-frame there were the following highlights:</p>
+
+<ul>
+  <li>The <code>&lt;atomic&gt;</code> header is now passing all tests, when
+      compiling with clang and linking against the support code from
+      compiler-rt.</li>
+  <li>FreeBSD now includes libc++ as part of the base system.</li>
+  <li>libc++ has been ported to Solaris and, in combination with libcxxrt and
+      clang, is working with a large body of existing code.</li>
+</ul>
 
 </div>
 
