@@ -98,6 +98,7 @@ else {
   $Clang = $ClangSB;
 }
 my $ClangCXX = $Clang . "++";
+my $ClangVersion = HtmlEscape(`$Clang --version`);
 
 ##----------------------------------------------------------------------------##
 # GetHTMLRunDir - Construct an HTML directory name for the current sub-run.
@@ -590,6 +591,7 @@ function ToggleDisplay(CheckButton, ClassName) {
 <tr><th>User:</th><td>${UserName}\@${HostName}</td></tr>
 <tr><th>Working Directory:</th><td>${CurrentDir}</td></tr>
 <tr><th>Command Line:</th><td>${CmdArgs}</td></tr>
+<tr><th>Clang Version:</th><td>${ClangVersion}</td></tr>
 <tr><th>Date:</th><td>${Date}</td></tr>
 ENDTEXT
 
