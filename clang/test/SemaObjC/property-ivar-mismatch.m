@@ -12,3 +12,15 @@
 @synthesize prop = ivar;  // expected-error {{type of property 'prop' ('int') does not match type of ivar 'ivar' ('char')}}
 @end
 
+
+@interface Test5
+{
+  void * _P; // expected-note {{ivar is declared here}}
+}
+@property int P;
+@end
+
+@implementation Test5
+@synthesize P=_P; // expected-error {{ype of property 'P' ('int') does not match type of ivar '_P' ('void *')}}
+@end
+
