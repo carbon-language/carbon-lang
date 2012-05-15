@@ -85,4 +85,11 @@ int main() {
   @((NSUInteger)i);
   // CHECK: load i8** [[stringWithUTF8StringSEL]]
   const char *s; @(s);
+
+  typedef enum : NSInteger { Red, Green, Blue } Color;
+  // CHECK: load i8** [[WithIntegerSEL]]
+  @(Red);
+  Color col = Red;
+  // CHECK: load i8** [[WithIntegerSEL]]
+  @(col);
 }

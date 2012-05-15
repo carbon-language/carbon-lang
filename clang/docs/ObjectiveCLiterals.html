@@ -157,6 +157,18 @@ NSNumber *red = @(Red), *green = @(Green), *blue = @(Blue); // => [NSNumber numb
 then the fixed underlying type will be used to select the correct <code>NSNumber</code> creation method.
 </p>
 
+<p>
+Boxing a value of enum type will result in a <code>NSNumber</code> pointer with a creation method according to the underlying type of the enum,
+which can be a <a href="http://clang.llvm.org/docs/LanguageExtensions.html#objc_fixed_enum">fixed underlying type</a> or a compiler-defined
+integer type capable of representing the values of all the members of the enumeration:
+</p>
+
+<pre>
+typedef enum : unsigned char { Red, Green, Blue } Color;
+Color col = Red;
+NSNumber *nsCol = @(col); // => [NSNumber numberWithUnsignedChar:]
+</pre>
+
 <h3>Boxed C Strings</h3>
 
 <p>
