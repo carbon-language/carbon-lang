@@ -4858,6 +4858,135 @@ SymbolFileDWARF::FindDefinitionTypeForDWARFDeclContext (const DWARFDeclContext &
     return type_sp;
 }
 
+bool
+SymbolFileDWARF::CopyUniqueClassMethodTypes (Type *class_type,
+                                             DWARFCompileUnit* src_cu,
+                                             const DWARFDebugInfoEntry *src_class_die,
+                                             DWARFCompileUnit* dst_cu,
+                                             const DWARFDebugInfoEntry *dst_class_die)
+{
+    if (!class_type || !src_cu || !src_class_die || !dst_cu || !dst_class_die)
+        return false;
+    if (src_class_die->Tag() != dst_class_die->Tag())
+        return false;
+    
+    // We need to complete the class type so we can get all of the method types
+    // parsed so we can then unique those types to their equivalent counterparts
+    // in "dst_cu" and "dst_class_die"
+    class_type->GetClangFullType();
+
+    const DWARFDebugInfoEntry *src_die;
+    const DWARFDebugInfoEntry *dst_die;
+    UniqueCStringMap<const DWARFDebugInfoEntry *> src_name_to_die;
+    UniqueCStringMap<const DWARFDebugInfoEntry *> dst_name_to_die;
+    for (src_die = src_class_die->GetFirstChild(); src_die != NULL; src_die = src_die->GetSibling())
+    {
+        if (src_die->Tag() == DW_TAG_subprogram)
+        {
+            const char *src_name = src_die->GetMangledName (this, src_cu);
+            if (src_name)
+                src_name_to_die.Append(ConstString(src_name).GetCString(), src_die);
+        }
+    }
+    for (dst_die = dst_class_die->GetFirstChild(); dst_die != NULL; dst_die = dst_die->GetSibling())
+    {
+        if (dst_die->Tag() == DW_TAG_subprogram)
+        {
+            const char *dst_name = dst_die->GetMangledName (this, dst_cu);
+            if (dst_name)
+                dst_name_to_die.Append(ConstString(dst_name).GetCString(), dst_die);
+        }
+    }
+    const uint32_t src_size = src_name_to_die.GetSize ();
+    const uint32_t dst_size = dst_name_to_die.GetSize ();
+    LogSP log (LogChannelDWARF::GetLogIfAny(DWARF_LOG_DEBUG_INFO | DWARF_LOG_TYPE_COMPLETION));
+    
+    if (src_size && dst_size)
+    {
+        uint32_t idx;
+        for (idx = 0; idx < src_size; ++idx)
+        {
+            src_die = src_name_to_die.GetValueAtIndexUnchecked (idx);
+            dst_die = dst_name_to_die.GetValueAtIndexUnchecked (idx);
+
+            if (src_die->Tag() != dst_die->Tag())
+            {
+                if (log)
+                    log->Printf("warning: tried to unique class DIE 0x%8.8x to 0x%8.8x, but 0x%8.8x (%s) tags didn't match 0x%8.8x (%s)",
+                                src_class_die->GetOffset(),
+                                dst_class_die->GetOffset(),
+                                src_die->GetOffset(),
+                                DW_TAG_value_to_name(src_die->Tag()),
+                                dst_die->GetOffset(),
+                                DW_TAG_value_to_name(src_die->Tag()));
+                return false;
+            }
+            
+            const char *src_name = src_die->GetMangledName (this, src_cu);
+            const char *dst_name = dst_die->GetMangledName (this, dst_cu);
+            
+            // Make sure the names match
+            if (src_name == dst_name || (strcmp (src_name, dst_name) == 0))
+                continue;
+
+            if (log)
+                log->Printf("warning: tried to unique class DIE 0x%8.8x to 0x%8.8x, but 0x%8.8x (%s) names didn't match 0x%8.8x (%s)",
+                            src_class_die->GetOffset(),
+                            dst_class_die->GetOffset(),
+                            src_die->GetOffset(),
+                            src_name,
+                            dst_die->GetOffset(),
+                            dst_name);
+            
+            return false;
+        }
+
+        for (idx = 0; idx < src_size; ++idx)
+        {
+            src_die = src_name_to_die.GetValueAtIndexUnchecked (idx);
+            dst_die = dst_name_to_die.GetValueAtIndexUnchecked (idx);
+            
+            clang::DeclContext *src_decl_ctx = m_die_to_decl_ctx[src_die];
+            if (src_decl_ctx)
+            {
+                if (log)
+                    log->Printf ("uniquing decl context %p from 0x%8.8x for 0x%8.8x\n", src_decl_ctx, src_die->GetOffset(), dst_die->GetOffset());
+                LinkDeclContextToDIE (src_decl_ctx, dst_die);
+            }
+            else
+            {
+                if (log)
+                    log->Printf ("warning: tried to unique decl context from 0x%8.8x for 0x%8.8x, but none was found\n", src_die->GetOffset(), dst_die->GetOffset());
+            }
+            
+            Type *src_child_type = m_die_to_type[src_die];
+            if (src_child_type)
+            {
+                if (log)
+                    log->Printf ("uniquing type %p (uid=0x%llx) from 0x%8.8x for 0x%8.8x\n", src_child_type, src_child_type->GetID(), src_die->GetOffset(), dst_die->GetOffset());
+                m_die_to_type[dst_die] = src_child_type;
+            }
+            else
+            {
+                if (log)
+                    log->Printf ("warning: tried to unique lldb_private::Type from 0x%8.8x for 0x%8.8x, but none was found\n", src_die->GetOffset(), dst_die->GetOffset());
+            }
+        }
+        return true;
+    }
+    else
+    {
+        if (log)
+            log->Printf("warning: tried to unique class DIE 0x%8.8x to 0x%8.8x, but 0x%8.8x has %u methods and 0x%8.8x has %u",
+                        src_class_die->GetOffset(),
+                        dst_class_die->GetOffset(),
+                        src_die->GetOffset(),
+                        src_size,
+                        dst_die->GetOffset(),
+                        dst_size);
+    }
+    return false;
+}
 
 TypeSP
 SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu, const DWARFDebugInfoEntry *die, bool *type_is_new_ptr)
@@ -5745,6 +5874,31 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                 Type *class_type = ResolveType (dwarf_cu, decl_ctx_die);
                                 if (class_type)
                                 {
+                                    if (class_type->GetID() != MakeUserID(decl_ctx_die->GetOffset()))
+                                    {
+                                        // We uniqued the parent class of this function to another class
+                                        // so we now need to associate all dies under "decl_ctx_die" to
+                                        // DIEs in the DIE for "class_type"...
+                                        DWARFCompileUnitSP class_type_cu_sp;
+                                        const DWARFDebugInfoEntry *class_type_die = DebugInfo()->GetDIEPtr(class_type->GetID(), &class_type_cu_sp);
+                                        if (class_type_die)
+                                        {
+                                            if (CopyUniqueClassMethodTypes (class_type,
+                                                                            class_type_cu_sp.get(),
+                                                                            class_type_die,
+                                                                            dwarf_cu,
+                                                                            decl_ctx_die))
+                                            {
+                                                type_ptr = m_die_to_type[die];
+                                                if (type_ptr)
+                                                {
+                                                    type_sp = type_ptr->shared_from_this();
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                    }
+                                    
                                     if (specification_die_offset != DW_INVALID_OFFSET)
                                     {
                                         // We have a specification which we are going to base our function

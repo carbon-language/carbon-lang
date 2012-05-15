@@ -315,9 +315,10 @@ protected:
     tid_sig_collection m_continue_S_tids; // 'S' for step with signal
     lldb::addr_t m_dispatch_queue_offsets_addr;
     size_t m_max_memory_size;       // The maximum number of bytes to read/write when reading and writing memory
-    bool m_waiting_for_attach;
-    std::vector<lldb::user_id_t>  m_thread_observation_bps;
     MMapMap m_addr_to_mmap_size;
+    lldb::BreakpointSP m_thread_create_bp_sp;
+    bool m_waiting_for_attach;
+    
     bool
     StartAsyncThread ();
 

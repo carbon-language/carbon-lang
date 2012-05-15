@@ -13,6 +13,7 @@
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
+#include "lldb/Breakpoint/BreakpointIDList.h"
 #include "lldb/Core/Error.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/PluginManager.h"
@@ -673,4 +674,9 @@ Platform::IsCompatibleArchitecture (const ArchSpec &arch, ArchSpec *compatible_a
     
 }
 
+lldb::BreakpointSP
+Platform::SetThreadCreationBreakpoint (lldb_private::Target &target)
+{
+    return lldb::BreakpointSP();
+}
 

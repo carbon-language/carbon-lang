@@ -79,6 +79,9 @@ public:
     GetProcessInfo (lldb::pid_t pid, 
                     lldb_private::ProcessInstanceInfo &proc_info);
     
+    virtual lldb::BreakpointSP
+    SetThreadCreationBreakpoint (lldb_private::Target &target);
+
     virtual uint32_t
     FindProcesses (const lldb_private::ProcessInstanceInfoMatch &match_info,
                    lldb_private::ProcessInstanceInfoList &process_infos);

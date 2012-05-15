@@ -823,3 +823,38 @@ PlatformDarwin::GetDeveloperDirectory()
     return NULL;
 }
 
+
+BreakpointSP
+PlatformDarwin::SetThreadCreationBreakpoint (Target &target)
+{
+    BreakpointSP bp_sp;
+    static const char *g_bp_names[] =
+    {
+        "start_wqthread",
+        "_pthread_wqthread",
+        "_pthread_start",
+    };
+
+    static const char *g_bp_modules[] =
+    {
+        "libsystem_c.dylib",
+        "libSystem.B.dylib"
+    };
+
+    FileSpecList bp_modules;
+    for (int i = 0; i < sizeof(g_bp_modules)/sizeof(const char *); i++)
+    {
+        const char *bp_module = g_bp_modules[i];
+        bp_modules.Append(FileSpec(bp_module, false));
+    }
+
+    bp_sp = target.CreateBreakpoint (&bp_modules,
+                                     NULL,
+                                     g_bp_names,
+                                     sizeof(g_bp_names)/sizeof(const char *),
+                                     eFunctionNameTypeFull,
+                                     true);
+
+    return bp_sp;
+}
+

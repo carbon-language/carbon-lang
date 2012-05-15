@@ -173,8 +173,9 @@ ProcessGDBRemote::ProcessGDBRemote(Target& target, Listener &listener) :
     m_continue_S_tids (),
     m_dispatch_queue_offsets_addr (LLDB_INVALID_ADDRESS),
     m_max_memory_size (512),
-    m_waiting_for_attach (false),
-    m_thread_observation_bps()
+    m_addr_to_mmap_size (),
+    m_thread_create_bp_sp (),
+    m_waiting_for_attach (false)
 {
     m_async_broadcaster.SetEventName (eBroadcastBitAsyncThreadShouldExit,   "async thread should exit");
     m_async_broadcaster.SetEventName (eBroadcastBitAsyncContinue,           "async thread continue");
@@ -2672,51 +2673,33 @@ ProcessGDBRemote::NewThreadNotifyBreakpointHit (void *baton,
 bool
 ProcessGDBRemote::StartNoticingNewThreads()
 {
-    static const char *bp_names[] =
-    {
-        "start_wqthread",
-        "_pthread_wqthread",
-        "_pthread_start",
-        NULL
-    };
-    
     LogSP log (lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
-    size_t num_bps = m_thread_observation_bps.size();
-    if (num_bps != 0)
+    if (m_thread_create_bp_sp)
     {
-        for (int i = 0; i < num_bps; i++)
-        {
-            lldb::BreakpointSP break_sp = m_target.GetBreakpointByID(m_thread_observation_bps[i]);
-            if (break_sp)
-            {
-                if (log && log->GetVerbose())
-                    log->Printf("Enabled noticing new thread breakpoint.");
-                break_sp->SetEnabled(true);
-            }
-        }
+        if (log && log->GetVerbose())
+            log->Printf("Enabled noticing new thread breakpoint.");
+        m_thread_create_bp_sp->SetEnabled(true);
     }
-    else 
+    else
     {
-        for (int i = 0; bp_names[i] != NULL; i++)
+        PlatformSP platform_sp (m_target.GetPlatform());
+        if (platform_sp)
         {
-            Breakpoint *breakpoint = m_target.CreateBreakpoint (NULL, NULL, bp_names[i], eFunctionNameTypeFull, true).get();
-            if (breakpoint)
+            m_thread_create_bp_sp = platform_sp->SetThreadCreationBreakpoint(m_target);
+            if (m_thread_create_bp_sp)
             {
                 if (log && log->GetVerbose())
-                     log->Printf("Successfully created new thread notification breakpoint at \"%s\".", bp_names[i]);
-                m_thread_observation_bps.push_back(breakpoint->GetID());
-                breakpoint->SetCallback (ProcessGDBRemote::NewThreadNotifyBreakpointHit, this, true);
+                    log->Printf("Successfully created new thread notification breakpoint %i", m_thread_create_bp_sp->GetID());
+                m_thread_create_bp_sp->SetCallback (ProcessGDBRemote::NewThreadNotifyBreakpointHit, this, true);
             }
             else
             {
                 if (log)
                     log->Printf("Failed to create new thread notification breakpoint.");
-                return false;
             }
         }
     }
-
-    return true;
+    return m_thread_create_bp_sp.get() != NULL;
 }
 
 bool
@@ -2725,19 +2708,10 @@ ProcessGDBRemote::StopNoticingNewThreads()
     LogSP log (lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
     if (log && log->GetVerbose())
         log->Printf ("Disabling new thread notification breakpoint.");
-    size_t num_bps = m_thread_observation_bps.size();
-    if (num_bps != 0)
-    {
-        for (int i = 0; i < num_bps; i++)
-        {
-            
-            lldb::BreakpointSP break_sp = m_target.GetBreakpointByID(m_thread_observation_bps[i]);
-            if (break_sp)
-            {
-                break_sp->SetEnabled(false);
-            }
-        }
-    }
+
+    if (m_thread_create_bp_sp)
+        m_thread_create_bp_sp->SetEnabled(false);
+
     return true;
 }
     

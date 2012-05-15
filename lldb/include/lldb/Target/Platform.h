@@ -368,6 +368,15 @@ namespace lldb_private {
 
         virtual bool
         GetProcessInfo (lldb::pid_t pid, ProcessInstanceInfo &proc_info);
+        
+        //------------------------------------------------------------------
+        // Set a breakpoint on all functions that can end up creating a thread
+        // for this platform. This is needed when running expressions and
+        // also for process control.
+        //------------------------------------------------------------------
+        virtual lldb::BreakpointSP
+        SetThreadCreationBreakpoint (Target &target);
+        
 
         const std::string &
         GetRemoteURL () const

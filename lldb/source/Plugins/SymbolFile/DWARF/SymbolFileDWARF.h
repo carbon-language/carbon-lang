@@ -521,6 +521,13 @@ protected:
                            const DWARFDebugInfoEntry *class_die,
                            const lldb_private::ConstString &selector);
 
+    bool
+    CopyUniqueClassMethodTypes (lldb_private::Type *class_type,
+                                DWARFCompileUnit* src_cu,
+                                const DWARFDebugInfoEntry *src_class_die,
+                                DWARFCompileUnit* dst_cu,
+                                const DWARFDebugInfoEntry *dst_class_die);
+
     SymbolFileDWARFDebugMap *       m_debug_map_symfile;
     clang::TranslationUnitDecl *    m_clang_tu_decl;
     lldb_private::Flags             m_flags;
