@@ -974,12 +974,15 @@ const SCEV *ScalarEvolution::getZeroExtendExpr(const SCEV *Op,
           Type *WideTy = IntegerType::get(getContext(), BitWidth * 2);
           // Check whether Start+Step*MaxBECount has no unsigned overflow.
           const SCEV *ZMul = getMulExpr(CastedMaxBECount, Step);
-          const SCEV *Add = getAddExpr(Start, ZMul);
+          const SCEV *ZAdd = getZeroExtendExpr(getAddExpr(Start, ZMul), WideTy);
+          const SCEV *WideStart = getZeroExtendExpr(Start, WideTy);
+          const SCEV *WideMaxBECount =
+            getZeroExtendExpr(CastedMaxBECount, WideTy);
           const SCEV *OperandExtendedAdd =
-            getAddExpr(getZeroExtendExpr(Start, WideTy),
-                       getMulExpr(getZeroExtendExpr(CastedMaxBECount, WideTy),
+            getAddExpr(WideStart,
+                       getMulExpr(WideMaxBECount,
                                   getZeroExtendExpr(Step, WideTy)));
-          if (getZeroExtendExpr(Add, WideTy) == OperandExtendedAdd) {
+          if (ZAdd == OperandExtendedAdd) {
             // Cache knowledge of AR NUW, which is propagated to this AddRec.
             const_cast<SCEVAddRecExpr *>(AR)->setNoWrapFlags(SCEV::FlagNUW);
             // Return the expression with the addrec on the outside.
@@ -989,13 +992,11 @@ const SCEV *ScalarEvolution::getZeroExtendExpr(const SCEV *Op,
           }
           // Similar to above, only this time treat the step value as signed.
           // This covers loops that count down.
-          const SCEV *SMul = getMulExpr(CastedMaxBECount, Step);
-          Add = getAddExpr(Start, SMul);
           OperandExtendedAdd =
-            getAddExpr(getZeroExtendExpr(Start, WideTy),
-                       getMulExpr(getZeroExtendExpr(CastedMaxBECount, WideTy),
+            getAddExpr(WideStart,
+                       getMulExpr(WideMaxBECount,
                                   getSignExtendExpr(Step, WideTy)));
-          if (getZeroExtendExpr(Add, WideTy) == OperandExtendedAdd) {
+          if (ZAdd == OperandExtendedAdd) {
             // Cache knowledge of AR NW, which is propagated to this AddRec.
             // Negative step causes unsigned wrap, but it still can't self-wrap.
             const_cast<SCEVAddRecExpr *>(AR)->setNoWrapFlags(SCEV::FlagNW);
@@ -1239,12 +1240,15 @@ const SCEV *ScalarEvolution::getSignExtendExpr(const SCEV *Op,
           Type *WideTy = IntegerType::get(getContext(), BitWidth * 2);
           // Check whether Start+Step*MaxBECount has no signed overflow.
           const SCEV *SMul = getMulExpr(CastedMaxBECount, Step);
-          const SCEV *Add = getAddExpr(Start, SMul);
+          const SCEV *SAdd = getSignExtendExpr(getAddExpr(Start, SMul), WideTy);
+          const SCEV *WideStart = getSignExtendExpr(Start, WideTy);
+          const SCEV *WideMaxBECount =
+            getZeroExtendExpr(CastedMaxBECount, WideTy);
           const SCEV *OperandExtendedAdd =
-            getAddExpr(getSignExtendExpr(Start, WideTy),
-                       getMulExpr(getZeroExtendExpr(CastedMaxBECount, WideTy),
+            getAddExpr(WideStart,
+                       getMulExpr(WideMaxBECount,
                                   getSignExtendExpr(Step, WideTy)));
-          if (getSignExtendExpr(Add, WideTy) == OperandExtendedAdd) {
+          if (SAdd == OperandExtendedAdd) {
             // Cache knowledge of AR NSW, which is propagated to this AddRec.
             const_cast<SCEVAddRecExpr *>(AR)->setNoWrapFlags(SCEV::FlagNSW);
             // Return the expression with the addrec on the outside.
@@ -1254,13 +1258,11 @@ const SCEV *ScalarEvolution::getSignExtendExpr(const SCEV *Op,
           }
           // Similar to above, only this time treat the step value as unsigned.
           // This covers loops that count up with an unsigned step.
-          const SCEV *UMul = getMulExpr(CastedMaxBECount, Step);
-          Add = getAddExpr(Start, UMul);
           OperandExtendedAdd =
-            getAddExpr(getSignExtendExpr(Start, WideTy),
-                       getMulExpr(getZeroExtendExpr(CastedMaxBECount, WideTy),
+            getAddExpr(WideStart,
+                       getMulExpr(WideMaxBECount,
                                   getZeroExtendExpr(Step, WideTy)));
-          if (getSignExtendExpr(Add, WideTy) == OperandExtendedAdd) {
+          if (SAdd == OperandExtendedAdd) {
             // Cache knowledge of AR NSW, which is propagated to this AddRec.
             const_cast<SCEVAddRecExpr *>(AR)->setNoWrapFlags(SCEV::FlagNSW);
             // Return the expression with the addrec on the outside.
