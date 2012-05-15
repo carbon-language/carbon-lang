@@ -53,11 +53,19 @@ if( LLVM_ENABLE_PIC )
   set(SHARED_LIBRARY TRUE)
   add_clang_library(libclang ${SOURCES})
 
-  set_target_properties(libclang
-    PROPERTIES
-    OUTPUT_NAME "libclang"
-    VERSION ${LIBCLANG_LIBRARY_VERSION}
-    DEFINE_SYMBOL _CINDEX_LIB_)
+  if(WIN32)
+    set_target_properties(libclang
+      PROPERTIES
+      OUTPUT_NAME "libclang"
+      VERSION ${LIBCLANG_LIBRARY_VERSION}
+      DEFINE_SYMBOL _CINDEX_LIB_)
+  else()
+    set_target_properties(libclang
+      PROPERTIES
+      OUTPUT_NAME "clang"
+      VERSION ${LIBCLANG_LIBRARY_VERSION}
+      DEFINE_SYMBOL _CINDEX_LIB_)
+  endif()
 
   if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(LIBCLANG_LINK_FLAGS
@@ -86,5 +94,5 @@ if( NOT BUILD_SHARED_LIBS AND NOT WIN32 )
 
   set_target_properties(${LIBCLANG_STATIC_TARGET_NAME}
     PROPERTIES
-    OUTPUT_NAME "libclang")
+    OUTPUT_NAME "clang")
 endif()
