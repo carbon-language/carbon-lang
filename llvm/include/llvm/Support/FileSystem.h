@@ -309,6 +309,13 @@ bool equivalent(file_status A, file_status B);
 ///          platform specific error_code.
 error_code equivalent(const Twine &A, const Twine &B, bool &result);
 
+/// @brief Simpler version of equivalent for clients that don't need to
+///        differentiate between an error and false.
+inline bool equivalent(const Twine &A, const Twine &B) {
+  bool result;
+  return !equivalent(A, B, result) && result;
+}
+
 /// @brief Get file size.
 ///
 /// @param path Input path.
