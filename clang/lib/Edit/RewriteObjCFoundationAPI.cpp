@@ -684,6 +684,14 @@ static void objectifyExpr(const Expr *E, Commit &commit) {
 // rewriteToNumericBoxedExpression.
 //===----------------------------------------------------------------------===//
 
+static bool isEnumConstant(const Expr *E) {
+  if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E->IgnoreParenImpCasts()))
+    if (const ValueDecl *VD = DRE->getDecl())
+      return isa<EnumConstantDecl>(VD);
+
+  return false;
+}
+
 static bool rewriteToNumericBoxedExpression(const ObjCMessageExpr *Msg,
                                             const NSAPI &NS, Commit &commit) {
   if (Msg->getNumArgs() != 1)
@@ -725,7 +733,7 @@ static bool rewriteToNumericBoxedExpression(const ObjCMessageExpr *Msg,
       if ((MK == NSAPI::NSNumberWithInteger ||
            MK == NSAPI::NSNumberWithUnsignedInteger) &&
           !isTruncated) {
-        if (OrigTy->getAs<EnumType>())
+        if (OrigTy->getAs<EnumType>() || isEnumConstant(OrigArg))
           break;
         if ((MK==NSAPI::NSNumberWithInteger) == OrigTy->isSignedIntegerType() &&
             OrigTySize >= Ctx.getTypeSize(Ctx.IntTy))
