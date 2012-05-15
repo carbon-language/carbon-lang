@@ -73,13 +73,14 @@ void test3() {
   // Use FileCheck to ensure we don't get any unnecessary macro-expansion notes 
   // (that don't appear as 'real' notes & can't be seen/tested by -verify)
   // CHECK-NOT: note:
-  // CHECK: note: expanded from macro 'FNULL'
-#define FNULL NULL
-  int a2 = FNULL; // expected-warning {{implicit conversion of NULL constant to 'int'}}
-  // CHECK-NOT: note:
   // CHECK: note: expanded from macro 'FINIT'
 #define FINIT int a3 = NULL;
   FINIT // expected-warning {{implicit conversion of NULL constant to 'int'}}
+
+  // we don't catch the case of #define FOO NULL ... int i = FOO; but that seems a bit narrow anyway
+  // and avoiding that helps us skip these cases:
+#define NULL_COND(cond) ((cond) ? &a : NULL)
+  bool bl2 = NULL_COND(true); // don't warn on NULL conversion through the conditional operator across a macro boundary
 }
 
 namespace test4 {
