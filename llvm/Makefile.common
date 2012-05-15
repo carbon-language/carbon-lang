@@ -30,8 +30,7 @@
 #
 # 4. Source - If specified, this sets the source code filenames.  If this
 #    is not set, it defaults to be all of the .cpp, .c, .y, and .l files
-#    in the current directory.  Also, if you want to build files in addition
-#    to the local files, you can use the ExtraSource variable
+#    in the current directory.
 #
 # 5. SourceDir - If specified, this specifies a directory that the source files
 #    are in, if they are not in the current directory.  This should include a
