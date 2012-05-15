@@ -60,7 +60,7 @@ bool
 MipsSubtarget::enablePostRAScheduler(CodeGenOpt::Level OptLevel,
                                     TargetSubtargetInfo::AntiDepBreakMode& Mode,
                                      RegClassVector& CriticalPathRCs) const {
-  Mode = TargetSubtargetInfo::ANTIDEP_CRITICAL;
+  Mode = TargetSubtargetInfo::ANTIDEP_NONE;
   CriticalPathRCs.clear();
   CriticalPathRCs.push_back(hasMips64() ?
                             &Mips::CPU64RegsRegClass : &Mips::CPURegsRegClass);
