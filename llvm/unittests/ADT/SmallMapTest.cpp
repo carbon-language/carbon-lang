@@ -149,7 +149,7 @@ TEST(SmallMapTest, GeneralTest) {
   SmallMap<int, int, 8> d;
   d[0] = 2;
   d[1] = 3;
-  unsigned counts[2] = { 0, 0 };
+  int counts[2] = { 0, 0 };
   for (SmallMap<int, int, 8>::iterator I = d.begin(), E = d.end(); I != E;
        ++I) {
     EXPECT_TRUE(I->first == 0 || I->first == 1);
