@@ -113,6 +113,8 @@ def main():
     global filename_components
 
     test_dir = sys.path[0]
+    if not test_dir:
+        test_dir = os.getcwd()
     if not test_dir.endswith('test'):
         print "This script expects to reside in lldb's test directory."
         sys.exit(-1)
