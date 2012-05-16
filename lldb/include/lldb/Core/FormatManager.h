@@ -131,6 +131,7 @@ public:
         return retval;
     }
     
+#ifndef LLDB_DISABLE_PYTHON
     SynthNavigator::MapValueType
     GetSyntheticForType (lldb::TypeNameSpecifierImplSP type_sp)
     {
@@ -146,6 +147,7 @@ public:
         
         return retval;
     }
+#endif
     
     lldb::TypeNameSpecifierImplSP
     GetTypeNameSpecifierForSummaryAtIndex (uint32_t index)
@@ -503,9 +505,11 @@ public:
     GetSummaryFormat (ValueObject& valobj,
          lldb::DynamicValueType use_dynamic);
     
+#ifndef LLDB_DISABLE_PYTHON
     lldb::SyntheticChildrenSP
     GetSyntheticChildren (ValueObject& valobj,
                           lldb::DynamicValueType use_dynamic);
+#endif
     
 private:
     
@@ -655,18 +659,24 @@ public:
     lldb::TypeFilterImplSP
     GetFilterForType (lldb::TypeNameSpecifierImplSP type_sp);
 
+#ifndef LLDB_DISABLE_PYTHON
     lldb::TypeSyntheticImplSP
     GetSyntheticForType (lldb::TypeNameSpecifierImplSP type_sp);
+#endif
     
+#ifndef LLDB_DISABLE_PYTHON
     lldb::SyntheticChildrenSP
     GetSyntheticChildrenForType (lldb::TypeNameSpecifierImplSP type_sp);
+#endif
     
+#ifndef LLDB_DISABLE_PYTHON
     lldb::SyntheticChildrenSP
     GetSyntheticChildren (ValueObject& valobj,
                           lldb::DynamicValueType use_dynamic)
     {
         return m_categories_map.GetSyntheticChildren(valobj, use_dynamic);
     }
+#endif
     
     bool
     AnyMatches (ConstString type_name,

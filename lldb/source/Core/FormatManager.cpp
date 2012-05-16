@@ -497,6 +497,7 @@ FormatManager::GetFilterForType (lldb::TypeNameSpecifierImplSP type_sp)
     return filter_chosen_sp;
 }
 
+#ifndef LLDB_DISABLE_PYTHON
 lldb::TypeSyntheticImplSP
 FormatManager::GetSyntheticForType (lldb::TypeNameSpecifierImplSP type_sp)
 {
@@ -522,7 +523,9 @@ FormatManager::GetSyntheticForType (lldb::TypeNameSpecifierImplSP type_sp)
     }
     return synth_chosen_sp;
 }
+#endif
 
+#ifndef LLDB_DISABLE_PYTHON
 lldb::SyntheticChildrenSP
 FormatManager::GetSyntheticChildrenForType (lldb::TypeNameSpecifierImplSP type_sp)
 {
@@ -535,7 +538,9 @@ FormatManager::GetSyntheticChildrenForType (lldb::TypeNameSpecifierImplSP type_s
     else
         return lldb::SyntheticChildrenSP(synth_sp.get());
 }
+#endif
 
+#ifndef LLDB_DISABLE_PYTHON
 lldb::SyntheticChildrenSP
 CategoryMap::GetSyntheticChildren (ValueObject& valobj,
                                    lldb::DynamicValueType use_dynamic)
@@ -556,6 +561,7 @@ CategoryMap::GetSyntheticChildren (ValueObject& valobj,
     }
     return lldb::SyntheticChildrenSP();
 }
+#endif
 
 void
 CategoryMap::LoopThrough(CallbackType callback, void* param)

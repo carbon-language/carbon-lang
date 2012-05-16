@@ -74,18 +74,24 @@ public:
     static lldb::TypeSummaryImplSP
     GetSummaryForType (lldb::TypeNameSpecifierImplSP type_sp);
     
+#ifndef LLDB_DISABLE_PYTHON
     static lldb::SyntheticChildrenSP
     GetSyntheticChildrenForType (lldb::TypeNameSpecifierImplSP type_sp);
+#endif
     
     static lldb::TypeFilterImplSP
     GetFilterForType (lldb::TypeNameSpecifierImplSP type_sp);
 
+#ifndef LLDB_DISABLE_PYTHON
     static lldb::TypeSyntheticImplSP
     GetSyntheticForType (lldb::TypeNameSpecifierImplSP type_sp);
+#endif
     
+#ifndef LLDB_DISABLE_PYTHON
     static lldb::SyntheticChildrenSP
     GetSyntheticChildren(ValueObject& valobj,
                          lldb::DynamicValueType use_dynamic);
+#endif
     
     static bool
     AnyMatches(ConstString type_name,
