@@ -421,7 +421,8 @@ class Interactive(cmd.Cmd):
                                 print image
                     if matches_found == 0:
                         for (image_idx, image) in enumerate(crash_log.images):
-                            if string.find(image.get_resolved_path(), image_path) >= 0:
+                            resolved_image_path = image.get_resolved_path()
+                            if resolved_image_path and string.find(image.get_resolved_path(), image_path) >= 0:
                                 print image
         else:
             for crash_log in self.crash_logs:
