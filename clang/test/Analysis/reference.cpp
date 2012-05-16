@@ -1,11 +1,10 @@
 // RUN: %clang_cc1 -analyze -analyzer-checker=core,experimental.core -analyzer-store=region -analyzer-constraints=range -verify -Wno-null-dereference %s
-// XFAIL
 
 typedef typeof(sizeof(int)) size_t;
 void malloc (size_t);
 
 void f1() {
-  int const &i = 3;  // <--- **FIXME** This is currently not being modeled correctly.
+  int const &i = 3;
   int b = i;
 
   int *p = 0;
