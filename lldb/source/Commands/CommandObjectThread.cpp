@@ -543,6 +543,10 @@ public:
                     result.AppendMessageWithFormat ("Process %llu %s\n", process->GetID(), StateAsCString (state));
                     result.SetStatus (eReturnStatusSuccessFinishNoResult);
                 }
+                else
+                {
+                    result.SetStatus (eReturnStatusSuccessContinuingNoResult);
+                }
             }
             else
             {
