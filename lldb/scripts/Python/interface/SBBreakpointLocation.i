@@ -29,6 +29,9 @@ public:
 
     ~SBBreakpointLocation ();
 
+    break_id_t
+    GetID ();
+    
     bool
     IsValid() const;
 
