@@ -14,9 +14,9 @@ protected:
 public:
   void m() {
     int l = 2;
-  };
+  }; // expected-warning{{extra ';' after function definition}}
 
-  template<typename T> void mt(T) { };
+  template<typename T> void mt(T) { }
   ; // expected-warning{{extra ';' inside a class}}
 
   virtual int vf() const volatile = 0;

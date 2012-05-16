@@ -202,6 +202,33 @@ bool Parser::ExpectAndConsumeSemi(unsigned DiagID) {
   return ExpectAndConsume(tok::semi, DiagID);
 }
 
+void Parser::ConsumeExtraSemi(ExtraSemiKind Kind, const char* DiagMsg) {
+  if (!Tok.is(tok::semi)) return;
+
+  // AfterDefinition should only warn when placed on the same line as the
+  // definition.  Otherwise, defer to another semi warning.
+  if (Kind == AfterDefinition && Tok.isAtStartOfLine()) return;
+
+  SourceLocation StartLoc = Tok.getLocation();
+  SourceLocation EndLoc = Tok.getLocation();
+  ConsumeToken();
+
+  while ((Tok.is(tok::semi) && !Tok.isAtStartOfLine())) {
+    EndLoc = Tok.getLocation();
+    ConsumeToken();
+  }
+
+  if (Kind == OutsideFunction && getLangOpts().CPlusPlus0x) {
+    Diag(StartLoc, diag::warn_cxx98_compat_top_level_semi)
+        << FixItHint::CreateRemoval(SourceRange(StartLoc, EndLoc));
+    return;
+  }
+
+  Diag(StartLoc, diag::ext_extra_semi)
+      << Kind << DiagMsg << FixItHint::CreateRemoval(SourceRange(StartLoc,
+                                                                 EndLoc));
+}
+
 //===----------------------------------------------------------------------===//
 // Error recovery.
 //===----------------------------------------------------------------------===//
@@ -582,11 +609,7 @@ Parser::ParseExternalDeclaration(ParsedAttributesWithRange &attrs,
     HandlePragmaPack();
     return DeclGroupPtrTy();
   case tok::semi:
-    Diag(Tok, getLangOpts().CPlusPlus0x ?
-         diag::warn_cxx98_compat_top_level_semi : diag::ext_top_level_semi)
-      << FixItHint::CreateRemoval(Tok.getLocation());
-
-    ConsumeToken();
+    ConsumeExtraSemi(OutsideFunction);
     // TODO: Invoke action for top-level semicolon.
     return DeclGroupPtrTy();
   case tok::r_brace:
