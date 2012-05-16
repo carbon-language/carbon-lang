@@ -1062,12 +1062,11 @@ void PR12206(const char *x) {
 
   // Constrain the length of x.
   if (strlen(x) != value) return;
-
   // Test relational operators.
-  clang_analyzer_eval(strlen(x) >= 2); // expected-warning{{TRUE}}
-  clang_analyzer_eval(2 <= strlen(x)); // expected-warning{{TRUE}}
+  if (strlen(x) < 2) { (void)*(char*)0; } // no-warning
+  if (2 > strlen(x)) { (void)*(char*)0; } // no-warning
 
   // Test equality operators.
-  clang_analyzer_eval(strlen(x) != 1); // expected-warning{{TRUE}}
-  clang_analyzer_eval(1 != strlen(x)); // expected-warning{{TRUE}}
+  if (strlen(x) == 1) { (void)*(char*)0; } // no-warning
+  if (1 == strlen(x)) { (void)*(char*)0; } // no-warning
 }
