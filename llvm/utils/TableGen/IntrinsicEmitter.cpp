@@ -236,10 +236,10 @@ static void EmitTypeGenerate(raw_ostream &OS, const Record *ArgType,
     assert(Number < ArgNo && "Invalid matching number!");
     if (ArgType->isSubClassOf("LLVMExtendedElementVectorType"))
       OS << "VectorType::getExtendedElementVectorType"
-         << "(dyn_cast<VectorType>(Tys[" << Number << "]))";
+         << "(cast<VectorType>(Tys[" << Number << "]))";
     else if (ArgType->isSubClassOf("LLVMTruncatedElementVectorType"))
       OS << "VectorType::getTruncatedElementVectorType"
-         << "(dyn_cast<VectorType>(Tys[" << Number << "]))";
+         << "(cast<VectorType>(Tys[" << Number << "]))";
     else
       OS << "Tys[" << Number << "]";
   } else if (VT == MVT::iAny || VT == MVT::fAny || VT == MVT::vAny) {
