@@ -483,5 +483,9 @@ def TaintTesterChecker : Checker<"TaintTest">,
   HelpText<"Mark tainted symbols as such.">,
   DescFile<"TaintTesterChecker.cpp">;
 
+def ExprInspectionChecker : Checker<"ExprInspection">,
+  HelpText<"Check the analyzer's understanding of expressions">,
+  DescFile<"ExprInspectionChecker.cpp">;
+
 } // end "debug"
 

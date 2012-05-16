@@ -1,4 +1,6 @@
-// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -analyze -disable-free -analyzer-eagerly-assume -analyzer-checker=core,deadcode,experimental.security.taint,debug.TaintTest -verify %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -analyze -disable-free -analyzer-eagerly-assume -analyzer-checker=core,deadcode,experimental.security.taint,debug.TaintTest,debug.ExprInspection -verify %s
+
+void clang_analyzer_eval(int);
 
 // Note, we do need to include headers here, since the analyzer checks if the function declaration is located in a system header.
 #include "system-header-simulator.h"
@@ -73,3 +75,12 @@ int constIntGlobExtern() {
   }
   return 0;
 }
+
+void testAnalyzerEvalIsPure() {
+  extern int someGlobal;
+  if (someGlobal == 0) {
+    clang_analyzer_eval(someGlobal == 0); // expected-warning{{TRUE}}
+    clang_analyzer_eval(someGlobal == 0); // expected-warning{{TRUE}}
+  }
+}
+
