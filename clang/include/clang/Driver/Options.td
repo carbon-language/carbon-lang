@@ -800,6 +800,8 @@ def mrtd : Flag<"-mrtd">, Group<m_Group>, Flags<[CC1Option]>,
 def msmall_data_threshold_EQ : Joined <"-msmall-data-threshold=">, Group<m_Group>;
 def msoft_float : Flag<"-msoft-float">, Group<m_Group>, Flags<[CC1Option]>,
   HelpText<"Use software floating point">;
+def no_implicit_float : Flag<"-no-implicit-float">, Flags<[CC1Option]>,
+  HelpText<"Don't generate implicit floating point instructions">;
 def msse2 : Flag<"-msse2">, Group<m_x86_Features_Group>;
 def msse3 : Flag<"-msse3">, Group<m_x86_Features_Group>;
 def msse4a : Flag<"-msse4a">, Group<m_x86_Features_Group>;

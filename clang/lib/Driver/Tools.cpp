@@ -755,6 +755,9 @@ void Clang::AddARMTargetArgs(const ArgList &Args,
     if (A->getOption().matches(options::OPT_mno_global_merge))
       CmdArgs.push_back("-mno-global-merge");
   }
+
+  if (Args.hasArg(options::OPT_no_implicit_float))
+    CmdArgs.push_back("-no-implicit-float");
 }
 
 // Get default architecture.
