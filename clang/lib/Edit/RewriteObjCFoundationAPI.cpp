@@ -824,8 +824,12 @@ static bool doRewriteToUTF8StringBoxedExpressionHelper(
   if (Arg->isTypeDependent())
     return false;
 
+  ASTContext &Ctx = NS.getASTContext();
+
   const Expr *OrigArg = Arg->IgnoreImpCasts();
   QualType OrigTy = OrigArg->getType();
+  if (OrigTy->isArrayType())
+    OrigTy = Ctx.getArrayDecayedType(OrigTy);
 
   if (const StringLiteral *
         StrE = dyn_cast<StringLiteral>(OrigArg->IgnoreParens())) {
@@ -833,8 +837,6 @@ static bool doRewriteToUTF8StringBoxedExpressionHelper(
     commit.insert(StrE->getLocStart(), "@");
     return true;
   }
-
-  ASTContext &Ctx = NS.getASTContext();
 
   if (const PointerType *PT = OrigTy->getAs<PointerType>()) {
     QualType PointeeType = PT->getPointeeType();

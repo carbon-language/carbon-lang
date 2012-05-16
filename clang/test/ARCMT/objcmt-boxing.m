@@ -95,4 +95,7 @@ void boxString() {
   NSStringEncoding encode;
   s = [NSString stringWithCString:cstr1 encoding:encode];
   s = [NSString stringWithCString:cstr1];
+
+  static const char strarr[] = "coolbox";
+  s = [NSString stringWithUTF8String:strarr];
 }
