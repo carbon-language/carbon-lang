@@ -84,3 +84,6 @@ module MethodPoolA {
 module MethodPoolB {
   header "MethodPoolB.h"
 }
+module import_decl {
+  header "import-decl.h"
+}

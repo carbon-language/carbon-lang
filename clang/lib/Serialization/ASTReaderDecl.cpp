@@ -1249,7 +1249,6 @@ void ASTDeclReader::VisitImportDecl(ImportDecl *D) {
   SourceLocation *StoredLocs = reinterpret_cast<SourceLocation *>(D + 1);
   for (unsigned I = 0, N = Record.back(); I != N; ++I)
     StoredLocs[I] = ReadSourceLocation(Record, Idx);
-  ++Idx;
 }
 
 void ASTDeclReader::VisitAccessSpecDecl(AccessSpecDecl *D) {
