@@ -117,9 +117,6 @@ def main():
         print "This script expects to reside in lldb's test directory."
         sys.exit(-1)
 
-    if not len(sys.argv) > 1:
-        usage()
-
     index = 1
     while index < len(sys.argv):
         if sys.argv[index].startswith('-h'):
@@ -166,7 +163,7 @@ def main():
     os.path.walk(session_dir_path, redo, ".log")
 
     if not redo_specs:
-        print "No failures/errors recorded within the session directory, please specify a different session directory."
+        print "No failures/errors recorded within the session directory, please specify a different session directory.\n"
         usage()
 
     filters = " -f ".join(redo_specs)
