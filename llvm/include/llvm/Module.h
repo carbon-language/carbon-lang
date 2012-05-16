@@ -498,6 +498,13 @@ public:
   static iplist<GlobalAlias> Module::*getSublistAccess(GlobalAlias*) {
     return &Module::AliasList;
   }
+  /// Get the Module's list of named metadata (constant).
+  const NamedMDListType  &getNamedMDList() const      { return NamedMDList; }
+  /// Get the Module's list of named metadata.
+  NamedMDListType        &getNamedMDList()            { return NamedMDList; }
+  static ilist<NamedMDNode> Module::*getSublistAccess(NamedMDNode*) {
+    return &Module::NamedMDList;
+  }
   /// Get the symbol table of global variable and function identifiers
   const ValueSymbolTable &getValueSymbolTable() const { return *ValSymTab; }
   /// Get the Module's symbol table of global variable and function identifiers.
