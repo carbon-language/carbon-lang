@@ -477,10 +477,11 @@ TEST_F(JITTest, ModuleDeletion) {
 }
 #endif // !defined(__arm__)
 
-// ARM and PPC still emit stubs for calls since the target may be too far away
-// to call directly.  This #if can probably be removed when
+// ARM, MIPS and PPC still emit stubs for calls since the target may be
+// too far away to call directly.  This #if can probably be removed when
 // http://llvm.org/PR5201 is fixed.
-#if !defined(__arm__) && !defined(__powerpc__) && !defined(__ppc__)
+#if !defined(__arm__) && !defined(__mips__) && \
+    !defined(__powerpc__) && !defined(__ppc__)
 typedef int (*FooPtr) ();
 
 TEST_F(JITTest, NoStubs) {
@@ -554,9 +555,10 @@ TEST_F(JITTest, FunctionPointersOutliveTheirCreator) {
 #endif
 }
 
-// ARM doesn't have an implementation of replaceMachineCodeForFunction(), so
-// recompileAndRelinkFunction doesn't work.
-#if !defined(__arm__)
+// ARM and MIPS do not have an implementation
+// of replaceMachineCodeForFunction(), so recompileAndRelinkFunction
+// doesn't work.
+#if !defined(__arm__) && !defined(__mips__)
 TEST_F(JITTest, FunctionIsRecompiledAndRelinked) {
   Function *F = Function::Create(TypeBuilder<int(void), false>::get(Context),
                                  GlobalValue::ExternalLinkage, "test", M);
