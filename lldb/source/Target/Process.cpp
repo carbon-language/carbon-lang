@@ -3099,6 +3099,8 @@ Process::ShouldBroadcastEvent (Event *event_ptr)
             // If we are going to stop, then we always broadcast the event.
             // If we aren't going to stop, let the thread plans decide if we're going to report this event.
             // If no thread has an opinion, we don't report it.
+            
+            RefreshStateAfterStop ();
             if (ProcessEventData::GetInterruptedFromEvent (event_ptr))
             {
                 if (log)
@@ -3107,7 +3109,6 @@ Process::ShouldBroadcastEvent (Event *event_ptr)
             }
             else
             {
-                RefreshStateAfterStop ();
 
                 if (m_thread_list.ShouldStop (event_ptr) == false)
                 {
