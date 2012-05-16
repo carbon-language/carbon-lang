@@ -1012,8 +1012,9 @@ ExprResult Sema::ParseObjCProtocolExpression(IdentifierInfo *ProtocolId,
                                              SourceLocation AtLoc,
                                              SourceLocation ProtoLoc,
                                              SourceLocation LParenLoc,
+                                             SourceLocation ProtoIdLoc,
                                              SourceLocation RParenLoc) {
-  ObjCProtocolDecl* PDecl = LookupProtocol(ProtocolId, ProtoLoc);
+  ObjCProtocolDecl* PDecl = LookupProtocol(ProtocolId, ProtoIdLoc);
   if (!PDecl) {
     Diag(ProtoLoc, diag::err_undeclared_protocol) << ProtocolId;
     return true;
@@ -1023,7 +1024,7 @@ ExprResult Sema::ParseObjCProtocolExpression(IdentifierInfo *ProtocolId,
   if (Ty.isNull())
     return true;
   Ty = Context.getObjCObjectPointerType(Ty);
-  return new (Context) ObjCProtocolExpr(Ty, PDecl, AtLoc, RParenLoc);
+  return new (Context) ObjCProtocolExpr(Ty, PDecl, AtLoc, ProtoIdLoc, RParenLoc);
 }
 
 /// Try to capture an implicit reference to 'self'.

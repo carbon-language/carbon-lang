@@ -837,6 +837,7 @@ void ASTStmtWriter::VisitObjCProtocolExpr(ObjCProtocolExpr *E) {
   VisitExpr(E);
   Writer.AddDeclRef(E->getProtocol(), Record);
   Writer.AddSourceLocation(E->getAtLoc(), Record);
+  Writer.AddSourceLocation(E->ProtoLoc, Record);
   Writer.AddSourceLocation(E->getRParenLoc(), Record);
   Code = serialization::EXPR_OBJC_PROTOCOL_EXPR;
 }

@@ -2743,12 +2743,13 @@ Parser::ParseObjCProtocolExpression(SourceLocation AtLoc) {
     return ExprError(Diag(Tok, diag::err_expected_ident));
 
   IdentifierInfo *protocolId = Tok.getIdentifierInfo();
-  ConsumeToken();
+  SourceLocation ProtoIdLoc = ConsumeToken();
 
   T.consumeClose();
 
   return Owned(Actions.ParseObjCProtocolExpression(protocolId, AtLoc, ProtoLoc,
                                                    T.getOpenLocation(),
+                                                   ProtoIdLoc,
                                                    T.getCloseLocation()));
 }
 

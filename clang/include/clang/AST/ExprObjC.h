@@ -421,19 +421,20 @@ public:
 /// The return type is "Protocol*".
 class ObjCProtocolExpr : public Expr {
   ObjCProtocolDecl *TheProtocol;
-  SourceLocation AtLoc, RParenLoc;
+  SourceLocation AtLoc, ProtoLoc, RParenLoc;
 public:
   ObjCProtocolExpr(QualType T, ObjCProtocolDecl *protocol,
-                   SourceLocation at, SourceLocation rp)
+                 SourceLocation at, SourceLocation protoLoc, SourceLocation rp)
     : Expr(ObjCProtocolExprClass, T, VK_RValue, OK_Ordinary, false, false,
            false, false),
-      TheProtocol(protocol), AtLoc(at), RParenLoc(rp) {}
+      TheProtocol(protocol), AtLoc(at), ProtoLoc(protoLoc), RParenLoc(rp) {}
   explicit ObjCProtocolExpr(EmptyShell Empty)
     : Expr(ObjCProtocolExprClass, Empty) {}
 
   ObjCProtocolDecl *getProtocol() const { return TheProtocol; }
   void setProtocol(ObjCProtocolDecl *P) { TheProtocol = P; }
 
+  SourceLocation getProtocolIdLoc() const { return ProtoLoc; }
   SourceLocation getAtLoc() const { return AtLoc; }
   SourceLocation getRParenLoc() const { return RParenLoc; }
   void setAtLoc(SourceLocation L) { AtLoc = L; }
@@ -450,6 +451,9 @@ public:
 
   // Iterators
   child_range children() { return child_range(); }
+
+  friend class ASTStmtReader;
+  friend class ASTStmtWriter;
 };
 
 /// ObjCIvarRefExpr - A reference to an ObjC instance variable.

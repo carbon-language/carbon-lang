@@ -4096,6 +4096,7 @@ public:
                                          SourceLocation AtLoc,
                                          SourceLocation ProtoLoc,
                                          SourceLocation LParenLoc,
+                                         SourceLocation ProtoIdLoc,
                                          SourceLocation RParenLoc);
 
   //===--------------------------------------------------------------------===//

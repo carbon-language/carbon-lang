@@ -90,6 +90,12 @@ public:
     return true;
   }
 
+  bool VisitObjCProtocolExpr(ObjCProtocolExpr *E) {
+    IndexCtx.handleReference(E->getProtocol(), E->getProtocolIdLoc(),
+                             Parent, ParentDC, E, CXIdxEntityRef_Direct);
+    return true;
+  }
+
   bool VisitObjCBoxedExpr(ObjCBoxedExpr *E) {
     if (ObjCMethodDecl *MD = E->getBoxingMethod())
       IndexCtx.handleReference(MD, E->getLocStart(),
