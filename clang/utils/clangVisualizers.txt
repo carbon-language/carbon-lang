@@ -53,6 +53,11 @@ llvm::SmallVectorImpl<*>{
 	)
 }
 
+llvm::SmallString<*>{
+	preview ([$e.BeginX,s])
+	stringview ([$e.BeginX,sb])
+}
+
 llvm::StringRef{
 	preview ([$e.Data,s])
 	stringview ([$e.Data,sb])
