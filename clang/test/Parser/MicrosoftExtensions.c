@@ -29,6 +29,11 @@ void __forceinline InterlockedBitTestAndSet (long *Base, long Bit)
 }
 _inline int foo99() { return 99; }
 
+void test_ms_alignof_alias() {
+  unsigned int s = _alignof(int);
+  s = __builtin_alignof(int);
+}
+
 void *_alloca(int);
 
 void foo() {
