@@ -1241,8 +1241,7 @@ bool RecursiveASTVisitor<Derived>::Traverse##DECL (DECL *D) {   \
 DEF_TRAVERSE_DECL(AccessSpecDecl, { })
 
 DEF_TRAVERSE_DECL(BlockDecl, {
-    TypeSourceInfo *TInfo = D->getSignatureAsWritten();
-    if (TInfo)
+    if (TypeSourceInfo *TInfo = D->getSignatureAsWritten())
       TRY_TO(TraverseTypeLoc(TInfo->getTypeLoc()));
     TRY_TO(TraverseStmt(D->getBody()));
     // This return statement makes sure the traversal of nodes in
@@ -2130,7 +2129,10 @@ DEF_TRAVERSE_STMT(ExtVectorElementExpr, { })
 DEF_TRAVERSE_STMT(GNUNullExpr, { })
 DEF_TRAVERSE_STMT(ImplicitValueInitExpr, { })
 DEF_TRAVERSE_STMT(ObjCBoolLiteralExpr, { })
-DEF_TRAVERSE_STMT(ObjCEncodeExpr, { })
+DEF_TRAVERSE_STMT(ObjCEncodeExpr, {
+  if (TypeSourceInfo *TInfo = S->getEncodedTypeSourceInfo())
+    TRY_TO(TraverseTypeLoc(TInfo->getTypeLoc()));
+})
 DEF_TRAVERSE_STMT(ObjCIsaExpr, { })
 DEF_TRAVERSE_STMT(ObjCIvarRefExpr, { })
 DEF_TRAVERSE_STMT(ObjCMessageExpr, { })
