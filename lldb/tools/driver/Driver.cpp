@@ -135,7 +135,7 @@ Driver::~Driver ()
 void
 Driver::CloseIOChannelFile ()
 {
-    // Write and End of File sequence to the file descriptor to ensure any
+    // Write an End of File sequence to the file descriptor to ensure any
     // read functions can exit.
     char eof_str[] = "\x04";
     ::write (m_editline_pty.GetMasterFileDescriptor(), eof_str, strlen(eof_str));
