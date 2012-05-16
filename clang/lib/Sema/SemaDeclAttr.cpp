@@ -2489,26 +2489,19 @@ enum FormatAttrKind {
 /// getFormatAttrKind - Map from format attribute names to supported format
 /// types.
 static FormatAttrKind getFormatAttrKind(StringRef Format) {
-  // Check for formats that get handled specially.
-  if (Format == "NSString")
-    return NSStringFormat;
-  if (Format == "CFString")
-    return CFStringFormat;
-  if (Format == "strftime")
-    return StrftimeFormat;
+  return llvm::StringSwitch<FormatAttrKind>(Format)
+    // Check for formats that get handled specially.
+    .Case("NSString", NSStringFormat)
+    .Case("CFString", CFStringFormat)
+    .Case("strftime", StrftimeFormat)
 
-  // Otherwise, check for supported formats.
-  if (Format == "scanf" || Format == "printf" || Format == "printf0" ||
-      Format == "strfmon" || Format == "cmn_err" || Format == "vcmn_err" ||
-      Format == "zcmn_err" ||
-      Format == "kprintf")  // OpenBSD.
-    return SupportedFormat;
+    // Otherwise, check for supported formats.
+    .Cases("scanf", "printf", "printf0", "strfmon", SupportedFormat)
+    .Cases("cmn_err", "vcmn_err", "zcmn_err", SupportedFormat)
+    .Case("kprintf", SupportedFormat) // OpenBSD.
 
-  if (Format == "gcc_diag" || Format == "gcc_cdiag" ||
-      Format == "gcc_cxxdiag" || Format == "gcc_tdiag")
-    return IgnoredFormat;
-  
-  return InvalidFormat;
+    .Cases("gcc_diag", "gcc_cdiag", "gcc_cxxdiag", "gcc_tdiag", IgnoredFormat)
+    .Default(InvalidFormat);
 }
 
 /// Handle __attribute__((init_priority(priority))) attributes based on
