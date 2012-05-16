@@ -1326,6 +1326,7 @@ CommandInterpreter::HandleCommand (const char *command_line,
     StreamString revised_command_line;
     size_t actual_cmd_name_len = 0;
     std::string next_word;
+    StringList matches;
     while (!done)
     {
         char quote_char = '\0';
@@ -1346,7 +1347,7 @@ CommandInterpreter::HandleCommand (const char *command_line,
             }
             else
             {
-                cmd_obj = GetCommandObject (next_word.c_str());
+                cmd_obj = GetCommandObject (next_word.c_str(), &matches);
                 if (cmd_obj)
                 {
                     actual_cmd_name_len += next_word.length();
@@ -1392,7 +1393,26 @@ CommandInterpreter::HandleCommand (const char *command_line,
 
         if (cmd_obj == NULL)
         {
-            result.AppendErrorWithFormat ("'%s' is not a valid command.\n", next_word.c_str());
+            uint32_t num_matches = matches.GetSize();
+            if (matches.GetSize() > 1) {
+                std::string error_msg;
+                error_msg.assign ("Ambiguous command '");
+                error_msg.append(next_word.c_str());
+                error_msg.append ("'.");
+
+                error_msg.append (" Possible matches:");
+
+                for (uint32_t i = 0; i < num_matches; ++i) {
+                    error_msg.append ("\n\t");
+                    error_msg.append (matches.GetStringAtIndex(i));
+                }
+                error_msg.append ("\n");
+                result.AppendRawError (error_msg.c_str(), error_msg.size());
+            } else {
+                // We didn't have only one match, otherwise we wouldn't get here.
+                assert(num_matches == 0);
+                result.AppendErrorWithFormat ("'%s' is not a valid command.\n", next_word.c_str());
+            }
             result.SetStatus (eReturnStatusFailed);
             return false;
         }

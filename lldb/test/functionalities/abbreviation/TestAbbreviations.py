@@ -30,9 +30,15 @@ class AbbreviationsTestCase(TestBase):
                     COMMAND_FAILED_AS_EXPECTED, error = True,
                     substrs = ["error: 'gurp' is not a valid command."])
 
+        # Only one matching command: execute it.
         self.expect("h",
                     startstr = "The following is a list of built-in, permanent debugger commands:")
 
+        # Several matching commands: list them and error out.
+        self.expect("t",
+                    COMMAND_FAILED_AS_EXPECTED, error = True,
+                    substrs = ["Ambiguous command 't'. Possible matches:",
+                               "target", "thread", "type"])
 
         self.expect("com sou ./change_prompt.lldb",
                     patterns = ["Executing commands in '.*change_prompt.lldb'"])
