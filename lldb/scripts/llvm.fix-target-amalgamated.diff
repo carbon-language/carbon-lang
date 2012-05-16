@@ -41,6 +41,25 @@ Index: lib/Target/ARM/ARMInstrNEON.td
                       []>;
  
  // Vector Move Operations.
+Index: lib/Target/ARM/InstPrinter/ARMInstPrinter.cpp
+===================================================================
+--- lib/Target/ARM/InstPrinter/ARMInstPrinter.cpp	(revision 152265)
++++ lib/Target/ARM/InstPrinter/ARMInstPrinter.cpp	(working copy)
+@@ -212,12 +212,12 @@
+   } else {
+     assert(Op.isExpr() && "unknown operand kind in printOperand");
+     // If a symbolic branch target was added as a constant expression then print
+-    // that address in hex.
++    // that address in hex. And only print 32 unsigned bits for the address.
+     const MCConstantExpr *BranchTarget = dyn_cast<MCConstantExpr>(Op.getExpr());
+     int64_t Address;
+     if (BranchTarget && BranchTarget->EvaluateAsAbsolute(Address)) {
+       O << "0x";
+-      O.write_hex(Address);
++      O.write_hex((uint32_t)Address);
+     }
+     else {
+       // Otherwise, just print the expression.
 Index: lib/Target/ARM/ARMInstrThumb2.td
 ===================================================================
 --- lib/Target/ARM/ARMInstrThumb2.td	(revision 152265)
@@ -53,41 +72,6 @@ Index: lib/Target/ARM/ARMInstrThumb2.td
  }
  
  let isNotDuplicable = 1, isIndirectBranch = 1 in {
-Index: lib/Target/ARM/ARMInstrThumb.td
-===================================================================
---- lib/Target/ARM/ARMInstrThumb.td	(revision 152265)
-+++ lib/Target/ARM/ARMInstrThumb.td	(working copy)
-@@ -413,11 +413,11 @@
-                   "bl${p}\t$func",
-                   [(ARMtcall tglobaladdr:$func)]>,
-              Requires<[IsThumb, IsNotIOS]> {
--    bits<22> func;
--    let Inst{26} = func{21};
-+    bits<24> func;
-+    let Inst{26} = func{23};
-     let Inst{25-16} = func{20-11};
--    let Inst{13} = 1;
--    let Inst{11} = 1;
-+    let Inst{13} = func{22};
-+    let Inst{11} = func{21};
-     let Inst{10-0} = func{10-0};
-   }
- 
-@@ -427,10 +427,11 @@
-                    "blx${p}\t$func",
-                    [(ARMcall tglobaladdr:$func)]>,
-               Requires<[IsThumb, HasV5T, IsNotIOS]> {
--    bits<21> func;
-+    bits<24> func;
-+    let Inst{26} = func{23};
-     let Inst{25-16} = func{20-11};
--    let Inst{13} = 1;
--    let Inst{11} = 1;
-+    let Inst{13} = func{22};
-+    let Inst{11} = func{21};
-     let Inst{10-1} = func{10-1};
-     let Inst{0} = 0; // func{0} is assumed zero
-   }
 Index: lib/Target/ARM/MCTargetDesc/ARMAsmBackend.cpp
 ===================================================================
 --- lib/Target/ARM/MCTargetDesc/ARMAsmBackend.cpp	(revision 152265)
@@ -189,6 +173,41 @@ Index: lib/Target/ARM/MCTargetDesc/ARMAsmBackend.cpp
    }
    case ARM::fixup_arm_thumb_cp:
      // Offset by 4, and don't encode the low two bits. Two bytes of that
+Index: lib/Target/ARM/ARMInstrThumb.td
+===================================================================
+--- lib/Target/ARM/ARMInstrThumb.td	(revision 152265)
++++ lib/Target/ARM/ARMInstrThumb.td	(working copy)
+@@ -413,11 +413,11 @@
+                   "bl${p}\t$func",
+                   [(ARMtcall tglobaladdr:$func)]>,
+              Requires<[IsThumb, IsNotIOS]> {
+-    bits<22> func;
+-    let Inst{26} = func{21};
++    bits<24> func;
++    let Inst{26} = func{23};
+     let Inst{25-16} = func{20-11};
+-    let Inst{13} = 1;
+-    let Inst{11} = 1;
++    let Inst{13} = func{22};
++    let Inst{11} = func{21};
+     let Inst{10-0} = func{10-0};
+   }
+ 
+@@ -427,10 +427,11 @@
+                    "blx${p}\t$func",
+                    [(ARMcall tglobaladdr:$func)]>,
+               Requires<[IsThumb, HasV5T, IsNotIOS]> {
+-    bits<21> func;
++    bits<24> func;
++    let Inst{26} = func{23};
+     let Inst{25-16} = func{20-11};
+-    let Inst{13} = 1;
+-    let Inst{11} = 1;
++    let Inst{13} = func{22};
++    let Inst{11} = func{21};
+     let Inst{10-1} = func{10-1};
+     let Inst{0} = 0; // func{0} is assumed zero
+   }
 Index: lib/Target/ARM/Disassembler/ARMDisassembler.cpp
 ===================================================================
 --- lib/Target/ARM/Disassembler/ARMDisassembler.cpp	(revision 152265)
