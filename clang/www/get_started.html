@@ -83,15 +83,12 @@ follows:</p>
   </li>
 
   <li>If you intend to work on Clang C++ support, you may need to tell it how
-      to find your C++ standard library headers.  If Clang cannot find your 
-      system libstdc++ headers, please follow these instructions:
-  <ul>
-    <li>'<tt>gcc -v -x c++ /dev/null -fsyntax-only</tt>' to get the
-    path.</li>
-    <li>Look for the comment "FIXME: temporary hack:
-    hard-coded paths" in <tt>clang/lib/Frontend/InitHeaderSearch.cpp</tt> and
-    change the lines below to include that path.</li>
-  </ul>
+      to find your C++ standard library headers. In general, Clang will detect
+      the best version of libstdc++ headers available and use them - it will
+      look both for system installations of libstdc++ as well as installations
+      adjacent to Clang itself. If your configuration fits neither of these
+      scenarios, you can use the <tt>--with-gcc-toolchain</tt> configure option
+      to tell Clang where the gcc containing the desired libstdc++ is installed.
   </li>
   <li>Try it out (assuming you add llvm/Debug+Asserts/bin to your path):
   <ul>
