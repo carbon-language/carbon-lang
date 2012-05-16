@@ -506,12 +506,6 @@ protected:
     bool
     CheckIfTopInputReaderIsDone ();
     
-    void
-    DisconnectInput()
-    {
-        m_input_comm.Clear ();
-    }
-
     SourceManager::SourceFileCache &
     GetSourceFileCache ()
     {

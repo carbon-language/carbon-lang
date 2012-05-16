@@ -387,8 +387,14 @@ Debugger::Clear()
         }
     }
     BroadcasterManager::Clear ();
-    DisconnectInput();
-
+    
+    // Close the input file _before_ we close the input read communications class
+    // as it does NOT own the input file, our m_input_file does.
+    GetInputFile().Close ();
+    // Now that we have closed m_input_file, we can now tell our input communication
+    // class to close down. Its read thread should quickly exit after we close
+    // the input file handle above.
+    m_input_comm.Clear ();
 }
 
 bool
