@@ -13,6 +13,7 @@
 #include "tsan_symbolize.h"
 #include "tsan_mman.h"
 #include "tsan_rtl.h"
+#include "tsan_platform.h"
 
 #include <unistd.h>
 #include <stdlib.h>
@@ -26,29 +27,34 @@
 namespace __tsan {
 
 struct ModuleDesc {
-  ModuleDesc *next;
   const char *fullname;
   const char *name;
   uptr base;
-  uptr end;
   int inp_fd;
   int out_fd;
 };
 
+struct SectionDesc {
+  SectionDesc *next;
+  ModuleDesc *module;
+  uptr base;
+  uptr end;
+};
+
 struct DlIteratePhdrCtx {
-  ModuleDesc *modules;
+  SectionDesc *sections;
   bool is_first;
 };
 
-static void InitModule(ModuleDesc *m) {
-  int outfd[2];
-  if (pipe(outfd)) {
-    Printf("ThreadSanitizer: pipe() failed (%d)\n", errno);
+static void NOINLINE InitModule(ModuleDesc *m) {
+  int outfd[2] = {};
+  if (pipe(&outfd[0])) {
+    Printf("ThreadSanitizer: outfd pipe() failed (%d)\n", errno);
     Die();
   }
-  int infd[2];
-  if (pipe(infd)) {
-    Printf("ThreadSanitizer: pipe() failed (%d)\n", errno);
+  int infd[2] = {};
+  if (pipe(&infd[0])) {
+    Printf("ThreadSanitizer: infd pipe() failed (%d)\n", errno);
     Die();
   }
   int pid = fork();
@@ -85,45 +91,51 @@ static int dl_iterate_phdr_cb(dl_phdr_info *info, size_t size, void *arg) {
     return 0;
   ModuleDesc *m = (ModuleDesc*)internal_alloc(MBlockReportStack,
                                               sizeof(ModuleDesc));
-  m->next = ctx->modules;
-  ctx->modules = m;
   m->fullname = internal_strdup(info->dlpi_name);
   m->name = strrchr(m->fullname, '/');  // FIXME: internal_strrchr
   if (m->name)
     m->name += 1;
   else
     m->name = m->fullname;
-  m->base = (uptr)-1;
-  m->end = 0;
+  m->base = (uptr)info->dlpi_addr;
   m->inp_fd = -1;
   m->out_fd = -1;
+  DPrintf("Module %s %lx\n", m->name, m->base);
   for (int i = 0; i < info->dlpi_phnum; i++) {
-    uptr base1 = info->dlpi_addr + info->dlpi_phdr[i].p_vaddr;
-    uptr end1 = base1 + info->dlpi_phdr[i].p_memsz;
-    if (m->base > base1)
-      m->base = base1;
-    if (m->end < end1)
-      m->end = end1;
+    const Elf64_Phdr *s = &info->dlpi_phdr[i];
+    DPrintf("  Section p_type=%llx p_offset=%llx p_vaddr=%llx p_paddr=%llx"
+        " p_filesz=%llx p_memsz=%llx p_flags=%llx p_align=%llx\n",
+        (u64)s->p_type, (u64)s->p_offset, (u64)s->p_vaddr, (u64)s->p_paddr,
+        (u64)s->p_filesz, (u64)s->p_memsz, (u64)s->p_flags, (u64)s->p_align);
+    if (s->p_type != PT_LOAD)
+      continue;
+    SectionDesc *sec = (SectionDesc*)internal_alloc(MBlockReportStack,
+                                                    sizeof(SectionDesc));
+    sec->module = m;
+    sec->base = info->dlpi_addr + s->p_vaddr;
+    sec->end = sec->base + s->p_memsz;
+    sec->next = ctx->sections;
+    ctx->sections = sec;
+    DPrintf("  Section %lx-%lx\n", sec->base, sec->end);
   }
-  DPrintf("Module %s %lx-%lx\n", m->name, m->base, m->end);
   return 0;
 }
 
-static ModuleDesc *InitModules() {
+static SectionDesc *InitSections() {
   DlIteratePhdrCtx ctx = {0, true};
   dl_iterate_phdr(dl_iterate_phdr_cb, &ctx);
-  return ctx.modules;
+  return ctx.sections;
 }
 
-static ModuleDesc *GetModuleDesc(uptr addr) {
-  static ModuleDesc *modules = 0;
-  if (modules == 0)
-    modules = InitModules();
-  for (ModuleDesc *m = modules; m; m = m->next) {
-    if (addr >= m->base && addr < m->end) {
-      if (m->inp_fd == -1)
-        InitModule(m);
-      return m;
+static SectionDesc *GetSectionDesc(uptr addr) {
+  static SectionDesc *sections = 0;
+  if (sections == 0)
+    sections = InitSections();
+  for (SectionDesc *s = sections; s; s = s->next) {
+    if (addr >= s->base && addr < s->end) {
+      if (s->module->inp_fd == -1)
+        InitModule(s->module);
+      return s;
     }
   }
   return 0;
@@ -138,20 +150,23 @@ static ReportStack *NewFrame(uptr addr) {
 }
 
 ReportStack *SymbolizeCode(uptr addr) {
-  ModuleDesc *m = GetModuleDesc(addr);
-  if (m == 0)
-    NewFrame(addr);
+  SectionDesc *s = GetSectionDesc(addr);
+  if (s == 0)
+    return NewFrame(addr);
+  ModuleDesc *m = s->module;
   uptr offset = addr - m->base;
   char addrstr[32];
   Snprintf(addrstr, sizeof(addrstr), "%p\n", (void*)offset);
-  if (0 >= write(m->out_fd, addrstr, internal_strlen(addrstr))) {
-    Printf("ThreadSanitizer: can't write from symbolizer\n");
+  if (0 >= internal_write(m->out_fd, addrstr, internal_strlen(addrstr))) {
+    Printf("ThreadSanitizer: can't write from symbolizer (%d, %d)\n",
+        m->out_fd, errno);
     Die();
   }
   InternalScopedBuf<char> func(1024);
-  ssize_t len = read(m->inp_fd, func, func.Size() - 1);
+  ssize_t len = internal_read(m->inp_fd, func, func.Size() - 1);
   if (len <= 0) {
-    Printf("ThreadSanitizer: can't read from symbolizer\n");
+    Printf("ThreadSanitizer: can't read from symbolizer (%d, %d)\n",
+        m->inp_fd, errno);
     Die();
   }
   func.Ptr()[len] = 0;
