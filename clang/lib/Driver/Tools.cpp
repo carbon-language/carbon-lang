@@ -1304,6 +1304,27 @@ static void addAsanRTLinux(const ToolChain &TC, const ArgList &Args,
   }
 }
 
+/// If ThreadSanitizer is enabled, add appropriate linker flags (Linux).
+/// This needs to be called before we add the C run-time (malloc, etc).
+static void addTsanRTLinux(const ToolChain &TC, const ArgList &Args,
+                           ArgStringList &CmdArgs) {
+  if (!Args.hasFlag(options::OPT_fthread_sanitizer,
+                    options::OPT_fno_thread_sanitizer, false))
+    return;
+  if (!Args.hasArg(options::OPT_shared)) {
+    // LibTsan is "libclang_rt.tsan-<ArchName>.a" in the Linux library
+    // resource directory.
+    SmallString<128> LibTsan(TC.getDriver().ResourceDir);
+    llvm::sys::path::append(LibTsan, "lib", "linux",
+                            (Twine("libclang_rt.tsan-") +
+                             TC.getArchName() + ".a"));
+    CmdArgs.push_back(Args.MakeArgString(LibTsan));
+    CmdArgs.push_back("-lpthread");
+    CmdArgs.push_back("-ldl");
+    CmdArgs.push_back("-export-dynamic");
+  }
+}
+
 static bool shouldUseFramePointer(const ArgList &Args,
                                   const llvm::Triple &Triple) {
   if (Arg *A = Args.getLastArg(options::OPT_fno_omit_frame_pointer,
@@ -5330,6 +5351,7 @@ void linuxtools::Link::ConstructJob(Compilation &C, const JobAction &JA,
 
   // Call this before we add the C run-time.
   addAsanRTLinux(getToolChain(), Args, CmdArgs);
+  addTsanRTLinux(getToolChain(), Args, CmdArgs);
 
   if (!Args.hasArg(options::OPT_nostdlib)) {
     if (!Args.hasArg(options::OPT_nodefaultlibs)) {

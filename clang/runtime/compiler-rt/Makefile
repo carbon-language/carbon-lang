@@ -90,7 +90,7 @@ RuntimeLibrary.linux.Configs += \
 endif
 ifeq ($(ARCH),x86_64)
 RuntimeLibrary.linux.Configs += \
-	full-x86_64 profile-x86_64 asan-x86_64
+	full-x86_64 profile-x86_64 asan-x86_64 tsan-x86_64
 endif
 
 endif
