@@ -281,6 +281,18 @@ SBBreakpointLocation::GetDescription (SBStream &description, DescriptionLevel le
     return true;
 }
 
+break_id_t
+SBBreakpointLocation::GetID ()
+{
+    if (m_opaque_sp)
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetBreakpoint().GetTarget().GetAPIMutex());
+        return m_opaque_sp->GetID ();
+    }
+    else
+        return LLDB_INVALID_BREAK_ID;
+}
+
 SBBreakpoint
 SBBreakpointLocation::GetBreakpoint ()
 {

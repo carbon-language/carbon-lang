@@ -28,6 +28,9 @@ public:
     const lldb::SBBreakpointLocation &
     operator = (const lldb::SBBreakpointLocation &rhs);
 
+    break_id_t
+    GetID ();
+    
     bool
     IsValid() const;
 
