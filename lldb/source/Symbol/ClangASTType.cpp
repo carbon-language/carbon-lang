@@ -577,6 +577,8 @@ ClangASTType::GetFormat (clang_type_t clang_type)
     case clang::Type::Typedef:
             return ClangASTType::GetFormat(llvm::cast<clang::TypedefType>(qual_type)->getDecl()->getUnderlyingType().getAsOpaquePtr());
 
+    case clang::Type::Auto:
+            return ClangASTType::GetFormat(llvm::cast<clang::AutoType>(qual_type)->desugar().getAsOpaquePtr());
     case clang::Type::DependentSizedArray:
     case clang::Type::DependentSizedExtVector:
     case clang::Type::UnresolvedUsing:
@@ -586,7 +588,6 @@ ClangASTType::GetFormat (clang_type_t clang_type)
     case clang::Type::TemplateTypeParm:
     case clang::Type::SubstTemplateTypeParm:
     case clang::Type::SubstTemplateTypeParmPack:
-    case clang::Type::Auto:
     case clang::Type::InjectedClassName:
     case clang::Type::DependentName:
     case clang::Type::DependentTemplateSpecialization:

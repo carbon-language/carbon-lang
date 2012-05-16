@@ -260,6 +260,21 @@ ASTResultSynthesizer::SynthesizeBodyResult (CompoundStmt *Body,
         // No auxiliary variable necessary; expression returns void
         return true;
     
+    // In C++11, last_expr can be a LValueToRvalue implicit cast.  Strip that off if that's the
+    // case.
+    
+    do {
+        ImplicitCastExpr *implicit_cast = dyn_cast<ImplicitCastExpr>(last_expr);
+        
+        if (!implicit_cast)
+            break;
+        
+        if (!implicit_cast->getCastKind() == CK_LValueToRValue)
+            break;
+        
+        last_expr = implicit_cast->getSubExpr();
+    } while (0);
+    
     // is_lvalue is used to record whether the expression returns an assignable Lvalue or an
     // Rvalue.  This is relevant because they are handled differently.
     //
@@ -354,7 +369,7 @@ ASTResultSynthesizer::SynthesizeBodyResult (CompoundStmt *Body,
                 
         ExprResult address_of_expr = m_sema->CreateBuiltinUnaryOp(SourceLocation(), UO_AddrOf, last_expr);
         
-        m_sema->AddInitializerToDecl(result_decl, address_of_expr.take(), true, true);
+        m_sema->AddInitializerToDecl(result_decl, address_of_expr.take(), true, false);
     }
     else
     {
@@ -373,7 +388,7 @@ ASTResultSynthesizer::SynthesizeBodyResult (CompoundStmt *Body,
         if (!result_decl)
             return false;
         
-        m_sema->AddInitializerToDecl(result_decl, last_expr, true, true);
+        m_sema->AddInitializerToDecl(result_decl, last_expr, true, false);
     }
     
     DC->addDecl(result_decl);
