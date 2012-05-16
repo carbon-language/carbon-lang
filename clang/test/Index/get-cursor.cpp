@@ -38,6 +38,13 @@ void test() {
   } catch (X e) {
     X x;
   }
+
+  struct LocalS {
+    void meth() {
+      int x;
+      ++x;
+    }
+  };
 }
 
 // RUN: c-index-test -cursor-at=%s:6:4 %s | FileCheck -check-prefix=CHECK-COMPLETION-1 %s
@@ -93,3 +100,6 @@ void test() {
 // RUN: c-index-test -test-load-source-usrs local %s | FileCheck -check-prefix=CHECK-USR %s
 // CHECK-USR: get-cursor.cpp c:get-cursor.cpp@472@F@test#@e Extent=[38:12 - 38:15]
 // CHECK-USR: get-cursor.cpp c:get-cursor.cpp@483@F@test#@x Extent=[39:5 - 39:8]
+
+// RUN: c-index-test -cursor-at=%s:45:9 %s | FileCheck -check-prefix=CHECK-LOCALCLASS %s
+// CHECK-LOCALCLASS: 45:9 DeclRefExpr=x:44:11 Extent=[45:9 - 45:10] Spelling=x ([45:9 - 45:10])
