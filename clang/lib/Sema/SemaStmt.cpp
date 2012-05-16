@@ -768,8 +768,29 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, Stmt *Switch,
 
         if (i != 0 && CaseVals[i].first == CaseVals[i-1].first) {
           // If we have a duplicate, report it.
-          Diag(CaseVals[i].second->getLHS()->getLocStart(),
-               diag::err_duplicate_case) << CaseVals[i].first.toString(10);
+          // First, determine if either case value has a name
+          StringRef PrevString, CurrString;
+          Expr *PrevCase = CaseVals[i-1].second->getLHS()->IgnoreParenCasts();
+          Expr *CurrCase = CaseVals[i].second->getLHS()->IgnoreParenCasts();
+          if (DeclRefExpr *DeclRef = dyn_cast<DeclRefExpr>(PrevCase)) {
+            PrevString = DeclRef->getDecl()->getName();
+          }
+          if (DeclRefExpr *DeclRef = dyn_cast<DeclRefExpr>(CurrCase)) {
+            CurrString = DeclRef->getDecl()->getName();
+          }
+          std::string CaseValStr = CaseVals[i-1].first.toString(10);
+
+          if (PrevString == CurrString)
+            Diag(CaseVals[i].second->getLHS()->getLocStart(),
+                 diag::err_duplicate_case) <<
+                 (PrevString.empty() ? CaseValStr : PrevString.str());
+          else
+            Diag(CaseVals[i].second->getLHS()->getLocStart(),
+                 diag::err_duplicate_case_differing_expr) <<
+                 (PrevString.empty() ? CaseValStr : PrevString.str()) <<
+                 (CurrString.empty() ? CaseValStr : CurrString.str()) <<
+                 CaseValStr;
+
           Diag(CaseVals[i-1].second->getLHS()->getLocStart(),
                diag::note_duplicate_case_prev);
           // FIXME: We really want to remove the bogus case stmt from the

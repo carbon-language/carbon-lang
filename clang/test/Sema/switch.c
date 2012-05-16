@@ -9,7 +9,7 @@ void foo(int X) {
   switch (X) {
   case 42: ;                 // expected-note {{previous case}}
   case 5000000000LL:         // expected-warning {{overflow}}
-  case 42:                   // expected-error {{duplicate case value}}
+  case 42:                   // expected-error {{duplicate case value '42'}}
    ;
 
   case 100 ... 99: ;         // expected-warning {{empty case range}}
@@ -319,4 +319,33 @@ void rdar110822110(Ints i)
                 default:	// expected-warning {{default label in switch which covers all enumeration values}}
                         break;
                 }
+}
+
+// PR9243
+#define TEST19MACRO 5
+void test19(int i) {
+  enum {
+    kTest19Enum1 = 7,
+    kTest19Enum2 = 7
+  };
+  const int a = 3;
+  switch (i) {
+    case 5: // expected-note {{previous case}}
+    case TEST19MACRO: // expected-error {{duplicate case value '5'}}
+
+    case 7: // expected-note {{previous case}}
+    case kTest19Enum1: // expected-error {{duplicate case value: '7' and 'kTest19Enum1' both equal '7'}} \
+                       // expected-note {{previous case}}
+    case kTest19Enum1: // expected-error {{duplicate case value 'kTest19Enum1'}} \
+                       // expected-note {{previous case}}
+    case kTest19Enum2: // expected-error {{duplicate case value: 'kTest19Enum1' and 'kTest19Enum2' both equal '7'}} \
+                       // expected-note {{previous case}}
+    case (int)kTest19Enum2: //expected-error {{duplicate case value 'kTest19Enum2'}}
+
+    case 3: // expected-note {{previous case}}
+    case a: // expected-error {{duplicate case value: '3' and 'a' both equal '3'}} \
+            // expected-note {{previous case}}
+    case a: // expected-error {{duplicate case value 'a'}}
+      break;
+  }
 }
