@@ -4,7 +4,7 @@ ifeq ($(DEBUG), 0)
 endif
 
 # For interception. FIXME: move interception one level higher.
-INCLUDES= -I../../asan
+INCLUDES= -I../..
 EXTRA_CXXFLAGS=-fno-exceptions
 NO_SYSROOT=--sysroot=.
 CXXFLAGS+=$(EXTRA_CXXFLAGS)
@@ -81,7 +81,7 @@ endif
 %.o: %.cc Makefile.old $(LIBTSAN_HEADERS)
 	$(CXX) $(CXXFLAGS) $(INCLUDES) $(NO_SYSROOT) -c $<
 
-%.o: ../../asan/interception/%.cc
+%.o: ../../interception/%.cc
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@ 
 
 libtsan.a: $(LIBTSAN_OBJ)
