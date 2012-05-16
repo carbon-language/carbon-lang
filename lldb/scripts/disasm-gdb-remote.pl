@@ -1749,6 +1749,7 @@ sub dump_stop_reply_data
 	
 		my $key = '';
 		my $value = '';
+		my $comment = '';
         if ($_[0] =~ /[0-9a-fA-F]/ && $_[1] =~ /[0-9a-fA-F]/)
     	{
     		my $reg_num = get8(\@_);
@@ -1780,7 +1781,26 @@ sub dump_stop_reply_data
 			if (length($char) == 0 or $char eq ';' or $char eq '#') { last; }
 			$value .= $char;
 		}
-		printf("\t%*s = %s\n", $max_register_name_len, $key, $value);
+		if ($key eq 'metype')
+		{
+		    our %metype_to_name = (
+		        '1' => ' (EXC_BAD_ACCESS)',
+                '2' => ' (EXC_BAD_INSTRUCTION)',
+                '3' => ' (EXC_ARITHMETIC)',
+                '4' => ' (EXC_EMULATION)',
+                '5' => ' (EXC_SOFTWARE)',
+                '6' => ' (EXC_BREAKPOINT)',
+                '7' => ' (EXC_SYSCALL)',
+                '8' => ' (EXC_MACH_SYSCALL)',
+                '9' => ' (EXC_RPC_ALERT)',
+                '10' => ' (EXC_CRASH)'
+            );
+            if (exists $metype_to_name{$value})
+            {
+                $comment = $metype_to_name{$value};
+            }
+		}
+		printf("\t%*s = %s$comment\n", $max_register_name_len, $key, $value);
 	}
 }
 
@@ -1791,13 +1811,56 @@ sub dump_stop_reply_data
 sub dump_stop_reply_packet
 {
 	my $what = shift(@_);
-	if ($what eq 'S')
+	if ($what eq 'S' or $what eq 'T')
 	{
-		print 'signal ( 0x' . shift(@_) . shift(@_) . " )\n";
-	}
-	elsif ($what eq 'T')
-	{
-		print 'signal ( 0x' . shift(@_) . shift(@_) . " )\n";
+	    my $signo = get8(\@_);
+	    
+	    our %signo_to_name = (
+                '1'  => ' SIGHUP',
+                '2'  => ' SIGINT',
+                '3'  => ' SIGQUIT',
+                '4'  => ' SIGILL',
+                '5'  => ' SIGTRAP',
+                '6'  => ' SIGABRT',
+                '7'  => ' SIGPOLL/SIGEMT',
+                '8'  => ' SIGFPE',
+                '9'  => ' SIGKILL',
+                '10' => ' SIGBUS',
+                '11' => ' SIGSEGV',
+                '12' => ' SIGSYS',
+                '13' => ' SIGPIPE',
+                '14' => ' SIGALRM',
+                '15' => ' SIGTERM',
+                '16' => ' SIGURG',
+                '17' => ' SIGSTOP',
+                '18' => ' SIGTSTP',
+                '19' => ' SIGCONT',
+                '20' => ' SIGCHLD',
+                '21' => ' SIGTTIN',
+                '22' => ' SIGTTOU',
+                '23' => ' SIGIO',
+                '24' => ' SIGXCPU',
+                '25' => ' SIGXFSZ',
+                '26' => ' SIGVTALRM',
+                '27' => ' SIGPROF',
+                '28' => ' SIGWINCH',
+                '29' => ' SIGINFO',
+                '30' => ' SIGUSR1',
+                '31' => ' SIGUSR2',
+                '145' => ' TARGET_EXC_BAD_ACCESS',        # 0x91
+                '146' => ' TARGET_EXC_BAD_INSTRUCTION',   # 0x92
+                '147' => ' TARGET_EXC_ARITHMETIC',        # 0x93
+                '148' => ' TARGET_EXC_EMULATION',         # 0x94
+                '149' => ' TARGET_EXC_SOFTWARE',          # 0x95
+                '150' => ' TARGET_EXC_BREAKPOINT'         # 0x96
+        );
+        my $signo_str = sprintf("%i", $signo);
+        my $signo_name = '';
+	    if (exists $signo_to_name{$signo_str})
+        {
+            $signo_name = $signo_to_name{$signo_str};
+        }
+		printf ("signal (signo=%u$signo_name)\n", $signo);
 		dump_stop_reply_data (@_);
 	}
 	elsif ($what eq 'W')
