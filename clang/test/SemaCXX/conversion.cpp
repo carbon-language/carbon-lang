@@ -81,6 +81,14 @@ void test3() {
   // and avoiding that helps us skip these cases:
 #define NULL_COND(cond) ((cond) ? &a : NULL)
   bool bl2 = NULL_COND(true); // don't warn on NULL conversion through the conditional operator across a macro boundary
+  if (NULL_COND(true))
+    ;
+  while (NULL_COND(true))
+    ;
+  for (; NULL_COND(true); )
+    ;
+  do ;
+  while(NULL_COND(true));
 }
 
 namespace test4 {
