@@ -51,8 +51,6 @@ using namespace llvm;
 
 STATISTIC(NumNVJGenerated, "Number of New Value Jump Instructions created");
 
-cl::opt<int> DebugHexagonNewValueJump("debug-nvj", cl::Hidden, cl::desc(""));
-
 static cl::opt<int>
 DbgNVJCount("nvj-count", cl::init(-1), cl::Hidden, cl::desc(
   "Maximum number of predicated jumps to be converted to New Value Jump"));
