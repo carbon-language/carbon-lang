@@ -289,7 +289,7 @@ DynamicLoaderMacOSXDYLD::FindTargetModuleForDYLDImageInfo (const DYLDImageInfo &
     module_spec.GetUUID() = image_info.uuid;
     ModuleSP module_sp (target_images.FindFirstModule (module_spec));
     
-    if (module_sp)
+    if (module_sp && !module_spec.GetUUID().IsValid() && !module_sp->GetUUID().IsValid())
     {
         // No UUID, we must rely upon the cached module modification 
         // time and the modification time of the file on disk
@@ -301,22 +301,19 @@ DynamicLoaderMacOSXDYLD::FindTargetModuleForDYLDImageInfo (const DYLDImageInfo &
     {
         if (can_create)
         {
-            if (!module_sp)
+            module_sp = m_process->GetTarget().GetSharedModule (module_spec);
+            if (!module_sp || module_sp->GetObjectFile() == NULL)
             {
-                module_sp = m_process->GetTarget().GetSharedModule (module_spec);
-                if (!module_sp || module_sp->GetObjectFile() == NULL)
-                {
-                    const bool add_image_to_target = true;
-                    const bool load_image_sections_in_target = false;
-                    module_sp = m_process->ReadModuleFromMemory (image_info.file_spec,
-                                                                 image_info.address,
-                                                                 add_image_to_target,
-                                                                 load_image_sections_in_target);
-                }
-
-                if (did_create_ptr)
-                    *did_create_ptr = module_sp;
+                const bool add_image_to_target = true;
+                const bool load_image_sections_in_target = false;
+                module_sp = m_process->ReadModuleFromMemory (image_info.file_spec,
+                                                             image_info.address,
+                                                             add_image_to_target,
+                                                             load_image_sections_in_target);
             }
+
+            if (did_create_ptr)
+                *did_create_ptr = module_sp;
         }
     }
     return module_sp;
