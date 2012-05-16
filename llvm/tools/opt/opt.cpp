@@ -104,15 +104,23 @@ StandardLinkOpts("std-link-opts",
 
 static cl::opt<bool>
 OptLevelO1("O1",
-           cl::desc("Optimization level 1. Similar to llvm-gcc -O1"));
+           cl::desc("Optimization level 1. Similar to clang -O1"));
 
 static cl::opt<bool>
 OptLevelO2("O2",
-           cl::desc("Optimization level 2. Similar to llvm-gcc -O2"));
+           cl::desc("Optimization level 2. Similar to clang -O2"));
+
+static cl::opt<bool>
+OptLevelOs("Os",
+           cl::desc("Like -O2 with extra optimizations for size. Similar to clang -Os"));
+
+static cl::opt<bool>
+OptLevelOz("Oz",
+           cl::desc("Like -Os but reduces code size further. Similar to clang -Oz"));
 
 static cl::opt<bool>
 OptLevelO3("O3",
-           cl::desc("Optimization level 3. Similar to llvm-gcc -O3"));
+           cl::desc("Optimization level 3. Similar to clang -O3"));
 
 static cl::opt<std::string>
 TargetTriple("mtriple", cl::desc("Override target triple for module"));
@@ -409,16 +417,21 @@ static inline void addPass(PassManagerBase &PM, Pass *P) {
 ///
 /// OptLevel - Optimization Level
 static void AddOptimizationPasses(PassManagerBase &MPM,FunctionPassManager &FPM,
-                                  unsigned OptLevel) {
+                                  unsigned OptLevel, unsigned SizeLevel) {
   FPM.add(createVerifierPass());                  // Verify that input is correct
 
   PassManagerBuilder Builder;
   Builder.OptLevel = OptLevel;
+  Builder.SizeLevel = SizeLevel;
 
   if (DisableInline) {
     // No inlining pass
   } else if (OptLevel > 1) {
     unsigned Threshold = 225;
+    if (SizeLevel == 1)      // -Os
+      Threshold = 75;
+    else if (SizeLevel == 2) // -Oz
+      Threshold = 25;
     if (OptLevel > 2)
       Threshold = 275;
     Builder.Inliner = createFunctionInliningPass(Threshold);
@@ -571,7 +584,7 @@ int main(int argc, char **argv) {
     Passes.add(TD);
 
   OwningPtr<FunctionPassManager> FPasses;
-  if (OptLevelO1 || OptLevelO2 || OptLevelO3) {
+  if (OptLevelO1 || OptLevelO2 || OptLevelOs || OptLevelOz || OptLevelO3) {
     FPasses.reset(new FunctionPassManager(M.get()));
     if (TD)
       FPasses->add(new TargetData(*TD));
@@ -617,17 +630,27 @@ int main(int argc, char **argv) {
     }
 
     if (OptLevelO1 && OptLevelO1.getPosition() < PassList.getPosition(i)) {
-      AddOptimizationPasses(Passes, *FPasses, 1);
+      AddOptimizationPasses(Passes, *FPasses, 1, 0);
       OptLevelO1 = false;
     }
 
     if (OptLevelO2 && OptLevelO2.getPosition() < PassList.getPosition(i)) {
-      AddOptimizationPasses(Passes, *FPasses, 2);
+      AddOptimizationPasses(Passes, *FPasses, 2, 0);
       OptLevelO2 = false;
     }
 
+    if (OptLevelOs && OptLevelOs.getPosition() < PassList.getPosition(i)) {
+      AddOptimizationPasses(Passes, *FPasses, 2, 1);
+      OptLevelOs = false;
+    }
+
+    if (OptLevelOz && OptLevelOz.getPosition() < PassList.getPosition(i)) {
+      AddOptimizationPasses(Passes, *FPasses, 2, 2);
+      OptLevelOz = false;
+    }
+
     if (OptLevelO3 && OptLevelO3.getPosition() < PassList.getPosition(i)) {
-      AddOptimizationPasses(Passes, *FPasses, 3);
+      AddOptimizationPasses(Passes, *FPasses, 3, 0);
       OptLevelO3 = false;
     }
 
@@ -682,15 +705,21 @@ int main(int argc, char **argv) {
   }
 
   if (OptLevelO1)
-    AddOptimizationPasses(Passes, *FPasses, 1);
+    AddOptimizationPasses(Passes, *FPasses, 1, 0);
 
   if (OptLevelO2)
-    AddOptimizationPasses(Passes, *FPasses, 2);
+    AddOptimizationPasses(Passes, *FPasses, 2, 0);
+
+  if (OptLevelOs)
+    AddOptimizationPasses(Passes, *FPasses, 2, 1);
+
+  if (OptLevelOz)
+    AddOptimizationPasses(Passes, *FPasses, 2, 2);
 
   if (OptLevelO3)
-    AddOptimizationPasses(Passes, *FPasses, 3);
+    AddOptimizationPasses(Passes, *FPasses, 3, 0);
 
-  if (OptLevelO1 || OptLevelO2 || OptLevelO3) {
+  if (OptLevelO1 || OptLevelO2 || OptLevelOs || OptLevelOz || OptLevelO3) {
     FPasses->doInitialization();
     for (Module::iterator F = M->begin(), E = M->end(); F != E; ++F)
       FPasses->run(*F);
