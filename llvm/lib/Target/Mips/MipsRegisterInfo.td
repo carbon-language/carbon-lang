@@ -265,6 +265,13 @@ def CPU64Regs : RegisterClass<"Mips", [i64], 64, (add
   // Reserved
   ZERO_64, AT_64, K0_64, K1_64, GP_64, SP_64, FP_64, RA_64)>;
 
+def CPU16Regs : RegisterClass<"Mips", [i32], 32, (add
+  // Return Values and Arguments
+  V0, V1, A0, A1, A2, A3,
+  // Callee save
+  S0, S1)>;
+
+
 // 64bit fp:
 // * FGR64  - 32 64-bit registers
 // * AFGR64 - 16 32-bit even registers (32-bit FP Mode)

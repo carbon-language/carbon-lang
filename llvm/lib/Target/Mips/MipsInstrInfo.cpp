@@ -189,15 +189,15 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
 
   unsigned Opc = 0;
 
-  if (RC == &Mips::CPURegsRegClass)
+  if (Mips::CPURegsRegClass.hasSubClassEq(RC))
     Opc = IsN64 ? Mips::SW_P8 : Mips::SW;
-  else if (RC == &Mips::CPU64RegsRegClass)
+  else if (Mips::CPU64RegsRegClass.hasSubClassEq(RC))
     Opc = IsN64 ? Mips::SD_P8 : Mips::SD;
-  else if (RC == &Mips::FGR32RegClass)
+  else if (Mips::FGR32RegClass.hasSubClassEq(RC))
     Opc = IsN64 ? Mips::SWC1_P8 : Mips::SWC1;
-  else if (RC == &Mips::AFGR64RegClass)
+  else if (Mips::AFGR64RegClass.hasSubClassEq(RC))
     Opc = Mips::SDC1;
-  else if (RC == &Mips::FGR64RegClass)
+  else if (Mips::FGR64RegClass.hasSubClassEq(RC))
     Opc = IsN64 ? Mips::SDC164_P8 : Mips::SDC164;
 
   assert(Opc && "Register class not handled!");
@@ -216,15 +216,15 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
   MachineMemOperand *MMO = GetMemOperand(MBB, FI, MachineMemOperand::MOLoad);
   unsigned Opc = 0;
 
-  if (RC == &Mips::CPURegsRegClass)
+  if (Mips::CPURegsRegClass.hasSubClassEq(RC))
     Opc = IsN64 ? Mips::LW_P8 : Mips::LW;
-  else if (RC == &Mips::CPU64RegsRegClass)
+  else if (Mips::CPU64RegsRegClass.hasSubClassEq(RC))
     Opc = IsN64 ? Mips::LD_P8 : Mips::LD;
-  else if (RC == &Mips::FGR32RegClass)
+  else if (Mips::FGR32RegClass.hasSubClassEq(RC))
     Opc = IsN64 ? Mips::LWC1_P8 : Mips::LWC1;
-  else if (RC == &Mips::AFGR64RegClass)
+  else if (Mips::AFGR64RegClass.hasSubClassEq(RC))
     Opc = Mips::LDC1;
-  else if (RC == &Mips::FGR64RegClass)
+  else if (Mips::FGR64RegClass.hasSubClassEq(RC))
     Opc = IsN64 ? Mips::LDC164_P8 : Mips::LDC164;
 
   assert(Opc && "Register class not handled!");
