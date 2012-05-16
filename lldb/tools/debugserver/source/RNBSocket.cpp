@@ -189,10 +189,10 @@ RNBSocket::ConnectToService()
     // Disconnect from any previous connections
     Disconnect(false);
 
-    m_fd = ::lockdown_checkin (NULL, NULL);
-    if (m_fd == -1)
+    if (::lockdown_secure_checkin (&m_fd, NULL, NULL, NULL) != kLDESuccess)
     {
-        DNBLogThreadedIf(LOG_RNB_COMM, "::lockdown_checkin(NULL, NULL) failed");
+        DNBLogThreadedIf(LOG_RNB_COMM, "::lockdown_secure_checkin(&m_fd, NULL, NULL, NULL) failed");
+        m_fd = -1;
         return rnb_not_connected;
     }
     m_fd_from_lockdown = true;
