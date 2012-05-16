@@ -1,4 +1,6 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core -analyzer-store region -cfg-add-initializers -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,debug.ExprInspection -analyzer-store region -cfg-add-initializers -verify %s
+
+void clang_analyzer_eval(bool);
 
 class A {
   int x;
@@ -7,8 +9,5 @@ public:
 };
 
 A::A() : x(0) {
-  if (x != 0) {
-    int *p = 0;
-    *p = 0; // no-warning
-  }
+  clang_analyzer_eval(x == 0); // expected-warning{{TRUE}}
 }

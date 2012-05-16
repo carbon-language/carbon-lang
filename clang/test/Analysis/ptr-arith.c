@@ -1,8 +1,7 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=experimental.core.FixedAddr,experimental.core.PointerArithm,experimental.core.PointerSub -analyzer-store=region -verify -triple x86_64-apple-darwin9 %s
-// RUN: %clang_cc1 -analyze -analyzer-checker=experimental.core.FixedAddr,experimental.core.PointerArithm,experimental.core.PointerSub -analyzer-store=region -verify -triple i686-apple-darwin9 %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=experimental.core.FixedAddr,experimental.core.PointerArithm,experimental.core.PointerSub,debug.ExprInspection -analyzer-store=region -verify -triple x86_64-apple-darwin9 %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=experimental.core.FixedAddr,experimental.core.PointerArithm,experimental.core.PointerSub,debug.ExprInspection -analyzer-store=region -verify -triple i686-apple-darwin9 %s
 
-// Used to trigger warnings for unreachable paths.
-#define WARN do { int a, b; int c = &b-&a; } while (0)
+void clang_analyzer_eval(int);
 
 void f1() {
   int a[10];
@@ -67,111 +66,48 @@ void f6(int *p, int *q) {
 void null_operand(int *a) {
 start:
   // LHS is a label, RHS is NULL
-  if (&&start == 0)
-    WARN; // no-warning
-  if (&&start <  0)
-    WARN; // no-warning
-  if (&&start <= 0)
-    WARN; // no-warning
-  if (!(&&start != 0))
-    WARN; // no-warning
-  if (!(&&start >  0))
-    WARN; // no-warning
-  if (!(&&start >= 0))
-    WARN; // no-warning
-  if (!(&&start - 0))
-    WARN; // no-warning
+  clang_analyzer_eval(&&start != 0); // expected-warning{{TRUE}}
+  clang_analyzer_eval(&&start >= 0); // expected-warning{{TRUE}}
+  clang_analyzer_eval(&&start > 0); // expected-warning{{TRUE}}
+  clang_analyzer_eval((&&start - 0) != 0); // expected-warning{{TRUE}}
 
   // LHS is a non-symbolic value, RHS is NULL
-  if (&a == 0)
-    WARN; // no-warning
-  if (&a <  0)
-    WARN; // no-warning
-  if (&a <= 0)
-    WARN; // no-warning
-  if (!(&a != 0))
-    WARN; // no-warning
-  if (!(&a >  0))
-    WARN; // no-warning
-  if (!(&a >= 0))
-    WARN; // no-warning
-
-  if (!(&a - 0)) // expected-warning{{Pointer arithmetic done on non-array variables}}
-    WARN; // no-warning
+  clang_analyzer_eval(&a != 0); // expected-warning{{TRUE}}
+  clang_analyzer_eval(&a >= 0); // expected-warning{{TRUE}}
+  clang_analyzer_eval(&a > 0); // expected-warning{{TRUE}}
+  clang_analyzer_eval((&a - 0) != 0); // expected-warning{{TRUE}} expected-warning{{Pointer arithmetic done on non-array variables}}
 
   // LHS is NULL, RHS is non-symbolic
   // The same code is used for labels and non-symbolic values.
-  if (0 == &a)
-    WARN; // no-warning
-  if (0 >  &a)
-    WARN; // no-warning
-  if (0 >= &a)
-    WARN; // no-warning
-  if (!(0 != &a))
-    WARN; // no-warning
-  if (!(0 <  &a))
-    WARN; // no-warning
-  if (!(0 <= &a))
-    WARN; // no-warning
+  clang_analyzer_eval(0 != &a); // expected-warning{{TRUE}}
+  clang_analyzer_eval(0 <= &a); // expected-warning{{TRUE}}
+  clang_analyzer_eval(0 < &a); // expected-warning{{TRUE}}
 
   // LHS is a symbolic value, RHS is NULL
-  if (a == 0)
-    WARN; // expected-warning{{}}
-  if (a <  0)
-    WARN; // no-warning
-  if (a <= 0)
-    WARN; // expected-warning{{}}
-  if (!(a != 0))
-    WARN; // expected-warning{{}}
-  if (!(a >  0))
-    WARN; // expected-warning{{}}
-  if (!(a >= 0))
-    WARN; // no-warning
-  if (!(a - 0))
-    WARN; // expected-warning{{}}
+  clang_analyzer_eval(a != 0); // expected-warning{{UNKNOWN}}
+  clang_analyzer_eval(a >= 0); // expected-warning{{TRUE}}
+  clang_analyzer_eval(a <= 0); // expected-warning{{UNKNOWN}}
+  clang_analyzer_eval((a - 0) != 0); // expected-warning{{UNKNOWN}}
 
   // LHS is NULL, RHS is a symbolic value
-  if (0 == a)
-    WARN; // expected-warning{{}}
-  if (0 >  a)
-    WARN; // no-warning
-  if (0 >= a)
-    WARN; // expected-warning{{}}
-  if (!(0 != a))
-    WARN; // expected-warning{{}}
-  if (!(0 <  a))
-    WARN; // expected-warning{{}}
-  if (!(0 <= a))
-    WARN; // no-warning
+  clang_analyzer_eval(0 != a); // expected-warning{{UNKNOWN}}
+  clang_analyzer_eval(0 <= a); // expected-warning{{TRUE}}
+  clang_analyzer_eval(0 < a); // expected-warning{{UNKNOWN}}
 }
 
 void const_locs() {
   char *a = (char*)0x1000;
   char *b = (char*)0x1100;
 start:
-  if (a==b)
-    WARN; // no-warning
-  if (!(a!=b))
-    WARN; // no-warning
-  if (a>b)
-    WARN; // no-warning
-  if (b<a)
-    WARN; // no-warning
-  if (a>=b)
-    WARN; // no-warning
-  if (b<=a)
-    WARN; // no-warning
-  if (b-a != 0x100)
-    WARN; // no-warning
+  clang_analyzer_eval(a != b); // expected-warning{{TRUE}}
+  clang_analyzer_eval(a < b); // expected-warning{{TRUE}}
+  clang_analyzer_eval(a <= b); // expected-warning{{TRUE}}
+  clang_analyzer_eval((b-a) == 0x100); // expected-warning{{TRUE}}
 
-  if (&&start == a)
-    WARN; // expected-warning{{}}
-  if (a == &&start)
-    WARN; // expected-warning{{}}
-  if (&a == (char**)a)
-    WARN; // expected-warning{{}}
-  if ((char**)a == &a)
-    WARN; // expected-warning{{}}
+  clang_analyzer_eval(&&start == a); // expected-warning{{UNKNOWN}}
+  clang_analyzer_eval(a == &&start); // expected-warning{{UNKNOWN}}
+  clang_analyzer_eval(&a == (char**)a); // expected-warning{{UNKNOWN}}
+  clang_analyzer_eval((char**)a == &a); // expected-warning{{UNKNOWN}}
 }
 
 void array_matching_types() {
@@ -179,20 +115,10 @@ void array_matching_types() {
   int *a = &array[2];
   int *b = &array[5];
 
-  if (a==b)
-    WARN; // no-warning
-  if (!(a!=b))
-    WARN; // no-warning
-  if (a>b)
-    WARN; // no-warning
-  if (b<a)
-    WARN; // no-warning
-  if (a>=b)
-    WARN; // no-warning
-  if (b<=a)
-    WARN; // no-warning
-  if ((b-a) == 0)
-    WARN; // no-warning
+  clang_analyzer_eval(a != b); // expected-warning{{TRUE}}
+  clang_analyzer_eval(a < b); // expected-warning{{TRUE}}
+  clang_analyzer_eval(a <= b); // expected-warning{{TRUE}}
+  clang_analyzer_eval((b-a) != 0); // expected-warning{{TRUE}}
 }
 
 // This takes a different code path than array_matching_types()
@@ -201,49 +127,22 @@ void array_different_types() {
   int *a = &array[2];
   char *b = (char*)&array[5];
 
-  if (a==b) // expected-warning{{comparison of distinct pointer types}}
-    WARN; // no-warning
-  if (!(a!=b)) // expected-warning{{comparison of distinct pointer types}}
-    WARN; // no-warning
-  if (a>b) // expected-warning{{comparison of distinct pointer types}}
-    WARN; // no-warning
-  if (b<a) // expected-warning{{comparison of distinct pointer types}}
-    WARN; // no-warning
-  if (a>=b) // expected-warning{{comparison of distinct pointer types}}
-    WARN; // no-warning
-  if (b<=a) // expected-warning{{comparison of distinct pointer types}}
-    WARN; // no-warning
+  clang_analyzer_eval(a != b); // expected-warning{{TRUE}} expected-warning{{comparison of distinct pointer types}}
+  clang_analyzer_eval(a < b); // expected-warning{{TRUE}} expected-warning{{comparison of distinct pointer types}}
+  clang_analyzer_eval(a <= b); // expected-warning{{TRUE}} expected-warning{{comparison of distinct pointer types}}
 }
 
 struct test { int x; int y; };
 void struct_fields() {
   struct test a, b;
 
-  if (&a.x == &a.y)
-    WARN; // no-warning
-  if (!(&a.x != &a.y))
-    WARN; // no-warning
-  if (&a.x > &a.y)
-    WARN; // no-warning
-  if (&a.y < &a.x)
-    WARN; // no-warning
-  if (&a.x >= &a.y)
-    WARN; // no-warning
-  if (&a.y <= &a.x)
-    WARN; // no-warning
+  clang_analyzer_eval(&a.x != &a.y); // expected-warning{{TRUE}}
+  clang_analyzer_eval(&a.x < &a.y); // expected-warning{{TRUE}}
+  clang_analyzer_eval(&a.x <= &a.y); // expected-warning{{TRUE}}
 
-  if (&a.x == &b.x)
-    WARN; // no-warning
-  if (!(&a.x != &b.x))
-    WARN; // no-warning
-  if (&a.x > &b.x)
-    WARN; // expected-warning{{}}
-  if (&b.x < &a.x)
-    WARN; // expected-warning{{}}
-  if (&a.x >= &b.x)
-    WARN; // expected-warning{{}}
-  if (&b.x <= &a.x)
-    WARN; // expected-warning{{}}
+  clang_analyzer_eval(&a.x != &b.x); // expected-warning{{TRUE}}
+  clang_analyzer_eval(&a.x > &b.x); // expected-warning{{UNKNOWN}}
+  clang_analyzer_eval(&a.x >= &b.x); // expected-warning{{UNKNOWN}}
 }
 
 void mixed_region_types() {
@@ -251,35 +150,17 @@ void mixed_region_types() {
   int array[2];
   void *a = &array, *b = &s;
 
-  if (&a == &b)
-    WARN; // no-warning
-  if (!(&a != &b))
-    WARN; // no-warning
-  if (&a > &b)
-    WARN; // expected-warning{{}}
-  if (&b < &a)
-    WARN; // expected-warning{{}}
-  if (&a >= &b)
-    WARN; // expected-warning{{}}
-  if (&b <= &a)
-    WARN; // expected-warning{{}}
+  clang_analyzer_eval(&a != &b); // expected-warning{{TRUE}}
+  clang_analyzer_eval(&a > &b); // expected-warning{{UNKNOWN}}
+  clang_analyzer_eval(&a >= &b); // expected-warning{{UNKNOWN}}
 }
 
 void symbolic_region(int *p) {
   int a;
 
-  if (&a == p)
-    WARN; // no-warning
-  if (&a != p)
-    WARN; // expected-warning{{}}
-  if (&a > p)
-    WARN; // expected-warning{{}}
-  if (&a < p)
-    WARN; // expected-warning{{}}
-  if (&a >= p)
-    WARN; // expected-warning{{}}
-  if (&a <= p)
-    WARN; // expected-warning{{}}
+  clang_analyzer_eval(&a != p); // expected-warning{{TRUE}}
+  clang_analyzer_eval(&a > p); // expected-warning{{UNKNOWN}}
+  clang_analyzer_eval(&a >= p); // expected-warning{{UNKNOWN}}
 }
 
 void PR7527 (int *p) {

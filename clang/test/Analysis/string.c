@@ -1,7 +1,7 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,unix.cstring,experimental.unix.cstring,experimental.deadcode.UnreachableCode -analyzer-store=region -Wno-null-dereference -verify %s
-// RUN: %clang_cc1 -analyze -DUSE_BUILTINS -analyzer-checker=core,unix.cstring,experimental.unix.cstring,experimental.deadcode.UnreachableCode -analyzer-store=region -Wno-null-dereference -verify %s
-// RUN: %clang_cc1 -analyze -DVARIANT -analyzer-checker=core,unix.cstring,experimental.unix.cstring,experimental.deadcode.UnreachableCode -analyzer-store=region -Wno-null-dereference -verify %s
-// RUN: %clang_cc1 -analyze -DUSE_BUILTINS -DVARIANT -analyzer-checker=experimental.security.taint,core,unix.cstring,experimental.unix.cstring,experimental.deadcode.UnreachableCode -analyzer-store=region -Wno-null-dereference -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,unix.cstring,experimental.unix.cstring,debug.ExprInspection -analyzer-store=region -Wno-null-dereference -verify %s
+// RUN: %clang_cc1 -analyze -DUSE_BUILTINS -analyzer-checker=core,unix.cstring,experimental.unix.cstring,debug.ExprInspection -analyzer-store=region -Wno-null-dereference -verify %s
+// RUN: %clang_cc1 -analyze -DVARIANT -analyzer-checker=core,unix.cstring,experimental.unix.cstring,debug.ExprInspection -analyzer-store=region -Wno-null-dereference -verify %s
+// RUN: %clang_cc1 -analyze -DUSE_BUILTINS -DVARIANT -analyzer-checker=experimental.security.taint,core,unix.cstring,experimental.unix.cstring,debug.ExprInspection -analyzer-store=region -Wno-null-dereference -verify %s
 
 //===----------------------------------------------------------------------===
 // Declarations
@@ -26,6 +26,9 @@
 
 #define NULL 0
 typedef typeof(sizeof(int)) size_t;
+
+void clang_analyzer_eval(int);
+
 int scanf(const char *restrict format, ...);
 
 //===----------------------------------------------------------------------===
@@ -36,23 +39,20 @@ int scanf(const char *restrict format, ...);
 size_t strlen(const char *s);
 
 void strlen_constant0() {
-  if (strlen("123") != 3)
-    (void)*(char*)0; // no-warning
+  clang_analyzer_eval(strlen("123") == 3); // expected-warning{{TRUE}}
 }
 
 void strlen_constant1() {
   const char *a = "123";
-  if (strlen(a) != 3)
-    (void)*(char*)0; // no-warning
+  clang_analyzer_eval(strlen(a) == 3); // expected-warning{{TRUE}}
 }
 
 void strlen_constant2(char x) {
   char a[] = "123";
-  if (strlen(a) != 3)
-    (void)*(char*)0; // no-warning
+  clang_analyzer_eval(strlen(a) == 3); // expected-warning{{TRUE}}
+
   a[0] = x;
-  if (strlen(a) != 3)
-    (void)*(char*)0; // expected-warning{{null}}
+  clang_analyzer_eval(strlen(a) == 3); // expected-warning{{UNKNOWN}}
 }
 
 size_t strlen_null() {
@@ -78,43 +78,46 @@ void strlen_subregion() {
   size_t a = strlen(z.a);
   z.b[0] = 5;
   size_t b = strlen(z.a);
-  if (a == 0 && b != 0)
-    (void)*(char*)0; // expected-warning{{never executed}}
+  if (a == 0)
+    clang_analyzer_eval(b == 0); // expected-warning{{TRUE}}
 
   use_two_strings(&z);
 
   size_t c = strlen(z.a);
-  if (a == 0 && c != 0)
-    (void)*(char*)0; // expected-warning{{null}}
+  if (a == 0)
+    clang_analyzer_eval(c == 0); // expected-warning{{UNKNOWN}}
 }
 
 extern void use_string(char *);
 void strlen_argument(char *x) {
   size_t a = strlen(x);
   size_t b = strlen(x);
-  if (a == 0 && b != 0)
-    (void)*(char*)0; // expected-warning{{never executed}}
+  if (a == 0)
+    clang_analyzer_eval(b == 0); // expected-warning{{TRUE}}
 
   use_string(x);
 
   size_t c = strlen(x);
-  if (a == 0 && c != 0)
-    (void)*(char*)0; // expected-warning{{null}}  
+  if (a == 0)
+    clang_analyzer_eval(c == 0); // expected-warning{{UNKNOWN}}
 }
 
 extern char global_str[];
 void strlen_global() {
   size_t a = strlen(global_str);
   size_t b = strlen(global_str);
-  if (a == 0 && b != 0)
-    (void)*(char*)0; // expected-warning{{never executed}}
+  if (a == 0) {
+    clang_analyzer_eval(b == 0); // expected-warning{{TRUE}}
+    // Make sure clang_analyzer_eval does not invalidate globals.
+    clang_analyzer_eval(strlen(global_str) == 0); // expected-warning{{TRUE}}    
+  }
 
   // Call a function with unknown effects, which should invalidate globals.
   use_string(0);
 
   size_t c = strlen(global_str);
-  if (a == 0 && c != 0)
-    (void)*(char*)0; // expected-warning{{null}}  
+  if (a == 0)
+    clang_analyzer_eval(c == 0); // expected-warning{{UNKNOWN}}
 }
 
 void strlen_indirect(char *x) {
@@ -122,15 +125,15 @@ void strlen_indirect(char *x) {
   char *p = x;
   char **p2 = &p;
   size_t b = strlen(x);
-  if (a == 0 && b != 0)
-    (void)*(char*)0; // expected-warning{{never executed}}
+  if (a == 0)
+    clang_analyzer_eval(b == 0); // expected-warning{{TRUE}}
 
   extern void use_string_ptr(char*const*);
   use_string_ptr(p2);
 
   size_t c = strlen(x);
-  if (a == 0 && c != 0)
-    (void)*(char*)0; // expected-warning{{null}}
+  if (a == 0)
+    clang_analyzer_eval(c == 0); // expected-warning{{UNKNOWN}}
 }
 
 void strlen_indirect2(char *x) {
@@ -141,15 +144,14 @@ void strlen_indirect2(char *x) {
   use_string_ptr2(p2);
 
   size_t c = strlen(x);
-  if (a == 0 && c != 0)
-    (void)*(char*)0; // expected-warning{{null}}
+  if (a == 0)
+    clang_analyzer_eval(c == 0); // expected-warning{{UNKNOWN}}
 }
 
 void strlen_liveness(const char *x) {
   if (strlen(x) < 5)
     return;
-  if (strlen(x) < 5)
-    (void)*(char*)0; // no-warning
+  clang_analyzer_eval(strlen(x) < 5); // expected-warning{{FALSE}}
 }
 
 //===----------------------------------------------------------------------===
@@ -159,43 +161,35 @@ void strlen_liveness(const char *x) {
 size_t strnlen(const char *s, size_t maxlen);
 
 void strnlen_constant0() {
-  if (strnlen("123", 10) != 3)
-    (void)*(char*)0; // expected-warning{{never executed}}
+  clang_analyzer_eval(strnlen("123", 10) == 3); // expected-warning{{TRUE}}
 }
 
 void strnlen_constant1() {
   const char *a = "123";
-  if (strnlen(a, 10) != 3)
-    (void)*(char*)0; // expected-warning{{never executed}}
+  clang_analyzer_eval(strnlen(a, 10) == 3); // expected-warning{{TRUE}}
 }
 
 void strnlen_constant2(char x) {
   char a[] = "123";
-  if (strnlen(a, 10) != 3)
-    (void)*(char*)0; // expected-warning{{never executed}}
+  clang_analyzer_eval(strnlen(a, 10) == 3); // expected-warning{{TRUE}}
   a[0] = x;
-  if (strnlen(a, 10) != 3)
-    (void)*(char*)0; // expected-warning{{null}}
+  clang_analyzer_eval(strnlen(a, 10) == 3); // expected-warning{{UNKNOWN}}
 }
 
 void strnlen_constant4() {
-  if (strnlen("123456", 3) != 3)
-    (void)*(char*)0; // expected-warning{{never executed}}
+  clang_analyzer_eval(strnlen("123456", 3) == 3); // expected-warning{{TRUE}}
 }
 
 void strnlen_constant5() {
   const char *a = "123456";
-  if (strnlen(a, 3) != 3)
-    (void)*(char*)0; // expected-warning{{never executed}}
+  clang_analyzer_eval(strnlen(a, 3) == 3); // expected-warning{{TRUE}}
 }
 
 void strnlen_constant6(char x) {
   char a[] = "123456";
-  if (strnlen(a, 3) != 3)
-    (void)*(char*)0; // expected-warning{{never executed}}
+  clang_analyzer_eval(strnlen(a, 3) == 3); // expected-warning{{TRUE}}
   a[0] = x;
-  if (strnlen(a, 3) != 3)
-    (void)*(char*)0; // expected-warning{{null}}
+  clang_analyzer_eval(strnlen(a, 3) == 3); // expected-warning{{UNKNOWN}}
 }
 
 size_t strnlen_null() {
@@ -212,10 +206,8 @@ label:
 }
 
 void strnlen_zero() {
-  if (strnlen("abc", 0) != 0)
-    (void)*(char*)0; // expected-warning{{never executed}}
-  if (strnlen(NULL, 0) != 0) // no-warning
-    (void)*(char*)0; // no-warning
+  clang_analyzer_eval(strnlen("abc", 0) == 0); // expected-warning{{TRUE}}
+  clang_analyzer_eval(strnlen(NULL, 0) == 0); // expected-warning{{TRUE}}
 }
 
 size_t strnlen_compound_literal() {
@@ -230,40 +222,26 @@ size_t strnlen_unknown_limit(float f) {
 }
 
 void strnlen_is_not_strlen(char *x) {
-  if (strnlen(x, 10) != strlen(x))
-    (void)*(char*)0; // expected-warning{{null}}
+  clang_analyzer_eval(strnlen(x, 10) == strlen(x)); // expected-warning{{UNKNOWN}}
 }
 
 void strnlen_at_limit(char *x) {
   size_t len = strnlen(x, 10);
-  if (len > 10)
-    (void)*(char*)0; // expected-warning{{never executed}}
-  if (len == 10)
-    (void)*(char*)0; // expected-warning{{null}}
-}
-
-void strnlen_less_than_limit(char *x) {
-  size_t len = strnlen(x, 10);
-  if (len > 10)
-    (void)*(char*)0; // expected-warning{{never executed}}
-  if (len < 10)
-    (void)*(char*)0; // expected-warning{{null}}
+  clang_analyzer_eval(len <= 10); // expected-warning{{TRUE}}
+  clang_analyzer_eval(len == 10); // expected-warning{{UNKNOWN}}
+  clang_analyzer_eval(len < 10); // expected-warning{{UNKNOWN}}
 }
 
 void strnlen_at_actual(size_t limit) {
   size_t len = strnlen("abc", limit);
-  if (len > 3)
-    (void)*(char*)0; // expected-warning{{never executed}}
-  if (len == 3)
-    (void)*(char*)0; // expected-warning{{null}}
-}
-
-void strnlen_less_than_actual(size_t limit) {
-  size_t len = strnlen("abc", limit);
-  if (len > 3)
-    (void)*(char*)0; // expected-warning{{never executed}}
-  if (len < 3)
-    (void)*(char*)0; // expected-warning{{null}}
+  clang_analyzer_eval(len <= 3); // expected-warning{{TRUE}}
+  // This is due to eager assertion in strnlen.
+  if (limit == 0) {
+    clang_analyzer_eval(len == 0); // expected-warning{{TRUE}}
+  } else {
+    clang_analyzer_eval(len == 3); // expected-warning{{UNKNOWN}}
+    clang_analyzer_eval(len < 3); // expected-warning{{UNKNOWN}}
+  }
 }
 
 //===----------------------------------------------------------------------===
@@ -304,14 +282,9 @@ void strcpy_fn_const(char *x) {
 void strcpy_effects(char *x, char *y) {
   char a = x[0];
 
-  if (strcpy(x, y) != x)
-    (void)*(char*)0; // no-warning
-
-  if (strlen(x) != strlen(y))
-    (void)*(char*)0; // no-warning
-
-  if (a != x[0])
-    (void)*(char*)0; // expected-warning{{null}}
+  clang_analyzer_eval(strcpy(x, y) == x); // expected-warning{{TRUE}}
+  clang_analyzer_eval(strlen(x) == strlen(y)); // expected-warning{{TRUE}}
+  clang_analyzer_eval(a == x[0]); // expected-warning{{UNKNOWN}}
 }
 
 void strcpy_overflow(char *y) {
@@ -348,14 +321,9 @@ char *stpcpy(char *restrict s1, const char *restrict s2);
 void stpcpy_effect(char *x, char *y) {
   char a = x[0];
 
-  if (stpcpy(x, y) != &x[strlen(y)])
-    (void)*(char*)0; // no-warning
-
-  if (strlen(x) != strlen(y))
-    (void)*(char*)0; // no-warning
-
-  if (a != x[0])
-    (void)*(char*)0; // expected-warning{{null}}
+  clang_analyzer_eval(stpcpy(x, y) == &x[strlen(y)]); // expected-warning{{TRUE}}
+  clang_analyzer_eval(strlen(x) == strlen(y)); // expected-warning{{TRUE}}
+  clang_analyzer_eval(a == x[0]); // expected-warning{{UNKNOWN}}
 }
 
 void stpcpy_overflow(char *y) {
@@ -409,11 +377,8 @@ void strcat_effects(char *y) {
   if (strlen(y) != 4)
     return;
 
-  if (strcat(x, y) != x)
-    (void)*(char*)0; // no-warning
-
-  if ((int)strlen(x) != (orig_len + strlen(y)))
-    (void)*(char*)0; // no-warning
+  clang_analyzer_eval(strcat(x, y) == x); // expected-warning{{TRUE}}
+  clang_analyzer_eval((int)strlen(x) == (orig_len + strlen(y))); // expected-warning{{TRUE}}
 }
 
 void strcat_overflow_0(char *y) {
@@ -442,29 +407,25 @@ void strcat_no_overflow(char *y) {
 
 void strcat_symbolic_dst_length(char *dst) {
 	strcat(dst, "1234");
-	if (strlen(dst) < 4)
-		(void)*(char*)0; // no-warning
+  clang_analyzer_eval(strlen(dst) >= 4); // expected-warning{{TRUE}}
 }
 
 void strcat_symbolic_src_length(char *src) {
 	char dst[8] = "1234";
 	strcat(dst, src);
-	if (strlen(dst) < 4)
-		(void)*(char*)0; // no-warning
+  clang_analyzer_eval(strlen(dst) >= 4); // expected-warning{{TRUE}}
 }
 
 void strcat_symbolic_dst_length_taint(char *dst) {
   scanf("%s", dst); // Taint data.
   strcat(dst, "1234");
-  if (strlen(dst) < 4)
-    (void)*(char*)0; // no-warning
+  clang_analyzer_eval(strlen(dst) >= 4); // expected-warning{{TRUE}}
 }
 
 void strcat_unknown_src_length(char *src, int offset) {
 	char dst[8] = "1234";
 	strcat(dst, &src[offset]);
-	if (strlen(dst) < 4)
-		(void)*(char*)0; // no-warning
+  clang_analyzer_eval(strlen(dst) >= 4); // expected-warning{{TRUE}}
 }
 
 // There is no strcat_unknown_dst_length because if we can't get a symbolic
@@ -513,14 +474,9 @@ void strncpy_fn(char *x) {
 void strncpy_effects(char *x, char *y) {
   char a = x[0];
 
-  if (strncpy(x, y, 5) != x)
-    (void)*(char*)0; // no-warning
-
-  if (strlen(x) != strlen(y))
-    (void)*(char*)0; // expected-warning{{null}}
-
-  if (a != x[0])
-    (void)*(char*)0; // expected-warning{{null}}
+  clang_analyzer_eval(strncpy(x, y, 5) == x); // expected-warning{{TRUE}}
+  clang_analyzer_eval(strlen(x) == strlen(y)); // expected-warning{{UNKNOWN}}
+  clang_analyzer_eval(a == x[0]); // expected-warning{{UNKNOWN}}
 }
 
 void strncpy_overflow(char *y) {
@@ -562,8 +518,7 @@ void strncpy_exactly_matching_buffer(char *y) {
 
 	// strncpy does not null-terminate, so we have no idea what the strlen is
 	// after this.
-	if (strlen(x) > 4)
-		(void)*(int*)0; // expected-warning{{null}}
+  clang_analyzer_eval(strlen(x) > 4); // expected-warning{{UNKNOWN}}
 }
 
 void strncpy_exactly_matching_buffer2(char *y) {
@@ -574,8 +529,7 @@ void strncpy_exactly_matching_buffer2(char *y) {
 	strncpy(x, y, 4); // no-warning
 
 	// This time, we know that y fits in x anyway.
-	if (strlen(x) > 3)
-		(void)*(int*)0; // no-warning
+  clang_analyzer_eval(strlen(x) <= 3); // expected-warning{{TRUE}}
 }
 
 void strncpy_zero(char *src) {
@@ -628,11 +582,8 @@ void strncat_effects(char *y) {
   if (strlen(y) != 4)
     return;
 
-  if (strncat(x, y, strlen(y)) != x)
-    (void)*(char*)0; // no-warning
-
-  if (strlen(x) != orig_len + strlen(y))
-    (void)*(char*)0; // no-warning
+  clang_analyzer_eval(strncat(x, y, strlen(y)) == x); // expected-warning{{TRUE}}
+  clang_analyzer_eval(strlen(x) == (orig_len + strlen(y))); // expected-warning{{TRUE}}
 }
 
 void strncat_overflow_0(char *y) {
@@ -672,15 +623,13 @@ void strncat_no_overflow_2(char *y) {
 
 void strncat_symbolic_dst_length(char *dst) {
   strncat(dst, "1234", 5);
-  if (strlen(dst) < 4)
-    (void)*(char*)0; // no-warning
+  clang_analyzer_eval(strlen(dst) >= 4); // expected-warning{{TRUE}}
 }
 
 void strncat_symbolic_src_length(char *src) {
   char dst[8] = "1234";
   strncat(dst, src, 3);
-  if (strlen(dst) < 4)
-    (void)*(char*)0; // no-warning
+  clang_analyzer_eval(strlen(dst) >= 4); // expected-warning{{TRUE}}
 
   char dst2[8] = "1234";
   strncat(dst2, src, 4); // expected-warning{{Size argument is greater than the free space in the destination buffer}}
@@ -689,8 +638,7 @@ void strncat_symbolic_src_length(char *src) {
 void strncat_unknown_src_length(char *src, int offset) {
   char dst[8] = "1234";
   strncat(dst, &src[offset], 3);
-  if (strlen(dst) < 4)
-    (void)*(char*)0; // no-warning
+  clang_analyzer_eval(strlen(dst) >= 4); // expected-warning{{TRUE}}
 
   char dst2[8] = "1234";
   strncat(dst2, &src[offset], 4); // expected-warning{{Size argument is greater than the free space in the destination buffer}}
@@ -703,20 +651,18 @@ void strncat_symbolic_limit(unsigned limit) {
   char dst[6] = "1234";
   char src[] = "567";
   strncat(dst, src, limit); // no-warning
-  if (strlen(dst) < 4)
-    (void)*(char*)0; // no-warning
-  if (strlen(dst) == 4)
-    (void)*(char*)0; // expected-warning{{null}}
+
+  clang_analyzer_eval(strlen(dst) >= 4); // expected-warning{{TRUE}}
+  clang_analyzer_eval(strlen(dst) == 4); // expected-warning{{UNKNOWN}}
 }
 
 void strncat_unknown_limit(float limit) {
   char dst[6] = "1234";
   char src[] = "567";
   strncat(dst, src, (size_t)limit); // no-warning
-  if (strlen(dst) < 4)
-    (void)*(char*)0; // no-warning
-  if (strlen(dst) == 4)
-    (void)*(char*)0; // expected-warning{{null}}
+
+  clang_analyzer_eval(strlen(dst) >= 4); // expected-warning{{TRUE}}
+  clang_analyzer_eval(strlen(dst) == 4); // expected-warning{{UNKNOWN}}
 }
 
 void strncat_too_big(char *dst, char *src) {
@@ -746,41 +692,35 @@ void strncat_empty() {
 int strcmp(const char * s1, const char * s2);
 
 void strcmp_constant0() {
-  if (strcmp("123", "123") != 0)
-    (void)*(char*)0; // no-warning
+  clang_analyzer_eval(strcmp("123", "123") == 0); // expected-warning{{TRUE}}
 }
 
 void strcmp_constant_and_var_0() {
   char *x = "123";
-  if (strcmp(x, "123") != 0)
-    (void)*(char*)0; // no-warning
+  clang_analyzer_eval(strcmp(x, "123") == 0); // expected-warning{{TRUE}}
 }
 
 void strcmp_constant_and_var_1() {
   char *x = "123";
-    if (strcmp("123", x) != 0)
-    (void)*(char*)0; // no-warning
+  clang_analyzer_eval(strcmp("123", x) == 0); // expected-warning{{TRUE}}
 }
 
 void strcmp_0() {
   char *x = "123";
   char *y = "123";
-  if (strcmp(x, y) != 0)
-    (void)*(char*)0; // no-warning
+  clang_analyzer_eval(strcmp(x, y) == 0); // expected-warning{{TRUE}}
 }
 
 void strcmp_1() {
   char *x = "234";
   char *y = "123";
-  if (strcmp(x, y) != 1)
-    (void)*(char*)0; // no-warning
+  clang_analyzer_eval(strcmp(x, y) == 1); // expected-warning{{TRUE}}
 }
 
 void strcmp_2() {
   char *x = "123";
   char *y = "234";
-  if (strcmp(x, y) != -1)
-    (void)*(char*)0; // no-warning
+  clang_analyzer_eval(strcmp(x, y) == -1); // expected-warning{{TRUE}}
 }
 
 void strcmp_null_0() {
@@ -798,39 +738,33 @@ void strcmp_null_1() {
 void strcmp_diff_length_0() {
   char *x = "12345";
   char *y = "234";
-  if (strcmp(x, y) != -1)
-    (void)*(char*)0; // no-warning
+  clang_analyzer_eval(strcmp(x, y) == -1); // expected-warning{{TRUE}}
 }
 
 void strcmp_diff_length_1() {
   char *x = "123";
   char *y = "23456";
-  if (strcmp(x, y) != -1)
-    (void)*(char*)0; // no-warning
+  clang_analyzer_eval(strcmp(x, y) == -1); // expected-warning{{TRUE}}
 }
 
 void strcmp_diff_length_2() {
   char *x = "12345";
   char *y = "123";
-  if (strcmp(x, y) != 1)
-    (void)*(char*)0; // no-warning
+  clang_analyzer_eval(strcmp(x, y) == 1); // expected-warning{{TRUE}}
 }
 
 void strcmp_diff_length_3() {
   char *x = "123";
   char *y = "12345";
-  if (strcmp(x, y) != -1)
-    (void)*(char*)0; // no-warning
+  clang_analyzer_eval(strcmp(x, y) == -1); // expected-warning{{TRUE}}
 }
 
 void strcmp_embedded_null () {
-	if (strcmp("\0z", "\0y") != 0)
-		(void)*(char*)0; // no-warning
+	clang_analyzer_eval(strcmp("\0z", "\0y") == 0); // expected-warning{{TRUE}}
 }
 
 void strcmp_unknown_arg (char *unknown) {
-	if (strcmp(unknown, unknown) != 0)
-		(void)*(char*)0; // no-warning
+	clang_analyzer_eval(strcmp(unknown, unknown) == 0); // expected-warning{{TRUE}}
 }
 
 //===----------------------------------------------------------------------===
@@ -841,41 +775,35 @@ void strcmp_unknown_arg (char *unknown) {
 int strncmp(const char *s1, const char *s2, size_t n);
 
 void strncmp_constant0() {
-  if (strncmp("123", "123", 3) != 0)
-    (void)*(char*)0; // no-warning
+  clang_analyzer_eval(strncmp("123", "123", 3) == 0); // expected-warning{{TRUE}}
 }
 
 void strncmp_constant_and_var_0() {
   char *x = "123";
-  if (strncmp(x, "123", 3) != 0)
-    (void)*(char*)0; // no-warning
+  clang_analyzer_eval(strncmp(x, "123", 3) == 0); // expected-warning{{TRUE}}
 }
 
 void strncmp_constant_and_var_1() {
   char *x = "123";
-  if (strncmp("123", x, 3) != 0)
-    (void)*(char*)0; // no-warning
+  clang_analyzer_eval(strncmp("123", x, 3) == 0); // expected-warning{{TRUE}}
 }
 
 void strncmp_0() {
   char *x = "123";
   char *y = "123";
-  if (strncmp(x, y, 3) != 0)
-    (void)*(char*)0; // no-warning
+  clang_analyzer_eval(strncmp(x, y, 3) == 0); // expected-warning{{TRUE}}
 }
 
 void strncmp_1() {
   char *x = "234";
   char *y = "123";
-  if (strncmp(x, y, 3) != 1)
-    (void)*(char*)0; // no-warning
+  clang_analyzer_eval(strncmp(x, y, 3) == 1); // expected-warning{{TRUE}}
 }
 
 void strncmp_2() {
   char *x = "123";
   char *y = "234";
-  if (strncmp(x, y, 3) != -1)
-    (void)*(char*)0; // no-warning
+  clang_analyzer_eval(strncmp(x, y, 3) == -1); // expected-warning{{TRUE}}
 }
 
 void strncmp_null_0() {
@@ -893,55 +821,47 @@ void strncmp_null_1() {
 void strncmp_diff_length_0() {
   char *x = "12345";
   char *y = "234";
-  if (strncmp(x, y, 5) != -1)
-    (void)*(char*)0; // no-warning
+  clang_analyzer_eval(strncmp(x, y, 5) == -1); // expected-warning{{TRUE}}
 }
 
 void strncmp_diff_length_1() {
   char *x = "123";
   char *y = "23456";
-  if (strncmp(x, y, 5) != -1)
-    (void)*(char*)0; // no-warning
+  clang_analyzer_eval(strncmp(x, y, 5) == -1); // expected-warning{{TRUE}}
 }
 
 void strncmp_diff_length_2() {
   char *x = "12345";
   char *y = "123";
-  if (strncmp(x, y, 5) != 1)
-    (void)*(char*)0; // no-warning
+  clang_analyzer_eval(strncmp(x, y, 5) == 1); // expected-warning{{TRUE}}
 }
 
 void strncmp_diff_length_3() {
   char *x = "123";
   char *y = "12345";
-  if (strncmp(x, y, 5) != -1)
-    (void)*(char*)0; // no-warning
+  clang_analyzer_eval(strncmp(x, y, 5) == -1); // expected-warning{{TRUE}}
 }
 
 void strncmp_diff_length_4() {
   char *x = "123";
   char *y = "12345";
-  if (strncmp(x, y, 3) != 0)
-    (void)*(char*)0; // no-warning
+  clang_analyzer_eval(strncmp(x, y, 3) == 0); // expected-warning{{TRUE}}
 }
 
 void strncmp_diff_length_5() {
   char *x = "012";
   char *y = "12345";
-  if (strncmp(x, y, 3) != -1)
-    (void)*(char*)0; // no-warning
+  clang_analyzer_eval(strncmp(x, y, 3) == -1); // expected-warning{{TRUE}}
 }
 
 void strncmp_diff_length_6() {
   char *x = "234";
   char *y = "12345";
-  if (strncmp(x, y, 3) != 1)
-    (void)*(char*)0; // no-warning
+  clang_analyzer_eval(strncmp(x, y, 3) == 1); // expected-warning{{TRUE}}
 }
 
 void strncmp_embedded_null () {
-	if (strncmp("ab\0zz", "ab\0yy", 4) != 0)
-		(void)*(char*)0; // no-warning
+	clang_analyzer_eval(strncmp("ab\0zz", "ab\0yy", 4) == 0); // expected-warning{{TRUE}}
 }
 
 //===----------------------------------------------------------------------===
@@ -952,41 +872,35 @@ void strncmp_embedded_null () {
 int strcasecmp(const char *s1, const char *s2);
 
 void strcasecmp_constant0() {
-  if (strcasecmp("abc", "Abc") != 0)
-    (void)*(char*)0; // no-warning
+  clang_analyzer_eval(strcasecmp("abc", "Abc") == 0); // expected-warning{{TRUE}}
 }
 
 void strcasecmp_constant_and_var_0() {
   char *x = "abc";
-  if (strcasecmp(x, "Abc") != 0)
-    (void)*(char*)0; // no-warning
+  clang_analyzer_eval(strcasecmp(x, "Abc") == 0); // expected-warning{{TRUE}}
 }
 
 void strcasecmp_constant_and_var_1() {
   char *x = "abc";
-    if (strcasecmp("Abc", x) != 0)
-    (void)*(char*)0; // no-warning
+  clang_analyzer_eval(strcasecmp("Abc", x) == 0); // expected-warning{{TRUE}}
 }
 
 void strcasecmp_0() {
   char *x = "abc";
   char *y = "Abc";
-  if (strcasecmp(x, y) != 0)
-    (void)*(char*)0; // no-warning
+  clang_analyzer_eval(strcasecmp(x, y) == 0); // expected-warning{{TRUE}}
 }
 
 void strcasecmp_1() {
   char *x = "Bcd";
   char *y = "abc";
-  if (strcasecmp(x, y) != 1)
-    (void)*(char*)0; // no-warning
+  clang_analyzer_eval(strcasecmp(x, y) == 1); // expected-warning{{TRUE}}
 }
 
 void strcasecmp_2() {
   char *x = "abc";
   char *y = "Bcd";
-  if (strcasecmp(x, y) != -1)
-    (void)*(char*)0; // no-warning
+  clang_analyzer_eval(strcasecmp(x, y) == -1); // expected-warning{{TRUE}}
 }
 
 void strcasecmp_null_0() {
@@ -1004,34 +918,29 @@ void strcasecmp_null_1() {
 void strcasecmp_diff_length_0() {
   char *x = "abcde";
   char *y = "aBd";
-  if (strcasecmp(x, y) != -1)
-    (void)*(char*)0; // no-warning
+  clang_analyzer_eval(strcasecmp(x, y) == -1); // expected-warning{{TRUE}}
 }
 
 void strcasecmp_diff_length_1() {
   char *x = "abc";
   char *y = "aBdef";
-  if (strcasecmp(x, y) != -1)
-    (void)*(char*)0; // no-warning
+  clang_analyzer_eval(strcasecmp(x, y) == -1); // expected-warning{{TRUE}}
 }
 
 void strcasecmp_diff_length_2() {
   char *x = "aBcDe";
   char *y = "abc";
-  if (strcasecmp(x, y) != 1)
-    (void)*(char*)0; // no-warning
+  clang_analyzer_eval(strcasecmp(x, y) == 1); // expected-warning{{TRUE}}
 }
 
 void strcasecmp_diff_length_3() {
   char *x = "aBc";
   char *y = "abcde";
-  if (strcasecmp(x, y) != -1)
-    (void)*(char*)0; // no-warning
+  clang_analyzer_eval(strcasecmp(x, y) == -1); // expected-warning{{TRUE}}
 }
 
 void strcasecmp_embedded_null () {
-	if (strcasecmp("ab\0zz", "ab\0yy") != 0)
-		(void)*(char*)0; // no-warning
+	clang_analyzer_eval(strcasecmp("ab\0zz", "ab\0yy") == 0); // expected-warning{{TRUE}}
 }
 
 //===----------------------------------------------------------------------===
@@ -1042,41 +951,35 @@ void strcasecmp_embedded_null () {
 int strncasecmp(const char *s1, const char *s2, size_t n);
 
 void strncasecmp_constant0() {
-  if (strncasecmp("abc", "Abc", 3) != 0)
-    (void)*(char*)0; // no-warning
+  clang_analyzer_eval(strncasecmp("abc", "Abc", 3) == 0); // expected-warning{{TRUE}}
 }
 
 void strncasecmp_constant_and_var_0() {
   char *x = "abc";
-  if (strncasecmp(x, "Abc", 3) != 0)
-    (void)*(char*)0; // no-warning
+  clang_analyzer_eval(strncasecmp(x, "Abc", 3) == 0); // expected-warning{{TRUE}}
 }
 
 void strncasecmp_constant_and_var_1() {
   char *x = "abc";
-  if (strncasecmp("Abc", x, 3) != 0)
-    (void)*(char*)0; // no-warning
+  clang_analyzer_eval(strncasecmp("Abc", x, 3) == 0); // expected-warning{{TRUE}}
 }
 
 void strncasecmp_0() {
   char *x = "abc";
   char *y = "Abc";
-  if (strncasecmp(x, y, 3) != 0)
-    (void)*(char*)0; // no-warning
+  clang_analyzer_eval(strncasecmp(x, y, 3) == 0); // expected-warning{{TRUE}}
 }
 
 void strncasecmp_1() {
   char *x = "Bcd";
   char *y = "abc";
-  if (strncasecmp(x, y, 3) != 1)
-    (void)*(char*)0; // no-warning
+  clang_analyzer_eval(strncasecmp(x, y, 3) == 1); // expected-warning{{TRUE}}
 }
 
 void strncasecmp_2() {
   char *x = "abc";
   char *y = "Bcd";
-  if (strncasecmp(x, y, 3) != -1)
-    (void)*(char*)0; // no-warning
+  clang_analyzer_eval(strncasecmp(x, y, 3) == -1); // expected-warning{{TRUE}}
 }
 
 void strncasecmp_null_0() {
@@ -1094,55 +997,47 @@ void strncasecmp_null_1() {
 void strncasecmp_diff_length_0() {
   char *x = "abcde";
   char *y = "aBd";
-  if (strncasecmp(x, y, 5) != -1)
-    (void)*(char*)0; // no-warning
+  clang_analyzer_eval(strncasecmp(x, y, 5) == -1); // expected-warning{{TRUE}}
 }
 
 void strncasecmp_diff_length_1() {
   char *x = "abc";
   char *y = "aBdef";
-  if (strncasecmp(x, y, 5) != -1)
-    (void)*(char*)0; // no-warning
+  clang_analyzer_eval(strncasecmp(x, y, 5) == -1); // expected-warning{{TRUE}}
 }
 
 void strncasecmp_diff_length_2() {
   char *x = "aBcDe";
   char *y = "abc";
-  if (strncasecmp(x, y, 5) != 1)
-    (void)*(char*)0; // no-warning
+  clang_analyzer_eval(strncasecmp(x, y, 5) == 1); // expected-warning{{TRUE}}
 }
 
 void strncasecmp_diff_length_3() {
   char *x = "aBc";
   char *y = "abcde";
-  if (strncasecmp(x, y, 5) != -1)
-    (void)*(char*)0; // no-warning
+  clang_analyzer_eval(strncasecmp(x, y, 5) == -1); // expected-warning{{TRUE}}
 }
 
 void strncasecmp_diff_length_4() {
   char *x = "abcde";
   char *y = "aBc";
-  if (strncasecmp(x, y, 3) != 0)
-    (void)*(char*)0; // no-warning
+  clang_analyzer_eval(strncasecmp(x, y, 3) == 0); // expected-warning{{TRUE}}
 }
 
 void strncasecmp_diff_length_5() {
   char *x = "abcde";
   char *y = "aBd";
-  if (strncasecmp(x, y, 3) != -1)
-    (void)*(char*)0; // no-warning
+  clang_analyzer_eval(strncasecmp(x, y, 3) == -1); // expected-warning{{TRUE}}
 }
 
 void strncasecmp_diff_length_6() {
   char *x = "aBDe";
   char *y = "abc";
-  if (strncasecmp(x, y, 3) != 1)
-    (void)*(char*)0; // no-warning
+  clang_analyzer_eval(strncasecmp(x, y, 3) == 1); // expected-warning{{TRUE}}
 }
 
 void strncasecmp_embedded_null () {
-	if (strncasecmp("ab\0zz", "ab\0yy", 4) != 0)
-		(void)*(char*)0; // no-warning
+	clang_analyzer_eval(strncasecmp("ab\0zz", "ab\0yy", 4) == 0); // expected-warning{{TRUE}}
 }
 
 //===----------------------------------------------------------------------===
@@ -1169,10 +1064,10 @@ void PR12206(const char *x) {
   if (strlen(x) != value) return;
 
   // Test relational operators.
-  if (strlen(x) < 2) { (void)*(char*)0; } // no-warning
-  if (2 > strlen(x)) { (void)*(char*)0; } // no-warning
+  clang_analyzer_eval(strlen(x) >= 2); // expected-warning{{TRUE}}
+  clang_analyzer_eval(2 <= strlen(x)); // expected-warning{{TRUE}}
 
   // Test equality operators.
-  if (strlen(x) == 1) { (void)*(char*)0; } // no-warning
-  if (1 == strlen(x)) { (void)*(char*)0; } // no-warning
+  clang_analyzer_eval(strlen(x) != 1); // expected-warning{{TRUE}}
+  clang_analyzer_eval(1 != strlen(x)); // expected-warning{{TRUE}}
 }

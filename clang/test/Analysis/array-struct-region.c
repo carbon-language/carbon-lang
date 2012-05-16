@@ -1,25 +1,21 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,experimental.core,experimental.deadcode.UnreachableCode -analyzer-store=region -analyzer-constraints=basic -verify %s
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,experimental.core,experimental.deadcode.UnreachableCode -analyzer-store=region -analyzer-constraints=range -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,experimental.core,debug.ExprInspection -analyzer-store=region -analyzer-constraints=basic -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,experimental.core,debug.ExprInspection -analyzer-store=region -analyzer-constraints=range -verify %s
+
+void clang_analyzer_eval(int);
 
 int string_literal_init() {
   char a[] = "abc";
   char b[2] = "abc"; // expected-warning{{too long}}
   char c[5] = "abc";
 
-  if (a[1] != 'b')
-    return 0; // expected-warning{{never executed}}
-  if (b[1] != 'b')
-    return 0; // expected-warning{{never executed}}
-  if (c[1] != 'b')
-    return 0; // expected-warning{{never executed}}
+  clang_analyzer_eval(a[1] == 'b'); // expected-warning{{TRUE}}
+  clang_analyzer_eval(b[1] == 'b'); // expected-warning{{TRUE}}
+  clang_analyzer_eval(c[1] == 'b'); // expected-warning{{TRUE}}
 
-  if (a[3] != 0)
-    return 0; // expected-warning{{never executed}}
-  if (c[3] != 0)
-    return 0; // expected-warning{{never executed}}
+  clang_analyzer_eval(a[3] == 0); // expected-warning{{TRUE}}
+  clang_analyzer_eval(c[3] == 0); // expected-warning{{TRUE}}
 
-  if (c[4] != 0)
-    return 0; // expected-warning{{never executed}}
+  clang_analyzer_eval(c[4] == 0); // expected-warning{{TRUE}}
 
   return 42;
 }
@@ -48,13 +44,16 @@ void nested_compound_literals_float(float rad) {
 
 
 void struct_as_array() {
-  struct simple { int x; };
+  struct simple { int x; int y; };
   struct simple a;
   struct simple *p = &a;
+
   p->x = 5;
-  if (!p[0].x)
-    return; // expected-warning{{never executed}}
-  if (p[0].x)
-    return; // no-warning
+  clang_analyzer_eval(a.x == 5); // expected-warning{{TRUE}}
+  clang_analyzer_eval(p[0].x == 5); // expected-warning{{TRUE}}
+
+  p[0].y = 5;
+  clang_analyzer_eval(a.y == 5); // expected-warning{{TRUE}}
+  clang_analyzer_eval(p->y == 5); // expected-warning{{TRUE}}
 }
 
