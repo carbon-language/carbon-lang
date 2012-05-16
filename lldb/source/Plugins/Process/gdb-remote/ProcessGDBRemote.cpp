@@ -2497,6 +2497,12 @@ ProcessGDBRemote::AsyncThread (void *arg)
                                     StringExtractorGDBRemote response;
                                     StateType stop_state = process->GetGDBRemote().SendContinuePacketAndWaitForResponse (process, continue_cstr, continue_cstr_len, response);
 
+                                    // We need to immediately clear the thread ID list so we are sure to get a valid list of threads.
+                                    // The thread ID list might be contained within the "response", or the stop reply packet that
+                                    // caused the stop. So clear it now before we give the stop reply packet to the process
+                                    // using the process->SetLastStopPacket()...
+                                    process->ClearThreadIDList ();
+
                                     switch (stop_state)
                                     {
                                     case eStateStopped:
