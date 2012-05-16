@@ -10040,7 +10040,8 @@ diagnoseUncapturableValueReference(Sema &S, SourceLocation loc,
 static ExprResult captureInLambda(Sema &S, LambdaScopeInfo *LSI,
                                   VarDecl *Var, QualType FieldType, 
                                   QualType DeclRefType,
-                                  SourceLocation Loc) {
+                                  SourceLocation Loc,
+                                  bool RefersToEnclosingLocal) {
   CXXRecordDecl *Lambda = LSI->Lambda;
 
   // Build the non-static data member.
@@ -10069,8 +10070,8 @@ static ExprResult captureInLambda(Sema &S, LambdaScopeInfo *LSI,
   // C++ [expr.prim.labda]p12:
   //   An entity captured by a lambda-expression is odr-used (3.2) in
   //   the scope containing the lambda-expression.
-  Expr *Ref = new (S.Context) DeclRefExpr(Var, true, DeclRefType,
-                                          VK_LValue, Loc);
+  Expr *Ref = new (S.Context) DeclRefExpr(Var, RefersToEnclosingLocal, 
+                                          DeclRefType, VK_LValue, Loc);
   Var->setReferenced(true);
   Var->setUsed(true);
 
@@ -10413,7 +10414,8 @@ bool Sema::tryCaptureVariable(VarDecl *Var, SourceLocation Loc,
     Expr *CopyExpr = 0;
     if (BuildAndDiagnose) {
       ExprResult Result = captureInLambda(*this, LSI, Var, CaptureType,
-                                          DeclRefType, Loc);
+                                          DeclRefType, Loc,
+                                          I == N-1);
       if (!Result.isInvalid())
         CopyExpr = Result.take();
     }
