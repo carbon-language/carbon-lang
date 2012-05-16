@@ -54,6 +54,18 @@ namespace test29 {
   // CHECK-HIDDEN: @_ZN6test299data_rectE = global
 }
 
+namespace test40 {
+  template<typename T>
+  struct foo {
+    DEFAULT static int bar;
+  };
+  template<typename T>
+  int foo<T>::bar;
+  template struct foo<int>;
+  // CHECK: _ZN6test403fooIiE3barE = weak_odr global
+  // CHECK-HIDDEN: _ZN6test403fooIiE3barE = weak_odr global
+}
+
 // CHECK: @_ZN5Test425VariableInHiddenNamespaceE = hidden global i32 10
 // CHECK: @_ZN5Test71aE = hidden global
 // CHECK: @_ZN5Test71bE = global
