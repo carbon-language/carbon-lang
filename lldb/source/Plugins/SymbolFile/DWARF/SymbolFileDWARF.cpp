@@ -2290,85 +2290,93 @@ SymbolFileDWARF::ResolveSymbolContext (const Address& so_addr, uint32_t resolve_
         DWARFDebugInfo* debug_info = DebugInfo();
         if (debug_info)
         {
-            dw_offset_t cu_offset = debug_info->GetCompileUnitAranges().FindAddress(file_vm_addr);
+            const dw_offset_t cu_offset = debug_info->GetCompileUnitAranges().FindAddress(file_vm_addr);
             if (cu_offset != DW_INVALID_OFFSET)
             {
-                uint32_t cu_idx;
+                uint32_t cu_idx = DW_INVALID_INDEX;
                 DWARFCompileUnit* dwarf_cu = debug_info->GetCompileUnit(cu_offset, &cu_idx).get();
                 if (dwarf_cu)
                 {
                     sc.comp_unit = GetCompUnitForDWARFCompUnit(dwarf_cu, cu_idx);
-                    assert(sc.comp_unit != NULL);
-                    resolved |= eSymbolContextCompUnit;
-
-                    if (resolve_scope & eSymbolContextLineEntry)
+                    if (sc.comp_unit)
                     {
-                        LineTable *line_table = sc.comp_unit->GetLineTable();
-                        if (line_table != NULL)
+                        resolved |= eSymbolContextCompUnit;
+
+                        if (resolve_scope & eSymbolContextLineEntry)
                         {
-                            if (so_addr.IsLinkedAddress())
+                            LineTable *line_table = sc.comp_unit->GetLineTable();
+                            if (line_table != NULL)
                             {
-                                Address linked_addr (so_addr);
-                                linked_addr.ResolveLinkedAddress();
-                                if (line_table->FindLineEntryByAddress (linked_addr, sc.line_entry))
+                                if (so_addr.IsLinkedAddress())
+                                {
+                                    Address linked_addr (so_addr);
+                                    linked_addr.ResolveLinkedAddress();
+                                    if (line_table->FindLineEntryByAddress (linked_addr, sc.line_entry))
+                                    {
+                                        resolved |= eSymbolContextLineEntry;
+                                    }
+                                }
+                                else if (line_table->FindLineEntryByAddress (so_addr, sc.line_entry))
                                 {
                                     resolved |= eSymbolContextLineEntry;
                                 }
                             }
-                            else if (line_table->FindLineEntryByAddress (so_addr, sc.line_entry))
+                        }
+
+                        if (resolve_scope & (eSymbolContextFunction | eSymbolContextBlock))
+                        {
+                            DWARFDebugInfoEntry *function_die = NULL;
+                            DWARFDebugInfoEntry *block_die = NULL;
+                            if (resolve_scope & eSymbolContextBlock)
                             {
-                                resolved |= eSymbolContextLineEntry;
+                                dwarf_cu->LookupAddress(file_vm_addr, &function_die, &block_die);
+                            }
+                            else
+                            {
+                                dwarf_cu->LookupAddress(file_vm_addr, &function_die, NULL);
+                            }
+
+                            if (function_die != NULL)
+                            {
+                                sc.function = sc.comp_unit->FindFunctionByUID (MakeUserID(function_die->GetOffset())).get();
+                                if (sc.function == NULL)
+                                    sc.function = ParseCompileUnitFunction(sc, dwarf_cu, function_die);
+                            }
+                            else
+                            {
+                                // We might have had a compile unit that had discontiguous
+                                // address ranges where the gaps are symbols that don't have
+                                // any debug info. Discontiguous compile unit address ranges
+                                // should only happen when there aren't other functions from
+                                // other compile units in these gaps. This helps keep the size
+                                // of the aranges down.
+                                sc.comp_unit = NULL;
+                                resolved &= ~eSymbolContextCompUnit;
+                            }
+
+                            if (sc.function != NULL)
+                            {
+                                resolved |= eSymbolContextFunction;
+
+                                if (resolve_scope & eSymbolContextBlock)
+                                {
+                                    Block& block = sc.function->GetBlock (true);
+
+                                    if (block_die != NULL)
+                                        sc.block = block.FindBlockByID (MakeUserID(block_die->GetOffset()));
+                                    else
+                                        sc.block = block.FindBlockByID (MakeUserID(function_die->GetOffset()));
+                                    if (sc.block)
+                                        resolved |= eSymbolContextBlock;
+                                }
                             }
                         }
                     }
-
-                    if (resolve_scope & (eSymbolContextFunction | eSymbolContextBlock))
+                    else
                     {
-                        DWARFDebugInfoEntry *function_die = NULL;
-                        DWARFDebugInfoEntry *block_die = NULL;
-                        if (resolve_scope & eSymbolContextBlock)
-                        {
-                            dwarf_cu->LookupAddress(file_vm_addr, &function_die, &block_die);
-                        }
-                        else
-                        {
-                            dwarf_cu->LookupAddress(file_vm_addr, &function_die, NULL);
-                        }
-
-                        if (function_die != NULL)
-                        {
-                            sc.function = sc.comp_unit->FindFunctionByUID (MakeUserID(function_die->GetOffset())).get();
-                            if (sc.function == NULL)
-                                sc.function = ParseCompileUnitFunction(sc, dwarf_cu, function_die);
-                        }
-                        else
-                        {
-                            // We might have had a compile unit that had discontiguous
-                            // address ranges where the gaps are symbols that don't have
-                            // any debug info. Discontiguous compile unit address ranges
-                            // should only happen when there aren't other functions from
-                            // other compile units in these gaps. This helps keep the size
-                            // of the aranges down.
-                            sc.comp_unit = NULL;
-                            resolved &= ~eSymbolContextCompUnit;
-                        }
-
-                        if (sc.function != NULL)
-                        {
-                            resolved |= eSymbolContextFunction;
-
-                            if (resolve_scope & eSymbolContextBlock)
-                            {
-                                Block& block = sc.function->GetBlock (true);
-
-                                if (block_die != NULL)
-                                    sc.block = block.FindBlockByID (MakeUserID(block_die->GetOffset()));
-                                else
-                                    sc.block = block.FindBlockByID (MakeUserID(function_die->GetOffset()));
-                                if (sc.block)
-                                    resolved |= eSymbolContextBlock;
-                            }
-                        }
+                        GetObjectFile()->GetModule()->ReportWarning ("0x%8.8x: compile unit %u failed to create a valid lldb_private::CompileUnit class.",
+                                                                     cu_offset,
+                                                                     cu_idx);
                     }
                 }
             }
@@ -2399,71 +2407,78 @@ SymbolFileDWARF::ResolveSymbolContext(const FileSpec& file_spec, uint32_t line, 
                 {
                     SymbolContext sc (m_obj_file->GetModule());
                     sc.comp_unit = GetCompUnitForDWARFCompUnit(dwarf_cu, cu_idx);
-                    assert(sc.comp_unit != NULL);
-
-                    uint32_t file_idx = UINT32_MAX;
-
-                    // If we are looking for inline functions only and we don't
-                    // find it in the support files, we are done.
-                    if (check_inlines)
+                    if (sc.comp_unit)
                     {
-                        file_idx = sc.comp_unit->GetSupportFiles().FindFileIndex (1, file_spec, true);
-                        if (file_idx == UINT32_MAX)
-                            continue;
-                    }
+                        uint32_t file_idx = UINT32_MAX;
 
-                    if (line != 0)
-                    {
-                        LineTable *line_table = sc.comp_unit->GetLineTable();
-
-                        if (line_table != NULL && line != 0)
+                        // If we are looking for inline functions only and we don't
+                        // find it in the support files, we are done.
+                        if (check_inlines)
                         {
-                            // We will have already looked up the file index if
-                            // we are searching for inline entries.
-                            if (!check_inlines)
-                                file_idx = sc.comp_unit->GetSupportFiles().FindFileIndex (1, file_spec, true);
+                            file_idx = sc.comp_unit->GetSupportFiles().FindFileIndex (1, file_spec, true);
+                            if (file_idx == UINT32_MAX)
+                                continue;
+                        }
 
-                            if (file_idx != UINT32_MAX)
+                        if (line != 0)
+                        {
+                            LineTable *line_table = sc.comp_unit->GetLineTable();
+
+                            if (line_table != NULL && line != 0)
                             {
-                                uint32_t found_line;
-                                uint32_t line_idx = line_table->FindLineEntryIndexByFileIndex (0, file_idx, line, false, &sc.line_entry);
-                                found_line = sc.line_entry.line;
+                                // We will have already looked up the file index if
+                                // we are searching for inline entries.
+                                if (!check_inlines)
+                                    file_idx = sc.comp_unit->GetSupportFiles().FindFileIndex (1, file_spec, true);
 
-                                while (line_idx != UINT32_MAX)
+                                if (file_idx != UINT32_MAX)
                                 {
-                                    sc.function = NULL;
-                                    sc.block = NULL;
-                                    if (resolve_scope & (eSymbolContextFunction | eSymbolContextBlock))
+                                    uint32_t found_line;
+                                    uint32_t line_idx = line_table->FindLineEntryIndexByFileIndex (0, file_idx, line, false, &sc.line_entry);
+                                    found_line = sc.line_entry.line;
+
+                                    while (line_idx != UINT32_MAX)
                                     {
-                                        const lldb::addr_t file_vm_addr = sc.line_entry.range.GetBaseAddress().GetFileAddress();
-                                        if (file_vm_addr != LLDB_INVALID_ADDRESS)
+                                        sc.function = NULL;
+                                        sc.block = NULL;
+                                        if (resolve_scope & (eSymbolContextFunction | eSymbolContextBlock))
                                         {
-                                            DWARFDebugInfoEntry *function_die = NULL;
-                                            DWARFDebugInfoEntry *block_die = NULL;
-                                            dwarf_cu->LookupAddress(file_vm_addr, &function_die, resolve_scope & eSymbolContextBlock ? &block_die : NULL);
-
-                                            if (function_die != NULL)
+                                            const lldb::addr_t file_vm_addr = sc.line_entry.range.GetBaseAddress().GetFileAddress();
+                                            if (file_vm_addr != LLDB_INVALID_ADDRESS)
                                             {
-                                                sc.function = sc.comp_unit->FindFunctionByUID (MakeUserID(function_die->GetOffset())).get();
-                                                if (sc.function == NULL)
-                                                    sc.function = ParseCompileUnitFunction(sc, dwarf_cu, function_die);
-                                            }
+                                                DWARFDebugInfoEntry *function_die = NULL;
+                                                DWARFDebugInfoEntry *block_die = NULL;
+                                                dwarf_cu->LookupAddress(file_vm_addr, &function_die, resolve_scope & eSymbolContextBlock ? &block_die : NULL);
 
-                                            if (sc.function != NULL)
-                                            {
-                                                Block& block = sc.function->GetBlock (true);
+                                                if (function_die != NULL)
+                                                {
+                                                    sc.function = sc.comp_unit->FindFunctionByUID (MakeUserID(function_die->GetOffset())).get();
+                                                    if (sc.function == NULL)
+                                                        sc.function = ParseCompileUnitFunction(sc, dwarf_cu, function_die);
+                                                }
 
-                                                if (block_die != NULL)
-                                                    sc.block = block.FindBlockByID (MakeUserID(block_die->GetOffset()));
-                                                else
-                                                    sc.block = block.FindBlockByID (MakeUserID(function_die->GetOffset()));
+                                                if (sc.function != NULL)
+                                                {
+                                                    Block& block = sc.function->GetBlock (true);
+
+                                                    if (block_die != NULL)
+                                                        sc.block = block.FindBlockByID (MakeUserID(block_die->GetOffset()));
+                                                    else
+                                                        sc.block = block.FindBlockByID (MakeUserID(function_die->GetOffset()));
+                                                }
                                             }
                                         }
-                                    }
 
-                                    sc_list.Append(sc);
-                                    line_idx = line_table->FindLineEntryIndexByFileIndex (line_idx + 1, file_idx, found_line, true, &sc.line_entry);
+                                        sc_list.Append(sc);
+                                        line_idx = line_table->FindLineEntryIndexByFileIndex (line_idx + 1, file_idx, found_line, true, &sc.line_entry);
+                                    }
                                 }
+                            }
+                            else if (file_spec_matches_cu_file_spec && !check_inlines)
+                            {
+                                // only append the context if we aren't looking for inline call sites
+                                // by file and line and if the file spec matches that of the compile unit
+                                sc_list.Append(sc);
                             }
                         }
                         else if (file_spec_matches_cu_file_spec && !check_inlines)
@@ -2472,16 +2487,10 @@ SymbolFileDWARF::ResolveSymbolContext(const FileSpec& file_spec, uint32_t line, 
                             // by file and line and if the file spec matches that of the compile unit
                             sc_list.Append(sc);
                         }
-                    }
-                    else if (file_spec_matches_cu_file_spec && !check_inlines)
-                    {
-                        // only append the context if we aren't looking for inline call sites
-                        // by file and line and if the file spec matches that of the compile unit
-                        sc_list.Append(sc);
-                    }
 
-                    if (!check_inlines)
-                        break;
+                        if (!check_inlines)
+                            break;
+                    }
                 }
             }
         }
@@ -2713,7 +2722,6 @@ SymbolFileDWARF::FindGlobalVariables (const ConstString &name, const lldb_privat
                     case DW_TAG_variable:
                         {
                             sc.comp_unit = GetCompUnitForDWARFCompUnit(dwarf_cu, UINT32_MAX);
-                            assert(sc.comp_unit != NULL);
                     
                             if (namespace_decl && !DIEIsInNamespace (namespace_decl, dwarf_cu, die))
                                 continue;
