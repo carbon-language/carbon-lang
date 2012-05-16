@@ -29,7 +29,6 @@
 #include "llvm/ADT/StringExtras.h"
 using namespace llvm;
 
-
 // Explicit instantiations of SymbolTableListTraits since some of the methods
 // are not in the public header file...
 template class llvm::SymbolTableListTraits<Argument, Function>;
@@ -358,17 +357,57 @@ std::string Intrinsic::getName(ID id, ArrayRef<Type*> Tys) {
   return Result;
 }
 
+#define GET_INTRINSTIC_GENERATOR_GLOBAL
+#include "llvm/Intrinsics.gen"
+#undef GET_INTRINSTIC_GENERATOR_GLOBAL
+
+static Type *DecodeFixedType(unsigned &TableVal, LLVMContext &Context) {
+  unsigned Nibble = TableVal & 0xF;
+  TableVal >>= 4;
+  
+  switch ((IIT_Info)Nibble) {
+  case IIT_Done: return Type::getVoidTy(Context);
+  case IIT_I1: return Type::getInt1Ty(Context);
+  case IIT_I8: return Type::getInt8Ty(Context);
+  case IIT_I16: return Type::getInt16Ty(Context);
+  case IIT_I32: return Type::getInt32Ty(Context);
+  case IIT_I64: return Type::getInt64Ty(Context);
+  case IIT_F32: return Type::getFloatTy(Context);
+  case IIT_F64: return Type::getDoubleTy(Context);
+  case IIT_V2: return VectorType::get(DecodeFixedType(TableVal, Context), 2);
+  case IIT_V4: return VectorType::get(DecodeFixedType(TableVal, Context), 4);
+  case IIT_V8: return VectorType::get(DecodeFixedType(TableVal, Context), 8);
+  case IIT_V16: return VectorType::get(DecodeFixedType(TableVal, Context), 16);
+  case IIT_MMX: return Type::getX86_MMXTy(Context);
+  case IIT_PTR: return PointerType::get(DecodeFixedType(TableVal, Context),0);
+  case IIT_ARG: assert(0 && "Unimp!");
+  }
+  llvm_unreachable("unhandled");
+}
+  
+
 FunctionType *Intrinsic::getType(LLVMContext &Context,
-                                       ID id, ArrayRef<Type*> Tys) {
-  Type *ResultTy = NULL;
+                                 ID id, ArrayRef<Type*> Tys) {
+  Type *ResultTy = 0;
   SmallVector<Type*, 8> ArgTys;
-  bool IsVarArg = false;
+  
+  // Check to see if the intrinsic's type was expressible by the table.
+  unsigned TableVal = IIT_Table[id-1];
+  if (TableVal != ~0U) {
+    ResultTy = DecodeFixedType(TableVal, Context);
+    
+    while (TableVal)
+      ArgTys.push_back(DecodeFixedType(TableVal, Context));
+
+    return FunctionType::get(ResultTy, ArgTys, false); 
+  }
+  
   
 #define GET_INTRINSIC_GENERATOR
 #include "llvm/Intrinsics.gen"
 #undef GET_INTRINSIC_GENERATOR
 
-  return FunctionType::get(ResultTy, ArgTys, IsVarArg); 
+  return FunctionType::get(ResultTy, ArgTys, false); 
 }
 
 bool Intrinsic::isOverloaded(ID id) {
@@ -440,4 +479,3 @@ bool Function::callsFunctionThatReturnsTwice() const {
   return false;
 }
 
-// vim: sw=2 ai
