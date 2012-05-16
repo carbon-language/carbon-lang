@@ -951,7 +951,7 @@ SDValue DAGTypeLegalizer::DisintegrateMERGE_VALUES(SDNode *N, unsigned ResNo) {
   for (unsigned i = 0, e = N->getNumValues(); i != e; ++i)
     if (i != ResNo)
       ReplaceValueWith(SDValue(N, i), SDValue(N->getOperand(i)));
-  return SDValue(N, ResNo);
+  return SDValue(N->getOperand(ResNo));
 }
 
 /// GetSplitDestVTs - Compute the VTs needed for the low/hi parts of a type
