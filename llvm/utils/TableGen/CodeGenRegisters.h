@@ -189,6 +189,9 @@ namespace llvm {
     // Canonically ordered set.
     typedef std::set<const CodeGenRegister*, Less> Set;
 
+    // Compute the set of registers overlapping this.
+    void computeOverlaps(Set &Overlaps, const CodeGenRegBank&) const;
+
   private:
     bool SubRegsComplete;
     bool SuperRegsComplete;
@@ -600,15 +603,6 @@ namespace llvm {
 
     // Computed derived records such as missing sub-register indices.
     void computeDerivedInfo();
-
-    // Compute full overlap sets for every register. These sets include the
-    // rarely used aliases that are neither sub nor super-registers.
-    //
-    // Map[R1].count(R2) is reflexive and symmetric, but not transitive.
-    //
-    // If R1 is a sub-register of R2, Map[R1] is a subset of Map[R2].
-    void computeOverlaps(std::map<const CodeGenRegister*,
-                                  CodeGenRegister::Set> &Map);
 
     // Compute the set of registers completely covered by the registers in Regs.
     // The returned BitVector will have a bit set for each register in Regs,

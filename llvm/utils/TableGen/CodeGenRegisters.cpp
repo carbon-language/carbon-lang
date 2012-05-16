@@ -529,6 +529,55 @@ CodeGenRegister::addSubRegsPreOrder(SetVector<const CodeGenRegister*> &OSet,
       OSet.insert(I->second);
 }
 
+// Compute overlapping registers.
+//
+// The standard set is all super-registers and all sub-registers, but the
+// target description can add arbitrary overlapping registers via the 'Aliases'
+// field. This complicates things, but we can compute overlapping sets using
+// the following rules:
+//
+// 1. The relation overlap(A, B) is reflexive and symmetric but not transitive.
+//
+// 2. overlap(A, B) implies overlap(A, S) for all S in supers(B).
+//
+// Alternatively:
+//
+//    overlap(A, B) iff there exists:
+//    A' in { A, subregs(A) } and B' in { B, subregs(B) } such that:
+//    A' = B' or A' in aliases(B') or B' in aliases(A').
+//
+// Here subregs(A) is the full flattened sub-register set returned by
+// A.getSubRegs() while aliases(A) is simply the special 'Aliases' field in the
+// description of register A.
+//
+// This also implies that registers with a common sub-register are considered
+// overlapping. This can happen when forming register pairs:
+//
+//    P0 = (R0, R1)
+//    P1 = (R1, R2)
+//    P2 = (R2, R3)
+//
+// In this case, we will infer an overlap between P0 and P1 because of the
+// shared sub-register R1. There is no overlap between P0 and P2.
+//
+void CodeGenRegister::computeOverlaps(CodeGenRegister::Set &Overlaps,
+                                      const CodeGenRegBank &RegBank) const {
+  assert(!RegUnits.empty() && "Compute register units before overlaps.");
+
+  // Register units are assigned such that the overlapping registers are the
+  // super-registers of the root registers of the register units.
+  for (unsigned rui = 0, rue = RegUnits.size(); rui != rue; ++rui) {
+    const RegUnit &RU = RegBank.getRegUnit(RegUnits[rui]);
+    ArrayRef<const CodeGenRegister*> Roots = RU.getRoots();
+    for (unsigned ri = 0, re = Roots.size(); ri != re; ++ri) {
+      const CodeGenRegister *Root = Roots[ri];
+      Overlaps.insert(Root);
+      ArrayRef<const CodeGenRegister*> Supers = Root->getSuperRegs();
+      Overlaps.insert(Supers.begin(), Supers.end());
+    }
+  }
+}
+
 // Get the sum of this register's unit weights.
 unsigned CodeGenRegister::getWeight(const CodeGenRegBank &RegBank) const {
   unsigned Weight = 0;
@@ -1504,77 +1553,6 @@ void CodeGenRegBank::computeRegUnitSets() {
         RegClassUnitSets[RCIdx].push_back(USIdx);
     }
     assert(!RegClassUnitSets[RCIdx].empty() && "missing unit set for regclass");
-  }
-}
-
-// Compute sets of overlapping registers.
-//
-// The standard set is all super-registers and all sub-registers, but the
-// target description can add arbitrary overlapping registers via the 'Aliases'
-// field. This complicates things, but we can compute overlapping sets using
-// the following rules:
-//
-// 1. The relation overlap(A, B) is reflexive and symmetric but not transitive.
-//
-// 2. overlap(A, B) implies overlap(A, S) for all S in supers(B).
-//
-// Alternatively:
-//
-//    overlap(A, B) iff there exists:
-//    A' in { A, subregs(A) } and B' in { B, subregs(B) } such that:
-//    A' = B' or A' in aliases(B') or B' in aliases(A').
-//
-// Here subregs(A) is the full flattened sub-register set returned by
-// A.getSubRegs() while aliases(A) is simply the special 'Aliases' field in the
-// description of register A.
-//
-// This also implies that registers with a common sub-register are considered
-// overlapping. This can happen when forming register pairs:
-//
-//    P0 = (R0, R1)
-//    P1 = (R1, R2)
-//    P2 = (R2, R3)
-//
-// In this case, we will infer an overlap between P0 and P1 because of the
-// shared sub-register R1. There is no overlap between P0 and P2.
-//
-void CodeGenRegBank::
-computeOverlaps(std::map<const CodeGenRegister*, CodeGenRegister::Set> &Map) {
-  assert(Map.empty());
-
-  // Collect overlaps that don't follow from rule 2.
-  for (unsigned i = 0, e = Registers.size(); i != e; ++i) {
-    CodeGenRegister *Reg = Registers[i];
-    CodeGenRegister::Set &Overlaps = Map[Reg];
-
-    // Reg overlaps itself.
-    Overlaps.insert(Reg);
-
-    // All super-registers overlap.
-    const CodeGenRegister::SuperRegList &Supers = Reg->getSuperRegs();
-    Overlaps.insert(Supers.begin(), Supers.end());
-
-    // Form symmetrical relations from the special Aliases[] lists.
-    ArrayRef<CodeGenRegister*> RegList = Reg->getExplicitAliases();
-    for (unsigned i2 = 0, e2 = RegList.size(); i2 != e2; ++i2) {
-      CodeGenRegister *Reg2 = RegList[i2];
-      const CodeGenRegister::SuperRegList &Supers2 = Reg2->getSuperRegs();
-      // Reg overlaps Reg2 which implies it overlaps supers(Reg2).
-      Overlaps.insert(Reg2);
-      Overlaps.insert(Supers2.begin(), Supers2.end());
-    }
-  }
-
-  // Apply rule 2. and inherit all sub-register overlaps.
-  for (unsigned i = 0, e = Registers.size(); i != e; ++i) {
-    CodeGenRegister *Reg = Registers[i];
-    CodeGenRegister::Set &Overlaps = Map[Reg];
-    const CodeGenRegister::SubRegMap &SRM = Reg->getSubRegs();
-    for (CodeGenRegister::SubRegMap::const_iterator i2 = SRM.begin(),
-         e2 = SRM.end(); i2 != e2; ++i2) {
-      CodeGenRegister::Set &Overlaps2 = Map[i2->second];
-      Overlaps.insert(Overlaps2.begin(), Overlaps2.end());
-    }
   }
 }
 

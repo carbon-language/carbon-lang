@@ -466,8 +466,6 @@ RegisterInfoEmitter::runMCDesc(raw_ostream &OS, CodeGenTarget &Target,
   OS << "#undef GET_REGINFO_MC_DESC\n";
 
   const std::vector<CodeGenRegister*> &Regs = RegBank.getRegisters();
-  std::map<const CodeGenRegister*, CodeGenRegister::Set> Overlaps;
-  RegBank.computeOverlaps(Overlaps);
 
   // The lists of sub-registers, super-registers, and overlaps all go in the
   // same array. That allows us to share suffixes.
@@ -504,7 +502,8 @@ RegisterInfoEmitter::runMCDesc(raw_ostream &OS, CodeGenTarget &Target,
     Omit.insert(Reg);
 
     // Any elements not in Suffix.
-    const CodeGenRegister::Set &OSet = Overlaps[Reg];
+    CodeGenRegister::Set OSet;
+    Reg->computeOverlaps(OSet, RegBank);
     std::set_difference(OSet.begin(), OSet.end(),
                         Omit.begin(), Omit.end(),
                         std::back_inserter(OverlapList),
