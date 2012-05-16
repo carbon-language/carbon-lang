@@ -86,3 +86,25 @@ namespace overloading {
     int &ir = accept_lambda_conv([](int x) { return x + 1; });
   }
 }
+
+namespace PR12746 {
+  bool f1(int *x) {
+    bool (^outer)() = ^ {
+      auto inner = [&]() -> bool {
+	return x == 0;
+      };
+      return inner();
+    };
+    return outer();
+  }
+
+  bool f2(int *x) {
+    auto outer = [&]() -> bool {
+      bool (^inner)() = ^ {
+	return x == 0;
+      };
+      return inner();
+    };
+    return outer();
+  }
+}

@@ -10069,7 +10069,7 @@ static ExprResult captureInLambda(Sema &S, LambdaScopeInfo *LSI,
   // C++ [expr.prim.labda]p12:
   //   An entity captured by a lambda-expression is odr-used (3.2) in
   //   the scope containing the lambda-expression.
-  Expr *Ref = new (S.Context) DeclRefExpr(Var, false, DeclRefType,
+  Expr *Ref = new (S.Context) DeclRefExpr(Var, true, DeclRefType,
                                           VK_LValue, Loc);
   Var->setReferenced(true);
   Var->setUsed(true);
