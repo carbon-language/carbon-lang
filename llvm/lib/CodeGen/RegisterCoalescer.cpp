@@ -911,6 +911,7 @@ void RegisterCoalescer::updateRegDefsUses(unsigned SrcReg,
                                           unsigned DstReg,
                                           unsigned SubIdx) {
   bool DstIsPhys = TargetRegisterInfo::isPhysicalRegister(DstReg);
+  LiveInterval &DstInt = LIS->getInterval(DstReg);
 
   // Update LiveDebugVariables.
   LDV->renameRegister(SrcReg, DstReg, SubIdx);
@@ -934,17 +935,20 @@ void RegisterCoalescer::updateRegDefsUses(unsigned SrcReg,
     bool Reads, Writes;
     tie(Reads, Writes) = UseMI->readsWritesVirtualRegister(SrcReg, &Ops);
 
+    // If SrcReg wasn't read, it may still be the case that DstReg is live-in
+    // because SrcReg is a sub-register.
+    if (!Reads && SubIdx)
+      Reads = DstInt.liveAt(LIS->getInstructionIndex(UseMI));
+
     // Replace SrcReg with DstReg in all UseMI operands.
     for (unsigned i = 0, e = Ops.size(); i != e; ++i) {
       MachineOperand &MO = UseMI->getOperand(Ops[i]);
 
-      // Make sure we don't create read-modify-write defs accidentally.  We
-      // assume here that a SrcReg def cannot be joined into a live DstReg.  If
-      // RegisterCoalescer starts tracking partially live registers, we will
-      // need to check the actual LiveInterval to determine if DstReg is live
-      // here.
-      if (SubIdx && !Reads)
-        MO.setIsUndef();
+      // Adjust <undef> flags in case of sub-register joins. We don't want to
+      // turn a full def into a read-modify-write sub-register def and vice
+      // versa.
+      if (SubIdx && MO.isDef())
+        MO.setIsUndef(!Reads);
 
       if (DstIsPhys)
         MO.substPhysReg(DstReg, *TRI);
