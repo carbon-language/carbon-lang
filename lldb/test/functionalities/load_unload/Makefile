@@ -1,7 +1,10 @@
 all: a.out liba.dylib libb.dylib libc.dylib libd.dylib
 
 CC ?= clang
-CFLAGS ?=-arch x86_64 -gdwarf-2 -O0
+ifeq "$(ARCH)" ""
+	ARCH = x86_64
+endif
+CFLAGS ?=-arch $(ARCH) -gdwarf-2 -O0
 CWD := $(shell pwd)
 
 all: a.out hidden/libd.dylib
