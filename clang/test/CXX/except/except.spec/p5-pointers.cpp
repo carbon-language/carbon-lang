@@ -65,9 +65,9 @@ void fnptrs()
   void (*(*t7)())() throw(B1) = &s8;       // valid
   void (*(*t8)())() throw(A) = &s8;        // expected-error {{return types differ}}
   void (*(*t9)())() throw(D) = &s8;        // expected-error {{return types differ}}
-  void (*t10)(void (*)() throw(B1)) = &s9; // valid   expected-warning{{disambiguated}}
-  void (*t11)(void (*)() throw(A)) = &s9;  // expected-error {{argument types differ}} expected-warning{{disambiguated}}
-  void (*t12)(void (*)() throw(D)) = &s9;  // expected-error {{argument types differ}} expected-warning{{disambiguated}}
+  void (*t10)(void (*)() throw(B1)) = &s9; // valid
+  void (*t11)(void (*)() throw(A)) = &s9;  // expected-error {{argument types differ}}
+  void (*t12)(void (*)() throw(D)) = &s9;  // expected-error {{argument types differ}}
 }
 
 // Member function stuff
