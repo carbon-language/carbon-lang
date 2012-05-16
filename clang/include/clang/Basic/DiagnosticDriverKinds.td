@@ -33,8 +33,6 @@ def err_drv_use_of_Z_option : Error<
   "unsupported use of internal gcc -Z option '%0'">;
 def err_drv_output_argument_with_multiple_files : Error<
   "cannot specify -o when generating multiple output files">;
-def err_drv_unable_to_make_temp : Error<
-  "unable to make temporary file: %0">;
 def err_drv_unable_to_remove_file : Error<
   "unable to remove file: %0">;
 def err_drv_command_failure : Error<

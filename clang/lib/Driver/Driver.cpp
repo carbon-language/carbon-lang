@@ -1635,7 +1635,7 @@ std::string Driver::GetTemporaryPath(StringRef Prefix, const char *Suffix)
   llvm::sys::Path P(TmpDir);
   P.appendComponent(Prefix);
   if (P.makeUnique(false, &Error)) {
-    Diag(clang::diag::err_drv_unable_to_make_temp) << Error;
+    Diag(clang::diag::err_unable_to_make_temp) << Error;
     return "";
   }
 

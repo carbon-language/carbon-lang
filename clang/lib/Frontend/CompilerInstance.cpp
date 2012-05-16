@@ -456,7 +456,7 @@ void CompilerInstance::clearOutputFiles(bool EraseFiles) {
         FileMgr->FixupRelativePath(NewOutFile);
         if (llvm::error_code ec = llvm::sys::fs::rename(it->TempFilename,
                                                         NewOutFile.str())) {
-          getDiagnostics().Report(diag::err_fe_unable_to_rename_temp)
+          getDiagnostics().Report(diag::err_unable_to_rename_temp)
             << it->TempFilename << it->Filename << ec.message();
 
           bool existed;
