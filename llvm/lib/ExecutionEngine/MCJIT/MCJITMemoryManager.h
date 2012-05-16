@@ -34,12 +34,12 @@ public:
 
   uint8_t *allocateDataSection(uintptr_t Size, unsigned Alignment,
                                unsigned SectionID) {
-    return JMM->allocateSpace(Size, Alignment);
+    return JMM->allocateDataSection(Size, Alignment, SectionID);
   }
 
   uint8_t *allocateCodeSection(uintptr_t Size, unsigned Alignment,
                                unsigned SectionID) {
-    return JMM->allocateSpace(Size, Alignment);
+    return JMM->allocateCodeSection(Size, Alignment, SectionID);
   }
 
   virtual void *getPointerToNamedFunction(const std::string &Name,
