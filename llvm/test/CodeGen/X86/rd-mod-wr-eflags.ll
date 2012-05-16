@@ -177,3 +177,49 @@ if.end4:
 return:
   ret void
 }
+
+; Deal with TokenFactor chain
+; rdar://11236106
+@foo = external global i64*, align 8
+
+define void @test3() nounwind ssp {
+entry:
+; CHECK: test3:
+; CHECK: decq 16(%rax)
+  %0 = load i64** @foo, align 8
+  %arrayidx = getelementptr inbounds i64* %0, i64 2
+  %1 = load i64* %arrayidx, align 8
+  %dec = add i64 %1, -1
+  store i64 %dec, i64* %arrayidx, align 8
+  %cmp = icmp eq i64 %dec, 0
+  br i1 %cmp, label %if.then, label %if.end
+
+if.then:
+  tail call void @baz() nounwind
+  br label %if.end
+
+if.end:
+  ret void
+}
+
+declare void @baz()
+
+; Avoid creating a cycle in the DAG which would trigger an assert in the
+; scheduler.
+; PR12565
+; rdar://11451474
+@x = external global i32, align 4
+@y = external global i32, align 4
+@z = external global i32, align 4
+
+define void @test4() nounwind uwtable ssp {
+entry:
+  %0 = load i32* @x, align 4
+  %1 = load i32* @y, align 4
+  %dec = add nsw i32 %1, -1
+  store i32 %dec, i32* @y, align 4
+  %tobool.i = icmp ne i32 %dec, 0
+  %cond.i = select i1 %tobool.i, i32 %0, i32 0
+  store i32 %cond.i, i32* @z, align 4
+  ret void
+}

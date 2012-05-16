@@ -1905,6 +1905,20 @@ static bool isLoadIncOrDecStore(StoreSDNode *StoreNode, unsigned Opc,
         ChainCheck = true;
         continue;
       }
+
+      // Make sure using Op as part of the chain would not cause a cycle here.
+      // In theory, we could check whether the chain node is a predecessor of
+      // the load. But that can be very expensive. Instead visit the uses and
+      // make sure they all have smaller node id than the load.
+      int LoadId = LoadNode->getNodeId();
+      for (SDNode::use_iterator UI = Op.getNode()->use_begin(),
+             UE = UI->use_end(); UI != UE; ++UI) {
+        if (UI.getUse().getResNo() != 0)
+          continue;
+        if (UI->getNodeId() > LoadId)
+          return false;
+      }
+
       ChainOps.push_back(Op);
     }
 
