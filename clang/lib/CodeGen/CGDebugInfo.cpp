@@ -688,9 +688,7 @@ llvm::DIType CGDebugInfo::CreateType(const FunctionType *Ty,
   }
 
   llvm::DIArray EltTypeArray = DBuilder.getOrCreateArray(EltTys);
-
-  llvm::DIType DbgTy = DBuilder.createSubroutineType(Unit, EltTypeArray);
-  return DbgTy;
+  return DBuilder.createSubroutineType(Unit, EltTypeArray);
 }
 
 
