@@ -217,7 +217,7 @@ AppleObjCRuntimeV2::RunFunctionToFindClassName(addr_t object_addr, Thread *threa
                                                      &m_get_class_name_args, 
                                                      errors, 
                                                      stop_others, 
-                                                     1000000, 
+                                                     100000, 
                                                      try_all_threads, 
                                                      unwind_on_error, 
                                                      void_ptr_value);
