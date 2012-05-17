@@ -3683,13 +3683,13 @@ def t2MSR_AR : T2I<(outs), (ins msr_mask:$mask, rGPR:$Rn),
 def t2MSR_M : T2I<(outs), (ins msr_mask:$SYSm, rGPR:$Rn),
                   NoItinerary, "msr", "\t$SYSm, $Rn", []>,
               Requires<[IsThumb,IsMClass]> {
-  bits<8> SYSm;
+  bits<12> SYSm;
   bits<4> Rn;
   let Inst{31-21} = 0b11110011100;
   let Inst{20}    = 0b0;
   let Inst{19-16} = Rn;
   let Inst{15-12} = 0b1000;
-  let Inst{7-0}  = SYSm;
+  let Inst{11-0}  = SYSm;
 }
 
 

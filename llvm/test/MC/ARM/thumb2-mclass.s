@@ -44,9 +44,21 @@
 @------------------------------------------------------------------------------
 
         msr  apsr, r0
+        msr  apsr_nzcvq, r0
+        msr  apsr_g, r0
+        msr  apsr_nzcvqg, r0
         msr  iapsr, r0
+        msr  iapsr_nzcvq, r0
+        msr  iapsr_g, r0
+        msr  iapsr_nzcvqg, r0
         msr  eapsr, r0
+        msr  eapsr_nzcvq, r0
+        msr  eapsr_g, r0
+        msr  eapsr_nzcvqg, r0
         msr  xpsr, r0
+        msr  xpsr_nzcvq, r0
+        msr  xpsr_g, r0
+        msr  xpsr_nzcvqg, r0
         msr  ipsr, r0
         msr  epsr, r0
         msr  iepsr, r0
@@ -58,10 +70,22 @@
         msr  faultmask, r0
         msr  control, r0
 
-@ CHECK: msr	apsr, r0                @ encoding: [0x80,0xf3,0x00,0x80]
-@ CHECK: msr	iapsr, r0               @ encoding: [0x80,0xf3,0x01,0x80]
-@ CHECK: msr	eapsr, r0               @ encoding: [0x80,0xf3,0x02,0x80]
-@ CHECK: msr	xpsr, r0                @ encoding: [0x80,0xf3,0x03,0x80]
+@ CHECK: msr	apsr, r0                @ encoding: [0x80,0xf3,0x00,0x88]
+@ CHECK: msr	apsr, r0                @ encoding: [0x80,0xf3,0x00,0x88]
+@ CHECK: msr	apsr_g, r0              @ encoding: [0x80,0xf3,0x00,0x84]
+@ CHECK: msr	apsr_nzcvqg, r0         @ encoding: [0x80,0xf3,0x00,0x8c]
+@ CHECK: msr	iapsr, r0               @ encoding: [0x80,0xf3,0x01,0x88]
+@ CHECK: msr	iapsr, r0               @ encoding: [0x80,0xf3,0x01,0x88]
+@ CHECK: msr	iapsr_g, r0             @ encoding: [0x80,0xf3,0x01,0x84]
+@ CHECK: msr	iapsr_nzcvqg, r0        @ encoding: [0x80,0xf3,0x01,0x8c]
+@ CHECK: msr	eapsr, r0               @ encoding: [0x80,0xf3,0x02,0x88]
+@ CHECK: msr	eapsr, r0               @ encoding: [0x80,0xf3,0x02,0x88]
+@ CHECK: msr	eapsr_g, r0             @ encoding: [0x80,0xf3,0x02,0x84]
+@ CHECK: msr	eapsr_nzcvqg, r0        @ encoding: [0x80,0xf3,0x02,0x8c]
+@ CHECK: msr	xpsr, r0                @ encoding: [0x80,0xf3,0x03,0x88]
+@ CHECK: msr	xpsr, r0                @ encoding: [0x80,0xf3,0x03,0x88]
+@ CHECK: msr	xpsr_g, r0              @ encoding: [0x80,0xf3,0x03,0x84]
+@ CHECK: msr	xpsr_nzcvqg, r0         @ encoding: [0x80,0xf3,0x03,0x8c]
 @ CHECK: msr	ipsr, r0                @ encoding: [0x80,0xf3,0x05,0x80]
 @ CHECK: msr	epsr, r0                @ encoding: [0x80,0xf3,0x06,0x80]
 @ CHECK: msr	iepsr, r0               @ encoding: [0x80,0xf3,0x07,0x80]

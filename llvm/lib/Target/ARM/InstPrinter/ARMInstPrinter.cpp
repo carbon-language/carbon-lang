@@ -647,12 +647,30 @@ void ARMInstPrinter::printMSRMaskOperand(const MCInst *MI, unsigned OpNum,
   unsigned Mask = Op.getImm() & 0xf;
 
   if (getAvailableFeatures() & ARM::FeatureMClass) {
-    switch (Op.getImm()) {
+    unsigned SYSm = Op.getImm();
+    unsigned Opcode = MI->getOpcode();
+    // For reads of the special registers ignore the "mask encoding" bits
+    // which are only for writes.
+    if (Opcode == ARM::t2MRS_M)
+      SYSm &= 0xff;
+    switch (SYSm) {
     default: llvm_unreachable("Unexpected mask value!");
-    case 0: O << "apsr"; return;
-    case 1: O << "iapsr"; return;
-    case 2: O << "eapsr"; return;
-    case 3: O << "xpsr"; return;
+    case     0:
+    case 0x800: O << "apsr"; return; // with _nzcvq bits is an alias for aspr
+    case 0x400: O << "apsr_g"; return;
+    case 0xc00: O << "apsr_nzcvqg"; return;
+    case     1:
+    case 0x801: O << "iapsr"; return; // with _nzcvq bits is an alias for iapsr
+    case 0x401: O << "iapsr_g"; return;
+    case 0xc01: O << "iapsr_nzcvqg"; return;
+    case     2:
+    case 0x802: O << "eapsr"; return; // with _nzcvq bits is an alias for eapsr
+    case 0x402: O << "eapsr_g"; return;
+    case 0xc02: O << "eapsr_nzcvqg"; return;
+    case     3:
+    case 0x803: O << "xpsr"; return; // with _nzcvq bits is an alias for xpsr
+    case 0x403: O << "xpsr_g"; return;
+    case 0xc03: O << "xpsr_nzcvqg"; return;
     case 5: O << "ipsr"; return;
     case 6: O << "epsr"; return;
     case 7: O << "iepsr"; return;
