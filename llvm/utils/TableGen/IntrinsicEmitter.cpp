@@ -13,6 +13,7 @@
 
 #include "CodeGenTarget.h"
 #include "IntrinsicEmitter.h"
+#include "SequenceToOffsetTable.h"
 #include "llvm/TableGen/Record.h"
 #include "llvm/TableGen/StringMatcher.h"
 #include "llvm/ADT/StringExtras.h"
@@ -308,97 +309,6 @@ void IntrinsicEmitter::EmitVerifier(const std::vector<CodeGenIntrinsic> &Ints,
   OS << "#endif\n\n";
 }
 
-static void EmitTypeForValueType(raw_ostream &OS, MVT::SimpleValueType VT) {
-  if (EVT(VT).isInteger()) {
-    unsigned BitWidth = EVT(VT).getSizeInBits();
-    OS << "IntegerType::get(Context, " << BitWidth << ")";
-  } else if (VT == MVT::Other) {
-    // MVT::OtherVT is used to mean the empty struct type here.
-    OS << "StructType::get(Context)";
-  } else if (VT == MVT::f16) {
-    OS << "Type::getHalfTy(Context)";
-  } else if (VT == MVT::f32) {
-    OS << "Type::getFloatTy(Context)";
-  } else if (VT == MVT::f64) {
-    OS << "Type::getDoubleTy(Context)";
-  } else if (VT == MVT::f128) {
-    OS << "Type::getFP128Ty(Context)";
-  } else if (VT == MVT::ppcf128) {
-    OS << "Type::getPPC_FP128Ty(Context)";
-  } else if (VT == MVT::isVoid) {
-    OS << "Type::getVoidTy(Context)";
-  } else if (VT == MVT::Metadata) {
-    OS << "Type::getMetadataTy(Context)";
-  } else if (VT == MVT::x86mmx) {
-    OS << "Type::getX86_MMXTy(Context)";
-  } else {
-    assert(false && "Unsupported ValueType!");
-  }
-}
-
-static void EmitTypeGenerate(raw_ostream &OS, const Record *ArgType,
-                             unsigned &ArgNo);
-
-static void EmitTypeGenerate(raw_ostream &OS,
-                             const std::vector<Record*> &ArgTypes,
-                             unsigned &ArgNo) {
-  if (ArgTypes.empty())
-    return EmitTypeForValueType(OS, MVT::isVoid);
-  
-  if (ArgTypes.size() == 1)
-    return EmitTypeGenerate(OS, ArgTypes.front(), ArgNo);
-  
-  OS << "StructType::get(";
-  
-  for (std::vector<Record*>::const_iterator
-       I = ArgTypes.begin(), E = ArgTypes.end(); I != E; ++I) {
-    EmitTypeGenerate(OS, *I, ArgNo);
-    OS << ", ";
-  }
-  
-  OS << " NULL)";
-}
-
-static void EmitTypeGenerate(raw_ostream &OS, const Record *ArgType,
-                             unsigned &ArgNo) {
-  MVT::SimpleValueType VT = getValueType(ArgType->getValueAsDef("VT"));
-  
-  if (ArgType->isSubClassOf("LLVMMatchType")) {
-    unsigned Number = ArgType->getValueAsInt("Number");
-    assert(Number < ArgNo && "Invalid matching number!");
-    if (ArgType->isSubClassOf("LLVMExtendedElementVectorType"))
-      OS << "VectorType::getExtendedElementVectorType"
-      << "(cast<VectorType>(Tys[" << Number << "]))";
-    else if (ArgType->isSubClassOf("LLVMTruncatedElementVectorType"))
-      OS << "VectorType::getTruncatedElementVectorType"
-      << "(cast<VectorType>(Tys[" << Number << "]))";
-    else
-      OS << "Tys[" << Number << "]";
-  } else if (VT == MVT::iAny || VT == MVT::fAny || VT == MVT::vAny ||
-             VT == MVT::iPTRAny) {
-    // NOTE: The ArgNo variable here is not the absolute argument number, it is
-    // the index of the "arbitrary" type in the Tys array passed to the
-    // Intrinsic::getDeclaration function. Consequently, we only want to
-    // increment it when we actually hit an overloaded type. Getting this wrong
-    // leads to very subtle bugs!
-    OS << "Tys[" << ArgNo++ << "]";
-  } else if (EVT(VT).isVector()) {
-    EVT VVT = VT;
-    OS << "VectorType::get(";
-    EmitTypeForValueType(OS, VVT.getVectorElementType().getSimpleVT().SimpleTy);
-    OS << ", " << VVT.getVectorNumElements() << ")";
-  } else if (VT == MVT::iPTR) {
-    OS << "PointerType::getUnqual(";
-    EmitTypeGenerate(OS, ArgType->getValueAsDef("ElTy"), ArgNo);
-    OS << ")";
-  } else if (VT == MVT::isVoid) {
-    assert(ArgNo == 0);
-    OS << "Type::getVoidTy(Context)";
-  } else {
-    EmitTypeForValueType(OS, VT);
-  }
-}
-
 
 // NOTE: This must be kept in synch with the version emitted to the .gen file!
 enum IIT_Info {
@@ -433,7 +343,7 @@ enum IIT_Info {
 
 
 static void EncodeFixedValueType(MVT::SimpleValueType VT,
-                                 SmallVectorImpl<unsigned> &Sig) {
+                                 std::vector<unsigned char> &Sig) {
   if (EVT(VT).isInteger()) {
     unsigned BitWidth = EVT(VT).getSizeInBits();
     switch (BitWidth) {
@@ -462,7 +372,7 @@ static void EncodeFixedValueType(MVT::SimpleValueType VT,
 #endif 
 
 static void EncodeFixedType(Record *R, unsigned &NextArgNo,
-                            SmallVectorImpl<unsigned> &Sig) {
+                            std::vector<unsigned char> &Sig) {
   
   if (R->isSubClassOf("LLVMMatchType")) {
     unsigned Number = R->getValueAsInt("Number");
@@ -515,10 +425,10 @@ static void EncodeFixedType(Record *R, unsigned &NextArgNo,
 
 /// ComputeFixedEncoding - If we can encode the type signature for this
 /// intrinsic into 32 bits, return it.  If not, return ~0U.
-static unsigned ComputeFixedEncoding(const CodeGenIntrinsic &Int) {
+static void ComputeFixedEncoding(const CodeGenIntrinsic &Int,
+                                 std::vector<unsigned char> &TypeSig) {
   unsigned NextArgNo = 0;
   
-  SmallVector<unsigned, 8> TypeSig;
   if (Int.IS.RetVTs.empty())
     TypeSig.push_back(IIT_Done);
   else if (Int.IS.RetVTs.size() == 1 &&
@@ -526,33 +436,24 @@ static unsigned ComputeFixedEncoding(const CodeGenIntrinsic &Int) {
     TypeSig.push_back(IIT_Done);
   else {
     switch (Int.IS.RetVTs.size()) {
-    case 1: break;
-    case 2: TypeSig.push_back(IIT_STRUCT2); break;
-    case 3: TypeSig.push_back(IIT_STRUCT3); break;
-    case 4: TypeSig.push_back(IIT_STRUCT4); break;
-    case 5: TypeSig.push_back(IIT_STRUCT5); break;
-    default: assert(0 && "Unhandled case in struct");
+      case 1: break;
+      case 2: TypeSig.push_back(IIT_STRUCT2); break;
+      case 3: TypeSig.push_back(IIT_STRUCT3); break;
+      case 4: TypeSig.push_back(IIT_STRUCT4); break;
+      case 5: TypeSig.push_back(IIT_STRUCT5); break;
+      default: assert(0 && "Unhandled case in struct");
     }
-
+    
     for (unsigned i = 0, e = Int.IS.RetVTs.size(); i != e; ++i)
       EncodeFixedType(Int.IS.RetTypeDefs[i], NextArgNo, TypeSig);
   }
   
   for (unsigned i = 0, e = Int.IS.ParamTypeDefs.size(); i != e; ++i)
     EncodeFixedType(Int.IS.ParamTypeDefs[i], NextArgNo, TypeSig);
-  
-  // Can only encode 8 nibbles into a 32-bit word.
-  if (TypeSig.size() > 8) return ~0U;
-  
-  unsigned Result = 0;
-  for (unsigned i = 0, e = TypeSig.size(); i != e; ++i) {
-    // If we had an unencodable argument, bail out.
-    if (TypeSig[i] > 15)
-      return ~0U;
-    Result = (Result << 4) | TypeSig[e-i-1];
-  }
-  
-  return Result;
+}
+
+void printIITEntry(raw_ostream &OS, unsigned char X) {
+  OS << (unsigned)X;
 }
 
 void IntrinsicEmitter::EmitGenerator(const std::vector<CodeGenIntrinsic> &Ints, 
@@ -588,73 +489,81 @@ void IntrinsicEmitter::EmitGenerator(const std::vector<CodeGenIntrinsic> &Ints,
   OS << "};\n\n";
 
   
-  // Similar to GET_INTRINSIC_VERIFIER, batch up cases that have identical
-  // types.
-  typedef std::map<RecPair, std::vector<unsigned>, RecordListComparator> MapTy;
-  MapTy UniqueArgInfos;
-
   // If we can compute a 32-bit fixed encoding for this intrinsic, do so and
   // capture it in this vector, otherwise store a ~0U.
   std::vector<unsigned> FixedEncodings;
   
+  SequenceToOffsetTable<std::vector<unsigned char> > LongEncodingTable;
+  
+  std::vector<unsigned char> TypeSig;
+  
   // Compute the unique argument type info.
   for (unsigned i = 0, e = Ints.size(); i != e; ++i) {
-    FixedEncodings.push_back(ComputeFixedEncoding(Ints[i]));
-    
-    // If we didn't compute a compact encoding, emit a long-form variant.
-    if (FixedEncodings.back() == ~0U)
-      UniqueArgInfos[make_pair(Ints[i].IS.RetTypeDefs,
-                               Ints[i].IS.ParamTypeDefs)].push_back(i);
+    // Get the signature for the intrinsic.
+    TypeSig.clear();
+    ComputeFixedEncoding(Ints[i], TypeSig);
+
+    // Check to see if we can encode it into a 32-bit word.  We can only encode
+    // 8 nibbles into a 32-bit word.
+    if (TypeSig.size() <= 8) {
+      bool Failed = false;
+      unsigned Result = 0;
+      for (unsigned i = 0, e = TypeSig.size(); i != e; ++i) {
+        // If we had an unencodable argument, bail out.
+        if (TypeSig[i] > 15) {
+          Failed = true;
+          break;
+        }
+        Result = (Result << 4) | TypeSig[e-i-1];
+      }
+      
+      // If this could be encoded into a 31-bit word, return it.
+      if (!Failed && (Result >> 31) == 0) {
+        FixedEncodings.push_back(Result);
+        continue;
+      }
+    }
+
+    // Otherwise, we're going to unique the sequence into the
+    // LongEncodingTable, and use its offset in the 32-bit table instead.
+    LongEncodingTable.add(TypeSig);
+      
+    // This is a placehold that we'll replace after the table is laid out.
+    FixedEncodings.push_back(~0U);
   }
+  
+  LongEncodingTable.layout();
   
   OS << "static const unsigned IIT_Table[] = {\n  ";
   
   for (unsigned i = 0, e = FixedEncodings.size(); i != e; ++i) {
     if ((i & 7) == 7)
       OS << "\n  ";
-    if (FixedEncodings[i] == ~0U) 
-      OS << "~0U, ";
-    else
+    
+    // If the entry fit in the table, just emit it.
+    if (FixedEncodings[i] != ~0U) {
       OS << "0x" << utohexstr(FixedEncodings[i]) << ", ";
-  }
-  
-  OS << "0\n};\n\n#endif\n\n";  // End of GET_INTRINSTIC_GENERATOR_GLOBAL
-  
-  OS << "// Code for generating Intrinsic function declarations.\n";
-  OS << "#ifdef GET_INTRINSIC_GENERATOR\n";
-  OS << "  switch (id) {\n";
-  OS << "  default: llvm_unreachable(\"Invalid intrinsic!\");\n";
-
-  // Loop through the array, emitting one generator for each batch.
-  std::string IntrinsicStr = TargetPrefix + "Intrinsic::";
-  
-  for (MapTy::iterator I = UniqueArgInfos.begin(),
-       E = UniqueArgInfos.end(); I != E; ++I) {
-    for (unsigned i = 0, e = I->second.size(); i != e; ++i)
-      OS << "  case " << IntrinsicStr << Ints[I->second[i]].EnumName 
-         << ":\t\t// " << Ints[I->second[i]].Name << "\n";
-    
-    const RecPair &ArgTypes = I->first;
-    const std::vector<Record*> &RetTys = ArgTypes.first;
-    const std::vector<Record*> &ParamTys = ArgTypes.second;
-
-    unsigned N = ParamTys.size();
-    unsigned ArgNo = 0;
-    OS << "    ResultTy = ";
-    EmitTypeGenerate(OS, RetTys, ArgNo);
-    OS << ";\n";
-    
-    for (unsigned j = 0; j != N; ++j) {
-      OS << "    ArgTys.push_back(";
-      EmitTypeGenerate(OS, ParamTys[j], ArgNo);
-      OS << ");\n";
+      continue;
     }
+    
+    TypeSig.clear();
+    ComputeFixedEncoding(Ints[i], TypeSig);
 
-    OS << "    break;\n";
+    
+    // Otherwise, emit the offset into the long encoding table.  We emit it this
+    // way so that it is easier to read the offset in the .def file.
+    OS << "(1U<<31) | " << LongEncodingTable.get(TypeSig) << ", ";
   }
-
-  OS << "  }\n";
-  OS << "#endif\n\n";
+  
+  OS << "0\n};\n\n";
+  
+  // Emit the shared table of register lists.
+  OS << "static const unsigned char IIT_LongEncodingTable[] = {\n";
+  if (!LongEncodingTable.empty())
+    LongEncodingTable.emit(OS, printIITEntry);
+  OS << "  255\n};\n\n";
+  
+  OS << "#endif\n\n";  // End of GET_INTRINSTIC_GENERATOR_GLOBAL
 }
 
 namespace {

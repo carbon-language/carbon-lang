@@ -419,31 +419,34 @@ static Type *DecodeFixedType(unsigned &NextElt, ArrayRef<unsigned char> Infos,
 
 FunctionType *Intrinsic::getType(LLVMContext &Context,
                                  ID id, ArrayRef<Type*> Tys) {
-  Type *ResultTy = 0;
-  SmallVector<Type*, 8> ArgTys;
-  
   // Check to see if the intrinsic's type was expressible by the table.
   unsigned TableVal = IIT_Table[id-1];
-  if (TableVal != ~0U) {
-    // Decode the TableVal into an array of IITValues.
-    SmallVector<unsigned char, 8> IITValues;
+  
+  // Decode the TableVal into an array of IITValues.
+  SmallVector<unsigned char, 8> IITValues;
+  ArrayRef<unsigned char> IITEntries;
+  unsigned NextElt = 0;
+  if ((TableVal >> 31) != 0) {
+    // This is an offset into the IIT_LongEncodingTable.
+    IITEntries = IIT_LongEncodingTable;
+    
+    // Strip sentinel bit.
+    NextElt = (TableVal << 1) >> 1;
+  } else {
     do {
       IITValues.push_back(TableVal & 0xF);
       TableVal >>= 4;
     } while (TableVal);
     
-    unsigned NextElt = 0;
-    ResultTy = DecodeFixedType(NextElt, IITValues, Tys, Context);
-    
-    while (NextElt != IITValues.size())
-      ArgTys.push_back(DecodeFixedType(NextElt, IITValues, Tys, Context));
-
-    return FunctionType::get(ResultTy, ArgTys, false); 
+    IITEntries = IITValues;
+    NextElt = 0;
   }
-  
-#define GET_INTRINSIC_GENERATOR
-#include "llvm/Intrinsics.gen"
-#undef GET_INTRINSIC_GENERATOR
+    
+  Type *ResultTy = DecodeFixedType(NextElt, IITEntries, Tys, Context);
+    
+  SmallVector<Type*, 8> ArgTys;
+  while (NextElt != IITEntries.size() && IITEntries[NextElt] != 0)
+    ArgTys.push_back(DecodeFixedType(NextElt, IITEntries, Tys, Context));
 
   return FunctionType::get(ResultTy, ArgTys, false); 
 }
