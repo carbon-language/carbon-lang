@@ -187,7 +187,7 @@ private:
       assert(isa<ConstantInt>(C1.Low) && isa<ConstantInt>(C2.High));
       const ConstantInt* CI1 = cast<const ConstantInt>(C1.Low);
       const ConstantInt* CI2 = cast<const ConstantInt>(C2.High);
-      return CI1->getValue().slt(CI2->getValue());
+      return CI1->getValue().ult(CI2->getValue());
     }
   };
 
