@@ -45,17 +45,18 @@ inline void NOINLINE breakhere() {
 }
 
 // FastState (from most significant bit):
+//   unused          : 1
 //   tid             : kTidBits
 //   epoch           : kClkBits
-//   unused          :
+//   unused          : -
 //   ignore_bit      : 1
 class FastState {
  public:
   FastState(u64 tid, u64 epoch) {
-    x_ = tid << (64 - kTidBits);
-    x_ |= epoch << (64 - kTidBits - kClkBits);
-    CHECK(tid == this->tid());
-    CHECK(epoch == this->epoch());
+    x_ = tid << kTidShift;
+    x_ |= epoch << kClkShift;
+    DCHECK(tid == this->tid());
+    DCHECK(epoch == this->epoch());
   }
 
   explicit FastState(u64 x)
@@ -63,28 +64,37 @@ class FastState {
   }
 
   u64 tid() const {
-    u64 res = x_ >> (64 - kTidBits);
+    u64 res = x_ >> kTidShift;
     return res;
   }
+
   u64 epoch() const {
-    u64 res = (x_ << kTidBits) >> (64 - kClkBits);
+    u64 res = (x_ << (kTidBits + 1)) >> (64 - kClkBits);
     return res;
-  };
-  void IncrementEpoch() {
-    // u64 old_epoch = epoch();
-    x_ += 1 << (64 - kTidBits - kClkBits);
-    // CHECK(old_epoch + 1 == epoch());
   }
-  void SetIgnoreBit() { x_ |= 1; }
-  void ClearIgnoreBit() { x_ &= ~(u64)1; }
-  bool GetIgnoreBit() { return x_ & 1; }
+
+  void IncrementEpoch() {
+    u64 old_epoch = epoch();
+    x_ += 1 << kClkShift;
+    DCHECK(old_epoch + 1 == epoch());
+    (void)old_epoch;
+  }
+
+  void SetIgnoreBit() { x_ |= kIgnoreBit; }
+  void ClearIgnoreBit() { x_ &= ~kIgnoreBit; }
+  bool GetIgnoreBit() { return x_ & kIgnoreBit; }
 
  private:
   friend class Shadow;
+  static const int kTidShift = 64 - kTidBits - 1;
+  static const int kClkShift = kTidShift - kClkBits;
+  static const u64 kIgnoreBit = 1ull;
+  static const u64 kFreedBit = 1ull << 63;
   u64 x_;
 };
 
 // Shadow (from most significant bit):
+//   freed           : 1
 //   tid             : kTidBits
 //   epoch           : kClkBits
 //   is_write        : 1
@@ -116,7 +126,7 @@ class Shadow: public FastState {
   u64 raw() const { return x_; }
 
   static inline bool TidsAreEqual(Shadow s1, Shadow s2) {
-    u64 shifted_xor = (s1.x_ ^ s2.x_) >> (64 - kTidBits);
+    u64 shifted_xor = (s1.x_ ^ s2.x_) >> kTidShift;
     DCHECK_EQ(shifted_xor == 0, s1.tid() == s2.tid());
     return shifted_xor == 0;
   }
@@ -169,6 +179,25 @@ class Shadow: public FastState {
   u64 addr0() const { return x_ & 7; }
   u64 size() const { return 1ull << size_log(); }
   bool is_write() const { return x_ & 32; }
+
+  // The idea behind the freed bit is as follows.
+  // When the memory is freed (or otherwise unaccessible) we write to the shadow
+  // values with tid/epoch related to the free and the freed bit set.
+  // During memory accesses processing the freed bit is considered
+  // as msb of tid. So any access races with shadow with freed bit set
+  // (it is as if write from a thread with which we never synchronized before).
+  // This allows us to detect accesses to freed memory w/o additional
+  // overheads in memory access processing and at the same time restore
+  // tid/epoch of free.
+  void MarkAsFreed() {
+     x_ |= kFreedBit;
+  }
+
+  bool GetFreedAndReset() {
+    bool res = x_ & kFreedBit;
+    x_ &= ~kFreedBit;
+    return res;
+  }
 
  private:
   u64 size_log() const { return (x_ >> 3) & 3; }

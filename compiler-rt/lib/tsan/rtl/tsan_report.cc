@@ -32,6 +32,8 @@ static void PrintHeader(ReportType typ) {
 
   if (typ == ReportTypeRace)
     Printf("data race");
+  else if (typ == ReportTypeUseAfterFree)
+    Printf("heap-use-after-free");
   else if (typ == ReportTypeThreadLeak)
     Printf("thread leak");
   else if (typ == ReportTypeMutexDestroyLocked)

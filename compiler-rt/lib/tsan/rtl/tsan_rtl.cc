@@ -373,7 +373,11 @@ void MemoryResetRange(ThreadState *thr, uptr pc, uptr addr, uptr size) {
 
 void MemoryRangeFreed(ThreadState *thr, uptr pc, uptr addr, uptr size) {
   MemoryAccessRange(thr, pc, addr, size, true);
-  MemoryRangeSet(thr, pc, addr, size, kShadowFreed);
+  Shadow s(thr->fast_state);
+  s.MarkAsFreed();
+  s.SetWrite(true);
+  s.SetAddr0AndSizeLog(0, 3);
+  MemoryRangeSet(thr, pc, addr, size, s.raw());
 }
 
 void FuncEntry(ThreadState *thr, uptr pc) {
@@ -389,16 +393,6 @@ void FuncEntry(ThreadState *thr, uptr pc) {
   DCHECK(thr->shadow_stack_pos < &thr->shadow_stack[kShadowStackSize]);
   thr->shadow_stack_pos[0] = pc;
   thr->shadow_stack_pos++;
-
-#if 1
-  // While we are testing on single-threaded benchmarks,
-  // emulate some synchronization activity.
-  // FIXME: remove me later.
-  if (((++thr->func_call_count) % 1000) == 0) {
-    thr->clock.set(thr->fast_state.tid(), thr->fast_state.epoch());
-    thr->fast_synch_epoch = thr->fast_state.epoch();
-  }
-#endif
 }
 
 void FuncExit(ThreadState *thr) {

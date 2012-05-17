@@ -42,7 +42,7 @@ struct ThreadClock {
   ThreadClock();
 
   u64 get(unsigned tid) const {
-    DCHECK(tid < kMaxTid);
+    DCHECK(tid < kMaxTidInClock);
     return clk_[tid];
   }
 
@@ -71,7 +71,7 @@ struct ThreadClock {
 
  private:
   uptr nclk_;
-  u64 clk_[kMaxTid];
+  u64 clk_[kMaxTidInClock];
 };
 
 }  // namespace __tsan

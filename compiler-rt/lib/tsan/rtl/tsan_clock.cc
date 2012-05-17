@@ -58,7 +58,7 @@ namespace __tsan {
 
 ThreadClock::ThreadClock() {
   nclk_ = 0;
-  for (uptr i = 0; i < (uptr)kMaxTid; i++)
+  for (uptr i = 0; i < (uptr)kMaxTidInClock; i++)
     clk_[i] = 0;
 }
 

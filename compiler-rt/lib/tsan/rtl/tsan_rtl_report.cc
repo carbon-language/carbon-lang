@@ -286,6 +286,14 @@ bool OutputReport(const ScopedReport &srep, const ReportStack *suppress_stack) {
 
 void ReportRace(ThreadState *thr) {
   ScopedInRtl in_rtl;
+
+  bool freed = false;
+  {
+    Shadow s(thr->racy_state[1]);
+    freed = s.GetFreedAndReset();
+    thr->racy_state[1] = s.raw();
+  }
+
   uptr addr = ShadowToMem((uptr)thr->racy_shadow_addr);
   uptr addr_min = 0;
   uptr addr_max = 0;
@@ -303,11 +311,10 @@ void ReportRace(ThreadState *thr) {
   Context *ctx = CTX();
   Lock l0(&ctx->thread_mtx);
 
-  ScopedReport rep(ReportTypeRace);
-  const uptr nmop = thr->racy_state[1] == kShadowFreed ? 1 : 2;
-
-  StackTrace traces[2];
-  for (uptr i = 0; i < nmop; i++) {
+  ScopedReport rep(freed ? ReportTypeUseAfterFree : ReportTypeRace);
+  const uptr kMop = 2;
+  StackTrace traces[kMop];
+  for (uptr i = 0; i < kMop; i++) {
     Shadow s(thr->racy_state[i]);
     RestoreStack(s.tid(), s.epoch(), &traces[i]);
   }
@@ -315,7 +322,7 @@ void ReportRace(ThreadState *thr) {
   if (HandleRacyStacks(thr, traces, addr_min, addr_max))
     return;
 
-  for (uptr i = 0; i < nmop; i++) {
+  for (uptr i = 0; i < kMop; i++) {
     Shadow s(thr->racy_state[i]);
     rep.AddMemoryAccess(addr, s, &traces[i]);
   }
@@ -323,7 +330,7 @@ void ReportRace(ThreadState *thr) {
   // Ensure that we have at least something for the current thread.
   CHECK_EQ(traces[0].IsEmpty(), false);
 
-  for (uptr i = 0; i < nmop; i++) {
+  for (uptr i = 0; i < kMop; i++) {
     FastState s(thr->racy_state[i]);
     ThreadContext *tctx = ctx->threads[s.tid()];
     if (s.epoch() < tctx->epoch0 || s.epoch() > tctx->epoch1)
