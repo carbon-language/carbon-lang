@@ -1,4 +1,4 @@
-//===- MachineScheduler.cpp - Machine Instruction Scheduler ---------------===//excess
+//===- MachineScheduler.cpp - Machine Instruction Scheduler ---------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -808,7 +808,8 @@ traceCandidate(const char *Label, unsigned QID, SUnit *SU,
 }
 #endif
 
-/// Return true if the LHS reg pressure effect is better than RHS.
+/// pickNodeFromQueue helper that returns true if the LHS reg pressure effect is
+/// more desirable than RHS from scheduling standpoint.
 static bool compareRPDelta(const RegPressureDelta &LHS,
                            const RegPressureDelta &RHS) {
   // Compare each component of pressure in decreasing order of importance
