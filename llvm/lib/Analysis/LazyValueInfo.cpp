@@ -818,7 +818,7 @@ bool LazyValueInfoCache::getEdgeValue(Value *Val, BasicBlock *BBFrom,
         ConstantInt *CI = dyn_cast<ConstantInt>(ICI->getOperand(1));
         if (CI && (ICI->getOperand(0) == Val || NegOffset)) {
           // Calculate the range of values that would satisfy the comparison.
-          ConstantRange CmpRange(CI->getValue(), CI->getValue()+1);
+          ConstantRange CmpRange(CI->getValue());
           ConstantRange TrueValues =
             ConstantRange::makeICmpRegion(ICI->getPredicate(), CmpRange);
 
