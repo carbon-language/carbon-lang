@@ -1227,22 +1227,19 @@ Host::GetProcessInfo (lldb::pid_t pid, ProcessInstanceInfo &process_info)
 lldb::TargetSP
 Host::GetDummyTarget (lldb_private::Debugger &debugger)
 {
-    static TargetSP g_dummy_target_sp;
-    
-    if (!g_dummy_target_sp)
-    {
-        ArchSpec arch(Target::GetDefaultArchitecture());
-        if (!arch.IsValid())
-            arch = Host::GetArchitecture ();
-        Error err = debugger.GetTargetList().CreateTarget(debugger, 
-                                                          FileSpec(), 
-                                                          arch.GetTriple().getTriple().c_str(),
-                                                          false, 
-                                                          NULL, 
-                                                          g_dummy_target_sp);
-    }
-    
-    return g_dummy_target_sp;
+    lldb::TargetSP dummy_target_sp;
+
+    ArchSpec arch(Target::GetDefaultArchitecture());
+    if (!arch.IsValid())
+        arch = Host::GetArchitecture ();
+    Error err = debugger.GetTargetList().CreateTarget(debugger, 
+                                                      FileSpec(), 
+                                                      arch.GetTriple().getTriple().c_str(),
+                                                      false, 
+                                                      NULL, 
+                                                      dummy_target_sp);
+
+    return dummy_target_sp;
 }
 
 struct ShellInfo
