@@ -918,6 +918,8 @@ void RegisterCoalescer::updateRegDefsUses(unsigned SrcReg,
 
   for (MachineRegisterInfo::reg_iterator I = MRI->reg_begin(SrcReg);
        MachineInstr *UseMI = I.skipInstruction();) {
+    bool AlreadyJoined = JoinedCopies.count(UseMI);
+
     // A PhysReg copy that won't be coalesced can perhaps be rematerialized
     // instead.
     if (DstIsPhys) {
@@ -925,7 +927,7 @@ void RegisterCoalescer::updateRegDefsUses(unsigned SrcReg,
           UseMI->getOperand(1).getReg() == SrcReg &&
           UseMI->getOperand(0).getReg() != SrcReg &&
           UseMI->getOperand(0).getReg() != DstReg &&
-          !JoinedCopies.count(UseMI) &&
+          !AlreadyJoined &&
           reMaterializeTrivialDef(LIS->getInterval(SrcReg), false,
                                   UseMI->getOperand(0).getReg(), UseMI))
         continue;
@@ -937,7 +939,7 @@ void RegisterCoalescer::updateRegDefsUses(unsigned SrcReg,
 
     // If SrcReg wasn't read, it may still be the case that DstReg is live-in
     // because SrcReg is a sub-register.
-    if (!Reads && SubIdx)
+    if (!Reads && SubIdx && !AlreadyJoined)
       Reads = DstInt.liveAt(LIS->getInstructionIndex(UseMI));
 
     // Replace SrcReg with DstReg in all UseMI operands.
@@ -947,7 +949,7 @@ void RegisterCoalescer::updateRegDefsUses(unsigned SrcReg,
       // Adjust <undef> flags in case of sub-register joins. We don't want to
       // turn a full def into a read-modify-write sub-register def and vice
       // versa.
-      if (SubIdx && MO.isDef())
+      if (SubIdx && !AlreadyJoined && MO.isDef())
         MO.setIsUndef(!Reads);
 
       if (DstIsPhys)
@@ -957,7 +959,7 @@ void RegisterCoalescer::updateRegDefsUses(unsigned SrcReg,
     }
 
     // This instruction is a copy that will be removed.
-    if (JoinedCopies.count(UseMI))
+    if (AlreadyJoined)
       continue;
 
     DEBUG({
