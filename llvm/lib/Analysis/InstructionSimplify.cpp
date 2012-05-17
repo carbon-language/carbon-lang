@@ -47,7 +47,7 @@ struct Query {
   const DominatorTree *DT;
 
   Query(const TargetData *td, const TargetLibraryInfo *tli,
-        const DominatorTree *dt) : TD(td), TLI(tli), DT(dt) {};
+        const DominatorTree *dt) : TD(td), TLI(tli), DT(dt) {}
 };
 
 static Value *SimplifyAndInst(Value *, Value *, const Query &, unsigned);
