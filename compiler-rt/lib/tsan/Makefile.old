@@ -20,7 +20,7 @@ UNIT_TEST_HDR=$(wildcard rtl/*.h)
 
 INCLUDES=-Irtl $(GTEST_INCLUDE)
 
-all: $(LIBTSAN) test
+all: libtsan test
 
 help:
 	@ echo "A little help is always welcome!"
@@ -31,7 +31,9 @@ help:
 	@ echo
 	@ echo "For more info, see http://code.google.com/p/data-race-test/wiki/ThreadSanitizer2"
 
-$(LIBTSAN):
+$(LIBTSAN): libtsan
+
+libtsan:
 	$(MAKE) -C rtl -f Makefile.old DEBUG=$(DEBUG)
 
 unit_tests/%_test.o: unit_tests/%_test.cc $(UNIT_TEST_HDR)
@@ -46,7 +48,7 @@ rtl_tests/%.o: rtl_tests/%.cc $(LIBTSAN_HEADERS)
 tsan_test: $(TEST_OBJ) $(UNIT_TEST_OBJ) $(RTL_TEST_OBJ) $(LIBTSAN) $(GTEST_LIB)
 	$(CXX) $^ -o $@ $(LDFLAGS)
 
-test: $(LIBTSAN) tsan_test
+test: libtsan tsan_test
 
 run: all
 	(ulimit -s 8192; ./tsan_test)
