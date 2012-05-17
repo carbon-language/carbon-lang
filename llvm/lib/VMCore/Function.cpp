@@ -376,7 +376,7 @@ static Type *DecodeFixedType(unsigned &NextElt, ArrayRef<unsigned char> Infos,
   case IIT_F32: return Type::getFloatTy(Context);
   case IIT_F64: return Type::getDoubleTy(Context);
   case IIT_MMX: return Type::getX86_MMXTy(Context);
-  case IIT_METADATA: return Type::Type::getMetadataTy(Context);
+  case IIT_METADATA: return Type::getMetadataTy(Context);
   case IIT_EMPTYSTRUCT: return StructType::get(Context);
   case IIT_V2:
     return VectorType::get(DecodeFixedType(NextElt, Infos, Tys, Context), 2);
