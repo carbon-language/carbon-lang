@@ -112,6 +112,8 @@ HOST_OS=@HOST_OS@
 # Target operating system for which LLVM will compile for.
 TARGET_OS=@TARGET_OS@
 
+# Host hardware architecture
+HOST_ARCH=@HOST_ARCH@
 # Target hardware architecture
 ARCH=@ARCH@
 TARGET_NATIVE_ARCH := $(ARCH)
