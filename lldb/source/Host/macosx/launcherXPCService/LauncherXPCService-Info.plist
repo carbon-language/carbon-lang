@@ -33,6 +33,7 @@
 		<key>_AllowedClients</key>
 		<array>
 			<string> identifier = com.apple.lldb AND_APPLE_CODE_SIGNED</string>
+            <string> identifier = com.apple.dt.Xcode AND_APPLE_CODE_SIGNED</string>
 		</array>
 		<key>ServiceType</key>
 		<string>Application</string>
