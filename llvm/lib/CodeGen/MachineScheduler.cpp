@@ -149,7 +149,7 @@ priorNonDebug(MachineBasicBlock::iterator I, MachineBasicBlock::iterator Beg) {
 /// non-debug instruction.
 static MachineBasicBlock::iterator
 nextIfDebug(MachineBasicBlock::iterator I, MachineBasicBlock::iterator End) {
-  while(I != End) {
+  for(; I != End; ++I) {
     if (!I->isDebugValue())
       break;
   }
@@ -449,17 +449,19 @@ void ScheduleDAGMI::releasePredecessors(SUnit *SU) {
 
 void ScheduleDAGMI::moveInstruction(MachineInstr *MI,
                                     MachineBasicBlock::iterator InsertPos) {
-  // Fix RegionBegin if the first instruction moves down.
+  // Advance RegionBegin if the first instruction moves down.
   if (&*RegionBegin == MI)
-    RegionBegin = llvm::next(RegionBegin);
+    ++RegionBegin;
+
+  // Update the instruction stream.
   BB->splice(InsertPos, BB, MI);
+
+  // Update LiveIntervals
   LIS->handleMove(MI);
-  // Fix RegionBegin if another instruction moves above the first instruction.
+
+  // Recede RegionBegin if an instruction moves above the first.
   if (RegionBegin == InsertPos)
     RegionBegin = MI;
-  // Fix TopRPTracker if we move something above CurrentTop.
-  if (CurrentTop == InsertPos)
-    TopRPTracker.setPos(MI);
 }
 
 bool ScheduleDAGMI::checkSchedLimit() {
@@ -571,8 +573,10 @@ void ScheduleDAGMI::schedule() {
       assert(SU->isTopReady() && "node still has unscheduled dependencies");
       if (&*CurrentTop == MI)
         CurrentTop = nextIfDebug(++CurrentTop, CurrentBottom);
-      else
+      else {
         moveInstruction(MI, CurrentTop);
+        TopRPTracker.setPos(MI);
+      }
 
       // Update top scheduled pressure.
       TopRPTracker.advance();
@@ -588,8 +592,10 @@ void ScheduleDAGMI::schedule() {
       if (&*priorII == MI)
         CurrentBottom = priorII;
       else {
-        if (&*CurrentTop == MI)
-          CurrentTop = nextIfDebug(++CurrentTop, CurrentBottom);
+        if (&*CurrentTop == MI) {
+          CurrentTop = nextIfDebug(++CurrentTop, priorII);
+          TopRPTracker.setPos(CurrentTop);
+        }
         moveInstruction(MI, CurrentBottom);
         CurrentBottom = MI;
       }
