@@ -3473,7 +3473,7 @@ const ArrayType *ASTContext::getAsArrayType(QualType T) const {
                                               VAT->getBracketsRange()));
 }
 
-QualType ASTContext::getAdjustedParameterType(QualType T) {
+QualType ASTContext::getAdjustedParameterType(QualType T) const {
   // C99 6.7.5.3p7:
   //   A declaration of a parameter as "array of type" shall be
   //   adjusted to "qualified pointer to type", where the type
@@ -3492,7 +3492,7 @@ QualType ASTContext::getAdjustedParameterType(QualType T) {
   return T;  
 }
 
-QualType ASTContext::getSignatureParameterType(QualType T) {
+QualType ASTContext::getSignatureParameterType(QualType T) const {
   T = getVariableArrayDecayedType(T);
   T = getAdjustedParameterType(T);
   return T.getUnqualifiedType();
