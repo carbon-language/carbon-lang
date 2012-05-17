@@ -53,7 +53,7 @@ def err_fe_unable_to_open_logfile : Error<
 def err_fe_pth_file_has_no_source_header : Error<
     "PTH file '%0' does not designate an original source header file for -include-pth">;
 def warn_fe_macro_contains_embedded_newline : Warning<
-    "macro '%0' contains embedded newline, text after the newline is ignored.">;
+    "macro '%0' contains embedded newline; text after the newline is ignored">;
 def warn_fe_cc_print_header_failure : Warning<
     "unable to open CC_PRINT_HEADERS file: %0 (using stderr)">;
 def warn_fe_cc_log_diagnostics_failure : Warning<

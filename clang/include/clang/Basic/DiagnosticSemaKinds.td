@@ -3815,7 +3815,7 @@ def note_indirection_through_null : Note<
   "consider using __builtin_trap() or qualifying pointer with 'volatile'">;
 def warn_pointer_indirection_from_incompatible_type : Warning<
   "dereference of type %1 that was reinterpret_cast from type %0 has undefined "
-  "behavior.">,
+  "behavior">,
   InGroup<DiagGroup<"undefined-reinterpret-cast">>, DefaultIgnore;
 
 def err_objc_object_assignment : Error<
@@ -4120,7 +4120,7 @@ def err_bad_cxx_cast_member_pointer_size : Error<
 def err_bad_reinterpret_cast_reference : Error<
   "reinterpret_cast of a %0 to %1 needs its address which is not allowed">;
 def warn_undefined_reinterpret_cast : Warning<
-  "reinterpret_cast from %0 to %1 has undefined behavior.">,
+  "reinterpret_cast from %0 to %1 has undefined behavior">,
   InGroup<DiagGroup<"undefined-reinterpret-cast">>, DefaultIgnore;
 
 // These messages don't adhere to the pattern.
@@ -4932,9 +4932,9 @@ def err_operator_new_delete_invalid_result_type : Error<
 def err_operator_new_delete_dependent_result_type : Error<
   "%0 cannot have a dependent return type; use %1 instead">;
 def err_operator_new_delete_too_few_parameters : Error<
-  "%0 must have at least one parameter.">;
+  "%0 must have at least one parameter">;
 def err_operator_new_delete_template_too_few_parameters : Error<
-  "%0 template must have at least two parameters.">;
+  "%0 template must have at least two parameters">;
 
 def err_operator_new_dependent_param_type : Error<
   "%0 cannot take a dependent type as first parameter; "
