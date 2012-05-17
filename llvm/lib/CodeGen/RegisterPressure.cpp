@@ -698,7 +698,7 @@ getMaxDownwardPressureDelta(const MachineInstr *MI, RegPressureDelta &Delta) {
       unsigned Reg = VirtRegOpers.Uses[i];
       const LiveInterval *LI = &LIS->getInterval(Reg);
       // FIXME: allow the caller to pass in the list of vreg uses that remain to
-      // be top-scheduled to avoid searching uses at each query.
+      // be bottom-scheduled to avoid searching uses at each query.
       SlotIndex CurrIdx = LIS->getInstructionIndex(CurrPos).getRegSlot();
       if (LI->killedAt(SlotIdx)
           && !findUseBetween(Reg, CurrIdx, SlotIdx, MRI, LIS)) {

@@ -819,8 +819,6 @@ SUnit *ConvergingScheduler::pickNode(bool &IsTopNode) {
     assert(TopQueue.empty() && BotQueue.empty() && "ReadyQ garbage");
     return NULL;
   }
-  // As an initial placeholder heuristic, schedule in the direction that has
-  // the fewest choices.
   SUnit *SU;
   if (ForceTopDown) {
     SU = DAG->getSUnit(DAG->top());
