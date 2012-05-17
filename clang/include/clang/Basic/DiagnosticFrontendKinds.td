@@ -91,7 +91,7 @@ def warn_unknown_warning_option : Warning<
     "unknown warning option '%0'">,
     InGroup<DiagGroup<"unknown-warning-option"> >;
 def warn_unknown_negative_warning_option : Warning<
-    "unknown warning option '%0'?">,
+    "unknown warning option '%0'">,
     InGroup<DiagGroup<"unknown-warning-option"> >;
 def warn_unknown_warning_option_suggest : Warning<
     "unknown warning option '%0'; did you mean '%1'?">,
