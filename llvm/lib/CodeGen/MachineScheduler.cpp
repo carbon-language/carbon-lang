@@ -1,4 +1,4 @@
-//===- MachineScheduler.cpp - Machine Instruction Scheduler ---------------===//
+//===- MachineScheduler.cpp - Machine Instruction Scheduler ---------------===//excess
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -326,9 +326,14 @@ class ScheduleDAGMI : public ScheduleDAGInstrs {
 
   MachineBasicBlock::iterator LiveRegionEnd;
 
-  // Register pressure in this region computed by buildSchedGraph.
+  /// Register pressure in this region computed by buildSchedGraph.
   IntervalPressure RegPressure;
   RegPressureTracker RPTracker;
+
+  /// List of pressure sets that exceed the target's pressure limit before
+  /// scheduling, listed in increasing set ID order. Each pressure set is paired
+  /// with its max pressure in the currently scheduled regions.
+  std::vector<PressureElement> RegionCriticalPSets;
 
   /// The top of the unscheduled zone.
   MachineBasicBlock::iterator CurrentTop;
@@ -380,8 +385,13 @@ public:
   /// Get register pressure for the entire scheduling region before scheduling.
   const IntervalPressure &getRegPressure() const { return RegPressure; }
 
+  const std::vector<PressureElement> &getRegionCriticalPSets() const {
+    return RegionCriticalPSets;
+  }
+
 protected:
   void initRegPressure();
+  void updateScheduledPressure(std::vector<unsigned> NewMaxPressure);
 
   void moveInstruction(MachineInstr *MI, MachineBasicBlock::iterator InsertPos);
   bool checkSchedLimit();
@@ -515,6 +525,33 @@ void ScheduleDAGMI::initRegPressure() {
     BotRPTracker.recede();
 
   assert(BotRPTracker.getPos() == RegionEnd && "Can't find the region bottom");
+
+  // Cache the list of excess pressure sets in this region. This will also track
+  // the max pressure in the scheduled code for these sets.
+  RegionCriticalPSets.clear();
+  std::vector<unsigned> RegionPressure = RPTracker.getPressure().MaxSetPressure;
+  for (unsigned i = 0, e = RegionPressure.size(); i < e; ++i) {
+    unsigned Limit = TRI->getRegPressureSetLimit(i);
+    if (RegionPressure[i] > Limit)
+      RegionCriticalPSets.push_back(PressureElement(i, 0));
+  }
+  DEBUG(dbgs() << "Excess PSets: ";
+        for (unsigned i = 0, e = RegionCriticalPSets.size(); i != e; ++i)
+          dbgs() << TRI->getRegPressureSetName(
+            RegionCriticalPSets[i].PSetID) << " ";
+        dbgs() << "\n");
+}
+
+// FIXME: When the pressure tracker deals in pressure differences then we won't
+// iterate over all RegionCriticalPSets[i].
+void ScheduleDAGMI::
+updateScheduledPressure(std::vector<unsigned> NewMaxPressure) {
+  for (unsigned i = 0, e = RegionCriticalPSets.size(); i < e; ++i) {
+    unsigned ID = RegionCriticalPSets[i].PSetID;
+    int &MaxUnits = RegionCriticalPSets[i].UnitIncrease;
+    if ((int)NewMaxPressure[ID] > MaxUnits)
+      MaxUnits = NewMaxPressure[ID];
+  }
 }
 
 /// schedule - Called back from MachineScheduler::runOnMachineFunction
@@ -581,6 +618,7 @@ void ScheduleDAGMI::schedule() {
       // Update top scheduled pressure.
       TopRPTracker.advance();
       assert(TopRPTracker.getPos() == CurrentTop && "out of sync");
+      updateScheduledPressure(TopRPTracker.getPressure().MaxSetPressure);
 
       // Release dependent instructions for scheduling.
       releaseSuccessors(SU);
@@ -602,6 +640,7 @@ void ScheduleDAGMI::schedule() {
       // Update bottom scheduled pressure.
       BotRPTracker.recede();
       assert(BotRPTracker.getPos() == CurrentBottom && "out of sync");
+      updateScheduledPressure(BotRPTracker.getPressure().MaxSetPressure);
 
       // Release dependent instructions for scheduling.
       releasePredecessors(SU);
@@ -654,6 +693,8 @@ struct ReadyQ {
 
   bool empty() const { return Queue.empty(); }
 
+  unsigned size() const { return Queue.size(); }
+
   iterator begin() { return Queue.begin(); }
 
   iterator end() { return Queue.end(); }
@@ -689,6 +730,9 @@ class ConvergingScheduler : public MachineSchedStrategy {
 
     SchedCandidate(): SU(NULL) {}
   };
+  /// Represent the type of SchedCandidate found within a single queue.
+  enum CandResult {
+    NoCand, NodeOrder, SingleExcess, SingleCritical, SingleMax, MultiPressure };
 
   ScheduleDAGMI *DAG;
   const TargetRegisterInfo *TRI;
@@ -732,88 +776,197 @@ public:
       BotQueue.push(SU);
   }
 protected:
+  SUnit *pickNodeBidrectional(bool &IsTopNode);
+
+  CandResult pickNodeFromQueue(ReadyQ &Q, const RegPressureTracker &RPTracker,
+                               SchedCandidate &Candidate);
 #ifndef NDEBUG
   void traceCandidate(const char *Label, unsigned QID, SUnit *SU,
-                      int RPDiff, unsigned PSetID);
+                      PressureElement P = PressureElement());
 #endif
-  bool pickNodeFromQueue(ReadyQ &Q, const RegPressureTracker &RPTracker,
-                         SchedCandidate &Candidate);
 };
 } // namespace
 
 #ifndef NDEBUG
 void ConvergingScheduler::
 traceCandidate(const char *Label, unsigned QID, SUnit *SU,
-               int RPDiff, unsigned PSetID) {
+               PressureElement P) {
   dbgs() << Label << getQName(QID) << " ";
-  if (RPDiff)
-    dbgs() << TRI->getRegPressureSetName(PSetID) << ":" << RPDiff << " ";
+  if (P.isValid())
+    dbgs() << TRI->getRegPressureSetName(P.PSetID) << ":" << P.UnitIncrease
+           << " ";
   else
     dbgs() << "     ";
   SU->dump(DAG);
 }
 #endif
 
+/// Return true if the LHS reg pressure effect is better than RHS.
+static bool compareRPDelta(const RegPressureDelta &LHS,
+                           const RegPressureDelta &RHS) {
+  // Compare each component of pressure in decreasing order of importance
+  // without checking if any are valid. Invalid PressureElements are assumed to
+  // have UnitIncrease==0, so are neutral.
+  if (LHS.Excess.UnitIncrease != RHS.Excess.UnitIncrease)
+    return LHS.Excess.UnitIncrease < RHS.Excess.UnitIncrease;
+
+  if (LHS.CriticalMax.UnitIncrease != RHS.CriticalMax.UnitIncrease)
+    return LHS.CriticalMax.UnitIncrease < RHS.CriticalMax.UnitIncrease;
+
+  if (LHS.CurrentMax.UnitIncrease != RHS.CurrentMax.UnitIncrease)
+    return LHS.CurrentMax.UnitIncrease < RHS.CurrentMax.UnitIncrease;
+
+  return false;
+}
+
+
 /// Pick the best candidate from the top queue.
 ///
 /// TODO: getMaxPressureDelta results can be mostly cached for each SUnit during
 /// DAG building. To adjust for the current scheduling location we need to
 /// maintain the number of vreg uses remaining to be top-scheduled.
-bool ConvergingScheduler::pickNodeFromQueue(ReadyQ &Q,
-                                            const RegPressureTracker &RPTracker,
-                                            SchedCandidate &Candidate) {
+ConvergingScheduler::CandResult ConvergingScheduler::
+pickNodeFromQueue(ReadyQ &Q, const RegPressureTracker &RPTracker,
+                  SchedCandidate &Candidate) {
+
   // getMaxPressureDelta temporarily modifies the tracker.
   RegPressureTracker &TempTracker = const_cast<RegPressureTracker&>(RPTracker);
 
   // BestSU remains NULL if no top candidates beat the best existing candidate.
-  bool FoundCandidate = false;
+  CandResult FoundCandidate = NoCand;
   for (ReadyQ::iterator I = Q.begin(), E = Q.end(); I != E; ++I) {
 
     RegPressureDelta RPDelta;
-    TempTracker.getMaxPressureDelta((*I)->getInstr(), RPDelta);
+    TempTracker.getMaxPressureDelta((*I)->getInstr(), RPDelta,
+                                    DAG->getRegionCriticalPSets(),
+                                    DAG->getRegPressure().MaxSetPressure);
 
+    // Initialize the candidate if needed.
+    if (!Candidate.SU) {
+      Candidate.SU = *I;
+      Candidate.RPDelta = RPDelta;
+      FoundCandidate = NodeOrder;
+      continue;
+    }
     // Avoid exceeding the target's limit.
-    if (!Candidate.SU || RPDelta.ExcessUnits < Candidate.RPDelta.ExcessUnits) {
-      DEBUG(traceCandidate(Candidate.SU ? "PCAND" : "ACAND", Q.ID, *I,
-                           RPDelta.ExcessUnits, RPDelta.ExcessSetID));
+    if (RPDelta.Excess.UnitIncrease < Candidate.RPDelta.Excess.UnitIncrease) {
+      DEBUG(traceCandidate("ECAND", Q.ID, *I, RPDelta.Excess));
       Candidate.SU = *I;
       Candidate.RPDelta = RPDelta;
-      FoundCandidate = true;
+      FoundCandidate = SingleExcess;
       continue;
     }
-    if (RPDelta.ExcessUnits > Candidate.RPDelta.ExcessUnits)
+    if (RPDelta.Excess.UnitIncrease > Candidate.RPDelta.Excess.UnitIncrease)
       continue;
+    if (FoundCandidate == SingleExcess)
+      FoundCandidate = MultiPressure;
 
-    // Avoid increasing the max pressure.
-    if (RPDelta.MaxUnitIncrease < Candidate.RPDelta.MaxUnitIncrease) {
-      DEBUG(traceCandidate("MCAND", Q.ID, *I,
-                           RPDelta.ExcessUnits, RPDelta.ExcessSetID));
+    // Avoid increasing the max critical pressure in the scheduled region.
+    if (RPDelta.CriticalMax.UnitIncrease
+        < Candidate.RPDelta.CriticalMax.UnitIncrease) {
+      DEBUG(traceCandidate("PCAND", Q.ID, *I, RPDelta.CriticalMax));
       Candidate.SU = *I;
       Candidate.RPDelta = RPDelta;
-      FoundCandidate = true;
+      FoundCandidate = SingleCritical;
       continue;
     }
-    if (RPDelta.MaxUnitIncrease > Candidate.RPDelta.MaxUnitIncrease)
+    if (RPDelta.CriticalMax.UnitIncrease
+        > Candidate.RPDelta.CriticalMax.UnitIncrease)
       continue;
+    if (FoundCandidate == SingleCritical)
+      FoundCandidate = MultiPressure;
+
+    // Avoid increasing the max pressure of the entire region.
+    if (RPDelta.CurrentMax.UnitIncrease
+        < Candidate.RPDelta.CurrentMax.UnitIncrease) {
+      DEBUG(traceCandidate("MCAND", Q.ID, *I, RPDelta.CurrentMax));
+      Candidate.SU = *I;
+      Candidate.RPDelta = RPDelta;
+      FoundCandidate = SingleMax;
+      continue;
+    }
+    if (RPDelta.CurrentMax.UnitIncrease
+        > Candidate.RPDelta.CurrentMax.UnitIncrease)
+      continue;
+    if (FoundCandidate == SingleMax)
+      FoundCandidate = MultiPressure;
 
     // Fall through to original instruction order.
-    // Only consider node order if BestSU was chosen from this Q.
-    if (!FoundCandidate)
+    // Only consider node order if Candidate was chosen from this Q.
+    if (FoundCandidate == NoCand)
       continue;
 
     if ((Q.ID == TopQID && (*I)->NodeNum < Candidate.SU->NodeNum)
         || (Q.ID == BotQID && (*I)->NodeNum > Candidate.SU->NodeNum)) {
-      DEBUG(traceCandidate("NCAND", Q.ID, *I, 0, 0));
+      DEBUG(traceCandidate("NCAND", Q.ID, *I));
       Candidate.SU = *I;
       Candidate.RPDelta = RPDelta;
-      FoundCandidate = true;
+      FoundCandidate = NodeOrder;
     }
   }
   return FoundCandidate;
 }
 
-/// Pick the best node from either the top or bottom queue to balance the
-/// schedule.
+/// Pick the best candidate node from either the top or bottom queue.
+SUnit *ConvergingScheduler::pickNodeBidrectional(bool &IsTopNode) {
+  // Schedule as far as possible in the direction of no choice. This is most
+  // efficient, but also provides the best heuristics for CriticalPSets.
+  if (BotQueue.size() == 1) {
+    IsTopNode = false;
+    return *BotQueue.begin();
+  }
+  if (TopQueue.size() == 1) {
+    IsTopNode = true;
+    return *TopQueue.begin();
+  }
+  SchedCandidate BotCandidate;
+  // Prefer bottom scheduling when heuristics are silent.
+  CandResult BotResult =
+    pickNodeFromQueue(BotQueue, DAG->getBotRPTracker(), BotCandidate);
+  assert(BotResult != NoCand && "failed to find the first candidate");
+
+  // If either Q has a single candidate that provides the least increase in
+  // Excess pressure, we can immediately schedule from that Q.
+  //
+  // RegionCriticalPSets summarizes the pressure within the scheduled region and
+  // affects picking from either Q. If scheduling in one direction must
+  // increase pressure for one of the excess PSets, then schedule in that
+  // direction first to provide more freedom in the other direction.
+  if (BotResult == SingleExcess || BotResult == SingleCritical) {
+    IsTopNode = false;
+    return BotCandidate.SU;
+  }
+  // Check if the top Q has a better candidate.
+  SchedCandidate TopCandidate;
+  CandResult TopResult =
+    pickNodeFromQueue(TopQueue, DAG->getTopRPTracker(), TopCandidate);
+  assert(TopResult != NoCand && "failed to find the first candidate");
+
+  if (TopResult == SingleExcess || TopResult == SingleCritical) {
+    IsTopNode = true;
+    return TopCandidate.SU;
+  }
+  // If either Q has a single candidate that minimizes pressure above the
+  // original region's pressure pick it.
+  if (BotResult == SingleMax) {
+    IsTopNode = false;
+    return BotCandidate.SU;
+  }
+  if (TopResult == SingleMax) {
+    IsTopNode = true;
+    return TopCandidate.SU;
+  }
+  // Check for a salient pressure difference and pick the best from either side.
+  if (compareRPDelta(TopCandidate.RPDelta, BotCandidate.RPDelta)) {
+    IsTopNode = true;
+    return TopCandidate.SU;
+  }
+  // Otherwise prefer the bottom candidate in node order.
+  IsTopNode = false;
+  return BotCandidate.SU;
+}
+
+/// Pick the best node to balance the schedule. Implements MachineSchedStrategy.
 SUnit *ConvergingScheduler::pickNode(bool &IsTopNode) {
   if (DAG->top() == DAG->bottom()) {
     assert(TopQueue.empty() && BotQueue.empty() && "ReadyQ garbage");
@@ -829,12 +982,7 @@ SUnit *ConvergingScheduler::pickNode(bool &IsTopNode) {
     IsTopNode = false;
   }
   else {
-    SchedCandidate Candidate;
-    // Prefer picking from the bottom.
-    pickNodeFromQueue(BotQueue, DAG->getBotRPTracker(), Candidate);
-    IsTopNode =
-      pickNodeFromQueue(TopQueue, DAG->getTopRPTracker(), Candidate);
-    SU = Candidate.SU;
+    SU = pickNodeBidrectional(IsTopNode);
   }
   if (SU->isTopReady()) {
     assert(!TopQueue.empty() && "bad ready count");

@@ -562,12 +562,13 @@ bool RegPressureTracker::advance() {
   return true;
 }
 
-// Find the max change in excess pressure across all sets.
-static int computeMaxPressureDelta(ArrayRef<unsigned> OldPressureVec,
-                                   ArrayRef<unsigned> NewPressureVec,
-                                   unsigned &PSetID,
-                                   const TargetRegisterInfo *TRI) {
+/// Find the max change in excess pressure across all sets.
+static void computeExcessPressureDelta(ArrayRef<unsigned> OldPressureVec,
+                                       ArrayRef<unsigned> NewPressureVec,
+                                       RegPressureDelta &Delta,
+                                       const TargetRegisterInfo *TRI) {
   int ExcessUnits = 0;
+  unsigned PSetID = ~0U;
   for (unsigned i = 0, e = OldPressureVec.size(); i < e; ++i) {
     unsigned POld = OldPressureVec[i];
     unsigned PNew = NewPressureVec[i];
@@ -590,7 +591,50 @@ static int computeMaxPressureDelta(ArrayRef<unsigned> OldPressureVec,
       PSetID = i;
     }
   }
-  return ExcessUnits;
+  Delta.Excess.PSetID = PSetID;
+  Delta.Excess.UnitIncrease = ExcessUnits;
+}
+
+/// Find the max change in max pressure that either surpasses a critical PSet
+/// limit or exceeds the current MaxPressureLimit.
+///
+/// FIXME: comparing each element of the old and new MaxPressure vectors here is
+/// silly. It's done now to demonstrate the concept but will go away with a
+/// RegPressureTracker API change to work with pressure differences.
+static void computeMaxPressureDelta(ArrayRef<unsigned> OldMaxPressureVec,
+                                    ArrayRef<unsigned> NewMaxPressureVec,
+                                    ArrayRef<PressureElement> CriticalPSets,
+                                    ArrayRef<unsigned> MaxPressureLimit,
+                                    RegPressureDelta &Delta) {
+  Delta.CriticalMax = PressureElement();
+  Delta.CurrentMax = PressureElement();
+
+  unsigned CritIdx = 0, CritEnd = CriticalPSets.size();
+  for (unsigned i = 0, e = OldMaxPressureVec.size(); i < e; ++i) {
+    unsigned POld = OldMaxPressureVec[i];
+    unsigned PNew = NewMaxPressureVec[i];
+    if (PNew == POld) // No change in this set in the common case.
+      continue;
+
+    while (CritIdx != CritEnd && CriticalPSets[CritIdx].PSetID < i)
+      ++CritIdx;
+
+    if (CritIdx != CritEnd && CriticalPSets[CritIdx].PSetID == i) {
+      int PDiff = (int)PNew - (int)CriticalPSets[CritIdx].UnitIncrease;
+      if (PDiff > Delta.CriticalMax.UnitIncrease) {
+        Delta.CriticalMax.PSetID = i;
+        Delta.CriticalMax.UnitIncrease = PDiff;
+      }
+    }
+
+    // Find the greatest increase above MaxPressureLimit.
+    // (Ignores negative MDiff).
+    int MDiff = (int)PNew - (int)MaxPressureLimit[i];
+    if (MDiff > Delta.CurrentMax.UnitIncrease) {
+      Delta.CurrentMax.PSetID = i;
+      Delta.CurrentMax.UnitIncrease = PNew;
+    }
+  }
 }
 
 /// Consider the pressure increase caused by traversing this instruction
@@ -605,13 +649,17 @@ static int computeMaxPressureDelta(ArrayRef<unsigned> OldPressureVec,
 /// result per-SUnit with enough information to adjust for the current
 /// scheduling position. But this works as a proof of concept.
 void RegPressureTracker::
-getMaxUpwardPressureDelta(const MachineInstr *MI, RegPressureDelta &Delta) {
+getMaxUpwardPressureDelta(const MachineInstr *MI, RegPressureDelta &Delta,
+                          ArrayRef<PressureElement> CriticalPSets,
+                          ArrayRef<unsigned> MaxPressureLimit) {
   // Account for register pressure similar to RegPressureTracker::recede().
   PhysRegOperands PhysRegOpers;
   VirtRegOperands VirtRegOpers;
   collectOperands(MI, PhysRegOpers, VirtRegOpers, TRI, RCI);
 
   // Snapshot Pressure.
+  // FIXME: The snapshot heap space should persist. But I'm planning to
+  // summarize the pressure effect so we don't need to snapshot at all.
   std::vector<unsigned> SavedPressure = CurrSetPressure;
   std::vector<unsigned> SavedMaxPressure = P.MaxSetPressure;
 
@@ -643,13 +691,11 @@ getMaxUpwardPressureDelta(const MachineInstr *MI, RegPressureDelta &Delta) {
       increaseVirtRegPressure(Reg);
     }
   }
-  Delta.ExcessUnits =
-    computeMaxPressureDelta(SavedPressure, CurrSetPressure,
-                            Delta.ExcessSetID, TRI);
-  Delta.MaxUnitIncrease =
-    computeMaxPressureDelta(SavedMaxPressure, P.MaxSetPressure,
-                            Delta.MaxSetID, TRI);
-  assert(Delta.MaxUnitIncrease >= 0 && "cannot increase max pressure");
+  computeExcessPressureDelta(SavedPressure, CurrSetPressure, Delta, TRI);
+  computeMaxPressureDelta(SavedMaxPressure, P.MaxSetPressure, CriticalPSets,
+                          MaxPressureLimit, Delta);
+  assert(Delta.CriticalMax.UnitIncrease >= 0 &&
+         Delta.CurrentMax.UnitIncrease >= 0 && "cannot decrease max pressure");
 
   // Restore the tracker's state.
   P.MaxSetPressure.swap(SavedMaxPressure);
@@ -679,7 +725,9 @@ static bool findUseBetween(unsigned Reg,
 ///
 /// This assumes that the current LiveIn set is sufficient.
 void RegPressureTracker::
-getMaxDownwardPressureDelta(const MachineInstr *MI, RegPressureDelta &Delta) {
+getMaxDownwardPressureDelta(const MachineInstr *MI, RegPressureDelta &Delta,
+                            ArrayRef<PressureElement> CriticalPSets,
+                            ArrayRef<unsigned> MaxPressureLimit) {
   // Account for register pressure similar to RegPressureTracker::recede().
   PhysRegOperands PhysRegOpers;
   VirtRegOperands VirtRegOpers;
@@ -717,12 +765,11 @@ getMaxDownwardPressureDelta(const MachineInstr *MI, RegPressureDelta &Delta) {
   decreasePhysRegPressure(PhysRegOpers.DeadDefs);
   decreaseVirtRegPressure(VirtRegOpers.DeadDefs);
 
-  Delta.ExcessUnits =
-    computeMaxPressureDelta(SavedPressure, CurrSetPressure,
-                            Delta.ExcessSetID, TRI);
-  Delta.MaxUnitIncrease =
-    computeMaxPressureDelta(SavedMaxPressure, P.MaxSetPressure,
-                            Delta.MaxSetID, TRI);
+  computeExcessPressureDelta(SavedPressure, CurrSetPressure, Delta, TRI);
+  computeMaxPressureDelta(SavedMaxPressure, P.MaxSetPressure, CriticalPSets,
+                          MaxPressureLimit, Delta);
+  assert(Delta.CriticalMax.UnitIncrease >= 0 &&
+         Delta.CurrentMax.UnitIncrease >= 0 && "cannot decrease max pressure");
 
   // Restore the tracker's state.
   P.MaxSetPressure.swap(SavedMaxPressure);
