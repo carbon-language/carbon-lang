@@ -2423,8 +2423,8 @@ CheckPrintfHandler::HandlePrintfSpecifier(const analyze_printf::PrintfSpecifier
         S.PDiag(diag::warn_printf_conversion_argument_type_mismatch)
           << ATR.getRepresentativeTypeName(S.Context) << Ex->getType()
           << Ex->getSourceRange(),
-        getLocationOfByte(CS.getStart()),
-        /*IsStringLocation*/true,
+        Ex->getLocStart(),
+        /*IsStringLocation*/false,
         getSpecifierRange(startSpecifier, specifierLen),
         FixItHint::CreateReplacement(
           getSpecifierRange(startSpecifier, specifierLen),
@@ -2436,8 +2436,8 @@ CheckPrintfHandler::HandlePrintfSpecifier(const analyze_printf::PrintfSpecifier
           << ATR.getRepresentativeTypeName(S.Context) << Ex->getType()
           << getSpecifierRange(startSpecifier, specifierLen)
           << Ex->getSourceRange(),
-        getLocationOfByte(CS.getStart()),
-        true,
+        Ex->getLocStart(),
+        /*IsStringLocation*/false,
         getSpecifierRange(startSpecifier, specifierLen));
     }
   }
@@ -2591,8 +2591,8 @@ bool CheckScanfHandler::HandleScanfSpecifier(
         S.PDiag(diag::warn_printf_conversion_argument_type_mismatch)
           << ATR.getRepresentativeTypeName(S.Context) << Ex->getType()
           << Ex->getSourceRange(),
-        getLocationOfByte(CS.getStart()),
-        /*IsStringLocation*/true,
+        Ex->getLocStart(),
+        /*IsStringLocation*/false,
         getSpecifierRange(startSpecifier, specifierLen),
         FixItHint::CreateReplacement(
           getSpecifierRange(startSpecifier, specifierLen),
@@ -2602,8 +2602,8 @@ bool CheckScanfHandler::HandleScanfSpecifier(
         S.PDiag(diag::warn_printf_conversion_argument_type_mismatch)
           << ATR.getRepresentativeTypeName(S.Context) << Ex->getType()
           << Ex->getSourceRange(),
-        getLocationOfByte(CS.getStart()),
-        /*IsStringLocation*/true,
+        Ex->getLocStart(),
+        /*IsStringLocation*/false,
         getSpecifierRange(startSpecifier, specifierLen));
     }
   }

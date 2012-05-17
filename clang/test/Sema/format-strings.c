@@ -502,8 +502,13 @@ void pr9751() {
   printf("%a", (long double)0); // expected-warning{{format specifies type 'double' but the argument has type 'long double'}}
 
   // Test braced char[] initializers.
-  const char kFormat18[] = { "%lld" }; // expected-note{{format string is defined here}}}
+  const char kFormat18[] = { "%lld" }; // expected-note{{format string is defined here}}
   printf(kFormat18, 0); // expected-warning{{format specifies type}}
+
+  // Make sure we point at the offending argument rather than the format string.
+  const char kFormat19[] = "%d";  // expected-note{{format string is defined here}}
+  printf(kFormat19,
+         0.0); // expected-warning{{format specifies}}
 }
 
 // PR 9466: clang: doesn't know about %Lu, %Ld, and %Lx 
