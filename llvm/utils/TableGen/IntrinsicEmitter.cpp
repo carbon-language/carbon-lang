@@ -376,7 +376,8 @@ static void EmitTypeGenerate(raw_ostream &OS, const Record *ArgType,
       << "(cast<VectorType>(Tys[" << Number << "]))";
     else
       OS << "Tys[" << Number << "]";
-  } else if (VT == MVT::iAny || VT == MVT::fAny || VT == MVT::vAny) {
+  } else if (VT == MVT::iAny || VT == MVT::fAny || VT == MVT::vAny ||
+             VT == MVT::iPTRAny) {
     // NOTE: The ArgNo variable here is not the absolute argument number, it is
     // the index of the "arbitrary" type in the Tys array passed to the
     // Intrinsic::getDeclaration function. Consequently, we only want to
@@ -392,14 +393,6 @@ static void EmitTypeGenerate(raw_ostream &OS, const Record *ArgType,
     OS << "PointerType::getUnqual(";
     EmitTypeGenerate(OS, ArgType->getValueAsDef("ElTy"), ArgNo);
     OS << ")";
-  } else if (VT == MVT::iPTRAny) {
-    // Make sure the user has passed us an argument type to overload. If not,
-    // treat it as an ordinary (not overloaded) intrinsic.
-    OS << "(" << ArgNo << " < Tys.size()) ? Tys[" << ArgNo
-    << "] : PointerType::getUnqual(";
-    EmitTypeGenerate(OS, ArgType->getValueAsDef("ElTy"), ArgNo);
-    OS << ")";
-    ++ArgNo;
   } else if (VT == MVT::isVoid) {
     assert(ArgNo == 0);
     OS << "Type::getVoidTy(Context)";
@@ -490,7 +483,8 @@ static void EncodeFixedType(Record *R, SmallVectorImpl<unsigned> &Sig) {
   
   MVT::SimpleValueType VT = getValueType(R->getValueAsDef("VT"));
   
-  if (VT == MVT::iAny || VT == MVT::fAny || VT == MVT::vAny) {
+  if (VT == MVT::iAny || VT == MVT::fAny || VT == MVT::vAny || 
+      VT == MVT::iPTRAny) {
     return Sig.push_back(~0U);
     /*
     // NOTE: The ArgNo variable here is not the absolute argument number, it is
@@ -520,16 +514,6 @@ static void EncodeFixedType(Record *R, SmallVectorImpl<unsigned> &Sig) {
     Sig.push_back(IIT_PTR);
     return EncodeFixedType(R->getValueAsDef("ElTy"), Sig);
   }
-  
-  /*if (VT == MVT::iPTRAny) {
-    // Make sure the user has passed us an argument type to overload. If not,
-    // treat it as an ordinary (not overloaded) intrinsic.
-    OS << "(" << ArgNo << " < Tys.size()) ? Tys[" << ArgNo
-    << "] : PointerType::getUnqual(";
-    EmitTypeGenerate(OS, ArgType->getValueAsDef("ElTy"), ArgNo);
-    OS << ")";
-    ++ArgNo;
-  }*/
   
   assert(VT != MVT::isVoid);
   EncodeFixedValueType(VT, Sig);
