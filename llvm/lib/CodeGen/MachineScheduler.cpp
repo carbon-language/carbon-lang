@@ -713,6 +713,13 @@ struct ReadyQ {
     *I = Queue.back();
     Queue.pop_back();
   }
+
+  void dump(const char* Name) {
+    dbgs() << Name << ": ";
+    for (unsigned i = 0, e = Queue.size(); i < e; ++i)
+      dbgs() << Queue[i]->NodeNum << " ";
+    dbgs() << "\n";
+  }
 };
 
 /// ConvergingScheduler shrinks the unscheduled zone using heuristics to balance
@@ -828,6 +835,7 @@ static bool compareRPDelta(const RegPressureDelta &LHS,
 ConvergingScheduler::CandResult ConvergingScheduler::
 pickNodeFromQueue(ReadyQ &Q, const RegPressureTracker &RPTracker,
                   SchedCandidate &Candidate) {
+  DEBUG(Q.dump(getQName(Q.ID)));
 
   // getMaxPressureDelta temporarily modifies the tracker.
   RegPressureTracker &TempTracker = const_cast<RegPressureTracker&>(RPTracker);
