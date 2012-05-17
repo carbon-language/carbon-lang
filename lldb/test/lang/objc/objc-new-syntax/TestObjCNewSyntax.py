@@ -112,11 +112,15 @@ class ObjCNewSyntaxTestCase(TestBase):
         self.expect("expr -o -- @1ull", VARIABLES_DISPLAYED_CORRECTLY,
             substrs = ["NSNumber", "1"])
 
-        #<rdar://problem/10924364>
-        #self.expect("expr -o -- @123.45", VARIABLES_DISPLAYED_CORRECTLY,
-        #    substrs = ["NSNumber", "123.45"])
-        #self.expect("expr -o -- @123.45f", VARIABLES_DISPLAYED_CORRECTLY,
-        #    substrs = ["NSNumber", "123.45"])
+        self.expect("expr -o -- @123.45", VARIABLES_DISPLAYED_CORRECTLY,
+            substrs = ["NSNumber", "123.45"])
+        self.expect("expr -o -- @123.45f", VARIABLES_DISPLAYED_CORRECTLY,
+            substrs = ["NSNumber", "123.45"])
+
+        self.expect("expr -o -- @( 1 + 3 )", VARIABLES_DISPLAYED_CORRECTLY,
+            substrs = ["NSNumber", "4"])
+        self.expect("expr -o -- @(\"Hello world\" + 6)", VARIABLES_DISPLAYED_CORRECTLY,
+            substrs = ["NSString", "@\"world\""])
 
             
 if __name__ == '__main__':
