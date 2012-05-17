@@ -466,6 +466,7 @@ static void EncodeFixedValueType(MVT::SimpleValueType VT,
   Sig.push_back(~0U);
 }
 
+#pragma optimize("",off) // MSVC 2010 optimizer can't deal with this function.
 
 static void EncodeFixedType(Record *R, SmallVectorImpl<unsigned> &Sig) {
   
@@ -531,6 +532,7 @@ static void EncodeFixedType(Record *R, SmallVectorImpl<unsigned> &Sig) {
   assert(VT != MVT::isVoid);
   EncodeFixedValueType(VT, Sig);
 }
+#pragma optimize("",on)
 
 /// ComputeFixedEncoding - If we can encode the type signature for this
 /// intrinsic into 32 bits, return it.  If not, return ~0U.
