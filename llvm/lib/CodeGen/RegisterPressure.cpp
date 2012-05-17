@@ -629,13 +629,17 @@ getMaxUpwardPressureDelta(const MachineInstr *MI, RegPressureDelta &Delta) {
   // Generate liveness for uses.
   for (unsigned i = 0, e = PhysRegOpers.Uses.size(); i < e; ++i) {
     unsigned Reg = PhysRegOpers.Uses[i];
-    if (!hasRegAlias(Reg, LivePhysRegs, TRI)) {
+    if (!hasRegAlias(Reg, LivePhysRegs, TRI)
+        && (findRegAlias(Reg, PhysRegOpers.Defs, TRI)
+            == PhysRegOpers.Defs.end())) {
       increasePhysRegPressure(Reg);
     }
   }
   for (unsigned i = 0, e = VirtRegOpers.Uses.size(); i < e; ++i) {
     unsigned Reg = VirtRegOpers.Uses[i];
-    if (!LiveVirtRegs.count(Reg)) {
+    if (!LiveVirtRegs.count(Reg)
+        && (std::find(VirtRegOpers.Defs.begin(), VirtRegOpers.Defs.end(), Reg)
+            != VirtRegOpers.Defs.end())) {
       increaseVirtRegPressure(Reg);
     }
   }
