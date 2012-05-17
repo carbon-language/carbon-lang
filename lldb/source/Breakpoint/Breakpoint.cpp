@@ -315,7 +315,7 @@ Breakpoint::ClearAllBreakpointSites ()
 //----------------------------------------------------------------------
 
 void
-Breakpoint::ModulesChanged (ModuleList &module_list, bool load)
+Breakpoint::ModulesChanged (ModuleList &module_list, bool load, bool delete_locations)
 {
     if (load)
     {
@@ -395,11 +395,7 @@ Breakpoint::ModulesChanged (ModuleList &module_list, bool load)
     else
     {
         // Go through the currently set locations and if any have breakpoints in
-        // the module list, then remove their breakpoint sites.
-        // FIXME: Think about this...  Maybe it's better to delete the locations?
-        // Are we sure that on load-unload-reload the module pointer will remain
-        // the same?  Or do we need to do an equality on modules that is an
-        // "equivalence"???
+        // the module list, then remove their breakpoint sites, and their locations if asked to.
 
         BreakpointEventData *removed_locations_event;
         if (!IsInternal())
@@ -414,7 +410,9 @@ Breakpoint::ModulesChanged (ModuleList &module_list, bool load)
             if (m_filter_sp->ModulePasses (module_sp))
             {
                 size_t loc_idx = 0;
-                while (loc_idx < m_locations.GetSize())
+                size_t num_locations = m_locations.GetSize();
+                BreakpointLocationCollection locations_to_remove;
+                for (loc_idx = 0; loc_idx < num_locations; loc_idx++)
                 {
                     BreakpointLocationSP break_loc_sp (m_locations.GetByIndex(loc_idx));
                     SectionSP section_sp (break_loc_sp->GetAddress().GetSection());
@@ -429,14 +427,39 @@ Breakpoint::ModulesChanged (ModuleList &module_list, bool load)
                         {
                             removed_locations_event->GetBreakpointLocationCollection().Add(break_loc_sp);
                         }
-                        //m_locations.RemoveLocation  (break_loc_sp);
+                        if (delete_locations)
+                            locations_to_remove.Add (break_loc_sp);
+                            
                     }
-                    ++loc_idx;
+                }
+                
+                if (delete_locations)
+                {
+                    size_t num_locations_to_remove = locations_to_remove.GetSize();
+                    for (loc_idx = 0; loc_idx < num_locations_to_remove; loc_idx++)
+                        m_locations.RemoveLocation  (locations_to_remove.GetByIndex(loc_idx));
                 }
             }
         }
         SendBreakpointChangedEvent (removed_locations_event);
     }
+}
+
+void
+Breakpoint::ModuleReplaced (ModuleSP old_module_sp, ModuleSP new_module_sp)
+{
+    ModuleList temp_list;
+    temp_list.Append (new_module_sp);
+    ModulesChanged (temp_list, true);
+
+    // TO DO: For now I'm just adding locations for the new module and removing the
+    // breakpoint locations that were in the old module.
+    // We should really go find the ones that are in the new module & if we can determine that they are "equivalent"
+    // carry over the options from the old location to the new.
+
+    temp_list.Clear();
+    temp_list.Append (old_module_sp);
+    ModulesChanged (temp_list, false, true);
 }
 
 void

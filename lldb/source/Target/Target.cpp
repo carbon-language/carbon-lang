@@ -978,12 +978,7 @@ void
 Target::ModuleUpdated (ModuleSP &old_module_sp, ModuleSP &new_module_sp)
 {
     // A module is replacing an already added module
-    ModuleList module_list;
-    module_list.Append (old_module_sp);
-    ModulesDidUnload (module_list);
-    module_list.Clear ();
-    module_list.Append (new_module_sp);
-    ModulesDidLoad (module_list);
+    m_breakpoint_list.UpdateBreakpointsWhenModuleIsReplaced(old_module_sp, new_module_sp);
 }
 
 void
@@ -1287,76 +1282,112 @@ Target::ReadPointerFromMemory (const Address& addr,
 ModuleSP
 Target::GetSharedModule (const ModuleSpec &module_spec, Error *error_ptr)
 {
-    // Don't pass in the UUID so we can tell if we have a stale value in our list
-    ModuleSP old_module_sp; // This will get filled in if we have a new version of the library
-    bool did_create_module = false;
     ModuleSP module_sp;
 
     Error error;
 
-    // If there are image search path entries, try to use them first to acquire a suitable image.
-    if (m_image_search_paths.GetSize())
-    {
-        ModuleSpec transformed_spec (module_spec);
-        if (m_image_search_paths.RemapPath (module_spec.GetFileSpec().GetDirectory(), transformed_spec.GetFileSpec().GetDirectory()))
-        {
-            transformed_spec.GetFileSpec().GetFilename() = module_spec.GetFileSpec().GetFilename();
-            error = ModuleList::GetSharedModule (transformed_spec, 
-                                                 module_sp, 
-                                                 &GetExecutableSearchPaths(),
-                                                 &old_module_sp, 
-                                                 &did_create_module);
-        }
-    }
+    // First see if we already have this module in our module list.  If we do, then we're done, we don't need
+    // to consult the shared modules list.  But only do this if we are passed a UUID.
     
+    if (module_spec.GetUUID().IsValid())
+        module_sp = m_images.FindFirstModule(module_spec);
+        
     if (!module_sp)
     {
-        // If we have a UUID, we can check our global shared module list in case
-        // we already have it. If we don't have a valid UUID, then we can't since
-        // the path in "module_spec" will be a platform path, and we will need to
-        // let the platform find that file. For example, we could be asking for
-        // "/usr/lib/dyld" and if we do not have a UUID, we don't want to pick
-        // the local copy of "/usr/lib/dyld" since our platform could be a remote
-        // platform that has its own "/usr/lib/dyld" in an SDK or in a local file
-        // cache.
-        if (module_spec.GetUUID().IsValid())
+        ModuleSP old_module_sp; // This will get filled in if we have a new version of the library
+        bool did_create_module = false;
+    
+        // If there are image search path entries, try to use them first to acquire a suitable image.
+        if (m_image_search_paths.GetSize())
         {
-            // We have a UUID, it is OK to check the global module list...
-            error = ModuleList::GetSharedModule (module_spec,
-                                                 module_sp, 
-                                                 &GetExecutableSearchPaths(),
-                                                 &old_module_sp, 
-                                                 &did_create_module);
+            ModuleSpec transformed_spec (module_spec);
+            if (m_image_search_paths.RemapPath (module_spec.GetFileSpec().GetDirectory(), transformed_spec.GetFileSpec().GetDirectory()))
+            {
+                transformed_spec.GetFileSpec().GetFilename() = module_spec.GetFileSpec().GetFilename();
+                error = ModuleList::GetSharedModule (transformed_spec, 
+                                                     module_sp, 
+                                                     &GetExecutableSearchPaths(),
+                                                     &old_module_sp, 
+                                                     &did_create_module);
+            }
         }
-
+        
         if (!module_sp)
         {
-            // The platform is responsible for finding and caching an appropriate
-            // module in the shared module cache.
-            if (m_platform_sp)
+            // If we have a UUID, we can check our global shared module list in case
+            // we already have it. If we don't have a valid UUID, then we can't since
+            // the path in "module_spec" will be a platform path, and we will need to
+            // let the platform find that file. For example, we could be asking for
+            // "/usr/lib/dyld" and if we do not have a UUID, we don't want to pick
+            // the local copy of "/usr/lib/dyld" since our platform could be a remote
+            // platform that has its own "/usr/lib/dyld" in an SDK or in a local file
+            // cache.
+            if (module_spec.GetUUID().IsValid())
             {
-                FileSpec platform_file_spec;        
-                error = m_platform_sp->GetSharedModule (module_spec, 
-                                                        module_sp, 
-                                                        &GetExecutableSearchPaths(),
-                                                        &old_module_sp, 
-                                                        &did_create_module);
+                // We have a UUID, it is OK to check the global module list...
+                error = ModuleList::GetSharedModule (module_spec,
+                                                     module_sp, 
+                                                     &GetExecutableSearchPaths(),
+                                                     &old_module_sp, 
+                                                     &did_create_module);
             }
-            else
+
+            if (!module_sp)
             {
-                error.SetErrorString("no platform is currently set");
+                // The platform is responsible for finding and caching an appropriate
+                // module in the shared module cache.
+                if (m_platform_sp)
+                {
+                    FileSpec platform_file_spec;        
+                    error = m_platform_sp->GetSharedModule (module_spec, 
+                                                            module_sp, 
+                                                            &GetExecutableSearchPaths(),
+                                                            &old_module_sp, 
+                                                            &did_create_module);
+                }
+                else
+                {
+                    error.SetErrorString("no platform is currently set");
+                }
             }
         }
-    }
 
-    // If a module hasn't been found yet, use the unmodified path.
-    if (module_sp)
-    {
-        m_images.Append (module_sp);
-        if (did_create_module)
+        // We found a module that wasn't in our target list.  Let's make sure that there wasn't an equivalent
+        // module in the list already, and if there was, let's remove it.
+        if (module_sp)
         {
+            // GetSharedModule is not guaranteed to find the old shared module, for instance
+            // in the common case where you pass in the UUID, it is only going to find the one
+            // module matching the UUID.  In fact, it has no good way to know what the "old module"
+            // relevant to this target is, since there might be many copies of a module with this file spec
+            // in various running debug sessions, but only one of them will belong to this target.
+            // So let's remove the UUID from the module list, and look in the target's module list.
+            // Only do this if there is SOMETHING else in the module spec...
+            if (!old_module_sp)
+            {
+                if (module_spec.GetUUID().IsValid() && !module_spec.GetFileSpec().GetFilename().IsEmpty() && !module_spec.GetFileSpec().GetDirectory().IsEmpty())
+                {
+                    ModuleSpec module_spec_copy(module_spec.GetFileSpec());
+                    module_spec_copy.GetUUID().Clear();
+                    
+                    ModuleList found_modules;
+                    size_t num_found = m_images.FindModules (module_spec_copy, found_modules);
+                    if (num_found == 1)
+                    {
+                        old_module_sp = found_modules.GetModuleAtIndex(0);
+                    }
+                }
+            }
+            
+            m_images.Append (module_sp);
             if (old_module_sp && m_images.GetIndexForModule (old_module_sp.get()) != LLDB_INVALID_INDEX32)
+            {
                 ModuleUpdated(old_module_sp, module_sp);
+                m_images.Remove (old_module_sp);
+                Module *old_module_ptr = old_module_sp.get();
+                old_module_sp.reset();
+                ModuleList::RemoveSharedModuleIfOrphaned (old_module_ptr);
+            }
             else
                 ModuleAdded(module_sp);
         }

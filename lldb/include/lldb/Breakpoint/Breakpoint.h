@@ -203,11 +203,11 @@ public:
     /// Tell this breakpoint to scan a given module list and resolve any
     /// new locations that match the breakpoint's specifications.
     ///
-    /// @param[in] changedModules
+    /// @param[in] changed_modules
     ///    The list of modules to look in for new locations.
     //------------------------------------------------------------------
     void
-    ResolveBreakpointInModules (ModuleList &changedModules);
+    ResolveBreakpointInModules (ModuleList &changed_modules);
 
 
     //------------------------------------------------------------------
@@ -219,12 +219,28 @@ public:
     ///    The list of modules to look in for new locations.
     /// @param[in] load_event
     ///    If \b true then the modules were loaded, if \b false, unloaded.
+    /// @param[in] delete_locations
+    ///    If \b true then the modules were unloaded delete any locations in the changed modules.
     //------------------------------------------------------------------
     void
-    ModulesChanged (ModuleList &changedModules,
-                    bool load_event);
+    ModulesChanged (ModuleList &changed_modules,
+                    bool load_event,
+                    bool delete_locations = false);
 
 
+    //------------------------------------------------------------------
+    /// Tells the breakpoint the old module \a old_module_sp has been
+    /// replaced by new_module_sp (usually because the underlying file has been
+    /// rebuilt, and the old version is gone.)
+    ///
+    /// @param[in] old_module_sp
+    ///    The old module that is going away.
+    /// @param[in] new_module_sp
+    ///    The new module that is replacing it.
+    //------------------------------------------------------------------
+    void
+    ModuleReplaced (lldb::ModuleSP old_module_sp, lldb::ModuleSP new_module_sp);
+    
     //------------------------------------------------------------------
     // The next set of methods provide access to the breakpoint locations
     // for this breakpoint.

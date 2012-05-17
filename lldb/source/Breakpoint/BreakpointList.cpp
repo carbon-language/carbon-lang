@@ -210,6 +210,17 @@ BreakpointList::UpdateBreakpoints (ModuleList& module_list, bool added)
 }
 
 void
+BreakpointList::UpdateBreakpointsWhenModuleIsReplaced (ModuleSP old_module_sp, ModuleSP new_module_sp)
+{
+    Mutex::Locker locker(m_mutex);
+    bp_collection::iterator end = m_breakpoints.end();
+    bp_collection::iterator pos;
+    for (pos = m_breakpoints.begin(); pos != end; ++pos)
+        (*pos)->ModuleReplaced (old_module_sp, new_module_sp);
+
+}
+
+void
 BreakpointList::ClearAllBreakpointSites ()
 {
     Mutex::Locker locker(m_mutex);

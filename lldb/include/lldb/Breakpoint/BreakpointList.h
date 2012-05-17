@@ -154,6 +154,9 @@ public:
     //------------------------------------------------------------------
     void
     UpdateBreakpoints (ModuleList &module_list, bool added);
+    
+    void
+    UpdateBreakpointsWhenModuleIsReplaced (lldb::ModuleSP old_module_sp, lldb::ModuleSP new_module_sp);
 
     void
     ClearAllBreakpointSites ();

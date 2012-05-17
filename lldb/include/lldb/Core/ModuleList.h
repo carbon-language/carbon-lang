@@ -355,6 +355,9 @@ public:
     size_t
     Remove (ModuleList &module_list);
     
+    bool
+    RemoveIfOrphaned (const Module *module_ptr);
+    
     size_t
     RemoveOrphans (bool mandatory);
 
@@ -419,6 +422,9 @@ public:
 
     static uint32_t
     RemoveOrphanSharedModules (bool mandatory);
+    
+    static bool
+    RemoveSharedModuleIfOrphaned (const Module *module_ptr);
 
 protected:
     //------------------------------------------------------------------

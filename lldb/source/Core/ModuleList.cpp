@@ -110,6 +110,29 @@ ModuleList::Remove (const ModuleSP &module_sp)
     return false;
 }
 
+bool
+ModuleList::RemoveIfOrphaned (const Module *module_ptr)
+{
+    if (module_ptr)
+    {
+        Mutex::Locker locker(m_modules_mutex);
+        collection::iterator pos, end = m_modules.end();
+        for (pos = m_modules.begin(); pos != end; ++pos)
+        {
+            if (pos->get() == module_ptr)
+            {
+                if (pos->unique())
+                {
+                    pos = m_modules.erase (pos);
+                    return true;
+                }
+                else
+                    return false;
+            }
+        }
+    }
+    return false;
+}
 
 size_t
 ModuleList::RemoveOrphans (bool mandatory)
@@ -815,6 +838,12 @@ bool
 ModuleList::RemoveSharedModule (lldb::ModuleSP &module_sp)
 {
     return GetSharedModuleList ().Remove (module_sp);
+}
+
+bool
+ModuleList::RemoveSharedModuleIfOrphaned (const Module *module_ptr)
+{
+    return GetSharedModuleList ().RemoveIfOrphaned (module_ptr);
 }
 
 
