@@ -43,8 +43,8 @@ See <a href="http://llvm.org/bugs/show_bug.cgi?id=12272">bug 12272</a>.
 
 <h2 id="platforms">Supported Platforms</h2>
 ThreadSanitizer is supported on Linux x86_64 (tested on Ubuntu 10.04). <BR>
-Support for MacOS 10.7 (64-bit only) is planed for late 2012. <BR>
-Support for 32-bit platforms is problematic and not yet planed.
+Support for MacOS 10.7 (64-bit only) is planned for late 2012. <BR>
+Support for 32-bit platforms is problematic and not yet planned.
 
 
 
@@ -100,7 +100,7 @@ WARNING: ThreadSanitizer: data race (pid=19219)
 <li> ThreadSanitizer uses more real memory than a native run.
 At the default settings the memory overhead is 9x plus 9Mb per each thread.
 Settings with 5x and 3x overhead (but less accurate analysis) are also available.
-<li> ThreadSanitizer maps (but not reserves) a lot of virtual address space.
+<li> ThreadSanitizer maps (but does not reserve) a lot of virtual address space.
 This means that tools like <tt>ulimit</tt> may not work as usually expected.
 <li> Static linking is not supported.
 <li> ThreadSanitizer requires <tt>-fPIE -pie</tt>
