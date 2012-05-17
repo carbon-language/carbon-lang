@@ -335,6 +335,10 @@ int RunningOnValgrind() {
   return 0;
 }
 
+double ValgrindSlowdown(void) {
+  return 10.0;
+}
+
 const char *ThreadSanitizerQuery(const char *query) {
   if (internal_strcmp(query, "pure_happens_before") == 0)
     return "1";
