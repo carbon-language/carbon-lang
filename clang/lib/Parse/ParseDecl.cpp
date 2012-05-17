@@ -742,7 +742,7 @@ void Parser::ParseLexedAttributes(ParsingClass &Class) {
   if (!AlreadyHasClassScope)
     Actions.ActOnStartDelayedMemberDeclarations(getCurScope(),
                                                 Class.TagOrTemplate);
-  {
+  if (!Class.LateParsedDeclarations.empty()) {
     // Allow 'this' within late-parsed attributes.
     Sema::CXXThisScopeRAII ThisScope(Actions, Class.TagOrTemplate, 
                                      /*TypeQuals=*/0);

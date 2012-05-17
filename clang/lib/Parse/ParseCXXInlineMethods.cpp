@@ -459,7 +459,7 @@ void Parser::ParseLexedMemberInitializers(ParsingClass &Class) {
     Actions.ActOnStartDelayedMemberDeclarations(getCurScope(),
                                                 Class.TagOrTemplate);
 
-  {
+  if (!Class.LateParsedDeclarations.empty()) {
     // C++11 [expr.prim.general]p4:
     //   Otherwise, if a member-declarator declares a non-static data member 
     //  (9.2) of a class X, the expression this is a prvalue of type "pointer
