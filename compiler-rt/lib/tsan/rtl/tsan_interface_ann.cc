@@ -335,7 +335,7 @@ int RunningOnValgrind() {
   return 0;
 }
 
-double ValgrindSlowdown(void) {
+double __attribute__((weak)) ValgrindSlowdown(void) {
   return 10.0;
 }
 
