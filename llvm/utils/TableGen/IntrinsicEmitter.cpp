@@ -404,6 +404,7 @@ static void EmitTypeGenerate(raw_ostream &OS, const Record *ArgType,
 
 // NOTE: This must be kept in synch with the version emitted to the .gen file!
 enum IIT_Info {
+  // Common values should be encoded with 0-15.
   IIT_Done = 0,
   IIT_I1   = 1,
   IIT_I8   = 2,
@@ -418,8 +419,20 @@ enum IIT_Info {
   IIT_V16  = 11,
   IIT_MMX  = 12,
   IIT_PTR  = 13,
-  IIT_ARG  = 14
+  IIT_ARG  = 14,
+  // 15
+  
+  // Values from 16+ are only encodable with the inefficient encoding.
+  IIT_F16  = 16,
+  IIT_F80  = 17,
+  IIT_F128 = 18,
+  IIT_PPC128 = 19,
+  IIT_METADATA = 20,
+  IIT_EMPTYSTRUCT = 21,
+  IIT_V32 = 22
+  
 };
+
 
 static void EncodeFixedValueType(MVT::SimpleValueType VT,
                                  SmallVectorImpl<unsigned> &Sig) {
@@ -435,65 +448,52 @@ static void EncodeFixedValueType(MVT::SimpleValueType VT,
     }
   }
   
-/*  } else if (VT == MVT::Other) {
-    // MVT::OtherVT is used to mean the empty struct type here.
-    OS << "StructType::get(Context)";
-  } else if (VT == MVT::f16) {
-    OS << "Type::getHalfTy(Context)";*/
-  if (VT == MVT::f32)
-    return Sig.push_back(IIT_F32);
-  if (VT == MVT::f64) 
-    return Sig.push_back(IIT_F64);
-  //if (VT == MVT::f80) {
-  //  OS << "Type::getX86_FP80Ty(Context)";
-  //if (VT == MVT::f128) {
-  //  OS << "Type::getFP128Ty(Context)";
-  // if (VT == MVT::ppcf128) {
-  //  OS << "Type::getPPC_FP128Ty(Context)";
-  //if (VT == MVT::Metadata) {
-  //  OS << "Type::getMetadataTy(Context)";
-  if (VT == MVT::x86mmx) 
-    return Sig.push_back(IIT_MMX);
-    
-  assert(VT != MVT::isVoid);
-  Sig.push_back(~0U);
+  switch (VT) {
+  default: assert(0 && "Unknown Type!");
+  case MVT::f16: return Sig.push_back(IIT_F16);
+  case MVT::f32: return Sig.push_back(IIT_F32);
+  case MVT::f64: return Sig.push_back(IIT_F64);
+  case MVT::f80: return Sig.push_back(IIT_F80);
+  case MVT::f128: return Sig.push_back(IIT_F128);
+  case MVT::ppcf128: return Sig.push_back(IIT_PPC128);
+  case MVT::Metadata: return Sig.push_back(IIT_METADATA);
+  case MVT::x86mmx: return Sig.push_back(IIT_MMX);
+  // MVT::OtherVT is used to mean the empty struct type here.
+  case MVT::Other: return Sig.push_back(IIT_EMPTYSTRUCT);
+  }
 }
 
 #ifdef _MSC_VER
 #pragma optimize("",off) // MSVC 2010 optimizer can't deal with this function.
 #endif 
 
-static void EncodeFixedType(Record *R, SmallVectorImpl<unsigned> &Sig) {
+static void EncodeFixedType(Record *R, unsigned &NextArgNo,
+                            SmallVectorImpl<unsigned> &Sig) {
   
   if (R->isSubClassOf("LLVMMatchType")) {
-    return Sig.push_back(~0U);
-/*
-    unsigned Number = ArgType->getValueAsInt("Number");
-    assert(Number < ArgNo && "Invalid matching number!");
-    if (ArgType->isSubClassOf("LLVMExtendedElementVectorType"))
-      OS << "VectorType::getExtendedElementVectorType"
-      << "(cast<VectorType>(Tys[" << Number << "]))";
-    else if (ArgType->isSubClassOf("LLVMTruncatedElementVectorType"))
-      OS << "VectorType::getTruncatedElementVectorType"
-      << "(cast<VectorType>(Tys[" << Number << "]))";
-    else
-      OS << "Tys[" << Number << "]";
- */
+    unsigned Number = R->getValueAsInt("Number");
+    assert(Number < NextArgNo && "Invalid matching number!");
+    if (R->isSubClassOf("LLVMExtendedElementVectorType"))
+      return Sig.push_back(~0U);
+
+      //OS << "VectorType::getExtendedElementVectorType"
+      // << "(cast<VectorType>(Tys[" << Number << "]))";
+    if (R->isSubClassOf("LLVMTruncatedElementVectorType"))
+      return Sig.push_back(~0U);
+      //OS << "VectorType::getTruncatedElementVectorType"
+      //  << "(cast<VectorType>(Tys[" << Number << "]))";
+    Sig.push_back(IIT_ARG);
+    return Sig.push_back(Number);
   }
   
   MVT::SimpleValueType VT = getValueType(R->getValueAsDef("VT"));
-  
-  if (VT == MVT::iAny || VT == MVT::fAny || VT == MVT::vAny || 
+
+  // If this is an "any" valuetype, then the type is the type of the next
+  // type in the list specified to getIntrinsic().  
+  if (VT == MVT::iAny || VT == MVT::fAny || VT == MVT::vAny ||
       VT == MVT::iPTRAny) {
-    return Sig.push_back(~0U);
-    /*
-    // NOTE: The ArgNo variable here is not the absolute argument number, it is
-    // the index of the "arbitrary" type in the Tys array passed to the
-    // Intrinsic::getDeclaration function. Consequently, we only want to
-    // increment it when we actually hit an overloaded type. Getting this wrong
-    // leads to very subtle bugs!
-    OS << "Tys[" << ArgNo++ << "]";
-    */
+    Sig.push_back(IIT_ARG);
+    return Sig.push_back(NextArgNo++);
   }
   
   if (EVT(VT).isVector()) {
@@ -504,6 +504,7 @@ static void EncodeFixedType(Record *R, SmallVectorImpl<unsigned> &Sig) {
     case 4: Sig.push_back(IIT_V4); break;
     case 8: Sig.push_back(IIT_V8); break;
     case 16: Sig.push_back(IIT_V16); break;
+    case 32: Sig.push_back(IIT_V32); break;
     }
     
     return EncodeFixedValueType(VVT.getVectorElementType().
@@ -512,10 +513,9 @@ static void EncodeFixedType(Record *R, SmallVectorImpl<unsigned> &Sig) {
   
   if (VT == MVT::iPTR) {
     Sig.push_back(IIT_PTR);
-    return EncodeFixedType(R->getValueAsDef("ElTy"), Sig);
+    return EncodeFixedType(R->getValueAsDef("ElTy"), NextArgNo, Sig);
   }
   
-  assert(VT != MVT::isVoid);
   EncodeFixedValueType(VT, Sig);
 }
 
@@ -528,6 +528,8 @@ static void EncodeFixedType(Record *R, SmallVectorImpl<unsigned> &Sig) {
 static unsigned ComputeFixedEncoding(const CodeGenIntrinsic &Int) {
   if (Int.IS.RetVTs.size() >= 2) return ~0U;
   
+  unsigned NextArgNo = 0;
+  
   SmallVector<unsigned, 8> TypeSig;
   if (Int.IS.RetVTs.empty())
     TypeSig.push_back(IIT_Done);
@@ -535,10 +537,10 @@ static unsigned ComputeFixedEncoding(const CodeGenIntrinsic &Int) {
            Int.IS.RetVTs[0] == MVT::isVoid)
     TypeSig.push_back(IIT_Done);
   else    
-    EncodeFixedType(Int.IS.RetTypeDefs[0], TypeSig);
+    EncodeFixedType(Int.IS.RetTypeDefs[0], NextArgNo, TypeSig);
   
   for (unsigned i = 0, e = Int.IS.ParamTypeDefs.size(); i != e; ++i)
-    EncodeFixedType(Int.IS.ParamTypeDefs[i], TypeSig);
+    EncodeFixedType(Int.IS.ParamTypeDefs[i], NextArgNo, TypeSig);
   
   // Can only encode 8 nibbles into a 32-bit word.
   if (TypeSig.size() > 8) return ~0U;
@@ -546,7 +548,7 @@ static unsigned ComputeFixedEncoding(const CodeGenIntrinsic &Int) {
   unsigned Result = 0;
   for (unsigned i = 0, e = TypeSig.size(); i != e; ++i) {
     // If we had an unencodable argument, bail out.
-    if (TypeSig[i] == ~0U)
+    if (TypeSig[i] > 15)
       return ~0U;
     Result = (Result << 4) | TypeSig[e-i-1];
   }
@@ -574,8 +576,15 @@ void IntrinsicEmitter::EmitGenerator(const std::vector<CodeGenIntrinsic> &Ints,
   OS << "  IIT_V16  = 11,\n";
   OS << "  IIT_MMX  = 12,\n";
   OS << "  IIT_PTR  = 13,\n";
-  OS << "  IIT_ARG  = 14\n";
+  OS << "  IIT_ARG  = 14,\n";
   // 15 is unassigned so far.
+  OS << "  IIT_F16  = 16,\n";
+  OS << "  IIT_F80  = 17,\n";
+  OS << "  IIT_F128 = 18,\n";
+  OS << "  IIT_PPC128 = 19,\n";
+  OS << "  IIT_METADATA = 20,\n";
+  OS << "  IIT_EMPTYSTRUCT = 21,\n";
+  OS << "  IIT_V32 = 22\n";
   OS << "};\n\n";
 
   

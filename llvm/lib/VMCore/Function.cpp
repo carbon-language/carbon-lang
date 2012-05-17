@@ -361,11 +361,13 @@ std::string Intrinsic::getName(ID id, ArrayRef<Type*> Tys) {
 #include "llvm/Intrinsics.gen"
 #undef GET_INTRINSTIC_GENERATOR_GLOBAL
 
-static Type *DecodeFixedType(unsigned &TableVal, LLVMContext &Context) {
+static Type *DecodeFixedType(unsigned &TableVal, ArrayRef<Type*> Tys,
+                             LLVMContext &Context) {
   unsigned Nibble = TableVal & 0xF;
   TableVal >>= 4;
   
   switch ((IIT_Info)Nibble) {
+  default: assert(0 && "Unknown argument type!");
   case IIT_Done: return Type::getVoidTy(Context);
   case IIT_I1: return Type::getInt1Ty(Context);
   case IIT_I8: return Type::getInt8Ty(Context);
@@ -374,13 +376,23 @@ static Type *DecodeFixedType(unsigned &TableVal, LLVMContext &Context) {
   case IIT_I64: return Type::getInt64Ty(Context);
   case IIT_F32: return Type::getFloatTy(Context);
   case IIT_F64: return Type::getDoubleTy(Context);
-  case IIT_V2: return VectorType::get(DecodeFixedType(TableVal, Context), 2);
-  case IIT_V4: return VectorType::get(DecodeFixedType(TableVal, Context), 4);
-  case IIT_V8: return VectorType::get(DecodeFixedType(TableVal, Context), 8);
-  case IIT_V16: return VectorType::get(DecodeFixedType(TableVal, Context), 16);
   case IIT_MMX: return Type::getX86_MMXTy(Context);
-  case IIT_PTR: return PointerType::get(DecodeFixedType(TableVal, Context),0);
-  case IIT_ARG: assert(0 && "Unimp!");
+  case IIT_V2:
+    return VectorType::get(DecodeFixedType(TableVal, Tys, Context), 2);
+  case IIT_V4:
+    return VectorType::get(DecodeFixedType(TableVal, Tys, Context), 4);
+  case IIT_V8:
+    return VectorType::get(DecodeFixedType(TableVal, Tys, Context), 8);
+  case IIT_V16:
+    return VectorType::get(DecodeFixedType(TableVal, Tys, Context), 16);
+  case IIT_PTR:
+    return PointerType::getUnqual(DecodeFixedType(TableVal, Tys, Context));
+  case IIT_ARG: {
+    unsigned ArgNo = TableVal & 0xF;
+    TableVal >>= 4;
+    assert(ArgNo < Tys.size() && "Not enough types specified!");
+    return Tys[ArgNo];
+  }
   }
   llvm_unreachable("unhandled");
 }
@@ -394,14 +406,13 @@ FunctionType *Intrinsic::getType(LLVMContext &Context,
   // Check to see if the intrinsic's type was expressible by the table.
   unsigned TableVal = IIT_Table[id-1];
   if (TableVal != ~0U) {
-    ResultTy = DecodeFixedType(TableVal, Context);
+    ResultTy = DecodeFixedType(TableVal, Tys, Context);
     
     while (TableVal)
-      ArgTys.push_back(DecodeFixedType(TableVal, Context));
+      ArgTys.push_back(DecodeFixedType(TableVal, Tys, Context));
 
     return FunctionType::get(ResultTy, ArgTys, false); 
   }
-  
   
 #define GET_INTRINSIC_GENERATOR
 #include "llvm/Intrinsics.gen"
