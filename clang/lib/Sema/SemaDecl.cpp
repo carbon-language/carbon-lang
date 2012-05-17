@@ -2227,10 +2227,11 @@ void Sema::mergeObjCMethodDecls(ObjCMethodDecl *newMethod,
   mergeDeclAttributes(newMethod, oldMethod, mergeDeprecation);
 
   // Merge attributes from the parameters.
-  ObjCMethodDecl::param_const_iterator oi = oldMethod->param_begin();
+  ObjCMethodDecl::param_const_iterator oi = oldMethod->param_begin(),
+                                       oe = oldMethod->param_end();
   for (ObjCMethodDecl::param_iterator
          ni = newMethod->param_begin(), ne = newMethod->param_end();
-       ni != ne; ++ni, ++oi)
+       ni != ne && oi != oe; ++ni, ++oi)
     mergeParamDeclAttributes(*ni, *oi, Context);
 
   CheckObjCMethodOverride(newMethod, oldMethod, true);

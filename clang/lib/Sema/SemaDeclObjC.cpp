@@ -173,10 +173,11 @@ void Sema::CheckObjCMethodOverride(ObjCMethodDecl *NewMethod,
         Diag(Overridden->getLocation(), diag::note_previous_decl) 
         << "method";
     }
-    ObjCMethodDecl::param_const_iterator oi = Overridden->param_begin();
+    ObjCMethodDecl::param_const_iterator oi = Overridden->param_begin(),
+                                         oe = Overridden->param_end();
     for (ObjCMethodDecl::param_iterator
            ni = NewMethod->param_begin(), ne = NewMethod->param_end();
-         ni != ne; ++ni, ++oi) {
+         ni != ne && oi != oe; ++ni, ++oi) {
       const ParmVarDecl *oldDecl = (*oi);
       ParmVarDecl *newDecl = (*ni);
       if (newDecl->hasAttr<NSConsumedAttr>() != 
@@ -1399,8 +1400,9 @@ void Sema::WarnConflictingTypedMethods(ObjCMethodDecl *ImpMethodDecl,
                             true);
 
   for (ObjCMethodDecl::param_iterator IM = ImpMethodDecl->param_begin(),
-       IF = MethodDecl->param_begin(), EM = ImpMethodDecl->param_end();
-       IM != EM; ++IM, ++IF) {
+       IF = MethodDecl->param_begin(), EM = ImpMethodDecl->param_end(),
+       EF = MethodDecl->param_end();
+       IM != EM && IF != EF; ++IM, ++IF) {
     CheckMethodOverrideParam(*this, ImpMethodDecl, MethodDecl, *IM, *IF,
                              IsProtocolMethodDecl, false, true);
   }
@@ -1421,8 +1423,9 @@ void Sema::CheckConflictingOverridingMethod(ObjCMethodDecl *Method,
                             true);
   
   for (ObjCMethodDecl::param_iterator IM = Method->param_begin(),
-       IF = Overridden->param_begin(), EM = Method->param_end();
-       IM != EM; ++IM, ++IF) {
+       IF = Overridden->param_begin(), EM = Method->param_end(),
+       EF = Overridden->param_end();
+       IM != EM && IF != EF; ++IM, ++IF) {
     CheckMethodOverrideParam(*this, Method, Overridden, *IM, *IF,
                              IsProtocolMethodDecl, true, true);
   }
@@ -1454,8 +1457,9 @@ void Sema::WarnExactTypedMethods(ObjCMethodDecl *ImpMethodDecl,
                                       IsProtocolMethodDecl, false, false);
   if (match)
     for (ObjCMethodDecl::param_iterator IM = ImpMethodDecl->param_begin(),
-         IF = MethodDecl->param_begin(), EM = ImpMethodDecl->param_end();
-         IM != EM; ++IM, ++IF) {
+         IF = MethodDecl->param_begin(), EM = ImpMethodDecl->param_end(),
+         EF = MethodDecl->param_end();
+         IM != EM && IF != EF; ++IM, ++IF) {
       match = CheckMethodOverrideParam(*this, ImpMethodDecl, MethodDecl, 
                                        *IM, *IF,
                                        IsProtocolMethodDecl, false, false);
@@ -1954,9 +1958,10 @@ bool Sema::MatchTwoMethodDeclarations(const ObjCMethodDecl *left,
     return false;
 
   ObjCMethodDecl::param_const_iterator
-    li = left->param_begin(), le = left->param_end(), ri = right->param_begin();
+    li = left->param_begin(), le = left->param_end(), ri = right->param_begin(),
+    re = right->param_end();
 
-  for (; li != le; ++li, ++ri) {
+  for (; li != le && ri != re; ++li, ++ri) {
     assert(ri != right->param_end() && "Param mismatch");
     const ParmVarDecl *lparm = *li, *rparm = *ri;
 
@@ -2673,9 +2678,9 @@ void Sema::CheckObjCMethodOverrides(ObjCMethodDecl *ObjCMethod,
         isa<ObjCInterfaceDecl>(overridden->getDeclContext())) {
       ObjCMethodDecl::param_iterator ParamI = ObjCMethod->param_begin(),
                                           E = ObjCMethod->param_end();
-      ObjCMethodDecl::param_iterator PrevI = overridden->param_begin();
-      for (; ParamI != E; ++ParamI, ++PrevI) {
-        // Number of parameters are the same and is guaranteed by selector match.
+      ObjCMethodDecl::param_iterator PrevI = overridden->param_begin(),
+                                     PrevE = overridden->param_end();
+      for (; ParamI != E && PrevI != PrevE; ++ParamI, ++PrevI) {
         assert(PrevI != overridden->param_end() && "Param mismatch");
         QualType T1 = Context.getCanonicalType((*ParamI)->getType());
         QualType T2 = Context.getCanonicalType((*PrevI)->getType());
