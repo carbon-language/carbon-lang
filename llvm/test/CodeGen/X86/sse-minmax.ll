@@ -1,6 +1,6 @@
-; RUN: llc < %s -march=x86-64 -mcpu=nehalem -asm-verbose=false -join-physregs -promote-elements | FileCheck %s
-; RUN: llc < %s -march=x86-64 -mcpu=nehalem -asm-verbose=false -join-physregs -enable-unsafe-fp-math -enable-no-nans-fp-math -promote-elements | FileCheck -check-prefix=UNSAFE %s
-; RUN: llc < %s -march=x86-64 -mcpu=nehalem -asm-verbose=false -join-physregs -enable-no-nans-fp-math -promote-elements | FileCheck -check-prefix=FINITE %s
+; RUN: llc < %s -march=x86-64 -mcpu=nehalem -asm-verbose=false -promote-elements | FileCheck %s
+; RUN: llc < %s -march=x86-64 -mcpu=nehalem -asm-verbose=false -enable-unsafe-fp-math -enable-no-nans-fp-math -promote-elements | FileCheck -check-prefix=UNSAFE %s
+; RUN: llc < %s -march=x86-64 -mcpu=nehalem -asm-verbose=false -enable-no-nans-fp-math -promote-elements | FileCheck -check-prefix=FINITE %s
 
 ; Some of these patterns can be matched as SSE min or max. Some of
 ; then can be matched provided that the operands are swapped.
@@ -8,12 +8,9 @@
 ; and a conditional branch.
 
 ; The naming convention is {,x_,y_}{o,u}{gt,lt,ge,le}{,_inverse}
-; x_ : use 0.0 instead of %y
-; y_ : use -0.0 instead of %y
+;  _x: use 0.0 instead of %y
+;  _y: use -0.0 instead of %y
 ; _inverse : swap the arms of the select.
-
-; Some of these tests depend on -join-physregs commuting instructions to
-; eliminate copies.
 
 ; CHECK:      ogt:
 ; CHECK-NEXT: maxsd %xmm1, %xmm0
@@ -139,147 +136,147 @@ define double @ole_inverse(double %x, double %y) nounwind {
   ret double %d
 }
 
-; CHECK:      x_ogt:
+; CHECK:      ogt_x:
 ; CHECK-NEXT: xorp{{[sd]}} %xmm1, %xmm1
 ; CHECK-NEXT: maxsd %xmm1, %xmm0
 ; CHECK-NEXT: ret
-; UNSAFE:      x_ogt:
+; UNSAFE:      ogt_x:
 ; UNSAFE-NEXT: xorp{{[sd]}} %xmm1, %xmm1
 ; UNSAFE-NEXT: maxsd %xmm1, %xmm0
 ; UNSAFE-NEXT: ret
-; FINITE:      x_ogt:
+; FINITE:      ogt_x:
 ; FINITE-NEXT: xorp{{[sd]}} %xmm1, %xmm1
 ; FINITE-NEXT: maxsd %xmm1, %xmm0
 ; FINITE-NEXT: ret
-define double @x_ogt(double %x) nounwind {
+define double @ogt_x(double %x) nounwind {
   %c = fcmp ogt double %x, 0.000000e+00
   %d = select i1 %c, double %x, double 0.000000e+00
   ret double %d
 }
 
-; CHECK:      x_olt:
+; CHECK:      olt_x:
 ; CHECK-NEXT: xorp{{[sd]}} %xmm1, %xmm1
 ; CHECK-NEXT: minsd %xmm1, %xmm0
 ; CHECK-NEXT: ret
-; UNSAFE:      x_olt:
+; UNSAFE:      olt_x:
 ; UNSAFE-NEXT: xorp{{[sd]}} %xmm1, %xmm1
 ; UNSAFE-NEXT: minsd %xmm1, %xmm0
 ; UNSAFE-NEXT: ret
-; FINITE:      x_olt:
+; FINITE:      olt_x:
 ; FINITE-NEXT: xorp{{[sd]}} %xmm1, %xmm1
 ; FINITE-NEXT: minsd %xmm1, %xmm0
 ; FINITE-NEXT: ret
-define double @x_olt(double %x) nounwind {
+define double @olt_x(double %x) nounwind {
   %c = fcmp olt double %x, 0.000000e+00
   %d = select i1 %c, double %x, double 0.000000e+00
   ret double %d
 }
 
-; CHECK:      x_ogt_inverse:
+; CHECK:      ogt_inverse_x:
 ; CHECK-NEXT: xorp{{[sd]}}  %xmm1, %xmm1
 ; CHECK-NEXT: minsd  %xmm0, %xmm1
 ; CHECK-NEXT: movap{{[sd]}} %xmm1, %xmm0
 ; CHECK-NEXT: ret
-; UNSAFE:      x_ogt_inverse:
+; UNSAFE:      ogt_inverse_x:
 ; UNSAFE-NEXT: xorp{{[sd]}}  %xmm1, %xmm1
 ; UNSAFE-NEXT: minsd  %xmm0, %xmm1
 ; UNSAFE-NEXT: movap{{[sd]}} %xmm1, %xmm0
 ; UNSAFE-NEXT: ret
-; FINITE:      x_ogt_inverse:
+; FINITE:      ogt_inverse_x:
 ; FINITE-NEXT: xorp{{[sd]}}  %xmm1, %xmm1
 ; FINITE-NEXT: minsd  %xmm0, %xmm1
 ; FINITE-NEXT: movap{{[sd]}} %xmm1, %xmm0
 ; FINITE-NEXT: ret
-define double @x_ogt_inverse(double %x) nounwind {
+define double @ogt_inverse_x(double %x) nounwind {
   %c = fcmp ogt double %x, 0.000000e+00
   %d = select i1 %c, double 0.000000e+00, double %x
   ret double %d
 }
 
-; CHECK:      x_olt_inverse:
+; CHECK:      olt_inverse_x:
 ; CHECK-NEXT: xorp{{[sd]}}  %xmm1, %xmm1
 ; CHECK-NEXT: maxsd  %xmm0, %xmm1
 ; CHECK-NEXT: movap{{[sd]}} %xmm1, %xmm0
 ; CHECK-NEXT: ret
-; UNSAFE:      x_olt_inverse:
+; UNSAFE:      olt_inverse_x:
 ; UNSAFE-NEXT: xorp{{[sd]}}  %xmm1, %xmm1
 ; UNSAFE-NEXT: maxsd  %xmm0, %xmm1
 ; UNSAFE-NEXT: movap{{[sd]}} %xmm1, %xmm0
 ; UNSAFE-NEXT: ret
-; FINITE:      x_olt_inverse:
+; FINITE:      olt_inverse_x:
 ; FINITE-NEXT: xorp{{[sd]}}  %xmm1, %xmm1
 ; FINITE-NEXT: maxsd  %xmm0, %xmm1
 ; FINITE-NEXT: movap{{[sd]}} %xmm1, %xmm0
 ; FINITE-NEXT: ret
-define double @x_olt_inverse(double %x) nounwind {
+define double @olt_inverse_x(double %x) nounwind {
   %c = fcmp olt double %x, 0.000000e+00
   %d = select i1 %c, double 0.000000e+00, double %x
   ret double %d
 }
 
-; CHECK:      x_oge:
+; CHECK:      oge_x:
 ; CHECK:      ucomisd %xmm1, %xmm0
-; UNSAFE:      x_oge:
+; UNSAFE:      oge_x:
 ; UNSAFE-NEXT: xorp{{[sd]}}   %xmm1, %xmm1
 ; UNSAFE-NEXT: maxsd   %xmm1, %xmm0
 ; UNSAFE-NEXT: ret
-; FINITE:      x_oge:
+; FINITE:      oge_x:
 ; FINITE-NEXT: xorp{{[sd]}}   %xmm1, %xmm1
 ; FINITE-NEXT: maxsd   %xmm1, %xmm0
 ; FINITE-NEXT: ret
-define double @x_oge(double %x) nounwind {
+define double @oge_x(double %x) nounwind {
   %c = fcmp oge double %x, 0.000000e+00
   %d = select i1 %c, double %x, double 0.000000e+00
   ret double %d
 }
 
-; CHECK:      x_ole:
+; CHECK:      ole_x:
 ; CHECK:      ucomisd %xmm0, %xmm1
-; UNSAFE:      x_ole:
+; UNSAFE:      ole_x:
 ; UNSAFE-NEXT: xorp{{[sd]}} %xmm1, %xmm1
 ; UNSAFE-NEXT: minsd %xmm1, %xmm0
 ; UNSAFE-NEXT: ret
-; FINITE:      x_ole:
+; FINITE:      ole_x:
 ; FINITE-NEXT: xorp{{[sd]}} %xmm1, %xmm1
 ; FINITE-NEXT: minsd %xmm1, %xmm0
 ; FINITE-NEXT: ret
-define double @x_ole(double %x) nounwind {
+define double @ole_x(double %x) nounwind {
   %c = fcmp ole double %x, 0.000000e+00
   %d = select i1 %c, double %x, double 0.000000e+00
   ret double %d
 }
 
-; CHECK:      x_oge_inverse:
-; CHECK:      ucomisd %xmm1, %xmm0
-; UNSAFE:      x_oge_inverse:
+; CHECK:      oge_inverse_x:
+; CHECK:      ucomisd %xmm
+; UNSAFE:      oge_inverse_x:
 ; UNSAFE-NEXT: xorp{{[sd]}}   %xmm1, %xmm1
 ; UNSAFE-NEXT: minsd   %xmm0, %xmm1
 ; UNSAFE-NEXT: movap{{[sd]}}  %xmm1, %xmm0
 ; UNSAFE-NEXT: ret
-; FINITE:      x_oge_inverse:
+; FINITE:      oge_inverse_x:
 ; FINITE-NEXT: xorp{{[sd]}}   %xmm1, %xmm1
 ; FINITE-NEXT: minsd   %xmm0, %xmm1
 ; FINITE-NEXT: movap{{[sd]}}  %xmm1, %xmm0
 ; FINITE-NEXT: ret
-define double @x_oge_inverse(double %x) nounwind {
+define double @oge_inverse_x(double %x) nounwind {
   %c = fcmp oge double %x, 0.000000e+00
   %d = select i1 %c, double 0.000000e+00, double %x
   ret double %d
 }
 
-; CHECK:      x_ole_inverse:
-; CHECK:      ucomisd %xmm0, %xmm1
-; UNSAFE:      x_ole_inverse:
+; CHECK:      ole_inverse_x:
+; CHECK:      ucomisd %xmm
+; UNSAFE:      ole_inverse_x:
 ; UNSAFE-NEXT: xorp{{[sd]}}   %xmm1, %xmm1
 ; UNSAFE-NEXT: maxsd   %xmm0, %xmm1
 ; UNSAFE-NEXT: movap{{[sd]}}  %xmm1, %xmm0
 ; UNSAFE-NEXT: ret
-; FINITE:      x_ole_inverse:
+; FINITE:      ole_inverse_x:
 ; FINITE-NEXT: xorp{{[sd]}}   %xmm1, %xmm1
 ; FINITE-NEXT: maxsd   %xmm0, %xmm1
 ; FINITE-NEXT: movap{{[sd]}}  %xmm1, %xmm0
 ; FINITE-NEXT: ret
-define double @x_ole_inverse(double %x) nounwind {
+define double @ole_inverse_x(double %x) nounwind {
   %c = fcmp ole double %x, 0.000000e+00
   %d = select i1 %c, double 0.000000e+00, double %x
   ret double %d
@@ -411,419 +408,419 @@ define double @ule_inverse(double %x, double %y) nounwind {
   ret double %d
 }
 
-; CHECK:      x_ugt:
+; CHECK:      ugt_x:
 ; CHECK:      ucomisd %xmm0, %xmm1
-; UNSAFE:      x_ugt:
+; UNSAFE:      ugt_x:
 ; UNSAFE-NEXT: xorp{{[sd]}}   %xmm1, %xmm1
 ; UNSAFE-NEXT: maxsd   %xmm1, %xmm0
 ; UNSAFE-NEXT: ret
-; FINITE:      x_ugt:
+; FINITE:      ugt_x:
 ; FINITE-NEXT: xorp{{[sd]}}   %xmm1, %xmm1
 ; FINITE-NEXT: maxsd   %xmm1, %xmm0
 ; FINITE-NEXT: ret
-define double @x_ugt(double %x) nounwind {
+define double @ugt_x(double %x) nounwind {
   %c = fcmp ugt double %x, 0.000000e+00
   %d = select i1 %c, double %x, double 0.000000e+00
   ret double %d
 }
 
-; CHECK:      x_ult:
+; CHECK:      ult_x:
 ; CHECK:      ucomisd %xmm1, %xmm0
-; UNSAFE:      x_ult:
+; UNSAFE:      ult_x:
 ; UNSAFE-NEXT: xorp{{[sd]}}   %xmm1, %xmm1
 ; UNSAFE-NEXT: minsd   %xmm1, %xmm0
 ; UNSAFE-NEXT: ret
-; FINITE:      x_ult:
+; FINITE:      ult_x:
 ; FINITE-NEXT: xorp{{[sd]}}   %xmm1, %xmm1
 ; FINITE-NEXT: minsd   %xmm1, %xmm0
 ; FINITE-NEXT: ret
-define double @x_ult(double %x) nounwind {
+define double @ult_x(double %x) nounwind {
   %c = fcmp ult double %x, 0.000000e+00
   %d = select i1 %c, double %x, double 0.000000e+00
   ret double %d
 }
 
-; CHECK:      x_ugt_inverse:
-; CHECK:      ucomisd %xmm0, %xmm1
-; UNSAFE:      x_ugt_inverse:
+; CHECK:      ugt_inverse_x:
+; CHECK:      ucomisd %xmm
+; UNSAFE:      ugt_inverse_x:
 ; UNSAFE-NEXT: xorp{{[sd]}}   %xmm1, %xmm1
 ; UNSAFE-NEXT: minsd   %xmm0, %xmm1
 ; UNSAFE-NEXT: movap{{[sd]}}  %xmm1, %xmm0
 ; UNSAFE-NEXT: ret
-; FINITE:      x_ugt_inverse:
+; FINITE:      ugt_inverse_x:
 ; FINITE-NEXT: xorp{{[sd]}}   %xmm1, %xmm1
 ; FINITE-NEXT: minsd   %xmm0, %xmm1
 ; FINITE-NEXT: movap{{[sd]}}  %xmm1, %xmm0
 ; FINITE-NEXT: ret
-define double @x_ugt_inverse(double %x) nounwind {
+define double @ugt_inverse_x(double %x) nounwind {
   %c = fcmp ugt double %x, 0.000000e+00
   %d = select i1 %c, double 0.000000e+00, double %x
   ret double %d
 }
 
-; CHECK:      x_ult_inverse:
-; CHECK:      ucomisd %xmm1, %xmm0
-; UNSAFE:      x_ult_inverse:
+; CHECK:      ult_inverse_x:
+; CHECK:      ucomisd %xmm
+; UNSAFE:      ult_inverse_x:
 ; UNSAFE-NEXT: xorp{{[sd]}}   %xmm1, %xmm1
 ; UNSAFE-NEXT: maxsd   %xmm0, %xmm1
 ; UNSAFE-NEXT: movap{{[sd]}}  %xmm1, %xmm0
 ; UNSAFE-NEXT: ret
-; FINITE:      x_ult_inverse:
+; FINITE:      ult_inverse_x:
 ; FINITE-NEXT: xorp{{[sd]}}   %xmm1, %xmm1
 ; FINITE-NEXT: maxsd   %xmm0, %xmm1
 ; FINITE-NEXT: movap{{[sd]}}  %xmm1, %xmm0
 ; FINITE-NEXT: ret
-define double @x_ult_inverse(double %x) nounwind {
+define double @ult_inverse_x(double %x) nounwind {
   %c = fcmp ult double %x, 0.000000e+00
   %d = select i1 %c, double 0.000000e+00, double %x
   ret double %d
 }
 
-; CHECK:      x_uge:
+; CHECK:      uge_x:
 ; CHECK-NEXT: xorp{{[sd]}}  %xmm1, %xmm1
 ; CHECK-NEXT: maxsd  %xmm0, %xmm1
 ; CHECK-NEXT: movap{{[sd]}} %xmm1, %xmm0
 ; CHECK-NEXT: ret
-; UNSAFE:      x_uge:
+; UNSAFE:      uge_x:
 ; UNSAFE-NEXT: xorp{{[sd]}}  %xmm1, %xmm1
 ; UNSAFE-NEXT: maxsd  %xmm1, %xmm0
 ; UNSAFE-NEXT: ret
-; FINITE:      x_uge:
+; FINITE:      uge_x:
 ; FINITE-NEXT: xorp{{[sd]}}  %xmm1, %xmm1
 ; FINITE-NEXT: maxsd  %xmm1, %xmm0
 ; FINITE-NEXT: ret
-define double @x_uge(double %x) nounwind {
+define double @uge_x(double %x) nounwind {
   %c = fcmp uge double %x, 0.000000e+00
   %d = select i1 %c, double %x, double 0.000000e+00
   ret double %d
 }
 
-; CHECK:      x_ule:
+; CHECK:      ule_x:
 ; CHECK-NEXT: xorp{{[sd]}}  %xmm1, %xmm1
 ; CHECK-NEXT: minsd  %xmm0, %xmm1
 ; CHECK-NEXT: movap{{[sd]}} %xmm1, %xmm0
 ; CHECK-NEXT: ret
-; UNSAFE:      x_ule:
+; UNSAFE:      ule_x:
 ; UNSAFE-NEXT: xorp{{[sd]}}  %xmm1, %xmm1
 ; UNSAFE-NEXT: minsd  %xmm1, %xmm0
 ; UNSAFE-NEXT: ret
-; FINITE:      x_ule:
+; FINITE:      ule_x:
 ; FINITE-NEXT: xorp{{[sd]}}  %xmm1, %xmm1
 ; FINITE-NEXT: minsd  %xmm1, %xmm0
 ; FINITE-NEXT: ret
-define double @x_ule(double %x) nounwind {
+define double @ule_x(double %x) nounwind {
   %c = fcmp ule double %x, 0.000000e+00
   %d = select i1 %c, double %x, double 0.000000e+00
   ret double %d
 }
 
-; CHECK:      x_uge_inverse:
+; CHECK:      uge_inverse_x:
 ; CHECK-NEXT: xorp{{[sd]}} %xmm1, %xmm1
 ; CHECK-NEXT: minsd %xmm1, %xmm0
 ; CHECK-NEXT: ret
-; UNSAFE:      x_uge_inverse:
+; UNSAFE:      uge_inverse_x:
 ; UNSAFE-NEXT: xorp{{[sd]}} %xmm1, %xmm1
 ; UNSAFE-NEXT: minsd %xmm0, %xmm1
 ; UNSAFE-NEXT: movap{{[sd]}} %xmm1, %xmm0
 ; UNSAFE-NEXT: ret
-; FINITE:      x_uge_inverse:
+; FINITE:      uge_inverse_x:
 ; FINITE-NEXT: xorp{{[sd]}} %xmm1, %xmm1
 ; FINITE-NEXT: minsd %xmm0, %xmm1
 ; FINITE-NEXT: movap{{[sd]}} %xmm1, %xmm0
 ; FINITE-NEXT: ret
-define double @x_uge_inverse(double %x) nounwind {
+define double @uge_inverse_x(double %x) nounwind {
   %c = fcmp uge double %x, 0.000000e+00
   %d = select i1 %c, double 0.000000e+00, double %x
   ret double %d
 }
 
-; CHECK:      x_ule_inverse:
+; CHECK:      ule_inverse_x:
 ; CHECK-NEXT: xorp{{[sd]}} %xmm1, %xmm1
 ; CHECK-NEXT: maxsd %xmm1, %xmm0
 ; CHECK-NEXT: ret
-; UNSAFE:      x_ule_inverse:
+; UNSAFE:      ule_inverse_x:
 ; UNSAFE-NEXT: xorp{{[sd]}} %xmm1, %xmm1
 ; UNSAFE-NEXT: maxsd %xmm0, %xmm1
 ; UNSAFE-NEXT: movap{{[sd]}} %xmm1, %xmm0
 ; UNSAFE-NEXT: ret
-; FINITE:      x_ule_inverse:
+; FINITE:      ule_inverse_x:
 ; FINITE-NEXT: xorp{{[sd]}} %xmm1, %xmm1
 ; FINITE-NEXT: maxsd %xmm0, %xmm1
 ; FINITE-NEXT: movap{{[sd]}} %xmm1, %xmm0
 ; FINITE-NEXT: ret
-define double @x_ule_inverse(double %x) nounwind {
+define double @ule_inverse_x(double %x) nounwind {
   %c = fcmp ule double %x, 0.000000e+00
   %d = select i1 %c, double 0.000000e+00, double %x
   ret double %d
 }
 
-; CHECK:      y_ogt:
+; CHECK:      ogt_y:
 ; CHECK-NEXT: maxsd {{[^,]*}}, %xmm0
 ; CHECK-NEXT: ret
-; UNSAFE:      y_ogt:
+; UNSAFE:      ogt_y:
 ; UNSAFE-NEXT: maxsd {{[^,]*}}, %xmm0
 ; UNSAFE-NEXT: ret
-; FINITE:      y_ogt:
+; FINITE:      ogt_y:
 ; FINITE-NEXT: maxsd {{[^,]*}}, %xmm0
 ; FINITE-NEXT: ret
-define double @y_ogt(double %x) nounwind {
+define double @ogt_y(double %x) nounwind {
   %c = fcmp ogt double %x, -0.000000e+00
   %d = select i1 %c, double %x, double -0.000000e+00
   ret double %d
 }
 
-; CHECK:      y_olt:
+; CHECK:      olt_y:
 ; CHECK-NEXT: minsd {{[^,]*}}, %xmm0
 ; CHECK-NEXT: ret
-; UNSAFE:      y_olt:
+; UNSAFE:      olt_y:
 ; UNSAFE-NEXT: minsd {{[^,]*}}, %xmm0
 ; UNSAFE-NEXT: ret
-; FINITE:      y_olt:
+; FINITE:      olt_y:
 ; FINITE-NEXT: minsd {{[^,]*}}, %xmm0
 ; FINITE-NEXT: ret
-define double @y_olt(double %x) nounwind {
+define double @olt_y(double %x) nounwind {
   %c = fcmp olt double %x, -0.000000e+00
   %d = select i1 %c, double %x, double -0.000000e+00
   ret double %d
 }
 
-; CHECK:      y_ogt_inverse:
+; CHECK:      ogt_inverse_y:
 ; CHECK-NEXT: movsd  {{[^,]*}}, %xmm1
 ; CHECK-NEXT: minsd  %xmm0, %xmm1
 ; CHECK-NEXT: movap{{[sd]}} %xmm1, %xmm0
 ; CHECK-NEXT: ret
-; UNSAFE:      y_ogt_inverse:
+; UNSAFE:      ogt_inverse_y:
 ; UNSAFE-NEXT: movsd  {{[^,]*}}, %xmm1
 ; UNSAFE-NEXT: minsd  %xmm0, %xmm1
 ; UNSAFE-NEXT: movap{{[sd]}} %xmm1, %xmm0
 ; UNSAFE-NEXT: ret
-; FINITE:      y_ogt_inverse:
+; FINITE:      ogt_inverse_y:
 ; FINITE-NEXT: movsd  {{[^,]*}}, %xmm1
 ; FINITE-NEXT: minsd  %xmm0, %xmm1
 ; FINITE-NEXT: movap{{[sd]}} %xmm1, %xmm0
 ; FINITE-NEXT: ret
-define double @y_ogt_inverse(double %x) nounwind {
+define double @ogt_inverse_y(double %x) nounwind {
   %c = fcmp ogt double %x, -0.000000e+00
   %d = select i1 %c, double -0.000000e+00, double %x
   ret double %d
 }
 
-; CHECK:      y_olt_inverse:
+; CHECK:      olt_inverse_y:
 ; CHECK-NEXT: movsd  {{[^,]*}}, %xmm1
 ; CHECK-NEXT: maxsd  %xmm0, %xmm1
 ; CHECK-NEXT: movap{{[sd]}} %xmm1, %xmm0
 ; CHECK-NEXT: ret
-; UNSAFE:      y_olt_inverse:
+; UNSAFE:      olt_inverse_y:
 ; UNSAFE-NEXT: movsd  {{[^,]*}}, %xmm1
 ; UNSAFE-NEXT: maxsd  %xmm0, %xmm1
 ; UNSAFE-NEXT: movap{{[sd]}} %xmm1, %xmm0
 ; UNSAFE-NEXT: ret
-; FINITE:      y_olt_inverse:
+; FINITE:      olt_inverse_y:
 ; FINITE-NEXT: movsd  {{[^,]*}}, %xmm1
 ; FINITE-NEXT: maxsd  %xmm0, %xmm1
 ; FINITE-NEXT: movap{{[sd]}} %xmm1, %xmm0
 ; FINITE-NEXT: ret
-define double @y_olt_inverse(double %x) nounwind {
+define double @olt_inverse_y(double %x) nounwind {
   %c = fcmp olt double %x, -0.000000e+00
   %d = select i1 %c, double -0.000000e+00, double %x
   ret double %d
 }
 
-; CHECK:      y_oge:
+; CHECK:      oge_y:
 ; CHECK:      ucomisd %xmm1, %xmm0
-; UNSAFE:      y_oge:
+; UNSAFE:      oge_y:
 ; UNSAFE-NEXT: maxsd   {{[^,]*}}, %xmm0
 ; UNSAFE-NEXT: ret
-; FINITE:      y_oge:
+; FINITE:      oge_y:
 ; FINITE-NEXT: maxsd   {{[^,]*}}, %xmm0
 ; FINITE-NEXT: ret
-define double @y_oge(double %x) nounwind {
+define double @oge_y(double %x) nounwind {
   %c = fcmp oge double %x, -0.000000e+00
   %d = select i1 %c, double %x, double -0.000000e+00
   ret double %d
 }
 
-; CHECK:      y_ole:
+; CHECK:      ole_y:
 ; CHECK:      ucomisd %xmm0, %xmm1
-; UNSAFE:      y_ole:
+; UNSAFE:      ole_y:
 ; UNSAFE-NEXT: minsd {{[^,]*}}, %xmm0
 ; UNSAFE-NEXT: ret
-; FINITE:      y_ole:
+; FINITE:      ole_y:
 ; FINITE-NEXT: minsd {{[^,]*}}, %xmm0
 ; FINITE-NEXT: ret
-define double @y_ole(double %x) nounwind {
+define double @ole_y(double %x) nounwind {
   %c = fcmp ole double %x, -0.000000e+00
   %d = select i1 %c, double %x, double -0.000000e+00
   ret double %d
 }
 
-; CHECK:      y_oge_inverse:
-; CHECK:      ucomisd %xmm1, %xmm0
-; UNSAFE:      y_oge_inverse:
+; CHECK:      oge_inverse_y:
+; CHECK:      ucomisd %xmm
+; UNSAFE:      oge_inverse_y:
 ; UNSAFE-NEXT: movsd   {{[^,]*}}, %xmm1
 ; UNSAFE-NEXT: minsd   %xmm0, %xmm1
 ; UNSAFE-NEXT: movap{{[sd]}}  %xmm1, %xmm0
 ; UNSAFE-NEXT: ret
-; FINITE:      y_oge_inverse:
+; FINITE:      oge_inverse_y:
 ; FINITE-NEXT: movsd   {{[^,]*}}, %xmm1
 ; FINITE-NEXT: minsd   %xmm0, %xmm1
 ; FINITE-NEXT: movap{{[sd]}}  %xmm1, %xmm0
 ; FINITE-NEXT: ret
-define double @y_oge_inverse(double %x) nounwind {
+define double @oge_inverse_y(double %x) nounwind {
   %c = fcmp oge double %x, -0.000000e+00
   %d = select i1 %c, double -0.000000e+00, double %x
   ret double %d
 }
 
-; CHECK:      y_ole_inverse:
-; CHECK:      ucomisd %xmm0, %xmm1
-; UNSAFE:      y_ole_inverse:
+; CHECK:      ole_inverse_y:
+; CHECK:      ucomisd %xmm
+; UNSAFE:      ole_inverse_y:
 ; UNSAFE-NEXT: movsd   {{[^,]*}}, %xmm1
 ; UNSAFE-NEXT: maxsd   %xmm0, %xmm1
 ; UNSAFE-NEXT: movap{{[sd]}}  %xmm1, %xmm0
 ; UNSAFE-NEXT: ret
-; FINITE:      y_ole_inverse:
+; FINITE:      ole_inverse_y:
 ; FINITE-NEXT: movsd   {{[^,]*}}, %xmm1
 ; FINITE-NEXT: maxsd   %xmm0, %xmm1
 ; FINITE-NEXT: movap{{[sd]}}  %xmm1, %xmm0
 ; FINITE-NEXT: ret
-define double @y_ole_inverse(double %x) nounwind {
+define double @ole_inverse_y(double %x) nounwind {
   %c = fcmp ole double %x, -0.000000e+00
   %d = select i1 %c, double -0.000000e+00, double %x
   ret double %d
 }
 
-; CHECK:      y_ugt:
+; CHECK:      ugt_y:
 ; CHECK:      ucomisd %xmm0, %xmm1
-; UNSAFE:      y_ugt:
+; UNSAFE:      ugt_y:
 ; UNSAFE-NEXT: maxsd   {{[^,]*}}, %xmm0
 ; UNSAFE-NEXT: ret
-; FINITE:      y_ugt:
+; FINITE:      ugt_y:
 ; FINITE-NEXT: maxsd   {{[^,]*}}, %xmm0
 ; FINITE-NEXT: ret
-define double @y_ugt(double %x) nounwind {
+define double @ugt_y(double %x) nounwind {
   %c = fcmp ugt double %x, -0.000000e+00
   %d = select i1 %c, double %x, double -0.000000e+00
   ret double %d
 }
 
-; CHECK:      y_ult:
+; CHECK:      ult_y:
 ; CHECK:      ucomisd %xmm1, %xmm0
-; UNSAFE:      y_ult:
+; UNSAFE:      ult_y:
 ; UNSAFE-NEXT: minsd   {{[^,]*}}, %xmm0
 ; UNSAFE-NEXT: ret
-; FINITE:      y_ult:
+; FINITE:      ult_y:
 ; FINITE-NEXT: minsd   {{[^,]*}}, %xmm0
 ; FINITE-NEXT: ret
-define double @y_ult(double %x) nounwind {
+define double @ult_y(double %x) nounwind {
   %c = fcmp ult double %x, -0.000000e+00
   %d = select i1 %c, double %x, double -0.000000e+00
   ret double %d
 }
 
-; CHECK:      y_ugt_inverse:
-; CHECK:      ucomisd %xmm0, %xmm1
-; UNSAFE:      y_ugt_inverse:
+; CHECK:      ugt_inverse_y:
+; CHECK:      ucomisd %xmm
+; UNSAFE:      ugt_inverse_y:
 ; UNSAFE-NEXT: movsd   {{[^,]*}}, %xmm1
 ; UNSAFE-NEXT: minsd   %xmm0, %xmm1
 ; UNSAFE-NEXT: movap{{[sd]}}  %xmm1, %xmm0
 ; UNSAFE-NEXT: ret
-; FINITE:      y_ugt_inverse:
+; FINITE:      ugt_inverse_y:
 ; FINITE-NEXT: movsd   {{[^,]*}}, %xmm1
 ; FINITE-NEXT: minsd   %xmm0, %xmm1
 ; FINITE-NEXT: movap{{[sd]}}  %xmm1, %xmm0
 ; FINITE-NEXT: ret
-define double @y_ugt_inverse(double %x) nounwind {
+define double @ugt_inverse_y(double %x) nounwind {
   %c = fcmp ugt double %x, -0.000000e+00
   %d = select i1 %c, double -0.000000e+00, double %x
   ret double %d
 }
 
-; CHECK:      y_ult_inverse:
-; CHECK:      ucomisd %xmm1, %xmm0
-; UNSAFE:      y_ult_inverse:
+; CHECK:      ult_inverse_y:
+; CHECK:      ucomisd %xmm
+; UNSAFE:      ult_inverse_y:
 ; UNSAFE-NEXT: movsd   {{[^,]*}}, %xmm1
 ; UNSAFE-NEXT: maxsd   %xmm0, %xmm1
 ; UNSAFE-NEXT: movap{{[sd]}}  %xmm1, %xmm0
 ; UNSAFE-NEXT: ret
-; FINITE:      y_ult_inverse:
+; FINITE:      ult_inverse_y:
 ; FINITE-NEXT: movsd   {{[^,]*}}, %xmm1
 ; FINITE-NEXT: maxsd   %xmm0, %xmm1
 ; FINITE-NEXT: movap{{[sd]}}  %xmm1, %xmm0
 ; FINITE-NEXT: ret
-define double @y_ult_inverse(double %x) nounwind {
+define double @ult_inverse_y(double %x) nounwind {
   %c = fcmp ult double %x, -0.000000e+00
   %d = select i1 %c, double -0.000000e+00, double %x
   ret double %d
 }
 
-; CHECK:      y_uge:
+; CHECK:      uge_y:
 ; CHECK-NEXT: movsd  {{[^,]*}}, %xmm1
 ; CHECK-NEXT: maxsd  %xmm0, %xmm1
 ; CHECK-NEXT: movap{{[sd]}} %xmm1, %xmm0
 ; CHECK-NEXT: ret
-; UNSAFE:      y_uge:
+; UNSAFE:      uge_y:
 ; UNSAFE-NEXT: maxsd  {{[^,]*}}, %xmm0
 ; UNSAFE-NEXT: ret
-; FINITE:      y_uge:
+; FINITE:      uge_y:
 ; FINITE-NEXT: maxsd  {{[^,]*}}, %xmm0
 ; FINITE-NEXT: ret
-define double @y_uge(double %x) nounwind {
+define double @uge_y(double %x) nounwind {
   %c = fcmp uge double %x, -0.000000e+00
   %d = select i1 %c, double %x, double -0.000000e+00
   ret double %d
 }
 
-; CHECK:      y_ule:
+; CHECK:      ule_y:
 ; CHECK-NEXT: movsd  {{[^,]*}}, %xmm1
 ; CHECK-NEXT: minsd  %xmm0, %xmm1
 ; CHECK-NEXT: movap{{[sd]}} %xmm1, %xmm0
 ; CHECK-NEXT: ret
-; UNSAFE:      y_ule:
+; UNSAFE:      ule_y:
 ; UNSAFE-NEXT: minsd  {{[^,]*}}, %xmm0
 ; UNSAFE-NEXT: ret
-; FINITE:      y_ule:
+; FINITE:      ule_y:
 ; FINITE-NEXT: minsd  {{[^,]*}}, %xmm0
 ; FINITE-NEXT: ret
-define double @y_ule(double %x) nounwind {
+define double @ule_y(double %x) nounwind {
   %c = fcmp ule double %x, -0.000000e+00
   %d = select i1 %c, double %x, double -0.000000e+00
   ret double %d
 }
 
-; CHECK:      y_uge_inverse:
+; CHECK:      uge_inverse_y:
 ; CHECK-NEXT: minsd {{[^,]*}}, %xmm0
 ; CHECK-NEXT: ret
-; UNSAFE:      y_uge_inverse:
+; UNSAFE:      uge_inverse_y:
 ; UNSAFE-NEXT: movsd {{[^,]*}}, %xmm1
 ; UNSAFE-NEXT: minsd %xmm0, %xmm1
 ; UNSAFE-NEXT: movap{{[sd]}} %xmm1, %xmm0
 ; UNSAFE-NEXT: ret
-; FINITE:      y_uge_inverse:
+; FINITE:      uge_inverse_y:
 ; FINITE-NEXT: movsd {{[^,]*}}, %xmm1
 ; FINITE-NEXT: minsd %xmm0, %xmm1
 ; FINITE-NEXT: movap{{[sd]}} %xmm1, %xmm0
 ; FINITE-NEXT: ret
-define double @y_uge_inverse(double %x) nounwind {
+define double @uge_inverse_y(double %x) nounwind {
   %c = fcmp uge double %x, -0.000000e+00
   %d = select i1 %c, double -0.000000e+00, double %x
   ret double %d
 }
 
-; CHECK:      y_ule_inverse:
+; CHECK:      ule_inverse_y:
 ; CHECK-NEXT: maxsd {{[^,]*}}, %xmm0
 ; CHECK-NEXT: ret
-; UNSAFE:      y_ule_inverse:
+; UNSAFE:      ule_inverse_y:
 ; UNSAFE-NEXT: movsd {{[^,]*}}, %xmm1
 ; UNSAFE-NEXT: maxsd %xmm0, %xmm1
 ; UNSAFE-NEXT: movap{{[sd]}} %xmm1, %xmm0
 ; UNSAFE-NEXT: ret
-; FINITE:      y_ule_inverse:
+; FINITE:      ule_inverse_y:
 ; FINITE-NEXT: movsd {{[^,]*}}, %xmm1
 ; FINITE-NEXT: maxsd %xmm0, %xmm1
 ; FINITE-NEXT: movap{{[sd]}} %xmm1, %xmm0
 ; FINITE-NEXT: ret
-define double @y_ule_inverse(double %x) nounwind {
+define double @ule_inverse_y(double %x) nounwind {
   %c = fcmp ule double %x, -0.000000e+00
   %d = select i1 %c, double -0.000000e+00, double %x
   ret double %d

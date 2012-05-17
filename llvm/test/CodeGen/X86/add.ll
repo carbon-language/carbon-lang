@@ -1,8 +1,6 @@
 ; RUN: llc < %s -mcpu=generic -march=x86 | FileCheck %s -check-prefix=X32
-; RUN: llc < %s -mcpu=generic -mtriple=x86_64-linux -join-physregs | FileCheck %s -check-prefix=X64
-; RUN: llc < %s -mcpu=generic -mtriple=x86_64-win32 -join-physregs | FileCheck %s -check-prefix=X64
-
-; Some of these tests depend on -join-physregs to commute instructions.
+; RUN: llc < %s -mcpu=generic -mtriple=x86_64-linux | FileCheck %s -check-prefix=X64
+; RUN: llc < %s -mcpu=generic -mtriple=x86_64-win32 | FileCheck %s -check-prefix=X64
 
 ; The immediate can be encoded in a smaller way if the
 ; instruction is a sub instead of an add.
@@ -101,9 +99,9 @@ define {i32, i1} @test7(i32 %v1, i32 %v2) nounwind {
 }
 
 ; X64: test7:
-; X64: addl %e[[A1]], %eax
+; X64: addl %e[[A1]], %e
 ; X64-NEXT: setb %dl
-; X64-NEXT: ret
+; X64: ret
 
 ; PR5443
 define {i64, i1} @test8(i64 %left, i64 %right) nounwind {

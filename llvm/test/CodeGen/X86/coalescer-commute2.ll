@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=x86_64-linux -join-physregs | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-linux | FileCheck %s
 ; CHECK-NOT:     mov
 ; CHECK:     paddw
 ; CHECK-NOT:     mov

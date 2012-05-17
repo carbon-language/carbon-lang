@@ -1,11 +1,8 @@
-; RUN: llc < %s -join-physregs -mcpu=generic -mtriple=x86_64-mingw32     | FileCheck %s -check-prefix=M64
-; RUN: llc < %s -join-physregs -mcpu=generic -mtriple=x86_64-win32       | FileCheck %s -check-prefix=W64
-; RUN: llc < %s -join-physregs -mcpu=generic -mtriple=x86_64-win32-macho | FileCheck %s -check-prefix=EFI
+; RUN: llc < %s -mcpu=generic -mtriple=x86_64-mingw32     | FileCheck %s -check-prefix=M64
+; RUN: llc < %s -mcpu=generic -mtriple=x86_64-win32       | FileCheck %s -check-prefix=W64
+; RUN: llc < %s -mcpu=generic -mtriple=x86_64-win32-macho | FileCheck %s -check-prefix=EFI
 ; PR8777
 ; PR8778
-
-; Passing the same value in two registers creates a false interference that
-; only -join-physregs resolves. It could also be handled by a parallel copy.
 
 define i64 @foo(i64 %n, i64 %x) nounwind {
 entry:
@@ -31,19 +28,19 @@ entry:
 
   %buf1 = alloca i8, i64 %n, align 1
 
-; M64: leaq  15(%rcx), %rax
+; M64: leaq  15(%{{.*}}), %rax
 ; M64: andq  $-16, %rax
 ; M64: callq ___chkstk
 ; M64-NOT:   %rsp
 ; M64: movq  %rsp, %rax
 
-; W64: leaq  15(%rcx), %rax
+; W64: leaq  15(%{{.*}}), %rax
 ; W64: andq  $-16, %rax
 ; W64: callq __chkstk
 ; W64: subq  %rax, %rsp
 ; W64: movq  %rsp, %rax
 
-; EFI: leaq  15(%rcx), [[R1:%r.*]]
+; EFI: leaq  15(%{{.*}}), [[R1:%r.*]]
 ; EFI: andq  $-16, [[R1]]
 ; EFI: movq  %rsp, [[R64:%r.*]]
 ; EFI: subq  [[R1]], [[R64]]

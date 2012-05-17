@@ -1,8 +1,6 @@
-; RUN: llc < %s -march=x86 -mattr=sse41 -mcpu=nehalem -stack-alignment=16 -join-physregs > %t
+; RUN: llc < %s -march=x86 -mattr=sse41 -mcpu=nehalem -stack-alignment=16 > %t
 ; RUN: grep pmul %t | count 12
 ; RUN: grep mov %t | count 11
-
-; The f() arguments in %xmm0 and %xmm1 cause an extra movdqa without -join-physregs.
 
 define <4 x i32> @a(<4 x i32> %i) nounwind  {
         %A = mul <4 x i32> %i, < i32 117, i32 117, i32 117, i32 117 >

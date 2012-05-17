@@ -1,10 +1,14 @@
-; RUN: llc < %s -mtriple=i386-apple-darwin -join-physregs | FileCheck %s
+; RUN: llc < %s -mtriple=i386-apple-darwin | FileCheck %s
+; XFAIL: *
 ; rdar://5571034
 
 ; This requires physreg joining, %vreg13 is live everywhere:
 ; 304L		%CL<def> = COPY %vreg13:sub_8bit; GR32_ABCD:%vreg13
 ; 320L		%vreg15<def> = COPY %vreg19; GR32:%vreg15 GR32_NOSP:%vreg19
 ; 336L		%vreg15<def> = SAR32rCL %vreg15, %EFLAGS<imp-def,dead>, %CL<imp-use,kill>; GR32:%vreg15
+;
+; This test is XFAIL until the register allocator understands trivial physreg
+; interference. <rdar://9802098>
 
 define void @foo(i32* nocapture %quadrant, i32* nocapture %ptr, i32 %bbSize, i32 %bbStart, i32 %shifts) nounwind ssp {
 ; CHECK: foo:
