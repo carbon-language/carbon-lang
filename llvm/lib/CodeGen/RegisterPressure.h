@@ -218,6 +218,7 @@ public:
   void getMaxPressureDelta(const MachineInstr *MI, RegPressureDelta &Delta) {
     if (isTopClosed())
       return getMaxDownwardPressureDelta(MI, Delta);
+
     assert(isBottomClosed() && "Uninitialized pressure tracker");
     return getMaxUpwardPressureDelta(MI, Delta);
   }

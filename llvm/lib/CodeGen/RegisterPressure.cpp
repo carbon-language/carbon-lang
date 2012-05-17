@@ -578,12 +578,12 @@ static int computeMaxPressureDelta(ArrayRef<unsigned> OldPressureVec,
     unsigned Limit = TRI->getRegPressureSetLimit(i);
     if (Limit > POld) {
       if (Limit > PNew)
-        PDiff = 0;          // Under the limit
+        PDiff = 0;            // Under the limit
       else
         PDiff = PNew - Limit; // Just exceeded limit.
     }
     else if (Limit > PNew)
-      PDiff = Limit - POld; // Just obeyed limit.
+      PDiff = Limit - POld;   // Just obeyed limit.
 
     if (std::abs(PDiff) > std::abs(ExcessUnits)) {
       ExcessUnits = PDiff;
