@@ -39,7 +39,7 @@ namespace {
     Constant *RewindFunction;
 
     bool InsertUnwindResumeCalls(Function &Fn);
-    Instruction *GetExceptionObject(ResumeInst *RI);
+    Value *GetExceptionObject(ResumeInst *RI);
 
   public:
     static char ID; // Pass identification, replacement for typeid.
@@ -68,9 +68,9 @@ FunctionPass *llvm::createDwarfEHPass(const TargetMachine *tm) {
 /// GetExceptionObject - Return the exception object from the value passed into
 /// the 'resume' instruction (typically an aggregate). Clean up any dead
 /// instructions, including the 'resume' instruction.
-Instruction *DwarfEHPrepare::GetExceptionObject(ResumeInst *RI) {
+Value *DwarfEHPrepare::GetExceptionObject(ResumeInst *RI) {
   Value *V = RI->getOperand(0);
-  Instruction *ExnObj = 0;
+  Value *ExnObj = 0;
   InsertValueInst *SelIVI = dyn_cast<InsertValueInst>(V);
   LoadInst *SelLoad = 0;
   InsertValueInst *ExcIVI = 0;
@@ -81,7 +81,7 @@ Instruction *DwarfEHPrepare::GetExceptionObject(ResumeInst *RI) {
       ExcIVI = dyn_cast<InsertValueInst>(SelIVI->getOperand(0));
       if (ExcIVI && isa<UndefValue>(ExcIVI->getOperand(0)) &&
           ExcIVI->getNumIndices() == 1 && *ExcIVI->idx_begin() == 0) {
-        ExnObj = cast<Instruction>(ExcIVI->getOperand(1));
+        ExnObj = ExcIVI->getOperand(1);
         SelLoad = dyn_cast<LoadInst>(SelIVI->getOperand(1));
         EraseIVIs = true;
       }
@@ -139,7 +139,7 @@ bool DwarfEHPrepare::InsertUnwindResumeCalls(Function &Fn) {
     // _Unwind_Resume to the end of the single resume block.
     ResumeInst *RI = Resumes.front();
     BasicBlock *UnwindBB = RI->getParent();
-    Instruction *ExnObj = GetExceptionObject(RI);
+    Value *ExnObj = GetExceptionObject(RI);
 
     // Call the _Unwind_Resume function.
     CallInst *CI = CallInst::Create(RewindFunction, ExnObj, "", UnwindBB);
@@ -162,7 +162,7 @@ bool DwarfEHPrepare::InsertUnwindResumeCalls(Function &Fn) {
     BasicBlock *Parent = RI->getParent();
     BranchInst::Create(UnwindBB, Parent);
 
-    Instruction *ExnObj = GetExceptionObject(RI);
+    Value *ExnObj = GetExceptionObject(RI);
     PN->addIncoming(ExnObj, Parent);
 
     ++NumResumesLowered;
