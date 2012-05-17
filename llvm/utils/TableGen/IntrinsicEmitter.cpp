@@ -321,8 +321,6 @@ static void EmitTypeForValueType(raw_ostream &OS, MVT::SimpleValueType VT) {
     OS << "Type::getFloatTy(Context)";
   } else if (VT == MVT::f64) {
     OS << "Type::getDoubleTy(Context)";
-  } else if (VT == MVT::f80) {
-    OS << "Type::getX86_FP80Ty(Context)";
   } else if (VT == MVT::f128) {
     OS << "Type::getFP128Ty(Context)";
   } else if (VT == MVT::ppcf128) {
@@ -417,20 +415,20 @@ enum IIT_Info {
   IIT_V4   = 9,
   IIT_V8   = 10,
   IIT_V16  = 11,
-  IIT_MMX  = 12,
-  IIT_PTR  = 13,
-  IIT_ARG  = 14,
-  // 15
+  IIT_V32  = 12,
+  IIT_MMX  = 13,
+  IIT_PTR  = 14,
+  IIT_ARG  = 15,
   
   // Values from 16+ are only encodable with the inefficient encoding.
-  IIT_F16  = 16,
-  IIT_F80  = 17,
-  IIT_F128 = 18,
-  IIT_PPC128 = 19,
-  IIT_METADATA = 20,
-  IIT_EMPTYSTRUCT = 21,
-  IIT_V32 = 22
-  
+  IIT_METADATA = 16,
+  IIT_EMPTYSTRUCT = 17,
+  IIT_STRUCT2 = 18,
+  IIT_STRUCT3 = 19,
+  IIT_STRUCT4 = 20,
+  IIT_STRUCT5 = 21,
+  IIT_EXTEND_VEC_ARG = 22,
+  IIT_TRUNC_VEC_ARG = 23
 };
 
 
@@ -439,7 +437,7 @@ static void EncodeFixedValueType(MVT::SimpleValueType VT,
   if (EVT(VT).isInteger()) {
     unsigned BitWidth = EVT(VT).getSizeInBits();
     switch (BitWidth) {
-    default: return Sig.push_back(~0U);
+    default: throw "unhandled integer type width in intrinsic!";
     case 1: return Sig.push_back(IIT_I1);
     case 8: return Sig.push_back(IIT_I8);
     case 16: return Sig.push_back(IIT_I16);
@@ -449,13 +447,9 @@ static void EncodeFixedValueType(MVT::SimpleValueType VT,
   }
   
   switch (VT) {
-  default: assert(0 && "Unknown Type!");
-  case MVT::f16: return Sig.push_back(IIT_F16);
+  default: throw "unhandled MVT in intrinsic!";
   case MVT::f32: return Sig.push_back(IIT_F32);
   case MVT::f64: return Sig.push_back(IIT_F64);
-  case MVT::f80: return Sig.push_back(IIT_F80);
-  case MVT::f128: return Sig.push_back(IIT_F128);
-  case MVT::ppcf128: return Sig.push_back(IIT_PPC128);
   case MVT::Metadata: return Sig.push_back(IIT_METADATA);
   case MVT::x86mmx: return Sig.push_back(IIT_MMX);
   // MVT::OtherVT is used to mean the empty struct type here.
@@ -474,15 +468,11 @@ static void EncodeFixedType(Record *R, unsigned &NextArgNo,
     unsigned Number = R->getValueAsInt("Number");
     assert(Number < NextArgNo && "Invalid matching number!");
     if (R->isSubClassOf("LLVMExtendedElementVectorType"))
-      return Sig.push_back(~0U);
-
-      //OS << "VectorType::getExtendedElementVectorType"
-      // << "(cast<VectorType>(Tys[" << Number << "]))";
-    if (R->isSubClassOf("LLVMTruncatedElementVectorType"))
-      return Sig.push_back(~0U);
-      //OS << "VectorType::getTruncatedElementVectorType"
-      //  << "(cast<VectorType>(Tys[" << Number << "]))";
-    Sig.push_back(IIT_ARG);
+      Sig.push_back(IIT_EXTEND_VEC_ARG);
+    else if (R->isSubClassOf("LLVMTruncatedElementVectorType"))
+      Sig.push_back(IIT_TRUNC_VEC_ARG);
+    else
+      Sig.push_back(IIT_ARG);
     return Sig.push_back(Number);
   }
   
@@ -499,7 +489,7 @@ static void EncodeFixedType(Record *R, unsigned &NextArgNo,
   if (EVT(VT).isVector()) {
     EVT VVT = VT;
     switch (VVT.getVectorNumElements()) {
-    default: Sig.push_back(~0U); return;
+    default: throw "unhandled vector type width in intrinsic!";
     case 2: Sig.push_back(IIT_V2); break;
     case 4: Sig.push_back(IIT_V4); break;
     case 8: Sig.push_back(IIT_V8); break;
@@ -526,8 +516,6 @@ static void EncodeFixedType(Record *R, unsigned &NextArgNo,
 /// ComputeFixedEncoding - If we can encode the type signature for this
 /// intrinsic into 32 bits, return it.  If not, return ~0U.
 static unsigned ComputeFixedEncoding(const CodeGenIntrinsic &Int) {
-  if (Int.IS.RetVTs.size() >= 2) return ~0U;
-  
   unsigned NextArgNo = 0;
   
   SmallVector<unsigned, 8> TypeSig;
@@ -536,8 +524,19 @@ static unsigned ComputeFixedEncoding(const CodeGenIntrinsic &Int) {
   else if (Int.IS.RetVTs.size() == 1 &&
            Int.IS.RetVTs[0] == MVT::isVoid)
     TypeSig.push_back(IIT_Done);
-  else    
-    EncodeFixedType(Int.IS.RetTypeDefs[0], NextArgNo, TypeSig);
+  else {
+    switch (Int.IS.RetVTs.size()) {
+    case 1: break;
+    case 2: TypeSig.push_back(IIT_STRUCT2); break;
+    case 3: TypeSig.push_back(IIT_STRUCT3); break;
+    case 4: TypeSig.push_back(IIT_STRUCT4); break;
+    case 5: TypeSig.push_back(IIT_STRUCT5); break;
+    default: assert(0 && "Unhandled case in struct");
+    }
+
+    for (unsigned i = 0, e = Int.IS.RetVTs.size(); i != e; ++i)
+      EncodeFixedType(Int.IS.RetTypeDefs[i], NextArgNo, TypeSig);
+  }
   
   for (unsigned i = 0, e = Int.IS.ParamTypeDefs.size(); i != e; ++i)
     EncodeFixedType(Int.IS.ParamTypeDefs[i], NextArgNo, TypeSig);
@@ -574,17 +573,18 @@ void IntrinsicEmitter::EmitGenerator(const std::vector<CodeGenIntrinsic> &Ints,
   OS << "  IIT_V4   = 9,\n";
   OS << "  IIT_V8   = 10,\n";
   OS << "  IIT_V16  = 11,\n";
-  OS << "  IIT_MMX  = 12,\n";
-  OS << "  IIT_PTR  = 13,\n";
-  OS << "  IIT_ARG  = 14,\n";
-  // 15 is unassigned so far.
-  OS << "  IIT_F16  = 16,\n";
-  OS << "  IIT_F80  = 17,\n";
-  OS << "  IIT_F128 = 18,\n";
-  OS << "  IIT_PPC128 = 19,\n";
-  OS << "  IIT_METADATA = 20,\n";
-  OS << "  IIT_EMPTYSTRUCT = 21,\n";
-  OS << "  IIT_V32 = 22\n";
+  OS << "  IIT_V32  = 12,\n";
+  OS << "  IIT_MMX  = 13,\n";
+  OS << "  IIT_PTR  = 14,\n";
+  OS << "  IIT_ARG  = 15,\n";
+  OS << "  IIT_METADATA = 16,\n";
+  OS << "  IIT_EMPTYSTRUCT = 17,\n";
+  OS << "  IIT_STRUCT2 = 18,\n";
+  OS << "  IIT_STRUCT3 = 19,\n";
+  OS << "  IIT_STRUCT4 = 20,\n";
+  OS << "  IIT_STRUCT5 = 21,\n";
+  OS << "  IIT_EXTEND_VEC_ARG = 22,\n";
+  OS << "  IIT_TRUNC_VEC_ARG = 23\n";
   OS << "};\n\n";
 
   

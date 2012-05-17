@@ -366,8 +366,9 @@ static Type *DecodeFixedType(unsigned &TableVal, ArrayRef<Type*> Tys,
   unsigned Nibble = TableVal & 0xF;
   TableVal >>= 4;
   
+  unsigned StructElts = 2;
+  
   switch ((IIT_Info)Nibble) {
-  default: assert(0 && "Unknown argument type!");
   case IIT_Done: return Type::getVoidTy(Context);
   case IIT_I1: return Type::getInt1Ty(Context);
   case IIT_I8: return Type::getInt8Ty(Context);
@@ -377,6 +378,8 @@ static Type *DecodeFixedType(unsigned &TableVal, ArrayRef<Type*> Tys,
   case IIT_F32: return Type::getFloatTy(Context);
   case IIT_F64: return Type::getDoubleTy(Context);
   case IIT_MMX: return Type::getX86_MMXTy(Context);
+  case IIT_METADATA: return Type::Type::getMetadataTy(Context);
+  case IIT_EMPTYSTRUCT: return StructType::get(Context);
   case IIT_V2:
     return VectorType::get(DecodeFixedType(TableVal, Tys, Context), 2);
   case IIT_V4:
@@ -385,13 +388,32 @@ static Type *DecodeFixedType(unsigned &TableVal, ArrayRef<Type*> Tys,
     return VectorType::get(DecodeFixedType(TableVal, Tys, Context), 8);
   case IIT_V16:
     return VectorType::get(DecodeFixedType(TableVal, Tys, Context), 16);
+  case IIT_V32:
+    return VectorType::get(DecodeFixedType(TableVal, Tys, Context), 32);
   case IIT_PTR:
     return PointerType::getUnqual(DecodeFixedType(TableVal, Tys, Context));
-  case IIT_ARG: {
+  case IIT_ARG:
+  case IIT_EXTEND_VEC_ARG:
+  case IIT_TRUNC_VEC_ARG: {
     unsigned ArgNo = TableVal & 0xF;
     TableVal >>= 4;
     assert(ArgNo < Tys.size() && "Not enough types specified!");
-    return Tys[ArgNo];
+    Type *T = Tys[ArgNo];
+   
+    if (Nibble == IIT_EXTEND_VEC_ARG)
+      T = VectorType::getExtendedElementVectorType(cast<VectorType>(T));
+    if (Nibble == IIT_TRUNC_VEC_ARG)
+      T = VectorType::getTruncatedElementVectorType(cast<VectorType>(T));
+    return T;
+  }
+  case IIT_STRUCT5: ++StructElts; // FALL THROUGH.
+  case IIT_STRUCT4: ++StructElts; // FALL THROUGH.
+  case IIT_STRUCT3: ++StructElts; // FALL THROUGH.
+  case IIT_STRUCT2: {
+    Type *Elts[5];
+    for (unsigned i = 0; i != StructElts; ++i)
+      Elts[i] = DecodeFixedType(TableVal, Tys, Context);
+    return StructType::get(Context, ArrayRef<Type*>(Elts, StructElts));
   }
   }
   llvm_unreachable("unhandled");
