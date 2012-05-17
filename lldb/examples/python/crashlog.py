@@ -556,7 +556,12 @@ be disassembled and lookups can be performed using the addresses found in the cr
                     #prev_frame_index = -1
                     for frame_idx, frame in enumerate(thread.frames):
                         disassemble = (this_thread_crashed or options.disassemble_all_threads) and frame_idx < options.disassemble_depth;
-                        symbolicated_frame_addresses = crash_log.symbolicate (frame.pc)
+                        if frame_idx == 0:
+                            symbolicated_frame_addresses = crash_log.symbolicate (frame.pc)
+                        else:
+                            # Any frame above frame zero and we have to subtract one to get the previous line entry
+                            symbolicated_frame_addresses = crash_log.symbolicate (frame.pc - 1)
+                        
                         if symbolicated_frame_addresses:
                             symbolicated_frame_address_idx = 0
                             for symbolicated_frame_address in symbolicated_frame_addresses:
