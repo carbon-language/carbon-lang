@@ -81,27 +81,21 @@ TEST(Flags, ParseStr) {
 
   InitializeFlags(&f, 0);
   EXPECT_EQ(0, strcmp(f.strip_path_prefix, ""));
-  FinalizeFlags(&f);
 
   InitializeFlags(&f, "strip_path_prefix");
   EXPECT_EQ(0, strcmp(f.strip_path_prefix, ""));
-  FinalizeFlags(&f);
 
   InitializeFlags(&f, "--strip_path_prefix=");
   EXPECT_EQ(0, strcmp(f.strip_path_prefix, ""));
-  FinalizeFlags(&f);
 
   InitializeFlags(&f, "--strip_path_prefix=abc");
   EXPECT_EQ(0, strcmp(f.strip_path_prefix, "abc"));
-  FinalizeFlags(&f);
 
   InitializeFlags(&f, "--strip_path_prefix='abc zxc'");
   EXPECT_EQ(0, strcmp(f.strip_path_prefix, "abc zxc"));
-  FinalizeFlags(&f);
 
   InitializeFlags(&f, "--strip_path_prefix=\"abc zxc\"");
   EXPECT_EQ(0, strcmp(f.strip_path_prefix, "abc zxc"));
-  FinalizeFlags(&f);
 }
 
 }  // namespace __tsan

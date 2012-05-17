@@ -50,7 +50,6 @@ struct Flags {
 
 Flags *flags();
 void InitializeFlags(Flags *flags, const char *env);
-void FinalizeFlags(Flags *flags);
 }
 
 #endif  // TSAN_FLAGS_H

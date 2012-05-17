@@ -45,8 +45,6 @@ void ThreadFinalize(ThreadState *thr) {
     if (tctx == 0)
       continue;
     MaybeReportThreadLeak(tctx);
-    DestroyAndFree(tctx);
-    ctx->threads[i] = 0;
   }
 }
 
@@ -222,7 +220,6 @@ void ThreadFinish(ThreadState *thr) {
 
   thr->~ThreadState();
   StatAggregate(ctx->stat, thr->stat);
-  InternalAllocStatAggregate(ctx, thr);
   tctx->thr = 0;
 }
 

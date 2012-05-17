@@ -41,7 +41,6 @@ TEST(Suppressions, Parse) {
   EXPECT_EQ(0, strcmp(supp->func, "foo"));
   supp = supp->next;
   EXPECT_EQ((Suppression*)0, supp);
-  SuppressionFree(supp0);
 }
 
 TEST(Suppressions, Parse2) {
@@ -61,7 +60,6 @@ TEST(Suppressions, Parse2) {
   EXPECT_EQ(0, strcmp(supp->func, "bar"));
   supp = supp->next;
   EXPECT_EQ((Suppression*)0, supp);
-  SuppressionFree(supp0);
 }
 
 TEST(Suppressions, Parse3) {
@@ -79,7 +77,6 @@ TEST(Suppressions, Parse3) {
   EXPECT_EQ(0, strcmp(supp->func, "foo"));
   supp = supp->next;
   EXPECT_EQ((Suppression*)0, supp);
-  SuppressionFree(supp0);
 }
 
 TEST(Suppressions, ParseType) {
@@ -104,7 +101,6 @@ TEST(Suppressions, ParseType) {
   EXPECT_EQ(0, strcmp(supp->func, "foo"));
   supp = supp->next;
   EXPECT_EQ((Suppression*)0, supp);
-  SuppressionFree(supp0);
 }
 
 static bool MyMatch(const char *templ, const char *func) {

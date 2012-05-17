@@ -40,8 +40,8 @@ void InitializeFlags(Flags *f, const char *env) {
   f->report_thread_leaks = true;
   f->report_signal_unsafe = true;
   f->force_seq_cst_atomics = false;
-  f->strip_path_prefix = internal_strdup("");
-  f->suppressions = internal_strdup("");
+  f->strip_path_prefix = "";
+  f->suppressions = "";
   f->exitcode = 66;
   f->log_fileno = 2;
   f->atexit_sleep_ms = 1000;
@@ -63,11 +63,6 @@ void InitializeFlags(Flags *f, const char *env) {
   Flag(env, &f->log_fileno, "log_fileno");
   Flag(env, &f->atexit_sleep_ms, "atexit_sleep_ms");
   Flag(env, &f->verbosity, "verbosity");
-}
-
-void FinalizeFlags(Flags *flags) {
-  internal_free((void*)flags->strip_path_prefix);
-  internal_free((void*)flags->suppressions);
 }
 
 static const char *GetFlagValue(const char *env, const char *name,

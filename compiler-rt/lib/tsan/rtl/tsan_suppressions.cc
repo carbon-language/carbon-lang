@@ -125,23 +125,9 @@ Suppression *SuppressionParse(const char* supp) {
   return head;
 }
 
-void SuppressionFree(Suppression *supp) {
-  while (supp) {
-    Suppression *tmp = supp;
-    supp = tmp->next;
-    internal_free(tmp->func);
-    internal_free(tmp);
-  }
-}
-
 void InitializeSuppressions() {
   char *supp = ReadFile(flags()->suppressions);
   g_suppressions = SuppressionParse(supp);
-}
-
-void FinalizeSuppressions() {
-  SuppressionFree(g_suppressions);
-  g_suppressions = 0;
 }
 
 bool IsSuppressed(ReportType typ, const ReportStack *stack) {

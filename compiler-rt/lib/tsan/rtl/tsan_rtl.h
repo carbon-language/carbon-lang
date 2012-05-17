@@ -246,8 +246,6 @@ struct ThreadState {
   uptr shadow_stack[kShadowStackSize];
   ThreadClock clock;
   u64 stat[StatCnt];
-  u64 int_alloc_cnt[MBlockTypeCount];
-  u64 int_alloc_siz[MBlockTypeCount];
   const int tid;
   int in_rtl;
   int func_call_count;
@@ -386,7 +384,6 @@ class ScopedReport {
   void operator = (const ScopedReport&);
 };
 
-void InternalAllocStatAggregate(Context *ctx, ThreadState *thr);
 void StatAggregate(u64 *dst, u64 *src);
 void StatOutput(u64 *stat);
 void ALWAYS_INLINE INLINE StatInc(ThreadState *thr, StatType typ, u64 n = 1) {

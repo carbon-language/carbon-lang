@@ -94,44 +94,16 @@ MBlock *user_mblock(ThreadState *thr, void *p) {
   return b;
 }
 
-#if TSAN_DEBUG
-struct InternalMBlock {
-  static u32 const kMagic = 0xBCEBC041;
-  u32 magic;
-  u32 typ;
-  u64 sz;
-};
-#endif
-
 void *internal_alloc(MBlockType typ, uptr sz) {
   ThreadState *thr = cur_thread();
   CHECK_GT(thr->in_rtl, 0);
-#if TSAN_DEBUG
-  InternalMBlock *b = (InternalMBlock*)Alloc(sizeof(InternalMBlock) + sz);
-  b->magic = InternalMBlock::kMagic;
-  b->typ = typ;
-  b->sz = sz;
-  thr->int_alloc_cnt[typ] += 1;
-  thr->int_alloc_siz[typ] += sz;
-  void *p = b + 1;
-  return p;
-#else
   return Alloc(sz);
-#endif
 }
 
 void internal_free(void *p) {
   ThreadState *thr = cur_thread();
   CHECK_GT(thr->in_rtl, 0);
-#if TSAN_DEBUG
-  InternalMBlock *b = (InternalMBlock*)p - 1;
-  CHECK_EQ(b->magic, InternalMBlock::kMagic);
-  thr->int_alloc_cnt[b->typ] -= 1;
-  thr->int_alloc_siz[b->typ] -= b->sz;
-  Free(b);
-#else
   Free(p);
-#endif
 }
 
 }  // namespace __tsan

@@ -120,11 +120,7 @@ int Finalize(ThreadState *thr) {
   Context *ctx = __tsan::ctx;
   bool failed = false;
 
-  // Be very careful beyond that point.
-  // All bets are off. Everything is destroyed.
-  ThreadFinish(thr);
   ThreadFinalize(thr);
-  FinalizeFlags(&ctx->flags);
 
   if (ctx->nreported) {
     failed = true;
@@ -138,27 +134,7 @@ int Finalize(ThreadState *thr) {
   }
 
   StatOutput(ctx->stat);
-  FinalizeSuppressions();
-  FinalizePlatform();
-
-  const int exitcode = failed ? flags()->exitcode : 0;
-  const int log_fileno = flags()->log_fileno;
-  __tsan::ctx->~Context();
-  __tsan::ctx = 0;
-
-  InternalAllocStatAggregate(ctx, thr);
-
-  for (int i = 0; i < (int)MBlockTypeCount; i++) {
-    if (ctx->int_alloc_cnt[i] == 0 && ctx->int_alloc_siz[i] == 0)
-      continue;
-    InternalScopedBuf<char> tmp(1024);
-    Snprintf(tmp, tmp.Size(), "ThreadSanitizer: Internal memory leak: "
-        "type=%d count=%lld size=%lld\n",
-        (int)i, ctx->int_alloc_cnt[i], ctx->int_alloc_siz[i]);
-    internal_write(log_fileno, tmp, internal_strlen(tmp));
-  }
-
-  return exitcode;
+  return failed ? flags()->exitcode : 0;
 }
 
 static void TraceSwitch(ThreadState *thr) {
@@ -415,15 +391,6 @@ void IgnoreCtl(ThreadState *thr, bool write, bool begin) {
     thr->fast_state.SetIgnoreBit();
   else
     thr->fast_state.ClearIgnoreBit();
-}
-
-void InternalAllocStatAggregate(Context *ctx, ThreadState *thr) {
-  for (int i = 0; i < (int)MBlockTypeCount; i++) {
-    ctx->int_alloc_cnt[i] += thr->int_alloc_cnt[i];
-    ctx->int_alloc_siz[i] += thr->int_alloc_siz[i];
-    thr->int_alloc_cnt[i] = 0;
-    thr->int_alloc_siz[i] = 0;
-  }
 }
 
 #if TSAN_DEBUG
