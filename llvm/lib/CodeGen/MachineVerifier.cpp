@@ -1076,7 +1076,7 @@ void MachineVerifier::verifyLiveIntervals() {
     const LiveInterval &LI = *LVI->second;
 
     // Spilling and splitting may leave unused registers around. Skip them.
-    if (MRI->use_empty(LI.reg))
+    if (MRI->reg_nodbg_empty(LI.reg))
       continue;
 
     // Physical registers have much weirdness going on, mostly from coalescing.
