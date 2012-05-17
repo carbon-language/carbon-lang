@@ -3554,8 +3554,7 @@ def SMMLAR : AMul2Ia <0b0111010, 0b0011, (outs GPR:$Rd),
 
 def SMMLS : AMul2Ia <0b0111010, 0b1101, (outs GPR:$Rd),
                (ins GPR:$Rn, GPR:$Rm, GPR:$Ra),
-               IIC_iMAC32, "smmls", "\t$Rd, $Rn, $Rm, $Ra",
-               [(set GPR:$Rd, (sub GPR:$Ra, (mulhs GPR:$Rn, GPR:$Rm)))]>,
+               IIC_iMAC32, "smmls", "\t$Rd, $Rn, $Rm, $Ra", []>,
             Requires<[IsARM, HasV6]>;
 
 def SMMLSR : AMul2Ia <0b0111010, 0b1111, (outs GPR:$Rd),
