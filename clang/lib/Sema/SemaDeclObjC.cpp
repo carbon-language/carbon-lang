@@ -2520,7 +2520,8 @@ public:
     // interface and each other.
     if (ObjCCategoryDecl *Category = dyn_cast<ObjCCategoryDecl>(container)) {
       searchFromContainer(container);
-      searchFromContainer(Category->getClassInterface());
+      if (ObjCInterfaceDecl *Interface = Category->getClassInterface())
+        searchFromContainer(Interface);
     } else {
       searchFromContainer(container);
     }
@@ -2569,11 +2570,12 @@ private:
     // declaration.
     if (ObjCCategoryDecl *category = impl->getCategoryDecl()) {
       search(category);
-      search(category->getClassInterface());
+      if (ObjCInterfaceDecl *Interface = category->getClassInterface())
+        search(Interface);
 
     // Otherwise it overrides declarations from the class.
-    } else {
-      search(impl->getClassInterface());
+    } else if (ObjCInterfaceDecl *Interface = impl->getClassInterface()) {
+      search(Interface);
     }
   }
 
@@ -2598,7 +2600,8 @@ private:
   void searchFrom(ObjCImplementationDecl *impl) {
     // A method in a class implementation overrides declarations from
     // the class interface.
-    search(impl->getClassInterface());
+    if (ObjCInterfaceDecl *Interface = impl->getClassInterface())
+      search(Interface);
   }
 
 
