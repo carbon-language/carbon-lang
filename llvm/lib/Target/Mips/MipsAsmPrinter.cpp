@@ -383,6 +383,11 @@ bool MipsAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNum,
           return true;
         O << "0x" << StringRef(utohexstr(MO.getImm())).lower();
         return false;
+      case 'x': // hex const int (low 16 bits)
+        if ((MO.getType()) != MachineOperand::MO_Immediate)
+          return true;
+        O << "0x" << StringRef(utohexstr(MO.getImm() & 0xffff)).lower();
+        return false;
     }
   }
 
