@@ -966,7 +966,7 @@ AppleObjCTrampolineHandler::GetStepThroughDispatchPlan (Thread &thread, bool sto
                  dispatch_values.PushValue (flag_value);
                  break;
             }
-            if (log) 
+            if (log && log->GetVerbose())
                 flag_value.GetScalar() = 1;
             else
                 flag_value.GetScalar() = 0;  // FIXME - Set to 0 when debugging is done.
