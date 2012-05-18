@@ -1960,6 +1960,28 @@ Process::ReadMemory (addr_t addr, void *buf, size_t size, Error &error)
 
 #endif  // #else for #if defined (ENABLE_MEMORY_CACHING)
 
+size_t
+Process::ReadCStringFromMemory (addr_t addr, std::string &out_str, Error &error)
+{
+    char buf[32];
+    out_str.clear();
+    addr_t curr_addr = addr;
+    while (1)
+    {
+        size_t length = ReadCStringFromMemory (curr_addr, buf, sizeof(buf), error);
+        if (length == 0)
+            break;
+        out_str.append(buf, length);
+        // If we got "length - 1" bytes, we didn't get the whole C string, we
+        // need to read some more characters
+        if (length == sizeof(buf) - 1)
+            curr_addr += length;
+        else
+            break;
+    }
+    return out_str.size();
+}
+
 
 size_t
 Process::ReadCStringFromMemory (addr_t addr, char *dst, size_t dst_max_len, Error &result_error)

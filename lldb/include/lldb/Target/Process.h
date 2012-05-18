@@ -2510,6 +2510,11 @@ public:
                            Error &error);
 
     size_t
+    ReadCStringFromMemory (lldb::addr_t vm_addr,
+                           std::string &out_str,
+                           Error &error);
+
+    size_t
     ReadMemoryFromInferior (lldb::addr_t vm_addr, 
                             void *buf, 
                             size_t size,

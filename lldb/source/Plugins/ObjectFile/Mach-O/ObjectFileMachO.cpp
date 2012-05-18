@@ -1257,6 +1257,7 @@ ObjectFileMachO::ParseSymtab (bool minimize)
             return 0;
 
         ProcessSP process_sp (m_process_wp.lock());
+        Process *process = process_sp.get();
 
         const size_t addr_byte_size = m_data.GetAddressByteSize();
         bool bit_width_32 = addr_byte_size == 4;
@@ -1268,9 +1269,10 @@ ObjectFileMachO::ParseSymtab (bool minimize)
         
         const addr_t nlist_data_byte_size = symtab_load_command.nsyms * nlist_byte_size;
         const addr_t strtab_data_byte_size = symtab_load_command.strsize;
-        if (process_sp)
+        addr_t strtab_addr = LLDB_INVALID_ADDRESS;
+        if (process)
         {
-            Target &target = process_sp->GetTarget();
+            Target &target = process->GetTarget();
             SectionSP linkedit_section_sp(section_list->FindSectionByName(GetSegmentNameLINKEDIT()));
             // Reading mach file from memory in a process or core file...
 
@@ -1279,7 +1281,7 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                 const addr_t linkedit_load_addr = linkedit_section_sp->GetLoadBaseAddress(&target);
                 const addr_t linkedit_file_offset = linkedit_section_sp->GetFileOffset();
                 const addr_t symoff_addr = linkedit_load_addr + symtab_load_command.symoff - linkedit_file_offset;
-                const addr_t stroff_addr = linkedit_load_addr + symtab_load_command.stroff - linkedit_file_offset;
+                strtab_addr = linkedit_load_addr + symtab_load_command.stroff - linkedit_file_offset;
 
                 bool data_was_read = false;
 
@@ -1305,7 +1307,7 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                     {
                         data_was_read = true;
                         nlist_data.SetData((void *)symoff_addr, nlist_data_byte_size, eByteOrderLittle);
-                        strtab_data.SetData((void *)stroff_addr, strtab_data_byte_size, eByteOrderLittle);
+                        strtab_data.SetData((void *)strtab_addr, strtab_data_byte_size, eByteOrderLittle);
                         if (function_starts_load_command.cmd)
                         {
                             const addr_t func_start_addr = linkedit_load_addr + function_starts_load_command.dataoff - linkedit_file_offset;
@@ -1320,9 +1322,9 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                     DataBufferSP nlist_data_sp (ReadMemory (process_sp, symoff_addr, nlist_data_byte_size));
                     if (nlist_data_sp)
                         nlist_data.SetData (nlist_data_sp, 0, nlist_data_sp->GetByteSize());
-                    DataBufferSP strtab_data_sp (ReadMemory (process_sp, stroff_addr, strtab_data_byte_size));
-                    if (strtab_data_sp)
-                        strtab_data.SetData (strtab_data_sp, 0, strtab_data_sp->GetByteSize());
+                    //DataBufferSP strtab_data_sp (ReadMemory (process_sp, strtab_addr, strtab_data_byte_size));
+                    //if (strtab_data_sp)
+                    //    strtab_data.SetData (strtab_data_sp, 0, strtab_data_sp->GetByteSize());
                     if (function_starts_load_command.cmd)
                     {
                         const addr_t func_start_addr = linkedit_load_addr + function_starts_load_command.dataoff - linkedit_file_offset;
@@ -1357,13 +1359,22 @@ ObjectFileMachO::ParseSymtab (bool minimize)
         }
 
 
-        if (strtab_data.GetByteSize() == 0)
+        if (process)
+        {
+            if (strtab_addr == LLDB_INVALID_ADDRESS)
+            {
+                if (log)
+                    module_sp->LogMessage(log.get(), "failed to locate the strtab in memory");
+                return 0;
+            }
+        }
+        else if (strtab_data.GetByteSize() == 0)
         {
             if (log)
                 module_sp->LogMessage(log.get(), "failed to read strtab data");
             return 0;
         }
-        
+
         const ConstString &g_segment_name_TEXT = GetSegmentNameTEXT();
         const ConstString &g_segment_name_DATA = GetSegmentNameDATA();
         const ConstString &g_segment_name_OBJC = GetSegmentNameOBJC();
@@ -1420,6 +1431,7 @@ ObjectFileMachO::ParseSymtab (bool minimize)
         uint32_t sym_idx = 0;
         Symbol *sym = symtab->Resize (symtab_load_command.nsyms + m_dysymtab.nindirectsyms);
         uint32_t num_syms = symtab->GetNumSymbols();
+        std::string memory_symbol_name;
 
         //symtab->Reserve (symtab_load_command.nsyms + m_dysymtab.nindirectsyms);
         for (nlist_idx = 0; nlist_idx < symtab_load_command.nsyms; ++nlist_idx)
@@ -1435,24 +1447,37 @@ ObjectFileMachO::ParseSymtab (bool minimize)
             nlist.n_value = nlist_data.GetAddress_unchecked (&nlist_data_offset);
 
             SymbolType type = eSymbolTypeInvalid;
-            const char *symbol_name = strtab_data.PeekCStr(nlist.n_strx);
-            if (symbol_name == NULL)
+            const char *symbol_name = NULL;
+            
+            if (process)
             {
-                // No symbol should be NULL, even the symbols with no
-                // string values should have an offset zero which points
-                // to an empty C-string
-                Host::SystemLog (Host::eSystemLogError,
-                                 "error: symbol[%u] has invalid string table offset 0x%x in %s/%s, ignoring symbol\n", 
-                                 nlist_idx,
-                                 nlist.n_strx,
-                                 module_sp->GetFileSpec().GetDirectory().GetCString(),
-                                 module_sp->GetFileSpec().GetFilename().GetCString());
-                continue;
+                const addr_t str_addr = strtab_addr + nlist.n_strx;
+                Error str_error;
+                if (process->ReadCStringFromMemory(str_addr, memory_symbol_name, str_error))
+                    symbol_name = memory_symbol_name.c_str();
+            }
+            else
+            {
+                symbol_name = strtab_data.PeekCStr(nlist.n_strx);
+                
+                if (symbol_name == NULL)
+                {
+                    // No symbol should be NULL, even the symbols with no
+                    // string values should have an offset zero which points
+                    // to an empty C-string
+                    Host::SystemLog (Host::eSystemLogError,
+                                     "error: symbol[%u] has invalid string table offset 0x%x in %s/%s, ignoring symbol\n", 
+                                     nlist_idx,
+                                     nlist.n_strx,
+                                     module_sp->GetFileSpec().GetDirectory().GetCString(),
+                                     module_sp->GetFileSpec().GetFilename().GetCString());
+                    continue;
+                }
+                if (symbol_name[0] == '\0')
+                    symbol_name = NULL;
             }
             const char *symbol_name_non_abi_mangled = NULL;
 
-            if (symbol_name[0] == '\0')
-                symbol_name = NULL;
             SectionSP symbol_section;
             uint32_t symbol_byte_size = 0;
             bool add_nlist = true;
