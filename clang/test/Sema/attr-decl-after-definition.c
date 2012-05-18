@@ -17,3 +17,6 @@ int bar = 0; // expected-note {{previous definition is here}}
 int bar __attribute__((weak)); // expected-warning {{must precede definition}}
 int bar;
 
+struct zed {  // expected-note {{previous definition is here}}
+};
+struct __attribute__((visibility("hidden"))) zed; // expected-warning {{must precede definition}}
