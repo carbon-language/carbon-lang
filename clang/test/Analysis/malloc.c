@@ -8,6 +8,8 @@ void free(void *);
 void *realloc(void *ptr, size_t size);
 void *reallocf(void *ptr, size_t size);
 void *calloc(size_t nmemb, size_t size);
+char *strdup(const char *s);
+char *strndup(const char *s, size_t n);
 
 void myfoo(int *p);
 void myfooint(int p);
@@ -241,6 +243,12 @@ void f7() {
   char *x = (char*) malloc(4);
   free(x);
   x[0] = 'a'; // expected-warning{{Use of memory after it is freed}}
+}
+
+void f8() {
+  char *x = (char*) malloc(4);
+  free(x);
+  char *y = strndup(x, 4); // expected-warning{{Use of memory after it is freed}}
 }
 
 void f7_realloc() {
@@ -653,10 +661,6 @@ int *specialMallocWithStruct() {
 }
 
 // Test various allocation/deallocation functions.
-
-char *strdup(const char *s);
-char *strndup(const char *s, size_t n);
-
 void testStrdup(const char *s, unsigned validIndex) {
   char *s2 = strdup(s);
   s2[validIndex + 1] = 'b';// expected-warning {{Memory is never released; potential leak}}

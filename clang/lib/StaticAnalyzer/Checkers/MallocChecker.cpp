@@ -146,6 +146,8 @@ private:
   /// Check if this is one of the functions which can allocate/reallocate memory 
   /// pointed to by one of its arguments.
   bool isMemFunction(const FunctionDecl *FD, ASTContext &C) const;
+  bool isFreeFunction(const FunctionDecl *FD, ASTContext &C) const;
+  bool isAllocationFunction(const FunctionDecl *FD, ASTContext &C) const;
 
   static ProgramStateRef MallocMemReturnsAttr(CheckerContext &C,
                                               const CallExpr *CE,
@@ -177,6 +179,9 @@ private:
                              bool FreesMemOnFailure) const;
   static ProgramStateRef CallocMem(CheckerContext &C, const CallExpr *CE);
   
+  ///\brief Check if the memory associated with this symbol was released.
+  bool isReleased(SymbolRef Sym, CheckerContext &C) const;
+
   bool checkEscape(SymbolRef Sym, const Stmt *S, CheckerContext &C) const;
   bool checkUseAfterFree(SymbolRef Sym, CheckerContext &C,
                          const Stmt *S = 0) const;
@@ -353,25 +358,62 @@ void MallocChecker::initIdentifierInfo(ASTContext &Ctx) const {
 }
 
 bool MallocChecker::isMemFunction(const FunctionDecl *FD, ASTContext &C) const {
+  if (isFreeFunction(FD, C))
+    return true;
+
+  if (isAllocationFunction(FD, C))
+    return true;
+
+  return false;
+}
+
+bool MallocChecker::isAllocationFunction(const FunctionDecl *FD,
+                                         ASTContext &C) const {
   if (!FD)
     return false;
+
   IdentifierInfo *FunI = FD->getIdentifier();
   if (!FunI)
     return false;
 
   initIdentifierInfo(C);
 
-  if (FunI == II_malloc || FunI == II_free || FunI == II_realloc ||
+  if (FunI == II_malloc || FunI == II_realloc ||
       FunI == II_reallocf || FunI == II_calloc || FunI == II_valloc ||
       FunI == II_strdup || FunI == II_strndup)
     return true;
 
-  if (Filter.CMallocOptimistic && FD->hasAttrs() &&
-      FD->specific_attr_begin<OwnershipAttr>() !=
-          FD->specific_attr_end<OwnershipAttr>())
+  if (Filter.CMallocOptimistic && FD->hasAttrs())
+    for (specific_attr_iterator<OwnershipAttr>
+           i = FD->specific_attr_begin<OwnershipAttr>(),
+           e = FD->specific_attr_end<OwnershipAttr>();
+           i != e; ++i)
+      if ((*i)->getOwnKind() == OwnershipAttr::Returns)
+        return true;
+  return false;
+}
+
+bool MallocChecker::isFreeFunction(const FunctionDecl *FD, ASTContext &C) const {
+  if (!FD)
+    return false;
+
+  IdentifierInfo *FunI = FD->getIdentifier();
+  if (!FunI)
+    return false;
+
+  initIdentifierInfo(C);
+
+  if (FunI == II_free || FunI == II_realloc || FunI == II_reallocf)
     return true;
 
-
+  if (Filter.CMallocOptimistic && FD->hasAttrs())
+    for (specific_attr_iterator<OwnershipAttr>
+           i = FD->specific_attr_begin<OwnershipAttr>(),
+           e = FD->specific_attr_end<OwnershipAttr>();
+           i != e; ++i)
+      if ((*i)->getOwnKind() == OwnershipAttr::Takes ||
+          (*i)->getOwnKind() == OwnershipAttr::Holds)
+        return true;
   return false;
 }
 
@@ -995,7 +1037,8 @@ bool MallocChecker::checkEscape(SymbolRef Sym, const Stmt *S,
 }
 
 void MallocChecker::checkPreStmt(const CallExpr *CE, CheckerContext &C) const {
-  if (isMemFunction(C.getCalleeDecl(CE), C.getASTContext()))
+  // We will check for double free in the post visit.
+  if (isFreeFunction(C.getCalleeDecl(CE), C.getASTContext()))
     return;
 
   // Check use after free, when a freed pointer is passed to a call.
@@ -1082,11 +1125,15 @@ void MallocChecker::checkPostStmt(const BlockExpr *BE,
   C.addTransition(state);
 }
 
-bool MallocChecker::checkUseAfterFree(SymbolRef Sym, CheckerContext &C,
-                                      const Stmt *S) const {
+bool MallocChecker::isReleased(SymbolRef Sym, CheckerContext &C) const {
   assert(Sym);
   const RefState *RS = C.getState()->get<RegionState>(Sym);
-  if (RS && RS->isReleased()) {
+  return (RS && RS->isReleased());
+}
+
+bool MallocChecker::checkUseAfterFree(SymbolRef Sym, CheckerContext &C,
+                                      const Stmt *S) const {
+  if (isReleased(Sym, C)) {
     if (ExplodedNode *N = C.generateSink()) {
       if (!BT_UseFree)
         BT_UseFree.reset(new BugType("Use-after-free", "Memory Error"));
@@ -1109,7 +1156,7 @@ void MallocChecker::checkLocation(SVal l, bool isLoad, const Stmt *S,
                                   CheckerContext &C) const {
   SymbolRef Sym = l.getLocSymbolInBase();
   if (Sym)
-    checkUseAfterFree(Sym, C);
+    checkUseAfterFree(Sym, C, S);
 }
 
 //===----------------------------------------------------------------------===//
