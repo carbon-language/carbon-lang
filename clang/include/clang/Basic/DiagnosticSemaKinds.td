@@ -2361,6 +2361,8 @@ def note_template_decl_here : Note<"template is declared here">;
 def note_member_of_template_here : Note<"member is declared here">;
 def err_template_arg_must_be_type : Error<
   "template argument for template type parameter must be a type">;
+def err_template_arg_must_be_type_suggest : Error<
+  "template argument for template type parameter must be a type; did you forget 'typename'?">;
 def err_template_arg_must_be_expr : Error<
   "template argument for non-type template parameter must be an expression">;
 def err_template_arg_nontype_ambig : Error<

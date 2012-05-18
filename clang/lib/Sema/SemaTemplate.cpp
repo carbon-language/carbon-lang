@@ -2438,6 +2438,45 @@ bool Sema::CheckTemplateTypeArgument(TemplateTypeParmDecl *Param,
 
     return true;
   }
+  case TemplateArgument::Expression: {
+    // We have a template type parameter but the template argument is an
+    // expression; see if maybe it is missing the "typename" keyword.
+    CXXScopeSpec SS;
+    DeclarationNameInfo NameInfo;
+
+    if (DeclRefExpr *ArgExpr = dyn_cast<DeclRefExpr>(Arg.getAsExpr())) {
+      SS.Adopt(ArgExpr->getQualifierLoc());
+      NameInfo = ArgExpr->getNameInfo();
+    } else if (DependentScopeDeclRefExpr *ArgExpr =
+               dyn_cast<DependentScopeDeclRefExpr>(Arg.getAsExpr())) {
+      SS.Adopt(ArgExpr->getQualifierLoc());
+      NameInfo = ArgExpr->getNameInfo();
+    } else if (CXXDependentScopeMemberExpr *ArgExpr =
+               dyn_cast<CXXDependentScopeMemberExpr>(Arg.getAsExpr())) {
+      SS.Adopt(ArgExpr->getQualifierLoc());
+      NameInfo = ArgExpr->getMemberNameInfo();
+    }
+
+    if (NameInfo.getName()) {
+      LookupResult Result(*this, NameInfo, LookupOrdinaryName);
+      LookupParsedName(Result, CurScope, &SS);
+
+      bool CouldBeType = Result.getResultKind() ==
+          LookupResult::NotFoundInCurrentInstantiation;
+
+      for (LookupResult::iterator I = Result.begin(), IEnd = Result.end();
+           !CouldBeType && I != IEnd; ++I) {
+        CouldBeType = isa<TypeDecl>(*I);
+      }
+      if (CouldBeType) {
+        SourceLocation Loc = AL.getSourceRange().getBegin();
+        Diag(Loc, diag::err_template_arg_must_be_type_suggest);
+        Diag(Param->getLocation(), diag::note_template_param_here);
+        return true;
+      }
+    }
+    // fallthrough
+  }
   default: {
     // We have a template type parameter but the template argument
     // is not a type.
