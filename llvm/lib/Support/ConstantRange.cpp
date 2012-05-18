@@ -288,7 +288,7 @@ ConstantRange ConstantRange::intersectWith(const ConstantRange &CR) const {
       if (CR.Upper.ult(Upper))
         return CR;
 
-      if (CR.Upper.ult(Lower))
+      if (CR.Upper.ule(Lower))
         return ConstantRange(CR.Lower, Upper);
 
       if (getSetSize().ult(CR.getSetSize()))

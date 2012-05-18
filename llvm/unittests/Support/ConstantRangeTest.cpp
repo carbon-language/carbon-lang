@@ -232,6 +232,11 @@ TEST_F(ConstantRangeTest, IntersectWith) {
   ConstantRange LHS(APInt(16, 4), APInt(16, 2));
   ConstantRange RHS(APInt(16, 6), APInt(16, 5));
   EXPECT_TRUE(LHS.intersectWith(RHS) == LHS);
+
+  // previous bug: intersection of [min, 3) and [2, max) should be 2
+  LHS = ConstantRange(APInt(32, -2147483648), APInt(32, 3));
+  RHS = ConstantRange(APInt(32, 2), APInt(32, 2147483648));
+  EXPECT_EQ(LHS.intersectWith(RHS), ConstantRange(APInt(32, 2)));
 }
 
 TEST_F(ConstantRangeTest, UnionWith) {
