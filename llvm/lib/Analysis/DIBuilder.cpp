@@ -907,7 +907,7 @@ DISubprogram DIBuilder::createMethod(DIDescriptor Context,
     TParam,
     llvm::Constant::getNullValue(Type::getInt32Ty(VMContext)),
     THolder,
-    // FIXME: Do we want to use a different scope lines?
+    // FIXME: Do we want to use different scope/lines?
     ConstantInt::get(Type::getInt32Ty(VMContext), LineNo)
   };
   MDNode *Node = MDNode::get(VMContext, Elts);
