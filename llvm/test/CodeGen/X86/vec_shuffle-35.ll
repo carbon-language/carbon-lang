@@ -1,6 +1,6 @@
 ; RUN: llc < %s -march=x86 -mcpu=yonah -stack-alignment=16 -o %t
-; RUN: grep pextrw %t | count 13
-; RUN: grep pinsrw %t | count 14
+; RUN: grep pextrw %t | count 12
+; RUN: grep pinsrw %t | count 13
 ; RUN: grep rolw %t | count 13
 ; RUN: not grep esp %t
 ; RUN: not grep ebp %t

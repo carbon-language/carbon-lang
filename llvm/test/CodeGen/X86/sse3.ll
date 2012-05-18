@@ -249,9 +249,10 @@ entry:
 ; X64: 	t16:
 ; X64: 		pextrw	$8, %xmm0, %eax
 ; X64: 		pslldq	$2, %xmm0
-; X64: 		movd	%xmm0, %ecx
-; X64: 		pextrw	$1, %xmm0, %edx
-; X64: 		pinsrw	$0, %ecx, %xmm0
+; X64: 		pextrw	$1, %xmm0, %ecx
+; X64: 		movzbl	%cl, %ecx
+; X64: 		orl	%eax, %ecx
+; X64: 		pinsrw	$1, %ecx, %xmm0
 ; X64: 		ret
 }
 
