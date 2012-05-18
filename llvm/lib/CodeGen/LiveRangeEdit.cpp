@@ -38,7 +38,7 @@ LiveInterval &LiveRangeEdit::createFrom(unsigned OldReg) {
     VRM->setIsSplitFromReg(VReg, VRM->getOriginal(OldReg));
   }
   LiveInterval &LI = LIS.getOrCreateInterval(VReg);
-  newRegs_.push_back(&LI);
+  NewRegs.push_back(&LI);
   return LI;
 }
 
@@ -46,16 +46,16 @@ bool LiveRangeEdit::checkRematerializable(VNInfo *VNI,
                                           const MachineInstr *DefMI,
                                           AliasAnalysis *aa) {
   assert(DefMI && "Missing instruction");
-  scannedRemattable_ = true;
+  ScannedRemattable = true;
   if (!TII.isTriviallyReMaterializable(DefMI, aa))
     return false;
-  remattable_.insert(VNI);
+  Remattable.insert(VNI);
   return true;
 }
 
 void LiveRangeEdit::scanRemattable(AliasAnalysis *aa) {
-  for (LiveInterval::vni_iterator I = parent_.vni_begin(),
-       E = parent_.vni_end(); I != E; ++I) {
+  for (LiveInterval::vni_iterator I = Parent.vni_begin(),
+       E = Parent.vni_end(); I != E; ++I) {
     VNInfo *VNI = *I;
     if (VNI->isUnused())
       continue;
@@ -64,13 +64,13 @@ void LiveRangeEdit::scanRemattable(AliasAnalysis *aa) {
       continue;
     checkRematerializable(VNI, DefMI, aa);
   }
-  scannedRemattable_ = true;
+  ScannedRemattable = true;
 }
 
 bool LiveRangeEdit::anyRematerializable(AliasAnalysis *aa) {
-  if (!scannedRemattable_)
+  if (!ScannedRemattable)
     scanRemattable(aa);
-  return !remattable_.empty();
+  return !Remattable.empty();
 }
 
 /// allUsesAvailableAt - Return true if all registers used by OrigMI at
@@ -101,10 +101,10 @@ bool LiveRangeEdit::allUsesAvailableAt(const MachineInstr *OrigMI,
 bool LiveRangeEdit::canRematerializeAt(Remat &RM,
                                        SlotIndex UseIdx,
                                        bool cheapAsAMove) {
-  assert(scannedRemattable_ && "Call anyRematerializable first");
+  assert(ScannedRemattable && "Call anyRematerializable first");
 
   // Use scanRemattable info.
-  if (!remattable_.count(RM.ParentVNI))
+  if (!Remattable.count(RM.ParentVNI))
     return false;
 
   // No defining instruction provided.
@@ -136,13 +136,13 @@ SlotIndex LiveRangeEdit::rematerializeAt(MachineBasicBlock &MBB,
                                          bool Late) {
   assert(RM.OrigMI && "Invalid remat");
   TII.reMaterialize(MBB, MI, DestReg, 0, RM.OrigMI, tri);
-  rematted_.insert(RM.ParentVNI);
+  Rematted.insert(RM.ParentVNI);
   return LIS.getSlotIndexes()->insertMachineInstrInMaps(--MI, Late)
            .getRegSlot();
 }
 
 void LiveRangeEdit::eraseVirtReg(unsigned Reg) {
-  if (delegate_ && delegate_->LRE_CanEraseVirtReg(Reg))
+  if (TheDelegate && TheDelegate->LRE_CanEraseVirtReg(Reg))
     LIS.removeInterval(Reg);
 }
 
@@ -242,8 +242,8 @@ void LiveRangeEdit::eliminateDeadDefs(SmallVectorImpl<MachineInstr*> &Dead,
         // Remove defined value.
         if (MOI->isDef()) {
           if (VNInfo *VNI = LI.getVNInfoAt(Idx)) {
-            if (delegate_)
-              delegate_->LRE_WillShrinkVirtReg(LI.reg);
+            if (TheDelegate)
+              TheDelegate->LRE_WillShrinkVirtReg(LI.reg);
             LI.removeValNo(VNI);
             if (LI.empty()) {
               ToShrink.remove(&LI);
@@ -253,8 +253,8 @@ void LiveRangeEdit::eliminateDeadDefs(SmallVectorImpl<MachineInstr*> &Dead,
         }
       }
 
-      if (delegate_)
-        delegate_->LRE_WillEraseInstruction(MI);
+      if (TheDelegate)
+        TheDelegate->LRE_WillEraseInstruction(MI);
       LIS.RemoveMachineInstrFromMaps(MI);
       MI->eraseFromParent();
       ++NumDCEDeleted;
@@ -268,8 +268,8 @@ void LiveRangeEdit::eliminateDeadDefs(SmallVectorImpl<MachineInstr*> &Dead,
     ToShrink.pop_back();
     if (foldAsLoad(LI, Dead))
       continue;
-    if (delegate_)
-      delegate_->LRE_WillShrinkVirtReg(LI->reg);
+    if (TheDelegate)
+      TheDelegate->LRE_WillShrinkVirtReg(LI->reg);
     if (!LIS.shrinkToUses(LI, &Dead))
       continue;
     
@@ -304,8 +304,8 @@ void LiveRangeEdit::eliminateDeadDefs(SmallVectorImpl<MachineInstr*> &Dead,
       // interval must contain all the split products, and LI doesn't.
       if (IsOriginal)
         VRM->setIsSplitFromReg(Dups.back()->reg, 0);
-      if (delegate_)
-        delegate_->LRE_DidCloneVirtReg(Dups.back()->reg, LI->reg);
+      if (TheDelegate)
+        TheDelegate->LRE_DidCloneVirtReg(Dups.back()->reg, LI->reg);
     }
     ConEQ.Distribute(&Dups[0], MRI);
   }

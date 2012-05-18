@@ -55,29 +55,29 @@ public:
   };
 
 private:
-  LiveInterval &parent_;
-  SmallVectorImpl<LiveInterval*> &newRegs_;
+  LiveInterval &Parent;
+  SmallVectorImpl<LiveInterval*> &NewRegs;
   MachineRegisterInfo &MRI;
   LiveIntervals &LIS;
   VirtRegMap *VRM;
   const TargetInstrInfo &TII;
-  Delegate *const delegate_;
+  Delegate *const TheDelegate;
 
-  /// firstNew_ - Index of the first register added to newRegs_.
-  const unsigned firstNew_;
+  /// FirstNew - Index of the first register added to NewRegs.
+  const unsigned FirstNew;
 
-  /// scannedRemattable_ - true when remattable values have been identified.
-  bool scannedRemattable_;
+  /// ScannedRemattable - true when remattable values have been identified.
+  bool ScannedRemattable;
 
-  /// remattable_ - Values defined by remattable instructions as identified by
+  /// Remattable - Values defined by remattable instructions as identified by
   /// tii.isTriviallyReMaterializable().
-  SmallPtrSet<const VNInfo*,4> remattable_;
+  SmallPtrSet<const VNInfo*,4> Remattable;
 
-  /// rematted_ - Values that were actually rematted, and so need to have their
+  /// Rematted - Values that were actually rematted, and so need to have their
   /// live range trimmed or entirely removed.
-  SmallPtrSet<const VNInfo*,4> rematted_;
+  SmallPtrSet<const VNInfo*,4> Rematted;
 
-  /// scanRemattable - Identify the parent_ values that may rematerialize.
+  /// scanRemattable - Identify the Parent values that may rematerialize.
   void scanRemattable(AliasAnalysis *aa);
 
   /// allUsesAvailableAt - Return true if all registers used by OrigMI at
@@ -105,26 +105,26 @@ public:
                 LiveIntervals &lis,
                 VirtRegMap *vrm,
                 Delegate *delegate = 0)
-    : parent_(parent), newRegs_(newRegs),
+    : Parent(parent), NewRegs(newRegs),
       MRI(MF.getRegInfo()), LIS(lis), VRM(vrm),
       TII(*MF.getTarget().getInstrInfo()),
-      delegate_(delegate),
-      firstNew_(newRegs.size()),
-      scannedRemattable_(false) {}
+      TheDelegate(delegate),
+      FirstNew(newRegs.size()),
+      ScannedRemattable(false) {}
 
-  LiveInterval &getParent() const { return parent_; }
-  unsigned getReg() const { return parent_.reg; }
+  LiveInterval &getParent() const { return Parent; }
+  unsigned getReg() const { return Parent.reg; }
 
   /// Iterator for accessing the new registers added by this edit.
   typedef SmallVectorImpl<LiveInterval*>::const_iterator iterator;
-  iterator begin() const { return newRegs_.begin()+firstNew_; }
-  iterator end() const { return newRegs_.end(); }
-  unsigned size() const { return newRegs_.size()-firstNew_; }
+  iterator begin() const { return NewRegs.begin()+FirstNew; }
+  iterator end() const { return NewRegs.end(); }
+  unsigned size() const { return NewRegs.size()-FirstNew; }
   bool empty() const { return size() == 0; }
-  LiveInterval *get(unsigned idx) const { return newRegs_[idx+firstNew_]; }
+  LiveInterval *get(unsigned idx) const { return NewRegs[idx+FirstNew]; }
 
   ArrayRef<LiveInterval*> regs() const {
-    return makeArrayRef(newRegs_).slice(firstNew_);
+    return makeArrayRef(NewRegs).slice(FirstNew);
   }
 
   /// createFrom - Create a new virtual register based on OldReg.
@@ -174,12 +174,12 @@ public:
   /// markRematerialized - explicitly mark a value as rematerialized after doing
   /// it manually.
   void markRematerialized(const VNInfo *ParentVNI) {
-    rematted_.insert(ParentVNI);
+    Rematted.insert(ParentVNI);
   }
 
   /// didRematerialize - Return true if ParentVNI was rematerialized anywhere.
   bool didRematerialize(const VNInfo *ParentVNI) const {
-    return rematted_.count(ParentVNI);
+    return Rematted.count(ParentVNI);
   }
 
   /// eraseVirtReg - Notify the delegate that Reg is no longer in use, and try
