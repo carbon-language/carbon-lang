@@ -180,17 +180,6 @@ private:
 
   typedef std::vector<CaseRec> CaseRecVector;
 
-  /// The comparison function for sorting the switch case values in the vector.
-  /// WARNING: Case ranges should be disjoint!
-  struct CaseCmp {
-    bool operator()(const Case &C1, const Case &C2) {
-      assert(isa<ConstantInt>(C1.Low) && isa<ConstantInt>(C2.High));
-      const ConstantInt* CI1 = cast<const ConstantInt>(C1.Low);
-      const ConstantInt* CI2 = cast<const ConstantInt>(C2.High);
-      return CI1->getValue().ult(CI2->getValue());
-    }
-  };
-
   struct CaseBitsCmp {
     bool operator()(const CaseBits &C1, const CaseBits &C2) {
       return C1.Bits > C2.Bits;
