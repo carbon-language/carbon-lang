@@ -30,6 +30,8 @@ static void SignalUnsafeCall(ThreadState *thr, uptr pc) {
 
 void *user_alloc(ThreadState *thr, uptr pc, uptr sz) {
   CHECK_GT(thr->in_rtl, 0);
+  if (sz + sizeof(MBlock) < sz)
+    return 0;
   MBlock *b = (MBlock*)Alloc(sz + sizeof(MBlock));
   b->size = sz;
   void *p = b + 1;
