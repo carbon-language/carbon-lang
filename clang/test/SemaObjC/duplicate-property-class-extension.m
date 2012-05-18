@@ -9,7 +9,7 @@
 @interface Foo ()
 @property (readwrite) char foo; // expected-note 2 {{property declared here}} 
 @property (readwrite) char NewProperty; // expected-note 2 {{property declared here}} 
-@property (readwrite) char bar; // expected-error{{illegal redeclaration of 'readwrite' property in continuation class 'Foo' (perhaps you intended this to be a 'readwrite' redeclaration of a 'readonly' public property?)}}
+@property (readwrite) char bar; // expected-error{{illegal redeclaration of 'readwrite' property in class extension 'Foo' (perhaps you intended this to be a 'readwrite' redeclaration of a 'readonly' public property?)}}
 @end
 
 @interface Foo ()

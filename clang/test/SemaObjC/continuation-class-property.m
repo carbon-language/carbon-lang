@@ -38,8 +38,8 @@ typedef struct {
 @end
 
 @interface MyClass ()
-@property (readwrite) NSString *foo; // expected-error {{type of property 'NSString *' in continuation class does not match property type in primary class}}
-@property (readwrite, strong) NSRect bar; // expected-error {{type of property 'NSRect' in continuation class does not match property type in primary class}}
+@property (readwrite) NSString *foo; // expected-error {{type of property 'NSString *' in class extension does not match property type in primary class}}
+@property (readwrite, strong) NSRect bar; // expected-error {{type of property 'NSRect' in class extension does not match property type in primary class}}
 @end
 
 // rdar://10655530

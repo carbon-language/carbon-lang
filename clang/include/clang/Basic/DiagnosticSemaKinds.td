@@ -593,7 +593,7 @@ def warn_objc_property_default_assign_on_object : Warning<
   "default property attribute 'assign' not appropriate for non-GC object">,
   InGroup<ObjCPropertyNoAttribute>;
 def warn_property_attr_mismatch : Warning<
-  "property attribute in continuation class does not match the primary class">;
+  "property attribute in class extension does not match the primary class">;
 def warn_objc_property_copy_missing_on_block : Warning<
     "'copy' attribute must be specified for the block property "
     "when -fobjc-gc-only is specified">;
@@ -634,16 +634,16 @@ def warn_default_atomic_custom_getter_setter : Warning<
   "(property should be marked 'atomic' if this is intended)">,
   InGroup<CustomAtomic>, DefaultIgnore;
 def err_use_continuation_class : Error<
-  "illegal redeclaration of property in continuation class %0"
+  "illegal redeclaration of property in class extension %0"
   " (attribute must be 'readwrite', while its primary must be 'readonly')">;
 def err_type_mismatch_continuation_class : Error<
-  "type of property %0 in continuation class does not match "
+  "type of property %0 in class extension does not match "
   "property type in primary class">;
 def err_use_continuation_class_redeclaration_readwrite : Error<
-  "illegal redeclaration of 'readwrite' property in continuation class %0"
+  "illegal redeclaration of 'readwrite' property in class extension %0"
   " (perhaps you intended this to be a 'readwrite' redeclaration of a "
   "'readonly' public property?)">;
-def err_continuation_class : Error<"continuation class has no primary class">;
+def err_continuation_class : Error<"class extension has no primary class">;
 def err_property_type : Error<"property cannot have array or function type %0">;
 def error_missing_property_context : Error<
   "missing context for property implementation declaration">;

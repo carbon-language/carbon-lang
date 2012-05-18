@@ -14,6 +14,6 @@
 
 @interface GKTurnBasedMatchMakerKVO ()
 @property(nonatomic,readwrite,retain) NSMutableArray* outline;
-@property(nonatomic,readwrite,retain) NSArray* err_outline; // expected-error {{type of property 'NSArray *' in continuation class does not match property type in primary class}}
+@property(nonatomic,readwrite,retain) NSArray* err_outline; // expected-error {{type of property 'NSArray *' in class extension does not match property type in primary class}}
 @end
 
