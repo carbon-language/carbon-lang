@@ -3486,8 +3486,18 @@ void ObjCARCOpt::OptimizeWeakCalls(Function &F) {
       for (Value::use_iterator UI = Alloca->use_begin(),
            UE = Alloca->use_end(); UI != UE; ) {
         CallInst *UserInst = cast<CallInst>(*UI++);
-        if (!UserInst->use_empty())
-          UserInst->replaceAllUsesWith(UserInst->getArgOperand(0));
+        switch (GetBasicInstructionClass(UserInst)) {
+        case IC_InitWeak:
+        case IC_StoreWeak:
+          // These functions return their second argument.
+          UserInst->replaceAllUsesWith(UserInst->getArgOperand(1));
+          break;
+        case IC_DestroyWeak:
+          // No return value.
+          break;
+        default:
+          break;
+        }
         UserInst->eraseFromParent();
       }
       Alloca->eraseFromParent();
