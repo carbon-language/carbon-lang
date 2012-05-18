@@ -6,6 +6,27 @@ This file is distributed under the University of Illinois Open Source
 License. See LICENSE.TXT for details.
 """
 import lldb
+import time, datetime
+import inspect
+
+class TimeMetrics:
+	@staticmethod
+	def generate(label=None):
+		return TimeMetrics(label)
+	
+	def __init__(self,lbl=None):
+		self.label = "" if lbl is None else lbl
+		pass
+	
+	def __enter__(self):
+		caller = inspect.stack()[1]
+		self.function = str(caller)
+		self.enter_time = time.clock()
+	
+	def __exit__(self, a,b,c):
+		self.exit_time = time.clock()
+		print "It took " + str(self.exit_time - self.enter_time) + " time units to run through " + self.function + self.label
+		return False
 
 class Counter:
 	def __init__(self):

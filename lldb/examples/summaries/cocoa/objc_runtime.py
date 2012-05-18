@@ -174,7 +174,8 @@ class RwT_Data:
 			logger >> "Marking as invalid - rwt is invald"
 			self.valid = False
 		if self.valid:
-			self.rot = self.valobj.CreateValueFromAddress("rot",self.roPointer,self.sys_params.types_cache.addr_ptr_type).AddressOf()
+			self.rot = self.valobj.CreateValueFromData("rot",lldb.SBData.CreateDataFromUInt64Array(self.sys_params.endianness, self.sys_params.pointer_size, [self.roPointer]),self.sys_params.types_cache.addr_ptr_type)
+#			self.rot = self.valobj.CreateValueFromAddress("rot",self.roPointer,self.sys_params.types_cache.addr_ptr_type).AddressOf()
 			self.data = RoT_Data(self.rot,self.sys_params)
 
 	# perform sanity checks on the contents of this class_rw_t
@@ -207,7 +208,8 @@ class Class_Data_V2:
 			logger >> "Marking as invalid - isa is invalid or None"
 			self.valid = False
 		if self.valid:
-			self.rwt = self.valobj.CreateValueFromAddress("rwt",self.dataPointer,self.sys_params.types_cache.addr_ptr_type).AddressOf()
+			self.rwt = self.valobj.CreateValueFromData("rwt",lldb.SBData.CreateDataFromUInt64Array(self.sys_params.endianness, self.sys_params.pointer_size, [self.dataPointer]),self.sys_params.types_cache.addr_ptr_type)
+#			self.rwt = self.valobj.CreateValueFromAddress("rwt",self.dataPointer,self.sys_params.types_cache.addr_ptr_type).AddressOf()
 			self.data = RwT_Data(self.rwt,self.sys_params)
 
 	# perform sanity checks on the contents of this class_t
@@ -609,7 +611,8 @@ class SystemParameters:
 		process = valobj.GetTarget().GetProcess()
 		self.pointer_size = process.GetAddressByteSize()
 		self.is_64_bit = (self.pointer_size == 8)
-		self.is_little = (process.GetByteOrder() == lldb.eByteOrderLittle)
+		self.endianness = process.GetByteOrder()
+		self.is_little = (self.endianness == lldb.eByteOrderLittle)
 		self.cfruntime_size = 16 if self.is_64_bit else 8
 
 	# a simple helper function that makes it more explicit that one is calculating
