@@ -244,7 +244,7 @@ CommandInterpreter::Initialize ()
     if (cmd_obj_sp)
     {
         alias_arguments_vector_sp.reset (new OptionArgVector);
-        ProcessAliasOptionsArgs (cmd_obj_sp, "--", alias_arguments_vector_sp);
+        ProcessAliasOptionsArgs (cmd_obj_sp, "--shell=/bin/bash --", alias_arguments_vector_sp);
         AddAlias ("r", cmd_obj_sp);
         AddAlias ("run", cmd_obj_sp);
         AddOrReplaceAliasOptions ("r", alias_arguments_vector_sp);
