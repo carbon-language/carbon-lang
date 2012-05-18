@@ -107,16 +107,16 @@ class AliasTestCase(TestBase):
 
 
         self.expect ("help run",
-                     substrs = [ "'run' is an abbreviation for 'process launch --'" ])
+                     substrs = [ "'run' is an abbreviation for 'process launch -c /bin/bash --'" ])
 
         self.expect ("help -a run",
-                     substrs = [ "'run' is an abbreviation for 'process launch --'" ])
+                     substrs = [ "'run' is an abbreviation for 'process launch -c /bin/bash --'" ])
 
         self.expect ("help -a",
-                     substrs = [ 'run', 'process launch' ])
+                     substrs = [ 'run', 'process launch -c /bin/bash' ])
 
         self.expect ("help", matching=False,
-                     substrs = [ "'run'", 'process launch' ])
+                     substrs = [ "'run'", 'process launch -c /bin/bash' ])
 
         self.expect ("run",
                      patterns = [ "Process .* launched: .*a.out" ])
