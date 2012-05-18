@@ -217,9 +217,9 @@ public:
   void setMiscFlag(enum MiscFlags M) { Misc |= M; }
   void setPosition(unsigned pos) { Position = pos; }
 protected:
-  explicit Option(enum NumOccurrencesFlag Occurrences, 
+  explicit Option(enum NumOccurrencesFlag OccurrencesFlag, 
                   enum OptionHidden Hidden)
-    : NumOccurrences(0), Occurrences(Occurrences), HiddenFlag(Hidden), 
+    : NumOccurrences(0), Occurrences(OccurrencesFlag), HiddenFlag(Hidden), 
       Formatting(NormalFormatting), Position(0),
       AdditionalVals(0), NextRegistered(0),
       ArgStr(""), HelpStr(""), ValueStr("") {

@@ -176,9 +176,9 @@ public:
   SMDiagnostic()
     : SM(0), LineNo(0), ColumnNo(0), Kind(SourceMgr::DK_Error) {}
   // Diagnostic with no location (e.g. file not found, command line arg error).
-  SMDiagnostic(const std::string &filename, SourceMgr::DiagKind Kind,
+  SMDiagnostic(const std::string &filename, SourceMgr::DiagKind Knd,
                const std::string &Msg)
-    : SM(0), Filename(filename), LineNo(-1), ColumnNo(-1), Kind(Kind),
+    : SM(0), Filename(filename), LineNo(-1), ColumnNo(-1), Kind(Knd),
       Message(Msg) {}
   
   // Diagnostic with a location.
