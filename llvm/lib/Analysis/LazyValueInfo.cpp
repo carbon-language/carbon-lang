@@ -862,21 +862,16 @@ bool LazyValueInfoCache::getEdgeValue(Value *Val, BasicBlock *BBFrom,
         return true;
       }
       
-      // We only know something if there is exactly one value that goes from
-      // BBFrom to BBTo.
-      unsigned NumEdges = 0;
-      ConstantInt *EdgeVal = 0;
+      unsigned BitWidth = Val->getType()->getIntegerBitWidth();
+      ConstantRange EdgesVals(BitWidth, false/*isFullSet*/);
       for (SwitchInst::CaseIt i = SI->case_begin(), e = SI->case_end();
            i != e; ++i) {
         if (i.getCaseSuccessor() != BBTo) continue;
-        if (NumEdges++) break;
-        EdgeVal = i.getCaseValue();
+        ConstantRange EdgeVal(i.getCaseValue()->getValue());
+        EdgesVals = EdgesVals.unionWith(EdgeVal);
       }
-      assert(EdgeVal && "Missing successor?");
-      if (NumEdges == 1) {
-        Result = LVILatticeVal::get(EdgeVal);
-        return true;
-      }
+      Result = LVILatticeVal::getRange(EdgesVals);
+      return true;
     }
   }
   
