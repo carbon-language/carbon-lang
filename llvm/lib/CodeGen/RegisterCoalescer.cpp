@@ -91,13 +91,19 @@ namespace {
     /// been remat'ed.
     SmallPtrSet<MachineInstr*, 8> ReMatDefs;
 
+    /// WorkList - Copy instructions yet to be coalesced.
+    SmallVector<MachineInstr*, 8> WorkList;
+
     /// joinAllIntervals - join compatible live intervals
     void joinAllIntervals();
 
     /// copyCoalesceInMBB - Coalesce copies in the specified MBB, putting
-    /// copies that cannot yet be coalesced into the "TryAgain" list.
-    void copyCoalesceInMBB(MachineBasicBlock *MBB,
-                           std::vector<MachineInstr*> &TryAgain);
+    /// copies that cannot yet be coalesced into WorkList.
+    void copyCoalesceInMBB(MachineBasicBlock *MBB);
+
+    /// copyCoalesceWorkList - Try to coalesce all copies in WorkList after
+    /// position From. Return true if any progress was made.
+    bool copyCoalesceWorkList(unsigned From = 0);
 
     /// joinCopy - Attempt to join intervals corresponding to SrcReg/DstReg,
     /// which are the src/dst of the copy instruction CopyMI.  This returns
@@ -1528,41 +1534,52 @@ namespace {
   };
 }
 
+// Try joining WorkList copies starting from index From.
+// Null out any successful joins.
+bool RegisterCoalescer::copyCoalesceWorkList(unsigned From) {
+  assert(From <= WorkList.size() && "Out of range");
+  bool Progress = false;
+  for (unsigned i = From, e = WorkList.size(); i != e; ++i) {
+    if (!WorkList[i])
+      continue;
+    bool Again = false;
+    bool Success = joinCopy(WorkList[i], Again);
+    Progress |= Success;
+    if (Success || !Again)
+      WorkList[i] = 0;
+  }
+  return Progress;
+}
+
 void
-RegisterCoalescer::copyCoalesceInMBB(MachineBasicBlock *MBB,
-                                     std::vector<MachineInstr*> &TryAgain) {
+RegisterCoalescer::copyCoalesceInMBB(MachineBasicBlock *MBB) {
   DEBUG(dbgs() << MBB->getName() << ":\n");
 
   // Collect all copy-like instructions in MBB. Don't start coalescing anything
   // yet, it might invalidate the iterator.
-  const unsigned PrevSize = TryAgain.size();
+  const unsigned PrevSize = WorkList.size();
   for (MachineBasicBlock::iterator MII = MBB->begin(), E = MBB->end();
        MII != E; ++MII)
     if (MII->isCopyLike())
-      TryAgain.push_back(MII);
+      WorkList.push_back(MII);
 
-  // Try coalescing the collected copies immediately.
-  // Null out the successful joins.
-  for (unsigned i = PrevSize, e = TryAgain.size(); i != e; ++i) {
-    bool Again = false;
-    if (joinCopy(TryAgain[i], Again) || !Again)
-      TryAgain[i] = 0;
-  }
-
-  // Remove the nulls from TryAgain.
-  TryAgain.erase(std::remove(TryAgain.begin() + PrevSize, TryAgain.end(),
-                             (MachineInstr*)0), TryAgain.end());
+  // Try coalescing the collected copies immediately, and remove the nulls.
+  // This prevents the WorkList from getting too large since most copies are
+  // joinable on the first attempt.
+  if (copyCoalesceWorkList(PrevSize))
+    WorkList.erase(std::remove(WorkList.begin() + PrevSize, WorkList.end(),
+                               (MachineInstr*)0), WorkList.end());
 }
 
 void RegisterCoalescer::joinAllIntervals() {
   DEBUG(dbgs() << "********** JOINING INTERVALS ***********\n");
+  assert(WorkList.empty() && "Old data still around.");
 
-  std::vector<MachineInstr*> TryAgainList;
   if (Loops->empty()) {
     // If there are no loops in the function, join intervals in function order.
     for (MachineFunction::iterator I = MF->begin(), E = MF->end();
          I != E; ++I)
-      copyCoalesceInMBB(I, TryAgainList);
+      copyCoalesceInMBB(I);
   } else {
     // Otherwise, join intervals in inner loops before other intervals.
     // Unfortunately we can't just iterate over loop hierarchy here because
@@ -1581,34 +1598,20 @@ void RegisterCoalescer::joinAllIntervals() {
 
     // Finally, join intervals in loop nest order.
     for (unsigned i = 0, e = MBBs.size(); i != e; ++i)
-      copyCoalesceInMBB(MBBs[i].second, TryAgainList);
+      copyCoalesceInMBB(MBBs[i].second);
   }
 
   // Joining intervals can allow other intervals to be joined.  Iteratively join
   // until we make no progress.
-  bool ProgressMade = true;
-  while (ProgressMade) {
-    ProgressMade = false;
-
-    for (unsigned i = 0, e = TryAgainList.size(); i != e; ++i) {
-      MachineInstr *&TheCopy = TryAgainList[i];
-      if (!TheCopy)
-        continue;
-
-      bool Again = false;
-      bool Success = joinCopy(TheCopy, Again);
-      if (Success || !Again) {
-        TheCopy= 0;   // Mark this one as done.
-        ProgressMade = true;
-      }
-    }
-  }
+  while (copyCoalesceWorkList())
+    /* empty */ ;
 }
 
 void RegisterCoalescer::releaseMemory() {
   JoinedCopies.clear();
   ReMatCopies.clear();
   ReMatDefs.clear();
+  WorkList.clear();
 }
 
 bool RegisterCoalescer::runOnMachineFunction(MachineFunction &fn) {
