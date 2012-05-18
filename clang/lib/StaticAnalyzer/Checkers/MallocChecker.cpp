@@ -339,22 +339,16 @@ public:
 } // end anonymous namespace
 
 void MallocChecker::initIdentifierInfo(ASTContext &Ctx) const {
-  if (!II_malloc)
-    II_malloc = &Ctx.Idents.get("malloc");
-  if (!II_free)
-    II_free = &Ctx.Idents.get("free");
-  if (!II_realloc)
-    II_realloc = &Ctx.Idents.get("realloc");
-  if (!II_reallocf)
-    II_reallocf = &Ctx.Idents.get("reallocf");
-  if (!II_calloc)
-    II_calloc = &Ctx.Idents.get("calloc");
-  if (!II_valloc)
-    II_valloc = &Ctx.Idents.get("valloc");
-  if (!II_strdup)
-    II_strdup = &Ctx.Idents.get("strdup");
-  if (!II_strndup)
-    II_strndup = &Ctx.Idents.get("strndup");
+  if (II_malloc)
+    return;
+  II_malloc = &Ctx.Idents.get("malloc");
+  II_free = &Ctx.Idents.get("free");
+  II_realloc = &Ctx.Idents.get("realloc");
+  II_reallocf = &Ctx.Idents.get("reallocf");
+  II_calloc = &Ctx.Idents.get("calloc");
+  II_valloc = &Ctx.Idents.get("valloc");
+  II_strdup = &Ctx.Idents.get("strdup");
+  II_strndup = &Ctx.Idents.get("strndup");
 }
 
 bool MallocChecker::isMemFunction(const FunctionDecl *FD, ASTContext &C) const {
