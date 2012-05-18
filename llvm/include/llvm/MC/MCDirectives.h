@@ -52,6 +52,14 @@ enum MCAssemblerFlag {
   MCAF_Code64                 ///< .code64 (X86)
 };
 
+enum MCDataRegionType {
+  MCDR_DataRegion,            ///< .data_region
+  MCDR_DataRegionJT8,         ///< .data_region jt8
+  MCDR_DataRegionJT16,        ///< .data_region jt16
+  MCDR_DataRegionJT32,        ///< .data_region jt32
+  MCDR_DataRegionEnd          ///< .end_data_region
+};
+
 } // end namespace llvm
 
 #endif

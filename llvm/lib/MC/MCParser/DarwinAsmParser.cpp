@@ -14,6 +14,7 @@
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCParser/MCAsmLexer.h"
 #include "llvm/MC/MCParser/MCAsmParser.h"
+#include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -55,6 +56,9 @@ public:
       ".secure_log_reset");
     AddDirectiveHandler<&DarwinAsmParser::ParseDirectiveTBSS>(".tbss");
     AddDirectiveHandler<&DarwinAsmParser::ParseDirectiveZerofill>(".zerofill");
+
+    AddDirectiveHandler<&DarwinAsmParser::ParseDirectiveDataRegion>(".data_region");
+    AddDirectiveHandler<&DarwinAsmParser::ParseDirectiveDataRegionEnd>(".end_data_region");
 
     // Special section directives.
     AddDirectiveHandler<&DarwinAsmParser::ParseSectionDirectiveConst>(".const");
@@ -113,6 +117,8 @@ public:
   bool ParseDirectiveSubsectionsViaSymbols(StringRef, SMLoc);
   bool ParseDirectiveTBSS(StringRef, SMLoc);
   bool ParseDirectiveZerofill(StringRef, SMLoc);
+  bool ParseDirectiveDataRegion(StringRef, SMLoc);
+  bool ParseDirectiveDataRegionEnd(StringRef, SMLoc);
 
   // Named Section Directive
   bool ParseSectionDirectiveConst(StringRef, SMLoc) {
@@ -656,6 +662,42 @@ bool DarwinAsmParser::ParseDirectiveZerofill(StringRef, SMLoc) {
                                0, SectionKind::getBSS()),
                              Sym, Size, 1 << Pow2Alignment);
 
+  return false;
+}
+
+/// ParseDirectiveDataRegion
+///  ::= .data_region [ ( jt8 | jt16 | jt32 ) ]
+bool DarwinAsmParser::ParseDirectiveDataRegion(StringRef, SMLoc) {
+  if (getLexer().is(AsmToken::EndOfStatement)) {
+    Lex();
+    getStreamer().EmitDataRegion(MCDR_DataRegion);
+    return false;
+  }
+  StringRef RegionType;
+  SMLoc Loc = getParser().getTok().getLoc();
+  if (getParser().ParseIdentifier(RegionType))
+    return TokError("expected region type after '.data_region' directive");
+  int Kind = StringSwitch<int>(RegionType)
+    .Case("jt8", MCDR_DataRegionJT8)
+    .Case("jt16", MCDR_DataRegionJT16)
+    .Case("jt32", MCDR_DataRegionJT32)
+    .Default(-1);
+  if (Kind == -1)
+    return Error(Loc, "unknown region type in '.data_region' directive");
+  Lex();
+
+  getStreamer().EmitDataRegion((MCDataRegionType)Kind);
+  return false;
+}
+
+/// ParseDirectiveDataRegionEnd
+///  ::= .end_data_region
+bool DarwinAsmParser::ParseDirectiveDataRegionEnd(StringRef, SMLoc) {
+  if (getLexer().isNot(AsmToken::EndOfStatement))
+    return TokError("unexpected token in '.end_data_region' directive");
+
+  Lex();
+  getStreamer().EmitDataRegion(MCDR_DataRegionEnd);
   return false;
 }
 

@@ -1,4 +1,3 @@
-//===- lib/MC/MCMachOStreamer.cpp - Mach-O Object Output ------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -33,6 +32,8 @@ class MCMachOStreamer : public MCObjectStreamer {
 private:
   virtual void EmitInstToData(const MCInst &Inst);
 
+  void EmitDataRegion(DataRegionData::KindTy Kind);
+  void EmitDataRegionEnd();
 public:
   MCMachOStreamer(MCContext &Context, MCAsmBackend &MAB,
                   raw_ostream &OS, MCCodeEmitter *Emitter)
@@ -46,6 +47,7 @@ public:
   virtual void EmitEHSymAttributes(const MCSymbol *Symbol,
                                    MCSymbol *EHSymbol);
   virtual void EmitAssemblerFlag(MCAssemblerFlag Flag);
+  virtual void EmitDataRegion(MCDataRegionType Kind);
   virtual void EmitThumbFunc(MCSymbol *Func);
   virtual void EmitAssignment(MCSymbol *Symbol, const MCExpr *Value);
   virtual void EmitSymbolAttribute(MCSymbol *Symbol, MCSymbolAttr Attribute);
@@ -138,6 +140,26 @@ void MCMachOStreamer::EmitLabel(MCSymbol *Symbol) {
   SD.setFlags(SD.getFlags() & ~SF_ReferenceTypeMask);
 }
 
+void MCMachOStreamer::EmitDataRegion(DataRegionData::KindTy Kind) {
+  // Create a temporary label to mark the start of the data region.
+  MCSymbol *Start = getContext().CreateTempSymbol();
+  EmitLabel(Start);
+  // Record the region for the object writer to use.
+  DataRegionData Data = { Kind, Start, NULL };
+  std::vector<DataRegionData> &Regions = getAssembler().getDataRegions();
+  Regions.push_back(Data);
+}
+
+void MCMachOStreamer::EmitDataRegionEnd() {
+  std::vector<DataRegionData> &Regions = getAssembler().getDataRegions();
+  assert(Regions.size() && "Mismatched .end_data_region!");
+  DataRegionData &Data = Regions.back();
+  assert(Data.End == NULL && "Mismatched .end_data_region!");
+  // Create a temporary label to mark the end of the data region.
+  Data.End = getContext().CreateTempSymbol();
+  EmitLabel(Data.End);
+}
+
 void MCMachOStreamer::EmitAssemblerFlag(MCAssemblerFlag Flag) {
   // Let the target do whatever target specific stuff it needs to do.
   getAssembler().getBackend().handleAssemblerFlag(Flag);
@@ -149,6 +171,26 @@ void MCMachOStreamer::EmitAssemblerFlag(MCAssemblerFlag Flag) {
   case MCAF_Code64: return; // Change parsing mode; no-op here.
   case MCAF_SubsectionsViaSymbols:
     getAssembler().setSubsectionsViaSymbols(true);
+    return;
+  }
+}
+
+void MCMachOStreamer::EmitDataRegion(MCDataRegionType Kind) {
+  switch (Kind) {
+  case MCDR_DataRegion:
+    EmitDataRegion(DataRegionData::Data);
+    return;
+  case MCDR_DataRegionJT8:
+    EmitDataRegion(DataRegionData::JumpTable8);
+    return;
+  case MCDR_DataRegionJT16:
+    EmitDataRegion(DataRegionData::JumpTable16);
+    return;
+  case MCDR_DataRegionJT32:
+    EmitDataRegion(DataRegionData::JumpTable32);
+    return;
+  case MCDR_DataRegionEnd:
+    EmitDataRegionEnd();
     return;
   }
 }

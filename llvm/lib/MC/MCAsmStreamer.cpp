@@ -138,6 +138,7 @@ public:
   virtual void EmitEHSymAttributes(const MCSymbol *Symbol,
                                    MCSymbol *EHSymbol);
   virtual void EmitAssemblerFlag(MCAssemblerFlag Flag);
+  virtual void EmitDataRegion(MCDataRegionType Kind);
   virtual void EmitThumbFunc(MCSymbol *Func);
 
   virtual void EmitAssignment(MCSymbol *Symbol, const MCExpr *Value);
@@ -348,6 +349,21 @@ void MCAsmStreamer::EmitAssemblerFlag(MCAssemblerFlag Flag) {
   case MCAF_Code16:                OS << '\t'<< MAI.getCode16Directive(); break;
   case MCAF_Code32:                OS << '\t'<< MAI.getCode32Directive(); break;
   case MCAF_Code64:                OS << '\t'<< MAI.getCode64Directive(); break;
+  }
+  EmitEOL();
+}
+
+void MCAsmStreamer::EmitDataRegion(MCDataRegionType Kind) {
+  MCContext &Ctx = getContext();
+  const MCAsmInfo &MAI = Ctx.getAsmInfo();
+  if (!MAI.doesSupportDataRegionDirectives())
+    return;
+  switch (Kind) {
+  case MCDR_DataRegion:            OS << "\t.data_region"; break;
+  case MCDR_DataRegionJT8:         OS << "\t.data_region jt8"; break;
+  case MCDR_DataRegionJT16:        OS << "\t.data_region jt16"; break;
+  case MCDR_DataRegionJT32:        OS << "\t.data_region jt32"; break;
+  case MCDR_DataRegionEnd:         OS << "\t.end_data_region"; break;
   }
   EmitEOL();
 }

@@ -357,6 +357,19 @@ void MachOObject::ReadSymbol64TableEntry(uint64_t SymbolTableOffset,
   ReadInMemoryStruct(*this, Buffer->getBuffer(), Offset, Res);
 }
 
+template<>
+void SwapStruct(macho::DataInCodeTableEntry &Value) {
+  SwapValue(Value.Offset);
+  SwapValue(Value.Length);
+  SwapValue(Value.Kind);
+}
+void MachOObject::ReadDataInCodeTableEntry(uint64_t TableOffset,
+                                           unsigned Index,
+                       InMemoryStruct<macho::DataInCodeTableEntry> &Res) const {
+  uint64_t Offset = (TableOffset +
+                     Index * sizeof(macho::DataInCodeTableEntry));
+  ReadInMemoryStruct(*this, Buffer->getBuffer(), Offset, Res);
+}
 
 void MachOObject::ReadULEB128s(uint64_t Index,
                                SmallVectorImpl<uint64_t> &Out) const {

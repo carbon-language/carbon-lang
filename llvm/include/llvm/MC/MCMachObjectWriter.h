@@ -179,6 +179,9 @@ public:
 
   void WriteNlist(MachSymbolData &MSD, const MCAsmLayout &Layout);
 
+  void WriteLinkeditLoadCommand(uint32_t Type, uint32_t DataOffset,
+                                uint32_t DataSize);
+
   // FIXME: We really need to improve the relocation validation. Basically, we
   // want to implement a separate computation which evaluates the relocation
   // entry as the linker would, and verifies that the resultant fixup value is

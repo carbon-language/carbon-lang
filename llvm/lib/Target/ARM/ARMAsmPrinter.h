@@ -44,9 +44,12 @@ class LLVM_LIBRARY_VISIBILITY ARMAsmPrinter : public AsmPrinter {
   /// MachineFunction.
   const MachineConstantPool *MCP;
 
+  /// InConstantPool - Maintain state when emitting a sequence of constant
+  /// pool entries so we can properly mark them as data regions.
+  bool InConstantPool;
 public:
   explicit ARMAsmPrinter(TargetMachine &TM, MCStreamer &Streamer)
-    : AsmPrinter(TM, Streamer), AFI(NULL), MCP(NULL) {
+    : AsmPrinter(TM, Streamer), AFI(NULL), MCP(NULL), InConstantPool(false) {
       Subtarget = &TM.getSubtarget<ARMSubtarget>();
     }
 
@@ -70,6 +73,7 @@ public:
   bool runOnMachineFunction(MachineFunction &F);
 
   virtual void EmitConstantPool() {} // we emit constant pools customly!
+  virtual void EmitFunctionBodyEnd();
   virtual void EmitFunctionEntryLabel();
   void EmitStartOfAsmFile(Module &M);
   void EmitEndOfAsmFile(Module &M);

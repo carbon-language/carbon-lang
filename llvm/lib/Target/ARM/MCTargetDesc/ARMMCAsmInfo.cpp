@@ -29,6 +29,7 @@ ARMMCAsmInfoDarwin::ARMMCAsmInfoDarwin() {
   CommentString = "@";
   Code16Directive = ".code\t16";
   Code32Directive = ".code\t32";
+  UseDataRegionDirectives = true;
 
   SupportsDebugInformation = true;
 

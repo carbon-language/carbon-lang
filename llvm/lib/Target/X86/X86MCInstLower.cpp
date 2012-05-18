@@ -610,8 +610,6 @@ static void LowerTlsAddr(MCStreamer &OutStreamer,
 }
 
 void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
-  OutStreamer.EmitCodeRegion();
-
   X86MCInstLower MCInstLowering(Mang, *MF, *this);
   switch (MI->getOpcode()) {
   case TargetOpcode::DBG_VALUE:

@@ -161,6 +161,10 @@ namespace llvm {
     /// with a unique but unspecified name.
     MCSymbol *CreateTempSymbol();
 
+    /// getUniqueSymbolID() - Return a unique identifier for use in constructing
+    /// symbol names.
+    unsigned getUniqueSymbolID() { return NextUniqueID++; }
+
     /// CreateDirectionalLocalSymbol - Create the definition of a directional
     /// local symbol for numbered label (used for "1:" definitions).
     MCSymbol *CreateDirectionalLocalSymbol(int64_t LocalLabelVal);

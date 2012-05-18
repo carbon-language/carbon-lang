@@ -332,6 +332,35 @@ static int DumpLinkeditDataCommand(MachOObject &Obj,
   return 0;
 }
 
+static int DumpDataInCodeDataCommand(MachOObject &Obj,
+                                     const MachOObject::LoadCommandInfo &LCI) {
+  InMemoryStruct<macho::LinkeditDataLoadCommand> LLC;
+  Obj.ReadLinkeditDataLoadCommand(LCI, LLC);
+  if (!LLC)
+    return Error("unable to read segment load command");
+
+  outs() << "  ('dataoff', " << LLC->DataOffset << ")\n"
+         << "  ('datasize', " << LLC->DataSize << ")\n"
+         << "  ('_data_regions', [\n";
+
+
+  unsigned NumRegions = LLC->DataSize / 8;
+  for (unsigned i = 0; i < NumRegions; ++i) {
+    InMemoryStruct<macho::DataInCodeTableEntry> DICE;
+    Obj.ReadDataInCodeTableEntry(LLC->DataOffset, i, DICE);
+    if (!DICE)
+      return Error("unable to read DataInCodeTableEntry");
+    outs() << "    # DICE " << i << "\n"
+           << "    ('offset', " << DICE->Offset << ")\n"
+           << "    ('length', " << DICE->Length << ")\n"
+           << "    ('kind', " << DICE->Kind << ")\n";
+  }
+
+  outs() <<"  ])\n";
+
+  return 0;
+}
+
 
 static int DumpLoadCommand(MachOObject &Obj, unsigned Index) {
   const MachOObject::LoadCommandInfo &LCI = Obj.getLoadCommandInfo(Index);
@@ -357,6 +386,9 @@ static int DumpLoadCommand(MachOObject &Obj, unsigned Index) {
   case macho::LCT_SegmentSplitInfo:
   case macho::LCT_FunctionStarts:
     Res = DumpLinkeditDataCommand(Obj, LCI);
+    break;
+  case macho::LCT_DataInCode:
+    Res = DumpDataInCodeDataCommand(Obj, LCI);
     break;
   default:
     Warning("unknown load command: " + Twine(LCI.Command.Type));
