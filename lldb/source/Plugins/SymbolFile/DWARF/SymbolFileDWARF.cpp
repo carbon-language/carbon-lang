@@ -502,6 +502,28 @@ SymbolFileDWARF::CalculateAbilities ()
             else
                 m_flags.Set (flagsGotDebugStrData);
         }
+        else
+        {
+            const char *symfile_dir_cstr = m_obj_file->GetFileSpec().GetDirectory().GetCString();
+            if (symfile_dir_cstr)
+            {
+                if (strcasestr(symfile_dir_cstr, ".dsym"))
+                {
+                    if (m_obj_file->GetType() == ObjectFile::eTypeDebugInfo)
+                    {
+                        // We have a dSYM file that didn't have a any debug info.
+                        // If the string table has a size of 1, then it was made from
+                        // an executable with no debug info, or from an executable that
+                        // was stripped.
+                        section = section_list->FindSectionByType (eSectionTypeDWARFDebugStr, true).get();
+                        if (section && section->GetFileSize() == 1)
+                        {
+                            m_obj_file->GetModule()->ReportWarning ("empty dSYM file detected, dSYM was created with an executable with no debug info.");
+                        }
+                    }
+                }
+            }
+        }
 
         if (debug_abbrev_file_size > 0 && debug_info_file_size > 0)
             abilities |= CompileUnits | Functions | Blocks | GlobalVariables | LocalVariables | VariableTypes;
