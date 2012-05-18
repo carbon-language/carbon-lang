@@ -54,18 +54,12 @@ STATISTIC(numCommutes , "Number of instruction commuting performed");
 STATISTIC(numExtends  , "Number of copies extended");
 STATISTIC(NumReMats   , "Number of instructions re-materialized");
 STATISTIC(numPeep     , "Number of identity moves eliminated after coalescing");
-STATISTIC(numAborts   , "Number of times interval joining aborted");
 STATISTIC(NumInflated , "Number of register classes inflated");
 
 static cl::opt<bool>
 EnableJoining("join-liveintervals",
               cl::desc("Coalesce copies (default=true)"),
               cl::init(true));
-
-static cl::opt<bool>
-EnablePhysicalJoin("join-physregs",
-                   cl::desc("Join physical register copies"),
-                   cl::init(false), cl::Hidden);
 
 static cl::opt<bool>
 VerifyCoalescing("verify-coalescing",
@@ -121,9 +115,6 @@ namespace {
     /// Attempt joining with a reserved physreg.
     bool joinReservedPhysReg(CoalescerPair &CP);
 
-    /// Check for interference with a normal unreserved physreg.
-    bool canJoinPhysReg(CoalescerPair &CP);
-
     /// adjustCopiesBackFrom - We found a non-trivially-coalescable copy. If
     /// the source value number is defined by a copy from the destination reg
     /// see if we can merge these two destination reg valno# into a single
@@ -147,8 +138,8 @@ namespace {
     bool reMaterializeTrivialDef(LiveInterval &SrcInt, bool PreserveSrcInt,
                                  unsigned DstReg, MachineInstr *CopyMI);
 
-    /// shouldJoinPhys - Return true if a physreg copy should be joined.
-    bool shouldJoinPhys(CoalescerPair &CP);
+    /// canJoinPhys - Return true if a physreg copy should be joined.
+    bool canJoinPhys(CoalescerPair &CP);
 
     /// updateRegDefsUses - Replace all defs and uses of SrcReg to DstReg and
     /// update the subregister number if it is not zero. If DstReg is a
@@ -1002,59 +993,23 @@ bool RegisterCoalescer::removeDeadDef(LiveInterval &li, MachineInstr *DefMI) {
   return removeIntervalIfEmpty(li, LIS, TRI);
 }
 
-/// shouldJoinPhys - Return true if a copy involving a physreg should be joined.
-/// We need to be careful about coalescing a source physical register with a
-/// virtual register. Once the coalescing is done, it cannot be broken and these
-/// are not spillable! If the destination interval uses are far away, think
-/// twice about coalescing them!
-bool RegisterCoalescer::shouldJoinPhys(CoalescerPair &CP) {
-  bool Allocatable = LIS->isAllocatable(CP.getDstReg());
-  LiveInterval &JoinVInt = LIS->getInterval(CP.getSrcReg());
-
+/// canJoinPhys - Return true if a copy involving a physreg should be joined.
+bool RegisterCoalescer::canJoinPhys(CoalescerPair &CP) {
   /// Always join simple intervals that are defined by a single copy from a
   /// reserved register. This doesn't increase register pressure, so it is
   /// always beneficial.
-  if (!Allocatable && CP.isFlipped() && JoinVInt.containsOneValue())
+  if (!RegClassInfo.isReserved(CP.getDstReg())) {
+    DEBUG(dbgs() << "\tCan only merge into reserved registers.\n");
+    return false;
+  }
+
+  LiveInterval &JoinVInt = LIS->getInterval(CP.getSrcReg());
+  if (CP.isFlipped() && JoinVInt.containsOneValue())
     return true;
 
-  if (!EnablePhysicalJoin) {
-    DEBUG(dbgs() << "\tPhysreg joins disabled.\n");
-    return false;
-  }
-
-  // Only coalesce to allocatable physreg, we don't want to risk modifying
-  // reserved registers.
-  if (!Allocatable) {
-    DEBUG(dbgs() << "\tRegister is an unallocatable physreg.\n");
-    return false;  // Not coalescable.
-  }
-
-  // Don't join with physregs that have a ridiculous number of live
-  // ranges. The data structure performance is really bad when that
-  // happens.
-  if (LIS->hasInterval(CP.getDstReg()) &&
-      LIS->getInterval(CP.getDstReg()).ranges.size() > 1000) {
-    ++numAborts;
-    DEBUG(dbgs()
-          << "\tPhysical register live interval too complicated, abort!\n");
-    return false;
-  }
-
-  // FIXME: Why are we skipping this test for partial copies?
-  //        CodeGen/X86/phys_subreg_coalesce-3.ll needs it.
-  if (!CP.isPartial()) {
-    const TargetRegisterClass *RC = MRI->getRegClass(CP.getSrcReg());
-    unsigned Threshold = RegClassInfo.getNumAllocatableRegs(RC) * 2;
-    unsigned Length = LIS->getApproximateInstructionCount(JoinVInt);
-    if (Length > Threshold) {
-      ++numAborts;
-      DEBUG(dbgs() << "\tMay tie down a physical register, abort!\n");
-      return false;
-    }
-  }
-  return true;
+  DEBUG(dbgs() << "\tCannot join defs into reserved register.\n");
+  return false;
 }
-
 
 /// joinCopy - Attempt to join intervals corresponding to SrcReg/DstReg,
 /// which are the src/dst of the copy instruction CopyMI.  This returns true
@@ -1094,7 +1049,7 @@ bool RegisterCoalescer::joinCopy(MachineInstr *CopyMI, bool &Again) {
     DEBUG(dbgs() << "\tConsidering merging " << PrintReg(CP.getSrcReg(), TRI)
                  << " with " << PrintReg(CP.getDstReg(), TRI, CP.getSrcIdx())
                  << '\n');
-    if (!shouldJoinPhys(CP)) {
+    if (!canJoinPhys(CP)) {
       // Before giving up coalescing, if definition of source is defined by
       // trivial computation, try rematerializing it.
       if (!CP.isFlipped() &&
@@ -1169,25 +1124,6 @@ bool RegisterCoalescer::joinCopy(MachineInstr *CopyMI, bool &Again) {
     updateRegDefsUses(CP.getDstReg(), CP.getDstReg(), CP.getDstIdx());
   updateRegDefsUses(CP.getSrcReg(), CP.getDstReg(), CP.getSrcIdx());
 
-  // If we have extended the live range of a physical register, make sure we
-  // update live-in lists as well.
-  if (CP.isPhys()) {
-    SmallVector<MachineBasicBlock*, 16> BlockSeq;
-    // joinIntervals invalidates the VNInfos in SrcInt, but we only need the
-    // ranges for this, and they are preserved.
-    LiveInterval &SrcInt = LIS->getInterval(CP.getSrcReg());
-    for (LiveInterval::const_iterator I = SrcInt.begin(), E = SrcInt.end();
-         I != E; ++I ) {
-      LIS->findLiveInMBBs(I->start, I->end, BlockSeq);
-      for (unsigned idx = 0, size = BlockSeq.size(); idx != size; ++idx) {
-        MachineBasicBlock &block = *BlockSeq[idx];
-        if (!block.isLiveIn(CP.getDstReg()))
-          block.addLiveIn(CP.getDstReg());
-      }
-      BlockSeq.clear();
-    }
-  }
-
   // SrcReg is guaranteed to be the register whose live interval that is
   // being merged.
   LIS->removeInterval(CP.getSrcReg());
@@ -1239,60 +1175,6 @@ bool RegisterCoalescer::joinReservedPhysReg(CoalescerPair &CP) {
   // reserved register.  Also skip merging the live ranges, the reserved
   // register live range doesn't need to be accurate as long as all the
   // defs are there.
-  return true;
-}
-
-bool RegisterCoalescer::canJoinPhysReg(CoalescerPair &CP) {
-  assert(CP.isPhys() && "Must be a physreg copy");
-  // If a live interval is a physical register, check for interference with any
-  // aliases. The interference check implemented here is a bit more
-  // conservative than the full interfeence check below. We allow overlapping
-  // live ranges only when one is a copy of the other.
-  LiveInterval &RHS = LIS->getInterval(CP.getSrcReg());
-  DEBUG({ dbgs() << "\t\tRHS = "; RHS.print(dbgs(), TRI); dbgs() << "\n"; });
-
-  // Check if a register mask clobbers DstReg.
-  BitVector UsableRegs;
-  if (LIS->checkRegMaskInterference(RHS, UsableRegs) &&
-      !UsableRegs.test(CP.getDstReg())) {
-    DEBUG(dbgs() << "\t\tRegister mask interference.\n");
-    return false;
-  }
-
-  for (const uint16_t *AS = TRI->getAliasSet(CP.getDstReg()); *AS; ++AS){
-    if (!LIS->hasInterval(*AS))
-      continue;
-    const LiveInterval &LHS = LIS->getInterval(*AS);
-    LiveInterval::const_iterator LI = LHS.begin();
-    for (LiveInterval::const_iterator RI = RHS.begin(), RE = RHS.end();
-         RI != RE; ++RI) {
-      LI = std::lower_bound(LI, LHS.end(), RI->start);
-      // Does LHS have an overlapping live range starting before RI?
-      if ((LI != LHS.begin() && LI[-1].end > RI->start) &&
-          (RI->start != RI->valno->def ||
-           !CP.isCoalescable(LIS->getInstructionFromIndex(RI->start)))) {
-        DEBUG({
-          dbgs() << "\t\tInterference from alias: ";
-          LHS.print(dbgs(), TRI);
-          dbgs() << "\n\t\tOverlap at " << RI->start << " and no copy.\n";
-        });
-        return false;
-      }
-
-      // Check that LHS ranges beginning in this range are copies.
-      for (; LI != LHS.end() && LI->start < RI->end; ++LI) {
-        if (LI->start != LI->valno->def ||
-            !CP.isCoalescable(LIS->getInstructionFromIndex(LI->start))) {
-          DEBUG({
-            dbgs() << "\t\tInterference from alias: ";
-            LHS.print(dbgs(), TRI);
-            dbgs() << "\n\t\tDef at " << LI->start << " is not a copy.\n";
-          });
-          return false;
-        }
-      }
-    }
-  }
   return true;
 }
 
@@ -1421,12 +1303,8 @@ static bool RegistersDefinedFromSameValue(LiveIntervals &li,
 /// returns false.
 bool RegisterCoalescer::joinIntervals(CoalescerPair &CP) {
   // Handle physreg joins separately.
-  if (CP.isPhys()) {
-    if (RegClassInfo.isReserved(CP.getDstReg()))
-      return joinReservedPhysReg(CP);
-    if (!canJoinPhysReg(CP))
-      return false;
-  }
+  if (CP.isPhys())
+    return joinReservedPhysReg(CP);
 
   LiveInterval &RHS = LIS->getInterval(CP.getSrcReg());
   DEBUG({ dbgs() << "\t\tRHS = "; RHS.print(dbgs(), TRI); dbgs() << "\n"; });
