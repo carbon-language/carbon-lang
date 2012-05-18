@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=x86_64-linux | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-linux -mcpu=nehalem | FileCheck %s
 ; CHECK-NOT:     mov
 ; CHECK:     paddw
 ; CHECK-NOT:     mov
@@ -26,14 +26,3 @@ entry:
 	%tmp10 = bitcast <8 x i16> %tmp9 to <2 x i64>		; <<2 x i64>> [#uses=1]
 	ret <2 x i64> %tmp10
 }
-
-
-; The coalescer should commute the add to avoid a copy.
-define <4 x float> @test3(<4 x float> %V) {
-entry:
-        %tmp8 = shufflevector <4 x float> %V, <4 x float> undef,
-                                        <4 x i32> < i32 3, i32 2, i32 1, i32 0 >
-        %add = fadd <4 x float> %tmp8, %V
-        ret <4 x float> %add
-}
-
