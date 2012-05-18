@@ -1533,58 +1533,25 @@ RegisterCoalescer::copyCoalesceInMBB(MachineBasicBlock *MBB,
                                      std::vector<MachineInstr*> &TryAgain) {
   DEBUG(dbgs() << MBB->getName() << ":\n");
 
-  SmallVector<MachineInstr*, 8> VirtCopies;
-  SmallVector<MachineInstr*, 8> PhysCopies;
-  SmallVector<MachineInstr*, 8> ImpDefCopies;
+  // Collect all copy-like instructions in MBB. Don't start coalescing anything
+  // yet, it might invalidate the iterator.
+  const unsigned PrevSize = TryAgain.size();
   for (MachineBasicBlock::iterator MII = MBB->begin(), E = MBB->end();
-       MII != E;) {
-    MachineInstr *Inst = MII++;
+       MII != E; ++MII)
+    if (MII->isCopyLike())
+      TryAgain.push_back(MII);
 
-    // If this isn't a copy nor a extract_subreg, we can't join intervals.
-    unsigned SrcReg, DstReg;
-    if (Inst->isCopy()) {
-      DstReg = Inst->getOperand(0).getReg();
-      SrcReg = Inst->getOperand(1).getReg();
-    } else if (Inst->isSubregToReg()) {
-      DstReg = Inst->getOperand(0).getReg();
-      SrcReg = Inst->getOperand(2).getReg();
-    } else
-      continue;
-
-    bool SrcIsPhys = TargetRegisterInfo::isPhysicalRegister(SrcReg);
-    bool DstIsPhys = TargetRegisterInfo::isPhysicalRegister(DstReg);
-    if (LIS->hasInterval(SrcReg) && LIS->getInterval(SrcReg).empty())
-      ImpDefCopies.push_back(Inst);
-    else if (SrcIsPhys || DstIsPhys)
-      PhysCopies.push_back(Inst);
-    else
-      VirtCopies.push_back(Inst);
+  // Try coalescing the collected copies immediately.
+  // Null out the successful joins.
+  for (unsigned i = PrevSize, e = TryAgain.size(); i != e; ++i) {
+    bool Again = false;
+    if (joinCopy(TryAgain[i], Again) || !Again)
+      TryAgain[i] = 0;
   }
 
-  // Try coalescing implicit copies and insert_subreg <undef> first,
-  // followed by copies to / from physical registers, then finally copies
-  // from virtual registers to virtual registers.
-  for (unsigned i = 0, e = ImpDefCopies.size(); i != e; ++i) {
-    MachineInstr *TheCopy = ImpDefCopies[i];
-    bool Again = false;
-    if (!joinCopy(TheCopy, Again))
-      if (Again)
-        TryAgain.push_back(TheCopy);
-  }
-  for (unsigned i = 0, e = PhysCopies.size(); i != e; ++i) {
-    MachineInstr *TheCopy = PhysCopies[i];
-    bool Again = false;
-    if (!joinCopy(TheCopy, Again))
-      if (Again)
-        TryAgain.push_back(TheCopy);
-  }
-  for (unsigned i = 0, e = VirtCopies.size(); i != e; ++i) {
-    MachineInstr *TheCopy = VirtCopies[i];
-    bool Again = false;
-    if (!joinCopy(TheCopy, Again))
-      if (Again)
-        TryAgain.push_back(TheCopy);
-  }
+  // Remove the nulls from TryAgain.
+  TryAgain.erase(std::remove(TryAgain.begin() + PrevSize, TryAgain.end(),
+                             (MachineInstr*)0), TryAgain.end());
 }
 
 void RegisterCoalescer::joinAllIntervals() {
