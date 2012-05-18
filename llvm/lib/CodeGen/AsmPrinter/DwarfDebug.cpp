@@ -117,7 +117,6 @@ DIType DbgVariable::getType() const {
       if (getName() == DT.getName())
         return (DT.getTypeDerivedFrom());
     }
-    return Ty;
   }
   return Ty;
 }
