@@ -5644,13 +5644,10 @@ X86TargetLowering::LowerVECTOR_SHUFFLEv8i16(SDValue Op,
     bool TwoInputs = V1Used && V2Used;
     for (unsigned i = 0; i != 8; ++i) {
       int EltIdx = MaskVals[i] * 2;
-      if (TwoInputs && (EltIdx >= 16)) {
-        pshufbMask.push_back(DAG.getConstant(0x80, MVT::i8));
-        pshufbMask.push_back(DAG.getConstant(0x80, MVT::i8));
-        continue;
-      }
-      pshufbMask.push_back(DAG.getConstant(EltIdx,   MVT::i8));
-      pshufbMask.push_back(DAG.getConstant(EltIdx+1, MVT::i8));
+      int Idx0 = (TwoInputs && (EltIdx >= 16)) ? 0x80 : EltIdx;
+      int Idx1 = (TwoInputs && (EltIdx >= 16)) ? 0x80 : EltIdx+1;
+      pshufbMask.push_back(DAG.getConstant(Idx0,   MVT::i8));
+      pshufbMask.push_back(DAG.getConstant(Idx1, MVT::i8));
     }
     V1 = DAG.getNode(ISD::BITCAST, dl, MVT::v16i8, V1);
     V1 = DAG.getNode(X86ISD::PSHUFB, dl, MVT::v16i8, V1,
@@ -5664,13 +5661,10 @@ X86TargetLowering::LowerVECTOR_SHUFFLEv8i16(SDValue Op,
     pshufbMask.clear();
     for (unsigned i = 0; i != 8; ++i) {
       int EltIdx = MaskVals[i] * 2;
-      if (EltIdx < 16) {
-        pshufbMask.push_back(DAG.getConstant(0x80, MVT::i8));
-        pshufbMask.push_back(DAG.getConstant(0x80, MVT::i8));
-        continue;
-      }
-      pshufbMask.push_back(DAG.getConstant(EltIdx - 16, MVT::i8));
-      pshufbMask.push_back(DAG.getConstant(EltIdx - 15, MVT::i8));
+      int Idx0 = (EltIdx < 16) ? 0x80 : EltIdx - 16;
+      int Idx1 = (EltIdx < 16) ? 0x80 : EltIdx - 15;
+      pshufbMask.push_back(DAG.getConstant(Idx0, MVT::i8));
+      pshufbMask.push_back(DAG.getConstant(Idx1, MVT::i8));
     }
     V2 = DAG.getNode(ISD::BITCAST, dl, MVT::v16i8, V2);
     V2 = DAG.getNode(X86ISD::PSHUFB, dl, MVT::v16i8, V2,
