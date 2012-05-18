@@ -295,7 +295,7 @@ TSAN_INTERCEPTOR(int, strcmp, const char *s1, const char *s2) {
 TSAN_INTERCEPTOR(int, strncmp, const char *s1, const char *s2, uptr n) {
   SCOPED_TSAN_INTERCEPTOR(strncmp, s1, s2, n);
   uptr len = 0;
-  for (; s1[len] && s2[len] && len < n; len++) {
+  for (; len < n && s1[len] && s2[len]; len++) {
     if (s1[len] != s2[len])
       break;
   }
