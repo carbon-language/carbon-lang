@@ -541,8 +541,18 @@ public:
                     StateType state = process->WaitForProcessToStop (NULL);
                     
                     result.SetDidChangeProcessState (true);
-                    result.AppendMessageWithFormat ("Process %llu %s\n", process->GetID(), StateAsCString (state));
-                    result.SetStatus (eReturnStatusSuccessFinishNoResult);
+
+                    if (state == eStateStopped)
+                    {
+                        result.AppendMessageWithFormat ("Process %llu %s\n", process->GetID(), StateAsCString (state));
+                        result.SetStatus (eReturnStatusSuccessFinishNoResult);
+                    }
+                    else
+                    {
+                        result.AppendError ("attach failed: process did not stop (no such process or permission problem?)");
+                        result.SetStatus (eReturnStatusFailed);
+                        return false;                
+                    }
                 }
             }
         }
