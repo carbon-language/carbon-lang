@@ -200,7 +200,7 @@ public:
 
   /// ReadToEndOfLine - Read the rest of the current preprocessor line as an
   /// uninterpreted string.  This switches the lexer out of directive mode.
-  std::string ReadToEndOfLine();
+  void ReadToEndOfLine(SmallVectorImpl<char> *Result = 0);
 
 
   /// Diag - Forwarding function for diagnostics.  This translate a source

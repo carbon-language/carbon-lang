@@ -1018,15 +1018,13 @@ void Preprocessor::HandleUserDiagnosticDirective(Token &Tok,
   // tokens.  For example, this is allowed: "#warning `   'foo".  GCC does
   // collapse multiple consequtive white space between tokens, but this isn't
   // specified by the standard.
-  std::string Message = CurLexer->ReadToEndOfLine();
+  SmallString<128> Message;
+  CurLexer->ReadToEndOfLine(&Message);
 
   // Find the first non-whitespace character, so that we can make the
   // diagnostic more succinct.
-  StringRef Msg(Message);
-  size_t i = Msg.find_first_not_of(' ');
-  if (i < Msg.size())
-    Msg = Msg.substr(i);
-  
+  StringRef Msg = Message.str().ltrim(" ");
+
   if (isWarning)
     Diag(Tok, diag::pp_hash_warning) << Msg;
   else

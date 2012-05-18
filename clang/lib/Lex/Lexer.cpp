@@ -2286,10 +2286,9 @@ bool Lexer::SkipBlockComment(Token &Result, const char *CurPtr) {
 
 /// ReadToEndOfLine - Read the rest of the current preprocessor line as an
 /// uninterpreted string.  This switches the lexer out of directive mode.
-std::string Lexer::ReadToEndOfLine() {
+void Lexer::ReadToEndOfLine(SmallVectorImpl<char> *Result) {
   assert(ParsingPreprocessorDirective && ParsingFilename == false &&
          "Must be in a preprocessing directive!");
-  std::string Result;
   Token Tmp;
 
   // CurPtr - Cache BufferPtr in an automatic variable.
@@ -2298,7 +2297,8 @@ std::string Lexer::ReadToEndOfLine() {
     char Char = getAndAdvanceChar(CurPtr, Tmp);
     switch (Char) {
     default:
-      Result += Char;
+      if (Result)
+        Result->push_back(Char);
       break;
     case 0:  // Null.
       // Found end of file?
@@ -2306,11 +2306,12 @@ std::string Lexer::ReadToEndOfLine() {
         if (isCodeCompletionPoint(CurPtr-1)) {
           PP->CodeCompleteNaturalLanguage();
           cutOffLexing();
-          return Result;
+          return;
         }
 
         // Nope, normal character, continue.
-        Result += Char;
+        if (Result)
+          Result->push_back(Char);
         break;
       }
       // FALL THROUGH.
@@ -2329,8 +2330,8 @@ std::string Lexer::ReadToEndOfLine() {
       }
       assert(Tmp.is(tok::eod) && "Unexpected token!");
 
-      // Finally, we're done, return the string we found.
-      return Result;
+      // Finally, we're done;
+      return;
     }
   }
 }
