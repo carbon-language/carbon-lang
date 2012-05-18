@@ -1410,6 +1410,14 @@ Thread::GetUnwinder ()
 }
 
 
+void
+Thread::Flush ()
+{
+    ClearStackFrames ();
+    m_reg_context_sp.reset();
+}
+
+
 #pragma mark "Thread::SettingsController"
 //--------------------------------------------------------------
 // class Thread::SettingsController

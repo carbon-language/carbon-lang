@@ -425,6 +425,9 @@ public:
                     {
                         if (reg_ctx->WriteRegister (reg_info, reg_value))
                         {
+                            // Toss all frames and anything else in the thread
+                            // after a register has been written.
+                            exe_ctx.GetThreadRef().Flush();
                             result.SetStatus (eReturnStatusSuccessFinishNoResult);
                             return true;
                         }

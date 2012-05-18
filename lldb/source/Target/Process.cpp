@@ -4707,6 +4707,12 @@ Process::ClearPreResumeActions ()
     m_pre_resume_actions.clear();
 }
 
+void
+Process::Flush ()
+{
+    m_thread_list.Flush();
+}
+
 //--------------------------------------------------------------
 // class Process::SettingsController
 //--------------------------------------------------------------

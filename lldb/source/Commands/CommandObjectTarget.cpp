@@ -3585,21 +3585,21 @@ public:
     Execute (Args& args,
              CommandReturnObject &result)
     {
-        Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
+        ExecutionContext exe_ctx (m_interpreter.GetExecutionContext());
+        Target *target = exe_ctx.GetTargetPtr();
         if (target == NULL)
         {
             result.AppendError ("invalid target, create a debug target using the 'target create' command");
             result.SetStatus (eReturnStatusFailed);
-            return false;
         }
         else
         {
+            bool flush = false;
             const size_t argc = args.GetArgumentCount();
             if (argc == 0)
             {
                 result.AppendError ("one or more symbol file paths must be specified");
                 result.SetStatus (eReturnStatusFailed);
-                return false;
             }
             else
             {
@@ -3633,13 +3633,14 @@ public:
                                     ModuleList module_list;
                                     module_list.Append (old_module_sp);
                                     target->ModulesDidLoad (module_list);
+                                    flush = true;
                                 }
                             }
                             else
                             {
                                 result.AppendError ("one or more executable image paths must be specified");
                                 result.SetStatus (eReturnStatusFailed);
-                                return false;
+                                break;
                             }
                             result.SetStatus (eReturnStatusSuccessFinishResult);
                         }
@@ -3660,6 +3661,13 @@ public:
                         }
                     }
                 }
+            }
+
+            if (flush)
+            {
+                Process *process = exe_ctx.GetProcessPtr();
+                if (process)
+                    process->Flush();
             }
         }
         return result.Succeeded();

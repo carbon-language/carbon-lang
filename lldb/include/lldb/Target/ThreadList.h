@@ -60,6 +60,9 @@ public:
     Clear();
 
     void
+    Flush();
+
+    void
     Destroy();
 
     // Note that "idx" is not the same as the "thread_index". It is a zero

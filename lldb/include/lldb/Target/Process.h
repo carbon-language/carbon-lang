@@ -2269,6 +2269,18 @@ public:
         return m_target;
     }
 
+    //------------------------------------------------------------------
+    /// Flush all data in the process.
+    ///
+    /// Flush the memory caches, all threads, and any other cached data
+    /// in the process.
+    ///
+    /// This function can be called after a world changing event like
+    /// adding a new symbol file, or after the process makes a large
+    /// context switch (from boot ROM to booted into an OS).
+    //------------------------------------------------------------------
+    void
+    Flush ();
 
     //------------------------------------------------------------------
     /// Get accessor for the current process state.

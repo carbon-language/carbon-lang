@@ -605,4 +605,12 @@ ThreadList::Update (ThreadList &rhs)
     }
 }
 
+void
+ThreadList::Flush ()
+{
+    Mutex::Locker locker(m_threads_mutex);    
+    collection::iterator pos, end = m_threads.end();
+    for (pos = m_threads.begin(); pos != end; ++pos)
+        (*pos)->Flush ();
+}
 
