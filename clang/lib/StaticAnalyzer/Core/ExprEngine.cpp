@@ -1537,7 +1537,7 @@ void ExprEngine::VisitMemberExpr(const MemberExpr *M, ExplodedNode *Pred,
 
   // For all other cases, compute an lvalue.    
   SVal L = state->getLValue(field, baseExprVal);
-  if (M->isLValue())
+  if (M->isGLValue())
     Bldr.generateNode(M, Pred, state->BindExpr(M, LCtx, L), false, 0,
                       ProgramPoint::PostLValueKind);
   else {
