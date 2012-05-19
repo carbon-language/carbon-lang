@@ -1002,9 +1002,9 @@ static bool IsStructurallyEquivalent(StructuralEquivalenceContext &Context,
   }
   
   // Check the fields for consistency.
-  CXXRecordDecl::field_iterator Field2 = D2->field_begin(),
+  RecordDecl::field_iterator Field2 = D2->field_begin(),
                              Field2End = D2->field_end();
-  for (CXXRecordDecl::field_iterator Field1 = D1->field_begin(),
+  for (RecordDecl::field_iterator Field1 = D1->field_begin(),
                                   Field1End = D1->field_end();
        Field1 != Field1End;
        ++Field1, ++Field2) {
