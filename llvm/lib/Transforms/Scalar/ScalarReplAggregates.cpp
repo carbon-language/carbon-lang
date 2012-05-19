@@ -29,6 +29,7 @@
 #include "llvm/IntrinsicInst.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
+#include "llvm/Operator.h"
 #include "llvm/Pass.h"
 #include "llvm/Analysis/DebugInfo.h"
 #include "llvm/Analysis/DIBuilder.h"
@@ -1346,6 +1347,25 @@ static bool ShouldAttemptScalarRepl(AllocaInst *AI) {
   return false;
 }
 
+/// getPointeeAlignment - Compute the minimum alignment of the value pointed
+/// to by the given pointer.
+static unsigned getPointeeAlignment(Value *V, const TargetData &TD) {
+  if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V))
+    if (CE->getOpcode() == Instruction::BitCast ||
+        (CE->getOpcode() == Instruction::GetElementPtr &&
+         cast<GEPOperator>(CE)->hasAllZeroIndices()))
+      return getPointeeAlignment(CE->getOperand(0), TD);
+
+  if (GlobalVariable *GV = dyn_cast<GlobalVariable>(V))
+    if (!GV->isDeclaration())
+      return TD.getPreferredAlignment(GV);
+
+  if (PointerType *PT = dyn_cast<PointerType>(V->getType()))
+    return TD.getABITypeAlignment(PT->getElementType());
+
+  return 0;
+}
+
 
 // performScalarRepl - This algorithm is a simple worklist driven algorithm,
 // which runs on all of the alloca instructions in the function, removing them
@@ -1379,23 +1399,26 @@ bool SROA::performScalarRepl(Function &F) {
       continue;
 
     // Check to see if this allocation is only modified by a memcpy/memmove from
-    // a constant global.  If this is the case, we can change all users to use
+    // a constant global whose alignment is equal to or exceeds that of the
+    // allocation.  If this is the case, we can change all users to use
     // the constant global instead.  This is commonly produced by the CFE by
     // constructs like "void foo() { int A[] = {1,2,3,4,5,6,7,8,9...}; }" if 'A'
     // is only subsequently read.
     SmallVector<Instruction *, 4> ToDelete;
     if (MemTransferInst *Copy = isOnlyCopiedFromConstantGlobal(AI, ToDelete)) {
-      DEBUG(dbgs() << "Found alloca equal to global: " << *AI << '\n');
-      DEBUG(dbgs() << "  memcpy = " << *Copy << '\n');
-      for (unsigned i = 0, e = ToDelete.size(); i != e; ++i)
-        ToDelete[i]->eraseFromParent();
-      Constant *TheSrc = cast<Constant>(Copy->getSource());
-      AI->replaceAllUsesWith(ConstantExpr::getBitCast(TheSrc, AI->getType()));
-      Copy->eraseFromParent();  // Don't mutate the global.
-      AI->eraseFromParent();
-      ++NumGlobals;
-      Changed = true;
-      continue;
+      if (AI->getAlignment() <= getPointeeAlignment(Copy->getSource(), *TD)) {
+        DEBUG(dbgs() << "Found alloca equal to global: " << *AI << '\n');
+        DEBUG(dbgs() << "  memcpy = " << *Copy << '\n');
+        for (unsigned i = 0, e = ToDelete.size(); i != e; ++i)
+          ToDelete[i]->eraseFromParent();
+        Constant *TheSrc = cast<Constant>(Copy->getSource());
+        AI->replaceAllUsesWith(ConstantExpr::getBitCast(TheSrc, AI->getType()));
+        Copy->eraseFromParent();  // Don't mutate the global.
+        AI->eraseFromParent();
+        ++NumGlobals;
+        Changed = true;
+        continue;
+      }
     }
 
     // Check to see if we can perform the core SROA transformation.  We cannot

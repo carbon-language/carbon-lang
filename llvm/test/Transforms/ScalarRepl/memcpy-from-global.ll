@@ -45,8 +45,10 @@ declare void @llvm.memcpy.i32(i8*, i8*, i32, i32)
 declare void @llvm.memcpy.p0i8.p0i8.i64(i8* nocapture, i8* nocapture, i64, i32, i1) nounwind
 
 %T = type { i8, [123 x i8] }
+%U = type { i32, i32, i32, i32, i32 }
 
 @G = constant %T {i8 1, [123 x i8] zeroinitializer }
+@H = constant [2 x %U] zeroinitializer, align 16
 
 define void @test2() {
   %A = alloca %T
@@ -108,3 +110,37 @@ define void @test5() {
 
 
 declare void @baz(i8* byval)
+
+
+define void @test6() {
+  %A = alloca %U, align 16
+  %a = bitcast %U* %A to i8*
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %a, i8* bitcast ([2 x %U]* @H to i8*), i64 20, i32 16, i1 false)
+  call void @bar(i8* %a) readonly
+; CHECK: @test6
+; CHECK-NEXT: %a = bitcast
+; CHECK-NEXT: call void @bar(i8* %a)
+  ret void
+}
+
+define void @test7() {
+  %A = alloca %U, align 16
+  %a = bitcast %U* %A to i8*
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %a, i8* bitcast (%U* getelementptr ([2 x %U]* @H, i64 0, i32 0) to i8*), i64 20, i32 4, i1 false)
+  call void @bar(i8* %a) readonly
+; CHECK: @test7
+; CHECK-NEXT: %a = bitcast
+; CHECK-NEXT: call void @bar(i8* %a)
+  ret void
+}
+
+define void @test8() {
+  %A = alloca %U, align 16
+  %a = bitcast %U* %A to i8*
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %a, i8* bitcast (%U* getelementptr ([2 x %U]* @H, i64 0, i32 1) to i8*), i64 20, i32 4, i1 false)
+  call void @bar(i8* %a) readonly
+; CHECK: @test8
+; CHECK: llvm.memcpy
+; CHECK: bar
+  ret void
+}
