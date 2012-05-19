@@ -54,7 +54,6 @@ STATISTIC(numCrossRCs , "Number of cross class joins performed");
 STATISTIC(numCommutes , "Number of instruction commuting performed");
 STATISTIC(numExtends  , "Number of copies extended");
 STATISTIC(NumReMats   , "Number of instructions re-materialized");
-STATISTIC(numPeep     , "Number of identity moves eliminated after coalescing");
 STATISTIC(NumInflated , "Number of register classes inflated");
 
 static cl::opt<bool>
@@ -80,14 +79,6 @@ namespace {
     const MachineLoopInfo* Loops;
     AliasAnalysis *AA;
     RegisterClassInfo RegClassInfo;
-
-    /// JoinedCopies - Keep track of copies eliminated due to coalescing.
-    ///
-    SmallPtrSet<MachineInstr*, 32> JoinedCopies;
-
-    /// ReMatDefs - Keep track of definition instructions which have
-    /// been remat'ed.
-    SmallPtrSet<MachineInstr*, 8> ReMatDefs;
 
     /// WorkList - Copy instructions yet to be coalesced.
     SmallVector<MachineInstr*, 8> WorkList;
@@ -166,14 +157,6 @@ namespace {
     /// being updated is not zero, make sure to set it to the correct physical
     /// subregister.
     void updateRegDefsUses(unsigned SrcReg, unsigned DstReg, unsigned SubIdx);
-
-    /// removeDeadDef - If a def of a live interval is now determined dead,
-    /// remove the val# it defines. If the live interval becomes empty, remove
-    /// it as well.
-    bool removeDeadDef(LiveInterval &li, MachineInstr *DefMI);
-
-    /// markAsJoined - Remember that CopyMI has already been joined.
-    void markAsJoined(MachineInstr *CopyMI);
 
     /// eliminateUndefCopy - Handle copies of undef values.
     bool eliminateUndefCopy(MachineInstr *CopyMI, const CoalescerPair &CP);
@@ -382,18 +365,6 @@ void RegisterCoalescer::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addPreserved<MachineLoopInfo>();
   AU.addPreservedID(MachineDominatorsID);
   MachineFunctionPass::getAnalysisUsage(AU);
-}
-
-void RegisterCoalescer::markAsJoined(MachineInstr *CopyMI) {
-  /// Joined copies are not deleted immediately, but kept in JoinedCopies.
-  JoinedCopies.insert(CopyMI);
-
-  /// Mark all register operands of CopyMI as <undef> so they won't affect dead
-  /// code elimination.
-  for (MachineInstr::mop_iterator I = CopyMI->operands_begin(),
-       E = CopyMI->operands_end(); I != E; ++I)
-    if (I->isReg())
-      I->setIsUndef(true);
 }
 
 void RegisterCoalescer::eliminateDeadDefs() {
@@ -689,8 +660,6 @@ bool RegisterCoalescer::removeCopyByCommutingDef(const CoalescerPair &CP,
     LiveInterval::iterator ULR = IntA.FindLiveRangeContaining(UseIdx);
     if (ULR == IntA.end() || ULR->valno != AValNo)
       continue;
-    if (JoinedCopies.count(UseMI))
-      return false;
     // If this use is tied to a def, we can't rewrite the register.
     if (UseMI->isRegTiedToDefOperand(UI.getOperandNo()))
       return false;
@@ -733,8 +702,6 @@ bool RegisterCoalescer::removeCopyByCommutingDef(const CoalescerPair &CP,
     MachineOperand &UseMO = UI.getOperand();
     MachineInstr *UseMI = &*UI;
     ++UI;
-    if (JoinedCopies.count(UseMI))
-      continue;
     if (UseMI->isDebugValue()) {
       // FIXME These don't have an instruction index.  Not clear we have enough
       // info to decide whether to do this replacement or not.  For now do it.
@@ -873,7 +840,6 @@ bool RegisterCoalescer::reMaterializeTrivialDef(LiveInterval &SrcInt,
 
   CopyMI->eraseFromParent();
   ErasedInstrs.insert(CopyMI);
-  ReMatDefs.insert(DefMI);
   DEBUG(dbgs() << "Remat: " << *NewMI);
   ++NumReMats;
 
@@ -944,14 +910,13 @@ void RegisterCoalescer::updateRegDefsUses(unsigned SrcReg,
 
   for (MachineRegisterInfo::reg_iterator I = MRI->reg_begin(SrcReg);
        MachineInstr *UseMI = I.skipInstruction();) {
-    bool AlreadyJoined = JoinedCopies.count(UseMI);
     SmallVector<unsigned,8> Ops;
     bool Reads, Writes;
     tie(Reads, Writes) = UseMI->readsWritesVirtualRegister(SrcReg, &Ops);
 
     // If SrcReg wasn't read, it may still be the case that DstReg is live-in
     // because SrcReg is a sub-register.
-    if (!Reads && SubIdx && !AlreadyJoined)
+    if (!Reads && SubIdx)
       Reads = DstInt.liveAt(LIS->getInstructionIndex(UseMI));
 
     // Replace SrcReg with DstReg in all UseMI operands.
@@ -961,7 +926,7 @@ void RegisterCoalescer::updateRegDefsUses(unsigned SrcReg,
       // Adjust <undef> flags in case of sub-register joins. We don't want to
       // turn a full def into a read-modify-write sub-register def and vice
       // versa.
-      if (SubIdx && !AlreadyJoined && MO.isDef())
+      if (SubIdx && MO.isDef())
         MO.setIsUndef(!Reads);
 
       if (DstIsPhys)
@@ -970,10 +935,6 @@ void RegisterCoalescer::updateRegDefsUses(unsigned SrcReg,
         MO.substVirtReg(DstReg, SubIdx, *TRI);
     }
 
-    // This instruction is a copy that will be removed.
-    if (AlreadyJoined)
-      continue;
-
     DEBUG({
         dbgs() << "\t\tupdated: ";
         if (!UseMI->isDebugValue())
@@ -981,37 +942,6 @@ void RegisterCoalescer::updateRegDefsUses(unsigned SrcReg,
         dbgs() << *UseMI;
       });
   }
-}
-
-/// removeIntervalIfEmpty - Check if the live interval of a physical register
-/// is empty, if so remove it and also remove the empty intervals of its
-/// sub-registers. Return true if live interval is removed.
-static bool removeIntervalIfEmpty(LiveInterval &li, LiveIntervals *LIS,
-                                  const TargetRegisterInfo *TRI) {
-  if (li.empty()) {
-    if (TargetRegisterInfo::isPhysicalRegister(li.reg))
-      for (const uint16_t* SR = TRI->getSubRegisters(li.reg); *SR; ++SR) {
-        if (!LIS->hasInterval(*SR))
-          continue;
-        LiveInterval &sli = LIS->getInterval(*SR);
-        if (sli.empty())
-          LIS->removeInterval(*SR);
-      }
-    LIS->removeInterval(li.reg);
-    return true;
-  }
-  return false;
-}
-
-/// removeDeadDef - If a def of a live interval is now determined dead, remove
-/// the val# it defines. If the live interval becomes empty, remove it as well.
-bool RegisterCoalescer::removeDeadDef(LiveInterval &li, MachineInstr *DefMI) {
-  SlotIndex DefIdx = LIS->getInstructionIndex(DefMI).getRegSlot();
-  LiveInterval::iterator MLR = li.FindLiveRangeContaining(DefIdx);
-  if (DefIdx != MLR->valno->def)
-    return false;
-  li.removeValNo(MLR->valno);
-  return removeIntervalIfEmpty(li, LIS, TRI);
 }
 
 /// canJoinPhys - Return true if a copy involving a physreg should be joined.
@@ -1040,9 +970,6 @@ bool RegisterCoalescer::canJoinPhys(CoalescerPair &CP) {
 bool RegisterCoalescer::joinCopy(MachineInstr *CopyMI, bool &Again) {
 
   Again = false;
-  if (JoinedCopies.count(CopyMI))
-    return false; // Already done.
-
   DEBUG(dbgs() << LIS->getInstructionIndex(CopyMI) << '\t' << *CopyMI);
 
   CoalescerPair CP(*TII, *TRI);
@@ -1646,9 +1573,7 @@ void RegisterCoalescer::joinAllIntervals() {
 }
 
 void RegisterCoalescer::releaseMemory() {
-  JoinedCopies.clear();
   ErasedInstrs.clear();
-  ReMatDefs.clear();
   WorkList.clear();
   DeadDefs.clear();
   InflateRegs.clear();
@@ -1696,74 +1621,6 @@ bool RegisterCoalescer::runOnMachineFunction(MachineFunction &fn) {
     for (MachineBasicBlock::iterator mii = mbb->begin(), mie = mbb->end();
          mii != mie; ) {
       MachineInstr *MI = mii;
-      if (JoinedCopies.count(MI)) {
-        // Delete all coalesced copies.
-        bool DoDelete = true;
-        assert(MI->isCopyLike() && "Unrecognized copy instruction");
-        unsigned SrcReg = MI->getOperand(MI->isSubregToReg() ? 2 : 1).getReg();
-
-        if (TargetRegisterInfo::isPhysicalRegister(SrcReg) &&
-            MI->getNumOperands() > 2)
-          // Do not delete extract_subreg, insert_subreg of physical
-          // registers unless the definition is dead. e.g.
-          // %DO<def> = INSERT_SUBREG %D0<undef>, %S0<kill>, 1
-          // or else the scavenger may complain. LowerSubregs will
-          // delete them later.
-          DoDelete = false;
-
-        if (MI->allDefsAreDead()) {
-          if (TargetRegisterInfo::isVirtualRegister(SrcReg) &&
-              LIS->hasInterval(SrcReg))
-            LIS->shrinkToUses(&LIS->getInterval(SrcReg));
-          DoDelete = true;
-        }
-        if (!DoDelete) {
-          // We need the instruction to adjust liveness, so make it a KILL.
-          if (MI->isSubregToReg()) {
-            MI->RemoveOperand(3);
-            MI->RemoveOperand(1);
-          }
-          MI->setDesc(TII->get(TargetOpcode::KILL));
-          mii = llvm::next(mii);
-        } else {
-          LIS->RemoveMachineInstrFromMaps(MI);
-          mii = mbbi->erase(mii);
-          ++numPeep;
-        }
-        continue;
-      }
-
-      // Now check if this is a remat'ed def instruction which is now dead.
-      if (ReMatDefs.count(MI)) {
-        bool isDead = true;
-        for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
-          const MachineOperand &MO = MI->getOperand(i);
-          if (!MO.isReg())
-            continue;
-          unsigned Reg = MO.getReg();
-          if (!Reg)
-            continue;
-          DeadDefs.push_back(Reg);
-          if (MO.isDead())
-            continue;
-          if (TargetRegisterInfo::isPhysicalRegister(Reg) ||
-              !MRI->use_nodbg_empty(Reg)) {
-            isDead = false;
-            break;
-          }
-        }
-        if (isDead) {
-          while (!DeadDefs.empty()) {
-            unsigned DeadDef = DeadDefs.back();
-            DeadDefs.pop_back();
-            removeDeadDef(LIS->getInterval(DeadDef), MI);
-          }
-          LIS->RemoveMachineInstrFromMaps(mii);
-          mii = mbbi->erase(mii);
-          continue;
-        } else
-          DeadDefs.clear();
-      }
 
       ++mii;
 
