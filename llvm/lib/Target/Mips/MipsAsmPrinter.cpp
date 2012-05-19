@@ -376,18 +376,23 @@ bool MipsAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNum,
 
     const MachineOperand &MO = MI->getOperand(OpNum);
     switch (ExtraCode[0]) {
-      default:
-        return true;  // Unknown modifier.
-      case 'X': // hex const int
-        if ((MO.getType()) != MachineOperand::MO_Immediate)
-          return true;
-        O << "0x" << StringRef(utohexstr(MO.getImm())).lower();
-        return false;
-      case 'x': // hex const int (low 16 bits)
-        if ((MO.getType()) != MachineOperand::MO_Immediate)
-          return true;
-        O << "0x" << StringRef(utohexstr(MO.getImm() & 0xffff)).lower();
-        return false;
+    default:
+      return true;  // Unknown modifier.
+    case 'X': // hex const int
+      if ((MO.getType()) != MachineOperand::MO_Immediate)
+        return true;
+      O << "0x" << StringRef(utohexstr(MO.getImm())).lower();
+      return false;
+    case 'x': // hex const int (low 16 bits)
+      if ((MO.getType()) != MachineOperand::MO_Immediate)
+        return true;
+      O << "0x" << StringRef(utohexstr(MO.getImm() & 0xffff)).lower();
+      return false;
+    case 'd': // decimal const int
+      if ((MO.getType()) != MachineOperand::MO_Immediate)
+        return true;
+      O << MO.getImm();
+      return false;
     }
   }
 
