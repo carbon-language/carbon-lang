@@ -127,8 +127,8 @@ namespace llvm {
                              StringRef Name = StringRef());
 
     /// createReferenceType - Create debugging information entry for a c++
-    /// style reference.
-    DIType createReferenceType(DIType RTy);
+    /// style reference or rvalue reference type.
+    DIType createReferenceType(unsigned Tag, DIType RTy);
 
     /// createTypedef - Create debugging information entry for a typedef.
     /// @param Ty          Original type.

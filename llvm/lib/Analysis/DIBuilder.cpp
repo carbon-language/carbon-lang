@@ -229,12 +229,13 @@ DIType DIBuilder::createPointerType(DIType PointeeTy, uint64_t SizeInBits,
   return DIType(MDNode::get(VMContext, Elts));
 }
 
-/// createReferenceType - Create debugging information entry for a reference.
-DIType DIBuilder::createReferenceType(DIType RTy) {
+/// createReferenceType - Create debugging information entry for a reference
+/// type.
+DIType DIBuilder::createReferenceType(unsigned Tag, DIType RTy) {
   assert(RTy.Verify() && "Unable to create reference type");
   // References are encoded in DIDerivedType format.
   Value *Elts[] = {
-    GetTagConstant(VMContext, dwarf::DW_TAG_reference_type),
+    GetTagConstant(VMContext, Tag),
     NULL, // TheCU,
     NULL, // Name
     NULL, // Filename

@@ -150,6 +150,7 @@ bool DIDescriptor::isDerivedType() const {
   case dwarf::DW_TAG_typedef:
   case dwarf::DW_TAG_pointer_type:
   case dwarf::DW_TAG_reference_type:
+  case dwarf::DW_TAG_rvalue_reference_type:
   case dwarf::DW_TAG_const_type:
   case dwarf::DW_TAG_volatile_type:
   case dwarf::DW_TAG_restrict_type:
@@ -399,11 +400,13 @@ bool DIType::Verify() const {
   unsigned Tag = getTag();
   if (!isBasicType() && Tag != dwarf::DW_TAG_const_type &&
       Tag != dwarf::DW_TAG_volatile_type && Tag != dwarf::DW_TAG_pointer_type &&
-      Tag != dwarf::DW_TAG_reference_type && Tag != dwarf::DW_TAG_restrict_type 
-      && Tag != dwarf::DW_TAG_vector_type && Tag != dwarf::DW_TAG_array_type
-      && Tag != dwarf::DW_TAG_enumeration_type 
-      && Tag != dwarf::DW_TAG_subroutine_type
-      && getFilename().empty())
+      Tag != dwarf::DW_TAG_reference_type &&
+      Tag != dwarf::DW_TAG_rvalue_reference_type &&
+      Tag != dwarf::DW_TAG_restrict_type && Tag != dwarf::DW_TAG_vector_type &&
+      Tag != dwarf::DW_TAG_array_type &&
+      Tag != dwarf::DW_TAG_enumeration_type &&
+      Tag != dwarf::DW_TAG_subroutine_type &&
+      getFilename().empty())
     return false;
   return true;
 }
@@ -512,7 +515,8 @@ uint64_t DIDerivedType::getOriginalTypeSize() const {
     // it's a reference then it's just the size of the field. Pointer types
     // have no need of this since they're a different type of qualification
     // on the type.
-    if (BaseType.getTag() == dwarf::DW_TAG_reference_type)
+    if (BaseType.getTag() == dwarf::DW_TAG_reference_type ||
+        BaseType.getTag() == dwarf::DW_TAG_rvalue_reference_type)
       return getSizeInBits();
     else if (BaseType.isDerivedType())
       return DIDerivedType(BaseType).getOriginalTypeSize();
