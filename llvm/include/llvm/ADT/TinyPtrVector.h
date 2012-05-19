@@ -10,8 +10,10 @@
 #ifndef LLVM_ADT_TINYPTRVECTOR_H
 #define LLVM_ADT_TINYPTRVECTOR_H
 
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/PointerUnion.h"
+#include "llvm/Support/Compiler.h"
 
 namespace llvm {
   
@@ -32,6 +34,11 @@ public:
     if (VecTy *V = Val.template dyn_cast<VecTy*>())
       Val = new VecTy(*V);
   }
+#if LLVM_USE_RVALUE_REFERENCES
+  TinyPtrVector(TinyPtrVector &&RHS) : Val(RHS.Val) {
+    RHS.Val = (EltTy)0;
+  }
+#endif
   ~TinyPtrVector() {
     if (VecTy *V = Val.template dyn_cast<VecTy*>())
       delete V;
@@ -159,6 +166,9 @@ public:
   
 private:
   void operator=(const TinyPtrVector&); // NOT IMPLEMENTED YET.
+#if LLVM_USE_RVALUE_REFERENCES
+  void operator=(TinyPtrVector&&); // NOT IMPLEMENTED YET.
+#endif
 };
 } // end namespace llvm
 

@@ -14,6 +14,7 @@
 #ifndef LLVM_ADT_DENSEMAP_H
 #define LLVM_ADT_DENSEMAP_H
 
+#include "llvm/Support/Compiler.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/PointerLikeTypeTraits.h"
 #include "llvm/Support/type_traits.h"
@@ -438,8 +439,8 @@ private:
         bool FoundVal = LookupBucketFor(B->first, DestBucket);
         (void)FoundVal; // silence warning.
         assert(!FoundVal && "Key already in new map?");
-        DestBucket->first = B->first;
-        new (&DestBucket->second) ValueT(B->second);
+        DestBucket->first = llvm_move(B->first);
+        new (&DestBucket->second) ValueT(llvm_move(B->second));
 
         // Free the value.
         B->second.~ValueT();
