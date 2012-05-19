@@ -330,6 +330,8 @@ void PPCFrameLowering::emitPrologue(MachineFunction &MF) const {
       BuildMI(MBB, MBBI, dl, TII.get(PPC::MFLR), PPC::R0);
 
     if (HasFP)
+      // FIXME: On PPC32 SVR4, FPOffset is negative and access to negative
+      // offsets of R1 is not allowed.
       BuildMI(MBB, MBBI, dl, TII.get(PPC::STW))
         .addReg(PPC::R31)
         .addImm(FPOffset)
