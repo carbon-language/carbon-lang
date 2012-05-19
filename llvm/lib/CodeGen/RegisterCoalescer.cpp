@@ -151,9 +151,8 @@ namespace {
 
     /// reMaterializeTrivialDef - If the source of a copy is defined by a
     /// trivial computation, replace the copy by rematerialize the definition.
-    /// If PreserveSrcInt is true, make sure SrcInt is valid after the call.
-    bool reMaterializeTrivialDef(LiveInterval &SrcInt, bool PreserveSrcInt,
-                                 unsigned DstReg, MachineInstr *CopyMI);
+    bool reMaterializeTrivialDef(LiveInterval &SrcInt, unsigned DstReg,
+                                 MachineInstr *CopyMI);
 
     /// canJoinPhys - Return true if a physreg copy should be joined.
     bool canJoinPhys(CoalescerPair &CP);
@@ -784,7 +783,6 @@ bool RegisterCoalescer::removeCopyByCommutingDef(const CoalescerPair &CP,
 /// reMaterializeTrivialDef - If the source of a copy is defined by a trivial
 /// computation, replace the copy by rematerialize the definition.
 bool RegisterCoalescer::reMaterializeTrivialDef(LiveInterval &SrcInt,
-                                                bool preserveSrcInt,
                                                 unsigned DstReg,
                                                 MachineInstr *CopyMI) {
   SlotIndex CopyIdx = LIS->getInstructionIndex(CopyMI).getRegSlot(true);
@@ -872,8 +870,7 @@ bool RegisterCoalescer::reMaterializeTrivialDef(LiveInterval &SrcInt,
   ++NumReMats;
 
   // The source interval can become smaller because we removed a use.
-  if (preserveSrcInt)
-    LIS->shrinkToUses(&SrcInt);
+  LIS->shrinkToUses(&SrcInt);
 
   return true;
 }
@@ -938,20 +935,6 @@ void RegisterCoalescer::updateRegDefsUses(unsigned SrcReg,
   for (MachineRegisterInfo::reg_iterator I = MRI->reg_begin(SrcReg);
        MachineInstr *UseMI = I.skipInstruction();) {
     bool AlreadyJoined = JoinedCopies.count(UseMI);
-
-    // A PhysReg copy that won't be coalesced can perhaps be rematerialized
-    // instead.
-    if (DstIsPhys) {
-      if (UseMI->isFullCopy() &&
-          UseMI->getOperand(1).getReg() == SrcReg &&
-          UseMI->getOperand(0).getReg() != SrcReg &&
-          UseMI->getOperand(0).getReg() != DstReg &&
-          !AlreadyJoined &&
-          reMaterializeTrivialDef(LIS->getInterval(SrcReg), false,
-                                  UseMI->getOperand(0).getReg(), UseMI))
-        continue;
-    }
-
     SmallVector<unsigned,8> Ops;
     bool Reads, Writes;
     tie(Reads, Writes) = UseMI->readsWritesVirtualRegister(SrcReg, &Ops);
@@ -1093,7 +1076,7 @@ bool RegisterCoalescer::joinCopy(MachineInstr *CopyMI, bool &Again) {
       // Before giving up coalescing, if definition of source is defined by
       // trivial computation, try rematerializing it.
       if (!CP.isFlipped() &&
-          reMaterializeTrivialDef(LIS->getInterval(CP.getSrcReg()), true,
+          reMaterializeTrivialDef(LIS->getInterval(CP.getSrcReg()),
                                   CP.getDstReg(), CopyMI))
         return true;
       return false;
@@ -1128,7 +1111,7 @@ bool RegisterCoalescer::joinCopy(MachineInstr *CopyMI, bool &Again) {
     // If definition of source is defined by trivial computation, try
     // rematerializing it.
     if (!CP.isFlipped() &&
-        reMaterializeTrivialDef(LIS->getInterval(CP.getSrcReg()), true,
+        reMaterializeTrivialDef(LIS->getInterval(CP.getSrcReg()),
                                 CP.getDstReg(), CopyMI))
       return true;
 
