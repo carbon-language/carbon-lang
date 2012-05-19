@@ -29,3 +29,21 @@ namespace PR10457 {
     Foo f(1, 1);
   }
 }
+
+namespace PR12890 {
+  class Document
+  {
+  public:
+      Document() = default;
+
+      template <class T>
+      explicit
+      Document(T&& t) : Document()
+      {
+      }
+  };
+  void f()
+  {
+      Document d(1);
+  }
+}
