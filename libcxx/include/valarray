@@ -794,38 +794,43 @@ private:
 
 public:
     // construct/destroy:
-    _LIBCPP_INLINE_VISIBILITY
-    valarray() : __begin_(0), __end_(0) {}
-    explicit valarray(size_t __n);
-    valarray(const value_type& __x, size_t __n);
-    valarray(const value_type* __p, size_t __n);
-    valarray(const valarray& __v);
+    _LIBCPP_INLINE_VISIBILITY valarray() : __begin_(0), __end_(0) {}
+    _LIBCPP_INLINE_VISIBILITY explicit valarray(size_t __n);
+    _LIBCPP_INLINE_VISIBILITY valarray(const value_type& __x, size_t __n);
+    _LIBCPP_INLINE_VISIBILITY valarray(const value_type* __p, size_t __n);
+    _LIBCPP_INLINE_VISIBILITY valarray(const valarray& __v);
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
-    valarray(valarray&& __v);
+    _LIBCPP_INLINE_VISIBILITY valarray(valarray&& __v);
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 #ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
-    valarray(initializer_list<value_type> __il);
+    _LIBCPP_INLINE_VISIBILITY valarray(initializer_list<value_type> __il);
 #endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
-    valarray(const slice_array<value_type>& __sa);
-    valarray(const gslice_array<value_type>& __ga);
-    valarray(const mask_array<value_type>& __ma);
-    valarray(const indirect_array<value_type>& __ia);
-    ~valarray();
+    _LIBCPP_INLINE_VISIBILITY valarray(const slice_array<value_type>& __sa);
+    _LIBCPP_INLINE_VISIBILITY valarray(const gslice_array<value_type>& __ga);
+    _LIBCPP_INLINE_VISIBILITY valarray(const mask_array<value_type>& __ma);
+    _LIBCPP_INLINE_VISIBILITY valarray(const indirect_array<value_type>& __ia);
+    _LIBCPP_INLINE_VISIBILITY ~valarray();
 
     // assignment:
-    valarray& operator=(const valarray& __v);
+    _LIBCPP_INLINE_VISIBILITY valarray& operator=(const valarray& __v);
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    _LIBCPP_INLINE_VISIBILITY
     valarray& operator=(valarray&& __v);
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 #ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
-    valarray& operator=(initializer_list<value_type>);
+    _LIBCPP_INLINE_VISIBILITY valarray& operator=(initializer_list<value_type>);
 #endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
-    valarray& operator=(const value_type& __x);
+    _LIBCPP_INLINE_VISIBILITY valarray& operator=(const value_type& __x);
+    _LIBCPP_INLINE_VISIBILITY
     valarray& operator=(const slice_array<value_type>& __sa);
+    _LIBCPP_INLINE_VISIBILITY
     valarray& operator=(const gslice_array<value_type>& __ga);
+    _LIBCPP_INLINE_VISIBILITY
     valarray& operator=(const mask_array<value_type>& __ma);
+    _LIBCPP_INLINE_VISIBILITY
     valarray& operator=(const indirect_array<value_type>& __ia);
     template <class _ValExpr>
+        _LIBCPP_INLINE_VISIBILITY
         valarray& operator=(const __val_expr<_ValExpr>& __v);
 
     // element access:
@@ -836,46 +841,71 @@ public:
     value_type&       operator[](size_t __i)       {return __begin_[__i];}
 
     // subset operations:
+    _LIBCPP_INLINE_VISIBILITY
     __val_expr<__slice_expr<const valarray&> >    operator[](slice __s) const;
+    _LIBCPP_INLINE_VISIBILITY
     slice_array<value_type>                       operator[](slice __s);
+    _LIBCPP_INLINE_VISIBILITY
     __val_expr<__indirect_expr<const valarray&> > operator[](const gslice& __gs) const;
+    _LIBCPP_INLINE_VISIBILITY
     gslice_array<value_type>   operator[](const gslice& __gs);
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    _LIBCPP_INLINE_VISIBILITY
     __val_expr<__indirect_expr<const valarray&> > operator[](gslice&& __gs) const;
+    _LIBCPP_INLINE_VISIBILITY
     gslice_array<value_type>                      operator[](gslice&& __gs);
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    _LIBCPP_INLINE_VISIBILITY
     __val_expr<__mask_expr<const valarray&> >     operator[](const valarray<bool>& __vb) const;
+    _LIBCPP_INLINE_VISIBILITY
     mask_array<value_type>                        operator[](const valarray<bool>& __vb);
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    _LIBCPP_INLINE_VISIBILITY
     __val_expr<__mask_expr<const valarray&> >     operator[](valarray<bool>&& __vb) const;
+    _LIBCPP_INLINE_VISIBILITY
     mask_array<value_type>                        operator[](valarray<bool>&& __vb);
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    _LIBCPP_INLINE_VISIBILITY
     __val_expr<__indirect_expr<const valarray&> > operator[](const valarray<size_t>& __vs) const;
+    _LIBCPP_INLINE_VISIBILITY
     indirect_array<value_type>                    operator[](const valarray<size_t>& __vs);
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    _LIBCPP_INLINE_VISIBILITY
     __val_expr<__indirect_expr<const valarray&> > operator[](valarray<size_t>&& __vs) const;
+    _LIBCPP_INLINE_VISIBILITY
     indirect_array<value_type>                    operator[](valarray<size_t>&& __vs);
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
     // unary operators:
-    valarray       operator+() const;
-    valarray       operator-() const;
-    valarray       operator~() const;
-    valarray<bool> operator!() const;
+    _LIBCPP_INLINE_VISIBILITY valarray       operator+() const;
+    _LIBCPP_INLINE_VISIBILITY valarray       operator-() const;
+    _LIBCPP_INLINE_VISIBILITY valarray       operator~() const;
+    _LIBCPP_INLINE_VISIBILITY valarray<bool> operator!() const;
 
     // computed assignment:
+    _LIBCPP_INLINE_VISIBILITY
     valarray& operator*= (const value_type& __x);
+    _LIBCPP_INLINE_VISIBILITY
     valarray& operator/= (const value_type& __x);
+    _LIBCPP_INLINE_VISIBILITY
     valarray& operator%= (const value_type& __x);
+    _LIBCPP_INLINE_VISIBILITY
     valarray& operator+= (const value_type& __x);
+    _LIBCPP_INLINE_VISIBILITY
     valarray& operator-= (const value_type& __x);
+    _LIBCPP_INLINE_VISIBILITY
     valarray& operator^= (const value_type& __x);
+    _LIBCPP_INLINE_VISIBILITY
     valarray& operator&= (const value_type& __x);
+    _LIBCPP_INLINE_VISIBILITY
     valarray& operator|= (const value_type& __x);
+    _LIBCPP_INLINE_VISIBILITY
     valarray& operator<<=(const value_type& __x);
+    _LIBCPP_INLINE_VISIBILITY
     valarray& operator>>=(const value_type& __x);
 
     template <class _Expr>
+    _LIBCPP_INLINE_VISIBILITY
     typename enable_if
     <
         __is_val_expr<_Expr>::value,
@@ -884,6 +914,7 @@ public:
     operator*= (const _Expr& __v);
 
     template <class _Expr>
+    _LIBCPP_INLINE_VISIBILITY
     typename enable_if
     <
         __is_val_expr<_Expr>::value,
@@ -892,6 +923,7 @@ public:
     operator/= (const _Expr& __v);
 
     template <class _Expr>
+    _LIBCPP_INLINE_VISIBILITY
     typename enable_if
     <
         __is_val_expr<_Expr>::value,
@@ -900,6 +932,7 @@ public:
     operator%= (const _Expr& __v);
 
     template <class _Expr>
+    _LIBCPP_INLINE_VISIBILITY
     typename enable_if
     <
         __is_val_expr<_Expr>::value,
@@ -908,6 +941,7 @@ public:
     operator+= (const _Expr& __v);
 
     template <class _Expr>
+    _LIBCPP_INLINE_VISIBILITY
     typename enable_if
     <
         __is_val_expr<_Expr>::value,
@@ -916,6 +950,7 @@ public:
     operator-= (const _Expr& __v);
 
     template <class _Expr>
+    _LIBCPP_INLINE_VISIBILITY
     typename enable_if
     <
         __is_val_expr<_Expr>::value,
@@ -924,6 +959,7 @@ public:
     operator^= (const _Expr& __v);
 
     template <class _Expr>
+    _LIBCPP_INLINE_VISIBILITY
     typename enable_if
     <
         __is_val_expr<_Expr>::value,
@@ -932,6 +968,7 @@ public:
     operator|= (const _Expr& __v);
 
     template <class _Expr>
+    _LIBCPP_INLINE_VISIBILITY
     typename enable_if
     <
         __is_val_expr<_Expr>::value,
@@ -940,6 +977,7 @@ public:
     operator&= (const _Expr& __v);
 
     template <class _Expr>
+    _LIBCPP_INLINE_VISIBILITY
     typename enable_if
     <
         __is_val_expr<_Expr>::value,
@@ -948,6 +986,7 @@ public:
     operator<<= (const _Expr& __v);
 
     template <class _Expr>
+    _LIBCPP_INLINE_VISIBILITY
     typename enable_if
     <
         __is_val_expr<_Expr>::value,
@@ -956,19 +995,22 @@ public:
     operator>>= (const _Expr& __v);
 
     // member functions:
-    void swap(valarray& __v);
+    _LIBCPP_INLINE_VISIBILITY void swap(valarray& __v);
 
     _LIBCPP_INLINE_VISIBILITY
     size_t size() const {return static_cast<size_t>(__end_ - __begin_);}
 
-    value_type sum() const;
-    value_type min() const;
-    value_type max() const;
+    _LIBCPP_INLINE_VISIBILITY value_type sum() const;
+    _LIBCPP_INLINE_VISIBILITY value_type min() const;
+    _LIBCPP_INLINE_VISIBILITY value_type max() const;
 
-    valarray shift (int __i) const;
-    valarray cshift(int __i) const;
+    _LIBCPP_INLINE_VISIBILITY valarray shift (int __i) const;
+    _LIBCPP_INLINE_VISIBILITY valarray cshift(int __i) const;
+    _LIBCPP_INLINE_VISIBILITY
     valarray apply(value_type __f(value_type)) const;
+    _LIBCPP_INLINE_VISIBILITY
     valarray apply(value_type __f(const value_type&)) const;
+    _LIBCPP_INLINE_VISIBILITY
     void     resize(size_t __n, value_type __x = value_type());
 
 private:
@@ -1099,6 +1141,7 @@ private:
 
 public:
     template <class _Expr>
+    _LIBCPP_INLINE_VISIBILITY
     typename enable_if
     <
         __is_val_expr<_Expr>::value,
@@ -1107,6 +1150,7 @@ public:
     operator=(const _Expr& __v) const;
 
     template <class _Expr>
+    _LIBCPP_INLINE_VISIBILITY
     typename enable_if
     <
         __is_val_expr<_Expr>::value,
@@ -1115,6 +1159,7 @@ public:
     operator*=(const _Expr& __v) const;
 
     template <class _Expr>
+    _LIBCPP_INLINE_VISIBILITY
     typename enable_if
     <
         __is_val_expr<_Expr>::value,
@@ -1123,6 +1168,7 @@ public:
     operator/=(const _Expr& __v) const;
 
     template <class _Expr>
+    _LIBCPP_INLINE_VISIBILITY
     typename enable_if
     <
         __is_val_expr<_Expr>::value,
@@ -1131,6 +1177,7 @@ public:
     operator%=(const _Expr& __v) const;
 
     template <class _Expr>
+    _LIBCPP_INLINE_VISIBILITY
     typename enable_if
     <
         __is_val_expr<_Expr>::value,
@@ -1139,6 +1186,7 @@ public:
     operator+=(const _Expr& __v) const;
 
     template <class _Expr>
+    _LIBCPP_INLINE_VISIBILITY
     typename enable_if
     <
         __is_val_expr<_Expr>::value,
@@ -1147,6 +1195,7 @@ public:
     operator-=(const _Expr& __v) const;
 
     template <class _Expr>
+    _LIBCPP_INLINE_VISIBILITY
     typename enable_if
     <
         __is_val_expr<_Expr>::value,
@@ -1155,6 +1204,7 @@ public:
     operator^=(const _Expr& __v) const;
 
     template <class _Expr>
+    _LIBCPP_INLINE_VISIBILITY
     typename enable_if
     <
         __is_val_expr<_Expr>::value,
@@ -1163,6 +1213,7 @@ public:
     operator&=(const _Expr& __v) const;
 
     template <class _Expr>
+    _LIBCPP_INLINE_VISIBILITY
     typename enable_if
     <
         __is_val_expr<_Expr>::value,
@@ -1171,6 +1222,7 @@ public:
     operator|=(const _Expr& __v) const;
 
     template <class _Expr>
+    _LIBCPP_INLINE_VISIBILITY
     typename enable_if
     <
         __is_val_expr<_Expr>::value,
@@ -1179,6 +1231,7 @@ public:
     operator<<=(const _Expr& __v) const;
 
     template <class _Expr>
+    _LIBCPP_INLINE_VISIBILITY
     typename enable_if
     <
         __is_val_expr<_Expr>::value,
@@ -1186,8 +1239,10 @@ public:
     >::type
     operator>>=(const _Expr& __v) const;
 
+    _LIBCPP_INLINE_VISIBILITY
     const slice_array& operator=(const slice_array& __sa) const;
 
+    _LIBCPP_INLINE_VISIBILITY
     void operator=(const value_type& __x) const;
 
 private:
@@ -1203,7 +1258,7 @@ private:
 };
 
 template <class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 const slice_array<_Tp>&
 slice_array<_Tp>::operator=(const slice_array& __sa) const
 {
@@ -1215,7 +1270,7 @@ slice_array<_Tp>::operator=(const slice_array& __sa) const
 
 template <class _Tp>
 template <class _Expr>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 typename enable_if
 <
     __is_val_expr<_Expr>::value,
@@ -1230,7 +1285,7 @@ slice_array<_Tp>::operator=(const _Expr& __v) const
 
 template <class _Tp>
 template <class _Expr>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 typename enable_if
 <
     __is_val_expr<_Expr>::value,
@@ -1245,7 +1300,7 @@ slice_array<_Tp>::operator*=(const _Expr& __v) const
 
 template <class _Tp>
 template <class _Expr>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 typename enable_if
 <
     __is_val_expr<_Expr>::value,
@@ -1260,7 +1315,7 @@ slice_array<_Tp>::operator/=(const _Expr& __v) const
 
 template <class _Tp>
 template <class _Expr>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 typename enable_if
 <
     __is_val_expr<_Expr>::value,
@@ -1275,7 +1330,7 @@ slice_array<_Tp>::operator%=(const _Expr& __v) const
 
 template <class _Tp>
 template <class _Expr>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 typename enable_if
 <
     __is_val_expr<_Expr>::value,
@@ -1290,7 +1345,7 @@ slice_array<_Tp>::operator+=(const _Expr& __v) const
 
 template <class _Tp>
 template <class _Expr>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 typename enable_if
 <
     __is_val_expr<_Expr>::value,
@@ -1305,7 +1360,7 @@ slice_array<_Tp>::operator-=(const _Expr& __v) const
 
 template <class _Tp>
 template <class _Expr>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 typename enable_if
 <
     __is_val_expr<_Expr>::value,
@@ -1320,7 +1375,7 @@ slice_array<_Tp>::operator^=(const _Expr& __v) const
 
 template <class _Tp>
 template <class _Expr>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 typename enable_if
 <
     __is_val_expr<_Expr>::value,
@@ -1335,7 +1390,7 @@ slice_array<_Tp>::operator&=(const _Expr& __v) const
 
 template <class _Tp>
 template <class _Expr>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 typename enable_if
 <
     __is_val_expr<_Expr>::value,
@@ -1350,7 +1405,7 @@ slice_array<_Tp>::operator|=(const _Expr& __v) const
 
 template <class _Tp>
 template <class _Expr>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 typename enable_if
 <
     __is_val_expr<_Expr>::value,
@@ -1365,7 +1420,7 @@ slice_array<_Tp>::operator<<=(const _Expr& __v) const
 
 template <class _Tp>
 template <class _Expr>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 typename enable_if
 <
     __is_val_expr<_Expr>::value,
@@ -1379,7 +1434,7 @@ slice_array<_Tp>::operator>>=(const _Expr& __v) const
 }
 
 template <class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 void
 slice_array<_Tp>::operator=(const value_type& __x) const
 {
@@ -1399,7 +1454,7 @@ class _LIBCPP_VISIBLE gslice
 public:
     _LIBCPP_INLINE_VISIBILITY
     gslice() {}
-
+    
     _LIBCPP_INLINE_VISIBILITY
     gslice(size_t __start, const valarray<size_t>& __size,
                            const valarray<size_t>& __stride)
@@ -1468,6 +1523,7 @@ private:
 
 public:
     template <class _Expr>
+    _LIBCPP_INLINE_VISIBILITY
     typename enable_if
     <
         __is_val_expr<_Expr>::value,
@@ -1476,6 +1532,7 @@ public:
     operator=(const _Expr& __v) const;
 
     template <class _Expr>
+    _LIBCPP_INLINE_VISIBILITY
     typename enable_if
     <
         __is_val_expr<_Expr>::value,
@@ -1484,6 +1541,7 @@ public:
     operator*=(const _Expr& __v) const;
 
     template <class _Expr>
+    _LIBCPP_INLINE_VISIBILITY
     typename enable_if
     <
         __is_val_expr<_Expr>::value,
@@ -1492,6 +1550,7 @@ public:
     operator/=(const _Expr& __v) const;
 
     template <class _Expr>
+    _LIBCPP_INLINE_VISIBILITY
     typename enable_if
     <
         __is_val_expr<_Expr>::value,
@@ -1500,6 +1559,7 @@ public:
     operator%=(const _Expr& __v) const;
 
     template <class _Expr>
+    _LIBCPP_INLINE_VISIBILITY
     typename enable_if
     <
         __is_val_expr<_Expr>::value,
@@ -1508,6 +1568,7 @@ public:
     operator+=(const _Expr& __v) const;
 
     template <class _Expr>
+    _LIBCPP_INLINE_VISIBILITY
     typename enable_if
     <
         __is_val_expr<_Expr>::value,
@@ -1516,6 +1577,7 @@ public:
     operator-=(const _Expr& __v) const;
 
     template <class _Expr>
+    _LIBCPP_INLINE_VISIBILITY
     typename enable_if
     <
         __is_val_expr<_Expr>::value,
@@ -1524,6 +1586,7 @@ public:
     operator^=(const _Expr& __v) const;
 
     template <class _Expr>
+    _LIBCPP_INLINE_VISIBILITY
     typename enable_if
     <
         __is_val_expr<_Expr>::value,
@@ -1532,6 +1595,7 @@ public:
     operator&=(const _Expr& __v) const;
 
     template <class _Expr>
+    _LIBCPP_INLINE_VISIBILITY
     typename enable_if
     <
         __is_val_expr<_Expr>::value,
@@ -1540,6 +1604,7 @@ public:
     operator|=(const _Expr& __v) const;
 
     template <class _Expr>
+    _LIBCPP_INLINE_VISIBILITY
     typename enable_if
     <
         __is_val_expr<_Expr>::value,
@@ -1548,6 +1613,7 @@ public:
     operator<<=(const _Expr& __v) const;
 
     template <class _Expr>
+    _LIBCPP_INLINE_VISIBILITY
     typename enable_if
     <
         __is_val_expr<_Expr>::value,
@@ -1555,8 +1621,10 @@ public:
     >::type
     operator>>=(const _Expr& __v) const;
 
+    _LIBCPP_INLINE_VISIBILITY
     const gslice_array& operator=(const gslice_array& __ga) const;
 
+    _LIBCPP_INLINE_VISIBILITY
     void operator=(const value_type& __x) const;
 
 //  gslice_array(const gslice_array&)            = default;
@@ -1586,7 +1654,7 @@ private:
 
 template <class _Tp>
 template <class _Expr>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 typename enable_if
 <
     __is_val_expr<_Expr>::value,
@@ -1602,7 +1670,7 @@ gslice_array<_Tp>::operator=(const _Expr& __v) const
 
 template <class _Tp>
 template <class _Expr>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 typename enable_if
 <
     __is_val_expr<_Expr>::value,
@@ -1618,7 +1686,7 @@ gslice_array<_Tp>::operator*=(const _Expr& __v) const
 
 template <class _Tp>
 template <class _Expr>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 typename enable_if
 <
     __is_val_expr<_Expr>::value,
@@ -1634,7 +1702,7 @@ gslice_array<_Tp>::operator/=(const _Expr& __v) const
 
 template <class _Tp>
 template <class _Expr>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 typename enable_if
 <
     __is_val_expr<_Expr>::value,
@@ -1650,7 +1718,7 @@ gslice_array<_Tp>::operator%=(const _Expr& __v) const
 
 template <class _Tp>
 template <class _Expr>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 typename enable_if
 <
     __is_val_expr<_Expr>::value,
@@ -1666,7 +1734,7 @@ gslice_array<_Tp>::operator+=(const _Expr& __v) const
 
 template <class _Tp>
 template <class _Expr>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 typename enable_if
 <
     __is_val_expr<_Expr>::value,
@@ -1682,7 +1750,7 @@ gslice_array<_Tp>::operator-=(const _Expr& __v) const
 
 template <class _Tp>
 template <class _Expr>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 typename enable_if
 <
     __is_val_expr<_Expr>::value,
@@ -1698,7 +1766,7 @@ gslice_array<_Tp>::operator^=(const _Expr& __v) const
 
 template <class _Tp>
 template <class _Expr>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 typename enable_if
 <
     __is_val_expr<_Expr>::value,
@@ -1714,7 +1782,7 @@ gslice_array<_Tp>::operator&=(const _Expr& __v) const
 
 template <class _Tp>
 template <class _Expr>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 typename enable_if
 <
     __is_val_expr<_Expr>::value,
@@ -1730,7 +1798,7 @@ gslice_array<_Tp>::operator|=(const _Expr& __v) const
 
 template <class _Tp>
 template <class _Expr>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 typename enable_if
 <
     __is_val_expr<_Expr>::value,
@@ -1746,7 +1814,7 @@ gslice_array<_Tp>::operator<<=(const _Expr& __v) const
 
 template <class _Tp>
 template <class _Expr>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 typename enable_if
 <
     __is_val_expr<_Expr>::value,
@@ -1761,7 +1829,7 @@ gslice_array<_Tp>::operator>>=(const _Expr& __v) const
 }
 
 template <class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 const gslice_array<_Tp>&
 gslice_array<_Tp>::operator=(const gslice_array& __ga) const
 {
@@ -1774,7 +1842,7 @@ gslice_array<_Tp>::operator=(const gslice_array& __ga) const
 }
 
 template <class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 void
 gslice_array<_Tp>::operator=(const value_type& __x) const
 {
@@ -1797,6 +1865,7 @@ private:
 
 public:
     template <class _Expr>
+    _LIBCPP_INLINE_VISIBILITY
     typename enable_if
     <
         __is_val_expr<_Expr>::value,
@@ -1805,6 +1874,7 @@ public:
     operator=(const _Expr& __v) const;
 
     template <class _Expr>
+    _LIBCPP_INLINE_VISIBILITY
     typename enable_if
     <
         __is_val_expr<_Expr>::value,
@@ -1813,6 +1883,7 @@ public:
     operator*=(const _Expr& __v) const;
 
     template <class _Expr>
+    _LIBCPP_INLINE_VISIBILITY
     typename enable_if
     <
         __is_val_expr<_Expr>::value,
@@ -1821,6 +1892,7 @@ public:
     operator/=(const _Expr& __v) const;
 
     template <class _Expr>
+    _LIBCPP_INLINE_VISIBILITY
     typename enable_if
     <
         __is_val_expr<_Expr>::value,
@@ -1829,6 +1901,7 @@ public:
     operator%=(const _Expr& __v) const;
 
     template <class _Expr>
+    _LIBCPP_INLINE_VISIBILITY
     typename enable_if
     <
         __is_val_expr<_Expr>::value,
@@ -1837,6 +1910,7 @@ public:
     operator+=(const _Expr& __v) const;
 
     template <class _Expr>
+    _LIBCPP_INLINE_VISIBILITY
     typename enable_if
     <
         __is_val_expr<_Expr>::value,
@@ -1845,6 +1919,7 @@ public:
     operator-=(const _Expr& __v) const;
 
     template <class _Expr>
+    _LIBCPP_INLINE_VISIBILITY
     typename enable_if
     <
         __is_val_expr<_Expr>::value,
@@ -1853,6 +1928,7 @@ public:
     operator^=(const _Expr& __v) const;
 
     template <class _Expr>
+    _LIBCPP_INLINE_VISIBILITY
     typename enable_if
     <
         __is_val_expr<_Expr>::value,
@@ -1861,6 +1937,7 @@ public:
     operator&=(const _Expr& __v) const;
 
     template <class _Expr>
+    _LIBCPP_INLINE_VISIBILITY
     typename enable_if
     <
         __is_val_expr<_Expr>::value,
@@ -1869,6 +1946,7 @@ public:
     operator|=(const _Expr& __v) const;
 
     template <class _Expr>
+    _LIBCPP_INLINE_VISIBILITY
     typename enable_if
     <
         __is_val_expr<_Expr>::value,
@@ -1877,6 +1955,7 @@ public:
     operator<<=(const _Expr& __v) const;
 
     template <class _Expr>
+    _LIBCPP_INLINE_VISIBILITY
     typename enable_if
     <
         __is_val_expr<_Expr>::value,
@@ -1884,8 +1963,10 @@ public:
     >::type
     operator>>=(const _Expr& __v) const;
 
+    _LIBCPP_INLINE_VISIBILITY
     const mask_array& operator=(const mask_array& __ma) const;
 
+    _LIBCPP_INLINE_VISIBILITY
     void operator=(const value_type& __x) const;
 
 //  mask_array(const mask_array&)            = default;
@@ -1910,7 +1991,7 @@ private:
 
 template <class _Tp>
 template <class _Expr>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 typename enable_if
 <
     __is_val_expr<_Expr>::value,
@@ -1925,7 +2006,7 @@ mask_array<_Tp>::operator=(const _Expr& __v) const
 
 template <class _Tp>
 template <class _Expr>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 typename enable_if
 <
     __is_val_expr<_Expr>::value,
@@ -1940,7 +2021,7 @@ mask_array<_Tp>::operator*=(const _Expr& __v) const
 
 template <class _Tp>
 template <class _Expr>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 typename enable_if
 <
     __is_val_expr<_Expr>::value,
@@ -1955,7 +2036,7 @@ mask_array<_Tp>::operator/=(const _Expr& __v) const
 
 template <class _Tp>
 template <class _Expr>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 typename enable_if
 <
     __is_val_expr<_Expr>::value,
@@ -1970,7 +2051,7 @@ mask_array<_Tp>::operator%=(const _Expr& __v) const
 
 template <class _Tp>
 template <class _Expr>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 typename enable_if
 <
     __is_val_expr<_Expr>::value,
@@ -1985,7 +2066,7 @@ mask_array<_Tp>::operator+=(const _Expr& __v) const
 
 template <class _Tp>
 template <class _Expr>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 typename enable_if
 <
     __is_val_expr<_Expr>::value,
@@ -2000,7 +2081,7 @@ mask_array<_Tp>::operator-=(const _Expr& __v) const
 
 template <class _Tp>
 template <class _Expr>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 typename enable_if
 <
     __is_val_expr<_Expr>::value,
@@ -2015,7 +2096,7 @@ mask_array<_Tp>::operator^=(const _Expr& __v) const
 
 template <class _Tp>
 template <class _Expr>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 typename enable_if
 <
     __is_val_expr<_Expr>::value,
@@ -2030,7 +2111,7 @@ mask_array<_Tp>::operator&=(const _Expr& __v) const
 
 template <class _Tp>
 template <class _Expr>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 typename enable_if
 <
     __is_val_expr<_Expr>::value,
@@ -2045,7 +2126,7 @@ mask_array<_Tp>::operator|=(const _Expr& __v) const
 
 template <class _Tp>
 template <class _Expr>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 typename enable_if
 <
     __is_val_expr<_Expr>::value,
@@ -2060,7 +2141,7 @@ mask_array<_Tp>::operator<<=(const _Expr& __v) const
 
 template <class _Tp>
 template <class _Expr>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 typename enable_if
 <
     __is_val_expr<_Expr>::value,
@@ -2074,7 +2155,7 @@ mask_array<_Tp>::operator>>=(const _Expr& __v) const
 }
 
 template <class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 const mask_array<_Tp>&
 mask_array<_Tp>::operator=(const mask_array& __ma) const
 {
@@ -2084,7 +2165,7 @@ mask_array<_Tp>::operator=(const mask_array& __ma) const
 }
 
 template <class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 void
 mask_array<_Tp>::operator=(const value_type& __x) const
 {
@@ -2141,6 +2222,7 @@ private:
 
 public:
     template <class _Expr>
+    _LIBCPP_INLINE_VISIBILITY
     typename enable_if
     <
         __is_val_expr<_Expr>::value,
@@ -2149,6 +2231,7 @@ public:
     operator=(const _Expr& __v) const;
 
     template <class _Expr>
+    _LIBCPP_INLINE_VISIBILITY
     typename enable_if
     <
         __is_val_expr<_Expr>::value,
@@ -2157,6 +2240,7 @@ public:
     operator*=(const _Expr& __v) const;
 
     template <class _Expr>
+    _LIBCPP_INLINE_VISIBILITY
     typename enable_if
     <
         __is_val_expr<_Expr>::value,
@@ -2165,6 +2249,7 @@ public:
     operator/=(const _Expr& __v) const;
 
     template <class _Expr>
+    _LIBCPP_INLINE_VISIBILITY
     typename enable_if
     <
         __is_val_expr<_Expr>::value,
@@ -2173,6 +2258,7 @@ public:
     operator%=(const _Expr& __v) const;
 
     template <class _Expr>
+    _LIBCPP_INLINE_VISIBILITY
     typename enable_if
     <
         __is_val_expr<_Expr>::value,
@@ -2181,6 +2267,7 @@ public:
     operator+=(const _Expr& __v) const;
 
     template <class _Expr>
+    _LIBCPP_INLINE_VISIBILITY
     typename enable_if
     <
         __is_val_expr<_Expr>::value,
@@ -2189,6 +2276,7 @@ public:
     operator-=(const _Expr& __v) const;
 
     template <class _Expr>
+    _LIBCPP_INLINE_VISIBILITY
     typename enable_if
     <
         __is_val_expr<_Expr>::value,
@@ -2197,6 +2285,7 @@ public:
     operator^=(const _Expr& __v) const;
 
     template <class _Expr>
+    _LIBCPP_INLINE_VISIBILITY
     typename enable_if
     <
         __is_val_expr<_Expr>::value,
@@ -2205,6 +2294,7 @@ public:
     operator&=(const _Expr& __v) const;
 
     template <class _Expr>
+    _LIBCPP_INLINE_VISIBILITY
     typename enable_if
     <
         __is_val_expr<_Expr>::value,
@@ -2213,6 +2303,7 @@ public:
     operator|=(const _Expr& __v) const;
 
     template <class _Expr>
+    _LIBCPP_INLINE_VISIBILITY
     typename enable_if
     <
         __is_val_expr<_Expr>::value,
@@ -2221,6 +2312,7 @@ public:
     operator<<=(const _Expr& __v) const;
 
     template <class _Expr>
+    _LIBCPP_INLINE_VISIBILITY
     typename enable_if
     <
         __is_val_expr<_Expr>::value,
@@ -2228,8 +2320,10 @@ public:
     >::type
     operator>>=(const _Expr& __v) const;
 
+    _LIBCPP_INLINE_VISIBILITY
     const indirect_array& operator=(const indirect_array& __ia) const;
 
+    _LIBCPP_INLINE_VISIBILITY
     void operator=(const value_type& __x) const;
 
 //  indirect_array(const indirect_array&)            = default;
@@ -2259,7 +2353,7 @@ private:
 
 template <class _Tp>
 template <class _Expr>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 typename enable_if
 <
     __is_val_expr<_Expr>::value,
@@ -2274,7 +2368,7 @@ indirect_array<_Tp>::operator=(const _Expr& __v) const
 
 template <class _Tp>
 template <class _Expr>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 typename enable_if
 <
     __is_val_expr<_Expr>::value,
@@ -2289,7 +2383,7 @@ indirect_array<_Tp>::operator*=(const _Expr& __v) const
 
 template <class _Tp>
 template <class _Expr>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 typename enable_if
 <
     __is_val_expr<_Expr>::value,
@@ -2304,7 +2398,7 @@ indirect_array<_Tp>::operator/=(const _Expr& __v) const
 
 template <class _Tp>
 template <class _Expr>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 typename enable_if
 <
     __is_val_expr<_Expr>::value,
@@ -2319,7 +2413,7 @@ indirect_array<_Tp>::operator%=(const _Expr& __v) const
 
 template <class _Tp>
 template <class _Expr>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 typename enable_if
 <
     __is_val_expr<_Expr>::value,
@@ -2334,7 +2428,7 @@ indirect_array<_Tp>::operator+=(const _Expr& __v) const
 
 template <class _Tp>
 template <class _Expr>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 typename enable_if
 <
     __is_val_expr<_Expr>::value,
@@ -2349,7 +2443,7 @@ indirect_array<_Tp>::operator-=(const _Expr& __v) const
 
 template <class _Tp>
 template <class _Expr>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 typename enable_if
 <
     __is_val_expr<_Expr>::value,
@@ -2364,7 +2458,7 @@ indirect_array<_Tp>::operator^=(const _Expr& __v) const
 
 template <class _Tp>
 template <class _Expr>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 typename enable_if
 <
     __is_val_expr<_Expr>::value,
@@ -2379,7 +2473,7 @@ indirect_array<_Tp>::operator&=(const _Expr& __v) const
 
 template <class _Tp>
 template <class _Expr>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 typename enable_if
 <
     __is_val_expr<_Expr>::value,
@@ -2394,7 +2488,7 @@ indirect_array<_Tp>::operator|=(const _Expr& __v) const
 
 template <class _Tp>
 template <class _Expr>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 typename enable_if
 <
     __is_val_expr<_Expr>::value,
@@ -2409,7 +2503,7 @@ indirect_array<_Tp>::operator<<=(const _Expr& __v) const
 
 template <class _Tp>
 template <class _Expr>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 typename enable_if
 <
     __is_val_expr<_Expr>::value,
@@ -2423,7 +2517,7 @@ indirect_array<_Tp>::operator>>=(const _Expr& __v) const
 }
 
 template <class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 const indirect_array<_Tp>&
 indirect_array<_Tp>::operator=(const indirect_array& __ia) const
 {
@@ -2436,7 +2530,7 @@ indirect_array<_Tp>::operator=(const indirect_array& __ia) const
 }
 
 template <class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 void
 indirect_array<_Tp>::operator=(const value_type& __x) const
 {
@@ -2638,7 +2732,7 @@ __val_expr<_ValExpr>::operator valarray<result_type>() const
 // valarray
 
 template <class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 valarray<_Tp>::valarray(size_t __n)
     : __begin_(0),
       __end_(0)
@@ -2647,7 +2741,7 @@ valarray<_Tp>::valarray(size_t __n)
 }
 
 template <class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 valarray<_Tp>::valarray(const value_type& __x, size_t __n)
     : __begin_(0),
       __end_(0)
@@ -2708,7 +2802,7 @@ valarray<_Tp>::valarray(const valarray& __v)
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 valarray<_Tp>::valarray(valarray&& __v)
     : __begin_(__v.__begin_),
       __end_(__v.__end_)
@@ -2862,7 +2956,7 @@ valarray<_Tp>::valarray(const indirect_array<value_type>& __ia)
 }
 
 template <class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 valarray<_Tp>::~valarray()
 {
     resize(0);
@@ -2884,7 +2978,7 @@ valarray<_Tp>::operator=(const valarray& __v)
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 valarray<_Tp>&
 valarray<_Tp>::operator=(valarray&& __v)
 {
@@ -2901,7 +2995,7 @@ valarray<_Tp>::operator=(valarray&& __v)
 #ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 
 template <class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 valarray<_Tp>&
 valarray<_Tp>::operator=(initializer_list<value_type> __il)
 {
@@ -2914,7 +3008,7 @@ valarray<_Tp>::operator=(initializer_list<value_type> __il)
 #endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 
 template <class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 valarray<_Tp>&
 valarray<_Tp>::operator=(const value_type& __x)
 {
@@ -2923,7 +3017,7 @@ valarray<_Tp>::operator=(const value_type& __x)
 }
 
 template <class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 valarray<_Tp>&
 valarray<_Tp>::operator=(const slice_array<value_type>& __sa)
 {
@@ -2935,7 +3029,7 @@ valarray<_Tp>::operator=(const slice_array<value_type>& __sa)
 }
 
 template <class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 valarray<_Tp>&
 valarray<_Tp>::operator=(const gslice_array<value_type>& __ga)
 {
@@ -2949,7 +3043,7 @@ valarray<_Tp>::operator=(const gslice_array<value_type>& __ga)
 }
 
 template <class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 valarray<_Tp>&
 valarray<_Tp>::operator=(const mask_array<value_type>& __ma)
 {
@@ -2963,7 +3057,7 @@ valarray<_Tp>::operator=(const mask_array<value_type>& __ma)
 }
 
 template <class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 valarray<_Tp>&
 valarray<_Tp>::operator=(const indirect_array<value_type>& __ia)
 {
@@ -2978,7 +3072,7 @@ valarray<_Tp>::operator=(const indirect_array<value_type>& __ia)
 
 template <class _Tp>
 template <class _ValExpr>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 valarray<_Tp>&
 valarray<_Tp>::operator=(const __val_expr<_ValExpr>& __v)
 {
@@ -2992,7 +3086,7 @@ valarray<_Tp>::operator=(const __val_expr<_ValExpr>& __v)
 }
 
 template <class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 __val_expr<__slice_expr<const valarray<_Tp>&> >
 valarray<_Tp>::operator[](slice __s) const
 {
@@ -3000,7 +3094,7 @@ valarray<_Tp>::operator[](slice __s) const
 }
 
 template <class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 slice_array<_Tp>
 valarray<_Tp>::operator[](slice __s)
 {
@@ -3008,7 +3102,7 @@ valarray<_Tp>::operator[](slice __s)
 }
 
 template <class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 __val_expr<__indirect_expr<const valarray<_Tp>&> >
 valarray<_Tp>::operator[](const gslice& __gs) const
 {
@@ -3016,7 +3110,7 @@ valarray<_Tp>::operator[](const gslice& __gs) const
 }
 
 template <class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 gslice_array<_Tp>
 valarray<_Tp>::operator[](const gslice& __gs)
 {
@@ -3026,7 +3120,7 @@ valarray<_Tp>::operator[](const gslice& __gs)
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 __val_expr<__indirect_expr<const valarray<_Tp>&> >
 valarray<_Tp>::operator[](gslice&& __gs) const
 {
@@ -3034,7 +3128,7 @@ valarray<_Tp>::operator[](gslice&& __gs) const
 }
 
 template <class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 gslice_array<_Tp>
 valarray<_Tp>::operator[](gslice&& __gs)
 {
@@ -3044,7 +3138,7 @@ valarray<_Tp>::operator[](gslice&& __gs)
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 __val_expr<__mask_expr<const valarray<_Tp>&> >
 valarray<_Tp>::operator[](const valarray<bool>& __vb) const
 {
@@ -3052,7 +3146,7 @@ valarray<_Tp>::operator[](const valarray<bool>& __vb) const
 }
 
 template <class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 mask_array<_Tp>
 valarray<_Tp>::operator[](const valarray<bool>& __vb)
 {
@@ -3062,7 +3156,7 @@ valarray<_Tp>::operator[](const valarray<bool>& __vb)
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 __val_expr<__mask_expr<const valarray<_Tp>&> >
 valarray<_Tp>::operator[](valarray<bool>&& __vb) const
 {
@@ -3070,7 +3164,7 @@ valarray<_Tp>::operator[](valarray<bool>&& __vb) const
 }
 
 template <class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 mask_array<_Tp>
 valarray<_Tp>::operator[](valarray<bool>&& __vb)
 {
@@ -3080,7 +3174,7 @@ valarray<_Tp>::operator[](valarray<bool>&& __vb)
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 __val_expr<__indirect_expr<const valarray<_Tp>&> >
 valarray<_Tp>::operator[](const valarray<size_t>& __vs) const
 {
@@ -3088,7 +3182,7 @@ valarray<_Tp>::operator[](const valarray<size_t>& __vs) const
 }
 
 template <class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 indirect_array<_Tp>
 valarray<_Tp>::operator[](const valarray<size_t>& __vs)
 {
@@ -3098,7 +3192,7 @@ valarray<_Tp>::operator[](const valarray<size_t>& __vs)
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 __val_expr<__indirect_expr<const valarray<_Tp>&> >
 valarray<_Tp>::operator[](valarray<size_t>&& __vs) const
 {
@@ -3106,7 +3200,7 @@ valarray<_Tp>::operator[](valarray<size_t>&& __vs) const
 }
 
 template <class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 indirect_array<_Tp>
 valarray<_Tp>::operator[](valarray<size_t>&& __vs)
 {
@@ -3184,7 +3278,7 @@ valarray<_Tp>::operator!() const
 }
 
 template <class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 valarray<_Tp>&
 valarray<_Tp>::operator*=(const value_type& __x)
 {
@@ -3194,7 +3288,7 @@ valarray<_Tp>::operator*=(const value_type& __x)
 }
 
 template <class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 valarray<_Tp>&
 valarray<_Tp>::operator/=(const value_type& __x)
 {
@@ -3204,7 +3298,7 @@ valarray<_Tp>::operator/=(const value_type& __x)
 }
 
 template <class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 valarray<_Tp>&
 valarray<_Tp>::operator%=(const value_type& __x)
 {
@@ -3214,7 +3308,7 @@ valarray<_Tp>::operator%=(const value_type& __x)
 }
 
 template <class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 valarray<_Tp>&
 valarray<_Tp>::operator+=(const value_type& __x)
 {
@@ -3224,7 +3318,7 @@ valarray<_Tp>::operator+=(const value_type& __x)
 }
 
 template <class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 valarray<_Tp>&
 valarray<_Tp>::operator-=(const value_type& __x)
 {
@@ -3234,7 +3328,7 @@ valarray<_Tp>::operator-=(const value_type& __x)
 }
 
 template <class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 valarray<_Tp>&
 valarray<_Tp>::operator^=(const value_type& __x)
 {
@@ -3244,7 +3338,7 @@ valarray<_Tp>::operator^=(const value_type& __x)
 }
 
 template <class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 valarray<_Tp>&
 valarray<_Tp>::operator&=(const value_type& __x)
 {
@@ -3254,7 +3348,7 @@ valarray<_Tp>::operator&=(const value_type& __x)
 }
 
 template <class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 valarray<_Tp>&
 valarray<_Tp>::operator|=(const value_type& __x)
 {
@@ -3264,7 +3358,7 @@ valarray<_Tp>::operator|=(const value_type& __x)
 }
 
 template <class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 valarray<_Tp>&
 valarray<_Tp>::operator<<=(const value_type& __x)
 {
@@ -3274,7 +3368,7 @@ valarray<_Tp>::operator<<=(const value_type& __x)
 }
 
 template <class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 valarray<_Tp>&
 valarray<_Tp>::operator>>=(const value_type& __x)
 {
@@ -3285,7 +3379,7 @@ valarray<_Tp>::operator>>=(const value_type& __x)
 
 template <class _Tp>
 template <class _Expr>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 typename enable_if
 <
     __is_val_expr<_Expr>::value,
@@ -3301,7 +3395,7 @@ valarray<_Tp>::operator*=(const _Expr& __v)
 
 template <class _Tp>
 template <class _Expr>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 typename enable_if
 <
     __is_val_expr<_Expr>::value,
@@ -3317,7 +3411,7 @@ valarray<_Tp>::operator/=(const _Expr& __v)
 
 template <class _Tp>
 template <class _Expr>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 typename enable_if
 <
     __is_val_expr<_Expr>::value,
@@ -3333,7 +3427,7 @@ valarray<_Tp>::operator%=(const _Expr& __v)
 
 template <class _Tp>
 template <class _Expr>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 typename enable_if
 <
     __is_val_expr<_Expr>::value,
@@ -3349,7 +3443,7 @@ valarray<_Tp>::operator+=(const _Expr& __v)
 
 template <class _Tp>
 template <class _Expr>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 typename enable_if
 <
     __is_val_expr<_Expr>::value,
@@ -3365,7 +3459,7 @@ valarray<_Tp>::operator-=(const _Expr& __v)
 
 template <class _Tp>
 template <class _Expr>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 typename enable_if
 <
     __is_val_expr<_Expr>::value,
@@ -3381,7 +3475,7 @@ valarray<_Tp>::operator^=(const _Expr& __v)
 
 template <class _Tp>
 template <class _Expr>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 typename enable_if
 <
     __is_val_expr<_Expr>::value,
@@ -3397,7 +3491,7 @@ valarray<_Tp>::operator|=(const _Expr& __v)
 
 template <class _Tp>
 template <class _Expr>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 typename enable_if
 <
     __is_val_expr<_Expr>::value,
@@ -3413,7 +3507,7 @@ valarray<_Tp>::operator&=(const _Expr& __v)
 
 template <class _Tp>
 template <class _Expr>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 typename enable_if
 <
     __is_val_expr<_Expr>::value,
@@ -3429,7 +3523,7 @@ valarray<_Tp>::operator<<=(const _Expr& __v)
 
 template <class _Tp>
 template <class _Expr>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 typename enable_if
 <
     __is_val_expr<_Expr>::value,
@@ -3444,7 +3538,7 @@ valarray<_Tp>::operator>>=(const _Expr& __v)
 }
 
 template <class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 void
 valarray<_Tp>::swap(valarray& __v)
 {
@@ -3453,7 +3547,7 @@ valarray<_Tp>::swap(valarray& __v)
 }
 
 template <class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 _Tp
 valarray<_Tp>::sum() const
 {
@@ -3467,7 +3561,7 @@ valarray<_Tp>::sum() const
 }
 
 template <class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 _Tp
 valarray<_Tp>::min() const
 {
@@ -3477,7 +3571,7 @@ valarray<_Tp>::min() const
 }
 
 template <class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline
 _Tp
 valarray<_Tp>::max() const
 {
