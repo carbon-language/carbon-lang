@@ -69,6 +69,7 @@ public:
         DISPATCH_CASE(Field)
         DISPATCH_CASE(UsingDirective)
         DISPATCH_CASE(Using)
+        DISPATCH_CASE(NamespaceAlias)
       default:
         llvm_unreachable("Subtype of ScopedDecl not handled.");
     }
@@ -90,6 +91,7 @@ public:
   DEFAULT_DISPATCH(ObjCCategory)
   DEFAULT_DISPATCH(UsingDirective)
   DEFAULT_DISPATCH(Using)
+  DEFAULT_DISPATCH(NamespaceAlias)
 
   void VisitCXXRecordDecl(CXXRecordDecl *D) {
     static_cast<ImplClass*>(this)->VisitRecordDecl(D);
