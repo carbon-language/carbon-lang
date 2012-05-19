@@ -853,12 +853,14 @@ public:
     assert(Other.Kind == IK_Identifier && "Cannot copy non-identifiers");
   }
 
-  /// \brief Destroy this unqualified-id.
-  ~UnqualifiedId() { clear(); }
-  
   /// \brief Clear out this unqualified-id, setting it to default (invalid) 
   /// state.
-  void clear();
+  void clear() {
+    Kind = IK_Identifier;
+    Identifier = 0;
+    StartLocation = SourceLocation();
+    EndLocation = SourceLocation();
+  }
   
   /// \brief Determine whether this unqualified-id refers to a valid name.
   bool isValid() const { return StartLocation.isValid(); }

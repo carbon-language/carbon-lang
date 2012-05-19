@@ -935,13 +935,6 @@ bool DeclSpec::isMissingDeclaratorOk() {
     StorageClassSpec != DeclSpec::SCS_typedef;
 }
 
-void UnqualifiedId::clear() {
-  Kind = IK_Identifier;
-  Identifier = 0;
-  StartLocation = SourceLocation();
-  EndLocation = SourceLocation();
-}
-
 void UnqualifiedId::setOperatorFunctionId(SourceLocation OperatorLoc, 
                                           OverloadedOperatorKind Op,
                                           SourceLocation SymbolLocations[3]) {
