@@ -1397,15 +1397,8 @@ bool RegisterCoalescer::joinIntervals(CoalescerPair &CP) {
 
   while (I != IE && J != JE) {
     // Determine if these two live ranges overlap.
-    bool Overlaps;
-    if (I->start < J->start) {
-      Overlaps = I->end > J->start;
-    } else {
-      Overlaps = J->end > I->start;
-    }
-
     // If so, check value # info to determine if they are really different.
-    if (Overlaps) {
+    if (I->end > J->start && J->end > I->start) {
       // If the live range overlap will map to the same value number in the
       // result liverange, we can still coalesce them.  If not, we can't.
       if (LHSValNoAssignments[I->valno->id] !=
