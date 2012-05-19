@@ -686,6 +686,9 @@ void ValueHandleBase::ValueIsRAUWd(Value *Old, Value *New) {
 #endif
 }
 
-/// ~CallbackVH. Empty, but defined here to avoid emitting the vtable
-/// more than once.
-CallbackVH::~CallbackVH() {}
+// Default implementation for CallbackVH.
+void CallbackVH::allUsesReplacedWith(Value *) {}
+
+void CallbackVH::deleted() {
+  setValPtr(NULL);
+}
