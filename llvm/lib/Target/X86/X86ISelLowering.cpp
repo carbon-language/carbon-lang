@@ -5026,11 +5026,17 @@ X86TargetLowering::LowerVectorBroadcast(SDValue &Op, SelectionDAG &DAG) const {
     }
   }
 
-  // The scalar source must be a normal load.
-  if (!ISD::isNormalLoad(Ld.getNode()))
-    return SDValue();
-
+  bool IsLoad = ISD::isNormalLoad(Ld.getNode());
   unsigned ScalarSize = Ld.getValueType().getSizeInBits();
+
+  // Handle AVX2 in-register broadcasts.
+  if (!IsLoad && Subtarget->hasAVX2() &&
+      (ScalarSize == 32 || (Is256 && ScalarSize == 64)))
+    return DAG.getNode(X86ISD::VBROADCAST, dl, VT, Ld);
+
+  // The scalar source must be a normal load.
+  if (!IsLoad)
+    return SDValue();
 
   if (ScalarSize == 32 || (Is256 && ScalarSize == 64))
     return DAG.getNode(X86ISD::VBROADCAST, dl, VT, Ld);

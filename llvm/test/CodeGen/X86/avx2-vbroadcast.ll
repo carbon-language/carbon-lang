@@ -222,3 +222,40 @@ footer349VF:
 ret:
   ret void
 }
+
+; CHECK: _inreg0
+; CHECK: broadcastss
+; CHECK: ret
+define <8 x i32> @_inreg0(i32 %scalar) nounwind uwtable readnone ssp {
+  %in = insertelement <8 x i32> undef, i32 %scalar, i32 0
+  %wide = shufflevector <8 x i32> %in, <8 x i32> undef, <8 x i32> zeroinitializer
+  ret <8 x i32> %wide
+}
+
+; CHECK: _inreg1
+; CHECK: broadcastss
+; CHECK: ret
+define <8 x float> @_inreg1(float %scalar) nounwind uwtable readnone ssp {
+  %in = insertelement <8 x float> undef, float %scalar, i32 0
+  %wide = shufflevector <8 x float> %in, <8 x float> undef, <8 x i32> zeroinitializer
+  ret <8 x float> %wide
+}
+
+; CHECK: _inreg2
+; CHECK: broadcastss
+; CHECK: ret
+define <4 x float> @_inreg2(float %scalar) nounwind uwtable readnone ssp {
+  %in = insertelement <4 x float> undef, float %scalar, i32 0
+  %wide = shufflevector <4 x float> %in, <4 x float> undef, <4 x i32> zeroinitializer
+  ret <4 x float> %wide
+}
+
+; CHECK: _inreg3
+; CHECK: broadcastsd
+; CHECK: ret
+define <4 x double> @_inreg3(double %scalar) nounwind uwtable readnone ssp {
+  %in = insertelement <4 x double> undef, double %scalar, i32 0
+  %wide = shufflevector <4 x double> %in, <4 x double> undef, <4 x i32> zeroinitializer
+  ret <4 x double> %wide
+}
+
