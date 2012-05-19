@@ -687,9 +687,12 @@ bool RegisterCoalescer::removeCopyByCommutingDef(const CoalescerPair &CP,
     MachineInstr *UseMI = &*UI;
     SlotIndex UseIdx = LIS->getInstructionIndex(UseMI);
     LiveInterval::iterator ULR = IntA.FindLiveRangeContaining(UseIdx);
-    if (ULR == IntA.end())
+    if (ULR == IntA.end() || ULR->valno != AValNo)
       continue;
-    if (ULR->valno == AValNo && JoinedCopies.count(UseMI))
+    if (JoinedCopies.count(UseMI))
+      return false;
+    // If this use is tied to a def, we can't rewrite the register.
+    if (UseMI->isRegTiedToDefOperand(UI.getOperandNo()))
       return false;
   }
 
