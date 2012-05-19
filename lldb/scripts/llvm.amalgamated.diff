@@ -1,3 +1,476 @@
+Index: include/llvm/ADT/PointerUnion.h
+===================================================================
+--- include/llvm/ADT/PointerUnion.h	(revision 152265)
++++ include/llvm/ADT/PointerUnion.h	(working copy)
+@@ -266,7 +266,7 @@
+         ::llvm::PointerUnionTypeSelector<PT1, T, IsInnerUnion,
+           ::llvm::PointerUnionTypeSelector<PT2, T, IsInnerUnion, IsPT3 >
+                                                                    >::Return Ty;
+-      return Ty(Val).is<T>();
++      return Ty(Val).template is<T>();
+     }
+     
+     /// get<T>() - Return the value of the specified pointer type. If the
+@@ -279,7 +279,7 @@
+         ::llvm::PointerUnionTypeSelector<PT1, T, IsInnerUnion,
+           ::llvm::PointerUnionTypeSelector<PT2, T, IsInnerUnion, IsPT3 >
+                                                                    >::Return Ty;
+-      return Ty(Val).get<T>();
++      return Ty(Val).template get<T>();
+     }
+     
+     /// dyn_cast<T>() - If the current value is of the specified pointer type,
+Index: include/llvm/ADT/IntervalMap.h
+===================================================================
+--- include/llvm/ADT/IntervalMap.h	(revision 152265)
++++ include/llvm/ADT/IntervalMap.h	(working copy)
+@@ -1977,7 +1977,7 @@
+     CurSize[Nodes] = CurSize[NewNode];
+     Node[Nodes] = Node[NewNode];
+     CurSize[NewNode] = 0;
+-    Node[NewNode] = this->map->newNode<NodeT>();
++    Node[NewNode] = this->map->template newNode<NodeT>();
+     ++Nodes;
+   }
+ 
+Index: utils/TableGen/X86RecognizableInstr.cpp
+===================================================================
+--- utils/TableGen/X86RecognizableInstr.cpp	(revision 152265)
++++ utils/TableGen/X86RecognizableInstr.cpp	(working copy)
+@@ -405,13 +405,13 @@
+     return FILTER_STRONG;
+     
+     
+-  // Filter out artificial instructions
++  // Filter out artificial instructions but leave in the LOCK_PREFIX so it is
++  // printed as a separate "instruction".
+     
+   if (Name.find("_Int") != Name.npos       ||
+       Name.find("Int_") != Name.npos       ||
+       Name.find("_NOREX") != Name.npos     ||
+-      Name.find("2SDL") != Name.npos       ||
+-      Name == "LOCK_PREFIX")
++      Name.find("2SDL") != Name.npos)
+     return FILTER_STRONG;
+ 
+   // Filter out instructions with segment override prefixes.
+Index: lib/Target/ARM/ARMJITInfo.cpp
+===================================================================
+--- lib/Target/ARM/ARMJITInfo.cpp	(revision 152265)
++++ lib/Target/ARM/ARMJITInfo.cpp	(working copy)
+@@ -61,7 +61,7 @@
+     // concerned, so we can't just preserve the callee saved regs.
+     "stmdb sp!, {r0, r1, r2, r3, lr}\n"
+ #if (defined(__VFP_FP__) && !defined(__SOFTFP__))
+-    "fstmfdd sp!, {d0, d1, d2, d3, d4, d5, d6, d7}\n"
++    "vstmdb sp!, {d0, d1, d2, d3, d4, d5, d6, d7}\n"
+ #endif
+     // The LR contains the address of the stub function on entry.
+     // pass it as the argument to the C part of the callback
+@@ -85,7 +85,7 @@
+     //
+ #if (defined(__VFP_FP__) && !defined(__SOFTFP__))
+     // Restore VFP caller-saved registers.
+-    "fldmfdd sp!, {d0, d1, d2, d3, d4, d5, d6, d7}\n"
++    "vldmia sp!, {d0, d1, d2, d3, d4, d5, d6, d7}\n"
+ #endif
+     //
+     //      We need to exchange the values in slots 0 and 1 so we can
+Index: lib/Target/ARM/ARMInstrNEON.td
+===================================================================
+--- lib/Target/ARM/ARMInstrNEON.td	(revision 152265)
++++ lib/Target/ARM/ARMInstrNEON.td	(working copy)
+@@ -4795,12 +4795,12 @@
+ 
+ // Vector Swap
+ def  VSWPd    : N2VX<0b11, 0b11, 0b00, 0b10, 0b00000, 0, 0,
+-                     (outs DPR:$Vd, DPR:$Vd1), (ins DPR:$Vm, DPR:$Vm1),
+-                     NoItinerary, "vswp", "$Vd, $Vd1", "$Vm = $Vd, $Vm1 = $Vd1",
++                     (outs DPR:$Vd, DPR:$Vm), (ins DPR:$in1, DPR:$in2),
++                     NoItinerary, "vswp", "$Vd, $Vm", "$in1 = $Vd, $in2 = $Vm",
+                      []>;
+ def  VSWPq    : N2VX<0b11, 0b11, 0b00, 0b10, 0b00000, 1, 0,
+-                     (outs QPR:$Vd, QPR:$Vd1), (ins QPR:$Vm, QPR:$Vm1),
+-                     NoItinerary, "vswp", "$Vd, $Vd1", "$Vm = $Vd, $Vm1 = $Vd1",
++                     (outs QPR:$Vd, QPR:$Vm), (ins QPR:$in1, QPR:$in2),
++                     NoItinerary, "vswp", "$Vd, $Vm", "$in1 = $Vd, $in2 = $Vm",
+                      []>;
+ 
+ // Vector Move Operations.
+Index: lib/Target/ARM/InstPrinter/ARMInstPrinter.cpp
+===================================================================
+--- lib/Target/ARM/InstPrinter/ARMInstPrinter.cpp	(revision 152265)
++++ lib/Target/ARM/InstPrinter/ARMInstPrinter.cpp	(working copy)
+@@ -212,12 +212,12 @@
+   } else {
+     assert(Op.isExpr() && "unknown operand kind in printOperand");
+     // If a symbolic branch target was added as a constant expression then print
+-    // that address in hex.
++    // that address in hex. And only print 32 unsigned bits for the address.
+     const MCConstantExpr *BranchTarget = dyn_cast<MCConstantExpr>(Op.getExpr());
+     int64_t Address;
+     if (BranchTarget && BranchTarget->EvaluateAsAbsolute(Address)) {
+       O << "0x";
+-      O.write_hex(Address);
++      O.write_hex((uint32_t)Address);
+     }
+     else {
+       // Otherwise, just print the expression.
+Index: lib/Target/ARM/ARMInstrThumb2.td
+===================================================================
+--- lib/Target/ARM/ARMInstrThumb2.td	(revision 152265)
++++ lib/Target/ARM/ARMInstrThumb2.td	(working copy)
+@@ -3198,6 +3198,7 @@
+   let Inst{13} = target{17};
+   let Inst{21-16} = target{16-11};
+   let Inst{10-0} = target{10-0};
++  let DecoderMethod = "DecodeT2BInstruction";
+ }
+ 
+ let isNotDuplicable = 1, isIndirectBranch = 1 in {
+Index: lib/Target/ARM/ARMInstrThumb.td
+===================================================================
+--- lib/Target/ARM/ARMInstrThumb.td	(revision 152265)
++++ lib/Target/ARM/ARMInstrThumb.td	(working copy)
+@@ -413,11 +413,11 @@
+                   "bl${p}\t$func",
+                   [(ARMtcall tglobaladdr:$func)]>,
+              Requires<[IsThumb, IsNotIOS]> {
+-    bits<22> func;
+-    let Inst{26} = func{21};
++    bits<24> func;
++    let Inst{26} = func{23};
+     let Inst{25-16} = func{20-11};
+-    let Inst{13} = 1;
+-    let Inst{11} = 1;
++    let Inst{13} = func{22};
++    let Inst{11} = func{21};
+     let Inst{10-0} = func{10-0};
+   }
+ 
+@@ -427,10 +427,11 @@
+                    "blx${p}\t$func",
+                    [(ARMcall tglobaladdr:$func)]>,
+               Requires<[IsThumb, HasV5T, IsNotIOS]> {
+-    bits<21> func;
++    bits<24> func;
++    let Inst{26} = func{23};
+     let Inst{25-16} = func{20-11};
+-    let Inst{13} = 1;
+-    let Inst{11} = 1;
++    let Inst{13} = func{22};
++    let Inst{11} = func{21};
+     let Inst{10-1} = func{10-1};
+     let Inst{0} = 0; // func{0} is assumed zero
+   }
+Index: lib/Target/ARM/MCTargetDesc/ARMAsmBackend.cpp
+===================================================================
+--- lib/Target/ARM/MCTargetDesc/ARMAsmBackend.cpp	(revision 152265)
++++ lib/Target/ARM/MCTargetDesc/ARMAsmBackend.cpp	(working copy)
+@@ -397,39 +397,65 @@
+     return swapped;
+   }
+   case ARM::fixup_arm_thumb_bl: {
+-    // The value doesn't encode the low bit (always zero) and is offset by
+-    // four. The value is encoded into disjoint bit positions in the destination
+-    // opcode. x = unchanged, I = immediate value bit, S = sign extension bit
+-    //
+-    //   BL:  xxxxxSIIIIIIIIII xxxxxIIIIIIIIIII
+-    //
+-    // Note that the halfwords are stored high first, low second; so we need
+-    // to transpose the fixup value here to map properly.
+-    unsigned isNeg = (int64_t(Value - 4) < 0) ? 1 : 0;
+-    uint32_t Binary = 0;
+-    Value = 0x3fffff & ((Value - 4) >> 1);
+-    Binary  = (Value & 0x7ff) << 16;    // Low imm11 value.
+-    Binary |= (Value & 0x1ffc00) >> 11; // High imm10 value.
+-    Binary |= isNeg << 10;              // Sign bit.
+-    return Binary;
++     // The value doesn't encode the low bit (always zero) and is offset by
++     // four. The 32-bit immediate value is encoded as
++     //   imm32 = SignExtend(S:I1:I2:imm10:imm11:0)
++     // where I1 = NOT(J1 ^ S) and I2 = NOT(J2 ^ S).
++     // The value is encoded into disjoint bit positions in the destination
++     // opcode. x = unchanged, I = immediate value bit, S = sign extension bit,
++     // J = either J1 or J2 bit
++     //
++     //   BL:  xxxxxSIIIIIIIIII xxJxJIIIIIIIIIII
++     //
++     // Note that the halfwords are stored high first, low second; so we need
++     // to transpose the fixup value here to map properly.
++     uint32_t offset = (Value - 4) >> 1;
++     uint32_t signBit = (offset & 0x800000) >> 23;
++     uint32_t I1Bit = (offset & 0x400000) >> 22;
++     uint32_t J1Bit = (I1Bit ^ 0x1) ^ signBit;
++     uint32_t I2Bit = (offset & 0x200000) >> 21;
++     uint32_t J2Bit = (I2Bit ^ 0x1) ^ signBit;
++     uint32_t imm10Bits = (offset & 0x1FF800) >> 11;
++     uint32_t imm11Bits = (offset & 0x000007FF);
++ 
++     uint32_t Binary = 0;
++     uint32_t firstHalf = (((uint16_t)signBit << 10) | (uint16_t)imm10Bits);
++     uint32_t secondHalf = (((uint16_t)J1Bit << 13) | ((uint16_t)J2Bit << 11) |
++                           (uint16_t)imm11Bits);
++     Binary |= secondHalf << 16;
++     Binary |= firstHalf;
++     return Binary;
++
+   }
+   case ARM::fixup_arm_thumb_blx: {
+-    // The value doesn't encode the low two bits (always zero) and is offset by
+-    // four (see fixup_arm_thumb_cp). The value is encoded into disjoint bit
+-    // positions in the destination opcode. x = unchanged, I = immediate value
+-    // bit, S = sign extension bit, 0 = zero.
+-    //
+-    //   BLX: xxxxxSIIIIIIIIII xxxxxIIIIIIIIII0
+-    //
+-    // Note that the halfwords are stored high first, low second; so we need
+-    // to transpose the fixup value here to map properly.
+-    unsigned isNeg = (int64_t(Value-4) < 0) ? 1 : 0;
+-    uint32_t Binary = 0;
+-    Value = 0xfffff & ((Value - 2) >> 2);
+-    Binary  = (Value & 0x3ff) << 17;    // Low imm10L value.
+-    Binary |= (Value & 0xffc00) >> 10;  // High imm10H value.
+-    Binary |= isNeg << 10;              // Sign bit.
+-    return Binary;
++     // The value doesn't encode the low two bits (always zero) and is offset by
++     // four (see fixup_arm_thumb_cp). The 32-bit immediate value is encoded as
++     //   imm32 = SignExtend(S:I1:I2:imm10H:imm10L:00)
++     // where I1 = NOT(J1 ^ S) and I2 = NOT(J2 ^ S).
++     // The value is encoded into disjoint bit positions in the destination 
++     // opcode. x = unchanged, I = immediate value bit, S = sign extension bit, 
++     // J = either J1 or J2 bit, 0 = zero.
++     //
++     //   BLX: xxxxxSIIIIIIIIII xxJxJIIIIIIIIII0
++     //
++     // Note that the halfwords are stored high first, low second; so we need
++     // to transpose the fixup value here to map properly.
++     uint32_t offset = (Value - 2) >> 2;
++     uint32_t signBit = (offset & 0x400000) >> 22;
++     uint32_t I1Bit = (offset & 0x200000) >> 21;
++     uint32_t J1Bit = (I1Bit ^ 0x1) ^ signBit;
++     uint32_t I2Bit = (offset & 0x100000) >> 20;
++     uint32_t J2Bit = (I2Bit ^ 0x1) ^ signBit;
++     uint32_t imm10HBits = (offset & 0xFFC00) >> 10;
++     uint32_t imm10LBits = (offset & 0x3FF);
++ 
++     uint32_t Binary = 0;
++     uint32_t firstHalf = (((uint16_t)signBit << 10) | (uint16_t)imm10HBits);
++     uint32_t secondHalf = (((uint16_t)J1Bit << 13) | ((uint16_t)J2Bit << 11) | 
++                           ((uint16_t)imm10LBits) << 1);
++     Binary |= secondHalf << 16;
++     Binary |= firstHalf;
++     return Binary;
+   }
+   case ARM::fixup_arm_thumb_cp:
+     // Offset by 4, and don't encode the low two bits. Two bytes of that
+Index: lib/Target/ARM/Disassembler/ARMDisassembler.cpp
+===================================================================
+--- lib/Target/ARM/Disassembler/ARMDisassembler.cpp	(revision 152265)
++++ lib/Target/ARM/Disassembler/ARMDisassembler.cpp	(working copy)
+@@ -182,6 +182,8 @@
+                                uint64_t Address, const void *Decoder);
+ static DecodeStatus DecodeAddrMode7Operand(llvm::MCInst &Inst, unsigned Val,
+                                uint64_t Address, const void *Decoder);
++static DecodeStatus DecodeT2BInstruction(MCInst &Inst, unsigned Insn,
++                               uint64_t Address, const void *Decoder);
+ static DecodeStatus DecodeBranchImmInstruction(llvm::MCInst &Inst,unsigned Insn,
+                                uint64_t Address, const void *Decoder);
+ static DecodeStatus DecodeAddrMode6Operand(llvm::MCInst &Inst, unsigned Val,
+@@ -1945,6 +1947,21 @@
+ }
+ 
+ static DecodeStatus
++DecodeT2BInstruction(MCInst &Inst, unsigned Insn,
++                     uint64_t Address, const void *Decoder) {
++  DecodeStatus S = MCDisassembler::Success;
++  unsigned imm = (fieldFromInstruction32(Insn, 0, 11) << 0) |
++                 (fieldFromInstruction32(Insn, 11, 1) << 18) |
++                 (fieldFromInstruction32(Insn, 13, 1) << 17) |
++                 (fieldFromInstruction32(Insn, 16, 6) << 11) |
++                 (fieldFromInstruction32(Insn, 26, 1) << 19);
++  if (!tryAddingSymbolicOperand(Address, Address + SignExtend32<20>(imm<<1) + 4,
++                                true, 4, Inst, Decoder))
++    Inst.addOperand(MCOperand::CreateImm(SignExtend32<20>(imm << 1)));
++  return S;
++}
++
++static DecodeStatus
+ DecodeBranchImmInstruction(llvm::MCInst &Inst, unsigned Insn,
+                            uint64_t Address, const void *Decoder) {
+   DecodeStatus S = MCDisassembler::Success;
+@@ -2177,6 +2194,8 @@
+     case ARM::VLD2b8wb_register:
+     case ARM::VLD2b16wb_register:
+     case ARM::VLD2b32wb_register:
++      Inst.addOperand(MCOperand::CreateImm(0));
++      break;
+     case ARM::VLD3d8_UPD:
+     case ARM::VLD3d16_UPD:
+     case ARM::VLD3d32_UPD:
+@@ -2245,6 +2264,16 @@
+         !Check(S, DecodeGPRRegisterClass(Inst, Rm, Address, Decoder)))
+       return MCDisassembler::Fail;
+     break;
++  case ARM::VLD2d8wb_fixed:
++  case ARM::VLD2d16wb_fixed:
++  case ARM::VLD2d32wb_fixed:
++  case ARM::VLD2b8wb_fixed:
++  case ARM::VLD2b16wb_fixed:
++  case ARM::VLD2b32wb_fixed:
++  case ARM::VLD2q8wb_fixed:
++  case ARM::VLD2q16wb_fixed:
++  case ARM::VLD2q32wb_fixed:
++    break;
+   }
+ 
+   return S;
+@@ -2313,6 +2342,10 @@
+     case ARM::VST2b8wb_register:
+     case ARM::VST2b16wb_register:
+     case ARM::VST2b32wb_register:
++      if (Rm == 0xF)
++        return MCDisassembler::Fail;
++      Inst.addOperand(MCOperand::CreateImm(0));
++      break;
+     case ARM::VST3d8_UPD:
+     case ARM::VST3d16_UPD:
+     case ARM::VST3d32_UPD:
+@@ -2354,6 +2387,23 @@
+     case ARM::VST1q16wb_fixed:
+     case ARM::VST1q32wb_fixed:
+     case ARM::VST1q64wb_fixed:
++    case ARM::VST1d8Twb_fixed:
++    case ARM::VST1d16Twb_fixed:
++    case ARM::VST1d32Twb_fixed:
++    case ARM::VST1d64Twb_fixed:
++    case ARM::VST1d8Qwb_fixed:
++    case ARM::VST1d16Qwb_fixed:
++    case ARM::VST1d32Qwb_fixed:
++    case ARM::VST1d64Qwb_fixed:
++    case ARM::VST2d8wb_fixed:
++    case ARM::VST2d16wb_fixed:
++    case ARM::VST2d32wb_fixed:
++    case ARM::VST2q8wb_fixed:
++    case ARM::VST2q16wb_fixed:
++    case ARM::VST2q32wb_fixed:
++    case ARM::VST2b8wb_fixed:
++    case ARM::VST2b16wb_fixed:
++    case ARM::VST2b32wb_fixed:
+       break;
+   }
+ 
+@@ -2837,19 +2887,25 @@
+ 
+ static DecodeStatus DecodeThumbBROperand(llvm::MCInst &Inst, unsigned Val,
+                                  uint64_t Address, const void *Decoder) {
+-  Inst.addOperand(MCOperand::CreateImm(SignExtend32<12>(Val << 1)));
++   if (!tryAddingSymbolicOperand(Address, Address + SignExtend32<12>(Val<<1) + 4,
++                                 true, 2, Inst, Decoder))
++     Inst.addOperand(MCOperand::CreateImm(SignExtend32<12>(Val << 1)));
+   return MCDisassembler::Success;
+ }
+ 
+ static DecodeStatus DecodeT2BROperand(llvm::MCInst &Inst, unsigned Val,
+                                  uint64_t Address, const void *Decoder) {
+-  Inst.addOperand(MCOperand::CreateImm(SignExtend32<21>(Val)));
++   if (!tryAddingSymbolicOperand(Address, Address + SignExtend32<21>(Val) + 4,
++                                 true, 4, Inst, Decoder))
++     Inst.addOperand(MCOperand::CreateImm(SignExtend32<21>(Val)));
+   return MCDisassembler::Success;
+ }
+ 
+ static DecodeStatus DecodeThumbCmpBROperand(llvm::MCInst &Inst, unsigned Val,
+                                  uint64_t Address, const void *Decoder) {
+-  Inst.addOperand(MCOperand::CreateImm(SignExtend32<7>(Val << 1)));
++   if (!tryAddingSymbolicOperand(Address, Address + SignExtend32<7>(Val<<1) + 4,
++                                 true, 2, Inst, Decoder))
++     Inst.addOperand(MCOperand::CreateImm(SignExtend32<7>(Val << 1)));
+   return MCDisassembler::Success;
+ }
+ 
+@@ -3162,10 +3218,25 @@
+ 
+ static DecodeStatus DecodeThumbBLXOffset(llvm::MCInst &Inst, unsigned Val,
+                                  uint64_t Address, const void *Decoder) {
++  // Val is passed in as S:J1:J2:imm10H:imm10L:’0’
++  // Note only one trailing zero not two.  Also the J1 and J2 values are from
++  // the encoded instruction.  So here change to I1 and I2 values via:
++  // I1 = NOT(J1 EOR S);
++  // I2 = NOT(J2 EOR S);
++  // and build the imm32 with two trailing zeros as documented:
++  // imm32 = SignExtend(S:I1:I2:imm10H:imm10L:’00’, 32);
++  unsigned S = (Val >> 23) & 1;
++  unsigned J1 = (Val >> 22) & 1;
++  unsigned J2 = (Val >> 21) & 1;
++  unsigned I1 = !(J1 ^ S);
++  unsigned I2 = !(J2 ^ S);
++  unsigned tmp = (Val & ~0x600000) | (I1 << 22) | (I2 << 21);
++  int imm32 = SignExtend32<25>(tmp << 1);
++
+   if (!tryAddingSymbolicOperand(Address,
+-                                (Address & ~2u) + SignExtend32<22>(Val << 1) + 4,
++                                (Address & ~2u) + imm32 + 4,
+                                 true, 4, Inst, Decoder))
+-    Inst.addOperand(MCOperand::CreateImm(SignExtend32<22>(Val << 1)));
++    Inst.addOperand(MCOperand::CreateImm(imm32));
+   return MCDisassembler::Success;
+ }
+ 
+@@ -3271,15 +3342,32 @@
+ static DecodeStatus
+ DecodeThumbBCCTargetOperand(llvm::MCInst &Inst, unsigned Val,
+                             uint64_t Address, const void *Decoder){
+-  Inst.addOperand(MCOperand::CreateImm(Val << 1));
++  if (!tryAddingSymbolicOperand(Address, Address + SignExtend32<8>(Val<<1) + 4,
++                                true, 2, Inst, Decoder))
++    Inst.addOperand(MCOperand::CreateImm(SignExtend32<8>(Val << 1)));
+   return MCDisassembler::Success;
+ }
+ 
+ static DecodeStatus DecodeThumbBLTargetOperand(llvm::MCInst &Inst, unsigned Val,
+                                        uint64_t Address, const void *Decoder){
+-  if (!tryAddingSymbolicOperand(Address, Address + SignExtend32<22>(Val<<1) + 4,
++  // Val is passed in as S:J1:J2:imm10:imm11
++  // Note no trailing zero after imm11.  Also the J1 and J2 values are from
++  // the encoded instruction.  So here change to I1 and I2 values via:
++  // I1 = NOT(J1 EOR S);
++  // I2 = NOT(J2 EOR S);
++  // and build the imm32 with one trailing zero as documented:
++  // imm32 = SignExtend(S:I1:I2:imm10:imm11:’0’, 32);
++  unsigned S = (Val >> 23) & 1;
++  unsigned J1 = (Val >> 22) & 1;
++  unsigned J2 = (Val >> 21) & 1;
++  unsigned I1 = !(J1 ^ S);
++  unsigned I2 = !(J2 ^ S);
++  unsigned tmp = (Val & ~0x600000) | (I1 << 22) | (I2 << 21);
++  int imm32 = SignExtend32<25>(tmp << 1);
++
++  if (!tryAddingSymbolicOperand(Address, Address + imm32 + 4,
+                                 true, 4, Inst, Decoder))
+-    Inst.addOperand(MCOperand::CreateImm(SignExtend32<22>(Val << 1)));
++    Inst.addOperand(MCOperand::CreateImm(imm32));
+   return MCDisassembler::Success;
+ }
+ 
+Index: lib/Target/X86/Disassembler/X86DisassemblerDecoder.c
+===================================================================
+--- lib/Target/X86/Disassembler/X86DisassemblerDecoder.c	(revision 152265)
++++ lib/Target/X86/Disassembler/X86DisassemblerDecoder.c	(working copy)
+@@ -312,6 +312,13 @@
+     
+     if (consumeByte(insn, &byte))
+       return -1;
++
++    // If the the first byte is a LOCK prefix break and let it be disassembled
++    // as a lock "instruction", by creating an <MCInst #xxxx LOCK_PREFIX>.
++    // FIXME there is currently no way to get the disassembler to print the
++    // lock prefix if it is not the first byte.
++    if (insn->readerCursor - 1 == insn->startLocation && byte == 0xf0)
++      break;
+     
+     switch (byte) {
+     case 0xf0:  /* LOCK */
 Index: lib/ExecutionEngine/RuntimeDyld/RuntimeDyldMachO.cpp
 ===================================================================
 --- lib/ExecutionEngine/RuntimeDyld/RuntimeDyldMachO.cpp	(revision 152265)
@@ -839,3 +1312,63 @@ Index: lib/ExecutionEngine/RuntimeDyld/RuntimeDyldMachO.h
                              bool isPCRel,
                              unsigned Type,
                              unsigned Size,
+Index: lib/MC/MCDisassembler/Disassembler.cpp
+===================================================================
+--- lib/MC/MCDisassembler/Disassembler.cpp	(revision 152265)
++++ lib/MC/MCDisassembler/Disassembler.cpp	(working copy)
+@@ -15,7 +15,9 @@
+ #include "llvm/MC/MCDisassembler.h"
+ #include "llvm/MC/MCInst.h"
+ #include "llvm/MC/MCInstPrinter.h"
++#include "llvm/MC/MCInstrInfo.h"
+ #include "llvm/MC/MCRegisterInfo.h"
++#include "llvm/MC/MCSubtargetInfo.h"
+ #include "llvm/Support/MemoryObject.h"
+ #include "llvm/Support/TargetRegistry.h"
+ #include "llvm/Support/TargetSelect.h"
+@@ -86,7 +88,7 @@
+   LLVMDisasmContext *DC = new LLVMDisasmContext(TripleName, DisInfo, TagType,
+                                                 GetOpInfo, SymbolLookUp,
+                                                 TheTarget, MAI, MRI,
+-                                                Ctx, DisAsm, IP);
++                                                STI, Ctx, DisAsm, IP);
+   assert(DC && "Allocation failure!");
+ 
+   return DC;
+Index: lib/MC/MCDisassembler/Disassembler.h
+===================================================================
+--- lib/MC/MCDisassembler/Disassembler.h	(revision 152265)
++++ lib/MC/MCDisassembler/Disassembler.h	(working copy)
+@@ -29,6 +29,7 @@
+ class MCDisassembler;
+ class MCInstPrinter; 
+ class MCRegisterInfo;
++class MCSubtargetInfo;
+ class Target;
+ 
+ //
+@@ -61,6 +62,8 @@
+   llvm::OwningPtr<const llvm::MCAsmInfo> MAI;
+   // The register information for the target architecture.
+   llvm::OwningPtr<const llvm::MCRegisterInfo> MRI;
++  // The subtarget information for the target architecture.
++  llvm::OwningPtr<const llvm::MCSubtargetInfo> MSI;
+   // The assembly context for creating symbols and MCExprs.
+   llvm::OwningPtr<const llvm::MCContext> Ctx;
+   // The disassembler for the target architecture.
+@@ -78,6 +81,7 @@
+                     LLVMSymbolLookupCallback symbolLookUp,
+                     const Target *theTarget, const MCAsmInfo *mAI,
+                     const MCRegisterInfo *mRI,
++                    const MCSubtargetInfo *mSI,
+                     llvm::MCContext *ctx, const MCDisassembler *disAsm,
+                     MCInstPrinter *iP) : TripleName(tripleName),
+                     DisInfo(disInfo), TagType(tagType), GetOpInfo(getOpInfo),
+@@ -85,6 +89,7 @@
+                     CommentStream(CommentsToEmit) {
+     MAI.reset(mAI);
+     MRI.reset(mRI);
++    MSI.reset(mSI);
+     Ctx.reset(ctx);
+     DisAsm.reset(disAsm);
+     IP.reset(iP);
