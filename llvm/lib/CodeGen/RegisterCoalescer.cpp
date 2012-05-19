@@ -870,7 +870,9 @@ bool RegisterCoalescer::reMaterializeTrivialDef(LiveInterval &SrcInt,
   ++NumReMats;
 
   // The source interval can become smaller because we removed a use.
-  LIS->shrinkToUses(&SrcInt);
+  LIS->shrinkToUses(&SrcInt, &DeadDefs);
+  if (!DeadDefs.empty())
+    eliminateDeadDefs();
 
   return true;
 }
