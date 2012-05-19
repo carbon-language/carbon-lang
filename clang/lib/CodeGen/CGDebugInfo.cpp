@@ -576,8 +576,10 @@ llvm::DIType CGDebugInfo::CreatePointerLikeType(unsigned Tag,
                                                 const Type *Ty, 
                                                 QualType PointeeTy,
                                                 llvm::DIFile Unit) {
-  if (Tag == llvm::dwarf::DW_TAG_reference_type)
-    return DBuilder.createReferenceType(CreatePointeeType(PointeeTy, Unit));
+  if (Tag == llvm::dwarf::DW_TAG_reference_type ||
+      Tag == llvm::dwarf::DW_TAG_rvalue_reference_type)
+    return DBuilder.createReferenceType(Tag,
+                                        CreatePointeeType(PointeeTy, Unit));
                                     
   // Bit size, align and offset of the type.
   // Size is always the size of a pointer. We can't use getTypeSize here
@@ -2239,14 +2241,14 @@ void CGDebugInfo::EmitDeclare(const VarDecl *VD, unsigned Tag,
     // If Storage is an aggregate returned as 'sret' then let debugger know
     // about this.
     if (Arg->hasStructRetAttr())
-      Ty = DBuilder.createReferenceType(Ty);
+      Ty = DBuilder.createReferenceType(llvm::dwarf::DW_TAG_reference_type, Ty);
     else if (CXXRecordDecl *Record = VD->getType()->getAsCXXRecordDecl()) {
       // If an aggregate variable has non trivial destructor or non trivial copy
       // constructor than it is pass indirectly. Let debug info know about this
       // by using reference of the aggregate type as a argument type.
       if (!Record->hasTrivialCopyConstructor() ||
           !Record->hasTrivialDestructor())
-        Ty = DBuilder.createReferenceType(Ty);
+        Ty = DBuilder.createReferenceType(llvm::dwarf::DW_TAG_reference_type, Ty);
     }
   }
       
