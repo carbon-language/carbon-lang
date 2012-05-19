@@ -194,7 +194,7 @@ public:
   SmallVector<sys::MemoryBlock, 16> AllocatedCodeMem;
   SmallVector<sys::MemoryBlock, 16> FreeCodeMem;
 
-  LLIMCJITMemoryManager() { };
+  LLIMCJITMemoryManager() { }
   ~LLIMCJITMemoryManager();
 
   virtual uint8_t *allocateCodeSection(uintptr_t Size, unsigned Alignment,
@@ -216,57 +216,57 @@ public:
   // need implement them.
   virtual void setMemoryWritable() {
     llvm_unreachable("Unexpected call!");
-  };
+  }
   virtual void setMemoryExecutable() {
     llvm_unreachable("Unexpected call!");
-  };
+  }
   virtual void setPoisonMemory(bool poison) {
     llvm_unreachable("Unexpected call!");
-  };
+  }
   virtual void AllocateGOT() {
     llvm_unreachable("Unexpected call!");
-  };
+  }
   virtual uint8_t *getGOTBase() const {
     llvm_unreachable("Unexpected call!");
     return 0;
-  };
+  }
   virtual uint8_t *startFunctionBody(const Function *F,
                                      uintptr_t &ActualSize){
     llvm_unreachable("Unexpected call!");
     return 0;
-  };
+  }
   virtual uint8_t *allocateStub(const GlobalValue* F, unsigned StubSize,
                                 unsigned Alignment) {
     llvm_unreachable("Unexpected call!");
     return 0;
-  };
+  }
   virtual void endFunctionBody(const Function *F, uint8_t *FunctionStart,
                                uint8_t *FunctionEnd) {
     llvm_unreachable("Unexpected call!");
-  };
+  }
   virtual uint8_t *allocateSpace(intptr_t Size, unsigned Alignment) {
     llvm_unreachable("Unexpected call!");
     return 0;
-  };
+  }
   virtual uint8_t *allocateGlobal(uintptr_t Size, unsigned Alignment) {
     llvm_unreachable("Unexpected call!");
     return 0;
-  };
+  }
   virtual void deallocateFunctionBody(void *Body) {
     llvm_unreachable("Unexpected call!");
-  };
+  }
   virtual uint8_t* startExceptionTable(const Function* F,
                                        uintptr_t &ActualSize) {
     llvm_unreachable("Unexpected call!");
     return 0;
-  };
+  }
   virtual void endExceptionTable(const Function *F, uint8_t *TableStart,
                                  uint8_t *TableEnd, uint8_t* FrameRegister) {
     llvm_unreachable("Unexpected call!");
-  };
+  }
   virtual void deallocateExceptionTable(void *ET) {
     llvm_unreachable("Unexpected call!");
-  };
+  }
 };
 
 uint8_t *LLIMCJITMemoryManager::allocateDataSection(uintptr_t Size,
