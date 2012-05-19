@@ -1070,15 +1070,17 @@ bool RegisterCoalescer::joinCopy(MachineInstr *CopyMI, bool &Again) {
 
   // If they are already joined we continue.
   if (CP.getSrcReg() == CP.getDstReg()) {
-    markAsJoined(CopyMI);
     DEBUG(dbgs() << "\tCopy already coalesced.\n");
+    LIS->RemoveMachineInstrFromMaps(CopyMI);
+    CopyMI->eraseFromParent();
     return false;  // Not coalescable.
   }
 
   // Eliminate undefs.
   if (!CP.isPhys() && eliminateUndefCopy(CopyMI, CP)) {
-    markAsJoined(CopyMI);
     DEBUG(dbgs() << "\tEliminated copy of <undef> value.\n");
+    LIS->RemoveMachineInstrFromMaps(CopyMI);
+    CopyMI->eraseFromParent();
     return false;  // Not coalescable.
   }
 
