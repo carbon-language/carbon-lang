@@ -1504,14 +1504,15 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
   Decl *Member;
   if (isInstField) {
     CXXScopeSpec &SS = D.getCXXScopeSpec();
-    IdentifierInfo *II = Name.getAsIdentifierInfo();
 
     // Data members must have identifiers for names.
-    if (!II) {
+    if (!Name.isIdentifier()) {
       Diag(Loc, diag::err_bad_variable_name)
         << Name;
       return 0;
     }
+
+    IdentifierInfo *II = Name.getAsIdentifierInfo();
 
     // Member field could not be with "template" keyword.
     // So TemplateParameterLists should be empty in this case.
