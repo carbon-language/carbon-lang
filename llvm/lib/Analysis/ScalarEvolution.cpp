@@ -6039,12 +6039,34 @@ ScalarEvolution::isLoopEntryGuardedByCond(const Loop *L,
   return false;
 }
 
+/// RAII wrapper to prevent recursive application of isImpliedCond.
+/// ScalarEvolution's PendingLoopPredicates set must be empty unless we are
+/// currently evaluating isImpliedCond.
+struct MarkPendingLoopPredicate {
+  Value *Cond;
+  DenseSet<Value*> &LoopPreds;
+  bool Pending;
+
+  MarkPendingLoopPredicate(Value *C, DenseSet<Value*> &LP)
+    : Cond(C), LoopPreds(LP) {
+    Pending = !LoopPreds.insert(Cond).second;
+  }
+  ~MarkPendingLoopPredicate() {
+    if (!Pending)
+      LoopPreds.erase(Cond);
+  }
+};
+
 /// isImpliedCond - Test whether the condition described by Pred, LHS,
 /// and RHS is true whenever the given Cond value evaluates to true.
 bool ScalarEvolution::isImpliedCond(ICmpInst::Predicate Pred,
                                     const SCEV *LHS, const SCEV *RHS,
                                     Value *FoundCondValue,
                                     bool Inverse) {
+  MarkPendingLoopPredicate Mark(FoundCondValue, PendingLoopPredicates);
+  if (Mark.Pending)
+    return false;
+
   // Recursively handle And and Or conditions.
   if (BinaryOperator *BO = dyn_cast<BinaryOperator>(FoundCondValue)) {
     if (BO->getOpcode() == Instruction::And) {
@@ -6570,6 +6592,8 @@ void ScalarEvolution::releaseMemory() {
        I != E; ++I) {
     I->second.clear();
   }
+
+  assert(PendingLoopPredicates.empty() && "isImpliedCond garbage");
 
   BackedgeTakenCounts.clear();
   ConstantEvolutionLoopExitValue.clear();
