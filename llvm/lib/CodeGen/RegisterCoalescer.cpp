@@ -99,6 +99,9 @@ namespace {
     /// Dead instructions that are about to be deleted.
     SmallVector<MachineInstr*, 8> DeadDefs;
 
+    /// Virtual registers to be considered for register class inflation.
+    SmallVector<unsigned, 8> InflateRegs;
+
     /// Recursively eliminate dead defs in DeadDefs.
     void eliminateDeadDefs();
 
@@ -1140,6 +1143,11 @@ bool RegisterCoalescer::joinCopy(MachineInstr *CopyMI, bool &Again) {
     MRI->setRegClass(CP.getDstReg(), CP.getNewRC());
   }
 
+  // Removing sub-register copies can ease the register class constraints.
+  // Make sure we attempt to inflate the register class of DstReg.
+  if (!CP.isPhys() && RegClassInfo.isProperSubClass(CP.getNewRC()))
+    InflateRegs.push_back(CP.getDstReg());
+
   // Remember to delete the copy instruction.
   markAsJoined(CopyMI);
 
@@ -1638,6 +1646,7 @@ void RegisterCoalescer::releaseMemory() {
   ReMatDefs.clear();
   WorkList.clear();
   DeadDefs.clear();
+  InflateRegs.clear();
 }
 
 bool RegisterCoalescer::runOnMachineFunction(MachineFunction &fn) {
@@ -1675,7 +1684,7 @@ bool RegisterCoalescer::runOnMachineFunction(MachineFunction &fn) {
 
   // Perform a final pass over the instructions and compute spill weights
   // and remove identity moves.
-  SmallVector<unsigned, 4> DeadDefs, InflateRegs;
+  SmallVector<unsigned, 4> DeadDefs;
   for (MachineFunction::iterator mbbi = MF->begin(), mbbe = MF->end();
        mbbi != mbbe; ++mbbi) {
     MachineBasicBlock* mbb = mbbi;
@@ -1687,15 +1696,6 @@ bool RegisterCoalescer::runOnMachineFunction(MachineFunction &fn) {
         bool DoDelete = true;
         assert(MI->isCopyLike() && "Unrecognized copy instruction");
         unsigned SrcReg = MI->getOperand(MI->isSubregToReg() ? 2 : 1).getReg();
-        unsigned DstReg = MI->getOperand(0).getReg();
-
-        // Collect candidates for register class inflation.
-        if (TargetRegisterInfo::isVirtualRegister(SrcReg) &&
-            RegClassInfo.isProperSubClass(MRI->getRegClass(SrcReg)))
-          InflateRegs.push_back(SrcReg);
-        if (TargetRegisterInfo::isVirtualRegister(DstReg) &&
-            RegClassInfo.isProperSubClass(MRI->getRegClass(DstReg)))
-          InflateRegs.push_back(DstReg);
 
         if (TargetRegisterInfo::isPhysicalRegister(SrcReg) &&
             MI->getNumOperands() > 2)
@@ -1739,11 +1739,6 @@ bool RegisterCoalescer::runOnMachineFunction(MachineFunction &fn) {
           if (!Reg)
             continue;
           DeadDefs.push_back(Reg);
-          if (TargetRegisterInfo::isVirtualRegister(Reg)) {
-            // Remat may also enable register class inflation.
-            if (RegClassInfo.isProperSubClass(MRI->getRegClass(Reg)))
-              InflateRegs.push_back(Reg);
-          }
           if (MO.isDead())
             continue;
           if (TargetRegisterInfo::isPhysicalRegister(Reg) ||
@@ -1792,7 +1787,7 @@ bool RegisterCoalescer::runOnMachineFunction(MachineFunction &fn) {
   }
 
   // After deleting a lot of copies, register classes may be less constrained.
-  // Removing sub-register opreands may alow GR32_ABCD -> GR32 and DPR_VFP2 ->
+  // Removing sub-register operands may allow GR32_ABCD -> GR32 and DPR_VFP2 ->
   // DPR inflation.
   array_pod_sort(InflateRegs.begin(), InflateRegs.end());
   InflateRegs.erase(std::unique(InflateRegs.begin(), InflateRegs.end()),
