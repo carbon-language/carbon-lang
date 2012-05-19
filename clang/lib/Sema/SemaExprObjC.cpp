@@ -1398,14 +1398,14 @@ HandleExprPropertyRefExpr(const ObjCObjectPointerType *OPT,
                           bool Super) {
   const ObjCInterfaceType *IFaceT = OPT->getInterfaceType();
   ObjCInterfaceDecl *IFace = IFaceT->getDecl();
-  
-  if (MemberName.getNameKind() != DeclarationName::Identifier) {
+
+  IdentifierInfo *Member = MemberName.getAsIdentifierInfo();
+  if (!Member) {
     Diag(MemberLoc, diag::err_invalid_property_name)
       << MemberName << QualType(OPT, 0);
     return ExprError();
   }
   
-  IdentifierInfo *Member = MemberName.getAsIdentifierInfo();
   SourceRange BaseRange = Super? SourceRange(SuperLoc)
                                : BaseExpr->getSourceRange();
   if (RequireCompleteType(MemberLoc, OPT->getPointeeType(), 

@@ -281,7 +281,7 @@ IdentifierInfo *DeclarationName::getCXXLiteralIdentifier() const {
 void *DeclarationName::getFETokenInfoAsVoidSlow() const {
   switch (getNameKind()) {
   case Identifier:
-    llvm_unreachable("Handled by getFETokenInfoAsVoid()");
+    llvm_unreachable("Handled by getFETokenInfo()");
 
   case CXXConstructorName:
   case CXXDestructorName:

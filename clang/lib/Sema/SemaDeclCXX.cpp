@@ -1504,15 +1504,14 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
   Decl *Member;
   if (isInstField) {
     CXXScopeSpec &SS = D.getCXXScopeSpec();
+    IdentifierInfo *II = Name.getAsIdentifierInfo();
 
     // Data members must have identifiers for names.
-    if (Name.getNameKind() != DeclarationName::Identifier) {
+    if (!II) {
       Diag(Loc, diag::err_bad_variable_name)
         << Name;
       return 0;
     }
-    
-    IdentifierInfo *II = Name.getAsIdentifierInfo();
 
     // Member field could not be with "template" keyword.
     // So TemplateParameterLists should be empty in this case.
@@ -4469,7 +4468,7 @@ void Sema::DiagnoseHiddenVirtualMethods(CXXRecordDecl *DC, CXXMethodDecl *MD) {
   if (Diags.getDiagnosticLevel(diag::warn_overloaded_virtual,
                                MD->getLocation()) == DiagnosticsEngine::Ignored)
     return;
-  if (MD->getDeclName().getNameKind() != DeclarationName::Identifier)
+  if (!MD->getDeclName().isIdentifier())
     return;
 
   CXXBasePaths Paths(/*FindAmbiguities=*/true, // true to look in all bases.
