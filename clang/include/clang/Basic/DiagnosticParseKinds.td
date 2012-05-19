@@ -651,7 +651,8 @@ def err_availability_unknown_change : Error<
   "%0 is not an availability stage; use 'introduced', 'deprecated', or "
   "'obsoleted'">;
 def err_availability_redundant : Error<
-  "redundant %0 availability change; only the last specified change will "        "be used">;
+  "redundant %0 availability change; only the last specified change will "
+  "be used">;
 def warn_availability_and_unavailable : Warning<
   "'unavailable' availability overrides all other availability information">,
   InGroup<Availability>;
