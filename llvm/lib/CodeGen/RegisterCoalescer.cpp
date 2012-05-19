@@ -1081,9 +1081,10 @@ bool RegisterCoalescer::joinCopy(MachineInstr *CopyMI, bool &Again) {
   if (!CP.isPhys() && RegClassInfo.isProperSubClass(CP.getNewRC()))
     InflateRegs.push_back(CP.getDstReg());
 
-  // Remember to delete the copy instruction.
-  LIS->RemoveMachineInstrFromMaps(CopyMI);
-  CopyMI->eraseFromParent();
+  // CopyMI has been erased by joinIntervals at this point. Remove it from
+  // ErasedInstrs since copyCoalesceWorkList() won't add a successful join back
+  // to the work list. This keeps ErasedInstrs from growing needlessly.
+  ErasedInstrs.erase(CopyMI);
 
   // Rewrite all SrcReg operands to DstReg.
   // Also update DstReg operands to include DstIdx if it is set.
@@ -1285,6 +1286,7 @@ bool RegisterCoalescer::joinIntervals(CoalescerPair &CP) {
   SmallVector<VNInfo*, 16> NewVNInfo;
 
   SmallVector<MachineInstr*, 8> DupCopies;
+  SmallVector<MachineInstr*, 8> DeadCopies;
 
   LiveInterval &LHS = LIS->getOrCreateInterval(CP.getDstReg());
   DEBUG({ dbgs() << "\t\tLHS = "; LHS.print(dbgs(), TRI); dbgs() << "\n"; });
@@ -1313,6 +1315,7 @@ bool RegisterCoalescer::joinIntervals(CoalescerPair &CP) {
       continue;
 
     LHSValsDefinedFromRHS[VNI] = lr->valno;
+    DeadCopies.push_back(MI);
   }
 
   // Loop over the value numbers of the RHS, seeing if any are defined from
@@ -1339,6 +1342,7 @@ bool RegisterCoalescer::joinIntervals(CoalescerPair &CP) {
         continue;
 
     RHSValsDefinedFromLHS[VNI] = lr->valno;
+    DeadCopies.push_back(MI);
   }
 
   LHSValNoAssignments.resize(LHS.getNumValNums(), -1);
@@ -1438,6 +1442,17 @@ bool RegisterCoalescer::joinIntervals(CoalescerPair &CP) {
   if (RHSValNoAssignments.empty())
     RHSValNoAssignments.push_back(-1);
 
+  // Now erase all the redundant copies.
+  for (unsigned i = 0, e = DeadCopies.size(); i != e; ++i) {
+    MachineInstr *MI = DeadCopies[i];
+    DEBUG(dbgs() << "\t\terased:\t" << LIS->getInstructionIndex(MI)
+                 << '\t' << *MI);
+    if (!ErasedInstrs.insert(MI))
+      continue;
+    LIS->RemoveMachineInstrFromMaps(MI);
+    MI->eraseFromParent();
+  }
+
   SmallVector<unsigned, 8> SourceRegisters;
   for (SmallVector<MachineInstr*, 8>::iterator I = DupCopies.begin(),
          E = DupCopies.end(); I != E; ++I) {
@@ -1451,7 +1466,8 @@ bool RegisterCoalescer::joinIntervals(CoalescerPair &CP) {
     // A = X
     unsigned Src = MI->getOperand(1).getReg();
     SourceRegisters.push_back(Src);
-    ErasedInstrs.insert(MI);
+    if (!ErasedInstrs.insert(MI))
+      continue;
     LIS->RemoveMachineInstrFromMaps(MI);
     MI->eraseFromParent();
   }

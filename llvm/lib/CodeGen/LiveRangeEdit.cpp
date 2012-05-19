@@ -308,6 +308,10 @@ void LiveRangeEdit::eliminateDeadDefs(SmallVectorImpl<MachineInstr*> &Dead,
         TheDelegate->LRE_DidCloneVirtReg(Dups.back()->reg, LI->reg);
     }
     ConEQ.Distribute(&Dups[0], MRI);
+    DEBUG({
+      for (unsigned i = 0; i != NumComp; ++i)
+        dbgs() << '\t' << *Dups[i] << '\n';
+    });
   }
 }
 
