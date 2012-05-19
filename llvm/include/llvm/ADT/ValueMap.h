@@ -269,7 +269,7 @@ struct DenseMapInfo<ValueMapCallbackVH<KeyT, ValueT, Config> > {
     return LHS == RHS;
   }
   static bool isEqual(const KeyT &LHS, const VH &RHS) {
-    return LHS == RHS;
+    return LHS == RHS.getValPtr();
   }
 };
 
