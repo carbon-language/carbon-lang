@@ -766,7 +766,9 @@ bool RegisterCoalescer::removeCopyByCommutingDef(const CoalescerPair &CP,
     DEBUG(dbgs() << "\t\tnoop: " << DefIdx << '\t' << *UseMI);
     assert(DVNI->def == DefIdx);
     BValNo = IntB.MergeValueNumberInto(BValNo, DVNI);
-    markAsJoined(UseMI);
+    ErasedInstrs.insert(UseMI);
+    LIS->RemoveMachineInstrFromMaps(UseMI);
+    UseMI->eraseFromParent();
   }
 
   // Extend BValNo by merging in IntA live ranges of AValNo. Val# definition
@@ -1127,7 +1129,8 @@ bool RegisterCoalescer::joinCopy(MachineInstr *CopyMI, bool &Again) {
     if (!CP.isPartial()) {
       if (adjustCopiesBackFrom(CP, CopyMI) ||
           removeCopyByCommutingDef(CP, CopyMI)) {
-        markAsJoined(CopyMI);
+        LIS->RemoveMachineInstrFromMaps(CopyMI);
+        CopyMI->eraseFromParent();
         DEBUG(dbgs() << "\tTrivial!\n");
         return true;
       }
@@ -1152,7 +1155,8 @@ bool RegisterCoalescer::joinCopy(MachineInstr *CopyMI, bool &Again) {
     InflateRegs.push_back(CP.getDstReg());
 
   // Remember to delete the copy instruction.
-  markAsJoined(CopyMI);
+  LIS->RemoveMachineInstrFromMaps(CopyMI);
+  CopyMI->eraseFromParent();
 
   // Rewrite all SrcReg operands to DstReg.
   // Also update DstReg operands to include DstIdx if it is set.
@@ -1518,13 +1522,11 @@ bool RegisterCoalescer::joinIntervals(CoalescerPair &CP) {
     // was actually a copy from A. Now that we decided to coalesce A and B,
     // transform the code into
     // A = X
-    // X = X
-    // and mark the X as coalesced to keep the illusion.
     unsigned Src = MI->getOperand(1).getReg();
     SourceRegisters.push_back(Src);
-    MI->getOperand(0).substVirtReg(Src, 0, *TRI);
-
-    markAsJoined(MI);
+    ErasedInstrs.insert(MI);
+    LIS->RemoveMachineInstrFromMaps(MI);
+    MI->eraseFromParent();
   }
 
   // If B = X was the last use of X in a liverange, we have to shrink it now

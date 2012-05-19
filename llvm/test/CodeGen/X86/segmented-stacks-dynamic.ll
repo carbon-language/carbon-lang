@@ -51,14 +51,14 @@ false:
 ; X64-NEXT: callq __morestack
 ; X64-NEXT: ret
 
-; X64:      movq %rsp, %rdi
-; X64-NEXT: subq %rax, %rdi
-; X64-NEXT: cmpq %rdi, %fs:112
+; X64:      movq %rsp, %[[RDI:rdi|rax]]
+; X64-NEXT: subq %{{.*}}, %[[RDI]]
+; X64-NEXT: cmpq %[[RDI]], %fs:112
 
-; X64:      movq %rdi, %rsp
+; X64:      movq %[[RDI]], %rsp
 
-; X64:      movq %rax, %rdi
+; X64:      movq %{{.*}}, %rdi
 ; X64-NEXT: callq __morestack_allocate_stack_space
-; X64-NEXT: movq %rax, %rdi
+; X64:      movq %rax, %rdi
 
 }
