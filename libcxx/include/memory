@@ -3603,9 +3603,10 @@ public:
     long use_count() const _NOEXCEPT {return __shared_count::use_count();}
     __shared_weak_count* lock() _NOEXCEPT;
 
-#ifndef _LIBCPP_NO_RTTI
+    // purposefully not protected with #ifndef _LIBCPP_NO_RTTI because doing so
+    //  breaks ABI for those clients who need to compile their projects with
+    //    -fno-rtti and yet link against a libc++.dylib compiled without -fno-rtti.
     virtual const void* __get_deleter(const type_info&) const _NOEXCEPT;
-#endif
 private:
     virtual void __on_zero_shared_weak() _NOEXCEPT = 0;
 };
