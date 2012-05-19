@@ -1963,7 +1963,7 @@ Process::ReadMemory (addr_t addr, void *buf, size_t size, Error &error)
 size_t
 Process::ReadCStringFromMemory (addr_t addr, std::string &out_str, Error &error)
 {
-    char buf[32];
+    char buf[256];
     out_str.clear();
     addr_t curr_addr = addr;
     while (1)
