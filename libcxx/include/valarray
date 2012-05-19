@@ -1010,7 +1010,6 @@ public:
     valarray apply(value_type __f(value_type)) const;
     _LIBCPP_INLINE_VISIBILITY
     valarray apply(value_type __f(const value_type&)) const;
-    _LIBCPP_INLINE_VISIBILITY
     void     resize(size_t __n, value_type __x = value_type());
 
 private:
