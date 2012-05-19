@@ -681,7 +681,10 @@ void ConnectedVNInfoEqClasses::Distribute(LiveInterval *LIV[],
     SlotIndex Idx = LIS.getInstructionIndex(MI);
     Idx = Idx.getRegSlot(MO.isUse());
     const VNInfo *VNI = LI.getVNInfoAt(Idx);
-    assert(VNI && "Interval not live at use.");
+    // FIXME: We should be able to assert(VNI) here, but the coalescer leaves
+    // dangling defs around.
+    if (!VNI)
+      continue;
     MO.setReg(LIV[getEqClass(VNI)]->reg);
   }
 

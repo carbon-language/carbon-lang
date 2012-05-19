@@ -21,29 +21,30 @@
 
 #include "llvm/Pass.h"
 #include "llvm/Value.h"
-#include "llvm/CodeGen/LiveIntervalAnalysis.h"
-#include "llvm/CodeGen/MachineInstr.h"
-#include "llvm/CodeGen/MachineRegisterInfo.h"
-#include "llvm/Target/TargetInstrInfo.h"
-#include "llvm/Target/TargetRegisterInfo.h"
-#include "llvm/CodeGen/LiveIntervalAnalysis.h"
+#include "llvm/ADT/OwningPtr.h"
+#include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/SmallSet.h"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/AliasAnalysis.h"
+#include "llvm/CodeGen/LiveIntervalAnalysis.h"
+#include "llvm/CodeGen/LiveIntervalAnalysis.h"
+#include "llvm/CodeGen/LiveRangeEdit.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
+#include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineLoopInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/Passes.h"
-#include "llvm/Target/TargetInstrInfo.h"
-#include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/TargetOptions.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/ADT/OwningPtr.h"
-#include "llvm/ADT/SmallSet.h"
-#include "llvm/ADT/Statistic.h"
-#include "llvm/ADT/STLExtras.h"
+#include "llvm/Target/TargetInstrInfo.h"
+#include "llvm/Target/TargetInstrInfo.h"
+#include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetOptions.h"
+#include "llvm/Target/TargetRegisterInfo.h"
 #include <algorithm>
 #include <cmath>
 using namespace llvm;
@@ -67,7 +68,8 @@ VerifyCoalescing("verify-coalescing",
          cl::Hidden);
 
 namespace {
-  class RegisterCoalescer : public MachineFunctionPass {
+  class RegisterCoalescer : public MachineFunctionPass,
+                            private LiveRangeEdit::Delegate {
     MachineFunction* MF;
     MachineRegisterInfo* MRI;
     const TargetMachine* TM;
@@ -83,16 +85,25 @@ namespace {
     ///
     SmallPtrSet<MachineInstr*, 32> JoinedCopies;
 
-    /// ReMatCopies - Keep track of copies eliminated due to remat.
-    ///
-    SmallPtrSet<MachineInstr*, 32> ReMatCopies;
-
     /// ReMatDefs - Keep track of definition instructions which have
     /// been remat'ed.
     SmallPtrSet<MachineInstr*, 8> ReMatDefs;
 
     /// WorkList - Copy instructions yet to be coalesced.
     SmallVector<MachineInstr*, 8> WorkList;
+
+    /// ErasedInstrs - Set of instruction pointers that have been erased, and
+    /// that may be present in WorkList.
+    SmallPtrSet<MachineInstr*, 8> ErasedInstrs;
+
+    /// Dead instructions that are about to be deleted.
+    SmallVector<MachineInstr*, 8> DeadDefs;
+
+    /// Recursively eliminate dead defs in DeadDefs.
+    void eliminateDeadDefs();
+
+    /// LiveRangeEdit callback.
+    void LRE_WillEraseInstruction(MachineInstr *MI);
 
     /// joinAllIntervals - join compatible live intervals
     void joinAllIntervals();
@@ -381,6 +392,17 @@ void RegisterCoalescer::markAsJoined(MachineInstr *CopyMI) {
        E = CopyMI->operands_end(); I != E; ++I)
     if (I->isReg())
       I->setIsUndef(true);
+}
+
+void RegisterCoalescer::eliminateDeadDefs() {
+  SmallVector<LiveInterval*, 8> NewRegs;
+  LiveRangeEdit(0, NewRegs, *MF, *LIS, 0, this).eliminateDeadDefs(DeadDefs);
+}
+
+// Callback from eliminateDeadDefs().
+void RegisterCoalescer::LRE_WillEraseInstruction(MachineInstr *MI) {
+  // MI may be in WorkList. Make sure we don't visit it.
+  ErasedInstrs.insert(MI);
 }
 
 /// adjustCopiesBackFrom - We found a non-trivially-coalescable copy with IntA
@@ -844,7 +866,7 @@ bool RegisterCoalescer::reMaterializeTrivialDef(LiveInterval &SrcInt,
   }
 
   CopyMI->eraseFromParent();
-  ReMatCopies.insert(CopyMI);
+  ErasedInstrs.insert(CopyMI);
   ReMatDefs.insert(DefMI);
   DEBUG(dbgs() << "Remat: " << *NewMI);
   ++NumReMats;
@@ -1025,7 +1047,7 @@ bool RegisterCoalescer::canJoinPhys(CoalescerPair &CP) {
 bool RegisterCoalescer::joinCopy(MachineInstr *CopyMI, bool &Again) {
 
   Again = false;
-  if (JoinedCopies.count(CopyMI) || ReMatCopies.count(CopyMI))
+  if (JoinedCopies.count(CopyMI))
     return false; // Already done.
 
   DEBUG(dbgs() << LIS->getInstructionIndex(CopyMI) << '\t' << *CopyMI);
@@ -1034,6 +1056,16 @@ bool RegisterCoalescer::joinCopy(MachineInstr *CopyMI, bool &Again) {
   if (!CP.setRegisters(CopyMI)) {
     DEBUG(dbgs() << "\tNot coalescable.\n");
     return false;
+  }
+
+  // Dead code elimination. This really should be handled by MachineDCE, but
+  // sometimes dead copies slip through, and we can't generate invalid live
+  // ranges.
+  if (!CP.isPhys() && CopyMI->allDefsAreDead()) {
+    DEBUG(dbgs() << "\tCopy is dead.\n");
+    DeadDefs.push_back(CopyMI);
+    eliminateDeadDefs();
+    return true;
   }
 
   // If they are already joined we continue.
@@ -1542,6 +1574,12 @@ bool RegisterCoalescer::copyCoalesceWorkList(unsigned From) {
   for (unsigned i = From, e = WorkList.size(); i != e; ++i) {
     if (!WorkList[i])
       continue;
+    // Skip instruction pointers that have already been erased, for example by
+    // dead code elimination.
+    if (ErasedInstrs.erase(WorkList[i])) {
+      WorkList[i] = 0;
+      continue;
+    }
     bool Again = false;
     bool Success = joinCopy(WorkList[i], Again);
     Progress |= Success;
@@ -1609,9 +1647,10 @@ void RegisterCoalescer::joinAllIntervals() {
 
 void RegisterCoalescer::releaseMemory() {
   JoinedCopies.clear();
-  ReMatCopies.clear();
+  ErasedInstrs.clear();
   ReMatDefs.clear();
   WorkList.clear();
+  DeadDefs.clear();
 }
 
 bool RegisterCoalescer::runOnMachineFunction(MachineFunction &fn) {
