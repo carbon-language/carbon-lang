@@ -54,8 +54,8 @@ bool LiveRangeEdit::checkRematerializable(VNInfo *VNI,
 }
 
 void LiveRangeEdit::scanRemattable(AliasAnalysis *aa) {
-  for (LiveInterval::vni_iterator I = Parent.vni_begin(),
-       E = Parent.vni_end(); I != E; ++I) {
+  for (LiveInterval::vni_iterator I = getParent().vni_begin(),
+       E = getParent().vni_end(); I != E; ++I) {
     VNInfo *VNI = *I;
     if (VNI->isUnused())
       continue;

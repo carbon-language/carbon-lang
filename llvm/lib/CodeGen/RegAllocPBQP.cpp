@@ -550,7 +550,7 @@ bool RegAllocPBQP::mapPBQPToRegAlloc(const PBQPRAProblem &problem,
     } else if (problem.isSpillOption(vreg, alloc)) {
       vregsToAlloc.erase(vreg);
       SmallVector<LiveInterval*, 8> newSpills;
-      LiveRangeEdit LRE(lis->getInterval(vreg), newSpills, *mf, *lis, vrm);
+      LiveRangeEdit LRE(&lis->getInterval(vreg), newSpills, *mf, *lis, vrm);
       spiller->spill(LRE);
 
       DEBUG(dbgs() << "VREG " << vreg << " -> SPILLED (Cost: "

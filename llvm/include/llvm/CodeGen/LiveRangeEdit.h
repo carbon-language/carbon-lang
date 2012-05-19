@@ -55,7 +55,7 @@ public:
   };
 
 private:
-  LiveInterval &Parent;
+  LiveInterval *Parent;
   SmallVectorImpl<LiveInterval*> &NewRegs;
   MachineRegisterInfo &MRI;
   LiveIntervals &LIS;
@@ -99,7 +99,7 @@ public:
   /// @param vrm Map of virtual registers to physical registers for this
   ///            function.  If NULL, no virtual register map updates will
   ///            be done.  This could be the case if called before Regalloc.
-  LiveRangeEdit(LiveInterval &parent,
+  LiveRangeEdit(LiveInterval *parent,
                 SmallVectorImpl<LiveInterval*> &newRegs,
                 MachineFunction &MF,
                 LiveIntervals &lis,
@@ -112,8 +112,11 @@ public:
       FirstNew(newRegs.size()),
       ScannedRemattable(false) {}
 
-  LiveInterval &getParent() const { return Parent; }
-  unsigned getReg() const { return Parent.reg; }
+  LiveInterval &getParent() const {
+   assert(Parent && "No parent LiveInterval");
+   return *Parent;
+  }
+  unsigned getReg() const { return getParent().reg; }
 
   /// Iterator for accessing the new registers added by this edit.
   typedef SmallVectorImpl<LiveInterval*>::const_iterator iterator;

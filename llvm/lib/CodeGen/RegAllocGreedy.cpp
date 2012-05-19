@@ -1183,7 +1183,7 @@ unsigned RAGreedy::tryRegionSplit(LiveInterval &VirtReg, AllocationOrder &Order,
     return 0;
 
   // Prepare split editor.
-  LiveRangeEdit LREdit(VirtReg, NewVRegs, *MF, *LIS, VRM, this);
+  LiveRangeEdit LREdit(&VirtReg, NewVRegs, *MF, *LIS, VRM, this);
   SE->reset(LREdit, SplitSpillMode);
 
   // Assign all edge bundles to the preferred candidate, or NoCand.
@@ -1231,7 +1231,7 @@ unsigned RAGreedy::tryBlockSplit(LiveInterval &VirtReg, AllocationOrder &Order,
   assert(&SA->getParent() == &VirtReg && "Live range wasn't analyzed");
   unsigned Reg = VirtReg.reg;
   bool SingleInstrs = RegClassInfo.isProperSubClass(MRI->getRegClass(Reg));
-  LiveRangeEdit LREdit(VirtReg, NewVRegs, *MF, *LIS, VRM, this);
+  LiveRangeEdit LREdit(&VirtReg, NewVRegs, *MF, *LIS, VRM, this);
   SE->reset(LREdit, SplitSpillMode);
   ArrayRef<SplitAnalysis::BlockInfo> UseBlocks = SA->getUseBlocks();
   for (unsigned i = 0; i != UseBlocks.size(); ++i) {
@@ -1512,7 +1512,7 @@ unsigned RAGreedy::tryLocalSplit(LiveInterval &VirtReg, AllocationOrder &Order,
                << '-' << Uses[BestAfter] << ", " << BestDiff
                << ", " << (BestAfter - BestBefore + 1) << " instrs\n");
 
-  LiveRangeEdit LREdit(VirtReg, NewVRegs, *MF, *LIS, VRM, this);
+  LiveRangeEdit LREdit(&VirtReg, NewVRegs, *MF, *LIS, VRM, this);
   SE->reset(LREdit);
 
   SE->openIntv();
@@ -1644,7 +1644,7 @@ unsigned RAGreedy::selectOrSplit(LiveInterval &VirtReg,
 
   // Finally spill VirtReg itself.
   NamedRegionTimer T("Spiller", TimerGroupName, TimePassesIsEnabled);
-  LiveRangeEdit LRE(VirtReg, NewVRegs, *MF, *LIS, VRM, this);
+  LiveRangeEdit LRE(&VirtReg, NewVRegs, *MF, *LIS, VRM, this);
   spiller().spill(LRE);
   setStage(NewVRegs.begin(), NewVRegs.end(), RS_Done);
 
