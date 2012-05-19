@@ -200,6 +200,53 @@ makePropertyAttributesAsWritten(unsigned Attributes) {
   return (ObjCPropertyDecl::PropertyAttributeKind)attributesAsWritten;
 }
 
+static std::string getPropertyAttributeString(const ObjCPropertyDecl *property,
+                                              unsigned Attributes) {
+  std::string attr;
+  if (!Attributes)
+    return attr;
+  attr = "(";
+  bool first = true;
+  if (Attributes & ObjCPropertyDecl::OBJC_PR_readonly)
+    {attr +=  !first ? ", readonly" : "readonly"; first = false; } 
+  if (Attributes & ObjCPropertyDecl::OBJC_PR_readwrite)
+    {attr +=  !first ? ", readwrite" : "readwrite"; first = false; } 
+  if (Attributes & ObjCPropertyDecl::OBJC_PR_getter)
+    {
+      if (!first)
+        attr += ", ";
+      attr += "getter=";
+      attr += property->getGetterName().getAsString();
+      first = false;
+   }
+  if (Attributes & ObjCPropertyDecl::OBJC_PR_setter)
+    {
+      if (!first)
+        attr += ", ";
+      attr += "setter=";
+      attr += property->getSetterName().getAsString();
+      first = false;
+   }
+  if (Attributes & ObjCPropertyDecl::OBJC_PR_assign)
+    {attr +=  !first ? ", assign" : "assign"; first = false; } 
+  if (Attributes & ObjCPropertyDecl::OBJC_PR_retain)
+    {attr +=  !first ? ", retain" : "retain"; first = false; } 
+  if (Attributes & ObjCPropertyDecl::OBJC_PR_strong)
+    {attr +=  !first ? ", strong" : "strong"; first = false; } 
+  if (Attributes & ObjCPropertyDecl::OBJC_PR_weak)
+    {attr +=  !first ? ", weak" : "weak"; first = false; } 
+  if (Attributes & ObjCPropertyDecl::OBJC_PR_copy)
+    {attr +=  !first ? ", copy" : "copy"; first = false; } 
+  if (Attributes & ObjCPropertyDecl::OBJC_PR_unsafe_unretained)
+    {attr +=  !first ? ", unsafe_unretained" : "unsafe_unretained"; first = false; } 
+  if (Attributes & ObjCPropertyDecl::OBJC_PR_nonatomic)
+    {attr +=  !first ? ", nonatomic" : "nonatomic"; first = false; } 
+  if (Attributes & ObjCPropertyDecl::OBJC_PR_atomic)
+    {attr +=  !first ? ", atomic" : "atomic"; first = false; } 
+  attr += ")";
+  return attr;
+}
+
 Decl *
 Sema::HandlePropertyInClassExtension(Scope *S,
                                      SourceLocation AtLoc,
@@ -628,6 +675,26 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
         return 0;
       }
     }
+    
+    if (Synthesize&&
+        (PIkind & ObjCPropertyDecl::OBJC_PR_readonly) &&
+        property->hasAttr<IBOutletAttr>() &&
+        !AtLoc.isValid()) {
+      unsigned rwPIKind = (PIkind | ObjCPropertyDecl::OBJC_PR_readwrite);
+      rwPIKind &= (~ObjCPropertyDecl::OBJC_PR_readonly);
+      Diag(IC->getLocation(), diag::warn_auto_readonly_iboutlet_property);
+      Diag(property->getLocation(), diag::note_property_declare);
+      // FIXME. End location must be that of closing ')' which is currently
+      // unavailable. Need to add it.
+      SourceLocation endLoc =
+              property->getTypeSourceInfo()->getTypeLoc().getBeginLoc();
+      SourceRange PropSourceRange(property->getLParenLoc(), endLoc);
+      Diag(property->getLocation(), 
+           diag::note_auto_readonly_iboutlet_fixup_suggest) <<
+      FixItHint::CreateReplacement(PropSourceRange, getPropertyAttributeString(property,
+                                                                               rwPIKind));
+    }
+        
   } else if ((CatImplClass = dyn_cast<ObjCCategoryImplDecl>(ClassImpDecl))) {
     if (Synthesize) {
       Diag(AtLoc, diag::error_synthesize_category_decl);
