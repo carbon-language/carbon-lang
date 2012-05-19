@@ -510,7 +510,7 @@ void ExprEngine::VisitCallExpr(const CallExpr *CE, ExplodedNode *Pred,
       else
         ResultTy = CE->getType();
 
-      if (CE->isLValue())
+      if (CE->isGLValue())
         ResultTy = Eng.getContext().getPointerType(ResultTy);
 
       // Conjure a symbol value to use as the result.

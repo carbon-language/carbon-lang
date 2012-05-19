@@ -30,7 +30,7 @@ QualType CallOrObjCMessage::getResultType(ASTContext &ctx) const {
   } else {
     const CallExpr *FunctionCall = CallE.get<const CallExpr *>();
 
-    isLVal = FunctionCall->isLValue();
+    isLVal = FunctionCall->isGLValue();
     const Expr *Callee = FunctionCall->getCallee();
     if (const FunctionDecl *FD = State->getSVal(Callee, LCtx).getAsFunctionDecl())
       resultTy = FD->getResultType();

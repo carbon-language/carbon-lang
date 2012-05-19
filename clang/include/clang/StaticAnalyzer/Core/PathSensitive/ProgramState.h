@@ -672,7 +672,7 @@ ProgramState::getSValAsScalarOrLoc(const Stmt *S,
                                    const LocationContext *LCtx) const {
   if (const Expr *Ex = dyn_cast<Expr>(S)) {
     QualType T = Ex->getType();
-    if (Ex->isLValue() || Loc::isLocType(T) || T->isIntegerType())
+    if (Ex->isGLValue() || Loc::isLocType(T) || T->isIntegerType())
       return getSVal(S, LCtx);
   }
 

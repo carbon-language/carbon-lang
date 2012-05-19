@@ -1432,7 +1432,7 @@ void ExprEngine::VisitCommonDeclRefExpr(const Expr *Ex, const NamedDecl *D,
   const LocationContext *LCtx = Pred->getLocationContext();
 
   if (const VarDecl *VD = dyn_cast<VarDecl>(D)) {
-    assert(Ex->isLValue());
+    assert(Ex->isGLValue());
     SVal V = state->getLValue(VD, Pred->getLocationContext());
 
     // For references, the 'lvalue' is the pointer address stored in the
@@ -1449,7 +1449,7 @@ void ExprEngine::VisitCommonDeclRefExpr(const Expr *Ex, const NamedDecl *D,
     return;
   }
   if (const EnumConstantDecl *ED = dyn_cast<EnumConstantDecl>(D)) {
-    assert(!Ex->isLValue());
+    assert(!Ex->isGLValue());
     SVal V = svalBuilder.makeIntVal(ED->getInitVal());
     Bldr.generateNode(Ex, Pred, state->BindExpr(Ex, LCtx, V));
     return;
@@ -1492,7 +1492,7 @@ void ExprEngine::VisitLvalArraySubscriptExpr(const ArraySubscriptExpr *A,
     SVal V = state->getLValue(A->getType(),
                               state->getSVal(Idx, LCtx),
                               state->getSVal(Base, LCtx));
-    assert(A->isLValue());
+    assert(A->isGLValue());
     Bldr.generateNode(A, *it, state->BindExpr(A, LCtx, V),
                       false, 0, ProgramPoint::PostLValueKind);
   }
@@ -1506,7 +1506,7 @@ void ExprEngine::VisitMemberExpr(const MemberExpr *M, ExplodedNode *Pred,
   ExplodedNodeSet Dst;
   Decl *member = M->getMemberDecl();
   if (VarDecl *VD = dyn_cast<VarDecl>(member)) {
-    assert(M->isLValue());
+    assert(M->isGLValue());
     Bldr.takeNodes(Pred);
     VisitCommonDeclRefExpr(M, VD, Pred, Dst);
     Bldr.addNodes(Dst);
