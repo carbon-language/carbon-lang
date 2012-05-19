@@ -502,7 +502,7 @@ SBTarget::GetBroadcasterClassName ()
 bool
 SBTarget::IsValid () const
 {
-    return m_opaque_sp.get() != NULL;
+    return m_opaque_sp.get() != NULL && m_opaque_sp->IsValid();
 }
 
 SBProcess

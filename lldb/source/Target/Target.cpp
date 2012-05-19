@@ -64,6 +64,7 @@ Target::Target(Debugger &debugger, const ArchSpec &target_arch, const lldb::Plat
     m_internal_breakpoint_list (true),
     m_watchpoint_list (),
     m_process_sp (),
+    m_valid (true),
     m_search_filter_sp (),
     m_image_search_paths (ImageSearchPathsChanged, this),
     m_scratch_ast_context_ap (NULL),
@@ -165,6 +166,7 @@ void
 Target::Destroy()
 {
     Mutex::Locker locker (m_mutex);
+    m_valid = false;
     DeleteCurrentProcess ();
     m_platform_sp.reset();
     m_arch.Clear();

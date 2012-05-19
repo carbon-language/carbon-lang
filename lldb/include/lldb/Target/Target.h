@@ -414,6 +414,12 @@ public:
     const lldb::ProcessSP &
     GetProcessSP () const;
 
+    bool
+    IsValid()
+    {
+        return m_valid;
+    }
+
     void
     Destroy();
 
@@ -1156,6 +1162,7 @@ protected:
     // we can correctly tear down everything that we need to, so the only
     // class that knows about the process lifespan is this target class.
     lldb::ProcessSP m_process_sp;
+    bool m_valid;
     lldb::SearchFilterSP  m_search_filter_sp;
     PathMappingList m_image_search_paths;
     std::auto_ptr<ClangASTContext> m_scratch_ast_context_ap;
