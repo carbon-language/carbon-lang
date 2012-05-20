@@ -817,9 +817,7 @@ void SelectionDAGLegalize::LegalizeOp(SDNode *Node) {
   }
 
   if (SimpleFinishLegalizing) {
-    SmallVector<SDValue, 8> Ops;
-    for (unsigned i = 0, e = Node->getNumOperands(); i != e; ++i)
-      Ops.push_back(Node->getOperand(i));
+    SDNode *NewNode = Node;
     switch (Node->getOpcode()) {
     default: break;
     case ISD::SHL:
@@ -829,11 +827,14 @@ void SelectionDAGLegalize::LegalizeOp(SDNode *Node) {
     case ISD::ROTR:
       // Legalizing shifts/rotates requires adjusting the shift amount
       // to the appropriate width.
-      if (!Ops[1].getValueType().isVector()) {
-        SDValue SAO = DAG.getShiftAmountOperand(Ops[0].getValueType(), Ops[1]);
+      if (!Node->getOperand(1).getValueType().isVector()) {
+        SDValue SAO =
+          DAG.getShiftAmountOperand(Node->getOperand(0).getValueType(),
+                                    Node->getOperand(1));
         HandleSDNode Handle(SAO);
         LegalizeOp(SAO.getNode());
-        Ops[1] = Handle.getValue();
+        NewNode = DAG.UpdateNodeOperands(Node, Node->getOperand(0),
+                                         Handle.getValue());
       }
       break;
     case ISD::SRL_PARTS:
@@ -841,16 +842,19 @@ void SelectionDAGLegalize::LegalizeOp(SDNode *Node) {
     case ISD::SHL_PARTS:
       // Legalizing shifts/rotates requires adjusting the shift amount
       // to the appropriate width.
-      if (!Ops[2].getValueType().isVector()) {
-        SDValue SAO = DAG.getShiftAmountOperand(Ops[0].getValueType(), Ops[2]);
+      if (!Node->getOperand(2).getValueType().isVector()) {
+        SDValue SAO =
+          DAG.getShiftAmountOperand(Node->getOperand(0).getValueType(),
+                                    Node->getOperand(2));
         HandleSDNode Handle(SAO);
         LegalizeOp(SAO.getNode());
-        Ops[2] = Handle.getValue();
+        NewNode = DAG.UpdateNodeOperands(Node, Node->getOperand(0),
+                                         Node->getOperand(1),
+                                         Handle.getValue());
       }
       break;
     }
 
-    SDNode *NewNode = DAG.UpdateNodeOperands(Node, Ops.data(), Ops.size());
     if (NewNode != Node) {
       DAG.ReplaceAllUsesWith(Node, NewNode);
       for (unsigned i = 0, e = Node->getNumValues(); i != e; ++i)
