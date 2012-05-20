@@ -419,8 +419,6 @@ int main(int argc, char **argv, char * const *envp) {
   builder.setRelocationModel(RelocModel);
   builder.setCodeModel(CMModel);
   builder.setErrorStr(&ErrorMsg);
-  builder.setJITMemoryManager(ForceInterpreter ? 0 :
-                              JITMemoryManager::CreateDefaultMemManager());
   builder.setEngineKind(ForceInterpreter
                         ? EngineKind::Interpreter
                         : EngineKind::JIT);
@@ -435,6 +433,9 @@ int main(int argc, char **argv, char * const *envp) {
     builder.setUseMCJIT(true);
     JMM = new LLIMCJITMemoryManager();
     builder.setJITMemoryManager(JMM);
+  } else {
+    builder.setJITMemoryManager(ForceInterpreter ? 0 :
+                                JITMemoryManager::CreateDefaultMemManager());
   }
 
   CodeGenOpt::Level OLvl = CodeGenOpt::Default;

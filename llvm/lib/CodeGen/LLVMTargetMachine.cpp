@@ -273,7 +273,7 @@ bool LLVMTargetMachine::addPassesToEmitMC(PassManagerBase &PM,
 
   // Create the code emitter for the target if it exists.  If not, .o file
   // emission fails.
-  const MCRegisterInfo &MRI = *getTarget().createMCRegInfo(getTargetTriple());
+  const MCRegisterInfo &MRI = *getRegisterInfo();
   const MCSubtargetInfo &STI = getSubtarget<MCSubtargetInfo>();
   MCCodeEmitter *MCE = getTarget().createMCCodeEmitter(*getInstrInfo(), MRI,
                                                        STI, *Ctx);
