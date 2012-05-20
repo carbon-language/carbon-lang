@@ -1,7 +1,7 @@
-; RUN: llc < %s -mtriple=armv7-eabi      | FileCheck %s -check-prefix=EABI
-; RUN: llc < %s -mtriple=armv7-apple-ios -relocation-model=dynamic-no-pic | FileCheck %s -check-prefix=IOS
-; RUN: llc < %s -mtriple=armv7-apple-ios -relocation-model=pic            | FileCheck %s -check-prefix=IOS-PIC
-; RUN: llc < %s -mtriple=armv7-apple-ios -relocation-model=static         | FileCheck %s -check-prefix=IOS-STATIC
+; RUN: llc < %s -verify-machineinstrs -mtriple=armv7-eabi      | FileCheck %s -check-prefix=EABI
+; RUN: llc < %s -verify-machineinstrs -mtriple=armv7-apple-ios -relocation-model=dynamic-no-pic | FileCheck %s -check-prefix=IOS
+; RUN: llc < %s -verify-machineinstrs -mtriple=armv7-apple-ios -relocation-model=pic            | FileCheck %s -check-prefix=IOS-PIC
+; RUN: llc < %s -verify-machineinstrs -mtriple=armv7-apple-ios -relocation-model=static         | FileCheck %s -check-prefix=IOS-STATIC
 
 @foo = common global i32 0
 

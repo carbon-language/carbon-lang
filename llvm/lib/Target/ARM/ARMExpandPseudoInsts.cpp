@@ -925,7 +925,7 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
       if (isARM) {
         AddDefaultPred(MIB3);
         if (Opcode == ARM::MOV_ga_pcrel_ldr)
-          MIB2->setMemRefs(MI.memoperands_begin(), MI.memoperands_end());
+          MIB3->setMemRefs(MI.memoperands_begin(), MI.memoperands_end());
       }
       TransferImpOps(MI, MIB1, MIB3);
       MI.eraseFromParent();
