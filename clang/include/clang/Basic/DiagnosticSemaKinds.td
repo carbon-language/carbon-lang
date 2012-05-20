@@ -4392,6 +4392,9 @@ def err_invalid_declarator_in_function : Error<
 def err_not_tag_in_scope : Error<
   "no %select{struct|union|class|enum}0 named %1 in %2">;
 
+def err_no_typeid_with_fno_rtti : Error<
+  "cannot use typeid with -fno-rtti">;
+
 def err_cannot_form_pointer_to_member_of_reference_type : Error<
   "cannot form a pointer-to-member to member %0 of reference type %1">;
 def err_incomplete_object_call : Error<

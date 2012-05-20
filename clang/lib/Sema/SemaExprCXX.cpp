@@ -379,6 +379,10 @@ Sema::ActOnCXXTypeid(SourceLocation OpLoc, SourceLocation LParenLoc,
       return ExprError(Diag(OpLoc, diag::err_need_header_before_typeid));
   }
 
+  if (!getLangOpts().RTTI) {
+    return ExprError(Diag(OpLoc, diag::err_no_typeid_with_fno_rtti));
+  }
+
   QualType TypeInfoType = Context.getTypeDeclType(CXXTypeInfoDecl);
 
   if (isType) {
