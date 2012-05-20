@@ -578,11 +578,11 @@ MachineInstr *InlineSpiller::traceSiblingValue(unsigned UseReg, VNInfo *UseVNI,
     if (unsigned SrcReg = isFullCopyOf(MI, Reg)) {
       if (isSibling(SrcReg)) {
         LiveInterval &SrcLI = LIS.getInterval(SrcReg);
-        LiveRange *SrcLR = SrcLI.getLiveRangeContaining(VNI->def.getRegSlot(true));
-        assert(SrcLR && "Copy from non-existing value");
+        LiveRangeQuery SrcQ(SrcLI, VNI->def);
+        assert(SrcQ.valueIn() && "Copy from non-existing value");
         // Check if this COPY kills its source.
-        SVI->second.KillsSource = (SrcLR->end == VNI->def);
-        VNInfo *SrcVNI = SrcLR->valno;
+        SVI->second.KillsSource = SrcQ.isKill();
+        VNInfo *SrcVNI = SrcQ.valueIn();
         DEBUG(dbgs() << "copy of " << PrintReg(SrcReg) << ':'
                      << SrcVNI->id << '@' << SrcVNI->def
                      << " kill=" << unsigned(SVI->second.KillsSource) << '\n');
