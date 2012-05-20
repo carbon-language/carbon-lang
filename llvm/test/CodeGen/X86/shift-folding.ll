@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86 | FileCheck %s
+; RUN: llc < %s -march=x86 -verify-coalescing | FileCheck %s
 
 define i32* @test1(i32* %P, i32 %X) {
 ; CHECK: test1:

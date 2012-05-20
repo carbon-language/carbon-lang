@@ -1555,6 +1555,12 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
             MO.setIsKill(false);
             RemovedKillFlag = true;
           }
+
+          // Make sure regA is a legal regclass for the SrcIdx operand.
+          if (TargetRegisterInfo::isVirtualRegister(regA) &&
+              TargetRegisterInfo::isVirtualRegister(regB))
+            MRI->constrainRegClass(regA, MRI->getRegClass(regB));
+
           MO.setReg(regA);
 
           if (isCopy)
