@@ -165,7 +165,7 @@ bool LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
     Context->setAllowTemporaryLabels(false);
 
   const MCAsmInfo &MAI = *getMCAsmInfo();
-  const MCRegisterInfo &MRI = *getTarget().createMCRegInfo(getTargetTriple());
+  const MCRegisterInfo &MRI = *getRegisterInfo();
   const MCSubtargetInfo &STI = getSubtarget<MCSubtargetInfo>();
   OwningPtr<MCStreamer> AsmStreamer;
 
