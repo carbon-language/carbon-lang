@@ -1212,7 +1212,7 @@ static bool RegistersDefinedFromSameValue(LiveIntervals &li,
                                           const TargetRegisterInfo &tri,
                                           CoalescerPair &CP,
                                           VNInfo *VNI,
-                                          LiveRange *LR,
+                                          VNInfo *OtherVNI,
                                      SmallVector<MachineInstr*, 8> &DupCopies) {
   // FIXME: This is very conservative. For example, we don't handle
   // physical registers.
@@ -1236,8 +1236,7 @@ static bool RegistersDefinedFromSameValue(LiveIntervals &li,
     std::swap(A, B);
   assert(Dst == A);
 
-  VNInfo *Other = LR->valno;
-  const MachineInstr *OtherMI = li.getInstructionFromIndex(Other->def);
+  const MachineInstr *OtherMI = li.getInstructionFromIndex(OtherVNI->def);
 
   if (!OtherMI || !OtherMI->isFullCopy())
     return false;
@@ -1259,7 +1258,7 @@ static bool RegistersDefinedFromSameValue(LiveIntervals &li,
   LiveInterval &SrcInt = li.getInterval(Src);
   // getVNInfoBefore returns NULL for undef copies. In this case, the
   // optimization is still safe.
-  if (SrcInt.getVNInfoBefore(Other->def) != SrcInt.getVNInfoBefore(VNI->def))
+  if (SrcInt.getVNInfoBefore(OtherVNI->def) != SrcInt.getVNInfoBefore(VNI->def))
     return false;
 
   DupCopies.push_back(MI);
@@ -1304,17 +1303,19 @@ bool RegisterCoalescer::joinIntervals(CoalescerPair &CP) {
       continue;
 
     // Figure out the value # from the RHS.
-    LiveRange *lr = RHS.getLiveRangeContaining(VNI->def.getPrevSlot());
+    VNInfo *OtherVNI = RHS.getVNInfoBefore(VNI->def);
     // The copy could be to an aliased physreg.
-    if (!lr) continue;
+    if (!OtherVNI)
+      continue;
 
     // DstReg is known to be a register in the LHS interval.  If the src is
     // from the RHS interval, we can use its value #.
     if (!CP.isCoalescable(MI) &&
-        !RegistersDefinedFromSameValue(*LIS, *TRI, CP, VNI, lr, DupCopies))
+        !RegistersDefinedFromSameValue(*LIS, *TRI, CP, VNI, OtherVNI,
+                                       DupCopies))
       continue;
 
-    LHSValsDefinedFromRHS[VNI] = lr->valno;
+    LHSValsDefinedFromRHS[VNI] = OtherVNI;
     DeadCopies.push_back(MI);
   }
 
@@ -1331,17 +1332,19 @@ bool RegisterCoalescer::joinIntervals(CoalescerPair &CP) {
       continue;
 
     // Figure out the value # from the LHS.
-    LiveRange *lr = LHS.getLiveRangeContaining(VNI->def.getPrevSlot());
+    VNInfo *OtherVNI = LHS.getVNInfoBefore(VNI->def);
     // The copy could be to an aliased physreg.
-    if (!lr) continue;
+    if (!OtherVNI)
+      continue;
 
     // DstReg is known to be a register in the RHS interval.  If the src is
     // from the LHS interval, we can use its value #.
     if (!CP.isCoalescable(MI) &&
-        !RegistersDefinedFromSameValue(*LIS, *TRI, CP, VNI, lr, DupCopies))
+        !RegistersDefinedFromSameValue(*LIS, *TRI, CP, VNI, OtherVNI,
+                                       DupCopies))
         continue;
 
-    RHSValsDefinedFromLHS[VNI] = lr->valno;
+    RHSValsDefinedFromLHS[VNI] = OtherVNI;
     DeadCopies.push_back(MI);
   }
 
