@@ -272,8 +272,8 @@ TailDuplicatePass::TailDuplicateAndUpdate(MachineBasicBlock *MBB,
       continue;
     unsigned Dst = Copy->getOperand(0).getReg();
     unsigned Src = Copy->getOperand(1).getReg();
-    MachineRegisterInfo::use_iterator UI = MRI->use_begin(Src);
-    if (++UI == MRI->use_end()) {
+    if (MRI->hasOneNonDBGUse(Src) &&
+        MRI->constrainRegClass(Src, MRI->getRegClass(Dst))) {
       // Copy is the only use. Do trivial copy propagation here.
       MRI->replaceRegWith(Dst, Src);
       Copy->eraseFromParent();
@@ -429,8 +429,10 @@ void TailDuplicatePass::DuplicateInstruction(MachineInstr *MI,
         AddSSAUpdateEntry(Reg, NewReg, PredBB);
     } else {
       DenseMap<unsigned, unsigned>::iterator VI = LocalVRMap.find(Reg);
-      if (VI != LocalVRMap.end())
+      if (VI != LocalVRMap.end()) {
         MO.setReg(VI->second);
+        MRI->constrainRegClass(VI->second, MRI->getRegClass(Reg));
+      }
     }
   }
   PredBB->insert(PredBB->instr_end(), NewMI);
