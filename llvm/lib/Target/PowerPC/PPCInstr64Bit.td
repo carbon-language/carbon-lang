@@ -660,6 +660,14 @@ def STHU8 : DForm_1a<45, (outs ptr_rc:$ea_res), (ins G8RC:$rS,
                                         iaddroff:$ptroff))]>,
                     RegConstraint<"$ptrreg = $ea_res">, NoEncode<"$ea_res">;
 
+def STWU8 : DForm_1a<37, (outs ptr_rc:$ea_res), (ins G8RC:$rS,
+                             symbolLo:$ptroff, ptr_rc:$ptrreg),
+                    "stwu $rS, $ptroff($ptrreg)", LdStStore,
+                    [(set ptr_rc:$ea_res,
+                          (pre_truncsti32 G8RC:$rS, ptr_rc:$ptrreg,
+                                          iaddroff:$ptroff))]>,
+                    RegConstraint<"$ptrreg = $ea_res">, NoEncode<"$ea_res">;
+
 def STDU : DSForm_1a<62, 1, (outs ptr_rc:$ea_res), (ins G8RC:$rS,
                                         s16immX4:$ptroff, ptr_rc:$ptrreg),
                     "stdu $rS, $ptroff($ptrreg)", LdStSTD,
