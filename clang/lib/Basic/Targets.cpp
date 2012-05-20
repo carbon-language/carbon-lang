@@ -1077,6 +1077,99 @@ namespace {
 }
 
 namespace {
+  static const unsigned NVPTXAddrSpaceMap[] = {
+    1,    // opencl_global
+    3,    // opencl_local
+    4,    // opencl_constant
+    1,    // cuda_device
+    4,    // cuda_constant
+    3,    // cuda_shared
+  };
+  class NVPTXTargetInfo : public TargetInfo {
+    static const char * const GCCRegNames[];
+  public:
+    NVPTXTargetInfo(const std::string& triple) : TargetInfo(triple) {
+      BigEndian = false;
+      TLSSupported = false;
+      LongWidth = LongAlign = 64;
+      AddrSpaceMap = &NVPTXAddrSpaceMap;
+    }
+    virtual void getTargetDefines(const LangOptions &Opts,
+                                  MacroBuilder &Builder) const {
+      Builder.defineMacro("__PTX__");
+    }
+    virtual void getTargetBuiltins(const Builtin::Info *&Records,
+                                   unsigned &NumRecords) const {
+      // FIXME: implement.
+      Records = 0;
+      NumRecords = 0;
+    }
+    virtual bool hasFeature(StringRef Feature) const {
+      return Feature == "nvptx";
+    }
+    
+    virtual void getGCCRegNames(const char * const *&Names,
+                                unsigned &NumNames) const;
+    virtual void getGCCRegAliases(const GCCRegAlias *&Aliases,
+                                  unsigned &NumAliases) const {
+      // No aliases.
+      Aliases = 0;
+      NumAliases = 0;
+    }
+    virtual bool validateAsmConstraint(const char *&Name,
+                                       TargetInfo::ConstraintInfo &info) const {
+      // FIXME: implement
+      return true;
+    }
+    virtual const char *getClobbers() const {
+      // FIXME: Is this really right?
+      return "";
+    }
+    virtual const char *getVAListDeclaration() const {
+      // FIXME: implement
+      return "typedef char* __builtin_va_list;";
+    }
+    virtual bool setCPU(const std::string &Name) {
+      return Name == "sm_10";
+    }
+  };
+
+  const char * const NVPTXTargetInfo::GCCRegNames[] = {
+    "r0"
+  };
+
+  void NVPTXTargetInfo::getGCCRegNames(const char * const *&Names,
+                                     unsigned &NumNames) const {
+    Names = GCCRegNames;
+    NumNames = llvm::array_lengthof(GCCRegNames);
+  }
+
+  class NVPTX32TargetInfo : public NVPTXTargetInfo {
+  public:
+  NVPTX32TargetInfo(const std::string& triple) : NVPTXTargetInfo(triple) {
+      PointerWidth = PointerAlign = 32;
+      SizeType = PtrDiffType = IntPtrType = TargetInfo::UnsignedInt;
+      DescriptionString
+        = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-"
+          "f32:32:32-f64:64:64-v16:16:16-v32:32:32-v64:64:64-v128:128:128-"
+          "n16:32:64";
+    }
+  };
+
+  class NVPTX64TargetInfo : public NVPTXTargetInfo {
+  public:
+  NVPTX64TargetInfo(const std::string& triple) : NVPTXTargetInfo(triple) {
+      PointerWidth = PointerAlign = 64;
+      SizeType = PtrDiffType = IntPtrType = TargetInfo::UnsignedLongLong;
+      DescriptionString
+        = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-"
+          "f32:32:32-f64:64:64-v16:16:16-v32:32:32-v64:64:64-v128:128:128-"
+          "n16:32:64";
+    }
+  };
+}
+
+namespace {
 // MBlaze abstract base class
 class MBlazeTargetInfo : public TargetInfo {
   static const char * const GCCRegNames[];
@@ -4050,6 +4143,11 @@ static TargetInfo *AllocateTarget(const std::string &T) {
     return new PTX32TargetInfo(T);
   case llvm::Triple::ptx64:
     return new PTX64TargetInfo(T);
+
+  case llvm::Triple::nvptx:
+    return new NVPTX32TargetInfo(T);
+  case llvm::Triple::nvptx64:
+    return new NVPTX64TargetInfo(T);
 
   case llvm::Triple::mblaze:
     return new MBlazeTargetInfo(T);
