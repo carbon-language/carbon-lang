@@ -644,9 +644,6 @@ public:
     RK_Pattern          //< Refers to a precomputed pattern.
   };
 
-  /// \brief The kind of result stored here.
-  ResultKind Kind;
-
   /// \brief When Kind == RK_Declaration or RK_Pattern, the declaration we are
   /// referring to. In the latter case, the declaration might be NULL.
   NamedDecl *Declaration;
@@ -667,15 +664,18 @@ public:
   /// \brief The priority of this particular code-completion result.
   unsigned Priority;
 
-  /// \brief The cursor kind that describes this result.
-  CXCursorKind CursorKind;
-
-  /// \brief The availability of this result.
-  CXAvailabilityKind Availability;
-
   /// \brief Specifies which parameter (of a function, Objective-C method,
   /// macro, etc.) we should start with when formatting the result.
   unsigned StartParameter;
+
+  /// \brief The kind of result stored here.
+  ResultKind Kind : 3;
+
+  /// \brief The cursor kind that describes this result.
+  CXCursorKind CursorKind : 16;
+
+  /// \brief The availability of this result.
+  CXAvailabilityKind Availability : 8;
 
   /// \brief Whether this result is hidden by another name.
   bool Hidden : 1;
@@ -705,10 +705,10 @@ public:
                        NestedNameSpecifier *Qualifier = 0,
                        bool QualifierIsInformative = false,
                        bool Accessible = true)
-    : Kind(RK_Declaration), Declaration(Declaration),
-      Priority(getPriorityFromDecl(Declaration)),
-      Availability(CXAvailability_Available), StartParameter(0),
-      Hidden(false), QualifierIsInformative(QualifierIsInformative),
+    : Declaration(Declaration), Priority(getPriorityFromDecl(Declaration)),
+      StartParameter(0), Kind(RK_Declaration),
+      Availability(CXAvailability_Available), Hidden(false),
+      QualifierIsInformative(QualifierIsInformative),
       StartsNestedNameSpecifier(false), AllParametersAreInformative(false),
       DeclaringEntity(false), Qualifier(Qualifier) {
     computeCursorKindAndAvailability(Accessible);
@@ -716,22 +716,22 @@ public:
 
   /// \brief Build a result that refers to a keyword or symbol.
   CodeCompletionResult(const char *Keyword, unsigned Priority = CCP_Keyword)
-    : Kind(RK_Keyword), Declaration(0), Keyword(Keyword), Priority(Priority),
-      Availability(CXAvailability_Available),
-      StartParameter(0), Hidden(false), QualifierIsInformative(0),
-      StartsNestedNameSpecifier(false), AllParametersAreInformative(false),
-      DeclaringEntity(false), Qualifier(0) {
-    computeCursorKindAndAvailability();
+    : Declaration(0), Keyword(Keyword), Priority(Priority), StartParameter(0),
+      Kind(RK_Keyword), CursorKind(CXCursor_NotImplemented),
+      Availability(CXAvailability_Available), Hidden(false),
+      QualifierIsInformative(0), StartsNestedNameSpecifier(false),
+      AllParametersAreInformative(false), DeclaringEntity(false), Qualifier(0)
+  {
   }
 
   /// \brief Build a result that refers to a macro.
   CodeCompletionResult(IdentifierInfo *Macro, unsigned Priority = CCP_Macro)
-    : Kind(RK_Macro), Declaration(0), Macro(Macro), Priority(Priority),
-      Availability(CXAvailability_Available), StartParameter(0),
-      Hidden(false), QualifierIsInformative(0),
-      StartsNestedNameSpecifier(false), AllParametersAreInformative(false),
-      DeclaringEntity(false), Qualifier(0) {
-    computeCursorKindAndAvailability();
+    : Declaration(0), Macro(Macro), Priority(Priority), StartParameter(0),
+      Kind(RK_Macro), CursorKind(CXCursor_MacroDefinition),
+      Availability(CXAvailability_Available), Hidden(false),
+      QualifierIsInformative(0), StartsNestedNameSpecifier(false),
+      AllParametersAreInformative(false), DeclaringEntity(false), Qualifier(0)
+  {
   }
 
   /// \brief Build a result that refers to a pattern.
@@ -740,8 +740,8 @@ public:
                        CXCursorKind CursorKind = CXCursor_NotImplemented,
                    CXAvailabilityKind Availability = CXAvailability_Available,
                        NamedDecl *D = 0)
-    : Kind(RK_Pattern), Declaration(D), Pattern(Pattern), Priority(Priority),
-      CursorKind(CursorKind), Availability(Availability), StartParameter(0),
+    : Declaration(D), Pattern(Pattern), Priority(Priority), StartParameter(0),
+      Kind(RK_Pattern), CursorKind(CursorKind), Availability(Availability),
       Hidden(false), QualifierIsInformative(0),
       StartsNestedNameSpecifier(false), AllParametersAreInformative(false),
       DeclaringEntity(false), Qualifier(0)
@@ -752,11 +752,10 @@ public:
   /// declaration.
   CodeCompletionResult(CodeCompletionString *Pattern, NamedDecl *D,
                        unsigned Priority)
-    : Kind(RK_Pattern), Declaration(D), Pattern(Pattern), Priority(Priority),
-      Availability(CXAvailability_Available), StartParameter(0),
-      Hidden(false), QualifierIsInformative(false),
-      StartsNestedNameSpecifier(false), AllParametersAreInformative(false),
-      DeclaringEntity(false), Qualifier(0) {
+    : Declaration(D), Pattern(Pattern), Priority(Priority), StartParameter(0),
+      Kind(RK_Pattern), Availability(CXAvailability_Available), Hidden(false),
+      QualifierIsInformative(false), StartsNestedNameSpecifier(false),
+      AllParametersAreInformative(false), DeclaringEntity(false), Qualifier(0) {
     computeCursorKindAndAvailability();
   }  
   

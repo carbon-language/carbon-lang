@@ -573,14 +573,8 @@ void CodeCompletionResult::computeCursorKindAndAvailability(bool Accessible) {
   }
 
   case RK_Macro:
-    Availability = CXAvailability_Available;      
-    CursorKind = CXCursor_MacroDefinition;
-    break;
-      
   case RK_Keyword:
-    Availability = CXAvailability_Available;      
-    CursorKind = CXCursor_NotImplemented;
-    break;      
+    llvm_unreachable("Macro and keyword kinds are handled by the constructors");
   }
 
   if (!Accessible)
