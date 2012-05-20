@@ -1441,10 +1441,10 @@ bool RegisterCoalescer::joinIntervals(CoalescerPair &CP) {
   // Now erase all the redundant copies.
   for (unsigned i = 0, e = DeadCopies.size(); i != e; ++i) {
     MachineInstr *MI = DeadCopies[i];
-    DEBUG(dbgs() << "\t\terased:\t" << LIS->getInstructionIndex(MI)
-                 << '\t' << *MI);
     if (!ErasedInstrs.insert(MI))
       continue;
+    DEBUG(dbgs() << "\t\terased:\t" << LIS->getInstructionIndex(MI)
+                 << '\t' << *MI);
     LIS->RemoveMachineInstrFromMaps(MI);
     MI->eraseFromParent();
   }
@@ -1453,6 +1453,8 @@ bool RegisterCoalescer::joinIntervals(CoalescerPair &CP) {
   for (SmallVector<MachineInstr*, 8>::iterator I = DupCopies.begin(),
          E = DupCopies.end(); I != E; ++I) {
     MachineInstr *MI = *I;
+    if (!ErasedInstrs.insert(MI))
+      continue;
 
     // We have pretended that the assignment to B in
     // A = X
@@ -1462,8 +1464,6 @@ bool RegisterCoalescer::joinIntervals(CoalescerPair &CP) {
     // A = X
     unsigned Src = MI->getOperand(1).getReg();
     SourceRegisters.push_back(Src);
-    if (!ErasedInstrs.insert(MI))
-      continue;
     LIS->RemoveMachineInstrFromMaps(MI);
     MI->eraseFromParent();
   }
