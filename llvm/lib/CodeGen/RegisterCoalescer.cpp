@@ -1317,7 +1317,6 @@ bool RegisterCoalescer::joinIntervals(CoalescerPair &CP) {
       continue;
 
     LHSValsDefinedFromRHS[VNI] = OtherVNI;
-    DeadCopies.push_back(MI);
   }
 
   // Loop over the value numbers of the RHS, seeing if any are defined from
