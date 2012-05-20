@@ -150,6 +150,13 @@ optimizeExtInstr(MachineInstr *MI, MachineBasicBlock *MBB,
     // No other uses.
     return false;
 
+  // Ensure DstReg can get a register class that actually supports
+  // sub-registers. Don't change the class until we commit.
+  const TargetRegisterClass *DstRC = MRI->getRegClass(DstReg);
+  DstRC = TM->getRegisterInfo()->getSubClassWithSubReg(DstRC, SubIdx);
+  if (!DstRC)
+    return false;
+
   // The source has other uses. See if we can replace the other uses with use of
   // the result of the extension.
   SmallPtrSet<MachineBasicBlock*, 4> ReachedBBs;
@@ -247,8 +254,10 @@ optimizeExtInstr(MachineInstr *MI, MachineBasicBlock *MBB,
         continue;
 
       // About to add uses of DstReg, clear DstReg's kill flags.
-      if (!Changed)
+      if (!Changed) {
         MRI->clearKillFlags(DstReg);
+        MRI->constrainRegClass(DstReg, DstRC);
+      }
 
       unsigned NewVR = MRI->createVirtualRegister(RC);
       BuildMI(*UseMBB, UseMI, UseMI->getDebugLoc(),
