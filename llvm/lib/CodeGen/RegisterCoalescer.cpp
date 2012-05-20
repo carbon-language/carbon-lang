@@ -1143,6 +1143,10 @@ bool RegisterCoalescer::joinReservedPhysReg(CoalescerPair &CP) {
   // reserved register.  Also skip merging the live ranges, the reserved
   // register live range doesn't need to be accurate as long as all the
   // defs are there.
+
+  // We don't track kills for reserved registers.
+  MRI->clearKillFlags(CP.getSrcReg());
+
   return true;
 }
 
@@ -1387,6 +1391,10 @@ bool RegisterCoalescer::joinIntervals(CoalescerPair &CP) {
   LiveInterval::const_iterator J = RHS.begin();
   LiveInterval::const_iterator JE = RHS.end();
 
+  // Collect interval end points that will no longer be kills.
+  SmallVector<MachineInstr*, 8> LHSOldKills;
+  SmallVector<MachineInstr*, 8> RHSOldKills;
+
   // Skip ahead until the first place of potential sharing.
   if (I != IE && J != JE) {
     if (I->start < J->start) {
@@ -1407,6 +1415,14 @@ bool RegisterCoalescer::joinIntervals(CoalescerPair &CP) {
       if (LHSValNoAssignments[I->valno->id] !=
           RHSValNoAssignments[J->valno->id])
         return false;
+
+      // Extended live ranges should no longer be killed.
+      if (!I->end.isBlock() && I->end < J->end)
+        if (MachineInstr *MI = LIS->getInstructionFromIndex(I->end))
+          LHSOldKills.push_back(MI);
+      if (!J->end.isBlock() && J->end < I->end)
+        if (MachineInstr *MI = LIS->getInstructionFromIndex(J->end))
+          RHSOldKills.push_back(MI);
     }
 
     if (I->end < J->end)
@@ -1432,6 +1448,12 @@ bool RegisterCoalescer::joinIntervals(CoalescerPair &CP) {
     if (VNI->hasPHIKill())
       NewVNInfo[RHSValID]->setHasPHIKill(true);
   }
+
+  // Clear kill flags where live ranges are extended.
+  while (!LHSOldKills.empty())
+    LHSOldKills.pop_back_val()->clearRegisterKills(LHS.reg, TRI);
+  while (!RHSOldKills.empty())
+    RHSOldKills.pop_back_val()->clearRegisterKills(RHS.reg, TRI);
 
   if (LHSValNoAssignments.empty())
     LHSValNoAssignments.push_back(-1);
@@ -1622,42 +1644,6 @@ bool RegisterCoalescer::runOnMachineFunction(MachineFunction &fn) {
           dbgs() << "\n";
         }
       });
-  }
-
-  // Perform a final pass over the instructions and compute spill weights
-  // and remove identity moves.
-  SmallVector<unsigned, 4> DeadDefs;
-  for (MachineFunction::iterator mbbi = MF->begin(), mbbe = MF->end();
-       mbbi != mbbe; ++mbbi) {
-    MachineBasicBlock* mbb = mbbi;
-    for (MachineBasicBlock::iterator mii = mbb->begin(), mie = mbb->end();
-         mii != mie; ) {
-      MachineInstr *MI = mii;
-
-      ++mii;
-
-      // Check for now unnecessary kill flags.
-      if (LIS->isNotInMIMap(MI)) continue;
-      SlotIndex DefIdx = LIS->getInstructionIndex(MI).getRegSlot();
-      for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
-        MachineOperand &MO = MI->getOperand(i);
-        if (!MO.isReg() || !MO.isKill()) continue;
-        unsigned reg = MO.getReg();
-        if (!reg || !LIS->hasInterval(reg)) continue;
-        if (!LIS->getInterval(reg).killedAt(DefIdx)) {
-          MO.setIsKill(false);
-          continue;
-        }
-        // When leaving a kill flag on a physreg, check if any subregs should
-        // remain alive.
-        if (!TargetRegisterInfo::isPhysicalRegister(reg))
-          continue;
-        for (const uint16_t *SR = TRI->getSubRegisters(reg);
-             unsigned S = *SR; ++SR)
-          if (LIS->hasInterval(S) && LIS->getInterval(S).liveAt(DefIdx))
-            MI->addRegisterDefined(S, TRI);
-      }
-    }
   }
 
   // After deleting a lot of copies, register classes may be less constrained.
