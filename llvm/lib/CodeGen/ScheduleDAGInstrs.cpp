@@ -445,19 +445,11 @@ void ScheduleDAGInstrs::addVRegUseDeps(SUnit *SU, unsigned OperIdx) {
 
   // Lookup this operand's reaching definition.
   assert(LIS && "vreg dependencies requires LiveIntervals");
-  SlotIndex UseIdx = LIS->getInstructionIndex(MI).getRegSlot();
-  LiveInterval *LI = &LIS->getInterval(Reg);
-  VNInfo *VNI = LI->getVNInfoBefore(UseIdx);
+  LiveRangeQuery LRQ(LIS->getInterval(Reg), LIS->getInstructionIndex(MI));
+  VNInfo *VNI = LRQ.valueIn();
 
-  // Special case: An early-clobber tied operand reads and writes the
-  // register one slot early. e.g. InlineAsm.
-  //
-  // FIXME: Same special case is in shrinkToUses. Hide under an API.
-  if (SlotIndex::isSameInstr(VNI->def, UseIdx)) {
-    UseIdx = VNI->def;
-    VNI = LI->getVNInfoBefore(UseIdx);
-  }
   // VNI will be valid because MachineOperand::readsReg() is checked by caller.
+  assert(VNI && "No value to read by operand");
   MachineInstr *Def = LIS->getInstructionFromIndex(VNI->def);
   // Phis and other noninstructions (after coalescing) have a NULL Def.
   if (Def) {
