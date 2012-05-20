@@ -267,7 +267,7 @@ def CUDAConstant : InheritableAttr {
   let Spellings = ["constant"];
 }
 
-def CUDADevice : Attr {
+def CUDADevice : InheritableAttr {
   let Spellings = ["device"];
 }
 
@@ -275,7 +275,7 @@ def CUDAGlobal : InheritableAttr {
   let Spellings = ["global"];
 }
 
-def CUDAHost : Attr {
+def CUDAHost : InheritableAttr {
   let Spellings = ["host"];
 }
 
