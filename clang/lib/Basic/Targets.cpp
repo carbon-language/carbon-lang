@@ -949,7 +949,10 @@ namespace {
   static const unsigned PTXAddrSpaceMap[] = {
     0,    // opencl_global
     4,    // opencl_local
-    1     // opencl_constant
+    1,    // opencl_constant
+    0,    // cuda_device
+    1,    // cuda_constant
+    4,    // cuda_shared
   };
   class PTXTargetInfo : public TargetInfo {
     static const char * const GCCRegNames[];
@@ -3384,7 +3387,10 @@ namespace {
   static const unsigned TCEOpenCLAddrSpaceMap[] = {
       3, // opencl_global
       4, // opencl_local
-      5  // opencl_constant
+      5, // opencl_constant
+      0, // cuda_device
+      0, // cuda_constant
+      0  // cuda_shared
   };
 
   class TCETargetInfo : public TargetInfo{

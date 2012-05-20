@@ -29,6 +29,10 @@ enum ID {
   opencl_local,
   opencl_constant,
 
+  cuda_device,
+  cuda_constant,
+  cuda_shared,
+
   Last,
   Count = Last-Offset
 };

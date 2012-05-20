@@ -517,6 +517,12 @@ public:
   CreateOrReplaceCXXRuntimeVariable(StringRef Name, llvm::Type *Ty,
                                     llvm::GlobalValue::LinkageTypes Linkage);
 
+  /// GetGlobalVarAddressSpace - Return the address space of the underlying
+  /// global variable for D, as determined by its declaration.  Normally this
+  /// is the same as the address space of D's type, but in CUDA, address spaces
+  /// are associated with declarations, not types.
+  unsigned GetGlobalVarAddressSpace(const VarDecl *D, unsigned AddrSpace);
+
   /// GetAddrOfGlobalVar - Return the llvm::Constant for the address of the
   /// given global variable.  If Ty is non-null and if the global doesn't exist,
   /// then it will be greated with the specified type instead of whatever the

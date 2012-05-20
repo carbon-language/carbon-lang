@@ -1172,11 +1172,12 @@ CodeGenModule::GetOrCreateLLVMGlobal(StringRef MangledName,
     DeferredDecls.erase(DDI);
   }
 
+  unsigned AddrSpace = GetGlobalVarAddressSpace(D, Ty->getAddressSpace());
   llvm::GlobalVariable *GV =
     new llvm::GlobalVariable(getModule(), Ty->getElementType(), false,
                              llvm::GlobalValue::ExternalLinkage,
                              0, MangledName, 0,
-                             false, Ty->getAddressSpace());
+                             false, AddrSpace);
 
   // Handle things which are present even on external declarations.
   if (D) {
@@ -1202,7 +1203,10 @@ CodeGenModule::GetOrCreateLLVMGlobal(StringRef MangledName,
     GV->setThreadLocal(D->isThreadSpecified());
   }
 
-  return GV;
+  if (AddrSpace != Ty->getAddressSpace())
+    return llvm::ConstantExpr::getBitCast(GV, Ty);
+  else
+    return GV;
 }
 
 
@@ -1487,6 +1491,20 @@ CodeGenModule::MaybeEmitGlobalStdInitializerListInitializer(const VarDecl *D,
   return llvmInit;
 }
 
+unsigned CodeGenModule::GetGlobalVarAddressSpace(const VarDecl *D,
+                                                 unsigned AddrSpace) {
+  if (LangOpts.CUDA && CodeGenOpts.CUDAIsDevice) {
+    if (D->hasAttr<CUDAConstantAttr>())
+      AddrSpace = getContext().getTargetAddressSpace(LangAS::cuda_constant);
+    else if (D->hasAttr<CUDASharedAttr>())
+      AddrSpace = getContext().getTargetAddressSpace(LangAS::cuda_shared);
+    else
+      AddrSpace = getContext().getTargetAddressSpace(LangAS::cuda_device);
+  }
+
+  return AddrSpace;
+}
+
 void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
   llvm::Constant *Init = 0;
   QualType ASTTy = D->getType();
@@ -1566,7 +1584,7 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
   if (GV == 0 ||
       GV->getType()->getElementType() != InitType ||
       GV->getType()->getAddressSpace() !=
-        getContext().getTargetAddressSpace(ASTTy)) {
+       GetGlobalVarAddressSpace(D, getContext().getTargetAddressSpace(ASTTy))) {
 
     // Move the old entry aside so that we'll create a new one.
     Entry->setName(StringRef());
