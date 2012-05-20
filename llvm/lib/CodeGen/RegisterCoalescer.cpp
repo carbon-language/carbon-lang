@@ -1310,9 +1310,10 @@ bool RegisterCoalescer::joinIntervals(CoalescerPair &CP) {
 
     // DstReg is known to be a register in the LHS interval.  If the src is
     // from the RHS interval, we can use its value #.
-    if (!CP.isCoalescable(MI) &&
-        !RegistersDefinedFromSameValue(*LIS, *TRI, CP, VNI, OtherVNI,
-                                       DupCopies))
+    if (CP.isCoalescable(MI))
+      DeadCopies.push_back(MI);
+    else if (!RegistersDefinedFromSameValue(*LIS, *TRI, CP, VNI, OtherVNI,
+                                            DupCopies))
       continue;
 
     LHSValsDefinedFromRHS[VNI] = OtherVNI;
@@ -1339,13 +1340,13 @@ bool RegisterCoalescer::joinIntervals(CoalescerPair &CP) {
 
     // DstReg is known to be a register in the RHS interval.  If the src is
     // from the LHS interval, we can use its value #.
-    if (!CP.isCoalescable(MI) &&
-        !RegistersDefinedFromSameValue(*LIS, *TRI, CP, VNI, OtherVNI,
-                                       DupCopies))
+    if (CP.isCoalescable(MI))
+      DeadCopies.push_back(MI);
+    else if (!RegistersDefinedFromSameValue(*LIS, *TRI, CP, VNI, OtherVNI,
+                                            DupCopies))
         continue;
 
     RHSValsDefinedFromLHS[VNI] = OtherVNI;
-    DeadCopies.push_back(MI);
   }
 
   LHSValNoAssignments.resize(LHS.getNumValNums(), -1);
