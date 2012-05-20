@@ -409,7 +409,6 @@ CodeGenFunction::EmitCXXConstructExpr(const CXXConstructExpr *E,
   if (E->requiresZeroInitialization() && !Dest.isZeroed()) {
     switch (E->getConstructionKind()) {
     case CXXConstructExpr::CK_Delegating:
-      assert(0 && "Delegating constructor should not need zeroing");
     case CXXConstructExpr::CK_Complete:
       EmitNullInitialization(Dest.getAddr(), E->getType());
       break;

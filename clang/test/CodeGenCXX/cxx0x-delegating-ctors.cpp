@@ -54,3 +54,14 @@ delegator::delegator(char)
 delegator::delegator(int)
   : delegator()
 {}
+
+namespace PR12890 {
+  class X {
+    int x;
+    X() = default;
+    X(int);
+  };
+  X::X(int) : X() {}
+}
+// CHECK: define {{.*}} @_ZN7PR128901XC1Ei(%"class.PR12890::X"* %this, i32)
+// CHECK: call void @llvm.memset.p0i8.i64(i8* {{.*}}, i8 0, i64 4, i32 4, i1 false)
