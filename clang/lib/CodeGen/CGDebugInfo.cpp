@@ -1479,25 +1479,21 @@ llvm::DIType CGDebugInfo::CreateType(const ArrayType *Ty,
   // obvious/recursive way?
   SmallVector<llvm::Value *, 8> Subscripts;
   QualType EltTy(Ty, 0);
-  if (Ty->isIncompleteArrayType())
+  while ((Ty = dyn_cast<ArrayType>(EltTy))) {
+    int64_t UpperBound = 0;
+    int64_t LowerBound = 0;
+    if (const ConstantArrayType *CAT = dyn_cast<ConstantArrayType>(Ty)) {
+      if (CAT->getSize().getZExtValue())
+        UpperBound = CAT->getSize().getZExtValue() - 1;
+    } else
+      // This is an unbounded array. Use Low = 1, Hi = 0 to express such 
+      // arrays.
+      LowerBound = 1;
+    
+    // FIXME: Verify this is right for VLAs.
+    Subscripts.push_back(DBuilder.getOrCreateSubrange(LowerBound,
+                                                      UpperBound));
     EltTy = Ty->getElementType();
-  else {
-    while ((Ty = dyn_cast<ArrayType>(EltTy))) {
-      int64_t UpperBound = 0;
-      int64_t LowerBound = 0;
-      if (const ConstantArrayType *CAT = dyn_cast<ConstantArrayType>(Ty)) {
-        if (CAT->getSize().getZExtValue())
-          UpperBound = CAT->getSize().getZExtValue() - 1;
-      } else
-        // This is an unbounded array. Use Low = 1, Hi = 0 to express such 
-        // arrays.
-        LowerBound = 1;
-
-      // FIXME: Verify this is right for VLAs.
-      Subscripts.push_back(DBuilder.getOrCreateSubrange(LowerBound,
-                                                        UpperBound));
-      EltTy = Ty->getElementType();
-    }
   }
 
   llvm::DIArray SubscriptArray = DBuilder.getOrCreateArray(Subscripts);
