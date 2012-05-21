@@ -805,3 +805,16 @@ namespace test42 {
   // CHECK: define hidden void @_ZN6test423barINS_3fooEE3zedEv
   // CHECK-HIDDEN: define hidden void @_ZN6test423barINS_3fooEE3zedEv
 }
+
+namespace test43 {
+  struct HIDDEN foo {
+  };
+  template <class P>
+  void bar() {
+  }
+  template <>
+  DEFAULT void bar<foo>() {
+  }
+  // CHECK: define hidden void @_ZN6test433barINS_3fooEEEvv
+  // CHECK-HIDDEN: define hidden void @_ZN6test433barINS_3fooEEEvv
+}

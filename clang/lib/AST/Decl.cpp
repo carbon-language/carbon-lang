@@ -158,8 +158,9 @@ getLVForTemplateArgumentList(const TemplateArgumentList &TArgs,
   return getLVForTemplateArgumentList(TArgs.data(), TArgs.size(), OnlyTemplate);
 }
 
-static bool shouldConsiderTemplateLV(const FunctionDecl *fn) {
-  return !fn->hasAttr<VisibilityAttr>();
+static bool shouldConsiderTemplateLV(const FunctionDecl *fn,
+                               const FunctionTemplateSpecializationInfo *spec) {
+  return !fn->hasAttr<VisibilityAttr>() || spec->isExplicitSpecialization();
 }
 
 static bool shouldConsiderTemplateLV(const ClassTemplateSpecializationDecl *d) {
@@ -374,7 +375,7 @@ static LinkageInfo getLVForNamespaceScopeDecl(const NamedDecl *D,
     // this is an explicit specialization with a visibility attribute.
     if (FunctionTemplateSpecializationInfo *specInfo
                                = Function->getTemplateSpecializationInfo()) {
-      if (shouldConsiderTemplateLV(Function)) {
+      if (shouldConsiderTemplateLV(Function, specInfo)) {
         LV.merge(getLVForDecl(specInfo->getTemplate(),
                               true));
         const TemplateArgumentList &templateArgs = *specInfo->TemplateArguments;
@@ -525,7 +526,7 @@ static LinkageInfo getLVForClassMember(const NamedDecl *D, bool OnlyTemplate) {
     // the template parameters and arguments.
     if (FunctionTemplateSpecializationInfo *spec
            = MD->getTemplateSpecializationInfo()) {
-      if (shouldConsiderTemplateLV(MD)) {
+      if (shouldConsiderTemplateLV(MD, spec)) {
         LV.mergeWithMin(getLVForTemplateArgumentList(*spec->TemplateArguments,
                                                      OnlyTemplate));
         if (!OnlyTemplate)
