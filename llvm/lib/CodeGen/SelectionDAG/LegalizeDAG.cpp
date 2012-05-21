@@ -3064,7 +3064,7 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node) {
            "Don't know how to expand this subtraction!");
     Tmp1 = DAG.getNode(ISD::XOR, dl, VT, Node->getOperand(1),
                DAG.getConstant(APInt::getAllOnesValue(VT.getSizeInBits()), VT));
-    Tmp1 = DAG.getNode(ISD::ADD, dl, VT, Tmp2, DAG.getConstant(1, VT));
+    Tmp1 = DAG.getNode(ISD::ADD, dl, VT, Tmp1, DAG.getConstant(1, VT));
     Results.push_back(DAG.getNode(ISD::ADD, dl, VT, Node->getOperand(0), Tmp1));
     break;
   }
