@@ -143,6 +143,32 @@ class ScopedInterceptor {
       Printf("ThreadSanitizer: failed to intercept '" #func "' function\n"); \
 /**/
 
+// May be overriden by front-end.
+extern "C" void WEAK __tsan_malloc_hook(void *ptr, uptr size) {
+  (void)ptr;
+  (void)size;
+}
+
+extern "C" void WEAK __tsan_free_hook(void *ptr) {
+  (void)ptr;
+}
+
+static void invoke_malloc_hook(void *ptr, uptr size) {
+  Context *ctx = CTX();
+  ThreadState *thr = cur_thread();
+  if (ctx == 0 || !ctx->initialized || thr->in_rtl)
+    return;
+  __tsan_malloc_hook(ptr, size);
+}
+
+static void invoke_free_hook(void *ptr) {
+  Context *ctx = CTX();
+  ThreadState *thr = cur_thread();
+  if (ctx == 0 || !ctx->initialized || thr->in_rtl)
+    return;
+  __tsan_free_hook(ptr);
+}
+
 class AtExitContext {
  public:
   AtExitContext()
@@ -237,25 +263,41 @@ static uptr dir2addr(char *path) {
 }
 
 TSAN_INTERCEPTOR(void*, malloc, uptr size) {
-  SCOPED_INTERCEPTOR_RAW(malloc, size);
-  return user_alloc(thr, pc, size);
+  void *p = 0;
+  {
+    SCOPED_INTERCEPTOR_RAW(malloc, size);
+    p = user_alloc(thr, pc, size);
+  }
+  invoke_malloc_hook(p, size);
+  return p;
 }
 
 TSAN_INTERCEPTOR(void*, calloc, uptr size, uptr n) {
-  SCOPED_INTERCEPTOR_RAW(calloc, size, n);
-  void *p = user_alloc(thr, pc, n * size);
-  internal_memset(p, 0, n * size);
+  void *p = 0;
+  {
+    SCOPED_INTERCEPTOR_RAW(calloc, size, n);
+    p = user_alloc(thr, pc, n * size);
+    internal_memset(p, 0, n * size);
+  }
+  invoke_malloc_hook(p, n * size);
   return p;
 }
 
 TSAN_INTERCEPTOR(void*, realloc, void *p, uptr size) {
-  SCOPED_INTERCEPTOR_RAW(realloc, p, size);
-  return user_realloc(thr, pc, p, size);
+  if (p)
+    invoke_free_hook(p);
+  {
+    SCOPED_INTERCEPTOR_RAW(realloc, p, size);
+    p = user_realloc(thr, pc, p, size);
+  }
+  invoke_malloc_hook(p, size);
+  return p;
 }
 
 TSAN_INTERCEPTOR(void, free, void *p) {
   if (p == 0)
     return;
+  invoke_free_hook(p);
   SCOPED_INTERCEPTOR_RAW(free, p);
   user_free(thr, pc, p);
 }
@@ -263,6 +305,7 @@ TSAN_INTERCEPTOR(void, free, void *p) {
 TSAN_INTERCEPTOR(void, cfree, void *p) {
   if (p == 0)
     return;
+  invoke_free_hook(p);
   SCOPED_INTERCEPTOR_RAW(cfree, p);
   user_free(thr, pc, p);
 }
@@ -441,26 +484,46 @@ TSAN_INTERCEPTOR(int, munmap, void *addr, long_t sz) {
 
 // void *operator new(size_t)
 TSAN_INTERCEPTOR(void*, _Znwm, uptr sz) {
-  SCOPED_TSAN_INTERCEPTOR(_Znwm, sz);
-  return user_alloc(thr, pc, sz);
+  void *p = 0;
+  {
+    SCOPED_TSAN_INTERCEPTOR(_Znwm, sz);
+    p = user_alloc(thr, pc, sz);
+  }
+  invoke_malloc_hook(p, sz);
+  return p;
 }
 
 // void *operator new(size_t, nothrow_t)
 TSAN_INTERCEPTOR(void*, _ZnwmRKSt9nothrow_t, uptr sz) {
-  SCOPED_TSAN_INTERCEPTOR(_ZnwmRKSt9nothrow_t, sz);
-  return user_alloc(thr, pc, sz);
+  void *p = 0;
+  {
+    SCOPED_TSAN_INTERCEPTOR(_ZnwmRKSt9nothrow_t, sz);
+    p = user_alloc(thr, pc, sz);
+  }
+  invoke_malloc_hook(p, sz);
+  return p;
 }
 
 // void *operator new[](size_t)
 TSAN_INTERCEPTOR(void*, _Znam, uptr sz) {
-  SCOPED_TSAN_INTERCEPTOR(_Znam, sz);
-  return user_alloc(thr, pc, sz);
+  void *p = 0;
+  {
+    SCOPED_TSAN_INTERCEPTOR(_Znam, sz);
+    p = user_alloc(thr, pc, sz);
+  }
+  invoke_malloc_hook(p, sz);
+  return p;
 }
 
 // void *operator new[](size_t, nothrow_t)
 TSAN_INTERCEPTOR(void*, _ZnamRKSt9nothrow_t, uptr sz) {
-  SCOPED_TSAN_INTERCEPTOR(_ZnamRKSt9nothrow_t, sz);
-  return user_alloc(thr, pc, sz);
+  void *p = 0;
+  {
+    SCOPED_TSAN_INTERCEPTOR(_ZnamRKSt9nothrow_t, sz);
+    p = user_alloc(thr, pc, sz);
+  }
+  invoke_malloc_hook(p, sz);
+  return p;
 }
 
 #else
@@ -471,6 +534,7 @@ TSAN_INTERCEPTOR(void*, _ZnamRKSt9nothrow_t, uptr sz) {
 TSAN_INTERCEPTOR(void, _ZdlPv, void *p) {
   if (p == 0)
     return;
+  invoke_free_hook(p);
   SCOPED_TSAN_INTERCEPTOR(_ZdlPv, p);
   user_free(thr, pc, p);
 }
@@ -479,6 +543,7 @@ TSAN_INTERCEPTOR(void, _ZdlPv, void *p) {
 TSAN_INTERCEPTOR(void, _ZdlPvRKSt9nothrow_t, void *p) {
   if (p == 0)
     return;
+  invoke_free_hook(p);
   SCOPED_TSAN_INTERCEPTOR(_ZdlPvRKSt9nothrow_t, p);
   user_free(thr, pc, p);
 }
@@ -487,6 +552,7 @@ TSAN_INTERCEPTOR(void, _ZdlPvRKSt9nothrow_t, void *p) {
 TSAN_INTERCEPTOR(void, _ZdaPv, void *p) {
   if (p == 0)
     return;
+  invoke_free_hook(p);
   SCOPED_TSAN_INTERCEPTOR(_ZdaPv, p);
   user_free(thr, pc, p);
 }
@@ -495,6 +561,7 @@ TSAN_INTERCEPTOR(void, _ZdaPv, void *p) {
 TSAN_INTERCEPTOR(void, _ZdaPvRKSt9nothrow_t, void *p) {
   if (p == 0)
     return;
+  invoke_free_hook(p);
   SCOPED_TSAN_INTERCEPTOR(_ZdaPvRKSt9nothrow_t, p);
   user_free(thr, pc, p);
 }
