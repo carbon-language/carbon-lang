@@ -66,6 +66,19 @@ namespace test40 {
   // CHECK-HIDDEN: _ZN6test403fooIiE3barE = weak_odr global
 }
 
+namespace test41 {
+  // Unlike gcc we propagate the information that foo not only is hidden, but
+  // has been explicitly marked as so. This lets us produce a hidden undefined
+  // reference to bar.
+  struct __attribute__((visibility("hidden"))) foo {};
+  extern foo bar;
+  foo *zed() {
+    return &bar;
+  }
+  // CHECK: @_ZN6test413barE = external hidden global
+  // CHECK-HIDDEN: @_ZN6test413barE = external hidden global
+}
+
 // CHECK: @_ZN5Test425VariableInHiddenNamespaceE = hidden global i32 10
 // CHECK: @_ZN5Test71aE = hidden global
 // CHECK: @_ZN5Test71bE = global
