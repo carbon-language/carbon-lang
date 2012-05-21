@@ -202,8 +202,7 @@ makePropertyAttributesAsWritten(unsigned Attributes) {
   return (ObjCPropertyDecl::PropertyAttributeKind)attributesAsWritten;
 }
 
-static bool LocPropertyAttribute(const Sema &sema,
-                                 ASTContext &Context, const char *attrName, 
+static bool LocPropertyAttribute( ASTContext &Context, const char *attrName, 
                                  SourceLocation LParenLoc, SourceLocation &Loc) {
   if (LParenLoc.isMacroID())
     return false;
@@ -672,7 +671,7 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
       Diag(IC->getLocation(), diag::warn_auto_readonly_iboutlet_property);
       Diag(property->getLocation(), diag::note_property_declare);
       SourceLocation readonlyLoc;
-      if (LocPropertyAttribute(*this, Context, "readonly", 
+      if (LocPropertyAttribute(Context, "readonly", 
                                property->getLParenLoc(), readonlyLoc)) {
         SourceLocation endLoc = 
           readonlyLoc.getLocWithOffset(strlen("readonly")-1);
