@@ -199,21 +199,25 @@ void Generic_ELF::anchor() {}
 
 Tool &Darwin::SelectTool(const Compilation &C, const JobAction &JA,
                          const ActionList &Inputs) const {
-  Action::ActionClass Key;
+  Action::ActionClass Key = JA.getKind();
+  bool useClang = false;
 
   if (getDriver().ShouldUseClangCompiler(C, JA, getTriple())) {
+    useClang = true;
     // Fallback to llvm-gcc for i386 kext compiles, we don't support that ABI.
-    if (Inputs.size() == 1 &&
+    if (!getDriver().shouldForceClangUse() &&
+        Inputs.size() == 1 &&
         types::isCXX(Inputs[0]->getType()) &&
         getTriple().isOSDarwin() &&
         getTriple().getArch() == llvm::Triple::x86 &&
         (C.getArgs().getLastArg(options::OPT_fapple_kext) ||
          C.getArgs().getLastArg(options::OPT_mkernel)))
-      Key = JA.getKind();
-    else
-      Key = Action::AnalyzeJobClass;
-  } else
-    Key = JA.getKind();
+      useClang = false;
+  }
+
+  // FIXME: This seems like a hacky way to choose clang frontend.
+  if (useClang)
+    Key = Action::AnalyzeJobClass;
 
   bool UseIntegratedAs = C.getArgs().hasFlag(options::OPT_integrated_as,
                                              options::OPT_no_integrated_as,

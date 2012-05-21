@@ -59,7 +59,7 @@ Driver::Driver(StringRef ClangExecutable,
     CCPrintOptions(false), CCPrintHeaders(false), CCLogDiagnostics(false),
     CCGenDiagnostics(false), CCCGenericGCCName(""), CheckInputsExist(true),
     CCCUseClang(true), CCCUseClangCXX(true), CCCUseClangCPP(true),
-    CCCUsePCH(true), SuppressMissingInputWarning(false) {
+    ForcedClangUse(false), CCCUsePCH(true), SuppressMissingInputWarning(false) {
   if (IsProduction) {
     // In a "production" build, only use clang on architectures we expect to
     // work.
