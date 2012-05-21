@@ -5091,6 +5091,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
             case DW_TAG_base_type:
             case DW_TAG_pointer_type:
             case DW_TAG_reference_type:
+            case DW_TAG_rvalue_reference_type:
             case DW_TAG_typedef:
             case DW_TAG_const_type:
             case DW_TAG_restrict_type:
@@ -5165,12 +5166,13 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                                                                    byte_size * 8);
                         break;
 
-                    case DW_TAG_pointer_type:   encoding_data_type = Type::eEncodingIsPointerUID;           break;
-                    case DW_TAG_reference_type: encoding_data_type = Type::eEncodingIsLValueReferenceUID;   break;
-                    case DW_TAG_typedef:        encoding_data_type = Type::eEncodingIsTypedefUID;           break;
-                    case DW_TAG_const_type:     encoding_data_type = Type::eEncodingIsConstUID;             break;
-                    case DW_TAG_restrict_type:  encoding_data_type = Type::eEncodingIsRestrictUID;          break;
-                    case DW_TAG_volatile_type:  encoding_data_type = Type::eEncodingIsVolatileUID;          break;
+                    case DW_TAG_pointer_type:           encoding_data_type = Type::eEncodingIsPointerUID;           break;
+                    case DW_TAG_reference_type:         encoding_data_type = Type::eEncodingIsLValueReferenceUID;   break;
+                    case DW_TAG_rvalue_reference_type:  encoding_data_type = Type::eEncodingIsRValueReferenceUID;   break;
+                    case DW_TAG_typedef:                encoding_data_type = Type::eEncodingIsTypedefUID;           break;
+                    case DW_TAG_const_type:             encoding_data_type = Type::eEncodingIsConstUID;             break;
+                    case DW_TAG_restrict_type:          encoding_data_type = Type::eEncodingIsRestrictUID;          break;
+                    case DW_TAG_volatile_type:          encoding_data_type = Type::eEncodingIsVolatileUID;          break;
                     }
 
                     if (clang_type == NULL && (encoding_data_type == Type::eEncodingIsPointerUID || encoding_data_type == Type::eEncodingIsTypedefUID))
