@@ -53,7 +53,7 @@ class CPPThisTestCase(TestBase):
         self.expect("expression -- m_a = 2",
                     startstr = "(int) $1 = 2")
         
-        self.expect("expression -- m_a", 
+        self.expect("expression -- (int)getpid(); m_a", 
                     startstr = "(int) $2 = 2")
 
         self.runCmd("process continue")

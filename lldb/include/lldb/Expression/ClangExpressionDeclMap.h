@@ -809,6 +809,10 @@ private:
     ///     during parsing, in which case we don't know its type; hence the
     ///     default.
     ///
+    /// @param[in] object_pointer
+    ///     The type expected is an object type.  This means we will ignore
+    ///     constness of the pointer target.
+    ///
     /// @return
     ///     The LLDB Variable found, or NULL if none was found.
     //------------------------------------------------------------------
@@ -816,7 +820,7 @@ private:
     FindVariableInScope (StackFrame &frame,
                          const ConstString &name,
                          TypeFromUser *type = NULL,
-                         bool ignore_const = false);
+                         bool object_pointer = false);
     
     //------------------------------------------------------------------
     /// Given a target, find a data symbol that has the given name.
