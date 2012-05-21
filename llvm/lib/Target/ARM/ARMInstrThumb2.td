@@ -668,16 +668,16 @@ let hasPostISelHook = 1, Defs = [CPSR] in {
 multiclass T2I_rbin_s_is<PatFrag opnode> {
    // shifted imm
    def ri : t2PseudoInst<(outs rGPR:$Rd),
-                         (ins GPRnopc:$Rn, t2_so_imm:$imm, pred:$p),
+                         (ins rGPR:$Rn, t2_so_imm:$imm, pred:$p),
                          4, IIC_iALUi,
                          [(set rGPR:$Rd, CPSR, (opnode t2_so_imm:$imm,
-                                                GPRnopc:$Rn))]>;
+                                                rGPR:$Rn))]>;
    // shifted register
    def rs : t2PseudoInst<(outs rGPR:$Rd),
-                         (ins GPRnopc:$Rn, t2_so_reg:$ShiftedRm, pred:$p),
+                         (ins rGPR:$Rn, t2_so_reg:$ShiftedRm, pred:$p),
                          4, IIC_iALUsi,
                          [(set rGPR:$Rd, CPSR, (opnode t2_so_reg:$ShiftedRm,
-                                                GPRnopc:$Rn))]>;
+                                                rGPR:$Rn))]>;
 }
 }
 
