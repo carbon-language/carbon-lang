@@ -26,11 +26,7 @@
 using namespace llvm;
 
 TargetMachine *EngineBuilder::selectTarget() {
-  StringRef MArch = "";
-  StringRef MCPU = "";
-  SmallVector<std::string, 1> MAttrs;
   Triple TT(M->getTargetTriple());
-
   return selectTarget(TT, MArch, MCPU, MAttrs);
 }
 
