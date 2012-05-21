@@ -669,13 +669,13 @@ public:
   unsigned StartParameter;
 
   /// \brief The kind of result stored here.
-  ResultKind Kind : 3;
+  ResultKind Kind;
 
   /// \brief The cursor kind that describes this result.
-  CXCursorKind CursorKind : 16;
+  CXCursorKind CursorKind;
 
   /// \brief The availability of this result.
-  CXAvailabilityKind Availability : 8;
+  CXAvailabilityKind Availability;
 
   /// \brief Whether this result is hidden by another name.
   bool Hidden : 1;
