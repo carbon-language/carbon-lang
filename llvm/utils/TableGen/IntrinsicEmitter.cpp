@@ -413,6 +413,12 @@ static void EncodeFixedType(Record *R, unsigned &NextArgNo,
   
   if (VT == MVT::iPTR) {
     Sig.push_back(IIT_PTR);
+    unsigned AddrSpace = 0;
+    if (R->isSubClassOf("LLVMQualPointerType")) {
+      AddrSpace = R->getValueAsInt("AddrSpace");
+      assert(AddrSpace < 256 && "Address space exceeds 255");
+    }
+    Sig.push_back(AddrSpace);
     return EncodeFixedType(R->getValueAsDef("ElTy"), NextArgNo, Sig);
   }
   

@@ -63,10 +63,14 @@ class LLVMType<ValueType vt> {
   ValueType VT = vt;
 }
 
-class LLVMPointerType<LLVMType elty>
+class LLVMQualPointerType<LLVMType elty, int addrspace>
   : LLVMType<iPTR>{
   LLVMType ElTy = elty;
+  int AddrSpace = addrspace;
 }
+
+class LLVMPointerType<LLVMType elty>
+  : LLVMQualPointerType<elty, 0>;
 
 class LLVMAnyPointerType<LLVMType elty>
   : LLVMType<iPTRAny>{
