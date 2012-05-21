@@ -3496,7 +3496,7 @@ void ObjCARCOpt::OptimizeWeakCalls(Function &F) {
           // No return value.
           break;
         default:
-          break;
+          llvm_unreachable("alloca really is used!");
         }
         UserInst->eraseFromParent();
       }
