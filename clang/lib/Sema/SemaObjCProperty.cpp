@@ -18,6 +18,8 @@
 #include "clang/AST/ExprObjC.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/ASTMutationListener.h"
+#include "clang/Lex/Lexer.h"
+#include "clang/Basic/SourceManager.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/SmallString.h"
 
@@ -200,51 +202,36 @@ makePropertyAttributesAsWritten(unsigned Attributes) {
   return (ObjCPropertyDecl::PropertyAttributeKind)attributesAsWritten;
 }
 
-static std::string getPropertyAttributeString(const ObjCPropertyDecl *property,
-                                              unsigned Attributes) {
-  std::string attr;
-  if (!Attributes)
-    return attr;
-  attr = "(";
-  bool first = true;
-  if (Attributes & ObjCPropertyDecl::OBJC_PR_readonly)
-    {attr +=  !first ? ", readonly" : "readonly"; first = false; } 
-  if (Attributes & ObjCPropertyDecl::OBJC_PR_readwrite)
-    {attr +=  !first ? ", readwrite" : "readwrite"; first = false; } 
-  if (Attributes & ObjCPropertyDecl::OBJC_PR_getter)
-    {
-      if (!first)
-        attr += ", ";
-      attr += "getter=";
-      attr += property->getGetterName().getAsString();
-      first = false;
-   }
-  if (Attributes & ObjCPropertyDecl::OBJC_PR_setter)
-    {
-      if (!first)
-        attr += ", ";
-      attr += "setter=";
-      attr += property->getSetterName().getAsString();
-      first = false;
-   }
-  if (Attributes & ObjCPropertyDecl::OBJC_PR_assign)
-    {attr +=  !first ? ", assign" : "assign"; first = false; } 
-  if (Attributes & ObjCPropertyDecl::OBJC_PR_retain)
-    {attr +=  !first ? ", retain" : "retain"; first = false; } 
-  if (Attributes & ObjCPropertyDecl::OBJC_PR_strong)
-    {attr +=  !first ? ", strong" : "strong"; first = false; } 
-  if (Attributes & ObjCPropertyDecl::OBJC_PR_weak)
-    {attr +=  !first ? ", weak" : "weak"; first = false; } 
-  if (Attributes & ObjCPropertyDecl::OBJC_PR_copy)
-    {attr +=  !first ? ", copy" : "copy"; first = false; } 
-  if (Attributes & ObjCPropertyDecl::OBJC_PR_unsafe_unretained)
-    {attr +=  !first ? ", unsafe_unretained" : "unsafe_unretained"; first = false; } 
-  if (Attributes & ObjCPropertyDecl::OBJC_PR_nonatomic)
-    {attr +=  !first ? ", nonatomic" : "nonatomic"; first = false; } 
-  if (Attributes & ObjCPropertyDecl::OBJC_PR_atomic)
-    {attr +=  !first ? ", atomic" : "atomic"; first = false; } 
-  attr += ")";
-  return attr;
+static bool LocPropertyAttribute(const Sema &sema,
+                                 ASTContext &Context, const char *attrName, 
+                                 SourceLocation LParenLoc, SourceLocation &Loc) {
+  if (LParenLoc.isMacroID())
+    return false;
+  
+  SourceManager &SM = Context.getSourceManager();
+  std::pair<FileID, unsigned> locInfo = SM.getDecomposedLoc(LParenLoc);
+  // Try to load the file buffer.
+  bool invalidTemp = false;
+  StringRef file = SM.getBufferData(locInfo.first, &invalidTemp);
+  if (invalidTemp)
+    return false;
+  const char *tokenBegin = file.data() + locInfo.second;
+  
+  // Lex from the start of the given location.
+  Lexer lexer(SM.getLocForStartOfFile(locInfo.first),
+              Context.getLangOpts(),
+              file.begin(), tokenBegin, file.end());
+  Token Tok;
+  do {
+    lexer.LexFromRawLexer(Tok);
+    if (Tok.is(tok::raw_identifier) &&
+        StringRef(Tok.getRawIdentifierData(), Tok.getLength()) == attrName) {
+      Loc = Tok.getLocation();
+      return true;
+    }
+  } while (Tok.isNot(tok::r_paren));
+  return false;
+  
 }
 
 Decl *
@@ -684,15 +671,16 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
       rwPIKind &= (~ObjCPropertyDecl::OBJC_PR_readonly);
       Diag(IC->getLocation(), diag::warn_auto_readonly_iboutlet_property);
       Diag(property->getLocation(), diag::note_property_declare);
-      // FIXME. End location must be that of closing ')' which is currently
-      // unavailable. Need to add it.
-      SourceLocation endLoc =
-              property->getTypeSourceInfo()->getTypeLoc().getBeginLoc();
-      SourceRange PropSourceRange(property->getLParenLoc(), endLoc);
-      Diag(property->getLocation(), 
-           diag::note_auto_readonly_iboutlet_fixup_suggest) <<
-      FixItHint::CreateReplacement(PropSourceRange, getPropertyAttributeString(property,
-                                                                               rwPIKind));
+      SourceLocation readonlyLoc;
+      if (LocPropertyAttribute(*this, Context, "readonly", 
+                               property->getLParenLoc(), readonlyLoc)) {
+        SourceLocation endLoc = 
+          readonlyLoc.getLocWithOffset(strlen("readonly")-1);
+        SourceRange ReadonlySourceRange(readonlyLoc, endLoc);
+        Diag(property->getLocation(), 
+             diag::note_auto_readonly_iboutlet_fixup_suggest) <<
+        FixItHint::CreateReplacement(ReadonlySourceRange, "readwrite");
+      }
     }
         
   } else if ((CatImplClass = dyn_cast<ObjCCategoryImplDecl>(ClassImpDecl))) {
