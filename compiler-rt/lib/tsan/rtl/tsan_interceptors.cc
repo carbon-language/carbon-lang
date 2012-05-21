@@ -52,6 +52,12 @@ const int kPthreadAttrSize = 56;
 const int EINVAL = 22;
 const int EBUSY = 16;
 const int EPOLL_CTL_ADD = 1;
+const int SIGILL = 4;
+const int SIGABRT = 6;
+const int SIGFPE = 8;
+const int SIGSEGV = 11;
+const int SIGPIPE = 13;
+const int SIGBUS = 7;
 void *const MAP_FAILED = (void*)-1;
 const int PTHREAD_BARRIER_SERIAL_THREAD = -1;
 const int MAP_FIXED = 0x10;
@@ -76,6 +82,7 @@ struct sigaction_t {
 
 const sighandler_t SIG_DFL = (sighandler_t)0;
 const sighandler_t SIG_IGN = (sighandler_t)1;
+const sighandler_t SIG_ERR = (sighandler_t)-1;
 const int SA_SIGINFO = 4;
 const int SIG_SETMASK = 2;
 
@@ -1138,40 +1145,109 @@ TSAN_INTERCEPTOR(int, epoll_wait, int epfd, void *ev, int cnt, int timeout) {
   return res;
 }
 
-static void rtl_sighandler(int sig) {
+static void ALWAYS_INLINE rtl_generic_sighandler(bool sigact, int sig,
+    my_siginfo_t *info, void *ctx) {
   ThreadState *thr = cur_thread();
+  // Don't mess with synchronous signals.
+  if (sig == SIGSEGV || sig == SIGBUS || sig == SIGILL || sig == SIGABRT ||
+      sig == SIGFPE || sig == SIGPIPE || sig == thr->int_signal_send) {
+    CHECK(thr->in_rtl == 0 || thr->in_rtl == 1);
+    int in_rtl = thr->in_rtl;
+    thr->in_rtl = 0;
+    CHECK_EQ(thr->in_signal_handler, false);
+    thr->in_signal_handler = true;
+    if (sigact)
+      sigactions[sig].sa_sigaction(sig, info, ctx);
+    else
+      sigactions[sig].sa_handler(sig);
+    CHECK_EQ(thr->in_signal_handler, true);
+    thr->in_signal_handler = false;
+    thr->in_rtl = in_rtl;
+    return;
+  }
+
   SignalDesc *signal = &thr->pending_signals[sig];
   if (signal->armed == false) {
     signal->armed = true;
-    signal->sigaction = false;
+    signal->sigaction = sigact;
+    if (info)
+      signal->siginfo = *info;
     thr->pending_signal_count++;
   }
 }
 
+static void rtl_sighandler(int sig) {
+  rtl_generic_sighandler(false, sig, 0, 0);
+}
+
 static void rtl_sigaction(int sig, my_siginfo_t *info, void *ctx) {
-  ThreadState *thr = cur_thread();
-  SignalDesc *signal = &thr->pending_signals[sig];
-  if (signal->armed == false) {
-    signal->armed = true;
-    signal->sigaction = true;
-    signal->siginfo = *info;
-    thr->pending_signal_count++;
-  }
+  rtl_generic_sighandler(true, sig, info, ctx);
 }
 
 TSAN_INTERCEPTOR(int, sigaction, int sig, sigaction_t *act, sigaction_t *old) {
   SCOPED_TSAN_INTERCEPTOR(sigaction, sig, act, old);
-  int res = 0;
-  if (act == 0 || act->sa_handler == SIG_IGN || act->sa_handler == SIG_DFL) {
-    res = REAL(sigaction)(sig, act, old);
-  } else {
-    sigactions[sig] = *act;
-    sigaction_t newact = *act;
+  if (old)
+    *old = sigactions[sig];
+  if (act == 0)
+    return 0;
+  sigactions[sig] = *act;
+  sigaction_t newact = *act;
+  if (act->sa_handler != SIG_IGN && act->sa_handler != SIG_DFL) {
     if (newact.sa_flags & SA_SIGINFO)
       newact.sa_sigaction = rtl_sigaction;
     else
       newact.sa_handler = rtl_sighandler;
-    res = REAL(sigaction)(sig, &newact, old);
+  }
+  int res = REAL(sigaction)(sig, &newact, 0);
+  return res;
+}
+
+TSAN_INTERCEPTOR(sighandler_t, signal, int sig, sighandler_t h) {
+  sigaction_t act = {};
+  act.sa_handler = h;
+  internal_memset(&act.sa_mask, -1, sizeof(act.sa_mask));
+  act.sa_flags = 0;
+  sigaction_t old = {};
+  int res = sigaction(sig, &act, &old);
+  if (res)
+    return SIG_ERR;
+  return old.sa_handler;
+}
+
+TSAN_INTERCEPTOR(int, raise, int sig) {
+  SCOPED_TSAN_INTERCEPTOR(raise, sig);
+  CHECK_EQ(thr->int_signal_send, 0);
+  thr->int_signal_send = sig;
+  int res = REAL(raise)(sig);
+  CHECK_EQ(thr->int_signal_send, sig);
+  thr->int_signal_send = 0;
+  return res;
+}
+
+TSAN_INTERCEPTOR(int, kill, int pid, int sig) {
+  SCOPED_TSAN_INTERCEPTOR(kill, pid, sig);
+  if (pid == GetPid()) {
+    CHECK_EQ(thr->int_signal_send, 0);
+    thr->int_signal_send = sig;
+  }
+  int res = REAL(kill)(pid, sig);
+  if (pid == GetPid()) {
+    CHECK_EQ(thr->int_signal_send, sig);
+    thr->int_signal_send = 0;
+  }
+  return res;
+}
+
+TSAN_INTERCEPTOR(int, pthread_kill, void *tid, int sig) {
+  SCOPED_TSAN_INTERCEPTOR(pthread_kill, tid, sig);
+  if (tid == pthread_self()) {
+    CHECK_EQ(thr->int_signal_send, 0);
+    thr->int_signal_send = sig;
+  }
+  int res = REAL(pthread_kill)(tid, sig);
+  if (tid == pthread_self()) {
+    CHECK_EQ(thr->int_signal_send, sig);
+    thr->int_signal_send = 0;
   }
   return res;
 }
@@ -1180,6 +1256,7 @@ static void process_pending_signals(ThreadState *thr) {
   CHECK_EQ(thr->in_rtl, 0);
   if (thr->pending_signal_count == 0 || thr->in_signal_handler)
     return;
+  CHECK_EQ(thr->in_signal_handler, false);
   thr->in_signal_handler = true;
   thr->pending_signal_count = 0;
   // These are too big for stack.
@@ -1192,10 +1269,13 @@ static void process_pending_signals(ThreadState *thr) {
     SignalDesc *signal = &thr->pending_signals[sig];
     if (signal->armed) {
       signal->armed = false;
-      if (signal->sigaction)
-        sigactions[sig].sa_sigaction(sig, &signal->siginfo, &uctx);
-      else
-        sigactions[sig].sa_handler(sig);
+      if (sigactions[sig].sa_handler != SIG_DFL
+          && sigactions[sig].sa_handler != SIG_IGN) {
+        if (signal->sigaction)
+          sigactions[sig].sa_sigaction(sig, &signal->siginfo, &uctx);
+        else
+          sigactions[sig].sa_handler(sig);
+      }
     }
   }
   pthread_sigmask(SIG_SETMASK, &oldset, 0);
@@ -1341,6 +1421,10 @@ void InitializeInterceptors() {
   TSAN_INTERCEPT(epoll_wait);
 
   TSAN_INTERCEPT(sigaction);
+  TSAN_INTERCEPT(signal);
+  TSAN_INTERCEPT(raise);
+  TSAN_INTERCEPT(kill);
+  TSAN_INTERCEPT(pthread_kill);
 
   atexit_ctx = new(internal_alloc(MBlockAtExit, sizeof(AtExitContext)))
       AtExitContext();

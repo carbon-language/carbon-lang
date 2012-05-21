@@ -193,6 +193,10 @@ enum StatType {
   StatInt_epoll_ctl,
   StatInt_epoll_wait,
   StatInt_sigaction,
+  StatInt_signal,
+  StatInt_raise,
+  StatInt_kill,
+  StatInt_pthread_kill,
 
   // Dynamic annotations.
   StatAnnotation,

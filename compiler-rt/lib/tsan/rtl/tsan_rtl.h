@@ -257,6 +257,7 @@ struct ThreadState {
   DeadlockDetector deadlock_detector;
 
   bool in_signal_handler;
+  int int_signal_send;
   int pending_signal_count;
   SignalDesc pending_signals[kSigCount];
 
