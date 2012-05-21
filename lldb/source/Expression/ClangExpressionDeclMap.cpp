@@ -2196,8 +2196,11 @@ ClangExpressionDeclMap::FindVariableInScope
         !var_sp->LocationIsValidForFrame (&frame))
         return lldb::VariableSP();
 
-    if (var_sp && type)
+    if (var_sp)
     {
+        if (!type)
+            return var_sp;
+        
         TypeFromUser candidate_type(var_sp->GetType()->GetClangFullType(),
                                     var_sp->GetType()->GetClangAST());
         
@@ -2213,30 +2216,44 @@ ClangExpressionDeclMap::FindVariableInScope
             clang::QualType desired_qual_type = clang::QualType::getFromOpaquePtr(type->GetOpaqueQualType());
             clang::QualType candidate_qual_type = clang::QualType::getFromOpaquePtr(candidate_type.GetOpaqueQualType());
             
+            const clang::ObjCObjectPointerType *desired_objc_ptr_type = desired_qual_type->getAs<clang::ObjCObjectPointerType>();
+            const clang::ObjCObjectPointerType *candidate_objc_ptr_type = desired_qual_type->getAs<clang::ObjCObjectPointerType>();
+            
+            if (desired_objc_ptr_type && candidate_objc_ptr_type) {
+                clang::QualType desired_target_type = desired_objc_ptr_type->getPointeeType().getUnqualifiedType();
+                clang::QualType candidate_target_type = candidate_objc_ptr_type->getPointeeType().getUnqualifiedType();
+                
+                if (ClangASTContext::AreTypesSame(type->GetASTContext(),
+                                                  desired_target_type.getAsOpaquePtr(),
+                                                  candidate_target_type.getAsOpaquePtr()))
+                    return var_sp;
+            }
+            
             const clang::PointerType *desired_ptr_type = desired_qual_type->getAs<clang::PointerType>();
             const clang::PointerType *candidate_ptr_type = candidate_qual_type->getAs<clang::PointerType>();
             
-            if (!desired_ptr_type || !candidate_ptr_type)
-                return lldb::VariableSP();
+            if (desired_ptr_type && candidate_ptr_type) {
+                clang::QualType desired_target_type = desired_ptr_type->getPointeeType().getUnqualifiedType();
+                clang::QualType candidate_target_type = candidate_ptr_type->getPointeeType().getUnqualifiedType();
+                
+                if (ClangASTContext::AreTypesSame(type->GetASTContext(),
+                                                  desired_target_type.getAsOpaquePtr(),
+                                                  candidate_target_type.getAsOpaquePtr()))
+                    return var_sp;
+            }
             
-            clang::QualType desired_target_type = desired_ptr_type->getPointeeType().getUnqualifiedType();
-            clang::QualType candidate_target_type = candidate_ptr_type->getPointeeType().getUnqualifiedType();
-            
-            if (!ClangASTContext::AreTypesSame(type->GetASTContext(),
-                                               desired_target_type.getAsOpaquePtr(),
-                                               candidate_target_type.getAsOpaquePtr()))
-                return lldb::VariableSP();
+            return lldb::VariableSP();
         }
         else
         {
-            if (!ClangASTContext::AreTypesSame(type->GetASTContext(),
+            if (ClangASTContext::AreTypesSame(type->GetASTContext(),
                                                type->GetOpaqueQualType(), 
                                                var_sp->GetType()->GetClangFullType()))
-                return lldb::VariableSP();
+                return var_sp;
         }
     }
 
-    return var_sp;
+    return lldb::VariableSP();
 }
 
 Symbol *
