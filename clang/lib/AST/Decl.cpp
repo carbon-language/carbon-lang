@@ -163,7 +163,7 @@ static bool shouldConsiderTemplateLV(const FunctionDecl *fn) {
 }
 
 static bool shouldConsiderTemplateLV(const ClassTemplateSpecializationDecl *d) {
-  return !d->hasAttr<VisibilityAttr>();
+  return !d->hasAttr<VisibilityAttr>() || d->isExplicitSpecialization();
 }
 
 static LinkageInfo getLVForNamespaceScopeDecl(const NamedDecl *D,
