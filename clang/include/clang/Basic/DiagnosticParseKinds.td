@@ -378,6 +378,8 @@ def err_synthesized_property_name : Error<
 def warn_semicolon_before_method_body : Warning<
   "semicolon before method body is ignored">,
   InGroup<DiagGroup<"semicolon-before-method-body">>, DefaultIgnore;
+def note_extra_comma_message_arg : Note<
+  "comma separating objective-c messaging arguments">;
 
 def err_expected_field_designator : Error<
   "expected a field designator, such as '.field = 4'">;

@@ -2452,10 +2452,14 @@ Parser::ParseObjCMessageExpressionBody(SourceLocation LBracLoc,
     }
     // Parse the, optional, argument list, comma separated.
     while (Tok.is(tok::comma)) {
-      ConsumeToken(); // Eat the ','.
+      SourceLocation commaLoc = ConsumeToken(); // Eat the ','.
       ///  Parse the expression after ','
       ExprResult Res(ParseAssignmentExpression());
       if (Res.isInvalid()) {
+        if (Tok.is(tok::colon)) {
+          Diag(commaLoc, diag::note_extra_comma_message_arg) <<
+            FixItHint::CreateRemoval(commaLoc);
+        }
         // We must manually skip to a ']', otherwise the expression skipper will
         // stop at the ']' when it skips to the ';'.  We want it to skip beyond
         // the enclosing expression.
