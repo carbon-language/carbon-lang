@@ -804,14 +804,28 @@ void Verifier::visitSwitchInst(SwitchInst &SI) {
   // Check to make sure that all of the constants in the switch instruction
   // have the same type as the switched-on value.
   Type *SwitchTy = SI.getCondition()->getType();
-  SmallPtrSet<ConstantInt*, 32> Constants;
+  CRSBuilder Builder;
+  std::map<ConstantRangesSet::Range, unsigned> RangeSetMap;
   for (SwitchInst::CaseIt i = SI.case_begin(), e = SI.case_end(); i != e; ++i) {
-    Assert1(i.getCaseValue()->getType() == SwitchTy,
-            "Switch constants must all be same type as switch value!", &SI);
-    Assert2(Constants.insert(i.getCaseValue()),
-            "Duplicate integer as switch case", &SI, i.getCaseValue());
+    ConstantRangesSet RS = i.getCaseValueEx();
+    for (unsigned ri = 0, rie = RS.getNumItems(); ri < rie; ++ri) {
+      ConstantRangesSet::Range r = RS.getItem(ri);
+      Assert1(r.Low->getType() == SwitchTy,
+              "Switch constants must all be same type as switch value!", &SI);
+      Assert1(r.High->getType() == SwitchTy,
+              "Switch constants must all be same type as switch value!", &SI);
+      Builder.add(r);
+      RangeSetMap[r] = i.getCaseIndex();
+    }
   }
-
+  
+  CRSBuilder::RangeIterator errItem;
+  if (!Builder.verify(errItem)) {
+    unsigned CaseIndex = RangeSetMap[errItem->first];
+    SwitchInst::CaseIt i(&SI, CaseIndex);
+    Assert2(false, "Duplicate integer as switch case", &SI, i.getCaseValueEx());
+  }
+  
   visitTerminatorInst(SI);
 }
 

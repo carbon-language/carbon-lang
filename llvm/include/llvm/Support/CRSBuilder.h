@@ -100,14 +100,16 @@ public:
     Sorted = false;
   }
   
-  bool verify() {
+  bool verify(RangeIterator& errItem) {
     if (Items.empty())
       return true;
     sort();
     for (CaseItemIt i = Items.begin(), j = i+1, e = Items.end();
          j != e; i = j++) {
-      if (isIntersected(j, i) && j->second != i->second)
+      if (isIntersected(j, i) && j->second != i->second) {
+        errItem = j;
         return false;
+      }
     }
     return true;
   }
@@ -185,10 +187,13 @@ public:
 
 template <class SuccessorClass>
 class CRSBuilderT : public CRSBuilderBase<SuccessorClass, false> {
+public:
   
   typedef typename CRSBuilderBase<SuccessorClass, false>::RangeTy RangeTy;
   typedef typename CRSBuilderBase<SuccessorClass, false>::RangeIterator
       RangeIterator;
+  
+private:
   
   typedef std::list<RangeTy> RangesCollection;
   typedef typename RangesCollection::iterator RangesCollectionIt;

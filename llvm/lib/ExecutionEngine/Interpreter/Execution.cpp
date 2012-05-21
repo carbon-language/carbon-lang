@@ -651,10 +651,16 @@ void Interpreter::visitSwitchInst(SwitchInst &I) {
   // Check to see if any of the cases match...
   BasicBlock *Dest = 0;
   for (SwitchInst::CaseIt i = I.case_begin(), e = I.case_end(); i != e; ++i) {
-    GenericValue CaseVal = getOperandValue(i.getCaseValue(), SF);
-    if (executeICMP_EQ(CondVal, CaseVal, ElTy).IntVal != 0) {
-      Dest = cast<BasicBlock>(i.getCaseSuccessor());
-      break;
+    ConstantRangesSet Case = i.getCaseValueEx();
+    for (unsigned n = 0, en = Case.getNumItems(); n != en; ++n) {
+      ConstantRangesSet::Range r = Case.getItem(n);
+      GenericValue Low = getOperandValue(r.Low, SF);
+      GenericValue High = getOperandValue(r.High, SF);
+      if (executeICMP_ULE(Low, CondVal, ElTy).IntVal != 0 &&
+          executeICMP_ULE(CondVal, High, ElTy).IntVal != 0) {
+        Dest = cast<BasicBlock>(i.getCaseSuccessor());
+        break;        
+      }
     }
   }
   if (!Dest) Dest = I.getDefaultDest();   // No cases matched: use default
