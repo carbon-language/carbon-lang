@@ -1036,8 +1036,11 @@ void ARMAsmPrinter::EmitJump2Table(const MachineInstr *MI) {
                                    OutContext);
     OutStreamer.EmitValue(Expr, OffsetWidth);
   }
-  // Mark the end of jump table data-in-code region.
-  OutStreamer.EmitDataRegion(MCDR_DataRegionEnd);
+  // Mark the end of jump table data-in-code region. 32-bit offsets use
+  // actual branch instructions here, so we don't mark those as a data-region
+  // at all.
+  if (OffsetWidth != 4)
+    OutStreamer.EmitDataRegion(MCDR_DataRegionEnd);
 }
 
 void ARMAsmPrinter::PrintDebugValueComment(const MachineInstr *MI,
