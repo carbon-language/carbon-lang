@@ -814,6 +814,24 @@ Index: lib/Sema/SemaExprCXX.cpp
        } else if (ObjCArrayLiteral *ArrayLit = dyn_cast<ObjCArrayLiteral>(E)) {
          D = ArrayLit->getArrayWithObjectsMethod();
        } else if (ObjCDictionaryLiteral *DictLit
+@@ -4529,6 +4529,17 @@
+   if (RD->isInvalidDecl() || RD->isDependentContext())
+     return Owned(E);
+ 
++  if (!RD->getDefinition()) {
++    if (RD->hasExternalLexicalStorage()) {
++      ExternalASTSource *ext_source = RD->getASTContext().getExternalSource();
++      if (ext_source)
++        ext_source->CompleteType(RD);
++    }
++  }
++
++  if (!RD->getDefinition())
++    return Owned(E);
++
+   bool IsDecltype = ExprEvalContexts.back().IsDecltype;
+   CXXDestructorDecl *Destructor = IsDecltype ? 0 : LookupDestructor(RD);
+ 
 Index: lib/Sema/SemaExceptionSpec.cpp
 ===================================================================
 --- lib/Sema/SemaExceptionSpec.cpp	(revision 152265)
