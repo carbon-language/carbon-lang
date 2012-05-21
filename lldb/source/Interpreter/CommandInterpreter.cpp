@@ -256,6 +256,15 @@ CommandInterpreter::Initialize ()
     {
         AddAlias ("add-dsym", cmd_obj_sp);
     }
+    
+    cmd_obj_sp = GetCommandSPExact ("breakpoint set", false);
+    if (cmd_obj_sp)
+    {
+        alias_arguments_vector_sp.reset (new OptionArgVector);
+        ProcessAliasOptionsArgs (cmd_obj_sp, "--func-regex %1", alias_arguments_vector_sp);
+        AddAlias ("rb", cmd_obj_sp);
+        AddOrReplaceAliasOptions("rb", alias_arguments_vector_sp);
+    }
 }
 
 const char *
