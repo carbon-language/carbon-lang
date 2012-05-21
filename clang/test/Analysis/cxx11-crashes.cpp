@@ -31,3 +31,8 @@ void radar11487541() {
   namespace fs = boost::filesystem;
   fs::path p;
 }
+
+// PR12873 radrar://11499139
+void testFloatInitializer() {
+  const float ysize={0.015}, xsize={0.01};
+}

@@ -568,8 +568,10 @@ void ExprEngine::VisitInitListExpr(const InitListExpr *IE,
                                              state->getSVal(initEx, LCtx)));
     return;
   }
-  
-  llvm_unreachable("unprocessed InitListExpr type");
+
+  assert(IE->getNumInits() == 1);
+  B.generateNode(IE, Pred, state->BindExpr(IE, LCtx, UnknownVal()));
+  return;
 }
 
 void ExprEngine::VisitGuardedExpr(const Expr *Ex,
