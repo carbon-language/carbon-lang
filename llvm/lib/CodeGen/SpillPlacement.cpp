@@ -207,6 +207,17 @@ void SpillPlacement::activate(unsigned n) {
     return;
   ActiveNodes->set(n);
   nodes[n].clear();
+
+  // Very large bundles usually come from big switches, indirect branches,
+  // landing pads, or loops with many 'continue' statements. It is difficult to
+  // allocate registers when so many different blocks are involved.
+  //
+  // Give a small negative bias to large bundles such that 1/32 of the
+  // connected blocks need to be interested before we consider expanding the
+  // region through the bundle. This helps compile time by limiting the number
+  // of blocks visited and the number of links in the Hopfield network.
+  if (bundles->getBlocks(n).size() > 100)
+    nodes[n].Bias = -0.0625f;
 }
 
 

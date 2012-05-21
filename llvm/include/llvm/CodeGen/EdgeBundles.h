@@ -46,7 +46,7 @@ public:
   unsigned getNumBundles() const { return EC.getNumClasses(); }
 
   /// getBlocks - Return an array of blocks that are connected to Bundle.
-  ArrayRef<unsigned> getBlocks(unsigned Bundle) { return Blocks[Bundle]; }
+  ArrayRef<unsigned> getBlocks(unsigned Bundle) const { return Blocks[Bundle]; }
 
   /// getMachineFunction - Return the last machine function computed.
   const MachineFunction *getMachineFunction() const { return MF; }
