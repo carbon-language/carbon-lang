@@ -1,9 +1,15 @@
-; RUN: llc < %s -march=thumb -mattr=+thumb2 -arm-adjust-jump-tables=0 | not grep tbb
+; RUN: llc < %s -march=thumb -mattr=+thumb2 -arm-adjust-jump-tables=0 | FileCheck %s
 
 ; Do not use tbb / tbh if any destination is before the jumptable.
 ; rdar://7102917
 
 define i16 @main__getopt_internal_2E_exit_2E_ce(i32, i1 %b) nounwind {
+; CHECK: main__getopt_internal_2E_exit_2E_ce
+; CHECK-NOT: tbb
+; CHECK-NOT: tbh
+; 32-bit jump tables use explicit branches, not data regions, so make sure
+; we don't annotate this region.
+; CHECK-NOT: data_region
 entry:
   br i1 %b, label %codeRepl127.exitStub, label %newFuncRoot
 
