@@ -76,7 +76,7 @@ class FastState {
   void IncrementEpoch() {
     u64 old_epoch = epoch();
     x_ += 1 << kClkShift;
-    DCHECK(old_epoch + 1 == epoch());
+    DCHECK_EQ(old_epoch + 1, epoch());
     (void)old_epoch;
   }
 
