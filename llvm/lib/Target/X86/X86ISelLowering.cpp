@@ -4061,13 +4061,14 @@ static SDValue CommuteVectorShuffle(ShuffleVectorSDNode *SVOp,
   SmallVector<int, 8> MaskVec;
 
   for (unsigned i = 0; i != NumElems; ++i) {
-    int idx = SVOp->getMaskElt(i);
-    if (idx < 0)
-      MaskVec.push_back(idx);
-    else if (idx < (int)NumElems)
-      MaskVec.push_back(idx + NumElems);
-    else
-      MaskVec.push_back(idx - NumElems);
+    int Idx = SVOp->getMaskElt(i);
+    if (Idx >= 0) {
+      if (Idx < (int)NumElems)
+        Idx += NumElems;
+      else
+        Idx -= NumElems;
+    }
+    MaskVec.push_back(Idx);
   }
   return DAG.getVectorShuffle(VT, SVOp->getDebugLoc(), SVOp->getOperand(1),
                               SVOp->getOperand(0), &MaskVec[0]);
@@ -5970,14 +5971,15 @@ LowerVECTOR_SHUFFLE_256(ShuffleVectorSDNode *SVOp, SelectionDAG &DAG) {
   DebugLoc dl = SVOp->getDebugLoc();
   MVT EltVT = VT.getVectorElementType().getSimpleVT();
   EVT NVT = MVT::getVectorVT(EltVT, NumLaneElems);
-  SDValue Shufs[2];
+  SDValue Output[2];
 
   SmallVector<int, 16> Mask;
   for (unsigned l = 0; l < 2; ++l) {
     // Build a shuffle mask for the output, discovering on the fly which
     // input vectors to use as shuffle operands (recorded in InputUsed).
     // If building a suitable shuffle vector proves too hard, then bail
-    // out with useBuildVector set.
+    // out with UseBuildVector set.
+    bool UseBuildVector = false;
     int InputUsed[2] = { -1, -1 }; // Not yet discovered.
     unsigned LaneStart = l * NumLaneElems;
     for (unsigned i = 0; i != NumLaneElems; ++i) {
@@ -6009,17 +6011,44 @@ LowerVECTOR_SHUFFLE_256(ShuffleVectorSDNode *SVOp, SelectionDAG &DAG) {
       }
 
       if (OpNo >= array_lengthof(InputUsed)) {
-        // More than two input vectors used! Give up.
-        return SDValue();
+        // More than two input vectors used!  Give up on trying to create a
+        // shuffle vector.  Insert all elements into a BUILD_VECTOR instead.
+        UseBuildVector = true;
+        break;
       }
 
       // Add the mask index for the new shuffle vector.
       Mask.push_back(Idx + OpNo * NumLaneElems);
     }
 
-    if (InputUsed[0] < 0) {
+    if (UseBuildVector) {
+      SmallVector<SDValue, 16> SVOps;
+      for (unsigned i = 0; i != NumLaneElems; ++i) {
+        // The mask element.  This indexes into the input.
+        int Idx = SVOp->getMaskElt(i+LaneStart);
+        if (Idx < 0) {
+          SVOps.push_back(DAG.getUNDEF(EltVT));
+          continue;
+        }
+
+        // The input vector this mask element indexes into.
+        int Input = Idx / NumElems;
+
+        // Turn the index into an offset from the start of the input vector.
+        Idx -= Input * NumElems;
+
+        // Extract the vector element by hand.
+        SVOps.push_back(DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, EltVT,
+                                    SVOp->getOperand(Input),
+                                    DAG.getIntPtrConstant(Idx)));
+      }
+
+      // Construct the output using a BUILD_VECTOR.
+      Output[l] = DAG.getNode(ISD::BUILD_VECTOR, dl, NVT, &SVOps[0],
+                              SVOps.size());
+    } else if (InputUsed[0] < 0) {
       // No input vectors were used! The result is undefined.
-      Shufs[l] = DAG.getUNDEF(NVT);
+      Output[l] = DAG.getUNDEF(NVT);
     } else {
       SDValue Op0 = Extract128BitVector(SVOp->getOperand(InputUsed[0] / 2),
                                         (InputUsed[0] % 2) * NumLaneElems,
@@ -6029,14 +6058,14 @@ LowerVECTOR_SHUFFLE_256(ShuffleVectorSDNode *SVOp, SelectionDAG &DAG) {
         Extract128BitVector(SVOp->getOperand(InputUsed[1] / 2),
                             (InputUsed[1] % 2) * NumLaneElems, DAG, dl);
       // At least one input vector was used. Create a new shuffle vector.
-      Shufs[l] = DAG.getVectorShuffle(NVT, dl, Op0, Op1, &Mask[0]);
+      Output[l] = DAG.getVectorShuffle(NVT, dl, Op0, Op1, &Mask[0]);
     }
 
     Mask.clear();
   }
 
   // Concatenate the result back
-  return DAG.getNode(ISD::CONCAT_VECTORS, dl, VT, Shufs[0], Shufs[1]);
+  return DAG.getNode(ISD::CONCAT_VECTORS, dl, VT, Output[0], Output[1]);
 }
 
 /// LowerVECTOR_SHUFFLE_128v4 - Handle all 128-bit wide vectors with
