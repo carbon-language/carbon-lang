@@ -1216,38 +1216,38 @@ TSAN_INTERCEPTOR(sighandler_t, signal, int sig, sighandler_t h) {
 
 TSAN_INTERCEPTOR(int, raise, int sig) {
   SCOPED_TSAN_INTERCEPTOR(raise, sig);
-  CHECK_EQ(thr->int_signal_send, 0);
+  int prev = thr->int_signal_send;
   thr->int_signal_send = sig;
   int res = REAL(raise)(sig);
   CHECK_EQ(thr->int_signal_send, sig);
-  thr->int_signal_send = 0;
+  thr->int_signal_send = prev;
   return res;
 }
 
 TSAN_INTERCEPTOR(int, kill, int pid, int sig) {
   SCOPED_TSAN_INTERCEPTOR(kill, pid, sig);
+  int prev = thr->int_signal_send;
   if (pid == GetPid()) {
-    CHECK_EQ(thr->int_signal_send, 0);
     thr->int_signal_send = sig;
   }
   int res = REAL(kill)(pid, sig);
   if (pid == GetPid()) {
     CHECK_EQ(thr->int_signal_send, sig);
-    thr->int_signal_send = 0;
+    thr->int_signal_send = prev;
   }
   return res;
 }
 
 TSAN_INTERCEPTOR(int, pthread_kill, void *tid, int sig) {
   SCOPED_TSAN_INTERCEPTOR(pthread_kill, tid, sig);
+  int prev = thr->int_signal_send;
   if (tid == pthread_self()) {
-    CHECK_EQ(thr->int_signal_send, 0);
     thr->int_signal_send = sig;
   }
   int res = REAL(pthread_kill)(tid, sig);
   if (tid == pthread_self()) {
     CHECK_EQ(thr->int_signal_send, sig);
-    thr->int_signal_send = 0;
+    thr->int_signal_send = prev;
   }
   return res;
 }
