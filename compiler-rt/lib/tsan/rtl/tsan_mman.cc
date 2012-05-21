@@ -33,6 +33,8 @@ void *user_alloc(ThreadState *thr, uptr pc, uptr sz) {
   if (sz + sizeof(MBlock) < sz)
     return 0;
   MBlock *b = (MBlock*)Alloc(sz + sizeof(MBlock));
+  if (b == 0)
+    return 0;
   b->size = sz;
   void *p = b + 1;
   if (CTX() && CTX()->initialized) {
@@ -63,6 +65,8 @@ void *user_realloc(ThreadState *thr, uptr pc, void *p, uptr sz) {
   // it seems that some software actually does this.
   if (sz) {
     p2 = user_alloc(thr, pc, sz);
+    if (p2 == 0)
+      return 0;
     if (p) {
       MBlock *b = user_mblock(thr, p);
       internal_memcpy(p2, p, min(b->size, sz));
