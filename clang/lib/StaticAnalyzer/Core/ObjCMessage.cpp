@@ -161,16 +161,15 @@ bool CallOrObjCMessage::hasNonZeroCallbackArg() const {
 }
 
 bool CallOrObjCMessage::isCFCGAllowingEscape(StringRef FName) {
-  if (FName[0] == 'C' && (FName[1] == 'F' || FName[1] == 'G'))
-         if (StrInStrNoCase(FName, "InsertValue") != StringRef::npos||
-             StrInStrNoCase(FName, "AddValue") != StringRef::npos ||
-             StrInStrNoCase(FName, "SetValue") != StringRef::npos ||
-             StrInStrNoCase(FName, "WithData") != StringRef::npos ||
-             StrInStrNoCase(FName, "AppendValue") != StringRef::npos||
-             StrInStrNoCase(FName, "SetAttribute") != StringRef::npos) {
-       return true;
-     }
-  return false;
+  if (!FName.startswith("CF") && !FName.startswith("CG"))
+    return false;
+
+  return StrInStrNoCase(FName, "InsertValue")  != StringRef::npos ||
+         StrInStrNoCase(FName, "AddValue")     != StringRef::npos ||
+         StrInStrNoCase(FName, "SetValue")     != StringRef::npos ||
+         StrInStrNoCase(FName, "WithData")     != StringRef::npos ||
+         StrInStrNoCase(FName, "AppendValue")  != StringRef::npos ||
+         StrInStrNoCase(FName, "SetAttribute") != StringRef::npos;
 }
 
 
