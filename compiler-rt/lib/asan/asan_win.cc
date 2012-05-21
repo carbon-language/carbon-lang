@@ -120,7 +120,7 @@ void AsanStackTrace::GetStackTrace(size_t max_s, uintptr_t pc, uintptr_t bp) {
     trace[i] = (uintptr_t)tmp[i + offset];
 }
 
-bool WinSymbolize(const void *addr, char *out_buffer, int buffer_size) {
+bool __asan_WinSymbolize(const void *addr, char *out_buffer, int buffer_size) {
   ScopedLock lock(&dbghelp_lock);
   if (!dbghelp_initialized) {
     SymSetOptions(SYMOPT_DEFERRED_LOADS |
@@ -301,6 +301,7 @@ void Exit(int exitcode) {
 
 void Abort() {
   abort();
+  _exit(-1);  // abort is not NORETURN on Windows.
 }
 
 int Atexit(void (*function)(void)) {

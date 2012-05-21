@@ -21,6 +21,11 @@
 #include <stddef.h>  // for size_t, uintptr_t, etc.
 
 #if defined(_WIN32)
+# if defined(__clang__)
+typedef int              intptr_t;
+typedef unsigned int     uintptr_t;
+# endif
+
 // There's no <stdint.h> in Visual Studio 9, so we have to define [u]int*_t.
 typedef unsigned __int8  uint8_t;
 typedef unsigned __int16 uint16_t;
@@ -289,25 +294,29 @@ const size_t kWordSizeInBits = 8 * kWordSize;
 const size_t kPageSizeBits = 12;
 const size_t kPageSize = 1UL << kPageSizeBits;
 
-#ifndef _WIN32
-const size_t kMmapGranularity = kPageSize;
+#if !defined(_WIN32) || defined(__clang__)
 # define GET_CALLER_PC() (uintptr_t)__builtin_return_address(0)
 # define GET_CURRENT_FRAME() (uintptr_t)__builtin_frame_address(0)
-# define THREAD_CALLING_CONV
-typedef void* thread_return_t;
 #else
-const size_t kMmapGranularity = 1UL << 16;
 # define GET_CALLER_PC() (uintptr_t)_ReturnAddress()
 // CaptureStackBackTrace doesn't need to know BP on Windows.
 // FIXME: This macro is still used when printing error reports though it's not
 // clear if the BP value is needed in the ASan reports on Windows.
 # define GET_CURRENT_FRAME() (uintptr_t)0xDEADBEEF
+#endif
+
+#ifndef _WIN32
+const size_t kMmapGranularity = kPageSize;
+# define THREAD_CALLING_CONV
+typedef void* thread_return_t;
+#else
+const size_t kMmapGranularity = 1UL << 16;
 # define THREAD_CALLING_CONV __stdcall
 typedef DWORD thread_return_t;
 
 # ifndef ASAN_USE_EXTERNAL_SYMBOLIZER
-#  define ASAN_USE_EXTERNAL_SYMBOLIZER __asan::WinSymbolize
-bool WinSymbolize(const void *addr, char *out_buffer, int buffer_size);
+#  define ASAN_USE_EXTERNAL_SYMBOLIZER __asan_WinSymbolize
+bool __asan_WinSymbolize(const void *addr, char *out_buffer, int buffer_size);
 # endif
 #endif
 
