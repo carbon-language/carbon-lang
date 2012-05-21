@@ -63,6 +63,17 @@ public:
         break;
       return true;
     case OMF_autorelease:
+      if (isRemovable(E)) {
+        // An unused autorelease is badness. If we remove it the receiver
+        // will likely die immediately while previously it was kept alive
+        // by the autorelease pool. This is bad practice in general, leave it
+        // and emit an error to force the user to restructure his code.
+        Pass.TA.reportError("it is not safe to remove an unused 'autorelease' "
+            "message; its receiver may be destroyed immediately",
+            E->getLocStart(), E->getSourceRange());
+        return true;
+      }
+      // Pass through.
     case OMF_retain:
     case OMF_release:
       if (E->getReceiverKind() == ObjCMessageExpr::Instance)
