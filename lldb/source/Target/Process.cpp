@@ -1573,6 +1573,27 @@ Process::GetObjCLanguageRuntime (bool retry_if_null)
     return NULL;
 }
 
+bool
+Process::IsPossibleDynamicValue (ValueObject& in_value)
+{
+    if (in_value.IsDynamic())
+        return false;
+    LanguageType known_type = in_value.GetObjectRuntimeLanguage();
+
+    if (known_type != eLanguageTypeUnknown && known_type != eLanguageTypeC)
+    {
+        LanguageRuntime *runtime = GetLanguageRuntime (known_type);
+        return runtime ? runtime->CouldHaveDynamicValue(in_value) : false;
+    }
+
+    LanguageRuntime *cpp_runtime = GetLanguageRuntime (eLanguageTypeC_plus_plus);
+    if (cpp_runtime && cpp_runtime->CouldHaveDynamicValue(in_value))
+        return true;
+    
+    LanguageRuntime *objc_runtime = GetLanguageRuntime (eLanguageTypeObjC);
+    return objc_runtime ? objc_runtime->CouldHaveDynamicValue(in_value) : false;
+}
+
 BreakpointSiteList &
 Process::GetBreakpointSiteList()
 {

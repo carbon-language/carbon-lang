@@ -193,11 +193,10 @@ AppleObjCRuntime::GetPrintForDebuggerAddr()
 bool
 AppleObjCRuntime::CouldHaveDynamicValue (ValueObject &in_value)
 {
-    lldb::LanguageType known_type = in_value.GetObjectRuntimeLanguage();
-    if (known_type == lldb::eLanguageTypeObjC)
-        return in_value.IsPossibleDynamicType ();
-    else
-        return in_value.IsPointerType();
+    return ClangASTContext::IsPossibleDynamicType(in_value.GetClangAST(), in_value.GetClangType(),
+                                                  NULL,
+                                                  false, // do not check C++
+                                                  true); // check ObjC
 }
 
 bool

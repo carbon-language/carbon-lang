@@ -3088,6 +3088,9 @@ public:
     GetObjCLanguageRuntime (bool retry_if_null = true);
     
     bool
+    IsPossibleDynamicValue (ValueObject& in_value);
+    
+    bool
     IsRunning () const;
     
     DynamicCheckerFunctions *GetDynamicCheckers()

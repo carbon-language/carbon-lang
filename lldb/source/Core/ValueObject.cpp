@@ -1766,15 +1766,14 @@ ValueObject::IsPointerOrReferenceType ()
 }
 
 bool
-ValueObject::IsPossibleCPlusPlusDynamicType ()
-{
-    return ClangASTContext::IsPossibleCPlusPlusDynamicType (GetClangAST (), GetClangType());
-}
-
-bool
 ValueObject::IsPossibleDynamicType ()
 {
-    return ClangASTContext::IsPossibleDynamicType (GetClangAST (), GetClangType());
+    ExecutionContext exe_ctx (GetExecutionContextRef());
+    Process *process = exe_ctx.GetProcessPtr();
+    if (process)
+        return process->IsPossibleDynamicValue(*this);
+    else
+        return ClangASTContext::IsPossibleDynamicType (GetClangAST (), GetClangType());
 }
 
 ValueObjectSP
@@ -2058,37 +2057,8 @@ ValueObject::CalculateDynamicValue (DynamicValueType use_dynamic)
     {
         ExecutionContext exe_ctx (GetExecutionContextRef());
         Process *process = exe_ctx.GetProcessPtr();
-        if (process)
-        {
-            bool worth_having_dynamic_value = false;
-            
-            
-            // FIXME: Process should have some kind of "map over Runtimes" so we don't have to
-            // hard code this everywhere.
-            LanguageType known_type = GetObjectRuntimeLanguage();
-            if (known_type != eLanguageTypeUnknown && known_type != eLanguageTypeC)
-            {
-                LanguageRuntime *runtime = process->GetLanguageRuntime (known_type);
-                if (runtime)
-                    worth_having_dynamic_value = runtime->CouldHaveDynamicValue(*this);
-            }
-            else
-            {
-                LanguageRuntime *cpp_runtime = process->GetLanguageRuntime (eLanguageTypeC_plus_plus);
-                if (cpp_runtime)
-                    worth_having_dynamic_value = cpp_runtime->CouldHaveDynamicValue(*this);
-                
-                if (!worth_having_dynamic_value)
-                {
-                    LanguageRuntime *objc_runtime = process->GetLanguageRuntime (eLanguageTypeObjC);
-                    if (objc_runtime)
-                        worth_having_dynamic_value = objc_runtime->CouldHaveDynamicValue(*this);
-                }
-            }
-            
-            if (worth_having_dynamic_value)
-                m_dynamic_value = new ValueObjectDynamicValue (*this, use_dynamic);
-        }
+        if (process && process->IsPossibleDynamicValue(*this))
+            m_dynamic_value = new ValueObjectDynamicValue (*this, use_dynamic);
     }
 }
 

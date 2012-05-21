@@ -38,7 +38,9 @@ static const char *vtable_demangled_prefix = "vtable for ";
 bool
 ItaniumABILanguageRuntime::CouldHaveDynamicValue (ValueObject &in_value)
 {
-    return in_value.IsPossibleCPlusPlusDynamicType();
+    return ClangASTContext::IsPossibleDynamicType(in_value.GetClangAST(), in_value.GetClangType(), NULL,
+                                                  true, // check for C++
+                                                  false); // do not check for ObjC
 }
 
 bool

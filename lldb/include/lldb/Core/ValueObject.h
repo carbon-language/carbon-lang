@@ -600,9 +600,6 @@ public:
     IsPointerOrReferenceType ();
     
     virtual bool
-    IsPossibleCPlusPlusDynamicType ();
-    
-    virtual bool
     IsPossibleDynamicType ();
 
     virtual bool
