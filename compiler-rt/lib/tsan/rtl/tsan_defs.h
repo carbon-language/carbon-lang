@@ -29,7 +29,7 @@ typedef   signed long long s64;  // NOLINT
 typedef unsigned long uptr;  // NOLINT
 
 const uptr kPageSize = 4096;
-const int kTidBits = 15;
+const int kTidBits = 13;
 const unsigned kMaxTid = 1 << kTidBits;
 const unsigned kMaxTidInClock = kMaxTid * 2;  // This includes msb 'freed' bit.
 const int kClkBits = 40;

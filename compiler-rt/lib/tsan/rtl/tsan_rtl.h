@@ -207,7 +207,7 @@ class Shadow: public FastState {
 // As if 8-byte write by thread 0xff..f at epoch 0xff..f, races with everything.
 const u64 kShadowFreed = 0xfffffffffffffff8ull;
 
-const int kSigCount = 1024;
+const int kSigCount = 128;
 const int kShadowStackSize = 1024;
 
 struct my_siginfo_t {
@@ -301,8 +301,8 @@ struct ThreadContext {
   u64 epoch0;
   u64 epoch1;
   StackTrace creation_stack;
-  ThreadDeadInfo dead_info;
-  ThreadContext* dead_next;  // In dead thread list.
+  ThreadDeadInfo *dead_info;
+  ThreadContext *dead_next;  // In dead thread list.
 
   explicit ThreadContext(int tid);
 };

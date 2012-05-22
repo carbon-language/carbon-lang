@@ -76,6 +76,7 @@ ThreadContext::ThreadContext(int tid)
   , reuse_count()
   , epoch0()
   , epoch1()
+  , dead_info()
   , dead_next() {
 }
 

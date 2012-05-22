@@ -352,6 +352,7 @@ ScopedThread::ScopedThread(bool detached, bool main) {
     pthread_attr_t attr;
     pthread_attr_init(&attr);
     pthread_attr_setdetachstate(&attr, detached);
+    pthread_attr_setstacksize(&attr, 64*1024);
     pthread_create(&impl_->thread, &attr,
         ScopedThread::Impl::ScopedThreadCallback, impl_);
   }

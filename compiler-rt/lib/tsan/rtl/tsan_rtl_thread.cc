@@ -20,7 +20,7 @@
 
 namespace __tsan {
 
-const int kThreadQuarantineSize = 100;
+const int kThreadQuarantineSize = 16;
 
 static void MaybeReportThreadLeak(ThreadContext *tctx) {
   if (tctx->detached)
@@ -93,8 +93,7 @@ int ThreadCreate(ThreadState *thr, uptr pc, uptr uid, bool detached) {
     tctx->status = ThreadStatusInvalid;
     tctx->reuse_count++;
     tid = tctx->tid;
-    // The point to reclain dead_info.
-    // delete tctx->dead_info;
+    DestroyAndFree(tctx->dead_info);
   } else {
     StatInc(thr, StatThreadMaxTid);
     tid = ctx->thread_seq++;
@@ -207,13 +206,12 @@ void ThreadFinish(ThreadState *thr) {
   }
 
   // Save from info about the thread.
-  // If dead_info will become dynamically allocated again,
-  // it is the point to allocate it.
-  // tctx->dead_info = new ThreadDeadInfo;
-  internal_memcpy(&tctx->dead_info.trace.events[0],
+  tctx->dead_info = new(internal_alloc(MBlockDeadInfo, sizeof(ThreadDeadInfo)))
+      ThreadDeadInfo();
+  internal_memcpy(&tctx->dead_info->trace.events[0],
       &thr->trace.events[0], sizeof(thr->trace.events));
   for (int i = 0; i < kTraceParts; i++) {
-    tctx->dead_info.trace.headers[i].stack0.CopyFrom(
+    tctx->dead_info->trace.headers[i].stack0.CopyFrom(
         thr->trace.headers[i].stack0);
   }
   tctx->epoch1 = thr->clock.get(tctx->tid);

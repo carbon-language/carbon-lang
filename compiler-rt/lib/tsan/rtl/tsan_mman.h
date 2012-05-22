@@ -39,6 +39,7 @@ enum MBlockType {
   MBlockSync,
   MBlockClock,
   MBlockThreadContex,
+  MBlockDeadInfo,
   MBlockRacyStacks,
   MBlockRacyAddresses,
   MBlockAtExit,

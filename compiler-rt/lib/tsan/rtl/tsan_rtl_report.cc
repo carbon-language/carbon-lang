@@ -175,7 +175,9 @@ static void RestoreStack(int tid, const u64 epoch, StackTrace *stk) {
     trace = &tctx->thr->trace;
   } else if (tctx->status == ThreadStatusFinished
       || tctx->status == ThreadStatusDead) {
-    trace = &tctx->dead_info.trace;
+    if (tctx->dead_info == 0)
+      return;
+    trace = &tctx->dead_info->trace;
   } else {
     return;
   }

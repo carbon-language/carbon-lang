@@ -20,7 +20,7 @@
 namespace __tsan {
 
 const int kTraceParts = 8;
-const int kTraceSize = 1024*1024;
+const int kTraceSize = 128*1024;
 const int kTracePartSize = kTraceSize / kTraceParts;
 
 // Must fit into 3 bits.
