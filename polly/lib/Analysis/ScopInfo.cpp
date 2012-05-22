@@ -126,11 +126,11 @@ public:
   }
 
   __isl_give isl_pw_aff *visitTruncateExpr(const SCEVTruncateExpr *Expr) {
-    assert(0 && "Not yet supported");
+    llvm_unreachable("SCEVTruncateExpr not yet supported");
   }
 
   __isl_give isl_pw_aff *visitZeroExtendExpr(const SCEVZeroExtendExpr *Expr) {
-    assert(0 && "Not yet supported");
+    llvm_unreachable("SCEVZeroExtendExpr not yet supported");
   }
 
   __isl_give isl_pw_aff *visitSignExtendExpr(const SCEVSignExtendExpr *Expr) {
@@ -172,7 +172,7 @@ public:
   }
 
   __isl_give isl_pw_aff *visitUDivExpr(const SCEVUDivExpr *Expr) {
-    assert(0 && "Not yet supported");
+    llvm_unreachable("SCEVUDivExpr not yet supported");
   }
 
   int getLoopDepth(const Loop *L) {
@@ -214,7 +214,7 @@ public:
   }
 
   __isl_give isl_pw_aff *visitUMaxExpr(const SCEVUMaxExpr *Expr) {
-    assert(0 && "Not yet supported");
+    llvm_unreachable("SCEVUMaxExpr not yet supported");
   }
 
   __isl_give isl_pw_aff *visitUnknown(const SCEVUnknown *Expr) {
