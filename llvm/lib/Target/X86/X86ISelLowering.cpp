@@ -5805,7 +5805,7 @@ SDValue LowerVECTOR_SHUFFLEv16i8(ShuffleVectorSDNode *SVOp,
     for (unsigned i = 0; i != 16; ++i) {
       int EltIdx = MaskVals[i];
       EltIdx = (EltIdx < 16) ? 0x80 : EltIdx - 16;
-      pshufbMask.push_back(DAG.getConstant(EltIdx - 16, MVT::i8));
+      pshufbMask.push_back(DAG.getConstant(EltIdx, MVT::i8));
     }
     V2 = DAG.getNode(X86ISD::PSHUFB, dl, MVT::v16i8, V2,
                      DAG.getNode(ISD::BUILD_VECTOR, dl,
