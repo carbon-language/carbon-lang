@@ -297,28 +297,23 @@ int main () {
   missing_template_keyword<int>();
 }
 
-
-
-
 namespace access_protected_PTM {
+  class A {
+  protected:
+    void f(); // expected-note {{must name member using the type of the current context 'access_protected_PTM::B'}}
+  };
 
-class A {
-protected:
-  void f(); // expected-note {{must name member using the type of the current context 'access_protected_PTM::B'}}
-};
+  class B : public A{
+  public:
+    void test_access();
+    static void test_access_static();
+  };
 
-class B : public A{
-public:
-  void test_access();
-  static void test_access_static();
-};
+  void B::test_access() {
+    &A::f; // expected-error {{'f' is a protected member of 'access_protected_PTM::A'}}
+  }
 
-void B::test_access() {
-  &A::f; // expected-error {{'f' is a protected member of 'access_protected_PTM::A'}}
-}
-
-void B::test_access_static() {
-  &A::f;
-}
-
+  void B::test_access_static() {
+    &A::f;
+  }
 }
