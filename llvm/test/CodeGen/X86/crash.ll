@@ -203,7 +203,7 @@ entry:
 ; <rdar://problem/9187792>
 define fastcc void @func_61() nounwind sspreq {
 entry:
-  %t1 = tail call i64 @llvm.objectsize.i64(i8* undef, i1 false, i32 0)
+  %t1 = tail call i64 @llvm.objectsize.i64(i8* undef, i1 false)
   %t2 = icmp eq i64 %t1, -1
   br i1 %t2, label %bb2, label %bb1
 
@@ -214,7 +214,7 @@ bb2:
   ret void
 }
 
-declare i64 @llvm.objectsize.i64(i8*, i1, i32) nounwind readnone
+declare i64 @llvm.objectsize.i64(i8*, i1) nounwind readnone
 
 ; PR10277
 ; This test has dead code elimination caused by remat during spilling.

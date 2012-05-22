@@ -10,7 +10,7 @@ target triple = "x86_64-apple-darwin10.0"
 define void @bar() nounwind ssp {
 entry:
   %tmp = load i8** @p                             ; <i8*> [#uses=1]
-  %0 = call i64 @llvm.objectsize.i64(i8* %tmp, i1 0, i32 0) ; <i64> [#uses=1]
+  %0 = call i64 @llvm.objectsize.i64(i8* %tmp, i1 0) ; <i64> [#uses=1]
   %cmp = icmp ne i64 %0, -1                       ; <i1> [#uses=1]
 ; X64: movabsq $-1, [[RAX:%r..]]
 ; X64: cmpq    $-1, [[RAX]]
@@ -19,7 +19,7 @@ entry:
 cond.true:                                        ; preds = %entry
   %tmp1 = load i8** @p                            ; <i8*> [#uses=1]
   %tmp2 = load i8** @p                            ; <i8*> [#uses=1]
-  %1 = call i64 @llvm.objectsize.i64(i8* %tmp2, i1 1, i32 0) ; <i64> [#uses=1]
+  %1 = call i64 @llvm.objectsize.i64(i8* %tmp2, i1 1) ; <i64> [#uses=1]
   %call = call i8* @__strcpy_chk(i8* %tmp1, i8* getelementptr inbounds ([3 x i8]* @.str, i32 0, i32 0), i64 %1) ssp ; <i8*> [#uses=1]
   br label %cond.end
 
@@ -33,7 +33,7 @@ cond.end:                                         ; preds = %cond.false, %cond.t
   ret void
 }
 
-declare i64 @llvm.objectsize.i64(i8*, i1, i32) nounwind readonly
+declare i64 @llvm.objectsize.i64(i8*, i1) nounwind readonly
 
 declare i8* @__strcpy_chk(i8*, i8*, i64) ssp
 
@@ -47,7 +47,7 @@ entry:
   %tmp = load i8** %__dest.addr                   ; <i8*> [#uses=1]
   %tmp1 = load i8** %__src.addr                   ; <i8*> [#uses=1]
   %tmp2 = load i8** %__dest.addr                  ; <i8*> [#uses=1]
-  %0 = call i64 @llvm.objectsize.i64(i8* %tmp2, i1 1, i32 0) ; <i64> [#uses=1]
+  %0 = call i64 @llvm.objectsize.i64(i8* %tmp2, i1 1) ; <i64> [#uses=1]
   %call = call i8* @__strcpy_chk(i8* %tmp, i8* %tmp1, i64 %0) ssp ; <i8*> [#uses=1]
   store i8* %call, i8** %retval
   %1 = load i8** %retval                          ; <i8*> [#uses=1]

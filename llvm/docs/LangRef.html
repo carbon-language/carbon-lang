@@ -8467,8 +8467,8 @@ LLVM</a>.</p>
 
 <h5>Syntax:</h5>
 <pre>
-  declare i32 @llvm.objectsize.i32(i8* &lt;object&gt;, i1 &lt;min&gt;, i32 &lt;runtime&gt;)
-  declare i64 @llvm.objectsize.i64(i8* &lt;object&gt;, i1 &lt;min&gt;, i32 &lt;runtime&gt;)
+  declare i32 @llvm.objectsize.i32(i8* &lt;object&gt;, i1 &lt;min&gt;)
+  declare i64 @llvm.objectsize.i64(i8* &lt;object&gt;, i1 &lt;min&gt;)
 </pre>
 
 <h5>Overview:</h5>
@@ -8479,21 +8479,17 @@ LLVM</a>.</p>
    an allocation of a specific class, structure, array, or other object.</p>
 
 <h5>Arguments:</h5>
-<p>The <tt>llvm.objectsize</tt> intrinsic takes three arguments. The first
+<p>The <tt>llvm.objectsize</tt> intrinsic takes two arguments. The first
    argument is a pointer to or into the <tt>object</tt>. The second argument
-   is a boolean and determines whether <tt>llvm.objectsize</tt> returns 0 (if true)
-   or -1 (if false) when the object size is unknown.
-   The third argument, <tt>runtime</tt>, indicates whether the compiler is allowed
-   to return a non-constant value. The higher the value, the higher the potential
-   run-time performance impact.
-   The second and third arguments only accepts constants.</p>
+   is a boolean and determines whether <tt>llvm.objectsize</tt> returns 0 (if
+   true) or -1 (if false) when the object size is unknown.
+   The second argument only accepts constants.</p>
    
 <h5>Semantics:</h5>
 <p>The <tt>llvm.objectsize</tt> intrinsic is lowered to a constant representing
    the size of the object concerned. If the size cannot be determined at compile
-   time, <tt>llvm.objectsize</tt> either returns <tt>i32/i64 -1 or 0</tt>
-   (depending on the <tt>min</tt> argument) if <tt>runtime</tt> is 0, or a run-time
-   value (if <tt>runtime</tt> &gt; 0 and an expression could be generated).</p>
+   time, <tt>llvm.objectsize</tt> returns <tt>i32/i64 -1 or 0</tt>
+   (depending on the <tt>min</tt> argument).</p>
 
 </div>
 <!-- _______________________________________________________________________ -->

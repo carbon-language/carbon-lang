@@ -11,7 +11,7 @@ declare i8* @strcpy(i8*, i8*)
 
 declare i8* @__strcpy_chk(i8*, i8*, i32) nounwind
 
-declare i32 @llvm.objectsize.i32(i8*, i1, i32) nounwind readonly
+declare i32 @llvm.objectsize.i32(i8*, i1) nounwind readonly
 
 ; rdar://6839935
 
@@ -30,7 +30,7 @@ define i32 @t2() {
   %target = alloca [1024 x i8]
   %arg1 = getelementptr [1024 x i8]* %target, i32 0, i32 0
   %arg2 = getelementptr [6 x i8]* @hello, i32 0, i32 0
-  %tmp1 = call i32 @llvm.objectsize.i32(i8* %arg1, i1 false, i32 0)
+  %tmp1 = call i32 @llvm.objectsize.i32(i8* %arg1, i1 false)
   %rslt1 = call i8* @__strcpy_chk(i8* %arg1, i8* %arg2, i32 %tmp1)
 ; CHECK: @__memcpy_chk
   ret i32 0
