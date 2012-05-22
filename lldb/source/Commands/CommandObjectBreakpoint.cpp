@@ -66,7 +66,8 @@ CommandObjectBreakpointSet::CommandOptions::CommandOptions(CommandInterpreter &i
     m_queue_name(),
     m_catch_bp (false),
     m_throw_bp (false),
-    m_language (eLanguageTypeUnknown)
+    m_language (eLanguageTypeUnknown),
+    m_skip_prologue (eLazyBoolCalculate)
 {
 }
 
@@ -78,6 +79,7 @@ CommandObjectBreakpointSet::CommandOptions::~CommandOptions ()
 // update the numbers passed to LLDB_OPT_SET_FROM_TO(...) appropriately.
 #define LLDB_OPT_FILE ( LLDB_OPT_SET_FROM_TO(1, 9) & ~LLDB_OPT_SET_2 )
 #define LLDB_OPT_NOT_10 ( LLDB_OPT_SET_FROM_TO(1, 10) & ~LLDB_OPT_SET_10 )
+#define LLDB_OPT_SKIP_PROLOGUE ( LLDB_OPT_SET_1 | LLDB_OPT_SET_FROM_TO(3,8) )
 
 OptionDefinition
 CommandObjectBreakpointSet::CommandOptions::g_option_table[] =
@@ -147,6 +149,9 @@ CommandObjectBreakpointSet::CommandOptions::g_option_table[] =
 
     { LLDB_OPT_SET_10, false, "on-catch", 'h', required_argument, NULL, 0, eArgTypeBoolean,
         "Set the breakpoint on exception catcH." },
+
+    { LLDB_OPT_SKIP_PROLOGUE, false, "skip-prologue", 'K', required_argument, NULL, 0, eArgTypeBoolean,
+        "sKip the prologue if the breakpoint is at the beginning of a function.  If not set the target.skip-prologue setting is used." },
 
     { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
@@ -295,6 +300,19 @@ CommandObjectBreakpointSet::CommandOptions::SetOptionValue (uint32_t option_idx,
             if (!success)
                 error.SetErrorStringWithFormat ("Invalid boolean value for on-catch option: '%s'", option_arg);
         }
+        case 'K':
+        {
+            bool success;
+            bool value;
+            value = Args::StringToBoolean (option_arg, true, &success);
+            if (value)
+                m_skip_prologue = eLazyBoolYes;
+            else
+                m_skip_prologue = eLazyBoolNo;
+                
+            if (!success)
+                error.SetErrorStringWithFormat ("Invalid boolean value for skip prologue option: '%s'", option_arg);
+        }
         break;
         default:
             error.SetErrorStringWithFormat ("unrecognized option '%c'", short_option);
@@ -323,6 +341,7 @@ CommandObjectBreakpointSet::CommandOptions::OptionParsingStarting ()
     m_language = eLanguageTypeUnknown;
     m_catch_bp = false;
     m_throw_bp = true;
+    m_skip_prologue = eLazyBoolCalculate;
 }
 
 //-------------------------------------------------------------------------
@@ -430,6 +449,8 @@ CommandObjectBreakpointSet::Execute
     FileSpec module_spec;
     bool use_module = false;
     int num_modules = m_options.m_modules.GetSize();
+    
+    const bool internal = false;
 
     if ((num_modules > 0) && (break_type != eSetTypeAddress))
         use_module = true;
@@ -461,7 +482,9 @@ CommandObjectBreakpointSet::Execute
                 bp = target->CreateBreakpoint (&(m_options.m_modules),
                                                file,
                                                m_options.m_line_num,
-                                               m_options.m_check_inlines).get();
+                                               m_options.m_check_inlines,
+                                               m_options.m_skip_prologue,
+                                               internal).get();
             }
             break;
 
@@ -480,7 +503,8 @@ CommandObjectBreakpointSet::Execute
                                                &(m_options.m_filenames),
                                                m_options.m_func_names,
                                                name_type_mask,
-                                               Breakpoint::Exact).get();
+                                               m_options.m_skip_prologue,
+                                               internal).get();
             }
             break;
 
@@ -497,7 +521,11 @@ CommandObjectBreakpointSet::Execute
                     return false;
                 }
                 
-                bp = target->CreateFuncRegexBreakpoint (&(m_options.m_modules), &(m_options.m_filenames), regexp).get();
+                bp = target->CreateFuncRegexBreakpoint (&(m_options.m_modules),
+                                                        &(m_options.m_filenames),
+                                                        regexp,
+                                                        m_options.m_skip_prologue,
+                                                        internal).get();
             }
             break;
         case eSetTypeSourceRegexp: // Breakpoint by regexp on source text.

@@ -16,6 +16,7 @@
 #include "lldb/Breakpoint/BreakpointLocation.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/StreamString.h"
+#include "lldb/Target/Target.h"
 #include "lldb/lldb-private-log.h"
 
 using namespace lldb;
@@ -29,12 +30,14 @@ BreakpointResolverFileLine::BreakpointResolverFileLine
     Breakpoint *bkpt,
     const FileSpec &file_spec,
     uint32_t line_no,
-    bool check_inlines
+    bool check_inlines,
+    bool skip_prologue
 ) :
     BreakpointResolver (bkpt, BreakpointResolver::FileLineResolver),
     m_file_spec (file_spec),
     m_line_number (line_no),
-    m_inlines (check_inlines)
+    m_inlines (check_inlines),
+    m_skip_prologue(skip_prologue)
 {
 }
 
@@ -135,12 +138,36 @@ BreakpointResolverFileLine::SearchCallback
                     {
                         if (filter.AddressPasses(line_start))
                         {
+                            // If the line number is before the prologue end, move it there...
+                            bool skipped_prologue = false;
+                            if (m_skip_prologue)
+                            {
+                                if (sc.function)
+                                {
+                                    Address prologue_addr(sc.function->GetAddressRange().GetBaseAddress());
+                                    if (prologue_addr.IsValid() && (line_start == prologue_addr))
+                                    {
+                                        const uint32_t prologue_byte_size = sc.function->GetPrologueByteSize();
+                                        if (prologue_byte_size)
+                                        {
+                                            prologue_addr.Slide(prologue_byte_size);
+                     
+                                            if (filter.AddressPasses(prologue_addr))
+                                            {
+                                                skipped_prologue = true;
+                                                line_start = prologue_addr;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        
                             BreakpointLocationSP bp_loc_sp (m_breakpoint->AddLocation(line_start));
                             if (log && bp_loc_sp && !m_breakpoint->IsInternal())
                             {
                                 StreamString s;
                                 bp_loc_sp->GetDescription (&s, lldb::eDescriptionLevelVerbose);
-                                log->Printf ("Added location: %s\n", s.GetData());
+                                log->Printf ("Added location (skipped prologue: %s): %s \n", skipped_prologue ? "yes" : "no", s.GetData());
                             }
                         }
                         else if (log)

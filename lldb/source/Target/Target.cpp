@@ -234,10 +234,17 @@ Target::CreateSourceRegexBreakpoint (const FileSpecList *containingModules,
 
 
 BreakpointSP
-Target::CreateBreakpoint (const FileSpecList *containingModules, const FileSpec &file, uint32_t line_no, bool check_inlines, bool internal)
+Target::CreateBreakpoint (const FileSpecList *containingModules,
+                          const FileSpec &file,
+                          uint32_t line_no,
+                          bool check_inlines,
+                          LazyBool skip_prologue,
+                          bool internal)
 {
     SearchFilterSP filter_sp(GetSearchFilterForModuleList (containingModules));
-    BreakpointResolverSP resolver_sp(new BreakpointResolverFileLine (NULL, file, line_no, check_inlines));
+    
+    BreakpointResolverSP resolver_sp(new BreakpointResolverFileLine (NULL, file, line_no, check_inlines,
+                                                                     skip_prologue == eLazyBoolCalculate ? GetSkipPrologue() : skip_prologue));
     return CreateBreakpoint (filter_sp, resolver_sp, internal);
 }
 
@@ -273,8 +280,8 @@ Target::CreateBreakpoint (const FileSpecList *containingModules,
                           const FileSpecList *containingSourceFiles,
                           const char *func_name, 
                           uint32_t func_name_type_mask, 
-                          bool internal,
-                          LazyBool skip_prologue)
+                          LazyBool skip_prologue,
+                          bool internal)
 {
     BreakpointSP bp_sp;
     if (func_name)
@@ -296,8 +303,8 @@ Target::CreateBreakpoint (const FileSpecList *containingModules,
                           const FileSpecList *containingSourceFiles,
                           const std::vector<std::string> &func_names,
                           uint32_t func_name_type_mask,
-                          bool internal,
-                          LazyBool skip_prologue)
+                          LazyBool skip_prologue,
+                          bool internal)
 {
     BreakpointSP bp_sp;
     size_t num_names = func_names.size();
@@ -320,8 +327,8 @@ Target::CreateBreakpoint (const FileSpecList *containingModules,
                           const char *func_names[],
                           size_t num_names, 
                           uint32_t func_name_type_mask, 
-                          bool internal,
-                          LazyBool skip_prologue)
+                          LazyBool skip_prologue,
+                          bool internal)
 {
     BreakpointSP bp_sp;
     if (num_names > 0)
@@ -377,7 +384,8 @@ Target::GetSearchFilterForModuleList (const FileSpecList *containingModules)
 }
 
 SearchFilterSP
-Target::GetSearchFilterForModuleAndCUList (const FileSpecList *containingModules, const FileSpecList *containingSourceFiles)
+Target::GetSearchFilterForModuleAndCUList (const FileSpecList *containingModules,
+                                           const FileSpecList *containingSourceFiles)
 {
     if (containingSourceFiles == NULL || containingSourceFiles->GetSize() == 0)
         return GetSearchFilterForModuleList(containingModules);
@@ -399,10 +407,10 @@ Target::GetSearchFilterForModuleAndCUList (const FileSpecList *containingModules
 
 BreakpointSP
 Target::CreateFuncRegexBreakpoint (const FileSpecList *containingModules, 
-                          const FileSpecList *containingSourceFiles,
-                          RegularExpression &func_regex, 
-                          bool internal,
-                          LazyBool skip_prologue)
+                                   const FileSpecList *containingSourceFiles,
+                                   RegularExpression &func_regex, 
+                                   LazyBool skip_prologue,
+                                   bool internal)
 {
     SearchFilterSP filter_sp(GetSearchFilterForModuleAndCUList (containingModules, containingSourceFiles));
     BreakpointResolverSP resolver_sp(new BreakpointResolverName (NULL, 

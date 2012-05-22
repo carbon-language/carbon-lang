@@ -116,6 +116,7 @@ public:
         bool m_catch_bp;
         bool m_throw_bp;
         lldb::LanguageType m_language;
+        LazyBool m_skip_prologue;
 
     };
 

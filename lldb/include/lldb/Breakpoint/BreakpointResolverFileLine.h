@@ -31,7 +31,8 @@ public:
     BreakpointResolverFileLine (Breakpoint *bkpt,
                                 const FileSpec &resolver,
                                 uint32_t line_no,
-                                bool check_inlines);
+                                bool check_inlines,
+                                bool skip_prologue);
 
     virtual
     ~BreakpointResolverFileLine ();
@@ -62,6 +63,7 @@ protected:
     FileSpec m_file_spec; // This is the file spec we are looking for.
     uint32_t m_line_number; // This is the line number that we are looking for.
     bool m_inlines; // This determines whether the resolver looks for inlined functions or not.
+    bool m_skip_prologue;
 
 private:
     DISALLOW_COPY_AND_ASSIGN(BreakpointResolverFileLine);

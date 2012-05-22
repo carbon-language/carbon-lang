@@ -848,12 +848,15 @@ PlatformDarwin::SetThreadCreationBreakpoint (Target &target)
         bp_modules.Append(FileSpec(bp_module, false));
     }
 
+    bool internal = true;
+    LazyBool skip_prologue = eLazyBoolNo;
     bp_sp = target.CreateBreakpoint (&bp_modules,
                                      NULL,
                                      g_bp_names,
                                      sizeof(g_bp_names)/sizeof(const char *),
                                      eFunctionNameTypeFull,
-                                     true);
+                                     skip_prologue,
+                                     internal);
 
     return bp_sp;
 }

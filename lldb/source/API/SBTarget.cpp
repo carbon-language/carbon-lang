@@ -1170,7 +1170,11 @@ SBTarget::BreakpointCreateByLocation (const SBFileSpec &sb_file_spec, uint32_t l
     if (target_sp && line != 0)
     {
         Mutex::Locker api_locker (target_sp->GetAPIMutex());
-        *sb_bp = target_sp->CreateBreakpoint (NULL, *sb_file_spec, line, true, false);
+        
+        const bool check_inlines = true;
+        const bool internal = false;
+        const LazyBool skip_prologue = eLazyBoolCalculate;
+        *sb_bp = target_sp->CreateBreakpoint (NULL, *sb_file_spec, line, check_inlines, skip_prologue, internal);
     }
 
     if (log)
@@ -1200,15 +1204,18 @@ SBTarget::BreakpointCreateByName (const char *symbol_name, const char *module_na
     if (target_sp.get())
     {
         Mutex::Locker api_locker (target_sp->GetAPIMutex());
+        
+        const bool internal = false;
+        const LazyBool skip_prologue = eLazyBoolCalculate;
         if (module_name && module_name[0])
         {
             FileSpecList module_spec_list;
             module_spec_list.Append (FileSpec (module_name, false));
-            *sb_bp = target_sp->CreateBreakpoint (&module_spec_list, NULL, symbol_name, eFunctionNameTypeAuto, false);
+            *sb_bp = target_sp->CreateBreakpoint (&module_spec_list, NULL, symbol_name, eFunctionNameTypeAuto, skip_prologue, internal);
         }
         else
         {
-            *sb_bp = target_sp->CreateBreakpoint (NULL, NULL, symbol_name, eFunctionNameTypeAuto, false);
+            *sb_bp = target_sp->CreateBreakpoint (NULL, NULL, symbol_name, eFunctionNameTypeAuto, skip_prologue, internal);
         }
     }
     
@@ -1242,12 +1249,15 @@ SBTarget::BreakpointCreateByName (const char *symbol_name,
     TargetSP target_sp(GetSP());
     if (target_sp && symbol_name && symbol_name[0])
     {
+        const bool internal = false;
+        const LazyBool skip_prologue = eLazyBoolCalculate;
         Mutex::Locker api_locker (target_sp->GetAPIMutex());
         *sb_bp = target_sp->CreateBreakpoint (module_list.get(), 
                                                 comp_unit_list.get(), 
                                                 symbol_name, 
                                                 name_type_mask, 
-                                                false);
+                                                skip_prologue,
+                                                internal);
     }
     
     if (log)
@@ -1273,12 +1283,15 @@ SBTarget::BreakpointCreateByNames (const char *symbol_names[],
     if (target_sp && num_names > 0)
     {
         Mutex::Locker api_locker (target_sp->GetAPIMutex());
+        const bool internal = false;
+        const LazyBool skip_prologue = eLazyBoolCalculate;
         *sb_bp = target_sp->CreateBreakpoint (module_list.get(), 
                                                 comp_unit_list.get(), 
                                                 symbol_names,
                                                 num_names,
                                                 name_type_mask, 
-                                                false);
+                                                skip_prologue,
+                                                internal);
     }
     
     if (log)
@@ -1314,17 +1327,19 @@ SBTarget::BreakpointCreateByRegex (const char *symbol_name_regex, const char *mo
     {
         Mutex::Locker api_locker (target_sp->GetAPIMutex());
         RegularExpression regexp(symbol_name_regex);
+        const bool internal = false;
+        const LazyBool skip_prologue = eLazyBoolCalculate;
         
         if (module_name && module_name[0])
         {
             FileSpecList module_spec_list;
             module_spec_list.Append (FileSpec (module_name, false));
             
-            *sb_bp = target_sp->CreateFuncRegexBreakpoint (&module_spec_list, NULL, regexp, false);
+            *sb_bp = target_sp->CreateFuncRegexBreakpoint (&module_spec_list, NULL, regexp, skip_prologue, internal);
         }
         else
         {
-            *sb_bp = target_sp->CreateFuncRegexBreakpoint (NULL, NULL, regexp, false);
+            *sb_bp = target_sp->CreateFuncRegexBreakpoint (NULL, NULL, regexp, skip_prologue, internal);
         }
     }
 
@@ -1350,8 +1365,10 @@ SBTarget::BreakpointCreateByRegex (const char *symbol_name_regex,
     {
         Mutex::Locker api_locker (target_sp->GetAPIMutex());
         RegularExpression regexp(symbol_name_regex);
+        const bool internal = false;
+        const LazyBool skip_prologue = eLazyBoolCalculate;
         
-        *sb_bp = target_sp->CreateFuncRegexBreakpoint (module_list.get(), comp_unit_list.get(), regexp, false);
+        *sb_bp = target_sp->CreateFuncRegexBreakpoint (module_list.get(), comp_unit_list.get(), regexp, skip_prologue, internal);
     }
 
     if (log)
