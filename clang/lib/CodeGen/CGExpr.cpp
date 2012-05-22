@@ -526,8 +526,7 @@ void CodeGenFunction::EmitCheck(llvm::Value *Address, unsigned Size) {
   llvm::Value *F = CGM.getIntrinsic(llvm::Intrinsic::objectsize, IntPtrTy);
 
   llvm::Value *Min = Builder.getFalse();
-  llvm::Value *Runtime = Builder.getInt32(BoundsChecking);
-  llvm::Value *C = Builder.CreateCall3(F, Address, Min, Runtime);
+  llvm::Value *C = Builder.CreateCall2(F, Address, Min);
   llvm::BasicBlock *Cont = createBasicBlock();
   Builder.CreateCondBr(Builder.CreateICmpUGE(C,
                                         llvm::ConstantInt::get(IntPtrTy, Size)),

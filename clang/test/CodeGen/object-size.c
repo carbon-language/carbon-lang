@@ -40,7 +40,7 @@ void test4() {
 // CHECK: define void @test5
 void test5() {
   // CHECK:     = load i8** @gp
-  // CHECK-NEXT:= call i64 @llvm.objectsize.i64(i8* %{{.*}}, i1 false, i32 0)
+  // CHECK-NEXT:= call i64 @llvm.objectsize.i64(i8* %{{.*}}, i1 false)
   strcpy(gp, "Hi there");
 }
 
@@ -55,7 +55,7 @@ void test6() {
 // CHECK: define void @test7
 void test7() {
   int i;
-  // CHECK:     = call i64 @llvm.objectsize.i64(i8* {{.*}}@gbuf{{.*}}, i1 false, i32 0)
+  // CHECK:     = call i64 @llvm.objectsize.i64(i8* {{.*}}@gbuf{{.*}}, i1 false)
   strcpy((++i, gbuf), "Hi there");
 }
 
