@@ -218,21 +218,7 @@ public:
   }
 
   __isl_give isl_pw_aff *visitUnknown(const SCEVUnknown *Expr) {
-    Value *Value = Expr->getValue();
-
-    isl_space *Space;
-
-    std::string ValueName = Value->getName();
-    isl_id *ID = isl_id_alloc(ctx, ValueName.c_str(), Value);
-    Space = isl_space_set_alloc(ctx, 1, NbLoopSpaces);
-    Space = isl_space_set_dim_id(Space, isl_dim_param, 0, ID);
-
-    isl_set *Domain = isl_set_universe(isl_space_copy(Space));
-    isl_aff *Affine = isl_aff_zero_on_domain(isl_local_space_from_space(Space));
-
-    Affine = isl_aff_add_coefficient_si(Affine, isl_dim_param, 0, 1);
-
-    return isl_pw_aff_alloc(Domain, Affine);
+    llvm_unreachable("Unknowns are always parameters");
   }
 };
 
