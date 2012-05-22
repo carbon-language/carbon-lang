@@ -74,7 +74,7 @@ class RegisterCommandsTestCase(TestBase):
         # Test reading of rax and eax.
         self.runCmd("register read rax eax")
 
-        # No write rax with a unique bit pattern and test that eax indeed represents the lower half of rax.
+        # Now write rax with a unique bit pattern and test that eax indeed represents the lower half of rax.
         self.runCmd("register write rax 0x1234567887654321")
         self.expect("expr -- ($rax & 0xffffffff) == $eax",
             substrs = ['true'])
