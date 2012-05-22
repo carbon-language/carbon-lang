@@ -11,7 +11,7 @@ CLANG_LEVEL = ../..
 TESTNAME = Tooling
 LINK_COMPONENTS := support mc
 USEDLIBS = clangTooling.a clangFrontend.a clangSerialization.a clangDriver.a \
-           clangParse.a clangSema.a clangAnalysis.a clangEdit.a clangAST.a \
-           clangLex.a clangBasic.a
+           clangParse.a clangRewrite.a clangSema.a clangAnalysis.a clangEdit.a \
+           clangAST.a clangLex.a clangBasic.a
 
 include $(CLANG_LEVEL)/unittests/Makefile
