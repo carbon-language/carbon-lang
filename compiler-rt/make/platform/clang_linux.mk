@@ -63,8 +63,8 @@ CFLAGS.full-i386 := $(CFLAGS) -m32
 CFLAGS.full-x86_64 := $(CFLAGS) -m64
 CFLAGS.profile-i386 := $(CFLAGS) -m32
 CFLAGS.profile-x86_64 := $(CFLAGS) -m64
-CFLAGS.asan-i386 := $(CFLAGS) -m32
-CFLAGS.asan-x86_64 := $(CFLAGS) -m64
+CFLAGS.asan-i386 := $(CFLAGS) -m32 -fPIE -fno-builtin
+CFLAGS.asan-x86_64 := $(CFLAGS) -m64 -fPIE -fno-builtin
 CFLAGS.tsan-x86_64 := $(CFLAGS) -m64 -fPIE -fno-builtin
 
 # Use our stub SDK as the sysroot to support more portable building. For now we
