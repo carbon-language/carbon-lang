@@ -764,15 +764,20 @@ CodeGenRegisterClass::CodeGenRegisterClass(CodeGenRegBank &RegBank, Record *R)
 // Create an inferred register class that was missing from the .td files.
 // Most properties will be inherited from the closest super-class after the
 // class structure has been computed.
-CodeGenRegisterClass::CodeGenRegisterClass(StringRef Name, Key Props)
+CodeGenRegisterClass::CodeGenRegisterClass(CodeGenRegBank &RegBank,
+                                           StringRef Name, Key Props)
   : Members(*Props.Members),
     TheDef(0),
     Name(Name),
+    TopoSigs(RegBank.getNumTopoSigs()),
     EnumValue(-1),
     SpillSize(Props.SpillSize),
     SpillAlignment(Props.SpillAlignment),
     CopyCost(0),
     Allocatable(true) {
+  for (CodeGenRegister::Set::iterator I = Members.begin(), E = Members.end();
+       I != E; ++I)
+    TopoSigs.set((*I)->getTopoSig());
 }
 
 // Compute inherited propertied for a synthesized register class.
@@ -1080,7 +1085,7 @@ CodeGenRegBank::getOrCreateSubClass(const CodeGenRegisterClass *RC,
     return FoundI->second;
 
   // Sub-class doesn't exist, create a new one.
-  CodeGenRegisterClass *NewRC = new CodeGenRegisterClass(Name, K);
+  CodeGenRegisterClass *NewRC = new CodeGenRegisterClass(*this, Name, K);
   addToMaps(NewRC);
   return NewRC;
 }

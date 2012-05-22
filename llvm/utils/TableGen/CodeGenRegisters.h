@@ -368,7 +368,7 @@ namespace llvm {
     };
 
     // Create a non-user defined register class.
-    CodeGenRegisterClass(StringRef Name, Key Props);
+    CodeGenRegisterClass(CodeGenRegBank&, StringRef Name, Key Props);
 
     // Called by CodeGenRegBank::CodeGenRegBank().
     static void computeSubClasses(CodeGenRegBank&);
