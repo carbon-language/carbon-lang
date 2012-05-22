@@ -220,6 +220,9 @@ void LiveRangeEdit::eliminateDeadDefs(SmallVectorImpl<MachineInstr*> &Dead,
 
       DEBUG(dbgs() << "Deleting dead def " << Idx << '\t' << *MI);
 
+      // Collect virtual registers to be erased after MI is gone.
+      SmallVector<unsigned, 8> RegsToErase;
+
       // Check for live intervals that may shrink
       for (MachineInstr::mop_iterator MOI = MI->operands_begin(),
              MOE = MI->operands_end(); MOI != MOE; ++MOI) {
@@ -245,10 +248,8 @@ void LiveRangeEdit::eliminateDeadDefs(SmallVectorImpl<MachineInstr*> &Dead,
             if (TheDelegate)
               TheDelegate->LRE_WillShrinkVirtReg(LI.reg);
             LI.removeValNo(VNI);
-            if (LI.empty()) {
-              ToShrink.remove(&LI);
-              eraseVirtReg(Reg);
-            }
+            if (LI.empty())
+              RegsToErase.push_back(Reg);
           }
         }
       }
@@ -258,6 +259,16 @@ void LiveRangeEdit::eliminateDeadDefs(SmallVectorImpl<MachineInstr*> &Dead,
       LIS.RemoveMachineInstrFromMaps(MI);
       MI->eraseFromParent();
       ++NumDCEDeleted;
+
+      // Erase any virtregs that are now empty and unused. There may be <undef>
+      // uses around. Keep the empty live range in that case.
+      for (unsigned i = 0, e = RegsToErase.size(); i != e; ++i) {
+        unsigned Reg = RegsToErase[i];
+        if (LIS.hasInterval(Reg) && MRI.reg_nodbg_empty(Reg)) {
+          ToShrink.remove(&LIS.getInterval(Reg));
+          eraseVirtReg(Reg);
+        }
+      }
     }
 
     if (ToShrink.empty())
