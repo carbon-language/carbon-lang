@@ -398,9 +398,6 @@ def parseOptionsAndInitTestdirs():
 
     do_help = False
 
-    if len(sys.argv) == 1:
-        return
-
     # Process possible trace and/or verbose flag, among other things.
     index = 1
     while index < len(sys.argv):
