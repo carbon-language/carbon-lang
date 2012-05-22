@@ -33,7 +33,7 @@ using namespace llvm;
 
 /// CompileUnit - Compile unit constructor.
 CompileUnit::CompileUnit(unsigned I, unsigned L, DIE *D, AsmPrinter *A,
-			 DwarfDebug *DW)
+                         DwarfDebug *DW)
   : ID(I), Language(L), CUDie(D), Asm(A), DD(DW), IndexTyDie(0) {
   DIEIntegerOne = new (DIEValueAllocator) DIEInteger(1);
 }
@@ -198,7 +198,7 @@ void CompileUnit::addSourceLine(DIE *Die, DIObjCProperty Ty) {
     return;
   DIFile File = Ty.getFile();
   unsigned FileID = DD->GetOrCreateSourceID(File.getFilename(),
-					    File.getDirectory());
+                                            File.getDirectory());
   assert(FileID && "Invalid file id");
   addUInt(Die, dwarf::DW_AT_decl_file, 0, FileID);
   addUInt(Die, dwarf::DW_AT_decl_line, 0, Line);
@@ -647,8 +647,7 @@ DIE *CompileUnit::getOrCreateTypeDIE(const MDNode *TyNode) {
 }
 
 /// addType - Add a new type attribute to the specified entity.
-void CompileUnit::addType(DIE *Entity, DIType Ty,
-			  unsigned Attribute) {
+void CompileUnit::addType(DIE *Entity, DIType Ty, unsigned Attribute) {
   if (!Ty.Verify())
     return;
 
@@ -802,9 +801,9 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
     // Add prototype flag if we're dealing with a C language and the
     // function has been prototyped.
     if (isPrototyped &&
-	(Language == dwarf::DW_LANG_C89 ||
-	 Language == dwarf::DW_LANG_C99 ||
-	 Language == dwarf::DW_LANG_ObjC))
+        (Language == dwarf::DW_LANG_C89 ||
+         Language == dwarf::DW_LANG_C99 ||
+         Language == dwarf::DW_LANG_ObjC))
       addUInt(&Buffer, dwarf::DW_AT_prototyped, dwarf::DW_FORM_flag, 1);
   }
     break;
@@ -847,19 +846,19 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
         addUInt(ElemDie, dwarf::DW_AT_external, dwarf::DW_FORM_flag, 1);
         addSourceLine(ElemDie, DV);
       } else if (Element.isDerivedType()) {
-	DIDerivedType DDTy(Element);
-	if (DDTy.getTag() == dwarf::DW_TAG_friend) {
-	  ElemDie = new DIE(dwarf::DW_TAG_friend);
-	  addType(ElemDie, DDTy.getTypeDerivedFrom(), dwarf::DW_AT_friend);
-	} else
-	  ElemDie = createMemberDIE(DIDerivedType(Element));
+        DIDerivedType DDTy(Element);
+        if (DDTy.getTag() == dwarf::DW_TAG_friend) {
+          ElemDie = new DIE(dwarf::DW_TAG_friend);
+          addType(ElemDie, DDTy.getTypeDerivedFrom(), dwarf::DW_AT_friend);
+        } else
+          ElemDie = createMemberDIE(DIDerivedType(Element));
       } else if (Element.isObjCProperty()) {
         DIObjCProperty Property(Element);
         ElemDie = new DIE(Property.getTag());
         StringRef PropertyName = Property.getObjCPropertyName();
         addString(ElemDie, dwarf::DW_AT_APPLE_property_name, PropertyName);
-	addType(ElemDie, Property.getType());
-	addSourceLine(ElemDie, Property);
+        addType(ElemDie, Property.getType());
+        addSourceLine(ElemDie, Property);
         StringRef GetterName = Property.getObjCPropertyGetterName();
         if (!GetterName.empty())
           addString(ElemDie, dwarf::DW_AT_APPLE_property_getter, GetterName);
@@ -970,7 +969,7 @@ CompileUnit::getOrCreateTemplateTypeParameterDIE(DITemplateTypeParameter TP) {
 /// getOrCreateTemplateValueParameterDIE - Find existing DIE or create new DIE 
 /// for the given DITemplateValueParameter.
 DIE *
-CompileUnit::getOrCreateTemplateValueParameterDIE(DITemplateValueParameter TPV) {
+CompileUnit::getOrCreateTemplateValueParameterDIE(DITemplateValueParameter TPV){
   DIE *ParamDIE = getDIE(TPV);
   if (ParamDIE)
     return ParamDIE;
@@ -1242,7 +1241,8 @@ void CompileUnit::createGlobalVariableDIE(const MDNode *N) {
 }
 
 /// constructSubrangeDIE - Construct subrange DIE from DISubrange.
-void CompileUnit::constructSubrangeDIE(DIE &Buffer, DISubrange SR, DIE *IndexTy){
+void CompileUnit::constructSubrangeDIE(DIE &Buffer, DISubrange SR,
+                                       DIE *IndexTy) {
   DIE *DW_Subrange = new DIE(dwarf::DW_TAG_subrange_type);
   addDIEEntry(DW_Subrange, dwarf::DW_AT_type, dwarf::DW_FORM_ref4, IndexTy);
   uint64_t L = SR.getLo();
