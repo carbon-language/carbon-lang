@@ -39,6 +39,8 @@ extern "C" void* _DYNAMIC;
 
 namespace __asan {
 
+const size_t kMaxThreadStackSize = 256 * (1 << 20);  // 256M
+
 void *AsanDoesNotSupportStaticLinkage() {
   // This will fail to link with -static.
   return &_DYNAMIC;  // defined in link.h
@@ -294,6 +296,9 @@ void AsanThread::SetThreadStackTopAndBottom() {
     size_t stacksize = rl.rlim_cur;
     if (stacksize > end - prev_end)
       stacksize = end - prev_end;
+    // When running with unlimited stack size, we still want to set some limit.
+    // The unlimited stack size is caused by 'ulimit -s unlimited'.
+    // Also, for some reason, GNU make spawns subrocesses with unlimited stack.
     if (stacksize > kMaxThreadStackSize)
       stacksize = kMaxThreadStackSize;
     stack_top_ = end;
@@ -310,12 +315,7 @@ void AsanThread::SetThreadStackTopAndBottom() {
 
   stack_top_ = (uintptr_t)stackaddr + stacksize;
   stack_bottom_ = (uintptr_t)stackaddr;
-  // When running with unlimited stack size, we still want to set some limit.
-  // The unlimited stack size is caused by 'ulimit -s unlimited'.
-  // Also, for some reason, GNU make spawns subrocesses with unlimited stack.
-  if (stacksize > kMaxThreadStackSize) {
-    stack_bottom_ = stack_top_ - kMaxThreadStackSize;
-  }
+  CHECK(stacksize < kMaxThreadStackSize);  // Sanity check.
   CHECK(AddrIsInStack((uintptr_t)&attr));
 }
 

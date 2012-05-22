@@ -21,8 +21,6 @@
 
 namespace __asan {
 
-const size_t kMaxThreadStackSize = 16 * (1 << 20);  // 16M
-
 class AsanThread;
 
 // These objects are created for every thread and are never deleted,
