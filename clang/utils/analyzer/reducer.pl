@@ -24,7 +24,7 @@ my $reduceOut = "$dir/reduceOut";
 my $command;
 if (scalar(@ARGV) > 0) { $command = \@ARGV; }
 else {
-  my $compiler = "/Users/kremenek/llvm-cmake-release/bin/clang";
+  my $compiler = "clang";
   $command = [$compiler, "-fsyntax-only", "-Wfatal-errors", "-Wno-deprecated-declarations", "-Wimplicit-function-declaration"];
 }
 push @$command, $srcFile;
@@ -49,8 +49,8 @@ close(OUT);
 `chmod +x $scriptFile`;
 
 print "$prog: starting reduction\n";
-sub multidelta {
-    my $level = shift @_;
+sub multidelta($) {
+    my ($level) = @_;
     system("multidelta -level=$level $scriptFile $srcFile");
 }
 
