@@ -77,7 +77,9 @@ typedef const struct __CFString * CFStringRef;
 #define PAIR(x) @#x, [NSNumber numberWithInt:(x)]
 #define TWO(x) ((x), (x))
 
-@interface I
+@interface I {
+  NSArray *ivarArr;
+}
 @end
 @implementation I
 -(void) foo {
@@ -138,6 +140,7 @@ typedef const struct __CFString * CFStringRef;
   o = [*parr objectAtIndex:2];
   void *hd;
   o = [(NSArray*)hd objectAtIndex:2];
+  o = [ivarArr objectAtIndex:2];
 }
 @end
 

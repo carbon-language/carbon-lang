@@ -624,6 +624,7 @@ static bool subscriptOperatorNeedsParens(const Expr *FullExpr) {
       isa<ObjCPropertyRefExpr>(Expr) ||
       isa<ObjCProtocolExpr>(Expr) ||
       isa<MemberExpr>(Expr) ||
+      isa<ObjCIvarRefExpr>(Expr) ||
       isa<ParenExpr>(FullExpr) ||
       isa<ParenListExpr>(Expr) ||
       isa<SizeOfPackExpr>(Expr))
@@ -650,6 +651,7 @@ static bool castOperatorNeedsParens(const Expr *FullExpr) {
       isa<ObjCPropertyRefExpr>(Expr) ||
       isa<ObjCProtocolExpr>(Expr) ||
       isa<MemberExpr>(Expr) ||
+      isa<ObjCIvarRefExpr>(Expr) ||
       isa<ParenExpr>(FullExpr) ||
       isa<ParenListExpr>(Expr) ||
       isa<SizeOfPackExpr>(Expr) ||
