@@ -955,7 +955,8 @@ bool SCEVExpander::hoistIVInc(Instruction *IncV, Instruction *InsertPos) {
 
   // InsertPos must itself dominate IncV so that IncV's new position satisfies
   // its existing users.
-  if (!SE.DT->dominates(InsertPos->getParent(), IncV->getParent()))
+  if (isa<PHINode>(InsertPos)
+      || !SE.DT->dominates(InsertPos->getParent(), IncV->getParent()))
     return false;
 
   // Check that the chain of IV operands leading back to Phi can be hoisted.

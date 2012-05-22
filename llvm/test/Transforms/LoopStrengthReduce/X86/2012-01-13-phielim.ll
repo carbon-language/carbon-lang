@@ -90,3 +90,60 @@ for.inc498:                                       ; preds = %for.inc498, %for.bo
 while.end:                                        ; preds = %entry
   ret void
 }
+
+; PR12898: SCEVExpander crash
+; Test redundant phi elimination when the deleted phi's increment is
+; itself a phi.
+;
+; CHECK: @test3
+; CHECK: %for.body3.lr.ph.us.i.loopexit
+; CHECK-NEXT: in Loop: Header
+; CHECK-NEXT: incq
+; CHECK-NEXT: .align
+; CHECK-NEXT: %for.body3.us.i
+; CHECK-NEXT: Inner Loop
+; CHECK: testb
+; CHECK: jne
+; CHECK: jmp
+define fastcc void @test3(double* nocapture %u) nounwind uwtable ssp {
+entry:
+  br i1 undef, label %meshBB1, label %meshBB5
+
+for.inc8.us.i:                                    ; preds = %for.body3.us.i
+  br i1 undef, label %meshBB1, label %meshBB
+
+for.body3.us.i:                                   ; preds = %meshBB, %for.body3.lr.ph.us.i
+  %indvars.iv.i.SV.phi = phi i64 [ %indvars.iv.next.i, %meshBB ], [ 0, %for.body3.lr.ph.us.i ]
+  %storemerge13.us.i.SV.phi = phi i32 [ 0, %meshBB ], [ 0, %for.body3.lr.ph.us.i ]
+  %Opq.sa.calc12 = sub i32 undef, 227
+  %0 = add nsw i64 %indvars.iv.i.SV.phi, %indvars.iv8.i.SV.phi26
+  %1 = trunc i64 %0 to i32
+  %mul.i.us.i = mul nsw i32 0, %1
+  %arrayidx5.us.i = getelementptr inbounds double* %u, i64 %indvars.iv.i.SV.phi
+  %2 = load double* %arrayidx5.us.i, align 8
+  %indvars.iv.next.i = add i64 %indvars.iv.i.SV.phi, 1
+  br i1 undef, label %for.inc8.us.i, label %meshBB
+
+for.body3.lr.ph.us.i:                             ; preds = %meshBB1, %meshBB
+  %indvars.iv8.i.SV.phi26 = phi i64 [ undef, %meshBB1 ], [ %indvars.iv8.i.SV.phi24, %meshBB ]
+  %arrayidx.us.i = getelementptr inbounds double* undef, i64 %indvars.iv8.i.SV.phi26
+  %3 = add i64 %indvars.iv8.i.SV.phi26, 1
+  br label %for.body3.us.i
+
+for.inc8.us.i2:                                   ; preds = %meshBB5
+  unreachable
+
+eval_At_times_u.exit:                             ; preds = %meshBB5
+  ret void
+
+meshBB:                                           ; preds = %for.body3.us.i, %for.inc8.us.i
+  %indvars.iv8.i.SV.phi24 = phi i64 [ undef, %for.body3.us.i ], [ %3, %for.inc8.us.i ]
+  %meshStackVariable.phi = phi i32 [ %Opq.sa.calc12, %for.body3.us.i ], [ undef, %for.inc8.us.i ]
+  br i1 undef, label %for.body3.lr.ph.us.i, label %for.body3.us.i
+
+meshBB1:                                          ; preds = %for.inc8.us.i, %entry
+  br label %for.body3.lr.ph.us.i
+
+meshBB5:                                          ; preds = %entry
+  br i1 undef, label %eval_At_times_u.exit, label %for.inc8.us.i2
+}
