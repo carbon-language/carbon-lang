@@ -197,33 +197,21 @@ void IslScheduleOptimizer::extendScattering(Scop &S, unsigned NewDimensions) {
     ScopStmt *Stmt = *SI;
     unsigned OldDimensions = Stmt->getNumScattering();
     isl_space *Space;
-    isl_basic_map *ChangeScattering;
+    isl_map *Map, *New;
 
     Space = isl_space_alloc(Stmt->getIslCtx(), 0, OldDimensions, NewDimensions);
-    ChangeScattering = isl_basic_map_universe(isl_space_copy(Space));
-    isl_local_space *LocalSpace = isl_local_space_from_space(Space);
+    Map = isl_map_universe(Space);
 
-    for (unsigned i = 0; i < OldDimensions; i++) {
-      isl_constraint *c = isl_equality_alloc(isl_local_space_copy(LocalSpace));
-      isl_constraint_set_coefficient_si(c, isl_dim_in, i, 1);
-      isl_constraint_set_coefficient_si(c, isl_dim_out, i, -1);
-      ChangeScattering = isl_basic_map_add_constraint(ChangeScattering, c);
-    }
+    for (unsigned i = 0; i < OldDimensions; i++)
+      Map = isl_map_equate(Map, isl_dim_in, i, isl_dim_out, i);
 
-    for (unsigned i = OldDimensions; i < NewDimensions; i++) {
-      isl_constraint *c = isl_equality_alloc(isl_local_space_copy(LocalSpace));
-      isl_constraint_set_coefficient_si(c, isl_dim_out, i, 1);
-      ChangeScattering = isl_basic_map_add_constraint(ChangeScattering, c);
-    }
+    for (unsigned i = OldDimensions; i < NewDimensions; i++)
+      Map = isl_map_fix_si(Map, isl_dim_out, i, 0);
 
-    isl_map *ChangeScatteringMap = isl_map_from_basic_map(ChangeScattering);
 
-    ChangeScatteringMap = isl_map_align_params(ChangeScatteringMap,
-                                               S.getParamSpace());
-    isl_map *NewScattering = isl_map_apply_range(Stmt->getScattering(),
-                                                 ChangeScatteringMap);
-    Stmt->setScattering(NewScattering);
-    isl_local_space_free(LocalSpace);
+    Map = isl_map_align_params(Map, S.getParamSpace());
+    New = isl_map_apply_range(Stmt->getScattering(), Map);
+    Stmt->setScattering(New);
   }
 }
 
