@@ -79,6 +79,64 @@ ThreadContext::ThreadContext(int tid)
   , dead_next() {
 }
 
+static void WriteMemoryProfile(char *buf, uptr buf_size, int num) {
+  uptr shadow = GetShadowMemoryConsumption();
+
+  int nthread = 0;
+  int nlivethread = 0;
+  uptr threadmem = 0;
+  {
+    Lock l(&ctx->thread_mtx);
+    for (unsigned i = 0; i < kMaxTid; i++) {
+      ThreadContext *tctx = ctx->threads[i];
+      if (tctx == 0)
+        continue;
+      nthread += 1;
+      threadmem += sizeof(ThreadContext);
+      if (tctx->status != ThreadStatusRunning)
+        continue;
+      nlivethread += 1;
+      threadmem += sizeof(ThreadState);
+    }
+  }
+
+  uptr nsync = 0;
+  uptr syncmem = CTX()->synctab.GetMemoryConsumption(&nsync);
+
+  Snprintf(buf, buf_size, "%d: shadow=%luMB"
+                          " thread=%luMB(total=%d/live=%d)"
+                          " sync=%luMB(cnt=%lu)\n",
+    num,
+    shadow >> 20,
+    threadmem >> 20, nthread, nlivethread,
+    syncmem >> 20, nsync);
+}
+
+static void MemoryProfileThread(void *arg) {
+  ScopedInRtl in_rtl;
+  fd_t fd = (fd_t)(uptr)arg;
+  for (int i = 0; ; i++) {
+    InternalScopedBuf<char> buf(4096);
+    WriteMemoryProfile(buf.Ptr(), buf.Size(), i);
+    internal_write(fd, buf.Ptr(), internal_strlen(buf.Ptr()));
+    internal_sleep_ms(1000);
+  }
+}
+
+static void InitializeMemoryProfile() {
+  if (flags()->profile_memory == 0 || flags()->profile_memory[0] == 0)
+    return;
+  InternalScopedBuf<char> filename(4096);
+  Snprintf(filename.Ptr(), filename.Size(), "%s.%d",
+      flags()->profile_memory, GetPid());
+  fd_t fd = internal_open(filename.Ptr(), true);
+  if (fd == kInvalidFd) {
+    Printf("Failed to open memory profile file '%s'\n", &filename[0]);
+    Die();
+  }
+  internal_start_thread(&MemoryProfileThread, (void*)(uptr)fd);
+}
+
 void Initialize(ThreadState *thr) {
   // Thread safe because done before all threads exist.
   static bool is_initialized = false;
@@ -97,6 +155,7 @@ void Initialize(ThreadState *thr) {
   ctx->dead_list_tail = 0;
   InitializeFlags(&ctx->flags, env);
   InitializeSuppressions();
+  InitializeMemoryProfile();
 
   if (ctx->flags.verbosity)
     Printf("***** Running under ThreadSanitizer v2 (pid=%d) *****\n", GetPid());

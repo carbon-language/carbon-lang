@@ -59,6 +59,10 @@ void Die() {
   _exit(1);
 }
 
+uptr GetShadowMemoryConsumption() {
+  return 0;
+}
+
 static void *my_mmap(void *addr, size_t length, int prot, int flags,
                     int fd, u64 offset) {
   ScopedInRtl in_rtl;
@@ -69,9 +73,13 @@ static void *my_mmap(void *addr, size_t length, int prot, int flags,
 # endif
 }
 
-void sched_yield() {
+void internal_yield() {
   ScopedInRtl in_rtl;
   syscall(__NR_sched_yield);
+}
+
+void internal_sleep_ms(u32 ms) {
+  usleep(ms * 1000);
 }
 
 fd_t internal_open(const char *name, bool write) {

@@ -46,6 +46,7 @@ void InitializeFlags(Flags *f, const char *env) {
   f->log_fileno = 2;
   f->atexit_sleep_ms = 1000;
   f->verbosity = 0;
+  f->profile_memory = "";
 
   // Let a frontend override.
   OverrideFlags(f);
@@ -63,6 +64,7 @@ void InitializeFlags(Flags *f, const char *env) {
   Flag(env, &f->log_fileno, "log_fileno");
   Flag(env, &f->atexit_sleep_ms, "atexit_sleep_ms");
   Flag(env, &f->verbosity, "verbosity");
+  Flag(env, &f->profile_memory, "profile_memory");
 }
 
 static const char *GetFlagValue(const char *env, const char *name,

@@ -64,11 +64,16 @@ static inline uptr ShadowToMem(uptr shadow) {
 #endif
 }
 
+uptr GetShadowMemoryConsumption();
+
 const char *InitializePlatform();
 void FinalizePlatform();
 int GetPid();
 
-void sched_yield();
+void internal_yield();
+void internal_sleep_ms(u32 ms);
+
+void internal_start_thread(void(*func)(void*), void *arg);
 
 typedef int fd_t;
 const fd_t kInvalidFd = -1;

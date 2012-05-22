@@ -163,7 +163,7 @@ class Backoff {
     if (iter_++ < kActiveSpinIters)
       proc_yield(kActiveSpinCnt);
     else
-      sched_yield();
+      internal_yield();
     return true;
   }
 

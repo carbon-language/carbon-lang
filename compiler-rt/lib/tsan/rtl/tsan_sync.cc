@@ -107,6 +107,26 @@ SyncVar* SyncTab::GetAndRemove(ThreadState *thr, uptr pc, uptr addr) {
   return res;
 }
 
+uptr SyncVar::GetMemoryConsumption() {
+  return sizeof(*this)
+      + clock.size() * sizeof(u64)
+      + read_clock.size() * sizeof(u64)
+      + creation_stack.Size() * sizeof(uptr);
+}
+
+uptr SyncTab::GetMemoryConsumption(uptr *nsync) {
+  uptr mem = 0;
+  for (int i = 0; i < kPartCount; i++) {
+    Part *p = &tab_[i];
+    Lock l(&p->mtx);
+    for (SyncVar *s = p->val; s; s = s->next) {
+      *nsync += 1;
+      mem += s->GetMemoryConsumption();
+    }
+  }
+  return mem;
+}
+
 int SyncTab::PartIdx(uptr addr) {
   return (addr >> 3) % kPartCount;
 }

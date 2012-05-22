@@ -1551,4 +1551,10 @@ const char *internal_strchr(const char *where, char what) {
   return (const char*)REAL(strchr)((void*)where, what);
 }
 
+void internal_start_thread(void(*func)(void *arg), void *arg) {
+  void *th;
+  REAL(pthread_create)(&th, 0, (void*(*)(void *arg))func, arg);
+  REAL(pthread_detach)(th);
+}
+
 }  // namespace __tsan

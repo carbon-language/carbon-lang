@@ -52,14 +52,16 @@ struct SyncVar {
   Mutex mtx;
   const uptr addr;
   SyncClock clock;
-  StackTrace creation_stack;
   SyncClock read_clock;  // Used for rw mutexes only.
+  StackTrace creation_stack;
   int owner_tid;  // Set only by exclusive owners.
   int recursion;
   bool is_rw;
   bool is_recursive;
   bool is_broken;
   SyncVar *next;  // In SyncTab hashtable.
+
+  uptr GetMemoryConsumption();
 };
 
 class SyncTab {
@@ -73,6 +75,8 @@ class SyncTab {
 
   // If the SyncVar does not exist, returns 0.
   SyncVar* GetAndRemove(ThreadState *thr, uptr pc, uptr addr);
+
+  uptr GetMemoryConsumption(uptr *nsync);
 
  private:
   struct Part {

@@ -46,6 +46,8 @@ struct Flags {
   int atexit_sleep_ms;
   // Verbosity level (0 - silent, 1 - a bit of output, 2+ - more output).
   int verbosity;
+  // If set, periodically write memory profile to that file.
+  const char *profile_memory;
 };
 
 Flags *flags();
