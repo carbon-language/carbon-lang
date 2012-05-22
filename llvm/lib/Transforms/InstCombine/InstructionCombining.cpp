@@ -87,6 +87,10 @@ void InstCombiner::getAnalysisUsage(AnalysisUsage &AU) const {
 }
 
 
+Value *InstCombiner::EmitGEPOffset(User *GEP) {
+  return llvm::EmitGEPOffset(Builder, *getTargetData(), GEP);
+}
+
 /// ShouldChangeType - Return true if it is desirable to convert a computation
 /// from 'From' to 'To'.  We don't want to convert from a legal to an illegal
 /// type for example, or from a smaller to a larger illegal type.

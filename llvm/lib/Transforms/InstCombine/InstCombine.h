@@ -226,7 +226,7 @@ private:
                                  bool DoXform = true);
   Instruction *transformSExtICmp(ICmpInst *ICI, Instruction &CI);
   bool WillNotOverflowSignedAdd(Value *LHS, Value *RHS);
-  Value *EmitGEPOffset(User *GEP, bool NoNUW = false);
+  Value *EmitGEPOffset(User *GEP);
 
 public:
   // InsertNewInstBefore - insert an instruction New before instruction Old

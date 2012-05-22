@@ -420,67 +420,6 @@ Instruction *InstCombiner::visitFAdd(BinaryOperator &I) {
 }
 
 
-/// EmitGEPOffset - Given a getelementptr instruction/constantexpr, emit the
-/// code necessary to compute the offset from the base pointer (without adding
-/// in the base pointer).  Return the result as a signed integer of intptr size.
-/// If NoNUW is true, then the NUW flag is not used.
-Value *InstCombiner::EmitGEPOffset(User *GEP, bool NoNUW) {
-  TargetData &TD = *getTargetData();
-  gep_type_iterator GTI = gep_type_begin(GEP);
-  Type *IntPtrTy = TD.getIntPtrType(GEP->getContext());
-  Value *Result = Constant::getNullValue(IntPtrTy);
-
-  // If the GEP is inbounds, we know that none of the addressing operations will
-  // overflow in an unsigned sense.
-  bool isInBounds = cast<GEPOperator>(GEP)->isInBounds() && !NoNUW;
-  
-  // Build a mask for high order bits.
-  unsigned IntPtrWidth = TD.getPointerSizeInBits();
-  uint64_t PtrSizeMask = ~0ULL >> (64-IntPtrWidth);
-
-  for (User::op_iterator i = GEP->op_begin() + 1, e = GEP->op_end(); i != e;
-       ++i, ++GTI) {
-    Value *Op = *i;
-    uint64_t Size = TD.getTypeAllocSize(GTI.getIndexedType()) & PtrSizeMask;
-    if (ConstantInt *OpC = dyn_cast<ConstantInt>(Op)) {
-      if (OpC->isZero()) continue;
-      
-      // Handle a struct index, which adds its field offset to the pointer.
-      if (StructType *STy = dyn_cast<StructType>(*GTI)) {
-        Size = TD.getStructLayout(STy)->getElementOffset(OpC->getZExtValue());
-        
-        if (Size)
-          Result = Builder->CreateAdd(Result, ConstantInt::get(IntPtrTy, Size),
-                                      GEP->getName()+".offs");
-        continue;
-      }
-      
-      Constant *Scale = ConstantInt::get(IntPtrTy, Size);
-      Constant *OC =
-              ConstantExpr::getIntegerCast(OpC, IntPtrTy, true /*SExt*/);
-      Scale = ConstantExpr::getMul(OC, Scale, isInBounds/*NUW*/);
-      // Emit an add instruction.
-      Result = Builder->CreateAdd(Result, Scale, GEP->getName()+".offs");
-      continue;
-    }
-    // Convert to correct type.
-    if (Op->getType() != IntPtrTy)
-      Op = Builder->CreateIntCast(Op, IntPtrTy, true, Op->getName()+".c");
-    if (Size != 1) {
-      // We'll let instcombine(mul) convert this to a shl if possible.
-      Op = Builder->CreateMul(Op, ConstantInt::get(IntPtrTy, Size),
-                              GEP->getName()+".idx", isInBounds /*NUW*/);
-    }
-
-    // Emit an add instruction.
-    Result = Builder->CreateAdd(Op, Result, GEP->getName()+".offs");
-  }
-  return Result;
-}
-
-
-
-
 /// Optimize pointer differences into the same array into a size.  Consider:
 ///  &A[10] - &A[0]: we should compile this to "10".  LHS/RHS are the pointer
 /// operands to the ptrtoint instructions for the LHS/RHS of the subtract.
