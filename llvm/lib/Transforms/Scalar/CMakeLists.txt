@@ -1,6 +1,7 @@
 add_llvm_library(LLVMScalarOpts
   ADCE.cpp
   BasicBlockPlacement.cpp
+  BoundsChecking.cpp
   CodeGenPrepare.cpp
   ConstantProp.cpp
   CorrelatedValuePropagation.cpp
