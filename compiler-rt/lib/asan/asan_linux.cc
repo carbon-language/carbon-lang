@@ -216,63 +216,12 @@ bool AsanProcMaps::Next(uintptr_t *start, uintptr_t *end,
   return true;
 }
 
-#if 1
-
 // Gets the object name and the offset by walking AsanProcMaps.
 bool AsanProcMaps::GetObjectNameAndOffset(uintptr_t addr, uintptr_t *offset,
                                           char filename[],
                                           size_t filename_size) {
   return IterateForObjectNameAndOffset(addr, offset, filename, filename_size);
 }
-
-#else
-// dl_iterate_phdr machinery is not working well for us.
-// We either need to fix it or get rid of it.
-struct DlIterateData {
-  int count;
-  uintptr_t addr;
-  uintptr_t offset;
-  char *filename;
-  size_t filename_size;
-};
-
-static int dl_iterate_phdr_callback(struct dl_phdr_info *info,
-                                    size_t size, void *raw_data) {
-  DlIterateData *data = (DlIterateData*)raw_data;
-  int count = data->count++;
-  if (info->dlpi_addr > data->addr)
-    return 0;
-  if (count == 0) {
-    // The first item (the main executable) does not have a so name,
-    // but we can just read it from /proc/self/exe.
-    size_t path_len = readlink("/proc/self/exe",
-                               data->filename, data->filename_size - 1);
-    data->filename[path_len] = 0;
-  } else {
-    CHECK(info->dlpi_name);
-    REAL(strncpy)(data->filename, info->dlpi_name, data->filename_size);
-  }
-  data->offset = data->addr - info->dlpi_addr;
-  return 1;
-}
-
-// Gets the object name and the offset using dl_iterate_phdr.
-bool AsanProcMaps::GetObjectNameAndOffset(uintptr_t addr, uintptr_t *offset,
-                                          char filename[],
-                                          size_t filename_size) {
-  DlIterateData data;
-  data.count = 0;
-  data.addr = addr;
-  data.filename = filename;
-  data.filename_size = filename_size;
-  if (dl_iterate_phdr(dl_iterate_phdr_callback, &data)) {
-    *offset = data.offset;
-    return true;
-  }
-  return false;
-}
-
-#endif  // __arm__
 
 void AsanThread::SetThreadStackTopAndBottom() {
   if (tid() == 0) {
