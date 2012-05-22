@@ -360,7 +360,33 @@ Index: lib/Target/ARM/Disassembler/ARMDisassembler.cpp
        break;
    }
  
-@@ -2837,19 +2887,25 @@
+@@ -2555,7 +2605,6 @@
+   unsigned Rm = fieldFromInstruction32(Insn, 0, 4);
+   unsigned align = fieldFromInstruction32(Insn, 4, 1);
+   unsigned size = 1 << fieldFromInstruction32(Insn, 6, 2);
+-  unsigned pred = fieldFromInstruction32(Insn, 22, 4);
+   align *= 2*size;
+ 
+   switch (Inst.getOpcode()) {
+@@ -2586,16 +2635,11 @@
+     return MCDisassembler::Fail;
+   Inst.addOperand(MCOperand::CreateImm(align));
+ 
+-  if (Rm == 0xD)
+-    Inst.addOperand(MCOperand::CreateReg(0));
+-  else if (Rm != 0xF) {
++  if (Rm != 0xD && Rm != 0xF) {
+     if (!Check(S, DecodeGPRRegisterClass(Inst, Rm, Address, Decoder)))
+       return MCDisassembler::Fail;
+   }
+ 
+-  if (!Check(S, DecodePredicateOperand(Inst, pred, Address, Decoder)))
+-    return MCDisassembler::Fail;
+-
+   return S;
+ }
+ 
+@@ -2837,19 +2881,25 @@
  
  static DecodeStatus DecodeThumbBROperand(llvm::MCInst &Inst, unsigned Val,
                                   uint64_t Address, const void *Decoder) {
@@ -389,7 +415,7 @@ Index: lib/Target/ARM/Disassembler/ARMDisassembler.cpp
    return MCDisassembler::Success;
  }
  
-@@ -3162,10 +3218,25 @@
+@@ -3162,10 +3212,25 @@
  
  static DecodeStatus DecodeThumbBLXOffset(llvm::MCInst &Inst, unsigned Val,
                                   uint64_t Address, const void *Decoder) {
@@ -417,7 +443,7 @@ Index: lib/Target/ARM/Disassembler/ARMDisassembler.cpp
    return MCDisassembler::Success;
  }
  
-@@ -3271,15 +3342,32 @@
+@@ -3271,15 +3336,32 @@
  static DecodeStatus
  DecodeThumbBCCTargetOperand(llvm::MCInst &Inst, unsigned Val,
                              uint64_t Address, const void *Decoder){
