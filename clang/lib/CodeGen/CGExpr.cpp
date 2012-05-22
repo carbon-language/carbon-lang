@@ -517,7 +517,7 @@ unsigned CodeGenFunction::getAccessedFieldNo(unsigned Idx,
 }
 
 void CodeGenFunction::EmitCheck(llvm::Value *Address, unsigned Size) {
-  if (BoundsChecking <= 0)
+  if (!CatchUndefined)
     return;
 
   // This needs to be to the standard address space.

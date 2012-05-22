@@ -172,6 +172,9 @@ public:
   /// or 0 if unspecified.
   unsigned NumRegisterParameters;
 
+  /// The run-time penalty for bounds checking, or 0 to disable.
+  unsigned char BoundsChecking;
+
 public:
   CodeGenOptions() {
     AsmVerbose = 0;
@@ -224,6 +227,7 @@ public:
     VerifyModule = 1;
     StackRealignment = 0;
     StackAlignment = 0;
+    BoundsChecking = 0;
 
     DebugInfo = NoDebugInfo;
     Inlining = NoInlining;

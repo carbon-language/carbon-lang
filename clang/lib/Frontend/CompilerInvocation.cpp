@@ -283,6 +283,8 @@ static void CodeGenOptsToArgs(const CodeGenOptions &Opts, ToArgsList &Res) {
     Res.push_back("-fobjc-dispatch-method=non-legacy");
     break;
   }
+  if (Opts.BoundsChecking > 0)
+    Res.push_back("-fbounds-checking=" + llvm::utostr(Opts.BoundsChecking));
   if (Opts.NumRegisterParameters)
     Res.push_back("-mregparm", llvm::utostr(Opts.NumRegisterParameters));
   if (Opts.NoGlobalMerge)
@@ -675,8 +677,6 @@ static void LangOptsToArgs(const LangOptions &Opts, ToArgsList &Res) {
     Res.push_back("-fno-operator-names");
   if (Opts.PascalStrings)
     Res.push_back("-fpascal-strings");
-  if (Opts.BoundsChecking > 0)
-    Res.push_back("-fbounds-checking=" + llvm::utostr(Opts.BoundsChecking));
   if (Opts.CatchUndefined)
     Res.push_back("-fcatch-undefined-behavior");
   if (Opts.AddressSanitizer)
@@ -1217,6 +1217,8 @@ static bool ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
   Opts.UnwindTables = Args.hasArg(OPT_munwind_tables);
   Opts.RelocationModel = Args.getLastArgValue(OPT_mrelocation_model, "pic");
   Opts.TrapFuncName = Args.getLastArgValue(OPT_ftrap_function_EQ);
+  Opts.BoundsChecking = Args.getLastArgIntValue(OPT_fbounds_checking_EQ, 0,
+                                                Diags);
 
   Opts.FunctionSections = Args.hasArg(OPT_ffunction_sections);
   Opts.DataSections = Args.hasArg(OPT_fdata_sections);
@@ -1955,11 +1957,7 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
     Opts.ObjCNonFragileABI2 = true;
   Opts.ObjCDefaultSynthProperties =
     Args.hasArg(OPT_fobjc_default_synthesize_properties);
-  Opts.BoundsChecking = 0;
-  if ((Opts.CatchUndefined = Args.hasArg(OPT_fcatch_undefined_behavior)))
-    Opts.BoundsChecking = 5;
-  Opts.BoundsChecking = Args.getLastArgIntValue(OPT_fbounds_checking_EQ,
-                                                Opts.BoundsChecking, Diags);
+  Opts.CatchUndefined = Args.hasArg(OPT_fcatch_undefined_behavior);
   Opts.EmitAllDecls = Args.hasArg(OPT_femit_all_decls);
   Opts.PackStruct = Args.getLastArgIntValue(OPT_fpack_struct_EQ, 0, Diags);
   Opts.PICLevel = Args.getLastArgIntValue(OPT_pic_level, 0, Diags);
