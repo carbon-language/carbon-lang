@@ -934,14 +934,10 @@ GDBRemoteDynamicRegisterInfo::Addx86_64ConvenienceRegisters()
 {
     // For eax, ebx, ecx, edx, esi, edi, ebp, esp register mapping.
     static const char* g_mapped_names[] = {
-        "rax",
-        "rbx",
-        "rcx",
-        "rdx",
-        "rdi",
-        "rsi",
-        "rbp",
-        "rsp"
+        "rax", "rbx", "rcx", "rdx", "rdi", "rsi", "rbp", "rsp",
+        "rax", "rbx", "rcx", "rdx", "rdi", "rsi", "rbp", "rsp",
+        "rax", "rbx", "rcx", "rdx",
+        "rax", "rbx", "rcx", "rdx", "rdi", "rsi", "rbp", "rsp"
     };
 
     // These value regs are to be populated with the corresponding primordial register index.
@@ -959,14 +955,34 @@ GDBRemoteDynamicRegisterInfo::Addx86_64ConvenienceRegisters()
     {
 //    NAME      ALT      SZ OFF ENCODING         FORMAT                COMPILER              DWARF                 GENERIC                      GDB                   LLDB NATIVE            VALUE REGS    INVALIDATE REGS
 //    ======    =======  == === =============    ============          ===================== ===================== ============================ ====================  ====================== ==========    ===============
-    { "eax",    NULL,    4,  0, eEncodingUint  , eFormatHex          , { LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM      , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM }, g_eax_regs,              NULL},
+    { "eax"   , NULL,    4,  0, eEncodingUint  , eFormatHex          , { LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM      , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM }, g_eax_regs,              NULL},
     { "ebx"   , NULL,    4,  0, eEncodingUint  , eFormatHex          , { LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM      , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM }, g_ebx_regs,              NULL},
     { "ecx"   , NULL,    4,  0, eEncodingUint  , eFormatHex          , { LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM      , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM }, g_ecx_regs,              NULL},
     { "edx"   , NULL,    4,  0, eEncodingUint  , eFormatHex          , { LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM      , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM }, g_edx_regs,              NULL},
     { "edi"   , NULL,    4,  0, eEncodingUint  , eFormatHex          , { LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM      , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM }, g_edi_regs,              NULL},
     { "esi"   , NULL,    4,  0, eEncodingUint  , eFormatHex          , { LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM      , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM }, g_esi_regs,              NULL},
     { "ebp"   , NULL,    4,  0, eEncodingUint  , eFormatHex          , { LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM      , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM }, g_ebp_regs,              NULL},
-    { "esp"   , NULL,    4,  0, eEncodingUint  , eFormatHex          , { LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM      , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM }, g_esp_regs,              NULL}
+    { "esp"   , NULL,    4,  0, eEncodingUint  , eFormatHex          , { LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM      , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM }, g_esp_regs,              NULL},
+    { "ax"    , NULL,    2,  0, eEncodingUint  , eFormatHex          , { LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM      , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM }, g_eax_regs,              NULL},
+    { "bx"    , NULL,    2,  0, eEncodingUint  , eFormatHex          , { LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM      , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM }, g_ebx_regs,              NULL},
+    { "cx"    , NULL,    2,  0, eEncodingUint  , eFormatHex          , { LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM      , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM }, g_ecx_regs,              NULL},
+    { "dx"    , NULL,    2,  0, eEncodingUint  , eFormatHex          , { LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM      , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM }, g_edx_regs,              NULL},
+    { "di"    , NULL,    2,  0, eEncodingUint  , eFormatHex          , { LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM      , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM }, g_edi_regs,              NULL},
+    { "si"    , NULL,    2,  0, eEncodingUint  , eFormatHex          , { LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM      , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM }, g_esi_regs,              NULL},
+    { "bp"    , NULL,    2,  0, eEncodingUint  , eFormatHex          , { LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM      , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM }, g_ebp_regs,              NULL},
+    { "sp"    , NULL,    2,  0, eEncodingUint  , eFormatHex          , { LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM      , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM }, g_esp_regs,              NULL},
+    { "ah"    , NULL,    1,  1, eEncodingUint  , eFormatHex          , { LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM      , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM }, g_eax_regs,              NULL},
+    { "bh"    , NULL,    1,  1, eEncodingUint  , eFormatHex          , { LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM      , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM }, g_ebx_regs,              NULL},
+    { "ch"    , NULL,    1,  1, eEncodingUint  , eFormatHex          , { LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM      , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM }, g_ecx_regs,              NULL},
+    { "dh"    , NULL,    1,  1, eEncodingUint  , eFormatHex          , { LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM      , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM }, g_edx_regs,              NULL},
+    { "al"    , NULL,    1,  0, eEncodingUint  , eFormatHex          , { LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM      , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM }, g_eax_regs,              NULL},
+    { "bl"    , NULL,    1,  0, eEncodingUint  , eFormatHex          , { LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM      , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM }, g_ebx_regs,              NULL},
+    { "cl"    , NULL,    1,  0, eEncodingUint  , eFormatHex          , { LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM      , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM }, g_ecx_regs,              NULL},
+    { "dl"    , NULL,    1,  0, eEncodingUint  , eFormatHex          , { LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM      , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM }, g_edx_regs,              NULL},
+    { "dil"   , NULL,    1,  0, eEncodingUint  , eFormatHex          , { LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM      , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM }, g_edi_regs,              NULL},
+    { "sil"   , NULL,    1,  0, eEncodingUint  , eFormatHex          , { LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM      , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM }, g_esi_regs,              NULL},
+    { "bpl"   , NULL,    1,  0, eEncodingUint  , eFormatHex          , { LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM      , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM }, g_ebp_regs,              NULL},
+    { "spl"   , NULL,    1,  0, eEncodingUint  , eFormatHex          , { LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM      , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM }, g_esp_regs,              NULL}
     };
 
     static const uint32_t num_conv_regs = llvm::array_lengthof(g_mapped_names);

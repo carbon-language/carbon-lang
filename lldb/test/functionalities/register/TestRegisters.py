@@ -78,6 +78,8 @@ class RegisterCommandsTestCase(TestBase):
         self.runCmd("register write rax 0x1234567887654321")
         self.expect("expr -- ($rax & 0xffffffff) == $eax",
             substrs = ['true'])
+        self.expect("expr -- $ax == (($ah << 8) | $al)",
+            substrs = ['true'])
 
 
 if __name__ == '__main__':
