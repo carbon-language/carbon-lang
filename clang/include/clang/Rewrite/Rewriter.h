@@ -279,6 +279,13 @@ public:
   buffer_iterator buffer_begin() { return RewriteBuffers.begin(); }
   buffer_iterator buffer_end() { return RewriteBuffers.end(); }
 
+  /// SaveFiles - Save all changed files to disk.
+  ///
+  /// Returns whether not all changes were saved successfully.
+  /// Outputs diagnostics via the source manager's diagnostic engine
+  /// in case of an error.
+  bool overwriteChangedFiles();
+
 private:
   unsigned getLocationOffsetAndFileID(SourceLocation Loc, FileID &FID) const;
 };

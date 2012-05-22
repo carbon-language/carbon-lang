@@ -15,9 +15,12 @@
 #include "clang/Rewrite/Rewriter.h"
 #include "clang/AST/Stmt.h"
 #include "clang/AST/Decl.h"
-#include "clang/Lex/Lexer.h"
+#include "clang/Basic/DiagnosticIDs.h"
+#include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
+#include "clang/Lex/Lexer.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/Support/FileSystem.h"
 using namespace clang;
 
 raw_ostream &RewriteBuffer::write(raw_ostream &os) const {
@@ -411,4 +414,69 @@ bool Rewriter::IncreaseIndentation(CharSourceRange range,
   }
 
   return false;
+}
+
+// A wrapper for a file stream that atomically overwrites the target.
+//
+// Creates a file output stream for a temporary file in the constructor,
+// which is later accessible via getStream() if ok() return true.
+// Flushes the stream and moves the temporary file to the target location
+// in the destructor.
+class AtomicallyMovedFile {
+public:
+  AtomicallyMovedFile(DiagnosticsEngine &Diagnostics, StringRef Filename,
+                      bool &AllWritten)
+    : Diagnostics(Diagnostics), Filename(Filename), AllWritten(AllWritten) {
+    TempFilename = Filename;
+    TempFilename += "-%%%%%%%%";
+    int FD;
+    if (llvm::sys::fs::unique_file(TempFilename.str(), FD, TempFilename,
+                                    /*makeAbsolute=*/true, 0664)) {
+      AllWritten = false;
+      Diagnostics.Report(clang::diag::err_unable_to_make_temp)
+        << TempFilename;
+    } else {
+      FileStream.reset(new llvm::raw_fd_ostream(FD, /*shouldClose=*/true));
+    }
+  }
+
+  ~AtomicallyMovedFile() {
+    if (!ok()) return;
+
+    FileStream->flush();
+    if (llvm::error_code ec =
+          llvm::sys::fs::rename(TempFilename.str(), Filename)) {
+      AllWritten = false;
+      Diagnostics.Report(clang::diag::err_unable_to_rename_temp)
+        << TempFilename << Filename << ec.message();
+      bool existed;
+      // If the remove fails, there's not a lot we can do - this is already an
+      // error.
+      llvm::sys::fs::remove(TempFilename.str(), existed);
+    }
+  }
+
+  bool ok() { return FileStream; }
+  llvm::raw_ostream &getStream() { return *FileStream; }
+
+private:
+  DiagnosticsEngine &Diagnostics;
+  StringRef Filename;
+  SmallString<128> TempFilename;
+  OwningPtr<llvm::raw_fd_ostream> FileStream;
+  bool &AllWritten;
+};
+
+bool Rewriter::overwriteChangedFiles() {
+  bool AllWritten = true;
+  for (buffer_iterator I = buffer_begin(), E = buffer_end(); I != E; ++I) {
+    const FileEntry *Entry =
+        getSourceMgr().getFileEntryForID(I->first);
+    AtomicallyMovedFile File(getSourceMgr().getDiagnostics(), Entry->getName(),
+                             AllWritten);
+    if (File.ok()) {
+      I->second.write(File.getStream());
+    }
+  }
+  return !AllWritten;
 }
