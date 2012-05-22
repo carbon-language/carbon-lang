@@ -817,9 +817,10 @@ public:
     if (LHS.isNegative()) {
       if (RHS.isNegative())
         APInt::udivrem(-LHS, -RHS, Quotient, Remainder);
-      else
+      else {
         APInt::udivrem(-LHS, RHS, Quotient, Remainder);
-      Quotient = -Quotient;
+        Quotient = -Quotient;
+      }
       Remainder = -Remainder;
     } else if (RHS.isNegative()) {
       APInt::udivrem(LHS, -RHS, Quotient, Remainder);

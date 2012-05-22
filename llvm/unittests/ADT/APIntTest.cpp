@@ -171,6 +171,34 @@ TEST(APIntTest, i1) {
   EXPECT_EQ(zero, neg_one.srem(one));
   EXPECT_EQ(zero, neg_one.urem(one));
   EXPECT_EQ(zero, one.srem(neg_one));
+
+  // sdivrem
+  {
+  APInt q(8, 0);
+  APInt r(8, 0);
+  APInt one(8, 1);
+  APInt two(8, 2);
+  APInt nine(8, 9);
+  APInt four(8, 4);
+
+  EXPECT_EQ(nine.srem(two), one);
+  EXPECT_EQ(nine.srem(-two), one);
+  EXPECT_EQ((-nine).srem(two), -one);
+  EXPECT_EQ((-nine).srem(-two), -one);
+
+  APInt::sdivrem(nine, two, q, r);
+  EXPECT_EQ(four, q);
+  EXPECT_EQ(one, r);
+  APInt::sdivrem(-nine, two, q, r);
+  EXPECT_EQ(-four, q);
+  EXPECT_EQ(-one, r);
+  APInt::sdivrem(nine, -two, q, r);
+  EXPECT_EQ(-four, q);
+  EXPECT_EQ(one, r);
+  APInt::sdivrem(-nine, -two, q, r);
+  EXPECT_EQ(four, q);
+  EXPECT_EQ(-one, r);
+  }
 }
 
 TEST(APIntTest, fromString) {
