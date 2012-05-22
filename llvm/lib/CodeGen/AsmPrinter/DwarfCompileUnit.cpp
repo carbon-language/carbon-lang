@@ -926,9 +926,10 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
   if (!Name.empty())
     addString(&Buffer, dwarf::DW_AT_name, Name);
 
-  if (Tag == dwarf::DW_TAG_enumeration_type || Tag == dwarf::DW_TAG_class_type
-      || Tag == dwarf::DW_TAG_structure_type || Tag == dwarf::DW_TAG_union_type)
-  {
+  if (Tag == dwarf::DW_TAG_enumeration_type ||
+      Tag == dwarf::DW_TAG_class_type ||
+      Tag == dwarf::DW_TAG_structure_type ||
+      Tag == dwarf::DW_TAG_union_type) {
     // Add size if non-zero (derived types might be zero-sized.)
     if (Size)
       addUInt(&Buffer, dwarf::DW_AT_byte_size, 0, Size);
