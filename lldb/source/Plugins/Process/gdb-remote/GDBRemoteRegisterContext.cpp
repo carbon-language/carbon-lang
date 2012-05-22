@@ -990,7 +990,7 @@ GDBRemoteDynamicRegisterInfo::Addx86_64ConvenienceRegisters()
                 {
                     // The name matches the existing primordial entry.
                     // Find and assign the offset, and then add this composite register entry.
-                    g_conv_register_infos[i].byte_offset = reg_info->byte_offset + 4;
+                    g_conv_register_infos[i].byte_offset = reg_info->byte_offset;
                     // Update the value_regs and the kinds fields in order to delegate to the primordial register.
                     g_conv_register_infos[i].value_regs[0] = j;
                     g_conv_register_infos[i].kinds[eRegisterKindLLDB] = ++reg_kind;
