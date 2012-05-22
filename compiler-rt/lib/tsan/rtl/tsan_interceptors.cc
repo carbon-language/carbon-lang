@@ -22,7 +22,7 @@
 using namespace __tsan;  // NOLINT
 
 struct sigset_t {
-  u64 val[kSigCount / 8 / sizeof(u64)];
+  u64 val[1024 / 8 / sizeof(u64)];
 };
 
 struct ucontext_t {
