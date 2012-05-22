@@ -10,7 +10,7 @@ die "$prog: [error] cannot read file $file\n" if (! -r $file);
 my $magic = shift @ARGV;
 die "$prog: [error] no error string specified\n" if (! defined $magic);
 
-# Create a backup of the fuke.
+# Create a backup of the file.
 my $dir = tempdir( CLEANUP => 1 );
 print "$prog: created temporary directory '$dir'\n";
 my $srcFile = "$dir/$file";
