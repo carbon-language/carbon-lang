@@ -1630,7 +1630,8 @@ def warn_attribute_wrong_decl_type : Warning<
   "variables and functions|functions and methods|parameters|"
   "functions, methods and blocks|functions, methods, and parameters|"
   "classes|variables|methods|variables, functions and labels|"
-  "fields and global variables|structs}1">;
+  "fields and global variables|structs|"
+  "variables, functions and tag types}1">;
 def err_attribute_wrong_decl_type : Error<
   "%0 attribute only applies to %select{functions|unions|"
   "variables and functions|functions and methods|parameters|"

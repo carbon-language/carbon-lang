@@ -11,11 +11,11 @@ typedef __w64 unsigned long ULONG_PTR, *PULONG_PTR;
 
 void * __ptr64 PtrToPtr64(const void *p)
 {
-  return((void * __ptr64) (unsigned __int64) (ULONG_PTR)p ); // expected-warning {{unknown attribute '__ptr64' ignored}}
+  return((void * __ptr64) (unsigned __int64) (ULONG_PTR)p );
 }
 void * __ptr32 PtrToPtr32(const void *p)
 {
-  return((void * __ptr32) (unsigned __int32) (ULONG_PTR)p ); // expected-warning {{unknown attribute '__ptr32' ignored}}
+  return((void * __ptr32) (unsigned __int32) (ULONG_PTR)p );
 }
 
 void __forceinline InterlockedBitTestAndSet (long *Base, long Bit)

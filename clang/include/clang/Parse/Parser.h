@@ -1859,6 +1859,7 @@ private:
                                 SourceLocation *endLoc = 0);
   void ParseMicrosoftDeclSpec(ParsedAttributes &attrs);
   void ParseMicrosoftTypeAttributes(ParsedAttributes &attrs);
+  void ParseMicrosoftInheritanceClassAttributes(ParsedAttributes &attrs);
   void ParseBorlandTypeAttributes(ParsedAttributes &attrs);
   void ParseOpenCLAttributes(ParsedAttributes &attrs);
   void ParseOpenCLQualifiers(DeclSpec &DS);

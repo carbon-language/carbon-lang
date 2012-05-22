@@ -3773,6 +3773,38 @@ static void handleUuidAttr(Sema &S, Decl *D, const AttributeList &Attr) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << "uuid";
 }
 
+static void handleInheritanceAttr(Sema &S, Decl *D, const AttributeList &Attr) {
+  if (S.LangOpts.MicrosoftExt) {
+    AttributeList::Kind Kind = Attr.getKind();
+    if (Kind == AttributeList::AT_single_inheritance)
+      D->addAttr(
+          ::new (S.Context) SingleInheritanceAttr(Attr.getRange(), S.Context));
+    else if (Kind == AttributeList::AT_multiple_inheritance)
+      D->addAttr(
+          ::new (S.Context) MultipleInheritanceAttr(Attr.getRange(), S.Context));
+    else if (Kind == AttributeList::AT_virtual_inheritance)
+      D->addAttr(
+          ::new (S.Context) VirtualInheritanceAttr(Attr.getRange(), S.Context));
+  } else
+    S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << Attr.getName();
+}
+
+static void handlePortabilityAttr(Sema &S, Decl *D, const AttributeList &Attr) {
+  if (S.LangOpts.MicrosoftExt) {
+    AttributeList::Kind Kind = Attr.getKind();
+    if (Kind == AttributeList::AT_ptr32)
+      D->addAttr(
+          ::new (S.Context) Ptr32Attr(Attr.getRange(), S.Context));
+    else if (Kind == AttributeList::AT_ptr64)
+      D->addAttr(
+          ::new (S.Context) Ptr64Attr(Attr.getRange(), S.Context));
+    else if (Kind == AttributeList::AT_w64)
+      D->addAttr(
+          ::new (S.Context) Win64Attr(Attr.getRange(), S.Context));
+  } else
+    S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << Attr.getName();
+}
+
 //===----------------------------------------------------------------------===//
 // Top Level Sema Entry Points
 //===----------------------------------------------------------------------===//
@@ -3889,7 +3921,6 @@ static void ProcessInheritableDeclAttr(Sema &S, Scope *scope, Decl *D,
       handleInitPriorityAttr(S, D, Attr); break;
       
   case AttributeList::AT_packed:      handlePackedAttr      (S, D, Attr); break;
-  case AttributeList::AT_ms_struct:    handleMsStructAttr    (S, D, Attr); break;
   case AttributeList::AT_section:     handleSectionAttr     (S, D, Attr); break;
   case AttributeList::AT_unavailable:
     handleAttrWithMessage<UnavailableAttr>(S, D, Attr, "unavailable");
@@ -3949,8 +3980,23 @@ static void ProcessInheritableDeclAttr(Sema &S, Scope *scope, Decl *D,
   case AttributeList::AT_opencl_kernel_function:
     handleOpenCLKernelAttr(S, D, Attr);
     break;
+
+  // Microsoft attributes:
+  case AttributeList::AT_ms_struct:
+    handleMsStructAttr(S, D, Attr);
+    break;
   case AttributeList::AT_uuid:
     handleUuidAttr(S, D, Attr);
+    break;
+  case AttributeList::AT_single_inheritance:
+  case AttributeList::AT_multiple_inheritance:
+  case AttributeList::AT_virtual_inheritance:
+    handleInheritanceAttr(S, D, Attr);
+    break;
+  case AttributeList::AT_w64:
+  case AttributeList::AT_ptr32:
+  case AttributeList::AT_ptr64:
+    handlePortabilityAttr(S, D, Attr);
     break;
 
   // Thread safety attributes:

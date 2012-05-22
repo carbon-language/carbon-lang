@@ -343,10 +343,6 @@ void Parser::ParseMicrosoftTypeAttributes(ParsedAttributes &attrs) {
          Tok.is(tok::kw___unaligned)) {
     IdentifierInfo *AttrName = Tok.getIdentifierInfo();
     SourceLocation AttrNameLoc = ConsumeToken();
-    if (Tok.is(tok::kw___ptr64) || Tok.is(tok::kw___w64) ||
-        Tok.is(tok::kw___ptr32))
-      // FIXME: Support these properly!
-      continue;
     attrs.addNew(AttrName, AttrNameLoc, 0, AttrNameLoc, 0,
                  SourceLocation(), 0, 0, true);
   }

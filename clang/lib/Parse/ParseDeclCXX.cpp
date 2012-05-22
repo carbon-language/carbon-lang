@@ -900,6 +900,17 @@ Parser::TypeResult Parser::ParseBaseTypeSpecifier(SourceLocation &BaseLoc,
   return Actions.ActOnTypeName(getCurScope(), DeclaratorInfo);
 }
 
+void Parser::ParseMicrosoftInheritanceClassAttributes(ParsedAttributes &attrs) {
+  while (Tok.is(tok::kw___single_inheritance) ||
+         Tok.is(tok::kw___multiple_inheritance) ||
+         Tok.is(tok::kw___virtual_inheritance)) {
+    IdentifierInfo *AttrName = Tok.getIdentifierInfo();
+    SourceLocation AttrNameLoc = ConsumeToken();
+    attrs.addNew(AttrName, AttrNameLoc, 0, AttrNameLoc, 0,
+                 SourceLocation(), 0, 0, false);
+  }
+}
+
 /// ParseClassSpecifier - Parse a C++ class-specifier [C++ class] or
 /// elaborated-type-specifier [C++ dcl.type.elab]; we can't tell which
 /// until we reach the start of a definition or see a token that
@@ -984,6 +995,12 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
   // If declspecs exist after tag, parse them.
   while (Tok.is(tok::kw___declspec))
     ParseMicrosoftDeclSpec(attrs);
+
+  // Parse inheritance specifiers.
+  if (Tok.is(tok::kw___single_inheritance) ||
+      Tok.is(tok::kw___multiple_inheritance) ||
+      Tok.is(tok::kw___virtual_inheritance))
+      ParseMicrosoftInheritanceClassAttributes(attrs);
 
   // If C++0x attributes exist here, parse them.
   // FIXME: Are we consistent with the ordering of parsing of different
