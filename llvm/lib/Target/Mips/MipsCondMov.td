@@ -101,7 +101,7 @@ multiclass MovnPats<RegisterClass CRC, RegisterClass DRC, Instruction MOVNInst,
 
 // Instantiation of instructions.
 def MOVZ_I_I     : CondMovIntInt<CPURegs, CPURegs, 0x0a, "movz">;
-let Predicates = [HasMips64],DecoderNamespace = "Mips64" in {
+let Predicates = [HasMips64, HasStandardEncoding],DecoderNamespace = "Mips64" in {
   def MOVZ_I_I64   : CondMovIntInt<CPURegs, CPU64Regs, 0x0a, "movz">;
   def MOVZ_I64_I   : CondMovIntInt<CPU64Regs, CPURegs, 0x0a, "movz"> {
     let isCodeGenOnly = 1;
@@ -112,7 +112,8 @@ let Predicates = [HasMips64],DecoderNamespace = "Mips64" in {
 }
 
 def MOVN_I_I     : CondMovIntInt<CPURegs, CPURegs, 0x0b, "movn">;
-let Predicates = [HasMips64],DecoderNamespace = "Mips64" in {
+let Predicates = [HasMips64, HasStandardEncoding],
+                  DecoderNamespace = "Mips64" in {
   def MOVN_I_I64   : CondMovIntInt<CPURegs, CPU64Regs, 0x0b, "movn">;
   def MOVN_I64_I   : CondMovIntInt<CPU64Regs, CPURegs, 0x0b, "movn"> {
     let isCodeGenOnly = 1;
@@ -124,21 +125,21 @@ let Predicates = [HasMips64],DecoderNamespace = "Mips64" in {
 
 def MOVZ_I_S   : CondMovIntFP<CPURegs, FGR32, 16, 18, "movz.s">;
 def MOVZ_I64_S : CondMovIntFP<CPU64Regs, FGR32, 16, 18, "movz.s">,
-                 Requires<[HasMips64]> {
+                 Requires<[HasMips64, HasStandardEncoding]> {
   let DecoderNamespace = "Mips64";
 }
 
 def MOVN_I_S   : CondMovIntFP<CPURegs, FGR32, 16, 19, "movn.s">;
 def MOVN_I64_S : CondMovIntFP<CPU64Regs, FGR32, 16, 19, "movn.s">,
-                 Requires<[HasMips64]> {
+                 Requires<[HasMips64, HasStandardEncoding]> {
   let DecoderNamespace = "Mips64";
 }
 
-let Predicates = [NotFP64bit] in {
+let Predicates = [NotFP64bit, HasStandardEncoding] in {
   def MOVZ_I_D32   : CondMovIntFP<CPURegs, AFGR64, 17, 18, "movz.d">;
   def MOVN_I_D32   : CondMovIntFP<CPURegs, AFGR64, 17, 19, "movn.d">;
 }
-let Predicates = [IsFP64bit],DecoderNamespace = "Mips64" in {
+let Predicates = [IsFP64bit, HasStandardEncoding],DecoderNamespace = "Mips64" in {
   def MOVZ_I_D64   : CondMovIntFP<CPURegs, FGR64, 17, 18, "movz.d">;
   def MOVZ_I64_D64 : CondMovIntFP<CPU64Regs, FGR64, 17, 18, "movz.d"> {
     let isCodeGenOnly = 1;
@@ -151,24 +152,25 @@ let Predicates = [IsFP64bit],DecoderNamespace = "Mips64" in {
 
 def MOVT_I   : CondMovFPInt<CPURegs, MipsCMovFP_T, 1, "movt">;
 def MOVT_I64 : CondMovFPInt<CPU64Regs, MipsCMovFP_T, 1, "movt">,
-               Requires<[HasMips64]> {
+               Requires<[HasMips64, HasStandardEncoding]> {
   let DecoderNamespace = "Mips64";
 }
 
 def MOVF_I   : CondMovFPInt<CPURegs, MipsCMovFP_F, 0, "movf">;
 def MOVF_I64 : CondMovFPInt<CPU64Regs, MipsCMovFP_F, 0, "movf">,
-               Requires<[HasMips64]> {
+               Requires<[HasMips64, HasStandardEncoding]> {
   let DecoderNamespace = "Mips64";
 }
 
 def MOVT_S : CondMovFPFP<FGR32, MipsCMovFP_T, 16, 1, "movt.s">;
 def MOVF_S : CondMovFPFP<FGR32, MipsCMovFP_F, 16, 0, "movf.s">;
 
-let Predicates = [NotFP64bit] in {
+let Predicates = [NotFP64bit, HasStandardEncoding] in {
   def MOVT_D32 : CondMovFPFP<AFGR64, MipsCMovFP_T, 17, 1, "movt.d">;
   def MOVF_D32 : CondMovFPFP<AFGR64, MipsCMovFP_F, 17, 0, "movf.d">;
 }
-let Predicates = [IsFP64bit], DecoderNamespace = "Mips64" in {
+let Predicates = [IsFP64bit, HasStandardEncoding],
+    DecoderNamespace = "Mips64" in {
   def MOVT_D64 : CondMovFPFP<FGR64, MipsCMovFP_T, 17, 1, "movt.d">;
   def MOVF_D64 : CondMovFPFP<FGR64, MipsCMovFP_F, 17, 0, "movf.d">;
 }
@@ -177,7 +179,7 @@ let Predicates = [IsFP64bit], DecoderNamespace = "Mips64" in {
 defm : MovzPats0<CPURegs, CPURegs, MOVZ_I_I, SLT, SLTu, SLTi, SLTiu>;
 defm : MovzPats1<CPURegs, CPURegs, MOVZ_I_I, XOR>;
 defm : MovzPats2<CPURegs, CPURegs, MOVZ_I_I, XORi>;
-let Predicates = [HasMips64] in {
+let Predicates = [HasMips64, HasStandardEncoding] in {
   defm : MovzPats0<CPURegs, CPU64Regs, MOVZ_I_I64, SLT, SLTu, SLTi, SLTiu>;
   defm : MovzPats0<CPU64Regs, CPURegs, MOVZ_I_I, SLT64, SLTu64, SLTi64,
                    SLTiu64>;
@@ -192,7 +194,7 @@ let Predicates = [HasMips64] in {
 }
 
 defm : MovnPats<CPURegs, CPURegs, MOVN_I_I, XOR>;
-let Predicates = [HasMips64] in {
+let Predicates = [HasMips64, HasStandardEncoding] in {
   defm : MovnPats<CPURegs, CPU64Regs, MOVN_I_I64, XOR>;
   defm : MovnPats<CPU64Regs, CPURegs, MOVN_I64_I, XOR64>;
   defm : MovnPats<CPU64Regs, CPU64Regs, MOVN_I64_I64, XOR64>;
@@ -201,19 +203,19 @@ let Predicates = [HasMips64] in {
 defm : MovzPats0<CPURegs, FGR32, MOVZ_I_S, SLT, SLTu, SLTi, SLTiu>;
 defm : MovzPats1<CPURegs, FGR32, MOVZ_I_S, XOR>;
 defm : MovnPats<CPURegs, FGR32, MOVN_I_S, XOR>;
-let Predicates = [HasMips64] in {
+let Predicates = [HasMips64, HasStandardEncoding] in {
   defm : MovzPats0<CPU64Regs, FGR32, MOVZ_I_S, SLT64, SLTu64, SLTi64,
                    SLTiu64>;
   defm : MovzPats1<CPU64Regs, FGR32, MOVZ_I64_S, XOR64>;
   defm : MovnPats<CPU64Regs, FGR32, MOVN_I64_S, XOR64>;
 }
 
-let Predicates = [NotFP64bit] in {
+let Predicates = [NotFP64bit, HasStandardEncoding] in {
   defm : MovzPats0<CPURegs, AFGR64, MOVZ_I_D32, SLT, SLTu, SLTi, SLTiu>;
   defm : MovzPats1<CPURegs, AFGR64, MOVZ_I_D32, XOR>;
   defm : MovnPats<CPURegs, AFGR64, MOVN_I_D32, XOR>;
 }
-let Predicates = [IsFP64bit] in {
+let Predicates = [IsFP64bit, HasStandardEncoding] in {
   defm : MovzPats0<CPURegs, FGR64, MOVZ_I_D64, SLT, SLTu, SLTi, SLTiu>;
   defm : MovzPats0<CPU64Regs, FGR64, MOVZ_I_D64, SLT64, SLTu64, SLTi64,
                    SLTiu64>;

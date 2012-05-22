@@ -130,6 +130,8 @@ public:
   bool inMips16Mode() const { return InMips16Mode; }
   bool isLinux() const { return IsLinux; }
 
+  bool hasStandardEncoding() const { return !inMips16Mode(); }
+
   /// Features related to the presence of specific instructions.
   bool hasSEInReg()   const { return HasSEInReg; }
   bool hasCondMov()   const { return HasCondMov; }

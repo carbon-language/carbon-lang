@@ -11,11 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-//===----------------------------------------------------------------------===//
-// Instruction format superclass
-//===----------------------------------------------------------------------===//
-
-include "MipsInstrFormats.td"
 
 //===----------------------------------------------------------------------===//
 // Mips profiles and nodes
@@ -151,6 +146,15 @@ def RelocPIC    :     Predicate<"TM.getRelocationModel() == Reloc::PIC_">,
                       AssemblerPredicate<"FeatureMips32">;
 def NoNaNsFPMath :    Predicate<"TM.Options.NoNaNsFPMath">,
                       AssemblerPredicate<"FeatureMips32">;
+def HasStandardEncoding:
+               Predicate<"Subtarget.hasStandardEncoding()">,
+               AssemblerPredicate<"FeatureMips32,FeatureMips32r2,FeatureMips64"> ;
+
+//===----------------------------------------------------------------------===//
+// Instruction format superclass
+//===----------------------------------------------------------------------===//
+
+include "MipsInstrFormats.td"
 
 //===----------------------------------------------------------------------===//
 // Mips Operand, Complex Patterns and Transformations Definitions.
@@ -430,9 +434,9 @@ class StoreUnAlign<bits<6> op, RegisterClass RC, Operand MemOpnd>:
 multiclass LoadM32<bits<6> op, string instr_asm, PatFrag OpNode,
                    bit Pseudo = 0> {
   def #NAME# : LoadM<op, instr_asm, OpNode, CPURegs, mem, Pseudo>,
-               Requires<[NotN64]>;
+               Requires<[NotN64, HasStandardEncoding]>;
   def _P8    : LoadM<op, instr_asm, OpNode, CPURegs, mem64, Pseudo>,
-               Requires<[IsN64]> {
+               Requires<[IsN64, HasStandardEncoding]> {
     let DecoderNamespace = "Mips64";
     let isCodeGenOnly = 1;
   }
@@ -442,9 +446,9 @@ multiclass LoadM32<bits<6> op, string instr_asm, PatFrag OpNode,
 multiclass LoadM64<bits<6> op, string instr_asm, PatFrag OpNode,
                    bit Pseudo = 0> {
   def #NAME# : LoadM<op, instr_asm, OpNode, CPU64Regs, mem, Pseudo>,
-               Requires<[NotN64]>;
+               Requires<[NotN64, HasStandardEncoding]>;
   def _P8    : LoadM<op, instr_asm, OpNode, CPU64Regs, mem64, Pseudo>,
-               Requires<[IsN64]> {
+               Requires<[IsN64, HasStandardEncoding]> {
     let DecoderNamespace = "Mips64";
     let isCodeGenOnly = 1;
   }
@@ -453,9 +457,9 @@ multiclass LoadM64<bits<6> op, string instr_asm, PatFrag OpNode,
 // 32-bit load.
 multiclass LoadUnAlign32<bits<6> op> {
   def #NAME# : LoadUnAlign<op, CPURegs, mem>,
-               Requires<[NotN64]>;
+               Requires<[NotN64, HasStandardEncoding]>;
   def _P8    : LoadUnAlign<op, CPURegs, mem64>,
-               Requires<[IsN64]> {
+               Requires<[IsN64, HasStandardEncoding]> {
     let DecoderNamespace = "Mips64";
     let isCodeGenOnly = 1;
   }
@@ -464,9 +468,9 @@ multiclass LoadUnAlign32<bits<6> op> {
 multiclass StoreM32<bits<6> op, string instr_asm, PatFrag OpNode,
                     bit Pseudo = 0> {
   def #NAME# : StoreM<op, instr_asm, OpNode, CPURegs, mem, Pseudo>,
-               Requires<[NotN64]>;
+               Requires<[NotN64, HasStandardEncoding]>;
   def _P8    : StoreM<op, instr_asm, OpNode, CPURegs, mem64, Pseudo>,
-               Requires<[IsN64]> {
+               Requires<[IsN64, HasStandardEncoding]> {
     let DecoderNamespace = "Mips64";
     let isCodeGenOnly = 1;
   }
@@ -476,9 +480,9 @@ multiclass StoreM32<bits<6> op, string instr_asm, PatFrag OpNode,
 multiclass StoreM64<bits<6> op, string instr_asm, PatFrag OpNode,
                     bit Pseudo = 0> {
   def #NAME# : StoreM<op, instr_asm, OpNode, CPU64Regs, mem, Pseudo>,
-               Requires<[NotN64]>;
+               Requires<[NotN64, HasStandardEncoding]>;
   def _P8    : StoreM<op, instr_asm, OpNode, CPU64Regs, mem64, Pseudo>,
-               Requires<[IsN64]> {
+               Requires<[IsN64, HasStandardEncoding]> {
     let DecoderNamespace = "Mips64";
     let isCodeGenOnly = 1;
   }
@@ -487,9 +491,9 @@ multiclass StoreM64<bits<6> op, string instr_asm, PatFrag OpNode,
 // 32-bit store.
 multiclass StoreUnAlign32<bits<6> op> {
   def #NAME# : StoreUnAlign<op, CPURegs, mem>,
-               Requires<[NotN64]>;
+               Requires<[NotN64, HasStandardEncoding]>;
   def _P8    : StoreUnAlign<op, CPURegs, mem64>,
-               Requires<[IsN64]> {
+               Requires<[IsN64, HasStandardEncoding]> {
     let DecoderNamespace = "Mips64";
     let isCodeGenOnly = 1;
   }
@@ -541,7 +545,7 @@ class JumpFJ<bits<6> op, string instr_asm>:
   let isTerminator=1;
   let isBarrier=1;
   let hasDelaySlot = 1;
-  let Predicates = [RelocStatic];
+  let Predicates = [RelocStatic, HasStandardEncoding];
   let DecoderMethod = "DecodeJumpTarget";
 }
 
@@ -555,7 +559,7 @@ class UncondBranch<bits<6> op, string instr_asm>:
   let isTerminator = 1;
   let isBarrier = 1;
   let hasDelaySlot = 1;
-  let Predicates = [RelocPIC];
+  let Predicates = [RelocPIC, HasStandardEncoding];
 }
 
 let isBranch=1, isTerminator=1, isBarrier=1, rd=0, hasDelaySlot = 1,
@@ -653,7 +657,7 @@ class CountLeading0<bits<6> func, string instr_asm, RegisterClass RC>:
   FR<0x1c, func, (outs RC:$rd), (ins RC:$rs),
      !strconcat(instr_asm, "\t$rd, $rs"),
      [(set RC:$rd, (ctlz RC:$rs))], IIAlu>,
-     Requires<[HasBitCount]> {
+     Requires<[HasBitCount, HasStandardEncoding]> {
   let shamt = 0;
   let rt = rd;
 }
@@ -662,7 +666,7 @@ class CountLeading1<bits<6> func, string instr_asm, RegisterClass RC>:
   FR<0x1c, func, (outs RC:$rd), (ins RC:$rs),
      !strconcat(instr_asm, "\t$rd, $rs"),
      [(set RC:$rd, (ctlz (not RC:$rs)))], IIAlu>,
-     Requires<[HasBitCount]> {
+     Requires<[HasBitCount, HasStandardEncoding]> {
   let shamt = 0;
   let rt = rd;
 }
@@ -675,7 +679,7 @@ class SignExtInReg<bits<5> sa, string instr_asm, ValueType vt,
      [(set RC:$rd, (sext_inreg RC:$rt, vt))], NoItinerary> {
   let rs = 0;
   let shamt = sa;
-  let Predicates = [HasSEInReg];
+  let Predicates = [HasSEInReg, HasStandardEncoding];
 }
 
 // Subword Swap
@@ -684,7 +688,7 @@ class SubwordSwap<bits<6> func, bits<5> sa, string instr_asm, RegisterClass RC>:
      !strconcat(instr_asm, "\t$rd, $rt"), [], NoItinerary> {
   let rs = 0;
   let shamt = sa;
-  let Predicates = [HasSwap];
+  let Predicates = [HasSwap, HasStandardEncoding];
   let neverHasSideEffects = 1;
 }
 
@@ -705,7 +709,7 @@ class ExtBase<bits<6> _funct, string instr_asm, RegisterClass RC>:
   bits<5> sz;
   let rd = sz;
   let shamt = pos;
-  let Predicates = [HasMips32r2];
+  let Predicates = [HasMips32r2, HasStandardEncoding];
 }
 
 class InsBase<bits<6> _funct, string instr_asm, RegisterClass RC>:
@@ -718,7 +722,7 @@ class InsBase<bits<6> _funct, string instr_asm, RegisterClass RC>:
   bits<5> sz;
   let rd = sz;
   let shamt = pos;
-  let Predicates = [HasMips32r2];
+  let Predicates = [HasMips32r2, HasStandardEncoding];
   let Constraints = "$src = $rt";
 }
 
@@ -730,8 +734,10 @@ class Atomic2Ops<PatFrag Op, string Opstr, RegisterClass DRC,
              [(set DRC:$dst, (Op PRC:$ptr, DRC:$incr))]>;
 
 multiclass Atomic2Ops32<PatFrag Op, string Opstr> {
-  def #NAME# : Atomic2Ops<Op, Opstr, CPURegs, CPURegs>, Requires<[NotN64]>;
-  def _P8    : Atomic2Ops<Op, Opstr, CPURegs, CPU64Regs>, Requires<[IsN64]> {
+  def #NAME# : Atomic2Ops<Op, Opstr, CPURegs, CPURegs>,
+                          Requires<[NotN64, HasStandardEncoding]>;
+  def _P8    : Atomic2Ops<Op, Opstr, CPURegs, CPU64Regs>,
+                          Requires<[IsN64, HasStandardEncoding]> {
     let DecoderNamespace = "Mips64";
   }
 }
@@ -744,8 +750,10 @@ class AtomicCmpSwap<PatFrag Op, string Width, RegisterClass DRC,
              [(set DRC:$dst, (Op PRC:$ptr, DRC:$cmp, DRC:$swap))]>;
 
 multiclass AtomicCmpSwap32<PatFrag Op, string Width>  {
-  def #NAME# : AtomicCmpSwap<Op, Width, CPURegs, CPURegs>, Requires<[NotN64]>;
-  def _P8    : AtomicCmpSwap<Op, Width, CPURegs, CPU64Regs>, Requires<[IsN64]> {
+  def #NAME# : AtomicCmpSwap<Op, Width, CPURegs, CPURegs>,
+                             Requires<[NotN64, HasStandardEncoding]>;
+  def _P8    : AtomicCmpSwap<Op, Width, CPURegs, CPU64Regs>,
+                             Requires<[IsN64, HasStandardEncoding]> {
     let DecoderNamespace = "Mips64";
   }
 }
@@ -876,7 +884,7 @@ def SRLV    : shift_rotate_reg<0x06, 0x00, "srlv", srl, CPURegs>;
 def SRAV    : shift_rotate_reg<0x07, 0x00, "srav", sra, CPURegs>;
 
 // Rotate Instructions
-let Predicates = [HasMips32r2] in {
+let Predicates = [HasMips32r2, HasStandardEncoding] in {
     def ROTR    : shift_rotate_imm32<0x02, 0x01, "rotr", rotr>;
     def ROTRV   : shift_rotate_reg<0x06, 0x01, "rotrv", rotr, CPURegs>;
 }
@@ -917,13 +925,17 @@ def SYNC : MipsInst<(outs), (ins i32imm:$stype), "sync $stype",
 }
 
 /// Load-linked, Store-conditional
-def LL    : LLBase<0x30, "ll", CPURegs, mem>, Requires<[NotN64]>;
-def LL_P8 : LLBase<0x30, "ll", CPURegs, mem64>, Requires<[IsN64]> {
+def LL    : LLBase<0x30, "ll", CPURegs, mem>,
+            Requires<[NotN64, HasStandardEncoding]>;
+def LL_P8 : LLBase<0x30, "ll", CPURegs, mem64>,
+            Requires<[IsN64, HasStandardEncoding]> {
   let DecoderNamespace = "Mips64";
 }
 
-def SC    : SCBase<0x38, "sc", CPURegs, mem>, Requires<[NotN64]>;
-def SC_P8 : SCBase<0x38, "sc", CPURegs, mem64>, Requires<[IsN64]> {
+def SC    : SCBase<0x38, "sc", CPURegs, mem>,
+            Requires<[NotN64, HasStandardEncoding]>;
+def SC_P8 : SCBase<0x38, "sc", CPURegs, mem64>,
+            Requires<[IsN64, HasStandardEncoding]> {
   let DecoderNamespace = "Mips64";
 }
 
@@ -999,7 +1011,7 @@ def MSUBU : MArithR<5, "msubu", MipsMSubu>;
 // MUL is a assembly macro in the current used ISAs. In recent ISA's
 // it is a real instruction.
 def MUL   : ArithLogicR<0x1c, 0x02, "mul", mul, IIImul, CPURegs, 1>,
-            Requires<[HasMips32]>;
+            Requires<[HasMips32, HasStandardEncoding]>;
 
 def RDHWR : ReadHardware<CPURegs, HWRegs>;
 
@@ -1085,13 +1097,13 @@ def : Pat<(not CPURegs:$in),
           (NOR CPURegs:$in, ZERO)>;
 
 // extended loads
-let Predicates = [NotN64] in {
+let Predicates = [NotN64, HasStandardEncoding] in {
   def : Pat<(i32 (extloadi1  addr:$src)), (LBu addr:$src)>;
   def : Pat<(i32 (extloadi8  addr:$src)), (LBu addr:$src)>;
   def : Pat<(i32 (extloadi16_a addr:$src)), (LHu addr:$src)>;
   def : Pat<(i32 (extloadi16_u addr:$src)), (ULHu addr:$src)>;
 }
-let Predicates = [IsN64] in {
+let Predicates = [IsN64, HasStandardEncoding] in {
   def : Pat<(i32 (extloadi1  addr:$src)), (LBu_P8 addr:$src)>;
   def : Pat<(i32 (extloadi8  addr:$src)), (LBu_P8 addr:$src)>;
   def : Pat<(i32 (extloadi16_a addr:$src)), (LHu_P8 addr:$src)>;
@@ -1099,11 +1111,11 @@ let Predicates = [IsN64] in {
 }
 
 // peepholes
-let Predicates = [NotN64] in {
+let Predicates = [NotN64, HasStandardEncoding] in {
   def : Pat<(store_a (i32 0), addr:$dst), (SW ZERO, addr:$dst)>;
   def : Pat<(store_u (i32 0), addr:$dst), (USW ZERO, addr:$dst)>;
 }
-let Predicates = [IsN64] in {
+let Predicates = [IsN64, HasStandardEncoding] in {
   def : Pat<(store_a (i32 0), addr:$dst), (SW_P8 ZERO, addr:$dst)>;
   def : Pat<(store_u (i32 0), addr:$dst), (USW_P8 ZERO, addr:$dst)>;
 }

@@ -70,6 +70,9 @@ class MipsInst<dag outs, dag ins, string asmstr, list<dag> pattern,
   let DecoderNamespace = "Mips";
 
   field bits<32> SoftFail = 0;
+
+  let Predicates = [HasStandardEncoding];
+
 }
 
 // Mips Pseudo Instructions Format

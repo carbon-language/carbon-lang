@@ -49,21 +49,24 @@ class Div64<SDNode op, bits<6> func, string instr_asm, InstrItinClass itin>:
   Div<op, func, instr_asm, itin, CPU64Regs, [HI64, LO64]>;
 
 multiclass Atomic2Ops64<PatFrag Op, string Opstr> {
-  def #NAME# : Atomic2Ops<Op, Opstr, CPU64Regs, CPURegs>, Requires<[NotN64]>;
-  def _P8    : Atomic2Ops<Op, Opstr, CPU64Regs, CPU64Regs>, Requires<[IsN64]> {
+  def #NAME# : Atomic2Ops<Op, Opstr, CPU64Regs, CPURegs>,
+               Requires<[NotN64, HasStandardEncoding]>;
+  def _P8    : Atomic2Ops<Op, Opstr, CPU64Regs, CPU64Regs>,
+               Requires<[IsN64, HasStandardEncoding]> {
     let isCodeGenOnly = 1;
   }
 }
 
 multiclass AtomicCmpSwap64<PatFrag Op, string Width>  {
-  def #NAME# : AtomicCmpSwap<Op, Width, CPU64Regs, CPURegs>, Requires<[NotN64]>;
+  def #NAME# : AtomicCmpSwap<Op, Width, CPU64Regs, CPURegs>,
+               Requires<[NotN64, HasStandardEncoding]>;
   def _P8    : AtomicCmpSwap<Op, Width, CPU64Regs, CPU64Regs>,
-               Requires<[IsN64]> {
+               Requires<[IsN64, HasStandardEncoding]> {
     let isCodeGenOnly = 1;
   }
 }
 }
-let usesCustomInserter = 1, Predicates = [HasMips64],
+let usesCustomInserter = 1, Predicates = [HasMips64, HasStandardEncoding],
   DecoderNamespace = "Mips64" in {
   defm ATOMIC_LOAD_ADD_I64  : Atomic2Ops64<atomic_load_add_64, "load_add_64">;
   defm ATOMIC_LOAD_SUB_I64  : Atomic2Ops64<atomic_load_sub_64, "load_sub_64">;
@@ -108,7 +111,8 @@ def DSRLV    : shift_rotate_reg<0x16, 0x00, "dsrlv", srl, CPU64Regs>;
 def DSRAV    : shift_rotate_reg<0x17, 0x00, "dsrav", sra, CPU64Regs>;
 }
 // Rotate Instructions
-let Predicates = [HasMips64r2], DecoderNamespace = "Mips64" in {
+let Predicates = [HasMips64r2, HasStandardEncoding],
+    DecoderNamespace = "Mips64" in {
   def DROTR    : shift_rotate_imm64<0x3a, 0x01, "drotr", rotr>;
   def DROTRV   : shift_rotate_reg<0x16, 0x01, "drotrv", rotr, CPU64Regs>;
 }
@@ -138,12 +142,16 @@ defm ULD       : LoadM64<0x37, "uld",  load_u, 1>;
 defm USD       : StoreM64<0x3f, "usd", store_u, 1>;
 
 /// Load-linked, Store-conditional
-def LLD    : LLBase<0x34, "lld", CPU64Regs, mem>, Requires<[NotN64]>;
-def LLD_P8 : LLBase<0x34, "lld", CPU64Regs, mem64>, Requires<[IsN64]> {
+def LLD    : LLBase<0x34, "lld", CPU64Regs, mem>,
+             Requires<[NotN64, HasStandardEncoding]>;
+def LLD_P8 : LLBase<0x34, "lld", CPU64Regs, mem64>,
+             Requires<[IsN64, HasStandardEncoding]> {
   let isCodeGenOnly = 1;
 }
-def SCD    : SCBase<0x3c, "scd", CPU64Regs, mem>, Requires<[NotN64]>;
-def SCD_P8 : SCBase<0x3c, "scd", CPU64Regs, mem64>, Requires<[IsN64]> {
+def SCD    : SCBase<0x3c, "scd", CPU64Regs, mem>,
+             Requires<[NotN64, HasStandardEncoding]>;
+def SCD_P8 : SCBase<0x3c, "scd", CPU64Regs, mem64>,
+             Requires<[IsN64, HasStandardEncoding]> {
   let isCodeGenOnly = 1;
 }
 
@@ -187,7 +195,7 @@ def LEA_ADDiu64 : EffectiveAddress<"daddiu\t$rt, $addr", CPU64Regs, mem_ea_64>;
 }
 let Uses = [SP_64], DecoderNamespace = "Mips64" in
 def DynAlloc64 : EffectiveAddress<"daddiu\t$rt, $addr", CPU64Regs, mem_ea_64>,
-                 Requires<[IsN64]> {
+                 Requires<[IsN64, HasStandardEncoding]> {
   let isCodeGenOnly = 1;
 }
 let DecoderNamespace = "Mips64" in {
@@ -209,7 +217,7 @@ def SLL64_64 : FR<0x0, 0x00, (outs CPU64Regs:$rd), (ins CPU64Regs:$rt),
 //===----------------------------------------------------------------------===//
 
 // extended loads
-let Predicates = [NotN64] in {
+let Predicates = [NotN64, HasStandardEncoding] in {
   def : Pat<(i64 (extloadi1  addr:$src)), (LB64 addr:$src)>;
   def : Pat<(i64 (extloadi8  addr:$src)), (LB64 addr:$src)>;
   def : Pat<(i64 (extloadi16_a addr:$src)), (LH64 addr:$src)>;
@@ -218,7 +226,7 @@ let Predicates = [NotN64] in {
   def : Pat<(i64 (extloadi32_u addr:$src)), (ULW64 addr:$src)>;
   def : Pat<(zextloadi32_u addr:$a), (DSRL (DSLL (ULW64 addr:$a), 32), 32)>;
 }
-let Predicates = [IsN64] in {
+let Predicates = [IsN64, HasStandardEncoding] in {
   def : Pat<(i64 (extloadi1  addr:$src)), (LB64_P8 addr:$src)>;
   def : Pat<(i64 (extloadi8  addr:$src)), (LB64_P8 addr:$src)>;
   def : Pat<(i64 (extloadi16_a addr:$src)), (LH64_P8 addr:$src)>;
@@ -270,11 +278,13 @@ defm : SetgePats<CPU64Regs, SLT64, SLTu64>;
 defm : SetgeImmPats<CPU64Regs, SLTi64, SLTiu64>;
 
 // select MipsDynAlloc
-def : Pat<(MipsDynAlloc addr:$f), (DynAlloc64 addr:$f)>, Requires<[IsN64]>;
+def : Pat<(MipsDynAlloc addr:$f), (DynAlloc64 addr:$f)>,
+          Requires<[IsN64, HasStandardEncoding]>;
 
 // truncate
 def : Pat<(i32 (trunc CPU64Regs:$src)),
-          (SLL (EXTRACT_SUBREG CPU64Regs:$src, sub_32), 0)>, Requires<[IsN64]>;
+          (SLL (EXTRACT_SUBREG CPU64Regs:$src, sub_32), 0)>,
+          Requires<[IsN64, HasStandardEncoding]>;
 
 // 32-to-64-bit extension
 def : Pat<(i64 (anyext CPURegs:$src)), (SLL64_32 CPURegs:$src)>;
