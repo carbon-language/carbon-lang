@@ -92,7 +92,7 @@ public:
             uint32_t data_offset) = 0;
             
     virtual void
-    SetDescription (const char *) {};  // May be overridden in sub-classes that have descriptions.
+    SetDescription (const char *) {}  // May be overridden in sub-classes that have descriptions.
     
     lldb::OptionValueSP
     ReadArray (FILE *in_file, Stream *out_stream, OptionValue::Type data_type);

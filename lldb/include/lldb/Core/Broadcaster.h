@@ -86,9 +86,9 @@ class BroadcasterManager
 {
 public:
     BroadcasterManager ();
-    
-    ~BroadcasterManager () {};
-    
+
+    ~BroadcasterManager () {}
+
     uint32_t
     RegisterListenerForEvents (Listener &listener, BroadcastEventSpec event_spec);
     

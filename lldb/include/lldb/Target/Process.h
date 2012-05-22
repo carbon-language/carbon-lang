@@ -3239,7 +3239,7 @@ protected:
         }
         
         virtual EventActionResult PerformAction (lldb::EventSP &event_sp) = 0;
-        virtual void HandleBeingUnshipped () {};
+        virtual void HandleBeingUnshipped () {}
         virtual EventActionResult HandleBeingInterrupted () = 0;
         virtual const char *GetExitString() = 0;
     protected:

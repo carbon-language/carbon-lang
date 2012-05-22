@@ -281,7 +281,7 @@ class SearchFilterForNonModuleSpecificSearches :
     public SearchFilter
 {
 public:
-    SearchFilterForNonModuleSpecificSearches (const lldb::TargetSP &targetSP) : SearchFilter(targetSP) {};
+    SearchFilterForNonModuleSpecificSearches (const lldb::TargetSP &targetSP) : SearchFilter(targetSP) {}
     ~SearchFilterForNonModuleSpecificSearches () {}
     
     virtual bool 

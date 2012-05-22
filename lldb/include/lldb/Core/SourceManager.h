@@ -88,8 +88,8 @@ public:
     class SourceFileCache
     {
     public:
-        SourceFileCache () {};
-        ~SourceFileCache() {};
+        SourceFileCache () {}
+        ~SourceFileCache() {}
         
         void AddSourceFile (const FileSP &file_sp);
         FileSP FindSourceFile (const FileSpec &file_spec) const;

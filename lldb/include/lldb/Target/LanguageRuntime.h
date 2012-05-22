@@ -99,7 +99,7 @@ protected:
                                 bool catch_bp,
                                 bool throw_bp);
 
-        virtual ~ExceptionBreakpointResolver() {};
+        virtual ~ExceptionBreakpointResolver() {}
 
         virtual Searcher::CallbackReturn
         SearchCallback (SearchFilter &filter,
@@ -114,7 +114,7 @@ protected:
         GetDescription (Stream *s);
         
         virtual void
-        Dump (Stream *s) const {};
+        Dump (Stream *s) const {}
 
         /// Methods for support type inquiry through isa, cast, and dyn_cast:
         static inline bool classof(const BreakpointResolverName *) { return true; }
