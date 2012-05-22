@@ -1610,8 +1610,8 @@ public:
     return cast<CXXMethodDecl>(FunctionDecl::getCanonicalDecl());
   }
 
-  /// isUserProvided - True if it is either an implicit constructor or
-  /// if it was defaulted or deleted on first declaration.
+  /// isUserProvided - True if this method is user-declared and was not
+  /// deleted or defaulted on its first declaration.
   bool isUserProvided() const {
     return !(isDeleted() || getCanonicalDecl()->isDefaulted());
   }
