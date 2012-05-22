@@ -8,6 +8,7 @@ INCLUDES= -I../..
 EXTRA_CXXFLAGS=-fno-exceptions
 NO_SYSROOT=--sysroot=.
 CXXFLAGS+=$(EXTRA_CXXFLAGS)
+CXXFLAGS+=$(CFLAGS)
 ifeq ($(DEBUG), 0)
   CXXFLAGS+=-fomit-frame-pointer
 ifeq ($(CXX), g++)
