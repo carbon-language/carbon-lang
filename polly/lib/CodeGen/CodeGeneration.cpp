@@ -283,6 +283,16 @@ private:
   /// statement.
   void codegenForOpenMP(const clast_for *f);
 
+  /// @brief Check if a loop is parallel
+  ///
+  /// Detect if a clast_for loop can be executed in parallel.
+  ///
+  /// @param f The clast for loop to check.
+  ///
+  /// @return bool Returns true if the incoming clast_for statement can
+  ///              execute in parallel.
+  bool isParallelFor(const clast_for *For);
+
   bool isInnermostLoop(const clast_for *f);
 
   /// @brief Get the number of loop iterations for this loop.
@@ -608,9 +618,19 @@ void ClastStmtCodeGen::codegenForVector(const clast_for *F) {
   ClastVars.erase(F->iterator);
 }
 
+
+bool ClastStmtCodeGen::isParallelFor(const clast_for *f) {
+  isl_set *Domain = isl_set_from_cloog_domain(f->domain);
+  assert(Domain && "Cannot access domain of loop");
+
+  Dependences &D = P->getAnalysis<Dependences>();
+
+  return D.isParallelDimension(isl_set_copy(Domain), isl_set_n_dim(Domain));
+}
+
 void ClastStmtCodeGen::codegen(const clast_for *f) {
   bool Vector = PollyVectorizerChoice != VECTORIZER_NONE;
-  if ((Vector || OpenMP) && P->getAnalysis<Dependences>().isParallelFor(f)) {
+  if ((Vector || OpenMP) && isParallelFor(f)) {
     if (Vector && isInnermostLoop(f) && (-1 != getNumberOfIterations(f))
         && (getNumberOfIterations(f) <= 16)) {
       codegenForVector(f);

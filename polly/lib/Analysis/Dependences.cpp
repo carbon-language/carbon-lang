@@ -30,11 +30,10 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/CommandLine.h"
 
-#include <isl/flow.h>
 #include <isl/aff.h>
-#define CLOOG_INT_GMP 1
-#include <cloog/cloog.h>
-#include <cloog/isl/cloog.h>
+#include <isl/flow.h>
+#include <isl/map.h>
+#include <isl/set.h>
 
 using namespace polly;
 using namespace llvm;
@@ -216,13 +215,6 @@ bool Dependences::isParallelDimension(__isl_take isl_set *ScheduleSubset,
   isl_set_free(Invalid);
 
   return IsParallel;
-}
-
-bool Dependences::isParallelFor(const clast_for *f) {
-  isl_set *Domain = isl_set_from_cloog_domain(f->domain);
-  assert(Domain && "Cannot access domain of loop");
-
-  return isParallelDimension(isl_set_copy(Domain), isl_set_n_dim(Domain));
 }
 
 void Dependences::printScop(raw_ostream &OS) const {

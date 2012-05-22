@@ -84,16 +84,6 @@ namespace polly {
     bool isParallelDimension(__isl_take isl_set *LoopDomain,
                              unsigned ParallelDimension);
 
-    /// @brief Check if a loop is parallel
-    ///
-    /// Detect if a clast_for loop can be executed in parallel.
-    ///
-    /// @param f The clast for loop to check.
-    ///
-    /// @return bool Returns true if the incoming clast_for statement can
-    ///              execute in parallel.
-    bool isParallelFor(const clast_for *For);
-
     /// @brief Get the dependences in this Scop.
     ///
     /// @param Kinds This integer defines the different kinds of dependences
