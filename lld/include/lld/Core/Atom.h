@@ -50,7 +50,7 @@ public:
 
   /// definition - Whether this atom is a definition or represents an undefined
   /// symbol.
-  Definition definition() const { return _definition; };
+  Definition definition() const { return _definition; }
 
   static inline bool classof(const Atom *a) { return true; }
 

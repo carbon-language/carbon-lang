@@ -423,7 +423,7 @@ public:
 
 private:
   // return a string of the correct number of spaces to align value
-  const char* spacePadding(int keyLen) {
+  const char* spacePadding(size_t keyLen) {
     const char* spaces = "                  ";
     assert(strlen(spaces) > keyLen);
     return &spaces[keyLen];
