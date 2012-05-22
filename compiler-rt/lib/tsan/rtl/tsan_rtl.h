@@ -82,7 +82,7 @@ class FastState {
 
   void SetIgnoreBit() { x_ |= kIgnoreBit; }
   void ClearIgnoreBit() { x_ &= ~kIgnoreBit; }
-  bool GetIgnoreBit() { return x_ & kIgnoreBit; }
+  bool GetIgnoreBit() const { return x_ & kIgnoreBit; }
 
  private:
   friend class Shadow;
@@ -125,23 +125,15 @@ class Shadow: public FastState {
   bool IsZero() const { return x_ == 0; }
   u64 raw() const { return x_; }
 
-  static inline bool TidsAreEqual(Shadow s1, Shadow s2) {
+  static inline bool TidsAreEqual(const Shadow s1, const Shadow s2) {
     u64 shifted_xor = (s1.x_ ^ s2.x_) >> kTidShift;
     DCHECK_EQ(shifted_xor == 0, s1.tid() == s2.tid());
     return shifted_xor == 0;
   }
-  static inline bool Addr0AndSizeAreEqual(Shadow s1, Shadow s2) {
+
+  static inline bool Addr0AndSizeAreEqual(const Shadow s1, const Shadow s2) {
     u64 masked_xor = (s1.x_ ^ s2.x_) & 31;
     return masked_xor == 0;
-  }
-
-  static bool TwoRangesIntersectSLOW(Shadow s1, Shadow s2) {
-    if (s1.addr0() == s2.addr0()) return true;
-    if (s1.addr0() < s2.addr0() && s1.addr0() + s1.size() > s2.addr0())
-      return true;
-    if (s2.addr0() < s1.addr0() && s2.addr0() + s2.size() > s1.addr0())
-      return true;
-    return false;
   }
 
   static inline bool TwoRangesIntersect(Shadow s1, Shadow s2,
@@ -201,6 +193,15 @@ class Shadow: public FastState {
 
  private:
   u64 size_log() const { return (x_ >> 3) & 3; }
+
+  static bool TwoRangesIntersectSLOW(const Shadow s1, const Shadow s2) {
+    if (s1.addr0() == s2.addr0()) return true;
+    if (s1.addr0() < s2.addr0() && s1.addr0() + s1.size() > s2.addr0())
+      return true;
+    if (s2.addr0() < s1.addr0() && s2.addr0() + s2.size() > s1.addr0())
+      return true;
+    return false;
+  }
 };
 
 // Freed memory.
@@ -248,7 +249,6 @@ struct ThreadState {
   u64 stat[StatCnt];
   const int tid;
   int in_rtl;
-  int func_call_count;
   const uptr stk_addr;
   const uptr stk_size;
   const uptr tls_addr;

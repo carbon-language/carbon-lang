@@ -47,6 +47,8 @@ void InitializeFlags(Flags *f, const char *env) {
   f->atexit_sleep_ms = 1000;
   f->verbosity = 0;
   f->profile_memory = "";
+  f->flush_memory_ms = 0;
+  f->stop_on_start = false;
 
   // Let a frontend override.
   OverrideFlags(f);
@@ -65,6 +67,8 @@ void InitializeFlags(Flags *f, const char *env) {
   Flag(env, &f->atexit_sleep_ms, "atexit_sleep_ms");
   Flag(env, &f->verbosity, "verbosity");
   Flag(env, &f->profile_memory, "profile_memory");
+  Flag(env, &f->flush_memory_ms, "flush_memory_ms");
+  Flag(env, &f->stop_on_start, "stop_on_start");
 }
 
 static const char *GetFlagValue(const char *env, const char *name,

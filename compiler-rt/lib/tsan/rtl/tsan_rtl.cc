@@ -21,10 +21,10 @@
 #include "tsan_placement_new.h"
 #include "tsan_suppressions.h"
 
-volatile int __tsan_stop = 0;
+volatile int __tsan_resumed = 0;
 
 extern "C" void __tsan_resume() {
-  __tsan_stop = 0;
+  __tsan_resumed = 1;
 }
 
 namespace __tsan {
@@ -59,7 +59,6 @@ ThreadState::ThreadState(Context *ctx, int tid, u64 epoch,
   // , in_rtl()
   , shadow_stack_pos(&shadow_stack[0])
   , tid(tid)
-  , func_call_count()
   , stk_addr(stk_addr)
   , stk_size(stk_size)
   , tls_addr(tls_addr)
@@ -138,6 +137,22 @@ static void InitializeMemoryProfile() {
   internal_start_thread(&MemoryProfileThread, (void*)(uptr)fd);
 }
 
+static void MemoryFlushThread(void *arg) {
+  ScopedInRtl in_rtl;
+  for (int i = 0; ; i++) {
+    internal_sleep_ms(flags()->flush_memory_ms);
+    FlushShadowMemory();
+  }
+}
+
+static void InitializeMemoryFlush() {
+  if (flags()->flush_memory_ms == 0)
+    return;
+  if (flags()->flush_memory_ms < 100)
+    flags()->flush_memory_ms = 100;
+  internal_start_thread(&MemoryFlushThread, 0);
+}
+
 void Initialize(ThreadState *thr) {
   // Thread safe because done before all threads exist.
   static bool is_initialized = false;
@@ -157,9 +172,10 @@ void Initialize(ThreadState *thr) {
   InitializeFlags(&ctx->flags, env);
   InitializeSuppressions();
   InitializeMemoryProfile();
+  InitializeMemoryFlush();
 
   if (ctx->flags.verbosity)
-    Printf("***** Running under ThreadSanitizer v2 (pid=%d) *****\n", GetPid());
+    Printf("***** Running under ThreadSanitizer v2 (pid %d) *****\n", GetPid());
 
   // Initialize thread 0.
   ctx->thread_seq = 0;
@@ -169,9 +185,11 @@ void Initialize(ThreadState *thr) {
   CHECK_EQ(thr->in_rtl, 1);
   ctx->initialized = true;
 
-  if (__tsan_stop) {
-    Printf("ThreadSanitizer is suspended at startup.\n");
-    while (__tsan_stop);
+  if (flags()->stop_on_start) {
+    Printf("ThreadSanitizer is suspended at startup (pid %d)."
+           " Call __tsan_resume().\n",
+           GetPid());
+    while (__tsan_resumed == 0);
   }
 }
 

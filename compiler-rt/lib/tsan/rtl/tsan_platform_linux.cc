@@ -63,6 +63,12 @@ uptr GetShadowMemoryConsumption() {
   return 0;
 }
 
+void FlushShadowMemory() {
+  madvise((void*)kLinuxShadowBeg,
+          kLinuxShadowEnd - kLinuxShadowBeg,
+          MADV_DONTNEED);
+}
+
 static void *my_mmap(void *addr, size_t length, int prot, int flags,
                     int fd, u64 offset) {
   ScopedInRtl in_rtl;

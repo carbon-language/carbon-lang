@@ -42,20 +42,20 @@ struct ThreadClock {
   ThreadClock();
 
   u64 get(unsigned tid) const {
-    DCHECK(tid < kMaxTidInClock);
+    DCHECK_LT(tid, kMaxTidInClock);
     return clk_[tid];
   }
 
   void set(unsigned tid, u64 v) {
-    DCHECK(tid < kMaxTid);
-    DCHECK(v >= clk_[tid]);
+    DCHECK_LT(tid, kMaxTid);
+    DCHECK_GE(v, clk_[tid]);
     clk_[tid] = v;
     if (nclk_ <= tid)
       nclk_ = tid + 1;
   }
 
   void tick(unsigned tid) {
-    DCHECK(tid < kMaxTid);
+    DCHECK_LT(tid, kMaxTid);
     clk_[tid]++;
     if (nclk_ <= tid)
       nclk_ = tid + 1;

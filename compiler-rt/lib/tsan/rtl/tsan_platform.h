@@ -65,6 +65,7 @@ static inline uptr ShadowToMem(uptr shadow) {
 }
 
 uptr GetShadowMemoryConsumption();
+void FlushShadowMemory();
 
 const char *InitializePlatform();
 void FinalizePlatform();

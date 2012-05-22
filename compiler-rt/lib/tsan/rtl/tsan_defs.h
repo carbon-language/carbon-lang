@@ -32,7 +32,7 @@ const uptr kPageSize = 4096;
 const int kTidBits = 13;
 const unsigned kMaxTid = 1 << kTidBits;
 const unsigned kMaxTidInClock = kMaxTid * 2;  // This includes msb 'freed' bit.
-const int kClkBits = 40;
+const int kClkBits = 43;
 
 #ifdef TSAN_SHADOW_COUNT
 # if TSAN_SHADOW_COUNT == 2 \

@@ -92,6 +92,7 @@ int ThreadCreate(ThreadState *thr, uptr pc, uptr uid, bool detached) {
     CHECK_EQ(tctx->status, ThreadStatusDead);
     tctx->status = ThreadStatusInvalid;
     tctx->reuse_count++;
+    tctx->sync.Reset();
     tid = tctx->tid;
     DestroyAndFree(tctx->dead_info);
   } else {
@@ -214,7 +215,7 @@ void ThreadFinish(ThreadState *thr) {
     tctx->dead_info->trace.headers[i].stack0.CopyFrom(
         thr->trace.headers[i].stack0);
   }
-  tctx->epoch1 = thr->clock.get(tctx->tid);
+  tctx->epoch1 = thr->fast_state.epoch();
 
   thr->~ThreadState();
   StatAggregate(ctx->stat, thr->stat);

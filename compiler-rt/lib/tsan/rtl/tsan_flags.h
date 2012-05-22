@@ -48,6 +48,10 @@ struct Flags {
   int verbosity;
   // If set, periodically write memory profile to that file.
   const char *profile_memory;
+  // Flush shadow memory every X ms.
+  int flush_memory_ms;
+  // Stops on start until __tsan_resume() is called (for debugging).
+  bool stop_on_start;
 };
 
 Flags *flags();
