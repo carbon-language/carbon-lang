@@ -400,6 +400,10 @@ ProcessGDBRemote::BuildDynamicRegisterInfo (bool force)
         m_register_info.HardcodeARMRegisters(from_scratch);
     }
 
+    // Add some convenience registers (eax, ebx, ecx, edx, esi, edi, ebp, esp) to x86_64.
+    if (target_arch.IsValid() && target_arch.GetMachine() == llvm::Triple::x86_64)
+        m_register_info.Addx86_64ConvenienceRegisters();
+
     // At this point, we can finalize our register info.
     m_register_info.Finalize ();
 }

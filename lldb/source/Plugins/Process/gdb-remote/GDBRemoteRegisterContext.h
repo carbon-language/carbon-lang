@@ -156,6 +156,9 @@ public:
     void
     HardcodeARMRegisters(bool from_scratch);
 
+    void
+    Addx86_64ConvenienceRegisters();
+
 protected:
     //------------------------------------------------------------------
     // Classes that inherit from GDBRemoteRegisterContext can see and modify these

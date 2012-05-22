@@ -929,3 +929,76 @@ GDBRemoteDynamicRegisterInfo::HardcodeARMRegisters(bool from_scratch)
     }
 }
 
+void
+GDBRemoteDynamicRegisterInfo::Addx86_64ConvenienceRegisters()
+{
+    // For eax, ebx, ecx, edx, esi, edi, ebp, esp register mapping.
+    static const char* g_mapped_names[] = {
+        "rax",
+        "rbx",
+        "rcx",
+        "rdx",
+        "rdi",
+        "rsi",
+        "rbp",
+        "rsp"
+    };
+
+    // These value regs are to be populated with the corresponding primordial register index.
+    // For example,
+    static uint32_t g_eax_regs[] =  { 0, LLDB_INVALID_REGNUM }; // 0 is to be replaced with rax's index.
+    static uint32_t g_ebx_regs[] =  { 0, LLDB_INVALID_REGNUM };
+    static uint32_t g_ecx_regs[] =  { 0, LLDB_INVALID_REGNUM };
+    static uint32_t g_edx_regs[] =  { 0, LLDB_INVALID_REGNUM };
+    static uint32_t g_edi_regs[] =  { 0, LLDB_INVALID_REGNUM };
+    static uint32_t g_esi_regs[] =  { 0, LLDB_INVALID_REGNUM };
+    static uint32_t g_ebp_regs[] =  { 0, LLDB_INVALID_REGNUM };
+    static uint32_t g_esp_regs[] =  { 0, LLDB_INVALID_REGNUM };
+    
+    static RegisterInfo g_conv_register_infos[] = 
+    {
+//    NAME      ALT      SZ OFF ENCODING         FORMAT                COMPILER              DWARF                 GENERIC                      GDB                   LLDB NATIVE            VALUE REGS    INVALIDATE REGS
+//    ======    =======  == === =============    ============          ===================== ===================== ============================ ====================  ====================== ==========    ===============
+    { "eax",    NULL,    4,  0, eEncodingUint  , eFormatHex          , { LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM      , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM }, g_eax_regs,              NULL},
+    { "ebx"   , NULL,    4,  0, eEncodingUint  , eFormatHex          , { LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM      , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM }, g_ebx_regs,              NULL},
+    { "ecx"   , NULL,    4,  0, eEncodingUint  , eFormatHex          , { LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM      , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM }, g_ecx_regs,              NULL},
+    { "edx"   , NULL,    4,  0, eEncodingUint  , eFormatHex          , { LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM      , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM }, g_edx_regs,              NULL},
+    { "edi"   , NULL,    4,  0, eEncodingUint  , eFormatHex          , { LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM      , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM }, g_edi_regs,              NULL},
+    { "esi"   , NULL,    4,  0, eEncodingUint  , eFormatHex          , { LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM      , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM }, g_esi_regs,              NULL},
+    { "ebp"   , NULL,    4,  0, eEncodingUint  , eFormatHex          , { LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM      , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM }, g_ebp_regs,              NULL},
+    { "esp"   , NULL,    4,  0, eEncodingUint  , eFormatHex          , { LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM      , LLDB_INVALID_REGNUM , LLDB_INVALID_REGNUM }, g_esp_regs,              NULL}
+    };
+
+    static const uint32_t num_conv_regs = llvm::array_lengthof(g_mapped_names);
+    static ConstString gpr_reg_set ("General Purpose Registers");
+    
+    // Add convenience registers to our primordial registers.
+    const uint32_t num_primordials = GetNumRegisters();
+    uint32_t reg_kind = num_primordials;
+    for (uint32_t i=0; i<num_conv_regs; ++i)
+    {
+        ConstString name;
+        ConstString alt_name;
+        const char *prim_reg_name = g_mapped_names[i];
+        if (prim_reg_name && prim_reg_name[0])
+        {
+            for (uint32_t j = 0; j < num_primordials; ++j)
+            {
+                const RegisterInfo *reg_info = GetRegisterInfoAtIndex(j);
+                // Find a matching primordial register info entry.
+                if (reg_info && reg_info->name && ::strcasecmp(reg_info->name, prim_reg_name) == 0)
+                {
+                    // The name matches the existing primordial entry.
+                    // Find and assign the offset, and then add this composite register entry.
+                    g_conv_register_infos[i].byte_offset = reg_info->byte_offset + 4;
+                    // Update the value_regs and the kinds fields in order to delegate to the primordial register.
+                    g_conv_register_infos[i].value_regs[0] = j;
+                    g_conv_register_infos[i].kinds[eRegisterKindLLDB] = ++reg_kind;
+                    name.SetCString(g_conv_register_infos[i].name);
+                    AddRegister(g_conv_register_infos[i], name, alt_name, gpr_reg_set);
+                }
+            }
+        }
+    }
+}
+
