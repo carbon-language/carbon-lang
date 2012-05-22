@@ -443,6 +443,9 @@ class Scop {
   /// @brief Build the Context of the Scop.
   void buildContext();
 
+  /// @brief Add the bounds of the parameters to the context.
+  void addParameterBounds();
+
   /// Build the Scop and Statement with precalculate scop information.
   void buildScop(TempScop &TempScop, const Region &CurRegion,
                   // Loops in Scop containing CurRegion

@@ -37,6 +37,7 @@
 #define DEBUG_TYPE "polly-scops"
 #include "llvm/Support/Debug.h"
 
+#include "isl/int.h"
 #include "isl/constraint.h"
 #include "isl/set.h"
 #include "isl/map.h"
@@ -755,6 +756,38 @@ void Scop::buildContext() {
   Context = isl_set_universe (Space);
 }
 
+void Scop::addParameterBounds() {
+  for (unsigned i = 0; i < isl_set_dim(Context, isl_dim_param); ++i) {
+    isl_int V;
+    isl_id *Id;
+    const SCEV *Scev;
+    const IntegerType *T;
+
+    Id = isl_set_get_dim_id(Context, isl_dim_param, i);
+    Scev = (const SCEV*) isl_id_get_user(Id);
+    T = dyn_cast<IntegerType>(Scev->getType());
+    isl_id_free(Id);
+
+    assert(T && "Not an integer type");
+    int Width = T->getBitWidth();
+
+    isl_int_init(V);
+
+    isl_int_set_si(V, 1);
+    isl_int_mul_2exp(V, V, Width-1);
+    isl_int_neg(V, V);
+    isl_set_lower_bound(Context, isl_dim_param, i, V);
+
+    isl_int_set_si(V, 1);
+    isl_int_mul_2exp(V, V, Width-1);
+    isl_int_sub_ui(V, V, 1);
+    isl_set_upper_bound(Context, isl_dim_param, i, V);
+
+    isl_int_clear(V);
+  }
+}
+
+
 void Scop::realignParams() {
   // Add all parameters into a common model.
   isl_space *Space = isl_space_params_alloc(IslCtx, ParameterIds.size());
@@ -790,6 +823,7 @@ Scop::Scop(TempScop &tempScop, LoopInfo &LI, ScalarEvolution &ScalarEvolution,
   buildScop(tempScop, getRegion(), NestLoops, Scatter, LI);
 
   realignParams();
+  addParameterBounds();
 
   assert(NestLoops.empty() && "NestLoops not empty at top level!");
 }
