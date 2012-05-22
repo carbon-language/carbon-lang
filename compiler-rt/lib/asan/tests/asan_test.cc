@@ -423,10 +423,11 @@ TEST(AddressSanitizer, LargeMallocTest) {
 TEST(AddressSanitizer, HugeMallocTest) {
 #ifdef __APPLE__
   // It was empirically found out that 1215 megabytes is the maximum amount of
-  // memory available to the process under AddressSanitizer on Darwin.
+  // memory available to the process under AddressSanitizer on 32-bit Mac 10.6.
+  // 32-bit Mac 10.7 gives even less (< 1G).
   // (the libSystem malloc() allows allocating up to 2300 megabytes without
   // ASan).
-  size_t n_megs = __WORDSIZE == 32 ? 1200 : 4100;
+  size_t n_megs = __WORDSIZE == 32 ? 500 : 4100;
 #else
   size_t n_megs = __WORDSIZE == 32 ? 2600 : 4100;
 #endif

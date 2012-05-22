@@ -363,8 +363,6 @@ TEST(AddressSanitizerInterface, SetErrorReportCallbackTest) {
   __asan_set_error_report_callback(NULL);
 }
 
-#ifdef __linux__
-// http://code.google.com/p/address-sanitizer/issues/detail?id=51
 TEST(AddressSanitizerInterface, GetOwnershipStressTest) {
   std::vector<char *> pointers;
   std::vector<size_t> sizes;
@@ -385,4 +383,3 @@ TEST(AddressSanitizerInterface, GetOwnershipStressTest) {
   for (size_t i = 0, n = pointers.size(); i < n; i++)
     free(pointers[i]);
 }
-#endif  // __linux__
