@@ -55,7 +55,7 @@ void zoo2() {
   int **a = 0;
   int **b = 0;
   asm ("nop"
-      :"=a"(*a)
+      :"=r"(*a)
       :"0"(*b) // expected-warning{{Dereference of null pointer}}
       );
 }

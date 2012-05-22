@@ -127,7 +127,7 @@ void test_call_operator(CallOperator call_op, int i, double d) {
 
 template<typename T>
 void test_asm(T t) {
-  asm ("nop" : "=a"(*t) : "r"(*t)); // expected-error {{indirection requires pointer operand ('int' invalid)}}
+  asm ("nop" : "=r"(*t) : "r"(*t)); // expected-error {{indirection requires pointer operand ('int' invalid)}}
 }
 
 void test_asm() {
