@@ -1081,6 +1081,18 @@ DNBWatchpointPrint (nub_process_t pid, nub_watch_t watchID)
 }
 
 //----------------------------------------------------------------------
+// Return the number of supported hardware watchpoints.
+//----------------------------------------------------------------------
+uint32_t
+DNBWatchpointGetNumSupportedHWP (nub_process_t pid)
+{
+    MachProcessSP procSP;
+    if (GetProcessSP (pid, procSP))
+        return procSP->GetNumSupportedHardwareWatchpoints();
+    return 0;
+}
+
+//----------------------------------------------------------------------
 // Read memory in the address space of process PID. This call will take
 // care of setting and restoring permissions and breaking up the memory
 // read into multiple chunks as required.

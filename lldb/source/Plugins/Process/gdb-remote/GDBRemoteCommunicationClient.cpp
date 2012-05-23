@@ -48,6 +48,7 @@ GDBRemoteCommunicationClient::GDBRemoteCommunicationClient(bool is_platform) :
     m_qHostInfo_is_valid (eLazyBoolCalculate),
     m_supports_alloc_dealloc_memory (eLazyBoolCalculate),
     m_supports_memory_region_info  (eLazyBoolCalculate),
+    m_supports_watchpoint_support_info  (eLazyBoolCalculate),
     m_supports_qProcessInfoPID (true),
     m_supports_qfProcessInfo (true),
     m_supports_qUserName (true),
@@ -60,6 +61,7 @@ GDBRemoteCommunicationClient::GDBRemoteCommunicationClient(bool is_platform) :
     m_supports_z4 (true),
     m_curr_tid (LLDB_INVALID_THREAD_ID),
     m_curr_tid_run (LLDB_INVALID_THREAD_ID),
+    m_num_supported_hardware_watchpoints (0),
     m_async_mutex (Mutex::eMutexTypeRecursive),
     m_async_packet_predicate (false),
     m_async_packet (),
@@ -1286,6 +1288,52 @@ GDBRemoteCommunicationClient::GetMemoryRegionInfo (lldb::addr_t addr,
 
 }
 
+Error
+GDBRemoteCommunicationClient::GetWatchpointSupportInfo (uint32_t &num)
+{
+    Error error;
+
+    if (m_supports_watchpoint_support_info == eLazyBoolYes)
+    {
+        num = m_num_supported_hardware_watchpoints;
+        return error;
+    }
+
+    // Set num to 0 first.
+    num = 0;
+    if (m_supports_watchpoint_support_info != eLazyBoolNo)
+    {
+        char packet[64];
+        const int packet_len = ::snprintf(packet, sizeof(packet), "qWatchpointSupportInfo:");
+        assert (packet_len < sizeof(packet));
+        StringExtractorGDBRemote response;
+        if (SendPacketAndWaitForResponse (packet, packet_len, response, false))
+        {
+            m_supports_watchpoint_support_info = eLazyBoolYes;        
+            std::string name;
+            std::string value;
+            while (response.GetNameColonValue(name, value))
+            {
+                if (name.compare ("num") == 0)
+                {
+                    num = Args::StringToUInt32(value.c_str(), 0, 0);
+                    m_num_supported_hardware_watchpoints = num;
+                }
+            }
+        }
+        else
+        {
+            m_supports_watchpoint_support_info = eLazyBoolNo;
+        }
+    }
+
+    if (m_supports_watchpoint_support_info == eLazyBoolNo)
+    {
+        error.SetErrorString("qWatchpointSupportInfo is not supported");
+    }
+    return error;
+
+}
 
 int
 GDBRemoteCommunicationClient::SetSTDIN (char const *path)

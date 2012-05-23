@@ -189,6 +189,7 @@ RNBRemote::CreatePacketTable  ()
     t.push_back (Packet (allocate_memory,               &RNBRemote::HandlePacket_AllocateMemory, NULL, "_M", "Allocate memory in the inferior process."));
     t.push_back (Packet (deallocate_memory,             &RNBRemote::HandlePacket_DeallocateMemory, NULL, "_m", "Deallocate memory in the inferior process."));
     t.push_back (Packet (memory_region_info,            &RNBRemote::HandlePacket_MemoryRegionInfo, NULL, "qMemoryRegionInfo", "Return size and attributes of a memory region that contains the given address"));
+    t.push_back (Packet (watchpoint_support_info,       &RNBRemote::HandlePacket_WatchpointSupportInfo, NULL, "qWatchpointSupportInfo", "Return the number of supported hardware watchpoints"));
 
 }
 
@@ -3361,6 +3362,33 @@ RNBRemote::HandlePacket_MemoryRegionInfo (const char *p)
     return SendPacket (ostrm.str());
 }
 
+rnb_err_t
+RNBRemote::HandlePacket_WatchpointSupportInfo (const char *p)
+{
+    /* This packet simply returns the number of supported hardware watchpoints.
+       
+       Examples of use:
+          qWatchpointSupportInfo:
+          num:4
+
+          qWatchpointSupportInfo
+          OK                   // this packet is implemented by the remote nub
+    */
+
+    p += sizeof ("qWatchpointSupportInfo") - 1;
+    if (*p == '\0')
+       return SendPacket ("OK");
+    if (*p++ != ':')
+       return SendPacket ("E67");
+
+    errno = 0;
+    uint32_t num = DNBWatchpointGetNumSupportedHWP (m_ctx.ProcessID());
+    std::ostringstream ostrm;
+
+    // size:4
+    ostrm << "num:" << std::dec << num << ';';
+    return SendPacket (ostrm.str());
+}
 
 /* 'C sig [;addr]'
  Resume with signal sig, optionally at address addr.  */

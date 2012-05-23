@@ -290,6 +290,15 @@ CommandObjectWatchpointList::Execute(Args& args, CommandReturnObject &result)
         return true;
     }
 
+    if (target->GetProcessSP() && target->GetProcessSP()->IsAlive())
+    {
+        uint32_t num_supported_hardware_watchpoints;
+        Error error = target->GetProcessSP()->GetWatchpointSupportInfo(num_supported_hardware_watchpoints);
+        if (error.Success())
+            result.AppendMessageWithFormat("Number of supported hardware watchpoints: %u\n",
+                                           num_supported_hardware_watchpoints);
+    }
+
     const WatchpointList &watchpoints = target->GetWatchpointList();
     Mutex::Locker locker;
     target->GetWatchpointList().GetListMutex(locker);

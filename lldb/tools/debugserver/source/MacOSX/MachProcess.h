@@ -131,6 +131,7 @@ public:
     nub_size_t              DisableAllWatchpoints (bool remove);
     bool                    EnableWatchpoint (nub_watch_t watchID);
     void                    DumpWatchpoint(nub_watch_t watchID) const;
+    uint32_t                GetNumSupportedHardwareWatchpoints () const;
     DNBBreakpointList&      Watchpoints() { return m_watchpoints; }
     const DNBBreakpointList& Watchpoints() const { return m_watchpoints; }
 

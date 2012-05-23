@@ -128,7 +128,8 @@ class WatchpointCommandsTestCase(TestBase):
         # Use the '-v' option to do verbose listing of the watchpoint.
         # The hit count should be 0 initially.
         self.expect("watchpoint list -v",
-            substrs = ['hit_count = 0'])
+            substrs = ['Number of supported hardware watchpoints:',
+                       'hit_count = 0'])
 
         self.runCmd("process continue")
 

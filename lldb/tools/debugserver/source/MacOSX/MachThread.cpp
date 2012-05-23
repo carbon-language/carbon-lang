@@ -715,6 +715,12 @@ MachThread::DisableHardwareWatchpoint (const DNBBreakpoint *wp)
     return false;
 }
 
+uint32_t
+MachThread::NumSupportedHardwareWatchpoints () const
+{
+    return m_arch_ap->NumSupportedHardwareWatchpoints();
+}
+
 bool
 MachThread::GetIdentifierInfo ()
 {

@@ -509,6 +509,17 @@ MachThreadList::DisableHardwareWatchpoint (const DNBBreakpoint* wp) const
 }
 
 uint32_t
+MachThreadList::NumSupportedHardwareWatchpoints () const
+{
+    PTHREAD_MUTEX_LOCKER (locker, m_threads_mutex);
+    const uint32_t num_threads = m_threads.size();
+    // Use an arbitrary thread to retrieve the number of supported hardware watchpoints.
+    if (num_threads)
+        return m_threads[0]->NumSupportedHardwareWatchpoints();
+    return 0;
+}
+
+uint32_t
 MachThreadList::GetThreadIndexForThreadStoppedWithSignal (const int signo) const
 {
     PTHREAD_MUTEX_LOCKER (locker, m_threads_mutex);

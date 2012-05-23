@@ -944,6 +944,12 @@ MachProcess::DumpWatchpoint(nub_watch_t watchID) const
     }
 }
 
+uint32_t
+MachProcess::GetNumSupportedHardwareWatchpoints () const
+{
+    return m_thread_list.NumSupportedHardwareWatchpoints();
+}
+
 bool
 MachProcess::EnableBreakpoint(nub_break_t breakID)
 {

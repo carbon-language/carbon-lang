@@ -50,6 +50,8 @@ public:
     bool            DisableHardwareBreakpoint (const DNBBreakpoint *bp) const;
     uint32_t        EnableHardwareWatchpoint (const DNBBreakpoint *wp) const;
     bool            DisableHardwareWatchpoint (const DNBBreakpoint *wp) const;
+    uint32_t        NumSupportedHardwareWatchpoints () const;
+
     uint32_t        GetThreadIndexForThreadStoppedWithSignal (const int signo) const;
 
     MachThreadSP    GetThreadByID (nub_thread_t tid) const;

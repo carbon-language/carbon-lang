@@ -2722,6 +2722,14 @@ public:
         return error;
     }
 
+    virtual Error
+    GetWatchpointSupportInfo (uint32_t &num)
+    {
+        Error error;
+        error.SetErrorString ("Process::GetWatchpointSupportInfo() not supported");
+        return error;
+    }
+
     lldb::ModuleSP
     ReadModuleFromMemory (const FileSpec& file_spec, 
                           lldb::addr_t header_addr,

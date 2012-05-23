@@ -204,6 +204,9 @@ public:
     virtual lldb_private::Error
     DisableWatchpoint (lldb_private::Watchpoint *wp);
 
+    virtual lldb_private::Error
+    GetWatchpointSupportInfo (uint32_t &num);
+    
     virtual bool
     StartNoticingNewThreads();    
 

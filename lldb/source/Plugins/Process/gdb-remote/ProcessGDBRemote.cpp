@@ -1858,6 +1858,14 @@ ProcessGDBRemote::GetMemoryRegionInfo (addr_t load_addr,
 }
 
 Error
+ProcessGDBRemote::GetWatchpointSupportInfo (uint32_t &num)
+{
+    
+    Error error (m_gdb_comm.GetWatchpointSupportInfo (num));
+    return error;
+}
+
+Error
 ProcessGDBRemote::DoDeallocateMemory (lldb::addr_t addr)
 {
     Error error; 

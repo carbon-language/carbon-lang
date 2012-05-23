@@ -138,6 +138,7 @@ nub_ssize_t     DNBWatchpointGetIgnoreCount     (nub_process_t pid, nub_watch_t 
 nub_bool_t      DNBWatchpointSetIgnoreCount     (nub_process_t pid, nub_watch_t watchID, nub_size_t ignore_count) DNB_EXPORT;
 nub_bool_t      DNBWatchpointSetCallback        (nub_process_t pid, nub_watch_t watchID, DNBCallbackBreakpointHit callback, void *baton) DNB_EXPORT;
 void            DNBWatchpointPrint              (nub_process_t pid, nub_watch_t watchID) DNB_EXPORT;
+uint32_t        DNBWatchpointGetNumSupportedHWP (nub_process_t pid) DNB_EXPORT; 
 
 const DNBRegisterSetInfo *
                 DNBGetRegisterSetInfo           (nub_size_t *num_reg_sets) DNB_EXPORT;

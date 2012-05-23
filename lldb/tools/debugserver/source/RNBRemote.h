@@ -108,6 +108,7 @@ public:
         set_working_dir,                // 'QSetWorkingDir:'
         set_list_threads_in_stop_reply, // 'QListThreadsInStopReply:'
         memory_region_info,             // 'qMemoryRegionInfo:'
+        watchpoint_support_info,        // 'qWatchpointSupportInfo:'
         allocate_memory,                // '_M'
         deallocate_memory,              // '_m'
 
@@ -202,6 +203,7 @@ public:
     rnb_err_t HandlePacket_AllocateMemory (const char *p);
     rnb_err_t HandlePacket_DeallocateMemory (const char *p);
     rnb_err_t HandlePacket_MemoryRegionInfo (const char *p);
+    rnb_err_t HandlePacket_WatchpointSupportInfo (const char *p);
 
     rnb_err_t HandlePacket_stop_process (const char *p);
 
