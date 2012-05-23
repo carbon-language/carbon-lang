@@ -2,7 +2,7 @@
 // compilation database.
 // RUN: rm -rf %t
 // RUN: mkdir %t
-// RUN: echo "[{\"directory\":\"%t\",\"command\":\"clang -c test.cpp -I.\",\"file\":\"%t/test.cpp\"}]" > %t/compile_commands.json
+// RUN: echo "[{\"directory\":\"%t\",\"command\":\"clang -c test.cpp -I.\",\"file\":\"%t/test.cpp\"}]" | sed -e 's/\\/\//g' > %t/compile_commands.json
 // RUN: cp "%s" "%t/test.cpp"
 // RUN: touch "%t/clang-check-test.h"
 // RUN: clang-check "%t" "%t/test.cpp" 2>&1|FileCheck %s
@@ -13,5 +13,5 @@
 // CHECK: C++ requires
 invalid;
 
-// FIXME: JSON doesn't like path separator '\', on Win32 hosts.
+// FIXME: This is incompatible to -fms-compatibility.
 // XFAIL: win32
