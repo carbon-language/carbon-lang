@@ -331,8 +331,8 @@ namespace llvm {
     /// @param Elements     Enumeration elements.
     DIType createEnumerationType(DIDescriptor Scope, StringRef Name, 
                                  DIFile File, unsigned LineNumber, 
-                                 uint64_t SizeInBits, 
-                                 uint64_t AlignInBits, DIArray Elements);
+                                 uint64_t SizeInBits, uint64_t AlignInBits,
+                                 DIArray Elements, DIType ClassType);
 
     /// createSubroutineType - Create subroutine type.
     /// @param File          File in which this subroutine is defined.

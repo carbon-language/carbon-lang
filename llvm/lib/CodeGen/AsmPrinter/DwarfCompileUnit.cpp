@@ -776,6 +776,11 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
         Buffer.addChild(ElemDie);
       }
     }
+    DIType DTy = CTy.getTypeDerivedFrom();
+    if (DTy.Verify()) {
+      addType(&Buffer, DTy);
+      addUInt(&Buffer, dwarf::DW_AT_enum_class, dwarf::DW_FORM_flag, 1);
+    }
   }
     break;
   case dwarf::DW_TAG_subroutine_type: {

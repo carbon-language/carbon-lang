@@ -548,7 +548,8 @@ DIType DIBuilder::createEnumerationType(DIDescriptor Scope, StringRef Name,
                                         DIFile File, unsigned LineNumber,
                                         uint64_t SizeInBits,
                                         uint64_t AlignInBits,
-                                        DIArray Elements) {
+                                        DIArray Elements,
+                                        DIType ClassType) {
   // TAG_enumeration_type is encoded in DICompositeType format.
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_enumeration_type),
@@ -560,7 +561,7 @@ DIType DIBuilder::createEnumerationType(DIDescriptor Scope, StringRef Name,
     ConstantInt::get(Type::getInt64Ty(VMContext), AlignInBits),
     ConstantInt::get(Type::getInt32Ty(VMContext), 0),
     ConstantInt::get(Type::getInt32Ty(VMContext), 0),
-    NULL,
+    ClassType,
     Elements,
     ConstantInt::get(Type::getInt32Ty(VMContext), 0),
     llvm::Constant::getNullValue(Type::getInt32Ty(VMContext)),
