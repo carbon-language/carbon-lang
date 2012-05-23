@@ -2142,7 +2142,7 @@ SDNode *X86DAGToDAGISel::Select(SDNode *Node) {
     }
 
     SDValue InFlag = CurDAG->getCopyToReg(CurDAG->getEntryNode(), dl, LoReg,
-                                            N0, SDValue()).getValue(1);
+                                          N0, SDValue()).getValue(1);
 
     if (foldedLoad) {
       SDValue Ops[] = { Tmp0, Tmp1, Tmp2, Tmp3, Tmp4, N1.getOperand(0),
@@ -2182,7 +2182,7 @@ SDNode *X86DAGToDAGISel::Select(SDNode *Node) {
     // Copy the low half of the result, if it is needed.
     if (!SDValue(Node, 0).use_empty()) {
       SDValue Result = CurDAG->getCopyFromReg(CurDAG->getEntryNode(), dl,
-                                                LoReg, NVT, InFlag);
+                                              LoReg, NVT, InFlag);
       InFlag = Result.getValue(2);
       ReplaceUses(SDValue(Node, 0), Result);
       DEBUG(dbgs() << "=> "; Result.getNode()->dump(CurDAG); dbgs() << '\n');
