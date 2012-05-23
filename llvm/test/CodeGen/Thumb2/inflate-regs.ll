@@ -20,3 +20,30 @@ entry:
   store float %a, float* %p, align 4
   ret void
 }
+
+; CHECK: global_split
+;
+; Same thing, but across basic blocks.
+;
+; CHECK: vldr s
+; CHECK-NOT: vstr
+; CHECK: vadd.f32
+; CHECK-NOT: vstr
+; CHECK: vorr
+; CHECK: vstr s
+define void @global_split(float* nocapture %p1, float* nocapture %p2) nounwind ssp {
+entry:
+  %0 = load float* %p1, align 4
+  %add = fadd float %0, 1.000000e+00
+  tail call void asm sideeffect "", "~{d0},~{d1},~{d2},~{d3},~{d4},~{d5},~{d6},~{d7},~{d8},~{d9},~{d10},~{d11},~{d12},~{d13},~{d14},~{d15}"() nounwind
+  %cmp = fcmp ogt float %add, 0.000000e+00
+  br i1 %cmp, label %if.then, label %if.end
+
+if.then:
+  store float %add, float* %p2, align 4
+  br label %if.end
+
+if.end:
+  store float %add, float* %p1, align 4
+  ret void
+}
