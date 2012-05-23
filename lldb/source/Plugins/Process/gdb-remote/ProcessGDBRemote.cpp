@@ -70,7 +70,7 @@ namespace lldb
         if (error.Success())
             ((ProcessGDBRemote *)p)->GetGDBRemote().DumpHistory (strm);
     }
-};
+}
 
 
 #define DEBUGSERVER_BASENAME    "debugserver"
