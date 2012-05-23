@@ -171,7 +171,7 @@ static unsigned determineREX(const MachineInstr &MI) {
   unsigned NumOps = Desc.getNumOperands();
   if (NumOps) {
     bool isTwoAddr = NumOps > 1 &&
-    Desc.getOperandConstraint(1, MCOI::TIED_TO) != -1;
+      Desc.getOperandConstraint(1, MCOI::TIED_TO) != -1;
 
     // If it accesses SPL, BPL, SIL, or DIL, then it requires a 0x40 REX prefix.
     unsigned i = isTwoAddr ? 1 : 0;
