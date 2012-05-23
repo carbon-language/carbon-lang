@@ -324,6 +324,7 @@ namespace {
     Stmt *RewriteObjCDictionaryLiteralExpr(ObjCDictionaryLiteral *Exp);
     Stmt *RewriteObjCProtocolExpr(ObjCProtocolExpr *Exp);
     Stmt *RewriteObjCTryStmt(ObjCAtTryStmt *S);
+    Stmt *RewriteObjCAutoreleasePoolStmt(ObjCAutoreleasePoolStmt  *S);
     Stmt *RewriteObjCSynchronizedStmt(ObjCAtSynchronizedStmt *S);
     Stmt *RewriteObjCThrowStmt(ObjCAtThrowStmt *S);
     Stmt *RewriteObjCForCollectionStmt(ObjCForCollectionStmt *S,
@@ -1879,6 +1880,16 @@ void RewriteModernObjC::WarnAboutReturnGotoStmts(Stmt *S)
                  TryFinallyContainsReturnDiag);
   }
   return;
+}
+
+Stmt *RewriteModernObjC::RewriteObjCAutoreleasePoolStmt(ObjCAutoreleasePoolStmt  *S) {
+  SourceLocation startLoc = S->getAtLoc();
+  ReplaceText(startLoc, strlen("@autoreleasepool"), "/* @autoreleasepool */");
+  std::string buf;
+  buf = "{ __AtAutoreleasePool __autoreleasepool; ";
+  ReplaceText(S->getSubStmt()->getLocStart(), 1, buf);
+  
+  return 0;
 }
 
 Stmt *RewriteModernObjC::RewriteObjCTryStmt(ObjCAtTryStmt *S) {
@@ -5408,6 +5419,11 @@ Stmt *RewriteModernObjC::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
     return RewriteMessageExpr(MessExpr);
   }
 
+  if (ObjCAutoreleasePoolStmt *StmtAutoRelease = 
+        dyn_cast<ObjCAutoreleasePoolStmt>(S)) {
+    return RewriteObjCAutoreleasePoolStmt(StmtAutoRelease);
+  }
+  
   if (ObjCAtTryStmt *StmtTry = dyn_cast<ObjCAtTryStmt>(S))
     return RewriteObjCTryStmt(StmtTry);
 
@@ -5885,6 +5901,15 @@ void RewriteModernObjC::Initialize(ASTContext &context) {
   Preamble += "  ~__NSContainer_literal() {\n";
   Preamble += "\tdelete[] arr;\n";
   Preamble += "  }\n";
+  Preamble += "};\n";
+  
+  // Declaration required for implementation of @autoreleasepool statement.
+  Preamble += "extern \"C\" __declspec(dllimport) void * objc_autoreleasePoolPush(void);\n";
+  Preamble += "extern \"C\" __declspec(dllimport) void objc_autoreleasePoolPop(void *);\n\n";
+  Preamble += "struct __AtAutoreleasePool {\n";
+  Preamble += "  __AtAutoreleasePool() {atautoreleasepoolobj = objc_autoreleasePoolPush();}\n";
+  Preamble += "  ~__AtAutoreleasePool() {objc_autoreleasePoolPop(atautoreleasepoolobj);}\n";
+  Preamble += "  void * atautoreleasepoolobj;\n";
   Preamble += "};\n";
   
   // NOTE! Windows uses LLP64 for 64bit mode. So, cast pointer to long long
