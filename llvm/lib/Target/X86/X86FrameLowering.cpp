@@ -45,10 +45,10 @@ bool X86FrameLowering::hasReservedCallFrame(const MachineFunction &MF) const {
 bool X86FrameLowering::hasFP(const MachineFunction &MF) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
   const MachineModuleInfo &MMI = MF.getMMI();
-  const TargetRegisterInfo *RI = TM.getRegisterInfo();
+  const TargetRegisterInfo *RegInfo = TM.getRegisterInfo();
 
   return (MF.getTarget().Options.DisableFramePointerElim(MF) ||
-          RI->needsStackRealignment(MF) ||
+          RegInfo->needsStackRealignment(MF) ||
           MFI->hasVarSizedObjects() ||
           MFI->isFrameAddressTaken() ||
           MF.getInfo<X86MachineFunctionInfo>()->getForceFramePointer() ||
@@ -1142,16 +1142,16 @@ void X86FrameLowering::emitEpilogue(MachineFunction &MF,
 }
 
 int X86FrameLowering::getFrameIndexOffset(const MachineFunction &MF, int FI) const {
-  const X86RegisterInfo *RI =
+  const X86RegisterInfo *RegInfo =
     static_cast<const X86RegisterInfo*>(MF.getTarget().getRegisterInfo());
   const MachineFrameInfo *MFI = MF.getFrameInfo();
   int Offset = MFI->getObjectOffset(FI) - getOffsetOfLocalArea();
   uint64_t StackSize = MFI->getStackSize();
 
-  if (RI->needsStackRealignment(MF)) {
+  if (RegInfo->needsStackRealignment(MF)) {
     if (FI < 0) {
       // Skip the saved EBP.
-      Offset += RI->getSlotSize();
+      return Offset + RegInfo->getSlotSize();
     } else {
       assert((-(Offset + StackSize)) % MFI->getObjectAlignment(FI) == 0);
       return Offset + StackSize;
@@ -1162,7 +1162,7 @@ int X86FrameLowering::getFrameIndexOffset(const MachineFunction &MF, int FI) con
       return Offset + StackSize;
 
     // Skip the saved EBP.
-    Offset += RI->getSlotSize();
+    Offset += RegInfo->getSlotSize();
 
     // Skip the RETADDR move area
     const X86MachineFunctionInfo *X86FI = MF.getInfo<X86MachineFunctionInfo>();
@@ -1176,15 +1176,14 @@ int X86FrameLowering::getFrameIndexOffset(const MachineFunction &MF, int FI) con
 
 int X86FrameLowering::getFrameIndexReference(const MachineFunction &MF, int FI,
                                              unsigned &FrameReg) const {
-  const X86RegisterInfo *RI =
+  const X86RegisterInfo *RegInfo =
       static_cast<const X86RegisterInfo*>(MF.getTarget().getRegisterInfo());
   // We can't calculate offset from frame pointer if the stack is realigned,
   // so enforce usage of stack pointer.
-  FrameReg = (RI->needsStackRealignment(MF)) ? RI->getStackRegister()
-                                             : RI->getFrameRegister(MF);
+  FrameReg = (RegInfo->needsStackRealignment(MF)) ? 
+    RegInfo->getStackRegister() : RegInfo->getFrameRegister(MF);
   return getFrameIndexOffset(MF, FI);
 }
-
 
 bool X86FrameLowering::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
                                              MachineBasicBlock::iterator MI,
