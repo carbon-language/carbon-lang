@@ -142,17 +142,21 @@ bool runToolOnCode(clang::FrontendAction *ToolAction, const Twine &Code,
 /// \param BaseDirectory An absolute path.
 static std::string getAbsolutePath(
     StringRef File, StringRef BaseDirectory) {
+  SmallString<1024> PathStorage;
   assert(llvm::sys::path::is_absolute(BaseDirectory));
   if (llvm::sys::path::is_absolute(File)) {
-    return File;
+    llvm::sys::path::native(File, PathStorage);
+    return PathStorage.str();
   }
   StringRef RelativePath(File);
+  // FIXME: Should '.\\' be accepted on Win32?
   if (RelativePath.startswith("./")) {
     RelativePath = RelativePath.substr(strlen("./"));
   }
   llvm::SmallString<1024> AbsolutePath(BaseDirectory);
   llvm::sys::path::append(AbsolutePath, RelativePath);
-  return AbsolutePath.str();
+  llvm::sys::path::native(Twine(AbsolutePath), PathStorage);
+  return PathStorage.str();
 }
 
 ToolInvocation::ToolInvocation(

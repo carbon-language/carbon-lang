@@ -179,8 +179,10 @@ JSONCompilationDatabase::loadFromBuffer(StringRef DatabaseString,
 
 std::vector<CompileCommand>
 JSONCompilationDatabase::getCompileCommands(StringRef FilePath) const {
+  llvm::SmallString<128> NativeFilePath;
+  llvm::sys::path::native(FilePath, NativeFilePath);
   llvm::StringMap< std::vector<CompileCommandRef> >::const_iterator
-    CommandsRefI = IndexByFile.find(FilePath);
+    CommandsRefI = IndexByFile.find(NativeFilePath);
   if (CommandsRefI == IndexByFile.end())
     return std::vector<CompileCommand>();
   const std::vector<CompileCommandRef> &CommandsRef = CommandsRefI->getValue();
@@ -271,7 +273,9 @@ bool JSONCompilationDatabase::parse(std::string &ErrorMessage) {
       return false;
     }
     llvm::SmallString<8> FileStorage;
-    IndexByFile[File->getValue(FileStorage)].push_back(
+    llvm::SmallString<128> NativeFilePath;
+    llvm::sys::path::native(File->getValue(FileStorage), NativeFilePath);
+    IndexByFile[NativeFilePath].push_back(
       CompileCommandRef(Directory, Command));
   }
   return true;
