@@ -126,3 +126,23 @@ entry:
 }
 
 declare i32 @bar(i8 zeroext, i8 zeroext, i8 zeroext, i8 zeroext, i8 zeroext, i8 zeroext)
+
+define i32 @bar0(i32 %i) nounwind {
+  ret i32 0
+}
+
+define void @foo3() uwtable {
+; ARM: movw    r0, #0
+; ARM: movw    r1, :lower16:_bar0
+; ARM: movt    r1, :upper16:_bar0
+; ARM: blx     r1
+; THUMB: movs    r0, #0
+; THUMB: movw    r1, :lower16:_bar0
+; THUMB: movt    r1, :upper16:_bar0
+; THUMB: blx     r1
+  %fptr = alloca i32 (i32)*, align 8
+  store i32 (i32)* @bar0, i32 (i32)** %fptr, align 8
+  %1 = load i32 (i32)** %fptr, align 8
+  %call = call i32 %1(i32 0)
+  ret void
+}

@@ -2216,11 +2216,6 @@ bool ARMFastISel::SelectCall(const Instruction *I,
   // Can't handle inline asm.
   if (isa<InlineAsm>(Callee)) return false;
 
-  // Only handle global variable Callees.
-  const GlobalValue *GV = dyn_cast<GlobalValue>(Callee);
-  if (!GV)
-    return false;
-
   // Check the calling convention.
   ImmutableCallSite CS(CI);
   CallingConv::ID CC = CS.getCallingConv();
@@ -2313,18 +2308,33 @@ bool ARMFastISel::SelectCall(const Instruction *I,
 
   // Issue the call.
   MachineInstrBuilder MIB;
+  const GlobalValue *GV = dyn_cast<GlobalValue>(Callee);
   unsigned CallOpc = ARMSelectCallOp(GV);
+  unsigned CalleeReg = 0;
+
+  if (!GV){
+    CallOpc = isThumb2 ? ARM::tBLXr : ARM::BLX;
+    CalleeReg = getRegForValue(Callee);
+    if (CalleeReg == 0) return false;
+  }
+
   // Explicitly adding the predicate here.
   if(isThumb2) {
     // Explicitly adding the predicate here.
     MIB = AddDefaultPred(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                                  TII.get(CallOpc)));
-    if (!IntrMemName)
+    if (!GV)
+      MIB.addReg(CalleeReg);
+    else if (!IntrMemName)
       MIB.addGlobalAddress(GV, 0, 0);
     else 
       MIB.addExternalSymbol(IntrMemName, 0);
   } else {
-    if (!IntrMemName)
+    if (!GV)
+      MIB = AddDefaultPred(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
+                                   TII.get(CallOpc))
+            .addReg(CalleeReg));
+    else if (!IntrMemName)
       // Explicitly adding the predicate here.
       MIB = AddDefaultPred(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                                    TII.get(CallOpc))
