@@ -62,6 +62,7 @@ namespace {
     unsigned Penalty;
 
     BasicBlock *getTrapBB();
+    void emitBranchToTrap(Value *Cmp = 0);
     ConstTriState computeAllocSize(Value *Alloc, uint64_t &Size,
                                    Value* &SizeValue);
     bool instrument(Value *Ptr, Value *Val);
@@ -91,6 +92,22 @@ BasicBlock *BoundsChecking::getTrapBB() {
 
   Builder->SetInsertPoint(PrevInsertPoint);
   return TrapBB;
+}
+
+
+/// emitBranchToTrap - emit a branch instruction to a trap block.
+/// If Cmp is non-null, perform a jump only if its value evaluates to true.
+void BoundsChecking::emitBranchToTrap(Value *Cmp) {
+  Instruction *Inst = Builder->GetInsertPoint();
+  BasicBlock *OldBB = Inst->getParent();
+  BasicBlock *Cont = OldBB->splitBasicBlock(Inst);
+  OldBB->getTerminator()->eraseFromParent();
+
+  // FIXME: add unlikely branch taken metadata?
+  if (Cmp)
+    BranchInst::Create(getTrapBB(), Cont, Cmp, OldBB);
+  else
+    BranchInst::Create(getTrapBB(), OldBB);
 }
 
 
@@ -254,7 +271,7 @@ bool BoundsChecking::instrument(Value *Ptr, Value *InstVal) {
   if (!OffsetValue && ConstAlloc == Const) {
     if (Size < Offset || (Size - Offset) < NeededSize) {
       // Out of bounds
-      Builder->CreateBr(getTrapBB());
+      emitBranchToTrap();
       ++ChecksAdded;
       return true;
     }
@@ -278,13 +295,8 @@ bool BoundsChecking::instrument(Value *Ptr, Value *InstVal) {
   Value *Cmp1 = Builder->CreateICmpULT(SizeValue, OffsetValue);
   Value *Cmp2 = Builder->CreateICmpULT(ObjSize, NeededSizeVal);
   Value *Or = Builder->CreateOr(Cmp1, Cmp2);
+  emitBranchToTrap(Or);
 
-  // FIXME: add unlikely branch taken metadata?
-  Instruction *Inst = Builder->GetInsertPoint();
-  BasicBlock *OldBB = Inst->getParent();
-  BasicBlock *Cont = OldBB->splitBasicBlock(Inst);
-  OldBB->getTerminator()->eraseFromParent();
-  BranchInst::Create(getTrapBB(), Cont, Or, OldBB);
   ++ChecksAdded;
   return true;
 }
