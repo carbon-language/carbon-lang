@@ -988,20 +988,31 @@ bool RegisterCoalescer::joinCopy(MachineInstr *CopyMI, bool &Again) {
     return true;
   }
 
-  // If they are already joined we continue.
-  if (CP.getSrcReg() == CP.getDstReg()) {
-    DEBUG(dbgs() << "\tCopy already coalesced.\n");
-    LIS->RemoveMachineInstrFromMaps(CopyMI);
-    CopyMI->eraseFromParent();
-    return false;  // Not coalescable.
-  }
-
   // Eliminate undefs.
   if (!CP.isPhys() && eliminateUndefCopy(CopyMI, CP)) {
     DEBUG(dbgs() << "\tEliminated copy of <undef> value.\n");
     LIS->RemoveMachineInstrFromMaps(CopyMI);
     CopyMI->eraseFromParent();
     return false;  // Not coalescable.
+  }
+
+  // Coalesced copies are normally removed immediately, but transformations
+  // like removeCopyByCommutingDef() can inadvertently create identity copies.
+  // When that happens, just join the values and remove the copy.
+  if (CP.getSrcReg() == CP.getDstReg()) {
+    LiveInterval &LI = LIS->getInterval(CP.getSrcReg());
+    DEBUG(dbgs() << "\tCopy already coalesced: " << LI << '\n');
+    LiveRangeQuery LRQ(LI, LIS->getInstructionIndex(CopyMI));
+    if (VNInfo *DefVNI = LRQ.valueDefined()) {
+      VNInfo *ReadVNI = LRQ.valueIn();
+      assert(ReadVNI && "No value before copy and no <undef> flag.");
+      assert(ReadVNI != DefVNI && "Cannot read and define the same value.");
+      LI.MergeValueNumberInto(DefVNI, ReadVNI);
+      DEBUG(dbgs() << "\tMerged values:          " << LI << '\n');
+    }
+    LIS->RemoveMachineInstrFromMaps(CopyMI);
+    CopyMI->eraseFromParent();
+    return true;
   }
 
   // Enforce policies.
