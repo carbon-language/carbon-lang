@@ -594,6 +594,26 @@ bool BitcodeReader::ParseTypeTableBody() {
       ResultTy = PointerType::get(ResultTy, AddressSpace);
       break;
     }
+    case bitc::TYPE_CODE_FUNCTION_OLD: {
+      // FIXME: attrid is dead, remove it in LLVM 4.0
+      // FUNCTION: [vararg, attrid, retty, paramty x N]
+      if (Record.size() < 3)
+        return Error("Invalid FUNCTION type record");
+      SmallVector<Type*, 8> ArgTys;
+      for (unsigned i = 3, e = Record.size(); i != e; ++i) {
+        if (Type *T = getTypeByID(Record[i]))
+          ArgTys.push_back(T);
+        else
+          break;
+      }
+      
+      ResultTy = getTypeByID(Record[2]);
+      if (ResultTy == 0 || ArgTys.size() < Record.size()-3)
+        return Error("invalid type in function type");
+
+      ResultTy = FunctionType::get(ResultTy, ArgTys, Record[0]);
+      break;
+    }
     case bitc::TYPE_CODE_FUNCTION: {
       // FUNCTION: [vararg, retty, paramty x N]
       if (Record.size() < 2)
