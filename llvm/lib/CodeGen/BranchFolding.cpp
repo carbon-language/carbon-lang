@@ -863,7 +863,7 @@ bool BranchFolder::TailMergeBlocks(MachineFunction &MF) {
 
   for (MachineFunction::iterator I = llvm::next(MF.begin()), E = MF.end();
        I != E; ++I) {
-    if (I->pred_size() >= 2) continue;
+    if (I->pred_size() < 2) continue;
     SmallPtrSet<MachineBasicBlock *, 8> UniquePreds;
     MachineBasicBlock *IBB = I;
     MachineBasicBlock *PredBB = prior(I);
