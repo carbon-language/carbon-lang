@@ -1001,6 +1001,29 @@ SBProcess::GetDescription (SBStream &description)
 }
 
 uint32_t
+SBProcess::GetNumSupportedHardwareWatchpoints (lldb::SBError &sb_error) const
+{
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+
+    uint32_t num = 0;
+    ProcessSP process_sp(GetSP());
+    if (process_sp)
+    {
+        Mutex::Locker api_locker (process_sp->GetTarget().GetAPIMutex());
+        sb_error.SetError(process_sp->GetWatchpointSupportInfo (num));
+        LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+        if (log)
+            log->Printf ("SBProcess(%p)::GetNumSupportedHardwareWatchpoints () => %u",
+                         process_sp.get(), num);
+    }
+    else
+    {
+        sb_error.SetErrorString ("SBProcess is invalid");
+    }
+    return num;
+}
+
+uint32_t
 SBProcess::LoadImage (lldb::SBFileSpec &sb_image_spec, lldb::SBError &sb_error)
 {
     ProcessSP process_sp(GetSP());

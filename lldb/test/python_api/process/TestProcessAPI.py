@@ -63,6 +63,12 @@ class ProcessAPITestCase(TestBase):
         self.buildDefault()
         self.remote_launch_should_fail()
 
+    @python_api_test
+    def test_get_num_supported_hardware_watchpoints(self):
+        """Test SBProcess.GetNumSupportedHardwareWatchpoints() API with a process."""
+        self.buildDefault()
+        self.get_num_supported_hardware_watchpoints()
+
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
@@ -309,6 +315,25 @@ class ProcessAPITestCase(TestBase):
         error = lldb.SBError()
         success = process.RemoteLaunch(None, None, None, None, None, None, 0, False, error)
         self.assertTrue(not success, "RemoteLaunch() should fail for process state != eStateConnected")
+
+    def get_num_supported_hardware_watchpoints(self):
+        """Test SBProcess.GetNumSupportedHardwareWatchpoints() API with a process."""
+        exe = os.path.join(os.getcwd(), "a.out")
+        self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
+
+        target = self.dbg.CreateTarget(exe)
+        self.assertTrue(target, VALID_TARGET)
+
+        breakpoint = target.BreakpointCreateByLocation("main.cpp", self.line)
+        self.assertTrue(breakpoint, VALID_BREAKPOINT)
+
+        # Launch the process, and do not stop at the entry point.
+        process = target.LaunchSimple(None, None, os.getcwd())
+
+        error = lldb.SBError();
+        num = process.GetNumSupportedHardwareWatchpoints(error)
+        if self.TraceOn() and error.Success():
+            print "Number of supported hardware watchpoints: %d" % num
 
 
 if __name__ == '__main__':

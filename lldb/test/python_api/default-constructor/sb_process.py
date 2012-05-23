@@ -44,5 +44,6 @@ def fuzz_obj(obj):
     obj.LoadImage(lldb.SBFileSpec(), error)
     obj.UnloadImage(0)
     obj.Clear()
+    obj.GetNumSupportedHardwareWatchpoints(error)
     for thread in obj:
         print thread

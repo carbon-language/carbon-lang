@@ -282,6 +282,9 @@ public:
     GetDescription (lldb::SBStream &description);
 
     uint32_t
+    GetNumSupportedHardwareWatchpoints (lldb::SBError &error) const;
+
+    uint32_t
     LoadImage (lldb::SBFileSpec &image_spec, lldb::SBError &error);
     
     lldb::SBError
