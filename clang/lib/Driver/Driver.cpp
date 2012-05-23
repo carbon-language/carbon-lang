@@ -386,6 +386,9 @@ void Driver::generateCompilationDiagnostics(Compilation &C,
     << "Please submit a bug report to " BUG_REPORT_URL " and include command"
     " line arguments and all diagnostic information.";
 
+  // Print the version of the compiler.
+  PrintVersion(C, llvm::errs());
+
   // Suppress driver output and emit preprocessor output to temp file.
   CCCIsCPP = true;
   CCGenDiagnostics = true;
