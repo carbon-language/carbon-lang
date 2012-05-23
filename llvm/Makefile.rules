@@ -553,6 +553,9 @@ endif
 ifndef LBUGPOINT
 LBUGPOINT := $(LLVMToolDir)/bugpoint$(EXEEXT)
 endif
+ifndef LLVMLINK
+LLVMLINK      := $(LLVMToolDir)/llvm-link$(EXEEXT)
+endif
 
 #--------------------------------------------------------------------
 # Adjust to user's request
@@ -1131,14 +1134,14 @@ $(warning Modules require LLVM capable compiler but none is available ****)
 else
 
 Module     := $(LibDir)/$(MODULE_NAME).bc
-LinkModule := $(LLVMLD) -r
+LinkModule := $(LLVMLINK)
 
 
 ifdef EXPORTED_SYMBOL_FILE
 LinkModule += -internalize-public-api-file=$(EXPORTED_SYMBOL_FILE)
 endif
 
-$(Module): $(BUILT_SOURCES) $(ObjectsBC) $(LibDir)/.dir $(LLVMLD)
+$(Module): $(BUILT_SOURCES) $(ObjectsBC) $(LibDir)/.dir $(LLVMLINK)
 	$(Echo) Building $(BuildMode) Bytecode Module $(notdir $@)
 	$(Verb) $(LinkModule) -o $@ $(ObjectsBC)
 
@@ -1273,9 +1276,9 @@ else
 all-local:: $(LibName.BCA)
 
 ifdef EXPORTED_SYMBOL_FILE
-BCLinkLib = $(LLVMLD) -internalize-public-api-file=$(EXPORTED_SYMBOL_FILE)
+BCLinkLib = $(LLVMLINK) -internalize-public-api-file=$(EXPORTED_SYMBOL_FILE)
 
-$(LibName.BCA): $(ObjectsBC) $(LibDir)/.dir $(LLVMLD) \
+$(LibName.BCA): $(ObjectsBC) $(LibDir)/.dir $(LLVMLINK) \
                 $(LLVMToolDir)/llvm-ar
 	$(Echo) Building $(BuildMode) Bytecode Archive $(notdir $@) \
 	  "(internalize)"
