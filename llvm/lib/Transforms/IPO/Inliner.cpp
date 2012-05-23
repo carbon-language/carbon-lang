@@ -201,19 +201,22 @@ static bool InlineCallIfPossible(CallSite CS, InlineFunctionInfo &IFI,
 }
 
 unsigned Inliner::getInlineThreshold(CallSite CS) const {
-  int thres = InlineThreshold;
+  int thres = InlineThreshold; // -inline-threshold or else selected by
+                               // overall opt level
 
-  // Listen to optsize when -inline-limit is not given.
+  // If -inline-threshold is not given, listen to the optsize attribute when it
+  // would decrease the threshold.
   Function *Caller = CS.getCaller();
-  if (Caller && !Caller->isDeclaration() &&
-      Caller->hasFnAttr(Attribute::OptimizeForSize) &&
-      InlineLimit.getNumOccurrences() == 0)
+  bool OptSize = Caller && !Caller->isDeclaration() &&
+    Caller->hasFnAttr(Attribute::OptimizeForSize);
+  if (!(InlineLimit.getNumOccurrences() > 0) && OptSize && OptSizeThreshold < thres)
     thres = OptSizeThreshold;
 
-  // Listen to inlinehint when it would increase the threshold.
+  // Listen to the inlinehint attribute when it would increase the threshold.
   Function *Callee = CS.getCalledFunction();
-  if (HintThreshold > thres && Callee && !Callee->isDeclaration() &&
-      Callee->hasFnAttr(Attribute::InlineHint))
+  bool InlineHint = Callee && !Callee->isDeclaration() &&
+    Callee->hasFnAttr(Attribute::InlineHint);
+  if (InlineHint && HintThreshold > thres)
     thres = HintThreshold;
 
   return thres;
