@@ -2553,6 +2553,7 @@ Process::AttachCompletionHandler::PerformAction (lldb::EventSP &event_sp)
                 {
                     --m_exec_count;
                     m_process->PrivateResume ();
+                    Process::ProcessEventData::SetRestartedInEvent (event_sp.get(), true);
                     return eEventActionRetry;
                 }
                 else
@@ -3026,6 +3027,31 @@ Process::Destroy ()
     if (error.Success())
     {
         DisableAllBreakpointSites();
+        if (m_public_state.GetValue() == eStateRunning)
+        {
+            error = Halt();
+            if (error.Success())
+            {
+                // Consume the halt event.
+                EventSP stop_event;
+                TimeValue timeout (TimeValue::Now());
+                timeout.OffsetWithMicroSeconds(1000);
+                StateType state = WaitForProcessToStop (&timeout);
+                if (state != eStateStopped)
+                {
+                    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
+                    if (log)
+                        log->Printf("Process::Destroy() Halt failed to stop, state is: %s", StateAsCString(state));
+                }
+            }
+            else
+            {
+                    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
+                    if (log)
+                        log->Printf("Process::Destroy() Halt got error: %s", error.AsCString());
+            }
+        }
+        
         error = DoDestroy();
         if (error.Success())
         {
