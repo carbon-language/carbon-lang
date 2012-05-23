@@ -1586,9 +1586,12 @@ llvm::DIType CGDebugInfo::CreateEnumType(const EnumDecl *ED) {
   }
   llvm::DIDescriptor EnumContext = 
     getContextDescriptor(cast<Decl>(ED->getDeclContext()));
+  llvm::DIType ClassTy = ED->isScopedUsingClassTag() ?
+    getOrCreateType(ED->getIntegerType(), DefUnit) : llvm::DIType();
   llvm::DIType DbgTy = 
     DBuilder.createEnumerationType(EnumContext, ED->getName(), DefUnit, Line,
-                                   Size, Align, EltArray);
+                                   Size, Align, EltArray,
+                                   ClassTy);
   return DbgTy;
 }
 
