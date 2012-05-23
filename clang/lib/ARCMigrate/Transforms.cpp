@@ -14,6 +14,7 @@
 #include "clang/AST/StmtVisitor.h"
 #include "clang/Lex/Lexer.h"
 #include "clang/Basic/SourceManager.h"
+#include "clang/Analysis/DomainSpecific/CocoaConventions.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/DenseSet.h"
 #include <map>
@@ -54,6 +55,47 @@ bool trans::canApplyWeak(ASTContext &Ctx, QualType type,
   }
 
   return true;
+}
+
+bool trans::isPlusOneAssign(const BinaryOperator *E) {
+  if (E->getOpcode() != BO_Assign)
+    return false;
+
+  if (const ObjCMessageExpr *
+        ME = dyn_cast<ObjCMessageExpr>(E->getRHS()->IgnoreParenCasts()))
+    if (ME->getMethodFamily() == OMF_retain)
+      return true;
+
+  if (const CallExpr *
+        callE = dyn_cast<CallExpr>(E->getRHS()->IgnoreParenCasts())) {
+    if (const FunctionDecl *FD = callE->getDirectCallee()) {
+      if (FD->getAttr<CFReturnsRetainedAttr>())
+        return true;
+
+      if (FD->isGlobal() &&
+          FD->getIdentifier() &&
+          FD->getParent()->isTranslationUnit() &&
+          FD->getLinkage() == ExternalLinkage &&
+          ento::cocoa::isRefType(callE->getType(), "CF",
+                                 FD->getIdentifier()->getName())) {
+        StringRef fname = FD->getIdentifier()->getName();
+        if (fname.endswith("Retain") ||
+            fname.find("Create") != StringRef::npos ||
+            fname.find("Copy") != StringRef::npos) {
+          return true;
+        }
+      }
+    }
+  }
+
+  const ImplicitCastExpr *implCE = dyn_cast<ImplicitCastExpr>(E->getRHS());
+  while (implCE && implCE->getCastKind() ==  CK_BitCast)
+    implCE = dyn_cast<ImplicitCastExpr>(implCE->getSubExpr());
+
+  if (implCE && implCE->getCastKind() == CK_ARCConsumeObject)
+    return true;
+
+  return false;
 }
 
 /// \brief 'Loc' is the end of a statement range. This returns the location

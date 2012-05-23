@@ -91,6 +91,9 @@ void test1(A *a, BOOL b, struct UnsafeS *unsafeS) {
   [a release];
   [a autorelease]; // expected-error {{it is not safe to remove an unused 'autorelease' message; its receiver may be destroyed immediately}} \
                    // expected-error {{ARC forbids explicit message send}}
+  [a autorelease]; // expected-error {{it is not safe to remove an unused 'autorelease' message; its receiver may be destroyed immediately}} \
+                   // expected-error {{ARC forbids explicit message send}}
+  a = 0;
 
   CFStringRef cfstr;
   NSString *str = (NSString *)cfstr; // expected-error {{cast of C pointer type 'CFStringRef' (aka 'const struct __CFString *') to Objective-C pointer type 'NSString *' requires a bridged cast}} \

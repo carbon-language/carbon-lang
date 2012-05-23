@@ -68,3 +68,14 @@ typedef const void* objc_objectptr_t;
 extern __attribute__((ns_returns_retained)) id objc_retainedObject(objc_objectptr_t __attribute__((cf_consumed)) pointer);
 extern __attribute__((ns_returns_not_retained)) id objc_unretainedObject(objc_objectptr_t pointer);
 extern objc_objectptr_t objc_unretainedPointer(id object);
+
+#define dispatch_retain(object) ({ dispatch_object_t _o = (object); _dispatch_object_validate(_o); (void)[_o retain]; })
+#define dispatch_release(object) ({ dispatch_object_t _o = (object); _dispatch_object_validate(_o); [_o release]; })
+#define xpc_retain(object) ({ xpc_object_t _o = (object); _xpc_object_validate(_o); [_o retain]; })
+#define xpc_release(object) ({ xpc_object_t _o = (object); _xpc_object_validate(_o); [_o release]; })
+
+typedef id dispatch_object_t;
+typedef id xpc_object_t;
+
+void _dispatch_object_validate(dispatch_object_t object);
+void _xpc_object_validate(xpc_object_t object);

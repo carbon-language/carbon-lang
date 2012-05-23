@@ -64,14 +64,16 @@ public:
       return true;
     case OMF_autorelease:
       if (isRemovable(E)) {
-        // An unused autorelease is badness. If we remove it the receiver
-        // will likely die immediately while previously it was kept alive
-        // by the autorelease pool. This is bad practice in general, leave it
-        // and emit an error to force the user to restructure his code.
-        Pass.TA.reportError("it is not safe to remove an unused 'autorelease' "
-            "message; its receiver may be destroyed immediately",
-            E->getLocStart(), E->getSourceRange());
-        return true;
+        if (!isCommonUnusedAutorelease(E)) {
+          // An unused autorelease is badness. If we remove it the receiver
+          // will likely die immediately while previously it was kept alive
+          // by the autorelease pool. This is bad practice in general, leave it
+          // and emit an error to force the user to restructure his code.
+          Pass.TA.reportError("it is not safe to remove an unused 'autorelease' "
+              "message; its receiver may be destroyed immediately",
+              E->getLocStart(), E->getSourceRange());
+          return true;
+        }
       }
       // Pass through.
     case OMF_retain:
@@ -156,6 +158,80 @@ public:
   }
 
 private:
+  /// \brief Checks for idioms where an unused -autorelease is common.
+  ///
+  /// Currently only returns true for this idiom which is common in property
+  /// setters:
+  ///
+  ///   [backingValue autorelease];
+  ///   backingValue = [newValue retain]; // in general a +1 assign
+  ///
+  bool isCommonUnusedAutorelease(ObjCMessageExpr *E) {
+    Expr *Rec = E->getInstanceReceiver();
+    if (!Rec)
+      return false;
+
+    Decl *RefD = getReferencedDecl(Rec);
+    if (!RefD)
+      return false;
+
+    Stmt *OuterS = E, *InnerS;
+    do {
+      InnerS = OuterS;
+      OuterS = StmtMap->getParent(InnerS);
+    }
+    while (OuterS && (isa<ParenExpr>(OuterS) ||
+                      isa<CastExpr>(OuterS) ||
+                      isa<ExprWithCleanups>(OuterS)));
+    
+    if (!OuterS)
+      return false;
+
+    // Find next statement after the -autorelease.
+
+    Stmt::child_iterator currChildS = OuterS->child_begin();
+    Stmt::child_iterator childE = OuterS->child_end();
+    for (; currChildS != childE; ++currChildS) {
+      if (*currChildS == InnerS)
+        break;
+    }
+    if (currChildS == childE)
+      return false;
+    ++currChildS;
+    if (currChildS == childE)
+      return false;
+
+    Stmt *nextStmt = *currChildS;
+    if (!nextStmt)
+      return false;
+    nextStmt = nextStmt->IgnoreImplicit();
+
+    // Check for "RefD = [+1 retained object];".
+    
+    if (BinaryOperator *Bop = dyn_cast<BinaryOperator>(nextStmt)) {
+      if (RefD != getReferencedDecl(Bop->getLHS()))
+        return false;
+      if (isPlusOneAssign(Bop))
+        return true;
+    }
+    return false;
+  }
+
+  Decl *getReferencedDecl(Expr *E) {
+    if (!E)
+      return 0;
+
+    E = E->IgnoreParenCasts();
+    if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E))
+      return DRE->getDecl();
+    if (MemberExpr *ME = dyn_cast<MemberExpr>(E))
+      return ME->getMemberDecl();
+    if (ObjCIvarRefExpr *IRE = dyn_cast<ObjCIvarRefExpr>(E))
+      return IRE->getDecl();
+
+    return 0;
+  }
+
   /// \brief Check if the retain/release is due to a GCD/XPC macro that are
   /// defined as:
   ///
