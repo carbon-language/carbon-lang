@@ -93,33 +93,6 @@ void *AsanDoesNotSupportStaticLinkage() {
   return NULL;
 }
 
-static inline bool IntervalsAreSeparate(uintptr_t start1, uintptr_t end1,
-                                        uintptr_t start2, uintptr_t end2) {
-  CHECK(start1 <= end1);
-  CHECK(start2 <= end2);
-  return (end1 < start2) || (end2 < start1);
-}
-
-// FIXME: this is thread-unsafe, but should not cause problems most of the time.
-// When the shadow is mapped only a single thread usually exists (plus maybe
-// several worker threads on Mac, which aren't expected to map big chunks of
-// memory).
-bool AsanShadowRangeIsAvailable() {
-  AsanProcMaps procmaps;
-  uintptr_t start, end;
-  bool available = true;
-  while (procmaps.Next(&start, &end,
-                       /*offset*/NULL, /*filename*/NULL, /*filename_size*/0)) {
-    if (!IntervalsAreSeparate(start, end,
-                              kLowShadowBeg - kMmapGranularity,
-                              kHighShadowEnd)) {
-      available = false;
-      break;
-    }
-  }
-  return available;
-}
-
 bool AsanInterceptsSignal(int signum) {
   return (signum == SIGSEGV || signum == SIGBUS) && FLAG_handle_segv;
 }

@@ -15,6 +15,7 @@
 
 #include "asan_internal.h"
 #include "asan_interceptors.h"
+#include "asan_mapping.h"
 #include "asan_procmaps.h"
 #include "asan_stack.h"
 #include "asan_thread_registry.h"
@@ -37,6 +38,31 @@
 static const size_t kAltStackSize = SIGSTKSZ * 4;  // SIGSTKSZ is not enough.
 
 namespace __asan {
+
+static inline bool IntervalsAreSeparate(uintptr_t start1, uintptr_t end1,
+                                        uintptr_t start2, uintptr_t end2) {
+  CHECK(start1 <= end1);
+  CHECK(start2 <= end2);
+  return (end1 < start2) || (end2 < start1);
+}
+
+// FIXME: this is thread-unsafe, but should not cause problems most of the time.
+// When the shadow is mapped only a single thread usually exists (plus maybe
+// several worker threads on Mac, which aren't expected to map big chunks of
+// memory).
+bool AsanShadowRangeIsAvailable() {
+  AsanProcMaps procmaps;
+  uintptr_t start, end;
+  uintptr_t shadow_start = kLowShadowBeg;
+  if (kLowShadowBeg > 0) shadow_start -= kMmapGranularity;
+  uintptr_t shadow_end = kHighShadowEnd;
+  while (procmaps.Next(&start, &end,
+                       /*offset*/NULL, /*filename*/NULL, /*filename_size*/0)) {
+    if (!IntervalsAreSeparate(start, end, shadow_start, shadow_end))
+      return false;
+  }
+  return true;
+}
 
 static void MaybeInstallSigaction(int signum,
                                   void (*handler)(int, siginfo_t *, void *)) {

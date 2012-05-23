@@ -46,11 +46,6 @@ void *AsanDoesNotSupportStaticLinkage() {
   return &_DYNAMIC;  // defined in link.h
 }
 
-bool AsanShadowRangeIsAvailable() {
-  // FIXME: shall we need anything here on Linux?
-  return true;
-}
-
 void GetPcSpBp(void *context, uintptr_t *pc, uintptr_t *sp, uintptr_t *bp) {
 #ifdef ANDROID
   *pc = *sp = *bp = 0;
@@ -191,6 +186,10 @@ bool AsanProcMaps::Next(uintptr_t *start, uintptr_t *end,
   char flags[10];
   int major, minor;
   uintptr_t inode;
+  uintptr_t dummy;
+  if (!start) start = &dummy;
+  if (!end) end = &dummy;
+  if (!offset) offset = &dummy;
   char *next_line = (char*)internal_memchr(current_, '\n', last - current_);
   if (next_line == NULL)
     next_line = last;
