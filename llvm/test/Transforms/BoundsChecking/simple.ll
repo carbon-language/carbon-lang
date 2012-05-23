@@ -1,4 +1,4 @@
-; RUN: opt < %s -boundschecking -S | FileCheck %s
+; RUN: opt < %s -bounds-checking -S | FileCheck %s
 target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64-S128"
 
 @.str = private constant [8 x i8] c"abcdefg\00"   ; <[8 x i8]*>
@@ -32,7 +32,7 @@ define void @f3(i64 %x) nounwind {
   %1 = tail call i8* @calloc(i64 4, i64 %x)
   %2 = bitcast i8* %1 to i32*
   %idx = getelementptr inbounds i32* %2, i64 8
-; CHECK-NEXT: mul i64 4, %
+; CHECK: mul i64 4, %
 ; CHECK-NEXT: sub i64 {{.*}}, 32
 ; CHECK-NEXT: icmp ult i64 {{.*}}, 32
 ; CHECK-NEXT: icmp ult i64 {{.*}}, 4
