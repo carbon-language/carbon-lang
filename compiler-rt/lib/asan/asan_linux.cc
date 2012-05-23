@@ -247,7 +247,7 @@ void AsanThread::SetThreadStackTopAndBottom() {
       stacksize = end - prev_end;
     // When running with unlimited stack size, we still want to set some limit.
     // The unlimited stack size is caused by 'ulimit -s unlimited'.
-    // Also, for some reason, GNU make spawns subrocesses with unlimited stack.
+    // Also, for some reason, GNU make spawns subprocesses with unlimited stack.
     if (stacksize > kMaxThreadStackSize)
       stacksize = kMaxThreadStackSize;
     stack_top_ = end;
