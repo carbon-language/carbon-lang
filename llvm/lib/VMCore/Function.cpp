@@ -388,7 +388,9 @@ static Type *DecodeFixedType(unsigned &NextElt, ArrayRef<unsigned char> Infos,
     return VectorType::get(DecodeFixedType(NextElt, Infos, Tys, Context), 16);
   case IIT_V32:
     return VectorType::get(DecodeFixedType(NextElt, Infos, Tys, Context), 32);
-  case IIT_PTR: {
+  case IIT_PTR:
+    return PointerType::getUnqual(DecodeFixedType(NextElt, Infos, Tys,Context));
+  case IIT_ANYPTR: {  // [ANYPTR addrspace, subtype]
     unsigned AddrSpace = Infos[NextElt++];
     Type *PtrTy = DecodeFixedType(NextElt, Infos, Tys,Context);
     return PointerType::get(PtrTy, AddrSpace);

@@ -338,7 +338,8 @@ enum IIT_Info {
   IIT_STRUCT4 = 20,
   IIT_STRUCT5 = 21,
   IIT_EXTEND_VEC_ARG = 22,
-  IIT_TRUNC_VEC_ARG = 23
+  IIT_TRUNC_VEC_ARG = 23,
+  IIT_ANYPTR = 24
 };
 
 
@@ -412,13 +413,17 @@ static void EncodeFixedType(Record *R, unsigned &NextArgNo,
   }
   
   if (VT == MVT::iPTR) {
-    Sig.push_back(IIT_PTR);
     unsigned AddrSpace = 0;
     if (R->isSubClassOf("LLVMQualPointerType")) {
       AddrSpace = R->getValueAsInt("AddrSpace");
       assert(AddrSpace < 256 && "Address space exceeds 255");
     }
-    Sig.push_back(AddrSpace);
+    if (AddrSpace) {
+      Sig.push_back(IIT_ANYPTR);
+      Sig.push_back(AddrSpace);
+    } else {
+      Sig.push_back(IIT_PTR);
+    }
     return EncodeFixedType(R->getValueAsDef("ElTy"), NextArgNo, Sig);
   }
   
@@ -491,7 +496,8 @@ void IntrinsicEmitter::EmitGenerator(const std::vector<CodeGenIntrinsic> &Ints,
   OS << "  IIT_STRUCT4 = 20,\n";
   OS << "  IIT_STRUCT5 = 21,\n";
   OS << "  IIT_EXTEND_VEC_ARG = 22,\n";
-  OS << "  IIT_TRUNC_VEC_ARG = 23\n";
+  OS << "  IIT_TRUNC_VEC_ARG = 23,\n";
+  OS << "  IIT_ANYPTR = 24\n";
   OS << "};\n\n";
 
   
