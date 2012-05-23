@@ -86,7 +86,7 @@ public:
         uint32_t Length() const { return prologue_length + sizeof(total_length) + sizeof(version) + sizeof(prologue_length); }
         // Length of the line table data in bytes (not including the prologue)
         uint32_t StatementTableLength() const { return total_length + sizeof(total_length) - Length(); }
-        int32_t MaxLineIncrementForSpecialOpcode() const { return line_base + (int8_t)line_range - 1; };
+        int32_t MaxLineIncrementForSpecialOpcode() const { return line_base + (int8_t)line_range - 1; }
         bool IsValid() const;
 //      void Append(BinaryStreamBuf& buff) const;
         void Dump (lldb_private::Log *log);

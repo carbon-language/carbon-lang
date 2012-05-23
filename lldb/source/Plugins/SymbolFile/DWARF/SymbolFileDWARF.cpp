@@ -1410,7 +1410,7 @@ SymbolFileDWARF::ParseTemplateParameterInfos (DWARFCompileUnit* dwarf_cu,
 {
 
     if (parent_die == NULL)
-        return NULL;
+        return false;
     
     Args template_parameter_names;
     for (const DWARFDebugInfoEntry *die = parent_die->GetFirstChild(); 
