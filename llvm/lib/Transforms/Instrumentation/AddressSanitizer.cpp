@@ -22,6 +22,7 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/Triple.h"
 #include "llvm/Function.h"
 #include "llvm/IntrinsicInst.h"
 #include "llvm/LLVMContext.h"
@@ -47,6 +48,7 @@ using namespace llvm;
 static const uint64_t kDefaultShadowScale = 3;
 static const uint64_t kDefaultShadowOffset32 = 1ULL << 29;
 static const uint64_t kDefaultShadowOffset64 = 1ULL << 44;
+static const uint64_t kDefaultShadowOffsetAndroid = 0;
 
 static const size_t kMaxStackMallocSize = 1 << 16;  // 64K
 static const uintptr_t kCurrentStackFrameMagic = 0x41B58AB3;
@@ -571,8 +573,11 @@ bool AddressSanitizer::runOnModule(Module &M) {
   AsanInitFunction->setLinkage(Function::ExternalLinkage);
   IRB.CreateCall(AsanInitFunction);
 
-  MappingOffset = LongSize == 32
-      ? kDefaultShadowOffset32 : kDefaultShadowOffset64;
+  llvm::Triple targetTriple(M.getTargetTriple());
+  bool isAndroid = targetTriple.getEnvironment() == llvm::Triple::ANDROIDEABI;
+
+  MappingOffset = isAndroid ? kDefaultShadowOffsetAndroid :
+    (LongSize == 32 ? kDefaultShadowOffset32 : kDefaultShadowOffset64);
   if (ClMappingOffsetLog >= 0) {
     if (ClMappingOffsetLog == 0) {
       // special case
