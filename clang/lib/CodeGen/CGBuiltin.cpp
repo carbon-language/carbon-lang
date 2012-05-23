@@ -335,6 +335,10 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     return RValue::get(Builder.CreateCall(F, ArgValue));
   }
   case Builtin::BI__builtin_object_size: {
+    // We rely on constant folding to deal with expressions with side effects.
+    assert(!E->getArg(0)->HasSideEffects(getContext()) &&
+           "should have been constant folded");
+
     // We pass this builtin onto the optimizer so that it can
     // figure out the object size in more complex cases.
     llvm::Type *ResType = ConvertType(E->getType());

@@ -55,7 +55,10 @@ void test6() {
 // CHECK: define void @test7
 void test7() {
   int i;
-  // CHECK:     = call i64 @llvm.objectsize.i64(i8* {{.*}}@gbuf{{.*}}, i1 false)
+  // Ensure we only evaluate the side-effect once.
+  // CHECK:     = add
+  // CHECK-NOT: = add
+  // CHECK:     = call i8* @__strcpy_chk(i8* getelementptr inbounds ([63 x i8]* @gbuf, i32 0, i32 0), i8* getelementptr inbounds ([9 x i8]* @.str, i32 0, i32 0), i64 63)
   strcpy((++i, gbuf), "Hi there");
 }
 
