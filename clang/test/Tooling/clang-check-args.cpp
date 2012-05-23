@@ -3,5 +3,5 @@
 // CHECK: C++ requires
 invalid;
 
-// FIXME: JSON doesn't like path separator '\', on Win32 hosts.
+// FIXME: This is incompatible to -fms-compatibility.
 // XFAIL: win32
