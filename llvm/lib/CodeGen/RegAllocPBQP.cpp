@@ -544,7 +544,8 @@ bool RegAllocPBQP::mapPBQPToRegAlloc(const PBQPRAProblem &problem,
 
     if (problem.isPRegOption(vreg, alloc)) {
       unsigned preg = problem.getPRegForOption(vreg, alloc);
-      DEBUG(dbgs() << "VREG " << vreg << " -> " << tri->getName(preg) << "\n");
+      DEBUG(dbgs() << "VREG " << PrintReg(vreg, tri) << " -> "
+            << tri->getName(preg) << "\n");
       assert(preg != 0 && "Invalid preg selected.");
       vrm->assignVirt2Phys(vreg, preg);
     } else if (problem.isSpillOption(vreg, alloc)) {
@@ -553,7 +554,7 @@ bool RegAllocPBQP::mapPBQPToRegAlloc(const PBQPRAProblem &problem,
       LiveRangeEdit LRE(&lis->getInterval(vreg), newSpills, *mf, *lis, vrm);
       spiller->spill(LRE);
 
-      DEBUG(dbgs() << "VREG " << vreg << " -> SPILLED (Cost: "
+      DEBUG(dbgs() << "VREG " << PrintReg(vreg, tri) << " -> SPILLED (Cost: "
                    << LRE.getParent().weight << ", New vregs: ");
 
       // Copy any newly inserted live intervals into the list of regs to
@@ -561,7 +562,7 @@ bool RegAllocPBQP::mapPBQPToRegAlloc(const PBQPRAProblem &problem,
       for (LiveRangeEdit::iterator itr = LRE.begin(), end = LRE.end();
            itr != end; ++itr) {
         assert(!(*itr)->empty() && "Empty spill range.");
-        DEBUG(dbgs() << (*itr)->reg << " ");
+        DEBUG(dbgs() << PrintReg((*itr)->reg, tri) << " ");
         vregsToAlloc.insert((*itr)->reg);
       }
 
