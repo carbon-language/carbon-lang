@@ -470,7 +470,7 @@ void printIITEntry(raw_ostream &OS, unsigned char X) {
 void IntrinsicEmitter::EmitGenerator(const std::vector<CodeGenIntrinsic> &Ints, 
                                      raw_ostream &OS) {
   OS << "// Global intrinsic function declaration type table.\n";
-  OS << "#ifdef GET_INTRINSTIC_GENERATOR_GLOBAL\n";
+  OS << "#ifdef GET_INTRINSIC_GENERATOR_GLOBAL\n";
   // NOTE: These enums must be kept in sync with the ones above!
   OS << "enum IIT_Info {\n";
   OS << "  IIT_Done = 0,\n";
@@ -575,7 +575,7 @@ void IntrinsicEmitter::EmitGenerator(const std::vector<CodeGenIntrinsic> &Ints,
     LongEncodingTable.emit(OS, printIITEntry);
   OS << "  255\n};\n\n";
   
-  OS << "#endif\n\n";  // End of GET_INTRINSTIC_GENERATOR_GLOBAL
+  OS << "#endif\n\n";  // End of GET_INTRINSIC_GENERATOR_GLOBAL
 }
 
 namespace {

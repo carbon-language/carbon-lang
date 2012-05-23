@@ -357,9 +357,9 @@ std::string Intrinsic::getName(ID id, ArrayRef<Type*> Tys) {
   return Result;
 }
 
-#define GET_INTRINSTIC_GENERATOR_GLOBAL
+#define GET_INTRINSIC_GENERATOR_GLOBAL
 #include "llvm/Intrinsics.gen"
-#undef GET_INTRINSTIC_GENERATOR_GLOBAL
+#undef GET_INTRINSIC_GENERATOR_GLOBAL
 
 static Type *DecodeFixedType(unsigned &NextElt, ArrayRef<unsigned char> Infos,
                              ArrayRef<Type*> Tys, LLVMContext &Context) {
