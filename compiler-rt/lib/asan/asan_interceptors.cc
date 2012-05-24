@@ -800,7 +800,7 @@ void InitializeAsanInterceptors() {
 # ifndef __APPLE__
   ASAN_INTERCEPT_FUNC(index);
 # else
-  CHECK(OVERRIDE_FUNCTION(index, WRAP(strchr));
+  CHECK(OVERRIDE_FUNCTION(index, WRAP(strchr)));
 # endif
 #endif
 #if ASAN_INTERCEPT_STRNLEN
