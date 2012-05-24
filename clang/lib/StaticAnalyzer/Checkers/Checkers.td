@@ -361,7 +361,7 @@ def MacOSKeychainAPIChecker : Checker<"SecKeychainAPI">,
 let ParentPackage = Cocoa in {
 
 def ObjCAtSyncChecker : Checker<"AtSync">,
-  HelpText<"Check for null pointers used as mutexes for @synchronized">,
+  HelpText<"Check for nil pointers used as mutexes for @synchronized">,
   DescFile<"ObjCAtSyncChecker.cpp">;
 
 def NilArgChecker : Checker<"NilArg">,
@@ -373,8 +373,8 @@ def ClassReleaseChecker : Checker<"ClassRelease">,
   DescFile<"BasicObjCFoundationChecks.cpp">;
 
 def VariadicMethodTypeChecker : Checker<"VariadicMethodTypes">,
-  HelpText<"Check for passing non-Objective-C types to variadic methods that expect "
-           "only Objective-C types">,
+  HelpText<"Check for passing non-Objective-C types to variadic collection "
+           "initialization methods that expect only Objective-C types">,
   DescFile<"BasicObjCFoundationChecks.cpp">;
 
 def NSAutoreleasePoolChecker : Checker<"NSAutoreleasePool">,
@@ -401,7 +401,7 @@ def RetainCountChecker : Checker<"RetainCount">,
   HelpText<"Check for leaks and improper reference count management">,
   DescFile<"RetainCountChecker.cpp">;
 
-} // end "cocoa"
+} // end "osx.cocoa"
 
 let ParentPackage = CocoaExperimental in {
 
