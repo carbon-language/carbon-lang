@@ -123,27 +123,24 @@ void build_consistency_shadow8();
 
 static inline void USED build_consistency() {
 #if TSAN_DEBUG
-  void(*volatile cfg)() = &build_consistency_debug;
+  build_consistency_debug();
 #else
-  void(*volatile cfg)() = &build_consistency_release;
+  build_consistency_release();
 #endif
 #if TSAN_COLLECT_STATS
-  void(*volatile stats)() = &build_consistency_stats;
+  build_consistency_stats();
 #else
-  void(*volatile stats)() = &build_consistency_nostats;
+  build_consistency_nostats();
 #endif
 #if TSAN_SHADOW_COUNT == 1
-  void(*volatile shadow)() = &build_consistency_shadow1;
+  build_consistency_shadow1();
 #elif TSAN_SHADOW_COUNT == 2
-  void(*volatile shadow)() = &build_consistency_shadow2;
+  build_consistency_shadow2();
 #elif TSAN_SHADOW_COUNT == 4
-  void(*volatile shadow)() = &build_consistency_shadow4;
+  build_consistency_shadow4();
 #else
-  void(*volatile shadow)() = &build_consistency_shadow8;
+  build_consistency_shadow8();
 #endif
-  (void)cfg;
-  (void)stats;
-  (void)shadow;
 }
 
 template<typename T>
