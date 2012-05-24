@@ -265,7 +265,7 @@ simple example:
 
    ; CHECK: test5:
    ; CHECK:    notw	[[REGISTER:%[a-z]+]]
-   ; CHECK:    andw	{{.*}}[REGISTER]]
+   ; CHECK:    andw	{{.*}}[[REGISTER]]
 
 
 The first check line matches a regex (**%[a-z]+**) and captures it into
