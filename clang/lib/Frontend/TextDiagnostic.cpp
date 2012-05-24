@@ -333,6 +333,22 @@ static void selectInterestingSourceRegion(std::string &SourceLine,
     CaretEnd = std::max(FixItEnd, CaretEnd);
   }
 
+  // CaretEnd may have been set at the middle of a character
+  // If it's not at a character's first column then advance it past the current
+  //   character.
+  while (static_cast<int>(CaretEnd) < map.columns() &&
+         -1 == map.columnToByte(CaretEnd))
+    ++CaretEnd;
+
+  assert((static_cast<int>(CaretStart) > map.columns() ||
+          -1!=map.columnToByte(CaretStart)) &&
+         "CaretStart must not point to a column in the middle of a source"
+         " line character");
+  assert((static_cast<int>(CaretEnd) > map.columns() ||
+          -1!=map.columnToByte(CaretEnd)) &&
+         "CaretEnd must not point to a column in the middle of a source line"
+         " character");
+
   // CaretLine[CaretStart, CaretEnd) contains all of the interesting
   // parts of the caret line. While this slice is smaller than the
   // number of columns we have, try to grow the slice to encompass
