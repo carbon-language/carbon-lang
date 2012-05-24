@@ -49,6 +49,8 @@ void InitializeFlags(Flags *f, const char *env) {
   f->profile_memory = "";
   f->flush_memory_ms = 0;
   f->stop_on_start = false;
+  f->running_on_valgrind = false;
+
 
   // Let a frontend override.
   OverrideFlags(f);

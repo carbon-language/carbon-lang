@@ -52,6 +52,8 @@ struct Flags {
   int flush_memory_ms;
   // Stops on start until __tsan_resume() is called (for debugging).
   bool stop_on_start;
+  // Controls whether RunningOnValgrind() returns true or false.
+  bool running_on_valgrind;
 };
 
 Flags *flags();

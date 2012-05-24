@@ -332,7 +332,7 @@ void WTFAnnotateBenignRaceSized(char *f, int l, uptr mem, uptr sz, char *desc) {
 }
 
 int RunningOnValgrind() {
-  return 0;
+  return flags()->running_on_valgrind;
 }
 
 double __attribute__((weak)) ValgrindSlowdown(void) {
