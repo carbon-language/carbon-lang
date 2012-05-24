@@ -1174,6 +1174,7 @@ SUnit *ConvergingScheduler::pickNode(bool &IsTopNode) {
       CandResult TopResult =
         pickNodeFromQueue(Top.Available, DAG->getTopRPTracker(), TopCand);
       assert(TopResult != NoCand && "failed to find the first candidate");
+      (void)TopResult;
       SU = TopCand.SU;
     }
     IsTopNode = true;
@@ -1185,6 +1186,7 @@ SUnit *ConvergingScheduler::pickNode(bool &IsTopNode) {
       CandResult BotResult =
         pickNodeFromQueue(Bot.Available, DAG->getBotRPTracker(), BotCand);
       assert(BotResult != NoCand && "failed to find the first candidate");
+      (void)BotResult;
       SU = BotCand.SU;
     }
     IsTopNode = false;
