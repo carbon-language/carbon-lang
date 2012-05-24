@@ -702,22 +702,29 @@ void ScheduleDAGMI::placeDebugValues() {
 //===----------------------------------------------------------------------===//
 
 namespace {
-/// Wrapper around a vector of SUnits with some basic convenience methods.
-struct ReadyQueue {
-  typedef std::vector<SUnit*>::iterator iterator;
-
+/// ReadyQ encapsulates vector of "ready" SUnits with basic convenience methods
+/// for pushing and removing nodes. ReadyQ's are uniquely identified by an
+/// ID. SUnit::NodeQueueId us a mask of the ReadyQs that the SUnit is in.
+class ReadyQueue {
   unsigned ID;
+  std::string Name;
   std::vector<SUnit*> Queue;
 
-  ReadyQueue(unsigned id): ID(id) {}
+public:
+  ReadyQueue(unsigned id, const Twine &name): ID(id), Name(name.str()) {}
 
-  bool isInQueue(SUnit *SU) const {
-    return SU->NodeQueueId & ID;
-  }
+  unsigned getID() const { return ID; }
+
+  StringRef getName() const { return Name; }
+
+  // SU is in this queue if it's NodeQueueID is a superset of this ID.
+  bool isInQueue(SUnit *SU) const { return (SU->NodeQueueId & ID); }
 
   bool empty() const { return Queue.empty(); }
 
   unsigned size() const { return Queue.size(); }
+
+  typedef std::vector<SUnit*>::iterator iterator;
 
   iterator begin() { return Queue.begin(); }
 
@@ -738,7 +745,7 @@ struct ReadyQueue {
     Queue.pop_back();
   }
 
-  void dump(const char* Name) {
+  void dump() {
     dbgs() << Name << ": ";
     for (unsigned i = 0, e = Queue.size(); i < e; ++i)
       dbgs() << Queue[i]->NodeNum << " ";
@@ -765,6 +772,9 @@ class ConvergingScheduler : public MachineSchedStrategy {
   enum CandResult {
     NoCand, NodeOrder, SingleExcess, SingleCritical, SingleMax, MultiPressure };
 
+  /// Each Scheduling boundary is associated with ready queues. It tracks the
+  /// current cycle in whichever direction at has moved, and maintains the state
+  /// of "hazards" and other interlocks at the current cycle.
   struct SchedBoundary {
     ReadyQueue Available;
     ReadyQueue Pending;
@@ -778,14 +788,19 @@ class ConvergingScheduler : public MachineSchedStrategy {
     /// MinReadyCycle - Cycle of the soonest available instruction.
     unsigned MinReadyCycle;
 
-    /// Pending queues extend the ready queues with the same ID.
-    SchedBoundary(unsigned ID):
-      Available(ID), Pending(ID), CheckPending(false), HazardRec(0),
-      CurrCycle(0), IssueCount(0), MinReadyCycle(UINT_MAX) {}
+    /// Pending queues extend the ready queues with the same ID and the
+    /// PendingFlag set.
+    SchedBoundary(unsigned ID, const Twine &Name):
+      Available(ID, Name+".A"),
+      Pending(ID << ConvergingScheduler::LogMaxQID, Name+".P"),
+      CheckPending(false), HazardRec(0), CurrCycle(0), IssueCount(0),
+      MinReadyCycle(UINT_MAX) {}
 
     ~SchedBoundary() { delete HazardRec; }
 
-    bool isTop() const { return Available.ID == ConvergingScheduler::TopQID; }
+    bool isTop() const {
+      return Available.getID() == ConvergingScheduler::TopQID;
+    }
 
     void releaseNode(SUnit *SU, unsigned ReadyCycle);
 
@@ -806,21 +821,15 @@ class ConvergingScheduler : public MachineSchedStrategy {
   SchedBoundary Bot;
 
 public:
-  /// SUnit::NodeQueueId = 0 (none), = 1 (top), = 2 (bottom), = 3 (both)
+  /// SUnit::NodeQueueId: 0 (none), 1 (top), 2 (bot), 3 (both)
   enum {
     TopQID = 1,
-    BotQID = 2
+    BotQID = 2,
+    LogMaxQID = 2
   };
 
-  ConvergingScheduler(): DAG(0), TRI(0), Top(TopQID), Bot(BotQID) {}
-
-  static const char *getQName(unsigned ID) {
-    switch(ID) {
-    default: return "NoQ";
-    case TopQID: return "TopQ";
-    case BotQID: return "BotQ";
-    };
-  }
+  ConvergingScheduler():
+    DAG(0), TRI(0), Top(TopQID, "TopQ"), Bot(BotQID, "BotQ") {}
 
   virtual void initialize(ScheduleDAGMI *dag);
 
@@ -839,7 +848,7 @@ protected:
                                const RegPressureTracker &RPTracker,
                                SchedCandidate &Candidate);
 #ifndef NDEBUG
-  void traceCandidate(const char *Label, unsigned QID, SUnit *SU,
+  void traceCandidate(const char *Label, const ReadyQueue &Q, SUnit *SU,
                       PressureElement P = PressureElement());
 #endif
 };
@@ -905,7 +914,7 @@ void ConvergingScheduler::SchedBoundary::bumpCycle() {
   }
   CheckPending = true;
 
-  DEBUG(dbgs() << "*** " << getQName(Available.ID) << " cycle "
+  DEBUG(dbgs() << "*** " << Available.getName() << " cycle "
         << CurrCycle << '\n');
 }
 
@@ -967,9 +976,9 @@ SUnit *ConvergingScheduler::SchedBoundary::pickOnlyChoice() {
 }
 
 #ifndef NDEBUG
-void ConvergingScheduler::traceCandidate(const char *Label, unsigned QID,
+void ConvergingScheduler::traceCandidate(const char *Label, const ReadyQueue &Q,
                                          SUnit *SU, PressureElement P) {
-  dbgs() << Label << " " << getQName(QID) << " ";
+  dbgs() << Label << " " << Q.getName() << " ";
   if (P.isValid())
     dbgs() << TRI->getRegPressureSetName(P.PSetID) << ":" << P.UnitIncrease
            << " ";
@@ -1010,7 +1019,7 @@ static bool compareRPDelta(const RegPressureDelta &LHS,
 ConvergingScheduler::CandResult ConvergingScheduler::
 pickNodeFromQueue(ReadyQueue &Q, const RegPressureTracker &RPTracker,
                   SchedCandidate &Candidate) {
-  DEBUG(Q.dump(getQName(Q.ID)));
+  DEBUG(Q.dump());
 
   // getMaxPressureDelta temporarily modifies the tracker.
   RegPressureTracker &TempTracker = const_cast<RegPressureTracker&>(RPTracker);
@@ -1032,7 +1041,7 @@ pickNodeFromQueue(ReadyQueue &Q, const RegPressureTracker &RPTracker,
     }
     // Avoid exceeding the target's limit.
     if (RPDelta.Excess.UnitIncrease < Candidate.RPDelta.Excess.UnitIncrease) {
-      DEBUG(traceCandidate("ECAND", Q.ID, *I, RPDelta.Excess));
+      DEBUG(traceCandidate("ECAND", Q, *I, RPDelta.Excess));
       Candidate.SU = *I;
       Candidate.RPDelta = RPDelta;
       FoundCandidate = SingleExcess;
@@ -1046,7 +1055,7 @@ pickNodeFromQueue(ReadyQueue &Q, const RegPressureTracker &RPTracker,
     // Avoid increasing the max critical pressure in the scheduled region.
     if (RPDelta.CriticalMax.UnitIncrease
         < Candidate.RPDelta.CriticalMax.UnitIncrease) {
-      DEBUG(traceCandidate("PCAND", Q.ID, *I, RPDelta.CriticalMax));
+      DEBUG(traceCandidate("PCAND", Q, *I, RPDelta.CriticalMax));
       Candidate.SU = *I;
       Candidate.RPDelta = RPDelta;
       FoundCandidate = SingleCritical;
@@ -1061,7 +1070,7 @@ pickNodeFromQueue(ReadyQueue &Q, const RegPressureTracker &RPTracker,
     // Avoid increasing the max pressure of the entire region.
     if (RPDelta.CurrentMax.UnitIncrease
         < Candidate.RPDelta.CurrentMax.UnitIncrease) {
-      DEBUG(traceCandidate("MCAND", Q.ID, *I, RPDelta.CurrentMax));
+      DEBUG(traceCandidate("MCAND", Q, *I, RPDelta.CurrentMax));
       Candidate.SU = *I;
       Candidate.RPDelta = RPDelta;
       FoundCandidate = SingleMax;
@@ -1078,9 +1087,9 @@ pickNodeFromQueue(ReadyQueue &Q, const RegPressureTracker &RPTracker,
     if (FoundCandidate == NoCand)
       continue;
 
-    if ((Q.ID == TopQID && (*I)->NodeNum < Candidate.SU->NodeNum)
-        || (Q.ID == BotQID && (*I)->NodeNum > Candidate.SU->NodeNum)) {
-      DEBUG(traceCandidate("NCAND", Q.ID, *I));
+    if ((Q.getID() == TopQID && (*I)->NodeNum < Candidate.SU->NodeNum)
+        || (Q.getID() == BotQID && (*I)->NodeNum > Candidate.SU->NodeNum)) {
+      DEBUG(traceCandidate("NCAND", Q, *I));
       Candidate.SU = *I;
       Candidate.RPDelta = RPDelta;
       FoundCandidate = NodeOrder;
