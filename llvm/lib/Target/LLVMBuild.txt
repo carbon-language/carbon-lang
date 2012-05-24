@@ -16,7 +16,7 @@
 ;===------------------------------------------------------------------------===;
 
 [common]
-subdirectories = ARM CellSPU CppBackend Hexagon MBlaze MSP430 NVPTX Mips PTX PowerPC Sparc X86 XCore
+subdirectories = ARM CellSPU CppBackend Hexagon MBlaze MSP430 NVPTX Mips PowerPC Sparc X86 XCore
 
 ; This is a special group whose required libraries are extended (by llvm-build)
 ; with the best execution engine (the native JIT, if available, or the

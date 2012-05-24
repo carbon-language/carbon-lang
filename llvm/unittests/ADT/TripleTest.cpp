@@ -353,9 +353,9 @@ TEST(TripleTest, BitWidthArchVariants) {
   EXPECT_EQ(Triple::ppc, T.get32BitArchVariant().getArch());
   EXPECT_EQ(Triple::ppc64, T.get64BitArchVariant().getArch());
 
-  T.setArch(Triple::ptx32);
-  EXPECT_EQ(Triple::ptx32, T.get32BitArchVariant().getArch());
-  EXPECT_EQ(Triple::ptx64, T.get64BitArchVariant().getArch());
+  T.setArch(Triple::nvptx);
+  EXPECT_EQ(Triple::nvptx, T.get32BitArchVariant().getArch());
+  EXPECT_EQ(Triple::nvptx64, T.get64BitArchVariant().getArch());
 
   T.setArch(Triple::sparc);
   EXPECT_EQ(Triple::sparc, T.get32BitArchVariant().getArch());
@@ -377,9 +377,9 @@ TEST(TripleTest, BitWidthArchVariants) {
   EXPECT_EQ(Triple::ppc, T.get32BitArchVariant().getArch());
   EXPECT_EQ(Triple::ppc64, T.get64BitArchVariant().getArch());
 
-  T.setArch(Triple::ptx64);
-  EXPECT_EQ(Triple::ptx32, T.get32BitArchVariant().getArch());
-  EXPECT_EQ(Triple::ptx64, T.get64BitArchVariant().getArch());
+  T.setArch(Triple::nvptx64);
+  EXPECT_EQ(Triple::nvptx, T.get32BitArchVariant().getArch());
+  EXPECT_EQ(Triple::nvptx64, T.get64BitArchVariant().getArch());
 
   T.setArch(Triple::sparcv9);
   EXPECT_EQ(Triple::sparc, T.get32BitArchVariant().getArch());
