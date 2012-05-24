@@ -51,9 +51,9 @@ WidenVMOVS("widen-vmovs", cl::Hidden, cl::init(true),
 
 /// ARM_MLxEntry - Record information about MLA / MLS instructions.
 struct ARM_MLxEntry {
-  unsigned MLxOpc;     // MLA / MLS opcode
-  unsigned MulOpc;     // Expanded multiplication opcode
-  unsigned AddSubOpc;  // Expanded add / sub opcode
+  uint16_t MLxOpc;     // MLA / MLS opcode
+  uint16_t MulOpc;     // Expanded multiplication opcode
+  uint16_t AddSubOpc;  // Expanded add / sub opcode
   bool NegAcc;         // True if the acc is negated before the add / sub.
   bool HasLane;        // True if instruction has an extra "lane" operand.
 };
@@ -1531,11 +1531,11 @@ ARMBaseInstrInfo::commuteInstruction(MachineInstr *MI, bool NewMI) const {
 /// This will go away once we can teach tblgen how to set the optional CPSR def
 /// operand itself.
 struct AddSubFlagsOpcodePair {
-  unsigned PseudoOpc;
-  unsigned MachineOpc;
+  uint16_t PseudoOpc;
+  uint16_t MachineOpc;
 };
 
-static AddSubFlagsOpcodePair AddSubFlagsOpcodeMap[] = {
+static const AddSubFlagsOpcodePair AddSubFlagsOpcodeMap[] = {
   {ARM::ADDSri, ARM::ADDri},
   {ARM::ADDSrr, ARM::ADDrr},
   {ARM::ADDSrsi, ARM::ADDrsi},
@@ -1563,14 +1563,9 @@ static AddSubFlagsOpcodePair AddSubFlagsOpcodeMap[] = {
 };
 
 unsigned llvm::convertAddSubFlagsOpcode(unsigned OldOpc) {
-  static const int NPairs =
-    sizeof(AddSubFlagsOpcodeMap) / sizeof(AddSubFlagsOpcodePair);
-  for (AddSubFlagsOpcodePair *OpcPair = &AddSubFlagsOpcodeMap[0],
-         *End = &AddSubFlagsOpcodeMap[NPairs]; OpcPair != End; ++OpcPair) {
-    if (OldOpc == OpcPair->PseudoOpc) {
-      return OpcPair->MachineOpc;
-    }
-  }
+  for (unsigned i = 0, e = array_lengthof(AddSubFlagsOpcodeMap); i != e; ++i)
+    if (OldOpc == AddSubFlagsOpcodeMap[i].PseudoOpc)
+      return AddSubFlagsOpcodeMap[i].MachineOpc;
   return 0;
 }
 
