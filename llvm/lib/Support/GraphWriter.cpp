@@ -99,7 +99,6 @@ void llvm::DisplayGraph(const sys::Path &Filename, bool wait,
   case GraphProgram::NEATO: args.push_back("-f"); args.push_back("neato");break;
   case GraphProgram::TWOPI: args.push_back("-f"); args.push_back("twopi");break;
   case GraphProgram::CIRCO: args.push_back("-f"); args.push_back("circo");break;
-  default: errs() << "Unknown graph layout name; using default.\n";
   }
 
   args.push_back(0);
