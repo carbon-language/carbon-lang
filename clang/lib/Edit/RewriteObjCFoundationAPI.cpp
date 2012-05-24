@@ -801,8 +801,14 @@ static bool rewriteToNumericBoxedExpression(const ObjCMessageExpr *Msg,
     }
   }
 
-  if (needsCast)
+  if (needsCast) {
+    DiagnosticsEngine &Diags = Ctx.getDiagnostics(); 
+    // FIXME: Use a custom category name to distinguish migration diagnostics.
+    unsigned diagID = Diags.getCustomDiagID(DiagnosticsEngine::Warning,
+                      "converting to boxing syntax requires a cast");
+    Diags.Report(Msg->getExprLoc(), diagID) << Msg->getSourceRange();
     return false;
+  }
 
   SourceRange ArgRange = OrigArg->getSourceRange();
   commit.replaceWithInner(Msg->getSourceRange(), ArgRange);

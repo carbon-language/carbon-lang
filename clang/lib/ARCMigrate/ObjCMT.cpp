@@ -209,6 +209,7 @@ void ObjCMigrateASTConsumer::HandleTranslationUnit(ASTContext &Ctx) {
 }
 
 bool MigrateSourceAction::BeginInvocation(CompilerInstance &CI) {
+  CI.getDiagnostics().setIgnoreAllWarnings(true);
   CI.getPreprocessorOpts().DetailedRecord = true;
   CI.getPreprocessorOpts().DetailedRecordConditionalDirectives = true;
   return true;
