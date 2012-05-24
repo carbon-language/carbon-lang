@@ -25,7 +25,7 @@ swig_python_wrapper=${SRC_ROOT}/scripts/Python/python-wrapper.swig
 swig_python_typemaps=${SRC_ROOT}/scripts/Python/python-typemaps.swig
 
 if [ $LLDB_DISABLE_PYTHON = "1" ] ; then
-    # SDKROOT was not empty, which currently means iOS cross build where python is disabled
+    # LLDB_DISABLE_PYTHON is set, which currently means iOS cross build where python is disabled
     rm -rf ${swig_output_file}
     touch ${swig_output_file}
 

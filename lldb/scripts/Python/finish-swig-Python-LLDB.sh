@@ -33,9 +33,9 @@ CONFIG_BUILD_DIR=$3
 PYTHON_INSTALL_DIR=$4
 debug_flag=$5
 
-# Make sure SDKROOT is not set, since if it is this is an iOS build where python
+# Make sure LLDB_DISABLE_PYTHON is not set, since if it is this is an iOS build where python
 # is disabled
-if [ "x$SDKROOT" = "x" ] ; then
+if [ ! $LLDB_DISABLE_PYTHON = "1" ] ; then
 
 if [ -n "$debug_flag" -a "$debug_flag" == "-debug" ]
 then
