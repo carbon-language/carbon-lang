@@ -1,4 +1,4 @@
-// RUN: %clang_cc1  -fsyntax-only -verify -Winterface-ivars %s
+// RUN: %clang_cc1  -fsyntax-only -verify -Wobjc-interface-ivars %s
 // rdar://10763173
 
 @interface I

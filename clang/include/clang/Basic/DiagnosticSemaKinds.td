@@ -3040,7 +3040,7 @@ def err_misplaced_ivar : Error<
   "ivars may not be placed in %select{categories|class extension}0">;
 def warn_ivars_in_interface : Warning<
   "declaration of ivars in the interface is deprecated">,
-  InGroup<DiagGroup<"interface-ivars">>, DefaultIgnore;
+  InGroup<DiagGroup<"objc-interface-ivars">>, DefaultIgnore;
 def ext_enum_value_not_int : Extension<
   "ISO C restricts enumerator values to range of 'int' (%0 is too "
   "%select{small|large}1)">;
