@@ -556,7 +556,16 @@ GDBRemoteCommunicationClient::SendContinuePacketAndWaitForResponse
                             // for the async packet did cause the stop
                             if (continue_after_async)
                             {
-                                //continue_packet.assign (1, 'c');
+                                // Reverting this for now as it is causing deadlocks
+                                // in programs (<rdar://problem/11529853>). In the future
+                                // we should check our thread list and "do the right thing"
+                                // for new threads that show up while we stop and run async
+                                // packets. Setting the packet to 'c' to continue all threads
+                                // is the right thing to do 99.99% of the time because if a
+                                // thread was single stepping, and we sent an interrupt, we
+                                // will notice above that we didn't stop due to an interrupt
+                                // but stopped due to stepping and we would _not_ continue.
+                                continue_packet.assign (1, 'c');
                                 continue;
                             }
                         }
