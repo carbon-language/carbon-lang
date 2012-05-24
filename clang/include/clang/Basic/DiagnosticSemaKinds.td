@@ -626,6 +626,10 @@ def warn_missing_explicit_synthesis : Warning <
 def warn_property_getter_owning_mismatch : Warning<
   "property declared as returning non-retained objects"
   "; getter returning retained objects">;
+def warn_property_setter_ambiguous_use : Warning<
+  "synthesized properties '%0' and '%1' both claim setter %2 -"
+  " use of this setter may cause unexpected behavior">,
+  InGroup<DiagGroup<"objc-multiple-property-setter-use">>;
 def err_ownin_getter_rule : Error<
   "property's synthesized getter follows Cocoa naming"
   " convention for returning 'owned' objects">;
