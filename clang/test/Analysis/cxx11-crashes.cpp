@@ -36,3 +36,24 @@ void radar11487541() {
 void testFloatInitializer() {
   const float ysize={0.015}, xsize={0.01};
 }
+
+
+// PR12874, radar://11487525
+template<class T> struct addr_impl_ref {
+  T & v_;
+  inline addr_impl_ref( T & v ): v_( v ) {
+  }
+  inline operator T& () const {return v_;}
+};
+template<class T> struct addressof_impl {
+  static inline T * f( T & v, long )     {
+    return reinterpret_cast<T*>(&const_cast<char&>(reinterpret_cast<const volatile char &>(v)));
+  }
+};
+template<class T> T * addressof( T & v ) {
+  return addressof_impl<T>::f( addr_impl_ref<T>( v ), 0 );
+}
+void testRadar11487525_1(){
+  bool s[25];
+  addressof(s);
+}

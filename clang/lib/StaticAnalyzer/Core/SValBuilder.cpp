@@ -325,7 +325,7 @@ SVal SValBuilder::evalCast(SVal val, QualType castTy, QualType originalTy) {
 
     // Are we casting from an array to a pointer?  If so just pass on
     // the decayed value.
-    if (castTy->isPointerType())
+    if (castTy->isPointerType() || castTy->isReferenceType())
       return val;
 
     // Are we casting from an array to an integer?  If so, cast the decayed
