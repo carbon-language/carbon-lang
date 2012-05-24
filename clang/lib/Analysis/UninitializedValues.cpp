@@ -112,7 +112,7 @@ public:
   
   void computeSetOfDeclarations(const DeclContext &dc);  
   ValueVector &getValueVector(const CFGBlock *block,
-                                const CFGBlock *dstBlock);
+                              const CFGBlock *dstBlock);
 
   BVPair &getValueVectors(const CFGBlock *block, bool shouldLazyCreate);
 
@@ -363,8 +363,7 @@ public:
       lastDR(0), lastLoad(0),
       skipProcessUses(false) {}
   
-  void reportUninit(const DeclRefExpr *ex, const VarDecl *vd,
-                    bool isAlwaysUninit);
+  void reportUse(const Expr *ex, const VarDecl *vd);
 
   void VisitBlockExpr(BlockExpr *be);
   void VisitDeclStmt(DeclStmt *ds);
@@ -399,9 +398,12 @@ static const Expr *stripCasts(ASTContext &C, const Expr *Ex) {
   return Ex;
 }
 
-void TransferFunctions::reportUninit(const DeclRefExpr *ex,
-                                     const VarDecl *vd, bool isAlwaysUnit) {
-  if (handler) handler->handleUseOfUninitVariable(ex, vd, isAlwaysUnit);
+void TransferFunctions::reportUse(const Expr *ex, const VarDecl *vd) {
+  if (!handler)
+    return;
+  Value v = vals[vd];
+  if (isUninitialized(v))
+    handler->handleUseOfUninitVariable(ex, vd, isAlwaysUninit(v));
 }
 
 FindVarResult TransferFunctions::findBlockVarDecl(Expr *ex) {
@@ -442,9 +444,7 @@ void TransferFunctions::VisitBlockExpr(BlockExpr *be) {
       vals[vd] = Initialized;
       continue;
     }
-    Value v = vals[vd];
-    if (handler && isUninitialized(v))
-      handler->handleUseOfUninitVariable(be, vd, isAlwaysUninit(v));
+    reportUse(be, vd);
   }
 }
 
@@ -507,13 +507,10 @@ void TransferFunctions::VisitBinaryOperator(clang::BinaryOperator *bo) {
   if (bo->isAssignmentOp()) {
     const FindVarResult &res = findBlockVarDecl(bo->getLHS());
     if (const VarDecl *vd = res.getDecl()) {
-      ValueVector::reference val = vals[vd];
-      if (isUninitialized(val)) {
-        if (bo->getOpcode() != BO_Assign)
-          reportUninit(res.getDeclRefExpr(), vd, isAlwaysUninit(val));
-        else
-          val = Initialized;
-      }
+      if (bo->getOpcode() != BO_Assign)
+        reportUse(res.getDeclRefExpr(), vd);
+      else
+        vals[vd] = Initialized;
     }
   }
 }
@@ -530,10 +527,7 @@ void TransferFunctions::VisitUnaryOperator(clang::UnaryOperator *uo) {
         // We null out lastDR to indicate we have fully processed it
         // and we don't want the auto-value setting in Visit().
         lastDR = 0;
-
-        ValueVector::reference val = vals[vd];
-        if (isUninitialized(val))
-          reportUninit(res.getDeclRefExpr(), vd, isAlwaysUninit(val));
+        reportUse(res.getDeclRefExpr(), vd);
       }
       break;
     }
@@ -592,8 +586,7 @@ void TransferFunctions::ProcessUses(Stmt *s) {
     // If we reach here, we may have seen a load of an uninitialized value
     // and it hasn't been casted to void or otherwise handled.  In this
     // situation, report the incident.
-    if (isUninitialized(vals[VD]))
-      reportUninit(DR, VD, isAlwaysUninit(vals[VD]));
+    reportUse(DR, VD);
 
     lastLoad = 0;
 
@@ -680,6 +673,9 @@ void clang::runUninitializedVariablesAnalysis(
   vals.computeSetOfDeclarations(dc);
   if (vals.hasNoDeclarations())
     return;
+#if 0
+  cfg.dump(dc.getParentASTContext().getLangOpts(), true);
+#endif
 
   stats.NumVariablesAnalyzed = vals.getNumEntries();
 

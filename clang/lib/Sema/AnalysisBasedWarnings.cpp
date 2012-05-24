@@ -748,6 +748,8 @@ public:
     if (!uses)
       return;
     
+    // FIXME: This iteration order, and thus the resulting diagnostic order,
+    //        is nondeterministic.
     for (UsesMap::iterator i = uses->begin(), e = uses->end(); i != e; ++i) {
       const VarDecl *vd = i->first;
       const UsesMap::mapped_type &V = i->second;
