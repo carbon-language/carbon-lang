@@ -148,8 +148,7 @@ class LLVM_LIBRARY_VISIBILITY NVPTXAsmPrinter : public AsmPrinter {
             O << ", ";
           O << (unsigned int)buffer[i];
         }
-      }
-      else {
+      } else {
         // print out in 4-bytes or 8-bytes
         unsigned int pos = 0;
         unsigned int nSym = 0;
@@ -169,16 +168,14 @@ class LLVM_LIBRARY_VISIBILITY NVPTXAsmPrinter : public AsmPrinter {
             else if (ConstantExpr *Cexpr =
                 dyn_cast<ConstantExpr>(v)) {
               O << *nvptx::LowerConstant(Cexpr, AP);
-            }
-            else
-              assert(0 && "symbol type unknown");
+            } else
+              llvm_unreachable("symbol type unknown");
             nSym++;
             if (nSym >= numSymbols)
               nextSymbolPos = size+1;
             else
               nextSymbolPos = symbolPosInBuffer[nSym];
-          }
-          else
+          } else
             if (nBytes == 4)
               O << *(unsigned int*)(buffer+pos);
             else

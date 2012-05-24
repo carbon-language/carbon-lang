@@ -731,9 +731,7 @@ unsigned VectorElementize::getScalarVersion(unsigned opcode) {
   if (opcode == NVPTX::IMPLICIT_DEF)
     return opcode;
   switch(opcode) {
-  default:
-    assert(0 && "Scalar version not set, fix NVPTXVector.td");
-    return 0;
+  default: llvm_unreachable("Scalar version not set, fix NVPTXVector.td");
   case TargetOpcode::COPY: return TargetOpcode::COPY;
   case NVPTX::AddCCCV2I32: return NVPTX::ADDCCCi32rr;
   case NVPTX::AddCCCV4I32: return NVPTX::ADDCCCi32rr;

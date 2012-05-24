@@ -478,7 +478,7 @@ NVPTXAsmPrinter::getVirtualRegisterName(unsigned vr, bool isVec,
     << getNVPTXRegClassStr(RC) << mapped_vr << "_1"
     << "}";
   else
-    assert(0 && "Unsupported vector size");
+    llvm_unreachable("Unsupported vector size");
 }
 
 void
@@ -519,7 +519,7 @@ void NVPTXAsmPrinter::printVecModifiedImmediate(const MachineOperand &MO,
     O << "_" << vecelem[Imm%2];
   }
   else
-    assert(0 && "Unknown Modifier on immediate operand");
+    llvm_unreachable("Unknown Modifier on immediate operand");
 }
 
 void NVPTXAsmPrinter::printOperand(const MachineInstr *MI, int opNum,
@@ -539,7 +539,7 @@ void NVPTXAsmPrinter::printOperand(const MachineInstr *MI, int opNum,
         if (strcmp(Modifier, "vecfull") == 0)
           emitVirtualRegister(MO.getReg(), true, O);
         else
-          assert(0 &&
+          llvm_unreachable(
                  "Don't know how to handle the modifier on virtual register.");
       }
     }
@@ -551,7 +551,7 @@ void NVPTXAsmPrinter::printOperand(const MachineInstr *MI, int opNum,
     else if (strstr(Modifier, "vec") == Modifier)
       printVecModifiedImmediate(MO, Modifier, O);
     else
-      assert(0 && "Don't know how to handle modifier on immediate operand");
+      llvm_unreachable("Don't know how to handle modifier on immediate operand");
     return;
 
   case MachineOperand::MO_FPImmediate:
@@ -584,7 +584,7 @@ void NVPTXAsmPrinter::printOperand(const MachineInstr *MI, int opNum,
     return;
 
   default:
-    assert(0 && " Operand type not supported.");
+    llvm_unreachable("Operand type not supported.");
   }
 }
 
@@ -1257,7 +1257,7 @@ void NVPTXAsmPrinter::emitPTXAddressSpace(unsigned int AddressSpace,
     O << "shared" ;
     break;
   default:
-    assert(0 && "unexpected address space");
+    llvm_unreachable("unexpected address space");
   }
 }
 
@@ -1748,8 +1748,7 @@ void NVPTXAsmPrinter::bufferLEByte(Constant *CPV, int Bytes,
         ptr = (unsigned char*)&int32;
         aggBuffer->addBytes(ptr, 4, Bytes);
         break;
-      }
-      else if (ConstantExpr *Cexpr = dyn_cast<ConstantExpr>(CPV)) {
+      } else if (ConstantExpr *Cexpr = dyn_cast<ConstantExpr>(CPV)) {
         if (ConstantInt *constInt =
             dyn_cast<ConstantInt>(ConstantFoldConstantExpression(
                 Cexpr, TD))) {
@@ -1765,15 +1764,14 @@ void NVPTXAsmPrinter::bufferLEByte(Constant *CPV, int Bytes,
           break;
         }
       }
-      assert(0 && "unsupported integer const type");
+      llvm_unreachable("unsupported integer const type");
     } else if (ETy == Type::getInt64Ty(CPV->getContext()) ) {
       if (ConstantInt *constInt = dyn_cast<ConstantInt>(CPV)) {
         long long int64 =(long long)(constInt->getZExtValue());
         ptr = (unsigned char*)&int64;
         aggBuffer->addBytes(ptr, 8, Bytes);
         break;
-      }
-      else if (ConstantExpr *Cexpr = dyn_cast<ConstantExpr>(CPV)) {
+      } else if (ConstantExpr *Cexpr = dyn_cast<ConstantExpr>(CPV)) {
         if (ConstantInt *constInt = dyn_cast<ConstantInt>(
             ConstantFoldConstantExpression(Cexpr, TD))) {
           long long int64 =(long long)(constInt->getZExtValue());
@@ -1789,8 +1787,7 @@ void NVPTXAsmPrinter::bufferLEByte(Constant *CPV, int Bytes,
         }
       }
       llvm_unreachable("unsupported integer const type");
-    }
-    else
+    } else
       llvm_unreachable("unsupported integer const type");
     break;
   }
@@ -1887,7 +1884,7 @@ void NVPTXAsmPrinter::bufferAggregateConstant(Constant *CPV,
     }
     return;
   }
-  assert(0 && "unsupported constant type in printAggregateConstant()");
+  llvm_unreachable("unsupported constant type in printAggregateConstant()");
 }
 
 // buildTypeNameMap - Run through symbol table looking for type names.

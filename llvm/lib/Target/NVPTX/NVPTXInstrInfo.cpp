@@ -106,7 +106,7 @@ void NVPTXInstrInfo::copyPhysReg (MachineBasicBlock &MBB,
     BuildMI(MBB, I, DL, get(NVPTX::V2f64Mov), DestReg)
     .addReg(SrcReg, getKillRegState(KillSrc));
   else {
-    assert(0 && "Don't know how to copy a register");
+    llvm_unreachable("Don't know how to copy a register");
   }
 }
 
