@@ -18,6 +18,8 @@
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Support/Debug.h"
+#include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
 
@@ -59,6 +61,22 @@ void RegisterPressure::increase(const TargetRegisterClass *RC,
 void RegisterPressure::decrease(const TargetRegisterClass *RC,
                                 const TargetRegisterInfo *TRI) {
   decreaseSetPressure(MaxSetPressure, RC, TRI);
+}
+
+void RegisterPressure::dump(const TargetRegisterInfo *TRI) {
+  dbgs() << "Live In: ";
+  for (unsigned i = 0, e = LiveInRegs.size(); i < e; ++i)
+    dbgs() << PrintReg(LiveInRegs[i], TRI) << " ";
+  dbgs() << '\n';
+  dbgs() << "Live Out: ";
+  for (unsigned i = 0, e = LiveOutRegs.size(); i < e; ++i)
+    dbgs() << PrintReg(LiveOutRegs[i], TRI) << " ";
+  dbgs() << '\n';
+  for (unsigned i = 0, e = MaxSetPressure.size(); i < e; ++i) {
+    if (MaxSetPressure[i] != 0)
+      dbgs() << TRI->getRegPressureSetName(i) << "=" << MaxSetPressure[i]
+             << '\n';
+  }
 }
 
 /// Increase the current pressure as impacted by these physical registers and

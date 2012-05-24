@@ -42,6 +42,8 @@ struct RegisterPressure {
   /// Decrease register pressure for each pressure set impacted by this register
   /// class. This is only useful to account for spilling or rematerialization.
   void decrease(const TargetRegisterClass *RC, const TargetRegisterInfo *TRI);
+
+  void dump(const TargetRegisterInfo *TRI);
 };
 
 /// RegisterPressure computed within a region of instructions delimited by
