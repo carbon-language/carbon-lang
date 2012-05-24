@@ -5275,34 +5275,34 @@ static bool IsSpecialDiscardedValue(Expr *E) {
   //   one of the following forms:
   E = E->IgnoreParens();
 
-  //   — id-expression (5.1.1),
+  //   - id-expression (5.1.1),
   if (isa<DeclRefExpr>(E))
     return true;
 
-  //   — subscripting (5.2.1),
+  //   - subscripting (5.2.1),
   if (isa<ArraySubscriptExpr>(E))
     return true;
 
-  //   — class member access (5.2.5),
+  //   - class member access (5.2.5),
   if (isa<MemberExpr>(E))
     return true;
 
-  //   — indirection (5.3.1),
+  //   - indirection (5.3.1),
   if (UnaryOperator *UO = dyn_cast<UnaryOperator>(E))
     if (UO->getOpcode() == UO_Deref)
       return true;
 
   if (BinaryOperator *BO = dyn_cast<BinaryOperator>(E)) {
-    //   — pointer-to-member operation (5.5),
+    //   - pointer-to-member operation (5.5),
     if (BO->isPtrMemOp())
       return true;
 
-    //   — comma expression (5.18) where the right operand is one of the above.
+    //   - comma expression (5.18) where the right operand is one of the above.
     if (BO->getOpcode() == BO_Comma)
       return IsSpecialDiscardedValue(BO->getRHS());
   }
 
-  //   — conditional expression (5.16) where both the second and the third
+  //   - conditional expression (5.16) where both the second and the third
   //     operands are one of the above, or
   if (ConditionalOperator *CO = dyn_cast<ConditionalOperator>(E))
     return IsSpecialDiscardedValue(CO->getTrueExpr()) &&
