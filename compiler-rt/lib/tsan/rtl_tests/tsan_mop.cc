@@ -194,12 +194,14 @@ TEST(ThreadSanitizer, HarmfulRaceOnVptr) {
 
 static void foo() {
   volatile int x = 42;
-  (void)x;
+  int x2 = x;
+  (void)x2;
 }
 
 static void bar() {
   volatile int x = 43;
-  (void)x;
+  int x2 = x;
+  (void)x2;
 }
 
 TEST(ThreadSanitizer, ReportDeadThread) {
