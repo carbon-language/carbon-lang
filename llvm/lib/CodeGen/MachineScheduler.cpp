@@ -396,6 +396,8 @@ protected:
   void moveInstruction(MachineInstr *MI, MachineBasicBlock::iterator InsertPos);
   bool checkSchedLimit();
 
+  void releaseRoots();
+
   void releaseSucc(SUnit *SU, SDep *SuccEdge);
   void releaseSuccessors(SUnit *SU);
   void releasePred(SUnit *SU, SDep *PredEdge);
@@ -554,6 +556,26 @@ updateScheduledPressure(std::vector<unsigned> NewMaxPressure) {
   }
 }
 
+// Release all DAG roots for scheduling.
+void ScheduleDAGMI::releaseRoots() {
+  SmallVector<SUnit*, 16> BotRoots;
+
+  for (std::vector<SUnit>::iterator
+         I = SUnits.begin(), E = SUnits.end(); I != E; ++I) {
+    // A SUnit is ready to top schedule if it has no predecessors.
+    if (I->Preds.empty())
+      SchedImpl->releaseTopNode(&(*I));
+    // A SUnit is ready to bottom schedule if it has no successors.
+    if (I->Succs.empty())
+      BotRoots.push_back(&(*I));
+  }
+  // Release bottom roots in reverse order so the higher priority nodes appear
+  // first. This is more natural and slightly more efficient.
+  for (SmallVectorImpl<SUnit*>::const_reverse_iterator
+         I = BotRoots.rbegin(), E = BotRoots.rend(); I != E; ++I)
+    SchedImpl->releaseBottomNode(*I);
+}
+
 /// schedule - Called back from MachineScheduler::runOnMachineFunction
 /// after setting up the current scheduling region. [RegionBegin, RegionEnd)
 /// only includes instructions that have DAG nodes, not scheduling boundaries.
@@ -584,15 +606,7 @@ void ScheduleDAGMI::schedule() {
   releasePredecessors(&ExitSU);
 
   // Release all DAG roots for scheduling.
-  for (std::vector<SUnit>::iterator I = SUnits.begin(), E = SUnits.end();
-       I != E; ++I) {
-    // A SUnit is ready to top schedule if it has no predecessors.
-    if (I->Preds.empty())
-      SchedImpl->releaseTopNode(&(*I));
-    // A SUnit is ready to bottom schedule if it has no successors.
-    if (I->Succs.empty())
-      SchedImpl->releaseBottomNode(&(*I));
-  }
+  releaseRoots();
 
   CurrentTop = nextIfDebug(RegionBegin, RegionEnd);
   CurrentBottom = RegionEnd;
