@@ -815,18 +815,21 @@ static bool compareRPDelta(const RegPressureDelta &LHS,
   // Compare each component of pressure in decreasing order of importance
   // without checking if any are valid. Invalid PressureElements are assumed to
   // have UnitIncrease==0, so are neutral.
+
+  // Avoid increasing the max critical pressure in the scheduled region.
   if (LHS.Excess.UnitIncrease != RHS.Excess.UnitIncrease)
     return LHS.Excess.UnitIncrease < RHS.Excess.UnitIncrease;
 
+  // Avoid increasing the max critical pressure in the scheduled region.
   if (LHS.CriticalMax.UnitIncrease != RHS.CriticalMax.UnitIncrease)
     return LHS.CriticalMax.UnitIncrease < RHS.CriticalMax.UnitIncrease;
 
+  // Avoid increasing the max pressure of the entire region.
   if (LHS.CurrentMax.UnitIncrease != RHS.CurrentMax.UnitIncrease)
     return LHS.CurrentMax.UnitIncrease < RHS.CurrentMax.UnitIncrease;
 
   return false;
 }
-
 
 /// Pick the best candidate from the top queue.
 ///
