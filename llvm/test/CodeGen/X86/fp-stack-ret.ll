@@ -22,7 +22,7 @@ define fastcc double @test2(<2 x double> %A) {
 
 ; CHECK: test3
 ; CHECK: sub{{.*}}%esp
-; CHECLK-NOT: xmm
+; CHECK-NOT: xmm
 define fastcc double @test3(<4 x float> %A) {
 	%B = bitcast <4 x float> %A to <2 x double>
 	%C = call fastcc double @test2(<2 x double> %B)
