@@ -191,7 +191,8 @@ class RegisterClass<string namespace, list<ValueType> regTypes, int alignment,
 // also in the second set.
 //
 // (sequence "R%u", 0, 15) -> [R0, R1, ..., R15]. Generate a sequence of
-// numbered registers.
+// numbered registers.  Takes an optional 4th operand which is a stride to use
+// when generating the sequence.
 //
 // (shl GPR, 4) - Remove the first N elements.
 //

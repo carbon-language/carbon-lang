@@ -160,9 +160,17 @@ struct InterleaveOp : public SetTheory::Operator {
 // (sequence "Format", From, To) Generate a sequence of records by name.
 struct SequenceOp : public SetTheory::Operator {
   void apply(SetTheory &ST, DagInit *Expr, RecSet &Elts) {
-    if (Expr->arg_size() != 3)
+    int Step = 1;
+    if (Expr->arg_size() > 4)
       throw "Bad args to (sequence \"Format\", From, To): " +
         Expr->getAsString();
+    else if (Expr->arg_size() == 4) {
+      if (IntInit *II = dynamic_cast<IntInit*>(Expr->arg_begin()[3])) {
+        Step = II->getValue();
+      } else
+        throw "Stride must be an integer: " + Expr->getAsString();
+    }
+
     std::string Format;
     if (StringInit *SI = dynamic_cast<StringInit*>(Expr->arg_begin()[0]))
       Format = SI->getValue();
@@ -187,8 +195,12 @@ struct SequenceOp : public SetTheory::Operator {
     RecordKeeper &Records =
       dynamic_cast<DefInit&>(*Expr->getOperator()).getDef()->getRecords();
 
-    int Step = From <= To ? 1 : -1;
-    for (To += Step; From != To; From += Step) {
+    Step *= From <= To ? 1 : -1;
+    while (true) {
+      if (Step > 0 && From > To)
+        break;
+      else if (Step < 0 && From < To)
+        break;
       std::string Name;
       raw_string_ostream OS(Name);
       OS << format(Format.c_str(), unsigned(From));
@@ -200,6 +212,8 @@ struct SequenceOp : public SetTheory::Operator {
         Elts.insert(Result->begin(), Result->end());
       else
         Elts.insert(Rec);
+
+      From += Step;
     }
   }
 };
