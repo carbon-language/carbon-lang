@@ -922,6 +922,81 @@ static void possibleTransparentUnionPointerType(QualType &T) {
     }
 }
 
+static void handleAllocSizeAttr(Sema &S, Decl *D, const AttributeList &Attr) {
+  if (!checkAttributeAtLeastNumArgs(S, Attr, 1))
+    return;
+
+  // In C++ the implicit 'this' function parameter also counts, and they are
+  // counted from one.
+  bool HasImplicitThisParam = isInstanceMethod(D);
+  unsigned NumArgs = getFunctionOrMethodNumArgs(D) + HasImplicitThisParam;
+
+  SmallVector<unsigned, 8> SizeArgs;
+
+  for (AttributeList::arg_iterator I = Attr.arg_begin(),
+       E = Attr.arg_end(); I!=E; ++I) {
+    // The argument must be an integer constant expression.
+    Expr *Ex = *I;
+    llvm::APSInt ArgNum;
+    if (Ex->isTypeDependent() || Ex->isValueDependent() ||
+        !Ex->isIntegerConstantExpr(ArgNum, S.Context)) {
+      S.Diag(Attr.getLoc(), diag::err_attribute_argument_not_int)
+      << "alloc_size" << Ex->getSourceRange();
+      return;
+    }
+
+    uint64_t x = ArgNum.getZExtValue();
+
+    if (x < 1 || x > NumArgs) {
+      S.Diag(Attr.getLoc(), diag::err_attribute_argument_out_of_bounds)
+      << "alloc_size" << I.getArgNum() << Ex->getSourceRange();
+      return;
+    }
+
+    --x;
+    if (HasImplicitThisParam) {
+      if (x == 0) {
+        S.Diag(Attr.getLoc(),
+               diag::err_attribute_invalid_implicit_this_argument)
+        << "alloc_size" << Ex->getSourceRange();
+        return;
+      }
+      --x;
+    }
+
+    // check if the function argument is of an integer type
+    QualType T = getFunctionOrMethodArgType(D, x).getNonReferenceType();
+    if (!T->isIntegerType()) {
+      S.Diag(Attr.getLoc(), diag::err_attribute_argument_not_int)
+      << "alloc_size" << Ex->getSourceRange();
+      return;
+    }
+
+    // check if the argument is a duplicate
+    SmallVectorImpl<unsigned>::iterator Pos;
+    Pos = std::find(SizeArgs.begin(), SizeArgs.end(), x);
+    if (Pos != SizeArgs.end()) {
+      S.Diag(Attr.getLoc(), diag::err_attribute_argument_duplicate)
+      << "alloc_size" << I.getArgNum() << Ex->getSourceRange();
+      return;
+    }
+
+    SizeArgs.push_back(x);
+  }
+
+  // check if the function returns a pointer
+  if (!getFunctionType(D)->getResultType()->isAnyPointerType()) {
+    S.Diag(Attr.getLoc(), diag::warn_ns_attribute_wrong_return_type)
+    << "alloc_size" << 0 /*function*/<< 1 /*pointer*/ << D->getSourceRange();
+  }
+
+  unsigned size = SizeArgs.size();
+  unsigned* start = &SizeArgs[0];
+  llvm::array_pod_sort(start, start + size);
+  D->addAttr(::new (S.Context) AllocSizeAttr(Attr.getRange(), S.Context, start,
+                                             size));
+}
+
 static void handleNonNullAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   // GCC ignores the nonnull attribute on K&R style function prototypes, so we
   // ignore it as well
@@ -3844,6 +3919,7 @@ static void ProcessInheritableDeclAttr(Sema &S, Scope *scope, Decl *D,
     break;
   case AttributeList::AT_alias:       handleAliasAttr       (S, D, Attr); break;
   case AttributeList::AT_aligned:     handleAlignedAttr     (S, D, Attr); break;
+  case AttributeList::AT_alloc_size:  handleAllocSizeAttr   (S, D, Attr); break;
   case AttributeList::AT_always_inline:
     handleAlwaysInlineAttr  (S, D, Attr); break;
   case AttributeList::AT_analyzer_noreturn:

@@ -144,6 +144,11 @@ def AlignMac68k : InheritableAttr {
   let SemaHandler = 0;
 }
 
+def AllocSize : Attr {
+  let Spellings = ["alloc_size"];
+  let Args = [VariadicUnsignedArgument<"Args">];
+}
+
 def AlwaysInline : InheritableAttr {
   let Spellings = ["always_inline"];
 }
