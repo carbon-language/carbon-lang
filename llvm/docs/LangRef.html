@@ -2289,8 +2289,9 @@ in signal handlers).</p>
    by <tt>0xM</tt> followed by 32 hexadecimal digits.  The IEEE 128-bit format
    is represented by <tt>0xL</tt> followed by 32 hexadecimal digits; no
    currently supported target uses this format.  Long doubles will only work if
-   they match the long double format on your target.  All hexadecimal formats
-   are big-endian (sign bit at the left).</p>
+   they match the long double format on your target. The IEEE 16-bit format
+   (half precision) is represented by <tt>0xH</tt> followed by 4 hexadecimal
+   digits. All hexadecimal formats are big-endian (sign bit at the left).</p>
 
 <p>There are no constants of type x86mmx.</p>
 </div>
@@ -7947,7 +7948,8 @@ LLVM</a>.</p>
 
 <div>
 
-<p>Half precision floating point is a storage-only format. This means that it is
+<p>For most target platforms, half precision floating point is a storage-only
+   format. This means that it is
    a dense encoding (in memory) but does not support computation in the
    format.</p>
    

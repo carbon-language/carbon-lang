@@ -673,11 +673,12 @@ lltok::Kind LLLexer::LexIdentifier() {
 ///    HexFP80Constant   0xK[0-9A-Fa-f]+
 ///    HexFP128Constant  0xL[0-9A-Fa-f]+
 ///    HexPPC128Constant 0xM[0-9A-Fa-f]+
+///    HexHalfConstant   0xH[0-9A-Fa-f]+
 lltok::Kind LLLexer::Lex0x() {
   CurPtr = TokStart + 2;
 
   char Kind;
-  if (CurPtr[0] >= 'K' && CurPtr[0] <= 'M') {
+  if (CurPtr[0] >= 'K' && CurPtr[0] <= 'M' || CurPtr[0] == 'H') {
     Kind = *CurPtr++;
   } else {
     Kind = 'J';
@@ -717,6 +718,9 @@ lltok::Kind LLLexer::Lex0x() {
     // PPC128HexFPConstant - PowerPC 128-bit in hexadecimal format (16 bytes)
     HexToIntPair(TokStart+3, CurPtr, Pair);
     APFloatVal = APFloat(APInt(128, Pair));
+    return lltok::APFloat;
+  case 'H':
+    APFloatVal = APFloat(APInt(16,HexIntToVal(TokStart+3, CurPtr)));
     return lltok::APFloat;
   }
 }

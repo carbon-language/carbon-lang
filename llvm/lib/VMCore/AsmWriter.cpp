@@ -708,8 +708,7 @@ static void WriteConstantInternal(raw_ostream &Out, const Constant *CV,
   }
 
   if (const ConstantFP *CFP = dyn_cast<ConstantFP>(CV)) {
-    if (&CFP->getValueAPF().getSemantics() == &APFloat::IEEEhalf ||
-        &CFP->getValueAPF().getSemantics() == &APFloat::IEEEsingle ||
+    if (&CFP->getValueAPF().getSemantics() == &APFloat::IEEEsingle ||
         &CFP->getValueAPF().getSemantics() == &APFloat::IEEEdouble) {
       // We would like to output the FP constant value in exponential notation,
       // but we cannot do this if doing so will lose precision.  Check here to
@@ -759,16 +758,20 @@ static void WriteConstantInternal(raw_ostream &Out, const Constant *CV,
       return;
     }
 
-    // Some form of long double.  These appear as a magic letter identifying
-    // the type, then a fixed number of hex digits.
+    // Either half, or some form of long double.
+    // These appear as a magic letter identifying the type, then a
+    // fixed number of hex digits.
     Out << "0x";
+    // Bit position, in the current word, of the next nibble to print.
+    int shiftcount;
+
     if (&CFP->getValueAPF().getSemantics() == &APFloat::x87DoubleExtended) {
       Out << 'K';
       // api needed to prevent premature destruction
       APInt api = CFP->getValueAPF().bitcastToAPInt();
       const uint64_t* p = api.getRawData();
       uint64_t word = p[1];
-      int shiftcount=12;
+      shiftcount = 12;
       int width = api.getBitWidth();
       for (int j=0; j<width; j+=4, shiftcount-=4) {
         unsigned int nibble = (word>>shiftcount) & 15;
@@ -784,17 +787,21 @@ static void WriteConstantInternal(raw_ostream &Out, const Constant *CV,
         }
       }
       return;
-    } else if (&CFP->getValueAPF().getSemantics() == &APFloat::IEEEquad)
+    } else if (&CFP->getValueAPF().getSemantics() == &APFloat::IEEEquad) {
+      shiftcount = 60;
       Out << 'L';
-    else if (&CFP->getValueAPF().getSemantics() == &APFloat::PPCDoubleDouble)
+    } else if (&CFP->getValueAPF().getSemantics() == &APFloat::PPCDoubleDouble) {
+      shiftcount = 60;
       Out << 'M';
-    else
+    } else if (&CFP->getValueAPF().getSemantics() == &APFloat::IEEEhalf) {
+      shiftcount = 12;
+      Out << 'H';
+    } else
       llvm_unreachable("Unsupported floating point type");
     // api needed to prevent premature destruction
     APInt api = CFP->getValueAPF().bitcastToAPInt();
     const uint64_t* p = api.getRawData();
     uint64_t word = *p;
-    int shiftcount=60;
     int width = api.getBitWidth();
     for (int j=0; j<width; j+=4, shiftcount-=4) {
       unsigned int nibble = (word>>shiftcount) & 15;
