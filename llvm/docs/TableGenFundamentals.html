@@ -225,18 +225,18 @@ else in user code to avoid conflict problems.</p>
 <div>
 
 <p>TableGen runs just like any other LLVM tool.  The first (optional) argument
-specifies the file to read.  If a filename is not specified, <tt>tblgen</tt>
-reads from standard input.</p>
+specifies the file to read.  If a filename is not specified, 
+<tt>llvm-tblgen</tt> reads from standard input.</p>
 
 <p>To be useful, one of the <a href="#backends">TableGen backends</a> must be
-used.  These backends are selectable on the command line (type '<tt>tblgen
+used.  These backends are selectable on the command line (type '<tt>llvm-tblgen
 -help</tt>' for a list).  For example, to get a list of all of the definitions
 that subclass a particular type (which can be useful for building up an enum
 list of these records), use the <tt>-print-enums</tt> option:</p>
 
 <div class="doc_code">
 <pre>
-$ tblgen X86.td -print-enums -class=Register
+$ llvm-tblgen X86.td -print-enums -class=Register
 AH, AL, AX, BH, BL, BP, BPL, BX, CH, CL, CX, DH, DI, DIL, DL, DX, EAX, EBP, EBX,
 ECX, EDI, EDX, EFLAGS, EIP, ESI, ESP, FP0, FP1, FP2, FP3, FP4, FP5, FP6, IP,
 MM0, MM1, MM2, MM3, MM4, MM5, MM6, MM7, R10, R10B, R10D, R10W, R11, R11B, R11D,
@@ -246,7 +246,7 @@ RDX, RIP, RSI, RSP, SI, SIL, SP, SPL, ST0, ST1, ST2, ST3, ST4, ST5, ST6, ST7,
 XMM0, XMM1, XMM10, XMM11, XMM12, XMM13, XMM14, XMM15, XMM2, XMM3, XMM4, XMM5,
 XMM6, XMM7, XMM8, XMM9,
 
-$ tblgen X86.td -print-enums -class=Instruction 
+$ llvm-tblgen X86.td -print-enums -class=Instruction 
 ABS_F, ABS_Fp32, ABS_Fp64, ABS_Fp80, ADC32mi, ADC32mi8, ADC32mr, ADC32ri,
 ADC32ri8, ADC32rm, ADC32rr, ADC64mi32, ADC64mi8, ADC64mr, ADC64ri32, ADC64ri8,
 ADC64rm, ADC64rr, ADD16mi, ADD16mi8, ADD16mr, ADD16ri, ADD16ri8, ADD16rm,
@@ -604,7 +604,8 @@ useful in conjunction with template arguments.  As an example:</p>
 <p>This is obviously a contrived example, but it shows how template arguments
 can be used to decouple the interface provided to the user of the class from the
 actual internal data representation expected by the class.  In this case,
-running <tt>tblgen</tt> on the example prints the following definitions:</p>
+running <tt>llvm-tblgen</tt> on the example prints the following 
+definitions:</p>
 
 <div class="doc_code">
 <pre>
