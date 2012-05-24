@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -triple ptx32-unknown-unknown -emit-llvm -O0 -o - | FileCheck %s
+// RUN: %clang_cc1 %s -triple nvptx-unknown-unknown -emit-llvm -O0 -o - | FileCheck %s
 
 void device_function() {
 }

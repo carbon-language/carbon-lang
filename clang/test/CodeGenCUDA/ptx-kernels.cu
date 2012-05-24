@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -triple ptx32-unknown-unknown -fcuda-is-device -emit-llvm -o - | FileCheck %s
+// RUN: %clang_cc1 %s -triple nvptx-unknown-unknown -fcuda-is-device -emit-llvm -o - | FileCheck %s
 
 #include "../SemaCUDA/cuda.h"
 

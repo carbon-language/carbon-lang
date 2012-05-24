@@ -1,24 +1,24 @@
-// RUN: %clang_cc1 -emit-llvm %s -o - -fcuda-is-device -triple ptx32-unknown-unknown | FileCheck %s
+// RUN: %clang_cc1 -emit-llvm %s -o - -fcuda-is-device -triple nvptx-unknown-unknown | FileCheck %s
 
 #include "../SemaCUDA/cuda.h"
 
-// CHECK: @i = global
+// CHECK: @i = addrspace(1) global
 __device__ int i;
 
-// CHECK: @j = addrspace(1) global
+// CHECK: @j = addrspace(4) global
 __constant__ int j;
 
-// CHECK: @k = addrspace(4) global
+// CHECK: @k = addrspace(3) global
 __shared__ int k;
 
 __device__ void foo() {
-  // CHECK: load i32* @i
+  // CHECK: load i32* bitcast (i32 addrspace(1)* @i to i32*)
   i++;
 
-  // CHECK: load i32* bitcast (i32 addrspace(1)* @j to i32*)
+  // CHECK: load i32* bitcast (i32 addrspace(4)* @j to i32*)
   j++;
 
-  // CHECK: load i32* bitcast (i32 addrspace(4)* @k to i32*)
+  // CHECK: load i32* bitcast (i32 addrspace(3)* @k to i32*)
   k++;
 }
 

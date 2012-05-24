@@ -2891,14 +2891,14 @@ llvm::Value *ARMABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
 }
 
 //===----------------------------------------------------------------------===//
-// PTX ABI Implementation
+// NVPTX ABI Implementation
 //===----------------------------------------------------------------------===//
 
 namespace {
 
-class PTXABIInfo : public ABIInfo {
+class NVPTXABIInfo : public ABIInfo {
 public:
-  PTXABIInfo(CodeGenTypes &CGT) : ABIInfo(CGT) {}
+  NVPTXABIInfo(CodeGenTypes &CGT) : ABIInfo(CGT) {}
 
   ABIArgInfo classifyReturnType(QualType RetTy) const;
   ABIArgInfo classifyArgumentType(QualType Ty) const;
@@ -2908,16 +2908,16 @@ public:
                                  CodeGenFunction &CFG) const;
 };
 
-class PTXTargetCodeGenInfo : public TargetCodeGenInfo {
+class NVPTXTargetCodeGenInfo : public TargetCodeGenInfo {
 public:
-  PTXTargetCodeGenInfo(CodeGenTypes &CGT)
-    : TargetCodeGenInfo(new PTXABIInfo(CGT)) {}
+  NVPTXTargetCodeGenInfo(CodeGenTypes &CGT)
+    : TargetCodeGenInfo(new NVPTXABIInfo(CGT)) {}
     
   virtual void SetTargetAttributes(const Decl *D, llvm::GlobalValue *GV,
                                    CodeGen::CodeGenModule &M) const;
 };
 
-ABIArgInfo PTXABIInfo::classifyReturnType(QualType RetTy) const {
+ABIArgInfo NVPTXABIInfo::classifyReturnType(QualType RetTy) const {
   if (RetTy->isVoidType())
     return ABIArgInfo::getIgnore();
   if (isAggregateTypeForABI(RetTy))
@@ -2925,14 +2925,14 @@ ABIArgInfo PTXABIInfo::classifyReturnType(QualType RetTy) const {
   return ABIArgInfo::getDirect();
 }
 
-ABIArgInfo PTXABIInfo::classifyArgumentType(QualType Ty) const {
+ABIArgInfo NVPTXABIInfo::classifyArgumentType(QualType Ty) const {
   if (isAggregateTypeForABI(Ty))
     return ABIArgInfo::getIndirect(0);
 
   return ABIArgInfo::getDirect();
 }
 
-void PTXABIInfo::computeInfo(CGFunctionInfo &FI) const {
+void NVPTXABIInfo::computeInfo(CGFunctionInfo &FI) const {
   FI.getReturnInfo() = classifyReturnType(FI.getReturnType());
   for (CGFunctionInfo::arg_iterator it = FI.arg_begin(), ie = FI.arg_end();
        it != ie; ++it)
@@ -2943,6 +2943,8 @@ void PTXABIInfo::computeInfo(CGFunctionInfo &FI) const {
     return;
 
   // Calling convention as default by an ABI.
+  // We're still using the PTX_Kernel/PTX_Device calling conventions here,
+  // but we should switch to NVVM metadata later on.
   llvm::CallingConv::ID DefaultCC;
   const LangOptions &LangOpts = getContext().getLangOpts();
   if (LangOpts.OpenCL || LangOpts.CUDA) {
@@ -2961,14 +2963,14 @@ void PTXABIInfo::computeInfo(CGFunctionInfo &FI) const {
    
 }
 
-llvm::Value *PTXABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
-                                   CodeGenFunction &CFG) const {
-  llvm_unreachable("PTX does not support varargs");
+llvm::Value *NVPTXABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
+                                     CodeGenFunction &CFG) const {
+  llvm_unreachable("NVPTX does not support varargs");
 }
 
-void PTXTargetCodeGenInfo::SetTargetAttributes(const Decl *D,
-                                               llvm::GlobalValue *GV,
-                                               CodeGen::CodeGenModule &M) const{
+void NVPTXTargetCodeGenInfo::
+SetTargetAttributes(const Decl *D, llvm::GlobalValue *GV,
+                    CodeGen::CodeGenModule &M) const{
   const FunctionDecl *FD = dyn_cast<FunctionDecl>(D);
   if (!FD) return;
 
@@ -3704,11 +3706,9 @@ const TargetCodeGenInfo &CodeGenModule::getTargetCodeGenInfo() {
   case llvm::Triple::ppc64:
     return *(TheTargetCodeGenInfo = new PPC64TargetCodeGenInfo(Types));
 
-  case llvm::Triple::ptx32:
-  case llvm::Triple::ptx64:
   case llvm::Triple::nvptx:
   case llvm::Triple::nvptx64:
-    return *(TheTargetCodeGenInfo = new PTXTargetCodeGenInfo(Types));
+    return *(TheTargetCodeGenInfo = new NVPTXTargetCodeGenInfo(Types));
 
   case llvm::Triple::mblaze:
     return *(TheTargetCodeGenInfo = new MBlazeTargetCodeGenInfo(Types));

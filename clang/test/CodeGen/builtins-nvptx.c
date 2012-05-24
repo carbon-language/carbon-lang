@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -triple ptx32-unknown-unknown -emit-llvm -o %t %s
-// RUN: %clang_cc1 -triple ptx64-unknown-unknown -emit-llvm -o %t %s
+// RUN: %clang_cc1 -triple nvptx-unknown-unknown -emit-llvm -o %t %s
+// RUN: %clang_cc1 -triple nvptx64-unknown-unknown -emit-llvm -o %t %s
 
 
 int read_tid() {

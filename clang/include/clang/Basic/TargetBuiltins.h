@@ -35,12 +35,12 @@ namespace clang {
     };
   }
 
-  /// PTX builtins
-  namespace PTX {
+  /// NVPTX builtins
+  namespace NVPTX {
     enum {
         LastTIBuiltin = clang::Builtin::FirstTSBuiltin-1,
 #define BUILTIN(ID, TYPE, ATTRS) BI##ID,
-#include "clang/Basic/BuiltinsPTX.def"
+#include "clang/Basic/BuiltinsNVPTX.def"
         LastTSBuiltin
     };
   }
