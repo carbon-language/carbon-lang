@@ -210,29 +210,29 @@ private:
   /// loads of D registers and even subregs and odd subregs of Q registers.
   /// For NumVecs <= 2, QOpcodes1 is not used.
   SDNode *SelectVLD(SDNode *N, bool isUpdating, unsigned NumVecs,
-                    unsigned *DOpcodes,
-                    unsigned *QOpcodes0, unsigned *QOpcodes1);
+                    const uint16_t *DOpcodes,
+                    const uint16_t *QOpcodes0, const uint16_t *QOpcodes1);
 
   /// SelectVST - Select NEON store intrinsics.  NumVecs should
   /// be 1, 2, 3 or 4.  The opcode arrays specify the instructions used for
   /// stores of D registers and even subregs and odd subregs of Q registers.
   /// For NumVecs <= 2, QOpcodes1 is not used.
   SDNode *SelectVST(SDNode *N, bool isUpdating, unsigned NumVecs,
-                    unsigned *DOpcodes,
-                    unsigned *QOpcodes0, unsigned *QOpcodes1);
+                    const uint16_t *DOpcodes,
+                    const uint16_t *QOpcodes0, const uint16_t *QOpcodes1);
 
   /// SelectVLDSTLane - Select NEON load/store lane intrinsics.  NumVecs should
   /// be 2, 3 or 4.  The opcode arrays specify the instructions used for
   /// load/store of D registers and Q registers.
   SDNode *SelectVLDSTLane(SDNode *N, bool IsLoad,
                           bool isUpdating, unsigned NumVecs,
-                          unsigned *DOpcodes, unsigned *QOpcodes);
+                          const uint16_t *DOpcodes, const uint16_t *QOpcodes);
 
   /// SelectVLDDup - Select NEON load-duplicate intrinsics.  NumVecs
   /// should be 2, 3 or 4.  The opcode array specifies the instructions used
   /// for loading D registers.  (Q registers are not supported.)
   SDNode *SelectVLDDup(SDNode *N, bool isUpdating, unsigned NumVecs,
-                       unsigned *Opcodes);
+                       const uint16_t *Opcodes);
 
   /// SelectVTBL - Select NEON VTBL and VTBX intrinsics.  NumVecs should be 2,
   /// 3 or 4.  These are custom-selected so that a REG_SEQUENCE can be
@@ -1595,8 +1595,9 @@ static unsigned getVLDSTRegisterUpdateOpcode(unsigned Opc) {
 }
 
 SDNode *ARMDAGToDAGISel::SelectVLD(SDNode *N, bool isUpdating, unsigned NumVecs,
-                                   unsigned *DOpcodes, unsigned *QOpcodes0,
-                                   unsigned *QOpcodes1) {
+                                   const uint16_t *DOpcodes,
+                                   const uint16_t *QOpcodes0,
+                                   const uint16_t *QOpcodes1) {
   assert(NumVecs >= 1 && NumVecs <= 4 && "VLD NumVecs out-of-range");
   DebugLoc dl = N->getDebugLoc();
 
@@ -1727,8 +1728,9 @@ SDNode *ARMDAGToDAGISel::SelectVLD(SDNode *N, bool isUpdating, unsigned NumVecs,
 }
 
 SDNode *ARMDAGToDAGISel::SelectVST(SDNode *N, bool isUpdating, unsigned NumVecs,
-                                   unsigned *DOpcodes, unsigned *QOpcodes0,
-                                   unsigned *QOpcodes1) {
+                                   const uint16_t *DOpcodes,
+                                   const uint16_t *QOpcodes0,
+                                   const uint16_t *QOpcodes1) {
   assert(NumVecs >= 1 && NumVecs <= 4 && "VST NumVecs out-of-range");
   DebugLoc dl = N->getDebugLoc();
 
@@ -1873,8 +1875,8 @@ SDNode *ARMDAGToDAGISel::SelectVST(SDNode *N, bool isUpdating, unsigned NumVecs,
 
 SDNode *ARMDAGToDAGISel::SelectVLDSTLane(SDNode *N, bool IsLoad,
                                          bool isUpdating, unsigned NumVecs,
-                                         unsigned *DOpcodes,
-                                         unsigned *QOpcodes) {
+                                         const uint16_t *DOpcodes,
+                                         const uint16_t *QOpcodes) {
   assert(NumVecs >=2 && NumVecs <= 4 && "VLDSTLane NumVecs out-of-range");
   DebugLoc dl = N->getDebugLoc();
 
@@ -1992,7 +1994,8 @@ SDNode *ARMDAGToDAGISel::SelectVLDSTLane(SDNode *N, bool IsLoad,
 }
 
 SDNode *ARMDAGToDAGISel::SelectVLDDup(SDNode *N, bool isUpdating,
-                                      unsigned NumVecs, unsigned *Opcodes) {
+                                      unsigned NumVecs,
+                                      const uint16_t *Opcodes) {
   assert(NumVecs >=2 && NumVecs <= 4 && "VLDDup NumVecs out-of-range");
   DebugLoc dl = N->getDebugLoc();
 
@@ -2891,176 +2894,199 @@ SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
   }
 
   case ARMISD::VLD2DUP: {
-    unsigned Opcodes[] = { ARM::VLD2DUPd8, ARM::VLD2DUPd16,
-                           ARM::VLD2DUPd32 };
+    static const uint16_t Opcodes[] = { ARM::VLD2DUPd8, ARM::VLD2DUPd16,
+                                        ARM::VLD2DUPd32 };
     return SelectVLDDup(N, false, 2, Opcodes);
   }
 
   case ARMISD::VLD3DUP: {
-    unsigned Opcodes[] = { ARM::VLD3DUPd8Pseudo, ARM::VLD3DUPd16Pseudo,
-                           ARM::VLD3DUPd32Pseudo };
+    static const uint16_t Opcodes[] = { ARM::VLD3DUPd8Pseudo,
+                                        ARM::VLD3DUPd16Pseudo,
+                                        ARM::VLD3DUPd32Pseudo };
     return SelectVLDDup(N, false, 3, Opcodes);
   }
 
   case ARMISD::VLD4DUP: {
-    unsigned Opcodes[] = { ARM::VLD4DUPd8Pseudo, ARM::VLD4DUPd16Pseudo,
-                           ARM::VLD4DUPd32Pseudo };
+    static const uint16_t Opcodes[] = { ARM::VLD4DUPd8Pseudo,
+                                        ARM::VLD4DUPd16Pseudo,
+                                        ARM::VLD4DUPd32Pseudo };
     return SelectVLDDup(N, false, 4, Opcodes);
   }
 
   case ARMISD::VLD2DUP_UPD: {
-    unsigned Opcodes[] = { ARM::VLD2DUPd8wb_fixed, ARM::VLD2DUPd16wb_fixed,
-                           ARM::VLD2DUPd32wb_fixed };
+    static const uint16_t Opcodes[] = { ARM::VLD2DUPd8wb_fixed,
+                                        ARM::VLD2DUPd16wb_fixed,
+                                        ARM::VLD2DUPd32wb_fixed };
     return SelectVLDDup(N, true, 2, Opcodes);
   }
 
   case ARMISD::VLD3DUP_UPD: {
-    unsigned Opcodes[] = { ARM::VLD3DUPd8Pseudo_UPD, ARM::VLD3DUPd16Pseudo_UPD,
-                           ARM::VLD3DUPd32Pseudo_UPD };
+    static const uint16_t Opcodes[] = { ARM::VLD3DUPd8Pseudo_UPD,
+                                        ARM::VLD3DUPd16Pseudo_UPD,
+                                        ARM::VLD3DUPd32Pseudo_UPD };
     return SelectVLDDup(N, true, 3, Opcodes);
   }
 
   case ARMISD::VLD4DUP_UPD: {
-    unsigned Opcodes[] = { ARM::VLD4DUPd8Pseudo_UPD, ARM::VLD4DUPd16Pseudo_UPD,
-                           ARM::VLD4DUPd32Pseudo_UPD };
+    static const uint16_t Opcodes[] = { ARM::VLD4DUPd8Pseudo_UPD,
+                                        ARM::VLD4DUPd16Pseudo_UPD,
+                                        ARM::VLD4DUPd32Pseudo_UPD };
     return SelectVLDDup(N, true, 4, Opcodes);
   }
 
   case ARMISD::VLD1_UPD: {
-    unsigned DOpcodes[] = { ARM::VLD1d8wb_fixed, ARM::VLD1d16wb_fixed,
-                            ARM::VLD1d32wb_fixed, ARM::VLD1d64wb_fixed };
-    unsigned QOpcodes[] = { ARM::VLD1q8wb_fixed,
-                            ARM::VLD1q16wb_fixed,
-                            ARM::VLD1q32wb_fixed,
-                            ARM::VLD1q64wb_fixed };
+    static const uint16_t DOpcodes[] = { ARM::VLD1d8wb_fixed,
+                                         ARM::VLD1d16wb_fixed,
+                                         ARM::VLD1d32wb_fixed,
+                                         ARM::VLD1d64wb_fixed };
+    static const uint16_t QOpcodes[] = { ARM::VLD1q8wb_fixed,
+                                         ARM::VLD1q16wb_fixed,
+                                         ARM::VLD1q32wb_fixed,
+                                         ARM::VLD1q64wb_fixed };
     return SelectVLD(N, true, 1, DOpcodes, QOpcodes, 0);
   }
 
   case ARMISD::VLD2_UPD: {
-    unsigned DOpcodes[] = { ARM::VLD2d8wb_fixed,
-                            ARM::VLD2d16wb_fixed,
-                            ARM::VLD2d32wb_fixed,
-                            ARM::VLD1q64wb_fixed};
-    unsigned QOpcodes[] = { ARM::VLD2q8PseudoWB_fixed,
-                            ARM::VLD2q16PseudoWB_fixed,
-                            ARM::VLD2q32PseudoWB_fixed };
+    static const uint16_t DOpcodes[] = { ARM::VLD2d8wb_fixed,
+                                         ARM::VLD2d16wb_fixed,
+                                         ARM::VLD2d32wb_fixed,
+                                         ARM::VLD1q64wb_fixed};
+    static const uint16_t QOpcodes[] = { ARM::VLD2q8PseudoWB_fixed,
+                                         ARM::VLD2q16PseudoWB_fixed,
+                                         ARM::VLD2q32PseudoWB_fixed };
     return SelectVLD(N, true, 2, DOpcodes, QOpcodes, 0);
   }
 
   case ARMISD::VLD3_UPD: {
-    unsigned DOpcodes[] = { ARM::VLD3d8Pseudo_UPD, ARM::VLD3d16Pseudo_UPD,
-                            ARM::VLD3d32Pseudo_UPD, ARM::VLD1q64wb_fixed};
-    unsigned QOpcodes0[] = { ARM::VLD3q8Pseudo_UPD,
-                             ARM::VLD3q16Pseudo_UPD,
-                             ARM::VLD3q32Pseudo_UPD };
-    unsigned QOpcodes1[] = { ARM::VLD3q8oddPseudo_UPD,
-                             ARM::VLD3q16oddPseudo_UPD,
-                             ARM::VLD3q32oddPseudo_UPD };
+    static const uint16_t DOpcodes[] = { ARM::VLD3d8Pseudo_UPD,
+                                         ARM::VLD3d16Pseudo_UPD,
+                                         ARM::VLD3d32Pseudo_UPD,
+                                         ARM::VLD1q64wb_fixed};
+    static const uint16_t QOpcodes0[] = { ARM::VLD3q8Pseudo_UPD,
+                                          ARM::VLD3q16Pseudo_UPD,
+                                          ARM::VLD3q32Pseudo_UPD };
+    static const uint16_t QOpcodes1[] = { ARM::VLD3q8oddPseudo_UPD,
+                                          ARM::VLD3q16oddPseudo_UPD,
+                                          ARM::VLD3q32oddPseudo_UPD };
     return SelectVLD(N, true, 3, DOpcodes, QOpcodes0, QOpcodes1);
   }
 
   case ARMISD::VLD4_UPD: {
-    unsigned DOpcodes[] = { ARM::VLD4d8Pseudo_UPD, ARM::VLD4d16Pseudo_UPD,
-                            ARM::VLD4d32Pseudo_UPD, ARM::VLD1q64wb_fixed};
-    unsigned QOpcodes0[] = { ARM::VLD4q8Pseudo_UPD,
-                             ARM::VLD4q16Pseudo_UPD,
-                             ARM::VLD4q32Pseudo_UPD };
-    unsigned QOpcodes1[] = { ARM::VLD4q8oddPseudo_UPD,
-                             ARM::VLD4q16oddPseudo_UPD,
-                             ARM::VLD4q32oddPseudo_UPD };
+    static const uint16_t DOpcodes[] = { ARM::VLD4d8Pseudo_UPD,
+                                         ARM::VLD4d16Pseudo_UPD,
+                                         ARM::VLD4d32Pseudo_UPD,
+                                         ARM::VLD1q64wb_fixed};
+    static const uint16_t QOpcodes0[] = { ARM::VLD4q8Pseudo_UPD,
+                                          ARM::VLD4q16Pseudo_UPD,
+                                          ARM::VLD4q32Pseudo_UPD };
+    static const uint16_t QOpcodes1[] = { ARM::VLD4q8oddPseudo_UPD,
+                                          ARM::VLD4q16oddPseudo_UPD,
+                                          ARM::VLD4q32oddPseudo_UPD };
     return SelectVLD(N, true, 4, DOpcodes, QOpcodes0, QOpcodes1);
   }
 
   case ARMISD::VLD2LN_UPD: {
-    unsigned DOpcodes[] = { ARM::VLD2LNd8Pseudo_UPD, ARM::VLD2LNd16Pseudo_UPD,
-                            ARM::VLD2LNd32Pseudo_UPD };
-    unsigned QOpcodes[] = { ARM::VLD2LNq16Pseudo_UPD,
-                            ARM::VLD2LNq32Pseudo_UPD };
+    static const uint16_t DOpcodes[] = { ARM::VLD2LNd8Pseudo_UPD,
+                                         ARM::VLD2LNd16Pseudo_UPD,
+                                         ARM::VLD2LNd32Pseudo_UPD };
+    static const uint16_t QOpcodes[] = { ARM::VLD2LNq16Pseudo_UPD,
+                                         ARM::VLD2LNq32Pseudo_UPD };
     return SelectVLDSTLane(N, true, true, 2, DOpcodes, QOpcodes);
   }
 
   case ARMISD::VLD3LN_UPD: {
-    unsigned DOpcodes[] = { ARM::VLD3LNd8Pseudo_UPD, ARM::VLD3LNd16Pseudo_UPD,
-                            ARM::VLD3LNd32Pseudo_UPD };
-    unsigned QOpcodes[] = { ARM::VLD3LNq16Pseudo_UPD,
-                            ARM::VLD3LNq32Pseudo_UPD };
+    static const uint16_t DOpcodes[] = { ARM::VLD3LNd8Pseudo_UPD,
+                                         ARM::VLD3LNd16Pseudo_UPD,
+                                         ARM::VLD3LNd32Pseudo_UPD };
+    static const uint16_t QOpcodes[] = { ARM::VLD3LNq16Pseudo_UPD,
+                                         ARM::VLD3LNq32Pseudo_UPD };
     return SelectVLDSTLane(N, true, true, 3, DOpcodes, QOpcodes);
   }
 
   case ARMISD::VLD4LN_UPD: {
-    unsigned DOpcodes[] = { ARM::VLD4LNd8Pseudo_UPD, ARM::VLD4LNd16Pseudo_UPD,
-                            ARM::VLD4LNd32Pseudo_UPD };
-    unsigned QOpcodes[] = { ARM::VLD4LNq16Pseudo_UPD,
-                            ARM::VLD4LNq32Pseudo_UPD };
+    static const uint16_t DOpcodes[] = { ARM::VLD4LNd8Pseudo_UPD,
+                                         ARM::VLD4LNd16Pseudo_UPD,
+                                         ARM::VLD4LNd32Pseudo_UPD };
+    static const uint16_t QOpcodes[] = { ARM::VLD4LNq16Pseudo_UPD,
+                                         ARM::VLD4LNq32Pseudo_UPD };
     return SelectVLDSTLane(N, true, true, 4, DOpcodes, QOpcodes);
   }
 
   case ARMISD::VST1_UPD: {
-    unsigned DOpcodes[] = { ARM::VST1d8wb_fixed, ARM::VST1d16wb_fixed,
-                            ARM::VST1d32wb_fixed, ARM::VST1d64wb_fixed };
-    unsigned QOpcodes[] = { ARM::VST1q8wb_fixed,
-                            ARM::VST1q16wb_fixed,
-                            ARM::VST1q32wb_fixed,
-                            ARM::VST1q64wb_fixed };
+    static const uint16_t DOpcodes[] = { ARM::VST1d8wb_fixed,
+                                         ARM::VST1d16wb_fixed,
+                                         ARM::VST1d32wb_fixed,
+                                         ARM::VST1d64wb_fixed };
+    static const uint16_t QOpcodes[] = { ARM::VST1q8wb_fixed,
+                                         ARM::VST1q16wb_fixed,
+                                         ARM::VST1q32wb_fixed,
+                                         ARM::VST1q64wb_fixed };
     return SelectVST(N, true, 1, DOpcodes, QOpcodes, 0);
   }
 
   case ARMISD::VST2_UPD: {
-    unsigned DOpcodes[] = { ARM::VST2d8wb_fixed,
-                            ARM::VST2d16wb_fixed,
-                            ARM::VST2d32wb_fixed,
-                            ARM::VST1q64wb_fixed};
-    unsigned QOpcodes[] = { ARM::VST2q8PseudoWB_fixed,
-                            ARM::VST2q16PseudoWB_fixed,
-                            ARM::VST2q32PseudoWB_fixed };
+    static const uint16_t DOpcodes[] = { ARM::VST2d8wb_fixed,
+                                         ARM::VST2d16wb_fixed,
+                                         ARM::VST2d32wb_fixed,
+                                         ARM::VST1q64wb_fixed};
+    static const uint16_t QOpcodes[] = { ARM::VST2q8PseudoWB_fixed,
+                                         ARM::VST2q16PseudoWB_fixed,
+                                         ARM::VST2q32PseudoWB_fixed };
     return SelectVST(N, true, 2, DOpcodes, QOpcodes, 0);
   }
 
   case ARMISD::VST3_UPD: {
-    unsigned DOpcodes[] = { ARM::VST3d8Pseudo_UPD, ARM::VST3d16Pseudo_UPD,
-                            ARM::VST3d32Pseudo_UPD,ARM::VST1d64TPseudoWB_fixed};
-    unsigned QOpcodes0[] = { ARM::VST3q8Pseudo_UPD,
-                             ARM::VST3q16Pseudo_UPD,
-                             ARM::VST3q32Pseudo_UPD };
-    unsigned QOpcodes1[] = { ARM::VST3q8oddPseudo_UPD,
-                             ARM::VST3q16oddPseudo_UPD,
-                             ARM::VST3q32oddPseudo_UPD };
+    static const uint16_t DOpcodes[] = { ARM::VST3d8Pseudo_UPD,
+                                         ARM::VST3d16Pseudo_UPD,
+                                         ARM::VST3d32Pseudo_UPD,
+                                         ARM::VST1d64TPseudoWB_fixed};
+    static const uint16_t QOpcodes0[] = { ARM::VST3q8Pseudo_UPD,
+                                          ARM::VST3q16Pseudo_UPD,
+                                          ARM::VST3q32Pseudo_UPD };
+    static const uint16_t QOpcodes1[] = { ARM::VST3q8oddPseudo_UPD,
+                                          ARM::VST3q16oddPseudo_UPD,
+                                          ARM::VST3q32oddPseudo_UPD };
     return SelectVST(N, true, 3, DOpcodes, QOpcodes0, QOpcodes1);
   }
 
   case ARMISD::VST4_UPD: {
-    unsigned DOpcodes[] = { ARM::VST4d8Pseudo_UPD, ARM::VST4d16Pseudo_UPD,
-                            ARM::VST4d32Pseudo_UPD,ARM::VST1d64QPseudoWB_fixed};
-    unsigned QOpcodes0[] = { ARM::VST4q8Pseudo_UPD,
-                             ARM::VST4q16Pseudo_UPD,
-                             ARM::VST4q32Pseudo_UPD };
-    unsigned QOpcodes1[] = { ARM::VST4q8oddPseudo_UPD,
-                             ARM::VST4q16oddPseudo_UPD,
-                             ARM::VST4q32oddPseudo_UPD };
+    static const uint16_t DOpcodes[] = { ARM::VST4d8Pseudo_UPD,
+                                         ARM::VST4d16Pseudo_UPD,
+                                         ARM::VST4d32Pseudo_UPD,
+                                         ARM::VST1d64QPseudoWB_fixed};
+    static const uint16_t QOpcodes0[] = { ARM::VST4q8Pseudo_UPD,
+                                          ARM::VST4q16Pseudo_UPD,
+                                          ARM::VST4q32Pseudo_UPD };
+    static const uint16_t QOpcodes1[] = { ARM::VST4q8oddPseudo_UPD,
+                                          ARM::VST4q16oddPseudo_UPD,
+                                          ARM::VST4q32oddPseudo_UPD };
     return SelectVST(N, true, 4, DOpcodes, QOpcodes0, QOpcodes1);
   }
 
   case ARMISD::VST2LN_UPD: {
-    unsigned DOpcodes[] = { ARM::VST2LNd8Pseudo_UPD, ARM::VST2LNd16Pseudo_UPD,
-                            ARM::VST2LNd32Pseudo_UPD };
-    unsigned QOpcodes[] = { ARM::VST2LNq16Pseudo_UPD,
-                            ARM::VST2LNq32Pseudo_UPD };
+    static const uint16_t DOpcodes[] = { ARM::VST2LNd8Pseudo_UPD,
+                                         ARM::VST2LNd16Pseudo_UPD,
+                                         ARM::VST2LNd32Pseudo_UPD };
+    static const uint16_t QOpcodes[] = { ARM::VST2LNq16Pseudo_UPD,
+                                         ARM::VST2LNq32Pseudo_UPD };
     return SelectVLDSTLane(N, false, true, 2, DOpcodes, QOpcodes);
   }
 
   case ARMISD::VST3LN_UPD: {
-    unsigned DOpcodes[] = { ARM::VST3LNd8Pseudo_UPD, ARM::VST3LNd16Pseudo_UPD,
-                            ARM::VST3LNd32Pseudo_UPD };
-    unsigned QOpcodes[] = { ARM::VST3LNq16Pseudo_UPD,
-                            ARM::VST3LNq32Pseudo_UPD };
+    static const uint16_t DOpcodes[] = { ARM::VST3LNd8Pseudo_UPD,
+                                         ARM::VST3LNd16Pseudo_UPD,
+                                         ARM::VST3LNd32Pseudo_UPD };
+    static const uint16_t QOpcodes[] = { ARM::VST3LNq16Pseudo_UPD,
+                                         ARM::VST3LNq32Pseudo_UPD };
     return SelectVLDSTLane(N, false, true, 3, DOpcodes, QOpcodes);
   }
 
   case ARMISD::VST4LN_UPD: {
-    unsigned DOpcodes[] = { ARM::VST4LNd8Pseudo_UPD, ARM::VST4LNd16Pseudo_UPD,
-                            ARM::VST4LNd32Pseudo_UPD };
-    unsigned QOpcodes[] = { ARM::VST4LNq16Pseudo_UPD,
-                            ARM::VST4LNq32Pseudo_UPD };
+    static const uint16_t DOpcodes[] = { ARM::VST4LNd8Pseudo_UPD,
+                                         ARM::VST4LNd16Pseudo_UPD,
+                                         ARM::VST4LNd32Pseudo_UPD };
+    static const uint16_t QOpcodes[] = { ARM::VST4LNq16Pseudo_UPD,
+                                         ARM::VST4LNq32Pseudo_UPD };
     return SelectVLDSTLane(N, false, true, 4, DOpcodes, QOpcodes);
   }
 
@@ -3177,124 +3203,144 @@ SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
     }
 
     case Intrinsic::arm_neon_vld1: {
-      unsigned DOpcodes[] = { ARM::VLD1d8, ARM::VLD1d16,
-                              ARM::VLD1d32, ARM::VLD1d64 };
-      unsigned QOpcodes[] = { ARM::VLD1q8, ARM::VLD1q16,
-                              ARM::VLD1q32, ARM::VLD1q64};
+      static const uint16_t DOpcodes[] = { ARM::VLD1d8, ARM::VLD1d16,
+                                           ARM::VLD1d32, ARM::VLD1d64 };
+      static const uint16_t QOpcodes[] = { ARM::VLD1q8, ARM::VLD1q16,
+                                           ARM::VLD1q32, ARM::VLD1q64};
       return SelectVLD(N, false, 1, DOpcodes, QOpcodes, 0);
     }
 
     case Intrinsic::arm_neon_vld2: {
-      unsigned DOpcodes[] = { ARM::VLD2d8, ARM::VLD2d16,
-                              ARM::VLD2d32, ARM::VLD1q64 };
-      unsigned QOpcodes[] = { ARM::VLD2q8Pseudo, ARM::VLD2q16Pseudo,
-                              ARM::VLD2q32Pseudo };
+      static const uint16_t DOpcodes[] = { ARM::VLD2d8, ARM::VLD2d16,
+                                           ARM::VLD2d32, ARM::VLD1q64 };
+      static const uint16_t QOpcodes[] = { ARM::VLD2q8Pseudo, ARM::VLD2q16Pseudo,
+                                           ARM::VLD2q32Pseudo };
       return SelectVLD(N, false, 2, DOpcodes, QOpcodes, 0);
     }
 
     case Intrinsic::arm_neon_vld3: {
-      unsigned DOpcodes[] = { ARM::VLD3d8Pseudo, ARM::VLD3d16Pseudo,
-                              ARM::VLD3d32Pseudo, ARM::VLD1d64TPseudo };
-      unsigned QOpcodes0[] = { ARM::VLD3q8Pseudo_UPD,
-                               ARM::VLD3q16Pseudo_UPD,
-                               ARM::VLD3q32Pseudo_UPD };
-      unsigned QOpcodes1[] = { ARM::VLD3q8oddPseudo,
-                               ARM::VLD3q16oddPseudo,
-                               ARM::VLD3q32oddPseudo };
+      static const uint16_t DOpcodes[] = { ARM::VLD3d8Pseudo,
+                                           ARM::VLD3d16Pseudo,
+                                           ARM::VLD3d32Pseudo,
+                                           ARM::VLD1d64TPseudo };
+      static const uint16_t QOpcodes0[] = { ARM::VLD3q8Pseudo_UPD,
+                                            ARM::VLD3q16Pseudo_UPD,
+                                            ARM::VLD3q32Pseudo_UPD };
+      static const uint16_t QOpcodes1[] = { ARM::VLD3q8oddPseudo,
+                                            ARM::VLD3q16oddPseudo,
+                                            ARM::VLD3q32oddPseudo };
       return SelectVLD(N, false, 3, DOpcodes, QOpcodes0, QOpcodes1);
     }
 
     case Intrinsic::arm_neon_vld4: {
-      unsigned DOpcodes[] = { ARM::VLD4d8Pseudo, ARM::VLD4d16Pseudo,
-                              ARM::VLD4d32Pseudo, ARM::VLD1d64QPseudo };
-      unsigned QOpcodes0[] = { ARM::VLD4q8Pseudo_UPD,
-                               ARM::VLD4q16Pseudo_UPD,
-                               ARM::VLD4q32Pseudo_UPD };
-      unsigned QOpcodes1[] = { ARM::VLD4q8oddPseudo,
-                               ARM::VLD4q16oddPseudo,
-                               ARM::VLD4q32oddPseudo };
+      static const uint16_t DOpcodes[] = { ARM::VLD4d8Pseudo,
+                                           ARM::VLD4d16Pseudo,
+                                           ARM::VLD4d32Pseudo,
+                                           ARM::VLD1d64QPseudo };
+      static const uint16_t QOpcodes0[] = { ARM::VLD4q8Pseudo_UPD,
+                                            ARM::VLD4q16Pseudo_UPD,
+                                            ARM::VLD4q32Pseudo_UPD };
+      static const uint16_t QOpcodes1[] = { ARM::VLD4q8oddPseudo,
+                                            ARM::VLD4q16oddPseudo,
+                                            ARM::VLD4q32oddPseudo };
       return SelectVLD(N, false, 4, DOpcodes, QOpcodes0, QOpcodes1);
     }
 
     case Intrinsic::arm_neon_vld2lane: {
-      unsigned DOpcodes[] = { ARM::VLD2LNd8Pseudo, ARM::VLD2LNd16Pseudo,
-                              ARM::VLD2LNd32Pseudo };
-      unsigned QOpcodes[] = { ARM::VLD2LNq16Pseudo, ARM::VLD2LNq32Pseudo };
+      static const uint16_t DOpcodes[] = { ARM::VLD2LNd8Pseudo,
+                                           ARM::VLD2LNd16Pseudo,
+                                           ARM::VLD2LNd32Pseudo };
+      static const uint16_t QOpcodes[] = { ARM::VLD2LNq16Pseudo,
+                                           ARM::VLD2LNq32Pseudo };
       return SelectVLDSTLane(N, true, false, 2, DOpcodes, QOpcodes);
     }
 
     case Intrinsic::arm_neon_vld3lane: {
-      unsigned DOpcodes[] = { ARM::VLD3LNd8Pseudo, ARM::VLD3LNd16Pseudo,
-                              ARM::VLD3LNd32Pseudo };
-      unsigned QOpcodes[] = { ARM::VLD3LNq16Pseudo, ARM::VLD3LNq32Pseudo };
+      static const uint16_t DOpcodes[] = { ARM::VLD3LNd8Pseudo,
+                                           ARM::VLD3LNd16Pseudo,
+                                           ARM::VLD3LNd32Pseudo };
+      static const uint16_t QOpcodes[] = { ARM::VLD3LNq16Pseudo,
+                                           ARM::VLD3LNq32Pseudo };
       return SelectVLDSTLane(N, true, false, 3, DOpcodes, QOpcodes);
     }
 
     case Intrinsic::arm_neon_vld4lane: {
-      unsigned DOpcodes[] = { ARM::VLD4LNd8Pseudo, ARM::VLD4LNd16Pseudo,
-                              ARM::VLD4LNd32Pseudo };
-      unsigned QOpcodes[] = { ARM::VLD4LNq16Pseudo, ARM::VLD4LNq32Pseudo };
+      static const uint16_t DOpcodes[] = { ARM::VLD4LNd8Pseudo,
+                                           ARM::VLD4LNd16Pseudo,
+                                           ARM::VLD4LNd32Pseudo };
+      static const uint16_t QOpcodes[] = { ARM::VLD4LNq16Pseudo,
+                                           ARM::VLD4LNq32Pseudo };
       return SelectVLDSTLane(N, true, false, 4, DOpcodes, QOpcodes);
     }
 
     case Intrinsic::arm_neon_vst1: {
-      unsigned DOpcodes[] = { ARM::VST1d8, ARM::VST1d16,
-                              ARM::VST1d32, ARM::VST1d64 };
-      unsigned QOpcodes[] = { ARM::VST1q8, ARM::VST1q16,
-                              ARM::VST1q32, ARM::VST1q64 };
+      static const uint16_t DOpcodes[] = { ARM::VST1d8, ARM::VST1d16,
+                                           ARM::VST1d32, ARM::VST1d64 };
+      static const uint16_t QOpcodes[] = { ARM::VST1q8, ARM::VST1q16,
+                                           ARM::VST1q32, ARM::VST1q64 };
       return SelectVST(N, false, 1, DOpcodes, QOpcodes, 0);
     }
 
     case Intrinsic::arm_neon_vst2: {
-      unsigned DOpcodes[] = { ARM::VST2d8, ARM::VST2d16,
-                              ARM::VST2d32, ARM::VST1q64 };
-      unsigned QOpcodes[] = { ARM::VST2q8Pseudo, ARM::VST2q16Pseudo,
-                              ARM::VST2q32Pseudo };
+      static const uint16_t DOpcodes[] = { ARM::VST2d8, ARM::VST2d16,
+                                           ARM::VST2d32, ARM::VST1q64 };
+      static uint16_t QOpcodes[] = { ARM::VST2q8Pseudo, ARM::VST2q16Pseudo,
+                                     ARM::VST2q32Pseudo };
       return SelectVST(N, false, 2, DOpcodes, QOpcodes, 0);
     }
 
     case Intrinsic::arm_neon_vst3: {
-      unsigned DOpcodes[] = { ARM::VST3d8Pseudo, ARM::VST3d16Pseudo,
-                              ARM::VST3d32Pseudo, ARM::VST1d64TPseudo };
-      unsigned QOpcodes0[] = { ARM::VST3q8Pseudo_UPD,
-                               ARM::VST3q16Pseudo_UPD,
-                               ARM::VST3q32Pseudo_UPD };
-      unsigned QOpcodes1[] = { ARM::VST3q8oddPseudo,
-                               ARM::VST3q16oddPseudo,
-                               ARM::VST3q32oddPseudo };
+      static const uint16_t DOpcodes[] = { ARM::VST3d8Pseudo,
+                                           ARM::VST3d16Pseudo,
+                                           ARM::VST3d32Pseudo,
+                                           ARM::VST1d64TPseudo };
+      static const uint16_t QOpcodes0[] = { ARM::VST3q8Pseudo_UPD,
+                                            ARM::VST3q16Pseudo_UPD,
+                                            ARM::VST3q32Pseudo_UPD };
+      static const uint16_t QOpcodes1[] = { ARM::VST3q8oddPseudo,
+                                            ARM::VST3q16oddPseudo,
+                                            ARM::VST3q32oddPseudo };
       return SelectVST(N, false, 3, DOpcodes, QOpcodes0, QOpcodes1);
     }
 
     case Intrinsic::arm_neon_vst4: {
-      unsigned DOpcodes[] = { ARM::VST4d8Pseudo, ARM::VST4d16Pseudo,
-                              ARM::VST4d32Pseudo, ARM::VST1d64QPseudo };
-      unsigned QOpcodes0[] = { ARM::VST4q8Pseudo_UPD,
-                               ARM::VST4q16Pseudo_UPD,
-                               ARM::VST4q32Pseudo_UPD };
-      unsigned QOpcodes1[] = { ARM::VST4q8oddPseudo,
-                               ARM::VST4q16oddPseudo,
-                               ARM::VST4q32oddPseudo };
+      static const uint16_t DOpcodes[] = { ARM::VST4d8Pseudo,
+                                           ARM::VST4d16Pseudo,
+                                           ARM::VST4d32Pseudo,
+                                           ARM::VST1d64QPseudo };
+      static const uint16_t QOpcodes0[] = { ARM::VST4q8Pseudo_UPD,
+                                            ARM::VST4q16Pseudo_UPD,
+                                            ARM::VST4q32Pseudo_UPD };
+      static const uint16_t QOpcodes1[] = { ARM::VST4q8oddPseudo,
+                                            ARM::VST4q16oddPseudo,
+                                            ARM::VST4q32oddPseudo };
       return SelectVST(N, false, 4, DOpcodes, QOpcodes0, QOpcodes1);
     }
 
     case Intrinsic::arm_neon_vst2lane: {
-      unsigned DOpcodes[] = { ARM::VST2LNd8Pseudo, ARM::VST2LNd16Pseudo,
-                              ARM::VST2LNd32Pseudo };
-      unsigned QOpcodes[] = { ARM::VST2LNq16Pseudo, ARM::VST2LNq32Pseudo };
+      static const uint16_t DOpcodes[] = { ARM::VST2LNd8Pseudo,
+                                           ARM::VST2LNd16Pseudo,
+                                           ARM::VST2LNd32Pseudo };
+      static const uint16_t QOpcodes[] = { ARM::VST2LNq16Pseudo,
+                                           ARM::VST2LNq32Pseudo };
       return SelectVLDSTLane(N, false, false, 2, DOpcodes, QOpcodes);
     }
 
     case Intrinsic::arm_neon_vst3lane: {
-      unsigned DOpcodes[] = { ARM::VST3LNd8Pseudo, ARM::VST3LNd16Pseudo,
-                              ARM::VST3LNd32Pseudo };
-      unsigned QOpcodes[] = { ARM::VST3LNq16Pseudo, ARM::VST3LNq32Pseudo };
+      static const uint16_t DOpcodes[] = { ARM::VST3LNd8Pseudo,
+                                           ARM::VST3LNd16Pseudo,
+                                           ARM::VST3LNd32Pseudo };
+      static const uint16_t QOpcodes[] = { ARM::VST3LNq16Pseudo,
+                                           ARM::VST3LNq32Pseudo };
       return SelectVLDSTLane(N, false, false, 3, DOpcodes, QOpcodes);
     }
 
     case Intrinsic::arm_neon_vst4lane: {
-      unsigned DOpcodes[] = { ARM::VST4LNd8Pseudo, ARM::VST4LNd16Pseudo,
-                              ARM::VST4LNd32Pseudo };
-      unsigned QOpcodes[] = { ARM::VST4LNq16Pseudo, ARM::VST4LNq32Pseudo };
+      static const uint16_t DOpcodes[] = { ARM::VST4LNd8Pseudo,
+                                           ARM::VST4LNd16Pseudo,
+                                           ARM::VST4LNd32Pseudo };
+      static const uint16_t QOpcodes[] = { ARM::VST4LNq16Pseudo,
+                                           ARM::VST4LNq32Pseudo };
       return SelectVLDSTLane(N, false, false, 4, DOpcodes, QOpcodes);
     }
     }
