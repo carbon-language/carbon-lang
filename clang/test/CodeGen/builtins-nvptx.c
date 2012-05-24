@@ -1,8 +1,6 @@
 // RUN: %clang_cc1 -triple nvptx-unknown-unknown -emit-llvm -o %t %s
 // RUN: %clang_cc1 -triple nvptx64-unknown-unknown -emit-llvm -o %t %s
 
-// XFAIL: *
-
 int read_tid() {
 
   int x = __builtin_ptx_read_tid_x();
