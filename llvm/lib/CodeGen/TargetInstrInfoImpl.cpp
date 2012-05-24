@@ -501,6 +501,14 @@ CreateTargetHazardRecognizer(const TargetMachine *TM,
   return new ScheduleHazardRecognizer();
 }
 
+// Default implementation of CreateTargetMIHazardRecognizer.
+ScheduleHazardRecognizer *TargetInstrInfoImpl::
+CreateTargetMIHazardRecognizer(const InstrItineraryData *II,
+                               const ScheduleDAG *DAG) const {
+  return (ScheduleHazardRecognizer *)
+    new ScoreboardHazardRecognizer(II, DAG, "misched");
+}
+
 // Default implementation of CreateTargetPostRAHazardRecognizer.
 ScheduleHazardRecognizer *TargetInstrInfoImpl::
 CreateTargetPostRAHazardRecognizer(const InstrItineraryData *II,
