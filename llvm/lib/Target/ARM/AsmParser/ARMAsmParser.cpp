@@ -2305,7 +2305,7 @@ void ARMOperand::print(raw_ostream &OS) const {
     OS << "<ccout " << getReg() << ">";
     break;
   case k_ITCondMask: {
-    static const char *MaskStr[] = {
+    static const char *const MaskStr[] = {
       "()", "(t)", "(e)", "(tt)", "(et)", "(te)", "(ee)", "(ttt)", "(ett)",
       "(tet)", "(eet)", "(tte)", "(ete)", "(tee)", "(eee)"
     };
