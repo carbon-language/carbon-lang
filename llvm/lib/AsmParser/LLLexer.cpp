@@ -678,7 +678,7 @@ lltok::Kind LLLexer::Lex0x() {
   CurPtr = TokStart + 2;
 
   char Kind;
-  if (CurPtr[0] >= 'K' && CurPtr[0] <= 'M' || CurPtr[0] == 'H') {
+  if ((CurPtr[0] >= 'K' && CurPtr[0] <= 'M') || CurPtr[0] == 'H') {
     Kind = *CurPtr++;
   } else {
     Kind = 'J';
