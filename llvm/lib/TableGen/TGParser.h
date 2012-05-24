@@ -45,10 +45,11 @@ namespace llvm {
   /// ForeachLoop - Record the iteration state associated with a for loop.
   /// This is used to instantiate items in the loop body.
   struct ForeachLoop {
-    Init *IterVar;
-    Init *ListValue;
+    VarInit *IterVar;
+    ListInit *ListValue;
 
-    ForeachLoop(Init *IVar, Init *LValue) : IterVar(IVar), ListValue(LValue) {}
+    ForeachLoop(VarInit *IVar, ListInit *LValue)
+      : IterVar(IVar), ListValue(LValue) {}
   };
 
 class TGParser {
@@ -113,20 +114,17 @@ private:  // Semantic analysis methods.
 
   // IterRecord: Map an iterator name to a value.
   struct IterRecord {
-    Init *IterVar;
+    VarInit *IterVar;
     Init *IterValue;
-    IterRecord(Init *Var, Init *Val) : IterVar(Var), IterValue(Val) {}
+    IterRecord(VarInit *Var, Init *Val) : IterVar(Var), IterValue(Val) {}
   };
 
   // IterSet: The set of all iterator values at some point in the
   // iteration space.
   typedef std::vector<IterRecord> IterSet;
 
-  bool ProcessForeachDefs(Record *CurRec, MultiClass *CurMultiClass,
-                          SMLoc Loc);
-  bool ProcessForeachDefs(Record *CurRec, MultiClass *CurMultiClass,
-                          SMLoc Loc, IterSet &IterVals, ForeachLoop &CurLoop,
-                          LoopVector::iterator NextLoop);
+  bool ProcessForeachDefs(Record *CurRec, SMLoc Loc);
+  bool ProcessForeachDefs(Record *CurRec, SMLoc Loc, IterSet &IterVals);
 
 private:  // Parser methods.
   bool ParseObjectList(MultiClass *MC = 0);
@@ -160,7 +158,7 @@ private:  // Parser methods.
 
   bool ParseTemplateArgList(Record *CurRec);
   Init *ParseDeclaration(Record *CurRec, bool ParsingTemplateArgs);
-  Init *ParseForeachDeclaration(Init *&ForeachListValue);
+  VarInit *ParseForeachDeclaration(ListInit *&ForeachListValue);
 
   SubClassReference ParseSubClassReference(Record *CurRec, bool isDefm);
   SubMultiClassReference ParseSubMultiClassReference(MultiClass *CurMC);
