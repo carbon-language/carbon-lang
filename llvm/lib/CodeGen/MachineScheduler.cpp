@@ -1168,11 +1168,25 @@ SUnit *ConvergingScheduler::pickNode(bool &IsTopNode) {
   }
   SUnit *SU;
   if (ForceTopDown) {
-    SU = DAG->getSUnit(DAG->top());
+    SU = Top.pickOnlyChoice();
+    if (!SU) {
+      SchedCandidate TopCand;
+      CandResult TopResult =
+        pickNodeFromQueue(Top.Available, DAG->getTopRPTracker(), TopCand);
+      assert(TopResult != NoCand && "failed to find the first candidate");
+      SU = TopCand.SU;
+    }
     IsTopNode = true;
   }
   else if (ForceBottomUp) {
-    SU = DAG->getSUnit(priorNonDebug(DAG->bottom(), DAG->top()));
+    SU = Bot.pickOnlyChoice();
+    if (!SU) {
+      SchedCandidate BotCand;
+      CandResult BotResult =
+        pickNodeFromQueue(Bot.Available, DAG->getBotRPTracker(), BotCand);
+      assert(BotResult != NoCand && "failed to find the first candidate");
+      SU = BotCand.SU;
+    }
     IsTopNode = false;
   }
   else {
