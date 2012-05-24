@@ -260,14 +260,12 @@ struct Z : X, Y { };
 int& cvqual_subsume(X&); // expected-note{{candidate function}}
 float& cvqual_subsume(const Y&); // expected-note{{candidate function}}
 
-int& cvqual_subsume2(const X&); // expected-note{{candidate function}}
-float& cvqual_subsume2(const volatile Y&); // expected-note{{candidate function}}
-
-Z get_Z();
+int& cvqual_subsume2(X&); // expected-note{{candidate function}}
+float& cvqual_subsume2(volatile Y&); // expected-note{{candidate function}}
 
 void cvqual_subsume_test(Z z) {
   cvqual_subsume(z); // expected-error{{call to 'cvqual_subsume' is ambiguous}}
-  int& x = cvqual_subsume2(get_Z()); // expected-error{{call to 'cvqual_subsume2' is ambiguous}}
+  cvqual_subsume2(z); // expected-error{{call to 'cvqual_subsume2' is ambiguous}}
 }
 
 // Test overloading with cv-qualification differences in reference
@@ -444,10 +442,10 @@ namespace PR6078 {
 namespace PR6177 {
   struct String { String(char const*); };
 
-  void f(bool const volatile&); // expected-note{{passing argument to parameter here}}
-  void f(String);
+  void f(bool const volatile&);
+  int &f(String);
 
-  void g() { f(""); } // expected-error{{volatile lvalue reference to type 'const volatile bool' cannot bind to a value of unrelated type 'const char [1]'}}
+  void g() { int &r = f(""); }
 }
 
 namespace PR7095 {
@@ -573,4 +571,12 @@ namespace IncompleteArg {
 namespace PR12142 {
   void fun(int (*x)[10]); // expected-note{{candidate function not viable: 1st argument ('const int (*)[10]') would lose const qualifier}}
   void g() { fun((const int(*)[10])0); } // expected-error{{no matching function for call to 'fun'}}
+}
+
+// DR1152: Take 'volatile' into account when handling reference bindings in
+//         overload resolution.
+namespace PR12931 {
+  void f(const int &, ...);
+  void f(const volatile int &, int);
+  void g() { f(0, 0); }
 }

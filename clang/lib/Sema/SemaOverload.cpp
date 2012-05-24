@@ -4153,7 +4153,7 @@ TryReferenceInit(Sema &S, Expr *Init, QualType DeclType,
   // qualifier.
   // This is also the point where rvalue references and lvalue inits no longer
   // go together.
-  if (!isRValRef && !T1.isConstQualified())
+  if (!isRValRef && (!T1.isConstQualified() || T1.isVolatileQualified()))
     return ICS;
 
   //       -- If the initializer expression
