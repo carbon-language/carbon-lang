@@ -250,7 +250,8 @@ bool MachineScheduler::runOnMachineFunction(MachineFunction &mf) {
         Scheduler->exitRegion();
         continue;
       }
-      DEBUG(dbgs() << "MachineScheduling " << MF->getFunction()->getName()
+      DEBUG(dbgs() << "********** MI Scheduling **********\n");
+      DEBUG(dbgs() << MF->getFunction()->getName()
             << ":BB#" << MBB->getNumber() << "\n  From: " << *I << "    To: ";
             if (RegionEnd != MBB->end()) dbgs() << *RegionEnd;
             else dbgs() << "End";
@@ -520,6 +521,8 @@ void ScheduleDAGMI::initRegPressure() {
   // Close the RPTracker to finalize live ins.
   RPTracker.closeRegion();
 
+  DEBUG(RPTracker.getPressure().dump(TRI));
+
   // Initialize the live ins and live outs.
   TopRPTracker.addLiveRegs(RPTracker.getPressure().LiveInRegs);
   BotRPTracker.addLiveRegs(RPTracker.getPressure().LiveOutRegs);
@@ -601,7 +604,6 @@ void ScheduleDAGMI::schedule() {
   // Initialize top/bottom trackers after computing region pressure.
   initRegPressure();
 
-  DEBUG(dbgs() << "********** MI Scheduling **********\n");
   DEBUG(for (unsigned su = 0, e = SUnits.size(); su != e; ++su)
           SUnits[su].dumpAll(this));
 
