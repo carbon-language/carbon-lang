@@ -12,7 +12,7 @@ namespace test0 {
     // pointer to volatile has side effect (thus no warning)
     Box* box = new Box;
     box->i; // expected-warning {{expression result unused}}
-    box->j;
+    box->j; // expected-warning {{expression result unused}}
   }
 }
 

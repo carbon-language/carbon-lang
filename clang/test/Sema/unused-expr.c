@@ -92,6 +92,7 @@ int t6() {
   fn2(92, 21);  // expected-warning {{ignoring return value of function declared with pure attribute}}
   fn3(42);  // expected-warning {{ignoring return value of function declared with const attribute}}
   __builtin_fabsf(0); // expected-warning {{ignoring return value of function declared with const attribute}}
+  (void)0, fn1();  // expected-warning {{ignoring return value of function declared with warn_unused_result attribute}}
   return 0;
 }
 

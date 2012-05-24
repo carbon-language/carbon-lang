@@ -4728,6 +4728,10 @@ def warn_unused_call : Warning<
 def warn_unused_result : Warning<
   "ignoring return value of function declared with warn_unused_result "
   "attribute">, InGroup<DiagGroup<"unused-result">>;
+def warn_unused_volatile : Warning<
+  "expression result unused; assign into a variable to force a volatile load">,
+  InGroup<DiagGroup<"unused-volatile-lvalue">>;
+
 def warn_unused_comparison : Warning<
   "%select{equality|inequality}0 comparison result unused">,
   InGroup<UnusedComparison>;

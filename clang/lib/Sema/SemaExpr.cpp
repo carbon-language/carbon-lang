@@ -7412,8 +7412,6 @@ QualType Sema::CheckAssignmentOperands(Expr *LHSExpr, ExprResult &RHS,
 // C99 6.5.17
 static QualType CheckCommaOperands(Sema &S, ExprResult &LHS, ExprResult &RHS,
                                    SourceLocation Loc) {
-  S.DiagnoseUnusedExprResult(LHS.get());
-
   LHS = S.CheckPlaceholderExpr(LHS.take());
   RHS = S.CheckPlaceholderExpr(RHS.take());
   if (LHS.isInvalid() || RHS.isInvalid())
@@ -7428,6 +7426,8 @@ static QualType CheckCommaOperands(Sema &S, ExprResult &LHS, ExprResult &RHS,
   LHS = S.IgnoredValueConversions(LHS.take());
   if (LHS.isInvalid())
     return QualType();
+
+  S.DiagnoseUnusedExprResult(LHS.get());
 
   if (!S.getLangOpts().CPlusPlus) {
     RHS = S.DefaultFunctionArrayLvalueConversion(RHS.take());

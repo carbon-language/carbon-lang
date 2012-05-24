@@ -179,11 +179,12 @@ public:
   SourceLocation getExprLoc() const LLVM_READONLY;
 
   /// isUnusedResultAWarning - Return true if this immediate expression should
-  /// be warned about if the result is unused.  If so, fill in Loc and Ranges
-  /// with location to warn on and the source range[s] to report with the
-  /// warning.
-  bool isUnusedResultAWarning(SourceLocation &Loc, SourceRange &R1,
-                              SourceRange &R2, ASTContext &Ctx) const;
+  /// be warned about if the result is unused.  If so, fill in expr, location,
+  /// and ranges with expr to warn on and source locations/ranges appropriate
+  /// for a warning.
+  bool isUnusedResultAWarning(const Expr *&WarnExpr, SourceLocation &Loc,
+                              SourceRange &R1, SourceRange &R2,
+                              ASTContext &Ctx) const;
 
   /// isLValue - True if this expression is an "l-value" according to
   /// the rules of the current language.  C and C++ give somewhat

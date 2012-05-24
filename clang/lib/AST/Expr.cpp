@@ -1654,8 +1654,9 @@ Stmt *BlockExpr::getBody() {
 /// be warned about if the result is unused.  If so, fill in Loc and Ranges
 /// with location to warn on and the source range[s] to report with the
 /// warning.
-bool Expr::isUnusedResultAWarning(SourceLocation &Loc, SourceRange &R1,
-                                  SourceRange &R2, ASTContext &Ctx) const {
+bool Expr::isUnusedResultAWarning(const Expr *&WarnE, SourceLocation &Loc, 
+                                  SourceRange &R1, SourceRange &R2,
+                                  ASTContext &Ctx) const {
   // Don't warn if the expr is type dependent. The type could end up
   // instantiating to void.
   if (isTypeDependent())
@@ -1665,30 +1666,32 @@ bool Expr::isUnusedResultAWarning(SourceLocation &Loc, SourceRange &R1,
   default:
     if (getType()->isVoidType())
       return false;
+    WarnE = this;
     Loc = getExprLoc();
     R1 = getSourceRange();
     return true;
   case ParenExprClass:
     return cast<ParenExpr>(this)->getSubExpr()->
-      isUnusedResultAWarning(Loc, R1, R2, Ctx);
+      isUnusedResultAWarning(WarnE, Loc, R1, R2, Ctx);
   case GenericSelectionExprClass:
     return cast<GenericSelectionExpr>(this)->getResultExpr()->
-      isUnusedResultAWarning(Loc, R1, R2, Ctx);
+      isUnusedResultAWarning(WarnE, Loc, R1, R2, Ctx);
   case UnaryOperatorClass: {
     const UnaryOperator *UO = cast<UnaryOperator>(this);
 
     switch (UO->getOpcode()) {
-    default: break;
+    case UO_Plus:
+    case UO_Minus:
+    case UO_AddrOf:
+    case UO_Not:
+    case UO_LNot:
+    case UO_Deref:
+      break;
     case UO_PostInc:
     case UO_PostDec:
     case UO_PreInc:
     case UO_PreDec:                 // ++/--
       return false;  // Not a warning.
-    case UO_Deref:
-      // Dereferencing a volatile pointer is a side-effect.
-      if (Ctx.getCanonicalType(getType()).isVolatileQualified())
-        return false;
-      break;
     case UO_Real:
     case UO_Imag:
       // accessing a piece of a volatile complex is a side-effect.
@@ -1697,8 +1700,9 @@ bool Expr::isUnusedResultAWarning(SourceLocation &Loc, SourceRange &R1,
         return false;
       break;
     case UO_Extension:
-      return UO->getSubExpr()->isUnusedResultAWarning(Loc, R1, R2, Ctx);
+      return UO->getSubExpr()->isUnusedResultAWarning(WarnE, Loc, R1, R2, Ctx);
     }
+    WarnE = this;
     Loc = UO->getOperatorLoc();
     R1 = UO->getSubExpr()->getSourceRange();
     return true;
@@ -1717,17 +1721,18 @@ bool Expr::isUnusedResultAWarning(SourceLocation &Loc, SourceRange &R1,
               dyn_cast<IntegerLiteral>(BO->getRHS()->IgnoreParens()))
           if (IE->getValue() == 0)
             return false;
-        return BO->getRHS()->isUnusedResultAWarning(Loc, R1, R2, Ctx);
+        return BO->getRHS()->isUnusedResultAWarning(WarnE, Loc, R1, R2, Ctx);
       // Consider '||', '&&' to have side effects if the LHS or RHS does.
       case BO_LAnd:
       case BO_LOr:
-        if (!BO->getLHS()->isUnusedResultAWarning(Loc, R1, R2, Ctx) ||
-            !BO->getRHS()->isUnusedResultAWarning(Loc, R1, R2, Ctx))
+        if (!BO->getLHS()->isUnusedResultAWarning(WarnE, Loc, R1, R2, Ctx) ||
+            !BO->getRHS()->isUnusedResultAWarning(WarnE, Loc, R1, R2, Ctx))
           return false;
         break;
     }
     if (BO->isAssignmentOp())
       return false;
+    WarnE = this;
     Loc = BO->getOperatorLoc();
     R1 = BO->getLHS()->getSourceRange();
     R2 = BO->getRHS()->getSourceRange();
@@ -1743,28 +1748,22 @@ bool Expr::isUnusedResultAWarning(SourceLocation &Loc, SourceRange &R1,
     // be being used for control flow. Only warn if both the LHS and
     // RHS are warnings.
     const ConditionalOperator *Exp = cast<ConditionalOperator>(this);
-    if (!Exp->getRHS()->isUnusedResultAWarning(Loc, R1, R2, Ctx))
+    if (!Exp->getRHS()->isUnusedResultAWarning(WarnE, Loc, R1, R2, Ctx))
       return false;
     if (!Exp->getLHS())
       return true;
-    return Exp->getLHS()->isUnusedResultAWarning(Loc, R1, R2, Ctx);
+    return Exp->getLHS()->isUnusedResultAWarning(WarnE, Loc, R1, R2, Ctx);
   }
 
   case MemberExprClass:
-    // If the base pointer or element is to a volatile pointer/field, accessing
-    // it is a side effect.
-    if (Ctx.getCanonicalType(getType()).isVolatileQualified())
-      return false;
+    WarnE = this;
     Loc = cast<MemberExpr>(this)->getMemberLoc();
     R1 = SourceRange(Loc, Loc);
     R2 = cast<MemberExpr>(this)->getBase()->getSourceRange();
     return true;
 
   case ArraySubscriptExprClass:
-    // If the base pointer or element is to a volatile pointer/field, accessing
-    // it is a side effect.
-    if (Ctx.getCanonicalType(getType()).isVolatileQualified())
-      return false;
+    WarnE = this;
     Loc = cast<ArraySubscriptExpr>(this)->getRBracketLoc();
     R1 = cast<ArraySubscriptExpr>(this)->getLHS()->getSourceRange();
     R2 = cast<ArraySubscriptExpr>(this)->getRHS()->getSourceRange();
@@ -1780,6 +1779,7 @@ bool Expr::isUnusedResultAWarning(SourceLocation &Loc, SourceRange &R1,
     const CXXOperatorCallExpr *Op = cast<CXXOperatorCallExpr>(this);
     if (Op->getOperator() == OO_EqualEqual ||
         Op->getOperator() == OO_ExclaimEqual) {
+      WarnE = this;
       Loc = Op->getOperatorLoc();
       R1 = Op->getSourceRange();
       return true;
@@ -1800,6 +1800,7 @@ bool Expr::isUnusedResultAWarning(SourceLocation &Loc, SourceRange &R1,
       // updated to match for QoI.
       if (FD->getAttr<WarnUnusedResultAttr>() ||
           FD->getAttr<PureAttr>() || FD->getAttr<ConstAttr>()) {
+        WarnE = this;
         Loc = CE->getCallee()->getLocStart();
         R1 = CE->getCallee()->getSourceRange();
 
@@ -1824,6 +1825,7 @@ bool Expr::isUnusedResultAWarning(SourceLocation &Loc, SourceRange &R1,
         ME->getSelector().getIdentifierInfoForSlot(0) &&
         ME->getSelector().getIdentifierInfoForSlot(0)
                                                ->getName().startswith("init")) {
+      WarnE = this;
       Loc = getExprLoc();
       R1 = ME->getSourceRange();
       return true;
@@ -1831,6 +1833,7 @@ bool Expr::isUnusedResultAWarning(SourceLocation &Loc, SourceRange &R1,
 
     const ObjCMethodDecl *MD = ME->getMethodDecl();
     if (MD && MD->getAttr<WarnUnusedResultAttr>()) {
+      WarnE = this;
       Loc = getExprLoc();
       return true;
     }
@@ -1838,6 +1841,7 @@ bool Expr::isUnusedResultAWarning(SourceLocation &Loc, SourceRange &R1,
   }
 
   case ObjCPropertyRefExprClass:
+    WarnE = this;
     Loc = getExprLoc();
     R1 = getSourceRange();
     return true;
@@ -1850,6 +1854,7 @@ bool Expr::isUnusedResultAWarning(SourceLocation &Loc, SourceRange &R1,
         isa<BinaryOperator>(PO->getSyntacticForm()))
       return false;
 
+    WarnE = this;
     Loc = getExprLoc();
     R1 = getSourceRange();
     return true;
@@ -1864,50 +1869,70 @@ bool Expr::isUnusedResultAWarning(SourceLocation &Loc, SourceRange &R1,
     const CompoundStmt *CS = cast<StmtExpr>(this)->getSubStmt();
     if (!CS->body_empty()) {
       if (const Expr *E = dyn_cast<Expr>(CS->body_back()))
-        return E->isUnusedResultAWarning(Loc, R1, R2, Ctx);
+        return E->isUnusedResultAWarning(WarnE, Loc, R1, R2, Ctx);
       if (const LabelStmt *Label = dyn_cast<LabelStmt>(CS->body_back()))
         if (const Expr *E = dyn_cast<Expr>(Label->getSubStmt()))
-          return E->isUnusedResultAWarning(Loc, R1, R2, Ctx);
+          return E->isUnusedResultAWarning(WarnE, Loc, R1, R2, Ctx);
     }
 
     if (getType()->isVoidType())
       return false;
+    WarnE = this;
     Loc = cast<StmtExpr>(this)->getLParenLoc();
     R1 = getSourceRange();
     return true;
   }
-  case CStyleCastExprClass:
-    // If this is an explicit cast to void, allow it.  People do this when they
-    // think they know what they're doing :).
-    if (getType()->isVoidType())
+  case CStyleCastExprClass: {
+    // Ignore an explicit cast to void, as long as the operand isn't a
+    // volatile lvalue.
+    const CStyleCastExpr *CE = cast<CStyleCastExpr>(this);
+    if (CE->getCastKind() == CK_ToVoid) {
+      if (CE->getSubExpr()->isGLValue() &&
+          CE->getSubExpr()->getType().isVolatileQualified())
+        return CE->getSubExpr()->isUnusedResultAWarning(WarnE, Loc,
+                                                        R1, R2, Ctx);
       return false;
-    Loc = cast<CStyleCastExpr>(this)->getLParenLoc();
-    R1 = cast<CStyleCastExpr>(this)->getSubExpr()->getSourceRange();
+    }
+    WarnE = this;
+    Loc = CE->getLParenLoc();
+    R1 = CE->getSubExpr()->getSourceRange();
     return true;
+  }
   case CXXFunctionalCastExprClass: {
-    if (getType()->isVoidType())
+    // Ignore an explicit cast to void, as long as the operand isn't a
+    // volatile lvalue.
+    const CXXFunctionalCastExpr *CE = cast<CXXFunctionalCastExpr>(this);
+    if (CE->getCastKind() == CK_ToVoid) {
+      if (CE->getSubExpr()->isGLValue() &&
+          CE->getSubExpr()->getType().isVolatileQualified())
+        return CE->getSubExpr()->isUnusedResultAWarning(WarnE, Loc,
+                                                        R1, R2, Ctx);
       return false;
-    const CastExpr *CE = cast<CastExpr>(this);
+    }
     
-    // If this is a cast to void or a constructor conversion, check the operand.
+    // If this is a cast to a constructor conversion, check the operand.
     // Otherwise, the result of the cast is unused.
-    if (CE->getCastKind() == CK_ToVoid ||
-        CE->getCastKind() == CK_ConstructorConversion)
-      return (cast<CastExpr>(this)->getSubExpr()
-              ->isUnusedResultAWarning(Loc, R1, R2, Ctx));
-    Loc = cast<CXXFunctionalCastExpr>(this)->getTypeBeginLoc();
-    R1 = cast<CXXFunctionalCastExpr>(this)->getSubExpr()->getSourceRange();
+    if (CE->getCastKind() == CK_ConstructorConversion)
+      return CE->getSubExpr()->isUnusedResultAWarning(WarnE, Loc, R1, R2, Ctx);
+    WarnE = this;
+    Loc = CE->getTypeBeginLoc();
+    R1 = CE->getSubExpr()->getSourceRange();
     return true;
   }
 
-  case ImplicitCastExprClass:
-    // Check the operand, since implicit casts are inserted by Sema
-    return (cast<ImplicitCastExpr>(this)
-            ->getSubExpr()->isUnusedResultAWarning(Loc, R1, R2, Ctx));
+  case ImplicitCastExprClass: {
+    const CastExpr *ICE = cast<ImplicitCastExpr>(this);
 
+    // lvalue-to-rvalue conversion on a volatile lvalue is a side-effect.
+    if (ICE->getCastKind() == CK_LValueToRValue &&
+        ICE->getSubExpr()->getType().isVolatileQualified())
+      return false;
+
+    return ICE->getSubExpr()->isUnusedResultAWarning(WarnE, Loc, R1, R2, Ctx);
+  }
   case CXXDefaultArgExprClass:
     return (cast<CXXDefaultArgExpr>(this)
-            ->getExpr()->isUnusedResultAWarning(Loc, R1, R2, Ctx));
+            ->getExpr()->isUnusedResultAWarning(WarnE, Loc, R1, R2, Ctx));
 
   case CXXNewExprClass:
     // FIXME: In theory, there might be new expressions that don't have side
@@ -1916,10 +1941,10 @@ bool Expr::isUnusedResultAWarning(SourceLocation &Loc, SourceRange &R1,
     return false;
   case CXXBindTemporaryExprClass:
     return (cast<CXXBindTemporaryExpr>(this)
-            ->getSubExpr()->isUnusedResultAWarning(Loc, R1, R2, Ctx));
+            ->getSubExpr()->isUnusedResultAWarning(WarnE, Loc, R1, R2, Ctx));
   case ExprWithCleanupsClass:
     return (cast<ExprWithCleanups>(this)
-            ->getSubExpr()->isUnusedResultAWarning(Loc, R1, R2, Ctx));
+            ->getSubExpr()->isUnusedResultAWarning(WarnE, Loc, R1, R2, Ctx));
   }
 }
 
