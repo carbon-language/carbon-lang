@@ -1415,7 +1415,8 @@ HandleExprPropertyRefExpr(const ObjCObjectPointerType *OPT,
     return ExprError();
   
   // Search for a declared property first.
-  if (ObjCPropertyDecl *PD = IFace->FindPropertyDeclaration(Member)) {
+  ObjCPropertyDecl *PD = IFace->FindPropertyDeclaration(Member);
+  if (PD) {
     // Check whether we can reference this property.
     if (DiagnoseUseOfDecl(PD, MemberLoc))
       return ExprError();
@@ -1483,6 +1484,10 @@ HandleExprPropertyRefExpr(const ObjCObjectPointerType *OPT,
     SelectorTable::constructSetterName(PP.getIdentifierTable(),
                                        PP.getSelectorTable(), Member);
   ObjCMethodDecl *Setter = IFace->lookupInstanceMethod(SetterSel);
+  // Check for corner case of: @property int p; ... self.P = 0;
+  // setter name is synthesized "setP" but there is no property name 'P'.
+  if (Setter && Setter->isSynthesized() && !PD)
+    Setter = 0;
   
   // May be founf in property's qualified list.
   if (!Setter)
