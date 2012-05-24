@@ -140,6 +140,8 @@ def IsN64       :     Predicate<"Subtarget.isABI_N64()">,
                       AssemblerPredicate<"FeatureN64">;
 def NotN64      :     Predicate<"!Subtarget.isABI_N64()">,
                       AssemblerPredicate<"!FeatureN64">;
+def InMips16Mode :    Predicate<"Subtarget.inMips16Mode()">,
+                      AssemblerPredicate<"FeatureMips16">;
 def RelocStatic :     Predicate<"TM.getRelocationModel() == Reloc::Static">,
                       AssemblerPredicate<"FeatureMips32">;
 def RelocPIC    :     Predicate<"TM.getRelocationModel() == Reloc::PIC_">,
@@ -147,8 +149,8 @@ def RelocPIC    :     Predicate<"TM.getRelocationModel() == Reloc::PIC_">,
 def NoNaNsFPMath :    Predicate<"TM.Options.NoNaNsFPMath">,
                       AssemblerPredicate<"FeatureMips32">;
 def HasStandardEncoding:
-               Predicate<"Subtarget.hasStandardEncoding()">,
-               AssemblerPredicate<"FeatureMips32,FeatureMips32r2,FeatureMips64"> ;
+  Predicate<"Subtarget.hasStandardEncoding()">,
+  AssemblerPredicate<"FeatureMips32,FeatureMips32r2,FeatureMips64"> ;
 
 //===----------------------------------------------------------------------===//
 // Instruction format superclass
@@ -256,7 +258,8 @@ def immZExt5 : ImmLeaf<i32, [{return Imm == (Imm & 0x1f);}]>;
 
 // Mips Address Mode! SDNode frameindex could possibily be a match
 // since load and store instructions from stack used it.
-def addr : ComplexPattern<iPTR, 2, "SelectAddr", [frameindex], [SDNPWantParent]>;
+def addr :
+  ComplexPattern<iPTR, 2, "SelectAddr", [frameindex], [SDNPWantParent]>;
 
 //===----------------------------------------------------------------------===//
 // Pattern fragment for load/store
@@ -1211,4 +1214,4 @@ include "MipsCondMov.td"
 // Mips16
 
 include "Mips16InstrFormats.td"
-
+include "Mips16InstrInfo.td"

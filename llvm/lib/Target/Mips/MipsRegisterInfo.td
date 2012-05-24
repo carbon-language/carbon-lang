@@ -271,6 +271,8 @@ def CPU16Regs : RegisterClass<"Mips", [i32], 32, (add
   // Callee save
   S0, S1)>;
 
+def CPURAReg : RegisterClass<"Mips", [i32], 32, (add RA)>;
+
 
 // 64bit fp:
 // * FGR64  - 32 64-bit registers

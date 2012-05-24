@@ -173,7 +173,7 @@ class FRI16<bits<5> op, dag outs, dag ins, string asmstr,
 // Format RR instruction class in Mips : <|opcode|rx|ry|funct|>
 //===----------------------------------------------------------------------===//
 
-class FRR16<bits<5> op, bits<5> _funct, dag outs, dag ins, string asmstr,
+class FRR16<bits<5> _funct, dag outs, dag ins, string asmstr,
             list<dag> pattern, InstrItinClass itin>:
             MipsInst16<outs, ins, asmstr, pattern, itin, FrmRR16>
 {
@@ -181,7 +181,7 @@ class FRR16<bits<5> op, bits<5> _funct, dag outs, dag ins, string asmstr,
   bits<3>  ry;
   bits<5>  funct;
 
-  let Opcode = op;
+  let Opcode = 0b11101;
   let funct  = _funct;
 
   let Inst{10-8} = rx;
