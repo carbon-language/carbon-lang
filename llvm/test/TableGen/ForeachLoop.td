@@ -9,6 +9,7 @@ class Register<string name, int idx> {
 foreach i = [0, 1, 2, 3, 4, 5, 6, 7] in
   def R#i : Register<"R"#i, i>;
 
+// CHECK-NOT: !strconcat
 
 // CHECK: def R0
 // CHECK: string Name = "R0";

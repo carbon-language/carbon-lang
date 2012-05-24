@@ -1903,7 +1903,7 @@ bool TGParser::ParseDef(MultiClass *CurMultiClass) {
   // Parse ObjectName and make a record for it.
   Record *CurRec = new Record(ParseObjectName(CurMultiClass), DefLoc, Records);
 
-  if (!CurMultiClass) {
+  if (!CurMultiClass && Loops.empty()) {
     // Top-level def definition.
 
     // Ensure redefinition doesn't happen.
@@ -1913,7 +1913,7 @@ bool TGParser::ParseDef(MultiClass *CurMultiClass) {
       return true;
     }
     Records.addDef(CurRec);
-  } else {
+  } else if (CurMultiClass) {
     // Otherwise, a def inside a multiclass, add it to the multiclass.
     for (unsigned i = 0, e = CurMultiClass->DefPrototypes.size(); i != e; ++i)
       if (CurMultiClass->DefPrototypes[i]->getNameInit()
