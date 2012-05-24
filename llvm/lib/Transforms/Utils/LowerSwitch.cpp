@@ -66,18 +66,6 @@ namespace {
                              BasicBlock* OrigBlock, BasicBlock* Default);
     unsigned Clusterify(CaseVector& Cases, SwitchInst *SI);
   };
-
-  /// The comparison function for sorting the switch case values in the vector.
-  /// WARNING: Case ranges should be disjoint!
-  struct CaseCmp {
-    bool operator () (const LowerSwitch::CaseRange& C1,
-                      const LowerSwitch::CaseRange& C2) {
-
-      const ConstantInt* CI1 = cast<const ConstantInt>(C1.Low);
-      const ConstantInt* CI2 = cast<const ConstantInt>(C2.High);
-      return CI1->getValue().slt(CI2->getValue());
-    }
-  };
 }
 
 char LowerSwitch::ID = 0;
@@ -159,7 +147,7 @@ BasicBlock* LowerSwitch::switchConvert(CaseItr Begin, CaseItr End,
   Function::iterator FI = OrigBlock;
   F->getBasicBlockList().insert(++FI, NewNode);
 
-  ICmpInst* Comp = new ICmpInst(ICmpInst::ICMP_SLT,
+  ICmpInst* Comp = new ICmpInst(ICmpInst::ICMP_ULT,
                                 Val, Pivot.Low, "Pivot");
   NewNode->getInstList().push_back(Comp);
   BranchInst::Create(LBranch, RBranch, Comp, NewNode);
@@ -234,40 +222,30 @@ BasicBlock* LowerSwitch::newLeafBlock(CaseRange& Leaf, Value* Val,
 
 // Clusterify - Transform simple list of Cases into list of CaseRange's
 unsigned LowerSwitch::Clusterify(CaseVector& Cases, SwitchInst *SI) {
-  unsigned numCmps = 0;
+
+  CRSBuilder TheClusterifier;
 
   // Start with "simple" cases
-  for (SwitchInst::CaseIt i = SI->case_begin(), e = SI->case_end(); i != e; ++i)
-    Cases.push_back(CaseRange(i.getCaseValue(), i.getCaseValue(),
-                              i.getCaseSuccessor()));
+  for (SwitchInst::CaseIt i = SI->case_begin(), e = SI->case_end();
+       i != e; ++i) {
+    BasicBlock *SuccBB = i.getCaseSuccessor();
+    ConstantRangesSet CRS = i.getCaseValueEx();
+    TheClusterifier.add(CRS, SuccBB);
+  }
   
-  std::sort(Cases.begin(), Cases.end(), CaseCmp());
-
-  // Merge case into clusters
-  if (Cases.size()>=2)
-    for (CaseItr I=Cases.begin(), J=llvm::next(Cases.begin()); J!=Cases.end(); ) {
-      int64_t nextValue = cast<ConstantInt>(J->Low)->getSExtValue();
-      int64_t currentValue = cast<ConstantInt>(I->High)->getSExtValue();
-      BasicBlock* nextBB = J->BB;
-      BasicBlock* currentBB = I->BB;
-
-      // If the two neighboring cases go to the same destination, merge them
-      // into a single case.
-      if ((nextValue-currentValue==1) && (currentBB == nextBB)) {
-        I->High = J->High;
-        J = Cases.erase(J);
-      } else {
-        I = J++;
-      }
-    }
-
-  for (CaseItr I=Cases.begin(), E=Cases.end(); I!=E; ++I, ++numCmps) {
-    if (I->Low != I->High)
+  TheClusterifier.optimize();
+  
+  size_t numCmps = 0;
+  for (CRSBuilder::RangeIterator i = TheClusterifier.begin(),
+       e = TheClusterifier.end(); i != e; ++i, ++numCmps) {
+    CRSBuilder::Cluster &C = *i;
+    Cases.push_back(CaseRange(C.first.Low, C.first.High, C.second));
+    if (C.first.Low != C.first.High)
       // A range counts double, since it requires two compares.
       ++numCmps;
   }
 
-  return numCmps;
+  return numCmps;  
 }
 
 // processSwitchInst - Replace the specified switch instruction with a sequence
