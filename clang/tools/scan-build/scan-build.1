@@ -1,6 +1,9 @@
-.Dd May 3, 2012
-.Os [clang] [3.1]
-.Dt SCAN-BUILD 1
+.\" This file is distributed under the University of Illinois Open Source
+.\" License. See LICENSE.TXT for details.
+.\" $Id$
+.Dd May 25, 2012
+.Os "clang" "3.1"
+.Dt SCAN-BUILD \&1 CLANG
 .Sh NAME
 .Nm scan-build
 .Nd Clang static analyzer
@@ -10,15 +13,16 @@
 .Op Fl analyze-headers
 .Op Fl enable-checker Op Ar checker_name
 .Op Fl disable-checker Op Ar checker_name
-.Op Fl -help
-.Op Fl -html-title Op Ar =title 
-.Op Fl -keep-going
-.Op Fl -plist
-.Op Fl -plist-html
-.Op Fl -status-bugs
-.Op Fl -use-c++ Op Ar =compiler_path
-.Op Fl -use-cc Op Ar =compiler_path
-.Op Fl -view
+.Op Fl Fl help
+.Op Fl Fl help-checkers
+.Op Fl Fl html-title Op Ar =title
+.Op Fl Fl keep-going
+.Op Fl plist
+.Op Fl plist-html
+.Op Fl Fl status-bugs
+.Op Fl Fl use-c++ Op Ar =compiler_path
+.Op Fl Fl use-cc Op Ar =compiler_path
+.Op Fl Fl view
 .Op Fl constraints Op Ar model
 .Op Fl maxloop Ar N
 .Op Fl no-failure-reports
@@ -28,72 +32,86 @@
 .Op build_options
 .\"
 .\" Sh DESCRIPTION
-.Sh OPTIONS
+.Sh DESCRIPTION
+.Nm
+is a Perl script that invokes the Clang static analyzer.  Options used by
+.Nm
+or by the analyzer appear first, followed by the
+.Ar build_command
+and any
+.Ar build_options
+normally used to build the target system.
+.Pp
+The static analyzer employs a long list of checking algorithms, see
+.Sx CHECKERS .
+Output can be written in standard
+.Li .plist
+and/or HTML format.
+.Pp
+The following options are supported:
 .Bl -tag -width indent
 .It Fl analyze-headers
 Also analyze functions in #included files.
-.It Fl enable-checker Op Ar checker_name
-.It Fl disable-checker Op Ar checker_name
+.It Fl enable-checker Ar checker_name , Fl disable-checker Ar checker_name
 Enable/disable
 .Ar checker_name .
-See 
-.Sx CONTROLLING CHECKERS
-below. 
-.It Fl h
-.It Fl -help
-Display this message
-.It Fl -html-title Ns Op = Ns Ar title 
+See
+.Sx CHECKERS .
+.It Fl h , Fl Fl help
+Display this message.
+.It Fl Fl help-checkers
+List default checkers, see
+.Sx CHECKERS .
+.It Fl Fl html-title Ns Op = Ns Ar title
 Specify the title used on generated HTML pages.
-If 
-.Ar title 
-is not specified, a default title is used.	
-.It Fl k
-.It Fl -keep-going
-Add a 
+A default title is generated if
+.Ar title
+is not specified.
+.It Fl k , Fl Fl keep-going
+Add a
 .Dq keep on going
-option to the specified build command.  Currently supports
-make and xcodebuild.  This is a convenience option; one can specify
-this behavior directly using build options.
+option to
+.Ar build_command .
+Currently supports make and xcodebuild. This is a convenience option;
+one can specify this behavior directly using build options.
 .It Fl o
 Target directory for HTML report files.  Subdirectories will be
-created as needed to represent separate 
-.Dq runs
+created as needed to represent separate invocations
 of the analyzer.  If this option is not specified, a directory is
 created in /tmp (TMPDIR on Mac OS X) to store the reports.
-.It Fl -plist
-Output the results as a set of 
-.Li
-\.plist
+.It Fl plist
+Output the results as a set of
+.Li .plist
 files. (By default the output of
 .Nm
 is a set of HTML files.)
-.It Fl -plist-html
+.It Fl plist-html
 Output the results as a set of HTML and .plist files
-.It Fl -status-bugs
+.It Fl Fl status-bugs
 Set exit status to 1 if it found potential bugs and 0 otherwise. By
 default the exit status of
 .Nm
-is the same as the executed build command.
-.It Fl -use-c++ Ns Op = Ns Ar compiler_path
+is that returned by
+.Ar build_command .
+.It Fl Fl use-c++ Ns Op = Ns Ar compiler_path
 Guess the default compiler for your C++ and Objective-C++ code. Use this
 option to specify an alternate compiler.
-.It Fl -use-cc Ns Op = Ns Ar compiler_path
+.It Fl Fl use-cc Ns Op = Ns Ar compiler_path
 Guess the default compiler for your C and Objective-C code. Use this
 option to specify an alternate compiler.
 .It Fl v
 Verbose output from
 .Nm
 and the analyzer. A second and
-third 
+third
 .Ar v
 increases verbosity.
-.It Fl V
-.It Fl -view
+.It Fl V , Fl Fl view
 View analysis results in a web browser when the build completes.
 .It Fl constraints Op Ar model
 Specify the contraint engine used by the analyzer.  By default the
 .Ql range
-model is used.  Specifying 
+model is used.  Specifying
 .Ql basic
 uses a simpler, less powerful constraint model used by checker-0.160
 and earlier.
@@ -116,15 +134,19 @@ store model is used.
 specifies a field-
 sensitive store model. Users can also specify
 .Ql basic
- which is far less precise but can more quickly analyze code.
+which is far less precise but can more quickly analyze code.
 .Ql basic
 was the default store model for checker-0.221 and earlier.
-.\" 
+.\"
 .El
 .Sh RETURN VALUES
 .Nm
-returns the value returned by the called compiler unless 
-.Fl -status-bugs
+returns the value returned by
+.Ar build_command
+unless
+.Fl Fl status-bugs
+or
+.Fl Fl keep-going
 is used.
 .\"
 .\" Other sections not yet used ...
@@ -133,185 +155,174 @@ is used.
 .\" .Sh DIAGNOSTICS
 .\" .Sh COMPATIBILITY
 .\" .Sh HISTORY
-.\" .Sh AUTHORS
 .\" .Sh BUGS
 .\"
-.Sh CONTROLLING CHECKERS
-A default group of checkers are always run unless explicitly disabled.
+.Sh CHECKERS
 The checkers listed below may be enabled/disabled using the
 .Fl enable-checker
-and 
+and
 .Fl disable-checker
-options. 
-.Bl -tag -width indent
+options.
+A default group of checkers is run unless explicitly disabled.
+Exactly which checkers constitute the default group is a function
+of the operating system in use; they are listed with
+.Fl Fl help-checkers .
+.Bl -tag -width indent.
 .It core.AdjustedReturnValue
 Check to see if the return value of a function call is different than
-the caller expects (e.g., from calls through function pointers)
-.Bq on
+the caller expects (e.g., from calls through function pointers).
 .It core.AttributeNonNull
 Check for null pointers passed as arguments to a function whose arguments are marked with the
-.Qlnonnull' attribute
-.Bq on
+.Ql nonnull
+attribute.
 .It core.CallAndMessage
-Check for logical errors for function calls and Objective-C message expressions (e.g., uninitialized arguments, null function pointers)
-.Bq on
+Check for logical errors for function calls and Objective-C message expressions (e.g., uninitialized arguments, null function pointers).
 .It core.DivideZero
-Check for division by zero
-.Bq on
+Check for division by zero.
 .It core.NullDereference
-Check for dereferences of null pointers
-.Bq on
+Check for dereferences of null pointers.
 .It core.StackAddressEscape
-Check that addresses to stack memory do not escape the function
-.Bq on
+Check that addresses to stack memory do not escape the function.
 .It core.UndefinedBinaryOperatorResult
-Check for undefined results of binary operators
-.Bq on
+Check for undefined results of binary operators.
 .It core.VLASize
-Check for declarations of VLA of undefined or zero size
-.Bq on
+Check for declarations of VLA of undefined or zero size.
 .It core.builtin.BuiltinFunctions
-Evaluate compiler builtin functions (e.g., alloca())
-.Bq on
-.It core.builtin.NoReturnFunctions  Evaluate "panic" functions that are known to not return to the caller
-.Bq on
+Evaluate compiler builtin functions, e.g. 
+.Fn alloca .
+.It core.builtin.NoReturnFunctions
+Evaluate 
+.Ql panic
+functions that are known to not return to the caller.
 .It core.uninitialized.ArraySubscript
-Check for uninitialized values used as array subscripts
-.Bq on
+Check for uninitialized values used as array subscripts.
 .It core.uninitialized.Assign
-Check for assigning uninitialized values
-.Bq on
-.It core.uninitialized.Bqanch
-Check for uninitialized values used as branch conditions
-.Bq on
+Check for assigning uninitialized values.
+.It core.uninitialized.Branch
+Check for uninitialized values used as branch conditions.
 .It core.uninitialized.CapturedBlockVariable
-Check for blocks that capture uninitialized values
-.Bq on
-.It core.uninitialized.UndefReturn  Check for uninitialized values being returned to the caller
-.Bq on
+Check for blocks that capture uninitialized values.
+.It core.uninitialized.UndefReturn
+Check for uninitialized values being returned to the caller.
 .It deadcode.DeadStores
-Check for values stored to variables that are never read afterwards
-.Bq off
+Check for values stored to variables that are never read afterwards.
 .It debug.DumpCFG
-Display Control-Flow Graphs
-.Bq off
+Display Control-Flow Graphs.
 .It debug.DumpCallGraph
-Display Call Graph
-.Bq off
+Display Call Graph.
 .It debug.DumpDominators
-Print the dominance tree for a given CFG
-.Bq off
+Print the dominance tree for a given Control-Flow Graph.
 .It debug.DumpLiveVars
-Print results of live variable analysis
-.Bq off
+Print results of live variable analysis.
 .It debug.Stats
-Emit warnings with analyzer statistics
-.Bq off
+Emit warnings with analyzer statistics.
 .It debug.TaintTest
 Mark tainted symbols as such.
-.Bq off
 .It debug.ViewCFG
-View Control-Flow Graphs using GraphViz
-.Bq off
+View Control-Flow Graphs using
+.Ic GraphViz .
 .It debug.ViewCallGraph
-View Call Graph using GraphViz
-.Bq off
+View Call Graph using
+.Ic GraphViz .
 .It llvm.Conventions
-Check code for LLVM codebase conventions
-.Bq off
+Check code for LLVM codebase conventions.
 .It osx.API
-Check for proper uses of various Mac OS X APIs
-.Bq off
+Check for proper uses of various Mac OS X APIs.
 .It osx.AtomicCAS
-Evaluate calls to OSAtomic functions
-.Bq off
+Evaluate calls to
+.Vt OSAtomic
+functions.
 .It osx.SecKeychainAPI
-Check for proper uses of Secure Keychain APIs
-.Bq off
+Check for proper uses of Secure Keychain APIs.
 .It osx.cocoa.AtSync
-Check for null pointers used as mutexes for @synchronized
-.Bq off
+Check for null pointers used as mutexes for @synchronized.
 .It osx.cocoa.ClassRelease
-Check for sending 'retain', 'release', or 'autorelease' directly to a Class
-.Bq off
+Check for sending
+.Ql retain ,
+.Ql release,
+or
+.Ql autorelease
+directly to a Class.
 .It osx.cocoa.IncompatibleMethodTypes
-Warn about Objective-C method signatures with type incompatibilities
-.Bq off
+Warn about Objective-C method signatures with type incompatibilities.
 .It osx.cocoa.NSAutoreleasePool
-Warn for suboptimal uses of NSAutoreleasePool in Objective-C GC mode
-.Bq off
+Warn for suboptimal uses of
+.Vt NSAutoreleasePool
+in Objective-C GC mode.
 .It osx.cocoa.NSError
-Check usage of NSError** parameters
-.Bq off
+Check usage of NSError** parameters.
 .It osx.cocoa.NilArg
-Check for prohibited nil arguments to ObjC method calls
-.Bq off
+Check for prohibited nil arguments to Objective-C method calls.
 .It osx.cocoa.RetainCount
-Check for leaks and improper reference count management
-.Bq off
+Check for leaks and improper reference count management.
 .It osx.cocoa.SelfInit
-Check that 'self' is properly initialized inside an initializer method
-.Bq off
+Check that
+.Ql self
+is properly initialized inside an initializer method.
 .It osx.cocoa.UnusedIvars
-Warn about private ivars that are never used
-.Bq off
+Warn about private ivars that are never used.
 .It osx.cocoa.VariadicMethodTypes
-Check for passing non-Objective-C types to variadic methods that expect only Objective-C types
-.Bq off
+Check for passing non-Objective-C types to variadic methods that expect only Objective-C types.
 .It osx.coreFoundation.CFError
-Check usage of CFErrorRef* parameters
-.Bq off
+Check usage of CFErrorRef* parameters.
 .It osx.coreFoundation.CFNumber
-Check for proper uses of CFNumberCreate
-.Bq off
+Check for proper uses of
+.Fn CFNumberCreate .
 .It osx.coreFoundation.CFRetainRelease
-Check for null arguments to CFRetain/CFRelease
-.Bq off
+Check for null arguments to
+.Fn CFRetain
+and
+.Fn CFRelease .
 .It osx.coreFoundation.containers.OutOfBounds
-Checks for index out-of-bounds when using 'CFArray' API
-.Bq off
+Checks for index out-of-bounds when using the
+.Vt CFArray
+API.
 .It osx.coreFoundation.containers.PointerSizedValues
-Warns if 'CFArray', 'CFDictionary', 'CFSet' are created with non-pointer-size values
-.Bq off
+Warns if
+.Vt CFArray ,
+.Vt CFDictionary ,
+or
+.Vt CFSet
+are created with non-pointer-size values.
 .It security.FloatLoopCounter
-Warn on using a floating point value as a loop counter (CERT: FLP30-C, FLP30-CPP)
-.Bq off
+Warn on using a floating point value as a loop counter (CERT: FLP30-C, FLP30-CPP).
 .It security.insecureAPI.UncheckedReturn
-Warn on uses of functions whose return values must be always checked
-.Bq off
+Warn on uses of functions whose return values must be always checked.
 .It security.insecureAPI.getpw
-Warn on uses of the 'getpw' function
-.Bq off
+Warn on uses of
+.Fn getpw .
 .It security.insecureAPI.gets
-Warn on uses of the 'gets' function
-.Bq off
+Warn on uses of
+.Fn gets .
 .It security.insecureAPI.mkstemp
-Warn when 'mkstemp' is passed fewer than 6 X's in the format string
-.Bq off
+Warn when
+.Fn mkstemp
+is passed fewer than 6 X's in the format string.
 .It security.insecureAPI.mktemp
-Warn on uses of the 'mktemp' function
-.Bq off
+Warn on uses of
+.Fn mktemp .
 .It security.insecureAPI.rand
-Warn on uses of the 'rand', 'random', and related functions
-.Bq off
+Warn on uses of
+.Fn rand ,
+.Fn random ,
+and related functions.
 .It security.insecureAPI.strcpy
-Warn on uses of the 'strcpy' and 'strcat' functions
-.Bq off
+Warn on uses of
+.Fn strcpy
+and
+.Fn strcat .
 .It security.insecureAPI.vfork
-Warn on uses of the 'vfork' function
-.Bq off
+Warn on uses of
+.Fn vfork .
 .It unix.API
-Check calls to various UNIX/Posix functions
-.Bq off
+Check calls to various UNIX/Posix functions.
 .It unix.Malloc
-Check for memory leaks, double free, and use-after-free problems.
-.Bq off
+Check for memory leaks, double free, and use-after-free.
 .It unix.cstring.BadSizeArg
-Check the size argument passed into C string functions for common erroneous patterns
-.Bq off
+Check the size argument passed into C string functions for common
+erroneous patterns.
 .It unix.cstring.NullArg
-Check for null pointers being passed as arguments to C string functions
-.Bq off
+Check for null pointers being passed as arguments to C string functions.
 .El
 .\"
 .Sh EXAMPLE
@@ -319,14 +330,19 @@ Check for null pointers being passed as arguments to C string functions
 .Pp
 The above example causes analysis reports to be deposited into
 a subdirectory of
-.Ql /tmp/myhtmldir
+.Pa /tmp/myhtmldir
 and to run
-.Ql make
+.Ic make
 with the
-.Ql -j4
+.Fl j4
 option.
 A different subdirectory is created each time
 .Nm
 analyzes a project.
 The analyzer should support most parallel builds, but not distributed builds.
-
+.Sh AUTHORS
+.Nm
+was written by
+.An "Ted Kremenek" .
+Documentation contributed by
+.An "James K. Lowden" Aq jklowden@schemamania.org .

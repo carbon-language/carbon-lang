@@ -77,6 +77,21 @@ sub DieDiag {
 }
 
 ##----------------------------------------------------------------------------##
+# Print default checker names
+##----------------------------------------------------------------------------##
+
+if (grep /^--help-checkers$/, @ARGV) {
+    my @options = qx($0 -h);
+    foreach (@options) {
+	next unless /^ \+/;
+	s/^\s*//;
+	my ($sign, $name, @text) = split ' ', $_;
+	print $name, $/ if $sign eq '+';
+    }
+    exit 1;
+}
+
+##----------------------------------------------------------------------------##
 # Some initial preprocessing of Clang options.
 ##----------------------------------------------------------------------------##
 
@@ -91,7 +106,7 @@ if (!defined $ClangSB || ! -x $ClangSB) {
   $Clang = `which clang`;
   chomp $Clang;
   if ($Clang eq "") {
-    DieDiag("No 'clang' executable found in path.");
+    DieDiag("No 'clang' executable found in path.\n");
   }
 }
 else {
