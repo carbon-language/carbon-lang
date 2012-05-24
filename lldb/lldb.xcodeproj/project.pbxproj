@@ -4058,6 +4058,8 @@
 				GCC_WARN_UNUSED_LABEL = YES;
 				GCC_WARN_UNUSED_VALUE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				LLDB_DISABLE_PYTHON = 0;
+				"LLDB_DISABLE_PYTHON[sdk=iphoneos*]" = 1;
 				LLDB_FRAMEWORK_INSTALL_DIR = /Applications/Xcode.app/Contents/SharedFrameworks;
 				LLDB_TOOLS_INSTALL_DIR = /usr/bin;
 				LLVM_BUILD_DIR = "$(SRCROOT)/llvm-build/$(LLVM_CONFIGURATION)";
@@ -4069,6 +4071,7 @@
 					"-flimit-debug-info",
 					"-Wparentheses",
 				);
+				SDKROOT = macosx;
 				STRIP_INSTALLED_PRODUCT = NO;
 				STRIP_STYLE = debugging;
 				VALID_ARCHS = "armv4t armv5 armv6 armv7 armv7s i386 ppc ppc64 ppc7400 ppc970 x86_64";
@@ -4111,6 +4114,8 @@
 				GCC_WARN_UNUSED_LABEL = YES;
 				GCC_WARN_UNUSED_VALUE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				LLDB_DISABLE_PYTHON = 0;
+				"LLDB_DISABLE_PYTHON[sdk=iphoneos*]" = 1;
 				LLDB_FRAMEWORK_INSTALL_DIR = /Applications/Xcode.app/Contents/SharedFrameworks;
 				LLDB_TOOLS_INSTALL_DIR = /usr/bin;
 				LLVM_BUILD_DIR = "$(SRCROOT)/llvm-build/$(LLVM_CONFIGURATION)";
@@ -4475,6 +4480,8 @@
 				GCC_WARN_UNUSED_LABEL = YES;
 				GCC_WARN_UNUSED_VALUE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				LLDB_DISABLE_PYTHON = 0;
+				"LLDB_DISABLE_PYTHON[sdk=iphoneos*]" = 1;
 				LLDB_FRAMEWORK_INSTALL_DIR = /Applications/Xcode.app/Contents/SharedFrameworks;
 				"LLDB_FRAMEWORK_INSTALL_DIR[sdk=iphoneos*]" = /System/Library/PrivateFrameworks;
 				LLDB_TOOLS_INSTALL_DIR = /Applications/Xcode.app/Contents/Developer/usr/bin;
