@@ -369,7 +369,7 @@ void X86FrameLowering::emitCalleeSavedFrameMoves(MachineFunction &MF,
 /// getCompactUnwindRegNum - Get the compact unwind number for a given
 /// register. The number corresponds to the enum lists in
 /// compact_unwind_encoding.h.
-static int getCompactUnwindRegNum(const unsigned *CURegs, unsigned Reg) {
+static int getCompactUnwindRegNum(const uint16_t *CURegs, unsigned Reg) {
   for (int Idx = 1; *CURegs; ++CURegs, ++Idx)
     if (*CURegs == Reg)
       return Idx;
@@ -398,13 +398,13 @@ encodeCompactUnwindRegistersWithoutFrame(unsigned SavedRegs[CU_NUM_SAVED_REGS],
   //     4       3
   //     5       3
   //
-  static const unsigned CU32BitRegs[] = {
+  static const uint16_t CU32BitRegs[] = {
     X86::EBX, X86::ECX, X86::EDX, X86::EDI, X86::ESI, X86::EBP, 0
   };
-  static const unsigned CU64BitRegs[] = {
+  static const uint16_t CU64BitRegs[] = {
     X86::RBX, X86::R12, X86::R13, X86::R14, X86::R15, X86::RBP, 0
   };
-  const unsigned *CURegs = (Is64Bit ? CU64BitRegs : CU32BitRegs);
+  const uint16_t *CURegs = (Is64Bit ? CU64BitRegs : CU32BitRegs);
 
   for (unsigned i = 0; i != CU_NUM_SAVED_REGS; ++i) {
     int CUReg = getCompactUnwindRegNum(CURegs, SavedRegs[i]);
@@ -466,13 +466,13 @@ encodeCompactUnwindRegistersWithoutFrame(unsigned SavedRegs[CU_NUM_SAVED_REGS],
 static uint32_t
 encodeCompactUnwindRegistersWithFrame(unsigned SavedRegs[CU_NUM_SAVED_REGS],
                                       bool Is64Bit) {
-  static const unsigned CU32BitRegs[] = {
+  static const uint16_t CU32BitRegs[] = {
     X86::EBX, X86::ECX, X86::EDX, X86::EDI, X86::ESI, X86::EBP, 0
   };
-  static const unsigned CU64BitRegs[] = {
+  static const uint16_t CU64BitRegs[] = {
     X86::RBX, X86::R12, X86::R13, X86::R14, X86::R15, X86::RBP, 0
   };
-  const unsigned *CURegs = (Is64Bit ? CU64BitRegs : CU32BitRegs);
+  const uint16_t *CURegs = (Is64Bit ? CU64BitRegs : CU32BitRegs);
 
   // Encode the registers in the order they were saved, 3-bits per register. The
   // registers are numbered from 1 to CU_NUM_SAVED_REGS.
