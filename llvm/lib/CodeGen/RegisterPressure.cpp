@@ -356,7 +356,7 @@ void RegPressureTracker::addLiveRegs(ArrayRef<unsigned> Regs) {
 /// Add PhysReg to the live in set and increase max pressure.
 void RegPressureTracker::discoverPhysLiveIn(unsigned Reg) {
   assert(!LivePhysRegs.count(Reg) && "avoid bumping max pressure twice");
-  if (findRegAlias(Reg, P.LiveInRegs, TRI) == P.LiveInRegs.end())
+  if (findRegAlias(Reg, P.LiveInRegs, TRI) != P.LiveInRegs.end())
     return;
 
   // At live in discovery, unconditionally increase the high water mark.
@@ -367,7 +367,7 @@ void RegPressureTracker::discoverPhysLiveIn(unsigned Reg) {
 /// Add PhysReg to the live out set and increase max pressure.
 void RegPressureTracker::discoverPhysLiveOut(unsigned Reg) {
   assert(!LivePhysRegs.count(Reg) && "avoid bumping max pressure twice");
-  if (findRegAlias(Reg, P.LiveOutRegs, TRI) == P.LiveOutRegs.end())
+  if (findRegAlias(Reg, P.LiveOutRegs, TRI) != P.LiveOutRegs.end())
     return;
 
   // At live out discovery, unconditionally increase the high water mark.
