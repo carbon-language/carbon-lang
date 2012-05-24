@@ -32,7 +32,7 @@ void radar11487541() {
   fs::path p;
 }
 
-// PR12873 radrar://11499139
+// PR12873 radar://11499139
 void testFloatInitializer() {
   const float ysize={0.015}, xsize={0.01};
 }
