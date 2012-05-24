@@ -14,7 +14,7 @@ run_program() {
   ./$1 2>&1 | $SYMBOLIZER 2> /dev/null | c++filt > $TMP_ASAN_REPORT
 }
 
-# check_program exe_file source_file check_prefix
+# check_program exe_file source_file check_prefixf
 check_program() {
   run_program $1
   $FILE_CHECK $2 --check-prefix=$3 < $TMP_ASAN_REPORT
@@ -43,9 +43,13 @@ for t in  *.cc; do
   for b in 32 64; do
     for O in 0 1 2 3; do
       c=`basename $t .cc`
-      if [[ "$c" == *"-so" ]]
-      then
+      if [[ "$c" == *"-so" ]]; then
         continue
+      fi
+      if [[ "$c" == *"-linux" ]]; then
+        if [[ "$OS" != "Linux" ]]; then
+          continue
+        fi
       fi
       c_so=$c-so
       exe=$c.$b.O$O

@@ -18,9 +18,10 @@
 #include <dlfcn.h>   // for dlsym
 
 namespace __interception {
-bool GetRealFunctionAddress(const char *func_name, void **func_addr) {
+bool GetRealFunctionAddress(const char *func_name, void **func_addr,
+    void *real, void *wrapper) {
   *func_addr = dlsym(RTLD_NEXT, func_name);
-  return (*func_addr != NULL);
+  return real == wrapper;
 }
 }  // namespace __interception
 

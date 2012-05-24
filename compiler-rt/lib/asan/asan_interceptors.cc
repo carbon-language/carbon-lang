@@ -743,6 +743,11 @@ INTERCEPTOR(long long, atoll, const char *nptr) {  // NOLINT
 }
 #endif  // ASAN_INTERCEPT_ATOLL_AND_STRTOLL
 
+#define ASAN_INTERCEPT_FUNC(name) do { \
+      if (!INTERCEPT_FUNCTION(name) && FLAG_v > 0) \
+        Report("AddressSanitizer: failed to intercept '" #name "'\n"); \
+    } while (0)
+
 #if defined(_WIN32)
 INTERCEPTOR_WINAPI(DWORD, CreateThread,
                    void* security, size_t stack_size,
@@ -758,7 +763,7 @@ INTERCEPTOR_WINAPI(DWORD, CreateThread,
 
 namespace __asan {
 void InitializeWindowsInterceptors() {
-  CHECK(INTERCEPT_FUNCTION(CreateThread));
+  ASAN_INTERCEPT_FUNC(CreateThread);
 }
 
 }  // namespace __asan
@@ -771,65 +776,65 @@ void InitializeAsanInterceptors() {
   CHECK(was_called_once == false);
   was_called_once = true;
   // Intercept mem* functions.
-  CHECK(INTERCEPT_FUNCTION(memcmp));
-  CHECK(INTERCEPT_FUNCTION(memmove));
-  CHECK(INTERCEPT_FUNCTION(memset));
+  ASAN_INTERCEPT_FUNC(memcmp);
+  ASAN_INTERCEPT_FUNC(memmove);
+  ASAN_INTERCEPT_FUNC(memset);
   if (PLATFORM_HAS_DIFFERENT_MEMCPY_AND_MEMMOVE) {
-    CHECK(INTERCEPT_FUNCTION(memcpy));
+    ASAN_INTERCEPT_FUNC(memcpy);
   } else {
     REAL(memcpy) = REAL(memmove);
   }
 
   // Intercept str* functions.
-  CHECK(INTERCEPT_FUNCTION(strcat));  // NOLINT
-  CHECK(INTERCEPT_FUNCTION(strchr));
-  CHECK(INTERCEPT_FUNCTION(strcmp));
-  CHECK(INTERCEPT_FUNCTION(strcpy));  // NOLINT
-  CHECK(INTERCEPT_FUNCTION(strlen));
-  CHECK(INTERCEPT_FUNCTION(strncmp));
-  CHECK(INTERCEPT_FUNCTION(strncpy));
+  ASAN_INTERCEPT_FUNC(strcat);  // NOLINT
+  ASAN_INTERCEPT_FUNC(strchr);
+  ASAN_INTERCEPT_FUNC(strcmp);
+  ASAN_INTERCEPT_FUNC(strcpy);  // NOLINT
+  ASAN_INTERCEPT_FUNC(strlen);
+  ASAN_INTERCEPT_FUNC(strncmp);
+  ASAN_INTERCEPT_FUNC(strncpy);
 #if !defined(_WIN32)
-  CHECK(INTERCEPT_FUNCTION(strcasecmp));
-  CHECK(INTERCEPT_FUNCTION(strdup));
-  CHECK(INTERCEPT_FUNCTION(strncasecmp));
+  ASAN_INTERCEPT_FUNC(strcasecmp);
+  ASAN_INTERCEPT_FUNC(strdup);
+  ASAN_INTERCEPT_FUNC(strncasecmp);
 # ifndef __APPLE__
-  CHECK(INTERCEPT_FUNCTION(index));
+  ASAN_INTERCEPT_FUNC(index);
 # else
-  CHECK(OVERRIDE_FUNCTION(index, WRAP(strchr)));
+  CHECK(OVERRIDE_FUNCTION(index, WRAP(strchr));
 # endif
 #endif
 #if ASAN_INTERCEPT_STRNLEN
-  CHECK(INTERCEPT_FUNCTION(strnlen));
+  ASAN_INTERCEPT_FUNC(strnlen);
 #endif
 
-  CHECK(INTERCEPT_FUNCTION(atoi));
-  CHECK(INTERCEPT_FUNCTION(atol));
-  CHECK(INTERCEPT_FUNCTION(strtol));
+  ASAN_INTERCEPT_FUNC(atoi);
+  ASAN_INTERCEPT_FUNC(atol);
+  ASAN_INTERCEPT_FUNC(strtol);
 #if ASAN_INTERCEPT_ATOLL_AND_STRTOLL
-  CHECK(INTERCEPT_FUNCTION(atoll));
-  CHECK(INTERCEPT_FUNCTION(strtoll));
+  ASAN_INTERCEPT_FUNC(atoll);
+  ASAN_INTERCEPT_FUNC(strtoll);
 #endif
 
   // Intecept signal- and jump-related functions.
-  CHECK(INTERCEPT_FUNCTION(longjmp));
+  ASAN_INTERCEPT_FUNC(longjmp);
 #if ASAN_INTERCEPT_SIGNAL_AND_SIGACTION
-  CHECK(INTERCEPT_FUNCTION(sigaction));
-  CHECK(INTERCEPT_FUNCTION(signal));
+  ASAN_INTERCEPT_FUNC(sigaction);
+  ASAN_INTERCEPT_FUNC(signal);
 #endif
 
 #if !defined(_WIN32)
-  CHECK(INTERCEPT_FUNCTION(_longjmp));
+  ASAN_INTERCEPT_FUNC(_longjmp);
   INTERCEPT_FUNCTION(__cxa_throw);
 # if !defined(__APPLE__)
   // On Darwin siglongjmp tailcalls longjmp, so we don't want to intercept it
   // there.
-  CHECK(INTERCEPT_FUNCTION(siglongjmp));
+  ASAN_INTERCEPT_FUNC(siglongjmp);
 # endif
 #endif
 
   // Intercept threading-related functions
 #if !defined(_WIN32)
-  CHECK(INTERCEPT_FUNCTION(pthread_create));
+  ASAN_INTERCEPT_FUNC(pthread_create);
 #endif
 
   // Some Windows-specific interceptors.

@@ -12,7 +12,7 @@ int main() {
 // Check-Common: {{0x.* is located 5 bytes inside of 10-byte region .0x.*,0x.*}}
 // Check-Common: {{freed by thread T0 here:}}
 
-// Check-Linux: {{    #0 0x.* in free}}
+// Check-Linux: {{    #0 0x.* in __xsan_free}}
 // Check-Linux: {{    #1 0x.* in main .*use-after-free.cc:[45]}}
 
 // Check-Darwin: {{    #0 0x.* in .*mz_free.*}}
@@ -22,7 +22,7 @@ int main() {
 
 // Check-Common: {{previously allocated by thread T0 here:}}
 
-// Check-Linux: {{    #0 0x.* in malloc}}
+// Check-Linux: {{    #0 0x.* in __xsan_malloc}}
 // Check-Linux: {{    #1 0x.* in main .*use-after-free.cc:3}}
 
 // Check-Darwin: {{    #0 0x.* in .*mz_malloc.*}}

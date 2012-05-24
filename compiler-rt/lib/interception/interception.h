@@ -61,20 +61,26 @@
 //           source file (to define a pointer to overriden function).
 
 // How it works:
-// To replace weak system functions on Linux we just need to declare functions
+// To replace system functions on Linux we just need to declare functions
 // with same names in our library and then obtain the real function pointers
-// using dlsym(). This is not so on Mac OS, where the two-level namespace makes
+// using dlsym().
+// There is one complication. A user may also intercept some of the functions
+// we intercept. To resolve this we declare our interceptors with __xsan_
+// prefix, and then make actual interceptors weak aliases to __xsan_
+// functions.
+// This is not so on Mac OS, where the two-level namespace makes
 // our replacement functions invisible to other libraries. This may be overcomed
 // using the DYLD_FORCE_FLAT_NAMESPACE, but some errors loading the shared
-// libraries in Chromium were noticed when doing so.
-// Instead we use mach_override, a handy framework for patching functions at
-// runtime. To avoid possible name clashes, our replacement functions have
+// libraries in Chromium were noticed when doing so. Instead we use
+// mach_override, a handy framework for patching functions at runtime.
+// To avoid possible name clashes, our replacement functions have
 // the "wrap_" prefix on Mac.
 
 #if defined(__APPLE__)
 # define WRAP(x) wrap_##x
 # define WRAPPER_NAME(x) "wrap_"#x
 # define INTERCEPTOR_ATTRIBUTE
+# define DECLARE_WRAPPER(ret_type, convention, func, ...)
 #elif defined(_WIN32)
 # if defined(_DLL)  // DLL CRT
 #  define WRAP(x) x
@@ -85,10 +91,14 @@
 #  define WRAPPER_NAME(x) "wrap_"#x
 #  define INTERCEPTOR_ATTRIBUTE
 # endif
+# define DECLARE_WRAPPER(ret_type, convention, func, ...)
 #else
-# define WRAP(x) x
-# define WRAPPER_NAME(x) #x
+# define WRAP(x) __xsan_ ## x
+# define WRAPPER_NAME(x) "__xsan_" #x
 # define INTERCEPTOR_ATTRIBUTE __attribute__((visibility("default")))
+# define DECLARE_WRAPPER(ret_type, convention, func, ...) \
+    extern "C" ret_type convention func(__VA_ARGS__) \
+    __attribute__((weak, alias("__xsan_" #func), visibility("default")))
 #endif
 
 #define PTR_TO_REAL(x) real_##x
@@ -125,6 +135,7 @@
 
 #define INTERCEPTOR_EX(ret_type, convention, func, ...) \
   DEFINE_REAL_EX(ret_type, convention, func, __VA_ARGS__); \
+  DECLARE_WRAPPER(ret_type, convention, func, __VA_ARGS__); \
   extern "C" \
   INTERCEPTOR_ATTRIBUTE \
   ret_type convention WRAP(func)(__VA_ARGS__)
