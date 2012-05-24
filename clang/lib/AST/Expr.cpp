@@ -1883,43 +1883,40 @@ bool Expr::isUnusedResultAWarning(const Expr *&WarnE, SourceLocation &Loc,
     return true;
   }
   case CStyleCastExprClass: {
-    // Ignore an explicit cast to void, as long as the operand isn't a
+    // Ignore an explicit cast to void unless the operand is a non-trivial
     // volatile lvalue.
-    const CStyleCastExpr *CE = cast<CStyleCastExpr>(this);
+    const CastExpr *CE = cast<CastExpr>(this);
     if (CE->getCastKind() == CK_ToVoid) {
       if (CE->getSubExpr()->isGLValue() &&
-          CE->getSubExpr()->getType().isVolatileQualified())
-        return CE->getSubExpr()->isUnusedResultAWarning(WarnE, Loc,
-                                                        R1, R2, Ctx);
+          CE->getSubExpr()->getType().isVolatileQualified()) {
+        const DeclRefExpr *DRE =
+            dyn_cast<DeclRefExpr>(CE->getSubExpr()->IgnoreParens());
+        if (!(DRE && isa<VarDecl>(DRE->getDecl()) &&
+              cast<VarDecl>(DRE->getDecl())->hasLocalStorage())) {
+          return CE->getSubExpr()->isUnusedResultAWarning(WarnE, Loc,
+                                                          R1, R2, Ctx);
+        }
+      }
       return false;
     }
-    WarnE = this;
-    Loc = CE->getLParenLoc();
-    R1 = CE->getSubExpr()->getSourceRange();
-    return true;
-  }
-  case CXXFunctionalCastExprClass: {
-    // Ignore an explicit cast to void, as long as the operand isn't a
-    // volatile lvalue.
-    const CXXFunctionalCastExpr *CE = cast<CXXFunctionalCastExpr>(this);
-    if (CE->getCastKind() == CK_ToVoid) {
-      if (CE->getSubExpr()->isGLValue() &&
-          CE->getSubExpr()->getType().isVolatileQualified())
-        return CE->getSubExpr()->isUnusedResultAWarning(WarnE, Loc,
-                                                        R1, R2, Ctx);
-      return false;
-    }
-    
+
     // If this is a cast to a constructor conversion, check the operand.
     // Otherwise, the result of the cast is unused.
     if (CE->getCastKind() == CK_ConstructorConversion)
       return CE->getSubExpr()->isUnusedResultAWarning(WarnE, Loc, R1, R2, Ctx);
+
     WarnE = this;
-    Loc = CE->getTypeBeginLoc();
-    R1 = CE->getSubExpr()->getSourceRange();
+    if (const CXXFunctionalCastExpr *CXXCE =
+            dyn_cast<CXXFunctionalCastExpr>(this)) {
+      Loc = CXXCE->getTypeBeginLoc();
+      R1 = CXXCE->getSubExpr()->getSourceRange();
+    } else {
+      const CStyleCastExpr *CStyleCE = cast<CStyleCastExpr>(this);
+      Loc = CStyleCE->getLParenLoc();
+      R1 = CStyleCE->getSubExpr()->getSourceRange();
+    }
     return true;
   }
-
   case ImplicitCastExprClass: {
     const CastExpr *ICE = cast<ImplicitCastExpr>(this);
 
