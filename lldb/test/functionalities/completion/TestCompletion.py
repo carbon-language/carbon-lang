@@ -18,6 +18,10 @@ class CommandLineCompletionTestCase(TestBase):
         system(["/bin/sh", "-c", "rm -f child_send.txt"])
         system(["/bin/sh", "-c", "rm -f child_read.txt"])
 
+    def test_process_attach_dash_dash_con(self):
+        """Test that 'process attach --con' completes to 'process attach --continue '."""
+        self.complete_from_to('process attach --con', 'process attach --continue ')
+
     # <rdar://problem/11052829>
     def test_infinite_loop_while_completing(self):
         """Test that 'process print hello\' completes to itself and does not infinite loop."""

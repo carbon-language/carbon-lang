@@ -794,7 +794,8 @@ public:
         ProcessInstanceInfo(),
         m_plugin_name (),
         m_resume_count (0),
-        m_wait_for_launch (false)
+        m_wait_for_launch (false),
+        m_continue_once_attached (false)
     {
     }
 
@@ -802,7 +803,8 @@ public:
         ProcessInstanceInfo(),
         m_plugin_name (),
         m_resume_count (0),
-        m_wait_for_launch (false)
+        m_wait_for_launch (false),
+        m_continue_once_attached (false)
     {
         ProcessInfo::operator= (launch_info);
         SetProcessPluginName (launch_info.GetProcessPluginName());
@@ -819,6 +821,18 @@ public:
     SetWaitForLaunch (bool b)
     {
         m_wait_for_launch = b;
+    }
+
+    bool
+    GetContinueOnceAttached () const
+    {
+        return m_continue_once_attached;
+    }
+    
+    void
+    SetContinueOnceAttached (bool b)
+    {
+        m_continue_once_attached = b;
     }
 
     uint32_t
@@ -874,6 +888,7 @@ protected:
     std::string m_plugin_name;
     uint32_t m_resume_count; // How many times do we resume after launching
     bool m_wait_for_launch;
+    bool m_continue_once_attached; // Supports the use-case scenario of immediately continuing the process once attached.
 };
 
 class ProcessLaunchCommandOptions : public Options
