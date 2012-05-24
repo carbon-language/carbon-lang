@@ -1885,9 +1885,8 @@ void RewriteModernObjC::WarnAboutReturnGotoStmts(Stmt *S)
 Stmt *RewriteModernObjC::RewriteObjCAutoreleasePoolStmt(ObjCAutoreleasePoolStmt  *S) {
   SourceLocation startLoc = S->getAtLoc();
   ReplaceText(startLoc, strlen("@autoreleasepool"), "/* @autoreleasepool */");
-  std::string buf;
-  buf = "{ __AtAutoreleasePool __autoreleasepool; ";
-  ReplaceText(S->getSubStmt()->getLocStart(), 1, buf);
+  ReplaceText(S->getSubStmt()->getLocStart(), 1, 
+              "{ __AtAutoreleasePool __autoreleasepool; ");
   
   return 0;
 }
