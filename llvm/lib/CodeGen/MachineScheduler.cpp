@@ -679,13 +679,13 @@ void ScheduleDAGMI::placeDebugValues() {
 
 namespace {
 /// Wrapper around a vector of SUnits with some basic convenience methods.
-struct ReadyQ {
+struct ReadyQueue {
   typedef std::vector<SUnit*>::iterator iterator;
 
   unsigned ID;
   std::vector<SUnit*> Queue;
 
-  ReadyQ(unsigned id): ID(id) {}
+  ReadyQueue(unsigned id): ID(id) {}
 
   bool isInQueue(SUnit *SU) const {
     return SU->NodeQueueId & ID;
@@ -744,8 +744,8 @@ class ConvergingScheduler : public MachineSchedStrategy {
   ScheduleDAGMI *DAG;
   const TargetRegisterInfo *TRI;
 
-  ReadyQ TopQueue;
-  ReadyQ BotQueue;
+  ReadyQueue TopQueue;
+  ReadyQueue BotQueue;
 
 public:
   /// SUnit::NodeQueueId = 0 (none), = 1 (top), = 2 (bottom), = 3 (both)
@@ -785,7 +785,8 @@ public:
 protected:
   SUnit *pickNodeBidrectional(bool &IsTopNode);
 
-  CandResult pickNodeFromQueue(ReadyQ &Q, const RegPressureTracker &RPTracker,
+  CandResult pickNodeFromQueue(ReadyQueue &Q,
+                               const RegPressureTracker &RPTracker,
                                SchedCandidate &Candidate);
 #ifndef NDEBUG
   void traceCandidate(const char *Label, unsigned QID, SUnit *SU,
@@ -837,7 +838,7 @@ static bool compareRPDelta(const RegPressureDelta &LHS,
 /// DAG building. To adjust for the current scheduling location we need to
 /// maintain the number of vreg uses remaining to be top-scheduled.
 ConvergingScheduler::CandResult ConvergingScheduler::
-pickNodeFromQueue(ReadyQ &Q, const RegPressureTracker &RPTracker,
+pickNodeFromQueue(ReadyQueue &Q, const RegPressureTracker &RPTracker,
                   SchedCandidate &Candidate) {
   DEBUG(Q.dump(getQName(Q.ID)));
 
@@ -846,7 +847,7 @@ pickNodeFromQueue(ReadyQ &Q, const RegPressureTracker &RPTracker,
 
   // BestSU remains NULL if no top candidates beat the best existing candidate.
   CandResult FoundCandidate = NoCand;
-  for (ReadyQ::iterator I = Q.begin(), E = Q.end(); I != E; ++I) {
+  for (ReadyQueue::iterator I = Q.begin(), E = Q.end(); I != E; ++I) {
 
     RegPressureDelta RPDelta;
     TempTracker.getMaxPressureDelta((*I)->getInstr(), RPDelta,
@@ -981,7 +982,7 @@ SUnit *ConvergingScheduler::pickNodeBidrectional(bool &IsTopNode) {
 /// Pick the best node to balance the schedule. Implements MachineSchedStrategy.
 SUnit *ConvergingScheduler::pickNode(bool &IsTopNode) {
   if (DAG->top() == DAG->bottom()) {
-    assert(TopQueue.empty() && BotQueue.empty() && "ReadyQ garbage");
+    assert(TopQueue.empty() && BotQueue.empty() && "ReadyQueue garbage");
     return NULL;
   }
   SUnit *SU;
