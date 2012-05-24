@@ -97,7 +97,7 @@ const EDInstInfo *Mips64Disassembler::getEDInfo() const {
 }
 
 // Decoder tables for Mips register
-static const unsigned CPURegsTable[] = {
+static const uint16_t CPURegsTable[] = {
   Mips::ZERO, Mips::AT, Mips::V0, Mips::V1,
   Mips::A0, Mips::A1, Mips::A2, Mips::A3,
   Mips::T0, Mips::T1, Mips::T2, Mips::T3,
@@ -108,7 +108,7 @@ static const unsigned CPURegsTable[] = {
   Mips::GP, Mips::SP, Mips::FP, Mips::RA
 };
 
-static const unsigned FGR32RegsTable[] = {
+static const uint16_t FGR32RegsTable[] = {
   Mips::F0, Mips::F1, Mips::F2, Mips::F3,
   Mips::F4, Mips::F5, Mips::F6, Mips::F7,
   Mips::F8, Mips::F9, Mips::F10, Mips::F11,
@@ -119,7 +119,7 @@ static const unsigned FGR32RegsTable[] = {
   Mips::F28, Mips::F29, Mips::F30, Mips::F31
 };
 
-static const unsigned CPU64RegsTable[] = {
+static const uint16_t CPU64RegsTable[] = {
   Mips::ZERO_64, Mips::AT_64, Mips::V0_64, Mips::V1_64,
   Mips::A0_64, Mips::A1_64, Mips::A2_64, Mips::A3_64,
   Mips::T0_64, Mips::T1_64, Mips::T2_64, Mips::T3_64,
@@ -130,7 +130,7 @@ static const unsigned CPU64RegsTable[] = {
   Mips::GP_64, Mips::SP_64, Mips::FP_64, Mips::RA_64
 };
 
-static const unsigned FGR64RegsTable[] = {
+static const uint16_t FGR64RegsTable[] = {
   Mips::D0_64,  Mips::D1_64,  Mips::D2_64,  Mips::D3_64,
   Mips::D4_64,  Mips::D5_64,  Mips::D6_64,  Mips::D7_64,
   Mips::D8_64,  Mips::D9_64,  Mips::D10_64, Mips::D11_64,
@@ -141,7 +141,7 @@ static const unsigned FGR64RegsTable[] = {
   Mips::D28_64, Mips::D29_64, Mips::D30_64, Mips::D31_64
 };
 
-static const unsigned AFGR64RegsTable[] = {
+static const uint16_t AFGR64RegsTable[] = {
   Mips::D0,  Mips::D1,  Mips::D2,  Mips::D3,
   Mips::D4,  Mips::D5,  Mips::D6,  Mips::D7,
   Mips::D8,  Mips::D9,  Mips::D10, Mips::D11,
