@@ -788,7 +788,7 @@ error_code MachOObjectFile::getRelocationTypeName(DataRefImpl Rel,
 
   switch (Arch) {
     case Triple::x86: {
-      const char* Table[] =  {
+      static const char *const Table[] =  {
         "GENERIC_RELOC_VANILLA",
         "GENERIC_RELOC_PAIR",
         "GENERIC_RELOC_SECTDIFF",
@@ -803,7 +803,7 @@ error_code MachOObjectFile::getRelocationTypeName(DataRefImpl Rel,
       break;
     }
     case Triple::x86_64: {
-      const char* Table[] =  {
+      static const char *const Table[] =  {
         "X86_64_RELOC_UNSIGNED",
         "X86_64_RELOC_SIGNED",
         "X86_64_RELOC_BRANCH",
@@ -822,7 +822,7 @@ error_code MachOObjectFile::getRelocationTypeName(DataRefImpl Rel,
       break;
     }
     case Triple::arm: {
-      const char* Table[] =  {
+      static const char *const Table[] =  {
         "ARM_RELOC_VANILLA",
         "ARM_RELOC_PAIR",
         "ARM_RELOC_SECTDIFF",
@@ -841,7 +841,7 @@ error_code MachOObjectFile::getRelocationTypeName(DataRefImpl Rel,
       break;
     }
     case Triple::ppc: {
-      const char* Table[] =  {
+      static const char *const Table[] =  {
         "PPC_RELOC_VANILLA",
         "PPC_RELOC_PAIR",
         "PPC_RELOC_BR14",

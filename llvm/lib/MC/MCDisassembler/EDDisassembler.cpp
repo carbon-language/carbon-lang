@@ -44,7 +44,7 @@ struct TripleMap {
   const char *String;
 };
 
-static struct TripleMap triplemap[] = {
+static const struct TripleMap triplemap[] = {
   { Triple::x86,          "i386-unknown-unknown"    },
   { Triple::x86_64,       "x86_64-unknown-unknown"  },
   { Triple::arm,          "arm-unknown-unknown"     },

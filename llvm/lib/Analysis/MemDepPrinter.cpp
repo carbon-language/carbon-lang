@@ -32,7 +32,7 @@ namespace {
       Unknown
     };
 
-    static const char* DepTypeStr[];
+    static const char *const DepTypeStr[];
 
     typedef PointerIntPair<const Instruction *, 2, DepType> InstTypePair;
     typedef std::pair<InstTypePair, const BasicBlock *> Dep;
@@ -88,7 +88,7 @@ FunctionPass *llvm::createMemDepPrinter() {
   return new MemDepPrinter();
 }
 
-const char* MemDepPrinter::DepTypeStr[]
+const char *const MemDepPrinter::DepTypeStr[]
   = {"Clobber", "Def", "NonFuncLocal", "Unknown"};
 
 bool MemDepPrinter::runOnFunction(Function &F) {

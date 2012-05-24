@@ -60,11 +60,11 @@ static const ArchiveMemberHeader *ToHeader(const char *base) {
 
 
 static bool isInternalMember(const ArchiveMemberHeader &amh) {
-  const char *internals[] = {
+  static const char *const internals[] = {
     "/",
     "//",
     "#_LLVM_SYM_TAB_#"
-    };
+  };
 
   StringRef name = amh.getName();
   for (std::size_t i = 0; i < sizeof(internals) / sizeof(*internals); ++i) {
