@@ -1697,7 +1697,9 @@ Init *TGParser::ParseDeclaration(Record *CurRec,
 /// the name of the declared object or a NULL Init on error.  Return
 /// the name of the parsed initializer list through ForeachListName.
 ///
-///  ForeachDeclaration ::= ID '=' Value
+///  ForeachDeclaration ::= ID '=' '[' ValueList ']'
+///  ForeachDeclaration ::= ID '=' '{' RangeList '}'
+///  ForeachDeclaration ::= ID '=' RangePiece
 ///
 VarInit *TGParser::ParseForeachDeclaration(ListInit *&ForeachListValue) {
   if (Lex.getCode() != tgtok::Id) {
@@ -1715,26 +1717,59 @@ VarInit *TGParser::ParseForeachDeclaration(ListInit *&ForeachListValue) {
   }
   Lex.Lex();  // Eat the '='
 
-  // Expect a list initializer.
-  Init *List = ParseSimpleValue(0, 0, ParseForeachMode);
+  RecTy *IterType = 0;
+  std::vector<unsigned> Ranges;
 
-  ForeachListValue = dynamic_cast<ListInit*>(List);
-  if (ForeachListValue == 0) {
-    TokError("Expected a Value list");
-    return 0;
+  switch (Lex.getCode()) {
+  default: TokError("Unknown token when expecting a range list"); return 0;
+  case tgtok::l_square: { // '[' ValueList ']'
+    Init *List = ParseSimpleValue(0, 0, ParseForeachMode);
+    ForeachListValue = dynamic_cast<ListInit*>(List);
+    if (ForeachListValue == 0) {
+      TokError("Expected a Value list");
+      return 0;
+    }
+    RecTy *ValueType = ForeachListValue->getType();
+    ListRecTy *ListType = dynamic_cast<ListRecTy *>(ValueType);
+    if (ListType == 0) {
+      TokError("Value list is not of list type");
+      return 0;
+    }
+    IterType = ListType->getElementType();
+    break;
   }
 
-  RecTy *ValueType = ForeachListValue->getType();
-  ListRecTy *ListType = dynamic_cast<ListRecTy *>(ValueType);
-  if (ListType == 0) {
-    TokError("Value list is not of list type");
-    return 0;
+  case tgtok::IntVal: { // RangePiece.
+    if (ParseRangePiece(Ranges))
+      return 0;
+    break;
   }
 
-  RecTy *IterType = ListType->getElementType();
-  VarInit *IterVar = VarInit::get(DeclName, IterType);
+  case tgtok::l_brace: { // '{' RangeList '}'
+    Lex.Lex(); // eat the '{'
+    Ranges = ParseRangeList();
+    if (Lex.getCode() != tgtok::r_brace) {
+      TokError("expected '}' at end of bit range list");
+      return 0;
+    }
+    Lex.Lex();
+    break;
+  }
+  }
 
-  return IterVar;
+  if (!Ranges.empty()) {
+    assert(!IterType && "Type already initialized?");
+    IterType = IntRecTy::get();
+    std::vector<Init*> Values;
+    for (unsigned i = 0, e = Ranges.size(); i != e; ++i)
+      Values.push_back(IntInit::get(Ranges[i]));
+    ForeachListValue = ListInit::get(Values, IterType);
+  }
+
+  if (!IterType)
+    return 0;
+
+  return VarInit::get(DeclName, IterType);
 }
 
 /// ParseTemplateArgList - Read a template argument list, which is a non-empty

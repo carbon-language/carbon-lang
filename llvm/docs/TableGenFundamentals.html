@@ -402,14 +402,18 @@ which case the user must specify it explicitly.</dd>
 <dt><tt>list[4-7,17,2-3]</tt></dt>
   <dd>A slice of the 'list' list, including elements 4,5,6,7,17,2, and 3 from
   it.  Elements may be included multiple times.</dd>
-<dt><tt>foreach &lt;var&gt; = &lt;list&gt; in { &lt;body&gt; }</tt></dt>
-<dt><tt>foreach &lt;var&gt; = &lt;list&gt; in &lt;def&gt;</tt></dt>
+<dt><tt>foreach &lt;var&gt; = [ &lt;list&gt; ] in { &lt;body&gt; }</tt></dt>
+<dt><tt>foreach &lt;var&gt; = [ &lt;list&gt; ] in &lt;def&gt;</tt></dt>
   <dd> Replicate &lt;body&gt; or &lt;def&gt;, replacing instances of
   &lt;var&gt; with each value in &lt;list&gt;.  &lt;var&gt; is scoped at the
   level of the <tt>foreach</tt> loop and must not conflict with any other object
   introduced in &lt;body&gt; or &lt;def&gt;.  Currently only <tt>def</tt>s are
   expanded within &lt;body&gt;.
   </dd>
+<dt><tt>foreach &lt;var&gt; = 0-15 in ...</tt></dt>
+<dt><tt>foreach &lt;var&gt; = {0-15,32-47} in ...</tt></dt>
+  <dd>Loop over ranges of integers. The braces are required for multiple
+  ranges.</dd>
 <dt><tt>(DEF a, b)</tt></dt>
   <dd>a dag value.  The first element is required to be a record definition, the
   remaining elements in the list may be arbitrary other values, including nested

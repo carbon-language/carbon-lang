@@ -6,10 +6,18 @@ class Register<string name, int idx> {
   int Index = idx;
 }
 
+// CHECK-NOT: !strconcat
+
+foreach i = 0-3 in
+  def Q#i : Register<"Q"#i, i>;
+
+// CHECK: def Q0
+// CHECK: def Q1
+// CHECK: def Q2
+// CHECK: def Q3
+
 foreach i = [0, 1, 2, 3, 4, 5, 6, 7] in
   def R#i : Register<"R"#i, i>;
-
-// CHECK-NOT: !strconcat
 
 // CHECK: def R0
 // CHECK: string Name = "R0";
@@ -42,3 +50,14 @@ foreach i = [0, 1, 2, 3, 4, 5, 6, 7] in
 // CHECK: def R7
 // CHECK: string Name = "R7";
 // CHECK: int Index = 7;
+
+foreach i = {0-3,9-7} in
+  def S#i : Register<"Q"#i, i>;
+
+// CHECK: def S0
+// CHECK: def S1
+// CHECK: def S2
+// CHECK: def S3
+// CHECK: def S7
+// CHECK: def S8
+// CHECK: def S9
