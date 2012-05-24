@@ -490,7 +490,7 @@ NVPTXAsmPrinter::emitVirtualRegister(unsigned int vr, bool isVec,
 void NVPTXAsmPrinter::printVecModifiedImmediate(const MachineOperand &MO,
                                                 const char *Modifier,
                                                 raw_ostream &O) {
-char vecelem[] = {'0', '1', '2', '3', '0', '1', '2', '3'};
+  static const char vecelem[] = {'0', '1', '2', '3', '0', '1', '2', '3'};
   int Imm = (int)MO.getImm();
   if(0 == strcmp(Modifier, "vecelem"))
     O << "_" << vecelem[Imm];

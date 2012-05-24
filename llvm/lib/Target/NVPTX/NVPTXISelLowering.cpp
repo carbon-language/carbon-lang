@@ -887,10 +887,10 @@ NVPTXTargetLowering::getParamHelpSymbol(SelectionDAG &DAG, int idx) {
 // Check to see if the kernel argument is image*_t or sampler_t
 
 bool llvm::isImageOrSamplerVal(const Value *arg, const Module *context) {
-  const char *specialTypes[] = {
-                                "struct._image2d_t",
-                                "struct._image3d_t",
-                                "struct._sampler_t"
+  static const char *const specialTypes[] = {
+                                             "struct._image2d_t",
+                                             "struct._image3d_t",
+                                             "struct._sampler_t"
   };
 
   const Type *Ty = arg->getType();
@@ -905,7 +905,7 @@ bool llvm::isImageOrSamplerVal(const Value *arg, const Module *context) {
   const StructType *STy = dyn_cast<StructType>(PTy->getElementType());
   const std::string TypeName = STy ? STy->getName() : "";
 
-  for (int i=0, e=sizeof(specialTypes)/sizeof(specialTypes[0]); i!=e; ++i)
+  for (int i = 0, e = array_lengthof(specialTypes); i != e; ++i)
     if (TypeName == specialTypes[i])
       return true;
 
