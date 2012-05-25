@@ -1359,20 +1359,24 @@ ObjectFileMachO::ParseSymtab (bool minimize)
         }
 
 
-        if (process)
+        const bool have_strtab_data = strtab_data.GetByteSize() > 0;
+        if (!have_strtab_data)
         {
-            if (strtab_addr == LLDB_INVALID_ADDRESS)
+            if (process)
+            {
+                if (strtab_addr == LLDB_INVALID_ADDRESS)
+                {
+                    if (log)
+                        module_sp->LogMessage(log.get(), "failed to locate the strtab in memory");
+                    return 0;
+                }
+            }
+            else
             {
                 if (log)
-                    module_sp->LogMessage(log.get(), "failed to locate the strtab in memory");
+                    module_sp->LogMessage(log.get(), "failed to read strtab data");
                 return 0;
             }
-        }
-        else if (strtab_data.GetByteSize() == 0)
-        {
-            if (log)
-                module_sp->LogMessage(log.get(), "failed to read strtab data");
-            return 0;
         }
 
         const ConstString &g_segment_name_TEXT = GetSegmentNameTEXT();
@@ -1449,14 +1453,7 @@ ObjectFileMachO::ParseSymtab (bool minimize)
             SymbolType type = eSymbolTypeInvalid;
             const char *symbol_name = NULL;
             
-            if (process)
-            {
-                const addr_t str_addr = strtab_addr + nlist.n_strx;
-                Error str_error;
-                if (process->ReadCStringFromMemory(str_addr, memory_symbol_name, str_error))
-                    symbol_name = memory_symbol_name.c_str();
-            }
-            else
+            if (have_strtab_data)
             {
                 symbol_name = strtab_data.PeekCStr(nlist.n_strx);
                 
@@ -1475,6 +1472,13 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                 }
                 if (symbol_name[0] == '\0')
                     symbol_name = NULL;
+            }
+            else
+            {
+                const addr_t str_addr = strtab_addr + nlist.n_strx;
+                Error str_error;
+                if (process->ReadCStringFromMemory(str_addr, memory_symbol_name, str_error))
+                    symbol_name = memory_symbol_name.c_str();
             }
             const char *symbol_name_non_abi_mangled = NULL;
 
