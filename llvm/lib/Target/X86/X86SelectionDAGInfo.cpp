@@ -62,13 +62,15 @@ X86SelectionDAGInfo::EmitTargetCodeForMemset(SelectionDAG &DAG, DebugLoc dl,
       Args.push_back(Entry);
       Entry.Node = Size;
       Args.push_back(Entry);
-      std::pair<SDValue,SDValue> CallResult =
-        TLI.LowerCallTo(Chain, Type::getVoidTy(*DAG.getContext()),
+      TargetLowering::
+      CallLoweringInfo CLI(Chain, Type::getVoidTy(*DAG.getContext()),
                         false, false, false, false,
                         0, CallingConv::C, /*isTailCall=*/false,
                         /*doesNotRet=*/false, /*isReturnValueUsed=*/false,
                         DAG.getExternalSymbol(bzeroEntry, IntPtr), Args,
                         DAG, dl);
+      std::pair<SDValue,SDValue> CallResult =
+        TLI.LowerCallTo(CLI);
       return CallResult.second;
     }
 

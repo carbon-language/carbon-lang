@@ -485,12 +485,12 @@ LowerLOAD(SDValue Op, SelectionDAG &DAG) const {
   Entry.Node = BasePtr;
   Args.push_back(Entry);
 
-  std::pair<SDValue, SDValue> CallResult =
-        LowerCallTo(Chain, IntPtrTy, false, false,
+  TargetLowering::CallLoweringInfo CLI(Chain, IntPtrTy, false, false,
                     false, false, 0, CallingConv::C, /*isTailCall=*/false,
                     /*doesNotRet=*/false, /*isReturnValueUsed=*/true,
                     DAG.getExternalSymbol("__misaligned_load", getPointerTy()),
                     Args, DAG, DL);
+  std::pair<SDValue, SDValue> CallResult = LowerCallTo(CLI);
 
   SDValue Ops[] =
     { CallResult.first, CallResult.second };
@@ -547,12 +547,13 @@ LowerSTORE(SDValue Op, SelectionDAG &DAG) const
   Entry.Node = Value;
   Args.push_back(Entry);
 
-  std::pair<SDValue, SDValue> CallResult =
-        LowerCallTo(Chain, Type::getVoidTy(*DAG.getContext()), false, false,
+  TargetLowering::CallLoweringInfo CLI(Chain,
+                    Type::getVoidTy(*DAG.getContext()), false, false,
                     false, false, 0, CallingConv::C, /*isTailCall=*/false,
                     /*doesNotRet=*/false, /*isReturnValueUsed=*/true,
                     DAG.getExternalSymbol("__misaligned_store", getPointerTy()),
                     Args, DAG, dl);
+  std::pair<SDValue, SDValue> CallResult = LowerCallTo(CLI);
 
   return CallResult.second;
 }
@@ -873,14 +874,19 @@ LowerINIT_TRAMPOLINE(SDValue Op, SelectionDAG &DAG) const {
 
 /// XCore call implementation
 SDValue
-XCoreTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
-                               CallingConv::ID CallConv, bool isVarArg,
-                               bool doesNotRet, bool &isTailCall,
-                               const SmallVectorImpl<ISD::OutputArg> &Outs,
-                               const SmallVectorImpl<SDValue> &OutVals,
-                               const SmallVectorImpl<ISD::InputArg> &Ins,
-                               DebugLoc dl, SelectionDAG &DAG,
+XCoreTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
                                SmallVectorImpl<SDValue> &InVals) const {
+  SelectionDAG &DAG                     = CLI.DAG;
+  DebugLoc &dl                          = CLI.DL;
+  SmallVector<ISD::OutputArg, 32> &Outs = CLI.Outs;
+  SmallVector<SDValue, 32> &OutVals     = CLI.OutVals;
+  SmallVector<ISD::InputArg, 32> &Ins   = CLI.Ins;
+  SDValue Chain                         = CLI.Chain;
+  SDValue Callee                        = CLI.Callee;
+  bool &isTailCall                      = CLI.IsTailCall;
+  CallingConv::ID CallConv              = CLI.CallConv;
+  bool isVarArg                         = CLI.IsVarArg;
+
   // XCore target does not yet support tail call optimization.
   isTailCall = false;
 

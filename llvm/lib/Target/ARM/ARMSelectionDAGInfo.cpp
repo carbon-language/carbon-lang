@@ -179,8 +179,7 @@ EmitTargetCodeForMemset(SelectionDAG &DAG, DebugLoc dl,
   Args.push_back(Entry);
 
   // Emit __eabi_memset call
-  std::pair<SDValue,SDValue> CallResult =
-    TLI.LowerCallTo(Chain,
+  TargetLowering::CallLoweringInfo CLI(Chain,
                     Type::getVoidTy(*DAG.getContext()), // return type
                     false, // return sign ext
                     false, // return zero ext
@@ -193,7 +192,9 @@ EmitTargetCodeForMemset(SelectionDAG &DAG, DebugLoc dl,
                     false, // is return val used
                     DAG.getExternalSymbol(TLI.getLibcallName(RTLIB::MEMSET),
                                           TLI.getPointerTy()), // callee
-                    Args, DAG, dl); // arg list, DAG and debug
+                    Args, DAG, dl);
+  std::pair<SDValue,SDValue> CallResult =
+    TLI.LowerCallTo(CLI);
 
   return CallResult.second;
 }
