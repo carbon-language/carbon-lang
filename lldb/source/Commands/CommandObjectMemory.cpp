@@ -613,8 +613,15 @@ public:
             bytes_read = target->ReadMemory(address, false, data_sp->GetBytes (), data_sp->GetByteSize(), error);
             if (bytes_read == 0)
             {
-                result.AppendWarningWithFormat("Read from 0x%llx failed.\n", addr);
-                result.AppendError(error.AsCString());
+                const char *error_cstr = error.AsCString();
+                if (error_cstr && error_cstr[0])
+                {
+                    result.AppendError(error_cstr);
+                }
+                else
+                {
+                    result.AppendErrorWithFormat("failed to read memory from 0x%llx.\n", addr);
+                }
                 result.SetStatus(eReturnStatusFailed);
                 return false;
             }

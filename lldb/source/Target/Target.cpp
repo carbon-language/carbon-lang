@@ -1062,6 +1062,7 @@ Target::ReadMemoryFromFileCache (const Address& addr, void *dst, size_t dst_len,
         // If the contents of this section are encrypted, the on-disk file is unusuable.  Read only from live memory.
         if (section_sp->IsEncrypted())
         {
+            error.SetErrorString("section is encrypted");
             return 0;
         }
         ModuleSP module_sp (section_sp->GetModule());

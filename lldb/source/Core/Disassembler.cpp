@@ -225,7 +225,7 @@ Disassembler::DisassembleRange
 
         if (disasm_sp)
         {
-            size_t bytes_disassembled = disasm_sp->ParseInstructions (&exe_ctx, range);
+            size_t bytes_disassembled = disasm_sp->ParseInstructions (&exe_ctx, range, NULL);
             if (bytes_disassembled == 0)
                 disasm_sp.reset();
         }
@@ -290,7 +290,7 @@ Disassembler::Disassemble
             ResolveAddress (exe_ctx, disasm_range.GetBaseAddress(), range.GetBaseAddress());
             range.SetByteSize (disasm_range.GetByteSize());
             
-            size_t bytes_disassembled = disasm_ap->ParseInstructions (&exe_ctx, range);
+            size_t bytes_disassembled = disasm_ap->ParseInstructions (&exe_ctx, range, &strm);
             if (bytes_disassembled == 0)
                 return false;
 
@@ -1010,7 +1010,8 @@ size_t
 Disassembler::ParseInstructions
 (
     const ExecutionContext *exe_ctx,
-    const AddressRange &range
+    const AddressRange &range,
+    Stream *error_strm_ptr
 )
 {
     if (exe_ctx)
@@ -1040,6 +1041,18 @@ Disassembler::ParseInstructions
                                 m_arch.GetAddressByteSize());
             return DecodeInstructions (range.GetBaseAddress(), data, 0, UINT32_MAX, false);
         }
+        else if (error_strm_ptr)
+        {
+            const char *error_cstr = error.AsCString();
+            if (error_cstr)
+            {
+                error_strm_ptr->Printf("error: %s\n", error_cstr);
+            }
+        }
+    }
+    else if (error_strm_ptr)
+    {
+        error_strm_ptr->PutCString("error: invalid execution context\n");
     }
     return 0;
 }

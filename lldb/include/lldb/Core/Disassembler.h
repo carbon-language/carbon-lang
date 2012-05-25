@@ -338,7 +338,8 @@ public:
     
     size_t
     ParseInstructions (const ExecutionContext *exe_ctx,
-                       const AddressRange &range);
+                       const AddressRange &range,
+                       Stream *error_strm_ptr);
 
     size_t
     ParseInstructions (const ExecutionContext *exe_ctx,
