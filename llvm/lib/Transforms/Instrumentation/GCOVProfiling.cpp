@@ -70,7 +70,9 @@ namespace {
 
     // Get pointers to the functions in the runtime library.
     Constant *getStartFileFunc();
-    Constant *getIncrementIndirectCounterFunc();
+    void incrementIndirectCounter(IRBuilder<> &Builder, BasicBlock *Exit,
+                                  GlobalVariable *EdgeState,
+                                  Value *CounterPtrArray);
     Constant *getEmitFunctionFunc();
     Constant *getEmitArcsFunc();
     Constant *getEndFileFunc();
@@ -501,16 +503,17 @@ bool GCOVProfiler::emitProfileArcs() {
         }
         for (int i = 0, e = ComplexEdgeSuccs.size(); i != e; ++i) {
           // call runtime to perform increment
-          BasicBlock::iterator InsertPt =
-            ComplexEdgeSuccs[i+1]->getFirstInsertionPt();
+          BasicBlock *BB = ComplexEdgeSuccs[i+1];
+          BasicBlock::iterator InsertPt = BB->getFirstInsertionPt();
+          BasicBlock *Split = BB->splitBasicBlock(InsertPt);
+          InsertPt = BB->getFirstInsertionPt();
           IRBuilder<> Builder(InsertPt);
           Value *CounterPtrArray =
             Builder.CreateConstInBoundsGEP2_64(EdgeTable, 0,
                                                i * ComplexEdgePreds.size());
-          Builder.CreateCall2(getIncrementIndirectCounterFunc(),
-                              EdgeState, CounterPtrArray);
-          // clear the predecessor number
-          Builder.CreateStore(ConstantInt::get(Int32Ty, 0xffffffff), EdgeState);
+
+          // Build code to increment the counter.
+          incrementIndirectCounter(Builder, Split, EdgeState, CounterPtrArray);
         }
       }
     }
@@ -573,14 +576,52 @@ Constant *GCOVProfiler::getStartFileFunc() {
   return M->getOrInsertFunction("llvm_gcda_start_file", FTy);
 }
 
-Constant *GCOVProfiler::getIncrementIndirectCounterFunc() {
-  Type *Args[] = {
-    Type::getInt32PtrTy(*Ctx),                  // uint32_t *predecessor
-    Type::getInt64PtrTy(*Ctx)->getPointerTo(),  // uint64_t **state_table_row
-  };
-  FunctionType *FTy = FunctionType::get(Type::getVoidTy(*Ctx),
-                                              Args, false);
-  return M->getOrInsertFunction("llvm_gcda_increment_indirect_counter", FTy);
+/// incrementIndirectCounter - Emit code that increments the indirect
+/// counter. The code is meant to copy the llvm_gcda_increment_indirect_counter
+/// function, but because it's inlined into the function, we don't have to worry
+/// about the runtime library possibly writing into a protected area.
+void GCOVProfiler::incrementIndirectCounter(IRBuilder<> &Builder,
+                                            BasicBlock *Exit,
+                                            GlobalVariable *EdgeState,
+                                            Value *CounterPtrArray) {
+  Type *Int64Ty = Type::getInt64Ty(*Ctx);
+  ConstantInt *NegOne = ConstantInt::get(Type::getInt32Ty(*Ctx), 0xffffffff);
+
+  // Create exiting blocks.
+  BasicBlock *InsBB = Builder.GetInsertBlock();
+  Function *Fn = InsBB->getParent();
+  BasicBlock *PredNotNegOne = BasicBlock::Create(*Ctx, "", Fn, Exit);
+  BasicBlock *CounterEnd = BasicBlock::Create(*Ctx, "", Fn, Exit);
+
+  // uint32_t pred = *EdgeState;
+  // if (pred == 0xffffffff) return;
+  Value *Pred = Builder.CreateLoad(EdgeState, "predecessor");
+  Value *Cond = Builder.CreateICmpEQ(Pred, NegOne);
+  InsBB->getTerminator()->eraseFromParent();
+  BranchInst::Create(Exit, PredNotNegOne, Cond, InsBB);
+
+  Builder.SetInsertPoint(PredNotNegOne);
+
+  // uint64_t *counter = CounterPtrArray[pred];
+  // if (!counter) return;
+  Value *ZExtPred = Builder.CreateZExt(Pred, Int64Ty);
+  Value *GEP = Builder.CreateGEP(CounterPtrArray, ZExtPred);
+  Value *Counter = Builder.CreateLoad(GEP, "counter");
+  Cond = Builder.CreateICmpEQ(Counter,
+                              Constant::getNullValue(Type::getInt64PtrTy(*Ctx, 0)));
+  Builder.CreateCondBr(Cond, Exit, CounterEnd);
+
+  Builder.SetInsertPoint(CounterEnd);
+
+  // ++*counter;
+  Value *Add = Builder.CreateAdd(Builder.CreateLoad(Counter),
+                                 ConstantInt::get(Int64Ty, 1));
+  Builder.CreateStore(Add, Counter);
+  Builder.CreateBr(Exit);
+
+  // Clear the predecessor number
+  Builder.SetInsertPoint(Exit->getFirstInsertionPt());
+  Builder.CreateStore(NegOne, EdgeState);
 }
 
 Constant *GCOVProfiler::getEmitFunctionFunc() {
@@ -588,8 +629,7 @@ Constant *GCOVProfiler::getEmitFunctionFunc() {
     Type::getInt32Ty(*Ctx),    // uint32_t ident
     Type::getInt8PtrTy(*Ctx),  // const char *function_name
   };
-  FunctionType *FTy = FunctionType::get(Type::getVoidTy(*Ctx),
-                                              Args, false);
+  FunctionType *FTy = FunctionType::get(Type::getVoidTy(*Ctx), Args, false);
   return M->getOrInsertFunction("llvm_gcda_emit_function", FTy);
 }
 
