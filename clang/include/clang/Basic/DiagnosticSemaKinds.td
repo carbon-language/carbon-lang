@@ -1180,6 +1180,9 @@ def warn_uninit_self_reference_in_init : Warning<
 def warn_uninit_var : Warning<
   "variable %0 is uninitialized when used here">,
   InGroup<Uninitialized>, DefaultIgnore;
+def warn_sometimes_uninit_var : Warning<
+  "variable %0 is sometimes uninitialized when used here">,
+  InGroup<UninitializedSometimes>, DefaultIgnore;
 def warn_maybe_uninit_var :
   Warning<"variable %0 may be uninitialized when used here">,
     InGroup<UninitializedMaybe>, DefaultIgnore;
@@ -1188,12 +1191,21 @@ def note_uninit_var_def : Note<
 def warn_uninit_var_captured_by_block : Warning<
   "variable %0 is uninitialized when captured by block">,
   InGroup<Uninitialized>, DefaultIgnore;
+def warn_sometimes_uninit_var_captured_by_block : Warning<
+  "variable %0 is sometimes uninitialized when captured by block">,
+  InGroup<UninitializedSometimes>, DefaultIgnore;
 def warn_maybe_uninit_var_captured_by_block : Warning<
   "variable %0 may be uninitialized when captured by block">,
   InGroup<UninitializedMaybe>, DefaultIgnore;
 def warn_uninit_byref_blockvar_captured_by_block : Warning<
   "block pointer variable %0 is uninitialized when captured by block">,
   InGroup<Uninitialized>, DefaultIgnore;
+def note_sometimes_uninit_var_branch : Note<
+  "uninitialized use occurs whenever "
+  "%select{'%1' condition is %select{true|false}2|"
+  "'%1' loop %select{is entered|exits because its condition is false}2|"
+  "'%1' loop %select{condition is true|exits because its condition is false}2|"
+  "switch %1 is taken}0">;
 def note_block_var_fixit_add_initialization : Note<
   "maybe you meant to use __block %0">;
 def note_var_fixit_add_initialization : Note<

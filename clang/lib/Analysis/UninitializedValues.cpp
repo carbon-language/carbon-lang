@@ -128,6 +128,13 @@ public:
   ValueVector &getScratch() { return scratch; }
   
   ValueVector::reference operator[](const VarDecl *vd);
+
+  Value getValue(const CFGBlock *block, const CFGBlock *dstBlock,
+                 const VarDecl *vd) {
+    const llvm::Optional<unsigned> &idx = declToIndex.getValueIndex(vd);
+    assert(idx.hasValue());
+    return getValueVector(block, dstBlock)[idx.getValue()];
+  }
 };  
 } // end anonymous namespace
 
@@ -338,6 +345,7 @@ public:
 class TransferFunctions : public StmtVisitor<TransferFunctions> {
   CFGBlockValues &vals;
   const CFG &cfg;
+  const CFGBlock *block;
   AnalysisDeclContext &ac;
   UninitVariablesHandler *handler;
   
@@ -357,9 +365,9 @@ class TransferFunctions : public StmtVisitor<TransferFunctions> {
   
 public:
   TransferFunctions(CFGBlockValues &vals, const CFG &cfg,
-                    AnalysisDeclContext &ac,
+                    const CFGBlock *block, AnalysisDeclContext &ac,
                     UninitVariablesHandler *handler)
-    : vals(vals), cfg(cfg), ac(ac), handler(handler),
+    : vals(vals), cfg(cfg), block(block), ac(ac), handler(handler),
       lastDR(0), lastLoad(0),
       skipProcessUses(false) {}
   
@@ -373,11 +381,131 @@ public:
   void VisitCastExpr(CastExpr *ce);
   void VisitObjCForCollectionStmt(ObjCForCollectionStmt *fs);
   void Visit(Stmt *s);
-  
+
   bool isTrackedVar(const VarDecl *vd) {
     return ::isTrackedVar(vd, cast<DeclContext>(ac.getDecl()));
   }
-  
+
+  UninitUse getUninitUse(const Expr *ex, const VarDecl *vd, Value v) {
+    UninitUse Use(ex, isAlwaysUninit(v));
+
+    assert(isUninitialized(v));
+    if (Use.getKind() == UninitUse::Always)
+      return Use;
+
+    // If an edge which leads unconditionally to this use did not initialize
+    // the variable, we can say something stronger than 'may be uninitialized':
+    // we can say 'either it's used uninitialized or you have dead code'.
+    //
+    // We track the number of successors of a node which have been visited, and
+    // visit a node once we have visited all of its successors. Only edges where
+    // the variable might still be uninitialized are followed. Since a variable
+    // can't transfer from being initialized to being uninitialized, this will
+    // trace out the subgraph which inevitably leads to the use and does not
+    // initialize the variable. We do not want to skip past loops, since their
+    // non-termination might be correlated with the initialization condition.
+    //
+    // For example:
+    //
+    //         void f(bool a, bool b) {
+    // block1:   int n;
+    //           if (a) {
+    // block2:     if (b)
+    // block3:       n = 1;
+    // block4:   } else if (b) {
+    // block5:     while (!a) {
+    // block6:       do_work(&a);
+    //               n = 2;
+    //             }
+    //           }
+    // block7:   if (a)
+    // block8:     g();
+    // block9:   return n;
+    //         }
+    //
+    // Starting from the maybe-uninitialized use in block 9:
+    //  * Block 7 is not visited because we have only visited one of its two
+    //    successors.
+    //  * Block 8 is visited because we've visited its only successor.
+    // From block 8:
+    //  * Block 7 is visited because we've now visited both of its successors.
+    // From block 7:
+    //  * Blocks 1, 2, 4, 5, and 6 are not visited because we didn't visit all
+    //    of their successors (we didn't visit 4, 3, 5, 6, and 5, respectively).
+    //  * Block 3 is not visited because it initializes 'n'.
+    // Now the algorithm terminates, having visited blocks 7 and 8, and having
+    // found the frontier is blocks 2, 4, and 5.
+    //
+    // 'n' is definitely uninitialized for two edges into block 7 (from blocks 2
+    // and 4), so we report that any time either of those edges is taken (in
+    // each case when 'b == false'), 'n' is used uninitialized.
+    llvm::SmallVector<const CFGBlock*, 32> Queue;
+    llvm::SmallVector<unsigned, 32> SuccsVisited(cfg.getNumBlockIDs(), 0);
+    Queue.push_back(block);
+    // Specify that we've already visited all successors of the starting block.
+    // This has the dual purpose of ensuring we never add it to the queue, and
+    // of marking it as not being a candidate element of the frontier.
+    SuccsVisited[block->getBlockID()] = block->succ_size();
+    while (!Queue.empty()) {
+      const CFGBlock *B = Queue.back();
+      Queue.pop_back();
+      for (CFGBlock::const_pred_iterator I = B->pred_begin(), E = B->pred_end();
+           I != E; ++I) {
+        const CFGBlock *Pred = *I;
+        if (vals.getValue(Pred, B, vd) == Initialized)
+          // This block initializes the variable.
+          continue;
+
+        if (++SuccsVisited[Pred->getBlockID()] == Pred->succ_size())
+          // All paths from this block lead to the use and don't initialize the
+          // variable.
+          Queue.push_back(Pred);
+      }
+    }
+
+    // Scan the frontier, looking for blocks where the variable was
+    // uninitialized.
+    for (CFG::const_iterator BI = cfg.begin(), BE = cfg.end(); BI != BE; ++BI) {
+      const CFGBlock *Block = *BI;
+      unsigned BlockID = Block->getBlockID();
+      const Stmt *Term = Block->getTerminator();
+      if (SuccsVisited[BlockID] && SuccsVisited[BlockID] < Block->succ_size() &&
+          Term) {
+        // This block inevitably leads to the use. If we have an edge from here
+        // to a post-dominator block, and the variable is uninitialized on that
+        // edge, we have found a bug.
+        for (CFGBlock::const_succ_iterator I = Block->succ_begin(),
+             E = Block->succ_end(); I != E; ++I) {
+          const CFGBlock *Succ = *I;
+          if (Succ && SuccsVisited[Succ->getBlockID()] >= Succ->succ_size() &&
+              vals.getValue(Block, Succ, vd) == Uninitialized) {
+            // Switch cases are a special case: report the label to the caller
+            // as the 'terminator', not the switch statement itself. Suppress
+            // situations where no label matched: we can't be sure that's
+            // possible.
+            if (isa<SwitchStmt>(Term)) {
+              const Stmt *Label = Succ->getLabel();
+              if (!Label || !isa<SwitchCase>(Label))
+                // Might not be possible.
+                continue;
+              UninitUse::Branch Branch;
+              Branch.Terminator = Label;
+              Branch.Output = 0; // Ignored.
+              Use.addUninitBranch(Branch);
+            } else {
+              UninitUse::Branch Branch;
+              Branch.Terminator = Term;
+              Branch.Output = I - Block->succ_begin();
+              Use.addUninitBranch(Branch);
+            }
+          }
+        }
+      }
+    }
+
+    return Use;
+  }
+
   FindVarResult findBlockVarDecl(Expr *ex);
   
   void ProcessUses(Stmt *s = 0);
@@ -403,7 +531,7 @@ void TransferFunctions::reportUse(const Expr *ex, const VarDecl *vd) {
     return;
   Value v = vals[vd];
   if (isUninitialized(v))
-    handler->handleUseOfUninitVariable(ex, vd, isAlwaysUninit(v));
+    handler->handleUseOfUninitVariable(vd, getUninitUse(ex, vd, v));
 }
 
 FindVarResult TransferFunctions::findBlockVarDecl(Expr *ex) {
@@ -652,7 +780,7 @@ static bool runOnBlock(const CFGBlock *block, const CFG &cfg,
     }
   }
   // Apply the transfer function.
-  TransferFunctions tf(vals, cfg, ac, handler);
+  TransferFunctions tf(vals, cfg, block, ac, handler);
   for (CFGBlock::const_iterator I = block->begin(), E = block->end(); 
        I != E; ++I) {
     if (const CFGStmt *cs = dyn_cast<CFGStmt>(&*I)) {

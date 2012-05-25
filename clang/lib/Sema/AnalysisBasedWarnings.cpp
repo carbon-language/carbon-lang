@@ -456,16 +456,93 @@ static bool SuggestInitializationFixit(Sema &S, const VarDecl *VD) {
   return true;
 }
 
+/// NoteUninitBranches -- Helper function to produce notes for branches which
+/// inevitably lead to an uninitialized variable use.
+static void NoteUninitBranches(Sema &S, const UninitUse &Use) {
+  for (UninitUse::branch_iterator I = Use.branch_begin(), E = Use.branch_end();
+       I != E; ++I) {
+    const Stmt *Term = I->Terminator;
+    unsigned DiagKind;
+    SourceRange Range;
+    const char *Str;
+    switch (Term->getStmtClass()) {
+    default:
+      // Don't know how to report this.
+      continue;
+
+    // "condition is true / condition is false".
+    case Stmt::IfStmtClass:
+      DiagKind = 0;
+      Str = "if";
+      Range = cast<IfStmt>(Term)->getCond()->getSourceRange();
+      break;
+    case Stmt::ConditionalOperatorClass:
+      DiagKind = 0;
+      Str = "?:";
+      Range = cast<ConditionalOperator>(Term)->getCond()->getSourceRange();
+      break;
+    case Stmt::BinaryOperatorClass: {
+      const BinaryOperator *BO = cast<BinaryOperator>(Term);
+      if (!BO->isLogicalOp())
+        continue;
+      DiagKind = 0;
+      Str = BO->getOpcodeStr();
+      Range = BO->getLHS()->getSourceRange();
+      break;
+    }
+
+    // "loop is entered / loop is exited".
+    case Stmt::WhileStmtClass:
+      DiagKind = 1;
+      Str = "while";
+      Range = cast<WhileStmt>(Term)->getCond()->getSourceRange();
+      break;
+    case Stmt::ForStmtClass:
+      DiagKind = 1;
+      Str = "for";
+      Range = cast<ForStmt>(Term)->getCond()->getSourceRange();
+      break;
+    case Stmt::CXXForRangeStmtClass:
+      DiagKind = 1;
+      Str = "for";
+      Range = cast<CXXForRangeStmt>(Term)->getCond()->getSourceRange();
+      break;
+
+    // "condition is true / loop is exited".
+    case Stmt::DoStmtClass:
+      DiagKind = 2;
+      Str = "do";
+      Range = cast<DoStmt>(Term)->getCond()->getSourceRange();
+      break;
+
+    // "switch case is taken".
+    case Stmt::CaseStmtClass:
+      DiagKind = 3;
+      Str = "case";
+      Range = cast<CaseStmt>(Term)->getLHS()->getSourceRange();
+      break;
+    case Stmt::DefaultStmtClass:
+      DiagKind = 3;
+      Str = "default";
+      Range = cast<DefaultStmt>(Term)->getDefaultLoc();
+      break;
+    }
+
+    S.Diag(Range.getBegin(), diag::note_sometimes_uninit_var_branch)
+      << DiagKind << Str << I->Output << Range;
+  }
+}
+
 /// DiagnoseUninitializedUse -- Helper function for diagnosing uses of an
 /// uninitialized variable. This manages the different forms of diagnostic
 /// emitted for particular types of uses. Returns true if the use was diagnosed
-/// as a warning. If a pariticular use is one we omit warnings for, returns
+/// as a warning. If a particular use is one we omit warnings for, returns
 /// false.
 static bool DiagnoseUninitializedUse(Sema &S, const VarDecl *VD,
-                                     const Expr *E, bool isAlwaysUninit,
+                                     const UninitUse &Use,
                                      bool alwaysReportSelfInit = false) {
 
-  if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E)) {
+  if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(Use.getUser())) {
     // Inspect the initializer of the variable declaration which is
     // being referenced prior to its initialization. We emit
     // specialized diagnostics for self-initialization, and we
@@ -491,20 +568,37 @@ static bool DiagnoseUninitializedUse(Sema &S, const VarDecl *VD,
       }
     }
 
-    S.Diag(DRE->getLocStart(), isAlwaysUninit ? diag::warn_uninit_var
-                                              : diag::warn_maybe_uninit_var)
+    unsigned DiagID = 0;
+    switch (Use.getKind()) {
+    case UninitUse::Always: DiagID = diag::warn_uninit_var; break;
+    case UninitUse::Sometimes: DiagID = diag::warn_sometimes_uninit_var; break;
+    case UninitUse::Maybe: DiagID = diag::warn_maybe_uninit_var; break;
+    }
+    S.Diag(DRE->getLocStart(), DiagID)
       << VD->getDeclName() << DRE->getSourceRange();
+    NoteUninitBranches(S, Use);
   } else {
-    const BlockExpr *BE = cast<BlockExpr>(E);
+    const BlockExpr *BE = cast<BlockExpr>(Use.getUser());
     if (VD->getType()->isBlockPointerType() &&
         !VD->hasAttr<BlocksAttr>())
       S.Diag(BE->getLocStart(), diag::warn_uninit_byref_blockvar_captured_by_block)
         << VD->getDeclName();
-    else
-      S.Diag(BE->getLocStart(),
-             isAlwaysUninit ? diag::warn_uninit_var_captured_by_block
-                            : diag::warn_maybe_uninit_var_captured_by_block)
-        << VD->getDeclName();
+    else {
+      unsigned DiagID = 0;
+      switch (Use.getKind()) {
+      case UninitUse::Always:
+        DiagID = diag::warn_uninit_var_captured_by_block;
+        break;
+      case UninitUse::Sometimes:
+        DiagID = diag::warn_sometimes_uninit_var_captured_by_block;
+        break;
+      case UninitUse::Maybe:
+        DiagID = diag::warn_maybe_uninit_var_captured_by_block;
+        break;
+      }
+      S.Diag(BE->getLocStart(), DiagID) << VD->getDeclName();
+      NoteUninitBranches(S, Use);
+    }
   }
 
   // Report where the variable was declared when the use wasn't within
@@ -700,13 +794,14 @@ static void DiagnoseSwitchLabelsFallthrough(Sema &S, AnalysisDeclContext &AC) {
 
 }
 
-typedef std::pair<const Expr*, bool> UninitUse;
-
 namespace {
 struct SLocSort {
   bool operator()(const UninitUse &a, const UninitUse &b) {
-    SourceLocation aLoc = a.first->getLocStart();
-    SourceLocation bLoc = b.first->getLocStart();
+    // Prefer a more confident report over a less confident one.
+    if (a.getKind() != b.getKind())
+      return a.getKind() > b.getKind();
+    SourceLocation aLoc = a.getUser()->getLocStart();
+    SourceLocation bLoc = b.getUser()->getLocStart();
     return aLoc.getRawEncoding() < bLoc.getRawEncoding();
   }
 };
@@ -735,9 +830,8 @@ public:
     return V;
   }
   
-  void handleUseOfUninitVariable(const Expr *ex, const VarDecl *vd,
-                                 bool isAlwaysUninit) {
-    getUses(vd).first->push_back(std::make_pair(ex, isAlwaysUninit));
+  void handleUseOfUninitVariable(const VarDecl *vd, const UninitUse &use) {
+    getUses(vd).first->push_back(use);
   }
   
   void handleSelfInit(const VarDecl *vd) {
@@ -761,8 +855,9 @@ public:
       // variable, but the root cause is an idiomatic self-init.  We want
       // to report the diagnostic at the self-init since that is the root cause.
       if (!vec->empty() && hasSelfInit && hasAlwaysUninitializedUse(vec))
-        DiagnoseUninitializedUse(S, vd, vd->getInit()->IgnoreParenCasts(),
-                                 /* isAlwaysUninit */ true,
+        DiagnoseUninitializedUse(S, vd,
+                                 UninitUse(vd->getInit()->IgnoreParenCasts(),
+                                           /* isAlwaysUninit */ true),
                                  /* alwaysReportSelfInit */ true);
       else {
         // Sort the uses by their SourceLocations.  While not strictly
@@ -772,8 +867,10 @@ public:
         
         for (UsesVec::iterator vi = vec->begin(), ve = vec->end(); vi != ve;
              ++vi) {
-          if (DiagnoseUninitializedUse(S, vd, vi->first,
-                                        /*isAlwaysUninit=*/vi->second))
+          // If we have self-init, downgrade all uses to 'may be uninitialized'.
+          UninitUse Use = hasSelfInit ? UninitUse(vi->getUser(), false) : *vi;
+
+          if (DiagnoseUninitializedUse(S, vd, Use))
             // Skip further diagnostics for this variable. We try to warn only
             // on the first point at which a variable is used uninitialized.
             break;
@@ -789,7 +886,7 @@ public:
 private:
   static bool hasAlwaysUninitializedUse(const UsesVec* vec) {
   for (UsesVec::const_iterator i = vec->begin(), e = vec->end(); i != e; ++i) {
-    if (i->second) {
+    if (i->getKind() == UninitUse::Always) {
       return true;
     }
   }
@@ -1130,6 +1227,8 @@ AnalysisBasedWarnings::IssueWarnings(sema::AnalysisBasedWarnings::Policy P,
   }
 
   if (Diags.getDiagnosticLevel(diag::warn_uninit_var, D->getLocStart())
+      != DiagnosticsEngine::Ignored ||
+      Diags.getDiagnosticLevel(diag::warn_sometimes_uninit_var,D->getLocStart())
       != DiagnosticsEngine::Ignored ||
       Diags.getDiagnosticLevel(diag::warn_maybe_uninit_var, D->getLocStart())
       != DiagnosticsEngine::Ignored) {

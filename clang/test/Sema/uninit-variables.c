@@ -39,17 +39,18 @@ int test6() {
 
 int test7(int y) {
   int x; // expected-note{{initialize the variable 'x' to silence this warning}}
-  if (y)
+  if (y) // expected-note{{uninitialized use occurs whenever 'if' condition is false}}
     x = 1;
-  return x; // expected-warning{{variable 'x' may be uninitialized when used here}}
+  return x; // expected-warning{{variable 'x' is sometimes uninitialized when used here}}
 }
 
 int test7b(int y) {
   int x = x; // expected-note{{variable 'x' is declared here}}
   if (y)
     x = 1;
-  // Warn with "may be uninitialized" here (not "is uninitialized"), since the
-  // self-initialization is intended to suppress a -Wuninitialized warning.
+  // Warn with "may be uninitialized" here (not "is sometimes uninitialized"),
+  // since the self-initialization is intended to suppress a -Wuninitialized
+  // warning.
   return x; // expected-warning{{variable 'x' may be uninitialized when used here}}
 }
 
@@ -293,8 +294,8 @@ int test40(int x) {
 
 int test41(int x) {
   int y; // expected-note{{initialize the variable 'y' to silence this warning}}
-  if (x) y = 1; // no-warning
-  return y; // expected-warning {{variable 'y' may be uninitialized when used here}}
+  if (x) y = 1; // expected-note{{uninitialized use occurs whenever 'if' condition is false}}
+  return y; // expected-warning {{variable 'y' is sometimes uninitialized when used here}}
 }
 
 void test42() {
