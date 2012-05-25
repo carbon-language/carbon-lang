@@ -622,8 +622,6 @@ void ScheduleDAGMI::schedule() {
   CurrentBottom = RegionEnd;
   bool IsTopNode = false;
   while (SUnit *SU = SchedImpl->pickNode(IsTopNode)) {
-    DEBUG(dbgs() << "*** " << (IsTopNode ? "Top" : "Bottom")
-          << " Scheduling Instruction");
     if (!checkSchedLimit())
       break;
 
@@ -671,7 +669,6 @@ void ScheduleDAGMI::schedule() {
     }
     SU->isScheduled = true;
     SchedImpl->schedNode(SU, IsTopNode);
-    DEBUG(SU->dump(this));
   }
   assert(CurrentTop == CurrentBottom && "Nonempty unscheduled zone.");
 
@@ -1198,6 +1195,11 @@ SUnit *ConvergingScheduler::pickNode(bool &IsTopNode) {
     Top.removeReady(SU);
   if (SU->isBottomReady())
     Bot.removeReady(SU);
+
+  DEBUG(dbgs() << "*** " << (IsTopNode ? "Top" : "Bottom")
+        << " Scheduling Instruction in cycle "
+        << (IsTopNode ? Top.CurrCycle : Bot.CurrCycle) << '\n';
+        SU->dump(DAG));
   return SU;
 }
 
@@ -1205,9 +1207,6 @@ SUnit *ConvergingScheduler::pickNode(bool &IsTopNode) {
 /// that was just returned by pickNode(). However, ScheduleDAGMI needs to update
 /// it's state based on the current cycle before MachineSchedStrategy.
 void ConvergingScheduler::schedNode(SUnit *SU, bool IsTopNode) {
-  DEBUG(dbgs() << " in cycle " << (IsTopNode ? Top.CurrCycle : Bot.CurrCycle)
-        << '\n');
-
   // Update the reservation table.
   if (IsTopNode && Top.HazardRec->isEnabled()) {
     Top.HazardRec->EmitInstruction(SU);

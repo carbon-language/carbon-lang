@@ -151,7 +151,8 @@ ScoreboardHazardRecognizer::getHazardType(SUnit *SU, int Stalls) {
       }
 
       if (!freeUnits) {
-        DEBUG(dbgs() << "*** Hazard in cycle " << (cycle + i) << ", ");
+        DEBUG(dbgs() << "*** Hazard in cycle " << ((cycle+i) < 0 ? "" : "+")
+              << (cycle + i) << ", ");
         DEBUG(dbgs() << "SU(" << SU->NodeNum << "): ");
         DEBUG(DAG->dumpNode(SU));
         return Hazard;
