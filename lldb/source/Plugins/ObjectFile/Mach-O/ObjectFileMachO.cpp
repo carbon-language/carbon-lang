@@ -751,7 +751,6 @@ ObjectFileMachO::ParseSections ()
 {
     lldb::user_id_t segID = 0;
     lldb::user_id_t sectID = 0;
-    struct segment_command_64 load_cmd;
     uint32_t offset = MachHeaderSizeFromMagic(m_header.magic);
     uint32_t i;
     const bool is_core = GetType() == eTypeCoreFile;
@@ -760,24 +759,32 @@ ObjectFileMachO::ParseSections ()
     // First look up any LC_ENCRYPTION_INFO load commands
     typedef RangeArray<uint32_t, uint32_t, 8> EncryptedFileRanges;
     EncryptedFileRanges encrypted_file_ranges;
+    encryption_info_command encryption_cmd;
     for (i=0; i<m_header.ncmds; ++i)
     {
         const uint32_t load_cmd_offset = offset;
-        if (m_data.GetU32(&offset, &load_cmd, 2) == NULL)
+        if (m_data.GetU32(&offset, &encryption_cmd, 2) == NULL)
             break;
         
-        if (load_cmd.cmd == LoadCommandEncryptionInfo)
+        if (encryption_cmd.cmd == LoadCommandEncryptionInfo)
         {
-            EncryptedFileRanges::Entry entry;
-            entry.SetRangeBase(m_data.GetU32(&offset));
-            entry.SetByteSize(m_data.GetU32(&offset));
-            encrypted_file_ranges.Append(entry);
+            if (m_data.GetU32(&offset, &encryption_cmd.cryptoff, 3))
+            {
+                if (encryption_cmd.cryptid != 0)
+                {
+                    EncryptedFileRanges::Entry entry;
+                    entry.SetRangeBase(encryption_cmd.cryptoff);
+                    entry.SetByteSize(encryption_cmd.cryptsize);
+                    encrypted_file_ranges.Append(entry);
+                }
+            }
         }
-        offset = load_cmd_offset + load_cmd.cmdsize;
+        offset = load_cmd_offset + encryption_cmd.cmdsize;
     }
 
     offset = MachHeaderSizeFromMagic(m_header.magic);
 
+    struct segment_command_64 load_cmd;
     for (i=0; i<m_header.ncmds; ++i)
     {
         const uint32_t load_cmd_offset = offset;
