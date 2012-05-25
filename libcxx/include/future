@@ -755,7 +755,6 @@ template <class _Alloc>
 void
 __assoc_sub_state_alloc<_Alloc>::__on_zero_shared() _NOEXCEPT
 {
-    this->~base();
     typename _Alloc::template rebind<__assoc_sub_state_alloc>::other __a(__alloc_);
     this->~__assoc_sub_state_alloc();
     __a.deallocate(this, 1);
