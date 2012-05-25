@@ -2049,8 +2049,7 @@ private:
 /// the offsets, if the return value is being lowered to memory.
 void GetReturnInfo(Type* ReturnType, Attributes attr,
                    SmallVectorImpl<ISD::OutputArg> &Outs,
-                   const TargetLowering &TLI,
-                   SmallVectorImpl<uint64_t> *Offsets = 0);
+                   const TargetLowering &TLI);
 
 } // end llvm namespace
 

@@ -997,13 +997,11 @@ unsigned TargetLowering::getVectorTypeBreakdown(LLVMContext &Context, EVT VT,
 /// TODO: Move this out of TargetLowering.cpp.
 void llvm::GetReturnInfo(Type* ReturnType, Attributes attr,
                          SmallVectorImpl<ISD::OutputArg> &Outs,
-                         const TargetLowering &TLI,
-                         SmallVectorImpl<uint64_t> *Offsets) {
+                         const TargetLowering &TLI) {
   SmallVector<EVT, 4> ValueVTs;
   ComputeValueVTs(TLI, ReturnType, ValueVTs);
   unsigned NumValues = ValueVTs.size();
   if (NumValues == 0) return;
-  unsigned Offset = 0;
 
   for (unsigned j = 0, f = NumValues; j != f; ++j) {
     EVT VT = ValueVTs[j];
@@ -1026,8 +1024,6 @@ void llvm::GetReturnInfo(Type* ReturnType, Attributes attr,
 
     unsigned NumParts = TLI.getNumRegisters(ReturnType->getContext(), VT);
     EVT PartVT = TLI.getRegisterType(ReturnType->getContext(), VT);
-    unsigned PartSize = TLI.getTargetData()->getTypeAllocSize(
-                        PartVT.getTypeForEVT(ReturnType->getContext()));
 
     // 'inreg' on function refers to return value
     ISD::ArgFlagsTy Flags = ISD::ArgFlagsTy();
@@ -1042,10 +1038,6 @@ void llvm::GetReturnInfo(Type* ReturnType, Attributes attr,
 
     for (unsigned i = 0; i < NumParts; ++i) {
       Outs.push_back(ISD::OutputArg(Flags, PartVT, /*isFixed=*/true));
-      if (Offsets) {
-        Offsets->push_back(Offset);
-        Offset += PartSize;
-      }
     }
   }
 }
