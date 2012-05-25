@@ -865,7 +865,7 @@ size_t asan_malloc_usable_size(void *ptr, AsanStackTrace *stack) {
   CHECK(stack);
   if (ptr == NULL) return 0;
   size_t usable_size = malloc_info.AllocationSize((uintptr_t)ptr);
-  if (usable_size == 0) {
+  if (FLAG_check_malloc_usable_size && (usable_size == 0)) {
     Report("ERROR: AddressSanitizer attempting to call malloc_usable_size() "
            "for pointer which is not owned: %p\n", ptr);
     stack->PrintStack();

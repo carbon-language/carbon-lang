@@ -259,6 +259,7 @@ extern bool   FLAG_allow_user_poisoning;
 extern int    FLAG_sleep_before_dying;
 extern bool   FLAG_handle_segv;
 extern bool   FLAG_use_sigaltstack;
+extern bool   FLAG_check_malloc_usable_size;
 
 extern int asan_inited;
 // Used to avoid infinite recursion in __asan_init().

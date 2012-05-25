@@ -51,6 +51,7 @@ bool   FLAG_allow_user_poisoning;
 int    FLAG_sleep_before_dying;
 bool   FLAG_unmap_shadow_on_exit;
 bool   FLAG_disable_core;
+bool   FLAG_check_malloc_usable_size;
 
 // -------------------------- Globals --------------------- {{{1
 int asan_inited;
@@ -468,6 +469,10 @@ void __asan_init() {
   // By default, disable core dumper on 64-bit --
   // it makes little sense to dump 16T+ core.
   FLAG_disable_core = IntFlagValue(options, "disable_core=", __WORDSIZE == 64);
+
+  // Allow the users to work around the bug in Nvidia drivers prior to 295.*.
+  FLAG_check_malloc_usable_size =
+      IntFlagValue(options, "check_malloc_usable_size=", 1);
 
   FLAG_quarantine_size = IntFlagValue(options, "quarantine_size=",
       (ASAN_LOW_MEMORY) ? 1UL << 24 : 1UL << 28);
