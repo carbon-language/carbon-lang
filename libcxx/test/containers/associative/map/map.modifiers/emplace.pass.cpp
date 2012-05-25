@@ -16,6 +16,7 @@
 
 #include <map>
 #include <cassert>
+#include <tuple>
 
 #include "../../../Emplaceable.h"
 #include "../../../DefaultOnly.h"
@@ -61,13 +62,15 @@ int main()
         assert(m.size() == 1);
         assert(m.begin()->first == 2);
         assert(m.begin()->second == Emplaceable());
-        r = m.emplace(1, 2, 3.5);
+        r = m.emplace(std::piecewise_construct, std::forward_as_tuple(1),
+                                                std::forward_as_tuple(2, 3.5));
         assert(r.second);
         assert(r.first == m.begin());
         assert(m.size() == 2);
         assert(m.begin()->first == 1);
         assert(m.begin()->second == Emplaceable(2, 3.5));
-        r = m.emplace(1, 2, 3.5);
+        r = m.emplace(std::piecewise_construct, std::forward_as_tuple(1),
+                                                std::forward_as_tuple(2, 3.5));
         assert(!r.second);
         assert(r.first == m.begin());
         assert(m.size() == 2);

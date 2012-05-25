@@ -57,12 +57,14 @@ int main()
         assert(m.size() == 1);
         assert(m.begin()->first == 2);
         assert(m.begin()->second == Emplaceable());
-        r = m.emplace(1, 2, 3.5);
+        r = m.emplace(std::piecewise_construct, std::forward_as_tuple(1),
+                                                std::forward_as_tuple(2, 3.5));
         assert(r == m.begin());
         assert(m.size() == 2);
         assert(m.begin()->first == 1);
         assert(m.begin()->second == Emplaceable(2, 3.5));
-        r = m.emplace(1, 3, 3.5);
+        r = m.emplace(std::piecewise_construct, std::forward_as_tuple(1),
+                                                std::forward_as_tuple(3, 3.5));
         assert(r == next(m.begin()));
         assert(m.size() == 3);
         assert(r->first == 1);

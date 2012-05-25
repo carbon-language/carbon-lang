@@ -39,7 +39,8 @@ int main()
         assert(r->first == 4);
         assert(r->second == Emplaceable(5, 6));
 
-        r = c.emplace_hint(e, 5, 6, 7);
+        r = c.emplace_hint(e, std::piecewise_construct, std::forward_as_tuple(5),
+                                                       std::forward_as_tuple(6, 7));
         assert(c.size() == 3);
         assert(r->first == 5);
         assert(r->second == Emplaceable(6, 7));

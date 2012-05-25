@@ -15,10 +15,14 @@
 
 #include <map>
 
+#if !__has_feature(cxx_noexcept)
+
 struct X
 {
     std::multimap<int, X> m;
 };
+
+#endif
 
 int main()
 {

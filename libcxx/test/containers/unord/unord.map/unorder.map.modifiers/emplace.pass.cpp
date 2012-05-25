@@ -40,7 +40,8 @@ int main()
         assert(r.first->first == 4);
         assert(r.first->second == Emplaceable(5, 6));
 
-        r = c.emplace(5, 6, 7);
+        r = c.emplace(std::piecewise_construct, std::forward_as_tuple(5),
+                                               std::forward_as_tuple(6, 7));
         assert(r.second);
         assert(c.size() == 3);
         assert(r.first->first == 5);
