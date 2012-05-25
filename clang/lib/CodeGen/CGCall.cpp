@@ -2090,9 +2090,11 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
   // add metadata for __attribute__((alloc_size(foo)))
   if (TargetDecl) {
     if (const AllocSizeAttr* Attr = TargetDecl->getAttr<AllocSizeAttr>()) {
-      std::vector<llvm::Value*> Args;
+      SmallVector<llvm::Value*, 4> Args;
       llvm::IntegerType *Ty = llvm::IntegerType::getInt32Ty(getLLVMContext());
-      bool isMethod = isa<CXXMethodDecl>(TargetDecl);
+      bool isMethod = false;
+      if (const CXXMethodDecl *MDecl = dyn_cast<CXXMethodDecl>(TargetDecl))
+        isMethod = MDecl->isInstance();
 
       for (AllocSizeAttr::args_iterator I = Attr->args_begin(),
            E = Attr->args_end(); I != E; ++I) {
