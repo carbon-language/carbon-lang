@@ -424,15 +424,7 @@ void __asan_report_error(uintptr_t pc, uintptr_t bp, uintptr_t sp,
   AsanDie();
 }
 
-void __asan_init() {
-  if (asan_inited) return;
-  asan_init_is_running = true;
-
-  // Make sure we are not statically linked.
-  AsanDoesNotSupportStaticLinkage();
-
-  // flags
-  const char *options = AsanGetEnv("ASAN_OPTIONS");
+static void ParseAsanOptions(const char *options) {
   FLAG_malloc_context_size =
       IntFlagValue(options, "malloc_context_size=", kMallocContextSize);
   CHECK(FLAG_malloc_context_size <= kMallocContextSize);
@@ -476,10 +468,23 @@ void __asan_init() {
 
   FLAG_quarantine_size = IntFlagValue(options, "quarantine_size=",
       (ASAN_LOW_MEMORY) ? 1UL << 24 : 1UL << 28);
+}
+
+void __asan_init() {
+  if (asan_inited) return;
+  asan_init_is_running = true;
+
+  // Make sure we are not statically linked.
+  AsanDoesNotSupportStaticLinkage();
+
+  // flags
+  const char *options = AsanGetEnv("ASAN_OPTIONS");
 
   if (FLAG_v) {
     Report("Parsed ASAN_OPTIONS: %s\n", options);
   }
+
+  ParseAsanOptions(options);
 
   if (FLAG_atexit) {
     Atexit(asan_atexit);
