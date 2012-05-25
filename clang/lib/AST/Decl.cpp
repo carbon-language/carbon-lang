@@ -401,8 +401,7 @@ static LinkageInfo getLVForNamespaceScopeDecl(const NamedDecl *D,
           = dyn_cast<ClassTemplateSpecializationDecl>(Tag)) {
       if (shouldConsiderTemplateLV(spec)) {
         // From the template.
-        LV.merge(getLVForDecl(spec->getSpecializedTemplate(),
-                              true));
+        LV.merge(getLVForDecl(spec->getSpecializedTemplate(), true));
 
         // The arguments at which the template was instantiated.
         const TemplateArgumentList &TemplateArgs = spec->getTemplateArgs();
@@ -546,9 +545,9 @@ static LinkageInfo getLVForClassMember(const NamedDecl *D, bool OnlyTemplate) {
         // class template specializations.
         LV.mergeWithMin(getLVForTemplateArgumentList(spec->getTemplateArgs(),
                                                      OnlyTemplate));
-      if (!OnlyTemplate)
-        LV.merge(getLVForTemplateParameterList(
-                    spec->getSpecializedTemplate()->getTemplateParameters()));
+        if (!OnlyTemplate)
+          LV.merge(getLVForTemplateParameterList(
+                      spec->getSpecializedTemplate()->getTemplateParameters()));
       }
     }
 
