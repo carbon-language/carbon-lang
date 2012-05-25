@@ -2087,6 +2087,23 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
   CS.setAttributes(Attrs);
   CS.setCallingConv(static_cast<llvm::CallingConv::ID>(CallingConv));
 
+  // add metadata for __attribute__((alloc_size(foo)))
+  if (TargetDecl) {
+    if (const AllocSizeAttr* Attr = TargetDecl->getAttr<AllocSizeAttr>()) {
+      std::vector<llvm::Value*> Args;
+      llvm::IntegerType *Ty = llvm::IntegerType::getInt32Ty(getLLVMContext());
+      bool isMethod = isa<CXXMethodDecl>(TargetDecl);
+
+      for (AllocSizeAttr::args_iterator I = Attr->args_begin(),
+           E = Attr->args_end(); I != E; ++I) {
+        Args.push_back(llvm::ConstantInt::get(Ty, *I + isMethod));
+      }
+
+      llvm::MDNode *MD = llvm::MDNode::get(getLLVMContext(), Args);
+      CS.getInstruction()->setMetadata("alloc_size", MD);
+    }
+  }
+
   // In ObjC ARC mode with no ObjC ARC exception safety, tell the ARC
   // optimizer it can aggressively ignore unwind edges.
   if (CGM.getLangOpts().ObjCAutoRefCount)
