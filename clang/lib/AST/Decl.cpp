@@ -163,7 +163,8 @@ static bool shouldConsiderTemplateLV(const FunctionDecl *fn,
   return !fn->hasAttr<VisibilityAttr>() || spec->isExplicitSpecialization();
 }
 
-static bool shouldConsiderTemplateLV(const ClassTemplateSpecializationDecl *d) {
+static bool
+shouldConsiderTemplateVis(const ClassTemplateSpecializationDecl *d) {
   return !d->hasAttr<VisibilityAttr>() || d->isExplicitSpecialization();
 }
 
@@ -399,14 +400,19 @@ static LinkageInfo getLVForNamespaceScopeDecl(const NamedDecl *D,
     // linkage of the template and template arguments.
     if (const ClassTemplateSpecializationDecl *spec
           = dyn_cast<ClassTemplateSpecializationDecl>(Tag)) {
-      if (shouldConsiderTemplateLV(spec)) {
-        // From the template.
-        LV.merge(getLVForDecl(spec->getSpecializedTemplate(), true));
+      // From the template.
+      LinkageInfo TempLV = getLVForDecl(spec->getSpecializedTemplate(), true);
 
-        // The arguments at which the template was instantiated.
-        const TemplateArgumentList &TemplateArgs = spec->getTemplateArgs();
-        LV.mergeWithMin(getLVForTemplateArgumentList(TemplateArgs,
-                                                     OnlyTemplate));
+      // The arguments at which the template was instantiated.
+      const TemplateArgumentList &TemplateArgs = spec->getTemplateArgs();
+      LinkageInfo ArgsLV = getLVForTemplateArgumentList(TemplateArgs,
+                                                        OnlyTemplate);
+      if (shouldConsiderTemplateVis(spec)) {
+        LV.merge(TempLV);
+        LV.mergeWithMin(ArgsLV);
+      } else {
+        LV.mergeLinkage(TempLV);
+        LV.mergeLinkage(ArgsLV);
       }
     }
 
@@ -540,7 +546,7 @@ static LinkageInfo getLVForClassMember(const NamedDecl *D, bool OnlyTemplate) {
   } else if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(D)) {
     if (const ClassTemplateSpecializationDecl *spec
         = dyn_cast<ClassTemplateSpecializationDecl>(RD)) {
-      if (shouldConsiderTemplateLV(spec)) {
+      if (shouldConsiderTemplateVis(spec)) {
         // Merge template argument/parameter information for member
         // class template specializations.
         LV.mergeWithMin(getLVForTemplateArgumentList(spec->getTemplateArgs(),
