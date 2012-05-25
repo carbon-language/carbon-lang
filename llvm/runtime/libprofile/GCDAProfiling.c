@@ -110,14 +110,14 @@ void llvm_gcda_start_file(const char *orig_filename) {
   char *filename;
   filename = mangle_filename(orig_filename);
   recursive_mkdir(filename);
-  output_file = fopen(filename, "wb");
+  output_file = fopen(filename, "w+b");
 
   if (!output_file) {
     const char *cptr = strrchr(orig_filename, '/');
-    output_file = fopen(cptr ? cptr + 1 : orig_filename, "wb");
+    output_file = fopen(cptr ? cptr + 1 : orig_filename, "w+b");
 
     if (!output_file) {
-      fprintf(stderr, "LLVM profiling runtime: while opening '%s': ",
+      fprintf(stderr, "LLVM profiling runtime: cannot open '%s': ",
               cptr ? cptr + 1 : orig_filename);
       perror("");
       return;
