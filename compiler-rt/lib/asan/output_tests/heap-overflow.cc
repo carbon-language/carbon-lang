@@ -13,7 +13,7 @@ int main(int argc, char **argv) {
 // Check-Common: {{0x.* is located 0 bytes to the right of 10-byte region}}
 // Check-Common: {{allocated by thread T0 here:}}
 
-// Check-Linux: {{    #0 0x.* in __xsan_malloc}}
+// Check-Linux: {{    #0 0x.* in .*malloc}}
 // Check-Linux: {{    #1 0x.* in main .*heap-overflow.cc:[45]}}
 
 // Check-Darwin: {{    #0 0x.* in .*mz_malloc.*}}
