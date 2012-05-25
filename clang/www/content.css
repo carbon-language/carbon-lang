@@ -24,6 +24,8 @@ IMG.img_slide {
 .itemTitle { color:#2d58b7 }
 
 span.error { color:red }
+span.warning { color:purple }
+span.note { color:gray }
 span.caret { color:green; font-weight:bold }
 
 /* Tables */

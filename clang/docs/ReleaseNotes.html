@@ -83,9 +83,42 @@ Release Notes</a>.</h1>
 <h3 id="majorfeatures">Major New Features</h3>
 <!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
 
-<h4 id="majorfeature1">Feature 1</h4>
+<h4 id="diagnostics">Improvements to Clang's diagnostics</h4>
 
-<p>...</p>
+<p>Clang's diagnostics are constantly being improved to catch more issues,
+explain them more clearly, and provide more accurate source information about
+them. The improvements since the 3.1 release include:</p>
+
+<ul>
+  <li><tt>-Wuninitialized</tt> has been taught to recognise uninitialized uses
+  which always occur when an explicitly-written non-constant condition is either
+  <tt>true</tt> or <tt>false</tt>. For example:
+
+<pre>
+int f(bool b) {
+  int n;
+  if (b)
+    n = 1;
+  return n;
+}
+
+<b>sometimes-uninit.cpp:5:10: <span class="warning">warning:</span> variable 'n' is sometimes uninitialized when used here [-Wsometimes-uninitialized]</b>
+  return n;
+         <span class="caret">^</span>
+<b>sometimes-uninit.cpp:3:7: <span class="note">note:</span></b> uninitialized use occurs whenever 'if' condition is false
+  if (b)
+      <span class="caret">^</span>
+<b>sometimes-uninit.cpp:2:8: <span class="note">note:</span></b> initialize the variable 'n' to silence this warning
+  int n;
+       <span class="caret">^</span>
+       <span class="caret"> = 0</span>
+</pre>
+
+  This functionality can be enabled or disabled separately from
+  <tt>-Wuninitialized</tt> with the <tt>-Wsometimes-uninitialized</tt> warning
+  flag.</li>
+</ul>
+
 
 <!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
 <h3 id="cchanges">C Language Changes in Clang</h3>
