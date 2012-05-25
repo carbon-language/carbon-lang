@@ -107,3 +107,12 @@ define void @f10(i64 %x, i64 %y) nounwind {
   %4 = load i128* %3, align 4
   ret void
 }
+
+; CHECK: @f11
+define void @f11(i128* byval %x) nounwind {
+  %1 = bitcast i128* %x to i8*
+  %2 = getelementptr inbounds i8* %1, i64 16
+; CHECK: br label
+  %3 = load i8* %2, align 4
+  ret void
+}

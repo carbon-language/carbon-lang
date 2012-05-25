@@ -104,7 +104,6 @@ void BoundsChecking::emitBranchToTrap(Value *Cmp) {
   BasicBlock *Cont = OldBB->splitBasicBlock(Inst);
   OldBB->getTerminator()->eraseFromParent();
 
-  // FIXME: add unlikely branch taken metadata?
   if (Cmp)
     BranchInst::Create(getTrapBB(), Cont, Cmp, OldBB);
   else
@@ -151,6 +150,15 @@ ConstTriState BoundsChecking::computeAllocSize(Value *Alloc, uint64_t &Size,
     SizeValue = ConstantInt::get(ArraySize->getType(), Size);
     SizeValue = Builder->CreateMul(SizeValue, ArraySize);
     return NotConst;
+
+  // function arguments
+  } else if (Argument *A = dyn_cast<Argument>(Alloc)) {
+    if (!A->hasByValAttr())
+      return Dunno;
+
+    PointerType *PT = cast<PointerType>(A->getType());
+    Size = TD->getTypeAllocSize(PT->getElementType());
+    return Const;
 
   // ptr = select(ptr1, ptr2)
   } else if (SelectInst *SI = dyn_cast<SelectInst>(Alloc)) {
