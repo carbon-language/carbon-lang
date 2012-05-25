@@ -67,12 +67,6 @@ bool MipsExpandPseudo::runOnMachineBasicBlock(MachineBasicBlock& MBB) {
     default:
       ++I;
       continue;
-    case Mips::SETGP2:
-      // Convert "setgp2 $globalreg, $t9" to "addu $globalreg, $v0, $t9"
-      BuildMI(MBB, I, I->getDebugLoc(), TII->get(Mips::ADDu),
-              I->getOperand(0).getReg())
-        .addReg(Mips::V0).addReg(I->getOperand(1).getReg());
-      break;
     case Mips::BuildPairF64:
       ExpandBuildPairF64(MBB, I);
       break;
