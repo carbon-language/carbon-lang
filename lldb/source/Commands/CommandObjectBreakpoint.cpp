@@ -49,6 +49,7 @@ AddBreakpointDescription (Stream *s, Breakpoint *bp, lldb::DescriptionLevel leve
 
 CommandObjectBreakpointSet::CommandOptions::CommandOptions(CommandInterpreter &interpreter) :
     Options (interpreter),
+    m_condition (),
     m_filenames (),
     m_line_num (0),
     m_column (0),
@@ -91,6 +92,9 @@ CommandObjectBreakpointSet::CommandOptions::g_option_table[] =
     { LLDB_OPT_SET_ALL, false, "ignore-count", 'i', required_argument,   NULL, 0, eArgTypeCount,
         "Set the number of times this breakpoint is skipped before stopping." },
 
+    { LLDB_OPT_SET_ALL, false, "condition",    'c', required_argument, NULL, 0, eArgTypeExpression,
+        "The breakpoint stops only if this condition expression evaluates to true."},
+
     { LLDB_OPT_SET_ALL, false, "thread-index", 'x', required_argument, NULL, 0, eArgTypeThreadIndex,
         "The breakpoint stops only for the thread whose index matches this argument."},
 
@@ -111,7 +115,7 @@ CommandObjectBreakpointSet::CommandOptions::g_option_table[] =
 
     // Comment out this option for the moment, as we don't actually use it, but will in the future.
     // This way users won't see it, but the infrastructure is left in place.
-    //    { 0, false, "column",     'c', required_argument, NULL, "<column>",
+    //    { 0, false, "column",     'C', required_argument, NULL, "<column>",
     //    "Set the breakpoint by source location at this particular column."},
 
     { LLDB_OPT_SET_2, true, "address", 'a', required_argument, NULL, 0, eArgTypeAddress,
@@ -179,8 +183,12 @@ CommandObjectBreakpointSet::CommandOptions::SetOptionValue (uint32_t option_idx,
                 error.SetErrorStringWithFormat ("invalid address string '%s'", option_arg);
             break;
 
-        case 'c':
+        case 'C':
             m_column = Args::StringToUInt32 (option_arg, 0);
+            break;
+
+        case 'c':
+            m_condition.assign(option_arg);
             break;
 
         case 'f':
@@ -325,6 +333,7 @@ CommandObjectBreakpointSet::CommandOptions::SetOptionValue (uint32_t option_idx,
 void
 CommandObjectBreakpointSet::CommandOptions::OptionParsingStarting ()
 {
+    m_condition.clear();
     m_filenames.Clear();
     m_line_num = 0;
     m_column = 0;
@@ -586,6 +595,9 @@ CommandObjectBreakpointSet::Execute
             
         if (m_options.m_ignore_count != 0)
             bp->GetOptions()->SetIgnoreCount(m_options.m_ignore_count);
+
+        if (!m_options.m_condition.empty())
+            bp->GetOptions()->SetCondition(m_options.m_condition.c_str());
     }
     
     if (bp)

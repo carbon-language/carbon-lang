@@ -98,6 +98,7 @@ public:
 
         // Instance variables to hold the values for command options.
 
+        std::string m_condition;
         FileSpecList m_filenames;
         uint32_t m_line_num;
         uint32_t m_column;

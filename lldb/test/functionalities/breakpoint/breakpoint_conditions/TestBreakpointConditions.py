@@ -14,28 +14,41 @@ class BreakpointConditionsTestCase(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @dsym_test
-    def test_with_dsym_and_run_command(self):
+    def test_breakpoint_condition_with_dsym_and_run_command(self):
         """Exercise breakpoint condition with 'breakpoint modify -c <expr> id'."""
         self.buildDsym()
         self.breakpoint_conditions()
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @dsym_test
+    def test_breakpoint_condition_inline_with_dsym_and_run_command(self):
+        """Exercise breakpoint condition inline with 'breakpoint set'."""
+        self.buildDsym()
+        self.breakpoint_conditions(inline=True)
+
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
     @dsym_test
-    def test_with_dsym_and_python_api(self):
+    def test_breakpoint_condition_with_dsym_and_python_api(self):
         """Use Python APIs to set breakpoint conditions."""
         self.buildDsym()
         self.breakpoint_conditions_python()
 
     @dwarf_test
-    def test_with_dwarf_and_run_command(self):
+    def test_breakpoint_condition_with_dwarf_and_run_command(self):
         """Exercise breakpoint condition with 'breakpoint modify -c <expr> id'."""
         self.buildDwarf()
         self.breakpoint_conditions()
 
+    @dwarf_test
+    def test_breakpoint_condition_inline_with_dwarf_and_run_command(self):
+        """Exercise breakpoint condition inline with 'breakpoint set'."""
+        self.buildDwarf()
+        self.breakpoint_conditions(inline=True)
+
     @python_api_test
     @dwarf_test
-    def test_with_dwarf_and_python_api(self):
+    def test_breakpoint_condition_with_dwarf_and_python_api(self):
         """Use Python APIs to set breakpoint conditions."""
         self.buildDwarf()
         self.breakpoint_conditions_python()
@@ -47,17 +60,22 @@ class BreakpointConditionsTestCase(TestBase):
         self.line1 = line_number('main.c', '// Find the line number of function "c" here.')
         self.line2 = line_number('main.c', "// Find the line number of c's parent call here.")
 
-    def breakpoint_conditions(self):
+    def breakpoint_conditions(self, inline=False):
         """Exercise breakpoint condition with 'breakpoint modify -c <expr> id'."""
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
-        # Create a breakpoint by function name 'c'.
-        self.expect("breakpoint set -n c", BREAKPOINT_CREATED,
-            startstr = "Breakpoint created: 1: name = 'c', locations = 1")
+        if inline:
+            # Create a breakpoint by function name 'c' and set the condition.
+            self.expect("breakpoint set -n c -c 'val == 3'", BREAKPOINT_CREATED,
+                startstr = "Breakpoint created: 1: name = 'c', locations = 1")
+        else:
+            # Create a breakpoint by function name 'c'.
+            self.expect("breakpoint set -n c", BREAKPOINT_CREATED,
+                startstr = "Breakpoint created: 1: name = 'c', locations = 1")
 
-        # And set a condition on the breakpoint to stop on when 'val == 3'.
-        self.runCmd("breakpoint modify -c 'val == 3' 1")
+            # And set a condition on the breakpoint to stop on when 'val == 3'.
+            self.runCmd("breakpoint modify -c 'val == 3' 1")
 
         # Now run the program.
         self.runCmd("run", RUN_SUCCEEDED)
