@@ -139,7 +139,7 @@ class ScopedInterceptor {
 
 #define TSAN_INTERCEPTOR(ret, func, ...) INTERCEPTOR(ret, func, __VA_ARGS__)
 #define TSAN_INTERCEPT(func) \
-    if (!INTERCEPT_FUNCTION(func)) \
+    if (!INTERCEPT_FUNCTION(func) && flags()->verbosity) \
       Printf("ThreadSanitizer: failed to intercept '" #func "' function\n"); \
 /**/
 
