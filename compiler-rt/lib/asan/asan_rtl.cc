@@ -479,12 +479,11 @@ void __asan_init() {
 
   // flags
   const char *options = AsanGetEnv("ASAN_OPTIONS");
+  ParseAsanOptions(options);
 
   if (FLAG_v) {
     Report("Parsed ASAN_OPTIONS: %s\n", options);
   }
-
-  ParseAsanOptions(options);
 
   if (FLAG_atexit) {
     Atexit(asan_atexit);
