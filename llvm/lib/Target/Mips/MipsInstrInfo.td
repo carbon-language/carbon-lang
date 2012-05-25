@@ -148,9 +148,8 @@ def RelocPIC    :     Predicate<"TM.getRelocationModel() == Reloc::PIC_">,
                       AssemblerPredicate<"FeatureMips32">;
 def NoNaNsFPMath :    Predicate<"TM.Options.NoNaNsFPMath">,
                       AssemblerPredicate<"FeatureMips32">;
-def HasStandardEncoding:
-  Predicate<"Subtarget.hasStandardEncoding()">,
-  AssemblerPredicate<"FeatureMips32,FeatureMips32r2,FeatureMips64"> ;
+def HasStandardEncoding : Predicate<"Subtarget.hasStandardEncoding()">,
+                          AssemblerPredicate<"!FeatureMips16">;
 
 //===----------------------------------------------------------------------===//
 // Instruction format superclass
