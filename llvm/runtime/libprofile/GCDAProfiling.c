@@ -85,17 +85,16 @@ static void recursive_mkdir(const char *filename) {
   int i, e;
 
   for (i = 1, e = strlen(filename); i != e; ++i) {
-    if (filename[i] == '/') {
-      pathname = malloc(i + 1);
-      strncpy(pathname, filename, i);
-      pathname[i] = '\0';
+    if (filename[i] != '/') continue;
+    pathname = malloc(i + 1);
+    strncpy(pathname, filename, i);
+    pathname[i] = '\0';
 #ifdef _WIN32
-      _mkdir(pathname);
+    _mkdir(pathname);
 #else
-      mkdir(pathname, 0750);  /* some of these will fail, ignore it. */
+    mkdir(pathname, 0750);  /* some of these will fail, ignore it. */
 #endif
-      free(pathname);
-    }
+    free(pathname);
   }
 }
 
