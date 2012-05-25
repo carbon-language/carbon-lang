@@ -1,8 +1,12 @@
 ; RUN: opt < %s -reassociate -S | FileCheck %s
 ; PR12169
+; PR12764
 
 define i64 @f(i64 %x0) {
-; CHECK-NOT: undef
+; CHECK: @f
+; CHECK-NEXT: mul i64 %x0, 208
+; CHECK-NEXT: add i64 %{{.*}}, 1617
+; CHECK-NEXT: ret i64
   %t0 = add i64 %x0, 1
   %t1 = add i64 %x0, 2
   %t2 = add i64 %x0, 3
