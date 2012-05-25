@@ -307,11 +307,11 @@ static void selectInterestingSourceRegion(std::string &SourceLine,
   // correctly.
   unsigned CaretStart = 0, CaretEnd = CaretLine.size();
   for (; CaretStart != CaretEnd; ++CaretStart)
-    if (!isspace(CaretLine[CaretStart]))
+    if (!isspace(static_cast<unsigned char>(CaretLine[CaretStart])))
       break;
 
   for (; CaretEnd != CaretStart; --CaretEnd)
-    if (!isspace(CaretLine[CaretEnd - 1]))
+    if (!isspace(static_cast<unsigned char>(CaretLine[CaretEnd - 1])))
       break;
 
   // caret has already been inserted into CaretLine so the above whitespace
@@ -322,11 +322,11 @@ static void selectInterestingSourceRegion(std::string &SourceLine,
   if (!FixItInsertionLine.empty()) {
     unsigned FixItStart = 0, FixItEnd = FixItInsertionLine.size();
     for (; FixItStart != FixItEnd; ++FixItStart)
-      if (!isspace(FixItInsertionLine[FixItStart]))
+      if (!isspace(static_cast<unsigned char>(FixItInsertionLine[FixItStart])))
         break;
 
     for (; FixItEnd != FixItStart; --FixItEnd)
-      if (!isspace(FixItInsertionLine[FixItEnd - 1]))
+      if (!isspace(static_cast<unsigned char>(FixItInsertionLine[FixItEnd - 1])))
         break;
 
     CaretStart = std::min(FixItStart, CaretStart);
@@ -382,12 +382,14 @@ static void selectInterestingSourceRegion(std::string &SourceLine,
       // Skip over any whitespace we see here; we're looking for
       // another bit of interesting text.
       while (NewStart &&
-             (map.byteToColumn(NewStart)==-1 || isspace(SourceLine[NewStart])))
+             (map.byteToColumn(NewStart)==-1 ||
+             isspace(static_cast<unsigned char>(SourceLine[NewStart]))))
         --NewStart;
 
       // Skip over this bit of "interesting" text.
       while (NewStart &&
-             (map.byteToColumn(NewStart)!=-1 && !isspace(SourceLine[NewStart])))
+             (map.byteToColumn(NewStart)!=-1 &&
+             !isspace(static_cast<unsigned char>(SourceLine[NewStart]))))
         --NewStart;
 
       // Move up to the non-whitespace character we just saw.
@@ -408,12 +410,14 @@ static void selectInterestingSourceRegion(std::string &SourceLine,
       // Skip over any whitespace we see here; we're looking for
       // another bit of interesting text.
       while (NewEnd<SourceLine.size() &&
-             (map.byteToColumn(NewEnd)==-1 || isspace(SourceLine[NewEnd])))
+             (map.byteToColumn(NewEnd)==-1 ||
+             isspace(static_cast<unsigned char>(SourceLine[NewEnd]))))
         ++NewEnd;
 
       // Skip over this bit of "interesting" text.
       while (NewEnd<SourceLine.size() &&
-             (map.byteToColumn(NewEnd)!=-1 && !isspace(SourceLine[NewEnd])))
+             (map.byteToColumn(NewEnd)!=-1 &&
+             !isspace(static_cast<unsigned char>(SourceLine[NewEnd]))))
         ++NewEnd;
 
       unsigned NewColumns = map.byteToColumn(NewEnd) -
