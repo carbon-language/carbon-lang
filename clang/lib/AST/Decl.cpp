@@ -546,14 +546,22 @@ static LinkageInfo getLVForClassMember(const NamedDecl *D, bool OnlyTemplate) {
   } else if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(D)) {
     if (const ClassTemplateSpecializationDecl *spec
         = dyn_cast<ClassTemplateSpecializationDecl>(RD)) {
+      // Merge template argument/parameter information for member
+      // class template specializations.
+      const TemplateArgumentList &TemplateArgs = spec->getTemplateArgs();
+      LinkageInfo ArgsLV = getLVForTemplateArgumentList(TemplateArgs,
+                                                        OnlyTemplate);
+      TemplateParameterList *TemplateParams =
+        spec->getSpecializedTemplate()->getTemplateParameters();
+      LinkageInfo ParamsLV = getLVForTemplateParameterList(TemplateParams);
       if (shouldConsiderTemplateVis(spec)) {
-        // Merge template argument/parameter information for member
-        // class template specializations.
-        LV.mergeWithMin(getLVForTemplateArgumentList(spec->getTemplateArgs(),
-                                                     OnlyTemplate));
+        LV.mergeWithMin(ArgsLV);
         if (!OnlyTemplate)
-          LV.merge(getLVForTemplateParameterList(
-                      spec->getSpecializedTemplate()->getTemplateParameters()));
+          LV.merge(ParamsLV);
+      } else {
+        LV.mergeLinkage(ArgsLV);
+        if (!OnlyTemplate)
+          LV.mergeLinkage(ParamsLV);
       }
     }
 

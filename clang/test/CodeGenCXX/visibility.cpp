@@ -832,3 +832,20 @@ namespace test44 {
   // CHECK: define internal void @_ZN6test443fooINS_12_GLOBAL__N_13barEEC1Ev
   // CHECK-HIDDEN: define internal void @_ZN6test443fooINS_12_GLOBAL__N_13barEEC1Ev
 }
+
+namespace test45 {
+  template <typename T>
+  struct foo {
+    template <typename T2>
+    struct bar {
+      bar() {};
+    };
+  };
+  namespace {
+    struct zed;
+  }
+  template struct DEFAULT foo<int>::bar<zed>;
+  foo<int>::bar<zed> x;
+  // CHECK: define internal void @_ZN6test453fooIiE3barINS_12_GLOBAL__N_13zedEEC1Ev
+  // CHECK-HIDDEN: define internal void @_ZN6test453fooIiE3barINS_12_GLOBAL__N_13zedEEC1Ev
+}
