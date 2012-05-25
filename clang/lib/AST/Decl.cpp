@@ -158,7 +158,7 @@ getLVForTemplateArgumentList(const TemplateArgumentList &TArgs,
   return getLVForTemplateArgumentList(TArgs.data(), TArgs.size(), OnlyTemplate);
 }
 
-static bool shouldConsiderTemplateLV(const FunctionDecl *fn,
+static bool shouldConsiderTemplateVis(const FunctionDecl *fn,
                                const FunctionTemplateSpecializationInfo *spec) {
   return !fn->hasAttr<VisibilityAttr>() || spec->isExplicitSpecialization();
 }
@@ -376,12 +376,16 @@ static LinkageInfo getLVForNamespaceScopeDecl(const NamedDecl *D,
     // this is an explicit specialization with a visibility attribute.
     if (FunctionTemplateSpecializationInfo *specInfo
                                = Function->getTemplateSpecializationInfo()) {
-      if (shouldConsiderTemplateLV(Function, specInfo)) {
-        LV.merge(getLVForDecl(specInfo->getTemplate(),
-                              true));
-        const TemplateArgumentList &templateArgs = *specInfo->TemplateArguments;
-        LV.mergeWithMin(getLVForTemplateArgumentList(templateArgs,
-                                                     OnlyTemplate));
+      LinkageInfo TempLV = getLVForDecl(specInfo->getTemplate(), true);
+      const TemplateArgumentList &templateArgs = *specInfo->TemplateArguments;
+      LinkageInfo ArgsLV = getLVForTemplateArgumentList(templateArgs,
+                                                        OnlyTemplate);
+      if (shouldConsiderTemplateVis(Function, specInfo)) {
+        LV.merge(TempLV);
+        LV.mergeWithMin(ArgsLV);
+      } else {
+        LV.mergeLinkage(TempLV);
+        LV.mergeLinkage(ArgsLV);
       }
     }
 
@@ -531,7 +535,7 @@ static LinkageInfo getLVForClassMember(const NamedDecl *D, bool OnlyTemplate) {
     // the template parameters and arguments.
     if (FunctionTemplateSpecializationInfo *spec
            = MD->getTemplateSpecializationInfo()) {
-      if (shouldConsiderTemplateLV(MD, spec)) {
+      if (shouldConsiderTemplateVis(MD, spec)) {
         LV.mergeWithMin(getLVForTemplateArgumentList(*spec->TemplateArguments,
                                                      OnlyTemplate));
         if (!OnlyTemplate)
