@@ -57,3 +57,10 @@ void testRadar11487525_1(){
   bool s[25];
   addressof(s);
 }
+
+// radar://11487525 Don't crash on CK_LValueBitCast.
+bool begin(double *it) {
+  typedef bool type[25];
+  bool *a = reinterpret_cast<type &>(*( reinterpret_cast<char *>( it )));
+  return *a;
+}
