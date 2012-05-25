@@ -70,6 +70,10 @@ public:
 private:
   void BuildCondBr(MachineBasicBlock &MBB, MachineBasicBlock *TBB, DebugLoc DL,
                    const SmallVectorImpl<MachineOperand>& Cond) const;
+  void ExpandExtractElementF64(MachineBasicBlock &MBB,
+                               MachineBasicBlock::iterator I) const;
+  void ExpandBuildPairF64(MachineBasicBlock &MBB,
+                          MachineBasicBlock::iterator I) const;
 
 public:
   virtual unsigned InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
@@ -91,6 +95,8 @@ public:
                                     unsigned DestReg, int FrameIndex,
                                     const TargetRegisterClass *RC,
                                     const TargetRegisterInfo *TRI) const;
+
+  virtual bool expandPostRAPseudo(MachineBasicBlock::iterator MI) const;
 
   virtual MachineInstr* emitFrameIndexDebugValue(MachineFunction &MF,
                                                  int FrameIx, uint64_t Offset,

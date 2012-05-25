@@ -105,7 +105,6 @@ public:
   }
 
   virtual bool addInstSelector();
-  virtual bool addPreSched2();
   virtual bool addPreEmitPass();
 };
 } // namespace
@@ -126,11 +125,6 @@ bool MipsPassConfig::addInstSelector() {
 // print out the code after the passes.
 bool MipsPassConfig::addPreEmitPass() {
   PM->add(createMipsDelaySlotFillerPass(getMipsTargetMachine()));
-  return true;
-}
-
-bool MipsPassConfig::addPreSched2() {
-  PM->add(createMipsExpandPseudoPass(getMipsTargetMachine()));
   return true;
 }
 

@@ -232,6 +232,53 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
     .addMemOperand(MMO);
 }
 
+void MipsInstrInfo::ExpandExtractElementF64(MachineBasicBlock &MBB,
+                                          MachineBasicBlock::iterator I) const {
+  const TargetInstrInfo *TII = TM.getInstrInfo();
+  unsigned DstReg = I->getOperand(0).getReg();
+  unsigned SrcReg = I->getOperand(1).getReg();
+  unsigned N = I->getOperand(2).getImm();
+  const MCInstrDesc& Mfc1Tdd = TII->get(Mips::MFC1);
+  DebugLoc dl = I->getDebugLoc();
+  const uint16_t* SubReg = TM.getRegisterInfo()->getSubRegisters(SrcReg);
+
+  BuildMI(MBB, I, dl, Mfc1Tdd, DstReg).addReg(*(SubReg + N));
+}
+
+void MipsInstrInfo::ExpandBuildPairF64(MachineBasicBlock &MBB,
+                                       MachineBasicBlock::iterator I) const {
+  const TargetInstrInfo *TII = TM.getInstrInfo();
+  unsigned DstReg = I->getOperand(0).getReg();
+  unsigned LoReg = I->getOperand(1).getReg(), HiReg = I->getOperand(2).getReg();
+  const MCInstrDesc& Mtc1Tdd = TII->get(Mips::MTC1);
+  DebugLoc dl = I->getDebugLoc();
+  const uint16_t* SubReg =
+    TM.getRegisterInfo()->getSubRegisters(DstReg);
+
+  // mtc1 Lo, $fp
+  // mtc1 Hi, $fp + 1
+  BuildMI(MBB, I, dl, Mtc1Tdd, *SubReg).addReg(LoReg);
+  BuildMI(MBB, I, dl, Mtc1Tdd, *(SubReg + 1)).addReg(HiReg);
+}
+
+bool MipsInstrInfo::expandPostRAPseudo(MachineBasicBlock::iterator MI) const {
+  MachineBasicBlock &MBB = *MI->getParent();
+
+  switch(MI->getDesc().getOpcode()) {
+  default:
+    return false;
+  case Mips::BuildPairF64:
+    ExpandBuildPairF64(MBB, MI);
+    break;
+  case Mips::ExtractElementF64:
+    ExpandExtractElementF64(MBB, MI);
+    break;
+  }
+
+  MBB.erase(MI);
+  return true;
+}
+
 MachineInstr*
 MipsInstrInfo::emitFrameIndexDebugValue(MachineFunction &MF, int FrameIx,
                                         uint64_t Offset, const MDNode *MDPtr,
