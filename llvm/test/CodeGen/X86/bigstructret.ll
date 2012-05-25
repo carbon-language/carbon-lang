@@ -34,10 +34,10 @@ entry:
 }
 
 ; CHECK: CallBigStruct2
-; CHECK: leal	16(%esp), {{.*}}
+; CHECK: leal	{{16|8}}(%esp), {{.*}}
 ; CHECK: call{{.*}}ReturnBigStruct2
 ; CHECK: subl	$4, %esp
-; CHECK: movl	20(%esp), %eax
+; CHECK: movl	{{20|12}}(%esp), %eax
 define fastcc i32 @CallBigStruct2() nounwind readnone {
 entry:
   %0 = call %1 @ReturnBigStruct2()
