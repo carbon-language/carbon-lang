@@ -76,3 +76,34 @@ define void @f7(i64 %x) nounwind {
   %2 = load i128* %1, align 4
   ret void
 }
+
+; CHECK: @f8
+define void @f8() nounwind {
+  %1 = alloca i128
+  %2 = alloca i128
+  %3 = select i1 undef, i128* %1, i128* %2
+; CHECK-NOT: trap
+  %4 = load i128* %3, align 4
+  ret void
+}
+
+; CHECK: @f9
+define void @f9(i128* %arg) nounwind {
+  %1 = alloca i128
+  %2 = select i1 undef, i128* %arg, i128* %1
+; CHECK: br i1 false
+  %3 = load i128* %2, align 4
+  ret void
+}
+
+; CHECK: @f10
+define void @f10(i64 %x, i64 %y) nounwind {
+  %1 = alloca i128, i64 %x
+  %2 = alloca i128, i64 %y
+  %3 = select i1 undef, i128* %1, i128* %2
+; CHECK: select
+; CHECK: select
+; CHECK: trap
+  %4 = load i128* %3, align 4
+  ret void
+}
