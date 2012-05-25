@@ -138,7 +138,7 @@ void ThreadStart(ThreadState *thr, int tid) {
   uptr stk_size = 0;
   uptr tls_addr = 0;
   uptr tls_size = 0;
-  GetThreadStackAndTls(&stk_addr, &stk_size, &tls_addr, &tls_size);
+  GetThreadStackAndTls(tid == 0, &stk_addr, &stk_size, &tls_addr, &tls_size);
 
   MemoryResetRange(thr, /*pc=*/ 1, stk_addr, stk_size);
 

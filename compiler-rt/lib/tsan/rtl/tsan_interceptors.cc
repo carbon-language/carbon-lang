@@ -138,10 +138,7 @@ class ScopedInterceptor {
 /**/
 
 #define TSAN_INTERCEPTOR(ret, func, ...) INTERCEPTOR(ret, func, __VA_ARGS__)
-#define TSAN_INTERCEPT(func) \
-    if (!INTERCEPT_FUNCTION(func) && flags()->verbosity) \
-      Printf("ThreadSanitizer: failed to intercept '" #func "' function\n"); \
-/**/
+#define TSAN_INTERCEPT(func) INTERCEPT_FUNCTION(func)
 
 // May be overriden by front-end.
 extern "C" void WEAK __tsan_malloc_hook(void *ptr, uptr size) {
@@ -1549,6 +1546,10 @@ const char *internal_strstr(const char *where, const char *what) {
 
 const char *internal_strchr(const char *where, char what) {
   return (const char*)REAL(strchr)((void*)where, what);
+}
+
+const char *internal_strrchr(const char *where, char what) {
+  return (const char*)REAL(strrchr)((void*)where, what);
 }
 
 void internal_start_thread(void(*func)(void *arg), void *arg) {

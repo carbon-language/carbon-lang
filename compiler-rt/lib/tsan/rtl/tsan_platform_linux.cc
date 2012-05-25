@@ -79,6 +79,11 @@ static void *my_mmap(void *addr, size_t length, int prot, int flags,
 # endif
 }
 
+static void my_munmap(void *addr, size_t length) {
+  ScopedInRtl in_rtl;
+  syscall(__NR_munmap, addr, length);
+}
+
 void internal_yield() {
   ScopedInRtl in_rtl;
   syscall(__NR_sched_yield);
@@ -114,6 +119,11 @@ uptr internal_read(fd_t fd, void *p, uptr size) {
 uptr internal_write(fd_t fd, const void *p, uptr size) {
   ScopedInRtl in_rtl;
   return syscall(__NR_write, fd, p, size);
+}
+
+int internal_dup2(int oldfd, int newfd) {
+  ScopedInRtl in_rtl;
+  return syscall(__NR_dup2, oldfd, newfd);
 }
 
 const char *internal_getpwd() {
@@ -230,25 +240,75 @@ uptr GetTlsSize() {
   return g_tls_size;
 }
 
-void GetThreadStackAndTls(uptr *stk_addr, uptr *stk_size,
+void GetThreadStackAndTls(bool main, uptr *stk_addr, uptr *stk_size,
                           uptr *tls_addr, uptr *tls_size) {
-  *stk_addr = 0;
-  *stk_size = 0;
-  pthread_attr_t attr;
-  if (pthread_getattr_np(pthread_self(), &attr) == 0) {
-    pthread_attr_getstack(&attr, (void**)stk_addr, (size_t*)stk_size);
-    pthread_attr_destroy(&attr);
-  }
   arch_prctl(ARCH_GET_FS, tls_addr);
   *tls_addr -= g_tls_size;
   *tls_size = g_tls_size;
 
-  // If stack and tls intersect, make them non-intersecting.
-  if (*tls_addr > *stk_addr && *tls_addr < *stk_addr + *stk_size) {
-    CHECK_GT(*tls_addr + *tls_size, *stk_addr);
-    CHECK_LE(*tls_addr + *tls_size, *stk_addr + *stk_size);
-    *stk_size -= *tls_size;
-    *tls_addr = *stk_addr + *stk_size;
+  if (main) {
+    uptr kBufSize = 1 << 20;
+    char *buf = (char*)my_mmap(0, kBufSize, PROT_READ | PROT_WRITE,
+                               MAP_PRIVATE | MAP_ANON, -1, 0);
+    fd_t maps = internal_open("/proc/self/maps", false);
+    if (maps == kInvalidFd) {
+      Printf("Failed to open /proc/self/maps\n");
+      Die();
+    }
+    char *end = buf;
+    while (end + kPageSize < buf + kBufSize) {
+      uptr read = internal_read(maps, end, kPageSize);
+      if ((int)read <= 0)
+        break;
+      end += read;
+    }
+    end[0] = 0;
+    end = (char*)internal_strstr(buf, "[stack]");
+    if (end == 0) {
+      Printf("Can't find [stack] in /proc/self/maps\n");
+      Die();
+    }
+    end[0] = 0;
+    char *pos = (char*)internal_strrchr(buf, '\n');
+    if (pos == 0) {
+      Printf("Can't find [stack] in /proc/self/maps\n");
+      Die();
+    }
+    uptr stack = 0;
+    for (; pos++;) {
+      uptr num = 0;
+      if (pos[0] >= '0' && pos[0] <= '9')
+        num = pos[0] - '0';
+      else if (pos[0] >= 'a' && pos[0] <= 'f')
+        num = pos[0] - 'a' + 10;
+      else
+        break;
+      stack = stack * 16 + num;
+    }
+    internal_close(maps);
+    my_munmap(buf, kBufSize);
+
+    struct rlimit rl;
+    CHECK_EQ(getrlimit(RLIMIT_STACK, &rl), 0);
+
+    *stk_addr = stack;
+    *stk_size = rl.rlim_cur;
+  } else {
+    *stk_addr = 0;
+    *stk_size = 0;
+    pthread_attr_t attr;
+    if (pthread_getattr_np(pthread_self(), &attr) == 0) {
+      pthread_attr_getstack(&attr, (void**)stk_addr, (size_t*)stk_size);
+      pthread_attr_destroy(&attr);
+    }
+
+    // If stack and tls intersect, make them non-intersecting.
+    if (*tls_addr > *stk_addr && *tls_addr < *stk_addr + *stk_size) {
+      CHECK_GT(*tls_addr + *tls_size, *stk_addr);
+      CHECK_LE(*tls_addr + *tls_size, *stk_addr + *stk_size);
+      *stk_size -= *tls_size;
+      *tls_addr = *stk_addr + *stk_size;
+    }
   }
 }
 

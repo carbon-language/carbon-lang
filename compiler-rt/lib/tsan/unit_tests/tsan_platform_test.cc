@@ -15,13 +15,13 @@
 
 namespace __tsan {
 
-static void *TestThreadInfo(void *arg) {
+static void TestThreadInfo(bool main) {
   ScopedInRtl in_rtl;
   uptr stk_addr = 0;
   uptr stk_size = 0;
   uptr tls_addr = 0;
   uptr tls_size = 0;
-  GetThreadStackAndTls(&stk_addr, &stk_size, &tls_addr, &tls_size);
+  GetThreadStackAndTls(main, &stk_addr, &stk_size, &tls_addr, &tls_size);
   // Printf("stk=%lx-%lx(%lu)\n", stk_addr, stk_addr + stk_size, stk_size);
   // Printf("tls=%lx-%lx(%lu)\n", tls_addr, tls_addr + tls_size, tls_size);
 
@@ -42,16 +42,20 @@ static void *TestThreadInfo(void *arg) {
   EXPECT_TRUE(tls_addr < stk_addr || tls_addr >= stk_addr + stk_size);
   EXPECT_TRUE(tls_end  < stk_addr || tls_end  >=  stk_addr + stk_size);
   EXPECT_TRUE((tls_addr < stk_addr) == (tls_end  < stk_addr));
+}
+
+static void *WorkerThread(void *arg) {
+  TestThreadInfo(false);
   return 0;
 }
 
 TEST(Platform, ThreadInfoMain) {
-  TestThreadInfo(0);
+  TestThreadInfo(true);
 }
 
 TEST(Platform, ThreadInfoWorker) {
   pthread_t t;
-  pthread_create(&t, 0, TestThreadInfo, 0);
+  pthread_create(&t, 0, WorkerThread, 0);
   pthread_join(t, 0);
 }
 

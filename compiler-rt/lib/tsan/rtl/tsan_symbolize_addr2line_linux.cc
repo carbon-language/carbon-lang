@@ -18,7 +18,6 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
 #include <errno.h>
 #include <link.h>
 #include <linux/limits.h>
@@ -59,22 +58,23 @@ static void NOINLINE InitModule(ModuleDesc *m) {
   }
   int pid = fork();
   if (pid == 0) {
-    close(STDOUT_FILENO);
-    close(STDIN_FILENO);
-    dup2(outfd[0], STDIN_FILENO);
-    dup2(infd[1], STDOUT_FILENO);
-    close(outfd[0]);
-    close(outfd[1]);
-    close(infd[0]);
-    close(infd[1]);
+    flags()->log_fileno = STDERR_FILENO;
+    internal_close(STDOUT_FILENO);
+    internal_close(STDIN_FILENO);
+    internal_dup2(outfd[0], STDIN_FILENO);
+    internal_dup2(infd[1], STDOUT_FILENO);
+    internal_close(outfd[0]);
+    internal_close(outfd[1]);
+    internal_close(infd[0]);
+    internal_close(infd[1]);
     execl("/usr/bin/addr2line", "/usr/bin/addr2line", "-Cfe", m->fullname, 0);
     _exit(0);
   } else if (pid < 0) {
     Printf("ThreadSanitizer: failed to fork symbolizer\n");
     Die();
   }
-  close(outfd[0]);
-  close(infd[1]);
+  internal_close(outfd[0]);
+  internal_close(infd[1]);
   m->inp_fd = infd[0];
   m->out_fd = outfd[1];
 }
@@ -92,7 +92,7 @@ static int dl_iterate_phdr_cb(dl_phdr_info *info, size_t size, void *arg) {
   ModuleDesc *m = (ModuleDesc*)internal_alloc(MBlockReportStack,
                                               sizeof(ModuleDesc));
   m->fullname = internal_strdup(info->dlpi_name);
-  m->name = strrchr(m->fullname, '/');  // FIXME: internal_strrchr
+  m->name = internal_strrchr(m->fullname, '/');
   if (m->name)
     m->name += 1;
   else
@@ -173,12 +173,12 @@ ReportStack *SymbolizeCode(uptr addr) {
   ReportStack *res = NewFrame(addr);
   res->module = internal_strdup(m->name);
   res->offset = offset;
-  char *pos = strchr(func, '\n');
+  char *pos = (char*)internal_strchr(func, '\n');
   if (pos && func[0] != '?') {
     res->func = (char*)internal_alloc(MBlockReportStack, pos - func + 1);
     internal_memcpy(res->func, func, pos - func);
     res->func[pos - func] = 0;
-    char *pos2 = strchr(pos, ':');
+    char *pos2 = (char*)internal_strchr(pos, ':');
     if (pos2) {
       res->file = (char*)internal_alloc(MBlockReportStack, pos2 - pos - 1 + 1);
       internal_memcpy(res->file, pos + 1, pos2 - pos - 1);
