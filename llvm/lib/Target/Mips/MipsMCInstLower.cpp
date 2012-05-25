@@ -140,33 +140,6 @@ void MipsMCInstLower::LowerCPLOAD(SmallVector<MCInst, 4>& MCInsts) {
   CreateMCInst(MCInsts[2], Mips::ADDu, GPReg, GPReg, T9Reg);
 }
 
-// Lower ".cprestore offset" to "sw $gp, offset($sp)".
-void MipsMCInstLower::LowerCPRESTORE(int64_t Offset,
-                                     SmallVector<MCInst, 4>& MCInsts) {
-  assert(isInt<32>(Offset) && (Offset >= 0) &&
-         "Imm operand of .cprestore must be a non-negative 32-bit value.");
-
-  MCOperand SPReg = MCOperand::CreateReg(Mips::SP), BaseReg = SPReg;
-  MCOperand GPReg = MCOperand::CreateReg(Mips::GP);
-
-  if (!isInt<16>(Offset)) {
-    unsigned Hi = ((Offset + 0x8000) >> 16) & 0xffff;
-    Offset &= 0xffff;
-    MCOperand ATReg = MCOperand::CreateReg(Mips::AT);
-    BaseReg = ATReg;
-
-    // lui   at,hi
-    // addu  at,at,sp
-    MCInsts.resize(2);
-    CreateMCInst(MCInsts[0], Mips::LUi, ATReg, MCOperand::CreateImm(Hi));
-    CreateMCInst(MCInsts[1], Mips::ADDu, ATReg, ATReg, SPReg);
-  }
-
-  MCInst Sw;
-  CreateMCInst(Sw, Mips::SW, GPReg, BaseReg, MCOperand::CreateImm(Offset));
-  MCInsts.push_back(Sw);
-}
-
 MCOperand MipsMCInstLower::LowerOperand(const MachineOperand& MO,
                                         unsigned offset) const {
   MachineOperandType MOTy = MO.getType();

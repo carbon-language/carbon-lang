@@ -112,28 +112,6 @@ void MipsAsmPrinter::EmitInstruction(const MachineInstr *MI) {
 
     return;
   }
-  case Mips::CPRESTORE: {
-    const MachineOperand &MO = MI->getOperand(0);
-    assert(MO.isImm() && "CPRESTORE's operand must be an immediate.");
-    int64_t Offset = MO.getImm();
-
-    if (OutStreamer.hasRawTextSupport()) {
-      if (!isInt<16>(Offset)) {
-        EmitInstrWithMacroNoAT(MI);
-        return;
-      }
-    } else {
-      MCInstLowering.LowerCPRESTORE(Offset, MCInsts);
-
-      for (SmallVector<MCInst, 4>::iterator I = MCInsts.begin();
-           I != MCInsts.end(); ++I)
-        OutStreamer.EmitInstruction(*I);
-
-      return;
-    }
-
-    break;
-  }
   default:
     break;
   }
