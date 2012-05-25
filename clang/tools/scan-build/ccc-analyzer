@@ -434,6 +434,9 @@ if ($Status) { exit($Status >> 8); }
 # Get the analysis options.
 my $Analyses = $ENV{'CCC_ANALYZER_ANALYSIS'};
 
+# Get the plugins to load.
+my $Plugins = $ENV{'CCC_ANALYZER_PLUGINS'};
+
 # Get the store model.
 my $StoreModel = $ENV{'CCC_ANALYZER_STORE_MODEL'};
 
@@ -647,6 +650,10 @@ if ($Action eq 'compile' or $Action eq 'link') {
     
     if (defined $Analyses) {
       push @AnalyzeArgs, split '\s+', $Analyses;
+    }
+
+    if (defined $Plugins) {
+      push @AnalyzeArgs, split '\s+', $Plugins;
     }
 
     if (defined $OutputFormat) {

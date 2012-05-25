@@ -36,6 +36,7 @@ my $HostName = HtmlEscape(hostname() || 'unknown');
 my $CurrentDir = HtmlEscape(getcwd());
 my $CurrentDirSuffix = basename($CurrentDir);
 
+my @PluginsToLoad;
 my $CmdArgs;
 
 my $HtmlTitle;
@@ -1032,9 +1033,23 @@ CONTROLLING CHECKERS:
 
  -enable-checker [checker name]
  -disable-checker [checker name]
+ 
+LOADING CHECKERS:
+
+ Loading external checkers using the clang plugin interface:
+
+ -load-plugin [plugin library]
 ENDTEXT
 
 # Query clang for list of checkers that are enabled.
+
+# create a list to load the plugins via the 'Xclang' command line
+# argument
+my @PluginLoadCommandline_xclang;
+foreach my $param ( @PluginsToLoad ) {
+  push ( @PluginLoadCommandline_xclang, "-Xclang" );
+  push ( @PluginLoadCommandline_xclang, $param );
+}
 my %EnabledCheckers;
 foreach my $lang ("c", "objective-c", "objective-c++", "c++") {
   pipe(FROM_CHILD, TO_PARENT);
@@ -1043,7 +1058,7 @@ foreach my $lang ("c", "objective-c", "objective-c++", "c++") {
     close FROM_CHILD;
     open(STDOUT,">&", \*TO_PARENT);
     open(STDERR,">&", \*TO_PARENT);
-    exec $Clang, ('--analyze', '-x', $lang, '-', '-###');
+    exec $Clang, ( @PluginLoadCommandline_xclang, '--analyze', '-x', $lang, '-', '-###'); 
   }
   close(TO_PARENT);
   while(<FROM_CHILD>) {
@@ -1065,7 +1080,7 @@ if ($pid == 0) {
   close FROM_CHILD;
   open(STDOUT,">&", \*TO_PARENT);
   open(STDERR,">&", \*TO_PARENT);
-  exec $Clang, ('-cc1', '-analyzer-checker-help');
+  exec $Clang, ('-cc1', @PluginsToLoad , '-analyzer-checker-help');
 }
 close(TO_PARENT);
 my $foundCheckers = 0;
@@ -1101,7 +1116,9 @@ else {
         if ($EnabledCheckers{$aggregate}) {
           $enabled =1;
           last;
-        }        
+        }
+        # append a dot, if an additional domain is added in the next iteration
+        $aggregate .= ".";
       }
       
       if ($enabled) {
@@ -1344,7 +1361,12 @@ while (@ARGV) {
     push @AnalysesToRun, "-analyzer-disable-checker", shift @ARGV;
     next;
   }
-
+  if ($arg eq "-load-plugin") {
+    shift @ARGV;
+    push @PluginsToLoad, "-load", shift @ARGV;
+    next;
+  }
+  
   DieDiag("unrecognized option '$arg'\n") if ($arg =~ /^-/);
   
   last;
@@ -1411,6 +1433,8 @@ if ($MaxLoop > 0) {
 }
 
 $ENV{'CCC_ANALYZER_ANALYSIS'} = join ' ',@AnalysesToRun;
+
+$ENV{'CCC_ANALYZER_PLUGINS'} = join ' ',@PluginsToLoad;
 
 if (defined $StoreModel) {
   $ENV{'CCC_ANALYZER_STORE_MODEL'} = $StoreModel;
