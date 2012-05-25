@@ -431,10 +431,15 @@ clang::Decl
     {
         if (NamedDecl *from_named_decl = dyn_cast<clang::NamedDecl>(from))
         {
+            std::string name_string;
+            llvm::raw_string_ostream name_stream(name_string);
+            from_named_decl->printName(name_stream);
+            name_stream.flush();
+            
             log->Printf("    [ClangASTImporter] Imported (%sDecl*)%p, named %s (from (Decl*)%p), metadata 0x%llx",
                         from->getDeclKindName(),
                         to,
-                        from_named_decl->getName().str().c_str(),
+                        name_string.c_str(),
                         from,
                         m_master.GetDeclMetadata(from));
         }
