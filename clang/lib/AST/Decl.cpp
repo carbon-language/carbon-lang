@@ -535,12 +535,20 @@ static LinkageInfo getLVForClassMember(const NamedDecl *D, bool OnlyTemplate) {
     // the template parameters and arguments.
     if (FunctionTemplateSpecializationInfo *spec
            = MD->getTemplateSpecializationInfo()) {
+      const TemplateArgumentList &TemplateArgs = *spec->TemplateArguments;
+      LinkageInfo ArgsLV = getLVForTemplateArgumentList(TemplateArgs,
+                                                        OnlyTemplate);
+      TemplateParameterList *TemplateParams =
+        spec->getTemplate()->getTemplateParameters();
+      LinkageInfo ParamsLV = getLVForTemplateParameterList(TemplateParams);
       if (shouldConsiderTemplateVis(MD, spec)) {
-        LV.mergeWithMin(getLVForTemplateArgumentList(*spec->TemplateArguments,
-                                                     OnlyTemplate));
+        LV.mergeWithMin(ArgsLV);
         if (!OnlyTemplate)
-          LV.merge(getLVForTemplateParameterList(
-                              spec->getTemplate()->getTemplateParameters()));
+          LV.merge(ParamsLV);
+      } else {
+        LV.mergeLinkage(ArgsLV);
+        if (!OnlyTemplate)
+          LV.mergeLinkage(ParamsLV);
       }
     }
 
