@@ -676,40 +676,69 @@ loopnext:
     }
     
     // Now look at the byte at the end of the AddressRange for a limited attempt at describing the
-    // epilogue.  If this function is built -fomit-frame-pointer (so the CFA is defined in terms of the
-    // stack pointer) we'd need to profile every instruction which causes rsp to change to backtrace
-    // all the time.  But assuming the CFA is in terms of rbp most of the time, this one additional Row
-    // will be sufficient.
+    // epilogue.  We're looking for the sequence
 
-    if (m_func_bounds.GetByteSize() > 2)
+    //  [ 0x5d ] mov %rbp, %rsp
+    //  [ 0xc3 ] ret
+    //  [ 0xe8 xx xx xx xx ] call __stack_chk_fail  (this is sometimes the final insn in the function)
+
+    // We want to add a Row describing how to unwind when we're stopped on the 'ret' instruction where the
+    // CFA is no longer defined in terms of rbp, but is now defined in terms of rsp like on function entry.
+
+    uint64_t ret_insn_offset = LLDB_INVALID_ADDRESS;
+    Address end_of_fun(m_func_bounds.GetBaseAddress());
+    end_of_fun.SetOffset (end_of_fun.GetOffset() + m_func_bounds.GetByteSize());
+    
+    if (m_func_bounds.GetByteSize() > 7)
     {
-        Address last_insn (m_func_bounds.GetBaseAddress());
-        last_insn.SetOffset (last_insn.GetOffset() + m_func_bounds.GetByteSize() - 1);
-        uint8_t bytebuf[1];
-        if (target->ReadMemory (last_insn, prefer_file_cache, bytebuf, 1, error) != -1)
+        uint8_t bytebuf[7];
+        Address last_seven_bytes(end_of_fun);
+        last_seven_bytes.SetOffset (last_seven_bytes.GetOffset() - 7);
+        if (target->ReadMemory (last_seven_bytes, prefer_file_cache, bytebuf, 7, error) != -1)
         {
-            if (bytebuf[0] == 0xc3)   // ret aka retq
+            if (bytebuf[5] == 0x5d && bytebuf[6] == 0xc3)  // mov, ret
             {
-                // Create a fresh, empty Row and RegisterLocation - don't mention any other registers
-                UnwindPlan::Row epi_row;
-                UnwindPlan::Row::RegisterLocation epi_regloc;
-
-                // When the ret instruction is about to be executed, here's our state
-                epi_row.SetOffset (m_func_bounds.GetByteSize() - 1);
-                epi_row.SetCFARegister (m_lldb_sp_regnum);
-                epi_row.SetCFAOffset (m_wordsize);
-               
-                // caller's stack pointer value before the call insn is the CFA address
-                epi_regloc.SetIsCFAPlusOffset (0);
-                epi_row.SetRegisterInfo (m_lldb_sp_regnum, epi_regloc);
-
-                // saved instruction pointer can be found at CFA - wordsize
-                epi_regloc.SetAtCFAPlusOffset (-m_wordsize);
-                epi_row.SetRegisterInfo (m_lldb_ip_regnum, epi_regloc);
-
-                unwind_plan.AppendRow (epi_row);
+                ret_insn_offset = m_func_bounds.GetByteSize() - 1;
+            }
+            else if (bytebuf[0] == 0x5d && bytebuf[1] == 0xc3 && bytebuf[2] == 0xe8) // mov, ret, call
+            {
+                ret_insn_offset = m_func_bounds.GetByteSize() - 6;
             }
         }
+    } else if (m_func_bounds.GetByteSize() > 2)
+    {
+        uint8_t bytebuf[2];
+        Address last_two_bytes(end_of_fun);
+        last_two_bytes.SetOffset (last_two_bytes.GetOffset() - 2);
+        if (target->ReadMemory (last_two_bytes, prefer_file_cache, bytebuf, 2, error) != -1)
+        {
+            if (bytebuf[0] == 0x5d && bytebuf[1] == 0xc3) // mov, ret
+            {
+                ret_insn_offset = m_func_bounds.GetByteSize() - 1;
+            }
+        }
+    }
+
+    if (ret_insn_offset != LLDB_INVALID_ADDRESS)
+    {
+        // Create a fresh, empty Row and RegisterLocation - don't mention any other registers
+        UnwindPlan::Row epi_row;
+        UnwindPlan::Row::RegisterLocation epi_regloc;
+
+        // When the ret instruction is about to be executed, here's our state
+        epi_row.SetOffset (ret_insn_offset);
+        epi_row.SetCFARegister (m_lldb_sp_regnum);
+        epi_row.SetCFAOffset (m_wordsize);
+       
+        // caller's stack pointer value before the call insn is the CFA address
+        epi_regloc.SetIsCFAPlusOffset (0);
+        epi_row.SetRegisterInfo (m_lldb_sp_regnum, epi_regloc);
+
+        // saved instruction pointer can be found at CFA - wordsize
+        epi_regloc.SetAtCFAPlusOffset (-m_wordsize);
+        epi_row.SetRegisterInfo (m_lldb_ip_regnum, epi_regloc);
+
+        unwind_plan.AppendRow (epi_row);
     }
     
     unwind_plan.SetSourceName ("assembly insn profiling");
