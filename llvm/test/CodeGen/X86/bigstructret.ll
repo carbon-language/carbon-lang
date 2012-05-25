@@ -32,15 +32,3 @@ entry:
   %3 = insertvalue %1 %2, i32 48, 3
   ret %1 %3
 }
-
-; CHECK: CallBigStruct2
-; CHECK: leal	{{16|8}}(%esp), {{.*}}
-; CHECK: call{{.*}}ReturnBigStruct2
-; CHECK: subl	$4, %esp
-; CHECK: movl	{{20|12}}(%esp), %eax
-define fastcc i32 @CallBigStruct2() nounwind readnone {
-entry:
-  %0 = call %1 @ReturnBigStruct2()
-  %1 = extractvalue %1 %0, 3
-  ret i32 %1
-}
