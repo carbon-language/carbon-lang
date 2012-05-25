@@ -474,9 +474,13 @@ RegisterInfoEmitter::runMCDesc(raw_ostream &OS, CodeGenTarget &Target,
   SmallVector<RegVec, 4> OverlapLists(Regs.size());
   SequenceToOffsetTable<RegVec, CodeGenRegister::Less> RegSeqs;
 
+  SequenceToOffsetTable<std::string> RegStrings;
+
   // Precompute register lists for the SequenceToOffsetTable.
   for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
     const CodeGenRegister *Reg = Regs[i];
+
+    RegStrings.add(Reg->getName());
 
     // Compute the ordered sub-register list.
     SetVector<const CodeGenRegister*> SR;
@@ -526,14 +530,20 @@ RegisterInfoEmitter::runMCDesc(raw_ostream &OS, CodeGenTarget &Target,
   RegSeqs.emit(OS, printRegister);
   OS << "};\n\n";
 
+  // Emit the string table.
+  RegStrings.layout();
+  OS << "extern const char " << TargetName << "RegStrings[] = {\n";
+  RegStrings.emit(OS, printChar);
+  OS << "};\n\n";
+
   OS << "extern const MCRegisterDesc " << TargetName
      << "RegDesc[] = { // Descriptors\n";
-  OS << "  { \"NOREG\", 0, 0, 0 },\n";
+  OS << "  { " << RegStrings.get("") << ", 0, 0, 0 },\n";
 
   // Emit the register descriptors now.
   for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
     const CodeGenRegister *Reg = Regs[i];
-    OS << "  { \"" << Reg->getName() << "\", "
+    OS << "  { " << RegStrings.get(Reg->getName()) << ", "
        << RegSeqs.get(OverlapLists[i]) << ", "
        << RegSeqs.get(SubRegLists[i]) << ", "
        << RegSeqs.get(Reg->getSuperRegs()) << " },\n";
@@ -658,7 +668,8 @@ RegisterInfoEmitter::runMCDesc(raw_ostream &OS, CodeGenTarget &Target,
      << "unsigned DwarfFlavour = 0, unsigned EHFlavour = 0) {\n";
   OS << "  RI->InitMCRegisterInfo(" << TargetName << "RegDesc, "
      << Regs.size()+1 << ", RA, " << TargetName << "MCRegisterClasses, "
-     << RegisterClasses.size() << ", " << TargetName << "RegLists, ";
+     << RegisterClasses.size() << ", " << TargetName << "RegLists, "
+     << TargetName << "RegStrings, ";
   if (SubRegIndices.size() != 0)
     OS << "(uint16_t*)" << TargetName << "SubRegTable, "
        << SubRegIndices.size() << ",\n";
@@ -1016,6 +1027,7 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
   // Emit the constructor of the class...
   OS << "extern const MCRegisterDesc " << TargetName << "RegDesc[];\n";
   OS << "extern const uint16_t " << TargetName << "RegLists[];\n";
+  OS << "extern const char " << TargetName << "RegStrings[];\n";
   if (SubRegIndices.size() != 0)
     OS << "extern const uint16_t *get" << TargetName
        << "SubRegTable();\n";
@@ -1032,6 +1044,7 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
      << Regs.size()+1 << ", RA,\n                     " << TargetName
      << "MCRegisterClasses, " << RegisterClasses.size() << ",\n"
      << "                     " << TargetName << "RegLists,\n"
+     << "                     " << TargetName << "RegStrings,\n"
      << "                     ";
   if (SubRegIndices.size() != 0)
     OS << "get" << TargetName << "SubRegTable(), "

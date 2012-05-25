@@ -256,7 +256,7 @@ void EDDisassembler::initMaps(const MCRegisterInfo &registerInfo) {
   unsigned registerIndex;
   
   for (registerIndex = 0; registerIndex < numRegisters; ++registerIndex) {
-    const char* registerName = registerInfo.get(registerIndex).Name;
+    const char* registerName = registerInfo.getName(registerIndex);
     
     RegVec.push_back(registerName);
     RegRMap[registerName] = registerIndex;
