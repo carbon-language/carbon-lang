@@ -1984,10 +1984,10 @@ bool SelectionDAGBuilder::handleSmallSwitchRange(CaseRec& CR,
       }
     }
   }
-
   // Rearrange the case blocks so that the last one falls through if possible.
   Case &BackCase = *(CR.Range.second-1);
-  if (NextBlock && Default != NextBlock && BackCase.BB != NextBlock) {
+  if (Size > 1 &&
+      NextBlock && Default != NextBlock && BackCase.BB != NextBlock) {
     // The last case block won't fall through into 'NextBlock' if we emit the
     // branches in this order.  See if rearranging a case value would help.
     // We start at the bottom as it's the case with the least weight.
