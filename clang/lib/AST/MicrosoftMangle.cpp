@@ -42,6 +42,7 @@ public:
   void mangleFunctionEncoding(const FunctionDecl *FD);
   void mangleVariableEncoding(const VarDecl *VD);
   void mangleNumber(int64_t Number);
+  void mangleNumber(const llvm::APSInt &Value);
   void mangleType(QualType T);
 
 private:
@@ -54,6 +55,11 @@ private:
   void mangleOperatorName(OverloadedOperatorKind OO);
   void mangleQualifiers(Qualifiers Quals, bool IsMember);
 
+  void mangleUnscopedTemplateName(const TemplateDecl *ND);
+  void mangleTemplateInstantiationName(const TemplateDecl *TD,
+                                       const TemplateArgument *TemplateArgs,
+                                       unsigned NumTemplateArgs,
+                                       SourceLocation InstantiationLoc);
   void mangleObjCMethodName(const ObjCMethodDecl *MD);
 
   // Declare manglers for every type class.
@@ -69,7 +75,11 @@ private:
   void mangleExtraDimensions(QualType T);
   void mangleFunctionClass(const FunctionDecl *FD);
   void mangleCallingConvention(const FunctionType *T, bool IsInstMethod = false);
+  void mangleIntegerLiteral(QualType T, const llvm::APSInt &Number);
   void mangleThrowSpecification(const FunctionProtoType *T);
+
+  void mangleTemplateArgs(const TemplateArgument *TemplateArgs, unsigned NumTemplateArgs,
+                          SourceLocation InstantiationLoc);
 
 };
 
@@ -266,27 +276,75 @@ void MicrosoftCXXNameMangler::mangleName(const NamedDecl *ND) {
 }
 
 void MicrosoftCXXNameMangler::mangleNumber(int64_t Number) {
-  // <number> ::= [?] <decimal digit> # <= 9
-  //          ::= [?] <hex digit>+ @ # > 9; A = 0, B = 1, etc...
+  // <number> ::= [?] <decimal digit> # 1 <= Number <= 10
+  //          ::= [?] <hex digit>+ @ # 0 or > 9; A = 0, B = 1, etc...
+  //          ::= [?] @ # 0 (alternate mangling, not emitted by VC)
   if (Number < 0) {
     Out << '?';
     Number = -Number;
   }
-  if (Number >= 1 && Number <= 10) {
+  // Oddly enough, there's a special shorter mangling for 0, but Microsoft chose not
+  // to use it. Instead, 0 gets mangled as "A@". Oh well...
+  if (Number >= 1 && Number <= 10)
     Out << Number-1;
-  } else {
+  else {
     // We have to build up the encoding in reverse order, so it will come
     // out right when we write it out.
     char Encoding[16];
     char *EndPtr = Encoding+sizeof(Encoding);
     char *CurPtr = EndPtr;
-    while (Number) {
+    do {
       *--CurPtr = 'A' + (Number % 16);
       Number /= 16;
-    }
+    } while (Number);
     Out.write(CurPtr, EndPtr-CurPtr);
     Out << '@';
   }
+}
+
+void MicrosoftCXXNameMangler::mangleNumber(const llvm::APSInt &Value) {
+  if (Value.isSigned() && Value.isNegative()) {
+    Out << '?';
+    mangleNumber(llvm::APSInt(Value.abs()));
+    return;
+  }
+  if (Value.uge(1) && Value.ule(10))
+    (Value-llvm::APSInt(llvm::APInt(Value.getBitWidth(), 1, Value.isSigned()))).print(Out,
+                                                                                   false);
+  else {
+    // We have to build up the encoding in reverse order, so it will come
+    // out right when we write it out.
+    char Encoding[64];
+    char *EndPtr = Encoding+sizeof(Encoding);
+    char *CurPtr = EndPtr;
+    llvm::APSInt Fifteen(Value.getBitWidth(), 15);
+    for (int i = 0, e = Value.getActiveBits() / 4; i != e; ++i) {
+      *--CurPtr = 'A' + Value.And(Fifteen).lshr(i*4).getLimitedValue(15);
+      Fifteen = Fifteen.shl(4);
+    };
+    Out.write(CurPtr, EndPtr-CurPtr);
+    Out << '@';
+  }
+}
+
+static const TemplateDecl *
+isTemplate(const NamedDecl *ND, const TemplateArgumentList *&TemplateArgs) {
+  // Check if we have a function template.
+  if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(ND)){
+    if (const TemplateDecl *TD = FD->getPrimaryTemplate()) {
+      TemplateArgs = FD->getTemplateSpecializationArgs();
+      return TD;
+    }
+  }
+
+  // Check if we have a class template.
+  if (const ClassTemplateSpecializationDecl *Spec =
+      dyn_cast<ClassTemplateSpecializationDecl>(ND)) {
+    TemplateArgs = &Spec->getTemplateArgs();
+    return Spec->getSpecializedTemplate();
+  }
+
+  return 0;
 }
 
 void
@@ -295,6 +353,15 @@ MicrosoftCXXNameMangler::mangleUnqualifiedName(const NamedDecl *ND,
   //  <unqualified-name> ::= <operator-name>
   //                     ::= <ctor-dtor-name>
   //                     ::= <source-name>
+  //                     ::= <template-name>
+  const TemplateArgumentList *TemplateArgs;
+  // Check if we have a template.
+  if (const TemplateDecl *TD = isTemplate(ND, TemplateArgs)) {
+    mangleTemplateInstantiationName(TD, TemplateArgs->data(), TemplateArgs->size(),
+                                    ND->getLocation());
+    return;
+  }
+
   switch (Name.getNameKind()) {
     case DeclarationName::Identifier: {
       if (const IdentifierInfo *II = Name.getAsIdentifierInfo()) {
@@ -364,7 +431,6 @@ MicrosoftCXXNameMangler::mangleUnqualifiedName(const NamedDecl *ND,
 void MicrosoftCXXNameMangler::manglePostfix(const DeclContext *DC,
                                             bool NoFunction) {
   // <postfix> ::= <unqualified-name> [<postfix>]
-  //           ::= <template-postfix> <template-args> [<postfix>]
   //           ::= <template-param>
   //           ::= <substitution> [<postfix>]
 
@@ -523,8 +589,67 @@ void MicrosoftCXXNameMangler::mangleSourceName(const IdentifierInfo *II) {
   Out << II->getName() << '@';
 }
 
+void MicrosoftCXXNameMangler::mangleTemplateInstantiationName(const TemplateDecl *TD,
+                                                     const TemplateArgument *TemplateArgs,
+                                                              unsigned NumTemplateArgs,
+                                                        SourceLocation InstantiationLoc) {
+  // <template-name> ::= <unscoped-template-name> <template-args>
+  //                 ::= <substitution>
+  // Always start with the unqualified name.
+  mangleUnscopedTemplateName(TD);
+  mangleTemplateArgs(TemplateArgs, NumTemplateArgs, InstantiationLoc);
+}
+
 void MicrosoftCXXNameMangler::mangleObjCMethodName(const ObjCMethodDecl *MD) {
   Context.mangleObjCMethodName(MD, Out);
+}
+
+void
+MicrosoftCXXNameMangler::mangleUnscopedTemplateName(const TemplateDecl *TD) {
+  // <unscoped-template-name> ::= ?$ <unqualified-name>
+  Out << "?$";
+  mangleUnqualifiedName(TD);
+}
+
+void
+MicrosoftCXXNameMangler::mangleIntegerLiteral(QualType T, const llvm::APSInt &Value) {
+  // <integer-literal> ::= $0 <number>
+  Out << "$0";
+  // Make sure booleans are encoded as 0/1.
+  if (T->isBooleanType())
+    Out << (Value.getBoolValue() ? "0" : "A@");
+  else
+    mangleNumber(Value);
+}
+
+void
+MicrosoftCXXNameMangler::mangleTemplateArgs(const TemplateArgument *TemplateArgs,
+                                            unsigned NumTemplateArgs,
+                                            SourceLocation InstantiationLoc) {
+  // <template-args> ::= {<type> | <integer-literal>}+ @
+  for (unsigned int i = 0; i < NumTemplateArgs; ++i) {
+    const TemplateArgument &TA = TemplateArgs[i];
+    switch (TA.getKind()) {
+  	case TemplateArgument::Null:
+  		llvm_unreachable("Can't mangle null template arguments!");
+    case TemplateArgument::Type:
+      mangleType(TA.getAsType());
+      break;
+    case TemplateArgument::Integral:
+      mangleIntegerLiteral(TA.getIntegralType(), *TA.getAsIntegral());
+      break;
+    default: {
+    	// Issue a diagnostic.
+    	DiagnosticsEngine &Diags = Context.getDiags();
+    	unsigned DiagID = Diags.getCustomDiagID(DiagnosticsEngine::Error,
+    		"cannot yet mangle this %select{null|type|pointer/reference|integral|template|"
+    		"template pack expansion|expression|parameter pack}0 template argument");
+    	Diags.Report(InstantiationLoc, DiagID)
+    		<< TA.getKind();
+    }
+    }
+  }
+  Out << '@';
 }
 
 void MicrosoftCXXNameMangler::mangleQualifiers(Qualifiers Quals,
