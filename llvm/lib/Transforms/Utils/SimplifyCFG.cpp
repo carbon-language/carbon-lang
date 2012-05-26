@@ -56,12 +56,26 @@ DupRet("simplifycfg-dup-ret", cl::Hidden, cl::init(false),
 STATISTIC(NumSpeculations, "Number of speculative executed instructions");
 
 namespace {
+  /// ValueEqualityComparisonCase - Represents a case of a switch.
+  struct ValueEqualityComparisonCase {
+    ConstantInt *Value;
+    BasicBlock *Dest;
+
+    ValueEqualityComparisonCase(ConstantInt *Value, BasicBlock *Dest)
+      : Value(Value), Dest(Dest) {}
+
+    bool operator<(ValueEqualityComparisonCase RHS) const {
+      // Comparing pointers is ok as we only rely on the order for uniquing.
+      return Value < RHS.Value;
+    }
+  };
+
 class SimplifyCFGOpt {
   const TargetData *const TD;
 
   Value *isValueEqualityComparison(TerminatorInst *TI);
   BasicBlock *GetValueEqualityComparisonCases(TerminatorInst *TI,
-    std::vector<std::pair<ConstantInt*, BasicBlock*> > &Cases);
+                               std::vector<ValueEqualityComparisonCase> &Cases);
   bool SimplifyEqualityComparisonWithOnlyPredecessor(TerminatorInst *TI,
                                                      BasicBlock *Pred,
                                                      IRBuilder<> &Builder);
@@ -477,21 +491,22 @@ Value *SimplifyCFGOpt::isValueEqualityComparison(TerminatorInst *TI) {
 /// decode all of the 'cases' that it represents and return the 'default' block.
 BasicBlock *SimplifyCFGOpt::
 GetValueEqualityComparisonCases(TerminatorInst *TI,
-                                std::vector<std::pair<ConstantInt*,
-                                                      BasicBlock*> > &Cases) {
+                                std::vector<ValueEqualityComparisonCase>
+                                                                       &Cases) {
   if (SwitchInst *SI = dyn_cast<SwitchInst>(TI)) {
     Cases.reserve(SI->getNumCases());
     for (SwitchInst::CaseIt i = SI->case_begin(), e = SI->case_end(); i != e; ++i)
-      Cases.push_back(std::make_pair(i.getCaseValue(),
-                                     i.getCaseSuccessor()));
+      Cases.push_back(ValueEqualityComparisonCase(i.getCaseValue(),
+                                                  i.getCaseSuccessor()));
     return SI->getDefaultDest();
   }
 
   BranchInst *BI = cast<BranchInst>(TI);
   ICmpInst *ICI = cast<ICmpInst>(BI->getCondition());
-  Cases.push_back(std::make_pair(GetConstantInt(ICI->getOperand(1), TD),
-                                 BI->getSuccessor(ICI->getPredicate() ==
-                                                  ICmpInst::ICMP_NE)));
+  BasicBlock *Succ = BI->getSuccessor(ICI->getPredicate() == ICmpInst::ICMP_NE);
+  Cases.push_back(ValueEqualityComparisonCase(GetConstantInt(ICI->getOperand(1),
+                                                             TD),
+                                              Succ));
   return BI->getSuccessor(ICI->getPredicate() == ICmpInst::ICMP_EQ);
 }
 
@@ -499,9 +514,9 @@ GetValueEqualityComparisonCases(TerminatorInst *TI,
 /// EliminateBlockCases - Given a vector of bb/value pairs, remove any entries
 /// in the list that match the specified block.
 static void EliminateBlockCases(BasicBlock *BB,
-               std::vector<std::pair<ConstantInt*, BasicBlock*> > &Cases) {
+                              std::vector<ValueEqualityComparisonCase> &Cases) {
   for (unsigned i = 0, e = Cases.size(); i != e; ++i)
-    if (Cases[i].second == BB) {
+    if (Cases[i].Dest == BB) {
       Cases.erase(Cases.begin()+i);
       --i; --e;
     }
@@ -510,9 +525,9 @@ static void EliminateBlockCases(BasicBlock *BB,
 /// ValuesOverlap - Return true if there are any keys in C1 that exist in C2 as
 /// well.
 static bool
-ValuesOverlap(std::vector<std::pair<ConstantInt*, BasicBlock*> > &C1,
-              std::vector<std::pair<ConstantInt*, BasicBlock*> > &C2) {
-  std::vector<std::pair<ConstantInt*, BasicBlock*> > *V1 = &C1, *V2 = &C2;
+ValuesOverlap(std::vector<ValueEqualityComparisonCase> &C1,
+              std::vector<ValueEqualityComparisonCase > &C2) {
+  std::vector<ValueEqualityComparisonCase> *V1 = &C1, *V2 = &C2;
 
   // Make V1 be smaller than V2.
   if (V1->size() > V2->size())
@@ -521,9 +536,9 @@ ValuesOverlap(std::vector<std::pair<ConstantInt*, BasicBlock*> > &C1,
   if (V1->size() == 0) return false;
   if (V1->size() == 1) {
     // Just scan V2.
-    ConstantInt *TheVal = (*V1)[0].first;
+    ConstantInt *TheVal = (*V1)[0].Value;
     for (unsigned i = 0, e = V2->size(); i != e; ++i)
-      if (TheVal == (*V2)[i].first)
+      if (TheVal == (*V2)[i].Value)
         return true;
   }
 
@@ -532,9 +547,9 @@ ValuesOverlap(std::vector<std::pair<ConstantInt*, BasicBlock*> > &C1,
   array_pod_sort(V2->begin(), V2->end());
   unsigned i1 = 0, i2 = 0, e1 = V1->size(), e2 = V2->size();
   while (i1 != e1 && i2 != e2) {
-    if ((*V1)[i1].first == (*V2)[i2].first)
+    if ((*V1)[i1].Value == (*V2)[i2].Value)
       return true;
-    if ((*V1)[i1].first < (*V2)[i2].first)
+    if ((*V1)[i1].Value < (*V2)[i2].Value)
       ++i1;
     else
       ++i2;
@@ -560,13 +575,13 @@ SimplifyEqualityComparisonWithOnlyPredecessor(TerminatorInst *TI,
   if (ThisVal != PredVal) return false;  // Different predicates.
 
   // Find out information about when control will move from Pred to TI's block.
-  std::vector<std::pair<ConstantInt*, BasicBlock*> > PredCases;
+  std::vector<ValueEqualityComparisonCase> PredCases;
   BasicBlock *PredDef = GetValueEqualityComparisonCases(Pred->getTerminator(),
                                                         PredCases);
   EliminateBlockCases(PredDef, PredCases);  // Remove default from cases.
 
   // Find information about how control leaves this block.
-  std::vector<std::pair<ConstantInt*, BasicBlock*> > ThisCases;
+  std::vector<ValueEqualityComparisonCase> ThisCases;
   BasicBlock *ThisDef = GetValueEqualityComparisonCases(TI, ThisCases);
   EliminateBlockCases(ThisDef, ThisCases);  // Remove default from cases.
 
@@ -588,7 +603,7 @@ SimplifyEqualityComparisonWithOnlyPredecessor(TerminatorInst *TI,
       (void) NI;
 
       // Remove PHI node entries for the dead edge.
-      ThisCases[0].second->removePredecessor(TI->getParent());
+      ThisCases[0].Dest->removePredecessor(TI->getParent());
 
       DEBUG(dbgs() << "Threading pred instr: " << *Pred->getTerminator()
            << "Through successor TI: " << *TI << "Leaving: " << *NI << "\n");
@@ -601,7 +616,7 @@ SimplifyEqualityComparisonWithOnlyPredecessor(TerminatorInst *TI,
     // Okay, TI has cases that are statically dead, prune them away.
     SmallPtrSet<Constant*, 16> DeadCases;
     for (unsigned i = 0, e = PredCases.size(); i != e; ++i)
-      DeadCases.insert(PredCases[i].first);
+      DeadCases.insert(PredCases[i].Value);
 
     DEBUG(dbgs() << "Threading pred instr: " << *Pred->getTerminator()
                  << "Through successor TI: " << *TI);
@@ -623,10 +638,10 @@ SimplifyEqualityComparisonWithOnlyPredecessor(TerminatorInst *TI,
   ConstantInt *TIV = 0;
   BasicBlock *TIBB = TI->getParent();
   for (unsigned i = 0, e = PredCases.size(); i != e; ++i)
-    if (PredCases[i].second == TIBB) {
+    if (PredCases[i].Dest == TIBB) {
       if (TIV != 0)
         return false;  // Cannot handle multiple values coming to this block.
-      TIV = PredCases[i].first;
+      TIV = PredCases[i].Value;
     }
   assert(TIV && "No edge from pred to succ?");
 
@@ -634,8 +649,8 @@ SimplifyEqualityComparisonWithOnlyPredecessor(TerminatorInst *TI,
   // BB.  Find out which successor will unconditionally be branched to.
   BasicBlock *TheRealDest = 0;
   for (unsigned i = 0, e = ThisCases.size(); i != e; ++i)
-    if (ThisCases[i].first == TIV) {
-      TheRealDest = ThisCases[i].second;
+    if (ThisCases[i].Value == TIV) {
+      TheRealDest = ThisCases[i].Dest;
       break;
     }
 
@@ -703,10 +718,10 @@ bool SimplifyCFGOpt::FoldValueComparisonIntoPredecessors(TerminatorInst *TI,
 
     if (PCV == CV && SafeToMergeTerminators(TI, PTI)) {
       // Figure out which 'cases' to copy from SI to PSI.
-      std::vector<std::pair<ConstantInt*, BasicBlock*> > BBCases;
+      std::vector<ValueEqualityComparisonCase> BBCases;
       BasicBlock *BBDefault = GetValueEqualityComparisonCases(TI, BBCases);
 
-      std::vector<std::pair<ConstantInt*, BasicBlock*> > PredCases;
+      std::vector<ValueEqualityComparisonCase> PredCases;
       BasicBlock *PredDefault = GetValueEqualityComparisonCases(PTI, PredCases);
 
       // Based on whether the default edge from PTI goes to BB or not, fill in
@@ -719,8 +734,8 @@ bool SimplifyCFGOpt::FoldValueComparisonIntoPredecessors(TerminatorInst *TI,
         // that don't occur in PTI, or that branch to BB will be activated.
         std::set<ConstantInt*, ConstantIntOrdering> PTIHandled;
         for (unsigned i = 0, e = PredCases.size(); i != e; ++i)
-          if (PredCases[i].second != BB)
-            PTIHandled.insert(PredCases[i].first);
+          if (PredCases[i].Dest != BB)
+            PTIHandled.insert(PredCases[i].Value);
           else {
             // The default destination is BB, we don't need explicit targets.
             std::swap(PredCases[i], PredCases.back());
@@ -735,10 +750,10 @@ bool SimplifyCFGOpt::FoldValueComparisonIntoPredecessors(TerminatorInst *TI,
           NewSuccessors.push_back(BBDefault);
         }
         for (unsigned i = 0, e = BBCases.size(); i != e; ++i)
-          if (!PTIHandled.count(BBCases[i].first) &&
-              BBCases[i].second != BBDefault) {
+          if (!PTIHandled.count(BBCases[i].Value) &&
+              BBCases[i].Dest != BBDefault) {
             PredCases.push_back(BBCases[i]);
-            NewSuccessors.push_back(BBCases[i].second);
+            NewSuccessors.push_back(BBCases[i].Dest);
           }
 
       } else {
@@ -747,8 +762,8 @@ bool SimplifyCFGOpt::FoldValueComparisonIntoPredecessors(TerminatorInst *TI,
         // activated.
         std::set<ConstantInt*, ConstantIntOrdering> PTIHandled;
         for (unsigned i = 0, e = PredCases.size(); i != e; ++i)
-          if (PredCases[i].second == BB) {
-            PTIHandled.insert(PredCases[i].first);
+          if (PredCases[i].Dest == BB) {
+            PTIHandled.insert(PredCases[i].Value);
             std::swap(PredCases[i], PredCases.back());
             PredCases.pop_back();
             --i; --e;
@@ -757,11 +772,11 @@ bool SimplifyCFGOpt::FoldValueComparisonIntoPredecessors(TerminatorInst *TI,
         // Okay, now we know which constants were sent to BB from the
         // predecessor.  Figure out where they will all go now.
         for (unsigned i = 0, e = BBCases.size(); i != e; ++i)
-          if (PTIHandled.count(BBCases[i].first)) {
+          if (PTIHandled.count(BBCases[i].Value)) {
             // If this is one we are capable of getting...
             PredCases.push_back(BBCases[i]);
-            NewSuccessors.push_back(BBCases[i].second);
-            PTIHandled.erase(BBCases[i].first);// This constant is taken care of
+            NewSuccessors.push_back(BBCases[i].Dest);
+            PTIHandled.erase(BBCases[i].Value);// This constant is taken care of
           }
 
         // If there are any constants vectored to BB that TI doesn't handle,
@@ -769,7 +784,7 @@ bool SimplifyCFGOpt::FoldValueComparisonIntoPredecessors(TerminatorInst *TI,
         for (std::set<ConstantInt*, ConstantIntOrdering>::iterator I = 
                                     PTIHandled.begin(),
                E = PTIHandled.end(); I != E; ++I) {
-          PredCases.push_back(std::make_pair(*I, BBDefault));
+          PredCases.push_back(ValueEqualityComparisonCase(*I, BBDefault));
           NewSuccessors.push_back(BBDefault);
         }
       }
@@ -793,7 +808,7 @@ bool SimplifyCFGOpt::FoldValueComparisonIntoPredecessors(TerminatorInst *TI,
                                                PredCases.size());
       NewSI->setDebugLoc(PTI->getDebugLoc());
       for (unsigned i = 0, e = PredCases.size(); i != e; ++i)
-        NewSI->addCase(PredCases[i].first, PredCases[i].second);
+        NewSI->addCase(PredCases[i].Value, PredCases[i].Dest);
 
       EraseTerminatorInstAndDCECond(PTI);
 
