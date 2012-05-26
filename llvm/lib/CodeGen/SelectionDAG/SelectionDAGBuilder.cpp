@@ -1903,8 +1903,6 @@ bool SelectionDAGBuilder::handleSmallSwitchRange(CaseRec& CR,
                                                  const Value* SV,
                                                  MachineBasicBlock *Default,
                                                  MachineBasicBlock *SwitchBB) {
-  Case& BackCase  = *(CR.Range.second-1);
-
   // Size is the number of Cases represented by this range.
   size_t Size = CR.Range.second - CR.Range.first;
   if (Size > 3)
@@ -1972,11 +1970,28 @@ bool SelectionDAGBuilder::handleSmallSwitchRange(CaseRec& CR,
     }
   }
 
+  // Order cases by weight so the most likely case will be checked first.
+  BranchProbabilityInfo *BPI = FuncInfo.BPI;
+  if (BPI) {
+    for (CaseItr I = CR.Range.first, IE = CR.Range.second; I != IE; ++I) {
+      uint32_t IWeight = BPI->getEdgeWeight(SwitchBB->getBasicBlock(),
+                                            I->BB->getBasicBlock());
+      for (CaseItr J = CR.Range.first; J < I; ++J) {
+        uint32_t JWeight = BPI->getEdgeWeight(SwitchBB->getBasicBlock(),
+                                              J->BB->getBasicBlock());
+        if (IWeight > JWeight)
+          std::swap(*I, *J);
+      }
+    }
+  }
+
   // Rearrange the case blocks so that the last one falls through if possible.
+  Case &BackCase = *(CR.Range.second-1);
   if (NextBlock && Default != NextBlock && BackCase.BB != NextBlock) {
     // The last case block won't fall through into 'NextBlock' if we emit the
     // branches in this order.  See if rearranging a case value would help.
-    for (CaseItr I = CR.Range.first, E = CR.Range.second-1; I != E; ++I) {
+    // We start at the bottom as it's the case with the least weight.
+    for (CaseItr I = CR.Range.second-2, E = CR.Range.first-1; I != E; --I) {
       if (I->BB == NextBlock) {
         std::swap(*I, BackCase);
         break;
