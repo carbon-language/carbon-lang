@@ -308,7 +308,8 @@ static BinaryOperator *LowerNegateToMultiply(Instruction *Neg,
 /// NOTE: This routine will set operands of non-leaf non-root nodes to undef in
 /// order to ensure that every non-root node in the expression has *exactly one*
 /// use by a non-leaf node of the expression.  This destruction means that the
-/// caller MUST use something like RewriteExprTree to put the values back in.
+/// caller MUST either replace 'I' with a new expression or use something like
+/// RewriteExprTree to put the values back in.
 ///
 /// In the above example either the right operand of A or the left operand of B
 /// will be replaced by undef.  If it is B's operand then this gives:
@@ -321,8 +322,9 @@ static BinaryOperator *LowerNegateToMultiply(Instruction *Neg,
 ///                / \ / \ / \   |
 ///                   +   *      |      F,  G
 ///
-/// Note that if you visit operands recursively starting from a leaf node then
-/// you will never encounter such an undef operand unless you get back to 'I',
+/// Note that such undef operands can only be reached by passing through 'I'.
+/// For example, if you visit operands recursively starting from a leaf node
+/// then you will never see such an undef operand unless you get back to 'I',
 /// which requires passing through a phi node.
 ///
 /// Note that this routine may also mutate binary operators of the wrong type
@@ -508,18 +510,19 @@ void Reassociate::RewriteExprTree(BinaryOperator *I,
   unsigned Opcode = I->getOpcode();
   NodesToRewrite.push_back(I);
 
-  // ExpressionChanged - Whether the rewritten expression differs non-trivially
-  // from the original, requiring the clearing of all optional flags.
-  bool ExpressionChanged = false;
+  // ExpressionChanged - Non-null if the rewritten expression differs from the
+  // original in some non-trivial way, requiring the clearing of optional flags.
+  // Flags are cleared from the operator in ExpressionChanged up to I inclusive.
+  BinaryOperator *ExpressionChanged = 0;
   BinaryOperator *Previous;
   BinaryOperator *Op = 0;
   for (unsigned i = 0, e = Ops.size(); i != e; ++i) {
     assert(!NodesToRewrite.empty() &&
            "Optimized expressions has more nodes than original!");
     Previous = Op; Op = NodesToRewrite.pop_back_val();
-    // Compactify the tree instructions together with each other to guarantee
-    // that the expression tree is dominated by all of Ops.
-    if (Previous)
+    if (ExpressionChanged)
+      // Compactify the tree instructions together with each other to guarantee
+      // that the expression tree is dominated by all of Ops.
       Op->moveBefore(Previous);
 
     // The last operation (which comes earliest in the IR) is special as both
@@ -560,7 +563,7 @@ void Reassociate::RewriteExprTree(BinaryOperator *I,
       }
       DEBUG(dbgs() << "TO: " << *Op << '\n');
 
-      ExpressionChanged = true;
+      ExpressionChanged = Op;
       MadeChange = true;
       ++NumChanged;
 
@@ -581,7 +584,7 @@ void Reassociate::RewriteExprTree(BinaryOperator *I,
         if (BinaryOperator *BO = isReassociableOp(Op->getOperand(1), Opcode))
           NodesToRewrite.push_back(BO);
         Op->setOperand(1, NewRHS);
-        ExpressionChanged = true;
+        ExpressionChanged = Op;
       }
       DEBUG(dbgs() << "TO: " << *Op << '\n');
       MadeChange = true;
@@ -603,19 +606,19 @@ void Reassociate::RewriteExprTree(BinaryOperator *I,
     DEBUG(dbgs() << "RA: " << *Op << '\n');
     Op->setOperand(0, NodesToRewrite.back());
     DEBUG(dbgs() << "TO: " << *Op << '\n');
-    ExpressionChanged = true;
+    ExpressionChanged = Op;
     MadeChange = true;
     ++NumChanged;
   }
 
-  // If the expression changed non-trivially then clear out all subclass data in
-  // the entire rewritten expression.
+  // If the expression changed non-trivially then clear out all subclass data
+  // starting from the operator specified in ExpressionChanged.
   if (ExpressionChanged) {
     do {
-      Op->clearSubclassOptionalData();
-      if (Op == I)
+      ExpressionChanged->clearSubclassOptionalData();
+      if (ExpressionChanged == I)
         break;
-      Op = cast<BinaryOperator>(*Op->use_begin());
+      ExpressionChanged = cast<BinaryOperator>(*ExpressionChanged->use_begin());
     } while (1);
   }
 
