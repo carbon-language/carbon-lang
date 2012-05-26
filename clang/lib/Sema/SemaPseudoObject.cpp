@@ -543,7 +543,7 @@ bool ObjCPropertyOpBuilder::findSetter(bool warn) {
         IdentifierInfo *AltMember = &S.PP.getIdentifierTable().get(PropertyName);
         if (ObjCPropertyDecl *prop1 = IFace->FindPropertyDeclaration(AltMember))
           if (prop != prop1 && (prop1->getSetterMethodDecl() == setter)) {
-            S.Diag(RefExpr->getExprLoc(), diag::warn_property_setter_ambiguous_use)
+            S.Diag(RefExpr->getExprLoc(), diag::error_property_setter_ambiguous_use)
               << prop->getName() << prop1->getName() << setter->getSelector();
             S.Diag(prop->getLocation(), diag::note_property_declare);
             S.Diag(prop1->getLocation(), diag::note_property_declare);

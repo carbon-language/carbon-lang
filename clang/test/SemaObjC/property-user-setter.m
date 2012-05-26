@@ -127,10 +127,10 @@ int main (void) {
   self.P = 0; // expected-error {{property 'P' not found on object of type 'rdar11363363 *'}}
   self.q = 0; // expected-error {{property 'q' not found on object of type 'rdar11363363 *'}}
 // rdar://11528439
-  self.t = 0; // expected-warning {{synthesized properties 't' and 'T' both claim setter 'setT:'}}
-  self.T = 0; // expected-warning {{synthesized properties 'T' and 't' both claim setter 'setT:'}}
-  self.Pxyz = 0; // expected-warning {{synthesized properties 'Pxyz' and 'pxyz' both claim setter 'setPxyz:'}}
-  self.pxyz = 0; // expected-warning {{synthesized properties 'pxyz' and 'Pxyz' both claim setter 'setPxyz:'}}
+  self.t = 0; // expected-error {{synthesized properties 't' and 'T' both claim setter 'setT:'}}
+  self.T = 0; // expected-error {{synthesized properties 'T' and 't' both claim setter 'setT:'}}
+  self.Pxyz = 0; // expected-error {{synthesized properties 'Pxyz' and 'pxyz' both claim setter 'setPxyz:'}}
+  self.pxyz = 0; // expected-error {{synthesized properties 'pxyz' and 'Pxyz' both claim setter 'setPxyz:'}}
   self.R = 0; // expected-error {{property 'R' not found on object of type 'rdar11363363 *'; did you mean to access ivar 'R'?}}
   return self.R; // expected-error {{property 'R' not found on object of type 'rdar11363363 *'; did you mean to access ivar 'R'?}}
 }
