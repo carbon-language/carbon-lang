@@ -1446,6 +1446,8 @@ Value *Reassociate::ReassociateExpression(BinaryOperator *I) {
   SmallVector<ValueEntry, 8> Ops;
   LinearizeExprTree(I, Ops);
 
+  DEBUG(dbgs() << "RAIn:\t"; PrintOps(I, Ops); dbgs() << '\n');
+
   // Now that we have linearized the tree to a list and have gathered all of
   // the operands and their ranks, sort the operands by their rank.  Use a
   // stable_sort so that values with equal ranks will have their relative
@@ -1453,8 +1455,6 @@ Value *Reassociate::ReassociateExpression(BinaryOperator *I) {
   // this sorts so that the highest ranking values end up at the beginning of
   // the vector.
   std::stable_sort(Ops.begin(), Ops.end());
-
-  DEBUG(dbgs() << "RAIn:\t"; PrintOps(I, Ops); dbgs() << '\n');
 
   // OptimizeExpression - Now that we have the expression tree in a convenient
   // sorted form, optimize it globally if possible.
