@@ -37,6 +37,7 @@
 #include "llvm/Support/ConstantRange.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/IRBuilder.h"
+#include "llvm/Support/MDBuilder.h"
 #include "llvm/Support/NoFolder.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
@@ -1740,12 +1741,10 @@ bool llvm::FoldBranchToCommonDest(BranchInst *BI) {
         ProbTrue = ProbTrue.udiv(GCD);
         ProbFalse = ProbFalse.udiv(GCD);
 
-        LLVMContext &Context = BI->getContext();
-        Value *Ops[3];
-        Ops[0] = BI->getMetadata(LLVMContext::MD_prof)->getOperand(0);
-        Ops[1] = ConstantInt::get(Context, ProbTrue);
-        Ops[2] = ConstantInt::get(Context, ProbFalse);
-        PBI->setMetadata(LLVMContext::MD_prof, MDNode::get(Context, Ops));
+        MDBuilder MDB(BI->getContext());
+        MDNode *N = MDB.createBranchWeights(ProbTrue.getZExtValue(),
+                                            ProbFalse.getZExtValue());
+        PBI->setMetadata(LLVMContext::MD_prof, N);
       } else {
         PBI->setMetadata(LLVMContext::MD_prof, NULL);
       }

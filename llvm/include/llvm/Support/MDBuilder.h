@@ -49,6 +49,29 @@ namespace llvm {
       return MDNode::get(Context, Op);
     }
 
+    //===------------------------------------------------------------------===//
+    // Prof metadata.
+    //===------------------------------------------------------------------===//
+
+    /// \brief Return metadata containing two branch weights.
+    MDNode *createBranchWeights(uint32_t TrueWeight, uint32_t FalseWeight) {
+      uint32_t Weights[] = { TrueWeight, FalseWeight };
+      return createBranchWeights(Weights);
+    }
+
+    /// \brief Return metadata containing a number of branch weights.
+    MDNode *createBranchWeights(ArrayRef<uint32_t> Weights) {
+      assert(Weights.size() >= 2 && "Need at least two branch weights!");
+
+      SmallVector<Value *, 4> Vals(Weights.size()+1);
+      Vals[0] = createString("branch_weights");
+
+      Type *Int32Ty = Type::getInt32Ty(Context);
+      for (unsigned i = 0, e = Weights.size(); i != e; ++i)
+        Vals[i+1] = ConstantInt::get(Int32Ty, Weights[i]);
+
+      return MDNode::get(Context, Vals);
+    }
 
     //===------------------------------------------------------------------===//
     // Range metadata.
