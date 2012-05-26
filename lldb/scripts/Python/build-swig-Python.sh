@@ -25,7 +25,10 @@ swig_python_wrapper=${SRC_ROOT}/scripts/Python/python-wrapper.swig
 swig_python_typemaps=${SRC_ROOT}/scripts/Python/python-typemaps.swig
 
 if [ $LLDB_DISABLE_PYTHON = "1" ] ; then
-    # LLDB_DISABLE_PYTHON is set, which currently means iOS cross build where python is disabled
+    # We don't want Python for this build, but touch the output file so we don't have to
+    # conditionalize the build on this as well.
+    # Note, at present iOS doesn't have Python, so if you're building for iOS be sure to
+    # set LLDB_DISABLE_PYTHON to 1.
     rm -rf ${swig_output_file}
     touch ${swig_output_file}
 

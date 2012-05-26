@@ -33,8 +33,10 @@ CONFIG_BUILD_DIR=$3
 PYTHON_INSTALL_DIR=$4
 debug_flag=$5
 
-# Make sure LLDB_DISABLE_PYTHON is not set, since if it is this is an iOS build where python
-# is disabled
+# If we don't want Python, then just do nothing here.
+# Note, at present iOS doesn't have Python, so if you're building for iOS be sure to
+# set LLDB_DISABLE_PYTHON to 1.
+
 if [ ! $LLDB_DISABLE_PYTHON = "1" ] ; then
 
 if [ -n "$debug_flag" -a "$debug_flag" == "-debug" ]
