@@ -102,12 +102,15 @@ int f(bool b) {
   return n;
 }
 
-<b>sometimes-uninit.cpp:5:10: <span class="warning">warning:</span> variable 'n' is sometimes uninitialized when used here [-Wsometimes-uninitialized]</b>
-  return n;
-         <span class="caret">^</span>
-<b>sometimes-uninit.cpp:3:7: <span class="note">note:</span></b> uninitialized use occurs whenever 'if' condition is false
+<b>sometimes-uninit.cpp:3:7: <span class="warning">warning:</span> variable 'n' is used uninitialized whenever 'if' condition is false [-Wsometimes-uninitialized]</b>
   if (b)
       <span class="caret">^</span>
+<b>sometimes-uninit.cpp:5:10: <span class="note">note:</span></b> uninitialized use occurs here
+  return n;
+         <span class="caret">^</span>
+<b>sometimes-uninit.cpp:3:3: <span class="note">note:</span></b> remove the 'if' if its condition is always true
+  if (b)
+  <span class="caret">^~~~~~</span>
 <b>sometimes-uninit.cpp:2:8: <span class="note">note:</span></b> initialize the variable 'n' to silence this warning
   int n;
        <span class="caret">^</span>

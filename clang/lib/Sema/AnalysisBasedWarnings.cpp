@@ -19,6 +19,7 @@
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/SourceLocation.h"
 #include "clang/Lex/Preprocessor.h"
+#include "clang/Lex/Lexer.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/ExprObjC.h"
@@ -456,31 +457,92 @@ static bool SuggestInitializationFixit(Sema &S, const VarDecl *VD) {
   return true;
 }
 
-/// NoteUninitBranches -- Helper function to produce notes for branches which
-/// inevitably lead to an uninitialized variable use.
-static void NoteUninitBranches(Sema &S, const UninitUse &Use) {
+/// Create a fixit to remove an if-like statement, on the assumption that its
+/// condition is CondVal.
+static void CreateIfFixit(Sema &S, const Stmt *If, const Stmt *Then,
+                          const Stmt *Else, bool CondVal,
+                          FixItHint &Fixit1, FixItHint &Fixit2) {
+  if (CondVal) {
+    // If condition is always true, remove all but the 'then'.
+    Fixit1 = FixItHint::CreateRemoval(
+        CharSourceRange::getCharRange(If->getLocStart(),
+                                      Then->getLocStart()));
+    if (Else) {
+      SourceLocation ElseKwLoc = Lexer::getLocForEndOfToken(
+          Then->getLocEnd(), 0, S.getSourceManager(), S.getLangOpts());
+      Fixit2 = FixItHint::CreateRemoval(
+          SourceRange(ElseKwLoc, Else->getLocEnd()));
+    }
+  } else {
+    // If condition is always false, remove all but the 'else'.
+    if (Else)
+      Fixit1 = FixItHint::CreateRemoval(
+          CharSourceRange::getCharRange(If->getLocStart(),
+                                        Else->getLocStart()));
+    else
+      Fixit1 = FixItHint::CreateRemoval(If->getSourceRange());
+  }
+}
+
+/// DiagUninitUse -- Helper function to produce a diagnostic for an
+/// uninitialized use of a variable.
+static void DiagUninitUse(Sema &S, const VarDecl *VD, const UninitUse &Use,
+                          bool IsCapturedByBlock) {
+  bool Diagnosed = false;
+
+  // Diagnose each branch which leads to a sometimes-uninitialized use.
   for (UninitUse::branch_iterator I = Use.branch_begin(), E = Use.branch_end();
        I != E; ++I) {
+    assert(Use.getKind() == UninitUse::Sometimes);
+
+    const Expr *User = Use.getUser();
     const Stmt *Term = I->Terminator;
+
+    // Information used when building the diagnostic.
     unsigned DiagKind;
-    SourceRange Range;
     const char *Str;
+    SourceRange Range;
+
+    // FixIts to suppress the diagnosic by removing the dead condition.
+    // For all binary terminators, branch 0 is taken if the condition is true,
+    // and branch 1 is taken if the condition is false.
+    int RemoveDiagKind = -1;
+    const char *FixitStr =
+        S.getLangOpts().CPlusPlus ? (I->Output ? "true" : "false")
+                                  : (I->Output ? "1" : "0");
+    FixItHint Fixit1, Fixit2;
+
     switch (Term->getStmtClass()) {
     default:
-      // Don't know how to report this.
+      // Don't know how to report this. Just fall back to 'may be used
+      // uninitialized'. This happens for range-based for, which the user
+      // can't explicitly fix.
+      // FIXME: This also happens if the first use of a variable is always
+      // uninitialized, eg "for (int n; n < 10; ++n)". We should report that
+      // with the 'is uninitialized' diagnostic.
       continue;
 
     // "condition is true / condition is false".
-    case Stmt::IfStmtClass:
+    case Stmt::IfStmtClass: {
+      const IfStmt *IS = cast<IfStmt>(Term);
       DiagKind = 0;
       Str = "if";
-      Range = cast<IfStmt>(Term)->getCond()->getSourceRange();
+      Range = IS->getCond()->getSourceRange();
+      RemoveDiagKind = 0;
+      CreateIfFixit(S, IS, IS->getThen(), IS->getElse(),
+                    I->Output, Fixit1, Fixit2);
       break;
-    case Stmt::ConditionalOperatorClass:
+    }
+    case Stmt::ConditionalOperatorClass: {
+      const ConditionalOperator *CO = cast<ConditionalOperator>(Term);
       DiagKind = 0;
       Str = "?:";
-      Range = cast<ConditionalOperator>(Term)->getCond()->getSourceRange();
+      Range = CO->getCond()->getSourceRange();
+      RemoveDiagKind = 0;
+      CreateIfFixit(S, CO, CO->getTrueExpr(), CO->getFalseExpr(),
+                    I->Output, Fixit1, Fixit2);
       break;
+    }
     case Stmt::BinaryOperatorClass: {
       const BinaryOperator *BO = cast<BinaryOperator>(Term);
       if (!BO->isLogicalOp())
@@ -488,6 +550,15 @@ static void NoteUninitBranches(Sema &S, const UninitUse &Use) {
       DiagKind = 0;
       Str = BO->getOpcodeStr();
       Range = BO->getLHS()->getSourceRange();
+      RemoveDiagKind = 0;
+      if ((BO->getOpcode() == BO_LAnd && I->Output) ||
+          (BO->getOpcode() == BO_LOr && !I->Output))
+        // true && y -> y, false || y -> y.
+        Fixit1 = FixItHint::CreateRemoval(SourceRange(BO->getLocStart(),
+                                                      BO->getOperatorLoc()));
+      else
+        // false && y -> false, true || y -> true.
+        Fixit1 = FixItHint::CreateReplacement(BO->getSourceRange(), FixitStr);
       break;
     }
 
@@ -496,16 +567,18 @@ static void NoteUninitBranches(Sema &S, const UninitUse &Use) {
       DiagKind = 1;
       Str = "while";
       Range = cast<WhileStmt>(Term)->getCond()->getSourceRange();
+      RemoveDiagKind = 1;
+      Fixit1 = FixItHint::CreateReplacement(Range, FixitStr);
       break;
     case Stmt::ForStmtClass:
       DiagKind = 1;
       Str = "for";
       Range = cast<ForStmt>(Term)->getCond()->getSourceRange();
-      break;
-    case Stmt::CXXForRangeStmtClass:
-      DiagKind = 1;
-      Str = "for";
-      Range = cast<CXXForRangeStmt>(Term)->getCond()->getSourceRange();
+      RemoveDiagKind = 1;
+      if (I->Output)
+        Fixit1 = FixItHint::CreateRemoval(Range);
+      else
+        Fixit1 = FixItHint::CreateReplacement(Range, FixitStr);
       break;
 
     // "condition is true / loop is exited".
@@ -513,6 +586,8 @@ static void NoteUninitBranches(Sema &S, const UninitUse &Use) {
       DiagKind = 2;
       Str = "do";
       Range = cast<DoStmt>(Term)->getCond()->getSourceRange();
+      RemoveDiagKind = 1;
+      Fixit1 = FixItHint::CreateReplacement(Range, FixitStr);
       break;
 
     // "switch case is taken".
@@ -528,9 +603,24 @@ static void NoteUninitBranches(Sema &S, const UninitUse &Use) {
       break;
     }
 
-    S.Diag(Range.getBegin(), diag::note_sometimes_uninit_var_branch)
-      << DiagKind << Str << I->Output << Range;
+    S.Diag(Range.getBegin(), diag::warn_sometimes_uninit_var)
+      << VD->getDeclName() << IsCapturedByBlock << DiagKind
+      << Str << I->Output << Range;
+    S.Diag(User->getLocStart(), diag::note_uninit_var_use)
+      << IsCapturedByBlock << User->getSourceRange();
+    if (RemoveDiagKind != -1)
+      S.Diag(Fixit1.RemoveRange.getBegin(), diag::note_uninit_fixit_remove_cond)
+        << RemoveDiagKind << Str << I->Output << Fixit1 << Fixit2;
+
+    Diagnosed = true;
   }
+
+  if (!Diagnosed)
+    S.Diag(Use.getUser()->getLocStart(),
+           Use.getKind() == UninitUse::Always ? diag::warn_uninit_var
+                                              : diag::warn_maybe_uninit_var)
+        << VD->getDeclName() << IsCapturedByBlock
+        << Use.getUser()->getSourceRange();
 }
 
 /// DiagnoseUninitializedUse -- Helper function for diagnosing uses of an
@@ -568,37 +658,15 @@ static bool DiagnoseUninitializedUse(Sema &S, const VarDecl *VD,
       }
     }
 
-    unsigned DiagID = 0;
-    switch (Use.getKind()) {
-    case UninitUse::Always: DiagID = diag::warn_uninit_var; break;
-    case UninitUse::Sometimes: DiagID = diag::warn_sometimes_uninit_var; break;
-    case UninitUse::Maybe: DiagID = diag::warn_maybe_uninit_var; break;
-    }
-    S.Diag(DRE->getLocStart(), DiagID)
-      << VD->getDeclName() << DRE->getSourceRange();
-    NoteUninitBranches(S, Use);
+    DiagUninitUse(S, VD, Use, false);
   } else {
     const BlockExpr *BE = cast<BlockExpr>(Use.getUser());
-    if (VD->getType()->isBlockPointerType() &&
-        !VD->hasAttr<BlocksAttr>())
-      S.Diag(BE->getLocStart(), diag::warn_uninit_byref_blockvar_captured_by_block)
+    if (VD->getType()->isBlockPointerType() && !VD->hasAttr<BlocksAttr>())
+      S.Diag(BE->getLocStart(),
+             diag::warn_uninit_byref_blockvar_captured_by_block)
         << VD->getDeclName();
-    else {
-      unsigned DiagID = 0;
-      switch (Use.getKind()) {
-      case UninitUse::Always:
-        DiagID = diag::warn_uninit_var_captured_by_block;
-        break;
-      case UninitUse::Sometimes:
-        DiagID = diag::warn_sometimes_uninit_var_captured_by_block;
-        break;
-      case UninitUse::Maybe:
-        DiagID = diag::warn_maybe_uninit_var_captured_by_block;
-        break;
-      }
-      S.Diag(BE->getLocStart(), DiagID) << VD->getDeclName();
-      NoteUninitBranches(S, Use);
-    }
+    else
+      DiagUninitUse(S, VD, Use, true);
   }
 
   // Report where the variable was declared when the use wasn't within
