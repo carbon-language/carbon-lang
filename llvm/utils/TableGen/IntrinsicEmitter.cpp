@@ -389,12 +389,31 @@ static void EncodeFixedType(Record *R, unsigned &NextArgNo,
   
   MVT::SimpleValueType VT = getValueType(R->getValueAsDef("VT"));
 
-  // If this is an "any" valuetype, then the type is the type of the next
-  // type in the list specified to getIntrinsic().  
-  if (VT == MVT::iAny || VT == MVT::fAny || VT == MVT::vAny ||
-      VT == MVT::iPTRAny) {
+  switch (VT) {
+  default: break;
+  case MVT::iAny:
+  case MVT::fAny:
+  case MVT::vAny:
+  case MVT::iPTRAny:
+    // If this is an "any" valuetype, then the type is the type of the next
+    // type in the list specified to getIntrinsic().  
     Sig.push_back(IIT_ARG);
     return Sig.push_back(NextArgNo++);
+  
+  case MVT::iPTR: {
+    unsigned AddrSpace = 0;
+    if (R->isSubClassOf("LLVMQualPointerType")) {
+      AddrSpace = R->getValueAsInt("AddrSpace");
+      assert(AddrSpace < 256 && "Address space exceeds 255");
+    }
+    if (AddrSpace) {
+      Sig.push_back(IIT_ANYPTR);
+      Sig.push_back(AddrSpace);
+    } else {
+      Sig.push_back(IIT_PTR);
+    }
+    return EncodeFixedType(R->getValueAsDef("ElTy"), NextArgNo, Sig);
+  }
   }
   
   if (EVT(VT).isVector()) {
@@ -411,22 +430,7 @@ static void EncodeFixedType(Record *R, unsigned &NextArgNo,
     return EncodeFixedValueType(VVT.getVectorElementType().
                                 getSimpleVT().SimpleTy, Sig);
   }
-  
-  if (VT == MVT::iPTR) {
-    unsigned AddrSpace = 0;
-    if (R->isSubClassOf("LLVMQualPointerType")) {
-      AddrSpace = R->getValueAsInt("AddrSpace");
-      assert(AddrSpace < 256 && "Address space exceeds 255");
-    }
-    if (AddrSpace) {
-      Sig.push_back(IIT_ANYPTR);
-      Sig.push_back(AddrSpace);
-    } else {
-      Sig.push_back(IIT_PTR);
-    }
-    return EncodeFixedType(R->getValueAsDef("ElTy"), NextArgNo, Sig);
-  }
-  
+
   EncodeFixedValueType(VT, Sig);
 }
 
