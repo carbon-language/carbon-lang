@@ -849,12 +849,15 @@ CommandObject::GetArgumentDescriptionAsCString (const lldb::CommandArgumentType 
 static
 const char *arch_helper()
 {
-    StringList archs;
-    ArchSpec::AutoComplete(NULL, archs);
-    StreamString ss;
-    ss.Printf("These are the supported architecture names:\n");
-    ss.Printf("%s\n", archs.Join("\n"));
-    return ss.GetData();
+    static StreamString g_archs_help;
+    if (g_archs_help.GetData() == NULL)
+    {
+        StringList archs;
+        ArchSpec::AutoComplete(NULL, archs);
+        g_archs_help.Printf("These are the supported architecture names:\n");
+        archs.Join("%s\n", g_archs_help);
+    }
+    return g_archs_help.GetData();
 }
 
 CommandObject::ArgumentTableEntry

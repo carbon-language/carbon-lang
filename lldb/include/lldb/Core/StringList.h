@@ -51,8 +51,8 @@ public:
     const char *
     GetStringAtIndex (size_t idx) const;
 
-    const char *
-    Join (const char *seperator);
+    void
+    Join (const char *separator, Stream &strm);
 
     void
     Clear ();

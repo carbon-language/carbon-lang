@@ -95,23 +95,20 @@ StringList::GetStringAtIndex (size_t idx) const
     return NULL;
 }
 
-const char *
-StringList::Join (const char *separator)
+void
+StringList::Join (const char *separator, Stream &strm)
 {
     uint32_t size = GetSize();
+    
     if (size == 0)
-        return "";
-    if (size == 1)
-        return GetStringAtIndex(0);
-
-    std::string buf;
+        return;
+    
     for (uint32_t i = 0; i < size; ++i)
     {
         if (i > 0)
-            buf.append(separator);
-        buf.append(GetStringAtIndex(i));
+            strm.PutCString(separator);
+        strm.PutCString(GetStringAtIndex(i));
     }
-    return buf.c_str();;
 }
 
 void
