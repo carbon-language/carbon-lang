@@ -17,6 +17,7 @@
 #include <ctype.h>
 
 #include "lldb/Core/Address.h"
+#include "lldb/Core/ArchSpec.h"
 #include "lldb/Interpreter/Options.h"
 
 // These are for the Sourcename completers.
@@ -845,13 +846,24 @@ CommandObject::GetArgumentDescriptionAsCString (const lldb::CommandArgumentType 
     return NULL;
 }
 
+static
+const char *arch_helper()
+{
+    StringList archs;
+    ArchSpec::AutoComplete(NULL, archs);
+    StreamString ss;
+    ss.Printf("These are the supported architecture names:\n");
+    ss.Printf("%s\n", archs.Join("\n"));
+    return ss.GetData();
+}
+
 CommandObject::ArgumentTableEntry
 CommandObject::g_arguments_data[] =
 {
     { eArgTypeAddress, "address", CommandCompletions::eNoCompletion, { NULL, false }, "A valid address in the target program's execution space." },
     { eArgTypeAliasName, "alias-name", CommandCompletions::eNoCompletion, { NULL, false }, "The name of an abbreviation (alias) for a debugger command." },
     { eArgTypeAliasOptions, "options-for-aliased-command", CommandCompletions::eNoCompletion, { NULL, false }, "Command options to be used as part of an alias (abbreviation) definition.  (See 'help commands alias' for more information.)" },
-    { eArgTypeArchitecture, "arch", CommandCompletions::eArchitectureCompletion, { NULL, false }, "The architecture name, e.g. i386 or x86_64." },
+    { eArgTypeArchitecture, "arch", CommandCompletions::eArchitectureCompletion, { arch_helper, true }, "The architecture name, e.g. i386 or x86_64." },
     { eArgTypeBoolean, "boolean", CommandCompletions::eNoCompletion, { NULL, false }, "A Boolean value: 'true' or 'false'" },
     { eArgTypeBreakpointID, "breakpt-id", CommandCompletions::eNoCompletion, { BreakpointIDHelpTextCallback, false }, NULL },
     { eArgTypeBreakpointIDRange, "breakpt-id-list", CommandCompletions::eNoCompletion, { BreakpointIDRangeHelpTextCallback, false }, NULL },

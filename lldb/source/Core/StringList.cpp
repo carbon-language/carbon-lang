@@ -95,6 +95,25 @@ StringList::GetStringAtIndex (size_t idx) const
     return NULL;
 }
 
+const char *
+StringList::Join (const char *separator)
+{
+    uint32_t size = GetSize();
+    if (size == 0)
+        return "";
+    if (size == 1)
+        return GetStringAtIndex(0);
+
+    std::string buf;
+    for (uint32_t i = 0; i < size; ++i)
+    {
+        if (i > 0)
+            buf.append(separator);
+        buf.append(GetStringAtIndex(i));
+    }
+    return buf.c_str();;
+}
+
 void
 StringList::Clear ()
 {

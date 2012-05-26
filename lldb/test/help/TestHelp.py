@@ -65,6 +65,11 @@ class HelpCommandTestCase(TestBase):
         return None
 
 
+    def test_help_arch(self):
+        """Test 'help arch' which should list of supported architectures."""
+        self.expect("help arch",
+            substrs = ['arm', 'x86_64', 'i386'])
+
     def test_help_version(self):
         """Test 'help version' and 'version' commands."""
         self.expect("help version",
