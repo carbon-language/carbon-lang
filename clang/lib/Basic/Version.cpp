@@ -136,8 +136,7 @@ std::string getClangFullCPPVersion() {
 #ifdef CLANG_VENDOR
   OS << CLANG_VENDOR;
 #endif
-  OS << "Clang " CLANG_VERSION_STRING " ("
-     << getClangFullRepositoryVersion() << ')';
+  OS << "Clang " CLANG_VERSION_STRING " " << getClangFullRepositoryVersion();
   return OS.str();
 }
 
