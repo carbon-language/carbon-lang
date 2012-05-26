@@ -777,8 +777,11 @@ static void DiagnoseSwitchLabelsFallthrough(Sema &S, AnalysisDeclContext &AC) {
       if (L.isMacroID())
         continue;
       if (S.getLangOpts().CPlusPlus0x) {
-        S.Diag(L, diag::note_insert_fallthrough_fixit) <<
-          FixItHint::CreateInsertion(L, "[[clang::fallthrough]]; ");
+        const Stmt *Term = B.getTerminator();
+        if (!(B.empty() && Term && isa<BreakStmt>(Term))) {
+          S.Diag(L, diag::note_insert_fallthrough_fixit) <<
+            FixItHint::CreateInsertion(L, "[[clang::fallthrough]]; ");
+        }
       }
       S.Diag(L, diag::note_insert_break_fixit) <<
         FixItHint::CreateInsertion(L, "break; ");
