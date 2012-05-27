@@ -20,7 +20,7 @@
 // This file also defines a simple ARC-aware AliasAnalysis.
 //
 // WARNING: This file knows about certain library functions. It recognizes them
-// by name, and hardwires knowedge of their semantics.
+// by name, and hardwires knowledge of their semantics.
 //
 // WARNING: This file knows about how certain Objective-C library functions are
 // used. Naive LLVM IR transformations which would otherwise be
