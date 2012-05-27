@@ -1,10 +1,10 @@
 // RUN: %clang_cc1 %s -verify -fsyntax-only
 class A {
-  void f() __attribute__((deprecated));
+  void f() __attribute__((deprecated)); // expected-note 2 {{declared here}}
   void g(A* a);
   void h(A* a) __attribute__((deprecated));
 
-  int b __attribute__((deprecated));
+  int b __attribute__((deprecated)); // expected-note 2 {{declared here}}
 };
 
 void A::g(A* a)
@@ -26,7 +26,7 @@ void A::h(A* a)
 }
 
 struct B {
-  virtual void f() __attribute__((deprecated));
+  virtual void f() __attribute__((deprecated)); // expected-note 4 {{declared here}}
   void g();
 };
 
@@ -68,20 +68,20 @@ void f(D* d) {
 
 // Overloaded namespace members.
 namespace test1 {
-  void foo(int) __attribute__((deprecated));
+  void foo(int) __attribute__((deprecated)); // expected-note {{declared here}}
   void test1() { foo(10); } // expected-warning {{deprecated}}
-  void foo(short) __attribute__((deprecated));
+  void foo(short) __attribute__((deprecated)); // expected-note {{declared here}}
   void test2(short s) { foo(s); } // expected-warning {{deprecated}}
   void foo(long);
   void test3(long l) { foo(l); }
   struct A {
-    friend void foo(A*) __attribute__((deprecated));
+    friend void foo(A*) __attribute__((deprecated)); // expected-note {{declared here}}
   };
   void test4(A *a) { foo(a); } // expected-warning {{deprecated}}
 
   namespace ns {
     struct Foo {};
-    void foo(const Foo &f) __attribute__((deprecated));
+    void foo(const Foo &f) __attribute__((deprecated)); // expected-note {{declared here}}
   }
   void test5() {
     foo(ns::Foo()); // expected-warning {{deprecated}}
@@ -91,9 +91,9 @@ namespace test1 {
 // Overloaded class members.
 namespace test2 {
   struct A {
-    void foo(int) __attribute__((deprecated));
+    void foo(int) __attribute__((deprecated)); // expected-note 2 {{declared here}}
     void foo(long);
-    static void bar(int) __attribute__((deprecated));
+    static void bar(int) __attribute__((deprecated)); // expected-note 3 {{declared here}}
     static void bar(long);
 
     void test2(int i, long l);
@@ -120,12 +120,12 @@ namespace test2 {
 namespace test3 {
   struct A {
     void operator*(const A &);
-    void operator*(int) __attribute__((deprecated));
+    void operator*(int) __attribute__((deprecated)); // expected-note {{declared here}}
     void operator-(const A &) const;
   };
   void operator+(const A &, const A &);
-  void operator+(const A &, int) __attribute__((deprecated));
-  void operator-(const A &, int) __attribute__((deprecated));
+  void operator+(const A &, int) __attribute__((deprecated)); // expected-note {{declared here}}
+  void operator-(const A &, int) __attribute__((deprecated)); // expected-note {{declared here}}
 
   void test() {
     A a, b;
@@ -143,9 +143,9 @@ namespace test4 {
   struct A {
     typedef void (*intfn)(int);
     typedef void (*unintfn)(unsigned);
-    operator intfn() __attribute__((deprecated));
+    operator intfn() __attribute__((deprecated)); // expected-note {{declared here}}
     operator unintfn();
-    void operator ()(A &) __attribute__((deprecated));
+    void operator ()(A &) __attribute__((deprecated)); // expected-note {{declared here}}
     void operator ()(const A &);
   };
 
@@ -163,7 +163,7 @@ namespace test4 {
 
 namespace test5 {
   struct A {
-    operator int() __attribute__((deprecated));
+    operator int() __attribute__((deprecated)); // expected-note 2 {{declared here}}
     operator long();
   };
   void test1(A a) {
@@ -193,8 +193,8 @@ namespace test5 {
 
 // rdar://problem/8518751
 namespace test6 {
-  enum __attribute__((deprecated)) A {
-    a0
+  enum __attribute__((deprecated)) A { // expected-note {{declared here}}
+    a0 // expected-note {{declared here}}
   };
   void testA() {
     A x; // expected-warning {{'A' is deprecated}}
@@ -202,7 +202,7 @@ namespace test6 {
   }
   
   enum B {
-    b0 __attribute__((deprecated)),
+    b0 __attribute__((deprecated)), // expected-note {{declared here}}
     b1
   };
   void testB() {
@@ -212,8 +212,8 @@ namespace test6 {
   }
 
   template <class T> struct C {
-    enum __attribute__((deprecated)) Enum {
-      c0
+    enum __attribute__((deprecated)) Enum { // expected-note {{declared here}}
+      c0 // expected-note {{declared here}}
     };
   };
   void testC() {
@@ -224,7 +224,7 @@ namespace test6 {
   template <class T> struct D {
     enum Enum {
       d0,
-      d1 __attribute__((deprecated)),
+      d1 __attribute__((deprecated)), // expected-note {{declared here}}
     };
   };
   void testD() {

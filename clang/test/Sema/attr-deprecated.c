@@ -1,10 +1,10 @@
 // RUN: %clang_cc1 %s -verify -fsyntax-only
 
-int f() __attribute__((deprecated));
+int f() __attribute__((deprecated)); // expected-note {{declared here}}
 void g() __attribute__((deprecated));
-void g();
+void g(); // expected-note {{declared here}}
 
-extern int var __attribute__((deprecated));
+extern int var __attribute__((deprecated)); // expected-note {{declared here}}
 
 int a() {
   int (*ptr)() = f; // expected-warning {{'f' is deprecated}}
@@ -17,7 +17,7 @@ int a() {
 }
 
 // test if attributes propagate to variables
-extern int var;
+extern int var; // expected-note {{declared here}}
 int w() {
   return var; // expected-warning {{'var' is deprecated}}
 }
@@ -32,7 +32,7 @@ int old_fn() {
 
 
 struct foo {
-  int x __attribute__((deprecated));
+  int x __attribute__((deprecated)); // expected-note {{declared here}}
 };
 
 void test1(struct foo *F) {
@@ -41,7 +41,7 @@ void test1(struct foo *F) {
   struct foo f2 = { 17 }; // expected-warning {{'x' is deprecated}}
 }
 
-typedef struct foo foo_dep __attribute__((deprecated));
+typedef struct foo foo_dep __attribute__((deprecated)); // expected-note 3 {{declared here}}
 foo_dep *test2;    // expected-warning {{'foo_dep' is deprecated}}
 
 struct __attribute__((deprecated, 
@@ -103,8 +103,8 @@ foo_dep test17, // expected-warning {{'foo_dep' is deprecated}}
 
 // rdar://problem/8518751
 enum __attribute__((deprecated)) Test20 {
-  test20_a __attribute__((deprecated)),
-  test20_b
+  test20_a __attribute__((deprecated)), // expected-note {{declared here}}
+  test20_b // expected-note {{declared here}}
 };
 void test20() {
   enum Test20 f; // expected-warning {{'Test20' is deprecated}}

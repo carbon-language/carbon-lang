@@ -20,7 +20,7 @@
 @end
 
 __attribute__((deprecated))
-@interface CL // expected-note 2 {{class declared here}}
+@interface CL // expected-note 2 {{class declared here}} // expected-note 2 {{declared here}}
 @end
 
 @implementation CL // expected-warning {{Implementing deprecated class}}

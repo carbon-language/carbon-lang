@@ -45,7 +45,7 @@ void test(C *c) {
 
 // rdar://10268422
 __attribute ((deprecated))
-@interface DEPRECATED
+@interface DEPRECATED // expected-note {{declared here}}
 +(id)new;
 @end
 

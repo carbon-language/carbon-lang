@@ -4489,8 +4489,12 @@ void Sema::EmitDeprecationWarning(NamedDecl *D, StringRef Message,
                                 : diag::note_previous_decl) << D->getDeclName();
   }
   else {
-    if (!UnknownObjCClass)
+    if (!UnknownObjCClass) {
       Diag(Loc, diag::warn_deprecated) << D->getDeclName();
+      Diag(D->getLocation(), 
+           isa<ObjCMethodDecl>(D) ? diag::note_method_declared_at 
+                                  : diag::note_previous_decl) << D->getDeclName();
+    }
     else {
       Diag(Loc, diag::warn_deprecated_fwdclass_message) << D->getDeclName();
       Diag(UnknownObjCClass->getLocation(), diag::note_forward_class);
