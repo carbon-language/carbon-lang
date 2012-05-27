@@ -444,6 +444,10 @@ public:
     if (!ok()) return;
 
     FileStream->flush();
+#ifdef _WIN32
+    // Win32 does not allow rename/removing opened files.
+    FileStream.reset();
+#endif
     if (llvm::error_code ec =
           llvm::sys::fs::rename(TempFilename.str(), Filename)) {
       AllWritten = false;
