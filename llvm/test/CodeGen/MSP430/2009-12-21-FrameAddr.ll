@@ -5,9 +5,9 @@ target triple = "msp430-unknown-linux-gnu"
 
 define msp430_intrcc void @foo() nounwind {
 entry:
-	%fa = call i16* @llvm.frameaddress(i32 0)
-	store i16 0, i16* %fa
+	%fa = call i8* @llvm.frameaddress(i32 0)
+	store i8 0, i8* %fa
 	ret void
 }
 
-declare i16* @llvm.frameaddress(i32)
+declare i8* @llvm.frameaddress(i32)

@@ -75,12 +75,12 @@ define <8 x i8> @vld2dupi8(i8* %A) nounwind {
         ret <8 x i8> %tmp5
 }
 
-define <4 x i16> @vld2dupi16(i16* %A) nounwind {
+define <4 x i16> @vld2dupi16(i8* %A) nounwind {
 ;CHECK: vld2dupi16:
 ;Check that a power-of-two alignment smaller than the total size of the memory
 ;being loaded is ignored.
 ;CHECK: vld2.16 {d16[], d17[]}, [r0]
-	%tmp0 = tail call %struct.__neon_int4x16x2_t @llvm.arm.neon.vld2lane.v4i16(i16* %A, <4 x i16> undef, <4 x i16> undef, i32 0, i32 2)
+	%tmp0 = tail call %struct.__neon_int4x16x2_t @llvm.arm.neon.vld2lane.v4i16(i8* %A, <4 x i16> undef, <4 x i16> undef, i32 0, i32 2)
 	%tmp1 = extractvalue %struct.__neon_int4x16x2_t %tmp0, 0
 	%tmp2 = shufflevector <4 x i16> %tmp1, <4 x i16> undef, <4 x i32> zeroinitializer
 	%tmp3 = extractvalue %struct.__neon_int4x16x2_t %tmp0, 1
@@ -94,7 +94,8 @@ define <4 x i16> @vld2dupi16_update(i16** %ptr) nounwind {
 ;CHECK: vld2dupi16_update:
 ;CHECK: vld2.16 {d16[], d17[]}, [r1]!
 	%A = load i16** %ptr
-	%tmp0 = tail call %struct.__neon_int4x16x2_t @llvm.arm.neon.vld2lane.v4i16(i16* %A, <4 x i16> undef, <4 x i16> undef, i32 0, i32 2)
+        %A2 = bitcast i16* %A to i8*
+	%tmp0 = tail call %struct.__neon_int4x16x2_t @llvm.arm.neon.vld2lane.v4i16(i8* %A2, <4 x i16> undef, <4 x i16> undef, i32 0, i32 2)
 	%tmp1 = extractvalue %struct.__neon_int4x16x2_t %tmp0, 0
 	%tmp2 = shufflevector <4 x i16> %tmp1, <4 x i16> undef, <4 x i32> zeroinitializer
 	%tmp3 = extractvalue %struct.__neon_int4x16x2_t %tmp0, 1
@@ -105,11 +106,11 @@ define <4 x i16> @vld2dupi16_update(i16** %ptr) nounwind {
 	ret <4 x i16> %tmp5
 }
 
-define <2 x i32> @vld2dupi32(i32* %A) nounwind {
+define <2 x i32> @vld2dupi32(i8* %A) nounwind {
 ;CHECK: vld2dupi32:
 ;Check the alignment value.  Max for this instruction is 64 bits:
 ;CHECK: vld2.32 {d16[], d17[]}, [r0, :64]
-	%tmp0 = tail call %struct.__neon_int2x32x2_t @llvm.arm.neon.vld2lane.v2i32(i32* %A, <2 x i32> undef, <2 x i32> undef, i32 0, i32 16)
+	%tmp0 = tail call %struct.__neon_int2x32x2_t @llvm.arm.neon.vld2lane.v2i32(i8* %A, <2 x i32> undef, <2 x i32> undef, i32 0, i32 16)
 	%tmp1 = extractvalue %struct.__neon_int2x32x2_t %tmp0, 0
 	%tmp2 = shufflevector <2 x i32> %tmp1, <2 x i32> undef, <2 x i32> zeroinitializer
 	%tmp3 = extractvalue %struct.__neon_int2x32x2_t %tmp0, 1
@@ -119,8 +120,8 @@ define <2 x i32> @vld2dupi32(i32* %A) nounwind {
 }
 
 declare %struct.__neon_int8x8x2_t @llvm.arm.neon.vld2lane.v8i8(i8*, <8 x i8>, <8 x i8>, i32, i32) nounwind readonly
-declare %struct.__neon_int4x16x2_t @llvm.arm.neon.vld2lane.v4i16(i16*, <4 x i16>, <4 x i16>, i32, i32) nounwind readonly
-declare %struct.__neon_int2x32x2_t @llvm.arm.neon.vld2lane.v2i32(i32*, <2 x i32>, <2 x i32>, i32, i32) nounwind readonly
+declare %struct.__neon_int4x16x2_t @llvm.arm.neon.vld2lane.v4i16(i8*, <4 x i16>, <4 x i16>, i32, i32) nounwind readonly
+declare %struct.__neon_int2x32x2_t @llvm.arm.neon.vld2lane.v2i32(i8*, <2 x i32>, <2 x i32>, i32, i32) nounwind readonly
 
 %struct.__neon_int8x8x3_t = type { <8 x i8>, <8 x i8>, <8 x i8> }
 %struct.__neon_int16x4x3_t = type { <4 x i16>, <4 x i16>, <4 x i16> }
@@ -144,11 +145,11 @@ define <8 x i8> @vld3dupi8_update(i8** %ptr, i32 %inc) nounwind {
 	ret <8 x i8> %tmp8
 }
 
-define <4 x i16> @vld3dupi16(i16* %A) nounwind {
+define <4 x i16> @vld3dupi16(i8* %A) nounwind {
 ;CHECK: vld3dupi16:
 ;Check the (default) alignment value. VLD3 does not support alignment.
 ;CHECK: vld3.16 {d16[], d17[], d18[]}, [r0]
-	%tmp0 = tail call %struct.__neon_int16x4x3_t @llvm.arm.neon.vld3lane.v4i16(i16* %A, <4 x i16> undef, <4 x i16> undef, <4 x i16> undef, i32 0, i32 8)
+	%tmp0 = tail call %struct.__neon_int16x4x3_t @llvm.arm.neon.vld3lane.v4i16(i8* %A, <4 x i16> undef, <4 x i16> undef, <4 x i16> undef, i32 0, i32 8)
 	%tmp1 = extractvalue %struct.__neon_int16x4x3_t %tmp0, 0
 	%tmp2 = shufflevector <4 x i16> %tmp1, <4 x i16> undef, <4 x i32> zeroinitializer
 	%tmp3 = extractvalue %struct.__neon_int16x4x3_t %tmp0, 1
@@ -161,7 +162,7 @@ define <4 x i16> @vld3dupi16(i16* %A) nounwind {
 }
 
 declare %struct.__neon_int8x8x3_t @llvm.arm.neon.vld3lane.v8i8(i8*, <8 x i8>, <8 x i8>, <8 x i8>, i32, i32) nounwind readonly
-declare %struct.__neon_int16x4x3_t @llvm.arm.neon.vld3lane.v4i16(i16*, <4 x i16>, <4 x i16>, <4 x i16>, i32, i32) nounwind readonly
+declare %struct.__neon_int16x4x3_t @llvm.arm.neon.vld3lane.v4i16(i8*, <4 x i16>, <4 x i16>, <4 x i16>, i32, i32) nounwind readonly
 
 %struct.__neon_int16x4x4_t = type { <4 x i16>, <4 x i16>, <4 x i16>, <4 x i16> }
 %struct.__neon_int32x2x4_t = type { <2 x i32>, <2 x i32>, <2 x i32>, <2 x i32> }
@@ -171,7 +172,8 @@ define <4 x i16> @vld4dupi16_update(i16** %ptr) nounwind {
 ;CHECK: vld4dupi16_update:
 ;CHECK: vld4.16 {d16[], d17[], d18[], d19[]}, [r1]!
 	%A = load i16** %ptr
-	%tmp0 = tail call %struct.__neon_int16x4x4_t @llvm.arm.neon.vld4lane.v4i16(i16* %A, <4 x i16> undef, <4 x i16> undef, <4 x i16> undef, <4 x i16> undef, i32 0, i32 1)
+        %A2 = bitcast i16* %A to i8*
+	%tmp0 = tail call %struct.__neon_int16x4x4_t @llvm.arm.neon.vld4lane.v4i16(i8* %A2, <4 x i16> undef, <4 x i16> undef, <4 x i16> undef, <4 x i16> undef, i32 0, i32 1)
 	%tmp1 = extractvalue %struct.__neon_int16x4x4_t %tmp0, 0
 	%tmp2 = shufflevector <4 x i16> %tmp1, <4 x i16> undef, <4 x i32> zeroinitializer
 	%tmp3 = extractvalue %struct.__neon_int16x4x4_t %tmp0, 1
@@ -188,12 +190,12 @@ define <4 x i16> @vld4dupi16_update(i16** %ptr) nounwind {
 	ret <4 x i16> %tmp11
 }
 
-define <2 x i32> @vld4dupi32(i32* %A) nounwind {
+define <2 x i32> @vld4dupi32(i8* %A) nounwind {
 ;CHECK: vld4dupi32:
 ;Check the alignment value.  An 8-byte alignment is allowed here even though
 ;it is smaller than the total size of the memory being loaded.
 ;CHECK: vld4.32 {d16[], d17[], d18[], d19[]}, [r0, :64]
-	%tmp0 = tail call %struct.__neon_int32x2x4_t @llvm.arm.neon.vld4lane.v2i32(i32* %A, <2 x i32> undef, <2 x i32> undef, <2 x i32> undef, <2 x i32> undef, i32 0, i32 8)
+	%tmp0 = tail call %struct.__neon_int32x2x4_t @llvm.arm.neon.vld4lane.v2i32(i8* %A, <2 x i32> undef, <2 x i32> undef, <2 x i32> undef, <2 x i32> undef, i32 0, i32 8)
 	%tmp1 = extractvalue %struct.__neon_int32x2x4_t %tmp0, 0
 	%tmp2 = shufflevector <2 x i32> %tmp1, <2 x i32> undef, <2 x i32> zeroinitializer
 	%tmp3 = extractvalue %struct.__neon_int32x2x4_t %tmp0, 1
@@ -208,5 +210,5 @@ define <2 x i32> @vld4dupi32(i32* %A) nounwind {
         ret <2 x i32> %tmp11
 }
 
-declare %struct.__neon_int16x4x4_t @llvm.arm.neon.vld4lane.v4i16(i16*, <4 x i16>, <4 x i16>, <4 x i16>, <4 x i16>, i32, i32) nounwind readonly
-declare %struct.__neon_int32x2x4_t @llvm.arm.neon.vld4lane.v2i32(i32*, <2 x i32>, <2 x i32>, <2 x i32>, <2 x i32>, i32, i32) nounwind readonly
+declare %struct.__neon_int16x4x4_t @llvm.arm.neon.vld4lane.v4i16(i8*, <4 x i16>, <4 x i16>, <4 x i16>, <4 x i16>, i32, i32) nounwind readonly
+declare %struct.__neon_int32x2x4_t @llvm.arm.neon.vld4lane.v2i32(i8*, <2 x i32>, <2 x i32>, <2 x i32>, <2 x i32>, i32, i32) nounwind readonly
