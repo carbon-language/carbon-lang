@@ -23,6 +23,7 @@
 
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/Compiler.h"
+#include <memory>
 
 namespace llvm {
 
@@ -146,15 +147,13 @@ namespace llvm {
 
 #if LLVM_USE_RVALUE_REFERENCES
     IntrusiveRefCntPtr& operator=(IntrusiveRefCntPtr&& S) {
-      Obj = S.Obj;
-      S.Obj = 0;
+      this_type(std::move(S)).swap(*this);
       return *this;
     }
 
     template <class X>
     IntrusiveRefCntPtr& operator=(IntrusiveRefCntPtr<X>&& S) {
-      Obj = S.getPtr();
-      S.Obj = 0;
+      this_type(std::move(S)).swap(*this);
       return *this;
     }
 #endif
