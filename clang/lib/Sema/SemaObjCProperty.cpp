@@ -1523,7 +1523,7 @@ void Sema::DefaultSynthesizeProperties(Scope *S, Decl *D) {
 
 void Sema::DiagnoseUnimplementedProperties(Scope *S, ObjCImplDecl* IMPDecl,
                                       ObjCContainerDecl *CDecl,
-                                      const llvm::DenseSet<Selector>& InsMap) {
+                                      const SelectorSet &InsMap) {
   llvm::DenseMap<IdentifierInfo *, ObjCPropertyDecl*> SuperPropMap;
   if (ObjCInterfaceDecl *IDecl = dyn_cast<ObjCInterfaceDecl>(CDecl))
     CollectSuperClassPropertyImplementations(IDecl, SuperPropMap);

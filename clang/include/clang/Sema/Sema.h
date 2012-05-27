@@ -2189,7 +2189,7 @@ public:
   bool isPropertyReadonly(ObjCPropertyDecl *PropertyDecl,
                           ObjCInterfaceDecl *IDecl);
 
-  typedef llvm::DenseSet<Selector, llvm::DenseMapInfo<Selector> > SelectorSet;
+  typedef llvm::SmallPtrSet<Selector, 8> SelectorSet;
   typedef llvm::DenseMap<Selector, ObjCMethodDecl*> ProtocolsMethodsMap;
 
   /// CheckProtocolMethodDefs - This routine checks unimplemented

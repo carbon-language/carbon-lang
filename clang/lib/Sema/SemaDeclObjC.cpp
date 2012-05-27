@@ -1491,8 +1491,8 @@ void Sema::WarnExactTypedMethods(ObjCMethodDecl *ImpMethodDecl,
 void Sema::CheckProtocolMethodDefs(SourceLocation ImpLoc,
                                    ObjCProtocolDecl *PDecl,
                                    bool& IncompleteImpl,
-                                   const llvm::DenseSet<Selector> &InsMap,
-                                   const llvm::DenseSet<Selector> &ClsMap,
+                                   const SelectorSet &InsMap,
+                                   const SelectorSet &ClsMap,
                                    ObjCContainerDecl *CDecl) {
   ObjCCategoryDecl *C = dyn_cast<ObjCCategoryDecl>(CDecl);
   ObjCInterfaceDecl *IDecl = C ? C->getClassInterface() 
@@ -1588,10 +1588,10 @@ void Sema::CheckProtocolMethodDefs(SourceLocation ImpLoc,
 /// MatchAllMethodDeclarations - Check methods declared in interface
 /// or protocol against those declared in their implementations.
 ///
-void Sema::MatchAllMethodDeclarations(const llvm::DenseSet<Selector> &InsMap,
-                                      const llvm::DenseSet<Selector> &ClsMap,
-                                      llvm::DenseSet<Selector> &InsMapSeen,
-                                      llvm::DenseSet<Selector> &ClsMapSeen,
+void Sema::MatchAllMethodDeclarations(const SelectorSet &InsMap,
+                                      const SelectorSet &ClsMap,
+                                      SelectorSet &InsMapSeen,
+                                      SelectorSet &ClsMapSeen,
                                       ObjCImplDecl* IMPDecl,
                                       ObjCContainerDecl* CDecl,
                                       bool &IncompleteImpl,
@@ -1687,7 +1687,7 @@ void Sema::MatchAllMethodDeclarations(const llvm::DenseSet<Selector> &InsMap,
 /// warns each time an exact match is found. 
 void Sema::CheckCategoryVsClassMethodMatches(
                                   ObjCCategoryImplDecl *CatIMPDecl) {
-  llvm::DenseSet<Selector> InsMap, ClsMap;
+  SelectorSet InsMap, ClsMap;
   
   for (ObjCImplementationDecl::instmeth_iterator
        I = CatIMPDecl->instmeth_begin(), 
@@ -1708,7 +1708,7 @@ void Sema::CheckCategoryVsClassMethodMatches(
   ObjCInterfaceDecl *IDecl = CatDecl->getClassInterface();
   if (!IDecl)
     return;
-  llvm::DenseSet<Selector> InsMapSeen, ClsMapSeen;
+  SelectorSet InsMapSeen, ClsMapSeen;
   bool IncompleteImpl = false;
   MatchAllMethodDeclarations(InsMap, ClsMap, InsMapSeen, ClsMapSeen,
                              CatIMPDecl, IDecl,
@@ -1719,7 +1719,7 @@ void Sema::CheckCategoryVsClassMethodMatches(
 void Sema::ImplMethodsVsClassMethods(Scope *S, ObjCImplDecl* IMPDecl,
                                      ObjCContainerDecl* CDecl,
                                      bool IncompleteImpl) {
-  llvm::DenseSet<Selector> InsMap;
+  SelectorSet InsMap;
   // Check and see if instance methods in class interface have been
   // implemented in the implementation class.
   for (ObjCImplementationDecl::instmeth_iterator
@@ -1734,7 +1734,7 @@ void Sema::ImplMethodsVsClassMethods(Scope *S, ObjCImplDecl* IMPDecl,
       IDecl->isObjCRequiresPropertyDefs())
       DiagnoseUnimplementedProperties(S, IMPDecl, CDecl, InsMap);
       
-  llvm::DenseSet<Selector> ClsMap;
+  SelectorSet ClsMap;
   for (ObjCImplementationDecl::classmeth_iterator
        I = IMPDecl->classmeth_begin(),
        E = IMPDecl->classmeth_end(); I != E; ++I)
@@ -1742,7 +1742,7 @@ void Sema::ImplMethodsVsClassMethods(Scope *S, ObjCImplDecl* IMPDecl,
 
   // Check for type conflict of methods declared in a class/protocol and
   // its implementation; if any.
-  llvm::DenseSet<Selector> InsMapSeen, ClsMapSeen;
+  SelectorSet InsMapSeen, ClsMapSeen;
   MatchAllMethodDeclarations(InsMap, ClsMap, InsMapSeen, ClsMapSeen,
                              IMPDecl, CDecl,
                              IncompleteImpl, true);
