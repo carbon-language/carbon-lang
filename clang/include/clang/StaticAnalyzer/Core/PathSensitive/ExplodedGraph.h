@@ -151,7 +151,7 @@ public:
 
   static void Profile(llvm::FoldingSetNodeID &ID,
                       const ProgramPoint &Loc,
-                      ProgramStateRef state,
+                      const ProgramStateRef &state,
                       bool IsSink) {
     ID.Add(Loc);
     ID.AddPointer(state.getPtr());
