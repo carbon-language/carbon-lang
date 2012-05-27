@@ -1991,7 +1991,7 @@ bool SelectionDAGBuilder::handleSmallSwitchRange(CaseRec& CR,
     // The last case block won't fall through into 'NextBlock' if we emit the
     // branches in this order.  See if rearranging a case value would help.
     // We start at the bottom as it's the case with the least weight.
-    for (CaseItr I = CR.Range.second-2, E = CR.Range.first-1; I != E; --I) {
+    for (CaseItr I = CR.Range.second-2, E = CR.Range.first; I >= E; --I) {
       if (I->BB == NextBlock) {
         std::swap(*I, BackCase);
         break;
