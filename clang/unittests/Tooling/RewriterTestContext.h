@@ -43,11 +43,6 @@ class RewriterTestContext {
   }
 
   ~RewriterTestContext() {
-    if (TemporaryDirectory.isValid()) {
-      std::string ErrorInfo;
-      TemporaryDirectory.eraseFromDisk(true, &ErrorInfo);
-      assert(ErrorInfo.empty());
-    }
   }
 
   FileID createInMemoryFile(StringRef Name, StringRef Content) {
