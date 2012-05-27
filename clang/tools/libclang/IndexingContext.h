@@ -542,10 +542,8 @@ namespace llvm {
     }
 
     static unsigned getHashValue(clang::cxindex::RefFileOccurence S) {
-      llvm::FoldingSetNodeID ID;
-      ID.AddPointer(S.File);
-      ID.AddPointer(S.Dcl);
-      return ID.ComputeHash();
+      typedef std::pair<const clang::FileEntry *, const clang::Decl *> PairTy;
+      return DenseMapInfo<PairTy>::getHashValue(PairTy(S.File, S.Dcl));
     }
 
     static bool isEqual(clang::cxindex::RefFileOccurence LHS,

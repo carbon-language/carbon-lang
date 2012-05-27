@@ -473,17 +473,14 @@ template <> struct DenseMapInfo<ObjCSummaryKey> {
   }
 
   static unsigned getHashValue(const ObjCSummaryKey &V) {
-    return (DenseMapInfo<IdentifierInfo*>::getHashValue(V.getIdentifier())
-            & 0x88888888)
-        | (DenseMapInfo<Selector>::getHashValue(V.getSelector())
-            & 0x55555555);
+    typedef std::pair<IdentifierInfo*, Selector> PairTy;
+    return DenseMapInfo<PairTy>::getHashValue(PairTy(V.getIdentifier(),
+                                                     V.getSelector()));
   }
 
   static bool isEqual(const ObjCSummaryKey& LHS, const ObjCSummaryKey& RHS) {
-    return DenseMapInfo<IdentifierInfo*>::isEqual(LHS.getIdentifier(),
-                                                  RHS.getIdentifier()) &&
-           DenseMapInfo<Selector>::isEqual(LHS.getSelector(),
-                                           RHS.getSelector());
+    return LHS.getIdentifier() == RHS.getIdentifier() &&
+           LHS.getSelector() == RHS.getSelector();
   }
 
 };

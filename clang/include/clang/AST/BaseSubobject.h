@@ -66,9 +66,9 @@ template<> struct DenseMapInfo<clang::BaseSubobject> {
   }
 
   static unsigned getHashValue(const clang::BaseSubobject &Base) {
-    return 
-      DenseMapInfo<const clang::CXXRecordDecl *>::getHashValue(Base.getBase()) ^
-      DenseMapInfo<int64_t>::getHashValue(Base.getBaseOffset().getQuantity());
+    typedef std::pair<const clang::CXXRecordDecl *, clang::CharUnits> PairTy;
+    return DenseMapInfo<PairTy>::getHashValue(PairTy(Base.getBase(),
+                                                     Base.getBaseOffset()));
   }
 
   static bool isEqual(const clang::BaseSubobject &LHS, 
