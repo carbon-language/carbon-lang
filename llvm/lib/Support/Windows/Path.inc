@@ -188,8 +188,10 @@ static Path *TempDirectory;
 
 Path
 Path::GetTemporaryDirectory(std::string* ErrMsg) {
-  if (TempDirectory)
+  if (TempDirectory) {
+    assert(TempDirectory->exists() && "Who has removed TempDirectory?");
     return *TempDirectory;
+  }
 
   char pathname[MAX_PATH];
   if (!GetTempPath(MAX_PATH, pathname)) {
