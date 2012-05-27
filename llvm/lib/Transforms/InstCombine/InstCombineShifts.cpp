@@ -151,7 +151,7 @@ static bool CanEvaluateShifted(Value *V, unsigned NumBits, bool isLeftShift,
 
     // We can always turn lshr(c1)+shl(c2) -> lshr(c3)+and(c4), but it isn't
     // profitable unless we know the and'd out bits are already zero.
-    if (CI->getZExtValue() > NumBits) {
+    if (CI->getValue().ult(TypeWidth) && CI->getZExtValue() > NumBits) {
       unsigned LowBits = CI->getZExtValue() - NumBits;
       if (MaskedValueIsZero(I->getOperand(0),
                           APInt::getLowBitsSet(TypeWidth, NumBits) << LowBits))
