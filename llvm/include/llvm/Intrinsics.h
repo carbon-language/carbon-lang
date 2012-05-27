@@ -100,11 +100,13 @@ namespace Intrinsic {
       AK_AnyPointer
     };
     unsigned getArgumentNumber() const {
-      assert(Kind == Argument);
+      assert(Kind == Argument || Kind == ExtendVecArgument || 
+             Kind == TruncVecArgument);
       return Argument_Info >> 2;
     }
     ArgKind getArgumentKind() const {
-      assert(Kind == Argument);
+      assert(Kind == Argument || Kind == ExtendVecArgument || 
+             Kind == TruncVecArgument);
       return (ArgKind)(Argument_Info&3);
     }
     
