@@ -1021,17 +1021,17 @@ DIE *CompileUnit::getOrCreateSubprogramDIE(DISubprogram SP) {
   if (SPDie)
     return SPDie;
 
+  SPDie = new DIE(dwarf::DW_TAG_subprogram);
+
+  // DW_TAG_inlined_subroutine may refer to this DIE.
+  insertDIE(SP, SPDie);
+
   DISubprogram SPDecl = SP.getFunctionDeclaration();
   DIE *DeclDie = NULL;
   if (SPDecl.isSubprogram()) {
     DeclDie = getOrCreateSubprogramDIE(SPDecl);
   }
 
-  SPDie = new DIE(dwarf::DW_TAG_subprogram);
-  
-  // DW_TAG_inlined_subroutine may refer to this DIE.
-  insertDIE(SP, SPDie);
-  
   // Add to context owner.
   addToContextOwner(SPDie, SP.getContext());
 
