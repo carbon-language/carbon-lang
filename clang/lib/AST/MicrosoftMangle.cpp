@@ -317,10 +317,11 @@ void MicrosoftCXXNameMangler::mangleNumber(const llvm::APSInt &Value) {
     char Encoding[64];
     char *EndPtr = Encoding+sizeof(Encoding);
     char *CurPtr = EndPtr;
-    llvm::APSInt Fifteen(Value.getBitWidth(), 15);
+    llvm::APSInt NibbleMask(Value.getBitWidth());
+    NibbleMask = 0xf;
     for (int i = 0, e = Value.getActiveBits() / 4; i != e; ++i) {
-      *--CurPtr = 'A' + Value.And(Fifteen).lshr(i*4).getLimitedValue(15);
-      Fifteen = Fifteen.shl(4);
+      *--CurPtr = 'A' + Value.And(NibbleMask).lshr(i*4).getLimitedValue(0xf);
+      NibbleMask = NibbleMask.shl(4);
     };
     Out.write(CurPtr, EndPtr-CurPtr);
     Out << '@';
