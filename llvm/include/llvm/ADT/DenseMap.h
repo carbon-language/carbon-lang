@@ -273,6 +273,9 @@ public:
 
 private:
   void DestroyAll() {
+    if (NumBuckets == 0) // Nothing to do.
+      return;
+
     const KeyT EmptyKey = getEmptyKey(), TombstoneKey = getTombstoneKey();
     for (BucketT *P = Buckets, *E = Buckets+NumBuckets; P != E; ++P) {
       if (!KeyInfoT::isEqual(P->first, EmptyKey) &&
@@ -281,12 +284,10 @@ private:
       P->first.~KeyT();
     }
 
-    if (NumBuckets) {
 #ifndef NDEBUG
-      memset((void*)Buckets, 0x5a, sizeof(BucketT)*NumBuckets);
+    memset((void*)Buckets, 0x5a, sizeof(BucketT)*NumBuckets);
 #endif
-      operator delete(Buckets);
-    }
+    operator delete(Buckets);
   }
 
   void CopyFrom(const DenseMap& other) {
