@@ -62,20 +62,9 @@ public:
     init(NextPowerOf2(std::distance(I, E)));
     insert(I, E);
   }
-  
+
   ~DenseMap() {
-    const KeyT EmptyKey = getEmptyKey(), TombstoneKey = getTombstoneKey();
-    for (BucketT *P = Buckets, *E = Buckets+NumBuckets; P != E; ++P) {
-      if (!KeyInfoT::isEqual(P->first, EmptyKey) &&
-          !KeyInfoT::isEqual(P->first, TombstoneKey))
-        P->second.~ValueT();
-      P->first.~KeyT();
-    }
-#ifndef NDEBUG
-    if (NumBuckets)
-      memset((void*)Buckets, 0x5a, sizeof(BucketT)*NumBuckets);
-#endif
-    operator delete(Buckets);
+    DestroyAll();
   }
 
   typedef DenseMapIterator<KeyT, ValueT, KeyInfoT> iterator;
@@ -254,20 +243,14 @@ public:
   const void *getPointerIntoBucketsArray() const { return Buckets; }
 
 private:
-  void CopyFrom(const DenseMap& other) {
-    if (NumBuckets != 0 &&
-        (!isPodLike<KeyT>::value || !isPodLike<ValueT>::value)) {
-      const KeyT EmptyKey = getEmptyKey(), TombstoneKey = getTombstoneKey();
-      for (BucketT *P = Buckets, *E = Buckets+NumBuckets; P != E; ++P) {
-        if (!KeyInfoT::isEqual(P->first, EmptyKey) &&
-            !KeyInfoT::isEqual(P->first, TombstoneKey))
-          P->second.~ValueT();
-        P->first.~KeyT();
-      }
+  void DestroyAll() {
+    const KeyT EmptyKey = getEmptyKey(), TombstoneKey = getTombstoneKey();
+    for (BucketT *P = Buckets, *E = Buckets+NumBuckets; P != E; ++P) {
+      if (!KeyInfoT::isEqual(P->first, EmptyKey) &&
+          !KeyInfoT::isEqual(P->first, TombstoneKey))
+        P->second.~ValueT();
+      P->first.~KeyT();
     }
-
-    NumEntries = other.NumEntries;
-    NumTombstones = other.NumTombstones;
 
     if (NumBuckets) {
 #ifndef NDEBUG
@@ -275,7 +258,13 @@ private:
 #endif
       operator delete(Buckets);
     }
+  }
 
+  void CopyFrom(const DenseMap& other) {
+    DestroyAll();
+
+    NumEntries = other.NumEntries;
+    NumTombstones = other.NumTombstones;
     NumBuckets = other.NumBuckets;
 
     if (NumBuckets == 0) {
