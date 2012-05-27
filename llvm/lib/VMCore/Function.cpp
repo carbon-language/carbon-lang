@@ -357,73 +357,151 @@ std::string Intrinsic::getName(ID id, ArrayRef<Type*> Tys) {
   return Result;
 }
 
-#define GET_INTRINSIC_GENERATOR_GLOBAL
-#include "llvm/Intrinsics.gen"
-#undef GET_INTRINSIC_GENERATOR_GLOBAL
 
-static Type *DecodeFixedType(unsigned &NextElt, ArrayRef<unsigned char> Infos,
-                             ArrayRef<Type*> Tys, LLVMContext &Context) {
+/// IIT_Info - These are enumerators that describe the entries returned by the
+/// getIntrinsicInfoTableEntries function.
+///
+/// NOTE: This must be kept in synch with the copy in TblGen/IntrinsicEmitter!
+enum IIT_Info {
+  // Common values should be encoded with 0-15.
+  IIT_Done = 0,
+  IIT_I1   = 1,
+  IIT_I8   = 2,
+  IIT_I16  = 3,
+  IIT_I32  = 4,
+  IIT_I64  = 5,
+  IIT_F32  = 6,
+  IIT_F64  = 7,
+  IIT_V2   = 8,
+  IIT_V4   = 9,
+  IIT_V8   = 10,
+  IIT_V16  = 11,
+  IIT_V32  = 12,
+  IIT_MMX  = 13,
+  IIT_PTR  = 14,
+  IIT_ARG  = 15,
+  
+  // Values from 16+ are only encodable with the inefficient encoding.
+  IIT_METADATA = 16,
+  IIT_EMPTYSTRUCT = 17,
+  IIT_STRUCT2 = 18,
+  IIT_STRUCT3 = 19,
+  IIT_STRUCT4 = 20,
+  IIT_STRUCT5 = 21,
+  IIT_EXTEND_VEC_ARG = 22,
+  IIT_TRUNC_VEC_ARG = 23,
+  IIT_ANYPTR = 24
+};
+
+
+static void DecodeIITType(unsigned &NextElt, ArrayRef<unsigned char> Infos,
+                      SmallVectorImpl<Intrinsic::IITDescriptor> &OutputTable) {
   IIT_Info Info = IIT_Info(Infos[NextElt++]);
   unsigned StructElts = 2;
+  using namespace Intrinsic;
   
   switch (Info) {
-  case IIT_Done: return Type::getVoidTy(Context);
-  case IIT_I1: return Type::getInt1Ty(Context);
-  case IIT_I8: return Type::getInt8Ty(Context);
-  case IIT_I16: return Type::getInt16Ty(Context);
-  case IIT_I32: return Type::getInt32Ty(Context);
-  case IIT_I64: return Type::getInt64Ty(Context);
-  case IIT_F32: return Type::getFloatTy(Context);
-  case IIT_F64: return Type::getDoubleTy(Context);
-  case IIT_MMX: return Type::getX86_MMXTy(Context);
-  case IIT_METADATA: return Type::getMetadataTy(Context);
-  case IIT_EMPTYSTRUCT: return StructType::get(Context);
+  case IIT_Done:
+    OutputTable.push_back(IITDescriptor::get(IITDescriptor::Void, 0));
+    return;
+  case IIT_MMX:
+    OutputTable.push_back(IITDescriptor::get(IITDescriptor::MMX, 0));
+    return;
+  case IIT_METADATA:
+    OutputTable.push_back(IITDescriptor::get(IITDescriptor::Metadata, 0));
+    return;
+  case IIT_F32:
+    OutputTable.push_back(IITDescriptor::get(IITDescriptor::Float, 0));
+    return;
+  case IIT_F64:
+    OutputTable.push_back(IITDescriptor::get(IITDescriptor::Double, 0));
+    return;
+  case IIT_I1:
+    OutputTable.push_back(IITDescriptor::get(IITDescriptor::Integer, 1));
+    return;
+  case IIT_I8:
+    OutputTable.push_back(IITDescriptor::get(IITDescriptor::Integer, 8));
+    return;
+  case IIT_I16:
+    OutputTable.push_back(IITDescriptor::get(IITDescriptor::Integer,16));
+    return;
+  case IIT_I32:
+    OutputTable.push_back(IITDescriptor::get(IITDescriptor::Integer, 32));
+    return;
+  case IIT_I64:
+    OutputTable.push_back(IITDescriptor::get(IITDescriptor::Integer, 64));
+    return;
   case IIT_V2:
-    return VectorType::get(DecodeFixedType(NextElt, Infos, Tys, Context), 2);
+    OutputTable.push_back(IITDescriptor::get(IITDescriptor::Vector, 2));
+    DecodeIITType(NextElt, Infos, OutputTable);
+    return;
   case IIT_V4:
-    return VectorType::get(DecodeFixedType(NextElt, Infos, Tys, Context), 4);
+    OutputTable.push_back(IITDescriptor::get(IITDescriptor::Vector, 4));
+    DecodeIITType(NextElt, Infos, OutputTable);
+    return;
   case IIT_V8:
-    return VectorType::get(DecodeFixedType(NextElt, Infos, Tys, Context), 8);
+    OutputTable.push_back(IITDescriptor::get(IITDescriptor::Vector, 8));
+    DecodeIITType(NextElt, Infos, OutputTable);
+    return;
   case IIT_V16:
-    return VectorType::get(DecodeFixedType(NextElt, Infos, Tys, Context), 16);
+    OutputTable.push_back(IITDescriptor::get(IITDescriptor::Vector, 16));
+    DecodeIITType(NextElt, Infos, OutputTable);
+    return;
   case IIT_V32:
-    return VectorType::get(DecodeFixedType(NextElt, Infos, Tys, Context), 32);
+    OutputTable.push_back(IITDescriptor::get(IITDescriptor::Vector, 32));
+    DecodeIITType(NextElt, Infos, OutputTable);
+    return;
   case IIT_PTR:
-    return PointerType::getUnqual(DecodeFixedType(NextElt, Infos, Tys,Context));
+    OutputTable.push_back(IITDescriptor::get(IITDescriptor::Pointer, 0));
+    DecodeIITType(NextElt, Infos, OutputTable);
+    return;
   case IIT_ANYPTR: {  // [ANYPTR addrspace, subtype]
-    unsigned AddrSpace = Infos[NextElt++];
-    Type *PtrTy = DecodeFixedType(NextElt, Infos, Tys,Context);
-    return PointerType::get(PtrTy, AddrSpace);
+    OutputTable.push_back(IITDescriptor::get(IITDescriptor::Pointer, 
+                                             Infos[NextElt++]));
+    DecodeIITType(NextElt, Infos, OutputTable);
+    return;
   }
-  case IIT_ARG:
-  case IIT_EXTEND_VEC_ARG:
+  case IIT_ARG: {
+    unsigned ArgInfo = (NextElt == Infos.size() ? 0 : Infos[NextElt++]);
+    OutputTable.push_back(IITDescriptor::get(IITDescriptor::Argument, ArgInfo));
+    return;
+  }
+  case IIT_EXTEND_VEC_ARG: {
+    unsigned ArgInfo = (NextElt == Infos.size() ? 0 : Infos[NextElt++]);
+    OutputTable.push_back(IITDescriptor::get(IITDescriptor::ExtendVecArgument,
+                                             ArgInfo));
+    return;
+  }
   case IIT_TRUNC_VEC_ARG: {
-    unsigned ArgNo = (NextElt == Infos.size() ? 0 : Infos[NextElt++]) >> 2;
-    assert(ArgNo < Tys.size() && "Not enough types specified!");
-    Type *T = Tys[ArgNo];
-   
-    if (Info == IIT_EXTEND_VEC_ARG)
-      T = VectorType::getExtendedElementVectorType(cast<VectorType>(T));
-    if (Info == IIT_TRUNC_VEC_ARG)
-      T = VectorType::getTruncatedElementVectorType(cast<VectorType>(T));
-    return T;
+    unsigned ArgInfo = (NextElt == Infos.size() ? 0 : Infos[NextElt++]);
+    OutputTable.push_back(IITDescriptor::get(IITDescriptor::TruncVecArgument,
+                                             ArgInfo));
+    return;
   }
+  case IIT_EMPTYSTRUCT:
+    OutputTable.push_back(IITDescriptor::get(IITDescriptor::Struct, 0));
+    return;
   case IIT_STRUCT5: ++StructElts; // FALL THROUGH.
   case IIT_STRUCT4: ++StructElts; // FALL THROUGH.
   case IIT_STRUCT3: ++StructElts; // FALL THROUGH.
   case IIT_STRUCT2: {
-    Type *Elts[5];
+    OutputTable.push_back(IITDescriptor::get(IITDescriptor::Struct,StructElts));
+
     for (unsigned i = 0; i != StructElts; ++i)
-      Elts[i] = DecodeFixedType(NextElt, Infos, Tys, Context);
-    return StructType::get(Context, ArrayRef<Type*>(Elts, StructElts));
+      DecodeIITType(NextElt, Infos, OutputTable);
+    return;
   }
   }
   llvm_unreachable("unhandled");
 }
-  
 
-FunctionType *Intrinsic::getType(LLVMContext &Context,
-                                 ID id, ArrayRef<Type*> Tys) {
+
+#define GET_INTRINSIC_GENERATOR_GLOBAL
+#include "llvm/Intrinsics.gen"
+#undef GET_INTRINSIC_GENERATOR_GLOBAL
+
+void Intrinsic::getIntrinsicInfoTableEntries(ID id, 
+                                             SmallVectorImpl<IITDescriptor> &T){
   // Check to see if the intrinsic's type was expressible by the table.
   unsigned TableVal = IIT_Table[id-1];
   
@@ -438,6 +516,8 @@ FunctionType *Intrinsic::getType(LLVMContext &Context,
     // Strip sentinel bit.
     NextElt = (TableVal << 1) >> 1;
   } else {
+    // Decode the TableVal into an array of IITValues.  If the entry was encoded
+    // into a single word in the table itself, decode it now.
     do {
       IITValues.push_back(TableVal & 0xF);
       TableVal >>= 4;
@@ -446,12 +526,68 @@ FunctionType *Intrinsic::getType(LLVMContext &Context,
     IITEntries = IITValues;
     NextElt = 0;
   }
-    
-  Type *ResultTy = DecodeFixedType(NextElt, IITEntries, Tys, Context);
+
+  // Okay, decode the table into the output vector of IITDescriptors.
+  DecodeIITType(NextElt, IITEntries, T);
+  while (NextElt != IITEntries.size() && IITEntries[NextElt] != 0)
+    DecodeIITType(NextElt, IITEntries, T);
+}
+
+
+static Type *DecodeFixedType(ArrayRef<Intrinsic::IITDescriptor> &Infos,
+                             ArrayRef<Type*> Tys, LLVMContext &Context) {
+  using namespace Intrinsic;
+  IITDescriptor D = Infos.front();
+  Infos = Infos.slice(1);
+  
+  switch (D.Kind) {
+  case IITDescriptor::Void: return Type::getVoidTy(Context);
+  case IITDescriptor::MMX: return Type::getX86_MMXTy(Context);
+  case IITDescriptor::Metadata: return Type::getMetadataTy(Context);
+  case IITDescriptor::Float: return Type::getFloatTy(Context);
+  case IITDescriptor::Double: return Type::getDoubleTy(Context);
+      
+  case IITDescriptor::Integer:
+    return IntegerType::get(Context, D.Integer_Width);
+  case IITDescriptor::Vector:
+    return VectorType::get(DecodeFixedType(Infos, Tys, Context),D.Vector_Width);
+  case IITDescriptor::Pointer:
+    return PointerType::get(DecodeFixedType(Infos, Tys, Context),
+                            D.Pointer_AddressSpace);
+  case IITDescriptor::Struct: {
+    Type *Elts[5];
+    assert(D.Struct_NumElements <= 5 && "Can't handle this yet");
+    for (unsigned i = 0, e = D.Struct_NumElements; i != e; ++i)
+      Elts[i] = DecodeFixedType(Infos, Tys, Context);
+    return StructType::get(Context, ArrayRef<Type*>(Elts,D.Struct_NumElements));
+  }
+
+  case IITDescriptor::Argument:
+    return Tys[D.getArgumentNumber()];
+  case IITDescriptor::ExtendVecArgument:
+    return VectorType::getExtendedElementVectorType(cast<VectorType>(
+                                                  Tys[D.getArgumentNumber()]));
+      
+  case IITDescriptor::TruncVecArgument:
+    return VectorType::getTruncatedElementVectorType(cast<VectorType>(
+                                                  Tys[D.getArgumentNumber()]));
+  }
+  llvm_unreachable("unhandled");
+}
+
+
+
+FunctionType *Intrinsic::getType(LLVMContext &Context,
+                                 ID id, ArrayRef<Type*> Tys) {
+  SmallVector<IITDescriptor, 8> Table;
+  getIntrinsicInfoTableEntries(id, Table);
+  
+  ArrayRef<IITDescriptor> TableRef = Table;
+  Type *ResultTy = DecodeFixedType(TableRef, Tys, Context);
     
   SmallVector<Type*, 8> ArgTys;
-  while (NextElt != IITEntries.size() && IITEntries[NextElt] != 0)
-    ArgTys.push_back(DecodeFixedType(NextElt, IITEntries, Tys, Context));
+  while (!TableRef.empty())
+    ArgTys.push_back(DecodeFixedType(TableRef, Tys, Context));
 
   return FunctionType::get(ResultTy, ArgTys, false); 
 }

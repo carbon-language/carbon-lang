@@ -310,7 +310,7 @@ void IntrinsicEmitter::EmitVerifier(const std::vector<CodeGenIntrinsic> &Ints,
 }
 
 
-// NOTE: This must be kept in synch with the version emitted to the .gen file!
+// NOTE: This must be kept in synch with the copy in lib/VMCore/Function.cpp!
 enum IIT_Info {
   // Common values should be encoded with 0-15.
   IIT_Done = 0,
@@ -481,38 +481,6 @@ void printIITEntry(raw_ostream &OS, unsigned char X) {
 
 void IntrinsicEmitter::EmitGenerator(const std::vector<CodeGenIntrinsic> &Ints, 
                                      raw_ostream &OS) {
-  OS << "// Global intrinsic function declaration type table.\n";
-  OS << "#ifdef GET_INTRINSIC_GENERATOR_GLOBAL\n";
-  // NOTE: These enums must be kept in sync with the ones above!
-  OS << "enum IIT_Info {\n";
-  OS << "  IIT_Done = 0,\n";
-  OS << "  IIT_I1   = 1,\n";
-  OS << "  IIT_I8   = 2,\n";
-  OS << "  IIT_I16  = 3,\n";
-  OS << "  IIT_I32  = 4,\n";
-  OS << "  IIT_I64  = 5,\n";
-  OS << "  IIT_F32  = 6,\n";
-  OS << "  IIT_F64  = 7,\n";
-  OS << "  IIT_V2   = 8,\n";
-  OS << "  IIT_V4   = 9,\n";
-  OS << "  IIT_V8   = 10,\n";
-  OS << "  IIT_V16  = 11,\n";
-  OS << "  IIT_V32  = 12,\n";
-  OS << "  IIT_MMX  = 13,\n";
-  OS << "  IIT_PTR  = 14,\n";
-  OS << "  IIT_ARG  = 15,\n";
-  OS << "  IIT_METADATA = 16,\n";
-  OS << "  IIT_EMPTYSTRUCT = 17,\n";
-  OS << "  IIT_STRUCT2 = 18,\n";
-  OS << "  IIT_STRUCT3 = 19,\n";
-  OS << "  IIT_STRUCT4 = 20,\n";
-  OS << "  IIT_STRUCT5 = 21,\n";
-  OS << "  IIT_EXTEND_VEC_ARG = 22,\n";
-  OS << "  IIT_TRUNC_VEC_ARG = 23,\n";
-  OS << "  IIT_ANYPTR = 24\n";
-  OS << "};\n\n";
-
-  
   // If we can compute a 32-bit fixed encoding for this intrinsic, do so and
   // capture it in this vector, otherwise store a ~0U.
   std::vector<unsigned> FixedEncodings;
@@ -558,6 +526,9 @@ void IntrinsicEmitter::EmitGenerator(const std::vector<CodeGenIntrinsic> &Ints,
   
   LongEncodingTable.layout();
   
+  OS << "// Global intrinsic function declaration type table.\n";
+  OS << "#ifdef GET_INTRINSIC_GENERATOR_GLOBAL\n";
+
   OS << "static const unsigned IIT_Table[] = {\n  ";
   
   for (unsigned i = 0, e = FixedEncodings.size(); i != e; ++i) {
