@@ -8386,7 +8386,7 @@ LLVM</a>.</p>
 
 <h5>Syntax:</h5>
 <pre>
-  declare void @llvm.trap()
+  declare void @llvm.trap() noreturn nounwind
 </pre>
 
 <h5>Overview:</h5>
@@ -8411,7 +8411,7 @@ LLVM</a>.</p>
 
 <h5>Syntax:</h5>
 <pre>
-  declare void @llvm.debugtrap()
+  declare void @llvm.debugtrap() nounwind
 </pre>
 
 <h5>Overview:</h5>

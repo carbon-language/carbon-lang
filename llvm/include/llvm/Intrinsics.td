@@ -55,6 +55,8 @@ class NoCapture<int argNo> : IntrinsicProperty {
   int ArgNo = argNo;
 }
 
+def IntrNoReturn : IntrinsicProperty;
+
 //===----------------------------------------------------------------------===//
 // Types used by intrinsics.
 //===----------------------------------------------------------------------===//
@@ -400,7 +402,7 @@ def int_invariant_end   : Intrinsic<[],
 //
 def int_flt_rounds : Intrinsic<[llvm_i32_ty]>,
                      GCCBuiltin<"__builtin_flt_rounds">;
-def int_trap : Intrinsic<[]>,
+def int_trap : Intrinsic<[], [], [IntrNoReturn]>,
                GCCBuiltin<"__builtin_trap">;
 def int_debugtrap : Intrinsic<[]>,
                     GCCBuiltin<"__builtin_debugtrap">;

@@ -451,6 +451,9 @@ namespace {
       if (L->canThrow != R->canThrow)
         return R->canThrow;
 
+      if (L->isNoReturn != R->isNoReturn)
+        return R->isNoReturn;
+
       // Try to order by readonly/readnone attribute.
       ModRefKind LK = getModRefKind(*L);
       ModRefKind RK = getModRefKind(*R);
@@ -549,16 +552,30 @@ EmitAttributes(const std::vector<CodeGenIntrinsic> &Ints, raw_ostream &OS) {
 
     ModRefKind modRef = getModRefKind(intrinsic);
 
-    if (!intrinsic.canThrow || modRef) {
+    if (!intrinsic.canThrow || modRef || intrinsic.isNoReturn) {
       OS << "      AWI[" << numAttrs++ << "] = AttributeWithIndex::get(~0, ";
+      bool Emitted = false;
       if (!intrinsic.canThrow) {
         OS << "Attribute::NoUnwind";
-        if (modRef) OS << '|';
+        Emitted = true;
       }
+      
+      if (intrinsic.isNoReturn) {
+        if (Emitted) OS << '|';
+        OS << "Attribute::NoReturn";
+        Emitted = true;
+      }
+
       switch (modRef) {
       case MRK_none: break;
-      case MRK_readonly: OS << "Attribute::ReadOnly"; break;
-      case MRK_readnone: OS << "Attribute::ReadNone"; break;
+      case MRK_readonly:
+        if (Emitted) OS << '|';
+        OS << "Attribute::ReadOnly";
+        break;
+      case MRK_readnone:
+        if (Emitted) OS << '|';
+        OS << "Attribute::ReadNone"; 
+        break;
       }
       OS << ");\n";
     }

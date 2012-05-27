@@ -72,7 +72,10 @@ namespace llvm {
 
     /// canThrow - True if the intrinsic can throw.
     bool canThrow;
-    
+
+    /// isNoReturn - True if the intrinsic is no-return.
+    bool isNoReturn;
+
     enum ArgAttribute {
       NoCapture
     };
