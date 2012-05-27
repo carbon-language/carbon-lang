@@ -398,7 +398,7 @@ static Type *DecodeFixedType(unsigned &NextElt, ArrayRef<unsigned char> Infos,
   case IIT_ARG:
   case IIT_EXTEND_VEC_ARG:
   case IIT_TRUNC_VEC_ARG: {
-    unsigned ArgNo = NextElt == Infos.size() ? 0 : Infos[NextElt++];
+    unsigned ArgNo = (NextElt == Infos.size() ? 0 : Infos[NextElt++]) >> 2;
     assert(ArgNo < Tys.size() && "Not enough types specified!");
     Type *T = Tys[ArgNo];
    

@@ -372,33 +372,41 @@ static void EncodeFixedValueType(MVT::SimpleValueType VT,
 #pragma optimize("",off) // MSVC 2010 optimizer can't deal with this function.
 #endif 
 
-static void EncodeFixedType(Record *R, unsigned &NextArgNo,
+static void EncodeFixedType(Record *R, std::vector<unsigned char> &ArgCodes,
                             std::vector<unsigned char> &Sig) {
   
   if (R->isSubClassOf("LLVMMatchType")) {
     unsigned Number = R->getValueAsInt("Number");
-    assert(Number < NextArgNo && "Invalid matching number!");
+    assert(Number < ArgCodes.size() && "Invalid matching number!");
     if (R->isSubClassOf("LLVMExtendedElementVectorType"))
       Sig.push_back(IIT_EXTEND_VEC_ARG);
     else if (R->isSubClassOf("LLVMTruncatedElementVectorType"))
       Sig.push_back(IIT_TRUNC_VEC_ARG);
     else
       Sig.push_back(IIT_ARG);
-    return Sig.push_back(Number);
+    return Sig.push_back((Number << 2) | ArgCodes[Number]);
   }
   
   MVT::SimpleValueType VT = getValueType(R->getValueAsDef("VT"));
 
+  unsigned Tmp = 0;
   switch (VT) {
   default: break;
-  case MVT::iAny:
-  case MVT::fAny:
-  case MVT::vAny:
-  case MVT::iPTRAny:
+  case MVT::iPTRAny: ++Tmp; // FALL THROUGH.
+  case MVT::vAny: ++Tmp; // FALL THROUGH.
+  case MVT::fAny: ++Tmp; // FALL THROUGH.
+  case MVT::iAny: {
     // If this is an "any" valuetype, then the type is the type of the next
     // type in the list specified to getIntrinsic().  
     Sig.push_back(IIT_ARG);
-    return Sig.push_back(NextArgNo++);
+    
+    // Figure out what arg # this is consuming, and remember what kind it was.
+    unsigned ArgNo = ArgCodes.size();
+    ArgCodes.push_back(Tmp);
+    
+    // Encode what sort of argument it must be in the low 2 bits of the ArgNo.
+    return Sig.push_back((ArgNo << 2) | Tmp);
+  }
   
   case MVT::iPTR: {
     unsigned AddrSpace = 0;
@@ -412,7 +420,7 @@ static void EncodeFixedType(Record *R, unsigned &NextArgNo,
     } else {
       Sig.push_back(IIT_PTR);
     }
-    return EncodeFixedType(R->getValueAsDef("ElTy"), NextArgNo, Sig);
+    return EncodeFixedType(R->getValueAsDef("ElTy"), ArgCodes, Sig);
   }
   }
   
@@ -442,7 +450,7 @@ static void EncodeFixedType(Record *R, unsigned &NextArgNo,
 /// intrinsic into 32 bits, return it.  If not, return ~0U.
 static void ComputeFixedEncoding(const CodeGenIntrinsic &Int,
                                  std::vector<unsigned char> &TypeSig) {
-  unsigned NextArgNo = 0;
+  std::vector<unsigned char> ArgCodes;
   
   if (Int.IS.RetVTs.empty())
     TypeSig.push_back(IIT_Done);
@@ -460,11 +468,11 @@ static void ComputeFixedEncoding(const CodeGenIntrinsic &Int,
     }
     
     for (unsigned i = 0, e = Int.IS.RetVTs.size(); i != e; ++i)
-      EncodeFixedType(Int.IS.RetTypeDefs[i], NextArgNo, TypeSig);
+      EncodeFixedType(Int.IS.RetTypeDefs[i], ArgCodes, TypeSig);
   }
   
   for (unsigned i = 0, e = Int.IS.ParamTypeDefs.size(); i != e; ++i)
-    EncodeFixedType(Int.IS.ParamTypeDefs[i], NextArgNo, TypeSig);
+    EncodeFixedType(Int.IS.ParamTypeDefs[i], ArgCodes, TypeSig);
 }
 
 void printIITEntry(raw_ostream &OS, unsigned char X) {
