@@ -17,6 +17,12 @@ class BoolTemplate {
   BoolTemplate() {}
 };
 
+template<int param>
+class IntTemplate {
+ public:
+  IntTemplate() {}
+};
+
 void template_mangling() {
   Class<Typename> c1;
   c1.method();
@@ -31,6 +37,12 @@ void template_mangling() {
 
   BoolTemplate<true> _true;
 // CHECK: call {{.*}} @"\01??0?$BoolTemplate@$00@@QAE@XZ"
+
+  IntTemplate<11> eleven;
+// CHECK: call {{.*}} @"\01??0?$IntTemplate@$0L@@@QAE@XZ"
+
+  IntTemplate<65535> ffff;
+// CHECK: call {{.*}} @"\01??0?$IntTemplate@$0PPPP@@@QAE@XZ"
 }
 
 namespace space {
