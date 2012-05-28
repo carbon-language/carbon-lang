@@ -61,7 +61,7 @@ void BitcodeReader::FreeState() {
 /// ConvertToString - Convert a string from a record into an std::string, return
 /// true on failure.
 template<typename StrTy>
-static bool ConvertToString(SmallVector<uint64_t, 64> &Record, unsigned Idx,
+static bool ConvertToString(ArrayRef<uint64_t> Record, unsigned Idx,
                             StrTy &Result) {
   if (Idx > Record.size())
     return true;
@@ -825,11 +825,7 @@ bool BitcodeReader::ParseMetadata() {
       break;
     case bitc::METADATA_NAME: {
       // Read named of the named metadata.
-      unsigned NameLength = Record.size();
-      SmallString<8> Name;
-      Name.resize(NameLength);
-      for (unsigned i = 0; i != NameLength; ++i)
-        Name[i] = Record[i];
+      SmallString<8> Name(Record.begin(), Record.end());
       Record.clear();
       Code = Stream.ReadCode();
 
@@ -873,26 +869,18 @@ bool BitcodeReader::ParseMetadata() {
       break;
     }
     case bitc::METADATA_STRING: {
-      unsigned MDStringLength = Record.size();
-      SmallString<8> String;
-      String.resize(MDStringLength);
-      for (unsigned i = 0; i != MDStringLength; ++i)
-        String[i] = Record[i];
-      Value *V = MDString::get(Context,
-                               StringRef(String.data(), String.size()));
+      SmallString<8> String(Record.begin(), Record.end());
+      Value *V = MDString::get(Context, String);
       MDValueList.AssignValue(V, NextMDValueNo++);
       break;
     }
     case bitc::METADATA_KIND: {
-      unsigned RecordLength = Record.size();
-      if (Record.empty() || RecordLength < 2)
+      if (Record.size() < 2)
         return Error("Invalid METADATA_KIND record");
-      SmallString<8> Name;
-      Name.resize(RecordLength-1);
+
       unsigned Kind = Record[0];
-      for (unsigned i = 1; i != RecordLength; ++i)
-        Name[i-1] = Record[i];
-      
+      SmallString<8> Name(Record.begin()+1, Record.end());
+
       unsigned NewKind = TheModule->getMDKindID(Name.str());
       if (!MDKindMap.insert(std::make_pair(Kind, NewKind)).second)
         return Error("Conflicting METADATA_KIND records");
@@ -951,13 +939,11 @@ bool BitcodeReader::ResolveGlobalAndAliasInits() {
   return false;
 }
 
-APInt ReadWideAPInt(const uint64_t *Vals, unsigned ActiveWords,
-                    unsigned TypeBits) {
-  SmallVector<uint64_t, 8> Words;
-  Words.resize(ActiveWords);
-  for (unsigned i = 0; i != ActiveWords; ++i)
-    Words[i] = DecodeSignRotatedValue(Vals[i]);
-  
+static APInt ReadWideAPInt(ArrayRef<uint64_t> Vals, unsigned TypeBits) {
+  SmallVector<uint64_t, 8> Words(Vals.size());
+  std::transform(Vals.begin(), Vals.end(), Words.begin(),
+                 DecodeSignRotatedValue);
+
   return APInt(TypeBits, Words);
 }
 
@@ -1016,10 +1002,8 @@ bool BitcodeReader::ParseConstants() {
       if (!CurTy->isIntegerTy() || Record.empty())
         return Error("Invalid WIDE_INTEGER record");
 
-      unsigned NumWords = Record.size();
-      
-      APInt VInt = ReadWideAPInt(&Record[0], NumWords,
-          cast<IntegerType>(CurTy)->getBitWidth());
+      APInt VInt = ReadWideAPInt(Record,
+                                 cast<IntegerType>(CurTy)->getBitWidth());
       V = ConstantInt::get(Context, VInt);
       
       break;
@@ -1080,10 +1064,7 @@ bool BitcodeReader::ParseConstants() {
       if (Record.empty())
         return Error("Invalid CST_STRING record");
 
-      unsigned Size = Record.size();
-      SmallString<16> Elts;
-      for (unsigned i = 0; i != Size; ++i)
-        Elts.push_back(Record[i]);
+      SmallString<16> Elts(Record.begin(), Record.end());
       V = ConstantDataArray::getString(Context, Elts,
                                        BitCode == bitc::CST_CODE_CSTRING);
       break;
@@ -1120,23 +1101,16 @@ bool BitcodeReader::ParseConstants() {
         else
           V = ConstantDataArray::get(Context, Elts);
       } else if (EltTy->isFloatTy()) {
-        SmallVector<float, 16> Elts;
-        for (unsigned i = 0; i != Size; ++i) {
-          union { uint32_t I; float F; };
-          I = Record[i];
-          Elts.push_back(F);
-        }
+        SmallVector<float, 16> Elts(Size);
+        std::transform(Record.begin(), Record.end(), Elts.begin(), BitsToFloat);
         if (isa<VectorType>(CurTy))
           V = ConstantDataVector::get(Context, Elts);
         else
           V = ConstantDataArray::get(Context, Elts);
       } else if (EltTy->isDoubleTy()) {
-        SmallVector<double, 16> Elts;
-        for (unsigned i = 0; i != Size; ++i) {
-          union { uint64_t I; double F; };
-          I = Record[i];
-          Elts.push_back(F);
-        }
+        SmallVector<double, 16> Elts(Size);
+        std::transform(Record.begin(), Record.end(), Elts.begin(),
+                       BitsToDouble);
         if (isa<VectorType>(CurTy))
           V = ConstantDataVector::get(Context, Elts);
         else
@@ -2281,7 +2255,8 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
             unsigned ActiveWords = 1;
             if (ValueBitWidth > 64)
               ActiveWords = Record[CurIdx++];
-            Low = ReadWideAPInt(&Record[CurIdx], ActiveWords, ValueBitWidth);
+            Low = ReadWideAPInt(makeArrayRef(&Record[CurIdx], ActiveWords),
+                                ValueBitWidth);
             CurIdx += ActiveWords;
 
             if (!isSingleNumber) {
@@ -2289,7 +2264,8 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
               if (ValueBitWidth > 64)
                 ActiveWords = Record[CurIdx++];
               APInt High =
-                  ReadWideAPInt(&Record[CurIdx], ActiveWords, ValueBitWidth);
+                  ReadWideAPInt(makeArrayRef(&Record[CurIdx], ActiveWords),
+                                ValueBitWidth);
               IntItemConstantIntImpl HighImpl =
                   cast<ConstantInt>(ConstantInt::get(OpTy, High));
               
