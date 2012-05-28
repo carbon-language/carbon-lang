@@ -22,6 +22,7 @@
 typedef __SIZE_TYPE__ size_t;
 
 void abort(void) __attribute__((__nothrow__)) __attribute__((__noreturn__));
+void atoi(const char *) __attribute__((__nothrow__));
 void free(void *) __attribute__((__nothrow__));
 char *getenv(const char *) __attribute__((__nothrow__))
   __attribute__((__nonnull__(1)));
