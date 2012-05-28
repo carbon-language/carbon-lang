@@ -274,6 +274,11 @@ void GetThreadStackAndTls(bool main, uptr *stk_addr, uptr *stk_size,
       Printf("Can't find [stack] in /proc/self/maps\n");
       Die();
     }
+    pos = (char*)internal_strchr(pos, '-');
+    if (pos == 0) {
+      Printf("Can't find [stack] in /proc/self/maps\n");
+      Die();
+    }
     uptr stack = 0;
     for (; pos++;) {
       uptr num = 0;
@@ -290,8 +295,7 @@ void GetThreadStackAndTls(bool main, uptr *stk_addr, uptr *stk_size,
 
     struct rlimit rl;
     CHECK_EQ(getrlimit(RLIMIT_STACK, &rl), 0);
-
-    *stk_addr = stack;
+    *stk_addr = stack - rl.rlim_cur;
     *stk_size = rl.rlim_cur;
   } else {
     *stk_addr = 0;
