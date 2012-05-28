@@ -361,5 +361,6 @@ get_third_party:
 
 clean:
 	rm -f *.o *.ll *.S *.a *.log asan_test64* asan_test32*  a.out perf.data log
+	rm -f $(LIBASAN_INST_DIR)/libclang_rt.asan-*.a
 	rm -rf $(BIN)
 	rm -rf $(GTEST_ROOT)/make-*
