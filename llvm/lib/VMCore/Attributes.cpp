@@ -131,8 +131,8 @@ class AttributeListImpl : public FoldingSetNode {
 public:
   SmallVector<AttributeWithIndex, 4> Attrs;
   
-  AttributeListImpl(const AttributeWithIndex *Attr, unsigned NumAttrs)
-    : Attrs(Attr, Attr+NumAttrs) {
+  AttributeListImpl(ArrayRef<AttributeWithIndex> attrs)
+    : Attrs(attrs.begin(), attrs.end()) {
     RefCount = 0;
   }
   
@@ -150,13 +150,12 @@ public:
   }
   
   void Profile(FoldingSetNodeID &ID) const {
-    Profile(ID, Attrs.data(), Attrs.size());
+    Profile(ID, Attrs);
   }
-  static void Profile(FoldingSetNodeID &ID, const AttributeWithIndex *Attr,
-                      unsigned NumAttrs) {
-    for (unsigned i = 0; i != NumAttrs; ++i) {
-      ID.AddInteger(Attr[i].Attrs.Raw());
-      ID.AddInteger(Attr[i].Index);
+  static void Profile(FoldingSetNodeID &ID, ArrayRef<AttributeWithIndex> Attrs){
+    for (unsigned i = 0, e = Attrs.size(); i != e; ++i) {
+      ID.AddInteger(Attrs[i].Attrs.Raw());
+      ID.AddInteger(Attrs[i].Index);
     }
   }
 };
@@ -168,13 +167,13 @@ AttributeListImpl::~AttributeListImpl() {
 }
 
 
-AttrListPtr AttrListPtr::get(const AttributeWithIndex *Attrs, unsigned NumAttrs) {
+AttrListPtr AttrListPtr::get(ArrayRef<AttributeWithIndex> Attrs) {
   // If there are no attributes then return a null AttributesList pointer.
-  if (NumAttrs == 0)
+  if (Attrs.empty())
     return AttrListPtr();
   
 #ifndef NDEBUG
-  for (unsigned i = 0; i != NumAttrs; ++i) {
+  for (unsigned i = 0, e = Attrs.size(); i != e; ++i) {
     assert(Attrs[i].Attrs != Attribute::None && 
            "Pointless attribute!");
     assert((!i || Attrs[i-1].Index < Attrs[i].Index) &&
@@ -184,7 +183,7 @@ AttrListPtr AttrListPtr::get(const AttributeWithIndex *Attrs, unsigned NumAttrs)
   
   // Otherwise, build a key to look up the existing attributes.
   FoldingSetNodeID ID;
-  AttributeListImpl::Profile(ID, Attrs, NumAttrs);
+  AttributeListImpl::Profile(ID, Attrs);
   void *InsertPos;
   
   sys::SmartScopedLock<true> Lock(*ALMutex);
@@ -195,7 +194,7 @@ AttrListPtr AttrListPtr::get(const AttributeWithIndex *Attrs, unsigned NumAttrs)
   // If we didn't find any existing attributes of the same shape then
   // create a new one and insert it.
   if (!PAL) {
-    PAL = new AttributeListImpl(Attrs, NumAttrs);
+    PAL = new AttributeListImpl(Attrs);
     AttributesLists->InsertNode(PAL, InsertPos);
   }
   
@@ -308,7 +307,7 @@ AttrListPtr AttrListPtr::addAttr(unsigned Idx, Attributes Attrs) const {
                        OldAttrList.begin()+i, OldAttrList.end());
   }
   
-  return get(NewAttrList.data(), NewAttrList.size());
+  return get(NewAttrList);
 }
 
 AttrListPtr AttrListPtr::removeAttr(unsigned Idx, Attributes Attrs) const {
@@ -343,7 +342,7 @@ AttrListPtr AttrListPtr::removeAttr(unsigned Idx, Attributes Attrs) const {
   NewAttrList.insert(NewAttrList.end(), 
                      OldAttrList.begin()+i, OldAttrList.end());
   
-  return get(NewAttrList.data(), NewAttrList.size());
+  return get(NewAttrList);
 }
 
 void AttrListPtr::dump() const {

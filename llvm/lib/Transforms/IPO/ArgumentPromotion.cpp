@@ -616,8 +616,7 @@ CallGraphNode *ArgPromotion::DoPromotion(Function *F,
   
   // Recompute the parameter attributes list based on the new arguments for
   // the function.
-  NF->setAttributes(AttrListPtr::get(AttributesVec.begin(),
-                                     AttributesVec.end()));
+  NF->setAttributes(AttrListPtr::get(AttributesVec));
   AttributesVec.clear();
 
   F->getParent()->getFunctionList().insert(F, NF);
@@ -734,13 +733,11 @@ CallGraphNode *ArgPromotion::DoPromotion(Function *F,
       New = InvokeInst::Create(NF, II->getNormalDest(), II->getUnwindDest(),
                                Args, "", Call);
       cast<InvokeInst>(New)->setCallingConv(CS.getCallingConv());
-      cast<InvokeInst>(New)->setAttributes(AttrListPtr::get(AttributesVec.begin(),
-                                                          AttributesVec.end()));
+      cast<InvokeInst>(New)->setAttributes(AttrListPtr::get(AttributesVec));
     } else {
       New = CallInst::Create(NF, Args, "", Call);
       cast<CallInst>(New)->setCallingConv(CS.getCallingConv());
-      cast<CallInst>(New)->setAttributes(AttrListPtr::get(AttributesVec.begin(),
-                                                        AttributesVec.end()));
+      cast<CallInst>(New)->setAttributes(AttrListPtr::get(AttributesVec));
       if (cast<CallInst>(Call)->isTailCall())
         cast<CallInst>(New)->setTailCall();
     }

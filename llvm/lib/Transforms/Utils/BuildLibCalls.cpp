@@ -42,7 +42,7 @@ Value *llvm::EmitStrLen(Value *Ptr, IRBuilder<> &B, const TargetData *TD) {
                                    Attribute::NoUnwind);
 
   LLVMContext &Context = B.GetInsertBlock()->getContext();
-  Constant *StrLen = M->getOrInsertFunction("strlen", AttrListPtr::get(AWI, 2),
+  Constant *StrLen = M->getOrInsertFunction("strlen", AttrListPtr::get(AWI),
                                             TD->getIntPtrType(Context),
                                             B.getInt8PtrTy(),
                                             NULL);
@@ -64,7 +64,7 @@ Value *llvm::EmitStrChr(Value *Ptr, char C, IRBuilder<> &B,
 
   Type *I8Ptr = B.getInt8PtrTy();
   Type *I32Ty = B.getInt32Ty();
-  Constant *StrChr = M->getOrInsertFunction("strchr", AttrListPtr::get(&AWI, 1),
+  Constant *StrChr = M->getOrInsertFunction("strchr", AttrListPtr::get(AWI),
                                             I8Ptr, I8Ptr, I32Ty, NULL);
   CallInst *CI = B.CreateCall2(StrChr, CastToCStr(Ptr, B),
                                ConstantInt::get(I32Ty, C), "strchr");
@@ -84,7 +84,7 @@ Value *llvm::EmitStrNCmp(Value *Ptr1, Value *Ptr2, Value *Len,
                                    Attribute::NoUnwind);
 
   LLVMContext &Context = B.GetInsertBlock()->getContext();
-  Value *StrNCmp = M->getOrInsertFunction("strncmp", AttrListPtr::get(AWI, 3),
+  Value *StrNCmp = M->getOrInsertFunction("strncmp", AttrListPtr::get(AWI),
                                           B.getInt32Ty(),
                                           B.getInt8PtrTy(),
                                           B.getInt8PtrTy(),
@@ -107,7 +107,7 @@ Value *llvm::EmitStrCpy(Value *Dst, Value *Src, IRBuilder<> &B,
   AWI[0] = AttributeWithIndex::get(2, Attribute::NoCapture);
   AWI[1] = AttributeWithIndex::get(~0u, Attribute::NoUnwind);
   Type *I8Ptr = B.getInt8PtrTy();
-  Value *StrCpy = M->getOrInsertFunction(Name, AttrListPtr::get(AWI, 2),
+  Value *StrCpy = M->getOrInsertFunction(Name, AttrListPtr::get(AWI),
                                          I8Ptr, I8Ptr, I8Ptr, NULL);
   CallInst *CI = B.CreateCall2(StrCpy, CastToCStr(Dst, B), CastToCStr(Src, B),
                                Name);
@@ -125,7 +125,7 @@ Value *llvm::EmitStrNCpy(Value *Dst, Value *Src, Value *Len,
   AWI[0] = AttributeWithIndex::get(2, Attribute::NoCapture);
   AWI[1] = AttributeWithIndex::get(~0u, Attribute::NoUnwind);
   Type *I8Ptr = B.getInt8PtrTy();
-  Value *StrNCpy = M->getOrInsertFunction(Name, AttrListPtr::get(AWI, 2),
+  Value *StrNCpy = M->getOrInsertFunction(Name, AttrListPtr::get(AWI),
                                           I8Ptr, I8Ptr, I8Ptr,
                                           Len->getType(), NULL);
   CallInst *CI = B.CreateCall3(StrNCpy, CastToCStr(Dst, B), CastToCStr(Src, B),
@@ -145,7 +145,7 @@ Value *llvm::EmitMemCpyChk(Value *Dst, Value *Src, Value *Len, Value *ObjSize,
   AWI = AttributeWithIndex::get(~0u, Attribute::NoUnwind);
   LLVMContext &Context = B.GetInsertBlock()->getContext();
   Value *MemCpy = M->getOrInsertFunction("__memcpy_chk",
-                                         AttrListPtr::get(&AWI, 1),
+                                         AttrListPtr::get(AWI),
                                          B.getInt8PtrTy(),
                                          B.getInt8PtrTy(),
                                          B.getInt8PtrTy(),
@@ -167,7 +167,7 @@ Value *llvm::EmitMemChr(Value *Ptr, Value *Val,
   AttributeWithIndex AWI;
   AWI = AttributeWithIndex::get(~0u, Attribute::ReadOnly | Attribute::NoUnwind);
   LLVMContext &Context = B.GetInsertBlock()->getContext();
-  Value *MemChr = M->getOrInsertFunction("memchr", AttrListPtr::get(&AWI, 1),
+  Value *MemChr = M->getOrInsertFunction("memchr", AttrListPtr::get(AWI),
                                          B.getInt8PtrTy(),
                                          B.getInt8PtrTy(),
                                          B.getInt32Ty(),
@@ -192,7 +192,7 @@ Value *llvm::EmitMemCmp(Value *Ptr1, Value *Ptr2,
                                    Attribute::NoUnwind);
 
   LLVMContext &Context = B.GetInsertBlock()->getContext();
-  Value *MemCmp = M->getOrInsertFunction("memcmp", AttrListPtr::get(AWI, 3),
+  Value *MemCmp = M->getOrInsertFunction("memcmp", AttrListPtr::get(AWI),
                                          B.getInt32Ty(),
                                          B.getInt8PtrTy(),
                                          B.getInt8PtrTy(),
@@ -260,7 +260,7 @@ void llvm::EmitPutS(Value *Str, IRBuilder<> &B, const TargetData *TD) {
   AWI[0] = AttributeWithIndex::get(1, Attribute::NoCapture);
   AWI[1] = AttributeWithIndex::get(~0u, Attribute::NoUnwind);
 
-  Value *PutS = M->getOrInsertFunction("puts", AttrListPtr::get(AWI, 2),
+  Value *PutS = M->getOrInsertFunction("puts", AttrListPtr::get(AWI),
                                        B.getInt32Ty(),
                                        B.getInt8PtrTy(),
                                        NULL);
@@ -280,7 +280,7 @@ void llvm::EmitFPutC(Value *Char, Value *File, IRBuilder<> &B,
   AWI[1] = AttributeWithIndex::get(~0u, Attribute::NoUnwind);
   Constant *F;
   if (File->getType()->isPointerTy())
-    F = M->getOrInsertFunction("fputc", AttrListPtr::get(AWI, 2),
+    F = M->getOrInsertFunction("fputc", AttrListPtr::get(AWI),
                                B.getInt32Ty(),
                                B.getInt32Ty(), File->getType(),
                                NULL);
@@ -309,7 +309,7 @@ void llvm::EmitFPutS(Value *Str, Value *File, IRBuilder<> &B,
   StringRef FPutsName = TLI->getName(LibFunc::fputs);
   Constant *F;
   if (File->getType()->isPointerTy())
-    F = M->getOrInsertFunction(FPutsName, AttrListPtr::get(AWI, 3),
+    F = M->getOrInsertFunction(FPutsName, AttrListPtr::get(AWI),
                                B.getInt32Ty(),
                                B.getInt8PtrTy(),
                                File->getType(), NULL);
@@ -337,7 +337,7 @@ void llvm::EmitFWrite(Value *Ptr, Value *Size, Value *File,
   StringRef FWriteName = TLI->getName(LibFunc::fwrite);
   Constant *F;
   if (File->getType()->isPointerTy())
-    F = M->getOrInsertFunction(FWriteName, AttrListPtr::get(AWI, 3),
+    F = M->getOrInsertFunction(FWriteName, AttrListPtr::get(AWI),
                                TD->getIntPtrType(Context),
                                B.getInt8PtrTy(),
                                TD->getIntPtrType(Context),

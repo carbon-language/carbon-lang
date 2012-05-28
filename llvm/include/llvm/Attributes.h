@@ -16,6 +16,7 @@
 #define LLVM_ATTRIBUTES_H
 
 #include "llvm/Support/MathExtras.h"
+#include "llvm/ADT/ArrayRef.h"
 #include <cassert>
 #include <string>
 
@@ -268,16 +269,8 @@ public:
   // Attribute List Construction and Mutation
   //===--------------------------------------------------------------------===//
 
-  /// get - Return a Attributes list with the specified parameter in it.
-  static AttrListPtr get(const AttributeWithIndex *Attr, unsigned NumAttrs);
-
-  /// get - Return a Attribute list with the parameters specified by the
-  /// consecutive random access iterator range.
-  template <typename Iter>
-  static AttrListPtr get(const Iter &I, const Iter &E) {
-    if (I == E) return AttrListPtr();  // Empty list.
-    return get(&*I, static_cast<unsigned>(E-I));
-  }
+  /// get - Return a Attributes list with the specified parameters in it.
+  static AttrListPtr get(ArrayRef<AttributeWithIndex> Attrs);
 
   /// addAttr - Add the specified attribute at the specified index to this
   /// attribute list.  Since attribute lists are immutable, this

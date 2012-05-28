@@ -486,7 +486,7 @@ bool BitcodeReader::ParseAttributeBlock() {
                                                   Attributes(Record[i+1])));
       }
 
-      MAttributes.push_back(AttrListPtr::get(Attrs.begin(), Attrs.end()));
+      MAttributes.push_back(AttrListPtr::get(Attrs));
       Attrs.clear();
       break;
     }

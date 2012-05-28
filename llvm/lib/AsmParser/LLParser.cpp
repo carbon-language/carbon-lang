@@ -2692,7 +2692,7 @@ bool LLParser::ParseFunctionHeader(Function *&Fn, bool isDefine) {
   if (FuncAttrs != Attribute::None)
     Attrs.push_back(AttributeWithIndex::get(~0, FuncAttrs));
 
-  AttrListPtr PAL = AttrListPtr::get(Attrs.begin(), Attrs.end());
+  AttrListPtr PAL = AttrListPtr::get(Attrs);
 
   if (PAL.paramHasAttr(1, Attribute::StructRet) && !RetType->isVoidTy())
     return Error(RetTypeLoc, "functions with 'sret' argument must return void");
@@ -3239,7 +3239,7 @@ bool LLParser::ParseInvoke(Instruction *&Inst, PerFunctionState &PFS) {
     Attrs.push_back(AttributeWithIndex::get(~0, FnAttrs));
 
   // Finish off the Attributes and check them
-  AttrListPtr PAL = AttrListPtr::get(Attrs.begin(), Attrs.end());
+  AttrListPtr PAL = AttrListPtr::get(Attrs);
 
   InvokeInst *II = InvokeInst::Create(Callee, NormalBB, UnwindBB, Args);
   II->setCallingConv(CC);
@@ -3635,7 +3635,7 @@ bool LLParser::ParseCall(Instruction *&Inst, PerFunctionState &PFS,
     Attrs.push_back(AttributeWithIndex::get(~0, FnAttrs));
 
   // Finish off the Attributes and check them
-  AttrListPtr PAL = AttrListPtr::get(Attrs.begin(), Attrs.end());
+  AttrListPtr PAL = AttrListPtr::get(Attrs);
 
   CallInst *CI = CallInst::Create(Callee, Args);
   CI->setTailCall(isTail);
