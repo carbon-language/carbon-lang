@@ -22,9 +22,11 @@
 #if !defined(_WIN32)
 #include <stdint.h>  // for uintptr_t
 #define ASAN_INTERFACE_FUNCTION_ATTRIBUTE __attribute__((visibility("default")))
+#define ASAN_WEAK_ATTRIBUTE __attribute__((weak));
 #else
 // TODO(timurrrr): find out what we need on Windows. __declspec(dllexport) ?
 #define ASAN_INTERFACE_FUNCTION_ATTRIBUTE
+#define ASAN_WEAK_ATTRIBUTE
 #endif
 #include <stddef.h>  // for size_t
 
@@ -163,6 +165,8 @@ extern "C" {
   // Prints accumulated stats to stderr. Used for debugging.
   void __asan_print_accumulated_stats()
       ASAN_INTERFACE_FUNCTION_ATTRIBUTE;
+  char *__asan_default_options
+      ASAN_WEAK_ATTRIBUTE;
 }  // namespace
 
 #undef ASAN_INTERFACE_FUNCTION_ATTRIBUTE

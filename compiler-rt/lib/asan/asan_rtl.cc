@@ -26,32 +26,31 @@ namespace __asan {
 
 // -------------------------- Flags ------------------------- {{{1
 static const size_t kMallocContextSize = 30;
-static int    FLAG_atexit;
 
-size_t FLAG_redzone;  // power of two, >= 32
-size_t FLAG_quarantine_size;
-int    FLAG_demangle;
-bool   FLAG_symbolize;
-int    FLAG_v;
-int    FLAG_debug;
-bool   FLAG_poison_shadow;
-int    FLAG_report_globals;
-size_t FLAG_malloc_context_size = kMallocContextSize;
-uintptr_t FLAG_large_malloc;
-bool   FLAG_handle_segv;
-bool   FLAG_use_sigaltstack;
-bool   FLAG_replace_str;
-bool   FLAG_replace_intrin;
-bool   FLAG_replace_cfallocator;  // Used on Mac only.
-size_t FLAG_max_malloc_fill_size = 0;
-bool   FLAG_use_fake_stack;
-bool   FLAG_abort_on_error;
-int    FLAG_exitcode = ASAN_DEFAULT_FAILURE_EXITCODE;
-bool   FLAG_allow_user_poisoning;
-int    FLAG_sleep_before_dying;
-bool   FLAG_unmap_shadow_on_exit;
-bool   FLAG_disable_core;
-bool   FLAG_check_malloc_usable_size;
+size_t  FLAG_malloc_context_size = kMallocContextSize;
+size_t  FLAG_max_malloc_fill_size = 0;
+int64_t FLAG_v = 0;
+size_t  FLAG_redzone = (ASAN_LOW_MEMORY) ? 64 : 128;  // power of two, >= 32
+size_t  FLAG_quarantine_size = (ASAN_LOW_MEMORY) ? 1UL << 24 : 1UL << 28;
+static int64_t    FLAG_atexit = 0;
+bool    FLAG_poison_shadow = 1;
+int64_t FLAG_report_globals = 1;
+bool    FLAG_handle_segv = ASAN_NEEDS_SEGV;
+bool    FLAG_use_sigaltstack = 0;
+bool    FLAG_symbolize = 1;
+int64_t FLAG_demangle = 1;
+int64_t FLAG_debug = 0;
+bool    FLAG_replace_cfallocator = 1;  // Used on Mac only.
+bool    FLAG_replace_str = 1;
+bool    FLAG_replace_intrin = 1;
+bool    FLAG_use_fake_stack = 1;
+int64_t FLAG_exitcode = ASAN_DEFAULT_FAILURE_EXITCODE;
+bool    FLAG_allow_user_poisoning = 1;
+int64_t FLAG_sleep_before_dying = 0;
+bool    FLAG_abort_on_error = 0;
+bool    FLAG_unmap_shadow_on_exit = 0;
+bool    FLAG_disable_core = __WORDSIZE == 64;
+bool    FLAG_check_malloc_usable_size = 1;
 
 // -------------------------- Globals --------------------- {{{1
 int asan_inited;
@@ -276,12 +275,41 @@ static NOINLINE void force_interface_symbols() {
 }
 
 // -------------------------- Init ------------------- {{{1
-static int64_t IntFlagValue(const char *flags, const char *flag,
-                            int64_t default_val) {
-  if (!flags) return default_val;
+static void IntFlagValue(const char *flags, const char *flag,
+                         int64_t *out_val) {
+  if (!flags) return;
   const char *str = internal_strstr(flags, flag);
-  if (!str) return default_val;
-  return internal_atoll(str + internal_strlen(flag));
+  if (!str) return;
+  *out_val = internal_atoll(str + internal_strlen(flag));
+}
+
+static void BoolFlagValue(const char *flags, const char *flag,
+                          bool *out_val) {
+  if (!flags) return;
+  const char *str = internal_strstr(flags, flag);
+  if (!str) return;
+  if (!internal_atoll(str + internal_strlen(flag))) {
+    if (str[0] == '0') {
+      *out_val = false;
+      return;
+    }
+  } else {
+    *out_val = true;
+    return;
+  }
+  switch (str[0]) {
+    case 'y':
+    case 't': {
+      *out_val = true;
+      break;
+    }
+    case 'n':
+    case 'f': {
+      *out_val = false;
+      break;
+    }
+    default: return;
+  }
 }
 
 static void asan_atexit() {
@@ -425,49 +453,44 @@ void __asan_report_error(uintptr_t pc, uintptr_t bp, uintptr_t sp,
 }
 
 static void ParseAsanOptions(const char *options) {
-  FLAG_malloc_context_size =
-      IntFlagValue(options, "malloc_context_size=", kMallocContextSize);
+  IntFlagValue(options, "malloc_context_size=",
+               (int64_t*)&FLAG_malloc_context_size);
   CHECK(FLAG_malloc_context_size <= kMallocContextSize);
 
-  FLAG_max_malloc_fill_size =
-      IntFlagValue(options, "max_malloc_fill_size=", 0);
+  IntFlagValue(options, "max_malloc_fill_size=",
+               (int64_t*)&FLAG_max_malloc_fill_size);
 
-  FLAG_v = IntFlagValue(options, "verbosity=", 0);
+  IntFlagValue(options, "verbosity=", &FLAG_v);
 
-  FLAG_redzone = IntFlagValue(options, "redzone=",
-      (ASAN_LOW_MEMORY) ? 64 : 128);
+  IntFlagValue(options, "redzone=", (int64_t*)&FLAG_redzone);
   CHECK(FLAG_redzone >= 32);
   CHECK((FLAG_redzone & (FLAG_redzone - 1)) == 0);
+  IntFlagValue(options, "quarantine_size=", (int64_t*)&FLAG_quarantine_size);
 
-  FLAG_atexit = IntFlagValue(options, "atexit=", 0);
-  FLAG_poison_shadow = IntFlagValue(options, "poison_shadow=", 1);
-  FLAG_report_globals = IntFlagValue(options, "report_globals=", 1);
-  FLAG_handle_segv = IntFlagValue(options, "handle_segv=", ASAN_NEEDS_SEGV);
-  FLAG_use_sigaltstack = IntFlagValue(options, "use_sigaltstack=", 0);
-  FLAG_symbolize = IntFlagValue(options, "symbolize=", 1);
-  FLAG_demangle = IntFlagValue(options, "demangle=", 1);
-  FLAG_debug = IntFlagValue(options, "debug=", 0);
-  FLAG_replace_cfallocator = IntFlagValue(options, "replace_cfallocator=", 1);
-  FLAG_replace_str = IntFlagValue(options, "replace_str=", 1);
-  FLAG_replace_intrin = IntFlagValue(options, "replace_intrin=", 1);
-  FLAG_use_fake_stack = IntFlagValue(options, "use_fake_stack=", 1);
-  FLAG_exitcode = IntFlagValue(options, "exitcode=",
-                               ASAN_DEFAULT_FAILURE_EXITCODE);
-  FLAG_allow_user_poisoning = IntFlagValue(options,
-                                           "allow_user_poisoning=", 1);
-  FLAG_sleep_before_dying = IntFlagValue(options, "sleep_before_dying=", 0);
-  FLAG_abort_on_error = IntFlagValue(options, "abort_on_error=", 0);
-  FLAG_unmap_shadow_on_exit = IntFlagValue(options, "unmap_shadow_on_exit=", 0);
+  IntFlagValue(options, "atexit=", &FLAG_atexit);
+  BoolFlagValue(options, "poison_shadow=", &FLAG_poison_shadow);
+  IntFlagValue(options, "report_globals=", &FLAG_report_globals);
+  BoolFlagValue(options, "handle_segv=", &FLAG_handle_segv);
+  BoolFlagValue(options, "use_sigaltstack=", &FLAG_use_sigaltstack);
+  BoolFlagValue(options, "symbolize=", &FLAG_symbolize);
+  IntFlagValue(options, "demangle=", &FLAG_demangle);
+  IntFlagValue(options, "debug=", &FLAG_debug);
+  BoolFlagValue(options, "replace_cfallocator=", &FLAG_replace_cfallocator);
+  BoolFlagValue(options, "replace_str=", &FLAG_replace_str);
+  BoolFlagValue(options, "replace_intrin=", &FLAG_replace_intrin);
+  BoolFlagValue(options, "use_fake_stack=", &FLAG_use_fake_stack);
+  IntFlagValue(options, "exitcode=", &FLAG_exitcode);
+  BoolFlagValue(options, "allow_user_poisoning=", &FLAG_allow_user_poisoning);
+  IntFlagValue(options, "sleep_before_dying=", &FLAG_sleep_before_dying);
+  BoolFlagValue(options, "abort_on_error=", &FLAG_abort_on_error);
+  BoolFlagValue(options, "unmap_shadow_on_exit=", &FLAG_unmap_shadow_on_exit);
   // By default, disable core dumper on 64-bit --
   // it makes little sense to dump 16T+ core.
-  FLAG_disable_core = IntFlagValue(options, "disable_core=", __WORDSIZE == 64);
+  BoolFlagValue(options, "disable_core=", &FLAG_disable_core);
 
   // Allow the users to work around the bug in Nvidia drivers prior to 295.*.
-  FLAG_check_malloc_usable_size =
-      IntFlagValue(options, "check_malloc_usable_size=", 1);
-
-  FLAG_quarantine_size = IntFlagValue(options, "quarantine_size=",
-      (ASAN_LOW_MEMORY) ? 1UL << 24 : 1UL << 28);
+  BoolFlagValue(options, "check_malloc_usable_size=",
+                &FLAG_check_malloc_usable_size);
 }
 
 void __asan_init() {
@@ -477,11 +500,16 @@ void __asan_init() {
   // Make sure we are not statically linked.
   AsanDoesNotSupportStaticLinkage();
 
+  if (__asan_default_options) {
+    Report("Using the defaults from __asan_default_options: %s\n",
+           __asan_default_options);
+    ParseAsanOptions(__asan_default_options);
+  }
   // flags
   const char *options = AsanGetEnv("ASAN_OPTIONS");
   ParseAsanOptions(options);
 
-  if (FLAG_v) {
+  if (FLAG_v && options) {
     Report("Parsed ASAN_OPTIONS: %s\n", options);
   }
 

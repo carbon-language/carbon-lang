@@ -239,27 +239,27 @@ bool PlatformHasDifferentMemcpyAndMemmove();
 # define PLATFORM_HAS_DIFFERENT_MEMCPY_AND_MEMMOVE true
 #endif  // __APPLE__
 
-extern size_t FLAG_quarantine_size;
-extern int    FLAG_demangle;
-extern bool   FLAG_symbolize;
-extern int    FLAG_v;
-extern size_t FLAG_redzone;
-extern int    FLAG_debug;
-extern bool   FLAG_poison_shadow;
-extern int    FLAG_report_globals;
-extern size_t FLAG_malloc_context_size;
-extern bool   FLAG_replace_str;
-extern bool   FLAG_replace_intrin;
-extern bool   FLAG_replace_cfallocator;
-extern bool   FLAG_fast_unwind;
-extern bool   FLAG_use_fake_stack;
-extern size_t FLAG_max_malloc_fill_size;
-extern int    FLAG_exitcode;
-extern bool   FLAG_allow_user_poisoning;
-extern int    FLAG_sleep_before_dying;
-extern bool   FLAG_handle_segv;
-extern bool   FLAG_use_sigaltstack;
-extern bool   FLAG_check_malloc_usable_size;
+extern size_t  FLAG_quarantine_size;
+extern int64_t FLAG_demangle;
+extern bool    FLAG_symbolize;
+extern int64_t FLAG_v;
+extern size_t  FLAG_redzone;
+extern int64_t FLAG_debug;
+extern bool    FLAG_poison_shadow;
+extern int64_t FLAG_report_globals;
+extern size_t  FLAG_malloc_context_size;
+extern bool    FLAG_replace_str;
+extern bool    FLAG_replace_intrin;
+extern bool    FLAG_replace_cfallocator;
+extern bool    FLAG_fast_unwind;
+extern bool    FLAG_use_fake_stack;
+extern size_t  FLAG_max_malloc_fill_size;
+extern int64_t FLAG_exitcode;
+extern bool    FLAG_allow_user_poisoning;
+extern int64_t FLAG_sleep_before_dying;
+extern bool    FLAG_handle_segv;
+extern bool    FLAG_use_sigaltstack;
+extern bool    FLAG_check_malloc_usable_size;
 
 extern int asan_inited;
 // Used to avoid infinite recursion in __asan_init().
