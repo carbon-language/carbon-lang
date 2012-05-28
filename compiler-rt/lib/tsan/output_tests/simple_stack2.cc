@@ -9,16 +9,16 @@ void __attribute__((noinline)) foo1() {
 }
 
 void __attribute__((noinline)) bar1() {
-  volatile int tmp = 42; (void)tmp;
+  volatile int tmp = 42; int tmp2 = tmp; (void)tmp2;
   foo1();
 }
 
 void __attribute__((noinline)) foo2() {
-  volatile int v = Global; (void)v;
+  volatile int tmp = Global; int tmp2 = tmp; (void)tmp2;
 }
 
 void __attribute__((noinline)) bar2() {
-  volatile int tmp = 42; (void)tmp;
+  volatile int tmp = 42; int tmp2 = tmp; (void)tmp2;
   foo2();
 }
 
