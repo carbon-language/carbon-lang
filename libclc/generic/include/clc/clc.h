@@ -33,6 +33,7 @@
 
 /* 6.11.2 Math Functions */
 #include <clc/math/cos.h>
+#include <clc/math/fabs.h>
 #include <clc/math/sin.h>
 #include <clc/math/sqrt.h>
 #include <clc/math/native_cos.h>
