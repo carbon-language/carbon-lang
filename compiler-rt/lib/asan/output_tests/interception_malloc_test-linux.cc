@@ -2,10 +2,10 @@
 #include <stdio.h>
 #include <unistd.h>
 
-extern "C" void *__xsan_malloc(size_t size);
+extern "C" void *__interceptor_malloc(size_t size);
 extern "C" void *malloc(size_t size) {
   write(2, "malloc call\n", sizeof("malloc call\n") - 1);
-  return __xsan_malloc(size);
+  return __interceptor_malloc(size);
 }
 
 int main() {

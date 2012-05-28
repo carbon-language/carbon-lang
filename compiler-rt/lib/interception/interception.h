@@ -65,8 +65,8 @@
 // with same names in our library and then obtain the real function pointers
 // using dlsym().
 // There is one complication. A user may also intercept some of the functions
-// we intercept. To resolve this we declare our interceptors with __xsan_
-// prefix, and then make actual interceptors weak aliases to __xsan_
+// we intercept. To resolve this we declare our interceptors with __interceptor_
+// prefix, and then make actual interceptors weak aliases to __interceptor_
 // functions.
 // This is not so on Mac OS, where the two-level namespace makes
 // our replacement functions invisible to other libraries. This may be overcomed
@@ -93,12 +93,12 @@
 # endif
 # define DECLARE_WRAPPER(ret_type, convention, func, ...)
 #else
-# define WRAP(x) __xsan_ ## x
-# define WRAPPER_NAME(x) "__xsan_" #x
+# define WRAP(x) __interceptor_ ## x
+# define WRAPPER_NAME(x) "__interceptor_" #x
 # define INTERCEPTOR_ATTRIBUTE __attribute__((visibility("default")))
 # define DECLARE_WRAPPER(ret_type, convention, func, ...) \
     extern "C" ret_type convention func(__VA_ARGS__) \
-    __attribute__((weak, alias("__xsan_" #func), visibility("default")))
+    __attribute__((weak, alias("__interceptor_" #func), visibility("default")))
 #endif
 
 #define PTR_TO_REAL(x) real_##x

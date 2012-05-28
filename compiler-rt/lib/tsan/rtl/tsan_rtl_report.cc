@@ -32,7 +32,7 @@ bool WEAK OnReport(const ReportDesc *rep, bool suppressed) {
 static void StackStripMain(ReportStack *stack) {
   ReportStack *last_frame = 0;
   ReportStack *last_frame2 = 0;
-  const char *prefix = "__xsan_";
+  const char *prefix = "__interceptor_";
   uptr prefix_len = internal_strlen(prefix);
   const char *path_prefix = flags()->strip_path_prefix;
   uptr path_prefix_len = internal_strlen(path_prefix);
