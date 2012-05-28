@@ -14,7 +14,7 @@ class BreakpointCommandTestCase(TestBase):
     @classmethod
     def classCleanup(cls):
         """Cleanup the test byproduct of breakpoint_command_sequence(self)."""
-        system(["/bin/sh", "-c", "rm -f output.txt"])
+        system(["/bin/sh", "-c", "rm -f output.txt output2.txt"])
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @dsym_test
