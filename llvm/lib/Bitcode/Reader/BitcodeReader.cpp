@@ -2254,8 +2254,6 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
               APInt High =
                   ReadWideAPInt(makeArrayRef(&Record[CurIdx], ActiveWords),
                                 ValueBitWidth);
-              IntItemConstantIntImpl HighImpl =
-                  cast<ConstantInt>(ConstantInt::get(OpTy, High));
               
               CaseBuilder.add(IntItem::fromType(OpTy, Low),
                               IntItem::fromType(OpTy, High));
