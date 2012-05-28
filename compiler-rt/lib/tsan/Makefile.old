@@ -37,13 +37,10 @@ libtsan:
 	$(MAKE) -C rtl -f Makefile.old DEBUG=$(DEBUG)
 
 unit_tests/%_test.o: unit_tests/%_test.cc $(UNIT_TEST_HDR)
-	$(CXX) $(CXXFLAGS) $(INCLUDES) -o $@ -c $<
+	$(CXX) $(CXXFLAGS) $(CFLAGS) $(INCLUDES) -o $@ -c $<
 
 rtl_tests/%.o: rtl_tests/%.cc $(LIBTSAN_HEADERS)
-	$(CXX) $(CXXFLAGS) $(INCLUDES) -o $@ -c $<
-
-#%.o: %.c $(LIBTSAN_HEADERS)
-#	$(CC) $(CXXFLAGS) $(INCLUDES) -c $<
+	$(CXX) $(CXXFLAGS) $(CFLAGS) $(INCLUDES) -o $@ -c $<
 
 tsan_test: $(TEST_OBJ) $(UNIT_TEST_OBJ) $(RTL_TEST_OBJ) $(LIBTSAN) $(GTEST_LIB)
 	$(CXX) $^ -o $@ $(LDFLAGS)
