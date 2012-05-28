@@ -88,7 +88,7 @@ static inline int AppendSignedDecimal(char **buff, const char *buff_end,
 static inline int AppendString(char **buff, const char *buff_end,
                                const char *s) {
   // Avoid library functions like stpcpy here.
-  RAW_CHECK(s);
+  RAW_CHECK_MSG(s, "Error: passing a NULL pointer to AppendString\n");
   int result = 0;
   for (; *s; s++) {
     result += AppendChar(buff, buff_end, *s);
