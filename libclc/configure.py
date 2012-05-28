@@ -40,7 +40,7 @@ llvm_clang = os.path.join(llvm_bindir, 'clang')
 llvm_link = os.path.join(llvm_bindir, 'llvm-link')
 llvm_opt = os.path.join(llvm_bindir, 'opt')
 
-default_targets = ['ptx32--nvidiacl', 'ptx64--nvidiacl']
+default_targets = ['nvptx--nvidiacl', 'nvptx64--nvidiacl']
 
 targets = args
 if not targets:
@@ -73,7 +73,7 @@ manifest_deps = set([sys.argv[0], os.path.join(srcdir, 'build', 'metabuild.py'),
 for target in targets:
   (t_arch, t_vendor, t_os) = target.split('-')
   archs = [t_arch]
-  if t_arch == 'ptx32' or t_arch == 'ptx64':
+  if t_arch == 'nvptx' or t_arch == 'nvptx64':
     archs.append('ptx')
   archs.append('generic')
 
