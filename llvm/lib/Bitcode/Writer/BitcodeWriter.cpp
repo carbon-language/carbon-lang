@@ -177,18 +177,7 @@ static void WriteAttributeTable(const ValueEnumerator &VE,
     for (unsigned i = 0, e = A.getNumSlots(); i != e; ++i) {
       const AttributeWithIndex &PAWI = A.getSlot(i);
       Record.push_back(PAWI.Index);
-
-      // FIXME: remove in LLVM 3.0
-      // Store the alignment in the bitcode as a 16-bit raw value instead of a
-      // 5-bit log2 encoded value. Shift the bits above the alignment up by
-      // 11 bits.
-      uint64_t FauxAttr = PAWI.Attrs.Raw() & 0xffff;
-      if (PAWI.Attrs & Attribute::Alignment)
-        FauxAttr |= (1ull<<16)<<
-            (((PAWI.Attrs & Attribute::Alignment).Raw()-1) >> 16);
-      FauxAttr |= (PAWI.Attrs.Raw() & (0x3FFull << 21)) << 11;
-
-      Record.push_back(FauxAttr);
+      Record.push_back(Attribute::encodeLLVMAttributesForBitcode(PAWI.Attrs));
     }
 
     Stream.EmitRecord(bitc::PARAMATTR_CODE_ENTRY, Record);
