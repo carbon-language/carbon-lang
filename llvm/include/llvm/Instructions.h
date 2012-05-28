@@ -2470,141 +2470,17 @@ protected:
   virtual SwitchInst *clone_impl() const;
 public:
   
+  template <class SwitchInstTy, class ConstantIntTy, class BasicBlockTy> 
+    class CaseIteratorT;
+
+  typedef CaseIteratorT<const SwitchInst, const ConstantInt, const BasicBlock>
+      ConstCaseIt;
+  
+  class CaseIt;
+  
   // -2
   static const unsigned DefaultPseudoIndex = static_cast<unsigned>(~0L-1);
   
-  template <class SwitchInstTy, class ConstantIntTy, class BasicBlockTy> 
-  class CaseIteratorT {
-  protected:
-    
-    SwitchInstTy *SI;
-    unsigned Index;
-    
-  public:
-    
-    typedef CaseIteratorT<SwitchInstTy, ConstantIntTy, BasicBlockTy> Self;
-    
-    /// Initializes case iterator for given SwitchInst and for given
-    /// case number.    
-    CaseIteratorT(SwitchInstTy *SI, unsigned CaseNum) {
-      this->SI = SI;
-      Index = CaseNum;
-    }
-    
-    /// Initializes case iterator for given SwitchInst and for given
-    /// TerminatorInst's successor index.
-    static Self fromSuccessorIndex(SwitchInstTy *SI, unsigned SuccessorIndex) {
-      assert(SuccessorIndex < SI->getNumSuccessors() &&
-             "Successor index # out of range!");    
-      return SuccessorIndex != 0 ? 
-             Self(SI, SuccessorIndex - 1) :
-             Self(SI, DefaultPseudoIndex);       
-    }
-    
-    /// Resolves case value for current case.
-    /// @Deprecated
-    ConstantIntTy *getCaseValue() {
-      assert(Index < SI->getNumCases() && "Index out the number of cases.");
-      ConstantRangesSet CRS =
-          reinterpret_cast<Constant*>(SI->getOperand(2 + Index*2));
-      ConstantRangesSet::Range R = CRS.getItem(0);
-      return R.Low;
-    }
-
-    /// Resolves case value for current case.
-    ConstantRangesSet getCaseValueEx() {
-      assert(Index < SI->getNumCases() && "Index out the number of cases.");
-      return reinterpret_cast<Constant*>(SI->getOperand(2 + Index*2));
-    }
-    
-    /// Resolves successor for current case.
-    BasicBlockTy *getCaseSuccessor() {
-      assert((Index < SI->getNumCases() ||
-              Index == DefaultPseudoIndex) &&
-             "Index out the number of cases.");
-      return SI->getSuccessor(getSuccessorIndex());      
-    }
-    
-    /// Returns number of current case.
-    unsigned getCaseIndex() const { return Index; }
-    
-    /// Returns TerminatorInst's successor index for current case successor.
-    unsigned getSuccessorIndex() const {
-      assert((Index == DefaultPseudoIndex || Index < SI->getNumCases()) &&
-             "Index out the number of cases.");
-      return Index != DefaultPseudoIndex ? Index + 1 : 0;
-    }
-    
-    Self operator++() {
-      // Check index correctness after increment.
-      // Note: Index == getNumCases() means end().      
-      assert(Index+1 <= SI->getNumCases() && "Index out the number of cases.");
-      ++Index;
-      return *this;
-    }
-    Self operator++(int) {
-      Self tmp = *this;
-      ++(*this);
-      return tmp;
-    }
-    Self operator--() { 
-      // Check index correctness after decrement.
-      // Note: Index == getNumCases() means end().
-      // Also allow "-1" iterator here. That will became valid after ++.
-      assert((Index == 0 || Index-1 <= SI->getNumCases()) &&
-             "Index out the number of cases.");
-      --Index;
-      return *this;
-    }
-    Self operator--(int) {
-      Self tmp = *this;
-      --(*this);
-      return tmp;
-    }
-    bool operator==(const Self& RHS) const {
-      assert(RHS.SI == SI && "Incompatible operators.");
-      return RHS.Index == Index;
-    }
-    bool operator!=(const Self& RHS) const {
-      assert(RHS.SI == SI && "Incompatible operators.");
-      return RHS.Index != Index;
-    }
-  };
-  
-  typedef CaseIteratorT<const SwitchInst, const ConstantInt, const BasicBlock>
-    ConstCaseIt;
-
-  class CaseIt : public CaseIteratorT<SwitchInst, ConstantInt, BasicBlock> {
-    
-    typedef CaseIteratorT<SwitchInst, ConstantInt, BasicBlock> ParentTy;
-  
-  public:
-    
-    CaseIt(const ParentTy& Src) : ParentTy(Src) {}
-    CaseIt(SwitchInst *SI, unsigned CaseNum) : ParentTy(SI, CaseNum) {}
-
-    /// Sets the new value for current case.    
-    /// @Deprecated.
-    void setValue(ConstantInt *V) {
-      assert(Index < SI->getNumCases() && "Index out the number of cases.");
-      CRSBuilder CB;
-      CB.add(V);
-      SI->setOperand(2 + Index*2,
-          reinterpret_cast<Value*>((Constant*)CB.getCase()));
-    }
-    
-    /// Sets the new value for current case.
-    void setValueEx(ConstantRangesSet& V) {
-      assert(Index < SI->getNumCases() && "Index out the number of cases.");
-      SI->setOperand(2 + Index*2, reinterpret_cast<Value*>((Constant*)V));      
-    }
-    
-    /// Sets the new successor for current case.
-    void setSuccessor(BasicBlock *S) {
-      SI->setSuccessor(getSuccessorIndex(), S);      
-    }
-  };
-
   static SwitchInst *Create(Value *Value, BasicBlock *Default,
                             unsigned NumCases, Instruction *InsertBefore = 0) {
     return new SwitchInst(Value, Default, NumCases, InsertBefore);
@@ -2743,8 +2619,140 @@ public:
     }
     return Hash;
   }  
+  
+  // Case iterators definition.
+
+  template <class SwitchInstTy, class ConstantIntTy, class BasicBlockTy> 
+  class CaseIteratorT {
+  protected:
+    
+    SwitchInstTy *SI;
+    unsigned Index;
+    
+  public:
+    
+    typedef CaseIteratorT<SwitchInstTy, ConstantIntTy, BasicBlockTy> Self;
+    
+    /// Initializes case iterator for given SwitchInst and for given
+    /// case number.    
+    CaseIteratorT(SwitchInstTy *SI, unsigned CaseNum) {
+      this->SI = SI;
+      Index = CaseNum;
+    }
+    
+    /// Initializes case iterator for given SwitchInst and for given
+    /// TerminatorInst's successor index.
+    static Self fromSuccessorIndex(SwitchInstTy *SI, unsigned SuccessorIndex) {
+      assert(SuccessorIndex < SI->getNumSuccessors() &&
+             "Successor index # out of range!");    
+      return SuccessorIndex != 0 ? 
+             Self(SI, SuccessorIndex - 1) :
+             Self(SI, DefaultPseudoIndex);       
+    }
+    
+    /// Resolves case value for current case.
+    /// @Deprecated
+    ConstantIntTy *getCaseValue() {
+      assert(Index < SI->getNumCases() && "Index out the number of cases.");
+      ConstantRangesSet CRS =
+          reinterpret_cast<Constant*>(SI->getOperand(2 + Index*2));
+      ConstantRangesSet::Range R = CRS.getItem(0);
+      return R.Low;
+    }
+
+    /// Resolves case value for current case.
+    ConstantRangesSet getCaseValueEx() {
+      assert(Index < SI->getNumCases() && "Index out the number of cases.");
+      return reinterpret_cast<Constant*>(SI->getOperand(2 + Index*2));
+    }
+    
+    /// Resolves successor for current case.
+    BasicBlockTy *getCaseSuccessor() {
+      assert((Index < SI->getNumCases() ||
+              Index == DefaultPseudoIndex) &&
+             "Index out the number of cases.");
+      return SI->getSuccessor(getSuccessorIndex());      
+    }
+    
+    /// Returns number of current case.
+    unsigned getCaseIndex() const { return Index; }
+    
+    /// Returns TerminatorInst's successor index for current case successor.
+    unsigned getSuccessorIndex() const {
+      assert((Index == DefaultPseudoIndex || Index < SI->getNumCases()) &&
+             "Index out the number of cases.");
+      return Index != DefaultPseudoIndex ? Index + 1 : 0;
+    }
+    
+    Self operator++() {
+      // Check index correctness after increment.
+      // Note: Index == getNumCases() means end().      
+      assert(Index+1 <= SI->getNumCases() && "Index out the number of cases.");
+      ++Index;
+      return *this;
+    }
+    Self operator++(int) {
+      Self tmp = *this;
+      ++(*this);
+      return tmp;
+    }
+    Self operator--() { 
+      // Check index correctness after decrement.
+      // Note: Index == getNumCases() means end().
+      // Also allow "-1" iterator here. That will became valid after ++.
+      assert((Index == 0 || Index-1 <= SI->getNumCases()) &&
+             "Index out the number of cases.");
+      --Index;
+      return *this;
+    }
+    Self operator--(int) {
+      Self tmp = *this;
+      --(*this);
+      return tmp;
+    }
+    bool operator==(const Self& RHS) const {
+      assert(RHS.SI == SI && "Incompatible operators.");
+      return RHS.Index == Index;
+    }
+    bool operator!=(const Self& RHS) const {
+      assert(RHS.SI == SI && "Incompatible operators.");
+      return RHS.Index != Index;
+    }
+  };
+
+  class CaseIt : public CaseIteratorT<SwitchInst, ConstantInt, BasicBlock> {
+    
+    typedef CaseIteratorT<SwitchInst, ConstantInt, BasicBlock> ParentTy;
+  
+  public:
+    
+    CaseIt(const ParentTy& Src) : ParentTy(Src) {}
+    CaseIt(SwitchInst *SI, unsigned CaseNum) : ParentTy(SI, CaseNum) {}
+
+    /// Sets the new value for current case.    
+    /// @Deprecated.
+    void setValue(ConstantInt *V) {
+      assert(Index < SI->getNumCases() && "Index out the number of cases.");
+      CRSBuilder CB;
+      CB.add(V);
+      SI->setOperand(2 + Index*2,
+          reinterpret_cast<Value*>((Constant*)CB.getCase()));
+    }
+    
+    /// Sets the new value for current case.
+    void setValueEx(ConstantRangesSet& V) {
+      assert(Index < SI->getNumCases() && "Index out the number of cases.");
+      SI->setOperand(2 + Index*2, reinterpret_cast<Value*>((Constant*)V));      
+    }
+    
+    /// Sets the new successor for current case.
+    void setSuccessor(BasicBlock *S) {
+      SI->setSuccessor(getSuccessorIndex(), S);      
+    }
+  };
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
+
   static inline bool classof(const SwitchInst *) { return true; }
   static inline bool classof(const Instruction *I) {
     return I->getOpcode() == Instruction::Switch;
