@@ -17,6 +17,9 @@
 /* 6.1 Supported Data Types */
 #include <clc/clctypes.h>
 
+/* 6.2.3 Explicit Conversions */
+#include <clc/convert.h>
+
 /* 6.2.4.2 Reinterpreting Types Using as_type() and as_typen() */
 #include <clc/as_type.h>
 
