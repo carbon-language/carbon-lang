@@ -247,7 +247,7 @@ void GetThreadStackAndTls(bool main, uptr *stk_addr, uptr *stk_size,
   *tls_size = g_tls_size;
 
   if (main) {
-    uptr kBufSize = 1 << 20;
+    uptr kBufSize = 1 << 26;
     char *buf = (char*)my_mmap(0, kBufSize, PROT_READ | PROT_WRITE,
                                MAP_PRIVATE | MAP_ANON, -1, 0);
     fd_t maps = internal_open("/proc/self/maps", false);
