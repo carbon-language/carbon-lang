@@ -25,26 +25,25 @@ template<typename decl_type>
 class Redeclarable {
 
 protected:
-  // FIXME: PointerIntPair is a value class that should not be inherited from.
-  // This should change to using containment.
-  struct DeclLink : public llvm::PointerIntPair<decl_type *, 1, bool> {
+  class DeclLink {
+    llvm::PointerIntPair<decl_type *, 1, bool> NextAndIsPrevious;
+  public:
     DeclLink(decl_type *D, bool isLatest)
-      : llvm::PointerIntPair<decl_type *, 1, bool>(D, isLatest) { }
+      : NextAndIsPrevious(D, isLatest) { }
 
-    typedef llvm::PointerIntPair<decl_type *, 1, bool> base_type;
-
-    bool NextIsPrevious() const { return base_type::getInt() == false; }
-    bool NextIsLatest() const { return base_type::getInt() == true; }
-    decl_type *getNext() const { return base_type::getPointer(); }
+    bool NextIsPrevious() const { return !NextAndIsPrevious.getInt(); }
+    bool NextIsLatest() const { return NextAndIsPrevious.getInt(); }
+    decl_type *getNext() const { return NextAndIsPrevious.getPointer(); }
+    void setNext(decl_type *D) { NextAndIsPrevious.setPointer(D); }
   };
 
-  struct PreviousDeclLink : public DeclLink {
-    PreviousDeclLink(decl_type *D) : DeclLink(D, false) { }
-  };
+  static DeclLink PreviousDeclLink(decl_type *D) {
+    return DeclLink(D, false);
+  }
 
-  struct LatestDeclLink : public DeclLink {
-    LatestDeclLink(decl_type *D) : DeclLink(D, true) { }
-  };
+  static DeclLink LatestDeclLink(decl_type *D) {
+    return DeclLink(D, true);
+  }
 
   /// \brief Points to the next redeclaration in the chain.
   ///
