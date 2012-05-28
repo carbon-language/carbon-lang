@@ -2217,7 +2217,7 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
   if (Op0I && Op1I && Op0I->isShift() && 
       Op0I->getOpcode() == Op1I->getOpcode() && 
       Op0I->getOperand(1) == Op1I->getOperand(1) &&
-      (Op1I->hasOneUse() || Op1I->hasOneUse())) {
+      (Op0I->hasOneUse() || Op1I->hasOneUse())) {
     Value *NewOp =
       Builder->CreateXor(Op0I->getOperand(0), Op1I->getOperand(0),
                          Op0I->getName());
