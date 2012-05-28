@@ -117,12 +117,20 @@ void llvm_gcda_start_file(const char *orig_filename) {
   output_file = fopen(filename, "w+b");
 
   if (!output_file) {
-    const char *cptr = strrchr(orig_filename, '/');
-    output_file = fopen(cptr ? cptr + 1 : orig_filename, "w+b");
+    int len = strlen(orig_filename) - 1;
+
+    for (; len >= 0 && orig_filename[len] != '/'; --len)
+      /* empty */;
+
+    if (len < 0)
+      len = 0;
+    else if (orig_filename[len] == '/')
+      ++len;
+
+    output_file = fopen(&orig_filename[len], "w+b");
 
     if (!output_file) {
-      fprintf(stderr, "profiling:%s: cannot open\n",
-              cptr ? cptr + 1 : orig_filename);
+      fprintf(stderr, "profiling:%s: cannot open\n", &orig_filename[len]);
       return;
     }
   }
@@ -160,8 +168,9 @@ void llvm_gcda_increment_indirect_counter(uint32_t *predecessor,
     ++*counter;
 #ifdef DEBUG_GCDAPROFILING
   else
-    printf("llvmgcda: increment_indirect_counter counters=%x, pred=%u\n",
-           state_table_row, *predecessor);
+    fprintf(stderr,
+            "llvmgcda: increment_indirect_counter counters=%x, pred=%u\n",
+            state_table_row, *predecessor);
 #endif
 }
 
