@@ -70,9 +70,7 @@ namespace {
 
     // Get pointers to the functions in the runtime library.
     Constant *getStartFileFunc();
-    void incrementIndirectCounter(IRBuilder<> &Builder, BasicBlock *Exit,
-                                  GlobalVariable *EdgeState,
-                                  Value *CounterPtrArray);
+    Constant *getIncrementIndirectCounterFunc();
     Constant *getEmitFunctionFunc();
     Constant *getEmitArcsFunc();
     Constant *getEndFileFunc();
@@ -92,6 +90,7 @@ namespace {
     // list.
     void insertCounterWriteout(SmallVector<std::pair<GlobalVariable *,
                                                      MDNode *>, 8> &);
+    void insertIndirectCounterIncrement();
 
     std::string mangleName(DICompileUnit CU, std::string NewStem);
 
@@ -423,6 +422,7 @@ bool GCOVProfiler::emitProfileArcs() {
   if (!CU_Nodes) return false;
 
   bool Result = false;  
+  bool InsertIndCounterIncrCode = false;
   for (unsigned i = 0, e = CU_Nodes->getNumOperands(); i != e; ++i) {
     DICompileUnit CU(CU_Nodes->getOperand(i));
     DIArray SPs = CU.getSubprograms();
@@ -503,22 +503,26 @@ bool GCOVProfiler::emitProfileArcs() {
         }
         for (int i = 0, e = ComplexEdgeSuccs.size(); i != e; ++i) {
           // call runtime to perform increment
-          BasicBlock *BB = ComplexEdgeSuccs[i+1];
-          BasicBlock::iterator InsertPt = BB->getFirstInsertionPt();
-          BasicBlock *Split = BB->splitBasicBlock(InsertPt);
-          InsertPt = BB->getFirstInsertionPt();
+          BasicBlock::iterator InsertPt =
+            ComplexEdgeSuccs[i+1]->getFirstInsertionPt();
           IRBuilder<> Builder(InsertPt);
           Value *CounterPtrArray =
             Builder.CreateConstInBoundsGEP2_64(EdgeTable, 0,
                                                i * ComplexEdgePreds.size());
 
           // Build code to increment the counter.
-          incrementIndirectCounter(Builder, Split, EdgeState, CounterPtrArray);
+          InsertIndCounterIncrCode = true;
+          Builder.CreateCall2(getIncrementIndirectCounterFunc(),
+                              EdgeState, CounterPtrArray);
         }
       }
     }
     insertCounterWriteout(CountersBySP);
   }
+
+  if (InsertIndCounterIncrCode)
+    insertIndirectCounterIncrement();
+
   return Result;
 }
 
@@ -576,52 +580,15 @@ Constant *GCOVProfiler::getStartFileFunc() {
   return M->getOrInsertFunction("llvm_gcda_start_file", FTy);
 }
 
-/// incrementIndirectCounter - Emit code that increments the indirect
-/// counter. The code is meant to copy the llvm_gcda_increment_indirect_counter
-/// function, but because it's inlined into the function, we don't have to worry
-/// about the runtime library possibly writing into a protected area.
-void GCOVProfiler::incrementIndirectCounter(IRBuilder<> &Builder,
-                                            BasicBlock *Exit,
-                                            GlobalVariable *EdgeState,
-                                            Value *CounterPtrArray) {
+Constant *GCOVProfiler::getIncrementIndirectCounterFunc() {
+  Type *Int32Ty = Type::getInt32Ty(*Ctx);
   Type *Int64Ty = Type::getInt64Ty(*Ctx);
-  ConstantInt *NegOne = ConstantInt::get(Type::getInt32Ty(*Ctx), 0xffffffff);
-
-  // Create exiting blocks.
-  BasicBlock *InsBB = Builder.GetInsertBlock();
-  Function *Fn = InsBB->getParent();
-  BasicBlock *PredNotNegOne = BasicBlock::Create(*Ctx, "", Fn, Exit);
-  BasicBlock *CounterEnd = BasicBlock::Create(*Ctx, "", Fn, Exit);
-
-  // uint32_t pred = *EdgeState;
-  // if (pred == 0xffffffff) return;
-  Value *Pred = Builder.CreateLoad(EdgeState, "predecessor");
-  Value *Cond = Builder.CreateICmpEQ(Pred, NegOne);
-  InsBB->getTerminator()->eraseFromParent();
-  BranchInst::Create(Exit, PredNotNegOne, Cond, InsBB);
-
-  Builder.SetInsertPoint(PredNotNegOne);
-
-  // uint64_t *counter = CounterPtrArray[pred];
-  // if (!counter) return;
-  Value *ZExtPred = Builder.CreateZExt(Pred, Int64Ty);
-  Value *GEP = Builder.CreateGEP(CounterPtrArray, ZExtPred);
-  Value *Counter = Builder.CreateLoad(GEP, "counter");
-  Cond = Builder.CreateICmpEQ(Counter,
-                              Constant::getNullValue(Type::getInt64PtrTy(*Ctx, 0)));
-  Builder.CreateCondBr(Cond, Exit, CounterEnd);
-
-  Builder.SetInsertPoint(CounterEnd);
-
-  // ++*counter;
-  Value *Add = Builder.CreateAdd(Builder.CreateLoad(Counter),
-                                 ConstantInt::get(Int64Ty, 1));
-  Builder.CreateStore(Add, Counter);
-  Builder.CreateBr(Exit);
-
-  // Clear the predecessor number
-  Builder.SetInsertPoint(Exit->getFirstInsertionPt());
-  Builder.CreateStore(NegOne, EdgeState);
+  Type *Args[] = {
+    Int32Ty->getPointerTo(),                // uint32_t *predecessor
+    Int64Ty->getPointerTo()->getPointerTo() // uint64_t **counters
+  };
+  FunctionType *FTy = FunctionType::get(Type::getVoidTy(*Ctx), Args, false);
+  return M->getOrInsertFunction("__llvm_gcov_indirect_counter_increment", FTy);
 }
 
 Constant *GCOVProfiler::getEmitFunctionFunc() {
@@ -706,4 +673,56 @@ void GCOVProfiler::insertCounterWriteout(
   Builder.CreateRetVoid();
 
   InsertProfilingShutdownCall(WriteoutF, M);
+}
+
+void GCOVProfiler::insertIndirectCounterIncrement() {
+  Function *Fn =
+    cast<Function>(GCOVProfiler::getIncrementIndirectCounterFunc());
+  Fn->setUnnamedAddr(true);
+  Fn->setLinkage(GlobalValue::InternalLinkage);
+  Fn->addFnAttr(Attribute::NoInline);
+
+  Type *Int32Ty = Type::getInt32Ty(*Ctx);
+  Type *Int64Ty = Type::getInt64Ty(*Ctx);
+  Constant *NegOne = ConstantInt::get(Int32Ty, 0xffffffff);
+
+  // Create basic blocks for function.
+  BasicBlock *BB = BasicBlock::Create(*Ctx, "entry", Fn);
+  IRBuilder<> Builder(BB);
+
+  BasicBlock *PredNotNegOne = BasicBlock::Create(*Ctx, "", Fn);
+  BasicBlock *CounterEnd = BasicBlock::Create(*Ctx, "", Fn);
+  BasicBlock *Exit = BasicBlock::Create(*Ctx, "exit", Fn);
+
+  // uint32_t pred = *predecessor;
+  // if (pred == 0xffffffff) return;
+  Argument *Arg = Fn->arg_begin();
+  Arg->setName("predecessor");
+  Value *Pred = Builder.CreateLoad(Arg, "pred");
+  Value *Cond = Builder.CreateICmpEQ(Pred, NegOne);
+  BranchInst::Create(Exit, PredNotNegOne, Cond, BB);
+
+  Builder.SetInsertPoint(PredNotNegOne);
+
+  // uint64_t *counter = counters[pred];
+  // if (!counter) return;
+  Value *ZExtPred = Builder.CreateZExt(Pred, Int64Ty);
+  Arg = llvm::next(Fn->arg_begin());
+  Arg->setName("counters");
+  Value *GEP = Builder.CreateGEP(Arg, ZExtPred);
+  Value *Counter = Builder.CreateLoad(GEP, "counter");
+  Cond = Builder.CreateICmpEQ(Counter,
+                              Constant::getNullValue(Int64Ty->getPointerTo()));
+  Builder.CreateCondBr(Cond, Exit, CounterEnd);
+
+  // ++*counter;
+  Builder.SetInsertPoint(CounterEnd);
+  Value *Add = Builder.CreateAdd(Builder.CreateLoad(Counter),
+                                 ConstantInt::get(Int64Ty, 1));
+  Builder.CreateStore(Add, Counter);
+  Builder.CreateBr(Exit);
+
+  // Fill in the exit block.
+  Builder.SetInsertPoint(Exit);
+  Builder.CreateRetVoid();
 }
