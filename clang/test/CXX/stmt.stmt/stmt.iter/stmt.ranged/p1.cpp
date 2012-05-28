@@ -1,5 +1,13 @@
 // RUN: %clang_cc1 -std=c++11 -fsyntax-only -verify %s
 
+struct pr12960 {
+  int begin;
+  void foo(int x) {
+    for (int& it : x) { // expected-error {{use of undeclared identifier 'begin'}} expected-note {{range has type 'int'}}
+    }
+  }
+};
+
 namespace std {
   template<typename T>
     auto begin(T &&t) -> decltype(t.begin()) { return t.begin(); } // expected-note 4{{ignored: substitution failure}}
@@ -207,3 +215,4 @@ void example() {
   for (int &x : array)
     x *= 2;
 }
+
