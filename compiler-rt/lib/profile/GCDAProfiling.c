@@ -67,20 +67,39 @@ static void write_string(const char *s) {
 }
 
 static char *mangle_filename(const char *orig_filename) {
-  /* TODO: handle GCOV_PREFIX_STRIP */
   char *filename = 0;
   int prefix_len = 0;
+  int prefix_strip = 0;
+  int level = 0;
+  const char *fname = orig_filename, *ptr = NULL;
   const char *prefix = getenv("GCOV_PREFIX");
+  const char *tmp = getenv("GCOV_PREFIX_STRIP");
 
-  if (!prefix || prefix[0] != '/') /* Ignore non-absolute paths */
+  if (!prefix)
     return strdup(orig_filename);
+
+  if (tmp) {
+    prefix_strip = atoi(tmp);
+
+    /* Negative GCOV_PREFIX_STRIP values are ignored */
+    if (prefix_strip < 0)
+      prefix_strip = 0;
+  }
 
   prefix_len = strlen(prefix);
   filename = malloc(prefix_len + 1 + strlen(orig_filename) + 1);
   strcpy(filename, prefix);
+
   if (prefix[prefix_len - 1] != '/')
     strcat(filename, "/");
-  strcat(filename, orig_filename);
+
+  for (ptr = fname + 1; *ptr != '\0' && level < prefix_strip; ++ptr) {
+    if (*ptr != '/') continue;
+    fname = ptr;
+    ++level;
+  }
+
+  strcat(filename, fname);
 
   return filename;
 }
