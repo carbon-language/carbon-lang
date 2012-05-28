@@ -188,8 +188,7 @@ Constant *Module::getOrInsertTargetIntrinsic(StringRef Name,
 
 Constant *Module::getOrInsertFunction(StringRef Name,
                                       FunctionType *Ty) {
-  AttrListPtr AttributeList = AttrListPtr::get((AttributeWithIndex *)0, 0);
-  return getOrInsertFunction(Name, Ty, AttributeList);
+  return getOrInsertFunction(Name, Ty, AttrListPtr());
 }
 
 // getOrInsertFunction - Look up the specified function in the module symbol
@@ -231,7 +230,7 @@ Constant *Module::getOrInsertFunction(StringRef Name,
   // Build the function type and chain to the other getOrInsertFunction...
   return getOrInsertFunction(Name,
                              FunctionType::get(RetTy, ArgTys, false),
-                             AttrListPtr::get((AttributeWithIndex *)0, 0));
+                             AttrListPtr());
 }
 
 // getFunction - Look up the specified function in the module symbol table.
