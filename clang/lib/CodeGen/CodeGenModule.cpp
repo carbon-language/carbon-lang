@@ -476,8 +476,7 @@ void CodeGenModule::SetLLVMFunctionAttributes(const Decl *D,
   unsigned CallingConv;
   AttributeListType AttributeList;
   ConstructAttributeList(Info, D, AttributeList, CallingConv);
-  F->setAttributes(llvm::AttrListPtr::get(AttributeList.begin(),
-                                          AttributeList.size()));
+  F->setAttributes(llvm::AttrListPtr::get(AttributeList));
   F->setCallingConv(static_cast<llvm::CallingConv::ID>(CallingConv));
 }
 
@@ -1735,8 +1734,7 @@ static void ReplaceUsesOfNonProtoTypeWithRealFunction(llvm::GlobalValue *Old,
     ArgList.clear();
     if (!NewCall->getType()->isVoidTy())
       NewCall->takeName(CI);
-    NewCall->setAttributes(llvm::AttrListPtr::get(AttrVec.begin(),
-                                                  AttrVec.end()));
+    NewCall->setAttributes(llvm::AttrListPtr::get(AttrVec));
     NewCall->setCallingConv(CI->getCallingConv());
 
     // Finally, remove the old call, replacing any uses with the new one.

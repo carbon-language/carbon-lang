@@ -2066,8 +2066,7 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
   unsigned CallingConv;
   CodeGen::AttributeListType AttributeList;
   CGM.ConstructAttributeList(CallInfo, TargetDecl, AttributeList, CallingConv);
-  llvm::AttrListPtr Attrs = llvm::AttrListPtr::get(AttributeList.begin(),
-                                                   AttributeList.end());
+  llvm::AttrListPtr Attrs = llvm::AttrListPtr::get(AttributeList);
 
   llvm::BasicBlock *InvokeDest = 0;
   if (!(Attrs.getFnAttributes() & llvm::Attribute::NoUnwind))
