@@ -140,18 +140,20 @@ void ThreadStart(ThreadState *thr, int tid) {
   uptr tls_size = 0;
   GetThreadStackAndTls(tid == 0, &stk_addr, &stk_size, &tls_addr, &tls_size);
 
-  MemoryResetRange(thr, /*pc=*/ 1, stk_addr, stk_size);
+  if (tid) {
+    MemoryResetRange(thr, /*pc=*/ 1, stk_addr, stk_size);
 
-  // Check that the thr object is in tls;
-  const uptr thr_beg = (uptr)thr;
-  const uptr thr_end = (uptr)thr + sizeof(*thr);
-  CHECK_GE(thr_beg, tls_addr);
-  CHECK_LE(thr_beg, tls_addr + tls_size);
-  CHECK_GE(thr_end, tls_addr);
-  CHECK_LE(thr_end, tls_addr + tls_size);
-  // Since the thr object is huge, skip it.
-  MemoryResetRange(thr, /*pc=*/ 2, tls_addr, thr_beg - tls_addr);
-  MemoryResetRange(thr, /*pc=*/ 2, thr_end, tls_addr + tls_size - thr_end);
+    // Check that the thr object is in tls;
+    const uptr thr_beg = (uptr)thr;
+    const uptr thr_end = (uptr)thr + sizeof(*thr);
+    CHECK_GE(thr_beg, tls_addr);
+    CHECK_LE(thr_beg, tls_addr + tls_size);
+    CHECK_GE(thr_end, tls_addr);
+    CHECK_LE(thr_end, tls_addr + tls_size);
+    // Since the thr object is huge, skip it.
+    MemoryResetRange(thr, /*pc=*/ 2, tls_addr, thr_beg - tls_addr);
+    MemoryResetRange(thr, /*pc=*/ 2, thr_end, tls_addr + tls_size - thr_end);
+  }
 
   Lock l(&CTX()->thread_mtx);
   ThreadContext *tctx = CTX()->threads[tid];
