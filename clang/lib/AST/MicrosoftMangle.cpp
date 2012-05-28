@@ -309,8 +309,8 @@ void MicrosoftCXXNameMangler::mangleNumber(const llvm::APSInt &Value) {
     return;
   }
   if (Value.uge(1) && Value.ule(10))
-    (Value-llvm::APSInt(llvm::APInt(Value.getBitWidth(), 1, Value.isSigned()))).print(Out,
-                                                                                   false);
+    (Value-llvm::APSInt(llvm::APInt(Value.getBitWidth(), 1, Value.isSigned()),
+                        Value.isUnsigned())).print(Out, false);
   else {
     // We have to build up the encoding in reverse order, so it will come
     // out right when we write it out.
