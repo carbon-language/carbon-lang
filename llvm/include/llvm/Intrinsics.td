@@ -259,6 +259,7 @@ let Properties = [IntrReadMem] in {
   def int_log2 : Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>]>;
   def int_exp  : Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>]>;
   def int_exp2 : Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>]>;
+  def int_fabs : Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>]>;
 }
 
 let Properties = [IntrNoMem] in {

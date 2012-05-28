@@ -4920,6 +4920,11 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
   case Intrinsic::pow:
     visitPow(I);
     return 0;
+  case Intrinsic::fabs:
+    setValue(&I, DAG.getNode(ISD::FABS, dl,
+                             getValue(I.getArgOperand(0)).getValueType(),
+                             getValue(I.getArgOperand(0))));
+    return 0;
   case Intrinsic::fma:
     setValue(&I, DAG.getNode(ISD::FMA, dl,
                              getValue(I.getArgOperand(0)).getValueType(),
