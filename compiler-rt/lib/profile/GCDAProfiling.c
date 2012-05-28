@@ -113,21 +113,10 @@ void llvm_gcda_start_file(const char *orig_filename) {
   output_file = fopen(filename, "w+b");
 
   if (!output_file) {
-    int len = strlen(orig_filename) - 1;
     recursive_mkdir(filename);
-
-    for (; len >= 0 && orig_filename[len] != '/'; --len)
-      /* empty */;
-
-    if (len < 0)
-      len = 0;
-    else if (orig_filename[len] == '/')
-      ++len;
-
-    output_file = fopen(&orig_filename[len], "w+b");
-
+    output_file = fopen(filename, "w+b");
     if (!output_file) {
-      fprintf(stderr, "profiling:%s: cannot open\n", &orig_filename[len]);
+      fprintf(stderr, "profiling:%s: cannot open\n", filename);
       return;
     }
   }
