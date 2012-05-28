@@ -317,7 +317,7 @@ void MicrosoftCXXNameMangler::mangleNumber(const llvm::APSInt &Value) {
     char Encoding[64];
     char *EndPtr = Encoding+sizeof(Encoding);
     char *CurPtr = EndPtr;
-    llvm::APSInt NibbleMask(Value.getBitWidth());
+    llvm::APSInt NibbleMask(Value.getBitWidth(), Value.isUnsigned());
     NibbleMask = 0xf;
     for (int i = 0, e = Value.getActiveBits() / 4; i != e; ++i) {
       *--CurPtr = 'A' + Value.And(NibbleMask).lshr(i*4).getLimitedValue(0xf);
