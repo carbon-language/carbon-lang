@@ -226,15 +226,20 @@ void ThreadFinish(ThreadState *thr) {
 
 int ThreadTid(ThreadState *thr, uptr pc, uptr uid) {
   CHECK_GT(thr->in_rtl, 0);
-  DPrintf("#%d: ThreadTid uid=%lu\n", thr->tid, uid);
-  Lock l(&CTX()->thread_mtx);
+  Context *ctx = CTX();
+  Lock l(&ctx->thread_mtx);
+  int res = -1;
   for (unsigned tid = 0; tid < kMaxTid; tid++) {
-    if (CTX()->threads[tid] != 0
-        && CTX()->threads[tid]->user_id == uid
-        && CTX()->threads[tid]->status != ThreadStatusInvalid)
-      return tid;
+    ThreadContext *tctx = ctx->threads[tid];
+    if (tctx != 0 && tctx->user_id == uid
+        && tctx->status != ThreadStatusInvalid) {
+      tctx->user_id = 0;
+      res = tid;
+      break;
+    }
   }
-  return -1;
+  DPrintf("#%d: ThreadTid uid=%lu tid=%d\n", thr->tid, uid, res);
+  return res;
 }
 
 void ThreadJoin(ThreadState *thr, uptr pc, int tid) {
