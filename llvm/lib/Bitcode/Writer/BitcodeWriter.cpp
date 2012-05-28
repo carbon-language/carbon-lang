@@ -1175,8 +1175,8 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
 
           Vals64.push_back(CRS.isSingleNumber(ri));
 
-          const APInt &Low = r.Low->getValue();
-          const APInt &High = r.High->getValue();
+          const APInt &Low = r.Low;
+          const APInt &High = r.High;
           unsigned Code, Abbrev; // will unused.
           
           EmitAPInt(Vals64, Code, Abbrev, Low, true);

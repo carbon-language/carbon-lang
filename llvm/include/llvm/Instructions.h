@@ -2552,13 +2552,13 @@ public:
   /// that it is handled by the default handler.
   CaseIt findCaseValue(const ConstantInt *C) {
     for (CaseIt i = case_begin(), e = case_end(); i != e; ++i)
-      if (i.getCaseValueEx().isSatisfies(C))
+      if (i.getCaseValueEx().isSatisfies(C->getValue()))
         return i;
     return case_default();
   }
   ConstCaseIt findCaseValue(const ConstantInt *C) const {
     for (ConstCaseIt i = case_begin(), e = case_end(); i != e; ++i)
-      if (i.getCaseValueEx().isSatisfies(C))
+      if (i.getCaseValueEx().isSatisfies(C->getValue()))
         return i;
     return case_default();
   }    
@@ -2657,7 +2657,10 @@ public:
       ConstantRangesSet CRS =
           reinterpret_cast<Constant*>(SI->getOperand(2 + Index*2));
       ConstantRangesSet::Range R = CRS.getItem(0);
-      return R.Low;
+      
+      // FIXME: Currently we work with ConstantInt based cases.
+      // So return CaseValue as ConstantInt.
+      return R.Low.toConstantInt();
     }
 
     /// Resolves case value for current case.
@@ -2734,7 +2737,9 @@ public:
     void setValue(ConstantInt *V) {
       assert(Index < SI->getNumCases() && "Index out the number of cases.");
       CRSBuilder CB;
-      CB.add(V);
+      // FIXME: Currently we work with ConstantInt based cases.
+      // So inititalize IntItem container directly from ConstantInt.
+      CB.add(IntItem::fromConstantInt(V));
       SI->setOperand(2 + Index*2,
           reinterpret_cast<Value*>((Constant*)CB.getCase()));
     }

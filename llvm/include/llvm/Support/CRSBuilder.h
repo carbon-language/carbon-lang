@@ -26,20 +26,19 @@
 
 namespace llvm {
 
-template <class SuccessorClass, bool IsReadonly>
+template <class SuccessorClass>
 class CRSBuilderBase {
 public:
   
-  typedef ConstantRangesSet::RangeT<IsReadonly> RangeTy;
+  typedef ConstantRangesSet::Range RangeTy;
   
   struct RangeEx : public RangeTy {
-    typedef ConstantRangesSet::RangeT<IsReadonly> RangeTy;
-    typedef typename RangeTy::ConstantIntTy ConstantIntTy;
+    typedef ConstantRangesSet::Range RangeTy;
     RangeEx() : Weight(1) {}
     RangeEx(const RangeTy &R) : RangeTy(R.Low, R.High), Weight(1) {}
-    RangeEx(ConstantIntTy *C) : RangeTy(C), Weight(1) {}
-    RangeEx(ConstantIntTy *L, ConstantIntTy *H) : RangeTy(L, H), Weight(1) {}
-    RangeEx(ConstantIntTy *L, ConstantIntTy *H, unsigned W) :
+    RangeEx(const IntItem &C) : RangeTy(C), Weight(1) {}
+    RangeEx(const IntItem &L, const IntItem &H) : RangeTy(L, H), Weight(1) {}
+    RangeEx(const IntItem &L, const IntItem &H, unsigned W) :
       RangeTy(L, H), Weight(W) {}
     unsigned Weight;
   };
@@ -62,7 +61,7 @@ protected:
   bool Sorted;
   
   bool isIntersected(CaseItemIt& LItem, CaseItemIt& RItem) {
-    return LItem->first.High->getValue().uge(RItem->first.Low->getValue());
+    return LItem->first.High->uge(RItem->first.Low);
   }
 
   bool isJoinable(CaseItemIt& LItem, CaseItemIt& RItem) {
@@ -71,10 +70,10 @@ protected:
              "Intersected items with different successors!");
       return false;
     }
-    APInt RLow = RItem->first.Low->getValue();
+    APInt RLow = RItem->first.Low;
     if (RLow != APInt::getNullValue(RLow.getBitWidth()))
       --RLow;
-    return LItem->first.High->getValue().uge(RLow);
+    return LItem->first.High->uge(RLow);
   }
   
   void sort() {
@@ -85,9 +84,6 @@ protected:
   }
   
 public:
-  
-  typedef typename CRSConstantTypes<IsReadonly>::ConstantIntTy ConstantIntTy;
-  typedef typename CRSConstantTypes<IsReadonly>::ConstantRangesSetTy ConstantRangesSetTy;
   
   // Don't public CaseItems itself. Don't allow edit the Items directly. 
   // Just present the user way to iterate over the internal collection
@@ -120,55 +116,55 @@ public:
     sort();
     CaseItems OldItems = Items;
     Items.clear();
-    ConstantIntTy *Low = OldItems.begin()->first.Low;
-    ConstantIntTy *High = OldItems.begin()->first.High;
+    IntItem *Low = &OldItems.begin()->first.Low;
+    IntItem *High = &OldItems.begin()->first.High;
     unsigned Weight = 1;
     SuccessorClass *Successor = OldItems.begin()->second;
     for (CaseItemIt i = OldItems.begin(), j = i+1, e = OldItems.end();
         j != e; i = j++) {
       if (isJoinable(i, j)) {
-        ConstantIntTy *CurHigh = j->first.High;
+        IntItem *CurHigh = &j->first.High;
         ++Weight;
-        if (CurHigh->getValue().ugt(High->getValue()))
+        if ((*CurHigh)->ugt(*High))
           High = CurHigh;
       } else {
-        RangeEx R(Low, High, Weight);
+        RangeEx R(*Low, *High, Weight);
         add(R, Successor);
-        Low = j->first.Low;
-        High = j->first.High; 
+        Low = &j->first.Low;
+        High = &j->first.High; 
         Weight = 1;
         Successor = j->second;
       }
     }
-    RangeEx R(Low, High, Weight);
+    RangeEx R(*Low, *High, Weight);
     add(R, Successor);
     // We recollected the Items, but we kept it sorted.
     Sorted = true;
   }
   
   /// Adds a constant value.
-  void add(ConstantIntTy *C, SuccessorClass *S = 0) {
+  void add(const IntItem &C, SuccessorClass *S = 0) {
     RangeTy R(C);
     add(R, S);
   }
   
   /// Adds a range.
-  void add(ConstantIntTy *Low, ConstantIntTy *High, SuccessorClass *S = 0) {
+  void add(const IntItem &Low, const IntItem &High, SuccessorClass *S = 0) {
     RangeTy R(Low, High);
     add(R, S);
   }
-  void add(RangeTy &R, SuccessorClass *S = 0) {
+  void add(const RangeTy &R, SuccessorClass *S = 0) {
     RangeEx REx = R;
     add(REx, S);
   }   
-  void add(RangeEx &R, SuccessorClass *S = 0) {
+  void add(const RangeEx &R, SuccessorClass *S = 0) {
     Items.push_back(std::make_pair(R, S));
     Sorted = false;
   }  
   
   /// Adds all ranges and values from given ranges set to the current
   /// CRSBuilder object.
-  void add(ConstantRangesSetTy &CRS, SuccessorClass *S = 0) {
+  void add(const ConstantRangesSet &CRS, SuccessorClass *S = 0) {
     for (unsigned i = 0, e = CRS.getNumItems(); i < e; ++i) {
       RangeTy R = CRS.getItem(i);
       add(R, S);
@@ -186,11 +182,11 @@ public:
 };
 
 template <class SuccessorClass>
-class CRSBuilderT : public CRSBuilderBase<SuccessorClass, false> {
+class CRSBuilderT : public CRSBuilderBase<SuccessorClass> {
 public:
   
-  typedef typename CRSBuilderBase<SuccessorClass, false>::RangeTy RangeTy;
-  typedef typename CRSBuilderBase<SuccessorClass, false>::RangeIterator
+  typedef typename CRSBuilderBase<SuccessorClass>::RangeTy RangeTy;
+  typedef typename CRSBuilderBase<SuccessorClass>::RangeIterator
       RangeIterator;
   
 private:
@@ -205,15 +201,17 @@ private:
     std::vector<Constant*> Elts;
     Elts.reserve(Src.size());
     for (RangesCollectionIt i = Src.begin(), e = Src.end(); i != e; ++i) {
-      const RangeTy &R = *i;
+      RangeTy &R = *i;
       std::vector<Constant*> r;
-      if (R.Low != R.High) {
+      if (R.isSingleNumber()) {
         r.reserve(2);
-        r.push_back(R.Low);
-        r.push_back(R.High);
+        // FIXME: Since currently we have ConstantInt based numbers
+        // use hack-conversion of IntItem to ConstantInt
+        r.push_back(R.Low.toConstantInt());
+        r.push_back(R.High.toConstantInt());
       } else {
         r.reserve(1);
-        r.push_back(R.Low);
+        r.push_back(R.Low.toConstantInt());
       }
       Constant *CV = ConstantVector::get(r);
       Elts.push_back(CV);    
@@ -250,7 +248,7 @@ public:
 
 class BasicBlock;
 typedef CRSBuilderT<BasicBlock> CRSBuilder;
-typedef CRSBuilderBase<BasicBlock, true> CRSBuilderConst;  
+typedef CRSBuilderBase<BasicBlock> CRSBuilderConst;  
 
 }
 

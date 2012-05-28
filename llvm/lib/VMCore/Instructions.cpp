@@ -3170,7 +3170,10 @@ SwitchInst::~SwitchInst() {
 ///
 void SwitchInst::addCase(ConstantInt *OnVal, BasicBlock *Dest) {
   CRSBuilder CB;
-  CB.add(OnVal);
+  
+  // FIXME: Currently we work with ConstantInt based cases.
+  // So inititalize IntItem container directly from ConstantInt.
+  CB.add(IntItem::fromConstantInt(OnVal));
   ConstantRangesSet CRS = CB.getCase();
   addCase(CRS, Dest);
 }

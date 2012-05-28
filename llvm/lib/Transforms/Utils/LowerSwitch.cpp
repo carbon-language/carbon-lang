@@ -239,7 +239,11 @@ unsigned LowerSwitch::Clusterify(CaseVector& Cases, SwitchInst *SI) {
   for (CRSBuilder::RangeIterator i = TheClusterifier.begin(),
        e = TheClusterifier.end(); i != e; ++i, ++numCmps) {
     CRSBuilder::Cluster &C = *i;
-    Cases.push_back(CaseRange(C.first.Low, C.first.High, C.second));
+    
+    // FIXME: Currently work with ConstantInt based numbers.
+    // Changing it to APInt based is a pretty heavy for this commit.
+    Cases.push_back(CaseRange(C.first.Low.toConstantInt(),
+                              C.first.High.toConstantInt(), C.second));
     if (C.first.Low != C.first.High)
       // A range counts double, since it requires two compares.
       ++numCmps;

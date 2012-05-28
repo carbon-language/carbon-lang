@@ -2427,7 +2427,7 @@ size_t SelectionDAGBuilder::Clusterify(CaseVector& Cases,
   
   /// Use a shorter form of declaration, and also
   /// show the we want to use CRSBuilder as Clusterifier.
-  typedef CRSBuilderBase<MachineBasicBlock, true> Clusterifier;
+  typedef CRSBuilderBase<MachineBasicBlock> Clusterifier;
   
   Clusterifier TheClusterifier;
 
@@ -2456,7 +2456,10 @@ size_t SelectionDAGBuilder::Clusterify(CaseVector& Cases,
       BPI->setEdgeWeight(SI.getParent(), C.second->getBasicBlock(), W);  
     }
 
-    Cases.push_back(Case(C.first.Low, C.first.High, C.second, W));
+    // FIXME: Currently work with ConstantInt based numbers.
+    // Changing it to APInt based is a pretty heavy for this commit.
+    Cases.push_back(Case(C.first.Low.toConstantInt(),
+                         C.first.High.toConstantInt(), C.second, W));
     
     if (C.first.Low != C.first.High)
     // A range counts double, since it requires two compares.

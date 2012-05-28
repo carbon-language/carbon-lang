@@ -2283,18 +2283,21 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
               ActiveWords = Record[CurIdx++];
             Low = ReadWideAPInt(&Record[CurIdx], ActiveWords, ValueBitWidth);
             CurIdx += ActiveWords;
-            
+
             if (!isSingleNumber) {
               ActiveWords = 1;
               if (ValueBitWidth > 64)
                 ActiveWords = Record[CurIdx++];
               APInt High =
                   ReadWideAPInt(&Record[CurIdx], ActiveWords, ValueBitWidth);
-              CaseBuilder.add(cast<ConstantInt>(ConstantInt::get(OpTy, Low)),
-                              cast<ConstantInt>(ConstantInt::get(OpTy, High)));
+              IntItemConstantIntImpl HighImpl =
+                  cast<ConstantInt>(ConstantInt::get(OpTy, High));
+              
+              CaseBuilder.add(IntItem::fromType(OpTy, Low),
+                              IntItem::fromType(OpTy, High));
               CurIdx += ActiveWords;
             } else
-              CaseBuilder.add(cast<ConstantInt>(ConstantInt::get(OpTy, Low)));
+              CaseBuilder.add(IntItem::fromType(OpTy, Low));
           }
           BasicBlock *DestBB = getBasicBlock(Record[CurIdx++]);
           ConstantRangesSet Case = CaseBuilder.getCase(); 

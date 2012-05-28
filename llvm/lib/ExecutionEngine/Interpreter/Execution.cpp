@@ -654,8 +654,11 @@ void Interpreter::visitSwitchInst(SwitchInst &I) {
     ConstantRangesSet Case = i.getCaseValueEx();
     for (unsigned n = 0, en = Case.getNumItems(); n != en; ++n) {
       ConstantRangesSet::Range r = Case.getItem(n);
-      GenericValue Low = getOperandValue(r.Low, SF);
-      GenericValue High = getOperandValue(r.High, SF);
+      // FIXME: Currently work with ConstantInt based numbers.
+      const ConstantInt *LowCI = r.Low.getImplementation();
+      const ConstantInt *HighCI = r.High.getImplementation();
+      GenericValue Low = getOperandValue(const_cast<ConstantInt*>(LowCI), SF);
+      GenericValue High = getOperandValue(const_cast<ConstantInt*>(HighCI), SF);
       if (executeICMP_ULE(Low, CondVal, ElTy).IntVal != 0 &&
           executeICMP_ULE(CondVal, High, ElTy).IntVal != 0) {
         Dest = cast<BasicBlock>(i.getCaseSuccessor());
