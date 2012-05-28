@@ -443,8 +443,8 @@ void FuncEntry(ThreadState *thr, uptr pc) {
 
   // Shadow stack maintenance can be replaced with
   // stack unwinding during trace switch (which presumably must be faster).
-  DCHECK(thr->shadow_stack_pos >= &thr->shadow_stack[0]);
-  DCHECK(thr->shadow_stack_pos < &thr->shadow_stack[kShadowStackSize]);
+  DCHECK_GE(thr->shadow_stack_pos, &thr->shadow_stack[0]);
+  DCHECK_LT(thr->shadow_stack_pos, &thr->shadow_stack[kShadowStackSize]);
   thr->shadow_stack_pos[0] = pc;
   thr->shadow_stack_pos++;
 }
@@ -456,8 +456,8 @@ void FuncExit(ThreadState *thr) {
   thr->fast_state.IncrementEpoch();
   TraceAddEvent(thr, thr->fast_state.epoch(), EventTypeFuncExit, 0);
 
-  DCHECK(thr->shadow_stack_pos > &thr->shadow_stack[0]);
-  DCHECK(thr->shadow_stack_pos < &thr->shadow_stack[kShadowStackSize]);
+  DCHECK_GT(thr->shadow_stack_pos, &thr->shadow_stack[0]);
+  DCHECK_LT(thr->shadow_stack_pos, &thr->shadow_stack[kShadowStackSize]);
   thr->shadow_stack_pos--;
 }
 
