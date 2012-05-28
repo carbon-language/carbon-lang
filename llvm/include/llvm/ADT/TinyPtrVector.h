@@ -120,6 +120,14 @@ public:
     return Val.template get<VecTy*>()->front();
   }
   
+  EltTy back() const {
+    assert(!empty() && "vector empty");
+    if (EltTy V = Val.template dyn_cast<EltTy>())
+      return V;
+    return Val.template get<VecTy*>()->back();
+  }
+
+  
   void push_back(EltTy NewVal) {
     assert(NewVal != 0 && "Can't add a null value");
     
@@ -138,6 +146,15 @@ public:
     // Add the new value, we know we have a vector.
     Val.template get<VecTy*>()->push_back(NewVal);
   }
+  
+  void pop_back() {
+    // If we have a single value, convert to empty.
+    if (Val.template is<EltTy>())
+      Val = (EltTy)0;
+    else if (VecTy *Vec = Val.template get<VecTy*>())
+      Vec->pop_back();
+  }
+
   
   void clear() {
     // If we have a single value, convert to empty.
