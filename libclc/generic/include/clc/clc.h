@@ -33,11 +33,19 @@
 
 /* 6.11.2 Math Functions */
 #include <clc/math/cos.h>
+#include <clc/math/exp.h>
+#include <clc/math/exp2.h>
 #include <clc/math/fabs.h>
+#include <clc/math/log.h>
+#include <clc/math/log2.h>
 #include <clc/math/sin.h>
 #include <clc/math/sqrt.h>
 #include <clc/math/native_cos.h>
 #include <clc/math/native_divide.h>
+#include <clc/math/native_exp.h>
+#include <clc/math/native_exp2.h>
+#include <clc/math/native_log.h>
+#include <clc/math/native_log2.h>
 #include <clc/math/native_sin.h>
 #include <clc/math/native_sqrt.h>
 
