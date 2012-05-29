@@ -7,4 +7,5 @@ integer/abs.cl
 integer/add_sat.cl
 integer/add_sat.ll
 integer/add_sat_impl.ll
+math/hypot.cl
 math/mad.cl

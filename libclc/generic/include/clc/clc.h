@@ -36,6 +36,8 @@
 #include <clc/math/exp.h>
 #include <clc/math/exp2.h>
 #include <clc/math/fabs.h>
+#include <clc/math/fma.h>
+#include <clc/math/hypot.h>
 #include <clc/math/log.h>
 #include <clc/math/log2.h>
 #include <clc/math/mad.h>
