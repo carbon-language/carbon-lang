@@ -496,7 +496,7 @@ void CppWriter::printAttributes(const AttrListPtr &PAL,
       Out << "Attrs.push_back(PAWI);";
       nl(Out);
     }
-    Out << name << "_PAL = AttrListPtr::get(Attrs.begin(), Attrs.end());";
+    Out << name << "_PAL = AttrListPtr::get(Attrs);";
     nl(Out);
     out(); nl(Out);
     Out << '}'; nl(Out);
