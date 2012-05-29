@@ -634,7 +634,7 @@ MachineVerifier::visitMachineOperand(const MachineOperand *MO, unsigned MONum) {
   if (MONum < MCID.getNumDefs()) {
     if (!MO->isReg())
       report("Explicit definition must be a register", MO, MONum);
-    else if (!MO->isDef())
+    else if (!MO->isDef() && !MCOI.isOptionalDef())
       report("Explicit definition marked as use", MO, MONum);
     else if (MO->isImplicit())
       report("Explicit definition marked as implicit", MO, MONum);
