@@ -170,42 +170,24 @@ ifeq ($(ASAN_COMPILER), gcc)
 endif
 
 INTERCEPTION=../interception
+MACH_OVERRIDE=$(INTERCEPTION)/mach_override
+COMMON=../sanitizer_common
 
-RTL_HDR=asan_allocator.h \
-	asan_internal.h \
-	asan_interceptors.h \
-	asan_interface.h \
-	asan_lock.h \
-	asan_mapping.h \
-	asan_procmaps.h \
-	asan_stack.h \
-	asan_stats.h \
-	asan_thread.h \
-	asan_thread_registry.h \
-	$(INTERCEPTION)/interception.h \
-	$(INTERCEPTION)/interception_linux.h \
-	$(INTERCEPTION)/interception_mac.h \
-	$(INTERCEPTION)/mach_override/mach_override.h
+RTL_HDR=$(wildcard *.h) \
+	$(wildcard $(INTERCEPTION)/*.h) \
+	$(wildcard $(MACH_OVERRIDE)/*.h) \
+	$(wildcard $(COMMON)/*.h)
 
-LIBASAN_OBJ=$(BIN)/asan_rtl$(SUFF).o \
-	    $(BIN)/asan_allocator$(SUFF).o  \
-	    $(BIN)/asan_globals$(SUFF).o  \
-	    $(BIN)/asan_interceptors$(SUFF).o  \
-	    $(BIN)/asan_linux$(SUFF).o \
-	    $(BIN)/asan_mac$(SUFF).o \
-	    $(BIN)/asan_malloc_linux$(SUFF).o \
-	    $(BIN)/asan_malloc_mac$(SUFF).o \
-	    $(BIN)/asan_new_delete$(SUFF).o \
-	    $(BIN)/asan_poisoning$(SUFF).o  \
-	    $(BIN)/asan_posix$(SUFF).o  \
-	    $(BIN)/asan_printf$(SUFF).o  \
-	    $(BIN)/asan_stack$(SUFF).o  \
-	    $(BIN)/asan_stats$(SUFF).o  \
-	    $(BIN)/asan_thread$(SUFF).o  \
-	    $(BIN)/asan_thread_registry$(SUFF).o  \
-	    $(BIN)/interception/interception_linux$(SUFF).o  \
-	    $(BIN)/interception/interception_mac$(SUFF).o  \
-	    $(BIN)/interception/mach_override/mach_override$(SUFF).o
+LIBTSAN_SRC=$(wildcard *.cc)
+INTERCEPTION_SRC=$(wildcard $(INTERCEPTION)/*.cc)
+MACH_OVERRIDE_SRC=$(wildcard $(MACH_OVERRIDE)/*.c)
+COMMON_SRC=$(wildcard $(COMMON)/*.cc)
+
+
+LIBASAN_OBJ=$(patsubst %.cc,$(BIN)/%$(SUFF).o,$(LIBTSAN_SRC)) \
+	    $(patsubst $(INTERCEPTION)/%.cc,$(BIN)/%$(SUFF).o,$(INTERCEPTION_SRC)) \
+	    $(patsubst $(COMMON)/%.cc,$(BIN)/%$(SUFF).o,$(COMMON_SRC)) \
+	    $(patsubst $(MACH_OVERRIDE)/%.c,$(BIN)/%$(SUFF).o,$(MACH_OVERRIDE_SRC))
 
 GTEST_ROOT=third_party/googletest
 GTEST_INCLUDE=-I$(GTEST_ROOT)/include
@@ -237,8 +219,6 @@ lib32:
 
 mk_bin_dir:
 	mkdir -p $(BIN)
-	mkdir -p $(BIN)/interception
-	mkdir -p $(BIN)/interception/mach_override
 
 clang:
 	cd ../ && llvm/rebuild_clang_and_asan.sh > /dev/null
@@ -268,17 +248,20 @@ $(BIN)/%_test$(SUFF).o: tests/%_test.cc $(RTL_HDR) $(MAKEFILE)
 $(BIN)/%_test$(SUFF).o: tests/%_test.mm $(RTL_HDR) $(MAKEFILE)
 	$(ASAN_CXX) $(GTEST_INCLUDE) -I. -g -c $< -O2 -o $@ -ObjC $(PIE) $(CFLAGS)
 
-RTL_COMMON=$(PIE) $(CFLAGS) -fPIC -c -O2 -fno-exceptions -funwind-tables \
+RTL_COMMON_FLAGS=$(PIE) $(CFLAGS) -fPIC -c -O2 -fno-exceptions -funwind-tables \
 	   -Ithird_party -I.. $(ASAN_FLAGS)
 
-$(BIN)/interception/%$(SUFF).o: ../interception/%.cc $(MAKEFILE)
-	$(CXX) $(RTL_COMMON) -o $@ -g $<
+$(BIN)/%$(SUFF).o: $(INTERCEPTION)/%.cc $(RTL_HDR) $(MAKEFILE)
+	$(CXX) $(RTL_COMMON_FLAGS) -o $@ -g $<
 
-$(BIN)/interception/mach_override/%$(SUFF).o: ../interception/mach_override/%.c $(MAKEFILE)
-	$(CC) $(RTL_COMMON) -o $@ -g $<
+$(BIN)/%$(SUFF).o: $(COMMON)/%.cc $(RTL_HDR) $(MAKEFILE)
+	$(CXX) $(RTL_COMMON_FLAGS) -o $@ -g $<
+
+$(BIN)/%$(SUFF).o: $(MACH_OVERRIDE)/%.c $(RTL_HDR) $(MAKEFILE)
+	$(CC) $(RTL_COMMON_FLAGS) -o $@ -g $<
 
 $(BIN)/%$(SUFF).o: %.cc $(RTL_HDR) $(MAKEFILE)
-	$(CXX) $(RTL_COMMON) -o $@ -g $<  \
+	$(CXX) $(RTL_COMMON_FLAGS) -o $@ -g $<  \
 		-DASAN_NEEDS_SEGV=$(ASAN_NEEDS_SEGV) \
 		-DASAN_HAS_EXCEPTIONS=$(ASAN_HAS_EXCEPTIONS) \
 		-DASAN_FLEXIBLE_MAPPING_AND_OFFSET=$(ASAN_FLEXIBLE_MAPPING_AND_OFFSET)
@@ -337,7 +320,7 @@ $(GTEST_LIB):
 	$(MAKE) -f ../make/Makefile CXXFLAGS="$(PIE) $(CFLAGS) -g -w" \
 	  CXX="$(CLANG_CXX)"
 
-RTL_LINT_FITLER=-readability/casting,-readability/check,-build/include,-build/header_guard,-build/class,-legal/copyright
+RTL_LINT_FITLER=-readability/casting,-readability/check,-build/include,-build/header_guard,-build/class,-legal/copyright,-build/namespaces
 # TODO(kcc): remove these filters one by one
 TEST_LINT_FITLER=-readability/casting,-build/include,-legal/copyright,-whitespace/newline,-runtime/sizeof,-runtime/int,-runtime/printf
 

@@ -23,6 +23,7 @@
 #include "asan_thread_registry.h"
 
 namespace __asan {
+using namespace __sanitizer;
 
 // -------------------------- Flags ------------------------- {{{1
 static const size_t kMallocContextSize = 30;
@@ -495,6 +496,7 @@ static void ParseAsanOptions(const char *options) {
 
 void __asan_init() {
   if (asan_inited) return;
+  MiniLibcStub();  // FIXME: remove me once mini libc build is tested properly.
   asan_init_is_running = true;
 
   // Make sure we are not statically linked.

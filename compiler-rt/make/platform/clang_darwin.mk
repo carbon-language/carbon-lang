@@ -144,7 +144,8 @@ FUNCTIONS.osx	:= mulosi4 mulodi4 muloti4
 FUNCTIONS.profile_osx := GCDAProfiling
 FUNCTIONS.profile_ios := GCDAProfiling
 
-FUNCTIONS.asan_osx := $(AsanFunctions) $(InterceptionFunctions)
+FUNCTIONS.asan_osx := $(AsanFunctions) $(InterceptionFunctions) \
+                                       $(SanitizerCommonFunctions)
 
 CCKEXT_COMMON_FUNCTIONS := \
 	absvdi2 \

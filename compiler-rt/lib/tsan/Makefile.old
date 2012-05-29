@@ -68,7 +68,7 @@ presubmit:
 	./check_analyze.sh
 	@ echo PRESUBMIT PASSED
 
-RTL_LINT_FITLER=-legal/copyright,-build/include,-readability/casting,-build/header_guard
+RTL_LINT_FITLER=-legal/copyright,-build/include,-readability/casting,-build/header_guard,-build/namespaces
 
 lint: lint_tsan lint_tests
 lint_tsan:

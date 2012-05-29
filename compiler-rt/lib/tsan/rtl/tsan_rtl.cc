@@ -12,6 +12,7 @@
 // Main file (entry points) for the TSan run-time.
 //===----------------------------------------------------------------------===//
 
+#include "sanitizer_common/mini_libc.h"
 #include "tsan_defs.h"
 #include "tsan_platform.h"
 #include "tsan_rtl.h"
@@ -28,6 +29,7 @@ extern "C" void __tsan_resume() {
 }
 
 namespace __tsan {
+using namespace __sanitizer;
 
 THREADLOCAL char cur_thread_placeholder[sizeof(ThreadState)] ALIGN(64);
 static char ctx_placeholder[sizeof(Context)] ALIGN(64);
@@ -154,6 +156,7 @@ static void InitializeMemoryFlush() {
 }
 
 void Initialize(ThreadState *thr) {
+  MiniLibcStub();
   // Thread safe because done before all threads exist.
   static bool is_initialized = false;
   if (is_initialized)

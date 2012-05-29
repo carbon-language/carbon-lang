@@ -4,6 +4,8 @@ ifeq ($(DEBUG), 0)
 endif
 
 # For interception. FIXME: move interception one level higher.
+INTERCEPTION=../../interception
+COMMON=../../sanitizer_common
 INCLUDES= -I../..
 EXTRA_CXXFLAGS=-fno-exceptions
 NO_SYSROOT=--sysroot=.
@@ -25,65 +27,27 @@ endif
 
 all: libtsan.a
 
-LIBTSAN_HEADERS=tsan_allocator.h \
-                tsan_atomic.h \
-                tsan_clock.h \
-                tsan_compiler.h \
-                tsan_defs.h \
-		tsan_interface.h \
-		tsan_interface_ann.h \
-		tsan_interface_inl.h \
-	        tsan_mman.h \
-                tsan_platform.h \
-                tsan_mutex.h \
-                tsan_report.h \
-		tsan_placement_new.h \
-                tsan_rtl.h \
-		tsan_suppressions.h \
-		tsan_symbolize.h \
-		tsan_sync.h \
-		tsan_trace.h \
-                tsan_vector.h
+LIBTSAN_HEADERS=$(wildcard *.h) \
+		$(wildcard $(INTERCEPTION)/*.h) \
+		$(wildcard $(COMMON)/*.h)
+LIBTSAN_SRC=$(wildcard *.cc)
+LIBTSAN_ASM_SRC=$(wildcard *.S)
+INTERCEPTION_SRC=$(wildcard $(INTERCEPTION)/*.cc)
+COMMON_SRC=$(wildcard $(COMMON)/*.cc)
 
-LIBTSAN_OBJ=tsan_allocator.o \
-            tsan_clock.o \
-            tsan_flags.o \
-            tsan_mutex.o \
-            tsan_interceptors.o \
-            tsan_interface.o \
-            tsan_interface_ann.o \
-            tsan_interface_atomic.o \
-            tsan_md5.o \
-            tsan_mman.o \
-	    tsan_platform_linux.o \
-            tsan_report.o \
-            tsan_printf.o \
-            tsan_rtl.o \
-            tsan_rtl_amd64.o \
-            tsan_rtl_mutex.o \
-            tsan_rtl_report.o \
-            tsan_rtl_thread.o \
-            tsan_stat.o \
-            tsan_suppressions.o \
-            tsan_sync.o \
-            interception_linux.o
-
-ifneq ($(TSAN_SYMB_NULL), )
-  LIBTSAN_OBJ+=tsan_symbolize_null.o
-else ifneq ($(TSAN_SYMB_LLDB), )
-  LIBTSAN_OBJ+=tsan_symbolize_lldb_linux.o
-else
-  LIBTSAN_OBJ+=tsan_symbolize_addr2line_linux.o
-endif
+LIBTSAN_OBJ=$(patsubst %.cc,%.o,$(LIBTSAN_SRC)) \
+	    $(patsubst %.S,%.o,$(LIBTSAN_ASM_SRC)) \
+	    $(patsubst $(INTERCEPTION)/%.cc,%.o,$(INTERCEPTION_SRC)) \
+	    $(patsubst $(COMMON)/%.cc,%.o,$(COMMON_SRC))
 
 %_linux.o: %_linux.cc Makefile.old $(LIBTSAN_HEADERS)
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $<
-
 %.o: %.cc Makefile.old $(LIBTSAN_HEADERS)
 	$(CXX) $(CXXFLAGS) $(INCLUDES) $(NO_SYSROOT) -c $<
-
-%.o: ../../interception/%.cc
-	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@ 
+%.o: $(INTERCEPTION)/%.cc Makefile.old $(LIBTSAN_HEADERS)
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
+%.o: $(COMMON)/%.cc Makefile.old $(LIBTSAN_HEADERS)
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
 
 libtsan.a: $(LIBTSAN_OBJ)
 	ar ru $@ $(LIBTSAN_OBJ)
