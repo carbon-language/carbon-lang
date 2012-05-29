@@ -337,9 +337,15 @@ public:
     if (regA == regB) return true;
     if (isVirtualRegister(regA) || isVirtualRegister(regB))
       return false;
-    for (const uint16_t *regList = getOverlaps(regA)+1; *regList; ++regList) {
-      if (*regList == regB) return true;
-    }
+
+    // Regunits are numerically ordered. Find a common unit.
+    MCRegUnitIterator RUA(regA, this);
+    MCRegUnitIterator RUB(regB, this);
+    do {
+      if (*RUA == *RUB) return true;
+      if (*RUA < *RUB) ++RUA;
+      else             ++RUB;
+    } while (RUA.isValid() && RUB.isValid());
     return false;
   }
 
