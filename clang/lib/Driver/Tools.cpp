@@ -1529,22 +1529,11 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   // This comes from the default translation the driver + cc1
   // would do to enable flag_pic.
-  //
-  // FIXME: Centralize this code.
-  Arg *LastPICArg = 0;
-  for (ArgList::const_iterator I = Args.begin(), E = Args.end(); I != E; ++I) {
-    if ((*I)->getOption().matches(options::OPT_fPIC) ||
-        (*I)->getOption().matches(options::OPT_fno_PIC) ||
-        (*I)->getOption().matches(options::OPT_fpic) ||
-        (*I)->getOption().matches(options::OPT_fno_pic) ||
-        (*I)->getOption().matches(options::OPT_fPIE) ||
-        (*I)->getOption().matches(options::OPT_fno_PIE) ||
-        (*I)->getOption().matches(options::OPT_fpie) ||
-        (*I)->getOption().matches(options::OPT_fno_pie)) {
-      LastPICArg = *I;
-      (*I)->claim();
-    }
-  }
+
+  Arg *LastPICArg = Args.getLastArg(options::OPT_fPIC, options::OPT_fno_PIC,
+                                    options::OPT_fpic, options::OPT_fno_pic,
+                                    options::OPT_fPIE, options::OPT_fno_PIE,
+                                    options::OPT_fpie, options::OPT_fno_pie);
   bool PICDisabled = false;
   bool PICEnabled = false;
   bool PICForPIE = false;

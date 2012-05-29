@@ -187,6 +187,14 @@ namespace driver {
                     OptSpecifier Id3) const;
     Arg *getLastArg(OptSpecifier Id0, OptSpecifier Id1, OptSpecifier Id2,
                     OptSpecifier Id3, OptSpecifier Id4) const;
+    Arg *getLastArg(OptSpecifier Id0, OptSpecifier Id1, OptSpecifier Id2,
+                    OptSpecifier Id3, OptSpecifier Id4, OptSpecifier Id5) const;
+    Arg *getLastArg(OptSpecifier Id0, OptSpecifier Id1, OptSpecifier Id2,
+                    OptSpecifier Id3, OptSpecifier Id4, OptSpecifier Id5,
+                    OptSpecifier Id6) const;
+    Arg *getLastArg(OptSpecifier Id0, OptSpecifier Id1, OptSpecifier Id2,
+                    OptSpecifier Id3, OptSpecifier Id4, OptSpecifier Id5,
+                    OptSpecifier Id6, OptSpecifier Id7) const;
 
     /// getArgString - Return the input argument string at \arg Index.
     virtual const char *getArgString(unsigned Index) const = 0;
