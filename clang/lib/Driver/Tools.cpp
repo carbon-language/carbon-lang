@@ -1839,15 +1839,22 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                       D.CCLogDiagnosticsFilename : "-");
   }
 
-  // Special case debug options to only pass -g to clang. This is
-  // wrong.
+  // Use the last option from "-g" group. "-gline-tables-only" is
+  // preserved, all other debug options are substituted with "-g".
+  // FIXME: We should eventually do the following:
+  //   1) collapse gdb and dwarf variations to -g (as we do now);
+  //   2) support things like -gtoggle;
+  //   3) ignore flag options like -gstrict-dwarf or -grecord-gcc-switches;
+  //   4) produce a driver error on unsupported formats
+  //      (-gstabs, -gcoff, -gvms etc.)
   Args.ClaimAllArgs(options::OPT_g_Group);
-  if (Arg *A = Args.getLastArg(options::OPT_g_Group))
-    if (!A->getOption().matches(options::OPT_g0)) {
+  if (Arg *A = Args.getLastArg(options::OPT_g_Group)) {
+    if (A->getOption().matches(options::OPT_gline_tables_only)) {
+      CmdArgs.push_back("-gline-tables-only");
+    } else if (!A->getOption().matches(options::OPT_g0)) {
       CmdArgs.push_back("-g");
     }
-  if (Args.hasArg(options::OPT_gline_tables_only))
-    CmdArgs.push_back("-gline-tables-only");
+  }
 
   Args.AddAllArgs(CmdArgs, options::OPT_ffunction_sections);
   Args.AddAllArgs(CmdArgs, options::OPT_fdata_sections);

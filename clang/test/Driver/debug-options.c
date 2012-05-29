@@ -7,8 +7,13 @@
 // RUN: %clang -### -c -ganything %s 2>&1 | FileCheck -check-prefix=GANY %s
 // RUN: %clang -### -c -ggdb %s 2>&1 | FileCheck -check-prefix=GGDB %s
 // RUN: %clang -### -c -gfoo %s 2>&1 | FileCheck -check-prefix=GFOO %s
+// RUN: %clang -### -c -g -g0 %s 2>&1 | FileCheck -check-prefix=GG0 %s
 // RUN: %clang -### -c -gline-tables-only %s 2>&1 \
 // RUN:             | FileCheck -check-prefix=GLTO %s
+// RUN: %clang -### -c -gline-tables-only -g %s 2>&1 \
+// RUN:             | FileCheck -check-prefix=GLTO2 %s
+// RUN: %clang -### -c -gline-tables-only -g0 %s 2>&1 \
+// RUN:             | FileCheck -check-prefix=GLTO3 %s
 //
 // G: "-cc1"
 // G: "-g"
@@ -28,5 +33,18 @@
 // GFOO: "-cc1"
 // GFOO-NOT: "-g"
 //
+// GG0: "-cc1"
+// GG0-NOT: "-g"
+//
 // GLTO: "-cc1"
-// GLTO: "-g"
+// GLTO-NOT: "-g"
+// GLTO: "-gline-tables-only"
+// GLTO-NOT: "-g"
+//
+// GLTO2: "-cc1"
+// GLTO2-NOT: "-gline-tables-only"
+// GLTO2: "-g"
+// GLTO2-NOT: "-gline-tables-only"
+//
+// GLTO3: "-cc1"
+// GLTO3-NOT: "-gline-tables-only"
