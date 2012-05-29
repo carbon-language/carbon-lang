@@ -245,6 +245,13 @@ bool JSONImporter::runOnScop(Scop &scop) {
   for (Scop::iterator SI = S->begin(), SE = S->end(); SI != SE; ++SI) {
     Json::Value schedule = jscop["statements"][index]["schedule"];
     isl_map *m = isl_map_read_from_str(S->getIslCtx(), schedule.asCString());
+    isl_space *Space = (*SI)->getDomainSpace();
+
+    // Copy the old tuple id. This is necessary to retain the user pointer,
+    // that stores the reference to the ScopStmt this scattering belongs to.
+    m = isl_map_set_tuple_id(m, isl_dim_in,
+                             isl_space_get_tuple_id(Space, isl_dim_set));
+    isl_space_free(Space);
     NewScattering[*SI] = m;
     index++;
   }
@@ -292,6 +299,11 @@ bool JSONImporter::runOnScop(Scop &scop) {
         isl_id *id = isl_map_get_dim_id(currentAccessMap, isl_dim_param, i);
         newAccessMap = isl_map_set_dim_id(newAccessMap, isl_dim_param, i, id);
       }
+
+      // Copy the old tuple id. This is necessary to retain the user pointer,
+      // that stores the reference to the ScopStmt this access belongs to.
+      isl_id *Id = isl_map_get_tuple_id(currentAccessMap, isl_dim_in);
+      newAccessMap = isl_map_set_tuple_id(newAccessMap, isl_dim_in, Id);
 
       if (!isl_map_has_equal_space(currentAccessMap, newAccessMap)) {
         errs() << "JScop file contains access function with incompatible "

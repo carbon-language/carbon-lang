@@ -268,14 +268,12 @@ isl_map *MemoryAccess::getNewAccessRelation() const {
 }
 
 isl_basic_map *MemoryAccess::createBasicAccessMap(ScopStmt *Statement) {
-  isl_space *Space = isl_space_alloc(Statement->getIslCtx(), 0,
-                                    Statement->getNumIterators(), 1);
-  setBaseName();
+  isl_space *Space = isl_space_set_alloc(Statement->getIslCtx(), 0, 1);
+  Space = isl_space_set_tuple_name(Space, isl_dim_set, getBaseName().c_str());
 
-  Space = isl_space_set_tuple_name(Space, isl_dim_out, getBaseName().c_str());
-  Space = isl_space_set_tuple_name(Space, isl_dim_in, Statement->getBaseName());
-
-  return isl_basic_map_universe(Space);
+  return isl_basic_map_from_domain_and_range(
+    isl_basic_set_universe(Statement->getDomainSpace()),
+    isl_basic_set_universe(Space));
 }
 
 MemoryAccess::MemoryAccess(const IRAccess &Access, ScopStmt *Statement) {
@@ -284,6 +282,7 @@ MemoryAccess::MemoryAccess(const IRAccess &Access, ScopStmt *Statement) {
   statement = Statement;
 
   BaseAddr = Access.getBase();
+  setBaseName();
 
   if (!Access.isAffine()) {
     Type = (Type == Read) ? Read : MayWrite;
@@ -292,8 +291,6 @@ MemoryAccess::MemoryAccess(const IRAccess &Access, ScopStmt *Statement) {
   }
 
   isl_pw_aff *Affine = SCEVAffinator::getPwAff(Statement, Access.getOffset());
-
-  setBaseName();
 
   // Divide the access function by the size of the elements in the array.
   //
@@ -309,8 +306,10 @@ MemoryAccess::MemoryAccess(const IRAccess &Access, ScopStmt *Statement) {
   isl_int_clear(v);
 
   AccessRelation = isl_map_from_pw_aff(Affine);
-  AccessRelation = isl_map_set_tuple_name(AccessRelation, isl_dim_in,
-                                          Statement->getBaseName());
+  isl_space *Space = Statement->getDomainSpace();
+  AccessRelation = isl_map_set_tuple_id(AccessRelation, isl_dim_in,
+    isl_space_get_tuple_id(Space, isl_dim_set));
+  isl_space_free(Space);
   AccessRelation = isl_map_set_tuple_name(AccessRelation, isl_dim_out,
                                           getBaseName().c_str());
 }
@@ -461,12 +460,11 @@ void ScopStmt::buildScattering(SmallVectorImpl<unsigned> &Scatter) {
   unsigned NbIterators = getNumIterators();
   unsigned NbScatteringDims = Parent.getMaxLoopDepth() * 2 + 1;
 
-  isl_space *Space = isl_space_alloc(getIslCtx(), 0, NbIterators,
-                                     NbScatteringDims);
+  isl_space *Space = isl_space_set_alloc(getIslCtx(), 0, NbScatteringDims);
   Space = isl_space_set_tuple_name(Space, isl_dim_out, "scattering");
-  Space = isl_space_set_tuple_name(Space, isl_dim_in, getBaseName());
 
-  Scattering = isl_map_universe(Space);
+  Scattering = isl_map_from_domain_and_range(isl_set_universe(getDomainSpace()),
+                                             isl_set_universe(Space));
 
   // Loop dimensions.
   for (unsigned i = 0; i < NbIterators; ++i)
@@ -585,13 +583,16 @@ __isl_give isl_set *ScopStmt::buildDomain(TempScop &tempScop,
                                           const Region &CurRegion) {
   isl_space *Space;
   isl_set *Domain;
+  isl_id *Id;
 
   Space = isl_space_set_alloc(getIslCtx(), 0, getNumIterators());
+
+  Id = isl_id_alloc(getIslCtx(), getBaseName(), this);
 
   Domain = isl_set_universe(Space);
   Domain = addLoopBoundsToDomain(Domain, tempScop);
   Domain = addConditionsToDomain(Domain, tempScop, CurRegion);
-  Domain = isl_set_set_tuple_name(Domain, getBaseName());
+  Domain = isl_set_set_tuple_id(Domain, Id);
 
   return Domain;
 }
