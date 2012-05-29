@@ -10,14 +10,14 @@ LLDB_LEVEL := ../..
 
 TOOLNAME = lldb-platform
 
-LD.Flags += -llldb -llldbUtility
+LLVMLibsOptions += -llldb -llldbUtility
 
 include $(LLDB_LEVEL)/Makefile
 
 ifeq ($(HOST_OS),Darwin)
-	LD.Flags += -Wl,-rpath,@loader_path/../lib/
+	LLVMLibsOptions += -Wl,-rpath,@loader_path/../lib/
 endif
 
 ifeq ($(HOST_OS), $(filter $(HOST_OS), Linux FreeBSD))
-	LD.Flags += -Wl,-rpath,$(LibDir)
+	LLVMLibsOptions += -Wl,-rpath,$(LibDir)
 endif
