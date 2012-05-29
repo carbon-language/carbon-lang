@@ -93,6 +93,7 @@ for target in targets:
   # The rule for building a .bc file for the specified architecture using clang.
   clang_bc_flags = "-ccc-host-triple %s -I`dirname $in` %s " \
                    "-Dcl_clang_storage_class_specifiers " \
+                   "-Dcl_khr_fp64 " \
                    "-emit-llvm" % (target, clang_cl_includes)
   clang_bc_rule = "CLANG_CL_BC_" + target
   c_compiler_rule(b, clang_bc_rule, "LLVM-CC", llvm_clang, clang_bc_flags)
