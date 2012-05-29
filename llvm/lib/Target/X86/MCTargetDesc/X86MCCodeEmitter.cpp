@@ -1150,8 +1150,9 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
   }
 
   // If there is a remaining operand, it must be a trailing immediate.  Emit it
-  // according to the right size for the instruction.
-  if (CurOp != NumOps) {
+  // according to the right size for the instruction. Some instructions
+  // (SSE4a extrq and insertq) have two trailing immediates.
+  while (CurOp != NumOps && NumOps - CurOp <= 2) {
     // The last source register of a 4 operand instruction in AVX is encoded
     // in bits[7:4] of a immediate byte.
     if ((TSFlags >> X86II::VEXShift) & X86II::VEX_I8IMM) {

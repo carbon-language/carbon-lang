@@ -1008,6 +1008,17 @@ let TargetPrefix = "x86" in { // All intrinsics start with "llvm.x86.".
 // SSE4A
 
 let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_sse4a_extrqi : GCCBuiltin<"__builtin_ia32_extrqi">,
+    Intrinsic<[llvm_v2i64_ty], [llvm_v2i64_ty, llvm_i8_ty, llvm_i8_ty], []>;
+  def int_x86_sse4a_extrq  : GCCBuiltin<"__builtin_ia32_extrq">,
+    Intrinsic<[llvm_v2i64_ty], [llvm_v2i64_ty, llvm_v16i8_ty], []>;
+
+  def int_x86_sse4a_insertqi : GCCBuiltin<"__builtin_ia32_insertqi">,
+    Intrinsic<[llvm_v2i64_ty], [llvm_v2i64_ty, llvm_v2i64_ty,
+                                llvm_i8_ty, llvm_i8_ty], []>;
+  def int_x86_sse4a_insertq  : GCCBuiltin<"__builtin_ia32_insertq">,
+    Intrinsic<[llvm_v2i64_ty], [llvm_v2i64_ty, llvm_v2i64_ty], []>;
+
   def int_x86_sse4a_movnt_ss : GCCBuiltin<"__builtin_ia32_movntss">,
     Intrinsic<[], [llvm_ptr_ty, llvm_v4f32_ty], []>;
   def int_x86_sse4a_movnt_sd : GCCBuiltin<"__builtin_ia32_movntsd">,

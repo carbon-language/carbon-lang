@@ -7268,6 +7268,31 @@ defm : pclmul_alias<"lqlq", 0x00>;
 //===----------------------------------------------------------------------===//
 
 let Predicates = [HasSSE4A] in {
+
+let Constraints = "$src = $dst" in {
+def EXTRQI : Ii8<0x78, MRM0r, (outs VR128:$dst),
+                 (ins VR128:$src, i8imm:$len, i8imm:$idx),
+                 "extrq\t{$idx, $len, $src|$src, $len, $idx}",
+                 [(set VR128:$dst, (int_x86_sse4a_extrqi VR128:$src, imm:$len,
+                                    imm:$idx))]>, TB, OpSize;
+def EXTRQ  : I<0x79, MRMSrcReg, (outs VR128:$dst),
+              (ins VR128:$src, VR128:$mask),
+              "extrq\t{$mask, $src|$src, $mask}",
+              [(set VR128:$dst, (int_x86_sse4a_extrq VR128:$src,
+                                 VR128:$mask))]>, TB, OpSize;
+
+def INSERTQI : Ii8<0x78, MRMSrcReg, (outs VR128:$dst),
+                   (ins VR128:$src, VR128:$src2, i8imm:$len, i8imm:$idx),
+                   "insertq\t{$idx, $len, $src2, $src|$src, $src2, $len, $idx}",
+                   [(set VR128:$dst, (int_x86_sse4a_insertqi VR128:$src,
+                                      VR128:$src2, imm:$len, imm:$idx))]>, XD;
+def INSERTQ  : I<0x79, MRMSrcReg, (outs VR128:$dst),
+                 (ins VR128:$src, VR128:$mask),
+                 "insertq\t{$mask, $src|$src, $mask}",
+                 [(set VR128:$dst, (int_x86_sse4a_insertq VR128:$src,
+                                    VR128:$mask))]>, XD;
+}
+
 def MOVNTSS : I<0x2B, MRMDestMem, (outs), (ins f32mem:$dst, VR128:$src),
                 "movntss\t{$src, $dst|$dst, $src}",
                 [(int_x86_sse4a_movnt_ss addr:$dst, VR128:$src)]>, XS;

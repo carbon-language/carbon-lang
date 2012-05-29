@@ -690,12 +690,13 @@ void RecognizableInstr::emitInstructionSpecifier(DisassemblerTables &tables) {
     // Operand 2 is a register operand in the R/M field.
     // - In AVX, there is a register operand in the VEX.vvvv field here -
     // Operand 3 (optional) is an immediate.
+    // Operand 4 (optional) is an immediate.
 
     if (HasVEX_4VPrefix || HasVEX_4VOp3Prefix)
       assert(numPhysicalOperands >= 3 && numPhysicalOperands <= 5 &&
              "Unexpected number of operands for MRMSrcRegFrm with VEX_4V"); 
     else
-      assert(numPhysicalOperands >= 2 && numPhysicalOperands <= 3 &&
+      assert(numPhysicalOperands >= 2 && numPhysicalOperands <= 4 &&
              "Unexpected number of operands for MRMSrcRegFrm");
   
     HANDLE_OPERAND(roRegister)
@@ -716,6 +717,7 @@ void RecognizableInstr::emitInstructionSpecifier(DisassemblerTables &tables) {
     if (!HasMemOp4Prefix)
       HANDLE_OPTIONAL(immediate)
     HANDLE_OPTIONAL(immediate) // above might be a register in 7:4
+    HANDLE_OPTIONAL(immediate)
     break;
   case X86Local::MRMSrcMem:
     // Operand 1 is a register operand in the Reg/Opcode field.
@@ -759,16 +761,18 @@ void RecognizableInstr::emitInstructionSpecifier(DisassemblerTables &tables) {
   case X86Local::MRM7r:
     // Operand 1 is a register operand in the R/M field.
     // Operand 2 (optional) is an immediate or relocation.
+    // Operand 3 (optional) is an immediate.
     if (HasVEX_4VPrefix)
       assert(numPhysicalOperands <= 3 &&
              "Unexpected number of operands for MRMnRFrm with VEX_4V");
     else
-      assert(numPhysicalOperands <= 2 &&
+      assert(numPhysicalOperands <= 3 &&
              "Unexpected number of operands for MRMnRFrm");
     if (HasVEX_4VPrefix)
       HANDLE_OPERAND(vvvvRegister)
     HANDLE_OPTIONAL(rmRegister)
     HANDLE_OPTIONAL(relocation)
+    HANDLE_OPTIONAL(immediate)
     break;
   case X86Local::MRM0m:
   case X86Local::MRM1m:
