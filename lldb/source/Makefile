@@ -13,6 +13,7 @@ LIBRARYNAME := lldbInitAndLog
 BUILD_ARCHIVE = 1
 
 BUILT_SOURCES = LLDB_vers.c
+SOURCES := lldb-log.cpp lldb.cpp
 
 include $(LLDB_LEVEL)/Makefile
 
