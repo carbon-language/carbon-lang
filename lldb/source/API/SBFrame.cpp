@@ -1055,12 +1055,12 @@ SBFrame::EvaluateExpression (const char *expr, lldb::DynamicValueType fetch_dyna
         Process::StopLocker stop_locker;
         if (stop_locker.TryLock(&exe_ctx.GetProcessPtr()->GetRunLock()))
         {
+#ifdef LLDB_CONFIGURATION_DEBUG
             StreamString frame_description;
             frame->DumpUsingSettingsFormat (&frame_description);
-
             Host::SetCrashDescriptionWithFormat ("SBFrame::EvaluateExpression (expr = \"%s\", fetch_dynamic_value = %u) %s",
                                                  expr, fetch_dynamic_value, frame_description.GetString().c_str());
-
+#endif
             const bool coerce_to_id = false;
             const bool keep_in_memory = false;
 
@@ -1073,7 +1073,9 @@ SBFrame::EvaluateExpression (const char *expr, lldb::DynamicValueType fetch_dyna
                                                       fetch_dynamic_value, 
                                                       expr_value_sp);
             expr_result.SetSP(expr_value_sp);
+#ifdef LLDB_CONFIGURATION_DEBUG
             Host::SetCrashDescription (NULL);
+#endif
         }
         else
         {
