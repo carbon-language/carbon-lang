@@ -38,6 +38,7 @@
 #include <clc/math/fabs.h>
 #include <clc/math/log.h>
 #include <clc/math/log2.h>
+#include <clc/math/mad.h>
 #include <clc/math/sin.h>
 #include <clc/math/sqrt.h>
 #include <clc/math/native_cos.h>
