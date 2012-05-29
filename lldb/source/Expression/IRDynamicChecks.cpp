@@ -611,22 +611,28 @@ IRDynamicChecks::runOnModule(llvm::Module &M)
         return false;
     }
 
-    ValidPointerChecker vpc(M, m_checker_functions);
+    if (m_checker_functions.m_valid_pointer_check.get())
+    {
+        ValidPointerChecker vpc(M, m_checker_functions);
+        
+        if (!vpc.Inspect(*function))
+            return false;
+        
+        if (!vpc.Instrument())
+            return false;
+    }
     
-    if (!vpc.Inspect(*function))
-        return false;
-    
-    if (!vpc.Instrument())
-        return false;
-    
-    ObjcObjectChecker ooc(M, m_checker_functions);
-    
-    if (!ooc.Inspect(*function))
-        return false;
-    
-    if (!ooc.Instrument())
-        return false;
-
+    if (m_checker_functions.m_objc_object_check.get())
+    {
+        ObjcObjectChecker ooc(M, m_checker_functions);
+        
+        if (!ooc.Inspect(*function))
+            return false;
+        
+        if (!ooc.Instrument())
+            return false;
+    }
+        
     if (log && log->GetVerbose())
     {
         std::string s;
