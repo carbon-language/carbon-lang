@@ -14,4 +14,5 @@ add_polly_library(PollyCodeGen
   ${CLOOG_FILES}
   ${ISL_CODEGEN_FILES}
   LoopGenerators.cpp
+  Utils.cpp
 )

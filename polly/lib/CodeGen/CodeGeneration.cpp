@@ -31,6 +31,7 @@
 #include "polly/CodeGen/CodeGeneration.h"
 #include "polly/CodeGen/BlockGenerators.h"
 #include "polly/CodeGen/LoopGenerators.h"
+#include "polly/CodeGen/Utils.h"
 #include "polly/Support/GICHelper.h"
 
 #include "llvm/Module.h"
@@ -752,163 +753,36 @@ ClastStmtCodeGen::ClastStmtCodeGen(Scop *scop, IRBuilder<> &B, Pass *P) :
 
 namespace {
 class CodeGeneration : public ScopPass {
-  Region *region;
-  Scop *S;
-  DominatorTree *DT;
-  RegionInfo *RI;
-
-  std::vector<std::string> parallelLoops;
+  std::vector<std::string> ParallelLoops;
 
   public:
   static char ID;
 
   CodeGeneration() : ScopPass(ID) {}
 
-  // Split the entry edge of the region and generate a new basic block on this
-  // edge. This function also updates ScopInfo and RegionInfo.
-  //
-  // @param region The region where the entry edge will be splitted.
-  BasicBlock *splitEdgeAdvanced(Region *region) {
-    BasicBlock *newBlock;
-    BasicBlock *splitBlock;
 
-    newBlock = SplitEdge(region->getEnteringBlock(), region->getEntry(), this);
+  bool runOnScop(Scop &S) {
+    ParallelLoops.clear();
 
-    if (DT->dominates(region->getEntry(), newBlock)) {
-      BasicBlock *OldBlock = region->getEntry();
-      std::string OldName = OldBlock->getName();
+    assert(S.getRegion().isSimple() && "Only simple regions are supported");
 
-      // Update ScopInfo.
-      for (Scop::iterator SI = S->begin(), SE = S->end(); SI != SE; ++SI)
-        if ((*SI)->getBasicBlock() == OldBlock) {
-          (*SI)->setBasicBlock(newBlock);
-          break;
-        }
+    BasicBlock *StartBlock = executeScopConditionally(S, this);
 
-      // Update RegionInfo.
-      splitBlock = OldBlock;
-      OldBlock->setName("polly.split");
-      newBlock->setName(OldName);
-      region->replaceEntry(newBlock);
-      RI->setRegionFor(newBlock, region);
-    } else {
-      RI->setRegionFor(newBlock, region->getParent());
-      splitBlock = newBlock;
-    }
+    IRBuilder<> Builder(StartBlock->begin());
 
-    return splitBlock;
-  }
-
-  // Create a split block that branches either to the old code or to a new basic
-  // block where the new code can be inserted.
-  //
-  // @param Builder A builder that will be set to point to a basic block, where
-  //                the new code can be generated.
-  // @return The split basic block.
-  BasicBlock *addSplitAndStartBlock(IRBuilder<> *Builder) {
-    BasicBlock *StartBlock, *SplitBlock;
-
-    SplitBlock = splitEdgeAdvanced(region);
-    SplitBlock->setName("polly.split_new_and_old");
-    Function *F = SplitBlock->getParent();
-    StartBlock = BasicBlock::Create(F->getContext(), "polly.start", F);
-    SplitBlock->getTerminator()->eraseFromParent();
-    Builder->SetInsertPoint(SplitBlock);
-    Builder->CreateCondBr(Builder->getTrue(), StartBlock, region->getEntry());
-    DT->addNewBlock(StartBlock, SplitBlock);
-    Builder->SetInsertPoint(StartBlock);
-    return SplitBlock;
-  }
-
-  // Merge the control flow of the newly generated code with the existing code.
-  //
-  // @param SplitBlock The basic block where the control flow was split between
-  //                   old and new version of the Scop.
-  // @param Builder    An IRBuilder that points to the last instruction of the
-  //                   newly generated code.
-  void mergeControlFlow(BasicBlock *SplitBlock, IRBuilder<> *Builder) {
-    BasicBlock *MergeBlock;
-    Region *R = region;
-
-    if (R->getExit()->getSinglePredecessor())
-      // No splitEdge required.  A block with a single predecessor cannot have
-      // PHI nodes that would complicate life.
-      MergeBlock = R->getExit();
-    else {
-      MergeBlock = SplitEdge(R->getExitingBlock(), R->getExit(), this);
-      // SplitEdge will never split R->getExit(), as R->getExit() has more than
-      // one predecessor. Hence, mergeBlock is always a newly generated block.
-      R->replaceExit(MergeBlock);
-    }
-
-    Builder->CreateBr(MergeBlock);
-    MergeBlock->setName("polly.merge_new_and_old");
-
-    if (DT->dominates(SplitBlock, MergeBlock))
-      DT->changeImmediateDominator(MergeBlock, SplitBlock);
-  }
-
-  bool runOnScop(Scop &scop) {
-    S = &scop;
-    region = &S->getRegion();
-    DT = &getAnalysis<DominatorTree>();
-    RI = &getAnalysis<RegionInfo>();
-
-    parallelLoops.clear();
-
-    assert(region->isSimple() && "Only simple regions are supported");
-
-    // In the CFG the optimized code of the SCoP is generated next to the
-    // original code. Both the new and the original version of the code remain
-    // in the CFG. A branch statement decides which version is executed.
-    // For now, we always execute the new version (the old one is dead code
-    // eliminated by the cleanup passes). In the future we may decide to execute
-    // the new version only if certain run time checks succeed. This will be
-    // useful to support constructs for which we cannot prove all assumptions at
-    // compile time.
-    //
-    // Before transformation:
-    //
-    //                        bb0
-    //                         |
-    //                     orig_scop
-    //                         |
-    //                        bb1
-    //
-    // After transformation:
-    //                        bb0
-    //                         |
-    //                  polly.splitBlock
-    //                     /       \.
-    //                     |     startBlock
-    //                     |        |
-    //               orig_scop   new_scop
-    //                     \      /
-    //                      \    /
-    //                        bb1 (joinBlock)
-    IRBuilder<> builder(region->getEntry());
-
-    // The builder will be set to startBlock.
-    BasicBlock *splitBlock = addSplitAndStartBlock(&builder);
-    BasicBlock *StartBlock = builder.GetInsertBlock();
-
-    mergeControlFlow(splitBlock, &builder);
-    builder.SetInsertPoint(StartBlock->begin());
-
-    ClastStmtCodeGen CodeGen(S, builder, this);
+    ClastStmtCodeGen CodeGen(&S, Builder, this);
     CloogInfo &C = getAnalysis<CloogInfo>();
     CodeGen.codegen(C.getClast());
 
-    parallelLoops.insert(parallelLoops.begin(),
+    ParallelLoops.insert(ParallelLoops.begin(),
                          CodeGen.getParallelLoops().begin(),
                          CodeGen.getParallelLoops().end());
-
     return true;
   }
 
   virtual void printScop(raw_ostream &OS) const {
-    for (std::vector<std::string>::const_iterator PI = parallelLoops.begin(),
-         PE = parallelLoops.end(); PI != PE; ++PI)
+    for (std::vector<std::string>::const_iterator PI = ParallelLoops.begin(),
+         PE = ParallelLoops.end(); PI != PE; ++PI)
       OS << "Parallel loop with iterator '" << *PI << "' generated\n";
   }
 
