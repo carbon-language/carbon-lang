@@ -83,6 +83,7 @@ CodeGenRegister::CodeGenRegister(Record *R, unsigned Enum)
     EnumValue(Enum),
     CostPerUse(R->getValueAsInt("CostPerUse")),
     CoveredBySubRegs(R->getValueAsBit("CoveredBySubRegs")),
+    NumNativeRegUnits(0),
     SubRegsComplete(false),
     SuperRegsComplete(false),
     TopoSig(~0u)
@@ -396,6 +397,10 @@ CodeGenRegister::computeSubRegs(CodeGenRegBank &RegBank) {
   // necessary. This means the aliasing leaf registers can share a single unit.
   if (RegUnits.empty())
     RegUnits.push_back(RegBank.newRegUnit(this));
+
+  // We have now computed the native register units. More may be adopted later
+  // for balancing purposes.
+  NumNativeRegUnits = RegUnits.size();
 
   return SubRegs;
 }

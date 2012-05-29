@@ -162,9 +162,17 @@ namespace llvm {
     // List of register units in ascending order.
     typedef SmallVector<unsigned, 16> RegUnitList;
 
+    // How many entries in RegUnitList are native?
+    unsigned NumNativeRegUnits;
+
     // Get the list of register units.
-    // This is only valid after getSubRegs() completes.
+    // This is only valid after computeSubRegs() completes.
     const RegUnitList &getRegUnits() const { return RegUnits; }
+
+    // Get the native register units. This is a prefix of getRegUnits().
+    ArrayRef<unsigned> getNativeRegUnits() const {
+      return makeArrayRef(RegUnits).slice(0, NumNativeRegUnits);
+    }
 
     // Inherit register units from subregisters.
     // Return true if the RegUnits changed.
@@ -553,6 +561,10 @@ namespace llvm {
     bool isNativeUnit(unsigned RUID) {
       return RUID < NumNativeRegUnits;
     }
+
+    unsigned getNumNativeRegUnits() const {
+      return NumNativeRegUnits;
+    };
 
     RegUnit &getRegUnit(unsigned RUID) { return RegUnits[RUID]; }
     const RegUnit &getRegUnit(unsigned RUID) const { return RegUnits[RUID]; }

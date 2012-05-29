@@ -454,6 +454,35 @@ static void printSubRegIndex(raw_ostream &OS, const CodeGenSubRegIndex *Idx) {
   OS << Idx->getQualifiedName();
 }
 
+// Differentially encoded register and regunit lists allow for better
+// compression on regular register banks. The sequence is computed from the
+// differential list as:
+//
+//   out[0] = InitVal;
+//   out[n+1] = out[n] + diff[n]; // n = 0, 1, ...
+//
+// The initial value depends on the specific list. The list is terminated by a
+// 0 differential which means we can't encode repeated elements.
+
+typedef SmallVector<uint16_t, 4> DiffVec;
+
+// Differentially encode a sequence of numbers into V. The starting value and
+// terminating 0 are not added to V, so it will have the same size as List.
+DiffVec &diffEncode(DiffVec &V, unsigned InitVal, ArrayRef<unsigned> List) {
+  assert(V.empty() && "Clear DiffVec before diffEncode.");
+  uint16_t Val = uint16_t(InitVal);
+  for (unsigned i = 0; i != List.size(); ++i) {
+    uint16_t Cur = List[i];
+    V.push_back(Cur - Val);
+    Val = Cur;
+  }
+  return V;
+}
+
+static void printDiff16(raw_ostream &OS, uint16_t Val) {
+  OS << SignExtend32<16>(Val);
+}
+
 //
 // runMCDesc - Print out MC register descriptions.
 //
@@ -473,6 +502,11 @@ RegisterInfoEmitter::runMCDesc(raw_ostream &OS, CodeGenTarget &Target,
   SmallVector<RegVec, 4> SubRegLists(Regs.size());
   SmallVector<RegVec, 4> OverlapLists(Regs.size());
   SequenceToOffsetTable<RegVec, CodeGenRegister::Less> RegSeqs;
+
+  // Differentially encoded lists.
+  SequenceToOffsetTable<DiffVec> DiffSeqs;
+  SmallVector<DiffVec, 4> RegUnitLists(Regs.size());
+  SmallVector<unsigned, 4> RegUnitInitScale(Regs.size());
 
   SequenceToOffsetTable<std::string> RegStrings;
 
@@ -516,10 +550,36 @@ RegisterInfoEmitter::runMCDesc(raw_ostream &OS, CodeGenTarget &Target,
     // Finally, Suffix itself.
     OverlapList.insert(OverlapList.end(), Suffix.begin(), Suffix.end());
     RegSeqs.add(OverlapList);
+
+    // Differentially encode the register unit list, seeded by register number.
+    // First compute a scale factor that allows more diff-lists to be reused:
+    //
+    //   D0 -> (S0, S1)
+    //   D1 -> (S2, S3)
+    //
+    // A scale factor of 2 allows D0 and D1 to share a diff-list. The initial
+    // value for the differential decoder is the register number multiplied by
+    // the scale.
+    //
+    // Check the neighboring registers for arithmetic progressions.
+    unsigned ScaleA = ~0u, ScaleB = ~0u;
+    ArrayRef<unsigned> RUs = Reg->getNativeRegUnits();
+    if (i > 0 && Regs[i-1]->getNativeRegUnits().size() == RUs.size())
+      ScaleB = RUs.front() - Regs[i-1]->getNativeRegUnits().front();
+    if (i+1 != Regs.size() &&
+        Regs[i+1]->getNativeRegUnits().size() == RUs.size())
+      ScaleA = Regs[i+1]->getNativeRegUnits().front() - RUs.front();
+    unsigned Scale = std::min(ScaleB, ScaleA);
+    // Default the scale to 0 if it can't be encoded in 4 bits.
+    if (Scale >= 16)
+      Scale = 0;
+    RegUnitInitScale[i] = Scale;
+    DiffSeqs.add(diffEncode(RegUnitLists[i], Scale * Reg->EnumValue, RUs));
   }
 
   // Compute the final layout of the sequence table.
   RegSeqs.layout();
+  DiffSeqs.layout();
 
   OS << "namespace llvm {\n\n";
 
@@ -530,6 +590,11 @@ RegisterInfoEmitter::runMCDesc(raw_ostream &OS, CodeGenTarget &Target,
   RegSeqs.emit(OS, printRegister);
   OS << "};\n\n";
 
+  // Emit the shared table of differential lists.
+  OS << "extern const uint16_t " << TargetName << "RegDiffLists[] = {\n";
+  DiffSeqs.emit(OS, printDiff16);
+  OS << "};\n\n";
+
   // Emit the string table.
   RegStrings.layout();
   OS << "extern const char " << TargetName << "RegStrings[] = {\n";
@@ -538,7 +603,7 @@ RegisterInfoEmitter::runMCDesc(raw_ostream &OS, CodeGenTarget &Target,
 
   OS << "extern const MCRegisterDesc " << TargetName
      << "RegDesc[] = { // Descriptors\n";
-  OS << "  { " << RegStrings.get("") << ", 0, 0, 0 },\n";
+  OS << "  { " << RegStrings.get("") << ", 0, 0, 0, 0 },\n";
 
   // Emit the register descriptors now.
   for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
@@ -546,7 +611,8 @@ RegisterInfoEmitter::runMCDesc(raw_ostream &OS, CodeGenTarget &Target,
     OS << "  { " << RegStrings.get(Reg->getName()) << ", "
        << RegSeqs.get(OverlapLists[i]) << ", "
        << RegSeqs.get(SubRegLists[i]) << ", "
-       << RegSeqs.get(Reg->getSuperRegs()) << " },\n";
+       << RegSeqs.get(Reg->getSuperRegs()) << ", "
+       << (DiffSeqs.get(RegUnitLists[i])*16 + RegUnitInitScale[i]) << " },\n";
   }
   OS << "};\n\n";      // End of register descriptors...
 
@@ -668,7 +734,10 @@ RegisterInfoEmitter::runMCDesc(raw_ostream &OS, CodeGenTarget &Target,
      << "unsigned DwarfFlavour = 0, unsigned EHFlavour = 0) {\n";
   OS << "  RI->InitMCRegisterInfo(" << TargetName << "RegDesc, "
      << Regs.size()+1 << ", RA, " << TargetName << "MCRegisterClasses, "
-     << RegisterClasses.size() << ", " << TargetName << "RegLists, "
+     << RegisterClasses.size() << ", "
+     << RegBank.getNumNativeRegUnits() << ", "
+     << TargetName << "RegLists, "
+     << TargetName << "RegDiffLists, "
      << TargetName << "RegStrings, ";
   if (SubRegIndices.size() != 0)
     OS << "(uint16_t*)" << TargetName << "SubRegTable, "
@@ -1027,6 +1096,7 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
   // Emit the constructor of the class...
   OS << "extern const MCRegisterDesc " << TargetName << "RegDesc[];\n";
   OS << "extern const uint16_t " << TargetName << "RegLists[];\n";
+  OS << "extern const uint16_t " << TargetName << "RegDiffLists[];\n";
   OS << "extern const char " << TargetName << "RegStrings[];\n";
   if (SubRegIndices.size() != 0)
     OS << "extern const uint16_t *get" << TargetName
@@ -1043,7 +1113,9 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
      << "  InitMCRegisterInfo(" << TargetName << "RegDesc, "
      << Regs.size()+1 << ", RA,\n                     " << TargetName
      << "MCRegisterClasses, " << RegisterClasses.size() << ",\n"
+     << "                     " << RegBank.getNumNativeRegUnits() << ",\n"
      << "                     " << TargetName << "RegLists,\n"
+     << "                     " << TargetName << "RegDiffLists,\n"
      << "                     " << TargetName << "RegStrings,\n"
      << "                     ";
   if (SubRegIndices.size() != 0)
