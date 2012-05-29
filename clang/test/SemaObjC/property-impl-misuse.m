@@ -35,8 +35,8 @@
 }
 @end
 
-// rdar://1105153
-@interface rdar1105153
+// rdar://11054153
+@interface rdar11054153
 @property int P; // expected-error {{type of property 'P' ('int') does not match type of accessor 'P' ('void')}}
 - (void)P; // expected-note {{declared here}}
 
