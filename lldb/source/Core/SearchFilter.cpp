@@ -305,7 +305,9 @@ SearchFilter::DoFunctionIteration (Function *function, const SymbolContext &cont
     bool
     SearchFilterForNonModuleSpecificSearches::ModulePasses (const lldb::ModuleSP &module_sp)
     {
-        if (m_target_sp->ModuleIsExcludedForNonModuleSpecificSearches (module_sp))
+        if (!module_sp)
+            return true;
+        else if (m_target_sp->ModuleIsExcludedForNonModuleSpecificSearches (module_sp))
             return false;
         else
             return true;

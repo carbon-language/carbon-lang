@@ -563,6 +563,9 @@ PlatformDarwin::GetGroupName (uint32_t gid)
 bool
 PlatformDarwin::ModuleIsExcludedForNonModuleSpecificSearches (lldb_private::Target &target, const lldb::ModuleSP &module_sp)
 {
+    if (!module_sp)
+        return false;
+        
     ObjectFile *obj_file = module_sp->GetObjectFile();
     if (!obj_file)
         return false;
