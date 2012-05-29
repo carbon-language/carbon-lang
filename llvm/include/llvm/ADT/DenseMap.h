@@ -256,6 +256,7 @@ public:
     DestroyAll();
     init(0);
     swap(other);
+    return *this;
   }
 #endif
 
