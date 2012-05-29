@@ -3159,7 +3159,6 @@ class SparcV8TargetInfo : public TargetInfo {
 public:
   SparcV8TargetInfo(const std::string& triple) : TargetInfo(triple) {
     // FIXME: Support Sparc quad-precision long double?
-    BigEndian = false;
     DescriptionString = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-"
                         "i64:64:64-f32:32:32-f64:64:64-v64:64:64-n32";
   }
