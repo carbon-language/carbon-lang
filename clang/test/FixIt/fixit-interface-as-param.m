@@ -7,5 +7,5 @@
 - (void) drawRect : inView:(NSView)view;
 @end
 
-// CHECK: {7:34-7:34}:"*"
+// CHECK: {7:35-7:35}:"*"
 
