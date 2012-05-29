@@ -53,7 +53,7 @@ Value *polly::createLoop(Value *LB, Value *UB, Value *Stride,
   IV->addIncoming(LB, PreheaderBB);
 
   Stride = Builder.CreateZExtOrBitCast(Stride, LoopIVType);
-  Value *IncrementedIV = Builder.CreateAdd(IV, Stride, "polly.next_loopiv");
+  Value *IncrementedIV = Builder.CreateNSWAdd(IV, Stride, "polly.next_loopiv");
 
   // Exit condition.
   Value *CMP;
