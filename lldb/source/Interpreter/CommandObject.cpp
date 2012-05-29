@@ -850,12 +850,12 @@ static
 const char *arch_helper()
 {
     static StreamString g_archs_help;
-    if (g_archs_help.GetData() == NULL)
+    if (g_archs_help.Empty())
     {
         StringList archs;
         ArchSpec::AutoComplete(NULL, archs);
         g_archs_help.Printf("These are the supported architecture names:\n");
-        archs.Join("%s\n", g_archs_help);
+        archs.Join("\n", g_archs_help);
     }
     return g_archs_help.GetData();
 }

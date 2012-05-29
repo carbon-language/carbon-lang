@@ -47,6 +47,12 @@ StreamString::Clear()
     m_packet.clear();
 }
 
+bool
+StreamString::Empty() const
+{
+    return GetSize() == 0;
+}
+
 const char *
 StreamString::GetData () const
 {

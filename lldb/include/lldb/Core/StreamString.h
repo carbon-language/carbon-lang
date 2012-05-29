@@ -37,6 +37,9 @@ public:
     void
     Clear();
 
+    bool
+    Empty() const;
+
     const char *
     GetData () const;
 
