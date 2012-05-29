@@ -14,7 +14,7 @@
 #include "polly/LinkAllPasses.h"
 #include "polly/ScopDetection.h"
 #include "polly/Support/ScopHelper.h"
-#include "polly/Cloog.h"
+#include "polly/CodeGen/Cloog.h"
 
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/RegionInfo.h"

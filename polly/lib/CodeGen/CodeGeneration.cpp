@@ -20,7 +20,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "polly/Cloog.h"
+#include "polly/CodeGen/Cloog.h"
 #ifdef CLOOG_FOUND
 
 #define DEBUG_TYPE "polly-codegen"

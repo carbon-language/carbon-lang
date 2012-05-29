@@ -22,7 +22,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "polly/Cloog.h"
+#include "polly/CodeGen/Cloog.h"
 #ifdef CLOOG_FOUND
 #include "polly/LinkAllPasses.h"
 #include "polly/ScopInfo.h"

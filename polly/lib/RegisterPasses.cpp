@@ -13,7 +13,7 @@
 #include "polly/RegisterPasses.h"
 #include "polly/LinkAllPasses.h"
 
-#include "polly/Cloog.h"
+#include "polly/CodeGen/Cloog.h"
 #include "polly/Dependences.h"
 #include "polly/ScopDetection.h"
 #include "polly/ScopInfo.h"
