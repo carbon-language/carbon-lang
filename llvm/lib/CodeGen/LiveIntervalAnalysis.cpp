@@ -1097,6 +1097,9 @@ public:
 
     BundleRanges BR = createBundleRanges(Entering, Internal, Exiting);
 
+    Entering.clear();
+    Internal.clear();
+    Exiting.clear();
     collectRanges(MI, Entering, Internal, Exiting, hasRegMaskOp, OldIdx);
     assert(!hasRegMaskOp && "Can't have RegMask operand in bundle.");
 
