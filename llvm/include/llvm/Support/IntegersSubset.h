@@ -223,14 +223,14 @@ struct IntRange {
 /// Note: It is assumed that "holder" is inherited from Constant object.
 ///       ConstantRangesSet may be converted to and from Constant* pointer.
 ///
-class ConstantRangesSet {
+class IntegersSubset {
   Constant *Array;
 public:
   
   bool IsWide;
   
   // implicit
-  ConstantRangesSet(Constant *V) : Array(V) {
+  IntegersSubset(Constant *V) : Array(V) {
     ArrayType *ArrTy = cast<ArrayType>(Array->getType());
     VectorType *VecTy = cast<VectorType>(ArrTy->getElementType());
     IntegerType *IntTy = cast<IntegerType>(VecTy->getElementType());

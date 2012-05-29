@@ -806,23 +806,23 @@ void Verifier::visitSwitchInst(SwitchInst &SI) {
   // have the same type as the switched-on value.
   Type *SwitchTy = SI.getCondition()->getType();
   IntegerType *IntTy = cast<IntegerType>(SwitchTy);
-  CRSBuilder Builder;
-  std::map<ConstantRangesSet::Range, unsigned> RangeSetMap;
+  IntegersSubsetToBB Mapping;
+  std::map<IntegersSubset::Range, unsigned> RangeSetMap;
   for (SwitchInst::CaseIt i = SI.case_begin(), e = SI.case_end(); i != e; ++i) {
-    ConstantRangesSet RS = i.getCaseValueEx();
-    for (unsigned ri = 0, rie = RS.getNumItems(); ri < rie; ++ri) {
-      ConstantRangesSet::Range r = RS.getItem(ri);
+    IntegersSubset CaseRanges = i.getCaseValueEx();
+    for (unsigned ri = 0, rie = CaseRanges.getNumItems(); ri < rie; ++ri) {
+      IntegersSubset::Range r = CaseRanges.getItem(ri);
       Assert1(r.Low->getBitWidth() == IntTy->getBitWidth(),
               "Switch constants must all be same type as switch value!", &SI);
       Assert1(r.High->getBitWidth() == IntTy->getBitWidth(),
               "Switch constants must all be same type as switch value!", &SI);
-      Builder.add(r);
+      Mapping.add(r);
       RangeSetMap[r] = i.getCaseIndex();
     }
   }
   
-  CRSBuilder::RangeIterator errItem;
-  if (!Builder.verify(errItem)) {
+  IntegersSubsetToBB::RangeIterator errItem;
+  if (!Mapping.verify(errItem)) {
     unsigned CaseIndex = RangeSetMap[errItem->first];
     SwitchInst::CaseIt i(&SI, CaseIndex);
     Assert2(false, "Duplicate integer as switch case", &SI, i.getCaseValueEx());

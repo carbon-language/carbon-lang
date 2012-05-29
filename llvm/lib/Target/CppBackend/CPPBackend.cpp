@@ -1105,7 +1105,7 @@ void CppWriter::printInstruction(const Instruction *I,
     nl(Out);
     for (SwitchInst::ConstCaseIt i = SI->case_begin(), e = SI->case_end();
          i != e; ++i) {
-      const ConstantRangesSet CaseVal = i.getCaseValueEx();
+      const IntegersSubset CaseVal = i.getCaseValueEx();
       const BasicBlock *BB = i.getCaseSuccessor();
       Out << iName << "->addCase("
           << getOpName(CaseVal) << ", "

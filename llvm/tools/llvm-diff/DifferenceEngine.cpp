@@ -326,7 +326,7 @@ class FunctionDifferenceEngine {
         
       for (SwitchInst::CaseIt I = RI->case_begin(), E = RI->case_end();
            I != E; ++I) {
-        ConstantRangesSet CaseValue = I.getCaseValueEx();
+        IntegersSubset CaseValue = I.getCaseValueEx();
         BasicBlock *LCase = LCases[CaseValue];
         if (LCase) {
           if (TryUnify) tryUnify(LCase, I.getCaseSuccessor());

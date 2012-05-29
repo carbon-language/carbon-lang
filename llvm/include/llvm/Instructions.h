@@ -20,8 +20,8 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Attributes.h"
 #include "llvm/CallingConv.h"
-#include "llvm/Support/ConstantRangesSet.h"
-#include "llvm/Support/CRSBuilder.h"
+#include "llvm/Support/IntegersSubset.h"
+#include "llvm/Support/IntegersSubsetMapping.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -2589,7 +2589,7 @@ public:
   /// Note:
   /// This action invalidates case_end(). Old case_end() iterator will
   /// point to the added case.
-  void addCase(ConstantRangesSet& OnVal, BasicBlock *Dest);
+  void addCase(IntegersSubset& OnVal, BasicBlock *Dest);
 
   /// removeCase - This method removes the specified case and its successor
   /// from the switch instruction. Note that this operation may reorder the
@@ -2654,9 +2654,9 @@ public:
     /// @Deprecated
     ConstantIntTy *getCaseValue() {
       assert(Index < SI->getNumCases() && "Index out the number of cases.");
-      ConstantRangesSet CRS =
+      IntegersSubset CaseRanges =
           reinterpret_cast<Constant*>(SI->getOperand(2 + Index*2));
-      ConstantRangesSet::Range R = CRS.getItem(0);
+      IntegersSubset::Range R = CaseRanges.getItem(0);
       
       // FIXME: Currently we work with ConstantInt based cases.
       // So return CaseValue as ConstantInt.
@@ -2664,7 +2664,7 @@ public:
     }
 
     /// Resolves case value for current case.
-    ConstantRangesSet getCaseValueEx() {
+    IntegersSubset getCaseValueEx() {
       assert(Index < SI->getNumCases() && "Index out the number of cases.");
       return reinterpret_cast<Constant*>(SI->getOperand(2 + Index*2));
     }
@@ -2736,16 +2736,16 @@ public:
     /// @Deprecated.
     void setValue(ConstantInt *V) {
       assert(Index < SI->getNumCases() && "Index out the number of cases.");
-      CRSBuilder CB;
+      IntegersSubsetToBB Mapping;
       // FIXME: Currently we work with ConstantInt based cases.
       // So inititalize IntItem container directly from ConstantInt.
-      CB.add(IntItem::fromConstantInt(V));
+      Mapping.add(IntItem::fromConstantInt(V));
       SI->setOperand(2 + Index*2,
-          reinterpret_cast<Value*>((Constant*)CB.getCase()));
+          reinterpret_cast<Value*>((Constant*)Mapping.getCase()));
     }
     
     /// Sets the new value for current case.
-    void setValueEx(ConstantRangesSet& V) {
+    void setValueEx(IntegersSubset& V) {
       assert(Index < SI->getNumCases() && "Index out the number of cases.");
       SI->setOperand(2 + Index*2, reinterpret_cast<Value*>((Constant*)V));      
     }

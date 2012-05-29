@@ -2234,7 +2234,7 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
         
         unsigned CurIdx = 5;
         for (unsigned i = 0; i != NumCases; ++i) {
-          CRSBuilder CaseBuilder;
+          IntegersSubsetToBB CaseBuilder;
           unsigned NumItems = Record[CurIdx++];
           for (unsigned ci = 0; ci != NumItems; ++ci) {
             bool isSingleNumber = Record[CurIdx++];
@@ -2262,7 +2262,7 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
               CaseBuilder.add(IntItem::fromType(OpTy, Low));
           }
           BasicBlock *DestBB = getBasicBlock(Record[CurIdx++]);
-          ConstantRangesSet Case = CaseBuilder.getCase(); 
+          IntegersSubset Case = CaseBuilder.getCase(); 
           SI->addCase(Case, DestBB);
         }
         uint16_t Hash = SI->hash();

@@ -51,7 +51,7 @@
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Support/CommandLine.h"
-#include "llvm/Support/CRSBuilder.h"
+#include "llvm/Support/IntegersSubsetMapping.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
@@ -2427,7 +2427,7 @@ size_t SelectionDAGBuilder::Clusterify(CaseVector& Cases,
   
   /// Use a shorter form of declaration, and also
   /// show the we want to use CRSBuilder as Clusterifier.
-  typedef CRSBuilderBase<MachineBasicBlock> Clusterifier;
+  typedef IntegersSubsetMapping<MachineBasicBlock> Clusterifier;
   
   Clusterifier TheClusterifier;
 

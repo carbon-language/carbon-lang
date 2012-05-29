@@ -651,9 +651,9 @@ void Interpreter::visitSwitchInst(SwitchInst &I) {
   // Check to see if any of the cases match...
   BasicBlock *Dest = 0;
   for (SwitchInst::CaseIt i = I.case_begin(), e = I.case_end(); i != e; ++i) {
-    ConstantRangesSet Case = i.getCaseValueEx();
+    IntegersSubset Case = i.getCaseValueEx();
     for (unsigned n = 0, en = Case.getNumItems(); n != en; ++n) {
-      ConstantRangesSet::Range r = Case.getItem(n);
+      IntegersSubset::Range r = Case.getItem(n);
       // FIXME: Currently work with ConstantInt based numbers.
       const ConstantInt *LowCI = r.Low.getImplementation();
       const ConstantInt *HighCI = r.High.getImplementation();

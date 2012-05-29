@@ -3169,16 +3169,16 @@ SwitchInst::~SwitchInst() {
 /// addCase - Add an entry to the switch instruction...
 ///
 void SwitchInst::addCase(ConstantInt *OnVal, BasicBlock *Dest) {
-  CRSBuilder CB;
+  IntegersSubsetToBB Mapping;
   
   // FIXME: Currently we work with ConstantInt based cases.
   // So inititalize IntItem container directly from ConstantInt.
-  CB.add(IntItem::fromConstantInt(OnVal));
-  ConstantRangesSet CRS = CB.getCase();
-  addCase(CRS, Dest);
+  Mapping.add(IntItem::fromConstantInt(OnVal));
+  IntegersSubset CaseRanges = Mapping.getCase();
+  addCase(CaseRanges, Dest);
 }
 
-void SwitchInst::addCase(ConstantRangesSet& OnVal, BasicBlock *Dest) {
+void SwitchInst::addCase(IntegersSubset& OnVal, BasicBlock *Dest) {
   unsigned NewCaseIdx = getNumCases(); 
   unsigned OpNo = NumOperands;
   if (OpNo+2 > ReservedSpace)

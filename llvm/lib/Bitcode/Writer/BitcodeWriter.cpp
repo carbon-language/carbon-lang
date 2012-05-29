@@ -1157,12 +1157,12 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
       Vals64.push_back(SI.getNumCases());
       for (SwitchInst::CaseIt i = SI.case_begin(), e = SI.case_end();
            i != e; ++i) {
-        ConstantRangesSet CRS = i.getCaseValueEx();
-        Vals64.push_back(CRS.getNumItems());
-        for (unsigned ri = 0, rn = CRS.getNumItems(); ri != rn; ++ri) {
-          ConstantRangesSet::Range r = CRS.getItem(ri);
+        IntegersSubset CaseRanges = i.getCaseValueEx();
+        Vals64.push_back(CaseRanges.getNumItems());
+        for (unsigned ri = 0, rn = CaseRanges.getNumItems(); ri != rn; ++ri) {
+          IntegersSubset::Range r = CaseRanges.getItem(ri);
 
-          Vals64.push_back(CRS.isSingleNumber(ri));
+          Vals64.push_back(CaseRanges.isSingleNumber(ri));
 
           const APInt &Low = r.Low;
           const APInt &High = r.High;

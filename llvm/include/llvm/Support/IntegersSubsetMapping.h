@@ -19,7 +19,7 @@
 #ifndef CRSBUILDER_H_
 #define CRSBUILDER_H_
 
-#include "llvm/Support/ConstantRangesSet.h"
+#include "llvm/Support/IntegersSubset.h"
 #include <list>
 #include <map>
 #include <vector>
@@ -27,13 +27,13 @@
 namespace llvm {
 
 template <class SuccessorClass>
-class CRSBuilderBase {
+class IntegersSubsetMapping {
 public:
   
-  typedef ConstantRangesSet::Range RangeTy;
+  typedef IntegersSubset::Range RangeTy;
   
   struct RangeEx : public RangeTy {
-    typedef ConstantRangesSet::Range RangeTy;
+    typedef IntegersSubset::Range RangeTy;
     RangeEx() : Weight(1) {}
     RangeEx(const RangeTy &R) : RangeTy(R.Low, R.High), Weight(1) {}
     RangeEx(const IntItem &C) : RangeTy(C), Weight(1) {}
@@ -50,6 +50,12 @@ protected:
   typedef std::vector<Cluster> CaseItems;
   typedef typename CaseItems::iterator CaseItemIt;
   typedef typename CaseItems::const_iterator CaseItemConstIt;
+  
+  typedef std::list<RangeTy> RangesCollection;
+  typedef typename RangesCollection::iterator RangesCollectionIt;
+  
+  typedef std::map<SuccessorClass*, RangesCollection > CRSMap;
+  typedef typename CRSMap::iterator CRSMapIt;
 
   struct ClustersCmp {
     bool operator()(const Cluster &C1, const Cluster &C2) {
@@ -82,6 +88,31 @@ protected:
       Sorted = true;
     }
   }
+
+  IntegersSubset getCase(RangesCollection& Src) {
+    std::vector<Constant*> Elts;
+    Elts.reserve(Src.size());
+    for (RangesCollectionIt i = Src.begin(), e = Src.end(); i != e; ++i) {
+      RangeTy &R = *i;
+      std::vector<Constant*> r;
+      if (R.isSingleNumber()) {
+        r.reserve(2);
+        // FIXME: Since currently we have ConstantInt based numbers
+        // use hack-conversion of IntItem to ConstantInt
+        r.push_back(R.Low.toConstantInt());
+        r.push_back(R.High.toConstantInt());
+      } else {
+        r.reserve(1);
+        r.push_back(R.Low.toConstantInt());
+      }
+      Constant *CV = ConstantVector::get(r);
+      Elts.push_back(CV);    
+    }
+    ArrayType *ArrTy =
+        ArrayType::get(Elts.front()->getType(), (uint64_t)Elts.size());
+    Constant *Array = ConstantArray::get(ArrTy, Elts);
+    return IntegersSubset(Array);     
+  }  
   
 public:
   
@@ -91,7 +122,10 @@ public:
   // factory.
   typedef CaseItemIt RangeIterator;
   
-  CRSBuilderBase() {
+  typedef std::pair<SuccessorClass*, IntegersSubset> Case;
+  typedef std::list<Case> Cases;
+  
+  IntegersSubsetMapping() {
     Items.reserve(32);
     Sorted = false;
   }
@@ -164,7 +198,7 @@ public:
   
   /// Adds all ranges and values from given ranges set to the current
   /// CRSBuilder object.
-  void add(const ConstantRangesSet &CRS, SuccessorClass *S = 0) {
+  void add(const IntegersSubset &CRS, SuccessorClass *S = 0) {
     for (unsigned i = 0, e = CRS.getNumItems(); i < e; ++i) {
       RangeTy R = CRS.getItem(i);
       add(R, S);
@@ -173,59 +207,6 @@ public:
   
   /// Removes items from set.
   void removeItem(RangeIterator i) { Items.erase(i); }
-  
-  /// Returns true if there is no ranges and values inside.
-  bool empty() const { return Items.empty(); }
-  
-  RangeIterator begin() { return Items.begin(); }
-  RangeIterator end() { return Items.end(); }
-};
-
-template <class SuccessorClass>
-class CRSBuilderT : public CRSBuilderBase<SuccessorClass> {
-public:
-  
-  typedef typename CRSBuilderBase<SuccessorClass>::RangeTy RangeTy;
-  typedef typename CRSBuilderBase<SuccessorClass>::RangeIterator
-      RangeIterator;
-  
-private:
-  
-  typedef std::list<RangeTy> RangesCollection;
-  typedef typename RangesCollection::iterator RangesCollectionIt;
-  
-  typedef std::map<SuccessorClass*, RangesCollection > CRSMap;
-  typedef typename CRSMap::iterator CRSMapIt;
-  
-  ConstantRangesSet getCase(RangesCollection& Src) {
-    std::vector<Constant*> Elts;
-    Elts.reserve(Src.size());
-    for (RangesCollectionIt i = Src.begin(), e = Src.end(); i != e; ++i) {
-      RangeTy &R = *i;
-      std::vector<Constant*> r;
-      if (R.isSingleNumber()) {
-        r.reserve(2);
-        // FIXME: Since currently we have ConstantInt based numbers
-        // use hack-conversion of IntItem to ConstantInt
-        r.push_back(R.Low.toConstantInt());
-        r.push_back(R.High.toConstantInt());
-      } else {
-        r.reserve(1);
-        r.push_back(R.Low.toConstantInt());
-      }
-      Constant *CV = ConstantVector::get(r);
-      Elts.push_back(CV);    
-    }
-    ArrayType *ArrTy =
-        ArrayType::get(Elts.front()->getType(), (uint64_t)Elts.size());
-    Constant *Array = ConstantArray::get(ArrTy, Elts);
-    return ConstantRangesSet(Array);     
-  }
-
-public:
-  
-  typedef std::pair<SuccessorClass*, ConstantRangesSet> Case;
-  typedef std::list<Case> Cases;
   
   /// Builds the finalized case objects.
   void getCases(Cases& TheCases) {
@@ -238,17 +219,22 @@ public:
   
   /// Builds the finalized case objects ignoring successor values, as though
   /// all ranges belongs to the same successor.
-  ConstantRangesSet getCase() {
+  IntegersSubset getCase() {
     RangesCollection Ranges;
     for (RangeIterator i = this->begin(); i != this->end(); ++i)
       Ranges.push_back(i->first);
     return getCase(Ranges);
-  }
+  }  
+  
+  /// Returns true if there is no ranges and values inside.
+  bool empty() const { return Items.empty(); }
+  
+  RangeIterator begin() { return Items.begin(); }
+  RangeIterator end() { return Items.end(); }
 };
 
 class BasicBlock;
-typedef CRSBuilderT<BasicBlock> CRSBuilder;
-typedef CRSBuilderBase<BasicBlock> CRSBuilderConst;  
+typedef IntegersSubsetMapping<BasicBlock> IntegersSubsetToBB;
 
 }
 
