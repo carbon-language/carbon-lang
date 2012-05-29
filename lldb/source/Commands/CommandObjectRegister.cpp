@@ -124,7 +124,8 @@ public:
     DumpRegisterSet (const ExecutionContext &exe_ctx,
                      Stream &strm,
                      RegisterContext *reg_ctx,
-                     uint32_t set_idx)
+                     uint32_t set_idx,
+                     bool primitive_only=false)
     {
         uint32_t unavailable_count = 0;
         uint32_t available_count = 0;
@@ -137,7 +138,11 @@ public:
             for (uint32_t reg_idx = 0; reg_idx < num_registers; ++reg_idx)
             {
                 const uint32_t reg = reg_set->registers[reg_idx];
-                if (DumpRegister (exe_ctx, strm, reg_ctx, reg_ctx->GetRegisterInfoAtIndex(reg)))
+                const RegisterInfo *reg_info = reg_ctx->GetRegisterInfoAtIndex(reg);
+                // Skip the dumping of derived register if primitive_only is true.
+                if (primitive_only && reg_info && reg_info->value_regs)
+                    continue;
+                if (DumpRegister (exe_ctx, strm, reg_ctx, reg_info))
                     ++available_count;
                 else
                     ++unavailable_count;
@@ -202,7 +207,8 @@ public:
 
                     for (set_idx = 0; set_idx < num_register_sets; ++set_idx)
                     {
-                        DumpRegisterSet (exe_ctx, strm, reg_ctx, set_idx);
+                        // When dump_all_sets option is set, dump primitive as well as derived registers.
+                        DumpRegisterSet (exe_ctx, strm, reg_ctx, set_idx, !m_command_options.dump_all_sets.GetCurrentValue());
                     }
                 }
             }

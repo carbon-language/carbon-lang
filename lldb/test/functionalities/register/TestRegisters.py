@@ -71,6 +71,13 @@ class RegisterCommandsTestCase(TestBase):
         self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,
             substrs = ['stopped', 'stop reason = breakpoint'])
 
+        # The vanilla "register read" command does not output derived register like eax.
+        self.expect("register read", matching=False,
+            substrs = ['eax'])
+        # While "register read -a" does output derived register like eax.
+        self.expect("register read -a", matching=True,
+            substrs = ['eax'])
+        
         # Test reading of rax and eax.
         self.runCmd("register read rax eax")
 
