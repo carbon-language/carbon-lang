@@ -4,6 +4,13 @@
 // RUN:   -no-integrated-as -c %s 2>&1 \
 // RUN:   | FileCheck -check-prefix=MIPS32-EB-AS %s
 // CHECK-MIPS32-EB-AS: as{{(.exe)?}}" "-march" "mips32" "-mabi" "32" "-EB"
+// CHECK-MIPS32-EB-AS-NOT: "-KPIC"
+//
+// RUN: %clang -target mips-linux-gnu -### \
+// RUN:   -no-integrated-as -fPIC -c %s 2>&1 \
+// RUN:   | FileCheck -check-prefix=MIPS32-EB-PIC %s
+// CHECK-MIPS32-EB-PIC: as{{(.exe)?}}" "-march" "mips32" "-mabi" "32" "-EB"
+// CHECK-MIPS32-EB-PIC: "-KPIC"
 //
 // RUN: %clang -target mipsel-linux-gnu -### \
 // RUN:   -no-integrated-as -c %s 2>&1 \

@@ -5137,6 +5137,18 @@ void linuxtools::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
       CmdArgs.push_back("-EB");
     else
       CmdArgs.push_back("-EL");
+
+    Arg *LastPICArg = Args.getLastArg(options::OPT_fPIC, options::OPT_fno_PIC,
+                                      options::OPT_fpic, options::OPT_fno_pic,
+                                      options::OPT_fPIE, options::OPT_fno_PIE,
+                                      options::OPT_fpie, options::OPT_fno_pie);
+    if (LastPICArg &&
+        (LastPICArg->getOption().matches(options::OPT_fPIC) ||
+         LastPICArg->getOption().matches(options::OPT_fpic) ||
+         LastPICArg->getOption().matches(options::OPT_fPIE) ||
+         LastPICArg->getOption().matches(options::OPT_fpie))) {
+      CmdArgs.push_back("-KPIC");
+    }
   }
 
   Args.AddAllArgValues(CmdArgs, options::OPT_Wa_COMMA,
