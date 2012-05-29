@@ -1242,6 +1242,7 @@ class X86TargetInfo : public TargetInfo {
   bool HasBMI;
   bool HasBMI2;
   bool HasPOPCNT;
+  bool HasSSE4a;
   bool HasFMA4;
 
   /// \brief Enumeration of all of the X86 CPUs supported by Clang.
@@ -1388,7 +1389,7 @@ public:
   X86TargetInfo(const std::string& triple)
     : TargetInfo(triple), SSELevel(NoSSE), MMX3DNowLevel(NoMMX3DNow),
       HasAES(false), HasLZCNT(false), HasBMI(false), HasBMI2(false),
-      HasPOPCNT(false), HasFMA4(false), CPU(CK_Generic) {
+      HasPOPCNT(false), HasSSE4a(false), HasFMA4(false), CPU(CK_Generic) {
     BigEndian = false;
     LongDoubleFormat = &llvm::APFloat::x87DoubleExtended;
   }
@@ -1843,6 +1844,11 @@ void X86TargetInfo::HandleTargetFeatures(std::vector<std::string> &Features) {
       continue;
     }
 
+    if (Feature == "sse4a") {
+      HasSSE4a = true;
+      continue;
+    }
+
     if (Feature == "fma4") {
       HasFMA4 = true;
       continue;
@@ -2042,6 +2048,9 @@ void X86TargetInfo::getTargetDefines(const LangOptions &Opts,
   if (HasPOPCNT)
     Builder.defineMacro("__POPCNT__");
 
+  if (HasSSE4a)
+    Builder.defineMacro("__SSE4A__");
+
   if (HasFMA4)
     Builder.defineMacro("__FMA4__");
 
@@ -2108,6 +2117,7 @@ bool X86TargetInfo::hasFeature(StringRef Feature) const {
       .Case("avx2", SSELevel >= AVX2)
       .Case("bmi", HasBMI)
       .Case("bmi2", HasBMI2)
+      .Case("sse4a", HasSSE4a)
       .Case("fma4", HasFMA4)
       .Case("lzcnt", HasLZCNT)
       .Case("mm3dnow", MMX3DNowLevel >= AMD3DNow)

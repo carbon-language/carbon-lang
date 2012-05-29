@@ -940,5 +940,47 @@
 // CHECK_ATHLON_FX_M64: #define __tune_k8__ 1
 // CHECK_ATHLON_FX_M64: #define __x86_64 1
 // CHECK_ATHLON_FX_M64: #define __x86_64__ 1
+// RUN: %clang -march=amdfam10 -m64 -E -dM %s -o - 2>&1 \
+// RUN:     -target i386-unknown-linux \
+// RUN:   | FileCheck %s -check-prefix=CHECK_AMDFAM10_M64
+// CHECK_AMDFAM10_M64: #define __3dNOW_A__ 1
+// CHECK_AMDFAM10_M64: #define __3dNOW__ 1
+// CHECK_AMDFAM10_M64: #define __MMX__ 1
+// CHECK_AMDFAM10_M64: #define __SSE2_MATH__ 1
+// CHECK_AMDFAM10_M64: #define __SSE2__ 1
+// CHECK_AMDFAM10_M64: #define __SSE3__ 1
+// CHECK_AMDFAM10_M64: #define __SSE4A__ 1
+// CHECK_AMDFAM10_M64: #define __SSE_MATH__ 1
+// CHECK_AMDFAM10_M64: #define __SSE__ 1
+// CHECK_AMDFAM10_M64: #define __amd64 1
+// CHECK_AMDFAM10_M64: #define __amd64__ 1
+// CHECK_AMDFAM10_M64: #define __amdfam10 1
+// CHECK_AMDFAM10_M64: #define __amdfam10__ 1
+// CHECK_AMDFAM10_M64: #define __tune_amdfam10__ 1
+// CHECK_AMDFAM10_M64: #define __x86_64 1
+// CHECK_AMDFAM10_M64: #define __x86_64__ 1
+// RUN: %clang -march=bdver1 -m64 -E -dM %s -o - 2>&1 \
+// RUN:     -target i386-unknown-linux \
+// RUN:   | FileCheck %s -check-prefix=CHECK_BDVER1_M64
+// CHECK_BDVER1_M64: #define __AVX__ 1
+// CHECK_BDVER1_M64-NOT: #define __3dNOW_A__ 1
+// CHECK_BDVER1_M64-NOT: #define __3dNOW__ 1
+// CHECK_BDVER1_M64: #define __MMX__ 1
+// CHECK_BDVER1_M64: #define __SSE2_MATH__ 1
+// CHECK_BDVER1_M64: #define __SSE2__ 1
+// CHECK_BDVER1_M64: #define __SSE3__ 1
+// CHECK_BDVER1_M64: #define __SSE4A__ 1
+// CHECK_BDVER1_M64: #define __SSE4_1__ 1
+// CHECK_BDVER1_M64: #define __SSE4_2__ 1
+// CHECK_BDVER1_M64: #define __SSE_MATH__ 1
+// CHECK_BDVER1_M64: #define __SSE__ 1
+// CHECK_BDVER1_M64: #define __SSSE3__ 1
+// CHECK_BDVER1_M64: #define __amd64 1
+// CHECK_BDVER1_M64: #define __amd64__ 1
+// CHECK_BDVER1_M64: #define __bdver1 1
+// CHECK_BDVER1_M64: #define __bdver1__ 1
+// CHECK_BDVER1_M64: #define __tune_bdver1__ 1
+// CHECK_BDVER1_M64: #define __x86_64 1
+// CHECK_BDVER1_M64: #define __x86_64__ 1
 //
 // End X86/GCC/Linux tests ------------------
