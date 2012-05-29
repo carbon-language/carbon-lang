@@ -73,11 +73,11 @@ typedef void (F)(void);
  NSArray* first;
 }
 
-@property (readonly) NSArray* pieces;
-@property (readonly) NSMutableArray* first;  // expected-warning {{type of property 'first' does not match type of accessor 'first'}}
+@property (readonly) NSArray* pieces; // expected-warning {{type of property 'pieces' does not match type of accessor 'pieces'}}
+@property (readonly) NSMutableArray* first;
 
-- (NSMutableArray*) pieces;
-- (NSArray*) first; // expected-note 2 {{declared here}}
+- (NSMutableArray*) pieces; // expected-note 2 {{declared here}}
+- (NSArray*) first;
 @end
 
 @interface Class2  {
@@ -90,12 +90,12 @@ typedef void (F)(void);
 
 - (id) lastPiece
 {
- return container.pieces;
+ return container.pieces; // expected-warning {{type of property 'pieces' does not match type of accessor 'pieces'}}
 }
 
 - (id)firstPeice
 {
-  return container.first; // expected-warning {{type of property 'first' does not match type of accessor 'first'}}
+  return container.first;
 }
 @end
 

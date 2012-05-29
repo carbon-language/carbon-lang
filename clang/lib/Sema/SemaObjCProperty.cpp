@@ -1114,9 +1114,9 @@ bool Sema::DiagnosePropertyAccessorMismatch(ObjCPropertyDecl *property,
         isa<ObjCObjectPointerType>(GetterType))
       compat =
         Context.canAssignObjCInterfaces(
-                                      PropertyIvarType->getAs<ObjCObjectPointerType>(),
-                                      GetterType->getAs<ObjCObjectPointerType>());
-    else if (CheckAssignmentConstraints(Loc, PropertyIvarType, GetterType) 
+                                      GetterType->getAs<ObjCObjectPointerType>(),
+                                      PropertyIvarType->getAs<ObjCObjectPointerType>());
+    else if (CheckAssignmentConstraints(Loc, GetterType, PropertyIvarType) 
               != Compatible) {
           Diag(Loc, diag::error_property_accessor_type)
             << property->getDeclName() << PropertyIvarType
