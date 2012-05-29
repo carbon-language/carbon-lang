@@ -500,11 +500,13 @@ void __asan_init() {
   // Make sure we are not statically linked.
   AsanDoesNotSupportStaticLinkage();
 
+#if !defined(_WIN32)
   if (__asan_default_options) {
     Report("Using the defaults from __asan_default_options: %s\n",
            __asan_default_options);
     ParseAsanOptions(__asan_default_options);
   }
+#endif
   // flags
   const char *options = AsanGetEnv("ASAN_OPTIONS");
   ParseAsanOptions(options);
