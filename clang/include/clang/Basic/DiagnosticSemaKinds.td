@@ -331,7 +331,7 @@ def warn_dyn_class_memaccess : Warning<
 def note_bad_memaccess_silence : Note<
   "explicitly cast the pointer to silence this warning">;
 def warn_sizeof_pointer_expr_memaccess : Warning<
-  "argument to 'sizeof' in %0 call is the same expression as the "
+  "argument to 'sizeof' in '%0' call is the same expression as the "
   "%select{destination|source}1; did you mean to "
   "%select{dereference it|remove the addressof|provide an explicit length}2?">,
   InGroup<DiagGroup<"sizeof-pointer-memaccess">>;
