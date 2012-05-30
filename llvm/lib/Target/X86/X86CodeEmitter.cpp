@@ -1433,7 +1433,7 @@ void Emitter<CodeEmitter>::emitInstruction(MachineInstr &MI,
     break;
   }
 
-  if (CurOp != NumOps) {
+  while (CurOp != NumOps && NumOps - CurOp <= 2) {
     // The last source register of a 4 operand instruction in AVX is encoded
     // in bits[7:4] of a immediate byte.
     if ((TSFlags >> X86II::VEXShift) & X86II::VEX_I8IMM) {
