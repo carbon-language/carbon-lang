@@ -5654,7 +5654,8 @@ bool ScalarEvolution::SimplifyICmpOperands(ICmpInst::Predicate &Pred,
       if (!RA)
         if (const SCEVAddExpr *AE = dyn_cast<SCEVAddExpr>(LHS))
           if (const SCEVMulExpr *ME = dyn_cast<SCEVMulExpr>(AE->getOperand(0)))
-            if (ME->getOperand(0)->isAllOnesValue()) {
+            if (AE->getNumOperands() == 2 && ME->getNumOperands() == 2 &&
+                ME->getOperand(0)->isAllOnesValue()) {
               RHS = AE->getOperand(1);
               LHS = ME->getOperand(1);
               Changed = true;
