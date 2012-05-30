@@ -554,6 +554,7 @@ sub dump_register_value
     if ($reg_num >= @$registers_aref)
     {
         printf("\tinvalid register index %d\n", $reg_num);
+        return;
     }
     
     my $reg_href = $$registers_aref[$reg_num];
