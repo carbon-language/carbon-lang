@@ -160,11 +160,12 @@ SearchFilter::SearchInModuleList (Searcher &searcher, ModuleList &modules)
         searcher.SearchCallback (*this, empty_sc, NULL, false);
     else
     {
+        Mutex::Locker modules_locker(modules.GetMutex());
         const size_t numModules = modules.GetSize();
 
         for (size_t i = 0; i < numModules; i++)
         {
-            ModuleSP module_sp(modules.GetModuleAtIndex(i));
+            ModuleSP module_sp(modules.GetModuleAtIndexUnlocked(i));
             if (ModulePasses(module_sp))
             {
                 if (DoModuleIteration(module_sp, searcher) == Searcher::eCallbackReturnStop)
@@ -191,12 +192,15 @@ SearchFilter::DoModuleIteration (const SymbolContext &context, Searcher &searche
     {
         if (!context.module_sp)
         {
-            size_t n_modules = m_target_sp->GetImages().GetSize();
+            ModuleList &target_images = m_target_sp->GetImages();
+            Mutex::Locker modules_locker(target_images.GetMutex());
+            
+            size_t n_modules = target_images.GetSize();
             for (size_t i = 0; i < n_modules; i++)
             {
                 // If this is the last level supplied, then call the callback directly,
                 // otherwise descend.
-                ModuleSP module_sp(m_target_sp->GetImages().GetModuleAtIndex(i));
+                ModuleSP module_sp(target_images.GetModuleAtIndexUnlocked (i));
                 if (!ModulePasses (module_sp))
                     continue;
 
@@ -427,11 +431,13 @@ SearchFilterByModule::Search (Searcher &searcher)
     // filespec that passes.  Otherwise, we need to go through all modules and
     // find the ones that match the file name.
 
-    ModuleList matching_modules;
-    const size_t num_modules = m_target_sp->GetImages().GetSize ();
+    ModuleList &target_modules = m_target_sp->GetImages();
+    Mutex::Locker modules_locker (target_modules.GetMutex());
+    
+    const size_t num_modules = target_modules.GetSize ();
     for (size_t i = 0; i < num_modules; i++)
     {
-        Module* module = m_target_sp->GetImages().GetModulePointerAtIndex(i);
+        Module* module = target_modules.GetModulePointerAtIndexUnlocked(i);
         if (FileSpec::Compare (m_module_spec, module->GetFileSpec(), false) == 0)
         {
             SymbolContext matchingContext(m_target_sp, module->shared_from_this());
@@ -591,11 +597,13 @@ SearchFilterByModuleList::Search (Searcher &searcher)
     // filespec that passes.  Otherwise, we need to go through all modules and
     // find the ones that match the file name.
 
-    ModuleList matching_modules;
-    const size_t num_modules = m_target_sp->GetImages().GetSize ();
+    ModuleList &target_modules = m_target_sp->GetImages();
+    Mutex::Locker modules_locker (target_modules.GetMutex());
+    
+    const size_t num_modules = target_modules.GetSize ();
     for (size_t i = 0; i < num_modules; i++)
     {
-        Module* module = m_target_sp->GetImages().GetModulePointerAtIndex(i);
+        Module* module = target_modules.GetModulePointerAtIndexUnlocked(i);
         if (m_module_spec_list.FindFileIndex(0, module->GetFileSpec(), false) != UINT32_MAX)
         {
             SymbolContext matchingContext(m_target_sp, module->shared_from_this());
@@ -762,11 +770,14 @@ SearchFilterByModuleListAndCU::Search (Searcher &searcher)
     // find the ones that match the file name.
 
     ModuleList matching_modules;
-    const size_t num_modules = m_target_sp->GetImages().GetSize ();
+    ModuleList &target_images = m_target_sp->GetImages();
+    Mutex::Locker modules_locker(target_images.GetMutex());
+    
+    const size_t num_modules = target_images.GetSize ();
     bool no_modules_in_filter = m_module_spec_list.GetSize() == 0;
     for (size_t i = 0; i < num_modules; i++)
     {
-        lldb::ModuleSP module_sp = m_target_sp->GetImages().GetModuleAtIndex(i);
+        lldb::ModuleSP module_sp = target_images.GetModuleAtIndexUnlocked(i);
         if (no_modules_in_filter || m_module_spec_list.FindFileIndex(0, module_sp->GetFileSpec(), false) != UINT32_MAX)
         {
             SymbolContext matchingContext(m_target_sp, module_sp);

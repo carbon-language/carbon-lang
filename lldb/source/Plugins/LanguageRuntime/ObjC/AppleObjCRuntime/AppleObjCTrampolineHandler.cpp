@@ -334,15 +334,16 @@ AppleObjCTrampolineHandler::AppleObjCVTables::InitializeVTableSymbols ()
         return true;
     Target &target = m_process_sp->GetTarget();
     
-    ModuleList &modules = target.GetImages();
-    size_t num_modules = modules.GetSize();
+    ModuleList &target_modules = target.GetImages();
+    Mutex::Locker modules_locker(target_modules.GetMutex());
+    size_t num_modules = target_modules.GetSize();
     if (!m_objc_module_sp)
     {
         for (size_t i = 0; i < num_modules; i++)
         {
-            if (m_process_sp->GetObjCLanguageRuntime()->IsModuleObjCLibrary (modules.GetModuleAtIndex(i)))
+            if (m_process_sp->GetObjCLanguageRuntime()->IsModuleObjCLibrary (target_modules.GetModuleAtIndexUnlocked(i)))
             {
-                m_objc_module_sp = modules.GetModuleAtIndex(i);
+                m_objc_module_sp = target_modules.GetModuleAtIndexUnlocked(i);
                 break;
             }
         }

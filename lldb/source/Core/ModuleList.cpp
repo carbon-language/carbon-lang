@@ -201,6 +201,12 @@ Module*
 ModuleList::GetModulePointerAtIndex (uint32_t idx) const
 {
     Mutex::Locker locker(m_modules_mutex);
+    return GetModulePointerAtIndexUnlocked(idx);
+}
+
+Module*
+ModuleList::GetModulePointerAtIndexUnlocked (uint32_t idx) const
+{
     if (idx < m_modules.size())
         return m_modules[idx].get();
     return NULL;
@@ -210,6 +216,12 @@ ModuleSP
 ModuleList::GetModuleAtIndex(uint32_t idx)
 {
     Mutex::Locker locker(m_modules_mutex);
+    return GetModuleAtIndexUnlocked(idx);
+}
+
+ModuleSP
+ModuleList::GetModuleAtIndexUnlocked(uint32_t idx)
+{
     ModuleSP module_sp;
     if (idx < m_modules.size())
         module_sp = m_modules[idx];

@@ -116,6 +116,13 @@ public:
     LogUUIDAndPaths (lldb::LogSP &log_sp, 
                      const char *prefix_cstr);
 
+
+    Mutex &
+    GetMutex ()
+    {
+        return m_modules_mutex;
+    }
+    
     uint32_t
     GetIndexForModule (const Module *module) const;
 
@@ -135,6 +142,23 @@ public:
     GetModuleAtIndex (uint32_t idx);
 
     //------------------------------------------------------------------
+    /// Get the module shared pointer for the module at index \a idx without
+    /// acquiring the ModuleList mutex.  This MUST already have been 
+    /// acquired with ModuleList::GetMutex and locked for this call to be safe.
+    ///
+    /// @param[in] idx
+    ///     An index into this module collection.
+    ///
+    /// @return
+    ///     A shared pointer to a Module which can contain NULL if
+    ///     \a idx is out of range.
+    ///
+    /// @see ModuleList::GetSize()
+    //------------------------------------------------------------------
+    lldb::ModuleSP
+    GetModuleAtIndexUnlocked (uint32_t idx);
+
+    //------------------------------------------------------------------
     /// Get the module pointer for the module at index \a idx.
     ///
     /// @param[in] idx
@@ -148,6 +172,23 @@ public:
     //------------------------------------------------------------------
     Module*
     GetModulePointerAtIndex (uint32_t idx) const;
+
+    //------------------------------------------------------------------
+    /// Get the module pointer for the module at index \a idx without
+    /// acquiring the ModuleList mutex.  This MUST already have been 
+    /// acquired with ModuleList::GetMutex and locked for this call to be safe.
+    ///
+    /// @param[in] idx
+    ///     An index into this module collection.
+    ///
+    /// @return
+    ///     A pointer to a Module which can by NULL if \a idx is out
+    ///     of range.
+    ///
+    /// @see ModuleList::GetSize()
+    //------------------------------------------------------------------
+    Module*
+    GetModulePointerAtIndexUnlocked (uint32_t idx) const;
 
     //------------------------------------------------------------------
     /// Find compile units by partial or full path.

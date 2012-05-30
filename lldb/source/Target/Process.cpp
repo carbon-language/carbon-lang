@@ -2814,19 +2814,23 @@ Process::CompleteAttach ()
 
     m_os_ap.reset (OperatingSystem::FindPlugin (this, NULL));
     // Figure out which one is the executable, and set that in our target:
-    ModuleList &modules = m_target.GetImages();
+    ModuleList &target_modules = m_target.GetImages();
+    Mutex::Locker modules_locker(target_modules.GetMutex());
+    size_t num_modules = target_modules.GetSize();
+    ModuleSP new_executable_module_sp;
     
-    size_t num_modules = modules.GetSize();
     for (int i = 0; i < num_modules; i++)
     {
-        ModuleSP module_sp (modules.GetModuleAtIndex(i));
+        ModuleSP module_sp (target_modules.GetModuleAtIndexUnlocked (i));
         if (module_sp && module_sp->IsExecutable())
         {
             if (m_target.GetExecutableModulePointer() != module_sp.get())
-                m_target.SetExecutableModule (module_sp, false);
+                new_executable_module_sp = module_sp;
             break;
         }
     }
+    if (new_executable_module_sp)
+        m_target.SetExecutableModule (new_executable_module_sp, false);
 }
 
 Error

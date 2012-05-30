@@ -1882,6 +1882,7 @@ public:
             if (command.GetArgumentCount() == 0)
             {
                 // Dump all sections for all modules images
+                Mutex::Locker modules_locker(target->GetImages().GetMutex());
                 const uint32_t num_modules = target->GetImages().GetSize();
                 if (num_modules > 0)
                 {
@@ -1894,7 +1895,10 @@ public:
                             result.GetOutputStream().EOL();
                         }
                         num_dumped++;
-                        DumpModuleSymtab (m_interpreter, result.GetOutputStream(), target->GetImages().GetModulePointerAtIndex(image_idx), m_options.m_sort_order);
+                        DumpModuleSymtab (m_interpreter,
+                                          result.GetOutputStream(),
+                                          target->GetImages().GetModulePointerAtIndexUnlocked(image_idx),
+                                          m_options.m_sort_order);
                     }
                 }
                 else
@@ -2179,13 +2183,15 @@ public:
             if (command.GetArgumentCount() == 0)
             {
                 // Dump all sections for all modules images
-                const uint32_t num_modules = target->GetImages().GetSize();
+                ModuleList &target_modules = target->GetImages();
+                Mutex::Locker modules_locker (target_modules.GetMutex());
+                const uint32_t num_modules = target_modules.GetSize();
                 if (num_modules > 0)
                 {
                     result.GetOutputStream().Printf("Dumping debug symbols for %u modules.\n", num_modules);
                     for (uint32_t image_idx = 0;  image_idx<num_modules; ++image_idx)
                     {
-                        if (DumpModuleSymbolVendor (result.GetOutputStream(), target->GetImages().GetModulePointerAtIndex(image_idx)))
+                        if (DumpModuleSymbolVendor (result.GetOutputStream(), target_modules.GetModulePointerAtIndexUnlocked(image_idx)))
                             num_dumped++;
                     }
                 }
@@ -2288,7 +2294,10 @@ public:
                 for (int arg_idx = 0; (arg_cstr = command.GetArgumentAtIndex(arg_idx)) != NULL; ++arg_idx)
                 {
                     FileSpec file_spec(arg_cstr, false);
-                    const uint32_t num_modules = target->GetImages().GetSize();
+                    
+                    ModuleList &target_modules = target->GetImages();
+                    Mutex::Locker modules_locker(target_modules.GetMutex());
+                    const uint32_t num_modules = target_modules.GetSize();
                     if (num_modules > 0)
                     {
                         uint32_t num_dumped = 0;
@@ -2296,7 +2305,7 @@ public:
                         {
                             if (DumpCompileUnitLineTable (m_interpreter,
                                                           result.GetOutputStream(),
-                                                          target->GetImages().GetModulePointerAtIndex(i),
+                                                          target_modules.GetModulePointerAtIndexUnlocked(i),
                                                           file_spec,
                                                           exe_ctx.GetProcessPtr() && exe_ctx.GetProcessRef().IsAlive()))
                                 num_dumped++;
@@ -2807,9 +2816,6 @@ public:
                 result.GetErrorStream().SetAddressByteSize(addr_byte_size);
             }
             // Dump all sections for all modules images
-            uint32_t num_modules = 0;
-            Mutex::Locker locker;
-            
             Stream &strm = result.GetOutputStream();
             
             if (m_options.m_module_addr != LLDB_INVALID_ADDRESS)
@@ -2845,6 +2851,11 @@ public:
                 return result.Succeeded();
             }
             
+            uint32_t num_modules = 0;
+            Mutex::Locker locker;      // This locker will be locked on the mutex in module_list_ptr if it is non-NULL.
+                                       // Otherwise it will lock the AllocationModuleCollectionMutex when accessing
+                                       // the global module list directly.
+            
             ModuleList module_list;
             ModuleList *module_list_ptr = NULL;
             const size_t argc = command.GetArgumentCount();
@@ -2858,7 +2869,6 @@ public:
                 else
                 {
                     module_list_ptr = &target->GetImages();
-                    num_modules = target->GetImages().GetSize();
                 }
             }
             else
@@ -2879,8 +2889,13 @@ public:
                     }
                 }
                 
-                num_modules = module_list.GetSize();
                 module_list_ptr = &module_list;
+            }
+            
+            if (module_list_ptr != NULL)
+            {
+                locker.Lock(module_list_ptr->GetMutex());
+                num_modules = module_list_ptr->GetSize();
             }
 
             if (num_modules > 0)
@@ -2891,7 +2906,7 @@ public:
                     Module *module;
                     if (module_list_ptr)
                     {
-                        module_sp = module_list_ptr->GetModuleAtIndex(image_idx);
+                        module_sp = module_list_ptr->GetModuleAtIndexUnlocked(image_idx);
                         module = module_sp.get();
                     }
                     else
@@ -3414,12 +3429,14 @@ public:
             if (command.GetArgumentCount() == 0)
             {
                 // Dump all sections for all modules images
-                const uint32_t num_modules = target->GetImages().GetSize();
+                ModuleList &target_modules = target->GetImages();
+                Mutex::Locker modules_locker(target_modules.GetMutex());
+                const uint32_t num_modules = target_modules.GetSize();
                 if (num_modules > 0)
                 {
                     for (i = 0; i<num_modules && syntax_error == false; ++i)
                     {
-                        if (LookupInModule (m_interpreter, target->GetImages().GetModulePointerAtIndex(i), result, syntax_error))
+                        if (LookupInModule (m_interpreter, target_modules.GetModulePointerAtIndexUnlocked(i), result, syntax_error))
                         {
                             result.GetOutputStream().EOL();
                             num_successful_lookups++;

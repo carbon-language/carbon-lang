@@ -317,6 +317,7 @@ Breakpoint::ClearAllBreakpointSites ()
 void
 Breakpoint::ModulesChanged (ModuleList &module_list, bool load, bool delete_locations)
 {
+    Mutex::Locker modules_mutex(module_list.GetMutex());
     if (load)
     {
         // The logic for handling new modules is:
@@ -332,11 +333,11 @@ Breakpoint::ModulesChanged (ModuleList &module_list, bool load, bool delete_loca
                                  // resolving breakpoints will add new locations potentially.
 
         const size_t num_locs = m_locations.GetSize();
-
-        for (size_t i = 0; i < module_list.GetSize(); i++)
+        size_t num_modules = module_list.GetSize();
+        for (size_t i = 0; i < num_modules; i++)
         {
             bool seen = false;
-            ModuleSP module_sp (module_list.GetModuleAtIndex (i));
+            ModuleSP module_sp (module_list.GetModuleAtIndexUnlocked (i));
             if (!m_filter_sp->ModulePasses (module_sp))
                 continue;
 
@@ -403,10 +404,11 @@ Breakpoint::ModulesChanged (ModuleList &module_list, bool load, bool delete_loca
                                                                shared_from_this());
         else
             removed_locations_event = NULL;
-                    
-        for (size_t i = 0; i < module_list.GetSize(); i++)
+        
+        size_t num_modules = module_list.GetSize();
+        for (size_t i = 0; i < num_modules; i++)
         {
-            ModuleSP module_sp (module_list.GetModuleAtIndex (i));
+            ModuleSP module_sp (module_list.GetModuleAtIndexUnlocked (i));
             if (m_filter_sp->ModulePasses (module_sp))
             {
                 size_t loc_idx = 0;

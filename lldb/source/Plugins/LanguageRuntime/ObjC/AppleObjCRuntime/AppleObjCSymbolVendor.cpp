@@ -43,13 +43,14 @@ AppleObjCSymbolVendor::FindTypes (const SymbolContext& sc,
     
     uint32_t ret = 0;
     
-    ModuleList &images = m_process->GetTarget().GetImages();
+    ModuleList &target_modules = m_process->GetTarget().GetImages();
+    Mutex::Locker modules_locker(target_modules.GetMutex());
     
-    for (size_t image_index = 0, end_index = images.GetSize();
+    for (size_t image_index = 0, end_index = target_modules.GetSize();
          image_index < end_index;
          ++image_index)
     {
-        Module *image = images.GetModulePointerAtIndex(image_index);
+        Module *image = target_modules.GetModulePointerAtIndexUnlocked(image_index);
         
         if (!image)
             continue;

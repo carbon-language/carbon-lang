@@ -97,10 +97,12 @@ DynamicLoaderStatic::LoadAllImagesAtFileAddresses ()
     
     ModuleList loaded_module_list;
 
+    Mutex::Locker mutex_locker(module_list.GetMutex());
+    
     const size_t num_modules = module_list.GetSize();
     for (uint32_t idx = 0; idx < num_modules; ++idx)
     {
-        ModuleSP module_sp (module_list.GetModuleAtIndex (idx));
+        ModuleSP module_sp (module_list.GetModuleAtIndexUnlocked (idx));
         if (module_sp)
         {
             bool changed = false;
