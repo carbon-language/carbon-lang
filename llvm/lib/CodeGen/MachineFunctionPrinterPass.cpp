@@ -15,6 +15,7 @@
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/Debug.h"
 
 using namespace llvm;
 
@@ -28,6 +29,7 @@ struct MachineFunctionPrinterPass : public MachineFunctionPass {
   raw_ostream &OS;
   const std::string Banner;
 
+  MachineFunctionPrinterPass() : MachineFunctionPass(ID), OS(dbgs()) { }
   MachineFunctionPrinterPass(raw_ostream &os, const std::string &banner) 
       : MachineFunctionPass(ID), OS(os), Banner(banner) {}
 
@@ -47,6 +49,10 @@ struct MachineFunctionPrinterPass : public MachineFunctionPass {
 
 char MachineFunctionPrinterPass::ID = 0;
 }
+
+char &MachineFunctionPrinterPassID = MachineFunctionPrinterPass::ID;
+INITIALIZE_PASS(MachineFunctionPrinterPass, "print-machineinstrs",
+                "Machine Function Printer", false, false)
 
 namespace llvm {
 /// Returns a newly-created MachineFunction Printer pass. The

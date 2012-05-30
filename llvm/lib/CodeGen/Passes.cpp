@@ -80,6 +80,10 @@ static cl::opt<bool> PrintGCInfo("print-gc", cl::Hidden,
 static cl::opt<bool> VerifyMachineCode("verify-machineinstrs", cl::Hidden,
     cl::desc("Verify generated machine code"),
     cl::init(getenv("LLVM_VERIFY_MACHINEINSTRS")!=NULL));
+static cl::opt<std::string>
+PrintMachineInstrs("print-machineinstrs", cl::ValueOptional,
+                   cl::desc("Print machine instrs"),
+                   cl::value_desc("pass-name"), cl::init("option-unspecified"));
 
 /// Allow standard passes to be disabled by command line options. This supports
 /// simple binary flags that either suppress the pass or do nothing.
@@ -196,6 +200,10 @@ public:
   // default by substituting NoPass, and the user may still enable that standard
   // pass with an explicit command line option.
   DenseMap<AnalysisID,AnalysisID> TargetPasses;
+
+  /// Store the pairs of <AnalysisID, AnalysisID> of which the second pass
+  /// is inserted after each instance of the first one.
+  SmallVector<std::pair<AnalysisID, AnalysisID>, 4> InsertedPasses;
 };
 } // namespace llvm
 
@@ -223,6 +231,14 @@ TargetPassConfig::TargetPassConfig(TargetMachine *tm, PassManagerBase &pm)
 
   // Temporarily disable experimental passes.
   substitutePass(MachineSchedulerID, NoPassID);
+}
+
+/// Insert InsertedPassID pass after TargetPassID.
+void TargetPassConfig::insertPass(const char &TargetPassID,
+                                  const char &InsertedPassID) {
+  assert(&TargetPassID != &InsertedPassID && "Insert a pass after itself!");
+  std::pair<AnalysisID, AnalysisID> P(&TargetPassID, &InsertedPassID);
+  Impl->InsertedPasses.push_back(P);
 }
 
 /// createPassConfig - Create a pass configuration object to be used by
@@ -270,6 +286,17 @@ AnalysisID TargetPassConfig::addPass(char &ID) {
   if (!P)
     llvm_unreachable("Pass ID not registered");
   PM->add(P);
+  // Add the passes after the pass P if there is any.
+  for (SmallVector<std::pair<AnalysisID, AnalysisID>, 4>::iterator
+         I = Impl->InsertedPasses.begin(), E = Impl->InsertedPasses.end();
+       I != E; ++I) {
+    if ((*I).first == &ID) {
+      assert((*I).second && "Illegal Pass ID!");
+      Pass *NP = Pass::createPass((*I).second);
+      assert(NP && "Pass ID not registered");
+      PM->add(NP);
+    }
+  }
   return FinalID;
 }
 
@@ -351,6 +378,21 @@ void TargetPassConfig::addISelPrepare() {
 void TargetPassConfig::addMachinePasses() {
   // Print the instruction selected machine code...
   printAndVerify("After Instruction Selection");
+
+  // Insert a machine instr printer pass after the specified pass.
+  // If -print-machineinstrs specified, print machineinstrs after all passes.
+  if (StringRef(PrintMachineInstrs.getValue()).equals(""))
+    TM->Options.PrintMachineCode = true;
+  else if (!StringRef(PrintMachineInstrs.getValue())
+           .equals("option-unspecified")) {
+    const PassRegistry *PR = PassRegistry::getPassRegistry();
+    const PassInfo *TPI = PR->getPassInfo(PrintMachineInstrs.getValue());
+    const PassInfo *IPI = PR->getPassInfo(StringRef("print-machineinstrs"));
+    assert (TPI && IPI && "Pass ID not registered!");
+    const char *TID = (char *)(TPI->getTypeInfo());
+    const char *IID = (char *)(IPI->getTypeInfo());
+    insertPass(*TID, *IID);
+  }
 
   // Expand pseudo-instructions emitted by ISel.
   addPass(ExpandISelPseudosID);

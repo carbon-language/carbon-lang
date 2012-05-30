@@ -146,11 +146,6 @@ EnableFPMAD("enable-fp-mad",
   cl::init(false));
 
 static cl::opt<bool>
-PrintCode("print-machineinstrs",
-  cl::desc("Print generated machine code"),
-  cl::init(false));
-
-static cl::opt<bool>
 DisableFPElim("disable-fp-elim",
   cl::desc("Disable frame pointer elimination optimization"),
   cl::init(false));
@@ -403,7 +398,6 @@ int main(int argc, char **argv) {
 
   TargetOptions Options;
   Options.LessPreciseFPMADOption = EnableFPMAD;
-  Options.PrintMachineCode = PrintCode;
   Options.NoFramePointerElim = DisableFPElim;
   Options.NoFramePointerElimNonLeaf = DisableFPElimNonLeaf;
   Options.NoExcessFPPrecision = DisableExcessPrecision;
