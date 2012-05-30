@@ -185,6 +185,33 @@ public:
   }
 };
 
+class TemplateArgumentLocTraverser
+  : public ExpectedLocationVisitor<TemplateArgumentLocTraverser> {
+public:
+  bool TraverseTemplateArgumentLoc(const TemplateArgumentLoc &ArgLoc) {
+    std::string ArgStr;
+    llvm::raw_string_ostream Stream(ArgStr);
+    const TemplateArgument &Arg = ArgLoc.getArgument();
+
+    Arg.print(Context->getPrintingPolicy(), Stream);
+    Match(Stream.str(), ArgLoc.getLocation());
+    return ExpectedLocationVisitor<TemplateArgumentLocTraverser>::
+      TraverseTemplateArgumentLoc(ArgLoc);
+  }
+};
+
+class CXXBoolLiteralExprVisitor 
+  : public ExpectedLocationVisitor<CXXBoolLiteralExprVisitor> {
+public:
+  bool VisitCXXBoolLiteralExpr(CXXBoolLiteralExpr *BE) {
+    if (BE->getValue())
+      Match("true", BE->getLocation());
+    else
+      Match("false", BE->getLocation());
+    return true;
+  }
+};
+
 TEST(RecursiveASTVisitor, VisitsBaseClassDeclarations) {
   TypeLocVisitor Visitor;
   Visitor.ExpectMatch("class X", 1, 30);
@@ -392,6 +419,33 @@ TEST(RecursiveASTVisitor, VisitsParensDuringDataRecursion) {
   ParenExprVisitor Visitor;
   Visitor.ExpectMatch("", 1, 9);
   EXPECT_TRUE(Visitor.runOver("int k = (4) + 9;\n"));
+}
+
+TEST(RecursiveASTVisitor, VisitsClassTemplateNonTypeParmDefaultArgument) {
+  CXXBoolLiteralExprVisitor Visitor;
+  Visitor.ExpectMatch("true", 2, 19);
+  EXPECT_TRUE(Visitor.runOver(
+    "template<bool B> class X;\n"
+    "template<bool B = true> class Y;\n"
+    "template<bool B> class Y {};\n"));
+}
+
+TEST(RecursiveASTVisitor, VisitsClassTemplateTypeParmDefaultArgument) {
+  TypeLocVisitor Visitor;
+  Visitor.ExpectMatch("class X", 2, 23);
+  EXPECT_TRUE(Visitor.runOver(
+    "class X;\n"
+    "template<typename T = X> class Y;\n"
+    "template<typename T> class Y {};\n"));
+}
+
+TEST(RecursiveASTVisitor, VisitsClassTemplateTemplateParmDefaultArgument) {
+  TemplateArgumentLocTraverser Visitor;
+  Visitor.ExpectMatch("X", 2, 40);
+  EXPECT_TRUE(Visitor.runOver(
+    "template<typename T> class X;\n"
+    "template<template <typename> class T = X> class Y;\n"
+    "template<template <typename> class T> class Y {};\n"));
 }
 
 } // end namespace clang
