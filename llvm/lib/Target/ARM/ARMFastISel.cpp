@@ -2406,6 +2406,42 @@ bool ARMFastISel::SelectIntrinsicCall(const IntrinsicInst &I) {
   // FIXME: Handle more intrinsics.
   switch (I.getIntrinsicID()) {
   default: return false;
+  case Intrinsic::frameaddress: {
+    MachineFrameInfo *MFI = FuncInfo.MF->getFrameInfo();
+    MFI->setFrameAddressIsTaken(true);
+
+    unsigned LdrOpc;
+    const TargetRegisterClass *RC;
+    if (isThumb2) {
+      LdrOpc =  ARM::t2LDRi12;
+      RC = (const TargetRegisterClass*)&ARM::tGPRRegClass;
+    } else {
+      LdrOpc =  ARM::LDRi12;
+      RC = (const TargetRegisterClass*)&ARM::GPRRegClass;
+    }
+
+    const ARMBaseRegisterInfo *RegInfo =
+          static_cast<const ARMBaseRegisterInfo*>(TM.getRegisterInfo());
+    unsigned FramePtr = RegInfo->getFrameRegister(*(FuncInfo.MF));
+    unsigned SrcReg = FramePtr;
+
+    // Recursively load frame address
+    // ldr r0 [fp]
+    // ldr r0 [r0]
+    // ldr r0 [r0]
+    // ...
+    unsigned DestReg;
+    unsigned Depth = cast<ConstantInt>(I.getOperand(0))->getZExtValue();
+    while (Depth--) {
+      DestReg = createResultReg(RC);
+      AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
+                              TII.get(LdrOpc), DestReg)
+                      .addReg(SrcReg).addImm(0));
+      SrcReg = DestReg;
+    }
+    UpdateValueMap(&I, DestReg);
+    return true;
+  }
   case Intrinsic::memcpy:
   case Intrinsic::memmove: {
     const MemTransferInst &MTI = cast<MemTransferInst>(I);
