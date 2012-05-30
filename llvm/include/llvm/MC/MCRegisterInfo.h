@@ -166,6 +166,7 @@ private:
   const DwarfLLVMRegPair *EHDwarf2LRegs;      // Dwarf to LLVM regs mapping EH
   DenseMap<unsigned, int> L2SEHRegs;          // LLVM to SEH regs mapping
 
+public:
   /// DiffListIterator - Base iterator class that can traverse the
   /// differentially encoded register and regunit lists in DiffLists.
   /// Don't use this class directly, use one of the specialized sub-classes
@@ -216,7 +217,6 @@ private:
   // internal list pointers.
   friend class MCRegUnitIterator;
 
-public:
   /// InitMCRegisterInfo - Initialize MCRegisterInfo, called by TableGen
   /// auto-generated routines. *DO NOT USE*.
   void InitMCRegisterInfo(const MCRegisterDesc *D, unsigned NR, unsigned RA,
