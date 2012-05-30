@@ -189,7 +189,7 @@ void HexagonRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
            (MI.getOpcode() == Hexagon::LDriw_f) ||
            (MI.getOpcode() == Hexagon::LDrid_f)) {
         unsigned dstReg = (MI.getOpcode() == Hexagon::LDrid) ?
-          *getSubRegisters(MI.getOperand(0).getReg()) :
+          getSubReg(MI.getOperand(0).getReg(), Hexagon::subreg_loreg) :
           MI.getOperand(0).getReg();
 
         // Check if offset can fit in addi.

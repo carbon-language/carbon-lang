@@ -240,9 +240,12 @@ void MipsInstrInfo::ExpandExtractElementF64(MachineBasicBlock &MBB,
   unsigned N = I->getOperand(2).getImm();
   const MCInstrDesc& Mfc1Tdd = TII->get(Mips::MFC1);
   DebugLoc dl = I->getDebugLoc();
-  const uint16_t* SubReg = TM.getRegisterInfo()->getSubRegisters(SrcReg);
 
-  BuildMI(MBB, I, dl, Mfc1Tdd, DstReg).addReg(*(SubReg + N));
+  assert(N < 2 && "Invalid immediate");
+  unsigned SubIdx = N ? Mips::sub_fpodd : Mips::sub_fpeven;
+  unsigned SubReg = TM.getRegisterInfo()->getSubReg(SrcReg, SubIdx);
+
+  BuildMI(MBB, I, dl, Mfc1Tdd, DstReg).addReg(SubReg);
 }
 
 void MipsInstrInfo::ExpandBuildPairF64(MachineBasicBlock &MBB,
@@ -252,13 +255,14 @@ void MipsInstrInfo::ExpandBuildPairF64(MachineBasicBlock &MBB,
   unsigned LoReg = I->getOperand(1).getReg(), HiReg = I->getOperand(2).getReg();
   const MCInstrDesc& Mtc1Tdd = TII->get(Mips::MTC1);
   DebugLoc dl = I->getDebugLoc();
-  const uint16_t* SubReg =
-    TM.getRegisterInfo()->getSubRegisters(DstReg);
+  const TargetRegisterInfo *TRI = TM.getRegisterInfo();
 
   // mtc1 Lo, $fp
   // mtc1 Hi, $fp + 1
-  BuildMI(MBB, I, dl, Mtc1Tdd, *SubReg).addReg(LoReg);
-  BuildMI(MBB, I, dl, Mtc1Tdd, *(SubReg + 1)).addReg(HiReg);
+  BuildMI(MBB, I, dl, Mtc1Tdd, TRI->getSubReg(DstReg, Mips::sub_fpeven))
+    .addReg(LoReg);
+  BuildMI(MBB, I, dl, Mtc1Tdd, TRI->getSubReg(DstReg, Mips::sub_fpodd))
+    .addReg(HiReg);
 }
 
 bool MipsInstrInfo::expandPostRAPseudo(MachineBasicBlock::iterator MI) const {
