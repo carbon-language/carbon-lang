@@ -1483,10 +1483,6 @@ HandleExprPropertyRefExpr(const ObjCObjectPointerType *OPT,
     SelectorTable::constructSetterName(PP.getIdentifierTable(),
                                        PP.getSelectorTable(), Member);
   ObjCMethodDecl *Setter = IFace->lookupInstanceMethod(SetterSel);
-  if (Setter && Setter->isSynthesized())
-    // Check for corner case of: @property int p; ... self.P = 0;
-    // setter name is synthesized "setP" but there is no property name 'P'.
-    Setter = 0;
       
   // May be founf in property's qualified list.
   if (!Setter)
