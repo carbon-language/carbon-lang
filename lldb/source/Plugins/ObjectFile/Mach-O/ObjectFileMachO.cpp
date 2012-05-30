@@ -1665,10 +1665,28 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                     {
                         // We use the current number of symbols in the symbol table in lieu of
                         // using nlist_idx in case we ever start trimming entries out
-                        if (symbol_name[0] == '/')
-                            N_SO_index = sym_idx;
+                        const bool N_SO_has_full_path = symbol_name[0] == '/';
+                        if (N_SO_has_full_path)
+                        {
+                            if (minimize && (N_SO_index == sym_idx - 1) && ((sym_idx - 1) < num_syms))
+                            {
+                                // We have two consecutive N_SO entries where the first contains a directory
+                                // and the second contains a full path.
+                                sym[sym_idx - 1].GetMangled().SetValue(symbol_name, false);
+                                m_nlist_idx_to_sym_idx[nlist_idx] = sym_idx - 1;
+                                add_nlist = false;
+                            }
+                            else
+                            {
+                                // This is the first entry in a N_SO that contains a directory or
+                                // a full path to the source file
+                                N_SO_index = sym_idx;
+                            }
+                        }
                         else if (minimize && (N_SO_index == sym_idx - 1) && ((sym_idx - 1) < num_syms))
                         {
+                            // This is usually the second N_SO entry that contains just the filename,
+                            // so here we combine it with the first one if we are minimizing the symbol table
                             const char *so_path = sym[sym_idx - 1].GetMangled().GetDemangledName().AsCString();
                             if (so_path && so_path[0])
                             {
