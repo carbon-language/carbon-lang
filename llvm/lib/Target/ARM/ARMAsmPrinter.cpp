@@ -441,15 +441,18 @@ bool ARMAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNum,
       printOperand(MI, OpNum, O);
       return false;
     case 'y': // Print a VFP single precision register as indexed double.
-      // This uses the ordering of the alias table to get the first 'd' register
-      // that overlaps the 's' register. Also, s0 is an odd register, hence the
-      // odd modulus check below.
       if (MI->getOperand(OpNum).isReg()) {
         unsigned Reg = MI->getOperand(OpNum).getReg();
         const TargetRegisterInfo *TRI = MF->getTarget().getRegisterInfo();
-        O << ARMInstPrinter::getRegisterName(TRI->getAliasSet(Reg)[0]) <<
-        (((Reg % 2) == 1) ? "[0]" : "[1]");
-        return false;
+        // Find the 'd' register that has this 's' register as a sub-register,
+        // and determine the lane number.
+        for (MCSuperRegIterator SR(Reg, TRI); SR.isValid(); ++SR) {
+          if (!ARM::DPRRegClass.contains(*SR))
+            continue;
+          bool Lane0 = TRI->getSubReg(*SR, ARM::ssub_0) == Reg;
+          O << ARMInstPrinter::getRegisterName(*SR) << (Lane0 ? "[0]" : "[1]");
+          return false;
+        }
       }
       return true;
     case 'B': // Bitwise inverse of integer or symbol without a preceding #.
