@@ -316,7 +316,7 @@ TEST(RecursiveASTVisitor, VisitsExplicitTemplateSpecialization) {
 
 TEST(RecursiveASTVisitor, VisitsPartialTemplateSpecialization) {
   // From cfe-commits/Week-of-Mon-20100830/033998.html
-  // Contrary to the approach sugggested in that email, we visit all
+  // Contrary to the approach suggested in that email, we visit all
   // specializations when we visit the primary template.  Visiting them when we
   // visit the associated specialization is problematic for specializations of
   // template members of class templates.
