@@ -480,7 +480,7 @@ DiffVec &diffEncode(DiffVec &V, unsigned InitVal, ArrayRef<unsigned> List) {
 }
 
 static void printDiff16(raw_ostream &OS, uint16_t Val) {
-  OS << SignExtend32<16>(Val);
+  OS << Val;
 }
 
 //
