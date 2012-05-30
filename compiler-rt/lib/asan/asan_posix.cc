@@ -74,6 +74,9 @@ static void MaybeInstallSigaction(int signum,
   sigact.sa_flags = SA_SIGINFO;
   if (FLAG_use_sigaltstack) sigact.sa_flags |= SA_ONSTACK;
   CHECK(0 == REAL(sigaction)(signum, &sigact, 0));
+  if (FLAG_v >= 1) {
+    Report("Installed the sigaction for signal %d\n", signum);
+  }
 }
 
 static void     ASAN_OnSIGSEGV(int, siginfo_t *siginfo, void *context) {
