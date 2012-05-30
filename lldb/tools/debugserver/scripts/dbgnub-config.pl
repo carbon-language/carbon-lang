@@ -33,6 +33,7 @@ my $key;
 my $val;
 while (($key, $val) = each %ENV) 
 {
+	$val =~ s/\n/\n\/\/	/;
 	printf CONFIG "//	%s = %s\n", $key, $val;
 }
 print CONFIG "//" . "-" x 72 . "\n";
