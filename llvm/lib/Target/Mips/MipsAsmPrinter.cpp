@@ -377,6 +377,11 @@ bool MipsAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNum,
         return true;
       O << MO.getImm();
       return false;
+    case 'm': // decimal const int minus 1
+      if ((MO.getType()) != MachineOperand::MO_Immediate)
+        return true;
+      O << MO.getImm() - 1;
+      return false;
     }
   }
 
