@@ -2755,24 +2755,14 @@ void Sema::CheckMemaccessArguments(const CallExpr *Call,
           // TODO: For strncpy() and friends, this could suggest sizeof(dst)
           //       over sizeof(src) as well.
           unsigned ActionIdx = 0; // Default is to suggest dereferencing.
-          FixItHint Fixit = FixItHint(); // Default hint.
           StringRef ReadableName = FnName->getName();
 
-          if (isa<DeclRefExpr>(SizeOfArg))
-            Fixit = FixItHint::CreateInsertion(SizeOfArg->getLocStart(), "*");
-
           if (const UnaryOperator *UnaryOp = dyn_cast<UnaryOperator>(Dest))
-            if (UnaryOp->getOpcode() == UO_AddrOf) {
-              Fixit = FixItHint::CreateRemoval(
-                      CharSourceRange::getTokenRange(SizeOfArg->getLocStart(),
-                                                     SizeOfArg->getLocStart()));
+            if (UnaryOp->getOpcode() == UO_AddrOf)
               ActionIdx = 1; // If its an address-of operator, just remove it.
-            }
           if (Context.getTypeSize(PointeeTy) == Context.getCharWidth())
             ActionIdx = 2; // If the pointee's size is sizeof(char),
                            // suggest an explicit length.
-          unsigned DestSrcSelect =
-            (BId == Builtin::BIstrndup ? 1 : ArgIdx);
 
           // If the function is defined as a builtin macro, do not show macro
           // expansion.
@@ -2790,14 +2780,18 @@ void Sema::CheckMemaccessArguments(const CallExpr *Call,
                              SM.getSpellingLoc(SSR.getEnd()));
           }
 
-          DiagRuntimeBehavior(SL, Dest,
+          DiagRuntimeBehavior(SL, SizeOfArg,
                               PDiag(diag::warn_sizeof_pointer_expr_memaccess)
                                 << ReadableName
-                                << DestSrcSelect
-                                << ActionIdx
+                                << PointeeTy
+                                << DestTy
                                 << DSR
-                                << SSR
-                                << Fixit);
+                                << SSR);
+          DiagRuntimeBehavior(SL, SizeOfArg,
+                         PDiag(diag::warn_sizeof_pointer_expr_memaccess_note)
+                                << ActionIdx
+                                << SSR);
+
           break;
         }
       }

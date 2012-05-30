@@ -335,10 +335,14 @@ def warn_dyn_class_memaccess : Warning<
 def note_bad_memaccess_silence : Note<
   "explicitly cast the pointer to silence this warning">;
 def warn_sizeof_pointer_expr_memaccess : Warning<
-  "argument to 'sizeof' in '%0' call is the same expression as the "
-  "%select{destination|source}1; did you mean to "
-  "%select{dereference it|remove the addressof|provide an explicit length}2?">,
+  "'%0' call operates on objects of type %1 while the size is based on a " 
+  "different type %2">, 
   InGroup<DiagGroup<"sizeof-pointer-memaccess">>;
+def warn_sizeof_pointer_expr_memaccess_note : Note<
+  "did you mean to %select{dereference the argument to 'sizeof' (and multiply "
+  "it by the number of elements)|remove the addressof in the argument to "
+  "'sizeof' (and multiply it by the number of elements)|provide an explicit "
+  "length}0?">;
 def warn_sizeof_pointer_type_memaccess : Warning<
   "argument to 'sizeof' in %0 call is the same pointer type %1 as the "
   "%select{destination|source}2; expected %3 or an explicit length">,
