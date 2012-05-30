@@ -564,7 +564,7 @@ namespace llvm {
 
     unsigned getNumNativeRegUnits() const {
       return NumNativeRegUnits;
-    };
+    }
 
     RegUnit &getRegUnit(unsigned RUID) { return RegUnits[RUID]; }
     const RegUnit &getRegUnit(unsigned RUID) const { return RegUnits[RUID]; }
