@@ -357,10 +357,10 @@ public:
 
   /// isSuperRegister - Returns true if regB is a super-register of regA.
   ///
-  bool isSuperRegister(unsigned regA, unsigned regB) const {
-    for (const uint16_t *regList = getSuperRegisters(regA); *regList;++regList){
-      if (*regList == regB) return true;
-    }
+  bool isSuperRegister(unsigned RegA, unsigned RegB) const {
+    for (MCSuperRegIterator I(RegA, this); I.isValid(); ++I)
+      if (*I == RegB)
+        return true;
     return false;
   }
 
