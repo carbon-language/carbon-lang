@@ -342,7 +342,29 @@ ArgTypeResult PrintfSpecifier::getArgType(ASTContext &Ctx,
 
 bool PrintfSpecifier::fixType(QualType QT, const LangOptions &LangOpt,
                               ASTContext &Ctx, bool IsObjCLiteral) {
-  // Handle strings first (char *, wchar_t *)
+  // Handle Objective-C objects first. Note that while the '%@' specifier will
+  // not warn for structure pointer or void pointer arguments (because that's
+  // how CoreFoundation objects are implemented), we only show a fixit for '%@'
+  // if we know it's an object (block, id, class, or __attribute__((NSObject))).
+  if (QT->isObjCRetainableType()) {
+    if (!IsObjCLiteral)
+      return false;
+
+    CS.setKind(ConversionSpecifier::ObjCObjArg);
+
+    // Disable irrelevant flags
+    HasThousandsGrouping = false;
+    HasPlusPrefix = false;
+    HasSpacePrefix = false;
+    HasAlternativeForm = false;
+    HasLeadingZeroes = false;
+    Precision.setHowSpecified(OptionalAmount::NotSpecified);
+    LM.setKind(LengthModifier::None);
+
+    return true;
+  }
+
+  // Handle strings next (char *, wchar_t *)
   if (QT->isPointerType() && (QT->getPointeeType()->isAnyCharacterType())) {
     CS.setKind(ConversionSpecifier::sArg);
 
