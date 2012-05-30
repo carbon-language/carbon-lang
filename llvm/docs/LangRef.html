@@ -1050,7 +1050,7 @@ declare signext i8 @returns_signed_char()
       value to the function.  The attribute implies that a hidden copy of the
       pointee
       is made between the caller and the callee, so the callee is unable to
-      modify the value in the callee.  This attribute is only valid on LLVM
+      modify the value in the caller.  This attribute is only valid on LLVM
       pointer arguments.  It is generally used to pass structs and arrays by
       value, but is also valid on pointers to scalars.  The copy is considered
       to belong to the caller not the callee (for example,
