@@ -1507,7 +1507,7 @@ static std::string GenTest(const std::string &name,
     s.push_back(arg);
     comma = ", ";
   }
-  s += ") { \\\n  ";
+  s += ") {\n  ";
 
   if (proto[0] != 'v')
     s += "return ";
