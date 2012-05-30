@@ -5771,7 +5771,7 @@ SDValue DAGCombiner::visitFMA(SDNode *N) {
     return DAG.getNode(ISD::FADD, N->getDebugLoc(), VT, N0, N2);
 
   // Canonicalize (fma c, x, y) -> (fma x, c, y)
-  if (!N0CFP && N1CFP)
+  if (N0CFP && !N1CFP)
     return DAG.getNode(ISD::FMA, N->getDebugLoc(), VT, N1, N0, N2);
 
   return SDValue();

@@ -192,7 +192,7 @@ define float @test_fma_const_fold(float %a, float %b) nounwind {
 define float @test_fma_canonicalize(float %a, float %b) nounwind {
 ; CHECK: test_fma_canonicalize
 ; CHECK: vmov.f32 s0
-; CHECK: vfma.f32 s2, s0, s1
+; CHECK: vfma.f32 s2, s1, s0
   %ret = call float @llvm.fma.f32(float 2.0, float %a, float %b)
   ret float %ret
 }
