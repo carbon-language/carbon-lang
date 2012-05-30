@@ -251,8 +251,7 @@ void ToolInvocation::addFileMappingsTo(SourceManager &Sources) {
     // FIXME: figure out what '0' stands for.
     const FileEntry *FromFile = Files->getVirtualFile(
         It->getKey(), Input->getBufferSize(), 0);
-    // FIXME: figure out memory management ('true').
-    Sources.overrideFileContents(FromFile, Input, true);
+    Sources.overrideFileContents(FromFile, Input);
   }
 }
 
