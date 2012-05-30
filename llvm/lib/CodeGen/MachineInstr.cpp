@@ -1766,9 +1766,7 @@ bool MachineInstr::addRegisterDead(unsigned IncomingReg,
       // There exists a super-register that's marked dead.
       if (RegInfo->isSuperRegister(IncomingReg, Reg))
         return true;
-      if (RegInfo->getSubRegisters(IncomingReg) &&
-          RegInfo->getSuperRegisters(Reg) &&
-          RegInfo->isSubRegister(IncomingReg, Reg))
+      if (RegInfo->isSubRegister(IncomingReg, Reg))
         DeadOps.push_back(i);
     }
   }
