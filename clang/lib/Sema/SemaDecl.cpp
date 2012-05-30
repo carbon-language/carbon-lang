@@ -10245,6 +10245,9 @@ static void CheckForUniqueEnumValues(Sema &S, Decl **Elements,
   if (NumElements < 2)
     return;
 
+  if (!Enum->getIdentifier())
+    return;
+
   llvm::APSInt FirstVal;
 
   for (unsigned i = 0; i != NumElements; ++i) {
@@ -10268,9 +10271,8 @@ static void CheckForUniqueEnumValues(Sema &S, Decl **Elements,
       return;
   }
 
-  bool hasIdentifier = Enum->getIdentifier();
   S.Diag(Enum->getLocation(), diag::warn_identical_enum_values)
-      << hasIdentifier << EnumType << FirstVal.toString(10)
+      << EnumType << FirstVal.toString(10)
       << Enum->getSourceRange();
 }
 

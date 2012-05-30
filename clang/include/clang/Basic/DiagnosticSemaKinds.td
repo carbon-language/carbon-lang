@@ -21,8 +21,8 @@ def warn_variables_not_in_loop_body : Warning<
   InGroup<DiagGroup<"loop-analysis">>, DefaultIgnore;
 
 def warn_identical_enum_values : Warning<
-  "all elements of %select{anonymous enum|%1}0 are initialized with literals "
-  "to value %2">, InGroup<DiagGroup<"unique-enum">>;
+  "all elements of %0 are initialized with literals to value %1">,
+  InGroup<DiagGroup<"unique-enum">>;
 
 // Constant expressions
 def err_expr_not_ice : Error<

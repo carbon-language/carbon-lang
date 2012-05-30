@@ -1,6 +1,6 @@
 // RUN: %clang_cc1 %s -fsyntax-only -verify -Wunique-enum
 enum A { A1 = 1, A2 = 1, A3 = 1 };  // expected-warning {{all elements of 'A' are initialized with literals to value 1}}
-enum { B1 = 1, B2 = 1, B3 = 1 };  // expected-warning {{all elements of anonymous enum are initialized with literals to value 1}}
+enum { B1 = 1, B2 = 1, B3 = 1 }; // no warning
 enum C { C1 = true, C2 = true}; // expected-warning {{all elements of 'C' are initialized with literals to value 1}}
 enum D { D1 = 5, D2 = 5L, D3 = 5UL, D4 = 5LL, D5 = 5ULL };  // expected-warning {{all elements of 'D' are initialized with literals to value 5}}
 
