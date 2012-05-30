@@ -10232,6 +10232,48 @@ Decl *Sema::ActOnEnumConstant(Scope *S, Decl *theEnumDecl, Decl *lastEnumConst,
   return New;
 }
 
+// Emits a warning if every element in the enum is the same value and if
+// every element is initialized with a integer or boolean literal.
+static void CheckForUniqueEnumValues(Sema &S, Decl **Elements,
+                                     unsigned NumElements, EnumDecl *Enum,
+                                     QualType EnumType) {
+  if (S.Diags.getDiagnosticLevel(diag::warn_identical_enum_values,
+                                 Enum->getLocation()) ==
+      DiagnosticsEngine::Ignored)
+    return;
+
+  if (NumElements < 2)
+    return;
+
+  llvm::APSInt FirstVal;
+
+  for (unsigned i = 0; i != NumElements; ++i) {
+    EnumConstantDecl *ECD = cast_or_null<EnumConstantDecl>(Elements[i]);
+    if (!ECD)
+      return;
+
+    Expr *InitExpr = ECD->getInitExpr();
+    if (!InitExpr)
+      return;
+    InitExpr = InitExpr->IgnoreImpCasts();
+    if (!isa<IntegerLiteral>(InitExpr) && !isa<CXXBoolLiteralExpr>(InitExpr))
+      return;
+
+    if (i == 0) {
+      FirstVal = ECD->getInitVal();
+      continue;
+    }
+
+    if (FirstVal != ECD->getInitVal())
+      return;
+  }
+
+  bool hasIdentifier = Enum->getIdentifier();
+  S.Diag(Enum->getLocation(), diag::warn_identical_enum_values)
+      << hasIdentifier << EnumType << FirstVal.toString(10)
+      << Enum->getSourceRange();
+}
+
 void Sema::ActOnEnumBody(SourceLocation EnumLoc, SourceLocation LBraceLoc,
                          SourceLocation RBraceLoc, Decl *EnumDeclX,
                          Decl **Elements, unsigned NumElements,
@@ -10455,6 +10497,7 @@ void Sema::ActOnEnumBody(SourceLocation EnumLoc, SourceLocation LBraceLoc,
   if (InFunctionDeclarator)
     DeclsInPrototypeScope.push_back(Enum);
 
+  CheckForUniqueEnumValues(*this, Elements, NumElements, Enum, EnumType);
 }
 
 Decl *Sema::ActOnFileScopeAsmDecl(Expr *expr,

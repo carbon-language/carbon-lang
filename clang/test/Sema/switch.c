@@ -326,7 +326,7 @@ void rdar110822110(Ints i)
 void test19(int i) {
   enum {
     kTest19Enum1 = 7,
-    kTest19Enum2 = 7
+    kTest19Enum2 = kTest19Enum1
   };
   const int a = 3;
   switch (i) {

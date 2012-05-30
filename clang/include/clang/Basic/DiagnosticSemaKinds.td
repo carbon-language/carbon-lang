@@ -20,6 +20,10 @@ def warn_variables_not_in_loop_body : Warning<
   "used in loop condition not modified in loop body">,
   InGroup<DiagGroup<"loop-analysis">>, DefaultIgnore;
 
+def warn_identical_enum_values : Warning<
+  "all elements of %select{anonymous enum|%1}0 are initialized with literals "
+  "to value %2">, InGroup<DiagGroup<"unique-enum">>;
+
 // Constant expressions
 def err_expr_not_ice : Error<
   "expression is not an %select{integer|integral}0 constant expression">;
