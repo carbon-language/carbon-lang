@@ -2088,9 +2088,12 @@ const SCEV *ScalarEvolution::getMulExpr(SmallVectorImpl<const SCEV *> &Ops,
           const SCEV *NewAddRec = getAddRecExpr(AddRecOps, AddRec->getLoop(),
                                                 SCEV::FlagAnyWrap);
           if (Ops.size() == 2) return NewAddRec;
-          Ops[Idx] = AddRec = cast<SCEVAddRecExpr>(NewAddRec);
+          Ops[Idx] = NewAddRec;
           Ops.erase(Ops.begin() + OtherIdx); --OtherIdx;
           OpsModified = true;
+          AddRec = dyn_cast<SCEVAddRecExpr>(NewAddRec);
+          if (!AddRec)
+            break;
         }
       }
       if (OpsModified)
