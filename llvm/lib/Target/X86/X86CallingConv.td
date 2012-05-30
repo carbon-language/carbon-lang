@@ -35,7 +35,7 @@ def RetCC_X86Common : CallingConv<[
   CCIfType<[i8] , CCAssignToReg<[AL, DL, CL]>>,
   CCIfType<[i16], CCAssignToReg<[AX, DX, CX]>>,
   CCIfType<[i32], CCAssignToReg<[EAX, EDX, ECX]>>,
-  CCIfType<[i64], CCAssignToReg<[RAX, RDX, RCX, R11]>>,
+  CCIfType<[i64], CCAssignToReg<[RAX, RDX, RCX]>>,
 
   // Vector types are returned in XMM0 and XMM1, when they fit.  XMM2 and XMM3
   // can only be used by ABI non-compliant code. If the target doesn't have XMM
