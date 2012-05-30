@@ -16,6 +16,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#ifndef LLVM_CLANG_TOOLING_REFACTORING_H
+#define LLVM_CLANG_TOOLING_REFACTORING_H
+
 #include "llvm/ADT/StringRef.h"
 #include "clang/Basic/SourceLocation.h"
 #include "clang/Tooling/Tooling.h"
@@ -75,6 +78,9 @@ public:
 
   /// \brief Applies the replacement on the Rewriter.
   bool apply(Rewriter &Rewrite) const;
+
+  /// \brief Returns a human readable string representation.
+  std::string toString() const;
 
   /// \brief Comparator to be able to use Replacement in std::set for uniquing.
   class Less {
@@ -140,3 +146,6 @@ Replacement::Replacement(SourceManager &Sources, const Node &NodeToReplace,
 
 } // end namespace tooling
 } // end namespace clang
+
+#endif // end namespace LLVM_CLANG_TOOLING_REFACTORING_H
+

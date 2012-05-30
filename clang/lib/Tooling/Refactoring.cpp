@@ -71,6 +71,14 @@ bool Replacement::apply(Rewriter &Rewrite) const {
   return RewriteSucceeded;
 }
 
+std::string Replacement::toString() const {
+  std::string result;
+  llvm::raw_string_ostream stream(result);
+  stream << FilePath << ": " << Offset << ":+" << Length
+         << ":\"" << ReplacementText << "\"";
+  return result;
+}
+
 bool Replacement::Less::operator()(const Replacement &R1,
                                    const Replacement &R2) const {
   if (R1.FilePath != R2.FilePath) return R1.FilePath < R2.FilePath;
