@@ -315,10 +315,16 @@ void AnalysisConsumer::HandleDeclsGallGraph() {
   // Otherwise, use the Callgraph to derive the order.
   // Build the Call Graph.
   CallGraph CG;
+
   // Add all the top level declarations to the graph.
-  for (SetOfDecls::iterator I = LocalTUDecls.begin(),
-                            E = LocalTUDecls.end(); I != E; ++I)
-    CG.addToCallGraph(*I);
+  // Note: TraverseDecl may modify LocalTUDecls, but only by appending more
+  // entries.  Thus we don't use an iterator, but rely on LocalTUDecls
+  // random access.  By doing so, we automatically compensate for iterators
+  // possibly being invalidated, although this is a bit slower.
+  const unsigned n = LocalTUDecls.size();
+  for (unsigned i = 0 ; i < n ; ++i) {
+    CG.addToCallGraph(LocalTUDecls[i]);
+  }
 
   // Find the top level nodes - children of root + the unreachable (parentless)
   // nodes.
