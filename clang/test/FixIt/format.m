@@ -68,3 +68,14 @@ void test_block_correction (block_t x) {
   // CHECK: fix-it:"{{.*}}":{64:11-64:13}:"%@"
   // CHECK: fix-it:"{{.*}}":{65:11-65:14}:"%@"
 }
+
+void test_class_correction (Class x) {
+  NSLog(@"%d", x); // expected-warning{{format specifies type 'int' but the argument has type 'Class'}}
+  NSLog(@"%s", x); // expected-warning{{format specifies type 'char *' but the argument has type 'Class'}}
+  NSLog(@"%lf", x); // expected-warning{{format specifies type 'double' but the argument has type 'Class'}}
+  NSLog(@"%@", x); // no-warning
+  // CHECK: fix-it:"{{.*}}":{73:11-73:13}:"%@"
+  // CHECK: fix-it:"{{.*}}":{74:11-74:13}:"%@"
+  // CHECK: fix-it:"{{.*}}":{75:11-75:14}:"%@"
+}
+
