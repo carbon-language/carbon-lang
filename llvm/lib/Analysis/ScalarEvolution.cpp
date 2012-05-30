@@ -5605,8 +5605,13 @@ static bool HasSameValue(const SCEV *A, const SCEV *B) {
 /// predicate Pred. Return true iff any changes were made.
 ///
 bool ScalarEvolution::SimplifyICmpOperands(ICmpInst::Predicate &Pred,
-                                           const SCEV *&LHS, const SCEV *&RHS) {
+                                           const SCEV *&LHS, const SCEV *&RHS,
+                                           unsigned Depth) {
   bool Changed = false;
+
+  // If we hit the max recursion limit bail out.
+  if (Depth >= 3)
+    return false;
 
   // Canonicalize a constant to the right side.
   if (const SCEVConstant *LHSC = dyn_cast<SCEVConstant>(LHS)) {
@@ -5645,6 +5650,15 @@ bool ScalarEvolution::SimplifyICmpOperands(ICmpInst::Predicate &Pred,
     default: llvm_unreachable("Unexpected ICmpInst::Predicate value!");
     case ICmpInst::ICMP_EQ:
     case ICmpInst::ICMP_NE:
+      // Fold ((-1) * %a) + %b == 0 (equivalent to %b-%a == 0) into %a == %b.
+      if (!RA)
+        if (const SCEVAddExpr *AE = dyn_cast<SCEVAddExpr>(LHS))
+          if (const SCEVMulExpr *ME = dyn_cast<SCEVMulExpr>(AE->getOperand(0)))
+            if (ME->getOperand(0)->isAllOnesValue()) {
+              RHS = AE->getOperand(1);
+              LHS = ME->getOperand(1);
+              Changed = true;
+            }
       break;
     case ICmpInst::ICMP_UGE:
       if ((RA - 1).isMinValue()) {
@@ -5845,6 +5859,11 @@ bool ScalarEvolution::SimplifyICmpOperands(ICmpInst::Predicate &Pred,
   }
 
   // TODO: More simplifications are possible here.
+
+  // Recursively simplify until we either hit a recursion limit or nothing
+  // changes.
+  if (Changed)
+    return SimplifyICmpOperands(Pred, LHS, RHS, Depth+1);
 
   return Changed;
 

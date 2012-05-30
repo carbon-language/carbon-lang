@@ -837,7 +837,8 @@ namespace llvm {
     ///
     bool SimplifyICmpOperands(ICmpInst::Predicate &Pred,
                               const SCEV *&LHS,
-                              const SCEV *&RHS);
+                              const SCEV *&RHS,
+                              unsigned Depth = 0);
 
     /// getLoopDisposition - Return the "disposition" of the given SCEV with
     /// respect to the given loop.
