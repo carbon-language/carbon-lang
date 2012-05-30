@@ -370,9 +370,9 @@ BUILTIN(__builtin_ia32_crc32si, "UiUiUi", "")
 BUILTIN(__builtin_ia32_crc32di, "ULLiULLiULLi", "")
 
 // SSE4a
-BUILTIN(__builtin_ia32_extrqi, "V2LLiV2LLicc", "")
+BUILTIN(__builtin_ia32_extrqi, "V2LLiV2LLiIcIc", "")
 BUILTIN(__builtin_ia32_extrq, "V2LLiV2LLiV16c", "")
-BUILTIN(__builtin_ia32_insertqi, "V2LLiV2LLiV2LLicc", "")
+BUILTIN(__builtin_ia32_insertqi, "V2LLiV2LLiV2LLiIcIc", "")
 BUILTIN(__builtin_ia32_insertq, "V2LLiV2LLiV2LLi", "")
 BUILTIN(__builtin_ia32_movntsd, "vd*V2d", "")
 BUILTIN(__builtin_ia32_movntss, "vf*V4f", "")
