@@ -1689,6 +1689,7 @@ void X86TargetInfo::getDefaultFeatures(llvm::StringMap<bool> &Features) const {
   case CK_BTVER1:
     setFeatureEnabled(Features, "ssse3", true);
     setFeatureEnabled(Features, "sse4a", true);
+    break;
   case CK_BDVER1:
   case CK_BDVER2:
     setFeatureEnabled(Features, "avx", true);
@@ -1750,10 +1751,11 @@ bool X86TargetInfo::setFeatureEnabled(llvm::StringMap<bool> &Features,
     else if (Name == "fma4")
         Features["mmx"] = Features["sse"] = Features["sse2"] = Features["sse3"] =
         Features["ssse3"] = Features["sse41"] = Features["sse42"] =
-        Features["popcnt"] = Features["avx"] = Features["fma4"] = true;
+        Features["popcnt"] = Features["avx"] = Features["sse4a"] =
+        Features["fma4"] = true;
     else if (Name == "sse4a")
       Features["mmx"] = Features["sse"] = Features["sse2"] = Features["sse3"] =
-        Features["lzcnt"] = Features["popcnt"] = Features["sse4a"] = true;
+        Features["sse4a"] = true;
     else if (Name == "lzcnt")
       Features["lzcnt"] = true;
     else if (Name == "bmi")
@@ -1792,7 +1794,7 @@ bool X86TargetInfo::setFeatureEnabled(llvm::StringMap<bool> &Features,
     else if (Name == "avx2")
       Features["avx2"] = false;
     else if (Name == "sse4a")
-      Features["sse4a"] = false;
+      Features["sse4a"] = Features["fma4"] = false;
     else if (Name == "lzcnt")
       Features["lzcnt"] = false;
     else if (Name == "bmi")
