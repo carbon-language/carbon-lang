@@ -43,3 +43,12 @@ entry:
   %0 = tail call i8 asm sideeffect "xchg $0, $1", "=r,*m,0,~{memory},~{dirflag},~{fpsr},~{flags}"(i32* %p, i1 %desired) nounwind
   ret void
 }
+
+; <rdar://problem/11542429>
+; The constrained GR32_ABCD register class of the 'q' constraint requires
+; special handling after the preceding outputs used up eax-edx.
+define void @constrain_abcd(i8* %h) nounwind ssp {
+entry:
+  %0 = call { i32, i32, i32, i32, i32 } asm sideeffect "", "=&r,=&r,=&r,=&r,=&q,r,~{ecx},~{memory},~{dirflag},~{fpsr},~{flags}"(i8* %h) nounwind
+  ret void
+}

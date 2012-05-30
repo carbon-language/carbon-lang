@@ -558,7 +558,13 @@ bool RAGreedy::canEvictInterference(LiveInterval &VirtReg, unsigned PhysReg,
       // Once a live range becomes small enough, it is urgent that we find a
       // register for it. This is indicated by an infinite spill weight. These
       // urgent live ranges get to evict almost anything.
-      bool Urgent = !VirtReg.isSpillable() && Intf->isSpillable();
+      //
+      // Also allow urgent evictions of unspillable ranges from a strictly
+      // larger allocation order.
+      bool Urgent = !VirtReg.isSpillable() &&
+        (Intf->isSpillable() ||
+         RegClassInfo.getNumAllocatableRegs(MRI->getRegClass(VirtReg.reg)) <
+         RegClassInfo.getNumAllocatableRegs(MRI->getRegClass(Intf->reg)));
       // Only evict older cascades or live ranges without a cascade.
       unsigned IntfCascade = ExtraRegInfo[Intf->reg].Cascade;
       if (Cascade <= IntfCascade) {
