@@ -302,7 +302,7 @@ void PEI::insertCSRSpillsAndRestores(MachineFunction &Fn) {
   const TargetRegisterInfo *TRI = Fn.getTarget().getRegisterInfo();
   MachineBasicBlock::iterator I;
 
-  if (! ShrinkWrapThisFunction) {
+  if (!ShrinkWrapThisFunction) {
     // Spill using target interface.
     I = EntryBlock->begin();
     if (!TFI->spillCalleeSavedRegisters(*EntryBlock, I, CSI, TRI)) {
