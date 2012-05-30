@@ -209,6 +209,16 @@ bool HexagonFrameLowering::hasFP(const MachineFunction &MF) const {
           FuncInfo->hasClobberLR() );
 }
 
+static inline
+unsigned uniqueSuperReg(unsigned Reg, const TargetRegisterInfo *TRI) {
+  MCSuperRegIterator SRI(Reg, TRI);
+  assert(SRI.isValid() && "Expected a superreg");
+  unsigned SuperReg = *SRI;
+  ++SRI;
+  assert(!SRI.isValid() && "Expected exactly one superreg");
+  return SuperReg;
+}
+
 bool
 HexagonFrameLowering::spillCalleeSavedRegisters(
                                         MachineBasicBlock &MBB,
@@ -235,26 +245,21 @@ HexagonFrameLowering::spillCalleeSavedRegisters(
     //
     // Check if we can use a double-word store.
     //
-    const uint16_t* SuperReg = TRI->getSuperRegisters(Reg);
-
-    // Assume that there is exactly one superreg.
-    assert(SuperReg[0] && !SuperReg[1] && "Expected exactly one superreg");
+    unsigned SuperReg = uniqueSuperReg(Reg, TRI);
     bool CanUseDblStore = false;
     const TargetRegisterClass* SuperRegClass = 0;
 
     if (ContiguousRegs && (i < CSI.size()-1)) {
-      const uint16_t* SuperRegNext = TRI->getSuperRegisters(CSI[i+1].getReg());
-      assert(SuperRegNext[0] && !SuperRegNext[1] &&
-             "Expected exactly one superreg");
-      SuperRegClass = TRI->getMinimalPhysRegClass(SuperReg[0]);
-      CanUseDblStore = (SuperRegNext[0] == SuperReg[0]);
+      unsigned SuperRegNext = uniqueSuperReg(CSI[i+1].getReg(), TRI);
+      SuperRegClass = TRI->getMinimalPhysRegClass(SuperReg);
+      CanUseDblStore = (SuperRegNext == SuperReg);
     }
 
 
     if (CanUseDblStore) {
-      TII.storeRegToStackSlot(MBB, MI, SuperReg[0], true,
+      TII.storeRegToStackSlot(MBB, MI, SuperReg, true,
                               CSI[i+1].getFrameIdx(), SuperRegClass, TRI);
-      MBB.addLiveIn(SuperReg[0]);
+      MBB.addLiveIn(SuperReg);
       ++i;
     } else {
       // Cannot use a double-word store.
@@ -295,25 +300,20 @@ bool HexagonFrameLowering::restoreCalleeSavedRegisters(
     //
     // Check if we can use a double-word load.
     //
-    const uint16_t* SuperReg = TRI->getSuperRegisters(Reg);
+    unsigned SuperReg = uniqueSuperReg(Reg, TRI);
     const TargetRegisterClass* SuperRegClass = 0;
-
-    // Assume that there is exactly one superreg.
-    assert(SuperReg[0] && !SuperReg[1] && "Expected exactly one superreg");
     bool CanUseDblLoad = false;
     if (ContiguousRegs && (i < CSI.size()-1)) {
-      const uint16_t* SuperRegNext = TRI->getSuperRegisters(CSI[i+1].getReg());
-      assert(SuperRegNext[0] && !SuperRegNext[1] &&
-             "Expected exactly one superreg");
-      SuperRegClass = TRI->getMinimalPhysRegClass(SuperReg[0]);
-      CanUseDblLoad = (SuperRegNext[0] == SuperReg[0]);
+      unsigned SuperRegNext = uniqueSuperReg(CSI[i+1].getReg(), TRI);
+      SuperRegClass = TRI->getMinimalPhysRegClass(SuperReg);
+      CanUseDblLoad = (SuperRegNext == SuperReg);
     }
 
 
     if (CanUseDblLoad) {
-      TII.loadRegFromStackSlot(MBB, MI, SuperReg[0], CSI[i+1].getFrameIdx(),
+      TII.loadRegFromStackSlot(MBB, MI, SuperReg, CSI[i+1].getFrameIdx(),
                                SuperRegClass, TRI);
-      MBB.addLiveIn(SuperReg[0]);
+      MBB.addLiveIn(SuperReg);
       ++i;
     } else {
       // Cannot use a double-word load.
