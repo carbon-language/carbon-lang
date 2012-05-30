@@ -240,7 +240,8 @@ bool LTOCodeGenerator::determineTarget(std::string& errMsg) {
     std::string FeatureStr = Features.getString();
     TargetOptions Options;
     _target = march->createTargetMachine(Triple, _mCpu, FeatureStr, Options,
-                                         RelocModel);
+                                         RelocModel, CodeModel::Default,
+                                         CodeGenOpt::Aggressive);
   }
   return false;
 }
@@ -372,8 +373,7 @@ bool LTOCodeGenerator::generateObjectFile(raw_ostream &out,
   formatted_raw_ostream Out(out);
 
   if (_target->addPassesToEmitFile(*codeGenPasses, Out,
-                                   TargetMachine::CGFT_ObjectFile,
-                                   CodeGenOpt::Aggressive)) {
+                                   TargetMachine::CGFT_ObjectFile)) {
     errMsg = "target file type not supported";
     return true;
   }
