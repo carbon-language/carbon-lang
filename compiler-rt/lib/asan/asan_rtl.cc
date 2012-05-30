@@ -289,8 +289,9 @@ static void BoolFlagValue(const char *flags, const char *flag,
   if (!flags) return;
   const char *str = internal_strstr(flags, flag);
   if (!str) return;
+  const char *suffix = str + internal_strlen(flag);
   if (!internal_atoll(str + internal_strlen(flag))) {
-    if (str[0] == '0') {
+    if (suffix[0] == '0') {
       *out_val = false;
       return;
     }
@@ -298,7 +299,7 @@ static void BoolFlagValue(const char *flags, const char *flag,
     *out_val = true;
     return;
   }
-  switch (str[0]) {
+  switch (suffix[0]) {
     case 'y':
     case 't': {
       *out_val = true;
