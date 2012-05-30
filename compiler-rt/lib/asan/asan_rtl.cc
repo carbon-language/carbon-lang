@@ -504,9 +504,11 @@ void __asan_init() {
 
 #if !defined(_WIN32)
   if (__asan_default_options) {
-    Report("Using the defaults from __asan_default_options: %s\n",
-           __asan_default_options);
     ParseAsanOptions(__asan_default_options);
+    if (FLAG_v) {
+      Report("Using the defaults from __asan_default_options: %s\n",
+             __asan_default_options);
+    }
   }
 #endif
   // flags
