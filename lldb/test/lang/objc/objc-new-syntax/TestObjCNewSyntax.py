@@ -13,13 +13,13 @@ class ObjCNewSyntaxTestCase(TestBase):
 
     mydir = os.path.join("lang", "objc", "objc-new-syntax")
 
-    @expectedFailurei386
+    @unittest2.expectedFailure
     @dsym_test
     def test_expr_with_dsym(self):
         self.buildDsym()
         self.expr()
 
-    @expectedFailurei386
+    @unittest2.expectedFailure
     @dwarf_test
     def test_expr_with_dwarf(self):
         self.buildDwarf()
