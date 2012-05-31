@@ -145,8 +145,10 @@
 #if defined(__clang__)
 
 #if __has_feature(cxx_alignas)
+#  define _ALIGNAS_TYPE(x) alignas(x)
 #  define _ALIGNAS(x) alignas(x)
 #else
+#  define _ALIGNAS_TYPE(x) __attribute__((__aligned__))
 #  define _ALIGNAS(x) __attribute__((__aligned__(x)))
 #endif
 

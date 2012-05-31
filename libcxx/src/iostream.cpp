@@ -13,21 +13,21 @@
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
-alignas (__stdinbuf<char> ) static char __cin [sizeof(__stdinbuf <char>)];
-alignas (__stdoutbuf<char>) static char __cout[sizeof(__stdoutbuf<char>)];
-alignas (__stdoutbuf<char>) static char __cerr[sizeof(__stdoutbuf<char>)];
-alignas (__stdinbuf<wchar_t> ) static char __wcin [sizeof(__stdinbuf <wchar_t>)];
-alignas (__stdoutbuf<wchar_t>) static char __wcout[sizeof(__stdoutbuf<wchar_t>)];
-alignas (__stdoutbuf<wchar_t>) static char __wcerr[sizeof(__stdoutbuf<wchar_t>)];
+_ALIGNAS_TYPE (__stdinbuf<char> ) static char __cin [sizeof(__stdinbuf <char>)];
+_ALIGNAS_TYPE (__stdoutbuf<char>) static char __cout[sizeof(__stdoutbuf<char>)];
+_ALIGNAS_TYPE (__stdoutbuf<char>) static char __cerr[sizeof(__stdoutbuf<char>)];
+_ALIGNAS_TYPE (__stdinbuf<wchar_t> ) static char __wcin [sizeof(__stdinbuf <wchar_t>)];
+_ALIGNAS_TYPE (__stdoutbuf<wchar_t>) static char __wcout[sizeof(__stdoutbuf<wchar_t>)];
+_ALIGNAS_TYPE (__stdoutbuf<wchar_t>) static char __wcerr[sizeof(__stdoutbuf<wchar_t>)];
 
-alignas (istream) char cin [sizeof(istream)];
-alignas (ostream) char cout[sizeof(ostream)];
-alignas (ostream) char cerr[sizeof(ostream)];
-alignas (ostream) char clog[sizeof(ostream)];
-alignas (wistream) char wcin [sizeof(wistream)];
-alignas (wostream) char wcout[sizeof(wostream)];
-alignas (wostream) char wcerr[sizeof(wostream)];
-alignas (wostream) char wclog[sizeof(wostream)];
+_ALIGNAS_TYPE (istream) char cin [sizeof(istream)];
+_ALIGNAS_TYPE (ostream) char cout[sizeof(ostream)];
+_ALIGNAS_TYPE (ostream) char cerr[sizeof(ostream)];
+_ALIGNAS_TYPE (ostream) char clog[sizeof(ostream)];
+_ALIGNAS_TYPE (wistream) char wcin [sizeof(wistream)];
+_ALIGNAS_TYPE (wostream) char wcout[sizeof(wostream)];
+_ALIGNAS_TYPE (wostream) char wcerr[sizeof(wostream)];
+_ALIGNAS_TYPE (wostream) char wclog[sizeof(wostream)];
 
 ios_base::Init __start_std_streams;
 
