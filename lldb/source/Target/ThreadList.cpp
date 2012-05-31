@@ -466,7 +466,12 @@ ThreadList::WillResume ()
         for (pos = m_threads.begin(); pos != end; ++pos)
         {
             ThreadSP thread_sp(*pos);
-            thread_sp->WillResume(thread_sp->GetCurrentPlan()->RunState());
+            StateType run_state;
+            if (thread_sp->GetResumeState() != eStateSuspended)
+                run_state = thread_sp->GetCurrentPlan()->RunState();
+            else
+                run_state = eStateSuspended;
+            thread_sp->WillResume(run_state);
         }
     }
     else
