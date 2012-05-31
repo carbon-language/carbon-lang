@@ -1025,7 +1025,7 @@ void MCAsmStreamer::EmitCFISignalFrame() {
   if (!UseCFI)
     return;
 
-  OS << "\t.cif_signal_frame";
+  OS << "\t.cfi_signal_frame";
   EmitEOL();
 }
 
