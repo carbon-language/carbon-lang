@@ -58,6 +58,7 @@ enum {
   TB_INDEX_0    = 0,
   TB_INDEX_1    = 1,
   TB_INDEX_2    = 2,
+  TB_INDEX_3    = 3,
   TB_INDEX_MASK = 0xff,
 
   // Minimum alignment required for load/store.
@@ -1122,6 +1123,75 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
                   // Index 2, folded load
                   Flags | TB_INDEX_2 | TB_FOLDED_LOAD);
   }
+
+  static const X86OpTblEntry OpTbl3[] = {
+    // FMA foldable instructions
+    { X86::VFMADDSSr231r,     X86::VFMADDSSr231m,      0 },
+    { X86::VFMADDSDr231r,     X86::VFMADDSDr231m,      0 },
+    { X86::VFMADDSSr132r,     X86::VFMADDSSr132m,      0 },
+    { X86::VFMADDSDr132r,     X86::VFMADDSDr132m,      0 },
+
+    { X86::VFMADDPSr231r,     X86::VFMADDPSr231m,      TB_ALIGN_16 },
+    { X86::VFMADDPDr231r,     X86::VFMADDPDr231m,      TB_ALIGN_16 },
+    { X86::VFMADDPSr132r,     X86::VFMADDPSr132m,      TB_ALIGN_16 },
+    { X86::VFMADDPDr132r,     X86::VFMADDPDr132m,      TB_ALIGN_16 },
+    { X86::VFMADDPSr213r,     X86::VFMADDPSr213m,      TB_ALIGN_16 },
+    { X86::VFMADDPDr213r,     X86::VFMADDPDr213m,      TB_ALIGN_16 },
+    { X86::VFMADDPSr231rY,    X86::VFMADDPSr231mY,     TB_ALIGN_32 },
+    { X86::VFMADDPDr231rY,    X86::VFMADDPDr231mY,     TB_ALIGN_32 },
+    { X86::VFMADDPSr132rY,    X86::VFMADDPSr132mY,     TB_ALIGN_32 },
+    { X86::VFMADDPDr132rY,    X86::VFMADDPDr132mY,     TB_ALIGN_32 },
+    { X86::VFMADDPSr213rY,    X86::VFMADDPSr213mY,     TB_ALIGN_32 },
+    { X86::VFMADDPDr213rY,    X86::VFMADDPDr213mY,     TB_ALIGN_32 },
+
+    { X86::VFNMADDSSr231r,    X86::VFNMADDSSr231m,     0 },
+    { X86::VFNMADDSDr231r,    X86::VFNMADDSDr231m,     0 },
+    { X86::VFNMADDSSr132r,    X86::VFNMADDSSr132m,     0 },
+    { X86::VFNMADDSDr132r,    X86::VFNMADDSDr132m,     0 },
+
+    { X86::VFNMADDPSr231r,    X86::VFNMADDPSr231m,     TB_ALIGN_16 },
+    { X86::VFNMADDPDr231r,    X86::VFNMADDPDr231m,     TB_ALIGN_16 },
+    { X86::VFNMADDPSr132r,    X86::VFNMADDPSr132m,     TB_ALIGN_16 },
+    { X86::VFNMADDPDr132r,    X86::VFNMADDPDr132m,     TB_ALIGN_16 },
+    { X86::VFNMADDPSr213r,    X86::VFNMADDPSr213m,     TB_ALIGN_16 },
+    { X86::VFNMADDPDr213r,    X86::VFNMADDPDr213m,     TB_ALIGN_16 },
+    { X86::VFNMADDPSr231rY,   X86::VFNMADDPSr231mY,    TB_ALIGN_32 },
+    { X86::VFNMADDPDr231rY,   X86::VFNMADDPDr231mY,    TB_ALIGN_32 },
+    { X86::VFNMADDPSr132rY,   X86::VFNMADDPSr132mY,    TB_ALIGN_32 },
+    { X86::VFNMADDPDr132rY,   X86::VFNMADDPDr132mY,    TB_ALIGN_32 },
+    { X86::VFNMADDPSr213rY,   X86::VFNMADDPSr213mY,    TB_ALIGN_32 },
+    { X86::VFNMADDPDr213rY,   X86::VFNMADDPDr213mY,    TB_ALIGN_32 },
+
+    { X86::VFMSUBSSr231r,     X86::VFMSUBSSr231m,      0 },
+    { X86::VFMSUBSDr231r,     X86::VFMSUBSDr231m,      0 },
+    { X86::VFMSUBSSr132r,     X86::VFMSUBSSr132m,      0 },
+    { X86::VFMSUBSDr132r,     X86::VFMSUBSDr132m,      0 },
+
+    { X86::VFMSUBPSr231r,     X86::VFMSUBPSr231m,      TB_ALIGN_16 },
+    { X86::VFMSUBPDr231r,     X86::VFMSUBPDr231m,      TB_ALIGN_16 },
+    { X86::VFMSUBPSr132r,     X86::VFMSUBPSr132m,      TB_ALIGN_16 },
+    { X86::VFMSUBPDr132r,     X86::VFMSUBPDr132m,      TB_ALIGN_16 },
+    { X86::VFMSUBPSr213r,     X86::VFMSUBPSr213m,      TB_ALIGN_16 },
+    { X86::VFMSUBPDr213r,     X86::VFMSUBPDr213m,      TB_ALIGN_16 },
+    { X86::VFMSUBPSr231rY,    X86::VFMSUBPSr231mY,     TB_ALIGN_32 },
+    { X86::VFMSUBPDr231rY,    X86::VFMSUBPDr231mY,     TB_ALIGN_32 },
+    { X86::VFMSUBPSr132rY,    X86::VFMSUBPSr132mY,     TB_ALIGN_32 },
+    { X86::VFMSUBPDr132rY,    X86::VFMSUBPDr132mY,     TB_ALIGN_32 },
+    { X86::VFMSUBPSr213rY,    X86::VFMSUBPSr213mY,     TB_ALIGN_32 },
+    { X86::VFMSUBPDr213rY,    X86::VFMSUBPDr213mY,     TB_ALIGN_32 },
+
+  };
+
+  for (unsigned i = 0, e = array_lengthof(OpTbl3); i != e; ++i) {
+    unsigned RegOp = OpTbl3[i].RegOp;
+    unsigned MemOp = OpTbl3[i].MemOp;
+    unsigned Flags = OpTbl3[i].Flags;
+    AddTableEntry(RegOp2MemOpTable3, MemOp2RegOpTable,
+                  RegOp, MemOp,
+                  // Index 3, folded load
+                  Flags | TB_INDEX_3 | TB_FOLDED_LOAD);
+  }
+
 }
 
 void

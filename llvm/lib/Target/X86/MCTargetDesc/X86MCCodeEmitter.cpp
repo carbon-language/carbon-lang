@@ -570,7 +570,11 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
   }
 
   // Classify VEX_B, VEX_4V, VEX_R, VEX_X
+  unsigned NumOps = Desc.getNumOperands();
   unsigned CurOp = 0;
+  if (NumOps > 1 && Desc.getOperandConstraint(1, MCOI::TIED_TO) != -1)
+    ++CurOp;
+
   switch (TSFlags & X86II::FormMask) {
   case X86II::MRMInitReg: llvm_unreachable("FIXME: Remove this!");
   case X86II::MRMDestMem: {
@@ -603,11 +607,11 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
     //  FMA4:
     //  dst(ModR/M.reg), src1(VEX_4V), src2(ModR/M), src3(VEX_I8IMM)
     //  dst(ModR/M.reg), src1(VEX_4V), src2(VEX_I8IMM), src3(ModR/M),
-    if (X86II::isX86_64ExtendedReg(MI.getOperand(0).getReg()))
+    if (X86II::isX86_64ExtendedReg(MI.getOperand(CurOp++).getReg()))
       VEX_R = 0x0;
 
     if (HasVEX_4V)
-      VEX_4V = getVEXRegisterEncoding(MI, 1);
+      VEX_4V = getVEXRegisterEncoding(MI, CurOp);
 
     if (X86II::isX86_64ExtendedReg(
                MI.getOperand(MemOperand+X86::AddrBaseReg).getReg()))

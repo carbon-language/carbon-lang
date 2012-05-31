@@ -933,7 +933,10 @@ void Emitter<CodeEmitter>::emitVEXOpcodePrefix(uint64_t TSFlags,
   }
 
   // Classify VEX_B, VEX_4V, VEX_R, VEX_X
+  unsigned NumOps = Desc->getNumOperands();
   unsigned CurOp = 0;
+  if (NumOps > 1 && Desc->getOperandConstraint(1, MCOI::TIED_TO) != -1)
+    ++CurOp;
   switch (TSFlags & X86II::FormMask) {
     case X86II::MRMInitReg:
       // Duplicate register.
