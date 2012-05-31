@@ -35,6 +35,12 @@ void InputFiles::appendFile(const File &file) {
   _files.push_back(&file);
 }
 
+void InputFiles::appendFiles(std::vector<std::unique_ptr<File>> &files) {
+  for (std::unique_ptr<File> &f : files) {
+    _files.push_back(f.release());
+  }
+}
+
 
 bool InputFiles::searchLibraries(StringRef name, bool searchSharedLibs,
                                bool searchArchives, bool dataSymbolOnly,

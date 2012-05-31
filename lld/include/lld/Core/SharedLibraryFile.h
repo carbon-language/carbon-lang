@@ -22,8 +22,6 @@ namespace lld {
 ///
 class SharedLibraryFile : public File {
 public:
-           SharedLibraryFile(StringRef path) : File(path) {
-  }
   virtual ~SharedLibraryFile() {
   }
 
@@ -44,7 +42,9 @@ public:
   /// symbol.  Otherwise return nullptr.
   virtual const SharedLibraryAtom *exports(StringRef name, 
                                           bool dataSymbolOnly) const;
-  
+protected:
+  /// only subclasses of SharedLibraryFile can be instantiated 
+  SharedLibraryFile(StringRef path) : File(path) { }
 };
 
 } // namespace lld

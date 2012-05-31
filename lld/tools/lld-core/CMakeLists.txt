@@ -1,9 +1,13 @@
 set(LLVM_USED_LIBS
   lldCore
-  lldReader
   lldPasses
-  lldDarwinPlatform
-  )
+  lldMachO
+  lldPECOFF
+  lldELF
+  lldNative
+  lldYAML
+  lldReaderWriter
+ )
 
 set(LLVM_LINK_COMPONENTS
   support

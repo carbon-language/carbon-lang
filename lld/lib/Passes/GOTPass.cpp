@@ -24,9 +24,9 @@
 // is in the same linkage unit and does not need to be interposable, and 
 // the GOT use is just a load (not some other operation), this pass can 
 // transform that load into an LEA (add).  This optimizes away one memory load
-// at runtime that could stall the pipeline.  This optimization only works
+// which at runtime that could stall the pipeline.  This optimization only works
 // for architectures in which a (GOT) load instruction can be change to an 
-// LEA instruction that is the same size.  The platform method isGOTAccess()
+// LEA instruction that is the same size.  The method isGOTAccess()
 // should only return true for "canBypassGOT" if this optimization is supported.
 //
 //===----------------------------------------------------------------------===//
@@ -35,23 +35,21 @@
 #include "lld/Core/File.h"
 #include "lld/Core/LLVM.h"
 #include "lld/Core/Pass.h"
-#include "lld/Core/Platform.h"
 #include "lld/Core/Reference.h"
-
 #include "llvm/ADT/DenseMap.h"
 
 namespace lld {
 
-void GOTPass::perform() {
+void GOTPass::perform(File& mergedFile) {
   // Use map so all pointers to same symbol use same GOT entry.
   llvm::DenseMap<const Atom*, const DefinedAtom*> targetToGOT;
   
   // Scan all references in all atoms.
-  for(const DefinedAtom *atom : _file.defined()) {
+  for(const DefinedAtom *atom : mergedFile.defined()) {
     for (const Reference *ref : *atom) {
       // Look at instructions accessing the GOT.
       bool canBypassGOT;
-      if ( _platform.isGOTAccess(ref->kind(), canBypassGOT) ) {
+      if ( this->isGOTAccess(ref->kind(), canBypassGOT) ) {
         const Atom* target = ref->target();
         assert(target != nullptr);
         const DefinedAtom* defTarget = dyn_cast<DefinedAtom>(target);
@@ -72,14 +70,14 @@ void GOTPass::perform() {
           // GOT to be by-passed, do that optimization and don't create
           // GOT entry.
           replaceTargetWithGOTAtom = !canBypassGOT;
-        } 
+        }
         if ( replaceTargetWithGOTAtom ) {
           // Replace the target with a reference to a GOT entry.
           const DefinedAtom* gotEntry = nullptr;
           auto pos = targetToGOT.find(target);
           if ( pos == targetToGOT.end() ) {
             // This is no existing GOT entry.  Create a new one.
-            gotEntry = _platform.makeGOTEntry(*target, _file);
+            gotEntry = this->makeGOTEntry(*target);
             assert(gotEntry != nullptr);
             assert(gotEntry->contentType() == DefinedAtom::typeGOT);
             targetToGOT[target] = gotEntry;
@@ -92,16 +90,16 @@ void GOTPass::perform() {
           // Switch reference to GOT atom.
           (const_cast<Reference*>(ref))->setTarget(gotEntry);
         }
-        // Platform needs to update reference kind to reflect
-        // that target is a GOT entry or a direct accesss.
-        _platform.updateReferenceToGOT(ref, replaceTargetWithGOTAtom);
+        // Update reference kind to reflect
+        // that target is now a GOT entry or a direct accesss.
+       this->updateReferenceToGOT(ref, replaceTargetWithGOTAtom);
       }
     }
   }
   
   // add all created GOT Atoms to master file
   for (auto it=targetToGOT.begin(), end=targetToGOT.end(); it != end; ++it) {
-    _file.addAtom(*it->second);
+    mergedFile.addAtom(*it->second);
   }
   
 

@@ -7,10 +7,10 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This linker pass updates call sites which have references to shared library
+// This linker pass updates call-sites which have references to shared library
 // atoms to instead have a reference to a stub (PLT entry) for the specified
-// symbol.  The platform object does the work of creating the platform-specific
-// StubAtom.
+// symbol.  Each file format defines a subclass of StubsPass which implements
+// the abstract methods for creating the file format specific StubAtoms.
 //
 //===----------------------------------------------------------------------===//
 
@@ -18,30 +18,28 @@
 #include "lld/Core/File.h"
 #include "lld/Core/LLVM.h"
 #include "lld/Core/Pass.h"
-#include "lld/Core/Platform.h"
 #include "lld/Core/Reference.h"
-
 #include "llvm/ADT/DenseMap.h"
 
 namespace lld {
 
-void StubsPass::perform() {
+void StubsPass::perform(File& mergedFile) {
   // Skip this pass if output format uses text relocations instead of stubs.
-  if ( !_platform.noTextRelocs() )
+  if ( ! this->noTextRelocs() )
     return;
 
   // Scan all references in all atoms.
-  for(const DefinedAtom *atom : _file.defined()) {
+  for(const DefinedAtom *atom : mergedFile.defined()) {
     for (const Reference *ref : *atom) {
       // Look at call-sites.
-      if ( _platform.isCallSite(ref->kind()) ) {
+      if (this->isCallSite(ref->kind()) ) {
         const Atom* target = ref->target();
         assert(target != nullptr);
         bool replaceCalleeWithStub = false;
         if ( target->definition() == Atom::definitionSharedLibrary ) {
           // Calls to shared libraries go through stubs.
           replaceCalleeWithStub = true;
-        } 
+        }
         else if (const DefinedAtom* defTarget =
                      dyn_cast<DefinedAtom>(target)) {
           if ( defTarget->interposable() != DefinedAtom::interposeNo ) {
@@ -52,8 +50,8 @@ void StubsPass::perform() {
           }
         }
         if ( replaceCalleeWithStub ) {
-          // Ask platform to make stub and other support atoms.
-          const DefinedAtom* stub = _platform.getStub(*target, _file);
+          // Make file-format specific stub and other support atoms.
+          const DefinedAtom* stub = this->getStub(*target);
           assert(stub != nullptr);
           // Switch call site to reference stub atom instead.
           (const_cast<Reference*>(ref))->setTarget(stub);
@@ -62,8 +60,8 @@ void StubsPass::perform() {
     }
   }
 
-  // Tell platform to add all created stubs and support Atoms to file.
-  _platform.addStubAtoms(_file);
+  // Add all created stubs and support Atoms.
+ this->addStubAtoms(mergedFile);
 }
 
 

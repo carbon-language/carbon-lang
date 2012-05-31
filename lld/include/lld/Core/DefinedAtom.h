@@ -1,4 +1,4 @@
-//===- Core/DefinedAtom.h - The Fundamental Unit of Linking ---------------===//
+//===- Core/DefinedAtom.h - An Atom with content --------------------------===//
 //
 //                             The LLVM Linker
 //

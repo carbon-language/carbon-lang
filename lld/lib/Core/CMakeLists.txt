@@ -2,14 +2,6 @@ add_lld_library(lldCore
   Error.cpp
   File.cpp
   InputFiles.cpp
-  NativeFileFormat.h
-  NativeReader.cpp
-  NativeWriter.cpp
-  Platform.cpp
   Resolver.cpp
   SymbolTable.cpp
-  YamlKeyValues.cpp
-  YamlKeyValues.h
-  YamlReader.cpp
-  YamlWriter.cpp
   )

@@ -173,7 +173,7 @@ void SymbolTable::addByName(const Atom & newAtom) {
           else {
             if ( _options.warnIfCoalesableAtomsHaveDifferentCanBeNull() ) {
               // FIXME: need diagonstics interface for writing warning messages
-              llvm::errs() << "lld warning: undefined symbol " 
+              llvm::errs() << "lld warning: undefined symbol "
                            << existingUndef->name()
                            << " has different weakness in "
                            << existingUndef->file().path()
@@ -198,7 +198,7 @@ void SymbolTable::addByName(const Atom & newAtom) {
             useNew = false;
             if ( _options.warnIfCoalesableAtomsHaveDifferentLoadName() ) {
               // FIXME: need diagonstics interface for writing warning messages
-              llvm::errs() << "lld warning: shared library symbol " 
+              llvm::errs() << "lld warning: shared library symbol "
                            << curShLib->name()
                            << " has different load path in "
                            << curShLib->file().path()
@@ -210,7 +210,7 @@ void SymbolTable::addByName(const Atom & newAtom) {
             useNew = false;
             if ( _options.warnIfCoalesableAtomsHaveDifferentCanBeNull() ) {
               // FIXME: need diagonstics interface for writing warning messages
-              llvm::errs() << "lld warning: shared library symbol " 
+              llvm::errs() << "lld warning: shared library symbol "
                            << curShLib->name()
                            << " has different weakness in "
                            << curShLib->file().path()

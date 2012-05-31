@@ -23,6 +23,7 @@ namespace llvm {
   // ADT's.
   class StringRef;
   class Twine;
+  class MemoryBuffer;
   template<typename T> class ArrayRef;
   template<class T> class OwningPtr;
   template<unsigned InternalLen> class SmallString;
@@ -55,6 +56,7 @@ namespace lld {
   // ADT's.
   using llvm::StringRef;
   using llvm::Twine;
+  using llvm::MemoryBuffer;
   using llvm::ArrayRef;
   using llvm::OwningPtr;
   using llvm::SmallString;

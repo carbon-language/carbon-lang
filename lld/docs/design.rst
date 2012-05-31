@@ -108,13 +108,32 @@ The overall steps in linking are:
 The Resolving and Passes steps are done purely on the master graph of atoms, so
 they have no notion of file formats such as mach-o or ELF.
 
+
+Input Files
+~~~~~~~~~~~
+
+Existing developer tools using different file formats for object files. 
+A goal of lld is to be file format independent.  This is done
+through a plug-in model for reading object files. The lld::Reader is the base
+class for all object file readers.  A Reader follows the factory method pattern.
+A Reader instantiates an lld::File object (which is a graph of Atoms) from a
+given object file (on disk or in-memory).
+
+Every Reader subclass defines its own "options" class (for instance the mach-o 
+Reader defines the class ReaderOptionsMachO).  This options class is the 
+one-and-only way to control how the Reader operates when parsing an input file
+into an Atom graph.  For instance, you may want the Reader to only accept
+certain architectures.  The options class can be instantiated from command
+line options, or it can be subclassed and the ivars programatically set. 
+
+
 Resolving
 ~~~~~~~~~
 
-The resolving step takes all the atoms' graphs from each object file and combines
-them into one master object graph.  Unfortunately, it is not as simple as
-appending the atom list from each file into one big list.  There are many cases
-where atoms need to be coalesced.  That is, two or more atoms need to be
+The resolving step takes all the atoms' graphs from each object file and 
+combines them into one master object graph.  Unfortunately, it is not as simple 
+as appending the atom list from each file into one big list.  There are many 
+cases where atoms need to be coalesced.  That is, two or more atoms need to be
 coalesced into one atom.  This is necessary to support: C language "tentative
 definitions", C++ weak symbols for templates and inlines defined in headers,
 replacing undefined atoms with actual definition atoms, and for merging copies
@@ -189,6 +208,7 @@ each proxy atom needed, and these new atoms are added to the current lld::File
 object.  Next, all the noted call sites to shared library atoms have their
 References altered to point to the stub atom instead of the shared library atom.
 
+
 Generate Output File
 ~~~~~~~~~~~~~~~~~~~~
 
@@ -196,17 +216,31 @@ Once the passes are done, the output file writer is given current lld::File
 object.  The writer's job is to create the executable content file wrapper and
 place the content of the atoms into it.
 
-Sometimes the output generator needs access to particular atoms (for instance,
-it may need to know which atom is "main" in order to specifiy the entry 
-point in the executable.  The way to do this is to have the platform create
-an Atom with a Reference to the required atom(s) and provide this atom
-in the initialize set of atoms for the resolver.  If a particular symbol name
-is required, this arrangment will also cause core linking to fail if the
-symbol is not defined (e.g. "main" is undefined).
+lld uses a plug-in model for writing output files. All concrete writers (e.g.
+ELF, mach-o, etc) are subclasses of the lld::Writer classs.  
 
-Sometimes a platform supports lazily created symbols.  To support this, the
-platform can create a File object which vends no initial atoms, but does
-lazily supply atoms by name as needed.  
+Unlike the Reader class which has just one method to instantiate an lld::File,
+the Writer class has multiple methods.  The crucial method is to generate the 
+output file, but there are also methods which allow the Writer to contribute
+Atoms to the resolver and specify passes to run.  
+
+An example of contributing
+atoms is that if the Writer knows a main executable is being linked and such
+an executable requires a specially named entry point (e.g. "_main"), the Writer
+can add an UndefinedAtom with that special name to the resolver.  This will 
+cause the resolver to issue an error if that symbol is not defined.  
+
+Sometimes a Writer supports lazily created symbols, such as names for the start
+of sections. To support this, the Writer can create a File object which vends 
+no initial atoms, but does lazily supply atoms by name as needed.  
+
+Every Writer subclass defines its own "options" class (for instance the mach-o 
+Writer defines the class WriterOptionsMachO).  This options class is the 
+one-and-only way to control how the Writer operates when producing an output 
+file from an Atom graph.  For instance, you may want the Writer to optimize
+the output for certain OS versions, or strip local symbols, etc. The options 
+class can be instantiated from command line options, or it can be subclassed 
+and the ivars programatically set. 
 
 
 lld::File representations
@@ -262,6 +296,10 @@ With this model for the native file format, files can be read and turned
 into the in-memory graph of lld::Atoms with just a few memory allocations.  
 And the format can easily adapt over time to new features.
 
+The binary file format follows the ReaderWriter patterns used in lld. The lld 
+library comes with the classes: ReaderNative and WriterNative.  So, switching 
+between file formats is as easy as switching which Reader subclass is used.
+
 
 Textual representations in YAML
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -300,8 +338,12 @@ feature trying to be tested. By writing test cases in the linkers own textual
 format, we can exactly specify every attribute of every atom and thus target
 specific linker logic.
 
+The textual/YAML format follows the ReaderWriter patterns used in lld. The lld 
+library comes with the classes: ReaderYAML and WriterYAML.  
+
+
 Testing
-~~~~~~~
+-------
 
 The lld project contains a test suite which is being built up as new code is
 added to lld.  All new lld functionality should have a tests added to the test

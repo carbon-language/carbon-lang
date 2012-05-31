@@ -9,13 +9,17 @@
 
 #include "lld/Core/Atom.h"
 #include "lld/Core/LLVM.h"
-#include "lld/Core/NativeReader.h"
-#include "lld/Core/NativeWriter.h"
 #include "lld/Core/Pass.h"
 #include "lld/Core/Resolver.h"
-#include "lld/Core/YamlReader.h"
-#include "lld/Core/YamlWriter.h"
-#include "lld/Reader/Reader.h"
+#include "lld/ReaderWriter/Reader.h"
+#include "lld/ReaderWriter/ReaderNative.h"
+#include "lld/ReaderWriter/ReaderYAML.h"
+#include "lld/ReaderWriter/Writer.h"
+#include "lld/ReaderWriter/WriterELF.h"
+#include "lld/ReaderWriter/WriterMachO.h"
+#include "lld/ReaderWriter/WriterNative.h"
+#include "lld/ReaderWriter/WriterPECOFF.h"
+#include "lld/ReaderWriter/WriterYAML.h"
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/Support/CommandLine.h"
@@ -28,6 +32,8 @@
 #include "llvm/Support/system_error.h"
 
 #include <vector>
+
+#include "TestingHelpers.hpp"
 
 using namespace lld;
 
@@ -42,311 +48,6 @@ static bool error(error_code ec) {
   }
   return false;
 }
-
-namespace {
-
-
-//
-// Simple atom created by the stubs pass.
-//
-class TestingStubAtom : public DefinedAtom {
-public:
-        TestingStubAtom(const File& f, const Atom& shlib) :
-                        _file(f), _shlib(shlib) {
-          static uint32_t lastOrdinal = 0;
-          _ordinal = lastOrdinal++; 
-        }
-
-  virtual const File& file() const {
-    return _file;
-  }
-
-  virtual StringRef name() const {
-    return StringRef();
-  }
-  
-  virtual uint64_t ordinal() const {
-    return _ordinal;
-  }
-
-  virtual uint64_t size() const {
-    return 0;
-  }
-
-  virtual Scope scope() const {
-    return DefinedAtom::scopeLinkageUnit;
-  }
-  
-  virtual Interposable interposable() const {
-    return DefinedAtom::interposeNo;
-  }
-  
-  virtual Merge merge() const {
-    return DefinedAtom::mergeNo;
-  }
-  
-  virtual ContentType contentType() const  {
-    return DefinedAtom::typeStub;
-  }
-
-  virtual Alignment alignment() const {
-    return Alignment(0,0);
-  }
-  
-  virtual SectionChoice sectionChoice() const {
-    return DefinedAtom::sectionBasedOnContent;
-  }
-    
-  virtual StringRef customSectionName() const {
-    return StringRef();
-  }
-  virtual DeadStripKind deadStrip() const {
-    return DefinedAtom::deadStripNormal;
-  }
-    
-  virtual ContentPermissions permissions() const  {
-    return DefinedAtom::permR_X;
-  }
-  
-  virtual bool isThumb() const {
-    return false;
-  }
-    
-  virtual bool isAlias() const {
-    return false;
-  }
-  
-  virtual ArrayRef<uint8_t> rawContent() const {
-    return ArrayRef<uint8_t>();
-  }
-  
-  virtual reference_iterator begin() const {
-    return reference_iterator(*this, nullptr);
-  }
-  
-  virtual reference_iterator end() const {
-    return reference_iterator(*this, nullptr);
-  }
-  
-  virtual const Reference* derefIterator(const void* iter) const {
-    return nullptr;
-  }
-  
-  virtual void incrementIterator(const void*& iter) const {
-  
-  }
-  
-private:
-  const File&               _file;
-  const Atom&               _shlib;
-  uint32_t                  _ordinal;
-};
-
-
-
-
-//
-// Simple atom created by the GOT pass.
-//
-class TestingGOTAtom : public DefinedAtom {
-public:
-        TestingGOTAtom(const File& f, const Atom& shlib) :
-                        _file(f), _shlib(shlib) {
-          static uint32_t lastOrdinal = 0;
-          _ordinal = lastOrdinal++; 
-        }
-
-  virtual const File& file() const {
-    return _file;
-  }
-
-  virtual StringRef name() const {
-    return StringRef();
-  }
-  
-  virtual uint64_t ordinal() const {
-    return _ordinal;
-  }
-
-  virtual uint64_t size() const {
-    return 0;
-  }
-
-  virtual Scope scope() const {
-    return DefinedAtom::scopeLinkageUnit;
-  }
-  
-  virtual Interposable interposable() const {
-    return DefinedAtom::interposeNo;
-  }
-  
-  virtual Merge merge() const {
-    return DefinedAtom::mergeNo;
-  }
-  
-  virtual ContentType contentType() const  {
-    return DefinedAtom::typeGOT;
-  }
-
-  virtual Alignment alignment() const {
-    return Alignment(3,0);
-  }
-  
-  virtual SectionChoice sectionChoice() const {
-    return DefinedAtom::sectionBasedOnContent;
-  }
-    
-  virtual StringRef customSectionName() const {
-    return StringRef();
-  }
-  virtual DeadStripKind deadStrip() const {
-    return DefinedAtom::deadStripNormal;
-  }
-    
-  virtual ContentPermissions permissions() const  {
-    return DefinedAtom::permRW_;
-  }
-  
-  virtual bool isThumb() const {
-    return false;
-  }
-    
-  virtual bool isAlias() const {
-    return false;
-  }
-  
-  virtual ArrayRef<uint8_t> rawContent() const {
-    return ArrayRef<uint8_t>();
-  }
-  
-  virtual reference_iterator begin() const {
-    return reference_iterator(*this, nullptr);
-  }
-  
-  virtual reference_iterator end() const {
-    return reference_iterator(*this, nullptr);
-  }
-  
-  virtual const Reference* derefIterator(const void* iter) const {
-    return nullptr;
-  }
-  
-  virtual void incrementIterator(const void*& iter) const {
-  
-  }
-  
-private:
-  const File&               _file;
-  const Atom&               _shlib;
-  uint32_t                  _ordinal;
-};
-
-//
-// A simple platform for testing.
-//
-class TestingPlatform : public Platform {
-public:
-
-  virtual void addFiles(InputFiles&) {
-  }
-
-  struct KindMapping {
-    const char*           string;
-    Reference::Kind       value;
-    bool                  isBranch;
-    bool                  isGotLoad;
-    bool                  isGotUse;
-  };
-
-  static const KindMapping _s_kindMappings[]; 
-  
-  virtual Reference::Kind kindFromString(StringRef kindName) {
-    for (const KindMapping* p = _s_kindMappings; p->string != nullptr; ++p) {
-      if ( kindName.equals(p->string) )
-        return p->value;
-    }
-    int k;
-    if (kindName.getAsInteger(0, k))
-      k = 0;
-    return k;
-  }
-  
-  virtual StringRef kindToString(Reference::Kind value) {
-    for (const KindMapping* p = _s_kindMappings; p->string != nullptr; ++p) {
-      if ( value == p->value)
-        return p->string;
-    }
-    return StringRef("???");
-  }
-
-  virtual bool noTextRelocs() {
-    return true;
-  }
-  
-  virtual bool isCallSite(Reference::Kind kind) {
-    for (const KindMapping* p = _s_kindMappings; p->string != nullptr; ++p) {
-      if ( kind == p->value )
-        return p->isBranch;
-    }
-    return false;
-  }
-
-  virtual bool isGOTAccess(Reference::Kind kind, bool& canBypassGOT) {
-    for (const KindMapping* p = _s_kindMappings; p->string != nullptr; ++p) {
-      if ( kind == p->value ) {
-        canBypassGOT = p->isGotLoad;
-        return p->isGotUse;
-      }
-    }
-    return false;
-  }
-  
-  virtual void updateReferenceToGOT(const Reference* ref, bool targetIsNowGOT) {
-    if ( targetIsNowGOT )
-      (const_cast<Reference*>(ref))->setKind(kindFromString("pcrel32"));
-    else
-      (const_cast<Reference*>(ref))->setKind(kindFromString("lea32wasGot"));
-  }
-
-
-
-  virtual const DefinedAtom *getStub(const Atom& shlibAtom, File& file) {
-    const DefinedAtom *result = new TestingStubAtom(file, shlibAtom);
-    _stubs.push_back(result);
-    return result;
-  }
-  
-  virtual const DefinedAtom* makeGOTEntry(const Atom& shlibAtom, File& file) {
-    return new TestingGOTAtom(file, shlibAtom);
-  }
-  
-  virtual void addStubAtoms(File &file) {
-    for (const DefinedAtom *stub : _stubs) {
-      file.addAtom(*stub);
-    }
-  }
-  
-  virtual void writeExecutable(const lld::File &, raw_ostream &out) {
-  }
-private:
-  std::vector<const DefinedAtom*> _stubs;
-};
-
-
-//
-// Table of fixup kinds in YAML documents used for testing
-//
-const TestingPlatform::KindMapping TestingPlatform::_s_kindMappings[] = {
-    { "call32",         1,    true,  false, false},
-    { "pcrel32",        2,    false, false, false },
-    { "gotLoad32",      3,    false, true,  true },
-    { "gotUse32",       4,    false, false, true },
-    { "lea32wasGot",    5,    false, false, false },
-    { nullptr,          0,    false, false, false }
-  };
-
-
-} // anon namespace
 
 
 llvm::cl::list<std::string>
@@ -383,16 +84,18 @@ cmdLineGlobalsNotDeadStrip("keep-globals",
           llvm::cl::desc("All global symbols are roots for dead-strip"));
 
 
-enum PlatformChoice {
-  platformTesting, platformDarwin
+enum WriteChoice {
+  writeYAML, writeMachO, writePECOFF, writeELF
 };
 
-llvm::cl::opt<PlatformChoice> 
-platformSelected("platform",
-  llvm::cl::desc("Select platform"),
+llvm::cl::opt<WriteChoice> 
+writeSelected("writer",
+  llvm::cl::desc("Select writer"),
   llvm::cl::values(
-    clEnumValN(platformTesting, "none", "link for testing"),
-    clEnumValN(platformDarwin, "darwin", "link as darwin would"),
+    clEnumValN(writeYAML,   "YAML",   "link assuming YAML format"),
+    clEnumValN(writeMachO,  "mach-o", "link as darwin would"),
+    clEnumValN(writePECOFF, "PECOFF", "link as windows would"),
+    clEnumValN(writeELF,    "ELF",    "link as linux would"),
     clEnumValEnd));
     
 
@@ -410,8 +113,6 @@ public:
 
 
 
-
-    
 int main(int argc, char *argv[]) {
   // Print a stack trace if we signal out.
   llvm::sys::PrintStackTraceOnErrorSignal();
@@ -421,108 +122,97 @@ int main(int argc, char *argv[]) {
   // parse options
   llvm::cl::ParseCommandLineOptions(argc, argv);
 
+  // if no input file specified, read from stdin
   if (cmdLineInputFilePaths.empty())
     cmdLineInputFilePaths.emplace_back("-");
 
-  // create platform for testing
-  Platform* platform = nullptr;
-  switch ( platformSelected ) {
-    case platformTesting:
-      platform = new TestingPlatform();
+  // if no output path specified, write to stdout
+  if (cmdLineOutputFilePath.empty())
+    cmdLineOutputFilePath.assign("-");
+
+  // create writer for final output
+  TestingWriterOptionsYAML  writerOptionsYAML(cmdLineDoStubsPass, 
+                                              cmdLineDoGotPass);
+  WriterOptionsMachO        writerOptionsMachO;
+  WriterOptionsPECOFF       writerOptionsPECOFF;
+  WriterOptionsELF          writerOptionsELF;
+  Writer* writer = nullptr;
+  switch ( writeSelected ) {
+    case writeYAML:
+      writer = createWriterYAML(writerOptionsYAML);
       break;
-    case platformDarwin:
-      platform = createDarwinPlatform();
+    case writeMachO:
+      writer = createWriterMachO(writerOptionsMachO);
+      break;
+    case writePECOFF:
+      writer = createWriterPECOFF(writerOptionsPECOFF);
+      break;
+    case writeELF:
+      writer = createWriterELF(writerOptionsELF);
       break;
   }
   
-  // read input YAML doc into object file(s)
-  std::vector<std::unique_ptr<const File>> files;
+  // create object to mange input files
+  InputFiles inputFiles;
+
+  // read input files into in-memory File objects
+  TestingReaderOptionsYAML  readerOptionsYAML;
+  Reader *reader = createReaderYAML(readerOptionsYAML);
   for (auto path : cmdLineInputFilePaths) {
-    OwningPtr<llvm::MemoryBuffer> ofile;
-    if (error(llvm::MemoryBuffer::getFileOrSTDIN(path, ofile)))
+    std::vector<std::unique_ptr<File>> files;
+    if ( error(reader->readFile(path, files)) )
       return 1;
-    std::unique_ptr<llvm::MemoryBuffer> file(ofile.take());
-    if (llvm::sys::fs::identify_magic(file->getBuffer())
-        == llvm::sys::fs::file_magic::coff_object) {
-      std::unique_ptr<File> f;
-      if (error(parseCOFFObjectFile(std::move(file), f)))
-        return 1;
-      files.push_back(std::move(f));
-    } else {
-      if (error(yaml::parseObjectText( file.release()
-                                     , *platform
-                                     , files)))
-        return 1;
-    }
+    inputFiles.appendFiles(files);
   }
+    
+  // given writer a chance to add files
+  writer->addFiles(inputFiles);
 
   // create options for resolving
   TestingResolverOptions options;
 
-  // create object to mange input files
-  InputFiles inputFiles;
-  for (const auto &file : files) {
-    inputFiles.appendFile(*file);
-  }
-  
-  platform->addFiles(inputFiles);
-
   // merge all atom graphs
   Resolver resolver(options, inputFiles);
   resolver.resolve();
+  File &mergedMasterFile = resolver.resultFile();
 
   // run passes
-  if ( cmdLineDoGotPass ) {
-    GOTPass  addGot(resolver.resultFile(), *platform);
-    addGot.perform();
+  if ( GOTPass *pass = writer->gotPass() ) {
+    pass->perform(mergedMasterFile);
   }
-  if ( cmdLineDoStubsPass ) {
-    StubsPass  addStubs(resolver.resultFile(), *platform);
-    addStubs.perform();
+  if ( StubsPass *pass = writer->stubPass() ) {
+    pass->perform(mergedMasterFile);
   }
 
-  
-//  yaml::writeObjectText(resolver.resultFile(), *platform, llvm::errs());
+  // showing yaml at this stage can help when debugging
+  const bool dumpIntermediateYAML = false;
+  if ( dumpIntermediateYAML )
+    writer->writeFile(mergedMasterFile, "-");
 
-  // make unique temp .o file to put generated object file
-  int fd;
-  SmallString<128> tempPath;
-  llvm::sys::fs::unique_file("temp%%%%%.o", fd, tempPath);
-  llvm::raw_fd_ostream  binaryOut(fd, /*shouldClose=*/true);
-  
-  // write native file
-  writeNativeObjectFile(resolver.resultFile(), binaryOut);
-  binaryOut.close();  // manually close so that file can be read next
-
-//  out << "native file: " << tempPath.str() << "\n";
-  
-  // read native file
-  std::unique_ptr<lld::File> natFile;
-  if ( error(parseNativeObjectFileOrSTDIN(tempPath, natFile)) ) 
+  // make unique temp file to put generated native object file
+  llvm::sys::Path tmpNativePath = llvm::sys::Path::GetTemporaryDirectory();
+  if (tmpNativePath.createTemporaryFileOnDisk()) {
+    error("createTemporaryFileOnDisk() failed");
     return 1;
-
-  // write new atom graph
-  std::string errorInfo;
-  const char* outPath = (cmdLineOutputFilePath.empty() ? "-" 
-                                              : cmdLineOutputFilePath.c_str());
-  llvm::raw_fd_ostream out(outPath, errorInfo);
-  if ( platformSelected == platformTesting) {
-    // write atom graph out as YAML doc
-    yaml::writeObjectText(resolver.resultFile() /* *natFile */, *platform, out);
   }
-  else {
-    // write atom graph as an executable
-    platform->writeExecutable(resolver.resultFile() /* *natFile */, out);
-    // HACK.  I don't see any way to set the 'executable' bit on files 
-    // in raw_fd_ostream or in llvm/Support.
-#if HAVE_SYS_STAT_H
-    ::chmod(outPath, 0777);
-#endif
-  }
-
-  // delete temp .o file
-  bool existed;
-  llvm::sys::fs::remove(tempPath.str(), existed);
   
+  // write as native file
+  WriterOptionsNative  optionsNativeWriter;
+  Writer *natWriter = createWriterNative(optionsNativeWriter);
+  if (error(natWriter->writeFile(mergedMasterFile, tmpNativePath.c_str())))
+    return 1;
+  
+  // read as native file
+  ReaderOptionsNative  optionsNativeReader;
+  Reader *natReader = createReaderNative(optionsNativeReader);
+  std::vector<std::unique_ptr<File>> readNativeFiles;
+  if (error(natReader->readFile(tmpNativePath.c_str(), readNativeFiles)))
+    return 1;
+  
+  // write new atom graph
+  const File *parsedNativeFile = readNativeFiles[0].get();
+  if (error(writer->writeFile(*parsedNativeFile, cmdLineOutputFilePath)))
+    return 1;
+   
   return 0;
 }

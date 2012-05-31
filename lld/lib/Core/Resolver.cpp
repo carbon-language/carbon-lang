@@ -7,15 +7,17 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "lld/Core/LLVM.h"
-#include "lld/Core/Resolver.h"
 #include "lld/Core/Atom.h"
 #include "lld/Core/File.h"
+#include "lld/Core/LLVM.h"
 #include "lld/Core/InputFiles.h"
 #include "lld/Core/LLVM.h"
+#include "lld/Core/Resolver.h"
 #include "lld/Core/SymbolTable.h"
 #include "lld/Core/UndefinedAtom.h"
 
+#include "llvm/Support/Debug.h"
+#include "llvm/Support/Format.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/ErrorHandling.h"
 
@@ -65,6 +67,8 @@ private:
 
 // add all atoms from all initial .o files
 void Resolver::buildInitialAtomList() {
+ DEBUG_WITH_TYPE("resolver", llvm::dbgs() << "Resolver initial atom list:\n");
+
   // each input files contributes initial atoms
   _atoms.reserve(1024);
   _inputFiles.forEachInitialAtom(*this);
@@ -79,7 +83,14 @@ void Resolver::doFile(const File &file) {
 
 
 void Resolver::doUndefinedAtom(const class UndefinedAtom& atom) {
-  // add to list of known atoms
+  DEBUG_WITH_TYPE("resolver", llvm::dbgs()
+                    << "       UndefinedAtom: "
+                    << llvm::format("0x%09lX", &atom)
+                    << ", name="
+                    << atom.name()
+                    << "\n");
+
+ // add to list of known atoms
   _atoms.push_back(&atom);
 
   // tell symbol table
@@ -89,6 +100,13 @@ void Resolver::doUndefinedAtom(const class UndefinedAtom& atom) {
 
 // called on each atom when a file is added
 void Resolver::doDefinedAtom(const DefinedAtom &atom) {
+  DEBUG_WITH_TYPE("resolver", llvm::dbgs()
+                    << "         DefinedAtom: "
+                    << llvm::format("0x%09lX", &atom)
+                    << ", name="
+                    << atom.name()
+                    << "\n");
+
   // add to list of known atoms
   _atoms.push_back(&atom);
 
@@ -97,7 +115,7 @@ void Resolver::doDefinedAtom(const DefinedAtom &atom) {
     // tell symbol table about non-static atoms
     _symbolTable.add(atom);
   }
-  
+
   if (_options.deadCodeStripping()) {
     // add to set of dead-strip-roots, all symbols that
     // the compiler marks as don't strip
@@ -107,6 +125,13 @@ void Resolver::doDefinedAtom(const DefinedAtom &atom) {
 }
 
 void Resolver::doSharedLibraryAtom(const SharedLibraryAtom& atom) {
+   DEBUG_WITH_TYPE("resolver", llvm::dbgs()
+                    << "   SharedLibraryAtom: "
+                    << llvm::format("0x%09lX", &atom)
+                    << ", name="
+                    << atom.name()
+                    << "\n");
+
   // add to list of known atoms
   _atoms.push_back(&atom);
 
@@ -115,6 +140,13 @@ void Resolver::doSharedLibraryAtom(const SharedLibraryAtom& atom) {
 }
 
 void Resolver::doAbsoluteAtom(const AbsoluteAtom& atom) {
+   DEBUG_WITH_TYPE("resolver", llvm::dbgs()
+                    << "       AbsoluteAtom: "
+                    << llvm::format("0x%09lX", &atom)
+                    << ", name="
+                     << atom.name()
+                    << "\n");
+
   // add to list of known atoms
   _atoms.push_back(&atom);
 
@@ -159,7 +191,7 @@ void Resolver::resolveUndefines() {
       _symbolTable.tentativeDefinitions(tentDefNames);
       for ( StringRef tentDefName : tentDefNames ) {
         // Load for previous tentative may also have loaded
-        // something that overrode this tentative, so always check. 
+        // something that overrode this tentative, so always check.
         const Atom *curAtom = _symbolTable.findByName(tentDefName);
         assert(curAtom != nullptr);
         if (const DefinedAtom* curDefAtom = dyn_cast<DefinedAtom>(curAtom)) {
@@ -228,7 +260,7 @@ void Resolver::deadStripOptimize() {
         _deadStripRoots.insert(defAtom);
     }
   }
-  
+
   // Or, use list of names that are dead stip roots.
   const std::vector<StringRef> &names = _options.deadStripRootNames();
   for ( const StringRef &name : names ) {
@@ -332,7 +364,13 @@ void Resolver::MergedFile::addAtom(const Atom& atom) {
 }
 
 void Resolver::MergedFile::addAtoms(std::vector<const Atom*>& all) {
+  DEBUG_WITH_TYPE("resolver", llvm::dbgs() << "Resolver final atom list:\n");
   for ( const Atom *atom : all ) {
+    DEBUG_WITH_TYPE("resolver", llvm::dbgs()
+                    << llvm::format("    0x%09lX", atom)
+                    << ", name="
+                    << atom->name()
+                    << "\n");
     this->addAtom(*atom);
   }
 }
