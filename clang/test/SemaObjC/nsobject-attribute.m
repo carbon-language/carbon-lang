@@ -46,9 +46,19 @@ int main(int argc, char *argv[]) {
    __attribute__((NSObject)) void * color; // expected-warning {{__attribute ((NSObject)) may be put on a typedef only, attribute is ignored}}
 }
   // <rdar://problem/10930507>
-@property (nonatomic, retain) __attribute__((NSObject)) void * color; // // no-warning
+@property (nonatomic, retain) __attribute__((NSObject)) CGColorRefNoNSObject color; // // no-warning
 @end
 void test_10453342() {
     char* __attribute__((NSObject)) string2 = 0; // expected-warning {{__attribute ((NSObject)) may be put on a typedef only, attribute is ignored}}
 }
+
+// rdar://11569860
+@interface A { int i; }
+@property(retain) __attribute__((NSObject)) int i; // expected-error {{__attribute ((NSObject)) is for pointer types only}} \
+  						   // expected-error {{property with 'retain (or strong)' attribute must be of object type}}
+@end
+
+@implementation A
+@synthesize i;
+@end
 
