@@ -275,78 +275,86 @@ GDBRemoteCommunicationClient::SendPacketAndWaitForResponse
     {
         if (send_async)
         {
-            Mutex::Locker async_locker (m_async_mutex);
-            m_async_packet.assign(payload, payload_length);
-            m_async_packet_predicate.SetValue (true, eBroadcastNever);
-            
-            if (log) 
-                log->Printf ("async: async packet = %s", m_async_packet.c_str());
-
-            bool timed_out = false;
-            if (SendInterrupt(locker, 2, timed_out))
+            if (IsRunning())
             {
-                if (m_interrupt_sent)
+                Mutex::Locker async_locker (m_async_mutex);
+                m_async_packet.assign(payload, payload_length);
+                m_async_packet_predicate.SetValue (true, eBroadcastNever);
+                
+                if (log) 
+                    log->Printf ("async: async packet = %s", m_async_packet.c_str());
+
+                bool timed_out = false;
+                if (SendInterrupt(locker, 2, timed_out))
                 {
-                    TimeValue timeout_time;
-                    timeout_time = TimeValue::Now();
-                    timeout_time.OffsetWithSeconds (m_packet_timeout);
-
-                    if (log) 
-                        log->Printf ("async: sent interrupt");
-
-                    if (m_async_packet_predicate.WaitForValueEqualTo (false, &timeout_time, &timed_out))
+                    if (m_interrupt_sent)
                     {
+                        TimeValue timeout_time;
+                        timeout_time = TimeValue::Now();
+                        timeout_time.OffsetWithSeconds (m_packet_timeout);
+
                         if (log) 
-                            log->Printf ("async: got response");
+                            log->Printf ("async: sent interrupt");
 
-                        // Swap the response buffer to avoid malloc and string copy
-                        response.GetStringRef().swap (m_async_response.GetStringRef());
-                        response_len = response.GetStringRef().size();
-                    }
-                    else
-                    {
-                        if (log) 
-                            log->Printf ("async: timed out waiting for response");
-                    }
-                    
-                    // Make sure we wait until the continue packet has been sent again...
-                    if (m_private_is_running.WaitForValueEqualTo (true, &timeout_time, &timed_out))
-                    {
-                        if (log)
+                        if (m_async_packet_predicate.WaitForValueEqualTo (false, &timeout_time, &timed_out))
                         {
-                            if (timed_out) 
-                                log->Printf ("async: timed out waiting for process to resume, but process was resumed");
-                            else
-                                log->Printf ("async: async packet sent");
+                            if (log) 
+                                log->Printf ("async: got response");
+
+                            // Swap the response buffer to avoid malloc and string copy
+                            response.GetStringRef().swap (m_async_response.GetStringRef());
+                            response_len = response.GetStringRef().size();
+                        }
+                        else
+                        {
+                            if (log) 
+                                log->Printf ("async: timed out waiting for response");
+                        }
+                        
+                        // Make sure we wait until the continue packet has been sent again...
+                        if (m_private_is_running.WaitForValueEqualTo (true, &timeout_time, &timed_out))
+                        {
+                            if (log)
+                            {
+                                if (timed_out) 
+                                    log->Printf ("async: timed out waiting for process to resume, but process was resumed");
+                                else
+                                    log->Printf ("async: async packet sent");
+                            }
+                        }
+                        else
+                        {
+                            if (log) 
+                                log->Printf ("async: timed out waiting for process to resume");
                         }
                     }
                     else
                     {
+                        // We had a racy condition where we went to send the interrupt
+                        // yet we were able to get the lock, so the process must have
+                        // just stopped?
                         if (log) 
-                            log->Printf ("async: timed out waiting for process to resume");
+                            log->Printf ("async: got lock without sending interrupt");
+                        // Send the packet normally since we got the lock
+                        if (SendPacketNoLock (payload, payload_length))
+                            response_len = WaitForPacketWithTimeoutMicroSecondsNoLock (response, GetPacketTimeoutInMicroSeconds ());
+                        else 
+                        {
+                            if (log)
+                                log->Printf("error: failed to send '%*s'", (int) payload_length, payload);   
+                        }
                     }
                 }
                 else
                 {
-                    // We had a racy condition where we went to send the interrupt
-                    // yet we were able to get the lock, so the process must have
-                    // just stopped?
                     if (log) 
-                        log->Printf ("async: got lock without sending interrupt");
-                    // Send the packet normally since we got the lock
-                    if (SendPacketNoLock (payload, payload_length))
-                        response_len = WaitForPacketWithTimeoutMicroSecondsNoLock (response, GetPacketTimeoutInMicroSeconds ());
-                    else 
-                    {
-                        if (log)
-                            log->Printf("error: failed to send '%*s'", (int) payload_length, payload);   
-                    }
+                        log->Printf ("async: failed to interrupt");
                 }
             }
             else
             {
                 if (log) 
-                    log->Printf ("async: failed to interrupt");
+                    log->Printf ("async: not running, async is ignored");
             }
         }
         else
