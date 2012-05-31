@@ -106,6 +106,7 @@ private:
   typedef llvm::DenseMap<const BinaryOperator *, BinaryOperatorData>
       AssumptionMap;
   mutable AssumptionMap hash;
+  mutable OwningPtr<BugType> BT;
 };
 }
 
@@ -343,7 +344,9 @@ void IdempotentOperationChecker::checkPostStmt(const BinaryOperator *B,
 void IdempotentOperationChecker::checkEndAnalysis(ExplodedGraph &G,
                                                   BugReporter &BR,
                                                   ExprEngine &Eng) const {
-  BugType *BT = new BugType("Idempotent operation", "Dead code");
+  if (!BT)
+    BT.reset(new BugType("Idempotent operation", "Dead code"));
+
   // Iterate over the hash to see if we have any paths with definite
   // idempotent operations.
   for (AssumptionMap::const_iterator i = hash.begin(); i != hash.end(); ++i) {
