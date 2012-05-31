@@ -483,6 +483,10 @@ Target::CreateWatchpoint(lldb::addr_t addr, size_t size, uint32_t type)
 
     // Currently we only support one watchpoint per address, with total number
     // of watchpoints limited by the hardware which the inferior is running on.
+
+    // Grab the list mutex while doing operations.
+    Mutex::Locker locker;
+    this->GetWatchpointList().GetListMutex(locker);
     WatchpointSP matched_sp = m_watchpoint_list.FindByAddress(addr);
     if (matched_sp)
     {

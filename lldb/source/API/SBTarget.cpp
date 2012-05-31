@@ -1634,6 +1634,8 @@ SBTarget::DeleteWatchpoint (watch_id_t wp_id)
     if (target_sp)
     {
         Mutex::Locker api_locker (target_sp->GetAPIMutex());
+        Mutex::Locker locker;
+        target_sp->GetWatchpointList().GetListMutex(locker);
         result = target_sp->RemoveWatchpointByID (wp_id);
     }
 
@@ -1656,6 +1658,8 @@ SBTarget::FindWatchpointByID (lldb::watch_id_t wp_id)
     if (target_sp && wp_id != LLDB_INVALID_WATCH_ID)
     {
         Mutex::Locker api_locker (target_sp->GetAPIMutex());
+        Mutex::Locker locker;
+        target_sp->GetWatchpointList().GetListMutex(locker);
         watchpoint_sp = target_sp->GetWatchpointList().FindByID(wp_id);
         sb_watchpoint.SetSP (watchpoint_sp);
     }
@@ -1685,6 +1689,7 @@ SBTarget::WatchAddress (lldb::addr_t addr, size_t size, bool read, bool write)
             watch_type |= LLDB_WATCH_TYPE_READ;
         if (write)
             watch_type |= LLDB_WATCH_TYPE_WRITE;
+        // Target::CreateWatchpoint() is thread safe.
         watchpoint_sp = target_sp->CreateWatchpoint(addr, size, watch_type);
         sb_watchpoint.SetSP (watchpoint_sp);
     }
@@ -1705,6 +1710,8 @@ SBTarget::EnableAllWatchpoints ()
     if (target_sp)
     {
         Mutex::Locker api_locker (target_sp->GetAPIMutex());
+        Mutex::Locker locker;
+        target_sp->GetWatchpointList().GetListMutex(locker);
         target_sp->EnableAllWatchpoints ();
         return true;
     }
@@ -1718,6 +1725,8 @@ SBTarget::DisableAllWatchpoints ()
     if (target_sp)
     {
         Mutex::Locker api_locker (target_sp->GetAPIMutex());
+        Mutex::Locker locker;
+        target_sp->GetWatchpointList().GetListMutex(locker);
         target_sp->DisableAllWatchpoints ();
         return true;
     }
@@ -1731,6 +1740,8 @@ SBTarget::DeleteAllWatchpoints ()
     if (target_sp)
     {
         Mutex::Locker api_locker (target_sp->GetAPIMutex());
+        Mutex::Locker locker;
+        target_sp->GetWatchpointList().GetListMutex(locker);
         target_sp->RemoveAllWatchpoints ();
         return true;
     }
