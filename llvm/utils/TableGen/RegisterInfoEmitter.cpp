@@ -616,6 +616,20 @@ RegisterInfoEmitter::runMCDesc(raw_ostream &OS, CodeGenTarget &Target,
   }
   OS << "};\n\n";      // End of register descriptors...
 
+  // Emit the table of register unit roots. Each regunit has one or two root
+  // registers.
+  OS << "extern const uint16_t " << TargetName << "RegUnitRoots[][2] = {\n";
+  for (unsigned i = 0, e = RegBank.getNumNativeRegUnits(); i != e; ++i) {
+    ArrayRef<const CodeGenRegister*> Roots = RegBank.getRegUnit(i).getRoots();
+    assert(!Roots.empty() && "All regunits must have a root register.");
+    assert(Roots.size() <= 2 && "More than two roots not supported yet.");
+    OS << "  { " << getQualifiedName(Roots.front()->TheDef);
+    for (unsigned r = 1; r != Roots.size(); ++r)
+      OS << ", " << getQualifiedName(Roots[r]->TheDef);
+    OS << " },\n";
+  }
+  OS << "};\n\n";
+
   ArrayRef<CodeGenRegisterClass*> RegisterClasses = RegBank.getRegClasses();
 
   // Loop over all of the register classes... emitting each one.
@@ -735,6 +749,7 @@ RegisterInfoEmitter::runMCDesc(raw_ostream &OS, CodeGenTarget &Target,
   OS << "  RI->InitMCRegisterInfo(" << TargetName << "RegDesc, "
      << Regs.size()+1 << ", RA, " << TargetName << "MCRegisterClasses, "
      << RegisterClasses.size() << ", "
+     << TargetName << "RegUnitRoots, "
      << RegBank.getNumNativeRegUnits() << ", "
      << TargetName << "RegLists, "
      << TargetName << "RegDiffLists, "
@@ -1098,6 +1113,7 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
   OS << "extern const uint16_t " << TargetName << "RegLists[];\n";
   OS << "extern const uint16_t " << TargetName << "RegDiffLists[];\n";
   OS << "extern const char " << TargetName << "RegStrings[];\n";
+  OS << "extern const uint16_t " << TargetName << "RegUnitRoots[][2];\n";
   if (SubRegIndices.size() != 0)
     OS << "extern const uint16_t *get" << TargetName
        << "SubRegTable();\n";
@@ -1113,6 +1129,7 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
      << "  InitMCRegisterInfo(" << TargetName << "RegDesc, "
      << Regs.size()+1 << ", RA,\n                     " << TargetName
      << "MCRegisterClasses, " << RegisterClasses.size() << ",\n"
+     << "                     " << TargetName << "RegUnitRoots,\n"
      << "                     " << RegBank.getNumNativeRegUnits() << ",\n"
      << "                     " << TargetName << "RegLists,\n"
      << "                     " << TargetName << "RegDiffLists,\n"

@@ -147,6 +147,7 @@ private:
   const MCRegisterClass *Classes;             // Pointer to the regclass array
   unsigned NumClasses;                        // Number of entries in the array
   unsigned NumRegUnits;                       // Number of regunits.
+  const uint16_t (*RegUnitRoots)[2];          // Pointer to regunit root table.
   const uint16_t *RegLists;                   // Pointer to the reglists array
   const uint16_t *DiffLists;                  // Pointer to the difflists array
   const char *RegStrings;                     // Pointer to the string table.
@@ -238,11 +239,14 @@ public:
   friend class MCSuperRegIterator;
   friend class MCRegAliasIterator;
   friend class MCRegUnitIterator;
+  friend class MCRegUnitRootIterator;
 
   /// InitMCRegisterInfo - Initialize MCRegisterInfo, called by TableGen
   /// auto-generated routines. *DO NOT USE*.
   void InitMCRegisterInfo(const MCRegisterDesc *D, unsigned NR, unsigned RA,
-                          const MCRegisterClass *C, unsigned NC, unsigned NRU,
+                          const MCRegisterClass *C, unsigned NC,
+                          const uint16_t (*RURoots)[2],
+                          unsigned NRU,
                           const uint16_t *RL,
                           const uint16_t *DL,
                           const char *Strings,
@@ -257,6 +261,7 @@ public:
     DiffLists = DL;
     RegStrings = Strings;
     NumClasses = NC;
+    RegUnitRoots = RURoots;
     NumRegUnits = NRU;
     SubRegIndices = SubIndices;
     NumSubRegIndices = NumIndices;
@@ -522,6 +527,46 @@ public:
     // terminate the list, but since we know every register has at least one
     // unit, we can allow a 0 differential here.
     advance();
+  }
+};
+
+// Each register unit has one or two root registers. The complete set of
+// registers containing a register unit is the union of the roots and their
+// super-registers. All registers aliasing Unit can be visited like this:
+//
+//   for (MCRegUnitRootIterator RI(Unit, MCRI); RI.isValid(); ++RI) {
+//     unsigned Root = *RI;
+//     visit(Root);
+//     for (MCSuperRegIterator SI(Root, MCRI); SI.isValid(); ++SI)
+//       visit(*SI);
+//    }
+
+/// MCRegUnitRootIterator enumerates the root registers of a register unit.
+class MCRegUnitRootIterator {
+  uint16_t Reg0;
+  uint16_t Reg1;
+public:
+  MCRegUnitRootIterator(unsigned RegUnit, const MCRegisterInfo *MCRI) {
+    assert(RegUnit < MCRI->getNumRegUnits() && "Invalid register unit");
+    Reg0 = MCRI->RegUnitRoots[RegUnit][0];
+    Reg1 = MCRI->RegUnitRoots[RegUnit][1];
+  }
+
+  /// Dereference to get the current root register.
+  unsigned operator*() const {
+    return Reg0;
+  }
+
+  /// isValid - Check if the iterator is at the end of the list.
+  bool isValid() const {
+    return Reg0;
+  }
+
+  /// Preincrement to move to the next root register.
+  void operator++() {
+    assert(isValid() && "Cannot move off the end of the list.");
+    Reg0 = Reg1;
+    Reg1 = 0;
   }
 };
 
