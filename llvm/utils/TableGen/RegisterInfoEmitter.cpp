@@ -468,6 +468,7 @@ typedef SmallVector<uint16_t, 4> DiffVec;
 
 // Differentially encode a sequence of numbers into V. The starting value and
 // terminating 0 are not added to V, so it will have the same size as List.
+static
 DiffVec &diffEncode(DiffVec &V, unsigned InitVal, ArrayRef<unsigned> List) {
   assert(V.empty() && "Clear DiffVec before diffEncode.");
   uint16_t Val = uint16_t(InitVal);
