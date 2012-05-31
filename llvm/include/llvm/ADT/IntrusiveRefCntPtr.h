@@ -140,32 +140,8 @@ namespace llvm {
       retain();
     }
 
-    IntrusiveRefCntPtr& operator=(const IntrusiveRefCntPtr& S) {
-      replace(S.getPtr());
-      return *this;
-    }
-
-#if LLVM_USE_RVALUE_REFERENCES
-    IntrusiveRefCntPtr& operator=(IntrusiveRefCntPtr&& S) {
-      this_type(std::move(S)).swap(*this);
-      return *this;
-    }
-
-    template <class X>
-    IntrusiveRefCntPtr& operator=(IntrusiveRefCntPtr<X>&& S) {
-      this_type(std::move(S)).swap(*this);
-      return *this;
-    }
-#endif
-
-    template <class X>
-    IntrusiveRefCntPtr& operator=(const IntrusiveRefCntPtr<X>& S) {
-      replace(S.getPtr());
-      return *this;
-    }
-
-    IntrusiveRefCntPtr& operator=(T * S) {
-      replace(S);
+    IntrusiveRefCntPtr& operator=(IntrusiveRefCntPtr S) {
+      swap(S);
       return *this;
     }
 
@@ -200,10 +176,6 @@ namespace llvm {
   private:
     void retain() { if (Obj) IntrusiveRefCntPtrInfo<T>::retain(Obj); }
     void release() { if (Obj) IntrusiveRefCntPtrInfo<T>::release(Obj); }
-
-    void replace(T* S) {
-      this_type(S).swap(*this);
-    }
   };
 
   template<class T, class U>
