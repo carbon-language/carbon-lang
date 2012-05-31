@@ -88,7 +88,7 @@ CommandObjectRegexCommand::ExecuteRawCommandString
                 }
                 // Interpret the new command and return this as the result!
                 result.GetOutputStream().Printf("%s\n", new_command.c_str());
-                return m_interpreter.HandleCommand(new_command.c_str(), true, result);
+                return m_interpreter.HandleCommand(new_command.c_str(), eLazyBoolCalculate, result);
             }
         }
         result.SetStatus(eReturnStatusFailed);

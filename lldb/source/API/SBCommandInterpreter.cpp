@@ -94,7 +94,7 @@ SBCommandInterpreter::HandleCommand (const char *command_line, SBCommandReturnOb
         Mutex::Locker api_locker;
         if (target_sp)
             api_locker.Lock(target_sp->GetAPIMutex());
-        m_opaque_ptr->HandleCommand (command_line, add_to_history, result.ref());
+        m_opaque_ptr->HandleCommand (command_line, add_to_history ? eLazyBoolYes : eLazyBoolNo, result.ref());
     }
     else
     {

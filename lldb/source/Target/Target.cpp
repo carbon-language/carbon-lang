@@ -2001,7 +2001,8 @@ Target::RunStopHooks ()
                                                                       stop_on_continue, 
                                                                       stop_on_error, 
                                                                       echo_commands,
-                                                                      print_results, 
+                                                                      print_results,
+                                                                      eLazyBoolNo,
                                                                       result);
 
                 // If the command started the target going again, we should bag out of

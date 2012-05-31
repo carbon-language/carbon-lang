@@ -80,8 +80,8 @@ CommandInterpreter::CommandInterpreter
     m_script_interpreter_ap (),
     m_comment_char ('#'),
     m_repeat_char ('!'),
-    m_batch_command_mode (false),
-    m_truncation_warning(eNoTruncation)
+    m_truncation_warning(eNoTruncation),
+    m_command_source_depth (0)
 {
     const char *dbg_name = debugger.GetInstanceName().AsCString();
     std::string lang_name = ScriptInterpreter::LanguageToString (script_language);
@@ -1218,7 +1218,7 @@ CommandInterpreter::PreprocessCommand (std::string &command)
 
 bool
 CommandInterpreter::HandleCommand (const char *command_line, 
-                                   bool add_to_history,
+                                   LazyBool lazy_add_to_history,
                                    CommandReturnObject &result,
                                    ExecutionContext *override_context,
                                    bool repeat_on_empty_command,
@@ -1246,7 +1246,14 @@ CommandInterpreter::HandleCommand (const char *command_line,
     
     if (!no_context_switching)
         UpdateExecutionContext (override_context);
-
+    
+    // <rdar://problem/11328896>
+    bool add_to_history;
+    if (lazy_add_to_history == eLazyBoolCalculate)
+        add_to_history = (m_command_source_depth == 0);
+    else
+        add_to_history = (lazy_add_to_history == eLazyBoolYes);
+    
     bool empty_command = false;
     bool comment_command = false;
     if (command_string.empty())
@@ -2226,7 +2233,7 @@ CommandInterpreter::SourceInitFile (bool in_cwd, CommandReturnObject &result)
         bool echo_commands    = false;
         bool print_results    = false;
         
-        HandleCommandsFromFile (init_file, exe_ctx, stop_on_continue, stop_on_error, echo_commands, print_results, result);
+        HandleCommandsFromFile (init_file, exe_ctx, stop_on_continue, stop_on_error, echo_commands, print_results, eLazyBoolNo, result);
     }
     else
     {
@@ -2258,6 +2265,7 @@ CommandInterpreter::HandleCommands (const StringList &commands,
                                     bool stop_on_error,
                                     bool echo_commands,
                                     bool print_results,
+                                    LazyBool add_to_history,
                                     CommandReturnObject &result)
 {
     size_t num_lines = commands.GetSize();
@@ -2294,7 +2302,7 @@ CommandInterpreter::HandleCommands (const StringList &commands,
         CommandReturnObject tmp_result;
         // If override_context is not NULL, pass no_context_switching = true for
         // HandleCommand() since we updated our context already.
-        bool success = HandleCommand(cmd, false, tmp_result,
+        bool success = HandleCommand(cmd, add_to_history, tmp_result,
                                      NULL, /* override_context */
                                      true, /* repeat_on_empty_command */
                                      override_context != NULL /* no_context_switching */);
@@ -2372,6 +2380,7 @@ CommandInterpreter::HandleCommandsFromFile (FileSpec &cmd_file,
                                             bool stop_on_error,
                                             bool echo_command,
                                             bool print_result,
+                                            LazyBool add_to_history,
                                             CommandReturnObject &result)
 {
     if (cmd_file.Exists())
@@ -2385,7 +2394,9 @@ CommandInterpreter::HandleCommandsFromFile (FileSpec &cmd_file,
             result.SetStatus (eReturnStatusFailed);
             return;
         }
-        HandleCommands (commands, context, stop_on_continue, stop_on_error, echo_command, print_result, result);
+        m_command_source_depth++;
+        HandleCommands (commands, context, stop_on_continue, stop_on_error, echo_command, print_result, add_to_history, result);
+        m_command_source_depth--;
     }
     else
     {

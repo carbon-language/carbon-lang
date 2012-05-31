@@ -866,7 +866,8 @@ CommandObjectBreakpointCommand::BreakpointOptionsCallbackFunction
                                                              stop_on_continue, 
                                                              data->stop_on_error, 
                                                              echo_commands, 
-                                                             print_results, 
+                                                             print_results,
+                                                             eLazyBoolNo,
                                                              result);
             result.GetImmediateOutputStream()->Flush();
             result.GetImmediateErrorStream()->Flush();
