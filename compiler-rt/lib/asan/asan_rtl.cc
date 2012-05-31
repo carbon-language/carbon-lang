@@ -26,13 +26,13 @@ namespace __asan {
 using namespace __sanitizer;
 
 // -------------------------- Flags ------------------------- {{{1
-static const size_t kMallocContextSize = 30;
+static const uptr kMallocContextSize = 30;
 
-size_t  FLAG_malloc_context_size = kMallocContextSize;
-size_t  FLAG_max_malloc_fill_size = 0;
+uptr  FLAG_malloc_context_size = kMallocContextSize;
+uptr  FLAG_max_malloc_fill_size = 0;
 int64_t FLAG_v = 0;
-size_t  FLAG_redzone = (ASAN_LOW_MEMORY) ? 64 : 128;  // power of two, >= 32
-size_t  FLAG_quarantine_size = (ASAN_LOW_MEMORY) ? 1UL << 24 : 1UL << 28;
+uptr  FLAG_redzone = (ASAN_LOW_MEMORY) ? 64 : 128;  // power of two, >= 32
+uptr  FLAG_quarantine_size = (ASAN_LOW_MEMORY) ? 1UL << 24 : 1UL << 28;
 static int64_t    FLAG_atexit = 0;
 bool    FLAG_poison_shadow = 1;
 int64_t FLAG_report_globals = 1;
@@ -58,9 +58,9 @@ int asan_inited;
 bool asan_init_is_running;
 static void (*death_callback)(void);
 static void (*error_report_callback)(const char*);
-char *error_message_buffer = NULL;
-size_t error_message_buffer_pos = 0;
-size_t error_message_buffer_size = 0;
+char *error_message_buffer = 0;
+uptr error_message_buffer_pos = 0;
+uptr error_message_buffer_size = 0;
 
 // -------------------------- Misc ---------------- {{{1
 void ShowStatsAndAbort() {
@@ -68,24 +68,24 @@ void ShowStatsAndAbort() {
   AsanDie();
 }
 
-static void PrintBytes(const char *before, uintptr_t *a) {
+static void PrintBytes(const char *before, uptr *a) {
   uint8_t *bytes = (uint8_t*)a;
-  size_t byte_num = (__WORDSIZE) / 8;
+  uptr byte_num = (__WORDSIZE) / 8;
   Printf("%s%p:", before, (void*)a);
-  for (size_t i = 0; i < byte_num; i++) {
+  for (uptr i = 0; i < byte_num; i++) {
     Printf(" %x%x", bytes[i] >> 4, bytes[i] & 15);
   }
   Printf("\n");
 }
 
-size_t ReadFileToBuffer(const char *file_name, char **buff,
-                         size_t *buff_size, size_t max_len) {
-  const size_t kMinFileLen = kPageSize;
-  size_t read_len = 0;
+uptr ReadFileToBuffer(const char *file_name, char **buff,
+                         uptr *buff_size, uptr max_len) {
+  const uptr kMinFileLen = kPageSize;
+  uptr read_len = 0;
   *buff = 0;
   *buff_size = 0;
   // The files we usually open are not seekable, so try different buffer sizes.
-  for (size_t size = kMinFileLen; size <= max_len; size *= 2) {
+  for (uptr size = kMinFileLen; size <= max_len; size *= 2) {
     int fd = AsanOpenReadonly(file_name);
     if (fd < 0) return 0;
     AsanUnmapOrDie(*buff, *buff_size);
@@ -95,7 +95,7 @@ size_t ReadFileToBuffer(const char *file_name, char **buff,
     read_len = 0;
     bool reached_eof = false;
     while (read_len + kPageSize <= size) {
-      size_t just_read = AsanRead(fd, *buff + read_len, kPageSize);
+      uptr just_read = AsanRead(fd, *buff + read_len, kPageSize);
       if (just_read == 0) {
         reached_eof = true;
         break;
@@ -129,7 +129,7 @@ void AsanDie() {
 }
 
 // ---------------------- mmap -------------------- {{{1
-void OutOfMemoryMessageAndDie(const char *mem_type, size_t size) {
+void OutOfMemoryMessageAndDie(const char *mem_type, uptr size) {
   Report("ERROR: AddressSanitizer failed to allocate "
          "0x%zx (%zd) bytes of %s\n",
          size, size, mem_type);
@@ -138,23 +138,23 @@ void OutOfMemoryMessageAndDie(const char *mem_type, size_t size) {
 }
 
 // Reserve memory range [beg, end].
-static void ReserveShadowMemoryRange(uintptr_t beg, uintptr_t end) {
+static void ReserveShadowMemoryRange(uptr beg, uptr end) {
   CHECK((beg % kPageSize) == 0);
   CHECK(((end + 1) % kPageSize) == 0);
-  size_t size = end - beg + 1;
+  uptr size = end - beg + 1;
   void *res = AsanMmapFixedNoReserve(beg, size);
   CHECK(res == (void*)beg && "ReserveShadowMemoryRange failed");
 }
 
 // ---------------------- LowLevelAllocator ------------- {{{1
-void *LowLevelAllocator::Allocate(size_t size) {
+void *LowLevelAllocator::Allocate(uptr size) {
   CHECK((size & (size - 1)) == 0 && "size must be a power of two");
   if (allocated_end_ - allocated_current_ < size) {
-    size_t size_to_allocate = Max(size, kPageSize);
+    uptr size_to_allocate = Max(size, kPageSize);
     allocated_current_ =
         (char*)AsanMmapSomewhereOrDie(size_to_allocate, __FUNCTION__);
     allocated_end_ = allocated_current_ + size_to_allocate;
-    PoisonShadow((uintptr_t)allocated_current_, size_to_allocate,
+    PoisonShadow((uptr)allocated_current_, size_to_allocate,
                  kAsanInternalHeapMagic);
   }
   CHECK(allocated_end_ - allocated_current_ >= size);
@@ -164,12 +164,12 @@ void *LowLevelAllocator::Allocate(size_t size) {
 }
 
 // ---------------------- DescribeAddress -------------------- {{{1
-static bool DescribeStackAddress(uintptr_t addr, uintptr_t access_size) {
+static bool DescribeStackAddress(uptr addr, uptr access_size) {
   AsanThread *t = asanThreadRegistry().FindThreadByStackAddress(addr);
   if (!t) return false;
   const intptr_t kBufSize = 4095;
   char buf[kBufSize];
-  uintptr_t offset = 0;
+  uptr offset = 0;
   const char *frame_descr = t->GetFrameNameByAddr(addr, &offset);
   // This string is created by the compiler and has the following form:
   // "FunctioName n alloc_1 alloc_2 ... alloc_n"
@@ -187,12 +187,12 @@ static bool DescribeStackAddress(uintptr_t addr, uintptr_t access_size) {
          addr, offset, buf, t->tid());
   // Report the number of stack objects.
   char *p;
-  size_t n_objects = internal_simple_strtoll(name_end, &p, 10);
+  uptr n_objects = internal_simple_strtoll(name_end, &p, 10);
   CHECK(n_objects > 0);
   Printf("  This frame has %zu object(s):\n", n_objects);
   // Report all objects in this frame.
-  for (size_t i = 0; i < n_objects; i++) {
-    size_t beg, size;
+  for (uptr i = 0; i < n_objects; i++) {
+    uptr beg, size;
     intptr_t len;
     beg  = internal_simple_strtoll(p, &p, 10);
     size = internal_simple_strtoll(p, &p, 10);
@@ -215,7 +215,7 @@ static bool DescribeStackAddress(uintptr_t addr, uintptr_t access_size) {
   return true;
 }
 
-static NOINLINE void DescribeAddress(uintptr_t addr, uintptr_t access_size) {
+static NOINLINE void DescribeAddress(uptr addr, uptr access_size) {
   // Check if this is a global.
   if (DescribeAddrIfGlobal(addr))
     return;
@@ -231,8 +231,8 @@ static NOINLINE void DescribeAddress(uintptr_t addr, uintptr_t access_size) {
 // exported functions
 #define ASAN_REPORT_ERROR(type, is_write, size)                     \
 extern "C" NOINLINE ASAN_INTERFACE_ATTRIBUTE                        \
-void __asan_report_ ## type ## size(uintptr_t addr);                \
-void __asan_report_ ## type ## size(uintptr_t addr) {               \
+void __asan_report_ ## type ## size(uptr addr);                \
+void __asan_report_ ## type ## size(uptr addr) {               \
   GET_CALLER_PC_BP_SP;                                              \
   __asan_report_error(pc, bp, sp, addr, is_write, size);            \
 }
@@ -266,11 +266,11 @@ static NOINLINE void force_interface_symbols() {
     __asan_report_store4(0);
     __asan_report_store8(0);
     __asan_report_store16(0);
-    __asan_register_global(0, 0, NULL);
-    __asan_register_globals(NULL, 0);
-    __asan_unregister_globals(NULL, 0);
-    __asan_set_death_callback(NULL);
-    __asan_set_error_report_callback(NULL);
+    __asan_register_global(0, 0, 0);
+    __asan_register_globals(0, 0);
+    __asan_unregister_globals(0, 0);
+    __asan_set_death_callback(0);
+    __asan_set_error_report_callback(0);
     __asan_handle_no_return();
   }
 }
@@ -340,8 +340,8 @@ void NOINLINE __asan_handle_no_return() {
   int local_stack;
   AsanThread *curr_thread = asanThreadRegistry().GetCurrent();
   CHECK(curr_thread);
-  uintptr_t top = curr_thread->stack_top();
-  uintptr_t bottom = ((uintptr_t)&local_stack - kPageSize) & ~(kPageSize-1);
+  uptr top = curr_thread->stack_top();
+  uptr bottom = ((uptr)&local_stack - kPageSize) & ~(kPageSize-1);
   PoisonShadow(bottom, top - bottom, 0);
 }
 
@@ -421,7 +421,7 @@ void __asan_report_error(uptr pc, uptr bp, uptr sp,
          access_size, addr, curr_tid);
 
   if (FLAG_debug) {
-    PrintBytes("PC: ", (uintptr_t*)pc);
+    PrintBytes("PC: ", (uptr*)pc);
   }
 
   GET_STACK_TRACE_WITH_PC_AND_BP(kStackTraceMax, pc, bp);
@@ -431,23 +431,23 @@ void __asan_report_error(uptr pc, uptr bp, uptr sp,
 
   DescribeAddress(addr, access_size);
 
-  uintptr_t shadow_addr = MemToShadow(addr);
+  uptr shadow_addr = MemToShadow(addr);
   Report("ABORTING\n");
   __asan_print_accumulated_stats();
   Printf("Shadow byte and word:\n");
   Printf("  %p: %x\n", shadow_addr, *(unsigned char*)shadow_addr);
-  uintptr_t aligned_shadow = shadow_addr & ~(kWordSize - 1);
-  PrintBytes("  ", (uintptr_t*)(aligned_shadow));
+  uptr aligned_shadow = shadow_addr & ~(kWordSize - 1);
+  PrintBytes("  ", (uptr*)(aligned_shadow));
   Printf("More shadow bytes:\n");
-  PrintBytes("  ", (uintptr_t*)(aligned_shadow-4*kWordSize));
-  PrintBytes("  ", (uintptr_t*)(aligned_shadow-3*kWordSize));
-  PrintBytes("  ", (uintptr_t*)(aligned_shadow-2*kWordSize));
-  PrintBytes("  ", (uintptr_t*)(aligned_shadow-1*kWordSize));
-  PrintBytes("=>", (uintptr_t*)(aligned_shadow+0*kWordSize));
-  PrintBytes("  ", (uintptr_t*)(aligned_shadow+1*kWordSize));
-  PrintBytes("  ", (uintptr_t*)(aligned_shadow+2*kWordSize));
-  PrintBytes("  ", (uintptr_t*)(aligned_shadow+3*kWordSize));
-  PrintBytes("  ", (uintptr_t*)(aligned_shadow+4*kWordSize));
+  PrintBytes("  ", (uptr*)(aligned_shadow-4*kWordSize));
+  PrintBytes("  ", (uptr*)(aligned_shadow-3*kWordSize));
+  PrintBytes("  ", (uptr*)(aligned_shadow-2*kWordSize));
+  PrintBytes("  ", (uptr*)(aligned_shadow-1*kWordSize));
+  PrintBytes("=>", (uptr*)(aligned_shadow+0*kWordSize));
+  PrintBytes("  ", (uptr*)(aligned_shadow+1*kWordSize));
+  PrintBytes("  ", (uptr*)(aligned_shadow+2*kWordSize));
+  PrintBytes("  ", (uptr*)(aligned_shadow+3*kWordSize));
+  PrintBytes("  ", (uptr*)(aligned_shadow+4*kWordSize));
   if (error_report_callback) {
     error_report_callback(error_message_buffer);
   }
@@ -544,12 +544,12 @@ void __asan_init() {
            MEM_TO_SHADOW(kLowShadowEnd),
            MEM_TO_SHADOW(kHighShadowBeg),
            MEM_TO_SHADOW(kHighShadowEnd));
-    Printf("red_zone=%zu\n", (size_t)FLAG_redzone);
-    Printf("malloc_context_size=%zu\n", (size_t)FLAG_malloc_context_size);
+    Printf("red_zone=%zu\n", (uptr)FLAG_redzone);
+    Printf("malloc_context_size=%zu\n", (uptr)FLAG_malloc_context_size);
 
-    Printf("SHADOW_SCALE: %zx\n", (size_t)SHADOW_SCALE);
-    Printf("SHADOW_GRANULARITY: %zx\n", (size_t)SHADOW_GRANULARITY);
-    Printf("SHADOW_OFFSET: %zx\n", (size_t)SHADOW_OFFSET);
+    Printf("SHADOW_SCALE: %zx\n", (uptr)SHADOW_SCALE);
+    Printf("SHADOW_GRANULARITY: %zx\n", (uptr)SHADOW_GRANULARITY);
+    Printf("SHADOW_OFFSET: %zx\n", (uptr)SHADOW_OFFSET);
     CHECK(SHADOW_SCALE >= 3 && SHADOW_SCALE <= 7);
   }
 

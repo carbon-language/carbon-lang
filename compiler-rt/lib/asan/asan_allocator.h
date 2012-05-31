@@ -20,7 +20,7 @@
 
 namespace __asan {
 
-static const size_t kNumberOfSizeClasses = 255;
+static const uptr kNumberOfSizeClasses = 255;
 struct AsanChunk;
 
 class AsanChunkFifoList {
@@ -30,15 +30,15 @@ class AsanChunkFifoList {
   void Push(AsanChunk *n);
   void PushList(AsanChunkFifoList *q);
   AsanChunk *Pop();
-  size_t size() { return size_; }
+  uptr size() { return size_; }
   void clear() {
-    first_ = last_ = NULL;
+    first_ = last_ = 0;
     size_ = 0;
   }
  private:
   AsanChunk *first_;
   AsanChunk *last_;
-  size_t size_;
+  uptr size_;
 };
 
 struct AsanThreadLocalMallocStorage {
@@ -57,8 +57,8 @@ struct AsanThreadLocalMallocStorage {
 // Fake stack frame contains local variables of one function.
 // This struct should fit into a stack redzone (32 bytes).
 struct FakeFrame {
-  uintptr_t magic;  // Modified by the instrumented code.
-  uintptr_t descr;  // Modified by the instrumented code.
+  uptr magic;  // Modified by the instrumented code.
+  uptr descr;  // Modified by the instrumented code.
   FakeFrame *next;
   uint64_t real_stack     : 48;
   uint64_t size_minus_one : 16;
@@ -100,60 +100,60 @@ class FakeStack {
  public:
   FakeStack();
   explicit FakeStack(LinkerInitialized) {}
-  void Init(size_t stack_size);
+  void Init(uptr stack_size);
   void StopUsingFakeStack() { alive_ = false; }
   void Cleanup();
-  uintptr_t AllocateStack(size_t size, size_t real_stack);
-  static void OnFree(size_t ptr, size_t size, size_t real_stack);
+  uptr AllocateStack(uptr size, uptr real_stack);
+  static void OnFree(uptr ptr, uptr size, uptr real_stack);
   // Return the bottom of the maped region.
-  uintptr_t AddrIsInFakeStack(uintptr_t addr);
+  uptr AddrIsInFakeStack(uptr addr);
   bool StackSize() { return stack_size_; }
  private:
-  static const size_t kMinStackFrameSizeLog = 9;  // Min frame is 512B.
-  static const size_t kMaxStackFrameSizeLog = 16;  // Max stack frame is 64K.
-  static const size_t kMaxStackMallocSize = 1 << kMaxStackFrameSizeLog;
-  static const size_t kNumberOfSizeClasses =
+  static const uptr kMinStackFrameSizeLog = 9;  // Min frame is 512B.
+  static const uptr kMaxStackFrameSizeLog = 16;  // Max stack frame is 64K.
+  static const uptr kMaxStackMallocSize = 1 << kMaxStackFrameSizeLog;
+  static const uptr kNumberOfSizeClasses =
       kMaxStackFrameSizeLog - kMinStackFrameSizeLog + 1;
 
-  bool AddrIsInSizeClass(uintptr_t addr, size_t size_class);
+  bool AddrIsInSizeClass(uptr addr, uptr size_class);
 
   // Each size class should be large enough to hold all frames.
-  size_t ClassMmapSize(size_t size_class);
+  uptr ClassMmapSize(uptr size_class);
 
-  size_t ClassSize(size_t size_class) {
+  uptr ClassSize(uptr size_class) {
     return 1UL << (size_class + kMinStackFrameSizeLog);
   }
 
   void DeallocateFrame(FakeFrame *fake_frame);
 
-  size_t ComputeSizeClass(size_t alloc_size);
-  void AllocateOneSizeClass(size_t size_class);
+  uptr ComputeSizeClass(uptr alloc_size);
+  void AllocateOneSizeClass(uptr size_class);
 
-  size_t stack_size_;
+  uptr stack_size_;
   bool   alive_;
 
-  uintptr_t allocated_size_classes_[kNumberOfSizeClasses];
+  uptr allocated_size_classes_[kNumberOfSizeClasses];
   FakeFrameFifo size_classes_[kNumberOfSizeClasses];
   FakeFrameLifo call_stack_;
 };
 
-void *asan_memalign(size_t alignment, size_t size, AsanStackTrace *stack);
+void *asan_memalign(uptr alignment, uptr size, AsanStackTrace *stack);
 void asan_free(void *ptr, AsanStackTrace *stack);
 
-void *asan_malloc(size_t size, AsanStackTrace *stack);
-void *asan_calloc(size_t nmemb, size_t size, AsanStackTrace *stack);
-void *asan_realloc(void *p, size_t size, AsanStackTrace *stack);
-void *asan_valloc(size_t size, AsanStackTrace *stack);
-void *asan_pvalloc(size_t size, AsanStackTrace *stack);
+void *asan_malloc(uptr size, AsanStackTrace *stack);
+void *asan_calloc(uptr nmemb, uptr size, AsanStackTrace *stack);
+void *asan_realloc(void *p, uptr size, AsanStackTrace *stack);
+void *asan_valloc(uptr size, AsanStackTrace *stack);
+void *asan_pvalloc(uptr size, AsanStackTrace *stack);
 
-int asan_posix_memalign(void **memptr, size_t alignment, size_t size,
+int asan_posix_memalign(void **memptr, uptr alignment, uptr size,
                           AsanStackTrace *stack);
-size_t asan_malloc_usable_size(void *ptr, AsanStackTrace *stack);
+uptr asan_malloc_usable_size(void *ptr, AsanStackTrace *stack);
 
-size_t asan_mz_size(const void *ptr);
+uptr asan_mz_size(const void *ptr);
 void asan_mz_force_lock();
 void asan_mz_force_unlock();
-void DescribeHeapAddress(uintptr_t addr, size_t access_size);
+void DescribeHeapAddress(uptr addr, uptr access_size);
 
 }  // namespace __asan
 #endif  // ASAN_ALLOCATOR_H

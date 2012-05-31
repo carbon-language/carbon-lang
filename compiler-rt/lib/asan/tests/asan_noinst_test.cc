@@ -92,11 +92,11 @@ TEST(AddressSanitizer, NoInstMallocTest) {
 #endif
 }
 
-static void PrintShadow(const char *tag, uintptr_t ptr, size_t size) {
+static void PrintShadow(const char *tag, uptr ptr, size_t size) {
   fprintf(stderr, "%s shadow: %lx size % 3ld: ", tag, (long)ptr, (long)size);
-  uintptr_t prev_shadow = 0;
+  uptr prev_shadow = 0;
   for (intptr_t i = -32; i < (intptr_t)size + 32; i++) {
-    uintptr_t shadow = __asan::MemToShadow(ptr + i);
+    uptr shadow = __asan::MemToShadow(ptr + i);
     if (i == 0 || i == (intptr_t)size)
       fprintf(stderr, ".");
     if (shadow != prev_shadow) {
@@ -110,13 +110,13 @@ static void PrintShadow(const char *tag, uintptr_t ptr, size_t size) {
 TEST(AddressSanitizer, DISABLED_InternalPrintShadow) {
   for (size_t size = 1; size <= 513; size++) {
     char *ptr = new char[size];
-    PrintShadow("m", (uintptr_t)ptr, size);
+    PrintShadow("m", (uptr)ptr, size);
     delete [] ptr;
-    PrintShadow("f", (uintptr_t)ptr, size);
+    PrintShadow("f", (uptr)ptr, size);
   }
 }
 
-static uintptr_t pc_array[] = {
+static uptr pc_array[] = {
 #if __WORDSIZE == 64
   0x7effbf756068ULL,
   0x7effbf75e5abULL,
@@ -215,7 +215,7 @@ void CompressStackTraceTest(size_t n_iter) {
     std::random_shuffle(pc_array, pc_array + kNumPcs);
     __asan::AsanStackTrace stack0, stack1;
     stack0.CopyFrom(pc_array, kNumPcs);
-    stack0.size = std::max((size_t)1, (size_t)my_rand(&seed) % stack0.size);
+    stack0.size = std::max((size_t)1, (size_t)(my_rand(&seed) % stack0.size));
     size_t compress_size =
       std::max((size_t)2, (size_t)my_rand(&seed) % (2 * kNumPcs));
     size_t n_frames =

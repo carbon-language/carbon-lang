@@ -30,8 +30,8 @@ class AsanLock {
   void Unlock();
   bool IsLocked() { return owner_ != 0; }
  private:
-  uintptr_t opaque_storage_[10];
-  uintptr_t owner_;  // for debugging and for malloc_introspection_t interface
+  uptr opaque_storage_[10];
+  uptr owner_;  // for debugging and for malloc_introspection_t interface
 };
 
 class ScopedLock {

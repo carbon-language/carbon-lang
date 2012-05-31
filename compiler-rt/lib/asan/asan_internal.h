@@ -14,18 +14,17 @@
 #ifndef ASAN_INTERNAL_H
 #define ASAN_INTERNAL_H
 
+#include "sanitizer_common/sanitizer_defs.h"
 #include "sanitizer_common/sanitizer_libc.h"
 
 #if !defined(__linux__) && !defined(__APPLE__) && !defined(_WIN32)
 # error "This operating system is not supported by AddressSanitizer"
 #endif
 
-#include <stddef.h>  // for size_t, uintptr_t, etc.
-
 #if defined(_WIN32)
 # if defined(__clang__)
 typedef int              intptr_t;
-typedef unsigned int     uintptr_t;
+typedef unsigned int     uptr;
 # endif
 
 // There's no <stdint.h> in Visual Studio 9, so we have to define [u]int*_t.
@@ -160,13 +159,13 @@ void NORETURN CheckFailed(const char *cond, const char *file, int line);
 void NORETURN ShowStatsAndAbort();
 
 // asan_globals.cc
-bool DescribeAddrIfGlobal(uintptr_t addr);
+bool DescribeAddrIfGlobal(uptr addr);
 
 void ReplaceOperatorsNewAndDelete();
 // asan_malloc_linux.cc / asan_malloc_mac.cc
 void ReplaceSystemMalloc();
 
-void OutOfMemoryMessageAndDie(const char *mem_type, size_t size);
+void OutOfMemoryMessageAndDie(const char *mem_type, uptr size);
 
 // asan_linux.cc / asan_mac.cc / asan_win.cc
 void *AsanDoesNotSupportStaticLinkage();
@@ -175,17 +174,17 @@ int AsanOpenReadonly(const char* filename);
 const char *AsanGetEnv(const char *name);
 void AsanDumpProcessMap();
 
-void *AsanMmapFixedNoReserve(uintptr_t fixed_addr, size_t size);
-void *AsanMmapFixedReserve(uintptr_t fixed_addr, size_t size);
-void *AsanMprotect(uintptr_t fixed_addr, size_t size);
-void *AsanMmapSomewhereOrDie(size_t size, const char *where);
-void AsanUnmapOrDie(void *ptr, size_t size);
+void *AsanMmapFixedNoReserve(uptr fixed_addr, uptr size);
+void *AsanMmapFixedReserve(uptr fixed_addr, uptr size);
+void *AsanMprotect(uptr fixed_addr, uptr size);
+void *AsanMmapSomewhereOrDie(uptr size, const char *where);
+void AsanUnmapOrDie(void *ptr, uptr size);
 
 void AsanDisableCoreDumper();
-void GetPcSpBp(void *context, uintptr_t *pc, uintptr_t *sp, uintptr_t *bp);
+void GetPcSpBp(void *context, uptr *pc, uptr *sp, uptr *bp);
 
-size_t AsanRead(int fd, void *buf, size_t count);
-size_t AsanWrite(int fd, const void *buf, size_t count);
+uptr AsanRead(int fd, void *buf, uptr count);
+uptr AsanWrite(int fd, const void *buf, uptr count);
 int AsanClose(int fd);
 
 bool AsanInterceptsSignal(int signum);
@@ -193,7 +192,7 @@ void SetAlternateSignalStack();
 void UnsetAlternateSignalStack();
 void InstallSignalHandlers();
 int GetPid();
-uintptr_t GetThreadSelf();
+uptr GetThreadSelf();
 int AtomicInc(int *a);
 uint16_t AtomicExchange(uint16_t *a, uint16_t new_val);
 
@@ -206,12 +205,12 @@ void AsanTSDSet(void *tsd);
 // The resulting buffer is mmaped and stored in '*buff'.
 // The size of the mmaped region is stored in '*buff_size',
 // Returns the number of read bytes or 0 if file can not be opened.
-size_t ReadFileToBuffer(const char *file_name, char **buff,
-                        size_t *buff_size, size_t max_len);
+uptr ReadFileToBuffer(const char *file_name, char **buff,
+                        uptr *buff_size, uptr max_len);
 
 // asan_printf.cc
 void RawWrite(const char *buffer);
-int SNPrintf(char *buffer, size_t length, const char *format, ...);
+int SNPrintf(char *buffer, uptr length, const char *format, ...);
 void Printf(const char *format, ...);
 int SScanf(const char *str, const char *format, ...);
 void Report(const char *format, ...);
@@ -220,16 +219,16 @@ void Report(const char *format, ...);
 template<class T> T Min(T a, T b) { return a < b ? a : b; }
 template<class T> T Max(T a, T b) { return a > b ? a : b; }
 
-void SortArray(uintptr_t *array, size_t size);
+void SortArray(uptr *array, uptr size);
 
 // asan_poisoning.cc
 // Poisons the shadow memory for "size" bytes starting from "addr".
-void PoisonShadow(uintptr_t addr, size_t size, uint8_t value);
+void PoisonShadow(uptr addr, uptr size, uint8_t value);
 // Poisons the shadow memory for "redzone_size" bytes starting from
 // "addr + size".
-void PoisonShadowPartialRightRedzone(uintptr_t addr,
-                                     uintptr_t size,
-                                     uintptr_t redzone_size,
+void PoisonShadowPartialRightRedzone(uptr addr,
+                                     uptr size,
+                                     uptr redzone_size,
                                      uint8_t value);
 
 // Platfrom-specific options.
@@ -241,21 +240,21 @@ bool PlatformHasDifferentMemcpyAndMemmove();
 # define PLATFORM_HAS_DIFFERENT_MEMCPY_AND_MEMMOVE true
 #endif  // __APPLE__
 
-extern size_t  FLAG_quarantine_size;
+extern uptr  FLAG_quarantine_size;
 extern int64_t FLAG_demangle;
 extern bool    FLAG_symbolize;
 extern int64_t FLAG_v;
-extern size_t  FLAG_redzone;
+extern uptr  FLAG_redzone;
 extern int64_t FLAG_debug;
 extern bool    FLAG_poison_shadow;
 extern int64_t FLAG_report_globals;
-extern size_t  FLAG_malloc_context_size;
+extern uptr  FLAG_malloc_context_size;
 extern bool    FLAG_replace_str;
 extern bool    FLAG_replace_intrin;
 extern bool    FLAG_replace_cfallocator;
 extern bool    FLAG_fast_unwind;
 extern bool    FLAG_use_fake_stack;
-extern size_t  FLAG_max_malloc_fill_size;
+extern uptr  FLAG_max_malloc_fill_size;
 extern int64_t FLAG_exitcode;
 extern bool    FLAG_allow_user_poisoning;
 extern int64_t FLAG_sleep_before_dying;
@@ -292,28 +291,28 @@ int Atexit(void (*function)(void));
 
 #define ASAN_ARRAY_SIZE(a) (sizeof(a)/sizeof((a)[0]))
 
-const size_t kWordSize = __WORDSIZE / 8;
-const size_t kWordSizeInBits = 8 * kWordSize;
-const size_t kPageSizeBits = 12;
-const size_t kPageSize = 1UL << kPageSizeBits;
+const uptr kWordSize = __WORDSIZE / 8;
+const uptr kWordSizeInBits = 8 * kWordSize;
+const uptr kPageSizeBits = 12;
+const uptr kPageSize = 1UL << kPageSizeBits;
 
 #if !defined(_WIN32) || defined(__clang__)
-# define GET_CALLER_PC() (uintptr_t)__builtin_return_address(0)
-# define GET_CURRENT_FRAME() (uintptr_t)__builtin_frame_address(0)
+# define GET_CALLER_PC() (uptr)__builtin_return_address(0)
+# define GET_CURRENT_FRAME() (uptr)__builtin_frame_address(0)
 #else
-# define GET_CALLER_PC() (uintptr_t)_ReturnAddress()
+# define GET_CALLER_PC() (uptr)_ReturnAddress()
 // CaptureStackBackTrace doesn't need to know BP on Windows.
 // FIXME: This macro is still used when printing error reports though it's not
 // clear if the BP value is needed in the ASan reports on Windows.
-# define GET_CURRENT_FRAME() (uintptr_t)0xDEADBEEF
+# define GET_CURRENT_FRAME() (uptr)0xDEADBEEF
 #endif
 
 #ifndef _WIN32
-const size_t kMmapGranularity = kPageSize;
+const uptr kMmapGranularity = kPageSize;
 # define THREAD_CALLING_CONV
 typedef void* thread_return_t;
 #else
-const size_t kMmapGranularity = 1UL << 16;
+const uptr kMmapGranularity = 1UL << 16;
 # define THREAD_CALLING_CONV __stdcall
 typedef DWORD thread_return_t;
 
@@ -338,15 +337,15 @@ const int kAsanUserPoisonedMemoryMagic = 0xf7;
 const int kAsanGlobalRedzoneMagic = 0xf9;
 const int kAsanInternalHeapMagic = 0xfe;
 
-static const uintptr_t kCurrentStackFrameMagic = 0x41B58AB3;
-static const uintptr_t kRetiredStackFrameMagic = 0x45E0360E;
+static const uptr kCurrentStackFrameMagic = 0x41B58AB3;
+static const uptr kRetiredStackFrameMagic = 0x45E0360E;
 
 // --------------------------- Bit twiddling ------- {{{1
-inline bool IsPowerOfTwo(size_t x) {
+inline bool IsPowerOfTwo(uptr x) {
   return (x & (x - 1)) == 0;
 }
 
-inline size_t RoundUpTo(size_t size, size_t boundary) {
+inline uptr RoundUpTo(uptr size, uptr boundary) {
   CHECK(IsPowerOfTwo(boundary));
   return (size + boundary - 1) & ~(boundary - 1);
 }
@@ -358,7 +357,7 @@ class LowLevelAllocator {
   explicit LowLevelAllocator(LinkerInitialized) {}
   // 'size' must be a power of two.
   // Requires an external lock.
-  void *Allocate(size_t size);
+  void *Allocate(uptr size);
  private:
   char *allocated_end_;
   char *allocated_current_;

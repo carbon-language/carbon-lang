@@ -21,14 +21,14 @@
 namespace __asan {
 
 AsanStats::AsanStats() {
-  CHECK(REAL(memset) != NULL);
+  CHECK(REAL(memset) != 0);
   REAL(memset)(this, 0, sizeof(AsanStats));
 }
 
 static void PrintMallocStatsArray(const char *prefix,
-                                  size_t (&array)[kNumberOfSizeClasses]) {
+                                  uptr (&array)[kNumberOfSizeClasses]) {
   Printf("%s", prefix);
-  for (size_t i = 0; i < kNumberOfSizeClasses; i++) {
+  for (uptr i = 0; i < kNumberOfSizeClasses; i++) {
     if (!array[i]) continue;
     Printf("%zu:%zu; ", i, array[i]);
   }

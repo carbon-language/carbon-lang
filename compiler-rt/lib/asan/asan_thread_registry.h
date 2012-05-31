@@ -34,7 +34,7 @@ class AsanThreadRegistry {
   void UnregisterThread(AsanThread *thread);
 
   AsanThread *GetMain();
-  // Get the current thread. May return NULL.
+  // Get the current thread. May return 0.
   AsanThread *GetCurrent();
   void SetCurrent(AsanThread *t);
 
@@ -45,17 +45,17 @@ class AsanThreadRegistry {
   }
 
   // Returns stats for GetCurrent(), or stats for
-  // T0 if GetCurrent() returns NULL.
+  // T0 if GetCurrent() returns 0.
   AsanStats &GetCurrentThreadStats();
   // Flushes all thread-local stats to accumulated stats, and returns
   // a copy of accumulated stats.
   AsanStats GetAccumulatedStats();
-  size_t GetCurrentAllocatedBytes();
-  size_t GetHeapSize();
-  size_t GetFreeBytes();
+  uptr GetCurrentAllocatedBytes();
+  uptr GetHeapSize();
+  uptr GetFreeBytes();
 
   AsanThreadSummary *FindByTid(int tid);
-  AsanThread *FindThreadByStackAddress(uintptr_t addr);
+  AsanThread *FindThreadByStackAddress(uptr addr);
 
  private:
   void UpdateAccumulatedStatsUnlocked();

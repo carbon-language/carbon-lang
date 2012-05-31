@@ -71,7 +71,7 @@ void *realloc(void *ptr, size_t size) {
 
 void *_realloc_dbg(void *ptr, size_t size, int) {
   CHECK(!"_realloc_dbg should not exist!");
-  return NULL;
+  return 0;
 }
 
 void* _recalloc(void* p, size_t n, size_t elem_size) {
@@ -79,7 +79,7 @@ void* _recalloc(void* p, size_t n, size_t elem_size) {
     return calloc(n, elem_size);
   const size_t size = n * elem_size;
   if (elem_size != 0 && size / elem_size != n)
-    return NULL;
+    return 0;
   return realloc(p, size);
 }
 

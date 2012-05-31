@@ -18,41 +18,41 @@
 
 namespace __asan {
 
-static const size_t kStackTraceMax = 64;
+static const uptr kStackTraceMax = 64;
 
 struct AsanStackTrace {
-  size_t size;
-  size_t max_size;
-  uintptr_t trace[kStackTraceMax];
-  static void PrintStack(uintptr_t *addr, size_t size);
+  uptr size;
+  uptr max_size;
+  uptr trace[kStackTraceMax];
+  static void PrintStack(uptr *addr, uptr size);
   void PrintStack() {
     PrintStack(this->trace, this->size);
   }
-  void CopyTo(uintptr_t *dst, size_t dst_size) {
-    for (size_t i = 0; i < size && i < dst_size; i++)
+  void CopyTo(uptr *dst, uptr dst_size) {
+    for (uptr i = 0; i < size && i < dst_size; i++)
       dst[i] = trace[i];
-    for (size_t i = size; i < dst_size; i++)
+    for (uptr i = size; i < dst_size; i++)
       dst[i] = 0;
   }
 
-  void CopyFrom(uintptr_t *src, size_t src_size) {
+  void CopyFrom(uptr *src, uptr src_size) {
     size = src_size;
     if (size > kStackTraceMax) size = kStackTraceMax;
-    for (size_t i = 0; i < size; i++) {
+    for (uptr i = 0; i < size; i++) {
       trace[i] = src[i];
     }
   }
 
-  void GetStackTrace(size_t max_s, uintptr_t pc, uintptr_t bp);
+  void GetStackTrace(uptr max_s, uptr pc, uptr bp);
 
-  void FastUnwindStack(uintptr_t pc, uintptr_t bp);
+  void FastUnwindStack(uptr pc, uptr bp);
 
-  static uintptr_t GetCurrentPc();
+  static uptr GetCurrentPc();
 
-  static size_t CompressStack(AsanStackTrace *stack,
-                            uint32_t *compressed, size_t size);
+  static uptr CompressStack(AsanStackTrace *stack,
+                            uint32_t *compressed, uptr size);
   static void UncompressStack(AsanStackTrace *stack,
-                              uint32_t *compressed, size_t size);
+                              uint32_t *compressed, uptr size);
 };
 
 }  // namespace __asan
@@ -60,18 +60,18 @@ struct AsanStackTrace {
 // Use this macro if you want to print stack trace with the caller
 // of the current function in the top frame.
 #define GET_CALLER_PC_BP_SP \
-  uintptr_t bp = GET_CURRENT_FRAME();              \
-  uintptr_t pc = GET_CALLER_PC();                  \
-  uintptr_t local_stack;                           \
-  uintptr_t sp = (uintptr_t)&local_stack;
+  uptr bp = GET_CURRENT_FRAME();              \
+  uptr pc = GET_CALLER_PC();                  \
+  uptr local_stack;                           \
+  uptr sp = (uptr)&local_stack;
 
 // Use this macro if you want to print stack trace with the current
 // function in the top frame.
 #define GET_CURRENT_PC_BP_SP \
-  uintptr_t bp = GET_CURRENT_FRAME();              \
-  uintptr_t pc = AsanStackTrace::GetCurrentPc();   \
-  uintptr_t local_stack;                           \
-  uintptr_t sp = (uintptr_t)&local_stack;
+  uptr bp = GET_CURRENT_FRAME();              \
+  uptr pc = AsanStackTrace::GetCurrentPc();   \
+  uptr local_stack;                           \
+  uptr sp = (uptr)&local_stack;
 
 // Get the stack trace with the given pc and bp.
 // The pc will be in the position 0 of the resulting stack trace.

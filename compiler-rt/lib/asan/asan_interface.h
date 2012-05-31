@@ -112,7 +112,7 @@ extern "C" {
       SANITIZER_INTERFACE_FUNCTION_ATTRIBUTE;
 
   // Sets the callback to be called right before death on error.
-  // Passing NULL will unset the callback.
+  // Passing 0 will unset the callback.
   void __asan_set_death_callback(void (*callback)(void))
       SANITIZER_INTERFACE_FUNCTION_ATTRIBUTE;
 
@@ -130,7 +130,7 @@ extern "C" {
   bool __asan_get_ownership(const void *p)
       SANITIZER_INTERFACE_FUNCTION_ATTRIBUTE;
   // Returns the number of bytes reserved for the pointer p.
-  // Requires (get_ownership(p) == true) or (p == NULL).
+  // Requires (get_ownership(p) == true) or (p == 0).
   uptr __asan_get_allocated_size(const void *p)
       SANITIZER_INTERFACE_FUNCTION_ATTRIBUTE;
   // Number of bytes, allocated and not yet freed by the application.

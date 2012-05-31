@@ -20,8 +20,8 @@
 // http://code.google.com/p/address-sanitizer/wiki/AddressSanitizerAlgorithm
 
 #if ASAN_FLEXIBLE_MAPPING_AND_OFFSET == 1
-extern __attribute__((visibility("default"))) uintptr_t __asan_mapping_scale;
-extern __attribute__((visibility("default"))) uintptr_t __asan_mapping_offset;
+extern __attribute__((visibility("default"))) uptr __asan_mapping_scale;
+extern __attribute__((visibility("default"))) uptr __asan_mapping_offset;
 # define SHADOW_SCALE (__asan_mapping_scale)
 # define SHADOW_OFFSET (__asan_mapping_offset)
 #else
@@ -43,9 +43,9 @@ extern __attribute__((visibility("default"))) uintptr_t __asan_mapping_offset;
 #define SHADOW_TO_MEM(shadow) (((shadow) - SHADOW_OFFSET) << SHADOW_SCALE)
 
 #if __WORDSIZE == 64
-  static const size_t kHighMemEnd = 0x00007fffffffffffUL;
+  static const uptr kHighMemEnd = 0x00007fffffffffffUL;
 #else  // __WORDSIZE == 32
-  static const size_t kHighMemEnd = 0xffffffff;
+  static const uptr kHighMemEnd = 0xffffffff;
 #endif  // __WORDSIZE
 
 
@@ -68,41 +68,41 @@ extern __attribute__((visibility("default"))) uintptr_t __asan_mapping_offset;
 
 namespace __asan {
 
-static inline bool AddrIsInLowMem(uintptr_t a) {
+static inline bool AddrIsInLowMem(uptr a) {
   return a < kLowMemEnd;
 }
 
-static inline bool AddrIsInLowShadow(uintptr_t a) {
+static inline bool AddrIsInLowShadow(uptr a) {
   return a >= kLowShadowBeg && a <= kLowShadowEnd;
 }
 
-static inline bool AddrIsInHighMem(uintptr_t a) {
+static inline bool AddrIsInHighMem(uptr a) {
   return a >= kHighMemBeg && a <= kHighMemEnd;
 }
 
-static inline bool AddrIsInMem(uintptr_t a) {
+static inline bool AddrIsInMem(uptr a) {
   return AddrIsInLowMem(a) || AddrIsInHighMem(a);
 }
 
-static inline uintptr_t MemToShadow(uintptr_t p) {
+static inline uptr MemToShadow(uptr p) {
   CHECK(AddrIsInMem(p));
   return MEM_TO_SHADOW(p);
 }
 
-static inline bool AddrIsInHighShadow(uintptr_t a) {
+static inline bool AddrIsInHighShadow(uptr a) {
   return a >= kHighShadowBeg && a <=  kHighMemEnd;
 }
 
-static inline bool AddrIsInShadow(uintptr_t a) {
+static inline bool AddrIsInShadow(uptr a) {
   return AddrIsInLowShadow(a) || AddrIsInHighShadow(a);
 }
 
-static inline bool AddrIsAlignedByGranularity(uintptr_t a) {
+static inline bool AddrIsAlignedByGranularity(uptr a) {
   return (a & (SHADOW_GRANULARITY - 1)) == 0;
 }
 
-static inline bool AddressIsPoisoned(uintptr_t a) {
-  const size_t kAccessSize = 1;
+static inline bool AddressIsPoisoned(uptr a) {
+  const uptr kAccessSize = 1;
   uint8_t *shadow_address = (uint8_t*)MemToShadow(a);
   int8_t shadow_value = *shadow_address;
   if (shadow_value) {

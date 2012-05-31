@@ -32,19 +32,19 @@
 namespace __asan {
 
 // ---------------------- Memory management ---------------- {{{1
-void *AsanMmapFixedNoReserve(uintptr_t fixed_addr, size_t size) {
+void *AsanMmapFixedNoReserve(uptr fixed_addr, size_t size) {
   return VirtualAlloc((LPVOID)fixed_addr, size,
                       MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
 }
 
 void *AsanMmapSomewhereOrDie(size_t size, const char *mem_type) {
-  void *rv = VirtualAlloc(NULL, size, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
-  if (rv == NULL)
+  void *rv = VirtualAlloc(0, size, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
+  if (rv == 0)
     OutOfMemoryMessageAndDie(mem_type, size);
   return rv;
 }
 
-void *AsanMprotect(uintptr_t fixed_addr, size_t size) {
+void *AsanMprotect(uptr fixed_addr, size_t size) {
   return VirtualAlloc((LPVOID)fixed_addr, size,
                       MEM_RESERVE | MEM_COMMIT, PAGE_NOACCESS);
 }
@@ -59,10 +59,10 @@ size_t AsanWrite(int fd, const void *buf, size_t count) {
     UNIMPLEMENTED();
 
   HANDLE err = GetStdHandle(STD_ERROR_HANDLE);
-  if (err == NULL)
+  if (err == 0)
     return 0;  // FIXME: this might not work on some apps.
   DWORD ret;
-  if (!WriteFile(err, buf, count, &ret, NULL))
+  if (!WriteFile(err, buf, count, &ret, 0))
     return 0;
   return ret;
 }
@@ -93,23 +93,23 @@ void AsanThread::SetThreadStackTopAndBottom() {
   // FIXME: is it possible for the stack to not be a single allocation?
   // Are these values what ASan expects to get (reserved, not committed;
   // including stack guard page) ?
-  stack_top_ = (uintptr_t)mbi.BaseAddress + mbi.RegionSize;
-  stack_bottom_ = (uintptr_t)mbi.AllocationBase;
+  stack_top_ = (uptr)mbi.BaseAddress + mbi.RegionSize;
+  stack_bottom_ = (uptr)mbi.AllocationBase;
 }
 
-void AsanStackTrace::GetStackTrace(size_t max_s, uintptr_t pc, uintptr_t bp) {
+void AsanStackTrace::GetStackTrace(size_t max_s, uptr pc, uptr bp) {
   max_size = max_s;
   void *tmp[kStackTraceMax];
 
   // FIXME: CaptureStackBackTrace might be too slow for us.
   // FIXME: Compare with StackWalk64.
   // FIXME: Look at LLVMUnhandledExceptionFilter in Signals.inc
-  size_t cs_ret = CaptureStackBackTrace(1, max_size, tmp, NULL),
+  size_t cs_ret = CaptureStackBackTrace(1, max_size, tmp, 0),
          offset = 0;
   // Skip the RTL frames by searching for the PC in the stacktrace.
   // FIXME: this doesn't work well for the malloc/free stacks yet.
   for (size_t i = 0; i < cs_ret; i++) {
-    if (pc != (uintptr_t)tmp[i])
+    if (pc != (uptr)tmp[i])
       continue;
     offset = i;
     break;
@@ -117,7 +117,7 @@ void AsanStackTrace::GetStackTrace(size_t max_s, uintptr_t pc, uintptr_t bp) {
 
   size = cs_ret - offset;
   for (size_t i = 0; i < size; i++)
-    trace[i] = (uintptr_t)tmp[i + offset];
+    trace[i] = (uptr)tmp[i + offset];
 }
 
 bool __asan_WinSymbolize(const void *addr, char *out_buffer, int buffer_size) {
@@ -126,7 +126,7 @@ bool __asan_WinSymbolize(const void *addr, char *out_buffer, int buffer_size) {
     SymSetOptions(SYMOPT_DEFERRED_LOADS |
                   SYMOPT_UNDNAME |
                   SYMOPT_LOAD_LINES);
-    CHECK(SymInitialize(GetCurrentProcess(), NULL, TRUE));
+    CHECK(SymInitialize(GetCurrentProcess(), 0, TRUE));
     // FIXME: We don't call SymCleanup() on exit yet - should we?
     dbghelp_initialized = true;
   }
@@ -200,7 +200,7 @@ void AsanLock::Unlock() {
 // ---------------------- TSD ---------------- {{{1
 static bool tsd_key_inited = false;
 
-static __declspec(thread) void *fake_tsd = NULL;
+static __declspec(thread) void *fake_tsd = 0;
 
 void AsanTSDInit(void (*destructor)(void *tsd)) {
   // FIXME: we're ignoring the destructor for now.
@@ -222,7 +222,7 @@ void *AsanDoesNotSupportStaticLinkage() {
 #if defined(_DEBUG)
 #error Please build the runtime with a non-debug CRT: /MD or /MT
 #endif
-  return NULL;
+  return 0;
 }
 
 bool AsanShadowRangeIsAvailable() {
@@ -260,7 +260,7 @@ const char* AsanGetEnv(const char* name) {
   DWORD rv = GetEnvironmentVariableA(name, env_buffer, sizeof(env_buffer));
   if (rv > 0 && rv < sizeof(env_buffer))
     return env_buffer;
-  return NULL;
+  return 0;
 }
 
 void AsanDumpProcessMap() {
@@ -271,7 +271,7 @@ int GetPid() {
   return GetProcessId(GetCurrentProcess());
 }
 
-uintptr_t GetThreadSelf() {
+uptr GetThreadSelf() {
   return GetCurrentThreadId();
 }
 
@@ -308,7 +308,7 @@ int Atexit(void (*function)(void)) {
   return atexit(function);
 }
 
-void SortArray(uintptr_t *array, size_t size) {
+void SortArray(uptr *array, size_t size) {
   std::sort(array, array + size);
 }
 

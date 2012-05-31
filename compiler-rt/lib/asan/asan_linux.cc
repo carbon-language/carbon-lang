@@ -39,14 +39,14 @@ extern "C" void* _DYNAMIC;
 
 namespace __asan {
 
-const size_t kMaxThreadStackSize = 256 * (1 << 20);  // 256M
+const uptr kMaxThreadStackSize = 256 * (1 << 20);  // 256M
 
 void *AsanDoesNotSupportStaticLinkage() {
   // This will fail to link with -static.
   return &_DYNAMIC;  // defined in link.h
 }
 
-void GetPcSpBp(void *context, uintptr_t *pc, uintptr_t *sp, uintptr_t *bp) {
+void GetPcSpBp(void *context, uptr *pc, uptr *sp, uptr *bp) {
 #ifdef ANDROID
   *pc = *sp = *bp = 0;
 #elif defined(__arm__)
@@ -73,7 +73,7 @@ bool AsanInterceptsSignal(int signum) {
   return signum == SIGSEGV && FLAG_handle_segv;
 }
 
-static void *asan_mmap(void *addr, size_t length, int prot, int flags,
+static void *asan_mmap(void *addr, uptr length, int prot, int flags,
                 int fd, uint64_t offset) {
 # if __WORDSIZE == 64
   return (void *)syscall(__NR_mmap, addr, length, prot, flags, fd, offset);
@@ -82,7 +82,7 @@ static void *asan_mmap(void *addr, size_t length, int prot, int flags,
 # endif
 }
 
-void *AsanMmapSomewhereOrDie(size_t size, const char *mem_type) {
+void *AsanMmapSomewhereOrDie(uptr size, const char *mem_type) {
   size = RoundUpTo(size, kPageSize);
   void *res = asan_mmap(0, size,
                         PROT_READ | PROT_WRITE,
@@ -93,21 +93,21 @@ void *AsanMmapSomewhereOrDie(size_t size, const char *mem_type) {
   return res;
 }
 
-void *AsanMmapFixedNoReserve(uintptr_t fixed_addr, size_t size) {
+void *AsanMmapFixedNoReserve(uptr fixed_addr, uptr size) {
   return asan_mmap((void*)fixed_addr, size,
                    PROT_READ | PROT_WRITE,
                    MAP_PRIVATE | MAP_ANON | MAP_FIXED | MAP_NORESERVE,
                    0, 0);
 }
 
-void *AsanMprotect(uintptr_t fixed_addr, size_t size) {
+void *AsanMprotect(uptr fixed_addr, uptr size) {
   return asan_mmap((void*)fixed_addr, size,
                    PROT_NONE,
                    MAP_PRIVATE | MAP_ANON | MAP_FIXED | MAP_NORESERVE,
                    0, 0);
 }
 
-void AsanUnmapOrDie(void *addr, size_t size) {
+void AsanUnmapOrDie(void *addr, uptr size) {
   if (!addr || !size) return;
   int res = syscall(__NR_munmap, addr, size);
   if (res != 0) {
@@ -116,8 +116,8 @@ void AsanUnmapOrDie(void *addr, size_t size) {
   }
 }
 
-size_t AsanWrite(int fd, const void *buf, size_t count) {
-  return (size_t)syscall(__NR_write, fd, buf, count);
+uptr AsanWrite(int fd, const void *buf, uptr count) {
+  return (uptr)syscall(__NR_write, fd, buf, count);
 }
 
 int AsanOpenReadonly(const char* filename) {
@@ -128,32 +128,32 @@ int AsanOpenReadonly(const char* filename) {
 // This function should be called first inside __asan_init.
 const char* AsanGetEnv(const char* name) {
   static char *environ;
-  static size_t len;
+  static uptr len;
   static bool inited;
   if (!inited) {
     inited = true;
-    size_t environ_size;
+    uptr environ_size;
     len = ReadFileToBuffer("/proc/self/environ",
                            &environ, &environ_size, 1 << 26);
   }
-  if (!environ || len == 0) return NULL;
-  size_t namelen = internal_strlen(name);
+  if (!environ || len == 0) return 0;
+  uptr namelen = internal_strlen(name);
   const char *p = environ;
   while (*p != '\0') {  // will happen at the \0\0 that terminates the buffer
     // proc file has the format NAME=value\0NAME=value\0NAME=value\0...
     const char* endp =
         (char*)internal_memchr(p, '\0', len - (p - environ));
-    if (endp == NULL)  // this entry isn't NUL terminated
-      return NULL;
+    if (endp == 0)  // this entry isn't NUL terminated
+      return 0;
     else if (!internal_memcmp(p, name, namelen) && p[namelen] == '=')  // Match.
       return p + namelen + 1;  // point after =
     p = endp + 1;
   }
-  return NULL;  // Not found.
+  return 0;  // Not found.
 }
 
-size_t AsanRead(int fd, void *buf, size_t count) {
-  return (size_t)syscall(__NR_read, fd, buf, count);
+uptr AsanRead(int fd, void *buf, uptr count) {
+  return (uptr)syscall(__NR_read, fd, buf, count);
 }
 
 int AsanClose(int fd) {
@@ -177,21 +177,21 @@ void AsanProcMaps::Reset() {
   current_ = proc_self_maps_buff_;
 }
 
-bool AsanProcMaps::Next(uintptr_t *start, uintptr_t *end,
-                        uintptr_t *offset, char filename[],
-                        size_t filename_size) {
+bool AsanProcMaps::Next(uptr *start, uptr *end,
+                        uptr *offset, char filename[],
+                        uptr filename_size) {
   char *last = proc_self_maps_buff_ + proc_self_maps_buff_len_;
   if (current_ >= last) return false;
   int consumed = 0;
   char flags[10];
   int major, minor;
-  uintptr_t inode;
-  uintptr_t dummy;
+  uptr inode;
+  uptr dummy;
   if (!start) start = &dummy;
   if (!end) end = &dummy;
   if (!offset) offset = &dummy;
   char *next_line = (char*)internal_memchr(current_, '\n', last - current_);
-  if (next_line == NULL)
+  if (next_line == 0)
     next_line = last;
   if (SScanf(current_,
              "%lx-%lx %4s %lx %x:%x %ld %n",
@@ -203,7 +203,7 @@ bool AsanProcMaps::Next(uintptr_t *start, uintptr_t *end,
   while (current_ < next_line && *current_ == ' ')
     current_++;
   // Fill in the filename.
-  size_t i = 0;
+  uptr i = 0;
   while (current_ < next_line) {
     if (filename && i < filename_size - 1)
       filename[i++] = *current_;
@@ -216,9 +216,9 @@ bool AsanProcMaps::Next(uintptr_t *start, uintptr_t *end,
 }
 
 // Gets the object name and the offset by walking AsanProcMaps.
-bool AsanProcMaps::GetObjectNameAndOffset(uintptr_t addr, uintptr_t *offset,
+bool AsanProcMaps::GetObjectNameAndOffset(uptr addr, uptr *offset,
                                           char filename[],
-                                          size_t filename_size) {
+                                          uptr filename_size) {
   return IterateForObjectNameAndOffset(addr, offset, filename, filename_size);
 }
 
@@ -230,18 +230,18 @@ void AsanThread::SetThreadStackTopAndBottom() {
 
     // Find the mapping that contains a stack variable.
     AsanProcMaps proc_maps;
-    uintptr_t start, end, offset;
-    uintptr_t prev_end = 0;
-    while (proc_maps.Next(&start, &end, &offset, NULL, 0)) {
-      if ((uintptr_t)&rl < end)
+    uptr start, end, offset;
+    uptr prev_end = 0;
+    while (proc_maps.Next(&start, &end, &offset, 0, 0)) {
+      if ((uptr)&rl < end)
         break;
       prev_end = end;
     }
-    CHECK((uintptr_t)&rl >= start && (uintptr_t)&rl < end);
+    CHECK((uptr)&rl >= start && (uptr)&rl < end);
 
     // Get stacksize from rlimit, but clip it so that it does not overlap
     // with other mappings.
-    size_t stacksize = rl.rlim_cur;
+    uptr stacksize = rl.rlim_cur;
     if (stacksize > end - prev_end)
       stacksize = end - prev_end;
     // When running with unlimited stack size, we still want to set some limit.
@@ -251,20 +251,20 @@ void AsanThread::SetThreadStackTopAndBottom() {
       stacksize = kMaxThreadStackSize;
     stack_top_ = end;
     stack_bottom_ = end - stacksize;
-    CHECK(AddrIsInStack((uintptr_t)&rl));
+    CHECK(AddrIsInStack((uptr)&rl));
     return;
   }
   pthread_attr_t attr;
   CHECK(pthread_getattr_np(pthread_self(), &attr) == 0);
-  size_t stacksize = 0;
-  void *stackaddr = NULL;
-  pthread_attr_getstack(&attr, &stackaddr, &stacksize);
+  uptr stacksize = 0;
+  void *stackaddr = 0;
+  pthread_attr_getstack(&attr, &stackaddr, (size_t*)&stacksize);
   pthread_attr_destroy(&attr);
 
-  stack_top_ = (uintptr_t)stackaddr + stacksize;
-  stack_bottom_ = (uintptr_t)stackaddr;
+  stack_top_ = (uptr)stackaddr + stacksize;
+  stack_bottom_ = (uptr)stackaddr;
   CHECK(stacksize < kMaxThreadStackSize);  // Sanity check.
-  CHECK(AddrIsInStack((uintptr_t)&attr));
+  CHECK(AddrIsInStack((uptr)&attr));
 }
 
 AsanLock::AsanLock(LinkerInitialized) {
@@ -278,11 +278,11 @@ void AsanLock::Lock() {
   CHECK(sizeof(pthread_mutex_t) <= sizeof(opaque_storage_));
   pthread_mutex_lock((pthread_mutex_t*)&opaque_storage_);
   CHECK(!owner_);
-  owner_ = (uintptr_t)pthread_self();
+  owner_ = (uptr)pthread_self();
 }
 
 void AsanLock::Unlock() {
-  CHECK(owner_ == (uintptr_t)pthread_self());
+  CHECK(owner_ == (uptr)pthread_self());
   owner_ = 0;
   pthread_mutex_unlock((pthread_mutex_t*)&opaque_storage_);
 }
@@ -295,14 +295,14 @@ void AsanLock::Unlock() {
 #define UNWIND_CONTINUE _URC_NO_REASON
 #endif
 
-uintptr_t Unwind_GetIP(struct _Unwind_Context *ctx) {
+uptr Unwind_GetIP(struct _Unwind_Context *ctx) {
 #ifdef __arm__
-  uintptr_t val;
+  uptr val;
   _Unwind_VRS_Result res = _Unwind_VRS_Get(ctx, _UVRSC_CORE,
       15 /* r15 = PC */, _UVRSD_UINT32, &val);
   CHECK(res == _UVRSR_OK && "_Unwind_VRS_Get failed");
   // Clear the Thumb bit.
-  return val & ~(uintptr_t)1;
+  return val & ~(uptr)1;
 #else
   return _Unwind_GetIP(ctx);
 #endif
@@ -312,13 +312,13 @@ _Unwind_Reason_Code Unwind_Trace(struct _Unwind_Context *ctx,
     void *param) {
   AsanStackTrace *b = (AsanStackTrace*)param;
   CHECK(b->size < b->max_size);
-  uintptr_t pc = Unwind_GetIP(ctx);
+  uptr pc = Unwind_GetIP(ctx);
   b->trace[b->size++] = pc;
   if (b->size == b->max_size) return UNWIND_STOP;
   return UNWIND_CONTINUE;
 }
 
-void AsanStackTrace::GetStackTrace(size_t max_s, uintptr_t pc, uintptr_t bp) {
+void AsanStackTrace::GetStackTrace(uptr max_s, uptr pc, uptr bp) {
   size = 0;
   trace[0] = pc;
   if ((max_s) > 1) {

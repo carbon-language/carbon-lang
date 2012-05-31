@@ -70,16 +70,16 @@ class AsanThread {
   void Init();  // Should be called from the thread itself.
   thread_return_t ThreadStart();
 
-  uintptr_t stack_top() { return stack_top_; }
-  uintptr_t stack_bottom() { return stack_bottom_; }
-  size_t stack_size() { return stack_top_ - stack_bottom_; }
+  uptr stack_top() { return stack_top_; }
+  uptr stack_bottom() { return stack_bottom_; }
+  uptr stack_size() { return stack_top_ - stack_bottom_; }
   int tid() { return summary_->tid(); }
   AsanThreadSummary *summary() { return summary_; }
   void set_summary(AsanThreadSummary *summary) { summary_ = summary; }
 
-  const char *GetFrameNameByAddr(uintptr_t addr, uintptr_t *offset);
+  const char *GetFrameNameByAddr(uptr addr, uptr *offset);
 
-  bool AddrIsInStack(uintptr_t addr) {
+  bool AddrIsInStack(uptr addr) {
     return addr >= stack_bottom_ && addr < stack_top_;
   }
 
@@ -96,8 +96,8 @@ class AsanThread {
   AsanThreadSummary *summary_;
   thread_callback_t start_routine_;
   void *arg_;
-  uintptr_t  stack_top_;
-  uintptr_t  stack_bottom_;
+  uptr  stack_top_;
+  uptr  stack_bottom_;
 
   FakeStack fake_stack_;
   AsanThreadLocalMallocStorage malloc_storage_;

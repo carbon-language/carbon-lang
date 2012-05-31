@@ -37,7 +37,7 @@
 
 namespace __asan {
 
-void GetPcSpBp(void *context, uintptr_t *pc, uintptr_t *sp, uintptr_t *bp) {
+void GetPcSpBp(void *context, uptr *pc, uptr *sp, uptr *bp) {
   ucontext_t *ucontext = (ucontext_t*)context;
 # if __WORDSIZE == 64
   *pc = ucontext->uc_mcontext->__ss.__rip;
@@ -63,9 +63,9 @@ static int GetMacosVersion() {
   size_t len = 0, maxlen = sizeof(version) / sizeof(version[0]);
   for (int i = 0; i < maxlen; i++) version[i] = '\0';
   // Get the version length.
-  CHECK(sysctl(mib, 2, NULL, &len, NULL, 0) != -1);
+  CHECK(sysctl(mib, 2, 0, &len, 0, 0) != -1);
   CHECK(len < maxlen);
-  CHECK(sysctl(mib, 2, version, &len, NULL, 0) != -1);
+  CHECK(sysctl(mib, 2, version, &len, 0, 0) != -1);
   switch (version[0]) {
     case '9': return MACOS_VERSION_LEOPARD;
     case '1': {
@@ -90,7 +90,7 @@ bool PlatformHasDifferentMemcpyAndMemmove() {
 
 // No-op. Mac does not support static linkage anyway.
 void *AsanDoesNotSupportStaticLinkage() {
-  return NULL;
+  return 0;
 }
 
 bool AsanInterceptsSignal(int signum) {
@@ -117,14 +117,14 @@ void *AsanMmapSomewhereOrDie(size_t size, const char *mem_type) {
   return res;
 }
 
-void *AsanMmapFixedNoReserve(uintptr_t fixed_addr, size_t size) {
+void *AsanMmapFixedNoReserve(uptr fixed_addr, size_t size) {
   return asan_mmap((void*)fixed_addr, size,
                    PROT_READ | PROT_WRITE,
                    MAP_PRIVATE | MAP_ANON | MAP_FIXED | MAP_NORESERVE,
                    0, 0);
 }
 
-void *AsanMprotect(uintptr_t fixed_addr, size_t size) {
+void *AsanMprotect(uptr fixed_addr, size_t size) {
   return asan_mmap((void*)fixed_addr, size,
                    PROT_NONE,
                    MAP_PRIVATE | MAP_ANON | MAP_FIXED | MAP_NORESERVE,
@@ -150,7 +150,7 @@ const char *AsanGetEnv(const char *name) {
   char **environ = *env_ptr;
   CHECK(environ);
   size_t name_len = internal_strlen(name);
-  while (*environ != NULL) {
+  while (*environ != 0) {
     size_t len = internal_strlen(*environ);
     if (len > name_len) {
       const char *p = *environ;
@@ -161,7 +161,7 @@ const char *AsanGetEnv(const char *name) {
     }
     environ++;
   }
-  return NULL;
+  return 0;
 }
 
 size_t AsanRead(int fd, void *buf, size_t count) {
@@ -200,7 +200,7 @@ void AsanProcMaps::Reset() {
   // adding and removing images which will invalidate the AsanProcMaps state.
   current_image_ = _dyld_image_count();
   current_load_cmd_count_ = -1;
-  current_load_cmd_addr_ = NULL;
+  current_load_cmd_addr_ = 0;
   current_magic_ = 0;
 }
 
@@ -213,7 +213,7 @@ void AsanProcMaps::Reset() {
 // Note that the segment addresses are not necessarily sorted.
 template<uint32_t kLCSegment, typename SegmentCommand>
 bool AsanProcMaps::NextSegmentLoad(
-    uintptr_t *start, uintptr_t *end, uintptr_t *offset,
+    uptr *start, uptr *end, uptr *offset,
     char filename[], size_t filename_size) {
   const char* lc = current_load_cmd_addr_;
   current_load_cmd_addr_ += ((const load_command *)lc)->cmdsize;
@@ -234,8 +234,8 @@ bool AsanProcMaps::NextSegmentLoad(
   return false;
 }
 
-bool AsanProcMaps::Next(uintptr_t *start, uintptr_t *end,
-                        uintptr_t *offset, char filename[],
+bool AsanProcMaps::Next(uptr *start, uptr *end,
+                        uptr *offset, char filename[],
                         size_t filename_size) {
   for (; current_image_ >= 0; current_image_--) {
     const mach_header* hdr = _dyld_get_image_header(current_image_);
@@ -286,7 +286,7 @@ bool AsanProcMaps::Next(uintptr_t *start, uintptr_t *end,
   return false;
 }
 
-bool AsanProcMaps::GetObjectNameAndOffset(uintptr_t addr, uintptr_t *offset,
+bool AsanProcMaps::GetObjectNameAndOffset(uptr addr, uptr *offset,
                                           char filename[],
                                           size_t filename_size) {
   return IterateForObjectNameAndOffset(addr, offset, filename, filename_size);
@@ -295,10 +295,10 @@ bool AsanProcMaps::GetObjectNameAndOffset(uintptr_t addr, uintptr_t *offset,
 void AsanThread::SetThreadStackTopAndBottom() {
   size_t stacksize = pthread_get_stacksize_np(pthread_self());
   void *stackaddr = pthread_get_stackaddr_np(pthread_self());
-  stack_top_ = (uintptr_t)stackaddr;
+  stack_top_ = (uptr)stackaddr;
   stack_bottom_ = stack_top_ - stacksize;
   int local;
-  CHECK(AddrIsInStack((uintptr_t)&local));
+  CHECK(AddrIsInStack((uptr)&local));
 }
 
 AsanLock::AsanLock(LinkerInitialized) {
@@ -308,19 +308,19 @@ AsanLock::AsanLock(LinkerInitialized) {
 void AsanLock::Lock() {
   CHECK(sizeof(OSSpinLock) <= sizeof(opaque_storage_));
   CHECK(OS_SPINLOCK_INIT == 0);
-  CHECK(owner_ != (uintptr_t)pthread_self());
+  CHECK(owner_ != (uptr)pthread_self());
   OSSpinLockLock((OSSpinLock*)&opaque_storage_);
   CHECK(!owner_);
-  owner_ = (uintptr_t)pthread_self();
+  owner_ = (uptr)pthread_self();
 }
 
 void AsanLock::Unlock() {
-  CHECK(owner_ == (uintptr_t)pthread_self());
+  CHECK(owner_ == (uptr)pthread_self());
   owner_ = 0;
   OSSpinLockUnlock((OSSpinLock*)&opaque_storage_);
 }
 
-void AsanStackTrace::GetStackTrace(size_t max_s, uintptr_t pc, uintptr_t bp) {
+void AsanStackTrace::GetStackTrace(size_t max_s, uptr pc, uptr bp) {
   size = 0;
   trace[0] = pc;
   if ((max_s) > 1) {
@@ -335,7 +335,7 @@ void AsanStackTrace::GetStackTrace(size_t max_s, uintptr_t pc, uintptr_t bp) {
 // These constants were chosen empirically and may not work if the shadow
 // memory layout changes. Unfortunately they do necessarily depend on
 // kHighMemBeg or kHighMemEnd.
-static void *island_allocator_pos = NULL;
+static void *island_allocator_pos = 0;
 
 #if __WORDSIZE == 32
 # define kIslandEnd (0xffdf0000 - kPageSize)
@@ -457,7 +457,7 @@ void asan_dispatch_call_block_and_release(void *block) {
   }
   AsanThread *t = asanThreadRegistry().GetCurrent();
   if (!t) {
-    t = AsanThread::Create(context->parent_tid, NULL, NULL, &stack);
+    t = AsanThread::Create(context->parent_tid, 0, 0, &stack);
     asanThreadRegistry().RegisterThread(t);
     t->Init();
     asanThreadRegistry().SetCurrent(t);
@@ -603,7 +603,7 @@ INTERCEPTOR(int, pthread_workqueue_additem_np, pthread_workqueue_t workq,
 
 // See http://opensource.apple.com/source/CF/CF-635.15/CFRuntime.h
 typedef struct __CFRuntimeBase {
-  uintptr_t _cfisa;
+  uptr _cfisa;
   uint8_t _cfinfo[4];
 #if __LP64__
   uint32_t _rc;

@@ -35,12 +35,12 @@
 // since most of the stuff here is inlinable.
 #include <algorithm>
 
-static const size_t kAltStackSize = SIGSTKSZ * 4;  // SIGSTKSZ is not enough.
+static const uptr kAltStackSize = SIGSTKSZ * 4;  // SIGSTKSZ is not enough.
 
 namespace __asan {
 
-static inline bool IntervalsAreSeparate(uintptr_t start1, uintptr_t end1,
-                                        uintptr_t start2, uintptr_t end2) {
+static inline bool IntervalsAreSeparate(uptr start1, uptr end1,
+                                        uptr start2, uptr end2) {
   CHECK(start1 <= end1);
   CHECK(start2 <= end2);
   return (end1 < start2) || (end2 < start1);
@@ -52,12 +52,12 @@ static inline bool IntervalsAreSeparate(uintptr_t start1, uintptr_t end1,
 // memory).
 bool AsanShadowRangeIsAvailable() {
   AsanProcMaps procmaps;
-  uintptr_t start, end;
-  uintptr_t shadow_start = kLowShadowBeg;
+  uptr start, end;
+  uptr shadow_start = kLowShadowBeg;
   if (kLowShadowBeg > 0) shadow_start -= kMmapGranularity;
-  uintptr_t shadow_end = kHighShadowEnd;
+  uptr shadow_end = kHighShadowEnd;
   while (procmaps.Next(&start, &end,
-                       /*offset*/NULL, /*filename*/NULL, /*filename_size*/0)) {
+                       /*offset*/0, /*filename*/0, /*filename_size*/0)) {
     if (!IntervalsAreSeparate(start, end, shadow_start, shadow_end))
       return false;
   }
@@ -80,10 +80,10 @@ static void MaybeInstallSigaction(int signum,
 }
 
 static void     ASAN_OnSIGSEGV(int, siginfo_t *siginfo, void *context) {
-  uintptr_t addr = (uintptr_t)siginfo->si_addr;
+  uptr addr = (uptr)siginfo->si_addr;
   // Write the first message using the bullet-proof write.
   if (13 != AsanWrite(2, "ASAN:SIGSEGV\n", 13)) AsanDie();
-  uintptr_t pc, sp, bp;
+  uptr pc, sp, bp;
   GetPcSpBp(context, &pc, &sp, &bp);
   Report("ERROR: AddressSanitizer crashed on unknown address %p"
          " (pc %p sp %p bp %p T%d)\n",
@@ -97,7 +97,7 @@ static void     ASAN_OnSIGSEGV(int, siginfo_t *siginfo, void *context) {
 
 void SetAlternateSignalStack() {
   stack_t altstack, oldstack;
-  CHECK(0 == sigaltstack(NULL, &oldstack));
+  CHECK(0 == sigaltstack(0, &oldstack));
   // If the alternate stack is already in place, do nothing.
   if ((oldstack.ss_flags & SS_DISABLE) == 0) return;
   // TODO(glider): the mapped stack should have the MAP_STACK flag in the
@@ -107,7 +107,7 @@ void SetAlternateSignalStack() {
   altstack.ss_sp = base;
   altstack.ss_flags = 0;
   altstack.ss_size = kAltStackSize;
-  CHECK(0 == sigaltstack(&altstack, NULL));
+  CHECK(0 == sigaltstack(&altstack, 0));
   if (FLAG_v > 0) {
     Report("Alternative stack for T%d set: [%p,%p)\n",
            asanThreadRegistry().GetCurrentTidOrMinusOne(),
@@ -117,7 +117,7 @@ void SetAlternateSignalStack() {
 
 void UnsetAlternateSignalStack() {
   stack_t altstack, oldstack;
-  altstack.ss_sp = NULL;
+  altstack.ss_sp = 0;
   altstack.ss_flags = SS_DISABLE;
   altstack.ss_size = 0;
   CHECK(0 == sigaltstack(&altstack, &oldstack));
@@ -142,11 +142,11 @@ void AsanDisableCoreDumper() {
 
 void AsanDumpProcessMap() {
   AsanProcMaps proc_maps;
-  uintptr_t start, end;
+  uptr start, end;
   const intptr_t kBufSize = 4095;
   char filename[kBufSize];
   Report("Process memory map follows:\n");
-  while (proc_maps.Next(&start, &end, /* file_offset */NULL,
+  while (proc_maps.Next(&start, &end, /* file_offset */0,
                         filename, kBufSize)) {
     Printf("\t%p-%p\t%s\n", (void*)start, (void*)end, filename);
   }
@@ -157,8 +157,8 @@ int GetPid() {
   return getpid();
 }
 
-uintptr_t GetThreadSelf() {
-  return (uintptr_t)pthread_self();
+uptr GetThreadSelf() {
+  return (uptr)pthread_self();
 }
 
 void SleepForSeconds(int seconds) {
@@ -189,7 +189,7 @@ uint16_t AtomicExchange(uint16_t *a, uint16_t new_val) {
   return __sync_lock_test_and_set(a, new_val);
 }
 
-void SortArray(uintptr_t *array, size_t size) {
+void SortArray(uptr *array, uptr size) {
   std::sort(array, array + size);
 }
 

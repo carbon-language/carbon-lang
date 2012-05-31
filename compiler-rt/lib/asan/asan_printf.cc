@@ -23,11 +23,11 @@
 namespace __asan {
 
 extern char *error_message_buffer;
-extern size_t error_message_buffer_pos, error_message_buffer_size;
+extern uptr error_message_buffer_pos, error_message_buffer_size;
 
 void RawWrite(const char *buffer) {
   static const char *kRawWriteError = "RawWrite can't output requested buffer!";
-  size_t length = (size_t)internal_strlen(buffer);
+  uptr length = (uptr)internal_strlen(buffer);
   if (length != AsanWrite(2, buffer, length)) {
     AsanWrite(2, kRawWriteError, internal_strlen(kRawWriteError));
     AsanDie();
@@ -54,11 +54,11 @@ static inline int AppendChar(char **buff, const char *buff_end, char c) {
 // "minimal_num_length", it is padded with leading zeroes.
 static int AppendUnsigned(char **buff, const char *buff_end, uint64_t num,
                           uint8_t base, uint8_t minimal_num_length) {
-  size_t const kMaxLen = 30;
+  uptr const kMaxLen = 30;
   RAW_CHECK(base == 10 || base == 16);
   RAW_CHECK(minimal_num_length < kMaxLen);
-  size_t num_buffer[kMaxLen];
-  size_t pos = 0;
+  uptr num_buffer[kMaxLen];
+  uptr pos = 0;
   do {
     RAW_CHECK_MSG(pos < kMaxLen, "appendNumber buffer overflow");
     num_buffer[pos++] = num % base;
@@ -67,7 +67,7 @@ static int AppendUnsigned(char **buff, const char *buff_end, uint64_t num,
   while (pos < minimal_num_length) num_buffer[pos++] = 0;
   int result = 0;
   while (pos-- > 0) {
-    size_t digit = num_buffer[pos];
+    uptr digit = num_buffer[pos];
     result += AppendChar(buff, buff_end, (digit < 10) ? '0' + digit
                                                       : 'a' + digit - 10);
   }
@@ -88,7 +88,7 @@ static inline int AppendSignedDecimal(char **buff, const char *buff_end,
 static inline int AppendString(char **buff, const char *buff_end,
                                const char *s) {
   // Avoid library functions like stpcpy here.
-  RAW_CHECK_MSG(s, "Error: passing a NULL pointer to AppendString\n");
+  RAW_CHECK_MSG(s, "Error: passing a 0 pointer to AppendString\n");
   int result = 0;
   for (; *s; s++) {
     result += AppendChar(buff, buff_end, *s);
@@ -126,17 +126,17 @@ static int VSNPrintf(char *buff, int buff_length,
                                 : va_arg(args, int);
                   result += AppendSignedDecimal(&buff, buff_end, dval);
                   break;
-        case 'u': uval = have_z ? va_arg(args, size_t)
+        case 'u': uval = have_z ? va_arg(args, uptr)
                                 : va_arg(args, unsigned);
                   result += AppendUnsigned(&buff, buff_end, uval, 10, 0);
                   break;
-        case 'x': uval = have_z ? va_arg(args, size_t)
+        case 'x': uval = have_z ? va_arg(args, uptr)
                                 : va_arg(args, unsigned);
                   result += AppendUnsigned(&buff, buff_end, uval, 16, 0);
                   break;
         case 'p': RAW_CHECK_MSG(!have_z, kPrintfFormatsHelp);
                   result += AppendPointer(&buff, buff_end,
-                                          va_arg(args, uintptr_t));
+                                          va_arg(args, uptr));
                   break;
         case 's': RAW_CHECK_MSG(!have_z, kPrintfFormatsHelp);
                   result += AppendString(&buff, buff_end, va_arg(args, char*));
@@ -167,7 +167,7 @@ void Printf(const char *format, ...) {
 // Returns the number of symbols that should have been written to buffer
 // (not including trailing '\0'). Thus, the string is truncated
 // iff return value is not less than "length".
-int SNPrintf(char *buffer, size_t length, const char *format, ...) {
+int SNPrintf(char *buffer, uptr length, const char *format, ...) {
   va_list args;
   va_start(args, format);
   int needed_length = VSNPrintf(buffer, length, format, args);

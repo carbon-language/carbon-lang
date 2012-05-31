@@ -23,27 +23,27 @@ namespace __asan {
 // Each AsanThread has its own AsanStats, which are sometimes flushed
 // to the accumulated AsanStats.
 struct AsanStats {
-  // AsanStats must be a struct consisting of size_t fields only.
-  // When merging two AsanStats structs, we treat them as arrays of size_t.
-  size_t mallocs;
-  size_t malloced;
-  size_t malloced_redzones;
-  size_t frees;
-  size_t freed;
-  size_t real_frees;
-  size_t really_freed;
-  size_t really_freed_redzones;
-  size_t reallocs;
-  size_t realloced;
-  size_t mmaps;
-  size_t mmaped;
-  size_t mmaped_by_size[kNumberOfSizeClasses];
-  size_t malloced_by_size[kNumberOfSizeClasses];
-  size_t freed_by_size[kNumberOfSizeClasses];
-  size_t really_freed_by_size[kNumberOfSizeClasses];
+  // AsanStats must be a struct consisting of uptr fields only.
+  // When merging two AsanStats structs, we treat them as arrays of uptr.
+  uptr mallocs;
+  uptr malloced;
+  uptr malloced_redzones;
+  uptr frees;
+  uptr freed;
+  uptr real_frees;
+  uptr really_freed;
+  uptr really_freed_redzones;
+  uptr reallocs;
+  uptr realloced;
+  uptr mmaps;
+  uptr mmaped;
+  uptr mmaped_by_size[kNumberOfSizeClasses];
+  uptr malloced_by_size[kNumberOfSizeClasses];
+  uptr freed_by_size[kNumberOfSizeClasses];
+  uptr really_freed_by_size[kNumberOfSizeClasses];
 
-  size_t malloc_large;
-  size_t malloc_small_slow;
+  uptr malloc_large;
+  uptr malloc_small_slow;
 
   // Ctor for global AsanStats (accumulated stats and main thread stats).
   explicit AsanStats(LinkerInitialized) { }
