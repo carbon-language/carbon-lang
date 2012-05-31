@@ -842,6 +842,7 @@ DNBArchImplI386::EnableHardwareWatchpoint (nub_addr_t addr, nub_size_t size, boo
         uint32_t i = 0;
 
         DBG &debug_state = m_state.context.dbg;
+        DBG dsCheckPoint = m_state.context.dbg;
         for (i = 0; i < num_hw_watchpoints; ++i)
         {
             if (IsWatchpointVacant(debug_state, i))
@@ -859,6 +860,8 @@ DNBArchImplI386::EnableHardwareWatchpoint (nub_addr_t addr, nub_size_t size, boo
 
             if (kret == KERN_SUCCESS)
                 return i;
+            else // Recovery block.
+                m_state.context.dbg = dsCheckPoint;
         }
         else
         {
@@ -877,6 +880,7 @@ DNBArchImplI386::DisableHardwareWatchpoint (uint32_t hw_index)
     if (kret == KERN_SUCCESS)
     {
         DBG &debug_state = m_state.context.dbg;
+        DBG dsCheckPoint = m_state.context.dbg;
         if (hw_index < num_hw_points && !IsWatchpointVacant(debug_state, hw_index))
         {
             // Modify our local copy of the debug state, first.
@@ -888,6 +892,8 @@ DNBArchImplI386::DisableHardwareWatchpoint (uint32_t hw_index)
 
             if (kret == KERN_SUCCESS)
                 return true;
+            else // Recovery block.
+                m_state.context.dbg = dsCheckPoint;
         }
     }
     return false;
@@ -911,7 +917,7 @@ uint32_t
 DNBArchImplI386::GetHardwareWatchpointHit(nub_addr_t &addr)
 {
     // Read the debug state
-    kern_return_t kret = GetDBGState(false);
+    kern_return_t kret = GetDBGState(true);
     DNBLogThreadedIf(LOG_WATCHPOINTS, "DNBArchImplI386::GetHardwareWatchpointHit() GetDBGState() => 0x%8.8x.", kret);
     if (kret == KERN_SUCCESS)
     {
