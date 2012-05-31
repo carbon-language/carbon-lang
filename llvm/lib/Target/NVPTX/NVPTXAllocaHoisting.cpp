@@ -1,4 +1,4 @@
-//===-- AllocaHoisting.cpp - Hosist allocas to the entry block --*- C++ -*-===//
+//===-- AllocaHoisting.cpp - Hoist allocas to the entry block --*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -38,7 +38,7 @@ bool NVPTXAllocaHoisting::runOnFunction(Function &function) {
 
 char NVPTXAllocaHoisting::ID = 1;
 RegisterPass<NVPTXAllocaHoisting> X("alloca-hoisting",
-                                    "Hoisting alloca instructsion in non-entry "
+                                    "Hoisting alloca instructions in non-entry "
                                     "blocks to the entry block");
 
 FunctionPass *createAllocaHoisting() {
