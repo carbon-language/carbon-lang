@@ -76,3 +76,43 @@ entry:
 }
 !8 = metadata !{i8 0, i8 0}
 ; CHECK: Range must not be empty!
+
+define i8 @f10(i8* %x) {
+entry:
+  %y = load i8* %x, align 1, !range !9
+  ret i8 %y
+}
+!9 = metadata !{i8 0, i8 2, i8 1, i8 3}
+; CHECK: Intervals are overlapping, contiguous or not in order
+
+define i8 @f11(i8* %x) {
+entry:
+  %y = load i8* %x, align 1, !range !10
+  ret i8 %y
+}
+!10 = metadata !{i8 0, i8 2, i8 2, i8 3}
+; CHECK: Intervals are overlapping, contiguous or not in order
+
+define i8 @f12(i8* %x) {
+entry:
+  %y = load i8* %x, align 1, !range !11
+  ret i8 %y
+}
+!11 = metadata !{i8 1, i8 2, i8 -1, i8 0}
+; CHECK: Intervals are overlapping, contiguous or not in order
+
+define i8 @f13(i8* %x) {
+entry:
+  %y = load i8* %x, align 1, !range !12
+  ret i8 %y
+}
+!12 = metadata !{i8 1, i8 3, i8 5, i8 1}
+; CHECK: First and last intervals are contiguous or overlap
+
+define i8 @f14(i8* %x) {
+entry:
+  %y = load i8* %x, align 1, !range !13
+  ret i8 %y
+}
+!13 = metadata !{i8 1, i8 3, i8 5, i8 2}
+; CHECK: First and last intervals are contiguous or overlap

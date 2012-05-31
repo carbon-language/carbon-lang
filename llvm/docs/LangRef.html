@@ -3054,6 +3054,8 @@ call void @llvm.dbg.value(metadata !24, i64 0, metadata !25)
    <li>The range should not represent the full or empty set. That is,
        <tt>a!=b</tt>. </li>
 </ul>
+<p> In addiion, the pairs must be in signed order of the lower bound and
+  they must be non contigous.</p>
 
 <p>Examples:</p>
 <div class="doc_code">
@@ -3061,10 +3063,12 @@ call void @llvm.dbg.value(metadata !24, i64 0, metadata !25)
   %a = load i8* %x, align 1, !range !0 ; Can only be 0 or 1
   %b = load i8* %y, align 1, !range !1 ; Can only be 255 (-1), 0 or 1
   %c = load i8* %z, align 1, !range !2 ; Can only be 0, 1, 3, 4 or 5
+  %d = load i8* %z, align 1, !range !3 ; Can only be -2, -1, 3, 4 or 5
 ...
 !0 = metadata !{ i8 0, i8 2 }
 !1 = metadata !{ i8 255, i8 2 }
 !2 = metadata !{ i8 0, i8 2, i8 3, i8 6 }
+!3 = metadata !{ i8 -2, i8 0, i8 3, i8 6 }
 </pre>
 </div>
 </div>

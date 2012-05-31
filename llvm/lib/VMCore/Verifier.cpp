@@ -1383,6 +1383,8 @@ void Verifier::visitLoadInst(LoadInst &LI) {
     Assert1(NumOperands % 2 == 0, "Unfinished range!", Range);
     unsigned NumRanges = NumOperands / 2;
     Assert1(NumRanges >= 1, "It should have at least one range!", Range);
+
+    APInt LastHigh;
     for (unsigned i = 0; i < NumRanges; ++i) {
       ConstantInt *Low = dyn_cast<ConstantInt>(Range->getOperand(2*i));
       Assert1(Low, "The lower limit must be an integer!", Low);
@@ -1391,8 +1393,20 @@ void Verifier::visitLoadInst(LoadInst &LI) {
       Assert1(High->getType() == Low->getType() &&
               High->getType() == ElTy, "Range types must match load type!",
               &LI);
-      Assert1(High->getValue() != Low->getValue(), "Range must not be empty!",
-              Range);
+
+      APInt HighV = High->getValue();
+      APInt LowV = Low->getValue();
+      Assert1(HighV != LowV, "Range must not be empty!", Range);
+      if (i != 0) {
+        Assert1(Low->getValue().sgt(LastHigh),
+                "Intervals are overlapping, contiguous or not in order", Range);
+        if (i == NumRanges - 1 && HighV.slt(LowV)) {
+          APInt First = dyn_cast<ConstantInt>(Range->getOperand(0))->getValue();
+          Assert1(First.sgt(HighV),
+                  "First and last intervals are contiguous or overlap", Range);
+        }
+      }
+      LastHigh = High->getValue();
     }
   }
 
