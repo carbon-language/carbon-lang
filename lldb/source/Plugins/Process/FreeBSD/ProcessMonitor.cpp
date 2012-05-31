@@ -942,7 +942,7 @@ ProcessMonitor::Launch(LaunchArgs *args)
     // XXX - Release the master terminal descriptor and pass it off to the
     // XXX - ProcessMonitor instance.  Similarly stash the inferior pid.
     // For now just use stdin fd
-    monitor->m_terminal_fd = STDIN_FILENO;
+    monitor->m_terminal_fd = ::dup(STDIN_FILENO);
     monitor->m_pid = pid;
 
     // Set the terminal fd to be in non blocking mode (it simplifies the
