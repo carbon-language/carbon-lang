@@ -380,6 +380,24 @@ class Interactive(cmd.Cmd):
         '''Quit command'''
         return True
 
+    def do_symbolicate(self, line):
+        description='''Symbolicate one or more darwin crash log files by index to provide source file and line information,
+        inlined stack frames back to the concrete functions, and disassemble the location of the crash
+        for the first frame of the crashed thread.'''
+        option_parser = CreateSymbolicateCrashLogOptions ('symbolicate', description, False)
+        command_args = shlex.split(line)
+        try:
+            (options, args) = option_parser.parse_args(command_args)
+        except:
+            return
+
+        for idx_str in args:
+            idx = int(idx_str)
+            if idx < len(self.crash_logs):
+                SymbolicateCrashLog (self.crash_logs[idx], options)
+            else:
+                print 'error: crash log index %u is out of range' % (idx)
+    
     def do_list(self, line=None):
         '''Dump a list of all crash logs that are currently loaded.
         
@@ -459,13 +477,110 @@ def interactive_crashlogs(options, args):
     
         
 def Symbolicate(debugger, command, result, dict):
+    print 'def Symbolicate(debugger, command, result, dict): called with "%s"' % (command)
     try:
-        SymbolicateCrashLog (shlex.split(command))
+        SymbolicateCrashLogs (shlex.split(command))
     except:
         result.PutCString ("error: python exception %s" % sys.exc_info()[0])
+
+def SymbolicateCrashLog(crash_log, options):
+    if crash_log.error:
+        print crash_log.error
+        return
+    if options.verbose:
+        crash_log.dump()
+    if not crash_log.images:
+        print 'error: no images in crash log'
+        return
+
+    target = crash_log.create_target ()
+    if not target:
+        return
+    exe_module = target.GetModuleAtIndex(0)
+    images_to_load = list()
+    loaded_images = list()
+    if options.load_all_images:
+        # --load-all option was specified, load everything up
+        for image in crash_log.images:
+            images_to_load.append(image)
+    else:
+        # Only load the images found in stack frames for the crashed threads
+        for ident in crash_log.idents:
+            images = crash_log.find_images_with_identifier (ident)
+            if images:
+                for image in images:
+                    images_to_load.append(image)
+            else:
+                print 'error: can\'t find image for identifier "%s"' % ident
+
+    for image in images_to_load:
+        if image in loaded_images:
+            print "warning: skipping %s loaded at %#16.16x duplicate entry (probably commpage)" % (image.path, image.text_addr_lo)
+        else:
+            err = image.add_module (target)
+            if err:
+                print err
+            else:
+                #print 'loaded %s' % image
+                loaded_images.append(image)
+
+    for thread in crash_log.threads:
+        this_thread_crashed = thread.did_crash()
+        if options.crashed_only and this_thread_crashed == False:
+            continue
+        print "%s" % thread
+        #prev_frame_index = -1
+        for frame_idx, frame in enumerate(thread.frames):
+            disassemble = (this_thread_crashed or options.disassemble_all_threads) and frame_idx < options.disassemble_depth;
+            if frame_idx == 0:
+                symbolicated_frame_addresses = crash_log.symbolicate (frame.pc)
+            else:
+                # Any frame above frame zero and we have to subtract one to get the previous line entry
+                symbolicated_frame_addresses = crash_log.symbolicate (frame.pc - 1)
+            
+            if symbolicated_frame_addresses:
+                symbolicated_frame_address_idx = 0
+                for symbolicated_frame_address in symbolicated_frame_addresses:
+                    print '[%3u] %s' % (frame_idx, symbolicated_frame_address)
                 
-def SymbolicateCrashLog(command_args):
+                    if symbolicated_frame_address_idx == 0:
+                        if disassemble:
+                            instructions = symbolicated_frame_address.get_instructions()
+                            if instructions:
+                                print
+                                symbolication.disassemble_instructions (target, 
+                                                                        instructions, 
+                                                                        frame.pc, 
+                                                                        options.disassemble_before, 
+                                                                        options.disassemble_after, frame.index > 0)
+                                print
+                    symbolicated_frame_address_idx += 1
+            else:
+                print frame
+        print                
+
+    if options.dump_image_list:
+        print "Binary Images:"
+        for image in crash_log.images:
+            print image
+
+def CreateSymbolicateCrashLogOptions(command_name, description, add_interactive_options):
     usage = "usage: %prog [options] <FILE> [FILE ...]"
+    option_parser = optparse.OptionParser(description=description, prog='crashlog',usage=usage)
+    option_parser.add_option('-v', '--verbose', action='store_true', dest='verbose', help='display verbose debug info', default=False)
+    option_parser.add_option('-a', '--load-all', action='store_true', dest='load_all_images', help='load all executable images, not just the images found in the crashed stack frames', default=False)
+    option_parser.add_option('--images', action='store_true', dest='dump_image_list', help='show image list', default=False)
+    option_parser.add_option('-g', '--debug-delay', type='int', dest='debug_delay', metavar='NSEC', help='pause for NSEC seconds for debugger', default=0)
+    option_parser.add_option('-c', '--crashed-only', action='store_true', dest='crashed_only', help='only symbolicate the crashed thread', default=False)
+    option_parser.add_option('-d', '--disasm-depth', type='int', dest='disassemble_depth', help='set the depth in stack frames that should be disassembled (default is 1)', default=1)
+    option_parser.add_option('-D', '--disasm-all', action='store_true', dest='disassemble_all_threads', help='enabled disassembly of frames on all threads (not just the crashed thread)', default=False)
+    option_parser.add_option('-B', '--disasm-before', type='int', dest='disassemble_before', help='the number of instructions to disassemble before the frame PC', default=4)
+    option_parser.add_option('-A', '--disasm-after', type='int', dest='disassemble_after', help='the number of instructions to disassemble after the frame PC', default=4)
+    if add_interactive_options:
+        option_parser.add_option('-i', '--interactive', action='store_true', help='parse all crash logs and enter interactive mode', default=False)
+    return option_parser
+    
+def SymbolicateCrashLogs(command_args):
     description='''Symbolicate one or more darwin crash log files to provide source file and line information,
 inlined stack frames back to the concrete functions, and disassemble the location of the crash
 for the first frame of the crashed thread.
@@ -474,19 +589,9 @@ for use at the LLDB command line. After a crash log has been parsed and symbolic
 created that has all of the shared libraries loaded at the load addresses found in the crash log file. This allows
 you to explore the program as if it were stopped at the locations described in the crash log and functions can 
 be disassembled and lookups can be performed using the addresses found in the crash log.'''
-    parser = optparse.OptionParser(description=description, prog='crashlog',usage=usage)
-    parser.add_option('-v', '--verbose', action='store_true', dest='verbose', help='display verbose debug info', default=False)
-    parser.add_option('-a', '--load-all', action='store_true', dest='load_all_images', help='load all executable images, not just the images found in the crashed stack frames', default=False)
-    parser.add_option('--images', action='store_true', dest='dump_image_list', help='show image list', default=False)
-    parser.add_option('-g', '--debug-delay', type='int', dest='debug_delay', metavar='NSEC', help='pause for NSEC seconds for debugger', default=0)
-    parser.add_option('-c', '--crashed-only', action='store_true', dest='crashed_only', help='only symbolicate the crashed thread', default=False)
-    parser.add_option('-d', '--disasm-depth', type='int', dest='disassemble_depth', help='set the depth in stack frames that should be disassembled (default is 1)', default=1)
-    parser.add_option('-D', '--disasm-all', action='store_true', dest='disassemble_all_threads', help='enabled disassembly of frames on all threads (not just the crashed thread)', default=False)
-    parser.add_option('-B', '--disasm-before', type='int', dest='disassemble_before', help='the number of instructions to disassemble before the frame PC', default=4)
-    parser.add_option('-A', '--disasm-after', type='int', dest='disassemble_after', help='the number of instructions to disassemble after the frame PC', default=4)
-    parser.add_option('-i', '--interactive', action='store_true', help='parse all crash logs and enter interactive mode', default=False)
+    option_parser = CreateSymbolicateCrashLogOptions ('crashlog', description, True)
     try:
-        (options, args) = parser.parse_args(command_args)
+        (options, args) = option_parser.parse_args(command_args)
     except:
         return
         
@@ -505,93 +610,13 @@ be disassembled and lookups can be performed using the addresses found in the cr
             interactive_crashlogs(options, args)
         else:
             for crash_log_file in args:
-                crash_log = CrashLog(crash_log_file)
-            
-                #pp = pprint.PrettyPrinter(indent=4); pp.pprint(args)
-                if crash_log.error:
-                    print crash_log.error
-                    return
-                if options.verbose:
-                    crash_log.dump()
-                if not crash_log.images:
-                    print 'error: no images in crash log'
-                    return
-
-                target = crash_log.create_target ()
-                if not target:
-                    return
-                exe_module = target.GetModuleAtIndex(0)
-                images_to_load = list()
-                loaded_images = list()
-                if options.load_all_images:
-                    # --load-all option was specified, load everything up
-                    for image in crash_log.images:
-                        images_to_load.append(image)
-                else:
-                    # Only load the images found in stack frames for the crashed threads
-                    for ident in crash_log.idents:
-                        images = crash_log.find_images_with_identifier (ident)
-                        if images:
-                            for image in images:
-                                images_to_load.append(image)
-                        else:
-                            print 'error: can\'t find image for identifier "%s"' % ident
-            
-                for image in images_to_load:
-                    if image in loaded_images:
-                        print "warning: skipping %s loaded at %#16.16x duplicate entry (probably commpage)" % (image.path, image.text_addr_lo)
-                    else:
-                        err = image.add_module (target)
-                        if err:
-                            print err
-                        else:
-                            #print 'loaded %s' % image
-                            loaded_images.append(image)
-            
-                for thread in crash_log.threads:
-                    this_thread_crashed = thread.did_crash()
-                    if options.crashed_only and this_thread_crashed == False:
-                        continue
-                    print "%s" % thread
-                    #prev_frame_index = -1
-                    for frame_idx, frame in enumerate(thread.frames):
-                        disassemble = (this_thread_crashed or options.disassemble_all_threads) and frame_idx < options.disassemble_depth;
-                        if frame_idx == 0:
-                            symbolicated_frame_addresses = crash_log.symbolicate (frame.pc)
-                        else:
-                            # Any frame above frame zero and we have to subtract one to get the previous line entry
-                            symbolicated_frame_addresses = crash_log.symbolicate (frame.pc - 1)
-                        
-                        if symbolicated_frame_addresses:
-                            symbolicated_frame_address_idx = 0
-                            for symbolicated_frame_address in symbolicated_frame_addresses:
-                                print '[%3u] %s' % (frame_idx, symbolicated_frame_address)
-                            
-                                if symbolicated_frame_address_idx == 0:
-                                    if disassemble:
-                                        instructions = symbolicated_frame_address.get_instructions()
-                                        if instructions:
-                                            print
-                                            symbolication.disassemble_instructions (target, 
-                                                                                    instructions, 
-                                                                                    frame.pc, 
-                                                                                    options.disassemble_before, 
-                                                                                    options.disassemble_after, frame.index > 0)
-                                            print
-                                symbolicated_frame_address_idx += 1
-                        else:
-                            print frame
-                    print                
-
-                if options.dump_image_list:
-                    print "Binary Images:"
-                    for image in crash_log.images:
-                        print image
-
+                crash_log = CrashLog(crash_log_file)            
+                SymbolicateCrashLog (crash_log, options)
 if __name__ == '__main__':
     # Create a new debugger instance
+    print 'main'
     lldb.debugger = lldb.SBDebugger.Create()
-    SymbolicateCrashLog (sys.argv[1:])
+    SymbolicateCrashLogs (sys.argv[1:])
 elif getattr(lldb, 'debugger', None):
     lldb.debugger.HandleCommand('command script add -f lldb.macosx.crashlog.Symbolicate crashlog')
     print '"crashlog" command installed, type "crashlog --help" for detailed help'
