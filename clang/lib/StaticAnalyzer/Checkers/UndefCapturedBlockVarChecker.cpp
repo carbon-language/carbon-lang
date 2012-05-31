@@ -94,6 +94,7 @@ UndefCapturedBlockVarChecker::checkPostStmt(const BlockExpr *BE,
         if (const Expr *Ex = FindBlockDeclRefExpr(BE->getBody(), VD))
           R->addRange(Ex->getSourceRange());
         R->addVisitor(new FindLastStoreBRVisitor(VRVal, VR));
+        R->disablePathPruning();
         // need location of block
         C.EmitReport(R);
       }

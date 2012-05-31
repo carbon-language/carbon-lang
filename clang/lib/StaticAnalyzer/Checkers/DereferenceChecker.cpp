@@ -88,6 +88,7 @@ void DereferenceChecker::checkLocation(SVal l, bool isLoad, const Stmt* S,
         new BugReport(*BT_undef, BT_undef->getDescription(), N);
       report->addVisitor(bugreporter::getTrackNullOrUndefValueVisitor(N,
                                         bugreporter::GetDerefExpr(N), report));
+      report->disablePathPruning();
       C.EmitReport(report);
     }
     return;

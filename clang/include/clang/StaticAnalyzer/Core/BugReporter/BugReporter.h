@@ -101,20 +101,27 @@ protected:
   /// Used for clients to tell if the report's configuration has changed
   /// since the last time they checked.
   unsigned ConfigurationChangeToken;
+  
+  /// When set, this flag disables all callstack pruning from a diagnostic
+  /// path.  This is useful for some reports that want maximum fidelty
+  /// when reporting an issue.
+  bool DoNotPrunePath;
 
 public:
   BugReport(BugType& bt, StringRef desc, const ExplodedNode *errornode)
     : BT(bt), DeclWithIssue(0), Description(desc), ErrorNode(errornode),
-      ConfigurationChangeToken(0) {}
+      ConfigurationChangeToken(0), DoNotPrunePath(false) {}
 
   BugReport(BugType& bt, StringRef shortDesc, StringRef desc,
             const ExplodedNode *errornode)
     : BT(bt), DeclWithIssue(0), ShortDescription(shortDesc), Description(desc),
-      ErrorNode(errornode), ConfigurationChangeToken(0) {}
+      ErrorNode(errornode), ConfigurationChangeToken(0),
+      DoNotPrunePath(false) {}
 
   BugReport(BugType& bt, StringRef desc, PathDiagnosticLocation l)
     : BT(bt), DeclWithIssue(0), Description(desc), Location(l), ErrorNode(0),
-      ConfigurationChangeToken(0) {}
+      ConfigurationChangeToken(0),
+      DoNotPrunePath(false) {}
 
   /// \brief Create a BugReport with a custom uniqueing location.
   ///
@@ -142,6 +149,13 @@ public:
     return ShortDescription.empty() ? Description : ShortDescription;
   }
 
+  /// Indicates whether or not any path pruning should take place
+  /// when generating a PathDiagnostic from this BugReport.
+  bool shouldPrunePath() const { return !DoNotPrunePath; }
+
+  /// Disable all path pruning when generating a PathDiagnostic.
+  void disablePathPruning() { DoNotPrunePath = true; }
+  
   void markInteresting(SymbolRef sym);
   void markInteresting(const MemRegion *R);
   void markInteresting(SVal V);

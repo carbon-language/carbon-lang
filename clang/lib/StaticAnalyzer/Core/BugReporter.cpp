@@ -1861,9 +1861,11 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
   } while(finalReportConfigToken != originalReportConfigToken);
 
   // Finally, prune the diagnostic path of uninteresting stuff.
-  bool hasSomethingInteresting = RemoveUneededCalls(PD.getMutablePieces());
-  assert(hasSomethingInteresting);
-  (void) hasSomethingInteresting;
+  if (R->shouldPrunePath()) {
+    bool hasSomethingInteresting = RemoveUneededCalls(PD.getMutablePieces());
+    assert(hasSomethingInteresting);
+    (void) hasSomethingInteresting;
+  }
 }
 
 void BugReporter::Register(BugType *BT) {

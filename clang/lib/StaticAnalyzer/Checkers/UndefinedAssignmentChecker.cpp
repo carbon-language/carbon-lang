@@ -80,6 +80,7 @@ void UndefinedAssignmentChecker::checkBind(SVal location, SVal val,
     R->addRange(ex->getSourceRange());
     R->addVisitor(bugreporter::getTrackNullOrUndefValueVisitor(N, ex, R));
   }
+  R->disablePathPruning();
   C.EmitReport(R);
 }
 
