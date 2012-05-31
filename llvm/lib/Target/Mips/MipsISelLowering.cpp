@@ -103,6 +103,11 @@ MipsTargetLowering(MipsTargetMachine &TM)
   if (HasMips64)
     addRegisterClass(MVT::i64, &Mips::CPU64RegsRegClass);
 
+  if (Subtarget->inMips16Mode()) {
+    addRegisterClass(MVT::i32, &Mips::CPU16RegsRegClass);
+    addRegisterClass(MVT::i32, &Mips::CPURARegRegClass);
+  }
+
   if (!TM.Options.UseSoftFloat) {
     addRegisterClass(MVT::f32, &Mips::FGR32RegClass);
 
