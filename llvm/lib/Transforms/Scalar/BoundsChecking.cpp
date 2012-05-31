@@ -20,6 +20,7 @@
 #include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/Analysis/ScalarEvolutionExpander.h"
 #include "llvm/Analysis/ScalarEvolutionExpressions.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/InstIterator.h"
 #include "llvm/Support/IRBuilder.h"
@@ -34,6 +35,9 @@
 #include "llvm/Operator.h"
 #include "llvm/Pass.h"
 using namespace llvm;
+
+static cl::opt<bool> ManyTrapBB("bounds-checking-multiple-traps",
+                                cl::desc("Use one trap block per assertion"));
 
 STATISTIC(ChecksAdded, "Bounds checks added");
 STATISTIC(ChecksSkipped, "Bounds checks skipped");
@@ -98,7 +102,7 @@ INITIALIZE_PASS_END(BoundsChecking, "bounds-checking",
 /// getTrapBB - create a basic block that traps. All overflowing conditions
 /// branch to this block. There's only one trap block per function.
 BasicBlock *BoundsChecking::getTrapBB() {
-  if (TrapBB)
+  if (TrapBB && !ManyTrapBB)
     return TrapBB;
 
   BasicBlock::iterator PrevInsertPoint = Builder->GetInsertPoint();
