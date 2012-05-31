@@ -950,11 +950,15 @@ __equal_unaligned(__bit_iterator<_Cp, true> __first1, __bit_iterator<_Cp, true> 
             __storage_type __ddn = _VSTD::min<__storage_type>(__dn, __clz_r);
             __m = (~__storage_type(0) << __first2.__ctz_) & (~__storage_type(0) >> (__clz_r - __ddn));
             if (__first2.__ctz_ > __first1.__ctz_)
+            {
                 if ((*__first2.__seg_ & __m) != (__b << (__first2.__ctz_ - __first1.__ctz_)))
                     return false;
+            }
             else
+            {
                 if ((*__first2.__seg_ & __m) != (__b >> (__first1.__ctz_ - __first2.__ctz_)))
                     return false;
+            }
             __first2.__seg_ += (__ddn + __first2.__ctz_) / __bits_per_word;
             __first2.__ctz_ = static_cast<unsigned>((__ddn + __first2.__ctz_)  % __bits_per_word);
             __dn -= __ddn;
