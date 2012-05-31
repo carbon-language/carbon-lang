@@ -32,29 +32,29 @@
 namespace __asan {
 
 // ---------------------- Memory management ---------------- {{{1
-void *AsanMmapFixedNoReserve(uptr fixed_addr, size_t size) {
+void *AsanMmapFixedNoReserve(uptr fixed_addr, uptr size) {
   return VirtualAlloc((LPVOID)fixed_addr, size,
                       MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
 }
 
-void *AsanMmapSomewhereOrDie(size_t size, const char *mem_type) {
+void *AsanMmapSomewhereOrDie(uptr size, const char *mem_type) {
   void *rv = VirtualAlloc(0, size, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
   if (rv == 0)
     OutOfMemoryMessageAndDie(mem_type, size);
   return rv;
 }
 
-void *AsanMprotect(uptr fixed_addr, size_t size) {
+void *AsanMprotect(uptr fixed_addr, uptr size) {
   return VirtualAlloc((LPVOID)fixed_addr, size,
                       MEM_RESERVE | MEM_COMMIT, PAGE_NOACCESS);
 }
 
-void AsanUnmapOrDie(void *addr, size_t size) {
+void AsanUnmapOrDie(void *addr, uptr size) {
   CHECK(VirtualFree(addr, size, MEM_DECOMMIT));
 }
 
 // ---------------------- IO ---------------- {{{1
-size_t AsanWrite(int fd, const void *buf, size_t count) {
+uptr AsanWrite(int fd, const void *buf, uptr count) {
   if (fd != 2)
     UNIMPLEMENTED();
 
@@ -73,7 +73,7 @@ int AsanOpenReadonly(const char* filename) {
   UNIMPLEMENTED();
 }
 
-size_t AsanRead(int fd, void *buf, size_t count) {
+uptr AsanRead(int fd, void *buf, uptr count) {
   UNIMPLEMENTED();
 }
 
@@ -97,18 +97,18 @@ void AsanThread::SetThreadStackTopAndBottom() {
   stack_bottom_ = (uptr)mbi.AllocationBase;
 }
 
-void AsanStackTrace::GetStackTrace(size_t max_s, uptr pc, uptr bp) {
+void AsanStackTrace::GetStackTrace(uptr max_s, uptr pc, uptr bp) {
   max_size = max_s;
   void *tmp[kStackTraceMax];
 
   // FIXME: CaptureStackBackTrace might be too slow for us.
   // FIXME: Compare with StackWalk64.
   // FIXME: Look at LLVMUnhandledExceptionFilter in Signals.inc
-  size_t cs_ret = CaptureStackBackTrace(1, max_size, tmp, 0),
+  uptr cs_ret = CaptureStackBackTrace(1, max_size, tmp, 0),
          offset = 0;
   // Skip the RTL frames by searching for the PC in the stacktrace.
   // FIXME: this doesn't work well for the malloc/free stacks yet.
-  for (size_t i = 0; i < cs_ret; i++) {
+  for (uptr i = 0; i < cs_ret; i++) {
     if (pc != (uptr)tmp[i])
       continue;
     offset = i;
@@ -116,7 +116,7 @@ void AsanStackTrace::GetStackTrace(size_t max_s, uptr pc, uptr bp) {
   }
 
   size = cs_ret - offset;
-  for (size_t i = 0; i < size; i++)
+  for (uptr i = 0; i < size; i++)
     trace[i] = (uptr)tmp[i + offset];
 }
 
@@ -308,7 +308,7 @@ int Atexit(void (*function)(void)) {
   return atexit(function);
 }
 
-void SortArray(uptr *array, size_t size) {
+void SortArray(uptr *array, uptr size) {
   std::sort(array, array + size);
 }
 
