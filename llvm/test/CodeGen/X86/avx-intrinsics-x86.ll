@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=x86_64-apple-darwin -march=x86 -mcpu=corei7 -mattr=avx | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-apple-darwin -march=x86 -mcpu=corei7-avx | FileCheck %s
 
 define <2 x i64> @test_x86_aesni_aesdec(<2 x i64> %a0, <2 x i64> %a1) {
   ; CHECK: vaesdec
@@ -2579,3 +2579,12 @@ define void @movnt_pd(i8* %p, <4 x double> %a1) nounwind {
   ret void
 }
 declare void @llvm.x86.avx.movnt.pd.256(i8*, <4 x double>) nounwind
+
+
+; Check for pclmulqdq
+define <2 x i64> @test_x86_pclmulqdq(<2 x i64> %a0, <2 x i64> %a1) {
+; CHECK: vpclmulqdq
+  %res = call <2 x i64> @llvm.x86.pclmulqdq(<2 x i64> %a0, <2 x i64> %a1, i8 0) ; <<2 x i64>> [#uses=1]
+  ret <2 x i64> %res
+}
+declare <2 x i64> @llvm.x86.pclmulqdq(<2 x i64>, <2 x i64>, i8) nounwind readnone

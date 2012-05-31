@@ -7212,49 +7212,47 @@ def AESKEYGENASSIST128rm : AESAI<0xDF, MRMSrcMem, (outs VR128:$dst),
 // CLMUL Instructions
 //===----------------------------------------------------------------------===//
 
-// Carry-less Multiplication instructions
-let neverHasSideEffects = 1 in {
 // AVX carry-less Multiplication instructions
 def VPCLMULQDQrr : AVXCLMULIi8<0x44, MRMSrcReg, (outs VR128:$dst),
            (ins VR128:$src1, VR128:$src2, i8imm:$src3),
            "vpclmulqdq\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}",
-           []>;
+           [(set VR128:$dst,
+             (int_x86_pclmulqdq VR128:$src1, VR128:$src2, imm:$src3))]>;
 
-let mayLoad = 1 in
 def VPCLMULQDQrm : AVXCLMULIi8<0x44, MRMSrcMem, (outs VR128:$dst),
            (ins VR128:$src1, i128mem:$src2, i8imm:$src3),
            "vpclmulqdq\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}",
-           []>;
+           [(set VR128:$dst, (int_x86_pclmulqdq VR128:$src1,
+                              (memopv2i64 addr:$src2), imm:$src3))]>;
 
+// Carry-less Multiplication instructions
 let Constraints = "$src1 = $dst" in {
 def PCLMULQDQrr : CLMULIi8<0x44, MRMSrcReg, (outs VR128:$dst),
            (ins VR128:$src1, VR128:$src2, i8imm:$src3),
            "pclmulqdq\t{$src3, $src2, $dst|$dst, $src2, $src3}",
-           []>;
+           [(set VR128:$dst,
+             (int_x86_pclmulqdq VR128:$src1, VR128:$src2, imm:$src3))]>;
 
-let mayLoad = 1 in
 def PCLMULQDQrm : CLMULIi8<0x44, MRMSrcMem, (outs VR128:$dst),
            (ins VR128:$src1, i128mem:$src2, i8imm:$src3),
            "pclmulqdq\t{$src3, $src2, $dst|$dst, $src2, $src3}",
-           []>;
+           [(set VR128:$dst, (int_x86_pclmulqdq VR128:$src1,
+                              (memopv2i64 addr:$src2), imm:$src3))]>;
 } // Constraints = "$src1 = $dst"
-} // neverHasSideEffects = 1
 
 
 multiclass pclmul_alias<string asm, int immop> {
-  def : InstAlias<!strconcat("pclmul", asm, 
-                           "dq {$src, $dst|$dst, $src}"),
+  def : InstAlias<!strconcat("pclmul", asm, "dq {$src, $dst|$dst, $src}"),
                   (PCLMULQDQrr VR128:$dst, VR128:$src, immop)>;
 
-  def : InstAlias<!strconcat("pclmul", asm, 
-                             "dq {$src, $dst|$dst, $src}"),
+  def : InstAlias<!strconcat("pclmul", asm, "dq {$src, $dst|$dst, $src}"),
                   (PCLMULQDQrm VR128:$dst, i128mem:$src, immop)>;
 
-  def : InstAlias<!strconcat("vpclmul", asm, 
+  def : InstAlias<!strconcat("vpclmul", asm,
                              "dq {$src2, $src1, $dst|$dst, $src1, $src2}"),
                   (VPCLMULQDQrr VR128:$dst, VR128:$src1, VR128:$src2, immop)>;
 
-  def : InstAlias<!strconcat("vpclmul", asm, 
+  def : InstAlias<!strconcat("vpclmul", asm,
                              "dq {$src2, $src1, $dst|$dst, $src1, $src2}"),
                   (VPCLMULQDQrm VR128:$dst, VR128:$src1, i128mem:$src2, immop)>;
 }

@@ -819,6 +819,13 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
                         [IntrNoMem]>;
 }
 
+// PCLMUL instruction
+let TargetPrefix = "x86" in { // All intrinsics start with "llvm.x86.".
+  def int_x86_pclmulqdq : GCCBuiltin<"__builtin_ia32_pclmulqdq128">,
+          Intrinsic<[llvm_v2i64_ty], [llvm_v2i64_ty, llvm_v2i64_ty, llvm_i8_ty],
+                    [IntrNoMem]>;
+}
+
 // Vector pack
 let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_sse41_packusdw        : GCCBuiltin<"__builtin_ia32_packusdw128">,
