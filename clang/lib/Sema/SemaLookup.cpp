@@ -3161,7 +3161,7 @@ class TypoCorrectionConsumer : public VisibleDeclConsumer {
   ///
   /// The pointer value being set to the current DeclContext indicates
   /// whether there is a keyword with this name.
-  TypoEditDistanceMap BestResults;
+  TypoEditDistanceMap CorrectionResults;
 
   Sema &SemaRef;
 
@@ -3180,23 +3180,28 @@ public:
 
   typedef TypoResultsMap::iterator result_iterator;
   typedef TypoEditDistanceMap::iterator distance_iterator;
-  distance_iterator begin() { return BestResults.begin(); }
-  distance_iterator end()  { return BestResults.end(); }
-  void erase(distance_iterator I) { BestResults.erase(I); }
-  unsigned size() const { return BestResults.size(); }
-  bool empty() const { return BestResults.empty(); }
+  distance_iterator begin() { return CorrectionResults.begin(); }
+  distance_iterator end()  { return CorrectionResults.end(); }
+  void erase(distance_iterator I) { CorrectionResults.erase(I); }
+  unsigned size() const { return CorrectionResults.size(); }
+  bool empty() const { return CorrectionResults.empty(); }
 
   TypoCorrection &operator[](StringRef Name) {
-    return BestResults.begin()->second[Name];
+    return CorrectionResults.begin()->second[Name];
   }
 
   unsigned getBestEditDistance(bool Normalized) {
-    if (BestResults.empty())
+    if (CorrectionResults.empty())
       return (std::numeric_limits<unsigned>::max)();
 
-    unsigned BestED = BestResults.begin()->first;
+    unsigned BestED = CorrectionResults.begin()->first;
     return Normalized ? TypoCorrection::NormalizeEditDistance(BestED) : BestED;
   }
+
+  TypoResultsMap &getBestResults() {
+    return CorrectionResults.begin()->second;
+  }
+
 };
 
 }
@@ -3251,7 +3256,7 @@ void TypoCorrectionConsumer::addName(StringRef Name,
 
 void TypoCorrectionConsumer::addCorrection(TypoCorrection Correction) {
   StringRef Name = Correction.getCorrectionAsIdentifierInfo()->getName();
-  TypoResultsMap &Map = BestResults[Correction.getEditDistance(false)];
+  TypoResultsMap &Map = CorrectionResults[Correction.getEditDistance(false)];
 
   TypoCorrection &CurrentCorrection = Map[Name];
   if (!CurrentCorrection ||
@@ -3262,8 +3267,8 @@ void TypoCorrectionConsumer::addCorrection(TypoCorrection Correction) {
       CurrentCorrection.getAsString(SemaRef.getLangOpts()))
     CurrentCorrection = Correction;
 
-  while (BestResults.size() > MaxTypoDistanceResultSets)
-    erase(llvm::prior(BestResults.end()));
+  while (CorrectionResults.size() > MaxTypoDistanceResultSets)
+    erase(llvm::prior(CorrectionResults.end()));
 }
 
 // Fill the supplied vector with the IdentifierInfo pointers for each piece of
@@ -3978,8 +3983,8 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
   // No corrections remain...
   if (Consumer.empty()) return TypoCorrection();
 
-  TypoResultsMap &BestResults = Consumer.begin()->second;
-  ED = TypoCorrection::NormalizeEditDistance(Consumer.begin()->first);
+  TypoResultsMap &BestResults = Consumer.getBestResults();
+  ED = Consumer.getBestEditDistance(true);
 
   if (ED > 0 && Typo->getName().size() / ED < 3) {
     // If this was an unqualified lookup and we believe the callback
