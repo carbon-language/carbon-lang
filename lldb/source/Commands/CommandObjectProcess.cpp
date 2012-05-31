@@ -598,7 +598,7 @@ public:
 
             // This supports the use-case scenario of immediately continuing the process once attached.
             if (m_options.attach_info.GetContinueOnceAttached())
-                m_interpreter.HandleCommand("process continue", false, result);
+                m_interpreter.HandleCommand("process continue", eLazyBoolNo, result);
         }
         return result.Succeeded();
     }
