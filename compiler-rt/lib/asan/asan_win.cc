@@ -234,7 +234,7 @@ int AtomicInc(int *a) {
   return InterlockedExchangeAdd((LONG*)a, 1) + 1;
 }
 
-uint16_t AtomicExchange(uint16_t *a, uint16_t new_val) {
+u16 AtomicExchange(u16 *a, u16 new_val) {
   // InterlockedExchange16 seems unavailable on some MSVS installations.
   // Everybody stand back, I pretend to know inline assembly!
   // FIXME: I assume VC is smart enough to save/restore eax/ecx?

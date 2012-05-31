@@ -184,11 +184,11 @@ static inline int ToLower(int c) {
 
 // ---------------------- Internal string functions ---------------- {{{1
 
-int64_t internal_simple_strtoll(const char *nptr, char **endptr, int base) {
+s64 internal_simple_strtoll(const char *nptr, char **endptr, int base) {
   CHECK(base == 10);
   while (IsSpace(*nptr)) nptr++;
   int sgn = 1;
-  uint64_t res = 0;
+  u64 res = 0;
   bool have_digits = false;
   char *old_nptr = (char*)nptr;
   if (*nptr == '+') {
@@ -209,13 +209,13 @@ int64_t internal_simple_strtoll(const char *nptr, char **endptr, int base) {
     *endptr = (have_digits) ? (char*)nptr : old_nptr;
   }
   if (sgn > 0) {
-    return (int64_t)(Min((uint64_t)INT64_MAX, res));
+    return (s64)(Min((u64)INT64_MAX, res));
   } else {
-    return (res > INT64_MAX) ? INT64_MIN : ((int64_t)res * -1);
+    return (res > INT64_MAX) ? INT64_MIN : ((s64)res * -1);
   }
 }
 
-int64_t internal_atoll(const char *nptr) {
+s64 internal_atoll(const char *nptr) {
   return internal_simple_strtoll(nptr, (char**)0, 10);
 }
 

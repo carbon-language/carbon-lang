@@ -60,8 +60,8 @@ struct FakeFrame {
   uptr magic;  // Modified by the instrumented code.
   uptr descr;  // Modified by the instrumented code.
   FakeFrame *next;
-  uint64_t real_stack     : 48;
-  uint64_t size_minus_one : 16;
+  u64 real_stack     : 48;
+  u64 size_minus_one : 16;
 };
 
 struct FakeFrameFifo {

@@ -52,8 +52,8 @@ static inline int AppendChar(char **buff, const char *buff_end, char c) {
 
 // Appends number in a given base to buffer. If its length is less than
 // "minimal_num_length", it is padded with leading zeroes.
-static int AppendUnsigned(char **buff, const char *buff_end, uint64_t num,
-                          uint8_t base, uint8_t minimal_num_length) {
+static int AppendUnsigned(char **buff, const char *buff_end, u64 num,
+                          u8 base, u8 minimal_num_length) {
   uptr const kMaxLen = 30;
   RAW_CHECK(base == 10 || base == 16);
   RAW_CHECK(minimal_num_length < kMaxLen);
@@ -75,13 +75,13 @@ static int AppendUnsigned(char **buff, const char *buff_end, uint64_t num,
 }
 
 static inline int AppendSignedDecimal(char **buff, const char *buff_end,
-                                      int64_t num) {
+                                      s64 num) {
   int result = 0;
   if (num < 0) {
     result += AppendChar(buff, buff_end, '-');
     num = -num;
   }
-  result += AppendUnsigned(buff, buff_end, (uint64_t)num, 10, 0);
+  result += AppendUnsigned(buff, buff_end, (u64)num, 10, 0);
   return result;
 }
 
@@ -97,7 +97,7 @@ static inline int AppendString(char **buff, const char *buff_end,
 }
 
 static inline int AppendPointer(char **buff, const char *buff_end,
-                                uint64_t ptr_value) {
+                                u64 ptr_value) {
   int result = 0;
   result += AppendString(buff, buff_end, "0x");
   result += AppendUnsigned(buff, buff_end, ptr_value, 16,
@@ -119,10 +119,10 @@ static int VSNPrintf(char *buff, int buff_length,
       cur++;
       bool have_z = (*cur == 'z');
       cur += have_z;
-      int64_t dval;
-      uint64_t uval;
+      s64 dval;
+      u64 uval;
       switch (*cur) {
-        case 'd': dval = have_z ? va_arg(args, intptr_t)
+        case 'd': dval = have_z ? va_arg(args, sptr)
                                 : va_arg(args, int);
                   result += AppendSignedDecimal(&buff, buff_end, dval);
                   break;

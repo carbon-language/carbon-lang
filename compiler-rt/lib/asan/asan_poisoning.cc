@@ -19,7 +19,7 @@
 
 namespace __asan {
 
-void PoisonShadow(uptr addr, uptr size, uint8_t value) {
+void PoisonShadow(uptr addr, uptr size, u8 value) {
   CHECK(AddrIsAlignedByGranularity(addr));
   CHECK(AddrIsAlignedByGranularity(addr + size));
   uptr shadow_beg = MemToShadow(addr);
@@ -31,9 +31,9 @@ void PoisonShadow(uptr addr, uptr size, uint8_t value) {
 void PoisonShadowPartialRightRedzone(uptr addr,
                                      uptr size,
                                      uptr redzone_size,
-                                     uint8_t value) {
+                                     u8 value) {
   CHECK(AddrIsAlignedByGranularity(addr));
-  uint8_t *shadow = (uint8_t*)MemToShadow(addr);
+  u8 *shadow = (u8*)MemToShadow(addr);
   for (uptr i = 0; i < redzone_size;
        i += SHADOW_GRANULARITY, shadow++) {
     if (i + SHADOW_GRANULARITY <= size) {
@@ -48,12 +48,12 @@ void PoisonShadowPartialRightRedzone(uptr addr,
 
 
 struct ShadowSegmentEndpoint {
-  uint8_t *chunk;
-  int8_t offset;  // in [0, SHADOW_GRANULARITY)
-  int8_t value;  // = *chunk;
+  u8 *chunk;
+  s8 offset;  // in [0, SHADOW_GRANULARITY)
+  s8 value;  // = *chunk;
 
   explicit ShadowSegmentEndpoint(uptr address) {
-    chunk = (uint8_t*)MemToShadow(address);
+    chunk = (u8*)MemToShadow(address);
     offset = address & (SHADOW_GRANULARITY - 1);
     value = *chunk;
   }
@@ -85,7 +85,7 @@ void __asan_poison_memory_region(void const volatile *addr, uptr size) {
   ShadowSegmentEndpoint end(end_addr);
   if (beg.chunk == end.chunk) {
     CHECK(beg.offset < end.offset);
-    int8_t value = beg.value;
+    s8 value = beg.value;
     CHECK(value == end.value);
     // We can only poison memory if the byte in end.offset is unaddressable.
     // No need to re-poison memory if it is poisoned already.
@@ -126,7 +126,7 @@ void __asan_unpoison_memory_region(void const volatile *addr, uptr size) {
   ShadowSegmentEndpoint end(end_addr);
   if (beg.chunk == end.chunk) {
     CHECK(beg.offset < end.offset);
-    int8_t value = beg.value;
+    s8 value = beg.value;
     CHECK(value == end.value);
     // We unpoison memory bytes up to enbytes up to end.offset if it is not
     // unpoisoned already.

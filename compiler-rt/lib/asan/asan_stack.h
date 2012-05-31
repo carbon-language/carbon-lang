@@ -50,9 +50,9 @@ struct AsanStackTrace {
   static uptr GetCurrentPc();
 
   static uptr CompressStack(AsanStackTrace *stack,
-                            uint32_t *compressed, uptr size);
+                            u32 *compressed, uptr size);
   static void UncompressStack(AsanStackTrace *stack,
-                              uint32_t *compressed, uptr size);
+                              u32 *compressed, uptr size);
 };
 
 }  // namespace __asan

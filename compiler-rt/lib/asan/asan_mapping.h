@@ -103,10 +103,10 @@ static inline bool AddrIsAlignedByGranularity(uptr a) {
 
 static inline bool AddressIsPoisoned(uptr a) {
   const uptr kAccessSize = 1;
-  uint8_t *shadow_address = (uint8_t*)MemToShadow(a);
-  int8_t shadow_value = *shadow_address;
+  u8 *shadow_address = (u8*)MemToShadow(a);
+  s8 shadow_value = *shadow_address;
   if (shadow_value) {
-    uint8_t last_accessed_byte = (a & (SHADOW_GRANULARITY - 1))
+    u8 last_accessed_byte = (a & (SHADOW_GRANULARITY - 1))
                                  + kAccessSize - 1;
     return (last_accessed_byte >= shadow_value);
   }

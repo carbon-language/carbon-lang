@@ -143,7 +143,7 @@ void AsanDisableCoreDumper() {
 void AsanDumpProcessMap() {
   AsanProcMaps proc_maps;
   uptr start, end;
-  const intptr_t kBufSize = 4095;
+  const sptr kBufSize = 4095;
   char filename[kBufSize];
   Report("Process memory map follows:\n");
   while (proc_maps.Next(&start, &end, /* file_offset */0,
@@ -185,7 +185,7 @@ int AtomicInc(int *a) {
 #endif
 }
 
-uint16_t AtomicExchange(uint16_t *a, uint16_t new_val) {
+u16 AtomicExchange(u16 *a, u16 new_val) {
   return __sync_lock_test_and_set(a, new_val);
 }
 

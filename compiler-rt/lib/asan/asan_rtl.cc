@@ -30,24 +30,24 @@ static const uptr kMallocContextSize = 30;
 
 uptr  FLAG_malloc_context_size = kMallocContextSize;
 uptr  FLAG_max_malloc_fill_size = 0;
-int64_t FLAG_v = 0;
+s64 FLAG_v = 0;
 uptr  FLAG_redzone = (ASAN_LOW_MEMORY) ? 64 : 128;  // power of two, >= 32
 uptr  FLAG_quarantine_size = (ASAN_LOW_MEMORY) ? 1UL << 24 : 1UL << 28;
-static int64_t    FLAG_atexit = 0;
+static s64    FLAG_atexit = 0;
 bool    FLAG_poison_shadow = 1;
-int64_t FLAG_report_globals = 1;
+s64 FLAG_report_globals = 1;
 bool    FLAG_handle_segv = ASAN_NEEDS_SEGV;
 bool    FLAG_use_sigaltstack = 0;
 bool    FLAG_symbolize = 1;
-int64_t FLAG_demangle = 1;
-int64_t FLAG_debug = 0;
+s64 FLAG_demangle = 1;
+s64 FLAG_debug = 0;
 bool    FLAG_replace_cfallocator = 1;  // Used on Mac only.
 bool    FLAG_replace_str = 1;
 bool    FLAG_replace_intrin = 1;
 bool    FLAG_use_fake_stack = 1;
-int64_t FLAG_exitcode = ASAN_DEFAULT_FAILURE_EXITCODE;
+s64 FLAG_exitcode = ASAN_DEFAULT_FAILURE_EXITCODE;
 bool    FLAG_allow_user_poisoning = 1;
-int64_t FLAG_sleep_before_dying = 0;
+s64 FLAG_sleep_before_dying = 0;
 bool    FLAG_abort_on_error = 0;
 bool    FLAG_unmap_shadow_on_exit = 0;
 bool    FLAG_disable_core = __WORDSIZE == 64;
@@ -69,7 +69,7 @@ void ShowStatsAndAbort() {
 }
 
 static void PrintBytes(const char *before, uptr *a) {
-  uint8_t *bytes = (uint8_t*)a;
+  u8 *bytes = (u8*)a;
   uptr byte_num = (__WORDSIZE) / 8;
   Printf("%s%p:", before, (void*)a);
   for (uptr i = 0; i < byte_num; i++) {
@@ -167,7 +167,7 @@ void *LowLevelAllocator::Allocate(uptr size) {
 static bool DescribeStackAddress(uptr addr, uptr access_size) {
   AsanThread *t = asanThreadRegistry().FindThreadByStackAddress(addr);
   if (!t) return false;
-  const intptr_t kBufSize = 4095;
+  const sptr kBufSize = 4095;
   char buf[kBufSize];
   uptr offset = 0;
   const char *frame_descr = t->GetFrameNameByAddr(addr, &offset);
@@ -181,7 +181,7 @@ static bool DescribeStackAddress(uptr addr, uptr access_size) {
   buf[0] = 0;
   internal_strncat(buf, frame_descr,
                    Min(kBufSize,
-                       static_cast<intptr_t>(name_end - frame_descr)));
+                       static_cast<sptr>(name_end - frame_descr)));
   Printf("Address %p is located at offset %zu "
          "in frame <%s> of T%d's stack:\n",
          addr, offset, buf, t->tid());
@@ -193,7 +193,7 @@ static bool DescribeStackAddress(uptr addr, uptr access_size) {
   // Report all objects in this frame.
   for (uptr i = 0; i < n_objects; i++) {
     uptr beg, size;
-    intptr_t len;
+    sptr len;
     beg  = internal_simple_strtoll(p, &p, 10);
     size = internal_simple_strtoll(p, &p, 10);
     len  = internal_simple_strtoll(p, &p, 10);
@@ -277,7 +277,7 @@ static NOINLINE void force_interface_symbols() {
 
 // -------------------------- Init ------------------- {{{1
 static void IntFlagValue(const char *flags, const char *flag,
-                         int64_t *out_val) {
+                         s64 *out_val) {
   if (!flags) return;
   const char *str = internal_strstr(flags, flag);
   if (!str) return;
@@ -368,7 +368,7 @@ void __asan_report_error(uptr pc, uptr bp, uptr sp,
   Printf("=================================================================\n");
   const char *bug_descr = "unknown-crash";
   if (AddrIsInMem(addr)) {
-    uint8_t *shadow_addr = (uint8_t*)MemToShadow(addr);
+    u8 *shadow_addr = (u8*)MemToShadow(addr);
     // If we are accessing 16 bytes, look at the second shadow byte.
     if (*shadow_addr == 0 && access_size > SHADOW_GRANULARITY)
       shadow_addr++;
@@ -456,18 +456,18 @@ void __asan_report_error(uptr pc, uptr bp, uptr sp,
 
 static void ParseAsanOptions(const char *options) {
   IntFlagValue(options, "malloc_context_size=",
-               (int64_t*)&FLAG_malloc_context_size);
+               (s64*)&FLAG_malloc_context_size);
   CHECK(FLAG_malloc_context_size <= kMallocContextSize);
 
   IntFlagValue(options, "max_malloc_fill_size=",
-               (int64_t*)&FLAG_max_malloc_fill_size);
+               (s64*)&FLAG_max_malloc_fill_size);
 
   IntFlagValue(options, "verbosity=", &FLAG_v);
 
-  IntFlagValue(options, "redzone=", (int64_t*)&FLAG_redzone);
+  IntFlagValue(options, "redzone=", (s64*)&FLAG_redzone);
   CHECK(FLAG_redzone >= 32);
   CHECK((FLAG_redzone & (FLAG_redzone - 1)) == 0);
-  IntFlagValue(options, "quarantine_size=", (int64_t*)&FLAG_quarantine_size);
+  IntFlagValue(options, "quarantine_size=", (s64*)&FLAG_quarantine_size);
 
   IntFlagValue(options, "atexit=", &FLAG_atexit);
   BoolFlagValue(options, "poison_shadow=", &FLAG_poison_shadow);

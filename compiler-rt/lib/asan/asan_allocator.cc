@@ -43,7 +43,7 @@ namespace __asan {
 
 #define  REDZONE FLAG_redzone
 static const uptr kMinAllocSize = REDZONE * 2;
-static const uint64_t kMaxAvailableRam = 128ULL << 30;  // 128G
+static const u64 kMaxAvailableRam = 128ULL << 30;  // 128G
 static const uptr kMaxThreadLocalQuarantine = 1 << 20;  // 1M
 
 static const uptr kMinMmapSize = (ASAN_LOW_MEMORY) ? 4UL << 17 : 4UL << 20;
@@ -94,7 +94,7 @@ static inline uptr RoundUpToPowerOfTwo(uptr size) {
   return 1UL << (up + 1);
 }
 
-static inline uptr SizeClassToSize(uint8_t size_class) {
+static inline uptr SizeClassToSize(u8 size_class) {
   CHECK(size_class < kNumberOfSizeClasses);
   if (size_class <= kMallocSizeClassStepLog) {
     return 1UL << size_class;
@@ -103,8 +103,8 @@ static inline uptr SizeClassToSize(uint8_t size_class) {
   }
 }
 
-static inline uint8_t SizeToSizeClass(uptr size) {
-  uint8_t res = 0;
+static inline u8 SizeToSizeClass(uptr size) {
+  u8 res = 0;
   if (size <= kMallocSizeClassStep) {
     uptr rounded = RoundUpToPowerOfTwo(size);
     res = Log2(rounded);
@@ -129,9 +129,9 @@ static void PoisonHeapPartialRightRedzone(uptr mem, uptr size) {
                                   kAsanHeapRightRedzoneMagic);
 }
 
-static uint8_t *MmapNewPagesAndPoisonShadow(uptr size) {
+static u8 *MmapNewPagesAndPoisonShadow(uptr size) {
   CHECK(IsAligned(size, kPageSize));
-  uint8_t *res = (uint8_t*)AsanMmapSomewhereOrDie(size, __FUNCTION__);
+  u8 *res = (u8*)AsanMmapSomewhereOrDie(size, __FUNCTION__);
   PoisonShadow((uptr)res, size, kAsanHeapLeftRedzoneMagic);
   if (FLAG_debug) {
     Printf("ASAN_MMAP: [%p, %p)\n", res, res + size);
@@ -157,35 +157,35 @@ enum {
 };
 
 struct ChunkBase {
-  uint16_t   chunk_state;
-  uint8_t    size_class;
-  uint32_t   offset;  // User-visible memory starts at this+offset (beg()).
-  int32_t    alloc_tid;
-  int32_t    free_tid;
+  u16   chunk_state;
+  u8    size_class;
+  u32   offset;  // User-visible memory starts at this+offset (beg()).
+  s32    alloc_tid;
+  s32    free_tid;
   uptr     used_size;  // Size requested by the user.
   AsanChunk *next;
 
   uptr   beg() { return (uptr)this + offset; }
   uptr Size() { return SizeClassToSize(size_class); }
-  uint8_t SizeClass() { return size_class; }
+  u8 SizeClass() { return size_class; }
 };
 
 struct AsanChunk: public ChunkBase {
-  uint32_t *compressed_alloc_stack() {
+  u32 *compressed_alloc_stack() {
     CHECK(REDZONE >= sizeof(ChunkBase));
-    return (uint32_t*)((uptr)this + sizeof(ChunkBase));
+    return (u32*)((uptr)this + sizeof(ChunkBase));
   }
-  uint32_t *compressed_free_stack() {
+  u32 *compressed_free_stack() {
     CHECK(REDZONE >= sizeof(ChunkBase));
-    return (uint32_t*)((uptr)this + REDZONE);
+    return (u32*)((uptr)this + REDZONE);
   }
 
   // The left redzone after the ChunkBase is given to the alloc stack trace.
   uptr compressed_alloc_stack_size() {
-    return (REDZONE - sizeof(ChunkBase)) / sizeof(uint32_t);
+    return (REDZONE - sizeof(ChunkBase)) / sizeof(u32);
   }
   uptr compressed_free_stack_size() {
-    return (REDZONE) / sizeof(uint32_t);
+    return (REDZONE) / sizeof(u32);
   }
 
   bool AddrIsInside(uptr addr, uptr access_size, uptr *offset) {
@@ -307,7 +307,7 @@ class MallocInfo {
 
   explicit MallocInfo(LinkerInitialized x) : mu_(x) { }
 
-  AsanChunk *AllocateChunks(uint8_t size_class, uptr n_chunks) {
+  AsanChunk *AllocateChunks(u8 size_class, uptr n_chunks) {
     AsanChunk *m = 0;
     AsanChunk **fl = &free_lists_[size_class];
     {
@@ -515,7 +515,7 @@ class MallocInfo {
   }
 
   // Get a list of newly allocated chunks.
-  AsanChunk *GetNewChunks(uint8_t size_class) {
+  AsanChunk *GetNewChunks(u8 size_class) {
     uptr size = SizeClassToSize(size_class);
     CHECK(IsPowerOfTwo(kMinMmapSize));
     CHECK(size < kMinMmapSize || (size % kMinMmapSize) == 0);
@@ -530,7 +530,7 @@ class MallocInfo {
       mmap_size += kPageSize;
     }
     CHECK(n_chunks > 0);
-    uint8_t *mem = MmapNewPagesAndPoisonShadow(mmap_size);
+    u8 *mem = MmapNewPagesAndPoisonShadow(mmap_size);
 
     // Statistics.
     AsanStats &thread_stats = asanThreadRegistry().GetCurrentThreadStats();
@@ -608,7 +608,7 @@ static void Describe(uptr addr, uptr access_size) {
   }
 }
 
-static uint8_t *Allocate(uptr alignment, uptr size, AsanStackTrace *stack) {
+static u8 *Allocate(uptr alignment, uptr size, AsanStackTrace *stack) {
   __asan_init();
   CHECK(stack);
   if (size == 0) {
@@ -626,7 +626,7 @@ static uint8_t *Allocate(uptr alignment, uptr size, AsanStackTrace *stack) {
     return 0;
   }
 
-  uint8_t size_class = SizeToSizeClass(needed_size);
+  u8 size_class = SizeToSizeClass(needed_size);
   uptr size_to_allocate = SizeClassToSize(size_class);
   CHECK(size_to_allocate >= kMinAllocSize);
   CHECK(size_to_allocate >= needed_size);
@@ -692,10 +692,10 @@ static uint8_t *Allocate(uptr alignment, uptr size, AsanStackTrace *stack) {
   if (size <= FLAG_max_malloc_fill_size) {
     REAL(memset)((void*)addr, 0, rounded_size);
   }
-  return (uint8_t*)addr;
+  return (u8*)addr;
 }
 
-static void Deallocate(uint8_t *ptr, AsanStackTrace *stack) {
+static void Deallocate(u8 *ptr, AsanStackTrace *stack) {
   if (!ptr) return;
   CHECK(stack);
 
@@ -707,7 +707,7 @@ static void Deallocate(uint8_t *ptr, AsanStackTrace *stack) {
   AsanChunk *m = PtrToChunk((uptr)ptr);
 
   // Flip the state atomically to avoid race on double-free.
-  uint16_t old_chunk_state = AtomicExchange(&m->chunk_state, CHUNK_QUARANTINE);
+  u16 old_chunk_state = AtomicExchange(&m->chunk_state, CHUNK_QUARANTINE);
 
   if (old_chunk_state == CHUNK_QUARANTINE) {
     Report("ERROR: AddressSanitizer attempting double-free on %p:\n", ptr);
@@ -751,7 +751,7 @@ static void Deallocate(uint8_t *ptr, AsanStackTrace *stack) {
   }
 }
 
-static uint8_t *Reallocate(uint8_t *old_ptr, uptr new_size,
+static u8 *Reallocate(u8 *old_ptr, uptr new_size,
                            AsanStackTrace *stack) {
   CHECK(old_ptr && new_size);
 
@@ -764,7 +764,7 @@ static uint8_t *Reallocate(uint8_t *old_ptr, uptr new_size,
   CHECK(m->chunk_state == CHUNK_ALLOCATED);
   uptr old_size = m->used_size;
   uptr memcpy_size = Min(new_size, old_size);
-  uint8_t *new_ptr = Allocate(0, new_size, stack);
+  u8 *new_ptr = Allocate(0, new_size, stack);
   if (new_ptr) {
     CHECK(REAL(memcpy) != 0);
     REAL(memcpy)(new_ptr, old_ptr, memcpy_size);
@@ -805,7 +805,7 @@ void *asan_memalign(uptr alignment, uptr size, AsanStackTrace *stack) {
 
 void asan_free(void *ptr, AsanStackTrace *stack) {
   ASAN_DELETE_HOOK(ptr);
-  Deallocate((uint8_t*)ptr, stack);
+  Deallocate((u8*)ptr, stack);
 }
 
 void *asan_malloc(uptr size, AsanStackTrace *stack) {
@@ -829,10 +829,10 @@ void *asan_realloc(void *p, uptr size, AsanStackTrace *stack) {
     return ptr;
   } else if (size == 0) {
     ASAN_DELETE_HOOK(p);
-    Deallocate((uint8_t*)p, stack);
+    Deallocate((u8*)p, stack);
     return 0;
   }
-  return Reallocate((uint8_t*)p, size, stack);
+  return Reallocate((u8*)p, size, stack);
 }
 
 void *asan_valloc(uptr size, AsanStackTrace *stack) {

@@ -56,11 +56,11 @@ class AsanProcMaps {
   uptr proc_self_maps_buff_len_;
   char *current_;
 #elif defined __APPLE__
-  template<uint32_t kLCSegment, typename SegmentCommand>
+  template<u32 kLCSegment, typename SegmentCommand>
   bool NextSegmentLoad(uptr *start, uptr *end, uptr *offset,
                        char filename[], uptr filename_size);
   int current_image_;
-  uint32_t current_magic_;
+  u32 current_magic_;
   int current_load_cmd_count_;
   char *current_load_cmd_addr_;
 #endif

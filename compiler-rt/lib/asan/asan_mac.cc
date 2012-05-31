@@ -98,7 +98,7 @@ bool AsanInterceptsSignal(int signum) {
 }
 
 static void *asan_mmap(void *addr, size_t length, int prot, int flags,
-                int fd, uint64_t offset) {
+                int fd, u64 offset) {
   return mmap(addr, length, prot, flags, fd, offset);
 }
 
@@ -211,14 +211,14 @@ void AsanProcMaps::Reset() {
 // and returns the start and end addresses and file offset of the corresponding
 // segment.
 // Note that the segment addresses are not necessarily sorted.
-template<uint32_t kLCSegment, typename SegmentCommand>
+template<u32 kLCSegment, typename SegmentCommand>
 bool AsanProcMaps::NextSegmentLoad(
     uptr *start, uptr *end, uptr *offset,
     char filename[], size_t filename_size) {
   const char* lc = current_load_cmd_addr_;
   current_load_cmd_addr_ += ((const load_command *)lc)->cmdsize;
   if (((const load_command *)lc)->cmd == kLCSegment) {
-    const intptr_t dlloff = _dyld_get_image_vmaddr_slide(current_image_);
+    const sptr dlloff = _dyld_get_image_vmaddr_slide(current_image_);
     const SegmentCommand* sc = (const SegmentCommand *)lc;
     if (start) *start = sc->vmaddr + dlloff;
     if (end) *end = sc->vmaddr + sc->vmsize + dlloff;
@@ -414,7 +414,7 @@ typedef void* pthread_workitem_handle_t;
 
 typedef void* dispatch_group_t;
 typedef void* dispatch_queue_t;
-typedef uint64_t dispatch_time_t;
+typedef u64 dispatch_time_t;
 typedef void (*dispatch_function_t)(void *block);
 typedef void* (*worker_t)(void *block);
 
@@ -604,9 +604,9 @@ INTERCEPTOR(int, pthread_workqueue_additem_np, pthread_workqueue_t workq,
 // See http://opensource.apple.com/source/CF/CF-635.15/CFRuntime.h
 typedef struct __CFRuntimeBase {
   uptr _cfisa;
-  uint8_t _cfinfo[4];
+  u8 _cfinfo[4];
 #if __LP64__
-  uint32_t _rc;
+  u32 _rc;
 #endif
 } CFRuntimeBase;
 

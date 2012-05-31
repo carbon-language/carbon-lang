@@ -27,11 +27,11 @@
 
 // Simple stand-alone pseudorandom number generator.
 // Current algorithm is ANSI C linear congruential PRNG.
-static inline uint32_t my_rand(uint32_t* state) {
+static inline u32 my_rand(u32* state) {
   return (*state = *state * 1103515245 + 12345) >> 16;
 }
 
-static uint32_t global_seed = 0;
+static u32 global_seed = 0;
 
 
 TEST(AddressSanitizer, InternalSimpleDeathTest) {
@@ -39,7 +39,7 @@ TEST(AddressSanitizer, InternalSimpleDeathTest) {
 }
 
 static void MallocStress(size_t n) {
-  uint32_t seed = my_rand(&global_seed);
+  u32 seed = my_rand(&global_seed);
   __asan::AsanStackTrace stack1;
   stack1.trace[0] = 0xa123;
   stack1.trace[1] = 0xa456;
@@ -95,13 +95,13 @@ TEST(AddressSanitizer, NoInstMallocTest) {
 static void PrintShadow(const char *tag, uptr ptr, size_t size) {
   fprintf(stderr, "%s shadow: %lx size % 3ld: ", tag, (long)ptr, (long)size);
   uptr prev_shadow = 0;
-  for (intptr_t i = -32; i < (intptr_t)size + 32; i++) {
+  for (sptr i = -32; i < (sptr)size + 32; i++) {
     uptr shadow = __asan::MemToShadow(ptr + i);
-    if (i == 0 || i == (intptr_t)size)
+    if (i == 0 || i == (sptr)size)
       fprintf(stderr, ".");
     if (shadow != prev_shadow) {
       prev_shadow = shadow;
-      fprintf(stderr, "%02x", (int)*(uint8_t*)shadow);
+      fprintf(stderr, "%02x", (int)*(u8*)shadow);
     }
   }
   fprintf(stderr, "\n");
@@ -207,9 +207,9 @@ static uptr pc_array[] = {
 };
 
 void CompressStackTraceTest(size_t n_iter) {
-  uint32_t seed = my_rand(&global_seed);
+  u32 seed = my_rand(&global_seed);
   const size_t kNumPcs = ASAN_ARRAY_SIZE(pc_array);
-  uint32_t compressed[2 * kNumPcs];
+  u32 compressed[2 * kNumPcs];
 
   for (size_t iter = 0; iter < n_iter; iter++) {
     std::random_shuffle(pc_array, pc_array + kNumPcs);
@@ -235,7 +235,7 @@ TEST(AddressSanitizer, CompressStackTraceTest) {
 
 void CompressStackTraceBenchmark(size_t n_iter) {
   const size_t kNumPcs = ASAN_ARRAY_SIZE(pc_array);
-  uint32_t compressed[2 * kNumPcs];
+  u32 compressed[2 * kNumPcs];
   std::random_shuffle(pc_array, pc_array + kNumPcs);
 
   __asan::AsanStackTrace stack0;
@@ -274,7 +274,7 @@ TEST(AddressSanitizer, QuarantineTest) {
 }
 
 void *ThreadedQuarantineTestWorker(void *unused) {
-  uint32_t seed = my_rand(&global_seed);
+  u32 seed = my_rand(&global_seed);
   __asan::AsanStackTrace stack;
   stack.trace[0] = 0x890;
   stack.size = 1;

@@ -28,7 +28,15 @@
 // For portability reasons we do not include stddef.h, stdint.h or any other
 // system header, but we do need some basic types that are not defined
 // in a portable way by the language itself.
-typedef unsigned long uptr;  // Unsigned integer of the same size as a pointer.
-// FIXME: add u64, u32, etc.
+typedef unsigned long uptr;
+typedef signed   long sptr;
+typedef unsigned char u8;
+typedef unsigned short u16;
+typedef unsigned int u32;
+typedef unsigned long long u64;
+typedef signed   char s8;
+typedef signed   short s16;
+typedef signed   int s32;
+typedef signed   long long s64;
 
 #endif  // SANITIZER_DEFS_H

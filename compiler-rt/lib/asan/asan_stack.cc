@@ -85,7 +85,7 @@ void AsanStackTrace::FastUnwindStack(uptr pc, uptr bp) {
 // On 64-bits we compress stack traces: if a given pc differes slightly from
 // the previous one, we record a 31-bit offset instead of the full pc.
 uptr AsanStackTrace::CompressStack(AsanStackTrace *stack,
-                                   uint32_t *compressed, uptr size) {
+                                   u32 *compressed, uptr size) {
 #if __WORDSIZE == 32
   // Don't compress, just copy.
   uptr res = 0;
@@ -103,10 +103,10 @@ uptr AsanStackTrace::CompressStack(AsanStackTrace *stack,
   for (uptr i = 0, n = stack->size; i < n; i++) {
     uptr pc = stack->trace[i];
     if (!pc) break;
-    if ((int64_t)pc < 0) break;
+    if ((s64)pc < 0) break;
     // Printf("C pc[%zu] %zx\n", i, pc);
     if (prev_pc - pc < kMaxOffset || pc - prev_pc < kMaxOffset) {
-      uptr offset = (int64_t)(pc - prev_pc);
+      uptr offset = (s64)(pc - prev_pc);
       offset |= (1U << 31);
       if (c_index >= size) break;
       // Printf("C co[%zu] offset %zx\n", i, offset);
@@ -148,7 +148,7 @@ uptr AsanStackTrace::CompressStack(AsanStackTrace *stack,
 }
 
 void AsanStackTrace::UncompressStack(AsanStackTrace *stack,
-                                     uint32_t *compressed, uptr size) {
+                                     u32 *compressed, uptr size) {
 #if __WORDSIZE == 32
   // Don't uncompress, just copy.
   stack->size = 0;
@@ -161,12 +161,12 @@ void AsanStackTrace::UncompressStack(AsanStackTrace *stack,
   uptr prev_pc = 0;
   stack->size = 0;
   for (uptr i = 0; i < size && stack->size < kStackTraceMax; i++) {
-    uint32_t x = compressed[i];
+    u32 x = compressed[i];
     uptr pc = 0;
     if (x & (1U << 31)) {
       // Printf("U co[%zu] offset: %x\n", i, x);
       // this is an offset
-      int32_t offset = x;
+      s32 offset = x;
       offset = (offset << 1) >> 1;  // remove the 31-byte and sign-extend.
       pc = prev_pc + offset;
       CHECK(pc);

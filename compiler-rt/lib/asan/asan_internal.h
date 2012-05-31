@@ -23,19 +23,19 @@
 
 #if defined(_WIN32)
 # if defined(__clang__)
-typedef int              intptr_t;
+typedef int              sptr;
 typedef unsigned int     uptr;
 # endif
 
 // There's no <stdint.h> in Visual Studio 9, so we have to define [u]int*_t.
-typedef unsigned __int8  uint8_t;
-typedef unsigned __int16 uint16_t;
-typedef unsigned __int32 uint32_t;
-typedef unsigned __int64 uint64_t;
-typedef __int8           int8_t;
+typedef unsigned __int8  u8;
+typedef unsigned __int16 u16;
+typedef unsigned __int32 u32;
+typedef unsigned __int64 u64;
+typedef __int8           s8;
 typedef __int16          int16_t;
-typedef __int32          int32_t;
-typedef __int64          int64_t;
+typedef __int32          s32;
+typedef __int64          s64;
 typedef unsigned long    DWORD;  // NOLINT
 
 extern "C" void* _ReturnAddress(void);
@@ -48,7 +48,7 @@ extern "C" void* _ReturnAddress(void);
 
 # define ASAN_INTERFACE_ATTRIBUTE  // TODO(timurrrr): do we need this on Win?
 #else  // defined(_WIN32)
-# include <stdint.h>  // for __WORDSIZE
+// #include <stdint.h>
 
 # define ALIAS(x) __attribute__((alias(x)))
 # define ALIGNED(x) __attribute__((aligned(x)))
@@ -194,7 +194,7 @@ void InstallSignalHandlers();
 int GetPid();
 uptr GetThreadSelf();
 int AtomicInc(int *a);
-uint16_t AtomicExchange(uint16_t *a, uint16_t new_val);
+u16 AtomicExchange(u16 *a, u16 new_val);
 
 // Wrapper for TLS/TSD.
 void AsanTSDInit(void (*destructor)(void *tsd));
@@ -223,13 +223,13 @@ void SortArray(uptr *array, uptr size);
 
 // asan_poisoning.cc
 // Poisons the shadow memory for "size" bytes starting from "addr".
-void PoisonShadow(uptr addr, uptr size, uint8_t value);
+void PoisonShadow(uptr addr, uptr size, u8 value);
 // Poisons the shadow memory for "redzone_size" bytes starting from
 // "addr + size".
 void PoisonShadowPartialRightRedzone(uptr addr,
                                      uptr size,
                                      uptr redzone_size,
-                                     uint8_t value);
+                                     u8 value);
 
 // Platfrom-specific options.
 #ifdef __APPLE__
@@ -241,13 +241,13 @@ bool PlatformHasDifferentMemcpyAndMemmove();
 #endif  // __APPLE__
 
 extern uptr  FLAG_quarantine_size;
-extern int64_t FLAG_demangle;
+extern s64 FLAG_demangle;
 extern bool    FLAG_symbolize;
-extern int64_t FLAG_v;
+extern s64 FLAG_v;
 extern uptr  FLAG_redzone;
-extern int64_t FLAG_debug;
+extern s64 FLAG_debug;
 extern bool    FLAG_poison_shadow;
-extern int64_t FLAG_report_globals;
+extern s64 FLAG_report_globals;
 extern uptr  FLAG_malloc_context_size;
 extern bool    FLAG_replace_str;
 extern bool    FLAG_replace_intrin;
@@ -255,9 +255,9 @@ extern bool    FLAG_replace_cfallocator;
 extern bool    FLAG_fast_unwind;
 extern bool    FLAG_use_fake_stack;
 extern uptr  FLAG_max_malloc_fill_size;
-extern int64_t FLAG_exitcode;
+extern s64 FLAG_exitcode;
 extern bool    FLAG_allow_user_poisoning;
-extern int64_t FLAG_sleep_before_dying;
+extern s64 FLAG_sleep_before_dying;
 extern bool    FLAG_handle_segv;
 extern bool    FLAG_use_sigaltstack;
 extern bool    FLAG_check_malloc_usable_size;

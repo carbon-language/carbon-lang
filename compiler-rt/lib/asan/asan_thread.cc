@@ -116,8 +116,8 @@ const char *AsanThread::GetFrameNameByAddr(uptr addr, uptr *offset) {
     is_fake_stack = true;
   }
   uptr aligned_addr = addr & ~(__WORDSIZE/8 - 1);  // align addr.
-  uint8_t *shadow_ptr = (uint8_t*)MemToShadow(aligned_addr);
-  uint8_t *shadow_bottom = (uint8_t*)MemToShadow(bottom);
+  u8 *shadow_ptr = (u8*)MemToShadow(aligned_addr);
+  u8 *shadow_bottom = (u8*)MemToShadow(bottom);
 
   while (shadow_ptr >= shadow_bottom &&
       *shadow_ptr != kAsanStackLeftRedzoneMagic) {

@@ -74,7 +74,7 @@ bool AsanInterceptsSignal(int signum) {
 }
 
 static void *asan_mmap(void *addr, uptr length, int prot, int flags,
-                int fd, uint64_t offset) {
+                int fd, u64 offset) {
 # if __WORDSIZE == 64
   return (void *)syscall(__NR_mmap, addr, length, prot, flags, fd, offset);
 # else

@@ -45,7 +45,7 @@ void PoisonRedZones(const Global &g)  {
                kGlobalAndStackRedzone, kAsanGlobalRedzoneMagic);
   if ((g.size % kGlobalAndStackRedzone) != 0) {
     // partial right redzone
-    uint64_t g_aligned_down_size = kGlobalAndStackRedzone *
+    u64 g_aligned_down_size = kGlobalAndStackRedzone *
         (g.size / kGlobalAndStackRedzone);
     CHECK(g_aligned_down_size == g_aligned_size - kGlobalAndStackRedzone);
     PoisonShadowPartialRightRedzone(g.beg + g_aligned_down_size,
