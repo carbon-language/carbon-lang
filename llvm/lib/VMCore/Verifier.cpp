@@ -68,6 +68,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/Support/ConstantRange.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
@@ -1362,6 +1363,10 @@ void Verifier::visitGetElementPtrInst(GetElementPtrInst &GEP) {
   visitInstruction(GEP);
 }
 
+static bool isContiguous(const ConstantRange &A, const ConstantRange &B) {
+  return A.getUpper() == B.getLower() || A.getLower() == B.getUpper();
+}
+
 void Verifier::visitLoadInst(LoadInst &LI) {
   PointerType *PTy = dyn_cast<PointerType>(LI.getOperand(0)->getType());
   Assert1(PTy, "Load operand must be a pointer.", &LI);
@@ -1384,7 +1389,7 @@ void Verifier::visitLoadInst(LoadInst &LI) {
     unsigned NumRanges = NumOperands / 2;
     Assert1(NumRanges >= 1, "It should have at least one range!", Range);
 
-    APInt LastHigh;
+    ConstantRange LastRange(1); // Dummy initial value
     for (unsigned i = 0; i < NumRanges; ++i) {
       ConstantInt *Low = dyn_cast<ConstantInt>(Range->getOperand(2*i));
       Assert1(Low, "The lower limit must be an integer!", Low);
@@ -1396,18 +1401,32 @@ void Verifier::visitLoadInst(LoadInst &LI) {
 
       APInt HighV = High->getValue();
       APInt LowV = Low->getValue();
-      Assert1(HighV != LowV, "Range must not be empty!", Range);
+      ConstantRange CurRange(LowV, HighV);
+      Assert1(!CurRange.isEmptySet() && !CurRange.isFullSet(),
+              "Range must not be empty!", Range);
       if (i != 0) {
-        Assert1(Low->getValue().sgt(LastHigh),
-                "Intervals are overlapping, contiguous or not in order", Range);
-        if (i == NumRanges - 1 && HighV.slt(LowV)) {
-          APInt First = dyn_cast<ConstantInt>(Range->getOperand(0))->getValue();
-          Assert1(First.sgt(HighV),
-                  "First and last intervals are contiguous or overlap", Range);
-        }
+        Assert1(CurRange.intersectWith(LastRange).isEmptySet(),
+                "Intervals are overlapping", Range);
+        Assert1(LowV.sgt(LastRange.getLower()), "Intervals are not in order",
+                Range);
+        Assert1(!isContiguous(CurRange, LastRange), "Intervals are contiguous",
+                Range);
       }
-      LastHigh = High->getValue();
+      LastRange = ConstantRange(LowV, HighV);
     }
+    if (NumRanges > 2) {
+      APInt FirstLow =
+        dyn_cast<ConstantInt>(Range->getOperand(0))->getValue();
+      APInt FirstHigh =
+        dyn_cast<ConstantInt>(Range->getOperand(1))->getValue();
+      ConstantRange FirstRange(FirstLow, FirstHigh);
+      Assert1(FirstRange.intersectWith(LastRange).isEmptySet(),
+              "Intervals are overlapping", Range);
+      Assert1(!isContiguous(FirstRange, LastRange), "Intervals are contiguous",
+              Range);
+    }
+
+
   }
 
   visitInstruction(LI);
