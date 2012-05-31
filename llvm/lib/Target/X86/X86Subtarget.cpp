@@ -202,8 +202,8 @@ void X86Subtarget::AutoDetectSubtargetFeatures() {
   bool IsAMD   = !IsIntel && memcmp(text.c, "AuthenticAMD", 12) == 0;
 
   if ((ECX >> 1) & 0x1) {
-    HasCLMUL = true;
-    ToggleFeature(X86::FeatureCLMUL);
+    HasPCLMUL = true;
+    ToggleFeature(X86::FeaturePCLMUL);
   }
   // FMA3 autodetection is switched off until we have a special flag
   // in code generator
@@ -328,7 +328,7 @@ X86Subtarget::X86Subtarget(const std::string &TT, const std::string &CPU,
   , HasPOPCNT(false)
   , HasSSE4A(false)
   , HasAES(false)
-  , HasCLMUL(false)
+  , HasPCLMUL(false)
   , HasFMA3(false)
   , HasFMA4(false)
   , HasXOP(false)

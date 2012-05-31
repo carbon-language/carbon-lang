@@ -86,8 +86,8 @@ def FeatureAVX     : SubtargetFeature<"avx", "X86SSELevel", "AVX",
 def FeatureAVX2    : SubtargetFeature<"avx2", "X86SSELevel", "AVX2",
                                       "Enable AVX2 instructions",
                                       [FeatureAVX]>;
-def FeatureCLMUL   : SubtargetFeature<"clmul", "HasCLMUL", "true",
-                               "Enable carry-less multiplication instructions",
+def FeaturePCLMUL  : SubtargetFeature<"pclmul", "HasPCLMUL", "true",
+                         "Enable packed carry-less multiplication instructions",
                                [FeatureSSE2]>;
 def FeatureFMA3    : SubtargetFeature<"fma3", "HasFMA3", "true",
                                       "Enable three-operand fused multiple-add",
@@ -172,20 +172,20 @@ def : Proc<"nehalem",         [FeatureSSE42,  FeatureCMPXCHG16B,
 // Westmere is the corei3/i5/i7 path from nehalem to sandybridge
 def : Proc<"westmere",        [FeatureSSE42, FeatureCMPXCHG16B,
                                FeatureSlowBTMem, FeatureFastUAMem,
-                               FeaturePOPCNT, FeatureAES, FeatureCLMUL]>;
+                               FeaturePOPCNT, FeatureAES, FeaturePCLMUL]>;
 // Sandy Bridge
 // SSE is not listed here since llvm treats AVX as a reimplementation of SSE,
 // rather than a superset.
 def : Proc<"corei7-avx",      [FeatureAVX, FeatureCMPXCHG16B, FeaturePOPCNT,
-                               FeatureAES, FeatureCLMUL]>;
+                               FeatureAES, FeaturePCLMUL]>;
 // Ivy Bridge
 def : Proc<"core-avx-i",      [FeatureAVX, FeatureCMPXCHG16B, FeaturePOPCNT,
-                               FeatureAES, FeatureCLMUL,
+                               FeatureAES, FeaturePCLMUL,
                                FeatureRDRAND, FeatureF16C, FeatureFSGSBase]>;
 
 // Haswell
 def : Proc<"core-avx2",       [FeatureAVX2, FeatureCMPXCHG16B, FeaturePOPCNT,
-                               FeatureAES, FeatureCLMUL, FeatureRDRAND,
+                               FeatureAES, FeaturePCLMUL, FeatureRDRAND,
                                FeatureF16C, FeatureFSGSBase,
                                FeatureMOVBE, FeatureLZCNT, FeatureBMI,
                                FeatureBMI2, FeatureFMA3]>;
@@ -220,11 +220,11 @@ def : Proc<"btver1",          [FeatureSSSE3, FeatureSSE4A, FeatureCMPXCHG16B,
                                FeatureLZCNT, FeaturePOPCNT]>;
 // Bulldozer
 def : Proc<"bdver1",          [FeatureXOP, FeatureFMA4, FeatureCMPXCHG16B,
-                               FeatureAES, FeatureCLMUL,
+                               FeatureAES, FeaturePCLMUL,
                                FeatureLZCNT, FeaturePOPCNT]>;
 // Enhanced Bulldozer
 def : Proc<"bdver2",          [FeatureXOP, FeatureFMA4, FeatureCMPXCHG16B,
-                               FeatureAES, FeatureCLMUL,
+                               FeatureAES, FeaturePCLMUL,
                                FeatureF16C, FeatureLZCNT,
                                FeaturePOPCNT, FeatureBMI]>;
 

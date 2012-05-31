@@ -511,16 +511,16 @@ class AESAI<bits<8> o, Format F, dag outs, dag ins, string asm,
       : Ii8<o, F, outs, ins, asm, pattern, itin, SSEPackedInt>, TA,
         Requires<[HasAES]>;
 
-// CLMUL Instruction Templates
-class CLMULIi8<bits<8> o, Format F, dag outs, dag ins, string asm,
+// PCLMUL Instruction Templates
+class PCLMULIi8<bits<8> o, Format F, dag outs, dag ins, string asm,
                list<dag>pattern, InstrItinClass itin = IIC_DEFAULT>
       : Ii8<o, F, outs, ins, asm, pattern, itin, SSEPackedInt>, TA,
-        OpSize, Requires<[HasCLMUL]>;
+        OpSize, Requires<[HasPCLMUL]>;
 
-class AVXCLMULIi8<bits<8> o, Format F, dag outs, dag ins, string asm,
+class AVXPCLMULIi8<bits<8> o, Format F, dag outs, dag ins, string asm,
                   list<dag>pattern, InstrItinClass itin = IIC_DEFAULT>
       : Ii8<o, F, outs, ins, asm, pattern, itin, SSEPackedInt>, TA,
-        OpSize, VEX_4V, Requires<[HasAVX, HasCLMUL]>;
+        OpSize, VEX_4V, Requires<[HasAVX, HasPCLMUL]>;
 
 // FMA3 Instruction Templates
 class FMA3<bits<8> o, Format F, dag outs, dag ins, string asm,

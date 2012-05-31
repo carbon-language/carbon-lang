@@ -519,7 +519,7 @@ def HasAVX2      : Predicate<"Subtarget->hasAVX2()">;
 
 def HasPOPCNT    : Predicate<"Subtarget->hasPOPCNT()">;
 def HasAES       : Predicate<"Subtarget->hasAES()">;
-def HasCLMUL     : Predicate<"Subtarget->hasCLMUL()">;
+def HasPCLMUL    : Predicate<"Subtarget->hasPCLMUL()">;
 def HasFMA3      : Predicate<"Subtarget->hasFMA3()">;
 def HasFMA4      : Predicate<"Subtarget->hasFMA4()">;
 def HasXOP       : Predicate<"Subtarget->hasXOP()">;

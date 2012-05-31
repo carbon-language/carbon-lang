@@ -85,8 +85,8 @@ protected:
   /// HasAES - Target has AES instructions
   bool HasAES;
 
-  /// HasCLMUL - Target has carry-less multiplication
-  bool HasCLMUL;
+  /// HasPCLMUL - Target has carry-less multiplication
+  bool HasPCLMUL;
 
   /// HasFMA3 - Target has 3-operand fused multiply-add
   bool HasFMA3;
@@ -203,7 +203,7 @@ public:
   bool has3DNowA() const { return X863DNowLevel >= ThreeDNowA; }
   bool hasPOPCNT() const { return HasPOPCNT; }
   bool hasAES() const { return HasAES; }
-  bool hasCLMUL() const { return HasCLMUL; }
+  bool hasPCLMUL() const { return HasPCLMUL; }
   bool hasFMA3() const { return HasFMA3; }
   bool hasFMA4() const { return HasFMA4; }
   bool hasXOP() const { return HasXOP; }
