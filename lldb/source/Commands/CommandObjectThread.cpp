@@ -678,7 +678,7 @@ public:
                     result.AppendMessage ("Resuming thread ");
                     for (idx=0; idx<num_threads; ++idx)
                     {
-                        Thread *thread = process->GetThreadList().GetThreadAtIndex(idx).get();
+                        Thread *thread = process->GetThreadList().FindThreadByIndexID(idx).get();
                         if (find(resume_thread_indexes.begin(), resume_thread_indexes.end(), idx) != resume_thread_indexes.end())
                         {
                             result.AppendMessageWithFormat ("%u ", idx);
@@ -704,7 +704,7 @@ public:
                 // Set the actions that the threads should each take when resuming
                 for (idx=0; idx<num_threads; ++idx)
                 {
-                    Thread *thread = process->GetThreadList().GetThreadAtIndex(idx).get();
+                    Thread *thread = process->GetThreadList().FindThreadByIndexID(idx).get();
                     if (thread == current_thread)
                     {
                         result.AppendMessageWithFormat ("Resuming thread 0x%4.4llx in process %llu\n", thread->GetID(), process->GetID());
@@ -937,7 +937,7 @@ public:
             }
             else
             {
-                thread = process->GetThreadList().GetThreadAtIndex(m_options.m_thread_idx).get();
+                thread = process->GetThreadList().FindThreadByIndexID(m_options.m_thread_idx).get();
             }
 
             if (thread == NULL)
