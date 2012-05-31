@@ -850,6 +850,29 @@ static inline raw_ostream &operator<<(raw_ostream &OS, const PrintReg &PR) {
   return OS;
 }
 
+/// PrintRegUnit - Helper class for printing register units on a raw_ostream.
+///
+/// Register units are named after their root registers:
+///
+///   AL      - Single root.
+///   FP0~ST7 - Dual roots.
+///
+/// Usage: OS << PrintRegUnit(Unit, TRI) << '\n';
+///
+class PrintRegUnit {
+  const TargetRegisterInfo *TRI;
+  unsigned Unit;
+public:
+  PrintRegUnit(unsigned unit, const TargetRegisterInfo *tri)
+    : TRI(tri), Unit(unit) {}
+  void print(raw_ostream&) const;
+};
+
+static inline raw_ostream &operator<<(raw_ostream &OS, const PrintRegUnit &PR) {
+  PR.print(OS);
+  return OS;
+}
+
 } // End llvm namespace
 
 #endif

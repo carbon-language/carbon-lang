@@ -46,6 +46,27 @@ void PrintReg::print(raw_ostream &OS) const {
   }
 }
 
+void PrintRegUnit::print(raw_ostream &OS) const {
+  // Generic printout when TRI is missing.
+  if (!TRI) {
+    OS << "Unit~" << Unit;
+    return;
+  }
+
+  // Check for invalid register units.
+  if (Unit >= TRI->getNumRegUnits()) {
+    OS << "BadUnit~" << Unit;
+    return;
+  }
+
+  // Normal units have at least one root.
+  MCRegUnitRootIterator Roots(Unit, TRI);
+  assert(Roots.isValid() && "Unit has no roots.");
+  OS << TRI->getName(*Roots);
+  for (++Roots; Roots.isValid(); ++Roots)
+    OS << '~' << TRI->getName(*Roots);
+}
+
 /// getAllocatableClass - Return the maximal subclass of the given register
 /// class that is alloctable, or NULL.
 const TargetRegisterClass *
