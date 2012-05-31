@@ -32,7 +32,7 @@ enum SuppressionType {
 struct Suppression {
   Suppression *next;
   SuppressionType type;
-  char *func;
+  char *templ;
 };
 
 Suppression *SuppressionParse(const char* supp);

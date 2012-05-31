@@ -29,16 +29,16 @@ TEST(Suppressions, Parse) {
   );  // NOLINT
   Suppression *supp = supp0;
   EXPECT_EQ(supp->type, SuppressionRace);
-  EXPECT_EQ(0, strcmp(supp->func, "quz"));
+  EXPECT_EQ(0, strcmp(supp->templ, "quz"));
   supp = supp->next;
   EXPECT_EQ(supp->type, SuppressionRace);
-  EXPECT_EQ(0, strcmp(supp->func, "baz"));
+  EXPECT_EQ(0, strcmp(supp->templ, "baz"));
   supp = supp->next;
   EXPECT_EQ(supp->type, SuppressionRace);
-  EXPECT_EQ(0, strcmp(supp->func, "bar"));
+  EXPECT_EQ(0, strcmp(supp->templ, "bar"));
   supp = supp->next;
   EXPECT_EQ(supp->type, SuppressionRace);
-  EXPECT_EQ(0, strcmp(supp->func, "foo"));
+  EXPECT_EQ(0, strcmp(supp->templ, "foo"));
   supp = supp->next;
   EXPECT_EQ((Suppression*)0, supp);
 }
@@ -54,10 +54,10 @@ TEST(Suppressions, Parse2) {
   );  // NOLINT
   Suppression *supp = supp0;
   EXPECT_EQ(supp->type, SuppressionRace);
-  EXPECT_EQ(0, strcmp(supp->func, "baz* *baz"));
+  EXPECT_EQ(0, strcmp(supp->templ, "baz* *baz"));
   supp = supp->next;
   EXPECT_EQ(supp->type, SuppressionRace);
-  EXPECT_EQ(0, strcmp(supp->func, "bar"));
+  EXPECT_EQ(0, strcmp(supp->templ, "bar"));
   supp = supp->next;
   EXPECT_EQ((Suppression*)0, supp);
 }
@@ -71,10 +71,10 @@ TEST(Suppressions, Parse3) {
   );  // NOLINT
   Suppression *supp = supp0;
   EXPECT_EQ(supp->type, SuppressionRace);
-  EXPECT_EQ(0, strcmp(supp->func, "bar"));
+  EXPECT_EQ(0, strcmp(supp->templ, "bar"));
   supp = supp->next;
   EXPECT_EQ(supp->type, SuppressionRace);
-  EXPECT_EQ(0, strcmp(supp->func, "foo"));
+  EXPECT_EQ(0, strcmp(supp->templ, "foo"));
   supp = supp->next;
   EXPECT_EQ((Suppression*)0, supp);
 }
@@ -89,16 +89,16 @@ TEST(Suppressions, ParseType) {
   );  // NOLINT
   Suppression *supp = supp0;
   EXPECT_EQ(supp->type, SuppressionSignal);
-  EXPECT_EQ(0, strcmp(supp->func, "quz"));
+  EXPECT_EQ(0, strcmp(supp->templ, "quz"));
   supp = supp->next;
   EXPECT_EQ(supp->type, SuppressionMutex);
-  EXPECT_EQ(0, strcmp(supp->func, "baz"));
+  EXPECT_EQ(0, strcmp(supp->templ, "baz"));
   supp = supp->next;
   EXPECT_EQ(supp->type, SuppressionThread);
-  EXPECT_EQ(0, strcmp(supp->func, "bar"));
+  EXPECT_EQ(0, strcmp(supp->templ, "bar"));
   supp = supp->next;
   EXPECT_EQ(supp->type, SuppressionRace);
-  EXPECT_EQ(0, strcmp(supp->func, "foo"));
+  EXPECT_EQ(0, strcmp(supp->templ, "foo"));
   supp = supp->next;
   EXPECT_EQ((Suppression*)0, supp);
 }

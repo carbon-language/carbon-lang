@@ -53,6 +53,8 @@ static char *ReadFile(const char *filename) {
 }
 
 bool SuppressionMatch(char *templ, const char *str) {
+  if (str == 0 || str[0] == 0)
+    return false;
   char *tpos;
   const char *spos;
   while (templ && templ[0]) {
@@ -114,9 +116,9 @@ Suppression *SuppressionParse(const char* supp) {
       s->next = head;
       head = s;
       s->type = stype;
-      s->func = (char*)internal_alloc(MBlockSuppression, end2 - line + 1);
-      internal_memcpy(s->func, line, end2 - line);
-      s->func[end2 - line] = 0;
+      s->templ = (char*)internal_alloc(MBlockSuppression, end2 - line + 1);
+      internal_memcpy(s->templ, line, end2 - line);
+      s->templ[end2 - line] = 0;
     }
     if (end[0] == 0)
       break;
@@ -145,11 +147,11 @@ bool IsSuppressed(ReportType typ, const ReportStack *stack) {
   else
     return false;
   for (const ReportStack *frame = stack; frame; frame = frame->next) {
-    if (frame->func == 0)
-      continue;
     for (Suppression *supp = g_suppressions; supp; supp = supp->next) {
-      if (stype == supp->type && SuppressionMatch(supp->func, frame->func)) {
-        DPrintf("ThreadSanitizer: matched suppression '%s'\n", supp->func);
+      if (stype == supp->type ||
+          SuppressionMatch(supp->templ, frame->func) ||
+          SuppressionMatch(supp->templ, frame->file)) {
+        DPrintf("ThreadSanitizer: matched suppression '%s'\n", supp->templ);
         return true;
       }
     }
