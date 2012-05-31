@@ -235,6 +235,18 @@ TSAN_INTERCEPTOR(int, atexit, void (*f)()) {
   return 0;
 }
 
+TSAN_INTERCEPTOR(void, longjmp, void *env, int val) {
+  SCOPED_TSAN_INTERCEPTOR(longjmp, env, val);
+  Printf("ThreadSanitizer: longjmp() is not supported\n");
+  Die();
+}
+
+TSAN_INTERCEPTOR(void, siglongjmp, void *env, int val) {
+  SCOPED_TSAN_INTERCEPTOR(siglongjmp, env, val);
+  Printf("ThreadSanitizer: siglongjmp() is not supported\n");
+  Die();
+}
+
 static uptr fd2addr(int fd) {
   (void)fd;
   static u64 addr;
@@ -1369,6 +1381,9 @@ void InitializeInterceptors() {
   // We need to setup it early, because functions like dlsym() can call it.
   REAL(memset) = poormans_memset;
   REAL(memcpy) = poormans_memcpy;
+
+  TSAN_INTERCEPT(longjmp);
+  TSAN_INTERCEPT(siglongjmp);
 
   TSAN_INTERCEPT(malloc);
   TSAN_INTERCEPT(calloc);

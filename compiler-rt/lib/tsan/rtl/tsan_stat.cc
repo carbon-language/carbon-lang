@@ -91,6 +91,8 @@ void StatOutput(u64 *stat) {
   name[StatAtomic8]                      = "            size 8                ";
 
   name[StatInterceptor]                  = "Interceptors                      ";
+  name[StatInt_longjmp]                  = "  longjmp                         ";
+  name[StatInt_siglongjmp]               = "  siglongjmp                      ";
   name[StatInt_malloc]                   = "  malloc                          ";
   name[StatInt_calloc]                   = "  calloc                          ";
   name[StatInt_realloc]                  = "  realloc                         ";

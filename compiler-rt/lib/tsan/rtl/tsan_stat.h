@@ -91,6 +91,8 @@ enum StatType {
 
   // Interceptors.
   StatInterceptor,
+  StatInt_longjmp,
+  StatInt_siglongjmp,
   StatInt_malloc,
   StatInt_calloc,
   StatInt_realloc,
