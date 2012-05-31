@@ -14,6 +14,7 @@
 
 #define DEBUG_TYPE "bounds-checking"
 #include "llvm/Transforms/Scalar.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/ScalarEvolution.h"
@@ -43,9 +44,15 @@ STATISTIC(ChecksUnableLoad, "Bounds checks unable to add (LoadInst)");
 typedef IRBuilder<true, TargetFolder> BuilderTy;
 
 namespace {
-  enum ConstTriState {
-    NotConst, Const, Dunno
+  // FIXME: can use unions here to save space
+  struct CacheData {
+    APInt Offset;
+    Value *OffsetValue;
+    APInt Size;
+    Value *SizeValue;
+    bool ReturnVal;
   };
+  typedef DenseMap<Value*, CacheData> CacheMapTy;
 
   struct BoundsChecking : public FunctionPass {
     static char ID;
@@ -70,11 +77,12 @@ namespace {
     Function *Fn;
     BasicBlock *TrapBB;
     unsigned Penalty;
+    CacheMapTy CacheMap;
 
     BasicBlock *getTrapBB();
     void emitBranchToTrap(Value *Cmp = 0);
-    ConstTriState computeAllocSize(Value *Alloc, uint64_t &Size,
-                                   Value* &SizeValue);
+    bool computeAllocSize(Value *Ptr, APInt &Offset, Value* &OffsetValue,
+                          APInt &Size, Value* &SizeValue);
     bool instrument(Value *Ptr, Value *Val);
  };
 }
@@ -123,91 +131,157 @@ void BoundsChecking::emitBranchToTrap(Value *Cmp) {
 }
 
 
-/// computeAllocSize - compute the object size allocated by an allocation
-/// site. Returns NotConst if the size is not constant (in SizeValue), Const if
-/// the size is constant (in Size), and Dunno if the size could not be
-/// determined within the given maximum Penalty that the computation would
-/// incurr at run-time.
-ConstTriState BoundsChecking::computeAllocSize(Value *Alloc, uint64_t &Size,
-                                     Value* &SizeValue) {
-  IntegerType *RetTy = TD->getIntPtrType(Fn->getContext());
+#define GET_VALUE(Val, Int) \
+  if (!Val) \
+    Val = ConstantInt::get(IntTy, Int)
+
+#define RETURN(Val) \
+  do { ReturnVal = Val; goto cache_and_return; } while (0)
+
+/// computeAllocSize - compute the object size and the offset within the object
+/// pointed by Ptr. OffsetValue/SizeValue will be null if they are constant, and
+/// therefore the result is given in Offset/Size variables instead.
+/// Returns true if the offset and size could be computed within the given
+/// maximum run-time penalty.
+bool BoundsChecking::computeAllocSize(Value *Ptr, APInt &Offset,
+                                      Value* &OffsetValue, APInt &Size,
+                                      Value* &SizeValue) {
+  Ptr = Ptr->stripPointerCasts();
+
+  // lookup to see if we've seen the Ptr before
+  CacheMapTy::iterator CacheIt = CacheMap.find(Ptr);
+  if (CacheIt != CacheMap.end()) {
+    CacheData &Cache = CacheIt->second;
+    Offset = Cache.Offset;
+    OffsetValue = Cache.OffsetValue;
+    Size = Cache.Size;
+    SizeValue = Cache.SizeValue;
+    return Cache.ReturnVal;
+  }
+
+  IntegerType *IntTy = TD->getIntPtrType(Fn->getContext());
+  unsigned IntTyBits = IntTy->getBitWidth();
+  bool ReturnVal;
+
+  // always generate code immediately before the instruction being processed, so
+  // that the generated code dominates the same BBs
+  Instruction *PrevInsertPoint = Builder->GetInsertPoint();
+  if (Instruction *I = dyn_cast<Instruction>(Ptr))
+    Builder->SetInsertPoint(I);
+
+  // initalize with "don't know" state: offset=0 and size=uintmax
+  Offset = 0;
+  Size = APInt::getMaxValue(TD->getTypeSizeInBits(IntTy));
+  OffsetValue = SizeValue = 0;
+
+  if (GEPOperator *GEP = dyn_cast<GEPOperator>(Ptr)) {
+    APInt PtrOffset(IntTyBits, 0);
+    Value *PtrOffsetValue = 0;
+    if (!computeAllocSize(GEP->getPointerOperand(), PtrOffset, PtrOffsetValue,
+                          Size, SizeValue))
+      RETURN(false);
+
+    if (GEP->hasAllConstantIndices()) {
+      SmallVector<Value*, 8> Ops(GEP->idx_begin(), GEP->idx_end());
+      Offset = TD->getIndexedOffset(GEP->getPointerOperandType(), Ops);
+      // if PtrOffset is constant, return immediately
+      if (!PtrOffsetValue) {
+        Offset += PtrOffset;
+        RETURN(true);
+      }
+      OffsetValue = ConstantInt::get(IntTy, Offset);
+    } else {
+      OffsetValue = EmitGEPOffset(Builder, *TD, GEP);
+    }
+
+    GET_VALUE(PtrOffsetValue, PtrOffset);
+    OffsetValue = Builder->CreateAdd(PtrOffsetValue, OffsetValue);
+    RETURN(true);
 
   // global variable with definitive size
-  if (GlobalVariable *GV = dyn_cast<GlobalVariable>(Alloc)) {
+  } else if (GlobalVariable *GV = dyn_cast<GlobalVariable>(Ptr)) {
     if (GV->hasDefinitiveInitializer()) {
       Constant *C = GV->getInitializer();
       Size = TD->getTypeAllocSize(C->getType());
-      return Const;
+      RETURN(true);
     }
-    return Dunno;
+    RETURN(false);
 
   // stack allocation
-  } else if (AllocaInst *AI = dyn_cast<AllocaInst>(Alloc)) {
+  } else if (AllocaInst *AI = dyn_cast<AllocaInst>(Ptr)) {
     if (!AI->getAllocatedType()->isSized())
-      return Dunno;
+      RETURN(false);
 
     Size = TD->getTypeAllocSize(AI->getAllocatedType());
     if (!AI->isArrayAllocation())
-      return Const; // we are done
+      RETURN(true); // we are done
 
     Value *ArraySize = AI->getArraySize();
     if (const ConstantInt *C = dyn_cast<ConstantInt>(ArraySize)) {
-      Size *= C->getZExtValue();
-      return Const;
+      Size *= C->getValue();
+      RETURN(true);
     }
 
     if (Penalty < 2)
-      return Dunno;
+      RETURN(false);
 
+    // VLA: compute size dynamically
     SizeValue = ConstantInt::get(ArraySize->getType(), Size);
     SizeValue = Builder->CreateMul(SizeValue, ArraySize);
-    return NotConst;
+    RETURN(true);
 
   // function arguments
-  } else if (Argument *A = dyn_cast<Argument>(Alloc)) {
+  } else if (Argument *A = dyn_cast<Argument>(Ptr)) {
+    // right now we only support byval arguments, so that no interprocedural
+    // analysis is necessary
     if (!A->hasByValAttr()) {
       ++ChecksUnableInterproc;
-      return Dunno;
+      RETURN(false);
     }
 
     PointerType *PT = cast<PointerType>(A->getType());
     Size = TD->getTypeAllocSize(PT->getElementType());
-    return Const;
+    RETURN(true);
 
   // ptr = select(ptr1, ptr2)
-  } else if (SelectInst *SI = dyn_cast<SelectInst>(Alloc)) {
-    uint64_t SizeFalse;
-    Value *SizeValueFalse;
-    ConstTriState TrueConst = computeAllocSize(SI->getTrueValue(), Size,
-                                               SizeValue);
-    ConstTriState FalseConst = computeAllocSize(SI->getFalseValue(), SizeFalse,
-                                                SizeValueFalse);
+  } else if (SelectInst *SI = dyn_cast<SelectInst>(Ptr)) {
+    APInt OffsetTrue(IntTyBits, 0), OffsetFalse(IntTyBits, 0);
+    APInt SizeTrue(IntTyBits, 0), SizeFalse(IntTyBits, 0);
+    Value *OffsetValueTrue = 0, *OffsetValueFalse = 0;
+    Value *SizeValueTrue = 0, *SizeValueFalse = 0;
 
-    if (TrueConst == Const && FalseConst == Const && Size == SizeFalse)
-      return Const;
+    bool TrueAlloc = computeAllocSize(SI->getTrueValue(), OffsetTrue,
+                                      OffsetValueTrue, SizeTrue, SizeValueTrue);
+    bool FalseAlloc = computeAllocSize(SI->getFalseValue(), OffsetFalse,
+                                       OffsetValueFalse, SizeFalse,
+                                       SizeValueFalse);
+    if (!TrueAlloc && !FalseAlloc)
+      RETURN(false);
 
-    if (Penalty < 2 || (TrueConst == Dunno && FalseConst == Dunno))
-      return Dunno;
+    // fold constant sizes & offsets if they are equal
+    if (!OffsetValueTrue && !OffsetValueFalse && OffsetTrue == OffsetFalse)
+      Offset = OffsetTrue;
+    else if (Penalty > 1) {
+      GET_VALUE(OffsetValueTrue, OffsetTrue);
+      GET_VALUE(OffsetValueFalse, OffsetFalse);
+      OffsetValue = Builder->CreateSelect(SI->getCondition(), OffsetValueTrue,
+                                          OffsetValueFalse);
+    } else
+      RETURN(false);
 
-    // if one of the branches is Dunno, assume it is ok and check just the other
-    APInt MaxSize = APInt::getMaxValue(TD->getTypeSizeInBits(RetTy));
-
-    if (TrueConst == Const)
-      SizeValue = ConstantInt::get(RetTy, Size);
-    else if (TrueConst == Dunno)
-      SizeValue = ConstantInt::get(RetTy, MaxSize);
-
-    if (FalseConst == Const)
-      SizeValueFalse = ConstantInt::get(RetTy, SizeFalse);
-    else if (FalseConst == Dunno)
-      SizeValueFalse = ConstantInt::get(RetTy, MaxSize);
-
-    SizeValue = Builder->CreateSelect(SI->getCondition(), SizeValue,
-                                      SizeValueFalse);
-    return NotConst;
+    if (!SizeValueTrue && !SizeValueFalse && SizeTrue == SizeFalse)
+      Size = SizeTrue;
+    else if (Penalty > 1) {
+      GET_VALUE(SizeValueTrue, SizeTrue);
+      GET_VALUE(SizeValueFalse, SizeFalse);
+      SizeValue = Builder->CreateSelect(SI->getCondition(), SizeValueTrue,
+                                        SizeValueFalse);
+    } else
+      RETURN(false);
+    RETURN(true);
 
   // call allocation function
-  } else if (CallInst *CI = dyn_cast<CallInst>(Alloc)) {
+  } else if (CallInst *CI = dyn_cast<CallInst>(Ptr)) {
     SmallVector<unsigned, 4> Args;
 
     if (MDNode *MD = CI->getMetadata("alloc_size")) {
@@ -241,11 +315,17 @@ ConstTriState BoundsChecking::computeAllocSize(Value *Alloc, uint64_t &Size,
           Args.push_back(0);
           Args.push_back(1);
         }
+      } else if (FTy->getNumParams() == 3) {
+        // alloc(_, _, x)
+        if (FTy->getParamType(2)->isIntegerTy() &&
+            Callee->getName() == "posix_memalign") {
+          Args.push_back(2);
+        }
       }
     }
 
     if (Args.empty())
-      return Dunno;
+      RETURN(false);
 
     // check if all arguments are constant. if so, the object size is also const
     bool AllConst = true;
@@ -262,27 +342,25 @@ ConstTriState BoundsChecking::computeAllocSize(Value *Alloc, uint64_t &Size,
       for (SmallVectorImpl<unsigned>::iterator I = Args.begin(), E = Args.end();
            I != E; ++I) {
         ConstantInt *Arg = cast<ConstantInt>(CI->getArgOperand(*I));
-        Size *= (size_t)Arg->getZExtValue();
+        Size *= Arg->getValue().zextOrSelf(IntTyBits);
       }
-      return Const;
+      RETURN(true);
     }
 
     if (Penalty < 2)
-      return Dunno;
+      RETURN(false);
 
     // not all arguments are constant, so create a sequence of multiplications
-    bool First = true;
     for (SmallVectorImpl<unsigned>::iterator I = Args.begin(), E = Args.end();
          I != E; ++I) {
-      Value *Arg = CI->getArgOperand(*I);
-      if (First) {
+      Value *Arg = Builder->CreateZExt(CI->getArgOperand(*I), IntTy);
+      if (!SizeValue) {
         SizeValue = Arg;
-        First = false;
         continue;
       }
       SizeValue = Builder->CreateMul(SizeValue, Arg);
     }
-    return NotConst;
+    RETURN(true);
 
     // TODO: handle more standard functions:
     // - strdup / strndup
@@ -290,12 +368,67 @@ ConstTriState BoundsChecking::computeAllocSize(Value *Alloc, uint64_t &Size,
     // - memcpy / memmove
     // - strcat / strncat
 
-  } else if (isa<LoadInst>(Alloc)) {
+  } else if (PHINode *PHI = dyn_cast<PHINode>(Ptr)) {
+    // create 2 PHIs: one for offset and another for size
+    PHINode *OffsetPHI = Builder->CreatePHI(IntTy, PHI->getNumIncomingValues());
+    PHINode *SizePHI   = Builder->CreatePHI(IntTy, PHI->getNumIncomingValues());
+
+    // insert right away in the cache to handle recursive PHIs
+    CacheData CacheEntry;
+    CacheEntry.Offset = CacheEntry.Size = 0;
+    CacheEntry.OffsetValue = OffsetPHI;
+    CacheEntry.SizeValue = SizePHI;
+    CacheEntry.ReturnVal = true;
+    CacheMap[Ptr] = CacheEntry;
+
+    // compute offset/size for each PHI incoming pointer
+    bool someOk = false;
+    for (unsigned i = 0, e = PHI->getNumIncomingValues(); i != e; ++i) {
+      Builder->SetInsertPoint(PHI->getIncomingBlock(i)->getFirstInsertionPt());
+
+      APInt PhiOffset(IntTyBits, 0), PhiSize(IntTyBits, 0);
+      Value *PhiOffsetValue = 0, *PhiSizeValue = 0;
+      someOk |= computeAllocSize(PHI->getIncomingValue(i), PhiOffset,
+                                 PhiOffsetValue, PhiSize, PhiSizeValue);
+
+      GET_VALUE(PhiOffsetValue, PhiOffset);
+      GET_VALUE(PhiSizeValue, PhiSize);
+
+      OffsetPHI->addIncoming(PhiOffsetValue, PHI->getIncomingBlock(i));
+      SizePHI->addIncoming(PhiSizeValue, PHI->getIncomingBlock(i));
+    }
+
+    // fail here if we couldn't compute the size/offset in any incoming edge
+    if (!someOk)
+      RETURN(false);
+
+    OffsetValue = OffsetPHI;
+    SizeValue = SizePHI;
+    RETURN(true);    
+
+  } else if (isa<UndefValue>(Ptr)) {
+    Size = 0;
+    RETURN(true);
+
+  } else if (isa<LoadInst>(Ptr)) {
     ++ChecksUnableLoad;
-    return Dunno;
+    RETURN(false);
   }
 
-  return Dunno;
+  RETURN(false);
+
+cache_and_return:
+  // cache the result and return
+  CacheData CacheEntry;
+  CacheEntry.Offset = Offset;
+  CacheEntry.OffsetValue = OffsetValue;
+  CacheEntry.Size = Size;
+  CacheEntry.SizeValue = SizeValue;
+  CacheEntry.ReturnVal = ReturnVal;
+  CacheMap[Ptr] = CacheEntry;
+
+  Builder->SetInsertPoint(PrevInsertPoint);
+  return ReturnVal;
 }
 
 
@@ -309,63 +442,24 @@ bool BoundsChecking::instrument(Value *Ptr, Value *InstVal) {
   DEBUG(dbgs() << "Instrument " << *Ptr << " for " << Twine(NeededSize)
               << " bytes\n");
 
-  Type *SizeTy = TD->getIntPtrType(Fn->getContext());
+  IntegerType *IntTy = TD->getIntPtrType(Fn->getContext());
+  unsigned IntTyBits = IntTy->getBitWidth();
 
-  // Get to the real allocated thing and offset as fast as possible.
-  Ptr = Ptr->stripPointerCasts();
+  APInt Offset(IntTyBits, 0), Size(IntTyBits, 0);
+  Value *OffsetValue = 0, *SizeValue = 0;
 
-  // try to hoist the check if the instruction is inside a loop
-  Value *LoopOffset = 0;
-  if (Loop *L = LI->getLoopFor(Builder->GetInsertPoint()->getParent())) {
-    const SCEV *PtrSCEV  = SE->getSCEVAtScope(Ptr, L->getParentLoop());
-    const SCEV *BaseSCEV = SE->getPointerBase(PtrSCEV);
-
-    if (const SCEVUnknown *PointerBase = dyn_cast<SCEVUnknown>(BaseSCEV)) {
-      Ptr = PointerBase->getValue()->stripPointerCasts();
-      Instruction *InsertPoint = L->getLoopPreheader()->getFirstInsertionPt();
-      Builder->SetInsertPoint(InsertPoint);
-
-      SCEVExpander Expander(*SE, "bounds-checking");
-      const SCEV *OffsetSCEV = SE->getMinusSCEV(PtrSCEV, PointerBase);
-      LoopOffset = Expander.expandCodeFor(OffsetSCEV, SizeTy, InsertPoint);
-    }
-  }
-
-  GEPOperator *GEP = dyn_cast<GEPOperator>(Ptr);
-  if (GEP) {
-    // check if we will be able to get the offset
-    if (!GEP->hasAllConstantIndices() && Penalty < 2) {
-      ++ChecksUnable;
-      return false;
-    }
-    Ptr = GEP->getPointerOperand()->stripPointerCasts();
-  }
-
-  uint64_t Size = 0;
-  Value *SizeValue = 0;
-  ConstTriState ConstAlloc = computeAllocSize(Ptr, Size, SizeValue);
-  if (ConstAlloc == Dunno) {
+  if (!computeAllocSize(Ptr, Offset, OffsetValue, Size, SizeValue)) {
     DEBUG(dbgs() << "computeAllocSize failed:\n" << *Ptr << "\n");
     ++ChecksUnable;
     return false;
   }
-  assert(ConstAlloc == Const || SizeValue);
 
-  uint64_t Offset = 0;
-  Value *OffsetValue = 0;
-
-  if (GEP) {
-    if (GEP->hasAllConstantIndices()) {
-      SmallVector<Value*, 8> Ops(GEP->idx_begin(), GEP->idx_end());
-      assert(GEP->getPointerOperandType()->isPointerTy());
-      Offset = TD->getIndexedOffset(GEP->getPointerOperandType(), Ops);
-    } else {
-      OffsetValue = EmitGEPOffset(Builder, *TD, GEP);
-    }
-  }
-
-  if (!LoopOffset && !OffsetValue && ConstAlloc == Const) {
-    if (Size < Offset || (Size - Offset) < NeededSize) {
+  // three checks are required to ensure safety:
+  // . Offset >= 0  (since the offset is given from the base ptr)
+  // . Size >= Offset  (unsigned)
+  // . Size - Offset >= NeededSize  (unsigned)
+  if (!OffsetValue && !SizeValue) {
+    if (Offset.slt(0) || Size.ult(Offset) || (Size - Offset).ult(NeededSize)) {
       // Out of bounds
       emitBranchToTrap();
       ++ChecksAdded;
@@ -376,23 +470,30 @@ bool BoundsChecking::instrument(Value *Ptr, Value *InstVal) {
     return false;
   }
 
-  if (!OffsetValue)
-    OffsetValue = ConstantInt::get(SizeTy, Offset);
+  // emit check for offset < 0
+  Value *CmpOffset = 0;
+  if (OffsetValue)
+    CmpOffset = Builder->CreateICmpSLT(OffsetValue, ConstantInt::get(IntTy, 0));
+  else if (Offset.slt(0)) {
+    // offset proved to be negative
+    emitBranchToTrap();
+    ++ChecksAdded;
+    return true;
+  }
 
-  if (SizeValue)
-    SizeValue = Builder->CreateZExt(SizeValue, SizeTy);
-  else
-    SizeValue = ConstantInt::get(SizeTy, Size);
+  // we couldn't determine statically if the memory access is safe; emit a
+  // run-time check
+  GET_VALUE(OffsetValue, Offset);
+  GET_VALUE(SizeValue, Size);
 
-  // add the loop offset if the check was hoisted
-  if (LoopOffset)
-    OffsetValue = Builder->CreateAdd(OffsetValue, LoopOffset);
-
-  Value *NeededSizeVal = ConstantInt::get(SizeTy, NeededSize);
+  Value *NeededSizeVal = ConstantInt::get(IntTy, NeededSize);
+  // FIXME: add NSW/NUW here?  -- we dont care if the subtraction overflows
   Value *ObjSize = Builder->CreateSub(SizeValue, OffsetValue);
   Value *Cmp1 = Builder->CreateICmpULT(SizeValue, OffsetValue);
   Value *Cmp2 = Builder->CreateICmpULT(ObjSize, NeededSizeVal);
   Value *Or = Builder->CreateOr(Cmp1, Cmp2);
+  if (CmpOffset)
+    Or = Builder->CreateOr(CmpOffset, Or);
   emitBranchToTrap(Or);
 
   ++ChecksAdded;
