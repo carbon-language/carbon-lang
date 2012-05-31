@@ -1238,6 +1238,7 @@ class X86TargetInfo : public TargetInfo {
   } MMX3DNowLevel;
 
   bool HasAES;
+  bool HasPCLMUL;
   bool HasLZCNT;
   bool HasBMI;
   bool HasBMI2;
@@ -1388,8 +1389,9 @@ class X86TargetInfo : public TargetInfo {
 public:
   X86TargetInfo(const std::string& triple)
     : TargetInfo(triple), SSELevel(NoSSE), MMX3DNowLevel(NoMMX3DNow),
-      HasAES(false), HasLZCNT(false), HasBMI(false), HasBMI2(false),
-      HasPOPCNT(false), HasSSE4a(false), HasFMA4(false), CPU(CK_Generic) {
+      HasAES(false), HasPCLMUL(false), HasLZCNT(false), HasBMI(false),
+      HasBMI2(false), HasPOPCNT(false), HasSSE4a(false), HasFMA4(false),
+      CPU(CK_Generic) {
     BigEndian = false;
     LongDoubleFormat = &llvm::APFloat::x87DoubleExtended;
   }
@@ -1571,6 +1573,7 @@ void X86TargetInfo::getDefaultFeatures(llvm::StringMap<bool> &Features) const {
   Features["sse42"] = false;
   Features["sse4a"] = false;
   Features["aes"] = false;
+  Features["pclmul"] = false;
   Features["avx"] = false;
   Features["avx2"] = false;
   Features["lzcnt"] = false;
@@ -1631,18 +1634,19 @@ void X86TargetInfo::getDefaultFeatures(llvm::StringMap<bool> &Features) const {
   case CK_Corei7:
     setFeatureEnabled(Features, "mmx", true);
     setFeatureEnabled(Features, "sse4", true);
-    setFeatureEnabled(Features, "aes", true);
     break;
   case CK_Corei7AVX:
   case CK_CoreAVXi:
     setFeatureEnabled(Features, "mmx", true);
     setFeatureEnabled(Features, "avx", true);
     setFeatureEnabled(Features, "aes", true);
+    setFeatureEnabled(Features, "pclmul", true);
     break;
   case CK_CoreAVX2:
     setFeatureEnabled(Features, "mmx", true);
     setFeatureEnabled(Features, "avx2", true);
     setFeatureEnabled(Features, "aes", true);
+    setFeatureEnabled(Features, "pclmul", true);
     setFeatureEnabled(Features, "lzcnt", true);
     setFeatureEnabled(Features, "bmi", true);
     setFeatureEnabled(Features, "bmi2", true);
@@ -1695,6 +1699,7 @@ void X86TargetInfo::getDefaultFeatures(llvm::StringMap<bool> &Features) const {
     setFeatureEnabled(Features, "avx", true);
     setFeatureEnabled(Features, "sse4a", true);
     setFeatureEnabled(Features, "aes", true);
+    setFeatureEnabled(Features, "pclmul", true);
     break;
   case CK_C3_2:
     setFeatureEnabled(Features, "mmx", true);
@@ -1740,6 +1745,8 @@ bool X86TargetInfo::setFeatureEnabled(llvm::StringMap<bool> &Features,
       Features["mmx"] = Features["3dnow"] = Features["3dnowa"] = true;
     else if (Name == "aes")
       Features["aes"] = true;
+    else if (Name == "pclmul")
+      Features["pclmul"] = true;
     else if (Name == "avx")
       Features["mmx"] = Features["sse"] = Features["sse2"] = Features["sse3"] =
         Features["ssse3"] = Features["sse41"] = Features["sse42"] =
@@ -1789,6 +1796,8 @@ bool X86TargetInfo::setFeatureEnabled(llvm::StringMap<bool> &Features,
       Features["3dnowa"] = false;
     else if (Name == "aes")
       Features["aes"] = false;
+    else if (Name == "pclmul")
+      Features["pclmul"] = false;
     else if (Name == "avx")
       Features["avx"] = Features["avx2"] = Features["fma4"] = false;
     else if (Name == "avx2")
@@ -1823,6 +1832,11 @@ void X86TargetInfo::HandleTargetFeatures(std::vector<std::string> &Features) {
 
     if (Feature == "aes") {
       HasAES = true;
+      continue;
+    }
+
+    if (Feature == "pclmul") {
+      HasPCLMUL = true;
       continue;
     }
 
@@ -2038,6 +2052,9 @@ void X86TargetInfo::getTargetDefines(const LangOptions &Opts,
   if (HasAES)
     Builder.defineMacro("__AES__");
 
+  if (HasPCLMUL)
+    Builder.defineMacro("__PCLMUL__");
+
   if (HasLZCNT)
     Builder.defineMacro("__LZCNT__");
 
@@ -2119,12 +2136,12 @@ bool X86TargetInfo::hasFeature(StringRef Feature) const {
       .Case("avx2", SSELevel >= AVX2)
       .Case("bmi", HasBMI)
       .Case("bmi2", HasBMI2)
-      .Case("sse4a", HasSSE4a)
       .Case("fma4", HasFMA4)
       .Case("lzcnt", HasLZCNT)
       .Case("mm3dnow", MMX3DNowLevel >= AMD3DNow)
       .Case("mm3dnowa", MMX3DNowLevel >= AMD3DNowAthlon)
       .Case("mmx", MMX3DNowLevel >= MMX)
+      .Case("pclmul", HasPCLMUL)
       .Case("popcnt", HasPOPCNT)
       .Case("sse", SSELevel >= SSE1)
       .Case("sse2", SSELevel >= SSE2)
@@ -2132,6 +2149,7 @@ bool X86TargetInfo::hasFeature(StringRef Feature) const {
       .Case("ssse3", SSELevel >= SSSE3)
       .Case("sse41", SSELevel >= SSE41)
       .Case("sse42", SSELevel >= SSE42)
+      .Case("sse4a", HasSSE4a)
       .Case("x86", true)
       .Case("x86_32", PointerWidth == 32)
       .Case("x86_64", PointerWidth == 64)
