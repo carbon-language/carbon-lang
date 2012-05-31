@@ -148,9 +148,9 @@ bool IsSuppressed(ReportType typ, const ReportStack *stack) {
     return false;
   for (const ReportStack *frame = stack; frame; frame = frame->next) {
     for (Suppression *supp = g_suppressions; supp; supp = supp->next) {
-      if (stype == supp->type ||
-          SuppressionMatch(supp->templ, frame->func) ||
-          SuppressionMatch(supp->templ, frame->file)) {
+      if (stype == supp->type &&
+          (SuppressionMatch(supp->templ, frame->func) ||
+          SuppressionMatch(supp->templ, frame->file))) {
         DPrintf("ThreadSanitizer: matched suppression '%s'\n", supp->templ);
         return true;
       }
