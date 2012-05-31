@@ -36,3 +36,29 @@ true:
 false:
   ret i32 0
 }
+
+; Sink to the nearest post-dominator
+
+;      CHECK: @diamond
+;      CHECK: X:
+; CHECK-NEXT: phi
+; CHECK-NEXT: mul nsw
+; CHECK-NEXT: sub
+
+define i32 @diamond(i32 %a, i32 %b, i32 %c) {
+  %1 = mul nsw i32 %c, %b
+  %2 = icmp sgt i32 %a, 0
+  br i1 %2, label %B0, label %B1
+
+B0:                                       ; preds = %0
+  br label %X
+
+B1:                                      ; preds = %0
+  br label %X
+
+X:                                     ; preds = %5, %3
+  %.01 = phi i32 [ %c, %B0 ], [ %a, %B1 ]
+  %R = sub i32 %1, %.01
+  ret i32 %R
+}
+
