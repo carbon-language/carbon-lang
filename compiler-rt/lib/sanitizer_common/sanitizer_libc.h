@@ -1,4 +1,4 @@
-//===-- mini_libc.h ---------------------------------------------*- C++ -*-===//
+//===-- sanitizer_libc.h ----------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -18,7 +18,7 @@
 #ifndef MINILIBC_H
 #define MINILIBC_H
 
-// No code hete yet. Will move more code in the next changes.
+// No code here yet. Will move more code in the next changes.
 namespace __sanitizer {
 
 void MiniLibcStub();

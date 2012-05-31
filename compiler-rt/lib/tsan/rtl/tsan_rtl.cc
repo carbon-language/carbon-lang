@@ -12,7 +12,7 @@
 // Main file (entry points) for the TSan run-time.
 //===----------------------------------------------------------------------===//
 
-#include "sanitizer_common/mini_libc.h"
+#include "sanitizer_common/sanitizer_libc.h"
 #include "tsan_defs.h"
 #include "tsan_platform.h"
 #include "tsan_rtl.h"

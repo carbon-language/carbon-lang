@@ -14,7 +14,7 @@
 #ifndef ASAN_INTERNAL_H
 #define ASAN_INTERNAL_H
 
-#include "sanitizer_common/mini_libc.h"
+#include "sanitizer_common/sanitizer_libc.h"
 
 #if !defined(__linux__) && !defined(__APPLE__) && !defined(_WIN32)
 # error "This operating system is not supported by AddressSanitizer"

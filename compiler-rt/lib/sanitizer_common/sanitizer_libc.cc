@@ -1,4 +1,4 @@
-//===-- mini_libc.cc --------------------------------------------*- C++ -*-===//
+//===-- sanitizer_libc.cc ---------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -8,9 +8,9 @@
 //===----------------------------------------------------------------------===//
 //
 // This file is shared between AddressSanitizer and ThreadSanitizer
-// run-time libraries. See mini_libc.h for details.
+// run-time libraries. See sanitizer_libc.h for details.
 //===----------------------------------------------------------------------===//
-#include "mini_libc.h"
+#include "sanitizer_libc.h"
 
 namespace __sanitizer {
 
