@@ -74,7 +74,7 @@ using namespace __asan;  // NOLINT
 // at least [left, AlignDown(right)).
 // * if user asks to unpoison region [left, right), the program unpoisons
 // at most [AlignDown(left), right).
-void __asan_poison_memory_region(void const volatile *addr, size_t size) {
+void __asan_poison_memory_region(void const volatile *addr, uptr size) {
   if (!FLAG_allow_user_poisoning || size == 0) return;
   uintptr_t beg_addr = (uintptr_t)addr;
   uintptr_t end_addr = beg_addr + size;
@@ -115,7 +115,7 @@ void __asan_poison_memory_region(void const volatile *addr, size_t size) {
   }
 }
 
-void __asan_unpoison_memory_region(void const volatile *addr, size_t size) {
+void __asan_unpoison_memory_region(void const volatile *addr, uptr size) {
   if (!FLAG_allow_user_poisoning || size == 0) return;
   uintptr_t beg_addr = (uintptr_t)addr;
   uintptr_t end_addr = beg_addr + size;

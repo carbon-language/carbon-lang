@@ -139,7 +139,7 @@ static void UnregisterGlobal(const Global *g) {
 using namespace __asan;  // NOLINT
 
 // Register one global with a default redzone.
-void __asan_register_global(uintptr_t addr, size_t size,
+void __asan_register_global(uptr addr, uptr size,
                             const char *name) {
   if (!FLAG_report_globals) return;
   ScopedLock lock(&mu_for_globals);
@@ -152,20 +152,20 @@ void __asan_register_global(uintptr_t addr, size_t size,
 }
 
 // Register an array of globals.
-void __asan_register_globals(__asan_global *globals, size_t n) {
+void __asan_register_globals(__asan_global *globals, uptr n) {
   if (!FLAG_report_globals) return;
   ScopedLock lock(&mu_for_globals);
-  for (size_t i = 0; i < n; i++) {
+  for (uptr i = 0; i < n; i++) {
     RegisterGlobal(&globals[i]);
   }
 }
 
 // Unregister an array of globals.
 // We must do it when a shared objects gets dlclosed.
-void __asan_unregister_globals(__asan_global *globals, size_t n) {
+void __asan_unregister_globals(__asan_global *globals, uptr n) {
   if (!FLAG_report_globals) return;
   ScopedLock lock(&mu_for_globals);
-  for (size_t i = 0; i < n; i++) {
+  for (uptr i = 0; i < n; i++) {
     UnregisterGlobal(&globals[i]);
   }
 }

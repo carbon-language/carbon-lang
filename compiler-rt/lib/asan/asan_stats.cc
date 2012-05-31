@@ -67,19 +67,19 @@ static void PrintAccumulatedStats() {
 // ---------------------- Interface ---------------- {{{1
 using namespace __asan;  // NOLINT
 
-size_t __asan_get_current_allocated_bytes() {
+uptr __asan_get_current_allocated_bytes() {
   return asanThreadRegistry().GetCurrentAllocatedBytes();
 }
 
-size_t __asan_get_heap_size() {
+uptr __asan_get_heap_size() {
   return asanThreadRegistry().GetHeapSize();
 }
 
-size_t __asan_get_free_bytes() {
+uptr __asan_get_free_bytes() {
   return asanThreadRegistry().GetFreeBytes();
 }
 
-size_t __asan_get_unmapped_bytes() {
+uptr __asan_get_unmapped_bytes() {
   return 0;
 }
 

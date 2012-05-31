@@ -15,8 +15,8 @@
 // We also define several basic types here to avoid using system headers
 // as the latter complicate portability of this low-level code.
 //===----------------------------------------------------------------------===//
-#ifndef MINILIBC_H
-#define MINILIBC_H
+#ifndef SANITIZER_LIBC_H
+#define SANITIZER_LIBC_H
 
 // No code here yet. Will move more code in the next changes.
 namespace __sanitizer {
@@ -25,4 +25,4 @@ void MiniLibcStub();
 
 }  // namespace __sanitizer
 
-#endif  // MINILIBC_H
+#endif  // SANITIZER_LIBC_H

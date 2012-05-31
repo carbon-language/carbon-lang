@@ -55,7 +55,7 @@ static const size_t kMaxSizeForThreadLocalFreeList =
 static const size_t kMallocSizeClassStepLog = 26;
 static const size_t kMallocSizeClassStep = 1UL << kMallocSizeClassStepLog;
 
-static const size_t kMaxAllowedMallocSize =
+static const uptr kMaxAllowedMallocSize =
     (__WORDSIZE == 32) ? 3UL << 30 : 8UL << 30;
 
 static inline bool IsAligned(uintptr_t a, uintptr_t alignment) {
@@ -1036,7 +1036,7 @@ void FakeStack::OnFree(size_t ptr, size_t size, size_t real_stack) {
 // ---------------------- Interface ---------------- {{{1
 using namespace __asan;  // NOLINT
 
-size_t __asan_stack_malloc(size_t size, size_t real_stack) {
+uptr __asan_stack_malloc(size_t size, size_t real_stack) {
   if (!FLAG_use_fake_stack) return real_stack;
   AsanThread *t = asanThreadRegistry().GetCurrent();
   if (!t) {
@@ -1057,7 +1057,7 @@ void __asan_stack_free(size_t ptr, size_t size, size_t real_stack) {
 
 // ASan allocator doesn't reserve extra bytes, so normally we would
 // just return "size".
-size_t __asan_get_estimated_allocated_size(size_t size) {
+uptr __asan_get_estimated_allocated_size(uptr size) {
   if (size == 0) return 1;
   return Min(size, kMaxAllowedMallocSize);
 }
@@ -1066,7 +1066,7 @@ bool __asan_get_ownership(const void *p) {
   return malloc_info.AllocationSize((uintptr_t)p) > 0;
 }
 
-size_t __asan_get_allocated_size(const void *p) {
+uptr __asan_get_allocated_size(const void *p) {
   if (p == NULL) return 0;
   size_t allocated_size = malloc_info.AllocationSize((uintptr_t)p);
   // Die if p is not malloced or if it is already freed.

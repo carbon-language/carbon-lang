@@ -359,8 +359,8 @@ void NOINLINE __asan_set_error_report_callback(void (*callback)(const char*)) {
   }
 }
 
-void __asan_report_error(uintptr_t pc, uintptr_t bp, uintptr_t sp,
-                         uintptr_t addr, bool is_write, size_t access_size) {
+void __asan_report_error(uptr pc, uptr bp, uptr sp,
+                         uptr addr, bool is_write, uptr access_size) {
   // Do not print more than one report, otherwise they will mix up.
   static int num_calls = 0;
   if (AtomicInc(&num_calls) > 1) return;

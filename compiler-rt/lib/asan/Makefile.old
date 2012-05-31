@@ -243,10 +243,10 @@ $(BIN)/asan_break_optimization$(SUFF).o: tests/asan_break_optimization.cc $(MAKE
 	$(CLEANROOM_CXX) $(PIE) $(CFLAGS) -c $< -O0 -o $@
 
 $(BIN)/%_test$(SUFF).o: tests/%_test.cc $(RTL_HDR) $(MAKEFILE)
-	$(ASAN_CXX) $(GTEST_INCLUDE) -I. -g -c $< -O2 -o $@ $(PIE) $(CFLAGS)
+	$(ASAN_CXX) $(GTEST_INCLUDE) -I. -I.. -g -c $< -O2 -o $@ $(PIE) $(CFLAGS)
 
 $(BIN)/%_test$(SUFF).o: tests/%_test.mm $(RTL_HDR) $(MAKEFILE)
-	$(ASAN_CXX) $(GTEST_INCLUDE) -I. -g -c $< -O2 -o $@ -ObjC $(PIE) $(CFLAGS)
+	$(ASAN_CXX) $(GTEST_INCLUDE) -I. -I.. -g -c $< -O2 -o $@ -ObjC $(PIE) $(CFLAGS)
 
 RTL_COMMON_FLAGS=$(PIE) $(CFLAGS) -fPIC -c -O2 -fno-exceptions -funwind-tables \
 	   -Ithird_party -I.. $(ASAN_FLAGS)
