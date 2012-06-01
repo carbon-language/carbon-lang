@@ -19,3 +19,25 @@ define i64 @test_noop_bitcast() {
 }
 ; CHECK: test_noop_bitcast:
 ; CHECK: jmp	_testi                  ## TAILCALL
+
+
+; Tail call shouldn't be blocked by no-op inttoptr.
+define i8* @test_inttoptr() {
+  %A = tail call i64 @testi()
+  %B = inttoptr i64 %A to i8*
+  ret i8* %B
+}
+
+; CHECK: test_inttoptr:
+; CHECK: jmp	_testi                  ## TAILCALL
+
+
+declare <4 x float> @testv()
+
+define <4 x i32> @test_vectorbitcast() {
+  %A = tail call <4 x float> @testv()
+  %B = bitcast <4 x float> %A to <4 x i32>
+  ret <4 x i32> %B
+}
+; CHECK: test_vectorbitcast:
+; CHECK: jmp	_testv                  ## TAILCALL

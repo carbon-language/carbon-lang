@@ -210,22 +210,50 @@ ISD::CondCode llvm::getICmpCondCode(ICmpInst::Predicate Pred) {
 ///
 static const Value *getNoopInput(const Value *V, const TargetLowering &TLI) {
   // If V is not an instruction, it can't be looked through.
-  const Instruction *U = dyn_cast<Instruction>(V);
-  if (U == 0 || !U->hasOneUse()) return V;
+  const Instruction *I = dyn_cast<Instruction>(V);
+  if (I == 0 || !I->hasOneUse() || I->getNumOperands() == 0) return V;
   
+  Value *Op = I->getOperand(0);
+
   // Look through truly no-op truncates.
-  if (isa<TruncInst>(U) &&
-      TLI.isTruncateFree(U->getOperand(0)->getType(), U->getType()))
-    return getNoopInput(U->getOperand(0), TLI);
+  if (isa<TruncInst>(I) &&
+      TLI.isTruncateFree(I->getOperand(0)->getType(), I->getType()))
+    return getNoopInput(I->getOperand(0), TLI);
   
   // Look through truly no-op bitcasts.
-  if (isa<BitCastInst>(U)) {
-    Value *Op = U->getOperand(0);
-    if (Op->getType() == U->getType() ||  // No type change.
-        // Pointer to pointer cast.
-        (Op->getType()->isPointerTy() && U->getType()->isPointerTy()))
+  if (isa<BitCastInst>(I)) {
+    // No type change at all.
+    if (Op->getType() == I->getType())
+      return getNoopInput(Op, TLI);
+
+    // Pointer to pointer cast.
+    if (Op->getType()->isPointerTy() && I->getType()->isPointerTy())
+      return getNoopInput(Op, TLI);
+    
+    if (isa<VectorType>(Op->getType()) && isa<VectorType>(I->getType()) &&
+        TLI.isTypeLegal(EVT::getEVT(Op->getType())) &&
+        TLI.isTypeLegal(EVT::getEVT(I->getType())))
       return getNoopInput(Op, TLI);
   }
+  
+  // Look through inttoptr.
+  if (isa<IntToPtrInst>(I) && !isa<VectorType>(I->getType())) {
+    // Make sure this isn't a truncating or extending cast.  We could support
+    // this eventually, but don't bother for now.
+    if (TLI.getPointerTy().getSizeInBits() == 
+          cast<IntegerType>(Op->getType())->getBitWidth())
+      return getNoopInput(Op, TLI);
+  }
+
+  // Look through ptrtoint.
+  if (isa<PtrToIntInst>(I) && !isa<VectorType>(I->getType())) {
+    // Make sure this isn't a truncating or extending cast.  We could support
+    // this eventually, but don't bother for now.
+    if (TLI.getPointerTy().getSizeInBits() == 
+        cast<IntegerType>(I->getType())->getBitWidth())
+      return getNoopInput(Op, TLI);
+  }
+
 
   // Otherwise it's not something we can look through.
   return V;
