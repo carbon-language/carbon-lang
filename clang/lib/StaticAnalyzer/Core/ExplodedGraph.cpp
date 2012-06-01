@@ -67,6 +67,8 @@ bool ExplodedGraph::shouldCollect(const ExplodedNode *node) {
   // (6) The 'GDM' is the same as the predecessor.
   // (7) The LocationContext is the same as the predecessor.
   // (8) The PostStmt is for a non-consumed Stmt or Expr.
+  // (9) The successor is a CallExpr StmtPoint (so that we would be able to
+  //     find it when retrying a call with no inlining).
 
   // Conditions 1 and 2.
   if (node->pred_size() != 1 || node->succ_size() != 1)
@@ -109,7 +111,13 @@ bool ExplodedGraph::shouldCollect(const ExplodedNode *node) {
       return false;
   }
   
-  return true; 
+  // Condition 9.
+  const ProgramPoint SuccLoc = succ->getLocation();
+  if (const StmtPoint *SP = dyn_cast<StmtPoint>(&SuccLoc))
+    if (isa<CallExpr>(SP->getStmt()))
+      return false;
+
+  return true;
 }
 
 void ExplodedGraph::collectNode(ExplodedNode *node) {
