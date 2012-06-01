@@ -62,17 +62,11 @@ void CriticalAntiDepBreaker::StartBlock(MachineBasicBlock *BB) {
     // In a return block, examine the function live-out regs.
     for (MachineRegisterInfo::liveout_iterator I = MRI.liveout_begin(),
          E = MRI.liveout_end(); I != E; ++I) {
-      unsigned Reg = *I;
-      Classes[Reg] = reinterpret_cast<TargetRegisterClass *>(-1);
-      KillIndices[Reg] = BBSize;
-      DefIndices[Reg] = ~0u;
-
-      // Repeat, for all aliases.
-      for (const uint16_t *Alias = TRI->getAliasSet(Reg); *Alias; ++Alias) {
-        unsigned AliasReg = *Alias;
-        Classes[AliasReg] = reinterpret_cast<TargetRegisterClass *>(-1);
-        KillIndices[AliasReg] = BBSize;
-        DefIndices[AliasReg] = ~0u;
+      for (MCRegAliasIterator AI(*I, TRI, true); AI.isValid(); ++AI) {
+        unsigned Reg = *AI;
+        Classes[Reg] = reinterpret_cast<TargetRegisterClass *>(-1);
+        KillIndices[Reg] = BBSize;
+        DefIndices[Reg] = ~0u;
       }
     }
   }
@@ -84,17 +78,11 @@ void CriticalAntiDepBreaker::StartBlock(MachineBasicBlock *BB) {
          SE = BB->succ_end(); SI != SE; ++SI)
     for (MachineBasicBlock::livein_iterator I = (*SI)->livein_begin(),
            E = (*SI)->livein_end(); I != E; ++I) {
-      unsigned Reg = *I;
-      Classes[Reg] = reinterpret_cast<TargetRegisterClass *>(-1);
-      KillIndices[Reg] = BBSize;
-      DefIndices[Reg] = ~0u;
-
-      // Repeat, for all aliases.
-      for (const uint16_t *Alias = TRI->getAliasSet(Reg); *Alias; ++Alias) {
-        unsigned AliasReg = *Alias;
-        Classes[AliasReg] = reinterpret_cast<TargetRegisterClass *>(-1);
-        KillIndices[AliasReg] = BBSize;
-        DefIndices[AliasReg] = ~0u;
+      for (MCRegAliasIterator AI(*I, TRI, true); AI.isValid(); ++AI) {
+        unsigned Reg = *AI;
+        Classes[Reg] = reinterpret_cast<TargetRegisterClass *>(-1);
+        KillIndices[Reg] = BBSize;
+        DefIndices[Reg] = ~0u;
       }
     }
 
@@ -104,18 +92,12 @@ void CriticalAntiDepBreaker::StartBlock(MachineBasicBlock *BB) {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
   BitVector Pristine = MFI->getPristineRegs(BB);
   for (const uint16_t *I = TRI->getCalleeSavedRegs(&MF); *I; ++I) {
-    unsigned Reg = *I;
-    if (!IsReturnBlock && !Pristine.test(Reg)) continue;
-    Classes[Reg] = reinterpret_cast<TargetRegisterClass *>(-1);
-    KillIndices[Reg] = BBSize;
-    DefIndices[Reg] = ~0u;
-
-    // Repeat, for all aliases.
-    for (const uint16_t *Alias = TRI->getAliasSet(Reg); *Alias; ++Alias) {
-      unsigned AliasReg = *Alias;
-      Classes[AliasReg] = reinterpret_cast<TargetRegisterClass *>(-1);
-      KillIndices[AliasReg] = BBSize;
-      DefIndices[AliasReg] = ~0u;
+    if (!IsReturnBlock && !Pristine.test(*I)) continue;
+    for (MCRegAliasIterator AI(*I, TRI, true); AI.isValid(); ++AI) {
+      unsigned Reg = *AI;
+      Classes[Reg] = reinterpret_cast<TargetRegisterClass *>(-1);
+      KillIndices[Reg] = BBSize;
+      DefIndices[Reg] = ~0u;
     }
   }
 }

@@ -56,11 +56,8 @@ void Hexagon_CCState::HandleByVal(unsigned ValNo, EVT ValVT,
 
 /// MarkAllocated - Mark a register and all of its aliases as allocated.
 void Hexagon_CCState::MarkAllocated(unsigned Reg) {
-  UsedRegs[Reg/32] |= 1 << (Reg&31);
-
-  if (const uint16_t *RegAliases = TRI.getAliasSet(Reg))
-    for (; (Reg = *RegAliases); ++RegAliases)
-      UsedRegs[Reg/32] |= 1 << (Reg&31);
+  for (MCRegAliasIterator AI(Reg, &TRI, true); AI.isValid(); ++AI)
+    UsedRegs[*AI/32] |= 1 << (*AI&31);
 }
 
 /// AnalyzeFormalArguments - Analyze an ISD::FORMAL_ARGUMENTS node,

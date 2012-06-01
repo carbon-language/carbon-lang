@@ -216,11 +216,10 @@ bool MachineCSE::hasLivePhysRegDefUses(const MachineInstr *MI,
     if (MO.isDef() &&
         (MO.isDead() || isPhysDefTriviallyDead(Reg, I, MBB->end())))
       continue;
-    PhysRefs.insert(Reg);
+    for (MCRegAliasIterator AI(Reg, TRI, true); AI.isValid(); ++AI)
+      PhysRefs.insert(*AI);
     if (MO.isDef())
       PhysDefs.push_back(Reg);
-    for (const uint16_t *Alias = TRI->getAliasSet(Reg); *Alias; ++Alias)
-      PhysRefs.insert(*Alias);
   }
 
   return !PhysRefs.empty();

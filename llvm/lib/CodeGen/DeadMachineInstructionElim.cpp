@@ -187,10 +187,8 @@ bool DeadMachineInstructionElim::runOnMachineFunction(MachineFunction &MF) {
         if (MO.isReg() && MO.isUse()) {
           unsigned Reg = MO.getReg();
           if (TargetRegisterInfo::isPhysicalRegister(Reg)) {
-            LivePhysRegs.set(Reg);
-            for (const uint16_t *AliasSet = TRI->getAliasSet(Reg);
-                 *AliasSet; ++AliasSet)
-              LivePhysRegs.set(*AliasSet);
+            for (MCRegAliasIterator AI(Reg, TRI, true); AI.isValid(); ++AI)
+              LivePhysRegs.set(*AI);
           }
         }
       }

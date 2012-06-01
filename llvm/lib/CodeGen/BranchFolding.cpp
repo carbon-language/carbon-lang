@@ -1491,9 +1491,8 @@ MachineBasicBlock::iterator findHoistingInsertPosAndDeps(MachineBasicBlock *MBB,
     if (!Reg)
       continue;
     if (MO.isUse()) {
-      Uses.insert(Reg);
-      for (const uint16_t *AS = TRI->getAliasSet(Reg); *AS; ++AS)
-        Uses.insert(*AS);
+      for (MCRegAliasIterator AI(Reg, TRI, true); AI.isValid(); ++AI)
+        Uses.insert(*AI);
     } else if (!MO.isDead())
       // Don't try to hoist code in the rare case the terminator defines a
       // register that is later used.
@@ -1553,18 +1552,16 @@ MachineBasicBlock::iterator findHoistingInsertPosAndDeps(MachineBasicBlock *MBB,
     if (!Reg)
       continue;
     if (MO.isUse()) {
-      Uses.insert(Reg);
-      for (const uint16_t *AS = TRI->getAliasSet(Reg); *AS; ++AS)
-        Uses.insert(*AS);
+      for (MCRegAliasIterator AI(Reg, TRI, true); AI.isValid(); ++AI)
+        Uses.insert(*AI);
     } else {
       if (Uses.count(Reg)) {
         Uses.erase(Reg);
         for (const uint16_t *SR = TRI->getSubRegisters(Reg); *SR; ++SR)
           Uses.erase(*SR); // Use getSubRegisters to be conservative
       }
-      Defs.insert(Reg);
-      for (const uint16_t *AS = TRI->getAliasSet(Reg); *AS; ++AS)
-        Defs.insert(*AS);
+      for (MCRegAliasIterator AI(Reg, TRI, true); AI.isValid(); ++AI)
+        Defs.insert(*AI);
     }
   }
 

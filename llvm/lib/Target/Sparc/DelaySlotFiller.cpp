@@ -279,14 +279,11 @@ void Filler::insertDefsUses(MachineBasicBlock::iterator MI,
 //returns true if the Reg or its alias is in the RegSet.
 bool Filler::IsRegInSet(SmallSet<unsigned, 32>& RegSet, unsigned Reg)
 {
-  if (RegSet.count(Reg))
-    return true;
-  // check Aliased Registers
-  for (const uint16_t *Alias = TM.getRegisterInfo()->getAliasSet(Reg);
-       *Alias; ++ Alias)
-    if (RegSet.count(*Alias))
+  // Check Reg and all aliased Registers.
+  for (MCRegAliasIterator AI(Reg, TM.getRegisterInfo(), true);
+       AI.isValid(); ++AI)
+    if (RegSet.count(*AI))
       return true;
-
   return false;
 }
 
