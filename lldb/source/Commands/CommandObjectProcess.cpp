@@ -622,7 +622,7 @@ CommandObjectProcessAttach::CommandOptions::g_option_table[] =
 { LLDB_OPT_SET_ALL, false, "plugin",  'P', required_argument, NULL, 0, eArgTypePlugin,       "Name of the process plugin you want to use."},
 { LLDB_OPT_SET_1,   false, "pid",     'p', required_argument, NULL, 0, eArgTypePid,          "The process ID of an existing process to attach to."},
 { LLDB_OPT_SET_2,   false, "name",    'n', required_argument, NULL, 0, eArgTypeProcessName,  "The name of the process to attach to."},
-{ LLDB_OPT_SET_2,   false, "waitfor", 'w', no_argument,       NULL, 0, eArgTypeNone,         "Wait for the the process with <process-name> to launch."},
+{ LLDB_OPT_SET_2,   false, "waitfor", 'w', no_argument,       NULL, 0, eArgTypeNone,         "Wait for the process with <process-name> to launch."},
 { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
 
