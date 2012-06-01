@@ -118,8 +118,8 @@ lldb_private::Initialize ()
         AppleObjCRuntimeV1::Initialize();
         ObjectContainerUniversalMachO::Initialize();
         ObjectFileMachO::Initialize();
-        ProcessKDP::Initialize();
         ProcessGDBRemote::Initialize();
+        ProcessKDP::Initialize();
         ProcessMachCore::Initialize();
         SymbolVendorMacOSX::Initialize();
         PlatformRemoteiOS::Initialize();
@@ -193,8 +193,8 @@ lldb_private::Terminate ()
     ObjectContainerUniversalMachO::Terminate();
     ObjectFileMachO::Terminate();
     ProcessMachCore::Terminate();
-    ProcessKDP::Terminate();
     ProcessGDBRemote::Terminate();
+    ProcessKDP::Terminate();
     SymbolVendorMacOSX::Terminate();
     PlatformMacOSX::Terminate();
     PlatformRemoteiOS::Terminate();
