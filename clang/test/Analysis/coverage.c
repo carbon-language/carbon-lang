@@ -92,3 +92,11 @@ void coverage9(int *x) {
   function_which_gives_up_settonull(&x);
   y = (*x);  // no warning
 }
+
+static void empty_function(){
+}
+int use_empty_function(int x) {
+    x = 0;
+    empty_function();
+    return 5/x; //expected-warning {{Division by zero}}
+}

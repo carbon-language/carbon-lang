@@ -159,6 +159,8 @@ void ExprEngine::processCallExit(ExplodedNode *CEBNode) {
     removeDead(BindedRetNode, CleanedNodes, 0, callerCtx, LastSt,
                ProgramPoint::PostStmtPurgeDeadSymbolsKind);
     currentBuilderContext = 0;
+  } else {
+    CleanedNodes.Add(CEBNode);
   }
 
   for (ExplodedNodeSet::iterator I = CleanedNodes.begin(),
