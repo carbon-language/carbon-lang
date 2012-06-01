@@ -329,10 +329,12 @@ namespace llvm {
     /// @param SizeInBits   Member size.
     /// @param AlignInBits  Member alignment.
     /// @param Elements     Enumeration elements.
+    /// @param Flags        Flags (e.g. forward decl)
     DIType createEnumerationType(DIDescriptor Scope, StringRef Name, 
                                  DIFile File, unsigned LineNumber, 
                                  uint64_t SizeInBits, uint64_t AlignInBits,
-                                 DIArray Elements, DIType ClassType);
+                                 DIArray Elements, DIType ClassType,
+                                 unsigned Flags);
 
     /// createSubroutineType - Create subroutine type.
     /// @param File          File in which this subroutine is defined.

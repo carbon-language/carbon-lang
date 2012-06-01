@@ -935,15 +935,16 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
       Tag == dwarf::DW_TAG_structure_type ||
       Tag == dwarf::DW_TAG_union_type) {
     // Add size if non-zero (derived types might be zero-sized.)
+    // TODO: Do we care about size for enum forward declarations?
     if (Size)
       addUInt(&Buffer, dwarf::DW_AT_byte_size, 0, Size);
-    else {
+    else if (!CTy.isForwardDecl())
       // Add zero size if it is not a forward declaration.
-      if (CTy.isForwardDecl())
-        addUInt(&Buffer, dwarf::DW_AT_declaration, dwarf::DW_FORM_flag, 1);
-      else
-        addUInt(&Buffer, dwarf::DW_AT_byte_size, 0, 0);
-    }
+      addUInt(&Buffer, dwarf::DW_AT_byte_size, 0, 0);
+
+    // If we're a forward decl, say so.
+    if (CTy.isForwardDecl())
+      addUInt(&Buffer, dwarf::DW_AT_declaration, dwarf::DW_FORM_flag, 1);
 
     // Add source line info if available.
     if (!CTy.isForwardDecl())
