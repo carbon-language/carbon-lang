@@ -293,7 +293,7 @@ def checkBuild(SBOutputDir):
     
         FailuresCopied = NumOfFailuresInSummary
         Idx = 0
-        for FailLogPathI in glob.glob(SBOutputDir + "/*/failures/*.stderr.txt"):
+        for FailLogPathI in Failures:
             if Idx >= NumOfFailuresInSummary:
                 break;
             Idx += 1 
@@ -380,7 +380,7 @@ def updateSVN(Mode, ProjectsMap):
 
             if Verbose == 1:        
                 print "  Executing: %s" % (Command,)
-                check_call(Command, shell=True)    
+            check_call(Command, shell=True)    
     
         if Mode == "delete":
             CommitCommand = "svn commit -m \"[analyzer tests] Remove " \
@@ -390,7 +390,7 @@ def updateSVN(Mode, ProjectsMap):
                             "reference results.\""
         if Verbose == 1:        
             print "  Executing: %s" % (CommitCommand,)
-            check_call(CommitCommand, shell=True)    
+        check_call(CommitCommand, shell=True)    
     except:
         print "Error: SVN update failed."
         sys.exit(-1)
