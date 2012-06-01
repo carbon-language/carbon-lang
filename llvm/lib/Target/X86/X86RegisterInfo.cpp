@@ -275,21 +275,19 @@ BitVector X86RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
 
   // Set the stack-pointer register and its aliases as reserved.
   Reserved.set(X86::RSP);
-  Reserved.set(X86::ESP);
-  Reserved.set(X86::SP);
-  Reserved.set(X86::SPL);
+  for (MCSubRegIterator I(X86::RSP, this); I.isValid(); ++I)
+    Reserved.set(*I);
 
   // Set the instruction pointer register and its aliases as reserved.
   Reserved.set(X86::RIP);
-  Reserved.set(X86::EIP);
-  Reserved.set(X86::IP);
+  for (MCSubRegIterator I(X86::RIP, this); I.isValid(); ++I)
+    Reserved.set(*I);
 
   // Set the frame-pointer register and its aliases as reserved if needed.
   if (TFI->hasFP(MF)) {
     Reserved.set(X86::RBP);
-    Reserved.set(X86::EBP);
-    Reserved.set(X86::BP);
-    Reserved.set(X86::BPL);
+    for (MCSubRegIterator I(X86::RBP, this); I.isValid(); ++I)
+      Reserved.set(*I);
   }
 
   // Mark the segment registers as reserved.
