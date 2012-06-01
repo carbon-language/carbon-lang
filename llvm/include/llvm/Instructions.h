@@ -2552,13 +2552,13 @@ public:
   /// that it is handled by the default handler.
   CaseIt findCaseValue(const ConstantInt *C) {
     for (CaseIt i = case_begin(), e = case_end(); i != e; ++i)
-      if (i.getCaseValueEx().isSatisfies(C->getValue()))
+      if (i.getCaseValueEx().isSatisfies(IntItem::fromConstantInt(C)))
         return i;
     return case_default();
   }
   ConstCaseIt findCaseValue(const ConstantInt *C) const {
     for (ConstCaseIt i = case_begin(), e = case_end(); i != e; ++i)
-      if (i.getCaseValueEx().isSatisfies(C->getValue()))
+      if (i.getCaseValueEx().isSatisfies(IntItem::fromConstantInt(C)))
         return i;
     return case_default();
   }    

@@ -67,7 +67,7 @@ protected:
   bool Sorted;
   
   bool isIntersected(CaseItemIt& LItem, CaseItemIt& RItem) {
-    return LItem->first.High->uge(RItem->first.Low);
+    return LItem->first.High >= RItem->first.Low;
   }
 
   bool isJoinable(CaseItemIt& LItem, CaseItemIt& RItem) {
@@ -79,7 +79,7 @@ protected:
     APInt RLow = RItem->first.Low;
     if (RLow != APInt::getNullValue(RLow.getBitWidth()))
       --RLow;
-    return LItem->first.High->uge(RLow);
+    return LItem->first.High >= RLow;
   }
   
   void sort() {
@@ -159,7 +159,7 @@ public:
       if (isJoinable(i, j)) {
         IntItem *CurHigh = &j->first.High;
         ++Weight;
-        if ((*CurHigh)->ugt(*High))
+        if (*CurHigh > *High)
           High = CurHigh;
       } else {
         RangeEx R(*Low, *High, Weight);

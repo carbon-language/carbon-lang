@@ -655,8 +655,8 @@ void Interpreter::visitSwitchInst(SwitchInst &I) {
     for (unsigned n = 0, en = Case.getNumItems(); n != en; ++n) {
       IntegersSubset::Range r = Case.getItem(n);
       // FIXME: Currently work with ConstantInt based numbers.
-      const ConstantInt *LowCI = r.Low.getImplementation();
-      const ConstantInt *HighCI = r.High.getImplementation();
+      const ConstantInt *LowCI = r.Low.toConstantInt();
+      const ConstantInt *HighCI = r.High.toConstantInt();
       GenericValue Low = getOperandValue(const_cast<ConstantInt*>(LowCI), SF);
       GenericValue High = getOperandValue(const_cast<ConstantInt*>(HighCI), SF);
       if (executeICMP_ULE(Low, CondVal, ElTy).IntVal != 0 &&

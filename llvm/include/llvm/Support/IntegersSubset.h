@@ -25,88 +25,143 @@
 
 namespace llvm {
   
-template <class ImplTy>
-class IntItemBase {
-protected:
-  ImplTy Implementation;
-  typedef IntItemBase<ImplTy> self;
-public:
+  // The IntItem is a wrapper for APInt.
+  // 1. It determines sign of integer, it allows to use
+  //    comparison operators >,<,>=,<=, and as result we got shorter and cleaner
+  //    constructions.
+  // 2. It helps to implement PR1255 (case ranges) as a series of small patches.
+  // 3. Currently we can interpret IntItem both as ConstantInt and as APInt.
+  //    It allows to provide SwitchInst methods that works with ConstantInt for
+  //    non-updated passes. And it allows to use APInt interface for new methods.   
+  // 4. IntItem can be easily replaced with APInt.
   
-  IntItemBase() {}
-  
-  IntItemBase(const ImplTy &impl) : Implementation(impl) {}
-  
-  // implicit
-  IntItemBase(const APInt& src) : Implementation(src) {}
-  
-  operator const APInt&() const {
-    return (const APInt&)Implementation;
-  }
-  bool operator<(const self& RHS) const {
-    return ((const APInt&)*this).ult(RHS);
-  }
-  bool operator==(const self& RHS) const {
-    return (const APInt&)*this == (const APInt&)RHS;
-  }
-  bool operator!=(const self& RHS) const {
-    return (const APInt&)*this != (const APInt&)RHS;
-  }  
-  self& operator=(const ImplTy& RHS) {
-    Implementation = RHS;
-    return *this;
-  }
-  const APInt* operator->() const {
-    return &((const APInt&)Implementation);
-  }
-  const APInt& operator*() const {
-    return ((const APInt&)Implementation);
-  }
-  // FIXME: Hack. Will removed.
-  ImplTy& getImplementation() {
-    return Implementation;
-  }
-};
- 
-class IntItemConstantIntImpl {
-  const ConstantInt *ConstantIntVal;
-public:
-  IntItemConstantIntImpl() : ConstantIntVal(0) {}
-  IntItemConstantIntImpl(const ConstantInt *Val) : ConstantIntVal(Val) {}
-  IntItemConstantIntImpl(LLVMContext &Ctx, const APInt& src) {
-    ConstantIntVal = cast<ConstantInt>(ConstantInt::get(Ctx, src));
-  }
-  explicit IntItemConstantIntImpl(const APInt& src) {
-    ConstantIntVal =
-        cast<ConstantInt>(ConstantInt::get(llvm::getGlobalContext(), src));
-  }
-  operator const APInt&() const {
-    return ConstantIntVal->getValue();
-  }  
-  operator const ConstantInt*() {
-    return ConstantIntVal;
-  }
-};
+  // The set of macros that allows to propagate APInt operators to the IntItem. 
 
-class IntItem : public IntItemBase<IntItemConstantIntImpl> {
-  typedef IntItemBase<IntItemConstantIntImpl> ParentTy;
-  IntItem(const IntItemConstantIntImpl& Impl) : ParentTy(Impl) {}
+#define INT_ITEM_DEFINE_COMPARISON(op,func) \
+  bool operator op (const APInt& RHS) const { \
+    return ConstantIntVal->getValue().func(RHS); \
+  }
+  
+#define INT_ITEM_DEFINE_UNARY_OP(op) \
+  IntItem operator op () const { \
+    APInt res = op(ConstantIntVal->getValue()); \
+    Constant *NewVal = ConstantInt::get(ConstantIntVal->getContext(), res); \
+    return IntItem(cast<ConstantInt>(NewVal)); \
+  }
+  
+#define INT_ITEM_DEFINE_BINARY_OP(op) \
+  IntItem operator op (const APInt& RHS) const { \
+    APInt res = ConstantIntVal->getValue() op RHS; \
+    Constant *NewVal = ConstantInt::get(ConstantIntVal->getContext(), res); \
+    return IntItem(cast<ConstantInt>(NewVal)); \
+  }
+  
+#define INT_ITEM_DEFINE_ASSIGNMENT_BY_OP(op) \
+  IntItem& operator op (const APInt& RHS) {\
+    APInt res = ConstantIntVal->getValue();\
+    res op RHS; \
+    Constant *NewVal = ConstantInt::get(ConstantIntVal->getContext(), res); \
+    ConstantIntVal = cast<ConstantInt>(NewVal); \
+    return *this; \
+  }  
+  
+#define INT_ITEM_DEFINE_PREINCDEC(op) \
+    IntItem& operator op () { \
+      APInt res = ConstantIntVal->getValue(); \
+      op(res); \
+      Constant *NewVal = ConstantInt::get(ConstantIntVal->getContext(), res); \
+      ConstantIntVal = cast<ConstantInt>(NewVal); \
+      return *this; \
+    }    
+
+#define INT_ITEM_DEFINE_POSTINCDEC(op) \
+    IntItem& operator op (int) { \
+      APInt res = ConstantIntVal->getValue();\
+      op(res); \
+      Constant *NewVal = ConstantInt::get(ConstantIntVal->getContext(), res); \
+      OldConstantIntVal = ConstantIntVal; \
+      ConstantIntVal = cast<ConstantInt>(NewVal); \
+      return IntItem(OldConstantIntVal); \
+    }   
+  
+#define INT_ITEM_DEFINE_OP_STANDARD_INT(RetTy, op, IntTy) \
+  RetTy operator op (IntTy RHS) const { \
+    return (*this) op APInt(ConstantIntVal->getValue().getBitWidth(), RHS); \
+  }  
+
+class IntItem {
+  ConstantInt *ConstantIntVal;
+  IntItem(const ConstantInt *V) : ConstantIntVal(const_cast<ConstantInt*>(V)) {}
 public:
   
   IntItem() {}
   
-  // implicit
-  IntItem(const APInt& src) : ParentTy(src) {}  
+  operator const APInt&() const {
+    return (const APInt&)ConstantIntVal->getValue();
+  }  
+  
+  // Propogate APInt operators.
+  // Note, that
+  // /,/=,>>,>>= are not implemented in APInt.
+  // <<= is implemented for unsigned RHS, but not implemented for APInt RHS.
+  
+  INT_ITEM_DEFINE_COMPARISON(<, ult);
+  INT_ITEM_DEFINE_COMPARISON(>, ugt);
+  INT_ITEM_DEFINE_COMPARISON(<=, ule);
+  INT_ITEM_DEFINE_COMPARISON(>=, uge);
+  INT_ITEM_DEFINE_COMPARISON(==, eq);
+  INT_ITEM_DEFINE_COMPARISON(!=, ne);
+  
+  INT_ITEM_DEFINE_BINARY_OP(*);
+  INT_ITEM_DEFINE_BINARY_OP(+);
+  INT_ITEM_DEFINE_OP_STANDARD_INT(IntItem,+,uint64_t);
+  INT_ITEM_DEFINE_BINARY_OP(-);
+  INT_ITEM_DEFINE_OP_STANDARD_INT(IntItem,-,uint64_t);
+  INT_ITEM_DEFINE_BINARY_OP(<<);
+  INT_ITEM_DEFINE_OP_STANDARD_INT(IntItem,<<,unsigned);
+  INT_ITEM_DEFINE_BINARY_OP(&);
+  INT_ITEM_DEFINE_BINARY_OP(^);
+  INT_ITEM_DEFINE_BINARY_OP(|);
+  
+  INT_ITEM_DEFINE_ASSIGNMENT_BY_OP(*=);
+  INT_ITEM_DEFINE_ASSIGNMENT_BY_OP(+=);
+  INT_ITEM_DEFINE_ASSIGNMENT_BY_OP(-=);
+  INT_ITEM_DEFINE_ASSIGNMENT_BY_OP(&=);
+  INT_ITEM_DEFINE_ASSIGNMENT_BY_OP(^=);
+  INT_ITEM_DEFINE_ASSIGNMENT_BY_OP(|=);
+  
+  // Special case for <<=
+  IntItem& operator <<= (unsigned RHS) {
+    APInt res = ConstantIntVal->getValue();
+    res <<= RHS;
+    Constant *NewVal = ConstantInt::get(ConstantIntVal->getContext(), res);
+    ConstantIntVal = cast<ConstantInt>(NewVal);
+    return *this;    
+  }
+  
+  INT_ITEM_DEFINE_UNARY_OP(-);
+  INT_ITEM_DEFINE_UNARY_OP(~);
+  
+  INT_ITEM_DEFINE_PREINCDEC(++);
+  INT_ITEM_DEFINE_PREINCDEC(--);
+  
+  // The set of workarounds, since currently we use ConstantInt implemented
+  // integer.
   
   static IntItem fromConstantInt(const ConstantInt *V) {
-    IntItemConstantIntImpl Impl(V);
-    return IntItem(Impl);
+    return IntItem(V);
   }
   static IntItem fromType(Type* Ty, const APInt& V) {
     ConstantInt *C = cast<ConstantInt>(ConstantInt::get(Ty, V));
     return fromConstantInt(C);
   }
+  static IntItem withImplLikeThis(const IntItem& LikeThis, const APInt& V) {
+    ConstantInt *C = cast<ConstantInt>(ConstantInt::get(
+        LikeThis.ConstantIntVal->getContext(), V));
+    return fromConstantInt(C);
+  }
   ConstantInt *toConstantInt() {
-    return const_cast<ConstantInt*>((const ConstantInt*)Implementation);
+    return ConstantIntVal;
   }
 };
 
@@ -145,24 +200,19 @@ struct IntRange {
     bool operator<(const IntRange &RHS) const {
       assert(!IsEmpty && "Left range is empty.");
       assert(!RHS.IsEmpty && "Right range is empty.");
-      if (Low->getBitWidth() == RHS.Low->getBitWidth()) {
-        if (Low->eq(RHS.Low)) {
-          if (High->ult(RHS.High))
-            return true;
-          return false;
-        }
-        if (Low->ult(RHS.Low))
+      if (Low == RHS.Low) {
+        if (High > RHS.High)
           return true;
         return false;
-      } else
-        return Low->getBitWidth() < RHS.Low->getBitWidth();      
+      }
+      if (Low < RHS.Low)
+        return true;
+      return false;
     }
 
     bool operator==(const IntRange &RHS) const {
       assert(!IsEmpty && "Left range is empty.");
       assert(!RHS.IsEmpty && "Right range is empty.");
-      if (Low->getBitWidth() != RHS.Low->getBitWidth())
-        return false;
       return Low == RHS.Low && High == RHS.High;      
     }
  
@@ -171,18 +221,12 @@ struct IntRange {
     }
  
     static bool LessBySize(const IntRange &LHS, const IntRange &RHS) {
-      assert(LHS.Low->getBitWidth() == RHS.Low->getBitWidth() && 
-          "This type of comparison requires equal bit width for LHS and RHS");
-      APInt LSize = *LHS.High - *LHS.Low;
-      APInt RSize = *RHS.High - *RHS.Low;
-      return LSize.ult(RSize);      
+      return (LHS.High - LHS.Low) < (RHS.High - RHS.Low);
     }
  
-    bool isInRange(const APInt &IntVal) const {
+    bool isInRange(const IntItem &IntVal) const {
       assert(!IsEmpty && "Range is empty.");
-      if (IntVal.getBitWidth() != Low->getBitWidth())
-        return false;
-      return IntVal.uge(Low) && IntVal.ule(High);      
+      return IntVal >= Low && IntVal <= High;      
     }    
   
     SubRes sub(const IntRange &RHS) const {
@@ -200,14 +244,14 @@ struct IntRange {
         return Res;
       }
       
-      if (Low->ult(RHS.Low)) {
+      if (Low < RHS.Low) {
         Res.first.Low = Low;
-        APInt NewHigh = RHS.Low;
+        IntItem NewHigh = RHS.Low;
         --NewHigh;
         Res.first.High = NewHigh;
       }
-      if (High->ugt(RHS.High)) {
-        APInt NewLow = RHS.High;
+      if (High > RHS.High) {
+        IntItem NewLow = RHS.High;
         ++NewLow;
         Res.second.Low = NewLow;
         Res.second.High = High;
@@ -332,7 +376,7 @@ public:
   /// E.g.: for range [<0>, <1>, <4,8>] the size will 7;
   ///       for range [<0>, <1>, <5>] the size will 3
   unsigned getSize() const {
-    APInt sz(getItem(0).Low->getBitWidth(), 0);
+    APInt sz(((const APInt&)getItem(0).Low).getBitWidth(), 0);
     for (unsigned i = 0, e = getNumItems(); i != e; ++i) {
       const APInt &Low = getItem(i).Low;
       const APInt &High = getItem(i).High;
@@ -347,7 +391,7 @@ public:
   /// [<1>, <4,8>] is considered as [1,4,5,6,7,8] 
   /// For range [<1>, <4,8>] getSingleValue(3) returns 6.
   APInt getSingleValue(unsigned idx) const {
-    APInt sz(getItem(0).Low->getBitWidth(), 0);
+    APInt sz(((const APInt&)getItem(0).Low).getBitWidth(), 0);
     for (unsigned i = 0, e = getNumItems(); i != e; ++i) {
       const APInt &Low = getItem(i).Low;
       const APInt &High = getItem(i).High;      
