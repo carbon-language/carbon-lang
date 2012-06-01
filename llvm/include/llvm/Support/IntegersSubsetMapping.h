@@ -26,14 +26,14 @@
 
 namespace llvm {
 
-template <class SuccessorClass>
+template <class SuccessorClass, class IntegersSubsetTy>
 class IntegersSubsetMapping {
 public:
   
-  typedef IntegersSubset::Range RangeTy;
+  typedef IntRange RangeTy;
   
   struct RangeEx : public RangeTy {
-    typedef IntegersSubset::Range RangeTy;
+    typedef IntRange RangeTy;
     RangeEx() : Weight(1) {}
     RangeEx(const RangeTy &R) : RangeTy(R.Low, R.High), Weight(1) {}
     RangeEx(const IntItem &C) : RangeTy(C), Weight(1) {}
@@ -88,31 +88,6 @@ protected:
       Sorted = true;
     }
   }
-
-  IntegersSubset getCase(RangesCollection& Src) {
-    std::vector<Constant*> Elts;
-    Elts.reserve(Src.size());
-    for (RangesCollectionIt i = Src.begin(), e = Src.end(); i != e; ++i) {
-      RangeTy &R = *i;
-      std::vector<Constant*> r;
-      if (R.isSingleNumber()) {
-        r.reserve(2);
-        // FIXME: Since currently we have ConstantInt based numbers
-        // use hack-conversion of IntItem to ConstantInt
-        r.push_back(R.Low.toConstantInt());
-        r.push_back(R.High.toConstantInt());
-      } else {
-        r.reserve(1);
-        r.push_back(R.Low.toConstantInt());
-      }
-      Constant *CV = ConstantVector::get(r);
-      Elts.push_back(CV);    
-    }
-    ArrayType *ArrTy =
-        ArrayType::get(Elts.front()->getType(), (uint64_t)Elts.size());
-    Constant *Array = ConstantArray::get(ArrTy, Elts);
-    return IntegersSubset(Array);     
-  }  
   
 public:
   
@@ -122,7 +97,7 @@ public:
   // factory.
   typedef CaseItemIt RangeIterator;
   
-  typedef std::pair<SuccessorClass*, IntegersSubset> Case;
+  typedef std::pair<SuccessorClass*, IntegersSubsetTy> Case;
   typedef std::list<Case> Cases;
   
   IntegersSubsetMapping() {
@@ -214,7 +189,7 @@ public:
     for (RangeIterator i = this->begin(); i != this->end(); ++i)
       TheCRSMap[i->second].push_back(i->first);
     for (CRSMapIt i = TheCRSMap.begin(), e = TheCRSMap.end(); i != e; ++i)
-      TheCases.push_back(std::make_pair(i->first, getCase(i->second)));
+      TheCases.push_back(std::make_pair(i->first, IntegersSubsetTy(i->second)));
   }
   
   /// Builds the finalized case objects ignoring successor values, as though
@@ -223,7 +198,7 @@ public:
     RangesCollection Ranges;
     for (RangeIterator i = this->begin(); i != this->end(); ++i)
       Ranges.push_back(i->first);
-    return getCase(Ranges);
+    return IntegersSubsetTy(Ranges);
   }  
   
   /// Returns true if there is no ranges and values inside.
@@ -234,7 +209,7 @@ public:
 };
 
 class BasicBlock;
-typedef IntegersSubsetMapping<BasicBlock> IntegersSubsetToBB;
+typedef IntegersSubsetMapping<BasicBlock, IntegersSubset> IntegersSubsetToBB;
 
 }
 

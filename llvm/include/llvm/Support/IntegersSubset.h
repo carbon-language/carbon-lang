@@ -19,6 +19,8 @@
 #ifndef CONSTANTRANGESSET_H_
 #define CONSTANTRANGESSET_H_
 
+#include <list>
+
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/LLVMContext.h"
@@ -109,8 +111,12 @@ public:
   INT_ITEM_DEFINE_COMPARISON(>, ugt)
   INT_ITEM_DEFINE_COMPARISON(<=, ule)
   INT_ITEM_DEFINE_COMPARISON(>=, uge)
+  
   INT_ITEM_DEFINE_COMPARISON(==, eq)
+  INT_ITEM_DEFINE_OP_STANDARD_INT(bool,==,uint64_t)
+  
   INT_ITEM_DEFINE_COMPARISON(!=, ne)
+  INT_ITEM_DEFINE_OP_STANDARD_INT(bool,!=,uint64_t)
   
   INT_ITEM_DEFINE_BINARY_OP(*)
   INT_ITEM_DEFINE_BINARY_OP(+)
@@ -160,7 +166,7 @@ public:
         LikeThis.ConstantIntVal->getContext(), V));
     return fromConstantInt(C);
   }
-  ConstantInt *toConstantInt() {
+  ConstantInt *toConstantInt() const {
     return ConstantIntVal;
   }
 };
@@ -261,30 +267,41 @@ struct IntRange {
   };      
 
 //===----------------------------------------------------------------------===//
-/// ConstantRangesSet - class that implements constant set of ranges.
-/// It is a wrapper for some real "holder" class (currently ConstantArray).
-/// It contains functions, that allows to parse "holder" like a set of ranges.
-/// Note: It is assumed that "holder" is inherited from Constant object.
-///       ConstantRangesSet may be converted to and from Constant* pointer.
-///
-class IntegersSubset {
-  Constant *Array;
+/// IntegersSubsetGeneric - class that implements the subset of integers. It
+/// consists from ranges and single numbers.
+class IntegersSubsetGeneric {
+public:
+  // Use Chris Lattner idea, that was initially described here:
+  // http://lists.cs.uiuc.edu/pipermail/llvm-commits/Week-of-Mon-20120213/136954.html
+  // In short, for more compact memory consumption we can store flat
+  // numbers collection, and define range as pair of indices.
+  // In that case we can safe some memory on 32 bit machines.
+  typedef std::list<IntItem> FlatCollectionTy;
+  typedef std::pair<IntItem*, IntItem*> RangeLinkTy;
+  typedef SmallVector<RangeLinkTy, 64> RangeLinksTy;
+  typedef RangeLinksTy::iterator RangeLinksConstIt;
+  
+protected:
+  
+  FlatCollectionTy FlatCollection;
+  RangeLinksTy RangeLinks;
+  
 public:
   
-  bool IsWide;
-  
-  // implicit
-  IntegersSubset(Constant *V) : Array(V) {
-    ArrayType *ArrTy = cast<ArrayType>(Array->getType());
-    VectorType *VecTy = cast<VectorType>(ArrTy->getElementType());
-    IntegerType *IntTy = cast<IntegerType>(VecTy->getElementType());
-    IsWide = IntTy->getBitWidth() > 64;    
+  template<class RangesCollectionTy>
+  IntegersSubsetGeneric(const RangesCollectionTy& Links) {
+    assert(Links.size() && "Empty ranges are not allowed.");
+    for (typename RangesCollectionTy::const_iterator i = Links.begin(),
+         e = Links.end(); i != e; ++i) {
+      RangeLinkTy RangeLink;
+      FlatCollection.push_back(i->Low);
+      RangeLink.first = &FlatCollection.back();
+      if (i->Low != i->High)
+        FlatCollection.push_back(i->High);
+      RangeLink.second = &FlatCollection.back();
+      RangeLinks.push_back(RangeLink);
+    }
   }
-  
-  operator Constant*() { return Array; }
-  operator const Constant*() const { return Array; }
-  Constant *operator->() { return Array; }
-  const Constant *operator->() const { return Array; }
   
   typedef IntRange Range;
  
@@ -293,81 +310,33 @@ public:
   /// contained ranges.
   bool isSatisfies(const IntItem &CheckingVal) const {
     for (unsigned i = 0, e = getNumItems(); i < e; ++i) {
-      const Constant *CV = Array->getAggregateElement(i);
-      unsigned VecSize = cast<VectorType>(CV->getType())->getNumElements();
-      switch (VecSize) {
-      case 1:
-        if (cast<const ConstantInt>(CV->getAggregateElement(0U))->getValue() ==
-            CheckingVal)
+      if (RangeLinks[i].first == RangeLinks[i].second) {
+        if (*RangeLinks[i].first == CheckingVal)
           return true;
-        break;
-      case 2: {
-        const APInt &Lo =
-            cast<const ConstantInt>(CV->getAggregateElement(0U))->getValue();
-        const APInt &Hi =
-            cast<const ConstantInt>(CV->getAggregateElement(1))->getValue();
-        if (Lo.uge(CheckingVal) && Hi.ule(CheckingVal))
-          return true;
-      }
-        break;
-      default:
-        assert(0 && "Only pairs and single numbers are allowed here.");
-        break;
-      }
+      } else if (*RangeLinks[i].first >= CheckingVal &&
+                 *RangeLinks[i].second <= CheckingVal) 
+        return true;
     }
     return false;    
   }
   
   /// Returns set's item with given index.
-  Range getItem(unsigned idx) {
-    Constant *CV = Array->getAggregateElement(idx);
-    unsigned NumEls = cast<VectorType>(CV->getType())->getNumElements();
-    switch (NumEls) {
-    case 1:
-      return Range(IntItem::fromConstantInt(
-                    cast<ConstantInt>(CV->getAggregateElement(0U))));
-    case 2:
-      return Range(IntItem::fromConstantInt(
-                     cast<ConstantInt>(CV->getAggregateElement(0U))),
-                   IntItem::fromConstantInt(
-                     cast<ConstantInt>(CV->getAggregateElement(1U))));
-    default:
-      assert(0 && "Only pairs and single numbers are allowed here.");
-      return Range();
-    }    
-  }
-  
-  const Range getItem(unsigned idx) const {
-    const Constant *CV = Array->getAggregateElement(idx);
-    
-    unsigned NumEls = cast<VectorType>(CV->getType())->getNumElements();
-    switch (NumEls) {
-    case 1:
-      return Range(IntItem::fromConstantInt(
-                     cast<ConstantInt>(CV->getAggregateElement(0U))),
-                   IntItem::fromConstantInt(cast<ConstantInt>(
-                     cast<ConstantInt>(CV->getAggregateElement(0U)))));
-    case 2:
-      return Range(IntItem::fromConstantInt(
-                     cast<ConstantInt>(CV->getAggregateElement(0U))),
-                   IntItem::fromConstantInt(
-                   cast<ConstantInt>(CV->getAggregateElement(1))));
-    default:
-      assert(0 && "Only pairs and single numbers are allowed here.");
-      return Range();
-    }    
-  }
+  Range getItem(unsigned idx) const {
+    const RangeLinkTy &Link = RangeLinks[idx];
+    if (Link.first != Link.second)
+      return Range(*Link.first, *Link.second);
+    else
+      return Range(*Link.first);
+  }  
   
   /// Return number of items (ranges) stored in set.
   unsigned getNumItems() const {
-    return cast<ArrayType>(Array->getType())->getNumElements();
+    return RangeLinks.size();
   }
   
-  bool isWideNumberFormat() const { return IsWide; }
-  
   bool isSingleNumber(unsigned idx) const {
-    Constant *CV = Array->getAggregateElement(idx);
-    return cast<VectorType>(CV->getType())->getNumElements() == 1;
+    return RangeLinks.size() == 1 &&
+           RangeLinks[0].first == RangeLinks[0].second;
   }
   
   /// Returns set the size, that equals number of all values + sizes of all
@@ -409,6 +378,86 @@ public:
     assert(0 && "Index exceeds high border.");
     return sz;    
   }
+};  
+
+//===----------------------------------------------------------------------===//
+/// IntegersSubset - currenly is extension of IntegersSubsetGeneric
+/// that also supports conversion to/from Constant* object.
+class IntegersSubset : public IntegersSubsetGeneric {
+  Constant *Holder;
+  
+  static unsigned getNumItemsFromConstant(Constant *C) {
+    return cast<ArrayType>(C->getType())->getNumElements();
+  }
+  
+  static Range getItemFromConstant(Constant *C, unsigned idx) {
+    const Constant *CV = C->getAggregateElement(idx);
+    
+    unsigned NumEls = cast<VectorType>(CV->getType())->getNumElements();
+    switch (NumEls) {
+    case 1:
+      return Range(IntItem::fromConstantInt(
+                     cast<ConstantInt>(CV->getAggregateElement(0U))),
+                   IntItem::fromConstantInt(cast<ConstantInt>(
+                     cast<ConstantInt>(CV->getAggregateElement(0U)))));
+    case 2:
+      return Range(IntItem::fromConstantInt(
+                     cast<ConstantInt>(CV->getAggregateElement(0U))),
+                   IntItem::fromConstantInt(
+                   cast<ConstantInt>(CV->getAggregateElement(1))));
+    default:
+      assert(0 && "Only pairs and single numbers are allowed here.");
+      return Range();
+    }    
+  }  
+  
+  std::vector<Range> rangesFromConstant(Constant *C) {
+    unsigned NumItems = getNumItemsFromConstant(C);
+    std::vector<Range> r;
+    r.reserve(NumItems);
+    for (unsigned i = 0, e = NumItems; i != e; ++i)
+      r.push_back(getItemFromConstant(C, i));
+    return r;
+  }
+  
+public:
+  
+  IntegersSubset(Constant *C) : IntegersSubsetGeneric(rangesFromConstant(C)),
+                                Holder(C) {}
+  
+  // implicit
+  template<class RangesCollectionTy>
+  IntegersSubset(const RangesCollectionTy& Src) :
+    IntegersSubsetGeneric(Src) {
+    
+    std::vector<Constant*> Elts;
+    Elts.reserve(Src.size());
+    for (typename RangesCollectionTy::const_iterator i = Src.begin(),
+         e = Src.end(); i != e; ++i) {
+      const Range &R = *i;
+      std::vector<Constant*> r;
+      if (R.Low != R.High) {
+        r.reserve(2);
+        // FIXME: Since currently we have ConstantInt based numbers
+        // use hack-conversion of IntItem to ConstantInt
+        r.push_back(R.Low.toConstantInt());
+        r.push_back(R.High.toConstantInt());
+      } else {
+        r.reserve(1);
+        r.push_back(R.Low.toConstantInt());
+      }
+      Constant *CV = ConstantVector::get(r);
+      Elts.push_back(CV);    
+    }
+    ArrayType *ArrTy =
+        ArrayType::get(Elts.front()->getType(), (uint64_t)Elts.size());
+    Holder = ConstantArray::get(ArrTy, Elts);    
+  }
+  
+  operator Constant*() { return Holder; }
+  operator const Constant*() const { return Holder; }
+  Constant *operator->() { return Holder; }
+  const Constant *operator->() const { return Holder; }
 };  
 
 }

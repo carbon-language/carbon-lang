@@ -2427,7 +2427,7 @@ size_t SelectionDAGBuilder::Clusterify(CaseVector& Cases,
   
   /// Use a shorter form of declaration, and also
   /// show the we want to use CRSBuilder as Clusterifier.
-  typedef IntegersSubsetMapping<MachineBasicBlock> Clusterifier;
+  typedef IntegersSubsetMapping<MachineBasicBlock, IntegersSubset> Clusterifier;
   
   Clusterifier TheClusterifier;
 
