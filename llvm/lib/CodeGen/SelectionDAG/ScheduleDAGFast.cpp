@@ -441,19 +441,14 @@ static bool CheckForLiveRegDef(SUnit *SU, unsigned Reg,
                                SmallVector<unsigned, 4> &LRegs,
                                const TargetRegisterInfo *TRI) {
   bool Added = false;
-  if (LiveRegDefs[Reg] && LiveRegDefs[Reg] != SU) {
-    if (RegAdded.insert(Reg)) {
-      LRegs.push_back(Reg);
-      Added = true;
-    }
-  }
-  for (const uint16_t *Alias = TRI->getAliasSet(Reg); *Alias; ++Alias)
-    if (LiveRegDefs[*Alias] && LiveRegDefs[*Alias] != SU) {
-      if (RegAdded.insert(*Alias)) {
-        LRegs.push_back(*Alias);
+  for (MCRegAliasIterator AI(Reg, TRI, true); AI.isValid(); ++AI) {
+    if (LiveRegDefs[*AI] && LiveRegDefs[*AI] != SU) {
+      if (RegAdded.insert(*AI)) {
+        LRegs.push_back(*AI);
         Added = true;
       }
     }
+  }
   return Added;
 }
 
