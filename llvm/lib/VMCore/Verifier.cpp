@@ -1575,53 +1575,9 @@ void Verifier::visitLandingPadInst(LandingPadInst &LPI) {
 
 void Verifier::verifyDominatesUse(Instruction &I, unsigned i) {
   Instruction *Op = cast<Instruction>(I.getOperand(i));
-  BasicBlock *BB = I.getParent();
-  BasicBlock *OpBlock = Op->getParent();
-  PHINode *PN = dyn_cast<PHINode>(&I);
 
-  // DT can handle non phi instructions for us.
-  if (!PN) {
-    // Definition must dominate use unless use is unreachable!
-    Assert2(InstsInThisBlock.count(Op) || !DT->isReachableFromEntry(BB) ||
-            DT->dominates(Op, &I),
-            "Instruction does not dominate all uses!", Op, &I);
-    return;
-  }
-
-  // Check that a definition dominates all of its uses.
-  if (InvokeInst *II = dyn_cast<InvokeInst>(Op)) {
-    // Invoke results are only usable in the normal destination, not in the
-    // exceptional destination.
-    BasicBlock *NormalDest = II->getNormalDest();
-
-
-    // PHI nodes differ from other nodes because they actually "use" the
-    // value in the predecessor basic blocks they correspond to.
-    BasicBlock *UseBlock = BB;
-    unsigned j = PHINode::getIncomingValueNumForOperand(i);
-    UseBlock = PN->getIncomingBlock(j);
-    Assert2(UseBlock, "Invoke operand is PHI node with bad incoming-BB",
-            Op, &I);
-
-    if (UseBlock == OpBlock) {
-      // Special case of a phi node in the normal destination or the unwind
-      // destination.
-      Assert2(BB == NormalDest || !DT->isReachableFromEntry(UseBlock),
-              "Invoke result not available in the unwind destination!",
-              Op, &I);
-    } else {
-      Assert2(DT->dominates(II, UseBlock) ||
-              !DT->isReachableFromEntry(UseBlock),
-              "Invoke result does not dominate all uses!", Op, &I);
-    }
-  }
-
-  // PHI nodes are more difficult than other nodes because they actually
-  // "use" the value in the predecessor basic blocks they correspond to.
-  unsigned j = PHINode::getIncomingValueNumForOperand(i);
-  BasicBlock *PredBB = PN->getIncomingBlock(j);
-  Assert2(PredBB && (DT->dominates(OpBlock, PredBB) ||
-                     !DT->isReachableFromEntry(PredBB)),
+  const Use &U = I.getOperandUse(i);
+  Assert2(InstsInThisBlock.count(Op) || DT->dominates(Op, U),
           "Instruction does not dominate all uses!", Op, &I);
 }
 

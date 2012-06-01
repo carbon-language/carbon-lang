@@ -20,7 +20,7 @@ bb2:
   %y3 = landingpad i32 personality i32 ()* @g
           cleanup
   ret void
-; CHECK: Invoke result not available in the unwind destination!
+; CHECK: Instruction does not dominate all uses!
 ; CHECK-NEXT:  %y1 = invoke i32 @g()
 ; CHECK-NEXT:        to label %bb1 unwind label %bb2
 ; CHECK-NEXT:  %y2 = phi i32 [ %y1, %bb0 ]
@@ -38,7 +38,7 @@ bb2:
 bb3:
   %y3 = phi i32 [%y1, %bb2]
   ret void
-; CHECK: Invoke result does not dominate all uses!
+; CHECK: Instruction does not dominate all uses!
 ; CHECK-NEXT:  %y1 = invoke i32 @g()
 ; CHECK-NEXT:          to label %bb1 unwind label %bb2
 ; CHECK-NEXT:  %y3 = phi i32 [ %y1, %bb2 ]
