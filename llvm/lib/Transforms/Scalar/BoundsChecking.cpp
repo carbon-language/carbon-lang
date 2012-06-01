@@ -55,8 +55,13 @@ namespace {
     APInt Size;
     Value *SizeValue;
     bool ReturnVal;
+    CacheData() {}
+    CacheData(APInt Off, Value *OffVal, APInt Sz, Value *SzVal, bool Ret) :
+      Offset(Off), OffsetValue(OffVal), Size(Sz), SizeValue(SzVal),
+      ReturnVal(Ret) {}
   };
   typedef DenseMap<Value*, CacheData> CacheMapTy;
+  typedef SmallPtrSet<Value*, 8> PtrSetTy;
 
   struct BoundsChecking : public FunctionPass {
     static char ID;
@@ -82,6 +87,7 @@ namespace {
     BasicBlock *TrapBB;
     unsigned Penalty;
     CacheMapTy CacheMap;
+    PtrSetTy SeenPtrs;
 
     BasicBlock *getTrapBB();
     void emitBranchToTrap(Value *Cmp = 0);
@@ -163,6 +169,10 @@ bool BoundsChecking::computeAllocSize(Value *Ptr, APInt &Offset,
     return Cache.ReturnVal;
   }
 
+  // record the pointers that were handled in this run, so that they can be
+  // cleaned later if something fails
+  SeenPtrs.insert(Ptr);
+
   IntegerType *IntTy = TD->getIntPtrType(Fn->getContext());
   unsigned IntTyBits = IntTy->getBitWidth();
   bool ReturnVal;
@@ -194,11 +204,12 @@ bool BoundsChecking::computeAllocSize(Value *Ptr, APInt &Offset,
         RETURN(true);
       }
       OffsetValue = ConstantInt::get(IntTy, Offset);
-    } else {
+    } else if (Penalty > 1) {
       OffsetValue = EmitGEPOffset(Builder, *TD, GEP);
-    }
+      GET_VALUE(PtrOffsetValue, PtrOffset);
+    } else
+      RETURN(false);
 
-    GET_VALUE(PtrOffsetValue, PtrOffset);
     OffsetValue = Builder->CreateAdd(PtrOffsetValue, OffsetValue);
     RETURN(true);
 
@@ -259,7 +270,7 @@ bool BoundsChecking::computeAllocSize(Value *Ptr, APInt &Offset,
     bool FalseAlloc = computeAllocSize(SI->getFalseValue(), OffsetFalse,
                                        OffsetValueFalse, SizeFalse,
                                        SizeValueFalse);
-    if (!TrueAlloc && !FalseAlloc)
+    if (!TrueAlloc || !FalseAlloc)
       RETURN(false);
 
     // fold constant sizes & offsets if they are equal
@@ -378,22 +389,24 @@ bool BoundsChecking::computeAllocSize(Value *Ptr, APInt &Offset,
     PHINode *SizePHI   = Builder->CreatePHI(IntTy, PHI->getNumIncomingValues());
 
     // insert right away in the cache to handle recursive PHIs
-    CacheData CacheEntry;
-    CacheEntry.Offset = CacheEntry.Size = 0;
-    CacheEntry.OffsetValue = OffsetPHI;
-    CacheEntry.SizeValue = SizePHI;
-    CacheEntry.ReturnVal = true;
+    CacheData CacheEntry(APInt(), OffsetPHI, APInt(), SizePHI, true);
     CacheMap[Ptr] = CacheEntry;
 
     // compute offset/size for each PHI incoming pointer
-    bool someOk = false;
     for (unsigned i = 0, e = PHI->getNumIncomingValues(); i != e; ++i) {
       Builder->SetInsertPoint(PHI->getIncomingBlock(i)->getFirstInsertionPt());
 
       APInt PhiOffset(IntTyBits, 0), PhiSize(IntTyBits, 0);
       Value *PhiOffsetValue = 0, *PhiSizeValue = 0;
-      someOk |= computeAllocSize(PHI->getIncomingValue(i), PhiOffset,
-                                 PhiOffsetValue, PhiSize, PhiSizeValue);
+
+      if (!computeAllocSize(PHI->getIncomingValue(i), PhiOffset, PhiOffsetValue,
+                            PhiSize, PhiSizeValue)) {
+        OffsetPHI->replaceAllUsesWith(UndefValue::get(IntTy));
+        OffsetPHI->eraseFromParent();
+        SizePHI->replaceAllUsesWith(UndefValue::get(IntTy));
+        SizePHI->eraseFromParent();
+        RETURN(false);
+      }
 
       GET_VALUE(PhiOffsetValue, PhiOffset);
       GET_VALUE(PhiSizeValue, PhiSize);
@@ -401,10 +414,6 @@ bool BoundsChecking::computeAllocSize(Value *Ptr, APInt &Offset,
       OffsetPHI->addIncoming(PhiOffsetValue, PHI->getIncomingBlock(i));
       SizePHI->addIncoming(PhiSizeValue, PHI->getIncomingBlock(i));
     }
-
-    // fail here if we couldn't compute the size/offset in any incoming edge
-    if (!someOk)
-      RETURN(false);
 
     OffsetValue = OffsetPHI;
     SizeValue = SizePHI;
@@ -423,13 +432,12 @@ bool BoundsChecking::computeAllocSize(Value *Ptr, APInt &Offset,
 
 cache_and_return:
   // cache the result and return
-  CacheData CacheEntry;
-  CacheEntry.Offset = Offset;
-  CacheEntry.OffsetValue = OffsetValue;
-  CacheEntry.Size = Size;
-  CacheEntry.SizeValue = SizeValue;
-  CacheEntry.ReturnVal = ReturnVal;
+  CacheData CacheEntry(Offset, OffsetValue, Size, SizeValue, ReturnVal);
   CacheMap[Ptr] = CacheEntry;
+
+  // non-computable results can be safely cached
+  if (!ReturnVal)
+    SeenPtrs.erase(Ptr);
 
   Builder->SetInsertPoint(PrevInsertPoint);
   return ReturnVal;
@@ -454,6 +462,15 @@ bool BoundsChecking::instrument(Value *Ptr, Value *InstVal) {
 
   if (!computeAllocSize(Ptr, Offset, OffsetValue, Size, SizeValue)) {
     DEBUG(dbgs() << "computeAllocSize failed:\n" << *Ptr << "\n");
+
+    // erase everything that was computed in this iteration from the cache, so
+    // that no dangling references are left behind. We could be a bit smarter if
+    // we kept a dependency graph. It's probably not worth the complexity,
+    // though.
+    for (PtrSetTy::iterator I=SeenPtrs.begin(), E=SeenPtrs.end(); I != E; ++I)
+      CacheMap.erase(*I);
+    SeenPtrs.clear();
+
     ++ChecksUnable;
     return false;
   }

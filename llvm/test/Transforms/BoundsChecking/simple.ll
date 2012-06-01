@@ -91,7 +91,7 @@ define void @f8() nounwind {
 define void @f9(i128* %arg) nounwind {
   %1 = alloca i128
   %2 = select i1 undef, i128* %arg, i128* %1
-; CHECK: br i1 false
+; CHECK-NOT: trap
   %3 = load i128* %2, align 4
   ret void
 }
