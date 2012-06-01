@@ -86,4 +86,11 @@ define {i8*, i64} @test_pair_conv_extract() {
 
 
 
+; PR13006
+define { i64, i64 } @crash(i8* %this) {
+  %c = tail call { i64, i64 } @testp()
+  %mrv7 = insertvalue { i64, i64 } %c, i64 undef, 1
+  ret { i64, i64 } %mrv7
+}
+
 
