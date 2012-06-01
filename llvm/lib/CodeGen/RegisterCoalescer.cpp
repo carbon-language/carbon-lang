@@ -396,6 +396,7 @@ void RegisterCoalescer::LRE_WillEraseInstruction(MachineInstr *MI) {
 bool RegisterCoalescer::adjustCopiesBackFrom(const CoalescerPair &CP,
                                              MachineInstr *CopyMI) {
   assert(!CP.isPartial() && "This doesn't work for partial copies.");
+  assert(!CP.isPhys() && "This doesn't work for physreg copies.");
 
   // Bail if there is no dst interval - can happen when merging physical subreg
   // operations.
@@ -449,20 +450,6 @@ bool RegisterCoalescer::adjustCopiesBackFrom(const CoalescerPair &CP,
   // live-range starts.  If there are no intervening live ranges between them in
   // IntB, we can merge them.
   if (ValLR+1 != BLR) return false;
-
-  // If a live interval is a physical register, conservatively check if any
-  // of its aliases is overlapping the live interval of the virtual register.
-  // If so, do not coalesce.
-  if (TargetRegisterInfo::isPhysicalRegister(IntB.reg)) {
-    for (const uint16_t *AS = TRI->getAliasSet(IntB.reg); *AS; ++AS)
-      if (LIS->hasInterval(*AS) && IntA.overlaps(LIS->getInterval(*AS))) {
-        DEBUG({
-            dbgs() << "\t\tInterfere with alias ";
-            LIS->getInterval(*AS).print(dbgs(), TRI);
-          });
-        return false;
-      }
-  }
 
   DEBUG({
       dbgs() << "Extending: ";
@@ -576,12 +563,7 @@ bool RegisterCoalescer::hasOtherReachingDefs(LiveInterval &IntA,
 ///
 bool RegisterCoalescer::removeCopyByCommutingDef(const CoalescerPair &CP,
                                                  MachineInstr *CopyMI) {
-  // FIXME: For now, only eliminate the copy by commuting its def when the
-  // source register is a virtual register. We want to guard against cases
-  // where the copy is a back edge copy and commuting the def lengthen the
-  // live interval of the source register to the entire loop.
-  if (CP.isPhys() && CP.isFlipped())
-    return false;
+  assert (!CP.isPhys());
 
   // Bail if there is no dst interval.
   if (!LIS->hasInterval(CP.getDstReg()))
@@ -641,14 +623,6 @@ bool RegisterCoalescer::removeCopyByCommutingDef(const CoalescerPair &CP,
   // uses which the new definition can reach.
   if (hasOtherReachingDefs(IntA, IntB, AValNo, BValNo))
     return false;
-
-  // Abort if the aliases of IntB.reg have values that are not simply the
-  // clobbers from the superreg.
-  if (TargetRegisterInfo::isPhysicalRegister(IntB.reg))
-    for (const uint16_t *AS = TRI->getAliasSet(IntB.reg); *AS; ++AS)
-      if (LIS->hasInterval(*AS) &&
-          hasOtherReachingDefs(IntA, LIS->getInterval(*AS), AValNo, 0))
-        return false;
 
   // If some of the uses of IntA.reg is already coalesced away, return false.
   // It's not possible to determine whether it's safe to perform the coalescing.
@@ -1064,7 +1038,7 @@ bool RegisterCoalescer::joinCopy(MachineInstr *CopyMI, bool &Again) {
       return true;
 
     // If we can eliminate the copy without merging the live ranges, do so now.
-    if (!CP.isPartial()) {
+    if (!CP.isPartial() && !CP.isPhys()) {
       if (adjustCopiesBackFrom(CP, CopyMI) ||
           removeCopyByCommutingDef(CP, CopyMI)) {
         LIS->RemoveMachineInstrFromMaps(CopyMI);
