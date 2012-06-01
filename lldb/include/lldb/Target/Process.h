@@ -719,6 +719,22 @@ public:
     {
         m_resume_count = c;
     }
+    
+    bool
+    GetLaunchInSeparateProcessGroup ()
+    {
+        return m_flags.Test(lldb::eLaunchFlagLaunchInSeparateProcessGroup);
+    }
+    
+    void
+    SetLaunchInSeparateProcessGroup (bool separate)
+    {
+        if (separate)
+            m_flags.Set(lldb::eLaunchFlagLaunchInSeparateProcessGroup);
+        else
+            m_flags.Clear (lldb::eLaunchFlagLaunchInSeparateProcessGroup);
+
+    }
 
     void
     Clear ()
@@ -779,6 +795,7 @@ protected:
     Host::MonitorChildProcessCallback m_monitor_callback;
     void *m_monitor_callback_baton;
     bool m_monitor_signals;
+
 };
 
 //----------------------------------------------------------------------

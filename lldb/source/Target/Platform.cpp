@@ -605,6 +605,11 @@ Platform::DebugProcess (ProcessLaunchInfo &launch_info,
     ProcessSP process_sp;
     // Make sure we stop at the entry point
     launch_info.GetFlags ().Set (eLaunchFlagDebug);
+    // We always launch the process we are going to debug in a separate process
+    // group, since then we can handle ^C interrupts ourselves w/o having to worry
+    // about the target getting them as well.
+    launch_info.SetLaunchInSeparateProcessGroup(true);
+    
     error = LaunchProcess (launch_info);
     if (error.Success())
     {

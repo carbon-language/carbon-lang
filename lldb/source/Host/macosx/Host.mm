@@ -1240,6 +1240,9 @@ GetPosixspawnFlags (ProcessLaunchInfo &launch_info)
     
     if (launch_info.GetFlags().Test (eLaunchFlagDisableASLR))
         flags |= _POSIX_SPAWN_DISABLE_ASLR;     // Darwin specific posix_spawn flag
+        
+    if (launch_info.GetLaunchInSeparateProcessGroup())
+        flags |= POSIX_SPAWN_SETPGROUP;
     
 //#ifdef POSIX_SPAWN_CLOEXEC_DEFAULT
 //    // Close all files exception those with file actions if this is supported.
