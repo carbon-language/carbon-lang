@@ -1626,9 +1626,9 @@ def : Pat&lt;(i32 imm:$imm),
    the registers <tt>EAX</tt>, <tt>AX</tt> and <tt>AL</tt> share the first eight
    bits. These physical registers are marked as <i>aliased</i> in LLVM. Given a
    particular architecture, you can check which registers are aliased by
-   inspecting its <tt>RegisterInfo.td</tt> file. Moreover, the method
-   <tt>MCRegisterInfo::getAliasSet(p_reg)</tt> returns an array containing
-   all the physical registers aliased to the register <tt>p_reg</tt>.</p>
+   inspecting its <tt>RegisterInfo.td</tt> file. Moreover, the class
+   <tt>MCRegAliasIterator</tt> enumerates all the physical registers aliased to
+   a register.</p>
 
 <p>Physical registers, in LLVM, are grouped in <i>Register Classes</i>.
    Elements in the same register class are functionally equivalent, and can be
