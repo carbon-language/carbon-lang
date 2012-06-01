@@ -41,6 +41,8 @@ static char getFlagForLevel(DiagnosticsEngine::Level Level) {
   case DiagnosticsEngine::Error:   return 'E';
   case DiagnosticsEngine::Fatal:   return 'F';
   }
+
+  llvm_unreachable("Unknown diagnostic level");
 }
 
 static CompilerInstance *createCompiler(unsigned int argc, char **argv) {
