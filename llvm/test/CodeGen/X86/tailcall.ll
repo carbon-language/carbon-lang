@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86 -tailcallopt | grep TAILCALL | count 5
+; RUN: llc < %s -march=x86 -tailcallopt | grep TAILCALL | count 7
 
 ; With -tailcallopt, CodeGen guarantees a tail call optimization
 ; for all of these.
@@ -37,4 +37,16 @@ declare fastcc void @does_not_return()
 define fastcc i32 @noret() nounwind {
   tail call fastcc void @does_not_return()
   unreachable
+}
+
+define fastcc void @void_test(i32, i32, i32, i32) {
+  entry:
+   tail call fastcc void @void_test( i32 %0, i32 %1, i32 %2, i32 %3)
+   ret void 
+}
+
+define fastcc i1 @i1test(i32, i32, i32, i32) {
+  entry:
+  %4 = tail call fastcc i1 @i1test( i32 %0, i32 %1, i32 %2, i32 %3)
+  ret i1 %4
 }
