@@ -2439,7 +2439,7 @@ bool ARMFastISel::SelectIntrinsicCall(const IntrinsicInst &I) {
                       .addReg(SrcReg).addImm(0));
       SrcReg = DestReg;
     }
-    UpdateValueMap(&I, DestReg);
+    UpdateValueMap(&I, SrcReg);
     return true;
   }
   case Intrinsic::memcpy:
