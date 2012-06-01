@@ -35,7 +35,7 @@
   _prop = newVal;
 }
 -(void) setProp2:(CFTypeRef) newVal {
-  _prop = (__bridge_transfer id)CFRetain(newVal);
+  _prop = (id)CFBridgingRelease(CFRetain(newVal));
 }
 
 -(id) xpc_prop {

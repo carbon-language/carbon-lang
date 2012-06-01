@@ -6,6 +6,7 @@
 
 #define NS_RETURNS_RETAINED __attribute__((ns_returns_retained))
 #define CF_CONSUMED __attribute__((cf_consumed))
+#define CF_RETURNS_RETAINED __attribute__((cf_returns_retained))
 
 #define NS_INLINE static __inline__ __attribute__((always_inline))
 #define nil ((void*) 0)
@@ -21,7 +22,7 @@ typedef struct _NSZone NSZone;
 
 typedef const void * CFTypeRef;
 CFTypeRef CFRetain(CFTypeRef cf);
-id CFBridgingRelease(CFTypeRef CF_CONSUMED X);
+CFTypeRef CFMakeCollectable(CFTypeRef cf) NS_AUTOMATED_REFCOUNT_UNAVAILABLE;
 
 NS_INLINE NS_RETURNS_RETAINED id NSMakeCollectable(CFTypeRef CF_CONSUMED cf) NS_AUTOMATED_REFCOUNT_UNAVAILABLE;
 
@@ -79,3 +80,25 @@ typedef id xpc_object_t;
 
 void _dispatch_object_validate(dispatch_object_t object);
 void _xpc_object_validate(xpc_object_t object);
+
+#if __has_feature(objc_arc)
+
+NS_INLINE CF_RETURNS_RETAINED CFTypeRef CFBridgingRetain(id X) {
+    return (__bridge_retained CFTypeRef)X;
+}
+
+NS_INLINE id CFBridgingRelease(CFTypeRef CF_CONSUMED X) {
+    return (__bridge_transfer id)X;
+}
+
+#else
+
+NS_INLINE CF_RETURNS_RETAINED CFTypeRef CFBridgingRetain(id X) {
+    return X ? CFRetain((CFTypeRef)X) : NULL;
+}
+
+NS_INLINE id CFBridgingRelease(CFTypeRef CF_CONSUMED X) {
+    return [(id)CFMakeCollectable(X) autorelease];
+}
+
+#endif

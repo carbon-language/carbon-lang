@@ -10,6 +10,7 @@
 #include "Transforms.h"
 #include "Internals.h"
 #include "clang/Sema/SemaDiagnostic.h"
+#include "clang/Sema/Sema.h"
 #include "clang/AST/RecursiveASTVisitor.h"
 #include "clang/AST/StmtVisitor.h"
 #include "clang/Lex/Lexer.h"
@@ -24,6 +25,13 @@ using namespace arcmt;
 using namespace trans;
 
 ASTTraverser::~ASTTraverser() { }
+
+bool MigrationPass::CFBridgingFunctionsDefined() {
+  if (!EnableCFBridgeFns.hasValue())
+    EnableCFBridgeFns = SemaRef.isKnownName("CFBridgingRetain") &&
+                        SemaRef.isKnownName("CFBridgingRelease");
+  return *EnableCFBridgeFns;
+}
 
 //===----------------------------------------------------------------------===//
 // Helpers.

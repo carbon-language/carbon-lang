@@ -12,6 +12,7 @@
 
 #include "clang/ARCMigrate/ARCMT.h"
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/Optional.h"
 
 namespace clang {
   class Sema;
@@ -144,6 +145,7 @@ public:
   Sema &SemaRef;
   TransformActions &TA;
   std::vector<SourceLocation> &ARCMTMacroLocs;
+  llvm::Optional<bool> EnableCFBridgeFns;
 
   MigrationPass(ASTContext &Ctx, LangOptions::GCMode OrigGCMode,
                 Sema &sema, TransformActions &TA,
@@ -157,6 +159,8 @@ public:
   void setNSAllocReallocError(bool val) { MigOptions.NoNSAllocReallocError = val; }
   bool noFinalizeRemoval() const { return MigOptions.NoFinalizeRemoval; }
   void setNoFinalizeRemoval(bool val) {MigOptions.NoFinalizeRemoval = val; }
+
+  bool CFBridgingFunctionsDefined();
 };
 
 static inline StringRef getARCMTMacroName() {

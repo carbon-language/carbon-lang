@@ -12,7 +12,7 @@
 // A cast of non-objc pointer to an objc one is checked. If the non-objc pointer
 // is from a file-level variable, __bridge cast is used to convert it.
 // For the result of a function call that we know is +1/+0,
-// __bridge/__bridge_transfer is used.
+// __bridge/CFBridgingRelease is used.
 //
 //  NSString *str = (NSString *)kUTTypePlainText;
 //  str = b ? kUTTypeRTF : kUTTypePlainText;
@@ -21,8 +21,8 @@
 // ---->
 //  NSString *str = (__bridge NSString *)kUTTypePlainText;
 //  str = (__bridge NSString *)(b ? kUTTypeRTF : kUTTypePlainText);
-// NSString *_uuidString = (__bridge_transfer NSString *)
-//                               CFUUIDCreateString(kCFAllocatorDefault, _uuid);
+// NSString *_uuidString = (NSString *)
+//            CFBridgingRelease(CFUUIDCreateString(kCFAllocatorDefault, _uuid));
 //
 // For a C pointer to ObjC, for casting 'self', __bridge is used.
 //
@@ -191,22 +191,42 @@ private:
     TA.clearDiagnostic(diag::err_arc_mismatched_cast,
                        diag::err_arc_cast_requires_bridge,
                        E->getLocStart());
-    if (CStyleCastExpr *CCE = dyn_cast<CStyleCastExpr>(E)) {
-      TA.insertAfterToken(CCE->getLParenLoc(), bridge);
-    } else {
-      SourceLocation insertLoc = E->getSubExpr()->getLocStart();
-      SmallString<128> newCast;
-      newCast += '(';
-      newCast += bridge;
-      newCast += E->getType().getAsString(Pass.Ctx.getPrintingPolicy());
-      newCast += ')';
-
-      if (isa<ParenExpr>(E->getSubExpr())) {
-        TA.insert(insertLoc, newCast.str());
+    if (Kind == OBC_Bridge || !Pass.CFBridgingFunctionsDefined()) {
+      if (CStyleCastExpr *CCE = dyn_cast<CStyleCastExpr>(E)) {
+        TA.insertAfterToken(CCE->getLParenLoc(), bridge);
       } else {
+        SourceLocation insertLoc = E->getSubExpr()->getLocStart();
+        SmallString<128> newCast;
         newCast += '(';
-        TA.insert(insertLoc, newCast.str());
-        TA.insertAfterToken(E->getLocEnd(), ")");
+        newCast += bridge;
+        newCast += E->getType().getAsString(Pass.Ctx.getPrintingPolicy());
+        newCast += ')';
+
+        if (isa<ParenExpr>(E->getSubExpr())) {
+          TA.insert(insertLoc, newCast.str());
+        } else {
+          newCast += '(';
+          TA.insert(insertLoc, newCast.str());
+          TA.insertAfterToken(E->getLocEnd(), ")");
+        }
+      }
+    } else {
+      assert(Kind == OBC_BridgeTransfer || Kind == OBC_BridgeRetained);
+      StringRef cfBridging;
+      if (Kind == OBC_BridgeTransfer)
+        cfBridging = "CFBridgingRelease";
+      else
+        cfBridging = "CFBridgingRetain";
+
+      Expr *WrapE = E->getSubExpr();
+      SourceLocation insertLoc = WrapE->getLocStart();
+      if (isa<ParenExpr>(WrapE)) {
+        TA.insert(insertLoc, cfBridging);
+      } else {
+        std::string withParens = cfBridging;
+        withParens += '(';
+        TA.insert(insertLoc, withParens);
+        TA.insertAfterToken(WrapE->getLocEnd(), ")");
       }
     }
   }
