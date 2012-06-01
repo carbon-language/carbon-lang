@@ -18,9 +18,9 @@
 // Type profiles.
 def SDT_ARMCallSeqStart : SDCallSeqStart<[ SDTCisVT<0, i32> ]>;
 def SDT_ARMCallSeqEnd   : SDCallSeqEnd<[ SDTCisVT<0, i32>, SDTCisVT<1, i32> ]>;
-def SDT_ARMStructByVal : SDTypeProfile<0, 3,
+def SDT_ARMStructByVal : SDTypeProfile<0, 4,
                                        [SDTCisVT<0, i32>, SDTCisVT<1, i32>,
-                                        SDTCisVT<2, i32>]>;
+                                        SDTCisVT<2, i32>, SDTCisVT<3, i32>]>;
 
 def SDT_ARMSaveCallPC : SDTypeProfile<0, 1, []>;
 
@@ -4174,9 +4174,9 @@ let usesCustomInserter = 1 in {
 
 let usesCustomInserter = 1 in {
     def COPY_STRUCT_BYVAL_I32 : PseudoInst<
-      (outs), (ins GPR:$dst, GPR:$src, i32imm:$size),
+      (outs), (ins GPR:$dst, GPR:$src, i32imm:$size, i32imm:$alignment),
       NoItinerary,
-      [(ARMcopystructbyval GPR:$dst, GPR:$src, imm:$size)]>;
+      [(ARMcopystructbyval GPR:$dst, GPR:$src, imm:$size, imm:$alignment)]>;
 }
 
 let mayLoad = 1 in {

@@ -530,6 +530,9 @@ namespace llvm {
                                              MachineBasicBlock *MBB) const;
 
     bool RemapAddSubWithFlags(MachineInstr *MI, MachineBasicBlock *BB) const;
+
+    MachineBasicBlock *EmitStructByval(MachineInstr *MI,
+                                       MachineBasicBlock *MBB) const;
   };
 
   enum NEONModImmType {
