@@ -157,8 +157,8 @@ void AggressiveAntiDepBreaker::StartBlock(MachineBasicBlock *BB) {
     // In a return block, examine the function live-out regs.
     for (MachineRegisterInfo::liveout_iterator I = MRI.liveout_begin(),
          E = MRI.liveout_end(); I != E; ++I) {
-      for (const uint16_t *Alias = TRI->getOverlaps(*I);
-           unsigned Reg = *Alias; ++Alias) {
+      for (MCRegAliasIterator AI(*I, TRI, true); AI.isValid(); ++AI) {
+        unsigned Reg = *AI;
         State->UnionGroups(Reg, 0);
         KillIndices[Reg] = BB->size();
         DefIndices[Reg] = ~0u;
@@ -173,8 +173,8 @@ void AggressiveAntiDepBreaker::StartBlock(MachineBasicBlock *BB) {
          SE = BB->succ_end(); SI != SE; ++SI)
     for (MachineBasicBlock::livein_iterator I = (*SI)->livein_begin(),
            E = (*SI)->livein_end(); I != E; ++I) {
-      for (const uint16_t *Alias = TRI->getOverlaps(*I);
-           unsigned Reg = *Alias; ++Alias) {
+      for (MCRegAliasIterator AI(*I, TRI, true); AI.isValid(); ++AI) {
+        unsigned Reg = *AI;
         State->UnionGroups(Reg, 0);
         KillIndices[Reg] = BB->size();
         DefIndices[Reg] = ~0u;
@@ -189,8 +189,8 @@ void AggressiveAntiDepBreaker::StartBlock(MachineBasicBlock *BB) {
   for (const uint16_t *I = TRI->getCalleeSavedRegs(&MF); *I; ++I) {
     unsigned Reg = *I;
     if (!IsReturnBlock && !Pristine.test(Reg)) continue;
-    for (const uint16_t *Alias = TRI->getOverlaps(Reg);
-         unsigned AliasReg = *Alias; ++Alias) {
+    for (MCRegAliasIterator AI(Reg, TRI, true); AI.isValid(); ++AI) {
+      unsigned AliasReg = *AI;
       State->UnionGroups(AliasReg, 0);
       KillIndices[AliasReg] = BB->size();
       DefIndices[AliasReg] = ~0u;
@@ -265,10 +265,8 @@ void AggressiveAntiDepBreaker::GetPassthruRegs(MachineInstr *MI,
         IsImplicitDefUse(MI, MO)) {
       const unsigned Reg = MO.getReg();
       PassthruRegs.insert(Reg);
-      for (const uint16_t *Subreg = TRI->getSubRegisters(Reg);
-           *Subreg; ++Subreg) {
-        PassthruRegs.insert(*Subreg);
-      }
+      for (MCSubRegIterator SubRegs(Reg, TRI); SubRegs.isValid(); ++SubRegs)
+        PassthruRegs.insert(*SubRegs);
     }
   }
 }
@@ -333,9 +331,8 @@ void AggressiveAntiDepBreaker::HandleLastUse(unsigned Reg, unsigned KillIdx,
     DEBUG(dbgs() << "->g" << State->GetGroup(Reg) << tag);
   }
   // Repeat for subregisters.
-  for (const uint16_t *Subreg = TRI->getSubRegisters(Reg);
-       *Subreg; ++Subreg) {
-    unsigned SubregReg = *Subreg;
+  for (MCSubRegIterator SubRegs(Reg, TRI); SubRegs.isValid(); ++SubRegs) {
+    unsigned SubregReg = *SubRegs;
     if (!State->IsLive(SubregReg)) {
       KillIndices[SubregReg] = KillIdx;
       DefIndices[SubregReg] = ~0u;
@@ -392,8 +389,8 @@ void AggressiveAntiDepBreaker::PrescanInstruction(MachineInstr *MI,
 
     // Any aliased that are live at this point are completely or
     // partially defined here, so group those aliases with Reg.
-    for (const uint16_t *Alias = TRI->getAliasSet(Reg); *Alias; ++Alias) {
-      unsigned AliasReg = *Alias;
+    for (MCRegAliasIterator AI(Reg, TRI, false); AI.isValid(); ++AI) {
+      unsigned AliasReg = *AI;
       if (State->IsLive(AliasReg)) {
         State->UnionGroups(Reg, AliasReg);
         DEBUG(dbgs() << "->g" << State->GetGroup(Reg) << "(via " <<
@@ -423,9 +420,8 @@ void AggressiveAntiDepBreaker::PrescanInstruction(MachineInstr *MI,
       continue;
 
     // Update def for Reg and aliases.
-    for (const uint16_t *Alias = TRI->getOverlaps(Reg);
-         unsigned AliasReg = *Alias; ++Alias)
-      DefIndices[AliasReg] = Count;
+    for (MCRegAliasIterator AI(Reg, TRI, true); AI.isValid(); ++AI)
+      DefIndices[*AI] = Count;
   }
 }
 
@@ -678,9 +674,8 @@ bool AggressiveAntiDepBreaker::FindSuitableFreeRegisters(
         goto next_super_reg;
       } else {
         bool found = false;
-        for (const uint16_t *Alias = TRI->getAliasSet(NewReg);
-             *Alias; ++Alias) {
-          unsigned AliasReg = *Alias;
+        for (MCRegAliasIterator AI(NewReg, TRI, false); AI.isValid(); ++AI) {
+          unsigned AliasReg = *AI;
           if (State->IsLive(AliasReg) ||
               (KillIndices[Reg] > DefIndices[AliasReg])) {
             DEBUG(dbgs() << "(alias " << TRI->getName(AliasReg) << " live)");

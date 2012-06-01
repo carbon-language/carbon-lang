@@ -204,8 +204,8 @@ bool RABasic::spillInterferences(LiveInterval &VirtReg, unsigned PhysReg,
   // either the union or live intervals.
   unsigned NumInterferences = 0;
   // Collect interferences assigned to any alias of the physical register.
-  for (const uint16_t *asI = TRI->getOverlaps(PhysReg); *asI; ++asI) {
-    LiveIntervalUnion::Query &QAlias = query(VirtReg, *asI);
+  for (MCRegAliasIterator AI(PhysReg, TRI, true); AI.isValid(); ++AI) {
+    LiveIntervalUnion::Query &QAlias = query(VirtReg, *AI);
     NumInterferences += QAlias.collectInterferingVRegs();
     if (QAlias.seenUnspillableVReg()) {
       return false;
@@ -216,8 +216,8 @@ bool RABasic::spillInterferences(LiveInterval &VirtReg, unsigned PhysReg,
   assert(NumInterferences > 0 && "expect interference");
 
   // Spill each interfering vreg allocated to PhysReg or an alias.
-  for (const uint16_t *AliasI = TRI->getOverlaps(PhysReg); *AliasI; ++AliasI)
-    spillReg(VirtReg, *AliasI, SplitVRegs);
+  for (MCRegAliasIterator AI(PhysReg, TRI, true); AI.isValid(); ++AI)
+    spillReg(VirtReg, *AI, SplitVRegs);
   return true;
 }
 

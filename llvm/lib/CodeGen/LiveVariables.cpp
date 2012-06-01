@@ -192,8 +192,8 @@ MachineInstr *LiveVariables::FindLastPartialDef(unsigned Reg,
   unsigned LastDefReg = 0;
   unsigned LastDefDist = 0;
   MachineInstr *LastDef = NULL;
-  for (const uint16_t *SubRegs = TRI->getSubRegisters(Reg);
-       unsigned SubReg = *SubRegs; ++SubRegs) {
+  for (MCSubRegIterator SubRegs(Reg, TRI); SubRegs.isValid(); ++SubRegs) {
+    unsigned SubReg = *SubRegs;
     MachineInstr *Def = PhysRegDef[SubReg];
     if (!Def)
       continue;
@@ -216,9 +216,8 @@ MachineInstr *LiveVariables::FindLastPartialDef(unsigned Reg,
     unsigned DefReg = MO.getReg();
     if (TRI->isSubRegister(Reg, DefReg)) {
       PartDefRegs.insert(DefReg);
-      for (const uint16_t *SubRegs = TRI->getSubRegisters(DefReg);
-           unsigned SubReg = *SubRegs; ++SubRegs)
-        PartDefRegs.insert(SubReg);
+      for (MCSubRegIterator SubRegs(DefReg, TRI); SubRegs.isValid(); ++SubRegs)
+        PartDefRegs.insert(*SubRegs);
     }
   }
   return LastDef;
@@ -247,8 +246,8 @@ void LiveVariables::HandlePhysRegUse(unsigned Reg, MachineInstr *MI) {
                                                            true/*IsImp*/));
       PhysRegDef[Reg] = LastPartialDef;
       SmallSet<unsigned, 8> Processed;
-      for (const uint16_t *SubRegs = TRI->getSubRegisters(Reg);
-           unsigned SubReg = *SubRegs; ++SubRegs) {
+      for (MCSubRegIterator SubRegs(Reg, TRI); SubRegs.isValid(); ++SubRegs) {
+        unsigned SubReg = *SubRegs;
         if (Processed.count(SubReg))
           continue;
         if (PartDefRegs.count(SubReg))
@@ -259,7 +258,7 @@ void LiveVariables::HandlePhysRegUse(unsigned Reg, MachineInstr *MI) {
                                                              false/*IsDef*/,
                                                              true/*IsImp*/));
         PhysRegDef[SubReg] = LastPartialDef;
-        for (const uint16_t *SS = TRI->getSubRegisters(SubReg); *SS; ++SS)
+        for (MCSubRegIterator SS(SubReg, TRI); SS.isValid(); ++SS)
           Processed.insert(*SS);
       }
     }
@@ -271,9 +270,8 @@ void LiveVariables::HandlePhysRegUse(unsigned Reg, MachineInstr *MI) {
 
   // Remember this use.
   PhysRegUse[Reg]  = MI;
-  for (const uint16_t *SubRegs = TRI->getSubRegisters(Reg);
-       unsigned SubReg = *SubRegs; ++SubRegs)
-    PhysRegUse[SubReg] =  MI;
+  for (MCSubRegIterator SubRegs(Reg, TRI); SubRegs.isValid(); ++SubRegs)
+    PhysRegUse[*SubRegs] =  MI;
 }
 
 /// FindLastRefOrPartRef - Return the last reference or partial reference of
@@ -287,8 +285,8 @@ MachineInstr *LiveVariables::FindLastRefOrPartRef(unsigned Reg) {
   MachineInstr *LastRefOrPartRef = LastUse ? LastUse : LastDef;
   unsigned LastRefOrPartRefDist = DistanceMap[LastRefOrPartRef];
   unsigned LastPartDefDist = 0;
-  for (const uint16_t *SubRegs = TRI->getSubRegisters(Reg);
-       unsigned SubReg = *SubRegs; ++SubRegs) {
+  for (MCSubRegIterator SubRegs(Reg, TRI); SubRegs.isValid(); ++SubRegs) {
+    unsigned SubReg = *SubRegs;
     MachineInstr *Def = PhysRegDef[SubReg];
     if (Def && Def != LastDef) {
       // There was a def of this sub-register in between. This is a partial
@@ -336,8 +334,8 @@ bool LiveVariables::HandlePhysRegKill(unsigned Reg, MachineInstr *MI) {
   MachineInstr *LastPartDef = 0;
   unsigned LastPartDefDist = 0;
   SmallSet<unsigned, 8> PartUses;
-  for (const uint16_t *SubRegs = TRI->getSubRegisters(Reg);
-       unsigned SubReg = *SubRegs; ++SubRegs) {
+  for (MCSubRegIterator SubRegs(Reg, TRI); SubRegs.isValid(); ++SubRegs) {
+    unsigned SubReg = *SubRegs;
     MachineInstr *Def = PhysRegDef[SubReg];
     if (Def && Def != LastDef) {
       // There was a def of this sub-register in between. This is a partial
@@ -351,7 +349,7 @@ bool LiveVariables::HandlePhysRegKill(unsigned Reg, MachineInstr *MI) {
     }
     if (MachineInstr *Use = PhysRegUse[SubReg]) {
       PartUses.insert(SubReg);
-      for (const uint16_t *SS = TRI->getSubRegisters(SubReg); *SS; ++SS)
+      for (MCSubRegIterator SS(SubReg, TRI); SS.isValid(); ++SS)
         PartUses.insert(*SS);
       unsigned Dist = DistanceMap[Use];
       if (Dist > LastRefOrPartRefDist) {
@@ -367,8 +365,8 @@ bool LiveVariables::HandlePhysRegKill(unsigned Reg, MachineInstr *MI) {
     // EAX<dead>  = op  AL<imp-def>
     // That is, EAX def is dead but AL def extends pass it.
     PhysRegDef[Reg]->addRegisterDead(Reg, TRI, true);
-    for (const uint16_t *SubRegs = TRI->getSubRegisters(Reg);
-         unsigned SubReg = *SubRegs; ++SubRegs) {
+    for (MCSubRegIterator SubRegs(Reg, TRI); SubRegs.isValid(); ++SubRegs) {
+      unsigned SubReg = *SubRegs;
       if (!PartUses.count(SubReg))
         continue;
       bool NeedDef = true;
@@ -388,11 +386,10 @@ bool LiveVariables::HandlePhysRegKill(unsigned Reg, MachineInstr *MI) {
       else {
         LastRefOrPartRef->addRegisterKilled(SubReg, TRI, true);
         PhysRegUse[SubReg] = LastRefOrPartRef;
-        for (const uint16_t *SSRegs = TRI->getSubRegisters(SubReg);
-             unsigned SSReg = *SSRegs; ++SSRegs)
-          PhysRegUse[SSReg] = LastRefOrPartRef;
+        for (MCSubRegIterator SS(SubReg, TRI); SS.isValid(); ++SS)
+          PhysRegUse[*SS] = LastRefOrPartRef;
       }
-      for (const uint16_t *SS = TRI->getSubRegisters(SubReg); *SS; ++SS)
+      for (MCSubRegIterator SS(SubReg, TRI); SS.isValid(); ++SS)
         PartUses.erase(*SS);
     }
   } else if (LastRefOrPartRef == PhysRegDef[Reg] && LastRefOrPartRef != MI) {
@@ -434,7 +431,7 @@ void LiveVariables::HandleRegMask(const MachineOperand &MO) {
     // Kill the largest clobbered super-register.
     // This avoids needless implicit operands.
     unsigned Super = Reg;
-    for (const uint16_t *SR = TRI->getSuperRegisters(Reg); *SR; ++SR)
+    for (MCSuperRegIterator SR(Reg, TRI); SR.isValid(); ++SR)
       if ((PhysRegDef[*SR] || PhysRegUse[*SR]) && MO.clobbersPhysReg(*SR))
         Super = *SR;
     HandlePhysRegKill(Super, 0);
@@ -447,11 +444,11 @@ void LiveVariables::HandlePhysRegDef(unsigned Reg, MachineInstr *MI,
   SmallSet<unsigned, 32> Live;
   if (PhysRegDef[Reg] || PhysRegUse[Reg]) {
     Live.insert(Reg);
-    for (const uint16_t *SS = TRI->getSubRegisters(Reg); *SS; ++SS)
-      Live.insert(*SS);
+    for (MCSubRegIterator SubRegs(Reg, TRI); SubRegs.isValid(); ++SubRegs)
+      Live.insert(*SubRegs);
   } else {
-    for (const uint16_t *SubRegs = TRI->getSubRegisters(Reg);
-         unsigned SubReg = *SubRegs; ++SubRegs) {
+    for (MCSubRegIterator SubRegs(Reg, TRI); SubRegs.isValid(); ++SubRegs) {
+      unsigned SubReg = *SubRegs;
       // If a register isn't itself defined, but all parts that make up of it
       // are defined, then consider it also defined.
       // e.g.
@@ -462,7 +459,7 @@ void LiveVariables::HandlePhysRegDef(unsigned Reg, MachineInstr *MI,
         continue;
       if (PhysRegDef[SubReg] || PhysRegUse[SubReg]) {
         Live.insert(SubReg);
-        for (const uint16_t *SS = TRI->getSubRegisters(SubReg); *SS; ++SS)
+        for (MCSubRegIterator SS(SubReg, TRI); SS.isValid(); ++SS)
           Live.insert(*SS);
       }
     }
@@ -472,8 +469,8 @@ void LiveVariables::HandlePhysRegDef(unsigned Reg, MachineInstr *MI,
   // is referenced.
   HandlePhysRegKill(Reg, MI);
   // Only some of the sub-registers are used.
-  for (const uint16_t *SubRegs = TRI->getSubRegisters(Reg);
-       unsigned SubReg = *SubRegs; ++SubRegs) {
+  for (MCSubRegIterator SubRegs(Reg, TRI); SubRegs.isValid(); ++SubRegs) {
+    unsigned SubReg = *SubRegs;
     if (!Live.count(SubReg))
       // Skip if this sub-register isn't defined.
       continue;
@@ -491,8 +488,8 @@ void LiveVariables::UpdatePhysRegDefs(MachineInstr *MI,
     Defs.pop_back();
     PhysRegDef[Reg]  = MI;
     PhysRegUse[Reg]  = NULL;
-    for (const uint16_t *SubRegs = TRI->getSubRegisters(Reg);
-         unsigned SubReg = *SubRegs; ++SubRegs) {
+    for (MCSubRegIterator SubRegs(Reg, TRI); SubRegs.isValid(); ++SubRegs) {
+      unsigned SubReg = *SubRegs;
       PhysRegDef[SubReg]  = MI;
       PhysRegUse[SubReg]  = NULL;
     }

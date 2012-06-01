@@ -137,9 +137,8 @@ bool BranchFolder::OptimizeImpDefsBlock(MachineBasicBlock *MBB) {
       break;
     unsigned Reg = I->getOperand(0).getReg();
     ImpDefRegs.insert(Reg);
-    for (const uint16_t *SubRegs = TRI->getSubRegisters(Reg);
-         unsigned SubReg = *SubRegs; ++SubRegs)
-      ImpDefRegs.insert(SubReg);
+    for (MCSubRegIterator SubRegs(Reg, TRI); SubRegs.isValid(); ++SubRegs)
+      ImpDefRegs.insert(*SubRegs);
     ++I;
   }
   if (ImpDefRegs.empty())
@@ -1557,8 +1556,8 @@ MachineBasicBlock::iterator findHoistingInsertPosAndDeps(MachineBasicBlock *MBB,
     } else {
       if (Uses.count(Reg)) {
         Uses.erase(Reg);
-        for (const uint16_t *SR = TRI->getSubRegisters(Reg); *SR; ++SR)
-          Uses.erase(*SR); // Use getSubRegisters to be conservative
+        for (MCSubRegIterator SubRegs(Reg, TRI); SubRegs.isValid(); ++SubRegs)
+          Uses.erase(*SubRegs); // Use sub-registers to be conservative
       }
       for (MCRegAliasIterator AI(Reg, TRI, true); AI.isValid(); ++AI)
         Defs.insert(*AI);
@@ -1688,8 +1687,8 @@ bool BranchFolder::HoistCommonCodeInSuccs(MachineBasicBlock *MBB) {
       unsigned Reg = MO.getReg();
       if (!Reg || !LocalDefsSet.count(Reg))
         continue;
-      for (const uint16_t *OR = TRI->getOverlaps(Reg); *OR; ++OR)
-        LocalDefsSet.erase(*OR);
+      for (MCRegAliasIterator AI(Reg, TRI, true); AI.isValid(); ++AI)
+        LocalDefsSet.erase(*AI);
     }
 
     // Track local defs so we can update liveins.
@@ -1701,8 +1700,8 @@ bool BranchFolder::HoistCommonCodeInSuccs(MachineBasicBlock *MBB) {
       if (!Reg)
         continue;
       LocalDefs.push_back(Reg);
-      for (const uint16_t *OR = TRI->getOverlaps(Reg); *OR; ++OR)
-        LocalDefsSet.insert(*OR);
+      for (MCRegAliasIterator AI(Reg, TRI, true); AI.isValid(); ++AI)
+        LocalDefsSet.insert(*AI);
     }
 
     HasDups = true;

@@ -470,7 +470,7 @@ bool RegisterCoalescer::adjustCopiesBackFrom(const CoalescerPair &CP,
   // If the IntB live range is assigned to a physical register, and if that
   // physreg has sub-registers, update their live intervals as well.
   if (TargetRegisterInfo::isPhysicalRegister(IntB.reg)) {
-    for (const uint16_t *SR = TRI->getSubRegisters(IntB.reg); *SR; ++SR) {
+    for (MCSubRegIterator SR(IntB.reg, TRI); SR.isValid(); ++SR) {
       if (!LIS->hasInterval(*SR))
         continue;
       LiveInterval &SRLI = LIS->getInterval(*SR);
@@ -1112,7 +1112,7 @@ bool RegisterCoalescer::joinReservedPhysReg(CoalescerPair &CP) {
 
   // Deny any overlapping intervals.  This depends on all the reserved
   // register live ranges to look like dead defs.
-  for (const uint16_t *AS = TRI->getOverlaps(CP.getDstReg()); *AS; ++AS) {
+  for (MCRegAliasIterator AS(CP.getDstReg(), TRI, true); AS.isValid(); ++AS) {
     if (!LIS->hasInterval(*AS)) {
       // Make sure at least DstReg itself exists before attempting a join.
       if (*AS == CP.getDstReg())

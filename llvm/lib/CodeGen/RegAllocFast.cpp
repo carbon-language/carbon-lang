@@ -354,8 +354,8 @@ void RAFast::usePhysReg(MachineOperand &MO) {
   }
 
   // Maybe a superregister is reserved?
-  for (const uint16_t *AS = TRI->getAliasSet(PhysReg);
-       unsigned Alias = *AS; ++AS) {
+  for (MCRegAliasIterator AI(PhysReg, TRI, false); AI.isValid(); ++AI) {
+    unsigned Alias = *AI;
     switch (PhysRegState[Alias]) {
     case regDisabled:
       break;
@@ -408,8 +408,8 @@ void RAFast::definePhysReg(MachineInstr *MI, unsigned PhysReg,
 
   // This is a disabled register, disable all aliases.
   PhysRegState[PhysReg] = NewState;
-  for (const uint16_t *AS = TRI->getAliasSet(PhysReg);
-       unsigned Alias = *AS; ++AS) {
+  for (MCRegAliasIterator AI(PhysReg, TRI, false); AI.isValid(); ++AI) {
+    unsigned Alias = *AI;
     switch (unsigned VirtReg = PhysRegState[Alias]) {
     case regDisabled:
       break;
@@ -456,8 +456,8 @@ unsigned RAFast::calcSpillCost(unsigned PhysReg) const {
   // This is a disabled register, add up cost of aliases.
   DEBUG(dbgs() << PrintReg(PhysReg, TRI) << " is disabled.\n");
   unsigned Cost = 0;
-  for (const uint16_t *AS = TRI->getAliasSet(PhysReg);
-       unsigned Alias = *AS; ++AS) {
+  for (MCRegAliasIterator AI(PhysReg, TRI, false); AI.isValid(); ++AI) {
+    unsigned Alias = *AI;
     if (UsedInInstr.test(Alias))
       return spillImpossible;
     switch (unsigned VirtReg = PhysRegState[Alias]) {

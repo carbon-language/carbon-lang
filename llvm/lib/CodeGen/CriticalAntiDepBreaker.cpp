@@ -200,11 +200,11 @@ void CriticalAntiDepBreaker::PrescanInstruction(MachineInstr *MI) {
       Classes[Reg] = reinterpret_cast<TargetRegisterClass *>(-1);
 
     // Now check for aliases.
-    for (const uint16_t *Alias = TRI->getAliasSet(Reg); *Alias; ++Alias) {
+    for (MCRegAliasIterator AI(Reg, TRI, false); AI.isValid(); ++AI) {
       // If an alias of the reg is used during the live range, give up.
       // Note that this allows us to skip checking if AntiDepReg
       // overlaps with any of the aliases, among other things.
-      unsigned AliasReg = *Alias;
+      unsigned AliasReg = *AI;
       if (Classes[AliasReg]) {
         Classes[AliasReg] = reinterpret_cast<TargetRegisterClass *>(-1);
         Classes[Reg] = reinterpret_cast<TargetRegisterClass *>(-1);
@@ -218,9 +218,8 @@ void CriticalAntiDepBreaker::PrescanInstruction(MachineInstr *MI) {
     if (MO.isUse() && Special) {
       if (!KeepRegs.test(Reg)) {
         KeepRegs.set(Reg);
-        for (const uint16_t *Subreg = TRI->getSubRegisters(Reg);
-             *Subreg; ++Subreg)
-          KeepRegs.set(*Subreg);
+        for (MCSubRegIterator SubRegs(Reg, TRI); SubRegs.isValid(); ++SubRegs)
+          KeepRegs.set(*SubRegs);
       }
     }
   }
@@ -264,9 +263,8 @@ void CriticalAntiDepBreaker::ScanInstruction(MachineInstr *MI,
       Classes[Reg] = 0;
       RegRefs.erase(Reg);
       // Repeat, for all subregs.
-      for (const uint16_t *Subreg = TRI->getSubRegisters(Reg);
-           *Subreg; ++Subreg) {
-        unsigned SubregReg = *Subreg;
+      for (MCSubRegIterator SubRegs(Reg, TRI); SubRegs.isValid(); ++SubRegs) {
+        unsigned SubregReg = *SubRegs;
         DefIndices[SubregReg] = Count;
         KillIndices[SubregReg] = ~0u;
         KeepRegs.reset(SubregReg);
@@ -274,11 +272,8 @@ void CriticalAntiDepBreaker::ScanInstruction(MachineInstr *MI,
         RegRefs.erase(SubregReg);
       }
       // Conservatively mark super-registers as unusable.
-      for (const uint16_t *Super = TRI->getSuperRegisters(Reg);
-           *Super; ++Super) {
-        unsigned SuperReg = *Super;
-        Classes[SuperReg] = reinterpret_cast<TargetRegisterClass *>(-1);
-      }
+      for (MCSuperRegIterator SR(Reg, TRI); SR.isValid(); ++SR)
+        Classes[*SR] = reinterpret_cast<TargetRegisterClass *>(-1);
     }
   }
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
@@ -310,8 +305,8 @@ void CriticalAntiDepBreaker::ScanInstruction(MachineInstr *MI,
                "Kill and Def maps aren't consistent for Reg!");
     }
     // Repeat, for all aliases.
-    for (const uint16_t *Alias = TRI->getAliasSet(Reg); *Alias; ++Alias) {
-      unsigned AliasReg = *Alias;
+    for (MCRegAliasIterator AI(Reg, TRI, false); AI.isValid(); ++AI) {
+      unsigned AliasReg = *AI;
       if (KillIndices[AliasReg] == ~0u) {
         KillIndices[AliasReg] = Count;
         DefIndices[AliasReg] = ~0u;

@@ -80,8 +80,8 @@ void InterferenceCache::Entry::reset(unsigned physReg,
   PhysReg = physReg;
   Blocks.resize(MF->getNumBlockIDs());
   Aliases.clear();
-  for (const uint16_t *AS = TRI->getOverlaps(PhysReg); *AS; ++AS) {
-    LiveIntervalUnion *LIU = LIUArray + *AS;
+  for (MCRegAliasIterator AI(PhysReg, TRI, true); AI.isValid(); ++AI) {
+    LiveIntervalUnion *LIU = LIUArray + *AI;
     Aliases.push_back(std::make_pair(LIU, LIU->getTag()));
   }
 
@@ -96,8 +96,8 @@ void InterferenceCache::Entry::reset(unsigned physReg,
 bool InterferenceCache::Entry::valid(LiveIntervalUnion *LIUArray,
                                      const TargetRegisterInfo *TRI) {
   unsigned i = 0, e = Aliases.size();
-  for (const uint16_t *AS = TRI->getOverlaps(PhysReg); *AS; ++AS, ++i) {
-    LiveIntervalUnion *LIU = LIUArray + *AS;
+  for (MCRegAliasIterator AI(PhysReg, TRI, true); AI.isValid(); ++AI, ++i) {
+    LiveIntervalUnion *LIU = LIUArray + *AI;
     if (i == e ||  Aliases[i].first != LIU)
       return false;
     if (LIU->changedSince(Aliases[i].second))

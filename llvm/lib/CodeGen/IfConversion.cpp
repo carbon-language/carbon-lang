@@ -962,9 +962,8 @@ static void InitPredRedefs(MachineBasicBlock *BB, SmallSet<unsigned,4> &Redefs,
          E = BB->livein_end(); I != E; ++I) {
     unsigned Reg = *I;
     Redefs.insert(Reg);
-    for (const uint16_t *Subreg = TRI->getSubRegisters(Reg);
-         *Subreg; ++Subreg)
-      Redefs.insert(*Subreg);
+    for (MCSubRegIterator SubRegs(Reg, TRI); SubRegs.isValid(); ++SubRegs)
+      Redefs.insert(*SubRegs);
   }
 }
 
@@ -983,8 +982,8 @@ static void UpdatePredRedefs(MachineInstr *MI, SmallSet<unsigned,4> &Redefs,
       Defs.push_back(Reg);
     else if (MO.isKill()) {
       Redefs.erase(Reg);
-      for (const uint16_t *SR = TRI->getSubRegisters(Reg); *SR; ++SR)
-        Redefs.erase(*SR);
+      for (MCSubRegIterator SubRegs(Reg, TRI); SubRegs.isValid(); ++SubRegs)
+        Redefs.erase(*SubRegs);
     }
   }
   for (unsigned i = 0, e = Defs.size(); i != e; ++i) {
@@ -997,8 +996,8 @@ static void UpdatePredRedefs(MachineInstr *MI, SmallSet<unsigned,4> &Redefs,
                                               false/*IsDead*/,true/*IsUndef*/));
     } else {
       Redefs.insert(Reg);
-      for (const uint16_t *SR = TRI->getSubRegisters(Reg); *SR; ++SR)
-        Redefs.insert(*SR);
+      for (MCSubRegIterator SubRegs(Reg, TRI); SubRegs.isValid(); ++SubRegs)
+        Redefs.insert(*SubRegs);
     }
   }
 }
@@ -1336,8 +1335,8 @@ bool IfConverter::IfConvertDiamond(BBInfo &BBI, IfcvtKind Kind,
           // These are defined before ctrl flow reach the 'false' instructions.
           // They cannot be modified by the 'true' instructions.
           ExtUses.insert(Reg);
-          for (const uint16_t *SR = TRI->getSubRegisters(Reg); *SR; ++SR)
-            ExtUses.insert(*SR);
+          for (MCSubRegIterator SubRegs(Reg, TRI); SubRegs.isValid(); ++SubRegs)
+            ExtUses.insert(*SubRegs);
         }
       }
 
@@ -1345,8 +1344,8 @@ bool IfConverter::IfConvertDiamond(BBInfo &BBI, IfcvtKind Kind,
         unsigned Reg = Defs[i];
         if (!ExtUses.count(Reg)) {
           RedefsByFalse.insert(Reg);
-          for (const uint16_t *SR = TRI->getSubRegisters(Reg); *SR; ++SR)
-            RedefsByFalse.insert(*SR);
+          for (MCSubRegIterator SubRegs(Reg, TRI); SubRegs.isValid(); ++SubRegs)
+            RedefsByFalse.insert(*SubRegs);
         }
       }
     }

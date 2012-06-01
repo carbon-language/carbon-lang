@@ -169,8 +169,8 @@ void llvm::finalizeBundle(MachineBasicBlock &MBB,
       }
 
       if (!MO.isDead()) {
-        for (const uint16_t *SubRegs = TRI->getSubRegisters(Reg);
-             unsigned SubReg = *SubRegs; ++SubRegs) {
+        for (MCSubRegIterator SubRegs(Reg, TRI); SubRegs.isValid(); ++SubRegs) {
+          unsigned SubReg = *SubRegs;
           if (LocalDefSet.insert(SubReg))
             LocalDefs.push_back(SubReg);
         }

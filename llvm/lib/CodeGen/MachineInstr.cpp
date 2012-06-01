@@ -1538,12 +1538,14 @@ void MachineInstr::print(raw_ostream &OS, const TargetMachine *TM) const {
         const MachineRegisterInfo &MRI = MF->getRegInfo();
         if (MRI.use_empty(Reg) && !MRI.isLiveOut(Reg)) {
           bool HasAliasLive = false;
-          for (const uint16_t *Alias = TM->getRegisterInfo()->getAliasSet(Reg);
-               unsigned AliasReg = *Alias; ++Alias)
+          for (MCRegAliasIterator AI(Reg, TM->getRegisterInfo(), true);
+               AI.isValid(); ++AI) {
+            unsigned AliasReg = *AI;
             if (!MRI.use_empty(AliasReg) || MRI.isLiveOut(AliasReg)) {
               HasAliasLive = true;
               break;
             }
+          }
           if (!HasAliasLive) {
             OmittedAnyCallClobbers = true;
             continue;
@@ -1675,7 +1677,8 @@ bool MachineInstr::addRegisterKilled(unsigned IncomingReg,
                                      const TargetRegisterInfo *RegInfo,
                                      bool AddIfNotFound) {
   bool isPhysReg = TargetRegisterInfo::isPhysicalRegister(IncomingReg);
-  bool hasAliases = isPhysReg && RegInfo->getAliasSet(IncomingReg);
+  bool hasAliases = isPhysReg &&
+    MCRegAliasIterator(IncomingReg, RegInfo, false).isValid();
   bool Found = false;
   SmallVector<unsigned,4> DeadOps;
   for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
@@ -1747,7 +1750,8 @@ bool MachineInstr::addRegisterDead(unsigned IncomingReg,
                                    const TargetRegisterInfo *RegInfo,
                                    bool AddIfNotFound) {
   bool isPhysReg = TargetRegisterInfo::isPhysicalRegister(IncomingReg);
-  bool hasAliases = isPhysReg && RegInfo->getAliasSet(IncomingReg);
+  bool hasAliases = isPhysReg &&
+    MCRegAliasIterator(IncomingReg, RegInfo, false).isValid();
   bool Found = false;
   SmallVector<unsigned,4> DeadOps;
   for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {

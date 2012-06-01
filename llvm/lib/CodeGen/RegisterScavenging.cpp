@@ -37,9 +37,8 @@ using namespace llvm;
 void RegScavenger::setUsed(unsigned Reg) {
   RegsAvailable.reset(Reg);
 
-  for (const uint16_t *SubRegs = TRI->getSubRegisters(Reg);
-       unsigned SubReg = *SubRegs; ++SubRegs)
-    RegsAvailable.reset(SubReg);
+  for (MCSubRegIterator SubRegs(Reg, TRI); SubRegs.isValid(); ++SubRegs)
+    RegsAvailable.reset(*SubRegs);
 }
 
 bool RegScavenger::isAliasUsed(unsigned Reg) const {
@@ -112,8 +111,8 @@ void RegScavenger::enterBasicBlock(MachineBasicBlock *mbb) {
 
 void RegScavenger::addRegWithSubRegs(BitVector &BV, unsigned Reg) {
   BV.set(Reg);
-  for (const uint16_t *R = TRI->getSubRegisters(Reg); *R; R++)
-    BV.set(*R);
+  for (MCSubRegIterator SubRegs(Reg, TRI); SubRegs.isValid(); ++SubRegs)
+    BV.set(*SubRegs);
 }
 
 void RegScavenger::forward() {
@@ -193,9 +192,8 @@ void RegScavenger::forward() {
         // Ideally we would like a way to model this, but leaving the
         // insert_subreg around causes both correctness and performance issues.
         bool SubUsed = false;
-        for (const uint16_t *SubRegs = TRI->getSubRegisters(Reg);
-             unsigned SubReg = *SubRegs; ++SubRegs)
-          if (isUsed(SubReg)) {
+        for (MCSubRegIterator SubRegs(Reg, TRI); SubRegs.isValid(); ++SubRegs)
+          if (isUsed(*SubRegs)) {
             SubUsed = true;
             break;
           }

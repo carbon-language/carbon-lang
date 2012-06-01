@@ -125,8 +125,8 @@ static unsigned findDeadCallerSavedReg(MachineBasicBlock &MBB,
       unsigned Reg = MO.getReg();
       if (!Reg)
         continue;
-      for (const uint16_t *AsI = TRI.getOverlaps(Reg); *AsI; ++AsI)
-        Uses.insert(*AsI);
+      for (MCRegAliasIterator AI(Reg, &TRI, true); AI.isValid(); ++AI)
+        Uses.insert(*AI);
     }
 
     const uint16_t *CS = Is64Bit ? CallerSavedRegs64Bit : CallerSavedRegs32Bit;

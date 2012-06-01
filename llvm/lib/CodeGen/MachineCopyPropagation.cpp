@@ -71,7 +71,7 @@ MachineCopyPropagation::SourceNoLongerAvailable(unsigned Reg,
         unsigned MappedDef = *I;
         // Source of copy is no longer available for propagation.
         if (AvailCopyMap.erase(MappedDef)) {
-          for (const uint16_t *SR = TRI->getSubRegisters(MappedDef); *SR; ++SR)
+          for (MCSubRegIterator SR(MappedDef, TRI); SR.isValid(); ++SR)
             AvailCopyMap.erase(*SR);
         }
       }
@@ -196,13 +196,13 @@ bool MachineCopyPropagation::CopyPropagateBlock(MachineBasicBlock &MBB) {
 
       // Remember Def is defined by the copy.
       // ... Make sure to clear the def maps of aliases first.
-      for (const uint16_t *AS = TRI->getAliasSet(Def); *AS; ++AS) {
-        CopyMap.erase(*AS);
-        AvailCopyMap.erase(*AS);
+      for (MCRegAliasIterator AI(Def, TRI, false); AI.isValid(); ++AI) {
+        CopyMap.erase(*AI);
+        AvailCopyMap.erase(*AI);
       }
       CopyMap[Def] = MI;
       AvailCopyMap[Def] = MI;
-      for (const uint16_t *SR = TRI->getSubRegisters(Def); *SR; ++SR) {
+      for (MCSubRegIterator SR(Def, TRI); SR.isValid(); ++SR) {
         CopyMap[*SR] = MI;
         AvailCopyMap[*SR] = MI;
       }

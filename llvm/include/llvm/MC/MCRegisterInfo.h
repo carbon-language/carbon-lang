@@ -361,12 +361,7 @@ public:
   /// getMatchingSuperReg - Return a super-register of the specified register
   /// Reg so its sub-register of index SubIdx is Reg.
   unsigned getMatchingSuperReg(unsigned Reg, unsigned SubIdx,
-                               const MCRegisterClass *RC) const {
-    for (const uint16_t *SRs = getSuperRegisters(Reg); unsigned SR = *SRs;++SRs)
-      if (Reg == getSubReg(SR, SubIdx) && RC->contains(SR))
-        return SR;
-    return 0;
-  }
+                               const MCRegisterClass *RC) const;
 
   /// getSubRegIndex - For a given register pair, return the sub-register index
   /// if the second register is a sub-register of the first. Return zero
@@ -493,6 +488,15 @@ public:
     : RegListIterator(MCRI->RegLists + MCRI->get(Reg).Overlaps + !IncludeSelf)
   {}
 };
+
+inline
+unsigned MCRegisterInfo::getMatchingSuperReg(unsigned Reg, unsigned SubIdx,
+                                             const MCRegisterClass *RC) const {
+    for (MCSuperRegIterator Supers(Reg, this); Supers.isValid(); ++Supers)
+      if (Reg == getSubReg(*Supers, SubIdx) && RC->contains(*Supers))
+        return *Supers;
+    return 0;
+}
 
 //===----------------------------------------------------------------------===//
 //                               Register Units

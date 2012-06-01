@@ -666,7 +666,8 @@ bool ExeDepsFix::runOnMachineFunction(MachineFunction &mf) {
     // or -1.
     AliasMap.resize(TRI->getNumRegs(), -1);
     for (unsigned i = 0, e = RC->getNumRegs(); i != e; ++i)
-      for (const uint16_t *AI = TRI->getOverlaps(RC->getRegister(i)); *AI; ++AI)
+      for (MCRegAliasIterator AI(RC->getRegister(i), TRI, true);
+           AI.isValid(); ++AI)
         AliasMap[*AI] = i;
   }
 

@@ -271,10 +271,9 @@ void RegPressureTracker::closeRegion() {
 static bool hasRegAlias(unsigned Reg, SparseSet<unsigned> &Regs,
                         const TargetRegisterInfo *TRI) {
   assert(!TargetRegisterInfo::isVirtualRegister(Reg) && "only for physregs");
-  for (const uint16_t *Alias = TRI->getOverlaps(Reg); *Alias; ++Alias) {
-    if (Regs.count(*Alias))
+  for (MCRegAliasIterator AI(Reg, TRI, true); AI.isValid(); ++AI)
+    if (Regs.count(*AI))
       return true;
-  }
   return false;
 }
 
@@ -283,9 +282,9 @@ static bool hasRegAlias(unsigned Reg, SparseSet<unsigned> &Regs,
 static SmallVectorImpl<unsigned>::iterator
 findRegAlias(unsigned Reg, SmallVectorImpl<unsigned> &Regs,
              const TargetRegisterInfo *TRI) {
-  for (const uint16_t *Alias = TRI->getOverlaps(Reg); *Alias; ++Alias) {
+  for (MCRegAliasIterator AI(Reg, TRI, true); AI.isValid(); ++AI) {
     SmallVectorImpl<unsigned>::iterator I =
-      std::find(Regs.begin(), Regs.end(), *Alias);
+      std::find(Regs.begin(), Regs.end(), *AI);
     if (I != Regs.end())
       return I;
   }
