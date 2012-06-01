@@ -1588,10 +1588,11 @@ llvm::DIType CGDebugInfo::CreateEnumType(const EnumDecl *ED) {
     getContextDescriptor(cast<Decl>(ED->getDeclContext()));
   llvm::DIType ClassTy = ED->isScopedUsingClassTag() ?
     getOrCreateType(ED->getIntegerType(), DefUnit) : llvm::DIType();
+  unsigned Flags = !ED->isCompleteDefinition() ? llvm::DIDescriptor::FlagFwdDecl : 0;
   llvm::DIType DbgTy = 
     DBuilder.createEnumerationType(EnumContext, ED->getName(), DefUnit, Line,
                                    Size, Align, EltArray,
-                                   ClassTy);
+                                   ClassTy, Flags);
   return DbgTy;
 }
 
