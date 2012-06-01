@@ -332,7 +332,9 @@ bool llvm::isInTailCallPosition(ImmutableCallSite CS, Attributes CalleeRetAttr,
   // see if each is transparent.
   for (unsigned i = 0, e =cast<StructType>(RetVal->getType())->getNumElements();
        i != e; ++i) {
-    const Value *InScalar = getNoopInput(FindInsertedValue(RetVal, i), TLI);
+    const Value *InScalar = FindInsertedValue(RetVal, i);
+    if (InScalar == 0) return false;
+    InScalar = getNoopInput(InScalar, TLI);
     
     // If the scalar value being inserted is an extractvalue of the right index
     // from the call, then everything is good.
