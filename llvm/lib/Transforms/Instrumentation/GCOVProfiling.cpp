@@ -22,6 +22,7 @@
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/Instructions.h"
+#include "llvm/Transforms/Utils/ModuleUtils.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/DebugLoc.h"
@@ -57,7 +58,6 @@ namespace {
     virtual const char *getPassName() const {
       return "GCOV Profiler";
     }
-
   private:
     bool runOnModule(Module &M);
 
@@ -517,6 +517,7 @@ bool GCOVProfiler::emitProfileArcs() {
         }
       }
     }
+
     insertCounterWriteout(CountersBySP);
   }
 
@@ -672,7 +673,26 @@ void GCOVProfiler::insertCounterWriteout(
   }
   Builder.CreateRetVoid();
 
-  InsertProfilingShutdownCall(WriteoutF, M);
+  // Create a small bit of code that registers the "__llvm_gcov_writeout"
+  // function to be executed at exit.
+  FunctionType *FTy = FunctionType::get(Type::getVoidTy(*Ctx), false);
+  Function *F = Function::Create(FTy, GlobalValue::InternalLinkage,
+                                 "__llvm_gcov_init", M);
+  F->setUnnamedAddr(true);
+  F->setLinkage(GlobalValue::InternalLinkage);
+  F->addFnAttr(Attribute::NoInline);
+
+  BB = BasicBlock::Create(*Ctx, "entry", F);
+  Builder.SetInsertPoint(BB);
+
+  FTy = FunctionType::get(Type::getInt32Ty(*Ctx),
+                          PointerType::get(FTy, 0), false);
+  Function *AtExitFn =
+    Function::Create(FTy, GlobalValue::ExternalLinkage, "atexit", M);
+  Builder.CreateCall(AtExitFn, WriteoutF);
+  Builder.CreateRetVoid();
+
+  appendToGlobalCtors(*M, F, 0);
 }
 
 void GCOVProfiler::insertIndirectCounterIncrement() {
