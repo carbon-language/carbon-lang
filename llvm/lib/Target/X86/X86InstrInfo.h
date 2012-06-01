@@ -128,9 +128,8 @@ class X86InstrInfo : public X86GenInstrInfo {
   X86TargetMachine &TM;
   const X86RegisterInfo RI;
 
-  /// RegOp2MemOpTable3Addr, RegOp2MemOpTable2Addr, 
-  /// RegOp2MemOpTable0, RegOp2MemOpTable1,
-  /// RegOp2MemOpTable2 - Load / store folding opcode maps.
+  /// RegOp2MemOpTable3Addr, RegOp2MemOpTable0, RegOp2MemOpTable1,
+  /// RegOp2MemOpTable2, RegOp2MemOpTable3 - Load / store folding opcode maps.
   ///
   typedef DenseMap<unsigned,
                    std::pair<unsigned, unsigned> > RegOp2MemOpTableType;
