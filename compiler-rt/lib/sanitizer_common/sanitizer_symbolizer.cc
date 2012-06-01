@@ -16,11 +16,7 @@
 #include "sanitizer_symbolizer.h"
 // FIXME: replace library malloc/free with internal_malloc/internal_free
 // that would be provided by ASan/TSan run-time libraries.
-#if defined(__linux__)
-# include <malloc.h>
-#elif defined(__APPLE__)
-# include <malloc/malloc.h>
-#endif
+#include <stdlib.h>
 
 namespace __sanitizer {
 
