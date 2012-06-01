@@ -25,7 +25,7 @@ int main()
         int i = 321;
         double d = 5.5;
         std::string s("cat");
-        out << i << ' ' << d << ' ' << s;
+        out << i << ' ' << d << ' ' << s << std::ends;
         assert(out.str() == std::string("321 5.5 cat"));
     }
     {
@@ -35,7 +35,7 @@ int main()
         int i = 321;
         double d = 5.5;
         std::string s("cat");
-        out << i << ' ' << d << ' ' << s;
+        out << i << ' ' << d << ' ' << s << std::ends;
         assert(out.str() == std::string("123 4.5 dog321 5.5 cat"));
     }
 }

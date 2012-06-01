@@ -22,6 +22,6 @@ int main()
     int i = 123;
     double d = 4.5;
     std::string s("dog");
-    out << i << ' ' << d << ' ' << s;
+    out << i << ' ' << d << ' ' << s << std::ends;
     assert(out.str() == std::string("123 4.5 dog"));
 }
