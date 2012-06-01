@@ -9,6 +9,7 @@ class Make(object):
     self.rules = {}
     self.rule_text = ''
     self.all_targets = []
+    self.default_targets = []
     self.clean_files = []
     self.distclean_files = []
     self.output.write("""all::
@@ -68,8 +69,11 @@ endif
       return input
     return [input]
 
+  def default(self, paths):
+    self.default_targets += self._as_list(paths)
+
   def finish(self):
-    self.output.write('all:: %s\n\n' % ' '.join(self.all_targets))
+    self.output.write('all:: %s\n\n' % ' '.join(self.default_targets or self.all_targets))
     self.output.write('clean: \n\trm -f %s\n\n' % ' '.join(self.clean_files))
     self.output.write('distclean: clean\n\trm -f %s\n' % ' '.join(self.distclean_files))
 

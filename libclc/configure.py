@@ -17,6 +17,8 @@ import metabuild
 p = OptionParser()
 p.add_option('--with-llvm-config', metavar='PATH',
              help='use given llvm-config script')
+p.add_option('--prefix', metavar='PATH',
+             help='install to given prefix')
 p.add_option('-g', metavar='GENERATOR', default='make',
              help='use given generator (default: make)')
 (options, args) = p.parse_args()
@@ -70,6 +72,9 @@ b.rule("PREPARE_BUILTINS", "%s -o $out $in" % prepare_builtins,
 manifest_deps = set([sys.argv[0], os.path.join(srcdir, 'build', 'metabuild.py'),
                      os.path.join(srcdir, 'build', 'ninja_syntax.py')])
 
+install_files = []
+install_deps = []
+
 for target in targets:
   (t_arch, t_vendor, t_os) = target.split('-')
   archs = [t_arch]
@@ -83,12 +88,13 @@ for target in targets:
     subdirs.append("%s-%s" % (arch, t_os))
     subdirs.append(arch)
 
-  subdirs = [subdir for subdir in subdirs
-             if os.path.isdir(os.path.join(srcdir, subdir, 'include')) or
-                os.path.isfile(os.path.join(srcdir, subdir, 'lib', 'SOURCES'))]
+  incdirs = filter(os.path.isdir,
+               [os.path.join(srcdir, subdir, 'include') for subdir in subdirs])
+  libdirs = filter(lambda d: os.path.isfile(os.path.join(d, 'SOURCES')),
+                   [os.path.join(srcdir, subdir, 'lib') for subdir in subdirs])
 
-  clang_cl_includes = ' '.join(["-I%s" % os.path.join(srcdir, subdir, 'include')
-                                for subdir in subdirs])
+  clang_cl_includes = ' '.join(["-I%s" % incdir for incdir in incdirs])
+  install_files += [(incdir, incdir[len(srcdir)+1:]) for incdir in incdirs]
 
   # The rule for building a .bc file for the specified architecture using clang.
   clang_bc_flags = "-ccc-host-triple %s -I`dirname $in` %s " \
@@ -101,11 +107,8 @@ for target in targets:
   objects = []
   sources_seen = set()
 
-  for subdir in subdirs:
-    src_libdir = os.path.join(srcdir, subdir, 'lib')
-    if not os.path.isdir(src_libdir):
-      continue
-    subdir_list_file = os.path.join(src_libdir, 'SOURCES')
+  for libdir in libdirs:
+    subdir_list_file = os.path.join(libdir, 'SOURCES')
     manifest_deps.add(subdir_list_file)
     for src in open(subdir_list_file).readlines():
       src = src.rstrip()
@@ -113,7 +116,7 @@ for target in targets:
         sources_seen.add(src)
         obj = os.path.join(target, 'lib', src + '.bc')
         objects.append(obj)
-        src_file = os.path.join(src_libdir, src)
+        src_file = os.path.join(libdir, src)
         ext = os.path.splitext(src)[1]
         if ext == '.ll':
           b.build(obj, 'LLVM_AS', src_file)
@@ -126,6 +129,18 @@ for target in targets:
   b.build(builtins_link_bc, "LLVM_LINK", objects)
   b.build(builtins_opt_bc, "OPT", builtins_link_bc)
   b.build(builtins_bc, "PREPARE_BUILTINS", builtins_opt_bc, prepare_builtins)
+  install_files.append((builtins_bc, builtins_bc))
+  install_deps.append(builtins_bc)
+  b.default(builtins_bc)
+
+if options.prefix:
+  install_cmd = ' && '.join(['mkdir -p %(dst)s && cp -r %(src)s %(dst)s' % 
+                             {'src': file,
+                              'dst': os.path.join(options.prefix,
+                                                  os.path.dirname(dest))}
+                             for (file, dest) in install_files])
+  b.rule('install', command = install_cmd, description = 'INSTALL')
+  b.build('install', 'install', install_deps)
 
 b.rule("configure", command = ' '.join(sys.argv), description = 'CONFIGURE',
        generator = True)
