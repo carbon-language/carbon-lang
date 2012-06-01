@@ -375,11 +375,16 @@ let Defs = [EAX, ECX, EDX, FP0, FP1, FP2, FP3, FP4, FP5, FP6, ST0,
             MM0, MM1, MM2, MM3, MM4, MM5, MM6, MM7,
             XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7,
             XMM8, XMM9, XMM10, XMM11, XMM12, XMM13, XMM14, XMM15, EFLAGS],
-    Uses = [ESP] in
+    Uses = [ESP] in {
 def TLS_addr32 : I<0, Pseudo, (outs), (ins i32mem:$sym),
                   "# TLS_addr32",
                   [(X86tlsaddr tls32addr:$sym)]>,
                   Requires<[In32BitMode]>;
+def TLS_base_addr32 : I<0, Pseudo, (outs), (ins i32mem:$sym),
+                  "# TLS_base_addr32",
+                  [(X86tlsbaseaddr tls32baseaddr:$sym)]>,
+                  Requires<[In32BitMode]>;
+}
 
 // All calls clobber the non-callee saved registers. RSP is marked as
 // a use to prevent stack-pointer assignments that appear immediately
@@ -389,11 +394,16 @@ let Defs = [RAX, RCX, RDX, RSI, RDI, R8, R9, R10, R11,
             MM0, MM1, MM2, MM3, MM4, MM5, MM6, MM7,
             XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7,
             XMM8, XMM9, XMM10, XMM11, XMM12, XMM13, XMM14, XMM15, EFLAGS],
-    Uses = [RSP] in
+    Uses = [RSP] in {
 def TLS_addr64 : I<0, Pseudo, (outs), (ins i64mem:$sym),
                    "# TLS_addr64",
                   [(X86tlsaddr tls64addr:$sym)]>,
                   Requires<[In64BitMode]>;
+def TLS_base_addr64 : I<0, Pseudo, (outs), (ins i64mem:$sym),
+                   "# TLS_base_addr64",
+                  [(X86tlsbaseaddr tls64baseaddr:$sym)]>,
+                  Requires<[In64BitMode]>;
+}
 
 // Darwin TLS Support
 // For i386, the address of the thunk is passed on the stack, on return the

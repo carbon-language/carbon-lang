@@ -7263,7 +7263,7 @@ X86TargetLowering::LowerGlobalAddress(SDValue Op, SelectionDAG &DAG) const {
 static SDValue
 GetTLSADDR(SelectionDAG &DAG, SDValue Chain, GlobalAddressSDNode *GA,
            SDValue *InFlag, const EVT PtrVT, unsigned ReturnReg,
-           unsigned char OperandFlags) {
+           unsigned char OperandFlags, bool LocalDynamic = false) {
   MachineFrameInfo *MFI = DAG.getMachineFunction().getFrameInfo();
   SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Glue);
   DebugLoc dl = GA->getDebugLoc();
@@ -7271,12 +7271,16 @@ GetTLSADDR(SelectionDAG &DAG, SDValue Chain, GlobalAddressSDNode *GA,
                                            GA->getValueType(0),
                                            GA->getOffset(),
                                            OperandFlags);
+
+  X86ISD::NodeType CallType = LocalDynamic ? X86ISD::TLSBASEADDR
+                                           : X86ISD::TLSADDR;
+
   if (InFlag) {
     SDValue Ops[] = { Chain,  TGA, *InFlag };
-    Chain = DAG.getNode(X86ISD::TLSADDR, dl, NodeTys, Ops, 3);
+    Chain = DAG.getNode(CallType, dl, NodeTys, Ops, 3);
   } else {
     SDValue Ops[]  = { Chain, TGA };
-    Chain = DAG.getNode(X86ISD::TLSADDR, dl, NodeTys, Ops, 2);
+    Chain = DAG.getNode(CallType, dl, NodeTys, Ops, 2);
   }
 
   // TLSADDR will be codegen'ed as call. Inform MFI that function has calls.
@@ -7306,6 +7310,45 @@ LowerToTLSGeneralDynamicModel64(GlobalAddressSDNode *GA, SelectionDAG &DAG,
                                 const EVT PtrVT) {
   return GetTLSADDR(DAG, DAG.getEntryNode(), GA, NULL, PtrVT,
                     X86::RAX, X86II::MO_TLSGD);
+}
+
+static SDValue LowerToTLSLocalDynamicModel(GlobalAddressSDNode *GA,
+                                           SelectionDAG &DAG,
+                                           const EVT PtrVT,
+                                           bool is64Bit) {
+  DebugLoc dl = GA->getDebugLoc();
+
+  // Get the start address of the TLS block for this module.
+  X86MachineFunctionInfo* MFI = DAG.getMachineFunction()
+      .getInfo<X86MachineFunctionInfo>();
+  MFI->incNumLocalDynamicTLSAccesses();
+
+  SDValue Base;
+  if (is64Bit) {
+    Base = GetTLSADDR(DAG, DAG.getEntryNode(), GA, NULL, PtrVT, X86::RAX,
+                      X86II::MO_TLSLD, /*LocalDynamic=*/true);
+  } else {
+    SDValue InFlag;
+    SDValue Chain = DAG.getCopyToReg(DAG.getEntryNode(), dl, X86::EBX,
+        DAG.getNode(X86ISD::GlobalBaseReg, DebugLoc(), PtrVT), InFlag);
+    InFlag = Chain.getValue(1);
+    Base = GetTLSADDR(DAG, Chain, GA, &InFlag, PtrVT, X86::EAX,
+                      X86II::MO_TLSLDM, /*LocalDynamic=*/true);
+  }
+
+  // Note: the CleanupLocalDynamicTLSPass will remove redundant computations
+  // of Base.
+
+  // Build x@dtpoff.
+  unsigned char OperandFlags = X86II::MO_DTPOFF;
+  unsigned WrapperKind = X86ISD::Wrapper;
+  SDValue TGA = DAG.getTargetGlobalAddress(GA->getGlobal(), dl,
+                                           GA->getValueType(0),
+                                           GA->getOffset(), OperandFlags);
+  SDValue Offset = DAG.getNode(WrapperKind, dl, PtrVT, TGA);
+
+  // Add x@dtpoff with the base.
+  return DAG.getNode(ISD::ADD, dl, PtrVT, Offset, Base);
 }
 
 // Lower ISD::GlobalTLSAddress using the "initial exec" or "local exec" model.
@@ -7372,8 +7415,6 @@ X86TargetLowering::LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const {
   const GlobalValue *GV = GA->getGlobal();
 
   if (Subtarget->isTargetELF()) {
-    // TODO: implement the "local dynamic" model
-
     // If GV is an alias then use the aliasee for determining
     // thread-localness.
     if (const GlobalAlias *GA = dyn_cast<GlobalAlias>(GV))
@@ -7383,11 +7424,12 @@ X86TargetLowering::LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const {
 
     switch (model) {
       case TLSModel::GeneralDynamic:
-      case TLSModel::LocalDynamic: // not implemented
         if (Subtarget->is64Bit())
           return LowerToTLSGeneralDynamicModel64(GA, DAG, getPointerTy());
         return LowerToTLSGeneralDynamicModel32(GA, DAG, getPointerTy());
-
+      case TLSModel::LocalDynamic:
+        return LowerToTLSLocalDynamicModel(GA, DAG, getPointerTy(),
+                                           Subtarget->is64Bit());
       case TLSModel::InitialExec:
       case TLSModel::LocalExec:
         return LowerToTLSExecModel(GA, DAG, getPointerTy(), model,
@@ -11257,6 +11299,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::FRSQRT:             return "X86ISD::FRSQRT";
   case X86ISD::FRCP:               return "X86ISD::FRCP";
   case X86ISD::TLSADDR:            return "X86ISD::TLSADDR";
+  case X86ISD::TLSBASEADDR:        return "X86ISD::TLSBASEADDR";
   case X86ISD::TLSCALL:            return "X86ISD::TLSCALL";
   case X86ISD::EH_RETURN:          return "X86ISD::EH_RETURN";
   case X86ISD::TC_RETURN:          return "X86ISD::TC_RETURN";

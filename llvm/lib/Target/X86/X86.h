@@ -36,6 +36,11 @@ FunctionPass *createX86ISelDag(X86TargetMachine &TM,
 /// register for PIC on x86-32.
 FunctionPass* createGlobalBaseRegPass();
 
+/// createCleanupLocalDynamicTLSPass() - This pass combines multiple accesses
+/// to local-dynamic TLS variables so that the TLS base address for the module
+/// is only fetched once per execution path through the function.
+FunctionPass *createCleanupLocalDynamicTLSPass();
+
 /// createX86FloatingPointStackifierPass - This function returns a pass which
 /// converts floating point register references and pseudo instructions into
 /// floating point stack references and physical instructions.

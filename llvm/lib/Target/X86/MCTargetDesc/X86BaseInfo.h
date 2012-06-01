@@ -100,6 +100,26 @@ namespace X86II {
     ///    SYMBOL_LABEL @TLSGD
     MO_TLSGD,
 
+    /// MO_TLSLD - On a symbol operand this indicates that the immediate is
+    /// the offset of the GOT entry with the TLS index for the module that
+    /// contains the symbol. When this index is passed to a call to to
+    /// __tls_get_addr, the function will return the base address of the TLS
+    /// block for the symbol.
+    ///
+    /// See 'ELF Handling for Thread-Local Storage' for more details.
+    ///    SYMBOL_LABEL @TLSLD
+    MO_TLSLD,
+
+    /// MO_TLSLDM - On a symbol operand this indicates that the immediate is
+    /// the offset of the GOT entry with the TLS index for the module that
+    /// contains the symbol. When this index is passed to a call to to
+    /// ___tls_get_addr, the function will return the base address of the TLS
+    /// block for the symbol.
+    ///
+    /// See 'ELF Handling for Thread-Local Storage' for more details.
+    ///    SYMBOL_LABEL @TLSLDM
+    MO_TLSLDM,
+
     /// MO_GOTTPOFF - On a symbol operand this indicates that the immediate is
     /// some TLS offset.
     ///
@@ -120,6 +140,13 @@ namespace X86II {
     /// See 'ELF Handling for Thread-Local Storage' for more details.
     ///    SYMBOL_LABEL @TPOFF
     MO_TPOFF,
+
+    /// MO_DTPOFF - On a symbol operand this indicates that the immediate is
+    /// the offset of the GOT entry with the TLS offset of the symbol.
+    ///
+    /// See 'ELF Handling for Thread-Local Storage' for more details.
+    ///    SYMBOL_LABEL @DTPOFF
+    MO_DTPOFF,
 
     /// MO_NTPOFF - On a symbol operand this indicates that the immediate is
     /// some TLS offset.

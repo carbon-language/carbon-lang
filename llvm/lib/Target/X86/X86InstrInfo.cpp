@@ -21,6 +21,7 @@
 #include "llvm/LLVMContext.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
+#include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
@@ -3990,9 +3991,126 @@ namespace {
       AU.setPreservesCFG();
       MachineFunctionPass::getAnalysisUsage(AU);
     }
+
+   private:
+    unsigned BaseReg;
   };
 }
 
 char CGBR::ID = 0;
 FunctionPass*
 llvm::createGlobalBaseRegPass() { return new CGBR(); }
+
+namespace {
+  struct LDTLSCleanup : public MachineFunctionPass {
+    static char ID;
+    LDTLSCleanup() : MachineFunctionPass(ID) {}
+
+    virtual bool runOnMachineFunction(MachineFunction &MF) {
+      X86MachineFunctionInfo* MFI = MF.getInfo<X86MachineFunctionInfo>();
+      if (MFI->getNumLocalDynamicTLSAccesses() < 2) {
+        // No point folding accesses if there isn't at least two.
+        return false;
+      }
+
+      MachineDominatorTree *DT = &getAnalysis<MachineDominatorTree>();
+      return VisitNode(DT->getRootNode(), 0);
+    }
+
+    // Visit the dominator subtree rooted at Node in pre-order.
+    // If TLSBaseAddrReg is non-null, then use that to replace any
+    // TLS_base_addr instructions. Otherwise, create the register
+    // when the first such instruction is seen, and then use it
+    // as we encounter more instructions.
+    bool VisitNode(MachineDomTreeNode *Node, unsigned TLSBaseAddrReg) {
+      MachineBasicBlock *BB = Node->getBlock();
+      bool Changed = false;
+
+      // Traverse the current block.
+      for (MachineBasicBlock::iterator I = BB->begin(), E = BB->end(); I != E;
+           ++I) {
+        switch (I->getOpcode()) {
+          case X86::TLS_base_addr32:
+          case X86::TLS_base_addr64:
+            if (TLSBaseAddrReg)
+              I = ReplaceTLSBaseAddrCall(I, TLSBaseAddrReg);
+            else
+              I = SetRegister(I, &TLSBaseAddrReg);
+            Changed = true;
+            break;
+          default:
+            break;
+        }
+      }
+
+      // Visit the children of this block in the dominator tree.
+      for (MachineDomTreeNode::iterator I = Node->begin(), E = Node->end();
+           I != E; ++I) {
+        Changed |= VisitNode(*I, TLSBaseAddrReg);
+      }
+
+      return Changed;
+    }
+
+    // Replace the TLS_base_addr instruction I with a copy from
+    // TLSBaseAddrReg, returning the new instruction.
+    MachineInstr *ReplaceTLSBaseAddrCall(MachineInstr *I,
+                                         unsigned TLSBaseAddrReg) {
+      MachineFunction *MF = I->getParent()->getParent();
+      const X86TargetMachine *TM =
+          static_cast<const X86TargetMachine *>(&MF->getTarget());
+      const bool is64Bit = TM->getSubtarget<X86Subtarget>().is64Bit();
+      const X86InstrInfo *TII = TM->getInstrInfo();
+
+      // Insert a Copy from TLSBaseAddrReg to RAX/EAX.
+      MachineInstr *Copy = BuildMI(*I->getParent(), I, I->getDebugLoc(),
+                                   TII->get(TargetOpcode::COPY),
+                                   is64Bit ? X86::RAX : X86::EAX)
+                                   .addReg(TLSBaseAddrReg);
+
+      // Erase the TLS_base_addr instruction.
+      I->eraseFromParent();
+
+      return Copy;
+    }
+
+    // Create a virtal register in *TLSBaseAddrReg, and populate it by
+    // inserting a copy instruction after I. Returns the new instruction.
+    MachineInstr *SetRegister(MachineInstr *I, unsigned *TLSBaseAddrReg) {
+      MachineFunction *MF = I->getParent()->getParent();
+      const X86TargetMachine *TM =
+          static_cast<const X86TargetMachine *>(&MF->getTarget());
+      const bool is64Bit = TM->getSubtarget<X86Subtarget>().is64Bit();
+      const X86InstrInfo *TII = TM->getInstrInfo();
+
+      // Create a virtual register for the TLS base address.
+      MachineRegisterInfo &RegInfo = MF->getRegInfo();
+      *TLSBaseAddrReg = RegInfo.createVirtualRegister(is64Bit
+                                                      ? &X86::GR64RegClass
+                                                      : &X86::GR32RegClass);
+
+      // Insert a copy from RAX/EAX to TLSBaseAddrReg.
+      MachineInstr *Next = I->getNextNode();
+      MachineInstr *Copy = BuildMI(*I->getParent(), Next, I->getDebugLoc(),
+                                   TII->get(TargetOpcode::COPY),
+                                   *TLSBaseAddrReg)
+                                   .addReg(is64Bit ? X86::RAX : X86::EAX);
+
+      return Copy;
+    }
+
+    virtual const char *getPassName() const {
+      return "Local Dynamic TLS Access Clean-up";
+    }
+
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.setPreservesCFG();
+      AU.addRequired<MachineDominatorTree>();
+      MachineFunctionPass::getAnalysisUsage(AU);
+    }
+  };
+}
+
+char LDTLSCleanup::ID = 0;
+FunctionPass*
+llvm::createCleanupLocalDynamicTLSPass() { return new LDTLSCleanup(); }

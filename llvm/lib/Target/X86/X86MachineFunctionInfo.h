@@ -66,6 +66,8 @@ class X86MachineFunctionInfo : public MachineFunctionInfo {
   /// ArgumentStackSize - The number of bytes on stack consumed by the arguments
   /// being passed on the stack.
   unsigned ArgumentStackSize;
+  /// NumLocalDynamics - Number of local-dynamic TLS accesses.
+  unsigned NumLocalDynamics;
 
 public:
   X86MachineFunctionInfo() : ForceFramePointer(false),
@@ -79,7 +81,8 @@ public:
                              RegSaveFrameIndex(0),
                              VarArgsGPOffset(0),
                              VarArgsFPOffset(0),
-                             ArgumentStackSize(0) {}
+                             ArgumentStackSize(0),
+                             NumLocalDynamics(0) {}
   
   explicit X86MachineFunctionInfo(MachineFunction &MF)
     : ForceFramePointer(false),
@@ -93,7 +96,8 @@ public:
       RegSaveFrameIndex(0),
       VarArgsGPOffset(0),
       VarArgsFPOffset(0),
-      ArgumentStackSize(0) {}
+      ArgumentStackSize(0),
+      NumLocalDynamics(0) {}
   
   bool getForceFramePointer() const { return ForceFramePointer;} 
   void setForceFramePointer(bool forceFP) { ForceFramePointer = forceFP; }
@@ -130,6 +134,9 @@ public:
 
   unsigned getArgumentStackSize() const { return ArgumentStackSize; }
   void setArgumentStackSize(unsigned size) { ArgumentStackSize = size; }
+
+  unsigned getNumLocalDynamicTLSAccesses() const { return NumLocalDynamics; }
+  void incNumLocalDynamicTLSAccesses() { ++NumLocalDynamics; }
 };
 
 } // End llvm namespace

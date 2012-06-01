@@ -186,9 +186,12 @@ void X86AsmPrinter::printSymbolOperand(const MachineOperand &MO,
     O << '-' << *MF->getPICBaseSymbol();
     break;
   case X86II::MO_TLSGD:     O << "@TLSGD";     break;
+  case X86II::MO_TLSLD:     O << "@TLSLD";     break;
+  case X86II::MO_TLSLDM:    O << "@TLSLDM";    break;
   case X86II::MO_GOTTPOFF:  O << "@GOTTPOFF";  break;
   case X86II::MO_INDNTPOFF: O << "@INDNTPOFF"; break;
   case X86II::MO_TPOFF:     O << "@TPOFF";     break;
+  case X86II::MO_DTPOFF:    O << "@DTPOFF";    break;
   case X86II::MO_NTPOFF:    O << "@NTPOFF";    break;
   case X86II::MO_GOTNTPOFF: O << "@GOTNTPOFF"; break;
   case X86II::MO_GOTPCREL:  O << "@GOTPCREL";  break;

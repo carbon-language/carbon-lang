@@ -147,6 +147,10 @@ bool X86PassConfig::addInstSelector() {
   // Install an instruction selector.
   PM->add(createX86ISelDag(getX86TargetMachine(), getOptLevel()));
 
+  // For ELF, cleanup any local-dynamic TLS accesses.
+  if (getX86Subtarget().isTargetELF() && getOptLevel() != CodeGenOpt::None)
+    PM->add(createCleanupLocalDynamicTLSPass());
+
   // For 32-bit, prepend instructions to set the "global base reg" for PIC.
   if (!getX86Subtarget().is64Bit())
     PM->add(createGlobalBaseRegPass());

@@ -207,6 +207,10 @@ namespace llvm {
       // TLSADDR - Thread Local Storage.
       TLSADDR,
 
+      // TLSBASEADDR - Thread Local Storage. A call to get the start address
+      // of the TLS block for the current module.
+      TLSBASEADDR,
+
       // TLSCALL - Thread Local Storage.  When calling to an OS provided
       // thunk at the address from an earlier relocation.
       TLSCALL,

@@ -2,6 +2,8 @@
 ; RUN: llc < %s -march=x86-64 -mtriple=x86_64-linux-gnu -relocation-model=pic | FileCheck -check-prefix=X64 %s
 
 @i = thread_local global i32 15
+@j = internal thread_local global i32 42
+@k = internal thread_local global i32 42
 
 define i32 @f1() {
 entry:
@@ -64,4 +66,22 @@ entry:
 ; X64:   callq __tls_get_addr@PLT
 
 
+define i32 @f5() nounwind {
+entry:
+	%0 = load i32* @j, align 4
+	%1 = load i32* @k, align 4
+	%add = add nsw i32 %0, %1
+	ret i32 %add
+}
 
+; X32:    f5:
+; X32:      leal {{[jk]}}@TLSLDM
+; X32-NEXT: calll ___tls_get_addr@PLT
+; X32-NEXT: movl {{[jk]}}@DTPOFF(%eax)
+; X32-NEXT: addl {{[jk]}}@DTPOFF(%eax)
+
+; X64:    f5:
+; X64:      leaq {{[jk]}}@TLSLD(%rip), %rdi
+; X64-NEXT: callq	__tls_get_addr@PLT
+; X64-NEXT: movl {{[jk]}}@DTPOFF(%rax)
+; X64-NEXT: addl {{[jk]}}@DTPOFF(%rax)
