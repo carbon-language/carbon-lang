@@ -1080,10 +1080,19 @@ Driver::EditLineInputReaderCallback
     case eInputReaderInterrupt:
         if (driver->m_io_channel_ap.get() != NULL)
         {
-            driver->m_io_channel_ap->OutWrite ("^C\n", 3, NO_ASYNC);
-            // I wish I could erase the entire input line, but there's no public API for that.
-            driver->m_io_channel_ap->EraseCharsBeforeCursor();
-            driver->m_io_channel_ap->RefreshPrompt();
+            SBProcess process = driver->GetDebugger().GetSelectedTarget().GetProcess();
+            if (!driver->m_io_channel_ap->EditLineHasCharacters()
+                &&  process.IsValid() && process.GetState() == lldb::eStateRunning)
+            {
+                process.Stop();
+            }
+            else
+            {
+                driver->m_io_channel_ap->OutWrite ("^C\n", 3, NO_ASYNC);
+                // I wish I could erase the entire input line, but there's no public API for that.
+                driver->m_io_channel_ap->EraseCharsBeforeCursor();
+                driver->m_io_channel_ap->RefreshPrompt();
+            }
         }
         break;
         
