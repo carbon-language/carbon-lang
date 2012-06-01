@@ -15,6 +15,7 @@
 #define LLVM_ADT_SMALLBITVECTOR_H
 
 #include "llvm/ADT/BitVector.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/Support/MathExtras.h"
 #include <cassert>
 
@@ -151,6 +152,12 @@ public:
     else
       switchToLarge(new BitVector(*RHS.getPointer()));
   }
+
+#if LLVM_USE_RVALUE_REFERENCES
+  SmallBitVector(SmallBitVector &&RHS) : X(RHS.X) {
+    RHS.X = 1;
+  }
+#endif
 
   ~SmallBitVector() {
     if (!isSmall())
@@ -421,6 +428,16 @@ public:
     }
     return *this;
   }
+
+#if LLVM_USE_RVALUE_REFERENCES
+  const SmallBitVector &operator=(SmallBitVector &&RHS) {
+    if (this != &RHS) {
+      clear();
+      swap(RHS);
+    }
+    return *this;
+  }
+#endif
 
   void swap(SmallBitVector &RHS) {
     std::swap(X, RHS.X);

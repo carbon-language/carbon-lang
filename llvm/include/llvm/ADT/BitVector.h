@@ -14,6 +14,7 @@
 #ifndef LLVM_ADT_BITVECTOR_H
 #define LLVM_ADT_BITVECTOR_H
 
+#include "llvm/Support/Compiler.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
 #include <algorithm>
@@ -96,6 +97,13 @@ public:
     Bits = (BitWord *)std::malloc(Capacity * sizeof(BitWord));
     std::memcpy(Bits, RHS.Bits, Capacity * sizeof(BitWord));
   }
+
+#if LLVM_USE_RVALUE_REFERENCES
+  BitVector(BitVector &&RHS)
+    : Bits(RHS.Bits), Size(RHS.Size), Capacity(RHS.Capacity) {
+    RHS.Bits = 0;
+  }
+#endif
 
   ~BitVector() {
     std::free(Bits);
@@ -370,6 +378,21 @@ public:
 
     return *this;
   }
+
+#if LLVM_USE_RVALUE_REFERENCES
+  const BitVector &operator=(BitVector &&RHS) {
+    if (this == &RHS) return *this;
+
+    std::free(Bits);
+    Bits = RHS.Bits;
+    Size = RHS.Size;
+    Capacity = RHS.Capacity;
+
+    RHS.Bits = 0;
+
+    return *this;
+  }
+#endif
 
   void swap(BitVector &RHS) {
     std::swap(Bits, RHS.Bits);
