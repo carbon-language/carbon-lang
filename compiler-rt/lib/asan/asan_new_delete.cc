@@ -16,6 +16,7 @@
 #include "asan_internal.h"
 #include "asan_stack.h"
 
+#include <stddef.h>
 #include <new>
 
 namespace __asan {
