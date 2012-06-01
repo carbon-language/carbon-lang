@@ -322,7 +322,27 @@ bool llvm::isInTailCallPosition(ImmutableCallSite CS, Attributes CalleeRetAttr,
     return false;
 
   // Otherwise, make sure the unmodified return value of I is the return value.
-  return getNoopInput(Ret->getOperand(0), TLI) == I;
+  // We handle two cases: multiple return values + scalars.
+  Value *RetVal = Ret->getOperand(0);
+  if (!isa<InsertValueInst>(RetVal) || !isa<StructType>(RetVal->getType()))
+    // Handle scalars first.
+    return getNoopInput(Ret->getOperand(0), TLI) == I;
+  
+  // If this is an aggregate return, look through the insert/extract values and
+  // see if each is transparent.
+  for (unsigned i = 0, e =cast<StructType>(RetVal->getType())->getNumElements();
+       i != e; ++i) {
+    const Value *InScalar = getNoopInput(FindInsertedValue(RetVal, i), TLI);
+    
+    // If the scalar value being inserted is an extractvalue of the right index
+    // from the call, then everything is good.
+    const ExtractValueInst *EVI = dyn_cast<ExtractValueInst>(InScalar);
+    if (EVI == 0 || EVI->getOperand(0) != I || EVI->getNumIndices() != 1 ||
+        EVI->getIndices()[0] != i)
+      return false;
+  }
+  
+  return true;
 }
 
 bool llvm::isInTailCallPosition(SelectionDAG &DAG, SDNode *Node,

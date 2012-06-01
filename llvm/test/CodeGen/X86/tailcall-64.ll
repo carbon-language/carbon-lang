@@ -41,3 +41,49 @@ define <4 x i32> @test_vectorbitcast() {
 }
 ; CHECK: test_vectorbitcast:
 ; CHECK: jmp	_testv                  ## TAILCALL
+
+
+declare { i64, i64 } @testp()
+
+define {i64, i64} @test_pair_trivial() {
+  %A = tail call { i64, i64} @testp()
+  ret { i64, i64} %A
+}
+; CHECK: test_pair_trivial:
+; CHECK: jmp	_testp                  ## TAILCALL
+
+
+
+define {i64, i64} @test_pair_trivial_extract() {
+  %A = tail call { i64, i64} @testp()
+  %x = extractvalue { i64, i64} %A, 0
+  %y = extractvalue { i64, i64} %A, 1
+  
+  %b = insertvalue {i64, i64} undef, i64 %x, 0
+  %c = insertvalue {i64, i64} %b, i64 %y, 1
+  
+  ret { i64, i64} %c
+}
+
+; CHECK: test_pair_trivial_extract:
+; CHECK: jmp	_testp                  ## TAILCALL
+
+define {i8*, i64} @test_pair_conv_extract() {
+  %A = tail call { i64, i64} @testp()
+  %x = extractvalue { i64, i64} %A, 0
+  %y = extractvalue { i64, i64} %A, 1
+  
+  %x1 = inttoptr i64 %x to i8*
+  
+  %b = insertvalue {i8*, i64} undef, i8* %x1, 0
+  %c = insertvalue {i8*, i64} %b, i64 %y, 1
+  
+  ret { i8*, i64} %c
+}
+
+; CHECK: test_pair_conv_extract:
+; CHECK: jmp	_testp                  ## TAILCALL
+
+
+
+
