@@ -572,7 +572,7 @@ class SymbolReaper {
 
   RegionSetTy RegionRoots;
   
-  const LocationContext *LCtx;
+  const StackFrameContext *LCtx;
   const Stmt *Loc;
   SymbolManager& SymMgr;
   StoreRef reapedStore;
@@ -586,7 +586,8 @@ public:
   /// considered live.
   SymbolReaper(const LocationContext *ctx, const Stmt *s, SymbolManager& symmgr,
                StoreManager &storeMgr)
-   : LCtx(ctx), Loc(s), SymMgr(symmgr), reapedStore(0, storeMgr) {}
+   : LCtx(ctx->getCurrentStackFrame()), Loc(s), SymMgr(symmgr),
+     reapedStore(0, storeMgr) {}
 
   ~SymbolReaper() {}
 

@@ -1452,8 +1452,7 @@ void test_blocks_1_indirect_release_via_call(void) {
 }
 
 void test_blocks_1_indirect_retain_via_call(void) {
-  // Eventually this should be reported as a leak.
-  NSNumber *number = [[NSNumber alloc] initWithInt:5]; // no-warning
+  NSNumber *number = [[NSNumber alloc] initWithInt:5]; // expected-warning {{leak}}
   ^(NSObject *o){ [o retain]; }(number);
 }
 

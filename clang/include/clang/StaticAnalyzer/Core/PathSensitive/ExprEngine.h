@@ -494,7 +494,7 @@ private:
                     ProgramStateRef St, SVal location,
                     const ProgramPointTag *tag, bool isLoad);
 
-  bool shouldInlineDecl(const FunctionDecl *FD, ExplodedNode *Pred);
+  bool shouldInlineDecl(const Decl *D, ExplodedNode *Pred);
   bool InlineCall(ExplodedNodeSet &Dst, const CallExpr *CE, ExplodedNode *Pred);
 
   bool replayWithoutInlining(ExplodedNode *P, const LocationContext *CalleeLC);

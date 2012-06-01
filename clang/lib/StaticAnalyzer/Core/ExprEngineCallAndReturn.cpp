@@ -103,7 +103,12 @@ void ExprEngine::processCallExit(ExplodedNode *CEBNode) {
 
   const StackFrameContext *calleeCtx =
       CEBNode->getLocationContext()->getCurrentStackFrame();
-  const LocationContext *callerCtx = calleeCtx->getParent();
+  
+  // The parent context might not be a stack frame, so make sure we
+  // look up the first enclosing stack frame.
+  const StackFrameContext *callerCtx =
+    calleeCtx->getParent()->getCurrentStackFrame();
+  
   const Stmt *CE = calleeCtx->getCallSite();
   ProgramStateRef state = CEBNode->getState();
   // Find the last statement in the function and the corresponding basic block.
@@ -199,8 +204,8 @@ static unsigned getNumberStackFrames(const LocationContext *LCtx) {
 }
 
 // Determine if we should inline the call.
-bool ExprEngine::shouldInlineDecl(const FunctionDecl *FD, ExplodedNode *Pred) {
-  AnalysisDeclContext *CalleeADC = AMgr.getAnalysisDeclContext(FD);
+bool ExprEngine::shouldInlineDecl(const Decl *D, ExplodedNode *Pred) {
+  AnalysisDeclContext *CalleeADC = AMgr.getAnalysisDeclContext(D);
   const CFG *CalleeCFG = CalleeADC->getCFG();
 
   // It is possible that the CFG cannot be constructed.
@@ -212,7 +217,7 @@ bool ExprEngine::shouldInlineDecl(const FunctionDecl *FD, ExplodedNode *Pred) {
         == AMgr.InlineMaxStackDepth)
     return false;
 
-  if (Engine.FunctionSummaries->hasReachedMaxBlockCount(FD))
+  if (Engine.FunctionSummaries->hasReachedMaxBlockCount(D))
     return false;
 
   if (CalleeCFG->getNumBlockIDs() > AMgr.InlineMaxFunctionSize)
@@ -231,10 +236,7 @@ static bool shouldInlineCallExpr(const CallExpr *CE, ExprEngine *E) {
   if (const PointerType *PT = callee->getAs<PointerType>())
     FT = dyn_cast<FunctionProtoType>(PT->getPointeeType());
   else if (const BlockPointerType *BT = callee->getAs<BlockPointerType>()) {
-    // FIXME: inline blocks.
-    // FT = dyn_cast<FunctionProtoType>(BT->getPointeeType());
-    (void) BT;
-    return false;
+    FT = dyn_cast<FunctionProtoType>(BT->getPointeeType());
   }
   // If we have no prototype, assume the function is okay.
   if (!FT)
@@ -250,41 +252,64 @@ bool ExprEngine::InlineCall(ExplodedNodeSet &Dst,
   if (!shouldInlineCallExpr(CE, this))
     return false;
 
+  const StackFrameContext *CallerSFC =
+    Pred->getLocationContext()->getCurrentStackFrame();
+
   ProgramStateRef state = Pred->getState();
   const Expr *Callee = CE->getCallee();
-  const FunctionDecl *FD =
-    state->getSVal(Callee, Pred->getLocationContext()).getAsFunctionDecl();
-  if (!FD || !FD->hasBody(FD))
+  SVal CalleeVal = state->getSVal(Callee, Pred->getLocationContext());
+  const Decl *D = 0;
+  const LocationContext *ParentOfCallee = 0;
+  
+  if (const FunctionDecl *FD = CalleeVal.getAsFunctionDecl()) {
+    if (!FD->hasBody(FD))
+      return false;
+  
+    switch (CE->getStmtClass()) {
+      default:
+        // FIXME: Handle C++.
+        break;
+      case Stmt::CallExprClass: {
+        D = FD;
+        break;
+        
+      }
+    }
+  } else if (const BlockDataRegion *BR =
+              dyn_cast_or_null<BlockDataRegion>(CalleeVal.getAsRegion())) {
+    assert(CE->getStmtClass() == Stmt::CallExprClass);
+    const BlockDecl *BD = BR->getDecl();
+    D = BD;
+    AnalysisDeclContext *BlockCtx = AMgr.getAnalysisDeclContext(BD);
+    ParentOfCallee = BlockCtx->getBlockInvocationContext(CallerSFC,
+                                                         BD,
+                                                         BR);
+  } else {
+    // This is case we don't handle yet.
+    return false;
+  }
+  
+  if (!D || !shouldInlineDecl(D, Pred))
     return false;
   
-  switch (CE->getStmtClass()) {
-    default:
-      // FIXME: Handle C++.
-      break;
-    case Stmt::CallExprClass: {
-      if (!shouldInlineDecl(FD, Pred))
-        return false;
+  if (!ParentOfCallee)
+    ParentOfCallee = CallerSFC;
 
-      // Construct a new stack frame for the callee.
-      AnalysisDeclContext *CalleeADC = AMgr.getAnalysisDeclContext(FD);
-      const StackFrameContext *CallerSFC =
-      Pred->getLocationContext()->getCurrentStackFrame();
-      const StackFrameContext *CalleeSFC =
-      CalleeADC->getStackFrame(CallerSFC, CE,
-                               currentBuilderContext->getBlock(),
-                               currentStmtIdx);
-      
-      CallEnter Loc(CE, CalleeSFC, Pred->getLocationContext());
-      bool isNew;
-      if (ExplodedNode *N = G.getNode(Loc, state, false, &isNew)) {
-        N->addPredecessor(Pred, G);
-        if (isNew)
-          Engine.getWorkList()->enqueue(N);
-      }
-      return true;
-    }
+  // Construct a new stack frame for the callee.
+  AnalysisDeclContext *CalleeADC = AMgr.getAnalysisDeclContext(D);
+  const StackFrameContext *CalleeSFC =
+    CalleeADC->getStackFrame(ParentOfCallee, CE,
+                             currentBuilderContext->getBlock(),
+                             currentStmtIdx);
+  
+  CallEnter Loc(CE, CalleeSFC, Pred->getLocationContext());
+  bool isNew;
+  if (ExplodedNode *N = G.getNode(Loc, state, false, &isNew)) {
+    N->addPredecessor(Pred, G);
+    if (isNew)
+      Engine.getWorkList()->enqueue(N);
   }
-  return false;
+  return true;
 }
 
 static bool isPointerToConst(const ParmVarDecl *ParamDecl) {

@@ -79,9 +79,7 @@ void test2() {
 void test2_b() {
   static int y = 0;
   __block int x;
-  // This is also a bug, but should be found not by checking the value
-  // 'x' is bound at block creation.
-  ^{ y = x + 1; }(); // no-warning
+  ^{ y = x + 1; }(); // expected-warning {{left operand of '+' is a garbage value}}
 }
 
 void test2_c() {
