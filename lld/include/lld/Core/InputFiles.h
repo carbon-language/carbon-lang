@@ -12,6 +12,7 @@
 
 #include "lld/Core/File.h"
 
+#include <memory>
 #include <vector>
 
 namespace lld {
