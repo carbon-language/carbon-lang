@@ -16,9 +16,9 @@ TOOL_NO_EXPORTS := 1
 # Don't install this.
 NO_INSTALL = 1
 
-LINK_COMPONENTS := support
+LINK_COMPONENTS := support $(TARGETS_TO_BUILD)
 
-USEDLIBS = clangBasic.a
+USEDLIBS = clangBasic.a clangFrontend.a
 
 include $(CLANG_LEVEL)/Makefile
 

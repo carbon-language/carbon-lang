@@ -1,17 +1,21 @@
 set( LLVM_LINK_COMPONENTS
   support
+  ${LLVM_TARGETS_TO_BUILD}
   )
 
 set( LLVM_USED_LIBS
   clangBasic
   clangLex
   clangSema
+  clangFrontend
   )
 
 add_clang_executable(diagtool
   diagtool_main.cpp
   DiagTool.cpp
+  DiagnosticNames.cpp
   ListWarnings.cpp
+  ShowEnabledWarnings.cpp
 )
 
 if(UNIX)
