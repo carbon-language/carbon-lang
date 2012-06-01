@@ -5922,7 +5922,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                                                             decl_ctx_die))
                                             {
                                                 type_ptr = m_die_to_type[die];
-                                                if (type_ptr)
+                                                if (type_ptr && type_ptr != DIE_IS_BEING_PARSED)
                                                 {
                                                     type_sp = type_ptr->shared_from_this();
                                                     break;
@@ -6047,7 +6047,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
 
                                                 // The type for this DIE should have been filled in the function call above
                                                 type_ptr = m_die_to_type[die];
-                                                if (type_ptr)
+                                                if (type_ptr && type_ptr != DIE_IS_BEING_PARSED)
                                                 {
                                                     type_sp = type_ptr->shared_from_this();
                                                     break;
