@@ -41,6 +41,9 @@ namespace llvm {
                     // PIC mode.
       WrapperJT,    // WrapperJT - A wrapper node for TargetJumpTable
 
+      // Add pseudo op to model memcpy for struct byval.
+      COPY_STRUCT_BYVAL,
+
       CALL,         // Function call.
       CALL_PRED,    // Function call that's predicable.
       CALL_NOLINK,  // Function call with branch not branch-and-link.

@@ -52,6 +52,7 @@ using namespace llvm;
 
 STATISTIC(NumTailCalls, "Number of tail calls");
 STATISTIC(NumMovwMovt, "Number of GAs materialized with movw + movt");
+STATISTIC(NumLoopByVals, "Number of loops generated for byval arguments");
 
 // This option should go away when tail calls fully work.
 static cl::opt<bool>
@@ -1424,21 +1425,21 @@ ARMTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
         CCInfo.clearFirstByValReg();
       }
 
-      unsigned LocMemOffset = VA.getLocMemOffset();
-      SDValue StkPtrOff = DAG.getIntPtrConstant(LocMemOffset);
-      SDValue Dst = DAG.getNode(ISD::ADD, dl, getPointerTy(), StackPtr,
-                                StkPtrOff);
-      SDValue SrcOffset = DAG.getIntPtrConstant(4*offset);
-      SDValue Src = DAG.getNode(ISD::ADD, dl, getPointerTy(), Arg, SrcOffset);
-      SDValue SizeNode = DAG.getConstant(Flags.getByValSize() - 4*offset,
-                                         MVT::i32);
-      MemOpChains.push_back(DAG.getMemcpy(Chain, dl, Dst, Src, SizeNode,
-                                          Flags.getByValAlign(),
-                                          /*isVolatile=*/false,
-                                          /*AlwaysInline=*/false,
-                                          MachinePointerInfo(0),
-                                          MachinePointerInfo(0)));
+      if (Flags.getByValSize() - 4*offset > 0) {
+        unsigned LocMemOffset = VA.getLocMemOffset();
+        SDValue StkPtrOff = DAG.getIntPtrConstant(LocMemOffset);
+        SDValue Dst = DAG.getNode(ISD::ADD, dl, getPointerTy(), StackPtr,
+                                  StkPtrOff);
+        SDValue SrcOffset = DAG.getIntPtrConstant(4*offset);
+        SDValue Src = DAG.getNode(ISD::ADD, dl, getPointerTy(), Arg, SrcOffset);
+        SDValue SizeNode = DAG.getConstant(Flags.getByValSize() - 4*offset,
+                                           MVT::i32);
 
+        SDVTList VTs = DAG.getVTList(MVT::Other, MVT::Glue);
+        SDValue Ops[] = { Chain, Dst, Src, SizeNode};
+        MemOpChains.push_back(DAG.getNode(ARMISD::COPY_STRUCT_BYVAL, dl, VTs,
+                                          Ops, array_lengthof(Ops)));
+      }
     } else if (!IsSibCall) {
       assert(VA.isMemLoc());
 
@@ -6592,6 +6593,252 @@ ARMTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
 
     // return last added BB
     return SinkBB;
+  }
+  case ARM::COPY_STRUCT_BYVAL_I32: {
+    ++NumLoopByVals;
+    // This pseudo instruction has 3 operands: dst, src, size
+    // We expand it to a loop if size > Subtarget->getMaxInlineSizeThreshold().
+    // Otherwise, we will generate unrolled scalar copies.
+    const BasicBlock *LLVM_BB = BB->getBasicBlock();
+    MachineFunction::iterator It = BB;
+    ++It;
+
+    unsigned dest = MI->getOperand(0).getReg();
+    unsigned src = MI->getOperand(1).getReg();
+    unsigned size = MI->getOperand(2).getImm();
+    DebugLoc dl = MI->getDebugLoc();
+    unsigned BytesLeft = size & 3;
+    unsigned LoopSize = size - BytesLeft;
+
+    bool isThumb2 = Subtarget->isThumb2();
+    MachineFunction *MF = BB->getParent();
+    MachineRegisterInfo &MRI = MF->getRegInfo();
+    unsigned ldrOpc = isThumb2 ? ARM::t2LDR_POST : ARM::LDR_POST_IMM;
+    unsigned strOpc = isThumb2 ? ARM::t2STR_POST : ARM::STR_POST_IMM;
+
+    const TargetRegisterClass *TRC = isThumb2 ?
+      (const TargetRegisterClass*)&ARM::tGPRRegClass :
+      (const TargetRegisterClass*)&ARM::GPRRegClass;
+
+    if (size <= Subtarget->getMaxInlineSizeThreshold()) {
+      // Use LDR and STR to copy.
+      // [scratch, srcOut] = LDR_POST(srcIn, 4)
+      // [destOut] = STR_POST(scratch, destIn, 4)
+      unsigned srcIn = src;
+      unsigned destIn = dest;
+      for (unsigned i = 0; i < LoopSize; i+=4) {
+        unsigned scratch = MRI.createVirtualRegister(TRC);
+        unsigned srcOut = MRI.createVirtualRegister(TRC);
+        unsigned destOut = MRI.createVirtualRegister(TRC);
+        if (isThumb2) {
+          AddDefaultPred(BuildMI(*BB, MI, dl,
+            TII->get(ldrOpc), scratch)
+            .addReg(srcOut, RegState::Define).addReg(srcIn).addImm(4));
+
+          AddDefaultPred(BuildMI(*BB, MI, dl, TII->get(strOpc), destOut)
+            .addReg(scratch).addReg(destIn)
+            .addImm(4));
+        } else {
+          AddDefaultPred(BuildMI(*BB, MI, dl,
+            TII->get(ldrOpc), scratch)
+            .addReg(srcOut, RegState::Define).addReg(srcIn).addReg(0).addImm(4));
+
+          AddDefaultPred(BuildMI(*BB, MI, dl, TII->get(strOpc), destOut)
+            .addReg(scratch).addReg(destIn)
+            .addReg(0).addImm(4));
+        }
+        srcIn = srcOut;
+        destIn = destOut;
+      }
+
+      // Handle the leftover bytes with LDRB and STRB.
+      // [scratch, srcOut] = LDRB_POST(srcIn, 1)
+      // [destOut] = STRB_POST(scratch, destIn, 1)
+      ldrOpc = isThumb2 ? ARM::t2LDRB_POST : ARM::LDRB_POST_IMM;
+      strOpc = isThumb2 ? ARM::t2STRB_POST : ARM::STRB_POST_IMM;
+      for (unsigned i = 0; i < BytesLeft; i++) {
+        unsigned scratch = MRI.createVirtualRegister(TRC);
+        unsigned srcOut = MRI.createVirtualRegister(TRC);
+        unsigned destOut = MRI.createVirtualRegister(TRC);
+        if (isThumb2) {
+          AddDefaultPred(BuildMI(*BB, MI, dl,
+            TII->get(ldrOpc),scratch)
+            .addReg(srcOut, RegState::Define).addReg(srcIn).addImm(1));
+
+          AddDefaultPred(BuildMI(*BB, MI, dl, TII->get(strOpc), destOut)
+            .addReg(scratch).addReg(destIn)
+            .addReg(0).addImm(1));
+        } else {
+          AddDefaultPred(BuildMI(*BB, MI, dl,
+            TII->get(ldrOpc),scratch)
+            .addReg(srcOut, RegState::Define).addReg(srcIn).addImm(1));
+
+          AddDefaultPred(BuildMI(*BB, MI, dl, TII->get(strOpc), destOut)
+            .addReg(scratch).addReg(destIn)
+            .addReg(0).addImm(1));
+       }
+        srcIn = srcOut;
+        destIn = destOut;
+      }
+      MI->eraseFromParent();   // The instruction is gone now.
+      return BB;
+    }
+
+    // Expand the pseudo op to a loop.
+    // thisMBB:
+    //   ...
+    //   movw varEnd, # --> with thumb2
+    //   movt varEnd, #
+    //   ldrcp varEnd, idx --> without thumb2
+    //   fallthrough --> loopMBB
+    // loopMBB:
+    //   PHI varPhi, varEnd, varLoop
+    //   PHI srcPhi, src, srcLoop
+    //   PHI destPhi, dst, destLoop
+    //   [scratch, srcLoop] = LDR_POST(srcPhi, 4)
+    //   [destLoop] = STR_POST(scratch, destPhi, 4)
+    //   subs varLoop, varPhi, #4
+    //   bne loopMBB
+    //   fallthrough --> exitMBB
+    // exitMBB:
+    //   epilogue to handle left-over bytes
+    //   [scratch, srcOut] = LDRB_POST(srcLoop, 1)
+    //   [destOut] = STRB_POST(scratch, destLoop, 1)
+    MachineBasicBlock *loopMBB = MF->CreateMachineBasicBlock(LLVM_BB);
+    MachineBasicBlock *exitMBB = MF->CreateMachineBasicBlock(LLVM_BB);
+    MF->insert(It, loopMBB);
+    MF->insert(It, exitMBB);
+
+    // Transfer the remainder of BB and its successor edges to exitMBB.
+    exitMBB->splice(exitMBB->begin(), BB,
+                    llvm::next(MachineBasicBlock::iterator(MI)),
+                    BB->end());
+    exitMBB->transferSuccessorsAndUpdatePHIs(BB);
+
+    // Load an immediate to varEnd.
+    unsigned varEnd = MRI.createVirtualRegister(TRC);
+    if (isThumb2) {
+      unsigned VReg1 = varEnd;
+      if ((LoopSize & 0xFFFF0000) != 0)
+        VReg1 = MRI.createVirtualRegister(TRC);
+      AddDefaultPred(BuildMI(BB, dl, TII->get(ARM::t2MOVi16), VReg1)
+                     .addImm(LoopSize & 0xFFFF));
+
+      if ((LoopSize & 0xFFFF0000) != 0)
+        AddDefaultPred(BuildMI(BB, dl, TII->get(ARM::t2MOVTi16), varEnd)
+                       .addReg(VReg1)
+                       .addImm(LoopSize >> 16));
+    } else {
+      MachineConstantPool *ConstantPool = MF->getConstantPool();
+      Type *Int32Ty = Type::getInt32Ty(MF->getFunction()->getContext());
+      const Constant *C = ConstantInt::get(Int32Ty, LoopSize);
+
+      // MachineConstantPool wants an explicit alignment.
+      unsigned Align = getTargetData()->getPrefTypeAlignment(Int32Ty);
+      if (Align == 0)
+        Align = getTargetData()->getTypeAllocSize(C->getType());
+      unsigned Idx = ConstantPool->getConstantPoolIndex(C, Align);
+
+      AddDefaultPred(BuildMI(BB, dl, TII->get(ARM::LDRcp))
+                     .addReg(varEnd, RegState::Define)
+                     .addConstantPoolIndex(Idx)
+                     .addImm(0));
+    }
+    BB->addSuccessor(loopMBB);
+
+    // Generate the loop body:
+    //   varPhi = PHI(varLoop, varEnd)
+    //   srcPhi = PHI(srcLoop, src)
+    //   destPhi = PHI(destLoop, dst)
+    MachineBasicBlock *entryBB = BB;
+    BB = loopMBB;
+    unsigned varLoop = MRI.createVirtualRegister(TRC);
+    unsigned varPhi = MRI.createVirtualRegister(TRC);
+    unsigned srcLoop = MRI.createVirtualRegister(TRC);
+    unsigned srcPhi = MRI.createVirtualRegister(TRC);
+    unsigned destLoop = MRI.createVirtualRegister(TRC);
+    unsigned destPhi = MRI.createVirtualRegister(TRC);
+
+    BuildMI(*BB, BB->begin(), dl, TII->get(ARM::PHI), varPhi)
+      .addReg(varLoop).addMBB(loopMBB)
+      .addReg(varEnd).addMBB(entryBB);
+    BuildMI(BB, dl, TII->get(ARM::PHI), srcPhi)
+      .addReg(srcLoop).addMBB(loopMBB)
+      .addReg(src).addMBB(entryBB);
+    BuildMI(BB, dl, TII->get(ARM::PHI), destPhi)
+      .addReg(destLoop).addMBB(loopMBB)
+      .addReg(dest).addMBB(entryBB);
+
+    //   [scratch, srcLoop] = LDR_POST(srcPhi, 4)
+    //   [destLoop] = STR_POST(scratch, destPhi, 4)
+    unsigned scratch = MRI.createVirtualRegister(TRC);
+    if (isThumb2) {
+      AddDefaultPred(BuildMI(BB, dl, TII->get(ldrOpc), scratch)
+        .addReg(srcLoop, RegState::Define).addReg(srcPhi).addImm(4));
+
+      AddDefaultPred(BuildMI(BB, dl, TII->get(strOpc), destLoop)
+        .addReg(scratch).addReg(destPhi)
+        .addImm(4));
+    } else {
+      AddDefaultPred(BuildMI(BB, dl, TII->get(ldrOpc), scratch)
+        .addReg(srcLoop, RegState::Define).addReg(srcPhi).addReg(0).addImm(4));
+
+      AddDefaultPred(BuildMI(BB, dl, TII->get(strOpc), destLoop)
+        .addReg(scratch).addReg(destPhi)
+        .addReg(0).addImm(4));
+    }
+
+    // Decrement loop variable by 4.
+    MachineInstrBuilder MIB = BuildMI(BB, dl,
+      TII->get(isThumb2 ? ARM::t2SUBri : ARM::SUBri), varLoop);
+    AddDefaultCC(AddDefaultPred(MIB.addReg(varPhi).addImm(4)));
+    MIB->getOperand(5).setReg(ARM::CPSR);
+    MIB->getOperand(5).setIsDef(true);
+
+    BuildMI(BB, dl, TII->get(isThumb2 ? ARM::t2Bcc : ARM::Bcc))
+      .addMBB(loopMBB).addImm(ARMCC::NE).addReg(ARM::CPSR);
+
+    // loopMBB can loop back to loopMBB or fall through to exitMBB.
+    BB->addSuccessor(loopMBB);
+    BB->addSuccessor(exitMBB);
+
+    // Add epilogue to handle BytesLeft.
+    BB = exitMBB;
+    MachineInstr *StartOfExit = exitMBB->begin();
+    ldrOpc = isThumb2 ? ARM::t2LDRB_POST : ARM::LDRB_POST_IMM;
+    strOpc = isThumb2 ? ARM::t2STRB_POST : ARM::STRB_POST_IMM;
+
+    //   [scratch, srcOut] = LDRB_POST(srcLoop, 1)
+    //   [destOut] = STRB_POST(scratch, destLoop, 1)
+    unsigned srcIn = srcLoop;
+    unsigned destIn = destLoop;
+    for (unsigned i = 0; i < BytesLeft; i++) {
+      unsigned scratch = MRI.createVirtualRegister(TRC);
+      unsigned srcOut = MRI.createVirtualRegister(TRC);
+      unsigned destOut = MRI.createVirtualRegister(TRC);
+      if (isThumb2) {
+        AddDefaultPred(BuildMI(*BB, StartOfExit, dl,
+          TII->get(ldrOpc),scratch)
+          .addReg(srcOut, RegState::Define).addReg(srcIn).addImm(1));
+
+        AddDefaultPred(BuildMI(*BB, StartOfExit, dl, TII->get(strOpc), destOut)
+          .addReg(scratch).addReg(destIn)
+          .addImm(1));
+      } else {
+        AddDefaultPred(BuildMI(*BB, StartOfExit, dl,
+          TII->get(ldrOpc),scratch)
+          .addReg(srcOut, RegState::Define).addReg(srcIn).addReg(0).addImm(1));
+
+        AddDefaultPred(BuildMI(*BB, StartOfExit, dl, TII->get(strOpc), destOut)
+          .addReg(scratch).addReg(destIn)
+          .addReg(0).addImm(1));
+      }
+      srcIn = srcOut;
+      destIn = destOut;
+    }
+
+    MI->eraseFromParent();   // The instruction is gone now.
+    return BB;
   }
   }
 }

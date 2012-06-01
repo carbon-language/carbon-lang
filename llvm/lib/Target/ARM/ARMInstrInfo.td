@@ -18,6 +18,9 @@
 // Type profiles.
 def SDT_ARMCallSeqStart : SDCallSeqStart<[ SDTCisVT<0, i32> ]>;
 def SDT_ARMCallSeqEnd   : SDCallSeqEnd<[ SDTCisVT<0, i32>, SDTCisVT<1, i32> ]>;
+def SDT_ARMStructByVal : SDTypeProfile<0, 3,
+                                       [SDTCisVT<0, i32>, SDTCisVT<1, i32>,
+                                        SDTCisVT<2, i32>]>;
 
 def SDT_ARMSaveCallPC : SDTypeProfile<0, 1, []>;
 
@@ -90,6 +93,10 @@ def ARMcallseq_start : SDNode<"ISD::CALLSEQ_START", SDT_ARMCallSeqStart,
                               [SDNPHasChain, SDNPOutGlue]>;
 def ARMcallseq_end   : SDNode<"ISD::CALLSEQ_END",   SDT_ARMCallSeqEnd,
                               [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue]>;
+def ARMcopystructbyval : SDNode<"ARMISD::COPY_STRUCT_BYVAL" ,
+                                SDT_ARMStructByVal,
+                                [SDNPHasChain, SDNPInGlue, SDNPOutGlue,
+                                 SDNPMayStore, SDNPMayLoad]>;
 
 def ARMcall          : SDNode<"ARMISD::CALL", SDT_ARMcall,
                               [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue,
@@ -4163,6 +4170,13 @@ let usesCustomInserter = 1 in {
       (outs GPR:$dst), (ins GPR:$ptr, GPR:$old, GPR:$new), NoItinerary,
       [(set GPR:$dst, (atomic_cmp_swap_32 GPR:$ptr, GPR:$old, GPR:$new))]>;
 }
+}
+
+let usesCustomInserter = 1 in {
+    def COPY_STRUCT_BYVAL_I32 : PseudoInst<
+      (outs), (ins GPR:$dst, GPR:$src, i32imm:$size),
+      NoItinerary,
+      [(ARMcopystructbyval GPR:$dst, GPR:$src, imm:$size)]>;
 }
 
 let mayLoad = 1 in {
