@@ -34,7 +34,9 @@ namespace {
                  cl::init("-"));
 
   cl::opt<std::string>
-  DependFilename("d", cl::desc("Dependency filename"), cl::value_desc("filename"),
+  DependFilename("d",
+                 cl::desc("Dependency filename"),
+                 cl::value_desc("filename"),
                  cl::init(""));
 
   cl::opt<std::string>
@@ -53,7 +55,8 @@ int TableGenMain(char *argv0, TableGenAction &Action) {
   try {
     // Parse the input file.
     OwningPtr<MemoryBuffer> File;
-    if (error_code ec = MemoryBuffer::getFileOrSTDIN(InputFilename.c_str(), File)) {
+    if (error_code ec =
+          MemoryBuffer::getFileOrSTDIN(InputFilename.c_str(), File)) {
       errs() << "Could not open input file '" << InputFilename << "': "
              << ec.message() <<"\n";
       return 1;
@@ -93,7 +96,7 @@ int TableGenMain(char *argv0, TableGenAction &Action) {
       DepOut.os() << OutputFilename << ":";
       const std::vector<std::string> &Dependencies = Parser.getDependencies();
       for (std::vector<std::string>::const_iterator I = Dependencies.begin(),
-                                                          E = Dependencies.end();
+                                                    E = Dependencies.end();
            I != E; ++I) {
         DepOut.os() << " " << (*I);
       }
