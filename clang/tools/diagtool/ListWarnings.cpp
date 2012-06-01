@@ -13,7 +13,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "DiagTool.h"
-#include "DiagnosticNames.h"
 #include "clang/Basic/Diagnostic.h"
 #include "llvm/Support/Format.h"
 #include "llvm/ADT/StringMap.h"
@@ -25,6 +24,28 @@ DEF_DIAGTOOL("list-warnings",
              ListWarnings)
   
 using namespace clang;
+
+namespace {
+struct StaticDiagNameIndexRec {
+  const char *NameStr;
+  unsigned short DiagID;
+  uint8_t NameLen;
+
+  StringRef getName() const {
+    return StringRef(NameStr, NameLen);
+  }
+};
+}
+
+static const StaticDiagNameIndexRec StaticDiagNameIndex[] = {
+#define DIAG_NAME_INDEX(ENUM) { #ENUM, diag::ENUM, STR_SIZE(#ENUM, uint8_t) },
+#include "clang/Basic/DiagnosticIndexName.inc"
+#undef DIAG_NAME_INDEX
+  { 0, 0, 0 }
+};
+
+static const unsigned StaticDiagNameIndexSize =
+  sizeof(StaticDiagNameIndex)/sizeof(StaticDiagNameIndex[0])-1;
 
 namespace {
 struct Entry {
@@ -52,8 +73,8 @@ int ListWarnings::run(unsigned int argc, char **argv, llvm::raw_ostream &out) {
   std::vector<Entry> Flagged, Unflagged;
   llvm::StringMap<std::vector<unsigned> > flagHistogram;
   
-  for (const diagtool::DiagnosticRecord *di = diagtool::BuiltinDiagnostics,
-       *de = di + diagtool::BuiltinDiagnosticsCount; di != de; ++di) {
+  for (const StaticDiagNameIndexRec *di = StaticDiagNameIndex, *de = StaticDiagNameIndex + StaticDiagNameIndexSize;
+       di != de; ++di) {
     
     unsigned diagID = di->DiagID;
     
