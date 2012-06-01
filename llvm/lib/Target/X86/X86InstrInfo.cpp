@@ -33,12 +33,15 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetOptions.h"
+#include "llvm/ADT/Statistic.h"
 #include <limits>
 
 #define GET_INSTRINFO_CTOR
 #include "X86GenInstrInfo.inc"
 
 using namespace llvm;
+
+STATISTIC(NumCmpsRemoved, "Number of Cmps removed due to an earlier Sub");
 
 static cl::opt<bool>
 NoFusing("disable-spill-fusing",
@@ -2725,6 +2728,326 @@ void X86InstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
     MIB.addOperand(Addr[i]);
   (*MIB).setMemRefs(MMOBegin, MMOEnd);
   NewMIs.push_back(MIB);
+}
+
+bool X86InstrInfo::
+AnalyzeCompare(const MachineInstr *MI, unsigned &SrcReg, int &CmpMask,
+               int &CmpValue) const {
+  switch (MI->getOpcode()) {
+  default: break;
+  case X86::CMP64ri32:
+  case X86::CMP64ri8:
+  case X86::CMP32ri:
+  case X86::CMP32ri8:
+  case X86::CMP16ri:
+  case X86::CMP16ri8:
+  case X86::CMP8ri:
+    SrcReg = MI->getOperand(0).getReg();
+    CmpMask = ~0;
+    CmpValue = MI->getOperand(1).getImm();
+    return true;
+  case X86::CMP64rr:
+  case X86::CMP32rr:
+  case X86::CMP16rr:
+  case X86::CMP8rr:
+    SrcReg = MI->getOperand(0).getReg();
+    CmpMask = ~0;
+    CmpValue = 0;
+    return true;
+  }
+
+  return false;
+}
+
+// This function updates condition code for SET Opcodes.
+// The input condition code can be E,NE,L,LE,G,GE,B,BE,A,AE and
+// the updated condition code will be E,NE,G,GE,L,LE,A,AE,B,BE.
+// This is to convert from a > b to b < a, a >= b to b <= a etc.
+static unsigned UpdateSETCondToOptimizeCmp(unsigned SETOpc) {
+  switch (SETOpc) {
+  default: return 0;
+  case X86::SETEr:  return X86::SETEr;
+  case X86::SETEm:  return X86::SETEm;
+  case X86::SETNEr: return X86::SETNEr;
+  case X86::SETNEm: return X86::SETNEm;
+  case X86::SETLr:  return X86::SETGr;
+  case X86::SETLm:  return X86::SETGm;
+  case X86::SETLEr: return X86::SETGEr;
+  case X86::SETLEm: return X86::SETGEm;
+  case X86::SETGr:  return X86::SETLr;
+  case X86::SETGm:  return X86::SETLm;
+  case X86::SETGEr: return X86::SETLEr;
+  case X86::SETGEm: return X86::SETLEm;
+  case X86::SETBr:  return X86::SETAr;
+  case X86::SETBm:  return X86::SETAm;
+  case X86::SETBEr: return X86::SETAEr;
+  case X86::SETBEm: return X86::SETAEm;
+  case X86::SETAr:  return X86::SETBr;
+  case X86::SETAm:  return X86::SETBm;
+  case X86::SETAEr: return X86::SETBEr;
+  case X86::SETAEm: return X86::SETBEm;
+  }
+}
+
+// This function updates condition code for Branch Opcodes.
+// The input condition code can be E,NE,L,LE,G,GE,B,BE,A,AE and
+// the updated condition code will be E,NE,G,GE,L,LE,A,AE,B,BE.
+// This is to convert from a > b to b < a, a >= b to b <= a etc.
+static unsigned UpdateBranchCondToOptimizeCmp(unsigned BranchOpc) {
+  switch (BranchOpc) {
+  default: return 0;
+  case X86::JE_4:  return X86::JE_4;
+  case X86::JNE_4: return X86::JNE_4;
+  case X86::JL_4:  return X86::JG_4;
+  case X86::JLE_4: return X86::JGE_4;
+  case X86::JG_4:  return X86::JL_4;
+  case X86::JGE_4: return X86::JLE_4;
+  case X86::JB_4:  return X86::JA_4;
+  case X86::JBE_4: return X86::JAE_4;
+  case X86::JA_4:  return X86::JB_4;
+  case X86::JAE_4: return X86::JBE_4;
+  }
+}
+
+// This function updates condition code for CMOV Opcodes.
+// The input condition code can be E,NE,L,LE,G,GE,B,BE,A,AE and
+// the updated condition code will be E,NE,G,GE,L,LE,A,AE,B,BE.
+// This is to convert from a > b to b < a, a >= b to b <= a etc.
+static unsigned UpdateCMovCondToOptimizeCmp(unsigned CMovOpc) {
+  switch (CMovOpc) {
+  default: return 0;
+  case X86::CMOVE16rm:  return X86::CMOVE16rm;
+  case X86::CMOVE16rr:  return X86::CMOVE16rr;
+  case X86::CMOVE32rm:  return X86::CMOVE32rm;
+  case X86::CMOVE32rr:  return X86::CMOVE32rr;
+  case X86::CMOVE64rm:  return X86::CMOVE64rm;
+  case X86::CMOVE64rr:  return X86::CMOVE64rr;
+  case X86::CMOVNE16rm: return X86::CMOVNE16rm;
+  case X86::CMOVNE16rr: return X86::CMOVNE16rr;
+  case X86::CMOVNE32rm: return X86::CMOVNE32rm;
+  case X86::CMOVNE32rr: return X86::CMOVNE32rr;
+  case X86::CMOVNE64rm: return X86::CMOVNE64rm;
+  case X86::CMOVNE64rr: return X86::CMOVNE64rr;
+
+  case X86::CMOVL16rm:  return X86::CMOVG16rm;
+  case X86::CMOVL16rr:  return X86::CMOVG16rr;
+  case X86::CMOVL32rm:  return X86::CMOVG32rm;
+  case X86::CMOVL32rr:  return X86::CMOVG32rr;
+  case X86::CMOVL64rm:  return X86::CMOVG64rm;
+  case X86::CMOVL64rr:  return X86::CMOVG64rr;
+  case X86::CMOVLE16rm: return X86::CMOVGE16rm;
+  case X86::CMOVLE16rr: return X86::CMOVGE16rr;
+  case X86::CMOVLE32rm: return X86::CMOVGE32rm;
+  case X86::CMOVLE32rr: return X86::CMOVGE32rr;
+  case X86::CMOVLE64rm: return X86::CMOVGE64rm;
+  case X86::CMOVLE64rr: return X86::CMOVGE64rr;
+
+  case X86::CMOVG16rm:  return X86::CMOVL16rm;
+  case X86::CMOVG16rr:  return X86::CMOVL16rr;
+  case X86::CMOVG32rm:  return X86::CMOVL32rm;
+  case X86::CMOVG32rr:  return X86::CMOVL32rr;
+  case X86::CMOVG64rm:  return X86::CMOVL64rm;
+  case X86::CMOVG64rr:  return X86::CMOVL64rr;
+  case X86::CMOVGE16rm: return X86::CMOVLE16rm;
+  case X86::CMOVGE16rr: return X86::CMOVLE16rr;
+  case X86::CMOVGE32rm: return X86::CMOVLE32rm;
+  case X86::CMOVGE32rr: return X86::CMOVLE32rr;
+  case X86::CMOVGE64rm: return X86::CMOVLE64rm;
+  case X86::CMOVGE64rr: return X86::CMOVLE64rr;
+
+  case X86::CMOVB16rm:  return X86::CMOVA16rm;
+  case X86::CMOVB16rr:  return X86::CMOVA16rr;
+  case X86::CMOVB32rm:  return X86::CMOVA32rm;
+  case X86::CMOVB32rr:  return X86::CMOVA32rr;
+  case X86::CMOVB64rm:  return X86::CMOVA64rm;
+  case X86::CMOVB64rr:  return X86::CMOVA64rr;
+  case X86::CMOVBE16rm: return X86::CMOVAE16rm;
+  case X86::CMOVBE16rr: return X86::CMOVAE16rr;
+  case X86::CMOVBE32rm: return X86::CMOVAE32rm;
+  case X86::CMOVBE32rr: return X86::CMOVAE32rr;
+  case X86::CMOVBE64rm: return X86::CMOVAE64rm;
+  case X86::CMOVBE64rr: return X86::CMOVAE64rr;
+
+  case X86::CMOVA16rm:  return X86::CMOVB16rm;
+  case X86::CMOVA16rr:  return X86::CMOVB16rr;
+  case X86::CMOVA32rm:  return X86::CMOVB32rm;
+  case X86::CMOVA32rr:  return X86::CMOVB32rr;
+  case X86::CMOVA64rm:  return X86::CMOVB64rm;
+  case X86::CMOVA64rr:  return X86::CMOVB64rr;
+  case X86::CMOVAE16rm: return X86::CMOVBE16rm;
+  case X86::CMOVAE16rr: return X86::CMOVBE16rr;
+  case X86::CMOVAE32rm: return X86::CMOVBE32rm;
+  case X86::CMOVAE32rr: return X86::CMOVBE32rr;
+  case X86::CMOVAE64rm: return X86::CMOVBE64rm;
+  case X86::CMOVAE64rr: return X86::CMOVBE64rr;
+  }
+}
+
+bool X86InstrInfo::
+OptimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg, int CmpMask,
+                     int CmpValue, const MachineRegisterInfo *MRI) const {
+  MachineRegisterInfo::def_iterator DI = MRI->def_begin(SrcReg);
+  if (llvm::next(DI) != MRI->def_end())
+    // Only support one definition.
+    return false;
+
+  MachineInstr *MI = &*DI;
+  // Get ready to iterate backward from CmpInstr.
+  MachineBasicBlock::iterator I = CmpInstr, E = MI,
+                              B = CmpInstr->getParent()->begin();
+
+  // Early exit if CmpInstr is at the beginning of the BB.
+  if (I == B) return false;
+
+  // For CMPrr(r1,r2), we are looking for SUB(r1,r2) or SUB(r2,r1).
+  // For CMPri(r1, CmpValue), we are looking for SUBri(r1, CmpValue).
+  MachineInstr *Sub = NULL;
+  unsigned SrcReg2 = 0;
+  if (CmpInstr->getOpcode() == X86::CMP64rr ||
+      CmpInstr->getOpcode() == X86::CMP32rr ||
+      CmpInstr->getOpcode() == X86::CMP16rr ||
+      CmpInstr->getOpcode() == X86::CMP8rr) {
+    SrcReg2 = CmpInstr->getOperand(1).getReg();
+  }
+
+  // Search backwards for a SUB instruction.
+  // If EFLAGS is updated in the middle, we can not remove the CMP instruction.
+  --I;
+  for (; I != E; --I) {
+    const MachineInstr &Instr = *I;
+
+    // Check whether the current instruction is SUB(r1, r2) or SUB(r2, r1).
+    if (((CmpInstr->getOpcode() == X86::CMP64rr &&
+          Instr.getOpcode() == X86::SUB64rr) ||
+         (CmpInstr->getOpcode() == X86::CMP32rr &&
+          Instr.getOpcode() == X86::SUB32rr)||
+         (CmpInstr->getOpcode() == X86::CMP16rr &&
+          Instr.getOpcode() == X86::SUB16rr)||
+         (CmpInstr->getOpcode() == X86::CMP8rr &&
+          Instr.getOpcode() == X86::SUB8rr)) &&
+        ((Instr.getOperand(1).getReg() == SrcReg &&
+          Instr.getOperand(2).getReg() == SrcReg2) ||
+         (Instr.getOperand(1).getReg() == SrcReg2 &&
+          Instr.getOperand(2).getReg() == SrcReg))) {
+      Sub = &*I;
+      break;
+    }
+
+    // Check whether the current instruction is SUBri(r1, CmpValue).
+    if (((CmpInstr->getOpcode() == X86::CMP64ri32 &&
+          Instr.getOpcode() == X86::SUB64ri32) ||
+         (CmpInstr->getOpcode() == X86::CMP64ri8 &&
+          Instr.getOpcode() == X86::SUB64ri8) ||
+         (CmpInstr->getOpcode() == X86::CMP32ri &&
+          Instr.getOpcode() == X86::SUB32ri) ||
+         (CmpInstr->getOpcode() == X86::CMP32ri8 &&
+          Instr.getOpcode() == X86::SUB32ri8) ||
+         (CmpInstr->getOpcode() == X86::CMP16ri &&
+          Instr.getOpcode() == X86::SUB16ri) ||
+         (CmpInstr->getOpcode() == X86::CMP16ri8 &&
+          Instr.getOpcode() == X86::SUB16ri8) ||
+         (CmpInstr->getOpcode() == X86::CMP8ri &&
+          Instr.getOpcode() == X86::SUB8ri)) &&
+        CmpValue != 0 &&
+        Instr.getOperand(1).getReg() == SrcReg &&
+        Instr.getOperand(2).getImm() == CmpValue) {
+      Sub = &*I;
+      break;
+    }
+
+    for (unsigned IO = 0, EO = Instr.getNumOperands(); IO != EO; ++IO) {
+      const MachineOperand &MO = Instr.getOperand(IO);
+      if (MO.isRegMask() && MO.clobbersPhysReg(X86::EFLAGS))
+        return false;
+      if (!MO.isReg()) continue;
+
+      // This instruction modifies or uses EFLAGS before we find a SUB.
+      // We can't do this transformation.
+      if (MO.getReg() == X86::EFLAGS)
+        return false;
+    }
+
+    if (I == B)
+      // Reaching beginning of the block.
+      return false;
+  }
+
+  // Return false if no candidates exist.
+  if (!Sub)
+    return false;
+  MI = Sub;
+
+  switch (MI->getOpcode()) {
+  default: break;
+  case X86::SUB64rr:
+  case X86::SUB32rr:
+  case X86::SUB16rr:
+  case X86::SUB8rr:
+  case X86::SUB64ri32:
+  case X86::SUB64ri8:
+  case X86::SUB32ri:
+  case X86::SUB32ri8:
+  case X86::SUB16ri:
+  case X86::SUB16ri8:
+  case X86::SUB8ri: {
+    // Scan forward from CmpInstr for the use of EFLAGS.
+    // Handle the condition codes GE, L, G, LE, B, L, BE, LE.
+    SmallVector<std::pair<MachineInstr*, unsigned /*NewOpc*/>, 4> OpsToUpdate;
+    bool isSafe = false;
+    I = CmpInstr;
+    E = CmpInstr->getParent()->end();
+    while (!isSafe && ++I != E) {
+      const MachineInstr &Instr = *I;
+      for (unsigned IO = 0, EO = Instr.getNumOperands();
+           !isSafe && IO != EO; ++IO) {
+        const MachineOperand &MO = Instr.getOperand(IO);
+        if (MO.isRegMask() && MO.clobbersPhysReg(X86::EFLAGS)) {
+          isSafe = true;
+          break;
+        }
+        if (!MO.isReg() || MO.getReg() != X86::EFLAGS)
+          continue;
+        // EFLAGS is redefined by this instruction.
+        if (MO.isDef()) {
+          isSafe = true;
+          break;
+        }
+        // EFLAGS is used by this instruction.
+
+        // If we have SUB(r1, r2) and CMP(r2, r1), the condition code needs
+        // to be changed from r2 > r1 to r1 < r2, from r2 < r1 to r1 > r2, etc.
+        unsigned NewOpc = UpdateBranchCondToOptimizeCmp(Instr.getOpcode());
+        if (!NewOpc) NewOpc = UpdateSETCondToOptimizeCmp(Instr.getOpcode());
+        if (!NewOpc) NewOpc = UpdateCMovCondToOptimizeCmp(Instr.getOpcode());
+        if (!NewOpc) return false;
+
+        // Push the MachineInstr to OpsToUpdate.
+        // If it is safe to remove CmpInstr, the condition code of these
+        // instructions will be modified.
+        if (SrcReg2 != 0 && Sub->getOperand(1).getReg() == SrcReg2 &&
+            Sub->getOperand(2).getReg() == SrcReg)
+          OpsToUpdate.push_back(std::make_pair(&*I, NewOpc));
+      }
+    }
+
+    // We may exit the loop at end of the basic block.
+    // In that case, it is still safe to remove CmpInstr.
+
+    // Make sure Sub instruction defines EFLAGS.
+    assert(MI->getOperand(3).getReg() == X86::EFLAGS &&
+           "Expected EFLAGS is the 4th operand of SUBrr or SUBri.");
+    MI->getOperand(3).setIsDef(true);
+    CmpInstr->eraseFromParent();
+
+    // Modify the condition code of instructions in OpsToUpdate.
+    for (unsigned i = 0; i < OpsToUpdate.size(); i++)
+      OpsToUpdate[i].first->setDesc(get(OpsToUpdate[i].second));
+    NumCmpsRemoved++;
+    return true;
+  }
+  }
+
+  return false;
 }
 
 bool X86InstrInfo::

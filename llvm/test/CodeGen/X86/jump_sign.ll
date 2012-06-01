@@ -83,6 +83,25 @@ entry:
   %cond = select i1 %cmp, i32 %sub, i32 0
   ret i32 %cond
 }
+; redundant cmp instruction
+define i32 @l(i32 %a, i32 %b) nounwind {
+entry:
+; CHECK: l:
+; CHECK-NOT: cmp
+  %cmp = icmp slt i32 %b, %a
+  %sub = sub nsw i32 %a, %b
+  %cond = select i1 %cmp, i32 %sub, i32 %a
+  ret i32 %cond
+}
+define i32 @m(i32 %a, i32 %b) nounwind {
+entry:
+; CHECK: m:
+; CHECK-NOT: cmp
+  %cmp = icmp sgt i32 %a, %b
+  %sub = sub nsw i32 %a, %b
+  %cond = select i1 %cmp, i32 %b, i32 %sub
+  ret i32 %cond
+}
 ; rdar://11540023
 define i64 @n(i64 %x, i64 %y) nounwind {
 entry:
