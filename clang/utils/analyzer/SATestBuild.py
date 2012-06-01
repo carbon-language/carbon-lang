@@ -76,8 +76,6 @@ Checkers="experimental.security.taint,core,deadcode,cplusplus,security,unix,osx,
 
 Verbose = 1
 
-IsReferenceBuild = False
-
 # Make sure we flush the output after every print statement.
 class flushfile(object):
     def __init__(self, f):
@@ -100,7 +98,7 @@ def getProjectMapPath():
 def getProjectDir(ID):
     return os.path.join(os.path.abspath(os.curdir), ID)        
 
-def getSBOutputDirName() :
+def getSBOutputDirName(IsReferenceBuild) :
     if IsReferenceBuild == True :
         return SBOutputDirReferencePrefix + SBOutputDirName
     else :
@@ -210,7 +208,7 @@ def runAnalyzePreprocessed(Dir, SBOutputDir):
         if Failed == False:
             os.remove(LogFile.name);
 
-def buildProject(Dir, SBOutputDir, IsScanBuild):
+def buildProject(Dir, SBOutputDir, IsScanBuild, IsReferenceBuild):
     TBegin = time.time() 
 
     BuildLogPath = os.path.join(SBOutputDir, LogFolderName, BuildLogName)
@@ -373,7 +371,7 @@ def updateSVN(Mode, ProjectsMap):
         ProjectsMap.seek(0)    
         for I in csv.reader(ProjectsMap):
             ProjName = I[0] 
-            Path = os.path.join(ProjName, getSBOutputDirName())
+            Path = os.path.join(ProjName, getSBOutputDirName(True))
     
             if Mode == "delete":
                 Command = "svn delete %s" % (Path,)
@@ -397,7 +395,7 @@ def updateSVN(Mode, ProjectsMap):
         print "Error: SVN update failed."
         sys.exit(-1)
         
-def testProject(ID, IsScanBuild, Dir=None):
+def testProject(ID, IsScanBuild, IsReferenceBuild=False, Dir=None):
     print " \n\n--- Building project %s" % (ID,)
 
     TBegin = time.time() 
@@ -408,10 +406,10 @@ def testProject(ID, IsScanBuild, Dir=None):
         print "  Build directory: %s." % (Dir,)
     
     # Set the build results directory.
-    RelOutputDir = getSBOutputDirName()
+    RelOutputDir = getSBOutputDirName(IsReferenceBuild)
     SBOutputDir = os.path.join(Dir, RelOutputDir)
                 
-    buildProject(Dir, SBOutputDir, IsScanBuild)    
+    buildProject(Dir, SBOutputDir, IsScanBuild, IsReferenceBuild)
 
     checkBuild(SBOutputDir)
     
@@ -421,10 +419,7 @@ def testProject(ID, IsScanBuild, Dir=None):
     print "Completed tests for project %s (time: %.2f)." % \
           (ID, (time.time()-TBegin))
     
-def testAll(InIsReferenceBuild = False, UpdateSVN = False):
-    global IsReferenceBuild
-    IsReferenceBuild = InIsReferenceBuild
-
+def testAll(IsReferenceBuild = False, UpdateSVN = False):
     PMapFile = open(getProjectMapPath(), "rb")
     try:        
         # Validate the input.
@@ -439,13 +434,13 @@ def testAll(InIsReferenceBuild = False, UpdateSVN = False):
         # When we are regenerating the reference results, we might need to 
         # update svn. Remove reference results from SVN.
         if UpdateSVN == True:
-            assert(InIsReferenceBuild == True);
+            assert(IsReferenceBuild == True);
             updateSVN("delete",  PMapFile);
             
         # Test the projects.
         PMapFile.seek(0)    
         for I in csv.reader(PMapFile):
-            testProject(I[0], int(I[1]))
+            testProject(I[0], int(I[1]), IsReferenceBuild)
 
         # Add reference results to SVN.
         if UpdateSVN == True:
