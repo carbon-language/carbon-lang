@@ -96,6 +96,9 @@ public:
     const char *
     GetPrompt ();
 
+    bool
+    EditLineHasCharacters ();
+    
     void
     EraseCharsBeforeCursor ();
 

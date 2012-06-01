@@ -50,6 +50,17 @@ IOChannel::GetPrompt ()
     return pos->second.c_str();
 }
 
+bool
+IOChannel::EditLineHasCharacters ()
+{
+    const LineInfo *line_info  = el_line(m_edit_line);
+    if (line_info)
+        return line_info->cursor != line_info->buffer;
+    else
+        return false;
+}
+
+
 void
 IOChannel::EraseCharsBeforeCursor ()
 {
