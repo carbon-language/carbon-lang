@@ -203,6 +203,35 @@ ISD::CondCode llvm::getICmpCondCode(ICmpInst::Predicate Pred) {
   }
 }
 
+
+/// getNoopInput - If V is a noop (i.e., lowers to no machine code), look
+/// through it (and any transitive noop operands to it) and return its input
+/// value.  This is used to determine if a tail call can be formed.
+///
+static const Value *getNoopInput(const Value *V, const TargetLowering &TLI) {
+  // If V is not an instruction, it can't be looked through.
+  const Instruction *U = dyn_cast<Instruction>(V);
+  if (U == 0 || !U->hasOneUse()) return V;
+  
+  // Look through truly no-op truncates.
+  if (isa<TruncInst>(U) &&
+      TLI.isTruncateFree(U->getOperand(0)->getType(), U->getType()))
+    return getNoopInput(U->getOperand(0), TLI);
+  
+  // Look through truly no-op bitcasts.
+  if (isa<BitCastInst>(U)) {
+    Value *Op = U->getOperand(0);
+    if (Op->getType() == U->getType() ||  // No type change.
+        // Pointer to pointer cast.
+        (Op->getType()->isPointerTy() && U->getType()->isPointerTy()))
+      return getNoopInput(Op, TLI);
+  }
+
+  // Otherwise it's not something we can look through.
+  return V;
+}
+
+
 /// Test if the given instruction is in a position to be optimized
 /// with a tail-call. This roughly means that it's in a block with
 /// a return and there's nothing that needs to be scheduled
@@ -226,7 +255,8 @@ bool llvm::isInTailCallPosition(ImmutableCallSite CS, Attributes CalleeRetAttr,
   // been fully understood.
   if (!Ret &&
       (!TLI.getTargetMachine().Options.GuaranteedTailCallOpt ||
-       !isa<UnreachableInst>(Term))) return false;
+       !isa<UnreachableInst>(Term)))
+    return false;
 
   // If I will have a chain, make sure no other instruction that will have a
   // chain interposes between I and the return.
@@ -264,29 +294,7 @@ bool llvm::isInTailCallPosition(ImmutableCallSite CS, Attributes CalleeRetAttr,
     return false;
 
   // Otherwise, make sure the unmodified return value of I is the return value.
-  for (const Instruction *U = dyn_cast<Instruction>(Ret->getOperand(0)); ;
-       U = dyn_cast<Instruction>(U->getOperand(0))) {
-    if (!U)
-      return false;
-    if (!U->hasOneUse())
-      return false;
-    if (U == I)
-      break;
-    // Check for a truly no-op truncate.
-    if (isa<TruncInst>(U) &&
-        TLI.isTruncateFree(U->getOperand(0)->getType(), U->getType()))
-      continue;
-    // Check for a truly no-op bitcast.
-    if (isa<BitCastInst>(U) &&
-        (U->getOperand(0)->getType() == U->getType() ||
-         (U->getOperand(0)->getType()->isPointerTy() &&
-          U->getType()->isPointerTy())))
-      continue;
-    // Otherwise it's not a true no-op.
-    return false;
-  }
-
-  return true;
+  return getNoopInput(Ret->getOperand(0), TLI) == I;
 }
 
 bool llvm::isInTailCallPosition(SelectionDAG &DAG, SDNode *Node,
