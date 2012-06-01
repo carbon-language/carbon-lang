@@ -795,6 +795,42 @@ DNBArchImplX86_64::GetWatchAddress(const DBG &debug_state, uint32_t hw_index)
     }
 }
 
+bool
+DNBArchImplX86_64::StartTransForHWP()
+{
+    if (m_2pc_trans_state != Trans_Done || m_2pc_trans_state != Trans_Rolled_Back)
+        DNBLogError ("%s inconsistent state detected, expected %d or %d, got: %d", __FUNCTION__, Trans_Done, Trans_Rolled_Back, m_2pc_trans_state);
+    m_2pc_dbg_checkpoint = m_state.context.dbg;
+    m_2pc_trans_state = Trans_Pending;
+    return true;
+}
+bool
+DNBArchImplX86_64::RollbackTransForHWP()
+{
+    m_state.context.dbg = m_2pc_dbg_checkpoint;
+    if (m_2pc_trans_state != Trans_Pending)
+        DNBLogError ("%s inconsistent state detected, expected %d, got: %d", __FUNCTION__, Trans_Pending, m_2pc_trans_state);
+    m_2pc_trans_state = Trans_Rolled_Back;
+    kern_return_t kret = SetDBGState();
+    DNBLogThreadedIf(LOG_WATCHPOINTS, "DNBArchImplX86_64::RollbackTransForHWP() SetDBGState() => 0x%8.8x.", kret);
+
+    if (kret == KERN_SUCCESS)
+        return true;
+    else
+        return false;
+}
+bool
+DNBArchImplX86_64::FinishTransForHWP()
+{
+    m_2pc_trans_state = Trans_Done;
+    return true;
+}
+DNBArchImplX86_64::DBG
+DNBArchImplX86_64::GetDBGCheckpoint()
+{
+    return m_2pc_dbg_checkpoint;
+}
+
 uint32_t
 DNBArchImplX86_64::EnableHardwareWatchpoint (nub_addr_t addr, nub_size_t size, bool read, bool write)
 {
@@ -819,7 +855,6 @@ DNBArchImplX86_64::EnableHardwareWatchpoint (nub_addr_t addr, nub_size_t size, b
         uint32_t i = 0;
 
         DBG &debug_state = m_state.context.dbg;
-        DBG dsCheckPoint = m_state.context.dbg;
         for (i = 0; i < num_hw_watchpoints; ++i)
         {
             if (IsWatchpointVacant(debug_state, i))
@@ -829,6 +864,8 @@ DNBArchImplX86_64::EnableHardwareWatchpoint (nub_addr_t addr, nub_size_t size, b
         // See if we found an available hw breakpoint slot above
         if (i < num_hw_watchpoints)
         {
+            StartTransForHWP();
+
             // Modify our local copy of the debug state, first.
             SetWatchpoint(debug_state, i, addr, size, read, write);
             // Now set the watch point in the inferior.
@@ -837,8 +874,8 @@ DNBArchImplX86_64::EnableHardwareWatchpoint (nub_addr_t addr, nub_size_t size, b
 
             if (kret == KERN_SUCCESS)
                 return i;
-            else // Recovery block.
-                m_state.context.dbg = dsCheckPoint;
+            else // Revert to the previous debug state voluntarily.  The transaction coordinator knows that we have failed.
+                m_state.context.dbg = GetDBGCheckpoint();
         }
         else
         {
@@ -857,9 +894,10 @@ DNBArchImplX86_64::DisableHardwareWatchpoint (uint32_t hw_index)
     if (kret == KERN_SUCCESS)
     {
         DBG &debug_state = m_state.context.dbg;
-        DBG dsCheckPoint = m_state.context.dbg;
         if (hw_index < num_hw_points && !IsWatchpointVacant(debug_state, hw_index))
         {
+            StartTransForHWP();
+
             // Modify our local copy of the debug state, first.
             ClearWatchpoint(debug_state, hw_index);
             // Now disable the watch point in the inferior.
@@ -869,8 +907,8 @@ DNBArchImplX86_64::DisableHardwareWatchpoint (uint32_t hw_index)
 
             if (kret == KERN_SUCCESS)
                 return true;
-            else // Recovery block.
-                m_state.context.dbg = dsCheckPoint;
+            else // Revert to the previous debug state voluntarily.  The transaction coordinator knows that we have failed.
+                m_state.context.dbg = GetDBGCheckpoint();
         }
     }
     return false;

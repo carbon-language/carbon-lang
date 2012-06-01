@@ -700,6 +700,18 @@ MachThread::HardwareWatchpointStateChanged ()
 }
 
 bool
+MachThread::RollbackTransForHWP()
+{
+    return m_arch_ap->RollbackTransForHWP();
+}
+
+bool
+MachThread::FinishTransForHWP()
+{
+    return m_arch_ap->FinishTransForHWP();
+}
+
+bool
 MachThread::DisableHardwareBreakpoint (const DNBBreakpoint *bp)
 {
     if (bp != NULL && bp->IsHardware())

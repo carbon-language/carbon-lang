@@ -66,6 +66,8 @@ public:
     bool            DisableHardwareBreakpoint (const DNBBreakpoint *breakpoint);
     bool            DisableHardwareWatchpoint (const DNBBreakpoint *watchpoint);
     uint32_t        NumSupportedHardwareWatchpoints () const;
+    bool            RollbackTransForHWP();
+    bool            FinishTransForHWP();
 
     nub_state_t     GetState();
     void            SetState(nub_state_t state);

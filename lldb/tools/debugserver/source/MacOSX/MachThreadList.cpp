@@ -478,8 +478,17 @@ MachThreadList::EnableHardwareWatchpoint (const DNBBreakpoint* wp) const
         for (uint32_t idx = 0; idx < num_threads; ++idx)
         {
             if ((hw_index = m_threads[idx]->EnableHardwareWatchpoint(wp)) == INVALID_NUB_HW_INDEX)
+            {
+                // We know that idx failed for some reason.  Let's rollback the transaction for [0, idx).
+                for (uint32_t i = 0; i < idx; ++i)
+                    m_threads[i]->RollbackTransForHWP();
                 return INVALID_NUB_HW_INDEX;
+            }
         }
+        // Notify each thread to commit the pending transaction.
+        for (uint32_t idx = 0; idx < num_threads; ++idx)
+            m_threads[idx]->FinishTransForHWP();
+
         // Use an arbitrary thread to signal the completion of our transaction.
         if (num_threads)
             m_threads[0]->HardwareWatchpointStateChanged();
@@ -498,8 +507,17 @@ MachThreadList::DisableHardwareWatchpoint (const DNBBreakpoint* wp) const
         for (uint32_t idx = 0; idx < num_threads; ++idx)
         {
             if (!m_threads[idx]->DisableHardwareWatchpoint(wp))
+            {
+                // We know that idx failed for some reason.  Let's rollback the transaction for [0, idx).
+                for (uint32_t i = 0; i < idx; ++i)
+                    m_threads[i]->RollbackTransForHWP();
                 return false;
+            }
         }
+        // Notify each thread to commit the pending transaction.
+        for (uint32_t idx = 0; idx < num_threads; ++idx)
+            m_threads[idx]->FinishTransForHWP();
+
         // Use an arbitrary thread to signal the completion of our transaction.
         if (num_threads)
             m_threads[0]->HardwareWatchpointStateChanged();

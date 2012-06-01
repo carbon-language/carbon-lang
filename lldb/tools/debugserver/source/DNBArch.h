@@ -82,6 +82,19 @@ public:
     virtual bool            DisableHardwareWatchpoint (uint32_t hw_index) { return false; }
     virtual uint32_t        GetHardwareWatchpointHit() { return INVALID_NUB_HW_INDEX; }
     virtual bool            StepNotComplete () { return false; }
+
+protected:
+    friend class MachThread;
+
+    enum
+    {
+        Trans_Pending = 0,      // Transaction is pending, and checkpoint state has been snapshotted.
+        Trans_Done = 1,         // Transaction is done, the current state is committed, and checkpoint state is irrelevant.
+        Trans_Rolled_Back = 2   // Transaction is done, the current state has been rolled back to the checkpoint state.
+    };
+    virtual bool StartTransForHWP() { return true; }
+    virtual bool RollbackTransForHWP() { return true; }
+    virtual bool FinishTransForHWP() { return true; }
 };
 
 
