@@ -3147,7 +3147,8 @@ LabelDecl *Sema::LookupOrCreateLabel(IdentifierInfo *II, SourceLocation Loc,
 
 namespace {
 
-typedef llvm::StringMap<TypoCorrection, llvm::BumpPtrAllocator> TypoResultsMap;
+typedef llvm::SmallVector<TypoCorrection, 1> TypoResultList;
+typedef llvm::StringMap<TypoResultList, llvm::BumpPtrAllocator> TypoResultsMap;
 typedef std::map<unsigned, TypoResultsMap> TypoEditDistanceMap;
 
 static const unsigned MaxTypoDistanceResultSets = 5;
@@ -3186,7 +3187,7 @@ public:
   unsigned size() const { return CorrectionResults.size(); }
   bool empty() const { return CorrectionResults.empty(); }
 
-  TypoCorrection &operator[](StringRef Name) {
+  TypoResultList &operator[](StringRef Name) {
     return CorrectionResults.begin()->second[Name];
   }
 
@@ -3256,16 +3257,28 @@ void TypoCorrectionConsumer::addName(StringRef Name,
 
 void TypoCorrectionConsumer::addCorrection(TypoCorrection Correction) {
   StringRef Name = Correction.getCorrectionAsIdentifierInfo()->getName();
-  TypoResultsMap &Map = CorrectionResults[Correction.getEditDistance(false)];
+  TypoResultList &CList =
+      CorrectionResults[Correction.getEditDistance(false)][Name];
 
-  TypoCorrection &CurrentCorrection = Map[Name];
-  if (!CurrentCorrection ||
-      // FIXME: The following should be rolled up into an operator< on
-      // TypoCorrection with a more principled definition.
-      CurrentCorrection.isKeyword() < Correction.isKeyword() ||
-      Correction.getAsString(SemaRef.getLangOpts()) <
-      CurrentCorrection.getAsString(SemaRef.getLangOpts()))
-    CurrentCorrection = Correction;
+  if (!CList.empty() && !CList.back().isResolved())
+    CList.pop_back();
+  if (NamedDecl *NewND = Correction.getCorrectionDecl()) {
+    std::string CorrectionStr = Correction.getAsString(SemaRef.getLangOpts());
+    for (TypoResultList::iterator RI = CList.begin(), RIEnd = CList.end();
+         RI != RIEnd; ++RI) {
+      // If the Correction refers to a decl already in the result list,
+      // replace the existing result if the string representation of Correction
+      // comes before the current result alphabetically, then stop as there is
+      // nothing more to be done to add Correction to the candidate set.
+      if (RI->getCorrectionDecl() == NewND) {
+        if (CorrectionStr < RI->getAsString(SemaRef.getLangOpts()))
+          *RI = Correction;
+        return;
+      }
+    }
+  }
+  if (CList.empty() || Correction.isResolved())
+    CList.push_back(Correction);
 
   while (CorrectionResults.size() > MaxTypoDistanceResultSets)
     erase(llvm::prior(CorrectionResults.end()));
@@ -3862,16 +3875,30 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
       // If the item already has been looked up or is a keyword, keep it.
       // If a validator callback object was given, drop the correction
       // unless it passes validation.
-      if (I->second.isResolved()) {
+      bool Viable = false;
+      for (TypoResultList::iterator RI = I->second.begin(), RIEnd = I->second.end();
+           RI != RIEnd; /* Increment in loop. */) {
+        TypoResultList::iterator Prev = RI;
+        ++RI;
+        if (Prev->isResolved()) {
+          if (!isCandidateViable(CCC, *Prev))
+            I->second.erase(Prev);
+          else
+            Viable = true;
+        }
+      }
+      if (Viable || I->second.empty()) {
         TypoCorrectionConsumer::result_iterator Prev = I;
         ++I;
-        if (!isCandidateViable(CCC, Prev->second))
+        if (!Viable)
           DI->second.erase(Prev);
         continue;
       }
+      assert(I->second.size() == 1 && "Expected a single unresolved candidate");
 
       // Perform name lookup on this name.
-      IdentifierInfo *Name = I->second.getCorrectionAsIdentifierInfo();
+      TypoCorrection &Candidate = I->second.front();
+      IdentifierInfo *Name = Candidate.getCorrectionAsIdentifierInfo();
       LookupPotentialTypoResult(*this, TmpRes, Name, S, SS, MemberContext,
                                 EnteringContext, CCC.IsObjCIvarLookup);
 
@@ -3879,7 +3906,7 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
       case LookupResult::NotFound:
       case LookupResult::NotFoundInCurrentInstantiation:
       case LookupResult::FoundUnresolvedValue:
-        QualifiedResults.push_back(I->second);
+        QualifiedResults.push_back(Candidate);
         // We didn't find this name in our scope, or didn't like what we found;
         // ignore it.
         {
@@ -3900,18 +3927,18 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
         for (LookupResult::iterator TRD = TmpRes.begin(),
                                  TRDEnd = TmpRes.end();
              TRD != TRDEnd; ++TRD)
-          I->second.addCorrectionDecl(*TRD);
+          Candidate.addCorrectionDecl(*TRD);
         ++I;
-        if (!isCandidateViable(CCC, Prev->second))
+        if (!isCandidateViable(CCC, Candidate))
           DI->second.erase(Prev);
         break;
       }
 
       case LookupResult::Found: {
         TypoCorrectionConsumer::result_iterator Prev = I;
-        I->second.setCorrectionDecl(TmpRes.getAsSingle<NamedDecl>());
+        Candidate.setCorrectionDecl(TmpRes.getAsSingle<NamedDecl>());
         ++I;
-        if (!isCandidateViable(CCC, Prev->second))
+        if (!isCandidateViable(CCC, Candidate))
           DI->second.erase(Prev);
         break;
       }
@@ -3998,8 +4025,9 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
 
   // If only a single name remains, return that result.
   if (BestResults.size() == 1) {
-    const llvm::StringMapEntry<TypoCorrection> &Correction = *(BestResults.begin());
-    const TypoCorrection &Result = Correction.second;
+    const TypoResultList &CorrectionList = BestResults.begin()->second;
+    const TypoCorrection &Result = CorrectionList.front();
+    if (CorrectionList.size() != 1) return TypoCorrection();
 
     // Don't correct to a keyword that's the same as the typo; the keyword
     // wasn't actually in scope.
@@ -4017,7 +4045,7 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
            // some instances of CTC_Unknown, while WantRemainingKeywords is true
            // for CTC_Unknown but not for CTC_ObjCMessageReceiver.
            && CCC.WantObjCSuper && !CCC.WantRemainingKeywords
-           && BestResults["super"].isKeyword()) {
+           && BestResults["super"].front().isKeyword()) {
     // Prefer 'super' when we're completing in a message-receiver
     // context.
 
@@ -4027,9 +4055,9 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
 
     // Record the correction for unqualified lookup.
     if (IsUnqualifiedLookup)
-      UnqualifiedTyposCorrected[Typo] = BestResults["super"];
+      UnqualifiedTyposCorrected[Typo] = BestResults["super"].front();
 
-    return BestResults["super"];
+    return BestResults["super"].front();
   }
 
   // If this was an unqualified lookup and we believe the callback object did

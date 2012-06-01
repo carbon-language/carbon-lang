@@ -197,3 +197,12 @@ namespace ImplicitInt {
     unsinged : 4; // expected-error{{did you mean 'unsigned'}}
   };
 }
+
+namespace PR12951 {
+// If there are two corrections that have the same identifier and edit distance
+// and only differ by their namespaces, don't suggest either as a correction
+// since both are equally likely corrections.
+namespace foobar { struct Thing {}; }
+namespace bazquux { struct Thing {}; }
+void f() { Thing t; } // expected-error{{unknown type name 'Thing'}}
+}
