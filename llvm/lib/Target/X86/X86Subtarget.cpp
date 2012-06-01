@@ -205,12 +205,10 @@ void X86Subtarget::AutoDetectSubtargetFeatures() {
     HasPCLMUL = true;
     ToggleFeature(X86::FeaturePCLMUL);
   }
-  // FMA3 autodetection is switched off until we have a special flag
-  // in code generator
-  //if ((ECX >> 12) & 0x1) {
-  //  HasFMA3 = true;
-  //  ToggleFeature(X86::FeatureFMA3);
-  //}
+  if ((ECX >> 12) & 0x1) {
+    HasFMA3 = true;
+    ToggleFeature(X86::FeatureFMA3);
+  }
   if (IsIntel && ((ECX >> 22) & 0x1)) {
     HasMOVBE = true;
     ToggleFeature(X86::FeatureMOVBE);
