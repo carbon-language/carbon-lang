@@ -5297,6 +5297,9 @@ def warn_missing_cases : Warning<
 def warn_unannotated_fallthrough : Warning<
   "unannotated fall-through between switch labels">,
   InGroup<ImplicitFallthrough>, DefaultIgnore;
+def warn_unannotated_fallthrough_per_method : Warning<
+  "unannotated fall-through between switch labels in partly annotated method">,
+  InGroup<ImplicitFallthroughPerMethod>, DefaultIgnore;
 def note_insert_fallthrough_fixit : Note<
   "insert '[[clang::fallthrough]];' to silence this warning">;
 def note_insert_break_fixit : Note<
