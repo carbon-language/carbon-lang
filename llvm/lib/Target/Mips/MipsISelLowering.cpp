@@ -161,6 +161,8 @@ MipsTargetLowering(MipsTargetMachine &TM)
   setOperationAction(ISD::FCOPYSIGN,          MVT::f64,   Custom);
   setOperationAction(ISD::MEMBARRIER,         MVT::Other, Custom);
   setOperationAction(ISD::ATOMIC_FENCE,       MVT::Other, Custom);
+  setOperationAction(ISD::LOAD,               MVT::i32, Custom);
+  setOperationAction(ISD::STORE,              MVT::i32, Custom);
 
   if (!TM.Options.NoNaNsFPMath) {
     setOperationAction(ISD::FABS,             MVT::f32,   Custom);
@@ -175,6 +177,8 @@ MipsTargetLowering(MipsTargetMachine &TM)
     setOperationAction(ISD::ConstantPool,       MVT::i64,   Custom);
     setOperationAction(ISD::SELECT,             MVT::i64,   Custom);
     setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i64,   Custom);
+    setOperationAction(ISD::LOAD,               MVT::i64,   Custom);
+    setOperationAction(ISD::STORE,              MVT::i64,   Custom);
   }
 
   if (!HasMips64) {
@@ -275,6 +279,13 @@ MipsTargetLowering(MipsTargetMachine &TM)
   if (!Subtarget->hasSwap()) {
     setOperationAction(ISD::BSWAP, MVT::i32, Expand);
     setOperationAction(ISD::BSWAP, MVT::i64, Expand);
+  }
+
+  if (HasMips64) {
+    setLoadExtAction(ISD::SEXTLOAD, MVT::i32, Custom);
+    setLoadExtAction(ISD::ZEXTLOAD, MVT::i32, Custom);
+    setLoadExtAction(ISD::EXTLOAD, MVT::i32, Custom);
+    setTruncStoreAction(MVT::i64, MVT::i32, Custom);
   }
 
   setTargetDAGCombine(ISD::ADDE);
