@@ -166,7 +166,9 @@ ToolInvocation::ToolInvocation(
 }
 
 void ToolInvocation::mapVirtualFile(StringRef FilePath, StringRef Content) {
-  MappedFileContents[FilePath] = Content;
+  SmallString<1024> PathStorage;
+  llvm::sys::path::native(FilePath, PathStorage);
+  MappedFileContents[PathStorage] = Content;
 }
 
 bool ToolInvocation::run() {
