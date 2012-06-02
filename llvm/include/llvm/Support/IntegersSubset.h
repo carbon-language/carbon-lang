@@ -432,9 +432,7 @@ public:
   
   // implicit
   template<class RangesCollectionTy>
-  IntegersSubset(const RangesCollectionTy& Src) :
-    IntegersSubsetGeneric(Src) {
-    
+  IntegersSubset(const RangesCollectionTy& Src) : ParentTy(Src) {
     std::vector<Constant*> Elts;
     Elts.reserve(Src.size());
     for (typename RangesCollectionTy::const_iterator i = Src.begin(),
