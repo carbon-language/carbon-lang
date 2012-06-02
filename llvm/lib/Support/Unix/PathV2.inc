@@ -273,8 +273,7 @@ error_code exists(const Twine &path, bool &result) {
   SmallString<128> path_storage;
   StringRef p = path.toNullTerminatedStringRef(path_storage);
 
-  struct stat status;
-  if (::stat(p.begin(), &status) == -1) {
+  if (::access(p.begin(), F_OK) == -1) {
     if (errno != errc::no_such_file_or_directory)
       return error_code(errno, system_category());
     result = false;
