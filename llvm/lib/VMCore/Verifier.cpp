@@ -813,9 +813,9 @@ void Verifier::visitSwitchInst(SwitchInst &SI) {
     IntegersSubset CaseRanges = i.getCaseValueEx();
     for (unsigned ri = 0, rie = CaseRanges.getNumItems(); ri < rie; ++ri) {
       IntegersSubset::Range r = CaseRanges.getItem(ri);
-      Assert1(((const APInt&)r.Low).getBitWidth() == IntTy->getBitWidth(),
+      Assert1(((const APInt&)r.getLow()).getBitWidth() == IntTy->getBitWidth(),
               "Switch constants must all be same type as switch value!", &SI);
-      Assert1(((const APInt&)r.High).getBitWidth() == IntTy->getBitWidth(),
+      Assert1(((const APInt&)r.getHigh()).getBitWidth() == IntTy->getBitWidth(),
               "Switch constants must all be same type as switch value!", &SI);
       Mapping.add(r);
       RangeSetMap[r] = i.getCaseIndex();

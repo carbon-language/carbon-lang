@@ -173,7 +173,7 @@ bool llvm::ConstantFoldTerminator(BasicBlock *BB, bool DeleteDeadConditions) {
       if (CaseRanges.getNumItems() == 1 && CaseRanges.isSingleNumber(0)) {
         // FIXME: Currently work with ConstantInt based numbers.
         Value *Cond = Builder.CreateICmpEQ(SI->getCondition(),
-            CaseRanges.getItem(0).Low.toConstantInt(),
+            CaseRanges.getItem(0).getLow().toConstantInt(),
             "cond");
 
         // Insert the new branch.

@@ -2458,10 +2458,10 @@ size_t SelectionDAGBuilder::Clusterify(CaseVector& Cases,
 
     // FIXME: Currently work with ConstantInt based numbers.
     // Changing it to APInt based is a pretty heavy for this commit.
-    Cases.push_back(Case(C.first.Low.toConstantInt(),
-                         C.first.High.toConstantInt(), C.second, W));
+    Cases.push_back(Case(C.first.getLow().toConstantInt(),
+                         C.first.getHigh().toConstantInt(), C.second, W));
     
-    if (C.first.Low != C.first.High)
+    if (C.first.getLow() != C.first.getHigh())
     // A range counts double, since it requires two compares.
     ++numCmps;
   }

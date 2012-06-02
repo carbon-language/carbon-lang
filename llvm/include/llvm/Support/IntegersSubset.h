@@ -172,34 +172,33 @@ public:
 };
 
 template<class IntType>
-struct IntRange {
-
-  typedef IntRange<IntType> self;
+class IntRange {
+protected:
     IntType Low;
     IntType High;
     bool IsEmpty : 1;
     bool IsSingleNumber : 1;
-// TODO: 
-// public:
-    
+
+public:
+    typedef IntRange<IntType> self;    
     typedef std::pair<self, self> SubRes;
     
     IntRange() : IsEmpty(true) {}
-    IntRange(const self &RHS) :
-      Low(RHS.Low), High(RHS.High), IsEmpty(false), IsSingleNumber(false) {}
+    
     IntRange(const IntType &C) :
       Low(C), High(C), IsEmpty(false), IsSingleNumber(true) {}
+    
     IntRange(const IntType &L, const IntType &H) : Low(L), High(H),
-        IsEmpty(false), IsSingleNumber(false) {}
+      IsEmpty(false), IsSingleNumber(Low == High) {}
     
     bool isEmpty() const { return IsEmpty; }
     bool isSingleNumber() const { return IsSingleNumber; }
     
-    const IntType& getLow() {
+    const IntType& getLow() const {
       assert(!IsEmpty && "Range is empty.");
       return Low;
     }
-    const IntType& getHigh() {
+    const IntType& getHigh() const {
       assert(!IsEmpty && "Range is empty.");
       return High;
     }
@@ -296,10 +295,10 @@ public:
     for (typename RangesCollectionTy::const_iterator i = Links.begin(),
          e = Links.end(); i != e; ++i) {
       RangeLinkTy RangeLink;
-      FlatCollection.push_back(i->Low);
+      FlatCollection.push_back(i->getLow());
       RangeLink.first = &FlatCollection.back();
-      if (i->Low != i->High)
-        FlatCollection.push_back(i->High);
+      if (i->getLow() != i->getHigh())
+        FlatCollection.push_back(i->getHigh());
       RangeLink.second = &FlatCollection.back();
       RangeLinks.push_back(RangeLink);
     }
@@ -336,9 +335,16 @@ public:
     return RangeLinks.size();
   }
   
-  bool isSingleNumber(unsigned idx) const {
+  /// Returns true if whole subset contains single element.
+  bool isSingleNumber() const {
     return RangeLinks.size() == 1 &&
            RangeLinks[0].first == RangeLinks[0].second;
+  }
+
+  /// Does the same like getItem(idx).isSingleNumber(), but
+  /// works faster, since we avoid creation of temporary range object. 
+  bool isSingleNumber(unsigned idx) const {
+    return RangeLinks[idx].first == RangeLinks[idx].second;
   }
   
   /// Returns set the size, that equals number of all values + sizes of all
@@ -347,10 +353,10 @@ public:
   /// E.g.: for range [<0>, <1>, <4,8>] the size will 7;
   ///       for range [<0>, <1>, <5>] the size will 3
   unsigned getSize() const {
-    APInt sz(((const APInt&)getItem(0).Low).getBitWidth(), 0);
+    APInt sz(((const APInt&)getItem(0).getLow()).getBitWidth(), 0);
     for (unsigned i = 0, e = getNumItems(); i != e; ++i) {
-      const APInt &Low = getItem(i).Low;
-      const APInt &High = getItem(i).High;
+      const APInt &Low = getItem(i).getLow();
+      const APInt &High = getItem(i).getHigh();
       const APInt &S = High - Low;
       sz += S;
     }
@@ -362,10 +368,10 @@ public:
   /// [<1>, <4,8>] is considered as [1,4,5,6,7,8] 
   /// For range [<1>, <4,8>] getSingleValue(3) returns 6.
   APInt getSingleValue(unsigned idx) const {
-    APInt sz(((const APInt&)getItem(0).Low).getBitWidth(), 0);
+    APInt sz(((const APInt&)getItem(0).getLow()).getBitWidth(), 0);
     for (unsigned i = 0, e = getNumItems(); i != e; ++i) {
-      const APInt &Low = getItem(i).Low;
-      const APInt &High = getItem(i).High;      
+      const APInt &Low = getItem(i).getLow();
+      const APInt &High = getItem(i).getHigh();      
       const APInt& S = High - Low;
       APInt oldSz = sz;
       sz += S;
@@ -439,15 +445,15 @@ public:
          e = Src.end(); i != e; ++i) {
       const Range &R = *i;
       std::vector<Constant*> r;
-      if (R.Low != R.High) {
+      if (R.isSingleNumber()) {
         r.reserve(2);
         // FIXME: Since currently we have ConstantInt based numbers
         // use hack-conversion of IntItem to ConstantInt
-        r.push_back(R.Low.toConstantInt());
-        r.push_back(R.High.toConstantInt());
+        r.push_back(R.getLow().toConstantInt());
+        r.push_back(R.getHigh().toConstantInt());
       } else {
         r.reserve(1);
-        r.push_back(R.Low.toConstantInt());
+        r.push_back(R.getLow().toConstantInt());
       }
       Constant *CV = ConstantVector::get(r);
       Elts.push_back(CV);    

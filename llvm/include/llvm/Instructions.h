@@ -2660,7 +2660,7 @@ public:
       
       // FIXME: Currently we work with ConstantInt based cases.
       // So return CaseValue as ConstantInt.
-      return R.Low.toConstantInt();
+      return R.getLow().toConstantInt();
     }
 
     /// Resolves case value for current case.

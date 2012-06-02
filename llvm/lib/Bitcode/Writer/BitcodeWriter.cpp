@@ -1161,16 +1161,15 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
         Vals64.push_back(CaseRanges.getNumItems());
         for (unsigned ri = 0, rn = CaseRanges.getNumItems(); ri != rn; ++ri) {
           IntegersSubset::Range r = CaseRanges.getItem(ri);
+          bool IsSingleNumber = r.isSingleNumber();
 
-          Vals64.push_back(CaseRanges.isSingleNumber(ri));
+          Vals64.push_back(IsSingleNumber);
 
-          const APInt &Low = r.Low;
-          const APInt &High = r.High;
           unsigned Code, Abbrev; // will unused.
           
-          EmitAPInt(Vals64, Code, Abbrev, Low, true);
-          if (r.Low != r.High)
-            EmitAPInt(Vals64, Code, Abbrev, High, true);
+          EmitAPInt(Vals64, Code, Abbrev, r.getLow(), true);
+          if (!IsSingleNumber)
+            EmitAPInt(Vals64, Code, Abbrev, r.getHigh(), true);
         }
         Vals64.push_back(VE.getValueID(i.getCaseSuccessor()));
       }

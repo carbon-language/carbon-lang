@@ -36,7 +36,7 @@ public:
   
   struct RangeEx : public RangeTy {
     RangeEx() : Weight(1) {}
-    RangeEx(const RangeTy &R) : RangeTy(R.Low, R.High), Weight(1) {}
+    RangeEx(const RangeTy &R) : RangeTy(R), Weight(1) {}
     RangeEx(const IntTy &C) : RangeTy(C), Weight(1) {}
     RangeEx(const IntTy &L, const IntTy &H) : RangeTy(L, H), Weight(1) {}
     RangeEx(const IntTy &L, const IntTy &H, unsigned W) :
@@ -68,7 +68,7 @@ protected:
   bool Sorted;
   
   bool isIntersected(CaseItemIt& LItem, CaseItemIt& RItem) {
-    return LItem->first.High >= RItem->first.Low;
+    return LItem->first.getHigh() >= RItem->first.getLow();
   }
 
   bool isJoinable(CaseItemIt& LItem, CaseItemIt& RItem) {
@@ -77,10 +77,10 @@ protected:
              "Intersected items with different successors!");
       return false;
     }
-    APInt RLow = RItem->first.Low;
+    APInt RLow = RItem->first.getLow();
     if (RLow != APInt::getNullValue(RLow.getBitWidth()))
       --RLow;
-    return LItem->first.High >= RLow;
+    return LItem->first.getHigh() >= RLow;
   }
   
   void sort() {
@@ -126,22 +126,22 @@ public:
     sort();
     CaseItems OldItems = Items;
     Items.clear();
-    IntTy *Low = &OldItems.begin()->first.Low;
-    IntTy *High = &OldItems.begin()->first.High;
+    const IntTy *Low = &OldItems.begin()->first.getLow();
+    const IntTy *High = &OldItems.begin()->first.getHigh();
     unsigned Weight = 1;
     SuccessorClass *Successor = OldItems.begin()->second;
     for (CaseItemIt i = OldItems.begin(), j = i+1, e = OldItems.end();
         j != e; i = j++) {
       if (isJoinable(i, j)) {
-        IntTy *CurHigh = &j->first.High;
+        const IntTy *CurHigh = &j->first.getHigh();
         ++Weight;
         if (*CurHigh > *High)
           High = CurHigh;
       } else {
         RangeEx R(*Low, *High, Weight);
         add(R, Successor);
-        Low = &j->first.Low;
-        High = &j->first.High; 
+        Low = &j->first.getLow();
+        High = &j->first.getHigh(); 
         Weight = 1;
         Successor = j->second;
       }

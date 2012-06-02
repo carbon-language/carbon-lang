@@ -242,9 +242,9 @@ unsigned LowerSwitch::Clusterify(CaseVector& Cases, SwitchInst *SI) {
     
     // FIXME: Currently work with ConstantInt based numbers.
     // Changing it to APInt based is a pretty heavy for this commit.
-    Cases.push_back(CaseRange(C.first.Low.toConstantInt(),
-                              C.first.High.toConstantInt(), C.second));
-    if (C.first.Low != C.first.High)
+    Cases.push_back(CaseRange(C.first.getLow().toConstantInt(),
+                              C.first.getHigh().toConstantInt(), C.second));
+    if (C.first.isSingleNumber())
       // A range counts double, since it requires two compares.
       ++numCmps;
   }
