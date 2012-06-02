@@ -1,4 +1,4 @@
-// RUN: rm %t.c
+// RUN: rm -f %t.c
 // RUN: touch %t.c
 // RUN: c-index-test -write-pch %t.pch %t.c
 // RUN: cp %s %t.c
