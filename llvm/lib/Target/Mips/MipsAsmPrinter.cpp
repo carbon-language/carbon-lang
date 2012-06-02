@@ -43,19 +43,6 @@
 
 using namespace llvm;
 
-void MipsAsmPrinter::EmitInstrWithMacroNoAT(const MachineInstr *MI) {
-  MCInst TmpInst;
-
-  MCInstLowering.Lower(MI, TmpInst);
-  OutStreamer.EmitRawText(StringRef("\t.set\tmacro"));
-  if (MipsFI->getEmitNOAT())
-    OutStreamer.EmitRawText(StringRef("\t.set\tat"));
-  OutStreamer.EmitInstruction(TmpInst);
-  if (MipsFI->getEmitNOAT())
-    OutStreamer.EmitRawText(StringRef("\t.set\tnoat"));
-  OutStreamer.EmitRawText(StringRef("\t.set\tnomacro"));
-}
-
 bool MipsAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   MipsFI = MF.getInfo<MipsFunctionInfo>();
   AsmPrinter::runOnMachineFunction(MF);
@@ -71,51 +58,7 @@ void MipsAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     return;
   }
 
-  unsigned Opc = MI->getOpcode();
   MCInst TmpInst0;
-  SmallVector<MCInst, 4> MCInsts;
-
-  switch (Opc) {
-  case Mips::ULW:
-  case Mips::ULH:
-  case Mips::ULHu:
-  case Mips::USW:
-  case Mips::USH:
-  case Mips::ULW_P8:
-  case Mips::ULH_P8:
-  case Mips::ULHu_P8:
-  case Mips::USW_P8:
-  case Mips::USH_P8:
-  case Mips::ULD:
-  case Mips::ULW64:
-  case Mips::ULH64:
-  case Mips::ULHu64:
-  case Mips::USD:
-  case Mips::USW64:
-  case Mips::USH64:
-  case Mips::ULD_P8:
-  case Mips::ULW64_P8:
-  case Mips::ULH64_P8:
-  case Mips::ULHu64_P8:
-  case Mips::USD_P8:
-  case Mips::USW64_P8:
-  case Mips::USH64_P8: {
-    if (OutStreamer.hasRawTextSupport()) {
-      EmitInstrWithMacroNoAT(MI);
-      return;
-    }
-
-    MCInstLowering.LowerUnalignedLoadStore(MI, MCInsts);
-    for (SmallVector<MCInst, 4>::iterator I = MCInsts.begin(); I
-           != MCInsts.end(); ++I)
-      OutStreamer.EmitInstruction(*I);
-
-    return;
-  }
-  default:
-    break;
-  }
-
   MCInstLowering.Lower(MI, TmpInst0);
   OutStreamer.EmitInstruction(TmpInst0);
 }
