@@ -66,54 +66,6 @@ Preprocessor::Preprocessor(DiagnosticsEngine &diags, LangOptions &opts,
     Record(0), MIChainHead(0), MICache(0) 
 {
   OwnsHeaderSearch = OwnsHeaders;
-
-  if (!DelayInitialization) {
-    assert(Target && "Must provide target information for PP initialization");
-    Initialize(*Target);
-  }
-}
-
-Preprocessor::~Preprocessor() {
-  assert(BacktrackPositions.empty() && "EnableBacktrack/Backtrack imbalance!");
-
-  while (!IncludeMacroStack.empty()) {
-    delete IncludeMacroStack.back().TheLexer;
-    delete IncludeMacroStack.back().TheTokenLexer;
-    IncludeMacroStack.pop_back();
-  }
-
-  // Free any macro definitions.
-  for (MacroInfoChain *I = MIChainHead ; I ; I = I->Next)
-    I->MI.Destroy();
-
-  // Free any cached macro expanders.
-  for (unsigned i = 0, e = NumCachedTokenLexers; i != e; ++i)
-    delete TokenLexerCache[i];
-
-  // Free any cached MacroArgs.
-  for (MacroArgs *ArgList = MacroArgCache; ArgList; )
-    ArgList = ArgList->deallocate();
-
-  // Release pragma information.
-  delete PragmaHandlers;
-
-  // Delete the scratch buffer info.
-  delete ScratchBuf;
-
-  // Delete the header search info, if we own it.
-  if (OwnsHeaderSearch)
-    delete &HeaderInfo;
-
-  delete Callbacks;
-}
-
-void Preprocessor::Initialize(const TargetInfo &Target) {
-  assert((!this->Target || this->Target == &Target) &&
-         "Invalid override of target information");
-  this->Target = &Target;
-  
-  // Initialize information about built-ins.
-  BuiltinInfo.InitializeTarget(Target);
   
   ScratchBuf = new ScratchBuffer(SourceMgr);
   CounterValue = 0; // __COUNTER__ starts at 0.
@@ -170,7 +122,54 @@ void Preprocessor::Initialize(const TargetInfo &Target) {
     Ident___exception_info = Ident___exception_code = Ident___abnormal_termination = 0;
     Ident_GetExceptionInfo = Ident_GetExceptionCode = Ident_AbnormalTermination = 0;
   }
+
+  if (!DelayInitialization) {
+    assert(Target && "Must provide target information for PP initialization");
+    Initialize(*Target);
+  }
+}
+
+Preprocessor::~Preprocessor() {
+  assert(BacktrackPositions.empty() && "EnableBacktrack/Backtrack imbalance!");
+
+  while (!IncludeMacroStack.empty()) {
+    delete IncludeMacroStack.back().TheLexer;
+    delete IncludeMacroStack.back().TheTokenLexer;
+    IncludeMacroStack.pop_back();
+  }
+
+  // Free any macro definitions.
+  for (MacroInfoChain *I = MIChainHead ; I ; I = I->Next)
+    I->MI.Destroy();
+
+  // Free any cached macro expanders.
+  for (unsigned i = 0, e = NumCachedTokenLexers; i != e; ++i)
+    delete TokenLexerCache[i];
+
+  // Free any cached MacroArgs.
+  for (MacroArgs *ArgList = MacroArgCache; ArgList; )
+    ArgList = ArgList->deallocate();
+
+  // Release pragma information.
+  delete PragmaHandlers;
+
+  // Delete the scratch buffer info.
+  delete ScratchBuf;
+
+  // Delete the header search info, if we own it.
+  if (OwnsHeaderSearch)
+    delete &HeaderInfo;
+
+  delete Callbacks;
+}
+
+void Preprocessor::Initialize(const TargetInfo &Target) {
+  assert((!this->Target || this->Target == &Target) &&
+         "Invalid override of target information");
+  this->Target = &Target;
   
+  // Initialize information about built-ins.
+  BuiltinInfo.InitializeTarget(Target);
   HeaderInfo.setTarget(Target);
 }
 
