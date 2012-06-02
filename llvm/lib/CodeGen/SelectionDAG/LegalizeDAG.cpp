@@ -1312,8 +1312,9 @@ void SelectionDAGLegalize::LegalizeOp(SDNode *Node) {
           }
           break;
         case TargetLowering::Custom:
-          ReplaceNode(SDValue(Node, 0),
-                      TLI.LowerOperation(SDValue(Node, 0), DAG));
+          Tmp1 = TLI.LowerOperation(SDValue(Node, 0), DAG);
+          if (Tmp1.getNode())
+            ReplaceNode(SDValue(Node, 0), Tmp1);
           break;
         case TargetLowering::Expand:
           assert(!StVT.isVector() &&
