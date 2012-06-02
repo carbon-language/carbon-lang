@@ -81,6 +81,14 @@ const char *MipsTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case MipsISD::Sync:              return "MipsISD::Sync";
   case MipsISD::Ext:               return "MipsISD::Ext";
   case MipsISD::Ins:               return "MipsISD::Ins";
+  case MipsISD::LWL:               return "MipsISD::LWL";
+  case MipsISD::LWR:               return "MipsISD::LWR";
+  case MipsISD::SWL:               return "MipsISD::SWL";
+  case MipsISD::SWR:               return "MipsISD::SWR";
+  case MipsISD::LDL:               return "MipsISD::LDL";
+  case MipsISD::LDR:               return "MipsISD::LDR";
+  case MipsISD::SDL:               return "MipsISD::SDL";
+  case MipsISD::SDR:               return "MipsISD::SDR";
   default:                         return NULL;
   }
 }

@@ -44,6 +44,10 @@ def SDT_Ins : SDTypeProfile<1, 4, [SDTCisInt<0>, SDTCisSameAs<0, 1>,
                                    SDTCisVT<2, i32>, SDTCisSameAs<2, 3>,
                                    SDTCisSameAs<0, 4>]>;
 
+def SDTMipsLoadLR  : SDTypeProfile<1, 2,
+                                   [SDTCisInt<0>, SDTCisPtrTy<1>,
+                                    SDTCisSameAs<0, 2>]>;
+
 // Call
 def MipsJmpLink : SDNode<"MipsISD::JmpLink",SDT_MipsJmpLink,
                          [SDNPHasChain, SDNPOutGlue, SDNPOptInGlue,
@@ -112,6 +116,23 @@ def MipsSync : SDNode<"MipsISD::Sync", SDT_Sync, [SDNPHasChain]>;
 
 def MipsExt :  SDNode<"MipsISD::Ext", SDT_Ext>;
 def MipsIns :  SDNode<"MipsISD::Ins", SDT_Ins>;
+
+def MipsLWL : SDNode<"MipsISD::LWL", SDTMipsLoadLR,
+                     [SDNPHasChain, SDNPMayLoad, SDNPMemOperand]>;
+def MipsLWR : SDNode<"MipsISD::LWR", SDTMipsLoadLR,
+                     [SDNPHasChain, SDNPMayLoad, SDNPMemOperand]>;
+def MipsSWL : SDNode<"MipsISD::SWL", SDTStore,
+                     [SDNPHasChain, SDNPMayStore, SDNPMemOperand]>;
+def MipsSWR : SDNode<"MipsISD::SWR", SDTStore,
+                     [SDNPHasChain, SDNPMayStore, SDNPMemOperand]>;
+def MipsLDL : SDNode<"MipsISD::LDL", SDTMipsLoadLR,
+                     [SDNPHasChain, SDNPMayLoad, SDNPMemOperand]>;
+def MipsLDR : SDNode<"MipsISD::LDR", SDTMipsLoadLR,
+                     [SDNPHasChain, SDNPMayLoad, SDNPMemOperand]>;
+def MipsSDL : SDNode<"MipsISD::SDL", SDTStore,
+                     [SDNPHasChain, SDNPMayStore, SDNPMemOperand]>;
+def MipsSDR : SDNode<"MipsISD::SDR", SDTStore,
+                     [SDNPHasChain, SDNPMayStore, SDNPMemOperand]>;
 
 //===----------------------------------------------------------------------===//
 // Mips Instruction Predicate Definitions.

@@ -79,7 +79,17 @@ namespace llvm {
       Sync,
 
       Ext,
-      Ins
+      Ins,
+
+      // Load/Store Left/Right nodes.
+      LWL = ISD::FIRST_TARGET_MEMORY_OPCODE,
+      LWR,
+      SWL,
+      SWR,
+      LDL,
+      LDR,
+      SDL,
+      SDR
     };
   }
 
