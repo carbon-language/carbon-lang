@@ -9,9 +9,9 @@
 //
 // This implements NewValueJump pass in Hexagon.
 // Ideally, we should merge this as a Peephole pass prior to register
-// allocation, but becuase we have a spill in between the feeder and new value
+// allocation, but because we have a spill in between the feeder and new value
 // jump instructions, we are forced to write after register allocation.
-// Having said that, we should re-attempt to  pull this ealier at some piont
+// Having said that, we should re-attempt to pull this earlier at some point
 // in future.
 
 // The basic approach looks for sequence of predicated jump, compare instruciton

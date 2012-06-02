@@ -11,7 +11,7 @@
 // structure and branch probability estimates.
 //
 // The pass strives to preserve the structure of the CFG (that is, retain
-// a topological ordering of basic blocks) in the absense of a *strong* signal
+// a topological ordering of basic blocks) in the absence of a *strong* signal
 // to the contrary from probabilities. However, within the CFG structure, it
 // attempts to choose an ordering which favors placing more likely sequences of
 // blocks adjacent to each other.
@@ -180,7 +180,7 @@ class MachineBlockPlacement : public MachineFunctionPass {
   /// \brief Allocator and owner of BlockChain structures.
   ///
   /// We build BlockChains lazily by merging together high probability BB
-  /// sequences acording to the "Algo2" in the paper mentioned at the top of
+  /// sequences according to the "Algo2" in the paper mentioned at the top of
   /// the file. To reduce malloc traffic, we allocate them using this slab-like
   /// allocator, and destroy them after the pass completes.
   SpecificBumpPtrAllocator<BlockChain> ChainAllocator;
@@ -329,7 +329,7 @@ MachineBasicBlock *MachineBlockPlacement::selectBestSuccessor(
   // the MBPI analysis, we manually compute probabilities using the edge
   // weights. This is suboptimal as it means that the somewhat subtle
   // definition of edge weight semantics is encoded here as well. We should
-  // improve the MBPI interface to effeciently support query patterns such as
+  // improve the MBPI interface to efficiently support query patterns such as
   // this.
   uint32_t BestWeight = 0;
   uint32_t WeightScale = 0;
@@ -1053,7 +1053,7 @@ namespace {
 ///
 /// A separate pass to compute interesting statistics for evaluating block
 /// placement. This is separate from the actual placement pass so that they can
-/// be computed in the absense of any placement transformations or when using
+/// be computed in the absence of any placement transformations or when using
 /// alternative placement strategies.
 class MachineBlockPlacementStats : public MachineFunctionPass {
   /// \brief A handle to the branch probability pass.

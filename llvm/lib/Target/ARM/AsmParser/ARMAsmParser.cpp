@@ -6789,8 +6789,8 @@ processInstruction(MCInst &Inst,
     case ARM_AM::ror: newOpc = ARM::t2RORri; isNarrow = false; break;
     case ARM_AM::rrx: isNarrow = false; newOpc = ARM::t2RRX; break;
     }
-    unsigned Ammount = ARM_AM::getSORegOffset(Inst.getOperand(2).getImm());
-    if (Ammount == 32) Ammount = 0;
+    unsigned Amount = ARM_AM::getSORegOffset(Inst.getOperand(2).getImm());
+    if (Amount == 32) Amount = 0;
     TmpInst.setOpcode(newOpc);
     TmpInst.addOperand(Inst.getOperand(0)); // Rd
     if (isNarrow)
@@ -6798,7 +6798,7 @@ processInstruction(MCInst &Inst,
           Inst.getOpcode() == ARM::t2MOVSsi ? ARM::CPSR : 0));
     TmpInst.addOperand(Inst.getOperand(1)); // Rn
     if (newOpc != ARM::t2RRX)
-      TmpInst.addOperand(MCOperand::CreateImm(Ammount));
+      TmpInst.addOperand(MCOperand::CreateImm(Amount));
     TmpInst.addOperand(Inst.getOperand(3)); // CondCode
     TmpInst.addOperand(Inst.getOperand(4));
     if (!isNarrow)
@@ -7400,7 +7400,7 @@ MatchAndEmitInstruction(SMLoc IDLoc,
     return Error(IDLoc, "invalid instruction",
                  ((ARMOperand*)Operands[0])->getLocRange());
   case Match_ConversionFail:
-    // The converter function will have already emited a diagnostic.
+    // The converter function will have already emitted a diagnostic.
     return true;
   case Match_RequiresNotITBlock:
     return Error(IDLoc, "flag setting instruction only valid outside IT block");

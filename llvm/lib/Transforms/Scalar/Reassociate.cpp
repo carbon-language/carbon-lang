@@ -1164,7 +1164,7 @@ bool Reassociate::collectMultiplyFactors(SmallVectorImpl<ValueEntry> &Ops,
       ++Count;
     if (Count == 1)
       continue;
-    // Move an even number of occurences to Factors.
+    // Move an even number of occurrences to Factors.
     Count &= ~1U;
     Idx -= Count;
     FactorPowerSum += Count;

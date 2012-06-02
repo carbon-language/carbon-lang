@@ -846,7 +846,7 @@ multiclass FPCONTRACT32<string OpcStr, Predicate Pred> {
                       [(set Float32Regs:$dst, (fadd
                         (fmul Float32Regs:$a, Float32Regs:$b),
                         Float32Regs:$c))]>, Requires<[Pred]>;
-   // This is to WAR a wierd bug in Tablegen that does not automatically
+   // This is to WAR a weird bug in Tablegen that does not automatically
    // generate the following permutated rule rrr2 from the above rrr.
    // So we explicitly add it here. This happens to FMA32 only.
    // See the comments at FMAD32 and FMA32 for more information.

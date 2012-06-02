@@ -906,7 +906,7 @@ getNonLocalPointerDepFromBB(const PHITransAddr &Pointer,
   if (!Pair.second) {
     if (CacheInfo->Size < Loc.Size) {
       // The query's Size is greater than the cached one. Throw out the
-      // cached data and procede with the query at the greater size.
+      // cached data and proceed with the query at the greater size.
       CacheInfo->Pair = BBSkipFirstBlockPair();
       CacheInfo->Size = Loc.Size;
       for (NonLocalDepInfo::iterator DI = CacheInfo->NonLocalDeps.begin(),

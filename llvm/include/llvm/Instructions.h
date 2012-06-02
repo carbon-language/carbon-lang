@@ -2239,7 +2239,7 @@ public:
   /// getNumClauses - Get the number of clauses for this landing pad.
   unsigned getNumClauses() const { return getNumOperands() - 1; }
 
-  /// reserveClauses - Grow the size of the operand list to accomodate the new
+  /// reserveClauses - Grow the size of the operand list to accommodate the new
   /// number of clauses.
   void reserveClauses(unsigned Size) { growOperands(Size); }
 

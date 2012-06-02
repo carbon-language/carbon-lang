@@ -228,7 +228,7 @@ void CriticalAntiDepBreaker::PrescanInstruction(MachineInstr *MI) {
 void CriticalAntiDepBreaker::ScanInstruction(MachineInstr *MI,
                                              unsigned Count) {
   // Update liveness.
-  // Proceding upwards, registers that are defed but not used in this
+  // Proceeding upwards, registers that are defed but not used in this
   // instruction are now dead.
 
   if (!TII->isPredicated(MI)) {

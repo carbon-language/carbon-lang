@@ -177,7 +177,7 @@ namespace llvm {
     /// @param OffsetInBits Member offset.
     /// @param Flags        Flags to encode member attribute, e.g. private
     /// @param Ty           Parent type.
-    /// @param PropertyName Name of the Objective C property assoicated with
+    /// @param PropertyName Name of the Objective C property associated with
     ///                     this ivar.
     /// @param GetterName   Name of the Objective C property getter selector.
     /// @param SetterName   Name of the Objective C property setter selector.

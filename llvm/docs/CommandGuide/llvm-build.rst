@@ -61,7 +61,7 @@ OPTIONS
  Write out new *LLVMBuild.txt* files based on the loaded components. This is
  useful for auto-upgrading the schema of the files. **llvm-build** will try to a
  limited extent to preserve the comments which were written in the original
- source file, although at this time it only preserves block comments that preceed
+ source file, although at this time it only preserves block comments that precede
  the section names in the *LLVMBuild* files.
 
 

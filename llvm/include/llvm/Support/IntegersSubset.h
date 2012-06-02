@@ -102,7 +102,7 @@ public:
     return (const APInt&)ConstantIntVal->getValue();
   }  
   
-  // Propogate APInt operators.
+  // Propagate APInt operators.
   // Note, that
   // /,/=,>>,>>= are not implemented in APInt.
   // <<= is implemented for unsigned RHS, but not implemented for APInt RHS.

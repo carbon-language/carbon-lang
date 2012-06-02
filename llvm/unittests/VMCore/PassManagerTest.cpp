@@ -324,7 +324,7 @@ namespace llvm {
 
       Passes.run(M);
       // Some passes must be rerun because a pass that modified the
-      // module/function was run inbetween
+      // module/function was run in between
       EXPECT_EQ(2, mNDM->run);
       EXPECT_EQ(1, mNDNM->run);
       EXPECT_EQ(1, mNDM2->run);

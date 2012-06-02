@@ -340,7 +340,7 @@ public:
   void clear();
 
   /// clearDanglingDebugInfo - Clear the dangling debug information
-  /// map. This function is seperated from the clear so that debug
+  /// map. This function is separated from the clear so that debug
   /// information that is dangling in a basic block can be properly
   /// resolved in a different basic block. This allows the
   /// SelectionDAG to resolve dangling debug information attached

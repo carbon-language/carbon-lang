@@ -59,7 +59,7 @@ struct DomainValue {
 
   // Pointer to the next DomainValue in a chain.  When two DomainValues are
   // merged, Victim.Next is set to point to Victor, so old DomainValue
-  // references can be updated by folowing the chain.
+  // references can be updated by following the chain.
   DomainValue *Next;
 
   // Twiddleable instructions using or defining these registers.

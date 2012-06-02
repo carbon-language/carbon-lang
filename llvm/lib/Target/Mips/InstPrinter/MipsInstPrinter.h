@@ -16,7 +16,7 @@
 #include "llvm/MC/MCInstPrinter.h"
 
 namespace llvm {
-// These enumeration declarations were orignally in MipsInstrInfo.h but
+// These enumeration declarations were originally in MipsInstrInfo.h but
 // had to be moved here to avoid circular dependencies between
 // LLVMMipsCodeGen and LLVMMipsAsmPrinter.
 namespace Mips {

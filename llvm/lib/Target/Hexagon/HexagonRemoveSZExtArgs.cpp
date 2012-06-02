@@ -1,4 +1,4 @@
-//===- HexagonRemoveExtendArgs.cpp - Remove unecessary argument sign extends =//
+//===- HexagonRemoveExtendArgs.cpp - Remove unnecessary argument sign extends //
 //
 //                     The LLVM Compiler Infrastructure
 //

@@ -145,7 +145,7 @@ protected:
   // in the relocation list where it's stored.
   typedef SmallVector<RelocationEntry, 64> RelocationList;
   // Relocations to sections already loaded. Indexed by SectionID which is the
-  // source of the address. The target where the address will be writen is
+  // source of the address. The target where the address will be written is
   // SectionID/Offset in the relocation itself.
   DenseMap<unsigned, RelocationList> Relocations;
 

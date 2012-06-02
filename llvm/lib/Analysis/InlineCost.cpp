@@ -178,7 +178,7 @@ bool CallAnalyzer::lookupSROAArgAndCost(
 
 /// \brief Disable SROA for the candidate marked by this cost iterator.
 ///
-/// This markes the candidate as no longer viable for SROA, and adds the cost
+/// This marks the candidate as no longer viable for SROA, and adds the cost
 /// savings associated with it back into the inline cost measurement.
 void CallAnalyzer::disableSROA(DenseMap<Value *, int>::iterator CostIt) {
   // If we're no longer able to perform SROA we need to undo its cost savings

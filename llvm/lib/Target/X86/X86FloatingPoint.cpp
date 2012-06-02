@@ -130,7 +130,7 @@ namespace {
     // The hardware keeps track of how many FP registers are live, so we have
     // to model that exactly. Usually, each live register corresponds to an
     // FP<n> register, but when dealing with calls, returns, and inline
-    // assembly, it is sometimes neccesary to have live scratch registers.
+    // assembly, it is sometimes necessary to have live scratch registers.
     unsigned Stack[8];          // FP<n> Registers in each stack slot...
     unsigned StackTop;          // The current top of the FP stack.
 

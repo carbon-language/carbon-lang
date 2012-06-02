@@ -2115,7 +2115,7 @@ LLVMBasicBlockRef LLVMGetInstructionParent(LLVMValueRef Inst);
 LLVMValueRef LLVMGetNextInstruction(LLVMValueRef Inst);
 
 /**
- * Obtain the instruction that occured before this one.
+ * Obtain the instruction that occurred before this one.
  *
  * If the instruction is the first instruction in a basic block, NULL
  * will be returned.

@@ -131,7 +131,7 @@ static void ConnectProlog(Loop *L, Value *TripCount, unsigned Count,
 /// There are two value maps that are defined and used.  VMap is
 /// for the values in the current loop instance.  LVMap contains
 /// the values from the last loop instance.  We need the LVMap values
-/// to update the inital values for the current loop instance.
+/// to update the initial values for the current loop instance.
 ///
 static void CloneLoopBlocks(Loop *L,
                             bool FirstCopy,

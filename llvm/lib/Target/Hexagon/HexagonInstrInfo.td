@@ -3029,7 +3029,7 @@ def : Pat <(i64 (sext_inreg (i64 DoubleRegs:$src1), i8)),
       (i64 (SXTW (i32 (SXTB (i32 (EXTRACT_SUBREG (i64 DoubleRegs:$src1),
                                                  subreg_loreg))))))>;
 
-// We want to prevent emiting pnot's as much as possible.
+// We want to prevent emitting pnot's as much as possible.
 // Map brcond with an unsupported setcc to a JMP_cNot.
 def : Pat <(brcond (i1 (setne (i32 IntRegs:$src1), (i32 IntRegs:$src2))),
                         bb:$offset),

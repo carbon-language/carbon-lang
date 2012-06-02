@@ -1466,7 +1466,7 @@ static MachineBasicBlock *findFalseBlock(MachineBasicBlock *BB,
 }
 
 /// findHoistingInsertPosAndDeps - Find the location to move common instructions
-/// in successors to. The location is ususally just before the terminator,
+/// in successors to. The location is usually just before the terminator,
 /// however if the terminator is a conditional branch and its previous
 /// instruction is the flag setting instruction, the previous instruction is
 /// the preferred location. This function also gathers uses and defs of the

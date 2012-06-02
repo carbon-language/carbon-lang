@@ -217,7 +217,7 @@ class BlockFrequencyImpl {
     divBlockFreq(BB, BranchProbability(Numerator, EntryFreq));
   }
 
-  /// doLoop - Propagate block frequency down throught the loop.
+  /// doLoop - Propagate block frequency down through the loop.
   void doLoop(BlockT *Head, BlockT *Tail) {
     DEBUG(dbgs() << "doLoop(" << getBlockName(Head) << ", "
                  << getBlockName(Tail) << ")\n");

@@ -13,7 +13,7 @@ industrial strength compilers to specialized JIT applications to small
 research projects.
 
 Similarly, documentation is broken down into several high-level groupings
-targetted at different audiences:
+targeted at different audiences:
 
   * **Design & Overview**
 

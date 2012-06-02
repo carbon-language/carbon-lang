@@ -55,7 +55,7 @@ def make_install_dir(path):
     Create the given directory path for installation, including any parents.
     """
 
-    # os.makedirs considers it an error to be called with an existant path.
+    # os.makedirs considers it an error to be called with an existent path.
     if not os.path.exists(path):
         os.makedirs(path)
 

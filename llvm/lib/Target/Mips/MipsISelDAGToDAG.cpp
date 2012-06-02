@@ -190,7 +190,7 @@ void MipsDAGToDAGISel::InitGlobalBaseReg(MachineFunction &MF) {
   // We emit only the last instruction here.
   //
   // GNU linker requires that the first two instructions appear at the beginning
-  // of a funtion and no instructions be inserted before or between them.
+  // of a function and no instructions be inserted before or between them.
   // The two instructions are emitted during lowering to MC layer in order to
   // avoid any reordering.
   //

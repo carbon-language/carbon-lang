@@ -217,7 +217,7 @@ struct Elf_Verdef_Impl {
   }
 };
 
-/// Elf_Verdaux: This is the structure of auxilary data in the SHT_GNU_verdef
+/// Elf_Verdaux: This is the structure of auxiliary data in the SHT_GNU_verdef
 /// section (.gnu.version_d). This structure is identical for ELF32 and ELF64.
 template<support::endianness target_endianness, bool is64Bits>
 struct Elf_Verdaux_Impl {

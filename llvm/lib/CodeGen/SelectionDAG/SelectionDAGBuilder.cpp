@@ -844,7 +844,7 @@ void SelectionDAGBuilder::clear() {
 }
 
 /// clearDanglingDebugInfo - Clear the dangling debug information
-/// map. This function is seperated from the clear so that debug
+/// map. This function is separated from the clear so that debug
 /// information that is dangling in a basic block can be properly
 /// resolved in a different basic block. This allows the
 /// SelectionDAG to resolve dangling debug information attached
@@ -2810,7 +2810,7 @@ void SelectionDAGBuilder::visitExtractElement(const User &I) {
 }
 
 // Utility for visitShuffleVector - Return true if every element in Mask,
-// begining from position Pos and ending in Pos+Size, falls within the
+// beginning from position Pos and ending in Pos+Size, falls within the
 // specified sequential range [L, L+Pos). or is undef.
 static bool isSequentialInRange(const SmallVectorImpl<int> &Mask,
                                 unsigned Pos, unsigned Size, int Low) {

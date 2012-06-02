@@ -1403,7 +1403,7 @@ def : InstAlias<"nop", (tMOVr R8, R8, 14, 0)>,Requires<[IsThumb, IsThumb1Only]>;
 
 // For round-trip assembly/disassembly, we have to handle a CPS instruction
 // without any iflags. That's not, strictly speaking, valid syntax, but it's
-// a useful extention and assembles to defined behaviour (the insn does
+// a useful extension and assembles to defined behaviour (the insn does
 // nothing).
 def : tInstAlias<"cps$imod", (tCPS imod_op:$imod, 0)>;
 def : tInstAlias<"cps$imod", (tCPS imod_op:$imod, 0)>;

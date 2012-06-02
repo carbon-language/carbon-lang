@@ -442,7 +442,7 @@ following format.
 ... log message ...
 <log delineator>
 
-where <test name> should be the name of a preceeding reported test, <log
+where <test name> should be the name of a preceding reported test, <log
 delineator> is a string of '\*' characters *at least* four characters long (the
 recommended length is 20), and <trailing delineator> is an arbitrary (unparsed)
 string.

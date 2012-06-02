@@ -90,7 +90,7 @@ public:
 
 /// @brief Create a Binary from Source, autodetecting the file type.
 ///
-/// @param Source The data to create the Binary from. Ownership is transfered
+/// @param Source The data to create the Binary from. Ownership is transferred
 ///        to Result if successful. If an error is returned, Source is destroyed
 ///        by createBinary before returning.
 /// @param Result A pointer to the resulting Binary if no error occured.

@@ -345,7 +345,7 @@ TEST(HashingTest, HashCombineBasicTest) {
   EXPECT_EQ(hash_combine_range(arr1, arr1 + 6),
             hash_combine(i1, i2, i3, i4, i5, i6));
 
-  // Hashing a sequence of heterogenous types which *happen* to all produce the
+  // Hashing a sequence of heterogeneous types which *happen* to all produce the
   // same data for hashing produces the same as a range-based hash of the
   // fundamental values.
   const size_t s1 = 1024, s2 = 8888, s3 = 9000000;

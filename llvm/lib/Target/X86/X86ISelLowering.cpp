@@ -3191,7 +3191,7 @@ static bool isUndefOrEqual(int Val, int CmpVal) {
   return false;
 }
 
-/// isSequentialOrUndefInRange - Return true if every element in Mask, begining
+/// isSequentialOrUndefInRange - Return true if every element in Mask, beginning
 /// from position Pos and ending in Pos+Size, falls within the specified
 /// sequential range (L, L+Pos]. or is undef.
 static bool isSequentialOrUndefInRange(ArrayRef<int> Mask,
@@ -6333,7 +6333,7 @@ SDValue getMOVLP(SDValue &Op, DebugLoc &dl, SelectionDAG &DAG, bool HasSSE2) {
       return getTargetShuffleNode(X86ISD::MOVLPD, dl, VT, V1, V2, DAG);
 
     if (NumElems == 4)
-      // If we don't care about the second element, procede to use movss.
+      // If we don't care about the second element, proceed to use movss.
       if (SVOp->getMaskElt(1) != -1)
         return getTargetShuffleNode(X86ISD::MOVLPS, dl, VT, V1, V2, DAG);
   }

@@ -371,7 +371,7 @@ def s4_3ImmPred  : PatLeaf<(i32 imm), [{
 def u64ImmPred  : PatLeaf<(i64 imm), [{
   // immS16 predicate - True if the immediate fits in a 16-bit sign extended
   // field.
-  // Adding "N ||" to supress gcc unused warning.
+  // Adding "N ||" to suppress gcc unused warning.
   return (N || true);
 }]>;
 

@@ -201,7 +201,7 @@ bool CodePlacementOpt::EliminateUnconditionalJumpsToTop(MachineFunction &MF,
           // fallthrough edge.
           if (!Prior->isSuccessor(End))
             goto next_pred;
-          // Otherwise we can stop scanning and procede to move the blocks.
+          // Otherwise we can stop scanning and proceed to move the blocks.
           break;
         }
         // If we hit a switch or something complicated, don't move anything

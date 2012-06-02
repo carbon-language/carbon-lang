@@ -1723,7 +1723,7 @@ bool Verifier::VerifyIntrinsicType(Type *Ty,
   }
       
   case IITDescriptor::Argument:
-    // Two cases here - If this is the second occurrance of an argument, verify
+    // Two cases here - If this is the second occurrence of an argument, verify
     // that the later instance matches the previous instance. 
     if (D.getArgumentNumber() < ArgTys.size())
       return Ty != ArgTys[D.getArgumentNumber()];  

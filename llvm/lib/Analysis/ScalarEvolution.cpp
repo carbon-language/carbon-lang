@@ -1838,7 +1838,7 @@ static uint64_t umul_ov(uint64_t i, uint64_t j, bool &Overflow) {
 
 /// Compute the result of "n choose k", the binomial coefficient.  If an
 /// intermediate computation overflows, Overflow will be set and the return will
-/// be garbage. Overflow is not cleared on absense of overflow.
+/// be garbage. Overflow is not cleared on absence of overflow.
 static uint64_t Choose(uint64_t n, uint64_t k, bool &Overflow) {
   // We use the multiplicative formula:
   //     n(n-1)(n-2)...(n-(k-1)) / k(k-1)(k-2)...1 .

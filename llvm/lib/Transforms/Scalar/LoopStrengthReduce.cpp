@@ -2194,7 +2194,7 @@ LSRInstance::FindUseWithSimilarFormula(const Formula &OrigF,
             return &LU;
           // This is the formula where all the registers and symbols matched;
           // there aren't going to be any others. Since we declined it, we
-          // can skip the rest of the formulae and procede to the next LSRUse.
+          // can skip the rest of the formulae and proceed to the next LSRUse.
           break;
         }
       }

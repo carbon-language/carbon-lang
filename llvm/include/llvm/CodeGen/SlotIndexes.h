@@ -576,7 +576,7 @@ namespace llvm {
         nextItr = getIndexAfter(mi).listEntry();
         prevItr = prior(nextItr);
       } else {
-        // Insert mi's index immediately after the preceeding instruction.
+        // Insert mi's index immediately after the preceding instruction.
         prevItr = getIndexBefore(mi).listEntry();
         nextItr = llvm::next(prevItr);
       }
