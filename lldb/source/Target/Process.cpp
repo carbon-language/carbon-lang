@@ -1299,15 +1299,24 @@ Process::SetPublicState (StateType new_state)
     // to tell the program to run.
     if (!IsHijackedForEvent(eBroadcastBitStateChanged))
     {
-        const bool old_state_is_stopped = StateIsStoppedState(old_state, false);
-        const bool new_state_is_stopped = StateIsStoppedState(new_state, false);
-        if (old_state_is_stopped != new_state_is_stopped)
+        if (new_state == eStateDetached)
         {
-            if (new_state_is_stopped)
+            if (log)
+                log->Printf("Process::SetPublicState (%s) -- unlocking run lock for detach", StateAsCString(new_state));
+            m_run_lock.WriteUnlock();
+        }
+        else
+        {
+            const bool old_state_is_stopped = StateIsStoppedState(old_state, false);
+            const bool new_state_is_stopped = StateIsStoppedState(new_state, false);
+            if (old_state_is_stopped != new_state_is_stopped)
             {
-                if (log)
-                    log->Printf("Process::SetPublicState (%s) -- unlocking run lock", StateAsCString(new_state));
-                m_run_lock.WriteUnlock();
+                if (new_state_is_stopped)
+                {
+                    if (log)
+                        log->Printf("Process::SetPublicState (%s) -- unlocking run lock", StateAsCString(new_state));
+                    m_run_lock.WriteUnlock();
+                }
             }
         }
     }
