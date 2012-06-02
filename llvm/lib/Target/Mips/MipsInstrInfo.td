@@ -445,14 +445,6 @@ class StoreM<bits<6> op, string instr_asm, PatFrag OpNode, RegisterClass RC,
   let isPseudo = Pseudo;
 }
 
-// Unaligned Memory Load/Store
-let canFoldAsLoad = 1 in
-class LoadUnAlign<bits<6> op, RegisterClass RC, Operand MemOpnd>:
-  FMem<op, (outs RC:$rt), (ins MemOpnd:$addr), "", [], IILoad> {}
-
-class StoreUnAlign<bits<6> op, RegisterClass RC, Operand MemOpnd>:
-  FMem<op, (outs), (ins RC:$rt, MemOpnd:$addr), "", [], IIStore> {}
-
 // 32-bit load.
 multiclass LoadM32<bits<6> op, string instr_asm, PatFrag OpNode,
                    bit Pseudo = 0> {
@@ -477,16 +469,6 @@ multiclass LoadM64<bits<6> op, string instr_asm, PatFrag OpNode,
   }
 }
 
-// 32-bit load.
-multiclass LoadUnAlign32<bits<6> op> {
-  def #NAME# : LoadUnAlign<op, CPURegs, mem>,
-               Requires<[NotN64, HasStandardEncoding]>;
-  def _P8    : LoadUnAlign<op, CPURegs, mem64>,
-               Requires<[IsN64, HasStandardEncoding]> {
-    let DecoderNamespace = "Mips64";
-    let isCodeGenOnly = 1;
-  }
-}
 // 32-bit store.
 multiclass StoreM32<bits<6> op, string instr_asm, PatFrag OpNode,
                     bit Pseudo = 0> {
@@ -511,11 +493,60 @@ multiclass StoreM64<bits<6> op, string instr_asm, PatFrag OpNode,
   }
 }
 
-// 32-bit store.
-multiclass StoreUnAlign32<bits<6> op> {
-  def #NAME# : StoreUnAlign<op, CPURegs, mem>,
+// Load/Store Left/Right
+let canFoldAsLoad = 1 in
+class LoadLeftRight<bits<6> op, string instr_asm, SDNode OpNode,
+                    RegisterClass RC, Operand MemOpnd> :
+  FMem<op, (outs RC:$rt), (ins MemOpnd:$addr, RC:$src),
+       !strconcat(instr_asm, "\t$rt, $addr"),
+       [(set RC:$rt, (OpNode addr:$addr, RC:$src))], IILoad> {
+  string Constraints = "$src = $rt";
+}
+
+class StoreLeftRight<bits<6> op, string instr_asm, SDNode OpNode,
+                     RegisterClass RC, Operand MemOpnd>:
+  FMem<op, (outs), (ins RC:$rt, MemOpnd:$addr),
+       !strconcat(instr_asm, "\t$rt, $addr"), [(OpNode RC:$rt, addr:$addr)],
+       IIStore>;
+
+// 32-bit load left/right.
+multiclass LoadLeftRightM32<bits<6> op, string instr_asm, SDNode OpNode> {
+  def #NAME# : LoadLeftRight<op, instr_asm, OpNode, CPURegs, mem>,
                Requires<[NotN64, HasStandardEncoding]>;
-  def _P8    : StoreUnAlign<op, CPURegs, mem64>,
+  def _P8    : LoadLeftRight<op, instr_asm, OpNode, CPURegs, mem64>,
+               Requires<[IsN64, HasStandardEncoding]> {
+    let DecoderNamespace = "Mips64";
+    let isCodeGenOnly = 1;
+  }
+}
+
+// 64-bit load left/right.
+multiclass LoadLeftRightM64<bits<6> op, string instr_asm, SDNode OpNode> {
+  def #NAME# : LoadLeftRight<op, instr_asm, OpNode, CPU64Regs, mem>,
+               Requires<[NotN64, HasStandardEncoding]>;
+  def _P8    : LoadLeftRight<op, instr_asm, OpNode, CPU64Regs, mem64>,
+               Requires<[IsN64, HasStandardEncoding]> {
+    let DecoderNamespace = "Mips64";
+    let isCodeGenOnly = 1;
+  }
+}
+
+// 32-bit store left/right.
+multiclass StoreLeftRightM32<bits<6> op, string instr_asm, SDNode OpNode> {
+  def #NAME# : StoreLeftRight<op, instr_asm, OpNode, CPURegs, mem>,
+               Requires<[NotN64, HasStandardEncoding]>;
+  def _P8    : StoreLeftRight<op, instr_asm, OpNode, CPURegs, mem64>,
+               Requires<[IsN64, HasStandardEncoding]> {
+    let DecoderNamespace = "Mips64";
+    let isCodeGenOnly = 1;
+  }
+}
+
+// 64-bit store left/right.
+multiclass StoreLeftRightM64<bits<6> op, string instr_asm, SDNode OpNode> {
+  def #NAME# : StoreLeftRight<op, instr_asm, OpNode, CPU64Regs, mem>,
+               Requires<[NotN64, HasStandardEncoding]>;
+  def _P8    : StoreLeftRight<op, instr_asm, OpNode, CPU64Regs, mem64>,
                Requires<[IsN64, HasStandardEncoding]> {
     let DecoderNamespace = "Mips64";
     let isCodeGenOnly = 1;
@@ -907,11 +938,11 @@ defm ULW     : LoadM32<0x23, "ulw",  load_u, 1>;
 defm USH     : StoreM32<0x29, "ush", truncstorei16_u, 1>;
 defm USW     : StoreM32<0x2b, "usw", store_u, 1>;
 
-/// Primitives for unaligned
-defm LWL     : LoadUnAlign32<0x22>;
-defm LWR     : LoadUnAlign32<0x26>;
-defm SWL     : StoreUnAlign32<0x2A>;
-defm SWR     : StoreUnAlign32<0x2E>;
+/// load/store left/right
+defm LWL : LoadLeftRightM32<0x22, "lwl", MipsLWL>;
+defm LWR : LoadLeftRightM32<0x26, "lwr", MipsLWR>;
+defm SWL : StoreLeftRightM32<0x2a, "swl", MipsSWL>;
+defm SWR : StoreLeftRightM32<0x2e, "swr", MipsSWR>;
 
 let hasSideEffects = 1 in
 def SYNC : MipsInst<(outs), (ins i32imm:$stype), "sync $stype",

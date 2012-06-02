@@ -141,6 +141,18 @@ defm USW64     : StoreM64<0x2b, "usw", truncstorei32_u, 1>;
 defm ULD       : LoadM64<0x37, "uld",  load_u, 1>;
 defm USD       : StoreM64<0x3f, "usd", store_u, 1>;
 
+/// load/store left/right
+let isCodeGenOnly = 1 in {
+  defm LWL64 : LoadLeftRightM64<0x22, "lwl", MipsLWL>;
+  defm LWR64 : LoadLeftRightM64<0x26, "lwr", MipsLWR>;
+  defm SWL64 : StoreLeftRightM64<0x2a, "swl", MipsSWL>;
+  defm SWR64 : StoreLeftRightM64<0x2e, "swr", MipsSWR>;
+}
+defm LDL   : LoadLeftRightM64<0x1a, "ldl", MipsLDL>;
+defm LDR   : LoadLeftRightM64<0x1b, "ldr", MipsLDR>;
+defm SDL   : StoreLeftRightM64<0x2c, "sdl", MipsSDL>;
+defm SDR   : StoreLeftRightM64<0x2d, "sdr", MipsSDR>;
+
 /// Load-linked, Store-conditional
 def LLD    : LLBase<0x34, "lld", CPU64Regs, mem>,
              Requires<[NotN64, HasStandardEncoding]>;
