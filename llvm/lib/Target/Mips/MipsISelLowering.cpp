@@ -2150,7 +2150,7 @@ SDValue MipsTargetLowering::LowerLOAD(SDValue Op, SelectionDAG &DAG) const {
 static SDValue CreateStoreLR(unsigned Opc, SelectionDAG &DAG, StoreSDNode *SD,
                              SDValue Chain, unsigned Offset) {
   SDValue BasePtr = SD->getBasePtr(), Ptr, Value = SD->getValue();
-  EVT VT = Value.getValueType(), MemVT = SD->getMemoryVT();
+  EVT MemVT = SD->getMemoryVT();
   EVT BasePtrVT = BasePtr.getValueType();
   DebugLoc DL = SD->getDebugLoc();
   SDVTList VTList = DAG.getVTList(MVT::Other);
