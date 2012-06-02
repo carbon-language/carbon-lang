@@ -281,6 +281,11 @@ public:
   // TODO: To reduce false negatives here, we should track the container
   // allocation site and check if a proper deallocator was set there.
   static bool isCFCGAllowingEscape(StringRef FName);
+
+  // Check if this kind of expression can be inlined by the analyzer.
+  static bool canBeInlined(const Stmt *S) {
+    return isa<CallExpr>(S);
+  }
 };
 
 }
