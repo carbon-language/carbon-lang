@@ -386,6 +386,9 @@ public:
 /// IntegersSubset - currently is extension of IntegersSubsetGeneric
 /// that also supports conversion to/from Constant* object.
 class IntegersSubset : public IntegersSubsetGeneric<IntItem> {
+  
+  typedef IntegersSubsetGeneric<IntItem> ParentTy;
+  
   Constant *Holder;
   
   static unsigned getNumItemsFromConstant(Constant *C) {
@@ -424,7 +427,7 @@ class IntegersSubset : public IntegersSubsetGeneric<IntItem> {
   
 public:
   
-  IntegersSubset(Constant *C) : IntegersSubsetGeneric(rangesFromConstant(C)),
+  IntegersSubset(Constant *C) : ParentTy(rangesFromConstant(C)),
                                 Holder(C) {}
   
   // implicit
