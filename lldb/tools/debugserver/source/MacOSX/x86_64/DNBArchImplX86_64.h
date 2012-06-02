@@ -26,7 +26,9 @@ class DNBArchImplX86_64 : public DNBArchProtocol
 public:
     DNBArchImplX86_64(MachThread *thread) :
         m_thread(thread),
-        m_state()
+        m_state(),
+        m_2pc_dbg_checkpoint(),
+        m_2pc_trans_state(Trans_Done)
     {
     }
     virtual ~DNBArchImplX86_64()
