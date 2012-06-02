@@ -1,4 +1,4 @@
-//===- CRSBuilder.h - ConstantRangesSet Builder -----------------*- C++ -*-===//
+//===- IntegersSubsetMapping.h - Mapping subset ==> Successor ---*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -8,11 +8,12 @@
 //===----------------------------------------------------------------------===//
 //
 /// @file
-/// CRSBuilder allows to build and parse ConstantRangesSet objects.
-/// There is such features like add/remove range, or combine
-/// Two ConstantRangesSet object with neighboring ranges merging.
-/// Set IsReadonly=true if you want to operate with "const ConstantInt" and
-/// "const ConstantRangesSet" objects.
+/// IntegersSubsetMapping is mapping from A to B, where
+/// Items in A is subsets of integers,
+/// Items in B some pointers (Successors).
+/// If user which to add another subset for successor that is already
+/// exists in mapping, IntegersSubsetMapping merges existing subset with
+/// added one.
 //
 //===----------------------------------------------------------------------===//
 
@@ -55,6 +56,7 @@ protected:
   typedef std::list<RangeTy> RangesCollection;
   typedef typename RangesCollection::iterator RangesCollectionIt;
   
+  // TODO: Change unclean CRS prefixes to SubsetMap for example.
   typedef std::map<SuccessorClass*, RangesCollection > CRSMap;
   typedef typename CRSMap::iterator CRSMapIt;
 
@@ -112,7 +114,7 @@ public:
     sort();
     for (CaseItemIt i = Items.begin(), j = i+1, e = Items.end();
          j != e; i = j++) {
-      if (isIntersected(j, i) && j->second != i->second) {
+      if (isIntersected(i, j) && i->second != j->second) {
         errItem = j;
         return false;
       }
@@ -173,7 +175,7 @@ public:
   }  
   
   /// Adds all ranges and values from given ranges set to the current
-  /// CRSBuilder object.
+  /// mapping.
   void add(const IntegersSubset &CRS, SuccessorClass *S = 0) {
     for (unsigned i = 0, e = CRS.getNumItems(); i < e; ++i) {
       RangeTy R = CRS.getItem(i);

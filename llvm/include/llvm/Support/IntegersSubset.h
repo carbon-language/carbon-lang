@@ -1,4 +1,4 @@
-//===-- llvm/ConstantRangesSet.h - The constant set of ranges ---*- C++ -*-===//
+//===-- llvm/IntegersSubset.h - The subset of integers ----------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -9,10 +9,9 @@
 //
 /// @file
 /// This file contains class that implements constant set of ranges:
-/// [<Low0,High0>,...,<LowN,HighN>]. Mainly, this set is used by SwitchInst and
-/// represents case value that may contain multiple ranges for a single
-/// successor.
-///
+/// [<Low0,High0>,...,<LowN,HighN>]. Initially, this class was created for
+/// SwitchInst and was used for case value representation that may contain
+/// multiple ranges for a single successor.
 //
 //===----------------------------------------------------------------------===//
 
@@ -280,7 +279,9 @@ public:
   typedef std::list<IntTy> FlatCollectionTy;
   typedef std::pair<IntTy*, IntTy*> RangeLinkTy;
   typedef SmallVector<RangeLinkTy, 64> RangeLinksTy;
-  typedef typename RangeLinksTy::iterator RangeLinksConstIt;
+  typedef typename RangeLinksTy::const_iterator RangeLinksConstIt;
+  
+  typedef IntegersSubsetGeneric<IntTy> self;
   
 protected:
   
@@ -304,6 +305,26 @@ public:
     }
   }
   
+  IntegersSubsetGeneric(const self& RHS) {
+    *this = RHS;
+  }
+  
+  self& operator=(const self& RHS) {
+    FlatCollection.clear();
+    RangeLinks.clear();
+    for (RangeLinksConstIt i = RHS.RangeLinks.begin(), e = RHS.RangeLinks.end();
+         i != e; ++i) {
+      RangeLinkTy RangeLink;
+      FlatCollection.push_back(*(i->first));
+      RangeLink.first = &FlatCollection.back();
+      if (i->first != i->second)
+        FlatCollection.push_back(*(i->second));
+      RangeLink.second = &FlatCollection.back();
+      RangeLinks.push_back(RangeLink);
+    }
+    return *this;
+  }
+  
   typedef IntRange<IntTy> Range;
  
   /// Checks is the given constant satisfies this case. Returns
@@ -314,8 +335,8 @@ public:
       if (RangeLinks[i].first == RangeLinks[i].second) {
         if (*RangeLinks[i].first == CheckingVal)
           return true;
-      } else if (*RangeLinks[i].first >= CheckingVal &&
-                 *RangeLinks[i].second <= CheckingVal) 
+      } else if (*RangeLinks[i].first <= CheckingVal &&
+                 *RangeLinks[i].second >= CheckingVal) 
         return true;
     }
     return false;    
@@ -357,7 +378,7 @@ public:
     for (unsigned i = 0, e = getNumItems(); i != e; ++i) {
       const APInt &Low = getItem(i).getLow();
       const APInt &High = getItem(i).getHigh();
-      const APInt &S = High - Low;
+      APInt S = High - Low + 1;
       sz += S;
     }
     return sz.getZExtValue();    
@@ -372,12 +393,12 @@ public:
     for (unsigned i = 0, e = getNumItems(); i != e; ++i) {
       const APInt &Low = getItem(i).getLow();
       const APInt &High = getItem(i).getHigh();      
-      const APInt& S = High - Low;
+      APInt S = High - Low + 1;
       APInt oldSz = sz;
       sz += S;
-      if (oldSz.uge(i) && sz.ult(i)) {
+      if (sz.ugt(idx)) {
         APInt Res = Low;
-        APInt Offset(oldSz.getBitWidth(), i);
+        APInt Offset(oldSz.getBitWidth(), idx);
         Offset -= oldSz;
         Res += Offset;
         return Res;
