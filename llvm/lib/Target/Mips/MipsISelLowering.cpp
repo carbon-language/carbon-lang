@@ -768,6 +768,8 @@ LowerOperation(SDValue Op, SelectionDAG &DAG) const
     case ISD::SHL_PARTS:          return LowerShiftLeftParts(Op, DAG);
     case ISD::SRA_PARTS:          return LowerShiftRightParts(Op, DAG, true);
     case ISD::SRL_PARTS:          return LowerShiftRightParts(Op, DAG, false);
+    case ISD::LOAD:               return LowerLOAD(Op, DAG);
+    case ISD::STORE:              return LowerSTORE(Op, DAG);
   }
   return SDValue();
 }
@@ -2052,6 +2054,142 @@ SDValue MipsTargetLowering::LowerShiftRightParts(SDValue Op, SelectionDAG& DAG,
 
   SDValue Ops[2] = {Lo, Hi};
   return DAG.getMergeValues(Ops, 2, DL);
+}
+
+static SDValue CreateLoadLR(unsigned Opc, SelectionDAG &DAG, LoadSDNode *LD,
+                            SDValue Chain, SDValue Src, unsigned Offset) {
+  SDValue BasePtr = LD->getBasePtr(), Ptr;
+  EVT VT = LD->getValueType(0), MemVT = LD->getMemoryVT();
+  EVT BasePtrVT = BasePtr.getValueType();
+  DebugLoc DL = LD->getDebugLoc();
+  SDVTList VTList = DAG.getVTList(VT, MVT::Other);
+
+  if (Offset)
+    Ptr = DAG.getNode(ISD::ADD, DL, BasePtrVT, BasePtr,
+                      DAG.getConstant(Offset, BasePtrVT));
+  else
+    Ptr = BasePtr;
+
+  SDValue Ops[] = { Chain, Ptr, Src };
+  return DAG.getMemIntrinsicNode(Opc, DL, VTList, Ops, 3, MemVT,
+                                 LD->getMemOperand());
+}
+
+// Expand an unaligned 32 or 64-bit integer load node.
+SDValue MipsTargetLowering::LowerLOAD(SDValue Op, SelectionDAG &DAG) const {
+  LoadSDNode *LD = cast<LoadSDNode>(Op);
+  EVT MemVT = LD->getMemoryVT();
+
+  // Return if load is aligned or if MemVT is neither i32 nor i64.
+  if ((LD->getAlignment() >= MemVT.getSizeInBits() / 8) ||
+      ((MemVT != MVT::i32) && (MemVT != MVT::i64)))
+    return SDValue();
+
+  bool IsLittle = Subtarget->isLittle();
+  EVT VT = Op.getValueType();
+  ISD::LoadExtType ExtType = LD->getExtensionType();
+  SDValue Chain = LD->getChain(), Undef = DAG.getUNDEF(VT);
+
+  assert((VT == MVT::i32) || (VT == MVT::i64));
+
+  // Expand
+  //  (set dst, (i64 (load baseptr)))
+  // to
+  //  (set tmp, (ldl (add baseptr, 7), undef))
+  //  (set dst, (ldr baseptr, tmp))
+  if ((VT == MVT::i64) && (ExtType == ISD::NON_EXTLOAD)) {
+    SDValue LDL = CreateLoadLR(MipsISD::LDL, DAG, LD, Chain, Undef,
+                               IsLittle ? 7 : 0);
+    return CreateLoadLR(MipsISD::LDR, DAG, LD, LDL.getValue(1), LDL,
+                        IsLittle ? 0 : 7);
+  }
+
+  SDValue LWL = CreateLoadLR(MipsISD::LWL, DAG, LD, Chain, Undef,
+                             IsLittle ? 3 : 0);
+  SDValue LWR = CreateLoadLR(MipsISD::LWR, DAG, LD, LWL.getValue(1), LWL,
+                             IsLittle ? 0 : 3);
+
+  // Expand
+  //  (set dst, (i32 (load baseptr))) or
+  //  (set dst, (i64 (sextload baseptr))) or
+  //  (set dst, (i64 (extload baseptr)))
+  // to
+  //  (set tmp, (lwl (add baseptr, 3), undef))
+  //  (set dst, (lwr baseptr, tmp))
+  if ((VT == MVT::i32) || (ExtType == ISD::SEXTLOAD) ||
+      (ExtType == ISD::EXTLOAD))
+    return LWR;
+
+  assert((VT == MVT::i64) && (ExtType == ISD::ZEXTLOAD));
+
+  // Expand
+  //  (set dst, (i64 (zextload baseptr)))
+  // to
+  //  (set tmp0, (lwl (add baseptr, 3), undef))
+  //  (set tmp1, (lwr baseptr, tmp0))
+  //  (set tmp2, (shl tmp1, 32))
+  //  (set dst, (srl tmp2, 32))
+  DebugLoc DL = LD->getDebugLoc();
+  SDValue Const32 = DAG.getConstant(32, MVT::i32);
+  SDValue SLL = DAG.getNode(ISD::SHL, DL, MVT::i64, LWR, Const32);
+  SDValue Ops[] = { SLL, LWR.getValue(1) };
+  return DAG.getMergeValues(Ops, 2, DL);
+}
+
+static SDValue CreateStoreLR(unsigned Opc, SelectionDAG &DAG, StoreSDNode *SD,
+                             SDValue Chain, unsigned Offset) {
+  SDValue BasePtr = SD->getBasePtr(), Ptr, Value = SD->getValue();
+  EVT VT = Value.getValueType(), MemVT = SD->getMemoryVT();
+  EVT BasePtrVT = BasePtr.getValueType();
+  DebugLoc DL = SD->getDebugLoc();
+  SDVTList VTList = DAG.getVTList(MVT::Other);
+
+  if (Offset)
+    Ptr = DAG.getNode(ISD::ADD, DL, BasePtrVT, BasePtr,
+                      DAG.getConstant(Offset, BasePtrVT));
+  else
+    Ptr = BasePtr;
+
+  SDValue Ops[] = { Chain, Value, Ptr };
+  return DAG.getMemIntrinsicNode(Opc, DL, VTList, Ops, 3, MemVT,
+                                 SD->getMemOperand());
+}
+
+// Expand an unaligned 32 or 64-bit integer store node.
+SDValue MipsTargetLowering::LowerSTORE(SDValue Op, SelectionDAG &DAG) const {
+  StoreSDNode *SD = cast<StoreSDNode>(Op);
+  EVT MemVT = SD->getMemoryVT();
+
+  // Return if store is aligned or if MemVT is neither i32 nor i64.
+  if ((SD->getAlignment() >= MemVT.getSizeInBits() / 8) ||
+      ((MemVT != MVT::i32) && (MemVT != MVT::i64)))
+    return SDValue();
+
+  bool IsLittle = Subtarget->isLittle();
+  SDValue Value = SD->getValue(), Chain = SD->getChain();
+  EVT VT = Value.getValueType();
+
+  // Expand
+  //  (store val, baseptr) or
+  //  (truncstore val, baseptr)
+  // to
+  //  (swl val, (add baseptr, 3))
+  //  (swr val, baseptr)
+  if ((VT == MVT::i32) || SD->isTruncatingStore()) {
+    SDValue SWL = CreateStoreLR(MipsISD::SWL, DAG, SD, Chain,
+                                IsLittle ? 3 : 0);
+    return CreateStoreLR(MipsISD::SWR, DAG, SD, SWL, IsLittle ? 0 : 3);
+  }
+
+  assert(VT == MVT::i64);
+
+  // Expand
+  //  (store val, baseptr)
+  // to
+  //  (sdl val, (add baseptr, 7))
+  //  (sdr val, baseptr)
+  SDValue SDL = CreateStoreLR(MipsISD::SDL, DAG, SD, Chain, IsLittle ? 7 : 0);
+  return CreateStoreLR(MipsISD::SDR, DAG, SD, SDL, IsLittle ? 0 : 7);
 }
 
 //===----------------------------------------------------------------------===//
