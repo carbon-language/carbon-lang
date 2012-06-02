@@ -171,39 +171,40 @@ public:
   }
 };
 
-// TODO: it should be a class in next commit.
+template<class IntType>
 struct IntRange {
 
-    IntItem Low;
-    IntItem High;
+  typedef IntRange<IntType> self;
+    IntType Low;
+    IntType High;
     bool IsEmpty : 1;
     bool IsSingleNumber : 1;
 // TODO: 
 // public:
     
-    typedef std::pair<IntRange, IntRange> SubRes;
+    typedef std::pair<self, self> SubRes;
     
     IntRange() : IsEmpty(true) {}
-    IntRange(const IntRange &RHS) :
+    IntRange(const self &RHS) :
       Low(RHS.Low), High(RHS.High), IsEmpty(false), IsSingleNumber(false) {}
-    IntRange(const IntItem &C) :
+    IntRange(const IntType &C) :
       Low(C), High(C), IsEmpty(false), IsSingleNumber(true) {}
-    IntRange(const IntItem &L, const IntItem &H) : Low(L), High(H),
+    IntRange(const IntType &L, const IntType &H) : Low(L), High(H),
         IsEmpty(false), IsSingleNumber(false) {}
     
     bool isEmpty() const { return IsEmpty; }
     bool isSingleNumber() const { return IsSingleNumber; }
     
-    const IntItem& getLow() {
+    const IntType& getLow() {
       assert(!IsEmpty && "Range is empty.");
       return Low;
     }
-    const IntItem& getHigh() {
+    const IntType& getHigh() {
       assert(!IsEmpty && "Range is empty.");
       return High;
     }
    
-    bool operator<(const IntRange &RHS) const {
+    bool operator<(const self &RHS) const {
       assert(!IsEmpty && "Left range is empty.");
       assert(!RHS.IsEmpty && "Right range is empty.");
       if (Low == RHS.Low) {
@@ -216,26 +217,26 @@ struct IntRange {
       return false;
     }
 
-    bool operator==(const IntRange &RHS) const {
+    bool operator==(const self &RHS) const {
       assert(!IsEmpty && "Left range is empty.");
       assert(!RHS.IsEmpty && "Right range is empty.");
       return Low == RHS.Low && High == RHS.High;      
     }
  
-    bool operator!=(const IntRange &RHS) const {
+    bool operator!=(const self &RHS) const {
       return !operator ==(RHS);      
     }
  
-    static bool LessBySize(const IntRange &LHS, const IntRange &RHS) {
+    static bool LessBySize(const self &LHS, const self &RHS) {
       return (LHS.High - LHS.Low) < (RHS.High - RHS.Low);
     }
  
-    bool isInRange(const IntItem &IntVal) const {
+    bool isInRange(const IntType &IntVal) const {
       assert(!IsEmpty && "Range is empty.");
       return IntVal >= Low && IntVal <= High;      
     }    
   
-    SubRes sub(const IntRange &RHS) const {
+    SubRes sub(const self &RHS) const {
       SubRes Res;
       
       // RHS is either more global and includes this range or
@@ -245,19 +246,19 @@ struct IntRange {
         // If RHS more global (it is enough to check
         // only one border in this case.
         if (RHS.isInRange(Low))
-          return std::make_pair(IntRange(Low, High), IntRange()); 
+          return std::make_pair(self(Low, High), self()); 
         
         return Res;
       }
       
       if (Low < RHS.Low) {
         Res.first.Low = Low;
-        IntItem NewHigh = RHS.Low;
+        IntType NewHigh = RHS.Low;
         --NewHigh;
         Res.first.High = NewHigh;
       }
       if (High > RHS.High) {
-        IntItem NewLow = RHS.High;
+        IntType NewLow = RHS.High;
         ++NewLow;
         Res.second.Low = NewLow;
         Res.second.High = High;
@@ -269,6 +270,7 @@ struct IntRange {
 //===----------------------------------------------------------------------===//
 /// IntegersSubsetGeneric - class that implements the subset of integers. It
 /// consists from ranges and single numbers.
+template <class IntTy>
 class IntegersSubsetGeneric {
 public:
   // Use Chris Lattner idea, that was initially described here:
@@ -276,10 +278,10 @@ public:
   // In short, for more compact memory consumption we can store flat
   // numbers collection, and define range as pair of indices.
   // In that case we can safe some memory on 32 bit machines.
-  typedef std::list<IntItem> FlatCollectionTy;
-  typedef std::pair<IntItem*, IntItem*> RangeLinkTy;
+  typedef std::list<IntTy> FlatCollectionTy;
+  typedef std::pair<IntTy*, IntTy*> RangeLinkTy;
   typedef SmallVector<RangeLinkTy, 64> RangeLinksTy;
-  typedef RangeLinksTy::iterator RangeLinksConstIt;
+  typedef typename RangeLinksTy::iterator RangeLinksConstIt;
   
 protected:
   
@@ -303,12 +305,12 @@ public:
     }
   }
   
-  typedef IntRange Range;
+  typedef IntRange<IntTy> Range;
  
   /// Checks is the given constant satisfies this case. Returns
   /// true if it equals to one of contained values or belongs to the one of
   /// contained ranges.
-  bool isSatisfies(const IntItem &CheckingVal) const {
+  bool isSatisfies(const IntTy &CheckingVal) const {
     for (unsigned i = 0, e = getNumItems(); i < e; ++i) {
       if (RangeLinks[i].first == RangeLinks[i].second) {
         if (*RangeLinks[i].first == CheckingVal)
@@ -381,9 +383,9 @@ public:
 };  
 
 //===----------------------------------------------------------------------===//
-/// IntegersSubset - currenly is extension of IntegersSubsetGeneric
+/// IntegersSubset - currently is extension of IntegersSubsetGeneric
 /// that also supports conversion to/from Constant* object.
-class IntegersSubset : public IntegersSubsetGeneric {
+class IntegersSubset : public IntegersSubsetGeneric<IntItem> {
   Constant *Holder;
   
   static unsigned getNumItemsFromConstant(Constant *C) {

@@ -26,19 +26,20 @@
 
 namespace llvm {
 
-template <class SuccessorClass, class IntegersSubsetTy>
+template <class SuccessorClass,
+          class IntegersSubsetTy = IntegersSubset,
+          class IntTy = IntItem>
 class IntegersSubsetMapping {
 public:
   
-  typedef IntRange RangeTy;
+  typedef IntRange<IntTy> RangeTy;
   
   struct RangeEx : public RangeTy {
-    typedef IntRange RangeTy;
     RangeEx() : Weight(1) {}
     RangeEx(const RangeTy &R) : RangeTy(R.Low, R.High), Weight(1) {}
-    RangeEx(const IntItem &C) : RangeTy(C), Weight(1) {}
-    RangeEx(const IntItem &L, const IntItem &H) : RangeTy(L, H), Weight(1) {}
-    RangeEx(const IntItem &L, const IntItem &H, unsigned W) :
+    RangeEx(const IntTy &C) : RangeTy(C), Weight(1) {}
+    RangeEx(const IntTy &L, const IntTy &H) : RangeTy(L, H), Weight(1) {}
+    RangeEx(const IntTy &L, const IntTy &H, unsigned W) :
       RangeTy(L, H), Weight(W) {}
     unsigned Weight;
   };
@@ -125,14 +126,14 @@ public:
     sort();
     CaseItems OldItems = Items;
     Items.clear();
-    IntItem *Low = &OldItems.begin()->first.Low;
-    IntItem *High = &OldItems.begin()->first.High;
+    IntTy *Low = &OldItems.begin()->first.Low;
+    IntTy *High = &OldItems.begin()->first.High;
     unsigned Weight = 1;
     SuccessorClass *Successor = OldItems.begin()->second;
     for (CaseItemIt i = OldItems.begin(), j = i+1, e = OldItems.end();
         j != e; i = j++) {
       if (isJoinable(i, j)) {
-        IntItem *CurHigh = &j->first.High;
+        IntTy *CurHigh = &j->first.High;
         ++Weight;
         if (*CurHigh > *High)
           High = CurHigh;
@@ -152,13 +153,13 @@ public:
   }
   
   /// Adds a constant value.
-  void add(const IntItem &C, SuccessorClass *S = 0) {
+  void add(const IntTy &C, SuccessorClass *S = 0) {
     RangeTy R(C);
     add(R, S);
   }
   
   /// Adds a range.
-  void add(const IntItem &Low, const IntItem &High, SuccessorClass *S = 0) {
+  void add(const IntTy &Low, const IntTy &High, SuccessorClass *S = 0) {
     RangeTy R(Low, High);
     add(R, S);
   }
@@ -209,7 +210,7 @@ public:
 };
 
 class BasicBlock;
-typedef IntegersSubsetMapping<BasicBlock, IntegersSubset> IntegersSubsetToBB;
+typedef IntegersSubsetMapping<BasicBlock> IntegersSubsetToBB;
 
 }
 
