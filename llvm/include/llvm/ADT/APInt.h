@@ -16,6 +16,7 @@
 #define LLVM_APINT_H
 
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/Support/MathExtras.h"
 #include <cassert>
 #include <climits>
@@ -272,6 +273,13 @@ public:
     else
       initSlowCase(that);
   }
+
+#if LLVM_USE_RVALUE_REFERENCES
+  /// @brief Move Constructor.
+  APInt(APInt&& that) : BitWidth(that.BitWidth), VAL(that.VAL) {
+    that.BitWidth = 0;
+  }
+#endif
 
   /// @brief Destructor.
   ~APInt() {
@@ -586,6 +594,21 @@ public:
 
     return AssignSlowCase(RHS);
   }
+
+#if LLVM_USE_RVALUE_REFERENCES
+  /// @brief Move assignment operator.
+  APInt& operator=(APInt&& that) {
+    if (!isSingleWord())
+      delete [] pVal;
+
+    BitWidth = that.BitWidth;
+    VAL = that.VAL;
+
+    that.BitWidth = 0;
+
+    return *this;
+  }
+#endif
 
   /// The RHS value is assigned to *this. If the significant bits in RHS exceed
   /// the bit width, the excess bits are truncated. If the bit width is larger
