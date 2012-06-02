@@ -292,7 +292,6 @@ bool MipsTargetLowering::allowsUnalignedMemoryAccesses(EVT VT) const {
   switch (SVT) {
   case MVT::i64:
   case MVT::i32:
-  case MVT::i16:
     return true;
   case MVT::f32:
     return Subtarget->hasMips32r2Or64();
