@@ -237,7 +237,8 @@ GDBRemoteCommunication::SendPacketNoLock (const char *payload, size_t payload_le
             {
                 if (GetAck () != '+')
                 {
-                    printf("get ack failed...");
+                    if (log)
+                        log->Printf("get ack failed...");
                     return 0;
                 }
             }
