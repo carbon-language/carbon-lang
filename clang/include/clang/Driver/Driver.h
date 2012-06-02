@@ -177,7 +177,7 @@ private:
   /// \brief Cache of all the ToolChains in use by the driver.
   ///
   /// This maps from the string representation of a triple to a ToolChain
-  /// created targetting that triple. The driver owns all the ToolChain objects
+  /// created targeting that triple. The driver owns all the ToolChain objects
   /// stored in it, and will clean them up when torn down.
   mutable llvm::StringMap<ToolChain *> ToolChains;
 

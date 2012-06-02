@@ -273,7 +273,7 @@ GenericTaintChecker::TaintPropagationRule::getTaintPropagationRule(
 
   // Skipping the following functions, since they might be used for cleansing
   // or smart memory copy:
-  // - memccpy - copying untill hitting a special character.
+  // - memccpy - copying until hitting a special character.
 
   return TaintPropagationRule();
 }

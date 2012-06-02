@@ -4375,7 +4375,7 @@ static void handleDelayedForbiddenType(Sema &S, DelayedDiagnostic &diag,
   }
   if (S.getLangOpts().ObjCAutoRefCount)
     if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(decl)) {
-      // FIXME. we may want to supress diagnostics for all
+      // FIXME: we may want to suppress diagnostics for all
       // kind of forbidden type messages on unavailable functions. 
       if (FD->hasAttr<UnavailableAttr>() &&
           diag.getForbiddenTypeDiagnostic() == 

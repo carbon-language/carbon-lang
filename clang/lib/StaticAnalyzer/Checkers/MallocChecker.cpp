@@ -1286,7 +1286,7 @@ bool MallocChecker::doesNotFreeMemory(const CallOrObjCMessage *Call,
     // White list the 'XXXNoCopy' ObjC functions.
     if (FName.endswith("NoCopy")) {
       // Look for the deallocator argument. We know that the memory ownership
-      // is not transfered only if the deallocator argument is
+      // is not transferred only if the deallocator argument is
       // 'kCFAllocatorNull'.
       for (unsigned i = 1; i < Call->getNumArgs(); ++i) {
         const Expr *ArgE = Call->getArg(i)->IgnoreParenCasts();
@@ -1368,7 +1368,7 @@ bool MallocChecker::doesNotFreeMemory(const CallOrObjCMessage *Call,
     }
 
     // If the first selector ends with NoCopy, assume that the ownership is
-    // transfered as well.
+    // transferred as well.
     // Ex:  [NSData dataWithBytesNoCopy:bytes length:10];
     if (S.getNameForSlot(0).endswith("NoCopy")) {
       return false;

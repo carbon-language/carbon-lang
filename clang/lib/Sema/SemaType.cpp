@@ -2736,7 +2736,7 @@ static void transferARCOwnershipToDeclaratorChunk(TypeProcessingState &state,
   // TODO: mark whether we did this inference?
 }
 
-/// \brief Used for transfering ownership in casts resulting in l-values.
+/// \brief Used for transferring ownership in casts resulting in l-values.
 static void transferARCOwnership(TypeProcessingState &state,
                                  QualType &declSpecTy,
                                  Qualifiers::ObjCLifetime ownership) {

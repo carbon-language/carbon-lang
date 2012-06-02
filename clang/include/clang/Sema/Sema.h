@@ -2692,7 +2692,7 @@ public:
   /// this variable in the innermost block or lambda. Only valid when the
   /// variable can be captured.
   ///
-  /// \param DeclRefType Will be set to the type of a refernce to the capture
+  /// \param DeclRefType Will be set to the type of a reference to the capture
   /// from within the current scope. Only valid when the variable can be 
   /// captured.
   ///

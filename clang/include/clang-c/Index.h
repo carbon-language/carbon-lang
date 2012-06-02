@@ -3260,7 +3260,7 @@ CINDEX_LINKAGE CXCursor clang_getSpecializedCursorTemplate(CXCursor C);
  * \param PieceIndex For contiguous names or when passing the flag 
  * CXNameRange_WantSinglePiece, only one piece with index 0 is 
  * available. When the CXNameRange_WantSinglePiece flag is not passed for a
- * non-contiguous names, this index can be used to retreive the individual
+ * non-contiguous names, this index can be used to retrieve the individual
  * pieces of the name. See also CXNameRange_WantSinglePiece.
  *
  * \returns The piece of the name pointed to by the given cursor. If there is no

@@ -59,7 +59,7 @@ public:
   ///
   /// This is a static helper to handle the line wrapping, colorizing, and
   /// rendering of a diagnostic message to a particular ostream. It is
-  /// publically visible so that clients which do not have sufficient state to
+  /// publicly visible so that clients which do not have sufficient state to
   /// build a complete TextDiagnostic object can still get consistent
   /// formatting of their diagnostic messages.
   ///

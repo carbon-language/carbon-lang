@@ -349,7 +349,7 @@ namespace {
     virtual void RewriteIvarOffsetComputation(ObjCIvarDecl *ivar,
                                          std::string &Result) = 0;
     
-    // Misc. AST transformation routines. Somtimes they end up calling
+    // Misc. AST transformation routines. Sometimes they end up calling
     // rewriting routines on the new ASTs.
     CallExpr *SynthesizeCallToFunctionDecl(FunctionDecl *FD,
                                            Expr **args, unsigned nargs,

@@ -501,7 +501,7 @@ public:
   /// something like "default" (meaning that the symbol is visible
   /// outside this shared object) and "hidden" (meaning that it isn't)
   /// visibilities, but "protected" is really an ELF-specific concept
-  /// with wierd semantics designed around the convenience of dynamic
+  /// with weird semantics designed around the convenience of dynamic
   /// linker implementations.  Which is not to suggest that there's
   /// consistent target-independent semantics for "default" visibility
   /// either; the entire thing is pretty badly mangled.

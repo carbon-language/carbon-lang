@@ -3366,7 +3366,7 @@ class NamespaceSpecifierSet {
       getNestedNameSpecifierIdentifiers(CurScopeSpec->getScopeRep(),
                                         CurNameSpecifierIdentifiers);
     // Build the list of identifiers that would be used for an absolute
-    // (from the global context) NestedNameSpecifier refering to the current
+    // (from the global context) NestedNameSpecifier referring to the current
     // context.
     for (DeclContextList::reverse_iterator C = CurContextChain.rbegin(),
                                         CEnd = CurContextChain.rend();
