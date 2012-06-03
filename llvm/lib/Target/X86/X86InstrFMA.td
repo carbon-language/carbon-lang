@@ -79,40 +79,40 @@ multiclass fma3p_forms<bits<8> opc132, bits<8> opc213, bits<8> opc231,
 // Fused Multiply-Add
 let ExeDomain = SSEPackedSingle in {
   defm VFMADDPS    : fma3p_forms<0x98, 0xA8, 0xB8, "vfmadd", "ps", memopv4f32,
-    memopv8f32, int_x86_fma4_vfmadd_ps, int_x86_fma4_vfmadd_ps_256>;
+    memopv8f32, int_x86_fma_vfmadd_ps, int_x86_fma_vfmadd_ps_256>;
   defm VFMSUBPS    : fma3p_forms<0x9A, 0xAA, 0xBA, "vfmsub", "ps",  memopv4f32,
-    memopv8f32, int_x86_fma4_vfmsub_ps, int_x86_fma4_vfmsub_ps_256>;
+    memopv8f32, int_x86_fma_vfmsub_ps, int_x86_fma_vfmsub_ps_256>;
   defm VFMADDSUBPS : fma3p_forms<0x96, 0xA6, 0xB6, "vfmaddsub", "ps",
-    memopv4f32, memopv8f32, int_x86_fma4_vfmaddsub_ps,
-    int_x86_fma4_vfmaddsub_ps_256>;
+    memopv4f32, memopv8f32, int_x86_fma_vfmaddsub_ps,
+    int_x86_fma_vfmaddsub_ps_256>;
   defm VFMSUBADDPS : fma3p_forms<0x97, 0xA7, 0xB7, "vfmsubadd", "ps",
-    memopv4f32, memopv8f32, int_x86_fma4_vfmsubadd_ps,
-    int_x86_fma4_vfmaddsub_ps_256>;
+    memopv4f32, memopv8f32, int_x86_fma_vfmsubadd_ps,
+    int_x86_fma_vfmaddsub_ps_256>;
 }
 
 let ExeDomain = SSEPackedDouble in {
   defm VFMADDPD    : fma3p_forms<0x98, 0xA8, 0xB8, "vfmadd", "pd", memopv2f64,
-    memopv4f64, int_x86_fma4_vfmadd_pd, int_x86_fma4_vfmadd_pd_256>, VEX_W;
+    memopv4f64, int_x86_fma_vfmadd_pd, int_x86_fma_vfmadd_pd_256>, VEX_W;
   defm VFMSUBPD    : fma3p_forms<0x9A, 0xAA, 0xBA, "vfmsub", "pd", memopv2f64,
-    memopv4f64, int_x86_fma4_vfmsub_pd, int_x86_fma4_vfmsub_pd_256>, VEX_W;
+    memopv4f64, int_x86_fma_vfmsub_pd, int_x86_fma_vfmsub_pd_256>, VEX_W;
   defm VFMADDSUBPD : fma3p_forms<0x96, 0xA6, 0xB6, "vfmaddsub", "pd", memopv2f64,
-    memopv4f64, int_x86_fma4_vfmaddsub_pd, int_x86_fma4_vfmaddsub_pd_256>, VEX_W;
+    memopv4f64, int_x86_fma_vfmaddsub_pd, int_x86_fma_vfmaddsub_pd_256>, VEX_W;
   defm VFMSUBADDPD : fma3p_forms<0x97, 0xA7, 0xB7, "vfmsubadd", "pd", memopv2f64,
-    memopv4f64, int_x86_fma4_vfmsubadd_pd, int_x86_fma4_vfmsubadd_pd_256>, VEX_W;
+    memopv4f64, int_x86_fma_vfmsubadd_pd, int_x86_fma_vfmsubadd_pd_256>, VEX_W;
 }
 
 // Fused Negative Multiply-Add
 let ExeDomain = SSEPackedSingle in {
   defm VFNMADDPS : fma3p_forms<0x9C, 0xAC, 0xBC, "vfnmadd", "ps",  memopv4f32,
-    memopv8f32, int_x86_fma4_vfnmadd_ps, int_x86_fma4_vfnmadd_ps_256>;
+    memopv8f32, int_x86_fma_vfnmadd_ps, int_x86_fma_vfnmadd_ps_256>;
   defm VFNMSUBPS : fma3p_forms<0x9E, 0xAE, 0xBE, "vfnmsub", "ps",  memopv4f32,
-    memopv8f32, int_x86_fma4_vfnmsub_ps, int_x86_fma4_vfnmsub_ps_256>;
+    memopv8f32, int_x86_fma_vfnmsub_ps, int_x86_fma_vfnmsub_ps_256>;
 }
 let ExeDomain = SSEPackedDouble in {
   defm VFNMADDPD : fma3p_forms<0x9C, 0xAC, 0xBC, "vfnmadd", "pd", memopv2f64,
-    memopv4f64, int_x86_fma4_vfnmadd_pd, int_x86_fma4_vfnmadd_pd_256>, VEX_W;
+    memopv4f64, int_x86_fma_vfnmadd_pd, int_x86_fma_vfnmadd_pd_256>, VEX_W;
   defm VFNMSUBPD : fma3p_forms<0x9E, 0xAE, 0xBE, "vfnmsub", "pd", memopv2f64,
-    memopv4f64, int_x86_fma4_vfnmsub_pd, int_x86_fma4_vfnmsub_pd_256>, VEX_W;
+    memopv4f64, int_x86_fma_vfnmsub_pd, int_x86_fma_vfnmsub_pd_256>, VEX_W;
 }
 
 
@@ -160,15 +160,15 @@ multiclass fma3s_forms<bits<8> opc132, bits<8> opc213, bits<8> opc231,
                                   sse_load_f64, IntF64>;
 }
 
-defm VFMADD : fma3s_forms<0x99, 0xA9, 0xB9, "vfmadd", int_x86_fma4_vfmadd_ss,
-                          int_x86_fma4_vfmadd_sd>, VEX_LIG;
-defm VFMSUB : fma3s_forms<0x9B, 0xAB, 0xBB, "vfmsub", int_x86_fma4_vfmsub_ss,
-                          int_x86_fma4_vfmsub_sd>, VEX_LIG;
+defm VFMADD : fma3s_forms<0x99, 0xA9, 0xB9, "vfmadd", int_x86_fma_vfmadd_ss,
+                          int_x86_fma_vfmadd_sd>, VEX_LIG;
+defm VFMSUB : fma3s_forms<0x9B, 0xAB, 0xBB, "vfmsub", int_x86_fma_vfmsub_ss,
+                          int_x86_fma_vfmsub_sd>, VEX_LIG;
 
-defm VFNMADD : fma3s_forms<0x9D, 0xAD, 0xBD, "vfnmadd", int_x86_fma4_vfnmadd_ss,
-                           int_x86_fma4_vfnmadd_sd>, VEX_LIG;
-defm VFNMSUB : fma3s_forms<0x9F, 0xAF, 0xBF, "vfnmsub", int_x86_fma4_vfnmsub_ss,
-                           int_x86_fma4_vfnmsub_sd>, VEX_LIG;
+defm VFNMADD : fma3s_forms<0x9D, 0xAD, 0xBD, "vfnmadd", int_x86_fma_vfnmadd_ss,
+                           int_x86_fma_vfnmadd_sd>, VEX_LIG;
+defm VFNMSUB : fma3s_forms<0x9F, 0xAF, 0xBF, "vfnmsub", int_x86_fma_vfnmsub_ss,
+                           int_x86_fma_vfnmsub_sd>, VEX_LIG;
 
 
 //===----------------------------------------------------------------------===//
@@ -259,44 +259,44 @@ let isCodeGenOnly = 1 in {
 let Predicates = [HasFMA4] in {
 
 defm VFMADDSS4    : fma4s<0x6A, "vfmaddss", ssmem, sse_load_f32,
-                          int_x86_fma4_vfmadd_ss>;
+                          int_x86_fma_vfmadd_ss>;
 defm VFMADDSD4    : fma4s<0x6B, "vfmaddsd", sdmem, sse_load_f64,
-                          int_x86_fma4_vfmadd_sd>;
-defm VFMADDPS4    : fma4p<0x68, "vfmaddps", int_x86_fma4_vfmadd_ps,
-                          int_x86_fma4_vfmadd_ps_256, memopv4f32, memopv8f32>;
-defm VFMADDPD4    : fma4p<0x69, "vfmaddpd", int_x86_fma4_vfmadd_pd,
-                          int_x86_fma4_vfmadd_pd_256, memopv2f64, memopv4f64>;
+                          int_x86_fma_vfmadd_sd>;
+defm VFMADDPS4    : fma4p<0x68, "vfmaddps", int_x86_fma_vfmadd_ps,
+                          int_x86_fma_vfmadd_ps_256, memopv4f32, memopv8f32>;
+defm VFMADDPD4    : fma4p<0x69, "vfmaddpd", int_x86_fma_vfmadd_pd,
+                          int_x86_fma_vfmadd_pd_256, memopv2f64, memopv4f64>;
 defm VFMSUBSS4    : fma4s<0x6E, "vfmsubss", ssmem, sse_load_f32,
-                          int_x86_fma4_vfmsub_ss>;
+                          int_x86_fma_vfmsub_ss>;
 defm VFMSUBSD4    : fma4s<0x6F, "vfmsubsd", sdmem, sse_load_f64,
-                          int_x86_fma4_vfmsub_sd>;
-defm VFMSUBPS4    : fma4p<0x6C, "vfmsubps", int_x86_fma4_vfmsub_ps,
-                          int_x86_fma4_vfmsub_ps_256, memopv4f32, memopv8f32>;
-defm VFMSUBPD4    : fma4p<0x6D, "vfmsubpd", int_x86_fma4_vfmsub_pd,
-                          int_x86_fma4_vfmsub_pd_256, memopv2f64, memopv4f64>;
+                          int_x86_fma_vfmsub_sd>;
+defm VFMSUBPS4    : fma4p<0x6C, "vfmsubps", int_x86_fma_vfmsub_ps,
+                          int_x86_fma_vfmsub_ps_256, memopv4f32, memopv8f32>;
+defm VFMSUBPD4    : fma4p<0x6D, "vfmsubpd", int_x86_fma_vfmsub_pd,
+                          int_x86_fma_vfmsub_pd_256, memopv2f64, memopv4f64>;
 defm VFNMADDSS4   : fma4s<0x7A, "vfnmaddss", ssmem, sse_load_f32,
-                          int_x86_fma4_vfnmadd_ss>;
+                          int_x86_fma_vfnmadd_ss>;
 defm VFNMADDSD4   : fma4s<0x7B, "vfnmaddsd", sdmem, sse_load_f64,
-                          int_x86_fma4_vfnmadd_sd>;
-defm VFNMADDPS4   : fma4p<0x78, "vfnmaddps", int_x86_fma4_vfnmadd_ps,
-                          int_x86_fma4_vfnmadd_ps_256, memopv4f32, memopv8f32>;
-defm VFNMADDPD4   : fma4p<0x79, "vfnmaddpd", int_x86_fma4_vfnmadd_pd,
-                          int_x86_fma4_vfnmadd_pd_256, memopv2f64, memopv4f64>;
+                          int_x86_fma_vfnmadd_sd>;
+defm VFNMADDPS4   : fma4p<0x78, "vfnmaddps", int_x86_fma_vfnmadd_ps,
+                          int_x86_fma_vfnmadd_ps_256, memopv4f32, memopv8f32>;
+defm VFNMADDPD4   : fma4p<0x79, "vfnmaddpd", int_x86_fma_vfnmadd_pd,
+                          int_x86_fma_vfnmadd_pd_256, memopv2f64, memopv4f64>;
 defm VFNMSUBSS4   : fma4s<0x7E, "vfnmsubss", ssmem, sse_load_f32,
-                          int_x86_fma4_vfnmsub_ss>;
+                          int_x86_fma_vfnmsub_ss>;
 defm VFNMSUBSD4   : fma4s<0x7F, "vfnmsubsd", sdmem, sse_load_f64,
-                          int_x86_fma4_vfnmsub_sd>;
-defm VFNMSUBPS4   : fma4p<0x7C, "vfnmsubps", int_x86_fma4_vfnmsub_ps,
-                          int_x86_fma4_vfnmsub_ps_256, memopv4f32, memopv8f32>;
-defm VFNMSUBPD4   : fma4p<0x7D, "vfnmsubpd", int_x86_fma4_vfnmsub_pd,
-                          int_x86_fma4_vfnmsub_pd_256, memopv2f64, memopv4f64>;
-defm VFMADDSUBPS4 : fma4p<0x5C, "vfmaddsubps", int_x86_fma4_vfmaddsub_ps,
-                         int_x86_fma4_vfmaddsub_ps_256, memopv4f32, memopv8f32>;
-defm VFMADDSUBPD4 : fma4p<0x5D, "vfmaddsubpd", int_x86_fma4_vfmaddsub_pd,
-                         int_x86_fma4_vfmaddsub_pd_256, memopv2f64, memopv4f64>;
-defm VFMSUBADDPS4 : fma4p<0x5E, "vfmsubaddps", int_x86_fma4_vfmsubadd_ps,
-                         int_x86_fma4_vfmsubadd_ps_256, memopv4f32, memopv8f32>;
-defm VFMSUBADDPD4 : fma4p<0x5F, "vfmsubaddpd", int_x86_fma4_vfmsubadd_pd,
-                         int_x86_fma4_vfmsubadd_pd_256, memopv2f64, memopv4f64>;
+                          int_x86_fma_vfnmsub_sd>;
+defm VFNMSUBPS4   : fma4p<0x7C, "vfnmsubps", int_x86_fma_vfnmsub_ps,
+                          int_x86_fma_vfnmsub_ps_256, memopv4f32, memopv8f32>;
+defm VFNMSUBPD4   : fma4p<0x7D, "vfnmsubpd", int_x86_fma_vfnmsub_pd,
+                          int_x86_fma_vfnmsub_pd_256, memopv2f64, memopv4f64>;
+defm VFMADDSUBPS4 : fma4p<0x5C, "vfmaddsubps", int_x86_fma_vfmaddsub_ps,
+                          int_x86_fma_vfmaddsub_ps_256, memopv4f32, memopv8f32>;
+defm VFMADDSUBPD4 : fma4p<0x5D, "vfmaddsubpd", int_x86_fma_vfmaddsub_pd,
+                          int_x86_fma_vfmaddsub_pd_256, memopv2f64, memopv4f64>;
+defm VFMSUBADDPS4 : fma4p<0x5E, "vfmsubaddps", int_x86_fma_vfmsubadd_ps,
+                          int_x86_fma_vfmsubadd_ps_256, memopv4f32, memopv8f32>;
+defm VFMSUBADDPD4 : fma4p<0x5F, "vfmsubaddpd", int_x86_fma_vfmsubadd_pd,
+                          int_x86_fma_vfmsubadd_pd_256, memopv2f64, memopv4f64>;
 } // HasFMA4
 
