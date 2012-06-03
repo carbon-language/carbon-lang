@@ -1747,9 +1747,9 @@ bool X86TargetInfo::setFeatureEnabled(llvm::StringMap<bool> &Features,
     else if (Name == "3dnowa")
       Features["mmx"] = Features["3dnow"] = Features["3dnowa"] = true;
     else if (Name == "aes")
-      Features["aes"] = true;
+      Features["sse"] = Features["sse2"] = Features["aes"] = true;
     else if (Name == "pclmul")
-      Features["pclmul"] = true;
+      Features["sse"] = Features["sse2"] = Features["pclmul"] = true;
     else if (Name == "avx")
       Features["mmx"] = Features["sse"] = Features["sse2"] = Features["sse3"] =
         Features["ssse3"] = Features["sse41"] = Features["sse42"] =
@@ -1787,7 +1787,8 @@ bool X86TargetInfo::setFeatureEnabled(llvm::StringMap<bool> &Features,
         Features["sse4a"] = false;
     else if (Name == "sse2")
       Features["sse2"] = Features["sse3"] = Features["ssse3"] =
-        Features["sse41"] = Features["sse42"] = Features["sse4a"] = false;
+        Features["sse41"] = Features["sse42"] = Features["sse4a"] =
+        Features["aes"] = Features["pclmul"] = false;
     else if (Name == "sse3")
       Features["sse3"] = Features["ssse3"] = Features["sse41"] =
         Features["sse42"] = Features["sse4a"] = false;
