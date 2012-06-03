@@ -379,6 +379,7 @@
 // RUN:     -target i386-unknown-linux \
 // RUN:   | FileCheck %s -check-prefix=CHECK_COREI7_M32
 // CHECK_COREI7_M32: #define __MMX__ 1
+// CHECK_COREI7_M32: #define __POPCNT__ 1
 // CHECK_COREI7_M32: #define __SSE2__ 1
 // CHECK_COREI7_M32: #define __SSE3__ 1
 // CHECK_COREI7_M32: #define __SSE4_1__ 1
@@ -395,6 +396,7 @@
 // RUN:     -target i386-unknown-linux \
 // RUN:   | FileCheck %s -check-prefix=CHECK_COREI7_M64
 // CHECK_COREI7_M64: #define __MMX__ 1
+// CHECK_COREI7_M64: #define __POPCNT__ 1
 // CHECK_COREI7_M64: #define __SSE2_MATH__ 1
 // CHECK_COREI7_M64: #define __SSE2__ 1
 // CHECK_COREI7_M64: #define __SSE3__ 1
@@ -418,6 +420,7 @@
 // CHECK_COREI7_AVX_M32: #define __AVX__ 1
 // CHECK_COREI7_AVX_M32: #define __MMX__ 1
 // CHECK_COREI7_AVX_M32: #define __PCLMUL__ 1
+// CHECK_COREI7_AVX_M32: #define __POPCNT__ 1
 // CHECK_COREI7_AVX_M32: #define __SSE2__ 1
 // CHECK_COREI7_AVX_M32: #define __SSE3__ 1
 // CHECK_COREI7_AVX_M32: #define __SSE4_1__ 1
@@ -437,6 +440,7 @@
 // CHECK_COREI7_AVX_M64: #define __AVX__ 1
 // CHECK_COREI7_AVX_M64: #define __MMX__ 1
 // CHECK_COREI7_AVX_M64: #define __PCLMUL__ 1
+// CHECK_COREI7_AVX_M64: #define __POPCNT__ 1
 // CHECK_COREI7_AVX_M64: #define __SSE2_MATH__ 1
 // CHECK_COREI7_AVX_M64: #define __SSE2__ 1
 // CHECK_COREI7_AVX_M64: #define __SSE3__ 1
