@@ -1,7 +1,7 @@
 ; RUN: llc < %s -mtriple=x86_64-pc-win32 -mcpu=core-avx2 -mattr=avx2,+fma3 | FileCheck %s
 
 define <4 x float> @test_x86_fmadd_ss(<4 x float> %a0, <4 x float> %a1, <4 x float> %a2) {
-  ; CHECK: fmadd132ss {{.*\(%r.*}}, %xmm
+  ; CHECK: fmadd132ss %xmm
   %res = call <4 x float> @llvm.x86.fma4.vfmadd.ss(<4 x float> %a0, <4 x float> %a1, <4 x float> %a2) nounwind
   ret <4 x float> %res
 }
@@ -22,7 +22,7 @@ define <8 x float> @test_x86_fmadd_ps_y(<8 x float> %a0, <8 x float> %a1, <8 x f
 declare <8 x float> @llvm.x86.fma4.vfmadd.ps.256(<8 x float>, <8 x float>, <8 x float>) nounwind readnone
 
 define <4 x float> @test_x86_fnmadd_ss(<4 x float> %a0, <4 x float> %a1, <4 x float> %a2) {
-  ; CHECK: fnmadd132ss {{.*\(%r.*}}, %xmm
+  ; CHECK: fnmadd132ss %xmm
   %res = call <4 x float> @llvm.x86.fma4.vfnmadd.ss(<4 x float> %a0, <4 x float> %a1, <4 x float> %a2) nounwind
   ret <4 x float> %res
 }
