@@ -8092,7 +8092,7 @@ static void DiagnoseBitwisePrecedence(Sema &Self, BinaryOperatorKind Opc,
     << DiagRange << BinOp::getOpcodeStr(Opc) << OpStr;
   SuggestParentheses(Self, OpLoc,
     Self.PDiag(diag::note_precedence_bitwise_silence) << OpStr,
-    RHSExpr->getSourceRange());
+    (isLeftComp ? LHSExpr : RHSExpr)->getSourceRange());
   SuggestParentheses(Self, OpLoc,
     Self.PDiag(diag::note_precedence_bitwise_first) << BinOp::getOpcodeStr(Opc),
     ParensRange);
