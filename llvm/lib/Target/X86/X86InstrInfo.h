@@ -367,12 +367,6 @@ public:
   virtual bool OptimizeSubInstr(MachineInstr *SubInstr,
                                 const MachineRegisterInfo *MRI) const;
 
-  virtual bool AnalyzeCompare(const MachineInstr *MI, unsigned &SrcReg,
-                              int &CmpMask, int &CmpValue) const;
-  virtual bool OptimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg,
-                                    int CmpMask, int CmpValue,
-                                    const MachineRegisterInfo *MRI) const;
-
 private:
   MachineInstr * convertToThreeAddressWithLEA(unsigned MIOpc,
                                               MachineFunction::iterator &MFI,

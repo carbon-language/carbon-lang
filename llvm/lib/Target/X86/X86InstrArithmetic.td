@@ -1143,9 +1143,7 @@ let Uses = [EFLAGS] in {
                             0, 0>;
 }
 
-let isCompare = 1 in {
 defm CMP : ArithBinOp_F<0x38, 0x3A, 0x3C, "cmp", MRM7r, MRM7m, X86cmp, 0, 0>;
-}
 
 
 //===----------------------------------------------------------------------===//
