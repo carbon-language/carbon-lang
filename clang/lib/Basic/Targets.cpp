@@ -1245,6 +1245,7 @@ class X86TargetInfo : public TargetInfo {
   bool HasPOPCNT;
   bool HasSSE4a;
   bool HasFMA4;
+  bool HasFMA;
 
   /// \brief Enumeration of all of the X86 CPUs supported by Clang.
   ///
@@ -1391,7 +1392,7 @@ public:
     : TargetInfo(triple), SSELevel(NoSSE), MMX3DNowLevel(NoMMX3DNow),
       HasAES(false), HasPCLMUL(false), HasLZCNT(false), HasBMI(false),
       HasBMI2(false), HasPOPCNT(false), HasSSE4a(false), HasFMA4(false),
-      CPU(CK_Generic) {
+      HasFMA(false), CPU(CK_Generic) {
     BigEndian = false;
     LongDoubleFormat = &llvm::APFloat::x87DoubleExtended;
   }
@@ -1581,6 +1582,7 @@ void X86TargetInfo::getDefaultFeatures(llvm::StringMap<bool> &Features) const {
   Features["bmi2"] = false;
   Features["popcnt"] = false;
   Features["fma4"] = false;
+  Features["fma"] = false;
 
   // FIXME: This *really* should not be here.
 
@@ -1650,6 +1652,7 @@ void X86TargetInfo::getDefaultFeatures(llvm::StringMap<bool> &Features) const {
     setFeatureEnabled(Features, "lzcnt", true);
     setFeatureEnabled(Features, "bmi", true);
     setFeatureEnabled(Features, "bmi2", true);
+    setFeatureEnabled(Features, "fma", true);
     break;
   case CK_K6:
   case CK_WinChipC6:
@@ -1755,6 +1758,10 @@ bool X86TargetInfo::setFeatureEnabled(llvm::StringMap<bool> &Features,
       Features["mmx"] = Features["sse"] = Features["sse2"] = Features["sse3"] =
         Features["ssse3"] = Features["sse41"] = Features["sse42"] =
         Features["popcnt"] = Features["avx"] = Features["avx2"] = true;
+    else if (Name == "fma")
+      Features["mmx"] = Features["sse"] = Features["sse2"] = Features["sse3"] =
+        Features["ssse3"] = Features["sse41"] = Features["sse42"] =
+        Features["popcnt"] = Features["avx"] = Features["fma"] = true;
     else if (Name == "fma4")
         Features["mmx"] = Features["sse"] = Features["sse2"] = Features["sse3"] =
         Features["ssse3"] = Features["sse41"] = Features["sse42"] =
@@ -1799,9 +1806,12 @@ bool X86TargetInfo::setFeatureEnabled(llvm::StringMap<bool> &Features,
     else if (Name == "pclmul")
       Features["pclmul"] = false;
     else if (Name == "avx")
-      Features["avx"] = Features["avx2"] = Features["fma4"] = false;
+      Features["avx"] = Features["avx2"] = Features["fma"] =
+        Features["fma4"] = false;
     else if (Name == "avx2")
       Features["avx2"] = false;
+    else if (Name == "fma")
+      Features["fma"] = false;
     else if (Name == "sse4a")
       Features["sse4a"] = Features["fma4"] = false;
     else if (Name == "lzcnt")
@@ -1867,6 +1877,11 @@ void X86TargetInfo::HandleTargetFeatures(std::vector<std::string> &Features) {
 
     if (Feature == "fma4") {
       HasFMA4 = true;
+      continue;
+    }
+
+    if (Feature == "fma") {
+      HasFMA = true;
       continue;
     }
 
@@ -2073,6 +2088,9 @@ void X86TargetInfo::getTargetDefines(const LangOptions &Opts,
   if (HasFMA4)
     Builder.defineMacro("__FMA4__");
 
+  if (HasFMA)
+    Builder.defineMacro("__FMA__");
+
   // Each case falls through to the previous one here.
   switch (SSELevel) {
   case AVX2:
@@ -2136,6 +2154,7 @@ bool X86TargetInfo::hasFeature(StringRef Feature) const {
       .Case("avx2", SSELevel >= AVX2)
       .Case("bmi", HasBMI)
       .Case("bmi2", HasBMI2)
+      .Case("fma", HasFMA)
       .Case("fma4", HasFMA4)
       .Case("lzcnt", HasLZCNT)
       .Case("mm3dnow", MMX3DNowLevel >= AMD3DNow)
