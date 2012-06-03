@@ -183,7 +183,9 @@ public:
     typedef std::pair<self, self> SubRes;
     
     IntRange() : IsEmpty(true) {}
-    
+    IntRange(const self &RHS) :
+      Low(RHS.Low), High(RHS.High),
+      IsEmpty(RHS.IsEmpty), IsSingleNumber(RHS.IsSingleNumber) {}
     IntRange(const IntType &C) :
       Low(C), High(C), IsEmpty(false), IsSingleNumber(true) {}
     
