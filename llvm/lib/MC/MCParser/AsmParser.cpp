@@ -45,6 +45,8 @@ FatalAssemblerWarnings("fatal-assembler-warnings",
 namespace {
 
 /// \brief Helper class for tracking macro definitions.
+typedef std::vector<AsmToken> MacroArgument;
+
 struct Macro {
   StringRef Name;
   StringRef Body;
@@ -183,7 +185,7 @@ private:
   bool HandleMacroEntry(StringRef Name, SMLoc NameLoc, const Macro *M);
   bool expandMacro(SmallString<256> &Buf, StringRef Body,
                    const std::vector<StringRef> &Parameters,
-                   const std::vector<std::vector<AsmToken> > &A,
+                   const std::vector<MacroArgument> &A,
                    const SMLoc &L);
   void HandleMacroExit();
 
@@ -1438,7 +1440,7 @@ void AsmParser::DiagHandler(const SMDiagnostic &Diag, void *Context) {
 
 bool AsmParser::expandMacro(SmallString<256> &Buf, StringRef Body,
                             const std::vector<StringRef> &Parameters,
-                            const std::vector<std::vector<AsmToken> > &A,
+                            const std::vector<MacroArgument> &A,
                             const SMLoc &L) {
   raw_svector_ostream OS(Buf);
   unsigned NParameters = Parameters.size();
@@ -1492,7 +1494,7 @@ bool AsmParser::expandMacro(SmallString<256> &Buf, StringRef Body,
           break;
 
         // Otherwise substitute with the token values, with spaces eliminated.
-        for (std::vector<AsmToken>::const_iterator it = A[Index].begin(),
+        for (MacroArgument::const_iterator it = A[Index].begin(),
                ie = A[Index].end(); it != ie; ++it)
           OS << it->getString();
         break;
@@ -1515,7 +1517,7 @@ bool AsmParser::expandMacro(SmallString<256> &Buf, StringRef Body,
       if (Index == NParameters)
         return Error(L, "Parameter not found");
 
-      for (std::vector<AsmToken>::const_iterator it = A[Index].begin(),
+      for (MacroArgument::const_iterator it = A[Index].begin(),
              ie = A[Index].end(); it != ie; ++it)
         OS << it->getString();
 
@@ -1545,8 +1547,8 @@ bool AsmParser::HandleMacroEntry(StringRef Name, SMLoc NameLoc,
     return TokError("macros cannot be nested more than 20 levels deep");
 
   // Parse the macro instantiation arguments.
-  std::vector<std::vector<AsmToken> > MacroArguments;
-  MacroArguments.push_back(std::vector<AsmToken>());
+  std::vector<MacroArgument> MacroArguments;
+  MacroArguments.push_back(MacroArgument());
   unsigned ParenLevel = 0;
   for (;;) {
     if (Lexer.is(AsmToken::Eof))
@@ -1557,7 +1559,7 @@ bool AsmParser::HandleMacroEntry(StringRef Name, SMLoc NameLoc,
     // If we aren't inside parentheses and this is a comma, start a new token
     // list.
     if (ParenLevel == 0 && Lexer.is(AsmToken::Comma)) {
-      MacroArguments.push_back(std::vector<AsmToken>());
+      MacroArguments.push_back(MacroArgument());
     } else {
       // Adjust the current parentheses level.
       if (Lexer.is(AsmToken::LParen))
