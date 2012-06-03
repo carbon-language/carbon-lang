@@ -66,77 +66,9 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
     }
     // Fix the FMA4 intrinsics to remove the 4
     if (Name.startswith("x86.fma4.")) {
-      const char* NewFnName = 0;
-      if (Name == "x86.fma4.vfmadd.ss")
-        NewFnName = "llvm.x86.fma.vfmadd.ss";
-      else if (Name == "x86.fma4.vfmadd.sd")
-        NewFnName = "llvm.x86.fma.vfmadd.sd";
-      else if (Name == "x86.fma4.vfmadd.ps")
-        NewFnName = "llvm.x86.fma.vfmadd.ps";
-      else if (Name == "x86.fma4.vfmadd.pd")
-        NewFnName = "llvm.x86.fma.vfmadd.pd";
-      else if (Name == "x86.fma4.vfmadd.ps.256")
-        NewFnName = "llvm.x86.fma.vfmadd.ps.256";
-      else if (Name == "x86.fma4.vfmadd.pd.256")
-        NewFnName = "llvm.x86.fma.vfmadd.pd.256";
-      else if (Name == "x86.fma4.vfmsub.ss")
-        NewFnName = "llvm.x86.fma.vfmsub.ss";
-      else if (Name == "x86.fma4.vfmsub.sd")
-        NewFnName = "llvm.x86.fma.vfmsub.sd";
-      else if (Name == "x86.fma4.vfmsub.ps")
-        NewFnName = "llvm.x86.fma.vfmsub.ps";
-      else if (Name == "x86.fma4.vfmsub.pd")
-        NewFnName = "llvm.x86.fma.vfmsub.pd";
-      else if (Name == "x86.fma4.vfmsub.ps.256")
-        NewFnName = "llvm.x86.fma.vfmsub.ps.256";
-      else if (Name == "x86.fma4.vfmsub.pd.256")
-        NewFnName = "llvm.x86.fma.vfmsub.pd.256";
-      else if (Name == "x86.fma4.vfnmadd.ss")
-        NewFnName = "llvm.x86.fma.vfnmadd.ss";
-      else if (Name == "x86.fma4.vfnmadd.sd")
-        NewFnName = "llvm.x86.fma.vfnmadd.sd";
-      else if (Name == "x86.fma4.vfnmadd.ps")
-        NewFnName = "llvm.x86.fma.vfnmadd.ps";
-      else if (Name == "x86.fma4.vfnmadd.pd")
-        NewFnName = "llvm.x86.fma.vfnmadd.pd";
-      else if (Name == "x86.fma4.vfnmadd.ps.256")
-        NewFnName = "llvm.x86.fma.vfnmadd.ps.256";
-      else if (Name == "x86.fma4.vfnmadd.pd.256")
-        NewFnName = "llvm.x86.fma.vfnmadd.pd.256";
-      else if (Name == "x86.fma4.vfnmsub.ss")
-        NewFnName = "llvm.x86.fma.vfnmsub.ss";
-      else if (Name == "x86.fma4.vfnmsub.sd")
-        NewFnName = "llvm.x86.fma.vfnmsub.sd";
-      else if (Name == "x86.fma4.vfnmsub.ps")
-        NewFnName = "llvm.x86.fma.vfnmsub.ps";
-      else if (Name == "x86.fma4.vfnmsub.pd")
-        NewFnName = "llvm.x86.fma.vfnmsub.pd";
-      else if (Name == "x86.fma4.vfnmsub.ps.256")
-        NewFnName = "llvm.x86.fma.vfnmsub.ps.256";
-      else if (Name == "x86.fma4.vfnmsub.pd.256")
-        NewFnName = "llvm.x86.fma.vfnmsub.pd.256";
-      else if (Name == "x86.fma4.vfmaddsub.ps")
-        NewFnName = "llvm.x86.fma.vfmaddsub.ps";
-      else if (Name == "x86.fma4.vfmaddsub.pd")
-        NewFnName = "llvm.x86.fma.vfmaddsub.pd";
-      else if (Name == "x86.fma4.vfmaddsub.ps.256")
-        NewFnName = "llvm.x86.fma.vfmaddsub.ps.256";
-      else if (Name == "x86.fma4.vfmaddsub.pd.256")
-        NewFnName = "llvm.x86.fma.vfmaddsub.pd.256";
-      else if (Name == "x86.fma4.vfmsubadd.ps")
-        NewFnName = "llvm.x86.fma.vfmsubadd.ps";
-      else if (Name == "x86.fma4.vfmsubadd.pd")
-        NewFnName = "llvm.x86.fma.vfmsubadd.pd";
-      else if (Name == "x86.fma4.vfmsubadd.ps.256")
-        NewFnName = "llvm.x86.fma.vfmsubadd.ps.256";
-      else if (Name == "x86.fma4.vfmsubadd.pd.256")
-        NewFnName = "llvm.x86.fma.vfmsubadd.pd.256";
-
-      if (NewFnName) {
-        F->setName(NewFnName);
-        NewFn = F;
-        return true;
-      }
+      F->setName("llvm.x86.fma" + Name.substr(8));
+      NewFn = F;
+      return true;
     }
     break;
   }
