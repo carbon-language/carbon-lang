@@ -17,6 +17,7 @@
 
 let Constraints = "$src1 = $dst" in {
 multiclass fma3p_rm<bits<8> opc, string OpcodeStr> {
+let neverHasSideEffects = 1 in {
   def r : FMA3<opc, MRMSrcReg, (outs VR128:$dst),
            (ins VR128:$src1, VR128:$src2, VR128:$src3),
            !strconcat(OpcodeStr, "\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
@@ -35,6 +36,7 @@ multiclass fma3p_rm<bits<8> opc, string OpcodeStr> {
            (ins VR256:$src1, VR256:$src2, f256mem:$src3),
            !strconcat(OpcodeStr, "\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
            []>;
+} // neverHasSideEffects = 1
 }
 
 // Intrinsic for 132 pattern
@@ -117,14 +119,17 @@ let ExeDomain = SSEPackedDouble in {
 let Constraints = "$src1 = $dst" in {
 multiclass fma3s_rm<bits<8> opc, string OpcodeStr, X86MemOperand x86memop,
                     RegisterClass RC> {
+let neverHasSideEffects = 1 in {
   def r : FMA3<opc, MRMSrcReg, (outs RC:$dst),
            (ins RC:$src1, RC:$src2, RC:$src3),
            !strconcat(OpcodeStr, "\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
            []>;
+  let mayLoad = 1 in
   def m : FMA3<opc, MRMSrcMem, (outs RC:$dst),
            (ins RC:$src1, RC:$src2, x86memop:$src3),
            !strconcat(OpcodeStr, "\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
            []>;
+} // neverHasSideEffects = 1
 }
 
 multiclass fma3s_rm_int<bits<8> opc, string OpcodeStr, X86MemOperand x86memop,
