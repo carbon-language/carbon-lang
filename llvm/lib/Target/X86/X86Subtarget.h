@@ -88,8 +88,8 @@ protected:
   /// HasPCLMUL - Target has carry-less multiplication
   bool HasPCLMUL;
 
-  /// HasFMA3 - Target has 3-operand fused multiply-add
-  bool HasFMA3;
+  /// HasFMA - Target has 3-operand fused multiply-add
+  bool HasFMA;
 
   /// HasFMA4 - Target has 4-operand fused multiply-add
   bool HasFMA4;
@@ -204,7 +204,7 @@ public:
   bool hasPOPCNT() const { return HasPOPCNT; }
   bool hasAES() const { return HasAES; }
   bool hasPCLMUL() const { return HasPCLMUL; }
-  bool hasFMA3() const { return HasFMA3; }
+  bool hasFMA() const { return HasFMA; }
   bool hasFMA4() const { return HasFMA4; }
   bool hasXOP() const { return HasXOP; }
   bool hasMOVBE() const { return HasMOVBE; }

@@ -89,7 +89,7 @@ def FeatureAVX2    : SubtargetFeature<"avx2", "X86SSELevel", "AVX2",
 def FeaturePCLMUL  : SubtargetFeature<"pclmul", "HasPCLMUL", "true",
                          "Enable packed carry-less multiplication instructions",
                                [FeatureSSE2]>;
-def FeatureFMA3    : SubtargetFeature<"fma3", "HasFMA3", "true",
+def FeatureFMA     : SubtargetFeature<"fma", "HasFMA", "true",
                                       "Enable three-operand fused multiple-add",
                                       [FeatureAVX]>;
 def FeatureFMA4    : SubtargetFeature<"fma4", "HasFMA4", "true",
@@ -188,7 +188,7 @@ def : Proc<"core-avx2",       [FeatureAVX2, FeatureCMPXCHG16B, FeaturePOPCNT,
                                FeatureAES, FeaturePCLMUL, FeatureRDRAND,
                                FeatureF16C, FeatureFSGSBase,
                                FeatureMOVBE, FeatureLZCNT, FeatureBMI,
-                               FeatureBMI2, FeatureFMA3]>;
+                               FeatureBMI2, FeatureFMA]>;
 
 def : Proc<"k6",              [FeatureMMX]>;
 def : Proc<"k6-2",            [Feature3DNow]>;
