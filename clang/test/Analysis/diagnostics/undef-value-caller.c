@@ -13,8 +13,6 @@ int test_calling_unimportant_callee(int argc, char *argv[]) {
 //CHECK:  <dict>
 //CHECK:   <key>files</key>
 //CHECK:   <array>
-//CHECK:    <string>/Users/anya/workspace/gllvm/llvm/tools/clang/test/Analysis/diagnostics/undef-value-caller.c</string>
-//CHECK:    <string>/Users/anya/workspace/gllvm/llvm/tools/clang/test/Analysis/diagnostics/undef-value-callee.h</string>
 //CHECK:   </array>
 //CHECK:   <key>diagnostics</key>
 //CHECK:   <array>
