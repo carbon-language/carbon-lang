@@ -1,4 +1,4 @@
-//===-- asan_break_optimization.cc ------------*- C++ -*-===//
+//===-- asan_break_optimization.cc ----------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

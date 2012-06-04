@@ -1,4 +1,4 @@
-//===-- asan_interceptors.cc ------------------------------------*- C++ -*-===//
+//===-- asan_interceptors.cc ----------------------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

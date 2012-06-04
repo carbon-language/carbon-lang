@@ -1,4 +1,4 @@
-//===-- asan_malloc_linux.cc ------------------------------------*- C++ -*-===//
+//===-- asan_malloc_linux.cc ----------------------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

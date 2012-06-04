@@ -1,4 +1,4 @@
-//===-- asan_test.cc ------------*- C++ -*-===//
+//===-- asan_test.cc ----------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

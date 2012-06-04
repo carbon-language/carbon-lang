@@ -1,4 +1,4 @@
-//===-- asan_noinst_test.cc ------------*- C++ -*-===//
+//===-- asan_noinst_test.cc ----------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

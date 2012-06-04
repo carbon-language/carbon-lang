@@ -1,4 +1,4 @@
-//===-- asan_thread_registry.cc ---------------------------------*- C++ -*-===//
+//===-- asan_thread_registry.cc -------------------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
