@@ -382,6 +382,11 @@ void PlistDiagnostics::FlushDiagnosticsImpl(
 
         if (const PathDiagnosticCallPiece *call =
             dyn_cast<PathDiagnosticCallPiece>(piece)) {
+          IntrusiveRefCntPtr<PathDiagnosticEventPiece>
+            callEnterWithin = call->getCallEnterWithinCallerEvent();
+          if (callEnterWithin)
+            AddFID(FM, Fids, SM, callEnterWithin->getLocation().asLocation());
+
           WorkList.push_back(&call->path);
         }
         else if (const PathDiagnosticMacroPiece *macro =
