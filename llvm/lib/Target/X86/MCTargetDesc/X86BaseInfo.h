@@ -94,7 +94,9 @@ namespace X86II {
     MO_PLT,
 
     /// MO_TLSGD - On a symbol operand this indicates that the immediate is
-    /// some TLS offset.
+    /// the offset of the GOT entry with the TLS index structure that contains
+    /// the module number and variable offset for the symbol. Used in the
+    /// general dynamic TLS access model.
     ///
     /// See 'ELF Handling for Thread-Local Storage' for more details.
     ///    SYMBOL_LABEL @TLSGD
@@ -104,7 +106,7 @@ namespace X86II {
     /// the offset of the GOT entry with the TLS index for the module that
     /// contains the symbol. When this index is passed to a call to to
     /// __tls_get_addr, the function will return the base address of the TLS
-    /// block for the symbol.
+    /// block for the symbol. Used in the x86-64 local dynamic TLS access model.
     ///
     /// See 'ELF Handling for Thread-Local Storage' for more details.
     ///    SYMBOL_LABEL @TLSLD
@@ -114,49 +116,56 @@ namespace X86II {
     /// the offset of the GOT entry with the TLS index for the module that
     /// contains the symbol. When this index is passed to a call to to
     /// ___tls_get_addr, the function will return the base address of the TLS
-    /// block for the symbol.
+    /// block for the symbol. Used in the IA32 local dynamic TLS access model.
     ///
     /// See 'ELF Handling for Thread-Local Storage' for more details.
     ///    SYMBOL_LABEL @TLSLDM
     MO_TLSLDM,
 
     /// MO_GOTTPOFF - On a symbol operand this indicates that the immediate is
-    /// some TLS offset.
+    /// the offset of the GOT entry with the thread-pointer offset for the
+    /// symbol. Used in the x86-64 initial exec TLS access model.
     ///
     /// See 'ELF Handling for Thread-Local Storage' for more details.
     ///    SYMBOL_LABEL @GOTTPOFF
     MO_GOTTPOFF,
 
     /// MO_INDNTPOFF - On a symbol operand this indicates that the immediate is
-    /// some TLS offset.
+    /// the absolute address of the GOT entry with the negative thread-pointer
+    /// offset for the symbol. Used in the non-PIC IA32 initial exec TLS access
+    /// model.
     ///
     /// See 'ELF Handling for Thread-Local Storage' for more details.
     ///    SYMBOL_LABEL @INDNTPOFF
     MO_INDNTPOFF,
 
     /// MO_TPOFF - On a symbol operand this indicates that the immediate is
-    /// some TLS offset.
+    /// the thread-pointer offset for the symbol. Used in the x86-64 local
+    /// exec TLS access model.
     ///
     /// See 'ELF Handling for Thread-Local Storage' for more details.
     ///    SYMBOL_LABEL @TPOFF
     MO_TPOFF,
 
     /// MO_DTPOFF - On a symbol operand this indicates that the immediate is
-    /// the offset of the GOT entry with the TLS offset of the symbol.
+    /// the offset of the GOT entry with the TLS offset of the symbol. Used
+    /// in the local dynamic TLS access model.
     ///
     /// See 'ELF Handling for Thread-Local Storage' for more details.
     ///    SYMBOL_LABEL @DTPOFF
     MO_DTPOFF,
 
     /// MO_NTPOFF - On a symbol operand this indicates that the immediate is
-    /// some TLS offset.
+    /// the negative thread-pointer offset for the symbol. Used in the IA32
+    /// local exec TLS access model.
     ///
     /// See 'ELF Handling for Thread-Local Storage' for more details.
     ///    SYMBOL_LABEL @NTPOFF
     MO_NTPOFF,
 
     /// MO_GOTNTPOFF - On a symbol operand this indicates that the immediate is
-    /// some TLS offset.
+    /// the offset of the GOT entry with the negative thread-pointer offset for
+    /// the symbol. Used in the PIC IA32 initial exec TLS access model.
     ///
     /// See 'ELF Handling for Thread-Local Storage' for more details.
     ///    SYMBOL_LABEL @GOTNTPOFF
