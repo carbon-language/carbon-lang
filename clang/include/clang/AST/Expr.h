@@ -213,7 +213,8 @@ public:
     LV_InvalidMessageExpression,
     LV_MemberFunction,
     LV_SubObjCPropertySetting,
-    LV_ClassTemporary
+    LV_ClassTemporary,
+    LV_ArrayTemporary
   };
   /// Reasons why an expression might not be an l-value.
   LValueClassification ClassifyLValue(ASTContext &Ctx) const;
@@ -242,7 +243,8 @@ public:
     MLV_MemberFunction,
     MLV_SubObjCPropertySetting,
     MLV_InvalidMessageExpression,
-    MLV_ClassTemporary
+    MLV_ClassTemporary,
+    MLV_ArrayTemporary
   };
   isModifiableLvalueResult isModifiableLvalue(ASTContext &Ctx,
                                               SourceLocation *Loc = 0) const;
@@ -261,7 +263,8 @@ public:
       CL_DuplicateVectorComponents, // A vector shuffle with dupes.
       CL_MemberFunction, // An expression referring to a member function
       CL_SubObjCPropertySetting,
-      CL_ClassTemporary, // A prvalue of class type
+      CL_ClassTemporary, // A temporary of class type, or subobject thereof.
+      CL_ArrayTemporary, // A temporary of array type.
       CL_ObjCMessageRValue, // ObjC message is an rvalue
       CL_PRValue // A prvalue for any other reason, of any other type
     };

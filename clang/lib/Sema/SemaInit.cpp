@@ -4747,6 +4747,43 @@ PerformConstructorInitialization(Sema &S,
   return move(CurInit);
 }
 
+/// Determine whether the specified InitializedEntity definitely has a lifetime
+/// longer than the current full-expression. Conservatively returns false if
+/// it's unclear.
+static bool
+InitializedEntityOutlivesFullExpression(const InitializedEntity &Entity) {
+  const InitializedEntity *Top = &Entity;
+  while (Top->getParent())
+    Top = Top->getParent();
+
+  switch (Top->getKind()) {
+  case InitializedEntity::EK_Variable:
+  case InitializedEntity::EK_Result:
+  case InitializedEntity::EK_Exception:
+  case InitializedEntity::EK_Member:
+  case InitializedEntity::EK_New:
+  case InitializedEntity::EK_Base:
+  case InitializedEntity::EK_Delegating:
+    return true;
+
+  case InitializedEntity::EK_ArrayElement:
+  case InitializedEntity::EK_VectorElement:
+  case InitializedEntity::EK_BlockElement:
+  case InitializedEntity::EK_ComplexElement:
+    // Could not determine what the full initialization is. Assume it might not
+    // outlive the full-expression.
+    return false;
+
+  case InitializedEntity::EK_Parameter:
+  case InitializedEntity::EK_Temporary:
+  case InitializedEntity::EK_LambdaCapture:
+    // The entity being initialized might not outlive the full-expression.
+    return false;
+  }
+
+  llvm_unreachable("unknown entity kind");
+}
+
 ExprResult
 InitializationSequence::Perform(Sema &S,
                                 const InitializedEntity &Entity,
@@ -4824,6 +4861,18 @@ InitializationSequence::Perform(Sema &S,
     Expr *Init = Args.get()[0];
     S.Diag(Init->getLocStart(), diag::warn_cxx98_compat_reference_list_init)
       << Init->getSourceRange();
+  }
+
+  // Diagnose cases where we initialize a pointer to an array temporary, and the
+  // pointer obviously outlives the temporary.
+  if (Args.size() == 1 && Args.get()[0]->getType()->isArrayType() &&
+      Entity.getType()->isPointerType() &&
+      InitializedEntityOutlivesFullExpression(Entity)) {
+    Expr *Init = Args.get()[0];
+    Expr::LValueClassification Kind = Init->ClassifyLValue(S.Context);
+    if (Kind == Expr::LV_ClassTemporary || Kind == Expr::LV_ArrayTemporary)
+      S.Diag(Init->getLocStart(), diag::warn_temporary_array_to_pointer_decay)
+        << Init->getSourceRange();
   }
 
   QualType DestType = Entity.getType().getNonReferenceType();

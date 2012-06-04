@@ -7280,6 +7280,7 @@ static bool CheckForModifiableLvalue(Expr *E, SourceLocation Loc, Sema &S) {
 
     break;
   case Expr::MLV_ArrayType:
+  case Expr::MLV_ArrayTemporary:
     Diag = diag::err_typecheck_array_not_modifiable_lvalue;
     NeedType = true;
     break;
