@@ -137,8 +137,8 @@ public:
 
   static Constant *getNullValue(Type* Ty);
 
-  /// @returns the value for an integer constant of the given type that has all
-  /// its bits set to true.
+  /// @returns the value for an integer or vector of integer constant of the
+  /// given type that has all its bits set to true.
   /// @brief Get the all ones value
   static Constant *getAllOnesValue(Type* Ty);
 
