@@ -626,14 +626,6 @@ LiveInterval* LiveIntervals::createInterval(unsigned reg) {
   return new LiveInterval(reg, Weight);
 }
 
-/// dupInterval - Duplicate a live interval. The caller is responsible for
-/// managing the allocated memory.
-LiveInterval* LiveIntervals::dupInterval(LiveInterval *li) {
-  LiveInterval *NewLI = createInterval(li->reg);
-  NewLI->Copy(*li, MRI, getVNInfoAllocator());
-  return NewLI;
-}
-
 /// shrinkToUses - After removing some uses of a register, shrink its live
 /// range to just the remaining uses. This method does not compute reaching
 /// defs for new uses, and it doesn't remove dead defs.
