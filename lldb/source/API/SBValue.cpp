@@ -304,7 +304,7 @@ SBValue::GetType()
         if (process_sp && !stop_locker.TryLock(&process_sp->GetRunLock()))
         {
             if (log)
-                log->Printf ("SBValue(%p)::GetValueDidChange() => error: process is running", value_sp.get());
+                log->Printf ("SBValue(%p)::GetType() => error: process is running", value_sp.get());
         }
         else
         {
@@ -482,7 +482,7 @@ SBValue::GetTypeFormat ()
         {
             LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
             if (log)
-                log->Printf ("SBValue(%p)::GetTypeSummary() => error: process is running", value_sp.get());
+                log->Printf ("SBValue(%p)::GetTypeFormat() => error: process is running", value_sp.get());
         }
         else
         {
@@ -627,7 +627,7 @@ SBValue::CreateChildAtOffset (const char *name, uint32_t offset, SBType type)
         {
             LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
             if (log)
-                log->Printf ("SBValue(%p)::GetTypeSynthetic() => error: process is running", value_sp.get());
+                log->Printf ("SBValue(%p)::CreateChildAtOffset() => error: process is running", value_sp.get());
         }
         else
         {
@@ -650,9 +650,9 @@ SBValue::CreateChildAtOffset (const char *name, uint32_t offset, SBType type)
     if (log)
     {
         if (new_value_sp)
-            log->Printf ("SBValue(%p)::GetChildAtOffset => \"%s\"", value_sp.get(), new_value_sp->GetName().AsCString());
+            log->Printf ("SBValue(%p)::CreateChildAtOffset => \"%s\"", value_sp.get(), new_value_sp->GetName().AsCString());
         else
-            log->Printf ("SBValue(%p)::GetChildAtOffset => NULL", value_sp.get());
+            log->Printf ("SBValue(%p)::CreateChildAtOffset => NULL", value_sp.get());
     }
     return sb_value;
 }
@@ -709,13 +709,13 @@ SBValue::CreateValueFromExpression (const char *name, const char* expression)
     if (log)
     {
         if (new_value_sp)
-            log->Printf ("SBValue(%p)::GetChildFromExpression(name=\"%s\", expression=\"%s\") => SBValue (%p)",
+            log->Printf ("SBValue(%p)::CreateValueFromExpression(name=\"%s\", expression=\"%s\") => SBValue (%p)",
                          value_sp.get(),
                          name,
                          expression,
                          new_value_sp.get());
         else
-            log->Printf ("SBValue(%p)::GetChildFromExpression(name=\"%s\", expression=\"%s\") => NULL",
+            log->Printf ("SBValue(%p)::CreateValueFromExpression(name=\"%s\", expression=\"%s\") => NULL",
                          value_sp.get(),
                          name,
                          expression);
@@ -793,9 +793,9 @@ SBValue::CreateValueFromData (const char* name, SBData data, SBType type)
     if (log)
     {
         if (new_value_sp)
-            log->Printf ("SBValue(%p)::GetChildFromExpression => \"%s\"", value_sp.get(), new_value_sp->GetName().AsCString());
+            log->Printf ("SBValue(%p)::CreateValueFromData => \"%s\"", value_sp.get(), new_value_sp->GetName().AsCString());
         else
-            log->Printf ("SBValue(%p)::GetChildFromExpression => NULL", value_sp.get());
+            log->Printf ("SBValue(%p)::CreateValueFromData => NULL", value_sp.get());
     }
     return sb_value;
 }
@@ -1501,7 +1501,7 @@ SBValue::AddressOf()
     }
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
-        log->Printf ("SBValue(%p)::GetPointerToObject () => SBValue(%p)", value_sp.get(), value_sp.get());
+        log->Printf ("SBValue(%p)::AddressOf () => SBValue(%p)", value_sp.get(), value_sp.get());
     
     return sb_value;
 }
