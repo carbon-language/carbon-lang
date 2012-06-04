@@ -118,9 +118,11 @@ class CrashLog(symbolication.Symbolicator):
             self.version = version
         
         def locate_module_and_debug_symbols(self):
-            if self.resolved_path:
-                # Don't load a module twice...
+            # Don't load a module twice...
+            if self.resolved:
                 return True
+            # Mark this as resolved so we don't keep trying
+            self.resolved = True
             uuid_str = self.get_normalized_uuid_string()
             print 'Getting symbols for %s %s...' % (uuid_str, self.path),
             if os.path.exists(self.dsymForUUIDBinary):
@@ -150,7 +152,8 @@ class CrashLog(symbolication.Symbolicator):
                             self.arch = match.group(2)
                             break;
                 if not self.resolved_path:
-                    print "error: file %s '%s' doesn't match the UUID in the installed file" % (uuid_str, self.path)
+                    self.unavailable = True
+                    print "error\n    error: unable to locate '%s' with UUID %s" % (self.path, uuid_str)
                     return False
             if (self.resolved_path and os.path.exists(self.resolved_path)) or (self.path and os.path.exists(self.path)):
                 print 'ok'
@@ -159,6 +162,8 @@ class CrashLog(symbolication.Symbolicator):
                 # if self.symfile:
                 #     print ' dsym = "%s"' % self.symfile
                 return True
+            else:
+                self.unavailable = True
             return False
         
     
@@ -313,7 +318,7 @@ class CrashLog(symbolication.Symbolicator):
             elif parse_mode == PARSE_MODE_SYSTEM:
                 self.system_profile.append(line)
         f.close()
-        
+    
     def dump(self):
         print "Crash Log File: %s" % (self.path)
         print "\nThreads:"
@@ -351,7 +356,7 @@ class CrashLog(symbolication.Symbolicator):
         print 'crashlog.create_target()...4'
         print 'error: unable to locate any executables from the crash log'
         return None
-
+    
 
 def usage():
     print "Usage: lldb-symbolicate.py [-n name] executable-image"
@@ -477,7 +482,6 @@ def interactive_crashlogs(options, args):
     
         
 def Symbolicate(debugger, command, result, dict):
-    print 'def Symbolicate(debugger, command, result, dict): called with "%s"' % (command)
     try:
         SymbolicateCrashLogs (shlex.split(command))
     except:
@@ -610,7 +614,7 @@ be disassembled and lookups can be performed using the addresses found in the cr
             interactive_crashlogs(options, args)
         else:
             for crash_log_file in args:
-                crash_log = CrashLog(crash_log_file)            
+                crash_log = CrashLog(crash_log_file)
                 SymbolicateCrashLog (crash_log, options)
 if __name__ == '__main__':
     # Create a new debugger instance

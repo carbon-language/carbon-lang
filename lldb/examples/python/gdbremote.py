@@ -25,10 +25,15 @@ import string
 import sys
 import tempfile
 
+#----------------------------------------------------------------------
+# Global variables
+#----------------------------------------------------------------------
+g_log_file = ''
+g_byte_order = 'little'
+
 class TerminalColors:
     '''Simple terminal colors class'''
-    def __init__(self, file = sys.stdout, enabled = True):
-        self.file = file
+    def __init__(self, enabled = True):
         # TODO: discover terminal type from "file" and disable if
         # it can't handle the color codes
         self.enabled = enabled
@@ -36,133 +41,144 @@ class TerminalColors:
     def reset(self):
         '''Reset all terminal colors and formatting.'''
         if self.enabled:
-            self.file.write("\x1b[0m");
+            return "\x1b[0m";
+        return ''
     
     def bold(self, on = True):
         '''Enable or disable bold depending on the "on" paramter.'''
         if self.enabled:
             if on:
-                self.file.write("\x1b[1m");
+                return "\x1b[1m";
             else:
-                self.file.write("\x1b[22m");
-
+                return "\x1b[22m";
+        return ''
+    
     def italics(self, on = True):
         '''Enable or disable italics depending on the "on" paramter.'''
         if self.enabled:
             if on:
-                self.file.write("\x1b[3m");
+                return "\x1b[3m";
             else:
-                self.file.write("\x1b[23m");
-
+                return "\x1b[23m";
+        return ''
+    
     def underline(self, on = True):
         '''Enable or disable underline depending on the "on" paramter.'''
         if self.enabled:
             if on:
-                self.file.write("\x1b[4m");
+                return "\x1b[4m";
             else:
-                self.file.write("\x1b[24m");
+                return "\x1b[24m";
+        return ''
+    
     def inverse(self, on = True):
         '''Enable or disable inverse depending on the "on" paramter.'''
         if self.enabled:
             if on:
-                self.file.write("\x1b[7m");
+                return "\x1b[7m";
             else:
-                self.file.write("\x1b[27m");
-
+                return "\x1b[27m";
+        return ''
+    
     def strike(self, on = True):
         '''Enable or disable strike through depending on the "on" paramter.'''
         if self.enabled:
             if on:
-                self.file.write("\x1b[9m");
+                return "\x1b[9m";
             else:                
-                self.file.write("\x1b[29m");
-                                 
+                return "\x1b[29m";
+        return ''
+                     
     def black(self, fg = True):        
         '''Set the foreground or background color to black. 
         The foreground color will be set if "fg" tests True. The background color will be set if "fg" tests False.'''
         if self.enabled:         
             if fg:               
-                self.file.write("\x1b[30m");
+                return "\x1b[30m";
             else:
-                self.file.write("\x1b[40m");
-                                 
+                return "\x1b[40m";
+        return ''
+    
     def red(self, fg = True):          
         '''Set the foreground or background color to red. 
         The foreground color will be set if "fg" tests True. The background color will be set if "fg" tests False.'''
         if self.enabled:         
             if fg:               
-                self.file.write("\x1b[31m");
+                return "\x1b[31m";
             else:                
-                self.file.write("\x1b[41m");
-                                 
+                return "\x1b[41m";
+        return ''
+    
     def green(self, fg = True):        
         '''Set the foreground or background color to green. 
         The foreground color will be set if "fg" tests True. The background color will be set if "fg" tests False.'''
         if self.enabled:         
             if fg:               
-                self.file.write("\x1b[32m");
+                return "\x1b[32m";
             else:                
-                self.file.write("\x1b[42m");
-
+                return "\x1b[42m";
+        return ''
+    
     def yellow(self, fg = True):       
         '''Set the foreground or background color to yellow. 
         The foreground color will be set if "fg" tests True. The background color will be set if "fg" tests False.'''
         if self.enabled:         
             if fg:               
-                self.file.write("\x1b[43m");
+                return "\x1b[43m";
             else:                
-                self.file.write("\x1b[33m");
-
+                return "\x1b[33m";
+        return ''
+    
     def blue(self, fg = True):         
         '''Set the foreground or background color to blue. 
         The foreground color will be set if "fg" tests True. The background color will be set if "fg" tests False.'''
         if self.enabled:         
             if fg:               
-                self.file.write("\x1b[34m");
+                return "\x1b[34m";
             else:                
-                self.file.write("\x1b[44m");
-
+                return "\x1b[44m";
+        return ''
+    
     def magenta(self, fg = True):      
         '''Set the foreground or background color to magenta. 
         The foreground color will be set if "fg" tests True. The background color will be set if "fg" tests False.'''
         if self.enabled:         
             if fg:               
-                self.file.write("\x1b[35m");
+                return "\x1b[35m";
             else:                
-                self.file.write("\x1b[45m");
-
+                return "\x1b[45m";
+        return ''
+    
     def cyan(self, fg = True):         
         '''Set the foreground or background color to cyan. 
         The foreground color will be set if "fg" tests True. The background color will be set if "fg" tests False.'''
         if self.enabled:         
             if fg:               
-                self.file.write("\x1b[36m");
+                return "\x1b[36m";
             else:                
-                self.file.write("\x1b[46m");
-
+                return "\x1b[46m";
+        return ''
+    
     def white(self, fg = True):        
         '''Set the foreground or background color to white. 
         The foreground color will be set if "fg" tests True. The background color will be set if "fg" tests False.'''
         if self.enabled:         
             if fg:               
-                self.file.write("\x1b[37m");
+                return "\x1b[37m";
             else:                
-                self.file.write("\x1b[47m");
-
+                return "\x1b[47m";
+        return ''
+    
     def default(self, fg = True):      
         '''Set the foreground or background color to the default. 
         The foreground color will be set if "fg" tests True. The background color will be set if "fg" tests False.'''
         if self.enabled:         
             if fg:               
-                self.file.write("\x1b[39m");
+                return "\x1b[39m";
             else:                
-                self.file.write("\x1b[49m");
+                return "\x1b[49m";
+        return ''
 
-#----------------------------------------------------------------------
-# Global variables
-#----------------------------------------------------------------------
-g_log_file = ''
-g_byte_order = 'little'
 
 def start_gdb_log(debugger, command, result, dict):
     '''Start logging GDB remote packets by enabling logging with timestamps and 
@@ -211,11 +227,22 @@ def stop_gdb_log(debugger, command, result, dict):
     parser = optparse.OptionParser(description=description, prog='stop_gdb_log',usage=usage)
     parser.add_option('-v', '--verbose', action='store_true', dest='verbose', help='display verbose debug info', default=False)
     parser.add_option('-q', '--quiet', action='store_true', dest='quiet', help='display verbose debug info', default=False)
+    parser.add_option('-C', '--color', action='store_true', dest='color', help='add terminal colors', default=False)
     parser.add_option('-c', '--sort-by-count', action='store_true', dest='sort_count', help='display verbose debug info', default=False)
+    parser.add_option('-s', '--symbolicate', action='store_true', dest='symbolicate', help='symbolicate addresses in log using current "lldb.target"', default=False)
     try:
         (options, args) = parser.parse_args(command_args)
     except:
         return
+    options.colors = TerminalColors(options.color)
+    options.symbolicator = None
+    if options.symbolicate:
+        if lldb.target:
+            import lldb.utils.symbolication
+            options.symbolicator = lldb.utils.symbolication.Symbolicator()
+            options.symbolicator.target = lldb.target
+        else:
+            print "error: can't symbolicate without a target"
 
     if not g_log_file:
         result.PutCString ('error: logging must have been previously enabled with a call to "stop_gdb_log"')
@@ -224,7 +251,6 @@ def stop_gdb_log(debugger, command, result, dict):
             debugger.HandleCommand('log disable gdb-remote packets');
             result.PutCString ("GDB packet logging disabled. Logged packets are in '%s'" % g_log_file)
             parse_gdb_log_file (g_log_file, options)
-            g_log_file = None
         else:
             result.PutCString (usage)
     else:
@@ -440,10 +466,10 @@ def get_thread_from_thread_suffix(str):
             return int(match.group(1), 16)
     return None
 
-def cmd_stop_reply(command, args):
+def cmd_stop_reply(options, cmd, args):
     print "get_last_stop_info()"
 
-def rsp_stop_reply(cmd, cmd_args, rsp):
+def rsp_stop_reply(options, cmd, cmd_args, rsp):
     global g_byte_order
     packet = Packet(rsp)
     stop_type = packet.get_char()
@@ -456,12 +482,7 @@ def rsp_stop_reply(cmd, cmd_args, rsp):
             value = key_value_pair[1]
             if is_hex_byte(key):
                 reg_num = Packet(key).get_hex_uint8()
-                if reg_num < len(g_register_infos):
-                    reg_info = g_register_infos[reg_num]
-                    print '    ' +  reg_info.name() + ' = ' + reg_info.get_value_from_hex_string (value)
-                else:
-                    reg_value = Packet(value).get_hex_uint(g_byte_order)
-                    print '    reg(%u) = 0x%x' % (reg_num, reg_value)
+                print '    ' + get_register_name_equal_value (options, reg_num, value)
             else:
                 print '    %s = %s' % (key, value)
     elif stop_type == 'W':
@@ -471,22 +492,22 @@ def rsp_stop_reply(cmd, cmd_args, rsp):
         print 'stdout = %s' % packet.str
         
 
-def cmd_unknown_packet(cmd, args):
+def cmd_unknown_packet(options, cmd, args):
     if args:
         print "cmd: %s, args: %s", cmd, args
     else:
         print "cmd: %s", cmd
 
-def cmd_query_packet(command, args):
+def cmd_query_packet(options, cmd, args):
     if args:
-        print "query: %s, args: %s" % (command, args)
+        print "query: %s, args: %s" % (cmd, args)
     else:
-        print "query: %s" % (command)
+        print "query: %s" % (cmd)
 
 def rsp_ok_error(rsp):
     print "rsp: ", rsp
 
-def rsp_ok_means_supported(cmd, cmd_args, rsp):
+def rsp_ok_means_supported(options, cmd, cmd_args, rsp):
     if rsp == 'OK':
         print "%s%s is supported" % (cmd, cmd_args)
     elif rsp == '':
@@ -494,7 +515,7 @@ def rsp_ok_means_supported(cmd, cmd_args, rsp):
     else:
         print "%s%s -> %s" % (cmd, cmd_args, rsp)
 
-def rsp_ok_means_success(cmd, cmd_args, rsp):
+def rsp_ok_means_success(options, cmd, cmd_args, rsp):
     if rsp == 'OK':
         print "success"
     elif rsp == '':
@@ -502,7 +523,7 @@ def rsp_ok_means_success(cmd, cmd_args, rsp):
     else:
         print "%s%s -> %s" % (cmd, cmd_args, rsp)
 
-def rsp_dump_key_value_pairs(cmd, cmd_args, rsp):
+def rsp_dump_key_value_pairs(options, cmd, cmd_args, rsp):
     if rsp:
         packet = Packet(rsp)
         key_value_pairs = packet.get_key_value_pairs()
@@ -513,7 +534,7 @@ def rsp_dump_key_value_pairs(cmd, cmd_args, rsp):
     else:
         print "not supported"
 
-def cmd_vCont(cmd, args):
+def cmd_vCont(options, cmd, args):
     if args == '?':
         print "%s: get supported extended continue modes" % (cmd)
     else:
@@ -544,7 +565,7 @@ def cmd_vCont(cmd, args):
         else:
             print "extended_continue (%s, other-threads: suspend)" % (s)
 
-def rsp_vCont(cmd, cmd_args, rsp):
+def rsp_vCont(options, cmd, cmd_args, rsp):
     if cmd_args == '?':
         # Skip the leading 'vCont;'
         rsp = rsp[6:]
@@ -567,7 +588,7 @@ def rsp_vCont(cmd, cmd_args, rsp):
         print s
     elif rsp:
         if rsp[0] == 'T' or rsp[0] == 'S' or rsp[0] == 'W' or rsp[0] == 'X':
-            rsp_stop_reply (cmd, cmd_args, rsp)
+            rsp_stop_reply (options, cmd, cmd_args, rsp)
             return
         if rsp[0] == 'O':
             print "stdout: %s" % (rsp)
@@ -575,17 +596,17 @@ def rsp_vCont(cmd, cmd_args, rsp):
     else:
         print "not supported (cmd = '%s', args = '%s', rsp = '%s')" % (cmd, cmd_args, rsp)
 
-def cmd_vAttach(cmd, args):
+def cmd_vAttach(options, cmd, args):
     (extra_command, args) = string.split(args, ';')
     if extra_command:
         print "%s%s(%s)" % (cmd, extra_command, args)
     else:
         print "attach_pid(%s)" % args
 
-def cmd_qRegisterInfo(cmd, args):
+def cmd_qRegisterInfo(options, cmd, args):
     print 'query_register_info(reg_num=%i)' % (int(args, 16))
 
-def rsp_qRegisterInfo(cmd, cmd_args, rsp):
+def rsp_qRegisterInfo(options, cmd, cmd_args, rsp):
     global g_max_register_info_name_len
     print 'query_register_info(reg_num=%i):' % (int(cmd_args, 16)),
     if len(rsp) == 3 and rsp[0] == 'E':
@@ -602,14 +623,14 @@ def rsp_qRegisterInfo(cmd, cmd_args, rsp):
         print reg_info
         
 
-def cmd_qThreadInfo(cmd, args):
+def cmd_qThreadInfo(options, cmd, args):
     if cmd == 'qfThreadInfo':
         query_type = 'first'
     else: 
         query_type = 'subsequent'
     print 'get_current_thread_list(type=%s)' % (query_type)
 
-def rsp_qThreadInfo(cmd, cmd_args, rsp):
+def rsp_qThreadInfo(options, cmd, cmd_args, rsp):
     packet = Packet(rsp)
     response_type = packet.get_char()
     if response_type == 'm':
@@ -622,12 +643,12 @@ def rsp_qThreadInfo(cmd, cmd_args, rsp):
     elif response_type == 'l':
         print 'END'
 
-def rsp_hex_big_endian(cmd, cmd_args, rsp):
+def rsp_hex_big_endian(options, cmd, cmd_args, rsp):
     packet = Packet(rsp)
     uval = packet.get_hex_uint('big')
     print '%s: 0x%x' % (cmd, uval)
 
-def cmd_read_memory(cmd, args):
+def cmd_read_memory(options, cmd, args):
     packet = Packet(args)
     addr = packet.get_hex_uint('big')
     comma = packet.get_char()
@@ -656,7 +677,7 @@ def dump_hex_memory_buffer(addr, hex_byte_str):
         print '  ', ascii
         ascii = ''        
     
-def cmd_write_memory(cmd, args):
+def cmd_write_memory(options, cmd, args):
     packet = Packet(args)
     addr = packet.get_hex_uint('big')
     if packet.get_char() != ',':
@@ -669,7 +690,7 @@ def cmd_write_memory(cmd, args):
     print 'write_memory (addr = 0x%x, size = %u, data:' % (addr, size)
     dump_hex_memory_buffer (addr, packet.str) 
 
-def cmd_alloc_memory(cmd, args):
+def cmd_alloc_memory(options, cmd, args):
     packet = Packet(args)
     byte_size = packet.get_hex_uint('big')
     if packet.get_char() != ',':
@@ -677,12 +698,12 @@ def cmd_alloc_memory(cmd, args):
         return
     print 'allocate_memory (byte-size = %u (0x%x), permissions = %s)' % (byte_size, byte_size, packet.str)
 
-def rsp_alloc_memory(cmd, cmd_args, rsp):
+def rsp_alloc_memory(options, cmd, cmd_args, rsp):
     packet = Packet(rsp)
     addr = packet.get_hex_uint('big')
     print 'addr = 0x%x' % addr
 
-def cmd_dealloc_memory(cmd, args):
+def cmd_dealloc_memory(options, cmd, args):
     packet = Packet(args)
     addr = packet.get_hex_uint('big')
     if packet.get_char() != ',':
@@ -690,19 +711,29 @@ def cmd_dealloc_memory(cmd, args):
         return
     print 'deallocate_memory (addr = 0x%x, permissions = %s)' % (addr, packet.str)
 
-def rsp_memory_bytes(cmd, cmd_args, rsp):
+def rsp_memory_bytes(options, cmd, cmd_args, rsp):
     addr = Packet(cmd_args).get_hex_uint('big')
     dump_hex_memory_buffer (addr, rsp) 
 
-def get_register_name_equal_value(reg_num, hex_value_str):
+def get_register_name_equal_value(options, reg_num, hex_value_str):
     if reg_num < len(g_register_infos):
         reg_info = g_register_infos[reg_num]
-        return reg_info.name() + ' = ' + reg_info.get_value_from_hex_string (hex_value_str)
+        value_str = reg_info.get_value_from_hex_string (hex_value_str)
+        s = reg_info.name() + ' = '
+        if options.symbolicator:
+            symbolicated_addresses = options.symbolicator.symbolicate (int(value_str, 0))
+            if symbolicated_addresses:
+                s += options.colors.magenta()
+                s += '%s' % symbolicated_addresses[0]
+                s += options.colors.reset()
+                return s
+        s += value_str
+        return s
     else:
         reg_value = Packet(hex_value_str).get_hex_uint(g_byte_order)
         return 'reg(%u) = 0x%x' % (reg_num, reg_value)
 
-def cmd_read_one_reg(cmd, args):
+def cmd_read_one_reg(options, cmd, args):
     packet = Packet(args)
     reg_num = packet.get_hex_uint('big')
     tid = get_thread_from_thread_suffix (packet.str)
@@ -721,12 +752,12 @@ def cmd_read_one_reg(cmd, args):
     s += ')'
     print s
 
-def rsp_read_one_reg(cmd, cmd_args, rsp):
+def rsp_read_one_reg(options, cmd, cmd_args, rsp):
     packet = Packet(cmd_args)
     reg_num = packet.get_hex_uint('big')
-    print get_register_name_equal_value (reg_num, rsp)
+    print get_register_name_equal_value (options, reg_num, rsp)
 
-def cmd_write_one_reg(cmd, args):
+def cmd_write_one_reg(options, cmd, args):
     packet = Packet(args)
     reg_num = packet.get_hex_uint('big')
     if packet.get_char() != '=':
@@ -739,7 +770,7 @@ def cmd_write_one_reg(cmd, args):
         if name:
             s += ' (%s)' % (name)
         s += ', value = '
-        s += get_register_name_equal_value(reg_num, hex_value_str)
+        s += get_register_name_equal_value(options, reg_num, hex_value_str)
         if tid != None:
             s += ', tid = 0x%4.4x' % (tid)
         s += ')'
@@ -764,18 +795,18 @@ def cmd_read_all_regs(cmd, cmd_args):
     else:
         print 'read_all_register()'
 
-def rsp_read_all_regs(cmd, cmd_args, rsp):
+def rsp_read_all_regs(options, cmd, cmd_args, rsp):
     packet = Packet(rsp)
     dump_all_regs (packet)
 
-def cmd_write_all_regs(cmd, args):
+def cmd_write_all_regs(options, cmd, args):
     packet = Packet(args)
     print 'write_all_registers()'
     dump_all_regs (packet)
     
 g_bp_types = [ "software_bp", "hardware_bp", "write_wp", "read_wp", "access_wp" ]
 
-def cmd_bp(cmd, args):
+def cmd_bp(options, cmd, args):
     if cmd == 'Z':
         s = 'set_'
     else:
@@ -790,13 +821,13 @@ def cmd_bp(cmd, args):
     s += " (addr = 0x%x, size = %u)" % (bp_addr, bp_size)
     print s
 
-def cmd_mem_rgn_info(cmd, args):
+def cmd_mem_rgn_info(options, cmd, args):
     packet = Packet(args)
     packet.get_char() # skip ':' character
     addr = packet.get_hex_uint('big')
     print 'get_memory_region_info (addr=0x%x)' % (addr)
 
-def cmd_kill(cmd, args):
+def cmd_kill(options, cmd, args):
     print 'kill_process()'
 
 gdb_remote_commands = {
@@ -845,7 +876,6 @@ def parse_gdb_log_file(file, options):
     base_time = 0.0
     last_time = 0.0
     packet_send_time = 0.0
-    packet_name = None
     packet_total_times = {}
     packet_count = {}
     file = open(file)
@@ -854,12 +884,14 @@ def parse_gdb_log_file(file, options):
     last_command_args = None
     last_command_packet = None
     for line in lines:
+        packet_name = None
         m = packet_transmit_name_regex.search(line)
+        is_command = False
         if m:
             direction = m.group('direction')
             is_command = direction == 'send'
             packet = m.group('packet')
-            options.colors.green()
+            sys.stdout.write(options.colors.green())
             if options.quiet:
                 if is_command:
                     print '-->', packet
@@ -867,7 +899,7 @@ def parse_gdb_log_file(file, options):
                     print '<--', packet
             else:
                 print '#  ', line
-            options.colors.reset()
+            sys.stdout.write(options.colors.reset())
                 
             #print 'direction = "%s", packet = "%s"' % (direction, packet)
             
@@ -883,15 +915,24 @@ def parse_gdb_log_file(file, options):
                         m = packet_names_regex.match (contents)
                         if m:
                             last_command = m.group(1)
+                            packet_name = last_command
                             last_command_args = m.group(2)
                             last_command_packet = contents
-                            gdb_remote_commands[last_command]['cmd'](last_command, last_command_args)
+                            gdb_remote_commands[last_command]['cmd'](options, last_command, last_command_args)
                         else:
+                            packet_match = packet_name_regex.match (line[idx+14:])
+                            if packet_match:
+                                packet_name = packet_match.group(1)
+                                for tricky_cmd in tricky_commands:
+                                    if packet_name.find (tricky_cmd) == 0:
+                                        packet_name = tricky_cmd
+                            else:
+                                packet_name = contents
                             last_command = None
                             last_command_args = None
                             last_command_packet = None
                     elif last_command:
-                        gdb_remote_commands[last_command]['rsp'](last_command, last_command_args, contents)
+                        gdb_remote_commands[last_command]['rsp'](options, last_command, last_command_args, contents)
                 else:
                     print 'error: invalid packet: "', packet, '"'
             else:
@@ -906,15 +947,9 @@ def parse_gdb_log_file(file, options):
                 delta = curr_time - last_time
             else:
                 base_time = curr_time
-            idx = line.find('send packet: $')
-            if idx >= 0:
+            
+            if is_command:
                 packet_send_time = curr_time
-                packet_match = packet_name_regex.match (line[idx+14:])
-                if packet_match:
-                    packet_name = packet_match.group(1)
-                    for tricky_cmd in tricky_commands:
-                        if packet_name.find (tricky_cmd) == 0:
-                            packet_name = tricky_cmd
             elif line.find('read packet: $') >= 0 and packet_name:
                 if packet_name in packet_total_times:
                     packet_total_times[packet_name] += delta
@@ -963,7 +998,6 @@ def parse_gdb_log_file(file, options):
     
     
 if __name__ == '__main__':
-    import sys
     usage = "usage: gdbremote [options]"
     description='''The command disassembles a GDB remote packet log.'''
     parser = optparse.OptionParser(description=description, prog='gdbremote',usage=usage)
@@ -971,13 +1005,21 @@ if __name__ == '__main__':
     parser.add_option('-q', '--quiet', action='store_true', dest='quiet', help='display verbose debug info', default=False)
     parser.add_option('-C', '--color', action='store_true', dest='color', help='add terminal colors', default=False)
     parser.add_option('-c', '--sort-by-count', action='store_true', dest='sort_count', help='display verbose debug info', default=False)
+    parser.add_option('--crashlog', type='string', dest='crashlog', help='symbolicate using a darwin crash log file', default=False)
     try:
         (options, args) = parser.parse_args(sys.argv[1:])
     except:
         print 'error: argument error'
         sys.exit(1)
 
-    options.colors = TerminalColors(sys.stdout, options.color)
+    options.colors = TerminalColors(options.color)
+    options.symbolicator = None
+    if options.crashlog:
+        import lldb
+        lldb.debugger = lldb.SBDebugger.Create()
+        import lldb.macosx.crashlog
+        options.symbolicator = lldb.macosx.crashlog.CrashLog(options.crashlog)
+        print '%s' % (options.symbolicator)
 
     # This script is being run from the command line, create a debugger in case we are
     # going to use any debugger functions in our function.
@@ -986,6 +1028,9 @@ if __name__ == '__main__':
         print "# GDB remote log file: '%s'" % file
         print '#----------------------------------------------------------------------'
         parse_gdb_log_file (file, options)
+    if options.symbolicator:
+        print '%s' % (options.symbolicator)
+        
 else:
     import lldb
     if lldb.debugger:    
