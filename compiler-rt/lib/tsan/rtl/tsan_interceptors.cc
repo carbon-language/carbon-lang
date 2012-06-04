@@ -1,4 +1,4 @@
-//===-- tsan_interceptors_linux.cc ------------------------------*- C++ -*-===//
+//===-- tsan_interceptors_linux.cc ----------------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

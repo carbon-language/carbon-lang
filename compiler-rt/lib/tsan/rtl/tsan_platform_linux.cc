@@ -1,4 +1,4 @@
-//===-- tsan_platform_linux.cc ----------------------------------*- C++ -*-===//
+//===-- tsan_platform_linux.cc --------------------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

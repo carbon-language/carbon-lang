@@ -1,4 +1,4 @@
-//===-- tsan_suppressions.cc ------------------------------------*- C++ -*-===//
+//===-- tsan_suppressions.cc ----------------------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

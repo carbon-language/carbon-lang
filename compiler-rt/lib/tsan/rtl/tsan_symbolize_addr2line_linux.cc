@@ -1,4 +1,4 @@
-//===-- tsan_symbolize_addr2line.cc -----------------------------*- C++ -*-===//
+//===-- tsan_symbolize_addr2line.cc ---------------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

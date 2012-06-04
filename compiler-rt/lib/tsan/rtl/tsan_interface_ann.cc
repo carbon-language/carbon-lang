@@ -1,4 +1,4 @@
-//===-- tsan_interface_ann.cc -----------------------------------*- C++ -*-===//
+//===-- tsan_interface_ann.cc ---------------------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

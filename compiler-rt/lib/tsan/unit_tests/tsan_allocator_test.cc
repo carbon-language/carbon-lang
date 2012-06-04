@@ -1,4 +1,4 @@
-//===-- tsan_allocator_test.c------------------------------------*- C++ -*-===//
+//===-- tsan_allocator_test.c----------------------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

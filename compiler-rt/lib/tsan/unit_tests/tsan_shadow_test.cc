@@ -1,4 +1,4 @@
-//===-- tsan_shadow_test.cc -------------------------------------*- C++ -*-===//
+//===-- tsan_shadow_test.cc -----------------------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

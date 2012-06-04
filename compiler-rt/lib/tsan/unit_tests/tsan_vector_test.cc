@@ -1,4 +1,4 @@
-//===-- tsan_vector_test.cc -------------------------------------*- C++ -*-===//
+//===-- tsan_vector_test.cc -----------------------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
