@@ -3501,8 +3501,8 @@ CommandObjectTargetModulesLookup::CommandOptions::g_option_table[] =
     { LLDB_OPT_SET_2,   true,  "symbol",     's', required_argument, NULL, 0, eArgTypeSymbol,       "Lookup a symbol by name in the symbol tables in one or more target modules."},
     { LLDB_OPT_SET_3,   true,  "file",       'f', required_argument, NULL, 0, eArgTypeFilename,     "Lookup a file by fullpath or basename in one or more target modules."},
     { LLDB_OPT_SET_3,   false, "line",       'l', required_argument, NULL, 0, eArgTypeLineNum,      "Lookup a line number in a file (must be used in conjunction with --file)."},
-    { LLDB_OPT_SET_3|
-      LLDB_OPT_SET_4,   false, "no-inlines", 'i', no_argument,       NULL, 0, eArgTypeNone,         "Ignore inline entries (must be used in conjunction with --file or --function)."},
+    { LLDB_OPT_SET_FROM_TO(3,5),
+                        false, "no-inlines", 'i', no_argument,       NULL, 0, eArgTypeNone,         "Ignore inline entries (must be used in conjunction with --file or --function)."},
     { LLDB_OPT_SET_4,   true,  "function",   'F', required_argument, NULL, 0, eArgTypeFunctionName, "Lookup a function by name in the debug symbols in one or more target modules."},
     { LLDB_OPT_SET_5,   true,  "name",       'n', required_argument, NULL, 0, eArgTypeFunctionName, "Lookup a function or symbol by name in one or more target modules."},
     { LLDB_OPT_SET_6,   true,  "type",       't', required_argument, NULL, 0, eArgTypeName,         "Lookup a type by name in the debug symbols in one or more target modules."},
