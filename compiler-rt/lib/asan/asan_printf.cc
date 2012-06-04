@@ -16,9 +16,12 @@
 
 #include "asan_internal.h"
 #include "asan_interceptors.h"
+#include "sanitizer_common/sanitizer_libc.h"
 
 #include <stdarg.h>
 #include <stdio.h>
+
+using namespace __sanitizer;  // NOLINT
 
 namespace __asan {
 

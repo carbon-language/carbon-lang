@@ -18,10 +18,15 @@
 #ifndef SANITIZER_LIBC_H
 #define SANITIZER_LIBC_H
 
+#include "sanitizer_defs.h"
+
 // No code here yet. Will move more code in the next changes.
 namespace __sanitizer {
 
 void MiniLibcStub();
+
+// internal_X() is a custom implementation of X() for use in RTL.
+char *internal_strncpy(char *dst, const char *src, uptr n);
 
 }  // namespace __sanitizer
 

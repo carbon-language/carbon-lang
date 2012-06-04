@@ -41,7 +41,6 @@ int internal_memcmp(const void* s1, const void* s2, uptr n);
 char *internal_strstr(const char *haystack, const char *needle);
 char *internal_strncat(char *dst, const char *src, uptr n);
 int internal_strcmp(const char *s1, const char *s2);
-char *internal_strncpy(char *dst, const char *src, uptr n);
 // Works only for base=10 and doesn't set errno.
 s64 internal_simple_strtoll(const char *nptr, char **endptr, int base);
 
