@@ -441,6 +441,19 @@ href="#DiagnosticClient">Other diagnostic clients</a> might choose
 to render the code differently (e.g., as markup inline) or even give
 the user the ability to automatically fix the problem.</p>
 
+<p>Fix-it hints on errors and warnings need to obey these rules:</p>
+
+<ul>
+<li>Since they are automatically applied if <code>-Xclang -fixit</code>
+is passed to the driver, they should only be used when it's very likely they
+match the user's intent.</li>
+<li>Clang must recover from the error or warning as if the fix-it had been
+applied.</li>
+</ul>
+
+<p>If a fix-it can't obey these rules, put the fix-it on a note. Fix-its on
+notes are not applied automatically.</p>
+
 <p>All fix-it hints are described by the <code>FixItHint</code> class,
 instances of which should be attached to the diagnostic using the
 &lt;&lt; operator in the same way that highlighted source ranges and
