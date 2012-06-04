@@ -345,9 +345,11 @@ void SplitEditor::reset(LiveRangeEdit &LRE, ComplementSpillMode SM) {
   Values.clear();
 
   // Reset the LiveRangeCalc instances needed for this spill mode.
-  LRCalc[0].reset(&VRM.getMachineFunction());
+  LRCalc[0].reset(&VRM.getMachineFunction(), LIS.getSlotIndexes(), &MDT,
+                  &LIS.getVNInfoAllocator());
   if (SpillMode)
-    LRCalc[1].reset(&VRM.getMachineFunction());
+    LRCalc[1].reset(&VRM.getMachineFunction(), LIS.getSlotIndexes(), &MDT,
+                    &LIS.getVNInfoAllocator());
 
   // We don't need an AliasAnalysis since we will only be performing
   // cheap-as-a-copy remats anyway.
@@ -924,11 +926,9 @@ bool SplitEditor::transferValues() {
     DEBUG(dbgs() << '\n');
   }
 
-  LRCalc[0].calculateValues(LIS.getSlotIndexes(), &MDT,
-                            &LIS.getVNInfoAllocator());
+  LRCalc[0].calculateValues();
   if (SpillMode)
-    LRCalc[1].calculateValues(LIS.getSlotIndexes(), &MDT,
-                              &LIS.getVNInfoAllocator());
+    LRCalc[1].calculateValues();
 
   return Skipped;
 }
@@ -953,8 +953,7 @@ void SplitEditor::extendPHIKillRanges() {
       if (Edit->getParent().liveAt(LastUse)) {
         assert(RegAssign.lookup(LastUse) == RegIdx &&
                "Different register assignment in phi predecessor");
-        LRC.extend(LI, End,
-                   LIS.getSlotIndexes(), &MDT, &LIS.getVNInfoAllocator());
+        LRC.extend(LI, End);
       }
     }
   }
@@ -1004,8 +1003,7 @@ void SplitEditor::rewriteAssigned(bool ExtendRanges) {
     } else
       Idx = Idx.getRegSlot(true);
 
-    getLRCalc(RegIdx).extend(LI, Idx.getNextSlot(), LIS.getSlotIndexes(),
-                             &MDT, &LIS.getVNInfoAllocator());
+    getLRCalc(RegIdx).extend(LI, Idx.getNextSlot());
   }
 }
 

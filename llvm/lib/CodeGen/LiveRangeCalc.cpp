@@ -17,7 +17,15 @@
 
 using namespace llvm;
 
-void LiveRangeCalc::reset(const MachineFunction *MF) {
+void LiveRangeCalc::reset(const MachineFunction *MF,
+                          SlotIndexes *SI,
+                          MachineDominatorTree *MDT,
+                          VNInfo::Allocator *VNIA) {
+  MRI = &MF->getRegInfo();
+  Indexes = SI;
+  DomTree = MDT;
+  Alloc = VNIA;
+
   unsigned N = MF->getNumBlockIDs();
   Seen.clear();
   Seen.resize(N);
@@ -27,7 +35,7 @@ void LiveRangeCalc::reset(const MachineFunction *MF) {
 
 
 // Transfer information from the LiveIn vector to the live ranges.
-void LiveRangeCalc::updateLiveIns(VNInfo *OverrideVNI, SlotIndexes *Indexes) {
+void LiveRangeCalc::updateLiveIns(VNInfo *OverrideVNI) {
   for (SmallVectorImpl<LiveInBlock>::iterator I = LiveIn.begin(),
          E = LiveIn.end(); I != E; ++I) {
     if (!I->DomNode)
@@ -55,10 +63,7 @@ void LiveRangeCalc::updateLiveIns(VNInfo *OverrideVNI, SlotIndexes *Indexes) {
 
 
 void LiveRangeCalc::extend(LiveInterval *LI,
-                           SlotIndex Kill,
-                           SlotIndexes *Indexes,
-                           MachineDominatorTree *DomTree,
-                           VNInfo::Allocator *Alloc) {
+                           SlotIndex Kill) {
   assert(LI && "Missing live range");
   assert(Kill.isValid() && "Invalid SlotIndex");
   assert(Indexes && "Missing SlotIndexes");
@@ -75,34 +80,30 @@ void LiveRangeCalc::extend(LiveInterval *LI,
   // multiple values, and we may need to create even more phi-defs to preserve
   // VNInfo SSA form.  Perform a search for all predecessor blocks where we
   // know the dominating VNInfo.
-  VNInfo *VNI = findReachingDefs(LI, KillMBB, Kill, Indexes, DomTree);
+  VNInfo *VNI = findReachingDefs(LI, KillMBB, Kill);
 
   // When there were multiple different values, we may need new PHIs.
   if (!VNI)
-    updateSSA(Indexes, DomTree, Alloc);
+    updateSSA();
 
-  updateLiveIns(VNI, Indexes);
+  updateLiveIns(VNI);
 }
 
 
 // This function is called by a client after using the low-level API to add
 // live-out and live-in blocks.  The unique value optimization is not
 // available, SplitEditor::transferValues handles that case directly anyway.
-void LiveRangeCalc::calculateValues(SlotIndexes *Indexes,
-                                    MachineDominatorTree *DomTree,
-                                    VNInfo::Allocator *Alloc) {
+void LiveRangeCalc::calculateValues() {
   assert(Indexes && "Missing SlotIndexes");
   assert(DomTree && "Missing dominator tree");
-  updateSSA(Indexes, DomTree, Alloc);
-  updateLiveIns(0, Indexes);
+  updateSSA();
+  updateLiveIns(0);
 }
 
 
 VNInfo *LiveRangeCalc::findReachingDefs(LiveInterval *LI,
                                         MachineBasicBlock *KillMBB,
-                                        SlotIndex Kill,
-                                        SlotIndexes *Indexes,
-                                        MachineDominatorTree *DomTree) {
+                                        SlotIndex Kill) {
   // Blocks where LI should be live-in.
   SmallVector<MachineBasicBlock*, 16> WorkList(1, KillMBB);
 
@@ -168,9 +169,7 @@ VNInfo *LiveRangeCalc::findReachingDefs(LiveInterval *LI,
 
 // This is essentially the same iterative algorithm that SSAUpdater uses,
 // except we already have a dominator tree, so we don't have to recompute it.
-void LiveRangeCalc::updateSSA(SlotIndexes *Indexes,
-                              MachineDominatorTree *DomTree,
-                              VNInfo::Allocator *Alloc) {
+void LiveRangeCalc::updateSSA() {
   assert(Indexes && "Missing SlotIndexes");
   assert(DomTree && "Missing dominator tree");
 
