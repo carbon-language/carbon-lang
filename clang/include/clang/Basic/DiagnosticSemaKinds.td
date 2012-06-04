@@ -4330,10 +4330,6 @@ let CategoryName = "Lambda Issue" in {
   def note_lambda_decl : Note<"lambda expression begins here">;
   def err_lambda_unevaluated_operand : Error<
     "lambda expression in an unevaluated operand">;
-  def ext_lambda_implies_void_return : ExtWarn<
-    "C++11 requires lambda with omitted result type to consist of a single "
-    "return statement">,
-    InGroup<LambdaExtensions>;
   def err_lambda_return_init_list : Error<
     "cannot deduce lambda return type from initializer list">;
   def err_lambda_capture_default_arg : Error<

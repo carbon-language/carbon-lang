@@ -648,26 +648,6 @@ ExprResult Sema::ActOnLambdaExpr(SourceLocation StartLoc, Stmt *Body,
       //     braced-init-list, the type void;
       if (LSI->ReturnType.isNull()) {
         LSI->ReturnType = Context.VoidTy;
-      } else {
-        // C++11 [expr.prim.lambda]p4:
-        //   - if the compound-statement is of the form
-        //
-        //       { attribute-specifier-seq[opt] return expression ; }
-        //
-        //     the type of the returned expression after
-        //     lvalue-to-rvalue conversion (4.1), array-to-pointer
-        //     conver- sion (4.2), and function-to-pointer conversion
-        //     (4.3);
-        //
-        // Since we're accepting the resolution to a post-C++11 core
-        // issue with a non-trivial extension, provide a warning (by
-        // default).
-        CompoundStmt *CompoundBody = cast<CompoundStmt>(Body);
-        if (!(CompoundBody->size() == 1 &&
-              isa<ReturnStmt>(*CompoundBody->body_begin())) &&
-            !Context.hasSameType(LSI->ReturnType, Context.VoidTy))
-          Diag(IntroducerRange.getBegin(), 
-               diag::ext_lambda_implies_void_return);
       }
 
       // Create a function type with the inferred return type.

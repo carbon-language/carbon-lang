@@ -210,6 +210,6 @@ int pr12325(int params) {
 
 // Test lambda expressions with -Wuninitialized
 int test_lambda() {
-  auto f1 = [] (int x, int y) { int z; return x + y + z; }; // expected-warning {{C++11 requires lambda with omitted result type to consist of a single return statement}} expected-warning{{variable 'z' is uninitialized when used here}} expected-note {{initialize the variable 'z' to silence this warning}}
+  auto f1 = [] (int x, int y) { int z; return x + y + z; }; // expected-warning{{variable 'z' is uninitialized when used here}} expected-note {{initialize the variable 'z' to silence this warning}}
   return f1(1, 2);
 }
