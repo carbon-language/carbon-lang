@@ -50,21 +50,27 @@ namespace llvm {
     /// and jumps to external functions on Tiger and earlier.
     MO_DARWIN_STUB = 1,
     
-    /// MO_LO16, MO_HA16 - lo16(symbol) and ha16(symbol)
-    MO_LO16 = 4, MO_HA16 = 8,
-
     /// MO_PIC_FLAG - If this bit is set, the symbol reference is relative to
     /// the function's picbase, e.g. lo16(symbol-picbase).
-    MO_PIC_FLAG = 16,
+    MO_PIC_FLAG = 4,
 
     /// MO_NLP_FLAG - If this bit is set, the symbol reference is actually to
     /// the non_lazy_ptr for the global, e.g. lo16(symbol$non_lazy_ptr-picbase).
-    MO_NLP_FLAG = 32,
+    MO_NLP_FLAG = 8,
     
     /// MO_NLP_HIDDEN_FLAG - If this bit is set, the symbol reference is to a
     /// symbol with hidden visibility.  This causes a different kind of
     /// non-lazy-pointer to be generated.
-    MO_NLP_HIDDEN_FLAG = 64
+    MO_NLP_HIDDEN_FLAG = 16,
+
+    /// The next are not flags but distinct values.
+    MO_ACCESS_MASK = 224,
+
+    /// MO_LO16, MO_HA16 - lo16(symbol) and ha16(symbol)
+    MO_LO16 = 32, MO_HA16 = 64,
+
+    MO_TPREL16_HA = 96,
+    MO_TPREL16_LO = 128
   };
   } // end namespace PPCII
   

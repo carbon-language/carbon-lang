@@ -99,10 +99,22 @@ static MCOperand GetSymbolRef(const MachineOperand &MO, const MCSymbol *Symbol,
   MCContext &Ctx = Printer.OutContext;
   MCSymbolRefExpr::VariantKind RefKind = MCSymbolRefExpr::VK_None;
 
-  if (MO.getTargetFlags() & PPCII::MO_LO16)
-    RefKind = isDarwin ? MCSymbolRefExpr::VK_PPC_DARWIN_LO16 : MCSymbolRefExpr::VK_PPC_GAS_LO16;
-  else if (MO.getTargetFlags() & PPCII::MO_HA16)
-    RefKind = isDarwin ? MCSymbolRefExpr::VK_PPC_DARWIN_HA16 : MCSymbolRefExpr::VK_PPC_GAS_HA16;
+  unsigned access = MO.getTargetFlags() & PPCII::MO_ACCESS_MASK;
+
+  switch (access) {
+    case PPCII::MO_HA16: RefKind = isDarwin ? 
+                           MCSymbolRefExpr::VK_PPC_DARWIN_HA16 : 
+                           MCSymbolRefExpr::VK_PPC_GAS_HA16; 
+                         break;
+    case PPCII::MO_LO16: RefKind = isDarwin ? 
+                           MCSymbolRefExpr::VK_PPC_DARWIN_LO16 : 
+                           MCSymbolRefExpr::VK_PPC_GAS_LO16; 
+                         break;
+    case PPCII::MO_TPREL16_HA: RefKind = MCSymbolRefExpr::VK_PPC_TPREL16_HA;
+                               break;
+    case PPCII::MO_TPREL16_LO: RefKind = MCSymbolRefExpr::VK_PPC_TPREL16_LO;
+                               break;
+   }
 
   // FIXME: This isn't right, but we don't have a good way to express this in
   // the MC Level, see below.

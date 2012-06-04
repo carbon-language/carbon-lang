@@ -176,6 +176,8 @@ public:
     VK_PPC_DARWIN_LO16,  // lo16(symbol)
     VK_PPC_GAS_HA16,     // symbol@ha
     VK_PPC_GAS_LO16,      // symbol@l
+    VK_PPC_TPREL16_HA,   // symbol@tprel@ha
+    VK_PPC_TPREL16_LO,   // symbol@tprel@l
 
     VK_Mips_GPREL,
     VK_Mips_GOT_CALL,
