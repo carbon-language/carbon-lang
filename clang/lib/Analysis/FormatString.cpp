@@ -241,6 +241,9 @@ bool ArgTypeResult::matchesType(ASTContext &C, QualType argTy) const {
       return true;
       
     case AnyCharTy: {
+      if (const EnumType *ETy = argTy->getAs<EnumType>())
+        argTy = ETy->getDecl()->getIntegerType();
+
       if (const BuiltinType *BT = argTy->getAs<BuiltinType>())
         switch (BT->getKind()) {
           default:
@@ -255,7 +258,10 @@ bool ArgTypeResult::matchesType(ASTContext &C, QualType argTy) const {
     }
       
     case SpecificTy: {
+      if (const EnumType *ETy = argTy->getAs<EnumType>())
+        argTy = ETy->getDecl()->getIntegerType();
       argTy = C.getCanonicalType(argTy).getUnqualifiedType();
+
       if (T == argTy)
         return true;
       // Check for "compatible types".

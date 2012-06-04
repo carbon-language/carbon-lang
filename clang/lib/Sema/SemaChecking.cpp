@@ -2396,17 +2396,26 @@ CheckPrintfHandler::HandlePrintfSpecifier(const analyze_printf::PrintfSpecifier
   const analyze_printf::ArgTypeResult &ATR = FS.getArgType(S.Context,
                                                            IsObjCLiteral);
   if (ATR.isValid() && !ATR.matchesType(S.Context, Ex->getType())) {
-    // Check if we didn't match because of an implicit cast from a 'char'
-    // or 'short' to an 'int'.  This is done because printf is a varargs
-    // function.
-    if (const ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(Ex))
-      if (ICE->getType() == S.Context.IntTy ||
-          ICE->getType() == S.Context.UnsignedIntTy) {
-        // All further checking is done on the subexpression.
+    // Look through argument promotions for our error message's reported type.
+    // This includes the integral and floating promotions, but excludes array
+    // and function pointer decay; seeing that an argument intended to be a
+    // string has type 'char [6]' is probably more confusing than 'char *'.
+    if (const ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(Ex)) {
+      if (ICE->getCastKind() == CK_IntegralCast ||
+          ICE->getCastKind() == CK_FloatingCast) {
         Ex = ICE->getSubExpr();
-        if (ATR.matchesType(S.Context, Ex->getType()))
-          return true;
+
+        // Check if we didn't match because of an implicit cast from a 'char'
+        // or 'short' to an 'int'.  This is done because printf is a varargs
+        // function.
+        if (ICE->getType() == S.Context.IntTy ||
+            ICE->getType() == S.Context.UnsignedIntTy) {
+          // All further checking is done on the subexpression.
+          if (ATR.matchesType(S.Context, Ex->getType()))
+            return true;
+        }
       }
+    }
 
     // We may be able to offer a FixItHint if it is a supported type.
     PrintfSpecifier fixedFS = FS;
@@ -2415,7 +2424,7 @@ CheckPrintfHandler::HandlePrintfSpecifier(const analyze_printf::PrintfSpecifier
 
     if (success) {
       // Get the fix string from the fixed format specifier
-      SmallString<128> buf;
+      SmallString<16> buf;
       llvm::raw_svector_ostream os(buf);
       fixedFS.toString(os);
 
