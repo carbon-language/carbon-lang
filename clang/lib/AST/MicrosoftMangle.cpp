@@ -198,7 +198,7 @@ void MicrosoftCXXNameMangler::mangleFunctionEncoding(const FunctionDecl *FD) {
   
   // We should never ever see a FunctionNoProtoType at this point.
   // We don't even know how to mangle their types anyway :).
-  const FunctionProtoType *FT = cast<FunctionProtoType>(FD->getType());
+  const FunctionProtoType *FT = FD->getType()->castAs<FunctionProtoType>();
 
   bool InStructor = false, InInstMethod = false;
   const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(FD);

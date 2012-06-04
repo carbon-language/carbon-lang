@@ -116,3 +116,8 @@ void operator_new_delete() {
   delete [] array;
 // CHECK: @"\01??_V@YAXPAX@Z"
 }
+
+// PR13022
+void (redundant_parens)();
+void redundant_parens_use() { redundant_parens(); }
+// CHECK: @"\01?redundant_parens@@YAXXZ"
