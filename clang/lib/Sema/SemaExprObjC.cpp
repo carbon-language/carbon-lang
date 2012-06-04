@@ -1347,6 +1347,9 @@ static void DiagnoseARCUseOfWeakReceiver(Sema &S, Expr *Receiver) {
   if (!Receiver)
     return;
   
+  if (OpaqueValueExpr *OVE = dyn_cast<OpaqueValueExpr>(Receiver))
+    Receiver = OVE->getSourceExpr();
+  
   Expr *RExpr = Receiver->IgnoreParenImpCasts();
   SourceLocation Loc = RExpr->getLocStart();
   QualType T = RExpr->getType();
@@ -1367,6 +1370,20 @@ static void DiagnoseARCUseOfWeakReceiver(Sema &S, Expr *Receiver) {
           T = PDecl->getType();
         }
       }
+    }
+  }
+  else if (ObjCMessageExpr *ME = dyn_cast<ObjCMessageExpr>(RExpr)) {
+    // See if receiver is a method which envokes a synthesized getter
+    // backing a 'weak' property.
+    ObjCMethodDecl *Method = ME->getMethodDecl();
+    if (Method && Method->isSynthesized()) {
+      Selector Sel = Method->getSelector();
+      if (Sel.getNumArgs() == 0)
+        PDecl = 
+          S.LookupPropertyDecl(Method->getClassInterface(), 
+                               Sel.getIdentifierInfoForSlot(0));
+      if (PDecl)
+        T = PDecl->getType();
     }
   }
   

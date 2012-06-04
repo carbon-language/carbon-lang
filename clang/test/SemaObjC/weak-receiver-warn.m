@@ -15,7 +15,7 @@ void test0(Test0 *x) {
 
   [weakx addBlock: ^{ [x actNow]; }]; // expected-warning {{weak receiver may be unpredictably null in ARC mode}}
   [weakx setBlock: ^{ [x actNow]; }]; // expected-warning {{weak receiver may be unpredictably null in ARC mode}}
-  weakx.block = ^{ [x actNow]; };
+  weakx.block = ^{ [x actNow]; };     // expected-warning {{weak receiver may be unpredictably null in ARC mode}}
 }
 
 @interface Test
@@ -48,3 +48,21 @@ void test0(Test0 *x) {
 @dynamic weak_prop, weak_atomic_prop;
 @end
 
+
+@interface MyClass {
+    __weak MyClass *_parent;
+}
+@property (weak) MyClass *parent; // expected-note 2 {{property declared here}}
+@end
+
+@implementation MyClass
+@synthesize parent = _parent;
+
+- (void)doSomething
+{
+    [[self parent] doSomething]; // expected-warning {{weak property may be unpredictably null in ARC mode}}
+
+    (void)self.parent.doSomething; // expected-warning {{weak property may be unpredictably null in ARC mode}}
+}
+
+@end
