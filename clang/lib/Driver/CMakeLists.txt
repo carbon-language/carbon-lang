@@ -1,4 +1,4 @@
-set(LLVM_USED_LIBS clangBasic clangAST clangParse)
+set(LLVM_USED_LIBS clangBasic)
 
 add_clang_library(clangDriver
   Action.cpp
