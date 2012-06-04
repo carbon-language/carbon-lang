@@ -1636,6 +1636,15 @@ bool Sema::SemaCheckStringLiteral(const Expr *E, Expr **Args,
         return SemaCheckStringLiteral(Arg, Args, NumArgs, HasVAListArg,
                                       format_idx, firstDataArg, Type,
                                       inFunctionCall);
+      } else if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(ND)) {
+        unsigned BuiltinID = FD->getBuiltinID();
+        if (BuiltinID == Builtin::BI__builtin___CFStringMakeConstantString ||
+            BuiltinID == Builtin::BI__builtin___NSStringMakeConstantString) {
+          const Expr *Arg = CE->getArg(0);
+          return SemaCheckStringLiteral(Arg, Args, NumArgs, HasVAListArg,
+                                        format_idx, firstDataArg, Type,
+                                        inFunctionCall);
+        }
       }
     }
 
@@ -1780,7 +1789,6 @@ protected:
   const Expr *OrigFormatExpr;
   const unsigned FirstDataArg;
   const unsigned NumDataArgs;
-  const bool IsObjCLiteral;
   const char *Beg; // Start of format string.
   const bool HasVAListArg;
   const Expr * const *Args;
@@ -1793,15 +1801,12 @@ protected:
 public:
   CheckFormatHandler(Sema &s, const StringLiteral *fexpr,
                      const Expr *origFormatExpr, unsigned firstDataArg,
-                     unsigned numDataArgs, bool isObjCLiteral,
-                     const char *beg, bool hasVAListArg,
+                     unsigned numDataArgs, const char *beg, bool hasVAListArg,
                      Expr **args, unsigned numArgs,
                      unsigned formatIdx, bool inFunctionCall)
     : S(s), FExpr(fexpr), OrigFormatExpr(origFormatExpr),
-      FirstDataArg(firstDataArg),
-      NumDataArgs(numDataArgs),
-      IsObjCLiteral(isObjCLiteral), Beg(beg),
-      HasVAListArg(hasVAListArg),
+      FirstDataArg(firstDataArg), NumDataArgs(numDataArgs),
+      Beg(beg), HasVAListArg(hasVAListArg),
       Args(args), NumArgs(numArgs), FormatIdx(formatIdx),
       usesPositionalArgs(false), atFirstArg(true),
       inFunctionCall(inFunctionCall) {
@@ -1961,7 +1966,7 @@ void CheckFormatHandler::HandleZeroPosition(const char *startPos,
 }
 
 void CheckFormatHandler::HandleNullChar(const char *nullCharacter) {
-  if (!IsObjCLiteral) {
+  if (!isa<ObjCStringLiteral>(OrigFormatExpr)) {
     // The presence of a null character is likely an error.
     EmitFormatDiagnostic(
       S.PDiag(diag::warn_printf_format_string_contains_null_char),
@@ -2112,16 +2117,17 @@ void CheckFormatHandler::EmitFormatDiagnostic(Sema &S, bool InFunctionCall,
 
 namespace {
 class CheckPrintfHandler : public CheckFormatHandler {
+  bool ObjCContext;
 public:
   CheckPrintfHandler(Sema &s, const StringLiteral *fexpr,
                      const Expr *origFormatExpr, unsigned firstDataArg,
-                     unsigned numDataArgs, bool isObjCLiteral,
+                     unsigned numDataArgs, bool isObjC,
                      const char *beg, bool hasVAListArg,
                      Expr **Args, unsigned NumArgs,
                      unsigned formatIdx, bool inFunctionCall)
   : CheckFormatHandler(s, fexpr, origFormatExpr, firstDataArg,
-                       numDataArgs, isObjCLiteral, beg, hasVAListArg,
-                       Args, NumArgs, formatIdx, inFunctionCall) {}
+                       numDataArgs, beg, hasVAListArg, Args, NumArgs,
+                       formatIdx, inFunctionCall), ObjCContext(isObjC) {}
   
   
   bool HandleInvalidPrintfConversionSpecifier(
@@ -2314,7 +2320,7 @@ CheckPrintfHandler::HandlePrintfSpecifier(const analyze_printf::PrintfSpecifier
 
   // Check for using an Objective-C specific conversion specifier
   // in a non-ObjC literal.
-  if (!IsObjCLiteral && CS.isObjCArg()) {
+  if (!ObjCContext && CS.isObjCArg()) {
     return HandleInvalidPrintfConversionSpecifier(FS, startSpecifier,
                                                   specifierLen);
   }
@@ -2394,7 +2400,7 @@ CheckPrintfHandler::HandlePrintfSpecifier(const analyze_printf::PrintfSpecifier
   // format specifier.
   const Expr *Ex = getDataArg(argIndex);
   const analyze_printf::ArgTypeResult &ATR = FS.getArgType(S.Context,
-                                                           IsObjCLiteral);
+                                                           ObjCContext);
   if (ATR.isValid() && !ATR.matchesType(S.Context, Ex->getType())) {
     // Look through argument promotions for our error message's reported type.
     // This includes the integral and floating promotions, but excludes array
@@ -2420,7 +2426,7 @@ CheckPrintfHandler::HandlePrintfSpecifier(const analyze_printf::PrintfSpecifier
     // We may be able to offer a FixItHint if it is a supported type.
     PrintfSpecifier fixedFS = FS;
     bool success = fixedFS.fixType(Ex->getType(), S.getLangOpts(),
-                                   S.Context, IsObjCLiteral);
+                                   S.Context, ObjCContext);
 
     if (success) {
       // Get the fix string from the fixed format specifier
@@ -2461,12 +2467,11 @@ class CheckScanfHandler : public CheckFormatHandler {
 public:
   CheckScanfHandler(Sema &s, const StringLiteral *fexpr,
                     const Expr *origFormatExpr, unsigned firstDataArg,
-                    unsigned numDataArgs, bool isObjCLiteral,
-                    const char *beg, bool hasVAListArg,
+                    unsigned numDataArgs, const char *beg, bool hasVAListArg,
                     Expr **Args, unsigned NumArgs,
                     unsigned formatIdx, bool inFunctionCall)
   : CheckFormatHandler(s, fexpr, origFormatExpr, firstDataArg,
-                       numDataArgs, isObjCLiteral, beg, hasVAListArg,
+                       numDataArgs, beg, hasVAListArg,
                        Args, NumArgs, formatIdx, inFunctionCall) {}
   
   bool HandleScanfSpecifier(const analyze_scanf::ScanfSpecifier &FS,
@@ -2653,7 +2658,7 @@ void Sema::CheckFormatString(const StringLiteral *FExpr,
   
   if (Type == FST_Printf || Type == FST_NSString) {
     CheckPrintfHandler H(*this, FExpr, OrigFormatExpr, firstDataArg,
-                         numDataArgs, isa<ObjCStringLiteral>(OrigFormatExpr),
+                         numDataArgs, (Type == FST_NSString),
                          Str, HasVAListArg, Args, NumArgs, format_idx,
                          inFunctionCall);
   
@@ -2661,8 +2666,7 @@ void Sema::CheckFormatString(const StringLiteral *FExpr,
                                                   getLangOpts()))
       H.DoneProcessing();
   } else if (Type == FST_Scanf) {
-    CheckScanfHandler H(*this, FExpr, OrigFormatExpr, firstDataArg,
-                        numDataArgs, isa<ObjCStringLiteral>(OrigFormatExpr),
+    CheckScanfHandler H(*this, FExpr, OrigFormatExpr, firstDataArg, numDataArgs,
                         Str, HasVAListArg, Args, NumArgs, format_idx,
                         inFunctionCall);
     

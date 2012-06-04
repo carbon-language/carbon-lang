@@ -31,6 +31,12 @@ extern void *_NSConstantStringClassReference;
 
 typedef const struct __CFString * CFStringRef;
 extern void CFStringCreateWithFormat(CFStringRef format, ...) __attribute__((format(CFString, 1, 2)));
+#define CFSTR(cStr)  ((CFStringRef) __builtin___CFStringMakeConstantString ("" cStr ""))
+
+// This function is used instead of the builtin if -fno-constant-cfstrings.
+// The definition on Mac OS X is NOT annotated with format_arg as of 10.7,
+// but if it were, we want the same checking behavior as with the builtin.
+extern CFStringRef __CFStringMakeConstantString(const char *) __attribute__((format_arg(1)));
 
 int printf(const char * restrict, ...) ;
 
@@ -52,6 +58,7 @@ void rdar_7068334() {
   long long test = 500;  
   printf("%i ",test); // expected-warning{{format specifies type 'int' but the argument has type 'long long'}}
   NSLog(@"%i ",test); // expected-warning{{format specifies type 'int' but the argument has type 'long long'}}
+  CFStringCreateWithFormat(CFSTR("%i"),test); // expected-warning{{format specifies type 'int' but the argument has type 'long long'}}
 }
 
 // <rdar://problem/7697748>
@@ -72,7 +79,7 @@ extern void MyCFStringCreateWithFormat(CFStringRef format, ...) __attribute__((f
 
 void check_mylog() {
   MyNSLog(@"%@"); // expected-warning {{more '%' conversions than data arguments}}
-  // FIXME: find a way to test CFString too, but I don't know how to create constant CFString.
+  MyCFStringCreateWithFormat(CFSTR("%@")); // expected-warning {{more '%' conversions than data arguments}}
 }
 
 // PR 10275 - format function attribute isn't checked in Objective-C methods
@@ -159,8 +166,12 @@ void test_percent_C() {
 }
 
 // Test that %@ works with toll-free bridging (<rdar://problem/10814120>).
-void test_toll_free_bridging(CFStringRef x) {
+void test_toll_free_bridging(CFStringRef x, id y) {
   NSLog(@"%@", x); // no-warning
+  CFStringCreateWithFormat(CFSTR("%@"), x); // no-warning
+
+  NSLog(@"%@", y); // no-warning
+  CFStringCreateWithFormat(CFSTR("%@"), y); // no-warning
 }
 
 @interface Bar
@@ -193,5 +204,9 @@ int rdar11049844() {
   typedef void (^MyBlock)(void);
   MyBlock x = ^void() { rdar11049844_aux(); };
   printf("%p", x);  // no-warning
+}
+
+void test_nonBuiltinCFStrings() {
+  CFStringCreateWithFormat(__CFStringMakeConstantString("%@"), 1); // expected-warning{{format specifies type 'id' but the argument has type 'int'}}
 }
 
