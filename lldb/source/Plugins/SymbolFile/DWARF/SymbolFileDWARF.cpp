@@ -1457,6 +1457,57 @@ SymbolFileDWARF::ParseClassTemplateDecl (clang::DeclContext *decl_ctx,
     return NULL;
 }
 
+class SymbolFileDWARF::DelayedAddObjCClassProperty
+{
+public:
+    DelayedAddObjCClassProperty
+    (
+        clang::ASTContext      *ast,
+        lldb::clang_type_t      class_opaque_type, 
+        const char             *property_name,
+        lldb::clang_type_t      property_opaque_type,  // The property type is only required if you don't have an ivar decl
+        clang::ObjCIvarDecl    *ivar_decl,   
+        const char             *property_setter_name,
+        const char             *property_getter_name,
+        uint32_t                property_attributes,
+        uint64_t                metadata = 0
+    ) :
+        m_ast                   (ast),
+        m_class_opaque_type     (class_opaque_type),
+        m_property_name         (property_name),
+        m_property_opaque_type  (property_opaque_type),
+        m_ivar_decl             (ivar_decl),
+        m_property_setter_name  (property_setter_name),
+        m_property_getter_name  (property_getter_name),
+        m_property_attributes   (property_attributes),
+        m_metadata              (metadata)
+    {
+    }
+    
+    bool Finalize() const
+    {
+        return ClangASTContext::AddObjCClassProperty(m_ast,
+                                                     m_class_opaque_type,
+                                                     m_property_name,
+                                                     m_property_opaque_type,
+                                                     m_ivar_decl,
+                                                     m_property_setter_name,
+                                                     m_property_getter_name,
+                                                     m_property_attributes,
+                                                     m_metadata);
+    }
+private:
+    clang::ASTContext      *m_ast;
+    lldb::clang_type_t      m_class_opaque_type;
+    const char             *m_property_name;
+    lldb::clang_type_t      m_property_opaque_type;
+    clang::ObjCIvarDecl    *m_ivar_decl;
+    const char             *m_property_setter_name;
+    const char             *m_property_getter_name;
+    uint32_t                m_property_attributes;
+    uint64_t                m_metadata;
+};
+
 size_t
 SymbolFileDWARF::ParseChildMembers
 (
@@ -1468,6 +1519,7 @@ SymbolFileDWARF::ParseChildMembers
     std::vector<clang::CXXBaseSpecifier *>& base_classes,
     std::vector<int>& member_accessibilities,
     DWARFDIECollection& member_function_dies,
+    DelayedPropertyList& delayed_properties,
     AccessType& default_accessibility,
     bool &is_a_class,
     LayoutInfo &layout_info
@@ -1739,14 +1791,15 @@ SymbolFileDWARF::ParseChildMembers
                                 assert (ivar_decl != NULL);
                             }
                             
-                            GetClangASTContext().AddObjCClassProperty (class_clang_type,
-                                                                       prop_name,
-                                                                       member_type->GetClangLayoutType(),
-                                                                       ivar_decl,
-                                                                       prop_setter_name,
-                                                                       prop_getter_name,
-                                                                       prop_attributes,
-                                                                       MakeUserID(die->GetOffset()));
+                            delayed_properties.push_back(DelayedAddObjCClassProperty(GetClangASTContext().getASTContext(),
+                                                                                     class_clang_type,
+                                                                                     prop_name,
+                                                                                     member_type->GetClangLayoutType(),
+                                                                                     ivar_decl,
+                                                                                     prop_setter_name,
+                                                                                     prop_getter_name,
+                                                                                     prop_attributes,
+                                                                                     MakeUserID(die->GetOffset())));
                             
                             if (ivar_decl)
                                 GetClangASTContext().SetMetadata((uintptr_t)ivar_decl, MakeUserID(die->GetOffset()));
@@ -1857,6 +1910,7 @@ SymbolFileDWARF::ParseChildMembers
             break;
         }
     }
+    
     return count;
 }
 
@@ -2061,6 +2115,8 @@ SymbolFileDWARF::ResolveClangOpaqueTypeDefinition (lldb::clang_type_t clang_type
                     bool is_a_class = false;
                     // Parse members and base classes first
                     DWARFDIECollection member_function_dies;
+                                        
+                    DelayedPropertyList delayed_properties;
                     
                     ParseChildMembers (sc, 
                                        dwarf_cu,
@@ -2070,6 +2126,7 @@ SymbolFileDWARF::ResolveClangOpaqueTypeDefinition (lldb::clang_type_t clang_type
                                        base_classes, 
                                        member_accessibilities,
                                        member_function_dies,
+                                       delayed_properties,
                                        default_accessibility, 
                                        is_a_class,
                                        layout_info);
@@ -2128,6 +2185,11 @@ SymbolFileDWARF::ResolveClangOpaqueTypeDefinition (lldb::clang_type_t clang_type
                                     }            
                                 }
                             }
+                            
+                            for (DelayedPropertyList::const_iterator pi = delayed_properties.begin(), pe = delayed_properties.end();
+                                 pi != pe;
+                                 ++pi)
+                                pi->Finalize();
                         }
                     }
                     

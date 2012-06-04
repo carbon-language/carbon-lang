@@ -331,6 +331,9 @@ protected:
                                 bool parse_children,
                                 lldb_private::VariableList* cc_variable_list = NULL);
 
+    class DelayedAddObjCClassProperty;
+    typedef std::vector <DelayedAddObjCClassProperty> DelayedPropertyList;
+    
     size_t                  ParseChildMembers(
                                 const lldb_private::SymbolContext& sc,
                                 DWARFCompileUnit* dwarf_cu,
@@ -340,6 +343,7 @@ protected:
                                 std::vector<clang::CXXBaseSpecifier *>& base_classes,
                                 std::vector<int>& member_accessibilities,
                                 DWARFDIECollection& member_function_dies,
+                                DelayedPropertyList& delayed_properties,
                                 lldb::AccessType &default_accessibility,
                                 bool &is_a_class,
                                 LayoutInfo &layout_info);
