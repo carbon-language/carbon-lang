@@ -1,4 +1,4 @@
-##===- tools/driver/Makefile -------------------------------*- Makefile -*-===##
+##===- tools/diagtool/Makefile -----------------------------*- Makefile -*-===##
 #
 #                     The LLVM Compiler Infrastructure
 #
@@ -16,9 +16,11 @@ TOOL_NO_EXPORTS := 1
 # Don't install this.
 NO_INSTALL = 1
 
-LINK_COMPONENTS := support
+LINK_COMPONENTS := support mc
 
-USEDLIBS = clangBasic.a
+USEDLIBS = clangAnalysis.a clangAST.a clangBasic.a clangDriver.a clangEdit.a \
+           clangFrontend.a clangLex.a clangParse.a clangSema.a \
+           clangSerialization.a
 
 include $(CLANG_LEVEL)/Makefile
 

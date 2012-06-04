@@ -6,12 +6,15 @@ set( LLVM_USED_LIBS
   clangBasic
   clangLex
   clangSema
+  clangFrontend
   )
 
 add_clang_executable(diagtool
   diagtool_main.cpp
   DiagTool.cpp
+  DiagnosticNames.cpp
   ListWarnings.cpp
+  ShowEnabledWarnings.cpp
 )
 
 if(UNIX)
