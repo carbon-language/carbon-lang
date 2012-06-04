@@ -1290,6 +1290,8 @@ static void addAsanRTLinux(const ToolChain &TC, const ArgList &Args,
     return;
   if(TC.getTriple().getEnvironment() == llvm::Triple::ANDROIDEABI) {
     if (!Args.hasArg(options::OPT_shared)) {
+      if (!Args.hasArg(options::OPT_pie))
+        TC.getDriver().Diag(diag::err_drv_asan_android_requires_pie);
       // For an executable, we add a .preinit_array stub.
       CmdArgs.push_back("-u");
       CmdArgs.push_back("__asan_preinit");

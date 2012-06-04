@@ -97,6 +97,8 @@ def err_arc_unsupported : Error<
   "-fobjc-arc is not supported on current deployment target">;
 def err_drv_mg_requires_m_or_mm : Error<
   "option '-MG' requires '-M' or '-MM'">;
+def err_drv_asan_android_requires_pie : Error<
+  "AddressSanitizer on Android requires '-pie'">;
 
 def warn_c_kext : Warning<
   "ignoring -fapple-kext which is valid for c++ and objective-c++ only">;
