@@ -25,7 +25,7 @@ void infer_void_return_type(int i) {
 struct X { };
 
 X infer_X_return_type(X x) {
-  return [&x](int y) { // expected-warning{{omitted result type}}
+  return [&x](int y) {
     if (y > 0)
       return X();
     else
@@ -33,11 +33,11 @@ X infer_X_return_type(X x) {
   }(5);
 }
 
-X infer_X_return_type_fail(X x) { 
-  return [x](int y) { // expected-warning{{omitted result type}}
+X infer_X_return_type_fail(X x) {
+  return [x](int y) {
     if (y > 0)
       return X();
-    else 
+    else
       return x; // expected-error{{return type 'const X' must match previous return type 'X' when lambda expression has unspecified explicit return type}}
   }(5);
 }
