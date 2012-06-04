@@ -2144,7 +2144,8 @@ SDValue MipsTargetLowering::LowerLOAD(SDValue Op, SelectionDAG &DAG) const {
   DebugLoc DL = LD->getDebugLoc();
   SDValue Const32 = DAG.getConstant(32, MVT::i32);
   SDValue SLL = DAG.getNode(ISD::SHL, DL, MVT::i64, LWR, Const32);
-  SDValue Ops[] = { SLL, LWR.getValue(1) };
+  SDValue SRL = DAG.getNode(ISD::SRL, DL, MVT::i64, SLL, Const32);
+  SDValue Ops[] = { SRL, LWR.getValue(1) };
   return DAG.getMergeValues(Ops, 2, DL);
 }
 
