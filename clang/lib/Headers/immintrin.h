@@ -72,4 +72,8 @@
 #include <lzcntintrin.h>
 #endif
 
+#ifdef __FMA__
+#include <fmaintrin.h>
+#endif
+
 #endif /* __IMMINTRIN_H */
