@@ -1,4 +1,4 @@
-//===-- symbolizer.cc -------------------------------------------*- C++ -*-===//
+//===-- sanitizer_symbolizer.cc ---------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
