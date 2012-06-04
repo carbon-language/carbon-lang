@@ -45,6 +45,19 @@ g_option_table[] =
 };
 
 
+bool
+OptionGroupWatchpoint::IsWatchSizeSupported(uint32_t watch_size)
+{
+    for (uint32_t i = 0; i < llvm::array_lengthof(g_watch_size); ++i)
+    {
+        if (g_watch_size[i].value == 0)
+            break;
+        if (watch_size == g_watch_size[i].value)
+            return true;
+    }
+    return false;
+}
+
 OptionGroupWatchpoint::OptionGroupWatchpoint () :
     OptionGroup()
 {

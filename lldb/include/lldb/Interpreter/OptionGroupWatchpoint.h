@@ -26,6 +26,9 @@ namespace lldb_private {
     {
     public:
         
+        static bool
+        IsWatchSizeSupported(uint32_t watch_size);
+
         OptionGroupWatchpoint ();
 
         virtual
