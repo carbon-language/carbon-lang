@@ -1532,10 +1532,6 @@ int internal_memcmp(const void *s1, const void *s2, uptr size) {
   return REAL(memcmp)(s1, s2, size);
 }
 
-int internal_strcmp(const char *s1, const char *s2) {
-  return REAL(strcmp)(s1, s2);
-}
-
 int internal_strncmp(const char *s1, const char *s2, uptr size) {
   return REAL(strncmp)(s1, s2, size);
 }

@@ -10,6 +10,7 @@
 // This file is a part of ThreadSanitizer (TSan), a race detector.
 //
 //===----------------------------------------------------------------------===//
+#include "sanitizer_common/sanitizer_libc.h"
 #include "tsan_interface_ann.h"
 #include "tsan_mutex.h"
 #include "tsan_placement_new.h"
@@ -20,6 +21,7 @@
 
 #define CALLERPC ((uptr)__builtin_return_address(0))
 
+using namespace __sanitizer;  // NOLINT
 using namespace __tsan;  // NOLINT
 
 namespace __tsan {

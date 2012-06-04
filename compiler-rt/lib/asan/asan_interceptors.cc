@@ -21,6 +21,9 @@
 #include "asan_stats.h"
 #include "asan_thread_registry.h"
 #include "interception/interception.h"
+#include "sanitizer_common/sanitizer_libc.h"
+
+using namespace __sanitizer;  // NOLINT
 
 // Use macro to describe if specific function should be
 // intercepted on a given platform.
@@ -295,18 +298,6 @@ char *internal_strncat(char *dst, const char *src, uptr n) {
     dst[len + i] = src[i];
   dst[len + i] = 0;
   return dst;
-}
-
-int internal_strcmp(const char *s1, const char *s2) {
-  while (true) {
-    unsigned c1 = *s1;
-    unsigned c2 = *s2;
-    if (c1 != c2) return (c1 < c2) ? -1 : 1;
-    if (c1 == 0) break;
-    s1++;
-    s2++;
-  }
-  return 0;
 }
 
 }  // namespace __asan
