@@ -332,6 +332,7 @@ lint:
 	third_party/cpplint/cpplint.py --filter=$(LLVM_LINT_FILTER) $(ADDRESS_SANITIZER_CPP)
 	third_party/cpplint/cpplint.py --filter=$(RTL_LINT_FITLER) asan_*.cc asan_*.h
 	third_party/cpplint/cpplint.py --filter=$(RTL_LINT_FITLER) $(INTERCEPTION)/interception*.h $(INTERCEPTION)/interception*.cc
+	third_party/cpplint/cpplint.py --filter=$(RTL_LINT_FITLER) $(COMMON)/sanitizer_*.h $(COMMON)/sanitizer_*.cc
 	third_party/cpplint/cpplint.py --filter=$(TEST_LINT_FITLER) tests/*.cc output_tests/*.cc
 
 get_third_party:
