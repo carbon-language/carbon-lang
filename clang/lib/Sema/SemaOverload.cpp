@@ -6120,40 +6120,49 @@ BuiltinCandidateTypeSet::AddPointerWithMoreQualifiedTypeVariants(QualType Ty,
   const PointerType *PointerTy = Ty->getAs<PointerType>();
   bool buildObjCPtr = false;
   if (!PointerTy) {
-    if (const ObjCObjectPointerType *PTy = Ty->getAs<ObjCObjectPointerType>()) {
-      PointeeTy = PTy->getPointeeType();
-      buildObjCPtr = true;
-    }
-    else
-      llvm_unreachable("type was not a pointer type!");
-  }
-  else
+    const ObjCObjectPointerType *PTy = Ty->castAs<ObjCObjectPointerType>();
+    PointeeTy = PTy->getPointeeType();
+    buildObjCPtr = true;
+  } else {
     PointeeTy = PointerTy->getPointeeType();
-
+  }
+  
   // Don't add qualified variants of arrays. For one, they're not allowed
   // (the qualifier would sink to the element type), and for another, the
   // only overload situation where it matters is subscript or pointer +- int,
   // and those shouldn't have qualifier variants anyway.
   if (PointeeTy->isArrayType())
     return true;
+  
   unsigned BaseCVR = PointeeTy.getCVRQualifiers();
-  if (const ConstantArrayType *Array =Context.getAsConstantArrayType(PointeeTy))
-    BaseCVR = Array->getElementType().getCVRQualifiers();
   bool hasVolatile = VisibleQuals.hasVolatile();
   bool hasRestrict = VisibleQuals.hasRestrict();
 
   // Iterate through all strict supersets of BaseCVR.
   for (unsigned CVR = BaseCVR+1; CVR <= Qualifiers::CVRMask; ++CVR) {
     if ((CVR | BaseCVR) != CVR) continue;
-    // Skip over Volatile/Restrict if no Volatile/Restrict found anywhere
-    // in the types.
+    // Skip over volatile if no volatile found anywhere in the types.
     if ((CVR & Qualifiers::Volatile) && !hasVolatile) continue;
-    if ((CVR & Qualifiers::Restrict) && !hasRestrict) continue;
+    
+    // Skip over restrict if no restrict found anywhere in the types, or if
+    // the type cannot be restrict-qualified.
+    if ((CVR & Qualifiers::Restrict) &&
+        (!hasRestrict ||
+         (!(PointeeTy->isAnyPointerType() || PointeeTy->isReferenceType()))))
+      continue;
+  
+    // Build qualified pointee type.
     QualType QPointeeTy = Context.getCVRQualifiedType(PointeeTy, CVR);
+    
+    // Build qualified pointer type.
+    QualType QPointerTy;
     if (!buildObjCPtr)
-      PointerTypes.insert(Context.getPointerType(QPointeeTy));
+      QPointerTy = Context.getPointerType(QPointeeTy);
     else
-      PointerTypes.insert(Context.getObjCObjectPointerType(QPointeeTy));
+      QPointerTy = Context.getObjCObjectPointerType(QPointeeTy);
+    
+    // Insert qualified pointer type.
+    PointerTypes.insert(QPointerTy);
   }
 
   return true;
@@ -6350,6 +6359,8 @@ static  Qualifiers CollectVRQualifiers(ASTContext &Context, Expr* ArgExpr) {
         // as see them.
         bool done = false;
         while (!done) {
+          if (CanTy.isRestrictQualified())
+            VRQuals.addRestrict();
           if (const PointerType *ResTypePtr = CanTy->getAs<PointerType>())
             CanTy = ResTypePtr->getPointeeType();
           else if (const MemberPointerType *ResTypeMPtr =
@@ -6359,8 +6370,6 @@ static  Qualifiers CollectVRQualifiers(ASTContext &Context, Expr* ArgExpr) {
             done = true;
           if (CanTy.isVolatileQualified())
             VRQuals.addVolatile();
-          if (CanTy.isRestrictQualified())
-            VRQuals.addRestrict();
           if (VRQuals.hasRestrict() && VRQuals.hasVolatile())
             return VRQuals;
         }
@@ -6488,7 +6497,8 @@ class BuiltinOperatorOverloadBuilder {
   /// \brief Helper method to factor out the common pattern of adding overloads
   /// for '++' and '--' builtin operators.
   void addPlusPlusMinusMinusStyleOverloads(QualType CandidateTy,
-                                           bool HasVolatile) {
+                                           bool HasVolatile,
+                                           bool HasRestrict) {
     QualType ParamTypes[2] = {
       S.Context.getLValueReferenceType(CandidateTy),
       S.Context.IntTy
@@ -6511,6 +6521,33 @@ class BuiltinOperatorOverloadBuilder {
       else
         S.AddBuiltinCandidate(CandidateTy, ParamTypes, Args, 2, CandidateSet);
     }
+    
+    // Add restrict version only if there are conversions to a restrict type
+    // and our candidate type is a non-restrict-qualified pointer.
+    if (HasRestrict && CandidateTy->isAnyPointerType() &&
+        !CandidateTy.isRestrictQualified()) {
+      ParamTypes[0]
+        = S.Context.getLValueReferenceType(
+            S.Context.getCVRQualifiedType(CandidateTy, Qualifiers::Restrict));
+      if (NumArgs == 1)
+        S.AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 1, CandidateSet);
+      else
+        S.AddBuiltinCandidate(CandidateTy, ParamTypes, Args, 2, CandidateSet);
+      
+      if (HasVolatile) {
+        ParamTypes[0]
+          = S.Context.getLValueReferenceType(
+              S.Context.getCVRQualifiedType(CandidateTy,
+                                            (Qualifiers::Volatile |
+                                             Qualifiers::Restrict)));
+        if (NumArgs == 1)
+          S.AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 1,
+                                CandidateSet);
+        else
+          S.AddBuiltinCandidate(CandidateTy, ParamTypes, Args, 2, CandidateSet);
+      }
+    }
+
   }
 
 public:
@@ -6565,7 +6602,8 @@ public:
          Arith < NumArithmeticTypes; ++Arith) {
       addPlusPlusMinusMinusStyleOverloads(
         getArithmeticType(Arith),
-        VisibleTypeConversionsQuals.hasVolatile());
+        VisibleTypeConversionsQuals.hasVolatile(),
+        VisibleTypeConversionsQuals.hasRestrict());
     }
   }
 
@@ -6589,8 +6627,10 @@ public:
         continue;
 
       addPlusPlusMinusMinusStyleOverloads(*Ptr,
-        (!S.Context.getCanonicalType(*Ptr).isVolatileQualified() &&
-         VisibleTypeConversionsQuals.hasVolatile()));
+        (!(*Ptr).isVolatileQualified() &&
+         VisibleTypeConversionsQuals.hasVolatile()),
+        (!(*Ptr).isRestrictQualified() &&
+         VisibleTypeConversionsQuals.hasRestrict()));
     }
   }
 
@@ -7048,13 +7088,35 @@ public:
       S.AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 2, CandidateSet,
                             /*IsAssigmentOperator=*/ isEqualOp);
 
-      if (!S.Context.getCanonicalType(*Ptr).isVolatileQualified() &&
-          VisibleTypeConversionsQuals.hasVolatile()) {
+      bool NeedVolatile = !(*Ptr).isVolatileQualified() &&
+                          VisibleTypeConversionsQuals.hasVolatile();
+      if (NeedVolatile) {
         // volatile version
         ParamTypes[0] =
           S.Context.getLValueReferenceType(S.Context.getVolatileType(*Ptr));
         S.AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 2, CandidateSet,
                               /*IsAssigmentOperator=*/isEqualOp);
+      }
+      
+      if (!(*Ptr).isRestrictQualified() &&
+          VisibleTypeConversionsQuals.hasRestrict()) {
+        // restrict version
+        ParamTypes[0]
+          = S.Context.getLValueReferenceType(S.Context.getRestrictType(*Ptr));
+        S.AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 2, CandidateSet,
+                              /*IsAssigmentOperator=*/isEqualOp);
+        
+        if (NeedVolatile) {
+          // volatile restrict version
+          ParamTypes[0]
+            = S.Context.getLValueReferenceType(
+                S.Context.getCVRQualifiedType(*Ptr,
+                                              (Qualifiers::Volatile |
+                                               Qualifiers::Restrict)));
+          S.AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 2,
+                                CandidateSet,
+                                /*IsAssigmentOperator=*/isEqualOp);
+        }
       }
     }
 
@@ -7076,13 +7138,35 @@ public:
         S.AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 2, CandidateSet,
                               /*IsAssigmentOperator=*/true);
 
-        if (!S.Context.getCanonicalType(*Ptr).isVolatileQualified() &&
-            VisibleTypeConversionsQuals.hasVolatile()) {
+        bool NeedVolatile = !(*Ptr).isVolatileQualified() &&
+                           VisibleTypeConversionsQuals.hasVolatile();
+        if (NeedVolatile) {
           // volatile version
           ParamTypes[0] =
             S.Context.getLValueReferenceType(S.Context.getVolatileType(*Ptr));
           S.AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 2,
                                 CandidateSet, /*IsAssigmentOperator=*/true);
+        }
+      
+        if (!(*Ptr).isRestrictQualified() &&
+            VisibleTypeConversionsQuals.hasRestrict()) {
+          // restrict version
+          ParamTypes[0]
+            = S.Context.getLValueReferenceType(S.Context.getRestrictType(*Ptr));
+          S.AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 2,
+                                CandidateSet, /*IsAssigmentOperator=*/true);
+          
+          if (NeedVolatile) {
+            // volatile restrict version
+            ParamTypes[0]
+              = S.Context.getLValueReferenceType(
+                  S.Context.getCVRQualifiedType(*Ptr,
+                                                (Qualifiers::Volatile |
+                                                 Qualifiers::Restrict)));
+            S.AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 2,
+                                  CandidateSet, /*IsAssigmentOperator=*/true);
+            
+          }
         }
       }
     }

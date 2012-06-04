@@ -237,3 +237,22 @@ namespace PR7851 {
     (void)(x - x);
   }
 }
+
+namespace PR12854 {
+  enum { size = 1 };
+  void plus_equals() {
+    int* __restrict py;
+    py += size;
+  }
+
+  struct RestrictInt {
+    operator int* __restrict &();
+  };
+
+  void user_conversions(RestrictInt ri) {
+    ++ri;
+    --ri;
+    ri++;
+    ri--;
+  }
+}
