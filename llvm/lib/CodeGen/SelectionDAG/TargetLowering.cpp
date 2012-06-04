@@ -33,13 +33,6 @@
 #include <cctype>
 using namespace llvm;
 
-/// We are in the process of implementing a new TypeLegalization action
-/// - the promotion of vector elements. This feature is disabled by default
-/// and only enabled using this flag.
-static cl::opt<bool>
-AllowPromoteIntElem("promote-elements", cl::Hidden, cl::init(true),
-  cl::desc("Allow promotion of integer vector element types"));
-
 /// InitLibcallNames - Set default libcall names.
 ///
 static void InitLibcallNames(const char **Names) {
@@ -522,8 +515,7 @@ static void InitCmpLibcallCCs(ISD::CondCode *CCs) {
 /// NOTE: The constructor takes ownership of TLOF.
 TargetLowering::TargetLowering(const TargetMachine &tm,
                                const TargetLoweringObjectFile *tlof)
-  : TM(tm), TD(TM.getTargetData()), TLOF(*tlof),
-  mayPromoteElements(AllowPromoteIntElem) {
+  : TM(tm), TD(TM.getTargetData()), TLOF(*tlof) {
   // All operations default to being supported.
   memset(OpActions, 0, sizeof(OpActions));
   memset(LoadExtActions, 0, sizeof(LoadExtActions));
@@ -829,11 +821,8 @@ void TargetLowering::computeRegisterProperties() {
     unsigned NElts = VT.getVectorNumElements();
     if (NElts != 1) {
       bool IsLegalWiderType = false;
-      // If we allow the promotion of vector elements using a flag,
-      // then return TypePromoteInteger on vector elements.
       // First try to promote the elements of integer vectors. If no legal
       // promotion was found, fallback to the widen-vector method.
-      if (mayPromoteElements)
       for (unsigned nVT = i+1; nVT <= MVT::LAST_VECTOR_VALUETYPE; ++nVT) {
         EVT SVT = (MVT::SimpleValueType)nVT;
         // Promote vectors of integers to vectors with the same number

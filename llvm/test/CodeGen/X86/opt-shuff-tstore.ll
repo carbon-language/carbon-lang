@@ -1,4 +1,4 @@
-; RUN: llc -mcpu=corei7 -mtriple=x86_64-linux < %s -promote-elements -mattr=+sse2,+sse41 | FileCheck %s
+; RUN: llc -mcpu=corei7 -mtriple=x86_64-linux < %s  -mattr=+sse2,+sse41 | FileCheck %s
 
 ; CHECK: func_4_8
 ; A single memory write

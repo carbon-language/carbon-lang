@@ -1720,13 +1720,6 @@ private:
   const TargetData *TD;
   const TargetLoweringObjectFile &TLOF;
 
-  /// We are in the process of implementing a new TypeLegalization action
-  /// which is the promotion of vector elements. This feature is under
-  /// development. Until this feature is complete, it is only enabled using a
-  /// flag. We pass this flag using a member because of circular dep issues.
-  /// This member will be removed with the flag once we complete the transition.
-  bool mayPromoteElements;
-
   /// PointerTy - The type to use for pointers, usually i32 or i64.
   ///
   MVT PointerTy;
@@ -1930,9 +1923,8 @@ private:
     if (NumElts == 1)
       return LegalizeKind(TypeScalarizeVector, EltVT);
 
-    // If we allow the promotion of vector elements using a flag,
-    // then try to widen vector elements until a legal type is found.
-    if (mayPromoteElements && EltVT.isInteger()) {
+    // Try to widen vector elements until a legal type is found.
+    if (EltVT.isInteger()) {
       // Vectors with a number of elements that is not a power of two are always
       // widened, for example <3 x float> -> <4 x float>.
       if (!VT.isPow2VectorType()) {

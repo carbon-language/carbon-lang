@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=corei7-avx -promote-elements -mattr=+avx | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=corei7-avx  -mattr=+avx | FileCheck %s
 
 ; AVX128 tests:
 

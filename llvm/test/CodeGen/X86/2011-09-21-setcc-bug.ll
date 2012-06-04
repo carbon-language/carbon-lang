@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86-64 -mcpu=corei7 -promote-elements -mattr=+sse41
+; RUN: llc < %s -march=x86-64 -mcpu=corei7 -mattr=+sse41
 
 ; Make sure we are not crashing on this code.
 

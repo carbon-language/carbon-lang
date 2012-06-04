@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=corei7-avx -promote-elements -mattr=-sse41 
+; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=corei7-avx -mattr=-sse41 
 
 target triple = "x86_64-unknown-linux-gnu"
 

@@ -1,4 +1,4 @@
-; RUN: llc -promote-elements < %s -march=x86-64
+; RUN: llc < %s -march=x86-64
 
 define<4 x i8> @func_8_64() {
   %F = load <4 x i64>* undef

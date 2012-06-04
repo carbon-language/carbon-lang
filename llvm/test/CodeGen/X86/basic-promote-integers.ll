@@ -1,7 +1,7 @@
 ; Test that vectors are scalarized/lowered correctly
 ; (with both legalization methods).
-; RUN: llc -march=x86 -promote-elements < %s
-; RUN: llc -march=x86                   < %s
+; RUN: llc -march=x86  < %s
+; RUN: llc -march=x86  < %s
 
 ; A simple test to check copyToParts and copyFromParts.
 

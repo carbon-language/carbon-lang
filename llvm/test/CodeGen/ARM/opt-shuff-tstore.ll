@@ -1,4 +1,4 @@
-; RUN: llc -mcpu=cortex-a9 -mtriple=arm-linux-unknown -promote-elements -mattr=+neon < %s | FileCheck %s
+; RUN: llc -mcpu=cortex-a9 -mtriple=arm-linux-unknown -mattr=+neon < %s | FileCheck %s
 
 ; CHECK: func_4_8
 ; CHECK: vst1.32
