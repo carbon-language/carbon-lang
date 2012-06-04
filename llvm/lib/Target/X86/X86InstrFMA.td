@@ -154,10 +154,10 @@ multiclass fma3s_forms<bits<8> opc132, bits<8> opc213, bits<8> opc231,
   defm SDr132 : fma3s_rm<opc132, !strconcat(OpStr, "132sd"), f64mem, FR64>, VEX_W;
   defm SDr213 : fma3s_rm<opc213, !strconcat(OpStr, "213sd"), f64mem, FR64>, VEX_W;
   defm SDr231 : fma3s_rm<opc231, !strconcat(OpStr, "231sd"), f64mem, FR64>, VEX_W;
-  defm SSr132_Int : fma3s_rm_int <opc132, !strconcat(OpStr, "132ss"), ssmem,
-                                  sse_load_f32, IntF32>;
-  defm SDr132_Int : fma3s_rm_int <opc132, !strconcat(OpStr, "132sd"), sdmem,
-                                  sse_load_f64, IntF64>;
+  defm SSr132 : fma3s_rm_int <opc132, !strconcat(OpStr, "132ss"), ssmem,
+                              sse_load_f32, IntF32>;
+  defm SDr132 : fma3s_rm_int <opc132, !strconcat(OpStr, "132sd"), sdmem,
+                              sse_load_f64, IntF64>;
 }
 
 defm VFMADD : fma3s_forms<0x99, 0xA9, 0xB9, "vfmadd", int_x86_fma_vfmadd_ss,
