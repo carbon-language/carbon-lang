@@ -51,9 +51,8 @@ static bool CC_PPC_SVR4_Custom_AlignFPArgRegs(unsigned &ValNo, MVT &ValVT,
                                               ISD::ArgFlagsTy &ArgFlags,
                                               CCState &State);
 
-static cl::opt<bool> EnablePPCPreinc("enable-ppc-preinc",
-cl::desc("enable preincrement load/store generation on PPC (experimental)"),
-                                     cl::Hidden);
+static cl::opt<bool> DisablePPCPreinc("disable-ppc-preinc",
+cl::desc("disable preincrement load/store generation on PPC"), cl::Hidden);
 
 static TargetLoweringObjectFile *CreateTLOF(const PPCTargetMachine &TM) {
   if (TM.getSubtargetImpl()->isDarwin())
@@ -1084,8 +1083,7 @@ bool PPCTargetLowering::getPreIndexedAddressParts(SDNode *N, SDValue &Base,
                                                   SDValue &Offset,
                                                   ISD::MemIndexedMode &AM,
                                                   SelectionDAG &DAG) const {
-  // Disabled by default for now.
-  if (!EnablePPCPreinc) return false;
+  if (DisablePPCPreinc) return false;
 
   SDValue Ptr;
   EVT VT;
