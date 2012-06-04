@@ -1648,9 +1648,10 @@ LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const
   TLSModel::Model model = getTargetMachine().getTLSModel(GV);
 
   if (model == TLSModel::GeneralDynamic || model == TLSModel::LocalDynamic) {
-    // General Dynamic TLS Model
-    bool LocalDynamic = GV->hasInternalLinkage();
-    unsigned Flag = LocalDynamic ? MipsII::MO_TLSLDM :MipsII::MO_TLSGD;
+    // General Dynamic and Local Dynamic TLS Model.
+    unsigned Flag = (model == TLSModel::LocalDynamic) ? MipsII::MO_TLSLDM
+                                                      : MipsII::MO_TLSGD;
+
     SDValue TGA = DAG.getTargetGlobalAddress(GV, dl, PtrVT, 0, Flag);
     SDValue Argument = DAG.getNode(MipsISD::Wrapper, dl, PtrVT,
                                    GetGlobalReg(DAG, PtrVT), TGA);
