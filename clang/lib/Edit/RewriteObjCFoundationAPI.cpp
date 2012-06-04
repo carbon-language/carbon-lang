@@ -86,7 +86,8 @@ static void maybePutParensOnReceiver(const Expr *Receiver, Commit &commit) {
   }
 }
 
-static bool rewriteToSubscriptGet(const ObjCMessageExpr *Msg, Commit &commit) {
+static bool rewriteToSubscriptGetCommon(const ObjCMessageExpr *Msg,
+                                        Commit &commit) {
   if (Msg->getNumArgs() != 1)
     return false;
   const Expr *Rec = Msg->getInstanceReceiver();
@@ -107,12 +108,34 @@ static bool rewriteToSubscriptGet(const ObjCMessageExpr *Msg, Commit &commit) {
   return true;
 }
 
-static bool rewriteToArraySubscriptSet(const ObjCMessageExpr *Msg,
+static bool rewriteToArraySubscriptGet(const ObjCInterfaceDecl *IFace,
+                                       const ObjCMessageExpr *Msg,
+                                       const NSAPI &NS,
+                                       Commit &commit) {
+  if (!IFace->getInstanceMethod(NS.getObjectAtIndexedSubscriptSelector()))
+    return false;
+  return rewriteToSubscriptGetCommon(Msg, commit);
+}
+
+static bool rewriteToDictionarySubscriptGet(const ObjCInterfaceDecl *IFace,
+                                            const ObjCMessageExpr *Msg,
+                                            const NSAPI &NS,
+                                            Commit &commit) {
+  if (!IFace->getInstanceMethod(NS.getObjectForKeyedSubscriptSelector()))
+    return false;
+  return rewriteToSubscriptGetCommon(Msg, commit);
+}
+
+static bool rewriteToArraySubscriptSet(const ObjCInterfaceDecl *IFace,
+                                       const ObjCMessageExpr *Msg,
+                                       const NSAPI &NS,
                                        Commit &commit) {
   if (Msg->getNumArgs() != 2)
     return false;
   const Expr *Rec = Msg->getInstanceReceiver();
   if (!Rec)
+    return false;
+  if (!IFace->getInstanceMethod(NS.getSetObjectAtIndexedSubscriptSelector()))
     return false;
 
   SourceRange MsgRange = Msg->getSourceRange();
@@ -135,12 +158,16 @@ static bool rewriteToArraySubscriptSet(const ObjCMessageExpr *Msg,
   return true;
 }
 
-static bool rewriteToDictionarySubscriptSet(const ObjCMessageExpr *Msg,
+static bool rewriteToDictionarySubscriptSet(const ObjCInterfaceDecl *IFace,
+                                            const ObjCMessageExpr *Msg,
+                                            const NSAPI &NS,
                                             Commit &commit) {
   if (Msg->getNumArgs() != 2)
     return false;
   const Expr *Rec = Msg->getInstanceReceiver();
   if (!Rec)
+    return false;
+  if (!IFace->getInstanceMethod(NS.getSetObjectForKeyedSubscriptSelector()))
     return false;
 
   SourceRange MsgRange = Msg->getSourceRange();
@@ -163,7 +190,7 @@ static bool rewriteToDictionarySubscriptSet(const ObjCMessageExpr *Msg,
 }
 
 bool edit::rewriteToObjCSubscriptSyntax(const ObjCMessageExpr *Msg,
-                                           const NSAPI &NS, Commit &commit) {
+                                        const NSAPI &NS, Commit &commit) {
   if (!Msg || Msg->isImplicit() ||
       Msg->getReceiverKind() != ObjCMessageExpr::Instance)
     return false;
@@ -179,22 +206,24 @@ bool edit::rewriteToObjCSubscriptSyntax(const ObjCMessageExpr *Msg,
   IdentifierInfo *II = IFace->getIdentifier();
   Selector Sel = Msg->getSelector();
 
-  if ((II == NS.getNSClassId(NSAPI::ClassId_NSArray) &&
-       Sel == NS.getNSArraySelector(NSAPI::NSArr_objectAtIndex)) ||
-      (II == NS.getNSClassId(NSAPI::ClassId_NSDictionary) &&
-       Sel == NS.getNSDictionarySelector(NSAPI::NSDict_objectForKey)))
-    return rewriteToSubscriptGet(Msg, commit);
+  if (II == NS.getNSClassId(NSAPI::ClassId_NSArray) &&
+      Sel == NS.getNSArraySelector(NSAPI::NSArr_objectAtIndex))
+    return rewriteToArraySubscriptGet(IFace, Msg, NS, commit);
+
+  if (II == NS.getNSClassId(NSAPI::ClassId_NSDictionary) &&
+      Sel == NS.getNSDictionarySelector(NSAPI::NSDict_objectForKey))
+    return rewriteToDictionarySubscriptGet(IFace, Msg, NS, commit);
 
   if (Msg->getNumArgs() != 2)
     return false;
 
   if (II == NS.getNSClassId(NSAPI::ClassId_NSMutableArray) &&
       Sel == NS.getNSArraySelector(NSAPI::NSMutableArr_replaceObjectAtIndex))
-    return rewriteToArraySubscriptSet(Msg, commit);
+    return rewriteToArraySubscriptSet(IFace, Msg, NS, commit);
 
   if (II == NS.getNSClassId(NSAPI::ClassId_NSMutableDictionary) &&
       Sel == NS.getNSDictionarySelector(NSAPI::NSMutableDict_setObjectForKey))
-    return rewriteToDictionarySubscriptSet(Msg, commit);
+    return rewriteToDictionarySubscriptSet(IFace, Msg, NS, commit);
 
   return false;
 }

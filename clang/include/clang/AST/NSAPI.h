@@ -11,6 +11,7 @@
 #define LLVM_CLANG_AST_NSAPI_H
 
 #include "clang/Basic/IdentifierTable.h"
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/Optional.h"
 
 namespace clang {
@@ -107,6 +108,30 @@ public:
   llvm::Optional<NSDictionaryMethodKind>
       getNSDictionaryMethodKind(Selector Sel);
 
+  /// \brief Returns selector for "objectForKeyedSubscript:".
+  Selector getObjectForKeyedSubscriptSelector() const {
+    return getOrInitSelector(StringRef("objectForKeyedSubscript"),
+                             objectForKeyedSubscriptSel);
+  }
+
+  /// \brief Returns selector for "objectAtIndexedSubscript:".
+  Selector getObjectAtIndexedSubscriptSelector() const {
+    return getOrInitSelector(StringRef("objectAtIndexedSubscript"),
+                             objectAtIndexedSubscriptSel);
+  }
+
+  /// \brief Returns selector for "setObject:forKeyedSubscript".
+  Selector getSetObjectForKeyedSubscriptSelector() const {
+    StringRef Ids[] = { "setObject", "forKeyedSubscript" };
+    return getOrInitSelector(Ids, setObjectForKeyedSubscriptSel);
+  }
+
+  /// \brief Returns selector for "setObject:atIndexedSubscript".
+  Selector getSetObjectAtIndexedSubscriptSelector() const {
+    StringRef Ids[] = { "setObject", "atIndexedSubscript" };
+    return getOrInitSelector(Ids, setObjectAtIndexedSubscriptSel);
+  }
+
   /// \brief Enumerates the NSNumber methods used to generate literals.
   enum NSNumberLiteralMethodKind {
     NSNumberWithChar,
@@ -159,6 +184,7 @@ private:
   bool isObjCTypedef(QualType T, StringRef name, IdentifierInfo *&II) const;
   bool isObjCEnumerator(const Expr *E,
                         StringRef name, IdentifierInfo *&II) const;
+  Selector getOrInitSelector(ArrayRef<StringRef> Ids, Selector &Sel) const;
 
   ASTContext &Ctx;
 
@@ -175,6 +201,9 @@ private:
   /// \brief The Objective-C NSNumber selectors used to create NSNumber literals.
   mutable Selector NSNumberClassSelectors[NumNSNumberLiteralMethods];
   mutable Selector NSNumberInstanceSelectors[NumNSNumberLiteralMethods];
+
+  mutable Selector objectForKeyedSubscriptSel, objectAtIndexedSubscriptSel,
+                   setObjectForKeyedSubscriptSel,setObjectAtIndexedSubscriptSel;
 
   mutable IdentifierInfo *BOOLId, *NSIntegerId, *NSUIntegerId;
   mutable IdentifierInfo *NSASCIIStringEncodingId, *NSUTF8StringEncodingId;
