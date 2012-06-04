@@ -337,6 +337,10 @@ public:
     lldb::SBWatchpoint
     Watch (bool resolve_location, bool read, bool write, SBError &error);
 
+    // Backward compatibility fix in the interim.
+    lldb::SBWatchpoint
+    Watch (bool resolve_location, bool read, bool write);
+
     //------------------------------------------------------------------
     /// Watch this value that this value points to in memory
     ///

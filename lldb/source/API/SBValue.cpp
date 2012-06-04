@@ -1719,6 +1719,72 @@ SBValue::Watch (bool resolve_location, bool read, bool write, SBError &error)
     return sb_watchpoint;
 }
 
+// FIXME: Remove this method impl (as well as the decl in .h) once it is no longer needed.
+// Backward compatibility fix in the interim.
+lldb::SBWatchpoint
+SBValue::Watch (bool resolve_location, bool read, bool write)
+{
+    SBWatchpoint sb_watchpoint;
+    
+    // If the SBValue is not valid, there's no point in even trying to watch it.
+    lldb::ValueObjectSP value_sp(GetSP());
+    TargetSP target_sp (GetTarget().GetSP());
+    if (value_sp && target_sp)
+    {
+        // Can't watch this if the process is running
+        ProcessSP process_sp(value_sp->GetProcessSP());
+        Process::StopLocker stop_locker;
+        if (process_sp && !stop_locker.TryLock(&process_sp->GetRunLock()))
+        {
+            LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+            if (log)
+                log->Printf ("SBValue(%p)::Watch() => error: process is running", value_sp.get());
+            return sb_watchpoint;
+        }
+
+        // Read and Write cannot both be false.
+        if (!read && !write)
+            return sb_watchpoint;
+        
+        // If the value is not in scope, don't try and watch and invalid value
+        if (!IsInScope())
+            return sb_watchpoint;
+        
+        addr_t addr = GetLoadAddress();
+        if (addr == LLDB_INVALID_ADDRESS)
+            return sb_watchpoint;
+        size_t byte_size = GetByteSize();
+        if (byte_size == 0)
+            return sb_watchpoint;
+                
+        uint32_t watch_type = 0;
+        if (read)
+            watch_type |= LLDB_WATCH_TYPE_READ;
+        if (write)
+            watch_type |= LLDB_WATCH_TYPE_WRITE;
+        
+        Error rc;
+        WatchpointSP watchpoint_sp = target_sp->CreateWatchpoint(addr, byte_size, watch_type, rc);
+                
+        if (watchpoint_sp) 
+        {
+            sb_watchpoint.SetSP (watchpoint_sp);
+            Declaration decl;
+            if (value_sp->GetDeclaration (decl))
+            {
+                if (decl.GetFile()) 
+                {
+                    StreamString ss;
+                    // True to show fullpath for declaration file.
+                    decl.DumpStopContext(&ss, true);
+                    watchpoint_sp->SetDeclInfo(ss.GetString());
+                }
+            }
+        }
+    }
+    return sb_watchpoint;
+}
+
 lldb::SBWatchpoint
 SBValue::WatchPointee (bool resolve_location, bool read, bool write, SBError &error)
 {
