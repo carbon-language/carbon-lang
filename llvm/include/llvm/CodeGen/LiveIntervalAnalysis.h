@@ -44,27 +44,27 @@ namespace llvm {
   class VirtRegMap;
 
   class LiveIntervals : public MachineFunctionPass {
-    MachineFunction* mf_;
-    MachineRegisterInfo* mri_;
-    const TargetMachine* tm_;
-    const TargetRegisterInfo* tri_;
-    const TargetInstrInfo* tii_;
-    AliasAnalysis *aa_;
-    LiveVariables* lv_;
-    SlotIndexes* indexes_;
+    MachineFunction* MF;
+    MachineRegisterInfo* MRI;
+    const TargetMachine* TM;
+    const TargetRegisterInfo* TRI;
+    const TargetInstrInfo* TII;
+    AliasAnalysis *AA;
+    LiveVariables* LV;
+    SlotIndexes* Indexes;
 
     /// Special pool allocator for VNInfo's (LiveInterval val#).
     ///
     VNInfo::Allocator VNInfoAllocator;
 
     typedef DenseMap<unsigned, LiveInterval*> Reg2IntervalMap;
-    Reg2IntervalMap r2iMap_;
+    Reg2IntervalMap R2IMap;
 
-    /// allocatableRegs_ - A bit vector of allocatable registers.
-    BitVector allocatableRegs_;
+    /// AllocatableRegs - A bit vector of allocatable registers.
+    BitVector AllocatableRegs;
 
-    /// reservedRegs_ - A bit vector of reserved registers.
-    BitVector reservedRegs_;
+    /// ReservedRegs - A bit vector of reserved registers.
+    BitVector ReservedRegs;
 
     /// RegMaskSlots - Sorted list of instructions with register mask operands.
     /// Always use the 'r' slot, RegMasks are normal clobbers, not early
@@ -103,38 +103,38 @@ namespace llvm {
 
     typedef Reg2IntervalMap::iterator iterator;
     typedef Reg2IntervalMap::const_iterator const_iterator;
-    const_iterator begin() const { return r2iMap_.begin(); }
-    const_iterator end() const { return r2iMap_.end(); }
-    iterator begin() { return r2iMap_.begin(); }
-    iterator end() { return r2iMap_.end(); }
-    unsigned getNumIntervals() const { return (unsigned)r2iMap_.size(); }
+    const_iterator begin() const { return R2IMap.begin(); }
+    const_iterator end() const { return R2IMap.end(); }
+    iterator begin() { return R2IMap.begin(); }
+    iterator end() { return R2IMap.end(); }
+    unsigned getNumIntervals() const { return (unsigned)R2IMap.size(); }
 
     LiveInterval &getInterval(unsigned reg) {
-      Reg2IntervalMap::iterator I = r2iMap_.find(reg);
-      assert(I != r2iMap_.end() && "Interval does not exist for register");
+      Reg2IntervalMap::iterator I = R2IMap.find(reg);
+      assert(I != R2IMap.end() && "Interval does not exist for register");
       return *I->second;
     }
 
     const LiveInterval &getInterval(unsigned reg) const {
-      Reg2IntervalMap::const_iterator I = r2iMap_.find(reg);
-      assert(I != r2iMap_.end() && "Interval does not exist for register");
+      Reg2IntervalMap::const_iterator I = R2IMap.find(reg);
+      assert(I != R2IMap.end() && "Interval does not exist for register");
       return *I->second;
     }
 
     bool hasInterval(unsigned reg) const {
-      return r2iMap_.count(reg);
+      return R2IMap.count(reg);
     }
 
     /// isAllocatable - is the physical register reg allocatable in the current
     /// function?
     bool isAllocatable(unsigned reg) const {
-      return allocatableRegs_.test(reg);
+      return AllocatableRegs.test(reg);
     }
 
     /// isReserved - is the physical register reg reserved in the current
     /// function
     bool isReserved(unsigned reg) const {
-      return reservedRegs_.test(reg);
+      return ReservedRegs.test(reg);
     }
 
     /// getApproximateInstructionCount - computes an estimate of the number
@@ -145,9 +145,9 @@ namespace llvm {
 
     // Interval creation
     LiveInterval &getOrCreateInterval(unsigned reg) {
-      Reg2IntervalMap::iterator I = r2iMap_.find(reg);
-      if (I == r2iMap_.end())
-        I = r2iMap_.insert(std::make_pair(reg, createInterval(reg))).first;
+      Reg2IntervalMap::iterator I = R2IMap.find(reg);
+      if (I == R2IMap.end())
+        I = R2IMap.insert(std::make_pair(reg, createInterval(reg))).first;
       return *I->second;
     }
 
@@ -173,39 +173,39 @@ namespace llvm {
     // Interval removal
 
     void removeInterval(unsigned Reg) {
-      DenseMap<unsigned, LiveInterval*>::iterator I = r2iMap_.find(Reg);
+      DenseMap<unsigned, LiveInterval*>::iterator I = R2IMap.find(Reg);
       delete I->second;
-      r2iMap_.erase(I);
+      R2IMap.erase(I);
     }
 
     SlotIndexes *getSlotIndexes() const {
-      return indexes_;
+      return Indexes;
     }
 
     /// isNotInMIMap - returns true if the specified machine instr has been
     /// removed or was never entered in the map.
     bool isNotInMIMap(const MachineInstr* Instr) const {
-      return !indexes_->hasIndex(Instr);
+      return !Indexes->hasIndex(Instr);
     }
 
     /// Returns the base index of the given instruction.
     SlotIndex getInstructionIndex(const MachineInstr *instr) const {
-      return indexes_->getInstructionIndex(instr);
+      return Indexes->getInstructionIndex(instr);
     }
 
     /// Returns the instruction associated with the given index.
     MachineInstr* getInstructionFromIndex(SlotIndex index) const {
-      return indexes_->getInstructionFromIndex(index);
+      return Indexes->getInstructionFromIndex(index);
     }
 
     /// Return the first index in the given basic block.
     SlotIndex getMBBStartIdx(const MachineBasicBlock *mbb) const {
-      return indexes_->getMBBStartIdx(mbb);
+      return Indexes->getMBBStartIdx(mbb);
     }
 
     /// Return the last index in the given basic block.
     SlotIndex getMBBEndIdx(const MachineBasicBlock *mbb) const {
-      return indexes_->getMBBEndIdx(mbb);
+      return Indexes->getMBBEndIdx(mbb);
     }
 
     bool isLiveInToMBB(const LiveInterval &li,
@@ -219,24 +219,24 @@ namespace llvm {
     }
 
     MachineBasicBlock* getMBBFromIndex(SlotIndex index) const {
-      return indexes_->getMBBFromIndex(index);
+      return Indexes->getMBBFromIndex(index);
     }
 
     SlotIndex InsertMachineInstrInMaps(MachineInstr *MI) {
-      return indexes_->insertMachineInstrInMaps(MI);
+      return Indexes->insertMachineInstrInMaps(MI);
     }
 
     void RemoveMachineInstrFromMaps(MachineInstr *MI) {
-      indexes_->removeMachineInstrFromMaps(MI);
+      Indexes->removeMachineInstrFromMaps(MI);
     }
 
     void ReplaceMachineInstrInMaps(MachineInstr *MI, MachineInstr *NewMI) {
-      indexes_->replaceMachineInstrInMaps(MI, NewMI);
+      Indexes->replaceMachineInstrInMaps(MI, NewMI);
     }
 
     bool findLiveInMBBs(SlotIndex Start, SlotIndex End,
                         SmallVectorImpl<MachineBasicBlock*> &MBBs) const {
-      return indexes_->findLiveInMBBs(Start, End, MBBs);
+      return Indexes->findLiveInMBBs(Start, End, MBBs);
     }
 
     VNInfo::Allocator& getVNInfoAllocator() { return VNInfoAllocator; }
