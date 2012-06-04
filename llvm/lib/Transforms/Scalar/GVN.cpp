@@ -19,6 +19,7 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/IntrinsicInst.h"
+#include "llvm/Metadata.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/ConstantFolding.h"
@@ -41,6 +42,7 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/ConstantRange.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/IRBuilder.h"
 #include "llvm/Support/PatternMatch.h"
@@ -1734,6 +1736,202 @@ bool GVN::processNonLocalLoad(LoadInst *LI) {
   return true;
 }
 
+static MDNode *getMostGenericTBAA(MDNode *A, MDNode *B) {
+  if (!A || !B)
+    return NULL;
+
+  if (A == B)
+    return A;
+
+  SmallVector<MDNode *, 4> PathA;
+  MDNode *T = A;
+  while (T) {
+    PathA.push_back(T);
+    T = T->getNumOperands() >= 2 ? cast_or_null<MDNode>(T->getOperand(1)) : 0;
+  }
+
+  SmallVector<MDNode *, 4> PathB;
+  T = B;
+  while (T) {
+    PathB.push_back(T);
+    T = T->getNumOperands() >= 2 ? cast_or_null<MDNode>(T->getOperand(1)) : 0;
+  }
+
+  int IA = PathA.size() - 1;
+  int IB = PathB.size() - 1;
+
+  MDNode *Ret = 0;
+  while (IA >= 0 && IB >=0) {
+    if (PathA[IA] == PathB[IB])
+      Ret = PathA[IA];
+    else
+      break;
+    --IA;
+    --IB;
+  }
+  return Ret;
+}
+
+static MDNode *getMostGenericFPMath(MDNode *A, MDNode *B) {
+  if (!A || !B)
+    return NULL;
+
+  APFloat AVal = cast<ConstantFP>(A->getOperand(0))->getValueAPF();
+  APFloat BVal = cast<ConstantFP>(B->getOperand(0))->getValueAPF();
+  if (AVal.compare(BVal) == APFloat::cmpLessThan)
+    return A;
+  return B;
+}
+
+static bool isContiguous(const ConstantRange &A, const ConstantRange &B) {
+  return A.getUpper() == B.getLower() || A.getLower() == B.getUpper();
+}
+
+static bool canBeMerged(const ConstantRange &A, const ConstantRange &B) {
+  return !A.intersectWith(B).isEmptySet() || isContiguous(A, B);
+}
+
+static bool tryMergeRange(SmallVector<Value*, 4> &EndPoints, ConstantInt *Low,
+                          ConstantInt *High) {
+  ConstantRange NewRange(Low->getValue(), High->getValue());
+  unsigned Size = EndPoints.size();
+  APInt LB = cast<ConstantInt>(EndPoints[Size - 2])->getValue();
+  APInt LE = cast<ConstantInt>(EndPoints[Size - 1])->getValue();
+  ConstantRange LastRange(LB, LE);
+  if (canBeMerged(NewRange, LastRange)) {
+    ConstantRange Union = LastRange.unionWith(NewRange);
+    Type *Ty = High->getType();
+    EndPoints[Size - 2] = ConstantInt::get(Ty, Union.getLower());
+    EndPoints[Size - 1] = ConstantInt::get(Ty, Union.getUpper());
+    return true;
+  }
+  return false;
+}
+
+static void addRange(SmallVector<Value*, 4> &EndPoints, ConstantInt *Low,
+                     ConstantInt *High) {
+  if (!EndPoints.empty())
+    if (tryMergeRange(EndPoints, Low, High))
+      return;
+
+  EndPoints.push_back(Low);
+  EndPoints.push_back(High);
+}
+
+static MDNode *getMostGenericRange(MDNode *A, MDNode *B) {
+  // Given two ranges, we want to compute the union of the ranges. This
+  // is slightly complitade by having to combine the intervals and merge
+  // the ones that overlap.
+
+  if (!A || !B)
+    return NULL;
+
+  if (A == B)
+    return A;
+
+  // First, walk both lists in older of the lower boundary of each interval.
+  // At each step, try to merge the new interval to the last one we adedd.
+  SmallVector<Value*, 4> EndPoints;
+  int AI = 0;
+  int BI = 0;
+  int AN = A->getNumOperands() / 2;
+  int BN = B->getNumOperands() / 2;
+  while (AI < AN && BI < BN) {
+    ConstantInt *ALow = cast<ConstantInt>(A->getOperand(2 * AI));
+    ConstantInt *BLow = cast<ConstantInt>(B->getOperand(2 * BI));
+
+    if (ALow->getValue().slt(BLow->getValue())) {
+      addRange(EndPoints, ALow, cast<ConstantInt>(A->getOperand(2 * AI + 1)));
+      ++AI;
+    } else {
+      addRange(EndPoints, BLow, cast<ConstantInt>(B->getOperand(2 * BI + 1)));
+      ++BI;
+    }
+  }
+  while (AI < AN) {
+    addRange(EndPoints, cast<ConstantInt>(A->getOperand(2 * AI)),
+             cast<ConstantInt>(A->getOperand(2 * AI + 1)));
+    ++AI;
+  }
+  while (BI < BN) {
+    addRange(EndPoints, cast<ConstantInt>(B->getOperand(2 * BI)),
+             cast<ConstantInt>(B->getOperand(2 * BI + 1)));
+    ++BI;
+  }
+
+  // If we have more than 2 ranges (4 endpoints) we have to try to merge
+  // the last and first ones.
+  unsigned Size = EndPoints.size();
+  if (Size > 4) {
+    ConstantInt *FB = cast<ConstantInt>(EndPoints[0]);
+    ConstantInt *FE = cast<ConstantInt>(EndPoints[1]);
+    if (tryMergeRange(EndPoints, FB, FE)) {
+      for (unsigned i = 0; i < Size - 2; ++i) {
+        EndPoints[i] = EndPoints[i + 2];
+      }
+      EndPoints.resize(Size - 2);
+    }
+  }
+
+  // If in the end we have a single range, it is possible that it is now the
+  // full range. Just drop the metadata in that case.
+  if (EndPoints.size() == 2) {
+    ConstantRange Range(cast<ConstantInt>(EndPoints[0])->getValue(),
+                        cast<ConstantInt>(EndPoints[1])->getValue());
+    if (Range.isFullSet())
+      return NULL;
+  }
+
+  return MDNode::get(A->getContext(), EndPoints);
+}
+
+static void patchReplacementInstruction(Value *Repl, Instruction *I) {
+  // Patch the replacement so that it is not more restrictive than the value
+  // being replaced.
+  BinaryOperator *Op = dyn_cast<BinaryOperator>(I);
+  BinaryOperator *ReplOp = dyn_cast<BinaryOperator>(Repl);
+  if (Op && ReplOp && isa<OverflowingBinaryOperator>(Op) &&
+      isa<OverflowingBinaryOperator>(ReplOp)) {
+    if (ReplOp->hasNoSignedWrap() && !Op->hasNoSignedWrap())
+      ReplOp->setHasNoSignedWrap(false);
+    if (ReplOp->hasNoUnsignedWrap() && !Op->hasNoUnsignedWrap())
+      ReplOp->setHasNoUnsignedWrap(false);
+  }
+  if (Instruction *ReplInst = dyn_cast<Instruction>(Repl)) {
+    SmallVector<std::pair<unsigned, MDNode*>, 4> Metadata;
+    ReplInst->getAllMetadataOtherThanDebugLoc(Metadata);
+    for (int i = 0, n = Metadata.size(); i < n; ++i) {
+      unsigned Kind = Metadata[i].first;
+      MDNode *IMD = I->getMetadata(Kind);
+      MDNode *ReplMD = Metadata[i].second;
+      switch(Kind) {
+      default:
+        ReplInst->setMetadata(Kind, NULL); // Remove unknown metadata
+        break;
+      case LLVMContext::MD_dbg:
+        llvm_unreachable("getAllMetadataOtherThanDebugLoc returned a MD_dbg");
+      case LLVMContext::MD_tbaa:
+        ReplInst->setMetadata(Kind, getMostGenericTBAA(IMD, ReplMD));
+        break;
+      case LLVMContext::MD_range:
+        ReplInst->setMetadata(Kind, getMostGenericRange(IMD, ReplMD));
+        break;
+      case LLVMContext::MD_prof:
+        llvm_unreachable("MD_prof in a non terminator instruction");
+        break;
+      case LLVMContext::MD_fpmath:
+        ReplInst->setMetadata(Kind, getMostGenericFPMath(IMD, ReplMD));
+        break;
+      }
+    }
+  }
+}
+
+static void patchAndReplaceAllUsesWith(Value *Repl, Instruction *I) {
+  patchReplacementInstruction(Repl, I);
+  I->replaceAllUsesWith(Repl);
+}
+
 /// processLoad - Attempt to eliminate a load, first by eliminating it
 /// locally, and then attempting non-local elimination if that fails.
 bool GVN::processLoad(LoadInst *L) {
@@ -1892,7 +2090,7 @@ bool GVN::processLoad(LoadInst *L) {
     }
     
     // Remove it!
-    L->replaceAllUsesWith(AvailableVal);
+    patchAndReplaceAllUsesWith(AvailableVal, L);
     if (DepLI->getType()->isPointerTy())
       MD->invalidateCachedPointerInfo(DepLI);
     markInstructionForDeletion(L);
@@ -2224,7 +2422,7 @@ bool GVN::processInstruction(Instruction *I) {
   }
   
   // Remove it!
-  I->replaceAllUsesWith(repl);
+  patchAndReplaceAllUsesWith(repl, I);
   if (MD && repl->getType()->isPointerTy())
     MD->invalidateCachedPointerInfo(repl);
   markInstructionForDeletion(I);
