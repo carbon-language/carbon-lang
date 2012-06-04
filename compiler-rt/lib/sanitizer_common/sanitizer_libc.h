@@ -29,6 +29,11 @@ void MiniLibcStub();
 int internal_strcmp(const char *s1, const char *s2);
 char *internal_strncpy(char *dst, const char *src, uptr n);
 
+#ifndef _WIN32
+void *internal_mmap(void *addr, uptr length, int prot, int flags,
+                    int fd, u64 offset);
+#endif  // _WIN32
+
 }  // namespace __sanitizer
 
 #endif  // SANITIZER_LIBC_H

@@ -21,6 +21,7 @@
 #include "asan_stack.h"
 #include "asan_thread.h"
 #include "asan_thread_registry.h"
+#include "sanitizer_common/sanitizer_libc.h"
 
 #include <crt_externs.h>  // for _NSGetEnviron
 #include <mach-o/dyld.h>
@@ -34,6 +35,8 @@
 #include <unistd.h>
 #include <libkern/OSAtomic.h>
 #include <CoreFoundation/CFString.h>
+
+using namespace __sanitizer;  // NOLINT
 
 namespace __asan {
 
@@ -97,20 +100,15 @@ bool AsanInterceptsSignal(int signum) {
   return (signum == SIGSEGV || signum == SIGBUS) && FLAG_handle_segv;
 }
 
-static void *asan_mmap(void *addr, size_t length, int prot, int flags,
-                int fd, u64 offset) {
-  return mmap(addr, length, prot, flags, fd, offset);
-}
-
 size_t AsanWrite(int fd, const void *buf, size_t count) {
   return write(fd, buf, count);
 }
 
 void *AsanMmapSomewhereOrDie(size_t size, const char *mem_type) {
   size = RoundUpTo(size, kPageSize);
-  void *res = asan_mmap(0, size,
-                        PROT_READ | PROT_WRITE,
-                        MAP_PRIVATE | MAP_ANON, -1, 0);
+  void *res = internal_mmap(0, size,
+                            PROT_READ | PROT_WRITE,
+                            MAP_PRIVATE | MAP_ANON, -1, 0);
   if (res == (void*)-1) {
     OutOfMemoryMessageAndDie(mem_type, size);
   }
@@ -118,17 +116,17 @@ void *AsanMmapSomewhereOrDie(size_t size, const char *mem_type) {
 }
 
 void *AsanMmapFixedNoReserve(uptr fixed_addr, size_t size) {
-  return asan_mmap((void*)fixed_addr, size,
-                   PROT_READ | PROT_WRITE,
-                   MAP_PRIVATE | MAP_ANON | MAP_FIXED | MAP_NORESERVE,
-                   0, 0);
+  return internal_mmap((void*)fixed_addr, size,
+                      PROT_READ | PROT_WRITE,
+                      MAP_PRIVATE | MAP_ANON | MAP_FIXED | MAP_NORESERVE,
+                      0, 0);
 }
 
 void *AsanMprotect(uptr fixed_addr, size_t size) {
-  return asan_mmap((void*)fixed_addr, size,
-                   PROT_NONE,
-                   MAP_PRIVATE | MAP_ANON | MAP_FIXED | MAP_NORESERVE,
-                   0, 0);
+  return internal_mmap((void*)fixed_addr, size,
+                       PROT_NONE,
+                       MAP_PRIVATE | MAP_ANON | MAP_FIXED | MAP_NORESERVE,
+                       0, 0);
 }
 
 void AsanUnmapOrDie(void *addr, size_t size) {
@@ -351,10 +349,10 @@ mach_error_t __interception_allocate_island(void **ptr,
                                             void *unused_hint) {
   if (!island_allocator_pos) {
     island_allocator_pos =
-        asan_mmap((void*)kIslandBeg, kIslandEnd - kIslandBeg,
-                  PROT_READ | PROT_WRITE | PROT_EXEC,
-                  MAP_PRIVATE | MAP_ANON | MAP_FIXED,
-                 -1, 0);
+        internal_mmap((void*)kIslandBeg, kIslandEnd - kIslandBeg,
+                      PROT_READ | PROT_WRITE | PROT_EXEC,
+                      MAP_PRIVATE | MAP_ANON | MAP_FIXED,
+                      -1, 0);
     if (island_allocator_pos != (void*)kIslandBeg) {
       return KERN_NO_SPACE;
     }

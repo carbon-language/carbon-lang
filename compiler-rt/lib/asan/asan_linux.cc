@@ -18,6 +18,7 @@
 #include "asan_lock.h"
 #include "asan_procmaps.h"
 #include "asan_thread.h"
+#include "sanitizer_common/sanitizer_libc.h"
 
 #include <sys/time.h>
 #include <sys/resource.h>
@@ -34,6 +35,8 @@
 // FIXME: where to get ucontext on Android?
 #include <sys/ucontext.h>
 #endif
+
+using namespace __sanitizer;  // NOLINT
 
 extern "C" void* _DYNAMIC;
 
@@ -73,20 +76,11 @@ bool AsanInterceptsSignal(int signum) {
   return signum == SIGSEGV && FLAG_handle_segv;
 }
 
-static void *asan_mmap(void *addr, uptr length, int prot, int flags,
-                int fd, u64 offset) {
-# if __WORDSIZE == 64
-  return (void *)syscall(__NR_mmap, addr, length, prot, flags, fd, offset);
-# else
-  return (void *)syscall(__NR_mmap2, addr, length, prot, flags, fd, offset);
-# endif
-}
-
 void *AsanMmapSomewhereOrDie(uptr size, const char *mem_type) {
   size = RoundUpTo(size, kPageSize);
-  void *res = asan_mmap(0, size,
-                        PROT_READ | PROT_WRITE,
-                        MAP_PRIVATE | MAP_ANON, -1, 0);
+  void *res = internal_mmap(0, size,
+                            PROT_READ | PROT_WRITE,
+                            MAP_PRIVATE | MAP_ANON, -1, 0);
   if (res == (void*)-1) {
     OutOfMemoryMessageAndDie(mem_type, size);
   }
@@ -94,17 +88,17 @@ void *AsanMmapSomewhereOrDie(uptr size, const char *mem_type) {
 }
 
 void *AsanMmapFixedNoReserve(uptr fixed_addr, uptr size) {
-  return asan_mmap((void*)fixed_addr, size,
-                   PROT_READ | PROT_WRITE,
-                   MAP_PRIVATE | MAP_ANON | MAP_FIXED | MAP_NORESERVE,
-                   0, 0);
+  return internal_mmap((void*)fixed_addr, size,
+                      PROT_READ | PROT_WRITE,
+                      MAP_PRIVATE | MAP_ANON | MAP_FIXED | MAP_NORESERVE,
+                      0, 0);
 }
 
 void *AsanMprotect(uptr fixed_addr, uptr size) {
-  return asan_mmap((void*)fixed_addr, size,
-                   PROT_NONE,
-                   MAP_PRIVATE | MAP_ANON | MAP_FIXED | MAP_NORESERVE,
-                   0, 0);
+  return internal_mmap((void*)fixed_addr, size,
+                       PROT_NONE,
+                       MAP_PRIVATE | MAP_ANON | MAP_FIXED | MAP_NORESERVE,
+                       0, 0);
 }
 
 void AsanUnmapOrDie(void *addr, uptr size) {
