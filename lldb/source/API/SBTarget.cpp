@@ -1674,7 +1674,7 @@ SBTarget::FindWatchpointByID (lldb::watch_id_t wp_id)
 }
 
 lldb::SBWatchpoint
-SBTarget::WatchAddress (lldb::addr_t addr, size_t size, bool read, bool write)
+SBTarget::WatchAddress (lldb::addr_t addr, size_t size, bool read, bool write, SBError &error)
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     
@@ -1690,7 +1690,9 @@ SBTarget::WatchAddress (lldb::addr_t addr, size_t size, bool read, bool write)
         if (write)
             watch_type |= LLDB_WATCH_TYPE_WRITE;
         // Target::CreateWatchpoint() is thread safe.
-        watchpoint_sp = target_sp->CreateWatchpoint(addr, size, watch_type);
+        Error cw_error;
+        watchpoint_sp = target_sp->CreateWatchpoint(addr, size, watch_type, cw_error);
+        error.SetError(cw_error);
         sb_watchpoint.SetSP (watchpoint_sp);
     }
     

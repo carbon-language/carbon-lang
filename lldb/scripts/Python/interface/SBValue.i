@@ -313,14 +313,14 @@ public:
     /// It returns an SBWatchpoint, which may be invalid.
     ") Watch;
     lldb::SBWatchpoint
-    Watch (bool resolve_location, bool read, bool write);
+    Watch (bool resolve_location, bool read, bool write, SBError &error);
 
     %feature("docstring", "
     /// Find and watch the location pointed to by a variable.
     /// It returns an SBWatchpoint, which may be invalid.
     ") WatchPointee;
     lldb::SBWatchpoint
-    WatchPointee (bool resolve_location, bool read, bool write);
+    WatchPointee (bool resolve_location, bool read, bool write, SBError &error);
 
     bool
     GetDescription (lldb::SBStream &description);

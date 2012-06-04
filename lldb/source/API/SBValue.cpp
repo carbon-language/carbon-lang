@@ -1655,7 +1655,7 @@ SBValue::GetData ()
 }
 
 lldb::SBWatchpoint
-SBValue::Watch (bool resolve_location, bool read, bool write)
+SBValue::Watch (bool resolve_location, bool read, bool write, SBError &error)
 {
     SBWatchpoint sb_watchpoint;
     
@@ -1696,7 +1696,9 @@ SBValue::Watch (bool resolve_location, bool read, bool write)
         if (write)
             watch_type |= LLDB_WATCH_TYPE_WRITE;
         
-        WatchpointSP watchpoint_sp = target_sp->CreateWatchpoint(addr, byte_size, watch_type);
+        Error rc;
+        WatchpointSP watchpoint_sp = target_sp->CreateWatchpoint(addr, byte_size, watch_type, rc);
+        error.SetError(rc);
                 
         if (watchpoint_sp) 
         {
@@ -1718,11 +1720,11 @@ SBValue::Watch (bool resolve_location, bool read, bool write)
 }
 
 lldb::SBWatchpoint
-SBValue::WatchPointee (bool resolve_location, bool read, bool write)
+SBValue::WatchPointee (bool resolve_location, bool read, bool write, SBError &error)
 {
     SBWatchpoint sb_watchpoint;
     if (IsInScope() && GetType().IsPointerType())
-        sb_watchpoint = Dereference().Watch (resolve_location, read, write);
+        sb_watchpoint = Dereference().Watch (resolve_location, read, write, error);
     return sb_watchpoint;
 }
 

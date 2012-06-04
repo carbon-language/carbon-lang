@@ -523,7 +523,8 @@ public:
     lldb::WatchpointSP
     CreateWatchpoint (lldb::addr_t addr,
                       size_t size,
-                      uint32_t type);
+                      uint32_t type,
+                      Error &error);
 
     lldb::WatchpointSP
     GetLastCreatedWatchpoint ()

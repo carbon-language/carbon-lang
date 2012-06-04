@@ -37,6 +37,21 @@ class TargetWatchAddressAPITestCase(TestBase):
         self.buildDwarf()
         self.do_set_watchaddress()
 
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @python_api_test
+    @dsym_test
+    def test_watch_address_with_invalid_watch_size_with_dsym(self):
+        """Exercise SBTarget.WatchAddress() API but pass an invalid watch_size."""
+        self.buildDsym()
+        self.do_set_watchaddress_with_invalid_watch_size()
+
+    @python_api_test
+    @dwarf_test
+    def test_watch_address_with_invalid_watch_size_with_dwarf(self):
+        """Exercise SBTarget.WatchAddress() API but pass an invalid watch_size."""
+        self.buildDwarf()
+        self.do_set_watchaddress_with_invalid_watch_size()
+
     def do_set_watchaddress(self):
         """Use SBTarget.WatchAddress() to set a watchpoint and verify that the program stops later due to the watchpoint."""
         exe = os.path.join(os.getcwd(), "a.out")
@@ -67,7 +82,8 @@ class TargetWatchAddressAPITestCase(TestBase):
                                                value.GetValueAsUnsigned(0),
                                                value.GetType().GetPointeeType())
         # Watch for write to *g_char_ptr.
-        watchpoint = target.WatchAddress(value.GetValueAsUnsigned(), 1, False, True)
+        error = lldb.SBError();
+        watchpoint = target.WatchAddress(value.GetValueAsUnsigned(), 1, False, True, error)
         self.assertTrue(value and watchpoint,
                         "Successfully found the pointer and set a watchpoint")
         self.DebugSBValue(value)
@@ -94,6 +110,42 @@ class TargetWatchAddressAPITestCase(TestBase):
             substrs = [self.violating_func])
 
         # This finishes our test.
+
+    def do_set_watchaddress_with_invalid_watch_size(self):
+        """Use SBTarget.WatchAddress() to set a watchpoint with invalid watch_size and verify we get a meaningful error message."""
+        exe = os.path.join(os.getcwd(), "a.out")
+
+        # Create a target by the debugger.
+        target = self.dbg.CreateTarget(exe)
+        self.assertTrue(target, VALID_TARGET)
+
+        # Now create a breakpoint on main.c.
+        breakpoint = target.BreakpointCreateByLocation(self.source, self.line)
+        self.assertTrue(breakpoint and
+                        breakpoint.GetNumLocations() == 1,
+                        VALID_BREAKPOINT)
+
+        # Now launch the process, and do not stop at the entry point.
+        process = target.LaunchSimple(None, None, os.getcwd())
+
+        # We should be stopped due to the breakpoint.  Get frame #0.
+        process = target.GetProcess()
+        self.assertTrue(process.GetState() == lldb.eStateStopped,
+                        PROCESS_STOPPED)
+        thread = lldbutil.get_stopped_thread(process, lldb.eStopReasonBreakpoint)
+        frame0 = thread.GetFrameAtIndex(0)
+
+        value = frame0.FindValue('g_char_ptr',
+                                 lldb.eValueTypeVariableGlobal)
+        pointee = value.CreateValueFromAddress("pointee",
+                                               value.GetValueAsUnsigned(0),
+                                               value.GetType().GetPointeeType())
+        # Watch for write to *g_char_ptr.
+        error = lldb.SBError();
+        watchpoint = target.WatchAddress(value.GetValueAsUnsigned(), 365, False, True, error)
+        self.assertFalse(watchpoint)
+        self.expect(error.GetCString(), exe=False,
+            substrs = ['watch size of %d is not supported' % 365])
 
 
 if __name__ == '__main__':

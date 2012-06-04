@@ -692,7 +692,7 @@ public:
     FindWatchpointByID (lldb::watch_id_t watch_id);
 
     lldb::SBWatchpoint
-    WatchAddress (lldb::addr_t addr, size_t size, bool read, bool write);
+    WatchAddress (lldb::addr_t addr, size_t size, bool read, bool write, SBError& error);
 
     bool
     EnableAllWatchpoints ();

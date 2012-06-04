@@ -8,7 +8,6 @@ import lldb
 def fuzz_obj(obj):
     obj.GetID()
     obj.IsValid()
-    obj.GetError()
     obj.GetHardwareIndex()
     obj.GetWatchAddress()
     obj.GetWatchSize()

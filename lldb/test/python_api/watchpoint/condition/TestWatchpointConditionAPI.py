@@ -66,7 +66,8 @@ class WatchpointConditionAPITestCase(TestBase):
 
         # Watch 'global' for write.
         value = frame0.FindValue('global', lldb.eValueTypeVariableGlobal)
-        watchpoint = value.Watch(True, False, True)
+        error = lldb.SBError();
+        watchpoint = value.Watch(True, False, True, error)
         self.assertTrue(value and watchpoint,
                         "Successfully found the variable and set a watchpoint")
         self.DebugSBValue(value)

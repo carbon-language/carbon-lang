@@ -87,22 +87,7 @@ SBWatchpoint::GetID ()
 bool
 SBWatchpoint::IsValid() const
 {
-    lldb::WatchpointSP watchpoint_sp(GetSP());
-    if (watchpoint_sp && watchpoint_sp->GetError().Success())
-        return true;
-    return false;
-}
-
-SBError
-SBWatchpoint::GetError ()
-{
-    SBError sb_error;
-    lldb::WatchpointSP watchpoint_sp(GetSP());
-    if (watchpoint_sp)
-    {
-        sb_error.SetError(watchpoint_sp->GetError());
-    }
-    return sb_error;
+    return m_opaque_sp;
 }
 
 int32_t

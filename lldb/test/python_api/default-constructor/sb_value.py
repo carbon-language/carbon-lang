@@ -34,8 +34,9 @@ def fuzz_obj(obj):
     obj.GetDescription(stream)
     obj.GetExpressionPath(stream)
     obj.GetExpressionPath(stream, True)
-    obj.Watch(True, True, False)
-    obj.WatchPointee(True, False, True)
+    error = lldb.SBError()
+    obj.Watch(True, True, False, error)
+    obj.WatchPointee(True, False, True, error)
     for child_val in obj:
         print child_val
     error = lldb.SBError()

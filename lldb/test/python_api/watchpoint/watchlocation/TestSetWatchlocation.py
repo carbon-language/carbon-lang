@@ -67,7 +67,8 @@ class SetWatchlocationAPITestCase(TestBase):
                                                value.GetValueAsUnsigned(0),
                                                value.GetType().GetPointeeType())
         # Watch for write to *g_char_ptr.
-        watchpoint = value.WatchPointee(True, False, True)
+        error = lldb.SBError();
+        watchpoint = value.WatchPointee(True, False, True, error)
         self.assertTrue(value and watchpoint,
                         "Successfully found the pointer and set a watchpoint")
         self.DebugSBValue(value)

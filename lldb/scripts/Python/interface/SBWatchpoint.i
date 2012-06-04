@@ -31,9 +31,6 @@ public:
     bool
     IsValid();
 
-    SBError
-    GetError();
-
     watch_id_t
     GetID ();
 

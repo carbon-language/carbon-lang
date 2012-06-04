@@ -668,7 +668,8 @@ public:
     WatchAddress (lldb::addr_t addr, 
                   size_t size, 
                   bool read, 
-                  bool write);
+                  bool write,
+                  SBError &error);
              
 
     lldb::SBBroadcaster

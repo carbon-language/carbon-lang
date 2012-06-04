@@ -59,20 +59,6 @@ CheckTargetForWatchpointOperations(Target *target, CommandReturnObject &result)
     return true;
 }
 
-static void
-CheckIfWatchpointsExhausted(Target *target, CommandReturnObject &result)
-{
-    uint32_t num_supported_hardware_watchpoints;
-    Error error = target->GetProcessSP()->GetWatchpointSupportInfo(num_supported_hardware_watchpoints);
-    if (error.Success())
-    {
-        uint32_t num_current_watchpoints = target->GetWatchpointList().GetSize();
-        if (num_current_watchpoints >= num_supported_hardware_watchpoints)
-            result.AppendErrorWithFormat("Number of supported hardware watchpoints (%u) has been reached.\n",
-                                         num_supported_hardware_watchpoints);
-    }
-}
-
 #include "llvm/ADT/StringRef.h"
 
 // Equivalent class: {"-", "to", "To", "TO"} of range specifier array.
@@ -1013,11 +999,6 @@ CommandObjectWatchpointSetVariable::Execute
             // Find out the size of this variable.
             size = m_option_watchpoint.watch_size == 0 ? valobj_sp->GetByteSize()
                                                        : m_option_watchpoint.watch_size;
-            if (!m_option_watchpoint.IsWatchSizeSupported(size))
-            {
-                result.GetErrorStream().Printf("Watch size of %lu is not supported\n", size);
-                return false;
-            }
         }
     } else {
         const char *error_cstr = error.AsCString(NULL);
@@ -1031,7 +1012,8 @@ CommandObjectWatchpointSetVariable::Execute
 
     // Now it's time to create the watchpoint.
     uint32_t watch_type = m_option_watchpoint.watch_type;
-    Watchpoint *wp = target->CreateWatchpoint(addr, size, watch_type).get();
+    error.Clear();
+    Watchpoint *wp = target->CreateWatchpoint(addr, size, watch_type, error).get();
     if (wp) {
         if (var_sp && var_sp->GetDeclaration().GetFile()) {
             StreamString ss;
@@ -1047,7 +1029,8 @@ CommandObjectWatchpointSetVariable::Execute
     } else {
         result.AppendErrorWithFormat("Watchpoint creation failed (addr=0x%llx, size=%lu).\n",
                                      addr, size);
-        CheckIfWatchpointsExhausted(target, result);
+        if (error.AsCString(NULL))
+            result.AppendError(error.AsCString());
         result.SetStatus(eReturnStatusFailed);
     }
 
@@ -1221,15 +1204,11 @@ CommandObjectWatchpointSetExpression::ExecuteRawCommandString
     }
     size = with_dash_x ? m_option_watchpoint.watch_size
                        : target->GetArchitecture().GetAddressByteSize();
-    if (!m_option_watchpoint.IsWatchSizeSupported(size))
-    {
-        result.GetErrorStream().Printf("Watch size of %lu is not supported\n", size);
-        return false;
-    }
 
     // Now it's time to create the watchpoint.
     uint32_t watch_type = m_option_watchpoint.watch_type;
-    Watchpoint *wp = target->CreateWatchpoint(addr, size, watch_type).get();
+    Error error;
+    Watchpoint *wp = target->CreateWatchpoint(addr, size, watch_type, error).get();
     if (wp) {
         if (var_sp && var_sp->GetDeclaration().GetFile()) {
             StreamString ss;
@@ -1245,7 +1224,8 @@ CommandObjectWatchpointSetExpression::ExecuteRawCommandString
     } else {
         result.AppendErrorWithFormat("Watchpoint creation failed (addr=0x%llx, size=%lu).\n",
                                      addr, size);
-        CheckIfWatchpointsExhausted(target, result);
+        if (error.AsCString(NULL))
+            result.AppendError(error.AsCString());
         result.SetStatus(eReturnStatusFailed);
     }
 

@@ -30,6 +30,7 @@
 #include "lldb/Host/Host.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
+#include "lldb/Interpreter/OptionGroupWatchpoint.h"
 #include "lldb/lldb-private-log.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Target/Process.h"
@@ -465,10 +466,25 @@ Target::ProcessIsValid()
     return (m_process_sp && m_process_sp->IsAlive());
 }
 
+static bool
+CheckIfWatchpointsExhausted(Target *target, Error &error)
+{
+    uint32_t num_supported_hardware_watchpoints;
+    Error rc = target->GetProcessSP()->GetWatchpointSupportInfo(num_supported_hardware_watchpoints);
+    if (rc.Success())
+    {
+        uint32_t num_current_watchpoints = target->GetWatchpointList().GetSize();
+        if (num_current_watchpoints >= num_supported_hardware_watchpoints)
+            error.SetErrorStringWithFormat("number of supported hardware watchpoints (%u) has been reached",
+                                           num_supported_hardware_watchpoints);
+    }
+    return false;
+}
+
 // See also Watchpoint::SetWatchpointType(uint32_t type) and
 // the OptionGroupWatchpoint::WatchType enum type.
 WatchpointSP
-Target::CreateWatchpoint(lldb::addr_t addr, size_t size, uint32_t type)
+Target::CreateWatchpoint(lldb::addr_t addr, size_t size, uint32_t type, Error &error)
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_WATCHPOINTS));
     if (log)
@@ -477,9 +493,18 @@ Target::CreateWatchpoint(lldb::addr_t addr, size_t size, uint32_t type)
 
     WatchpointSP wp_sp;
     if (!ProcessIsValid())
+    {
+        error.SetErrorString("process is not alive");
         return wp_sp;
+    }
     if (addr == LLDB_INVALID_ADDRESS || size == 0)
+    {
+        if (size == 0)
+            error.SetErrorString("cannot set a watchpoint with watch_size of 0");
+        else
+            error.SetErrorStringWithFormat("invalid watch address: %llu", addr);
         return wp_sp;
+    }
 
     // Currently we only support one watchpoint per address, with total number
     // of watchpoints limited by the hardware which the inferior is running on.
@@ -517,17 +542,23 @@ Target::CreateWatchpoint(lldb::addr_t addr, size_t size, uint32_t type)
         m_watchpoint_list.Add(wp_sp);
     }
 
-    Error rc = m_process_sp->EnableWatchpoint(wp_sp.get());
+    error = m_process_sp->EnableWatchpoint(wp_sp.get());
     if (log)
             log->Printf("Target::%s (creation of watchpoint %s with id = %u)\n",
                         __FUNCTION__,
-                        rc.Success() ? "succeeded" : "failed",
+                        error.Success() ? "succeeded" : "failed",
                         wp_sp->GetID());
 
-    if (rc.Fail()) {
+    if (error.Fail()) {
         // Enabling the watchpoint on the device side failed.
         // Remove the said watchpoint from the list maintained by the target instance.
         m_watchpoint_list.Remove(wp_sp->GetID());
+        // See if we could provide more helpful error message.
+        if (!CheckIfWatchpointsExhausted(this, error))
+        {
+            if (!OptionGroupWatchpoint::IsWatchSizeSupported(size))
+                error.SetErrorStringWithFormat("watch size of %lu is not supported", size);
+        }
         wp_sp.reset();
     }
     else
