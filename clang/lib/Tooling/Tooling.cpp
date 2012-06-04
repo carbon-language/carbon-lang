@@ -37,9 +37,6 @@
 namespace clang {
 namespace tooling {
 
-// Exists solely for the purpose of lookup of the resource path.
-static int StaticSymbol;
-
 FrontendActionFactory::~FrontendActionFactory() {}
 
 // FIXME: This file contains structural duplication with other parts of the
@@ -50,19 +47,8 @@ FrontendActionFactory::~FrontendActionFactory() {}
 static clang::driver::Driver *newDriver(clang::DiagnosticsEngine *Diagnostics,
                                         const char *BinaryName) {
   const std::string DefaultOutputName = "a.out";
-  // This just needs to be some symbol in the binary.
-  void *const SymbolAddr = &StaticSymbol;
-  // The driver detects the builtin header path based on the path of
-  // the executable.
-  // FIXME: On linux, GetMainExecutable is independent of the content
-  // of BinaryName, thus allowing ClangTool and runToolOnCode to just
-  // pass in made-up names here (in the case of ClangTool this being
-  // the original compiler invocation). Make sure this works on other
-  // platforms.
-  llvm::sys::Path MainExecutable =
-    llvm::sys::Path::GetMainExecutable(BinaryName, SymbolAddr);
   clang::driver::Driver *CompilerDriver = new clang::driver::Driver(
-    MainExecutable.str(), llvm::sys::getDefaultTargetTriple(),
+    BinaryName, llvm::sys::getDefaultTargetTriple(),
     DefaultOutputName, false, *Diagnostics);
   CompilerDriver->setTitle("clang_based_tool");
   return CompilerDriver;
@@ -231,15 +217,6 @@ bool ToolInvocation::runInvocation(
   Compiler.createSourceManager(*Files);
   addFileMappingsTo(Compiler.getSourceManager());
 
-  // Infer the builtin include path if unspecified.
-  if (Compiler.getHeaderSearchOpts().UseBuiltinIncludes &&
-      Compiler.getHeaderSearchOpts().ResourceDir.empty()) {
-    // This just needs to be some symbol in the binary.
-    void *const SymbolAddr = &StaticSymbol;
-    Compiler.getHeaderSearchOpts().ResourceDir =
-        clang::CompilerInvocation::GetResourcesPath(BinaryName, SymbolAddr);
-  }
-
   const bool Success = Compiler.ExecuteAction(*ScopedToolAction);
 
   Compiler.resetAndLeakFileManager();
@@ -300,6 +277,17 @@ void ClangTool::setArgumentsAdjuster(ArgumentsAdjuster *Adjuster) {
 }
 
 int ClangTool::run(FrontendActionFactory *ActionFactory) {
+  // Exists solely for the purpose of lookup of the resource path.
+  // This just needs to be some symbol in the binary.
+  static int StaticSymbol;
+  // The driver detects the builtin header path based on the path of the
+  // executable.
+  // FIXME: On linux, GetMainExecutable is independent of the value of the
+  // first argument, thus allowing ClangTool and runToolOnCode to just
+  // pass in made-up names here. Make sure this works on other platforms.
+  std::string MainExecutable =
+    llvm::sys::Path::GetMainExecutable("clang_tool", &StaticSymbol).str();
+
   bool ProcessingFailed = false;
   for (unsigned I = 0; I < CompileCommands.size(); ++I) {
     std::string File = CompileCommands[I].first;
@@ -307,7 +295,7 @@ int ClangTool::run(FrontendActionFactory *ActionFactory) {
     // behavior as chdir is complex: chdir resolves the path once, thus
     // guaranteeing that all subsequent relative path operations work
     // on the same path the original chdir resulted in. This makes a difference
-    // for example on network filesystems, where symlinks might be switched 
+    // for example on network filesystems, where symlinks might be switched
     // during runtime of the tool. Fixing this depends on having a file system
     // abstraction that allows openat() style interactions.
     if (chdir(CompileCommands[I].second.Directory.c_str()))
@@ -315,6 +303,8 @@ int ClangTool::run(FrontendActionFactory *ActionFactory) {
                                CompileCommands[I].second.Directory + "\n!");
     std::vector<std::string> CommandLine =
       ArgsAdjuster->Adjust(CompileCommands[I].second.CommandLine);
+    assert(!CommandLine.empty());
+    CommandLine[0] = MainExecutable;
     llvm::outs() << "Processing: " << File << ".\n";
     ToolInvocation Invocation(CommandLine, ActionFactory->create(), &Files);
     for (int I = 0, E = MappedFileContents.size(); I != E; ++I) {
