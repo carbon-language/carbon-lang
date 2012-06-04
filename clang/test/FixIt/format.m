@@ -79,3 +79,17 @@ void test_class_correction (Class x) {
   // CHECK: fix-it:"{{.*}}":{75:11-75:14}:"%@"
 }
 
+
+typedef enum : int { NSUTF8StringEncoding = 8 } NSStringEncoding;
+void test_fixed_enum_correction(NSStringEncoding x) {
+  NSLog(@"%@", x); // expected-warning{{format specifies type 'id' but the argument has type 'NSStringEncoding'}}
+  // CHECK: fix-it:"{{.*}}":{85:11-85:13}:"%d"
+}
+
+typedef __SIZE_TYPE__ size_t;
+enum SomeSize : size_t { IntegerSize = sizeof(int) };
+void test_named_fixed_enum_correction(enum SomeSize x) {
+  NSLog(@"%@", x); // expected-warning{{format specifies type 'id' but the argument has type 'enum SomeSize'}}
+  // CHECK: fix-it:"{{.*}}":{92:11-92:13}:"%zu"
+}
+

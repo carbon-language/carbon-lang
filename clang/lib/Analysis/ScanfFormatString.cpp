@@ -316,6 +316,11 @@ bool ScanfSpecifier::fixType(QualType QT, const LangOptions &LangOpt,
     return false;
 
   QualType PT = QT->getPointeeType();
+
+  // If it's an enum, get its underlying type.
+  if (const EnumType *ETy = QT->getAs<EnumType>())
+    QT = ETy->getDecl()->getIntegerType();
+  
   const BuiltinType *BT = PT->getAs<BuiltinType>();
   if (!BT)
     return false;
