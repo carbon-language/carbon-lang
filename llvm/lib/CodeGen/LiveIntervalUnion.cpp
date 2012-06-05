@@ -81,7 +81,6 @@ void LiveIntervalUnion::extract(LiveInterval &VirtReg) {
 
 void
 LiveIntervalUnion::print(raw_ostream &OS, const TargetRegisterInfo *TRI) const {
-  OS << "LIU " << PrintReg(RepReg, TRI);
   if (empty()) {
     OS << " empty\n";
     return;

@@ -96,7 +96,7 @@ void RegAllocBase::LiveUnionArray::init(LiveIntervalUnion::Allocator &allocator,
   Array =
     static_cast<LiveIntervalUnion*>(malloc(sizeof(LiveIntervalUnion)*NRegs));
   for (unsigned r = 0; r != NRegs; ++r)
-    new(Array + r) LiveIntervalUnion(r, allocator);
+    new(Array + r) LiveIntervalUnion(allocator);
 }
 
 void RegAllocBase::init(VirtRegMap &vrm, LiveIntervals &lis) {

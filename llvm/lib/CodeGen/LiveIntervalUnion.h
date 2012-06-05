@@ -60,13 +60,11 @@ public:
   class Query;
 
 private:
-  const unsigned RepReg;  // representative register number
   unsigned Tag;           // unique tag for current contents.
   LiveSegments Segments;  // union of virtual reg segments
 
 public:
-  LiveIntervalUnion(unsigned r, Allocator &a) : RepReg(r), Tag(0), Segments(a)
-    {}
+  explicit LiveIntervalUnion(Allocator &a) : Tag(0), Segments(a) {}
 
   // Iterate over all segments in the union of live virtual registers ordered
   // by their starting position.
