@@ -277,6 +277,11 @@
           <li><a href="#int_umul_overflow">'<tt>llvm.umul.with.overflow.*</tt> Intrinsics</a></li>
         </ol>
       </li>
+      <li><a href="#spec_arithmetic">Specialised Arithmetic Intrinsics</a>
+        <ol>
+          <li><a href="#fmuladd">'<tt>llvm.fmuladd</tt> Intrinsic</a></li>
+        </ol>
+      </li>
       <li><a href="#int_fp16">Half Precision Floating Point Intrinsics</a>
         <ol>
           <li><a href="#int_convert_to_fp16">'<tt>llvm.convert.to.fp16</tt>' Intrinsic</a></li>
@@ -7942,6 +7947,52 @@ LLVM</a>.</p>
 </pre>
 
 </div>
+
+</div>
+
+<!-- ======================================================================= -->
+<h3>
+  <a name="spec_arithmetic">Specialised Arithmetic Intrinsics</a>
+</h3>
+
+<!-- _______________________________________________________________________ -->
+
+<h4>
+  <a name="fmuladd">'<tt>llvm.fmuladd.*</tt>' Intrinsic</a>
+</h4>
+
+<div>
+
+<h5>Syntax:</h5>
+<pre>
+  declare float @llvm.fmuladd.f32(float %a, float %b, float %c)
+  declare double @llvm.fmuladd.f64(double %a, double %b, double %c)
+</pre>
+
+<h5>Overview:</h5>
+<p>The '<tt>llvm.fmuladd.*</tt>' intrinsic functions represent multiply-add
+expressions that can be fused if the code generator determines that the fused
+expression would be legal and efficient.</p>
+
+<h5>Arguments:</h5>
+<p>The '<tt>llvm.fmuladd.*</tt>' intrinsics each take three arguments: two
+multiplicands, a and b, and an addend c.</p>
+
+<h5>Semantics:</h5>
+<p>The expression:</p>
+<pre>
+  %0 = call float @llvm.fmuladd.f32(%a, %b, %c)
+</pre>
+<p>is equivalent to the expression a * b + c, except that rounding will not be
+performed between the multiplication and addition steps if the code generator
+fuses the operations. Fusion is not guaranteed, even if the target platform
+supports it. If a fused multiply-add is required the corresponding llvm.fma.*
+intrinsic function should be used instead.</p>
+
+<h5>Examples:</h5>
+<pre>
+  %r2 = call float @llvm.fmuladd.f32(float %a, float %b, float %c) ; yields {float}:r2 = (a * b) + c
+</pre>
 
 </div>
 

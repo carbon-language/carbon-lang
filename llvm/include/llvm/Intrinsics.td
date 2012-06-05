@@ -266,6 +266,10 @@ let Properties = [IntrNoMem] in {
   def int_fma  : Intrinsic<[llvm_anyfloat_ty],
                          [LLVMMatchType<0>, LLVMMatchType<0>,
                           LLVMMatchType<0>]>;
+
+  def int_fmuladd : Intrinsic<[llvm_anyfloat_ty],
+                              [LLVMMatchType<0>, LLVMMatchType<0>,
+                               LLVMMatchType<0>]>;
 }
 
 // NOTE: these are internal interfaces.

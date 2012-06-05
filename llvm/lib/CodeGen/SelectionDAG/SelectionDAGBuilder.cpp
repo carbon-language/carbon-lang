@@ -4932,6 +4932,27 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
                              getValue(I.getArgOperand(1)),
                              getValue(I.getArgOperand(2))));
     return 0;
+  case Intrinsic::fmuladd: {
+    EVT VT = TLI.getValueType(I.getType());
+    if (TLI.isOperationLegal(ISD::FMA, VT) && TLI.isFMAFasterThanMulAndAdd(VT)){
+      setValue(&I, DAG.getNode(ISD::FMA, dl,
+                               getValue(I.getArgOperand(0)).getValueType(),
+                               getValue(I.getArgOperand(0)),
+                               getValue(I.getArgOperand(1)),
+                               getValue(I.getArgOperand(2))));
+    } else {
+      SDValue Mul = DAG.getNode(ISD::FMUL, dl,
+                                getValue(I.getArgOperand(0)).getValueType(),
+                                getValue(I.getArgOperand(0)),
+                                getValue(I.getArgOperand(1)));
+      SDValue Add = DAG.getNode(ISD::FADD, dl,
+                                getValue(I.getArgOperand(0)).getValueType(),
+                                Mul,
+                                getValue(I.getArgOperand(2)));
+      setValue(&I, Add);
+    }
+    return 0;
+  }
   case Intrinsic::convert_to_fp16:
     setValue(&I, DAG.getNode(ISD::FP32_TO_FP16, dl,
                              MVT::i16, getValue(I.getArgOperand(0))));

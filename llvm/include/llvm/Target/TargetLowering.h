@@ -1657,6 +1657,14 @@ public:
     return false;
   }
 
+  /// isFMAFasterThanMulAndAdd - Return true if an FMA operation is faster than
+  /// a pair of mul and add instructions. fmuladd intrinsics will be expanded to
+  /// FMAs when this method returns true (and FMAs are legal), otherwise fmuladd
+  /// is expanded to mul + add.
+  virtual bool isFMAFasterThanMulAndAdd(EVT) const {
+    return false;
+  }
+
   /// isNarrowingProfitable - Return true if it's profitable to narrow
   /// operations of type VT1 to VT2. e.g. on x86, it's profitable to narrow
   /// from i32 to i8 but not from i32 to i16.
