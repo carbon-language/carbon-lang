@@ -2331,22 +2331,21 @@ static int BUCompareLatency(SUnit *left, SUnit *right, bool checkPref,
   // and latency.
   if (!checkPref || (left->SchedulingPref == Sched::ILP ||
                      right->SchedulingPref == Sched::ILP)) {
-    if (DisableSchedCycles) {
+    // If neither instruction stalls (!LStall && !RStall) and HazardRecognizer
+    // is enabled, grouping instructions by cycle, then its height is already
+    // covered so only its depth matters. We also reach this point if both stall
+    // but have the same height.
+    if (!SPQ->getHazardRec()->isEnabled()) {
       if (LHeight != RHeight)
         return LHeight > RHeight ? 1 : -1;
     }
-    else {
-      // If neither instruction stalls (!LStall && !RStall) then
-      // its height is already covered so only its depth matters. We also reach
-      // this if both stall but have the same height.
-      int LDepth = left->getDepth() - LPenalty;
-      int RDepth = right->getDepth() - RPenalty;
-      if (LDepth != RDepth) {
-        DEBUG(dbgs() << "  Comparing latency of SU (" << left->NodeNum
-              << ") depth " << LDepth << " vs SU (" << right->NodeNum
-              << ") depth " << RDepth << "\n");
-        return LDepth < RDepth ? 1 : -1;
-      }
+    int LDepth = left->getDepth() - LPenalty;
+    int RDepth = right->getDepth() - RPenalty;
+    if (LDepth != RDepth) {
+      DEBUG(dbgs() << "  Comparing latency of SU (" << left->NodeNum
+            << ") depth " << LDepth << " vs SU (" << right->NodeNum
+            << ") depth " << RDepth << "\n");
+      return LDepth < RDepth ? 1 : -1;
     }
     if (left->Latency != right->Latency)
       return left->Latency > right->Latency ? 1 : -1;
