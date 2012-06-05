@@ -1695,7 +1695,9 @@ bool CXXConstructorDecl::isConvertingConstructor(bool AllowExplicit) const {
   return (getNumParams() == 0 &&
           getType()->getAs<FunctionProtoType>()->isVariadic()) ||
          (getNumParams() == 1) ||
-         (getNumParams() > 1 && getParamDecl(1)->hasDefaultArg());
+         (getNumParams() > 1 &&
+          (getParamDecl(1)->hasDefaultArg() ||
+           getParamDecl(1)->isParameterPack()));
 }
 
 bool CXXConstructorDecl::isSpecializationCopyingObject() const {
