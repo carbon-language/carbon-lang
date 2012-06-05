@@ -3,8 +3,10 @@
 // Radar 9168773
 
 // DEBUGGER: ptype A
-// CHECK: type = class A {
-// CHECK-NEXT: public:
+// Work around a gdb bug where it believes that a class is a
+// struct if there aren't any methods - even though it's tagged
+// as a class.
+// CHECK: type = struct A {
 // CHECK-NEXT: int MyData;
 // CHECK-NEXT: }
 class A;
