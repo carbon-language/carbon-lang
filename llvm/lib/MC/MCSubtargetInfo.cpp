@@ -91,6 +91,8 @@ MCSubtargetInfo::getInstrItineraryForCPU(StringRef CPU) const {
     return InstrItineraryData();
   }
 
-  return InstrItineraryData(Stages, OperandCycles, ForwardingPathes,
-                            (InstrItinerary *)Found->Value);
+  InstrItinerarySubtargetValue *V =
+    (InstrItinerarySubtargetValue *)Found->Value;
+  return InstrItineraryData(V->Props, Stages, OperandCycles, ForwardingPathes,
+                            V->Itineraries);
 }

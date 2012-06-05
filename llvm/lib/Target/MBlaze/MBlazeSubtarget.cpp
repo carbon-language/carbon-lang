@@ -43,13 +43,6 @@ MBlazeSubtarget::MBlazeSubtarget(const std::string &TT,
 
   // Initialize scheduling itinerary for the specified CPU.
   InstrItins = getInstrItineraryForCPU(CPUName);
-
-  // Compute the issue width of the MBlaze itineraries
-  computeIssueWidth();
-}
-
-void MBlazeSubtarget::computeIssueWidth() {
-  InstrItins.IssueWidth = 1;
 }
 
 bool MBlazeSubtarget::

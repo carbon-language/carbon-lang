@@ -44,8 +44,6 @@ ScoreboardHazardRecognizer(const InstrItineraryData *II,
   // avoid dealing with the boundary condition.
   unsigned ScoreboardDepth = 1;
   if (ItinData && !ItinData->isEmpty()) {
-    IssueWidth = ItinData->IssueWidth;
-
     for (unsigned idx = 0; ; ++idx) {
       if (ItinData->isEndMarker(idx))
         break;
@@ -74,11 +72,13 @@ ScoreboardHazardRecognizer(const InstrItineraryData *II,
   ReservedScoreboard.reset(ScoreboardDepth);
   RequiredScoreboard.reset(ScoreboardDepth);
 
-  if (!MaxLookAhead)
+  if (!isEnabled())
     DEBUG(dbgs() << "Disabled scoreboard hazard recognizer\n");
-  else
+  else {
+    IssueWidth = ItinData->Props.IssueWidth;
     DEBUG(dbgs() << "Using scoreboard hazard recognizer: Depth = "
           << ScoreboardDepth << '\n');
+  }
 }
 
 void ScoreboardHazardRecognizer::Reset() {

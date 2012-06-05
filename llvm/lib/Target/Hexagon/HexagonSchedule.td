@@ -41,7 +41,10 @@ def HexagonItineraries :
         InstrItinData<SYS    , [InstrStage<1, [LSUNIT]>]>,
         InstrItinData<MARKER , [InstrStage<1, [LUNIT, LSUNIT, MUNIT, SUNIT]>]>,
         InstrItinData<PSEUDO , [InstrStage<1, [LUNIT, LSUNIT, MUNIT, SUNIT]>]>
-      ]>;
+      ]> {
+  // Max issue per cycle == bundle width.
+  let IssueWidth = 4;
+}
 
 //===----------------------------------------------------------------------===//
 // V4 Machine Info +

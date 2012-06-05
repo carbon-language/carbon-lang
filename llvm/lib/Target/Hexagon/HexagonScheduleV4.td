@@ -52,7 +52,11 @@ def HexagonItinerariesV4 :
         InstrItinData<MARKER , [InstrStage<1, [SLOT0, SLOT1, SLOT2, SLOT3]>]>,
         InstrItinData<PREFIX , [InstrStage<1, [SLOT0, SLOT1, SLOT2, SLOT3]>]>,
         InstrItinData<PSEUDO , [InstrStage<1, [SLOT0, SLOT1, SLOT2, SLOT3]>]>
-      ]>;
+      ]> {
+  // Max issue per cycle == bundle width.
+  let IssueWidth = 4;
+}
+
 
 //===----------------------------------------------------------------------===//
 // Hexagon V4 Resource Definitions -

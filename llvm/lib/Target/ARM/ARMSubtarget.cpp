@@ -200,13 +200,14 @@ void ARMSubtarget::computeIssueWidth() {
     const InstrStage *IS = InstrItins.Stages + itin->FirstStage;
     allStage1Units |= IS->getUnits();
   }
-  InstrItins.IssueWidth = 0;
+  InstrItins.Props.IssueWidth = 0;
   while (allStage1Units) {
-    ++InstrItins.IssueWidth;
+    ++InstrItins.Props.IssueWidth;
     // clear the lowest bit
     allStage1Units ^= allStage1Units & ~(allStage1Units - 1);
   }
-  assert(InstrItins.IssueWidth <= 2 && "itinerary bug, too many stage 1 units");
+  assert(InstrItins.Props.IssueWidth <= 2 &&
+         "itinerary bug, too many stage 1 units");
 }
 
 bool ARMSubtarget::enablePostRAScheduler(

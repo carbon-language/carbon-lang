@@ -47,6 +47,8 @@ class SubtargetEmitter : public TableGenBackend {
                      std::map<std::string, unsigned> &ItinClassesMap,
                      std::vector<Record*> &ItinClassList,
                      std::vector<std::vector<InstrItinerary> > &ProcList);
+  void EmitItineraryProp(raw_ostream &OS, const Record *R, const char *Name,
+                         char Separator);
   void EmitProcessorData(raw_ostream &OS,
                          std::vector<Record*> &ItinClassList,
                          std::vector<std::vector<InstrItinerary> > &ProcList);

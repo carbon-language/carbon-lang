@@ -117,9 +117,16 @@ class InstrItinData<InstrItinClass Class, list<InstrStage> stages,
 // Processor itineraries - These values represent the set of all itinerary
 // classes for a given chip set.
 //
+// Set property values to -1 to use the default.
+// See InstrItineraryProps for comments and defaults.
 class ProcessorItineraries<list<FuncUnit> fu, list<Bypass> bp,
                            list<InstrItinData> iid> {
-  int IssueWidth = 1;
+  int IssueWidth = -1; // Max instructions that may be scheduled per cycle.
+  int MinLatency = -1; // Determines which instrucions are allowed in a group.
+                       // (-1) inorder (0) ooo, (1): inorder +var latencies.
+  int LoadLatency = -1; // Cycles for loads to access the cache.
+  int HighLatency = -1; // Approximation of cycles for "high latency" ops.
+
   list<FuncUnit> FU = fu;
   list<Bypass> BP = bp;
   list<InstrItinData> IID = iid;
@@ -129,3 +136,15 @@ class ProcessorItineraries<list<FuncUnit> fu, list<Bypass> bp,
 // info.
 def NoItineraries : ProcessorItineraries<[], [], []>;
 
+// Processor itineraries with non-unit issue width. This allows issue
+// width to be explicity specified at the beginning of the itinerary.
+class MultiIssueItineraries<int issuewidth, int minlatency,
+                            int loadlatency, int highlatency,
+                            list<FuncUnit> fu, list<Bypass> bp,
+                            list<InstrItinData> iid>
+  : ProcessorItineraries<fu, bp, iid> {
+  let IssueWidth = issuewidth;
+  let MinLatency = minlatency;
+  let LoadLatency = loadlatency;
+  let HighLatency = highlatency;
+}
