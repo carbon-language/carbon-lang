@@ -3530,14 +3530,15 @@ public:
 
   virtual void getArchDefines(const LangOptions &Opts,
                               MacroBuilder &Builder) const {
-    if (SoftFloat)
-      Builder.defineMacro("__mips_soft_float", Twine(1));
-    else if (SingleFloat)
-      Builder.defineMacro("__mips_single_float", Twine(1));
-    else if (!SoftFloat && !SingleFloat)
-      Builder.defineMacro("__mips_hard_float", Twine(1));
-    else
+    if (SoftFloat && SingleFloat)
       llvm_unreachable("Invalid float ABI for Mips.");
+    else if (SoftFloat)
+      Builder.defineMacro("__mips_soft_float", Twine(1));
+    else {
+      Builder.defineMacro("__mips_hard_float", Twine(1));
+      if (SingleFloat)
+        Builder.defineMacro("__mips_single_float", Twine(1));
+    }
 
     Builder.defineMacro("_MIPS_SZPTR", Twine(getPointerWidth(0)));
     Builder.defineMacro("_MIPS_SZINT", Twine(getIntWidth()));

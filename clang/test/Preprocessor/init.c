@@ -873,6 +873,7 @@
 // RUN: %clang_cc1 -target-feature +single-float -E -dM -ffreestanding \
 // RUN:   -triple=mips-none-none < /dev/null \
 // RUN:   | FileCheck -check-prefix MIPS-FABI-SINGLE %s
+// MIPS-FABI-SINGLE:#define __mips_hard_float 1
 // MIPS-FABI-SINGLE:#define __mips_single_float 1
 //
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=msp430-none-none < /dev/null | FileCheck -check-prefix MSP430 %s
