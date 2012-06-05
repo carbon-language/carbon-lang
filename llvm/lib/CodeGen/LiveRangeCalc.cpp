@@ -14,6 +14,7 @@
 #define DEBUG_TYPE "regalloc"
 #include "LiveRangeCalc.h"
 #include "llvm/CodeGen/MachineDominators.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 
 using namespace llvm;
 
@@ -31,6 +32,71 @@ void LiveRangeCalc::reset(const MachineFunction *MF,
   Seen.resize(N);
   LiveOut.resize(N);
   LiveIn.clear();
+}
+
+
+void LiveRangeCalc::createDeadDefs(LiveInterval *LI, unsigned Reg) {
+  assert(MRI && Indexes && "call reset() first");
+
+  // Visit all def operands. If the same instruction has multiple defs of Reg,
+  // LI->createDeadDef() will deduplicate.
+  for (MachineRegisterInfo::def_iterator
+       I = MRI->def_begin(Reg), E = MRI->def_end(); I != E; ++I) {
+    const MachineInstr *MI = &*I;
+    // Find the corresponding slot index.
+    SlotIndex Idx;
+    if (MI->isPHI())
+      // PHI defs begin at the basic block start index.
+      Idx = Indexes->getMBBStartIdx(MI->getParent());
+    else
+      // Instructions are either normal 'r', or early clobber 'e'.
+      Idx = Indexes->getInstructionIndex(MI)
+        .getRegSlot(I.getOperand().isEarlyClobber());
+
+    // Create the def in LI. This may find an existing def.
+    VNInfo *VNI = LI->createDeadDef(Idx, *Alloc);
+    VNI->setIsPHIDef(MI->isPHI());
+  }
+}
+
+
+void LiveRangeCalc::extendToUses(LiveInterval *LI, unsigned Reg) {
+  assert(MRI && Indexes && "call reset() first");
+
+  // Visit all operands that read Reg. This may include partial defs.
+  for (MachineRegisterInfo::reg_nodbg_iterator I = MRI->reg_nodbg_begin(Reg),
+       E = MRI->reg_nodbg_end(); I != E; ++I) {
+    const MachineOperand &MO = I.getOperand();
+    if (!MO.readsReg())
+      continue;
+    // MI is reading Reg. We may have visited MI before if it happens to be
+    // reading Reg multiple times. That is OK, extend() is idempotent.
+    const MachineInstr *MI = &*I;
+
+    // Find the SlotIndex being read.
+    SlotIndex Idx;
+    if (MI->isPHI()) {
+      assert(!MO.isDef() && "Cannot handle PHI def of partial register.");
+      // PHI operands are paired: (Reg, PredMBB).
+      // Extend the live range to be live-out from PredMBB.
+      Idx = Indexes->getMBBEndIdx(MI->getOperand(I.getOperandNo()+1).getMBB());
+    } else {
+      // This is a normal instruction.
+      Idx = Indexes->getInstructionIndex(MI).getRegSlot();
+      // Check for early-clobber redefs.
+      unsigned DefIdx;
+      if (MO.isDef()) {
+        if (MO.isEarlyClobber())
+          Idx = Idx.getRegSlot(true);
+      } else if (MI->isRegTiedToDefOperand(I.getOperandNo(), &DefIdx)) {
+        // FIXME: This would be a lot easier if tied early-clobber uses also
+        // had an early-clobber flag.
+        if (MI->getOperand(DefIdx).isEarlyClobber())
+          Idx = Idx.getRegSlot(true);
+      }
+    }
+    extend(LI, Idx);
+  }
 }
 
 

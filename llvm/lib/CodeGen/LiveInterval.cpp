@@ -48,6 +48,26 @@ LiveInterval::iterator LiveInterval::find(SlotIndex Pos) {
   return I;
 }
 
+VNInfo *LiveInterval::createDeadDef(SlotIndex Def,
+                                    VNInfo::Allocator &VNInfoAllocator) {
+  assert(!Def.isDead() && "Cannot define a value at the dead slot");
+  iterator I = find(Def);
+  if (I == end()) {
+    VNInfo *VNI = getNextValue(Def, VNInfoAllocator);
+    ranges.push_back(LiveRange(Def, Def.getDeadSlot(), VNI));
+    return VNI;
+  }
+  if (SlotIndex::isSameInstr(Def, I->start)) {
+    assert(I->start == Def && "Cannot insert def, already live");
+    assert(I->valno->def == Def && "Inconsistent existing value def");
+    return I->valno;
+  }
+  assert(SlotIndex::isEarlierInstr(Def, I->start) && "Already live at def");
+  VNInfo *VNI = getNextValue(Def, VNInfoAllocator);
+  ranges.insert(I, LiveRange(Def, Def.getDeadSlot(), VNI));
+  return VNI;
+}
+
 /// killedInRange - Return true if the interval has kills in [Start,End).
 bool LiveInterval::killedInRange(SlotIndex Start, SlotIndex End) const {
   Ranges::const_iterator r =

@@ -159,11 +159,26 @@ public:
   /// single existing value, Alloc may be null.
   void extend(LiveInterval *LI, SlotIndex Kill);
 
-  /// extendToUses - Extend the live range of LI to reach all uses.
+  /// createDeadDefs - Create a dead def in LI for every def operand of Reg.
+  /// Each instruction defining Reg gets a new VNInfo with a corresponding
+  /// minimal live range.
+  void createDeadDefs(LiveInterval *LI, unsigned Reg);
+
+  /// createDeadDefs - Create a dead def in LI for every def of LI->reg.
+  void createDeadDefs(LiveInterval *LI) {
+    createDeadDefs(LI, LI->reg);
+  }
+
+  /// extendToUses - Extend the live range of LI to reach all uses of Reg.
   ///
   /// All uses must be jointly dominated by existing liveness.  PHI-defs are
   /// inserted as needed to preserve SSA form.
-  void extendToUses(LiveInterval *LI);
+  void extendToUses(LiveInterval *LI, unsigned Reg);
+
+  /// extendToUses - Extend the live range of LI to reach all uses of LI->reg.
+  void extendToUses(LiveInterval *LI) {
+    extendToUses(LI, LI->reg);
+  }
 
   //===--------------------------------------------------------------------===//
   // Low-level interface.

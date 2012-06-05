@@ -274,6 +274,11 @@ namespace llvm {
       return VNI;
     }
 
+    /// createDeadDef - Make sure the interval has a value defined at Def.
+    /// If one already exists, return it. Otherwise allocate a new value and
+    /// add liveness for a dead def.
+    VNInfo *createDeadDef(SlotIndex Def, VNInfo::Allocator &VNInfoAllocator);
+
     /// Create a copy of the given value. The new value will be identical except
     /// for the Value number.
     VNInfo *createValueCopy(const VNInfo *orig,
