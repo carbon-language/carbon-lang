@@ -148,6 +148,10 @@ public:
   /// TypeLocs.
   bool shouldWalkTypesOfTypeLocs() const { return true; }
 
+  /// \brief Return whether this visitor should recurse into implicit
+  /// declarations, e.g., implicit constructors and destructors.
+  bool shouldVisitImplicitDeclarations() const { return false; }
+
   /// \brief Return whether \param S should be traversed using data recursion
   /// to avoid a stack overflow with extreme cases.
   bool shouldUseDataRecursionFor(Stmt *S) const {
@@ -601,10 +605,9 @@ bool RecursiveASTVisitor<Derived>::TraverseDecl(Decl *D) {
   if (!D)
     return true;
 
-  // As a syntax visitor, we want to ignore declarations for
-  // implicitly-defined declarations (ones not typed explicitly by the
-  // user).
-  if (D->isImplicit())
+  // As a syntax visitor, by default we want to ignore declarations for
+  // implicit declarations (ones not typed explicitly by the user).
+  if (!getDerived().shouldVisitImplicitDeclarations() && D->isImplicit())
     return true;
 
   switch (D->getKind()) {
@@ -1697,7 +1700,9 @@ bool RecursiveASTVisitor<Derived>::TraverseFunctionHelper(FunctionDecl *D) {
   // FunctionNoProtoType or FunctionProtoType, or a typedef.  This
   // also covers the return type and the function parameters,
   // including exception specifications.
-  TRY_TO(TraverseTypeLoc(D->getTypeSourceInfo()->getTypeLoc()));
+  if (clang::TypeSourceInfo *TSI = D->getTypeSourceInfo()) {
+    TRY_TO(TraverseTypeLoc(TSI->getTypeLoc()));
+  }
 
   if (CXXConstructorDecl *Ctor = dyn_cast<CXXConstructorDecl>(D)) {
     // Constructor initializers.
