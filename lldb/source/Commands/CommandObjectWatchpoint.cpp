@@ -1196,8 +1196,9 @@ CommandObjectWatchpointSetExpression::ExecuteRawCommandString
     }
 
     // Get the address to watch.
-    addr = valobj_sp->GetValueAsUnsigned(0);
-    if (!addr) {
+    bool success = false;
+    addr = valobj_sp->GetValueAsUnsigned(0, &success);
+    if (!success) {
         result.GetErrorStream().Printf("error: expression did not evaluate to an address\n");
         result.SetStatus(eReturnStatusFailed);
         return false;

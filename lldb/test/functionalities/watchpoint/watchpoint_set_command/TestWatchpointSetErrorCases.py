@@ -61,6 +61,10 @@ class WatchpointSetErrorTestCase(TestBase):
         self.expect("watchpoint set expression -w write --", error=True,
             startstr = 'error: required argument missing; specify an expression to evaulate into the addres to watch for')
 
+        # It's an error if the expression did not evaluate to an address.
+        self.expect("watchpoint set expression MyAggregateDataType", error=True,
+            startstr = 'error: expression did not evaluate to an address')
+
         # Check for missing option terminator '--'.
         self.expect("watchpoint set expression -w write -x 1 g_char_ptr", error=True,
             startstr = 'error: did you forget to enter the option terminator string "--"?')

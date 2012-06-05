@@ -1246,15 +1246,23 @@ ValueObject::GetValueAsCString ()
 // if > 8bytes, 0 is returned. this method should mostly be used
 // to read address values out of pointers
 uint64_t
-ValueObject::GetValueAsUnsigned (uint64_t fail_value)
+ValueObject::GetValueAsUnsigned (uint64_t fail_value, bool *success)
 {
     // If our byte size is zero this is an aggregate type that has children
     if (ClangASTContext::IsAggregateType (GetClangType()) == false)
     {
         Scalar scalar;
         if (ResolveValue (scalar))
+        {
+            if (success)
+                *success = true;
             return scalar.GetRawBits64(fail_value);
+        }
+        // fallthrough, otherwise...
     }
+
+    if (success)
+        *success = false;
     return fail_value;
 }
 

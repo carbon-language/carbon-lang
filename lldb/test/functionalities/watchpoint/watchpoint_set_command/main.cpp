@@ -98,6 +98,12 @@ int main (int argc, char const *argv[])
     err = ::pthread_create (&g_thread_2, NULL, thread_func, &thread_index_2);
     err = ::pthread_create (&g_thread_3, NULL, thread_func, &thread_index_3);
 
+    struct {
+        int a;
+        int b;
+        int c;
+    } MyAggregateDataType;
+
     printf ("Before turning all three threads loose...\n"); // Set break point at this line.
 
     // Join all of our threads
