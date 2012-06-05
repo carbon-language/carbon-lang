@@ -736,6 +736,7 @@ void LiveIntervals::computeLiveInRegUnits() {
           NewIntvs.push_back(Intv);
         }
         VNInfo *VNI = Intv->createDeadDef(Begin, getVNInfoAllocator());
+        (void)VNI;
         DEBUG(dbgs() << ' ' << PrintRegUnit(Unit, TRI) << '#' << VNI->id);
       }
     }
