@@ -33,7 +33,11 @@ void *internal_mmap(void *addr, uptr length, int prot, int flags,
                     int fd, u64 offset);
 
 typedef int fd_t;
+const fd_t kInvalidFd = -1;
+int internal_close(fd_t fd);
 fd_t internal_open(const char *filename, bool write);
+uptr internal_read(fd_t fd, void *buf, uptr count);
+uptr internal_write(fd_t fd, const void *buf, uptr count);
 
 }  // namespace __sanitizer
 

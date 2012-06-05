@@ -21,6 +21,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <fcntl.h>
+#include <unistd.h>
 
 namespace __sanitizer {
 
@@ -29,9 +30,21 @@ void *internal_mmap(void *addr, size_t length, int prot, int flags,
   return mmap(addr, length, prot, flags, fd, offset);
 }
 
+int internal_close(fd_t fd) {
+  return close(fd);
+}
+
 fd_t internal_open(const char *filename, bool write) {
   return open(filename,
               write ? O_WRONLY | O_CREAT | O_CLOEXEC : O_RDONLY, 0660);
+}
+
+uptr internal_read(fd_t fd, void *buf, uptr count) {
+  return read(fd, buf, count);
+}
+
+uptr internal_write(fd_t fd, const void *buf, uptr count) {
+  return write(fd, buf, count);
 }
 
 }  // namespace __sanitizer
