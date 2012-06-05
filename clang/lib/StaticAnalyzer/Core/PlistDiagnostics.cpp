@@ -183,10 +183,18 @@ static void ReportControlFlow(raw_ostream &o,
        I!=E; ++I) {
     Indent(o, indent) << "<dict>\n";
     ++indent;
+
+    // Make the ranges of the start and end point self-consistent with adjacent edges
+    // by forcing to use only the beginning of the range.  This simplifies the layout
+    // logic for clients.
     Indent(o, indent) << "<key>start</key>\n";
-    EmitRange(o, SM, LangOpts, I->getStart().asRange(), FM, indent+1);
+    SourceLocation StartEdge = I->getStart().asRange().getBegin();
+    EmitRange(o, SM, LangOpts, SourceRange(StartEdge, StartEdge), FM, indent+1);
+
     Indent(o, indent) << "<key>end</key>\n";
-    EmitRange(o, SM, LangOpts, I->getEnd().asRange(), FM, indent+1);
+    SourceLocation EndEdge = I->getEnd().asRange().getBegin();
+    EmitRange(o, SM, LangOpts, SourceRange(EndEdge, EndEdge), FM, indent+1);
+
     --indent;
     Indent(o, indent) << "</dict>\n";
   }

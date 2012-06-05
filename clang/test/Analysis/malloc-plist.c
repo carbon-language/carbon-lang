@@ -168,4248 +168,4250 @@ void use_function_with_leak7() {
     function_with_leak7();
 }
 
-//CHECK:  <dict>
-//CHECK:   <key>files</key>
-//CHECK:   <array>
-//CHECK:   </array>
-//CHECK:   <key>diagnostics</key>
-//CHECK:   <array>
-//CHECK:    <dict>
-//CHECK:     <key>path</key>
-//CHECK:     <array>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>control</string>
-//CHECK:       <key>edges</key>
-//CHECK:        <array>
-//CHECK:         <dict>
-//CHECK:          <key>start</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>10</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>10</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:          <key>end</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>10</integer>
-//CHECK:             <key>col</key><integer>9</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>10</integer>
-//CHECK:             <key>col</key><integer>9</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:         </dict>
-//CHECK:        </array>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>control</string>
-//CHECK:       <key>edges</key>
-//CHECK:        <array>
-//CHECK:         <dict>
-//CHECK:          <key>start</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>10</integer>
-//CHECK:             <key>col</key><integer>9</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>10</integer>
-//CHECK:             <key>col</key><integer>9</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:          <key>end</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>11</integer>
-//CHECK:             <key>col</key><integer>9</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>11</integer>
-//CHECK:             <key>col</key><integer>9</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:         </dict>
-//CHECK:        </array>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>control</string>
-//CHECK:       <key>edges</key>
-//CHECK:        <array>
-//CHECK:         <dict>
-//CHECK:          <key>start</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>11</integer>
-//CHECK:             <key>col</key><integer>9</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>11</integer>
-//CHECK:             <key>col</key><integer>9</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:          <key>end</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>11</integer>
-//CHECK:             <key>col</key><integer>18</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>11</integer>
-//CHECK:             <key>col</key><integer>27</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:         </dict>
-//CHECK:        </array>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>event</string>
-//CHECK:       <key>location</key>
-//CHECK:       <dict>
-//CHECK:        <key>line</key><integer>11</integer>
-//CHECK:        <key>col</key><integer>18</integer>
-//CHECK:        <key>file</key><integer>0</integer>
-//CHECK:       </dict>
-//CHECK:       <key>ranges</key>
-//CHECK:       <array>
-//CHECK:         <array>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>11</integer>
-//CHECK:           <key>col</key><integer>18</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>11</integer>
-//CHECK:           <key>col</key><integer>27</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:         </array>
-//CHECK:       </array>
-//CHECK:       <key>depth</key><integer>0</integer>
-//CHECK:       <key>extended_message</key>
-//CHECK:       <string>Memory is allocated</string>
-//CHECK:       <key>message</key>
-//CHECK:  <string>Memory is allocated</string>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>control</string>
-//CHECK:       <key>edges</key>
-//CHECK:        <array>
-//CHECK:         <dict>
-//CHECK:          <key>start</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>11</integer>
-//CHECK:             <key>col</key><integer>18</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>11</integer>
-//CHECK:             <key>col</key><integer>27</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:          <key>end</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>14</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>14</integer>
-//CHECK:             <key>col</key><integer>6</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:         </dict>
-//CHECK:        </array>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>event</string>
-//CHECK:       <key>location</key>
-//CHECK:       <dict>
-//CHECK:        <key>line</key><integer>14</integer>
-//CHECK:        <key>col</key><integer>5</integer>
-//CHECK:        <key>file</key><integer>0</integer>
-//CHECK:       </dict>
-//CHECK:       <key>depth</key><integer>0</integer>
-//CHECK:       <key>extended_message</key>
-//CHECK:       <string>Memory is never released; potential leak of memory pointed to by &apos;p&apos;</string>
-//CHECK:       <key>message</key>
-//CHECK:  <string>Memory is never released; potential leak of memory pointed to by &apos;p&apos;</string>
-//CHECK:      </dict>
-//CHECK:     </array>
-//CHECK:     <key>description</key><string>Memory is never released; potential leak of memory pointed to by &apos;p&apos;</string>
-//CHECK:     <key>category</key><string>Memory Error</string>
-//CHECK:     <key>type</key><string>Memory leak</string>
-//CHECK:    <key>issue_context_kind</key><string>function</string>
-//CHECK:    <key>issue_context</key><string>diagnosticTest</string>
-//CHECK:    <key>location</key>
-//CHECK:    <dict>
-//CHECK:     <key>line</key><integer>14</integer>
-//CHECK:     <key>col</key><integer>5</integer>
-//CHECK:     <key>file</key><integer>0</integer>
-//CHECK:    </dict>
-//CHECK:    </dict>
-//CHECK:    <dict>
-//CHECK:     <key>path</key>
-//CHECK:     <array>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>control</string>
-//CHECK:       <key>edges</key>
-//CHECK:        <array>
-//CHECK:         <dict>
-//CHECK:          <key>start</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>18</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>18</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:          <key>end</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>19</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>19</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:         </dict>
-//CHECK:        </array>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>control</string>
-//CHECK:       <key>edges</key>
-//CHECK:        <array>
-//CHECK:         <dict>
-//CHECK:          <key>start</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>19</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>19</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:          <key>end</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>19</integer>
-//CHECK:             <key>col</key><integer>9</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>19</integer>
-//CHECK:             <key>col</key><integer>30</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:         </dict>
-//CHECK:        </array>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>event</string>
-//CHECK:       <key>location</key>
-//CHECK:       <dict>
-//CHECK:        <key>line</key><integer>19</integer>
-//CHECK:        <key>col</key><integer>9</integer>
-//CHECK:        <key>file</key><integer>0</integer>
-//CHECK:       </dict>
-//CHECK:       <key>ranges</key>
-//CHECK:       <array>
-//CHECK:         <array>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>19</integer>
-//CHECK:           <key>col</key><integer>9</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>19</integer>
-//CHECK:           <key>col</key><integer>30</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:         </array>
-//CHECK:       </array>
-//CHECK:       <key>depth</key><integer>0</integer>
-//CHECK:       <key>extended_message</key>
-//CHECK:       <string>Memory is allocated</string>
-//CHECK:       <key>message</key>
-//CHECK:  <string>Memory is allocated</string>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>control</string>
-//CHECK:       <key>edges</key>
-//CHECK:        <array>
-//CHECK:         <dict>
-//CHECK:          <key>start</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>19</integer>
-//CHECK:             <key>col</key><integer>9</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>19</integer>
-//CHECK:             <key>col</key><integer>30</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:          <key>end</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>21</integer>
-//CHECK:             <key>col</key><integer>1</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>21</integer>
-//CHECK:             <key>col</key><integer>1</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:         </dict>
-//CHECK:        </array>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>event</string>
-//CHECK:       <key>location</key>
-//CHECK:       <dict>
-//CHECK:        <key>line</key><integer>21</integer>
-//CHECK:        <key>col</key><integer>1</integer>
-//CHECK:        <key>file</key><integer>0</integer>
-//CHECK:       </dict>
-//CHECK:       <key>depth</key><integer>0</integer>
-//CHECK:       <key>extended_message</key>
-//CHECK:       <string>Memory is never released; potential leak of memory pointed to by &apos;A&apos;</string>
-//CHECK:       <key>message</key>
-//CHECK:  <string>Memory is never released; potential leak of memory pointed to by &apos;A&apos;</string>
-//CHECK:      </dict>
-//CHECK:     </array>
-//CHECK:     <key>description</key><string>Memory is never released; potential leak of memory pointed to by &apos;A&apos;</string>
-//CHECK:     <key>category</key><string>Memory Error</string>
-//CHECK:     <key>type</key><string>Memory leak</string>
-//CHECK:    <key>issue_context_kind</key><string>function</string>
-//CHECK:    <key>issue_context</key><string>myArrayAllocation</string>
-//CHECK:    <key>location</key>
-//CHECK:    <dict>
-//CHECK:     <key>line</key><integer>21</integer>
-//CHECK:     <key>col</key><integer>1</integer>
-//CHECK:     <key>file</key><integer>0</integer>
-//CHECK:    </dict>
-//CHECK:    </dict>
-//CHECK:    <dict>
-//CHECK:     <key>path</key>
-//CHECK:     <array>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>control</string>
-//CHECK:       <key>edges</key>
-//CHECK:        <array>
-//CHECK:         <dict>
-//CHECK:          <key>start</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>24</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>24</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:          <key>end</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>24</integer>
-//CHECK:             <key>col</key><integer>18</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>24</integer>
-//CHECK:             <key>col</key><integer>28</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:         </dict>
-//CHECK:        </array>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>event</string>
-//CHECK:       <key>location</key>
-//CHECK:       <dict>
-//CHECK:        <key>line</key><integer>24</integer>
-//CHECK:        <key>col</key><integer>18</integer>
-//CHECK:        <key>file</key><integer>0</integer>
-//CHECK:       </dict>
-//CHECK:       <key>ranges</key>
-//CHECK:       <array>
-//CHECK:         <array>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>24</integer>
-//CHECK:           <key>col</key><integer>18</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>24</integer>
-//CHECK:           <key>col</key><integer>28</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:         </array>
-//CHECK:       </array>
-//CHECK:       <key>depth</key><integer>0</integer>
-//CHECK:       <key>extended_message</key>
-//CHECK:       <string>Memory is allocated</string>
-//CHECK:       <key>message</key>
-//CHECK:  <string>Memory is allocated</string>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>control</string>
-//CHECK:       <key>edges</key>
-//CHECK:        <array>
-//CHECK:         <dict>
-//CHECK:          <key>start</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>24</integer>
-//CHECK:             <key>col</key><integer>18</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>24</integer>
-//CHECK:             <key>col</key><integer>28</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:          <key>end</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>26</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>26</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:         </dict>
-//CHECK:        </array>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>control</string>
-//CHECK:       <key>edges</key>
-//CHECK:        <array>
-//CHECK:         <dict>
-//CHECK:          <key>start</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>26</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>26</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:          <key>end</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>26</integer>
-//CHECK:             <key>col</key><integer>18</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>26</integer>
-//CHECK:             <key>col</key><integer>40</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:         </dict>
-//CHECK:        </array>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>event</string>
-//CHECK:       <key>location</key>
-//CHECK:       <dict>
-//CHECK:        <key>line</key><integer>26</integer>
-//CHECK:        <key>col</key><integer>18</integer>
-//CHECK:        <key>file</key><integer>0</integer>
-//CHECK:       </dict>
-//CHECK:       <key>ranges</key>
-//CHECK:       <array>
-//CHECK:         <array>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>26</integer>
-//CHECK:           <key>col</key><integer>18</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>26</integer>
-//CHECK:           <key>col</key><integer>40</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:         </array>
-//CHECK:       </array>
-//CHECK:       <key>depth</key><integer>0</integer>
-//CHECK:       <key>extended_message</key>
-//CHECK:       <string>Attempt to reallocate memory</string>
-//CHECK:       <key>message</key>
-//CHECK:  <string>Attempt to reallocate memory</string>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>control</string>
-//CHECK:       <key>edges</key>
-//CHECK:        <array>
-//CHECK:         <dict>
-//CHECK:          <key>start</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>26</integer>
-//CHECK:             <key>col</key><integer>18</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>26</integer>
-//CHECK:             <key>col</key><integer>40</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:          <key>end</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>27</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>27</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:         </dict>
-//CHECK:        </array>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>control</string>
-//CHECK:       <key>edges</key>
-//CHECK:        <array>
-//CHECK:         <dict>
-//CHECK:          <key>start</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>27</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>27</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:          <key>end</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>27</integer>
-//CHECK:             <key>col</key><integer>9</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>27</integer>
-//CHECK:             <key>col</key><integer>12</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:         </dict>
-//CHECK:        </array>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>event</string>
-//CHECK:       <key>location</key>
-//CHECK:       <dict>
-//CHECK:        <key>line</key><integer>27</integer>
-//CHECK:        <key>col</key><integer>9</integer>
-//CHECK:        <key>file</key><integer>0</integer>
-//CHECK:       </dict>
-//CHECK:       <key>ranges</key>
-//CHECK:       <array>
-//CHECK:         <array>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>27</integer>
-//CHECK:           <key>col</key><integer>9</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>27</integer>
-//CHECK:           <key>col</key><integer>12</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:         </array>
-//CHECK:       </array>
-//CHECK:       <key>depth</key><integer>0</integer>
-//CHECK:       <key>extended_message</key>
-//CHECK:       <string>Assuming &apos;tmp&apos; is null</string>
-//CHECK:       <key>message</key>
-//CHECK:  <string>Assuming &apos;tmp&apos; is null</string>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>control</string>
-//CHECK:       <key>edges</key>
-//CHECK:        <array>
-//CHECK:         <dict>
-//CHECK:          <key>start</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>27</integer>
-//CHECK:             <key>col</key><integer>9</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>27</integer>
-//CHECK:             <key>col</key><integer>12</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:          <key>end</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>27</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>27</integer>
-//CHECK:             <key>col</key><integer>6</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:         </dict>
-//CHECK:        </array>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>event</string>
-//CHECK:       <key>location</key>
-//CHECK:       <dict>
-//CHECK:        <key>line</key><integer>27</integer>
-//CHECK:        <key>col</key><integer>5</integer>
-//CHECK:        <key>file</key><integer>0</integer>
-//CHECK:       </dict>
-//CHECK:       <key>ranges</key>
-//CHECK:       <array>
-//CHECK:         <array>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>27</integer>
-//CHECK:           <key>col</key><integer>5</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>27</integer>
-//CHECK:           <key>col</key><integer>6</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:         </array>
-//CHECK:       </array>
-//CHECK:       <key>depth</key><integer>0</integer>
-//CHECK:       <key>extended_message</key>
-//CHECK:       <string>Reallocation failed</string>
-//CHECK:       <key>message</key>
-//CHECK:  <string>Reallocation failed</string>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>control</string>
-//CHECK:       <key>edges</key>
-//CHECK:        <array>
-//CHECK:         <dict>
-//CHECK:          <key>start</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>27</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>27</integer>
-//CHECK:             <key>col</key><integer>6</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:          <key>end</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>28</integer>
-//CHECK:             <key>col</key><integer>9</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>28</integer>
-//CHECK:             <key>col</key><integer>14</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:         </dict>
-//CHECK:        </array>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>event</string>
-//CHECK:       <key>location</key>
-//CHECK:       <dict>
-//CHECK:        <key>line</key><integer>28</integer>
-//CHECK:        <key>col</key><integer>9</integer>
-//CHECK:        <key>file</key><integer>0</integer>
-//CHECK:       </dict>
-//CHECK:       <key>depth</key><integer>0</integer>
-//CHECK:       <key>extended_message</key>
-//CHECK:       <string>Memory is never released; potential leak of memory pointed to by &apos;buf&apos;</string>
-//CHECK:       <key>message</key>
-//CHECK:  <string>Memory is never released; potential leak of memory pointed to by &apos;buf&apos;</string>
-//CHECK:      </dict>
-//CHECK:     </array>
-//CHECK:     <key>description</key><string>Memory is never released; potential leak of memory pointed to by &apos;buf&apos;</string>
-//CHECK:     <key>category</key><string>Memory Error</string>
-//CHECK:     <key>type</key><string>Memory leak</string>
-//CHECK:    <key>issue_context_kind</key><string>function</string>
-//CHECK:    <key>issue_context</key><string>reallocDiagnostics</string>
-//CHECK:    <key>location</key>
-//CHECK:    <dict>
-//CHECK:     <key>line</key><integer>28</integer>
-//CHECK:     <key>col</key><integer>9</integer>
-//CHECK:     <key>file</key><integer>0</integer>
-//CHECK:    </dict>
-//CHECK:    </dict>
-//CHECK:    <dict>
-//CHECK:     <key>path</key>
-//CHECK:     <array>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>control</string>
-//CHECK:       <key>edges</key>
-//CHECK:        <array>
-//CHECK:         <dict>
-//CHECK:          <key>start</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>43</integer>
-//CHECK:             <key>col</key><integer>3</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>43</integer>
-//CHECK:             <key>col</key><integer>3</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:          <key>end</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>43</integer>
-//CHECK:             <key>col</key><integer>15</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>43</integer>
-//CHECK:             <key>col</key><integer>15</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:         </dict>
-//CHECK:        </array>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>event</string>
-//CHECK:       <key>location</key>
-//CHECK:       <dict>
-//CHECK:        <key>line</key><integer>43</integer>
-//CHECK:        <key>col</key><integer>15</integer>
-//CHECK:        <key>file</key><integer>0</integer>
-//CHECK:       </dict>
-//CHECK:       <key>ranges</key>
-//CHECK:       <array>
-//CHECK:         <array>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>43</integer>
-//CHECK:           <key>col</key><integer>15</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>43</integer>
-//CHECK:           <key>col</key><integer>23</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:         </array>
-//CHECK:       </array>
-//CHECK:       <key>depth</key><integer>0</integer>
-//CHECK:       <key>extended_message</key>
-//CHECK:       <string>Calling &apos;wrapper&apos;</string>
-//CHECK:       <key>message</key>
-//CHECK:  <string>Calling &apos;wrapper&apos;</string>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>event</string>
-//CHECK:       <key>location</key>
-//CHECK:       <dict>
-//CHECK:        <key>line</key><integer>34</integer>
-//CHECK:        <key>col</key><integer>1</integer>
-//CHECK:        <key>file</key><integer>0</integer>
-//CHECK:       </dict>
-//CHECK:       <key>depth</key><integer>1</integer>
-//CHECK:       <key>extended_message</key>
-//CHECK:       <string>Entered call from &apos;test_wrapper&apos;</string>
-//CHECK:       <key>message</key>
-//CHECK:  <string>Entered call from &apos;test_wrapper&apos;</string>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>control</string>
-//CHECK:       <key>edges</key>
-//CHECK:        <array>
-//CHECK:         <dict>
-//CHECK:          <key>start</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>34</integer>
-//CHECK:             <key>col</key><integer>1</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>34</integer>
-//CHECK:             <key>col</key><integer>1</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:          <key>end</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>35</integer>
-//CHECK:             <key>col</key><integer>3</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>35</integer>
-//CHECK:             <key>col</key><integer>3</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:         </dict>
-//CHECK:        </array>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>control</string>
-//CHECK:       <key>edges</key>
-//CHECK:        <array>
-//CHECK:         <dict>
-//CHECK:          <key>start</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>35</integer>
-//CHECK:             <key>col</key><integer>3</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>35</integer>
-//CHECK:             <key>col</key><integer>3</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:          <key>end</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>35</integer>
-//CHECK:             <key>col</key><integer>13</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>35</integer>
-//CHECK:             <key>col</key><integer>23</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:         </dict>
-//CHECK:        </array>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>event</string>
-//CHECK:       <key>location</key>
-//CHECK:       <dict>
-//CHECK:        <key>line</key><integer>35</integer>
-//CHECK:        <key>col</key><integer>13</integer>
-//CHECK:        <key>file</key><integer>0</integer>
-//CHECK:       </dict>
-//CHECK:       <key>ranges</key>
-//CHECK:       <array>
-//CHECK:         <array>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>35</integer>
-//CHECK:           <key>col</key><integer>13</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>35</integer>
-//CHECK:           <key>col</key><integer>23</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:         </array>
-//CHECK:       </array>
-//CHECK:       <key>depth</key><integer>1</integer>
-//CHECK:       <key>extended_message</key>
-//CHECK:       <string>Memory is allocated</string>
-//CHECK:       <key>message</key>
-//CHECK:  <string>Memory is allocated</string>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>control</string>
-//CHECK:       <key>edges</key>
-//CHECK:        <array>
-//CHECK:         <dict>
-//CHECK:          <key>start</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>35</integer>
-//CHECK:             <key>col</key><integer>13</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>35</integer>
-//CHECK:             <key>col</key><integer>23</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:          <key>end</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>37</integer>
-//CHECK:             <key>col</key><integer>3</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>37</integer>
-//CHECK:             <key>col</key><integer>3</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:         </dict>
-//CHECK:        </array>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>control</string>
-//CHECK:       <key>edges</key>
-//CHECK:        <array>
-//CHECK:         <dict>
-//CHECK:          <key>start</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>37</integer>
-//CHECK:             <key>col</key><integer>3</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>37</integer>
-//CHECK:             <key>col</key><integer>3</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:          <key>end</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>37</integer>
-//CHECK:             <key>col</key><integer>7</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>37</integer>
-//CHECK:             <key>col</key><integer>7</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:         </dict>
-//CHECK:        </array>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>event</string>
-//CHECK:       <key>location</key>
-//CHECK:       <dict>
-//CHECK:        <key>line</key><integer>37</integer>
-//CHECK:        <key>col</key><integer>7</integer>
-//CHECK:        <key>file</key><integer>0</integer>
-//CHECK:       </dict>
-//CHECK:       <key>ranges</key>
-//CHECK:       <array>
-//CHECK:         <array>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>37</integer>
-//CHECK:           <key>col</key><integer>7</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>37</integer>
-//CHECK:           <key>col</key><integer>7</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:         </array>
-//CHECK:       </array>
-//CHECK:       <key>depth</key><integer>1</integer>
-//CHECK:       <key>extended_message</key>
-//CHECK:       <string>Assuming &apos;x&apos; is non-null</string>
-//CHECK:       <key>message</key>
-//CHECK:  <string>Assuming &apos;x&apos; is non-null</string>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>control</string>
-//CHECK:       <key>edges</key>
-//CHECK:        <array>
-//CHECK:         <dict>
-//CHECK:          <key>start</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>37</integer>
-//CHECK:             <key>col</key><integer>7</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>37</integer>
-//CHECK:             <key>col</key><integer>7</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:          <key>end</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>38</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>38</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:         </dict>
-//CHECK:        </array>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>event</string>
-//CHECK:       <key>location</key>
-//CHECK:       <dict>
-//CHECK:        <key>line</key><integer>43</integer>
-//CHECK:        <key>col</key><integer>15</integer>
-//CHECK:        <key>file</key><integer>0</integer>
-//CHECK:       </dict>
-//CHECK:       <key>ranges</key>
-//CHECK:       <array>
-//CHECK:         <array>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>43</integer>
-//CHECK:           <key>col</key><integer>15</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>43</integer>
-//CHECK:           <key>col</key><integer>23</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:         </array>
-//CHECK:       </array>
-//CHECK:       <key>depth</key><integer>1</integer>
-//CHECK:       <key>extended_message</key>
-//CHECK:       <string>Returned allocated memory</string>
-//CHECK:       <key>message</key>
-//CHECK:  <string>Returned allocated memory</string>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>control</string>
-//CHECK:       <key>edges</key>
-//CHECK:        <array>
-//CHECK:         <dict>
-//CHECK:          <key>start</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>43</integer>
-//CHECK:             <key>col</key><integer>15</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>43</integer>
-//CHECK:             <key>col</key><integer>23</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:          <key>end</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>45</integer>
-//CHECK:             <key>col</key><integer>1</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>45</integer>
-//CHECK:             <key>col</key><integer>1</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:         </dict>
-//CHECK:        </array>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>event</string>
-//CHECK:       <key>location</key>
-//CHECK:       <dict>
-//CHECK:        <key>line</key><integer>45</integer>
-//CHECK:        <key>col</key><integer>1</integer>
-//CHECK:        <key>file</key><integer>0</integer>
-//CHECK:       </dict>
-//CHECK:       <key>depth</key><integer>0</integer>
-//CHECK:       <key>extended_message</key>
-//CHECK:       <string>Memory is never released; potential leak of memory pointed to by &apos;buf&apos;</string>
-//CHECK:       <key>message</key>
-//CHECK:  <string>Memory is never released; potential leak of memory pointed to by &apos;buf&apos;</string>
-//CHECK:      </dict>
-//CHECK:     </array>
-//CHECK:     <key>description</key><string>Memory is never released; potential leak of memory pointed to by &apos;buf&apos;</string>
-//CHECK:     <key>category</key><string>Memory Error</string>
-//CHECK:     <key>type</key><string>Memory leak</string>
-//CHECK:    <key>issue_context_kind</key><string>function</string>
-//CHECK:    <key>issue_context</key><string>test_wrapper</string>
-//CHECK:    <key>location</key>
-//CHECK:    <dict>
-//CHECK:     <key>line</key><integer>45</integer>
-//CHECK:     <key>col</key><integer>1</integer>
-//CHECK:     <key>file</key><integer>0</integer>
-//CHECK:    </dict>
-//CHECK:    </dict>
-//CHECK:    <dict>
-//CHECK:     <key>path</key>
-//CHECK:     <array>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>control</string>
-//CHECK:       <key>edges</key>
-//CHECK:        <array>
-//CHECK:         <dict>
-//CHECK:          <key>start</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>59</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>59</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:          <key>end</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>60</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>60</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:         </dict>
-//CHECK:        </array>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>event</string>
-//CHECK:       <key>location</key>
-//CHECK:       <dict>
-//CHECK:        <key>line</key><integer>60</integer>
-//CHECK:        <key>col</key><integer>5</integer>
-//CHECK:        <key>file</key><integer>0</integer>
-//CHECK:       </dict>
-//CHECK:       <key>ranges</key>
-//CHECK:       <array>
-//CHECK:         <array>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>60</integer>
-//CHECK:           <key>col</key><integer>5</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>60</integer>
-//CHECK:           <key>col</key><integer>28</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:         </array>
-//CHECK:       </array>
-//CHECK:       <key>depth</key><integer>0</integer>
-//CHECK:       <key>extended_message</key>
-//CHECK:       <string>Calling &apos;my_malloc_and_free&apos;</string>
-//CHECK:       <key>message</key>
-//CHECK:  <string>Calling &apos;my_malloc_and_free&apos;</string>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>event</string>
-//CHECK:       <key>location</key>
-//CHECK:       <dict>
-//CHECK:        <key>line</key><integer>52</integer>
-//CHECK:        <key>col</key><integer>1</integer>
-//CHECK:        <key>file</key><integer>0</integer>
-//CHECK:       </dict>
-//CHECK:       <key>depth</key><integer>1</integer>
-//CHECK:       <key>extended_message</key>
-//CHECK:       <string>Entered call from &apos;test_double_action_call&apos;</string>
-//CHECK:       <key>message</key>
-//CHECK:  <string>Entered call from &apos;test_double_action_call&apos;</string>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>control</string>
-//CHECK:       <key>edges</key>
-//CHECK:        <array>
-//CHECK:         <dict>
-//CHECK:          <key>start</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>52</integer>
-//CHECK:             <key>col</key><integer>1</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>52</integer>
-//CHECK:             <key>col</key><integer>1</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:          <key>end</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>53</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>53</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:         </dict>
-//CHECK:        </array>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>control</string>
-//CHECK:       <key>edges</key>
-//CHECK:        <array>
-//CHECK:         <dict>
-//CHECK:          <key>start</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>53</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>53</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:          <key>end</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>53</integer>
-//CHECK:             <key>col</key><integer>10</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>53</integer>
-//CHECK:             <key>col</key><integer>20</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:         </dict>
-//CHECK:        </array>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>event</string>
-//CHECK:       <key>location</key>
-//CHECK:       <dict>
-//CHECK:        <key>line</key><integer>53</integer>
-//CHECK:        <key>col</key><integer>10</integer>
-//CHECK:        <key>file</key><integer>0</integer>
-//CHECK:       </dict>
-//CHECK:       <key>ranges</key>
-//CHECK:       <array>
-//CHECK:         <array>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>53</integer>
-//CHECK:           <key>col</key><integer>10</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>53</integer>
-//CHECK:           <key>col</key><integer>20</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:         </array>
-//CHECK:       </array>
-//CHECK:       <key>depth</key><integer>1</integer>
-//CHECK:       <key>extended_message</key>
-//CHECK:       <string>Memory is allocated</string>
-//CHECK:       <key>message</key>
-//CHECK:  <string>Memory is allocated</string>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>control</string>
-//CHECK:       <key>edges</key>
-//CHECK:        <array>
-//CHECK:         <dict>
-//CHECK:          <key>start</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>53</integer>
-//CHECK:             <key>col</key><integer>10</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>53</integer>
-//CHECK:             <key>col</key><integer>20</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:          <key>end</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>54</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>54</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:         </dict>
-//CHECK:        </array>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>control</string>
-//CHECK:       <key>edges</key>
-//CHECK:        <array>
-//CHECK:         <dict>
-//CHECK:          <key>start</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>54</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>54</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:          <key>end</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>55</integer>
-//CHECK:             <key>col</key><integer>7</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>55</integer>
-//CHECK:             <key>col</key><integer>7</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:         </dict>
-//CHECK:        </array>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>event</string>
-//CHECK:       <key>location</key>
-//CHECK:       <dict>
-//CHECK:        <key>line</key><integer>55</integer>
-//CHECK:        <key>col</key><integer>7</integer>
-//CHECK:        <key>file</key><integer>0</integer>
-//CHECK:       </dict>
-//CHECK:       <key>ranges</key>
-//CHECK:       <array>
-//CHECK:         <array>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>55</integer>
-//CHECK:           <key>col</key><integer>7</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>55</integer>
-//CHECK:           <key>col</key><integer>17</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:         </array>
-//CHECK:       </array>
-//CHECK:       <key>depth</key><integer>1</integer>
-//CHECK:       <key>extended_message</key>
-//CHECK:       <string>Calling &apos;my_free&apos;</string>
-//CHECK:       <key>message</key>
-//CHECK:  <string>Calling &apos;my_free&apos;</string>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>event</string>
-//CHECK:       <key>location</key>
-//CHECK:       <dict>
-//CHECK:        <key>line</key><integer>49</integer>
-//CHECK:        <key>col</key><integer>1</integer>
-//CHECK:        <key>file</key><integer>0</integer>
-//CHECK:       </dict>
-//CHECK:       <key>depth</key><integer>2</integer>
-//CHECK:       <key>extended_message</key>
-//CHECK:       <string>Entered call from &apos;my_malloc_and_free&apos;</string>
-//CHECK:       <key>message</key>
-//CHECK:  <string>Entered call from &apos;my_malloc_and_free&apos;</string>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>control</string>
-//CHECK:       <key>edges</key>
-//CHECK:        <array>
-//CHECK:         <dict>
-//CHECK:          <key>start</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>49</integer>
-//CHECK:             <key>col</key><integer>1</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>49</integer>
-//CHECK:             <key>col</key><integer>1</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:          <key>end</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>50</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>50</integer>
-//CHECK:             <key>col</key><integer>11</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:         </dict>
-//CHECK:        </array>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>event</string>
-//CHECK:       <key>location</key>
-//CHECK:       <dict>
-//CHECK:        <key>line</key><integer>50</integer>
-//CHECK:        <key>col</key><integer>5</integer>
-//CHECK:        <key>file</key><integer>0</integer>
-//CHECK:       </dict>
-//CHECK:       <key>ranges</key>
-//CHECK:       <array>
-//CHECK:         <array>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>50</integer>
-//CHECK:           <key>col</key><integer>5</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>50</integer>
-//CHECK:           <key>col</key><integer>11</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:         </array>
-//CHECK:       </array>
-//CHECK:       <key>depth</key><integer>2</integer>
-//CHECK:       <key>extended_message</key>
-//CHECK:       <string>Memory is released</string>
-//CHECK:       <key>message</key>
-//CHECK:  <string>Memory is released</string>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>event</string>
-//CHECK:       <key>location</key>
-//CHECK:       <dict>
-//CHECK:        <key>line</key><integer>55</integer>
-//CHECK:        <key>col</key><integer>7</integer>
-//CHECK:        <key>file</key><integer>0</integer>
-//CHECK:       </dict>
-//CHECK:       <key>ranges</key>
-//CHECK:       <array>
-//CHECK:         <array>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>55</integer>
-//CHECK:           <key>col</key><integer>7</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>55</integer>
-//CHECK:           <key>col</key><integer>17</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:         </array>
-//CHECK:       </array>
-//CHECK:       <key>depth</key><integer>2</integer>
-//CHECK:       <key>extended_message</key>
-//CHECK:       <string>Returned released memory via 1st parameter</string>
-//CHECK:       <key>message</key>
-//CHECK:  <string>Returned released memory via 1st parameter</string>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>control</string>
-//CHECK:       <key>edges</key>
-//CHECK:        <array>
-//CHECK:         <dict>
-//CHECK:          <key>start</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>55</integer>
-//CHECK:             <key>col</key><integer>7</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>55</integer>
-//CHECK:             <key>col</key><integer>17</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:          <key>end</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>56</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>56</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:         </dict>
-//CHECK:        </array>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>event</string>
-//CHECK:       <key>location</key>
-//CHECK:       <dict>
-//CHECK:        <key>line</key><integer>60</integer>
-//CHECK:        <key>col</key><integer>5</integer>
-//CHECK:        <key>file</key><integer>0</integer>
-//CHECK:       </dict>
-//CHECK:       <key>ranges</key>
-//CHECK:       <array>
-//CHECK:         <array>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>60</integer>
-//CHECK:           <key>col</key><integer>5</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>60</integer>
-//CHECK:           <key>col</key><integer>28</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:         </array>
-//CHECK:       </array>
-//CHECK:       <key>depth</key><integer>1</integer>
-//CHECK:       <key>extended_message</key>
-//CHECK:       <string>Returned released memory via 1st parameter</string>
-//CHECK:       <key>message</key>
-//CHECK:  <string>Returned released memory via 1st parameter</string>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>control</string>
-//CHECK:       <key>edges</key>
-//CHECK:        <array>
-//CHECK:         <dict>
-//CHECK:          <key>start</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>60</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>60</integer>
-//CHECK:             <key>col</key><integer>28</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:          <key>end</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>61</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>61</integer>
-//CHECK:             <key>col</key><integer>14</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:         </dict>
-//CHECK:        </array>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>event</string>
-//CHECK:       <key>location</key>
-//CHECK:       <dict>
-//CHECK:        <key>line</key><integer>61</integer>
-//CHECK:        <key>col</key><integer>5</integer>
-//CHECK:        <key>file</key><integer>0</integer>
-//CHECK:       </dict>
-//CHECK:       <key>ranges</key>
-//CHECK:       <array>
-//CHECK:         <array>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>61</integer>
-//CHECK:           <key>col</key><integer>12</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>61</integer>
-//CHECK:           <key>col</key><integer>14</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:         </array>
-//CHECK:       </array>
-//CHECK:       <key>depth</key><integer>0</integer>
-//CHECK:       <key>extended_message</key>
-//CHECK:       <string>Use of memory after it is freed</string>
-//CHECK:       <key>message</key>
-//CHECK:  <string>Use of memory after it is freed</string>
-//CHECK:      </dict>
-//CHECK:     </array>
-//CHECK:     <key>description</key><string>Use of memory after it is freed</string>
-//CHECK:     <key>category</key><string>Memory Error</string>
-//CHECK:     <key>type</key><string>Use-after-free</string>
-//CHECK:    <key>issue_context_kind</key><string>function</string>
-//CHECK:    <key>issue_context</key><string>test_double_action_call</string>
-//CHECK:    <key>location</key>
-//CHECK:    <dict>
-//CHECK:     <key>line</key><integer>61</integer>
-//CHECK:     <key>col</key><integer>5</integer>
-//CHECK:     <key>file</key><integer>0</integer>
-//CHECK:    </dict>
-//CHECK:    </dict>
-//CHECK:    <dict>
-//CHECK:     <key>path</key>
-//CHECK:     <array>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>control</string>
-//CHECK:       <key>edges</key>
-//CHECK:        <array>
-//CHECK:         <dict>
-//CHECK:          <key>start</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>74</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>74</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:          <key>end</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>74</integer>
-//CHECK:             <key>col</key><integer>25</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>74</integer>
-//CHECK:             <key>col</key><integer>35</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:         </dict>
-//CHECK:        </array>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>event</string>
-//CHECK:       <key>location</key>
-//CHECK:       <dict>
-//CHECK:        <key>line</key><integer>74</integer>
-//CHECK:        <key>col</key><integer>25</integer>
-//CHECK:        <key>file</key><integer>0</integer>
-//CHECK:       </dict>
-//CHECK:       <key>ranges</key>
-//CHECK:       <array>
-//CHECK:         <array>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>74</integer>
-//CHECK:           <key>col</key><integer>25</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>74</integer>
-//CHECK:           <key>col</key><integer>35</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:         </array>
-//CHECK:       </array>
-//CHECK:       <key>depth</key><integer>0</integer>
-//CHECK:       <key>extended_message</key>
-//CHECK:       <string>Memory is allocated</string>
-//CHECK:       <key>message</key>
-//CHECK:  <string>Memory is allocated</string>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>control</string>
-//CHECK:       <key>edges</key>
-//CHECK:        <array>
-//CHECK:         <dict>
-//CHECK:          <key>start</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>74</integer>
-//CHECK:             <key>col</key><integer>25</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>74</integer>
-//CHECK:             <key>col</key><integer>35</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:          <key>end</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>75</integer>
-//CHECK:             <key>col</key><integer>11</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>75</integer>
-//CHECK:             <key>col</key><integer>11</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:         </dict>
-//CHECK:        </array>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>event</string>
-//CHECK:       <key>location</key>
-//CHECK:       <dict>
-//CHECK:        <key>line</key><integer>75</integer>
-//CHECK:        <key>col</key><integer>11</integer>
-//CHECK:        <key>file</key><integer>0</integer>
-//CHECK:       </dict>
-//CHECK:       <key>ranges</key>
-//CHECK:       <array>
-//CHECK:         <array>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>75</integer>
-//CHECK:           <key>col</key><integer>11</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>75</integer>
-//CHECK:           <key>col</key><integer>25</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:         </array>
-//CHECK:       </array>
-//CHECK:       <key>depth</key><integer>0</integer>
-//CHECK:       <key>extended_message</key>
-//CHECK:       <string>Calling &apos;my_realloc&apos;</string>
-//CHECK:       <key>message</key>
-//CHECK:  <string>Calling &apos;my_realloc&apos;</string>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>event</string>
-//CHECK:       <key>location</key>
-//CHECK:       <dict>
-//CHECK:        <key>line</key><integer>65</integer>
-//CHECK:        <key>col</key><integer>1</integer>
-//CHECK:        <key>file</key><integer>0</integer>
-//CHECK:       </dict>
-//CHECK:       <key>depth</key><integer>1</integer>
-//CHECK:       <key>extended_message</key>
-//CHECK:       <string>Entered call from &apos;reallocIntra&apos;</string>
-//CHECK:       <key>message</key>
-//CHECK:  <string>Entered call from &apos;reallocIntra&apos;</string>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>control</string>
-//CHECK:       <key>edges</key>
-//CHECK:        <array>
-//CHECK:         <dict>
-//CHECK:          <key>start</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>65</integer>
-//CHECK:             <key>col</key><integer>1</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>65</integer>
-//CHECK:             <key>col</key><integer>1</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:          <key>end</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>66</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>66</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:         </dict>
-//CHECK:        </array>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>control</string>
-//CHECK:       <key>edges</key>
-//CHECK:        <array>
-//CHECK:         <dict>
-//CHECK:          <key>start</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>66</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>66</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:          <key>end</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>67</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>67</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:         </dict>
-//CHECK:        </array>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>control</string>
-//CHECK:       <key>edges</key>
-//CHECK:        <array>
-//CHECK:         <dict>
-//CHECK:          <key>start</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>67</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>67</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:          <key>end</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>67</integer>
-//CHECK:             <key>col</key><integer>18</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>67</integer>
-//CHECK:             <key>col</key><integer>40</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:         </dict>
-//CHECK:        </array>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>event</string>
-//CHECK:       <key>location</key>
-//CHECK:       <dict>
-//CHECK:        <key>line</key><integer>67</integer>
-//CHECK:        <key>col</key><integer>18</integer>
-//CHECK:        <key>file</key><integer>0</integer>
-//CHECK:       </dict>
-//CHECK:       <key>ranges</key>
-//CHECK:       <array>
-//CHECK:         <array>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>67</integer>
-//CHECK:           <key>col</key><integer>18</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>67</integer>
-//CHECK:           <key>col</key><integer>40</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:         </array>
-//CHECK:       </array>
-//CHECK:       <key>depth</key><integer>1</integer>
-//CHECK:       <key>extended_message</key>
-//CHECK:       <string>Attempt to reallocate memory</string>
-//CHECK:       <key>message</key>
-//CHECK:  <string>Attempt to reallocate memory</string>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>control</string>
-//CHECK:       <key>edges</key>
-//CHECK:        <array>
-//CHECK:         <dict>
-//CHECK:          <key>start</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>67</integer>
-//CHECK:             <key>col</key><integer>18</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>67</integer>
-//CHECK:             <key>col</key><integer>40</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:          <key>end</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>68</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>68</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:         </dict>
-//CHECK:        </array>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>control</string>
-//CHECK:       <key>edges</key>
-//CHECK:        <array>
-//CHECK:         <dict>
-//CHECK:          <key>start</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>68</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>68</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:          <key>end</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>68</integer>
-//CHECK:             <key>col</key><integer>9</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>68</integer>
-//CHECK:             <key>col</key><integer>12</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:         </dict>
-//CHECK:        </array>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>event</string>
-//CHECK:       <key>location</key>
-//CHECK:       <dict>
-//CHECK:        <key>line</key><integer>68</integer>
-//CHECK:        <key>col</key><integer>9</integer>
-//CHECK:        <key>file</key><integer>0</integer>
-//CHECK:       </dict>
-//CHECK:       <key>ranges</key>
-//CHECK:       <array>
-//CHECK:         <array>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>68</integer>
-//CHECK:           <key>col</key><integer>9</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>68</integer>
-//CHECK:           <key>col</key><integer>12</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:         </array>
-//CHECK:       </array>
-//CHECK:       <key>depth</key><integer>1</integer>
-//CHECK:       <key>extended_message</key>
-//CHECK:       <string>Assuming &apos;tmp&apos; is null</string>
-//CHECK:       <key>message</key>
-//CHECK:  <string>Assuming &apos;tmp&apos; is null</string>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>control</string>
-//CHECK:       <key>edges</key>
-//CHECK:        <array>
-//CHECK:         <dict>
-//CHECK:          <key>start</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>68</integer>
-//CHECK:             <key>col</key><integer>9</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>68</integer>
-//CHECK:             <key>col</key><integer>12</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:          <key>end</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>68</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>68</integer>
-//CHECK:             <key>col</key><integer>6</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:         </dict>
-//CHECK:        </array>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>event</string>
-//CHECK:       <key>location</key>
-//CHECK:       <dict>
-//CHECK:        <key>line</key><integer>68</integer>
-//CHECK:        <key>col</key><integer>5</integer>
-//CHECK:        <key>file</key><integer>0</integer>
-//CHECK:       </dict>
-//CHECK:       <key>ranges</key>
-//CHECK:       <array>
-//CHECK:         <array>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>68</integer>
-//CHECK:           <key>col</key><integer>5</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>68</integer>
-//CHECK:           <key>col</key><integer>6</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:         </array>
-//CHECK:       </array>
-//CHECK:       <key>depth</key><integer>1</integer>
-//CHECK:       <key>extended_message</key>
-//CHECK:       <string>Reallocation failed</string>
-//CHECK:       <key>message</key>
-//CHECK:  <string>Reallocation failed</string>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>control</string>
-//CHECK:       <key>edges</key>
-//CHECK:        <array>
-//CHECK:         <dict>
-//CHECK:          <key>start</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>68</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>68</integer>
-//CHECK:             <key>col</key><integer>6</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:          <key>end</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>69</integer>
-//CHECK:             <key>col</key><integer>9</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>69</integer>
-//CHECK:             <key>col</key><integer>9</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:         </dict>
-//CHECK:        </array>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>event</string>
-//CHECK:       <key>location</key>
-//CHECK:       <dict>
-//CHECK:        <key>line</key><integer>75</integer>
-//CHECK:        <key>col</key><integer>11</integer>
-//CHECK:        <key>file</key><integer>0</integer>
-//CHECK:       </dict>
-//CHECK:       <key>ranges</key>
-//CHECK:       <array>
-//CHECK:         <array>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>75</integer>
-//CHECK:           <key>col</key><integer>11</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>75</integer>
-//CHECK:           <key>col</key><integer>25</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:         </array>
-//CHECK:       </array>
-//CHECK:       <key>depth</key><integer>1</integer>
-//CHECK:       <key>extended_message</key>
-//CHECK:       <string>Reallocation of 1st parameter failed</string>
-//CHECK:       <key>message</key>
-//CHECK:  <string>Reallocation of 1st parameter failed</string>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>control</string>
-//CHECK:       <key>edges</key>
-//CHECK:        <array>
-//CHECK:         <dict>
-//CHECK:          <key>start</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>75</integer>
-//CHECK:             <key>col</key><integer>11</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>75</integer>
-//CHECK:             <key>col</key><integer>25</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:          <key>end</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>76</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>76</integer>
-//CHECK:             <key>col</key><integer>13</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:         </dict>
-//CHECK:        </array>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>event</string>
-//CHECK:       <key>location</key>
-//CHECK:       <dict>
-//CHECK:        <key>line</key><integer>76</integer>
-//CHECK:        <key>col</key><integer>5</integer>
-//CHECK:        <key>file</key><integer>0</integer>
-//CHECK:       </dict>
-//CHECK:       <key>depth</key><integer>0</integer>
-//CHECK:       <key>extended_message</key>
-//CHECK:       <string>Memory is never released; potential leak of memory pointed to by &apos;buf&apos;</string>
-//CHECK:       <key>message</key>
-//CHECK:  <string>Memory is never released; potential leak of memory pointed to by &apos;buf&apos;</string>
-//CHECK:      </dict>
-//CHECK:     </array>
-//CHECK:     <key>description</key><string>Memory is never released; potential leak of memory pointed to by &apos;buf&apos;</string>
-//CHECK:     <key>category</key><string>Memory Error</string>
-//CHECK:     <key>type</key><string>Memory leak</string>
-//CHECK:    <key>issue_context_kind</key><string>function</string>
-//CHECK:    <key>issue_context</key><string>reallocIntra</string>
-//CHECK:    <key>location</key>
-//CHECK:    <dict>
-//CHECK:     <key>line</key><integer>76</integer>
-//CHECK:     <key>col</key><integer>5</integer>
-//CHECK:     <key>file</key><integer>0</integer>
-//CHECK:    </dict>
-//CHECK:    </dict>
-//CHECK:    <dict>
-//CHECK:     <key>path</key>
-//CHECK:     <array>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>control</string>
-//CHECK:       <key>edges</key>
-//CHECK:        <array>
-//CHECK:         <dict>
-//CHECK:          <key>start</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>84</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>84</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:          <key>end</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>85</integer>
-//CHECK:             <key>col</key><integer>9</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>85</integer>
-//CHECK:             <key>col</key><integer>9</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:         </dict>
-//CHECK:        </array>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>event</string>
-//CHECK:       <key>location</key>
-//CHECK:       <dict>
-//CHECK:        <key>line</key><integer>85</integer>
-//CHECK:        <key>col</key><integer>9</integer>
-//CHECK:        <key>file</key><integer>0</integer>
-//CHECK:       </dict>
-//CHECK:       <key>ranges</key>
-//CHECK:       <array>
-//CHECK:         <array>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>85</integer>
-//CHECK:           <key>col</key><integer>9</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>85</integer>
-//CHECK:           <key>col</key><integer>28</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:         </array>
-//CHECK:       </array>
-//CHECK:       <key>depth</key><integer>0</integer>
-//CHECK:       <key>extended_message</key>
-//CHECK:       <string>Calling &apos;malloc_wrapper_ret&apos;</string>
-//CHECK:       <key>message</key>
-//CHECK:  <string>Calling &apos;malloc_wrapper_ret&apos;</string>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>event</string>
-//CHECK:       <key>location</key>
-//CHECK:       <dict>
-//CHECK:        <key>line</key><integer>80</integer>
-//CHECK:        <key>col</key><integer>1</integer>
-//CHECK:        <key>file</key><integer>0</integer>
-//CHECK:       </dict>
-//CHECK:       <key>depth</key><integer>1</integer>
-//CHECK:       <key>extended_message</key>
-//CHECK:       <string>Entered call from &apos;use_ret&apos;</string>
-//CHECK:       <key>message</key>
-//CHECK:  <string>Entered call from &apos;use_ret&apos;</string>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>control</string>
-//CHECK:       <key>edges</key>
-//CHECK:        <array>
-//CHECK:         <dict>
-//CHECK:          <key>start</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>80</integer>
-//CHECK:             <key>col</key><integer>1</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>80</integer>
-//CHECK:             <key>col</key><integer>1</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:          <key>end</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>81</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>81</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:         </dict>
-//CHECK:        </array>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>control</string>
-//CHECK:       <key>edges</key>
-//CHECK:        <array>
-//CHECK:         <dict>
-//CHECK:          <key>start</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>81</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>81</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:          <key>end</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>81</integer>
-//CHECK:             <key>col</key><integer>19</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>81</integer>
-//CHECK:             <key>col</key><integer>28</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:         </dict>
-//CHECK:        </array>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>event</string>
-//CHECK:       <key>location</key>
-//CHECK:       <dict>
-//CHECK:        <key>line</key><integer>81</integer>
-//CHECK:        <key>col</key><integer>19</integer>
-//CHECK:        <key>file</key><integer>0</integer>
-//CHECK:       </dict>
-//CHECK:       <key>ranges</key>
-//CHECK:       <array>
-//CHECK:         <array>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>81</integer>
-//CHECK:           <key>col</key><integer>19</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>81</integer>
-//CHECK:           <key>col</key><integer>28</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:         </array>
-//CHECK:       </array>
-//CHECK:       <key>depth</key><integer>1</integer>
-//CHECK:       <key>extended_message</key>
-//CHECK:       <string>Memory is allocated</string>
-//CHECK:       <key>message</key>
-//CHECK:  <string>Memory is allocated</string>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>event</string>
-//CHECK:       <key>location</key>
-//CHECK:       <dict>
-//CHECK:        <key>line</key><integer>85</integer>
-//CHECK:        <key>col</key><integer>9</integer>
-//CHECK:        <key>file</key><integer>0</integer>
-//CHECK:       </dict>
-//CHECK:       <key>ranges</key>
-//CHECK:       <array>
-//CHECK:         <array>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>85</integer>
-//CHECK:           <key>col</key><integer>9</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>85</integer>
-//CHECK:           <key>col</key><integer>28</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:         </array>
-//CHECK:       </array>
-//CHECK:       <key>depth</key><integer>1</integer>
-//CHECK:       <key>extended_message</key>
-//CHECK:       <string>Returned allocated memory</string>
-//CHECK:       <key>message</key>
-//CHECK:  <string>Returned allocated memory</string>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>control</string>
-//CHECK:       <key>edges</key>
-//CHECK:        <array>
-//CHECK:         <dict>
-//CHECK:          <key>start</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>85</integer>
-//CHECK:             <key>col</key><integer>9</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>85</integer>
-//CHECK:             <key>col</key><integer>28</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:          <key>end</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>86</integer>
-//CHECK:             <key>col</key><integer>1</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>86</integer>
-//CHECK:             <key>col</key><integer>1</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:         </dict>
-//CHECK:        </array>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>event</string>
-//CHECK:       <key>location</key>
-//CHECK:       <dict>
-//CHECK:        <key>line</key><integer>86</integer>
-//CHECK:        <key>col</key><integer>1</integer>
-//CHECK:        <key>file</key><integer>0</integer>
-//CHECK:       </dict>
-//CHECK:       <key>depth</key><integer>0</integer>
-//CHECK:       <key>extended_message</key>
-//CHECK:       <string>Memory is never released; potential leak of memory pointed to by &apos;v&apos;</string>
-//CHECK:       <key>message</key>
-//CHECK:  <string>Memory is never released; potential leak of memory pointed to by &apos;v&apos;</string>
-//CHECK:      </dict>
-//CHECK:     </array>
-//CHECK:     <key>description</key><string>Memory is never released; potential leak of memory pointed to by &apos;v&apos;</string>
-//CHECK:     <key>category</key><string>Memory Error</string>
-//CHECK:     <key>type</key><string>Memory leak</string>
-//CHECK:    <key>issue_context_kind</key><string>function</string>
-//CHECK:    <key>issue_context</key><string>use_ret</string>
-//CHECK:    <key>location</key>
-//CHECK:    <dict>
-//CHECK:     <key>line</key><integer>86</integer>
-//CHECK:     <key>col</key><integer>1</integer>
-//CHECK:     <key>file</key><integer>0</integer>
-//CHECK:    </dict>
-//CHECK:    </dict>
-//CHECK:    <dict>
-//CHECK:     <key>path</key>
-//CHECK:     <array>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>control</string>
-//CHECK:       <key>edges</key>
-//CHECK:        <array>
-//CHECK:         <dict>
-//CHECK:          <key>start</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>90</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>90</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:          <key>end</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>92</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>92</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:         </dict>
-//CHECK:        </array>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>control</string>
-//CHECK:       <key>edges</key>
-//CHECK:        <array>
-//CHECK:         <dict>
-//CHECK:          <key>start</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>92</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>92</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:          <key>end</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>92</integer>
-//CHECK:             <key>col</key><integer>15</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>92</integer>
-//CHECK:             <key>col</key><integer>24</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:         </dict>
-//CHECK:        </array>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>event</string>
-//CHECK:       <key>location</key>
-//CHECK:       <dict>
-//CHECK:        <key>line</key><integer>92</integer>
-//CHECK:        <key>col</key><integer>15</integer>
-//CHECK:        <key>file</key><integer>0</integer>
-//CHECK:       </dict>
-//CHECK:       <key>ranges</key>
-//CHECK:       <array>
-//CHECK:         <array>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>92</integer>
-//CHECK:           <key>col</key><integer>15</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>92</integer>
-//CHECK:           <key>col</key><integer>24</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:         </array>
-//CHECK:       </array>
-//CHECK:       <key>depth</key><integer>0</integer>
-//CHECK:       <key>extended_message</key>
-//CHECK:       <string>Memory is allocated</string>
-//CHECK:       <key>message</key>
-//CHECK:  <string>Memory is allocated</string>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>control</string>
-//CHECK:       <key>edges</key>
-//CHECK:        <array>
-//CHECK:         <dict>
-//CHECK:          <key>start</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>92</integer>
-//CHECK:             <key>col</key><integer>15</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>92</integer>
-//CHECK:             <key>col</key><integer>24</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:          <key>end</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>97</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>97</integer>
-//CHECK:             <key>col</key><integer>8</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:         </dict>
-//CHECK:        </array>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>event</string>
-//CHECK:       <key>location</key>
-//CHECK:       <dict>
-//CHECK:        <key>line</key><integer>97</integer>
-//CHECK:        <key>col</key><integer>5</integer>
-//CHECK:        <key>file</key><integer>0</integer>
-//CHECK:       </dict>
-//CHECK:       <key>depth</key><integer>0</integer>
-//CHECK:       <key>extended_message</key>
-//CHECK:       <string>Memory is never released; potential leak of memory pointed to by &apos;m&apos;</string>
-//CHECK:       <key>message</key>
-//CHECK:  <string>Memory is never released; potential leak of memory pointed to by &apos;m&apos;</string>
-//CHECK:      </dict>
-//CHECK:     </array>
-//CHECK:     <key>description</key><string>Memory is never released; potential leak of memory pointed to by &apos;m&apos;</string>
-//CHECK:     <key>category</key><string>Memory Error</string>
-//CHECK:     <key>type</key><string>Memory leak</string>
-//CHECK:    <key>issue_context_kind</key><string>function</string>
-//CHECK:    <key>issue_context</key><string>LeakedSymbol</string>
-//CHECK:    <key>location</key>
-//CHECK:    <dict>
-//CHECK:     <key>line</key><integer>97</integer>
-//CHECK:     <key>col</key><integer>5</integer>
-//CHECK:     <key>file</key><integer>0</integer>
-//CHECK:    </dict>
-//CHECK:    </dict>
-//CHECK:    <dict>
-//CHECK:     <key>path</key>
-//CHECK:     <array>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>event</string>
-//CHECK:       <key>location</key>
-//CHECK:       <dict>
-//CHECK:        <key>line</key><integer>105</integer>
-//CHECK:        <key>col</key><integer>5</integer>
-//CHECK:        <key>file</key><integer>0</integer>
-//CHECK:       </dict>
-//CHECK:       <key>ranges</key>
-//CHECK:       <array>
-//CHECK:         <array>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>105</integer>
-//CHECK:           <key>col</key><integer>5</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>105</integer>
-//CHECK:           <key>col</key><integer>25</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:         </array>
-//CHECK:       </array>
-//CHECK:       <key>depth</key><integer>0</integer>
-//CHECK:       <key>extended_message</key>
-//CHECK:       <string>Calling &apos;function_with_leak1&apos;</string>
-//CHECK:       <key>message</key>
-//CHECK:  <string>Calling &apos;function_with_leak1&apos;</string>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>event</string>
-//CHECK:       <key>location</key>
-//CHECK:       <dict>
-//CHECK:        <key>line</key><integer>101</integer>
-//CHECK:        <key>col</key><integer>1</integer>
-//CHECK:        <key>file</key><integer>0</integer>
-//CHECK:       </dict>
-//CHECK:       <key>depth</key><integer>1</integer>
-//CHECK:       <key>extended_message</key>
-//CHECK:       <string>Entered call from &apos;use_function_with_leak1&apos;</string>
-//CHECK:       <key>message</key>
-//CHECK:  <string>Entered call from &apos;use_function_with_leak1&apos;</string>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>control</string>
-//CHECK:       <key>edges</key>
-//CHECK:        <array>
-//CHECK:         <dict>
-//CHECK:          <key>start</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>101</integer>
-//CHECK:             <key>col</key><integer>1</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>101</integer>
-//CHECK:             <key>col</key><integer>1</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:          <key>end</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>102</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>102</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:         </dict>
-//CHECK:        </array>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>control</string>
-//CHECK:       <key>edges</key>
-//CHECK:        <array>
-//CHECK:         <dict>
-//CHECK:          <key>start</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>102</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>102</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:          <key>end</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>102</integer>
-//CHECK:             <key>col</key><integer>22</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>102</integer>
-//CHECK:             <key>col</key><integer>31</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:         </dict>
-//CHECK:        </array>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>event</string>
-//CHECK:       <key>location</key>
-//CHECK:       <dict>
-//CHECK:        <key>line</key><integer>102</integer>
-//CHECK:        <key>col</key><integer>22</integer>
-//CHECK:        <key>file</key><integer>0</integer>
-//CHECK:       </dict>
-//CHECK:       <key>ranges</key>
-//CHECK:       <array>
-//CHECK:         <array>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>102</integer>
-//CHECK:           <key>col</key><integer>22</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>102</integer>
-//CHECK:           <key>col</key><integer>31</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:         </array>
-//CHECK:       </array>
-//CHECK:       <key>depth</key><integer>1</integer>
-//CHECK:       <key>extended_message</key>
-//CHECK:       <string>Memory is allocated</string>
-//CHECK:       <key>message</key>
-//CHECK:  <string>Memory is allocated</string>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>control</string>
-//CHECK:       <key>edges</key>
-//CHECK:        <array>
-//CHECK:         <dict>
-//CHECK:          <key>start</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>102</integer>
-//CHECK:             <key>col</key><integer>22</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>102</integer>
-//CHECK:             <key>col</key><integer>31</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:          <key>end</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>102</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>102</integer>
-//CHECK:             <key>col</key><integer>11</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:         </dict>
-//CHECK:        </array>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>event</string>
-//CHECK:       <key>location</key>
-//CHECK:       <dict>
-//CHECK:        <key>line</key><integer>102</integer>
-//CHECK:        <key>col</key><integer>5</integer>
-//CHECK:        <key>file</key><integer>0</integer>
-//CHECK:       </dict>
-//CHECK:       <key>depth</key><integer>1</integer>
-//CHECK:       <key>extended_message</key>
-//CHECK:       <string>Memory is never released; potential leak of memory pointed to by &apos;x&apos;</string>
-//CHECK:       <key>message</key>
-//CHECK:  <string>Memory is never released; potential leak of memory pointed to by &apos;x&apos;</string>
-//CHECK:      </dict>
-//CHECK:     </array>
-//CHECK:     <key>description</key><string>Memory is never released; potential leak of memory pointed to by &apos;x&apos;</string>
-//CHECK:     <key>category</key><string>Memory Error</string>
-//CHECK:     <key>type</key><string>Memory leak</string>
-//CHECK:    <key>issue_context_kind</key><string>function</string>
-//CHECK:    <key>issue_context</key><string>function_with_leak1</string>
-//CHECK:    <key>location</key>
-//CHECK:    <dict>
-//CHECK:     <key>line</key><integer>102</integer>
-//CHECK:     <key>col</key><integer>5</integer>
-//CHECK:     <key>file</key><integer>0</integer>
-//CHECK:    </dict>
-//CHECK:    </dict>
-//CHECK:    <dict>
-//CHECK:     <key>path</key>
-//CHECK:     <array>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>event</string>
-//CHECK:       <key>location</key>
-//CHECK:       <dict>
-//CHECK:        <key>line</key><integer>114</integer>
-//CHECK:        <key>col</key><integer>5</integer>
-//CHECK:        <key>file</key><integer>0</integer>
-//CHECK:       </dict>
-//CHECK:       <key>ranges</key>
-//CHECK:       <array>
-//CHECK:         <array>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>114</integer>
-//CHECK:           <key>col</key><integer>5</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>114</integer>
-//CHECK:           <key>col</key><integer>25</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:         </array>
-//CHECK:       </array>
-//CHECK:       <key>depth</key><integer>0</integer>
-//CHECK:       <key>extended_message</key>
-//CHECK:       <string>Calling &apos;function_with_leak2&apos;</string>
-//CHECK:       <key>message</key>
-//CHECK:  <string>Calling &apos;function_with_leak2&apos;</string>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>event</string>
-//CHECK:       <key>location</key>
-//CHECK:       <dict>
-//CHECK:        <key>line</key><integer>109</integer>
-//CHECK:        <key>col</key><integer>1</integer>
-//CHECK:        <key>file</key><integer>0</integer>
-//CHECK:       </dict>
-//CHECK:       <key>depth</key><integer>1</integer>
-//CHECK:       <key>extended_message</key>
-//CHECK:       <string>Entered call from &apos;use_function_with_leak2&apos;</string>
-//CHECK:       <key>message</key>
-//CHECK:  <string>Entered call from &apos;use_function_with_leak2&apos;</string>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>control</string>
-//CHECK:       <key>edges</key>
-//CHECK:        <array>
-//CHECK:         <dict>
-//CHECK:          <key>start</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>109</integer>
-//CHECK:             <key>col</key><integer>1</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>109</integer>
-//CHECK:             <key>col</key><integer>1</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:          <key>end</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>110</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>110</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:         </dict>
-//CHECK:        </array>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>control</string>
-//CHECK:       <key>edges</key>
-//CHECK:        <array>
-//CHECK:         <dict>
-//CHECK:          <key>start</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>110</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>110</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:          <key>end</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>110</integer>
-//CHECK:             <key>col</key><integer>22</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>110</integer>
-//CHECK:             <key>col</key><integer>31</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:         </dict>
-//CHECK:        </array>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>event</string>
-//CHECK:       <key>location</key>
-//CHECK:       <dict>
-//CHECK:        <key>line</key><integer>110</integer>
-//CHECK:        <key>col</key><integer>22</integer>
-//CHECK:        <key>file</key><integer>0</integer>
-//CHECK:       </dict>
-//CHECK:       <key>ranges</key>
-//CHECK:       <array>
-//CHECK:         <array>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>110</integer>
-//CHECK:           <key>col</key><integer>22</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>110</integer>
-//CHECK:           <key>col</key><integer>31</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:         </array>
-//CHECK:       </array>
-//CHECK:       <key>depth</key><integer>1</integer>
-//CHECK:       <key>extended_message</key>
-//CHECK:       <string>Memory is allocated</string>
-//CHECK:       <key>message</key>
-//CHECK:  <string>Memory is allocated</string>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>control</string>
-//CHECK:       <key>edges</key>
-//CHECK:        <array>
-//CHECK:         <dict>
-//CHECK:          <key>start</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>110</integer>
-//CHECK:             <key>col</key><integer>22</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>110</integer>
-//CHECK:             <key>col</key><integer>31</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:          <key>end</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>111</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>111</integer>
-//CHECK:             <key>col</key><integer>9</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:         </dict>
-//CHECK:        </array>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>event</string>
-//CHECK:       <key>location</key>
-//CHECK:       <dict>
-//CHECK:        <key>line</key><integer>111</integer>
-//CHECK:        <key>col</key><integer>5</integer>
-//CHECK:        <key>file</key><integer>0</integer>
-//CHECK:       </dict>
-//CHECK:       <key>depth</key><integer>1</integer>
-//CHECK:       <key>extended_message</key>
-//CHECK:       <string>Memory is never released; potential leak of memory pointed to by &apos;x&apos;</string>
-//CHECK:       <key>message</key>
-//CHECK:  <string>Memory is never released; potential leak of memory pointed to by &apos;x&apos;</string>
-//CHECK:      </dict>
-//CHECK:     </array>
-//CHECK:     <key>description</key><string>Memory is never released; potential leak of memory pointed to by &apos;x&apos;</string>
-//CHECK:     <key>category</key><string>Memory Error</string>
-//CHECK:     <key>type</key><string>Memory leak</string>
-//CHECK:    <key>issue_context_kind</key><string>function</string>
-//CHECK:    <key>issue_context</key><string>function_with_leak2</string>
-//CHECK:    <key>location</key>
-//CHECK:    <dict>
-//CHECK:     <key>line</key><integer>111</integer>
-//CHECK:     <key>col</key><integer>5</integer>
-//CHECK:     <key>file</key><integer>0</integer>
-//CHECK:    </dict>
-//CHECK:    </dict>
-//CHECK:    <dict>
-//CHECK:     <key>path</key>
-//CHECK:     <array>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>event</string>
-//CHECK:       <key>location</key>
-//CHECK:       <dict>
-//CHECK:        <key>line</key><integer>123</integer>
-//CHECK:        <key>col</key><integer>5</integer>
-//CHECK:        <key>file</key><integer>0</integer>
-//CHECK:       </dict>
-//CHECK:       <key>ranges</key>
-//CHECK:       <array>
-//CHECK:         <array>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>123</integer>
-//CHECK:           <key>col</key><integer>5</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>123</integer>
-//CHECK:           <key>col</key><integer>26</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:         </array>
-//CHECK:       </array>
-//CHECK:       <key>depth</key><integer>0</integer>
-//CHECK:       <key>extended_message</key>
-//CHECK:       <string>Calling &apos;function_with_leak3&apos;</string>
-//CHECK:       <key>message</key>
-//CHECK:  <string>Calling &apos;function_with_leak3&apos;</string>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>event</string>
-//CHECK:       <key>location</key>
-//CHECK:       <dict>
-//CHECK:        <key>line</key><integer>117</integer>
-//CHECK:        <key>col</key><integer>1</integer>
-//CHECK:        <key>file</key><integer>0</integer>
-//CHECK:       </dict>
-//CHECK:       <key>depth</key><integer>1</integer>
-//CHECK:       <key>extended_message</key>
-//CHECK:       <string>Entered call from &apos;use_function_with_leak3&apos;</string>
-//CHECK:       <key>message</key>
-//CHECK:  <string>Entered call from &apos;use_function_with_leak3&apos;</string>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>control</string>
-//CHECK:       <key>edges</key>
-//CHECK:        <array>
-//CHECK:         <dict>
-//CHECK:          <key>start</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>117</integer>
-//CHECK:             <key>col</key><integer>1</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>117</integer>
-//CHECK:             <key>col</key><integer>1</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:          <key>end</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>118</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>118</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:         </dict>
-//CHECK:        </array>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>control</string>
-//CHECK:       <key>edges</key>
-//CHECK:        <array>
-//CHECK:         <dict>
-//CHECK:          <key>start</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>118</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>118</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:          <key>end</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>118</integer>
-//CHECK:             <key>col</key><integer>22</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>118</integer>
-//CHECK:             <key>col</key><integer>31</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:         </dict>
-//CHECK:        </array>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>event</string>
-//CHECK:       <key>location</key>
-//CHECK:       <dict>
-//CHECK:        <key>line</key><integer>118</integer>
-//CHECK:        <key>col</key><integer>22</integer>
-//CHECK:        <key>file</key><integer>0</integer>
-//CHECK:       </dict>
-//CHECK:       <key>ranges</key>
-//CHECK:       <array>
-//CHECK:         <array>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>118</integer>
-//CHECK:           <key>col</key><integer>22</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>118</integer>
-//CHECK:           <key>col</key><integer>31</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:         </array>
-//CHECK:       </array>
-//CHECK:       <key>depth</key><integer>1</integer>
-//CHECK:       <key>extended_message</key>
-//CHECK:       <string>Memory is allocated</string>
-//CHECK:       <key>message</key>
-//CHECK:  <string>Memory is allocated</string>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>control</string>
-//CHECK:       <key>edges</key>
-//CHECK:        <array>
-//CHECK:         <dict>
-//CHECK:          <key>start</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>118</integer>
-//CHECK:             <key>col</key><integer>22</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>118</integer>
-//CHECK:             <key>col</key><integer>31</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:          <key>end</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>119</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>119</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:         </dict>
-//CHECK:        </array>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>control</string>
-//CHECK:       <key>edges</key>
-//CHECK:        <array>
-//CHECK:         <dict>
-//CHECK:          <key>start</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>119</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>119</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:          <key>end</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>119</integer>
-//CHECK:             <key>col</key><integer>9</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>119</integer>
-//CHECK:             <key>col</key><integer>9</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:         </dict>
-//CHECK:        </array>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>control</string>
-//CHECK:       <key>edges</key>
-//CHECK:        <array>
-//CHECK:         <dict>
-//CHECK:          <key>start</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>119</integer>
-//CHECK:             <key>col</key><integer>9</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>119</integer>
-//CHECK:             <key>col</key><integer>9</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:          <key>end</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>120</integer>
-//CHECK:             <key>col</key><integer>9</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>120</integer>
-//CHECK:             <key>col</key><integer>9</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:         </dict>
-//CHECK:        </array>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>event</string>
-//CHECK:       <key>location</key>
-//CHECK:       <dict>
-//CHECK:        <key>line</key><integer>120</integer>
-//CHECK:        <key>col</key><integer>9</integer>
-//CHECK:        <key>file</key><integer>0</integer>
-//CHECK:       </dict>
-//CHECK:       <key>depth</key><integer>1</integer>
-//CHECK:       <key>extended_message</key>
-//CHECK:       <string>Memory is never released; potential leak of memory pointed to by &apos;x&apos;</string>
-//CHECK:       <key>message</key>
-//CHECK:  <string>Memory is never released; potential leak of memory pointed to by &apos;x&apos;</string>
-//CHECK:      </dict>
-//CHECK:     </array>
-//CHECK:     <key>description</key><string>Memory is never released; potential leak of memory pointed to by &apos;x&apos;</string>
-//CHECK:     <key>category</key><string>Memory Error</string>
-//CHECK:     <key>type</key><string>Memory leak</string>
-//CHECK:    <key>issue_context_kind</key><string>function</string>
-//CHECK:    <key>issue_context</key><string>function_with_leak3</string>
-//CHECK:    <key>location</key>
-//CHECK:    <dict>
-//CHECK:     <key>line</key><integer>120</integer>
-//CHECK:     <key>col</key><integer>9</integer>
-//CHECK:     <key>file</key><integer>0</integer>
-//CHECK:    </dict>
-//CHECK:    </dict>
-//CHECK:    <dict>
-//CHECK:     <key>path</key>
-//CHECK:     <array>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>event</string>
-//CHECK:       <key>location</key>
-//CHECK:       <dict>
-//CHECK:        <key>line</key><integer>134</integer>
-//CHECK:        <key>col</key><integer>5</integer>
-//CHECK:        <key>file</key><integer>0</integer>
-//CHECK:       </dict>
-//CHECK:       <key>ranges</key>
-//CHECK:       <array>
-//CHECK:         <array>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>134</integer>
-//CHECK:           <key>col</key><integer>5</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>134</integer>
-//CHECK:           <key>col</key><integer>26</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:         </array>
-//CHECK:       </array>
-//CHECK:       <key>depth</key><integer>0</integer>
-//CHECK:       <key>extended_message</key>
-//CHECK:       <string>Calling &apos;function_with_leak4&apos;</string>
-//CHECK:       <key>message</key>
-//CHECK:  <string>Calling &apos;function_with_leak4&apos;</string>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>event</string>
-//CHECK:       <key>location</key>
-//CHECK:       <dict>
-//CHECK:        <key>line</key><integer>126</integer>
-//CHECK:        <key>col</key><integer>1</integer>
-//CHECK:        <key>file</key><integer>0</integer>
-//CHECK:       </dict>
-//CHECK:       <key>depth</key><integer>1</integer>
-//CHECK:       <key>extended_message</key>
-//CHECK:       <string>Entered call from &apos;use_function_with_leak4&apos;</string>
-//CHECK:       <key>message</key>
-//CHECK:  <string>Entered call from &apos;use_function_with_leak4&apos;</string>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>control</string>
-//CHECK:       <key>edges</key>
-//CHECK:        <array>
-//CHECK:         <dict>
-//CHECK:          <key>start</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>126</integer>
-//CHECK:             <key>col</key><integer>1</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>126</integer>
-//CHECK:             <key>col</key><integer>1</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:          <key>end</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>127</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>127</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:         </dict>
-//CHECK:        </array>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>control</string>
-//CHECK:       <key>edges</key>
-//CHECK:        <array>
-//CHECK:         <dict>
-//CHECK:          <key>start</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>127</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>127</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:          <key>end</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>127</integer>
-//CHECK:             <key>col</key><integer>22</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>127</integer>
-//CHECK:             <key>col</key><integer>31</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:         </dict>
-//CHECK:        </array>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>event</string>
-//CHECK:       <key>location</key>
-//CHECK:       <dict>
-//CHECK:        <key>line</key><integer>127</integer>
-//CHECK:        <key>col</key><integer>22</integer>
-//CHECK:        <key>file</key><integer>0</integer>
-//CHECK:       </dict>
-//CHECK:       <key>ranges</key>
-//CHECK:       <array>
-//CHECK:         <array>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>127</integer>
-//CHECK:           <key>col</key><integer>22</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>127</integer>
-//CHECK:           <key>col</key><integer>31</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:         </array>
-//CHECK:       </array>
-//CHECK:       <key>depth</key><integer>1</integer>
-//CHECK:       <key>extended_message</key>
-//CHECK:       <string>Memory is allocated</string>
-//CHECK:       <key>message</key>
-//CHECK:  <string>Memory is allocated</string>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>control</string>
-//CHECK:       <key>edges</key>
-//CHECK:        <array>
-//CHECK:         <dict>
-//CHECK:          <key>start</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>127</integer>
-//CHECK:             <key>col</key><integer>22</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>127</integer>
-//CHECK:             <key>col</key><integer>31</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:          <key>end</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>128</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>128</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:         </dict>
-//CHECK:        </array>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>control</string>
-//CHECK:       <key>edges</key>
-//CHECK:        <array>
-//CHECK:         <dict>
-//CHECK:          <key>start</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>128</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>128</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:          <key>end</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>128</integer>
-//CHECK:             <key>col</key><integer>9</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>128</integer>
-//CHECK:             <key>col</key><integer>9</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:         </dict>
-//CHECK:        </array>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>control</string>
-//CHECK:       <key>edges</key>
-//CHECK:        <array>
-//CHECK:         <dict>
-//CHECK:          <key>start</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>128</integer>
-//CHECK:             <key>col</key><integer>9</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>128</integer>
-//CHECK:             <key>col</key><integer>9</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:          <key>end</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>131</integer>
-//CHECK:             <key>col</key><integer>9</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>131</integer>
-//CHECK:             <key>col</key><integer>9</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:         </dict>
-//CHECK:        </array>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>event</string>
-//CHECK:       <key>location</key>
-//CHECK:       <dict>
-//CHECK:        <key>line</key><integer>131</integer>
-//CHECK:        <key>col</key><integer>9</integer>
-//CHECK:        <key>file</key><integer>0</integer>
-//CHECK:       </dict>
-//CHECK:       <key>depth</key><integer>1</integer>
-//CHECK:       <key>extended_message</key>
-//CHECK:       <string>Memory is never released; potential leak of memory pointed to by &apos;x&apos;</string>
-//CHECK:       <key>message</key>
-//CHECK:  <string>Memory is never released; potential leak of memory pointed to by &apos;x&apos;</string>
-//CHECK:      </dict>
-//CHECK:     </array>
-//CHECK:     <key>description</key><string>Memory is never released; potential leak of memory pointed to by &apos;x&apos;</string>
-//CHECK:     <key>category</key><string>Memory Error</string>
-//CHECK:     <key>type</key><string>Memory leak</string>
-//CHECK:    <key>issue_context_kind</key><string>function</string>
-//CHECK:    <key>issue_context</key><string>function_with_leak4</string>
-//CHECK:    <key>location</key>
-//CHECK:    <dict>
-//CHECK:     <key>line</key><integer>131</integer>
-//CHECK:     <key>col</key><integer>9</integer>
-//CHECK:     <key>file</key><integer>0</integer>
-//CHECK:    </dict>
-//CHECK:    </dict>
-//CHECK:    <dict>
-//CHECK:     <key>path</key>
-//CHECK:     <array>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>event</string>
-//CHECK:       <key>location</key>
-//CHECK:       <dict>
-//CHECK:        <key>line</key><integer>145</integer>
-//CHECK:        <key>col</key><integer>5</integer>
-//CHECK:        <key>file</key><integer>0</integer>
-//CHECK:       </dict>
-//CHECK:       <key>ranges</key>
-//CHECK:       <array>
-//CHECK:         <array>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>145</integer>
-//CHECK:           <key>col</key><integer>5</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>145</integer>
-//CHECK:           <key>col</key><integer>25</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:         </array>
-//CHECK:       </array>
-//CHECK:       <key>depth</key><integer>0</integer>
-//CHECK:       <key>extended_message</key>
-//CHECK:       <string>Calling &apos;function_with_leak5&apos;</string>
-//CHECK:       <key>message</key>
-//CHECK:  <string>Calling &apos;function_with_leak5&apos;</string>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>event</string>
-//CHECK:       <key>location</key>
-//CHECK:       <dict>
-//CHECK:        <key>line</key><integer>140</integer>
-//CHECK:        <key>col</key><integer>1</integer>
-//CHECK:        <key>file</key><integer>0</integer>
-//CHECK:       </dict>
-//CHECK:       <key>depth</key><integer>1</integer>
-//CHECK:       <key>extended_message</key>
-//CHECK:       <string>Entered call from &apos;use_function_with_leak5&apos;</string>
-//CHECK:       <key>message</key>
-//CHECK:  <string>Entered call from &apos;use_function_with_leak5&apos;</string>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>control</string>
-//CHECK:       <key>edges</key>
-//CHECK:        <array>
-//CHECK:         <dict>
-//CHECK:          <key>start</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>140</integer>
-//CHECK:             <key>col</key><integer>1</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>140</integer>
-//CHECK:             <key>col</key><integer>1</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:          <key>end</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>141</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>141</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:         </dict>
-//CHECK:        </array>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>control</string>
-//CHECK:       <key>edges</key>
-//CHECK:        <array>
-//CHECK:         <dict>
-//CHECK:          <key>start</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>141</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>141</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:          <key>end</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>141</integer>
-//CHECK:             <key>col</key><integer>22</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>141</integer>
-//CHECK:             <key>col</key><integer>31</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:         </dict>
-//CHECK:        </array>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>event</string>
-//CHECK:       <key>location</key>
-//CHECK:       <dict>
-//CHECK:        <key>line</key><integer>141</integer>
-//CHECK:        <key>col</key><integer>22</integer>
-//CHECK:        <key>file</key><integer>0</integer>
-//CHECK:       </dict>
-//CHECK:       <key>ranges</key>
-//CHECK:       <array>
-//CHECK:         <array>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>141</integer>
-//CHECK:           <key>col</key><integer>22</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>141</integer>
-//CHECK:           <key>col</key><integer>31</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:         </array>
-//CHECK:       </array>
-//CHECK:       <key>depth</key><integer>1</integer>
-//CHECK:       <key>extended_message</key>
-//CHECK:       <string>Memory is allocated</string>
-//CHECK:       <key>message</key>
-//CHECK:  <string>Memory is allocated</string>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>control</string>
-//CHECK:       <key>edges</key>
-//CHECK:        <array>
-//CHECK:         <dict>
-//CHECK:          <key>start</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>141</integer>
-//CHECK:             <key>col</key><integer>22</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>141</integer>
-//CHECK:             <key>col</key><integer>31</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:          <key>end</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>142</integer>
-//CHECK:             <key>col</key><integer>12</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>142</integer>
-//CHECK:             <key>col</key><integer>29</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:         </dict>
-//CHECK:        </array>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>event</string>
-//CHECK:       <key>location</key>
-//CHECK:       <dict>
-//CHECK:        <key>line</key><integer>142</integer>
-//CHECK:        <key>col</key><integer>12</integer>
-//CHECK:        <key>file</key><integer>0</integer>
-//CHECK:       </dict>
-//CHECK:       <key>depth</key><integer>1</integer>
-//CHECK:       <key>extended_message</key>
-//CHECK:       <string>Memory is never released; potential leak of memory pointed to by &apos;x&apos;</string>
-//CHECK:       <key>message</key>
-//CHECK:  <string>Memory is never released; potential leak of memory pointed to by &apos;x&apos;</string>
-//CHECK:      </dict>
-//CHECK:     </array>
-//CHECK:     <key>description</key><string>Memory is never released; potential leak of memory pointed to by &apos;x&apos;</string>
-//CHECK:     <key>category</key><string>Memory Error</string>
-//CHECK:     <key>type</key><string>Memory leak</string>
-//CHECK:    <key>issue_context_kind</key><string>function</string>
-//CHECK:    <key>issue_context</key><string>function_with_leak5</string>
-//CHECK:    <key>location</key>
-//CHECK:    <dict>
-//CHECK:     <key>line</key><integer>142</integer>
-//CHECK:     <key>col</key><integer>12</integer>
-//CHECK:     <key>file</key><integer>0</integer>
-//CHECK:    </dict>
-//CHECK:    </dict>
-//CHECK:    <dict>
-//CHECK:     <key>path</key>
-//CHECK:     <array>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>event</string>
-//CHECK:       <key>location</key>
-//CHECK:       <dict>
-//CHECK:        <key>line</key><integer>156</integer>
-//CHECK:        <key>col</key><integer>5</integer>
-//CHECK:        <key>file</key><integer>0</integer>
-//CHECK:       </dict>
-//CHECK:       <key>ranges</key>
-//CHECK:       <array>
-//CHECK:         <array>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>156</integer>
-//CHECK:           <key>col</key><integer>5</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>156</integer>
-//CHECK:           <key>col</key><integer>25</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:         </array>
-//CHECK:       </array>
-//CHECK:       <key>depth</key><integer>0</integer>
-//CHECK:       <key>extended_message</key>
-//CHECK:       <string>Calling &apos;function_with_leak6&apos;</string>
-//CHECK:       <key>message</key>
-//CHECK:  <string>Calling &apos;function_with_leak6&apos;</string>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>event</string>
-//CHECK:       <key>location</key>
-//CHECK:       <dict>
-//CHECK:        <key>line</key><integer>151</integer>
-//CHECK:        <key>col</key><integer>1</integer>
-//CHECK:        <key>file</key><integer>0</integer>
-//CHECK:       </dict>
-//CHECK:       <key>depth</key><integer>1</integer>
-//CHECK:       <key>extended_message</key>
-//CHECK:       <string>Entered call from &apos;use_function_with_leak6&apos;</string>
-//CHECK:       <key>message</key>
-//CHECK:  <string>Entered call from &apos;use_function_with_leak6&apos;</string>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>control</string>
-//CHECK:       <key>edges</key>
-//CHECK:        <array>
-//CHECK:         <dict>
-//CHECK:          <key>start</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>151</integer>
-//CHECK:             <key>col</key><integer>1</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>151</integer>
-//CHECK:             <key>col</key><integer>1</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:          <key>end</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>152</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>152</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:         </dict>
-//CHECK:        </array>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>control</string>
-//CHECK:       <key>edges</key>
-//CHECK:        <array>
-//CHECK:         <dict>
-//CHECK:          <key>start</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>152</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>152</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:          <key>end</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>152</integer>
-//CHECK:             <key>col</key><integer>22</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>152</integer>
-//CHECK:             <key>col</key><integer>31</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:         </dict>
-//CHECK:        </array>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>event</string>
-//CHECK:       <key>location</key>
-//CHECK:       <dict>
-//CHECK:        <key>line</key><integer>152</integer>
-//CHECK:        <key>col</key><integer>22</integer>
-//CHECK:        <key>file</key><integer>0</integer>
-//CHECK:       </dict>
-//CHECK:       <key>ranges</key>
-//CHECK:       <array>
-//CHECK:         <array>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>152</integer>
-//CHECK:           <key>col</key><integer>22</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>152</integer>
-//CHECK:           <key>col</key><integer>31</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:         </array>
-//CHECK:       </array>
-//CHECK:       <key>depth</key><integer>1</integer>
-//CHECK:       <key>extended_message</key>
-//CHECK:       <string>Memory is allocated</string>
-//CHECK:       <key>message</key>
-//CHECK:  <string>Memory is allocated</string>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>control</string>
-//CHECK:       <key>edges</key>
-//CHECK:        <array>
-//CHECK:         <dict>
-//CHECK:          <key>start</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>152</integer>
-//CHECK:             <key>col</key><integer>22</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>152</integer>
-//CHECK:             <key>col</key><integer>31</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:          <key>end</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>153</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>153</integer>
-//CHECK:             <key>col</key><integer>23</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:         </dict>
-//CHECK:        </array>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>event</string>
-//CHECK:       <key>location</key>
-//CHECK:       <dict>
-//CHECK:        <key>line</key><integer>153</integer>
-//CHECK:        <key>col</key><integer>5</integer>
-//CHECK:        <key>file</key><integer>0</integer>
-//CHECK:       </dict>
-//CHECK:       <key>depth</key><integer>1</integer>
-//CHECK:       <key>extended_message</key>
-//CHECK:       <string>Memory is never released; potential leak of memory pointed to by &apos;x&apos;</string>
-//CHECK:       <key>message</key>
-//CHECK:  <string>Memory is never released; potential leak of memory pointed to by &apos;x&apos;</string>
-//CHECK:      </dict>
-//CHECK:     </array>
-//CHECK:     <key>description</key><string>Memory is never released; potential leak of memory pointed to by &apos;x&apos;</string>
-//CHECK:     <key>category</key><string>Memory Error</string>
-//CHECK:     <key>type</key><string>Memory leak</string>
-//CHECK:    <key>issue_context_kind</key><string>function</string>
-//CHECK:    <key>issue_context</key><string>function_with_leak6</string>
-//CHECK:    <key>location</key>
-//CHECK:    <dict>
-//CHECK:     <key>line</key><integer>153</integer>
-//CHECK:     <key>col</key><integer>5</integer>
-//CHECK:     <key>file</key><integer>0</integer>
-//CHECK:    </dict>
-//CHECK:    </dict>
-//CHECK:    <dict>
-//CHECK:     <key>path</key>
-//CHECK:     <array>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>event</string>
-//CHECK:       <key>location</key>
-//CHECK:       <dict>
-//CHECK:        <key>line</key><integer>168</integer>
-//CHECK:        <key>col</key><integer>5</integer>
-//CHECK:        <key>file</key><integer>0</integer>
-//CHECK:       </dict>
-//CHECK:       <key>ranges</key>
-//CHECK:       <array>
-//CHECK:         <array>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>168</integer>
-//CHECK:           <key>col</key><integer>5</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>168</integer>
-//CHECK:           <key>col</key><integer>25</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:         </array>
-//CHECK:       </array>
-//CHECK:       <key>depth</key><integer>0</integer>
-//CHECK:       <key>extended_message</key>
-//CHECK:       <string>Calling &apos;function_with_leak7&apos;</string>
-//CHECK:       <key>message</key>
-//CHECK:  <string>Calling &apos;function_with_leak7&apos;</string>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>event</string>
-//CHECK:       <key>location</key>
-//CHECK:       <dict>
-//CHECK:        <key>line</key><integer>164</integer>
-//CHECK:        <key>col</key><integer>1</integer>
-//CHECK:        <key>file</key><integer>0</integer>
-//CHECK:       </dict>
-//CHECK:       <key>depth</key><integer>1</integer>
-//CHECK:       <key>extended_message</key>
-//CHECK:       <string>Entered call from &apos;use_function_with_leak7&apos;</string>
-//CHECK:       <key>message</key>
-//CHECK:  <string>Entered call from &apos;use_function_with_leak7&apos;</string>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>control</string>
-//CHECK:       <key>edges</key>
-//CHECK:        <array>
-//CHECK:         <dict>
-//CHECK:          <key>start</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>164</integer>
-//CHECK:             <key>col</key><integer>1</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>164</integer>
-//CHECK:             <key>col</key><integer>1</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:          <key>end</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>165</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>165</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:         </dict>
-//CHECK:        </array>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>control</string>
-//CHECK:       <key>edges</key>
-//CHECK:        <array>
-//CHECK:         <dict>
-//CHECK:          <key>start</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>165</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>165</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:          <key>end</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>165</integer>
-//CHECK:             <key>col</key><integer>19</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>165</integer>
-//CHECK:             <key>col</key><integer>28</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:         </dict>
-//CHECK:        </array>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>event</string>
-//CHECK:       <key>location</key>
-//CHECK:       <dict>
-//CHECK:        <key>line</key><integer>165</integer>
-//CHECK:        <key>col</key><integer>19</integer>
-//CHECK:        <key>file</key><integer>0</integer>
-//CHECK:       </dict>
-//CHECK:       <key>ranges</key>
-//CHECK:       <array>
-//CHECK:         <array>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>165</integer>
-//CHECK:           <key>col</key><integer>19</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>165</integer>
-//CHECK:           <key>col</key><integer>28</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:         </array>
-//CHECK:       </array>
-//CHECK:       <key>depth</key><integer>1</integer>
-//CHECK:       <key>extended_message</key>
-//CHECK:       <string>Memory is allocated</string>
-//CHECK:       <key>message</key>
-//CHECK:  <string>Memory is allocated</string>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>event</string>
-//CHECK:       <key>location</key>
-//CHECK:       <dict>
-//CHECK:        <key>line</key><integer>168</integer>
-//CHECK:        <key>col</key><integer>5</integer>
-//CHECK:        <key>file</key><integer>0</integer>
-//CHECK:       </dict>
-//CHECK:       <key>ranges</key>
-//CHECK:       <array>
-//CHECK:         <array>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>168</integer>
-//CHECK:           <key>col</key><integer>5</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:          <dict>
-//CHECK:           <key>line</key><integer>168</integer>
-//CHECK:           <key>col</key><integer>25</integer>
-//CHECK:           <key>file</key><integer>0</integer>
-//CHECK:          </dict>
-//CHECK:         </array>
-//CHECK:       </array>
-//CHECK:       <key>depth</key><integer>1</integer>
-//CHECK:       <key>extended_message</key>
-//CHECK:       <string>Returned allocated memory</string>
-//CHECK:       <key>message</key>
-//CHECK:  <string>Returned allocated memory</string>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>control</string>
-//CHECK:       <key>edges</key>
-//CHECK:        <array>
-//CHECK:         <dict>
-//CHECK:          <key>start</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>168</integer>
-//CHECK:             <key>col</key><integer>5</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>168</integer>
-//CHECK:             <key>col</key><integer>25</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:          <key>end</key>
-//CHECK:           <array>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>169</integer>
-//CHECK:             <key>col</key><integer>1</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:            <dict>
-//CHECK:             <key>line</key><integer>169</integer>
-//CHECK:             <key>col</key><integer>1</integer>
-//CHECK:             <key>file</key><integer>0</integer>
-//CHECK:            </dict>
-//CHECK:           </array>
-//CHECK:         </dict>
-//CHECK:        </array>
-//CHECK:      </dict>
-//CHECK:      <dict>
-//CHECK:       <key>kind</key><string>event</string>
-//CHECK:       <key>location</key>
-//CHECK:       <dict>
-//CHECK:        <key>line</key><integer>169</integer>
-//CHECK:        <key>col</key><integer>1</integer>
-//CHECK:        <key>file</key><integer>0</integer>
-//CHECK:       </dict>
-//CHECK:       <key>depth</key><integer>0</integer>
-//CHECK:       <key>extended_message</key>
-//CHECK:       <string>Memory is never released; potential leak</string>
-//CHECK:       <key>message</key>
-//CHECK:  <string>Memory is never released; potential leak</string>
-//CHECK:      </dict>
-//CHECK:     </array>
-//CHECK:     <key>description</key><string>Memory is never released; potential leak</string>
-//CHECK:     <key>category</key><string>Memory Error</string>
-//CHECK:     <key>type</key><string>Memory leak</string>
-//CHECK:    <key>issue_context_kind</key><string>function</string>
-//CHECK:    <key>issue_context</key><string>use_function_with_leak7</string>
-//CHECK:    <key>location</key>
-//CHECK:    <dict>
-//CHECK:     <key>line</key><integer>169</integer>
-//CHECK:     <key>col</key><integer>1</integer>
-//CHECK:     <key>file</key><integer>0</integer>
-//CHECK:    </dict>
-//CHECK:    </dict>
-//CHECK:   </array>
-//CHECK:  </dict>
-//CHECK:  </plist>
+// CHECK: <?xml version="1.0" encoding="UTF-8"?>
+// CHECK: <plist version="1.0">
+// CHECK: <dict>
+// CHECK:  <key>files</key>
+// CHECK:  <array>
+// CHECK:  </array>
+// CHECK:  <key>diagnostics</key>
+// CHECK:  <array>
+// CHECK:   <dict>
+// CHECK:    <key>path</key>
+// CHECK:    <array>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>10</integer>
+// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>10</integer>
+// CHECK:            <key>col</key><integer>6</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>10</integer>
+// CHECK:            <key>col</key><integer>9</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>10</integer>
+// CHECK:            <key>col</key><integer>10</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>10</integer>
+// CHECK:            <key>col</key><integer>9</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>10</integer>
+// CHECK:            <key>col</key><integer>10</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>11</integer>
+// CHECK:            <key>col</key><integer>9</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>11</integer>
+// CHECK:            <key>col</key><integer>11</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>11</integer>
+// CHECK:            <key>col</key><integer>9</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>11</integer>
+// CHECK:            <key>col</key><integer>11</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>11</integer>
+// CHECK:            <key>col</key><integer>18</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>11</integer>
+// CHECK:            <key>col</key><integer>23</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>event</string>
+// CHECK:      <key>location</key>
+// CHECK:      <dict>
+// CHECK:       <key>line</key><integer>11</integer>
+// CHECK:       <key>col</key><integer>18</integer>
+// CHECK:       <key>file</key><integer>0</integer>
+// CHECK:      </dict>
+// CHECK:      <key>ranges</key>
+// CHECK:      <array>
+// CHECK:        <array>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>11</integer>
+// CHECK:          <key>col</key><integer>18</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>11</integer>
+// CHECK:          <key>col</key><integer>27</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:        </array>
+// CHECK:      </array>
+// CHECK:      <key>depth</key><integer>0</integer>
+// CHECK:      <key>extended_message</key>
+// CHECK:      <string>Memory is allocated</string>
+// CHECK:      <key>message</key>
+// CHECK: <string>Memory is allocated</string>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>11</integer>
+// CHECK:            <key>col</key><integer>18</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>11</integer>
+// CHECK:            <key>col</key><integer>23</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>14</integer>
+// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>14</integer>
+// CHECK:            <key>col</key><integer>6</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>event</string>
+// CHECK:      <key>location</key>
+// CHECK:      <dict>
+// CHECK:       <key>line</key><integer>14</integer>
+// CHECK:       <key>col</key><integer>5</integer>
+// CHECK:       <key>file</key><integer>0</integer>
+// CHECK:      </dict>
+// CHECK:      <key>depth</key><integer>0</integer>
+// CHECK:      <key>extended_message</key>
+// CHECK:      <string>Memory is never released; potential leak of memory pointed to by &apos;p&apos;</string>
+// CHECK:      <key>message</key>
+// CHECK: <string>Memory is never released; potential leak of memory pointed to by &apos;p&apos;</string>
+// CHECK:     </dict>
+// CHECK:    </array>
+// CHECK:    <key>description</key><string>Memory is never released; potential leak of memory pointed to by &apos;p&apos;</string>
+// CHECK:    <key>category</key><string>Memory Error</string>
+// CHECK:    <key>type</key><string>Memory leak</string>
+// CHECK:   <key>issue_context_kind</key><string>function</string>
+// CHECK:   <key>issue_context</key><string>diagnosticTest</string>
+// CHECK:   <key>location</key>
+// CHECK:   <dict>
+// CHECK:    <key>line</key><integer>14</integer>
+// CHECK:    <key>col</key><integer>5</integer>
+// CHECK:    <key>file</key><integer>0</integer>
+// CHECK:   </dict>
+// CHECK:   </dict>
+// CHECK:   <dict>
+// CHECK:    <key>path</key>
+// CHECK:    <array>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>18</integer>
+// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>18</integer>
+// CHECK:            <key>col</key><integer>7</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>19</integer>
+// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>19</integer>
+// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>19</integer>
+// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>19</integer>
+// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>19</integer>
+// CHECK:            <key>col</key><integer>9</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>19</integer>
+// CHECK:            <key>col</key><integer>14</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>event</string>
+// CHECK:      <key>location</key>
+// CHECK:      <dict>
+// CHECK:       <key>line</key><integer>19</integer>
+// CHECK:       <key>col</key><integer>9</integer>
+// CHECK:       <key>file</key><integer>0</integer>
+// CHECK:      </dict>
+// CHECK:      <key>ranges</key>
+// CHECK:      <array>
+// CHECK:        <array>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>19</integer>
+// CHECK:          <key>col</key><integer>9</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>19</integer>
+// CHECK:          <key>col</key><integer>30</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:        </array>
+// CHECK:      </array>
+// CHECK:      <key>depth</key><integer>0</integer>
+// CHECK:      <key>extended_message</key>
+// CHECK:      <string>Memory is allocated</string>
+// CHECK:      <key>message</key>
+// CHECK: <string>Memory is allocated</string>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>19</integer>
+// CHECK:            <key>col</key><integer>9</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>19</integer>
+// CHECK:            <key>col</key><integer>14</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>21</integer>
+// CHECK:            <key>col</key><integer>1</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>21</integer>
+// CHECK:            <key>col</key><integer>1</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>event</string>
+// CHECK:      <key>location</key>
+// CHECK:      <dict>
+// CHECK:       <key>line</key><integer>21</integer>
+// CHECK:       <key>col</key><integer>1</integer>
+// CHECK:       <key>file</key><integer>0</integer>
+// CHECK:      </dict>
+// CHECK:      <key>depth</key><integer>0</integer>
+// CHECK:      <key>extended_message</key>
+// CHECK:      <string>Memory is never released; potential leak of memory pointed to by &apos;A&apos;</string>
+// CHECK:      <key>message</key>
+// CHECK: <string>Memory is never released; potential leak of memory pointed to by &apos;A&apos;</string>
+// CHECK:     </dict>
+// CHECK:    </array>
+// CHECK:    <key>description</key><string>Memory is never released; potential leak of memory pointed to by &apos;A&apos;</string>
+// CHECK:    <key>category</key><string>Memory Error</string>
+// CHECK:    <key>type</key><string>Memory leak</string>
+// CHECK:   <key>issue_context_kind</key><string>function</string>
+// CHECK:   <key>issue_context</key><string>myArrayAllocation</string>
+// CHECK:   <key>location</key>
+// CHECK:   <dict>
+// CHECK:    <key>line</key><integer>21</integer>
+// CHECK:    <key>col</key><integer>1</integer>
+// CHECK:    <key>file</key><integer>0</integer>
+// CHECK:   </dict>
+// CHECK:   </dict>
+// CHECK:   <dict>
+// CHECK:    <key>path</key>
+// CHECK:    <array>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>24</integer>
+// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>24</integer>
+// CHECK:            <key>col</key><integer>8</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>24</integer>
+// CHECK:            <key>col</key><integer>18</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>24</integer>
+// CHECK:            <key>col</key><integer>23</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>event</string>
+// CHECK:      <key>location</key>
+// CHECK:      <dict>
+// CHECK:       <key>line</key><integer>24</integer>
+// CHECK:       <key>col</key><integer>18</integer>
+// CHECK:       <key>file</key><integer>0</integer>
+// CHECK:      </dict>
+// CHECK:      <key>ranges</key>
+// CHECK:      <array>
+// CHECK:        <array>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>24</integer>
+// CHECK:          <key>col</key><integer>18</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>24</integer>
+// CHECK:          <key>col</key><integer>28</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:        </array>
+// CHECK:      </array>
+// CHECK:      <key>depth</key><integer>0</integer>
+// CHECK:      <key>extended_message</key>
+// CHECK:      <string>Memory is allocated</string>
+// CHECK:      <key>message</key>
+// CHECK: <string>Memory is allocated</string>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>24</integer>
+// CHECK:            <key>col</key><integer>18</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>24</integer>
+// CHECK:            <key>col</key><integer>23</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>26</integer>
+// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>26</integer>
+// CHECK:            <key>col</key><integer>7</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>26</integer>
+// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>26</integer>
+// CHECK:            <key>col</key><integer>7</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>26</integer>
+// CHECK:            <key>col</key><integer>18</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>26</integer>
+// CHECK:            <key>col</key><integer>24</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>event</string>
+// CHECK:      <key>location</key>
+// CHECK:      <dict>
+// CHECK:       <key>line</key><integer>26</integer>
+// CHECK:       <key>col</key><integer>18</integer>
+// CHECK:       <key>file</key><integer>0</integer>
+// CHECK:      </dict>
+// CHECK:      <key>ranges</key>
+// CHECK:      <array>
+// CHECK:        <array>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>26</integer>
+// CHECK:          <key>col</key><integer>18</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>26</integer>
+// CHECK:          <key>col</key><integer>40</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:        </array>
+// CHECK:      </array>
+// CHECK:      <key>depth</key><integer>0</integer>
+// CHECK:      <key>extended_message</key>
+// CHECK:      <string>Attempt to reallocate memory</string>
+// CHECK:      <key>message</key>
+// CHECK: <string>Attempt to reallocate memory</string>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>26</integer>
+// CHECK:            <key>col</key><integer>18</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>26</integer>
+// CHECK:            <key>col</key><integer>24</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>27</integer>
+// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>27</integer>
+// CHECK:            <key>col</key><integer>6</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>27</integer>
+// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>27</integer>
+// CHECK:            <key>col</key><integer>6</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>27</integer>
+// CHECK:            <key>col</key><integer>9</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>27</integer>
+// CHECK:            <key>col</key><integer>9</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>event</string>
+// CHECK:      <key>location</key>
+// CHECK:      <dict>
+// CHECK:       <key>line</key><integer>27</integer>
+// CHECK:       <key>col</key><integer>9</integer>
+// CHECK:       <key>file</key><integer>0</integer>
+// CHECK:      </dict>
+// CHECK:      <key>ranges</key>
+// CHECK:      <array>
+// CHECK:        <array>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>27</integer>
+// CHECK:          <key>col</key><integer>9</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>27</integer>
+// CHECK:          <key>col</key><integer>12</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:        </array>
+// CHECK:      </array>
+// CHECK:      <key>depth</key><integer>0</integer>
+// CHECK:      <key>extended_message</key>
+// CHECK:      <string>Assuming &apos;tmp&apos; is null</string>
+// CHECK:      <key>message</key>
+// CHECK: <string>Assuming &apos;tmp&apos; is null</string>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>27</integer>
+// CHECK:            <key>col</key><integer>9</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>27</integer>
+// CHECK:            <key>col</key><integer>9</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>27</integer>
+// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>27</integer>
+// CHECK:            <key>col</key><integer>6</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>event</string>
+// CHECK:      <key>location</key>
+// CHECK:      <dict>
+// CHECK:       <key>line</key><integer>27</integer>
+// CHECK:       <key>col</key><integer>5</integer>
+// CHECK:       <key>file</key><integer>0</integer>
+// CHECK:      </dict>
+// CHECK:      <key>ranges</key>
+// CHECK:      <array>
+// CHECK:        <array>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>27</integer>
+// CHECK:          <key>col</key><integer>5</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>27</integer>
+// CHECK:          <key>col</key><integer>6</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:        </array>
+// CHECK:      </array>
+// CHECK:      <key>depth</key><integer>0</integer>
+// CHECK:      <key>extended_message</key>
+// CHECK:      <string>Reallocation failed</string>
+// CHECK:      <key>message</key>
+// CHECK: <string>Reallocation failed</string>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>27</integer>
+// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>27</integer>
+// CHECK:            <key>col</key><integer>6</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>28</integer>
+// CHECK:            <key>col</key><integer>9</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>28</integer>
+// CHECK:            <key>col</key><integer>14</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>event</string>
+// CHECK:      <key>location</key>
+// CHECK:      <dict>
+// CHECK:       <key>line</key><integer>28</integer>
+// CHECK:       <key>col</key><integer>9</integer>
+// CHECK:       <key>file</key><integer>0</integer>
+// CHECK:      </dict>
+// CHECK:      <key>depth</key><integer>0</integer>
+// CHECK:      <key>extended_message</key>
+// CHECK:      <string>Memory is never released; potential leak of memory pointed to by &apos;buf&apos;</string>
+// CHECK:      <key>message</key>
+// CHECK: <string>Memory is never released; potential leak of memory pointed to by &apos;buf&apos;</string>
+// CHECK:     </dict>
+// CHECK:    </array>
+// CHECK:    <key>description</key><string>Memory is never released; potential leak of memory pointed to by &apos;buf&apos;</string>
+// CHECK:    <key>category</key><string>Memory Error</string>
+// CHECK:    <key>type</key><string>Memory leak</string>
+// CHECK:   <key>issue_context_kind</key><string>function</string>
+// CHECK:   <key>issue_context</key><string>reallocDiagnostics</string>
+// CHECK:   <key>location</key>
+// CHECK:   <dict>
+// CHECK:    <key>line</key><integer>28</integer>
+// CHECK:    <key>col</key><integer>9</integer>
+// CHECK:    <key>file</key><integer>0</integer>
+// CHECK:   </dict>
+// CHECK:   </dict>
+// CHECK:   <dict>
+// CHECK:    <key>path</key>
+// CHECK:    <array>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>43</integer>
+// CHECK:            <key>col</key><integer>3</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>43</integer>
+// CHECK:            <key>col</key><integer>6</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>43</integer>
+// CHECK:            <key>col</key><integer>15</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>43</integer>
+// CHECK:            <key>col</key><integer>21</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>event</string>
+// CHECK:      <key>location</key>
+// CHECK:      <dict>
+// CHECK:       <key>line</key><integer>43</integer>
+// CHECK:       <key>col</key><integer>15</integer>
+// CHECK:       <key>file</key><integer>0</integer>
+// CHECK:      </dict>
+// CHECK:      <key>ranges</key>
+// CHECK:      <array>
+// CHECK:        <array>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>43</integer>
+// CHECK:          <key>col</key><integer>15</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>43</integer>
+// CHECK:          <key>col</key><integer>23</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:        </array>
+// CHECK:      </array>
+// CHECK:      <key>depth</key><integer>0</integer>
+// CHECK:      <key>extended_message</key>
+// CHECK:      <string>Calling &apos;wrapper&apos;</string>
+// CHECK:      <key>message</key>
+// CHECK: <string>Calling &apos;wrapper&apos;</string>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>event</string>
+// CHECK:      <key>location</key>
+// CHECK:      <dict>
+// CHECK:       <key>line</key><integer>34</integer>
+// CHECK:       <key>col</key><integer>1</integer>
+// CHECK:       <key>file</key><integer>0</integer>
+// CHECK:      </dict>
+// CHECK:      <key>depth</key><integer>1</integer>
+// CHECK:      <key>extended_message</key>
+// CHECK:      <string>Entered call from &apos;test_wrapper&apos;</string>
+// CHECK:      <key>message</key>
+// CHECK: <string>Entered call from &apos;test_wrapper&apos;</string>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>34</integer>
+// CHECK:            <key>col</key><integer>1</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>34</integer>
+// CHECK:            <key>col</key><integer>4</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>35</integer>
+// CHECK:            <key>col</key><integer>3</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>35</integer>
+// CHECK:            <key>col</key><integer>6</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>35</integer>
+// CHECK:            <key>col</key><integer>3</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>35</integer>
+// CHECK:            <key>col</key><integer>6</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>35</integer>
+// CHECK:            <key>col</key><integer>13</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>35</integer>
+// CHECK:            <key>col</key><integer>18</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>event</string>
+// CHECK:      <key>location</key>
+// CHECK:      <dict>
+// CHECK:       <key>line</key><integer>35</integer>
+// CHECK:       <key>col</key><integer>13</integer>
+// CHECK:       <key>file</key><integer>0</integer>
+// CHECK:      </dict>
+// CHECK:      <key>ranges</key>
+// CHECK:      <array>
+// CHECK:        <array>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>35</integer>
+// CHECK:          <key>col</key><integer>13</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>35</integer>
+// CHECK:          <key>col</key><integer>23</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:        </array>
+// CHECK:      </array>
+// CHECK:      <key>depth</key><integer>1</integer>
+// CHECK:      <key>extended_message</key>
+// CHECK:      <string>Memory is allocated</string>
+// CHECK:      <key>message</key>
+// CHECK: <string>Memory is allocated</string>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>35</integer>
+// CHECK:            <key>col</key><integer>13</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>35</integer>
+// CHECK:            <key>col</key><integer>18</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>37</integer>
+// CHECK:            <key>col</key><integer>3</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>37</integer>
+// CHECK:            <key>col</key><integer>4</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>37</integer>
+// CHECK:            <key>col</key><integer>3</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>37</integer>
+// CHECK:            <key>col</key><integer>4</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>37</integer>
+// CHECK:            <key>col</key><integer>7</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>37</integer>
+// CHECK:            <key>col</key><integer>7</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>event</string>
+// CHECK:      <key>location</key>
+// CHECK:      <dict>
+// CHECK:       <key>line</key><integer>37</integer>
+// CHECK:       <key>col</key><integer>7</integer>
+// CHECK:       <key>file</key><integer>0</integer>
+// CHECK:      </dict>
+// CHECK:      <key>ranges</key>
+// CHECK:      <array>
+// CHECK:        <array>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>37</integer>
+// CHECK:          <key>col</key><integer>7</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>37</integer>
+// CHECK:          <key>col</key><integer>7</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:        </array>
+// CHECK:      </array>
+// CHECK:      <key>depth</key><integer>1</integer>
+// CHECK:      <key>extended_message</key>
+// CHECK:      <string>Assuming &apos;x&apos; is non-null</string>
+// CHECK:      <key>message</key>
+// CHECK: <string>Assuming &apos;x&apos; is non-null</string>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>37</integer>
+// CHECK:            <key>col</key><integer>7</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>37</integer>
+// CHECK:            <key>col</key><integer>7</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>38</integer>
+// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>38</integer>
+// CHECK:            <key>col</key><integer>10</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>event</string>
+// CHECK:      <key>location</key>
+// CHECK:      <dict>
+// CHECK:       <key>line</key><integer>43</integer>
+// CHECK:       <key>col</key><integer>15</integer>
+// CHECK:       <key>file</key><integer>0</integer>
+// CHECK:      </dict>
+// CHECK:      <key>ranges</key>
+// CHECK:      <array>
+// CHECK:        <array>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>43</integer>
+// CHECK:          <key>col</key><integer>15</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>43</integer>
+// CHECK:          <key>col</key><integer>23</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:        </array>
+// CHECK:      </array>
+// CHECK:      <key>depth</key><integer>1</integer>
+// CHECK:      <key>extended_message</key>
+// CHECK:      <string>Returned allocated memory</string>
+// CHECK:      <key>message</key>
+// CHECK: <string>Returned allocated memory</string>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>43</integer>
+// CHECK:            <key>col</key><integer>15</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>43</integer>
+// CHECK:            <key>col</key><integer>21</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>45</integer>
+// CHECK:            <key>col</key><integer>1</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>45</integer>
+// CHECK:            <key>col</key><integer>1</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>event</string>
+// CHECK:      <key>location</key>
+// CHECK:      <dict>
+// CHECK:       <key>line</key><integer>45</integer>
+// CHECK:       <key>col</key><integer>1</integer>
+// CHECK:       <key>file</key><integer>0</integer>
+// CHECK:      </dict>
+// CHECK:      <key>depth</key><integer>0</integer>
+// CHECK:      <key>extended_message</key>
+// CHECK:      <string>Memory is never released; potential leak of memory pointed to by &apos;buf&apos;</string>
+// CHECK:      <key>message</key>
+// CHECK: <string>Memory is never released; potential leak of memory pointed to by &apos;buf&apos;</string>
+// CHECK:     </dict>
+// CHECK:    </array>
+// CHECK:    <key>description</key><string>Memory is never released; potential leak of memory pointed to by &apos;buf&apos;</string>
+// CHECK:    <key>category</key><string>Memory Error</string>
+// CHECK:    <key>type</key><string>Memory leak</string>
+// CHECK:   <key>issue_context_kind</key><string>function</string>
+// CHECK:   <key>issue_context</key><string>test_wrapper</string>
+// CHECK:   <key>location</key>
+// CHECK:   <dict>
+// CHECK:    <key>line</key><integer>45</integer>
+// CHECK:    <key>col</key><integer>1</integer>
+// CHECK:    <key>file</key><integer>0</integer>
+// CHECK:   </dict>
+// CHECK:   </dict>
+// CHECK:   <dict>
+// CHECK:    <key>path</key>
+// CHECK:    <array>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>59</integer>
+// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>59</integer>
+// CHECK:            <key>col</key><integer>8</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>60</integer>
+// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>60</integer>
+// CHECK:            <key>col</key><integer>22</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>event</string>
+// CHECK:      <key>location</key>
+// CHECK:      <dict>
+// CHECK:       <key>line</key><integer>60</integer>
+// CHECK:       <key>col</key><integer>5</integer>
+// CHECK:       <key>file</key><integer>0</integer>
+// CHECK:      </dict>
+// CHECK:      <key>ranges</key>
+// CHECK:      <array>
+// CHECK:        <array>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>60</integer>
+// CHECK:          <key>col</key><integer>5</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>60</integer>
+// CHECK:          <key>col</key><integer>28</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:        </array>
+// CHECK:      </array>
+// CHECK:      <key>depth</key><integer>0</integer>
+// CHECK:      <key>extended_message</key>
+// CHECK:      <string>Calling &apos;my_malloc_and_free&apos;</string>
+// CHECK:      <key>message</key>
+// CHECK: <string>Calling &apos;my_malloc_and_free&apos;</string>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>event</string>
+// CHECK:      <key>location</key>
+// CHECK:      <dict>
+// CHECK:       <key>line</key><integer>52</integer>
+// CHECK:       <key>col</key><integer>1</integer>
+// CHECK:       <key>file</key><integer>0</integer>
+// CHECK:      </dict>
+// CHECK:      <key>depth</key><integer>1</integer>
+// CHECK:      <key>extended_message</key>
+// CHECK:      <string>Entered call from &apos;test_double_action_call&apos;</string>
+// CHECK:      <key>message</key>
+// CHECK: <string>Entered call from &apos;test_double_action_call&apos;</string>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>52</integer>
+// CHECK:            <key>col</key><integer>1</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>52</integer>
+// CHECK:            <key>col</key><integer>4</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>53</integer>
+// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>53</integer>
+// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>53</integer>
+// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>53</integer>
+// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>53</integer>
+// CHECK:            <key>col</key><integer>10</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>53</integer>
+// CHECK:            <key>col</key><integer>15</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>event</string>
+// CHECK:      <key>location</key>
+// CHECK:      <dict>
+// CHECK:       <key>line</key><integer>53</integer>
+// CHECK:       <key>col</key><integer>10</integer>
+// CHECK:       <key>file</key><integer>0</integer>
+// CHECK:      </dict>
+// CHECK:      <key>ranges</key>
+// CHECK:      <array>
+// CHECK:        <array>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>53</integer>
+// CHECK:          <key>col</key><integer>10</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>53</integer>
+// CHECK:          <key>col</key><integer>20</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:        </array>
+// CHECK:      </array>
+// CHECK:      <key>depth</key><integer>1</integer>
+// CHECK:      <key>extended_message</key>
+// CHECK:      <string>Memory is allocated</string>
+// CHECK:      <key>message</key>
+// CHECK: <string>Memory is allocated</string>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>53</integer>
+// CHECK:            <key>col</key><integer>10</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>53</integer>
+// CHECK:            <key>col</key><integer>15</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>54</integer>
+// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>54</integer>
+// CHECK:            <key>col</key><integer>6</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>54</integer>
+// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>54</integer>
+// CHECK:            <key>col</key><integer>6</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>55</integer>
+// CHECK:            <key>col</key><integer>7</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>55</integer>
+// CHECK:            <key>col</key><integer>13</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>event</string>
+// CHECK:      <key>location</key>
+// CHECK:      <dict>
+// CHECK:       <key>line</key><integer>55</integer>
+// CHECK:       <key>col</key><integer>7</integer>
+// CHECK:       <key>file</key><integer>0</integer>
+// CHECK:      </dict>
+// CHECK:      <key>ranges</key>
+// CHECK:      <array>
+// CHECK:        <array>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>55</integer>
+// CHECK:          <key>col</key><integer>7</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>55</integer>
+// CHECK:          <key>col</key><integer>17</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:        </array>
+// CHECK:      </array>
+// CHECK:      <key>depth</key><integer>1</integer>
+// CHECK:      <key>extended_message</key>
+// CHECK:      <string>Calling &apos;my_free&apos;</string>
+// CHECK:      <key>message</key>
+// CHECK: <string>Calling &apos;my_free&apos;</string>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>event</string>
+// CHECK:      <key>location</key>
+// CHECK:      <dict>
+// CHECK:       <key>line</key><integer>49</integer>
+// CHECK:       <key>col</key><integer>1</integer>
+// CHECK:       <key>file</key><integer>0</integer>
+// CHECK:      </dict>
+// CHECK:      <key>depth</key><integer>2</integer>
+// CHECK:      <key>extended_message</key>
+// CHECK:      <string>Entered call from &apos;my_malloc_and_free&apos;</string>
+// CHECK:      <key>message</key>
+// CHECK: <string>Entered call from &apos;my_malloc_and_free&apos;</string>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>49</integer>
+// CHECK:            <key>col</key><integer>1</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>49</integer>
+// CHECK:            <key>col</key><integer>4</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>50</integer>
+// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>50</integer>
+// CHECK:            <key>col</key><integer>8</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>event</string>
+// CHECK:      <key>location</key>
+// CHECK:      <dict>
+// CHECK:       <key>line</key><integer>50</integer>
+// CHECK:       <key>col</key><integer>5</integer>
+// CHECK:       <key>file</key><integer>0</integer>
+// CHECK:      </dict>
+// CHECK:      <key>ranges</key>
+// CHECK:      <array>
+// CHECK:        <array>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>50</integer>
+// CHECK:          <key>col</key><integer>5</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>50</integer>
+// CHECK:          <key>col</key><integer>11</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:        </array>
+// CHECK:      </array>
+// CHECK:      <key>depth</key><integer>2</integer>
+// CHECK:      <key>extended_message</key>
+// CHECK:      <string>Memory is released</string>
+// CHECK:      <key>message</key>
+// CHECK: <string>Memory is released</string>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>event</string>
+// CHECK:      <key>location</key>
+// CHECK:      <dict>
+// CHECK:       <key>line</key><integer>55</integer>
+// CHECK:       <key>col</key><integer>7</integer>
+// CHECK:       <key>file</key><integer>0</integer>
+// CHECK:      </dict>
+// CHECK:      <key>ranges</key>
+// CHECK:      <array>
+// CHECK:        <array>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>55</integer>
+// CHECK:          <key>col</key><integer>7</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>55</integer>
+// CHECK:          <key>col</key><integer>17</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:        </array>
+// CHECK:      </array>
+// CHECK:      <key>depth</key><integer>2</integer>
+// CHECK:      <key>extended_message</key>
+// CHECK:      <string>Returned released memory via 1st parameter</string>
+// CHECK:      <key>message</key>
+// CHECK: <string>Returned released memory via 1st parameter</string>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>55</integer>
+// CHECK:            <key>col</key><integer>7</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>55</integer>
+// CHECK:            <key>col</key><integer>13</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>56</integer>
+// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>56</integer>
+// CHECK:            <key>col</key><integer>10</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>event</string>
+// CHECK:      <key>location</key>
+// CHECK:      <dict>
+// CHECK:       <key>line</key><integer>60</integer>
+// CHECK:       <key>col</key><integer>5</integer>
+// CHECK:       <key>file</key><integer>0</integer>
+// CHECK:      </dict>
+// CHECK:      <key>ranges</key>
+// CHECK:      <array>
+// CHECK:        <array>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>60</integer>
+// CHECK:          <key>col</key><integer>5</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>60</integer>
+// CHECK:          <key>col</key><integer>28</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:        </array>
+// CHECK:      </array>
+// CHECK:      <key>depth</key><integer>1</integer>
+// CHECK:      <key>extended_message</key>
+// CHECK:      <string>Returned released memory via 1st parameter</string>
+// CHECK:      <key>message</key>
+// CHECK: <string>Returned released memory via 1st parameter</string>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>60</integer>
+// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>60</integer>
+// CHECK:            <key>col</key><integer>22</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>61</integer>
+// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>61</integer>
+// CHECK:            <key>col</key><integer>10</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>event</string>
+// CHECK:      <key>location</key>
+// CHECK:      <dict>
+// CHECK:       <key>line</key><integer>61</integer>
+// CHECK:       <key>col</key><integer>5</integer>
+// CHECK:       <key>file</key><integer>0</integer>
+// CHECK:      </dict>
+// CHECK:      <key>ranges</key>
+// CHECK:      <array>
+// CHECK:        <array>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>61</integer>
+// CHECK:          <key>col</key><integer>12</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>61</integer>
+// CHECK:          <key>col</key><integer>14</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:        </array>
+// CHECK:      </array>
+// CHECK:      <key>depth</key><integer>0</integer>
+// CHECK:      <key>extended_message</key>
+// CHECK:      <string>Use of memory after it is freed</string>
+// CHECK:      <key>message</key>
+// CHECK: <string>Use of memory after it is freed</string>
+// CHECK:     </dict>
+// CHECK:    </array>
+// CHECK:    <key>description</key><string>Use of memory after it is freed</string>
+// CHECK:    <key>category</key><string>Memory Error</string>
+// CHECK:    <key>type</key><string>Use-after-free</string>
+// CHECK:   <key>issue_context_kind</key><string>function</string>
+// CHECK:   <key>issue_context</key><string>test_double_action_call</string>
+// CHECK:   <key>location</key>
+// CHECK:   <dict>
+// CHECK:    <key>line</key><integer>61</integer>
+// CHECK:    <key>col</key><integer>5</integer>
+// CHECK:    <key>file</key><integer>0</integer>
+// CHECK:   </dict>
+// CHECK:   </dict>
+// CHECK:   <dict>
+// CHECK:    <key>path</key>
+// CHECK:    <array>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>74</integer>
+// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>74</integer>
+// CHECK:            <key>col</key><integer>8</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>74</integer>
+// CHECK:            <key>col</key><integer>25</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>74</integer>
+// CHECK:            <key>col</key><integer>30</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>event</string>
+// CHECK:      <key>location</key>
+// CHECK:      <dict>
+// CHECK:       <key>line</key><integer>74</integer>
+// CHECK:       <key>col</key><integer>25</integer>
+// CHECK:       <key>file</key><integer>0</integer>
+// CHECK:      </dict>
+// CHECK:      <key>ranges</key>
+// CHECK:      <array>
+// CHECK:        <array>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>74</integer>
+// CHECK:          <key>col</key><integer>25</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>74</integer>
+// CHECK:          <key>col</key><integer>35</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:        </array>
+// CHECK:      </array>
+// CHECK:      <key>depth</key><integer>0</integer>
+// CHECK:      <key>extended_message</key>
+// CHECK:      <string>Memory is allocated</string>
+// CHECK:      <key>message</key>
+// CHECK: <string>Memory is allocated</string>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>74</integer>
+// CHECK:            <key>col</key><integer>25</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>74</integer>
+// CHECK:            <key>col</key><integer>30</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>75</integer>
+// CHECK:            <key>col</key><integer>11</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>75</integer>
+// CHECK:            <key>col</key><integer>20</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>event</string>
+// CHECK:      <key>location</key>
+// CHECK:      <dict>
+// CHECK:       <key>line</key><integer>75</integer>
+// CHECK:       <key>col</key><integer>11</integer>
+// CHECK:       <key>file</key><integer>0</integer>
+// CHECK:      </dict>
+// CHECK:      <key>ranges</key>
+// CHECK:      <array>
+// CHECK:        <array>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>75</integer>
+// CHECK:          <key>col</key><integer>11</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>75</integer>
+// CHECK:          <key>col</key><integer>25</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:        </array>
+// CHECK:      </array>
+// CHECK:      <key>depth</key><integer>0</integer>
+// CHECK:      <key>extended_message</key>
+// CHECK:      <string>Calling &apos;my_realloc&apos;</string>
+// CHECK:      <key>message</key>
+// CHECK: <string>Calling &apos;my_realloc&apos;</string>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>event</string>
+// CHECK:      <key>location</key>
+// CHECK:      <dict>
+// CHECK:       <key>line</key><integer>65</integer>
+// CHECK:       <key>col</key><integer>1</integer>
+// CHECK:       <key>file</key><integer>0</integer>
+// CHECK:      </dict>
+// CHECK:      <key>depth</key><integer>1</integer>
+// CHECK:      <key>extended_message</key>
+// CHECK:      <string>Entered call from &apos;reallocIntra&apos;</string>
+// CHECK:      <key>message</key>
+// CHECK: <string>Entered call from &apos;reallocIntra&apos;</string>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>65</integer>
+// CHECK:            <key>col</key><integer>1</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>65</integer>
+// CHECK:            <key>col</key><integer>4</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>66</integer>
+// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>66</integer>
+// CHECK:            <key>col</key><integer>8</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>66</integer>
+// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>66</integer>
+// CHECK:            <key>col</key><integer>8</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>67</integer>
+// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>67</integer>
+// CHECK:            <key>col</key><integer>7</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>67</integer>
+// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>67</integer>
+// CHECK:            <key>col</key><integer>7</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>67</integer>
+// CHECK:            <key>col</key><integer>18</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>67</integer>
+// CHECK:            <key>col</key><integer>24</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>event</string>
+// CHECK:      <key>location</key>
+// CHECK:      <dict>
+// CHECK:       <key>line</key><integer>67</integer>
+// CHECK:       <key>col</key><integer>18</integer>
+// CHECK:       <key>file</key><integer>0</integer>
+// CHECK:      </dict>
+// CHECK:      <key>ranges</key>
+// CHECK:      <array>
+// CHECK:        <array>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>67</integer>
+// CHECK:          <key>col</key><integer>18</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>67</integer>
+// CHECK:          <key>col</key><integer>40</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:        </array>
+// CHECK:      </array>
+// CHECK:      <key>depth</key><integer>1</integer>
+// CHECK:      <key>extended_message</key>
+// CHECK:      <string>Attempt to reallocate memory</string>
+// CHECK:      <key>message</key>
+// CHECK: <string>Attempt to reallocate memory</string>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>67</integer>
+// CHECK:            <key>col</key><integer>18</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>67</integer>
+// CHECK:            <key>col</key><integer>24</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>68</integer>
+// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>68</integer>
+// CHECK:            <key>col</key><integer>6</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>68</integer>
+// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>68</integer>
+// CHECK:            <key>col</key><integer>6</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>68</integer>
+// CHECK:            <key>col</key><integer>9</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>68</integer>
+// CHECK:            <key>col</key><integer>9</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>event</string>
+// CHECK:      <key>location</key>
+// CHECK:      <dict>
+// CHECK:       <key>line</key><integer>68</integer>
+// CHECK:       <key>col</key><integer>9</integer>
+// CHECK:       <key>file</key><integer>0</integer>
+// CHECK:      </dict>
+// CHECK:      <key>ranges</key>
+// CHECK:      <array>
+// CHECK:        <array>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>68</integer>
+// CHECK:          <key>col</key><integer>9</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>68</integer>
+// CHECK:          <key>col</key><integer>12</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:        </array>
+// CHECK:      </array>
+// CHECK:      <key>depth</key><integer>1</integer>
+// CHECK:      <key>extended_message</key>
+// CHECK:      <string>Assuming &apos;tmp&apos; is null</string>
+// CHECK:      <key>message</key>
+// CHECK: <string>Assuming &apos;tmp&apos; is null</string>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>68</integer>
+// CHECK:            <key>col</key><integer>9</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>68</integer>
+// CHECK:            <key>col</key><integer>9</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>68</integer>
+// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>68</integer>
+// CHECK:            <key>col</key><integer>6</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>event</string>
+// CHECK:      <key>location</key>
+// CHECK:      <dict>
+// CHECK:       <key>line</key><integer>68</integer>
+// CHECK:       <key>col</key><integer>5</integer>
+// CHECK:       <key>file</key><integer>0</integer>
+// CHECK:      </dict>
+// CHECK:      <key>ranges</key>
+// CHECK:      <array>
+// CHECK:        <array>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>68</integer>
+// CHECK:          <key>col</key><integer>5</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>68</integer>
+// CHECK:          <key>col</key><integer>6</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:        </array>
+// CHECK:      </array>
+// CHECK:      <key>depth</key><integer>1</integer>
+// CHECK:      <key>extended_message</key>
+// CHECK:      <string>Reallocation failed</string>
+// CHECK:      <key>message</key>
+// CHECK: <string>Reallocation failed</string>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>68</integer>
+// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>68</integer>
+// CHECK:            <key>col</key><integer>6</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>69</integer>
+// CHECK:            <key>col</key><integer>9</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>69</integer>
+// CHECK:            <key>col</key><integer>14</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>event</string>
+// CHECK:      <key>location</key>
+// CHECK:      <dict>
+// CHECK:       <key>line</key><integer>75</integer>
+// CHECK:       <key>col</key><integer>11</integer>
+// CHECK:       <key>file</key><integer>0</integer>
+// CHECK:      </dict>
+// CHECK:      <key>ranges</key>
+// CHECK:      <array>
+// CHECK:        <array>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>75</integer>
+// CHECK:          <key>col</key><integer>11</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>75</integer>
+// CHECK:          <key>col</key><integer>25</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:        </array>
+// CHECK:      </array>
+// CHECK:      <key>depth</key><integer>1</integer>
+// CHECK:      <key>extended_message</key>
+// CHECK:      <string>Reallocation of 1st parameter failed</string>
+// CHECK:      <key>message</key>
+// CHECK: <string>Reallocation of 1st parameter failed</string>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>75</integer>
+// CHECK:            <key>col</key><integer>11</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>75</integer>
+// CHECK:            <key>col</key><integer>20</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>76</integer>
+// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>76</integer>
+// CHECK:            <key>col</key><integer>8</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>event</string>
+// CHECK:      <key>location</key>
+// CHECK:      <dict>
+// CHECK:       <key>line</key><integer>76</integer>
+// CHECK:       <key>col</key><integer>5</integer>
+// CHECK:       <key>file</key><integer>0</integer>
+// CHECK:      </dict>
+// CHECK:      <key>depth</key><integer>0</integer>
+// CHECK:      <key>extended_message</key>
+// CHECK:      <string>Memory is never released; potential leak of memory pointed to by &apos;buf&apos;</string>
+// CHECK:      <key>message</key>
+// CHECK: <string>Memory is never released; potential leak of memory pointed to by &apos;buf&apos;</string>
+// CHECK:     </dict>
+// CHECK:    </array>
+// CHECK:    <key>description</key><string>Memory is never released; potential leak of memory pointed to by &apos;buf&apos;</string>
+// CHECK:    <key>category</key><string>Memory Error</string>
+// CHECK:    <key>type</key><string>Memory leak</string>
+// CHECK:   <key>issue_context_kind</key><string>function</string>
+// CHECK:   <key>issue_context</key><string>reallocIntra</string>
+// CHECK:   <key>location</key>
+// CHECK:   <dict>
+// CHECK:    <key>line</key><integer>76</integer>
+// CHECK:    <key>col</key><integer>5</integer>
+// CHECK:    <key>file</key><integer>0</integer>
+// CHECK:   </dict>
+// CHECK:   </dict>
+// CHECK:   <dict>
+// CHECK:    <key>path</key>
+// CHECK:    <array>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>84</integer>
+// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>84</integer>
+// CHECK:            <key>col</key><integer>8</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>85</integer>
+// CHECK:            <key>col</key><integer>9</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>85</integer>
+// CHECK:            <key>col</key><integer>26</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>event</string>
+// CHECK:      <key>location</key>
+// CHECK:      <dict>
+// CHECK:       <key>line</key><integer>85</integer>
+// CHECK:       <key>col</key><integer>9</integer>
+// CHECK:       <key>file</key><integer>0</integer>
+// CHECK:      </dict>
+// CHECK:      <key>ranges</key>
+// CHECK:      <array>
+// CHECK:        <array>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>85</integer>
+// CHECK:          <key>col</key><integer>9</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>85</integer>
+// CHECK:          <key>col</key><integer>28</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:        </array>
+// CHECK:      </array>
+// CHECK:      <key>depth</key><integer>0</integer>
+// CHECK:      <key>extended_message</key>
+// CHECK:      <string>Calling &apos;malloc_wrapper_ret&apos;</string>
+// CHECK:      <key>message</key>
+// CHECK: <string>Calling &apos;malloc_wrapper_ret&apos;</string>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>event</string>
+// CHECK:      <key>location</key>
+// CHECK:      <dict>
+// CHECK:       <key>line</key><integer>80</integer>
+// CHECK:       <key>col</key><integer>1</integer>
+// CHECK:       <key>file</key><integer>0</integer>
+// CHECK:      </dict>
+// CHECK:      <key>depth</key><integer>1</integer>
+// CHECK:      <key>extended_message</key>
+// CHECK:      <string>Entered call from &apos;use_ret&apos;</string>
+// CHECK:      <key>message</key>
+// CHECK: <string>Entered call from &apos;use_ret&apos;</string>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>80</integer>
+// CHECK:            <key>col</key><integer>1</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>80</integer>
+// CHECK:            <key>col</key><integer>6</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>81</integer>
+// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>81</integer>
+// CHECK:            <key>col</key><integer>10</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>81</integer>
+// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>81</integer>
+// CHECK:            <key>col</key><integer>10</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>81</integer>
+// CHECK:            <key>col</key><integer>19</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>81</integer>
+// CHECK:            <key>col</key><integer>24</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>event</string>
+// CHECK:      <key>location</key>
+// CHECK:      <dict>
+// CHECK:       <key>line</key><integer>81</integer>
+// CHECK:       <key>col</key><integer>19</integer>
+// CHECK:       <key>file</key><integer>0</integer>
+// CHECK:      </dict>
+// CHECK:      <key>ranges</key>
+// CHECK:      <array>
+// CHECK:        <array>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>81</integer>
+// CHECK:          <key>col</key><integer>19</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>81</integer>
+// CHECK:          <key>col</key><integer>28</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:        </array>
+// CHECK:      </array>
+// CHECK:      <key>depth</key><integer>1</integer>
+// CHECK:      <key>extended_message</key>
+// CHECK:      <string>Memory is allocated</string>
+// CHECK:      <key>message</key>
+// CHECK: <string>Memory is allocated</string>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>event</string>
+// CHECK:      <key>location</key>
+// CHECK:      <dict>
+// CHECK:       <key>line</key><integer>85</integer>
+// CHECK:       <key>col</key><integer>9</integer>
+// CHECK:       <key>file</key><integer>0</integer>
+// CHECK:      </dict>
+// CHECK:      <key>ranges</key>
+// CHECK:      <array>
+// CHECK:        <array>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>85</integer>
+// CHECK:          <key>col</key><integer>9</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>85</integer>
+// CHECK:          <key>col</key><integer>28</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:        </array>
+// CHECK:      </array>
+// CHECK:      <key>depth</key><integer>1</integer>
+// CHECK:      <key>extended_message</key>
+// CHECK:      <string>Returned allocated memory</string>
+// CHECK:      <key>message</key>
+// CHECK: <string>Returned allocated memory</string>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>85</integer>
+// CHECK:            <key>col</key><integer>9</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>85</integer>
+// CHECK:            <key>col</key><integer>26</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>86</integer>
+// CHECK:            <key>col</key><integer>1</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>86</integer>
+// CHECK:            <key>col</key><integer>1</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>event</string>
+// CHECK:      <key>location</key>
+// CHECK:      <dict>
+// CHECK:       <key>line</key><integer>86</integer>
+// CHECK:       <key>col</key><integer>1</integer>
+// CHECK:       <key>file</key><integer>0</integer>
+// CHECK:      </dict>
+// CHECK:      <key>depth</key><integer>0</integer>
+// CHECK:      <key>extended_message</key>
+// CHECK:      <string>Memory is never released; potential leak of memory pointed to by &apos;v&apos;</string>
+// CHECK:      <key>message</key>
+// CHECK: <string>Memory is never released; potential leak of memory pointed to by &apos;v&apos;</string>
+// CHECK:     </dict>
+// CHECK:    </array>
+// CHECK:    <key>description</key><string>Memory is never released; potential leak of memory pointed to by &apos;v&apos;</string>
+// CHECK:    <key>category</key><string>Memory Error</string>
+// CHECK:    <key>type</key><string>Memory leak</string>
+// CHECK:   <key>issue_context_kind</key><string>function</string>
+// CHECK:   <key>issue_context</key><string>use_ret</string>
+// CHECK:   <key>location</key>
+// CHECK:   <dict>
+// CHECK:    <key>line</key><integer>86</integer>
+// CHECK:    <key>col</key><integer>1</integer>
+// CHECK:    <key>file</key><integer>0</integer>
+// CHECK:   </dict>
+// CHECK:   </dict>
+// CHECK:   <dict>
+// CHECK:    <key>path</key>
+// CHECK:    <array>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>90</integer>
+// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>90</integer>
+// CHECK:            <key>col</key><integer>7</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>92</integer>
+// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>92</integer>
+// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>92</integer>
+// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>92</integer>
+// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>92</integer>
+// CHECK:            <key>col</key><integer>15</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>92</integer>
+// CHECK:            <key>col</key><integer>20</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>event</string>
+// CHECK:      <key>location</key>
+// CHECK:      <dict>
+// CHECK:       <key>line</key><integer>92</integer>
+// CHECK:       <key>col</key><integer>15</integer>
+// CHECK:       <key>file</key><integer>0</integer>
+// CHECK:      </dict>
+// CHECK:      <key>ranges</key>
+// CHECK:      <array>
+// CHECK:        <array>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>92</integer>
+// CHECK:          <key>col</key><integer>15</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>92</integer>
+// CHECK:          <key>col</key><integer>24</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:        </array>
+// CHECK:      </array>
+// CHECK:      <key>depth</key><integer>0</integer>
+// CHECK:      <key>extended_message</key>
+// CHECK:      <string>Memory is allocated</string>
+// CHECK:      <key>message</key>
+// CHECK: <string>Memory is allocated</string>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>92</integer>
+// CHECK:            <key>col</key><integer>15</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>92</integer>
+// CHECK:            <key>col</key><integer>20</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>97</integer>
+// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>97</integer>
+// CHECK:            <key>col</key><integer>6</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>event</string>
+// CHECK:      <key>location</key>
+// CHECK:      <dict>
+// CHECK:       <key>line</key><integer>97</integer>
+// CHECK:       <key>col</key><integer>5</integer>
+// CHECK:       <key>file</key><integer>0</integer>
+// CHECK:      </dict>
+// CHECK:      <key>depth</key><integer>0</integer>
+// CHECK:      <key>extended_message</key>
+// CHECK:      <string>Memory is never released; potential leak of memory pointed to by &apos;m&apos;</string>
+// CHECK:      <key>message</key>
+// CHECK: <string>Memory is never released; potential leak of memory pointed to by &apos;m&apos;</string>
+// CHECK:     </dict>
+// CHECK:    </array>
+// CHECK:    <key>description</key><string>Memory is never released; potential leak of memory pointed to by &apos;m&apos;</string>
+// CHECK:    <key>category</key><string>Memory Error</string>
+// CHECK:    <key>type</key><string>Memory leak</string>
+// CHECK:   <key>issue_context_kind</key><string>function</string>
+// CHECK:   <key>issue_context</key><string>LeakedSymbol</string>
+// CHECK:   <key>location</key>
+// CHECK:   <dict>
+// CHECK:    <key>line</key><integer>97</integer>
+// CHECK:    <key>col</key><integer>5</integer>
+// CHECK:    <key>file</key><integer>0</integer>
+// CHECK:   </dict>
+// CHECK:   </dict>
+// CHECK:   <dict>
+// CHECK:    <key>path</key>
+// CHECK:    <array>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>event</string>
+// CHECK:      <key>location</key>
+// CHECK:      <dict>
+// CHECK:       <key>line</key><integer>105</integer>
+// CHECK:       <key>col</key><integer>5</integer>
+// CHECK:       <key>file</key><integer>0</integer>
+// CHECK:      </dict>
+// CHECK:      <key>ranges</key>
+// CHECK:      <array>
+// CHECK:        <array>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>105</integer>
+// CHECK:          <key>col</key><integer>5</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>105</integer>
+// CHECK:          <key>col</key><integer>25</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:        </array>
+// CHECK:      </array>
+// CHECK:      <key>depth</key><integer>0</integer>
+// CHECK:      <key>extended_message</key>
+// CHECK:      <string>Calling &apos;function_with_leak1&apos;</string>
+// CHECK:      <key>message</key>
+// CHECK: <string>Calling &apos;function_with_leak1&apos;</string>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>event</string>
+// CHECK:      <key>location</key>
+// CHECK:      <dict>
+// CHECK:       <key>line</key><integer>101</integer>
+// CHECK:       <key>col</key><integer>1</integer>
+// CHECK:       <key>file</key><integer>0</integer>
+// CHECK:      </dict>
+// CHECK:      <key>depth</key><integer>1</integer>
+// CHECK:      <key>extended_message</key>
+// CHECK:      <string>Entered call from &apos;use_function_with_leak1&apos;</string>
+// CHECK:      <key>message</key>
+// CHECK: <string>Entered call from &apos;use_function_with_leak1&apos;</string>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>101</integer>
+// CHECK:            <key>col</key><integer>1</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>101</integer>
+// CHECK:            <key>col</key><integer>6</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>102</integer>
+// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>102</integer>
+// CHECK:            <key>col</key><integer>8</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>102</integer>
+// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>102</integer>
+// CHECK:            <key>col</key><integer>8</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>102</integer>
+// CHECK:            <key>col</key><integer>22</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>102</integer>
+// CHECK:            <key>col</key><integer>27</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>event</string>
+// CHECK:      <key>location</key>
+// CHECK:      <dict>
+// CHECK:       <key>line</key><integer>102</integer>
+// CHECK:       <key>col</key><integer>22</integer>
+// CHECK:       <key>file</key><integer>0</integer>
+// CHECK:      </dict>
+// CHECK:      <key>ranges</key>
+// CHECK:      <array>
+// CHECK:        <array>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>102</integer>
+// CHECK:          <key>col</key><integer>22</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>102</integer>
+// CHECK:          <key>col</key><integer>31</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:        </array>
+// CHECK:      </array>
+// CHECK:      <key>depth</key><integer>1</integer>
+// CHECK:      <key>extended_message</key>
+// CHECK:      <string>Memory is allocated</string>
+// CHECK:      <key>message</key>
+// CHECK: <string>Memory is allocated</string>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>102</integer>
+// CHECK:            <key>col</key><integer>22</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>102</integer>
+// CHECK:            <key>col</key><integer>27</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>102</integer>
+// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>102</integer>
+// CHECK:            <key>col</key><integer>8</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>event</string>
+// CHECK:      <key>location</key>
+// CHECK:      <dict>
+// CHECK:       <key>line</key><integer>102</integer>
+// CHECK:       <key>col</key><integer>5</integer>
+// CHECK:       <key>file</key><integer>0</integer>
+// CHECK:      </dict>
+// CHECK:      <key>depth</key><integer>1</integer>
+// CHECK:      <key>extended_message</key>
+// CHECK:      <string>Memory is never released; potential leak of memory pointed to by &apos;x&apos;</string>
+// CHECK:      <key>message</key>
+// CHECK: <string>Memory is never released; potential leak of memory pointed to by &apos;x&apos;</string>
+// CHECK:     </dict>
+// CHECK:    </array>
+// CHECK:    <key>description</key><string>Memory is never released; potential leak of memory pointed to by &apos;x&apos;</string>
+// CHECK:    <key>category</key><string>Memory Error</string>
+// CHECK:    <key>type</key><string>Memory leak</string>
+// CHECK:   <key>issue_context_kind</key><string>function</string>
+// CHECK:   <key>issue_context</key><string>function_with_leak1</string>
+// CHECK:   <key>location</key>
+// CHECK:   <dict>
+// CHECK:    <key>line</key><integer>102</integer>
+// CHECK:    <key>col</key><integer>5</integer>
+// CHECK:    <key>file</key><integer>0</integer>
+// CHECK:   </dict>
+// CHECK:   </dict>
+// CHECK:   <dict>
+// CHECK:    <key>path</key>
+// CHECK:    <array>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>event</string>
+// CHECK:      <key>location</key>
+// CHECK:      <dict>
+// CHECK:       <key>line</key><integer>114</integer>
+// CHECK:       <key>col</key><integer>5</integer>
+// CHECK:       <key>file</key><integer>0</integer>
+// CHECK:      </dict>
+// CHECK:      <key>ranges</key>
+// CHECK:      <array>
+// CHECK:        <array>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>114</integer>
+// CHECK:          <key>col</key><integer>5</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>114</integer>
+// CHECK:          <key>col</key><integer>25</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:        </array>
+// CHECK:      </array>
+// CHECK:      <key>depth</key><integer>0</integer>
+// CHECK:      <key>extended_message</key>
+// CHECK:      <string>Calling &apos;function_with_leak2&apos;</string>
+// CHECK:      <key>message</key>
+// CHECK: <string>Calling &apos;function_with_leak2&apos;</string>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>event</string>
+// CHECK:      <key>location</key>
+// CHECK:      <dict>
+// CHECK:       <key>line</key><integer>109</integer>
+// CHECK:       <key>col</key><integer>1</integer>
+// CHECK:       <key>file</key><integer>0</integer>
+// CHECK:      </dict>
+// CHECK:      <key>depth</key><integer>1</integer>
+// CHECK:      <key>extended_message</key>
+// CHECK:      <string>Entered call from &apos;use_function_with_leak2&apos;</string>
+// CHECK:      <key>message</key>
+// CHECK: <string>Entered call from &apos;use_function_with_leak2&apos;</string>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>109</integer>
+// CHECK:            <key>col</key><integer>1</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>109</integer>
+// CHECK:            <key>col</key><integer>6</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>110</integer>
+// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>110</integer>
+// CHECK:            <key>col</key><integer>8</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>110</integer>
+// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>110</integer>
+// CHECK:            <key>col</key><integer>8</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>110</integer>
+// CHECK:            <key>col</key><integer>22</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>110</integer>
+// CHECK:            <key>col</key><integer>27</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>event</string>
+// CHECK:      <key>location</key>
+// CHECK:      <dict>
+// CHECK:       <key>line</key><integer>110</integer>
+// CHECK:       <key>col</key><integer>22</integer>
+// CHECK:       <key>file</key><integer>0</integer>
+// CHECK:      </dict>
+// CHECK:      <key>ranges</key>
+// CHECK:      <array>
+// CHECK:        <array>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>110</integer>
+// CHECK:          <key>col</key><integer>22</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>110</integer>
+// CHECK:          <key>col</key><integer>31</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:        </array>
+// CHECK:      </array>
+// CHECK:      <key>depth</key><integer>1</integer>
+// CHECK:      <key>extended_message</key>
+// CHECK:      <string>Memory is allocated</string>
+// CHECK:      <key>message</key>
+// CHECK: <string>Memory is allocated</string>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>110</integer>
+// CHECK:            <key>col</key><integer>22</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>110</integer>
+// CHECK:            <key>col</key><integer>27</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>111</integer>
+// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>111</integer>
+// CHECK:            <key>col</key><integer>7</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>event</string>
+// CHECK:      <key>location</key>
+// CHECK:      <dict>
+// CHECK:       <key>line</key><integer>111</integer>
+// CHECK:       <key>col</key><integer>5</integer>
+// CHECK:       <key>file</key><integer>0</integer>
+// CHECK:      </dict>
+// CHECK:      <key>depth</key><integer>1</integer>
+// CHECK:      <key>extended_message</key>
+// CHECK:      <string>Memory is never released; potential leak of memory pointed to by &apos;x&apos;</string>
+// CHECK:      <key>message</key>
+// CHECK: <string>Memory is never released; potential leak of memory pointed to by &apos;x&apos;</string>
+// CHECK:     </dict>
+// CHECK:    </array>
+// CHECK:    <key>description</key><string>Memory is never released; potential leak of memory pointed to by &apos;x&apos;</string>
+// CHECK:    <key>category</key><string>Memory Error</string>
+// CHECK:    <key>type</key><string>Memory leak</string>
+// CHECK:   <key>issue_context_kind</key><string>function</string>
+// CHECK:   <key>issue_context</key><string>function_with_leak2</string>
+// CHECK:   <key>location</key>
+// CHECK:   <dict>
+// CHECK:    <key>line</key><integer>111</integer>
+// CHECK:    <key>col</key><integer>5</integer>
+// CHECK:    <key>file</key><integer>0</integer>
+// CHECK:   </dict>
+// CHECK:   </dict>
+// CHECK:   <dict>
+// CHECK:    <key>path</key>
+// CHECK:    <array>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>event</string>
+// CHECK:      <key>location</key>
+// CHECK:      <dict>
+// CHECK:       <key>line</key><integer>123</integer>
+// CHECK:       <key>col</key><integer>5</integer>
+// CHECK:       <key>file</key><integer>0</integer>
+// CHECK:      </dict>
+// CHECK:      <key>ranges</key>
+// CHECK:      <array>
+// CHECK:        <array>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>123</integer>
+// CHECK:          <key>col</key><integer>5</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>123</integer>
+// CHECK:          <key>col</key><integer>26</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:        </array>
+// CHECK:      </array>
+// CHECK:      <key>depth</key><integer>0</integer>
+// CHECK:      <key>extended_message</key>
+// CHECK:      <string>Calling &apos;function_with_leak3&apos;</string>
+// CHECK:      <key>message</key>
+// CHECK: <string>Calling &apos;function_with_leak3&apos;</string>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>event</string>
+// CHECK:      <key>location</key>
+// CHECK:      <dict>
+// CHECK:       <key>line</key><integer>117</integer>
+// CHECK:       <key>col</key><integer>1</integer>
+// CHECK:       <key>file</key><integer>0</integer>
+// CHECK:      </dict>
+// CHECK:      <key>depth</key><integer>1</integer>
+// CHECK:      <key>extended_message</key>
+// CHECK:      <string>Entered call from &apos;use_function_with_leak3&apos;</string>
+// CHECK:      <key>message</key>
+// CHECK: <string>Entered call from &apos;use_function_with_leak3&apos;</string>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>117</integer>
+// CHECK:            <key>col</key><integer>1</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>117</integer>
+// CHECK:            <key>col</key><integer>6</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>118</integer>
+// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>118</integer>
+// CHECK:            <key>col</key><integer>8</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>118</integer>
+// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>118</integer>
+// CHECK:            <key>col</key><integer>8</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>118</integer>
+// CHECK:            <key>col</key><integer>22</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>118</integer>
+// CHECK:            <key>col</key><integer>27</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>event</string>
+// CHECK:      <key>location</key>
+// CHECK:      <dict>
+// CHECK:       <key>line</key><integer>118</integer>
+// CHECK:       <key>col</key><integer>22</integer>
+// CHECK:       <key>file</key><integer>0</integer>
+// CHECK:      </dict>
+// CHECK:      <key>ranges</key>
+// CHECK:      <array>
+// CHECK:        <array>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>118</integer>
+// CHECK:          <key>col</key><integer>22</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>118</integer>
+// CHECK:          <key>col</key><integer>31</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:        </array>
+// CHECK:      </array>
+// CHECK:      <key>depth</key><integer>1</integer>
+// CHECK:      <key>extended_message</key>
+// CHECK:      <string>Memory is allocated</string>
+// CHECK:      <key>message</key>
+// CHECK: <string>Memory is allocated</string>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>118</integer>
+// CHECK:            <key>col</key><integer>22</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>118</integer>
+// CHECK:            <key>col</key><integer>27</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>119</integer>
+// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>119</integer>
+// CHECK:            <key>col</key><integer>6</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>119</integer>
+// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>119</integer>
+// CHECK:            <key>col</key><integer>6</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>119</integer>
+// CHECK:            <key>col</key><integer>9</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>119</integer>
+// CHECK:            <key>col</key><integer>9</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>119</integer>
+// CHECK:            <key>col</key><integer>9</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>119</integer>
+// CHECK:            <key>col</key><integer>9</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>120</integer>
+// CHECK:            <key>col</key><integer>9</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>120</integer>
+// CHECK:            <key>col</key><integer>9</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>event</string>
+// CHECK:      <key>location</key>
+// CHECK:      <dict>
+// CHECK:       <key>line</key><integer>120</integer>
+// CHECK:       <key>col</key><integer>9</integer>
+// CHECK:       <key>file</key><integer>0</integer>
+// CHECK:      </dict>
+// CHECK:      <key>depth</key><integer>1</integer>
+// CHECK:      <key>extended_message</key>
+// CHECK:      <string>Memory is never released; potential leak of memory pointed to by &apos;x&apos;</string>
+// CHECK:      <key>message</key>
+// CHECK: <string>Memory is never released; potential leak of memory pointed to by &apos;x&apos;</string>
+// CHECK:     </dict>
+// CHECK:    </array>
+// CHECK:    <key>description</key><string>Memory is never released; potential leak of memory pointed to by &apos;x&apos;</string>
+// CHECK:    <key>category</key><string>Memory Error</string>
+// CHECK:    <key>type</key><string>Memory leak</string>
+// CHECK:   <key>issue_context_kind</key><string>function</string>
+// CHECK:   <key>issue_context</key><string>function_with_leak3</string>
+// CHECK:   <key>location</key>
+// CHECK:   <dict>
+// CHECK:    <key>line</key><integer>120</integer>
+// CHECK:    <key>col</key><integer>9</integer>
+// CHECK:    <key>file</key><integer>0</integer>
+// CHECK:   </dict>
+// CHECK:   </dict>
+// CHECK:   <dict>
+// CHECK:    <key>path</key>
+// CHECK:    <array>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>event</string>
+// CHECK:      <key>location</key>
+// CHECK:      <dict>
+// CHECK:       <key>line</key><integer>134</integer>
+// CHECK:       <key>col</key><integer>5</integer>
+// CHECK:       <key>file</key><integer>0</integer>
+// CHECK:      </dict>
+// CHECK:      <key>ranges</key>
+// CHECK:      <array>
+// CHECK:        <array>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>134</integer>
+// CHECK:          <key>col</key><integer>5</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>134</integer>
+// CHECK:          <key>col</key><integer>26</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:        </array>
+// CHECK:      </array>
+// CHECK:      <key>depth</key><integer>0</integer>
+// CHECK:      <key>extended_message</key>
+// CHECK:      <string>Calling &apos;function_with_leak4&apos;</string>
+// CHECK:      <key>message</key>
+// CHECK: <string>Calling &apos;function_with_leak4&apos;</string>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>event</string>
+// CHECK:      <key>location</key>
+// CHECK:      <dict>
+// CHECK:       <key>line</key><integer>126</integer>
+// CHECK:       <key>col</key><integer>1</integer>
+// CHECK:       <key>file</key><integer>0</integer>
+// CHECK:      </dict>
+// CHECK:      <key>depth</key><integer>1</integer>
+// CHECK:      <key>extended_message</key>
+// CHECK:      <string>Entered call from &apos;use_function_with_leak4&apos;</string>
+// CHECK:      <key>message</key>
+// CHECK: <string>Entered call from &apos;use_function_with_leak4&apos;</string>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>126</integer>
+// CHECK:            <key>col</key><integer>1</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>126</integer>
+// CHECK:            <key>col</key><integer>6</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>127</integer>
+// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>127</integer>
+// CHECK:            <key>col</key><integer>8</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>127</integer>
+// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>127</integer>
+// CHECK:            <key>col</key><integer>8</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>127</integer>
+// CHECK:            <key>col</key><integer>22</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>127</integer>
+// CHECK:            <key>col</key><integer>27</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>event</string>
+// CHECK:      <key>location</key>
+// CHECK:      <dict>
+// CHECK:       <key>line</key><integer>127</integer>
+// CHECK:       <key>col</key><integer>22</integer>
+// CHECK:       <key>file</key><integer>0</integer>
+// CHECK:      </dict>
+// CHECK:      <key>ranges</key>
+// CHECK:      <array>
+// CHECK:        <array>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>127</integer>
+// CHECK:          <key>col</key><integer>22</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>127</integer>
+// CHECK:          <key>col</key><integer>31</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:        </array>
+// CHECK:      </array>
+// CHECK:      <key>depth</key><integer>1</integer>
+// CHECK:      <key>extended_message</key>
+// CHECK:      <string>Memory is allocated</string>
+// CHECK:      <key>message</key>
+// CHECK: <string>Memory is allocated</string>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>127</integer>
+// CHECK:            <key>col</key><integer>22</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>127</integer>
+// CHECK:            <key>col</key><integer>27</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>128</integer>
+// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>128</integer>
+// CHECK:            <key>col</key><integer>6</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>128</integer>
+// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>128</integer>
+// CHECK:            <key>col</key><integer>6</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>128</integer>
+// CHECK:            <key>col</key><integer>9</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>128</integer>
+// CHECK:            <key>col</key><integer>9</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>128</integer>
+// CHECK:            <key>col</key><integer>9</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>128</integer>
+// CHECK:            <key>col</key><integer>9</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>131</integer>
+// CHECK:            <key>col</key><integer>9</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>131</integer>
+// CHECK:            <key>col</key><integer>9</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>event</string>
+// CHECK:      <key>location</key>
+// CHECK:      <dict>
+// CHECK:       <key>line</key><integer>131</integer>
+// CHECK:       <key>col</key><integer>9</integer>
+// CHECK:       <key>file</key><integer>0</integer>
+// CHECK:      </dict>
+// CHECK:      <key>depth</key><integer>1</integer>
+// CHECK:      <key>extended_message</key>
+// CHECK:      <string>Memory is never released; potential leak of memory pointed to by &apos;x&apos;</string>
+// CHECK:      <key>message</key>
+// CHECK: <string>Memory is never released; potential leak of memory pointed to by &apos;x&apos;</string>
+// CHECK:     </dict>
+// CHECK:    </array>
+// CHECK:    <key>description</key><string>Memory is never released; potential leak of memory pointed to by &apos;x&apos;</string>
+// CHECK:    <key>category</key><string>Memory Error</string>
+// CHECK:    <key>type</key><string>Memory leak</string>
+// CHECK:   <key>issue_context_kind</key><string>function</string>
+// CHECK:   <key>issue_context</key><string>function_with_leak4</string>
+// CHECK:   <key>location</key>
+// CHECK:   <dict>
+// CHECK:    <key>line</key><integer>131</integer>
+// CHECK:    <key>col</key><integer>9</integer>
+// CHECK:    <key>file</key><integer>0</integer>
+// CHECK:   </dict>
+// CHECK:   </dict>
+// CHECK:   <dict>
+// CHECK:    <key>path</key>
+// CHECK:    <array>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>event</string>
+// CHECK:      <key>location</key>
+// CHECK:      <dict>
+// CHECK:       <key>line</key><integer>145</integer>
+// CHECK:       <key>col</key><integer>5</integer>
+// CHECK:       <key>file</key><integer>0</integer>
+// CHECK:      </dict>
+// CHECK:      <key>ranges</key>
+// CHECK:      <array>
+// CHECK:        <array>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>145</integer>
+// CHECK:          <key>col</key><integer>5</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>145</integer>
+// CHECK:          <key>col</key><integer>25</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:        </array>
+// CHECK:      </array>
+// CHECK:      <key>depth</key><integer>0</integer>
+// CHECK:      <key>extended_message</key>
+// CHECK:      <string>Calling &apos;function_with_leak5&apos;</string>
+// CHECK:      <key>message</key>
+// CHECK: <string>Calling &apos;function_with_leak5&apos;</string>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>event</string>
+// CHECK:      <key>location</key>
+// CHECK:      <dict>
+// CHECK:       <key>line</key><integer>140</integer>
+// CHECK:       <key>col</key><integer>1</integer>
+// CHECK:       <key>file</key><integer>0</integer>
+// CHECK:      </dict>
+// CHECK:      <key>depth</key><integer>1</integer>
+// CHECK:      <key>extended_message</key>
+// CHECK:      <string>Entered call from &apos;use_function_with_leak5&apos;</string>
+// CHECK:      <key>message</key>
+// CHECK: <string>Entered call from &apos;use_function_with_leak5&apos;</string>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>140</integer>
+// CHECK:            <key>col</key><integer>1</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>140</integer>
+// CHECK:            <key>col</key><integer>6</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>141</integer>
+// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>141</integer>
+// CHECK:            <key>col</key><integer>8</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>141</integer>
+// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>141</integer>
+// CHECK:            <key>col</key><integer>8</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>141</integer>
+// CHECK:            <key>col</key><integer>22</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>141</integer>
+// CHECK:            <key>col</key><integer>27</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>event</string>
+// CHECK:      <key>location</key>
+// CHECK:      <dict>
+// CHECK:       <key>line</key><integer>141</integer>
+// CHECK:       <key>col</key><integer>22</integer>
+// CHECK:       <key>file</key><integer>0</integer>
+// CHECK:      </dict>
+// CHECK:      <key>ranges</key>
+// CHECK:      <array>
+// CHECK:        <array>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>141</integer>
+// CHECK:          <key>col</key><integer>22</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>141</integer>
+// CHECK:          <key>col</key><integer>31</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:        </array>
+// CHECK:      </array>
+// CHECK:      <key>depth</key><integer>1</integer>
+// CHECK:      <key>extended_message</key>
+// CHECK:      <string>Memory is allocated</string>
+// CHECK:      <key>message</key>
+// CHECK: <string>Memory is allocated</string>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>141</integer>
+// CHECK:            <key>col</key><integer>22</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>141</integer>
+// CHECK:            <key>col</key><integer>27</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>142</integer>
+// CHECK:            <key>col</key><integer>12</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>142</integer>
+// CHECK:            <key>col</key><integer>27</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>event</string>
+// CHECK:      <key>location</key>
+// CHECK:      <dict>
+// CHECK:       <key>line</key><integer>142</integer>
+// CHECK:       <key>col</key><integer>12</integer>
+// CHECK:       <key>file</key><integer>0</integer>
+// CHECK:      </dict>
+// CHECK:      <key>depth</key><integer>1</integer>
+// CHECK:      <key>extended_message</key>
+// CHECK:      <string>Memory is never released; potential leak of memory pointed to by &apos;x&apos;</string>
+// CHECK:      <key>message</key>
+// CHECK: <string>Memory is never released; potential leak of memory pointed to by &apos;x&apos;</string>
+// CHECK:     </dict>
+// CHECK:    </array>
+// CHECK:    <key>description</key><string>Memory is never released; potential leak of memory pointed to by &apos;x&apos;</string>
+// CHECK:    <key>category</key><string>Memory Error</string>
+// CHECK:    <key>type</key><string>Memory leak</string>
+// CHECK:   <key>issue_context_kind</key><string>function</string>
+// CHECK:   <key>issue_context</key><string>function_with_leak5</string>
+// CHECK:   <key>location</key>
+// CHECK:   <dict>
+// CHECK:    <key>line</key><integer>142</integer>
+// CHECK:    <key>col</key><integer>12</integer>
+// CHECK:    <key>file</key><integer>0</integer>
+// CHECK:   </dict>
+// CHECK:   </dict>
+// CHECK:   <dict>
+// CHECK:    <key>path</key>
+// CHECK:    <array>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>event</string>
+// CHECK:      <key>location</key>
+// CHECK:      <dict>
+// CHECK:       <key>line</key><integer>156</integer>
+// CHECK:       <key>col</key><integer>5</integer>
+// CHECK:       <key>file</key><integer>0</integer>
+// CHECK:      </dict>
+// CHECK:      <key>ranges</key>
+// CHECK:      <array>
+// CHECK:        <array>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>156</integer>
+// CHECK:          <key>col</key><integer>5</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>156</integer>
+// CHECK:          <key>col</key><integer>25</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:        </array>
+// CHECK:      </array>
+// CHECK:      <key>depth</key><integer>0</integer>
+// CHECK:      <key>extended_message</key>
+// CHECK:      <string>Calling &apos;function_with_leak6&apos;</string>
+// CHECK:      <key>message</key>
+// CHECK: <string>Calling &apos;function_with_leak6&apos;</string>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>event</string>
+// CHECK:      <key>location</key>
+// CHECK:      <dict>
+// CHECK:       <key>line</key><integer>151</integer>
+// CHECK:       <key>col</key><integer>1</integer>
+// CHECK:       <key>file</key><integer>0</integer>
+// CHECK:      </dict>
+// CHECK:      <key>depth</key><integer>1</integer>
+// CHECK:      <key>extended_message</key>
+// CHECK:      <string>Entered call from &apos;use_function_with_leak6&apos;</string>
+// CHECK:      <key>message</key>
+// CHECK: <string>Entered call from &apos;use_function_with_leak6&apos;</string>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>151</integer>
+// CHECK:            <key>col</key><integer>1</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>151</integer>
+// CHECK:            <key>col</key><integer>6</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>152</integer>
+// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>152</integer>
+// CHECK:            <key>col</key><integer>8</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>152</integer>
+// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>152</integer>
+// CHECK:            <key>col</key><integer>8</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>152</integer>
+// CHECK:            <key>col</key><integer>22</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>152</integer>
+// CHECK:            <key>col</key><integer>27</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>event</string>
+// CHECK:      <key>location</key>
+// CHECK:      <dict>
+// CHECK:       <key>line</key><integer>152</integer>
+// CHECK:       <key>col</key><integer>22</integer>
+// CHECK:       <key>file</key><integer>0</integer>
+// CHECK:      </dict>
+// CHECK:      <key>ranges</key>
+// CHECK:      <array>
+// CHECK:        <array>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>152</integer>
+// CHECK:          <key>col</key><integer>22</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>152</integer>
+// CHECK:          <key>col</key><integer>31</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:        </array>
+// CHECK:      </array>
+// CHECK:      <key>depth</key><integer>1</integer>
+// CHECK:      <key>extended_message</key>
+// CHECK:      <string>Memory is allocated</string>
+// CHECK:      <key>message</key>
+// CHECK: <string>Memory is allocated</string>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>152</integer>
+// CHECK:            <key>col</key><integer>22</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>152</integer>
+// CHECK:            <key>col</key><integer>27</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>153</integer>
+// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>153</integer>
+// CHECK:            <key>col</key><integer>20</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>event</string>
+// CHECK:      <key>location</key>
+// CHECK:      <dict>
+// CHECK:       <key>line</key><integer>153</integer>
+// CHECK:       <key>col</key><integer>5</integer>
+// CHECK:       <key>file</key><integer>0</integer>
+// CHECK:      </dict>
+// CHECK:      <key>depth</key><integer>1</integer>
+// CHECK:      <key>extended_message</key>
+// CHECK:      <string>Memory is never released; potential leak of memory pointed to by &apos;x&apos;</string>
+// CHECK:      <key>message</key>
+// CHECK: <string>Memory is never released; potential leak of memory pointed to by &apos;x&apos;</string>
+// CHECK:     </dict>
+// CHECK:    </array>
+// CHECK:    <key>description</key><string>Memory is never released; potential leak of memory pointed to by &apos;x&apos;</string>
+// CHECK:    <key>category</key><string>Memory Error</string>
+// CHECK:    <key>type</key><string>Memory leak</string>
+// CHECK:   <key>issue_context_kind</key><string>function</string>
+// CHECK:   <key>issue_context</key><string>function_with_leak6</string>
+// CHECK:   <key>location</key>
+// CHECK:   <dict>
+// CHECK:    <key>line</key><integer>153</integer>
+// CHECK:    <key>col</key><integer>5</integer>
+// CHECK:    <key>file</key><integer>0</integer>
+// CHECK:   </dict>
+// CHECK:   </dict>
+// CHECK:   <dict>
+// CHECK:    <key>path</key>
+// CHECK:    <array>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>event</string>
+// CHECK:      <key>location</key>
+// CHECK:      <dict>
+// CHECK:       <key>line</key><integer>168</integer>
+// CHECK:       <key>col</key><integer>5</integer>
+// CHECK:       <key>file</key><integer>0</integer>
+// CHECK:      </dict>
+// CHECK:      <key>ranges</key>
+// CHECK:      <array>
+// CHECK:        <array>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>168</integer>
+// CHECK:          <key>col</key><integer>5</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>168</integer>
+// CHECK:          <key>col</key><integer>25</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:        </array>
+// CHECK:      </array>
+// CHECK:      <key>depth</key><integer>0</integer>
+// CHECK:      <key>extended_message</key>
+// CHECK:      <string>Calling &apos;function_with_leak7&apos;</string>
+// CHECK:      <key>message</key>
+// CHECK: <string>Calling &apos;function_with_leak7&apos;</string>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>event</string>
+// CHECK:      <key>location</key>
+// CHECK:      <dict>
+// CHECK:       <key>line</key><integer>164</integer>
+// CHECK:       <key>col</key><integer>1</integer>
+// CHECK:       <key>file</key><integer>0</integer>
+// CHECK:      </dict>
+// CHECK:      <key>depth</key><integer>1</integer>
+// CHECK:      <key>extended_message</key>
+// CHECK:      <string>Entered call from &apos;use_function_with_leak7&apos;</string>
+// CHECK:      <key>message</key>
+// CHECK: <string>Entered call from &apos;use_function_with_leak7&apos;</string>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>164</integer>
+// CHECK:            <key>col</key><integer>1</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>164</integer>
+// CHECK:            <key>col</key><integer>6</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>165</integer>
+// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>165</integer>
+// CHECK:            <key>col</key><integer>10</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>165</integer>
+// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>165</integer>
+// CHECK:            <key>col</key><integer>10</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>165</integer>
+// CHECK:            <key>col</key><integer>19</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>165</integer>
+// CHECK:            <key>col</key><integer>24</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>event</string>
+// CHECK:      <key>location</key>
+// CHECK:      <dict>
+// CHECK:       <key>line</key><integer>165</integer>
+// CHECK:       <key>col</key><integer>19</integer>
+// CHECK:       <key>file</key><integer>0</integer>
+// CHECK:      </dict>
+// CHECK:      <key>ranges</key>
+// CHECK:      <array>
+// CHECK:        <array>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>165</integer>
+// CHECK:          <key>col</key><integer>19</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>165</integer>
+// CHECK:          <key>col</key><integer>28</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:        </array>
+// CHECK:      </array>
+// CHECK:      <key>depth</key><integer>1</integer>
+// CHECK:      <key>extended_message</key>
+// CHECK:      <string>Memory is allocated</string>
+// CHECK:      <key>message</key>
+// CHECK: <string>Memory is allocated</string>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>event</string>
+// CHECK:      <key>location</key>
+// CHECK:      <dict>
+// CHECK:       <key>line</key><integer>168</integer>
+// CHECK:       <key>col</key><integer>5</integer>
+// CHECK:       <key>file</key><integer>0</integer>
+// CHECK:      </dict>
+// CHECK:      <key>ranges</key>
+// CHECK:      <array>
+// CHECK:        <array>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>168</integer>
+// CHECK:          <key>col</key><integer>5</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>168</integer>
+// CHECK:          <key>col</key><integer>25</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:        </array>
+// CHECK:      </array>
+// CHECK:      <key>depth</key><integer>1</integer>
+// CHECK:      <key>extended_message</key>
+// CHECK:      <string>Returned allocated memory</string>
+// CHECK:      <key>message</key>
+// CHECK: <string>Returned allocated memory</string>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>control</string>
+// CHECK:      <key>edges</key>
+// CHECK:       <array>
+// CHECK:        <dict>
+// CHECK:         <key>start</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>168</integer>
+// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>168</integer>
+// CHECK:            <key>col</key><integer>23</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:         <key>end</key>
+// CHECK:          <array>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>169</integer>
+// CHECK:            <key>col</key><integer>1</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:           <dict>
+// CHECK:            <key>line</key><integer>169</integer>
+// CHECK:            <key>col</key><integer>1</integer>
+// CHECK:            <key>file</key><integer>0</integer>
+// CHECK:           </dict>
+// CHECK:          </array>
+// CHECK:        </dict>
+// CHECK:       </array>
+// CHECK:     </dict>
+// CHECK:     <dict>
+// CHECK:      <key>kind</key><string>event</string>
+// CHECK:      <key>location</key>
+// CHECK:      <dict>
+// CHECK:       <key>line</key><integer>169</integer>
+// CHECK:       <key>col</key><integer>1</integer>
+// CHECK:       <key>file</key><integer>0</integer>
+// CHECK:      </dict>
+// CHECK:      <key>depth</key><integer>0</integer>
+// CHECK:      <key>extended_message</key>
+// CHECK:      <string>Memory is never released; potential leak</string>
+// CHECK:      <key>message</key>
+// CHECK: <string>Memory is never released; potential leak</string>
+// CHECK:     </dict>
+// CHECK:    </array>
+// CHECK:    <key>description</key><string>Memory is never released; potential leak</string>
+// CHECK:    <key>category</key><string>Memory Error</string>
+// CHECK:    <key>type</key><string>Memory leak</string>
+// CHECK:   <key>issue_context_kind</key><string>function</string>
+// CHECK:   <key>issue_context</key><string>use_function_with_leak7</string>
+// CHECK:   <key>location</key>
+// CHECK:   <dict>
+// CHECK:    <key>line</key><integer>169</integer>
+// CHECK:    <key>col</key><integer>1</integer>
+// CHECK:    <key>file</key><integer>0</integer>
+// CHECK:   </dict>
+// CHECK:   </dict>
+// CHECK:  </array>
+// CHECK: </dict>
+// CHECK: </plist>

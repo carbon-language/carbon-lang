@@ -40,7 +40,7 @@ void test_bug_2() {
 // CHECK:           </dict>
 // CHECK:           <dict>
 // CHECK:            <key>line</key><integer>9</integer>
-// CHECK:            <key>col</key><integer>3</integer>
+// CHECK:            <key>col</key><integer>5</integer>
 // CHECK:            <key>file</key><integer>0</integer>
 // CHECK:           </dict>
 // CHECK:          </array>
@@ -53,7 +53,7 @@ void test_bug_2() {
 // CHECK:           </dict>
 // CHECK:           <dict>
 // CHECK:            <key>line</key><integer>10</integer>
-// CHECK:            <key>col</key><integer>3</integer>
+// CHECK:            <key>col</key><integer>5</integer>
 // CHECK:            <key>file</key><integer>0</integer>
 // CHECK:           </dict>
 // CHECK:          </array>
@@ -117,7 +117,7 @@ void test_bug_2() {
 // CHECK:           </dict>
 // CHECK:           <dict>
 // CHECK:            <key>line</key><integer>4</integer>
-// CHECK:            <key>col</key><integer>1</integer>
+// CHECK:            <key>col</key><integer>6</integer>
 // CHECK:            <key>file</key><integer>0</integer>
 // CHECK:           </dict>
 // CHECK:          </array>
@@ -182,3 +182,4 @@ void test_bug_2() {
 // CHECK:  </array>
 // CHECK: </dict>
 // CHECK: </plist>
+

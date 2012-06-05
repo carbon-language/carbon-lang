@@ -105,7 +105,7 @@ int test_cond_assign() {
 // CHECK:           </dict>
 // CHECK:           <dict>
 // CHECK:            <key>line</key><integer>5</integer>
-// CHECK:            <key>col</key><integer>3</integer>
+// CHECK:            <key>col</key><integer>5</integer>
 // CHECK:            <key>file</key><integer>0</integer>
 // CHECK:           </dict>
 // CHECK:          </array>
@@ -184,7 +184,7 @@ int test_cond_assign() {
 // CHECK:           </dict>
 // CHECK:           <dict>
 // CHECK:            <key>line</key><integer>10</integer>
-// CHECK:            <key>col</key><integer>3</integer>
+// CHECK:            <key>col</key><integer>5</integer>
 // CHECK:            <key>file</key><integer>0</integer>
 // CHECK:           </dict>
 // CHECK:          </array>
@@ -263,7 +263,7 @@ int test_cond_assign() {
 // CHECK:           </dict>
 // CHECK:           <dict>
 // CHECK:            <key>line</key><integer>16</integer>
-// CHECK:            <key>col</key><integer>3</integer>
+// CHECK:            <key>col</key><integer>5</integer>
 // CHECK:            <key>file</key><integer>0</integer>
 // CHECK:           </dict>
 // CHECK:          </array>
@@ -342,7 +342,7 @@ int test_cond_assign() {
 // CHECK:           </dict>
 // CHECK:           <dict>
 // CHECK:            <key>line</key><integer>23</integer>
-// CHECK:            <key>col</key><integer>3</integer>
+// CHECK:            <key>col</key><integer>4</integer>
 // CHECK:            <key>file</key><integer>0</integer>
 // CHECK:           </dict>
 // CHECK:          </array>
@@ -355,7 +355,7 @@ int test_cond_assign() {
 // CHECK:           </dict>
 // CHECK:           <dict>
 // CHECK:            <key>line</key><integer>23</integer>
-// CHECK:            <key>col</key><integer>8</integer>
+// CHECK:            <key>col</key><integer>7</integer>
 // CHECK:            <key>file</key><integer>0</integer>
 // CHECK:           </dict>
 // CHECK:          </array>
@@ -405,7 +405,7 @@ int test_cond_assign() {
 // CHECK:           </dict>
 // CHECK:           <dict>
 // CHECK:            <key>line</key><integer>23</integer>
-// CHECK:            <key>col</key><integer>8</integer>
+// CHECK:            <key>col</key><integer>7</integer>
 // CHECK:            <key>file</key><integer>0</integer>
 // CHECK:           </dict>
 // CHECK:          </array>
@@ -484,7 +484,7 @@ int test_cond_assign() {
 // CHECK:           </dict>
 // CHECK:           <dict>
 // CHECK:            <key>line</key><integer>29</integer>
-// CHECK:            <key>col</key><integer>3</integer>
+// CHECK:            <key>col</key><integer>4</integer>
 // CHECK:            <key>file</key><integer>0</integer>
 // CHECK:           </dict>
 // CHECK:          </array>
@@ -497,7 +497,7 @@ int test_cond_assign() {
 // CHECK:           </dict>
 // CHECK:           <dict>
 // CHECK:            <key>line</key><integer>29</integer>
-// CHECK:            <key>col</key><integer>8</integer>
+// CHECK:            <key>col</key><integer>7</integer>
 // CHECK:            <key>file</key><integer>0</integer>
 // CHECK:           </dict>
 // CHECK:          </array>
@@ -518,7 +518,7 @@ int test_cond_assign() {
 // CHECK:           </dict>
 // CHECK:           <dict>
 // CHECK:            <key>line</key><integer>29</integer>
-// CHECK:            <key>col</key><integer>8</integer>
+// CHECK:            <key>col</key><integer>7</integer>
 // CHECK:            <key>file</key><integer>0</integer>
 // CHECK:           </dict>
 // CHECK:          </array>
@@ -531,7 +531,7 @@ int test_cond_assign() {
 // CHECK:           </dict>
 // CHECK:           <dict>
 // CHECK:            <key>line</key><integer>31</integer>
-// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>col</key><integer>7</integer>
 // CHECK:            <key>file</key><integer>0</integer>
 // CHECK:           </dict>
 // CHECK:          </array>
@@ -552,7 +552,7 @@ int test_cond_assign() {
 // CHECK:           </dict>
 // CHECK:           <dict>
 // CHECK:            <key>line</key><integer>31</integer>
-// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>col</key><integer>7</integer>
 // CHECK:            <key>file</key><integer>0</integer>
 // CHECK:           </dict>
 // CHECK:          </array>
@@ -631,7 +631,7 @@ int test_cond_assign() {
 // CHECK:           </dict>
 // CHECK:           <dict>
 // CHECK:            <key>line</key><integer>37</integer>
-// CHECK:            <key>col</key><integer>3</integer>
+// CHECK:            <key>col</key><integer>8</integer>
 // CHECK:            <key>file</key><integer>0</integer>
 // CHECK:           </dict>
 // CHECK:          </array>
@@ -744,7 +744,7 @@ int test_cond_assign() {
 // CHECK:           </dict>
 // CHECK:           <dict>
 // CHECK:            <key>line</key><integer>44</integer>
-// CHECK:            <key>col</key><integer>3</integer>
+// CHECK:            <key>col</key><integer>4</integer>
 // CHECK:            <key>file</key><integer>0</integer>
 // CHECK:           </dict>
 // CHECK:          </array>
@@ -791,7 +791,7 @@ int test_cond_assign() {
 // CHECK:           </dict>
 // CHECK:           <dict>
 // CHECK:            <key>line</key><integer>47</integer>
-// CHECK:            <key>col</key><integer>3</integer>
+// CHECK:            <key>col</key><integer>4</integer>
 // CHECK:            <key>file</key><integer>0</integer>
 // CHECK:           </dict>
 // CHECK:          </array>
@@ -812,7 +812,7 @@ int test_cond_assign() {
 // CHECK:           </dict>
 // CHECK:           <dict>
 // CHECK:            <key>line</key><integer>47</integer>
-// CHECK:            <key>col</key><integer>3</integer>
+// CHECK:            <key>col</key><integer>4</integer>
 // CHECK:            <key>file</key><integer>0</integer>
 // CHECK:           </dict>
 // CHECK:          </array>
@@ -859,7 +859,7 @@ int test_cond_assign() {
 // CHECK:           </dict>
 // CHECK:           <dict>
 // CHECK:            <key>line</key><integer>50</integer>
-// CHECK:            <key>col</key><integer>3</integer>
+// CHECK:            <key>col</key><integer>5</integer>
 // CHECK:            <key>file</key><integer>0</integer>
 // CHECK:           </dict>
 // CHECK:          </array>
@@ -880,7 +880,7 @@ int test_cond_assign() {
 // CHECK:           </dict>
 // CHECK:           <dict>
 // CHECK:            <key>line</key><integer>50</integer>
-// CHECK:            <key>col</key><integer>3</integer>
+// CHECK:            <key>col</key><integer>5</integer>
 // CHECK:            <key>file</key><integer>0</integer>
 // CHECK:           </dict>
 // CHECK:          </array>
@@ -959,7 +959,7 @@ int test_cond_assign() {
 // CHECK:           </dict>
 // CHECK:           <dict>
 // CHECK:            <key>line</key><integer>56</integer>
-// CHECK:            <key>col</key><integer>3</integer>
+// CHECK:            <key>col</key><integer>5</integer>
 // CHECK:            <key>file</key><integer>0</integer>
 // CHECK:           </dict>
 // CHECK:          </array>
@@ -972,7 +972,7 @@ int test_cond_assign() {
 // CHECK:           </dict>
 // CHECK:           <dict>
 // CHECK:            <key>line</key><integer>57</integer>
-// CHECK:            <key>col</key><integer>3</integer>
+// CHECK:            <key>col</key><integer>4</integer>
 // CHECK:            <key>file</key><integer>0</integer>
 // CHECK:           </dict>
 // CHECK:          </array>
@@ -993,7 +993,7 @@ int test_cond_assign() {
 // CHECK:           </dict>
 // CHECK:           <dict>
 // CHECK:            <key>line</key><integer>57</integer>
-// CHECK:            <key>col</key><integer>3</integer>
+// CHECK:            <key>col</key><integer>4</integer>
 // CHECK:            <key>file</key><integer>0</integer>
 // CHECK:           </dict>
 // CHECK:          </array>
@@ -1069,7 +1069,7 @@ int test_cond_assign() {
 // CHECK:           </dict>
 // CHECK:           <dict>
 // CHECK:            <key>line</key><integer>59</integer>
-// CHECK:            <key>col</key><integer>3</integer>
+// CHECK:            <key>col</key><integer>8</integer>
 // CHECK:            <key>file</key><integer>0</integer>
 // CHECK:           </dict>
 // CHECK:          </array>
@@ -1090,7 +1090,7 @@ int test_cond_assign() {
 // CHECK:           </dict>
 // CHECK:           <dict>
 // CHECK:            <key>line</key><integer>59</integer>
-// CHECK:            <key>col</key><integer>3</integer>
+// CHECK:            <key>col</key><integer>8</integer>
 // CHECK:            <key>file</key><integer>0</integer>
 // CHECK:           </dict>
 // CHECK:          </array>
@@ -1103,7 +1103,7 @@ int test_cond_assign() {
 // CHECK:           </dict>
 // CHECK:           <dict>
 // CHECK:            <key>line</key><integer>59</integer>
-// CHECK:            <key>col</key><integer>11</integer>
+// CHECK:            <key>col</key><integer>10</integer>
 // CHECK:            <key>file</key><integer>0</integer>
 // CHECK:           </dict>
 // CHECK:          </array>
@@ -1169,7 +1169,7 @@ int test_cond_assign() {
 // CHECK:           </dict>
 // CHECK:           <dict>
 // CHECK:            <key>line</key><integer>76</integer>
-// CHECK:            <key>col</key><integer>3</integer>
+// CHECK:            <key>col</key><integer>4</integer>
 // CHECK:            <key>file</key><integer>0</integer>
 // CHECK:           </dict>
 // CHECK:          </array>
@@ -1216,7 +1216,7 @@ int test_cond_assign() {
 // CHECK:           </dict>
 // CHECK:           <dict>
 // CHECK:            <key>line</key><integer>76</integer>
-// CHECK:            <key>col</key><integer>3</integer>
+// CHECK:            <key>col</key><integer>4</integer>
 // CHECK:            <key>file</key><integer>0</integer>
 // CHECK:           </dict>
 // CHECK:          </array>
@@ -1237,7 +1237,7 @@ int test_cond_assign() {
 // CHECK:           </dict>
 // CHECK:           <dict>
 // CHECK:            <key>line</key><integer>76</integer>
-// CHECK:            <key>col</key><integer>3</integer>
+// CHECK:            <key>col</key><integer>4</integer>
 // CHECK:            <key>file</key><integer>0</integer>
 // CHECK:           </dict>
 // CHECK:          </array>
@@ -1250,7 +1250,7 @@ int test_cond_assign() {
 // CHECK:           </dict>
 // CHECK:           <dict>
 // CHECK:            <key>line</key><integer>77</integer>
-// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>col</key><integer>7</integer>
 // CHECK:            <key>file</key><integer>0</integer>
 // CHECK:           </dict>
 // CHECK:          </array>
@@ -1271,7 +1271,7 @@ int test_cond_assign() {
 // CHECK:           </dict>
 // CHECK:           <dict>
 // CHECK:            <key>line</key><integer>77</integer>
-// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>col</key><integer>7</integer>
 // CHECK:            <key>file</key><integer>0</integer>
 // CHECK:           </dict>
 // CHECK:          </array>
@@ -1336,4 +1336,3 @@ int test_cond_assign() {
 // CHECK:  </array>
 // CHECK: </dict>
 // CHECK: </plist>
-

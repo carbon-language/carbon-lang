@@ -88,7 +88,7 @@ void test_block_arg() {
 // CHECK:           </dict>
 // CHECK:           <dict>
 // CHECK:            <key>line</key><integer>11</integer>
-// CHECK:            <key>col</key><integer>10</integer>
+// CHECK:            <key>col</key><integer>7</integer>
 // CHECK:            <key>file</key><integer>0</integer>
 // CHECK:           </dict>
 // CHECK:          </array>
@@ -101,7 +101,7 @@ void test_block_arg() {
 // CHECK:           </dict>
 // CHECK:           <dict>
 // CHECK:            <key>line</key><integer>12</integer>
-// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>col</key><integer>6</integer>
 // CHECK:            <key>file</key><integer>0</integer>
 // CHECK:           </dict>
 // CHECK:          </array>
@@ -122,7 +122,7 @@ void test_block_arg() {
 // CHECK:           </dict>
 // CHECK:           <dict>
 // CHECK:            <key>line</key><integer>12</integer>
-// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>col</key><integer>6</integer>
 // CHECK:            <key>file</key><integer>0</integer>
 // CHECK:           </dict>
 // CHECK:          </array>
@@ -198,7 +198,7 @@ void test_block_arg() {
 // CHECK:           </dict>
 // CHECK:           <dict>
 // CHECK:            <key>line</key><integer>14</integer>
-// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>col</key><integer>10</integer>
 // CHECK:            <key>file</key><integer>0</integer>
 // CHECK:           </dict>
 // CHECK:          </array>
@@ -219,7 +219,7 @@ void test_block_arg() {
 // CHECK:           </dict>
 // CHECK:           <dict>
 // CHECK:            <key>line</key><integer>14</integer>
-// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>col</key><integer>10</integer>
 // CHECK:            <key>file</key><integer>0</integer>
 // CHECK:           </dict>
 // CHECK:          </array>
@@ -341,7 +341,7 @@ void test_block_arg() {
 // CHECK:           </dict>
 // CHECK:           <dict>
 // CHECK:            <key>line</key><integer>18</integer>
-// CHECK:            <key>col</key><integer>1</integer>
+// CHECK:            <key>col</key><integer>4</integer>
 // CHECK:            <key>file</key><integer>0</integer>
 // CHECK:           </dict>
 // CHECK:          </array>
@@ -420,7 +420,7 @@ void test_block_arg() {
 // CHECK:           </dict>
 // CHECK:           <dict>
 // CHECK:            <key>line</key><integer>33</integer>
-// CHECK:            <key>col</key><integer>3</integer>
+// CHECK:            <key>col</key><integer>4</integer>
 // CHECK:            <key>file</key><integer>0</integer>
 // CHECK:           </dict>
 // CHECK:          </array>
@@ -433,7 +433,7 @@ void test_block_arg() {
 // CHECK:           </dict>
 // CHECK:           <dict>
 // CHECK:            <key>line</key><integer>33</integer>
-// CHECK:            <key>col</key><integer>9</integer>
+// CHECK:            <key>col</key><integer>8</integer>
 // CHECK:            <key>file</key><integer>0</integer>
 // CHECK:           </dict>
 // CHECK:          </array>
@@ -483,7 +483,7 @@ void test_block_arg() {
 // CHECK:           </dict>
 // CHECK:           <dict>
 // CHECK:            <key>line</key><integer>33</integer>
-// CHECK:            <key>col</key><integer>9</integer>
+// CHECK:            <key>col</key><integer>8</integer>
 // CHECK:            <key>file</key><integer>0</integer>
 // CHECK:           </dict>
 // CHECK:          </array>
@@ -496,7 +496,7 @@ void test_block_arg() {
 // CHECK:           </dict>
 // CHECK:           <dict>
 // CHECK:            <key>line</key><integer>36</integer>
-// CHECK:            <key>col</key><integer>3</integer>
+// CHECK:            <key>col</key><integer>4</integer>
 // CHECK:            <key>file</key><integer>0</integer>
 // CHECK:           </dict>
 // CHECK:          </array>
@@ -517,7 +517,7 @@ void test_block_arg() {
 // CHECK:           </dict>
 // CHECK:           <dict>
 // CHECK:            <key>line</key><integer>36</integer>
-// CHECK:            <key>col</key><integer>3</integer>
+// CHECK:            <key>col</key><integer>4</integer>
 // CHECK:            <key>file</key><integer>0</integer>
 // CHECK:           </dict>
 // CHECK:          </array>
@@ -530,7 +530,7 @@ void test_block_arg() {
 // CHECK:           </dict>
 // CHECK:           <dict>
 // CHECK:            <key>line</key><integer>37</integer>
-// CHECK:            <key>col</key><integer>5</integer>
+// CHECK:            <key>col</key><integer>16</integer>
 // CHECK:            <key>file</key><integer>0</integer>
 // CHECK:           </dict>
 // CHECK:          </array>
@@ -594,7 +594,7 @@ void test_block_arg() {
 // CHECK:           </dict>
 // CHECK:           <dict>
 // CHECK:            <key>line</key><integer>26</integer>
-// CHECK:            <key>col</key><integer>1</integer>
+// CHECK:            <key>col</key><integer>4</integer>
 // CHECK:            <key>file</key><integer>0</integer>
 // CHECK:           </dict>
 // CHECK:          </array>
@@ -702,7 +702,7 @@ void test_block_arg() {
 // CHECK:           </dict>
 // CHECK:           <dict>
 // CHECK:            <key>line</key><integer>45</integer>
-// CHECK:            <key>col</key><integer>8</integer>
+// CHECK:            <key>col</key><integer>5</integer>
 // CHECK:            <key>file</key><integer>0</integer>
 // CHECK:           </dict>
 // CHECK:          </array>
@@ -856,7 +856,7 @@ void test_block_arg() {
 // CHECK:           </dict>
 // CHECK:           <dict>
 // CHECK:            <key>line</key><integer>50</integer>
-// CHECK:            <key>col</key><integer>3</integer>
+// CHECK:            <key>col</key><integer>5</integer>
 // CHECK:            <key>file</key><integer>0</integer>
 // CHECK:           </dict>
 // CHECK:          </array>
@@ -890,7 +890,7 @@ void test_block_arg() {
 // CHECK:           </dict>
 // CHECK:           <dict>
 // CHECK:            <key>line</key><integer>50</integer>
-// CHECK:            <key>col</key><integer>41</integer>
+// CHECK:            <key>col</key><integer>12</integer>
 // CHECK:            <key>file</key><integer>0</integer>
 // CHECK:           </dict>
 // CHECK:          </array>
@@ -969,7 +969,7 @@ void test_block_arg() {
 // CHECK:           </dict>
 // CHECK:           <dict>
 // CHECK:            <key>line</key><integer>55</integer>
-// CHECK:            <key>col</key><integer>3</integer>
+// CHECK:            <key>col</key><integer>9</integer>
 // CHECK:            <key>file</key><integer>0</integer>
 // CHECK:           </dict>
 // CHECK:          </array>
@@ -1003,7 +1003,7 @@ void test_block_arg() {
 // CHECK:           </dict>
 // CHECK:           <dict>
 // CHECK:            <key>line</key><integer>56</integer>
-// CHECK:            <key>col</key><integer>17</integer>
+// CHECK:            <key>col</key><integer>3</integer>
 // CHECK:            <key>file</key><integer>0</integer>
 // CHECK:           </dict>
 // CHECK:          </array>
@@ -1082,7 +1082,7 @@ void test_block_arg() {
 // CHECK:           </dict>
 // CHECK:           <dict>
 // CHECK:            <key>line</key><integer>61</integer>
-// CHECK:            <key>col</key><integer>3</integer>
+// CHECK:            <key>col</key><integer>5</integer>
 // CHECK:            <key>file</key><integer>0</integer>
 // CHECK:           </dict>
 // CHECK:          </array>
@@ -1116,7 +1116,7 @@ void test_block_arg() {
 // CHECK:           </dict>
 // CHECK:           <dict>
 // CHECK:            <key>line</key><integer>62</integer>
-// CHECK:            <key>col</key><integer>27</integer>
+// CHECK:            <key>col</key><integer>3</integer>
 // CHECK:            <key>file</key><integer>0</integer>
 // CHECK:           </dict>
 // CHECK:          </array>
