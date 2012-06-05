@@ -324,3 +324,16 @@ void f64(struct s64 x) {}
 // CHECK: define float @f65()
 struct s65 { signed char a[0]; float b; };
 struct s65 f65() { return (struct s65){{},2}; }
+
+// CHECK: define <2 x i64> @f66
+// CHECK: ptrtoint
+// CHECK: and {{.*}}, -16
+// CHECK: inttoptr
+typedef int T66 __attribute((vector_size(16)));
+T66 f66(int i, ...) {
+  __builtin_va_list ap;
+  __builtin_va_start(ap, i);
+  T66 v = __builtin_va_arg(ap, T66);
+  __builtin_va_end(ap);
+  return v;
+}
