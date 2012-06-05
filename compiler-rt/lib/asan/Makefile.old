@@ -320,9 +320,9 @@ $(GTEST_LIB):
 	$(MAKE) -f ../make/Makefile CXXFLAGS="$(PIE) $(CFLAGS) -g -w" \
 	  CXX="$(CLANG_CXX)"
 
-RTL_LINT_FITLER=-readability/casting,-readability/check,-build/include,-build/header_guard,-build/class,-legal/copyright,-build/namespaces
+RTL_LINT_FILTER=-readability/casting,-readability/check,-build/include,-build/header_guard,-build/class,-legal/copyright,-build/namespaces
 # TODO(kcc): remove these filters one by one
-TEST_LINT_FITLER=-readability/casting,-build/include,-legal/copyright,-whitespace/newline,-runtime/sizeof,-runtime/int,-runtime/printf
+TEST_LINT_FILTER=-readability/casting,-build/include,-legal/copyright,-whitespace/newline,-runtime/sizeof,-runtime/int,-runtime/printf
 
 LLVM_LINT_FILTER=-,+whitespace
 
@@ -330,10 +330,10 @@ ADDRESS_SANITIZER_CPP=../../../../lib/Transforms/Instrumentation/AddressSanitize
 
 lint:
 	third_party/cpplint/cpplint.py --filter=$(LLVM_LINT_FILTER) $(ADDRESS_SANITIZER_CPP)
-	third_party/cpplint/cpplint.py --filter=$(RTL_LINT_FITLER) asan_*.cc asan_*.h
-	third_party/cpplint/cpplint.py --filter=$(RTL_LINT_FITLER) $(INTERCEPTION)/interception*.h $(INTERCEPTION)/interception*.cc
-	third_party/cpplint/cpplint.py --filter=$(RTL_LINT_FITLER) $(COMMON)/sanitizer_*.h $(COMMON)/sanitizer_*.cc
-	third_party/cpplint/cpplint.py --filter=$(TEST_LINT_FITLER) tests/*.cc output_tests/*.cc
+	third_party/cpplint/cpplint.py --filter=$(RTL_LINT_FILTER) asan_*.cc asan_*.h
+	third_party/cpplint/cpplint.py --filter=$(RTL_LINT_FILTER) $(INTERCEPTION)/interception*.h $(INTERCEPTION)/interception*.cc
+	third_party/cpplint/cpplint.py --filter=$(RTL_LINT_FILTER) $(COMMON)/sanitizer_*.h $(COMMON)/sanitizer_*.cc
+	third_party/cpplint/cpplint.py --filter=$(TEST_LINT_FILTER) tests/*.cc output_tests/*.cc
 
 get_third_party:
 	rm -rf third_party
