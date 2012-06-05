@@ -19,6 +19,7 @@
 #include "asan_procmaps.h"
 #include "asan_stack.h"
 #include "asan_thread_registry.h"
+#include "sanitizer_common/sanitizer_libc.h"
 
 #include <pthread.h>
 #include <signal.h>
@@ -34,6 +35,8 @@
 // Should not add dependency on libstdc++,
 // since most of the stuff here is inlinable.
 #include <algorithm>
+
+using namespace __sanitizer;
 
 static const uptr kAltStackSize = SIGSTKSZ * 4;  // SIGSTKSZ is not enough.
 
@@ -82,7 +85,7 @@ static void MaybeInstallSigaction(int signum,
 static void     ASAN_OnSIGSEGV(int, siginfo_t *siginfo, void *context) {
   uptr addr = (uptr)siginfo->si_addr;
   // Write the first message using the bullet-proof write.
-  if (13 != AsanWrite(2, "ASAN:SIGSEGV\n", 13)) AsanDie();
+  if (13 != internal_write(2, "ASAN:SIGSEGV\n", 13)) AsanDie();
   uptr pc, sp, bp;
   GetPcSpBp(context, &pc, &sp, &bp);
   Report("ERROR: AddressSanitizer crashed on unknown address %p"

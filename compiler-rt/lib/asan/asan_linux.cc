@@ -110,10 +110,6 @@ void AsanUnmapOrDie(void *addr, uptr size) {
   }
 }
 
-uptr AsanWrite(int fd, const void *buf, uptr count) {
-  return (uptr)syscall(__NR_write, fd, buf, count);
-}
-
 // Like getenv, but reads env directly from /proc and does not use libc.
 // This function should be called first inside __asan_init.
 const char* AsanGetEnv(const char* name) {
@@ -142,20 +138,12 @@ const char* AsanGetEnv(const char* name) {
   return 0;  // Not found.
 }
 
-uptr AsanRead(int fd, void *buf, uptr count) {
-  return (uptr)syscall(__NR_read, fd, buf, count);
-}
-
-int AsanClose(int fd) {
-  return syscall(__NR_close, fd);
-}
-
 AsanProcMaps::AsanProcMaps() {
   proc_self_maps_buff_len_ =
       ReadFileToBuffer("/proc/self/maps", &proc_self_maps_buff_,
                        &proc_self_maps_buff_mmaped_size_, 1 << 26);
   CHECK(proc_self_maps_buff_len_ > 0);
-  // AsanWrite(2, proc_self_maps_buff_, proc_self_maps_buff_len_);
+  // internal_write(2, proc_self_maps_buff_, proc_self_maps_buff_len_);
   Reset();
 }
 

@@ -31,8 +31,8 @@ extern uptr error_message_buffer_pos, error_message_buffer_size;
 void RawWrite(const char *buffer) {
   static const char *kRawWriteError = "RawWrite can't output requested buffer!";
   uptr length = (uptr)internal_strlen(buffer);
-  if (length != AsanWrite(2, buffer, length)) {
-    AsanWrite(2, kRawWriteError, internal_strlen(kRawWriteError));
+  if (length != internal_write(2, buffer, length)) {
+    internal_write(2, kRawWriteError, internal_strlen(kRawWriteError));
     AsanDie();
   }
   if (error_message_buffer) {

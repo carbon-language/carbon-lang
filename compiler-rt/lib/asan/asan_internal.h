@@ -169,10 +169,6 @@ void AsanUnmapOrDie(void *ptr, uptr size);
 void AsanDisableCoreDumper();
 void GetPcSpBp(void *context, uptr *pc, uptr *sp, uptr *bp);
 
-uptr AsanRead(int fd, void *buf, uptr count);
-uptr AsanWrite(int fd, const void *buf, uptr count);
-int AsanClose(int fd);
-
 bool AsanInterceptsSignal(int signum);
 void SetAlternateSignalStack();
 void UnsetAlternateSignalStack();

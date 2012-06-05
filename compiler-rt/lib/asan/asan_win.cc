@@ -53,30 +53,6 @@ void AsanUnmapOrDie(void *addr, uptr size) {
   CHECK(VirtualFree(addr, size, MEM_DECOMMIT));
 }
 
-// ---------------------- IO ---------------- {{{1
-uptr AsanWrite(int fd, const void *buf, uptr count) {
-  if (fd != 2)
-    UNIMPLEMENTED();
-
-  HANDLE err = GetStdHandle(STD_ERROR_HANDLE);
-  if (err == 0)
-    return 0;  // FIXME: this might not work on some apps.
-  DWORD ret;
-  if (!WriteFile(err, buf, count, &ret, 0))
-    return 0;
-  return ret;
-}
-
-// FIXME: Looks like these functions are not needed and are linked in by the
-// code unreachable on Windows. We should clean this up.
-uptr AsanRead(int fd, void *buf, uptr count) {
-  UNIMPLEMENTED();
-}
-
-int AsanClose(int fd) {
-  UNIMPLEMENTED();
-}
-
 // ---------------------- Stacktraces, symbols, etc. ---------------- {{{1
 static AsanLock dbghelp_lock(LINKER_INITIALIZED);
 static bool dbghelp_initialized = false;

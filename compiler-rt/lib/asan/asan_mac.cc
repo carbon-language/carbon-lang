@@ -100,10 +100,6 @@ bool AsanInterceptsSignal(int signum) {
   return (signum == SIGSEGV || signum == SIGBUS) && FLAG_handle_segv;
 }
 
-size_t AsanWrite(int fd, const void *buf, size_t count) {
-  return write(fd, buf, count);
-}
-
 void *AsanMmapSomewhereOrDie(size_t size, const char *mem_type) {
   size = RoundUpTo(size, kPageSize);
   void *res = internal_mmap(0, size,
@@ -156,14 +152,6 @@ const char *AsanGetEnv(const char *name) {
     environ++;
   }
   return 0;
-}
-
-size_t AsanRead(int fd, void *buf, size_t count) {
-  return read(fd, buf, count);
-}
-
-int AsanClose(int fd) {
-  return close(fd);
 }
 
 AsanProcMaps::AsanProcMaps() {

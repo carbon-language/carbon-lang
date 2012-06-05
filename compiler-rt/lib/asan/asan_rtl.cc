@@ -96,14 +96,14 @@ uptr ReadFileToBuffer(const char *file_name, char **buff,
     read_len = 0;
     bool reached_eof = false;
     while (read_len + kPageSize <= size) {
-      uptr just_read = AsanRead(fd, *buff + read_len, kPageSize);
+      uptr just_read = internal_read(fd, *buff + read_len, kPageSize);
       if (just_read == 0) {
         reached_eof = true;
         break;
       }
       read_len += just_read;
     }
-    AsanClose(fd);
+    internal_close(fd);
     if (reached_eof)  // We've read the whole file.
       break;
   }
