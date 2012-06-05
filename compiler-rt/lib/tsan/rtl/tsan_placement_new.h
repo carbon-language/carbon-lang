@@ -17,7 +17,7 @@
 
 #include "tsan_defs.h"
 
-inline void *operator new(__tsan::uptr sz, void *p) {
+inline void *operator new(__sanitizer::uptr sz, void *p) {
   return p;
 }
 

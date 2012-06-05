@@ -126,7 +126,7 @@ class ScopedInterceptor {
     StatInc(thr, StatInterceptor); \
     StatInc(thr, StatInt_##func); \
     ScopedInterceptor si(thr, #func, \
-        (__tsan::uptr)__builtin_return_address(0)); \
+        (__sanitizer::uptr)__builtin_return_address(0)); \
     const uptr pc = (uptr)&func; \
     (void)pc; \
 /**/

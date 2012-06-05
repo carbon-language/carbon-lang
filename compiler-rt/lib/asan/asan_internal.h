@@ -17,43 +17,16 @@
 #include "sanitizer_common/sanitizer_defs.h"
 #include "sanitizer_common/sanitizer_libc.h"
 
+using namespace __sanitizer;  // NOLINT
+
 #if !defined(__linux__) && !defined(__APPLE__) && !defined(_WIN32)
 # error "This operating system is not supported by AddressSanitizer"
 #endif
 
 #if defined(_WIN32)
-
-typedef unsigned long    DWORD;  // NOLINT
-
 extern "C" void* _ReturnAddress(void);
 # pragma intrinsic(_ReturnAddress)
-
-# define ALIAS(x)   // TODO(timurrrr): do we need this on Windows?
-# define ALIGNED(x) __declspec(align(x))
-# define NOINLINE __declspec(noinline)
-# define NORETURN __declspec(noreturn)
-
-# define ASAN_INTERFACE_ATTRIBUTE  // TODO(timurrrr): do we need this on Win?
-#else  // defined(_WIN32)
-// #include <stdint.h>
-
-# define ALIAS(x) __attribute__((alias(x)))
-# define ALIGNED(x) __attribute__((aligned(x)))
-# define NOINLINE __attribute__((noinline))
-# define NORETURN  __attribute__((noreturn))
-
-# define ASAN_INTERFACE_ATTRIBUTE __attribute__((visibility("default")))
 #endif  // defined(_WIN32)
-
-// If __WORDSIZE was undefined by the platform, define it in terms of the
-// compiler built-ins __LP64__ and _WIN64.
-#ifndef __WORDSIZE
-#if __LP64__ || defined(_WIN64)
-#define __WORDSIZE 64
-#else
-#define __WORDSIZE 32
-#endif
-#endif
 
 // Limits for integral types. We have to redefine it in case we don't
 // have stdint.h (like in Visual Studio 9).
@@ -98,10 +71,6 @@ extern "C" void* _ReturnAddress(void);
 #endif
 
 #define ASAN_POSIX (ASAN_LINUX || ASAN_MAC)
-
-#if !defined(__has_feature)
-#define __has_feature(x) 0
-#endif
 
 #if __has_feature(address_sanitizer)
 # error "The AddressSanitizer run-time should not be"

@@ -13,7 +13,7 @@
 #include "tsan_allocator.h"
 
 // Provisional implementation.
-extern "C" void *__libc_malloc(__tsan::uptr size);
+extern "C" void *__libc_malloc(__sanitizer::uptr size);
 extern "C" void __libc_free(void *ptr);
 
 namespace __tsan {

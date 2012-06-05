@@ -231,7 +231,7 @@ static NOINLINE void DescribeAddress(uptr addr, uptr access_size) {
 // -------------------------- Run-time entry ------------------- {{{1
 // exported functions
 #define ASAN_REPORT_ERROR(type, is_write, size)                     \
-extern "C" NOINLINE ASAN_INTERFACE_ATTRIBUTE                        \
+extern "C" NOINLINE INTERFACE_ATTRIBUTE                        \
 void __asan_report_ ## type ## size(uptr addr);                \
 void __asan_report_ ## type ## size(uptr addr) {               \
   GET_CALLER_PC_BP_SP;                                              \

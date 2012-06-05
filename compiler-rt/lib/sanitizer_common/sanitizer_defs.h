@@ -8,35 +8,55 @@
 //===----------------------------------------------------------------------===//
 //
 // This file is shared between AddressSanitizer and ThreadSanitizer.
+// It contains macro used in run-time libraries code.
 //===----------------------------------------------------------------------===//
 #ifndef SANITIZER_DEFS_H
 #define SANITIZER_DEFS_H
 
+#include "sanitizer_interface_defs.h"
+using namespace __sanitizer;  // NOLINT
 // ----------- ATTENTION -------------
 // This header should NOT include any other headers to avoid portability issues.
 
+// Common defs.
+#define INLINE static inline
+#define INTERFACE_ATTRIBUTE SANITIZER_INTERFACE_ATTRIBUTE
+#define WEAK SANITIZER_WEAK_ATTRIBUTE
+
+// Platform-specific defs.
 #if defined(_WIN32)
-// FIXME find out what we need on Windows. __declspec(dllexport) ?
-#define SANITIZER_INTERFACE_FUNCTION_ATTRIBUTE
-#define SANITIZER_WEAK_ATTRIBUTE
-#else
-#define SANITIZER_INTERFACE_FUNCTION_ATTRIBUTE \
-  __attribute__((visibility("default")))
-#define SANITIZER_WEAK_ATTRIBUTE __attribute__((weak));
+typedef unsigned long    DWORD;  // NOLINT
+// FIXME(timurrrr): do we need this on Windows?
+# define ALIAS(x)
+# define ALIGNED(x) __declspec(align(x))
+# define NOINLINE __declspec(noinline)
+# define NORETURN __declspec(noreturn)
+# define THREADLOCAL   __declspec(thread)
+#else  // _WIN32
+# define ALIAS(x) __attribute__((alias(x)))
+# define ALIGNED(x) __attribute__((aligned(x)))
+# define NOINLINE __attribute__((noinline))
+# define NORETURN  __attribute__((noreturn))
+# define THREADLOCAL   __thread
+#endif  // _WIN32
+
+// We have no equivalent of these on Windows.
+#ifndef _WIN32
+# define ALWAYS_INLINE __attribute__((always_inline))
+# define LIKELY(x)     __builtin_expect(!!(x), 1)
+# define UNLIKELY(x)   __builtin_expect(!!(x), 0)
+# define FORMAT(f, a)  __attribute__((format(printf, f, a)))
+# define USED __attribute__((used))
 #endif
 
-// For portability reasons we do not include stddef.h, stdint.h or any other
-// system header, but we do need some basic types that are not defined
-// in a portable way by the language itself.
-typedef unsigned long uptr;  // NOLINT
-typedef signed   long sptr;  // NOLINT
-typedef unsigned char u8;
-typedef unsigned short u16;  // NOLINT
-typedef unsigned int u32;
-typedef unsigned long long u64;  // NOLINT
-typedef signed   char s8;
-typedef signed   short s16;  // NOLINT
-typedef signed   int s32;
-typedef signed   long long s64;  // NOLINT
+// If __WORDSIZE was undefined by the platform, define it in terms of the
+// compiler built-ins __LP64__ and _WIN64.
+#ifndef __WORDSIZE
+# if __LP64__ || defined(_WIN64)
+#  define __WORDSIZE 64
+# else
+#  define __WORDSIZE 32
+#  endif
+#endif  // __WORDSIZE
 
 #endif  // SANITIZER_DEFS_H

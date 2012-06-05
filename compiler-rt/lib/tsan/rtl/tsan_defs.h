@@ -14,19 +14,16 @@
 #ifndef TSAN_DEFS_H
 #define TSAN_DEFS_H
 
-#include "tsan_compiler.h"
+#include "sanitizer_common/sanitizer_defs.h"
 #include "tsan_stat.h"
 
 #ifndef TSAN_DEBUG
 #define TSAN_DEBUG 0
 #endif  // TSAN_DEBUG
 
-namespace __tsan {
+using namespace __sanitizer;
 
-typedef unsigned u32;  // NOLINT
-typedef unsigned long long u64;  // NOLINT
-typedef   signed long long s64;  // NOLINT
-typedef unsigned long uptr;  // NOLINT
+namespace __tsan {
 
 const uptr kPageSize = 4096;
 const int kTidBits = 13;
@@ -60,8 +57,8 @@ const bool kCollectStats = false;
 
 #define CHECK_IMPL(c1, op, c2) \
   do { \
-    __tsan::u64 v1 = (u64)(c1); \
-    __tsan::u64 v2 = (u64)(c2); \
+    __sanitizer::u64 v1 = (u64)(c1); \
+    __sanitizer::u64 v2 = (u64)(c2); \
     if (!(v1 op v2)) \
       __tsan::CheckFailed(__FILE__, __LINE__, \
         "(" #c1 ") " #op " (" #c2 ")", v1, v2); \

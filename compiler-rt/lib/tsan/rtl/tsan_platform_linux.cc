@@ -39,7 +39,7 @@
 
 using namespace __sanitizer;  // NOLINT
 
-extern "C" int arch_prctl(int code, __tsan::uptr *addr);
+extern "C" int arch_prctl(int code, __sanitizer::uptr *addr);
 
 namespace __tsan {
 
