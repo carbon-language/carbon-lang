@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 //===----------------------------------------------------------------------===//
-// Instruction Itinerary classes used for X86 
+// Instruction Itinerary classes used for X86
 def IIC_DEFAULT     : InstrItinClass;
 def IIC_ALU_MEM     : InstrItinClass;
 def IIC_ALU_NONMEM  : InstrItinClass;
@@ -459,6 +459,3 @@ def IIC_NOP : InstrItinClass;
 def GenericItineraries : ProcessorItineraries<[], [], []>;
 
 include "X86ScheduleAtom.td"
-
-
-

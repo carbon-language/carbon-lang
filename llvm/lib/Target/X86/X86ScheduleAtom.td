@@ -106,7 +106,7 @@ def AtomItineraries : ProcessorItineraries<
   InstrItinData<IIC_CMOV64_RM, [InstrStage<1, [Port0]>] >,
   InstrItinData<IIC_CMOV64_RR, [InstrStage<1, [Port0, Port1]>] >,
   // set
-  InstrItinData<IIC_SET_M, [InstrStage<2, [Port0, Port1]>] >, 
+  InstrItinData<IIC_SET_M, [InstrStage<2, [Port0, Port1]>] >,
   InstrItinData<IIC_SET_R, [InstrStage<1, [Port0, Port1]>] >,
   // jcc
   InstrItinData<IIC_Jcc, [InstrStage<1, [Port1]>] >,

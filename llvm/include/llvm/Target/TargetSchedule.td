@@ -1,10 +1,10 @@
 //===- TargetSchedule.td - Target Independent Scheduling ---*- tablegen -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines the target-independent scheduling interfaces which should
@@ -19,7 +19,7 @@
 // all chip sets of the target.  Each functional unit is treated as a resource
 // during scheduling and has an affect instruction order based on availability
 // during a time interval.
-//  
+//
 class FuncUnit;
 
 //===----------------------------------------------------------------------===//
@@ -84,7 +84,7 @@ class InstrItinClass<int ops = 1> {
 def NoItinerary : InstrItinClass;
 
 //===----------------------------------------------------------------------===//
-// Instruction itinerary data - These values provide a runtime map of an 
+// Instruction itinerary data - These values provide a runtime map of an
 // instruction itinerary class (name) to its itinerary data.
 //
 // OperandCycles are optional "cycle counts". They specify the cycle after
@@ -119,6 +119,7 @@ class InstrItinData<InstrItinClass Class, list<InstrStage> stages,
 //
 class ProcessorItineraries<list<FuncUnit> fu, list<Bypass> bp,
                            list<InstrItinData> iid> {
+  int IssueWidth = 1;
   list<FuncUnit> FU = fu;
   list<Bypass> BP = bp;
   list<InstrItinData> IID = iid;
