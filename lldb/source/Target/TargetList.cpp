@@ -165,6 +165,10 @@ TargetList::CreateTarget
     if (!platform_sp)
         platform_sp = debugger.GetPlatformList().GetSelectedPlatform();
 
+    if (!arch.IsValid())
+        arch = specified_arch;
+    
+
     if (file)
     {
         ModuleSP exe_module_sp;
