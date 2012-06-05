@@ -10,6 +10,7 @@
 // This file is a part of ThreadSanitizer (TSan), a race detector.
 //
 //===----------------------------------------------------------------------===//
+#include "sanitizer_common/sanitizer_libc.h"
 #include "tsan_symbolize.h"
 #include "tsan_mman.h"
 #include "tsan_rtl.h"
@@ -22,6 +23,8 @@
 #include <link.h>
 #include <linux/limits.h>
 #include <sys/types.h>
+
+using namespace __sanitizer;  // NOLINT
 
 namespace __tsan {
 

@@ -86,26 +86,11 @@ void internal_sleep_ms(u32 ms) {
   usleep(ms * 1000);
 }
 
-void internal_close(fd_t fd) {
-  ScopedInRtl in_rtl;
-  syscall(__NR_close, fd);
-}
-
 uptr internal_filesize(fd_t fd) {
   struct stat st = {};
   if (syscall(__NR_fstat, fd, &st))
     return -1;
   return (uptr)st.st_size;
-}
-
-uptr internal_read(fd_t fd, void *p, uptr size) {
-  ScopedInRtl in_rtl;
-  return syscall(__NR_read, fd, p, size);
-}
-
-uptr internal_write(fd_t fd, const void *p, uptr size) {
-  ScopedInRtl in_rtl;
-  return syscall(__NR_write, fd, p, size);
 }
 
 int internal_dup2(int oldfd, int newfd) {
