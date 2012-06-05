@@ -20,6 +20,7 @@
 #include "llvm/Value.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/CodeGen/LiveVariables.h"
+#include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/Passes.h"
@@ -33,6 +34,7 @@
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
+#include "LiveRangeCalc.h"
 #include <algorithm>
 #include <limits>
 #include <cmath>
@@ -41,6 +43,9 @@ using namespace llvm;
 // Hidden options for help debugging.
 static cl::opt<bool> DisableReMat("disable-rematerialization",
                                   cl::init(false), cl::Hidden);
+
+// Temporary option to enable regunit liveness.
+static cl::opt<bool> LiveRegUnits("live-regunits", cl::Hidden);
 
 STATISTIC(numIntervals , "Number of original intervals");
 
@@ -61,10 +66,21 @@ void LiveIntervals::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<LiveVariables>();
   AU.addPreserved<LiveVariables>();
   AU.addPreservedID(MachineLoopInfoID);
+  if (LiveRegUnits)
+    AU.addRequiredTransitiveID(MachineDominatorsID);
   AU.addPreservedID(MachineDominatorsID);
   AU.addPreserved<SlotIndexes>();
   AU.addRequiredTransitive<SlotIndexes>();
   MachineFunctionPass::getAnalysisUsage(AU);
+}
+
+LiveIntervals::LiveIntervals() : MachineFunctionPass(ID),
+  DomTree(0), LRCalc(0) {
+  initializeLiveIntervalsPass(*PassRegistry::getPassRegistry());
+}
+
+LiveIntervals::~LiveIntervals() {
+  delete LRCalc;
 }
 
 void LiveIntervals::releaseMemory() {
@@ -77,6 +93,10 @@ void LiveIntervals::releaseMemory() {
   RegMaskSlots.clear();
   RegMaskBits.clear();
   RegMaskBlocks.clear();
+
+  for (unsigned i = 0, e = RegUnitIntervals.size(); i != e; ++i)
+    delete RegUnitIntervals[i];
+  RegUnitIntervals.clear();
 
   // Release VNInfo memory regions, VNInfo objects don't need to be dtor'd.
   VNInfoAllocator.Reset();
@@ -93,12 +113,20 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
   AA = &getAnalysis<AliasAnalysis>();
   LV = &getAnalysis<LiveVariables>();
   Indexes = &getAnalysis<SlotIndexes>();
+  if (LiveRegUnits)
+    DomTree = &getAnalysis<MachineDominatorTree>();
+  if (LiveRegUnits && !LRCalc)
+    LRCalc = new LiveRangeCalc();
   AllocatableRegs = TRI->getAllocatableSet(fn);
   ReservedRegs = TRI->getReservedRegs(fn);
 
   computeIntervals();
 
   numIntervals += getNumIntervals();
+
+  if (LiveRegUnits) {
+    computeLiveInRegUnits();
+  }
 
   DEBUG(dump());
   return true;
@@ -114,6 +142,11 @@ void LiveIntervals::print(raw_ostream &OS, const Module* ) const {
       LI->print(OS, TRI);
       OS << '\n';
     }
+
+  // Dump the regunits.
+  for (unsigned i = 0, e = RegUnitIntervals.size(); i != e; ++i)
+    if (LiveInterval *LI = RegUnitIntervals[i])
+      OS << PrintRegUnit(i, TRI) << " = " << *LI << '\n';
 
   // Dump the virtregs.
   for (unsigned Reg = 0, RegE = MRI->getNumVirtRegs(); Reg != RegE; ++Reg)
@@ -625,6 +658,103 @@ LiveInterval* LiveIntervals::createInterval(unsigned reg) {
   float Weight = TargetRegisterInfo::isPhysicalRegister(reg) ? HUGE_VALF : 0.0F;
   return new LiveInterval(reg, Weight);
 }
+
+
+//===----------------------------------------------------------------------===//
+//                           Register Unit Liveness
+//===----------------------------------------------------------------------===//
+//
+// Fixed interference typically comes from ABI boundaries: Function arguments
+// and return values are passed in fixed registers, and so are exception
+// pointers entering landing pads. Certain instructions require values to be
+// present in specific registers. That is also represented through fixed
+// interference.
+//
+
+/// computeRegUnitInterval - Compute the live interval of a register unit, based
+/// on the uses and defs of aliasing registers.  The interval should be empty,
+/// or contain only dead phi-defs from ABI blocks.
+void LiveIntervals::computeRegUnitInterval(LiveInterval *LI) {
+  unsigned Unit = LI->reg;
+
+  assert(LRCalc && "LRCalc not initialized.");
+  LRCalc->reset(MF, getSlotIndexes(), DomTree, &getVNInfoAllocator());
+
+  // The physregs aliasing Unit are the roots and their super-registers.
+  // Create all values as dead defs before extending to uses. Note that roots
+  // may share super-registers. That's OK because createDeadDefs() is
+  // idempotent. It is very rare for a register unit to have multiple roots, so
+  // uniquing super-registers is probably not worthwhile.
+  for (MCRegUnitRootIterator Roots(Unit, TRI); Roots.isValid(); ++Roots) {
+    unsigned Root = *Roots;
+    if (!MRI->reg_empty(Root))
+      LRCalc->createDeadDefs(LI, Root);
+    for (MCSuperRegIterator Supers(Root, TRI); Supers.isValid(); ++Supers) {
+      if (!MRI->reg_empty(*Supers))
+        LRCalc->createDeadDefs(LI, *Supers);
+    }
+  }
+
+  // Now extend LI to reach all uses.
+  // Ignore uses of reserved registers. We only track defs of those.
+  for (MCRegUnitRootIterator Roots(Unit, TRI); Roots.isValid(); ++Roots) {
+    unsigned Root = *Roots;
+    if (!isReserved(Root) && !MRI->reg_empty(Root))
+      LRCalc->extendToUses(LI, Root);
+    for (MCSuperRegIterator Supers(Root, TRI); Supers.isValid(); ++Supers) {
+      unsigned Reg = *Supers;
+      if (!isReserved(Reg) && !MRI->reg_empty(Reg))
+        LRCalc->extendToUses(LI, Reg);
+    }
+  }
+}
+
+
+/// computeLiveInRegUnits - Precompute the live ranges of any register units
+/// that are live-in to an ABI block somewhere. Register values can appear
+/// without a corresponding def when entering the entry block or a landing pad.
+///
+void LiveIntervals::computeLiveInRegUnits() {
+  RegUnitIntervals.resize(TRI->getNumRegUnits());
+  DEBUG(dbgs() << "Computing live-in reg-units in ABI blocks.\n");
+
+  // Keep track of the intervals allocated.
+  SmallVector<LiveInterval*, 8> NewIntvs;
+
+  // Check all basic blocks for live-ins.
+  for (MachineFunction::const_iterator MFI = MF->begin(), MFE = MF->end();
+       MFI != MFE; ++MFI) {
+    const MachineBasicBlock *MBB = MFI;
+
+    // We only care about ABI blocks: Entry + landing pads.
+    if ((MFI != MF->begin() && !MBB->isLandingPad()) || MBB->livein_empty())
+      continue;
+
+    // Create phi-defs at Begin for all live-in registers.
+    SlotIndex Begin = Indexes->getMBBStartIdx(MBB);
+    DEBUG(dbgs() << Begin << "\tBB#" << MBB->getNumber());
+    for (MachineBasicBlock::livein_iterator LII = MBB->livein_begin(),
+         LIE = MBB->livein_end(); LII != LIE; ++LII) {
+      for (MCRegUnitIterator Units(*LII, TRI); Units.isValid(); ++Units) {
+        unsigned Unit = *Units;
+        LiveInterval *Intv = RegUnitIntervals[Unit];
+        if (!Intv) {
+          Intv = RegUnitIntervals[Unit] = new LiveInterval(Unit, HUGE_VALF);
+          NewIntvs.push_back(Intv);
+        }
+        VNInfo *VNI = Intv->createDeadDef(Begin, getVNInfoAllocator());
+        DEBUG(dbgs() << ' ' << PrintRegUnit(Unit, TRI) << '#' << VNI->id);
+      }
+    }
+    DEBUG(dbgs() << '\n');
+  }
+  DEBUG(dbgs() << "Created " << NewIntvs.size() << " new intervals.\n");
+
+  // Compute the 'normal' part of the intervals.
+  for (unsigned i = 0, e = NewIntvs.size(); i != e; ++i)
+    computeRegUnitInterval(NewIntvs[i]);
+}
+
 
 /// shrinkToUses - After removing some uses of a register, shrink its live
 /// range to just the remaining uses. This method does not compute reaching

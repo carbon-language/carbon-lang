@@ -35,7 +35,9 @@
 namespace llvm {
 
   class AliasAnalysis;
+  class LiveRangeCalc;
   class LiveVariables;
+  class MachineDominatorTree;
   class MachineLoopInfo;
   class TargetRegisterInfo;
   class MachineRegisterInfo;
@@ -52,6 +54,8 @@ namespace llvm {
     AliasAnalysis *AA;
     LiveVariables* LV;
     SlotIndexes* Indexes;
+    MachineDominatorTree *DomTree;
+    LiveRangeCalc *LRCalc;
 
     /// Special pool allocator for VNInfo's (LiveInterval val#).
     ///
@@ -92,11 +96,14 @@ namespace llvm {
     /// block.
     SmallVector<std::pair<unsigned, unsigned>, 8> RegMaskBlocks;
 
+    /// RegUnitIntervals - Keep a live interval for each register unit as a way
+    /// of tracking fixed physreg interference.
+    SmallVector<LiveInterval*, 0> RegUnitIntervals;
+
   public:
     static char ID; // Pass identification, replacement for typeid
-    LiveIntervals() : MachineFunctionPass(ID) {
-      initializeLiveIntervalsPass(*PassRegistry::getPassRegistry());
-    }
+    LiveIntervals();
+    virtual ~LiveIntervals();
 
     // Calculate the spill weight to assign to a single instruction.
     static float getSpillWeight(bool isDef, bool isUse, unsigned loopDepth);
@@ -317,6 +324,34 @@ namespace llvm {
     bool checkRegMaskInterference(LiveInterval &LI,
                                   BitVector &UsableRegs);
 
+    // Register unit functions.
+    //
+    // Fixed interference occurs when MachineInstrs use physregs directly
+    // instead of virtual registers. This typically happens when passing
+    // arguments to a function call, or when instructions require operands in
+    // fixed registers.
+    //
+    // Each physreg has one or more register units, see MCRegisterInfo. We
+    // track liveness per register unit to handle aliasing registers more
+    // efficiently.
+
+    /// getRegUnit - Return the live range for Unit.
+    /// It will be computed if it doesn't exist.
+    LiveInterval &getRegUnit(unsigned Unit) {
+      LiveInterval *LI = RegUnitIntervals[Unit];
+      if (!LI) {
+        // Compute missing ranges on demand.
+        RegUnitIntervals[Unit] = LI = new LiveInterval(Unit, HUGE_VALF);
+        computeRegUnitInterval(LI);
+      }
+      return *LI;
+    }
+
+    /// trackingRegUnits - Does LiveIntervals curently track register units?
+    /// This function will be removed when regunit tracking is permanently
+    /// enabled.
+    bool trackingRegUnits() const { return !RegUnitIntervals.empty(); }
+
   private:
     /// computeIntervals - Compute live intervals.
     void computeIntervals();
@@ -359,6 +394,9 @@ namespace llvm {
 
     void printInstrs(raw_ostream &O) const;
     void dumpInstrs() const;
+
+    void computeLiveInRegUnits();
+    void computeRegUnitInterval(LiveInterval*);
 
     class HMEditor;
   };
