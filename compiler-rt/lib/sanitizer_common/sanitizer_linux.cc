@@ -16,7 +16,9 @@
 #include "sanitizer_defs.h"
 #include "sanitizer_libc.h"
 
+#include <fcntl.h>
 #include <sys/mman.h>
+#include <sys/stat.h>
 #include <sys/syscall.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -30,6 +32,11 @@ void *internal_mmap(void *addr, uptr length, int prot, int flags,
 #else
   return (void *)syscall(__NR_mmap2, addr, length, prot, flags, fd, offset);
 #endif
+}
+
+fd_t internal_open(const char *filename, bool write) {
+  return syscall(__NR_open, filename,
+      write ? O_WRONLY | O_CREAT | O_CLOEXEC : O_RDONLY, 0660);
 }
 
 }  // namespace __sanitizer

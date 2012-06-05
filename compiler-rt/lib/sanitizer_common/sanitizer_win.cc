@@ -1,4 +1,4 @@
-//===-- sanitizer_mac.cc --------------------------------------------------===//
+//===-- sanitizer_win.cc ------------------------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -8,32 +8,32 @@
 //===----------------------------------------------------------------------===//
 //
 // This file is shared between AddressSanitizer and ThreadSanitizer
-// run-time libraries and implements mac-specific functions from
+// run-time libraries and implements windows-specific functions from
 // sanitizer_libc.h.
 //===----------------------------------------------------------------------===//
+#ifdef _WIN32
+#include <windows.h>
 
-#ifdef __APPLE__
+#include <assert.h>
 
 #include "sanitizer_defs.h"
 #include "sanitizer_libc.h"
 
-#include <sys/mman.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <fcntl.h>
+#define UNIMPLEMENTED_WIN() assert(false)
 
 namespace __sanitizer {
 
-void *internal_mmap(void *addr, size_t length, int prot, int flags,
+void *internal_mmap(void *addr, uptr length, int prot, int flags,
                     int fd, u64 offset) {
-  return mmap(addr, length, prot, flags, fd, offset);
+  UNIMPLEMENTED_WIN();
+  return 0;
 }
 
 fd_t internal_open(const char *filename, bool write) {
-  return open(filename,
-              write ? O_WRONLY | O_CREAT | O_CLOEXEC : O_RDONLY, 0660);
+  UNIMPLEMENTED_WIN();
+  return 0;
 }
 
 }  // namespace __sanitizer
 
-#endif  // __APPLE__
+#endif  // _WIN32
