@@ -872,7 +872,8 @@ void MachineInstr::eraseFromParent() {
       MBB->erase(MI);
     }
   }
-  getParent()->erase(this);
+  // Erase the individual instruction, which may itself be inside a bundle.
+  getParent()->erase_instr(this);
 }
 
 
