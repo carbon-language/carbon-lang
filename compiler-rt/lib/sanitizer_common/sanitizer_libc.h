@@ -18,7 +18,7 @@
 #ifndef SANITIZER_LIBC_H
 #define SANITIZER_LIBC_H
 
-#include "sanitizer_defs.h"
+#include "sanitizer_internal_defs.h"
 
 // No code here yet. Will move more code in the next changes.
 namespace __sanitizer {

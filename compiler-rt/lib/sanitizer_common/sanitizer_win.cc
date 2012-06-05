@@ -16,7 +16,7 @@
 
 #include <assert.h>
 
-#include "sanitizer_defs.h"
+#include "sanitizer_internal_defs.h"
 #include "sanitizer_libc.h"
 
 #define UNIMPLEMENTED_WIN() assert(false)

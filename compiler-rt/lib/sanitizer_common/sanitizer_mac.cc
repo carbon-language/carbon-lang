@@ -14,7 +14,7 @@
 
 #ifdef __APPLE__
 
-#include "sanitizer_defs.h"
+#include "sanitizer_internal_defs.h"
 #include "sanitizer_libc.h"
 
 #include <sys/mman.h>

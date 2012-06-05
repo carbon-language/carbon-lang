@@ -24,7 +24,7 @@
 #ifndef SANITIZER_SYMBOLIZER_H
 #define SANITIZER_SYMBOLIZER_H
 
-#include "sanitizer_defs.h"
+#include "sanitizer_internal_defs.h"
 #include "sanitizer_libc.h"
 // WARNING: Do not include system headers here. See details above.
 

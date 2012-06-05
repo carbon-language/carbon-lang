@@ -14,7 +14,7 @@
 #ifndef TSAN_DEFS_H
 #define TSAN_DEFS_H
 
-#include "sanitizer_common/sanitizer_defs.h"
+#include "sanitizer_common/sanitizer_internal_defs.h"
 #include "tsan_stat.h"
 
 #ifndef TSAN_DEBUG
