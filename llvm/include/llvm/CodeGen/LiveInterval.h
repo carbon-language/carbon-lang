@@ -486,7 +486,7 @@ namespace llvm {
               (thisIndex == otherIndex && reg < other.reg));
     }
 
-    void print(raw_ostream &OS, const TargetRegisterInfo *TRI = 0) const;
+    void print(raw_ostream &OS) const;
     void dump() const;
 
   private:

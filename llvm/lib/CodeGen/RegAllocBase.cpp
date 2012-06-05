@@ -189,7 +189,7 @@ void RegAllocBase::allocatePhysRegs() {
     // result from splitting.
     DEBUG(dbgs() << "\nselectOrSplit "
                  << MRI->getRegClass(VirtReg->reg)->getName()
-                 << ':' << *VirtReg << '\n');
+                 << ':' << PrintReg(VirtReg->reg) << ' ' << *VirtReg << '\n');
     typedef SmallVector<LiveInterval*, 4> VirtRegVec;
     VirtRegVec SplitVRegs;
     unsigned AvailablePhysReg = selectOrSplit(*VirtReg, SplitVRegs);

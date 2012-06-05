@@ -592,15 +592,10 @@ void LiveRange::dump() const {
   dbgs() << *this << "\n";
 }
 
-void LiveInterval::print(raw_ostream &OS, const TargetRegisterInfo *TRI) const {
-  OS << PrintReg(reg, TRI);
-  if (weight != 0)
-    OS << ',' << weight;
-
+void LiveInterval::print(raw_ostream &OS) const {
   if (empty())
-    OS << " EMPTY";
+    OS << "EMPTY";
   else {
-    OS << " = ";
     for (LiveInterval::Ranges::const_iterator I = ranges.begin(),
            E = ranges.end(); I != E; ++I) {
       OS << *I;

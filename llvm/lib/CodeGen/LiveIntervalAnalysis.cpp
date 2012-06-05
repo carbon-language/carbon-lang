@@ -138,10 +138,8 @@ void LiveIntervals::print(raw_ostream &OS, const Module* ) const {
 
   // Dump the physregs.
   for (unsigned Reg = 1, RegE = TRI->getNumRegs(); Reg != RegE; ++Reg)
-    if (const LiveInterval *LI = R2IMap.lookup(Reg)) {
-      LI->print(OS, TRI);
-      OS << '\n';
-    }
+    if (const LiveInterval *LI = R2IMap.lookup(Reg))
+      OS << PrintReg(Reg, TRI) << '\t' << *LI << '\n';
 
   // Dump the regunits.
   for (unsigned i = 0, e = RegUnitIntervals.size(); i != e; ++i)
@@ -151,10 +149,8 @@ void LiveIntervals::print(raw_ostream &OS, const Module* ) const {
   // Dump the virtregs.
   for (unsigned Reg = 0, RegE = MRI->getNumVirtRegs(); Reg != RegE; ++Reg)
     if (const LiveInterval *LI =
-        R2IMap.lookup(TargetRegisterInfo::index2VirtReg(Reg))) {
-      LI->print(OS, TRI);
-      OS << '\n';
-    }
+        R2IMap.lookup(TargetRegisterInfo::index2VirtReg(Reg)))
+      OS << PrintReg(LI->reg) << '\t' << *LI << '\n';
 
   printInstrs(OS);
 }
@@ -352,10 +348,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
         interval.addRange(LiveRange(RedefIndex, RedefIndex.getDeadSlot(),
                                     OldValNo));
 
-      DEBUG({
-          dbgs() << " RESULT: ";
-          interval.print(dbgs(), TRI);
-        });
+      DEBUG(dbgs() << " RESULT: " << interval);
     } else if (LV->isPHIJoin(interval.reg)) {
       // In the case of PHI elimination, each variable definition is only
       // live until the end of the block.  We've already taken care of the
