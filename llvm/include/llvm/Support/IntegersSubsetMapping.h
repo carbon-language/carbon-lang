@@ -66,6 +66,12 @@ protected:
     }
   };
   
+  struct ClusterLefterThan {
+    bool operator()(const Cluster &C, const RangeTy &R) {
+      return C.first.getHigh() < R.getLow();
+    }
+  };  
+  
   CaseItems Items;
   bool Sorted;
   
@@ -96,6 +102,40 @@ protected:
       Sorted = true;
     }
   }
+  
+  void exclude(CaseItemIt &beginIt, RangeTy &R) {
+    
+    std::list<CaseItemIt> ToBeErased;
+
+    CaseItemIt endIt = Items.end();
+    CaseItemIt It =
+          std::lower_bound(beginIt, Items.end(), R, ClusterLefterThan());
+    
+    if (It == endIt)
+      return;
+
+    if (It->first.getLow() < R.getLow())
+      Items.insert(It, std::make_pair(
+          RangeTy(It->first.getLow(), R.getLow()-1),
+          It->second));
+
+    do
+    ToBeErased.push_back(It++);
+    while (It != endIt && It->first.getLow() <= R.getHigh());
+
+    beginIt = It;
+    
+    CaseItemIt &LastRemoved = *(--ToBeErased.end());
+    if (LastRemoved->first.getHigh() > R.getHigh())
+      beginIt = Items.insert(LastRemoved, std::make_pair(
+          RangeTy(R.getHigh() + 1, LastRemoved->first.getHigh()),
+          LastRemoved->second
+          ));
+    
+    for (typename std::list<CaseItemIt>::iterator i = ToBeErased.begin(),
+         e = ToBeErased.end(); i != e; ++i)
+      Items.erase(*i);
+  }   
 
 public:
   
@@ -190,6 +230,18 @@ public:
   /// Removes items from set.
   void removeItem(RangeIterator i) { Items.erase(i); }
   
+  // Excludes RHS subset from current mapping. RHS should consists of non
+  // overlapped ranges only and sorted from left to the right.
+  // method will have unpredictional behaviour in another case. 
+  void exclude(IntegersSubsetTy &RHS) {
+    CaseItemIt startIt = begin();
+    for (unsigned i = 0, e = RHS.getNumItems();
+         i != e && startIt != end(); ++i) {
+      RangeTy R = RHS.getItem(i);
+      exclude(startIt, R);
+    }
+  }  
+  
   /// Builds the finalized case objects.
   void getCases(Cases& TheCases) {
     CRSMap TheCRSMap;
@@ -210,6 +262,13 @@ public:
   
   /// Returns true if there is no ranges and values inside.
   bool empty() const { return Items.empty(); }
+  
+  void clear() {
+    Items.clear();
+    // Don't reset Sorted flag:
+    // 1. For empty mapping it matters nothing.
+    // 2. After first item will added Sorted flag will cleared.
+  }  
   
   RangeIterator begin() { return Items.begin(); }
   RangeIterator end() { return Items.end(); }

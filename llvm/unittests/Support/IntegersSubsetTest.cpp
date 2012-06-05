@@ -178,4 +178,178 @@ namespace {
       EXPECT_EQ(CaseIt->second.getItem(0), Range(Int(i * 10), Int(i * 10 + 9)));
     }
   }
+  
+  TEST(IntegersSubsetTest, ExcludeTest) {
+    std::vector<Range> Ranges;
+    Ranges.reserve(3);
+
+    Mapping TheMapping;
+    
+    // Test case
+    // { {0, 4}, {7, 10} {13, 17} }
+    // sub
+    // { {3, 14} }
+    // =
+    // { {0, 2}, {15, 17} }
+    
+    Ranges.push_back(Range(Int(0), Int(4)));
+    Ranges.push_back(Range(Int(7), Int(10)));
+    Ranges.push_back(Range(Int(13), Int(17)));
+    
+    Subset TheSubset(Ranges);
+    
+    TheMapping.add(TheSubset);
+    
+    Ranges.clear();
+    Ranges.push_back(Range(Int(3), Int(14)));
+    TheSubset = Subset(Ranges);
+    
+    TheMapping.exclude(TheSubset);
+    
+    TheSubset = TheMapping.getCase();
+    
+    EXPECT_EQ(TheSubset.getNumItems(), 2ULL);
+    EXPECT_EQ(TheSubset.getItem(0), Range(Int(0), Int(2)));
+    EXPECT_EQ(TheSubset.getItem(1), Range(Int(15), Int(17)));
+    
+    // Test case
+    // { {0, 4}, {7, 10} {13, 17} }
+    // sub
+    // { {0, 4}, {13, 17} }
+    // =
+    // { {7, 10 }
+    
+    Ranges.clear();
+    Ranges.push_back(Range(Int(0), Int(4)));
+    Ranges.push_back(Range(Int(7), Int(10)));
+    Ranges.push_back(Range(Int(13), Int(17)));
+    
+    TheSubset = Subset(Ranges);
+    
+    TheMapping.clear();
+    TheMapping.add(TheSubset);
+    
+    Ranges.clear();
+    Ranges.push_back(Range(Int(0), Int(4)));
+    Ranges.push_back(Range(Int(13), Int(17)));
+
+    TheSubset = Subset(Ranges);
+    
+    TheMapping.exclude(TheSubset);
+    
+    TheSubset = TheMapping.getCase();
+    
+    EXPECT_EQ(TheSubset.getNumItems(), 1ULL);
+    EXPECT_EQ(TheSubset.getItem(0), Range(Int(7), Int(10)));
+
+    // Test case
+    // { {0, 17} }
+    // sub
+    // { {1, 5}, {10, 12}, {15, 16} }
+    // =
+    // { {0}, {6, 9}, {13, 14}, {17} }
+    
+    Ranges.clear();
+    Ranges.push_back(Range(Int(0), Int(17)));
+    
+    TheSubset = Subset(Ranges);
+    
+    TheMapping.clear();
+    TheMapping.add(TheSubset);
+    
+    Ranges.clear();
+    Ranges.push_back(Range(Int(1), Int(5)));
+    Ranges.push_back(Range(Int(10), Int(12)));
+    Ranges.push_back(Range(Int(15), Int(16)));
+
+    TheSubset = Subset(Ranges);
+    
+    TheMapping.exclude(TheSubset);
+    
+    TheSubset = TheMapping.getCase();
+    
+    EXPECT_EQ(TheSubset.getNumItems(), 4ULL);
+    EXPECT_EQ(TheSubset.getItem(0), Range(Int(0)));    
+    EXPECT_EQ(TheSubset.getItem(1), Range(Int(6), Int(9)));
+    EXPECT_EQ(TheSubset.getItem(2), Range(Int(13), Int(14)));
+    EXPECT_EQ(TheSubset.getItem(3), Range(Int(17)));
+    
+    // Test case
+    // { {2, 4} }
+    // sub
+    // { {0, 5} }
+    // =
+    // { empty }
+    
+    Ranges.clear();
+    Ranges.push_back(Range(Int(2), Int(4)));
+    
+    TheSubset = Subset(Ranges);
+    
+    TheMapping.clear();
+    TheMapping.add(TheSubset);
+    
+    Ranges.clear();
+    Ranges.push_back(Range(Int(0), Int(5)));
+
+    TheSubset = Subset(Ranges);
+    
+    TheMapping.exclude(TheSubset);
+    
+    EXPECT_TRUE(TheMapping.empty());
+    
+    // Test case
+    // { {2, 4} }
+    // sub
+    // { {7, 8} }
+    // =
+    // { {2, 4} }    
+    
+    Ranges.clear();
+    Ranges.push_back(Range(Int(2), Int(4)));
+    
+    TheSubset = Subset(Ranges);
+    
+    TheMapping.clear();
+    TheMapping.add(TheSubset);
+    
+    Ranges.clear();
+    Ranges.push_back(Range(Int(7), Int(8)));
+
+    TheSubset = Subset(Ranges);
+    
+    TheMapping.exclude(TheSubset);
+    
+    TheSubset = TheMapping.getCase();
+    
+    EXPECT_EQ(TheSubset.getNumItems(), 1ULL);    
+    EXPECT_EQ(TheSubset.getItem(0), Range(Int(2), Int(4)));
+    
+    // Test case
+    // { {3, 7} }
+    // sub
+    // { {1, 4} }
+    // =
+    // { {5, 7} }    
+    
+    Ranges.clear();
+    Ranges.push_back(Range(Int(3), Int(7)));
+    
+    TheSubset = Subset(Ranges);
+    
+    TheMapping.clear();
+    TheMapping.add(TheSubset);
+    
+    Ranges.clear();
+    Ranges.push_back(Range(Int(1), Int(4)));
+
+    TheSubset = Subset(Ranges);
+    
+    TheMapping.exclude(TheSubset);
+    
+    TheSubset = TheMapping.getCase();
+    
+    EXPECT_EQ(TheSubset.getNumItems(), 1ULL);    
+    EXPECT_EQ(TheSubset.getItem(0), Range(Int(5), Int(7)));    
+  }  
 }
