@@ -34,6 +34,10 @@ void *internal_mmap(void *addr, uptr length, int prot, int flags,
 #endif
 }
 
+int internal_munmap(void *addr, uptr length) {
+  return syscall(__NR_munmap, addr, length);
+}
+
 int internal_close(fd_t fd) {
   return syscall(__NR_close, fd);
 }

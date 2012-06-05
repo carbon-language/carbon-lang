@@ -194,7 +194,6 @@ uptr ReadFileToBuffer(const char *file_name, char **buff,
 void RawWrite(const char *buffer);
 int SNPrintf(char *buffer, uptr length, const char *format, ...);
 void Printf(const char *format, ...);
-int SScanf(const char *str, const char *format, ...);
 void Report(const char *format, ...);
 
 // Don't use std::min and std::max, to minimize dependency on libstdc++.

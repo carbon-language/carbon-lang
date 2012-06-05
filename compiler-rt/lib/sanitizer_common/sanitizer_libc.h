@@ -26,18 +26,25 @@ namespace __sanitizer {
 void MiniLibcStub();
 
 // internal_X() is a custom implementation of X() for use in RTL.
+
+// String functions
+void *internal_memchr(const void *s, int c, uptr n);
 int internal_strcmp(const char *s1, const char *s2);
 char *internal_strncpy(char *dst, const char *src, uptr n);
 
+// Memory
 void *internal_mmap(void *addr, uptr length, int prot, int flags,
                     int fd, u64 offset);
+int internal_munmap(void *addr, uptr length);
 
+// I/O
 typedef int fd_t;
 const fd_t kInvalidFd = -1;
 int internal_close(fd_t fd);
 fd_t internal_open(const char *filename, bool write);
 uptr internal_read(fd_t fd, void *buf, uptr count);
 uptr internal_write(fd_t fd, const void *buf, uptr count);
+int internal_sscanf(const char *str, const char *format, ...);
 
 }  // namespace __sanitizer
 

@@ -127,7 +127,7 @@ void *AsanMprotect(uptr fixed_addr, uptr size) {
 
 void AsanUnmapOrDie(void *addr, uptr size) {
   if (!addr || !size) return;
-  int res = munmap(addr, size);
+  int res = internal_munmap(addr, size);
   if (res != 0) {
     Report("Failed to unmap\n");
     AsanDie();

@@ -103,7 +103,7 @@ void *AsanMprotect(uptr fixed_addr, uptr size) {
 
 void AsanUnmapOrDie(void *addr, uptr size) {
   if (!addr || !size) return;
-  int res = syscall(__NR_munmap, addr, size);
+  int res = internal_munmap(addr, size);
   if (res != 0) {
     Report("Failed to unmap\n");
     AsanDie();
@@ -171,10 +171,10 @@ bool AsanProcMaps::Next(uptr *start, uptr *end,
   char *next_line = (char*)internal_memchr(current_, '\n', last - current_);
   if (next_line == 0)
     next_line = last;
-  if (SScanf(current_,
-             "%lx-%lx %4s %lx %x:%x %ld %n",
-             start, end, flags, offset, &major, &minor,
-             &inode, &consumed) != 7)
+  if (internal_sscanf(current_,
+                      "%lx-%lx %4s %lx %x:%x %ld %n",
+                      start, end, flags, offset, &major, &minor,
+                      &inode, &consumed) != 7)
     return false;
   current_ += consumed;
   // Skip spaces.

@@ -29,6 +29,11 @@ void *internal_mmap(void *addr, uptr length, int prot, int flags,
   return 0;
 }
 
+int internal_munmap(void *addr, uptr length) {
+  UNIMPLEMENTED_WIN();
+  return 0;
+}
+
 int internal_close(fd_t fd) {
   UNIMPLEMENTED_WIN();
   return 0;
@@ -56,6 +61,11 @@ uptr internal_write(fd_t fd, const void *buf, uptr count) {
   if (!WriteFile(err, buf, count, &ret, 0))
     return 0;
   return ret;
+}
+
+int internal_sscanf(const char *str, const char *format, ...) {
+  UNIMPLEMENTED_WIN();
+  return -1;
 }
 
 }  // namespace __sanitizer

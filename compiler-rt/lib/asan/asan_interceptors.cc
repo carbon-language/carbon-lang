@@ -249,14 +249,6 @@ char* internal_strchr(const char *s, int c) {
   }
 }
 
-void* internal_memchr(const void* s, int c, uptr n) {
-  const char* t = (char*)s;
-  for (uptr i = 0; i < n; ++i, ++t)
-    if (*t == c)
-      return (void*)t;
-  return 0;
-}
-
 int internal_memcmp(const void* s1, const void* s2, uptr n) {
   const char* t1 = (char*)s1;
   const char* t2 = (char*)s2;

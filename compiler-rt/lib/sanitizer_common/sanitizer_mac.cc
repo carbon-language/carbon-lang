@@ -30,6 +30,10 @@ void *internal_mmap(void *addr, size_t length, int prot, int flags,
   return mmap(addr, length, prot, flags, fd, offset);
 }
 
+int internal_munmap(void *addr, uptr length) {
+  return munmap(addr, length);
+}
+
 int internal_close(fd_t fd) {
   return close(fd);
 }

@@ -35,7 +35,6 @@ s64 internal_atoll(const char *nptr);
 uptr internal_strlen(const char *s);
 uptr internal_strnlen(const char *s, uptr maxlen);
 char* internal_strchr(const char *s, int c);
-void* internal_memchr(const void* s, int c, uptr n);
 void* internal_memset(void *s, int c, uptr n);
 int internal_memcmp(const void* s1, const void* s2, uptr n);
 char *internal_strstr(const char *haystack, const char *needle);

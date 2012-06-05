@@ -18,6 +18,14 @@ namespace __sanitizer {
 void MiniLibcStub() {
 }
 
+void *internal_memchr(const void *s, int c, uptr n) {
+  const char* t = (char*)s;
+  for (uptr i = 0; i < n; ++i, ++t)
+    if (*t == c)
+      return (void*)t;
+  return 0;
+}
+
 int internal_strcmp(const char *s1, const char *s2) {
   while (true) {
     unsigned c1 = *s1;
