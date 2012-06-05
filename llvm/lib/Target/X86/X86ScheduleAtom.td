@@ -22,7 +22,12 @@ def Port0 : FuncUnit; // ALU: ALU0, shift/rotate, load/store
 def Port1 : FuncUnit; // ALU: ALU1, bit processing, jump, and LEA
                       // SIMD/FP: SIMD ALU, FP Adder
 
-def AtomItineraries : ProcessorItineraries<
+def AtomItineraries : MultiIssueItineraries<
+  2, // IssueWidth=2 allows 2 instructions per scheduling group.
+  1, // MinLatency=1. InstrStage cycles overrides MinLatency.
+     //               OperandCycles may be used for expected latency.
+  3, // LoadLatency (expected, may be overriden by OperandCycles)
+  30,// HighLatency (expected, may be overriden by OperandCycles)
   [ Port0, Port1 ],
   [], [
   // P0 only
