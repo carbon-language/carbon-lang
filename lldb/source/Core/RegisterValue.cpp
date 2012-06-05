@@ -17,6 +17,7 @@
 #include "lldb/Core/Error.h"
 #include "lldb/Core/Scalar.h"
 #include "lldb/Core/Stream.h"
+#include "lldb/Core/StreamString.h"
 #include "lldb/Interpreter/Args.h"
 
 using namespace lldb;
@@ -28,22 +29,34 @@ RegisterValue::Dump (Stream *s,
                      const RegisterInfo *reg_info, 
                      bool prefix_with_name, 
                      bool prefix_with_alt_name, 
-                     Format format) const
+                     Format format,
+                     uint32_t reg_name_right_align_at) const
 {
     DataExtractor data;
     if (GetData (data))
     {
         bool name_printed = false;
+        // For simplicity, alignment of the register name printing applies only
+        // in the most common case where:
+        // 
+        //     prefix_with_name^prefix_with_alt_name is true
+        //
+        StreamString format_string;
+        if (reg_name_right_align_at && (prefix_with_name^prefix_with_alt_name))
+            format_string.Printf("%%%us", reg_name_right_align_at);
+        else
+            format_string.Printf("%%s");
+        const char *fmt = format_string.GetData();
         if (prefix_with_name)
         {
             if (reg_info->name)
             {
-                s->Printf ("%s", reg_info->name);
+                s->Printf (fmt, reg_info->name);
                 name_printed = true;
             }
             else if (reg_info->alt_name)
             {
-                s->Printf ("%s", reg_info->alt_name);
+                s->Printf (fmt, reg_info->alt_name);
                 prefix_with_alt_name = false;
                 name_printed = true;
             }
@@ -54,13 +67,13 @@ RegisterValue::Dump (Stream *s,
                 s->PutChar ('/');
             if (reg_info->alt_name)
             {
-                s->Printf ("%s", reg_info->alt_name);
+                s->Printf (fmt, reg_info->alt_name);
                 name_printed = true;
             }
             else if (!name_printed)
             {
                 // No alternate name but we were asked to display a name, so show the main name
-                s->Printf ("%s", reg_info->name);
+                s->Printf (fmt, reg_info->name);
                 name_printed = true;
             }
         }

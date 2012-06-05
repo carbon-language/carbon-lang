@@ -95,7 +95,7 @@ public:
 
                 bool prefix_with_altname = m_command_options.alternate_name;
                 bool prefix_with_name = !prefix_with_altname;
-                reg_value.Dump(&strm, reg_info, prefix_with_name, prefix_with_altname, m_format_options.GetFormat());
+                reg_value.Dump(&strm, reg_info, prefix_with_name, prefix_with_altname, m_format_options.GetFormat(), 8);
                 if ((reg_info->encoding == eEncodingUint) || (reg_info->encoding == eEncodingSint))
                 {
                     Process *process = exe_ctx.GetProcessPtr();
