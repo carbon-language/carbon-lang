@@ -63,7 +63,7 @@ enum {
 static int GetMacosVersion() {
   int mib[2] = { CTL_KERN, KERN_OSRELEASE };
   char version[100];
-  size_t len = 0, maxlen = sizeof(version) / sizeof(version[0]);
+  uptr len = 0, maxlen = sizeof(version) / sizeof(version[0]);
   for (int i = 0; i < maxlen; i++) version[i] = '\0';
   // Get the version length.
   CHECK(sysctl(mib, 2, 0, &len, 0, 0) != -1);
@@ -100,7 +100,7 @@ bool AsanInterceptsSignal(int signum) {
   return (signum == SIGSEGV || signum == SIGBUS) && FLAG_handle_segv;
 }
 
-void *AsanMmapSomewhereOrDie(size_t size, const char *mem_type) {
+void *AsanMmapSomewhereOrDie(uptr size, const char *mem_type) {
   size = RoundUpTo(size, kPageSize);
   void *res = internal_mmap(0, size,
                             PROT_READ | PROT_WRITE,
@@ -111,21 +111,21 @@ void *AsanMmapSomewhereOrDie(size_t size, const char *mem_type) {
   return res;
 }
 
-void *AsanMmapFixedNoReserve(uptr fixed_addr, size_t size) {
+void *AsanMmapFixedNoReserve(uptr fixed_addr, uptr size) {
   return internal_mmap((void*)fixed_addr, size,
                       PROT_READ | PROT_WRITE,
                       MAP_PRIVATE | MAP_ANON | MAP_FIXED | MAP_NORESERVE,
                       0, 0);
 }
 
-void *AsanMprotect(uptr fixed_addr, size_t size) {
+void *AsanMprotect(uptr fixed_addr, uptr size) {
   return internal_mmap((void*)fixed_addr, size,
                        PROT_NONE,
                        MAP_PRIVATE | MAP_ANON | MAP_FIXED | MAP_NORESERVE,
                        0, 0);
 }
 
-void AsanUnmapOrDie(void *addr, size_t size) {
+void AsanUnmapOrDie(void *addr, uptr size) {
   if (!addr || !size) return;
   int res = munmap(addr, size);
   if (res != 0) {
@@ -139,9 +139,9 @@ const char *AsanGetEnv(const char *name) {
   CHECK(env_ptr);
   char **environ = *env_ptr;
   CHECK(environ);
-  size_t name_len = internal_strlen(name);
+  uptr name_len = internal_strlen(name);
   while (*environ != 0) {
-    size_t len = internal_strlen(*environ);
+    uptr len = internal_strlen(*environ);
     if (len > name_len) {
       const char *p = *environ;
       if (!internal_memcmp(p, name, name_len) &&
@@ -196,7 +196,7 @@ void AsanProcMaps::Reset() {
 template<u32 kLCSegment, typename SegmentCommand>
 bool AsanProcMaps::NextSegmentLoad(
     uptr *start, uptr *end, uptr *offset,
-    char filename[], size_t filename_size) {
+    char filename[], uptr filename_size) {
   const char* lc = current_load_cmd_addr_;
   current_load_cmd_addr_ += ((const load_command *)lc)->cmdsize;
   if (((const load_command *)lc)->cmd == kLCSegment) {
@@ -218,7 +218,7 @@ bool AsanProcMaps::NextSegmentLoad(
 
 bool AsanProcMaps::Next(uptr *start, uptr *end,
                         uptr *offset, char filename[],
-                        size_t filename_size) {
+                        uptr filename_size) {
   for (; current_image_ >= 0; current_image_--) {
     const mach_header* hdr = _dyld_get_image_header(current_image_);
     if (!hdr) continue;
@@ -270,12 +270,12 @@ bool AsanProcMaps::Next(uptr *start, uptr *end,
 
 bool AsanProcMaps::GetObjectNameAndOffset(uptr addr, uptr *offset,
                                           char filename[],
-                                          size_t filename_size) {
+                                          uptr filename_size) {
   return IterateForObjectNameAndOffset(addr, offset, filename, filename_size);
 }
 
 void AsanThread::SetThreadStackTopAndBottom() {
-  size_t stacksize = pthread_get_stacksize_np(pthread_self());
+  uptr stacksize = pthread_get_stacksize_np(pthread_self());
   void *stackaddr = pthread_get_stackaddr_np(pthread_self());
   stack_top_ = (uptr)stackaddr;
   stack_bottom_ = stack_top_ - stacksize;
@@ -302,7 +302,7 @@ void AsanLock::Unlock() {
   OSSpinLockUnlock((OSSpinLock*)&opaque_storage_);
 }
 
-void AsanStackTrace::GetStackTrace(size_t max_s, uptr pc, uptr bp) {
+void AsanStackTrace::GetStackTrace(uptr max_s, uptr pc, uptr bp) {
   size = 0;
   trace[0] = pc;
   if ((max_s) > 1) {
@@ -329,7 +329,7 @@ static void *island_allocator_pos = 0;
 
 extern "C"
 mach_error_t __interception_allocate_island(void **ptr,
-                                            size_t unused_size,
+                                            uptr unused_size,
                                             void *unused_hint) {
   if (!island_allocator_pos) {
     island_allocator_pos =
