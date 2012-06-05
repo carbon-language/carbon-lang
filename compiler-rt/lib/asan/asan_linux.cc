@@ -114,10 +114,6 @@ uptr AsanWrite(int fd, const void *buf, uptr count) {
   return (uptr)syscall(__NR_write, fd, buf, count);
 }
 
-int AsanOpenReadonly(const char* filename) {
-  return syscall(__NR_open, filename, O_RDONLY);
-}
-
 // Like getenv, but reads env directly from /proc and does not use libc.
 // This function should be called first inside __asan_init.
 const char* AsanGetEnv(const char* name) {

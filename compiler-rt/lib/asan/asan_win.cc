@@ -69,10 +69,6 @@ uptr AsanWrite(int fd, const void *buf, uptr count) {
 
 // FIXME: Looks like these functions are not needed and are linked in by the
 // code unreachable on Windows. We should clean this up.
-int AsanOpenReadonly(const char* filename) {
-  UNIMPLEMENTED();
-}
-
 uptr AsanRead(int fd, void *buf, uptr count) {
   UNIMPLEMENTED();
 }

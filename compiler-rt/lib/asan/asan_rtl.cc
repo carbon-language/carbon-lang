@@ -21,6 +21,7 @@
 #include "asan_stats.h"
 #include "asan_thread.h"
 #include "asan_thread_registry.h"
+#include "sanitizer_common/sanitizer_libc.h"
 
 namespace __asan {
 using namespace __sanitizer;
@@ -86,7 +87,7 @@ uptr ReadFileToBuffer(const char *file_name, char **buff,
   *buff_size = 0;
   // The files we usually open are not seekable, so try different buffer sizes.
   for (uptr size = kMinFileLen; size <= max_len; size *= 2) {
-    int fd = AsanOpenReadonly(file_name);
+    fd_t fd = internal_open(file_name, /*write*/ false);
     if (fd < 0) return 0;
     AsanUnmapOrDie(*buff, *buff_size);
     *buff = (char*)AsanMmapSomewhereOrDie(size, __FUNCTION__);

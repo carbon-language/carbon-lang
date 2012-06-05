@@ -157,7 +157,6 @@ void OutOfMemoryMessageAndDie(const char *mem_type, uptr size);
 // asan_linux.cc / asan_mac.cc / asan_win.cc
 void *AsanDoesNotSupportStaticLinkage();
 bool AsanShadowRangeIsAvailable();
-int AsanOpenReadonly(const char* filename);
 const char *AsanGetEnv(const char *name);
 void AsanDumpProcessMap();
 

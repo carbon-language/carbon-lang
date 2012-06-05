@@ -138,10 +138,6 @@ void AsanUnmapOrDie(void *addr, size_t size) {
   }
 }
 
-int AsanOpenReadonly(const char* filename) {
-  return open(filename, O_RDONLY);
-}
-
 const char *AsanGetEnv(const char *name) {
   char ***env_ptr = _NSGetEnviron();
   CHECK(env_ptr);
