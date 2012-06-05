@@ -178,6 +178,10 @@ namespace llvm {
       return Indexes;
     }
 
+    AliasAnalysis *getAliasAnalysis() const {
+      return AA;
+    }
+
     /// isNotInMIMap - returns true if the specified machine instr has been
     /// removed or was never entered in the map.
     bool isNotInMIMap(const MachineInstr* Instr) const {

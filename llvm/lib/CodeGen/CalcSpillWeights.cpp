@@ -86,6 +86,27 @@ static unsigned copyHint(const MachineInstr *mi, unsigned reg,
   return tri.getMatchingSuperReg(hreg, sub, rc);
 }
 
+// Check if all values in LI are rematerializable
+static bool isRematerializable(const LiveInterval &LI,
+                               const LiveIntervals &LIS,
+                               const TargetInstrInfo &TII) {
+  for (LiveInterval::const_vni_iterator I = LI.vni_begin(), E = LI.vni_end();
+       I != E; ++I) {
+    const VNInfo *VNI = *I;
+    if (VNI->isUnused())
+      continue;
+    if (VNI->isPHIDef())
+      return false;
+
+    MachineInstr *MI = LIS.getInstructionFromIndex(VNI->def);
+    assert(MI && "Dead valno in interval");
+
+    if (!TII.isTriviallyReMaterializable(MI, LIS.getAliasAnalysis()))
+      return false;
+  }
+  return true;
+}
+
 void VirtRegAuxInfo::CalculateWeightAndHint(LiveInterval &li) {
   MachineRegisterInfo &mri = MF.getRegInfo();
   const TargetRegisterInfo &tri = *MF.getTarget().getRegisterInfo();
@@ -171,17 +192,11 @@ void VirtRegAuxInfo::CalculateWeightAndHint(LiveInterval &li) {
   }
 
   // If all of the definitions of the interval are re-materializable,
-  // it is a preferred candidate for spilling. If none of the defs are
-  // loads, then it's potentially very cheap to re-materialize.
+  // it is a preferred candidate for spilling.
   // FIXME: this gets much more complicated once we support non-trivial
   // re-materialization.
-  bool isLoad = false;
-  if (LIS.isReMaterializable(li, 0, isLoad)) {
-    if (isLoad)
-      totalWeight *= 0.9F;
-    else
-      totalWeight *= 0.5F;
-  }
+  if (isRematerializable(li, LIS, *MF.getTarget().getInstrInfo()))
+    totalWeight *= 0.5F;
 
   li.weight = normalizeSpillWeight(totalWeight, li.getSize());
 }
