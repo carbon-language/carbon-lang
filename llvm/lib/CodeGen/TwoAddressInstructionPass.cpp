@@ -1046,7 +1046,7 @@ bool TwoAddressInstructionPass::isDefTooClose(unsigned Reg, unsigned Dist,
       return true;  // Below MI
     unsigned DefDist = DDI->second;
     assert(Dist > DefDist && "Visited def already?");
-    if (TII->getInstrLatency(InstrItins, DefMI) > (int)(Dist - DefDist))
+    if (TII->getInstrLatency(InstrItins, DefMI) > (Dist - DefDist))
       return true;
   }
   return false;

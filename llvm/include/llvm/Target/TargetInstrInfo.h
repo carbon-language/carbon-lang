@@ -668,18 +668,36 @@ public:
     return Opcode <= TargetOpcode::COPY;
   }
 
+  virtual int getOperandLatency(const InstrItineraryData *ItinData,
+                                SDNode *DefNode, unsigned DefIdx,
+                                SDNode *UseNode, unsigned UseIdx) const = 0;
+
   /// getOperandLatency - Compute and return the use operand latency of a given
   /// pair of def and use.
   /// In most cases, the static scheduling itinerary was enough to determine the
   /// operand latency. But it may not be possible for instructions with variable
   /// number of defs / uses.
+  ///
+  /// This is a raw interface to the itinerary that may be directly overriden by
+  /// a target. Use computeOperandLatency to get the best estimate of latency.
   virtual int getOperandLatency(const InstrItineraryData *ItinData,
-                              const MachineInstr *DefMI, unsigned DefIdx,
-                              const MachineInstr *UseMI, unsigned UseIdx) const;
+                                const MachineInstr *DefMI, unsigned DefIdx,
+                                const MachineInstr *UseMI,
+                                unsigned UseIdx) const;
 
-  virtual int getOperandLatency(const InstrItineraryData *ItinData,
-                                SDNode *DefNode, unsigned DefIdx,
-                                SDNode *UseNode, unsigned UseIdx) const = 0;
+  /// computeOperandLatency - Compute and return the latency of the given data
+  /// dependent def and use. DefMI must be a valid def. UseMI may be NULL for
+  /// an unknown use. If the subtarget allows, this may or may not need to call
+  /// getOperandLatency().
+  ///
+  /// FindMin may be set to get the minimum vs. expected latency. Minimum
+  /// latency is used for scheduling groups, while expected latency is for
+  /// instruction cost and critical path.
+  unsigned computeOperandLatency(const InstrItineraryData *ItinData,
+                                 const TargetRegisterInfo *TRI,
+                                 const MachineInstr *DefMI,
+                                 const MachineInstr *UseMI,
+                                 unsigned Reg, bool FindMin) const;
 
   /// getOutputLatency - Compute and return the output dependency latency of a
   /// a given pair of defs which both target the same register. This is usually
@@ -693,12 +711,16 @@ public:
   /// getInstrLatency - Compute the instruction latency of a given instruction.
   /// If the instruction has higher cost when predicated, it's returned via
   /// PredCost.
-  virtual int getInstrLatency(const InstrItineraryData *ItinData,
-                              const MachineInstr *MI,
-                              unsigned *PredCost = 0) const;
+  virtual unsigned getInstrLatency(const InstrItineraryData *ItinData,
+                                   const MachineInstr *MI,
+                                   unsigned *PredCost = 0) const;
 
   virtual int getInstrLatency(const InstrItineraryData *ItinData,
                               SDNode *Node) const = 0;
+
+  /// Return the default expected latency for a def based on it's opcode.
+  unsigned defaultDefLatency(const InstrItineraryData *ItinData,
+                             const MachineInstr *DefMI) const;
 
   /// isHighLatencyDef - Return true if this opcode has high latency to its
   /// result.

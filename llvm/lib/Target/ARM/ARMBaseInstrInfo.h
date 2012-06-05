@@ -249,8 +249,9 @@ private:
                         const MCInstrDesc &UseMCID,
                         unsigned UseIdx, unsigned UseAlign) const;
 
-  int getInstrLatency(const InstrItineraryData *ItinData,
-                      const MachineInstr *MI, unsigned *PredCost = 0) const;
+  unsigned getInstrLatency(const InstrItineraryData *ItinData,
+                           const MachineInstr *MI,
+                           unsigned *PredCost = 0) const;
 
   int getInstrLatency(const InstrItineraryData *ItinData,
                       SDNode *Node) const;

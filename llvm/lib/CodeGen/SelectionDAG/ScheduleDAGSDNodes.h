@@ -98,12 +98,6 @@ namespace llvm {
     ///
     virtual void computeLatency(SUnit *SU);
 
-    /// computeOperandLatency - Override dependence edge latency using
-    /// operand use/def information
-    ///
-    virtual void computeOperandLatency(SUnit *Def, SUnit *Use,
-                                       SDep& dep) const { }
-
     virtual void computeOperandLatency(SDNode *Def, SDNode *Use,
                                        unsigned OpIdx, SDep& dep) const;
 

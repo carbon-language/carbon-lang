@@ -291,11 +291,15 @@ namespace llvm {
     ///
     virtual void computeLatency(SUnit *SU);
 
-    /// computeOperandLatency - Override dependence edge latency using
+    /// computeOperandLatency - Return dependence edge latency using
     /// operand use/def information
     ///
-    virtual void computeOperandLatency(SUnit *Def, SUnit *Use,
-                                       SDep& dep) const;
+    /// FindMin may be set to get the minimum vs. expected latency. Minimum
+    /// latency is used for scheduling groups, while expected latency is for
+    /// instruction cost and critical path.
+    virtual unsigned computeOperandLatency(SUnit *Def, SUnit *Use,
+                                           const SDep& dep,
+                                           bool FindMin = false) const;
 
     /// schedule - Order nodes according to selected style, filling
     /// in the Sequence member.

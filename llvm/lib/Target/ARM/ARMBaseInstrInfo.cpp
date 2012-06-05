@@ -2567,12 +2567,13 @@ static const MachineInstr *getBundledUseMI(const TargetRegisterInfo *TRI,
 
 int
 ARMBaseInstrInfo::getOperandLatency(const InstrItineraryData *ItinData,
-                             const MachineInstr *DefMI, unsigned DefIdx,
-                             const MachineInstr *UseMI, unsigned UseIdx) const {
+                                    const MachineInstr *DefMI, unsigned DefIdx,
+                                    const MachineInstr *UseMI,
+                                    unsigned UseIdx) const {
   if (DefMI->isCopyLike() || DefMI->isInsertSubreg() ||
-      DefMI->isRegSequence() || DefMI->isImplicitDef())
+      DefMI->isRegSequence() || DefMI->isImplicitDef()) {
     return 1;
-
+  }
   if (!ItinData || ItinData->isEmpty())
     return DefMI->mayLoad() ? 3 : 1;
 
@@ -2983,14 +2984,16 @@ ARMBaseInstrInfo::getOutputLatency(const InstrItineraryData *ItinData,
                            DepMI->getNumOperands());
 }
 
-int ARMBaseInstrInfo::getInstrLatency(const InstrItineraryData *ItinData,
-                                      const MachineInstr *MI,
-                                      unsigned *PredCost) const {
+unsigned ARMBaseInstrInfo::getInstrLatency(const InstrItineraryData *ItinData,
+                                           const MachineInstr *MI,
+                                           unsigned *PredCost) const {
   if (MI->isCopyLike() || MI->isInsertSubreg() ||
       MI->isRegSequence() || MI->isImplicitDef())
     return 1;
 
-  if (!ItinData || ItinData->isEmpty())
+  // Be sure to call getStageLatency for an empty itinerary in case it has a
+  // valid MinLatency property.
+  if (!ItinData)
     return 1;
 
   if (MI->isBundle()) {

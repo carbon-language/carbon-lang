@@ -214,6 +214,12 @@ public:
   /// class.  The latency is the maximum completion time for any stage
   /// in the itinerary.
   ///
+  /// InstrStages override the itinerary's MinLatency property. In fact, if the
+  /// stage latencies, which may be zero, are less than MinLatency,
+  /// getStageLatency returns a value less than MinLatency.
+  ///
+  /// If no stages exist, MinLatency is used. If MinLatency is invalid (<0),
+  /// then it defaults to one cycle.
   unsigned getStageLatency(unsigned ItinClassIndx) const {
     // If the target doesn't provide itinerary information, use a simple
     // non-zero default value for all instructions.  Some target's provide a
@@ -222,7 +228,7 @@ public:
     // stage). This is different from beginStage == endStage != 0, which could
     // be used for zero-latency pseudo ops.
     if (isEmpty() || Itineraries[ItinClassIndx].FirstStage == 0)
-      return 1;
+      return (Props.MinLatency < 0) ? 1 : Props.MinLatency;
 
     // Calculate the maximum completion time for any stage.
     unsigned Latency = 0, StartCycle = 0;
