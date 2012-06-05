@@ -284,11 +284,11 @@ $(LIBASAN_A): mk_bin_dir $(LIBASAN_OBJ) $(MAKEFILE)
 	$(CXX) -shared $(CFLAGS) $(LIBASAN_OBJ) $(LD_FLAGS) -o $(BIN)/libasan$(SUFF).so
 
 TEST_OBJECTS_COMMON=\
-	     $(BIN)/asan_test$(SUFF).o \
 	     $(BIN)/asan_globals_test$(SUFF).o \
 	     $(BIN)/asan_break_optimization$(SUFF).o \
 	     $(BIN)/asan_noinst_test$(SUFF).o \
-	     $(BIN)/asan_interface_test$(SUFF).o
+	     $(BIN)/asan_interface_test$(SUFF).o \
+	     $(BIN)/asan_test$(SUFF).o
 
 BENCHMARK_OBJECTS=\
 	     $(BIN)/asan_benchmarks_test$(SUFF).o \
