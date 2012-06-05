@@ -39,9 +39,9 @@ ScoreboardHazardRecognizer(const InstrItineraryData *II,
   DebugType = ParentDebugType;
 #endif
 
-  // Determine the maximum depth of any itinerary. This determines the
-  // depth of the scoreboard. We always make the scoreboard at least 1
-  // cycle deep to avoid dealing with the boundary condition.
+  // Determine the maximum depth of any itinerary. This determines the depth of
+  // the scoreboard. We always make the scoreboard at least 1 cycle deep to
+  // avoid dealing with the boundary condition.
   unsigned ScoreboardDepth = 1;
   if (ItinData && !ItinData->isEmpty()) {
     IssueWidth = ItinData->IssueWidth;
@@ -63,16 +63,22 @@ ScoreboardHazardRecognizer(const InstrItineraryData *II,
       // Find the next power-of-2 >= ItinDepth
       while (ItinDepth > ScoreboardDepth) {
         ScoreboardDepth *= 2;
+        // Don't set MaxLookAhead until we find at least one nonzero stage.
+        // This way, an itinerary with no stages has MaxLookAhead==0, which
+        // completely bypasses the scoreboard hazard logic.
+        MaxLookAhead = ScoreboardDepth;
       }
     }
-    MaxLookAhead = ScoreboardDepth;
   }
 
   ReservedScoreboard.reset(ScoreboardDepth);
   RequiredScoreboard.reset(ScoreboardDepth);
 
-  DEBUG(dbgs() << "Using scoreboard hazard recognizer: Depth = "
-               << ScoreboardDepth << '\n');
+  if (!MaxLookAhead)
+    DEBUG(dbgs() << "Disabled scoreboard hazard recognizer\n");
+  else
+    DEBUG(dbgs() << "Using scoreboard hazard recognizer: Depth = "
+          << ScoreboardDepth << '\n');
 }
 
 void ScoreboardHazardRecognizer::Reset() {

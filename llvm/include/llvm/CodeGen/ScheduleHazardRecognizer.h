@@ -46,6 +46,8 @@ public:
 
   /// atIssueLimit - Return true if no more instructions may be issued in this
   /// cycle.
+  ///
+  /// FIXME: remove this once MachineScheduler is the only client.
   virtual bool atIssueLimit() const { return false; }
 
   /// getHazardType - Return the hazard type of emitting this node.  There are
