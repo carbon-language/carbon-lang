@@ -115,8 +115,7 @@ public:
     void
     LogUUIDAndPaths (lldb::LogSP &log_sp, 
                      const char *prefix_cstr);
-
-
+                     
     Mutex &
     GetMutex ()
     {
