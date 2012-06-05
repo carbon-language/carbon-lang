@@ -1239,9 +1239,9 @@ SDValue PPCTargetLowering::LowerGlobalTLSAddress(SDValue Op,
 
   if (model != TLSModel::LocalExec)
     llvm_unreachable("only local-exec TLS mode supported");
-  SDValue R13 = DAG.getRegister(is64bit ? PPC::X13 : PPC::R13,
-                                is64bit ? MVT::i64 : MVT::i32);
-  SDValue Hi = DAG.getNode(PPCISD::Hi, dl, PtrVT, TGAHi, R13);
+  SDValue TLSReg = DAG.getRegister(is64bit ? PPC::X13 : PPC::R2,
+                                   is64bit ? MVT::i64 : MVT::i32);
+  SDValue Hi = DAG.getNode(PPCISD::Hi, dl, PtrVT, TGAHi, TLSReg);
   return DAG.getNode(PPCISD::Lo, dl, PtrVT, TGALo, Hi);
 }
 
