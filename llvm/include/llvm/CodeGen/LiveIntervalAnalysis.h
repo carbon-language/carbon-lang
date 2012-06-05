@@ -361,26 +361,6 @@ namespace llvm {
                               SlotIndex MIIdx,
                               LiveInterval &interval);
 
-    /// getReMatImplicitUse - If the remat definition MI has one (for now, we
-    /// only allow one) virtual register operand, then its uses are implicitly
-    /// using the register. Returns the virtual register.
-    unsigned getReMatImplicitUse(const LiveInterval &li,
-                                 MachineInstr *MI) const;
-
-    /// isValNoAvailableAt - Return true if the val# of the specified interval
-    /// which reaches the given instruction also reaches the specified use
-    /// index.
-    bool isValNoAvailableAt(const LiveInterval &li, MachineInstr *MI,
-                            SlotIndex UseIdx) const;
-
-    /// isReMaterializable - Returns true if the definition MI of the specified
-    /// val# of the specified interval is re-materializable. Also returns true
-    /// by reference if the def is a load.
-    bool isReMaterializable(const LiveInterval &li, const VNInfo *ValNo,
-                            MachineInstr *MI,
-                            const SmallVectorImpl<LiveInterval*> *SpillIs,
-                            bool &isLoad);
-
     static LiveInterval* createInterval(unsigned Reg);
 
     void printInstrs(raw_ostream &O) const;
