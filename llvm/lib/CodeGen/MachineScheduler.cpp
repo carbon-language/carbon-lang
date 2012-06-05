@@ -701,9 +701,9 @@ void ScheduleDAGMI::placeDebugValues() {
 //===----------------------------------------------------------------------===//
 
 namespace {
-/// ReadyQ encapsulates vector of "ready" SUnits with basic convenience methods
-/// for pushing and removing nodes. ReadyQ's are uniquely identified by an
-/// ID. SUnit::NodeQueueId us a mask of the ReadyQs that the SUnit is in.
+/// ReadyQueue encapsulates vector of "ready" SUnits with basic convenience
+/// methods for pushing and removing nodes. ReadyQueue's are uniquely identified
+/// by an ID. SUnit::NodeQueueId is a mask of the ReadyQueues the SUnit is in.
 class ReadyQueue {
   unsigned ID;
   std::string Name;
