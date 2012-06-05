@@ -72,11 +72,6 @@ void FlushShadowMemory() {
           MADV_DONTNEED);
 }
 
-static void my_munmap(void *addr, size_t length) {
-  ScopedInRtl in_rtl;
-  syscall(__NR_munmap, addr, length);
-}
-
 void internal_yield() {
   ScopedInRtl in_rtl;
   syscall(__NR_sched_yield);
@@ -263,7 +258,7 @@ void GetThreadStackAndTls(bool main, uptr *stk_addr, uptr *stk_size,
       stack = stack * 16 + num;
     }
     internal_close(maps);
-    my_munmap(buf, kBufSize);
+    internal_munmap(buf, kBufSize);
 
     struct rlimit rl;
     CHECK_EQ(getrlimit(RLIMIT_STACK, &rl), 0);
