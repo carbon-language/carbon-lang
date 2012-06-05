@@ -181,6 +181,28 @@ public:
     Query(const Query&);          // DO NOT IMPLEMENT
     void operator=(const Query&); // DO NOT IMPLEMENT
   };
+
+  // Array of LiveIntervalUnions.
+  class Array {
+    unsigned Size;
+    LiveIntervalUnion *LIUs;
+  public:
+    Array() : Size(0), LIUs(0) {}
+    ~Array() { clear(); }
+
+    // Initialize the array to have Size entries.
+    // Reuse an existing allocation if the size matches.
+    void init(LiveIntervalUnion::Allocator&, unsigned Size);
+
+    unsigned size() const { return Size; }
+
+    void clear();
+
+    LiveIntervalUnion& operator[](unsigned idx) {
+      assert(idx <  Size && "idx out of bounds");
+      return LIUs[idx];
+    }
+  };
 };
 
 } // end namespace llvm

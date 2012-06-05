@@ -62,27 +62,7 @@ class RegAllocBase {
   // registers may have changed.
   unsigned UserTag;
 
-  // Array of LiveIntervalUnions indexed by physical register.
-  class LiveUnionArray {
-    unsigned NumRegs;
-    LiveIntervalUnion *Array;
-  public:
-    LiveUnionArray(): NumRegs(0), Array(0) {}
-    ~LiveUnionArray() { clear(); }
-
-    unsigned numRegs() const { return NumRegs; }
-
-    void init(LiveIntervalUnion::Allocator &, unsigned NRegs);
-
-    void clear();
-
-    LiveIntervalUnion& operator[](unsigned PhysReg) {
-      assert(PhysReg <  NumRegs && "physReg out of bounds");
-      return Array[PhysReg];
-    }
-  };
-
-  LiveUnionArray PhysReg2LiveUnion;
+  LiveIntervalUnion::Array PhysReg2LiveUnion;
 
   // Current queries, one per physreg. They must be reinitialized each time we
   // query on a new live virtual register.
