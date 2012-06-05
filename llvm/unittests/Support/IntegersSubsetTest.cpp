@@ -22,6 +22,7 @@ namespace {
   class Int : public APInt {
   public:
     Int(uint64_t V) : APInt(64, V) {}
+    Int(const APInt& Src) : APInt(Src) {}
     bool operator < (const APInt& RHS) const { return ult(RHS); }
     bool operator > (const APInt& RHS) const { return ugt(RHS); }
     bool operator <= (const APInt& RHS) const { return ule(RHS); }

@@ -49,7 +49,7 @@ public:
 
 protected:
 
-  typedef std::vector<Cluster> CaseItems;
+  typedef std::list<Cluster> CaseItems;
   typedef typename CaseItems::iterator CaseItemIt;
   typedef typename CaseItems::const_iterator CaseItemConstIt;
   
@@ -87,11 +87,16 @@ protected:
   
   void sort() {
     if (!Sorted) {
-      std::sort(Items.begin(), Items.end(), ClustersCmp());
+      std::vector<Cluster> clustersVector;
+      clustersVector.reserve(Items.size());
+      clustersVector.insert(clustersVector.begin(), Items.begin(), Items.end());
+      std::sort(clustersVector.begin(), clustersVector.end(), ClustersCmp());
+      Items.clear();
+      Items.insert(Items.begin(), clustersVector.begin(), clustersVector.end());
       Sorted = true;
     }
   }
-  
+
 public:
   
   // Don't public CaseItems itself. Don't allow edit the Items directly. 
@@ -104,7 +109,6 @@ public:
   typedef std::list<Case> Cases;
   
   IntegersSubsetMapping() {
-    Items.reserve(32);
     Sorted = false;
   }
   
@@ -112,7 +116,7 @@ public:
     if (Items.empty())
       return true;
     sort();
-    for (CaseItemIt i = Items.begin(), j = i+1, e = Items.end();
+    for (CaseItemIt j = Items.begin(), i = j++, e = Items.end();
          j != e; i = j++) {
       if (isIntersected(i, j) && i->second != j->second) {
         errItem = j;
@@ -132,8 +136,8 @@ public:
     const IntTy *High = &OldItems.begin()->first.getHigh();
     unsigned Weight = 1;
     SuccessorClass *Successor = OldItems.begin()->second;
-    for (CaseItemIt i = OldItems.begin(), j = i+1, e = OldItems.end();
-        j != e; i = j++) {
+    for (CaseItemIt j = OldItems.begin(), i = j++, e = OldItems.end();
+         j != e; i = j++) {
       if (isJoinable(i, j)) {
         const IntTy *CurHigh = &j->first.getHigh();
         ++Weight;
@@ -176,7 +180,7 @@ public:
   
   /// Adds all ranges and values from given ranges set to the current
   /// mapping.
-  void add(const IntegersSubset &CRS, SuccessorClass *S = 0) {
+  void add(const IntegersSubsetTy &CRS, SuccessorClass *S = 0) {
     for (unsigned i = 0, e = CRS.getNumItems(); i < e; ++i) {
       RangeTy R = CRS.getItem(i);
       add(R, S);
@@ -197,7 +201,7 @@ public:
   
   /// Builds the finalized case objects ignoring successor values, as though
   /// all ranges belongs to the same successor.
-  IntegersSubset getCase() {
+  IntegersSubsetTy getCase() {
     RangesCollection Ranges;
     for (RangeIterator i = this->begin(); i != this->end(); ++i)
       Ranges.push_back(i->first);

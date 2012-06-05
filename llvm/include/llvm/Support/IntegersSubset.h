@@ -293,7 +293,7 @@ protected:
 public:
   
   template<class RangesCollectionTy>
-  IntegersSubsetGeneric(const RangesCollectionTy& Links) {
+  explicit IntegersSubsetGeneric(const RangesCollectionTy& Links) {
     assert(Links.size() && "Empty ranges are not allowed.");
     for (typename RangesCollectionTy::const_iterator i = Links.begin(),
          e = Links.end(); i != e; ++i) {
@@ -459,9 +459,8 @@ public:
   IntegersSubset(Constant *C) : ParentTy(rangesFromConstant(C)),
                                 Holder(C) {}
   
-  // implicit
   template<class RangesCollectionTy>
-  IntegersSubset(const RangesCollectionTy& Src) : ParentTy(Src) {
+  explicit IntegersSubset(const RangesCollectionTy& Src) : ParentTy(Src) {
     std::vector<Constant*> Elts;
     Elts.reserve(Src.size());
     for (typename RangesCollectionTy::const_iterator i = Src.begin(),
