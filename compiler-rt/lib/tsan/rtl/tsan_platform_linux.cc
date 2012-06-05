@@ -37,8 +37,6 @@
 #include <sched.h>
 #include <dlfcn.h>
 
-using namespace __sanitizer;  // NOLINT
-
 extern "C" int arch_prctl(int code, __sanitizer::uptr *addr);
 
 namespace __tsan {

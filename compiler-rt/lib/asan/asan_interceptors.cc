@@ -23,8 +23,6 @@
 #include "interception/interception.h"
 #include "sanitizer_common/sanitizer_libc.h"
 
-using namespace __sanitizer;  // NOLINT
-
 // Use macro to describe if specific function should be
 // intercepted on a given platform.
 #if !defined(_WIN32)

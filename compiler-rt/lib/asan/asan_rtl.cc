@@ -24,7 +24,6 @@
 #include "sanitizer_common/sanitizer_libc.h"
 
 namespace __asan {
-using namespace __sanitizer;
 
 // -------------------------- Flags ------------------------- {{{1
 static const uptr kMallocContextSize = 30;

@@ -21,8 +21,6 @@
 #include <stdarg.h>
 #include <stdio.h>
 
-using namespace __sanitizer;  // NOLINT
-
 namespace __asan {
 
 extern char *error_message_buffer;

@@ -17,8 +17,6 @@
 #include "sanitizer_common/sanitizer_defs.h"
 #include "sanitizer_common/sanitizer_libc.h"
 
-using namespace __sanitizer;  // NOLINT
-
 #if !defined(__linux__) && !defined(__APPLE__) && !defined(_WIN32)
 # error "This operating system is not supported by AddressSanitizer"
 #endif

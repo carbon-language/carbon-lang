@@ -18,8 +18,6 @@
 #include "tsan_mman.h"
 #include "tsan_platform.h"
 
-using namespace __sanitizer;  // NOLINT
-
 namespace __tsan {
 
 static Suppression *g_suppressions;

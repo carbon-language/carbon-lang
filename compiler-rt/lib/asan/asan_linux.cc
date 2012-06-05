@@ -36,8 +36,6 @@
 #include <sys/ucontext.h>
 #endif
 
-using namespace __sanitizer;  // NOLINT
-
 extern "C" void* _DYNAMIC;
 
 namespace __asan {

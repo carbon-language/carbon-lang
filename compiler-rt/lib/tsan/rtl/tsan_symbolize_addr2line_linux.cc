@@ -24,8 +24,6 @@
 #include <linux/limits.h>
 #include <sys/types.h>
 
-using namespace __sanitizer;  // NOLINT
-
 namespace __tsan {
 
 struct ModuleDesc {

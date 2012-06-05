@@ -14,8 +14,6 @@
 #include "tsan_platform.h"
 #include "gtest/gtest.h"
 
-using namespace __sanitizer;  // NOLINT
-
 namespace __tsan {
 
 static void TestThreadInfo(bool main) {

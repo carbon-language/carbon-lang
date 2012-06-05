@@ -22,8 +22,6 @@
 #include "tsan_flags.h"
 #include "tsan_placement_new.h"
 
-using namespace __sanitizer;  // NOLINT
-
 namespace __tsan {
 
 // Can be overriden by an application/test to intercept reports.

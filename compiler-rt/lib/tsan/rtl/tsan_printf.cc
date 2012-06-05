@@ -18,8 +18,6 @@
 
 #include <stdarg.h>  // va_list
 
-using namespace __sanitizer;  // NOLINT
-
 typedef long long i64;  // NOLINT
 typedef long iptr;  // NOLINT
 

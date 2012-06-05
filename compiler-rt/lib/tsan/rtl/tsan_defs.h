@@ -21,8 +21,6 @@
 #define TSAN_DEBUG 0
 #endif  // TSAN_DEBUG
 
-using namespace __sanitizer;
-
 namespace __tsan {
 
 const uptr kPageSize = 4096;

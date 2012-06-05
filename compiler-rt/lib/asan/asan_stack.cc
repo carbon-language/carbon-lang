@@ -19,8 +19,6 @@
 #include "asan_thread_registry.h"
 #include "sanitizer_common/sanitizer_symbolizer.h"
 
-using namespace __sanitizer; // NOLINT
-
 #ifdef ASAN_USE_EXTERNAL_SYMBOLIZER
 extern bool
 ASAN_USE_EXTERNAL_SYMBOLIZER(const void *pc, char *out, int out_size);

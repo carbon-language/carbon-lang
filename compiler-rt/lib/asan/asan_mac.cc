@@ -36,8 +36,6 @@
 #include <libkern/OSAtomic.h>
 #include <CoreFoundation/CFString.h>
 
-using namespace __sanitizer;  // NOLINT
-
 namespace __asan {
 
 void GetPcSpBp(void *context, uptr *pc, uptr *sp, uptr *bp) {

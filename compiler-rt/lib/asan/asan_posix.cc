@@ -36,8 +36,6 @@
 // since most of the stuff here is inlinable.
 #include <algorithm>
 
-using namespace __sanitizer;
-
 static const uptr kAltStackSize = SIGSTKSZ * 4;  // SIGSTKSZ is not enough.
 
 namespace __asan {

@@ -29,7 +29,6 @@ extern "C" void __tsan_resume() {
 }
 
 namespace __tsan {
-using namespace __sanitizer;
 
 THREADLOCAL char cur_thread_placeholder[sizeof(ThreadState)] ALIGNED(64);
 static char ctx_placeholder[sizeof(Context)] ALIGNED(64);

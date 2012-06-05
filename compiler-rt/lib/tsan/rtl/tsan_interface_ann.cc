@@ -21,7 +21,6 @@
 
 #define CALLERPC ((uptr)__builtin_return_address(0))
 
-using namespace __sanitizer;  // NOLINT
 using namespace __tsan;  // NOLINT
 
 namespace __tsan {
