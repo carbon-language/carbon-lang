@@ -86,12 +86,6 @@ void internal_sleep_ms(u32 ms) {
   usleep(ms * 1000);
 }
 
-fd_t internal_open(const char *name, bool write) {
-  ScopedInRtl in_rtl;
-  return syscall(__NR_open, name,
-      write ? O_WRONLY | O_CREAT | O_CLOEXEC : O_RDONLY, 0660);
-}
-
 void internal_close(fd_t fd) {
   ScopedInRtl in_rtl;
   syscall(__NR_close, fd);

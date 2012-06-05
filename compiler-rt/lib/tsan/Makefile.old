@@ -18,7 +18,7 @@ UNIT_TEST_SRC=$(wildcard unit_tests/*_test.cc)
 UNIT_TEST_OBJ=$(patsubst %.cc,%.o,$(UNIT_TEST_SRC))
 UNIT_TEST_HDR=$(wildcard rtl/*.h)
 
-INCLUDES=-Irtl $(GTEST_INCLUDE)
+INCLUDES=-Irtl -I.. $(GTEST_INCLUDE)
 
 all: libtsan test
 

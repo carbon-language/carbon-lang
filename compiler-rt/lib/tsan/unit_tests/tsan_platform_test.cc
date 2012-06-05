@@ -10,8 +10,11 @@
 // This file is a part of ThreadSanitizer (TSan), a race detector.
 //
 //===----------------------------------------------------------------------===//
+#include "sanitizer_common/sanitizer_libc.h"
 #include "tsan_platform.h"
 #include "gtest/gtest.h"
+
+using namespace __sanitizer;  // NOLINT
 
 namespace __tsan {
 

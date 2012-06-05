@@ -11,11 +11,14 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "sanitizer_common/sanitizer_libc.h"
 #include "tsan_suppressions.h"
 #include "tsan_rtl.h"
 #include "tsan_flags.h"
 #include "tsan_mman.h"
 #include "tsan_platform.h"
+
+using namespace __sanitizer;  // NOLINT
 
 namespace __tsan {
 
