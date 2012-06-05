@@ -31,7 +31,11 @@ def A9_DRegsN  : FuncUnit; // FP register set, NEON side
 // Bypasses
 def A9_LdBypass : Bypass;
 
-def CortexA9Itineraries : ProcessorItineraries<
+def CortexA9Itineraries : MultiIssueItineraries<
+  2, // IssueWidth - FIXME: A9_Issue0, A9_Issue1 are now redundant.
+  0, // MinLatency - FIXME: for misched, remove InstrStage for OOO operations.
+  2, // LoadLatency - optimistic, assumes bypass, overriden by OperandCycles.
+  10, // HighLatency - currently unused.
   [A9_Issue0, A9_Issue1, A9_Branch, A9_ALU0, A9_ALU1, A9_AGU, A9_NPipe, A9_MUX0,
    A9_LSUnit, A9_DRegsVFP, A9_DRegsN],
   [A9_LdBypass], [

@@ -22,7 +22,11 @@ def A8_NLSPipe : FuncUnit; // NEON LS pipe
 //
 // Dual issue pipeline represented by A8_Pipe0 | A8_Pipe1
 //
-def CortexA8Itineraries : ProcessorItineraries<
+def CortexA8Itineraries : MultiIssueItineraries<
+  2,  // IssueWidth
+  -1, // MinLatency - OperandCycles are interpreted as MinLatency.
+  2,  // LoadLatency - overriden by OperandCycles.
+  10, // HighLatency - currently unused.
   [A8_Pipe0, A8_Pipe1, A8_LSPipe, A8_NPipe, A8_NLSPipe],
   [], [
   // Two fully-pipelined integer ALU pipelines

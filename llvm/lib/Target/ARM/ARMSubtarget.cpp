@@ -100,9 +100,6 @@ ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &CPU,
   // Initialize scheduling itinerary for the specified CPU.
   InstrItins = getInstrItineraryForCPU(CPUString);
 
-  // After parsing Itineraries, set ItinData.IssueWidth.
-  computeIssueWidth();
-
   if ((TT.find("eabi") != std::string::npos) || (isTargetIOS() && isMClass()))
     // FIXME: We might want to separate AAPCS and EABI. Some systems, e.g.
     // Darwin-EABI conforms to AACPS but not the rest of EABI.
@@ -191,23 +188,6 @@ unsigned ARMSubtarget::getMispredictionPenalty() const {
 
   // Otherwise, just return a sensible default.
   return 10;
-}
-
-void ARMSubtarget::computeIssueWidth() {
-  unsigned allStage1Units = 0;
-  for (const InstrItinerary *itin = InstrItins.Itineraries;
-       itin->FirstStage != ~0U; ++itin) {
-    const InstrStage *IS = InstrItins.Stages + itin->FirstStage;
-    allStage1Units |= IS->getUnits();
-  }
-  InstrItins.Props.IssueWidth = 0;
-  while (allStage1Units) {
-    ++InstrItins.Props.IssueWidth;
-    // clear the lowest bit
-    allStage1Units ^= allStage1Units & ~(allStage1Units - 1);
-  }
-  assert(InstrItins.Props.IssueWidth <= 2 &&
-         "itinerary bug, too many stage 1 units");
 }
 
 bool ARMSubtarget::enablePostRAScheduler(
