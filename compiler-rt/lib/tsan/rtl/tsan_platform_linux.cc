@@ -12,6 +12,7 @@
 // Linux-specific code.
 //===----------------------------------------------------------------------===//
 
+#include "sanitizer_common/sanitizer_libc.h"
 #include "tsan_platform.h"
 #include "tsan_rtl.h"
 #include "tsan_flags.h"
@@ -35,6 +36,8 @@
 #include <errno.h>
 #include <sched.h>
 #include <dlfcn.h>
+
+using namespace __sanitizer;  // NOLINT
 
 extern "C" int arch_prctl(int code, __tsan::uptr *addr);
 
@@ -67,16 +70,6 @@ void FlushShadowMemory() {
   madvise((void*)kLinuxShadowBeg,
           kLinuxShadowEnd - kLinuxShadowBeg,
           MADV_DONTNEED);
-}
-
-static void *my_mmap(void *addr, size_t length, int prot, int flags,
-                    int fd, u64 offset) {
-  ScopedInRtl in_rtl;
-# if __WORDSIZE == 64
-  return (void *)syscall(__NR_mmap, addr, length, prot, flags, fd, offset);
-# else
-  return (void *)syscall(__NR_mmap2, addr, length, prot, flags, fd, offset);
-# endif
 }
 
 static void my_munmap(void *addr, size_t length) {
@@ -135,7 +128,7 @@ static void ProtectRange(uptr beg, uptr end) {
   CHECK_LE(beg, end);
   if (beg == end)
     return;
-  if (beg != (uptr)my_mmap((void*)(beg), end - beg,
+  if (beg != (uptr)internal_mmap((void*)(beg), end - beg,
       PROT_NONE,
       MAP_PRIVATE | MAP_ANON | MAP_FIXED | MAP_NORESERVE,
       -1, 0)) {
@@ -150,7 +143,7 @@ void InitializeShadowMemory() {
   const uptr kClosedLowEnd  = kLinuxShadowBeg - 1;
   const uptr kClosedMidBeg = kLinuxShadowEnd + 1;
   const uptr kClosedMidEnd = kLinuxAppMemBeg - 1;
-  uptr shadow = (uptr)my_mmap((void*)kLinuxShadowBeg,
+  uptr shadow = (uptr)internal_mmap((void*)kLinuxShadowBeg,
       kLinuxShadowEnd - kLinuxShadowBeg,
       PROT_READ | PROT_WRITE,
       MAP_PRIVATE | MAP_ANON | MAP_FIXED | MAP_NORESERVE,
@@ -248,7 +241,7 @@ void GetThreadStackAndTls(bool main, uptr *stk_addr, uptr *stk_size,
 
   if (main) {
     uptr kBufSize = 1 << 26;
-    char *buf = (char*)my_mmap(0, kBufSize, PROT_READ | PROT_WRITE,
+    char *buf = (char*)internal_mmap(0, kBufSize, PROT_READ | PROT_WRITE,
                                MAP_PRIVATE | MAP_ANON, -1, 0);
     fd_t maps = internal_open("/proc/self/maps", false);
     if (maps == kInvalidFd) {
