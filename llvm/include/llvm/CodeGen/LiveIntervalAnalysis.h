@@ -137,12 +137,6 @@ namespace llvm {
       return ReservedRegs.test(reg);
     }
 
-    /// getApproximateInstructionCount - computes an estimate of the number
-    /// of instructions in a given LiveInterval.
-    unsigned getApproximateInstructionCount(LiveInterval& I) {
-      return I.getSize()/SlotIndex::InstrDist;
-    }
-
     // Interval creation
     LiveInterval &getOrCreateInterval(unsigned reg) {
       Reg2IntervalMap::iterator I = R2IMap.find(reg);
