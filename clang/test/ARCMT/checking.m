@@ -45,9 +45,9 @@ struct UnsafeS {
 };
 
 @interface A : NSObject
-- (id)retain;
-- (id)retainCount;
-- (id)autorelease;
+- (id)retain; // expected-note {{declaration has been explicitly marked unavailable here}}
+- (id)retainCount; // expected-note {{declaration has been explicitly marked unavailable here}}
+- (id)autorelease; // expected-note 2 {{declaration has been explicitly marked unavailable here}}
 - (id)init;
 - (oneway void)release;
 - (void)dealloc;
@@ -79,7 +79,8 @@ void test1(A *a, BOOL b, struct UnsafeS *unsafeS) {
   [a.delegate release]; // expected-error {{it is not safe to remove 'retain' message on the result of a 'delegate' message; the object that was passed to 'setDelegate:' may not be properly retained}} \
                         // expected-error {{ARC forbids explicit message send}}
   [unsafeS->unsafeObj retain]; // expected-error {{it is not safe to remove 'retain' message on an __unsafe_unretained type}} \
-                               // expected-error {{ARC forbids explicit message send}}
+                               // expected-error {{ARC forbids explicit message send}} \
+                               // expected-error {{'retain' is unavailable}}
   id foo = [unsafeS->unsafeObj retain]; // no warning.
   [global_foo retain]; // expected-error {{it is not safe to remove 'retain' message on a global variable}} \
                        // expected-error {{ARC forbids explicit message send}}
@@ -87,12 +88,15 @@ void test1(A *a, BOOL b, struct UnsafeS *unsafeS) {
                         // expected-error {{ARC forbids explicit message send}}
   [a dealloc];
   [a retain];
-  [a retainCount]; // expected-error {{ARC forbids explicit message send of 'retainCount'}}
+  [a retainCount]; // expected-error {{ARC forbids explicit message send of 'retainCount'}} \
+                   // expected-error {{'retainCount' is unavailable}}
   [a release];
   [a autorelease]; // expected-error {{it is not safe to remove an unused 'autorelease' message; its receiver may be destroyed immediately}} \
-                   // expected-error {{ARC forbids explicit message send}}
+                   // expected-error {{ARC forbids explicit message send}} \
+                   // expected-error {{'autorelease' is unavailable}}
   [a autorelease]; // expected-error {{it is not safe to remove an unused 'autorelease' message; its receiver may be destroyed immediately}} \
-                   // expected-error {{ARC forbids explicit message send}}
+                   // expected-error {{ARC forbids explicit message send}} \
+                   // expected-error {{'autorelease' is unavailable}}
   a = 0;
 
   CFStringRef cfstr;

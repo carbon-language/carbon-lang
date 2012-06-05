@@ -2240,12 +2240,9 @@ bool Sema::MergeCompatibleFunctionDecls(FunctionDecl *New, FunctionDecl *Old,
 
 void Sema::mergeObjCMethodDecls(ObjCMethodDecl *newMethod,
                                 ObjCMethodDecl *oldMethod) {
-  // We don't want to merge unavailable and deprecated attributes
-  // except from interface to implementation.
-  bool mergeDeprecation = isa<ObjCImplDecl>(newMethod->getDeclContext());
 
-  // Merge the attributes.
-  mergeDeclAttributes(newMethod, oldMethod, mergeDeprecation);
+  // Merge the attributes, including deprecated/unavailable
+  mergeDeclAttributes(newMethod, oldMethod, /* mergeDeprecation */true);
 
   // Merge attributes from the parameters.
   ObjCMethodDecl::param_const_iterator oi = oldMethod->param_begin(),
