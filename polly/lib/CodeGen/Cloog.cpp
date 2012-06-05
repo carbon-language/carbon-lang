@@ -185,7 +185,22 @@ CloogUnionDomain *Cloog::buildCloogUnionDomain() {
 }
 
 CloogInput *Cloog::buildCloogInput() {
-  CloogDomain *Context = cloog_domain_from_isl_set(S->getContext());
+  // XXX: We do not copy the context of the scop, but use an unconstrained
+  //      context. This 'hack' is necessary as the context may contain bounds
+  //      on parameters such as [n] -> {:0 <= n < 2^32}. Those large
+  //      integers will cause CLooG to construct a clast that contains
+  //      expressions that include these large integers. Such expressions can
+  //      possibly not be evaluated correctly with i64 types. The cloog
+  //      based code generation backend, however, can not derive types
+  //      automatically and just assumes i64 types. Hence, it will break or
+  //      generate incorrect code.
+  //      This hack does not remove all possibilities of incorrectly generated
+  //      code, but it is ensures that for most problems the problems do not
+  //      show up. The correct solution, will be to automatically derive the
+  //      minimal types for each expression. This could be added to CLooG and it
+  //      will be available in the isl based code generation.
+  isl_set *EmptyContext = isl_set_universe(S->getParamSpace());
+  CloogDomain *Context = cloog_domain_from_isl_set(EmptyContext);
   CloogUnionDomain *Statements = buildCloogUnionDomain();
 
   isl_set *ScopContext = S->getContext();
