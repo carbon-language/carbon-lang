@@ -536,19 +536,21 @@ void __asan_init() {
   ReplaceOperatorsNewAndDelete();
 
   if (FLAG_v) {
-    Printf("|| `[%zx, %zx]` || HighMem    ||\n", kHighMemBeg, kHighMemEnd);
-    Printf("|| `[%zx, %zx]` || HighShadow ||\n",
-           kHighShadowBeg, kHighShadowEnd);
-    Printf("|| `[%zx, %zx]` || ShadowGap  ||\n",
-           kShadowGapBeg, kShadowGapEnd);
-    Printf("|| `[%zx, %zx]` || LowShadow  ||\n",
-           kLowShadowBeg, kLowShadowEnd);
-    Printf("|| `[%zx, %zx]` || LowMem     ||\n", kLowMemBeg, kLowMemEnd);
+    Printf("|| `[%p, %p]` || HighMem    ||\n",
+           (void*)kHighMemBeg, (void*)kHighMemEnd);
+    Printf("|| `[%p, %p]` || HighShadow ||\n",
+           (void*)kHighShadowBeg, (void*)kHighShadowEnd);
+    Printf("|| `[%p, %p]` || ShadowGap  ||\n",
+           (void*)kShadowGapBeg, (void*)kShadowGapEnd);
+    Printf("|| `[%p, %p]` || LowShadow  ||\n",
+           (void*)kLowShadowBeg, (void*)kLowShadowEnd);
+    Printf("|| `[%p, %p]` || LowMem     ||\n",
+           (void*)kLowMemBeg, (void*)kLowMemEnd);
     Printf("MemToShadow(shadow): %p %p %p %p\n",
-           MEM_TO_SHADOW(kLowShadowBeg),
-           MEM_TO_SHADOW(kLowShadowEnd),
-           MEM_TO_SHADOW(kHighShadowBeg),
-           MEM_TO_SHADOW(kHighShadowEnd));
+           (void*)MEM_TO_SHADOW(kLowShadowBeg),
+           (void*)MEM_TO_SHADOW(kLowShadowEnd),
+           (void*)MEM_TO_SHADOW(kHighShadowBeg),
+           (void*)MEM_TO_SHADOW(kHighShadowEnd));
     Printf("red_zone=%zu\n", (uptr)FLAG_redzone);
     Printf("malloc_context_size=%zu\n", (uptr)FLAG_malloc_context_size);
 
