@@ -40,10 +40,6 @@
 #include <cmath>
 using namespace llvm;
 
-// Hidden options for help debugging.
-static cl::opt<bool> DisableReMat("disable-rematerialization",
-                                  cl::init(false), cl::Hidden);
-
 // Temporary option to enable regunit liveness.
 static cl::opt<bool> LiveRegUnits("live-regunits", cl::Hidden);
 
