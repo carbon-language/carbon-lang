@@ -82,6 +82,8 @@ void UndefResultChecker::checkPostStmt(const BinaryOperator *B,
     else
       report->addVisitor(bugreporter::getTrackNullOrUndefValueVisitor(N, B,
                                                                       report));
+    
+    report->disablePathPruning();
     C.EmitReport(report);
   }
 }
