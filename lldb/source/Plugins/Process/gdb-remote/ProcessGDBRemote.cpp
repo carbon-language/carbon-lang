@@ -1646,6 +1646,10 @@ ProcessGDBRemote::WillDetach ()
     bool discard_thread_plans = true; 
     bool catch_stop_event = true;
     EventSP event_sp;
+    
+    // FIXME: InterruptIfRunning should be done in the Process base class, or better still make Halt do what is
+    // needed.  This shouldn't be a feature of a particular plugin.
+    
     return InterruptIfRunning (discard_thread_plans, catch_stop_event, event_sp);
 }
 
@@ -1688,6 +1692,9 @@ ProcessGDBRemote::DoDestroy ()
         log->Printf ("ProcessGDBRemote::DoDestroy()");
 
     // Interrupt if our inferior is running...
+    int exit_status = SIGABRT;
+    std::string exit_string;
+
     if (m_gdb_comm.IsConnected())
     {
         if (m_public_state.GetValue() != eStateAttaching)
@@ -1703,16 +1710,39 @@ ProcessGDBRemote::DoDestroy ()
                 {
                     SetLastStopPacket (response);
                     ClearThreadIDList ();
-                    SetExitStatus(response.GetHexU8(), NULL);
+                    exit_status = response.GetHexU8();
+                }
+                else
+                {
+                    if (log)
+                        log->Printf ("ProcessGDBRemote::DoDestroy - got unexpected response to k packet: %s", response.GetStringRef().c_str());
+                    exit_string.assign("got unexpected response to k packet: ");
+                    exit_string.append(response.GetStringRef());
                 }
             }
             else
             {
-                SetExitStatus(SIGABRT, NULL);
-                //error.SetErrorString("kill packet failed");
+                if (log)
+                    log->Printf ("ProcessGDBRemote::DoDestroy - failed to send k packet");
+                exit_string.assign("failed to send the k packet");
             }
         }
+        else
+        {
+            if (log)
+                log->Printf ("ProcessGDBRemote::DoDestroy - failed to send k packet");
+            exit_string.assign ("killing while attaching.");
+        }
     }
+    else
+    {
+        // If we missed setting the exit status on the way out, do it here.
+        // NB set exit status can be called multiple times, the first one sets the status.
+        exit_string.assign("destroying when not connected to debugserver");
+    }
+
+    SetExitStatus(exit_status, exit_string.c_str());
+
     StopAsyncThread ();
     KillDebugserverProcess ();
     return error;

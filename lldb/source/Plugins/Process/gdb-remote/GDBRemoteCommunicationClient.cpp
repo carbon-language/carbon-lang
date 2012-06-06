@@ -289,6 +289,7 @@ GDBRemoteCommunicationClient::SendPacketAndWaitForResponse
                 {
                     if (m_interrupt_sent)
                     {
+                        m_interrupt_sent = false;
                         TimeValue timeout_time;
                         timeout_time = TimeValue::Now();
                         timeout_time.OffsetWithSeconds (m_packet_timeout);
@@ -390,7 +391,7 @@ GDBRemoteCommunicationClient::SendContinuePacketAndWaitForResponse
     BroadcastEvent(eBroadcastBitRunPacketSent, NULL);
     m_public_is_running.SetValue (true, eBroadcastNever);
     // Set the starting continue packet into "continue_packet". This packet
-    // make change if we are interrupted and we continue after an async packet...
+    // may change if we are interrupted and we continue after an async packet...
     std::string continue_packet(payload, packet_length);
     
     bool got_stdout = false;
@@ -445,10 +446,9 @@ GDBRemoteCommunicationClient::SendContinuePacketAndWaitForResponse
 
                         const uint8_t signo = response.GetHexU8 (UINT8_MAX);
 
-                        bool continue_after_async = false;
-                        if (m_async_signal != -1 || m_async_packet_predicate.GetValue())
+                        bool continue_after_async = m_async_signal != -1 || m_async_packet_predicate.GetValue();
+                        if (continue_after_async || m_interrupt_sent)
                         {
-                            continue_after_async = true;
                             // We sent an interrupt packet to stop the inferior process
                             // for an async signal or to send an async packet while running
                             // but we might have been single stepping and received the
@@ -660,7 +660,6 @@ GDBRemoteCommunicationClient::SendInterrupt
     bool &timed_out
 )
 {
-    m_interrupt_sent = false;
     timed_out = false;
     LogSP log (ProcessGDBRemoteLog::GetLogIfAnyCategoryIsSet (GDBR_LOG_PROCESS | GDBR_LOG_PACKETS));
 
