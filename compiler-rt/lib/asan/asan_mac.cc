@@ -208,7 +208,8 @@ bool AsanProcMaps::NextSegmentLoad(
                     filename_size);
     }
     if (FLAG_v >= 4)
-      Report("LC_SEGMENT: %p--%p %s+%p\n", *start, *end, filename, *offset);
+      Report("LC_SEGMENT: %p--%p %s+%p\n", (void*)*start, (void*)*end,
+             filename, (void*)*offset);
     return true;
   }
   return false;
@@ -340,7 +341,7 @@ mach_error_t __interception_allocate_island(void **ptr,
     }
     if (FLAG_v) {
       Report("Mapped pages %p--%p for branch islands.\n",
-             kIslandBeg, kIslandEnd);
+             (void*)kIslandBeg, (void*)kIslandEnd);
     }
     // Should not be very performance-critical.
     internal_memset(island_allocator_pos, 0xCC, kIslandEnd - kIslandBeg);
