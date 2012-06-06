@@ -115,7 +115,7 @@ private:
     void *      m_callback_baton;      // Callback user data to pass to callback
     std::string m_decl_str;            // Declaration information, if any.
     std::string m_watch_spec_str;      // Spec for the watchpoint (for future use).
-    Error       m_error;               // An error object describing errors creating watchpoint.
+    Error       m_error;               // An error object describing errors associated with this watchpoint.
 
     std::auto_ptr<ClangUserExpression> m_condition_ap;  // The condition to test.
 
