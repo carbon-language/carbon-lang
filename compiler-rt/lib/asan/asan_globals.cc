@@ -66,13 +66,13 @@ void PrintIfASCII(const Global &g) {
     if (!isascii(*(char*)p)) return;
   }
   if (*(char*)(g.beg + g.size - 1) != 0) return;
-  Printf("  '%s' is ascii string '%s'\n", g.name, g.beg);
+  Printf("  '%s' is ascii string '%s'\n", g.name, (char*)g.beg);
 }
 
 bool DescribeAddrIfMyRedZone(const Global &g, uptr addr) {
   if (addr < g.beg - kGlobalAndStackRedzone) return false;
   if (addr >= g.beg + g.size_with_redzone) return false;
-  Printf("%p is located ", addr);
+  Printf("%p is located ", (void*)addr);
   if (addr < g.beg) {
     Printf("%zd bytes to the left", g.beg - addr);
   } else if (addr >= g.beg + g.size) {
@@ -95,7 +95,7 @@ bool DescribeAddrIfGlobal(uptr addr) {
     const Global &g = *l->g;
     if (FLAG_report_globals >= 2)
       Printf("Search Global: beg=%p size=%zu name=%s\n",
-             g.beg, g.size, g.name);
+             (void*)g.beg, g.size, (char*)g.name);
     res |= DescribeAddrIfMyRedZone(g, addr);
   }
   return res;
@@ -118,7 +118,7 @@ static void RegisterGlobal(const Global *g) {
   list_of_globals = l;
   if (FLAG_report_globals >= 2)
     Report("Added Global: beg=%p size=%zu name=%s\n",
-           g->beg, g->size, g->name);
+           (void*)g->beg, g->size, g->name);
 }
 
 static void UnregisterGlobal(const Global *g) {

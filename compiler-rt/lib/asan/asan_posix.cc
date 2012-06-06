@@ -88,7 +88,7 @@ static void     ASAN_OnSIGSEGV(int, siginfo_t *siginfo, void *context) {
   GetPcSpBp(context, &pc, &sp, &bp);
   Report("ERROR: AddressSanitizer crashed on unknown address %p"
          " (pc %p sp %p bp %p T%d)\n",
-         addr, pc, sp, bp,
+         (void*)addr, (void*)pc, (void*)sp, (void*)bp,
          asanThreadRegistry().GetCurrentTidOrMinusOne());
   Printf("AddressSanitizer can not provide additional info. ABORTING\n");
   GET_STACK_TRACE_WITH_PC_AND_BP(kStackTraceMax, pc, bp);

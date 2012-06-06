@@ -217,7 +217,7 @@ struct AsanChunk: public ChunkBase {
 
   void DescribeAddress(uptr addr, uptr access_size) {
     uptr offset;
-    Printf("%p is located ", addr);
+    Printf("%p is located ", (void*)addr);
     if (AddrIsInside(addr, access_size, &offset)) {
       Printf("%zu bytes inside of", offset);
     } else if (AddrIsAtLeft(addr, access_size, &offset)) {
@@ -228,7 +228,7 @@ struct AsanChunk: public ChunkBase {
       Printf(" somewhere around (this is AddressSanitizer bug!)");
     }
     Printf(" %zu-byte region [%p,%p)\n",
-           used_size, beg(), beg() + used_size);
+           used_size, (void*)beg(), (void*)(beg() + used_size));
   }
 };
 
@@ -622,7 +622,8 @@ static u8 *Allocate(uptr alignment, uptr size, AsanStackTrace *stack) {
   }
   CHECK(IsAligned(needed_size, REDZONE));
   if (size > kMaxAllowedMallocSize || needed_size > kMaxAllowedMallocSize) {
-    Report("WARNING: AddressSanitizer failed to allocate %p bytes\n", size);
+    Report("WARNING: AddressSanitizer failed to allocate %p bytes\n",
+           (void*)size);
     return 0;
   }
 

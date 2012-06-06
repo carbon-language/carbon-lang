@@ -33,7 +33,7 @@ void Die() {
     while (1) { }
   }
   if (FLAG_sleep_before_dying) {
-    Report("Sleeping for %d second(s)\n", FLAG_sleep_before_dying);
+    Report("Sleeping for %zd second(s)\n", FLAG_sleep_before_dying);
     SleepForSeconds(FLAG_sleep_before_dying);
   }
   if (FLAG_unmap_shadow_on_exit)
@@ -189,7 +189,7 @@ static bool DescribeStackAddress(uptr addr, uptr access_size) {
                        static_cast<sptr>(name_end - frame_descr)));
   Printf("Address %p is located at offset %zu "
          "in frame <%s> of T%d's stack:\n",
-         addr, offset, buf, t->tid());
+         (void*)addr, offset, buf, t->tid());
   // Report the number of stack objects.
   char *p;
   uptr n_objects = internal_simple_strtoll(name_end, &p, 10);
@@ -419,11 +419,11 @@ void __asan_report_error(uptr pc, uptr bp, uptr sp,
 
   Report("ERROR: AddressSanitizer %s on address "
          "%p at pc 0x%zx bp 0x%zx sp 0x%zx\n",
-         bug_descr, addr, pc, bp, sp);
+         bug_descr, (void*)addr, pc, bp, sp);
 
   Printf("%s of size %zu at %p thread T%d\n",
          access_size ? (is_write ? "WRITE" : "READ") : "ACCESS",
-         access_size, addr, curr_tid);
+         access_size, (void*)addr, curr_tid);
 
   if (FLAG_debug) {
     PrintBytes("PC: ", (uptr*)pc);
@@ -440,7 +440,7 @@ void __asan_report_error(uptr pc, uptr bp, uptr sp,
   Report("ABORTING\n");
   __asan_print_accumulated_stats();
   Printf("Shadow byte and word:\n");
-  Printf("  %p: %x\n", shadow_addr, *(unsigned char*)shadow_addr);
+  Printf("  %p: %x\n", (void*)shadow_addr, *(unsigned char*)shadow_addr);
   uptr aligned_shadow = shadow_addr & ~(kWordSize - 1);
   PrintBytes("  ", (uptr*)(aligned_shadow));
   Printf("More shadow bytes:\n");
@@ -536,14 +536,14 @@ void __asan_init() {
   ReplaceOperatorsNewAndDelete();
 
   if (FLAG_v) {
-    Printf("|| `[%p, %p]` || HighMem    ||\n", kHighMemBeg, kHighMemEnd);
-    Printf("|| `[%p, %p]` || HighShadow ||\n",
+    Printf("|| `[%zx, %zx]` || HighMem    ||\n", kHighMemBeg, kHighMemEnd);
+    Printf("|| `[%zx, %zx]` || HighShadow ||\n",
            kHighShadowBeg, kHighShadowEnd);
-    Printf("|| `[%p, %p]` || ShadowGap  ||\n",
+    Printf("|| `[%zx, %zx]` || ShadowGap  ||\n",
            kShadowGapBeg, kShadowGapEnd);
-    Printf("|| `[%p, %p]` || LowShadow  ||\n",
+    Printf("|| `[%zx, %zx]` || LowShadow  ||\n",
            kLowShadowBeg, kLowShadowEnd);
-    Printf("|| `[%p, %p]` || LowMem     ||\n", kLowMemBeg, kLowMemEnd);
+    Printf("|| `[%zx, %zx]` || LowMem     ||\n", kLowMemBeg, kLowMemEnd);
     Printf("MemToShadow(shadow): %p %p %p %p\n",
            MEM_TO_SHADOW(kLowShadowBeg),
            MEM_TO_SHADOW(kLowShadowEnd),

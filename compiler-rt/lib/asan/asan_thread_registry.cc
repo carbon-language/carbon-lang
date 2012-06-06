@@ -88,7 +88,8 @@ AsanThread *AsanThreadRegistry::GetCurrent() {
 void AsanThreadRegistry::SetCurrent(AsanThread *t) {
   CHECK(t->summary());
   if (FLAG_v >= 2) {
-    Report("SetCurrent: %p for thread %p\n", t->summary(), GetThreadSelf());
+    Report("SetCurrent: %p for thread %p\n",
+           t->summary(), (void*)GetThreadSelf());
   }
   // Make sure we do not reset the current AsanThread.
   CHECK(AsanTSDGet() == 0);

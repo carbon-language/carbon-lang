@@ -74,7 +74,7 @@ void AsanThread::Init() {
   if (FLAG_v >= 1) {
     int local = 0;
     Report("T%d: stack [%p,%p) size 0x%zx; local=%p\n",
-           tid(), stack_bottom_, stack_top_,
+           tid(), (void*)stack_bottom_, (void*)stack_top_,
            stack_top_ - stack_bottom_, &local);
   }
   fake_stack_.Init(stack_size());

@@ -79,7 +79,8 @@ void __asan_poison_memory_region(void const volatile *addr, uptr size) {
   uptr beg_addr = (uptr)addr;
   uptr end_addr = beg_addr + size;
   if (FLAG_v >= 1) {
-    Printf("Trying to poison memory region [%p, %p)\n", beg_addr, end_addr);
+    Printf("Trying to poison memory region [%p, %p)\n",
+           (void*)beg_addr, (void*)end_addr);
   }
   ShadowSegmentEndpoint beg(beg_addr);
   ShadowSegmentEndpoint end(end_addr);
@@ -120,7 +121,8 @@ void __asan_unpoison_memory_region(void const volatile *addr, uptr size) {
   uptr beg_addr = (uptr)addr;
   uptr end_addr = beg_addr + size;
   if (FLAG_v >= 1) {
-    Printf("Trying to unpoison memory region [%p, %p)\n", beg_addr, end_addr);
+    Printf("Trying to unpoison memory region [%p, %p)\n",
+           (void*)beg_addr, (void*)end_addr);
   }
   ShadowSegmentEndpoint beg(beg_addr);
   ShadowSegmentEndpoint end(end_addr);
