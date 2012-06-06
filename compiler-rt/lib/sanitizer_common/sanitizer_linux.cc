@@ -44,7 +44,7 @@ int internal_close(fd_t fd) {
 
 fd_t internal_open(const char *filename, bool write) {
   return syscall(__NR_open, filename,
-      write ? O_WRONLY | O_CREAT | O_CLOEXEC : O_RDONLY, 0660);
+      write ? O_WRONLY | O_CREAT /*| O_CLOEXEC*/ : O_RDONLY, 0660);
 }
 
 uptr internal_read(fd_t fd, void *buf, uptr count) {
