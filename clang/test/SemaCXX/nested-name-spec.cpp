@@ -113,7 +113,8 @@ namespace E {
       X = 0
     };
 
-    void f() {
+    void f() { // expected-note{{'E::Nested::f' declared here}} \
+               // expected-note{{previous definition is here}}
       return E::X; // expected-error{{expected a class or namespace}}
     }
   }
@@ -143,7 +144,10 @@ namespace A {
   void g(int&); // expected-note{{type of 1st parameter of member declaration does not match definition ('int &' vs 'const int &')}}
 } 
 
-void A::f() {} // expected-error{{out-of-line definition of 'f' does not match any declaration in namespace 'A'}}
+// TODO: Suppress the typo correction for an invalid redeclaration if the chosen
+// correction is a function that already has a body.
+void A::f() {} // expected-error{{out-of-line definition of 'f' does not match any declaration in namespace 'A'; did you mean 'E::Nested::f'?}} \
+               // expected-error{{redefinition of 'f'}}
 
 void A::g(const int&) { } // expected-error{{out-of-line definition of 'g' does not match any declaration in namespace 'A'}}
 
@@ -285,4 +289,16 @@ protected:
 };
 template <typename T>
 struct A2<T>::B::C; // expected-error {{no struct named 'C'}}
+}
+
+namespace PR13033 {
+namespace NS {
+ int a; // expected-note {{'NS::a' declared here}}
+ int longer_b; //expected-note {{'NS::longer_b' declared here}}
+}
+
+// Suggest adding a namespace qualifier to both variable names even though one
+// is only a single character long.
+int foobar = a + longer_b; // expected-error {{use of undeclared identifier 'a'; did you mean 'NS::a'?}} \
+                           // expected-error {{use of undeclared identifier 'longer_b'; did you mean 'NS::longer_b'?}}
 }

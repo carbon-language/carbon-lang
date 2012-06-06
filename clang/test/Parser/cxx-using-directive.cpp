@@ -3,7 +3,8 @@
 class A {};
 
 namespace B {
-  namespace A {} // expected-note{{namespace '::B::A' defined here}}
+  namespace A {} // expected-note{{namespace '::B::A' defined here}} \
+                 // expected-note{{namespace 'B::A' defined here}}
   using namespace A ;
 }
 
@@ -25,7 +26,7 @@ namespace D {
 }
 
 using namespace ! ; // expected-error{{expected namespace name}}
-using namespace A ; // expected-error{{expected namespace name}}
+using namespace A ; // expected-error{{no namespace named 'A'; did you mean 'B::A'?}}
 using namespace ::A // expected-error{{expected namespace name}} \
                     // expected-error{{expected ';' after namespace name}}
                     B ; 

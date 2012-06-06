@@ -19,7 +19,7 @@ bool test_elab(S1 *s1, struct S2 *s2, struct S3 *s3) {
 namespace NS {
   class X {
   public:
-    void test_elab2(struct S4 *s4);
+    void test_elab2(struct S4 *s4); // expected-note{{'NS::S4' declared here}}
   };
 
   void X::test_elab2(S4 *s4) { } // expected-note{{passing argument to parameter 's4' here}}
@@ -35,8 +35,7 @@ namespace NS {
 }
 
 void test_S5_scope() {
-  S4 *s4; // expected-error{{use of undeclared identifier 'S4'}} \
-  // expected-error{{use of undeclared identifier 's4'}}
+  S4 *s4; // expected-error{{unknown type name 'S4'; did you mean 'NS::S4'?}}
 }
 
 int test_funcparam_scope(struct S5 * s5) {
@@ -44,5 +43,3 @@ int test_funcparam_scope(struct S5 * s5) {
   if (s5 == s5_2) return 1; // expected-error {{comparison of distinct pointer types ('struct S5 *' and 'struct S5 *')}}
   return 0;
 }
-
-
