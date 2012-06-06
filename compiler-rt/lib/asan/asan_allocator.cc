@@ -157,11 +157,11 @@ enum {
 };
 
 struct ChunkBase {
-  u8   chunk_state;
-  u8   size_class;
+  uptr  chunk_state : 8;
+  uptr  size_class  : 8;
+  uptr  alloc_tid   : 24;
+  uptr  free_tid    : 24;
   u32  offset;  // User-visible memory starts at this+offset (beg()).
-  u32  alloc_tid;
-  u32  free_tid;
   uptr used_size;  // Size requested by the user.
   AsanChunk *next;
 
@@ -707,8 +707,8 @@ static void Deallocate(u8 *ptr, AsanStackTrace *stack) {
   // Printf("Deallocate %p\n", ptr);
   AsanChunk *m = PtrToChunk((uptr)ptr);
 
-  // Flip the state atomically to avoid race on double-free.
-  u8 old_chunk_state = AtomicExchange(&m->chunk_state, CHUNK_QUARANTINE);
+  // Flip the chunk_state atomically to avoid race on double-free.
+  u8 old_chunk_state = AtomicExchange((u8*)m, CHUNK_QUARANTINE);
 
   if (old_chunk_state == CHUNK_QUARANTINE) {
     AsanReport("ERROR: AddressSanitizer attempting double-free on %p:\n", ptr);
