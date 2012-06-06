@@ -28,14 +28,15 @@ int GetPid() {
   return getpid();
 }
 
-void *MmapOrDie(uptr size) {
+void *MmapOrDie(uptr size, const char *mem_type) {
   size = RoundUpTo(size, kPageSize);
   void *res = internal_mmap(0, size,
                             PROT_READ | PROT_WRITE,
                             MAP_PRIVATE | MAP_ANON, -1, 0);
   if (res == (void*)-1) {
-    RawWrite("Failed to map!\n");
-    Die();
+    Report("ERROR: Failed to allocate 0x%zx (%zd) bytes of %s\n",
+           size, size, mem_type);
+    CHECK("unable to mmap" && 0);
   }
   return res;
 }
@@ -44,8 +45,9 @@ void UnmapOrDie(void *addr, uptr size) {
   if (!addr || !size) return;
   int res = internal_munmap(addr, size);
   if (res != 0) {
-    RawWrite("Failed to unmap!\n");
-    Die();
+    Report("ERROR: Failed to deallocate 0x%zx (%zd) bytes at address %p\n",
+           size, size, addr);
+    CHECK("unable to unmap" && 0);
   }
 }
 

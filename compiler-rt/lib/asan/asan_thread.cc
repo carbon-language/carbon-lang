@@ -29,7 +29,7 @@ AsanThread::AsanThread(LinkerInitialized x)
 AsanThread *AsanThread::Create(u32 parent_tid, thread_callback_t start_routine,
                                void *arg, AsanStackTrace *stack) {
   uptr size = RoundUpTo(sizeof(AsanThread), kPageSize);
-  AsanThread *thread = (AsanThread*)AsanMmapSomewhereOrDie(size, __FUNCTION__);
+  AsanThread *thread = (AsanThread*)MmapOrDie(size, __FUNCTION__);
   thread->start_routine_ = start_routine;
   thread->arg_ = arg;
 
@@ -63,7 +63,7 @@ void AsanThread::Destroy() {
   ClearShadowForThreadStack();
   fake_stack().Cleanup();
   uptr size = RoundUpTo(sizeof(AsanThread), kPageSize);
-  AsanUnmapOrDie(this, size);
+  UnmapOrDie(this, size);
 }
 
 void AsanThread::Init() {

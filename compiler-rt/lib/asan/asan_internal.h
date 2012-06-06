@@ -119,8 +119,6 @@ void ReplaceOperatorsNewAndDelete();
 // asan_malloc_linux.cc / asan_malloc_mac.cc
 void ReplaceSystemMalloc();
 
-void OutOfMemoryMessageAndDie(const char *mem_type, uptr size);
-
 // asan_linux.cc / asan_mac.cc / asan_win.cc
 void *AsanDoesNotSupportStaticLinkage();
 bool AsanShadowRangeIsAvailable();
@@ -130,8 +128,6 @@ void AsanDumpProcessMap();
 void *AsanMmapFixedNoReserve(uptr fixed_addr, uptr size);
 void *AsanMmapFixedReserve(uptr fixed_addr, uptr size);
 void *AsanMprotect(uptr fixed_addr, uptr size);
-void *AsanMmapSomewhereOrDie(uptr size, const char *where);
-void AsanUnmapOrDie(void *ptr, uptr size);
 
 void AsanDisableCoreDumper();
 void GetPcSpBp(void *context, uptr *pc, uptr *sp, uptr *bp);

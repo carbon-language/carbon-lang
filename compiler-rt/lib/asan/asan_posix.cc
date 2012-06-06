@@ -104,7 +104,7 @@ void SetAlternateSignalStack() {
   // TODO(glider): the mapped stack should have the MAP_STACK flag in the
   // future. It is not required by man 2 sigaltstack now (they're using
   // malloc()).
-  void* base = AsanMmapSomewhereOrDie(kAltStackSize, __FUNCTION__);
+  void* base = MmapOrDie(kAltStackSize, __FUNCTION__);
   altstack.ss_sp = base;
   altstack.ss_flags = 0;
   altstack.ss_size = kAltStackSize;
@@ -122,7 +122,7 @@ void UnsetAlternateSignalStack() {
   altstack.ss_flags = SS_DISABLE;
   altstack.ss_size = 0;
   CHECK(0 == sigaltstack(&altstack, &oldstack));
-  AsanUnmapOrDie(oldstack.ss_sp, oldstack.ss_size);
+  UnmapOrDie(oldstack.ss_sp, oldstack.ss_size);
 }
 
 void InstallSignalHandlers() {

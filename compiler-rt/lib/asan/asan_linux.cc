@@ -74,17 +74,6 @@ bool AsanInterceptsSignal(int signum) {
   return signum == SIGSEGV && FLAG_handle_segv;
 }
 
-void *AsanMmapSomewhereOrDie(uptr size, const char *mem_type) {
-  size = RoundUpTo(size, kPageSize);
-  void *res = internal_mmap(0, size,
-                            PROT_READ | PROT_WRITE,
-                            MAP_PRIVATE | MAP_ANON, -1, 0);
-  if (res == (void*)-1) {
-    OutOfMemoryMessageAndDie(mem_type, size);
-  }
-  return res;
-}
-
 void *AsanMmapFixedNoReserve(uptr fixed_addr, uptr size) {
   return internal_mmap((void*)fixed_addr, size,
                       PROT_READ | PROT_WRITE,
@@ -97,15 +86,6 @@ void *AsanMprotect(uptr fixed_addr, uptr size) {
                        PROT_NONE,
                        MAP_PRIVATE | MAP_ANON | MAP_FIXED | MAP_NORESERVE,
                        0, 0);
-}
-
-void AsanUnmapOrDie(void *addr, uptr size) {
-  if (!addr || !size) return;
-  int res = internal_munmap(addr, size);
-  if (res != 0) {
-    Report("Failed to unmap\n");
-    Die();
-  }
 }
 
 // Like getenv, but reads env directly from /proc and does not use libc.
@@ -146,7 +126,7 @@ AsanProcMaps::AsanProcMaps() {
 }
 
 AsanProcMaps::~AsanProcMaps() {
-  AsanUnmapOrDie(proc_self_maps_buff_, proc_self_maps_buff_mmaped_size_);
+  UnmapOrDie(proc_self_maps_buff_, proc_self_maps_buff_mmaped_size_);
 }
 
 void AsanProcMaps::Reset() {

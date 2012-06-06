@@ -144,7 +144,7 @@ int VSNPrintf(char *buff, int buff_length,
 
 void Printf(const char *format, ...) {
   const int kLen = 1024 * 4;
-  char *buffer = (char*)MmapOrDie(kLen);
+  char *buffer = (char*)MmapOrDie(kLen, __FUNCTION__);
   va_list args;
   va_start(args, format);
   int needed_length = VSNPrintf(buffer, kLen, format, args);
@@ -169,7 +169,7 @@ int SNPrintf(char *buffer, uptr length, const char *format, ...) {
 // Like Printf, but prints the current PID before the output string.
 void Report(const char *format, ...) {
   const int kLen = 1024 * 4;
-  char *buffer = (char*)MmapOrDie(kLen);
+  char *buffer = (char*)MmapOrDie(kLen, __FUNCTION__);
   int needed_length = SNPrintf(buffer, kLen, "==%d== ", GetPid());
   RAW_CHECK_MSG(needed_length < kLen, "Buffer in Report is too short!\n");
   va_list args;

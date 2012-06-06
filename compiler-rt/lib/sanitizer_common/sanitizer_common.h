@@ -28,7 +28,9 @@ const uptr kPageSize = 1UL << kPageSizeBits;
 
 int GetPid();
 void RawWrite(const char *buffer);
-void *MmapOrDie(uptr size);
+
+// Memory management
+void *MmapOrDie(uptr size, const char *mem_type);
 void UnmapOrDie(void *addr, uptr size);
 
 void Printf(const char *format, ...);

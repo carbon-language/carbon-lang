@@ -37,20 +37,9 @@ void *AsanMmapFixedNoReserve(uptr fixed_addr, uptr size) {
                       MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
 }
 
-void *AsanMmapSomewhereOrDie(uptr size, const char *mem_type) {
-  void *rv = VirtualAlloc(0, size, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
-  if (rv == 0)
-    OutOfMemoryMessageAndDie(mem_type, size);
-  return rv;
-}
-
 void *AsanMprotect(uptr fixed_addr, uptr size) {
   return VirtualAlloc((LPVOID)fixed_addr, size,
                       MEM_RESERVE | MEM_COMMIT, PAGE_NOACCESS);
-}
-
-void AsanUnmapOrDie(void *addr, uptr size) {
-  CHECK(VirtualFree(addr, size, MEM_DECOMMIT));
 }
 
 // ---------------------- Stacktraces, symbols, etc. ---------------- {{{1

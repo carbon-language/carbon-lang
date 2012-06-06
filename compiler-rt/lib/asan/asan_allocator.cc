@@ -131,7 +131,7 @@ static void PoisonHeapPartialRightRedzone(uptr mem, uptr size) {
 
 static u8 *MmapNewPagesAndPoisonShadow(uptr size) {
   CHECK(IsAligned(size, kPageSize));
-  u8 *res = (u8*)AsanMmapSomewhereOrDie(size, __FUNCTION__);
+  u8 *res = (u8*)MmapOrDie(size, __FUNCTION__);
   PoisonShadow((uptr)res, size, kAsanHeapLeftRedzoneMagic);
   if (FLAG_debug) {
     Printf("ASAN_MMAP: [%p, %p)\n", res, res + size);
@@ -966,7 +966,7 @@ void FakeStack::Cleanup() {
     if (mem) {
       PoisonShadow(mem, ClassMmapSize(i), 0);
       allocated_size_classes_[i] = 0;
-      AsanUnmapOrDie((void*)mem, ClassMmapSize(i));
+      UnmapOrDie((void*)mem, ClassMmapSize(i));
     }
   }
 }
@@ -977,7 +977,7 @@ uptr FakeStack::ClassMmapSize(uptr size_class) {
 
 void FakeStack::AllocateOneSizeClass(uptr size_class) {
   CHECK(ClassMmapSize(size_class) >= kPageSize);
-  uptr new_mem = (uptr)AsanMmapSomewhereOrDie(
+  uptr new_mem = (uptr)MmapOrDie(
       ClassMmapSize(size_class), __FUNCTION__);
   // Printf("T%d new_mem[%zu]: %p-%p mmap %zu\n",
   //       asanThreadRegistry().GetCurrent()->tid(),

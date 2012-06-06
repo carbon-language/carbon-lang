@@ -23,18 +23,21 @@ int GetPid() {
   return GetProcessId(GetCurrentProcess());
 }
 
-void *MmapOrDie(uptr size) {
+void *MmapOrDie(uptr size, const char *mem_type) {
   void *rv = VirtualAlloc(0, size, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
-  if (rv == 0)
-    RawWrite("Failed to map!\n");
-    Die();
+  if (rv == 0) {
+    Report("ERROR: Failed to allocate 0x%zx (%zd) bytes of %s\n",
+           size, size, mem_type);
+    CHECK("unable to mmap" && 0);
+  }
   return rv;
 }
 
 void UnmapOrDie(void *addr, uptr size) {
   if (VirtualFree(addr, size, MEM_DECOMMIT) == 0) {
-    RawWrite("Failed to unmap!\n");
-    Die();
+    Report("ERROR: Failed to deallocate 0x%zx (%zd) bytes at address %p\n",
+           size, size, addr);
+    CHECK("unable to unmap" && 0);
   }
 }
 

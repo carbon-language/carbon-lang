@@ -37,7 +37,7 @@ void Die() {
     SleepForSeconds(FLAG_sleep_before_dying);
   }
   if (FLAG_unmap_shadow_on_exit)
-    AsanUnmapOrDie((void*)kLowShadowBeg, kHighShadowEnd - kLowShadowBeg);
+    UnmapOrDie((void*)kLowShadowBeg, kHighShadowEnd - kLowShadowBeg);
   if (death_callback)
     death_callback();
   if (FLAG_abort_on_error)
@@ -119,8 +119,8 @@ uptr ReadFileToBuffer(const char *file_name, char **buff,
   for (uptr size = kMinFileLen; size <= max_len; size *= 2) {
     fd_t fd = internal_open(file_name, /*write*/ false);
     if (fd < 0) return 0;
-    AsanUnmapOrDie(*buff, *buff_size);
-    *buff = (char*)AsanMmapSomewhereOrDie(size, __FUNCTION__);
+    UnmapOrDie(*buff, *buff_size);
+    *buff = (char*)MmapOrDie(size, __FUNCTION__);
     *buff_size = size;
     // Read up to one page at a time.
     read_len = 0;
@@ -153,14 +153,6 @@ void AppendToErrorMessageBuffer(const char *buffer) {
 }
 
 // ---------------------- mmap -------------------- {{{1
-void OutOfMemoryMessageAndDie(const char *mem_type, uptr size) {
-  AsanReport("ERROR: AddressSanitizer failed to allocate "
-             "0x%zx (%zd) bytes of %s\n",
-             size, size, mem_type);
-  PRINT_CURRENT_STACK();
-  ShowStatsAndAbort();
-}
-
 // Reserve memory range [beg, end].
 static void ReserveShadowMemoryRange(uptr beg, uptr end) {
   CHECK((beg % kPageSize) == 0);
@@ -176,7 +168,7 @@ void *LowLevelAllocator::Allocate(uptr size) {
   if (allocated_end_ - allocated_current_ < size) {
     uptr size_to_allocate = Max(size, kPageSize);
     allocated_current_ =
-        (char*)AsanMmapSomewhereOrDie(size_to_allocate, __FUNCTION__);
+        (char*)MmapOrDie(size_to_allocate, __FUNCTION__);
     allocated_end_ = allocated_current_ + size_to_allocate;
     PoisonShadow((uptr)allocated_current_, size_to_allocate,
                  kAsanInternalHeapMagic);
@@ -372,7 +364,7 @@ void NOINLINE __asan_set_error_report_callback(void (*callback)(const char*)) {
   if (callback) {
     error_message_buffer_size = 1 << 16;
     error_message_buffer =
-        (char*)AsanMmapSomewhereOrDie(error_message_buffer_size, __FUNCTION__);
+        (char*)MmapOrDie(error_message_buffer_size, __FUNCTION__);
     error_message_buffer_pos = 0;
   }
 }
