@@ -102,12 +102,11 @@
 // but still find raw_ostream& overloads.
 namespace llvm {
 class convertible_fwd_ostream : public std::ostream {
-  std::ostream& os_;
   raw_os_ostream ros_;
 
 public:
   convertible_fwd_ostream(std::ostream& os)
-    : std::ostream(os.rdbuf()), os_(os), ros_(*this) {}
+    : std::ostream(os.rdbuf()), ros_(*this) {}
   operator raw_ostream&() { return ros_; }
 };
 }
