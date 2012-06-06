@@ -12,10 +12,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "RegisterClassInfo.h"
 #include "llvm/CodeGen/LiveInterval.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/CodeGen/RegisterClassInfo.h"
 #include "llvm/CodeGen/RegisterPressure.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/Debug.h"

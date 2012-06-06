@@ -16,7 +16,6 @@
 #define DEBUG_TYPE "regalloc"
 #include "RegisterCoalescer.h"
 #include "LiveDebugVariables.h"
-#include "RegisterClassInfo.h"
 #include "VirtRegMap.h"
 
 #include "llvm/Pass.h"
@@ -36,6 +35,7 @@
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/Passes.h"
+#include "llvm/CodeGen/RegisterClassInfo.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
