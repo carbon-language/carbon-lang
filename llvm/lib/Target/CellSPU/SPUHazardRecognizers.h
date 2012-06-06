@@ -24,12 +24,8 @@ class TargetInstrInfo;
 /// SPUHazardRecognizer
 class SPUHazardRecognizer : public ScheduleHazardRecognizer
 {
-private:
-  const TargetInstrInfo &TII;
-  int EvenOdd;
-
 public:
-  SPUHazardRecognizer(const TargetInstrInfo &TII);
+  SPUHazardRecognizer(const TargetInstrInfo &/*TII*/) {}
   virtual HazardType getHazardType(SUnit *SU, int Stalls);
   virtual void EmitInstruction(SUnit *SU);
   virtual void AdvanceCycle();

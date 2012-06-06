@@ -167,13 +167,13 @@ TEST(TypeBuilderTest, Context) {
             &(TypeBuilder<types::i<1>, true>::get(context2))->getContext());
 }
 
-class MyType {
+struct MyType {
   int a;
   int *b;
   void *array[1];
 };
 
-class MyPortableType {
+struct MyPortableType {
   int32_t a;
   int32_t *b;
   void *array[1];

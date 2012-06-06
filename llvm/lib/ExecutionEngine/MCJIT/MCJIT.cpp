@@ -45,7 +45,7 @@ ExecutionEngine *MCJIT::createJIT(Module *M,
 
   // If the target supports JIT code generation, create the JIT.
   if (TargetJITInfo *TJ = TM->getJITInfo())
-    return new MCJIT(M, TM, *TJ, new MCJITMemoryManager(JMM, M), GVsWithCode);
+    return new MCJIT(M, TM, *TJ, new MCJITMemoryManager(JMM), GVsWithCode);
 
   if (ErrorStr)
     *ErrorStr = "target does not support JIT code generation";

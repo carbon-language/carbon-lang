@@ -22,10 +22,9 @@ namespace llvm {
   class SparcSubtarget;
 
 class SparcFrameLowering : public TargetFrameLowering {
-  const SparcSubtarget &STI;
 public:
-  explicit SparcFrameLowering(const SparcSubtarget &sti)
-    : TargetFrameLowering(TargetFrameLowering::StackGrowsDown, 8, 0), STI(sti) {
+  explicit SparcFrameLowering(const SparcSubtarget &/*sti*/)
+    : TargetFrameLowering(TargetFrameLowering::StackGrowsDown, 8, 0) {
   }
 
   /// emitProlog/emitEpilog - These methods insert prolog and epilog code into

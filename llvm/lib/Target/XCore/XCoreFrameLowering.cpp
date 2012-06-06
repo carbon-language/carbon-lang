@@ -78,8 +78,7 @@ static void storeToStack(MachineBasicBlock &MBB,
 //===----------------------------------------------------------------------===//
 
 XCoreFrameLowering::XCoreFrameLowering(const XCoreSubtarget &sti)
-  : TargetFrameLowering(TargetFrameLowering::StackGrowsDown, 4, 0),
-    STI(sti) {
+  : TargetFrameLowering(TargetFrameLowering::StackGrowsDown, 4, 0) {
   // Do nothing
 }
 

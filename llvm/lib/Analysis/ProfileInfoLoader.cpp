@@ -83,10 +83,8 @@ const unsigned ProfileInfoLoader::Uncounted = ~0U;
 // program if the file is invalid or broken.
 //
 ProfileInfoLoader::ProfileInfoLoader(const char *ToolName,
-                                     const std::string &Filename,
-                                     Module &TheModule) :
-                                     Filename(Filename), 
-                                     M(TheModule), Warned(false) {
+                                     const std::string &Filename)
+  : Filename(Filename), Warned(false) {
   FILE *F = fopen(Filename.c_str(), "rb");
   if (F == 0) {
     errs() << ToolName << ": Error opening '" << Filename << "': ";

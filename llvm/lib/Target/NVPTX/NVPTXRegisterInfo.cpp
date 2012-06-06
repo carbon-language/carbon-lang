@@ -250,12 +250,8 @@ int getNVPTXVectorSize(TargetRegisterClass const *RC) {
 
 NVPTXRegisterInfo::NVPTXRegisterInfo(const TargetInstrInfo &tii,
                                      const NVPTXSubtarget &st)
-: NVPTXGenRegisterInfo(0),
-  TII(tii),
-  ST(st) {
-  Is64Bit = st.is64Bit();
-}
-
+  : NVPTXGenRegisterInfo(0),
+    Is64Bit(st.is64Bit()) {}
 
 #define GET_REGINFO_TARGET_DESC
 #include "NVPTXGenRegisterInfo.inc"

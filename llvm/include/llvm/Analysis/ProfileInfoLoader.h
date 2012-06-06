@@ -28,7 +28,6 @@ class BasicBlock;
 
 class ProfileInfoLoader {
   const std::string &Filename;
-  Module &M;
   std::vector<std::string> CommandLines;
   std::vector<unsigned>    FunctionCounts;
   std::vector<unsigned>    BlockCounts;
@@ -39,8 +38,7 @@ class ProfileInfoLoader {
 public:
   // ProfileInfoLoader ctor - Read the specified profiling data file, exiting
   // the program if the file is invalid or broken.
-  ProfileInfoLoader(const char *ToolName, const std::string &Filename,
-                    Module &M);
+  ProfileInfoLoader(const char *ToolName, const std::string &Filename);
 
   static const unsigned Uncounted;
 

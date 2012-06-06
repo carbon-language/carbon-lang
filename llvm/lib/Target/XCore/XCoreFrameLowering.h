@@ -22,7 +22,6 @@ namespace llvm {
   class XCoreSubtarget;
 
   class XCoreFrameLowering: public TargetFrameLowering {
-    const XCoreSubtarget &STI;
   public:
     XCoreFrameLowering(const XCoreSubtarget &STI);
 

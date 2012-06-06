@@ -152,7 +152,7 @@ void LoaderPass::readEdge(ProfileInfo::Edge e,
 }
 
 bool LoaderPass::runOnModule(Module &M) {
-  ProfileInfoLoader PIL("profile-loader", Filename, M);
+  ProfileInfoLoader PIL("profile-loader", Filename);
 
   EdgeInformation.clear();
   std::vector<unsigned> Counters = PIL.getRawEdgeCounts();

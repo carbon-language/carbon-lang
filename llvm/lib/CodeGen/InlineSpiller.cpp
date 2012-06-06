@@ -52,7 +52,6 @@ static cl::opt<bool> DisableHoisting("disable-spill-hoist", cl::Hidden,
 
 namespace {
 class InlineSpiller : public Spiller {
-  MachineFunctionPass &Pass;
   MachineFunction &MF;
   LiveIntervals &LIS;
   LiveStacks &LSS;
@@ -137,8 +136,7 @@ public:
   InlineSpiller(MachineFunctionPass &pass,
                 MachineFunction &mf,
                 VirtRegMap &vrm)
-    : Pass(pass),
-      MF(mf),
+    : MF(mf),
       LIS(pass.getAnalysis<LiveIntervals>()),
       LSS(pass.getAnalysis<LiveStacks>()),
       AA(&pass.getAnalysis<AliasAnalysis>()),

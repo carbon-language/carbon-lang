@@ -31,8 +31,6 @@ class NVPTXSubtarget;
 
 class NVPTXRegisterInfo : public NVPTXGenRegisterInfo {
 private:
-  const TargetInstrInfo &TII;
-  const NVPTXSubtarget &ST;
   bool Is64Bit;
   // Hold Strings that can be free'd all together with NVPTXRegisterInfo
   ManagedStringPool     ManagedStrPool;

@@ -23,10 +23,9 @@ namespace llvm {
 /// and emission of the instruction selector.
 ///
 class DAGISelEmitter : public TableGenBackend {
-  RecordKeeper &Records;
   CodeGenDAGPatterns CGP;
 public:
-  explicit DAGISelEmitter(RecordKeeper &R) : Records(R), CGP(R) {}
+  explicit DAGISelEmitter(RecordKeeper &R) : CGP(R) {}
 
   // run - Output the isel, returning true on failure.
   void run(raw_ostream &OS);

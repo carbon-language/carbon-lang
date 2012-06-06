@@ -73,7 +73,6 @@ class RAGreedy : public MachineFunctionPass,
 
   // analyses
   SlotIndexes *Indexes;
-  LiveStacks *LS;
   MachineDominatorTree *DomTree;
   MachineLoopInfo *Loops;
   EdgeBundles *Bundles;
