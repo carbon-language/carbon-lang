@@ -15,6 +15,12 @@ function(add_llvm_unittest test_dirname)
   set_target_properties(${test_name}Tests PROPERTIES FOLDER "Tests")
 endfunction()
 
+# Visual Studio 2012 only supports up to 8 template parameters in
+# std::tr1::tuple by default, but gtest requires 10
+if(MSVC AND MSVC_VERSION EQUAL 1700)
+  add_definitions(-D_VARIADIC_MAX=10)
+endif ()
+
 add_custom_target(UnitTests)
 set_target_properties(UnitTests PROPERTIES FOLDER "Tests")
 
