@@ -152,12 +152,6 @@ TEST(AddressSanitizerInterface, GetFreeBytesTest) {
     EXPECT_LT(new_free_bytes, old_free_bytes);
     old_free_bytes = new_free_bytes;
   }
-  // Deleting these chunks will move them to quarantine, number of free
-  // bytes won't increase.
-  for (i = 0; i < kNumOfChunks; i++) {
-    free(chunks[i]);
-    EXPECT_EQ(old_free_bytes, __asan_get_free_bytes());
-  }
   EXPECT_DEATH(DoLargeMallocForGetFreeBytesTestAndDie(), "double-free");
 }
 
