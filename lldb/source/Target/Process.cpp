@@ -812,6 +812,7 @@ Process::Process(Target &target, Listener &listener) :
     m_should_detach (false),
     m_next_event_action_ap(),
     m_run_lock (),
+    m_currently_handling_event(false),
     m_can_jit(eCanJITDontKnow)
 {
     UpdateInstanceName();
@@ -2936,6 +2937,11 @@ Process::PrivateResume ()
 Error
 Process::Halt ()
 {
+    // First make sure we aren't in the middle of handling an event, or we might restart.  This is pretty weak, since
+    // we could just straightaway get another event.  It just narrows the window...
+    m_currently_handling_event.WaitForValueEqualTo(false);
+
+    
     // Pause our private state thread so we can ensure no one else eats
     // the stop event out from under us.
     Listener halt_listener ("lldb.process.halt_listener");
@@ -3039,30 +3045,50 @@ Process::Destroy ()
     Error error (WillDestroy());
     if (error.Success())
     {
-        DisableAllBreakpointSites();
         if (m_public_state.GetValue() == eStateRunning)
         {
+            LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TEMPORARY));
+            if (log)
+                log->Printf("Process::Destroy() About to halt.");
             error = Halt();
             if (error.Success())
             {
                 // Consume the halt event.
                 EventSP stop_event;
                 TimeValue timeout (TimeValue::Now());
-                timeout.OffsetWithMicroSeconds(1000);
+                timeout.OffsetWithSeconds(1);
                 StateType state = WaitForProcessToStop (&timeout);
                 if (state != eStateStopped)
                 {
-                    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
+                    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TEMPORARY));
                     if (log)
                         log->Printf("Process::Destroy() Halt failed to stop, state is: %s", StateAsCString(state));
+                    // If we really couldn't stop the process then we should just error out here, but if the
+                    // lower levels just bobbled sending the event and we really are stopped, then continue on.
+                    StateType private_state = m_private_state.GetValue();
+                    if (private_state != eStateStopped && private_state != eStateExited)
+                    {
+                        return error;
+                    }
                 }
             }
             else
             {
-                    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
+                    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TEMPORARY));
                     if (log)
                         log->Printf("Process::Destroy() Halt got error: %s", error.AsCString());
+                    return error;
             }
+        }
+
+        if (m_public_state.GetValue() != eStateRunning)
+        {
+            // Ditch all thread plans, and remove all our breakpoints: in case we have to restart the target to
+            // kill it, we don't want it hitting a breakpoint...
+            // Only do this if we've stopped, however, since if we didn't manage to halt it above, then
+            // we're not going to have much luck doing this now.
+            m_thread_list.DiscardThreadPlans();
+            DisableAllBreakpointSites();
         }
         
         error = DoDestroy();
@@ -3342,6 +3368,7 @@ void
 Process::HandlePrivateEvent (EventSP &event_sp)
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
+    m_currently_handling_event.SetValue(true, eBroadcastNever);
     
     const StateType new_state = Process::ProcessEventData::GetStateFromEvent(event_sp.get());
     
@@ -3407,6 +3434,7 @@ Process::HandlePrivateEvent (EventSP &event_sp)
                          StateAsCString (GetState ()));
         }
     }
+    m_currently_handling_event.SetValue(false, eBroadcastAlways);
 }
 
 void *

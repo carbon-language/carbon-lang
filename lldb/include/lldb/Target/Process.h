@@ -3382,6 +3382,7 @@ protected:
     std::auto_ptr<NextEventAction> m_next_event_action_ap;
     std::vector<PreResumeCallbackAndBaton> m_pre_resume_actions;
     ReadWriteLock               m_run_lock;
+    Predicate<bool>             m_currently_handling_event;
 
     enum {
         eCanJITDontKnow= 0,
