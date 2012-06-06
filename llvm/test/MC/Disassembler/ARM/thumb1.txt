@@ -1,4 +1,4 @@
-# RUN: llvm-mc -triple=thumbv6-apple-darwin -disassemble < %s | FileCheck %s
+# RUN: llvm-mc -triple=thumbv6-apple-darwin -disassemble -show-encoding < %s | FileCheck %s
 
 #------------------------------------------------------------------------------
 # ADC (register)
@@ -81,6 +81,15 @@
 # CHECK: bics r1, r6
 
 0xb1 0x43
+
+#------------------------------------------------------------------------------
+# B
+#------------------------------------------------------------------------------
+# CHECK: bls     #128                    @ encoding: [0x40,0xd9]
+# CHECK: beq     #-256                   @ encoding: [0x80,0xd0]
+
+0x40 0xd9
+0x80 0xd0
 
 #------------------------------------------------------------------------------
 # BKPT
