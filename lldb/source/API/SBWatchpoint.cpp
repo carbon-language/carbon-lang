@@ -90,6 +90,18 @@ SBWatchpoint::IsValid() const
     return m_opaque_sp;
 }
 
+SBError
+SBWatchpoint::GetError ()
+{
+    SBError sb_error;
+    lldb::WatchpointSP watchpoint_sp(GetSP());
+    if (watchpoint_sp)
+    {
+        sb_error.SetError(watchpoint_sp->GetError());
+    }
+    return sb_error;
+}
+
 int32_t
 SBWatchpoint::GetHardwareIndex ()
 {
