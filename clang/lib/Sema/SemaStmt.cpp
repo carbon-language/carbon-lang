@@ -1116,18 +1116,15 @@ namespace {
     llvm::SmallPtrSet<VarDecl*, 8> &Decls;
     llvm::SmallVector<SourceRange, 10> &Ranges;
     bool Simple;
-    PartialDiagnostic &PDiag;
 public:
   typedef EvaluatedExprVisitor<DeclExtractor> Inherited;
 
   DeclExtractor(Sema &S, llvm::SmallPtrSet<VarDecl*, 8> &Decls,
-                llvm::SmallVector<SourceRange, 10> &Ranges,
-                PartialDiagnostic &PDiag) :
+                llvm::SmallVector<SourceRange, 10> &Ranges) :
       Inherited(S.Context),
       Decls(Decls),
       Ranges(Ranges),
-      Simple(true),
-      PDiag(PDiag) {}
+      Simple(true) {}
 
   bool isSimple() { return Simple; }
 
@@ -1274,7 +1271,7 @@ public:
     PartialDiagnostic PDiag = S.PDiag(diag::warn_variables_not_in_loop_body);
     llvm::SmallPtrSet<VarDecl*, 8> Decls;
     llvm::SmallVector<SourceRange, 10> Ranges;
-    DeclExtractor DE(S, Decls, Ranges, PDiag);
+    DeclExtractor DE(S, Decls, Ranges);
     DE.Visit(Second);
 
     // Don't analyze complex conditionals.

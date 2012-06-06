@@ -39,7 +39,6 @@ namespace CodeGen {
 /// while lowering AST types to LLVM types.
 class CodeGenTBAA {
   ASTContext &Context;
-  llvm::LLVMContext& VMContext;
   const CodeGenOptions &CodeGenOpts;
   const LangOptions &Features;
   MangleContext &MContext;

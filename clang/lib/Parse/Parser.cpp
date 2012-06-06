@@ -59,7 +59,7 @@ Parser::Parser(Preprocessor &pp, Sema &actions, bool SkipFunctionBodies)
   MSStructHandler.reset(new PragmaMSStructHandler(actions));
   PP.AddPragmaHandler(MSStructHandler.get());
 
-  UnusedHandler.reset(new PragmaUnusedHandler(actions, *this));
+  UnusedHandler.reset(new PragmaUnusedHandler(actions));
   PP.AddPragmaHandler(UnusedHandler.get());
 
   WeakHandler.reset(new PragmaWeakHandler(actions));
@@ -68,12 +68,11 @@ Parser::Parser(Preprocessor &pp, Sema &actions, bool SkipFunctionBodies)
   RedefineExtnameHandler.reset(new PragmaRedefineExtnameHandler(actions));
   PP.AddPragmaHandler(RedefineExtnameHandler.get());
 
-  FPContractHandler.reset(new PragmaFPContractHandler(actions, *this));
+  FPContractHandler.reset(new PragmaFPContractHandler(actions));
   PP.AddPragmaHandler("STDC", FPContractHandler.get());
 
   if (getLangOpts().OpenCL) {
-    OpenCLExtensionHandler.reset(
-                  new PragmaOpenCLExtensionHandler(actions, *this));
+    OpenCLExtensionHandler.reset(new PragmaOpenCLExtensionHandler(actions));
     PP.AddPragmaHandler("OPENCL", OpenCLExtensionHandler.get());
 
     PP.AddPragmaHandler("OPENCL", FPContractHandler.get());

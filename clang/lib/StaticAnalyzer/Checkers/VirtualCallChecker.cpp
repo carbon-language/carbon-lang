@@ -46,7 +46,7 @@ class WalkAST : public StmtVisitor<WalkAST> {
                                 visited. */
               PostVisited  /**< A CallExpr to this FunctionDecl is in the
                                 worklist, and the body has been visited. */
-  } K;
+  };
 
   /// A DenseMap that records visited states of FunctionDecls.
   llvm::DenseMap<const FunctionDecl *, Kind> VisitedFunctions;

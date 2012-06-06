@@ -25,12 +25,11 @@ namespace {
 /// given function body.
 class CGBuilder : public StmtVisitor<CGBuilder> {
   CallGraph *G;
-  const Decl *FD;
   CallGraphNode *CallerNode;
 
 public:
-  CGBuilder(CallGraph *g, const Decl *D, CallGraphNode *N)
-    : G(g), FD(D), CallerNode(N) {}
+  CGBuilder(CallGraph *g, CallGraphNode *N)
+    : G(g), CallerNode(N) {}
 
   void VisitStmt(Stmt *S) { VisitChildren(S); }
 
@@ -99,7 +98,7 @@ void CallGraph::addNodeForDecl(Decl* D, bool IsGlobal) {
     Root->addCallee(Node, this);
 
   // Process all the calls by this function as well.
-  CGBuilder builder(this, D, Node);
+  CGBuilder builder(this, Node);
   if (Stmt *Body = D->getBody())
     builder.Visit(Body);
 }

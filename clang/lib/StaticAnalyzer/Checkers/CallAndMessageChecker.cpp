@@ -128,14 +128,13 @@ bool CallAndMessageChecker::PreVisitProcessArg(CheckerContext &C,
     public:
       SmallVector<const FieldDecl *, 10> FieldChain;
     private:
-      ASTContext &C;
       StoreManager &StoreMgr;
       MemRegionManager &MrMgr;
       Store store;
     public:
-      FindUninitializedField(ASTContext &c, StoreManager &storeMgr,
+      FindUninitializedField(StoreManager &storeMgr,
                              MemRegionManager &mrMgr, Store s)
-      : C(c), StoreMgr(storeMgr), MrMgr(mrMgr), store(s) {}
+      : StoreMgr(storeMgr), MrMgr(mrMgr), store(s) {}
 
       bool Find(const TypedValueRegion *R) {
         QualType T = R->getValueType();
@@ -165,8 +164,7 @@ bool CallAndMessageChecker::PreVisitProcessArg(CheckerContext &C,
     };
 
     const LazyCompoundValData *D = LV->getCVData();
-    FindUninitializedField F(C.getASTContext(),
-                             C.getState()->getStateManager().getStoreManager(),
+    FindUninitializedField F(C.getState()->getStateManager().getStoreManager(),
                              C.getSValBuilder().getRegionManager(),
                              D->getStore());
 

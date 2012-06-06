@@ -29,8 +29,7 @@ using namespace CodeGen;
 CodeGenTBAA::CodeGenTBAA(ASTContext &Ctx, llvm::LLVMContext& VMContext,
                          const CodeGenOptions &CGO,
                          const LangOptions &Features, MangleContext &MContext)
-  : Context(Ctx), VMContext(VMContext), CodeGenOpts(CGO),
-    Features(Features), MContext(MContext),
+  : Context(Ctx), CodeGenOpts(CGO), Features(Features), MContext(MContext),
     MDHelper(VMContext), Root(0), Char(0) {
 }
 

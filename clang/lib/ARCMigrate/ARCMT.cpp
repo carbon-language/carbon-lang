@@ -480,13 +480,12 @@ public:
 
 class RewritesApplicator : public TransformActions::RewriteReceiver {
   Rewriter &rewriter;
-  ASTContext &Ctx;
   MigrationProcess::RewriteListener *Listener;
 
 public:
   RewritesApplicator(Rewriter &rewriter, ASTContext &ctx,
                      MigrationProcess::RewriteListener *listener)
-    : rewriter(rewriter), Ctx(ctx), Listener(listener) {
+    : rewriter(rewriter), Listener(listener) {
     if (Listener)
       Listener->start(ctx);
   }
