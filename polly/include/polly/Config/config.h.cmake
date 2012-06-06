@@ -17,5 +17,6 @@
 #cmakedefine ISL_CODEGEN_FOUND
 #cmakedefine OPENSCOP_FOUND
 #cmakedefine SCOPLIB_FOUND
+#cmakedefine CUDALIB_FOUND
 
 #endif

@@ -6,6 +6,9 @@
 /* Use gmp for isl */
 #undef CLOOG_INT_GMP
 
+/* Define if cudalib found */
+#undef CUDALIB_FOUND
+
 /* Define if ISL has a code generator */
 #undef ISL_CODEGEN_FOUND
 

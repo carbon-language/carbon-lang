@@ -111,6 +111,11 @@ fi
 
 AC_SUBST(scoplib_rpath)
 
+dnl Check if CUDA lib there
+find_lib_and_headers([cuda], [cuda.h], [cuda])
+AS_IF([test "x$cuda_found" = "xyes"],
+  [AC_DEFINE([CUDALIB_FOUND],[1],[Define if cudalib found])])
+
 dnl **************************************************************************
 dnl * Create the output files
 dnl **************************************************************************
