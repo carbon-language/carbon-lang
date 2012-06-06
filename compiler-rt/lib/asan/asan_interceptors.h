@@ -32,7 +32,6 @@ namespace __asan {
 
 // __asan::internal_X() is the implementation of X() for use in RTL.
 s64 internal_atoll(const char *nptr);
-uptr internal_strlen(const char *s);
 uptr internal_strnlen(const char *s, uptr maxlen);
 char* internal_strchr(const char *s, int c);
 void* internal_memset(void *s, int c, uptr n);

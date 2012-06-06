@@ -59,4 +59,14 @@ typedef unsigned long    DWORD;  // NOLINT
 #  endif
 #endif  // __WORDSIZE
 
+// Raw check.
+#define RAW_CHECK_MSG(expr, msg) do { \
+  if (!(expr)) { \
+    RawWrite(msg); \
+    Die(); \
+  } \
+} while (0)
+
+#define RAW_CHECK(expr) RAW_CHECK_MSG(expr, #expr)
+
 #endif  // SANITIZER_DEFS_H

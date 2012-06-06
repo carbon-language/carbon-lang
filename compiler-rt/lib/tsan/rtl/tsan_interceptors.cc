@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "interception/interception.h"
+#include "sanitizer_common/sanitizer_libc.h"
 #include "tsan_rtl.h"
 #include "tsan_interface.h"
 #include "tsan_atomic.h"
@@ -1538,10 +1539,6 @@ int internal_strncmp(const char *s1, const char *s2, uptr size) {
 
 void internal_strcpy(char *s1, const char *s2) {
   REAL(strcpy)(s1, s2);  // NOLINT
-}
-
-uptr internal_strlen(const char *s) {
-  return REAL(strlen)(s);
 }
 
 char* internal_strdup(const char *s) {

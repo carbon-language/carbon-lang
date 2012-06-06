@@ -239,10 +239,6 @@ void AsanDumpProcessMap() {
   UNIMPLEMENTED();
 }
 
-int GetPid() {
-  return GetProcessId(GetCurrentProcess());
-}
-
 uptr GetThreadSelf() {
   return GetCurrentThreadId();
 }

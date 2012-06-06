@@ -13,13 +13,41 @@
 //===----------------------------------------------------------------------===//
 #if defined(__linux__) || defined(__APPLE__)
 
-#include "sanitizer_internal_defs.h"
+#include "sanitizer_common.h"
 #include "sanitizer_libc.h"
 
 #include <stdarg.h>
 #include <stdio.h>
+#include <sys/mman.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 namespace __sanitizer {
+
+int GetPid() {
+  return getpid();
+}
+
+void *MmapOrDie(uptr size) {
+  size = RoundUpTo(size, kPageSize);
+  void *res = internal_mmap(0, size,
+                            PROT_READ | PROT_WRITE,
+                            MAP_PRIVATE | MAP_ANON, -1, 0);
+  if (res == (void*)-1) {
+    RawWrite("Failed to map!\n");
+    Die();
+  }
+  return res;
+}
+
+void UnmapOrDie(void *addr, uptr size) {
+  if (!addr || !size) return;
+  int res = internal_munmap(addr, size);
+  if (res != 0) {
+    RawWrite("Failed to unmap!\n");
+    Die();
+  }
+}
 
 int internal_sscanf(const char *str, const char *format, ...) {
   va_list args;

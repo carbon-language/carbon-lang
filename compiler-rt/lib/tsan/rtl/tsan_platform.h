@@ -69,7 +69,6 @@ void FlushShadowMemory();
 
 const char *InitializePlatform();
 void FinalizePlatform();
-int GetPid();
 
 void internal_yield();
 void internal_sleep_ms(u32 ms);

@@ -220,12 +220,6 @@ s64 internal_atoll(const char *nptr) {
   return internal_simple_strtoll(nptr, (char**)0, 10);
 }
 
-uptr internal_strlen(const char *s) {
-  uptr i = 0;
-  while (s[i]) i++;
-  return i;
-}
-
 uptr internal_strnlen(const char *s, uptr maxlen) {
 #if ASAN_INTERCEPT_STRNLEN
   if (REAL(strnlen) != 0) {

@@ -10,6 +10,7 @@
 // This file is a part of ThreadSanitizer (TSan), a race detector.
 //
 //===----------------------------------------------------------------------===//
+#include "sanitizer_common/sanitizer_common.h"
 #include "sanitizer_common/sanitizer_libc.h"
 #include "tsan_symbolize.h"
 #include "tsan_mman.h"
@@ -84,7 +85,7 @@ static int dl_iterate_phdr_cb(dl_phdr_info *info, size_t size, void *arg) {
   DlIteratePhdrCtx *ctx = (DlIteratePhdrCtx*)arg;
   InternalScopedBuf<char> tmp(128);
   if (ctx->is_first) {
-    Snprintf(tmp.Ptr(), tmp.Size(), "/proc/%d/exe", (int)getpid());
+    Snprintf(tmp.Ptr(), tmp.Size(), "/proc/%d/exe", GetPid());
     info->dlpi_name = tmp.Ptr();
   }
   ctx->is_first = false;

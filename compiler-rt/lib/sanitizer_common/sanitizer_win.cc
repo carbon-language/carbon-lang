@@ -23,6 +23,23 @@
 
 namespace __sanitizer {
 
+int GetPid() {
+  return GetProcessId(GetCurrentProcess());
+}
+
+void *MmapOrDie(uptr size) {
+  void *rv = VirtualAlloc(0, size, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
+  if (rv == 0)
+    RawWrite("Failed to map!\n");
+    Die();
+  return rv;
+}
+
+void UnmapOrDie(void *addr, uptr size) {
+  // FIXME: Use CHECK here.
+  RAW_CHECK(VirtualFree(addr, size, MEM_DECOMMIT));
+}
+
 void *internal_mmap(void *addr, uptr length, int prot, int flags,
                     int fd, u64 offset) {
   UNIMPLEMENTED_WIN();

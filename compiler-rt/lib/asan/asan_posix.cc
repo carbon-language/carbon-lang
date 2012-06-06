@@ -154,10 +154,6 @@ void AsanDumpProcessMap() {
   Report("End of process memory map.\n");
 }
 
-int GetPid() {
-  return getpid();
-}
-
 uptr GetThreadSelf() {
   return (uptr)pthread_self();
 }

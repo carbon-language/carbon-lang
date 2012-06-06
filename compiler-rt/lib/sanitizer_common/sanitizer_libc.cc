@@ -38,6 +38,12 @@ int internal_strcmp(const char *s1, const char *s2) {
   return 0;
 }
 
+uptr internal_strlen(const char *s) {
+  uptr i = 0;
+  while (s[i]) i++;
+  return i;
+}
+
 char *internal_strncpy(char *dst, const char *src, uptr n) {
   uptr i;
   for (i = 0; i < n && src[i]; i++)

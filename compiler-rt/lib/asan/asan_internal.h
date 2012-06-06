@@ -141,7 +141,6 @@ bool AsanInterceptsSignal(int signum);
 void SetAlternateSignalStack();
 void UnsetAlternateSignalStack();
 void InstallSignalHandlers();
-int GetPid();
 uptr GetThreadSelf();
 int AtomicInc(int *a);
 u16 AtomicExchange(u16 *a, u16 new_val);
@@ -242,11 +241,6 @@ int Atexit(void (*function)(void));
 
 #define ASAN_ARRAY_SIZE(a) (sizeof(a)/sizeof((a)[0]))
 
-const uptr kWordSize = __WORDSIZE / 8;
-const uptr kWordSizeInBits = 8 * kWordSize;
-const uptr kPageSizeBits = 12;
-const uptr kPageSize = 1UL << kPageSizeBits;
-
 #if !defined(_WIN32) || defined(__clang__)
 # define GET_CALLER_PC() (uptr)__builtin_return_address(0)
 # define GET_CURRENT_FRAME() (uptr)__builtin_frame_address(0)
@@ -290,16 +284,6 @@ const int kAsanInternalHeapMagic = 0xfe;
 
 static const uptr kCurrentStackFrameMagic = 0x41B58AB3;
 static const uptr kRetiredStackFrameMagic = 0x45E0360E;
-
-// --------------------------- Bit twiddling ------- {{{1
-inline bool IsPowerOfTwo(uptr x) {
-  return (x & (x - 1)) == 0;
-}
-
-inline uptr RoundUpTo(uptr size, uptr boundary) {
-  CHECK(IsPowerOfTwo(boundary));
-  return (size + boundary - 1) & ~(boundary - 1);
-}
 
 // -------------------------- LowLevelAllocator ----- {{{1
 // A simple low-level memory allocator for internal use.

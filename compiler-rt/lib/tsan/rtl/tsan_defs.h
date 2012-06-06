@@ -23,7 +23,6 @@
 
 namespace __tsan {
 
-const uptr kPageSize = 4096;
 const int kTidBits = 13;
 const unsigned kMaxTid = 1 << kTidBits;
 const unsigned kMaxTidInClock = kMaxTid * 2;  // This includes msb 'freed' bit.
@@ -159,7 +158,6 @@ void internal_memcpy(void *dst, const void *src, uptr size);
 int internal_memcmp(const void *s1, const void *s2, uptr size);
 int internal_strncmp(const char *s1, const char *s2, uptr size);
 void internal_strcpy(char *s1, const char *s2);
-uptr internal_strlen(const char *s);
 char* internal_strdup(const char *s);
 const char *internal_strstr(const char *where, const char *what);
 const char *internal_strchr(const char *where, char what);

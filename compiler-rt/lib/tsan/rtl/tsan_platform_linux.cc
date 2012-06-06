@@ -273,8 +273,4 @@ void GetThreadStackAndTls(bool main, uptr *stk_addr, uptr *stk_size,
   }
 }
 
-int GetPid() {
-  return getpid();
-}
-
 }  // namespace __tsan
