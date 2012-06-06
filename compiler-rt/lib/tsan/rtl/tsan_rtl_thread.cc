@@ -53,7 +53,7 @@ static void ThreadDead(ThreadState *thr, ThreadContext *tctx) {
   CHECK_GT(thr->in_rtl, 0);
   CHECK(tctx->status == ThreadStatusRunning
       || tctx->status == ThreadStatusFinished);
-  DPrintf("#%d: ThreadDead uid=%lu\n", thr->tid, tctx->user_id);
+  DPrintf("#%d: ThreadDead uid=%zu\n", thr->tid, tctx->user_id);
   tctx->status = ThreadStatusDead;
   tctx->user_id = 0;
   tctx->sync.Reset();
@@ -106,7 +106,7 @@ int ThreadCreate(ThreadState *thr, uptr pc, uptr uid, bool detached) {
   CHECK_NE(tctx, 0);
   CHECK_GE(tid, 0);
   CHECK_LT(tid, kMaxTid);
-  DPrintf("#%d: ThreadCreate tid=%d uid=%lu\n", thr->tid, tid, uid);
+  DPrintf("#%d: ThreadCreate tid=%d uid=%zu\n", thr->tid, tid, uid);
   CHECK_EQ(tctx->status, ThreadStatusInvalid);
   ctx->alive_threads++;
   if (ctx->max_alive_threads < ctx->alive_threads) {
@@ -170,9 +170,9 @@ void ThreadStart(ThreadState *thr, int tid) {
   thr->clock.set(tid, tctx->epoch0);
   thr->clock.acquire(&tctx->sync);
   StatInc(thr, StatSyncAcquire);
-  DPrintf("#%d: ThreadStart epoch=%llu stk_addr=%lx stk_size=%lx "
-      "tls_addr=%lx tls_size=%lx\n",
-      tid, tctx->epoch0, stk_addr, stk_size, tls_addr, tls_size);
+  DPrintf("#%d: ThreadStart epoch=%zu stk_addr=%zx stk_size=%zx "
+          "tls_addr=%zx tls_size=%zx\n",
+          tid, (uptr)tctx->epoch0, stk_addr, stk_size, tls_addr, tls_size);
 }
 
 void ThreadFinish(ThreadState *thr) {
@@ -239,7 +239,7 @@ int ThreadTid(ThreadState *thr, uptr pc, uptr uid) {
       break;
     }
   }
-  DPrintf("#%d: ThreadTid uid=%lu tid=%d\n", thr->tid, uid, res);
+  DPrintf("#%d: ThreadTid uid=%zu tid=%d\n", thr->tid, uid, res);
   return res;
 }
 
@@ -292,20 +292,20 @@ void MemoryAccessRange(ThreadState *thr, uptr pc, uptr addr,
 
 #if TSAN_DEBUG
   if (!IsAppMem(addr)) {
-    TsanPrintf("Access to non app mem %lx\n", addr);
+    TsanPrintf("Access to non app mem %zx\n", addr);
     DCHECK(IsAppMem(addr));
   }
   if (!IsAppMem(addr + size - 1)) {
-    TsanPrintf("Access to non app mem %lx\n", addr + size - 1);
+    TsanPrintf("Access to non app mem %zx\n", addr + size - 1);
     DCHECK(IsAppMem(addr + size - 1));
   }
   if (!IsShadowMem((uptr)shadow_mem)) {
-    TsanPrintf("Bad shadow addr %p (%lx)\n", shadow_mem, addr);
+    TsanPrintf("Bad shadow addr %p (%zx)\n", shadow_mem, addr);
     DCHECK(IsShadowMem((uptr)shadow_mem));
   }
   if (!IsShadowMem((uptr)(shadow_mem + size * kShadowCnt / 8 - 1))) {
-    TsanPrintf("Bad shadow addr %p (%lx)\n",
-        shadow_mem + size * kShadowCnt / 8 - 1, addr + size - 1);
+    TsanPrintf("Bad shadow addr %p (%zx)\n",
+               shadow_mem + size * kShadowCnt / 8 - 1, addr + size - 1);
     DCHECK(IsShadowMem((uptr)(shadow_mem + size * kShadowCnt / 8 - 1)));
   }
 #endif

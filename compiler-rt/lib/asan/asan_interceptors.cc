@@ -155,9 +155,9 @@ static inline bool RangesOverlap(const char *offset1, uptr length1,
   const char *offset1 = (const char*)_offset1; \
   const char *offset2 = (const char*)_offset2; \
   if (RangesOverlap(offset1, length1, offset2, length2)) { \
-    Report("ERROR: AddressSanitizer %s-param-overlap: " \
-           "memory ranges [%p,%p) and [%p, %p) overlap\n", \
-           name, offset1, offset1 + length1, offset2, offset2 + length2); \
+    AsanReport("ERROR: AddressSanitizer %s-param-overlap: " \
+               "memory ranges [%p,%p) and [%p, %p) overlap\n", \
+               name, offset1, offset1 + length1, offset2, offset2 + length2); \
     PRINT_CURRENT_STACK(); \
     ShowStatsAndAbort(); \
   } \

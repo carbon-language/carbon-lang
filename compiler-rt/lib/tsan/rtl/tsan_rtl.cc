@@ -104,9 +104,9 @@ static void WriteMemoryProfile(char *buf, uptr buf_size, int num) {
   uptr nsync = 0;
   uptr syncmem = CTX()->synctab.GetMemoryConsumption(&nsync);
 
-  SNPrintf(buf, buf_size, "%d: shadow=%luMB"
-                          " thread=%luMB(total=%d/live=%d)"
-                          " sync=%luMB(cnt=%lu)\n",
+  SNPrintf(buf, buf_size, "%d: shadow=%zuMB"
+                          " thread=%zuMB(total=%d/live=%d)"
+                          " sync=%zuMB(cnt=%zu)\n",
     num,
     shadow >> 20,
     threadmem >> 20, nthread, nlivethread,
@@ -359,17 +359,18 @@ void MemoryAccess(ThreadState *thr, uptr pc, uptr addr,
     int kAccessSizeLog, bool kAccessIsWrite) {
   u64 *shadow_mem = (u64*)MemToShadow(addr);
   DPrintf2("#%d: tsan::OnMemoryAccess: @%p %p size=%d"
-      " is_write=%d shadow_mem=%p {%llx, %llx, %llx, %llx}\n",
+      " is_write=%d shadow_mem=%p {%zx, %zx, %zx, %zx}\n",
       (int)thr->fast_state.tid(), (void*)pc, (void*)addr,
       (int)(1 << kAccessSizeLog), kAccessIsWrite, shadow_mem,
-      shadow_mem[0], shadow_mem[1], shadow_mem[2], shadow_mem[3]);
+      (uptr)shadow_mem[0], (uptr)shadow_mem[1],
+      (uptr)shadow_mem[2], (uptr)shadow_mem[3]);
 #if TSAN_DEBUG
   if (!IsAppMem(addr)) {
-    TsanPrintf("Access to non app mem %lx\n", addr);
+    TsanPrintf("Access to non app mem %zx\n", addr);
     DCHECK(IsAppMem(addr));
   }
   if (!IsShadowMem((uptr)shadow_mem)) {
-    TsanPrintf("Bad shadow addr %p (%lx)\n", shadow_mem, addr);
+    TsanPrintf("Bad shadow addr %p (%zx)\n", shadow_mem, addr);
     DCHECK(IsShadowMem((uptr)shadow_mem));
   }
 #endif

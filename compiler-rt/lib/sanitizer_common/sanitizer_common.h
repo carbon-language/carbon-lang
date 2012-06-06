@@ -35,6 +35,10 @@ void RawWrite(const char *buffer);
 void *MmapOrDie(uptr size);
 void UnmapOrDie(void *addr, uptr size);
 
+void Printf(const char *format, ...) FORMAT(1, 2);
+int SNPrintf(char *buffer, uptr length, const char *format, ...) FORMAT(3, 4);
+void Report(const char *format, ...) FORMAT(1, 2);
+
 // Bit twiddling.
 inline bool IsPowerOfTwo(uptr x) {
   return (x & (x - 1)) == 0;

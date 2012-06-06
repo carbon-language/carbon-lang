@@ -96,7 +96,7 @@ static void ProtectRange(uptr beg, uptr end) {
       PROT_NONE,
       MAP_PRIVATE | MAP_ANON | MAP_FIXED | MAP_NORESERVE,
       -1, 0)) {
-    TsanPrintf("FATAL: ThreadSanitizer can not protect [%lx,%lx]\n", beg, end);
+    TsanPrintf("FATAL: ThreadSanitizer can not protect [%zx,%zx]\n", beg, end);
     TsanPrintf("FATAL: Make sure you are not using unlimited stack\n");
     Die();
   }
@@ -120,17 +120,17 @@ void InitializeShadowMemory() {
   }
   ProtectRange(kClosedLowBeg, kClosedLowEnd);
   ProtectRange(kClosedMidBeg, kClosedMidEnd);
-  DPrintf("kClosedLow   %lx-%lx (%luGB)\n",
+  DPrintf("kClosedLow   %zx-%zx (%zuGB)\n",
       kClosedLowBeg, kClosedLowEnd, (kClosedLowEnd - kClosedLowBeg) >> 30);
-  DPrintf("kLinuxShadow %lx-%lx (%luGB)\n",
+  DPrintf("kLinuxShadow %zx-%zx (%zuGB)\n",
       kLinuxShadowBeg, kLinuxShadowEnd,
       (kLinuxShadowEnd - kLinuxShadowBeg) >> 30);
-  DPrintf("kClosedMid   %lx-%lx (%luGB)\n",
+  DPrintf("kClosedMid   %zx-%zx (%zuGB)\n",
       kClosedMidBeg, kClosedMidEnd, (kClosedMidEnd - kClosedMidBeg) >> 30);
-  DPrintf("kLinuxAppMem %lx-%lx (%luGB)\n",
+  DPrintf("kLinuxAppMem %zx-%zx (%zuGB)\n",
       kLinuxAppMemBeg, kLinuxAppMemEnd,
       (kLinuxAppMemEnd - kLinuxAppMemBeg) >> 30);
-  DPrintf("stack        %lx\n", (uptr)&shadow);
+  DPrintf("stack        %zx\n", (uptr)&shadow);
 }
 
 static void CheckPIE() {
@@ -144,8 +144,8 @@ static void CheckPIE() {
     u64 addr = strtoll(buf, 0, 16);
     if ((u64)addr < kLinuxAppMemBeg) {
       TsanPrintf("FATAL: ThreadSanitizer can not mmap the shadow memory ("
-             "something is mapped at 0x%llx < 0x%lx)\n",
-             addr, kLinuxAppMemBeg);
+             "something is mapped at 0x%zx < 0x%zx)\n",
+             (uptr)addr, kLinuxAppMemBeg);
       TsanPrintf("FATAL: Make sure to compile with -fPIE"
              " and to link with -pie.\n");
       Die();

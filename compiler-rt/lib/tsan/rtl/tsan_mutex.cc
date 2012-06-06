@@ -120,7 +120,7 @@ DeadlockDetector::DeadlockDetector() {
 }
 
 void DeadlockDetector::Lock(MutexType t) {
-  // TsanPrintf("LOCK %d @%llu\n", t, seq_ + 1);
+  // TsanPrintf("LOCK %d @%zu\n", t, seq_ + 1);
   u64 max_seq = 0;
   u64 max_idx = MutexTypeInvalid;
   for (int i = 0; i != MutexTypeCount; i++) {
@@ -135,16 +135,17 @@ void DeadlockDetector::Lock(MutexType t) {
   locked_[t] = ++seq_;
   if (max_idx == MutexTypeInvalid)
     return;
-  // TsanPrintf("  last %d @%llu\n", max_idx, max_seq);
+  // TsanPrintf("  last %d @%zu\n", max_idx, max_seq);
   if (!CanLockAdj[max_idx][t]) {
     TsanPrintf("ThreadSanitizer: internal deadlock detected\n");
-    TsanPrintf("ThreadSanitizer: can't lock %d while under %llu\n", t, max_idx);
+    TsanPrintf("ThreadSanitizer: can't lock %d while under %zu\n",
+               t, (uptr)max_idx);
     Die();
   }
 }
 
 void DeadlockDetector::Unlock(MutexType t) {
-  // TsanPrintf("UNLO %d @%llu #%llu\n", t, seq_, locked_[t]);
+  // TsanPrintf("UNLO %d @%zu #%zu\n", t, seq_, locked_[t]);
   CHECK(locked_[t]);
   locked_[t] = 0;
 }

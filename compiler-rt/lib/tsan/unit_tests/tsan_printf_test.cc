@@ -21,13 +21,13 @@ namespace __tsan {
 TEST(Printf, Basic) {
   char buf[1024];
   uptr len = SNPrintf(buf, sizeof(buf),
-      "a%db%ldc%lldd%ue%luf%llug%xh%lxq%llxw%pe%sr",
-      (int)-1, (long)-2, (long long)-3,  // NOLINT
-      (unsigned)-4, (unsigned long)5, (unsigned long long)6,  // NOLINT
-      (unsigned)10, (unsigned long)11, (unsigned long long)12,  // NOLINT
+      "a%db%zdc%ue%zuf%xh%zxq%pe%sr",
+      (int)-1, (long)-2, // NOLINT
+      (unsigned)-4, (unsigned long)5, // NOLINT
+      (unsigned)10, (unsigned long)11, // NOLINT
       (void*)0x123, "_string_");
   EXPECT_EQ(len, strlen(buf));
-  EXPECT_EQ(0, strcmp(buf, "a-1b-2c-3d4294967292e5f6gahbqcw"
+  EXPECT_EQ(0, strcmp(buf, "a-1b-2c4294967292e5fahbq"
                            "0x000000000123e_string_r"));
 }
 
@@ -60,7 +60,7 @@ TEST(Printf, OverflowInt) {
 
 TEST(Printf, OverflowUint) {
   char buf[] = "123456789";
-  SNPrintf(buf, 4, "a%llx", (long long)0x123456789);  // NOLINT
+  SNPrintf(buf, 4, "a%zx", (unsigned long)0x123456789);  // NOLINT
   EXPECT_EQ(0, strcmp(buf, "a12"));
   EXPECT_EQ(buf[3], 0);
   EXPECT_EQ(buf[4], '5');
@@ -96,14 +96,11 @@ static void TestMinMax(const char *fmt, T min, T max) {
 
 TEST(Printf, MinMax) {
   TestMinMax<int>("%d-%d", INT_MIN, INT_MAX);  // NOLINT
-  TestMinMax<long>("%ld-%ld", LONG_MIN, LONG_MAX);  // NOLINT
-  TestMinMax<long long>("%lld-%lld", LLONG_MIN, LLONG_MAX);  // NOLINT
+  TestMinMax<long>("%zd-%zd", LONG_MIN, LONG_MAX);  // NOLINT
   TestMinMax<unsigned>("%u-%u", 0, UINT_MAX);  // NOLINT
-  TestMinMax<unsigned long>("%lu-%lu", 0, ULONG_MAX);  // NOLINT
-  TestMinMax<unsigned long long>("%llu-%llu", 0, ULLONG_MAX);  // NOLINT
+  TestMinMax<unsigned long>("%zu-%zu", 0, ULONG_MAX);  // NOLINT
   TestMinMax<unsigned>("%x-%x", 0, UINT_MAX);  // NOLINT
-  TestMinMax<unsigned long>("%lx-%lx", 0, ULONG_MAX);  // NOLINT
-  TestMinMax<unsigned long long>("%llx-%llx", 0, ULLONG_MAX);  // NOLINT
+  TestMinMax<unsigned long>("%zx-%zx", 0, ULONG_MAX);  // NOLINT
 }
 
 }  // namespace __tsan

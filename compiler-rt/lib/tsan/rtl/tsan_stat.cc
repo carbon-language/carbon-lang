@@ -243,7 +243,7 @@ void StatOutput(u64 *stat) {
 
   TsanPrintf("Statistics:\n");
   for (int i = 0; i < StatCnt; i++)
-    TsanPrintf("%s: %llu\n", name[i], stat[i]);
+    TsanPrintf("%s: %zu\n", name[i], (uptr)stat[i]);
 }
 
 }  // namespace __tsan

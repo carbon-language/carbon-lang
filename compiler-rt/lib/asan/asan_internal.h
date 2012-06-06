@@ -157,11 +157,10 @@ void AsanTSDSet(void *tsd);
 uptr ReadFileToBuffer(const char *file_name, char **buff,
                         uptr *buff_size, uptr max_len);
 
+void AppendToErrorMessageBuffer(const char *buffer);
 // asan_printf.cc
-void RawWrite(const char *buffer);
-int SNPrintf(char *buffer, uptr length, const char *format, ...);
-void Printf(const char *format, ...);
-void Report(const char *format, ...);
+void AsanPrintf(const char *format, ...) FORMAT(1, 2);
+void AsanReport(const char *format, ...) FORMAT(1, 2);
 
 // Don't use std::min and std::max, to minimize dependency on libstdc++.
 template<class T> T Min(T a, T b) { return a < b ? a : b; }

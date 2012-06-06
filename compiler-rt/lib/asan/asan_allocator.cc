@@ -217,18 +217,18 @@ struct AsanChunk: public ChunkBase {
 
   void DescribeAddress(uptr addr, uptr access_size) {
     uptr offset;
-    Printf("%p is located ", (void*)addr);
+    AsanPrintf("%p is located ", (void*)addr);
     if (AddrIsInside(addr, access_size, &offset)) {
-      Printf("%zu bytes inside of", offset);
+      AsanPrintf("%zu bytes inside of", offset);
     } else if (AddrIsAtLeft(addr, access_size, &offset)) {
-      Printf("%zu bytes to the left of", offset);
+      AsanPrintf("%zu bytes to the left of", offset);
     } else if (AddrIsAtRight(addr, access_size, &offset)) {
-      Printf("%zu bytes to the right of", offset);
+      AsanPrintf("%zu bytes to the right of", offset);
     } else {
-      Printf(" somewhere around (this is AddressSanitizer bug!)");
+      AsanPrintf(" somewhere around (this is AddressSanitizer bug!)");
     }
-    Printf(" %zu-byte region [%p,%p)\n",
-           used_size, (void*)beg(), (void*)(beg() + used_size));
+    AsanPrintf(" %zu-byte region [%p,%p)\n",
+               used_size, (void*)beg(), (void*)(beg() + used_size));
   }
 };
 
@@ -588,20 +588,20 @@ static void Describe(uptr addr, uptr access_size) {
   if (m->free_tid >= 0) {
     AsanThreadSummary *free_thread =
         asanThreadRegistry().FindByTid(m->free_tid);
-    Printf("freed by thread T%d here:\n", free_thread->tid());
+    AsanPrintf("freed by thread T%d here:\n", free_thread->tid());
     AsanStackTrace free_stack;
     AsanStackTrace::UncompressStack(&free_stack, m->compressed_free_stack(),
                                     m->compressed_free_stack_size());
     free_stack.PrintStack();
-    Printf("previously allocated by thread T%d here:\n",
-           alloc_thread->tid());
+    AsanPrintf("previously allocated by thread T%d here:\n",
+               alloc_thread->tid());
 
     alloc_stack.PrintStack();
     t->summary()->Announce();
     free_thread->Announce();
     alloc_thread->Announce();
   } else {
-    Printf("allocated by thread T%d here:\n", alloc_thread->tid());
+    AsanPrintf("allocated by thread T%d here:\n", alloc_thread->tid());
     alloc_stack.PrintStack();
     t->summary()->Announce();
     alloc_thread->Announce();
@@ -711,13 +711,13 @@ static void Deallocate(u8 *ptr, AsanStackTrace *stack) {
   u16 old_chunk_state = AtomicExchange(&m->chunk_state, CHUNK_QUARANTINE);
 
   if (old_chunk_state == CHUNK_QUARANTINE) {
-    Report("ERROR: AddressSanitizer attempting double-free on %p:\n", ptr);
+    AsanReport("ERROR: AddressSanitizer attempting double-free on %p:\n", ptr);
     stack->PrintStack();
     Describe((uptr)ptr, 1);
     ShowStatsAndAbort();
   } else if (old_chunk_state != CHUNK_ALLOCATED) {
-    Report("ERROR: AddressSanitizer attempting free on address which was not"
-           " malloc()-ed: %p\n", ptr);
+    AsanReport("ERROR: AddressSanitizer attempting free on address "
+               "which was not malloc()-ed: %p\n", ptr);
     stack->PrintStack();
     ShowStatsAndAbort();
   }
@@ -867,8 +867,9 @@ uptr asan_malloc_usable_size(void *ptr, AsanStackTrace *stack) {
   if (ptr == 0) return 0;
   uptr usable_size = malloc_info.AllocationSize((uptr)ptr);
   if (FLAG_check_malloc_usable_size && (usable_size == 0)) {
-    Report("ERROR: AddressSanitizer attempting to call malloc_usable_size() "
-           "for pointer which is not owned: %p\n", ptr);
+    AsanReport("ERROR: AddressSanitizer attempting to call "
+               "malloc_usable_size() for pointer which is "
+               "not owned: %p\n", ptr);
     stack->PrintStack();
     Describe((uptr)ptr, 1);
     ShowStatsAndAbort();
@@ -1072,9 +1073,9 @@ uptr __asan_get_allocated_size(const void *p) {
   uptr allocated_size = malloc_info.AllocationSize((uptr)p);
   // Die if p is not malloced or if it is already freed.
   if (allocated_size == 0) {
-    Report("ERROR: AddressSanitizer attempting to call "
-           "__asan_get_allocated_size() for pointer which is "
-           "not owned: %p\n", p);
+    AsanReport("ERROR: AddressSanitizer attempting to call "
+               "__asan_get_allocated_size() for pointer which is "
+               "not owned: %p\n", p);
     PRINT_CURRENT_STACK();
     Describe((uptr)p, 1);
     ShowStatsAndAbort();

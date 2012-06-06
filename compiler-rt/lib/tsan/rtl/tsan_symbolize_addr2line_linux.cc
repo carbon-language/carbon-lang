@@ -102,13 +102,14 @@ static int dl_iterate_phdr_cb(dl_phdr_info *info, size_t size, void *arg) {
   m->base = (uptr)info->dlpi_addr;
   m->inp_fd = -1;
   m->out_fd = -1;
-  DPrintf("Module %s %lx\n", m->name, m->base);
+  DPrintf("Module %s %zx\n", m->name, m->base);
   for (int i = 0; i < info->dlpi_phnum; i++) {
     const Elf64_Phdr *s = &info->dlpi_phdr[i];
-    DPrintf("  Section p_type=%llx p_offset=%llx p_vaddr=%llx p_paddr=%llx"
-        " p_filesz=%llx p_memsz=%llx p_flags=%llx p_align=%llx\n",
-        (u64)s->p_type, (u64)s->p_offset, (u64)s->p_vaddr, (u64)s->p_paddr,
-        (u64)s->p_filesz, (u64)s->p_memsz, (u64)s->p_flags, (u64)s->p_align);
+    DPrintf("  Section p_type=%zx p_offset=%zx p_vaddr=%zx p_paddr=%zx"
+            " p_filesz=%zx p_memsz=%zx p_flags=%zx p_align=%zx\n",
+            (uptr)s->p_type, (uptr)s->p_offset, (uptr)s->p_vaddr,
+            (uptr)s->p_paddr, (uptr)s->p_filesz, (uptr)s->p_memsz,
+            (uptr)s->p_flags, (uptr)s->p_align);
     if (s->p_type != PT_LOAD)
       continue;
     SectionDesc *sec = (SectionDesc*)internal_alloc(MBlockReportStack,
@@ -118,7 +119,7 @@ static int dl_iterate_phdr_cb(dl_phdr_info *info, size_t size, void *arg) {
     sec->end = sec->base + s->p_memsz;
     sec->next = ctx->sections;
     ctx->sections = sec;
-    DPrintf("  Section %lx-%lx\n", sec->base, sec->end);
+    DPrintf("  Section %zx-%zx\n", sec->base, sec->end);
   }
   return 0;
 }
@@ -199,7 +200,7 @@ ReportStack *SymbolizeData(uptr addr) {
   int res = 0;
   InternalScopedBuf<char> cmd(1024);
   SNPrintf(cmd, cmd.Size(),
-  "nm -alC %s|grep \"%lx\"|awk '{printf(\"%%s\\n%%s\", $3, $4)}' > tsan.tmp2",
+  "nm -alC %s|grep \"%zx\"|awk '{printf(\"%%s\\n%%s\", $3, $4)}' > tsan.tmp2",
     exe, (addr - base));
   if (system(cmd))
     return 0;

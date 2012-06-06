@@ -38,7 +38,6 @@
 namespace __tsan {
 
 void TsanPrintf(const char *format, ...) FORMAT(1, 2);
-uptr SNPrintf(char *buffer, uptr length, const char *format, ...)  FORMAT(3, 4);
 
 // FastState (from most significant bit):
 //   unused          : 1

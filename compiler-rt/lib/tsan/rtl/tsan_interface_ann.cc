@@ -125,7 +125,7 @@ static bool CheckContains(ExpectRace *list, uptr addr, uptr size) {
   ExpectRace *race = FindRace(list, addr, size);
   if (race == 0)
     return false;
-  DPrintf("Hit expected/benign race: %s addr=%lx:%d %s:%d\n",
+  DPrintf("Hit expected/benign race: %s addr=%zx:%d %s:%d\n",
       race->desc, race->addr, (int)race->size, race->file, race->line);
   race->hitcount++;
   return true;
@@ -217,7 +217,7 @@ void AnnotateNoOp(char *f, int l, uptr mem) {
 static void ReportMissedExpectedRace(ExpectRace *race) {
   TsanPrintf("==================\n");
   TsanPrintf("WARNING: ThreadSanitizer: missed expected data race\n");
-  TsanPrintf("  %s addr=%lx %s:%d\n",
+  TsanPrintf("  %s addr=%zx %s:%d\n",
       race->desc, race->addr, race->file, race->line);
   TsanPrintf("==================\n");
 }
@@ -267,14 +267,14 @@ void AnnotateExpectRace(char *f, int l, uptr mem, char *desc) {
   Lock lock(&dyn_ann_ctx->mtx);
   AddExpectRace(&dyn_ann_ctx->expect,
                 f, l, mem, 1, desc);
-  DPrintf("Add expected race: %s addr=%lx %s:%d\n", desc, mem, f, l);
+  DPrintf("Add expected race: %s addr=%zx %s:%d\n", desc, mem, f, l);
 }
 
 static void BenignRaceImpl(char *f, int l, uptr mem, uptr size, char *desc) {
   Lock lock(&dyn_ann_ctx->mtx);
   AddExpectRace(&dyn_ann_ctx->benign,
                 f, l, mem, size, desc);
-  DPrintf("Add benign race: %s addr=%lx %s:%d\n", desc, mem, f, l);
+  DPrintf("Add benign race: %s addr=%zx %s:%d\n", desc, mem, f, l);
 }
 
 // FIXME: Turn it off later. WTF is benign race?1?? Go talk to Hans Boehm.

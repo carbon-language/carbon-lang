@@ -119,14 +119,14 @@ void print_zone_for_ptr(void *ptr) {
   malloc_zone_t *orig_zone = malloc_zone_from_ptr(ptr);
   if (orig_zone) {
     if (orig_zone->zone_name) {
-      Printf("malloc_zone_from_ptr(%p) = %p, which is %s\n",
-             ptr, orig_zone, orig_zone->zone_name);
+      AsanPrintf("malloc_zone_from_ptr(%p) = %p, which is %s\n",
+                 ptr, orig_zone, orig_zone->zone_name);
     } else {
-      Printf("malloc_zone_from_ptr(%p) = %p, which doesn't have a name\n",
-             ptr, orig_zone);
+      AsanPrintf("malloc_zone_from_ptr(%p) = %p, which doesn't have a name\n",
+                 ptr, orig_zone);
     }
   } else {
-    Printf("malloc_zone_from_ptr(%p) = 0\n", ptr);
+    AsanPrintf("malloc_zone_from_ptr(%p) = 0\n", ptr);
   }
 }
 
@@ -146,8 +146,9 @@ void mz_free(malloc_zone_t *zone, void *ptr) {
     asan_free(ptr, &stack);
   } else {
     // Let us just leak this memory for now.
-    Printf("mz_free(%p) -- attempting to free unallocated memory.\n"
-           "AddressSanitizer is ignoring this error on Mac OS now.\n", ptr);
+    AsanPrintf("mz_free(%p) -- attempting to free unallocated memory.\n"
+               "AddressSanitizer is ignoring this error on Mac OS now.\n",
+               ptr);
     print_zone_for_ptr(ptr);
     GET_STACK_TRACE_HERE_FOR_FREE(ptr);
     stack.PrintStack();
@@ -170,8 +171,9 @@ void cf_free(void *ptr, void *info) {
     asan_free(ptr, &stack);
   } else {
     // Let us just leak this memory for now.
-    Printf("cf_free(%p) -- attempting to free unallocated memory.\n"
-           "AddressSanitizer is ignoring this error on Mac OS now.\n", ptr);
+    AsanPrintf("cf_free(%p) -- attempting to free unallocated memory.\n"
+               "AddressSanitizer is ignoring this error on Mac OS now.\n",
+               ptr);
     print_zone_for_ptr(ptr);
     GET_STACK_TRACE_HERE_FOR_FREE(ptr);
     stack.PrintStack();
@@ -191,8 +193,9 @@ void *mz_realloc(malloc_zone_t *zone, void *ptr, size_t size) {
       // We can't recover from reallocating an unknown address, because
       // this would require reading at most |size| bytes from
       // potentially unaccessible memory.
-      Printf("mz_realloc(%p) -- attempting to realloc unallocated memory.\n"
-             "This is an unrecoverable problem, exiting now.\n", ptr);
+      AsanPrintf("mz_realloc(%p) -- attempting to realloc unallocated memory.\n"
+                 "This is an unrecoverable problem, exiting now.\n",
+                 ptr);
       print_zone_for_ptr(ptr);
       GET_STACK_TRACE_HERE_FOR_FREE(ptr);
       stack.PrintStack();
@@ -214,8 +217,9 @@ void *cf_realloc(void *ptr, CFIndex size, CFOptionFlags hint, void *info) {
       // We can't recover from reallocating an unknown address, because
       // this would require reading at most |size| bytes from
       // potentially unaccessible memory.
-      Printf("cf_realloc(%p) -- attempting to realloc unallocated memory.\n"
-             "This is an unrecoverable problem, exiting now.\n", ptr);
+      AsanPrintf("cf_realloc(%p) -- attempting to realloc unallocated memory.\n"
+                 "This is an unrecoverable problem, exiting now.\n",
+                 ptr);
       print_zone_for_ptr(ptr);
       GET_STACK_TRACE_HERE_FOR_FREE(ptr);
       stack.PrintStack();
@@ -227,7 +231,7 @@ void *cf_realloc(void *ptr, CFIndex size, CFOptionFlags hint, void *info) {
 
 void mz_destroy(malloc_zone_t* zone) {
   // A no-op -- we will not be destroyed!
-  Printf("mz_destroy() called -- ignoring\n");
+  AsanPrintf("mz_destroy() called -- ignoring\n");
 }
   // from AvailabilityMacros.h
 #if defined(MAC_OS_X_VERSION_10_6) && \

@@ -679,7 +679,7 @@ TSAN_INTERCEPTOR(int, pthread_create,
   // We place the huge ThreadState object into TLS, account for that.
   const uptr minstacksize = GetTlsSize() + 128*1024;
   if (stacksize < minstacksize) {
-    DPrintf("ThreadSanitizer: stacksize %lu->%lu\n", stacksize, minstacksize);
+    DPrintf("ThreadSanitizer: stacksize %zu->%zu\n", stacksize, minstacksize);
     pthread_attr_setstacksize(attr, minstacksize);
   }
   ThreadParam p;

@@ -70,10 +70,10 @@ static void PrintMop(const ReportMop *mop, bool first) {
 
 static void PrintLocation(const ReportLocation *loc) {
   if (loc->type == ReportLocationGlobal) {
-    TsanPrintf("  Location is global '%s' of size %lu at %lx %s:%d\n",
+    TsanPrintf("  Location is global '%s' of size %zu at %zx %s:%d\n",
                loc->name, loc->size, loc->addr, loc->file, loc->line);
   } else if (loc->type == ReportLocationHeap) {
-    TsanPrintf("  Location is heap of size %lu at %lx allocated "
+    TsanPrintf("  Location is heap of size %zu at %zx allocated "
                "by thread %d:\n", loc->size, loc->addr, loc->tid);
     PrintStack(loc->stack);
   } else if (loc->type == ReportLocationStack) {

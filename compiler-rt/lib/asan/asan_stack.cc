@@ -33,7 +33,7 @@ void AsanStackTrace::PrintStack(uptr *addr, uptr size) {
     uptr pc = addr[i];
     char buff[4096];
     ASAN_USE_EXTERNAL_SYMBOLIZER((void*)pc, buff, sizeof(buff));
-    Printf("  #%zu 0x%zx %s\n", i, pc, buff);
+    AsanPrintf("  #%zu 0x%zx %s\n", i, pc, buff);
   }
 }
 
@@ -51,19 +51,19 @@ void AsanStackTrace::PrintStack(uptr *addr, uptr size) {
       for (AddressInfoList *entry = address_info_list; entry;
            entry = entry->next) {
         AddressInfo info = entry->info;
-        Printf("    #%zu 0x%zx %s:%d:%d\n", frame_num, pc,
-                                            (info.file) ? info.file : "",
-                                            info.line, info.column);
+        AsanPrintf("    #%zu 0x%zx %s:%d:%d\n", frame_num, pc,
+                                                (info.file) ? info.file : "",
+                                                info.line, info.column);
         frame_num++;
       }
       address_info_list->Clear();
     } else {
       if (proc_maps.GetObjectNameAndOffset(pc, &offset,
                                            filename, sizeof(filename))) {
-        Printf("    #%zu 0x%zx (%s+0x%zx)\n", frame_num, pc, filename,
-                                              offset);
+        AsanPrintf("    #%zu 0x%zx (%s+0x%zx)\n", frame_num, pc, filename,
+                                                  offset);
       } else {
-        Printf("    #%zu 0x%zx\n", frame_num, pc);
+        AsanPrintf("    #%zu 0x%zx\n", frame_num, pc);
       }
       frame_num++;
     }

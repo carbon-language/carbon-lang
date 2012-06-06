@@ -40,7 +40,7 @@ void *user_alloc(ThreadState *thr, uptr pc, uptr sz) {
   if (CTX() && CTX()->initialized) {
     MemoryResetRange(thr, pc, (uptr)p, sz);
   }
-  DPrintf("#%d: alloc(%lu) = %p\n", thr->tid, sz, p);
+  DPrintf("#%d: alloc(%zu) = %p\n", thr->tid, sz, p);
   SignalUnsafeCall(thr, pc);
   return p;
 }
@@ -92,7 +92,7 @@ MBlock *user_mblock(ThreadState *thr, void *p) {
   MBlock *b = (MBlock*)AllocBlock(p);
   // FIXME: Output a warning, it's a user error.
   if (p < (char*)(b + 1) || p > (char*)(b + 1) + b->size) {
-    TsanPrintf("user_mblock p=%p b=%p size=%lu beg=%p end=%p\n",
+    TsanPrintf("user_mblock p=%p b=%p size=%zu beg=%p end=%p\n",
         p, b, b->size, (char*)(b + 1), (char*)(b + 1) + b->size);
     CHECK_GE(p, (char*)(b + 1));
     CHECK_LE(p, (char*)(b + 1) + b->size);

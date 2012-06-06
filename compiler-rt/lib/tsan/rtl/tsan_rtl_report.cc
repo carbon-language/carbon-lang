@@ -68,7 +68,7 @@ static void StackStripMain(ReportStack *stack) {
     // can actually happen if we do not instrument some code,
     // so it's only a DCHECK. However we must try hard to not miss it
     // due to our fault.
-    TsanPrintf("Bottom stack frame of stack %lx is missed\n", stack->pc);
+    TsanPrintf("Bottom stack frame of stack %zx is missed\n", stack->pc);
   }
 }
 
@@ -189,19 +189,19 @@ static void RestoreStack(int tid, const u64 epoch, StackTrace *stk) {
     return;
   const u64 eend = epoch % kTraceSize;
   const u64 ebegin = eend / kTracePartSize * kTracePartSize;
-  DPrintf("#%d: RestoreStack epoch=%llu ebegin=%llu eend=%llu partidx=%d\n",
-      tid, epoch, ebegin, eend, partidx);
+  DPrintf("#%d: RestoreStack epoch=%zu ebegin=%zu eend=%zu partidx=%d\n",
+          tid, (uptr)epoch, (uptr)ebegin, (uptr)eend, partidx);
   InternalScopedBuf<uptr> stack(1024);  // FIXME: de-hardcode 1024
   for (uptr i = 0; i < hdr->stack0.Size(); i++) {
     stack[i] = hdr->stack0.Get(i);
-    DPrintf2("  #%02lu: pc=%lx\n", i, stack[i]);
+    DPrintf2("  #%02lu: pc=%zx\n", i, stack[i]);
   }
   uptr pos = hdr->stack0.Size();
   for (uptr i = ebegin; i <= eend; i++) {
     Event ev = trace->events[i];
     EventType typ = (EventType)(ev >> 61);
     uptr pc = (uptr)(ev & 0xffffffffffffull);
-    DPrintf2("  %lu typ=%d pc=%lx\n", i, typ, pc);
+    DPrintf2("  %zu typ=%d pc=%zx\n", i, typ, pc);
     if (typ == EventTypeMop) {
       stack[pos] = pc;
     } else if (typ == EventTypeFuncEnter) {
@@ -213,7 +213,7 @@ static void RestoreStack(int tid, const u64 epoch, StackTrace *stk) {
         pos--;
     }
     for (uptr j = 0; j <= pos; j++)
-      DPrintf2("      #%lu: %lx\n", j, stack[j]);
+      DPrintf2("      #%zu: %zx\n", j, stack[j]);
   }
   if (pos == 0 && stack[0] == 0)
     return;
@@ -349,8 +349,8 @@ void ReportRace(ThreadState *thr) {
 
 void CheckFailed(const char *file, int line, const char *cond, u64 v1, u64 v2) {
   ScopedInRtl in_rtl;
-  TsanPrintf("FATAL: ThreadSanitizer CHECK failed: %s:%d \"%s\" (%llx, %llx)\n",
-         file, line, cond, v1, v2);
+  TsanPrintf("FATAL: ThreadSanitizer CHECK failed: %s:%d \"%s\" (%zx, %zx)\n",
+             file, line, cond, (uptr)v1, (uptr)v2);
   Die();
 }
 

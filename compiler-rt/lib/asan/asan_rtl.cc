@@ -95,11 +95,11 @@ void ShowStatsAndAbort() {
 static void PrintBytes(const char *before, uptr *a) {
   u8 *bytes = (u8*)a;
   uptr byte_num = (__WORDSIZE) / 8;
-  Printf("%s%p:", before, (void*)a);
+  AsanPrintf("%s%p:", before, (void*)a);
   for (uptr i = 0; i < byte_num; i++) {
-    Printf(" %x%x", bytes[i] >> 4, bytes[i] & 15);
+    AsanPrintf(" %x%x", bytes[i] >> 4, bytes[i] & 15);
   }
-  Printf("\n");
+  AsanPrintf("\n");
 }
 
 uptr ReadFileToBuffer(const char *file_name, char **buff,
@@ -133,11 +133,23 @@ uptr ReadFileToBuffer(const char *file_name, char **buff,
   return read_len;
 }
 
+void AppendToErrorMessageBuffer(const char *buffer) {
+  if (error_message_buffer) {
+    uptr length = (uptr)internal_strlen(buffer);
+    int remaining = error_message_buffer_size - error_message_buffer_pos;
+    internal_strncpy(error_message_buffer + error_message_buffer_pos,
+                     buffer, remaining);
+    error_message_buffer[error_message_buffer_size - 1] = '\0';
+    // FIXME: reallocate the buffer instead of truncating the message.
+    error_message_buffer_pos += remaining > length ? length : remaining;
+  }
+}
+
 // ---------------------- mmap -------------------- {{{1
 void OutOfMemoryMessageAndDie(const char *mem_type, uptr size) {
-  Report("ERROR: AddressSanitizer failed to allocate "
-         "0x%zx (%zd) bytes of %s\n",
-         size, size, mem_type);
+  AsanReport("ERROR: AddressSanitizer failed to allocate "
+             "0x%zx (%zd) bytes of %s\n",
+             size, size, mem_type);
   PRINT_CURRENT_STACK();
   ShowStatsAndAbort();
 }
@@ -187,14 +199,14 @@ static bool DescribeStackAddress(uptr addr, uptr access_size) {
   internal_strncat(buf, frame_descr,
                    Min(kBufSize,
                        static_cast<sptr>(name_end - frame_descr)));
-  Printf("Address %p is located at offset %zu "
-         "in frame <%s> of T%d's stack:\n",
-         (void*)addr, offset, buf, t->tid());
+  AsanPrintf("Address %p is located at offset %zu "
+             "in frame <%s> of T%d's stack:\n",
+             (void*)addr, offset, buf, t->tid());
   // Report the number of stack objects.
   char *p;
   uptr n_objects = internal_simple_strtoll(name_end, &p, 10);
   CHECK(n_objects > 0);
-  Printf("  This frame has %zu object(s):\n", n_objects);
+  AsanPrintf("  This frame has %zu object(s):\n", n_objects);
   // Report all objects in this frame.
   for (uptr i = 0; i < n_objects; i++) {
     uptr beg, size;
@@ -203,19 +215,19 @@ static bool DescribeStackAddress(uptr addr, uptr access_size) {
     size = internal_simple_strtoll(p, &p, 10);
     len  = internal_simple_strtoll(p, &p, 10);
     if (beg <= 0 || size <= 0 || len < 0 || *p != ' ') {
-      Printf("AddressSanitizer can't parse the stack frame descriptor: |%s|\n",
-             frame_descr);
+      AsanPrintf("AddressSanitizer can't parse the stack frame "
+                 "descriptor: |%s|\n", frame_descr);
       break;
     }
     p++;
     buf[0] = 0;
     internal_strncat(buf, p, Min(kBufSize, len));
     p += len;
-    Printf("    [%zu, %zu) '%s'\n", beg, beg + size, buf);
+    AsanPrintf("    [%zu, %zu) '%s'\n", beg, beg + size, buf);
   }
-  Printf("HINT: this may be a false positive if your program uses "
-         "some custom stack unwind mechanism\n"
-         "      (longjmp and C++ exceptions *are* supported)\n");
+  AsanPrintf("HINT: this may be a false positive if your program uses "
+             "some custom stack unwind mechanism\n"
+             "      (longjmp and C++ exceptions *are* supported)\n");
   t->summary()->Announce();
   return true;
 }
@@ -320,7 +332,7 @@ static void BoolFlagValue(const char *flags, const char *flag,
 }
 
 static void asan_atexit() {
-  Printf("AddressSanitizer exit stats:\n");
+  AsanPrintf("AddressSanitizer exit stats:\n");
   __asan_print_accumulated_stats();
 }
 
@@ -370,7 +382,8 @@ void __asan_report_error(uptr pc, uptr bp, uptr sp,
   static int num_calls = 0;
   if (AtomicInc(&num_calls) > 1) return;
 
-  Printf("=================================================================\n");
+  AsanPrintf("===================================================="
+             "=============\n");
   const char *bug_descr = "unknown-crash";
   if (AddrIsInMem(addr)) {
     u8 *shadow_addr = (u8*)MemToShadow(addr);
@@ -417,13 +430,13 @@ void __asan_report_error(uptr pc, uptr bp, uptr sp,
     curr_thread->fake_stack().StopUsingFakeStack();
   }
 
-  Report("ERROR: AddressSanitizer %s on address "
-         "%p at pc 0x%zx bp 0x%zx sp 0x%zx\n",
-         bug_descr, (void*)addr, pc, bp, sp);
+  AsanReport("ERROR: AddressSanitizer %s on address "
+             "%p at pc 0x%zx bp 0x%zx sp 0x%zx\n",
+             bug_descr, (void*)addr, pc, bp, sp);
 
-  Printf("%s of size %zu at %p thread T%d\n",
-         access_size ? (is_write ? "WRITE" : "READ") : "ACCESS",
-         access_size, (void*)addr, curr_tid);
+  AsanPrintf("%s of size %zu at %p thread T%d\n",
+             access_size ? (is_write ? "WRITE" : "READ") : "ACCESS",
+             access_size, (void*)addr, curr_tid);
 
   if (FLAG_debug) {
     PrintBytes("PC: ", (uptr*)pc);
@@ -437,13 +450,13 @@ void __asan_report_error(uptr pc, uptr bp, uptr sp,
   DescribeAddress(addr, access_size);
 
   uptr shadow_addr = MemToShadow(addr);
-  Report("ABORTING\n");
+  AsanReport("ABORTING\n");
   __asan_print_accumulated_stats();
-  Printf("Shadow byte and word:\n");
-  Printf("  %p: %x\n", (void*)shadow_addr, *(unsigned char*)shadow_addr);
+  AsanPrintf("Shadow byte and word:\n");
+  AsanPrintf("  %p: %x\n", (void*)shadow_addr, *(unsigned char*)shadow_addr);
   uptr aligned_shadow = shadow_addr & ~(kWordSize - 1);
   PrintBytes("  ", (uptr*)(aligned_shadow));
-  Printf("More shadow bytes:\n");
+  AsanPrintf("More shadow bytes:\n");
   PrintBytes("  ", (uptr*)(aligned_shadow-4*kWordSize));
   PrintBytes("  ", (uptr*)(aligned_shadow-3*kWordSize));
   PrintBytes("  ", (uptr*)(aligned_shadow-2*kWordSize));
