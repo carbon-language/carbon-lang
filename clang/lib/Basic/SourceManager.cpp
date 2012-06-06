@@ -407,6 +407,7 @@ SourceManager::~SourceManager() {
 
 void SourceManager::clearIDTables() {
   MainFileID = FileID();
+  PredefinesFileID = FileID();
   LocalSLocEntryTable.clear();
   LoadedSLocEntryTable.clear();
   SLocEntryLoaded.clear();

@@ -439,10 +439,6 @@ void Parser::Initialize() {
   // Prime the lexer look-ahead.
   ConsumeToken();
 
-  if (Tok.is(tok::eof) &&
-      !getLangOpts().CPlusPlus)  // Empty source file is an extension in C
-    Diag(Tok, diag::ext_empty_source_file);
-
   // Initialization for Objective-C context sensitive keywords recognition.
   // Referenced in Parser::ParseObjCTypeQualifierList.
   if (getLangOpts().ObjC1) {

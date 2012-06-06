@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -verify -pedantic -fsyntax-only
+// RUN: %clang_cc1 %s -verify -pedantic -Wno-empty-translation-unit -fsyntax-only
 
 #pragma OPENCL EXTENSION cl_khr_fp16 : enable
 

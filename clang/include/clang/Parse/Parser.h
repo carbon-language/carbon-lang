@@ -730,6 +730,9 @@ private:
 public:
   DiagnosticBuilder Diag(SourceLocation Loc, unsigned DiagID);
   DiagnosticBuilder Diag(const Token &Tok, unsigned DiagID);
+  DiagnosticBuilder Diag(unsigned DiagID) {
+    return Diag(Tok, DiagID);
+  }
 
 private:
   void SuggestParentheses(SourceLocation Loc, unsigned DK,
