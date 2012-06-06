@@ -28,6 +28,7 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/DenseSet.h"
+#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/Statistic.h"
@@ -62,7 +63,7 @@ namespace {
     const TargetRegisterInfo *TRI;
     MachineModuleInfo *MMI;
     MachineRegisterInfo *MRI;
-    RegScavenger *RS;
+    OwningPtr<RegScavenger> RS;
     bool PreRegAlloc;
 
     // SSAUpdateVRs - A list of virtual registers for which to update SSA form.
@@ -132,9 +133,9 @@ bool TailDuplicatePass::runOnMachineFunction(MachineFunction &MF) {
   MRI = &MF.getRegInfo();
   MMI = getAnalysisIfAvailable<MachineModuleInfo>();
   PreRegAlloc = MRI->isSSA();
-  RS = NULL;
+  RS.reset();
   if (MRI->tracksLiveness() && TRI->trackLivenessAfterRegAlloc(MF))
-    RS = new RegScavenger();
+    RS.reset(new RegScavenger());
 
   bool MadeChange = false;
   while (TailDuplicateBlocks(MF))
