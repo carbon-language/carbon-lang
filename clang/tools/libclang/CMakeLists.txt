@@ -76,13 +76,6 @@ if( LLVM_ENABLE_PIC )
       INSTALL_NAME_DIR "@executable_path/../lib")
   endif()
 
-  if(MSVC)
-    # windows.h doesn't compile with /Za
-    get_target_property(NON_ANSI_COMPILE_FLAGS libclang COMPILE_FLAGS)
-    string(REPLACE "/Za" "" NON_ANSI_COMPILE_FLAGS ${NON_ANSI_COMPILE_FLAGS})
-    set_target_properties(libclang PROPERTIES
-      COMPILE_FLAGS ${NON_ANSI_COMPILE_FLAGS})
-  endif()
 
   set(LIBCLANG_STATIC_TARGET_NAME libclang_static)
 else()
