@@ -150,19 +150,19 @@ static u8 *MmapNewPagesAndPoisonShadow(uptr size) {
 //
 // The magic numbers for the enum values are taken randomly.
 enum {
-  CHUNK_AVAILABLE  = 0x573B,
-  CHUNK_ALLOCATED  = 0x3204,
-  CHUNK_QUARANTINE = 0x1978,
-  CHUNK_MEMALIGN   = 0xDC68,
+  CHUNK_AVAILABLE  = 0x57,
+  CHUNK_ALLOCATED  = 0x32,
+  CHUNK_QUARANTINE = 0x19,
+  CHUNK_MEMALIGN   = 0xDC,
 };
 
 struct ChunkBase {
-  u16   chunk_state;
-  u8    size_class;
-  u32   offset;  // User-visible memory starts at this+offset (beg()).
-  s32    alloc_tid;
-  s32    free_tid;
-  uptr     used_size;  // Size requested by the user.
+  u8   chunk_state;
+  u8   size_class;
+  u32  offset;  // User-visible memory starts at this+offset (beg()).
+  s32  alloc_tid;
+  s32  free_tid;
+  uptr used_size;  // Size requested by the user.
   AsanChunk *next;
 
   uptr   beg() { return (uptr)this + offset; }
@@ -708,7 +708,7 @@ static void Deallocate(u8 *ptr, AsanStackTrace *stack) {
   AsanChunk *m = PtrToChunk((uptr)ptr);
 
   // Flip the state atomically to avoid race on double-free.
-  u16 old_chunk_state = AtomicExchange(&m->chunk_state, CHUNK_QUARANTINE);
+  u8 old_chunk_state = AtomicExchange(&m->chunk_state, CHUNK_QUARANTINE);
 
   if (old_chunk_state == CHUNK_QUARANTINE) {
     AsanReport("ERROR: AddressSanitizer attempting double-free on %p:\n", ptr);

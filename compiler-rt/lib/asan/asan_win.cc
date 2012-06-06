@@ -219,6 +219,13 @@ u16 AtomicExchange(u16 *a, u16 new_val) {
   return new_val;
 }
 
+u16 AtomicExchange(u16 *a, u16 new_val) {
+  // FIXME: can we do this with a proper xchg intrinsic?
+  u8 t = *a;
+  *a = new_val;
+  return t;
+}
+
 const char* AsanGetEnv(const char* name) {
   static char env_buffer[32767] = {};
 

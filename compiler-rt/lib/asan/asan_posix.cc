@@ -186,6 +186,10 @@ u16 AtomicExchange(u16 *a, u16 new_val) {
   return __sync_lock_test_and_set(a, new_val);
 }
 
+u8 AtomicExchange(u8 *a, u8 new_val) {
+  return __sync_lock_test_and_set(a, new_val);
+}
+
 void SortArray(uptr *array, uptr size) {
   std::sort(array, array + size);
 }
