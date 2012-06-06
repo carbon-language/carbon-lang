@@ -109,13 +109,11 @@ private:
 };
 
 class BlockObjCVarRewriter : public RecursiveASTVisitor<BlockObjCVarRewriter> {
-  MigrationPass &Pass;
   llvm::DenseSet<VarDecl *> &VarsToChange;
 
 public:
-  BlockObjCVarRewriter(MigrationPass &pass,
-                       llvm::DenseSet<VarDecl *> &VarsToChange)
-    : Pass(pass), VarsToChange(VarsToChange) { }
+  BlockObjCVarRewriter(llvm::DenseSet<VarDecl *> &VarsToChange)
+    : VarsToChange(VarsToChange) { }
 
   bool TraverseBlockDecl(BlockDecl *block) {
     RootBlockObjCVarRewriter(VarsToChange).TraverseDecl(block);
@@ -129,7 +127,7 @@ void BlockObjCVariableTraverser::traverseBody(BodyContext &BodyCtx) {
   MigrationPass &Pass = BodyCtx.getMigrationContext().Pass;
   llvm::DenseSet<VarDecl *> VarsToChange;
 
-  BlockObjCVarRewriter trans(Pass, VarsToChange);
+  BlockObjCVarRewriter trans(VarsToChange);
   trans.TraverseStmt(BodyCtx.getTopStmt());
 
   for (llvm::DenseSet<VarDecl *>::iterator
