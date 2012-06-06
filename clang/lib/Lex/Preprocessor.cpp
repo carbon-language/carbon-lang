@@ -86,6 +86,7 @@ Preprocessor::Preprocessor(DiagnosticsEngine &diags, LangOptions &opts,
   
   // Macro expansion is enabled.
   DisableMacroExpansion = false;
+  MacroExpansionInDirectivesOverride = false;
   InMacroArgs = false;
   InMacroArgPreExpansion = false;
   NumCachedTokenLexers = 0;

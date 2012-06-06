@@ -445,6 +445,7 @@ static const char *getActionName(frontend::ActionKind Kind) {
   case frontend::PrintPreamble:          return "-print-preamble";
   case frontend::PrintPreprocessedInput: return "-E";
   case frontend::RewriteMacros:          return "-rewrite-macros";
+  case frontend::RewriteIncludes:        return "-rewrite-includes";
   case frontend::RewriteObjC:            return "-rewrite-objc";
   case frontend::RewriteTest:            return "-rewrite-test";
   case frontend::RunAnalysis:            return "-analyze";
@@ -1435,6 +1436,8 @@ static InputKind ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args,
       Opts.ProgramAction = frontend::PrintPreprocessedInput; break;
     case OPT_rewrite_macros:
       Opts.ProgramAction = frontend::RewriteMacros; break;
+    case OPT_rewrite_includes:
+      Opts.ProgramAction = frontend::RewriteIncludes; break;
     case OPT_rewrite_objc:
       Opts.ProgramAction = frontend::RewriteObjC; break;
     case OPT_rewrite_test:

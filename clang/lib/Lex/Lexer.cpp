@@ -2022,7 +2022,7 @@ bool Lexer::SaveBCPLComment(Token &Result, const char *CurPtr) {
   // directly.
   FormTokenWithChars(Result, CurPtr, tok::comment);
 
-  if (!ParsingPreprocessorDirective)
+  if (!ParsingPreprocessorDirective || LexingRawMode)
     return true;
 
   // If this BCPL-style comment is in a macro definition, transmogrify it into
@@ -2626,7 +2626,8 @@ LexNextToken:
       ParsingPreprocessorDirective = false;
 
       // Restore comment saving mode, in case it was disabled for directive.
-      SetCommentRetentionState(PP->getCommentRetentionState());
+      if (!LexingRawMode)
+        SetCommentRetentionState(PP->getCommentRetentionState());
 
       // Since we consumed a newline, we are back at the start of a line.
       IsAtStartOfLine = true;

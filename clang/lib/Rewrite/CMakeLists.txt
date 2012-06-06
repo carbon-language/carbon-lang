@@ -6,6 +6,7 @@ add_clang_library(clangRewrite
   FrontendActions.cpp
   HTMLPrint.cpp
   HTMLRewrite.cpp
+  InclusionRewriter.cpp
   RewriteMacros.cpp
   RewriteModernObjC.cpp
   RewriteObjC.cpp

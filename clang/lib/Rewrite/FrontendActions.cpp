@@ -181,3 +181,12 @@ void RewriteTestAction::ExecuteAction() {
 
   DoRewriteTest(CI.getPreprocessor(), OS);
 }
+
+void RewriteIncludesAction::ExecuteAction() {
+  CompilerInstance &CI = getCompilerInstance();
+  raw_ostream *OS = CI.createDefaultOutputFile(true, getCurrentFile());
+  if (!OS) return;
+
+  RewriteIncludesInInput(CI.getPreprocessor(), OS,
+                         CI.getPreprocessorOutputOpts());
+}

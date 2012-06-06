@@ -73,6 +73,11 @@ protected:
   void ExecuteAction();
 };
 
+class RewriteIncludesAction : public PreprocessorFrontendAction {
+protected:
+  void ExecuteAction();
+};
+
 }  // end namespace clang
 
 #endif

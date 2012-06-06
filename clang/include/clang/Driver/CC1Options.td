@@ -332,6 +332,8 @@ def rewrite_test : Flag<"-rewrite-test">,
   HelpText<"Rewriter playground">;
 def rewrite_macros : Flag<"-rewrite-macros">,
   HelpText<"Expand macros without full preprocessing">;
+def rewrite_includes : Flag<"-rewrite-includes">,
+  HelpText<"Expand includes without full preprocessing">;
 def migrate : Flag<"-migrate">,
   HelpText<"Migrate source code">;
 }

@@ -553,6 +553,21 @@ const FileEntry *Preprocessor::LookupFile(
 // Preprocessor Directive Handling.
 //===----------------------------------------------------------------------===//
 
+class Preprocessor::ResetMacroExpansionHelper {
+public:
+  ResetMacroExpansionHelper(Preprocessor *pp)
+    : PP(pp), save(pp->DisableMacroExpansion) {
+    if (pp->MacroExpansionInDirectivesOverride)
+      pp->DisableMacroExpansion = false;
+  }
+  ~ResetMacroExpansionHelper() {
+    PP->DisableMacroExpansion = save;
+  }
+private:
+  Preprocessor *PP;
+  bool save;
+};
+
 /// HandleDirective - This callback is invoked when the lexer sees a # token
 /// at the start of a line.  This consumes the directive, modifies the
 /// lexer/preprocessor state, and advances the lexer(s) so that the next token
@@ -603,6 +618,10 @@ void Preprocessor::HandleDirective(Token &Result) {
     }
     Diag(Result, diag::ext_embedded_directive);
   }
+
+  // Temporarily enable macro expansion if set so
+  // and reset to previous state when returning from this function.
+  ResetMacroExpansionHelper helper(this);
 
 TryAgain:
   switch (Result.getKind()) {

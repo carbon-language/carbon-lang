@@ -18,12 +18,17 @@
 
 namespace clang {
 class Preprocessor;
+class PreprocessorOutputOptions;
 
 /// RewriteMacrosInInput - Implement -rewrite-macros mode.
 void RewriteMacrosInInput(Preprocessor &PP, raw_ostream *OS);
 
 /// DoRewriteTest - A simple test for the TokenRewriter class.
 void DoRewriteTest(Preprocessor &PP, raw_ostream *OS);
+
+/// RewriteIncludesInInput - Implement -rewrite-includes mode.
+void RewriteIncludesInInput(Preprocessor &PP, raw_ostream *OS,
+                            const PreprocessorOutputOptions &Opts);
 
 }  // end namespace clang
 
