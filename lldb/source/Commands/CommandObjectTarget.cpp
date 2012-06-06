@@ -1628,8 +1628,58 @@ LookupTypeInModule (CommandInterpreter &interpreter,
 }
 
 static uint32_t
+LookupTypeHere (CommandInterpreter &interpreter,
+                Stream &strm,
+                const SymbolContext &sym_ctx,
+                const char *name_cstr, 
+                bool name_is_regex)
+{
+    if (!sym_ctx.module_sp)
+        return 0;
+    
+    TypeList type_list;
+    const uint32_t max_num_matches = UINT32_MAX;
+    uint32_t num_matches = 1;
+    bool name_is_fully_qualified = false;
+    
+    ConstString name(name_cstr);
+    num_matches = sym_ctx.module_sp->FindTypes(sym_ctx, name, name_is_fully_qualified, max_num_matches, type_list);
+    
+    if (num_matches)
+    {
+        strm.Indent ();
+        strm.PutCString("Best match found in ");
+        DumpFullpath (strm, &sym_ctx.module_sp->GetFileSpec(), 0);
+        strm.PutCString(":\n");
+        
+        TypeSP type_sp (type_list.GetTypeAtIndex(0));
+        if (type_sp)
+        {
+            // Resolve the clang type so that any forward references
+            // to types that haven't yet been parsed will get parsed.
+            type_sp->GetClangFullType ();
+            type_sp->GetDescription (&strm, eDescriptionLevelFull, true);
+            // Print all typedef chains
+            TypeSP typedef_type_sp (type_sp);
+            TypeSP typedefed_type_sp (typedef_type_sp->GetTypedefType());
+            while (typedefed_type_sp)
+            {
+                strm.EOL();
+                strm.Printf("     typedef '%s': ", typedef_type_sp->GetName().GetCString());
+                typedefed_type_sp->GetClangFullType ();
+                typedefed_type_sp->GetDescription (&strm, eDescriptionLevelFull, true);
+                typedef_type_sp = typedefed_type_sp;
+                typedefed_type_sp = typedef_type_sp->GetTypedefType();
+            }
+        }
+        strm.EOL();
+    }
+    return num_matches;
+}
+
+static uint32_t
 LookupFileAndLineInModule (CommandInterpreter &interpreter, 
-                           Stream &strm, 
+                           Stream &strm,
                            Module *module, 
                            const FileSpec &file_spec, 
                            uint32_t line, 
@@ -3227,6 +3277,10 @@ public:
                 case 'v':
                     m_verbose = 1;
                     break;
+                
+                case 'A':
+                    m_print_all = true;
+                    break;
                     
                 case 'r':
                     m_use_regex = true;
@@ -3248,6 +3302,7 @@ public:
             m_use_regex = false;
             m_include_inlines = true;
             m_verbose = false;
+            m_print_all = false;
         }
         
         const OptionDefinition*
@@ -3268,6 +3323,7 @@ public:
         bool            m_use_regex;    // Name lookups in m_str are regular expressions.
         bool            m_include_inlines;// Check for inline entries when looking up by file/line.
         bool            m_verbose;      // Enable verbose lookup info
+        bool            m_print_all;    // Print all matches, even in cases where there's a best match.
         
     };
     
@@ -3303,6 +3359,56 @@ public:
         return &m_options;
     }
     
+    bool
+    LookupHere (CommandInterpreter &interpreter, CommandReturnObject &result, bool &syntax_error)
+    {
+        switch (m_options.m_type)
+        {
+            case eLookupTypeAddress:
+            case eLookupTypeFileLine:
+            case eLookupTypeFunction:
+            case eLookupTypeFunctionOrSymbol:
+            case eLookupTypeSymbol:
+            default:
+                return false;
+            case eLookupTypeType:
+                break;
+        }
+        
+        ExecutionContext exe_ctx = interpreter.GetDebugger().GetSelectedExecutionContext();
+        
+        StackFrameSP frame = exe_ctx.GetFrameSP();
+        
+        if (!frame)
+            return false;
+        
+        const SymbolContext &sym_ctx(frame->GetSymbolContext(eSymbolContextModule));
+        
+        if (!sym_ctx.module_sp)
+            return false;
+             
+        switch (m_options.m_type)
+        {
+        default:
+            return false;
+        case eLookupTypeType:
+            if (!m_options.m_str.empty())
+            {
+                if (LookupTypeHere (m_interpreter,
+                                    result.GetOutputStream(),
+                                    sym_ctx,
+                                    m_options.m_str.c_str(),
+                                    m_options.m_use_regex))
+                {
+                    result.SetStatus(eReturnStatusSuccessFinishResult);
+                    return true;
+                }
+            }
+            break;
+        }
+        
+        return true;
+    }
     
     bool
     LookupInModule (CommandInterpreter &interpreter, Module *module, CommandReturnObject &result, bool &syntax_error)
@@ -3428,7 +3534,24 @@ public:
             
             if (command.GetArgumentCount() == 0)
             {
-                // Dump all sections for all modules images
+                ModuleSP current_module;
+                
+                // Where it is possible to look in the current symbol context
+                // first, try that.  If this search was successful and --all
+                // was not passed, don't print anything else.
+                if (LookupHere (m_interpreter, result, syntax_error))
+                {
+                    result.GetOutputStream().EOL();
+                    num_successful_lookups++;
+                    if (!m_options.m_print_all)
+                    {
+                        result.SetStatus (eReturnStatusSuccessFinishResult);
+                        return result.Succeeded();
+                    }
+                }
+                
+                // Dump all sections for all other modules
+                
                 ModuleList &target_modules = target->GetImages();
                 Mutex::Locker modules_locker(target_modules.GetMutex());
                 const uint32_t num_modules = target_modules.GetSize();
@@ -3436,7 +3559,10 @@ public:
                 {
                     for (i = 0; i<num_modules && syntax_error == false; ++i)
                     {
-                        if (LookupInModule (m_interpreter, target_modules.GetModulePointerAtIndexUnlocked(i), result, syntax_error))
+                        Module *module_pointer = target_modules.GetModulePointerAtIndexUnlocked(i);
+                        
+                        if (module_pointer != current_module.get() &&
+                            LookupInModule (m_interpreter, target_modules.GetModulePointerAtIndexUnlocked(i), result, syntax_error))
                         {
                             result.GetOutputStream().EOL();
                             num_successful_lookups++;
@@ -3507,6 +3633,7 @@ CommandObjectTargetModulesLookup::CommandOptions::g_option_table[] =
     { LLDB_OPT_SET_5,   true,  "name",       'n', required_argument, NULL, 0, eArgTypeFunctionName, "Lookup a function or symbol by name in one or more target modules."},
     { LLDB_OPT_SET_6,   true,  "type",       't', required_argument, NULL, 0, eArgTypeName,         "Lookup a type by name in the debug symbols in one or more target modules."},
     { LLDB_OPT_SET_ALL, false, "verbose",    'v', no_argument,       NULL, 0, eArgTypeNone,         "Enable verbose lookup information."},
+    { LLDB_OPT_SET_ALL, false, "all",        'A', no_argument,       NULL, 0, eArgTypeNone,         "Print all matches, not just the best match, if a best match is available."},
     { 0,                false, NULL,           0, 0,                 NULL, 0, eArgTypeNone, NULL }
 };
 
