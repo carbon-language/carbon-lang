@@ -237,8 +237,6 @@ protected:
   
 public:
 
-  void dumpToStream(raw_ostream &os) const;
-
   static bool classof(const MemRegion *R) {
     Kind k = R->getKind();
     return k >= BEG_NON_STATIC_GLOBAL_MEMSPACES &&
@@ -308,6 +306,9 @@ class HeapSpaceRegion : public MemSpaceRegion {
   HeapSpaceRegion(MemRegionManager *mgr)
     : MemSpaceRegion(mgr, HeapSpaceRegionKind) {}
 public:
+
+  void dumpToStream(raw_ostream &os) const;
+
   static bool classof(const MemRegion *R) {
     return R->getKind() == HeapSpaceRegionKind;
   }
@@ -319,6 +320,9 @@ class UnknownSpaceRegion : public MemSpaceRegion {
   UnknownSpaceRegion(MemRegionManager *mgr)
     : MemSpaceRegion(mgr, UnknownSpaceRegionKind) {}
 public:
+
+  void dumpToStream(raw_ostream &os) const;
+
   static bool classof(const MemRegion *R) {
     return R->getKind() == UnknownSpaceRegionKind;
   }
@@ -352,6 +356,9 @@ class StackLocalsSpaceRegion : public StackSpaceRegion {
   StackLocalsSpaceRegion(MemRegionManager *mgr, const StackFrameContext *sfc)
     : StackSpaceRegion(mgr, StackLocalsSpaceRegionKind, sfc) {}
 public:
+
+  void dumpToStream(raw_ostream &os) const;
+
   static bool classof(const MemRegion *R) {
     return R->getKind() == StackLocalsSpaceRegionKind;
   }
@@ -364,6 +371,9 @@ private:
   StackArgumentsSpaceRegion(MemRegionManager *mgr, const StackFrameContext *sfc)
     : StackSpaceRegion(mgr, StackArgumentsSpaceRegionKind, sfc) {}
 public:
+
+  void dumpToStream(raw_ostream &os) const;
+
   static bool classof(const MemRegion *R) {
     return R->getKind() == StackArgumentsSpaceRegionKind;
   }

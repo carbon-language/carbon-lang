@@ -518,10 +518,6 @@ void StaticGlobalSpaceRegion::dumpToStream(raw_ostream &os) const {
   os << "StaticGlobalsMemSpace{" << CR << '}';
 }
 
-void NonStaticGlobalSpaceRegion::dumpToStream(raw_ostream &os) const {
-  os << "NonStaticGlobalSpaceRegion";
-}
-
 void GlobalInternalSpaceRegion::dumpToStream(raw_ostream &os) const {
   os << "GlobalInternalSpaceRegion";
 }
@@ -532,6 +528,22 @@ void GlobalSystemSpaceRegion::dumpToStream(raw_ostream &os) const {
 
 void GlobalImmutableSpaceRegion::dumpToStream(raw_ostream &os) const {
   os << "GlobalImmutableSpaceRegion";
+}
+
+void HeapSpaceRegion::dumpToStream(raw_ostream &os) const {
+  os << "HeapSpaceRegion";
+}
+
+void UnknownSpaceRegion::dumpToStream(raw_ostream &os) const {
+  os << "UnknownSpaceRegion";
+}
+
+void StackArgumentsSpaceRegion::dumpToStream(raw_ostream &os) const {
+  os << "StackArgumentsSpaceRegion";
+}
+
+void StackLocalsSpaceRegion::dumpToStream(raw_ostream &os) const {
+  os << "StackLocalsSpaceRegion";
 }
 
 void MemRegion::dumpPretty(raw_ostream &os) const {
