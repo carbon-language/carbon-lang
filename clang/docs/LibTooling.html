@@ -180,6 +180,30 @@ as first argument and some source files as further positional arguments:
 </pre>
 </p>
 
+<h3 id="linking">Linking.</h3>
+<p>Please note that this presents the linking requirements at the time of this
+writing. For the most up-to-date information, look at one of the tools'
+Makefiles (for example
+<a href="http://llvm.org/viewvc/llvm-project/cfe/trunk/tools/clang-check/Makefile?view=markup">clang-check/Makefile</a>).
+</p>
+
+<p>To link a binary using the tooling infrastructure, link in the following
+libraries:
+<ul>
+<li>Analysis</li>
+<li>AST</li>
+<li>Basic</li>
+<li>Driver</li>
+<li>Edit</li>
+<li>Frontend</li>
+<li>Lex</li>
+<li>Parse</li>
+<li>Sema</li>
+<li>Serialization</li>
+<li>Tooling</li>
+</ul>
+</p>
+
 </div>
 </body>
 </html>
