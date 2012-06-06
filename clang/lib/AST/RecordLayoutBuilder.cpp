@@ -161,10 +161,9 @@ void EmptySubobjectMap::ComputeEmptySubobjectSizes() {
   // Check the fields.
   for (CXXRecordDecl::field_iterator I = Class->field_begin(),
        E = Class->field_end(); I != E; ++I) {
-    const FieldDecl &FD = *I;
 
     const RecordType *RT =
-      Context.getBaseElementType(FD.getType())->getAs<RecordType>();
+      Context.getBaseElementType(I->getType())->getAs<RecordType>();
 
     // We only care about record types.
     if (!RT)
@@ -261,12 +260,11 @@ EmptySubobjectMap::CanPlaceBaseSubobjectAtOffset(const BaseSubobjectInfo *Info,
   unsigned FieldNo = 0;
   for (CXXRecordDecl::field_iterator I = Info->Class->field_begin(), 
        E = Info->Class->field_end(); I != E; ++I, ++FieldNo) {
-    const FieldDecl *FD = &*I;
-    if (FD->isBitField())
+    if (I->isBitField())
       continue;
   
     CharUnits FieldOffset = Offset + getFieldOffset(Layout, FieldNo);
-    if (!CanPlaceFieldSubobjectAtOffset(FD, FieldOffset))
+    if (!CanPlaceFieldSubobjectAtOffset(*I, FieldOffset))
       return false;
   }
   
@@ -310,12 +308,11 @@ void EmptySubobjectMap::UpdateEmptyBaseSubobjects(const BaseSubobjectInfo *Info,
   unsigned FieldNo = 0;
   for (CXXRecordDecl::field_iterator I = Info->Class->field_begin(), 
        E = Info->Class->field_end(); I != E; ++I, ++FieldNo) {
-    const FieldDecl *FD = &*I;
-    if (FD->isBitField())
+    if (I->isBitField())
       continue;
 
     CharUnits FieldOffset = Offset + getFieldOffset(Layout, FieldNo);
-    UpdateEmptyFieldSubobjects(FD, FieldOffset);
+    UpdateEmptyFieldSubobjects(*I, FieldOffset);
   }
 }
 
@@ -380,13 +377,12 @@ EmptySubobjectMap::CanPlaceFieldSubobjectAtOffset(const CXXRecordDecl *RD,
   unsigned FieldNo = 0;
   for (CXXRecordDecl::field_iterator I = RD->field_begin(), E = RD->field_end();
        I != E; ++I, ++FieldNo) {
-    const FieldDecl *FD = &*I;
-    if (FD->isBitField())
+    if (I->isBitField())
       continue;
 
     CharUnits FieldOffset = Offset + getFieldOffset(Layout, FieldNo);
     
-    if (!CanPlaceFieldSubobjectAtOffset(FD, FieldOffset))
+    if (!CanPlaceFieldSubobjectAtOffset(*I, FieldOffset))
       return false;
   }
 
@@ -491,13 +487,12 @@ void EmptySubobjectMap::UpdateEmptyFieldSubobjects(const CXXRecordDecl *RD,
   unsigned FieldNo = 0;
   for (CXXRecordDecl::field_iterator I = RD->field_begin(), E = RD->field_end();
        I != E; ++I, ++FieldNo) {
-    const FieldDecl *FD = &*I;
-    if (FD->isBitField())
+    if (I->isBitField())
       continue;
 
     CharUnits FieldOffset = Offset + getFieldOffset(Layout, FieldNo);
 
-    UpdateEmptyFieldSubobjects(FD, FieldOffset);
+    UpdateEmptyFieldSubobjects(*I, FieldOffset);
   }
 }
   
@@ -1730,7 +1725,7 @@ void RecordLayoutBuilder::LayoutFields(const RecordDecl *D) {
   for (RecordDecl::field_iterator Field = D->field_begin(),
        FieldEnd = D->field_end(); Field != FieldEnd; ++Field) {
     if (IsMsStruct) {
-      FieldDecl *FD = &*Field;
+      FieldDecl *FD = *Field;
       if (Context.ZeroBitfieldFollowsBitfield(FD, LastFD))
         ZeroLengthBitfield = FD;
       // Zero-length bitfields following non-bitfield members are
@@ -1825,11 +1820,10 @@ void RecordLayoutBuilder::LayoutFields(const RecordDecl *D) {
     }
     else if (!Context.getTargetInfo().useBitFieldTypeAlignment() &&
              Context.getTargetInfo().useZeroLengthBitfieldAlignment()) {             
-      FieldDecl *FD = &*Field;
-      if (FD->isBitField() && FD->getBitWidthValue(Context) == 0)
-        ZeroLengthBitfield = FD;
+      if (Field->isBitField() && Field->getBitWidthValue(Context) == 0)
+        ZeroLengthBitfield = *Field;
     }
-    LayoutField(&*Field);
+    LayoutField(*Field);
   }
   if (IsMsStruct && RemainingInAlignment &&
       LastFD && LastFD->isBitField() && LastFD->getBitWidthValue(Context)) {
@@ -2337,7 +2331,7 @@ RecordLayoutBuilder::ComputeKeyFunction(const CXXRecordDecl *RD) {
 
   for (CXXRecordDecl::method_iterator I = RD->method_begin(),
          E = RD->method_end(); I != E; ++I) {
-    const CXXMethodDecl *MD = &*I;
+    const CXXMethodDecl *MD = *I;
 
     if (!MD->isVirtual())
       continue;
@@ -2607,7 +2601,7 @@ static void DumpCXXRecordLayout(raw_ostream &OS,
   uint64_t FieldNo = 0;
   for (CXXRecordDecl::field_iterator I = RD->field_begin(),
          E = RD->field_end(); I != E; ++I, ++FieldNo) {
-    const FieldDecl &Field = *I;
+    const FieldDecl &Field = **I;
     CharUnits FieldOffset = Offset + 
       C.toCharUnitsFromBits(Layout.getFieldOffset(FieldNo));
 

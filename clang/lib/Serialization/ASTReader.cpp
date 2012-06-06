@@ -5055,7 +5055,7 @@ static void PassObjCImplDeclToConsumer(ObjCImplDecl *ImplD,
 
   for (ObjCImplDecl::method_iterator
          I = ImplD->meth_begin(), E = ImplD->meth_end(); I != E; ++I)
-    Consumer->HandleInterestingDecl(DeclGroupRef(&*I));
+    Consumer->HandleInterestingDecl(DeclGroupRef(*I));
 
   Consumer->HandleInterestingDecl(DeclGroupRef(ImplD));
 }

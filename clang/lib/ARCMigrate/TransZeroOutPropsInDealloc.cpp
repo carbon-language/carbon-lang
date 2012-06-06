@@ -114,7 +114,7 @@ public:
     // this class implementation.
     for (ObjCImplDecl::propimpl_iterator
            I = IMD->propimpl_begin(), EI = IMD->propimpl_end(); I != EI; ++I) {
-        ObjCPropertyImplDecl *PID = &*I;
+        ObjCPropertyImplDecl *PID = *I;
         if (PID->getPropertyImplementation() ==
             ObjCPropertyImplDecl::Synthesize) {
           ObjCPropertyDecl *PD = PID->getPropertyDecl();

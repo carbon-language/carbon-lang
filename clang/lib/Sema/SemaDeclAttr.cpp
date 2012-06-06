@@ -2835,7 +2835,7 @@ static void handleTransparentUnionAttr(Sema &S, Decl *D,
     return;
   }
 
-  FieldDecl *FirstField = &*Field;
+  FieldDecl *FirstField = *Field;
   QualType FirstType = FirstField->getType();
   if (FirstType->hasFloatingRepresentation() || FirstType->isVectorType()) {
     S.Diag(FirstField->getLocation(),

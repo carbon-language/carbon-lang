@@ -7443,7 +7443,7 @@ Decl *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, Decl *D) {
       if (EnumDecl *ED = dyn_cast<EnumDecl>(D)) {
         for (EnumDecl::enumerator_iterator EI = ED->enumerator_begin(),
                EE = ED->enumerator_end(); EI != EE; ++EI)
-          PushOnScopeChains(&*EI, FnBodyScope, /*AddToContext=*/false);
+          PushOnScopeChains(*EI, FnBodyScope, /*AddToContext=*/false);
       }
     }
   }
@@ -9271,7 +9271,7 @@ void Sema::DiagnoseNontrivial(const RecordType* T, CXXSpecialMember member) {
     if (RD->hasUserDeclaredConstructor()) {
       typedef CXXRecordDecl::ctor_iterator ctor_iter;
       for (ctor_iter CI = RD->ctor_begin(), CE = RD->ctor_end(); CI != CE; ++CI)
-        if (DiagnoseNontrivialUserProvidedCtor(*this, QT, &*CI, member))
+        if (DiagnoseNontrivialUserProvidedCtor(*this, QT, *CI, member))
           return;
 
       // No user-provided constructors; look for constructor templates.

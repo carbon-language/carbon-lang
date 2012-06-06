@@ -431,7 +431,7 @@ void CodeGenTypes::GetExpandedTypes(QualType type,
 
       for (RecordDecl::field_iterator i = RD->field_begin(), e = RD->field_end();
            i != e; ++i) {
-        const FieldDecl *FD = &*i;
+        const FieldDecl *FD = *i;
         assert(!FD->isBitField() &&
                "Cannot expand structure with bit-field members.");
         CharUnits FieldSize = getContext().getTypeSizeInChars(FD->getType());
@@ -445,10 +445,9 @@ void CodeGenTypes::GetExpandedTypes(QualType type,
     } else {
       for (RecordDecl::field_iterator i = RD->field_begin(), e = RD->field_end();
            i != e; ++i) {
-        const FieldDecl &FD = *i;
-        assert(!FD.isBitField() &&
+        assert(!i->isBitField() &&
                "Cannot expand structure with bit-field members.");
-        GetExpandedTypes(FD.getType(), expandedTypes);
+        GetExpandedTypes(i->getType(), expandedTypes);
       }
     }
   } else if (const ComplexType *CT = type->getAs<ComplexType>()) {
@@ -483,7 +482,7 @@ CodeGenFunction::ExpandTypeFromArgs(QualType Ty, LValue LV,
 
       for (RecordDecl::field_iterator i = RD->field_begin(), e = RD->field_end();
            i != e; ++i) {
-        const FieldDecl *FD = &*i;
+        const FieldDecl *FD = *i;
         assert(!FD->isBitField() &&
                "Cannot expand structure with bit-field members.");
         CharUnits FieldSize = getContext().getTypeSizeInChars(FD->getType());
@@ -500,7 +499,7 @@ CodeGenFunction::ExpandTypeFromArgs(QualType Ty, LValue LV,
     } else {
       for (RecordDecl::field_iterator i = RD->field_begin(), e = RD->field_end();
            i != e; ++i) {
-        FieldDecl *FD = &*i;
+        FieldDecl *FD = *i;
         QualType FT = FD->getType();
 
         // FIXME: What are the right qualifiers here?
@@ -1815,7 +1814,7 @@ void CodeGenFunction::ExpandTypeToArgs(QualType Ty, RValue RV,
 
       for (RecordDecl::field_iterator i = RD->field_begin(), e = RD->field_end();
            i != e; ++i) {
-        const FieldDecl *FD = &*i;
+        const FieldDecl *FD = *i;
         assert(!FD->isBitField() &&
                "Cannot expand structure with bit-field members.");
         CharUnits FieldSize = getContext().getTypeSizeInChars(FD->getType());
@@ -1831,7 +1830,7 @@ void CodeGenFunction::ExpandTypeToArgs(QualType Ty, RValue RV,
     } else {
       for (RecordDecl::field_iterator i = RD->field_begin(), e = RD->field_end();
            i != e; ++i) {
-        FieldDecl *FD = &*i;
+        FieldDecl *FD = *i;
 
         RValue FldRV = EmitRValueForField(LV, FD);
         ExpandTypeToArgs(FD->getType(), FldRV, Args, IRFuncTy);

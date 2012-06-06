@@ -4362,7 +4362,7 @@ bool Sema::RequireLiteralType(SourceLocation Loc, QualType T,
       if (!I->getType()->isLiteralType() ||
           I->getType().isVolatileQualified()) {
         Diag(I->getLocation(), diag::note_non_literal_field)
-          << RD << &*I << I->getType()
+          << RD << *I << I->getType()
           << I->getType().isVolatileQualified();
         return true;
       }

@@ -1032,17 +1032,14 @@ static const FieldDecl *FindFirstNamedDataMember(const RecordDecl *RD) {
   
   for (RecordDecl::field_iterator I = RD->field_begin(), E = RD->field_end();
        I != E; ++I) {
-    const FieldDecl *FD = &*I;
+    if (I->getIdentifier())
+      return *I;
     
-    if (FD->getIdentifier())
-      return FD;
-    
-    if (const RecordType *RT = FD->getType()->getAs<RecordType>()) {
+    if (const RecordType *RT = I->getType()->getAs<RecordType>())
       if (const FieldDecl *NamedDataMember = 
           FindFirstNamedDataMember(RT->getDecl()))
         return NamedDataMember;
     }
-  }
 
   // We didn't find a named data member.
   return 0;

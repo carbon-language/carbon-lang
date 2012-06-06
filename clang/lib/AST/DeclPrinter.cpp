@@ -913,7 +913,7 @@ void DeclPrinter::VisitObjCInterfaceDecl(ObjCInterfaceDecl *OID) {
     Indentation += Policy.Indentation;
     for (ObjCInterfaceDecl::ivar_iterator I = OID->ivar_begin(),
          E = OID->ivar_end(); I != E; ++I) {
-      Indent() << I->getType().getAsString(Policy) << ' ' << *I << ";\n";
+      Indent() << I->getType().getAsString(Policy) << ' ' << **I << ";\n";
     }
     Indentation -= Policy.Indentation;
     Out << "}\n";

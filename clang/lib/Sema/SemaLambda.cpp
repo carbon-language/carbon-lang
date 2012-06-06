@@ -444,7 +444,7 @@ void Sema::ActOnLambdaError(SourceLocation StartLoc, Scope *CurScope,
   SmallVector<Decl*, 4> Fields;
   for (RecordDecl::field_iterator i = Class->field_begin(),
                                   e = Class->field_end(); i != e; ++i)
-    Fields.push_back(&*i);
+    Fields.push_back(*i);
   ActOnFields(0, Class->getLocation(), Class, Fields, 
               SourceLocation(), SourceLocation(), 0);
   CheckCompletedCXXClass(Class);
@@ -690,7 +690,7 @@ ExprResult Sema::ActOnLambdaExpr(SourceLocation StartLoc, Stmt *Body,
     SmallVector<Decl*, 4> Fields;
     for (RecordDecl::field_iterator i = Class->field_begin(),
                                     e = Class->field_end(); i != e; ++i)
-    Fields.push_back(&*i);
+      Fields.push_back(*i);
     ActOnFields(0, Class->getLocation(), Class, Fields, 
                 SourceLocation(), SourceLocation(), 0);
     CheckCompletedCXXClass(Class);

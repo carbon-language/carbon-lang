@@ -2499,11 +2499,11 @@ unsigned FieldDecl::getFieldIndex() const {
 
     if (IsMsStruct) {
       // Zero-length bitfields following non-bitfield members are ignored.
-      if (getASTContext().ZeroBitfieldFollowsNonBitfield(&*I, LastFD)) {
+      if (getASTContext().ZeroBitfieldFollowsNonBitfield(*I, LastFD)) {
         --Index;
         continue;
       }
-      LastFD = &*I;
+      LastFD = *I;
     }
   }
 

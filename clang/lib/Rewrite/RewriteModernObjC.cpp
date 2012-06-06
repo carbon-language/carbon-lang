@@ -1077,7 +1077,7 @@ void RewriteModernObjC::RewriteCategoryDecl(ObjCCategoryDecl *CatDecl) {
   
   for (ObjCCategoryDecl::prop_iterator I = CatDecl->prop_begin(),
        E = CatDecl->prop_end(); I != E; ++I)
-    RewriteProperty(&*I);
+    RewriteProperty(*I);
   
   for (ObjCCategoryDecl::instmeth_iterator
          I = CatDecl->instmeth_begin(), E = CatDecl->instmeth_end();
@@ -1111,7 +1111,7 @@ void RewriteModernObjC::RewriteProtocolDecl(ObjCProtocolDecl *PDecl) {
 
   for (ObjCInterfaceDecl::prop_iterator I = PDecl->prop_begin(),
        E = PDecl->prop_end(); I != E; ++I)
-    RewriteProperty(&*I);
+    RewriteProperty(*I);
   
   // Lastly, comment out the @end.
   SourceLocation LocEnd = PDecl->getAtEndRange().getBegin();
@@ -1343,7 +1343,7 @@ void RewriteModernObjC::RewriteImplementationDecl(Decl *OID) {
        I = IMD ? IMD->propimpl_begin() : CID->propimpl_begin(),
        E = IMD ? IMD->propimpl_end() : CID->propimpl_end();
        I != E; ++I) {
-    RewritePropertyImplDecl(&*I, IMD, CID);
+    RewritePropertyImplDecl(*I, IMD, CID);
   }
 
   InsertText(IMD ? IMD->getLocEnd() : CID->getLocEnd(), "// ");
@@ -1371,7 +1371,7 @@ void RewriteModernObjC::RewriteInterfaceDecl(ObjCInterfaceDecl *ClassDecl) {
   
     for (ObjCInterfaceDecl::prop_iterator I = ClassDecl->prop_begin(),
          E = ClassDecl->prop_end(); I != E; ++I)
-      RewriteProperty(&*I);
+      RewriteProperty(*I);
     for (ObjCInterfaceDecl::instmeth_iterator
          I = ClassDecl->instmeth_begin(), E = ClassDecl->instmeth_end();
          I != E; ++I)
@@ -3636,7 +3636,7 @@ bool RewriteModernObjC::RewriteObjCFieldDeclType(QualType &Type,
       Result += " {\n";
       for (RecordDecl::field_iterator i = RD->field_begin(), 
            e = RD->field_end(); i != e; ++i) {
-        FieldDecl *FD = &*i;
+        FieldDecl *FD = *i;
         RewriteObjCFieldDecl(FD, Result);
       }
       Result += "\t} "; 
@@ -5549,7 +5549,7 @@ Stmt *RewriteModernObjC::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
 void RewriteModernObjC::RewriteRecordBody(RecordDecl *RD) {
   for (RecordDecl::field_iterator i = RD->field_begin(), 
                                   e = RD->field_end(); i != e; ++i) {
-    FieldDecl *FD = &*i;
+    FieldDecl *FD = *i;
     if (isTopLevelBlockPointerType(FD->getType()))
       RewriteBlockPointerDecl(FD);
     if (FD->getType()->isObjCQualifiedIdType() ||
@@ -6750,7 +6750,7 @@ void RewriteModernObjC::RewriteObjCProtocolMetaData(ObjCProtocolDecl *PDecl,
   std::vector<ObjCPropertyDecl *> ProtocolProperties;
   for (ObjCContainerDecl::prop_iterator I = PDecl->prop_begin(),
        E = PDecl->prop_end(); I != E; ++I)
-    ProtocolProperties.push_back(&*I);
+    ProtocolProperties.push_back(*I);
   
   Write_prop_list_t_initializer(*this, Context, Result, ProtocolProperties,
                                  /* Container */0,
@@ -6971,7 +6971,7 @@ void RewriteModernObjC::RewriteObjCClassMetaData(ObjCImplementationDecl *IDecl,
   std::vector<ObjCPropertyDecl *> ClassProperties;
   for (ObjCContainerDecl::prop_iterator I = CDecl->prop_begin(),
        E = CDecl->prop_end(); I != E; ++I)
-    ClassProperties.push_back(&*I);
+    ClassProperties.push_back(*I);
   
   Write_prop_list_t_initializer(*this, Context, Result, ClassProperties,
                                  /* Container */IDecl,
@@ -7233,7 +7233,7 @@ void RewriteModernObjC::RewriteObjCCategoryImplDecl(ObjCCategoryImplDecl *IDecl,
   std::vector<ObjCPropertyDecl *> ClassProperties;
   for (ObjCContainerDecl::prop_iterator I = CDecl->prop_begin(),
        E = CDecl->prop_end(); I != E; ++I)
-    ClassProperties.push_back(&*I);
+    ClassProperties.push_back(*I);
   
   Write_prop_list_t_initializer(*this, Context, Result, ClassProperties,
                                 /* Container */IDecl,

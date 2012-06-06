@@ -1823,10 +1823,10 @@ void CodeGenFunction::EmitLambdaExpr(const LambdaExpr *E, AggValueSlot Slot) {
        i != e; ++i, ++CurField) {
     // Emit initialization
     
-    LValue LV = EmitLValueForFieldInitialization(SlotLV, &*CurField);
+    LValue LV = EmitLValueForFieldInitialization(SlotLV, *CurField);
     ArrayRef<VarDecl *> ArrayIndexes;
     if (CurField->getType()->isArrayType())
       ArrayIndexes = E->getCaptureInitIndexVars(i);
-    EmitInitializerForField(&*CurField, LV, *i, ArrayIndexes);
+    EmitInitializerForField(*CurField, LV, *i, ArrayIndexes);
   }
 }

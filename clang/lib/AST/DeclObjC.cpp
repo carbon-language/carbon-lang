@@ -767,9 +767,9 @@ ObjCIvarDecl *ObjCInterfaceDecl::all_declared_ivar_begin() {
   ObjCIvarDecl *curIvar = 0;
   if (!ivar_empty()) {
     ObjCInterfaceDecl::ivar_iterator I = ivar_begin(), E = ivar_end();
-    data().IvarList = &*I; ++I;
-    for (curIvar = data().IvarList; I != E; curIvar = &*I, ++I)
-      curIvar->setNextIvar(&*I);
+    data().IvarList = *I; ++I;
+    for (curIvar = data().IvarList; I != E; curIvar = *I, ++I)
+      curIvar->setNextIvar(*I);
   }
   
   for (const ObjCCategoryDecl *CDecl = getFirstClassExtension(); CDecl;
@@ -778,11 +778,11 @@ ObjCIvarDecl *ObjCInterfaceDecl::all_declared_ivar_begin() {
       ObjCCategoryDecl::ivar_iterator I = CDecl->ivar_begin(),
                                           E = CDecl->ivar_end();
       if (!data().IvarList) {
-        data().IvarList = &*I; ++I;
+        data().IvarList = *I; ++I;
         curIvar = data().IvarList;
       }
-      for ( ;I != E; curIvar = &*I, ++I)
-        curIvar->setNextIvar(&*I);
+      for ( ;I != E; curIvar = *I, ++I)
+        curIvar->setNextIvar(*I);
     }
   }
   
@@ -791,11 +791,11 @@ ObjCIvarDecl *ObjCInterfaceDecl::all_declared_ivar_begin() {
       ObjCImplementationDecl::ivar_iterator I = ImplDecl->ivar_begin(),
                                             E = ImplDecl->ivar_end();
       if (!data().IvarList) {
-        data().IvarList = &*I; ++I;
+        data().IvarList = *I; ++I;
         curIvar = data().IvarList;
       }
-      for ( ;I != E; curIvar = &*I, ++I)
-        curIvar->setNextIvar(&*I);
+      for ( ;I != E; curIvar = *I, ++I)
+        curIvar->setNextIvar(*I);
     }
   }
   return data().IvarList;
@@ -1175,7 +1175,7 @@ void ObjCImplDecl::setClassInterface(ObjCInterfaceDecl *IFace) {
 ObjCPropertyImplDecl *ObjCImplDecl::
 FindPropertyImplIvarDecl(IdentifierInfo *ivarId) const {
   for (propimpl_iterator i = propimpl_begin(), e = propimpl_end(); i != e; ++i){
-    ObjCPropertyImplDecl *PID = &*i;
+    ObjCPropertyImplDecl *PID = *i;
     if (PID->getPropertyIvarDecl() &&
         PID->getPropertyIvarDecl()->getIdentifier() == ivarId)
       return PID;
@@ -1190,7 +1190,7 @@ FindPropertyImplIvarDecl(IdentifierInfo *ivarId) const {
 ObjCPropertyImplDecl *ObjCImplDecl::
 FindPropertyImplDecl(IdentifierInfo *Id) const {
   for (propimpl_iterator i = propimpl_begin(), e = propimpl_end(); i != e; ++i){
-    ObjCPropertyImplDecl *PID = &*i;
+    ObjCPropertyImplDecl *PID = *i;
     if (PID->getPropertyDecl()->getIdentifier() == Id)
       return PID;
   }

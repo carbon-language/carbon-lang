@@ -3348,7 +3348,7 @@ static void AddObjCProperties(ObjCContainerDecl *Container,
        P != PEnd;
        ++P) {
     if (AddedProperties.insert(P->getIdentifier()))
-      Results.MaybeAddResult(Result(&*P, 0), CurContext);
+      Results.MaybeAddResult(Result(*P, 0), CurContext);
   }
   
   // Add nullary methods
@@ -3363,11 +3363,11 @@ static void AddObjCProperties(ObjCContainerDecl *Container,
           if (AddedProperties.insert(Name)) {
             CodeCompletionBuilder Builder(Results.getAllocator(),
                                           Results.getCodeCompletionTUInfo());
-            AddResultTypeChunk(Context, Policy, &*M, Builder);
+            AddResultTypeChunk(Context, Policy, *M, Builder);
             Builder.AddTypedTextChunk(
                             Results.getAllocator().CopyString(Name->getName()));
             
-            Results.MaybeAddResult(Result(Builder.TakeString(), &*M,
+            Results.MaybeAddResult(Result(Builder.TakeString(), *M,
                                   CCP_MemberDeclaration + CCD_MethodAsProperty),
                                           CurContext);
           }
@@ -3672,10 +3672,10 @@ void Sema::CodeCompleteCase(Scope *S) {
   for (EnumDecl::enumerator_iterator E = Enum->enumerator_begin(),
                                   EEnd = Enum->enumerator_end();
        E != EEnd; ++E) {
-    if (EnumeratorsSeen.count(&*E))
+    if (EnumeratorsSeen.count(*E))
       continue;
     
-    CodeCompletionResult R(&*E, Qualifier);
+    CodeCompletionResult R(*E, Qualifier);
     R.Priority = CCP_EnumInCase;
     Results.AddResult(R, CurContext, 0, false);
   }
@@ -4037,7 +4037,7 @@ void Sema::CodeCompleteNamespaceDecl(Scope *S)  {
     for (DeclContext::specific_decl_iterator<NamespaceDecl> 
          NS(Ctx->decls_begin()), NSEnd(Ctx->decls_end());
          NS != NSEnd; ++NS)
-      OrigToLatest[NS->getOriginalNamespace()] = &*NS;
+      OrigToLatest[NS->getOriginalNamespace()] = *NS;
     
     // Add the most recent definition (or extended definition) of each 
     // namespace to the list of results.
@@ -4193,7 +4193,7 @@ void Sema::CodeCompleteConstructorInitializer(Decl *ConstructorD,
       SawLastInitializer
         = NumInitializers > 0 && 
           Initializers[NumInitializers - 1]->isAnyMemberInitializer() &&
-          Initializers[NumInitializers - 1]->getAnyMember() == &*Field;
+          Initializers[NumInitializers - 1]->getAnyMember() == *Field;
       continue;
     }
     
@@ -4210,7 +4210,7 @@ void Sema::CodeCompleteConstructorInitializer(Decl *ConstructorD,
                                                      : CCP_MemberDeclaration,
                                            CXCursor_MemberRef,
                                            CXAvailability_Available,
-                                           &*Field));
+                                           *Field));
     SawLastInitializer = false;
   }
   Results.ExitScope();
@@ -4701,14 +4701,14 @@ static void AddObjCMethods(ObjCContainerDecl *Container,
     if (M->isInstanceMethod() == WantInstanceMethods) {
       // Check whether the selector identifiers we've been given are a 
       // subset of the identifiers for this particular method.
-      if (!isAcceptableObjCMethod(&*M, WantKind, SelIdents, NumSelIdents,
+      if (!isAcceptableObjCMethod(*M, WantKind, SelIdents, NumSelIdents,
                                   AllowSameLength))
         continue;
 
       if (!Selectors.insert(M->getSelector()))
         continue;
       
-      Result R = Result(&*M, 0);
+      Result R = Result(*M, 0);
       R.StartParameter = NumSelIdents;
       R.AllParametersAreInformative = (WantKind != MK_Any);
       if (!InOriginalClass)
@@ -6026,7 +6026,7 @@ static void FindImplementableMethods(ASTContext &Context,
           !Context.hasSameUnqualifiedType(ReturnType, M->getResultType()))
         continue;
 
-      KnownMethods[M->getSelector()] = std::make_pair(&*M, InOriginalClass);
+      KnownMethods[M->getSelector()] = std::make_pair(*M, InOriginalClass);
     }
   }
 }
@@ -6842,7 +6842,7 @@ void Sema::CodeCompleteObjCMethodDecl(Scope *S,
       for (ObjCContainerDecl::prop_iterator P = Containers[I]->prop_begin(),
                                          PEnd = Containers[I]->prop_end(); 
            P != PEnd; ++P) {
-        AddObjCKeyValueCompletions(&*P, IsInstanceMethod, ReturnType, Context, 
+        AddObjCKeyValueCompletions(*P, IsInstanceMethod, ReturnType, Context, 
                                    KnownSelectors, Results);
       }
     }

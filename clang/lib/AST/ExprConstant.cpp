@@ -3418,7 +3418,7 @@ static bool HandleClassZeroInitialization(EvalInfo &Info, const Expr *E,
       continue;
 
     LValue Subobject = This;
-    if (!HandleLValueMember(Info, E, Subobject, &*I, &Layout))
+    if (!HandleLValueMember(Info, E, Subobject, *I, &Layout))
       return false;
 
     ImplicitValueInitExpr VIE(I->getType());
@@ -3443,9 +3443,9 @@ bool RecordExprEvaluator::ZeroInitialization(const Expr *E) {
     }
 
     LValue Subobject = This;
-    if (!HandleLValueMember(Info, E, Subobject, &*I))
+    if (!HandleLValueMember(Info, E, Subobject, *I))
       return false;
-    Result = APValue(&*I);
+    Result = APValue(*I);
     ImplicitValueInitExpr VIE(I->getType());
     return EvaluateInPlace(Result.getUnionValue(), Info, Subobject, &VIE);
   }
@@ -3536,7 +3536,7 @@ bool RecordExprEvaluator::VisitInitListExpr(const InitListExpr *E) {
     // FIXME: Diagnostics here should point to the end of the initializer
     // list, not the start.
     if (!HandleLValueMember(Info, HaveInit ? E->getInit(ElementNo) : E,
-                            Subobject, &*Field, &Layout))
+                            Subobject, *Field, &Layout))
       return false;
 
     // Perform an implicit value-initialization for members beyond the end of

@@ -1017,7 +1017,7 @@ static bool IsStructurallyEquivalent(StructuralEquivalenceContext &Context,
       return false;
     }
     
-    if (!IsStructurallyEquivalent(Context, &*Field1, &*Field2))
+    if (!IsStructurallyEquivalent(Context, *Field1, *Field2))
       return false;    
   }
   

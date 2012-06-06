@@ -85,7 +85,7 @@ public:
         if (PrevAtProps->find(RawLoc) != PrevAtProps->end())
           continue;
       PropsTy &props = AtProps[RawLoc];
-      props.push_back(&*propI);
+      props.push_back(*propI);
     }
   }
 
@@ -102,7 +102,7 @@ public:
     for (prop_impl_iterator
            I = prop_impl_iterator(D->decls_begin()),
            E = prop_impl_iterator(D->decls_end()); I != E; ++I) {
-      ObjCPropertyImplDecl *implD = &*I;
+      ObjCPropertyImplDecl *implD = *I;
       if (implD->getPropertyImplementation() != ObjCPropertyImplDecl::Synthesize)
         continue;
       ObjCPropertyDecl *propD = implD->getPropertyDecl();

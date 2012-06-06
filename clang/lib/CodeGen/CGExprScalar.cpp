@@ -1522,7 +1522,7 @@ Value *ScalarExprEmitter::VisitOffsetOfExpr(OffsetOfExpr *E) {
       for (RecordDecl::field_iterator Field = RD->field_begin(),
                                       FieldEnd = RD->field_end();
            Field != FieldEnd; ++Field, ++i) {
-        if (&*Field == MemberDecl)
+        if (*Field == MemberDecl)
           break;
       }
       assert(i < RL.getFieldCount() && "offsetof field in wrong type");

@@ -1627,7 +1627,7 @@ void CGObjCGNU::GenerateProtocol(const ObjCProtocolDecl *PD) {
          iter = PD->prop_begin(), endIter = PD->prop_end();
        iter != endIter ; iter++) {
     std::vector<llvm::Constant*> Fields;
-    ObjCPropertyDecl *property = &*iter;
+    ObjCPropertyDecl *property = *iter;
 
     Fields.push_back(MakeConstantString(property->getNameAsString()));
     Fields.push_back(llvm::ConstantInt::get(Int8Ty,
@@ -1878,7 +1878,7 @@ llvm::Constant *CGObjCGNU::GeneratePropertyList(const ObjCImplementationDecl *OI
        iter != endIter ; iter++) {
     std::vector<llvm::Constant*> Fields;
     ObjCPropertyDecl *property = iter->getPropertyDecl();
-    ObjCPropertyImplDecl *propertyImpl = &*iter;
+    ObjCPropertyImplDecl *propertyImpl = *iter;
     bool isSynthesized = (propertyImpl->getPropertyImplementation() == 
         ObjCPropertyImplDecl::Synthesize);
 

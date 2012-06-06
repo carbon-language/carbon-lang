@@ -947,7 +947,7 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, Stmt *Switch,
            EDI != ED->enumerator_end(); ++EDI) {
         llvm::APSInt Val = EDI->getInitVal();
         AdjustAPSInt(Val, CondWidth, CondIsSigned);
-        EnumVals.push_back(std::make_pair(Val, &*EDI));
+        EnumVals.push_back(std::make_pair(Val, *EDI));
       }
       std::stable_sort(EnumVals.begin(), EnumVals.end(), CmpEnumVals);
       EnumValsTy::iterator EIend =

@@ -85,7 +85,7 @@ static void Scan(IvarUsageMap& M, const ObjCContainerDecl *D) {
     // to an ivar.
     for (ObjCImplementationDecl::propimpl_iterator I = ID->propimpl_begin(),
          E = ID->propimpl_end(); I!=E; ++I)
-      Scan(M, &*I);
+      Scan(M, *I);
 
     // Scan the associated categories as well.
     for (const ObjCCategoryDecl *CD =
@@ -118,7 +118,7 @@ static void checkObjCUnusedIvar(const ObjCImplementationDecl *D,
   for (ObjCInterfaceDecl::ivar_iterator I=ID->ivar_begin(),
         E=ID->ivar_end(); I!=E; ++I) {
 
-    const ObjCIvarDecl *ID = &*I;
+    const ObjCIvarDecl *ID = *I;
 
     // Ignore ivars that...
     // (a) aren't private

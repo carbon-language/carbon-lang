@@ -693,18 +693,17 @@ public:
     Decl *Starter;
 
   public:
-    typedef Decl                     value_type;
-    typedef value_type&              reference;
-    typedef value_type*              pointer;
+    typedef Decl *value_type;
+    typedef const value_type &reference;
+    typedef const value_type *pointer;
     typedef std::forward_iterator_tag iterator_category;
-    typedef std::ptrdiff_t            difference_type;
+    typedef std::ptrdiff_t difference_type;
 
     redecl_iterator() : Current(0) { }
     explicit redecl_iterator(Decl *C) : Current(C), Starter(C) { }
 
-    reference operator*() const { return *Current; }
-    pointer operator->() const { return Current; }
-    operator pointer() const { return Current; }
+    reference operator*() const { return Current; }
+    value_type operator->() const { return Current; }
 
     redecl_iterator& operator++() {
       assert(Current && "Advancing while iterator has reached end");
@@ -1175,9 +1174,9 @@ public:
     Decl *Current;
 
   public:
-    typedef Decl*                     value_type;
-    typedef Decl*                     reference;
-    typedef Decl*                     pointer;
+    typedef Decl *value_type;
+    typedef const value_type &reference;
+    typedef const value_type *pointer;
     typedef std::forward_iterator_tag iterator_category;
     typedef std::ptrdiff_t            difference_type;
 
@@ -1185,7 +1184,8 @@ public:
     explicit decl_iterator(Decl *C) : Current(C) { }
 
     reference operator*() const { return Current; }
-    pointer operator->() const { return Current; }
+    // This doesn't meet the iterator requirements, but it's convenient
+    value_type operator->() const { return Current; }
 
     decl_iterator& operator++() {
       Current = Current->getNextDeclInContext();
@@ -1209,14 +1209,14 @@ public:
   /// decls_begin/decls_end - Iterate over the declarations stored in
   /// this context.
   decl_iterator decls_begin() const;
-  decl_iterator decls_end() const;
+  decl_iterator decls_end() const { return decl_iterator(); }
   bool decls_empty() const;
 
   /// noload_decls_begin/end - Iterate over the declarations stored in this
   /// context that are currently loaded; don't attempt to retrieve anything
   /// from an external source.
   decl_iterator noload_decls_begin() const;
-  decl_iterator noload_decls_end() const;
+  decl_iterator noload_decls_end() const { return decl_iterator(); }
 
   /// specific_decl_iterator - Iterates over a subrange of
   /// declarations stored in a DeclContext, providing only those that
@@ -1239,9 +1239,11 @@ public:
     }
 
   public:
-    typedef SpecificDecl value_type;
-    typedef SpecificDecl& reference;
-    typedef SpecificDecl* pointer;
+    typedef SpecificDecl *value_type;
+    // TODO: Add reference and pointer typedefs (with some appropriate proxy
+    // type) if we ever have a need for them.
+    typedef void reference;
+    typedef void pointer;
     typedef std::iterator_traits<DeclContext::decl_iterator>::difference_type
       difference_type;
     typedef std::forward_iterator_tag iterator_category;
@@ -1260,8 +1262,9 @@ public:
       SkipToNextDecl();
     }
 
-    reference operator*() const { return *cast<SpecificDecl>(*Current); }
-    pointer operator->() const { return &**this; }
+    value_type operator*() const { return cast<SpecificDecl>(*Current); }
+    // This doesn't meet the iterator requirements, but it's convenient
+    value_type operator->() const { return **this; }
 
     specific_decl_iterator& operator++() {
       ++Current;
@@ -1313,9 +1316,11 @@ public:
     }
 
   public:
-    typedef SpecificDecl* value_type;
-    typedef SpecificDecl* reference;
-    typedef SpecificDecl* pointer;
+    typedef SpecificDecl *value_type;
+    // TODO: Add reference and pointer typedefs (with some appropriate proxy
+    // type) if we ever have a need for them.
+    typedef void reference;
+    typedef void pointer;
     typedef std::iterator_traits<DeclContext::decl_iterator>::difference_type
       difference_type;
     typedef std::forward_iterator_tag iterator_category;
@@ -1334,8 +1339,8 @@ public:
       SkipToNextDecl();
     }
 
-    reference operator*() const { return cast<SpecificDecl>(*Current); }
-    pointer operator->() const { return cast<SpecificDecl>(*Current); }
+    value_type operator*() const { return cast<SpecificDecl>(*Current); }
+    value_type operator->() const { return cast<SpecificDecl>(*Current); }
 
     filtered_decl_iterator& operator++() {
       ++Current;
@@ -1632,23 +1637,6 @@ template<class FromTy>
 struct cast_convert_val< const ::clang::DeclContext, FromTy*, FromTy*> {
   static const ::clang::DeclContext *doit(const FromTy *Val) {
     return FromTy::castToDeclContext(Val);
-  }
-};
-
-// simplify_type - Allow clients to treat redecl_iterators just like Decl
-// pointers when using casting operators.
-template<> struct simplify_type< ::clang::Decl::redecl_iterator> {
-  typedef ::clang::Decl *SimpleType;
-  static SimpleType getSimplifiedValue(const ::clang::Decl::redecl_iterator
-      &Val) {
-    return Val;
-  }
-};
-template<> struct simplify_type<const ::clang::Decl::redecl_iterator> {
-  typedef ::clang::Decl *SimpleType;
-  static SimpleType getSimplifiedValue(const ::clang::Decl::redecl_iterator
-      &Val) {
-    return Val;
   }
 };
 

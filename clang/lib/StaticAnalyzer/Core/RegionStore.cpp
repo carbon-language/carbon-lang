@@ -1746,7 +1746,7 @@ StoreRef RegionStoreManager::BindStruct(Store store, const TypedValueRegion* R,
       continue;
 
     QualType FTy = FI->getType();
-    const FieldRegion* FR = MRMgr.getFieldRegion(&*FI, R);
+    const FieldRegion* FR = MRMgr.getFieldRegion(*FI, R);
 
     if (FTy->isArrayType())
       newStore = BindArray(newStore.getStore(), FR, *VI);

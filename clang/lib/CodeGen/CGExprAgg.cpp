@@ -352,7 +352,7 @@ void AggExprEmitter::EmitStdInitializerList(llvm::Value *destPtr,
     return;
   }
   LValue DestLV = CGF.MakeNaturalAlignAddrLValue(destPtr, initList->getType());
-  LValue start = CGF.EmitLValueForFieldInitialization(DestLV, &*field);
+  LValue start = CGF.EmitLValueForFieldInitialization(DestLV, *field);
   llvm::Value *arrayStart = Builder.CreateStructGEP(alloc, 0, "arraystart");
   CGF.EmitStoreThroughLValue(RValue::get(arrayStart), start);
   ++field;
@@ -361,7 +361,7 @@ void AggExprEmitter::EmitStdInitializerList(llvm::Value *destPtr,
     CGF.ErrorUnsupported(initList, "weird std::initializer_list");
     return;
   }
-  LValue endOrLength = CGF.EmitLValueForFieldInitialization(DestLV, &*field);
+  LValue endOrLength = CGF.EmitLValueForFieldInitialization(DestLV, *field);
   if (ctx.hasSameType(field->getType(), elementPtr)) {
     // End pointer.
     llvm::Value *arrayEnd = Builder.CreateStructGEP(alloc,numInits, "arrayend");
@@ -1005,7 +1005,7 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
       break;
     
 
-    LValue LV = CGF.EmitLValueForFieldInitialization(DestLV, &*field);
+    LValue LV = CGF.EmitLValueForFieldInitialization(DestLV, *field);
     // We never generate write-barries for initialized fields.
     LV.setNonGC(true);
     

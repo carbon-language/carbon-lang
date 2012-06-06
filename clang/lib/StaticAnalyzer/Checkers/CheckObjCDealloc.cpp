@@ -114,7 +114,7 @@ static void checkObjCDealloc(const ObjCImplementationDecl *D,
   for (ObjCInterfaceDecl::ivar_iterator I=ID->ivar_begin(), E=ID->ivar_end();
        I!=E; ++I) {
 
-    ObjCIvarDecl *ID = &*I;
+    ObjCIvarDecl *ID = *I;
     QualType T = ID->getType();
 
     if (!T->isObjCObjectPointerType() ||
@@ -261,7 +261,7 @@ static void checkObjCDealloc(const ObjCImplementationDecl *D,
       }
 
       PathDiagnosticLocation SDLoc =
-        PathDiagnosticLocation::createBegin(&*I, BR.getSourceManager());
+        PathDiagnosticLocation::createBegin(*I, BR.getSourceManager());
 
       BR.EmitBasicReport(MD, name, categories::CoreFoundationObjectiveC,
                          os.str(), SDLoc);

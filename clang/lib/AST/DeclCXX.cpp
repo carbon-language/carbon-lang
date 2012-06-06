@@ -401,7 +401,7 @@ CXXConstructorDecl *CXXRecordDecl::getCopyConstructor(unsigned TypeQuals) const{
 CXXConstructorDecl *CXXRecordDecl::getMoveConstructor() const {
   for (ctor_iterator I = ctor_begin(), E = ctor_end(); I != E; ++I)
     if (I->isMoveConstructor())
-      return &*I;
+      return *I;
 
   return 0;
 }
@@ -459,7 +459,7 @@ CXXMethodDecl *CXXRecordDecl::getCopyAssignmentOperator(bool ArgIsConst) const {
 CXXMethodDecl *CXXRecordDecl::getMoveAssignmentOperator() const {
   for (method_iterator I = method_begin(), E = method_end(); I != E; ++I)
     if (I->isMoveAssignmentOperator())
-      return &*I;
+      return *I;
 
   return 0;
 }
@@ -999,11 +999,11 @@ void CXXRecordDecl::getCaptureFields(
   for (LambdaExpr::Capture *C = Lambda.Captures, *CEnd = C + Lambda.NumCaptures;
        C != CEnd; ++C, ++Field) {
     if (C->capturesThis()) {
-      ThisCapture = &*Field;
+      ThisCapture = *Field;
       continue;
     }
 
-    Captures[C->getCapturedVar()] = &*Field;
+    Captures[C->getCapturedVar()] = *Field;
   }
 }
 
