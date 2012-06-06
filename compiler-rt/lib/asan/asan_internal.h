@@ -159,8 +159,8 @@ uptr ReadFileToBuffer(const char *file_name, char **buff,
 
 void AppendToErrorMessageBuffer(const char *buffer);
 // asan_printf.cc
-void AsanPrintf(const char *format, ...) FORMAT(1, 2);
-void AsanReport(const char *format, ...) FORMAT(1, 2);
+void AsanPrintf(const char *format, ...);
+void AsanReport(const char *format, ...);
 
 // Don't use std::min and std::max, to minimize dependency on libstdc++.
 template<class T> T Min(T a, T b) { return a < b ? a : b; }

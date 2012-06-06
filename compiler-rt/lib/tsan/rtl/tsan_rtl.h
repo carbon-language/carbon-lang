@@ -37,7 +37,7 @@
 
 namespace __tsan {
 
-void TsanPrintf(const char *format, ...) FORMAT(1, 2);
+void TsanPrintf(const char *format, ...);
 
 // FastState (from most significant bit):
 //   unused          : 1
