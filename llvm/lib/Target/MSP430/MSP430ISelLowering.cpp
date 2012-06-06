@@ -59,7 +59,7 @@ HWMultMode("msp430-hwmult-mode",
 
 MSP430TargetLowering::MSP430TargetLowering(MSP430TargetMachine &tm) :
   TargetLowering(tm, new TargetLoweringObjectFileELF()),
-  Subtarget(*tm.getSubtargetImpl()), TM(tm) {
+  Subtarget(*tm.getSubtargetImpl()) {
 
   TD = getTargetData();
 

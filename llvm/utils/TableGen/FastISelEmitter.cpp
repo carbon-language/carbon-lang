@@ -867,6 +867,6 @@ void FastISelEmitter::run(raw_ostream &OS) {
 }
 
 FastISelEmitter::FastISelEmitter(RecordKeeper &R)
-  : Records(R), CGP(R) {
+  : CGP(R) {
 }
 

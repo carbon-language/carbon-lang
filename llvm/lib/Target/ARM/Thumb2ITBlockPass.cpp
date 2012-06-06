@@ -24,8 +24,6 @@ STATISTIC(NumMovedInsts, "Number of predicated instructions moved");
 
 namespace {
   class Thumb2ITBlockPass : public MachineFunctionPass {
-    bool PreRegAlloc;
-
   public:
     static char ID;
     Thumb2ITBlockPass() : MachineFunctionPass(ID) {}

@@ -36,7 +36,6 @@ namespace llvm {
   /// scheduled as soon as possible after the variable's last use.
   ///
   class LoopDependencies {
-    const MachineLoopInfo &MLI;
     const MachineDominatorTree &MDT;
 
   public:
@@ -44,9 +43,7 @@ namespace llvm {
       LoopDeps;
     LoopDeps Deps;
 
-    LoopDependencies(const MachineLoopInfo &mli,
-                     const MachineDominatorTree &mdt) :
-      MLI(mli), MDT(mdt) {}
+    LoopDependencies(const MachineDominatorTree &mdt) : MDT(mdt) {}
 
     /// VisitLoop - Clear out any previous state and analyze the given loop.
     ///

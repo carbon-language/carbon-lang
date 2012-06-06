@@ -78,7 +78,6 @@ AntiDepBreaker::~AntiDepBreaker() { }
 
 namespace {
   class PostRAScheduler : public MachineFunctionPass {
-    AliasAnalysis *AA;
     const TargetInstrInfo *TII;
     RegisterClassInfo RegClassInfo;
 

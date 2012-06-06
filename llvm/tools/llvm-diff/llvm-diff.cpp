@@ -78,8 +78,8 @@ int main(int argc, char **argv) {
   Module *RModule = ReadModule(Context, RightFilename);
   if (!LModule || !RModule) return 1;
 
-  DiffConsumer Consumer(LModule, RModule);
-  DifferenceEngine Engine(Context, Consumer);
+  DiffConsumer Consumer;
+  DifferenceEngine Engine(Consumer);
 
   // If any global names were given, just diff those.
   if (!GlobalsToCompare.empty()) {

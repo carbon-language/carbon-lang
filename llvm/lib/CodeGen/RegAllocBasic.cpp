@@ -65,7 +65,6 @@ class RABasic : public MachineFunctionPass, public RegAllocBase
   MachineFunction *MF;
 
   // analyses
-  LiveStacks *LS;
   RenderMachineFunction *RMF;
 
   // state

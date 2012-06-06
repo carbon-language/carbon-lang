@@ -154,7 +154,7 @@ bool MSP430AsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
 
 //===----------------------------------------------------------------------===//
 void MSP430AsmPrinter::EmitInstruction(const MachineInstr *MI) {
-  MSP430MCInstLower MCInstLowering(OutContext, *Mang, *this);
+  MSP430MCInstLower MCInstLowering(OutContext, *this);
 
   MCInst TmpInst;
   MCInstLowering.Lower(MI, TmpInst);

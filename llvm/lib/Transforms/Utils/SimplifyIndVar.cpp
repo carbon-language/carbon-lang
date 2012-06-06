@@ -16,7 +16,6 @@
 #define DEBUG_TYPE "indvars"
 
 #include "llvm/Instructions.h"
-#include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/IVUsers.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/LoopPass.h"
@@ -44,7 +43,6 @@ namespace {
   class SimplifyIndvar {
     Loop             *L;
     LoopInfo         *LI;
-    DominatorTree    *DT;
     ScalarEvolution  *SE;
     const TargetData *TD; // May be NULL
 

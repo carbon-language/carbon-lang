@@ -26,7 +26,6 @@ namespace llvm {
   /// two registers can be coalesced, CoalescerPair can determine if a copy
   /// instruction would become an identity copy after coalescing.
   class CoalescerPair {
-    const TargetInstrInfo &TII;
     const TargetRegisterInfo &TRI;
 
     /// DstReg - The register that will be left after coalescing. It can be a
@@ -60,8 +59,8 @@ namespace llvm {
     const TargetRegisterClass *NewRC;
 
   public:
-    CoalescerPair(const TargetInstrInfo &tii, const TargetRegisterInfo &tri)
-      : TII(tii), TRI(tri), DstReg(0), SrcReg(0), DstIdx(0), SrcIdx(0),
+    CoalescerPair(const TargetRegisterInfo &tri)
+      : TRI(tri), DstReg(0), SrcReg(0), DstIdx(0), SrcIdx(0),
         Partial(false), CrossClass(false), Flipped(false), NewRC(0) {}
 
     /// setRegisters - set registers to match the copy instruction MI. Return

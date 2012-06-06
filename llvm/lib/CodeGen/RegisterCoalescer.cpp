@@ -939,7 +939,7 @@ bool RegisterCoalescer::joinCopy(MachineInstr *CopyMI, bool &Again) {
   Again = false;
   DEBUG(dbgs() << LIS->getInstructionIndex(CopyMI) << '\t' << *CopyMI);
 
-  CoalescerPair CP(*TII, *TRI);
+  CoalescerPair CP(*TRI);
   if (!CP.setRegisters(CopyMI)) {
     DEBUG(dbgs() << "\tNot coalescable.\n");
     return false;

@@ -375,7 +375,7 @@ std::auto_ptr<PBQPRAProblem> PBQPBuilderWithCoalescing::build(
   PBQP::Graph &g = p->getGraph();
 
   const TargetMachine &tm = mf->getTarget();
-  CoalescerPair cp(*tm.getInstrInfo(), *tm.getRegisterInfo());
+  CoalescerPair cp(*tm.getRegisterInfo());
 
   // Scan the machine function and add a coalescing cost whenever CoalescerPair
   // gives the Ok.

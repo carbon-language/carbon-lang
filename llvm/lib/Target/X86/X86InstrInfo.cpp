@@ -4057,9 +4057,6 @@ namespace {
       AU.setPreservesCFG();
       MachineFunctionPass::getAnalysisUsage(AU);
     }
-
-   private:
-    unsigned BaseReg;
   };
 }
 

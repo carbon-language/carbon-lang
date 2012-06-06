@@ -187,7 +187,7 @@ void MBlazeAsmPrinter::EmitFunctionBodyEnd() {
 
 //===----------------------------------------------------------------------===//
 void MBlazeAsmPrinter::EmitInstruction(const MachineInstr *MI) {
-  MBlazeMCInstLower MCInstLowering(OutContext, *Mang, *this);
+  MBlazeMCInstLower MCInstLowering(OutContext, *this);
 
   MCInst TmpInst;
   MCInstLowering.Lower(MI, TmpInst);

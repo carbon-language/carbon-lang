@@ -21,18 +21,16 @@ namespace llvm {
   class MachineInstr;
   class MachineModuleInfoMachO;
   class MachineOperand;
-  class Mangler;
 
   /// MSP430MCInstLower - This class is used to lower an MachineInstr
   /// into an MCInst.
 class LLVM_LIBRARY_VISIBILITY MSP430MCInstLower {
   MCContext &Ctx;
-  Mangler &Mang;
 
   AsmPrinter &Printer;
 public:
-  MSP430MCInstLower(MCContext &ctx, Mangler &mang, AsmPrinter &printer)
-    : Ctx(ctx), Mang(mang), Printer(printer) {}
+  MSP430MCInstLower(MCContext &ctx, AsmPrinter &printer)
+    : Ctx(ctx), Printer(printer) {}
   void Lower(const MachineInstr *MI, MCInst &OutMI) const;
 
   MCOperand LowerSymbolOperand(const MachineOperand &MO, MCSymbol *Sym) const;

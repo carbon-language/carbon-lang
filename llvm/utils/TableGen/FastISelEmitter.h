@@ -25,7 +25,6 @@ class CodeGenTarget;
 /// and emission of the instruction selector.
 ///
 class FastISelEmitter : public TableGenBackend {
-  RecordKeeper &Records;
   CodeGenDAGPatterns CGP;
 public:
   explicit FastISelEmitter(RecordKeeper &R);
