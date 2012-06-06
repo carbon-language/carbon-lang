@@ -104,7 +104,7 @@ static void WriteMemoryProfile(char *buf, uptr buf_size, int num) {
   uptr nsync = 0;
   uptr syncmem = CTX()->synctab.GetMemoryConsumption(&nsync);
 
-  Snprintf(buf, buf_size, "%d: shadow=%luMB"
+  SNPrintf(buf, buf_size, "%d: shadow=%luMB"
                           " thread=%luMB(total=%d/live=%d)"
                           " sync=%luMB(cnt=%lu)\n",
     num,
@@ -128,11 +128,11 @@ static void InitializeMemoryProfile() {
   if (flags()->profile_memory == 0 || flags()->profile_memory[0] == 0)
     return;
   InternalScopedBuf<char> filename(4096);
-  Snprintf(filename.Ptr(), filename.Size(), "%s.%d",
+  SNPrintf(filename.Ptr(), filename.Size(), "%s.%d",
       flags()->profile_memory, GetPid());
   fd_t fd = internal_open(filename.Ptr(), true);
   if (fd == kInvalidFd) {
-    Printf("Failed to open memory profile file '%s'\n", &filename[0]);
+    TsanPrintf("Failed to open memory profile file '%s'\n", &filename[0]);
     Die();
   }
   internal_start_thread(&MemoryProfileThread, (void*)(uptr)fd);
@@ -177,7 +177,8 @@ void Initialize(ThreadState *thr) {
   InitializeMemoryFlush();
 
   if (ctx->flags.verbosity)
-    Printf("***** Running under ThreadSanitizer v2 (pid %d) *****\n", GetPid());
+    TsanPrintf("***** Running under ThreadSanitizer v2 (pid %d) *****\n",
+               GetPid());
 
   // Initialize thread 0.
   ctx->thread_seq = 0;
@@ -188,7 +189,7 @@ void Initialize(ThreadState *thr) {
   ctx->initialized = true;
 
   if (flags()->stop_on_start) {
-    Printf("ThreadSanitizer is suspended at startup (pid %d)."
+    TsanPrintf("ThreadSanitizer is suspended at startup (pid %d)."
            " Call __tsan_resume().\n",
            GetPid());
     while (__tsan_resumed == 0);
@@ -204,12 +205,12 @@ int Finalize(ThreadState *thr) {
 
   if (ctx->nreported) {
     failed = true;
-    Printf("ThreadSanitizer: reported %d warnings\n", ctx->nreported);
+    TsanPrintf("ThreadSanitizer: reported %d warnings\n", ctx->nreported);
   }
 
   if (ctx->nmissed_expected) {
     failed = true;
-    Printf("ThreadSanitizer: missed %d expected races\n",
+    TsanPrintf("ThreadSanitizer: missed %d expected races\n",
         ctx->nmissed_expected);
   }
 
@@ -364,11 +365,11 @@ void MemoryAccess(ThreadState *thr, uptr pc, uptr addr,
       shadow_mem[0], shadow_mem[1], shadow_mem[2], shadow_mem[3]);
 #if TSAN_DEBUG
   if (!IsAppMem(addr)) {
-    Printf("Access to non app mem %lx\n", addr);
+    TsanPrintf("Access to non app mem %lx\n", addr);
     DCHECK(IsAppMem(addr));
   }
   if (!IsShadowMem((uptr)shadow_mem)) {
-    Printf("Bad shadow addr %p (%lx)\n", shadow_mem, addr);
+    TsanPrintf("Bad shadow addr %p (%lx)\n", shadow_mem, addr);
     DCHECK(IsShadowMem((uptr)shadow_mem));
   }
 #endif

@@ -78,8 +78,8 @@ static int AppendPointer(char **buff, const char *buff_end, u64 ptr_value) {
   return result;
 }
 
-static uptr VSNPrintf(char *buff, int buff_length,
-                     const char *format, va_list args) {
+uptr VSNPrintf(char *buff, int buff_length,
+               const char *format, va_list args) {
   const char *buff_end = &buff[buff_length - 1];
   const char *cur = format;
   int result = 0;
@@ -126,7 +126,7 @@ static uptr VSNPrintf(char *buff, int buff_length,
   return result;
 }
 
-void Printf(const char *format, ...) {
+void TsanPrintf(const char *format, ...) {
   ScopedInRtl in_rtl;
   const uptr kMaxLen = 16 * 1024;
   InternalScopedBuf<char> buffer(kMaxLen);
@@ -138,11 +138,12 @@ void Printf(const char *format, ...) {
       buffer, len < buffer.Size() ? len : buffer.Size() - 1);
 }
 
-uptr Snprintf(char *buffer, uptr length, const char *format, ...) {
+uptr SNPrintf(char *buffer, uptr length, const char *format, ...) {
   va_list args;
   va_start(args, format);
   uptr len = VSNPrintf(buffer, length, format, args);
   va_end(args);
   return len;
 }
-}
+
+}  // namespace __tsan

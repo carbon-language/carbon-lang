@@ -68,7 +68,7 @@ static void StackStripMain(ReportStack *stack) {
     // can actually happen if we do not instrument some code,
     // so it's only a DCHECK. However we must try hard to not miss it
     // due to our fault.
-    Printf("Bottom stack frame of stack %lx is missed\n", stack->pc);
+    TsanPrintf("Bottom stack frame of stack %lx is missed\n", stack->pc);
   }
 }
 
@@ -349,7 +349,7 @@ void ReportRace(ThreadState *thr) {
 
 void CheckFailed(const char *file, int line, const char *cond, u64 v1, u64 v2) {
   ScopedInRtl in_rtl;
-  Printf("FATAL: ThreadSanitizer CHECK failed: %s:%d \"%s\" (%llx, %llx)\n",
+  TsanPrintf("FATAL: ThreadSanitizer CHECK failed: %s:%d \"%s\" (%llx, %llx)\n",
          file, line, cond, v1, v2);
   Die();
 }

@@ -92,7 +92,7 @@ MBlock *user_mblock(ThreadState *thr, void *p) {
   MBlock *b = (MBlock*)AllocBlock(p);
   // FIXME: Output a warning, it's a user error.
   if (p < (char*)(b + 1) || p > (char*)(b + 1) + b->size) {
-    Printf("user_mblock p=%p b=%p size=%lu beg=%p end=%p\n",
+    TsanPrintf("user_mblock p=%p b=%p size=%lu beg=%p end=%p\n",
         p, b, b->size, (char*)(b + 1), (char*)(b + 1) + b->size);
     CHECK_GE(p, (char*)(b + 1));
     CHECK_LE(p, (char*)(b + 1) + b->size);

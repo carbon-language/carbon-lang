@@ -91,25 +91,25 @@ void InitializeMutex() {
     }
   }
 #if 0
-  Printf("Can lock graph:\n");
+  TsanPrintf("Can lock graph:\n");
   for (int i = 0; i < N; i++) {
     for (int j = 0; j < N; j++) {
-      Printf("%d ", CanLockAdj[i][j]);
+      TsanPrintf("%d ", CanLockAdj[i][j]);
     }
-    Printf("\n");
+    TsanPrintf("\n");
   }
-  Printf("Can lock graph closure:\n");
+  TsanPrintf("Can lock graph closure:\n");
   for (int i = 0; i < N; i++) {
     for (int j = 0; j < N; j++) {
-      Printf("%d ", CanLockAdj2[i][j]);
+      TsanPrintf("%d ", CanLockAdj2[i][j]);
     }
-    Printf("\n");
+    TsanPrintf("\n");
   }
 #endif
   // Verify that the graph is acyclic.
   for (int i = 0; i < N; i++) {
     if (CanLockAdj2[i][i]) {
-      Printf("Mutex %d participates in a cycle\n", i);
+      TsanPrintf("Mutex %d participates in a cycle\n", i);
       Die();
     }
   }
@@ -120,7 +120,7 @@ DeadlockDetector::DeadlockDetector() {
 }
 
 void DeadlockDetector::Lock(MutexType t) {
-  // Printf("LOCK %d @%llu\n", t, seq_ + 1);
+  // TsanPrintf("LOCK %d @%llu\n", t, seq_ + 1);
   u64 max_seq = 0;
   u64 max_idx = MutexTypeInvalid;
   for (int i = 0; i != MutexTypeCount; i++) {
@@ -135,16 +135,16 @@ void DeadlockDetector::Lock(MutexType t) {
   locked_[t] = ++seq_;
   if (max_idx == MutexTypeInvalid)
     return;
-  // Printf("  last %d @%llu\n", max_idx, max_seq);
+  // TsanPrintf("  last %d @%llu\n", max_idx, max_seq);
   if (!CanLockAdj[max_idx][t]) {
-    Printf("ThreadSanitizer: internal deadlock detected\n");
-    Printf("ThreadSanitizer: can't lock %d while under %llu\n", t, max_idx);
+    TsanPrintf("ThreadSanitizer: internal deadlock detected\n");
+    TsanPrintf("ThreadSanitizer: can't lock %d while under %llu\n", t, max_idx);
     Die();
   }
 }
 
 void DeadlockDetector::Unlock(MutexType t) {
-  // Printf("UNLO %d @%llu #%llu\n", t, seq_, locked_[t]);
+  // TsanPrintf("UNLO %d @%llu #%llu\n", t, seq_, locked_[t]);
   CHECK(locked_[t]);
   locked_[t] = 0;
 }

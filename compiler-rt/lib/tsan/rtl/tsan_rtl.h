@@ -37,8 +37,8 @@
 
 namespace __tsan {
 
-void Printf(const char *format, ...) FORMAT(1, 2);
-uptr Snprintf(char *buffer, uptr length, const char *format, ...)  FORMAT(3, 4);
+void TsanPrintf(const char *format, ...) FORMAT(1, 2);
+uptr SNPrintf(char *buffer, uptr length, const char *format, ...)  FORMAT(3, 4);
 
 // FastState (from most significant bit):
 //   unused          : 1
@@ -398,13 +398,13 @@ bool OutputReport(const ScopedReport &srep,
 bool IsExpectedReport(uptr addr, uptr size);
 
 #if defined(TSAN_DEBUG_OUTPUT) && TSAN_DEBUG_OUTPUT >= 1
-# define DPrintf Printf
+# define DPrintf TsanPrintf
 #else
 # define DPrintf(...)
 #endif
 
 #if defined(TSAN_DEBUG_OUTPUT) && TSAN_DEBUG_OUTPUT >= 2
-# define DPrintf2 Printf
+# define DPrintf2 TsanPrintf
 #else
 # define DPrintf2(...)
 #endif

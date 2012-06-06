@@ -27,24 +27,24 @@ static char *ReadFile(const char *filename) {
     return 0;
   InternalScopedBuf<char> tmp(4*1024);
   if (filename[0] == '/')
-    Snprintf(tmp, tmp.Size(), "%s", filename);
+    SNPrintf(tmp, tmp.Size(), "%s", filename);
   else
-    Snprintf(tmp, tmp.Size(), "%s/%s", internal_getpwd(), filename);
+    SNPrintf(tmp, tmp.Size(), "%s/%s", internal_getpwd(), filename);
   fd_t fd = internal_open(tmp, false);
   if (fd == kInvalidFd) {
-    Printf("ThreadSanitizer: failed to open suppressions file '%s'\n",
+    TsanPrintf("ThreadSanitizer: failed to open suppressions file '%s'\n",
         tmp.Ptr());
     Die();
   }
   const uptr fsize = internal_filesize(fd);
   if (fsize == (uptr)-1) {
-    Printf("ThreadSanitizer: failed to stat suppressions file '%s'\n",
+    TsanPrintf("ThreadSanitizer: failed to stat suppressions file '%s'\n",
         tmp.Ptr());
     Die();
   }
   char *buf = (char*)internal_alloc(MBlockSuppression, fsize + 1);
   if (fsize != internal_read(fd, buf, fsize)) {
-    Printf("ThreadSanitizer: failed to read suppressions file '%s'\n",
+    TsanPrintf("ThreadSanitizer: failed to read suppressions file '%s'\n",
         tmp.Ptr());
     Die();
   }
@@ -109,7 +109,7 @@ Suppression *SuppressionParse(const char* supp) {
         stype = SuppressionSignal;
         line += sizeof("signal:") - 1;
       } else {
-        Printf("ThreadSanitizer: failed to parse suppressions file\n");
+        TsanPrintf("ThreadSanitizer: failed to parse suppressions file\n");
         Die();
       }
       Suppression *s = (Suppression*)internal_alloc(MBlockSuppression,

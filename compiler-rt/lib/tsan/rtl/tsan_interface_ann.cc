@@ -215,11 +215,11 @@ void AnnotateNoOp(char *f, int l, uptr mem) {
 }
 
 static void ReportMissedExpectedRace(ExpectRace *race) {
-  Printf("==================\n");
-  Printf("WARNING: ThreadSanitizer: missed expected data race\n");
-  Printf("  %s addr=%lx %s:%d\n",
+  TsanPrintf("==================\n");
+  TsanPrintf("WARNING: ThreadSanitizer: missed expected data race\n");
+  TsanPrintf("  %s addr=%lx %s:%d\n",
       race->desc, race->addr, race->file, race->line);
-  Printf("==================\n");
+  TsanPrintf("==================\n");
 }
 
 void AnnotateFlushExpectedRaces(char *f, int l) {

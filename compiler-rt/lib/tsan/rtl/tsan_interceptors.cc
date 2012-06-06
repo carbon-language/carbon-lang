@@ -238,13 +238,13 @@ TSAN_INTERCEPTOR(int, atexit, void (*f)()) {
 
 TSAN_INTERCEPTOR(void, longjmp, void *env, int val) {
   SCOPED_TSAN_INTERCEPTOR(longjmp, env, val);
-  Printf("ThreadSanitizer: longjmp() is not supported\n");
+  TsanPrintf("ThreadSanitizer: longjmp() is not supported\n");
   Die();
 }
 
 TSAN_INTERCEPTOR(void, siglongjmp, void *env, int val) {
   SCOPED_TSAN_INTERCEPTOR(siglongjmp, env, val);
-  Printf("ThreadSanitizer: siglongjmp() is not supported\n");
+  TsanPrintf("ThreadSanitizer: siglongjmp() is not supported\n");
   Die();
 }
 
@@ -620,7 +620,7 @@ static void thread_finalize(void *v) {
   uptr iter = (uptr)v;
   if (iter > 1) {
     if (pthread_setspecific(g_thread_finalize_key, (void*)(iter - 1))) {
-      Printf("ThreadSanitizer: failed to set thread key\n");
+      TsanPrintf("ThreadSanitizer: failed to set thread key\n");
       Die();
     }
     return;
@@ -647,7 +647,7 @@ extern "C" void *__tsan_thread_start_func(void *arg) {
     ThreadState *thr = cur_thread();
     ScopedInRtl in_rtl;
     if (pthread_setspecific(g_thread_finalize_key, (void*)4)) {
-      Printf("ThreadSanitizer: failed to set thread key\n");
+      TsanPrintf("ThreadSanitizer: failed to set thread key\n");
       Die();
     }
     while ((tid = atomic_load(&p->tid, memory_order_acquire)) == 0)
@@ -1511,12 +1511,12 @@ void InitializeInterceptors() {
       AtExitContext();
 
   if (__cxa_atexit(&finalize, 0, 0)) {
-    Printf("ThreadSanitizer: failed to setup atexit callback\n");
+    TsanPrintf("ThreadSanitizer: failed to setup atexit callback\n");
     Die();
   }
 
   if (pthread_key_create(&g_thread_finalize_key, &thread_finalize)) {
-    Printf("ThreadSanitizer: failed to create thread key\n");
+    TsanPrintf("ThreadSanitizer: failed to create thread key\n");
     Die();
   }
 }

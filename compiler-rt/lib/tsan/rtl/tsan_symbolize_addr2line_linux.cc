@@ -50,12 +50,12 @@ struct DlIteratePhdrCtx {
 static void NOINLINE InitModule(ModuleDesc *m) {
   int outfd[2] = {};
   if (pipe(&outfd[0])) {
-    Printf("ThreadSanitizer: outfd pipe() failed (%d)\n", errno);
+    TsanPrintf("ThreadSanitizer: outfd pipe() failed (%d)\n", errno);
     Die();
   }
   int infd[2] = {};
   if (pipe(&infd[0])) {
-    Printf("ThreadSanitizer: infd pipe() failed (%d)\n", errno);
+    TsanPrintf("ThreadSanitizer: infd pipe() failed (%d)\n", errno);
     Die();
   }
   int pid = fork();
@@ -72,7 +72,7 @@ static void NOINLINE InitModule(ModuleDesc *m) {
     execl("/usr/bin/addr2line", "/usr/bin/addr2line", "-Cfe", m->fullname, 0);
     _exit(0);
   } else if (pid < 0) {
-    Printf("ThreadSanitizer: failed to fork symbolizer\n");
+    TsanPrintf("ThreadSanitizer: failed to fork symbolizer\n");
     Die();
   }
   internal_close(outfd[0]);
@@ -85,7 +85,7 @@ static int dl_iterate_phdr_cb(dl_phdr_info *info, size_t size, void *arg) {
   DlIteratePhdrCtx *ctx = (DlIteratePhdrCtx*)arg;
   InternalScopedBuf<char> tmp(128);
   if (ctx->is_first) {
-    Snprintf(tmp.Ptr(), tmp.Size(), "/proc/%d/exe", GetPid());
+    SNPrintf(tmp.Ptr(), tmp.Size(), "/proc/%d/exe", GetPid());
     info->dlpi_name = tmp.Ptr();
   }
   ctx->is_first = false;
@@ -158,16 +158,16 @@ ReportStack *SymbolizeCode(uptr addr) {
   ModuleDesc *m = s->module;
   uptr offset = addr - m->base;
   char addrstr[32];
-  Snprintf(addrstr, sizeof(addrstr), "%p\n", (void*)offset);
+  SNPrintf(addrstr, sizeof(addrstr), "%p\n", (void*)offset);
   if (0 >= internal_write(m->out_fd, addrstr, internal_strlen(addrstr))) {
-    Printf("ThreadSanitizer: can't write from symbolizer (%d, %d)\n",
+    TsanPrintf("ThreadSanitizer: can't write from symbolizer (%d, %d)\n",
         m->out_fd, errno);
     Die();
   }
   InternalScopedBuf<char> func(1024);
   ssize_t len = internal_read(m->inp_fd, func, func.Size() - 1);
   if (len <= 0) {
-    Printf("ThreadSanitizer: can't read from symbolizer (%d, %d)\n",
+    TsanPrintf("ThreadSanitizer: can't read from symbolizer (%d, %d)\n",
         m->inp_fd, errno);
     Die();
   }
@@ -198,7 +198,7 @@ ReportStack *SymbolizeData(uptr addr) {
     base = GetImageBase();
   int res = 0;
   InternalScopedBuf<char> cmd(1024);
-  Snprintf(cmd, cmd.Size(),
+  SNPrintf(cmd, cmd.Size(),
   "nm -alC %s|grep \"%lx\"|awk '{printf(\"%%s\\n%%s\", $3, $4)}' > tsan.tmp2",
     exe, (addr - base));
   if (system(cmd))

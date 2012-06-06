@@ -78,7 +78,8 @@ int ThreadCreate(ThreadState *thr, uptr pc, uptr uid, bool detached) {
   if (ctx->dead_list_size > kThreadQuarantineSize
       || ctx->thread_seq >= kMaxTid) {
     if (ctx->dead_list_size == 0) {
-      Printf("ThreadSanitizer: %d thread limit exceeded. Dying.\n", kMaxTid);
+      TsanPrintf("ThreadSanitizer: %d thread limit exceeded. Dying.\n",
+                 kMaxTid);
       Die();
     }
     StatInc(thr, StatThreadReuse);
@@ -251,7 +252,7 @@ void ThreadJoin(ThreadState *thr, uptr pc, int tid) {
   Lock l(&ctx->thread_mtx);
   ThreadContext *tctx = ctx->threads[tid];
   if (tctx->status == ThreadStatusInvalid) {
-    Printf("ThreadSanitizer: join of non-existent thread\n");
+    TsanPrintf("ThreadSanitizer: join of non-existent thread\n");
     return;
   }
   CHECK_EQ(tctx->detached, false);
@@ -269,7 +270,7 @@ void ThreadDetach(ThreadState *thr, uptr pc, int tid) {
   Lock l(&ctx->thread_mtx);
   ThreadContext *tctx = ctx->threads[tid];
   if (tctx->status == ThreadStatusInvalid) {
-    Printf("ThreadSanitizer: detach of non-existent thread\n");
+    TsanPrintf("ThreadSanitizer: detach of non-existent thread\n");
     return;
   }
   if (tctx->status == ThreadStatusFinished) {
@@ -291,19 +292,19 @@ void MemoryAccessRange(ThreadState *thr, uptr pc, uptr addr,
 
 #if TSAN_DEBUG
   if (!IsAppMem(addr)) {
-    Printf("Access to non app mem %lx\n", addr);
+    TsanPrintf("Access to non app mem %lx\n", addr);
     DCHECK(IsAppMem(addr));
   }
   if (!IsAppMem(addr + size - 1)) {
-    Printf("Access to non app mem %lx\n", addr + size - 1);
+    TsanPrintf("Access to non app mem %lx\n", addr + size - 1);
     DCHECK(IsAppMem(addr + size - 1));
   }
   if (!IsShadowMem((uptr)shadow_mem)) {
-    Printf("Bad shadow addr %p (%lx)\n", shadow_mem, addr);
+    TsanPrintf("Bad shadow addr %p (%lx)\n", shadow_mem, addr);
     DCHECK(IsShadowMem((uptr)shadow_mem));
   }
   if (!IsShadowMem((uptr)(shadow_mem + size * kShadowCnt / 8 - 1))) {
-    Printf("Bad shadow addr %p (%lx)\n",
+    TsanPrintf("Bad shadow addr %p (%lx)\n",
         shadow_mem + size * kShadowCnt / 8 - 1, addr + size - 1);
     DCHECK(IsShadowMem((uptr)(shadow_mem + size * kShadowCnt / 8 - 1)));
   }

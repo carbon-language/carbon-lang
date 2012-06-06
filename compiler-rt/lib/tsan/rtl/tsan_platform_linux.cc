@@ -96,8 +96,8 @@ static void ProtectRange(uptr beg, uptr end) {
       PROT_NONE,
       MAP_PRIVATE | MAP_ANON | MAP_FIXED | MAP_NORESERVE,
       -1, 0)) {
-    Printf("FATAL: ThreadSanitizer can not protect [%lx,%lx]\n", beg, end);
-    Printf("FATAL: Make sure you are not using unlimited stack\n");
+    TsanPrintf("FATAL: ThreadSanitizer can not protect [%lx,%lx]\n", beg, end);
+    TsanPrintf("FATAL: Make sure you are not using unlimited stack\n");
     Die();
   }
 }
@@ -113,8 +113,9 @@ void InitializeShadowMemory() {
       MAP_PRIVATE | MAP_ANON | MAP_FIXED | MAP_NORESERVE,
       -1, 0);
   if (shadow != kLinuxShadowBeg) {
-    Printf("FATAL: ThreadSanitizer can not mmap the shadow memory\n");
-    Printf("FATAL: Make sure to compile with -fPIE and to link with -pie.\n");
+    TsanPrintf("FATAL: ThreadSanitizer can not mmap the shadow memory\n");
+    TsanPrintf("FATAL: Make sure to compile with -fPIE and "
+               "to link with -pie.\n");
     Die();
   }
   ProtectRange(kClosedLowBeg, kClosedLowEnd);
@@ -142,10 +143,10 @@ static void CheckPIE() {
     buf[sizeof(buf) - 1] = 0;
     u64 addr = strtoll(buf, 0, 16);
     if ((u64)addr < kLinuxAppMemBeg) {
-      Printf("FATAL: ThreadSanitizer can not mmap the shadow memory ("
+      TsanPrintf("FATAL: ThreadSanitizer can not mmap the shadow memory ("
              "something is mapped at 0x%llx < 0x%lx)\n",
              addr, kLinuxAppMemBeg);
-      Printf("FATAL: Make sure to compile with -fPIE"
+      TsanPrintf("FATAL: Make sure to compile with -fPIE"
              " and to link with -pie.\n");
       Die();
     }
@@ -209,7 +210,7 @@ void GetThreadStackAndTls(bool main, uptr *stk_addr, uptr *stk_size,
                                MAP_PRIVATE | MAP_ANON, -1, 0);
     fd_t maps = internal_open("/proc/self/maps", false);
     if (maps == kInvalidFd) {
-      Printf("Failed to open /proc/self/maps\n");
+      TsanPrintf("Failed to open /proc/self/maps\n");
       Die();
     }
     char *end = buf;
@@ -222,18 +223,18 @@ void GetThreadStackAndTls(bool main, uptr *stk_addr, uptr *stk_size,
     end[0] = 0;
     end = (char*)internal_strstr(buf, "[stack]");
     if (end == 0) {
-      Printf("Can't find [stack] in /proc/self/maps\n");
+      TsanPrintf("Can't find [stack] in /proc/self/maps\n");
       Die();
     }
     end[0] = 0;
     char *pos = (char*)internal_strrchr(buf, '\n');
     if (pos == 0) {
-      Printf("Can't find [stack] in /proc/self/maps\n");
+      TsanPrintf("Can't find [stack] in /proc/self/maps\n");
       Die();
     }
     pos = (char*)internal_strchr(pos, '-');
     if (pos == 0) {
-      Printf("Can't find [stack] in /proc/self/maps\n");
+      TsanPrintf("Can't find [stack] in /proc/self/maps\n");
       Die();
     }
     uptr stack = 0;
