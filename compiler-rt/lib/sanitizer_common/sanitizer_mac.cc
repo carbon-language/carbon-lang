@@ -51,6 +51,17 @@ uptr internal_write(fd_t fd, const void *buf, uptr count) {
   return write(fd, buf, count);
 }
 
+uptr internal_filesize(fd_t fd) {
+  struct stat st = {};
+  if (fstat(fd, &st))
+    return -1;
+  return (uptr)st.st_size;
+}
+
+int internal_dup2(int oldfd, int newfd) {
+  return dup2(oldfd, newfd);
+}
+
 }  // namespace __sanitizer
 
 #endif  // __APPLE__

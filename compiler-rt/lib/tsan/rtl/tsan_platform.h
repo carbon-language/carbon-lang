@@ -76,9 +76,6 @@ void internal_sleep_ms(u32 ms);
 
 void internal_start_thread(void(*func)(void*), void *arg);
 
-typedef int fd_t;
-uptr internal_filesize(fd_t fd);  // -1 on error.
-int internal_dup2(int oldfd, int newfd);
 const char *internal_getpwd();
 
 uptr GetTlsSize();

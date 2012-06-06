@@ -63,6 +63,16 @@ uptr internal_write(fd_t fd, const void *buf, uptr count) {
   return ret;
 }
 
+uptr internal_filesize(fd_t fd) {
+  UNIMPLEMENTED_WIN();
+  return -1;
+}
+
+int internal_dup2(int oldfd, int newfd) {
+  UNIMPLEMENTED_WIN();
+  return -1;
+}
+
 int internal_sscanf(const char *str, const char *format, ...) {
   UNIMPLEMENTED_WIN();
   return -1;

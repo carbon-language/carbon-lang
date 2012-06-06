@@ -83,18 +83,6 @@ void internal_sleep_ms(u32 ms) {
   usleep(ms * 1000);
 }
 
-uptr internal_filesize(fd_t fd) {
-  struct stat st = {};
-  if (syscall(__NR_fstat, fd, &st))
-    return -1;
-  return (uptr)st.st_size;
-}
-
-int internal_dup2(int oldfd, int newfd) {
-  ScopedInRtl in_rtl;
-  return syscall(__NR_dup2, oldfd, newfd);
-}
-
 const char *internal_getpwd() {
   return getenv("PWD");
 }
