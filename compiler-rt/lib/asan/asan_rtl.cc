@@ -45,6 +45,13 @@ void Die() {
   Exit(FLAG_exitcode);
 }
 
+void CheckFailed(const char *file, int line, const char *cond, u64 v1, u64 v2) {
+  AsanReport("AddressSanitizer CHECK failed: %s:%d \"%s\" (%zx, %zx)\n",
+             file, line, cond, (uptr)v1, (uptr)v2);
+  PRINT_CURRENT_STACK();
+  ShowStatsAndAbort();
+}
+
 }  // namespace __sanitizer
 
 namespace __asan {
@@ -334,12 +341,6 @@ static void BoolFlagValue(const char *flags, const char *flag,
 static void asan_atexit() {
   AsanPrintf("AddressSanitizer exit stats:\n");
   __asan_print_accumulated_stats();
-}
-
-void CheckFailed(const char *cond, const char *file, int line) {
-  Report("CHECK failed: %s at %s:%d\n", cond, file, line);
-  PRINT_CURRENT_STACK();
-  ShowStatsAndAbort();
 }
 
 }  // namespace __asan

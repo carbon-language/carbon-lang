@@ -52,24 +52,6 @@ const bool kCollectStats = true;
 const bool kCollectStats = false;
 #endif
 
-#define CHECK_IMPL(c1, op, c2) \
-  do { \
-    __sanitizer::u64 v1 = (u64)(c1); \
-    __sanitizer::u64 v2 = (u64)(c2); \
-    if (!(v1 op v2)) \
-      __tsan::CheckFailed(__FILE__, __LINE__, \
-        "(" #c1 ") " #op " (" #c2 ")", v1, v2); \
-  } while (false) \
-/**/
-
-#define CHECK(a)       CHECK_IMPL((a), !=, 0)
-#define CHECK_EQ(a, b) CHECK_IMPL((a), ==, (b))
-#define CHECK_NE(a, b) CHECK_IMPL((a), !=, (b))
-#define CHECK_LT(a, b) CHECK_IMPL((a), <,  (b))
-#define CHECK_LE(a, b) CHECK_IMPL((a), <=, (b))
-#define CHECK_GT(a, b) CHECK_IMPL((a), >,  (b))
-#define CHECK_GE(a, b) CHECK_IMPL((a), >=, (b))
-
 #if TSAN_DEBUG
 #define DCHECK(a)       CHECK(a)
 #define DCHECK_EQ(a, b) CHECK_EQ(a, b)
@@ -87,8 +69,6 @@ const bool kCollectStats = false;
 #define DCHECK_GT(a, b)
 #define DCHECK_GE(a, b)
 #endif
-
-void CheckFailed(const char *file, int line, const char *cond, u64 v1, u64 v2);
 
 // The following "build consistency" machinery ensures that all source files
 // are built in the same configuration. Inconsistent builds lead to

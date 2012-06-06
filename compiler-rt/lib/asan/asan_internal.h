@@ -110,7 +110,6 @@ class AsanThread;
 struct AsanStackTrace;
 
 // asan_rtl.cc
-void NORETURN CheckFailed(const char *cond, const char *file, int line);
 void NORETURN ShowStatsAndAbort();
 
 // asan_globals.cc
@@ -223,19 +222,6 @@ void SleepForSeconds(int seconds);
 void NORETURN Exit(int exitcode);
 void NORETURN Abort();
 int Atexit(void (*function)(void));
-
-#define CHECK(cond) do { if (!(cond)) { \
-  CheckFailed(#cond, __FILE__, __LINE__); \
-}}while(0)
-
-#define RAW_CHECK_MSG(expr, msg) do { \
-  if (!(expr)) { \
-    RawWrite(msg); \
-    Die(); \
-  } \
-} while (0)
-
-#define RAW_CHECK(expr) RAW_CHECK_MSG(expr, #expr)
 
 #define UNIMPLEMENTED() CHECK("unimplemented" && 0)
 

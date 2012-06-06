@@ -20,10 +20,6 @@
 
 namespace __sanitizer {
 
-// NOTE: Functions below must be defined in each run-time. {{{
-void NORETURN Die();
-// }}}
-
 // Constants.
 const uptr kWordSize = __WORDSIZE / 8;
 const uptr kWordSizeInBits = 8 * kWordSize;

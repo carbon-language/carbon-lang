@@ -22,6 +22,18 @@
 #include "tsan_flags.h"
 #include "tsan_placement_new.h"
 
+namespace __sanitizer {
+using namespace __tsan;
+
+void CheckFailed(const char *file, int line, const char *cond, u64 v1, u64 v2) {
+  ScopedInRtl in_rtl;
+  TsanPrintf("FATAL: ThreadSanitizer CHECK failed: %s:%d \"%s\" (%zx, %zx)\n",
+             file, line, cond, (uptr)v1, (uptr)v2);
+  Die();
+}
+
+}  // namespace __sanitizer
+
 namespace __tsan {
 
 // Can be overriden by an application/test to intercept reports.
@@ -345,13 +357,6 @@ void ReportRace(ThreadState *thr) {
     return;
 
   AddRacyStacks(thr, traces, addr_min, addr_max);
-}
-
-void CheckFailed(const char *file, int line, const char *cond, u64 v1, u64 v2) {
-  ScopedInRtl in_rtl;
-  TsanPrintf("FATAL: ThreadSanitizer CHECK failed: %s:%d \"%s\" (%zx, %zx)\n",
-             file, line, cond, (uptr)v1, (uptr)v2);
-  Die();
 }
 
 }  // namespace __tsan
