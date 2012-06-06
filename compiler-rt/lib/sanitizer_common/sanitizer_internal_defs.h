@@ -29,12 +29,14 @@ typedef unsigned long    DWORD;  // NOLINT
 // FIXME(timurrrr): do we need this on Windows?
 # define ALIAS(x)
 # define ALIGNED(x) __declspec(align(x))
+# define FORMAT(f, a)
 # define NOINLINE __declspec(noinline)
 # define NORETURN __declspec(noreturn)
 # define THREADLOCAL   __declspec(thread)
 #else  // _WIN32
 # define ALIAS(x) __attribute__((alias(x)))
 # define ALIGNED(x) __attribute__((aligned(x)))
+# define FORMAT(f, a)  __attribute__((format(printf, f, a)))
 # define NOINLINE __attribute__((noinline))
 # define NORETURN  __attribute__((noreturn))
 # define THREADLOCAL   __thread
@@ -45,7 +47,6 @@ typedef unsigned long    DWORD;  // NOLINT
 # define ALWAYS_INLINE __attribute__((always_inline))
 # define LIKELY(x)     __builtin_expect(!!(x), 1)
 # define UNLIKELY(x)   __builtin_expect(!!(x), 0)
-# define FORMAT(f, a)  __attribute__((format(printf, f, a)))
 # define USED __attribute__((used))
 #endif
 
