@@ -56,3 +56,13 @@ define zeroext i8 @t5(float %x, float %y) nounwind {
 ; CHECK: t5
 ; CHECK: ret i8 0
 }
+
+define zeroext i8 @t6(float %x, float %y) nounwind {
+       %a = fcmp uno float %x, %y
+       %b = fcmp ord float %x, %y
+       %c = and i1 %a, %b
+       %retval = zext i1 %c to i8
+       ret i8 %retval
+; CHECK: t6
+; CHECK: ret i8 0
+}
