@@ -99,6 +99,14 @@ public:
     DisAsm.reset(disAsm);
     IP.reset(iP);
   }
+  const std::string &getTripleName() const { return TripleName; }
+  void *getDisInfo() const { return DisInfo; }
+  int getTagType() const { return TagType; }
+  LLVMOpInfoCallback getGetOpInfo() const { return GetOpInfo; }
+  LLVMSymbolLookupCallback getSymbolLookupCallback() const {
+    return SymbolLookUp;
+  }
+  const Target *getTarget() const { return TheTarget; }
   const MCDisassembler *getDisAsm() const { return DisAsm.get(); }
   const MCAsmInfo *getAsmInfo() const { return MAI.get(); }
   MCInstPrinter *getIP() { return IP.get(); }
