@@ -31,7 +31,7 @@ void RawWrite(const char *buffer) {
   uptr length = (uptr)internal_strlen(buffer);
   if (length != internal_write(2, buffer, length)) {
     internal_write(2, kRawWriteError, internal_strlen(kRawWriteError));
-    AsanDie();
+    Die();
   }
   if (error_message_buffer) {
     int remaining = error_message_buffer_size - error_message_buffer_pos;

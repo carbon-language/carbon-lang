@@ -128,7 +128,7 @@ void AsanUnmapOrDie(void *addr, uptr size) {
   int res = internal_munmap(addr, size);
   if (res != 0) {
     Report("Failed to unmap\n");
-    AsanDie();
+    Die();
   }
 }
 

@@ -14,6 +14,7 @@
 #ifndef ASAN_INTERNAL_H
 #define ASAN_INTERNAL_H
 
+#include "sanitizer_common/sanitizer_common.h"
 #include "sanitizer_common/sanitizer_internal_defs.h"
 #include "sanitizer_common/sanitizer_libc.h"
 
@@ -209,14 +210,16 @@ extern s64 FLAG_sleep_before_dying;
 extern bool    FLAG_handle_segv;
 extern bool    FLAG_use_sigaltstack;
 extern bool    FLAG_check_malloc_usable_size;
+extern bool    FLAG_unmap_shadow_on_exit;
+extern bool    FLAG_abort_on_error;
 
 extern int asan_inited;
 // Used to avoid infinite recursion in __asan_init().
 extern bool asan_init_is_running;
+extern void (*death_callback)(void);
 
 enum LinkerInitialized { LINKER_INITIALIZED = 0 };
 
-void NORETURN AsanDie();
 void SleepForSeconds(int seconds);
 void NORETURN Exit(int exitcode);
 void NORETURN Abort();
@@ -229,7 +232,7 @@ int Atexit(void (*function)(void));
 #define RAW_CHECK_MSG(expr, msg) do { \
   if (!(expr)) { \
     RawWrite(msg); \
-    AsanDie(); \
+    Die(); \
   } \
 } while (0)
 

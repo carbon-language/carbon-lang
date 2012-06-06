@@ -23,6 +23,30 @@
 #include "asan_thread_registry.h"
 #include "sanitizer_common/sanitizer_libc.h"
 
+namespace __sanitizer {
+using namespace __asan;
+
+void Die() {
+  static int num_calls = 0;
+  if (AtomicInc(&num_calls) > 1) {
+    // Don't die twice - run a busy loop.
+    while (1) { }
+  }
+  if (FLAG_sleep_before_dying) {
+    Report("Sleeping for %d second(s)\n", FLAG_sleep_before_dying);
+    SleepForSeconds(FLAG_sleep_before_dying);
+  }
+  if (FLAG_unmap_shadow_on_exit)
+    AsanUnmapOrDie((void*)kLowShadowBeg, kHighShadowEnd - kLowShadowBeg);
+  if (death_callback)
+    death_callback();
+  if (FLAG_abort_on_error)
+    Abort();
+  Exit(FLAG_exitcode);
+}
+
+}  // namespace __sanitizer
+
 namespace __asan {
 
 // -------------------------- Flags ------------------------- {{{1
@@ -56,7 +80,7 @@ bool    FLAG_check_malloc_usable_size = 1;
 // -------------------------- Globals --------------------- {{{1
 int asan_inited;
 bool asan_init_is_running;
-static void (*death_callback)(void);
+void (*death_callback)(void);
 static void (*error_report_callback)(const char*);
 char *error_message_buffer = 0;
 uptr error_message_buffer_pos = 0;
@@ -65,7 +89,7 @@ uptr error_message_buffer_size = 0;
 // -------------------------- Misc ---------------- {{{1
 void ShowStatsAndAbort() {
   __asan_print_accumulated_stats();
-  AsanDie();
+  Die();
 }
 
 static void PrintBytes(const char *before, uptr *a) {
@@ -107,25 +131,6 @@ uptr ReadFileToBuffer(const char *file_name, char **buff,
       break;
   }
   return read_len;
-}
-
-void AsanDie() {
-  static int num_calls = 0;
-  if (AtomicInc(&num_calls) > 1) {
-    // Don't die twice - run a busy loop.
-    while (1) { }
-  }
-  if (FLAG_sleep_before_dying) {
-    Report("Sleeping for %d second(s)\n", FLAG_sleep_before_dying);
-    SleepForSeconds(FLAG_sleep_before_dying);
-  }
-  if (FLAG_unmap_shadow_on_exit)
-    AsanUnmapOrDie((void*)kLowShadowBeg, kHighShadowEnd - kLowShadowBeg);
-  if (death_callback)
-    death_callback();
-  if (FLAG_abort_on_error)
-    Abort();
-  Exit(FLAG_exitcode);
 }
 
 // ---------------------- mmap -------------------- {{{1
@@ -451,7 +456,7 @@ void __asan_report_error(uptr pc, uptr bp, uptr sp,
   if (error_report_callback) {
     error_report_callback(error_message_buffer);
   }
-  AsanDie();
+  Die();
 }
 
 static void ParseAsanOptions(const char *options) {
@@ -571,7 +576,7 @@ void __asan_init() {
     Report("Shadow memory range interleaves with an existing memory mapping. "
            "ASan cannot proceed correctly. ABORTING.\n");
     AsanDumpProcessMap();
-    AsanDie();
+    Die();
   }
 
   InstallSignalHandlers();

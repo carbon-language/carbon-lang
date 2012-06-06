@@ -83,7 +83,7 @@ static void MaybeInstallSigaction(int signum,
 static void     ASAN_OnSIGSEGV(int, siginfo_t *siginfo, void *context) {
   uptr addr = (uptr)siginfo->si_addr;
   // Write the first message using the bullet-proof write.
-  if (13 != internal_write(2, "ASAN:SIGSEGV\n", 13)) AsanDie();
+  if (13 != internal_write(2, "ASAN:SIGSEGV\n", 13)) Die();
   uptr pc, sp, bp;
   GetPcSpBp(context, &pc, &sp, &bp);
   Report("ERROR: AddressSanitizer crashed on unknown address %p"
