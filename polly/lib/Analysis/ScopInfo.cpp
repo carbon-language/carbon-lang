@@ -58,28 +58,28 @@ STATISTIC(RichScopFound,   "Number of Scops containing a loop");
 /// Translate a SCEVExpression into an isl_pw_aff object.
 struct SCEVAffinator : public SCEVVisitor<SCEVAffinator, isl_pw_aff*> {
 private:
-  isl_ctx *ctx;
+  isl_ctx *Ctx;
   int NbLoopSpaces;
-  const Scop *scop;
+  const Scop *S;
 
 public:
-  static isl_pw_aff *getPwAff(ScopStmt *stmt, const SCEV *scev) {
-    Scop *S = stmt->getParent();
+  static isl_pw_aff *getPwAff(ScopStmt *Stmt, const SCEV *Scev) {
+    Scop *S = Stmt->getParent();
     const Region *Reg = &S->getRegion();
 
-    S->addParams(getParamsInAffineExpr(Reg, scev, *S->getSE()));
+    S->addParams(getParamsInAffineExpr(Reg, Scev, *S->getSE()));
 
-    SCEVAffinator Affinator(stmt);
-    return Affinator.visit(scev);
+    SCEVAffinator Affinator(Stmt);
+    return Affinator.visit(Scev);
   }
 
-  isl_pw_aff *visit(const SCEV *scev) {
+  isl_pw_aff *visit(const SCEV *Scev) {
     // In case the scev is a valid parameter, we do not further analyze this
     // expression, but create a new parameter in the isl_pw_aff. This allows us
     // to treat subexpressions that we cannot translate into an piecewise affine
     // expression, as constant parameters of the piecewise affine expression.
-    if (isl_id *Id = scop->getIdForParam(scev)) {
-      isl_space *Space = isl_space_set_alloc(ctx, 1, NbLoopSpaces);
+    if (isl_id *Id = S->getIdForParam(Scev)) {
+      isl_space *Space = isl_space_set_alloc(Ctx, 1, NbLoopSpaces);
       Space = isl_space_set_dim_id(Space, isl_dim_param, 0, Id);
 
       isl_set *Domain = isl_set_universe(isl_space_copy(Space));
@@ -90,13 +90,13 @@ public:
       return isl_pw_aff_alloc(Domain, Affine);
     }
 
-    return SCEVVisitor<SCEVAffinator, isl_pw_aff*>::visit(scev);
+    return SCEVVisitor<SCEVAffinator, isl_pw_aff*>::visit(Scev);
   }
 
-  SCEVAffinator(const ScopStmt *stmt) :
-    ctx(stmt->getIslCtx()),
-    NbLoopSpaces(stmt->getNumIterators()),
-    scop(stmt->getParent()) {}
+  SCEVAffinator(const ScopStmt *Stmt) :
+    Ctx(Stmt->getIslCtx()),
+    NbLoopSpaces(Stmt->getNumIterators()),
+    S(Stmt->getParent()) {}
 
   __isl_give isl_pw_aff *visitConstant(const SCEVConstant *Constant) {
     ConstantInt *Value = Constant->getValue();
@@ -115,7 +115,7 @@ public:
     //    this constant correctly.
     MPZ_from_APInt(v, Value->getValue(), /* isSigned */ true);
 
-    isl_space *Space = isl_space_set_alloc(ctx, 0, NbLoopSpaces);
+    isl_space *Space = isl_space_set_alloc(Ctx, 0, NbLoopSpaces);
     isl_local_space *ls = isl_local_space_from_space(isl_space_copy(Space));
     isl_aff *Affine = isl_aff_zero_on_domain(ls);
     isl_set *Domain = isl_set_universe(Space);
@@ -178,19 +178,19 @@ public:
 
   int getLoopDepth(const Loop *L) {
     Loop *outerLoop =
-      scop->getRegion().outermostLoopInRegion(const_cast<Loop*>(L));
+      S->getRegion().outermostLoopInRegion(const_cast<Loop*>(L));
     assert(outerLoop && "Scop does not contain this loop");
     return L->getLoopDepth() - outerLoop->getLoopDepth();
   }
 
   __isl_give isl_pw_aff *visitAddRecExpr(const SCEVAddRecExpr *Expr) {
     assert(Expr->isAffine() && "Only affine AddRecurrences allowed");
-    assert(scop->getRegion().contains(Expr->getLoop())
+    assert(S->getRegion().contains(Expr->getLoop())
            && "Scop does not contain the loop referenced in this AddRec");
 
     isl_pw_aff *Start = visit(Expr->getStart());
     isl_pw_aff *Step = visit(Expr->getOperand(1));
-    isl_space *Space = isl_space_set_alloc(ctx, 0, NbLoopSpaces);
+    isl_space *Space = isl_space_set_alloc(Ctx, 0, NbLoopSpaces);
     isl_local_space *LocalSpace = isl_local_space_from_space(Space);
 
     int loopDimension = getLoopDepth(Expr->getLoop());
