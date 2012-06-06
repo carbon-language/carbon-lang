@@ -145,8 +145,8 @@ static u8 *MmapNewPagesAndPoisonShadow(uptr size) {
 // CHUNK_QUARANTINE: the chunk was freed and put into quarantine zone.
 //
 // The pseudo state CHUNK_MEMALIGN is used to mark that the address is not
-// the beginning of a AsanChunk (in which case 'next' contains the address
-// of the AsanChunk).
+// the beginning of a AsanChunk (in which the actual chunk resides at
+// this - this->used_size).
 //
 // The magic numbers for the enum values are taken randomly.
 enum {
@@ -167,7 +167,8 @@ struct ChunkBase {
   uptr alignment_log : 8;
   uptr used_size : FIRST_32_SECOND_64(32, 56);  // Size requested by the user.
 
-  // The rest.
+  // This field may overlap with the user area and thus should not
+  // be used while the chunk is in CHUNK_ALLOCATED state.
   AsanChunk *next;
 
   // Typically the beginning of the user-accessible memory is 'this'+REDZONE
@@ -246,7 +247,7 @@ struct AsanChunk: public ChunkBase {
 static AsanChunk *PtrToChunk(uptr ptr) {
   AsanChunk *m = (AsanChunk*)(ptr - REDZONE);
   if (m->chunk_state == CHUNK_MEMALIGN) {
-    m = m->next;
+    m = (AsanChunk*)((uptr)m - m->used_size);
   }
   return m;
 }
@@ -686,7 +687,7 @@ static u8 *Allocate(uptr alignment, uptr size, AsanStackTrace *stack) {
     CHECK((addr & (alignment - 1)) == 0);
     AsanChunk *p = (AsanChunk*)(addr - REDZONE);
     p->chunk_state = CHUNK_MEMALIGN;
-    p->next = m;
+    p->used_size = (uptr)p - (uptr)m;
     m->alignment_log = Log2(alignment);
     CHECK(m->Beg() == addr);
   } else {
@@ -736,6 +737,8 @@ static void Deallocate(u8 *ptr, AsanStackTrace *stack) {
     ShowStatsAndAbort();
   }
   CHECK(old_chunk_state == CHUNK_ALLOCATED);
+  // With REDZONE==16 m->next is in the user area, otherwise it should be 0.
+  CHECK(REDZONE <= 16 || !m->next);
   CHECK(m->free_tid == kInvalidTid);
   CHECK(m->alloc_tid >= 0);
   AsanThread *t = asanThreadRegistry().GetCurrent();
@@ -752,16 +755,15 @@ static void Deallocate(u8 *ptr, AsanStackTrace *stack) {
   thread_stats.freed_by_size[m->SizeClass()]++;
 
   CHECK(m->chunk_state == CHUNK_QUARANTINE);
+
   if (t) {
     AsanThreadLocalMallocStorage *ms = &t->malloc_storage();
-    CHECK(!m->next);
     ms->quarantine_.Push(m);
 
     if (ms->quarantine_.size() > kMaxThreadLocalQuarantine) {
       malloc_info.SwallowThreadLocalMallocStorage(ms, false);
     }
   } else {
-    CHECK(!m->next);
     malloc_info.BypassThreadLocalQuarantine(m);
   }
 }
