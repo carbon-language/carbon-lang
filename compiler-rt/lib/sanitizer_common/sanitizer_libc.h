@@ -11,16 +11,12 @@
 // run-time libraries.
 // These tools can not use some of the libc functions directly because those
 // functions are intercepted. Instead, we implement a tiny subset of libc here.
-//
-// We also define several basic types here to avoid using system headers
-// as the latter complicate portability of this low-level code.
 //===----------------------------------------------------------------------===//
 #ifndef SANITIZER_LIBC_H
 #define SANITIZER_LIBC_H
 
 #include "sanitizer_internal_defs.h"
 
-// No code here yet. Will move more code in the next changes.
 namespace __sanitizer {
 
 void MiniLibcStub();

@@ -26,6 +26,7 @@
 #ifndef TSAN_RTL_H
 #define TSAN_RTL_H
 
+#include "sanitizer_common/sanitizer_common.h"
 #include "tsan_clock.h"
 #include "tsan_defs.h"
 #include "tsan_flags.h"
@@ -390,7 +391,6 @@ void ALWAYS_INLINE INLINE StatInc(ThreadState *thr, StatType typ, u64 n = 1) {
 void InitializeShadowMemory();
 void InitializeInterceptors();
 void InitializeDynamicAnnotations();
-void Die() NORETURN;
 
 void ReportRace(ThreadState *thr);
 bool OutputReport(const ScopedReport &srep,

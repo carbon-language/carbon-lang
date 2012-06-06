@@ -39,6 +39,14 @@
 
 extern "C" int arch_prctl(int code, __sanitizer::uptr *addr);
 
+namespace __sanitizer {
+
+void Die() {
+  _exit(1);
+}
+
+}  // namespace __sanitizer
+
 namespace __tsan {
 
 static uptr g_tls_size;
@@ -54,10 +62,6 @@ ScopedInRtl::~ScopedInRtl() {
   thr_->in_rtl--;
   errno = errno_;
   CHECK_EQ(in_rtl_, thr_->in_rtl);
-}
-
-void Die() {
-  _exit(1);
 }
 
 uptr GetShadowMemoryConsumption() {
