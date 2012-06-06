@@ -37,6 +37,7 @@
 #include "clang/Basic/ExpressionTraits.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/OwningPtr.h"
+#include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include <deque>
@@ -266,6 +267,11 @@ public:
   
   /// FieldCollector - Collects CXXFieldDecls during parsing of C++ classes.
   OwningPtr<CXXFieldCollector> FieldCollector;
+
+  typedef llvm::SmallSetVector<const NamedDecl*, 16> NamedDeclSetType;
+
+  /// \brief Set containing all declared private fields that are not used.
+  NamedDeclSetType UnusedPrivateFields;
 
   typedef llvm::SmallPtrSet<const CXXRecordDecl*, 8> RecordDeclSetTy;
 

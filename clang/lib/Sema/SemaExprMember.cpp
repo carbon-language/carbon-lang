@@ -1591,6 +1591,8 @@ BuildFieldReferenceExpr(Sema &S, Expr *BaseExpr, bool IsArrow,
       MemberType = S.Context.getQualifiedType(MemberType, Combined);
   }
   
+  S.UnusedPrivateFields.remove(Field);
+
   ExprResult Base =
   S.PerformObjectMemberConversion(BaseExpr, SS.getScopeRep(),
                                   FoundDecl, Field);

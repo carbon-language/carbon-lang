@@ -173,6 +173,8 @@ def warn_unneeded_internal_decl : Warning<
 def warn_unneeded_member_function : Warning<
   "member function %0 is not needed and will not be emitted">,
   InGroup<UnneededMemberFunction>, DefaultIgnore;
+def warn_unused_private_field: Warning<"private field %0 is not used">,
+  InGroup<UnusedPrivateField>, DefaultIgnore;
 
 def warn_parameter_size: Warning<
   "%0 is a large (%1 bytes) pass-by-value argument; "

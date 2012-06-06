@@ -30,6 +30,7 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/ASTDiagnostic.h"
 #include "clang/AST/DeclCXX.h"
+#include "clang/AST/DeclFriend.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/ExprCXX.h"
@@ -422,6 +423,79 @@ void Sema::LoadExternalWeakUndeclaredIdentifiers() {
   }
 }
 
+
+typedef llvm::DenseMap<const CXXRecordDecl*, bool> RecordCompleteMap;
+
+/// \brief Returns true, if all methods and nested classes of the given
+/// CXXRecordDecl are defined in this translation unit.
+///
+/// Should only be called from ActOnEndOfTranslationUnit so that all
+/// definitions are actually read.
+static bool MethodsAndNestedClassesComplete(const CXXRecordDecl *RD,
+                                            RecordCompleteMap &MNCComplete) {
+  RecordCompleteMap::iterator Cache = MNCComplete.find(RD);
+  if (Cache != MNCComplete.end())
+    return Cache->second;
+  if (!RD->isCompleteDefinition())
+    return false;
+  bool Complete = true;
+  for (DeclContext::decl_iterator I = RD->decls_begin(),
+                                  E = RD->decls_end();
+       I != E && Complete; ++I) {
+    if (const CXXMethodDecl *M = dyn_cast<CXXMethodDecl>(*I))
+      Complete = M->isDefined() || (M->isPure() && !isa<CXXDestructorDecl>(M));
+    else if (const CXXRecordDecl *R = dyn_cast<CXXRecordDecl>(*I)) {
+      if (R->isInjectedClassName())
+        continue;
+      if (R->hasDefinition())
+        Complete = MethodsAndNestedClassesComplete(R->getDefinition(),
+                                                   MNCComplete);
+      else
+        Complete = false;
+    }
+  }
+  MNCComplete[RD] = Complete;
+  return Complete;
+}
+
+/// \brief Returns true, if the given CXXRecordDecl is fully defined in this
+/// translation unit, i.e. all methods are defined or pure virtual and all
+/// friends, friend functions and nested classes are fully defined in this
+/// translation unit.
+///
+/// Should only be called from ActOnEndOfTranslationUnit so that all
+/// definitions are actually read.
+static bool IsRecordFullyDefined(const CXXRecordDecl *RD,
+                                 RecordCompleteMap &RecordsComplete,
+                                 RecordCompleteMap &MNCComplete) {
+  RecordCompleteMap::iterator Cache = RecordsComplete.find(RD);
+  if (Cache != RecordsComplete.end())
+    return Cache->second;
+  bool Complete = MethodsAndNestedClassesComplete(RD, MNCComplete);
+  for (CXXRecordDecl::friend_iterator I = RD->friend_begin(),
+                                      E = RD->friend_end();
+       I != E && Complete; ++I) {
+    // Check if friend classes and methods are complete.
+    if (TypeSourceInfo *TSI = (*I)->getFriendType()) {
+      // Friend classes are available as the TypeSourceInfo of the FriendDecl.
+      if (CXXRecordDecl *FriendD = TSI->getType()->getAsCXXRecordDecl())
+        Complete = MethodsAndNestedClassesComplete(FriendD, MNCComplete);
+      else
+        Complete = false;
+    } else {
+      // Friend functions are available through the NamedDecl of FriendDecl.
+      if (const FunctionDecl *FD =
+          dyn_cast<FunctionDecl>((*I)->getFriendDecl()))
+        Complete = FD->isDefined();
+      else
+        // This is a template friend, give up.
+        Complete = false;
+    }
+  }
+  RecordsComplete[RD] = Complete;
+  return Complete;
+}
+
 /// ActOnEndOfTranslationUnit - This is called at the very end of the
 /// translation unit when EOF is reached and all but the top-level scope is
 /// popped.
@@ -626,6 +700,23 @@ void Sema::ActOnEndOfTranslationUnit() {
     }
 
     checkUndefinedInternals(*this);
+  }
+
+  if (Diags.getDiagnosticLevel(diag::warn_unused_private_field,
+                               SourceLocation())
+        != DiagnosticsEngine::Ignored) {
+    RecordCompleteMap RecordsComplete;
+    RecordCompleteMap MNCComplete;
+    for (NamedDeclSetType::iterator I = UnusedPrivateFields.begin(),
+         E = UnusedPrivateFields.end(); I != E; ++I) {
+      const NamedDecl *D = *I;
+      const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(D->getDeclContext());
+      if (RD && !RD->isUnion() &&
+          IsRecordFullyDefined(RD, RecordsComplete, MNCComplete)) {
+        Diag(D->getLocation(), diag::warn_unused_private_field)
+              << D->getDeclName();
+      }
+    }
   }
 
   // Check we've noticed that we're no longer parsing the initializer for every

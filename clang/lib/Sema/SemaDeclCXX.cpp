@@ -1439,6 +1439,17 @@ bool Sema::CheckIfOverriddenFunctionIsMarkedFinal(const CXXMethodDecl *New,
   return true;
 }
 
+static bool InitializationHasSideEffects(const FieldDecl &FD) {
+  if (!FD.getType().isNull()) {
+    if (const CXXRecordDecl *RD = FD.getType()->getAsCXXRecordDecl()) {
+      return !RD->isCompleteDefinition() ||
+             !RD->hasTrivialDefaultConstructor() ||
+             !RD->hasTrivialDestructor();
+    }
+  }
+  return false;
+}
+
 /// ActOnCXXMemberDeclarator - This is invoked when a C++ class member
 /// declarator is parsed. 'AS' is the access specifier, 'BW' specifies the
 /// bitfield width if there is one, 'InitExpr' specifies the initializer if
@@ -1624,8 +1635,23 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
 
   assert((Name || isInstField) && "No identifier for non-field ?");
 
-  if (isInstField)
-    FieldCollector->Add(cast<FieldDecl>(Member));
+  if (isInstField) {
+    FieldDecl *FD = cast<FieldDecl>(Member);
+    FieldCollector->Add(FD);
+
+    if (Diags.getDiagnosticLevel(diag::warn_unused_private_field,
+                                 FD->getLocation())
+          != DiagnosticsEngine::Ignored) {
+      // Remember all explicit private FieldDecls that have a name, no side
+      // effects and are not part of a dependent type declaration.
+      if (!FD->isImplicit() && FD->getDeclName() &&
+          FD->getAccess() == AS_private &&
+          !FD->getParent()->getTypeForDecl()->isDependentType() &&
+          !InitializationHasSideEffects(*FD))
+        UnusedPrivateFields.insert(FD);
+    }
+  }
+
   return Member;
 }
 
@@ -2105,6 +2131,25 @@ Sema::BuildMemberInitializer(ValueDecl *Member, Expr *Init,
     Args = InitList->getInits();
     NumArgs = InitList->getNumInits();
   }
+
+  // Mark FieldDecl as being used if it is a non-primitive type and the
+  // initializer does not call the default constructor (which is trivial
+  // for all entries in UnusedPrivateFields).
+  // FIXME: Make this smarter once more side effect-free types can be
+  // determined.
+  if (NumArgs > 0) {
+    if (Member->getType()->isRecordType()) {
+      UnusedPrivateFields.remove(Member);
+    } else {
+      for (unsigned i = 0; i < NumArgs; ++i) {
+        if (Args[i]->HasSideEffects(Context)) {
+          UnusedPrivateFields.remove(Member);
+          break;
+        }
+      }
+    }
+  }
+
   for (unsigned i = 0; i < NumArgs; ++i) {
     SourceLocation L;
     if (InitExprContainsUninitializedFields(Args[i], Member, &L)) {
@@ -2808,6 +2853,13 @@ static bool CollectFieldInitializer(Sema &SemaRef, BaseAndFieldInfo &Info,
                                                       SourceLocation(), 0,
                                                       SourceLocation());
     Info.AllToInit.push_back(Init);
+
+    // Check whether this initializer makes the field "used".
+    Expr *InitExpr = Field->getInClassInitializer();
+    if (Field->getType()->isRecordType() ||
+        (InitExpr && InitExpr->HasSideEffects(SemaRef.Context)))
+      SemaRef.UnusedPrivateFields.remove(Field);
+
     return false;
   }
 
