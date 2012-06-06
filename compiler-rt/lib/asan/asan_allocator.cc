@@ -157,15 +157,26 @@ enum {
 };
 
 struct ChunkBase {
+  // First 8 bytes.
   uptr  chunk_state : 8;
   uptr  size_class  : 8;
   uptr  alloc_tid   : 24;
   uptr  free_tid    : 24;
-  u32  offset;  // User-visible memory starts at this+offset (beg()).
-  uptr used_size;  // Size requested by the user.
+
+  // Second 8 bytes.
+  uptr alignment_log : 8;
+  uptr used_size : FIRST_32_SECOND_64(32, 56);  // Size requested by the user.
+
+  // The rest.
   AsanChunk *next;
 
-  uptr   beg() { return (uptr)this + offset; }
+  // Typically the beginning of the user-accessible memory is 'this'+REDZONE
+  // and is also aligned by REDZONE. However, if the memory is allocated
+  // by memalign, the alignment might be higher and the user-accessible memory
+  // starts at the first properly aligned address after the end of 'this'.
+  uptr   Beg() {
+    return RoundUpTo((uptr)this + sizeof(ChunkBase), 1 << alignment_log);
+  }
   uptr Size() { return SizeClassToSize(size_class); }
   u8 SizeClass() { return size_class; }
 };
@@ -189,27 +200,27 @@ struct AsanChunk: public ChunkBase {
   }
 
   bool AddrIsInside(uptr addr, uptr access_size, uptr *offset) {
-    if (addr >= beg() && (addr + access_size) <= (beg() + used_size)) {
-      *offset = addr - beg();
+    if (addr >= Beg() && (addr + access_size) <= (Beg() + used_size)) {
+      *offset = addr - Beg();
       return true;
     }
     return false;
   }
 
   bool AddrIsAtLeft(uptr addr, uptr access_size, uptr *offset) {
-    if (addr < beg()) {
-      *offset = beg() - addr;
+    if (addr < Beg()) {
+      *offset = Beg() - addr;
       return true;
     }
     return false;
   }
 
   bool AddrIsAtRight(uptr addr, uptr access_size, uptr *offset) {
-    if (addr + access_size >= beg() + used_size) {
-      if (addr <= beg() + used_size)
+    if (addr + access_size >= Beg() + used_size) {
+      if (addr <= Beg() + used_size)
         *offset = 0;
       else
-        *offset = addr - (beg() + used_size);
+        *offset = addr - (Beg() + used_size);
       return true;
     }
     return false;
@@ -228,7 +239,7 @@ struct AsanChunk: public ChunkBase {
       AsanPrintf(" somewhere around (this is AddressSanitizer bug!)");
     }
     AsanPrintf(" %zu-byte region [%p,%p)\n",
-               used_size, (void*)beg(), (void*)(beg() + used_size));
+               used_size, (void*)Beg(), (void*)(Beg() + used_size));
   }
 };
 
@@ -676,11 +687,14 @@ static u8 *Allocate(uptr alignment, uptr size, AsanStackTrace *stack) {
     AsanChunk *p = (AsanChunk*)(addr - REDZONE);
     p->chunk_state = CHUNK_MEMALIGN;
     p->next = m;
+    m->alignment_log = Log2(alignment);
+    CHECK(m->Beg() == addr);
+  } else {
+    m->alignment_log = Log2(REDZONE);
   }
   CHECK(m == PtrToChunk(addr));
   m->used_size = size;
-  m->offset = addr - (uptr)m;
-  CHECK(m->beg() == addr);
+  CHECK(m->Beg() == addr);
   m->alloc_tid = t ? t->tid() : 0;
   m->free_tid   = kInvalidTid;
   AsanStackTrace::CompressStack(stack, m->compressed_alloc_stack(),

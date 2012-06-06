@@ -47,6 +47,12 @@ inline uptr RoundUpTo(uptr size, uptr boundary) {
   return (size + boundary - 1) & ~(boundary - 1);
 }
 
+#if __WORDSIZE == 64
+# define FIRST_32_SECOND_64(a, b) (b)
+#else
+# define FIRST_32_SECOND_64(a, b) (a)
+#endif
+
 }  // namespace __sanitizer
 
 #endif  // SANITIZER_COMMON_H
