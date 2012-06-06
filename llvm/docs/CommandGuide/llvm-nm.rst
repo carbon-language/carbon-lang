@@ -1,29 +1,29 @@
-llvm-nm - list LLVM bitcode file's symbol table
-===============================================
+llvm-nm - list LLVM bitcode and object file's symbol table
+==========================================================
 
 
 SYNOPSIS
 --------
 
 
-**llvm-nm** [*options*] [*filenames...*]
+:program:`llvm-nm` [*options*] [*filenames...*]
 
 
 DESCRIPTION
 -----------
 
 
-The **llvm-nm** utility lists the names of symbols from the LLVM bitcode files,
-or **ar** archives containing LLVM bitcode files, named on the command line.
-Each symbol is listed along with some simple information about its provenance.
-If no file name is specified, or *-* is used as a file name, **llvm-nm** will
-process a bitcode file on its standard input stream.
+The :program:`llvm-nm` utility lists the names of symbols from the LLVM bitcode
+files, object files, or :program:`ar` archives containing them, named on the
+command line. Each symbol is listed along with some simple information about its
+provenance. If no file name is specified, or *-* is used as a file name,
+:program:`llvm-nm` will process a file on its standard input stream.
 
-**llvm-nm**'s default output format is the traditional BSD **nm** output format.
-Each such output record consists of an (optional) 8-digit hexadecimal address,
-followed by a type code character, followed by a name, for each symbol. One
-record is printed per line; fields are separated by spaces. When the address is
-omitted, it is replaced by 8 spaces.
+:program:`llvm-nm`'s default output format is the traditional BSD :program:`nm`
+output format. Each such output record consists of an (optional) 8-digit
+hexadecimal address, followed by a type code character, followed by a name, for
+each symbol. One record is printed per line; fields are separated by spaces.
+When the address is omitted, it is replaced by 8 spaces.
 
 Type code characters currently supported, and their meanings, are as follows:
 
@@ -78,73 +78,108 @@ D
 
 Because LLVM bitcode files typically contain objects that are not considered to
 have addresses until they are linked into an executable image or dynamically
-compiled "just-in-time", **llvm-nm** does not print an address for any symbol,
-even symbols which are defined in the bitcode file.
+compiled "just-in-time", :program:`llvm-nm` does not print an address for any
+symbol in a LLVM bitcode file, even symbols which are defined in the bitcode
+file.
 
 
 OPTIONS
 -------
 
 
-
-**-P**
-
- Use POSIX.2 output format. Alias for **--format=posix**.
+.. program:: llvm-nm
 
 
+.. option:: -B    (default)
 
-**-B**    (default)
-
- Use BSD output format. Alias for **--format=bsd**.
-
+ Use BSD output format. Alias for :option:`--format=bsd`.
 
 
-**-help**
+.. option:: -P
 
- Print a summary of command-line options and their meanings.
+ Use POSIX.2 output format. Alias for :option:`--format=posix`.
 
 
+.. option:: --debug-syms, -a
 
-**--defined-only**
+ Show all symbols, even debugger only.
 
- Print only symbols defined in this bitcode file (as opposed to
+
+.. option:: --defined-only
+
+ Print only symbols defined in this file (as opposed to
  symbols which may be referenced by objects in this file, but not
  defined in this file.)
 
 
+.. option:: --dynamic, -D
 
-**--extern-only**, **-g**
+ Display dynamic symbols instead of normal symbols.
+
+
+.. option:: --extern-only, -g
 
  Print only symbols whose definitions are external; that is, accessible
- from other bitcode files.
+ from other files.
 
 
+.. option:: --format=format, -f format
 
-**--undefined-only**, **-u**
-
- Print only symbols referenced but not defined in this bitcode file.
-
-
+ Select an output format; *format* may be *sysv*, *posix*, or *bsd*. The default
+ is *bsd*.
 
 
- Select an output format; *fmt* may be *sysv*, *posix*, or *bsd*. The
- default is *bsd*.
+.. option:: -help
+
+ Print a summary of command-line options and their meanings.
 
 
+.. option:: --no-sort, -p
+
+ Shows symbols in order encountered.
+
+
+.. option:: --numeric-sort, -n, -v
+
+ Sort symbols by address.
+
+
+.. option:: --print-file-name, -A, -o
+
+ Precede each symbol with the file it came from.
+
+
+.. option:: --print-size, -S
+
+ Show symbol size instead of address.
+
+
+.. option:: --size-sort
+
+ Sort symbols by size.
+
+
+.. option:: --undefined-only, -u
+
+ Print only symbols referenced but not defined in this file.
 
 
 BUGS
 ----
 
 
-**llvm-nm** cannot demangle C++ mangled names, like GNU **nm** can.
+ * :program:`llvm-nm` cannot demangle C++ mangled names, like GNU :program:`nm`
+   can.
+
+ * :program:`llvm-nm` does not support the full set of arguments that GNU
+   :program:`nm` does.
 
 
 EXIT STATUS
 -----------
 
 
-**llvm-nm** exits with an exit code of zero.
+:program:`llvm-nm` exits with an exit code of zero.
 
 
 SEE ALSO

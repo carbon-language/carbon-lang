@@ -7,12 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This program is a utility that works like traditional Unix "nm",
-// that is, it prints out the names of symbols in a bitcode file,
-// along with some information about each symbol.
+// This program is a utility that works like traditional Unix "nm", that is, it
+// prints out the names of symbols in a bitcode or object file, along with some
+// information about each symbol.
 //
-// This "nm" does not print symbols' addresses. It supports many of
-// the features of GNU "nm", including its different output formats.
+// This "nm" supports many of the features of GNU "nm", including its different
+// output formats.
 //
 //===----------------------------------------------------------------------===//
 
