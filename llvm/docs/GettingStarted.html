@@ -590,6 +590,7 @@ as the previous one. It appears to work with ENABLE_OPTIMIZED=0 (the default).</
 <p><b>GCC 4.3.3 (Debian 4.3.3-10) on ARM</b>: Miscompiles parts of LLVM 2.6
 when optimizations are turned on. The symptom is an infinite loop in
 FoldingSetImpl::RemoveNode while running the code generator.</p>
+<p><b>SUSE 11 GCC 4.3.4</b>: Miscompiles LLVM, causing crashes in ValueHandle logic.</p>
 <p><b>GCC 4.3.5 and GCC 4.4.5 on ARM</b>: These can miscompile <tt>value >>
 1</tt> even at -O0. A test failure in <tt>test/Assembler/alignstack.ll</tt> is
 one symptom of the problem.
