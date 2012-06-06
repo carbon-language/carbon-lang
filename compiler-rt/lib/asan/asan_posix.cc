@@ -89,7 +89,7 @@ static void     ASAN_OnSIGSEGV(int, siginfo_t *siginfo, void *context) {
   AsanReport("ERROR: AddressSanitizer crashed on unknown address %p"
              " (pc %p sp %p bp %p T%d)\n",
              (void*)addr, (void*)pc, (void*)sp, (void*)bp,
-             asanThreadRegistry().GetCurrentTidOrMinusOne());
+             asanThreadRegistry().GetCurrentTidOrInvalid());
   AsanPrintf("AddressSanitizer can not provide additional info. ABORTING\n");
   GET_STACK_TRACE_WITH_PC_AND_BP(kStackTraceMax, pc, bp);
   stack.PrintStack();
@@ -111,7 +111,7 @@ void SetAlternateSignalStack() {
   CHECK(0 == sigaltstack(&altstack, 0));
   if (FLAG_v > 0) {
     Report("Alternative stack for T%d set: [%p,%p)\n",
-           asanThreadRegistry().GetCurrentTidOrMinusOne(),
+           asanThreadRegistry().GetCurrentTidOrInvalid(),
            altstack.ss_sp, (char*)altstack.ss_sp + altstack.ss_size);
   }
 }

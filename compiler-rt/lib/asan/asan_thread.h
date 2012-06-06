@@ -21,6 +21,8 @@
 
 namespace __asan {
 
+const u32 kInvalidTid = 0xffffff;  // Must fit into 24 bits.
+
 class AsanThread;
 
 // These objects are created for every thread and are never deleted,
@@ -28,10 +30,10 @@ class AsanThread;
 class AsanThreadSummary {
  public:
   explicit AsanThreadSummary(LinkerInitialized) { }  // for T0.
-  AsanThreadSummary(int parent_tid, AsanStackTrace *stack)
+  AsanThreadSummary(u32 parent_tid, AsanStackTrace *stack)
       : parent_tid_(parent_tid),
         announced_(false) {
-    tid_ = -1;
+    tid_ = kInvalidTid;
     if (stack) {
       stack_ = *stack;
     }
@@ -45,15 +47,15 @@ class AsanThreadSummary {
       stack_.PrintStack();
     }
   }
-  int tid() { return tid_; }
-  void set_tid(int tid) { tid_ = tid; }
+  u32 tid() { return tid_; }
+  void set_tid(u32 tid) { tid_ = tid; }
   AsanThread *thread() { return thread_; }
   void set_thread(AsanThread *thread) { thread_ = thread; }
   static void TSDDtor(void *tsd);
 
  private:
-  int tid_;
-  int parent_tid_;
+  u32 tid_;
+  u32 parent_tid_;
   bool announced_;
   AsanStackTrace stack_;
   AsanThread *thread_;
@@ -63,7 +65,7 @@ class AsanThreadSummary {
 class AsanThread {
  public:
   explicit AsanThread(LinkerInitialized);  // for T0.
-  static AsanThread *Create(int parent_tid, thread_callback_t start_routine,
+  static AsanThread *Create(u32 parent_tid, thread_callback_t start_routine,
                             void *arg, AsanStackTrace *stack);
   void Destroy();
 
@@ -73,7 +75,7 @@ class AsanThread {
   uptr stack_top() { return stack_top_; }
   uptr stack_bottom() { return stack_bottom_; }
   uptr stack_size() { return stack_top_ - stack_bottom_; }
-  int tid() { return summary_->tid(); }
+  u32 tid() { return summary_->tid(); }
   AsanThreadSummary *summary() { return summary_; }
   void set_summary(AsanThreadSummary *summary) { summary_ = summary; }
 
@@ -86,8 +88,6 @@ class AsanThread {
   FakeStack &fake_stack() { return fake_stack_; }
   AsanThreadLocalMallocStorage &malloc_storage() { return malloc_storage_; }
   AsanStats &stats() { return stats_; }
-
-  static const int kInvalidTid = -1;
 
  private:
 

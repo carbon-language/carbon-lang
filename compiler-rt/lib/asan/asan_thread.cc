@@ -26,7 +26,7 @@ AsanThread::AsanThread(LinkerInitialized x)
       malloc_storage_(x),
       stats_(x) { }
 
-AsanThread *AsanThread::Create(int parent_tid, thread_callback_t start_routine,
+AsanThread *AsanThread::Create(u32 parent_tid, thread_callback_t start_routine,
                                void *arg, AsanStackTrace *stack) {
   uptr size = RoundUpTo(sizeof(AsanThread), kPageSize);
   AsanThread *thread = (AsanThread*)AsanMmapSomewhereOrDie(size, __FUNCTION__);

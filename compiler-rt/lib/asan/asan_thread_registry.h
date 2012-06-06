@@ -38,10 +38,10 @@ class AsanThreadRegistry {
   AsanThread *GetCurrent();
   void SetCurrent(AsanThread *t);
 
-  int GetCurrentTidOrMinusOne() {
+  u32 GetCurrentTidOrInvalid() {
     if (!inited_) return 0;
     AsanThread *t = GetCurrent();
-    return t ? t->tid() : -1;
+    return t ? t->tid() : kInvalidTid;
   }
 
   // Returns stats for GetCurrent(), or stats for
@@ -54,7 +54,7 @@ class AsanThreadRegistry {
   uptr GetHeapSize();
   uptr GetFreeBytes();
 
-  AsanThreadSummary *FindByTid(int tid);
+  AsanThreadSummary *FindByTid(u32 tid);
   AsanThread *FindThreadByStackAddress(uptr addr);
 
  private:
@@ -68,7 +68,7 @@ class AsanThreadRegistry {
   AsanThread main_thread_;
   AsanThreadSummary main_thread_summary_;
   AsanStats accumulated_stats_;
-  int n_threads_;
+  u32 n_threads_;
   AsanLock mu_;
   bool inited_;
 };

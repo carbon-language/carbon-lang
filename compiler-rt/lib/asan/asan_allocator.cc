@@ -160,8 +160,8 @@ struct ChunkBase {
   u8   chunk_state;
   u8   size_class;
   u32  offset;  // User-visible memory starts at this+offset (beg()).
-  s32  alloc_tid;
-  s32  free_tid;
+  u32  alloc_tid;
+  u32  free_tid;
   uptr used_size;  // Size requested by the user.
   AsanChunk *next;
 
@@ -585,7 +585,7 @@ static void Describe(uptr addr, uptr access_size) {
                                   m->compressed_alloc_stack_size());
   AsanThread *t = asanThreadRegistry().GetCurrent();
   CHECK(t);
-  if (m->free_tid >= 0) {
+  if (m->free_tid != kInvalidTid) {
     AsanThreadSummary *free_thread =
         asanThreadRegistry().FindByTid(m->free_tid);
     AsanPrintf("freed by thread T%d here:\n", free_thread->tid());
@@ -682,7 +682,7 @@ static u8 *Allocate(uptr alignment, uptr size, AsanStackTrace *stack) {
   m->offset = addr - (uptr)m;
   CHECK(m->beg() == addr);
   m->alloc_tid = t ? t->tid() : 0;
-  m->free_tid   = AsanThread::kInvalidTid;
+  m->free_tid   = kInvalidTid;
   AsanStackTrace::CompressStack(stack, m->compressed_alloc_stack(),
                                 m->compressed_alloc_stack_size());
   PoisonShadow(addr, rounded_size, 0);
@@ -722,7 +722,7 @@ static void Deallocate(u8 *ptr, AsanStackTrace *stack) {
     ShowStatsAndAbort();
   }
   CHECK(old_chunk_state == CHUNK_ALLOCATED);
-  CHECK(m->free_tid == AsanThread::kInvalidTid);
+  CHECK(m->free_tid == kInvalidTid);
   CHECK(m->alloc_tid >= 0);
   AsanThread *t = asanThreadRegistry().GetCurrent();
   m->free_tid = t ? t->tid() : 0;

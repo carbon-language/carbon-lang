@@ -299,7 +299,7 @@ static thread_return_t THREAD_CALLING_CONV asan_thread_start(void *arg) {
 INTERCEPTOR(int, pthread_create, void *thread,
     void *attr, void *(*start_routine)(void*), void *arg) {
   GET_STACK_TRACE_HERE(kStackTraceMax);
-  int current_tid = asanThreadRegistry().GetCurrentTidOrMinusOne();
+  u32 current_tid = asanThreadRegistry().GetCurrentTidOrInvalid();
   AsanThread *t = AsanThread::Create(current_tid, start_routine, arg, &stack);
   asanThreadRegistry().RegisterThread(t);
   return REAL(pthread_create)(thread, attr, asan_thread_start, t);
@@ -722,7 +722,7 @@ INTERCEPTOR_WINAPI(DWORD, CreateThread,
                    DWORD (__stdcall *start_routine)(void*), void* arg,
                    DWORD flags, void* tid) {
   GET_STACK_TRACE_HERE(kStackTraceMax);
-  int current_tid = asanThreadRegistry().GetCurrentTidOrMinusOne();
+  u32 current_tid = asanThreadRegistry().GetCurrentTidOrInvalid();
   AsanThread *t = AsanThread::Create(current_tid, start_routine, arg, &stack);
   asanThreadRegistry().RegisterThread(t);
   return REAL(CreateThread)(security, stack_size,

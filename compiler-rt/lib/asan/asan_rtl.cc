@@ -422,7 +422,7 @@ void __asan_report_error(uptr pc, uptr bp, uptr sp,
   }
 
   AsanThread *curr_thread = asanThreadRegistry().GetCurrent();
-  int curr_tid = asanThreadRegistry().GetCurrentTidOrMinusOne();
+  u32 curr_tid = asanThreadRegistry().GetCurrentTidOrInvalid();
 
   if (curr_thread) {
     // We started reporting an error message. Stop using the fake stack

@@ -403,7 +403,7 @@ typedef void* (*worker_t)(void *block);
 typedef struct {
   void *block;
   dispatch_function_t func;
-  int parent_tid;
+  u32 parent_tid;
 } asan_block_context_t;
 
 // We use extern declarations of libdispatch functions here instead
@@ -461,7 +461,7 @@ asan_block_context_t *alloc_asan_context(void *ctxt, dispatch_function_t func,
       (asan_block_context_t*) asan_malloc(sizeof(asan_block_context_t), stack);
   asan_ctxt->block = ctxt;
   asan_ctxt->func = func;
-  asan_ctxt->parent_tid = asanThreadRegistry().GetCurrentTidOrMinusOne();
+  asan_ctxt->parent_tid = asanThreadRegistry().GetCurrentTidOrInvalid();
   return asan_ctxt;
 }
 
@@ -559,7 +559,7 @@ INTERCEPTOR(int, pthread_workqueue_additem_np, pthread_workqueue_t workq,
       (asan_block_context_t*) asan_malloc(sizeof(asan_block_context_t), &stack);
   asan_ctxt->block = workitem_arg;
   asan_ctxt->func = (dispatch_function_t)workitem_func;
-  asan_ctxt->parent_tid = asanThreadRegistry().GetCurrentTidOrMinusOne();
+  asan_ctxt->parent_tid = asanThreadRegistry().GetCurrentTidOrInvalid();
   if (FLAG_v >= 2) {
     Report("pthread_workqueue_additem_np: %p\n", asan_ctxt);
     PRINT_CURRENT_STACK();
