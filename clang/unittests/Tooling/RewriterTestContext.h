@@ -21,6 +21,7 @@
 #include "clang/Frontend/DiagnosticOptions.h"
 #include "clang/Frontend/TextDiagnosticPrinter.h"
 #include "clang/Rewrite/Rewriter.h"
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/raw_ostream.h"
 
@@ -43,6 +44,10 @@ class RewriterTestContext {
   }
 
   ~RewriterTestContext() {
+    if (!TemporaryDirectory.empty()) {
+      uint32_t RemovedCount = 0;
+      llvm::sys::fs::remove_all(TemporaryDirectory.str(), RemovedCount);
+    }
   }
 
   FileID createInMemoryFile(StringRef Name, StringRef Content) {
@@ -56,12 +61,14 @@ class RewriterTestContext {
   }
 
   FileID createOnDiskFile(StringRef Name, StringRef Content) {
-    if (!TemporaryDirectory.isValid()) {
-      std::string ErrorInfo;
-      TemporaryDirectory = llvm::sys::Path::GetTemporaryDirectory(&ErrorInfo);
-      assert(ErrorInfo.empty());
+    if (TemporaryDirectory.empty()) {
+      int FD;
+      assert(!llvm::sys::fs::unique_file("rewriter-test-%%-%%-%%-%%/anchor",
+                                         FD, TemporaryDirectory));
+      llvm::raw_fd_ostream Closer(FD, /*shouldClose=*/true);
+      TemporaryDirectory = llvm::sys::path::parent_path(TemporaryDirectory);
     }
-    llvm::SmallString<1024> Path(TemporaryDirectory.str());
+    llvm::SmallString<1024> Path(TemporaryDirectory);
     llvm::sys::path::append(Path, Name);
     std::string ErrorInfo;
     llvm::raw_fd_ostream OutStream(Path.c_str(),
@@ -107,8 +114,8 @@ class RewriterTestContext {
   LangOptions Options;
   Rewriter Rewrite;
 
-  // Will be set once on disk files are generated. 
-  llvm::sys::Path TemporaryDirectory;
+  // Will be set once on disk files are generated.
+  SmallString<128> TemporaryDirectory;
 };
 
 } // end namespace clang
