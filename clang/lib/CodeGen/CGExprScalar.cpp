@@ -1970,9 +1970,6 @@ static Value *emitPointerArithmetic(CodeGenFunction &CGF,
   QualType elementType = pointerType->getPointeeType();
   if (const VariableArrayType *vla
         = CGF.getContext().getAsVariableArrayType(elementType)) {
-    // arithmatic on VLA pointer - make sure to emit the VLA size.
-    CGF.EmitVariablyModifiedType(elementType);
-    
     // The element count here is the total number of non-VLA elements.
     llvm::Value *numElements = CGF.getVLASize(vla).first;
 

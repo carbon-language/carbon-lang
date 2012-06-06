@@ -142,23 +142,3 @@ int test4(unsigned n, char (*p)[n][n+1][6]) {
   // CHECK-NEXT: ret i32 [[T7]]
   return p2 - p;
 }
-
-// rdar://11485774
-void test5(void)
-{
-  // CHECK: define void @test5(
-  int a[5], i = 0;
-  // CHECK: [[A:%.*]] = alloca [5 x i32], align 4
-  // CHECK-NEXT: [[I:%.*]] = alloca i32, align 4
-  // CHECK-NEXT: [[CL:%.*]] = alloca i32*, align 4
-  // CHECK-NEXT: store i32 0, i32* [[I]], align 4
-
-  (typeof(++i, (int (*)[i])a)){&a} += 0;
-  // CHECK-NEXT: [[Z:%.*]] = bitcast [5 x i32]* [[A]] to i32*
-  // CHECK-NEXT: store i32* [[Z]], i32** [[CL]]
-  // CHECK-NEXT: [[O:%.*]]  = load i32** [[CL]]
-  // CHECK-NEXT: [[T:%.*]] = load i32* [[I]], align 4
-  // CHECK-NEXT: [[VLAIX:%.*]] = mul nsw i32 0, [[T]]
-  // CHECK-NEXT: [[ADDPTR:%.*]] = getelementptr inbounds i32* [[O]], i32 [[VLAIX]]
-  // CHECK-NEXT: store i32* [[ADDPTR]], i32** [[CL]]
-}
