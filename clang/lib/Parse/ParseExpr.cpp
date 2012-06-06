@@ -1888,7 +1888,6 @@ Parser::ParseParenExpression(ParenParseOption &ExprType, bool stopIfCastExpr,
                              bool isTypeCast, ParsedType &CastTy,
                              SourceLocation &RParenLoc) {
   assert(Tok.is(tok::l_paren) && "Not a paren expr!");
-  GreaterThanIsOperatorScope G(GreaterThanIsOperator, true);
   BalancedDelimiterTracker T(*this, tok::l_paren);
   if (T.consumeOpen())
     return ExprError();

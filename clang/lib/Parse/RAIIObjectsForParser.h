@@ -332,6 +332,81 @@ namespace clang {
     }
   };
 
+  /// \brief RAII class that helps handle the parsing of an open/close delimiter
+  /// pair, such as braces { ... } or parentheses ( ... ).
+  class BalancedDelimiterTracker : public GreaterThanIsOperatorScope {
+    Parser& P;
+    tok::TokenKind Kind, Close;
+    SourceLocation (Parser::*Consumer)();
+    SourceLocation LOpen, LClose;
+    
+    unsigned short &getDepth() {
+      switch (Kind) {
+        case tok::l_brace: return P.BraceCount;
+        case tok::l_square: return P.BracketCount;
+        case tok::l_paren: return P.ParenCount;
+        default: llvm_unreachable("Wrong token kind");
+      }
+    }
+    
+    enum { MaxDepth = 256 };
+    
+    bool diagnoseOverflow();
+    bool diagnoseMissingClose();
+    
+  public:
+    BalancedDelimiterTracker(Parser& p, tok::TokenKind k)
+      : GreaterThanIsOperatorScope(p.GreaterThanIsOperator, true),
+        P(p), Kind(k)
+    {
+      switch (Kind) {
+        default: llvm_unreachable("Unexpected balanced token");
+        case tok::l_brace:
+          Close = tok::r_brace; 
+          Consumer = &Parser::ConsumeBrace;
+          break;
+        case tok::l_paren:
+          Close = tok::r_paren; 
+          Consumer = &Parser::ConsumeParen;
+          break;
+          
+        case tok::l_square:
+          Close = tok::r_square; 
+          Consumer = &Parser::ConsumeBracket;
+          break;
+      }      
+    }
+    
+    SourceLocation getOpenLocation() const { return LOpen; }
+    SourceLocation getCloseLocation() const { return LClose; }
+    SourceRange getRange() const { return SourceRange(LOpen, LClose); }
+    
+    bool consumeOpen() {
+      if (!P.Tok.is(Kind))
+        return true;
+      
+      if (getDepth() < MaxDepth) {
+        LOpen = (P.*Consumer)();
+        return false;
+      }
+      
+      return diagnoseOverflow();
+    }
+    
+    bool expectAndConsume(unsigned DiagID,
+                          const char *Msg = "",
+                          tok::TokenKind SkipToTok = tok::unknown);
+    bool consumeClose() {
+      if (P.Tok.is(Close)) {
+        LClose = (P.*Consumer)();
+        return false;
+      } 
+      
+      return diagnoseMissingClose();
+    }
+    void skipToEnd();
+  };
+
 } // end namespace clang
 
 #endif

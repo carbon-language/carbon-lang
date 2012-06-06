@@ -1235,8 +1235,6 @@ Parser::ParseCXXTypeConstructExpression(const DeclSpec &DS) {
                                              MultiExprArg(&InitList, 1),
                                              SourceLocation());
   } else {
-    GreaterThanIsOperatorScope G(GreaterThanIsOperator, true);
-
     BalancedDelimiterTracker T(*this, tok::l_paren);
     T.consumeOpen();
 

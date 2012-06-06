@@ -1704,13 +1704,13 @@ Parser::DeclGroupPtrTy Parser::ParseModuleImport(SourceLocation AtLoc) {
   return Actions.ConvertDeclToDeclGroup(Import.get());
 }
 
-bool Parser::BalancedDelimiterTracker::diagnoseOverflow() {
+bool BalancedDelimiterTracker::diagnoseOverflow() {
   P.Diag(P.Tok, diag::err_parser_impl_limit_overflow);
   P.SkipUntil(tok::eof);
   return true;  
 }
 
-bool Parser::BalancedDelimiterTracker::expectAndConsume(unsigned DiagID, 
+bool BalancedDelimiterTracker::expectAndConsume(unsigned DiagID,
                                             const char *Msg,
                                             tok::TokenKind SkipToToc ) {
   LOpen = P.Tok.getLocation();
@@ -1723,7 +1723,7 @@ bool Parser::BalancedDelimiterTracker::expectAndConsume(unsigned DiagID,
   return diagnoseOverflow();
 }
 
-bool Parser::BalancedDelimiterTracker::diagnoseMissingClose() {
+bool BalancedDelimiterTracker::diagnoseMissingClose() {
   assert(!P.Tok.is(Close) && "Should have consumed closing delimiter");
   
   const char *LHSName = "unknown";
@@ -1741,6 +1741,6 @@ bool Parser::BalancedDelimiterTracker::diagnoseMissingClose() {
   return true;
 }
 
-void Parser::BalancedDelimiterTracker::skipToEnd() {
+void BalancedDelimiterTracker::skipToEnd() {
   P.SkipUntil(Close, false);
 }
