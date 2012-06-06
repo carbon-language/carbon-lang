@@ -1,4 +1,4 @@
-; RUN: opt < %s -instcombiner | FileCheck %s
+; RUN: opt < %s -instcombine | FileCheck %s
 ; <rdar://problem/10889741>
 
 define void @func(double %r, double %g, double %b, double* %outH, double* %outS, double* %outL) nounwind uwtable ssp {
