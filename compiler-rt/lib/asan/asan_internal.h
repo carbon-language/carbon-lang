@@ -223,8 +223,6 @@ void NORETURN Exit(int exitcode);
 void NORETURN Abort();
 int Atexit(void (*function)(void));
 
-#define UNIMPLEMENTED() CHECK("unimplemented" && 0)
-
 #define ASAN_ARRAY_SIZE(a) (sizeof(a)/sizeof((a)[0]))
 
 #if !defined(_WIN32) || defined(__clang__)

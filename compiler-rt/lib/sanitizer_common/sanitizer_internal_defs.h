@@ -95,4 +95,6 @@ void NORETURN CheckFailed(const char *file, int line, const char *cond,
 #define CHECK_GT(a, b) CHECK_IMPL((a), >,  (b))
 #define CHECK_GE(a, b) CHECK_IMPL((a), >=, (b))
 
+#define UNIMPLEMENTED() CHECK("unimplemented" && 0)
+
 #endif  // SANITIZER_DEFS_H

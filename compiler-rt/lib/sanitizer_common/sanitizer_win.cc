@@ -14,12 +14,8 @@
 #ifdef _WIN32
 #include <windows.h>
 
-#include <assert.h>
-
 #include "sanitizer_common.h"
 #include "sanitizer_libc.h"
-
-#define UNIMPLEMENTED_WIN() assert(false)
 
 namespace __sanitizer {
 
@@ -36,41 +32,36 @@ void *MmapOrDie(uptr size) {
 }
 
 void UnmapOrDie(void *addr, uptr size) {
-  // FIXME: Use CHECK here.
-  RAW_CHECK(VirtualFree(addr, size, MEM_DECOMMIT));
+  if (VirtualFree(addr, size, MEM_DECOMMIT) == 0) {
+    RawWrite("Failed to unmap!\n");
+    Die();
+  }
 }
 
 void *internal_mmap(void *addr, uptr length, int prot, int flags,
                     int fd, u64 offset) {
-  UNIMPLEMENTED_WIN();
-  return 0;
+  UNIMPLEMENTED();
 }
 
 int internal_munmap(void *addr, uptr length) {
-  UNIMPLEMENTED_WIN();
-  return 0;
+  UNIMPLEMENTED();
 }
 
 int internal_close(fd_t fd) {
-  UNIMPLEMENTED_WIN();
-  return 0;
+  UNIMPLEMENTED();
 }
 
 fd_t internal_open(const char *filename, bool write) {
-  UNIMPLEMENTED_WIN();
-  return 0;
+  UNIMPLEMENTED();
 }
 
 uptr internal_read(fd_t fd, void *buf, uptr count) {
-  UNIMPLEMENTED_WIN();
-  return 0;
+  UNIMPLEMENTED();
 }
 
 uptr internal_write(fd_t fd, const void *buf, uptr count) {
-  if (fd != 2) {
-    UNIMPLEMENTED_WIN();
-    return 0;
-  }
+  if (fd != 2)
+    UNIMPLEMENTED();
   HANDLE err = GetStdHandle(STD_ERROR_HANDLE);
   if (err == 0)
     return 0;  // FIXME: this might not work on some apps.
@@ -81,18 +72,15 @@ uptr internal_write(fd_t fd, const void *buf, uptr count) {
 }
 
 uptr internal_filesize(fd_t fd) {
-  UNIMPLEMENTED_WIN();
-  return -1;
+  UNIMPLEMENTED();
 }
 
 int internal_dup2(int oldfd, int newfd) {
-  UNIMPLEMENTED_WIN();
-  return -1;
+  UNIMPLEMENTED();
 }
 
 int internal_sscanf(const char *str, const char *format, ...) {
-  UNIMPLEMENTED_WIN();
-  return -1;
+  UNIMPLEMENTED();
 }
 
 }  // namespace __sanitizer
