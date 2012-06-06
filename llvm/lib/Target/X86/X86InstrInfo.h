@@ -364,9 +364,6 @@ public:
                              const MachineInstr *DefMI, unsigned DefIdx,
                              const MachineInstr *UseMI, unsigned UseIdx) const;
 
-  virtual bool OptimizeSubInstr(MachineInstr *SubInstr,
-                                const MachineRegisterInfo *MRI) const;
-
 private:
   MachineInstr * convertToThreeAddressWithLEA(unsigned MIOpc,
                                               MachineFunction::iterator &MFI,

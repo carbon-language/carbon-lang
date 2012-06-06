@@ -2793,44 +2793,6 @@ void X86InstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
   NewMIs.push_back(MIB);
 }
 
-bool X86InstrInfo::
-OptimizeSubInstr(MachineInstr *SubInstr, const MachineRegisterInfo *MRI) const {
-  // If destination is a memory operand, do not perform this optimization.
-  if ((SubInstr->getOpcode() != X86::SUB64rr) &&
-      (SubInstr->getOpcode() != X86::SUB32rr) &&
-      (SubInstr->getOpcode() != X86::SUB16rr) &&
-      (SubInstr->getOpcode() != X86::SUB8rr) &&
-      (SubInstr->getOpcode() != X86::SUB64ri32) &&
-      (SubInstr->getOpcode() != X86::SUB64ri8) &&
-      (SubInstr->getOpcode() != X86::SUB32ri) &&
-      (SubInstr->getOpcode() != X86::SUB32ri8) &&
-      (SubInstr->getOpcode() != X86::SUB16ri) &&
-      (SubInstr->getOpcode() != X86::SUB16ri8) &&
-      (SubInstr->getOpcode() != X86::SUB8ri))
-    return false;
-  unsigned DestReg = SubInstr->getOperand(0).getReg();
-  if (MRI->use_begin(DestReg) != MRI->use_end())
-    return false;
-
-  // There is no use of the destination register, we can replace SUB with CMP.
-  switch (SubInstr->getOpcode()) {
-    default: break;
-    case X86::SUB64rr:   SubInstr->setDesc(get(X86::CMP64rr));   break;
-    case X86::SUB32rr:   SubInstr->setDesc(get(X86::CMP32rr));   break;
-    case X86::SUB16rr:   SubInstr->setDesc(get(X86::CMP16rr));   break;
-    case X86::SUB8rr:    SubInstr->setDesc(get(X86::CMP8rr));    break;
-    case X86::SUB64ri32: SubInstr->setDesc(get(X86::CMP64ri32)); break;
-    case X86::SUB64ri8:  SubInstr->setDesc(get(X86::CMP64ri8));  break;
-    case X86::SUB32ri:   SubInstr->setDesc(get(X86::CMP32ri));   break;
-    case X86::SUB32ri8:  SubInstr->setDesc(get(X86::CMP32ri8));  break;
-    case X86::SUB16ri:   SubInstr->setDesc(get(X86::CMP16ri));   break;
-    case X86::SUB16ri8:  SubInstr->setDesc(get(X86::CMP16ri8));  break;
-    case X86::SUB8ri:    SubInstr->setDesc(get(X86::CMP8ri));    break;
-  }
-  SubInstr->RemoveOperand(0);
-  return true;
-}
-
 /// Expand2AddrUndef - Expand a single-def pseudo instruction to a two-addr
 /// instruction with two undef reads of the register being defined.  This is
 /// used for mapping:

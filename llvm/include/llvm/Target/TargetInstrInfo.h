@@ -640,14 +640,6 @@ public:
     return false;
   }
 
-  /// OptimizeSubInstr - See if the SUB instruction can be converted into
-  /// something more efficient E.g., on X86, we can replace SUB with CMP
-  /// if the actual result of SUB is not used.
-  virtual bool OptimizeSubInstr(MachineInstr *SubInstr,
-                                const MachineRegisterInfo *MRI) const {
-    return false;
-  }
-
   /// FoldImmediate - 'Reg' is known to be defined by a move immediate
   /// instruction, try to fold the immediate into the use instruction.
   virtual bool FoldImmediate(MachineInstr *UseMI, MachineInstr *DefMI,

@@ -472,7 +472,6 @@ bool PeepholeOptimizer::runOnMachineFunction(MachineFunction &MF) {
         if (SeenMoveImm)
           Changed |= foldImmediate(MI, MBB, ImmDefRegs, ImmDefMIs);
       }
-      Changed |= TII->OptimizeSubInstr(MI, MRI);
 
       First = false;
       PMII = MII;
