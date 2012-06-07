@@ -596,6 +596,17 @@ void MachineVerifier::visitMachineBundleBefore(const MachineInstr *MI) {
     }
     lastIndex = idx;
   }
+
+  // Ensure non-terminators don't follow terminators.
+  // Ignore predicated terminators formed by if conversion.
+  // FIXME: If conversion shouldn't need to violate this rule.
+  if (MI->isTerminator() && !TII->isPredicated(MI)) {
+    if (!FirstTerminator)
+      FirstTerminator = MI;
+  } else if (FirstTerminator) {
+    report("Non-terminator instruction after the first terminator", MI);
+    *OS << "First terminator was:\t" << *FirstTerminator;
+  }
 }
 
 void MachineVerifier::visitMachineInstrBefore(const MachineInstr *MI) {
@@ -629,17 +640,6 @@ void MachineVerifier::visitMachineInstrBefore(const MachineInstr *MI) {
       if (!mapped)
         report("Missing slot index", MI);
     }
-  }
-
-  // Ensure non-terminators don't follow terminators.
-  // Ignore predicated terminators formed by if conversion.
-  // FIXME: If conversion shouldn't need to violate this rule.
-  if (MI->isTerminator() && !TII->isPredicated(MI)) {
-    if (!FirstTerminator)
-      FirstTerminator = MI;
-  } else if (FirstTerminator) {
-    report("Non-terminator instruction after the first terminator", MI);
-    *OS << "First terminator was:\t" << *FirstTerminator;
   }
 
   StringRef ErrorInfo;
