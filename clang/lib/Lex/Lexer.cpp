@@ -1124,6 +1124,11 @@ static inline bool isRawStringDelimBody(unsigned char c) {
     true : false;
 }
 
+// Allow external clients to make use of CharInfo.
+bool Lexer::isIdentifierBodyChar(char c, const LangOptions &LangOpts) {
+  return isIdentifierBody(c) || (c == '$' && LangOpts.DollarIdents);
+}
+
 
 //===----------------------------------------------------------------------===//
 // Diagnostics forwarding code.

@@ -2820,14 +2820,23 @@ static void addFixitForObjCARCConversion(Sema &S,
       castedE = CCE->getSubExpr();
     castedE = castedE->IgnoreImpCasts();
     SourceRange range = castedE->getSourceRange();
+
+    SmallString<32> BridgeCall;
+
+    SourceManager &SM = S.getSourceManager();
+    char PrevChar = *SM.getCharacterData(range.getBegin().getLocWithOffset(-1));
+    if (Lexer::isIdentifierBodyChar(PrevChar, S.getLangOpts()))
+      BridgeCall += ' ';
+
+    BridgeCall += CFBridgeName;
+
     if (isa<ParenExpr>(castedE)) {
       DiagB.AddFixItHint(FixItHint::CreateInsertion(range.getBegin(),
-                         CFBridgeName));
+                         BridgeCall));
     } else {
-      std::string namePlusParen = CFBridgeName;
-      namePlusParen += "(";
+      BridgeCall += '(';
       DiagB.AddFixItHint(FixItHint::CreateInsertion(range.getBegin(),
-                                                    namePlusParen));
+                                                    BridgeCall));
       DiagB.AddFixItHint(FixItHint::CreateInsertion(
                                        S.PP.getLocForEndOfToken(range.getEnd()),
                                        ")"));

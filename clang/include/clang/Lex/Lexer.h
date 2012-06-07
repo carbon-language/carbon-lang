@@ -541,6 +541,9 @@ public:
                                          const LangOptions &LangOpts,
                                          bool SkipTrailingWhitespaceAndNewLine);
 
+  /// \brief Returns true if the given character could appear in an identifier.
+  static bool isIdentifierBodyChar(char c, const LangOptions &LangOpts);
+
 private:
 
   /// getCharAndSizeSlowNoWarn - Same as getCharAndSizeSlow, but never emits a
