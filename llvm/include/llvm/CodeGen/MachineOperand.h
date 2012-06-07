@@ -542,14 +542,15 @@ public:
                                   bool isUndef = false,
                                   bool isEarlyClobber = false,
                                   unsigned SubReg = 0,
-                                  bool isDebug = false) {
+                                  bool isDebug = false,
+                                  bool isInternalRead = false) {
     MachineOperand Op(MachineOperand::MO_Register);
     Op.IsDef = isDef;
     Op.IsImp = isImp;
     Op.IsKill = isKill;
     Op.IsDead = isDead;
     Op.IsUndef = isUndef;
-    Op.IsInternalRead = false;
+    Op.IsInternalRead = isInternalRead;
     Op.IsEarlyClobber = isEarlyClobber;
     Op.IsDebug = isDebug;
     Op.SmallContents.RegNo = Reg;
