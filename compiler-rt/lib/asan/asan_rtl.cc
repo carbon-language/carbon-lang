@@ -445,8 +445,8 @@ static void ParseAsanOptions(const char *options) {
   IntFlagValue(options, "verbosity=", &FLAG_v);
 
   IntFlagValue(options, "redzone=", (s64*)&FLAG_redzone);
-  CHECK(FLAG_redzone >= 32);
-  CHECK((FLAG_redzone & (FLAG_redzone - 1)) == 0);
+  CHECK(FLAG_redzone >= 16);
+  CHECK(IsPowerOfTwo(FLAG_redzone));
   IntFlagValue(options, "quarantine_size=", (s64*)&FLAG_quarantine_size);
 
   IntFlagValue(options, "atexit=", &FLAG_atexit);

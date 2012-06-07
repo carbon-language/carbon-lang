@@ -174,29 +174,27 @@ struct ChunkBase {
   // Typically the beginning of the user-accessible memory is 'this'+REDZONE
   // and is also aligned by REDZONE. However, if the memory is allocated
   // by memalign, the alignment might be higher and the user-accessible memory
-  // starts at the first properly aligned address after the end of 'this'.
-  uptr   Beg() {
-    return RoundUpTo((uptr)this + sizeof(ChunkBase), 1 << alignment_log);
-  }
+  // starts at the first properly aligned address after 'this'.
+  uptr Beg() { return RoundUpTo((uptr)this + 1, 1 << alignment_log); }
   uptr Size() { return SizeClassToSize(size_class); }
   u8 SizeClass() { return size_class; }
 };
 
 struct AsanChunk: public ChunkBase {
   u32 *compressed_alloc_stack() {
-    CHECK(REDZONE >= sizeof(ChunkBase));
     return (u32*)((uptr)this + sizeof(ChunkBase));
   }
   u32 *compressed_free_stack() {
-    CHECK(REDZONE >= sizeof(ChunkBase));
-    return (u32*)((uptr)this + REDZONE);
+    return (u32*)((uptr)this + Max(REDZONE, (uptr)sizeof(ChunkBase)));
   }
 
   // The left redzone after the ChunkBase is given to the alloc stack trace.
   uptr compressed_alloc_stack_size() {
+    if (REDZONE < sizeof(ChunkBase)) return 0;
     return (REDZONE - sizeof(ChunkBase)) / sizeof(u32);
   }
   uptr compressed_free_stack_size() {
+    if (REDZONE < sizeof(ChunkBase)) return 0;
     return (REDZONE) / sizeof(u32);
   }
 
@@ -680,7 +678,7 @@ static u8 *Allocate(uptr alignment, uptr size, AsanStackTrace *stack) {
   m->next = 0;
   CHECK(m->Size() == size_to_allocate);
   uptr addr = (uptr)m + REDZONE;
-  CHECK(addr == (uptr)m->compressed_free_stack());
+  CHECK(addr <= (uptr)m->compressed_free_stack());
 
   if (alignment > REDZONE && (addr & (alignment - 1))) {
     addr = RoundUpTo(addr, alignment);
