@@ -4742,15 +4742,19 @@ static NamedDecl* DiagnoseInvalidRedeclaration(
     }
   }
 
-  if (Correction)
-    SemaRef.Diag(NewFD->getLocation(), DiagMsg)
+  if (Correction) {
+    SourceRange FixItLoc(NewFD->getLocation());
+    CXXScopeSpec &SS = ExtraArgs.D.getCXXScopeSpec();
+    if (Correction.getCorrectionSpecifier() && SS.isValid())
+      FixItLoc.setBegin(SS.getBeginLoc());
+    SemaRef.Diag(NewFD->getLocStart(), DiagMsg)
         << Name << NewDC << Correction.getQuoted(SemaRef.getLangOpts())
         << FixItHint::CreateReplacement(
-            NewFD->getLocation(),
-            Correction.getAsString(SemaRef.getLangOpts()));
-  else
+            FixItLoc, Correction.getAsString(SemaRef.getLangOpts()));
+  } else {
     SemaRef.Diag(NewFD->getLocation(), DiagMsg)
         << Name << NewDC << NewFD->getLocation();
+  }
 
   bool NewFDisConst = false;
   if (CXXMethodDecl *NewMD = dyn_cast<CXXMethodDecl>(NewFD))
