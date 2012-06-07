@@ -146,13 +146,6 @@ void AsanTSDInit(void (*destructor)(void *tsd));
 void *AsanTSDGet();
 void AsanTSDSet(void *tsd);
 
-// Opens the file 'file_name" and reads up to 'max_len' bytes.
-// The resulting buffer is mmaped and stored in '*buff'.
-// The size of the mmaped region is stored in '*buff_size',
-// Returns the number of read bytes or 0 if file can not be opened.
-uptr ReadFileToBuffer(const char *file_name, char **buff,
-                        uptr *buff_size, uptr max_len);
-
 void AppendToErrorMessageBuffer(const char *buffer);
 // asan_printf.cc
 void AsanPrintf(const char *format, ...);

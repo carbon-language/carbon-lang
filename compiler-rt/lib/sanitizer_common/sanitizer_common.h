@@ -37,6 +37,13 @@ void Printf(const char *format, ...);
 int SNPrintf(char *buffer, uptr length, const char *format, ...);
 void Report(const char *format, ...);
 
+// Opens the file 'file_name" and reads up to 'max_len' bytes.
+// The resulting buffer is mmaped and stored in '*buff'.
+// The size of the mmaped region is stored in '*buff_size',
+// Returns the number of read bytes or 0 if file can not be opened.
+uptr ReadFileToBuffer(const char *file_name, char **buff,
+                      uptr *buff_size, uptr max_len);
+
 // Bit twiddling.
 inline bool IsPowerOfTwo(uptr x) {
   return (x & (x - 1)) == 0;
