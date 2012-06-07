@@ -1525,10 +1525,6 @@ void internal_memset(void *ptr, int c, uptr size) {
   REAL(memset)(ptr, c, size);
 }
 
-void internal_memcpy(void *dst, const void *src, uptr size) {
-  REAL(memcpy)(dst, src, size);
-}
-
 int internal_memcmp(const void *s1, const void *s2, uptr size) {
   return REAL(memcmp)(s1, s2, size);
 }
@@ -1539,14 +1535,6 @@ int internal_strncmp(const char *s1, const char *s2, uptr size) {
 
 void internal_strcpy(char *s1, const char *s2) {
   REAL(strcpy)(s1, s2);  // NOLINT
-}
-
-char* internal_strdup(const char *s) {
-  uptr len = internal_strlen(s);
-  char *s2 = (char*)internal_alloc(MBlockString, len + 1);
-  internal_memcpy(s2, s, len);
-  s2[len] = 0;
-  return s2;
 }
 
 const char *internal_strstr(const char *where, const char *what) {

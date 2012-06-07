@@ -10,6 +10,7 @@
 // This file is a part of ThreadSanitizer (TSan), a race detector.
 //
 //===----------------------------------------------------------------------===//
+#include "sanitizer_common/sanitizer_common.h"
 #include "tsan_mman.h"
 #include "tsan_allocator.h"
 #include "tsan_rtl.h"
@@ -103,13 +104,13 @@ MBlock *user_mblock(ThreadState *thr, void *p) {
 void *internal_alloc(MBlockType typ, uptr sz) {
   ThreadState *thr = cur_thread();
   CHECK_GT(thr->in_rtl, 0);
-  return Alloc(sz);
+  return InternalAlloc(sz);
 }
 
 void internal_free(void *p) {
   ThreadState *thr = cur_thread();
   CHECK_GT(thr->in_rtl, 0);
-  Free(p);
+  InternalFree(p);
 }
 
 }  // namespace __tsan

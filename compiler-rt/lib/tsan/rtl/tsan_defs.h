@@ -15,6 +15,7 @@
 #define TSAN_DEFS_H
 
 #include "sanitizer_common/sanitizer_internal_defs.h"
+#include "sanitizer_common/sanitizer_libc.h"
 #include "tsan_stat.h"
 
 #ifndef TSAN_DEBUG
@@ -134,11 +135,9 @@ T RoundUp(T p, int align) {
 }
 
 void internal_memset(void *ptr, int c, uptr size);
-void internal_memcpy(void *dst, const void *src, uptr size);
 int internal_memcmp(const void *s1, const void *s2, uptr size);
 int internal_strncmp(const char *s1, const char *s2, uptr size);
 void internal_strcpy(char *s1, const char *s2);
-char* internal_strdup(const char *s);
 const char *internal_strstr(const char *where, const char *what);
 const char *internal_strchr(const char *where, char what);
 const char *internal_strrchr(const char *where, char what);

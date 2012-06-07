@@ -10,7 +10,7 @@
 // This file is shared between AddressSanitizer and ThreadSanitizer
 // run-time libraries. See sanitizer_libc.h for details.
 //===----------------------------------------------------------------------===//
-#include "sanitizer_internal_defs.h"
+#include "sanitizer_common.h"
 #include "sanitizer_libc.h"
 
 namespace __sanitizer {
@@ -24,6 +24,22 @@ void *internal_memchr(const void *s, int c, uptr n) {
     if (*t == c)
       return (void*)t;
   return 0;
+}
+
+void *internal_memcpy(void *dest, const void *src, uptr n) {
+  char *d = (char*)dest;
+  char *s = (char*)src;
+  for (uptr i = 0; i < n; ++i)
+    d[i] = s[i];
+  return dest;
+}
+
+char* internal_strdup(const char *s) {
+  uptr len = internal_strlen(s);
+  char *s2 = (char*)InternalAlloc(len + 1);
+  internal_memcpy(s2, s, len);
+  s2[len] = 0;
+  return s2;
 }
 
 int internal_strcmp(const char *s1, const char *s2) {
