@@ -18,8 +18,14 @@
 
 #include "sanitizer_internal_defs.h"
 
+#if __WORDSIZE == 64
 inline void *operator new(__sanitizer::uptr sz, void *p) {
   return p;
 }
+#else
+inline void *operator new(__sanitizer::u32 sz, void *p) {
+  return p;
+}
+#endif
 
 #endif  // SANITIZER_PLACEMENT_NEW_H
