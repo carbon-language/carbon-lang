@@ -2592,7 +2592,7 @@ ARMBaseInstrInfo::getOperandLatency(const InstrItineraryData *ItinData,
       return 0;
 
     // Otherwise it takes the instruction latency (generally one).
-    int Latency = getInstrLatency(ItinData, DefMI);
+    unsigned Latency = getInstrLatency(ItinData, DefMI);
 
     // For Thumb2 and -Os, prefer scheduling CPSR setting instruction close to
     // its uses. Instructions which are otherwise scheduled between them may
@@ -2991,13 +2991,10 @@ unsigned ARMBaseInstrInfo::getInstrLatency(const InstrItineraryData *ItinData,
       MI->isRegSequence() || MI->isImplicitDef())
     return 1;
 
-  // Be sure to call getStageLatency for an empty itinerary in case it has a
-  // valid MinLatency property.
-  if (!ItinData)
-    return 1;
-
+  // An instruction scheduler typically runs on unbundled instructions, however
+  // other passes may query the latency of a bundled instruction.
   if (MI->isBundle()) {
-    int Latency = 0;
+    unsigned Latency = 0;
     MachineBasicBlock::const_instr_iterator I = MI;
     MachineBasicBlock::const_instr_iterator E = MI->getParent()->instr_end();
     while (++I != E && I->isInsideBundle()) {
@@ -3008,15 +3005,24 @@ unsigned ARMBaseInstrInfo::getInstrLatency(const InstrItineraryData *ItinData,
   }
 
   const MCInstrDesc &MCID = MI->getDesc();
-  unsigned Class = MCID.getSchedClass();
-  unsigned UOps = ItinData->Itineraries[Class].NumMicroOps;
-  if (PredCost && (MCID.isCall() || MCID.hasImplicitDefOfPhysReg(ARM::CPSR)))
+  if (PredCost && (MCID.isCall() || MCID.hasImplicitDefOfPhysReg(ARM::CPSR))) {
     // When predicated, CPSR is an additional source operand for CPSR updating
     // instructions, this apparently increases their latencies.
     *PredCost = 1;
-  if (UOps)
-    return ItinData->getStageLatency(Class);
-  return getNumMicroOps(ItinData, MI);
+  }
+  // Be sure to call getStageLatency for an empty itinerary in case it has a
+  // valid MinLatency property.
+  if (!ItinData)
+    return MI->mayLoad() ? 3 : 1;
+
+  unsigned Class = MCID.getSchedClass();
+
+  // For instructions with variable uops, use uops as latency.
+  if (!ItinData->isEmpty() && !ItinData->Itineraries[Class].NumMicroOps) {
+    return getNumMicroOps(ItinData, MI);
+  }
+  // For the common case, fall back on the itinerary's latency.
+  return ItinData->getStageLatency(Class);
 }
 
 int ARMBaseInstrInfo::getInstrLatency(const InstrItineraryData *ItinData,
