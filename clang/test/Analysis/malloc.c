@@ -839,10 +839,8 @@ int fPtr(unsigned cond, int x) {
   return (cond ? mySub : myAdd)(x, x);
 }
 
-// ----------------------------------------------------------------------------
-// Below are the known false positives.
+// Test anti-aliasing.
 
-// TODO: There should be no warning here. This one might be difficult to get rid of.
 void dependsOnValueOfPtr(int *g, unsigned f) {
   int *p;
 
@@ -855,8 +853,53 @@ void dependsOnValueOfPtr(int *g, unsigned f) {
   if (p != g)
     free(p);
   else
-    return; // expected-warning{{Memory is never released; potential leak}}
+    return; // no warning
   return;
+}
+
+int CMPRegionHeapToStack() {
+  int x = 0;
+  int *x1 = malloc(8);
+  int *x2 = &x;
+  if (x1 == x2)
+    return 5/x; // expected-warning{{This statement is never executed}}
+  free(x1);
+  return x;
+}
+
+int CMPRegionHeapToHeap2() {
+  int x = 0;
+  int *x1 = malloc(8);
+  int *x2 = malloc(8);
+  int *x4 = x1;
+  int *x5 = x2;
+  if (x4 == x5)
+    return 5/x; // expected-warning{{This statement is never executed}}
+  free(x1);
+  free(x2);
+  return x;
+}
+
+int CMPRegionHeapToHeap() {
+  int x = 0;
+  int *x1 = malloc(8);
+  int *x4 = x1;
+  if (x1 == x4) {
+    free(x1);
+    return 5/x; // expected-warning{{Division by zero}}
+  }
+  return x;// expected-warning{{This statement is never executed}}
+}
+
+int HeapAssignment() {
+  int m = 0;
+  int *x = malloc(4);
+  int *y = x;
+  *x = 5;
+  if (*x != *y)
+    return 5/m; // expected-warning{{This statement is never executed}}
+  free(x);
+  return 0;
 }
 
 // ----------------------------------------------------------------------------

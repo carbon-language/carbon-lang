@@ -477,19 +477,27 @@ ProgramStateRef MallocChecker::MallocMemAux(CheckerContext &C,
                                            const CallExpr *CE,
                                            SVal Size, SVal Init,
                                            ProgramStateRef state) {
-  // Get the return value.
-  SVal retVal = state->getSVal(CE, C.getLocationContext());
+
+  // Bind the return value to the symbolic value from the heap region.
+  // TODO: We could rewrite post visit to eval call; 'malloc' does not have
+  // side effects other than what we model here.
+  unsigned Count = C.getCurrentBlockCount();
+  SValBuilder &svalBuilder = C.getSValBuilder();
+  const LocationContext *LCtx = C.getPredecessor()->getLocationContext();
+  DefinedSVal RetVal =
+    cast<DefinedSVal>(svalBuilder.getConjuredHeapSymbolVal(CE, LCtx, Count));
+  state = state->BindExpr(CE, C.getLocationContext(), RetVal);
 
   // We expect the malloc functions to return a pointer.
-  if (!isa<Loc>(retVal))
+  if (!isa<Loc>(RetVal))
     return 0;
 
   // Fill the region with the initialization value.
-  state = state->bindDefault(retVal, Init);
+  state = state->bindDefault(RetVal, Init);
 
   // Set the region's extent equal to the Size parameter.
   const SymbolicRegion *R =
-      dyn_cast_or_null<SymbolicRegion>(retVal.getAsRegion());
+      dyn_cast_or_null<SymbolicRegion>(RetVal.getAsRegion());
   if (!R)
     return 0;
   if (isa<DefinedOrUnknownSVal>(Size)) {

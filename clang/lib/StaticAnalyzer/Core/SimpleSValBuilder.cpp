@@ -673,11 +673,18 @@ SVal SimpleSValBuilder::evalBinOpLL(ProgramStateRef state,
       // regions, though.
       return UnknownVal();
 
-    // If both values wrap regions, see if they're from different base regions.
+    const MemSpaceRegion *LeftMS = LeftMR->getMemorySpace();
+    const MemSpaceRegion *RightMS = RightMR->getMemorySpace();
+    const MemSpaceRegion *UnknownMS = MemMgr.getUnknownRegion();
     const MemRegion *LeftBase = LeftMR->getBaseRegion();
     const MemRegion *RightBase = RightMR->getBaseRegion();
-    if (LeftBase != RightBase &&
-        !isa<SymbolicRegion>(LeftBase) && !isa<SymbolicRegion>(RightBase)) {
+
+    // If the two regions are from different known memory spaces they cannot be
+    // equal. Also, assume that no symbolic region (whose memory space is
+    // unknown) is on the stack.
+    if (LeftMS != RightMS &&
+        ((LeftMS != UnknownMS && RightMS != UnknownMS) ||
+         (isa<StackSpaceRegion>(LeftMS) || isa<StackSpaceRegion>(RightMS)))) {
       switch (op) {
       default:
         return UnknownVal();
@@ -688,24 +695,20 @@ SVal SimpleSValBuilder::evalBinOpLL(ProgramStateRef state,
       }
     }
 
-    // The two regions are from the same base region. See if they're both a
-    // type of region we know how to compare.
-    const MemSpaceRegion *LeftMS = LeftBase->getMemorySpace();
-    const MemSpaceRegion *RightMS = RightBase->getMemorySpace();
-
-    // Heuristic: assume that no symbolic region (whose memory space is
-    // unknown) is on the stack.
-    // FIXME: we should be able to be more precise once we can do better
-    // aliasing constraints for symbolic regions, but this is a reasonable,
-    // albeit unsound, assumption that holds most of the time.
-    if (isa<StackSpaceRegion>(LeftMS) ^ isa<StackSpaceRegion>(RightMS)) {
+    // If both values wrap regions, see if they're from different base regions.
+    // Note, heap base symbolic regions are assumed to not alias with
+    // each other; for example, we assume that malloc returns different address
+    // on each invocation.
+    if (LeftBase != RightBase &&
+        ((!isa<SymbolicRegion>(LeftBase) && !isa<SymbolicRegion>(RightBase)) ||
+         isa<HeapSpaceRegion>(LeftMS)) ){
       switch (op) {
-        default:
-          break;
-        case BO_EQ:
-          return makeTruthVal(false, resultTy);
-        case BO_NE:
-          return makeTruthVal(true, resultTy);
+      default:
+        return UnknownVal();
+      case BO_EQ:
+        return makeTruthVal(false, resultTy);
+      case BO_NE:
+        return makeTruthVal(true, resultTy);
       }
     }
 

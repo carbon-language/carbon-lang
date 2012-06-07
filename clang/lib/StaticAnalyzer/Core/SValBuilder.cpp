@@ -148,6 +148,18 @@ SValBuilder::getConjuredSymbolVal(const Stmt *stmt,
   return nonloc::SymbolVal(sym);
 }
 
+DefinedOrUnknownSVal
+SValBuilder::getConjuredHeapSymbolVal(const Expr *E,
+                                      const LocationContext *LCtx,
+                                      unsigned VisitCount) {
+  QualType T = E->getType();
+  assert(Loc::isLocType(T));
+  assert(SymbolManager::canSymbolicate(T));
+
+  SymbolRef sym = SymMgr.getConjuredSymbol(E, LCtx, T, VisitCount);
+  return loc::MemRegionVal(MemMgr.getSymbolicHeapRegion(sym));
+}
+
 DefinedSVal SValBuilder::getMetadataSymbolVal(const void *symbolTag,
                                               const MemRegion *region,
                                               const Expr *expr, QualType type,

@@ -849,6 +849,10 @@ const SymbolicRegion *MemRegionManager::getSymbolicRegion(SymbolRef sym) {
   return getSubRegion<SymbolicRegion>(sym, getUnknownRegion());
 }
 
+const SymbolicRegion *MemRegionManager::getSymbolicHeapRegion(SymbolRef Sym) {
+  return getSubRegion<SymbolicRegion>(Sym, getHeapRegion());
+}
+
 const FieldRegion*
 MemRegionManager::getFieldRegion(const FieldDecl *d,
                                  const MemRegion* superRegion){

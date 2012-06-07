@@ -1130,8 +1130,11 @@ public:
   const CXXThisRegion *getCXXThisRegion(QualType thisPointerTy,
                                         const LocationContext *LC);
 
-  /// getSymbolicRegion - Retrieve or create a "symbolic" memory region.
-  const SymbolicRegion* getSymbolicRegion(SymbolRef sym);
+  /// \brief Retrieve or create a "symbolic" memory region.
+  const SymbolicRegion* getSymbolicRegion(SymbolRef Sym);
+
+  /// \brief Return a unique symbolic region belonging to heap memory space.
+  const SymbolicRegion *getSymbolicHeapRegion(SymbolRef sym);
 
   const StringRegion *getStringRegion(const StringLiteral* Str);
 

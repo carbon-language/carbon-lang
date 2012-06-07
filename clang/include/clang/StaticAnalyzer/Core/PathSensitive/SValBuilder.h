@@ -182,6 +182,12 @@ public:
                                             const LocationContext *LCtx,
                                             QualType type,
                                             unsigned visitCount);
+  /// \brief Conjure a symbol representing heap allocated memory region.
+  ///
+  /// Note, the expression should represent a location.
+  DefinedOrUnknownSVal getConjuredHeapSymbolVal(const Expr *E,
+                                                const LocationContext *LCtx,
+                                                unsigned Count);
 
   DefinedOrUnknownSVal getDerivedRegionValueSymbolVal(
       SymbolRef parentSymbol, const TypedValueRegion *region);
