@@ -82,15 +82,23 @@ public:
                               StringList &value,
                               Error *err);
 
-
+    bool GetDisableMemoryCache() const
+    {
+        return m_disable_memory_cache;
+    }
+    
 protected:
-
+    const ConstString &
+    GetDisableMemoryCacheVarName () const;
+    
     void
     CopyInstanceSettings (const lldb::InstanceSettingsSP &new_settings,
                           bool pending);
 
     const ConstString
     CreateInstanceName ();
+    
+    bool    m_disable_memory_cache;
 };
 
 //----------------------------------------------------------------------

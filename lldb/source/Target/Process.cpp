@@ -1933,64 +1933,55 @@ Process::DisableSoftwareBreakpoint (BreakpointSite *bp_site)
 
 }
 
-// Comment out line below to disable memory caching
+// Comment out line below to disable memory caching, overriding the process setting
+// target.process.disable-memory-cache
 #define ENABLE_MEMORY_CACHING
 // Uncomment to verify memory caching works after making changes to caching code
 //#define VERIFY_MEMORY_READS
 
-#if defined (ENABLE_MEMORY_CACHING)
-
+size_t
+Process::ReadMemory (addr_t addr, void *buf, size_t size, Error &error)
+{
+    if (!GetDisableMemoryCache())
+    {        
 #if defined (VERIFY_MEMORY_READS)
-
-size_t
-Process::ReadMemory (addr_t addr, void *buf, size_t size, Error &error)
-{
-    // Memory caching is enabled, with debug verification
-    if (buf && size)
-    {
-        // Uncomment the line below to make sure memory caching is working.
-        // I ran this through the test suite and got no assertions, so I am 
-        // pretty confident this is working well. If any changes are made to
-        // memory caching, uncomment the line below and test your changes!
-
-        // Verify all memory reads by using the cache first, then redundantly
-        // reading the same memory from the inferior and comparing to make sure
-        // everything is exactly the same.
-        std::string verify_buf (size, '\0');
-        assert (verify_buf.size() == size);
-        const size_t cache_bytes_read = m_memory_cache.Read (this, addr, buf, size, error);
-        Error verify_error;
-        const size_t verify_bytes_read = ReadMemoryFromInferior (addr, const_cast<char *>(verify_buf.data()), verify_buf.size(), verify_error);
-        assert (cache_bytes_read == verify_bytes_read);
-        assert (memcmp(buf, verify_buf.data(), verify_buf.size()) == 0);
-        assert (verify_error.Success() == error.Success());
-        return cache_bytes_read;
+        // Memory caching is enabled, with debug verification
+        
+        if (buf && size)
+        {
+            // Uncomment the line below to make sure memory caching is working.
+            // I ran this through the test suite and got no assertions, so I am 
+            // pretty confident this is working well. If any changes are made to
+            // memory caching, uncomment the line below and test your changes!
+            
+            // Verify all memory reads by using the cache first, then redundantly
+            // reading the same memory from the inferior and comparing to make sure
+            // everything is exactly the same.
+            std::string verify_buf (size, '\0');
+            assert (verify_buf.size() == size);
+            const size_t cache_bytes_read = m_memory_cache.Read (this, addr, buf, size, error);
+            Error verify_error;
+            const size_t verify_bytes_read = ReadMemoryFromInferior (addr, const_cast<char *>(verify_buf.data()), verify_buf.size(), verify_error);
+            assert (cache_bytes_read == verify_bytes_read);
+            assert (memcmp(buf, verify_buf.data(), verify_buf.size()) == 0);
+            assert (verify_error.Success() == error.Success());
+            return cache_bytes_read;
+        }
+        return 0;
+#else // !defined(VERIFY_MEMORY_READS)
+        // Memory caching is enabled, without debug verification
+        
+        return m_memory_cache.Read (addr, buf, size, error);
+#endif // defined (VERIFY_MEMORY_READS)
     }
-    return 0;
+    else
+    {
+        // Memory caching is disabled
+        
+        return ReadMemoryFromInferior (addr, buf, size, error);
+    }
 }
-
-#else   // #if defined (VERIFY_MEMORY_READS)
-
-size_t
-Process::ReadMemory (addr_t addr, void *buf, size_t size, Error &error)
-{
-    // Memory caching enabled, no verification
-    return m_memory_cache.Read (addr, buf, size, error);
-}
-
-#endif  // #else for #if defined (VERIFY_MEMORY_READS)
     
-#else   // #if defined (ENABLE_MEMORY_CACHING)
-
-size_t
-Process::ReadMemory (addr_t addr, void *buf, size_t size, Error &error)
-{
-    // Memory caching is disabled
-    return ReadMemoryFromInferior (addr, buf, size, error);
-}
-
-#endif  // #else for #if defined (ENABLE_MEMORY_CACHING)
-
 size_t
 Process::ReadCStringFromMemory (addr_t addr, std::string &out_str, Error &error)
 {
@@ -3993,7 +3984,6 @@ Process::SettingsInitialize ()
         }
     }
     UserSettingsControllerSP &usc = GetSettingsController();
-    usc.reset (new SettingsController);
     UserSettingsController::InitializeSettingsController (usc,
                                                           SettingsController::global_settings_table,
                                                           SettingsController::instance_settings_table);
@@ -4914,16 +4904,36 @@ ProcessInstanceSettings::UpdateInstanceSettingsVariable (const ConstString &var_
                                                          Error &err,
                                                          bool pending)
 {
+    if (var_name == GetDisableMemoryCacheVarName())
+    {
+        bool success;
+        bool result = Args::StringToBoolean(value, false, &success);
+        
+        if (success)
+        {
+            m_disable_memory_cache = result;
+        }
+        else
+        {
+            err.SetErrorStringWithFormat ("Bad value \"%s\" for %s, should be Boolean.", value, GetDisableMemoryCacheVarName().AsCString());
+        }
+        
+    }
 }
 
 void
 ProcessInstanceSettings::CopyInstanceSettings (const lldb::InstanceSettingsSP &new_settings,
                                                bool pending)
 {
-//    if (new_settings.get() == NULL)
-//        return;
-//
-//    ProcessInstanceSettings *new_process_settings = (ProcessInstanceSettings *) new_settings.get();
+    if (new_settings.get() == NULL)
+        return;
+    
+    ProcessInstanceSettings *new_settings_ptr = static_cast <ProcessInstanceSettings *> (new_settings.get());
+    
+    if (!new_settings_ptr)
+        return;
+    
+    *this = *new_settings_ptr;
 }
 
 bool
@@ -4932,9 +4942,17 @@ ProcessInstanceSettings::GetInstanceSettingsValue (const SettingEntry &entry,
                                                    StringList &value,
                                                    Error *err)
 {
-    if (err)
-        err->SetErrorStringWithFormat ("unrecognized variable name '%s'", var_name.AsCString());
-    return false;
+    if (var_name == GetDisableMemoryCacheVarName())
+    {
+        value.AppendString(m_disable_memory_cache ? "true" : "false");
+        return true;
+    }
+    else
+    {
+        if (err)
+            err->SetErrorStringWithFormat ("unrecognized variable name '%s'", var_name.AsCString());
+        return false;
+    }
 }
 
 const ConstString
@@ -4948,6 +4966,14 @@ ProcessInstanceSettings::CreateInstanceName ()
 
     const ConstString ret_val (sstr.GetData());
     return ret_val;
+}
+
+const ConstString &
+ProcessInstanceSettings::GetDisableMemoryCacheVarName () const
+{
+    static ConstString disable_memory_cache_var_name ("disable-memory-cache");
+    
+    return disable_memory_cache_var_name;
 }
 
 //--------------------------------------------------
@@ -4966,6 +4992,13 @@ SettingEntry
 Process::SettingsController::instance_settings_table[] =
 {
   //{ "var-name",       var-type,              "default",       enum-table, init'd, hidden, "help-text"},
+    {  "disable-memory-cache", eSetVarTypeBoolean,
+#ifdef ENABLE_MEMORY_CACHING
+        "false",
+#else
+        "true",
+#endif
+        NULL,       false,  false,  "Disable reading and caching of memory in fixed-size units." },
     {  NULL,            eSetVarTypeNone,        NULL,           NULL,       false,  false,  NULL }
 };
 
