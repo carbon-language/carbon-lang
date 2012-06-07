@@ -171,7 +171,10 @@ if( MSVC )
 
     # Promoted warnings.
     -w14062 # Promote 'enumerator in switch of enum is not handled' to level 1 warning.
-    -w14239 # Promote 'nonstandard extension used : 'token' : conversion from 'type' to 'type'' to level 1 warning.
+
+    # Promoted warnings to errors.
+    -we4238 # Promote 'nonstandard extension used : class rvalue used as lvalue' to error.
+    -we4239 # Promote 'nonstandard extension used : 'token' : conversion from 'type' to 'type'' to error.
     )
 
   # Enable warnings
