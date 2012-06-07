@@ -147,7 +147,14 @@ SBDebugger::MemoryPressureDetected ()
     // non-mandatory. We have seen deadlocks with this function when called
     // so we need to safeguard against this until we can determine what is
     // causing the deadlocks.
+    LogSP log (GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    
     const bool mandatory = false;
+    if (log)
+    {
+        log->Printf ("SBDebugger::MemoryPressureDetected (), mandatory = %d", mandatory);
+    }
+    
     ModuleList::RemoveOrphanSharedModules(mandatory);
 }
 
