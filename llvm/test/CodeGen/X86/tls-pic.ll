@@ -75,7 +75,7 @@ entry:
 }
 
 ; X32:    f5:
-; X32:      leal {{[jk]}}@TLSLDM
+; X32:      leal {{[jk]}}@TLSLDM(%ebx)
 ; X32-NEXT: calll ___tls_get_addr@PLT
 ; X32-NEXT: movl {{[jk]}}@DTPOFF(%eax)
 ; X32-NEXT: addl {{[jk]}}@DTPOFF(%eax)

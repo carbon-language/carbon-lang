@@ -596,6 +596,14 @@ static void LowerTlsAddr(MCStreamer &OutStreamer,
     LEA.addOperand(MCOperand::CreateReg(0));        // index
     LEA.addOperand(MCOperand::CreateExpr(symRef));  // disp
     LEA.addOperand(MCOperand::CreateReg(0));        // seg
+  } else if (SRVK == MCSymbolRefExpr::VK_TLSLDM) {
+    LEA.setOpcode(X86::LEA32r);
+    LEA.addOperand(MCOperand::CreateReg(X86::EAX)); // dest
+    LEA.addOperand(MCOperand::CreateReg(X86::EBX)); // base
+    LEA.addOperand(MCOperand::CreateImm(1));        // scale
+    LEA.addOperand(MCOperand::CreateReg(0));        // index
+    LEA.addOperand(MCOperand::CreateExpr(symRef));  // disp
+    LEA.addOperand(MCOperand::CreateReg(0));        // seg
   } else {
     LEA.setOpcode(X86::LEA32r);
     LEA.addOperand(MCOperand::CreateReg(X86::EAX)); // dest
