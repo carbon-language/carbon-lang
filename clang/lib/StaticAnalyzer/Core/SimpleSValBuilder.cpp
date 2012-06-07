@@ -701,7 +701,7 @@ SVal SimpleSValBuilder::evalBinOpLL(ProgramStateRef state,
     // on each invocation.
     if (LeftBase != RightBase &&
         ((!isa<SymbolicRegion>(LeftBase) && !isa<SymbolicRegion>(RightBase)) ||
-         isa<HeapSpaceRegion>(LeftMS)) ){
+         (isa<HeapSpaceRegion>(LeftMS) || isa<HeapSpaceRegion>(RightMS))) ){
       switch (op) {
       default:
         return UnknownVal();

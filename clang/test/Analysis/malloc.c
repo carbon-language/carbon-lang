@@ -902,6 +902,23 @@ int HeapAssignment() {
   return 0;
 }
 
+int *retPtr();
+int *retPtrMightAlias(int *x);
+int cmpHeapAllocationToUnknown() {
+  int zero = 0;
+  int *yBefore = retPtr();
+  int *m = malloc(8);
+  int *yAfter = retPtrMightAlias(m);
+  if (yBefore == m) {
+    return 5/zero; // expected-warning {{This statement is never executed}}
+  }
+  if (yAfter == m) {
+    return 5/zero; // expected-warning {{This statement is never executed}}
+  }
+  free(m);
+  return 0;
+}
+
 // ----------------------------------------------------------------------------
 // False negatives.
 
