@@ -23,8 +23,9 @@
 #include <vector>
 
 using llvm::object::coff_symbol;
+using namespace lld;
 
-namespace lld {
+namespace { // anonymous 
 
 class COFFAbsoluteAtom : public AbsoluteAtom {
 public:
@@ -376,6 +377,10 @@ private:
   const ReaderOptionsPECOFF &_options;
 };
 
+} // namespace anonymous
+
+
+namespace lld {
 
 Reader* createReaderPECOFF(const ReaderOptionsPECOFF &options) {
   return new ReaderCOFF(options);
