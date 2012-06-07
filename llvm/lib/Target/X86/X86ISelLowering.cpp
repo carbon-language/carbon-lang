@@ -8306,7 +8306,8 @@ SDValue X86TargetLowering::EmitTest(SDValue Op, unsigned X86CC,
   if (Opcode == X86ISD::CMP) {
     SDValue New = DAG.getNode(Opcode, dl, MVT::i32, Op.getOperand(0),
                               Op.getOperand(1));
-    DAG.ReplaceAllUsesWith(Op, New);
+    // We can't replace usage of SUB with CMP.
+    // The SUB node will be removed later because there is no use of it.
     return SDValue(New.getNode(), 0);
   }
 
