@@ -2114,7 +2114,11 @@ LValue CodeGenFunction::EmitCompoundLiteralLValue(const CompoundLiteralExpr *E){
     llvm::Value *GlobalPtr = CGM.GetAddrOfConstantCompoundLiteral(E);
     return MakeAddrLValue(GlobalPtr, E->getType());
   }
-
+  if (const PointerType *pointerType = E->getType()->getAs<PointerType>())
+    if (pointerType->getPointeeType()->isVariableArrayType())
+      // make sure to emit the VLA size.
+    EmitVariablyModifiedType(pointerType->getPointeeType());
+  
   llvm::Value *DeclPtr = CreateMemTemp(E->getType(), ".compoundliteral");
   const Expr *InitExpr = E->getInitializer();
   LValue Result = MakeAddrLValue(DeclPtr, E->getType());
