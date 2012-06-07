@@ -12,18 +12,15 @@
 // run-time libraries. See sanitizer.h for details.
 //===----------------------------------------------------------------------===//
 
-// WARNING: Avoid using library functions - see comments in symbolizer.h.
+#include "sanitizer_common.h"
 #include "sanitizer_symbolizer.h"
-// FIXME: replace library malloc/free with internal_malloc/internal_free
-// that would be provided by ASan/TSan run-time libraries.
-#include <stdlib.h>
 
 namespace __sanitizer {
 
 void AddressInfo::Clear() {
-  free(module);
-  free(function);
-  free(file);
+  InternalFree(module);
+  InternalFree(function);
+  InternalFree(file);
 }
 
 void AddressInfoList::Clear() {
@@ -31,13 +28,14 @@ void AddressInfoList::Clear() {
   while (cur) {
     cur->info.Clear();
     AddressInfoList *nxt = cur->next;
-    free(cur);
+    InternalFree(cur);
     cur = nxt;
   }
 }
 
 AddressInfoList* SymbolizeCode(uptr address) {
-  AddressInfoList *list = (AddressInfoList*)malloc(sizeof(AddressInfoList));
+  AddressInfoList *list = (AddressInfoList*)InternalAlloc(
+      sizeof(AddressInfoList));
   list->next = 0;
   list->info.address = address;
   list->info.module = 0;

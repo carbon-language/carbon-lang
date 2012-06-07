@@ -34,6 +34,8 @@ void GetThreadStackTopAndBottom(bool at_initialization, uptr *stack_top,
 // Memory management
 void *MmapOrDie(uptr size, const char *mem_type);
 void UnmapOrDie(void *addr, uptr size);
+void *InternalAlloc(uptr size);
+void InternalFree(void *addr);
 
 void RawWrite(const char *buffer);
 void Printf(const char *format, ...);
