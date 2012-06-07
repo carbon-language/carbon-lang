@@ -252,6 +252,253 @@ private:
     bool m_old_value;
 };
 
+ScriptInterpreterPython::PythonInputReaderManager::PythonInputReaderManager (ScriptInterpreterPython *interpreter) :
+m_interpreter(interpreter),
+m_debugger_sp(),
+m_reader_sp(),
+m_error(false)
+{
+    if (m_interpreter == NULL)
+    {
+        m_error = true;
+        return;
+    }
+    
+    m_debugger_sp = m_interpreter->GetCommandInterpreter().GetDebugger().shared_from_this();
+    
+    if (!m_debugger_sp)
+    {
+        m_error = true;
+        return;
+    }
+
+    m_reader_sp = InputReaderSP(new InputReader(*m_debugger_sp.get()));
+    
+    if (!m_reader_sp)
+    {
+        m_error = true;
+        return;
+    }
+    
+    Error error (m_reader_sp->Initialize (ScriptInterpreterPython::PythonInputReaderManager::InputReaderCallback,
+                                          m_interpreter,                // baton
+                                          eInputReaderGranularityLine,  // token size, to pass to callback function
+                                          NULL,                         // end token
+                                          NULL,                         // prompt
+                                          true));                       // echo input
+    if (error.Fail())
+        m_error = true;
+    else
+    {
+        m_debugger_sp->PushInputReader (m_reader_sp);
+        m_interpreter->m_embedded_thread_input_reader_sp = m_reader_sp;
+    }
+}
+
+ScriptInterpreterPython::PythonInputReaderManager::~PythonInputReaderManager()
+{
+    if (m_interpreter)
+    {
+        if (m_interpreter->m_embedded_thread_input_reader_sp)
+            m_interpreter->m_embedded_thread_input_reader_sp->SetIsDone (true);
+        m_interpreter->m_embedded_python_pty.CloseSlaveFileDescriptor();
+    }
+    
+    
+    if (m_reader_sp)
+    {
+        m_reader_sp->SetIsDone (true);
+        if (m_debugger_sp)
+            m_debugger_sp->PopInputReader(m_reader_sp);
+    }
+    
+    if (m_interpreter)
+        m_interpreter->m_embedded_thread_input_reader_sp.reset();
+}
+
+size_t
+ScriptInterpreterPython::PythonInputReaderManager::InputReaderCallback
+(
+ void *baton, 
+ InputReader &reader, 
+ InputReaderAction notification,
+ const char *bytes, 
+ size_t bytes_len
+ )
+{
+    lldb::thread_t embedded_interpreter_thread;
+    LogSP log (lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_SCRIPT));
+    
+    if (baton == NULL)
+        return 0;
+    
+    ScriptInterpreterPython *script_interpreter = (ScriptInterpreterPython *) baton;
+    
+    if (script_interpreter->m_script_lang != eScriptLanguagePython)
+        return 0;
+    
+    StreamSP out_stream = reader.GetDebugger().GetAsyncOutputStream();
+    
+    switch (notification)
+    {
+        case eInputReaderActivate:
+        {
+            // Save terminal settings if we can
+            int input_fd = reader.GetDebugger().GetInputFile().GetDescriptor();
+            if (input_fd == File::kInvalidDescriptor)
+                input_fd = STDIN_FILENO;
+            
+            script_interpreter->SaveTerminalState(input_fd);
+            
+            {
+                ScriptInterpreterPython::Locker locker(script_interpreter,
+                                                       ScriptInterpreterPython::Locker::AcquireLock | ScriptInterpreterPython::Locker::InitSession,
+                                                       ScriptInterpreterPython::Locker::FreeAcquiredLock);
+            }
+            
+            char error_str[1024];
+            if (script_interpreter->m_embedded_python_pty.OpenFirstAvailableMaster (O_RDWR|O_NOCTTY, error_str, 
+                                                                                    sizeof(error_str)))
+            {
+                if (log)
+                    log->Printf ("ScriptInterpreterPython::NonInteractiveInputReaderCallback, Activate, succeeded in opening master pty (fd = %d).",
+                                 script_interpreter->m_embedded_python_pty.GetMasterFileDescriptor());
+                {
+                    StreamString run_string;
+                    char error_str[1024];
+                    const char *pty_slave_name = script_interpreter->m_embedded_python_pty.GetSlaveName (error_str, sizeof (error_str));
+                    if (pty_slave_name != NULL)
+                    {
+                        run_string.Printf ("run_one_line (%s, 'save_stderr = sys.stderr')", script_interpreter->m_dictionary_name.c_str());
+                        PyRun_SimpleString (run_string.GetData());
+                        run_string.Clear ();
+                        
+                        run_string.Printf ("run_one_line (%s, 'sys.stderr = sys.stdout')", script_interpreter->m_dictionary_name.c_str());
+                        PyRun_SimpleString (run_string.GetData());
+                        run_string.Clear ();
+                        
+                        run_string.Printf ("run_one_line (%s, 'save_stdin = sys.stdin')", script_interpreter->m_dictionary_name.c_str());
+                        PyRun_SimpleString (run_string.GetData());
+                        run_string.Clear ();
+                        
+                        run_string.Printf ("run_one_line (%s, \"sys.stdin = open ('%s', 'r')\")", script_interpreter->m_dictionary_name.c_str(),
+                                           pty_slave_name);
+                        PyRun_SimpleString (run_string.GetData());
+                        run_string.Clear ();
+                    }
+                }
+                embedded_interpreter_thread = Host::ThreadCreate ("<lldb.script-interpreter.noninteractive-python>",
+                                                                  ScriptInterpreterPython::PythonInputReaderManager::RunPythonInputReader,
+                                                                  script_interpreter, NULL);
+                if (IS_VALID_LLDB_HOST_THREAD(embedded_interpreter_thread))
+                {
+                    if (log)
+                        log->Printf ("ScriptInterpreterPython::NonInteractiveInputReaderCallback, Activate, succeeded in creating thread (thread_t = %p)", embedded_interpreter_thread);
+                    Error detach_error;
+                    Host::ThreadDetach (embedded_interpreter_thread, &detach_error);
+                }
+                else
+                {
+                    if (log)
+                        log->Printf ("ScriptInterpreterPython::NonInteractiveInputReaderCallback, Activate, failed in creating thread");
+                    reader.SetIsDone (true);
+                }
+            }
+            else
+            {
+                if (log)
+                    log->Printf ("ScriptInterpreterPython::NonInteractiveInputReaderCallback, Activate, failed to open master pty ");
+                reader.SetIsDone (true);
+            }
+        }
+            break;
+            
+        case eInputReaderDeactivate:
+			// When another input reader is pushed, don't leave the session...
+            //script_interpreter->LeaveSession ();
+            break;
+            
+        case eInputReaderReactivate:
+        {
+            // Don't try and acquire the interpreter lock here because code like
+            // this:
+            //
+            // (lldb) script
+            // >>> v = lldb.frame.EvaluateExpression("collection->get_at_index(12)")
+            //
+            // This will cause the process to run. The interpreter lock is taken
+            // by the input reader for the "script" command. If we try and acquire
+            // the lock here, when the process runs it might deactivate this input
+            // reader (if STDIN is hooked up to the inferior process) and 
+            // reactivate it when the process stops which will deadlock.
+            //ScriptInterpreterPython::Locker locker(script_interpreter,
+            //                                       ScriptInterpreterPython::Locker::AcquireLock | ScriptInterpreterPython::Locker::InitSession,
+            //                                       ScriptInterpreterPython::Locker::FreeAcquiredLock);
+        }
+            break;
+            
+        case eInputReaderAsynchronousOutputWritten:
+            break;
+            
+        case eInputReaderInterrupt:
+            reader.SetIsDone(true);
+            break;
+            
+        case eInputReaderEndOfFile:
+            reader.SetIsDone(true);
+            break;
+            
+        case eInputReaderGotToken:
+            if (script_interpreter->m_embedded_python_pty.GetMasterFileDescriptor() != -1)
+            {
+                if (log)
+                    log->Printf ("ScriptInterpreterPython::NonInteractiveInputReaderCallback, GotToken, bytes='%s', byte_len = %lu", bytes,
+                                 bytes_len);
+                if (bytes && bytes_len)
+                    ::write (script_interpreter->m_embedded_python_pty.GetMasterFileDescriptor(), bytes, bytes_len);
+                ::write (script_interpreter->m_embedded_python_pty.GetMasterFileDescriptor(), "\n", 1);
+            }
+            else
+            {
+                if (log)
+                    log->Printf ("ScriptInterpreterPython::NonInteractiveInputReaderCallback, GotToken, bytes='%s', byte_len = %lu, Master File Descriptor is bad.", 
+                                 bytes,
+                                 bytes_len);
+                reader.SetIsDone (true);
+            }
+            
+            break;
+            
+        case eInputReaderDone:
+        {
+            StreamString run_string;
+            char error_str[1024];
+            const char *pty_slave_name = script_interpreter->m_embedded_python_pty.GetSlaveName (error_str, sizeof (error_str));
+            if (pty_slave_name != NULL)
+            {
+                run_string.Printf ("run_one_line (%s, 'sys.stdin = save_stdin')", script_interpreter->m_dictionary_name.c_str());
+                PyRun_SimpleString (run_string.GetData());
+                run_string.Clear();
+                
+                run_string.Printf ("run_one_line (%s, 'sys.stderr = save_stderr')", script_interpreter->m_dictionary_name.c_str());
+                PyRun_SimpleString (run_string.GetData());
+                run_string.Clear();
+            }
+        }
+            
+            // Restore terminal settings if they were validly saved
+            if (log)
+                log->Printf ("ScriptInterpreterPython::NonInteractiveInputReaderCallback, Done, closing down input reader.");
+            
+            script_interpreter->RestoreTerminalState ();
+            
+            script_interpreter->m_embedded_python_pty.CloseMasterFileDescriptor();
+            break;
+    }
+    
+    return bytes_len;
+}
+
 ScriptInterpreterPython::ScriptInterpreterPython (CommandInterpreter &interpreter) :
     ScriptInterpreter (interpreter, eScriptLanguagePython),
     m_embedded_python_pty (),
@@ -514,7 +761,7 @@ GenerateUniqueName (const char* base_name_wanted,
 }
 
 bool
-ScriptInterpreterPython::ExecuteOneLine (const char *command, CommandReturnObject *result)
+ScriptInterpreterPython::ExecuteOneLine (const char *command, CommandReturnObject *result, bool enable_io)
 {
     if (!m_valid_session)
         return false;
@@ -567,7 +814,11 @@ ScriptInterpreterPython::ExecuteOneLine (const char *command, CommandReturnObjec
                         PyObject *pargs = Py_BuildValue("(Os)",script_interpreter_dict,command);
                         if (pargs != NULL)
                         {
-                            PyObject *pvalue = PyObject_CallObject (pfunc, pargs);
+                            PyObject *pvalue = NULL;
+                            { // scope for PythonInputReaderManager
+                                PythonInputReaderManager py_input(enable_io ? this : NULL);
+                                pvalue = PyObject_CallObject (pfunc, pargs);
+                            }
                             Py_DECREF (pargs);
                             if (pvalue != NULL)
                             {
@@ -794,7 +1045,8 @@ ScriptInterpreterPython::ExecuteInterpreterLoop ()
 bool
 ScriptInterpreterPython::ExecuteOneLineWithReturn (const char *in_string,
                                                    ScriptInterpreter::ScriptReturnType return_type,
-                                                   void *ret_value)
+                                                   void *ret_value,
+                                                   bool enable_io)
 {
 
     Locker locker(this,
@@ -830,14 +1082,17 @@ ScriptInterpreterPython::ExecuteOneLineWithReturn (const char *in_string,
     
     if (in_string != NULL)
     {
-        py_return = PyRun_String (in_string, Py_eval_input, globals, locals);
-        if (py_return == NULL)
-        {
-            py_error = PyErr_Occurred ();
-            if (py_error != NULL)
-                PyErr_Clear ();
+        { // scope for PythonInputReaderManager
+            PythonInputReaderManager py_input(enable_io ? this : NULL);
+            py_return = PyRun_String (in_string, Py_eval_input, globals, locals);
+            if (py_return == NULL)
+            { 
+                py_error = PyErr_Occurred ();
+                if (py_error != NULL)
+                    PyErr_Clear ();
 
-            py_return = PyRun_String (in_string, Py_single_input, globals, locals);
+                py_return = PyRun_String (in_string, Py_single_input, globals, locals);
+            }
         }
 
         if (locals != NULL
@@ -956,7 +1211,7 @@ ScriptInterpreterPython::ExecuteOneLineWithReturn (const char *in_string,
 }
 
 bool
-ScriptInterpreterPython::ExecuteMultipleLines (const char *in_string)
+ScriptInterpreterPython::ExecuteMultipleLines (const char *in_string, bool enable_io)
 {
     
     
@@ -998,7 +1253,10 @@ ScriptInterpreterPython::ExecuteMultipleLines (const char *in_string)
             PyCodeObject *compiled_code = PyNode_Compile (compiled_node, "temp.py");
             if (compiled_code)
             {
-                py_return = PyEval_EvalCode (compiled_code, globals, locals);
+                { // scope for PythonInputReaderManager
+                    PythonInputReaderManager py_input(enable_io ? this : NULL);
+                    py_return = PyEval_EvalCode (compiled_code, globals, locals);
+                }
                 if (py_return != NULL)
                 {
                     success = true;
@@ -1191,7 +1449,7 @@ ScriptInterpreterPython::ExportFunctionDefinitionToInterpreter (StringList &func
     // Convert StringList to one long, newline delimited, const char *.
     std::string function_def_string(function_def.CopyList());
 
-    return ExecuteMultipleLines (function_def_string.c_str());
+    return ExecuteMultipleLines (function_def_string.c_str(), false);
 }
 
 bool
@@ -1597,6 +1855,19 @@ ScriptInterpreterPython::RunEmbeddedPythonInterpreter (lldb::thread_arg_t baton)
     return NULL;
 }
 
+lldb::thread_result_t
+ScriptInterpreterPython::PythonInputReaderManager::RunPythonInputReader (lldb::thread_arg_t baton)
+{
+    ScriptInterpreterPython *script_interpreter = (ScriptInterpreterPython *) baton;
+
+    const InputReaderSP reader_sp = script_interpreter->m_embedded_thread_input_reader_sp;
+    
+    if (reader_sp)
+        reader_sp->WaitOnReaderIsDone();
+    
+    return NULL;
+}
+
 uint32_t
 ScriptInterpreterPython::CalculateNumChildren (const lldb::ScriptInterpreterObjectSP& implementor_sp)
 {
@@ -1751,7 +2022,7 @@ ScriptInterpreterPython::LoadScriptingModule (const char* pathname,
         command_stream.Printf("if not (sys.path.__contains__('%s')):\n    sys.path.append('%s');\n\n",
                               directory,
                               directory);
-        bool syspath_retval = ExecuteMultipleLines(command_stream.GetData());
+        bool syspath_retval = ExecuteMultipleLines(command_stream.GetData(), false);
         if (!syspath_retval)
         {
             error.SetErrorString("Python sys.path handling failed");
@@ -1772,7 +2043,7 @@ ScriptInterpreterPython::LoadScriptingModule (const char* pathname,
         // this call will fail if the module does not exist (because the parameter to it is not a string
         // but an actual Python module object, which is non-existant if the module was not imported before)
         bool was_imported = (ExecuteOneLineWithReturn(command_stream.GetData(),
-                                                      ScriptInterpreterPython::eScriptReturnTypeInt, &refcount) && refcount > 0);
+                                                      ScriptInterpreterPython::eScriptReturnTypeInt, &refcount, false) && refcount > 0);
         if (was_imported == true && can_reload == false)
         {
             error.SetErrorString("module already imported");
@@ -1782,7 +2053,7 @@ ScriptInterpreterPython::LoadScriptingModule (const char* pathname,
         // now actually do the import
         command_stream.Clear();
         command_stream.Printf("import %s",basename.c_str());
-        bool import_retval = ExecuteOneLine(command_stream.GetData(), NULL);
+        bool import_retval = ExecuteOneLine(command_stream.GetData(), NULL, false);
         if (!import_retval)
         {
             error.SetErrorString("Python import statement failed");
@@ -1861,6 +2132,8 @@ ScriptInterpreterPython::RunScriptBasedCommand(const char* impl_function,
         SynchronicityHandler synch_handler(debugger_sp,
                                            synchronicity);
         
+        PythonInputReaderManager py_input(this);
+        
         ret_val = g_swig_call_command       (impl_function,
                                              m_dictionary_name.c_str(),
                                              debugger_sp,
@@ -1890,7 +2163,7 @@ ScriptInterpreterPython::GetDocumentationForItem(const char* item)
     
     if (ExecuteOneLineWithReturn (command.c_str(),
                                  ScriptInterpreter::eScriptReturnTypeCharStrOrNone,
-                                 &result_ptr) && result_ptr)
+                                 &result_ptr, false) && result_ptr)
     {
         return std::string(result_ptr);
     }

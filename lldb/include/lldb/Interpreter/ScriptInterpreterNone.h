@@ -23,7 +23,7 @@ public:
     ~ScriptInterpreterNone ();
 
     bool
-    ExecuteOneLine (const char *command, CommandReturnObject *result);
+    ExecuteOneLine (const char *command, CommandReturnObject *result, bool enable_io);
 
     void
     ExecuteInterpreterLoop ();

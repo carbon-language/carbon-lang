@@ -67,7 +67,7 @@ CommandObjectScript::ExecuteRawCommandString
     }
 
     // We can do better when reporting the status of one-liner script execution.
-    if (script_interpreter->ExecuteOneLine (command, &result))
+    if (script_interpreter->ExecuteOneLine (command, &result, true))
         result.SetStatus(eReturnStatusSuccessFinishNoResult);
     else
         result.SetStatus(eReturnStatusFailed);

@@ -118,19 +118,19 @@ public:
     virtual ~ScriptInterpreter ();
 
     virtual bool
-    ExecuteOneLine (const char *command, CommandReturnObject *result) = 0;
+    ExecuteOneLine (const char *command, CommandReturnObject *result, bool enable_io) = 0;
 
     virtual void
     ExecuteInterpreterLoop () = 0;
 
     virtual bool
-    ExecuteOneLineWithReturn (const char *in_string, ScriptReturnType return_type, void *ret_value)
+    ExecuteOneLineWithReturn (const char *in_string, ScriptReturnType return_type, void *ret_value, bool enable_io)
     {
         return true;
     }
 
     virtual bool
-    ExecuteMultipleLines (const char *in_string)
+    ExecuteMultipleLines (const char *in_string, bool enable_io)
     {
         return true;
     }

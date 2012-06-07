@@ -39,7 +39,7 @@ public:
     ~ScriptInterpreterPython ();
 
     bool
-    ExecuteOneLine (const char *command, CommandReturnObject *result);
+    ExecuteOneLine (const char *command, CommandReturnObject *result, bool enable_io);
 
     void
     ExecuteInterpreterLoop ();
@@ -47,10 +47,11 @@ public:
     bool
     ExecuteOneLineWithReturn (const char *in_string, 
                               ScriptInterpreter::ScriptReturnType return_type,
-                              void *ret_value);
+                              void *ret_value,
+                              bool enable_io);
 
     bool
-    ExecuteMultipleLines (const char *in_string);
+    ExecuteMultipleLines (const char *in_string, bool enable_io);
 
     bool
     ExportFunctionDefinitionToInterpreter (StringList &function_def);
@@ -257,6 +258,36 @@ private:
     	ScriptInterpreterPython *m_python_interpreter;
     	FILE*                    m_tmp_fh;
 	};
+    
+    class PythonInputReaderManager
+    {
+    public:
+        PythonInputReaderManager (ScriptInterpreterPython *interpreter);
+        
+        operator bool()
+        {
+            return m_error;
+        }
+        
+        ~PythonInputReaderManager();
+        
+    private:
+        
+        static size_t
+        InputReaderCallback (void *baton,
+                                           InputReader &reader,
+                                           lldb::InputReaderAction notification,
+                                           const char *bytes,
+                                           size_t bytes_len);
+        
+        static lldb::thread_result_t
+        RunPythonInputReader (lldb::thread_arg_t baton);
+        
+        ScriptInterpreterPython *m_interpreter;
+        lldb::DebuggerSP m_debugger_sp;
+        lldb::InputReaderSP m_reader_sp;
+        bool m_error;
+    };
 
     static size_t
     InputReaderCallback (void *baton, 
