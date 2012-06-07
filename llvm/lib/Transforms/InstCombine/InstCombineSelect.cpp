@@ -129,6 +129,12 @@ Instruction *InstCombiner::FoldSelectOpOp(SelectInst &SI, Instruction *TI,
     if (TI->isCast()) {
       if (TI->getOperand(0)->getType() != FI->getOperand(0)->getType())
         return 0;
+      // The select condition may be a vector. We may only change the operand
+      // type if the vector width remains the same (and matches the condition).
+      Type *CondTy = SI.getCondition()->getType();
+      if (CondTy->isVectorTy() && CondTy->getVectorNumElements() !=
+          FI->getOperand(0)->getType()->getVectorNumElements())
+        return 0;
     } else {
       return 0;  // unknown unary op.
     }
