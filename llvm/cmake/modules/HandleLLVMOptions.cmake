@@ -150,6 +150,7 @@ if( MSVC )
     -D_SCL_SECURE_NO_DEPRECATE
     -D_SCL_SECURE_NO_WARNINGS
 
+    # Disabled warnings.
     -wd4146 # Suppress 'unary minus operator applied to unsigned type, result still unsigned'
     -wd4180 # Suppress 'qualifier applied to function type has no meaning; ignored'
     -wd4224 # Suppress 'nonstandard extension used : formal parameter 'identifier' was previously defined as a type'
@@ -167,12 +168,15 @@ if( MSVC )
     -wd4800 # Suppress ''type' : forcing value to bool 'true' or 'false' (performance warning)'
     -wd4065 # Suppress 'switch statement contains 'default' but no 'case' labels'
     -wd4181 # Suppress 'qualifier applied to reference type; ignored'
-    -w14062 # Promote "enumerator in switch of enum is not handled" to level 1 warning.
+
+    # Promoted warnings.
+    -w14062 # Promote 'enumerator in switch of enum is not handled' to level 1 warning.
+    -w14239 # Promote 'nonstandard extension used : 'token' : conversion from 'type' to 'type'' to level 1 warning.
     )
 
   # Enable warnings
   if (LLVM_ENABLE_WARNINGS)
-    add_llvm_definitions( /W4 /Wall )
+    add_llvm_definitions( /W4 )
     if (LLVM_ENABLE_PEDANTIC)
       # No MSVC equivalent available
     endif (LLVM_ENABLE_PEDANTIC)
