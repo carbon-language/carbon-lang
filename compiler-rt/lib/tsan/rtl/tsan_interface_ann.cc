@@ -11,9 +11,9 @@
 //
 //===----------------------------------------------------------------------===//
 #include "sanitizer_common/sanitizer_libc.h"
+#include "sanitizer_common/sanitizer_placement_new.h"
 #include "tsan_interface_ann.h"
 #include "tsan_mutex.h"
-#include "tsan_placement_new.h"
 #include "tsan_report.h"
 #include "tsan_rtl.h"
 #include "tsan_mman.h"

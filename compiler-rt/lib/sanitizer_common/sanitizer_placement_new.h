@@ -1,4 +1,4 @@
-//===-- tsan_placement_new.h ------------------------------------*- C++ -*-===//
+//===-- sanitizer_placement_new.h -------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,18 +7,19 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file is a part of ThreadSanitizer (TSan), a race detector.
+// This file is shared between AddressSanitizer and ThreadSanitizer
+// run-time libraries.
 //
-// The file provides 'placement new'
+// The file provides 'placement new'.
 // Do not include it into header files, only into source files.
 //===----------------------------------------------------------------------===//
-#ifndef TSAN_PLACEMENT_NEW_H
-#define TSAN_PLACEMENT_NEW_H
+#ifndef SANITIZER_PLACEMENT_NEW_H
+#define SANITIZER_PLACEMENT_NEW_H
 
-#include "tsan_defs.h"
+#include "sanitizer_internal_defs.h"
 
 inline void *operator new(__sanitizer::uptr sz, void *p) {
   return p;
 }
 
-#endif  // TSAN_PLACEMENT_NEW_H
+#endif  // SANITIZER_PLACEMENT_NEW_H

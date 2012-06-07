@@ -10,8 +10,8 @@
 // This file is a part of ThreadSanitizer (TSan), a race detector.
 //
 //===----------------------------------------------------------------------===//
+#include "sanitizer_common/sanitizer_placement_new.h"
 #include "tsan_sync.h"
-#include "tsan_placement_new.h"
 #include "tsan_rtl.h"
 #include "tsan_mman.h"
 

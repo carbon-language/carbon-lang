@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "sanitizer_common/sanitizer_placement_new.h"
 #include "tsan_interface_atomic.h"
-#include "tsan_placement_new.h"
 #include "tsan_flags.h"
 #include "tsan_rtl.h"
 

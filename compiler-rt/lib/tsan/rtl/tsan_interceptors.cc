@@ -13,12 +13,12 @@
 
 #include "interception/interception.h"
 #include "sanitizer_common/sanitizer_libc.h"
+#include "sanitizer_common/sanitizer_placement_new.h"
 #include "tsan_rtl.h"
 #include "tsan_interface.h"
 #include "tsan_atomic.h"
 #include "tsan_platform.h"
 #include "tsan_mman.h"
-#include "tsan_placement_new.h"
 
 using namespace __tsan;  // NOLINT
 
