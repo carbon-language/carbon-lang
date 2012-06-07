@@ -678,6 +678,15 @@ public:
                                 unsigned UseIdx) const;
 
   /// computeOperandLatency - Compute and return the latency of the given data
+  /// dependent def and use when the operand indices are already known.
+  ///
+  /// FindMin may be set to get the minimum vs. expected latency.
+  unsigned computeOperandLatency(const InstrItineraryData *ItinData,
+                                 const MachineInstr *DefMI, unsigned DefIdx,
+                                 const MachineInstr *UseMI, unsigned UseIdx,
+                                 bool FindMin = false) const;
+
+  /// computeOperandLatency - Compute and return the latency of the given data
   /// dependent def and use. DefMI must be a valid def. UseMI may be NULL for
   /// an unknown use. If the subtarget allows, this may or may not need to call
   /// getOperandLatency().

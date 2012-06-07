@@ -83,6 +83,66 @@ TargetInstrInfo::getOperandLatency(const InstrItineraryData *ItinData,
   return ItinData->getOperandLatency(DefClass, DefIdx, UseClass, UseIdx);
 }
 
+/// If we can determine the operand latency from the def only, without itinerary
+/// lookup, do so. Otherwise return -1.
+static int computeDefOperandLatency(
+  const TargetInstrInfo *TII, const InstrItineraryData *ItinData,
+  const MachineInstr *DefMI, bool FindMin) {
+
+  // Let the target hook getInstrLatency handle missing itineraries.
+  if (!ItinData)
+    return TII->getInstrLatency(ItinData, DefMI);
+
+  // Return a latency based on the itinerary properties and defining instruction
+  // if possible. Some common subtargets don't require per-operand latency,
+  // especially for minimum latencies.
+  if (FindMin) {
+    // If MinLatency is valid, call getInstrLatency. This uses Stage latency if
+    // it exists before defaulting to MinLatency.
+    if (ItinData->Props.MinLatency >= 0)
+      return TII->getInstrLatency(ItinData, DefMI);
+
+    // If MinLatency is invalid, OperandLatency is interpreted as MinLatency.
+    // For empty itineraries, short-cirtuit the check and default to one cycle.
+    if (ItinData->isEmpty())
+      return 1;
+  }
+  else if(ItinData->isEmpty())
+    return TII->defaultDefLatency(ItinData, DefMI);
+
+  // ...operand lookup required
+return -1;
+}
+
+/// computeOperandLatency - Compute and return the latency of the given data
+/// dependent def and use when the operand indices are already known.
+///
+/// FindMin may be set to get the minimum vs. expected latency.
+unsigned TargetInstrInfo::
+computeOperandLatency(const InstrItineraryData *ItinData,
+                      const MachineInstr *DefMI, unsigned DefIdx,
+                      const MachineInstr *UseMI, unsigned UseIdx,
+                      bool FindMin) const {
+
+  int DefLatency = computeDefOperandLatency(this, ItinData, DefMI, FindMin);
+  if (DefLatency >= 0)
+    return DefLatency;
+
+  assert(ItinData && !ItinData->isEmpty() && "computeDefOperandLatency fail");
+
+  int OperLatency = getOperandLatency(ItinData, DefMI, DefIdx, UseMI, UseIdx);
+  if (OperLatency >= 0)
+    return OperLatency;
+
+  // No operand latency was found.
+  unsigned InstrLatency = getInstrLatency(ItinData, DefMI);
+
+  // Expected latency is the max of the stage latency and itinerary props.
+  if (!FindMin)
+    InstrLatency = std::max(InstrLatency, defaultDefLatency(ItinData, DefMI));
+  return InstrLatency;
+}
+
 /// computeOperandLatency - Compute and return the latency of the given data
 /// dependent def and use. DefMI must be a valid def. UseMI may be NULL for an
 /// unknown use. Depending on the subtarget's itinerary properties, this may or
@@ -100,30 +160,11 @@ computeOperandLatency(const InstrItineraryData *ItinData,
                       const MachineInstr *DefMI, const MachineInstr *UseMI,
                       unsigned Reg, bool FindMin) const {
 
-  // Default to one cycle for missing itinerary. Empty itineraries still have
-  // a properties. We have one hard-coded exception for loads, to preserve
-  // existing behavior.
-  if (!ItinData)
-    return DefMI->mayLoad() ? 2 : 1;
+  int DefLatency = computeDefOperandLatency(this, ItinData, DefMI, FindMin);
+  if (DefLatency >= 0)
+    return DefLatency;
 
-  // Return a latency based on the itinerary properties and defining instruction
-  // if possible. Some common subtargets don't require per-operand latency,
-  // especially for minimum latencies.
-  if (FindMin) {
-    // If MinLatency is valid, call getInstrLatency. This uses Stage latency if
-    // it exists before defaulting to MinLatency.
-    if (ItinData->Props.MinLatency >= 0)
-      return getInstrLatency(ItinData, DefMI);
-
-    // If MinLatency is invalid, OperandLatency is interpreted as MinLatency.
-    // For empty itineraries, short-cirtuit the check and default to one cycle.
-    if (ItinData->isEmpty())
-      return 1;
-  }
-  else if(ItinData->isEmpty())
-    return defaultDefLatency(ItinData, DefMI);
-
-  // ...operand lookup required
+  assert(ItinData && !ItinData->isEmpty() && "computeDefOperandLatency fail");
 
   // Find the definition of the register in the defining instruction.
   int DefIdx = DefMI->findRegisterDefOperandIdx(Reg);
@@ -168,6 +209,7 @@ computeOperandLatency(const InstrItineraryData *ItinData,
   }
   // No operand latency was found.
   unsigned InstrLatency = getInstrLatency(ItinData, DefMI);
+
   // Expected latency is the max of the stage latency and itinerary props.
   if (!FindMin)
     InstrLatency = std::max(InstrLatency, defaultDefLatency(ItinData, DefMI));
@@ -180,7 +222,7 @@ unsigned TargetInstrInfo::getInstrLatency(const InstrItineraryData *ItinData,
   // Default to one cycle for no itinerary. However, an "empty" itinerary may
   // still have a MinLatency property, which getStageLatency checks.
   if (!ItinData)
-    return 1;
+    return MI->mayLoad() ? 2 : 1;
 
   return ItinData->getStageLatency(MI->getDesc().getSchedClass());
 }
