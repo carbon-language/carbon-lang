@@ -1227,8 +1227,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   setTargetDAGCombine(ISD::FP_TO_SINT);
   if (Subtarget->is64Bit())
     setTargetDAGCombine(ISD::MUL);
-  if (Subtarget->hasBMI())
-    setTargetDAGCombine(ISD::XOR);
+  setTargetDAGCombine(ISD::XOR);
 
   computeRegisterProperties();
 
@@ -14507,11 +14506,54 @@ static SDValue PerformOrCombine(SDNode *N, SelectionDAG &DAG,
   return SDValue();
 }
 
+// Generate NEG and CMOV for integer abs.
+static SDValue performIntegerAbsCombine(SDNode *N, SelectionDAG &DAG) {
+  EVT VT = N->getValueType(0);
+
+  // Since X86 does not have CMOV for 8-bit integer, we don't convert
+  // 8-bit integer abs to NEG and CMOV.
+  if (VT.isInteger() && VT.getSizeInBits() == 8)
+    return SDValue();
+
+  SDValue N0 = N->getOperand(0);
+  SDValue N1 = N->getOperand(1);
+  DebugLoc DL = N->getDebugLoc();
+
+  // Check pattern of XOR(ADD(X,Y), Y) where Y is SRA(X, size(X)-1)
+  // and change it to SUB and CMOV.
+  if (VT.isInteger() && N->getOpcode() == ISD::XOR &&
+      N0.getOpcode() == ISD::ADD &&
+      N0.getOperand(1) == N1 &&
+      N1.getOpcode() == ISD::SRA &&
+      N1.getOperand(0) == N0.getOperand(0))
+    if (ConstantSDNode *Y1C = dyn_cast<ConstantSDNode>(N1.getOperand(1)))
+      if (Y1C->getAPIntValue() == VT.getSizeInBits()-1) {
+        // Generate SUB & CMOV.
+        SDValue Neg = DAG.getNode(X86ISD::SUB, DL, DAG.getVTList(VT, MVT::i32),
+                                  DAG.getConstant(0, VT), N0.getOperand(0));
+
+        SDValue Ops[] = { N0.getOperand(0), Neg,
+                          DAG.getConstant(X86::COND_GE, MVT::i8),
+                          SDValue(Neg.getNode(), 1) };
+        return DAG.getNode(X86ISD::CMOV, DL, DAG.getVTList(VT, MVT::Glue),
+                           Ops, array_lengthof(Ops));
+      }
+  return SDValue();
+}
+
 // PerformXorCombine - Attempts to turn XOR nodes into BLSMSK nodes
 static SDValue PerformXorCombine(SDNode *N, SelectionDAG &DAG,
                                  TargetLowering::DAGCombinerInfo &DCI,
                                  const X86Subtarget *Subtarget) {
   if (DCI.isBeforeLegalizeOps())
+    return SDValue();
+
+  SDValue RV = performIntegerAbsCombine(N, DAG);
+  if (RV.getNode())
+    return RV;
+
+  // Try forming BMI if it is available.
+  if (!Subtarget->hasBMI())
     return SDValue();
 
   EVT VT = N->getValueType(0);
