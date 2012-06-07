@@ -17,6 +17,7 @@
 #include "asan_stack.h"
 #include "asan_thread.h"
 #include "asan_thread_registry.h"
+#include "sanitizer_common/sanitizer_procmaps.h"
 #include "sanitizer_common/sanitizer_symbolizer.h"
 
 #ifdef ASAN_USE_EXTERNAL_SYMBOLIZER
@@ -39,7 +40,7 @@ void AsanStackTrace::PrintStack(uptr *addr, uptr size) {
 
 #else  // ASAN_USE_EXTERNAL_SYMBOLIZER
 void AsanStackTrace::PrintStack(uptr *addr, uptr size) {
-  AsanProcMaps proc_maps;
+  ProcessMaps proc_maps;
   uptr frame_num = 0;
   for (uptr i = 0; i < size && addr[i]; i++) {
     proc_maps.Reset();

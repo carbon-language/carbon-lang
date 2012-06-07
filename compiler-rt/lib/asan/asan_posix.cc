@@ -20,6 +20,7 @@
 #include "asan_stack.h"
 #include "asan_thread_registry.h"
 #include "sanitizer_common/sanitizer_libc.h"
+#include "sanitizer_common/sanitizer_procmaps.h"
 
 #include <pthread.h>
 #include <signal.h>
@@ -52,7 +53,7 @@ static inline bool IntervalsAreSeparate(uptr start1, uptr end1,
 // several worker threads on Mac, which aren't expected to map big chunks of
 // memory).
 bool AsanShadowRangeIsAvailable() {
-  AsanProcMaps procmaps;
+  ProcessMaps procmaps;
   uptr start, end;
   uptr shadow_start = kLowShadowBeg;
   if (kLowShadowBeg > 0) shadow_start -= kMmapGranularity;
@@ -142,7 +143,7 @@ void AsanDisableCoreDumper() {
 }
 
 void AsanDumpProcessMap() {
-  AsanProcMaps proc_maps;
+  ProcessMaps proc_maps;
   uptr start, end;
   const sptr kBufSize = 4095;
   char filename[kBufSize];
