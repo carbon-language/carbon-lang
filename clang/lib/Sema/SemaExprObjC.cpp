@@ -2918,7 +2918,8 @@ diagnoseObjCARCConversion(Sema &S, SourceRange castRange,
                                    castType, castExpr, "__bridge ", 0);
     }
     {
-      DiagnosticBuilder DiagB = S.Diag(noteLoc, diag::note_arc_bridge_transfer)
+      DiagnosticBuilder DiagB = S.Diag(br ? castExpr->getExprLoc() : noteLoc,
+                                       diag::note_arc_bridge_transfer)
         << castExprType << br;
       addFixitForObjCARCConversion(S, DiagB, CCK, afterLParen,
                                    castType, castExpr, "__bridge_transfer ",
@@ -2946,7 +2947,8 @@ diagnoseObjCARCConversion(Sema &S, SourceRange castRange,
                                    castType, castExpr, "__bridge ", 0);
     }
     {
-      DiagnosticBuilder DiagB = S.Diag(noteLoc, diag::note_arc_bridge_retained)
+      DiagnosticBuilder DiagB = S.Diag(br ? castExpr->getExprLoc() : noteLoc,
+                                       diag::note_arc_bridge_retained)
         << castType << br;
       addFixitForObjCARCConversion(S, DiagB, CCK, afterLParen,
                                    castType, castExpr, "__bridge_retained ",
