@@ -151,8 +151,10 @@ if( MSVC )
     -D_SCL_SECURE_NO_WARNINGS
 
     # Disabled warnings.
+    -wd4065 # Suppress 'switch statement contains 'default' but no 'case' labels'
     -wd4146 # Suppress 'unary minus operator applied to unsigned type, result still unsigned'
     -wd4180 # Suppress 'qualifier applied to function type has no meaning; ignored'
+    -wd4181 # Suppress 'qualifier applied to reference type; ignored'
     -wd4224 # Suppress 'nonstandard extension used : formal parameter 'identifier' was previously defined as a type'
     -wd4244 # Suppress ''argument' : conversion from 'type1' to 'type2', possible loss of data'
     -wd4267 # Suppress ''var' : conversion from 'size_t' to 'type', possible loss of data'
@@ -166,8 +168,6 @@ if( MSVC )
     -wd4624 # Suppress ''derived class' : destructor could not be generated because a base class destructor is inaccessible'
     -wd4715 # Suppress ''function' : not all control paths return a value'
     -wd4800 # Suppress ''type' : forcing value to bool 'true' or 'false' (performance warning)'
-    -wd4065 # Suppress 'switch statement contains 'default' but no 'case' labels'
-    -wd4181 # Suppress 'qualifier applied to reference type; ignored'
 
     # Promoted warnings.
     -w14062 # Promote 'enumerator in switch of enum is not handled' to level 1 warning.
