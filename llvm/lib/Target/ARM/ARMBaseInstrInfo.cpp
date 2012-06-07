@@ -2574,8 +2574,9 @@ ARMBaseInstrInfo::getOperandLatency(const InstrItineraryData *ItinData,
       DefMI->isRegSequence() || DefMI->isImplicitDef()) {
     return 1;
   }
+  // No operand latency. The caller may fall back to getInstrLatency.
   if (!ItinData || ItinData->isEmpty())
-    return DefMI->mayLoad() ? 3 : 1;
+    return -1;
 
   const MCInstrDesc *DefMCID = &DefMI->getDesc();
   const MCInstrDesc *UseMCID = &UseMI->getDesc();
@@ -3057,6 +3058,8 @@ hasHighOperandLatency(const InstrItineraryData *ItinData,
 
   // Hoist VFP / NEON instructions with 4 or higher latency.
   int Latency = getOperandLatency(ItinData, DefMI, DefIdx, UseMI, UseIdx);
+  if (Latency < 0)
+    Latency = getInstrLatency(ItinData, DefMI);
   if (Latency <= 3)
     return false;
   return DDomain == ARMII::DomainVFP || DDomain == ARMII::DomainNEON ||
