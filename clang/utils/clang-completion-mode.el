@@ -32,8 +32,12 @@
 ;;
 ;;   (load-library "clang-completion-mode")
 ;;
+;; Once you have done this, you can set various parameters with
+;;
+;;   M-x customize-group RET clang-completion-mode RET
+;;
 ;; Finally, to try Clang-based code completion in a particular buffer,
-;; use M-x clang-completion-mode. When "Clang-CC" shows up in the mode
+;; use M-x clang-completion-mode. When "Clang" shows up in the mode
 ;; line, Clang's code-completion is enabled.
 ;;
 ;; Clang's code completion is based on parsing the complete source
@@ -100,7 +104,12 @@ This variable will typically contain include paths, e.g., -I~/MyProject."
   (or (string-match "OVERLOAD:" line)
       (string-match (concat "COMPLETION: " clang-completion-substring) line)))
 
+
+;; re-process the completions when further input narrows the field
 (defun clang-completion-display (buffer)
+  (fill-buffer buffer))
+
+(defun fill-buffer (buffer)
   (let* ((all-lines (split-string clang-result-string "\n"))
          (completion-lines (filter 'is-completion-line all-lines)))
     (if (consp completion-lines)
@@ -124,24 +133,7 @@ This variable will typically contain include paths, e.g., -I~/MyProject."
 ;; contents of the code-completion buffer with the new code-completion results
 ;; and ensures that the buffer is visible.
 (defun clang-completion-sentinel (proc event)
-  (let* ((all-lines (split-string clang-result-string "\n"))
-         (completion-lines (filter 'is-completion-line all-lines)))
-    (if (consp completion-lines)
-        (progn
-         ;; Erase the process buffer.
-         (let ((cur (current-buffer)))
-           (set-buffer (process-buffer proc))
-           (goto-char (point-min))
-           (erase-buffer)
-           (set-buffer cur))
-         
-         ;; Display the process buffer.
-         (display-buffer (process-buffer proc))
-         
-         ;; Insert the code-completion string into the process buffer.
-         (with-current-buffer (process-buffer proc)
-           (insert (mapconcat 'identity completion-lines "\n")))
-         ))))
+  (fill-buffer (process-buffer proc)))
 
 (defun clang-complete ()
   (let* ((cc-point (concat (buffer-file-name)
