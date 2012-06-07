@@ -50,13 +50,15 @@ class UnbridgedCastRewriter : public RecursiveASTVisitor<UnbridgedCastRewriter>{
   MigrationPass &Pass;
   IdentifierInfo *SelfII;
   OwningPtr<ParentMap> StmtMap;
+  Decl *ParentD;
 
 public:
-  UnbridgedCastRewriter(MigrationPass &pass) : Pass(pass) {
+  UnbridgedCastRewriter(MigrationPass &pass) : Pass(pass), ParentD(0) {
     SelfII = &Pass.Ctx.Idents.get("self");
   }
 
-  void transformBody(Stmt *body) {
+  void transformBody(Stmt *body, Decl *ParentD) {
+    this->ParentD = ParentD;
     StmtMap.reset(new ParentMap(body));
     TraverseStmt(body);
   }
@@ -152,6 +154,21 @@ private:
             castToObjCObject(E, /*retained=*/false);
             return;
           }
+        }
+      }
+    }
+
+    // If returning an ivar or a member of an ivar from a +0 method, use
+    // a __bridge cast.
+    Expr *base = inner->IgnoreParenImpCasts();
+    while (isa<MemberExpr>(base))
+      base = cast<MemberExpr>(base)->getBase()->IgnoreParenImpCasts();
+    if (isa<ObjCIvarRefExpr>(base) &&
+        isa<ReturnStmt>(StmtMap->getParentIgnoreParenCasts(E))) {
+      if (ObjCMethodDecl *method = dyn_cast_or_null<ObjCMethodDecl>(ParentD)) {
+        if (!method->hasAttr<NSReturnsRetainedAttr>()) {
+          castToObjCObject(E, /*retained=*/false);
+          return;
         }
       }
     }

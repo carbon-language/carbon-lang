@@ -75,7 +75,7 @@ public:
                                                  &pass.Ctx.Idents.get("drain"));
   }
 
-  void transformBody(Stmt *body) {
+  void transformBody(Stmt *body, Decl *ParentD) {
     Body = body;
     TraverseStmt(body);
   }

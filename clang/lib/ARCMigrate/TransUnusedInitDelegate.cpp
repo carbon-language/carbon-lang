@@ -40,7 +40,7 @@ public:
   UnusedInitRewriter(MigrationPass &pass)
     : Body(0), Pass(pass) { }
 
-  void transformBody(Stmt *body) {
+  void transformBody(Stmt *body, Decl *ParentD) {
     Body = body;
     collectRemovables(body, Removables);
     TraverseStmt(body);

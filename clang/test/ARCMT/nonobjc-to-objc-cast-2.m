@@ -3,15 +3,36 @@
 
 #include "Common.h"
 
-@interface NSString : NSObject
--(id)string;
--(id)newString;
-@end
-
 typedef const struct __CFString * CFStringRef;
 typedef const void * CFTypeRef;
 CFTypeRef CFBridgingRetain(id X);
 id CFBridgingRelease(CFTypeRef);
+
+struct StrS {
+  CFStringRef sref_member;
+};
+
+@interface NSString : NSObject {
+  CFStringRef sref;
+  struct StrS *strS;
+}
+-(id)string;
+-(id)newString;
+@end
+
+@implementation NSString
+-(id)string {
+  if (0)
+    return sref;
+  else
+    return strS->sref_member;
+}
+-(id)newString {
+  return sref; // expected-error {{implicit conversion of C pointer type 'CFStringRef' (aka 'const struct __CFString *') to Objective-C pointer type 'id' requires a bridged cast}} \
+    // expected-note{{use __bridge to convert directly (no change in ownership)}} \
+    // expected-note{{use CFBridgingRelease call to transfer ownership of a +1 'CFStringRef' (aka 'const struct __CFString *') into ARC}}
+}
+@end
 
 void f(BOOL b) {
   CFStringRef cfstr;

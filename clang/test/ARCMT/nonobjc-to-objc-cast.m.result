@@ -5,11 +5,6 @@
 
 #include "Common.h"
 
-@interface NSString : NSObject
--(id)string;
--(id)newString;
-@end
-
 typedef const struct __CFString * CFStringRef;
 extern const CFStringRef kUTTypePlainText;
 extern const CFStringRef kUTTypeRTF;
@@ -20,6 +15,18 @@ typedef const struct __CFUUID * CFUUIDRef;
 extern const CFAllocatorRef kCFAllocatorDefault;
 
 extern CFStringRef CFUUIDCreateString(CFAllocatorRef alloc, CFUUIDRef uuid);
+
+struct StrS {
+  CFStringRef sref_member;
+};
+
+@interface NSString : NSObject {
+  CFStringRef sref;
+  struct StrS *strS;
+}
+-(id)string;
+-(id)newString;
+@end
 
 void f(BOOL b, id p) {
   NSString *str = (__bridge NSString *)kUTTypePlainText;
@@ -39,6 +46,16 @@ void f(BOOL b, id p) {
   CFStringRef str2 = (__bridge CFStringRef)(self);
   return self;
 }
+@end
+
+@implementation NSString
+-(id)string {
+  if (0)
+    return (__bridge id)(sref);
+  else
+    return (__bridge id)(strS->sref_member);
+}
+-(id)newString { return 0; }
 @end
 
 extern void consumeParam(CFStringRef CF_CONSUMED p);
