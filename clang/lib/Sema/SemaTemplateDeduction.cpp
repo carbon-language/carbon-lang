@@ -193,7 +193,7 @@ checkDeducedTemplateArguments(ASTContext &Context,
     if (Y.getKind() == TemplateArgument::Expression ||
         Y.getKind() == TemplateArgument::Declaration ||
         (Y.getKind() == TemplateArgument::Integral &&
-         hasSameExtendedValue(*X.getAsIntegral(), *Y.getAsIntegral())))
+         hasSameExtendedValue(X.getAsIntegral(), Y.getAsIntegral())))
       return DeducedTemplateArgument(X,
                                      X.wasDeducedFromArrayBound() &&
                                      Y.wasDeducedFromArrayBound());
@@ -293,7 +293,8 @@ DeduceNonTypeTemplateArgument(Sema &S,
   assert(NTTP->getDepth() == 0 &&
          "Cannot deduce non-type template argument with depth > 0");
 
-  DeducedTemplateArgument NewDeduced(Value, ValueType, DeducedFromArrayBound);
+  DeducedTemplateArgument NewDeduced(S.Context, Value, ValueType,
+                                     DeducedFromArrayBound);
   DeducedTemplateArgument Result = checkDeducedTemplateArguments(S.Context,
                                                      Deduced[NTTP->getIndex()],
                                                                  NewDeduced);
@@ -1595,7 +1596,7 @@ DeduceTemplateArguments(Sema &S,
 
   case TemplateArgument::Integral:
     if (Arg.getKind() == TemplateArgument::Integral) {
-      if (hasSameExtendedValue(*Param.getAsIntegral(), *Arg.getAsIntegral()))
+      if (hasSameExtendedValue(Param.getAsIntegral(), Arg.getAsIntegral()))
         return Sema::TDK_Success;
 
       Info.FirstArg = Param;
@@ -1618,7 +1619,7 @@ DeduceTemplateArguments(Sema &S,
           = getDeducedParameterFromExpr(Param.getAsExpr())) {
       if (Arg.getKind() == TemplateArgument::Integral)
         return DeduceNonTypeTemplateArgument(S, NTTP,
-                                             *Arg.getAsIntegral(),
+                                             Arg.getAsIntegral(),
                                              Arg.getIntegralType(),
                                              /*ArrayBound=*/false,
                                              Info, Deduced);
@@ -1867,7 +1868,7 @@ static bool isSameTemplateArg(ASTContext &Context,
                     Y.getAsTemplateOrTemplatePattern()).getAsVoidPointer();
 
     case TemplateArgument::Integral:
-      return *X.getAsIntegral() == *Y.getAsIntegral();
+      return X.getAsIntegral() == Y.getAsIntegral();
 
     case TemplateArgument::Expression: {
       llvm::FoldingSetNodeID XID, YID;

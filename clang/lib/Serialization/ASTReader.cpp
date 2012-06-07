@@ -5905,7 +5905,7 @@ ASTReader::ReadTemplateArgument(ModuleFile &F,
   case TemplateArgument::Integral: {
     llvm::APSInt Value = ReadAPSInt(Record, Idx);
     QualType T = readType(F, Record, Idx);
-    return TemplateArgument(Value, T);
+    return TemplateArgument(Context, Value, T);
   }
   case TemplateArgument::Template: 
     return TemplateArgument(ReadTemplateName(F, Record, Idx));

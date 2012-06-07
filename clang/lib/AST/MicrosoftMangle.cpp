@@ -638,7 +638,7 @@ MicrosoftCXXNameMangler::mangleTemplateArgs(const TemplateArgument *TemplateArgs
       mangleType(TA.getAsType());
       break;
     case TemplateArgument::Integral:
-      mangleIntegerLiteral(TA.getIntegralType(), *TA.getAsIntegral());
+      mangleIntegerLiteral(TA.getIntegralType(), TA.getAsIntegral());
       break;
     default: {
     	// Issue a diagnostic.

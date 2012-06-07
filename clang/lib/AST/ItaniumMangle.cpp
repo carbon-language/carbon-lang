@@ -3132,7 +3132,7 @@ void CXXNameMangler::mangleTemplateArg(const NamedDecl *P,
     break;
   }
   case TemplateArgument::Integral:
-    mangleIntegerLiteral(A.getIntegralType(), *A.getAsIntegral());
+    mangleIntegerLiteral(A.getIntegralType(), A.getAsIntegral());
     break;
   case TemplateArgument::Declaration: {
     assert(P && "Missing template parameter for declaration argument");

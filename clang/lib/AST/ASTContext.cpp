@@ -3336,8 +3336,7 @@ ASTContext::getCanonicalTemplateArgument(const TemplateArgument &Arg) const {
                               Arg.getNumTemplateExpansions());
 
     case TemplateArgument::Integral:
-      return TemplateArgument(*Arg.getAsIntegral(),
-                              getCanonicalType(Arg.getIntegralType()));
+      return TemplateArgument(Arg, getCanonicalType(Arg.getIntegralType()));
 
     case TemplateArgument::Type:
       return TemplateArgument(getCanonicalType(Arg.getAsType()));

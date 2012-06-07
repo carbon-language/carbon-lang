@@ -152,10 +152,11 @@ namespace clang {
 
     /// \brief Construct an integral non-type template argument that
     /// has been deduced, possibly from an array bound.
-    DeducedTemplateArgument(const llvm::APSInt &Value,
+    DeducedTemplateArgument(ASTContext &Ctx,
+                            const llvm::APSInt &Value,
                             QualType ValueType,
                             bool DeducedFromArrayBound)
-      : TemplateArgument(Value, ValueType), 
+      : TemplateArgument(Ctx, Value, ValueType),
         DeducedFromArrayBound(DeducedFromArrayBound) { }
 
     /// \brief For a non-type template argument, determine whether the

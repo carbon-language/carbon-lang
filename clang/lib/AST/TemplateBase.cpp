@@ -36,23 +36,41 @@ using namespace clang;
 static void printIntegral(const TemplateArgument &TemplArg,
                           raw_ostream &Out) {
   const ::clang::Type *T = TemplArg.getIntegralType().getTypePtr();
-  const llvm::APSInt *Val = TemplArg.getAsIntegral();
+  const llvm::APSInt &Val = TemplArg.getAsIntegral();
 
   if (T->isBooleanType()) {
-    Out << (Val->getBoolValue() ? "true" : "false");
+    Out << (Val.getBoolValue() ? "true" : "false");
   } else if (T->isCharType()) {
-    const char Ch = Val->getZExtValue();
+    const char Ch = Val.getZExtValue();
     Out << ((Ch == '\'') ? "'\\" : "'");
     Out.write_escaped(StringRef(&Ch, 1), /*UseHexEscapes=*/ true);
     Out << "'";
   } else {
-    Out << Val->toString(10);
+    Out << Val;
   }
 }
 
 //===----------------------------------------------------------------------===//
 // TemplateArgument Implementation
 //===----------------------------------------------------------------------===//
+
+TemplateArgument::TemplateArgument(ASTContext &Ctx, const llvm::APSInt &Value,
+                                   QualType Type)
+  : Kind(Integral) {
+  // Copy the APSInt value into our decomposed form.
+  Integer.BitWidth = Value.getBitWidth();
+  Integer.IsUnsigned = Value.isUnsigned();
+  // If the value is large, we have to get additional memory from the ASTContext
+  if (Integer.BitWidth > 64) {
+    void *Mem = Ctx.Allocate(Integer.BitWidth / 8);
+    std::memcpy(Mem, Value.getRawData(), Integer.BitWidth / 8);
+    Integer.pVal = static_cast<uint64_t *>(Mem);
+  } else {
+    Integer.VAL = Value.getZExtValue();
+  }
+
+  Integer.Type = Type.getAsOpaquePtr();
+}
 
 TemplateArgument TemplateArgument::CreatePackCopy(ASTContext &Context,
                                                   const TemplateArgument *Args,
@@ -246,7 +264,7 @@ void TemplateArgument::Profile(llvm::FoldingSetNodeID &ID,
   }
       
   case Integral:
-    getAsIntegral()->Profile(ID);
+    getAsIntegral().Profile(ID);
     getIntegralType().Profile(ID);
     break;
 
@@ -275,7 +293,7 @@ bool TemplateArgument::structurallyEquals(const TemplateArgument &Other) const {
 
   case Integral:
     return getIntegralType() == Other.getIntegralType() &&
-           *getAsIntegral() == *Other.getAsIntegral();
+           getAsIntegral() == Other.getAsIntegral();
 
   case Pack:
     if (Args.NumArgs != Other.Args.NumArgs) return false;
@@ -498,7 +516,7 @@ const DiagnosticBuilder &clang::operator<<(const DiagnosticBuilder &DB,
     return DB << "nullptr";
       
   case TemplateArgument::Integral:
-    return DB << Arg.getAsIntegral()->toString(10);
+    return DB << Arg.getAsIntegral().toString(10);
       
   case TemplateArgument::Template:
     return DB << Arg.getAsTemplate();

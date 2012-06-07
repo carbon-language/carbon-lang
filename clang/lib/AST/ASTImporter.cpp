@@ -322,7 +322,7 @@ static bool IsStructurallyEquivalent(StructuralEquivalenceContext &Context,
                                           Arg2.getIntegralType()))
       return false;
     
-    return IsSameValue(*Arg1.getAsIntegral(), *Arg2.getAsIntegral());
+    return IsSameValue(Arg1.getAsIntegral(), Arg2.getAsIntegral());
       
   case TemplateArgument::Declaration:
     if (!Arg1.getAsDecl() || !Arg2.getAsDecl())
@@ -1992,7 +1992,7 @@ ASTNodeImporter::ImportTemplateArgument(const TemplateArgument &From) {
     QualType ToType = Importer.Import(From.getIntegralType());
     if (ToType.isNull())
       return TemplateArgument();
-    return TemplateArgument(*From.getAsIntegral(), ToType);
+    return TemplateArgument(From, ToType);
   }
 
   case TemplateArgument::Declaration:

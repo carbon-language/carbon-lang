@@ -4147,7 +4147,7 @@ void ASTWriter::AddTemplateArgument(const TemplateArgument &Arg,
     AddDeclRef(Arg.getAsDecl(), Record);
     break;
   case TemplateArgument::Integral:
-    AddAPSInt(*Arg.getAsIntegral(), Record);
+    AddAPSInt(Arg.getAsIntegral(), Record);
     AddTypeRef(Arg.getIntegralType(), Record);
     break;
   case TemplateArgument::Template:

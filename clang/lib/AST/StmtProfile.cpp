@@ -1161,7 +1161,7 @@ void StmtProfiler::VisitTemplateArgument(const TemplateArgument &Arg) {
     break;
 
   case TemplateArgument::Integral:
-    Arg.getAsIntegral()->Profile(ID);
+    Arg.getAsIntegral().Profile(ID);
     VisitType(Arg.getIntegralType());
     break;
 

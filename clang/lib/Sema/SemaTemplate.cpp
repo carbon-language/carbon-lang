@@ -4125,7 +4125,8 @@ ExprResult Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
         IntegerType = Enum->getDecl()->getIntegerType();
       Value = Value.extOrTrunc(Context.getTypeSize(IntegerType));
 
-      Converted = TemplateArgument(Value, Context.getCanonicalType(ParamType));
+      Converted = TemplateArgument(Context, Value,
+                                   Context.getCanonicalType(ParamType));
       return ArgResult;
     }
 
@@ -4251,7 +4252,7 @@ ExprResult Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
       }
     }
 
-    Converted = TemplateArgument(Value,
+    Converted = TemplateArgument(Context, Value,
                                  ParamType->isEnumeralType() 
                                    ? Context.getCanonicalType(ParamType)
                                    : IntegerType);
@@ -4569,13 +4570,13 @@ Sema::BuildExpressionFromIntegralTemplateArgument(const TemplateArgument &Arg,
       Kind = CharacterLiteral::Ascii;
 
     return Owned(new (Context) CharacterLiteral(
-                                            Arg.getAsIntegral()->getZExtValue(),
+                                            Arg.getAsIntegral().getZExtValue(),
                                             Kind, T, Loc));
   }
 
   if (T->isBooleanType())
     return Owned(new (Context) CXXBoolLiteralExpr(
-                                            Arg.getAsIntegral()->getBoolValue(),
+                                            Arg.getAsIntegral().getBoolValue(),
                                             T, Loc));
 
   if (T->isNullPtrType())
@@ -4590,7 +4591,7 @@ Sema::BuildExpressionFromIntegralTemplateArgument(const TemplateArgument &Arg,
   else
     BT = T;
 
-  Expr *E = IntegerLiteral::Create(Context, *Arg.getAsIntegral(), BT, Loc);
+  Expr *E = IntegerLiteral::Create(Context, Arg.getAsIntegral(), BT, Loc);
   if (T->isEnumeralType()) {
     // FIXME: This is a hack. We need a better way to handle substituted
     // non-type template parameters.

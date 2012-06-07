@@ -1086,7 +1086,7 @@ CollectTemplateParams(const TemplateParameterList *TPList,
       llvm::DIType TTy = getOrCreateType(TA.getIntegralType(), Unit);
       llvm::DITemplateValueParameter TVP =
         DBuilder.createTemplateValueParameter(TheCU, ND->getName(), TTy,
-                                          TA.getAsIntegral()->getZExtValue());
+                                             TA.getAsIntegral().getZExtValue());
       TemplateParams.push_back(TVP);          
     }
   }

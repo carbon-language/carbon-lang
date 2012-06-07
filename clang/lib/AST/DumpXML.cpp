@@ -326,7 +326,7 @@ struct XMLDumper : public XMLDeclVisitor<XMLDumper>,
     }
     case TemplateArgument::Integral: {
       push("integer");
-      setInteger("value", *A.getAsIntegral());
+      setInteger("value", A.getAsIntegral());
       completeAttrs();
       pop();
       break;
