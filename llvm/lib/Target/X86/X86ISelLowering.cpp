@@ -13521,8 +13521,6 @@ static SDValue PerformEXTRACT_VECTOR_ELTCombine(SDNode *N, SelectionDAG &DAG,
 static SDValue PerformSELECTCombine(SDNode *N, SelectionDAG &DAG,
                                     TargetLowering::DAGCombinerInfo &DCI,
                                     const X86Subtarget *Subtarget) {
-
-
   DebugLoc DL = N->getDebugLoc();
   SDValue Cond = N->getOperand(0);
   // Get the LHS/RHS of the select.
@@ -13804,9 +13802,13 @@ static SDValue PerformSELECTCombine(SDNode *N, SelectionDAG &DAG,
   // to simplify previous instructions.
   const TargetLowering &TLI = DAG.getTargetLoweringInfo();
   if (N->getOpcode() == ISD::VSELECT && DCI.isBeforeLegalizeOps() &&
-      !DCI.isBeforeLegalize() &&
-      TLI.isOperationLegal(ISD::VSELECT, VT)) {
+      !DCI.isBeforeLegalize() && TLI.isOperationLegal(ISD::VSELECT, VT)) {
     unsigned BitWidth = Cond.getValueType().getScalarType().getSizeInBits();
+
+    // Don't optimize vector selects that map to mask-registers.
+    if (BitWidth == 1)
+      return SDValue();
+
     assert(BitWidth >= 8 && BitWidth <= 64 && "Invalid mask size");
     APInt DemandedMask = APInt::getHighBitsSet(BitWidth, 1);
 
