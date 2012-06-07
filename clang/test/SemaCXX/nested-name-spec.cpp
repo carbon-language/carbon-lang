@@ -113,8 +113,7 @@ namespace E {
       X = 0
     };
 
-    void f() { // expected-note{{'E::Nested::f' declared here}} \
-               // expected-note{{previous definition is here}}
+    void f() {
       return E::X; // expected-error{{expected a class or namespace}}
     }
   }
@@ -144,10 +143,7 @@ namespace A {
   void g(int&); // expected-note{{type of 1st parameter of member declaration does not match definition ('int &' vs 'const int &')}}
 } 
 
-// TODO: Suppress the typo correction for an invalid redeclaration if the chosen
-// correction is a function that already has a body.
-void A::f() {} // expected-error{{out-of-line definition of 'f' does not match any declaration in namespace 'A'; did you mean 'E::Nested::f'?}} \
-               // expected-error{{redefinition of 'f'}}
+void A::f() {} // expected-error-re{{out-of-line definition of 'f' does not match any declaration in namespace 'A'$}}
 
 void A::g(const int&) { } // expected-error{{out-of-line definition of 'g' does not match any declaration in namespace 'A'}}
 

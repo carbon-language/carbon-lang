@@ -76,12 +76,9 @@ class Crash {
   void GetCart(int count) const;
 };
 // This out-of-line definition was fine...
-void Crash::cart(int count) const {} // expected-error {{out-of-line definition of 'cart' does not match any declaration in 'Crash'}} \
-                                     // expected-note {{'cart' declared here}} \
-                                     // expected-note {{previous definition is here}}
+void Crash::cart(int count) const {} // expected-error {{out-of-line definition of 'cart' does not match any declaration in 'Crash'}}
 // ...while this one crashed clang
-void Crash::chart(int count) const {} // expected-error {{out-of-line definition of 'chart' does not match any declaration in 'Crash'; did you mean 'cart'?}} \
-                                      // expected-error {{redefinition of 'cart'}}
+void Crash::chart(int count) const {} // expected-error {{out-of-line definition of 'chart' does not match any declaration in 'Crash'}}
 
 class TestConst {
  public:
@@ -98,3 +95,24 @@ void TestConst::setit(int) const { // expected-error {{out-of-line definition of
 
 struct J { int typo() const; };
 int J::typo_() { return 3; } // expected-error {{out-of-line definition of 'typo_' does not match any declaration in 'J'}}
+
+// Ensure we correct the redecl of Foo::isGood to Bar::Foo::isGood and not
+// Foo::IsGood even though Foo::IsGood is technically a closer match since it
+// already has a body. Also make sure Foo::beEvil is corrected to Foo::BeEvil
+// since it is a closer match than Bar::Foo::beEvil and neither have a body.
+namespace redecl_typo {
+namespace Foo {
+  bool IsGood() { return false; }
+  void BeEvil(); // expected-note {{'BeEvil' declared here}}
+}
+namespace Bar {
+  namespace Foo {
+    bool isGood(); // expected-note {{'Bar::Foo::isGood' declared here}}
+    void beEvil();
+  }
+}
+bool Foo::isGood() { // expected-error {{out-of-line definition of 'isGood' does not match any declaration in namespace 'redecl_typo::Foo'; did you mean 'Bar::Foo::isGood'?}}
+  return true;
+}
+void Foo::beEvil() {} // expected-error {{out-of-line definition of 'beEvil' does not match any declaration in namespace 'redecl_typo::Foo'; did you mean 'BeEvil'?}}
+}
