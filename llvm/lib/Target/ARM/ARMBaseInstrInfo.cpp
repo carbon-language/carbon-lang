@@ -2565,84 +2565,14 @@ static const MachineInstr *getBundledUseMI(const TargetRegisterInfo *TRI,
   return II;
 }
 
-int
-ARMBaseInstrInfo::getOperandLatency(const InstrItineraryData *ItinData,
-                                    const MachineInstr *DefMI, unsigned DefIdx,
-                                    const MachineInstr *UseMI,
-                                    unsigned UseIdx) const {
-  if (DefMI->isCopyLike() || DefMI->isInsertSubreg() ||
-      DefMI->isRegSequence() || DefMI->isImplicitDef()) {
-    return 1;
-  }
-  // No operand latency. The caller may fall back to getInstrLatency.
-  if (!ItinData || ItinData->isEmpty())
-    return -1;
-
-  const MCInstrDesc *DefMCID = &DefMI->getDesc();
-  const MCInstrDesc *UseMCID = &UseMI->getDesc();
-  const MachineOperand &DefMO = DefMI->getOperand(DefIdx);
-  unsigned Reg = DefMO.getReg();
-  if (Reg == ARM::CPSR) {
-    if (DefMI->getOpcode() == ARM::FMSTAT) {
-      // fpscr -> cpsr stalls over 20 cycles on A8 (and earlier?)
-      return Subtarget.isCortexA9() ? 1 : 20;
-    }
-
-    // CPSR set and branch can be paired in the same cycle.
-    if (UseMI->isBranch())
-      return 0;
-
-    // Otherwise it takes the instruction latency (generally one).
-    unsigned Latency = getInstrLatency(ItinData, DefMI);
-
-    // For Thumb2 and -Os, prefer scheduling CPSR setting instruction close to
-    // its uses. Instructions which are otherwise scheduled between them may
-    // incur a code size penalty (not able to use the CPSR setting 16-bit
-    // instructions).
-    if (Latency > 0 && Subtarget.isThumb2()) {
-      const MachineFunction *MF = DefMI->getParent()->getParent();
-      if (MF->getFunction()->hasFnAttr(Attribute::OptimizeForSize))
-        --Latency;
-    }
-    return Latency;
-  }
-
-  unsigned DefAlign = DefMI->hasOneMemOperand()
-    ? (*DefMI->memoperands_begin())->getAlignment() : 0;
-  unsigned UseAlign = UseMI->hasOneMemOperand()
-    ? (*UseMI->memoperands_begin())->getAlignment() : 0;
-
-  unsigned DefAdj = 0;
-  if (DefMI->isBundle()) {
-    DefMI = getBundledDefMI(&getRegisterInfo(), DefMI, Reg, DefIdx, DefAdj);
-    if (DefMI->isCopyLike() || DefMI->isInsertSubreg() ||
-        DefMI->isRegSequence() || DefMI->isImplicitDef())
-      return 1;
-    DefMCID = &DefMI->getDesc();
-  }
-  unsigned UseAdj = 0;
-  if (UseMI->isBundle()) {
-    unsigned NewUseIdx;
-    const MachineInstr *NewUseMI = getBundledUseMI(&getRegisterInfo(), UseMI,
-                                                   Reg, NewUseIdx, UseAdj);
-    if (NewUseMI) {
-      UseMI = NewUseMI;
-      UseIdx = NewUseIdx;
-      UseMCID = &UseMI->getDesc();
-    }
-  }
-
-  int Latency = getOperandLatency(ItinData, *DefMCID, DefIdx, DefAlign,
-                                  *UseMCID, UseIdx, UseAlign);
-  int Adj = DefAdj + UseAdj;
-  if (Adj) {
-    Latency -= (int)(DefAdj + UseAdj);
-    if (Latency < 1)
-      return 1;
-  }
-
-  if (Latency > 1 &&
-      (Subtarget.isCortexA8() || Subtarget.isCortexA9())) {
+/// Return the number of cycles to add to (or subtract from) the static
+/// itinerary based on the def opcode and alignment. The caller will ensure that
+/// adjusted latency is at least one cycle.
+static int adjustDefLatency(const ARMSubtarget &Subtarget,
+                            const MachineInstr *DefMI,
+                            const MCInstrDesc *DefMCID, unsigned DefAlign) {
+  int Adjust = 0;
+  if (Subtarget.isCortexA8() || Subtarget.isCortexA9()) {
     // FIXME: Shifter op hack: no shift (i.e. [r +/- r]) or [r + r << 2]
     // variants are one cycle cheaper.
     switch (DefMCID->getOpcode()) {
@@ -2653,7 +2583,7 @@ ARMBaseInstrInfo::getOperandLatency(const InstrItineraryData *ItinData,
       unsigned ShImm = ARM_AM::getAM2Offset(ShOpVal);
       if (ShImm == 0 ||
           (ShImm == 2 && ARM_AM::getAM2ShiftOpc(ShOpVal) == ARM_AM::lsl))
-        --Latency;
+        --Adjust;
       break;
     }
     case ARM::t2LDRs:
@@ -2663,13 +2593,13 @@ ARMBaseInstrInfo::getOperandLatency(const InstrItineraryData *ItinData,
       // Thumb2 mode: lsl only.
       unsigned ShAmt = DefMI->getOperand(3).getImm();
       if (ShAmt == 0 || ShAmt == 2)
-        --Latency;
+        --Adjust;
       break;
     }
     }
   }
 
-  if (DefAlign < 8 && Subtarget.isCortexA9())
+  if (DefAlign < 8 && Subtarget.isCortexA9()) {
     switch (DefMCID->getOpcode()) {
     default: break;
     case ARM::VLD1q8:
@@ -2778,10 +2708,97 @@ ARMBaseInstrInfo::getOperandLatency(const InstrItineraryData *ItinData,
     case ARM::VLD4LNq32_UPD:
       // If the address is not 64-bit aligned, the latencies of these
       // instructions increases by one.
-      ++Latency;
+      ++Adjust;
       break;
     }
+  }
+  return Adjust;
+}
 
+
+
+int
+ARMBaseInstrInfo::getOperandLatency(const InstrItineraryData *ItinData,
+                                    const MachineInstr *DefMI, unsigned DefIdx,
+                                    const MachineInstr *UseMI,
+                                    unsigned UseIdx) const {
+  // No operand latency. The caller may fall back to getInstrLatency.
+  if (!ItinData || ItinData->isEmpty())
+    return -1;
+
+  const MachineOperand &DefMO = DefMI->getOperand(DefIdx);
+  unsigned Reg = DefMO.getReg();
+  const MCInstrDesc *DefMCID = &DefMI->getDesc();
+  const MCInstrDesc *UseMCID = &UseMI->getDesc();
+
+  unsigned DefAdj = 0;
+  if (DefMI->isBundle()) {
+    DefMI = getBundledDefMI(&getRegisterInfo(), DefMI, Reg, DefIdx, DefAdj);
+    DefMCID = &DefMI->getDesc();
+  }
+  if (DefMI->isCopyLike() || DefMI->isInsertSubreg() ||
+      DefMI->isRegSequence() || DefMI->isImplicitDef()) {
+    return 1;
+  }
+
+  unsigned UseAdj = 0;
+  if (UseMI->isBundle()) {
+    unsigned NewUseIdx;
+    const MachineInstr *NewUseMI = getBundledUseMI(&getRegisterInfo(), UseMI,
+                                                   Reg, NewUseIdx, UseAdj);
+    if (NewUseMI) {
+      UseMI = NewUseMI;
+      UseIdx = NewUseIdx;
+      UseMCID = &UseMI->getDesc();
+    }
+  }
+
+  if (Reg == ARM::CPSR) {
+    if (DefMI->getOpcode() == ARM::FMSTAT) {
+      // fpscr -> cpsr stalls over 20 cycles on A8 (and earlier?)
+      return Subtarget.isCortexA9() ? 1 : 20;
+    }
+
+    // CPSR set and branch can be paired in the same cycle.
+    if (UseMI->isBranch())
+      return 0;
+
+    // Otherwise it takes the instruction latency (generally one).
+    unsigned Latency = getInstrLatency(ItinData, DefMI);
+
+    // For Thumb2 and -Os, prefer scheduling CPSR setting instruction close to
+    // its uses. Instructions which are otherwise scheduled between them may
+    // incur a code size penalty (not able to use the CPSR setting 16-bit
+    // instructions).
+    if (Latency > 0 && Subtarget.isThumb2()) {
+      const MachineFunction *MF = DefMI->getParent()->getParent();
+      if (MF->getFunction()->hasFnAttr(Attribute::OptimizeForSize))
+        --Latency;
+    }
+    return Latency;
+  }
+
+  unsigned DefAlign = DefMI->hasOneMemOperand()
+    ? (*DefMI->memoperands_begin())->getAlignment() : 0;
+  unsigned UseAlign = UseMI->hasOneMemOperand()
+    ? (*UseMI->memoperands_begin())->getAlignment() : 0;
+
+  // Get the itinerary's latency if possible, and handle variable_ops.
+  int Latency = getOperandLatency(ItinData, *DefMCID, DefIdx, DefAlign,
+                                  *UseMCID, UseIdx, UseAlign);
+  // Unable to find operand latency. The caller may resort to getInstrLatency.
+  if (Latency < 0)
+    return Latency;
+
+  // Adjust for IT block position.
+  int Adj = DefAdj + UseAdj;
+
+  // Adjust for dynamic def-side opcode variants not captured by the itinerary.
+  Adj += adjustDefLatency(Subtarget, DefMI, DefMCID, DefAlign);
+  if (Adj >= 0 || (int)Latency > -Adj) {
+    return Latency + Adj;
+  }
+  // Return the itinerary latency, which may be zero but not less than zero.
   return Latency;
 }
 
@@ -2981,8 +2998,9 @@ ARMBaseInstrInfo::getOutputLatency(const InstrItineraryData *ItinData,
     return 1;
 
   // If the second MI is predicated, then there is an implicit use dependency.
-  return getOperandLatency(ItinData, DefMI, DefIdx, DepMI,
-                           DepMI->getNumOperands());
+  int Latency = getOperandLatency(ItinData, DefMI, DefIdx, DepMI,
+                                  DepMI->getNumOperands());
+  return (Latency <= 0) ? 1 : Latency;
 }
 
 unsigned ARMBaseInstrInfo::getInstrLatency(const InstrItineraryData *ItinData,
@@ -3023,7 +3041,16 @@ unsigned ARMBaseInstrInfo::getInstrLatency(const InstrItineraryData *ItinData,
     return getNumMicroOps(ItinData, MI);
   }
   // For the common case, fall back on the itinerary's latency.
-  return ItinData->getStageLatency(Class);
+  unsigned Latency = ItinData->getStageLatency(Class);
+
+  // Adjust for dynamic def-side opcode variants not captured by the itinerary.
+  unsigned DefAlign = MI->hasOneMemOperand()
+    ? (*MI->memoperands_begin())->getAlignment() : 0;
+  int Adj = adjustDefLatency(Subtarget, MI, &MCID, DefAlign);
+  if (Adj >= 0 || (int)Latency > -Adj) {
+    return Latency + Adj;
+  }
+  return Latency;
 }
 
 int ARMBaseInstrInfo::getInstrLatency(const InstrItineraryData *ItinData,
