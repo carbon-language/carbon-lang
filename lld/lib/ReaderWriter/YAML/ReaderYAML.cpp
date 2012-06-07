@@ -1197,9 +1197,9 @@ void YAMLState::parse(Node *node, StringRef keyword, Node *keywordNode) {
 }
 
 
-/// parseObjectText - Parse the specified YAML formatted MemoryBuffer
+/// parseFile - Parse the specified YAML formatted MemoryBuffer
 /// into lld::File object(s) and append each to the specified vector<File*>.
-error_code parseFile(std::unique_ptr<MemoryBuffer> &mb,
+static error_code parseFile(std::unique_ptr<MemoryBuffer> &mb,
                       const ReaderOptionsYAML &options,
                       std::vector<std::unique_ptr<File>> &result) {
   llvm::SourceMgr       srcMgr;

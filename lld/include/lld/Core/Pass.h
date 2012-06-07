@@ -34,6 +34,8 @@ class DefinedAtom;
 ///
 class Pass {
 public:
+  virtual ~Pass() { }
+
     /// Do the actual work of the Pass.
     virtual void perform(File& mergedFile) = 0;
 

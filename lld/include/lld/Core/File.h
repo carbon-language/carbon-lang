@@ -110,6 +110,7 @@ protected:
   template <typename T>
   class atom_collection {
   public:
+    virtual ~atom_collection() { }
     virtual atom_iterator<T> begin() const = 0;
     virtual atom_iterator<T> end() const = 0;
     virtual const T* deref(const void* it) const = 0;
