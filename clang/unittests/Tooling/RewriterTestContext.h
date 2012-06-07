@@ -63,8 +63,10 @@ class RewriterTestContext {
   FileID createOnDiskFile(StringRef Name, StringRef Content) {
     if (TemporaryDirectory.empty()) {
       int FD;
-      assert(!llvm::sys::fs::unique_file("rewriter-test-%%-%%-%%-%%/anchor",
-                                         FD, TemporaryDirectory));
+      bool error =
+        llvm::sys::fs::unique_file("rewriter-test-%%-%%-%%-%%/anchor", FD,
+                                   TemporaryDirectory);
+      assert(!error); (void)error;
       llvm::raw_fd_ostream Closer(FD, /*shouldClose=*/true);
       TemporaryDirectory = llvm::sys::path::parent_path(TemporaryDirectory);
     }
