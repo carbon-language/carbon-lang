@@ -14,20 +14,24 @@
 
 #ifdef __APPLE__
 
+#include "sanitizer_common.h"
 #include "sanitizer_internal_defs.h"
 #include "sanitizer_libc.h"
 #include "sanitizer_procmaps.h"
 
+#include <fcntl.h>
 #include <mach-o/dyld.h>
 #include <mach-o/loader.h>
+#include <pthread.h>
 #include <sys/mman.h>
+#include <sys/resource.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <fcntl.h>
 #include <unistd.h>
 
 namespace __sanitizer {
 
+// ---------------------- sanitizer_libc.h
 void *internal_mmap(void *addr, size_t length, int prot, int flags,
                     int fd, u64 offset) {
   return mmap(addr, length, prot, flags, fd, offset);
@@ -65,7 +69,19 @@ int internal_dup2(int oldfd, int newfd) {
   return dup2(oldfd, newfd);
 }
 
-// ----------------- ProcessMaps implementation.
+// ----------------- sanitizer_common.h
+void GetThreadStackTopAndBottom(bool is_main_thread, uptr *stack_top,
+                                uptr *stack_bottom) {
+  CHECK(stack_top);
+  CHECK(stack_bottom);
+  uptr stacksize = pthread_get_stacksize_np(pthread_self());
+  void *stackaddr = pthread_get_stackaddr_np(pthread_self());
+  *stack_top = (uptr)stackaddr;
+  *stack_bottom = stack_top_ - stacksize;
+}
+
+
+// ----------------- sanitizer_procmaps.h
 
 ProcessMaps::ProcessMaps() {
   Reset();

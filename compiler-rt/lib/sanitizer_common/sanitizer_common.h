@@ -26,13 +26,16 @@ const uptr kWordSizeInBits = 8 * kWordSize;
 const uptr kPageSizeBits = 12;
 const uptr kPageSize = 1UL << kPageSizeBits;
 
+// Threads
 int GetPid();
-void RawWrite(const char *buffer);
+void GetThreadStackTopAndBottom(bool is_main_thread, uptr *stack_top,
+                                uptr *stack_bottom);
 
 // Memory management
 void *MmapOrDie(uptr size, const char *mem_type);
 void UnmapOrDie(void *addr, uptr size);
 
+void RawWrite(const char *buffer);
 void Printf(const char *format, ...);
 int SNPrintf(char *buffer, uptr length, const char *format, ...);
 void Report(const char *format, ...);

@@ -19,14 +19,18 @@
 #include "sanitizer_procmaps.h"
 
 #include <fcntl.h>
+#include <pthread.h>
 #include <sys/mman.h>
+#include <sys/resource.h>
 #include <sys/stat.h>
 #include <sys/syscall.h>
+#include <sys/time.h>
 #include <sys/types.h>
 #include <unistd.h>
 
 namespace __sanitizer {
 
+// --------------- sanitizer_libc.h
 void *internal_mmap(void *addr, uptr length, int prot, int flags,
                     int fd, u64 offset) {
 #if __WORDSIZE == 64
@@ -68,7 +72,55 @@ int internal_dup2(int oldfd, int newfd) {
   return syscall(__NR_dup2, oldfd, newfd);
 }
 
-// ----------------- ProcessMaps implementation.
+// ----------------- sanitizer_common.h
+void GetThreadStackTopAndBottom(bool is_main_thread, uptr *stack_top,
+                                uptr *stack_bottom) {
+  static const uptr kMaxThreadStackSize = 256 * (1 << 20);  // 256M
+  CHECK(stack_top);
+  CHECK(stack_bottom);
+  if (is_main_thread) {
+    // This is the main thread. Libpthread may not be initialized yet.
+    struct rlimit rl;
+    CHECK(getrlimit(RLIMIT_STACK, &rl) == 0);
+
+    // Find the mapping that contains a stack variable.
+    ProcessMaps proc_maps;
+    uptr start, end, offset;
+    uptr prev_end = 0;
+    while (proc_maps.Next(&start, &end, &offset, 0, 0)) {
+      if ((uptr)&rl < end)
+        break;
+      prev_end = end;
+    }
+    CHECK((uptr)&rl >= start && (uptr)&rl < end);
+
+    // Get stacksize from rlimit, but clip it so that it does not overlap
+    // with other mappings.
+    uptr stacksize = rl.rlim_cur;
+    if (stacksize > end - prev_end)
+      stacksize = end - prev_end;
+    // When running with unlimited stack size, we still want to set some limit.
+    // The unlimited stack size is caused by 'ulimit -s unlimited'.
+    // Also, for some reason, GNU make spawns subprocesses with unlimited stack.
+    if (stacksize > kMaxThreadStackSize)
+      stacksize = kMaxThreadStackSize;
+    *stack_top = end;
+    *stack_bottom = end - stacksize;
+    return;
+  }
+  pthread_attr_t attr;
+  CHECK(pthread_getattr_np(pthread_self(), &attr) == 0);
+  uptr stacksize = 0;
+  void *stackaddr = 0;
+  pthread_attr_getstack(&attr, &stackaddr, (size_t*)&stacksize);
+  pthread_attr_destroy(&attr);
+
+  *stack_top = (uptr)stackaddr + stacksize;
+  *stack_bottom = (uptr)stackaddr;
+  CHECK(stacksize < kMaxThreadStackSize);  // Sanity check.
+}
+
+// ----------------- sanitizer_procmaps.h
 ProcessMaps::ProcessMaps() {
   proc_self_maps_buff_len_ =
       ReadFileToBuffer("/proc/self/maps", &proc_self_maps_buff_,

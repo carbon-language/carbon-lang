@@ -117,51 +117,6 @@ const char* AsanGetEnv(const char* name) {
   return 0;  // Not found.
 }
 
-void AsanThread::SetThreadStackTopAndBottom() {
-  if (tid() == 0) {
-    // This is the main thread. Libpthread may not be initialized yet.
-    struct rlimit rl;
-    CHECK(getrlimit(RLIMIT_STACK, &rl) == 0);
-
-    // Find the mapping that contains a stack variable.
-    ProcessMaps proc_maps;
-    uptr start, end, offset;
-    uptr prev_end = 0;
-    while (proc_maps.Next(&start, &end, &offset, 0, 0)) {
-      if ((uptr)&rl < end)
-        break;
-      prev_end = end;
-    }
-    CHECK((uptr)&rl >= start && (uptr)&rl < end);
-
-    // Get stacksize from rlimit, but clip it so that it does not overlap
-    // with other mappings.
-    uptr stacksize = rl.rlim_cur;
-    if (stacksize > end - prev_end)
-      stacksize = end - prev_end;
-    // When running with unlimited stack size, we still want to set some limit.
-    // The unlimited stack size is caused by 'ulimit -s unlimited'.
-    // Also, for some reason, GNU make spawns subprocesses with unlimited stack.
-    if (stacksize > kMaxThreadStackSize)
-      stacksize = kMaxThreadStackSize;
-    stack_top_ = end;
-    stack_bottom_ = end - stacksize;
-    CHECK(AddrIsInStack((uptr)&rl));
-    return;
-  }
-  pthread_attr_t attr;
-  CHECK(pthread_getattr_np(pthread_self(), &attr) == 0);
-  uptr stacksize = 0;
-  void *stackaddr = 0;
-  pthread_attr_getstack(&attr, &stackaddr, (size_t*)&stacksize);
-  pthread_attr_destroy(&attr);
-
-  stack_top_ = (uptr)stackaddr + stacksize;
-  stack_bottom_ = (uptr)stackaddr;
-  CHECK(stacksize < kMaxThreadStackSize);  // Sanity check.
-  CHECK(AddrIsInStack((uptr)&attr));
-}
-
 AsanLock::AsanLock(LinkerInitialized) {
   // We assume that pthread_mutex_t initialized to all zeroes is a valid
   // unlocked mutex. We can not use PTHREAD_MUTEX_INITIALIZER as it triggers

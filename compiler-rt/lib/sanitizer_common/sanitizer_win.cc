@@ -19,9 +19,24 @@
 
 namespace __sanitizer {
 
+// --------------------- sanitizer_common.h
 int GetPid() {
   return GetProcessId(GetCurrentProcess());
 }
+
+void GetThreadStackTopAndBottom(bool is_main_thread, uptr *stack_top,
+                                uptr *stack_bottom) {
+  CHECK(stack_top);
+  CHECK(stack_bottom);
+  MEMORY_BASIC_INFORMATION mbi;
+  CHECK(VirtualQuery(&mbi /* on stack */, &mbi, sizeof(mbi)) != 0);
+  // FIXME: is it possible for the stack to not be a single allocation?
+  // Are these values what ASan expects to get (reserved, not committed;
+  // including stack guard page) ?
+  *stack_top = (uptr)mbi.BaseAddress + mbi.RegionSize;
+  *stack_bottom = (uptr)mbi.AllocationBase;
+}
+
 
 void *MmapOrDie(uptr size, const char *mem_type) {
   void *rv = VirtualAlloc(0, size, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
@@ -41,6 +56,7 @@ void UnmapOrDie(void *addr, uptr size) {
   }
 }
 
+// ------------------ sanitizer_libc.h
 void *internal_mmap(void *addr, uptr length, int prot, int flags,
                     int fd, u64 offset) {
   UNIMPLEMENTED();

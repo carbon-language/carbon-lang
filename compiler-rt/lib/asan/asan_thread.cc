@@ -18,6 +18,7 @@
 #include "asan_thread.h"
 #include "asan_thread_registry.h"
 #include "asan_mapping.h"
+#include "sanitizer_common/sanitizer_common.h"
 
 namespace __asan {
 
@@ -99,6 +100,12 @@ thread_return_t AsanThread::ThreadStart() {
   this->Destroy();
 
   return res;
+}
+
+void AsanThread::SetThreadStackTopAndBottom() {
+  GetThreadStackTopAndBottom(tid() == 0, &stack_top_, &stack_bottom_);
+  int local;
+  CHECK(AddrIsInStack((uptr)&local));
 }
 
 void AsanThread::ClearShadowForThreadStack() {

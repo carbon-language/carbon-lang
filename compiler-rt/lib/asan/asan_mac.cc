@@ -132,15 +132,6 @@ const char *AsanGetEnv(const char *name) {
   return 0;
 }
 
-void AsanThread::SetThreadStackTopAndBottom() {
-  uptr stacksize = pthread_get_stacksize_np(pthread_self());
-  void *stackaddr = pthread_get_stackaddr_np(pthread_self());
-  stack_top_ = (uptr)stackaddr;
-  stack_bottom_ = stack_top_ - stacksize;
-  int local;
-  CHECK(AddrIsInStack((uptr)&local));
-}
-
 AsanLock::AsanLock(LinkerInitialized) {
   // We assume that OS_SPINLOCK_INIT is zero
 }

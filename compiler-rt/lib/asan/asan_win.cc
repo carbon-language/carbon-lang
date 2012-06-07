@@ -47,17 +47,6 @@ static AsanLock dbghelp_lock(LINKER_INITIALIZED);
 static bool dbghelp_initialized = false;
 #pragma comment(lib, "dbghelp.lib")
 
-void AsanThread::SetThreadStackTopAndBottom() {
-  MEMORY_BASIC_INFORMATION mbi;
-  CHECK(VirtualQuery(&mbi /* on stack */,
-                    &mbi, sizeof(mbi)) != 0);
-  // FIXME: is it possible for the stack to not be a single allocation?
-  // Are these values what ASan expects to get (reserved, not committed;
-  // including stack guard page) ?
-  stack_top_ = (uptr)mbi.BaseAddress + mbi.RegionSize;
-  stack_bottom_ = (uptr)mbi.AllocationBase;
-}
-
 void AsanStackTrace::GetStackTrace(uptr max_s, uptr pc, uptr bp) {
   max_size = max_s;
   void *tmp[kStackTraceMax];
