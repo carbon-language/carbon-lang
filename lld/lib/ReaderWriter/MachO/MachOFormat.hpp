@@ -24,29 +24,23 @@
 namespace lld {
 namespace mach_o {
 
-class load_command {
-public:
-  uint32_t  cmd;  
-  uint32_t  cmdsize;
-  
-  void copyTo(uint8_t* to, bool swap=false) {
-    ::memcpy(to, (uint8_t*)&cmd, cmdsize);
-  }
-};
 
 enum { 
-  MH_MAGIC = 0xfeedface,
-  MAGIC_64 = 0xfeedfacf 
+  MH_MAGIC    = 0xfeedface,
+  MH_MAGIC_64 = 0xfeedfacf 
 };
 
 enum {
+  CPU_TYPE_ARM  =   0x0000000C,
   CPU_TYPE_I386 =   0x00000007,
   CPU_TYPE_X86_64 = 0x01000007
 };
 
 enum {
-  CPU_SUBTYPE_X86_ALL = 0x00000003,
-  CPU_SUBTYPE_X86_64_ALL = 0x00000003
+  CPU_SUBTYPE_X86_ALL    = 0x00000003,
+  CPU_SUBTYPE_X86_64_ALL = 0x00000003,
+  CPU_SUBTYPE_ARM_V6     = 0x00000006,
+  CPU_SUBTYPE_ARM_V7     = 0x00000009
 };
 
 enum {
@@ -60,6 +54,10 @@ enum {
 };
 
 
+//
+// Every mach-o file starts with this header.  The header size is
+// 28 bytes for 32-bit architecures and 32-bytes for 64-bit architectures.
+//
 class mach_header {
 public:
   uint32_t    magic;  
@@ -75,19 +73,91 @@ public:
     return (magic == 0xfeedfacf) ? 32 : 28;
   }
   
-  void copyTo(uint8_t* to, bool swap=false) {
+  void copyTo(uint8_t *to, bool swap=false) {
     ::memcpy(to, (char*)&magic, this->size());
   }
  
-  void recordLoadCommand(const class load_command* lc) {
-    ++ncmds;
-    sizeofcmds += lc->cmdsize;
+  void recordLoadCommand(const class load_command *lc);    
+};
+
+
+//
+// Every mach-o file has a list of load commands after the mach_header.
+// Each load command starts with a type and length, so you can iterate
+// through the load commands even if you don't understand the content
+// of a particular type.
+//
+// The model for handling endianness and 32 vs 64 bitness is that the in-memory
+// object is always 64-bit and the native endianess.  The endianess swapping
+// and pointer sizing is done when writing (copyTo method) or when reading
+// (constructor that takes a buffer).
+//
+// The load_command subclasses are designed so to mirror the traditional "C"
+// structs, so you can get and set the same field names (e.g. seg->vmaddr = 0).
+//
+class load_command {
+public:
+  const uint32_t  cmd;        // type of load command
+  const uint32_t  cmdsize;    // length of load command including this header
+  
+  load_command(uint32_t cmdNumber, uint32_t sz, bool is64, bool align=false)
+    : cmd(cmdNumber), cmdsize(pointerAlign(sz, is64, align)) {
   }
-    
+  
+  virtual ~load_command() {
+  }
+  
+  virtual void copyTo(uint8_t *to, bool swap=false) = 0;
+private:
+  // Load commands must be pointer-size aligned. Most load commands are
+  // a fixed size, so there is a runtime assert to check those.  For variable
+  // length load commands, setting the align option to true will add padding
+  // at the end of the load command to round up its size for proper alignment.
+  uint32_t pointerAlign(uint32_t size, bool is64, bool align) {
+    if ( align ) {
+       if ( is64 )
+        return (size + 7) & (-8);
+      else
+        return (size + 3) & (-4);
+    }
+    else {
+      if ( is64 )
+        assert((size % 8) == 0);
+      else
+        assert((size % 4) == 0);
+      return size;
+    }
+  }
 
 };
 
+void mach_header::recordLoadCommand(const load_command *lc) {
+  ++ncmds;
+  sizeofcmds += lc->cmdsize;
+}
+
+// Supported load command types
 enum {
+  LC_SEGMENT        = 0x00000001,
+  LC_SYMTAB         = 0x00000002,
+  LC_LOAD_DYLIB     = 0x0000000C,
+  LC_LOAD_DYLINKER  = 0x0000000E,
+  LC_SEGMENT_64     = 0x00000019,
+  LC_MAIN           = 0x80000028,
+  LC_DYLD_INFO_ONLY = 0x80000022
+};
+
+// Memory protection bit used in segment_command.initprot
+enum {
+  VM_PROT_NONE    = 0x0,
+  VM_PROT_READ    = 0x1,
+  VM_PROT_WRITE   = 0x2,
+  VM_PROT_EXECUTE = 0x4,
+};
+
+// Bits for the section.flags field
+enum {
+  // Section "type" is the low byte
   SECTION_TYPE              = 0x000000FF,
   S_REGULAR                 = 0x00000000,
   S_ZEROFILL                = 0x00000001,
@@ -96,10 +166,28 @@ enum {
   S_LAZY_SYMBOL_POINTERS    = 0x00000007,
   S_SYMBOL_STUBS            = 0x00000008,
   
+  // Other bits in section.flags
   S_ATTR_PURE_INSTRUCTIONS  = 0x80000000,
   S_ATTR_SOME_INSTRUCTIONS  = 0x00000400
 };
 
+
+// section record for 32-bit architectures
+struct section {
+  char      sectname[16];  
+  char      segname[16];  
+  uint32_t  addr;  
+  uint32_t  size;    
+  uint32_t  offset;  
+  uint32_t  align;    
+  uint32_t  reloff;  
+  uint32_t  nreloc;    
+  uint32_t  flags;    
+  uint32_t  reserved1;
+  uint32_t  reserved2;  
+};
+
+// section record for 64-bit architectures
 struct section_64 {
   char      sectname[16];  
   char      segname[16];  
@@ -115,20 +203,13 @@ struct section_64 {
   uint32_t  reserved3;
 };
 
-enum {
-  LC_SEGMENT_64 = 0x19
-};
 
-enum {
-  VM_PROT_NONE    = 0x0,
-  VM_PROT_READ    = 0x1,
-  VM_PROT_WRITE   = 0x2,
-  VM_PROT_EXECUTE = 0x4,
-};
-
-
-
-class segment_command_64 : public load_command {
+//
+// A segment load command has a fixed set of fields followed by an 'nsect'
+// array of section records.  The in-memory object uses a pointer to
+// a dynamically allocated array of sections.  
+//
+class segment_command : public load_command {
 public:
   char      segname[16];  
   uint64_t  vmaddr;    
@@ -139,81 +220,111 @@ public:
   uint32_t  initprot;  
   uint32_t  nsects;    
   uint32_t  flags;  
-  section_64 sections[1];
+  section_64 *sections;
   
-  // The segment_command_64 load commands has a nsect trailing
-  // section_64 records appended to the end.
-  static segment_command_64* make(unsigned sectCount) {
-    // Compute size in portable way.  Can't use offsetof() in non-POD class.
-    // Can't use zero size sections[] array above.
-    // So, since sizeof() already includes one section_64, subtract it off.
-    unsigned size = sizeof(segment_command_64) 
-                    + ((int)sectCount -1) * sizeof(section_64);
-    segment_command_64* result = reinterpret_cast<segment_command_64*>
-                                                          (::calloc(1, size));
-    result->cmd = LC_SEGMENT_64;
-    result->cmdsize = size;
-    result->nsects = sectCount;
-    return result;
+  segment_command(unsigned sectCount, bool is64)
+    : load_command((is64 ? LC_SEGMENT_64 : LC_SEGMENT), 
+                   (is64 ? (72 + sectCount*80) : (56 + sectCount*68)),
+                   is64),
+     vmaddr(0), vmsize(0), fileoff(0), filesize(0), 
+      maxprot(0), initprot(0), nsects(sectCount), flags(0) {
+    sections = new section_64[sectCount];
+    this->nsects = sectCount;
   }
   
+  ~segment_command() {
+    delete sections;
+  }
+  
+  void copyTo(uint8_t *to, bool swap) {
+    if ( swap ) {
+      assert(0 && "non-native endianness not supported yet");
+    }
+    else {
+      if( is64() ) {
+        // in-memory matches on-disk, so copy segment fields followed by sections
+        ::memcpy(to, (uint8_t*)&cmd, 72);
+        if ( nsects != 0 )
+          ::memcpy(&to[72], sections, sizeof(section_64)*nsects);
+      }
+      else {
+        // on-disk is 32-bit struct, so copy each field
+        ::memcpy(to, (uint8_t*)&cmd, 24);
+        copy32(to, 24, vmaddr);
+        copy32(to, 28, vmsize);
+        copy32(to, 32, fileoff);
+        copy32(to, 36, filesize);
+        copy32(to, 40, maxprot);
+        copy32(to, 44, initprot);
+        copy32(to, 48, nsects);
+        copy32(to, 52, flags);
+        for(uint32_t i=0; i < nsects; ++i) {
+          unsigned off = 56+i*68;
+          ::memcpy(&to[off], sections[i].sectname, 32);
+          copy32(to, off+32, sections[i].addr);
+          copy32(to, off+36, sections[i].size);
+          copy32(to, off+40, sections[i].offset);
+          copy32(to, off+44, sections[i].align);
+          copy32(to, off+48, sections[i].reloff);
+          copy32(to, off+52, sections[i].nreloc);
+          copy32(to, off+56, sections[i].flags);
+          copy32(to, off+60, sections[i].reserved1);
+          copy32(to, off+64, sections[i].reserved2);
+        }
+      }
+    }
+  }
+
+private:
+  void copy32(uint8_t *to, unsigned offset, uint64_t value) {
+    uint32_t value32 = value; // FIXME: range check
+    ::memcpy(&to[offset], &value32, sizeof(uint32_t));
+  }
+
+  bool is64() { 
+    return (cmd == LC_SEGMENT_64); 
+  }
 };
 
 
-enum {
-  LC_LOAD_DYLINKER = 0xe
-};
 
-
+//
+// The dylinker_command contains the path to the dynamic loader to use
+// with the program (e.g. "/usr/lib/dyld"). So, it is variable length.
+// But load commands must be pointer size aligned.
+//
+//
 class dylinker_command : public load_command {
 public:
   uint32_t  name_offset;
-  char      name[1];
-  
-  static dylinker_command* make(const char* path) {
-    unsigned size = (sizeof(dylinker_command) + strlen(path) + 7) & (-8);
-    dylinker_command* result = reinterpret_cast<dylinker_command*>
-                                                          (::calloc(1, size));
-    result->cmd = LC_LOAD_DYLINKER;
-    result->cmdsize = size;
-    result->name_offset = 12;
-    strcpy(result->name, path);
-    return result;
-  }
-};
-
-
-
-
-
-
-enum {
-  N_UNDF = 0x00,
-  N_EXT  = 0x01,
-  N_PEXT = 0x10,
-  N_SECT = 0x0e
-};
-
-class nlist_64 {
+private:
+  StringRef _name;
 public:
-  uint32_t  n_strx; 
-  uint8_t   n_type; 
-  uint8_t   n_sect;   
-  uint16_t  n_desc;   
-  uint64_t  n_value;    
-
-   void copyTo(uint8_t* to, bool swap=false) {
-     ::memcpy(to, (uint8_t*)&n_strx, 16);
+  dylinker_command(StringRef path, bool is64) 
+    : load_command(LC_LOAD_DYLINKER,12 + path.size(), is64, true), 
+       name_offset(12), _name(path) {
   }
 
+  virtual void copyTo(uint8_t *to, bool swap=false) {
+    if ( swap ) {
+      assert(0 && "non-native endianness not supported yet");
+    }
+    else {
+      // in-memory matches on-disk, so copy first fields followed by path
+      ::memcpy(to, (uint8_t*)&cmd, 12);
+      ::memcpy(&to[12], _name.data(), _name.size());
+      ::bzero(&to[12+_name.size()], cmdsize-(12+_name.size()));
+    }
+  }
 
 };
 
 
-enum {
-  LC_SYMTAB  =  0x2
-};
 
+//
+// The symtab_command just holds the offset to the array of nlist structs
+// and the offsets to the string pool for all symbol names.
+//
 class symtab_command : public load_command {
 public:
   uint32_t  symoff;  
@@ -221,40 +332,89 @@ public:
   uint32_t  stroff;  
   uint32_t  strsize;  
 
-  static symtab_command* make() {
-    unsigned size = sizeof(symtab_command);
-    symtab_command* result = reinterpret_cast<symtab_command*>
-                                                          (::calloc(1, size));
-    result->cmd = LC_SYMTAB;
-    result->cmdsize = size;
-    return result;
+  symtab_command(bool is64) 
+    : load_command(LC_SYMTAB, 24, is64), 
+      symoff(0), nsyms(0), stroff(0), strsize(0) {
   }
+  
+  virtual void copyTo(uint8_t *to, bool swap=false) {
+    if ( swap ) {
+      assert(0 && "non-native endianness not supported yet");
+    }
+    else {
+      // in-memory matches on-disk, so copy fields 
+      ::memcpy(to, (uint8_t*)&cmd, 24);
+    }
+  }
+  
 };
 
 
-enum {
-  LC_MAIN = 0x80000028
-};
-
+//
+// The entry_point_command load command holds the offset to the function
+// _main in a dynamic executable.  
+//
 class entry_point_command : public load_command {
 public:
-  uint64_t  entryoff;  /* file (__TEXT) offset of main() */
-  uint64_t  stacksize;/* if not zero, initial stack size */
+  uint64_t  entryoff;  
+  uint64_t  stacksize; 
 
-  static entry_point_command* make() {
-    unsigned size = sizeof(entry_point_command);
-    entry_point_command* result = reinterpret_cast<entry_point_command*>
-                                                          (::calloc(1, size));
-    result->cmd = LC_MAIN;
-    result->cmdsize = size;
-    return result;
+  entry_point_command(bool is64) 
+    : load_command(LC_MAIN, 24, is64), entryoff(0), stacksize(0) {
+  }
+  
+  virtual void copyTo(uint8_t *to, bool swap=false) {
+    if ( swap ) {
+      assert(0 && "non-native endianness not supported yet");
+    }
+    else {
+      // in-memory matches on-disk, so copy fields 
+      ::memcpy(to, (uint8_t*)&cmd, 24);
+    }
   }
 };
 
-enum {
-  LC_DYLD_INFO_ONLY = 0x80000022
+
+
+//
+// The dylib_command load command holds the name/path of a dynamic shared
+// library which this mach-o image depends on.
+//
+struct dylib_command : public load_command {
+  uint32_t  name_offset;
+  uint32_t  timestamp;
+  uint32_t  current_version;    
+  uint32_t  compatibility_version;
+private:  
+  StringRef _loadPath;
+public:
+  
+  dylib_command(StringRef path, bool is64) 
+    : load_command(LC_LOAD_DYLIB, 24 + path.size(), is64, true), 
+      name_offset(24), timestamp(0), 
+      current_version(0x10000), compatibility_version(0x10000),
+      _loadPath(path) {
+  }
+  
+  virtual void copyTo(uint8_t *to, bool swap=false) {
+    if ( swap ) {
+      assert(0 && "non-native endianness not supported yet");
+    }
+    else {
+      // in-memory matches on-disk, so copy first fields followed by path
+      ::memcpy(to, (uint8_t*)&cmd, 24);
+      ::memcpy(&to[24], _loadPath.data(), _loadPath.size());
+      ::bzero(&to[12+_loadPath.size()], cmdsize-(12+_loadPath.size()));
+    }
+  }
+
 };
 
+
+//
+// The dyld_info_command load command holds the offsets to various tables
+// of information needed by dyld to prepare the image for execution.
+//
 struct dyld_info_command : public load_command {
   uint32_t   rebase_off;  
   uint32_t   rebase_size;  
@@ -267,45 +427,24 @@ struct dyld_info_command : public load_command {
   uint32_t   export_off;  
   uint32_t   export_size;  
 
-  static dyld_info_command* make() {
-    unsigned size = sizeof(dyld_info_command);
-    dyld_info_command* result = reinterpret_cast<dyld_info_command*>
-    (::calloc(1, size));
-    result->cmd = LC_DYLD_INFO_ONLY;
-    result->cmdsize = size;
-    return result;
+  dyld_info_command(bool is64) 
+    : load_command(LC_DYLD_INFO_ONLY, 48, is64), 
+        rebase_off(0), rebase_size(0),
+        bind_off(0), bind_size(0), weak_bind_off(0), weak_bind_size(0), 
+        lazy_bind_off(0), lazy_bind_size(0), export_off(0), export_size(0) {
+   }
+  
+  virtual void copyTo(uint8_t *to, bool swap=false) {
+    if ( swap ) {
+      assert(0 && "non-native endianness not supported yet");
+    }
+    else {
+      // in-memory matches on-disk, so copy fields 
+      ::memcpy(to, (uint8_t*)&cmd, 48);
+    }
   }
 };
 
-
-enum {
-  LC_LOAD_DYLIB = 0xC
-};
-  
-
-struct dylib_command : public load_command {
-  uint32_t  name_offset;
-  uint32_t  timestamp;
-  uint32_t  current_version;    
-  uint32_t  compatibility_version;
-  char      name[1];
-  
-  static dylib_command* make(const char* path) {
-    unsigned size = (sizeof(dylib_command) + strlen(path) + 7) & (-8);
-    dylib_command* result = reinterpret_cast<dylib_command*>
-    (::calloc(1, size));
-    result->cmd = LC_LOAD_DYLIB;
-    result->cmdsize = size;
-    result->name_offset = 24;
-    result->name_offset = 24;
-    result->timestamp = 0;
-    result->current_version = 0x10000;
-    result->compatibility_version = 0x10000;
-    strcpy(result->name, path);
-    return result;
-  }
-  
-};
 
 enum {
   BIND_TYPE_POINTER               = 1,
@@ -341,6 +480,48 @@ enum {
   BIND_OPCODE_DO_BIND_ADD_ADDR_IMM_SCALED       = 0xB0,
   BIND_OPCODE_DO_BIND_ULEB_TIMES_SKIPPING_ULEB  = 0xC0
 };
+
+
+
+
+enum {
+  N_UNDF = 0x00,
+  N_EXT  = 0x01,
+  N_PEXT = 0x10,
+  N_SECT = 0x0e
+};
+
+class nlist {
+public:
+  uint32_t  n_strx; 
+  uint8_t   n_type; 
+  uint8_t   n_sect;   
+  uint16_t  n_desc;   
+  uint64_t  n_value;    
+  
+  static unsigned size(bool is64) {
+    return (is64 ? 16 : 12);
+  }
+  
+  void copyTo(uint8_t *to, bool is64, bool swap=false) {
+    if ( swap ) {
+      assert(0 && "non-native endianness not supported yet");
+    }
+    else {
+      if ( is64 ) {
+        // in-memory matches on-disk, so just copy whole struct 
+        ::memcpy(to, (uint8_t*)&n_strx, 16);
+      }
+      else {
+        // on-disk uses 32-bit n_value, so special case n_value
+        ::memcpy(to, (uint8_t*)&n_strx, 8);
+        uint32_t value32 = n_value; // FIXME: range check
+        ::memcpy(&to[8], &value32, sizeof(uint32_t));
+      }
+    }
+  }
+};
+
 
 
 

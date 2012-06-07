@@ -73,6 +73,7 @@ namespace mach_o {
 //
 class Chunk {
 public:
+  virtual             ~Chunk() { }
   virtual StringRef   segmentName() const = 0;
   virtual bool        occupiesNoDiskSpace();
   virtual void        write(uint8_t *fileBuffer) = 0;
@@ -158,8 +159,9 @@ public:
   uint64_t              loadCommandsSize();
 
 private:
-  uint32_t filetype(WriterOptionsMachO::OutputKind kind);
-  
+  uint32_t              filetype(WriterOptionsMachO::OutputKind kind);
+  uint32_t              magic(uint32_t cpuType);
+
   mach_header               _mh;
 };
 
@@ -187,20 +189,21 @@ private:
 
   void                addLoadCommand(load_command* lc);
   void                setMachOSection(SectionChunk *chunk,
-                                      segment_command_64 *seg, uint32_t index);
+                                      segment_command *seg, uint32_t index);
   uint32_t            permissionsFromSections(
                                   const SmallVector<SectionChunk*,16> &);
+  bool                use64BitMachO() const;
 
   struct ChunkSegInfo {
-    SectionChunk*         chunk;
-    segment_command_64*   segment;
-    section_64*           section;
+    SectionChunk       *chunk;
+    segment_command    *segment;
+    section_64         *section;
   };
 
   MachHeaderChunk             &_mh;
   const WriterOptionsMachO    &_options;
   class MachOWriter           &_writer;
-  segment_command_64          *_linkEditSegment;
+  segment_command             *_linkEditSegment;
   symtab_command              *_symbolTableLoadCommand;
   entry_point_command         *_entryPointLoadCommand;
   dyld_info_command           *_dyldInfoLoadCommand;
@@ -297,7 +300,7 @@ private:
 //
 class SymbolTableChunk : public LinkEditChunk {
 public:
-                      SymbolTableChunk(class SymbolStringsChunk&);
+                      SymbolTableChunk(class SymbolStringsChunk&, MachOWriter&);
   virtual void        write(uint8_t *fileBuffer);
   virtual void        computeSize(const lld::File &file,
                                       const std::vector<SectionChunk*>&);
@@ -307,10 +310,11 @@ public:
 private:
   uint8_t             nType(const DefinedAtom*);
 
-  SymbolStringsChunk       &_stringsChunk;
-  std::vector<nlist_64>     _globalDefinedsymbols;
-  std::vector<nlist_64>     _localDefinedsymbols;
-  std::vector<nlist_64>     _undefinedsymbols;
+  MachOWriter           &_writer;
+  SymbolStringsChunk    &_stringsChunk;
+  std::vector<nlist>     _globalDefinedsymbols;
+  std::vector<nlist>     _localDefinedsymbols;
+  std::vector<nlist>     _undefinedsymbols;
 };
 
 
@@ -350,7 +354,8 @@ public:
                                 uint64_t *segStartAddr, uint64_t *segEndAddr);
 
   const std::vector<Chunk*> chunks() { return _chunks; }
-
+  bool use64BitMachO() const;
+  
 private:
   friend class LoadCommandsChunk;
   friend class LazyBindingInfoChunk;
@@ -612,7 +617,7 @@ void SectionChunk::applyFixup(Reference::Kind kind, uint64_t addend,
 MachHeaderChunk::MachHeaderChunk(const WriterOptionsMachO &options,
                                                             const File &file) {
   // Set up mach_header based on options
-  _mh.magic      = MAGIC_64;
+  _mh.magic      = this->magic(options.cpuType());
   _mh.cputype    = options.cpuType();
   _mh.cpusubtype = options.cpuSubtype();
   _mh.filetype   = this->filetype(options.outputKind());
@@ -643,6 +648,18 @@ void MachHeaderChunk::recordLoadCommand(load_command* lc) {
 
 uint64_t MachHeaderChunk::loadCommandsSize() {
   return _mh.sizeofcmds;
+}
+
+uint32_t MachHeaderChunk::magic(uint32_t cpuType) {
+  switch ( cpuType ) {
+    case CPU_TYPE_ARM:
+    case CPU_TYPE_I386:
+      return MH_MAGIC;
+    case CPU_TYPE_X86_64:
+      return MH_MAGIC_64;
+  }
+  assert(0 && "file cpu type not supported");
+  return 0;
 }
 
 uint32_t MachHeaderChunk::filetype(WriterOptionsMachO::OutputKind kind) {
@@ -692,7 +709,7 @@ const char* LoadCommandsChunk::info() {
 }
 
 void LoadCommandsChunk::setMachOSection(SectionChunk *chunk,
-                                    segment_command_64 *seg, uint32_t index) {
+                                    segment_command *seg, uint32_t index) {
   for (ChunkSegInfo &entry : _sectionInfo) {
     if ( entry.chunk == chunk ) {
       entry.section = &(seg->sections[index]);
@@ -713,10 +730,12 @@ uint32_t LoadCommandsChunk::permissionsFromSections(
 }
 
 void LoadCommandsChunk::computeSize(const lld::File &file) {
+  const bool is64 = _writer.use64BitMachO();
   // Main executables have a __PAGEZERO segment.
   uint64_t pageZeroSize = _options.pageZeroSize();
   if ( pageZeroSize != 0 ) {
-    segment_command_64* pzSegCmd = segment_command_64::make(0);
+    assert(is64 || (pageZeroSize < 0xFFFFFFFF));
+    segment_command* pzSegCmd = new segment_command(0, is64);
     strcpy(pzSegCmd->segname, "__PAGEZERO");
     pzSegCmd->vmaddr   = 0;
     pzSegCmd->vmsize   = pageZeroSize;
@@ -735,7 +754,7 @@ void LoadCommandsChunk::computeSize(const lld::File &file) {
     StringRef entryName = entry.chunk->segmentName();
     if ( !lastSegName.equals(entryName) ) {
       // Start of new segment, so create load command for all previous sections.
-      segment_command_64* segCmd = segment_command_64::make(sections.size());
+      segment_command* segCmd = new segment_command(sections.size(), is64);
       strncpy(segCmd->segname, lastSegName.data(), 16);
       segCmd->initprot = this->permissionsFromSections(sections);
       segCmd->maxprot = VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE;
@@ -752,7 +771,7 @@ void LoadCommandsChunk::computeSize(const lld::File &file) {
     sections.push_back(entry.chunk);
   }
   // Add last segment load command.
-  segment_command_64* segCmd = segment_command_64::make(sections.size());
+  segment_command* segCmd = new segment_command(sections.size(), is64);
   strncpy(segCmd->segname, lastSegName.data(), 16);
   segCmd->initprot = this->permissionsFromSections(sections);;
   segCmd->maxprot = VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE;
@@ -764,14 +783,14 @@ void LoadCommandsChunk::computeSize(const lld::File &file) {
   }
 
   // Add LINKEDIT segment load command
-  _linkEditSegment = segment_command_64::make(0);
+  _linkEditSegment = new segment_command(0, is64);
   strcpy(_linkEditSegment->segname, "__LINKEDIT");
   _linkEditSegment->initprot = VM_PROT_READ;
   _linkEditSegment->maxprot = VM_PROT_READ;
   this->addLoadCommand(_linkEditSegment);
 
   // Add dyld load command.
-  this->addLoadCommand(dylinker_command::make("/usr/lib/dyld"));
+  this->addLoadCommand(new dylinker_command("/usr/lib/dyld", is64));
 
   // Add dylib load commands.
   llvm::StringMap<uint32_t> dylibNamesToOrdinal;
@@ -784,20 +803,20 @@ void LoadCommandsChunk::computeSize(const lld::File &file) {
   }
   for (llvm::StringMap<uint32_t>::iterator it=dylibNamesToOrdinal.begin(),
                             end=dylibNamesToOrdinal.end(); it != end; ++it) {
-    this->addLoadCommand(dylib_command::make(it->first().data()));
+    this->addLoadCommand(new dylib_command(it->first(), is64));
   }
 
   // Add symbol table load command
-  _symbolTableLoadCommand = symtab_command::make();
+  _symbolTableLoadCommand = new symtab_command(is64);
   this->addLoadCommand(_symbolTableLoadCommand);
 
   // Add dyld info load command
-  _dyldInfoLoadCommand = dyld_info_command::make();
+  _dyldInfoLoadCommand = new dyld_info_command(is64);
   this->addLoadCommand(_dyldInfoLoadCommand);
 
   // Add entry point load command to main executables
   if (_options.outputKind() == WriterOptionsMachO::outputDynamicExecutable) {
-    _entryPointLoadCommand = entry_point_command::make();
+    _entryPointLoadCommand = new entry_point_command(is64);
     this->addLoadCommand(_entryPointLoadCommand);
   }
   
@@ -808,7 +827,7 @@ void LoadCommandsChunk::computeSize(const lld::File &file) {
 
 void LoadCommandsChunk::updateLoadCommandContent(const lld::File &file) {
   // Update segment/section information in segment load commands
-  segment_command_64 *lastSegment = nullptr;
+  segment_command *lastSegment = nullptr;
   for (ChunkSegInfo &entry : _sectionInfo) {
     // Set section info.
     ::strncpy(entry.section->sectname, entry.chunk->sectionName().data(), 16);
@@ -1158,23 +1177,25 @@ void LazyBindingInfoChunk::computeSize(const lld::File &file,
 //  SymbolTableChunk
 //===----------------------------------------------------------------------===//
 
-SymbolTableChunk::SymbolTableChunk(SymbolStringsChunk& str)
-  : _stringsChunk(str) {
+SymbolTableChunk::SymbolTableChunk(SymbolStringsChunk &str, MachOWriter &wrtr)
+  : _writer(wrtr), _stringsChunk(str) {
 }
 
 void SymbolTableChunk::write(uint8_t *chunkBuffer) {
+  const bool is64 = _writer.use64BitMachO();
+  const unsigned nlistSize = nlist::size(is64);
   uint8_t *p = chunkBuffer;
-  for ( nlist_64 &sym : _globalDefinedsymbols ) {
-    sym.copyTo(p);
-    p += sizeof(nlist_64);
+  for ( nlist &sym : _globalDefinedsymbols ) {
+    sym.copyTo(p, is64);
+    p += nlistSize;
   }
-  for ( nlist_64 &sym : _localDefinedsymbols ) {
-    sym.copyTo(p);
-    p += sizeof(nlist_64);
+  for ( nlist &sym : _localDefinedsymbols ) {
+    sym.copyTo(p, is64);
+    p += nlistSize;
   }
-  for ( nlist_64 &sym : _undefinedsymbols ) {
-    sym.copyTo(p);
-    p += sizeof(nlist_64);
+  for ( nlist &sym : _undefinedsymbols ) {
+    sym.copyTo(p, is64);
+    p += nlistSize;
   }
 }
 
@@ -1212,7 +1233,7 @@ void SymbolTableChunk::computeSize(const lld::File &file,
       if ( info.atom->name().empty() )
         continue;
       uint64_t atomAddress = chunk->address() + info.offsetInSection;
-      nlist_64 sym;
+      nlist sym;
       sym.n_strx = _stringsChunk.stringIndex(info.atom->name());
       sym.n_type = this->nType(info.atom);
       sym.n_sect = sectionIndex;
@@ -1227,7 +1248,7 @@ void SymbolTableChunk::computeSize(const lld::File &file,
 
   // Add symbols for undefined/sharedLibrary symbols
   for (const SharedLibraryAtom* atom : file.sharedLibrary() ) {
-    nlist_64 sym;
+    nlist sym;
     sym.n_strx = _stringsChunk.stringIndex(atom->name());
     sym.n_type = N_UNDF;
     sym.n_sect = 0;
@@ -1235,7 +1256,7 @@ void SymbolTableChunk::computeSize(const lld::File &file,
     _undefinedsymbols.push_back(sym);
   }
 
-  _size = sizeof(nlist_64) * this->count();
+  _size = nlist::size(_writer.use64BitMachO()) * this->count();
 }
 
 
@@ -1350,7 +1371,7 @@ void MachOWriter::createChunks(const lld::File &file) {
   _bindingInfo = new BindingInfoChunk(*this);
   _lazyBindingInfo = new LazyBindingInfoChunk(*this);
   _stringsChunk = new SymbolStringsChunk();
-  _symbolTableChunk = new SymbolTableChunk(*_stringsChunk);
+  _symbolTableChunk = new SymbolTableChunk(*_stringsChunk, *this);
   this->addLinkEditChunk(_bindingInfo);
   this->addLinkEditChunk(_lazyBindingInfo);
   this->addLinkEditChunk(_symbolTableChunk);
@@ -1459,6 +1480,18 @@ void MachOWriter::findSegment(StringRef segmentName, uint32_t *segIndex,
   }
 }
 
+bool MachOWriter::use64BitMachO() const {
+  switch ( _options.cpuType() ) {
+    case CPU_TYPE_ARM:
+    case CPU_TYPE_I386:
+      return false;
+    case CPU_TYPE_X86_64:
+      return true;
+  }
+  assert(0 && "unknown cpu type");
+  return false;
+}
+
 
 //
 // Creates a mach-o final linked image from the given atom graph and writes
@@ -1519,7 +1552,7 @@ WriterOptionsMachO::WriterOptionsMachO()
  : _outputkind(outputDynamicExecutable),
    _archName("x86_64"),
    _architecture(arch_x86_64),
-   _pageZeroSize(0x10000000),
+   _pageZeroSize(0x100000000),
    _cpuType(mach_o::CPU_TYPE_X86_64),
    _cpuSubtype(mach_o::CPU_SUBTYPE_X86_64_ALL),
    _noTextRelocations(true) {
