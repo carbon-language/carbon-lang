@@ -61,9 +61,10 @@ TemplateArgument::TemplateArgument(ASTContext &Ctx, const llvm::APSInt &Value,
   Integer.BitWidth = Value.getBitWidth();
   Integer.IsUnsigned = Value.isUnsigned();
   // If the value is large, we have to get additional memory from the ASTContext
-  if (Integer.BitWidth > 64) {
-    void *Mem = Ctx.Allocate(Integer.BitWidth / 8);
-    std::memcpy(Mem, Value.getRawData(), Integer.BitWidth / 8);
+  unsigned NumWords = Value.getNumWords();
+  if (NumWords > 1) {
+    void *Mem = Ctx.Allocate(NumWords * sizeof(uint64_t));
+    std::memcpy(Mem, Value.getRawData(), NumWords * sizeof(uint64_t));
     Integer.pVal = static_cast<uint64_t *>(Mem);
   } else {
     Integer.VAL = Value.getZExtValue();

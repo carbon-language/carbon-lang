@@ -244,12 +244,13 @@ public:
   /// \brief Retrieve the template argument as an integral value.
   // FIXME: Provide a way to read the integral data without copying the value.
   llvm::APSInt getAsIntegral() const {
+    using namespace llvm;
     if (Integer.BitWidth <= 64)
-      return llvm::APSInt(llvm::APInt(Integer.BitWidth, Integer.VAL),
-                          Integer.IsUnsigned);
-    return llvm::APSInt(llvm::APInt(Integer.BitWidth,
-                        llvm::makeArrayRef(Integer.pVal, Integer.BitWidth / 8)),
-                        Integer.IsUnsigned);
+      return APSInt(APInt(Integer.BitWidth, Integer.VAL), Integer.IsUnsigned);
+
+    unsigned NumWords = APInt::getNumWords(Integer.BitWidth);
+    return APSInt(APInt(Integer.BitWidth, makeArrayRef(Integer.pVal, NumWords)),
+                  Integer.IsUnsigned);
   }
 
   /// \brief Retrieve the type of the integral value.
