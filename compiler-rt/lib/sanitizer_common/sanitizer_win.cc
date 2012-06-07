@@ -24,7 +24,7 @@ int GetPid() {
   return GetProcessId(GetCurrentProcess());
 }
 
-void GetThreadStackTopAndBottom(bool is_main_thread, uptr *stack_top,
+void GetThreadStackTopAndBottom(bool at_initialization, uptr *stack_top,
                                 uptr *stack_bottom) {
   CHECK(stack_top);
   CHECK(stack_bottom);

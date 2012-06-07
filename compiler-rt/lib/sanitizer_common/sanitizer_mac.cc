@@ -70,14 +70,14 @@ int internal_dup2(int oldfd, int newfd) {
 }
 
 // ----------------- sanitizer_common.h
-void GetThreadStackTopAndBottom(bool is_main_thread, uptr *stack_top,
+void GetThreadStackTopAndBottom(bool at_initialization, uptr *stack_top,
                                 uptr *stack_bottom) {
   CHECK(stack_top);
   CHECK(stack_bottom);
   uptr stacksize = pthread_get_stacksize_np(pthread_self());
   void *stackaddr = pthread_get_stackaddr_np(pthread_self());
   *stack_top = (uptr)stackaddr;
-  *stack_bottom = stack_top_ - stacksize;
+  *stack_bottom = *stack_top - stacksize;
 }
 
 

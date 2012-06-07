@@ -28,7 +28,7 @@ const uptr kPageSize = 1UL << kPageSizeBits;
 
 // Threads
 int GetPid();
-void GetThreadStackTopAndBottom(bool is_main_thread, uptr *stack_top,
+void GetThreadStackTopAndBottom(bool at_initialization, uptr *stack_top,
                                 uptr *stack_bottom);
 
 // Memory management

@@ -41,8 +41,6 @@ extern "C" void* _DYNAMIC;
 
 namespace __asan {
 
-const uptr kMaxThreadStackSize = 256 * (1 << 20);  // 256M
-
 void *AsanDoesNotSupportStaticLinkage() {
   // This will fail to link with -static.
   return &_DYNAMIC;  // defined in link.h

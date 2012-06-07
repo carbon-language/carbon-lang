@@ -73,12 +73,12 @@ int internal_dup2(int oldfd, int newfd) {
 }
 
 // ----------------- sanitizer_common.h
-void GetThreadStackTopAndBottom(bool is_main_thread, uptr *stack_top,
+void GetThreadStackTopAndBottom(bool at_initialization, uptr *stack_top,
                                 uptr *stack_bottom) {
   static const uptr kMaxThreadStackSize = 256 * (1 << 20);  // 256M
   CHECK(stack_top);
   CHECK(stack_bottom);
-  if (is_main_thread) {
+  if (at_initialization) {
     // This is the main thread. Libpthread may not be initialized yet.
     struct rlimit rl;
     CHECK(getrlimit(RLIMIT_STACK, &rl) == 0);
