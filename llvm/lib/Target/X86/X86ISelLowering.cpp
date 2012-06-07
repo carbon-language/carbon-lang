@@ -8271,7 +8271,13 @@ SDValue X86TargetLowering::EmitTest(SDValue Op, unsigned X86CC,
     // Otherwise use a regular EFLAGS-setting instruction.
     switch (Op.getNode()->getOpcode()) {
     default: llvm_unreachable("unexpected operator!");
-    case ISD::SUB: Opcode = X86ISD::SUB; break;
+    case ISD::SUB:
+      // If the only use of SUB is EFLAGS, use CMP instead.
+      if (Op.hasOneUse())
+        Opcode = X86ISD::CMP;
+      else
+        Opcode = X86ISD::SUB;
+      break;
     case ISD::OR:  Opcode = X86ISD::OR;  break;
     case ISD::XOR: Opcode = X86ISD::XOR; break;
     case ISD::AND: Opcode = X86ISD::AND; break;
@@ -8296,6 +8302,13 @@ SDValue X86TargetLowering::EmitTest(SDValue Op, unsigned X86CC,
     // Emit a CMP with 0, which is the TEST pattern.
     return DAG.getNode(X86ISD::CMP, dl, MVT::i32, Op,
                        DAG.getConstant(0, Op.getValueType()));
+
+  if (Opcode == X86ISD::CMP) {
+    SDValue New = DAG.getNode(Opcode, dl, MVT::i32, Op.getOperand(0),
+                              Op.getOperand(1));
+    DAG.ReplaceAllUsesWith(Op, New);
+    return SDValue(New.getNode(), 0);
+  }
 
   SDVTList VTs = DAG.getVTList(Op.getValueType(), MVT::i32);
   SmallVector<SDValue, 4> Ops;

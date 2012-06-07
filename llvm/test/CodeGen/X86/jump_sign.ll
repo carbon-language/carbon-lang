@@ -83,3 +83,14 @@ entry:
   %cond = select i1 %cmp, i32 %sub, i32 0
   ret i32 %cond
 }
+; rdar://11540023
+define i32 @n(i32 %x, i32 %y) nounwind {
+entry:
+; CHECK: n:
+; CHECK-NOT: sub
+; CHECK: cmp
+  %sub = sub nsw i32 %x, %y
+  %cmp = icmp slt i32 %sub, 0
+  %y.x = select i1 %cmp, i32 %y, i32 %x
+  ret i32 %y.x
+}
