@@ -4159,8 +4159,10 @@ public:
 /// list of protocols.
 ///
 /// Given the following declarations:
-///   @class C;
-///   @protocol P;
+/// \code
+///   \@class C;
+///   \@protocol P;
+/// \endcode
 ///
 /// 'C' is an ObjCInterfaceType C.  It is sugar for an ObjCObjectType
 /// with base C and no protocols.
@@ -4374,11 +4376,13 @@ public:
   /// This method is equivalent to getPointeeType() except that
   /// it discards any typedefs (or other sugar) between this
   /// type and the "outermost" object type.  So for:
-  ///   @class A; @protocol P; @protocol Q;
+  /// \code
+  ///   \@class A; \@protocol P; \@protocol Q;
   ///   typedef A<P> AP;
   ///   typedef A A1;
   ///   typedef A1<P> A1P;
   ///   typedef A1P<Q> A1PQ;
+  /// \endcode
   /// For 'A*', getObjectType() will return 'A'.
   /// For 'A<P>*', getObjectType() will return 'A<P>'.
   /// For 'AP*', getObjectType() will return 'A<P>'.
@@ -4395,7 +4399,7 @@ public:
   }
 
   /// getInterfaceType - If this pointer points to an Objective C
-  /// @interface type, gets the type for that interface.  Any protocol
+  /// \@interface type, gets the type for that interface.  Any protocol
   /// qualifiers on the interface are ignored.
   ///
   /// \return null if the base type for this pointer is 'id' or 'Class'
@@ -4403,7 +4407,7 @@ public:
     return getObjectType()->getBaseType()->getAs<ObjCInterfaceType>();
   }
 
-  /// getInterfaceDecl - If this pointer points to an Objective @interface
+  /// getInterfaceDecl - If this pointer points to an Objective \@interface
   /// type, gets the declaration for that interface.
   ///
   /// \return null if the base type for this pointer is 'id' or 'Class'

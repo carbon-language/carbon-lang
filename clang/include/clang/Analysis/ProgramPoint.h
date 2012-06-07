@@ -314,7 +314,7 @@ public:
   }
 };
 
-/// \class Represents a program point after a store evaluation.
+/// \brief Represents a program point after a store evaluation.
 class PostStore : public PostStmt {
 public:
   /// Construct the post store point.
@@ -350,7 +350,7 @@ public:
   }
 };
 
-/// \class Represents a point after we ran remove dead bindings BEFORE
+/// Represents a point after we ran remove dead bindings BEFORE
 /// processing the given statement.
 class PreStmtPurgeDeadSymbols : public StmtPoint {
 public:
@@ -363,7 +363,7 @@ public:
   }
 };
 
-/// \class Represents a point after we ran remove dead bindings AFTER
+/// Represents a point after we ran remove dead bindings AFTER
 /// processing the  given statement.
 class PostStmtPurgeDeadSymbols : public StmtPoint {
 public:
@@ -408,7 +408,7 @@ public:
   }
 };
 
-/// \class Represents a point when we begin processing an inlined call.
+/// Represents a point when we begin processing an inlined call.
 class CallEnter : public StmtPoint {
 public:
   CallEnter(const Stmt *stmt, const StackFrameContext *calleeCtx, 
@@ -428,8 +428,7 @@ public:
   }
 };
 
-/// \class Represents a point when we start the call exit sequence (for
-/// inlined call).
+/// Represents a point when we start the call exit sequence (for inlined call).
 ///
 /// The call exit is simulated with a sequence of nodes, which occur between
 /// CallExitBegin and CallExitEnd. The following operations occur between the
@@ -449,8 +448,7 @@ public:
   }
 };
 
-/// \class Represents a point when we finish the call exit sequence (for
-/// inlined call).
+/// Represents a point when we finish the call exit sequence (for inlined call).
 /// \sa CallExitBegin
 class CallExitEnd : public StmtPoint {
 public:

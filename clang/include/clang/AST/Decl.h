@@ -99,7 +99,7 @@ public:
 };
 
 /// NamedDecl - This represents a decl with a name.  Many decls have names such
-/// as ObjCMethodDecl, but not @class, etc.
+/// as ObjCMethodDecl, but not \@class, etc.
 class NamedDecl : public Decl {
   virtual void anchor();
   /// Name - The name of this declaration, which is typically a normal
@@ -1152,7 +1152,7 @@ public:
   }
 
   /// \brief Determine whether this variable is the exception variable in a
-  /// C++ catch statememt or an Objective-C @catch statement.
+  /// C++ catch statememt or an Objective-C \@catch statement.
   bool isExceptionVariable() const {
     return VarDeclBits.ExceptionVar;
   }
@@ -3213,7 +3213,7 @@ public:
 ///
 /// An import declaration imports the named module (or submodule). For example:
 /// \code
-///   @__experimental_modules_import std.vector;
+///   \@__experimental_modules_import std.vector;
 /// \endcode
 ///
 /// Import declarations can also be implicitly generated from #include/#import 

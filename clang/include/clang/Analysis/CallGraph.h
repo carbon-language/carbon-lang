@@ -26,7 +26,7 @@
 namespace clang {
 class CallGraphNode;
 
-/// \class The AST-based call graph.
+/// \brief The AST-based call graph.
 ///
 /// The call graph extends itself with the given declarations by implementing
 /// the recursive AST visitor, which constructs the graph by visiting the given
