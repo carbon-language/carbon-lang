@@ -6413,6 +6413,19 @@ static QualType DecodeTypeFromStr(const char *&Str, const ASTContext &Context,
                                  VectorType::GenericVector);
     break;
   }
+  case 'E': {
+    char *End;
+    
+    unsigned NumElements = strtoul(Str, &End, 10);
+    assert(End != Str && "Missing vector size");
+    
+    Str = End;
+    
+    QualType ElementType = DecodeTypeFromStr(Str, Context, Error, RequiresICE,
+                                             false);
+    Type = Context.getExtVectorType(ElementType, NumElements);
+    break;    
+  }
   case 'X': {
     QualType ElementType = DecodeTypeFromStr(Str, Context, Error, RequiresICE,
                                              false);

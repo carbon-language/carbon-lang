@@ -33,7 +33,8 @@
 //  H -> SEL
 //  a -> __builtin_va_list
 //  A -> "reference" to __builtin_va_list
-//  V -> Vector, following num elements and a base type.
+//  V -> Vector, followed by the number of elements and the base type.
+//  E -> ext_vector, followed by the number of elements and the base type.
 //  X -> _Complex, followed by the base type.
 //  Y -> ptrdiff_t
 //  P -> FILE
