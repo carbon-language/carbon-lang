@@ -1551,6 +1551,12 @@ IRForTarget::MaterializeInternalVariable (GlobalVariable *global_variable)
     llvm::Type *initializer_type = initializer->getType();
     
     size_t size = m_target_data->getTypeAllocSize(initializer_type);
+    size_t align = m_target_data->getPrefTypeAlignment(initializer_type);
+    
+    const size_t mask = (align - 1);
+    uint64_t aligned_offset = (offset + mask) & ~mask;
+    m_data_allocator->GetStream().PutNHex8(aligned_offset - offset, 0);
+    offset = aligned_offset;
     
     lldb_private::DataBufferHeap data(size, '\0');
     
@@ -2060,6 +2066,7 @@ IRForTarget::ReplaceStaticLiterals (llvm::BasicBlock &basic_block)
         llvm::Instruction *inst = *user_iter;
 
         ConstantFP *operand_constant_fp = dyn_cast<ConstantFP>(operand_val);
+        Type *operand_type = operand_constant_fp->getType();
         
         if (operand_constant_fp)
         {
@@ -2104,6 +2111,13 @@ IRForTarget::ReplaceStaticLiterals (llvm::BasicBlock &basic_block)
             }
             
             uint64_t offset = m_data_allocator->GetStream().GetSize();
+            
+            size_t align = m_target_data->getPrefTypeAlignment(operand_type);
+            
+            const size_t mask = (align - 1);
+            uint64_t aligned_offset = (offset + mask) & ~mask;
+            m_data_allocator->GetStream().PutNHex8(aligned_offset - offset, 0);
+            offset = aligned_offset;
             
             m_data_allocator->GetStream().Write(data.GetBytes(), operand_data_size);
             
