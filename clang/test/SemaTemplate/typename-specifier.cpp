@@ -118,7 +118,7 @@ namespace PR10925 {
 
 
 namespace missing_typename {
-template <class T1, class T2> struct pair {}; // expected-note 5 {{template parameter is declared here}}
+template <class T1, class T2> struct pair {}; // expected-note 7 {{template parameter is declared here}}
 
 template <class T1, class T2>
 struct map {
@@ -132,10 +132,13 @@ class ExampleClass1 {
 
   struct ExampleItemSet {
     typedef ExampleItem* iterator;
+    ExampleItem* operator[](unsigned);
   };
 
   void foo() {
     pair<ExampleItemSet::iterator, int> i; // expected-error {{template argument for template type parameter must be a type; did you forget 'typename'?}}
+    pair<this->ExampleItemSet::iterator, int> i; // expected-error-re {{template argument for template type parameter must be a type$}}
+    pair<ExampleItemSet::operator[], int> i; // expected-error-re {{template argument for template type parameter must be a type$}}
   }
   pair<ExampleItemSet::iterator, int> elt; // expected-error {{template argument for template type parameter must be a type; did you forget 'typename'?}}
 

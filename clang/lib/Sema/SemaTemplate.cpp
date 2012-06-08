@@ -2453,22 +2453,20 @@ bool Sema::CheckTemplateTypeArgument(TemplateTypeParmDecl *Param,
       NameInfo = ArgExpr->getNameInfo();
     } else if (CXXDependentScopeMemberExpr *ArgExpr =
                dyn_cast<CXXDependentScopeMemberExpr>(Arg.getAsExpr())) {
-      SS.Adopt(ArgExpr->getQualifierLoc());
-      NameInfo = ArgExpr->getMemberNameInfo();
+      if (ArgExpr->isImplicitAccess()) {
+        SS.Adopt(ArgExpr->getQualifierLoc());
+        NameInfo = ArgExpr->getMemberNameInfo();
+      }
     }
 
-    if (NameInfo.getName()) {
+    if (NameInfo.getName().isIdentifier()) {
       LookupResult Result(*this, NameInfo, LookupOrdinaryName);
       LookupParsedName(Result, CurScope, &SS);
 
-      bool CouldBeType = Result.getResultKind() ==
-          LookupResult::NotFoundInCurrentInstantiation;
-
-      for (LookupResult::iterator I = Result.begin(), IEnd = Result.end();
-           !CouldBeType && I != IEnd; ++I) {
-        CouldBeType = isa<TypeDecl>(*I);
-      }
-      if (CouldBeType) {
+      if (Result.getAsSingle<TypeDecl>() ||
+          Result.getResultKind() ==
+            LookupResult::NotFoundInCurrentInstantiation) {
+        // FIXME: Add a FixIt and fix up the template argument for recovery.
         SourceLocation Loc = AL.getSourceRange().getBegin();
         Diag(Loc, diag::err_template_arg_must_be_type_suggest);
         Diag(Param->getLocation(), diag::note_template_param_here);
