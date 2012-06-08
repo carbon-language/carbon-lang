@@ -141,19 +141,14 @@ Mutex::Locker::~Locker ()
 void
 Mutex::Locker::Lock (Mutex &mutex)
 {
-    pthread_mutex_t *mutex_ptr = mutex.GetMutex();
-
     // We already have this mutex locked or both are NULL...
-    if (m_mutex_ptr == mutex_ptr)
+    if (m_mutex_ptr == &mutex)
         return;
 
     Unlock ();
 
-    if (mutex_ptr)
-    {
-        m_mutex_ptr = mutex_ptr;
-        Mutex::Lock (m_mutex_ptr);
-    }
+    m_mutex_ptr = &mutex;
+    m_mutex_ptr->Lock();
 }
 
 void
@@ -161,27 +156,23 @@ Mutex::Locker::Unlock ()
 {
     if (m_mutex_ptr)
     {
-        Mutex::Unlock (m_mutex_ptr);
+        m_mutex_ptr->Unlock ();
         m_mutex_ptr = NULL;
     }
 }
 
 bool
-Mutex::Locker::TryLock (Mutex &mutex)
+Mutex::Locker::TryLock (Mutex &mutex, const char *failure_message)
 {
-    pthread_mutex_t *mutex_ptr = mutex.GetMutex();
-    
     // We already have this mutex locked!
-    if (m_mutex_ptr == mutex_ptr)
-        return m_mutex_ptr != NULL;
+    if (m_mutex_ptr == &mutex)
+        return true;
 
     Unlock ();
 
-    if (mutex_ptr)
-    {
-        if (Mutex::TryLock (mutex_ptr) == 0)
-            m_mutex_ptr = mutex_ptr;
-    }
+    if (mutex.TryLock(failure_message) == 0)
+        m_mutex_ptr = &mutex;
+
     return m_mutex_ptr != NULL;
 }
 
@@ -273,61 +264,6 @@ Mutex::GetMutex()
     return &m_mutex;
 }
 
-int
-Mutex::Lock (pthread_mutex_t *mutex_ptr)
-{
-    DEBUG_LOG ("[%4.4x/%4.4x] pthread_mutex_lock (%p)...\n", Host::GetCurrentProcessID(), Host::GetCurrentThreadID(), mutex_ptr);
-
-#if ENABLE_MUTEX_ERROR_CHECKING
-    error_check_mutex (mutex_ptr, eMutexActionAssertInitialized);
-#endif
-
-    int err = ::pthread_mutex_lock (mutex_ptr);
-    
-
-#if ENABLE_MUTEX_ERROR_CHECKING
-    if (err)
-    {
-        Host::SetCrashDescriptionWithFormat ("%s error: pthread_mutex_lock(%p) => err = %i (%s)", __PRETTY_FUNCTION__, mutex_ptr, err, strerror(err));
-        assert(err == 0);
-    }
-#endif
-    DEBUG_LOG ("[%4.4x/%4.4x] pthread_mutex_lock (%p) => %i\n", Host::GetCurrentProcessID(), Host::GetCurrentThreadID(), mutex_ptr, err);
-    return err;
-}
-
-int
-Mutex::TryLock (pthread_mutex_t *mutex_ptr)
-{
-#if ENABLE_MUTEX_ERROR_CHECKING
-    error_check_mutex (mutex_ptr, eMutexActionAssertInitialized);
-#endif
-
-    int err = ::pthread_mutex_trylock (mutex_ptr);
-    DEBUG_LOG ("[%4.4x/%4.4x] pthread_mutex_trylock (%p) => %i\n", Host::GetCurrentProcessID(), Host::GetCurrentThreadID(), mutex_ptr, err);
-    return err;
-}
-
-int
-Mutex::Unlock (pthread_mutex_t *mutex_ptr)
-{
-#if ENABLE_MUTEX_ERROR_CHECKING
-    error_check_mutex (mutex_ptr, eMutexActionAssertInitialized);
-#endif
-
-    int err = ::pthread_mutex_unlock (mutex_ptr);
-
-#if ENABLE_MUTEX_ERROR_CHECKING
-    if (err)
-    {
-        Host::SetCrashDescriptionWithFormat ("%s error: pthread_mutex_unlock(%p) => err = %i (%s)", __PRETTY_FUNCTION__, mutex_ptr, err, strerror(err));
-        assert(err == 0);
-    }
-#endif
-    DEBUG_LOG ("[%4.4x/%4.4x] pthread_mutex_unlock (%p) => %i\n", Host::GetCurrentProcessID(), Host::GetCurrentThreadID(), mutex_ptr, err);
-    return err;
-}
-
 //----------------------------------------------------------------------
 // Locks the mutex owned by this object, if the mutex is already
 // locked, the calling thread will block until the mutex becomes
@@ -339,7 +275,24 @@ Mutex::Unlock (pthread_mutex_t *mutex_ptr)
 int
 Mutex::Lock()
 {
-    return Mutex::Lock (&m_mutex);
+    DEBUG_LOG ("[%4.4x/%4.4x] pthread_mutex_lock (%p)...\n", Host::GetCurrentProcessID(), Host::GetCurrentThreadID(), mutex_ptr);
+
+#if ENABLE_MUTEX_ERROR_CHECKING
+    error_check_mutex (&m_mutex, eMutexActionAssertInitialized);
+#endif
+
+    int err = ::pthread_mutex_lock (&m_mutex);
+    
+
+#if ENABLE_MUTEX_ERROR_CHECKING
+    if (err)
+    {
+        Host::SetCrashDescriptionWithFormat ("%s error: pthread_mutex_lock(%p) => err = %i (%s)", __PRETTY_FUNCTION__, &m_mutex, err, strerror(err));
+        assert(err == 0);
+    }
+#endif
+    DEBUG_LOG ("[%4.4x/%4.4x] pthread_mutex_lock (%p) => %i\n", Host::GetCurrentProcessID(), Host::GetCurrentThreadID(), &m_mutex, err);
+    return err;
 }
 
 //----------------------------------------------------------------------
@@ -351,9 +304,15 @@ Mutex::Lock()
 //  The error code from the pthread_mutex_trylock() function call.
 //----------------------------------------------------------------------
 int
-Mutex::TryLock()
+Mutex::TryLock(const char *failure_message)
 {
-    return Mutex::TryLock (&m_mutex);
+#if ENABLE_MUTEX_ERROR_CHECKING
+    error_check_mutex (&m_mutex, eMutexActionAssertInitialized);
+#endif
+
+    int err = ::pthread_mutex_trylock (&m_mutex);
+    DEBUG_LOG ("[%4.4x/%4.4x] pthread_mutex_trylock (%p) => %i\n", Host::GetCurrentProcessID(), Host::GetCurrentThreadID(), &m_mutex, err);
+    return err;
 }
 
 //----------------------------------------------------------------------
@@ -368,5 +327,35 @@ Mutex::TryLock()
 int
 Mutex::Unlock()
 {
-    return Mutex::Unlock (&m_mutex);
+#if ENABLE_MUTEX_ERROR_CHECKING
+    error_check_mutex (&m_mutex, eMutexActionAssertInitialized);
+#endif
+
+    int err = ::pthread_mutex_unlock (&m_mutex);
+
+#if ENABLE_MUTEX_ERROR_CHECKING
+    if (err)
+    {
+        Host::SetCrashDescriptionWithFormat ("%s error: pthread_mutex_unlock(%p) => err = %i (%s)", __PRETTY_FUNCTION__, &m_mutex, err, strerror(err));
+        assert(err == 0);
+    }
+#endif
+    DEBUG_LOG ("[%4.4x/%4.4x] pthread_mutex_unlock (%p) => %i\n", Host::GetCurrentProcessID(), Host::GetCurrentThreadID(), &m_mutex, err);
+    return err;
 }
+
+#ifdef LLDB_CONFIGURATION_DEBUG
+int
+TrackingMutex::Unlock ()
+{
+    if (!m_failure_message.empty())
+        Host::SetCrashDescriptionWithFormat ("Unlocking lock (on thread %p) that thread: %p failed to get: %s",
+                                             pthread_self(),
+                                             m_thread_that_tried,
+                                             m_failure_message.c_str());
+    assert (m_failure_message.empty());
+    return Mutex::Unlock();
+}
+#endif
+    
+

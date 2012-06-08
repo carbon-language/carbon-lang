@@ -59,7 +59,7 @@ public:
                         size_t payload_length);
 
     bool
-    GetSequenceMutex (lldb_private::Mutex::Locker& locker);
+    GetSequenceMutex (lldb_private::Mutex::Locker& locker, const char *failure_message = NULL);
 
     bool
     CheckForPacket (const uint8_t *src, 
@@ -242,7 +242,11 @@ protected:
     // Classes that inherit from GDBRemoteCommunication can see and modify these
     //------------------------------------------------------------------
     uint32_t m_packet_timeout;
+#ifdef LLDB_CONFIGURATION_DEBUG
+    lldb_private::TrackingMutex m_sequence_mutex;
+#else
     lldb_private::Mutex m_sequence_mutex;    // Restrict access to sending/receiving packets to a single thread at a time
+#endif
     lldb_private::Predicate<bool> m_public_is_running;
     lldb_private::Predicate<bool> m_private_is_running;
     History m_history;

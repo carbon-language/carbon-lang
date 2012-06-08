@@ -14,6 +14,10 @@
 #include <pthread.h>
 #include <assert.h>
 
+#ifdef LLDB_CONFIGURATION_DEBUG
+#include <string>
+#endif
+
 namespace lldb_private {
 
 //----------------------------------------------------------------------
@@ -121,13 +125,13 @@ public:
         ///     returns \b false otherwise.
         //--------------------------------------------------------------
         bool
-        TryLock (Mutex &mutex);
+        TryLock (Mutex &mutex, const char *failure_message = NULL);
         
         bool
-        TryLock (Mutex *mutex)
+        TryLock (Mutex *mutex, const char *failure_message = NULL)
         {
             if (mutex)
-                return TryLock(*mutex);
+                return TryLock(*mutex, failure_message);
             else
                 return false;
         }
@@ -139,9 +143,7 @@ public:
         //--------------------------------------------------------------
         /// Member variables
         //--------------------------------------------------------------
-        pthread_mutex_t *m_mutex_ptr;   ///< A pthread mutex that is locked when
-                                        ///< acquired and unlocked when destroyed
-                                        ///< or reset.
+        Mutex *m_mutex_ptr;
 
     private:
         Locker(const Locker&);
@@ -176,6 +178,9 @@ public:
     ///
     /// Destroys the mutex owned by this object.
     //------------------------------------------------------------------
+#ifdef LLDB_CONFIGURATION_DEBUG
+    virtual
+#endif
     ~Mutex();
 
     //------------------------------------------------------------------
@@ -201,8 +206,11 @@ public:
     /// @return
     ///     The error code from \c pthread_mutex_trylock().
     //------------------------------------------------------------------
+#ifdef LLDB_CONFIGURATION_DEBUG
+    virtual
+#endif
     int
-    TryLock();
+    TryLock(const char *failure_message = NULL);
 
     //------------------------------------------------------------------
     /// Unlock the mutex.
@@ -215,22 +223,18 @@ public:
     /// @return
     ///     The error code from \c pthread_mutex_unlock().
     //------------------------------------------------------------------
+#ifdef LLDB_CONFIGURATION_DEBUG
+    virtual
+#endif
     int
     Unlock();
-
-    static
-    int Lock (pthread_mutex_t *mutex_ptr);
-
-    static
-    int TryLock (pthread_mutex_t *mutex_ptr);
-
-    static
-    int Unlock (pthread_mutex_t *mutex_ptr);
 
 protected:
     //------------------------------------------------------------------
     // Member variables
     //------------------------------------------------------------------
+    // TODO: Hide the mutex in the implementation file in case we ever need to port to an
+    // architecture that doesn't have pthread mutexes.
     pthread_mutex_t m_mutex; ///< The pthread mutex object.
 
 private:
@@ -246,6 +250,37 @@ private:
     Mutex(const Mutex&);
     const Mutex& operator=(const Mutex&);
 };
+
+#ifdef LLDB_CONFIGURATION_DEBUG
+class TrackingMutex : public Mutex
+{
+public:
+    TrackingMutex() : Mutex()  {}
+    TrackingMutex(Mutex::Type type) : Mutex (type) {}
+    
+    virtual
+    ~TrackingMutex() {}
+    
+    virtual int
+    Unlock ();
+
+    virtual int
+    TryLock (const char *failure_message = NULL)
+    {
+        int return_value = Mutex::TryLock();
+        if (return_value != 0 && failure_message != NULL)
+        {
+            m_failure_message.assign(failure_message);
+            m_thread_that_tried = pthread_self();
+        }
+        return return_value;
+    }
+    
+protected:
+    pthread_t m_thread_that_tried;
+    std::string m_failure_message;
+};
+#endif
 
 } // namespace lldb_private
 

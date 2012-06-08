@@ -1939,7 +1939,7 @@ GDBRemoteCommunicationClient::GetCurrentThreadIDs (std::vector<lldb::tid_t> &thr
     Mutex::Locker locker;
     thread_ids.clear();
     
-    if (GetSequenceMutex (locker))
+    if (GetSequenceMutex (locker, "ProcessGDBRemote::UpdateThreadList() failed due to not getting the sequence mutex"))
     {
         sequence_mutex_unavailable = false;
         StringExtractorGDBRemote response;
@@ -1968,9 +1968,13 @@ GDBRemoteCommunicationClient::GetCurrentThreadIDs (std::vector<lldb::tid_t> &thr
     }
     else
     {
+#if defined (LLDB_CONFIGURATION_DEBUG)
+        // assert(!"ProcessGDBRemote::UpdateThreadList() failed due to not getting the sequence mutex");
+#else
         LogSP log (ProcessGDBRemoteLog::GetLogIfAnyCategoryIsSet (GDBR_LOG_PROCESS | GDBR_LOG_PACKETS));
         if (log)
             log->Printf("error: failed to get packet sequence mutex, not sending packet 'qfThreadInfo'");
+#endif
         sequence_mutex_unavailable = true;
     }
     return thread_ids.size();

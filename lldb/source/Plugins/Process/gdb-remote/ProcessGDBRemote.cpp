@@ -1190,9 +1190,6 @@ ProcessGDBRemote::UpdateThreadIDList ()
     m_gdb_comm.GetCurrentThreadIDs (m_thread_ids, sequence_mutex_unavailable);
     if (sequence_mutex_unavailable)
     {
-#if defined (LLDB_CONFIGURATION_DEBUG)
-        assert(!"ProcessGDBRemote::UpdateThreadList() failed due to not getting the sequence mutex");
-#endif
         return false; // We just didn't get the list
     }
     return true;

@@ -263,10 +263,10 @@ GDBRemoteCommunication::GetAck ()
 }
 
 bool
-GDBRemoteCommunication::GetSequenceMutex (Mutex::Locker& locker)
+GDBRemoteCommunication::GetSequenceMutex (Mutex::Locker& locker, const char *failure_message)
 {
     if (IsRunning())
-        return locker.TryLock (m_sequence_mutex);
+        return locker.TryLock (m_sequence_mutex, failure_message);
 
     locker.Lock (m_sequence_mutex);
     return true;
