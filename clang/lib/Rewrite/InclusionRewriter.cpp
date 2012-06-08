@@ -33,11 +33,11 @@ class InclusionRewriter : public PPCallbacks {
     FileChange(SourceLocation From) : From(From) {
     }
   };
-  Preprocessor &PP; //< Used to find inclusion directives.
-  SourceManager &SM; //< Used to read and manage source files.
-  raw_ostream &OS; //< The destination stream for rewritten contents.
-  bool ShowLineMarkers; //< Show #line markers.
-  bool UseLineDirective; //< Use of line directives or line markers.
+  Preprocessor &PP; ///< Used to find inclusion directives.
+  SourceManager &SM; ///< Used to read and manage source files.
+  raw_ostream &OS; ///< The destination stream for rewritten contents.
+  bool ShowLineMarkers; ///< Show #line markers.
+  bool UseLineDirective; ///< Use of line directives or line markers.
   typedef std::map<unsigned, FileChange> FileChangeMap;
   FileChangeMap FileChanges; /// Tracks which files were included where.
   /// Used transitively for building up the FileChanges mapping over the

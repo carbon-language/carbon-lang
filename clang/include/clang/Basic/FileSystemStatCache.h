@@ -34,8 +34,8 @@ public:
   virtual ~FileSystemStatCache() {}
   
   enum LookupResult {
-    CacheExists,   //< We know the file exists and its cached stat data.
-    CacheMissing   //< We know that the file doesn't exist.
+    CacheExists,   ///< We know the file exists and its cached stat data.
+    CacheMissing   ///< We know that the file doesn't exist.
   };
 
   /// FileSystemStatCache::get - Get the 'stat' information for the specified

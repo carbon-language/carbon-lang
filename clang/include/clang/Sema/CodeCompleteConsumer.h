@@ -638,10 +638,10 @@ class CodeCompletionResult {
 public:
   /// \brief Describes the kind of result generated.
   enum ResultKind {
-    RK_Declaration = 0, //< Refers to a declaration
-    RK_Keyword,         //< Refers to a keyword or symbol.
-    RK_Macro,           //< Refers to a macro
-    RK_Pattern          //< Refers to a precomputed pattern.
+    RK_Declaration = 0, ///< Refers to a declaration
+    RK_Keyword,         ///< Refers to a keyword or symbol.
+    RK_Macro,           ///< Refers to a macro
+    RK_Pattern          ///< Refers to a precomputed pattern.
   };
 
   /// \brief When Kind == RK_Declaration or RK_Pattern, the declaration we are

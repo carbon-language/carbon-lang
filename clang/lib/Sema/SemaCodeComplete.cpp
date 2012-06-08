@@ -4620,9 +4620,9 @@ void Sema::CodeCompleteObjCPropertyFlags(Scope *S, ObjCDeclSpec &ODS) {
 /// \brief Descripts the kind of Objective-C method that we want to find
 /// via code completion.
 enum ObjCMethodKind {
-  MK_Any, //< Any kind of method, provided it means other specified criteria.
-  MK_ZeroArgSelector, //< Zero-argument (unary) selector.
-  MK_OneArgSelector //< One-argument selector.
+  MK_Any, ///< Any kind of method, provided it means other specified criteria.
+  MK_ZeroArgSelector, ///< Zero-argument (unary) selector.
+  MK_OneArgSelector ///< One-argument selector.
 };
 
 static bool isAcceptableObjCSelector(Selector Sel,
