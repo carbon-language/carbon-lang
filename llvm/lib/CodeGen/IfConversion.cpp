@@ -18,6 +18,7 @@
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineBranchProbabilityInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/MC/MCInstrItineraries.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetLowering.h"
@@ -155,7 +156,9 @@ namespace {
     const TargetRegisterInfo *TRI;
     const InstrItineraryData *InstrItins;
     const MachineBranchProbabilityInfo *MBPI;
+    MachineRegisterInfo *MRI;
 
+    bool PreRegAlloc;
     bool MadeChange;
     int FnNum;
   public:
@@ -263,14 +266,20 @@ bool IfConverter::runOnMachineFunction(MachineFunction &MF) {
   TII = MF.getTarget().getInstrInfo();
   TRI = MF.getTarget().getRegisterInfo();
   MBPI = &getAnalysis<MachineBranchProbabilityInfo>();
+  MRI = &MF.getRegInfo();
   InstrItins = MF.getTarget().getInstrItineraryData();
   if (!TII) return false;
 
-  // Tail merge tend to expose more if-conversion opportunities.
-  BranchFolder BF(true, false);
-  bool BFChange = BF.OptimizeFunction(MF, TII,
+  PreRegAlloc = MRI->isSSA();
+
+  bool BFChange = false;
+  if (!PreRegAlloc) {
+    // Tail merge tend to expose more if-conversion opportunities.
+    BranchFolder BF(true, false);
+    BFChange = BF.OptimizeFunction(MF, TII,
                                    MF.getTarget().getRegisterInfo(),
                                    getAnalysisIfAvailable<MachineModuleInfo>());
+  }
 
   DEBUG(dbgs() << "\nIfcvt: function (" << ++FnNum <<  ") \'"
                << MF.getFunction()->getName() << "\'");
@@ -621,7 +630,7 @@ void IfConverter::ScanInstructions(BBInfo &BBI) {
   if (BBI.IsDone)
     return;
 
-  bool AlreadyPredicated = BBI.Predicate.size() > 0;
+  bool AlreadyPredicated = !BBI.Predicate.empty();
   // First analyze the end of BB branches.
   BBI.TrueBB = BBI.FalseBB = NULL;
   BBI.BrCond.clear();
@@ -786,8 +795,8 @@ IfConverter::BBInfo &IfConverter::AnalyzeBlock(MachineBasicBlock *BB,
 
   unsigned Dups = 0;
   unsigned Dups2 = 0;
-  bool TNeedSub = TrueBBI.Predicate.size() > 0;
-  bool FNeedSub = FalseBBI.Predicate.size() > 0;
+  bool TNeedSub = !TrueBBI.Predicate.empty();
+  bool FNeedSub = !FalseBBI.Predicate.empty();
   bool Enqueued = false;
 
   BranchProbability Prediction = MBPI->getEdgeProbability(BB, TrueBBI.BB);
