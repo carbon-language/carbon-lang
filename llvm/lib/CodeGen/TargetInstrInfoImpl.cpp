@@ -554,8 +554,8 @@ int TargetInstrInfoImpl::getInstrLatency(const InstrItineraryData *ItinData,
 //===----------------------------------------------------------------------===//
 
 unsigned
-TargetInstrInfo::getNumMicroOps(const InstrItineraryData *ItinData,
-                                const MachineInstr *MI) const {
+TargetInstrInfoImpl::getNumMicroOps(const InstrItineraryData *ItinData,
+                                    const MachineInstr *MI) const {
   if (!ItinData || ItinData->isEmpty())
     return 1;
 
@@ -579,9 +579,10 @@ unsigned TargetInstrInfo::defaultDefLatency(const InstrItineraryData *ItinData,
   return 1;
 }
 
-unsigned TargetInstrInfo::getInstrLatency(const InstrItineraryData *ItinData,
-                                          const MachineInstr *MI,
-                                          unsigned *PredCost) const {
+unsigned TargetInstrInfoImpl::
+getInstrLatency(const InstrItineraryData *ItinData,
+                const MachineInstr *MI,
+                unsigned *PredCost) const {
   // Default to one cycle for no itinerary. However, an "empty" itinerary may
   // still have a MinLatency property, which getStageLatency checks.
   if (!ItinData)
@@ -590,9 +591,9 @@ unsigned TargetInstrInfo::getInstrLatency(const InstrItineraryData *ItinData,
   return ItinData->getStageLatency(MI->getDesc().getSchedClass());
 }
 
-bool TargetInstrInfo::hasLowDefLatency(const InstrItineraryData *ItinData,
-                                       const MachineInstr *DefMI,
-                                       unsigned DefIdx) const {
+bool TargetInstrInfoImpl::hasLowDefLatency(const InstrItineraryData *ItinData,
+                                           const MachineInstr *DefMI,
+                                           unsigned DefIdx) const {
   if (!ItinData || ItinData->isEmpty())
     return false;
 
@@ -603,11 +604,10 @@ bool TargetInstrInfo::hasLowDefLatency(const InstrItineraryData *ItinData,
 
 /// Both DefMI and UseMI must be valid.  By default, call directly to the
 /// itinerary. This may be overriden by the target.
-int
-TargetInstrInfo::getOperandLatency(const InstrItineraryData *ItinData,
-                                   const MachineInstr *DefMI, unsigned DefIdx,
-                                   const MachineInstr *UseMI,
-                                   unsigned UseIdx) const {
+int TargetInstrInfoImpl::
+getOperandLatency(const InstrItineraryData *ItinData,
+                  const MachineInstr *DefMI, unsigned DefIdx,
+                  const MachineInstr *UseMI, unsigned UseIdx) const {
   unsigned DefClass = DefMI->getDesc().getSchedClass();
   unsigned UseClass = UseMI->getDesc().getSchedClass();
   return ItinData->getOperandLatency(DefClass, DefIdx, UseClass, UseIdx);

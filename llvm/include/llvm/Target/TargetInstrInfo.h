@@ -650,7 +650,7 @@ public:
   /// getNumMicroOps - Return the number of u-operations the given machine
   /// instruction will be decoded to on the target cpu.
   virtual unsigned getNumMicroOps(const InstrItineraryData *ItinData,
-                                  const MachineInstr *MI) const;
+                                  const MachineInstr *MI) const = 0;
 
   /// isZeroCost - Return true for pseudo instructions that don't consume any
   /// machine resources in their current form. These are common cases that the
@@ -675,7 +675,7 @@ public:
   virtual int getOperandLatency(const InstrItineraryData *ItinData,
                                 const MachineInstr *DefMI, unsigned DefIdx,
                                 const MachineInstr *UseMI,
-                                unsigned UseIdx) const;
+                                unsigned UseIdx) const = 0;
 
   /// computeOperandLatency - Compute and return the latency of the given data
   /// dependent def and use when the operand indices are already known.
@@ -714,7 +714,7 @@ public:
   /// PredCost.
   virtual unsigned getInstrLatency(const InstrItineraryData *ItinData,
                                    const MachineInstr *MI,
-                                   unsigned *PredCost = 0) const;
+                                   unsigned *PredCost = 0) const = 0;
 
   virtual int getInstrLatency(const InstrItineraryData *ItinData,
                               SDNode *Node) const = 0;
@@ -744,7 +744,7 @@ public:
   /// if the target considered it 'low'.
   virtual
   bool hasLowDefLatency(const InstrItineraryData *ItinData,
-                        const MachineInstr *DefMI, unsigned DefIdx) const;
+                        const MachineInstr *DefMI, unsigned DefIdx) const = 0;
 
   /// verifyInstruction - Perform target specific instruction verification.
   virtual
@@ -901,13 +901,33 @@ public:
   virtual bool isSchedulingBoundary(const MachineInstr *MI,
                                     const MachineBasicBlock *MBB,
                                     const MachineFunction &MF) const;
-  using TargetInstrInfo::getOperandLatency;
+
   virtual int getOperandLatency(const InstrItineraryData *ItinData,
                                 SDNode *DefNode, unsigned DefIdx,
                                 SDNode *UseNode, unsigned UseIdx) const;
-  using TargetInstrInfo::getInstrLatency;
+
   virtual int getInstrLatency(const InstrItineraryData *ItinData,
                               SDNode *Node) const;
+
+  using TargetInstrInfo::getNumMicroOps;
+  virtual unsigned getNumMicroOps(const InstrItineraryData *ItinData,
+                                  const MachineInstr *MI) const;
+
+  using TargetInstrInfo::getInstrLatency;
+  virtual unsigned getInstrLatency(const InstrItineraryData *ItinData,
+                                   const MachineInstr *MI,
+                                   unsigned *PredCost = 0) const;
+
+  using TargetInstrInfo::hasLowDefLatency;
+  virtual
+  bool hasLowDefLatency(const InstrItineraryData *ItinData,
+                        const MachineInstr *DefMI, unsigned DefIdx) const;
+
+  using TargetInstrInfo::getOperandLatency;
+  virtual int getOperandLatency(const InstrItineraryData *ItinData,
+                                const MachineInstr *DefMI, unsigned DefIdx,
+                                const MachineInstr *UseMI,
+                                unsigned UseIdx) const;
 
   bool usePreRAHazardRecognizer() const;
 
