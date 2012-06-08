@@ -17,9 +17,14 @@
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/Target/TargetOptions.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/TargetRegistry.h"
 using namespace llvm;
+
+static cl::
+opt<bool> DisableCTRLoops("disable-ppc-ctrloops", cl::Hidden,
+                        cl::desc("Disable CTR loops for PPC"));
 
 extern "C" void LLVMInitializePowerPCTarget() {
   // Register the targets
@@ -81,6 +86,7 @@ public:
     return getTM<PPCTargetMachine>();
   }
 
+  virtual bool addPreRegAlloc();
   virtual bool addInstSelector();
   virtual bool addPreEmitPass();
 };
@@ -94,6 +100,14 @@ TargetPassConfig *PPCTargetMachine::createPassConfig(PassManagerBase &PM) {
   PassConfig->setEnableTailMerge(false);
 
   return PassConfig;
+}
+
+bool PPCPassConfig::addPreRegAlloc() {
+  if (!DisableCTRLoops && getOptLevel() != CodeGenOpt::None) {
+    PM->add(createPPCCTRLoops());
+  }
+
+  return false;
 }
 
 bool PPCPassConfig::addInstSelector() {

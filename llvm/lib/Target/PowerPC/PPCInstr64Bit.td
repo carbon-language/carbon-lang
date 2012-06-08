@@ -229,6 +229,15 @@ def : Pat<(PPCtc_return (i64 texternalsym:$dst), imm:$imm),
 def : Pat<(PPCtc_return CTRRC8:$dst, imm:$imm),
           (TCRETURNri8 CTRRC8:$dst, imm:$imm)>;
 
+let isBranch = 1, isTerminator = 1, hasCtrlDep = 1, PPC970_Unit = 7 in {
+  let Defs = [CTR8], Uses = [CTR8] in {
+    def BDZ8  : IForm_ext<16, 18, 0, 0, (outs), (ins condbrtarget:$dst),
+                         "bdz $dst",  BrB, []>;
+    def BDNZ8 : IForm_ext<16, 16, 0, 0, (outs), (ins condbrtarget:$dst),
+                         "bdnz $dst", BrB, []>;
+  }
+}
+
 // 64-but CR instructions
 def MTCRF8 : XFXForm_5<31, 144, (outs crbitm:$FXM), (ins G8RC:$rS),
                       "mtcrf $FXM, $rS", BrMCRX>,

@@ -135,21 +135,33 @@ bool PPCBSel::runOnMachineFunction(MachineFunction &Fn) {
           MBBStartOffset += 4;
           continue;
         }
-        
+
         // Otherwise, we have to expand it to a long branch.
-        // The BCC operands are:
-        // 0. PPC branch predicate
-        // 1. CR register
-        // 2. Target MBB
-        PPC::Predicate Pred = (PPC::Predicate)I->getOperand(0).getImm();
-        unsigned CRReg = I->getOperand(1).getReg();
-        
         MachineInstr *OldBranch = I;
         DebugLoc dl = OldBranch->getDebugLoc();
-        
-        // Jump over the uncond branch inst (i.e. $PC+8) on opposite condition.
-        BuildMI(MBB, I, dl, TII->get(PPC::BCC))
-          .addImm(PPC::InvertPredicate(Pred)).addReg(CRReg).addImm(2);
+ 
+        if (I->getOpcode() == PPC::BCC) {
+          // The BCC operands are:
+          // 0. PPC branch predicate
+          // 1. CR register
+          // 2. Target MBB
+          PPC::Predicate Pred = (PPC::Predicate)I->getOperand(0).getImm();
+          unsigned CRReg = I->getOperand(1).getReg();
+       
+          // Jump over the uncond branch inst (i.e. $PC+8) on opposite condition.
+          BuildMI(MBB, I, dl, TII->get(PPC::BCC))
+            .addImm(PPC::InvertPredicate(Pred)).addReg(CRReg).addImm(2);
+        } else if (I->getOpcode() == PPC::BDNZ) {
+          BuildMI(MBB, I, dl, TII->get(PPC::BDZ)).addImm(2);
+        } else if (I->getOpcode() == PPC::BDNZ8) {
+          BuildMI(MBB, I, dl, TII->get(PPC::BDZ8)).addImm(2);
+        } else if (I->getOpcode() == PPC::BDZ) {
+          BuildMI(MBB, I, dl, TII->get(PPC::BDNZ)).addImm(2);
+        } else if (I->getOpcode() == PPC::BDZ8) {
+          BuildMI(MBB, I, dl, TII->get(PPC::BDNZ8)).addImm(2);
+        } else {
+           llvm_unreachable("Unhandled branch type!");
+        }
         
         // Uncond branch to the real destination.
         I = BuildMI(MBB, I, dl, TII->get(PPC::B)).addMBB(Dest);

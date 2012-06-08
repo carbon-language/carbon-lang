@@ -186,10 +186,14 @@ void PPCInstrInfo::insertNoop(MachineBasicBlock &MBB,
 
 
 // Branch analysis.
+// Note: If the condition register is set to CTR or CTR8 then this is a
+// BDNZ (imm == 1) or BDZ (imm == 0) branch.
 bool PPCInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,MachineBasicBlock *&TBB,
                                  MachineBasicBlock *&FBB,
                                  SmallVectorImpl<MachineOperand> &Cond,
                                  bool AllowModify) const {
+  bool isPPC64 = TM.getSubtargetImpl()->isPPC64();
+
   // If the block has no terminators, it just falls into the block after it.
   MachineBasicBlock::iterator I = MBB.end();
   if (I == MBB.begin())
@@ -221,7 +225,26 @@ bool PPCInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,MachineBasicBlock *&TBB,
       Cond.push_back(LastInst->getOperand(0));
       Cond.push_back(LastInst->getOperand(1));
       return false;
+    } else if (LastInst->getOpcode() == PPC::BDNZ8 ||
+               LastInst->getOpcode() == PPC::BDNZ) {
+      if (!LastInst->getOperand(0).isMBB())
+        return true;
+      TBB = LastInst->getOperand(0).getMBB();
+      Cond.push_back(MachineOperand::CreateImm(1));
+      Cond.push_back(MachineOperand::CreateReg(isPPC64 ? PPC::CTR8 : PPC::CTR,
+                                               true));
+      return false;
+    } else if (LastInst->getOpcode() == PPC::BDZ8 ||
+               LastInst->getOpcode() == PPC::BDZ) {
+      if (!LastInst->getOperand(0).isMBB())
+        return true;
+      TBB = LastInst->getOperand(0).getMBB();
+      Cond.push_back(MachineOperand::CreateImm(0));
+      Cond.push_back(MachineOperand::CreateReg(isPPC64 ? PPC::CTR8 : PPC::CTR,
+                                               true));
+      return false;
     }
+
     // Otherwise, don't know what this is.
     return true;
   }
@@ -243,6 +266,30 @@ bool PPCInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,MachineBasicBlock *&TBB,
     TBB =  SecondLastInst->getOperand(2).getMBB();
     Cond.push_back(SecondLastInst->getOperand(0));
     Cond.push_back(SecondLastInst->getOperand(1));
+    FBB = LastInst->getOperand(0).getMBB();
+    return false;
+  } else if ((SecondLastInst->getOpcode() == PPC::BDNZ8 ||
+              SecondLastInst->getOpcode() == PPC::BDNZ) &&
+      LastInst->getOpcode() == PPC::B) {
+    if (!SecondLastInst->getOperand(0).isMBB() ||
+        !LastInst->getOperand(0).isMBB())
+      return true;
+    TBB = SecondLastInst->getOperand(0).getMBB();
+    Cond.push_back(MachineOperand::CreateImm(1));
+    Cond.push_back(MachineOperand::CreateReg(isPPC64 ? PPC::CTR8 : PPC::CTR,
+                                             true));
+    FBB = LastInst->getOperand(0).getMBB();
+    return false;
+  } else if ((SecondLastInst->getOpcode() == PPC::BDZ8 ||
+              SecondLastInst->getOpcode() == PPC::BDZ) &&
+      LastInst->getOpcode() == PPC::B) {
+    if (!SecondLastInst->getOperand(0).isMBB() ||
+        !LastInst->getOperand(0).isMBB())
+      return true;
+    TBB = SecondLastInst->getOperand(0).getMBB();
+    Cond.push_back(MachineOperand::CreateImm(0));
+    Cond.push_back(MachineOperand::CreateReg(isPPC64 ? PPC::CTR8 : PPC::CTR,
+                                             true));
     FBB = LastInst->getOperand(0).getMBB();
     return false;
   }
@@ -273,7 +320,9 @@ unsigned PPCInstrInfo::RemoveBranch(MachineBasicBlock &MBB) const {
       return 0;
     --I;
   }
-  if (I->getOpcode() != PPC::B && I->getOpcode() != PPC::BCC)
+  if (I->getOpcode() != PPC::B && I->getOpcode() != PPC::BCC &&
+      I->getOpcode() != PPC::BDNZ8 && I->getOpcode() != PPC::BDNZ &&
+      I->getOpcode() != PPC::BDZ8  && I->getOpcode() != PPC::BDZ)
     return 0;
 
   // Remove the branch.
@@ -283,7 +332,9 @@ unsigned PPCInstrInfo::RemoveBranch(MachineBasicBlock &MBB) const {
 
   if (I == MBB.begin()) return 1;
   --I;
-  if (I->getOpcode() != PPC::BCC)
+  if (I->getOpcode() != PPC::BCC &&
+      I->getOpcode() != PPC::BDNZ8 && I->getOpcode() != PPC::BDNZ &&
+      I->getOpcode() != PPC::BDZ8  && I->getOpcode() != PPC::BDZ)
     return 1;
 
   // Remove the branch.
@@ -301,10 +352,16 @@ PPCInstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
   assert((Cond.size() == 2 || Cond.size() == 0) &&
          "PPC branch conditions have two components!");
 
+  bool isPPC64 = TM.getSubtargetImpl()->isPPC64();
+
   // One-way branch.
   if (FBB == 0) {
     if (Cond.empty())   // Unconditional branch
       BuildMI(&MBB, DL, get(PPC::B)).addMBB(TBB);
+    else if (Cond[1].getReg() == PPC::CTR || Cond[1].getReg() == PPC::CTR8)
+      BuildMI(&MBB, DL, get(Cond[0].getImm() ?
+                              (isPPC64 ? PPC::BDNZ8 : PPC::BDNZ) :
+                              (isPPC64 ? PPC::BDZ8  : PPC::BDZ))).addMBB(TBB);
     else                // Conditional branch
       BuildMI(&MBB, DL, get(PPC::BCC))
         .addImm(Cond[0].getImm()).addReg(Cond[1].getReg()).addMBB(TBB);
@@ -312,8 +369,13 @@ PPCInstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
   }
 
   // Two-way Conditional Branch.
-  BuildMI(&MBB, DL, get(PPC::BCC))
-    .addImm(Cond[0].getImm()).addReg(Cond[1].getReg()).addMBB(TBB);
+  if (Cond[1].getReg() == PPC::CTR || Cond[1].getReg() == PPC::CTR8)
+    BuildMI(&MBB, DL, get(Cond[0].getImm() ?
+                            (isPPC64 ? PPC::BDNZ8 : PPC::BDNZ) :
+                            (isPPC64 ? PPC::BDZ8  : PPC::BDZ))).addMBB(TBB);
+  else
+    BuildMI(&MBB, DL, get(PPC::BCC))
+      .addImm(Cond[0].getImm()).addReg(Cond[1].getReg()).addMBB(TBB);
   BuildMI(&MBB, DL, get(PPC::B)).addMBB(FBB);
   return 2;
 }
@@ -665,8 +727,11 @@ PPCInstrInfo::emitFrameIndexDebugValue(MachineFunction &MF,
 bool PPCInstrInfo::
 ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const {
   assert(Cond.size() == 2 && "Invalid PPC branch opcode!");
-  // Leave the CR# the same, but invert the condition.
-  Cond[0].setImm(PPC::InvertPredicate((PPC::Predicate)Cond[0].getImm()));
+  if (Cond[1].getReg() == PPC::CTR8 || Cond[1].getReg() == PPC::CTR)
+    Cond[0].setImm(Cond[0].getImm() == 0 ? 1 : 0);
+  else
+    // Leave the CR# the same, but invert the condition.
+    Cond[0].setImm(PPC::InvertPredicate((PPC::Predicate)Cond[0].getImm()));
   return false;
 }
 

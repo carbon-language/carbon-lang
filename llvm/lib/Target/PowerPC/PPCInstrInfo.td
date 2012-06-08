@@ -438,6 +438,13 @@ let isBranch = 1, isTerminator = 1, hasCtrlDep = 1, PPC970_Unit = 7 in {
   def BCC : BForm<16, 0, 0, (outs), (ins pred:$cond, condbrtarget:$dst),
                   "b${cond:cc} ${cond:reg}, $dst"
                   /*[(PPCcondbranch CRRC:$crS, imm:$opc, bb:$dst)]*/>;
+
+  let Defs = [CTR], Uses = [CTR] in {
+    def BDZ  : IForm_ext<16, 18, 0, 0, (outs), (ins condbrtarget:$dst),
+                         "bdz $dst",  BrB, []>;
+    def BDNZ : IForm_ext<16, 16, 0, 0, (outs), (ins condbrtarget:$dst),
+                         "bdnz $dst", BrB, []>;
+  }
 }
 
 // Darwin ABI Calls.
