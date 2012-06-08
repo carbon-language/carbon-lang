@@ -14548,9 +14548,11 @@ static SDValue PerformXorCombine(SDNode *N, SelectionDAG &DAG,
   if (DCI.isBeforeLegalizeOps())
     return SDValue();
 
-  SDValue RV = performIntegerAbsCombine(N, DAG);
-  if (RV.getNode())
-    return RV;
+  if (Subtarget->hasCMov()) {
+    SDValue RV = performIntegerAbsCombine(N, DAG);
+    if (RV.getNode())
+      return RV;
+  }
 
   // Try forming BMI if it is available.
   if (!Subtarget->hasBMI())
