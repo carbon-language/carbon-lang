@@ -280,7 +280,7 @@ namespace llvm {
 
     struct ResultOperand {
     private:
-      StringRef Name;
+      std::string Name;
       Record *R;
 
       int64_t Imm;
@@ -291,7 +291,7 @@ namespace llvm {
         K_Reg
       } Kind;
 
-      ResultOperand(StringRef N, Record *r) : Name(N), R(r), Kind(K_Record) {}
+      ResultOperand(std::string N, Record *r) : Name(N), R(r), Kind(K_Record) {}
       ResultOperand(int64_t I) : Imm(I), Kind(K_Imm) {}
       ResultOperand(Record *r) : R(r), Kind(K_Reg) {}
 

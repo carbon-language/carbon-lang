@@ -556,9 +556,31 @@ CodeGenInstAlias::CodeGenInstAlias(Record *R, CodeGenTarget &T) : TheDef(R) {
     ResultOperand ResOp(static_cast<int64_t>(0));
     if (tryAliasOpMatch(Result, AliasOpNo, InstOpRec, (NumSubOps > 1),
                         R->getLoc(), T, ResOp)) {
-      ResultOperands.push_back(ResOp);
-      ResultInstOperandIndex.push_back(std::make_pair(i, -1));
-      ++AliasOpNo;
+      // If this is a simple operand, or a complex operand with a custom match
+      // class, then we can match is verbatim.
+      if (NumSubOps == 1 ||
+          (InstOpRec->getValue("ParserMatchClass") &&
+           InstOpRec->getValueAsDef("ParserMatchClass")
+             ->getValueAsString("Name") != "Imm")) {
+        ResultOperands.push_back(ResOp);
+        ResultInstOperandIndex.push_back(std::make_pair(i, -1));
+        ++AliasOpNo;
+
+      // Otherwise, we need to match each of the suboperands individually.
+      } else {
+         DagInit *MIOI = ResultInst->Operands[i].MIOperandInfo;
+         for (unsigned SubOp = 0; SubOp != NumSubOps; ++SubOp) {
+          Record *SubRec = dynamic_cast<DefInit*>(MIOI->getArg(SubOp))->getDef();
+
+          // Take care to instantiate each of the suboperands with the correct
+          // nomenclature: $foo.bar
+          ResultOperands.push_back(
+              ResultOperand(Result->getArgName(AliasOpNo) + "." +
+                            MIOI->getArgName(SubOp), SubRec));
+          ResultInstOperandIndex.push_back(std::make_pair(i, SubOp));
+         }
+         ++AliasOpNo;
+      }
       continue;
     }
 
