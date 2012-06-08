@@ -111,6 +111,7 @@ struct InstrItineraryProps {
   // IssueWidth is the maximum number of instructions that may be scheduled in
   // the same per-cycle group.
   unsigned IssueWidth;
+  static const unsigned DefaultIssueWidth = 1;
 
   // MinLatency is the minimum latency between a register write
   // followed by a data dependent read. This determines which
@@ -133,12 +134,14 @@ struct InstrItineraryProps {
   //      Optional InstrItinerary OperandCycles provides expected latency.
   //      TODO: can't yet specify both min and expected latency per operand.
   int MinLatency;
+  static const unsigned DefaultMinLatency = -1;
 
   // LoadLatency is the expected latency of load instructions.
   //
   // If MinLatency >= 0, this may be overriden for individual load opcodes by
   // InstrItinerary OperandCycles.
   unsigned LoadLatency;
+  static const unsigned DefaultLoadLatency = 4;
 
   // HighLatency is the expected latency of "very high latency" operations.
   // See TargetInstrInfo::isHighLatencyDef().
@@ -146,9 +149,16 @@ struct InstrItineraryProps {
   // likely to have some impact on scheduling heuristics.
   // If MinLatency >= 0, this may be overriden by InstrItinData OperandCycles.
   unsigned HighLatency;
+  static const unsigned DefaultHighLatency = 10;
 
-  InstrItineraryProps(): IssueWidth(1), MinLatency(-1), LoadLatency(4),
-                         HighLatency(10) {}
+  // Default's must be specified as static const literals so that tablegenerated
+  // target code can use it in static initializers. The defaults need to be
+  // initialized in this default ctor because some clients directly instantiate
+  // InstrItineraryData instead of using a generated itinerary.
+  InstrItineraryProps(): IssueWidth(DefaultMinLatency),
+                         MinLatency(DefaultMinLatency),
+                         LoadLatency(DefaultLoadLatency),
+                         HighLatency(DefaultHighLatency) {}
 
   InstrItineraryProps(unsigned iw, int ml, unsigned ll, unsigned hl):
     IssueWidth(iw), MinLatency(ml), LoadLatency(ll), HighLatency(hl) {}

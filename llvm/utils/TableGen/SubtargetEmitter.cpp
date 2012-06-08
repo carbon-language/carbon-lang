@@ -485,7 +485,7 @@ void SubtargetEmitter::EmitItineraryProp(raw_ostream &OS, const Record *R,
   if (V >= 0)
     OS << V << Separator << " // " << Name;
   else
-    OS << "DefaultItineraryProps." << Name << Separator;
+    OS << "InstrItineraryProps::Default" << Name << Separator;
   OS << '\n';
 }
 
@@ -496,7 +496,6 @@ void SubtargetEmitter::
 EmitProcessorData(raw_ostream &OS,
                   std::vector<Record*> &ItinClassList,
                   std::vector<std::vector<InstrItinerary> > &ProcList) {
-  OS << "static const llvm::InstrItineraryProps " << "DefaultItineraryProps;";
 
   // Get an iterator for processor itinerary stages
   std::vector<std::vector<InstrItinerary> >::iterator
