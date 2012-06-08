@@ -909,21 +909,17 @@ public:
   virtual int getInstrLatency(const InstrItineraryData *ItinData,
                               SDNode *Node) const;
 
-  using TargetInstrInfo::getNumMicroOps;
   virtual unsigned getNumMicroOps(const InstrItineraryData *ItinData,
                                   const MachineInstr *MI) const;
 
-  using TargetInstrInfo::getInstrLatency;
   virtual unsigned getInstrLatency(const InstrItineraryData *ItinData,
                                    const MachineInstr *MI,
                                    unsigned *PredCost = 0) const;
 
-  using TargetInstrInfo::hasLowDefLatency;
   virtual
   bool hasLowDefLatency(const InstrItineraryData *ItinData,
                         const MachineInstr *DefMI, unsigned DefIdx) const;
 
-  using TargetInstrInfo::getOperandLatency;
   virtual int getOperandLatency(const InstrItineraryData *ItinData,
                                 const MachineInstr *DefMI, unsigned DefIdx,
                                 const MachineInstr *UseMI,
