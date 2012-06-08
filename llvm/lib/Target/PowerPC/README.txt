@@ -2,7 +2,6 @@
 
 TODO:
 * gpr0 allocation
-* implement do-loop -> bdnz transform
 * lmw/stmw pass a la arm load store optimizer for prolog/epilog
 
 ===-------------------------------------------------------------------------===
