@@ -287,7 +287,7 @@ TSAN_INTERCEPTOR(void*, calloc, uptr size, uptr n) {
   {
     SCOPED_INTERCEPTOR_RAW(calloc, size, n);
     p = user_alloc(thr, pc, n * size);
-    internal_memset(p, 0, n * size);
+    real_memset(p, 0, n * size);
   }
   invoke_malloc_hook(p, n * size);
   return p;
@@ -1283,7 +1283,7 @@ TSAN_INTERCEPTOR(int, sigaction, int sig, sigaction_t *act, sigaction_t *old) {
 TSAN_INTERCEPTOR(sighandler_t, signal, int sig, sighandler_t h) {
   sigaction_t act = {};
   act.sa_handler = h;
-  internal_memset(&act.sa_mask, -1, sizeof(act.sa_mask));
+  real_memset(&act.sa_mask, -1, sizeof(act.sa_mask));
   act.sa_flags = 0;
   sigaction_t old = {};
   int res = sigaction(sig, &act, &old);
@@ -1521,7 +1521,7 @@ void InitializeInterceptors() {
   }
 }
 
-void internal_memset(void *ptr, int c, uptr size) {
+void real_memset(void *ptr, int c, uptr size) {
   REAL(memset)(ptr, c, size);
 }
 

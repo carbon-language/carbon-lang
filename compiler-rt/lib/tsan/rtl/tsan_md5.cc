@@ -194,13 +194,13 @@ void MD5_Final(unsigned char *result, MD5_CTX *ctx) {
   free = 64 - used;
 
   if (free < 8) {
-    internal_memset(&ctx->buffer[used], 0, free);
+    real_memset(&ctx->buffer[used], 0, free);
     body(ctx, ctx->buffer, 64);
     used = 0;
     free = 64;
   }
 
-  internal_memset(&ctx->buffer[used], 0, free - 8);
+  real_memset(&ctx->buffer[used], 0, free - 8);
 
   ctx->lo <<= 3;
   ctx->buffer[56] = ctx->lo;
@@ -231,7 +231,7 @@ void MD5_Final(unsigned char *result, MD5_CTX *ctx) {
   result[14] = ctx->d >> 16;
   result[15] = ctx->d >> 24;
 
-  internal_memset(ctx, 0, sizeof(*ctx));
+  real_memset(ctx, 0, sizeof(*ctx));
 }
 
 MD5Hash md5_hash(const void *data, uptr size) {

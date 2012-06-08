@@ -134,7 +134,7 @@ T RoundUp(T p, int align) {
   return (T)(((u64)p + align - 1) & ~(align - 1));
 }
 
-void internal_memset(void *ptr, int c, uptr size);
+void real_memset(void *ptr, int c, uptr size);
 int internal_memcmp(const void *s1, const void *s2, uptr size);
 int internal_strncmp(const char *s1, const char *s2, uptr size);
 void internal_strcpy(char *s1, const char *s2);

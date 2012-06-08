@@ -147,7 +147,7 @@ static SectionDesc *GetSectionDesc(uptr addr) {
 static ReportStack *NewFrame(uptr addr) {
   ReportStack *ent = (ReportStack*)internal_alloc(MBlockReportStack,
                                                   sizeof(ReportStack));
-  internal_memset(ent, 0, sizeof(*ent));
+  real_memset(ent, 0, sizeof(*ent));
   ent->pc = addr;
   return ent;
 }

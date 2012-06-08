@@ -32,7 +32,7 @@ void WEAK OverrideFlags(Flags *f) {
 }
 
 void InitializeFlags(Flags *f, const char *env) {
-  internal_memset(f, 0, sizeof(*f));
+  real_memset(f, 0, sizeof(*f));
 
   // Default values.
   f->enable_annotations = true;
