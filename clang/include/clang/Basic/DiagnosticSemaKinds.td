@@ -1469,6 +1469,10 @@ def warn_cxx98_compat_unicode_type : Warning<
 // Objective-C++
 def err_objc_decls_may_only_appear_in_global_scope : Error<
   "Objective-C declarations may only appear in global scope">;
+def warn_auto_var_is_id : Warning<
+  "'auto' deduced as 'id' in declaration of %0">,
+  InGroup<DiagGroup<"auto-var-id">>;
+
 // Attributes
 def err_nsobject_attribute : Error<
   "__attribute ((NSObject)) is for pointer types only">;

@@ -6303,6 +6303,17 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init,
     if (getLangOpts().ObjCAutoRefCount && inferObjCARCLifetime(VDecl))
       VDecl->setInvalidDecl();
 
+    // Warn if we deduced 'id'. 'auto' usually implies type-safety, but using
+    // 'id' instead of a specific object type prevents most of our usual checks.
+    // We only want to warn outside of template instantiations, though:
+    // inside a template, the 'id' could have come from a parameter.
+    if (ActiveTemplateInstantiations.empty() &&
+        DeducedType->getType()->isObjCIdType()) {
+      SourceLocation Loc = DeducedType->getTypeLoc().getBeginLoc();
+      Diag(Loc, diag::warn_auto_var_is_id)
+        << VDecl->getDeclName() << DeduceInit->getSourceRange();
+    }
+
     // If this is a redeclaration, check that the type we just deduced matches
     // the previously declared type.
     if (VarDecl *Old = VDecl->getPreviousDecl())

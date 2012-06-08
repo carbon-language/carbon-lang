@@ -22,7 +22,7 @@ void deduction(id obj) {
   __strong id *idp = new auto(obj);
 
   __strong id array[17];
-  for (auto x : array) {
+  for (auto x : array) { // expected-warning{{'auto' deduced as 'id' in declaration of 'x'}}
     __strong id *xPtr = &x;
   }
 
@@ -51,3 +51,24 @@ void test1c() {
   (void) ^{ (void) p; };
   (void) ^{ (void) v; }; // expected-error {{cannot capture __autoreleasing variable in a block}}
 }
+
+
+// <rdar://problem/11319689>
+// warn when initializing an 'auto' variable with an 'id' initializer expression
+
+void testAutoId(id obj) {
+  auto x = obj; // expected-warning{{'auto' deduced as 'id' in declaration of 'x'}}
+}
+
+// ...but don't warn if it's coming from a template parameter.
+template<typename T>
+void autoTemplateFunction(T param, id obj) {
+  auto x = param; // no-warning
+  auto y = obj; // expected-warning{{'auto' deduced as 'id' in declaration of 'y'}}
+}
+
+void testAutoIdTemplate(id obj) {
+  autoTemplateFunction(obj, obj); // no-warning
+}
+
+
