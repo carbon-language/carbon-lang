@@ -401,7 +401,8 @@ ProcessGDBRemote::BuildDynamicRegisterInfo (bool force)
     }
 
     // Add some convenience registers (eax, ebx, ecx, edx, esi, edi, ebp, esp) to x86_64.
-    if (target_arch.IsValid() && target_arch.GetMachine() == llvm::Triple::x86_64)
+    if ((target_arch.IsValid() && target_arch.GetMachine() == llvm::Triple::x86_64)
+        || (remote_arch.IsValid() && remote_arch.GetMachine() == llvm::Triple::x86_64))
         m_register_info.Addx86_64ConvenienceRegisters();
 
     // At this point, we can finalize our register info.
