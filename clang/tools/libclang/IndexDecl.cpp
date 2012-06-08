@@ -154,7 +154,20 @@ public:
     IndexCtx.handleObjCImplementation(D);
 
     IndexCtx.indexTUDeclsInObjCContainer();
-    IndexCtx.indexDeclContext(D);
+
+    // Index the ivars first to make sure the synthesized ivars are indexed
+    // before indexing the methods that can reference them.
+    for (ObjCImplementationDecl::ivar_iterator
+           IvarI = D->ivar_begin(),
+           IvarE = D->ivar_end(); IvarI != IvarE; ++IvarI) {
+      IndexCtx.indexDecl(*IvarI);
+    }
+    for (DeclContext::decl_iterator
+           I = D->decls_begin(), E = D->decls_end(); I != E; ++I) {
+      if (!isa<ObjCIvarDecl>(*I))
+        IndexCtx.indexDecl(*I);
+    }
+
     return true;
   }
 

@@ -11,9 +11,19 @@
 @synthesize prop = _prop;
 @end
 
-rdar://11015325
+// rdar://11015325
 @interface I1
 __attribute__((something)) @interface I2 @end
+@end
+
+@interface I3
+@property (assign,readwrite) id auto_prop;
+@end
+
+@implementation I3
+-(void)meth {
+  _auto_prop = 0;
+}
 @end
 
 // RUN: c-index-test -index-file %s > %t
@@ -28,3 +38,6 @@ __attribute__((something)) @interface I2 @end
 // CHECK: [indexDeclaration]: kind: objc-ivar | name: _prop | {{.*}} | loc: 11:20
 // CHECK: [indexDeclaration]: kind: objc-instance-method | name: prop | {{.*}} | loc: 11:13 | {{.*}} | lexical-container: [I:10:17]
 // CHECK: [indexDeclaration]: kind: objc-instance-method | name: setProp: | {{.*}} | loc: 11:13 | {{.*}} | lexical-container: [I:10:17]
+
+// CHECK: [indexDeclaration]: kind: objc-ivar | name: _auto_prop | {{.*}} | loc: 20:33
+// CHECK: [indexEntityReference]: kind: objc-ivar | name: _auto_prop | {{.*}} | loc: 25:3
