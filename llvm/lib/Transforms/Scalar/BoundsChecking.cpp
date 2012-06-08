@@ -377,11 +377,13 @@ bool BoundsChecking::computeAllocSize(Value *Ptr, APInt &Offset,
     }
     RETURN(true);
 
-    // TODO: handle more standard functions:
+    // TODO: handle more standard functions (+ wchar cousins):
     // - strdup / strndup
     // - strcpy / strncpy
+    // - strcat / strncat
     // - memcpy / memmove
     // - strcat / strncat
+    // - memset
 
   } else if (PHINode *PHI = dyn_cast<PHINode>(Ptr)) {
     // create 2 PHIs: one for offset and another for size
@@ -389,8 +391,7 @@ bool BoundsChecking::computeAllocSize(Value *Ptr, APInt &Offset,
     PHINode *SizePHI   = Builder->CreatePHI(IntTy, PHI->getNumIncomingValues());
 
     // insert right away in the cache to handle recursive PHIs
-    CacheData CacheEntry(APInt(), OffsetPHI, APInt(), SizePHI, true);
-    CacheMap[Ptr] = CacheEntry;
+    CacheMap[Ptr] = CacheData(APInt(), OffsetPHI, APInt(), SizePHI, true);
 
     // compute offset/size for each PHI incoming pointer
     for (unsigned i = 0, e = PHI->getNumIncomingValues(); i != e; ++i) {
@@ -419,7 +420,7 @@ bool BoundsChecking::computeAllocSize(Value *Ptr, APInt &Offset,
     SizeValue = SizePHI;
     RETURN(true);    
 
-  } else if (isa<UndefValue>(Ptr)) {
+  } else if (isa<UndefValue>(Ptr) || isa<ConstantPointerNull>(Ptr)) {
     Size = 0;
     RETURN(true);
 
@@ -428,12 +429,12 @@ bool BoundsChecking::computeAllocSize(Value *Ptr, APInt &Offset,
     RETURN(false);
   }
 
+  DEBUG(dbgs() << "computeAllocSize unhandled value:\n" << *Ptr << "\n");
   RETURN(false);
 
 cache_and_return:
   // cache the result and return
-  CacheData CacheEntry(Offset, OffsetValue, Size, SizeValue, ReturnVal);
-  CacheMap[Ptr] = CacheEntry;
+  CacheMap[Ptr] = CacheData(Offset, OffsetValue, Size, SizeValue, ReturnVal);
 
   // non-computable results can be safely cached
   if (!ReturnVal)
