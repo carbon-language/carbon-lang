@@ -23,8 +23,8 @@
 using namespace llvm;
 
 static cl::
-opt<bool> DisableCTRLoops("disable-ppc-ctrloops", cl::Hidden,
-                        cl::desc("Disable CTR loops for PPC"));
+opt<bool> EnableCTRLoops("enable-ppc-ctrloops", cl::Hidden,
+                        cl::desc("Enable CTR loops for PPC"));
 
 extern "C" void LLVMInitializePowerPCTarget() {
   // Register the targets
@@ -103,9 +103,10 @@ TargetPassConfig *PPCTargetMachine::createPassConfig(PassManagerBase &PM) {
 }
 
 bool PPCPassConfig::addPreRegAlloc() {
-  if (!DisableCTRLoops && getOptLevel() != CodeGenOpt::None) {
+  // FIXME: Once this can be enabled by default, this condition should read:
+  // if (!DisableCTRLoops && getOptLevel() != CodeGenOpt::None)
+  if (EnableCTRLoops)
     PM->add(createPPCCTRLoops());
-  }
 
   return false;
 }

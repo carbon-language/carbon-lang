@@ -40,6 +40,10 @@ extern cl::opt<bool> DisablePPC64RS;
 
 using namespace llvm;
 
+static cl::
+opt<bool> EnableCTRLoopAnal("enable-ppc-ctrloop-analysis", cl::Hidden,
+            cl::desc("Enable analysis for CTR loops (experimental)"));
+
 PPCInstrInfo::PPCInstrInfo(PPCTargetMachine &tm)
   : PPCGenInstrInfo(PPC::ADJCALLSTACKDOWN, PPC::ADJCALLSTACKUP),
     TM(tm), RI(*TM.getSubtargetImpl(), *this) {}
@@ -229,6 +233,8 @@ bool PPCInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,MachineBasicBlock *&TBB,
                LastInst->getOpcode() == PPC::BDNZ) {
       if (!LastInst->getOperand(0).isMBB())
         return true;
+      if (!EnableCTRLoopAnal)
+        return true;
       TBB = LastInst->getOperand(0).getMBB();
       Cond.push_back(MachineOperand::CreateImm(1));
       Cond.push_back(MachineOperand::CreateReg(isPPC64 ? PPC::CTR8 : PPC::CTR,
@@ -237,6 +243,8 @@ bool PPCInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,MachineBasicBlock *&TBB,
     } else if (LastInst->getOpcode() == PPC::BDZ8 ||
                LastInst->getOpcode() == PPC::BDZ) {
       if (!LastInst->getOperand(0).isMBB())
+        return true;
+      if (!EnableCTRLoopAnal)
         return true;
       TBB = LastInst->getOperand(0).getMBB();
       Cond.push_back(MachineOperand::CreateImm(0));
@@ -274,6 +282,8 @@ bool PPCInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,MachineBasicBlock *&TBB,
     if (!SecondLastInst->getOperand(0).isMBB() ||
         !LastInst->getOperand(0).isMBB())
       return true;
+    if (!EnableCTRLoopAnal)
+      return true;
     TBB = SecondLastInst->getOperand(0).getMBB();
     Cond.push_back(MachineOperand::CreateImm(1));
     Cond.push_back(MachineOperand::CreateReg(isPPC64 ? PPC::CTR8 : PPC::CTR,
@@ -285,6 +295,8 @@ bool PPCInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,MachineBasicBlock *&TBB,
       LastInst->getOpcode() == PPC::B) {
     if (!SecondLastInst->getOperand(0).isMBB() ||
         !LastInst->getOperand(0).isMBB())
+      return true;
+    if (!EnableCTRLoopAnal)
       return true;
     TBB = SecondLastInst->getOperand(0).getMBB();
     Cond.push_back(MachineOperand::CreateImm(0));
