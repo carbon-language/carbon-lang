@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=arm-apple-darwin -regalloc=fast
+; RUN: llc < %s -mtriple=arm-apple-darwin -regalloc=fast -optimize-regalloc=0
 ; PR1925
 
 	%"struct.kc::impl_Ccode_option" = type { %"struct.kc::impl_abstract_phylum" }

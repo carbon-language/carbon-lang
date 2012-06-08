@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86 -regalloc=fast       | FileCheck %s
+; RUN: llc < %s -march=x86 -regalloc=fast -optimize-regalloc=0 | FileCheck %s
 ; RUN: llc < %s -march=x86 -regalloc=basic      | FileCheck %s
 ; RUN: llc < %s -march=x86 -regalloc=greedy     | FileCheck %s
 

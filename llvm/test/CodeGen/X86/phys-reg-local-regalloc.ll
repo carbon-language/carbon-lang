@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86 -mtriple=i386-apple-darwin9 -regalloc=fast | FileCheck %s
+; RUN: llc < %s -march=x86 -mtriple=i386-apple-darwin9 -regalloc=fast -optimize-regalloc=0 | FileCheck %s
 ; RUN: llc -O0 < %s -march=x86 -mtriple=i386-apple-darwin9 -regalloc=fast | FileCheck %s
 ; CHECKed instructions should be the same with or without -O0.
 

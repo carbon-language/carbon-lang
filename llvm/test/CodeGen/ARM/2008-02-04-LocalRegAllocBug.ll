@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=arm-linux-gnueabi -regalloc=fast
+; RUN: llc < %s -mtriple=arm-linux-gnueabi -regalloc=fast -optimize-regalloc=0
 ; PR1925
 
 	%struct.encode_aux_nearestmatch = type { i32*, i32*, i32*, i32*, i32, i32 }

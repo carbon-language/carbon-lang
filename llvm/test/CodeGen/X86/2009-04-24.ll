@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86-64 -mtriple=x86_64-linux-gnu -regalloc=fast -relocation-model=pic > %t2
+; RUN: llc < %s -march=x86-64 -mtriple=x86_64-linux-gnu -regalloc=fast -optimize-regalloc=0 -relocation-model=pic > %t2
 ; RUN: grep {leaq.*TLSGD} %t2
 ; RUN: grep {__tls_get_addr} %t2
 ; PR4004
