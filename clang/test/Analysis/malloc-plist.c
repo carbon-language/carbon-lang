@@ -364,6 +364,7 @@ void use_function_with_leak7() {
 // CHECK:    <key>type</key><string>Memory leak</string>
 // CHECK:   <key>issue_context_kind</key><string>function</string>
 // CHECK:   <key>issue_context</key><string>diagnosticTest</string>
+// CHECK:   <key>issue_hash</key><integer>5</integer>
 // CHECK:   <key>location</key>
 // CHECK:   <dict>
 // CHECK:    <key>line</key><integer>14</integer>
@@ -525,6 +526,7 @@ void use_function_with_leak7() {
 // CHECK:    <key>type</key><string>Memory leak</string>
 // CHECK:   <key>issue_context_kind</key><string>function</string>
 // CHECK:   <key>issue_context</key><string>myArrayAllocation</string>
+// CHECK:   <key>issue_hash</key><integer>4</integer>
 // CHECK:   <key>location</key>
 // CHECK:   <dict>
 // CHECK:    <key>line</key><integer>21</integer>
@@ -909,6 +911,7 @@ void use_function_with_leak7() {
 // CHECK:    <key>type</key><string>Memory leak</string>
 // CHECK:   <key>issue_context_kind</key><string>function</string>
 // CHECK:   <key>issue_context</key><string>reallocDiagnostics</string>
+// CHECK:   <key>issue_hash</key><integer>5</integer>
 // CHECK:   <key>location</key>
 // CHECK:   <dict>
 // CHECK:    <key>line</key><integer>28</integer>
@@ -1307,6 +1310,7 @@ void use_function_with_leak7() {
 // CHECK:    <key>type</key><string>Memory leak</string>
 // CHECK:   <key>issue_context_kind</key><string>function</string>
 // CHECK:   <key>issue_context</key><string>test_wrapper</string>
+// CHECK:   <key>issue_hash</key><integer>3</integer>
 // CHECK:   <key>location</key>
 // CHECK:   <dict>
 // CHECK:    <key>line</key><integer>45</integer>
@@ -1826,6 +1830,7 @@ void use_function_with_leak7() {
 // CHECK:    <key>type</key><string>Use-after-free</string>
 // CHECK:   <key>issue_context_kind</key><string>function</string>
 // CHECK:   <key>issue_context</key><string>test_double_action_call</string>
+// CHECK:   <key>issue_hash</key><integer>3</integer>
 // CHECK:   <key>location</key>
 // CHECK:   <dict>
 // CHECK:    <key>line</key><integer>61</integer>
@@ -2384,6 +2389,7 @@ void use_function_with_leak7() {
 // CHECK:    <key>type</key><string>Memory leak</string>
 // CHECK:   <key>issue_context_kind</key><string>function</string>
 // CHECK:   <key>issue_context</key><string>reallocIntra</string>
+// CHECK:   <key>issue_hash</key><integer>3</integer>
 // CHECK:   <key>location</key>
 // CHECK:   <dict>
 // CHECK:    <key>line</key><integer>76</integer>
@@ -2651,6 +2657,7 @@ void use_function_with_leak7() {
 // CHECK:    <key>type</key><string>Memory leak</string>
 // CHECK:   <key>issue_context_kind</key><string>function</string>
 // CHECK:   <key>issue_context</key><string>use_ret</string>
+// CHECK:   <key>issue_hash</key><integer>3</integer>
 // CHECK:   <key>location</key>
 // CHECK:   <dict>
 // CHECK:    <key>line</key><integer>86</integer>
@@ -2812,6 +2819,7 @@ void use_function_with_leak7() {
 // CHECK:    <key>type</key><string>Memory leak</string>
 // CHECK:   <key>issue_context_kind</key><string>function</string>
 // CHECK:   <key>issue_context</key><string>LeakedSymbol</string>
+// CHECK:   <key>issue_hash</key><integer>8</integer>
 // CHECK:   <key>location</key>
 // CHECK:   <dict>
 // CHECK:    <key>line</key><integer>97</integer>
@@ -3016,6 +3024,7 @@ void use_function_with_leak7() {
 // CHECK:    <key>type</key><string>Memory leak</string>
 // CHECK:   <key>issue_context_kind</key><string>function</string>
 // CHECK:   <key>issue_context</key><string>function_with_leak1</string>
+// CHECK:   <key>issue_hash</key><integer>1</integer>
 // CHECK:   <key>location</key>
 // CHECK:   <dict>
 // CHECK:    <key>line</key><integer>102</integer>
@@ -3220,6 +3229,7 @@ void use_function_with_leak7() {
 // CHECK:    <key>type</key><string>Memory leak</string>
 // CHECK:   <key>issue_context_kind</key><string>function</string>
 // CHECK:   <key>issue_context</key><string>function_with_leak2</string>
+// CHECK:   <key>issue_hash</key><integer>2</integer>
 // CHECK:   <key>location</key>
 // CHECK:   <dict>
 // CHECK:    <key>line</key><integer>111</integer>
@@ -3492,6 +3502,7 @@ void use_function_with_leak7() {
 // CHECK:    <key>type</key><string>Memory leak</string>
 // CHECK:   <key>issue_context_kind</key><string>function</string>
 // CHECK:   <key>issue_context</key><string>function_with_leak3</string>
+// CHECK:   <key>issue_hash</key><integer>3</integer>
 // CHECK:   <key>location</key>
 // CHECK:   <dict>
 // CHECK:    <key>line</key><integer>120</integer>
@@ -3764,6 +3775,7 @@ void use_function_with_leak7() {
 // CHECK:    <key>type</key><string>Memory leak</string>
 // CHECK:   <key>issue_context_kind</key><string>function</string>
 // CHECK:   <key>issue_context</key><string>function_with_leak4</string>
+// CHECK:   <key>issue_hash</key><integer>5</integer>
 // CHECK:   <key>location</key>
 // CHECK:   <dict>
 // CHECK:    <key>line</key><integer>131</integer>
@@ -3968,6 +3980,7 @@ void use_function_with_leak7() {
 // CHECK:    <key>type</key><string>Memory leak</string>
 // CHECK:   <key>issue_context_kind</key><string>function</string>
 // CHECK:   <key>issue_context</key><string>function_with_leak5</string>
+// CHECK:   <key>issue_hash</key><integer>2</integer>
 // CHECK:   <key>location</key>
 // CHECK:   <dict>
 // CHECK:    <key>line</key><integer>142</integer>
@@ -4172,6 +4185,7 @@ void use_function_with_leak7() {
 // CHECK:    <key>type</key><string>Memory leak</string>
 // CHECK:   <key>issue_context_kind</key><string>function</string>
 // CHECK:   <key>issue_context</key><string>function_with_leak6</string>
+// CHECK:   <key>issue_hash</key><integer>2</integer>
 // CHECK:   <key>location</key>
 // CHECK:   <dict>
 // CHECK:    <key>line</key><integer>153</integer>
@@ -4405,6 +4419,7 @@ void use_function_with_leak7() {
 // CHECK:    <key>type</key><string>Memory leak</string>
 // CHECK:   <key>issue_context_kind</key><string>function</string>
 // CHECK:   <key>issue_context</key><string>use_function_with_leak7</string>
+// CHECK:   <key>issue_hash</key><integer>2</integer>
 // CHECK:   <key>location</key>
 // CHECK:   <dict>
 // CHECK:    <key>line</key><integer>169</integer>

@@ -274,6 +274,7 @@ void test_block_arg() {
 // CHECK:    <key>type</key><string>Division by zero</string>
 // CHECK:   <key>issue_context_kind</key><string>function</string>
 // CHECK:   <key>issue_context</key><string>foo</string>
+// CHECK:   <key>issue_hash</key><integer>4</integer>
 // CHECK:   <key>location</key>
 // CHECK:   <dict>
 // CHECK:    <key>line</key><integer>14</integer>
@@ -396,6 +397,7 @@ void test_block_arg() {
 // CHECK:    <key>type</key><string>Dereference of null pointer</string>
 // CHECK:   <key>issue_context_kind</key><string>function</string>
 // CHECK:   <key>issue_context</key><string>has_bug</string>
+// CHECK:   <key>issue_hash</key><integer>1</integer>
 // CHECK:   <key>location</key>
 // CHECK:   <dict>
 // CHECK:    <key>line</key><integer>19</integer>
@@ -649,6 +651,7 @@ void test_block_arg() {
 // CHECK:    <key>type</key><string>Dereference of null pointer</string>
 // CHECK:   <key>issue_context_kind</key><string>function</string>
 // CHECK:   <key>issue_context</key><string>triggers_bug</string>
+// CHECK:   <key>issue_hash</key><integer>1</integer>
 // CHECK:   <key>location</key>
 // CHECK:   <dict>
 // CHECK:    <key>line</key><integer>27</integer>
@@ -945,6 +948,7 @@ void test_block_arg() {
 // CHECK:    <key>type</key><string>Dereference of null pointer</string>
 // CHECK:   <key>issue_context_kind</key><string>function</string>
 // CHECK:   <key>issue_context</key><string>test_block_ret</string>
+// CHECK:   <key>issue_hash</key><integer>2</integer>
 // CHECK:   <key>location</key>
 // CHECK:   <dict>
 // CHECK:    <key>line</key><integer>51</integer>
@@ -1058,6 +1062,7 @@ void test_block_arg() {
 // CHECK:    <key>type</key><string>Dereference of null pointer</string>
 // CHECK:   <key>issue_context_kind</key><string>function</string>
 // CHECK:   <key>issue_context</key><string>test_block_blockvar</string>
+// CHECK:   <key>issue_hash</key><integer>3</integer>
 // CHECK:   <key>location</key>
 // CHECK:   <dict>
 // CHECK:    <key>line</key><integer>57</integer>
@@ -1171,6 +1176,7 @@ void test_block_arg() {
 // CHECK:    <key>type</key><string>Dereference of null pointer</string>
 // CHECK:   <key>issue_context_kind</key><string>function</string>
 // CHECK:   <key>issue_context</key><string>test_block_arg</string>
+// CHECK:   <key>issue_hash</key><integer>3</integer>
 // CHECK:   <key>location</key>
 // CHECK:   <dict>
 // CHECK:    <key>line</key><integer>63</integer>

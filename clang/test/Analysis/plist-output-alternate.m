@@ -137,6 +137,7 @@ void rdar8331641(int x) {
 // CHECK:    <key>type</key><string>Dereference of null pointer</string>
 // CHECK:   <key>issue_context_kind</key><string>function</string>
 // CHECK:   <key>issue_context</key><string>test_null_init</string>
+// CHECK:   <key>issue_hash</key><integer>2</integer>
 // CHECK:   <key>location</key>
 // CHECK:   <dict>
 // CHECK:    <key>line</key><integer>6</integer>
@@ -216,6 +217,7 @@ void rdar8331641(int x) {
 // CHECK:    <key>type</key><string>Dereference of null pointer</string>
 // CHECK:   <key>issue_context_kind</key><string>function</string>
 // CHECK:   <key>issue_context</key><string>test_null_assign</string>
+// CHECK:   <key>issue_hash</key><integer>3</integer>
 // CHECK:   <key>location</key>
 // CHECK:   <dict>
 // CHECK:    <key>line</key><integer>12</integer>
@@ -295,6 +297,7 @@ void rdar8331641(int x) {
 // CHECK:    <key>type</key><string>Dereference of null pointer</string>
 // CHECK:   <key>issue_context_kind</key><string>function</string>
 // CHECK:   <key>issue_context</key><string>test_null_assign_transitive</string>
+// CHECK:   <key>issue_hash</key><integer>4</integer>
 // CHECK:   <key>location</key>
 // CHECK:   <dict>
 // CHECK:    <key>line</key><integer>19</integer>
@@ -437,6 +440,7 @@ void rdar8331641(int x) {
 // CHECK:    <key>type</key><string>Dereference of null pointer</string>
 // CHECK:   <key>issue_context_kind</key><string>function</string>
 // CHECK:   <key>issue_context</key><string>test_null_cond</string>
+// CHECK:   <key>issue_hash</key><integer>2</integer>
 // CHECK:   <key>location</key>
 // CHECK:   <dict>
 // CHECK:    <key>line</key><integer>24</integer>
@@ -584,6 +588,7 @@ void rdar8331641(int x) {
 // CHECK:    <key>type</key><string>Dereference of null pointer</string>
 // CHECK:   <key>issue_context_kind</key><string>function</string>
 // CHECK:   <key>issue_context</key><string>test_null_cond_transitive</string>
+// CHECK:   <key>issue_hash</key><integer>3</integer>
 // CHECK:   <key>location</key>
 // CHECK:   <dict>
 // CHECK:    <key>line</key><integer>31</integer>
@@ -697,6 +702,7 @@ void rdar8331641(int x) {
 // CHECK:    <key>type</key><string>Dereference of null pointer</string>
 // CHECK:   <key>issue_context_kind</key><string>function</string>
 // CHECK:   <key>issue_context</key><string>test_null_field</string>
+// CHECK:   <key>issue_hash</key><integer>3</integer>
 // CHECK:   <key>location</key>
 // CHECK:   <dict>
 // CHECK:    <key>line</key><integer>38</integer>
@@ -960,6 +966,7 @@ void rdar8331641(int x) {
 // CHECK:    <key>type</key><string>Leak</string>
 // CHECK:   <key>issue_context_kind</key><string>function</string>
 // CHECK:   <key>issue_context</key><string>rdar8331641</string>
+// CHECK:   <key>issue_hash</key><integer>6</integer>
 // CHECK:   <key>location</key>
 // CHECK:   <dict>
 // CHECK:    <key>line</key><integer>58</integer>

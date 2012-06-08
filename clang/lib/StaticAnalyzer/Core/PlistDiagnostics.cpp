@@ -489,6 +489,17 @@ void PlistDiagnostics::FlushDiagnosticsImpl(
           o << "  <key>issue_context</key>";
           EmitString(o, declName) << '\n';
         }
+
+        // Output the bug hash for issue unique-ing. Currently, it's just an
+        // offset from the beginning of the function.
+        if (const Stmt *Body = DeclWithIssue->getBody()) {
+          FullSourceLoc Loc(SM->getExpansionLoc(D->getLocation().asLocation()),
+                            *SM);
+          FullSourceLoc FunLoc(SM->getExpansionLoc(Body->getLocStart()), *SM);
+          o << "  <key>issue_hash</key><integer>"
+              << Loc.getExpansionLineNumber() - FunLoc.getExpansionLineNumber()
+              << "</integer>\n";
+        }
       }
     }
 
