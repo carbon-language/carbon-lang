@@ -1183,7 +1183,7 @@ public:
   bool isARCPseudoStrong() const { return VarDeclBits.ARCPseudoStrong; }
   void setARCPseudoStrong(bool ps) { VarDeclBits.ARCPseudoStrong = ps; }
 
-  /// Whether this variable is (C++0x) constexpr.
+  /// Whether this variable is (C++11) constexpr.
   bool isConstexpr() const { return VarDeclBits.IsConstexpr; }
   void setConstexpr(bool IC) { VarDeclBits.IsConstexpr = IC; }
 
@@ -1736,9 +1736,9 @@ public:
   bool hasInheritedPrototype() const { return HasInheritedPrototype; }
   void setHasInheritedPrototype(bool P = true) { HasInheritedPrototype = P; }
 
-  /// Whether this is a (C++0x) constexpr function or constexpr constructor.
+  /// Whether this is a (C++11) constexpr function or constexpr constructor.
   bool isConstexpr() const { return IsConstexpr; }
-  void setConstexpr(bool IC) { IsConstexpr = IC; }
+  void setConstexpr(bool IC);
 
   /// \brief Whether this function has been deleted.
   ///

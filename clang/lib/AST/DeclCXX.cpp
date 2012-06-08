@@ -470,6 +470,18 @@ void CXXRecordDecl::markedVirtualFunctionPure() {
   data().Abstract = true;
 }
 
+void CXXRecordDecl::markedConstructorConstexpr(CXXConstructorDecl *CD) {
+  if (CD->isCopyConstructor())
+    data().HasConstexprCopyConstructor = true;
+  else if (CD->isMoveConstructor())
+    data().HasConstexprMoveConstructor = true;
+  else
+    data().HasConstexprNonCopyMoveConstructor = true;
+
+  if (CD->isDefaultConstructor())
+    data().HasConstexprDefaultConstructor = true;
+}
+
 void CXXRecordDecl::addedMember(Decl *D) {
   if (!D->isImplicit() &&
       !isa<FieldDecl>(D) &&

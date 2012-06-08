@@ -1684,6 +1684,13 @@ void FunctionDecl::setPure(bool P) {
       Parent->markedVirtualFunctionPure();
 }
 
+void FunctionDecl::setConstexpr(bool IC) {
+  IsConstexpr = IC;
+  CXXConstructorDecl *CD = dyn_cast<CXXConstructorDecl>(this);
+  if (IC && CD)
+    CD->getParent()->markedConstructorConstexpr(CD);
+}
+
 bool FunctionDecl::isMain() const {
   const TranslationUnitDecl *tunit =
     dyn_cast<TranslationUnitDecl>(getDeclContext()->getRedeclContext());

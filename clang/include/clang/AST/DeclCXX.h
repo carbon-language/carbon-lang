@@ -650,6 +650,9 @@ class CXXRecordDecl : public RecordDecl {
   void markedVirtualFunctionPure();
   friend void FunctionDecl::setPure(bool);
 
+  void markedConstructorConstexpr(CXXConstructorDecl *CD);
+  friend void FunctionDecl::setConstexpr(bool);
+
   friend class ASTNodeImporter;
 
 protected:
@@ -1119,7 +1122,7 @@ public:
   bool hasConstexprDefaultConstructor() const {
     return data().HasConstexprDefaultConstructor ||
            (!data().UserDeclaredConstructor &&
-            defaultedDefaultConstructorIsConstexpr() && isLiteral());
+            defaultedDefaultConstructorIsConstexpr());
   }
 
   /// hasConstexprCopyConstructor - Whether this class has a constexpr copy
@@ -1127,7 +1130,7 @@ public:
   bool hasConstexprCopyConstructor() const {
     return data().HasConstexprCopyConstructor ||
            (!data().DeclaredCopyConstructor &&
-            data().DefaultedCopyConstructorIsConstexpr && isLiteral());
+            data().DefaultedCopyConstructorIsConstexpr);
   }
 
   /// hasConstexprMoveConstructor - Whether this class has a constexpr move
@@ -1135,7 +1138,7 @@ public:
   bool hasConstexprMoveConstructor() const {
     return data().HasConstexprMoveConstructor ||
            (needsImplicitMoveConstructor() &&
-            data().DefaultedMoveConstructorIsConstexpr && isLiteral());
+            data().DefaultedMoveConstructorIsConstexpr);
   }
 
   // hasTrivialCopyConstructor - Whether this class has a trivial copy

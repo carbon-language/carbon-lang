@@ -43,6 +43,6 @@ struct Test {
   friend C::C(C &);
   friend D::D(const D &);
   friend E::E(E &);
-  friend F::F(const F &);
+  constexpr friend F::F(const F &);
   friend G::G(G &);
 };

@@ -58,3 +58,59 @@ struct Constexpr5Base {};
 struct Constexpr5 : Constexpr5Base { constexpr Constexpr5() {} };
 constexpr Constexpr5 ce5move = Constexpr5();
 constexpr Constexpr5 ce5copy = ce5move;
+
+// An explicitly-defaulted constructor doesn't become constexpr until the end of
+// its class. Make sure we note that the class has a constexpr constructor when
+// that happens.
+namespace PR13052 {
+  template<typename T> struct S {
+    S() = default; // expected-note 2{{here}}
+    S(S&&) = default;
+    S(const S&) = default;
+    T t;
+  };
+
+  struct U {
+    U() = default;
+    U(U&&) = default;
+    U(const U&) = default;
+  };
+
+  struct V {
+    V(); // expected-note {{here}}
+    V(V&&) = default;
+    V(const V&) = default;
+  };
+
+  struct W {
+    W(); // expected-note {{here}}
+  };
+
+  static_assert(__is_literal_type(U), "");
+  static_assert(!__is_literal_type(V), "");
+  static_assert(!__is_literal_type(W), "");
+  static_assert(__is_literal_type(S<U>), "");
+  static_assert(!__is_literal_type(S<V>), "");
+  static_assert(!__is_literal_type(S<W>), "");
+
+  struct X {
+    friend constexpr U::U() noexcept;
+    friend constexpr U::U(U&&) noexcept;
+    friend constexpr U::U(const U&) noexcept;
+    friend constexpr V::V(); // expected-error {{follows non-constexpr declaration}}
+    friend constexpr V::V(V&&) noexcept;
+    friend constexpr V::V(const V&) noexcept;
+    friend constexpr W::W(); // expected-error {{follows non-constexpr declaration}}
+    friend constexpr W::W(W&&) noexcept;
+    friend constexpr W::W(const W&) noexcept;
+    friend constexpr S<U>::S() noexcept;
+    friend constexpr S<U>::S(S<U>&&) noexcept;
+    friend constexpr S<U>::S(const S<U>&) noexcept;
+    friend constexpr S<V>::S(); // expected-error {{follows non-constexpr declaration}}
+    friend constexpr S<V>::S(S<V>&&) noexcept;
+    friend constexpr S<V>::S(const S<V>&) noexcept;
+    friend constexpr S<W>::S(); // expected-error {{follows non-constexpr declaration}}
+    friend constexpr S<W>::S(S<W>&&) noexcept;
+    friend constexpr S<W>::S(const S<W>&) noexcept;
+  };
+}
