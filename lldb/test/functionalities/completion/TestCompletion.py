@@ -109,8 +109,8 @@ class CommandLineCompletionTestCase(TestBase):
         self.complete_from_to('settings set target.process', 'settings set target.process.')
 
     def test_settings_set_target_process_dot(self):
-        """Test that 'settings set target.process.' completes to 'settings set target.process.thread.'."""
-        self.complete_from_to('settings set target.process.', 'settings set target.process.thread.')
+        """Test that 'settings set target.process.t' completes to 'settings set target.process.thread.'."""
+        self.complete_from_to('settings set target.process.t', 'settings set target.process.thread.')
 
     def test_settings_set_target_process_thread_dot(self):
         """Test that 'settings set target.process.thread.' completes to ['Available completions:',
