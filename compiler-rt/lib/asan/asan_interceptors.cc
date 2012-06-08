@@ -439,6 +439,9 @@ INTERCEPTOR(void*, memcpy, void *to, const void *from, uptr size) {
 }
 
 INTERCEPTOR(void*, memmove, void *to, const void *from, uptr size) {
+  if (asan_init_is_running) {
+    return REAL(memmove)(to, from, size);
+  }
   ENSURE_ASAN_INITED();
   if (FLAG_replace_intrin) {
     ASAN_WRITE_RANGE(from, size);
