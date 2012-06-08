@@ -26,6 +26,13 @@ class RegisterCommandsTestCase(TestBase):
         self.buildDefault()
         self.convenience_registers()
 
+    def test_convenience_registers_with_process_attach(self):
+        """Test convenience registers after a 'process attach'."""
+        if not self.getArchitecture() in ['x86_64']:
+            self.skipTest("This test requires x86_64 as the architecture for the inferior")
+        self.buildDefault()
+        self.convenience_registers_with_process_attach()
+
     def register_commands(self):
         """Test commands related to registers, in particular xmm registers."""
         exe = os.path.join(os.getcwd(), "a.out")
@@ -87,6 +94,26 @@ class RegisterCommandsTestCase(TestBase):
             substrs = ['true'])
         self.expect("expr -- $ax == (($ah << 8) | $al)",
             substrs = ['true'])
+
+    def convenience_registers_with_process_attach(self):
+        """Test convenience registers after a 'process attach'."""
+        exe = self.lldbHere
+        
+        # Spawn a new process and don't display the stdout if not in TraceOn() mode.
+        import subprocess
+        popen = subprocess.Popen([exe, self.lldbOption],
+                                 stdout = open(os.devnull, 'w') if not self.TraceOn() else None)
+        if self.TraceOn():
+            print "pid of spawned process: %d" % popen.pid
+
+        self.runCmd("process attach -p %d" % popen.pid)
+
+        # Add a hook to kill the child process during teardown.
+        self.addTearDownHook(
+            lambda: popen.kill())
+
+        # Check that "register read eax" works.
+        self.runCmd("register read eax")
 
 
 if __name__ == '__main__':
