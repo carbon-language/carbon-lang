@@ -1090,6 +1090,7 @@ std::string TextDiagnostic::buildFixItInsertionLine(
   std::string FixItInsertionLine;
   if (Hints.empty() || !DiagOpts.ShowFixits)
     return FixItInsertionLine;
+  unsigned PrevHintEnd = 0;
 
   for (ArrayRef<FixItHint>::iterator I = Hints.begin(), E = Hints.end();
        I != E; ++I) {
@@ -1107,6 +1108,16 @@ std::string TextDiagnostic::buildFixItInsertionLine(
         assert(HintColNo<static_cast<unsigned>(map.bytes())+1);
         HintColNo = map.byteToColumn(HintColNo);
 
+        // If we inserted a long previous hint, push this one forwards, and add
+        // an extra space to show that this is not part of the previous
+        // completion. This is sort of the best we can do when two hints appear
+        // to overlap.
+        //
+        // Note that if this hint is located immediately after the previous
+        // hint, no space will be added, since the location is more important.
+        if (HintColNo < PrevHintEnd)
+          HintColNo = PrevHintEnd + 1;
+
         // FIXME: if the fixit includes tabs or other characters that do not
         //  take up a single column per byte when displayed then
         //  I->CodeToInsert.size() is not a column number and we're mixing
@@ -1115,19 +1126,16 @@ std::string TextDiagnostic::buildFixItInsertionLine(
         unsigned LastColumnModified
           = HintColNo + I->CodeToInsert.size();
 
-        if (LastColumnModified > static_cast<unsigned>(map.bytes())) {
-          unsigned LastExistingColumn = map.byteToColumn(map.bytes());
-          unsigned AddedColumns = LastColumnModified-LastExistingColumn;
-          LastColumnModified = LastExistingColumn + AddedColumns;
-        } else {
+        if (LastColumnModified <= static_cast<unsigned>(map.bytes()))
           LastColumnModified = map.byteToColumn(LastColumnModified);
-        }
 
         if (LastColumnModified > FixItInsertionLine.size())
           FixItInsertionLine.resize(LastColumnModified, ' ');
         assert(HintColNo+I->CodeToInsert.size() <= FixItInsertionLine.size());
         std::copy(I->CodeToInsert.begin(), I->CodeToInsert.end(),
                   FixItInsertionLine.begin() + HintColNo);
+
+        PrevHintEnd = LastColumnModified;
       } else {
         FixItInsertionLine.clear();
         break;
