@@ -170,10 +170,11 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
   // -A + B  -->  B - A
   // -A + -B  -->  -(A + B)
   if (Value *LHSV = dyn_castNegVal(LHS)) {
-    if (Value *RHSV = dyn_castNegVal(RHS)) {
-      Value *NewAdd = Builder->CreateAdd(LHSV, RHSV, "sum");
-      return BinaryOperator::CreateNeg(NewAdd);
-    }
+    if (!isa<Constant>(RHS))
+      if (Value *RHSV = dyn_castNegVal(RHS)) {
+        Value *NewAdd = Builder->CreateAdd(LHSV, RHSV, "sum");
+        return BinaryOperator::CreateNeg(NewAdd);
+      }
     
     return BinaryOperator::CreateSub(RHS, LHSV);
   }
