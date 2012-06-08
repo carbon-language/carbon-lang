@@ -12,6 +12,9 @@
 // CHECK: @"\01?j@@3P6GHCE@ZA"
 // CHECK: @"\01?k@@3PTfoo@@DA"
 // CHECK: @"\01?l@@3P8foo@@AEHH@ZA"
+// CHECK: @"\01?color1@@3PANA"
+// CHECK: @"\01?color2@@3PBNA"
+// CHECK: @"\01?color3@@3PBY02NA"
 
 int a;
 
@@ -40,6 +43,8 @@ public:
   foo(char *q){}
 //CHECK: @"\01??0foo@@QAE@PAD@Z"
 }f,s1(1),s2((char*)0);
+
+typedef foo (foo2);
 
 struct bar {
   static int g;
@@ -72,9 +77,9 @@ int i[10][20];
 
 int (__stdcall *j)(signed char, unsigned char);
 
-const volatile char foo::*k;
+const volatile char foo2::*k;
 
-int (foo::*l)(int);
+int (foo2::*l)(int);
 
 // Static functions are mangled, too.
 // Also make sure calling conventions, arglists, and throw specs work.
@@ -121,3 +126,9 @@ void operator_new_delete() {
 void (redundant_parens)();
 void redundant_parens_use() { redundant_parens(); }
 // CHECK: @"\01?redundant_parens@@YAXXZ"
+
+// PR13047
+typedef double RGB[3];
+RGB color1;
+extern const RGB color2 = {};
+extern RGB const ((color3)[5]) = {};

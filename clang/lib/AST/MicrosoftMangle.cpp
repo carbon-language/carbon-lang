@@ -246,9 +246,9 @@ void MicrosoftCXXNameMangler::mangleVariableEncoding(const VarDecl *VD) {
   if (Ty->isPointerType() || Ty->isReferenceType()) {
     mangleType(Ty);
     Out << 'A';
-  } else if (Ty->isArrayType()) {
+  } else if (const ArrayType *AT = getASTContext().getAsArrayType(Ty)) {
     // Global arrays are funny, too.
-    mangleType(cast<ArrayType>(Ty.getTypePtr()), true);
+    mangleType(AT, true);
     Out << 'A';
   } else {
     mangleType(Ty.getLocalUnqualifiedType());
@@ -1082,9 +1082,8 @@ void MicrosoftCXXNameMangler::mangleType(const IncompleteArrayType *T) {
 void MicrosoftCXXNameMangler::mangleExtraDimensions(QualType ElementTy) {
   SmallVector<llvm::APInt, 3> Dimensions;
   for (;;) {
-    if (ElementTy->isConstantArrayType()) {
-      const ConstantArrayType *CAT =
-      static_cast<const ConstantArrayType *>(ElementTy.getTypePtr());
+    if (const ConstantArrayType *CAT =
+          getASTContext().getAsConstantArrayType(ElementTy)) {
       Dimensions.push_back(CAT->getSize());
       ElementTy = CAT->getElementType();
     } else if (ElementTy->isVariableArrayType()) {
@@ -1113,13 +1112,13 @@ void MicrosoftCXXNameMangler::mangleExtraDimensions(QualType ElementTy) {
 //                                                          <class name> <type>
 void MicrosoftCXXNameMangler::mangleType(const MemberPointerType *T) {
   QualType PointeeType = T->getPointeeType();
-  if (const FunctionProtoType *FPT = dyn_cast<FunctionProtoType>(PointeeType)) {
+  if (const FunctionProtoType *FPT = PointeeType->getAs<FunctionProtoType>()) {
     Out << '8';
-    mangleName(cast<RecordType>(T->getClass())->getDecl());
+    mangleName(T->getClass()->castAs<RecordType>()->getDecl());
     mangleType(FPT, NULL, false, true);
   } else {
     mangleQualifiers(PointeeType.getQualifiers(), true);
-    mangleName(cast<RecordType>(T->getClass())->getDecl());
+    mangleName(T->getClass()->castAs<RecordType>()->getDecl());
     mangleType(PointeeType.getLocalUnqualifiedType());
   }
 }
@@ -1140,12 +1139,11 @@ void MicrosoftCXXNameMangler::mangleType(const PointerType *T) {
   QualType PointeeTy = T->getPointeeType();
   if (PointeeTy->isArrayType()) {
     // Pointers to arrays are mangled like arrays.
-    mangleExtraDimensions(T->getPointeeType());
-  } else if (PointeeTy->isFunctionType()) {
+    mangleExtraDimensions(PointeeTy);
+  } else if (const FunctionType *FT = PointeeTy->getAs<FunctionType>()) {
     // Function pointers are special.
     Out << '6';
-    mangleType(static_cast<const FunctionType *>(PointeeTy.getTypePtr()),
-               NULL, false, false);
+    mangleType(FT, NULL, false, false);
   } else {
     if (!PointeeTy.hasQualifiers())
       // Lack of qualifiers is mangled as 'A'.
