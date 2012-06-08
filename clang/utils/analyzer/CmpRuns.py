@@ -134,6 +134,14 @@ def loadResults(path, opts, deleteEmpty=True):
 
     return run
 
+def getIssueIdentifier(d) :
+    id = ''
+    if 'issue_context' in d.data :
+      id += d.data['issue_context']
+    if 'issue_hash' in d.data :
+      id += str(d.data['issue_hash'])
+    return id
+
 def compareResults(A, B):
     """
     compareResults - Generate a relation from diagnostics in run A to
@@ -152,12 +160,12 @@ def compareResults(A, B):
     neqB = []
     eltsA = list(A.diagnostics)
     eltsB = list(B.diagnostics)
-    eltsA.sort(key = lambda d: d.data)
-    eltsB.sort(key = lambda d: d.data)
+    eltsA.sort(key = getIssueIdentifier)
+    eltsB.sort(key = getIssueIdentifier)
     while eltsA and eltsB:
         a = eltsA.pop()
         b = eltsB.pop()
-        if a.data['location'] == b.data['location']:
+        if (getIssueIdentifier(a) == getIssueIdentifier(b)) :
             res.append((a, b, 0))
         elif a.data > b.data:
             neqA.append(a)
