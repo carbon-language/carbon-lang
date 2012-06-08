@@ -51,3 +51,9 @@ template<typename T> struct S : T {
 struct lit { constexpr lit() {} };
 S<lit> s_lit; // ok
 S<bar> s_bar; // ok
+
+struct Friends {
+  friend S<bar>::S();
+  friend S<bar>::S(const S&);
+  friend S<bar>::S(S&&);
+};
