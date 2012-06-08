@@ -3533,7 +3533,16 @@ static void LookupPotentialTypoResult(Sema &SemaRef,
 /// \brief Add keywords to the consumer as possible typo corrections.
 static void AddKeywordsToConsumer(Sema &SemaRef,
                                   TypoCorrectionConsumer &Consumer,
-                                  Scope *S, CorrectionCandidateCallback &CCC) {
+                                  Scope *S, CorrectionCandidateCallback &CCC,
+                                  bool AfterNestedNameSpecifier) {
+  if (AfterNestedNameSpecifier) {
+    // For 'X::', we know exactly which keywords can appear next.
+    Consumer.addKeywordResult("template");
+    if (CCC.WantExpressionKeywords)
+      Consumer.addKeywordResult("operator");
+    return;
+  }
+
   if (CCC.WantObjCSuper)
     Consumer.addKeywordResult("super");
 
@@ -3823,7 +3832,7 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
     }
   }
 
-  AddKeywordsToConsumer(*this, Consumer, S, CCC);
+  AddKeywordsToConsumer(*this, Consumer, S, CCC, SS && SS->isNotEmpty());
 
   // If we haven't found anything, we're done.
   if (Consumer.empty()) {

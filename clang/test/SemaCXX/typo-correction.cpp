@@ -206,3 +206,16 @@ namespace foobar { struct Thing {}; }
 namespace bazquux { struct Thing {}; }
 void f() { Thing t; } // expected-error{{unknown type name 'Thing'}}
 }
+
+namespace PR13051 {
+  template<typename T> struct S {
+    template<typename U> void f();
+    operator bool() const;
+  };
+
+  void f() {
+    f(&S<int>::tempalte f<int>); // expected-error{{did you mean 'template'?}}
+    f(&S<int>::opeartor bool); // expected-error{{did you mean 'operator'?}}
+    f(&S<int>::foo); // expected-error-re{{no member named 'foo' in 'PR13051::S<int>'$}}
+  }
+}
