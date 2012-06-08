@@ -682,6 +682,8 @@ ObjectFileELF::GetSectionList()
                 section_sp->SetIsThreadSpecific (is_thread_specific);
             m_sections_ap->AddSection(section_sp);
         }
+        
+        m_sections_ap->Finalize(); // Now that we're done adding sections, finalize to build fast-lookup caches
     }
 
     return m_sections_ap.get();

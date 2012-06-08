@@ -15,6 +15,7 @@
 #include "lldb/Core/Flags.h"
 #include "lldb/Core/ModuleChild.h"
 #include "lldb/Core/ConstString.h"
+#include "lldb/Core/RangeMap.h"
 #include "lldb/Core/UserID.h"
 #include "lldb/Core/VMRange.h"
 #include <limits.h>
@@ -85,9 +86,23 @@ public:
 
     size_t
     Slide (lldb::addr_t slide_amount, bool slide_children);
+    
+    // Update all section lookup caches
+    void
+    Finalize ();
 
 protected:
     collection  m_sections;
+
+    typedef RangeDataArray<uint64_t, uint64_t, collection::size_type, 1> SectionRangeCache;
+    mutable SectionRangeCache   m_range_cache;
+#ifdef LLDB_CONFIGURATION_DEBUG
+    mutable bool                m_finalized;
+#endif
+    
+    void BuildRangeCache() const;
+    
+    void InvalidateRangeCache() const;
 };
 
 
@@ -272,6 +287,13 @@ public:
     SetIsThreadSpecific (bool b)
     {
         m_thread_specific = b;
+    }
+    
+    // Update all section lookup caches
+    void
+    Finalize ()
+    {
+        m_children.Finalize();
     }
 
 protected:

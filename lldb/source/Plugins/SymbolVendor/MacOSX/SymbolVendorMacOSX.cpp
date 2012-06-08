@@ -78,6 +78,8 @@ ReplaceDSYMSectionsWithExecutableSections (ObjectFile *exec_objfile, ObjectFile 
                     dsym_section_list->AddSection(exec_sect_sp);
             }
         }
+        
+        dsym_section_list->Finalize(); // Now that we're done adding sections, finalize to build fast-lookup caches
     }
 }
 

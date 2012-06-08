@@ -379,6 +379,9 @@ Section::SetLinkedLocation (const lldb::SectionSP &linked_section_sp, uint64_t l
 
 SectionList::SectionList () :
     m_sections()
+#ifdef LLDB_CONFIGURATION_DEBUG
+    , m_finalized(false)
+#endif
 {
 }
 
@@ -393,6 +396,7 @@ SectionList::AddSection (const lldb::SectionSP& section_sp)
     assert (section_sp.get());
     uint32_t section_index = m_sections.size();
     m_sections.push_back(section_sp);
+    InvalidateRangeCache();
     return section_index;
 }
 
@@ -432,6 +436,7 @@ SectionList::ReplaceSection (user_id_t sect_id, const lldb::SectionSP& sect_sp, 
         if ((*sect_iter)->GetID() == sect_id)
         {
             *sect_iter = sect_sp;
+            InvalidateRangeCache();
             return true;
         }
         else if (depth > 0)
@@ -565,26 +570,69 @@ SectionList::FindSectionContainingFileAddress (addr_t vm_addr, uint32_t depth) c
     return sect_sp;
 }
 
+void
+SectionList::BuildRangeCache() const
+{
+    m_range_cache.Clear();
+    
+    for (collection::size_type idx = 0, last_idx = m_sections.size();
+         idx < last_idx;
+         ++idx)
+    {
+        Section *sect = m_sections[idx].get();
+        
+        addr_t linked_file_address = sect->GetLinkedFileAddress();
+        
+        if (linked_file_address != LLDB_INVALID_ADDRESS)
+            m_range_cache.Append(SectionRangeCache::Entry(linked_file_address, sect->GetByteSize(), idx));
+    }
+    
+    m_range_cache.Sort();
+    
+#ifdef LLDB_CONFIGURATION_DEBUG
+    m_finalized = true;
+#endif
+}
+
+void
+SectionList::InvalidateRangeCache() const
+{
+#ifdef LLDB_CONFIGURATION_DEBUG
+    assert(!m_finalized);
+#endif
+    m_range_cache.Clear();
+}
 
 SectionSP
 SectionList::FindSectionContainingLinkedFileAddress (addr_t vm_addr, uint32_t depth) const
 {
-    SectionSP sect_sp;
-    const_iterator sect_iter;
-    const_iterator end = m_sections.end();
-    for (sect_iter = m_sections.begin(); sect_iter != end && sect_sp.get() == NULL; ++sect_iter)
+    //if (m_range_cache.IsEmpty())
+    //    BuildRangeCache();
+#ifdef LLDB_CONFIGURATION_DEBUG
+    assert(m_finalized);
+#endif
+    
+    SectionRangeCache::Entry *entry = m_range_cache.FindEntryThatContains(vm_addr);
+    
+    if (entry)
+        return m_sections[entry->data];
+        
+    if (depth == 0)
+        return SectionSP();
+    
+    for (const_iterator si = m_sections.begin(), se = m_sections.end();
+         si != se;
+         ++si)
     {
-        Section *sect = sect_iter->get();
-        if (sect->ContainsLinkedFileAddress (vm_addr))
-        {
-            sect_sp = *sect_iter;
-        }
-        else if (depth > 0)
-        {
-            sect_sp = sect->GetChildren().FindSectionContainingLinkedFileAddress (vm_addr, depth - 1);
-        }
+        Section *sect = si->get();
+        
+        SectionSP sect_sp = sect->GetChildren().FindSectionContainingLinkedFileAddress(vm_addr, depth - 1);
+            
+        if (sect_sp)
+            return sect_sp;
     }
-    return sect_sp;
+    
+    return SectionSP();
 }
 
 bool
@@ -628,6 +676,22 @@ SectionList::Slide (addr_t slide_amount, bool slide_children)
         if ((*pos)->Slide(slide_amount, slide_children))
             ++count;
     }
+    InvalidateRangeCache();
     return count;
+}
+
+void
+SectionList::Finalize ()
+{
+    BuildRangeCache();
+    
+    for (const_iterator si = m_sections.begin(), se = m_sections.end();
+         si != se;
+         ++si)
+    {
+        Section *sect = si->get();
+        
+        sect->GetChildren().Finalize();
+    }
 }
 

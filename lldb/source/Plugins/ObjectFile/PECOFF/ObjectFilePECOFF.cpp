@@ -648,6 +648,8 @@ ObjectFilePECOFF::GetSectionList()
 
                 m_sections_ap->AddSection(section_sp);
             }
+            
+            m_sections_ap->Finalize(); // Now that we're done adding sections, finalize to build fast-lookup caches
         }
     }
     return m_sections_ap.get();

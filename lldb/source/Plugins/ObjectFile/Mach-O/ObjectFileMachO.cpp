@@ -889,7 +889,7 @@ ObjectFileMachO::ParseSections ()
                                     // adjust the child section offsets for all existing children.
                                     const lldb::addr_t slide_amount = sect64_min_addr - curr_seg_min_addr;
                                     segment->Slide(slide_amount, false);
-                                    segment->GetChildren().Slide (-slide_amount, false);
+                                    segment->GetChildren().Slide(-slide_amount, false);
                                     segment->SetByteSize (curr_seg_max_addr - sect64_min_addr);
                                 }
 

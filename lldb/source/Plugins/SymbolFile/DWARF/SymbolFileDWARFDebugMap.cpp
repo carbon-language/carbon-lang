@@ -426,6 +426,8 @@ SymbolFileDWARFDebugMap::GetSymbolFileByCompUnitInfo (CompileUnitInfo *comp_unit
                         }
                     }
                 }
+                oso_objfile->GetSectionList()->Finalize(); // Now that we're done adding sections, finalize to build fast-lookup caches
+                comp_unit_info->debug_map_sections_sp->Finalize();
 #if defined(DEBUG_OSO_DMAP)
                 s << "OSO sections after:\n";
                 oso_objfile->GetSectionList()->Dump(&s, NULL, true);
