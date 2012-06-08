@@ -677,7 +677,7 @@ CursorKind.BINARY_OPERATOR = CursorKind(114)
 CursorKind.COMPOUND_ASSIGNMENT_OPERATOR = CursorKind(115)
 
 # The ?: ternary operator.
-CursorKind.CONDITONAL_OPERATOR = CursorKind(116)
+CursorKind.CONDITIONAL_OPERATOR = CursorKind(116)
 
 # An explicit cast in C (C99 6.5.4) or a C-style cast in C++
 # (C++ [expr.cast]), which uses the syntax (Type)expr.
