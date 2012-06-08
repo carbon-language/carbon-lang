@@ -41,8 +41,8 @@ extern cl::opt<bool> DisablePPC64RS;
 using namespace llvm;
 
 static cl::
-opt<bool> EnableCTRLoopAnal("enable-ppc-ctrloop-analysis", cl::Hidden,
-            cl::desc("Enable analysis for CTR loops (experimental)"));
+opt<bool> DisableCTRLoopAnal("disable-ppc-ctrloop-analysis", cl::Hidden,
+            cl::desc("Disable analysis for CTR loops"));
 
 PPCInstrInfo::PPCInstrInfo(PPCTargetMachine &tm)
   : PPCGenInstrInfo(PPC::ADJCALLSTACKDOWN, PPC::ADJCALLSTACKUP),
@@ -233,7 +233,7 @@ bool PPCInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,MachineBasicBlock *&TBB,
                LastInst->getOpcode() == PPC::BDNZ) {
       if (!LastInst->getOperand(0).isMBB())
         return true;
-      if (!EnableCTRLoopAnal)
+      if (DisableCTRLoopAnal)
         return true;
       TBB = LastInst->getOperand(0).getMBB();
       Cond.push_back(MachineOperand::CreateImm(1));
@@ -244,7 +244,7 @@ bool PPCInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,MachineBasicBlock *&TBB,
                LastInst->getOpcode() == PPC::BDZ) {
       if (!LastInst->getOperand(0).isMBB())
         return true;
-      if (!EnableCTRLoopAnal)
+      if (DisableCTRLoopAnal)
         return true;
       TBB = LastInst->getOperand(0).getMBB();
       Cond.push_back(MachineOperand::CreateImm(0));
@@ -282,7 +282,7 @@ bool PPCInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,MachineBasicBlock *&TBB,
     if (!SecondLastInst->getOperand(0).isMBB() ||
         !LastInst->getOperand(0).isMBB())
       return true;
-    if (!EnableCTRLoopAnal)
+    if (DisableCTRLoopAnal)
       return true;
     TBB = SecondLastInst->getOperand(0).getMBB();
     Cond.push_back(MachineOperand::CreateImm(1));
@@ -296,7 +296,7 @@ bool PPCInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,MachineBasicBlock *&TBB,
     if (!SecondLastInst->getOperand(0).isMBB() ||
         !LastInst->getOperand(0).isMBB())
       return true;
-    if (!EnableCTRLoopAnal)
+    if (DisableCTRLoopAnal)
       return true;
     TBB = SecondLastInst->getOperand(0).getMBB();
     Cond.push_back(MachineOperand::CreateImm(0));
