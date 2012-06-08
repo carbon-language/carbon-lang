@@ -15,6 +15,7 @@
 #ifndef LLVM_CLANG_SOURCEMANAGER_INTERNALS_H
 #define LLVM_CLANG_SOURCEMANAGER_INTERNALS_H
 
+#include "clang/Basic/SourceLocation.h"
 #include "clang/Basic/SourceManager.h"
 #include "llvm/ADT/StringMap.h"
 #include <map>
@@ -84,7 +85,7 @@ class LineTableInfo {
 
   /// LineEntries - This is a map from FileIDs to a list of line entries (sorted
   /// by the offset they occur in the file.
-  std::map<int, std::vector<LineEntry> > LineEntries;
+  std::map<FileID, std::vector<LineEntry> > LineEntries;
 public:
   LineTableInfo() {
   }
@@ -104,25 +105,25 @@ public:
   }
   unsigned getNumFilenames() const { return FilenamesByID.size(); }
 
-  void AddLineNote(int FID, unsigned Offset,
+  void AddLineNote(FileID FID, unsigned Offset,
                    unsigned LineNo, int FilenameID);
-  void AddLineNote(int FID, unsigned Offset,
+  void AddLineNote(FileID FID, unsigned Offset,
                    unsigned LineNo, int FilenameID,
                    unsigned EntryExit, SrcMgr::CharacteristicKind FileKind);
 
 
   /// FindNearestLineEntry - Find the line entry nearest to FID that is before
   /// it.  If there is no line entry before Offset in FID, return null.
-  const LineEntry *FindNearestLineEntry(int FID, unsigned Offset);
+  const LineEntry *FindNearestLineEntry(FileID FID, unsigned Offset);
 
   // Low-level access
-  typedef std::map<int, std::vector<LineEntry> >::iterator iterator;
+  typedef std::map<FileID, std::vector<LineEntry> >::iterator iterator;
   iterator begin() { return LineEntries.begin(); }
   iterator end() { return LineEntries.end(); }
 
   /// \brief Add a new line entry that has already been encoded into
   /// the internal representation of the line table.
-  void AddEntry(int FID, const std::vector<LineEntry> &Entries);
+  void AddEntry(FileID FID, const std::vector<LineEntry> &Entries);
 };
 
 } // end namespace clang

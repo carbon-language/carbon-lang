@@ -1604,11 +1604,11 @@ void ASTWriter::WriteSourceManagerBlock(SourceManager &SourceMgr,
     for (LineTableInfo::iterator L = LineTable.begin(), LEnd = LineTable.end();
          L != LEnd; ++L) {
       // Only emit entries for local files.
-      if (L->first < 0)
+      if (L->first.ID < 0)
         continue;
 
       // Emit the file ID
-      Record.push_back(L->first);
+      Record.push_back(L->first.ID);
 
       // Emit the line entries
       Record.push_back(L->second.size());

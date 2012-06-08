@@ -829,7 +829,7 @@ bool ASTReader::ParseLineTable(ModuleFile &F,
       Entries.push_back(LineEntry::get(FileOffset, LineNo, FilenameID,
                                        FileKind, IncludeOffset));
     }
-    LineTable.AddEntry(FID, Entries);
+    LineTable.AddEntry(FileID::get(FID), Entries);
   }
 
   return false;

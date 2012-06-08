@@ -191,7 +191,7 @@ unsigned LineTableInfo::getLineTableFilenameID(StringRef Name) {
 /// AddLineNote - Add a line note to the line table that indicates that there
 /// is a #line at the specified FID/Offset location which changes the presumed
 /// location to LineNo/FilenameID.
-void LineTableInfo::AddLineNote(int FID, unsigned Offset,
+void LineTableInfo::AddLineNote(FileID FID, unsigned Offset,
                                 unsigned LineNo, int FilenameID) {
   std::vector<LineEntry> &Entries = LineEntries[FID];
 
@@ -222,7 +222,7 @@ void LineTableInfo::AddLineNote(int FID, unsigned Offset,
 /// presumed #include stack.  If it is 1, this is a file entry, if it is 2 then
 /// this is a file exit.  FileKind specifies whether this is a system header or
 /// extern C system header.
-void LineTableInfo::AddLineNote(int FID, unsigned Offset,
+void LineTableInfo::AddLineNote(FileID FID, unsigned Offset,
                                 unsigned LineNo, int FilenameID,
                                 unsigned EntryExit,
                                 SrcMgr::CharacteristicKind FileKind) {
@@ -256,7 +256,7 @@ void LineTableInfo::AddLineNote(int FID, unsigned Offset,
 
 /// FindNearestLineEntry - Find the line entry nearest to FID that is before
 /// it.  If there is no line entry before Offset in FID, return null.
-const LineEntry *LineTableInfo::FindNearestLineEntry(int FID,
+const LineEntry *LineTableInfo::FindNearestLineEntry(FileID FID,
                                                      unsigned Offset) {
   const std::vector<LineEntry> &Entries = LineEntries[FID];
   assert(!Entries.empty() && "No #line entries for this FID after all!");
@@ -275,7 +275,7 @@ const LineEntry *LineTableInfo::FindNearestLineEntry(int FID,
 
 /// \brief Add a new line entry that has already been encoded into
 /// the internal representation of the line table.
-void LineTableInfo::AddEntry(int FID,
+void LineTableInfo::AddEntry(FileID FID,
                              const std::vector<LineEntry> &Entries) {
   LineEntries[FID] = Entries;
 }
@@ -308,7 +308,7 @@ void SourceManager::AddLineNote(SourceLocation Loc, unsigned LineNo,
 
   if (LineTable == 0)
     LineTable = new LineTableInfo();
-  LineTable->AddLineNote(LocInfo.first.ID, LocInfo.second, LineNo, FilenameID);
+  LineTable->AddLineNote(LocInfo.first, LocInfo.second, LineNo, FilenameID);
 }
 
 /// AddLineNote - Add a GNU line marker to the line table.
@@ -353,7 +353,7 @@ void SourceManager::AddLineNote(SourceLocation Loc, unsigned LineNo,
   else if (IsFileExit)
     EntryExit = 2;
 
-  LineTable->AddLineNote(LocInfo.first.ID, LocInfo.second, LineNo, FilenameID,
+  LineTable->AddLineNote(LocInfo.first, LocInfo.second, LineNo, FilenameID,
                          EntryExit, FileKind);
 }
 
@@ -1315,7 +1315,7 @@ SourceManager::getFileCharacteristic(SourceLocation Loc) const {
   assert(LineTable && "Can't have linetable entries without a LineTable!");
   // See if there is a #line directive before the location.
   const LineEntry *Entry =
-    LineTable->FindNearestLineEntry(LocInfo.first.ID, LocInfo.second);
+    LineTable->FindNearestLineEntry(LocInfo.first, LocInfo.second);
 
   // If this is before the first line marker, use the file characteristic.
   if (!Entry)
@@ -1380,7 +1380,7 @@ PresumedLoc SourceManager::getPresumedLoc(SourceLocation Loc) const {
     assert(LineTable && "Can't have linetable entries without a LineTable!");
     // See if there is a #line directive before this.  If so, get it.
     if (const LineEntry *Entry =
-          LineTable->FindNearestLineEntry(LocInfo.first.ID, LocInfo.second)) {
+          LineTable->FindNearestLineEntry(LocInfo.first, LocInfo.second)) {
       // If the LineEntry indicates a filename, use it.
       if (Entry->FilenameID != -1)
         Filename = LineTable->getFilename(Entry->FilenameID);
