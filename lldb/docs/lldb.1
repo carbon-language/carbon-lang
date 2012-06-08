@@ -1,0 +1,87 @@
+.Dd 7 June, 2012     \" DATE
+.Dt LLDB 1           \" Program name and manual section number
+.Os Darwin           \" Operating System
+.Sh NAME             \" Section Header - required - don't modify 
+.Nm lldb
+.Nd The debugger
+.Sh SYNOPSIS         \" Section Header - required - don't modify
+.Nm lldb
+.Op Fl hvdexw
+.Op Fl a Ar arch
+.Op Fl l Ar script-language
+.Op Fl s Ar lldb-commands
+.Op Fl n Ar process-name
+.Op Fl p Ar pid
+.Ar [[--] <PROGRAM-ARG1> <PROGRAM-ARG2> ...]
+.Sh DESCRIPTION      \" Section Header - required - don't modify
+.Nm
+is the command line interface for the LLDB debugger library. 
+.Nm
+can debug C, C++, Objective-C, and Objective-C++ programs.
+.Pp
+The following options are available:
+.Bl -tag -width indent
+.It Fl h, -help 
+Prints out the usage information for the 
+.Nm
+debugger.
+.It Fl v, -version 
+Prints out the version number of the 
+.Nm 
+debugger.
+.It Fl a, -arch Ar arch
+Specifies which architecture 
+.Nm
+will use when launching the specified program (assuming the provided
+executable is built for multiple architectures.)
+.It Fl f, -file Ar filename
+Specifies the executable file that
+.nm
+will be launching / attaching to.
+.It Fl n, -attach-name Ar process-name
+Specifies the name of a currently-running process to attach to.
+(or the name of a process to wait for if \fB\-w\fR is used.)
+.It Fl w, -wait-for
+When used in concert with \&\fB\-n process-name\-E\fR, indicates that
+.Nm
+should wait for a new process of that name to be started -- and attach
+to it as early in the process-launch as possible.
+.It Fl p, -attach-pid Ar pid
+Specifies a currently running process that
+.Nm
+should attach to.
+.It Fl l, -script-language Ar language
+Tells the debugger to use the specified scripting language for
+user-defined scripts, rather than the default.  Valid scripting
+languages that can be specified include Python, Perl, Ruby and Tcl.
+Currently only the Python extensions have been implemented.
+.It Fl d, -debug
+Tells the debugger to print out extra information for debugging itself.
+.It Fl s, -source Ar filename
+Tells 
+.Nm
+to read in and execute the file "\fBfilename\fR", which
+should contain 
+.Nm
+commands.
+.It Fl e, -editor
+Instructs
+.Nm
+to open source files using the host's "external editor" mechanism.
+.It Fl x, -no-lldbinit
+Do not automatically parse any '.lldbinit' files.
+.Pp
+(If you don't provide -f then the first argument will be the file to be debugged
+so 'lldb -- <filename> [<ARG1> [<ARG2>]]' also works.
+Remember to end the options with "--" if any of your arguments have a "-" in them.)
+.El
+.Sh SEE ALSO
+The LLDB project page http://lldb.llvm.org/ has many different resources for
+.Nm
+users -- the gdb/lldb command equivalence page http://lldb.llvm.org/lldb-gdb.html can
+be especially helpful for users coming from gdb.
+.Sh BUGS
+To report bugs, please visit http://llvm.org/bugs/
+.Sh AUTHOR
+Maintained by the LLDB Team, http://lldb.llvm.org/
+
