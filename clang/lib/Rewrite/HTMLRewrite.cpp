@@ -495,6 +495,11 @@ void html::HighlightMacros(Rewriter &R, FileID FID, const Preprocessor& PP) {
   // Inform the preprocessor that we don't want comments.
   TmpPP.SetCommentRetentionState(false, false);
 
+  // We don't want pragmas either. Although we filtered out #pragma, removing
+  // _Pragma and __pragma is much harder.
+  bool PragmasPreviouslyEnabled = TmpPP.getPragmasEnabled();
+  TmpPP.setPragmasEnabled(false);
+
   // Enter the tokens we just lexed.  This will cause them to be macro expanded
   // but won't enter sub-files (because we removed #'s).
   TmpPP.EnterTokenStream(&TokenStream[0], TokenStream.size(), false, false);
@@ -571,6 +576,7 @@ void html::HighlightMacros(Rewriter &R, FileID FID, const Preprocessor& PP) {
                    "<span class='macro'>", Expansion.c_str());
   }
 
-  // Restore diagnostics object back to its own thing.
+  // Restore the preprocessor's old state.
   TmpPP.setDiagnostics(*OldDiags);
+  TmpPP.setPragmasEnabled(PragmasPreviouslyEnabled);
 }

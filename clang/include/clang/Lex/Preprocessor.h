@@ -131,6 +131,9 @@ class Preprocessor : public RefCountedBase<Preprocessor> {
   /// \brief Whether we have already loaded macros from the external source.
   mutable bool ReadMacrosFromExternalSource : 1;
 
+  /// \brief True if pragmas are enabled.
+  bool PragmasEnabled : 1;
+
   /// \brief True if we are pre-expanding macro arguments.
   bool InMacroArgPreExpansion;
 
@@ -415,6 +418,9 @@ public:
   }
 
   bool getCommentRetentionState() const { return KeepComments; }
+
+  void setPragmasEnabled(bool Enabled) { PragmasEnabled = Enabled; }
+  bool getPragmasEnabled() const { return PragmasEnabled; }
 
   void SetSuppressIncludeNotFoundError(bool Suppress) {
     SuppressIncludeNotFoundError = Suppress;

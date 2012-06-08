@@ -16,3 +16,11 @@ int main(int argc, char **argv) {
   FOR_ALL_FILES(f) { }
 #endif
 
+// <rdar://problem/11625964>
+// -emit-html filters out # directives, but not _Pragma (or MS __pragma)
+// Diagnostic push/pop is stateful, so re-lexing a file can cause problems
+// if these pragmas are interpreted normally.
+_Pragma("clang diagnostic push")
+_Pragma("clang diagnostic ignored \"-Wformat-extra-args\"")
+_Pragma("clang diagnostic pop")
+

@@ -103,6 +103,9 @@ void PragmaNamespace::HandlePragma(Preprocessor &PP,
 /// HandlePragmaDirective - The "#pragma" directive has been parsed.  Lex the
 /// rest of the pragma, passing it to the registered pragma handlers.
 void Preprocessor::HandlePragmaDirective(unsigned Introducer) {
+  if (!PragmasEnabled)
+    return;
+
   ++NumPragma;
 
   // Invoke the first level of pragma handlers which reads the namespace id.

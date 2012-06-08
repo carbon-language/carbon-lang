@@ -90,7 +90,8 @@ Preprocessor::Preprocessor(DiagnosticsEngine &diags, LangOptions &opts,
   InMacroArgs = false;
   InMacroArgPreExpansion = false;
   NumCachedTokenLexers = 0;
-  
+  PragmasEnabled = true;
+
   CachedLexPos = 0;
   
   // We haven't read anything from the external source.
