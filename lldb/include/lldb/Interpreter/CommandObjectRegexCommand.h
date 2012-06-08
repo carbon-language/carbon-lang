@@ -25,7 +25,7 @@ namespace lldb_private {
 // CommandObjectRegexCommand
 //-------------------------------------------------------------------------
 
-class CommandObjectRegexCommand : public CommandObject
+class CommandObjectRegexCommand : public CommandObjectRaw
 {
 public:
 
@@ -38,18 +38,6 @@ public:
     virtual
     ~CommandObjectRegexCommand ();
 
-    virtual bool
-    Execute (Args& command,
-             CommandReturnObject &result);
-
-    virtual bool
-    WantsRawCommandString() { return true; }
-
-    virtual bool
-    ExecuteRawCommandString (const char *command,
-                             CommandReturnObject &result);
-
-
     bool
     AddRegexCommand (const char *re_cstr, const char *command_cstr);
 
@@ -60,6 +48,9 @@ public:
     }
 
 protected:
+    virtual bool
+    DoExecute (const char *command, CommandReturnObject &result);
+
     struct Entry
     {
         RegularExpression regex;

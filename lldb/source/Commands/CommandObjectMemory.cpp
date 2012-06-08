@@ -283,16 +283,16 @@ public:
 //----------------------------------------------------------------------
 // Read memory from the inferior process
 //----------------------------------------------------------------------
-class CommandObjectMemoryRead : public CommandObject
+class CommandObjectMemoryRead : public CommandObjectParsed
 {
 public:
 
     CommandObjectMemoryRead (CommandInterpreter &interpreter) :
-        CommandObject (interpreter,
-                       "memory read",
-                       "Read from the memory of the process being debugged.",
-                       NULL,
-                       eFlagProcessMustBePaused),
+        CommandObjectParsed (interpreter,
+                             "memory read",
+                             "Read from the memory of the process being debugged.",
+                             NULL,
+                             eFlagProcessMustBePaused),
         m_option_group (interpreter),
         m_format_options (eFormatBytesWithASCII, 1, 8),
         m_memory_options (),
@@ -361,8 +361,9 @@ public:
         return m_cmd_name.c_str();
     }
 
+protected:
     virtual bool
-    Execute (Args& command,
+    DoExecute (Args& command,
              CommandReturnObject &result)
     {
         ExecutionContext exe_ctx (m_interpreter.GetExecutionContext());
@@ -763,7 +764,6 @@ public:
         return true;
     }
 
-protected:
     OptionGroupOptions m_option_group;
     OptionGroupFormat m_format_options;
     OptionGroupReadMemory m_memory_options;
@@ -789,7 +789,7 @@ g_memory_write_option_table[] =
 //----------------------------------------------------------------------
 // Write memory to the inferior process
 //----------------------------------------------------------------------
-class CommandObjectMemoryWrite : public CommandObject
+class CommandObjectMemoryWrite : public CommandObjectParsed
 {
 public:
 
@@ -867,12 +867,11 @@ public:
     };
 
     CommandObjectMemoryWrite (CommandInterpreter &interpreter) :
-        CommandObject (interpreter,
-                       "memory write",
-                       "Write to the memory of the process being debugged.",
-                       //"memory write [<cmd-options>] <addr> [value1 value2 ...]",
-                       NULL,
-                       eFlagProcessMustBeLaunched),
+        CommandObjectParsed (interpreter,
+                             "memory write",
+                             "Write to the memory of the process being debugged.",
+                             NULL,
+                             eFlagProcessMustBeLaunched),
         m_option_group (interpreter),
         m_format_options (eFormatBytes, 1, UINT64_MAX),
         m_memory_options ()
@@ -945,9 +944,9 @@ public:
         return min <= sval64 && sval64 <= max;
     }
 
+protected:
     virtual bool
-    Execute (Args& command,
-             CommandReturnObject &result)
+    DoExecute (Args& command, CommandReturnObject &result)
     {
         Process *process = m_interpreter.GetExecutionContext().GetProcessPtr();
         if (process == NULL)
@@ -1221,8 +1220,6 @@ public:
         return true;
     }
 
-protected:
-    
     OptionGroupOptions m_option_group;
     OptionGroupFormat m_format_options;
     OptionGroupWriteMemory m_memory_options;

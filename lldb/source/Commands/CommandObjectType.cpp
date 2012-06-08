@@ -98,7 +98,7 @@ public:
 
 
 
-class CommandObjectTypeSummaryAdd : public CommandObject
+class CommandObjectTypeSummaryAdd : public CommandObjectParsed
 {
     
 private:
@@ -176,18 +176,19 @@ public:
     {
     }
     
-    bool
-    Execute (Args& command, CommandReturnObject &result);
-    
     static bool
     AddSummary(const ConstString& type_name,
                lldb::TypeSummaryImplSP entry,
                SummaryFormatType type,
                std::string category,
                Error* error = NULL);
+protected:
+    bool
+    DoExecute (Args& command, CommandReturnObject &result);
+    
 };
 
-class CommandObjectTypeSynthAdd : public CommandObject
+class CommandObjectTypeSynthAdd : public CommandObjectParsed
 {
     
 private:
@@ -297,13 +298,14 @@ private:
     CollectPythonScript (SynthAddOptions *options,
                          CommandReturnObject &result);    
     bool
-    Execute_HandwritePython (Args& command, CommandReturnObject &result);    
+    Execute_HandwritePython (Args& command, CommandReturnObject &result);
     
     bool
     Execute_PythonClass (Args& command, CommandReturnObject &result);
     
+protected:
     bool
-    Execute (Args& command, CommandReturnObject &result);
+    DoExecute (Args& command, CommandReturnObject &result);
     
 public:
     
@@ -331,7 +333,7 @@ public:
 // CommandObjectTypeFormatAdd
 //-------------------------------------------------------------------------
 
-class CommandObjectTypeFormatAdd : public CommandObject
+class CommandObjectTypeFormatAdd : public CommandObjectParsed
 {
     
 private:
@@ -419,10 +421,10 @@ private:
     
 public:
     CommandObjectTypeFormatAdd (CommandInterpreter &interpreter) :
-    CommandObject (interpreter,
-                   "type format add",
-                   "Add a new formatting style for a type.",
-                   NULL), 
+        CommandObjectParsed (interpreter,
+                             "type format add",
+                             "Add a new formatting style for a type.",
+                             NULL), 
         m_option_group (interpreter),
         m_format_options (eFormatInvalid),
         m_command_options ()
@@ -476,8 +478,9 @@ public:
     {
     }
     
+protected:
     bool
-    Execute (Args& command, CommandReturnObject &result)
+    DoExecute (Args& command, CommandReturnObject &result)
     {
         const size_t argc = command.GetArgumentCount();
         
@@ -544,14 +547,14 @@ CommandObjectTypeFormatAdd::CommandOptions::GetNumDefinitions ()
 // CommandObjectTypeFormatDelete
 //-------------------------------------------------------------------------
 
-class CommandObjectTypeFormatDelete : public CommandObject
+class CommandObjectTypeFormatDelete : public CommandObjectParsed
 {
 public:
     CommandObjectTypeFormatDelete (CommandInterpreter &interpreter) :
-    CommandObject (interpreter,
-                   "type format delete",
-                   "Delete an existing formatting style for a type.",
-                   NULL)
+        CommandObjectParsed (interpreter,
+                             "type format delete",
+                             "Delete an existing formatting style for a type.",
+                             NULL)
     {
         CommandArgumentEntry type_arg;
         CommandArgumentData type_style_arg;
@@ -569,8 +572,9 @@ public:
     {
     }
     
+protected:
     bool
-    Execute (Args& command, CommandReturnObject &result)
+    DoExecute (Args& command, CommandReturnObject &result)
     {
         const size_t argc = command.GetArgumentCount();
         
@@ -612,14 +616,14 @@ public:
 // CommandObjectTypeFormatClear
 //-------------------------------------------------------------------------
 
-class CommandObjectTypeFormatClear : public CommandObject
+class CommandObjectTypeFormatClear : public CommandObjectParsed
 {
 public:
     CommandObjectTypeFormatClear (CommandInterpreter &interpreter) :
-    CommandObject (interpreter,
-                   "type format clear",
-                   "Delete all existing format styles.",
-                   NULL)
+        CommandObjectParsed (interpreter,
+                             "type format clear",
+                             "Delete all existing format styles.",
+                             NULL)
     {
     }
     
@@ -627,8 +631,9 @@ public:
     {
     }
     
+protected:
     bool
-    Execute (Args& command, CommandReturnObject &result)
+    DoExecute (Args& command, CommandReturnObject &result)
     {
         DataVisualization::ValueFormats::Clear();
         result.SetStatus(eReturnStatusSuccessFinishResult);
@@ -653,14 +658,14 @@ struct CommandObjectTypeFormatList_LoopCallbackParam {
                                             RegularExpression* X = NULL) : self(S), result(R), regex(X) {}
 };
 
-class CommandObjectTypeFormatList : public CommandObject
+class CommandObjectTypeFormatList : public CommandObjectParsed
 {
 public:
     CommandObjectTypeFormatList (CommandInterpreter &interpreter) :
-    CommandObject (interpreter,
-                   "type format list",
-                   "Show a list of current formatting styles.",
-                   NULL)
+        CommandObjectParsed (interpreter,
+                             "type format list",
+                             "Show a list of current formatting styles.",
+                             NULL)
     {
         CommandArgumentEntry type_arg;
         CommandArgumentData type_style_arg;
@@ -677,8 +682,9 @@ public:
     {
     }
     
+protected:
     bool
-    Execute (Args& command, CommandReturnObject &result)
+    DoExecute (Args& command, CommandReturnObject &result)
     {
         const size_t argc = command.GetArgumentCount();
         
@@ -1230,10 +1236,11 @@ CommandObjectTypeSummaryAdd::Execute_StringSummary (Args& command, CommandReturn
 }
 
 CommandObjectTypeSummaryAdd::CommandObjectTypeSummaryAdd (CommandInterpreter &interpreter) :
-CommandObject (interpreter,
-               "type summary add",
-               "Add a new summary style for a type.",
-               NULL), m_options (interpreter)
+    CommandObjectParsed (interpreter,
+                         "type summary add",
+                         "Add a new summary style for a type.",
+                         NULL),
+    m_options (interpreter)
 {
     CommandArgumentEntry type_arg;
     CommandArgumentData type_style_arg;
@@ -1312,7 +1319,7 @@ CommandObject (interpreter,
 }
 
 bool
-CommandObjectTypeSummaryAdd::Execute (Args& command, CommandReturnObject &result)
+CommandObjectTypeSummaryAdd::DoExecute (Args& command, CommandReturnObject &result)
 {
     if (m_options.m_is_add_script)
     {
@@ -1391,7 +1398,7 @@ CommandObjectTypeSummaryAdd::CommandOptions::g_option_table[] =
 // CommandObjectTypeSummaryDelete
 //-------------------------------------------------------------------------
 
-class CommandObjectTypeSummaryDelete : public CommandObject
+class CommandObjectTypeSummaryDelete : public CommandObjectParsed
 {
 private:
     class CommandOptions : public Options
@@ -1471,10 +1478,11 @@ private:
 
 public:
     CommandObjectTypeSummaryDelete (CommandInterpreter &interpreter) :
-    CommandObject (interpreter,
-                   "type summary delete",
-                   "Delete an existing summary style for a type.",
-                   NULL), m_options(interpreter)
+        CommandObjectParsed (interpreter,
+                             "type summary delete",
+                             "Delete an existing summary style for a type.",
+                             NULL),
+        m_options(interpreter)
     {
         CommandArgumentEntry type_arg;
         CommandArgumentData type_style_arg;
@@ -1492,8 +1500,9 @@ public:
     {
     }
     
+protected:
     bool
-    Execute (Args& command, CommandReturnObject &result)
+    DoExecute (Args& command, CommandReturnObject &result)
     {
         const size_t argc = command.GetArgumentCount();
         
@@ -1551,7 +1560,7 @@ CommandObjectTypeSummaryDelete::CommandOptions::g_option_table[] =
     { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
 
-class CommandObjectTypeSummaryClear : public CommandObject
+class CommandObjectTypeSummaryClear : public CommandObjectParsed
 {
 private:
     
@@ -1628,10 +1637,11 @@ private:
     
 public:
     CommandObjectTypeSummaryClear (CommandInterpreter &interpreter) :
-    CommandObject (interpreter,
-                   "type summary clear",
-                   "Delete all existing summary styles.",
-                   NULL), m_options(interpreter)
+        CommandObjectParsed (interpreter,
+                             "type summary clear",
+                             "Delete all existing summary styles.",
+                             NULL),
+        m_options(interpreter)
     {
     }
     
@@ -1639,8 +1649,9 @@ public:
     {
     }
     
+protected:
     bool
-    Execute (Args& command, CommandReturnObject &result)
+    DoExecute (Args& command, CommandReturnObject &result)
     {
         
         if (m_options.m_delete_all)
@@ -1694,7 +1705,7 @@ struct CommandObjectTypeSummaryList_LoopCallbackParam {
                                                   RegularExpression* CX = NULL) : self(S), result(R), regex(X), cate_regex(CX) {}
 };
 
-class CommandObjectTypeSummaryList : public CommandObject
+class CommandObjectTypeSummaryList : public CommandObjectParsed
 {
     
     class CommandOptions : public Options
@@ -1760,10 +1771,11 @@ class CommandObjectTypeSummaryList : public CommandObject
     
 public:
     CommandObjectTypeSummaryList (CommandInterpreter &interpreter) :
-    CommandObject (interpreter,
-                   "type summary list",
-                   "Show a list of current summary styles.",
-                   NULL), m_options(interpreter)
+        CommandObjectParsed (interpreter,
+                             "type summary list",
+                             "Show a list of current summary styles.",
+                             NULL),
+        m_options(interpreter)
     {
         CommandArgumentEntry type_arg;
         CommandArgumentData type_style_arg;
@@ -1780,8 +1792,9 @@ public:
     {
     }
     
+protected:
     bool
-    Execute (Args& command, CommandReturnObject &result)
+    DoExecute (Args& command, CommandReturnObject &result)
     {
         const size_t argc = command.GetArgumentCount();
         
@@ -1905,14 +1918,14 @@ CommandObjectTypeSummaryList::CommandOptions::g_option_table[] =
 // CommandObjectTypeCategoryEnable
 //-------------------------------------------------------------------------
 
-class CommandObjectTypeCategoryEnable : public CommandObject
+class CommandObjectTypeCategoryEnable : public CommandObjectParsed
 {
 public:
     CommandObjectTypeCategoryEnable (CommandInterpreter &interpreter) :
-    CommandObject (interpreter,
-                   "type category enable",
-                   "Enable a category as a source of formatters.",
-                   NULL)
+        CommandObjectParsed (interpreter,
+                             "type category enable",
+                             "Enable a category as a source of formatters.",
+                             NULL)
     {
         CommandArgumentEntry type_arg;
         CommandArgumentData type_style_arg;
@@ -1930,8 +1943,9 @@ public:
     {
     }
     
+protected:
     bool
-    Execute (Args& command, CommandReturnObject &result)
+    DoExecute (Args& command, CommandReturnObject &result)
     {
         const size_t argc = command.GetArgumentCount();
         
@@ -1974,14 +1988,14 @@ public:
 // CommandObjectTypeCategoryDelete
 //-------------------------------------------------------------------------
 
-class CommandObjectTypeCategoryDelete : public CommandObject
+class CommandObjectTypeCategoryDelete : public CommandObjectParsed
 {
 public:
     CommandObjectTypeCategoryDelete (CommandInterpreter &interpreter) :
-    CommandObject (interpreter,
-                   "type category delete",
-                   "Delete a category and all associated formatters.",
-                   NULL)
+        CommandObjectParsed (interpreter,
+                             "type category delete",
+                             "Delete a category and all associated formatters.",
+                             NULL)
     {
         CommandArgumentEntry type_arg;
         CommandArgumentData type_style_arg;
@@ -1999,8 +2013,9 @@ public:
     {
     }
     
+protected:
     bool
-    Execute (Args& command, CommandReturnObject &result)
+    DoExecute (Args& command, CommandReturnObject &result)
     {
         const size_t argc = command.GetArgumentCount();
         
@@ -2046,14 +2061,14 @@ public:
 // CommandObjectTypeCategoryDisable
 //-------------------------------------------------------------------------
 
-class CommandObjectTypeCategoryDisable : public CommandObject
+class CommandObjectTypeCategoryDisable : public CommandObjectParsed
 {
 public:
     CommandObjectTypeCategoryDisable (CommandInterpreter &interpreter) :
-    CommandObject (interpreter,
-                   "type category disable",
-                   "Disable a category as a source of formatters.",
-                   NULL)
+        CommandObjectParsed (interpreter,
+                             "type category disable",
+                             "Disable a category as a source of formatters.",
+                             NULL)
     {
         CommandArgumentEntry type_arg;
         CommandArgumentData type_style_arg;
@@ -2071,8 +2086,9 @@ public:
     {
     }
     
+protected:
     bool
-    Execute (Args& command, CommandReturnObject &result)
+    DoExecute (Args& command, CommandReturnObject &result)
     {
         const size_t argc = command.GetArgumentCount();
         
@@ -2122,7 +2138,7 @@ public:
 // CommandObjectTypeCategoryList
 //-------------------------------------------------------------------------
 
-class CommandObjectTypeCategoryList : public CommandObject
+class CommandObjectTypeCategoryList : public CommandObjectParsed
 {
 private:
     
@@ -2159,10 +2175,10 @@ private:
     }
 public:
     CommandObjectTypeCategoryList (CommandInterpreter &interpreter) :
-    CommandObject (interpreter,
-                   "type category list",
-                   "Provide a list of all existing categories.",
-                   NULL)
+        CommandObjectParsed (interpreter,
+                             "type category list",
+                             "Provide a list of all existing categories.",
+                             NULL)
     {
         CommandArgumentEntry type_arg;
         CommandArgumentData type_style_arg;
@@ -2179,8 +2195,9 @@ public:
     {
     }
     
+protected:
     bool
-    Execute (Args& command, CommandReturnObject &result)
+    DoExecute (Args& command, CommandReturnObject &result)
     {
         const size_t argc = command.GetArgumentCount();
         RegularExpression* regex = NULL;
@@ -2229,7 +2246,7 @@ struct CommandObjectTypeFilterList_LoopCallbackParam {
                                                   RegularExpression* CX = NULL) : self(S), result(R), regex(X), cate_regex(CX) {}
 };
 
-class CommandObjectTypeFilterList : public CommandObject
+class CommandObjectTypeFilterList : public CommandObjectParsed
 {
     
     class CommandOptions : public Options
@@ -2295,10 +2312,11 @@ class CommandObjectTypeFilterList : public CommandObject
     
 public:
     CommandObjectTypeFilterList (CommandInterpreter &interpreter) :
-    CommandObject (interpreter,
-                   "type filter list",
-                   "Show a list of current filters.",
-                   NULL), m_options(interpreter)
+        CommandObjectParsed (interpreter,
+                             "type filter list",
+                             "Show a list of current filters.",
+                             NULL),
+        m_options(interpreter)
     {
         CommandArgumentEntry type_arg;
         CommandArgumentData type_style_arg;
@@ -2315,8 +2333,9 @@ public:
     {
     }
     
+protected:
     bool
-    Execute (Args& command, CommandReturnObject &result)
+    DoExecute (Args& command, CommandReturnObject &result)
     {
         const size_t argc = command.GetArgumentCount();
         
@@ -2441,7 +2460,7 @@ struct CommandObjectTypeSynthList_LoopCallbackParam {
                                                  RegularExpression* CX = NULL) : self(S), result(R), regex(X), cate_regex(CX) {}
 };
 
-class CommandObjectTypeSynthList : public CommandObject
+class CommandObjectTypeSynthList : public CommandObjectParsed
 {
     
     class CommandOptions : public Options
@@ -2507,10 +2526,11 @@ class CommandObjectTypeSynthList : public CommandObject
     
 public:
     CommandObjectTypeSynthList (CommandInterpreter &interpreter) :
-    CommandObject (interpreter,
-                   "type synthetic list",
-                   "Show a list of current synthetic providers.",
-                   NULL), m_options(interpreter)
+        CommandObjectParsed (interpreter,
+                             "type synthetic list",
+                             "Show a list of current synthetic providers.",
+                             NULL),
+        m_options(interpreter)
     {
         CommandArgumentEntry type_arg;
         CommandArgumentData type_style_arg;
@@ -2527,8 +2547,9 @@ public:
     {
     }
     
+protected:
     bool
-    Execute (Args& command, CommandReturnObject &result)
+    DoExecute (Args& command, CommandReturnObject &result)
     {
         const size_t argc = command.GetArgumentCount();
         
@@ -2637,7 +2658,7 @@ CommandObjectTypeSynthList::CommandOptions::g_option_table[] =
 // CommandObjectTypeFilterDelete
 //-------------------------------------------------------------------------
 
-class CommandObjectTypeFilterDelete : public CommandObject
+class CommandObjectTypeFilterDelete : public CommandObjectParsed
 {
 private:
     class CommandOptions : public Options
@@ -2716,10 +2737,11 @@ private:
     
 public:
     CommandObjectTypeFilterDelete (CommandInterpreter &interpreter) :
-    CommandObject (interpreter,
-                   "type filter delete",
-                   "Delete an existing filter for a type.",
-                   NULL), m_options(interpreter)
+        CommandObjectParsed (interpreter,
+                             "type filter delete",
+                             "Delete an existing filter for a type.",
+                             NULL),
+        m_options(interpreter)
     {
         CommandArgumentEntry type_arg;
         CommandArgumentData type_style_arg;
@@ -2737,8 +2759,9 @@ public:
     {
     }
     
+protected:
     bool
-    Execute (Args& command, CommandReturnObject &result)
+    DoExecute (Args& command, CommandReturnObject &result)
     {
         const size_t argc = command.GetArgumentCount();
         
@@ -2801,7 +2824,7 @@ CommandObjectTypeFilterDelete::CommandOptions::g_option_table[] =
 // CommandObjectTypeSynthDelete
 //-------------------------------------------------------------------------
 
-class CommandObjectTypeSynthDelete : public CommandObject
+class CommandObjectTypeSynthDelete : public CommandObjectParsed
 {
 private:
     class CommandOptions : public Options
@@ -2880,10 +2903,11 @@ private:
     
 public:
     CommandObjectTypeSynthDelete (CommandInterpreter &interpreter) :
-    CommandObject (interpreter,
-                   "type synthetic delete",
-                   "Delete an existing synthetic provider for a type.",
-                   NULL), m_options(interpreter)
+        CommandObjectParsed (interpreter,
+                             "type synthetic delete",
+                             "Delete an existing synthetic provider for a type.",
+                             NULL),
+        m_options(interpreter)
     {
         CommandArgumentEntry type_arg;
         CommandArgumentData type_style_arg;
@@ -2901,8 +2925,9 @@ public:
     {
     }
     
+protected:
     bool
-    Execute (Args& command, CommandReturnObject &result)
+    DoExecute (Args& command, CommandReturnObject &result)
     {
         const size_t argc = command.GetArgumentCount();
         
@@ -2965,7 +2990,7 @@ CommandObjectTypeSynthDelete::CommandOptions::g_option_table[] =
 // CommandObjectTypeFilterClear
 //-------------------------------------------------------------------------
 
-class CommandObjectTypeFilterClear : public CommandObject
+class CommandObjectTypeFilterClear : public CommandObjectParsed
 {
 private:
     
@@ -3041,10 +3066,11 @@ private:
     
 public:
     CommandObjectTypeFilterClear (CommandInterpreter &interpreter) :
-    CommandObject (interpreter,
-                   "type filter clear",
-                   "Delete all existing filters.",
-                   NULL), m_options(interpreter)
+        CommandObjectParsed (interpreter,
+                             "type filter clear",
+                             "Delete all existing filters.",
+                             NULL),
+        m_options(interpreter)
     {
     }
     
@@ -3052,8 +3078,9 @@ public:
     {
     }
     
+protected:
     bool
-    Execute (Args& command, CommandReturnObject &result)
+    DoExecute (Args& command, CommandReturnObject &result)
     {
         
         if (m_options.m_delete_all)
@@ -3092,7 +3119,7 @@ CommandObjectTypeFilterClear::CommandOptions::g_option_table[] =
 // CommandObjectTypeSynthClear
 //-------------------------------------------------------------------------
 
-class CommandObjectTypeSynthClear : public CommandObject
+class CommandObjectTypeSynthClear : public CommandObjectParsed
 {
 private:
     
@@ -3168,10 +3195,11 @@ private:
     
 public:
     CommandObjectTypeSynthClear (CommandInterpreter &interpreter) :
-    CommandObject (interpreter,
-                   "type synthetic clear",
-                   "Delete all existing synthetic providers.",
-                   NULL), m_options(interpreter)
+        CommandObjectParsed (interpreter,
+                             "type synthetic clear",
+                             "Delete all existing synthetic providers.",
+                             NULL),
+        m_options(interpreter)
     {
     }
     
@@ -3179,8 +3207,9 @@ public:
     {
     }
     
+protected:
     bool
-    Execute (Args& command, CommandReturnObject &result)
+    DoExecute (Args& command, CommandReturnObject &result)
     {
         
         if (m_options.m_delete_all)
@@ -3496,10 +3525,11 @@ CommandObjectTypeSynthAdd::Execute_PythonClass (Args& command, CommandReturnObje
 }
     
 CommandObjectTypeSynthAdd::CommandObjectTypeSynthAdd (CommandInterpreter &interpreter) :
-CommandObject (interpreter,
-               "type synthetic add",
-               "Add a new synthetic provider for a type.",
-               NULL), m_options (interpreter)
+    CommandObjectParsed (interpreter,
+                         "type synthetic add",
+                         "Add a new synthetic provider for a type.",
+                         NULL),
+    m_options (interpreter)
 {
     CommandArgumentEntry type_arg;
     CommandArgumentData type_style_arg;
@@ -3555,7 +3585,7 @@ CommandObjectTypeSynthAdd::AddSynth(const ConstString& type_name,
 }
     
 bool
-CommandObjectTypeSynthAdd::Execute (Args& command, CommandReturnObject &result)
+CommandObjectTypeSynthAdd::DoExecute (Args& command, CommandReturnObject &result)
 {
     if (m_options.handwrite_python)
         return Execute_HandwritePython(command, result);
@@ -3584,7 +3614,7 @@ CommandObjectTypeSynthAdd::CommandOptions::g_option_table[] =
 
 #endif // #ifndef LLDB_DISABLE_PYTHON
 
-class CommandObjectTypeFilterAdd : public CommandObject
+class CommandObjectTypeFilterAdd : public CommandObjectParsed
 {
     
 private:
@@ -3737,11 +3767,11 @@ private:
 public:
     
     CommandObjectTypeFilterAdd (CommandInterpreter &interpreter) :
-    CommandObject (interpreter,
-                   "type filter add",
-                   "Add a new filter for a type.",
-                   NULL),
-    m_options (interpreter)
+        CommandObjectParsed (interpreter,
+                             "type filter add",
+                             "Add a new filter for a type.",
+                             NULL),
+        m_options (interpreter)
     {
         CommandArgumentEntry type_arg;
         CommandArgumentData type_style_arg;
@@ -3785,8 +3815,9 @@ public:
     {
     }
     
+protected:
     bool
-    Execute (Args& command, CommandReturnObject &result)
+    DoExecute (Args& command, CommandReturnObject &result)
     {
         const size_t argc = command.GetArgumentCount();
         

@@ -34,16 +34,15 @@ using namespace lldb_private;
 //----------------------------------------------------------------------
 // "register read"
 //----------------------------------------------------------------------
-class CommandObjectRegisterRead : public CommandObject
+class CommandObjectRegisterRead : public CommandObjectParsed
 {
 public:
     CommandObjectRegisterRead (CommandInterpreter &interpreter) :
-        CommandObject (interpreter, 
-                       "register read",
-                       "Dump the contents of one or more register values from the current frame.  If no register is specified, dumps them all.",
-                       //"register read [<reg-name1> [<reg-name2> [...]]]",
-                       NULL,
-                       eFlagProcessMustBeLaunched | eFlagProcessMustBePaused),
+        CommandObjectParsed (interpreter, 
+                             "register read",
+                             "Dump the contents of one or more register values from the current frame.  If no register is specified, dumps them all.",
+                             NULL,
+                             eFlagProcessMustBeLaunched | eFlagProcessMustBePaused),
         m_option_group (interpreter),
         m_format_options (eFormatDefault),
         m_command_options ()
@@ -158,12 +157,9 @@ public:
         return available_count > 0;
     }
 
+protected:
     virtual bool
-    Execute 
-    (
-        Args& command,
-        CommandReturnObject &result
-    )
+    DoExecute (Args& command, CommandReturnObject &result)
     {
         Stream &strm = result.GetOutputStream();
         ExecutionContext exe_ctx(m_interpreter.GetExecutionContext());
@@ -359,15 +355,15 @@ CommandObjectRegisterRead::CommandOptions::GetNumDefinitions ()
 //----------------------------------------------------------------------
 // "register write"
 //----------------------------------------------------------------------
-class CommandObjectRegisterWrite : public CommandObject
+class CommandObjectRegisterWrite : public CommandObjectParsed
 {
 public:
     CommandObjectRegisterWrite (CommandInterpreter &interpreter) :
-        CommandObject (interpreter,
-                       "register write",
-                       "Modify a single register value.",
-                       NULL,
-                       eFlagProcessMustBeLaunched | eFlagProcessMustBePaused)
+        CommandObjectParsed (interpreter,
+                             "register write",
+                             "Modify a single register value.",
+                             NULL,
+                             eFlagProcessMustBeLaunched | eFlagProcessMustBePaused)
     {
         CommandArgumentEntry arg1;
         CommandArgumentEntry arg2;
@@ -398,12 +394,9 @@ public:
     {
     }
 
+protected:
     virtual bool
-    Execute 
-    (
-        Args& command,
-        CommandReturnObject &result
-    )
+    DoExecute(Args& command, CommandReturnObject &result)
     {
         DataExtractor reg_data;
         ExecutionContext exe_ctx(m_interpreter.GetExecutionContext());

@@ -42,7 +42,7 @@ using namespace lldb_private;
 // CommandObjectThreadBacktrace
 //-------------------------------------------------------------------------
 
-class CommandObjectThreadBacktrace : public CommandObject
+class CommandObjectThreadBacktrace : public CommandObjectParsed
 {
 public:
 
@@ -121,11 +121,11 @@ public:
     };
 
     CommandObjectThreadBacktrace (CommandInterpreter &interpreter) :
-        CommandObject (interpreter,
-                       "thread backtrace",
-                       "Show the stack for one or more threads.  If no threads are specified, show the currently selected thread.  Use the thread-index \"all\" to see all threads.",
-                       NULL,
-                       eFlagProcessMustBeLaunched | eFlagProcessMustBePaused),
+        CommandObjectParsed (interpreter,
+                           "thread backtrace",
+                           "Show the stack for one or more threads.  If no threads are specified, show the currently selected thread.  Use the thread-index \"all\" to see all threads.",
+                           NULL,
+                           eFlagProcessMustBeLaunched | eFlagProcessMustBePaused),
         m_options(interpreter)
     {
         CommandArgumentEntry arg;
@@ -152,8 +152,9 @@ public:
         return &m_options;
     }
 
+protected:
     virtual bool
-    Execute (Args& command, CommandReturnObject &result)
+    DoExecute (Args& command, CommandReturnObject &result)
     {        
         result.SetStatus (eReturnStatusSuccessFinishResult);
         Stream &strm = result.GetOutputStream();
@@ -250,7 +251,7 @@ public:
         }
         return result.Succeeded();
     }
-protected:
+
     CommandOptions m_options;
 };
 
@@ -268,7 +269,7 @@ enum StepScope
     eStepScopeInstruction
 };
 
-class CommandObjectThreadStepWithTypeAndScope : public CommandObject
+class CommandObjectThreadStepWithTypeAndScope : public CommandObjectParsed
 {
 public:
 
@@ -358,7 +359,7 @@ public:
                                              uint32_t flags,
                                              StepType step_type,
                                              StepScope step_scope) :
-        CommandObject (interpreter, name, help, syntax, flags),
+        CommandObjectParsed (interpreter, name, help, syntax, flags),
         m_step_type (step_type),
         m_step_scope (step_scope),
         m_options (interpreter)
@@ -389,12 +390,9 @@ public:
         return &m_options;
     }
 
+protected:
     virtual bool
-    Execute 
-    (
-        Args& command,
-        CommandReturnObject &result
-    )
+    DoExecute (Args& command, CommandReturnObject &result)
     {
         Process *process = m_interpreter.GetExecutionContext().GetProcessPtr();
         bool synchronous_execution = m_interpreter.GetSynchronous();
@@ -594,16 +592,16 @@ CommandObjectThreadStepWithTypeAndScope::CommandOptions::g_option_table[] =
 // CommandObjectThreadContinue
 //-------------------------------------------------------------------------
 
-class CommandObjectThreadContinue : public CommandObject
+class CommandObjectThreadContinue : public CommandObjectParsed
 {
 public:
 
     CommandObjectThreadContinue (CommandInterpreter &interpreter) :
-        CommandObject (interpreter, 
-                       "thread continue",
-                       "Continue execution of one or more threads in an active process.",
-                       NULL,
-                       eFlagProcessMustBeLaunched | eFlagProcessMustBePaused)
+        CommandObjectParsed (interpreter, 
+                             "thread continue",
+                             "Continue execution of one or more threads in an active process.",
+                             NULL,
+                             eFlagProcessMustBeLaunched | eFlagProcessMustBePaused)
     {
         CommandArgumentEntry arg;
         CommandArgumentData thread_idx_arg;
@@ -626,11 +624,7 @@ public:
     }
 
     virtual bool
-    Execute
-    (
-        Args& command,
-        CommandReturnObject &result
-    )
+    DoExecute (Args& command, CommandReturnObject &result)
     {
         bool synchronous_execution = m_interpreter.GetSynchronous ();
 
@@ -782,7 +776,7 @@ public:
 // CommandObjectThreadUntil
 //-------------------------------------------------------------------------
 
-class CommandObjectThreadUntil : public CommandObject
+class CommandObjectThreadUntil : public CommandObjectParsed
 {
 public:
 
@@ -879,11 +873,11 @@ public:
     };
 
     CommandObjectThreadUntil (CommandInterpreter &interpreter) :
-        CommandObject (interpreter, 
-                       "thread until",
-                       "Run the current or specified thread until it reaches a given line number or leaves the current function.",
-                       NULL,
-                       eFlagProcessMustBeLaunched | eFlagProcessMustBePaused),
+        CommandObjectParsed (interpreter, 
+                             "thread until",
+                             "Run the current or specified thread until it reaches a given line number or leaves the current function.",
+                             NULL,
+                             eFlagProcessMustBeLaunched | eFlagProcessMustBePaused),
         m_options (interpreter)
     {
         CommandArgumentEntry arg;
@@ -913,12 +907,9 @@ public:
         return &m_options;
     }
 
+protected:
     virtual bool
-    Execute 
-    (
-        Args& command,
-        CommandReturnObject &result
-    )
+    DoExecute (Args& command, CommandReturnObject &result)
     {
         bool synchronous_execution = m_interpreter.GetSynchronous ();
 
@@ -1100,7 +1091,7 @@ public:
         }
         return result.Succeeded();
     }
-protected:
+
     CommandOptions m_options;
 
 };
@@ -1119,16 +1110,16 @@ CommandObjectThreadUntil::CommandOptions::g_option_table[] =
 // CommandObjectThreadSelect
 //-------------------------------------------------------------------------
 
-class CommandObjectThreadSelect : public CommandObject
+class CommandObjectThreadSelect : public CommandObjectParsed
 {
 public:
 
     CommandObjectThreadSelect (CommandInterpreter &interpreter) :
-        CommandObject (interpreter,
-                       "thread select",
-                       "Select a thread as the currently active thread.",
-                       NULL,
-                       eFlagProcessMustBeLaunched | eFlagProcessMustBePaused)
+        CommandObjectParsed (interpreter,
+                             "thread select",
+                             "Select a thread as the currently active thread.",
+                             NULL,
+                             eFlagProcessMustBeLaunched | eFlagProcessMustBePaused)
     {
         CommandArgumentEntry arg;
         CommandArgumentData thread_idx_arg;
@@ -1150,12 +1141,9 @@ public:
     {
     }
 
+protected:
     virtual bool
-    Execute 
-    (
-        Args& command,
-        CommandReturnObject &result
-    )
+    DoExecute (Args& command, CommandReturnObject &result)
     {
         Process *process = m_interpreter.GetExecutionContext().GetProcessPtr();
         if (process == NULL)
@@ -1202,17 +1190,17 @@ public:
 // CommandObjectThreadList
 //-------------------------------------------------------------------------
 
-class CommandObjectThreadList : public CommandObject
+class CommandObjectThreadList : public CommandObjectParsed
 {
 public:
 
 
     CommandObjectThreadList (CommandInterpreter &interpreter):
-        CommandObject (interpreter,
-                       "thread list",
-                       "Show a summary of all current threads in a process.",
-                       "thread list",
-                       eFlagProcessMustBeLaunched | eFlagProcessMustBePaused)
+        CommandObjectParsed (interpreter,
+                             "thread list",
+                             "Show a summary of all current threads in a process.",
+                             "thread list",
+                             eFlagProcessMustBeLaunched | eFlagProcessMustBePaused)
     {
     }
 
@@ -1220,12 +1208,9 @@ public:
     {
     }
 
+protected:
     bool
-    Execute
-    (
-        Args& command,
-        CommandReturnObject &result
-    )
+    DoExecute (Args& command, CommandReturnObject &result)
     {
         Stream &strm = result.GetOutputStream();
         result.SetStatus (eReturnStatusSuccessFinishNoResult);

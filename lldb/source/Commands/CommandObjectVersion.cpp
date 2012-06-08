@@ -25,7 +25,7 @@ using namespace lldb_private;
 //-------------------------------------------------------------------------
 
 CommandObjectVersion::CommandObjectVersion (CommandInterpreter &interpreter) :
-    CommandObject (interpreter, "version", "Show version of LLDB debugger.", "version")
+    CommandObjectParsed (interpreter, "version", "Show version of LLDB debugger.", "version")
 {
 }
 
@@ -34,11 +34,7 @@ CommandObjectVersion::~CommandObjectVersion ()
 }
 
 bool
-CommandObjectVersion::Execute
-(
-    Args& args,
-    CommandReturnObject &result
-)
+CommandObjectVersion::DoExecute (Args& args, CommandReturnObject &result)
 {
     result.AppendMessageWithFormat ("%s\n", lldb_private::GetVersion());
     result.SetStatus (eReturnStatusSuccessFinishResult);

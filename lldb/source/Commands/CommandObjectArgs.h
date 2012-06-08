@@ -20,7 +20,7 @@
 
 namespace lldb_private {
     
-    class CommandObjectArgs : public CommandObject
+    class CommandObjectArgs : public CommandObjectParsed
     {
     public:
         
@@ -57,16 +57,14 @@ namespace lldb_private {
         GetOptions ();
         
         
-        virtual bool
-        Execute (    Args& command,
-                 CommandReturnObject &result);
-        
-        virtual bool
-        WantsRawCommandString() { return false; }
-        
     protected:
         
         CommandOptions m_options;
+
+        virtual bool
+        DoExecute (    Args& command,
+                 CommandReturnObject &result);
+        
     };
     
 } // namespace lldb_private

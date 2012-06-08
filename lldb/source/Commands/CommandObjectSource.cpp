@@ -32,7 +32,7 @@ using namespace lldb_private;
 // CommandObjectSourceInfo
 //-------------------------------------------------------------------------
 
-class CommandObjectSourceInfo : public CommandObject
+class CommandObjectSourceInfo : public CommandObjectParsed
 {
 
     class CommandOptions : public Options
@@ -96,10 +96,10 @@ class CommandObjectSourceInfo : public CommandObject
  
 public:   
     CommandObjectSourceInfo(CommandInterpreter &interpreter) :
-        CommandObject (interpreter,
-                       "source info",
-                       "Display information about the source lines from the current executable's debug info.",
-                       "source info [<cmd-options>]"),
+        CommandObjectParsed (interpreter,
+                             "source info",
+                             "Display information about the source lines from the current executable's debug info.",
+                             "source info [<cmd-options>]"),
         m_options (interpreter)
     {
     }
@@ -115,19 +115,15 @@ public:
         return &m_options;
     }
 
-
+protected:
     bool
-    Execute
-    (
-        Args& args,
-        CommandReturnObject &result
-    )
+    DoExecute (Args& command, CommandReturnObject &result)
     {
         result.AppendError ("Not yet implemented");
         result.SetStatus (eReturnStatusFailed);
         return false;
     }
-protected:
+
     CommandOptions m_options;
 };
 
@@ -144,7 +140,7 @@ CommandObjectSourceInfo::CommandOptions::g_option_table[] =
 // CommandObjectSourceList
 //-------------------------------------------------------------------------
 
-class CommandObjectSourceList : public CommandObject
+class CommandObjectSourceList : public CommandObjectParsed
 {
 
     class CommandOptions : public Options
@@ -232,10 +228,10 @@ class CommandObjectSourceList : public CommandObject
  
 public:   
     CommandObjectSourceList(CommandInterpreter &interpreter) :
-        CommandObject (interpreter,
-                       "source list",
-                       "Display source code (as specified) based on the current executable's debug info.",
-                        NULL),
+        CommandObjectParsed (interpreter,
+                             "source list",
+                             "Display source code (as specified) based on the current executable's debug info.",
+                             NULL),
         m_options (interpreter)
     {
         CommandArgumentEntry arg;
@@ -263,15 +259,17 @@ public:
         return &m_options;
     }
 
-
-    bool
-    Execute
-    (
-        Args& args,
-        CommandReturnObject &result
-    )
+    virtual const char *
+    GetRepeatCommand (Args &current_command_args, uint32_t index)
     {
-        const int argc = args.GetArgumentCount();
+        return m_cmd_name.c_str();
+    }
+
+protected:
+    bool
+    DoExecute (Args& command, CommandReturnObject &result)
+    {
+        const int argc = command.GetArgumentCount();
 
         if (argc != 0)
         {
@@ -601,12 +599,6 @@ public:
         return result.Succeeded();
     }
     
-    virtual const char *GetRepeatCommand (Args &current_command_args, uint32_t index)
-    {
-        return m_cmd_name.c_str();
-    }
-
-protected:
     const SymbolContextList *
     GetBreakpointLocations ()
     {

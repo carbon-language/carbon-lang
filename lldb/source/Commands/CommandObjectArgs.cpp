@@ -77,10 +77,10 @@ CommandObjectArgs::CommandOptions::GetDefinitions ()
 }
 
 CommandObjectArgs::CommandObjectArgs (CommandInterpreter &interpreter) :
-    CommandObject (interpreter, 
-                   "args",
-                   "When stopped at the start of a function, reads function arguments of type (u?)int(8|16|32|64)_t, (void|char)*",
-                   "args"),
+    CommandObjectParsed (interpreter,
+                         "args",
+                         "When stopped at the start of a function, reads function arguments of type (u?)int(8|16|32|64)_t, (void|char)*",
+                         "args"),
     m_options (interpreter)
 {
 }
@@ -96,11 +96,7 @@ CommandObjectArgs::GetOptions ()
 }
 
 bool
-CommandObjectArgs::Execute
-(
-    Args& args,
-    CommandReturnObject &result
-)
+CommandObjectArgs::DoExecute (Args& args, CommandReturnObject &result)
 {
     ConstString target_triple;
     

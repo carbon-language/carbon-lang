@@ -23,7 +23,7 @@ namespace lldb_private {
 // CommandObjectHelp
 //-------------------------------------------------------------------------
 
-class CommandObjectHelp : public CommandObject
+class CommandObjectHelp : public CommandObjectParsed
 {
 public:
 
@@ -31,10 +31,6 @@ public:
 
     virtual
     ~CommandObjectHelp ();
-
-    virtual bool
-    Execute (Args& command,
-             CommandReturnObject &result);
 
     virtual int
     HandleCompletion (Args &input,
@@ -102,14 +98,20 @@ public:
         bool m_show_user_defined;        
     };
     
-    CommandOptions m_options;
-    
     virtual Options *
     GetOptions ()
     {
         return &m_options;
     }
+    
+protected:
+    virtual bool
+    DoExecute (Args& command,
+             CommandReturnObject &result);
 
+private:
+    CommandOptions m_options;
+    
 };
 
 } // namespace lldb_private

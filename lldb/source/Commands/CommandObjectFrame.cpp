@@ -52,16 +52,16 @@ using namespace lldb_private;
 // CommandObjectFrameInfo
 //-------------------------------------------------------------------------
 
-class CommandObjectFrameInfo : public CommandObject
+class CommandObjectFrameInfo : public CommandObjectParsed
 {
 public:
 
     CommandObjectFrameInfo (CommandInterpreter &interpreter) :
-        CommandObject (interpreter,
-                       "frame info",
-                       "List information about the currently selected frame in the current thread.",
-                       "frame info",
-                       eFlagProcessMustBeLaunched | eFlagProcessMustBePaused)
+        CommandObjectParsed (interpreter,
+                             "frame info",
+                             "List information about the currently selected frame in the current thread.",
+                             "frame info",
+                             eFlagProcessMustBeLaunched | eFlagProcessMustBePaused)
     {
     }
 
@@ -69,8 +69,9 @@ public:
     {
     }
 
+protected:
     bool
-    Execute (Args& command,
+    DoExecute (Args& command,
              CommandReturnObject &result)
     {
         ExecutionContext exe_ctx(m_interpreter.GetExecutionContext());
@@ -95,7 +96,7 @@ public:
 // CommandObjectFrameSelect
 //-------------------------------------------------------------------------
 
-class CommandObjectFrameSelect : public CommandObject
+class CommandObjectFrameSelect : public CommandObjectParsed
 {
 public:
 
@@ -155,11 +156,11 @@ public:
     };
     
     CommandObjectFrameSelect (CommandInterpreter &interpreter) :
-        CommandObject (interpreter,
-                       "frame select",
-                       "Select a frame by index from within the current thread and make it the current frame.",
-                       NULL,
-                       eFlagProcessMustBeLaunched | eFlagProcessMustBePaused),
+        CommandObjectParsed (interpreter,
+                             "frame select",
+                             "Select a frame by index from within the current thread and make it the current frame.",
+                             NULL,
+                             eFlagProcessMustBeLaunched | eFlagProcessMustBePaused),
         m_options (interpreter)
     {
         CommandArgumentEntry arg;
@@ -188,8 +189,9 @@ public:
     }
 
 
+protected:
     bool
-    Execute (Args& command,
+    DoExecute (Args& command,
              CommandReturnObject &result)
     {
         ExecutionContext exe_ctx (m_interpreter.GetExecutionContext());
@@ -319,21 +321,21 @@ CommandObjectFrameSelect::CommandOptions::g_option_table[] =
 //----------------------------------------------------------------------
 // List images with associated information
 //----------------------------------------------------------------------
-class CommandObjectFrameVariable : public CommandObject
+class CommandObjectFrameVariable : public CommandObjectParsed
 {
 public:
 
     CommandObjectFrameVariable (CommandInterpreter &interpreter) :
-        CommandObject (interpreter,
-                       "frame variable",
-                       "Show frame variables. All argument and local variables "
-                       "that are in scope will be shown when no arguments are given. "
-                       "If any arguments are specified, they can be names of "
-                       "argument, local, file static and file global variables. "
-                       "Children of aggregate variables can be specified such as "
-                       "'var->child.x'.",
-                       NULL,
-                       eFlagProcessMustBeLaunched | eFlagProcessMustBePaused),
+        CommandObjectParsed (interpreter,
+                             "frame variable",
+                             "Show frame variables. All argument and local variables "
+                             "that are in scope will be shown when no arguments are given. "
+                             "If any arguments are specified, they can be names of "
+                             "argument, local, file static and file global variables. "
+                             "Children of aggregate variables can be specified such as "
+                             "'var->child.x'.",
+                             NULL,
+                             eFlagProcessMustBeLaunched | eFlagProcessMustBePaused),
         m_option_group (interpreter),
         m_option_variable(true), // Include the frame specific options by passing "true"
         m_option_format (eFormatDefault),
@@ -370,13 +372,9 @@ public:
         return &m_option_group;
     }
 
-
+protected:
     virtual bool
-    Execute
-    (
-        Args& command,
-        CommandReturnObject &result
-    )
+    DoExecute (Args& command, CommandReturnObject &result)
     {
         ExecutionContext exe_ctx(m_interpreter.GetExecutionContext());
         StackFrame *frame = exe_ctx.GetFramePtr();

@@ -22,7 +22,7 @@ namespace lldb_private {
 // CommandObjectScript
 //-------------------------------------------------------------------------
 
-class CommandObjectScript : public CommandObject
+class CommandObjectScript : public CommandObjectRaw
 {
 public:
 
@@ -32,15 +32,9 @@ public:
     virtual
     ~CommandObjectScript ();
 
-    bool WantsRawCommandString();
-
+protected:
     virtual bool
-    ExecuteRawCommandString (const char *command,
-                             CommandReturnObject &result);
-
-    virtual bool
-    Execute (Args& command,
-             CommandReturnObject &result);
+    DoExecute (const char *command, CommandReturnObject &result);
 
 private:
     lldb::ScriptLanguage m_script_lang;

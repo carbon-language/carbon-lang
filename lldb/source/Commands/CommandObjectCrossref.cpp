@@ -29,7 +29,7 @@ CommandObjectCrossref::CommandObjectCrossref
     const char *help,
     const char *syntax
 ) :
-    CommandObject (interpreter, name, help, syntax),
+    CommandObjectParsed (interpreter, name, help, syntax),
     m_crossref_object_types()
 {
 }
@@ -39,11 +39,7 @@ CommandObjectCrossref::~CommandObjectCrossref ()
 }
 
 bool
-CommandObjectCrossref::Execute
-(
-    Args& command,
-    CommandReturnObject &result
-)
+CommandObjectCrossref::DoExecute (Args& command, CommandReturnObject &result)
 {
     if (m_crossref_object_types.GetArgumentCount() == 0)
     {

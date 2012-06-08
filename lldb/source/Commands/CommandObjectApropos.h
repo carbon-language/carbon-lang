@@ -22,7 +22,7 @@ namespace lldb_private {
 // CommandObjectApropos
 //-------------------------------------------------------------------------
 
-class CommandObjectApropos : public CommandObject
+class CommandObjectApropos : public CommandObjectParsed
 {
 public:
 
@@ -31,8 +31,9 @@ public:
     virtual
     ~CommandObjectApropos ();
 
+protected:
     virtual bool
-    Execute (Args& command,
+    DoExecute (Args& command,
              CommandReturnObject &result);
 
 

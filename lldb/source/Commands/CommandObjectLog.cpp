@@ -42,17 +42,17 @@ using namespace lldb;
 using namespace lldb_private;
 
 
-class CommandObjectLogEnable : public CommandObject
+class CommandObjectLogEnable : public CommandObjectParsed
 {
 public:
     //------------------------------------------------------------------
     // Constructors and Destructors
     //------------------------------------------------------------------
     CommandObjectLogEnable(CommandInterpreter &interpreter) :
-        CommandObject (interpreter,
-                       "log enable",
-                       "Enable logging for a single log channel.",
-                        NULL),
+        CommandObjectParsed (interpreter,
+                             "log enable",
+                             "Enable logging for a single log channel.",
+                             NULL),
         m_options (interpreter)
     {
 
@@ -110,31 +110,6 @@ public:
 //        return matches.GetSize();
 //    }
 //
-    virtual bool
-    Execute (Args& args,
-             CommandReturnObject &result)
-    {
-        if (args.GetArgumentCount() < 2)
-        {
-            result.AppendErrorWithFormat("%s takes a log channel and one or more log types.\n", m_cmd_name.c_str());
-        }
-        else
-        {
-            std::string channel(args.GetArgumentAtIndex(0));
-            args.Shift ();  // Shift off the channel
-            bool success = m_interpreter.GetDebugger().EnableLog (channel.c_str(), 
-                                                                  args.GetConstArgumentVector(), 
-                                                                  m_options.log_file.c_str(), 
-                                                                  m_options.log_options, 
-                                                                  result.GetErrorStream());
-            if (success)
-                result.SetStatus (eReturnStatusSuccessFinishNoResult);
-            else
-                result.SetStatus (eReturnStatusFailed);
-        }    
-        return result.Succeeded();
-    }
-
 
     class CommandOptions : public Options
     {
@@ -201,6 +176,31 @@ public:
     };
 
 protected:
+    virtual bool
+    DoExecute (Args& args,
+             CommandReturnObject &result)
+    {
+        if (args.GetArgumentCount() < 2)
+        {
+            result.AppendErrorWithFormat("%s takes a log channel and one or more log types.\n", m_cmd_name.c_str());
+        }
+        else
+        {
+            std::string channel(args.GetArgumentAtIndex(0));
+            args.Shift ();  // Shift off the channel
+            bool success = m_interpreter.GetDebugger().EnableLog (channel.c_str(), 
+                                                                  args.GetConstArgumentVector(), 
+                                                                  m_options.log_file.c_str(), 
+                                                                  m_options.log_options, 
+                                                                  result.GetErrorStream());
+            if (success)
+                result.SetStatus (eReturnStatusSuccessFinishNoResult);
+            else
+                result.SetStatus (eReturnStatusFailed);
+        }    
+        return result.Succeeded();
+    }
+
     CommandOptions m_options;
 };
 
@@ -218,17 +218,17 @@ CommandObjectLogEnable::CommandOptions::g_option_table[] =
 { 0, false, NULL,                       0,  0,                 NULL, 0, eArgTypeNone,       NULL }
 };
 
-class CommandObjectLogDisable : public CommandObject
+class CommandObjectLogDisable : public CommandObjectParsed
 {
 public:
     //------------------------------------------------------------------
     // Constructors and Destructors
     //------------------------------------------------------------------
     CommandObjectLogDisable(CommandInterpreter &interpreter) :
-        CommandObject (interpreter,
-                       "log disable",
-                       "Disable one or more log channel categories.",
-                       NULL)
+        CommandObjectParsed (interpreter,
+                             "log disable",
+                             "Disable one or more log channel categories.",
+                             NULL)
     {
         CommandArgumentEntry arg1;
         CommandArgumentEntry arg2;
@@ -257,8 +257,9 @@ public:
     {
     }
 
+protected:
     virtual bool
-    Execute (Args& args,
+    DoExecute (Args& args,
              CommandReturnObject &result)
     {
         const size_t argc = args.GetArgumentCount();
@@ -297,17 +298,17 @@ public:
     }
 };
 
-class CommandObjectLogList : public CommandObject
+class CommandObjectLogList : public CommandObjectParsed
 {
 public:
     //------------------------------------------------------------------
     // Constructors and Destructors
     //------------------------------------------------------------------
     CommandObjectLogList(CommandInterpreter &interpreter) :
-        CommandObject (interpreter, 
-                       "log list",
-                       "List the log categories for one or more log channels.  If none specified, lists them all.",
-                       NULL)
+        CommandObjectParsed (interpreter, 
+                             "log list",
+                             "List the log categories for one or more log channels.  If none specified, lists them all.",
+                             NULL)
     {
         CommandArgumentEntry arg;
         CommandArgumentData channel_arg;
@@ -328,8 +329,9 @@ public:
     {
     }
 
+protected:
     virtual bool
-    Execute (Args& args,
+    DoExecute (Args& args,
              CommandReturnObject &result)
     {
         const size_t argc = args.GetArgumentCount();
@@ -372,17 +374,17 @@ public:
     }
 };
 
-class CommandObjectLogTimer : public CommandObject
+class CommandObjectLogTimer : public CommandObjectParsed
 {
 public:
     //------------------------------------------------------------------
     // Constructors and Destructors
     //------------------------------------------------------------------
     CommandObjectLogTimer(CommandInterpreter &interpreter) :
-        CommandObject (interpreter, 
-                       "log timers",
-                       "Enable, disable, dump, and reset LLDB internal performance timers.",
-                       "log timers < enable <depth> | disable | dump | increment <bool> | reset >")
+        CommandObjectParsed (interpreter,
+                           "log timers",
+                           "Enable, disable, dump, and reset LLDB internal performance timers.",
+                           "log timers < enable <depth> | disable | dump | increment <bool> | reset >")
     {
     }
 
@@ -391,8 +393,9 @@ public:
     {
     }
 
+protected:
     virtual bool
-    Execute (Args& args,
+    DoExecute (Args& args,
              CommandReturnObject &result)
     {
         const size_t argc = args.GetArgumentCount();

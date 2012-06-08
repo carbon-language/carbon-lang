@@ -26,6 +26,9 @@ namespace lldb_private {
 
 class CommandObjectMultiword : public CommandObject
 {
+// These two want to iterate over the subcommand dictionary.
+friend class CommandInterpreter;
+friend class CommandObjectSyntax;
 public:
     CommandObjectMultiword (CommandInterpreter &interpreter,
                             const char *name,
@@ -53,8 +56,7 @@ public:
     GetSubcommandObject (const char *sub_cmd, StringList *matches = NULL);
 
     virtual bool
-    Execute (Args& command,
-             CommandReturnObject &result);
+    WantsRawCommandString() { return false; };
 
     virtual int
     HandleCompletion (Args &input,
@@ -66,6 +68,11 @@ public:
                       StringList &matches);
 
     virtual const char *GetRepeatCommand (Args &current_command_args, uint32_t index);
+
+    virtual bool
+    Execute (const char *args_string,
+             CommandReturnObject &result);
+protected:
 
     CommandObject::CommandMap m_subcommand_dict;
 };

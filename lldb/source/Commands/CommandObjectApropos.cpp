@@ -27,10 +27,10 @@ using namespace lldb_private;
 //-------------------------------------------------------------------------
 
 CommandObjectApropos::CommandObjectApropos (CommandInterpreter &interpreter) :
-    CommandObject (interpreter,
-                   "apropos",
-                   "Find a list of debugger commands related to a particular word/subject.",
-                   NULL)
+    CommandObjectParsed (interpreter,
+                         "apropos",
+                         "Find a list of debugger commands related to a particular word/subject.",
+                         NULL)
 {
     CommandArgumentEntry arg;
     CommandArgumentData search_word_arg;
@@ -52,11 +52,7 @@ CommandObjectApropos::~CommandObjectApropos()
 
 
 bool
-CommandObjectApropos::Execute
-(
-    Args& args,
-    CommandReturnObject &result
-)
+CommandObjectApropos::DoExecute (Args& args, CommandReturnObject &result)
 {
     const int argc = args.GetArgumentCount ();
 

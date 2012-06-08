@@ -22,7 +22,7 @@ namespace lldb_private {
 // CommandObjectVersion
 //-------------------------------------------------------------------------
 
-class CommandObjectVersion : public CommandObject
+class CommandObjectVersion : public CommandObjectParsed
 {
 public:
 
@@ -31,8 +31,9 @@ public:
     virtual
     ~CommandObjectVersion ();
 
+protected:
     virtual bool
-    Execute (Args& args,
+    DoExecute (Args& args,
              CommandReturnObject &result);
 
 };

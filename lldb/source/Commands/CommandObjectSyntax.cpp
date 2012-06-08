@@ -28,10 +28,10 @@ using namespace lldb_private;
 //-------------------------------------------------------------------------
 
 CommandObjectSyntax::CommandObjectSyntax (CommandInterpreter &interpreter) :
-    CommandObject (interpreter,
-                   "syntax",
-                   "Shows the correct syntax for a given debugger command.",
-                   "syntax <command>")
+    CommandObjectParsed (interpreter,
+                         "syntax",
+                         "Shows the correct syntax for a given debugger command.",
+                         "syntax <command>")
 {
     CommandArgumentEntry arg;
     CommandArgumentData command_arg;
@@ -53,11 +53,7 @@ CommandObjectSyntax::~CommandObjectSyntax()
 
 
 bool
-CommandObjectSyntax::Execute
-(
-    Args& command,
-    CommandReturnObject &result
-)
+CommandObjectSyntax::DoExecute (Args& command, CommandReturnObject &result)
 {
     CommandObject::CommandMap::iterator pos;
     CommandObject *cmd_obj;

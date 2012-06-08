@@ -1562,35 +1562,7 @@ CommandInterpreter::HandleCommand (const char *command_line,
         if (log)
             log->Printf ("HandleCommand, command line after removing command name(s): '%s'", remainder.c_str());
     
-
-        CommandOverrideCallback command_callback = cmd_obj->GetOverrideCallback();
-        bool handled = false;
-        if (wants_raw_input)
-        {
-            if (command_callback)
-            {
-                std::string full_command (cmd_obj->GetCommandName ());
-                full_command += ' ';
-                full_command += remainder;
-                const char *argv[2] = { NULL, NULL };
-                argv[0] = full_command.c_str();
-                handled = command_callback (cmd_obj->GetOverrideCallbackBaton(), argv);
-            }
-            if (!handled)
-                cmd_obj->ExecuteRawCommandString (remainder.c_str(), result);
-        }
-        else
-        {
-            Args cmd_args (remainder.c_str());
-            if (command_callback)
-            {
-                Args full_args (cmd_obj->GetCommandName ());
-                full_args.AppendArguments(cmd_args);
-                handled = command_callback (cmd_obj->GetOverrideCallbackBaton(), full_args.GetConstArgumentVector());
-            }
-            if (!handled)
-                cmd_obj->ExecuteWithOptions (cmd_args, result);
-        }
+        cmd_obj->Execute (remainder.c_str(), result);
     }
     else
     {

@@ -30,7 +30,7 @@ CommandObjectRegexCommand::CommandObjectRegexCommand
     const char *syntax,
     uint32_t max_matches
 ) :
-    CommandObject (interpreter, name, help, syntax),
+    CommandObjectRaw (interpreter, name, help, syntax),
     m_max_matches (max_matches),
     m_entries ()
 {
@@ -45,18 +45,7 @@ CommandObjectRegexCommand::~CommandObjectRegexCommand()
 
 
 bool
-CommandObjectRegexCommand::Execute
-(
-    Args& command,
-    CommandReturnObject &result
-)
-{
-    return false;
-}
-
-
-bool
-CommandObjectRegexCommand::ExecuteRawCommandString
+CommandObjectRegexCommand::DoExecute
 (
     const char *command,
     CommandReturnObject &result

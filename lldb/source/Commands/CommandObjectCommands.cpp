@@ -34,9 +34,27 @@ using namespace lldb_private;
 // CommandObjectCommandsSource
 //-------------------------------------------------------------------------
 
-class CommandObjectCommandsHistory : public CommandObject
+class CommandObjectCommandsHistory : public CommandObjectParsed
 {
-private:
+public:
+    CommandObjectCommandsHistory(CommandInterpreter &interpreter) :
+        CommandObjectParsed (interpreter,
+                             "command history",
+                             "Dump the history of commands in this session.",
+                             NULL),
+        m_options (interpreter)
+    {
+    }
+
+    ~CommandObjectCommandsHistory () {}
+
+    virtual Options *
+    GetOptions ()
+    {
+        return &m_options;
+    }
+
+protected:
 
     class CommandOptions : public Options
     {
@@ -108,34 +126,8 @@ private:
         uint32_t m_end_idx;
     };
     
-    CommandOptions m_options;
-    
-    virtual Options *
-    GetOptions ()
-    {
-        return &m_options;
-    }
-
-public:
-    CommandObjectCommandsHistory(CommandInterpreter &interpreter) :
-        CommandObject (interpreter,
-                       "command history",
-                       "Dump the history of commands in this session.",
-                       NULL),
-        m_options (interpreter)
-    {
-    }
-
-    ~CommandObjectCommandsHistory ()
-    {
-    }
-
     bool
-    Execute
-    (
-        Args& args,
-        CommandReturnObject &result
-    )
+    DoExecute (Args& command, CommandReturnObject &result)
     {
         
         m_interpreter.DumpHistory (result.GetOutputStream(),
@@ -144,6 +136,8 @@ public:
         return result.Succeeded();
 
     }
+
+    CommandOptions m_options;
 };
 
 OptionDefinition
@@ -160,9 +154,69 @@ CommandObjectCommandsHistory::CommandOptions::g_option_table[] =
 // CommandObjectCommandsSource
 //-------------------------------------------------------------------------
 
-class CommandObjectCommandsSource : public CommandObject
+class CommandObjectCommandsSource : public CommandObjectParsed
 {
-private:
+public:
+    CommandObjectCommandsSource(CommandInterpreter &interpreter) :
+        CommandObjectParsed (interpreter,
+                             "command source",
+                             "Read in debugger commands from the file <filename> and execute them.",
+                             NULL),
+        m_options (interpreter)
+    {
+        CommandArgumentEntry arg;
+        CommandArgumentData file_arg;
+        
+        // Define the first (and only) variant of this arg.
+        file_arg.arg_type = eArgTypeFilename;
+        file_arg.arg_repetition = eArgRepeatPlain;
+        
+        // There is only one variant this argument could be; put it into the argument entry.
+        arg.push_back (file_arg);
+        
+        // Push the data for the first argument into the m_arguments vector.
+        m_arguments.push_back (arg);
+    }
+
+    ~CommandObjectCommandsSource () {}
+
+    virtual const char*
+    GetRepeatCommand (Args &current_command_args, uint32_t index)
+    {
+        return "";
+    }
+    
+    int
+    HandleArgumentCompletion (Args &input,
+                              int &cursor_index,
+                              int &cursor_char_position,
+                              OptionElementVector &opt_element_vector,
+                              int match_start_point,
+                              int max_return_elements,
+                              bool &word_complete,
+                              StringList &matches)
+    {
+        std::string completion_str (input.GetArgumentAtIndex(cursor_index));
+        completion_str.erase (cursor_char_position);
+        
+        CommandCompletions::InvokeCommonCompletionCallbacks (m_interpreter, 
+                                                             CommandCompletions::eDiskFileCompletion,
+                                                             completion_str.c_str(),
+                                                             match_start_point,
+                                                             max_return_elements,
+                                                             NULL,
+                                                             word_complete,
+                                                             matches);
+        return matches.GetSize();
+    }
+
+    virtual Options *
+    GetOptions ()
+    {
+        return &m_options;
+    }
+
+protected:
 
     class CommandOptions : public Options
     {
@@ -226,51 +280,13 @@ private:
         bool m_stop_on_continue;
     };
     
-    CommandOptions m_options;
-    
-    virtual Options *
-    GetOptions ()
-    {
-        return &m_options;
-    }
-
-public:
-    CommandObjectCommandsSource(CommandInterpreter &interpreter) :
-        CommandObject (interpreter,
-                       "command source",
-                       "Read in debugger commands from the file <filename> and execute them.",
-                       NULL),
-        m_options (interpreter)
-    {
-        CommandArgumentEntry arg;
-        CommandArgumentData file_arg;
-        
-        // Define the first (and only) variant of this arg.
-        file_arg.arg_type = eArgTypeFilename;
-        file_arg.arg_repetition = eArgRepeatPlain;
-        
-        // There is only one variant this argument could be; put it into the argument entry.
-        arg.push_back (file_arg);
-        
-        // Push the data for the first argument into the m_arguments vector.
-        m_arguments.push_back (arg);
-    }
-
-    ~CommandObjectCommandsSource ()
-    {
-    }
-
     bool
-    Execute
-    (
-        Args& args,
-        CommandReturnObject &result
-    )
+    DoExecute(Args& command, CommandReturnObject &result)
     {
-        const int argc = args.GetArgumentCount();
+        const int argc = command.GetArgumentCount();
         if (argc == 1)
         {
-            const char *filename = args.GetArgumentAtIndex(0);
+            const char *filename = command.GetArgumentAtIndex(0);
 
             result.AppendMessageWithFormat ("Executing commands in '%s'.\n", filename);
 
@@ -296,36 +312,7 @@ public:
         return result.Succeeded();
 
     }
-    
-    virtual const char*
-    GetRepeatCommand (Args &current_command_args, uint32_t index)
-    {
-        return "";
-    }
-    
-    int
-    HandleArgumentCompletion (Args &input,
-                              int &cursor_index,
-                              int &cursor_char_position,
-                              OptionElementVector &opt_element_vector,
-                              int match_start_point,
-                              int max_return_elements,
-                              bool &word_complete,
-                              StringList &matches)
-    {
-        std::string completion_str (input.GetArgumentAtIndex(cursor_index));
-        completion_str.erase (cursor_char_position);
-        
-        CommandCompletions::InvokeCommonCompletionCallbacks (m_interpreter, 
-                                                             CommandCompletions::eDiskFileCompletion,
-                                                             completion_str.c_str(),
-                                                             match_start_point,
-                                                             max_return_elements,
-                                                             NULL,
-                                                             word_complete,
-                                                             matches);
-        return matches.GetSize();
-    }
+    CommandOptions m_options;    
 };
 
 OptionDefinition
@@ -346,13 +333,13 @@ static const char *g_python_command_instructions =   "Enter your Python command(
                                                      "def my_command_impl(debugger, args, result, dict):";
 
 
-class CommandObjectCommandsAlias : public CommandObject
+class CommandObjectCommandsAlias : public CommandObjectRaw
 {
     
     
 public:
     CommandObjectCommandsAlias (CommandInterpreter &interpreter) :
-        CommandObject (interpreter, 
+        CommandObjectRaw (interpreter,
                        "command alias",
                        "Allow users to define their own debugger command abbreviations.",
                        NULL)
@@ -451,14 +438,9 @@ public:
     {
     }
 
-    bool
-    WantsRawCommandString ()
-    {
-        return true;
-    }
-    
-    bool
-    ExecuteRawCommandString (const char *raw_command_line, CommandReturnObject &result)
+protected:
+    virtual bool
+    DoExecute (const char *raw_command_line, CommandReturnObject &result)
     {
         Args args (raw_command_line);
         std::string raw_command_string (raw_command_line);
@@ -518,16 +500,24 @@ public:
         {
             // Note that args was initialized with the original command, and has not been updated to this point.
             // Therefore can we pass it to the version of Execute that does not need/expect raw input in the alias.
-            return Execute (args, result);
+            return HandleAliasingNormalCommand (args, result);
         }
         else
         {
+            return HandleAliasingRawCommand (alias_command, raw_command_string, *cmd_obj, result);
+        }
+        return result.Succeeded();
+    }
+
+    bool
+    HandleAliasingRawCommand (const std::string &alias_command, std::string &raw_command_string, CommandObject &cmd_obj, CommandReturnObject &result)
+    {
             // Verify & handle any options/arguments passed to the alias command
             
             OptionArgVectorSP option_arg_vector_sp = OptionArgVectorSP (new OptionArgVector);
             OptionArgVector *option_arg_vector = option_arg_vector_sp.get();
             
-            CommandObjectSP cmd_obj_sp = m_interpreter.GetCommandSPExact (cmd_obj->GetCommandName(), false);
+            CommandObjectSP cmd_obj_sp = m_interpreter.GetCommandSPExact (cmd_obj.GetCommandName(), false);
 
             if (!m_interpreter.ProcessAliasOptionsArgs (cmd_obj_sp, raw_command_string.c_str(), option_arg_vector_sp))
             {
@@ -562,16 +552,11 @@ public:
                 result.AppendError ("Unable to create requested alias.\n");
                 result.SetStatus (eReturnStatusFailed);
             }
-        }
-        return result.Succeeded();
+            return result.Succeeded ();
     }
-
+    
     bool
-    Execute
-    (
-        Args& args,
-        CommandReturnObject &result
-    )
+    HandleAliasingNormalCommand (Args& args, CommandReturnObject &result)
     {
         size_t argc = args.GetArgumentCount();
 
@@ -686,6 +671,7 @@ public:
 
         return result.Succeeded();
     }
+    
 };
 
 #pragma mark CommandObjectCommandsUnalias
@@ -693,11 +679,11 @@ public:
 // CommandObjectCommandsUnalias
 //-------------------------------------------------------------------------
 
-class CommandObjectCommandsUnalias : public CommandObject
+class CommandObjectCommandsUnalias : public CommandObjectParsed
 {
 public:
     CommandObjectCommandsUnalias (CommandInterpreter &interpreter) :
-        CommandObject (interpreter,
+        CommandObjectParsed (interpreter,
                        "command unalias",
                        "Allow the user to remove/delete a user-defined command abbreviation.",
                        NULL)
@@ -720,13 +706,9 @@ public:
     {
     }
 
-
+protected:
     bool
-    Execute
-    (
-        Args& args,
-        CommandReturnObject &result
-    )
+    DoExecute (Args& args, CommandReturnObject &result)
     {
         CommandObject::CommandMap::iterator pos;
         CommandObject *cmd_obj;
@@ -777,16 +759,16 @@ public:
     }
 };
 
-#pragma mark CommandObjectCommandsAddRegex
 //-------------------------------------------------------------------------
 // CommandObjectCommandsAddRegex
 //-------------------------------------------------------------------------
+#pragma mark CommandObjectCommandsAddRegex
 
-class CommandObjectCommandsAddRegex : public CommandObject
+class CommandObjectCommandsAddRegex : public CommandObjectParsed
 {
 public:
     CommandObjectCommandsAddRegex (CommandInterpreter &interpreter) :
-        CommandObject (interpreter,
+        CommandObjectParsed (interpreter,
                        "command regex",
                        "Allow the user to create a regular expression command.",
                        "command regex <cmd-name> [s/<regex>/<subst>/ ...]"),
@@ -822,10 +804,11 @@ public:
     }
     
     
+protected:
     bool
-    Execute (Args& args, CommandReturnObject &result)
+    DoExecute (Args& command, CommandReturnObject &result)
     {
-        const size_t argc = args.GetArgumentCount();
+        const size_t argc = command.GetArgumentCount();
         if (argc == 0)
         {
             result.AppendError ("usage: 'command regex <command-name> [s/<regex1>/<subst1>/ s/<regex2>/<subst2>/ ...]'\n");
@@ -834,7 +817,7 @@ public:
         else
         {   
             Error error;
-            const char *name = args.GetArgumentAtIndex(0);
+            const char *name = command.GetArgumentAtIndex(0);
             m_regex_cmd_ap.reset (new CommandObjectRegexCommand (m_interpreter, 
                                                                  name, 
                                                                  m_options.GetHelp (),
@@ -864,7 +847,7 @@ public:
             {
                 for (size_t arg_idx = 1; arg_idx < argc; ++arg_idx)
                 {
-                    llvm::StringRef arg_strref (args.GetArgumentAtIndex(arg_idx));
+                    llvm::StringRef arg_strref (command.GetArgumentAtIndex(arg_idx));
                     error = AppendRegexSubstitution (arg_strref);
                     if (error.Fail())
                         break;
@@ -1007,7 +990,78 @@ public:
                          InputReader &reader, 
                          lldb::InputReaderAction notification,
                          const char *bytes, 
-                         size_t bytes_len);
+                         size_t bytes_len)
+    {
+        CommandObjectCommandsAddRegex *add_regex_cmd = (CommandObjectCommandsAddRegex *) baton;
+        bool batch_mode = reader.GetDebugger().GetCommandInterpreter().GetBatchCommandMode();    
+        
+        switch (notification)
+        {
+            case eInputReaderActivate:
+                if (!batch_mode)
+                {
+                    StreamSP out_stream = reader.GetDebugger().GetAsyncOutputStream ();
+                    out_stream->Printf("%s\n", "Enter regular expressions in the form 's/<regex>/<subst>/' and terminate with an empty line:");
+                    out_stream->Flush();
+                }
+                break;
+            case eInputReaderReactivate:
+                break;
+                
+            case eInputReaderDeactivate:
+                break;
+            
+            case eInputReaderAsynchronousOutputWritten:
+                break;
+                        
+            case eInputReaderGotToken:
+                while (bytes_len > 0 && (bytes[bytes_len-1] == '\r' || bytes[bytes_len-1] == '\n'))
+                    --bytes_len;
+                if (bytes_len == 0)
+                    reader.SetIsDone(true);
+                else if (bytes)
+                {
+                    llvm::StringRef bytes_strref (bytes, bytes_len);
+                    Error error (add_regex_cmd->AppendRegexSubstitution (bytes_strref));
+                    if (error.Fail())
+                    {
+                        if (!batch_mode)
+                        {
+                            StreamSP out_stream = reader.GetDebugger().GetAsyncOutputStream();
+                            out_stream->Printf("error: %s\n", error.AsCString());
+                            out_stream->Flush();
+                        }
+                        add_regex_cmd->InputReaderDidCancel ();
+                        reader.SetIsDone (true);
+                    }
+                }
+                break;
+                
+            case eInputReaderInterrupt:
+                {
+                    reader.SetIsDone (true);
+                    if (!batch_mode)
+                    {
+                        StreamSP out_stream = reader.GetDebugger().GetAsyncOutputStream();
+                        out_stream->PutCString("Regular expression command creations was cancelled.\n");
+                        out_stream->Flush();
+                    }
+                    add_regex_cmd->InputReaderDidCancel ();
+                }
+                break;
+                
+            case eInputReaderEndOfFile:
+                reader.SetIsDone (true);
+                break;
+                
+            case eInputReaderDone:
+                add_regex_cmd->AddRegexCommandToInterpreter();
+                break;
+        }
+        
+        return bytes_len;
+    }
+
 private:
     std::auto_ptr<CommandObjectRegexCommand> m_regex_cmd_ap;    
 
@@ -1082,95 +1136,16 @@ private:
          std::string m_help;
          std::string m_syntax;
      };
-     
-     CommandOptions m_options;
-     
+          
      virtual Options *
      GetOptions ()
      {
          return &m_options;
      }
-
+     
+     CommandOptions m_options;
 };
 
-size_t
-CommandObjectCommandsAddRegex::InputReaderCallback (void *baton, 
-                                                    InputReader &reader, 
-                                                    lldb::InputReaderAction notification,
-                                                    const char *bytes, 
-                                                    size_t bytes_len)
-{
-    CommandObjectCommandsAddRegex *add_regex_cmd = (CommandObjectCommandsAddRegex *) baton;
-    bool batch_mode = reader.GetDebugger().GetCommandInterpreter().GetBatchCommandMode();    
-    
-    switch (notification)
-    {
-        case eInputReaderActivate:
-            if (!batch_mode)
-            {
-                StreamSP out_stream = reader.GetDebugger().GetAsyncOutputStream ();
-                out_stream->Printf("%s\n", "Enter regular expressions in the form 's/<regex>/<subst>/' and terminate with an empty line:");
-                out_stream->Flush();
-            }
-            break;
-        case eInputReaderReactivate:
-            break;
-            
-        case eInputReaderDeactivate:
-            break;
-        
-        case eInputReaderAsynchronousOutputWritten:
-            break;
-                    
-        case eInputReaderGotToken:
-            while (bytes_len > 0 && (bytes[bytes_len-1] == '\r' || bytes[bytes_len-1] == '\n'))
-                --bytes_len;
-            if (bytes_len == 0)
-                reader.SetIsDone(true);
-            else if (bytes)
-            {
-                llvm::StringRef bytes_strref (bytes, bytes_len);
-                Error error (add_regex_cmd->AppendRegexSubstitution (bytes_strref));
-                if (error.Fail())
-                {
-                    if (!batch_mode)
-                    {
-                        StreamSP out_stream = reader.GetDebugger().GetAsyncOutputStream();
-                        out_stream->Printf("error: %s\n", error.AsCString());
-                        out_stream->Flush();
-                    }
-                    add_regex_cmd->InputReaderDidCancel ();
-                    reader.SetIsDone (true);
-                }
-            }
-            break;
-            
-        case eInputReaderInterrupt:
-            {
-                reader.SetIsDone (true);
-                if (!batch_mode)
-                {
-                    StreamSP out_stream = reader.GetDebugger().GetAsyncOutputStream();
-                    out_stream->PutCString("Regular expression command creations was cancelled.\n");
-                    out_stream->Flush();
-                }
-                add_regex_cmd->InputReaderDidCancel ();
-            }
-            break;
-            
-        case eInputReaderEndOfFile:
-            reader.SetIsDone (true);
-            break;
-            
-        case eInputReaderDone:
-            add_regex_cmd->AddRegexCommandToInterpreter();
-            break;
-    }
-    
-    return bytes_len;
-}
-
-                                                                 
 OptionDefinition
 CommandObjectCommandsAddRegex::CommandOptions::g_option_table[] =
 {
@@ -1180,7 +1155,7 @@ CommandObjectCommandsAddRegex::CommandOptions::g_option_table[] =
 };
 
 
-class CommandObjectPythonFunction : public CommandObject
+class CommandObjectPythonFunction : public CommandObjectRaw
 {
 private:
     std::string m_function_name;
@@ -1192,12 +1167,12 @@ public:
                                  std::string name,
                                  std::string funct,
                                  ScriptedCommandSynchronicity synch) :
-    CommandObject (interpreter,
-                   name.c_str(),
-                   (std::string("Run Python function ") + funct).c_str(),
-                   NULL),
-    m_function_name(funct),
-    m_synchro(synch)
+        CommandObjectRaw (interpreter,
+                          name.c_str(),
+                          (std::string("Run Python function ") + funct).c_str(),
+                          NULL),
+        m_function_name(funct),
+        m_synchro(synch)
     {
         ScriptInterpreter* scripter = m_interpreter.GetScriptInterpreter();
         if (scripter)
@@ -1214,7 +1189,26 @@ public:
     }
     
     virtual bool
-    ExecuteRawCommandString (const char *raw_command_line, CommandReturnObject &result)
+    IsRemovable ()
+    {
+        return true;
+    }
+
+    const std::string&
+    GetFunctionName ()
+    {
+        return m_function_name;
+    }
+
+    ScriptedCommandSynchronicity
+    GetSynchronicity ()
+    {
+        return m_synchro;
+    }
+    
+protected:
+    virtual bool
+    DoExecute (const char *raw_command_line, CommandReturnObject &result)
     {
         ScriptInterpreter* scripter = m_interpreter.GetScriptInterpreter();
         
@@ -1235,55 +1229,78 @@ public:
         return result.Succeeded();
     }
     
-    virtual bool
-    WantsRawCommandString ()
-    {
-        return true;
-    }
-
-    bool
-    Execute (Args& command,
-             CommandReturnObject &result)
-    {
-        std::string cmd_string;
-        command.GetCommandString(cmd_string);
-        return ExecuteRawCommandString(cmd_string.c_str(), result);
-    }
-
-    virtual bool
-    IsRemovable ()
-    {
-        return true;
-    }
-
-    const std::string&
-    GetFunctionName ()
-    {
-        return m_function_name;
-    }
-
-    ScriptedCommandSynchronicity
-    GetSynchronicity ()
-    {
-        return m_synchro;
-    }
-    
 };
 
 //-------------------------------------------------------------------------
 // CommandObjectCommandsScriptImport
 //-------------------------------------------------------------------------
 
-class CommandObjectCommandsScriptImport : public CommandObject
+class CommandObjectCommandsScriptImport : public CommandObjectParsed
 {
-private:
+public:
+    CommandObjectCommandsScriptImport (CommandInterpreter &interpreter) :
+        CommandObjectParsed (interpreter,
+                             "command script import",
+                             "Import a scripting module in LLDB.",
+                             NULL),
+        m_options(interpreter)
+    {
+        CommandArgumentEntry arg1;
+        CommandArgumentData cmd_arg;
+        
+        // Define the first (and only) variant of this arg.
+        cmd_arg.arg_type = eArgTypeFilename;
+        cmd_arg.arg_repetition = eArgRepeatPlain;
+        
+        // There is only one variant this argument could be; put it into the argument entry.
+        arg1.push_back (cmd_arg);
+        
+        // Push the data for the first argument into the m_arguments vector.
+        m_arguments.push_back (arg1);
+    }
+    
+    ~CommandObjectCommandsScriptImport ()
+    {
+    }
+    
+    int
+    HandleArgumentCompletion (Args &input,
+                              int &cursor_index,
+                              int &cursor_char_position,
+                              OptionElementVector &opt_element_vector,
+                              int match_start_point,
+                              int max_return_elements,
+                              bool &word_complete,
+                              StringList &matches)
+    {
+        std::string completion_str (input.GetArgumentAtIndex(cursor_index));
+        completion_str.erase (cursor_char_position);
+        
+        CommandCompletions::InvokeCommonCompletionCallbacks (m_interpreter, 
+                                                             CommandCompletions::eDiskFileCompletion,
+                                                             completion_str.c_str(),
+                                                             match_start_point,
+                                                             max_return_elements,
+                                                             NULL,
+                                                             word_complete,
+                                                             matches);
+        return matches.GetSize();
+    }
+    
+    virtual Options *
+    GetOptions ()
+    {
+        return &m_options;
+    }
+
+protected:
     
     class CommandOptions : public Options
     {
     public:
         
         CommandOptions (CommandInterpreter &interpreter) :
-        Options (interpreter)
+            Options (interpreter)
         {
         }
         
@@ -1329,47 +1346,9 @@ private:
         
         bool m_allow_reload;
     };
-    
-    CommandOptions m_options;
-    
-    virtual Options *
-    GetOptions ()
-    {
-        return &m_options;
-    }
 
-public:
-    CommandObjectCommandsScriptImport (CommandInterpreter &interpreter) :
-    CommandObject (interpreter,
-                   "command script import",
-                   "Import a scripting module in LLDB.",
-                   NULL),
-    m_options(interpreter)
-    {
-        CommandArgumentEntry arg1;
-        CommandArgumentData cmd_arg;
-        
-        // Define the first (and only) variant of this arg.
-        cmd_arg.arg_type = eArgTypeFilename;
-        cmd_arg.arg_repetition = eArgRepeatPlain;
-        
-        // There is only one variant this argument could be; put it into the argument entry.
-        arg1.push_back (cmd_arg);
-        
-        // Push the data for the first argument into the m_arguments vector.
-        m_arguments.push_back (arg1);
-    }
-    
-    ~CommandObjectCommandsScriptImport ()
-    {
-    }
-    
     bool
-    Execute
-    (
-     Args& args,
-     CommandReturnObject &result
-     )
+    DoExecute (Args& command, CommandReturnObject &result)
     {
         
         if (m_interpreter.GetDebugger().GetScriptLanguage() != lldb::eScriptLanguagePython)
@@ -1379,7 +1358,7 @@ public:
             return false;
         }
         
-        size_t argc = args.GetArgumentCount();
+        size_t argc = command.GetArgumentCount();
         
         if (argc != 1)
         {
@@ -1388,7 +1367,7 @@ public:
             return false;
         }
         
-        std::string path = args.GetArgumentAtIndex(0);
+        std::string path = command.GetArgumentAtIndex(0);
         Error error;
         
         if (m_interpreter.GetScriptInterpreter()->LoadScriptingModule(path.c_str(),
@@ -1406,29 +1385,7 @@ public:
         return result.Succeeded();
     }
     
-    int
-    HandleArgumentCompletion (Args &input,
-                              int &cursor_index,
-                              int &cursor_char_position,
-                              OptionElementVector &opt_element_vector,
-                              int match_start_point,
-                              int max_return_elements,
-                              bool &word_complete,
-                              StringList &matches)
-    {
-        std::string completion_str (input.GetArgumentAtIndex(cursor_index));
-        completion_str.erase (cursor_char_position);
-        
-        CommandCompletions::InvokeCommonCompletionCallbacks (m_interpreter, 
-                                                             CommandCompletions::eDiskFileCompletion,
-                                                             completion_str.c_str(),
-                                                             match_start_point,
-                                                             max_return_elements,
-                                                             NULL,
-                                                             word_complete,
-                                                             matches);
-        return matches.GetSize();
-    }
+    CommandOptions m_options;
 };
 
 OptionDefinition
@@ -1443,9 +1400,41 @@ CommandObjectCommandsScriptImport::CommandOptions::g_option_table[] =
 // CommandObjectCommandsScriptAdd
 //-------------------------------------------------------------------------
 
-class CommandObjectCommandsScriptAdd : public CommandObject
+class CommandObjectCommandsScriptAdd : public CommandObjectParsed
 {
-private:
+public:
+    CommandObjectCommandsScriptAdd(CommandInterpreter &interpreter) :
+        CommandObjectParsed (interpreter,
+                             "command script add",
+                             "Add a scripted function as an LLDB command.",
+                             NULL),
+        m_options (interpreter)
+    {
+        CommandArgumentEntry arg1;
+        CommandArgumentData cmd_arg;
+        
+        // Define the first (and only) variant of this arg.
+        cmd_arg.arg_type = eArgTypeCommandName;
+        cmd_arg.arg_repetition = eArgRepeatPlain;
+        
+        // There is only one variant this argument could be; put it into the argument entry.
+        arg1.push_back (cmd_arg);
+        
+        // Push the data for the first argument into the m_arguments vector.
+        m_arguments.push_back (arg1);
+    }
+    
+    ~CommandObjectCommandsScriptAdd ()
+    {
+    }
+    
+    virtual Options *
+    GetOptions ()
+    {
+        return &m_options;
+    }
+    
+protected:
     
     class CommandOptions : public Options
     {
@@ -1505,15 +1494,8 @@ private:
         std::string m_funct_name;
         ScriptedCommandSynchronicity m_synchronous;
     };
-    
-    CommandOptions m_options;
-    
-    virtual Options *
-    GetOptions ()
-    {
-        return &m_options;
-    }
-    
+
+private:
     class PythonAliasReader : public InputReaderEZ
     {
     private:
@@ -1632,38 +1614,9 @@ private:
         }
     };
     
-public:
-    CommandObjectCommandsScriptAdd(CommandInterpreter &interpreter) :
-    CommandObject (interpreter,
-                   "command script add",
-                   "Add a scripted function as an LLDB command.",
-                   NULL),
-    m_options (interpreter)
-    {
-        CommandArgumentEntry arg1;
-        CommandArgumentData cmd_arg;
-        
-        // Define the first (and only) variant of this arg.
-        cmd_arg.arg_type = eArgTypeCommandName;
-        cmd_arg.arg_repetition = eArgRepeatPlain;
-        
-        // There is only one variant this argument could be; put it into the argument entry.
-        arg1.push_back (cmd_arg);
-        
-        // Push the data for the first argument into the m_arguments vector.
-        m_arguments.push_back (arg1);
-    }
-    
-    ~CommandObjectCommandsScriptAdd ()
-    {
-    }
-    
+protected:
     bool
-    Execute
-    (
-     Args& args,
-     CommandReturnObject &result
-     )
+    DoExecute (Args& command, CommandReturnObject &result)
     {
         
         if (m_interpreter.GetDebugger().GetScriptLanguage() != lldb::eScriptLanguagePython)
@@ -1673,7 +1626,7 @@ public:
             return false;
         }
         
-        size_t argc = args.GetArgumentCount();
+        size_t argc = command.GetArgumentCount();
         
         if (argc != 1)
         {
@@ -1682,7 +1635,7 @@ public:
             return false;
         }
         
-        std::string cmd_name = args.GetArgumentAtIndex(0);
+        std::string cmd_name = command.GetArgumentAtIndex(0);
         
         if (m_options.m_funct_name.empty())
         {
@@ -1734,6 +1687,8 @@ public:
         return result.Succeeded();
         
     }
+    
+    CommandOptions m_options;
 };
 
 static OptionEnumValueElement g_script_synchro_type[] =
@@ -1756,13 +1711,13 @@ CommandObjectCommandsScriptAdd::CommandOptions::g_option_table[] =
 // CommandObjectCommandsScriptList
 //-------------------------------------------------------------------------
 
-class CommandObjectCommandsScriptList : public CommandObject
+class CommandObjectCommandsScriptList : public CommandObjectParsed
 {
 private:
 
 public:
     CommandObjectCommandsScriptList(CommandInterpreter &interpreter) :
-    CommandObject (interpreter,
+    CommandObjectParsed (interpreter,
                    "command script list",
                    "List defined scripted commands.",
                    NULL)
@@ -1774,11 +1729,7 @@ public:
     }
     
     bool
-    Execute
-    (
-     Args& args,
-     CommandReturnObject &result
-     )
+    DoExecute (Args& command, CommandReturnObject &result)
     {
         
         m_interpreter.GetHelp(result,
@@ -1796,16 +1747,16 @@ public:
 // CommandObjectCommandsScriptClear
 //-------------------------------------------------------------------------
 
-class CommandObjectCommandsScriptClear : public CommandObject
+class CommandObjectCommandsScriptClear : public CommandObjectParsed
 {
 private:
     
 public:
     CommandObjectCommandsScriptClear(CommandInterpreter &interpreter) :
-    CommandObject (interpreter,
-                   "command script clear",
-                   "Delete all scripted commands.",
-                   NULL)
+        CommandObjectParsed (interpreter,
+                             "command script clear",
+                             "Delete all scripted commands.",
+                             NULL)
     {
     }
     
@@ -1813,12 +1764,9 @@ public:
     {
     }
     
+protected:
     bool
-    Execute
-    (
-     Args& args,
-     CommandReturnObject &result
-     )
+    DoExecute (Args& command, CommandReturnObject &result)
     {
         
         m_interpreter.RemoveAllUser();
@@ -1826,8 +1774,6 @@ public:
         result.SetStatus (eReturnStatusSuccessFinishResult);
         
         return true;
-        
-        
     }
 };
 
@@ -1835,16 +1781,14 @@ public:
 // CommandObjectCommandsScriptDelete
 //-------------------------------------------------------------------------
 
-class CommandObjectCommandsScriptDelete : public CommandObject
+class CommandObjectCommandsScriptDelete : public CommandObjectParsed
 {
-private:
-    
 public:
     CommandObjectCommandsScriptDelete(CommandInterpreter &interpreter) :
-    CommandObject (interpreter,
-                   "command script delete",
-                   "Delete a scripted command.",
-                   NULL)
+        CommandObjectParsed (interpreter,
+                             "command script delete",
+                             "Delete a scripted command.",
+                             NULL)
     {
         CommandArgumentEntry arg1;
         CommandArgumentData cmd_arg;
@@ -1864,15 +1808,12 @@ public:
     {
     }
     
+protected:
     bool
-    Execute
-    (
-     Args& args,
-     CommandReturnObject &result
-     )
+    DoExecute (Args& command, CommandReturnObject &result)
     {
         
-        size_t argc = args.GetArgumentCount();
+        size_t argc = command.GetArgumentCount();
         
         if (argc != 1)
         {
@@ -1881,7 +1822,7 @@ public:
             return false;
         }
         
-        const char* cmd_name = args.GetArgumentAtIndex(0);
+        const char* cmd_name = command.GetArgumentAtIndex(0);
         
         if (cmd_name && *cmd_name && m_interpreter.HasUserCommands() && m_interpreter.UserCommandExists(cmd_name))
         {

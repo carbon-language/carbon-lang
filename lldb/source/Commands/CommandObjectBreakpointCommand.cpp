@@ -28,143 +28,22 @@ using namespace lldb;
 using namespace lldb_private;
 
 //-------------------------------------------------------------------------
-// CommandObjectBreakpointCommandAdd::CommandOptions
-//-------------------------------------------------------------------------
-
-CommandObjectBreakpointCommandAdd::CommandOptions::CommandOptions (CommandInterpreter &interpreter) :
-    Options (interpreter),
-    m_use_commands (false),
-    m_use_script_language (false),
-    m_script_language (eScriptLanguageNone),
-    m_use_one_liner (false),
-    m_one_liner(),
-    m_function_name()
-{
-}
-
-CommandObjectBreakpointCommandAdd::CommandOptions::~CommandOptions ()
-{
-}
-
-// FIXME: "script-type" needs to have its contents determined dynamically, so somebody can add a new scripting
-// language to lldb and have it pickable here without having to change this enumeration by hand and rebuild lldb proper.
-
-static OptionEnumValueElement
-g_script_option_enumeration[4] =
-{
-    { eScriptLanguageNone,    "command",         "Commands are in the lldb command interpreter language"},
-    { eScriptLanguagePython,  "python",          "Commands are in the Python language."},
-    { eSortOrderByName,       "default-script",  "Commands are in the default scripting language."},
-    { 0,                      NULL,              NULL }
-};
-
-OptionDefinition
-CommandObjectBreakpointCommandAdd::CommandOptions::g_option_table[] =
-{
-    { LLDB_OPT_SET_1, false, "one-liner", 'o', required_argument, NULL, NULL, eArgTypeOneLiner,
-        "Specify a one-line breakpoint command inline. Be sure to surround it with quotes." },
-
-    { LLDB_OPT_SET_ALL, false, "stop-on-error", 'e', required_argument, NULL, NULL, eArgTypeBoolean,
-        "Specify whether breakpoint command execution should terminate on error." },
-
-    { LLDB_OPT_SET_ALL,   false, "script-type",     's', required_argument, g_script_option_enumeration, NULL, eArgTypeNone,
-        "Specify the language for the commands - if none is specified, the lldb command interpreter will be used."},
-
-    { LLDB_OPT_SET_2,   false, "python-function",     'F', required_argument, NULL, NULL, eArgTypePythonFunction,
-        "Give the name of a Python function to run as command for this breakpoint. Be sure to give a module name if appropriate."},
-    
-    { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
-};
-
-const OptionDefinition*
-CommandObjectBreakpointCommandAdd::CommandOptions::GetDefinitions ()
-{
-    return g_option_table;
-}
-
-
-Error
-CommandObjectBreakpointCommandAdd::CommandOptions::SetOptionValue 
-(
-    uint32_t option_idx, 
-    const char *option_arg
-)
-{
-    Error error;
-    char short_option = (char) m_getopt_table[option_idx].val;
-
-    switch (short_option)
-    {
-    case 'o':
-        m_use_one_liner = true;
-        m_one_liner = option_arg;
-        break;
-
-    case 's':
-        m_script_language = (lldb::ScriptLanguage) Args::StringToOptionEnum (option_arg, 
-                                                                             g_option_table[option_idx].enum_values, 
-                                                                             eScriptLanguageNone,
-                                                                             error);
-
-        if (m_script_language == eScriptLanguagePython || m_script_language == eScriptLanguageDefault)
-        {
-            m_use_script_language = true;
-        }
-        else
-        {
-            m_use_script_language = false;
-        }          
-        break;
-
-    case 'e':
-        {
-            bool success = false;
-            m_stop_on_error = Args::StringToBoolean(option_arg, false, &success);
-            if (!success)
-                error.SetErrorStringWithFormat("invalid value for stop-on-error: \"%s\"", option_arg);
-        }
-        break;
-            
-    case 'F':
-        {
-            m_use_one_liner = false;
-            m_use_script_language = true;
-            m_function_name.assign(option_arg);
-        }
-        break;
-
-    default:
-        break;
-    }
-    return error;
-}
-
-void
-CommandObjectBreakpointCommandAdd::CommandOptions::OptionParsingStarting ()
-{
-    m_use_commands = true;
-    m_use_script_language = false;
-    m_script_language = eScriptLanguageNone;
-
-    m_use_one_liner = false;
-    m_stop_on_error = true;
-    m_one_liner.clear();
-    m_function_name.clear();
-}
-
-//-------------------------------------------------------------------------
 // CommandObjectBreakpointCommandAdd
 //-------------------------------------------------------------------------
 
 
-CommandObjectBreakpointCommandAdd::CommandObjectBreakpointCommandAdd (CommandInterpreter &interpreter) :
-    CommandObject (interpreter,
-                   "add",
-                   "Add a set of commands to a breakpoint, to be executed whenever the breakpoint is hit.",
-                   NULL),
-    m_options (interpreter)
+class CommandObjectBreakpointCommandAdd : public CommandObjectParsed
 {
-    SetHelpLong (
+public:
+
+    CommandObjectBreakpointCommandAdd (CommandInterpreter &interpreter) :
+        CommandObjectParsed (interpreter,
+                             "add",
+                             "Add a set of commands to a breakpoint, to be executed whenever the breakpoint is hit.",
+                             NULL),
+        m_options (interpreter)
+    {
+        SetHelpLong (
 "\nGeneral information about entering breakpoint commands \n\
 ------------------------------------------------------ \n\
  \n\
@@ -282,470 +161,547 @@ You may enter any debugger command, exactly as you would at the \n\
 debugger prompt.  You may enter as many debugger commands as you like, \n\
 but do NOT enter more than one command per line. \n" );
 
+        CommandArgumentEntry arg;
+        CommandArgumentData bp_id_arg;
 
-    CommandArgumentEntry arg;
-    CommandArgumentData bp_id_arg;
+        // Define the first (and only) variant of this arg.
+        bp_id_arg.arg_type = eArgTypeBreakpointID;
+        bp_id_arg.arg_repetition = eArgRepeatPlain;
 
-    // Define the first (and only) variant of this arg.
-    bp_id_arg.arg_type = eArgTypeBreakpointID;
-    bp_id_arg.arg_repetition = eArgRepeatPlain;
+        // There is only one variant this argument could be; put it into the argument entry.
+        arg.push_back (bp_id_arg);
 
-    // There is only one variant this argument could be; put it into the argument entry.
-    arg.push_back (bp_id_arg);
-
-    // Push the data for the first argument into the m_arguments vector.
-    m_arguments.push_back (arg);
-}
-
-CommandObjectBreakpointCommandAdd::~CommandObjectBreakpointCommandAdd ()
-{
-}
-
-bool
-CommandObjectBreakpointCommandAdd::Execute 
-(
-    Args& command,
-    CommandReturnObject &result
-)
-{
-    Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
-
-    if (target == NULL)
-    {
-        result.AppendError ("There is not a current executable; there are no breakpoints to which to add commands");
-        result.SetStatus (eReturnStatusFailed);
-        return false;
+        // Push the data for the first argument into the m_arguments vector.
+        m_arguments.push_back (arg);
     }
 
-    const BreakpointList &breakpoints = target->GetBreakpointList();
-    size_t num_breakpoints = breakpoints.GetSize();
+    virtual
+    ~CommandObjectBreakpointCommandAdd () {}
 
-    if (num_breakpoints == 0)
+    virtual Options *
+    GetOptions ()
     {
-        result.AppendError ("No breakpoints exist to have commands added");
-        result.SetStatus (eReturnStatusFailed);
-        return false;
+        return &m_options;
     }
 
-    if (m_options.m_use_script_language == false && m_options.m_function_name.size())
+    void
+    CollectDataForBreakpointCommandCallback (BreakpointOptions *bp_options, 
+                                             CommandReturnObject &result)
     {
-        result.AppendError ("need to enable scripting to have a function run as a breakpoint command");
-        result.SetStatus (eReturnStatusFailed);
-        return false;
-    }
-    
-    BreakpointIDList valid_bp_ids;
-    CommandObjectMultiwordBreakpoint::VerifyBreakpointIDs (command, target, result, &valid_bp_ids);
-
-    if (result.Succeeded())
-    {
-        const size_t count = valid_bp_ids.GetSize();
-        for (size_t i = 0; i < count; ++i)
+        InputReaderSP reader_sp (new InputReader(m_interpreter.GetDebugger()));
+        std::auto_ptr<BreakpointOptions::CommandData> data_ap(new BreakpointOptions::CommandData());
+        if (reader_sp && data_ap.get())
         {
-            BreakpointID cur_bp_id = valid_bp_ids.GetBreakpointIDAtIndex (i);
-            if (cur_bp_id.GetBreakpointID() != LLDB_INVALID_BREAK_ID)
+            BatonSP baton_sp (new BreakpointOptions::CommandBaton (data_ap.release()));
+            bp_options->SetCallback (BreakpointOptionsCallbackFunction, baton_sp);
+
+            Error err (reader_sp->Initialize (CommandObjectBreakpointCommandAdd::GenerateBreakpointCommandCallback,
+                                              bp_options,                   // baton
+                                              eInputReaderGranularityLine,  // token size, to pass to callback function
+                                              "DONE",                       // end token
+                                              "> ",                         // prompt
+                                              true));                       // echo input
+            if (err.Success())
             {
-                Breakpoint *bp = target->GetBreakpointByID (cur_bp_id.GetBreakpointID()).get();
-                BreakpointOptions *bp_options = NULL;
-                if (cur_bp_id.GetLocationID() == LLDB_INVALID_BREAK_ID)
-                {
-                    // This breakpoint does not have an associated location.
-                    bp_options = bp->GetOptions();
-                }
-                else                    
-                {
-                    BreakpointLocationSP bp_loc_sp(bp->FindLocationByID (cur_bp_id.GetLocationID()));
-                    // This breakpoint does have an associated location.
-                    // Get its breakpoint options.
-                    if (bp_loc_sp)
-                        bp_options = bp_loc_sp->GetLocationOptions();
-                }
-
-                // Skip this breakpoint if bp_options is not good.
-                if (bp_options == NULL) continue;
-
-                // If we are using script language, get the script interpreter
-                // in order to set or collect command callback.  Otherwise, call
-                // the methods associated with this object.
-                if (m_options.m_use_script_language)
-                {
-                    // Special handling for one-liner specified inline.
-                    if (m_options.m_use_one_liner)
-                    {
-                        m_interpreter.GetScriptInterpreter()->SetBreakpointCommandCallback (bp_options,
-                                                                                            m_options.m_one_liner.c_str());
-                    }
-                    // Special handling for using a Python function by name
-                    // instead of extending the breakpoint callback data structures, we just automatize
-                    // what the user would do manually: make their breakpoint command be a function call
-                    else if (m_options.m_function_name.size())
-                    {
-                        std::string oneliner(m_options.m_function_name);
-                        oneliner += "(frame, bp_loc, dict)";
-                        m_interpreter.GetScriptInterpreter()->SetBreakpointCommandCallback (bp_options,
-                                                                                            oneliner.c_str());
-                    }
-                    else
-                    {
-                        m_interpreter.GetScriptInterpreter()->CollectDataForBreakpointCommandCallback (bp_options,
-                                                                                                       result);
-                    }
-                }
-                else
-                {
-                    // Special handling for one-liner specified inline.
-                    if (m_options.m_use_one_liner)
-                        SetBreakpointCommandCallback (bp_options,
-                                                      m_options.m_one_liner.c_str());
-                    else
-                        CollectDataForBreakpointCommandCallback (bp_options, 
-                                                                 result);
-                }
+                m_interpreter.GetDebugger().PushInputReader (reader_sp);
+                result.SetStatus (eReturnStatusSuccessFinishNoResult);
             }
-        }
-    }
-
-    return result.Succeeded();
-}
-
-Options *
-CommandObjectBreakpointCommandAdd::GetOptions ()
-{
-    return &m_options;
-}
-
-const char *g_reader_instructions = "Enter your debugger command(s).  Type 'DONE' to end.";
-
-void
-CommandObjectBreakpointCommandAdd::CollectDataForBreakpointCommandCallback
-(
-    BreakpointOptions *bp_options,
-    CommandReturnObject &result
-)
-{
-    InputReaderSP reader_sp (new InputReader(m_interpreter.GetDebugger()));
-    std::auto_ptr<BreakpointOptions::CommandData> data_ap(new BreakpointOptions::CommandData());
-    if (reader_sp && data_ap.get())
-    {
-        BatonSP baton_sp (new BreakpointOptions::CommandBaton (data_ap.release()));
-        bp_options->SetCallback (CommandObjectBreakpointCommand::BreakpointOptionsCallbackFunction, baton_sp);
-
-        Error err (reader_sp->Initialize (CommandObjectBreakpointCommandAdd::GenerateBreakpointCommandCallback,
-                                          bp_options,                   // baton
-                                          eInputReaderGranularityLine,  // token size, to pass to callback function
-                                          "DONE",                       // end token
-                                          "> ",                         // prompt
-                                          true));                       // echo input
-        if (err.Success())
-        {
-            m_interpreter.GetDebugger().PushInputReader (reader_sp);
-            result.SetStatus (eReturnStatusSuccessFinishNoResult);
+            else
+            {
+                result.AppendError (err.AsCString());
+                result.SetStatus (eReturnStatusFailed);
+            }
         }
         else
         {
-            result.AppendError (err.AsCString());
+            result.AppendError("out of memory");
             result.SetStatus (eReturnStatusFailed);
         }
+
     }
-    else
-    {
-        result.AppendError("out of memory");
-        result.SetStatus (eReturnStatusFailed);
-    }
-
-}
-
-// Set a one-liner as the callback for the breakpoint.
-void
-CommandObjectBreakpointCommandAdd::SetBreakpointCommandCallback (BreakpointOptions *bp_options,
-                                                                 const char *oneliner)
-{
-    std::auto_ptr<BreakpointOptions::CommandData> data_ap(new BreakpointOptions::CommandData());
-
-    // It's necessary to set both user_source and script_source to the oneliner.
-    // The former is used to generate callback description (as in breakpoint command list)
-    // while the latter is used for Python to interpret during the actual callback.
-    data_ap->user_source.AppendString (oneliner);
-    data_ap->script_source.assign (oneliner);
-    data_ap->stop_on_error = m_options.m_stop_on_error;
-
-    BatonSP baton_sp (new BreakpointOptions::CommandBaton (data_ap.release()));
-    bp_options->SetCallback (CommandObjectBreakpointCommand::BreakpointOptionsCallbackFunction, baton_sp);
-
-    return;
-}
-
-size_t
-CommandObjectBreakpointCommandAdd::GenerateBreakpointCommandCallback
-(
-    void *baton, 
-    InputReader &reader, 
-    lldb::InputReaderAction notification,
-    const char *bytes, 
-    size_t bytes_len
-)
-{
-    StreamSP out_stream = reader.GetDebugger().GetAsyncOutputStream();
-    bool batch_mode = reader.GetDebugger().GetCommandInterpreter().GetBatchCommandMode();
     
-    switch (notification)
+    /// Set a one-liner as the callback for the breakpoint.
+    void 
+    SetBreakpointCommandCallback (BreakpointOptions *bp_options,
+                                  const char *oneliner)
     {
-    case eInputReaderActivate:
-        if (!batch_mode)
-        {
-            out_stream->Printf ("%s\n", g_reader_instructions);
-            if (reader.GetPrompt())
-                out_stream->Printf ("%s", reader.GetPrompt());
-            out_stream->Flush();
-        }
-        break;
+        std::auto_ptr<BreakpointOptions::CommandData> data_ap(new BreakpointOptions::CommandData());
 
-    case eInputReaderDeactivate:
-        break;
+        // It's necessary to set both user_source and script_source to the oneliner.
+        // The former is used to generate callback description (as in breakpoint command list)
+        // while the latter is used for Python to interpret during the actual callback.
+        data_ap->user_source.AppendString (oneliner);
+        data_ap->script_source.assign (oneliner);
+        data_ap->stop_on_error = m_options.m_stop_on_error;
 
-    case eInputReaderReactivate:
-        if (reader.GetPrompt() && !batch_mode)
-        {
-            out_stream->Printf ("%s", reader.GetPrompt());
-            out_stream->Flush();
-        }
-        break;
+        BatonSP baton_sp (new BreakpointOptions::CommandBaton (data_ap.release()));
+        bp_options->SetCallback (BreakpointOptionsCallbackFunction, baton_sp);
 
-    case eInputReaderAsynchronousOutputWritten:
-        break;
+        return;
+    }
+
+    static size_t
+    GenerateBreakpointCommandCallback (void *baton, 
+                                       InputReader &reader, 
+                                       lldb::InputReaderAction notification,
+                                       const char *bytes, 
+                                       size_t bytes_len)
+    {
+        StreamSP out_stream = reader.GetDebugger().GetAsyncOutputStream();
+        bool batch_mode = reader.GetDebugger().GetCommandInterpreter().GetBatchCommandMode();
         
-    case eInputReaderGotToken:
-        if (bytes && bytes_len && baton)
+        switch (notification)
         {
-            BreakpointOptions *bp_options = (BreakpointOptions *) baton;
-            if (bp_options)
-            {
-                Baton *bp_options_baton = bp_options->GetBaton();
-                if (bp_options_baton)
-                    ((BreakpointOptions::CommandData *)bp_options_baton->m_data)->user_source.AppendString (bytes, bytes_len); 
-            }
-        }
-        if (!reader.IsDone() && reader.GetPrompt() && !batch_mode)
-        {
-            out_stream->Printf ("%s", reader.GetPrompt());
-            out_stream->Flush();
-        }
-        break;
-        
-    case eInputReaderInterrupt:
-        {
-            // Finish, and cancel the breakpoint command.
-            reader.SetIsDone (true);
-            BreakpointOptions *bp_options = (BreakpointOptions *) baton;
-            if (bp_options)
-            {
-                Baton *bp_options_baton = bp_options->GetBaton ();
-                if (bp_options_baton)
-                {
-                    ((BreakpointOptions::CommandData *) bp_options_baton->m_data)->user_source.Clear();
-                    ((BreakpointOptions::CommandData *) bp_options_baton->m_data)->script_source.clear();
-                }
-            }
+        case eInputReaderActivate:
             if (!batch_mode)
             {
-                out_stream->Printf ("Warning: No command attached to breakpoint.\n");
+                out_stream->Printf ("%s\n", g_reader_instructions);
+                if (reader.GetPrompt())
+                    out_stream->Printf ("%s", reader.GetPrompt());
                 out_stream->Flush();
             }
+            break;
+
+        case eInputReaderDeactivate:
+            break;
+
+        case eInputReaderReactivate:
+            if (reader.GetPrompt() && !batch_mode)
+            {
+                out_stream->Printf ("%s", reader.GetPrompt());
+                out_stream->Flush();
+            }
+            break;
+
+        case eInputReaderAsynchronousOutputWritten:
+            break;
+            
+        case eInputReaderGotToken:
+            if (bytes && bytes_len && baton)
+            {
+                BreakpointOptions *bp_options = (BreakpointOptions *) baton;
+                if (bp_options)
+                {
+                    Baton *bp_options_baton = bp_options->GetBaton();
+                    if (bp_options_baton)
+                        ((BreakpointOptions::CommandData *)bp_options_baton->m_data)->user_source.AppendString (bytes, bytes_len); 
+                }
+            }
+            if (!reader.IsDone() && reader.GetPrompt() && !batch_mode)
+            {
+                out_stream->Printf ("%s", reader.GetPrompt());
+                out_stream->Flush();
+            }
+            break;
+            
+        case eInputReaderInterrupt:
+            {
+                // Finish, and cancel the breakpoint command.
+                reader.SetIsDone (true);
+                BreakpointOptions *bp_options = (BreakpointOptions *) baton;
+                if (bp_options)
+                {
+                    Baton *bp_options_baton = bp_options->GetBaton ();
+                    if (bp_options_baton)
+                    {
+                        ((BreakpointOptions::CommandData *) bp_options_baton->m_data)->user_source.Clear();
+                        ((BreakpointOptions::CommandData *) bp_options_baton->m_data)->script_source.clear();
+                    }
+                }
+                if (!batch_mode)
+                {
+                    out_stream->Printf ("Warning: No command attached to breakpoint.\n");
+                    out_stream->Flush();
+                }
+            }
+            break;
+            
+        case eInputReaderEndOfFile:
+            reader.SetIsDone (true);
+            break;
+            
+        case eInputReaderDone:
+            break;
         }
-        break;
+
+        return bytes_len;
+    }
+    
+    static bool
+    BreakpointOptionsCallbackFunction (void *baton,
+                                       StoppointCallbackContext *context, 
+                                       lldb::user_id_t break_id,
+                                       lldb::user_id_t break_loc_id)
+    {
+        bool ret_value = true;
+        if (baton == NULL)
+            return true;
         
-    case eInputReaderEndOfFile:
-        reader.SetIsDone (true);
-        break;
         
-    case eInputReaderDone:
-        break;
+        BreakpointOptions::CommandData *data = (BreakpointOptions::CommandData *) baton;
+        StringList &commands = data->user_source;
+        
+        if (commands.GetSize() > 0)
+        {
+            ExecutionContext exe_ctx (context->exe_ctx_ref);
+            Target *target = exe_ctx.GetTargetPtr();
+            if (target)
+            {
+                CommandReturnObject result;
+                Debugger &debugger = target->GetDebugger();
+                // Rig up the results secondary output stream to the debugger's, so the output will come out synchronously
+                // if the debugger is set up that way.
+                    
+                StreamSP output_stream (debugger.GetAsyncOutputStream());
+                StreamSP error_stream (debugger.GetAsyncErrorStream());
+                result.SetImmediateOutputStream (output_stream);
+                result.SetImmediateErrorStream (error_stream);
+        
+                bool stop_on_continue = true;
+                bool echo_commands    = false;
+                bool print_results    = true;
+
+                debugger.GetCommandInterpreter().HandleCommands (commands, 
+                                                                 &exe_ctx,
+                                                                 stop_on_continue, 
+                                                                 data->stop_on_error, 
+                                                                 echo_commands, 
+                                                                 print_results,
+                                                                 eLazyBoolNo,
+                                                                 result);
+                result.GetImmediateOutputStream()->Flush();
+                result.GetImmediateErrorStream()->Flush();
+           }
+        }
+        return ret_value;
+    }    
+
+    class CommandOptions : public Options
+    {
+    public:
+
+        CommandOptions (CommandInterpreter &interpreter) :
+            Options (interpreter),
+            m_use_commands (false),
+            m_use_script_language (false),
+            m_script_language (eScriptLanguageNone),
+            m_use_one_liner (false),
+            m_one_liner(),
+            m_function_name()
+        {
+        }
+
+        virtual
+        ~CommandOptions () {}
+
+        virtual Error
+        SetOptionValue (uint32_t option_idx, const char *option_arg)
+        {
+            Error error;
+            char short_option = (char) m_getopt_table[option_idx].val;
+
+            switch (short_option)
+            {
+            case 'o':
+                m_use_one_liner = true;
+                m_one_liner = option_arg;
+                break;
+
+            case 's':
+                m_script_language = (lldb::ScriptLanguage) Args::StringToOptionEnum (option_arg, 
+                                                                                     g_option_table[option_idx].enum_values, 
+                                                                                     eScriptLanguageNone,
+                                                                                     error);
+
+                if (m_script_language == eScriptLanguagePython || m_script_language == eScriptLanguageDefault)
+                {
+                    m_use_script_language = true;
+                }
+                else
+                {
+                    m_use_script_language = false;
+                }          
+                break;
+
+            case 'e':
+                {
+                    bool success = false;
+                    m_stop_on_error = Args::StringToBoolean(option_arg, false, &success);
+                    if (!success)
+                        error.SetErrorStringWithFormat("invalid value for stop-on-error: \"%s\"", option_arg);
+                }
+                break;
+                    
+            case 'F':
+                {
+                    m_use_one_liner = false;
+                    m_use_script_language = true;
+                    m_function_name.assign(option_arg);
+                }
+                break;
+
+            default:
+                break;
+            }
+            return error;
+        }
+        void
+        OptionParsingStarting ()
+        {
+            m_use_commands = true;
+            m_use_script_language = false;
+            m_script_language = eScriptLanguageNone;
+
+            m_use_one_liner = false;
+            m_stop_on_error = true;
+            m_one_liner.clear();
+            m_function_name.clear();
+        }
+
+        const OptionDefinition*
+        GetDefinitions ()
+        {
+            return g_option_table;
+        }
+
+        // Options table: Required for subclasses of Options.
+
+        static OptionDefinition g_option_table[];
+
+        // Instance variables to hold the values for command options.
+
+        bool m_use_commands;
+        bool m_use_script_language;
+        lldb::ScriptLanguage m_script_language;
+
+        // Instance variables to hold the values for one_liner options.
+        bool m_use_one_liner;
+        std::string m_one_liner;
+        bool m_stop_on_error;
+        std::string m_function_name;
+    };
+
+protected:
+    virtual bool
+    DoExecute (Args& command, CommandReturnObject &result)
+    {
+        Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
+
+        if (target == NULL)
+        {
+            result.AppendError ("There is not a current executable; there are no breakpoints to which to add commands");
+            result.SetStatus (eReturnStatusFailed);
+            return false;
+        }
+
+        const BreakpointList &breakpoints = target->GetBreakpointList();
+        size_t num_breakpoints = breakpoints.GetSize();
+
+        if (num_breakpoints == 0)
+        {
+            result.AppendError ("No breakpoints exist to have commands added");
+            result.SetStatus (eReturnStatusFailed);
+            return false;
+        }
+
+        if (m_options.m_use_script_language == false && m_options.m_function_name.size())
+        {
+            result.AppendError ("need to enable scripting to have a function run as a breakpoint command");
+            result.SetStatus (eReturnStatusFailed);
+            return false;
+        }
+        
+        BreakpointIDList valid_bp_ids;
+        CommandObjectMultiwordBreakpoint::VerifyBreakpointIDs (command, target, result, &valid_bp_ids);
+
+        if (result.Succeeded())
+        {
+            const size_t count = valid_bp_ids.GetSize();
+            for (size_t i = 0; i < count; ++i)
+            {
+                BreakpointID cur_bp_id = valid_bp_ids.GetBreakpointIDAtIndex (i);
+                if (cur_bp_id.GetBreakpointID() != LLDB_INVALID_BREAK_ID)
+                {
+                    Breakpoint *bp = target->GetBreakpointByID (cur_bp_id.GetBreakpointID()).get();
+                    BreakpointOptions *bp_options = NULL;
+                    if (cur_bp_id.GetLocationID() == LLDB_INVALID_BREAK_ID)
+                    {
+                        // This breakpoint does not have an associated location.
+                        bp_options = bp->GetOptions();
+                    }
+                    else                    
+                    {
+                        BreakpointLocationSP bp_loc_sp(bp->FindLocationByID (cur_bp_id.GetLocationID()));
+                        // This breakpoint does have an associated location.
+                        // Get its breakpoint options.
+                        if (bp_loc_sp)
+                            bp_options = bp_loc_sp->GetLocationOptions();
+                    }
+
+                    // Skip this breakpoint if bp_options is not good.
+                    if (bp_options == NULL) continue;
+
+                    // If we are using script language, get the script interpreter
+                    // in order to set or collect command callback.  Otherwise, call
+                    // the methods associated with this object.
+                    if (m_options.m_use_script_language)
+                    {
+                        // Special handling for one-liner specified inline.
+                        if (m_options.m_use_one_liner)
+                        {
+                            m_interpreter.GetScriptInterpreter()->SetBreakpointCommandCallback (bp_options,
+                                                                                                m_options.m_one_liner.c_str());
+                        }
+                        // Special handling for using a Python function by name
+                        // instead of extending the breakpoint callback data structures, we just automatize
+                        // what the user would do manually: make their breakpoint command be a function call
+                        else if (m_options.m_function_name.size())
+                        {
+                            std::string oneliner(m_options.m_function_name);
+                            oneliner += "(frame, bp_loc, dict)";
+                            m_interpreter.GetScriptInterpreter()->SetBreakpointCommandCallback (bp_options,
+                                                                                                oneliner.c_str());
+                        }
+                        else
+                        {
+                            m_interpreter.GetScriptInterpreter()->CollectDataForBreakpointCommandCallback (bp_options,
+                                                                                                           result);
+                        }
+                    }
+                    else
+                    {
+                        // Special handling for one-liner specified inline.
+                        if (m_options.m_use_one_liner)
+                            SetBreakpointCommandCallback (bp_options,
+                                                          m_options.m_one_liner.c_str());
+                        else
+                            CollectDataForBreakpointCommandCallback (bp_options, 
+                                                                     result);
+                    }
+                }
+            }
+        }
+
+        return result.Succeeded();
     }
 
-    return bytes_len;
-}
+private:
+    CommandOptions m_options;
+    static const char *g_reader_instructions;
 
+};
+
+const char *
+CommandObjectBreakpointCommandAdd::g_reader_instructions = "Enter your debugger command(s).  Type 'DONE' to end.";
+
+// FIXME: "script-type" needs to have its contents determined dynamically, so somebody can add a new scripting
+// language to lldb and have it pickable here without having to change this enumeration by hand and rebuild lldb proper.
+
+static OptionEnumValueElement
+g_script_option_enumeration[4] =
+{
+    { eScriptLanguageNone,    "command",         "Commands are in the lldb command interpreter language"},
+    { eScriptLanguagePython,  "python",          "Commands are in the Python language."},
+    { eSortOrderByName,       "default-script",  "Commands are in the default scripting language."},
+    { 0,                      NULL,              NULL }
+};
+
+OptionDefinition
+CommandObjectBreakpointCommandAdd::CommandOptions::g_option_table[] =
+{
+    { LLDB_OPT_SET_1, false, "one-liner", 'o', required_argument, NULL, NULL, eArgTypeOneLiner,
+        "Specify a one-line breakpoint command inline. Be sure to surround it with quotes." },
+
+    { LLDB_OPT_SET_ALL, false, "stop-on-error", 'e', required_argument, NULL, NULL, eArgTypeBoolean,
+        "Specify whether breakpoint command execution should terminate on error." },
+
+    { LLDB_OPT_SET_ALL,   false, "script-type",     's', required_argument, g_script_option_enumeration, NULL, eArgTypeNone,
+        "Specify the language for the commands - if none is specified, the lldb command interpreter will be used."},
+
+    { LLDB_OPT_SET_2,   false, "python-function",     'F', required_argument, NULL, NULL, eArgTypePythonFunction,
+        "Give the name of a Python function to run as command for this breakpoint. Be sure to give a module name if appropriate."},
+    
+    { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
+};
 
 //-------------------------------------------------------------------------
 // CommandObjectBreakpointCommandDelete
 //-------------------------------------------------------------------------
 
-CommandObjectBreakpointCommandDelete::CommandObjectBreakpointCommandDelete (CommandInterpreter &interpreter) :
-    CommandObject (interpreter, 
-                   "delete",
-                   "Delete the set of commands from a breakpoint.",
-                   NULL)
+class CommandObjectBreakpointCommandDelete : public CommandObjectParsed
 {
-    CommandArgumentEntry arg;
-    CommandArgumentData bp_id_arg;
-
-    // Define the first (and only) variant of this arg.
-    bp_id_arg.arg_type = eArgTypeBreakpointID;
-    bp_id_arg.arg_repetition = eArgRepeatPlain;
-
-    // There is only one variant this argument could be; put it into the argument entry.
-    arg.push_back (bp_id_arg);
-
-    // Push the data for the first argument into the m_arguments vector.
-    m_arguments.push_back (arg);
-}
-
-CommandObjectBreakpointCommandDelete::~CommandObjectBreakpointCommandDelete ()
-{
-}
-
-bool
-CommandObjectBreakpointCommandDelete::Execute 
-(
-    Args& command,
-    CommandReturnObject &result
-)
-{
-    Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
-
-    if (target == NULL)
+public:
+    CommandObjectBreakpointCommandDelete (CommandInterpreter &interpreter) :
+        CommandObjectParsed (interpreter, 
+                             "delete",
+                             "Delete the set of commands from a breakpoint.",
+                             NULL)
     {
-        result.AppendError ("There is not a current executable; there are no breakpoints from which to delete commands");
-        result.SetStatus (eReturnStatusFailed);
-        return false;
+        CommandArgumentEntry arg;
+        CommandArgumentData bp_id_arg;
+
+        // Define the first (and only) variant of this arg.
+        bp_id_arg.arg_type = eArgTypeBreakpointID;
+        bp_id_arg.arg_repetition = eArgRepeatPlain;
+
+        // There is only one variant this argument could be; put it into the argument entry.
+        arg.push_back (bp_id_arg);
+
+        // Push the data for the first argument into the m_arguments vector.
+        m_arguments.push_back (arg);
     }
 
-    const BreakpointList &breakpoints = target->GetBreakpointList();
-    size_t num_breakpoints = breakpoints.GetSize();
 
-    if (num_breakpoints == 0)
+    virtual
+    ~CommandObjectBreakpointCommandDelete () {}
+
+protected:
+    virtual bool
+    DoExecute (Args& command, CommandReturnObject &result)
     {
-        result.AppendError ("No breakpoints exist to have commands deleted");
-        result.SetStatus (eReturnStatusFailed);
-        return false;
-    }
+        Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
 
-    if (command.GetArgumentCount() == 0)
-    {
-        result.AppendError ("No breakpoint specified from which to delete the commands");
-        result.SetStatus (eReturnStatusFailed);
-        return false;
-    }
-
-    BreakpointIDList valid_bp_ids;
-    CommandObjectMultiwordBreakpoint::VerifyBreakpointIDs (command, target, result, &valid_bp_ids);
-
-    if (result.Succeeded())
-    {
-        const size_t count = valid_bp_ids.GetSize();
-        for (size_t i = 0; i < count; ++i)
+        if (target == NULL)
         {
-            BreakpointID cur_bp_id = valid_bp_ids.GetBreakpointIDAtIndex (i);
-            if (cur_bp_id.GetBreakpointID() != LLDB_INVALID_BREAK_ID)
-            {
-                Breakpoint *bp = target->GetBreakpointByID (cur_bp_id.GetBreakpointID()).get();
-                if (cur_bp_id.GetLocationID() != LLDB_INVALID_BREAK_ID)
-                {
-                    BreakpointLocationSP bp_loc_sp (bp->FindLocationByID (cur_bp_id.GetLocationID()));
-                    if (bp_loc_sp)
-                        bp_loc_sp->ClearCallback();
-                    else
-                    {
-                        result.AppendErrorWithFormat("Invalid breakpoint ID: %u.%u.\n", 
-                                                     cur_bp_id.GetBreakpointID(),
-                                                     cur_bp_id.GetLocationID());
-                        result.SetStatus (eReturnStatusFailed);
-                        return false;
-                    }
-                }
-                else
-                {
-                    bp->ClearCallback();
-                }
-            }
+            result.AppendError ("There is not a current executable; there are no breakpoints from which to delete commands");
+            result.SetStatus (eReturnStatusFailed);
+            return false;
         }
-    }
-    return result.Succeeded();
-}
 
+        const BreakpointList &breakpoints = target->GetBreakpointList();
+        size_t num_breakpoints = breakpoints.GetSize();
 
-//-------------------------------------------------------------------------
-// CommandObjectBreakpointCommandList
-//-------------------------------------------------------------------------
-
-CommandObjectBreakpointCommandList::CommandObjectBreakpointCommandList (CommandInterpreter &interpreter) :
-    CommandObject (interpreter,
-                   "list",
-                   "List the script or set of commands to be executed when the breakpoint is hit.",
-                    NULL)
-{
-    CommandArgumentEntry arg;
-    CommandArgumentData bp_id_arg;
-
-    // Define the first (and only) variant of this arg.
-    bp_id_arg.arg_type = eArgTypeBreakpointID;
-    bp_id_arg.arg_repetition = eArgRepeatPlain;
-
-    // There is only one variant this argument could be; put it into the argument entry.
-    arg.push_back (bp_id_arg);
-
-    // Push the data for the first argument into the m_arguments vector.
-    m_arguments.push_back (arg);
-}
-
-CommandObjectBreakpointCommandList::~CommandObjectBreakpointCommandList ()
-{
-}
-
-bool
-CommandObjectBreakpointCommandList::Execute 
-(
-    Args& command,
-    CommandReturnObject &result
-)
-{
-    Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
-
-    if (target == NULL)
-    {
-        result.AppendError ("There is not a current executable; there are no breakpoints for which to list commands");
-        result.SetStatus (eReturnStatusFailed);
-        return false;
-    }
-
-    const BreakpointList &breakpoints = target->GetBreakpointList();
-    size_t num_breakpoints = breakpoints.GetSize();
-
-    if (num_breakpoints == 0)
-    {
-        result.AppendError ("No breakpoints exist for which to list commands");
-        result.SetStatus (eReturnStatusFailed);
-        return false;
-    }
-
-    if (command.GetArgumentCount() == 0)
-    {
-        result.AppendError ("No breakpoint specified for which to list the commands");
-        result.SetStatus (eReturnStatusFailed);
-        return false;
-    }
-
-    BreakpointIDList valid_bp_ids;
-    CommandObjectMultiwordBreakpoint::VerifyBreakpointIDs (command, target, result, &valid_bp_ids);
-
-    if (result.Succeeded())
-    {
-        const size_t count = valid_bp_ids.GetSize();
-        for (size_t i = 0; i < count; ++i)
+        if (num_breakpoints == 0)
         {
-            BreakpointID cur_bp_id = valid_bp_ids.GetBreakpointIDAtIndex (i);
-            if (cur_bp_id.GetBreakpointID() != LLDB_INVALID_BREAK_ID)
+            result.AppendError ("No breakpoints exist to have commands deleted");
+            result.SetStatus (eReturnStatusFailed);
+            return false;
+        }
+
+        if (command.GetArgumentCount() == 0)
+        {
+            result.AppendError ("No breakpoint specified from which to delete the commands");
+            result.SetStatus (eReturnStatusFailed);
+            return false;
+        }
+
+        BreakpointIDList valid_bp_ids;
+        CommandObjectMultiwordBreakpoint::VerifyBreakpointIDs (command, target, result, &valid_bp_ids);
+
+        if (result.Succeeded())
+        {
+            const size_t count = valid_bp_ids.GetSize();
+            for (size_t i = 0; i < count; ++i)
             {
-                Breakpoint *bp = target->GetBreakpointByID (cur_bp_id.GetBreakpointID()).get();
-                
-                if (bp)
+                BreakpointID cur_bp_id = valid_bp_ids.GetBreakpointIDAtIndex (i);
+                if (cur_bp_id.GetBreakpointID() != LLDB_INVALID_BREAK_ID)
                 {
-                    const BreakpointOptions *bp_options = NULL;
+                    Breakpoint *bp = target->GetBreakpointByID (cur_bp_id.GetBreakpointID()).get();
                     if (cur_bp_id.GetLocationID() != LLDB_INVALID_BREAK_ID)
                     {
-                        BreakpointLocationSP bp_loc_sp(bp->FindLocationByID (cur_bp_id.GetLocationID()));
+                        BreakpointLocationSP bp_loc_sp (bp->FindLocationByID (cur_bp_id.GetLocationID()));
                         if (bp_loc_sp)
-                            bp_options = bp_loc_sp->GetOptionsNoCreate();
+                            bp_loc_sp->ClearCallback();
                         else
                         {
                             result.AppendErrorWithFormat("Invalid breakpoint ID: %u.%u.\n", 
@@ -757,43 +713,146 @@ CommandObjectBreakpointCommandList::Execute
                     }
                     else
                     {
-                        bp_options = bp->GetOptions();
+                        bp->ClearCallback();
                     }
+                }
+            }
+        }
+        return result.Succeeded();
+    }
+};
 
-                    if (bp_options)
+//-------------------------------------------------------------------------
+// CommandObjectBreakpointCommandList
+//-------------------------------------------------------------------------
+
+class CommandObjectBreakpointCommandList : public CommandObjectParsed
+{
+public:
+    CommandObjectBreakpointCommandList (CommandInterpreter &interpreter) :
+        CommandObjectParsed (interpreter,
+                             "list",
+                             "List the script or set of commands to be executed when the breakpoint is hit.",
+                              NULL)
+    {
+        CommandArgumentEntry arg;
+        CommandArgumentData bp_id_arg;
+
+        // Define the first (and only) variant of this arg.
+        bp_id_arg.arg_type = eArgTypeBreakpointID;
+        bp_id_arg.arg_repetition = eArgRepeatPlain;
+
+        // There is only one variant this argument could be; put it into the argument entry.
+        arg.push_back (bp_id_arg);
+
+        // Push the data for the first argument into the m_arguments vector.
+        m_arguments.push_back (arg);
+    }
+
+    virtual
+    ~CommandObjectBreakpointCommandList () {}
+
+protected:
+    virtual bool
+    DoExecute (Args& command,
+             CommandReturnObject &result)
+    {
+        Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
+
+        if (target == NULL)
+        {
+            result.AppendError ("There is not a current executable; there are no breakpoints for which to list commands");
+            result.SetStatus (eReturnStatusFailed);
+            return false;
+        }
+
+        const BreakpointList &breakpoints = target->GetBreakpointList();
+        size_t num_breakpoints = breakpoints.GetSize();
+
+        if (num_breakpoints == 0)
+        {
+            result.AppendError ("No breakpoints exist for which to list commands");
+            result.SetStatus (eReturnStatusFailed);
+            return false;
+        }
+
+        if (command.GetArgumentCount() == 0)
+        {
+            result.AppendError ("No breakpoint specified for which to list the commands");
+            result.SetStatus (eReturnStatusFailed);
+            return false;
+        }
+
+        BreakpointIDList valid_bp_ids;
+        CommandObjectMultiwordBreakpoint::VerifyBreakpointIDs (command, target, result, &valid_bp_ids);
+
+        if (result.Succeeded())
+        {
+            const size_t count = valid_bp_ids.GetSize();
+            for (size_t i = 0; i < count; ++i)
+            {
+                BreakpointID cur_bp_id = valid_bp_ids.GetBreakpointIDAtIndex (i);
+                if (cur_bp_id.GetBreakpointID() != LLDB_INVALID_BREAK_ID)
+                {
+                    Breakpoint *bp = target->GetBreakpointByID (cur_bp_id.GetBreakpointID()).get();
+                    
+                    if (bp)
                     {
-                        StreamString id_str;
-                        BreakpointID::GetCanonicalReference (&id_str, 
-                                                             cur_bp_id.GetBreakpointID(), 
-                                                             cur_bp_id.GetLocationID());
-                        const Baton *baton = bp_options->GetBaton();
-                        if (baton)
+                        const BreakpointOptions *bp_options = NULL;
+                        if (cur_bp_id.GetLocationID() != LLDB_INVALID_BREAK_ID)
                         {
-                            result.GetOutputStream().Printf ("Breakpoint %s:\n", id_str.GetData());
-                            result.GetOutputStream().IndentMore ();
-                            baton->GetDescription(&result.GetOutputStream(), eDescriptionLevelFull);
-                            result.GetOutputStream().IndentLess ();
+                            BreakpointLocationSP bp_loc_sp(bp->FindLocationByID (cur_bp_id.GetLocationID()));
+                            if (bp_loc_sp)
+                                bp_options = bp_loc_sp->GetOptionsNoCreate();
+                            else
+                            {
+                                result.AppendErrorWithFormat("Invalid breakpoint ID: %u.%u.\n", 
+                                                             cur_bp_id.GetBreakpointID(),
+                                                             cur_bp_id.GetLocationID());
+                                result.SetStatus (eReturnStatusFailed);
+                                return false;
+                            }
                         }
                         else
                         {
-                            result.AppendMessageWithFormat ("Breakpoint %s does not have an associated command.\n", 
-                                                            id_str.GetData());
+                            bp_options = bp->GetOptions();
                         }
-                    }
-                    result.SetStatus (eReturnStatusSuccessFinishResult);
-                }
-                else
-                {
-                    result.AppendErrorWithFormat("Invalid breakpoint ID: %u.\n", cur_bp_id.GetBreakpointID());
-                    result.SetStatus (eReturnStatusFailed);
-                }
 
+                        if (bp_options)
+                        {
+                            StreamString id_str;
+                            BreakpointID::GetCanonicalReference (&id_str, 
+                                                                 cur_bp_id.GetBreakpointID(), 
+                                                                 cur_bp_id.GetLocationID());
+                            const Baton *baton = bp_options->GetBaton();
+                            if (baton)
+                            {
+                                result.GetOutputStream().Printf ("Breakpoint %s:\n", id_str.GetData());
+                                result.GetOutputStream().IndentMore ();
+                                baton->GetDescription(&result.GetOutputStream(), eDescriptionLevelFull);
+                                result.GetOutputStream().IndentLess ();
+                            }
+                            else
+                            {
+                                result.AppendMessageWithFormat ("Breakpoint %s does not have an associated command.\n", 
+                                                                id_str.GetData());
+                            }
+                        }
+                        result.SetStatus (eReturnStatusSuccessFinishResult);
+                    }
+                    else
+                    {
+                        result.AppendErrorWithFormat("Invalid breakpoint ID: %u.\n", cur_bp_id.GetBreakpointID());
+                        result.SetStatus (eReturnStatusFailed);
+                    }
+
+                }
             }
         }
-    }
 
-    return result.Succeeded();
-}
+        return result.Succeeded();
+    }
+};
 
 //-------------------------------------------------------------------------
 // CommandObjectBreakpointCommand
@@ -819,60 +878,8 @@ CommandObjectBreakpointCommand::CommandObjectBreakpointCommand (CommandInterpret
     status = LoadSubCommand ("list",   list_command_object);
 }
 
-
 CommandObjectBreakpointCommand::~CommandObjectBreakpointCommand ()
 {
 }
 
-bool
-CommandObjectBreakpointCommand::BreakpointOptionsCallbackFunction 
-(
-    void *baton, 
-    StoppointCallbackContext *context,
-    lldb::user_id_t break_id, 
-    lldb::user_id_t break_loc_id
-)
-{
-    bool ret_value = true;
-    if (baton == NULL)
-        return true;
-    
-    
-    BreakpointOptions::CommandData *data = (BreakpointOptions::CommandData *) baton;
-    StringList &commands = data->user_source;
-    
-    if (commands.GetSize() > 0)
-    {
-        ExecutionContext exe_ctx (context->exe_ctx_ref);
-        Target *target = exe_ctx.GetTargetPtr();
-        if (target)
-        {
-            CommandReturnObject result;
-            Debugger &debugger = target->GetDebugger();
-            // Rig up the results secondary output stream to the debugger's, so the output will come out synchronously
-            // if the debugger is set up that way.
-                
-            StreamSP output_stream (debugger.GetAsyncOutputStream());
-            StreamSP error_stream (debugger.GetAsyncErrorStream());
-            result.SetImmediateOutputStream (output_stream);
-            result.SetImmediateErrorStream (error_stream);
-    
-            bool stop_on_continue = true;
-            bool echo_commands    = false;
-            bool print_results    = true;
-
-            debugger.GetCommandInterpreter().HandleCommands (commands, 
-                                                             &exe_ctx,
-                                                             stop_on_continue, 
-                                                             data->stop_on_error, 
-                                                             echo_commands, 
-                                                             print_results,
-                                                             eLazyBoolNo,
-                                                             result);
-            result.GetImmediateOutputStream()->Flush();
-            result.GetImmediateErrorStream()->Flush();
-       }
-    }
-    return ret_value;
-}
 

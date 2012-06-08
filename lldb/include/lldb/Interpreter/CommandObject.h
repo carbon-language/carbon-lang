@@ -145,7 +145,7 @@ public:
     IsMultiwordObject () { return false; }
 
     virtual bool
-    WantsRawCommandString() { return false; }
+    WantsRawCommandString() = 0;
 
     // By default, WantsCompletion = !WantsRawCommandString.
     // Subclasses who want raw command string but desire, for example,
@@ -197,22 +197,6 @@ public:
     bool
     ParseOptions (Args& args,
                   CommandReturnObject &result);
-
-    bool
-    ExecuteWithOptions (Args& command,
-                        CommandReturnObject &result);
-
-    virtual bool
-    ExecuteRawCommandString (const char *command,
-                             CommandReturnObject &result)
-    {
-        return false;
-    }
-
-
-    virtual bool
-    Execute (Args& command,
-             CommandReturnObject &result) = 0;
 
     void
     SetCommandName (const char *name);
@@ -337,7 +321,10 @@ public:
     ///     A reference to the Flags member variable.
     //------------------------------------------------------------------
     Flags&
-    GetFlags();
+    GetFlags()
+    {
+        return m_flags;
+    }
 
     //------------------------------------------------------------------
     /// The flags const accessor.
@@ -346,7 +333,23 @@ public:
     ///     A const reference to the Flags member variable.
     //------------------------------------------------------------------
     const Flags&
-    GetFlags() const;
+    GetFlags() const
+    {
+        return m_flags;
+    }
+    
+    //------------------------------------------------------------------
+    /// Check the command flags against the interpreter's current execution context.
+    ///
+    /// @param[out] result
+    ///     A command result object, if it is not okay to run the command this will be
+    ///     filled in with a suitable error.
+    ///
+    /// @return
+    ///     \b true if it is okay to run this command, \b false otherwise.
+    //------------------------------------------------------------------
+    bool
+    CheckFlags (CommandReturnObject &result);
     
     //------------------------------------------------------------------
     /// Get the command that appropriate for a "repeat" of the current command.
@@ -382,6 +385,9 @@ public:
         m_command_override_callback = callback;
         m_command_override_baton = baton;
     }
+    
+    virtual bool
+    Execute (const char *args_string, CommandReturnObject &result) = 0;
 
 protected:
     CommandInterpreter &m_interpreter;
@@ -394,12 +400,65 @@ protected:
     std::vector<CommandArgumentEntry> m_arguments;
     CommandOverrideCallback m_command_override_callback;
     void * m_command_override_baton;
+    
     // Helper function to populate IDs or ID ranges as the command argument data
     // to the specified command argument entry.
     static void
     AddIDsArgumentData(CommandArgumentEntry &arg, lldb::CommandArgumentType ID, lldb::CommandArgumentType IDRange);
-
+    
 };
+
+class CommandObjectParsed : public CommandObject
+{
+public:
+
+    CommandObjectParsed (CommandInterpreter &interpreter,
+                         const char *name,
+                         const char *help = NULL,
+                         const char *syntax = NULL,
+                         uint32_t flags = 0) :
+        CommandObject (interpreter, name, help, syntax, flags) {}
+
+    virtual
+    ~CommandObjectParsed () {};
+    
+    virtual bool
+    Execute (const char *args_string, CommandReturnObject &result);
+    
+protected:
+    virtual bool
+    DoExecute (Args& command,
+             CommandReturnObject &result) = 0;
+    
+    virtual bool
+    WantsRawCommandString() { return false; };
+};
+
+class CommandObjectRaw : public CommandObject
+{
+public:
+
+    CommandObjectRaw (CommandInterpreter &interpreter,
+                         const char *name,
+                         const char *help = NULL,
+                         const char *syntax = NULL,
+                         uint32_t flags = 0) :
+        CommandObject (interpreter, name, help, syntax, flags) {}
+
+    virtual
+    ~CommandObjectRaw () {};
+    
+    virtual bool
+    Execute (const char *args_string, CommandReturnObject &result);
+    
+protected:    
+    virtual bool
+    DoExecute (const char *command, CommandReturnObject &result) = 0;
+
+    virtual bool
+    WantsRawCommandString() { return true; };
+};
+
 
 } // namespace lldb_private
 

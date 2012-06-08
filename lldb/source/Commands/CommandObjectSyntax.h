@@ -22,7 +22,7 @@ namespace lldb_private {
 // CommandObjectSyntax
 //-------------------------------------------------------------------------
 
-class CommandObjectSyntax : public CommandObject
+class CommandObjectSyntax : public CommandObjectParsed
 {
 public:
 
@@ -31,8 +31,9 @@ public:
     virtual
     ~CommandObjectSyntax ();
     
+protected:
     virtual bool
-    Execute (Args& command,
+    DoExecute (Args& command,
              CommandReturnObject &result);
 
 

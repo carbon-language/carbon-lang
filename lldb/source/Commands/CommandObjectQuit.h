@@ -22,7 +22,7 @@ namespace lldb_private {
 // CommandObjectQuit
 //-------------------------------------------------------------------------
 
-class CommandObjectQuit : public CommandObject
+class CommandObjectQuit : public CommandObjectParsed
 {
 public:
 
@@ -31,8 +31,9 @@ public:
     virtual
     ~CommandObjectQuit ();
 
+protected:
     virtual bool
-    Execute (Args& args,
+    DoExecute (Args& args,
              CommandReturnObject &result);
 
 };

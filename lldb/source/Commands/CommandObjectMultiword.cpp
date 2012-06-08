@@ -107,12 +107,9 @@ CommandObjectMultiword::LoadSubCommand
 }
 
 bool
-CommandObjectMultiword::Execute
-(
-    Args& args,
-    CommandReturnObject &result
-)
+CommandObjectMultiword::Execute(const char *args_string, CommandReturnObject &result)
 {
+    Args args (args_string);
     const size_t argc = args.GetArgumentCount();
     if (argc == 0)
     {
@@ -139,7 +136,7 @@ CommandObjectMultiword::Execute
 
                     args.Shift();
 
-                    sub_cmd_obj->ExecuteWithOptions (args, result);
+                    sub_cmd_obj->Execute (args_string, result);
                 }
                 else
                 {

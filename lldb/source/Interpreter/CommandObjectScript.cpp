@@ -30,10 +30,10 @@ using namespace lldb_private;
 //-------------------------------------------------------------------------
 
 CommandObjectScript::CommandObjectScript (CommandInterpreter &interpreter, ScriptLanguage script_lang) :
-    CommandObject (interpreter, 
-                   "script",
-                   "Pass an expression to the script interpreter for evaluation and return the results. Drop into the interactive interpreter if no expression is given.",
-                   "script [<script-expression-for-evaluation>]"),
+    CommandObjectRaw (interpreter, 
+                      "script",
+                      "Pass an expression to the script interpreter for evaluation and return the results. Drop into the interactive interpreter if no expression is given.",
+                      "script [<script-expression-for-evaluation>]"),
     m_script_lang (script_lang)
 {
 }
@@ -43,7 +43,7 @@ CommandObjectScript::~CommandObjectScript ()
 }
 
 bool
-CommandObjectScript::ExecuteRawCommandString
+CommandObjectScript::DoExecute
 (
     const char *command,
     CommandReturnObject &result
@@ -74,21 +74,3 @@ CommandObjectScript::ExecuteRawCommandString
 
     return result.Succeeded();
 }
-
-bool
-CommandObjectScript::WantsRawCommandString()
-{
-    return true;
-}
-
-bool
-CommandObjectScript::Execute
-(
-    Args& command,
-    CommandReturnObject &result
-)
-{
-    // everything should be handled in ExecuteRawCommandString
-    return false;
-}
-

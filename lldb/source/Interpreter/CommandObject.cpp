@@ -153,18 +153,6 @@ CommandObject::GetOptions ()
     return NULL;
 }
 
-Flags&
-CommandObject::GetFlags()
-{
-    return m_flags;
-}
-
-const Flags&
-CommandObject::GetFlags() const
-{
-    return m_flags;
-}
-
 bool
 CommandObject::ParseOptions
 (
@@ -214,16 +202,12 @@ CommandObject::ParseOptions
     }
     return true;
 }
-bool
-CommandObject::ExecuteWithOptions (Args& args, CommandReturnObject &result)
-{
-    for (size_t i = 0; i < args.GetArgumentCount();  ++i)
-    {
-        const char *tmp_str = args.GetArgumentAtIndex (i);
-        if (tmp_str[0] == '`')  // back-quote
-            args.ReplaceArgumentAtIndex (i, m_interpreter.ProcessEmbeddedScriptCommands (tmp_str));
-    }
 
+
+
+bool
+CommandObject::CheckFlags (CommandReturnObject &result)
+{
     if (GetFlags().AnySet (CommandObject::eFlagProcessMustBeLaunched | CommandObject::eFlagProcessMustBePaused))
     {
         Process *process = m_interpreter.GetExecutionContext().GetProcessPtr();
@@ -274,12 +258,7 @@ CommandObject::ExecuteWithOptions (Args& args, CommandReturnObject &result)
             }
         }
     }
-    
-    if (!ParseOptions (args, result))
-        return false;
-
-    // Call the command-specific version of 'Execute', passing it the already processed arguments.
-    return Execute (args, result);
+    return true;
 }
 
 class CommandDictCommandPartialMatch
@@ -844,6 +823,63 @@ CommandObject::GetArgumentDescriptionAsCString (const lldb::CommandArgumentType 
     if (arg_type >=0 && arg_type < eArgTypeLastArg)
         return g_arguments_data[arg_type].help_text;
     return NULL;
+}
+
+bool
+CommandObjectParsed::Execute (const char *args_string, CommandReturnObject &result)
+{
+    CommandOverrideCallback command_callback = GetOverrideCallback();
+    bool handled = false;
+    Args cmd_args (args_string);
+    if (command_callback)
+    {
+        Args full_args (GetCommandName ());
+        full_args.AppendArguments(cmd_args);
+        handled = command_callback (GetOverrideCallbackBaton(), full_args.GetConstArgumentVector());
+    }
+    if (!handled)
+    {
+        for (size_t i = 0; i < cmd_args.GetArgumentCount();  ++i)
+        {
+            const char *tmp_str = cmd_args.GetArgumentAtIndex (i);
+            if (tmp_str[0] == '`')  // back-quote
+                cmd_args.ReplaceArgumentAtIndex (i, m_interpreter.ProcessEmbeddedScriptCommands (tmp_str));
+        }
+
+        if (!CheckFlags(result))
+            return false;
+            
+        if (!ParseOptions (cmd_args, result))
+            return false;
+
+        // Call the command-specific version of 'Execute', passing it the already processed arguments.
+        handled = DoExecute (cmd_args, result);
+    }
+    return handled;
+}
+
+bool
+CommandObjectRaw::Execute (const char *args_string, CommandReturnObject &result)
+{
+    CommandOverrideCallback command_callback = GetOverrideCallback();
+    bool handled = false;
+    if (command_callback)
+    {
+        std::string full_command (GetCommandName ());
+        full_command += ' ';
+        full_command += args_string;
+        const char *argv[2] = { NULL, NULL };
+        argv[0] = full_command.c_str();
+        handled = command_callback (GetOverrideCallbackBaton(), argv);
+    }
+    if (!handled)
+    {
+        if (!CheckFlags(result))
+            return false;
+        else
+            handled = DoExecute (args_string, result);
+    }
+    return handled;
 }
 
 static

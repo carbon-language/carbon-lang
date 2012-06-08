@@ -134,10 +134,11 @@ CommandObjectExpression::CommandOptions::GetDefinitions ()
 }
 
 CommandObjectExpression::CommandObjectExpression (CommandInterpreter &interpreter) :
-    CommandObject (interpreter,
-                   "expression",
-                   "Evaluate a C/ObjC/C++ expression in the current program context, using variables currently in scope.",
-                   NULL),
+    CommandObjectRaw (interpreter,
+                      "expression",
+                      "Evaluate a C/ObjC/C++ expression in the current program context, using variables currently in scope.",
+                      NULL,
+                      eFlagProcessMustBePaused),
     m_option_group (interpreter),
     m_format_options (eFormatDefault),
     m_command_options (),
@@ -179,18 +180,6 @@ CommandObjectExpression::GetOptions ()
 {
     return &m_option_group;
 }
-
-
-bool
-CommandObjectExpression::Execute
-(
-    Args& command,
-    CommandReturnObject &result
-)
-{
-    return false;
-}
-
 
 size_t
 CommandObjectExpression::MultiLineExpressionCallback
@@ -418,7 +407,7 @@ CommandObjectExpression::EvaluateExpression
 }
 
 bool
-CommandObjectExpression::ExecuteRawCommandString
+CommandObjectExpression::DoExecute
 (
     const char *command,
     CommandReturnObject &result

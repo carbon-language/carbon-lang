@@ -23,7 +23,7 @@ namespace lldb_private {
 // CommandObjectCrossref
 //-------------------------------------------------------------------------
 
-class CommandObjectCrossref : public CommandObject
+class CommandObjectCrossref : public CommandObjectParsed
 {
 public:
     CommandObjectCrossref (CommandInterpreter &interpreter,
@@ -38,10 +38,6 @@ public:
     GenerateHelpText (CommandReturnObject &result);
 
     virtual bool
-    Execute (Args& command,
-             CommandReturnObject &result);
-
-    virtual bool
     IsCrossRefObject ();
 
     virtual void
@@ -49,6 +45,11 @@ public:
 
     const char **
     GetObjectTypes () const;
+
+protected:
+    virtual bool
+    DoExecute (Args& command,
+             CommandReturnObject &result);
 
 private:
     Args m_crossref_object_types;

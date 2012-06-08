@@ -23,7 +23,7 @@ namespace lldb_private {
 // CommandObjectDisassemble
 //-------------------------------------------------------------------------
 
-class CommandObjectDisassemble : public CommandObject
+class CommandObjectDisassemble : public CommandObjectParsed
 {
 public:
     class CommandOptions : public Options
@@ -85,11 +85,11 @@ public:
         return &m_options;
     }
 
+protected:
     virtual bool
-    Execute (Args& command,
+    DoExecute (Args& command,
              CommandReturnObject &result);
 
-protected:
     CommandOptions m_options;
 
 };

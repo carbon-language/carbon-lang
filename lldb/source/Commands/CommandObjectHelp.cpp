@@ -26,10 +26,10 @@ using namespace lldb_private;
 //-------------------------------------------------------------------------
 
 CommandObjectHelp::CommandObjectHelp (CommandInterpreter &interpreter) :
-    CommandObject (interpreter,
-                   "help",
-                   "Show a list of all debugger commands, or give details about specific commands.",
-                   "help [<cmd-name>]"), m_options (interpreter)
+    CommandObjectParsed (interpreter,
+                         "help",
+                         "Show a list of all debugger commands, or give details about specific commands.",
+                         "help [<cmd-name>]"), m_options (interpreter)
 {
     CommandArgumentEntry arg;
     CommandArgumentData command_arg;
@@ -58,7 +58,7 @@ CommandObjectHelp::CommandOptions::g_option_table[] =
 };
 
 bool
-CommandObjectHelp::Execute (Args& command, CommandReturnObject &result)
+CommandObjectHelp::DoExecute (Args& command, CommandReturnObject &result)
 {
     CommandObject::CommandMap::iterator pos;
     CommandObject *cmd_obj;

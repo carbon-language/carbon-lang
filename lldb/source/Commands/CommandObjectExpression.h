@@ -20,7 +20,7 @@
 
 namespace lldb_private {
 
-class CommandObjectExpression : public CommandObject
+class CommandObjectExpression : public CommandObjectRaw
 {
 public:
 
@@ -66,19 +66,10 @@ public:
     Options *
     GetOptions ();
 
-
-    virtual bool
-    Execute (Args& command,
-             CommandReturnObject &result);
-
-    virtual bool
-    WantsRawCommandString() { return true; }
-
-    virtual bool
-    ExecuteRawCommandString (const char *command,
-                             CommandReturnObject &result);
-
 protected:
+    virtual bool
+    DoExecute (const char *command,
+               CommandReturnObject &result);
 
     static size_t
     MultiLineExpressionCallback (void *baton, 
