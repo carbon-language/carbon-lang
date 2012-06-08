@@ -10,13 +10,14 @@ void free(void *ptr);
 struct A {};
 struct B {};
 
-void foo() {
+void foo(unsigned int unsignedInt, unsigned int readSize) {
   int *ip1 = malloc(sizeof(1));
   int *ip2 = malloc(4 * sizeof(int));
 
   long *lp1 = malloc(sizeof(short)); // expected-warning {{Result of 'malloc' is converted to a pointer of type 'long', which is incompatible with sizeof operand type 'short'}}
   long *lp2 = malloc(5 * sizeof(double)); // expected-warning {{Result of 'malloc' is converted to a pointer of type 'long', which is incompatible with sizeof operand type 'double'}}
-  long *lp3 = malloc(5 * sizeof(char) + 2); // expected-warning {{Result of 'malloc' is converted to a pointer of type 'long', which is incompatible with sizeof operand type 'char'}}
+  char *cp3 = malloc(5 * sizeof(char) + 2); // no warning
+  unsigned char *buf = malloc(readSize + sizeof(unsignedInt)); // no warning
 
   struct A *ap1 = calloc(1, sizeof(struct A));
   struct A *ap2 = calloc(2, sizeof(*ap1));

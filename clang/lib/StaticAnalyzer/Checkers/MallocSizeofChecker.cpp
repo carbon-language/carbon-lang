@@ -118,11 +118,6 @@ public:
     Visit(E->getRHS());
   }
 
-  void VisitBinAdd(const BinaryOperator *E) {
-    Visit(E->getLHS());
-    Visit(E->getRHS());
-  }
-
   void VisitImplicitCastExpr(const ImplicitCastExpr *E) {
     return Visit(E->getSubExpr());
   }
