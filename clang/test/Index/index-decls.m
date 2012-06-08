@@ -26,7 +26,7 @@ __attribute__((something)) @interface I2 @end
 }
 @end
 
-// RUN: c-index-test -index-file %s > %t
+// RUN: c-index-test -index-file %s -target x86_64-apple-macosx10.7 > %t
 // RUN: FileCheck %s -input-file=%t
 // CHECK: [indexDeclaration]: kind: objc-class | name: I | {{.*}} | loc: 1:12
 // CHECK: [indexDeclaration]: kind: objc-instance-method | name: prop | {{.*}} | loc: 3:2
