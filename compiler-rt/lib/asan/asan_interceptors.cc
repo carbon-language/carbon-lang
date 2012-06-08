@@ -71,6 +71,7 @@ char* strchr(const char *str, int c);
 char* index(const char *string, int c);
 # endif
 char* strcat(char *to, const char* from);  // NOLINT
+char *strncat(char *to, const char* from, uptr size);
 char* strcpy(char *to, const char* from);  // NOLINT
 char* strncpy(char *to, const char* from, uptr size);
 int strcmp(const char *s1, const char* s2);
@@ -504,6 +505,22 @@ INTERCEPTOR(char*, strcat, char *to, const char *from) {  // NOLINT
   return REAL(strcat)(to, from);  // NOLINT
 }
 
+INTERCEPTOR(char*, strncat, char *to, const char *from, uptr size) {
+  ENSURE_ASAN_INITED();
+  if (FLAG_replace_str && size > 0) {
+    uptr from_length = internal_strnlen(from, size);
+    ASAN_READ_RANGE(from, Min(size, from_length + 1));
+    uptr to_length = REAL(strlen)(to);
+    ASAN_READ_RANGE(to, to_length);
+    ASAN_WRITE_RANGE(to + to_length, from_length + 1);
+    if (from_length > 0) {
+      CHECK_RANGES_OVERLAP("strncat", to, to_length + 1,
+                           from, Min(size, from_length + 1));
+    }
+  }
+  return REAL(strncat)(to, from, size);
+}
+
 INTERCEPTOR(int, strcmp, const char *s1, const char *s2) {
   if (!asan_inited) {
     return internal_strcmp(s1, s2);
@@ -759,6 +776,7 @@ void InitializeAsanInterceptors() {
   ASAN_INTERCEPT_FUNC(strcmp);
   ASAN_INTERCEPT_FUNC(strcpy);  // NOLINT
   ASAN_INTERCEPT_FUNC(strlen);
+  ASAN_INTERCEPT_FUNC(strncat);
   ASAN_INTERCEPT_FUNC(strncmp);
   ASAN_INTERCEPT_FUNC(strncpy);
 #if !defined(_WIN32)
