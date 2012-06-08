@@ -127,7 +127,7 @@ Lexer::Lexer(FileID FID, const llvm::MemoryBuffer *InputFile, Preprocessor &PP)
 }
 
 /// Lexer constructor - Create a new raw lexer object.  This object is only
-/// suitable for calls to 'LexRawToken'.  This lexer assumes that the text
+/// suitable for calls to 'LexFromRawLexer'.  This lexer assumes that the text
 /// range will outlive it, so it doesn't take ownership of it.
 Lexer::Lexer(SourceLocation fileloc, const LangOptions &langOpts,
              const char *BufStart, const char *BufPtr, const char *BufEnd)
@@ -140,7 +140,7 @@ Lexer::Lexer(SourceLocation fileloc, const LangOptions &langOpts,
 }
 
 /// Lexer constructor - Create a new raw lexer object.  This object is only
-/// suitable for calls to 'LexRawToken'.  This lexer assumes that the text
+/// suitable for calls to 'LexFromRawLexer'.  This lexer assumes that the text
 /// range will outlive it, so it doesn't take ownership of it.
 Lexer::Lexer(FileID FID, const llvm::MemoryBuffer *FromFile,
              const SourceManager &SM, const LangOptions &langOpts)
