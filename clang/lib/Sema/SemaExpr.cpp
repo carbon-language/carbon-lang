@@ -6589,6 +6589,153 @@ static void diagnoseFunctionPointerToVoidComparison(Sema &S, SourceLocation Loc,
     << LHS.get()->getSourceRange() << RHS.get()->getSourceRange();
 }
 
+static bool isObjCObjectLiteral(ExprResult &E) {
+  switch (E.get()->getStmtClass()) {
+  case Stmt::ObjCArrayLiteralClass:
+  case Stmt::ObjCDictionaryLiteralClass:
+  case Stmt::ObjCStringLiteralClass:
+  case Stmt::ObjCBoxedExprClass:
+    return true;
+  default:
+    // Note that ObjCBoolLiteral is NOT an object literal!
+    return false;
+  }
+}
+
+static DiagnosticBuilder diagnoseObjCLiteralComparison(Sema &S,
+                                                       SourceLocation Loc,
+                                                       ExprResult &LHS,
+                                                       ExprResult &RHS,
+                                                       bool CanFix = false) {
+  Expr *Literal = (isObjCObjectLiteral(LHS) ? LHS : RHS).get();
+
+  unsigned LiteralKind;
+  switch (Literal->getStmtClass()) {
+  case Stmt::ObjCStringLiteralClass:
+    // "string literal"
+    LiteralKind = 0;
+    break;
+  case Stmt::ObjCArrayLiteralClass:
+    // "array literal"
+    LiteralKind = 1;
+    break;
+  case Stmt::ObjCDictionaryLiteralClass:
+    // "dictionary literal"
+    LiteralKind = 2;
+    break;
+  case Stmt::ObjCBoxedExprClass: {
+    Expr *Inner = cast<ObjCBoxedExpr>(Literal)->getSubExpr();
+    switch (Inner->getStmtClass()) {
+    case Stmt::IntegerLiteralClass:
+    case Stmt::FloatingLiteralClass:
+    case Stmt::CharacterLiteralClass:
+    case Stmt::ObjCBoolLiteralExprClass:
+    case Stmt::CXXBoolLiteralExprClass:
+      // "numeric literal"
+      LiteralKind = 3;
+      break;
+    case Stmt::ImplicitCastExprClass: {
+      CastKind CK = cast<CastExpr>(Inner)->getCastKind();
+      // Boolean literals can be represented by implicit casts.
+      if (CK == CK_IntegralToBoolean || CK == CK_IntegralCast) {
+        LiteralKind = 3;
+        break;
+      }
+      // FALLTHROUGH
+    }
+    default:
+      // "boxed expression"
+      LiteralKind = 4;
+      break;
+    }
+    break;
+  }
+  default:
+    llvm_unreachable("Unknown Objective-C object literal kind");
+  }
+
+  return S.Diag(Loc, diag::err_objc_literal_comparison)
+           << LiteralKind << CanFix << Literal->getSourceRange();
+}
+
+static ExprResult fixObjCLiteralComparison(Sema &S, SourceLocation OpLoc,
+                                           ExprResult &LHS,
+                                           ExprResult &RHS,
+                                           BinaryOperatorKind Op) {
+  assert((Op == BO_EQ || Op == BO_NE) && "Cannot fix other operations.");
+
+  // Get the LHS object's interface type.
+  QualType Type = LHS.get()->getType();
+  QualType InterfaceType;
+  if (const ObjCObjectPointerType *PTy = Type->getAs<ObjCObjectPointerType>()) {
+    InterfaceType = PTy->getPointeeType();
+    if (const ObjCObjectType *iQFaceTy =
+        InterfaceType->getAsObjCQualifiedInterfaceType())
+      InterfaceType = iQFaceTy->getBaseType();
+  } else {
+    // If this is not actually an Objective-C object, bail out.
+    return ExprEmpty();
+  }
+
+  // If the RHS isn't an Objective-C object, bail out.
+  if (!RHS.get()->getType()->isObjCObjectPointerType())
+    return ExprEmpty();
+
+  // Try to find the -isEqual: method.
+  Selector IsEqualSel = S.NSAPIObj->getIsEqualSelector();
+  ObjCMethodDecl *Method = S.LookupMethodInObjectType(IsEqualSel,
+                                                      InterfaceType,
+                                                      /*instance=*/true);
+  bool ReceiverIsId = (Type->isObjCIdType() || Type->isObjCQualifiedIdType());
+
+  if (!Method && ReceiverIsId) {
+    Method = S.LookupInstanceMethodInGlobalPool(IsEqualSel, SourceRange(),
+                                                /*receiverId=*/true,
+                                                /*warn=*/false);
+  }
+
+  if (!Method)
+    return ExprEmpty();
+
+  QualType T = Method->param_begin()[0]->getType();
+  if (!T->isObjCObjectPointerType())
+    return ExprEmpty();
+
+  QualType R = Method->getResultType();
+  if (!R->isScalarType())
+    return ExprEmpty();
+
+  // At this point we know we have a good -isEqual: method.
+  // Emit the diagnostic and fixit.
+  DiagnosticBuilder Diag = diagnoseObjCLiteralComparison(S, OpLoc,
+                                                         LHS, RHS, true);
+
+  Expr *LHSExpr = LHS.take();
+  Expr *RHSExpr = RHS.take();
+
+  SourceLocation Start = LHSExpr->getLocStart();
+  SourceLocation End = S.PP.getLocForEndOfToken(RHSExpr->getLocEnd());
+  SourceRange OpRange(OpLoc, S.PP.getLocForEndOfToken(OpLoc));
+
+  Diag << FixItHint::CreateInsertion(Start, Op == BO_EQ ? "[" : "![")
+       << FixItHint::CreateReplacement(OpRange, "isEqual:")
+       << FixItHint::CreateInsertion(End, "]");
+
+  // Finally, build the call to -isEqual: (and possible logical not).
+  ExprResult Call = S.BuildInstanceMessage(LHSExpr, LHSExpr->getType(),
+                                           /*SuperLoc=*/SourceLocation(),
+                                           IsEqualSel, Method,
+                                           OpLoc, OpLoc, OpLoc,
+                                           MultiExprArg(S, &RHSExpr, 1),
+                                           /*isImplicit=*/false);
+
+  ExprResult CallCond = S.CheckBooleanCondition(Call.get(), OpLoc);
+
+  if (Op == BO_NE)
+    return S.CreateBuiltinUnaryOp(OpLoc, UO_LNot, CallCond.get());
+  return CallCond;
+}
+
 // C99 6.5.8, C++ [expr.rel]
 QualType Sema::CheckCompareOperands(ExprResult &LHS, ExprResult &RHS,
                                     SourceLocation Loc, unsigned OpaqueOpc,
@@ -6913,6 +7060,9 @@ QualType Sema::CheckCompareOperands(ExprResult &LHS, ExprResult &RHS,
       if (!Context.areComparableObjCPointerTypes(LHSType, RHSType))
         diagnoseDistinctPointerComparison(*this, Loc, LHS, RHS,
                                           /*isError*/false);
+      if (isObjCObjectLiteral(LHS) || isObjCObjectLiteral(RHS))
+        diagnoseObjCLiteralComparison(*this, Loc, LHS, RHS);
+
       if (LHSIsNull && !RHSIsNull)
         LHS = ImpCastExprToType(LHS.take(), RHSType, CK_BitCast);
       else
@@ -7971,6 +8121,13 @@ ExprResult Sema::CreateBuiltinBinOp(SourceLocation OpLoc,
     break;
   case BO_EQ:
   case BO_NE:
+    if (isObjCObjectLiteral(LHS) || isObjCObjectLiteral(RHS)) {
+      ExprResult IsEqualCall = fixObjCLiteralComparison(*this, OpLoc,
+                                                        LHS, RHS, Opc);
+      if (IsEqualCall.isUsable())
+        return IsEqualCall;
+      // Otherwise, fall back to the normal diagnostic in CheckCompareOperands.
+    }
     ResultTy = CheckCompareOperands(LHS, RHS, OpLoc, Opc, false);
     break;
   case BO_And:

@@ -132,6 +132,11 @@ public:
     return getOrInitSelector(Ids, setObjectAtIndexedSubscriptSel);
   }
 
+  /// \brief Returns selector for "isEqual:".
+  Selector getIsEqualSelector() const {
+    return getOrInitSelector(StringRef("isEqual"), isEqualSel);
+  }
+
   /// \brief Enumerates the NSNumber methods used to generate literals.
   enum NSNumberLiteralMethodKind {
     NSNumberWithChar,
@@ -203,7 +208,8 @@ private:
   mutable Selector NSNumberInstanceSelectors[NumNSNumberLiteralMethods];
 
   mutable Selector objectForKeyedSubscriptSel, objectAtIndexedSubscriptSel,
-                   setObjectForKeyedSubscriptSel,setObjectAtIndexedSubscriptSel;
+                   setObjectForKeyedSubscriptSel,setObjectAtIndexedSubscriptSel,
+                   isEqualSel;
 
   mutable IdentifierInfo *BOOLId, *NSIntegerId, *NSUIntegerId;
   mutable IdentifierInfo *NSASCIIStringEncodingId, *NSUTF8StringEncodingId;

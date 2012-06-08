@@ -1593,6 +1593,10 @@ def err_invalid_collection_element : Error<
 def err_box_literal_collection : Error<
   "%select{string|character|boolean|numeric}0 literal must be prefixed by '@' "
   "in a collection">;
+def err_objc_literal_comparison : Error<
+  "direct comparison of %select{a string literal|an array literal|"
+  "a dictionary literal|a numeric literal|a boxed expression|}0 is not "
+  "allowed%select{|; use -isEqual: instead}1">;
 
 let CategoryName = "Cocoa API Issue" in {
 def warn_objc_redundant_literal_use : Warning<
