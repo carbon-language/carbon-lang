@@ -1133,7 +1133,8 @@ bool ASTUnit::Parse(llvm::MemoryBuffer *OverrideMainBuffer) {
                                StoredDiagnostics);
   }
 
-  Act->Execute();
+  if (!Act->Execute())
+    goto error;
 
   transferASTDataFromCompilerInstance(*Clang);
   
@@ -1795,7 +1796,13 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocationAction(CompilerInvocation *CI,
                                            AST->getCurrentTopLevelHashValue()));
     Clang->setASTConsumer(new MultiplexConsumer(Consumers));
   }
-  Act->Execute();
+  if (!Act->Execute()) {
+    AST->transferASTDataFromCompilerInstance(*Clang);
+    if (OwnAST && ErrAST)
+      ErrAST->swap(OwnAST);
+
+    return 0;
+  }
 
   // Steal the created target, context, and preprocessor.
   AST->transferASTDataFromCompilerInstance(*Clang);

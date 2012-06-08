@@ -2692,6 +2692,8 @@ int clang_saveTranslationUnit(CXTranslationUnit TU, const char *FileName,
 
   ASTUnit *CXXUnit = static_cast<ASTUnit *>(TU->TUData);
   ASTUnit::ConcurrencyCheck Check(*CXXUnit);
+  if (!CXXUnit->hasSema())
+    return CXSaveError_InvalidTU;
 
   SaveTranslationUnitInfo STUI = { TU, FileName, options, CXSaveError_None };
 

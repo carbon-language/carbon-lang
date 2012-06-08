@@ -188,7 +188,7 @@ public:
   bool BeginSourceFile(CompilerInstance &CI, const FrontendInputFile &Input);
 
   /// Execute - Set the source managers main input file, and run the action.
-  void Execute();
+  bool Execute();
 
   /// EndSourceFile - Perform any per-file post processing, deallocate per-file
   /// objects, and run statistics and output file cleanup code.
