@@ -1135,7 +1135,7 @@ APInt APInt::lshr(unsigned shiftAmt) const {
   // If all the bits were shifted out, the result is 0. This avoids issues
   // with shifting by the size of the integer type, which produces undefined
   // results. We define these "undefined results" to always be 0.
-  if (shiftAmt == BitWidth)
+  if (shiftAmt >= BitWidth)
     return APInt(BitWidth, 0);
 
   // If none of the bits are shifted out, the result is *this. This avoids
