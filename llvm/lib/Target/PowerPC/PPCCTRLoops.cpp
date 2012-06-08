@@ -371,6 +371,7 @@ bool
 PPCCTRLoops::isInductionOperation(const MachineInstr *MI,
                                            unsigned IVReg) const {
   return ((MI->getOpcode() == PPC::ADDI || MI->getOpcode() == PPC::ADDI8) &&
+          MI->getOperand(1).isReg() && // could be a frame index instead
           MI->getOperand(1).getReg() == IVReg);
 }
 
