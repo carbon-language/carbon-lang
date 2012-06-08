@@ -140,7 +140,6 @@ int internal_strncmp(const char *s1, const char *s2, uptr size);
 void internal_strcpy(char *s1, const char *s2);
 const char *internal_strstr(const char *where, const char *what);
 const char *internal_strchr(const char *where, char what);
-const char *internal_strrchr(const char *where, char what);
 
 struct MD5Hash {
   u64 hash[2];

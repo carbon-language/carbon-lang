@@ -251,19 +251,6 @@ int internal_memcmp(const void* s1, const void* s2, uptr n) {
   return 0;
 }
 
-// Should not be used in performance-critical places.
-void* internal_memset(void* s, int c, uptr n) {
-  // The next line prevents Clang from making a call to memset() instead of the
-  // loop below.
-  // FIXME: building the runtime with -ffreestanding is a better idea. However
-  // there currently are linktime problems due to PR12396.
-  char volatile *t = (char*)s;
-  for (uptr i = 0; i < n; ++i, ++t) {
-    *t = c;
-  }
-  return s;
-}
-
 char *internal_strstr(const char *haystack, const char *needle) {
   // This is O(N^2), but we are not using it in hot places.
   uptr len1 = internal_strlen(haystack);

@@ -1545,10 +1545,6 @@ const char *internal_strchr(const char *where, char what) {
   return (const char*)REAL(strchr)((void*)where, what);
 }
 
-const char *internal_strrchr(const char *where, char what) {
-  return (const char*)REAL(strrchr)((void*)where, what);
-}
-
 void internal_start_thread(void(*func)(void *arg), void *arg) {
   void *th;
   REAL(pthread_create)(&th, 0, (void*(*)(void *arg))func, arg);

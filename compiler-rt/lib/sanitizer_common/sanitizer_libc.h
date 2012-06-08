@@ -26,10 +26,13 @@ void MiniLibcStub();
 // String functions
 void *internal_memchr(const void *s, int c, uptr n);
 void *internal_memcpy(void *dest, const void *src, uptr n);
+// Should not be used in performance-critical places.
+void *internal_memset(void *s, int c, uptr n);
 int internal_strcmp(const char *s1, const char *s2);
 char *internal_strdup(const char *s);
 uptr internal_strlen(const char *s);
 char *internal_strncpy(char *dst, const char *src, uptr n);
+char *internal_strrchr(const char *s, int c);
 
 // Memory
 void *internal_mmap(void *addr, uptr length, int prot, int flags,

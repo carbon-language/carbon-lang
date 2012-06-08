@@ -34,6 +34,18 @@ void *internal_memcpy(void *dest, const void *src, uptr n) {
   return dest;
 }
 
+void *internal_memset(void* s, int c, uptr n) {
+  // The next line prevents Clang from making a call to memset() instead of the
+  // loop below.
+  // FIXME: building the runtime with -ffreestanding is a better idea. However
+  // there currently are linktime problems due to PR12396.
+  char volatile *t = (char*)s;
+  for (uptr i = 0; i < n; ++i, ++t) {
+    *t = c;
+  }
+  return s;
+}
+
 char* internal_strdup(const char *s) {
   uptr len = internal_strlen(s);
   char *s2 = (char*)InternalAlloc(len + 1);
@@ -52,6 +64,14 @@ int internal_strcmp(const char *s1, const char *s2) {
     s2++;
   }
   return 0;
+}
+
+char *internal_strrchr(const char *s, int c) {
+  const char *res = 0;
+  for (uptr i = 0; s[i]; i++) {
+    if (s[i] == c) res = s + i;
+  }
+  return (char*)res;
 }
 
 uptr internal_strlen(const char *s) {
