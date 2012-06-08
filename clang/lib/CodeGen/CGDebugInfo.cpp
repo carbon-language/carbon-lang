@@ -1700,7 +1700,8 @@ llvm::DIType CGDebugInfo::getOrCreateType(QualType Ty, llvm::DIFile Unit) {
 
   llvm::DIType TC = getTypeOrNull(Ty);
   if (TC.Verify() && TC.isForwardDecl())
-    ReplaceMap.push_back(std::make_pair(Ty.getAsOpaquePtr(), TC));
+    ReplaceMap.push_back(std::make_pair(Ty.getAsOpaquePtr(),
+                                        static_cast<llvm::Value*>(TC)));
   
   // And update the type cache.
   TypeCache[Ty.getAsOpaquePtr()] = Res;
@@ -1811,7 +1812,8 @@ llvm::DIType CGDebugInfo::getOrCreateLimitedType(QualType Ty,
   llvm::DIType Res = CreateLimitedTypeNode(Ty, Unit);
 
   if (T.Verify() && T.isForwardDecl())
-    ReplaceMap.push_back(std::make_pair(Ty.getAsOpaquePtr(), T));
+    ReplaceMap.push_back(std::make_pair(Ty.getAsOpaquePtr(),
+                                        static_cast<llvm::Value*>(T)));
 
   // And update the type cache.
   TypeCache[Ty.getAsOpaquePtr()] = Res;
