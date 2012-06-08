@@ -177,13 +177,6 @@ namespace llvm {
     /// the specified stack slot
     void assignVirt2StackSlot(unsigned virtReg, int frameIndex);
 
-    /// rewrite - Rewrite all instructions in MF to use only physical registers
-    /// by mapping all virtual register operands to their assigned physical
-    /// registers.
-    ///
-    /// @param Indexes Optionally remove deleted instructions from indexes.
-    void rewrite(SlotIndexes *Indexes);
-
     void print(raw_ostream &OS, const Module* M = 0) const;
     void dump() const;
   };

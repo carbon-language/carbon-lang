@@ -65,6 +65,7 @@ void llvm::initializeCodeGen(PassRegistry &Registry) {
   initializeUnreachableBlockElimPass(Registry);
   initializeUnreachableMachineBlockElimPass(Registry);
   initializeVirtRegMapPass(Registry);
+  initializeVirtRegRewriterPass(Registry);
   initializeLowerIntrinsicsPass(Registry);
   initializeMachineFunctionPrinterPassPass(Registry);
 }

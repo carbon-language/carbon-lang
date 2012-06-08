@@ -248,6 +248,7 @@ void initializeUnreachableBlockElimPass(PassRegistry&);
 void initializeUnreachableMachineBlockElimPass(PassRegistry&);
 void initializeVerifierPass(PassRegistry&);
 void initializeVirtRegMapPass(PassRegistry&);
+void initializeVirtRegRewriterPass(PassRegistry&);
 void initializeInstSimplifierPass(PassRegistry&);
 void initializeUnpackMachineBundlesPass(PassRegistry&);
 void initializeFinalizeMachineBundlesPass(PassRegistry&);

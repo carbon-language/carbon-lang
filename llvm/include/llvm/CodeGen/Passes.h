@@ -300,6 +300,10 @@ namespace llvm {
   /// basic blocks.
   extern char &SpillPlacementID;
 
+  /// VirtRegRewriter pass. Rewrite virtual registers to physical registers as
+  /// assigned in VirtRegMap.
+  extern char &VirtRegRewriterID;
+
   /// UnreachableMachineBlockElimination - This pass removes unreachable
   /// machine basic blocks.
   extern char &UnreachableMachineBlockElimID;

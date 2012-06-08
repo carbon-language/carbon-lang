@@ -609,6 +609,10 @@ void TargetPassConfig::addOptimizedRegAlloc(FunctionPass *RegAllocPass) {
   PM->add(RegAllocPass);
   printAndVerify("After Register Allocation");
 
+  // Finally rewrite virtual registers.
+  addPass(VirtRegRewriterID);
+  printAndVerify("After Virtual Register Rewriter");
+
   // FinalizeRegAlloc is convenient until MachineInstrBundles is more mature,
   // but eventually, all users of it should probably be moved to addPostRA and
   // it can go away.  Currently, it's the intended place for targets to run

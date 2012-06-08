@@ -146,6 +146,7 @@ void RABasic::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<AliasAnalysis>();
   AU.addPreserved<AliasAnalysis>();
   AU.addRequired<LiveIntervals>();
+  AU.addPreserved<LiveIntervals>();
   AU.addPreserved<SlotIndexes>();
   AU.addRequired<LiveDebugVariables>();
   AU.addPreserved<LiveDebugVariables>();
@@ -335,18 +336,7 @@ bool RABasic::runOnMachineFunction(MachineFunction &mf) {
   }
 #endif // !NDEBUG
 
-  // Run rewriter
-  VRM->rewrite(LIS->getSlotIndexes());
-
-  // Write out new DBG_VALUE instructions.
-  getAnalysis<LiveDebugVariables>().emitDebugValues(VRM);
-
-  // All machine operands and other references to virtual registers have been
-  // replaced. Remove the virtual registers and release all the transient data.
-  VRM->clearAllVirt();
-  MRI->clearVirtRegs();
   releaseMemory();
-
   return true;
 }
 
