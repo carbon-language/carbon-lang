@@ -24,7 +24,9 @@ The following options are available:
 .It Fl h, -help 
 Prints out the usage information for the 
 .Nm
-debugger.
+debugger.  The \fB\-\-help\fR text may be more up-to-date and
+authoritative than the command line options described in this man
+page.
 .It Fl v, -version 
 Prints out the version number of the 
 .Nm 
@@ -75,6 +77,37 @@ Do not automatically parse any '.lldbinit' files.
 so 'lldb -- <filename> [<ARG1> [<ARG2>]]' also works.
 Remember to end the options with "--" if any of your arguments have a "-" in them.)
 .El
+.Sh USING LLDB
+In
+.Nm
+there is a \fBhelp\fR command which can be used to find descriptions and examples of
+all 
+.Nm
+commands.  To get help on "\fBbreakpoint set\fR" you would type "\fBhelp breakpoint set\fR".
+.Pp
+There is also an \fBapropos\fR command which will search the help text of all commands
+for a given term -- this is useful for locating a command by topic.  For instance, "\fBapropos breakpoint\fR"
+will list any command that has the word \fBbreakpoint\fR in its help text.
+.Sh FILES
+.Nm
+will read settings/aliases/commands from three files at startup, if they exist.
+.Pp
+First, it will read a \fB~/.lldbinit-\fIdebugger\fR command file.  If you are using the
+.Nm
+command line interface, this is \fB~/.lldbinit-lldb\fR.  If you are using 
+.Nm
+inside a GUI debugger like
+.Nm Xcode
+this will be \fB~/.lldbinit-Xcode\fR.  This is a useful place to put settings that you
+want to apply only when a given 
+.Nm
+command interpreter is used.
+.Pp
+Second, \fB~/.lldbinit\fR is read.
+.Pp
+Third, an \fR.lldbinit\fR file in the current working directory (where 
+.Nm
+is started) will be read.
 .Sh SEE ALSO
 The LLDB project page http://lldb.llvm.org/ has many different resources for
 .Nm
