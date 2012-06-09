@@ -203,7 +203,7 @@ Path::GetTemporaryDirectory(std::string* ErrMsg) {
   Path result;
   result.set(pathname);
 
-  // Append a subdirectory passed on our process id so multiple LLVMs don't
+  // Append a subdirectory based on our process id so multiple LLVMs don't
   // step on each other's toes.
 #ifdef __MINGW32__
   // Mingw's Win32 header files are broken.
