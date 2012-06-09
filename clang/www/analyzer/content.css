@@ -15,6 +15,11 @@ h1 { padding-top:0px; margin-top:0px;}
 h2 { color:#333333; padding-top:0.5em; }
 h3 { padding-top: 0.5em; margin-bottom: -0.25em; color:#2d58b7 }
 h4 { color:#2d58b7 }
+h4.faq { margin-top:4em;
+         color:black;
+         border-width:1px; border-style:solid;
+         border-color:#cccccc; 
+         background-color:#eeeeee; padding:10px }
 li { padding-bottom: 0.5em }
 ul { padding-left:1.5em; }
 
