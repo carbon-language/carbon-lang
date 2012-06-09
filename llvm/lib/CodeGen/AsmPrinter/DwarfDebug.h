@@ -188,6 +188,9 @@ class DwarfDebug {
   /// MMI - Collected machine module information.
   MachineModuleInfo *MMI;
 
+  /// DIEValueAllocator - All DIEValues are allocated through this allocator.
+  BumpPtrAllocator DIEValueAllocator;
+
   //===--------------------------------------------------------------------===//
   // Attributes used to construct specific Dwarf sections.
   //
@@ -210,11 +213,11 @@ class DwarfDebug {
 
   /// SourceIdMap - Source id map, i.e. pair of source filename and directory,
   /// separated by a zero byte, mapped to a unique id.
-  StringMap<unsigned> SourceIdMap;
+  StringMap<unsigned, BumpPtrAllocator&> SourceIdMap;
 
   /// StringPool - A String->Symbol mapping of strings used by indirect
   /// references.
-  StringMap<std::pair<MCSymbol*, unsigned> > StringPool;
+  StringMap<std::pair<MCSymbol*, unsigned>, BumpPtrAllocator&> StringPool;
   unsigned NextStringPoolNumber;
   
   /// SectionMap - Provides a unique id per text section.
@@ -291,9 +294,6 @@ class DwarfDebug {
   };
 
   std::vector<FunctionDebugFrameInfo> DebugFrames;
-
-  // DIEValueAllocator - All DIEValues are allocated through this allocator.
-  BumpPtrAllocator DIEValueAllocator;
 
   // Section Symbols: these are assembler temporary labels that are emitted at
   // the beginning of each supported dwarf section.  These are used to form
