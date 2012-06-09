@@ -1068,7 +1068,8 @@ bool CursorVisitor::VisitObjCImplementationDecl(ObjCImplementationDecl *D) {
 
 bool CursorVisitor::VisitObjCPropertyImplDecl(ObjCPropertyImplDecl *PD) {
   if (ObjCIvarDecl *Ivar = PD->getPropertyIvarDecl())
-    return Visit(MakeCursorMemberRef(Ivar, PD->getPropertyIvarDeclLoc(), TU));
+    if (PD->isIvarNameSpecified())
+      return Visit(MakeCursorMemberRef(Ivar, PD->getPropertyIvarDeclLoc(), TU));
   
   return false;
 }
@@ -3613,12 +3614,15 @@ CXString clang_getCursorKindSpelling(enum CXCursorKind Kind) {
 struct GetCursorData {
   SourceLocation TokenBeginLoc;
   bool PointsAtMacroArgExpansion;
+  bool VisitedObjCPropertyImplDecl;
+  SourceLocation VisitedDeclaratorDeclStartLoc;
   CXCursor &BestCursor;
 
   GetCursorData(SourceManager &SM,
                 SourceLocation tokenBegin, CXCursor &outputCursor)
     : TokenBeginLoc(tokenBegin), BestCursor(outputCursor) {
     PointsAtMacroArgExpansion = SM.isMacroArgExpansion(tokenBegin);
+    VisitedObjCPropertyImplDecl = false;
   }
 };
 
@@ -3658,6 +3662,32 @@ static enum CXChildVisitResult GetCursorVisitor(CXCursor cursor,
              !ID->isThisDeclarationADefinition())
            return CXChildVisit_Break;
         }
+
+    } else if (DeclaratorDecl *DD
+                    = dyn_cast_or_null<DeclaratorDecl>(getCursorDecl(cursor))) {
+      SourceLocation StartLoc = DD->getSourceRange().getBegin();
+      // Check that when we have multiple declarators in the same line,
+      // that later ones do not override the previous ones.
+      // If we have:
+      // int Foo, Bar;
+      // source ranges for both start at 'int', so 'Bar' will end up overriding
+      // 'Foo' even though the cursor location was at 'Foo'.
+      if (Data->VisitedDeclaratorDeclStartLoc == StartLoc)
+        return CXChildVisit_Break;
+      Data->VisitedDeclaratorDeclStartLoc = StartLoc;
+
+    } else if (ObjCPropertyImplDecl *PropImp
+              = dyn_cast_or_null<ObjCPropertyImplDecl>(getCursorDecl(cursor))) {
+      (void)PropImp;
+      // Check that when we have multiple @synthesize in the same line,
+      // that later ones do not override the previous ones.
+      // If we have:
+      // @synthesize Foo, Bar;
+      // source ranges for both start at '@', so 'Bar' will end up overriding
+      // 'Foo' even though the cursor location was at 'Foo'.
+      if (Data->VisitedObjCPropertyImplDecl)
+        return CXChildVisit_Break;
+      Data->VisitedObjCPropertyImplDecl = true;
     }
   }
 

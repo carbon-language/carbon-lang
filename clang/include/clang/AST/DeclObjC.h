@@ -1983,6 +1983,17 @@ public:
     this->IvarLoc = IvarLoc;
   }
 
+  /// \brief For \@synthesize, returns true if an ivar name was explicitly
+  /// specified.
+  ///
+  /// \code
+  /// \@synthesize int a = b; // true
+  /// \@synthesize int a; // false
+  /// \endcode
+  bool isIvarNameSpecified() const {
+    return IvarLoc.isValid() && IvarLoc != getLocation();
+  }
+
   Expr *getGetterCXXConstructor() const {
     return GetterCXXConstructor;
   }
