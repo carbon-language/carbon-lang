@@ -1,4 +1,4 @@
-//===--- Attr.h - Classes for representing expressions ----------*- C++ -*-===//
+//===--- Attr.h - Classes for representing attributes ----------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
