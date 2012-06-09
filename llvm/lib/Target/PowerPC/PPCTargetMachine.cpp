@@ -93,13 +93,7 @@ public:
 } // namespace
 
 TargetPassConfig *PPCTargetMachine::createPassConfig(PassManagerBase &PM) {
-  TargetPassConfig *PassConfig = new PPCPassConfig(this, PM);
-
-  // Override this for PowerPC.  Tail merging happily breaks up instruction issue
-  // groups, which typically degrades performance.
-  PassConfig->setEnableTailMerge(false);
-
-  return PassConfig;
+  return new PPCPassConfig(this, PM);
 }
 
 bool PPCPassConfig::addPreRegAlloc() {
