@@ -20,6 +20,7 @@ for.body:                                         ; preds = %for.body, %entry
 for.end:                                          ; preds = %for.body
   ret void
 ; CHECK: @test1
+; CHECK-NOT: or 3, 3, 3
 ; CHECK: mtctr
 ; CHECK-NOT: addi
 ; CHECK-NOT: cmplwi

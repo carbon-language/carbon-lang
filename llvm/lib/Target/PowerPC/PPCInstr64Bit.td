@@ -287,14 +287,6 @@ def MFLR8  : XFXForm_1_ext<31, 339, 8, (outs G8RC:$rT), (ins),
 
 let PPC970_Unit = 1 in {  // FXU Operations.
 
-// Copies, extends, truncates.
-def OR4To8  : XForm_6<31, 444, (outs G8RC:$rA), (ins GPRC:$rS, GPRC:$rB),
-                   "or $rA, $rS, $rB", IntGeneral,
-                   []>;
-def OR8To4  : XForm_6<31, 444, (outs GPRC:$rA), (ins G8RC:$rS, G8RC:$rB),
-                   "or $rA, $rS, $rB", IntGeneral,
-                   []>;
-
 def LI8  : DForm_2_r0<14, (outs G8RC:$rD), (ins symbolLo64:$imm),
                       "li $rD, $imm", IntGeneral,
                       [(set G8RC:$rD, immSExt16:$imm)]>;
@@ -726,11 +718,12 @@ def FCTIDZ : XForm_26<63, 815, (outs F8RC:$frD), (ins F8RC:$frB),
 
 // Extensions and truncates to/from 32-bit regs.
 def : Pat<(i64 (zext GPRC:$in)),
-          (RLDICL (OR4To8 GPRC:$in, GPRC:$in), 0, 32)>;
+          (RLDICL (INSERT_SUBREG (i64 (IMPLICIT_DEF)), GPRC:$in, sub_32),
+                  0, 32)>;
 def : Pat<(i64 (anyext GPRC:$in)),
-          (OR4To8 GPRC:$in, GPRC:$in)>;
+          (INSERT_SUBREG (i64 (IMPLICIT_DEF)), GPRC:$in, sub_32)>;
 def : Pat<(i32 (trunc G8RC:$in)),
-          (OR8To4 G8RC:$in, G8RC:$in)>;
+          (EXTRACT_SUBREG G8RC:$in, sub_32)>;
 
 // Extending loads with i64 targets.
 def : Pat<(zextloadi1 iaddr:$src),
