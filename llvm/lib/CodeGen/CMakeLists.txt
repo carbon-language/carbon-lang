@@ -30,6 +30,7 @@ add_llvm_library(LLVMCodeGen
   LiveInterval.cpp
   LiveIntervalAnalysis.cpp
   LiveIntervalUnion.cpp
+  LiveRegMatrix.cpp
   LiveStackAnalysis.cpp
   LiveVariables.cpp
   LiveRangeCalc.cpp
