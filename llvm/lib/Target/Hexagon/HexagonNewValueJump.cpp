@@ -222,7 +222,7 @@ static bool canCompareBeNewValueJump(const HexagonInstrInfo *QII,
       return false;
   }
 
-  unsigned cmpReg1, cmpOp2;
+  unsigned cmpReg1, cmpOp2 = 0; // cmpOp2 assignment silences compiler warning.
   cmpReg1 = MI->getOperand(1).getReg();
 
   if (secondReg) {
