@@ -60,7 +60,8 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
         Name.startswith("x86.avx.vpermil.") ||
         Name == "x86.avx.movnt.dq.256" ||
         Name == "x86.avx.movnt.pd.256" ||
-        Name == "x86.avx.movnt.ps.256") {
+        Name == "x86.avx.movnt.ps.256" ||
+        (Name.startswith("x86.xop.vpcom") && F->arg_size() == 2)) {
       NewFn = 0;
       return true;
     }
@@ -152,6 +153,51 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
       // Remove intrinsic.
       CI->eraseFromParent();
       return;
+    } else if (Name.startswith("llvm.x86.xop.vpcom")) {
+      Intrinsic::ID intID;
+      if (Name.endswith("ub"))
+        intID = Intrinsic::x86_xop_vpcomub;
+      else if (Name.endswith("uw"))
+        intID = Intrinsic::x86_xop_vpcomuw;
+      else if (Name.endswith("ud"))
+        intID = Intrinsic::x86_xop_vpcomud;
+      else if (Name.endswith("uq"))
+        intID = Intrinsic::x86_xop_vpcomuq;
+      else if (Name.endswith("b"))
+        intID = Intrinsic::x86_xop_vpcomb;
+      else if (Name.endswith("w"))
+        intID = Intrinsic::x86_xop_vpcomw;
+      else if (Name.endswith("d"))
+        intID = Intrinsic::x86_xop_vpcomd;
+      else if (Name.endswith("q"))
+        intID = Intrinsic::x86_xop_vpcomq;
+      else
+        llvm_unreachable("Unknown suffix");
+
+      Name = Name.substr(18); // strip off "llvm.x86.xop.vpcom"
+      unsigned Imm;
+      if (Name.startswith("lt"))
+        Imm = 0;
+      else if (Name.startswith("le"))
+        Imm = 1;
+      else if (Name.startswith("gt"))
+        Imm = 2;
+      else if (Name.startswith("ge"))
+        Imm = 3;
+      else if (Name.startswith("eq"))
+        Imm = 4;
+      else if (Name.startswith("ne"))
+        Imm = 5;
+      else if (Name.startswith("true"))
+        Imm = 6;
+      else if (Name.startswith("false"))
+        Imm = 7;
+      else
+        llvm_unreachable("Unknown condition");
+
+      Function *VPCOM = Intrinsic::getDeclaration(F->getParent(), intID);
+      Rep = Builder.CreateCall3(VPCOM, CI->getArgOperand(0),
+                                CI->getArgOperand(1), Builder.getInt8(Imm));
     } else {
       bool PD128 = false, PD256 = false, PS128 = false, PS256 = false;
       if (Name == "llvm.x86.avx.vpermil.pd.256")
