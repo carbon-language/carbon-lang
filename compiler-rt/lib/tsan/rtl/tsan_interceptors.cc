@@ -1525,6 +1525,10 @@ void real_memset(void *ptr, int c, uptr size) {
   REAL(memset)(ptr, c, size);
 }
 
+void real_memcpy(void *dst, const void *src, uptr size) {
+  REAL(memcpy)(dst, src, size);
+}
+
 int internal_memcmp(const void *s1, const void *s2, uptr size) {
   return REAL(memcmp)(s1, s2, size);
 }

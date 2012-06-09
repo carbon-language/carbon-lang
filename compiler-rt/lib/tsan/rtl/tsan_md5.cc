@@ -166,11 +166,11 @@ void MD5_Update(MD5_CTX *ctx, void *data, ulong_t size) {
     free = 64 - used;
 
     if (size < free) {
-      internal_memcpy(&ctx->buffer[used], data, size);
+      real_memcpy(&ctx->buffer[used], data, size);
       return;
     }
 
-    internal_memcpy(&ctx->buffer[used], data, free);
+    real_memcpy(&ctx->buffer[used], data, free);
     data = (unsigned char *)data + free;
     size -= free;
     body(ctx, ctx->buffer, 64);
@@ -181,7 +181,7 @@ void MD5_Update(MD5_CTX *ctx, void *data, ulong_t size) {
     size &= 0x3f;
   }
 
-  internal_memcpy(ctx->buffer, data, size);
+  real_memcpy(ctx->buffer, data, size);
 }
 
 void MD5_Final(unsigned char *result, MD5_CTX *ctx) {

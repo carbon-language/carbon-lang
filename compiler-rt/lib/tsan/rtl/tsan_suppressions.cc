@@ -118,7 +118,7 @@ Suppression *SuppressionParse(const char* supp) {
       head = s;
       s->type = stype;
       s->templ = (char*)internal_alloc(MBlockSuppression, end2 - line + 1);
-      internal_memcpy(s->templ, line, end2 - line);
+      real_memcpy(s->templ, line, end2 - line);
       s->templ[end2 - line] = 0;
     }
     if (end[0] == 0)

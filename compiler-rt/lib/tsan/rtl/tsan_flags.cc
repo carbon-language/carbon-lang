@@ -139,7 +139,7 @@ static void Flag(const char *env, const char **flag, const char *name) {
     return;
   int len = end - val;
   char *f = (char*)internal_alloc(MBlockFlag, len + 1);
-  internal_memcpy(f, val, len);
+  real_memcpy(f, val, len);
   f[len] = 0;
   *flag = f;
 }

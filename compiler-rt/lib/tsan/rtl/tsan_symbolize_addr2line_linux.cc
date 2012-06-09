@@ -179,12 +179,12 @@ ReportStack *SymbolizeCode(uptr addr) {
   char *pos = (char*)internal_strchr(func, '\n');
   if (pos && func[0] != '?') {
     res->func = (char*)internal_alloc(MBlockReportStack, pos - func + 1);
-    internal_memcpy(res->func, func, pos - func);
+    real_memcpy(res->func, func, pos - func);
     res->func[pos - func] = 0;
     char *pos2 = (char*)internal_strchr(pos, ':');
     if (pos2) {
       res->file = (char*)internal_alloc(MBlockReportStack, pos2 - pos - 1 + 1);
-      internal_memcpy(res->file, pos + 1, pos2 - pos - 1);
+      real_memcpy(res->file, pos + 1, pos2 - pos - 1);
       res->file[pos2 - pos - 1] = 0;
       res->line = atoi(pos2 + 1);
      }
@@ -215,14 +215,14 @@ ReportStack *SymbolizeData(uptr addr) {
       symb[0].module = 0;
       symb[0].offset = addr;
       symb[0].name = alloc->Alloc<char>(pos - tmp + 1);
-      internal_memcpy(symb[0].name, tmp, pos - tmp);
+      real_memcpy(symb[0].name, tmp, pos - tmp);
       symb[0].name[pos - tmp] = 0;
       symb[0].file = 0;
       symb[0].line = 0;
       char *pos2 = strchr(pos, ':');
       if (pos2) {
         symb[0].file = alloc->Alloc<char>(pos2 - pos - 1 + 1);
-        internal_memcpy(symb[0].file, pos + 1, pos2 - pos - 1);
+        real_memcpy(symb[0].file, pos + 1, pos2 - pos - 1);
         symb[0].file[pos2 - pos - 1] = 0;
         symb[0].line = atoi(pos2 + 1);
       }

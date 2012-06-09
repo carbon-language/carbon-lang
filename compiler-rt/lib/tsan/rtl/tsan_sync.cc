@@ -155,7 +155,7 @@ void StackTrace::Init(const uptr *pcs, uptr cnt) {
     return;
   n_ = cnt;
   s_ = (uptr*)internal_alloc(MBlockStackTrace, cnt * sizeof(s_[0]));
-  internal_memcpy(s_, pcs, cnt * sizeof(s_[0]));
+  real_memcpy(s_, pcs, cnt * sizeof(s_[0]));
 }
 
 void StackTrace::ObtainCurrent(ThreadState *thr, uptr toppc) {
