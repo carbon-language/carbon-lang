@@ -949,6 +949,12 @@ class Cursor(Structure):
         """
         return Cursor_is_def(self)
 
+    def is_static_method(self):
+        """Returns True if the cursor refers to a C++ member function or member
+        function template that is declared 'static'.
+        """
+        return Cursor_is_static_method(self)
+
     def get_definition(self):
         """
         If the cursor is a reference to a declaration or a declaration of
@@ -2175,6 +2181,10 @@ Cursor_usr.errcheck = _CXString.from_result
 Cursor_is_def = lib.clang_isCursorDefinition
 Cursor_is_def.argtypes = [Cursor]
 Cursor_is_def.restype = bool
+
+Cursor_is_static_method = lib.clang_CXXMethod_isStatic
+Cursor_is_static_method.argtypes = [Cursor]
+Cursor_is_static_method.restype = bool
 
 Cursor_def = lib.clang_getCursorDefinition
 Cursor_def.argtypes = [Cursor]
