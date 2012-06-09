@@ -15,14 +15,23 @@
 
 // FIXME: We should probably use more low-level allocator that would
 // mmap some pages and split them into chunks to fulfill requests.
-#include <stdlib.h>
+#ifdef __linux__
+extern "C" void *__libc_malloc(__sanitizer::uptr size);
+extern "C" void __libc_free(void *ptr);
+# define LIBC_MALLOC __libc_malloc
+# define LIBC_FREE __libc_free
+#else  // __linux__
+# include <stdlib.h>
+# define LIBC_MALLOC malloc
+# define LIBC_FREE free
+#endif  // __linux__
 
 namespace __sanitizer {
 
 static const u64 kInternalAllocBlockMagic = 0x7A6CB03ABCEBC042ull;
 
 void *InternalAlloc(uptr size) {
-  void *p = malloc(size + sizeof(u64));
+  void *p = LIBC_MALLOC(size + sizeof(u64));
   ((u64*)p)[0] = kInternalAllocBlockMagic;
   return (char*)p + sizeof(u64);
 }
@@ -32,7 +41,7 @@ void InternalFree(void *addr) {
   addr = (char*)addr - sizeof(u64);
   CHECK_EQ(((u64*)addr)[0], kInternalAllocBlockMagic);
   ((u64*)addr)[0] = 0;
-  free(addr);
+  LIBC_FREE(addr);
 }
 
 }  // namespace __sanitizer
