@@ -174,16 +174,6 @@ InclusionRewriter::FindFileChangeLocation(SourceLocation Loc) const {
   return NULL;
 }
 
-/// Count the raw \\n characters in the \p Len characters from \p Pos.
-inline unsigned CountNewLines(const char *Pos, int Len) {
-  const char *End = Pos + Len;
-  unsigned Lines = 0;
-  --Pos;
-  while ((Pos = static_cast<const char*>(memchr(Pos + 1, '\n', End - Pos - 1))))
-    ++Lines;
-  return Lines;
-}
-
 /// Detect the likely line ending style of \p FromFile by examining the first
 /// newline found within it.
 static StringRef DetectEOL(const MemoryBuffer &FromFile) {
@@ -209,8 +199,8 @@ void InclusionRewriter::OutputContentUpTo(const MemoryBuffer &FromFile,
     return;
   OS.write(FromFile.getBufferStart() + WriteFrom, WriteTo - WriteFrom);
   // count lines manually, it's faster than getPresumedLoc()
-  Line += CountNewLines(FromFile.getBufferStart() + WriteFrom,
-                        WriteTo - WriteFrom);
+  Line += std::count(FromFile.getBufferStart() + WriteFrom,
+                     FromFile.getBufferStart() + WriteTo, '\n');
   if (EnsureNewline) {
     char LastChar = FromFile.getBufferStart()[WriteTo - 1];
     if (LastChar != '\n' && LastChar != '\r')
