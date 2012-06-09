@@ -1,0 +1,50 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+          "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+  <title>Available Checks</title>
+  <link type="text/css" rel="stylesheet" href="menu.css">
+  <link type="text/css" rel="stylesheet" href="content.css">
+  <script type="text/javascript" src="scripts/menu.js"></script>
+  <style type="text/css">
+  tr:first-child { width:20%; }
+  </style>
+</head>
+<body>
+
+<div id="page">
+<!--#include virtual="menu.html.incl"-->
+
+<div id="content">
+
+<h1>FAQ and How to Deal with Common False Positives </h1>
+
+<h4>Q: The analyzer reports a bug on an error path. I do not want the bug being reported here since my custom error handler will safely end the execution before the bug is reached.</h1>
+
+<img src="images/example_custom_assert.png" alt="example custom assert">
+
+<p>You can tell the analyzer that this path is unreachable by teaching it about your <a href = "annotations.html#custom_assertions" >custom assertion handlers</a>.</p>
+
+<h4>Q: The analyzer reports "Dereference of null pointer", but I know that the pointer is never null.</h1>
+
+<img src="images/example_null_pointer.png" alt="example null pointer">
+
+<p>The reason the analyzer often thinks that a pointer can be null is because the preceding code checked compared it against null. So if you are absolutely sure that it cannot be null, remove the preceding check and, preferably, add an assert as well. For example, in the code segment above, it will be sufficient to remove the <tt>if (!b)</tt> check. </p>
+
+<h4>Q: The analyzer assumes that the loop body is never entered, which can never happen in this code.</h1>
+
+<img src="images/example_use_assert.png" alt="example use assert">
+
+<p>You can teach the analyzer facts about your code as well as document it by using asserts. In the contrived example above, the analyzer reports an error on the path which assumes that the loop is never entered. However, the owner of the code might know that the loop is always entered because the input parameter <tt>length</tt> is always greater than <tt>0</tt>. The false positive can be suppressed by asserting this knowledge, adding <tt>assert(length > 0)</tt> in the beginning of the function.</p>
+
+<h4>Q: How can I suppress the analyzer warning?</h1>
+
+<img src="images/example_null_pointer.png" alt="example null pointer">
+
+<p>Unfortunately, there is no mechanism for suppressing the analyzer warning. If you ran into an analyzer bug/false positive, please <a href = "filing_bugs.html">report it</a>.</p>
+
+</div>
+</div>
+</body>
+</html>
+
