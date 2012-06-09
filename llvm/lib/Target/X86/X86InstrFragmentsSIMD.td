@@ -107,13 +107,6 @@ def SDTX86CmpPTest : SDTypeProfile<1, 2, [SDTCisVT<0, i32>,
 def X86ptest   : SDNode<"X86ISD::PTEST", SDTX86CmpPTest>;
 def X86testp   : SDNode<"X86ISD::TESTP", SDTX86CmpPTest>;
 
-def X86vpcom   : SDNode<"X86ISD::VPCOM",
-                        SDTypeProfile<1, 3, [SDTCisVec<0>, SDTCisSameAs<0,1>,
-                                      SDTCisSameAs<0,2>, SDTCisVT<3, i8>]>>;
-def X86vpcomu  : SDNode<"X86ISD::VPCOMU",
-                        SDTypeProfile<1, 3, [SDTCisVec<0>, SDTCisSameAs<0,1>,
-                                      SDTCisSameAs<0,2>, SDTCisVT<3, i8>]>>;
-
 def X86pmuludq : SDNode<"X86ISD::PMULUDQ",
                         SDTypeProfile<1, 2, [SDTCisVec<0>, SDTCisVec<1>,
                                       SDTCisSameAs<1,2>]>>;

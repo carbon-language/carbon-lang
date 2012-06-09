@@ -170,32 +170,31 @@ let isAsmParserOnly = 1 in {
 }
 
 // Instruction where second source can be memory, third must be imm8
-multiclass xop4opimm<bits<8> opc, string OpcodeStr, SDNode OpNode,
-                     ValueType VT> {
+multiclass xop4opimm<bits<8> opc, string OpcodeStr, Intrinsic Int> {
   def ri : IXOPi8<opc, MRMSrcReg, (outs VR128:$dst),
            (ins VR128:$src1, VR128:$src2, i8imm:$src3),
            !strconcat(OpcodeStr,
            "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
-           [(set VR128:$dst,
-             (VT (OpNode VR128:$src1, VR128:$src2, imm:$src3)))]>, VEX_4V;
+           [(set VR128:$dst, (Int VR128:$src1, VR128:$src2, imm:$src3))]>,
+           VEX_4V;
   def mi : IXOPi8<opc, MRMSrcMem, (outs VR128:$dst),
            (ins VR128:$src1, f128mem:$src2, i8imm:$src3),
            !strconcat(OpcodeStr,
            "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
            [(set VR128:$dst,
-             (VT (OpNode VR128:$src1, (bitconvert (memopv2i64 addr:$src2)),
-                  imm:$src3)))]>, VEX_4V;
+             (Int VR128:$src1, (bitconvert (memopv2i64 addr:$src2)),
+              imm:$src3))]>, VEX_4V;
 }
 
 let isAsmParserOnly = 1 in {
-  defm VPCOMB  : xop4opimm<0xCC, "vpcomb", X86vpcom, v16i8>;
-  defm VPCOMW  : xop4opimm<0xCD, "vpcomw", X86vpcom, v8i16>;
-  defm VPCOMD  : xop4opimm<0xCE, "vpcomd", X86vpcom, v4i32>;
-  defm VPCOMQ  : xop4opimm<0xCF, "vpcomq", X86vpcom, v2i64>;
-  defm VPCOMUB : xop4opimm<0xEC, "vpcomub", X86vpcomu, v16i8>;
-  defm VPCOMUW : xop4opimm<0xED, "vpcomuw", X86vpcomu, v8i16>;
-  defm VPCOMUD : xop4opimm<0xEE, "vpcomud", X86vpcomu, v4i32>;
-  defm VPCOMUQ : xop4opimm<0xEF, "vpcomuq", X86vpcomu, v2i64>;
+  defm VPCOMB  : xop4opimm<0xCC, "vpcomb", int_x86_xop_vpcomb>;
+  defm VPCOMW  : xop4opimm<0xCD, "vpcomw", int_x86_xop_vpcomw>;
+  defm VPCOMD  : xop4opimm<0xCE, "vpcomd", int_x86_xop_vpcomd>;
+  defm VPCOMQ  : xop4opimm<0xCF, "vpcomq", int_x86_xop_vpcomq>;
+  defm VPCOMUB : xop4opimm<0xEC, "vpcomub", int_x86_xop_vpcomub>;
+  defm VPCOMUW : xop4opimm<0xED, "vpcomuw", int_x86_xop_vpcomuw>;
+  defm VPCOMUD : xop4opimm<0xEE, "vpcomud", int_x86_xop_vpcomud>;
+  defm VPCOMUQ : xop4opimm<0xEF, "vpcomuq", int_x86_xop_vpcomuq>;
 }
 
 // Instruction where either second or third source can be memory

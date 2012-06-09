@@ -9534,42 +9534,6 @@ X86TargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) const 
                                 DAG.getConstant(X86CC, MVT::i8), Cond);
     return DAG.getNode(ISD::ZERO_EXTEND, dl, MVT::i32, SetCC);
   }
-  // XOP comparison intrinsics
-  case Intrinsic::x86_xop_vpcomb:
-  case Intrinsic::x86_xop_vpcomw:
-  case Intrinsic::x86_xop_vpcomd:
-  case Intrinsic::x86_xop_vpcomq:
-  case Intrinsic::x86_xop_vpcomub:
-  case Intrinsic::x86_xop_vpcomuw:
-  case Intrinsic::x86_xop_vpcomud:
-  case Intrinsic::x86_xop_vpcomuq: {
-    unsigned CC;
-    unsigned Opc;
-
-    switch (IntNo) {
-    default: llvm_unreachable("Impossible intrinsic");  // Can't reach here.
-    case Intrinsic::x86_xop_vpcomb:
-    case Intrinsic::x86_xop_vpcomw:
-    case Intrinsic::x86_xop_vpcomd:
-    case Intrinsic::x86_xop_vpcomq:
-      CC = 0;
-      Opc = X86ISD::VPCOM;
-      break;
-    case Intrinsic::x86_xop_vpcomub:
-    case Intrinsic::x86_xop_vpcomuw:
-    case Intrinsic::x86_xop_vpcomud:
-    case Intrinsic::x86_xop_vpcomuq:
-      CC = 0;
-      Opc = X86ISD::VPCOMU;
-      break;
-    }
-
-    SDValue LHS = Op.getOperand(1);
-    SDValue RHS = Op.getOperand(2);
-    SDValue Imm = Op.getOperand(3);
-    return DAG.getNode(Opc, dl, Op.getValueType(), LHS, RHS, Imm);
-  }
-
   // Arithmetic intrinsics.
   case Intrinsic::x86_sse2_pmulu_dq:
   case Intrinsic::x86_avx2_pmulu_dq:

@@ -246,9 +246,6 @@ namespace llvm {
       // PCMP* - Vector integer comparisons.
       PCMPEQ, PCMPGT,
 
-      // VPCOM, VPCOMU - XOP Vector integer comparisons.
-      VPCOM, VPCOMU,
-
       // ADD, SUB, SMUL, etc. - Arithmetic operations with FLAGS results.
       ADD, SUB, ADC, SBB, SMUL,
       INC, DEC, OR, XOR, AND,
