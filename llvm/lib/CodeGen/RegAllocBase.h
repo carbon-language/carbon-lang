@@ -137,9 +137,6 @@ protected:
   /// allocation is making progress.
   void unassign(LiveInterval &VirtReg, unsigned PhysReg);
 
-  /// addMBBLiveIns - Add physreg liveins to basic blocks.
-  void addMBBLiveIns(MachineFunction *);
-
 #ifndef NDEBUG
   // Verify each LiveIntervalUnion.
   void verify();

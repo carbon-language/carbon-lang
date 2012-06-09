@@ -308,8 +308,6 @@ bool RABasic::runOnMachineFunction(MachineFunction &mf) {
 
   allocatePhysRegs();
 
-  addMBBLiveIns(MF);
-
   // Diagnostic output before rewriting
   DEBUG(dbgs() << "Post alloc VirtRegMap:\n" << *VRM << "\n");
 

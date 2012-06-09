@@ -1753,7 +1753,6 @@ bool RAGreedy::runOnMachineFunction(MachineFunction &mf) {
   GlobalCand.resize(32);  // This will grow as needed.
 
   allocatePhysRegs();
-  addMBBLiveIns(MF);
   releaseMemory();
   return true;
 }

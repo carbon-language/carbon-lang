@@ -203,6 +203,9 @@ bool VirtRegRewriter::runOnMachineFunction(MachineFunction &fn) {
   // Add kill flags while we still have virtual registers.
   LIS->addKillFlags();
 
+  // Live-in lists on basic blocks are required for physregs.
+  addMBBLiveIns();
+
   // Rewrite virtual registers.
   rewrite();
 
@@ -214,6 +217,35 @@ bool VirtRegRewriter::runOnMachineFunction(MachineFunction &fn) {
   VRM->clearAllVirt();
   MRI->clearVirtRegs();
   return true;
+}
+
+// Compute MBB live-in lists from virtual register live ranges and their
+// assignments.
+void VirtRegRewriter::addMBBLiveIns() {
+  SmallVector<MachineBasicBlock*, 16> LiveIn;
+  for (unsigned Idx = 0, IdxE = MRI->getNumVirtRegs(); Idx != IdxE; ++Idx) {
+    unsigned VirtReg = TargetRegisterInfo::index2VirtReg(Idx);
+    if (MRI->reg_nodbg_empty(VirtReg))
+      continue;
+    LiveInterval &LI = LIS->getInterval(VirtReg);
+    if (LI.empty() || LIS->intervalIsInOneMBB(LI))
+      continue;
+    // This is a virtual register that is live across basic blocks. Its
+    // assigned PhysReg must be marked as live-in to those blocks.
+    unsigned PhysReg = VRM->getPhys(VirtReg);
+    assert(PhysReg != VirtRegMap::NO_PHYS_REG && "Unmapped virtual register.");
+
+    // Scan the segments of LI.
+    for (LiveInterval::const_iterator I = LI.begin(), E = LI.end(); I != E;
+         ++I) {
+      if (!Indexes->findLiveInMBBs(I->start, I->end, LiveIn))
+        continue;
+      for (unsigned i = 0, e = LiveIn.size(); i != e; ++i)
+        if (!LiveIn[i]->isLiveIn(PhysReg))
+          LiveIn[i]->addLiveIn(PhysReg);
+      LiveIn.clear();
+    }
+  }
 }
 
 void VirtRegRewriter::rewrite() {
