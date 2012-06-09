@@ -1025,7 +1025,9 @@
 // CHECK_BDVER1_M64: #define __AVX__ 1
 // CHECK_BDVER1_M64-NOT: #define __3dNOW_A__ 1
 // CHECK_BDVER1_M64-NOT: #define __3dNOW__ 1
+// CHECK_BDVER1_M64: #define __FMA4__ 1
 // CHECK_BDVER1_M64: #define __MMX__ 1
+// CHECK_BDVER1_M64: #define __PCLMUL__ 1
 // CHECK_BDVER1_M64: #define __SSE2_MATH__ 1
 // CHECK_BDVER1_M64: #define __SSE2__ 1
 // CHECK_BDVER1_M64: #define __SSE3__ 1
@@ -1035,6 +1037,7 @@
 // CHECK_BDVER1_M64: #define __SSE_MATH__ 1
 // CHECK_BDVER1_M64: #define __SSE__ 1
 // CHECK_BDVER1_M64: #define __SSSE3__ 1
+// CHECK_BDVER1_M64: #define __XOP__ 1
 // CHECK_BDVER1_M64: #define __amd64 1
 // CHECK_BDVER1_M64: #define __amd64__ 1
 // CHECK_BDVER1_M64: #define __bdver1 1
