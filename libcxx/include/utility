@@ -233,8 +233,8 @@ struct _LIBCPP_VISIBLE pair
         _LIBCPP_INLINE_VISIBILITY
         pair(const pair<_U1, _U2>& __p
 #ifndef _LIBCPP_HAS_NO_ADVANCED_SFINAE
-                 ,typename enable_if<is_constructible<_T1, _U1>::value &&
-                                    is_constructible<_T2, _U2>::value>::type* = 0
+                 ,typename enable_if<is_convertible<const _U1&, _T1>::value &&
+                                    is_convertible<const _U2&, _T2>::value>::type* = 0
 #endif
                                       )
             : first(__p.first), second(__p.second) {}
@@ -261,8 +261,8 @@ struct _LIBCPP_VISIBLE pair
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
     template <class _U1, class _U2,
-              class = typename enable_if<is_constructible<first_type, _U1 >::value &&
-                                         is_constructible<second_type, _U2>::value>::type>
+              class = typename enable_if<is_convertible<_U1, first_type>::value &&
+                                         is_convertible<_U2, second_type>::value>::type>
         _LIBCPP_INLINE_VISIBILITY
         pair(_U1&& __u1, _U2&& __u2)
             : first(_VSTD::forward<_U1>(__u1)),
@@ -272,8 +272,8 @@ struct _LIBCPP_VISIBLE pair
     template<class _U1, class _U2>
         _LIBCPP_INLINE_VISIBILITY
         pair(pair<_U1, _U2>&& __p,
-                 typename enable_if<is_constructible<_T1, _U1>::value &&
-                                    is_constructible<_T2, _U2>::value>::type* = 0)
+                 typename enable_if<is_convertible<_U1, _T1>::value &&
+                                    is_convertible<_U2, _T2>::value>::type* = 0)
             : first(_VSTD::forward<_U1>(__p.first)),
               second(_VSTD::forward<_U2>(__p.second)) {}
 
