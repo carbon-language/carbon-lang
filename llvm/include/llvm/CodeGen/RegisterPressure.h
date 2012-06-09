@@ -198,6 +198,10 @@ public:
   /// or if closeRegion() was explicitly invoked.
   RegisterPressure &getPressure() { return P; }
 
+  /// Get the register set pressure at the current position, which may be less
+  /// than the pressure across the traversed region.
+  std::vector<unsigned> &getRegSetPressureAtPos() { return CurrSetPressure; }
+
   void discoverPhysLiveIn(unsigned Reg);
   void discoverPhysLiveOut(unsigned Reg);
 
@@ -243,12 +247,32 @@ public:
                                      MaxPressureLimit);
   }
 
+  /// Get the pressure of each PSet after traversing this instruction bottom-up.
+  void getUpwardPressure(const MachineInstr *MI,
+                         std::vector<unsigned> &PressureResult);
+
+  /// Get the pressure of each PSet after traversing this instruction top-down.
+  void getDownwardPressure(const MachineInstr *MI,
+                           std::vector<unsigned> &PressureResult);
+
+  void getPressureAfterInst(const MachineInstr *MI,
+                            std::vector<unsigned> &PressureResult) {
+    if (isTopClosed())
+      return getUpwardPressure(MI, PressureResult);
+
+    assert(isBottomClosed() && "Uninitialized pressure tracker");
+    return getDownwardPressure(MI, PressureResult);
+  }
+
 protected:
   void increasePhysRegPressure(ArrayRef<unsigned> Regs);
   void decreasePhysRegPressure(ArrayRef<unsigned> Regs);
 
   void increaseVirtRegPressure(ArrayRef<unsigned> Regs);
   void decreaseVirtRegPressure(ArrayRef<unsigned> Regs);
+
+  void bumpUpwardPressure(const MachineInstr *MI);
+  void bumpDownwardPressure(const MachineInstr *MI);
 };
 } // end namespace llvm
 
