@@ -21,10 +21,10 @@
 #include "llvm/Support/Casting.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/BitVector.h"
 #include "clang/AST/Stmt.h"
 #include "clang/Analysis/Support/BumpVector.h"
 #include "clang/Basic/SourceLocation.h"
+#include <bitset>
 #include <cassert>
 #include <iterator>
 
@@ -559,7 +559,7 @@ public:
   //===--------------------------------------------------------------------===//
 
   class BuildOptions {
-    llvm::BitVector alwaysAddMask;
+    std::bitset<Stmt::lastStmtConstant> alwaysAddMask;
   public:
     typedef llvm::DenseMap<const Stmt *, const CFGBlock*> ForcedBlkExprs;
     ForcedBlkExprs **forcedBlkExprs;
@@ -584,8 +584,7 @@ public:
     }
 
     BuildOptions()
-    : alwaysAddMask(Stmt::lastStmtConstant, false)
-      ,forcedBlkExprs(0), PruneTriviallyFalseEdges(true)
+    : forcedBlkExprs(0), PruneTriviallyFalseEdges(true)
       ,AddEHEdges(false)
       ,AddInitializers(false)
       ,AddImplicitDtors(false) {}
