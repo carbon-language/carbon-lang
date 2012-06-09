@@ -53,10 +53,10 @@ enum AlignTypeEnum {
 /// @note The unusual order of elements in the structure attempts to reduce
 /// padding and make the structure slightly more cache friendly.
 struct TargetAlignElem {
-  AlignTypeEnum       AlignType : 8;  //< Alignment type (AlignTypeEnum)
-  unsigned            ABIAlign;       //< ABI alignment for this type/bitw
-  unsigned            PrefAlign;      //< Pref. alignment for this type/bitw
-  uint32_t            TypeBitWidth;   //< Type bit width
+  AlignTypeEnum       AlignType : 8;  ///< Alignment type (AlignTypeEnum)
+  unsigned            ABIAlign;       ///< ABI alignment for this type/bitw
+  unsigned            PrefAlign;      ///< Pref. alignment for this type/bitw
+  uint32_t            TypeBitWidth;   ///< Type bit width
 
   /// Initializer
   static TargetAlignElem get(AlignTypeEnum align_type, unsigned abi_align,

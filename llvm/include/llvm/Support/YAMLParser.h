@@ -336,7 +336,7 @@ public:
   enum MappingType {
     MT_Block,
     MT_Flow,
-    MT_Inline //< An inline mapping node is used for "[key: value]".
+    MT_Inline ///< An inline mapping node is used for "[key: value]".
   };
 
   MappingNode(OwningPtr<Document> &D, StringRef Anchor, MappingType MT)

@@ -43,10 +43,10 @@ bool llvm::InlineFunction(InvokeInst *II, InlineFunctionInfo &IFI,
 namespace {
   /// A class for recording information about inlining through an invoke.
   class InvokeInliningInfo {
-    BasicBlock *OuterResumeDest; //< Destination of the invoke's unwind.
-    BasicBlock *InnerResumeDest; //< Destination for the callee's resume.
-    LandingPadInst *CallerLPad;  //< LandingPadInst associated with the invoke.
-    PHINode *InnerEHValuesPHI;   //< PHI for EH values from landingpad insts.
+    BasicBlock *OuterResumeDest; ///< Destination of the invoke's unwind.
+    BasicBlock *InnerResumeDest; ///< Destination for the callee's resume.
+    LandingPadInst *CallerLPad;  ///< LandingPadInst associated with the invoke.
+    PHINode *InnerEHValuesPHI;   ///< PHI for EH values from landingpad insts.
     SmallVector<Value*, 8> UnwindDestPHIValues;
 
   public:

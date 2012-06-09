@@ -65,14 +65,14 @@ namespace llvm {
     list_type Functions;
     
   protected:
-    unsigned NeededSafePoints; //< Bitmask of required safe points.
-    bool CustomReadBarriers;   //< Default is to insert loads.
-    bool CustomWriteBarriers;  //< Default is to insert stores.
-    bool CustomRoots;          //< Default is to pass through to backend.
-    bool CustomSafePoints;     //< Default is to use NeededSafePoints
-                               //  to find safe points.
-    bool InitRoots;            //< If set, roots are nulled during lowering.
-    bool UsesMetadata;         //< If set, backend must emit metadata tables.
+    unsigned NeededSafePoints; ///< Bitmask of required safe points.
+    bool CustomReadBarriers;   ///< Default is to insert loads.
+    bool CustomWriteBarriers;  ///< Default is to insert stores.
+    bool CustomRoots;          ///< Default is to pass through to backend.
+    bool CustomSafePoints;     ///< Default is to use NeededSafePoints
+                               ///< to find safe points.
+    bool InitRoots;            ///< If set, roots are nulled during lowering.
+    bool UsesMetadata;         ///< If set, backend must emit metadata tables.
     
   public:
     GCStrategy();

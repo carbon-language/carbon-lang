@@ -28,7 +28,7 @@ struct ArchiveMemberHeader {
   char UID[6];
   char GID[6];
   char AccessMode[8];
-  char Size[10]; //< Size of data, not including header or padding.
+  char Size[10]; ///< Size of data, not including header or padding.
   char Terminator[2];
 
   ///! Get the name without looking up long names.

@@ -47,9 +47,9 @@ namespace path {
 /// C:\foo\bar => C:,/,foo,bar
 ///
 class const_iterator {
-  StringRef Path;      //< The entire path.
-  StringRef Component; //< The current component. Not necessarily in Path.
-  size_t    Position;  //< The iterators current position within Path.
+  StringRef Path;      ///< The entire path.
+  StringRef Component; ///< The current component. Not necessarily in Path.
+  size_t    Position;  ///< The iterators current position within Path.
 
   // An end iterator has Position = Path.size() + 1.
   friend const_iterator begin(StringRef path);

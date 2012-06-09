@@ -48,18 +48,18 @@ namespace llvm {
     /// PointKind - The type of a collector-safe point.
     ///
     enum PointKind {
-      Loop,    //< Instr is a loop (backwards branch).
-      Return,  //< Instr is a return instruction.
-      PreCall, //< Instr is a call instruction.
-      PostCall //< Instr is the return address of a call.
+      Loop,    ///< Instr is a loop (backwards branch).
+      Return,  ///< Instr is a return instruction.
+      PreCall, ///< Instr is a call instruction.
+      PostCall ///< Instr is the return address of a call.
     };
   }
 
   /// GCPoint - Metadata for a collector-safe point in machine code.
   ///
   struct GCPoint {
-    GC::PointKind Kind; //< The kind of the safe point.
-    MCSymbol *Label;    //< A label.
+    GC::PointKind Kind; ///< The kind of the safe point.
+    MCSymbol *Label;    ///< A label.
     DebugLoc Loc;
 
     GCPoint(GC::PointKind K, MCSymbol *L, DebugLoc DL)
@@ -69,8 +69,8 @@ namespace llvm {
   /// GCRoot - Metadata for a pointer to an object managed by the garbage
   /// collector.
   struct GCRoot {
-    int Num;            //< Usually a frame index.
-    int StackOffset;    //< Offset from the stack pointer.
+    int Num;            ///< Usually a frame index.
+    int StackOffset;    ///< Offset from the stack pointer.
     const Constant *Metadata;//< Metadata straight from the call to llvm.gcroot.
 
     GCRoot(int N, const Constant *MD) : Num(N), StackOffset(-1), Metadata(MD) {}

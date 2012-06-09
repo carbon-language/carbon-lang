@@ -36,16 +36,16 @@ namespace ISD {
     static const uint64_t ByValOffs      = 4;
     static const uint64_t Nest           = 1ULL<<5;  ///< Nested fn static chain
     static const uint64_t NestOffs       = 5;
-    static const uint64_t ByValAlign     = 0xFULL << 6; //< Struct alignment
+    static const uint64_t ByValAlign     = 0xFULL << 6; ///< Struct alignment
     static const uint64_t ByValAlignOffs = 6;
     static const uint64_t Split          = 1ULL << 10;
     static const uint64_t SplitOffs      = 10;
     static const uint64_t OrigAlign      = 0x1FULL<<27;
     static const uint64_t OrigAlignOffs  = 27;
-    static const uint64_t ByValSize      = 0xffffffffULL << 32; //< Struct size
+    static const uint64_t ByValSize      = 0xffffffffULL << 32; ///< Struct size
     static const uint64_t ByValSizeOffs  = 32;
 
-    static const uint64_t One            = 1ULL; //< 1 of this type, for shifts
+    static const uint64_t One            = 1ULL; ///< 1 of this type, for shifts
 
     uint64_t Flags;
   public:
