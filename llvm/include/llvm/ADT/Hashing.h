@@ -76,10 +76,6 @@ namespace llvm {
 ///   using llvm::hash_value;
 ///   llvm::hash_code code = hash_value(x);
 /// \endcode
-///
-/// Also note that there are two numerical values which are reserved, and the
-/// implementation ensures will never be produced for real hash_codes. These
-/// can be used as sentinels within hashing data structures.
 class hash_code {
   size_t value;
 
