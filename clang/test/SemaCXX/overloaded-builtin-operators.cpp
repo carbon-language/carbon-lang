@@ -174,7 +174,7 @@ void test_dr425(A a) {
   // FIXME: lots of candidates here!
   (void)(1.0f * a); // expected-error{{ambiguous}} \
                     // expected-note 4{{candidate}} \
-                    // expected-note {{remaining 77 candidates omitted; pass -fshow-overloads=all to show them}}
+                    // expected-note {{remaining 117 candidates omitted; pass -fshow-overloads=all to show them}}
 }
 
 // pr5432
@@ -255,4 +255,16 @@ namespace PR12854 {
     ri++;
     ri--;
   }
+}
+
+namespace PR12964 {
+  struct X { operator  __int128() const; } x;
+  bool a = x == __int128(0);
+  bool b = x == 0;
+
+  struct Y { operator unsigned __int128() const; } y;
+  bool c = y == __int128(0);
+  bool d = y == 0;
+
+  bool e = x == y;
 }
