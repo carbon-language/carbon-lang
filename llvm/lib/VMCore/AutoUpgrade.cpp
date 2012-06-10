@@ -25,6 +25,21 @@
 #include <cstring>
 using namespace llvm;
 
+// Upgrade the declarations of the SSE4.1 functions whose arguments have
+// changed their type from v4f32 to v2i64.
+static bool UpgradeSSE41Function(Function* F, Intrinsic::ID IID,
+                                 Function *&NewFn) {
+  // Check whether this is an old version of the function, which received
+  // v4f32 arguments.
+  Type *Arg0Type = F->getFunctionType()->getParamType(0);
+  if (Arg0Type != VectorType::get(Type::getFloatTy(F->getContext()), 4))
+    return false;
+
+  // Yes, it's old, replace it with new version.
+  F->setName(F->getName() + ".old");
+  NewFn = Intrinsic::getDeclaration(F->getParent(), IID);
+  return true;
+}
 
 static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
   assert(F && "Illegal to upgrade a non-existent Function.");
@@ -65,6 +80,15 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
       NewFn = 0;
       return true;
     }
+    // SSE4.1 ptest functions may have an old signature.
+    if (Name.startswith("x86.sse41.ptest")) {
+      if (Name == "x86.sse41.ptestc")
+        return UpgradeSSE41Function(F, Intrinsic::x86_sse41_ptestc, NewFn);
+      if (Name == "x86.sse41.ptestz")
+        return UpgradeSSE41Function(F, Intrinsic::x86_sse41_ptestz, NewFn);
+      if (Name == "x86.sse41.ptestnzc")
+        return UpgradeSSE41Function(F, Intrinsic::x86_sse41_ptestnzc, NewFn);
+    }
     // Fix the FMA4 intrinsics to remove the 4
     if (Name.startswith("x86.fma4.")) {
       F->setName("llvm.x86.fma" + Name.substr(8));
@@ -75,9 +99,9 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
   }
   }
 
-  //  This may not belong here. This function is effectively being overloaded 
-  //  to both detect an intrinsic which needs upgrading, and to provide the 
-  //  upgraded form of the intrinsic. We should perhaps have two separate 
+  //  This may not belong here. This function is effectively being overloaded
+  //  to both detect an intrinsic which needs upgrading, and to provide the
+  //  upgraded form of the intrinsic. We should perhaps have two separate
   //  functions for this.
   return false;
 }
@@ -99,8 +123,8 @@ bool llvm::UpgradeGlobalVariable(GlobalVariable *GV) {
   return false;
 }
 
-// UpgradeIntrinsicCall - Upgrade a call to an old intrinsic to be a call the 
-// upgraded intrinsic. All argument and return casting must be provided in 
+// UpgradeIntrinsicCall - Upgrade a call to an old intrinsic to be a call the
+// upgraded intrinsic. All argument and return casting must be provided in
 // order to seamlessly integrate with existing context.
 void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
   Function *F = CI->getCalledFunction();
@@ -242,6 +266,8 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
     return;
   }
 
+  StringRef Name = CI->getName();
+
   switch (NewFn->getIntrinsicID()) {
   default:
     llvm_unreachable("Unknown function for CallInst upgrade.");
@@ -250,10 +276,37 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
   case Intrinsic::cttz:
     assert(CI->getNumArgOperands() == 1 &&
            "Mismatch between function args and call args");
-    StringRef Name = CI->getName();
     CI->setName(Name + ".old");
     CI->replaceAllUsesWith(Builder.CreateCall2(NewFn, CI->getArgOperand(0),
                                                Builder.getFalse(), Name));
+    CI->eraseFromParent();
+    return;
+
+  case Intrinsic::x86_sse41_ptestc:
+  case Intrinsic::x86_sse41_ptestz:
+  case Intrinsic::x86_sse41_ptestnzc:
+    // The arguments for these intrinsics used to be v4f32, and changed
+    // to v2i64. This is purely a nop, since those are bitwise intrinsics.
+    // So, the only thing required is a bitcast for both arguments.
+    // First, check the arguments have the old type.
+    Value *Arg0 = CI->getArgOperand(0);
+    if (Arg0->getType() != VectorType::get(Type::getFloatTy(C), 4))
+      return;
+
+    // Old intrinsic, add bitcasts
+    Value *Arg1 = CI->getArgOperand(1);
+
+    Value *BC0 =
+      Builder.CreateBitCast(Arg0,
+                            VectorType::get(Type::getInt64Ty(C), 2),
+                            "cast");
+    Value *BC1 =
+      Builder.CreateBitCast(Arg1,
+                            VectorType::get(Type::getInt64Ty(C), 2),
+                            "cast");
+
+    CallInst* NewCall = Builder.CreateCall2(NewFn, BC0, BC1, Name);
+    CI->replaceAllUsesWith(NewCall);
     CI->eraseFromParent();
     return;
   }
