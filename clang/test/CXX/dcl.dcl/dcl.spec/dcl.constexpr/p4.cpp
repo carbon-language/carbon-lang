@@ -209,7 +209,7 @@ struct ConstexprBaseMemberCtors : Literal {
   {}
 };
 
-// - every assignment-expression that is an initializer-caluse appearing
+// - every assignment-expression that is an initializer-clause appearing
 //   directly or indirectly within a brace-or-equal-initializer for a non-static
 //   data member that is not named by a mem-initializer-id shall be a constant
 //   expression; and
@@ -223,6 +223,25 @@ struct X {
   constexpr X() {}
   constexpr X(int c) : a(c) {} // ok, b initialized by 2 * c + 1
 };
+
+union XU1 { int a; constexpr XU1() = default; }; // expected-error{{not constexpr}}
+union XU2 { int a = 1; constexpr XU2() = default; };
+
+struct XU3 {
+  union {
+    int a;
+  };
+  constexpr XU3() = default; // expected-error{{not constexpr}}
+};
+struct XU4 {
+  union {
+    int a = 1;
+  };
+  constexpr XU4() = default;
+};
+
+static_assert(XU2().a == 1, "");
+static_assert(XU4().a == 1, "");
 
 //  - every implicit conversion used in converting a constructor argument to the
 //    corresponding parameter type and converting a full-expression to the
@@ -246,4 +265,31 @@ namespace StdExample {
   private:
       int val;
   };
+}
+
+namespace CtorLookup {
+  // Ensure that we look up which constructor will actually be used.
+  struct A {
+    constexpr A(const A&) {}
+    A(A&) {}
+    constexpr A(int); // expected-note {{previous}}
+  };
+  constexpr A::A(int = 0) {} // expected-warning {{default constructor}}
+
+  struct B : A {
+    B() = default;
+    constexpr B(const B&);
+    constexpr B(B&);
+  };
+  constexpr B::B(const B&) = default;
+  constexpr B::B(B&) = default; // expected-error {{not constexpr}}
+
+  struct C {
+    A a;
+    C() = default;
+    constexpr C(const C&);
+    constexpr C(C&);
+  };
+  constexpr C::C(const C&) = default;
+  constexpr C::C(C&) = default; // expected-error {{not constexpr}}
 }

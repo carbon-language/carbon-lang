@@ -3870,6 +3870,109 @@ void Sema::CheckExplicitlyDefaultedMethods(CXXRecordDecl *Record) {
       CheckExplicitlyDefaultedSpecialMember(*MI);
 }
 
+/// Is the special member function which would be selected to perform the
+/// specified operation on the specified class type a constexpr constructor?
+static bool specialMemberIsConstexpr(Sema &S, CXXRecordDecl *ClassDecl,
+                                     Sema::CXXSpecialMember CSM,
+                                     bool ConstArg) {
+  Sema::SpecialMemberOverloadResult *SMOR =
+      S.LookupSpecialMember(ClassDecl, CSM, ConstArg,
+                            false, false, false, false);
+  if (!SMOR || !SMOR->getMethod())
+    // A constructor we wouldn't select can't be "involved in initializing"
+    // anything.
+    return true;
+  return SMOR->getMethod()->isConstexpr();
+}
+
+/// Determine whether the specified special member function would be constexpr
+/// if it were implicitly defined.
+static bool defaultedSpecialMemberIsConstexpr(Sema &S, CXXRecordDecl *ClassDecl,
+                                              Sema::CXXSpecialMember CSM,
+                                              bool ConstArg) {
+  if (!S.getLangOpts().CPlusPlus0x)
+    return false;
+
+  // C++11 [dcl.constexpr]p4:
+  // In the definition of a constexpr constructor [...]
+  switch (CSM) {
+  case Sema::CXXDefaultConstructor:
+  case Sema::CXXCopyConstructor:
+  case Sema::CXXMoveConstructor:
+    break;
+
+  case Sema::CXXCopyAssignment:
+  case Sema::CXXMoveAssignment:
+  case Sema::CXXDestructor:
+  case Sema::CXXInvalid:
+    return false;
+  }
+
+  //   -- if the class is a non-empty union, or for each non-empty anonymous
+  //      union member of a non-union class, exactly one non-static data member
+  //      shall be initialized; [DR1359]
+  if (ClassDecl->isUnion())
+    // FIXME: In the default constructor case, we should check that the
+    // in-class initializer is actually a constant expression.
+    return CSM != Sema::CXXDefaultConstructor ||
+           ClassDecl->hasInClassInitializer();
+
+  //   -- the class shall not have any virtual base classes;
+  if (ClassDecl->getNumVBases())
+    return false;
+
+  //   -- every constructor involved in initializing [...] base class
+  //      sub-objects shall be a constexpr constructor;
+  for (CXXRecordDecl::base_class_iterator B = ClassDecl->bases_begin(),
+                                       BEnd = ClassDecl->bases_end();
+       B != BEnd; ++B) {
+    const RecordType *BaseType = B->getType()->getAs<RecordType>();
+    if (!BaseType) continue;
+
+    CXXRecordDecl *BaseClassDecl = cast<CXXRecordDecl>(BaseType->getDecl());
+    if (!specialMemberIsConstexpr(S, BaseClassDecl, CSM, ConstArg))
+      return false;
+  }
+
+  //   -- every constructor involved in initializing non-static data members
+  //      [...] shall be a constexpr constructor;
+  //   -- every non-static data member and base class sub-object shall be
+  //      initialized
+  for (RecordDecl::field_iterator F = ClassDecl->field_begin(),
+                               FEnd = ClassDecl->field_end();
+       F != FEnd; ++F) {
+    if (F->isInvalidDecl())
+      continue;
+    if (CSM == Sema::CXXDefaultConstructor && F->hasInClassInitializer()) {
+      // -- every assignment-expression that is an initializer-clause appearing
+      //    directly or indirectly within a brace-or-equal-initializer for a
+      //    non-static data member [...] shall be a constant expression;
+      //
+      // We consider this bullet to be a defect, since it results in this type
+      // having a non-constexpr default constructor:
+      //   struct S {
+      //     int a = 0;
+      //     int b = a;
+      //   };
+      // FIXME: We should still check that the constructor selected for this
+      // initialization (if any) is constexpr.
+    } else if (const RecordType *RecordTy =
+                   S.Context.getBaseElementType(F->getType())->
+                       getAs<RecordType>()) {
+      CXXRecordDecl *FieldRecDecl = cast<CXXRecordDecl>(RecordTy->getDecl());
+      if (!specialMemberIsConstexpr(S, FieldRecDecl, CSM, ConstArg))
+        return false;
+    } else if (CSM == Sema::CXXDefaultConstructor) {
+      // No in-class initializer, and not a class type. This member isn't going
+      // to be initialized.
+      return false;
+    }
+  }
+
+  // All OK, it's constexpr!
+  return true;
+}
+
 void Sema::CheckExplicitlyDefaultedSpecialMember(CXXMethodDecl *MD) {
   CXXRecordDecl *RD = MD->getParent();
   CXXSpecialMember CSM = getSpecialMember(MD);
@@ -3907,8 +4010,7 @@ void Sema::CheckExplicitlyDefaultedSpecialMember(CXXMethodDecl *MD) {
   // Compute implicit exception specification, argument constness, constexpr
   // and triviality.
   ImplicitExceptionSpecification Spec(*this);
-  bool Const = false;
-  bool Constexpr = false;
+  bool CanHaveConstParam = false;
   bool Trivial;
   switch (CSM) {
   case CXXDefaultConstructor:
@@ -3917,23 +4019,20 @@ void Sema::CheckExplicitlyDefaultedSpecialMember(CXXMethodDecl *MD) {
       // Exception specification depends on some deferred part of the class.
       // We'll try again when the class's definition has been fully processed.
       return;
-    Constexpr = RD->defaultedDefaultConstructorIsConstexpr();
     Trivial = RD->hasTrivialDefaultConstructor();
     break;
   case CXXCopyConstructor:
-    llvm::tie(Spec, Const) =
+    llvm::tie(Spec, CanHaveConstParam) =
       ComputeDefaultedCopyCtorExceptionSpecAndConst(RD);
-    Constexpr = RD->defaultedCopyConstructorIsConstexpr();
     Trivial = RD->hasTrivialCopyConstructor();
     break;
   case CXXCopyAssignment:
-    llvm::tie(Spec, Const) =
+    llvm::tie(Spec, CanHaveConstParam) =
       ComputeDefaultedCopyAssignmentExceptionSpecAndConst(RD);
     Trivial = RD->hasTrivialCopyAssignment();
     break;
   case CXXMoveConstructor:
     Spec = ComputeDefaultedMoveCtorExceptionSpec(RD);
-    Constexpr = RD->defaultedMoveConstructorIsConstexpr();
     Trivial = RD->hasTrivialMoveConstructor();
     break;
   case CXXMoveAssignment:
@@ -3970,9 +4069,11 @@ void Sema::CheckExplicitlyDefaultedSpecialMember(CXXMethodDecl *MD) {
 
   // Check for parameter type matching.
   QualType ArgType = ExpectedParams ? Type->getArgType(0) : QualType();
+  bool HasConstParam = false;
   if (ExpectedParams && ArgType->isReferenceType()) {
     // Argument must be reference to possibly-const T.
     QualType ReferentType = ArgType->getPointeeType();
+    HasConstParam = ReferentType.isConstQualified();
 
     if (ReferentType.isVolatileQualified()) {
       Diag(MD->getLocation(),
@@ -3980,7 +4081,7 @@ void Sema::CheckExplicitlyDefaultedSpecialMember(CXXMethodDecl *MD) {
       HadError = true;
     }
 
-    if (ReferentType.isConstQualified() && !Const) {
+    if (HasConstParam && !CanHaveConstParam) {
       if (CSM == CXXCopyConstructor || CSM == CXXCopyAssignment) {
         Diag(MD->getLocation(),
              diag::err_defaulted_special_member_copy_const_param)
@@ -3997,7 +4098,7 @@ void Sema::CheckExplicitlyDefaultedSpecialMember(CXXMethodDecl *MD) {
     // If a function is explicitly defaulted on its first declaration, it shall
     // have the same parameter type as if it had been implicitly declared.
     // (Presumably this is to prevent it from being trivial?)
-    if (!ReferentType.isConstQualified() && Const && First)
+    if (!HasConstParam && CanHaveConstParam && First)
       Diag(MD->getLocation(),
            diag::err_defaulted_special_member_copy_non_const_param)
         << (CSM == CXXCopyAssignment);
@@ -4021,9 +4122,12 @@ void Sema::CheckExplicitlyDefaultedSpecialMember(CXXMethodDecl *MD) {
   // Do not apply this rule to members of class templates, since core issue 1358
   // makes such functions always instantiate to constexpr functions. For
   // non-constructors, this is checked elsewhere.
+  bool Constexpr = defaultedSpecialMemberIsConstexpr(*this, RD, CSM,
+                                                     HasConstParam);
   if (isa<CXXConstructorDecl>(MD) && MD->isConstexpr() && !Constexpr &&
       MD->getTemplatedKind() == FunctionDecl::TK_NonTemplate) {
     Diag(MD->getLocStart(), diag::err_incorrect_defaulted_constexpr) << CSM;
+    // FIXME: Explain why the constructor can't be constexpr.
     HadError = true;
   }
   //   and may have an explicit exception-specification only if it is compatible
@@ -6626,6 +6730,10 @@ CXXConstructorDecl *Sema::DeclareImplicitDefaultConstructor(
     ComputeDefaultedDefaultCtorExceptionSpec(ClassDecl);
   FunctionProtoType::ExtProtoInfo EPI = Spec.getEPI();
 
+  bool Constexpr = defaultedSpecialMemberIsConstexpr(*this, ClassDecl,
+                                                     CXXDefaultConstructor,
+                                                     false);
+
   // Create the actual constructor declaration.
   CanQualType ClassType
     = Context.getCanonicalType(Context.getTypeDeclType(ClassDecl));
@@ -6637,8 +6745,7 @@ CXXConstructorDecl *Sema::DeclareImplicitDefaultConstructor(
       Context, ClassDecl, ClassLoc, NameInfo,
       Context.getFunctionType(Context.VoidTy, 0, 0, EPI), /*TInfo=*/0,
       /*isExplicit=*/false, /*isInline=*/true, /*isImplicitlyDeclared=*/true,
-      /*isConstexpr=*/ClassDecl->defaultedDefaultConstructorIsConstexpr() &&
-        getLangOpts().CPlusPlus0x);
+      Constexpr);
   DefaultCon->setAccess(AS_public);
   DefaultCon->setDefaulted();
   DefaultCon->setImplicit();
@@ -8474,6 +8581,10 @@ CXXConstructorDecl *Sema::DeclareImplicitCopyConstructor(
  
   FunctionProtoType::ExtProtoInfo EPI = Spec.getEPI();
 
+  bool Constexpr = defaultedSpecialMemberIsConstexpr(*this, ClassDecl,
+                                                     CXXCopyConstructor,
+                                                     Const);
+
   DeclarationName Name
     = Context.DeclarationNames.getCXXConstructorName(
                                            Context.getCanonicalType(ClassType));
@@ -8486,8 +8597,7 @@ CXXConstructorDecl *Sema::DeclareImplicitCopyConstructor(
       Context, ClassDecl, ClassLoc, NameInfo,
       Context.getFunctionType(Context.VoidTy, &ArgType, 1, EPI), /*TInfo=*/0,
       /*isExplicit=*/false, /*isInline=*/true, /*isImplicitlyDeclared=*/true,
-      /*isConstexpr=*/ClassDecl->defaultedCopyConstructorIsConstexpr() &&
-        getLangOpts().CPlusPlus0x);
+      Constexpr);
   CopyConstructor->setAccess(AS_public);
   CopyConstructor->setDefaulted();
   CopyConstructor->setTrivial(ClassDecl->hasTrivialCopyConstructor());
@@ -8644,6 +8754,10 @@ CXXConstructorDecl *Sema::DeclareImplicitMoveConstructor(
  
   FunctionProtoType::ExtProtoInfo EPI = Spec.getEPI();
 
+  bool Constexpr = defaultedSpecialMemberIsConstexpr(*this, ClassDecl,
+                                                     CXXMoveConstructor,
+                                                     false);
+
   DeclarationName Name
     = Context.DeclarationNames.getCXXConstructorName(
                                            Context.getCanonicalType(ClassType));
@@ -8657,8 +8771,7 @@ CXXConstructorDecl *Sema::DeclareImplicitMoveConstructor(
       Context, ClassDecl, ClassLoc, NameInfo,
       Context.getFunctionType(Context.VoidTy, &ArgType, 1, EPI), /*TInfo=*/0,
       /*isExplicit=*/false, /*isInline=*/true, /*isImplicitlyDeclared=*/true,
-      /*isConstexpr=*/ClassDecl->defaultedMoveConstructorIsConstexpr() &&
-        getLangOpts().CPlusPlus0x);
+      Constexpr);
   MoveConstructor->setAccess(AS_public);
   MoveConstructor->setDefaulted();
   MoveConstructor->setTrivial(ClassDecl->hasTrivialMoveConstructor());
