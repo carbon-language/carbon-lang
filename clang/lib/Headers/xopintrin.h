@@ -106,6 +106,114 @@ _mm_maddd_epi16(__m128i __A, __m128i __B, __m128i __C)
   return (__m128i)__builtin_ia32_vpmadcswd((__v8hi)__A, (__v8hi)__B, (__v4si)__C);
 }
 
+static __inline__ __m128i __attribute__((__always_inline__, __nodebug__))
+_mm_haddw_epi8(__m128i __A)
+{
+  return (__m128i)__builtin_ia32_vphaddbw((__v16qi)__A);
+}
+
+static __inline__ __m128i __attribute__((__always_inline__, __nodebug__))
+_mm_haddd_epi8(__m128i __A)
+{
+  return (__m128i)__builtin_ia32_vphaddbd((__v16qi)__A);
+}
+
+static __inline__ __m128i __attribute__((__always_inline__, __nodebug__))
+_mm_haddq_epi8(__m128i __A)
+{
+  return (__m128i)__builtin_ia32_vphaddbq((__v16qi)__A);
+}
+
+static __inline__ __m128i __attribute__((__always_inline__, __nodebug__))
+_mm_haddd_epi16(__m128i __A)
+{
+  return (__m128i)__builtin_ia32_vphaddwd((__v8hi)__A);
+}
+
+static __inline__ __m128i __attribute__((__always_inline__, __nodebug__))
+_mm_haddq_epi16(__m128i __A)
+{
+  return (__m128i)__builtin_ia32_vphaddwq((__v8hi)__A);
+}
+
+static __inline__ __m128i __attribute__((__always_inline__, __nodebug__))
+_mm_haddq_epi32(__m128i __A)
+{
+  return (__m128i)__builtin_ia32_vphadddq((__v4si)__A);
+}
+
+static __inline__ __m128i __attribute__((__always_inline__, __nodebug__))
+_mm_haddw_epu8(__m128i __A)
+{
+  return (__m128i)__builtin_ia32_vphaddubw((__v16qi)__A);
+}
+
+static __inline__ __m128i __attribute__((__always_inline__, __nodebug__))
+_mm_haddd_epu8(__m128i __A)
+{
+  return (__m128i)__builtin_ia32_vphaddubd((__v16qi)__A);
+}
+
+static __inline__ __m128i __attribute__((__always_inline__, __nodebug__))
+_mm_haddq_epu8(__m128i __A)
+{
+  return (__m128i)__builtin_ia32_vphaddubq((__v16qi)__A);
+}
+
+static __inline__ __m128i __attribute__((__always_inline__, __nodebug__))
+_mm_haddd_epu16(__m128i __A)
+{
+  return (__m128i)__builtin_ia32_vphadduwd((__v8hi)__A);
+}
+
+static __inline__ __m128i __attribute__((__always_inline__, __nodebug__))
+_mm_haddq_epu16(__m128i __A)
+{
+  return (__m128i)__builtin_ia32_vphadduwq((__v8hi)__A);
+}
+
+static __inline__ __m128i __attribute__((__always_inline__, __nodebug__))
+_mm_haddq_epu32(__m128i __A)
+{
+  return (__m128i)__builtin_ia32_vphaddudq((__v4si)__A);
+}
+
+static __inline__ __m128i __attribute__((__always_inline__, __nodebug__))
+_mm_hsubw_epi8(__m128i __A)
+{
+  return (__m128i)__builtin_ia32_vphsubbw((__v16qi)__A);
+}
+
+static __inline__ __m128i __attribute__((__always_inline__, __nodebug__))
+_mm_hsubd_epi16(__m128i __A)
+{
+  return (__m128i)__builtin_ia32_vphsubwd((__v8hi)__A);
+}
+
+static __inline__ __m128i __attribute__((__always_inline__, __nodebug__))
+_mm_hsubq_epi32(__m128i __A)
+{
+  return (__m128i)__builtin_ia32_vphsubdq((__v4si)__A);
+}
+
+static __inline__ __m128i __attribute__((__always_inline__, __nodebug__))
+_mm_cmov_si128(__m128i __A, __m128i __B, __m128i __C)
+{
+  return (__m128i)__builtin_ia32_vpcmov(__A, __B, __C);
+}
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_cmov_si256(__m256i __A, __m256i __B, __m256i __C)
+{
+  return (__m256i)__builtin_ia32_vpcmov_256(__A, __B, __C);
+}
+
+static __inline__ __m128i __attribute__((__always_inline__, __nodebug__))
+_mm_perm_epi8(__m128i __A, __m128i __B, __m128i __C)
+{
+  return (__m128i)__builtin_ia32_vpperm((__v16qi)__A, (__v16qi)__B, (__v16qi)__C);
+}
+
 #endif /* __XOP__ */
 
 #endif /* __XOPINTRIN_H */

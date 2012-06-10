@@ -655,4 +655,25 @@ BUILTIN(__builtin_ia32_vpmacsdqh, "V2LLiV4iV4iV2LLi", "")
 BUILTIN(__builtin_ia32_vpmadcsswd, "V4iV8sV8sV4i", "")
 BUILTIN(__builtin_ia32_vpmadcswd, "V4iV8sV8sV4i", "")
 
+BUILTIN(__builtin_ia32_vphaddbw, "V8sV16c", "")
+BUILTIN(__builtin_ia32_vphaddbd, "V4iV16c", "")
+BUILTIN(__builtin_ia32_vphaddbq, "V2LLiV16c", "")
+BUILTIN(__builtin_ia32_vphaddwd, "V4iV8s", "")
+BUILTIN(__builtin_ia32_vphaddwq, "V2LLiV8s", "")
+BUILTIN(__builtin_ia32_vphadddq, "V2LLiV4i", "")
+BUILTIN(__builtin_ia32_vphaddubw, "V8sV16c", "")
+BUILTIN(__builtin_ia32_vphaddubd, "V4iV16c", "")
+BUILTIN(__builtin_ia32_vphaddubq, "V2LLiV16c", "")
+BUILTIN(__builtin_ia32_vphadduwd, "V4iV8s", "")
+BUILTIN(__builtin_ia32_vphadduwq, "V2LLiV8s", "")
+BUILTIN(__builtin_ia32_vphaddudq, "V2LLiV4i", "")
+BUILTIN(__builtin_ia32_vphsubbw, "V8sV16c", "")
+BUILTIN(__builtin_ia32_vphsubwd, "V4iV8s", "")
+BUILTIN(__builtin_ia32_vphsubdq, "V2LLiV4i", "")
+
+BUILTIN(__builtin_ia32_vpcmov, "V2LLiV2LLiV2LLiV2LLi", "")
+BUILTIN(__builtin_ia32_vpcmov_256, "V4LLiV4LLiV4LLiV4LLi", "")
+
+BUILTIN(__builtin_ia32_vpperm, "V16cV16cV16cV16c", "")
+
 #undef BUILTIN
