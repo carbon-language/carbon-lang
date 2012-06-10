@@ -676,4 +676,13 @@ BUILTIN(__builtin_ia32_vpcmov_256, "V4LLiV4LLiV4LLiV4LLi", "")
 
 BUILTIN(__builtin_ia32_vpperm, "V16cV16cV16cV16c", "")
 
+BUILTIN(__builtin_ia32_vprotb, "V16cV16cV16c", "")
+BUILTIN(__builtin_ia32_vprotw, "V8sV8sV8s", "")
+BUILTIN(__builtin_ia32_vprotd, "V4iV4iV4i", "")
+BUILTIN(__builtin_ia32_vprotq, "V2LLiV2LLiV2LLi", "")
+BUILTIN(__builtin_ia32_vprotbi, "V16cV16cIc", "")
+BUILTIN(__builtin_ia32_vprotwi, "V8sV8sIc", "")
+BUILTIN(__builtin_ia32_vprotdi, "V4iV4iIc", "")
+BUILTIN(__builtin_ia32_vprotqi, "V2LLiV2LLiIc", "")
+
 #undef BUILTIN

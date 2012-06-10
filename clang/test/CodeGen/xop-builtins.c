@@ -154,3 +154,43 @@ __m128i test_mm_perm_epi8(__m128i a, __m128i b, __m128i c) {
   // CHECK: @llvm.x86.xop.vpperm
   return _mm_perm_epi8(a, b, c);
 }
+
+__m128i test_mm_rot_epi8(__m128i a, __m128i b) {
+  // CHECK: @llvm.x86.xop.vprotb
+  return _mm_rot_epi8(a, b);
+}
+
+__m128i test_mm_rot_epi16(__m128i a, __m128i b) {
+  // CHECK: @llvm.x86.xop.vprotw
+  return _mm_rot_epi16(a, b);
+}
+
+__m128i test_mm_rot_epi32(__m128i a, __m128i b) {
+  // CHECK: @llvm.x86.xop.vprotd
+  return _mm_rot_epi32(a, b);
+}
+
+__m128i test_mm_rot_epi64(__m128i a, __m128i b) {
+  // CHECK: @llvm.x86.xop.vprotq
+  return _mm_rot_epi64(a, b);
+}
+
+__m128i test_mm_roti_epi8(__m128i a) {
+  // CHECK: @llvm.x86.xop.vprotbi
+  return _mm_roti_epi8(a, 1);
+}
+
+__m128i test_mm_roti_epi16(__m128i a) {
+  // CHECK: @llvm.x86.xop.vprotwi
+  return _mm_roti_epi16(a, 50);
+}
+
+__m128i test_mm_roti_epi32(__m128i a) {
+  // CHECK: @llvm.x86.xop.vprotdi
+  return _mm_roti_epi32(a, -30);
+}
+
+__m128i test_mm_roti_epi64(__m128i a) {
+  // CHECK: @llvm.x86.xop.vprotqi
+  return _mm_roti_epi64(a, 100);
+}

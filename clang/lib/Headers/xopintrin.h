@@ -214,6 +214,46 @@ _mm_perm_epi8(__m128i __A, __m128i __B, __m128i __C)
   return (__m128i)__builtin_ia32_vpperm((__v16qi)__A, (__v16qi)__B, (__v16qi)__C);
 }
 
+static __inline__ __m128i __attribute__((__always_inline__, __nodebug__))
+_mm_rot_epi8(__m128i __A, __m128 __B)
+{
+  return (__m128i)__builtin_ia32_vprotb((__v16qi)__A, (__v16qi)__B);
+}
+
+static __inline__ __m128i __attribute__((__always_inline__, __nodebug__))
+_mm_rot_epi16(__m128i __A, __m128 __B)
+{
+  return (__m128i)__builtin_ia32_vprotw((__v8hi)__A, (__v8hi)__B);
+}
+
+static __inline__ __m128i __attribute__((__always_inline__, __nodebug__))
+_mm_rot_epi32(__m128i __A, __m128 __B)
+{
+  return (__m128i)__builtin_ia32_vprotd((__v4si)__A, (__v4si)__B);
+}
+
+static __inline__ __m128i __attribute__((__always_inline__, __nodebug__))
+_mm_rot_epi64(__m128i __A, __m128 __B)
+{
+  return (__m128i)__builtin_ia32_vprotq((__v2di)__A, (__v2di)__B);
+}
+
+#define _mm_roti_epi8(A, N) __extension__ ({ \
+  __m128i __A = (A); \
+  (__m128i)__builtin_ia32_vprotbi((__v16qi)__A, (N)); })
+
+#define _mm_roti_epi16(A, N) __extension__ ({ \
+  __m128i __A = (A); \
+  (__m128i)__builtin_ia32_vprotwi((__v8hi)__A, (N)); })
+
+#define _mm_roti_epi32(A, N) __extension__ ({ \
+  __m128i __A = (A); \
+  (__m128i)__builtin_ia32_vprotdi((__v4si)__A, (N)); })
+
+#define _mm_roti_epi64(A, N) __extension__ ({ \
+  __m128i __A = (A); \
+  (__m128i)__builtin_ia32_vprotqi((__v2di)__A, (N)); })
+
 #endif /* __XOP__ */
 
 #endif /* __XOPINTRIN_H */
