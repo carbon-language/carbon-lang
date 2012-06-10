@@ -3897,8 +3897,17 @@ static bool defaultedSpecialMemberIsConstexpr(Sema &S, CXXRecordDecl *ClassDecl,
   // In the definition of a constexpr constructor [...]
   switch (CSM) {
   case Sema::CXXDefaultConstructor:
+    // Since default constructor lookup is essentially trivial (and cannot
+    // involve, for instance, template instantiation), we compute whether a
+    // defaulted default constructor is constexpr directly within CXXRecordDecl.
+    //
+    // This is important for performance; we need to know whether the default
+    // constructor is constexpr to determine whether the type is a literal type.
+    return ClassDecl->defaultedDefaultConstructorIsConstexpr();
+
   case Sema::CXXCopyConstructor:
   case Sema::CXXMoveConstructor:
+    // For copy or move constructors, we need to perform overload resolution.
     break;
 
   case Sema::CXXCopyAssignment:
@@ -3911,11 +3920,12 @@ static bool defaultedSpecialMemberIsConstexpr(Sema &S, CXXRecordDecl *ClassDecl,
   //   -- if the class is a non-empty union, or for each non-empty anonymous
   //      union member of a non-union class, exactly one non-static data member
   //      shall be initialized; [DR1359]
+  //
+  // If we squint, this is guaranteed, since exactly one non-static data member
+  // will be initialized (if the constructor isn't deleted), we just don't know
+  // which one.
   if (ClassDecl->isUnion())
-    // FIXME: In the default constructor case, we should check that the
-    // in-class initializer is actually a constant expression.
-    return CSM != Sema::CXXDefaultConstructor ||
-           ClassDecl->hasInClassInitializer();
+    return true;
 
   //   -- the class shall not have any virtual base classes;
   if (ClassDecl->getNumVBases())
@@ -3943,29 +3953,11 @@ static bool defaultedSpecialMemberIsConstexpr(Sema &S, CXXRecordDecl *ClassDecl,
        F != FEnd; ++F) {
     if (F->isInvalidDecl())
       continue;
-    if (CSM == Sema::CXXDefaultConstructor && F->hasInClassInitializer()) {
-      // -- every assignment-expression that is an initializer-clause appearing
-      //    directly or indirectly within a brace-or-equal-initializer for a
-      //    non-static data member [...] shall be a constant expression;
-      //
-      // We consider this bullet to be a defect, since it results in this type
-      // having a non-constexpr default constructor:
-      //   struct S {
-      //     int a = 0;
-      //     int b = a;
-      //   };
-      // FIXME: We should still check that the constructor selected for this
-      // initialization (if any) is constexpr.
-    } else if (const RecordType *RecordTy =
-                   S.Context.getBaseElementType(F->getType())->
-                       getAs<RecordType>()) {
+    if (const RecordType *RecordTy =
+            S.Context.getBaseElementType(F->getType())->getAs<RecordType>()) {
       CXXRecordDecl *FieldRecDecl = cast<CXXRecordDecl>(RecordTy->getDecl());
       if (!specialMemberIsConstexpr(S, FieldRecDecl, CSM, ConstArg))
         return false;
-    } else if (CSM == Sema::CXXDefaultConstructor) {
-      // No in-class initializer, and not a class type. This member isn't going
-      // to be initialized.
-      return false;
     }
   }
 
