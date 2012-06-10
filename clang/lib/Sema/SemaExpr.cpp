@@ -10206,7 +10206,7 @@ static ExprResult captureInLambda(Sema &S, LambdaScopeInfo *LSI,
   FieldDecl *Field
     = FieldDecl::Create(S.Context, Lambda, Loc, Loc, 0, FieldType,
                         S.Context.getTrivialTypeSourceInfo(FieldType, Loc),
-                        0, false, false);
+                        0, false, ICIS_NoInit);
   Field->setImplicit(true);
   Field->setAccess(AS_private);
   Lambda->addDecl(Field);

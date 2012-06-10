@@ -168,6 +168,13 @@ namespace clang {
   inline bool isLegalForVariable(StorageClass SC) {
     return true;
   }
+
+  /// \brief In-class initialization styles for non-static data members.
+  enum InClassInitStyle {
+    ICIS_NoInit,   ///< No in-class initializer.
+    ICIS_CopyInit, ///< Copy initialization.
+    ICIS_ListInit  ///< Direct list-initialization.
+  };
 } // end namespace clang
 
 #endif // LLVM_CLANG_BASIC_SPECIFIERS_H

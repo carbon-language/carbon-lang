@@ -2969,7 +2969,7 @@ Decl *Sema::BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
                              Context.getTypeDeclType(Record),
                              TInfo,
                              /*BitWidth=*/0, /*Mutable=*/false,
-                             /*HasInit=*/false);
+                             /*InitStyle=*/ICIS_NoInit);
     Anon->setAccess(AS);
     if (getLangOpts().CPlusPlus)
       FieldCollector->Add(cast<FieldDecl>(Anon));
@@ -3066,7 +3066,7 @@ Decl *Sema::BuildMicrosoftCAnonymousStruct(Scope *S, DeclSpec &DS,
                              Context.getTypeDeclType(Record),
                              TInfo,
                              /*BitWidth=*/0, /*Mutable=*/false,
-                             /*HasInit=*/false);
+                             /*InitStyle=*/ICIS_NoInit);
   Anon->setImplicit();
 
   // Add the anonymous struct object to the current context.
@@ -8975,7 +8975,7 @@ Decl *Sema::ActOnField(Scope *S, Decl *TagD, SourceLocation DeclStart,
                        Declarator &D, Expr *BitfieldWidth) {
   FieldDecl *Res = HandleField(S, cast_or_null<RecordDecl>(TagD),
                                DeclStart, D, static_cast<Expr*>(BitfieldWidth),
-                               /*HasInit=*/false, AS_public);
+                               /*InitStyle=*/ICIS_NoInit, AS_public);
   return Res;
 }
 
@@ -8983,7 +8983,8 @@ Decl *Sema::ActOnField(Scope *S, Decl *TagD, SourceLocation DeclStart,
 ///
 FieldDecl *Sema::HandleField(Scope *S, RecordDecl *Record,
                              SourceLocation DeclStart,
-                             Declarator &D, Expr *BitWidth, bool HasInit,
+                             Declarator &D, Expr *BitWidth,
+                             InClassInitStyle InitStyle,
                              AccessSpecifier AS) {
   IdentifierInfo *II = D.getIdentifier();
   SourceLocation Loc = DeclStart;
@@ -9045,7 +9046,7 @@ FieldDecl *Sema::HandleField(Scope *S, RecordDecl *Record,
     = (D.getDeclSpec().getStorageClassSpec() == DeclSpec::SCS_mutable);
   SourceLocation TSSL = D.getLocStart();
   FieldDecl *NewFD
-    = CheckFieldDecl(II, T, TInfo, Record, Loc, Mutable, BitWidth, HasInit,
+    = CheckFieldDecl(II, T, TInfo, Record, Loc, Mutable, BitWidth, InitStyle,
                      TSSL, AS, PrevDecl, &D);
 
   if (NewFD->isInvalidDecl())
@@ -9078,7 +9079,8 @@ FieldDecl *Sema::HandleField(Scope *S, RecordDecl *Record,
 FieldDecl *Sema::CheckFieldDecl(DeclarationName Name, QualType T,
                                 TypeSourceInfo *TInfo,
                                 RecordDecl *Record, SourceLocation Loc,
-                                bool Mutable, Expr *BitWidth, bool HasInit,
+                                bool Mutable, Expr *BitWidth,
+                                InClassInitStyle InitStyle,
                                 SourceLocation TSSL,
                                 AccessSpecifier AS, NamedDecl *PrevDecl,
                                 Declarator *D) {
@@ -9168,7 +9170,7 @@ FieldDecl *Sema::CheckFieldDecl(DeclarationName Name, QualType T,
   }
 
   FieldDecl *NewFD = FieldDecl::Create(Context, Record, TSSL, Loc, II, T, TInfo,
-                                       BitWidth, Mutable, HasInit);
+                                       BitWidth, Mutable, InitStyle);
   if (InvalidDecl)
     NewFD->setInvalidDecl();
 

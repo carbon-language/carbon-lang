@@ -865,12 +865,11 @@ void ASTDeclReader::VisitObjCPropertyImplDecl(ObjCPropertyImplDecl *D) {
 
 void ASTDeclReader::VisitFieldDecl(FieldDecl *FD) {
   VisitDeclaratorDecl(FD);
-  FD->setMutable(Record[Idx++]);
-  int BitWidthOrInitializer = Record[Idx++];
-  if (BitWidthOrInitializer == 1)
-    FD->setBitWidth(Reader.ReadExpr(F));
-  else if (BitWidthOrInitializer == 2)
-    FD->setInClassInitializer(Reader.ReadExpr(F));
+  FD->Mutable = Record[Idx++];
+  if (int BitWidthOrInitializer = Record[Idx++]) {
+    FD->InitializerOrBitWidth.setInt(BitWidthOrInitializer - 1);
+    FD->InitializerOrBitWidth.setPointer(Reader.ReadExpr(F));
+  }
   if (!FD->getDeclName()) {
     if (FieldDecl *Tmpl = ReadDeclAs<FieldDecl>(Record, Idx))
       Reader.getContext().setInstantiatedFromUnnamedFieldDecl(FD, Tmpl);

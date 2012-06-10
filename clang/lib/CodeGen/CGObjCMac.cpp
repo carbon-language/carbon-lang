@@ -4386,9 +4386,10 @@ ObjCCommonTypesHelper::ObjCCommonTypesHelper(CodeGen::CodeGenModule &cgm)
                                       SourceLocation(), SourceLocation(),
                                       &Ctx.Idents.get("_objc_super"));
   RD->addDecl(FieldDecl::Create(Ctx, RD, SourceLocation(), SourceLocation(), 0,
-                                Ctx.getObjCIdType(), 0, 0, false, false));
+                                Ctx.getObjCIdType(), 0, 0, false, ICIS_NoInit));
   RD->addDecl(FieldDecl::Create(Ctx, RD, SourceLocation(), SourceLocation(), 0,
-                                Ctx.getObjCClassType(), 0, 0, false, false));
+                                Ctx.getObjCClassType(), 0, 0, false,
+                                ICIS_NoInit));
   RD->completeDefinition();
 
   SuperCTy = Ctx.getTagDeclType(RD);
@@ -4767,9 +4768,10 @@ ObjCNonFragileABITypesHelper::ObjCNonFragileABITypesHelper(CodeGen::CodeGenModul
                                       SourceLocation(), SourceLocation(),
                                       &Ctx.Idents.get("_message_ref_t"));
   RD->addDecl(FieldDecl::Create(Ctx, RD, SourceLocation(), SourceLocation(), 0,
-                                Ctx.VoidPtrTy, 0, 0, false, false));
+                                Ctx.VoidPtrTy, 0, 0, false, ICIS_NoInit));
   RD->addDecl(FieldDecl::Create(Ctx, RD, SourceLocation(), SourceLocation(), 0,
-                                Ctx.getObjCSelType(), 0, 0, false, false));
+                                Ctx.getObjCSelType(), 0, 0, false,
+                                ICIS_NoInit));
   RD->completeDefinition();
 
   MessageRefCTy = Ctx.getTagDeclType(RD);

@@ -1453,13 +1453,13 @@ static bool InitializationHasSideEffects(const FieldDecl &FD) {
 /// ActOnCXXMemberDeclarator - This is invoked when a C++ class member
 /// declarator is parsed. 'AS' is the access specifier, 'BW' specifies the
 /// bitfield width if there is one, 'InitExpr' specifies the initializer if
-/// one has been parsed, and 'HasDeferredInit' is true if an initializer is
-/// present but parsing it has been deferred.
+/// one has been parsed, and 'InitStyle' is set if an in-class initializer is
+/// present (but parsing it has been deferred).
 Decl *
 Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
                                MultiTemplateParamsArg TemplateParameterLists,
                                Expr *BW, const VirtSpecifiers &VS,
-                               bool HasDeferredInit) {
+                               InClassInitStyle InitStyle) {
   const DeclSpec &DS = D.getDeclSpec();
   DeclarationNameInfo NameInfo = GetNameForDeclarator(D);
   DeclarationName Name = NameInfo.getName();
@@ -1563,10 +1563,10 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
     }
 
     Member = HandleField(S, cast<CXXRecordDecl>(CurContext), Loc, D, BitWidth,
-                         HasDeferredInit, AS);
+                         InitStyle, AS);
     assert(Member && "HandleField never returns null");
   } else {
-    assert(!HasDeferredInit);
+    assert(InitStyle == ICIS_NoInit);
 
     Member = HandleDeclarator(S, D, move(TemplateParameterLists));
     if (!Member) {
@@ -1660,9 +1660,11 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
 /// instantiating an in-class initializer in a class template. Such actions
 /// are deferred until the class is complete.
 void
-Sema::ActOnCXXInClassMemberInitializer(Decl *D, SourceLocation EqualLoc,
+Sema::ActOnCXXInClassMemberInitializer(Decl *D, SourceLocation InitLoc,
                                        Expr *InitExpr) {
   FieldDecl *FD = cast<FieldDecl>(D);
+  assert(FD->getInClassInitStyle() != ICIS_NoInit &&
+         "must set init style when field is created");
 
   if (!InitExpr) {
     FD->setInvalidDecl();
@@ -1685,9 +1687,9 @@ Sema::ActOnCXXInClassMemberInitializer(Decl *D, SourceLocation EqualLoc,
     Expr **Inits = &InitExpr;
     unsigned NumInits = 1;
     InitializedEntity Entity = InitializedEntity::InitializeMember(FD);
-    InitializationKind Kind = EqualLoc.isInvalid()
+    InitializationKind Kind = FD->getInClassInitStyle() == ICIS_ListInit
         ? InitializationKind::CreateDirectList(InitExpr->getLocStart())
-        : InitializationKind::CreateCopy(InitExpr->getLocStart(), EqualLoc);
+        : InitializationKind::CreateCopy(InitExpr->getLocStart(), InitLoc);
     InitializationSequence Seq(*this, Entity, Kind, Inits, NumInits);
     Init = Seq.Perform(*this, Entity, Kind, MultiExprArg(Inits, NumInits));
     if (Init.isInvalid()) {
@@ -1695,7 +1697,7 @@ Sema::ActOnCXXInClassMemberInitializer(Decl *D, SourceLocation EqualLoc,
       return;
     }
 
-    CheckImplicitConversions(Init.get(), EqualLoc);
+    CheckImplicitConversions(Init.get(), InitLoc);
   }
 
   // C++0x [class.base.init]p7:

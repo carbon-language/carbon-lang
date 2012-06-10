@@ -1963,9 +1963,7 @@ Sema::InstantiateClass(SourceLocation PointOfInstantiation,
         Expr *Init = NewInit.take();
         assert(Init && "no-argument initializer in class");
         assert(!isa<ParenListExpr>(Init) && "call-style init in class");
-        ActOnCXXInClassMemberInitializer(NewField, 
-                                         Init->getSourceRange().getBegin(), 
-                                         Init);
+        ActOnCXXInClassMemberInitializer(NewField, Init->getLocStart(), Init);
       }
     }
   }

@@ -740,7 +740,7 @@ void Sema::CheckCXXThisCapture(SourceLocation Loc, bool Explicit) {
       FieldDecl *Field
         = FieldDecl::Create(Context, Lambda, Loc, Loc, 0, ThisTy,
                             Context.getTrivialTypeSourceInfo(ThisTy, Loc),
-                            0, false, false);
+                            0, false, ICIS_NoInit);
       Field->setImplicit(true);
       Field->setAccess(AS_private);
       Lambda->addDecl(Field);

@@ -1,6 +1,6 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify -std=c++11 %s
 
-struct X0 { // expected-note 4{{candidate}}
+struct X0 { // expected-note 8{{candidate}}
   X0(int*, float*); // expected-note 4{{candidate}}
 };
 
@@ -106,4 +106,15 @@ namespace PR7985 {
 
     array_lengthof(Description<float*>::data); // expected-error{{no matching function for call to 'array_lengthof'}}
   }
+}
+
+namespace PR13064 {
+  // Ensure that in-class direct-initialization is instantiated as
+  // direct-initialization and likewise copy-initialization is instantiated as
+  // copy-initialization.
+  struct A { explicit A(int); }; // expected-note{{here}}
+  template<typename T> struct B { T a { 0 }; };
+  B<A> b;
+  template<typename T> struct C { T a = { 0 }; }; // expected-error{{explicit}}
+  C<A> c; // expected-note{{here}}
 }

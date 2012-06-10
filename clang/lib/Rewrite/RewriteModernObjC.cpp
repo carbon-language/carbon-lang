@@ -823,7 +823,7 @@ RewriteModernObjC::getIvarAccessString(ObjCIvarDecl *D) {
                                         &Context->Idents.get(D->getNameAsString()),
                                         IvarT, 0,
                                         /*BitWidth=*/0, /*Mutable=*/true,
-                                        /*HasInit=*/false);
+                                        ICIS_NoInit);
       MemberExpr *ME = new (Context) MemberExpr(PE, true, FD, SourceLocation(),
                                                 FD->getType(), VK_LValue,
                                                 OK_Ordinary);
@@ -2720,7 +2720,7 @@ Stmt *RewriteModernObjC::RewriteObjCArrayLiteralExpr(ObjCArrayLiteral *Exp) {
                                     &Context->Idents.get("arr"),
                                     Context->getPointerType(Context->VoidPtrTy), 0,
                                     /*BitWidth=*/0, /*Mutable=*/true,
-                                    /*HasInit=*/false);
+                                    ICIS_NoInit);
   MemberExpr *ArrayLiteralME = 
     new (Context) MemberExpr(NSArrayCallExpr, false, ARRFD, 
                              SourceLocation(),
@@ -2867,7 +2867,7 @@ Stmt *RewriteModernObjC::RewriteObjCDictionaryLiteralExpr(ObjCDictionaryLiteral 
                                        &Context->Idents.get("arr"),
                                        Context->getPointerType(Context->VoidPtrTy), 0,
                                        /*BitWidth=*/0, /*Mutable=*/true,
-                                       /*HasInit=*/false);
+                                       ICIS_NoInit);
   MemberExpr *DictLiteralValueME = 
     new (Context) MemberExpr(NSValueCallExpr, false, ARRFD, 
                              SourceLocation(),
@@ -3014,7 +3014,7 @@ QualType RewriteModernObjC::getSuperStructType() {
                                                  FieldTypes[i], 0,
                                                  /*BitWidth=*/0,
                                                  /*Mutable=*/false,
-                                                 /*HasInit=*/false));
+                                                 ICIS_NoInit));
     }
 
     SuperStructDecl->completeDefinition();
@@ -3047,7 +3047,7 @@ QualType RewriteModernObjC::getConstantStringStructType() {
                                                     FieldTypes[i], 0,
                                                     /*BitWidth=*/0,
                                                     /*Mutable=*/true,
-                                                    /*HasInit=*/false));
+                                                    ICIS_NoInit));
     }
 
     ConstantStringDecl->completeDefinition();
@@ -4491,7 +4491,7 @@ Stmt *RewriteModernObjC::SynthesizeBlockCall(CallExpr *Exp, const Expr *BlockExp
                                     &Context->Idents.get("FuncPtr"),
                                     Context->VoidPtrTy, 0,
                                     /*BitWidth=*/0, /*Mutable=*/true,
-                                    /*HasInit=*/false);
+                                    ICIS_NoInit);
   MemberExpr *ME = new (Context) MemberExpr(PE, true, FD, SourceLocation(),
                                             FD->getType(), VK_LValue,
                                             OK_Ordinary);
@@ -4540,7 +4540,7 @@ Stmt *RewriteModernObjC::RewriteBlockDeclRefExpr(DeclRefExpr *DeclRefExp) {
                                     &Context->Idents.get("__forwarding"), 
                                     Context->VoidPtrTy, 0,
                                     /*BitWidth=*/0, /*Mutable=*/true,
-                                    /*HasInit=*/false);
+                                    ICIS_NoInit);
   MemberExpr *ME = new (Context) MemberExpr(DeclRefExp, isArrow,
                                             FD, SourceLocation(),
                                             FD->getType(), VK_LValue,
@@ -4551,7 +4551,7 @@ Stmt *RewriteModernObjC::RewriteBlockDeclRefExpr(DeclRefExpr *DeclRefExp) {
                          &Context->Idents.get(Name), 
                          Context->VoidPtrTy, 0,
                          /*BitWidth=*/0, /*Mutable=*/true,
-                         /*HasInit=*/false);
+                         ICIS_NoInit);
   ME = new (Context) MemberExpr(ME, true, FD, SourceLocation(),
                                 DeclRefExp->getType(), VK_LValue, OK_Ordinary);
   
@@ -7436,7 +7436,7 @@ Stmt *RewriteModernObjC::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV) {
                                             &Context->Idents.get(D->getNameAsString()),
                                             IvarT, 0,
                                             /*BitWidth=*/0, /*Mutable=*/true,
-                                            /*HasInit=*/false);
+                                            ICIS_NoInit);
           MemberExpr *ME = new (Context) MemberExpr(PE, true, FD, SourceLocation(),
                                                     FD->getType(), VK_LValue,
                                                     OK_Ordinary);

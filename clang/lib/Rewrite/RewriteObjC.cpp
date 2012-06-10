@@ -2592,7 +2592,7 @@ QualType RewriteObjC::getSuperStructType() {
                                                  FieldTypes[i], 0,
                                                  /*BitWidth=*/0,
                                                  /*Mutable=*/false,
-                                                 /*HasInit=*/false));
+                                                 ICIS_NoInit));
     }
 
     SuperStructDecl->completeDefinition();
@@ -2625,7 +2625,7 @@ QualType RewriteObjC::getConstantStringStructType() {
                                                     FieldTypes[i], 0,
                                                     /*BitWidth=*/0,
                                                     /*Mutable=*/true,
-                                                    /*HasInit=*/false));
+                                                    ICIS_NoInit));
     }
 
     ConstantStringDecl->completeDefinition();
@@ -3887,7 +3887,7 @@ Stmt *RewriteObjC::SynthesizeBlockCall(CallExpr *Exp, const Expr *BlockExp) {
                                     &Context->Idents.get("FuncPtr"),
                                     Context->VoidPtrTy, 0,
                                     /*BitWidth=*/0, /*Mutable=*/true,
-                                    /*HasInit=*/false);
+                                    ICIS_NoInit);
   MemberExpr *ME = new (Context) MemberExpr(PE, true, FD, SourceLocation(),
                                             FD->getType(), VK_LValue,
                                             OK_Ordinary);
@@ -3936,7 +3936,7 @@ Stmt *RewriteObjC::RewriteBlockDeclRefExpr(DeclRefExpr *DeclRefExp) {
                                     &Context->Idents.get("__forwarding"), 
                                     Context->VoidPtrTy, 0,
                                     /*BitWidth=*/0, /*Mutable=*/true,
-                                    /*HasInit=*/false);
+                                    ICIS_NoInit);
   MemberExpr *ME = new (Context) MemberExpr(DeclRefExp, isArrow,
                                             FD, SourceLocation(),
                                             FD->getType(), VK_LValue,
@@ -3947,7 +3947,7 @@ Stmt *RewriteObjC::RewriteBlockDeclRefExpr(DeclRefExpr *DeclRefExp) {
                          &Context->Idents.get(Name), 
                          Context->VoidPtrTy, 0,
                          /*BitWidth=*/0, /*Mutable=*/true,
-                         /*HasInit=*/false);
+                         ICIS_NoInit);
   ME = new (Context) MemberExpr(ME, true, FD, SourceLocation(),
                                 DeclRefExp->getType(), VK_LValue, OK_Ordinary);
   
@@ -6015,4 +6015,3 @@ Stmt *RewriteObjCFragileABI::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV) {
   ReplaceStmtWithRange(IV, Replacement, OldRange);
   return Replacement;  
 }
-

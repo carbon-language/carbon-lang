@@ -2465,15 +2465,15 @@ FieldDecl *FieldDecl::Create(const ASTContext &C, DeclContext *DC,
                              SourceLocation StartLoc, SourceLocation IdLoc,
                              IdentifierInfo *Id, QualType T,
                              TypeSourceInfo *TInfo, Expr *BW, bool Mutable,
-                             bool HasInit) {
+                             InClassInitStyle InitStyle) {
   return new (C) FieldDecl(Decl::Field, DC, StartLoc, IdLoc, Id, T, TInfo,
-                           BW, Mutable, HasInit);
+                           BW, Mutable, InitStyle);
 }
 
 FieldDecl *FieldDecl::CreateDeserialized(ASTContext &C, unsigned ID) {
   void *Mem = AllocateDeserializedDecl(C, ID, sizeof(FieldDecl));
   return new (Mem) FieldDecl(Field, 0, SourceLocation(), SourceLocation(),
-                             0, QualType(), 0, 0, false, false);
+                             0, QualType(), 0, 0, false, ICIS_NoInit);
 }
 
 bool FieldDecl::isAnonymousStructOrUnion() const {
@@ -2525,10 +2525,9 @@ SourceRange FieldDecl::getSourceRange() const {
 }
 
 void FieldDecl::setInClassInitializer(Expr *Init) {
-  assert(!InitializerOrBitWidth.getPointer() &&
+  assert(!InitializerOrBitWidth.getPointer() && hasInClassInitializer() &&
          "bit width or initializer already set");
   InitializerOrBitWidth.setPointer(Init);
-  InitializerOrBitWidth.setInt(0);
 }
 
 //===----------------------------------------------------------------------===//

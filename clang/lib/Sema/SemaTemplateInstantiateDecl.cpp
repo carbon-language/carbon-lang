@@ -430,7 +430,7 @@ Decl *TemplateDeclInstantiator::VisitFieldDecl(FieldDecl *D) {
                                             D->getLocation(),
                                             D->isMutable(),
                                             BitWidth,
-                                            D->hasInClassInitializer(),
+                                            D->getInClassInitStyle(),
                                             D->getInnerLocStart(),
                                             D->getAccess(),
                                             0);

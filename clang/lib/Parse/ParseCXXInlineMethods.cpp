@@ -46,7 +46,7 @@ Decl *Parser::ParseCXXInlineMethodDef(AccessSpecifier AS,
   else {
     FnD = Actions.ActOnCXXMemberDeclarator(getCurScope(), AS, D,
                                            move(TemplateParams), 0, 
-                                           VS, /*HasDeferredInit=*/false);
+                                           VS, ICIS_NoInit);
     if (FnD) {
       Actions.ProcessDeclAttributeList(getCurScope(), FnD, AccessAttrs,
                                        false, true);
@@ -493,7 +493,7 @@ void Parser::ParseLexedMemberInitializer(LateParsedMemberInitializer &MI) {
   ConsumeAnyToken();
 
   SourceLocation EqualLoc;
-    
+
   ExprResult Init = ParseCXXMemberInitializer(MI.Field, /*IsFunction=*/false, 
                                               EqualLoc);
 

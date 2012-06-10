@@ -2662,7 +2662,7 @@ Decl *ASTNodeImporter::VisitFieldDecl(FieldDecl *D) {
                                          Importer.Import(D->getInnerLocStart()),
                                          Loc, Name.getAsIdentifierInfo(),
                                          T, TInfo, BitWidth, D->isMutable(),
-                                         D->hasInClassInitializer());
+                                         D->getInClassInitStyle());
   ToField->setAccess(D->getAccess());
   ToField->setLexicalDeclContext(LexicalDC);
   if (ToField->hasInClassInitializer())

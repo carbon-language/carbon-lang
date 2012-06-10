@@ -1991,18 +1991,19 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
     // goes before or after the GNU attributes and __asm__.
     ParseOptionalCXX0XVirtSpecifierSeq(VS);
 
-    bool HasDeferredInitializer = false;
+    InClassInitStyle HasInClassInit = ICIS_NoInit;
     if ((Tok.is(tok::equal) || Tok.is(tok::l_brace)) && !HasInitializer) {
       if (BitfieldSize.get()) {
         Diag(Tok, diag::err_bitfield_member_init);
         SkipUntil(tok::comma, true, true);
       } else {
         HasInitializer = true;
-        HasDeferredInitializer = !DeclaratorInfo.isDeclarationOfFunction() &&
-          DeclaratorInfo.getDeclSpec().getStorageClassSpec()
-            != DeclSpec::SCS_static &&
-          DeclaratorInfo.getDeclSpec().getStorageClassSpec()
-            != DeclSpec::SCS_typedef;
+        if (!DeclaratorInfo.isDeclarationOfFunction() &&
+            DeclaratorInfo.getDeclSpec().getStorageClassSpec()
+              != DeclSpec::SCS_static &&
+            DeclaratorInfo.getDeclSpec().getStorageClassSpec()
+              != DeclSpec::SCS_typedef)
+          HasInClassInit = Tok.is(tok::equal) ? ICIS_CopyInit : ICIS_ListInit;
       }
     }
 
@@ -2020,7 +2021,7 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
                                                   DeclaratorInfo,
                                                   move(TemplateParams),
                                                   BitfieldSize.release(),
-                                                  VS, HasDeferredInitializer);
+                                                  VS, HasInClassInit);
       if (AccessAttrs)
         Actions.ProcessDeclAttributeList(getCurScope(), ThisDecl, AccessAttrs,
                                          false, true);
@@ -2036,15 +2037,15 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
     LateParsedAttrs.clear();
 
     // Handle the initializer.
-    if (HasDeferredInitializer) {
+    if (HasInClassInit != ICIS_NoInit) {
       // The initializer was deferred; parse it and cache the tokens.
       Diag(Tok, getLangOpts().CPlusPlus0x ?
            diag::warn_cxx98_compat_nonstatic_member_init :
            diag::ext_nonstatic_member_init);
 
       if (DeclaratorInfo.isArrayOfUnknownBound()) {
-        // C++0x [dcl.array]p3: An array bound may also be omitted when the
-        // declarator is followed by an initializer. 
+        // C++11 [dcl.array]p3: An array bound may also be omitted when the
+        // declarator is followed by an initializer.
         //
         // A brace-or-equal-initializer for a member-declarator is not an
         // initializer in the grammar, so this is ill-formed.

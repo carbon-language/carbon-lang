@@ -12,10 +12,14 @@ struct S {
   int &m = n;
   S *that = this;
 };
+template<typename T> struct X { T t {0}; };
 #endif
 
 #ifdef SOURCE
 S s;
+
+struct E { explicit E(int); };
+X<E> x;
 #elif HEADER
 #undef HEADER
 #define SOURCE
