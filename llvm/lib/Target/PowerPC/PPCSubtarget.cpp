@@ -146,10 +146,14 @@ bool PPCSubtarget::enablePostRAScheduler(
            CodeGenOpt::Level OptLevel,
            TargetSubtargetInfo::AntiDepBreakMode& Mode,
            RegClassVector& CriticalPathRCs) const {
-  if (DarwinDirective == PPC::DIR_440 || DarwinDirective == PPC::DIR_A2)
-    Mode = TargetSubtargetInfo::ANTIDEP_ALL;
-  else
-    Mode = TargetSubtargetInfo::ANTIDEP_CRITICAL;
+  // FIXME: It would be best to use TargetSubtargetInfo::ANTIDEP_ALL here,
+  // but we can't because we can't reassign the cr registers. There is a
+  // dependence between the cr register and the RLWINM instruction used
+  // to extract its value which the anti-dependency breaker can't currently
+  // see. Maybe we should make a late-expanded pseudo to encode this dependency.
+  // (the relevant code is in PPCDAGToDAGISel::SelectSETCC)
+
+  Mode = TargetSubtargetInfo::ANTIDEP_CRITICAL;
 
   CriticalPathRCs.clear();
 
@@ -157,6 +161,9 @@ bool PPCSubtarget::enablePostRAScheduler(
     CriticalPathRCs.push_back(&PPC::G8RCRegClass);
   else
     CriticalPathRCs.push_back(&PPC::GPRCRegClass);
+    
+  CriticalPathRCs.push_back(&PPC::F8RCRegClass);
+  CriticalPathRCs.push_back(&PPC::VRRCRegClass);
 
   return OptLevel >= CodeGenOpt::Default;
 }
