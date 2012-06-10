@@ -54,6 +54,9 @@ static bool CC_PPC_SVR4_Custom_AlignFPArgRegs(unsigned &ValNo, MVT &ValVT,
 static cl::opt<bool> DisablePPCPreinc("disable-ppc-preinc",
 cl::desc("disable preincrement load/store generation on PPC"), cl::Hidden);
 
+static cl::opt<bool> DisableILPPref("disable-ppc-ilp-pref",
+cl::desc("disable setting the node scheduling preference to ILP on PPC"), cl::Hidden);
+
 static TargetLoweringObjectFile *CreateTLOF(const PPCTargetMachine &TM) {
   if (TM.getSubtargetImpl()->isDarwin())
     return new TargetLoweringObjectFileMachO();
@@ -5871,10 +5874,9 @@ EVT PPCTargetLowering::getOptimalMemOpType(uint64_t Size,
 }
 
 Sched::Preference PPCTargetLowering::getSchedulingPreference(SDNode *N) const {
-  unsigned Directive = PPCSubTarget.getDarwinDirective();
-  if (Directive == PPC::DIR_440 || Directive == PPC::DIR_A2)
-    return Sched::ILP;
+  if (DisableILPPref)
+    return TargetLowering::getSchedulingPreference(N);
 
-  return TargetLowering::getSchedulingPreference(N);
+  return Sched::ILP;
 }
 
