@@ -54,6 +54,10 @@
 #include <fma4intrin.h>
 #endif
 
-// FIXME: XOP, LWP
+#ifdef __XOP__
+#include <xopintrin.h>
+#endif
+
+// FIXME: LWP
 
 #endif /* __X86INTRIN_H */

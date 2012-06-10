@@ -641,4 +641,18 @@ BUILTIN(__builtin_ia32_vfmaddsubpd256, "V4dV4dV4dV4d", "")
 BUILTIN(__builtin_ia32_vfmsubaddps256, "V8fV8fV8fV8f", "")
 BUILTIN(__builtin_ia32_vfmsubaddpd256, "V4dV4dV4dV4d", "")
 
+// XOP
+BUILTIN(__builtin_ia32_vpmacssww, "V8sV8sV8sV8s", "")
+BUILTIN(__builtin_ia32_vpmacsww, "V8sV8sV8sV8s", "")
+BUILTIN(__builtin_ia32_vpmacsswd, "V4iV8sV8sV4i", "")
+BUILTIN(__builtin_ia32_vpmacswd, "V4iV8sV8sV4i", "")
+BUILTIN(__builtin_ia32_vpmacssdd, "V4iV4iV4iV4i", "")
+BUILTIN(__builtin_ia32_vpmacsdd, "V4iV4iV4iV4i", "")
+BUILTIN(__builtin_ia32_vpmacssdql, "V2LLiV4iV4iV2LLi", "")
+BUILTIN(__builtin_ia32_vpmacsdql, "V2LLiV4iV4iV2LLi", "")
+BUILTIN(__builtin_ia32_vpmacssdqh, "V2LLiV4iV4iV2LLi", "")
+BUILTIN(__builtin_ia32_vpmacsdqh, "V2LLiV4iV4iV2LLi", "")
+BUILTIN(__builtin_ia32_vpmadcsswd, "V4iV8sV8sV4i", "")
+BUILTIN(__builtin_ia32_vpmadcswd, "V4iV8sV8sV4i", "")
+
 #undef BUILTIN

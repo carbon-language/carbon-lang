@@ -31,6 +31,7 @@ set(files
   wmmintrin.h
   x86intrin.h
   xmmintrin.h
+  xopintrin.h
   cpuid.h
   unwind.h
   module.map
