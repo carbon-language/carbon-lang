@@ -2086,22 +2086,32 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
               Intrinsic<[llvm_v16i8_ty],
                         [llvm_v16i8_ty, llvm_v16i8_ty, llvm_v16i8_ty],
                         [IntrNoMem]>;
-  def int_x86_xop_vprotb :
-              GCCBuiltin<"__builtin_ia32_vprotb">,
+
+  def int_x86_xop_vprotb : GCCBuiltin<"__builtin_ia32_vprotb">,
               Intrinsic<[llvm_v16i8_ty], [llvm_v16i8_ty, llvm_v16i8_ty],
                         [IntrNoMem]>;
-  def int_x86_xop_vprotd :
-              GCCBuiltin<"__builtin_ia32_vprotd">,
+  def int_x86_xop_vprotd : GCCBuiltin<"__builtin_ia32_vprotd">,
               Intrinsic<[llvm_v4i32_ty], [llvm_v4i32_ty, llvm_v4i32_ty],
                         [IntrNoMem]>;
-  def int_x86_xop_vprotq :
-              GCCBuiltin<"__builtin_ia32_vprotq">,
+  def int_x86_xop_vprotq : GCCBuiltin<"__builtin_ia32_vprotq">,
               Intrinsic<[llvm_v2i64_ty], [llvm_v2i64_ty, llvm_v2i64_ty],
                         [IntrNoMem]>;
-  def int_x86_xop_vprotw :
-              GCCBuiltin<"__builtin_ia32_vprotw">,
+  def int_x86_xop_vprotw : GCCBuiltin<"__builtin_ia32_vprotw">,
               Intrinsic<[llvm_v8i16_ty], [llvm_v8i16_ty, llvm_v8i16_ty],
                         [IntrNoMem]>;
+  def int_x86_xop_vprotbi : GCCBuiltin<"__builtin_ia32_vprotbi">,
+              Intrinsic<[llvm_v16i8_ty], [llvm_v16i8_ty, llvm_i8_ty],
+                        [IntrNoMem]>;
+  def int_x86_xop_vprotdi : GCCBuiltin<"__builtin_ia32_vprotdi">,
+              Intrinsic<[llvm_v4i32_ty], [llvm_v4i32_ty, llvm_i8_ty],
+                        [IntrNoMem]>;
+  def int_x86_xop_vprotqi : GCCBuiltin<"__builtin_ia32_vprotqi">,
+              Intrinsic<[llvm_v2i64_ty], [llvm_v2i64_ty, llvm_i8_ty],
+                        [IntrNoMem]>;
+  def int_x86_xop_vprotwi : GCCBuiltin<"__builtin_ia32_vprotwi">,
+              Intrinsic<[llvm_v8i16_ty], [llvm_v8i16_ty, llvm_i8_ty],
+                        [IntrNoMem]>;
+
   def int_x86_xop_vpshab :
               GCCBuiltin<"__builtin_ia32_vpshab">,
               Intrinsic<[llvm_v16i8_ty], [llvm_v16i8_ty, llvm_v16i8_ty],
