@@ -896,7 +896,7 @@ static void TargetOptsToArgs(const TargetOptions &Opts,
     Res.push_back("-target-feature", Opts.Features[i]);
 }
 
-void CompilerInvocation::toArgs(std::vector<std::string> &Res) {
+void CompilerInvocation::toArgs(std::vector<std::string> &Res) const {
   ToArgsList List(Res);
   AnalyzerOptsToArgs(getAnalyzerOpts(), List);
   CodeGenOptsToArgs(getCodeGenOpts(), List);

@@ -127,7 +127,7 @@ public:
 
   /// toArgs - Convert the CompilerInvocation to a list of strings suitable for
   /// passing to CreateFromArgs.
-  void toArgs(std::vector<std::string> &Res);
+  void toArgs(std::vector<std::string> &Res) const;
 
   /// setLangDefaults - Set language defaults for the given input language and
   /// language standard in this CompilerInvocation.
