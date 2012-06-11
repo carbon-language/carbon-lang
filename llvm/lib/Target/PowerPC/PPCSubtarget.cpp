@@ -162,7 +162,7 @@ PPCSubtarget::PPCSubtarget(const std::string &TT, const std::string &CPU,
   : PPCGenSubtargetInfo(TT, CPU, FS)
   , StackAlignment(16)
   , DarwinDirective(PPC::DIR_NONE)
-  , IsGigaProcessor(false)
+  , HasMFOCRF(false)
   , Has64BitSupport(false)
   , Use64BitRegs(false)
   , IsPPC64(is64Bit)

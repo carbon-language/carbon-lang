@@ -697,7 +697,7 @@ SDNode *PPCDAGToDAGISel::SelectSETCC(SDNode *N) {
   CCReg = CurDAG->getCopyToReg(CurDAG->getEntryNode(), dl, CR7Reg, CCReg,
                                InFlag).getValue(1);
 
-  if (PPCSubTarget.isGigaProcessor() && OtherCondIdx == -1)
+  if (PPCSubTarget.hasMFOCRF() && OtherCondIdx == -1)
     IntCR = SDValue(CurDAG->getMachineNode(PPC::MFOCRF, dl, MVT::i32, CR7Reg,
                                            CCReg), 0);
  else
@@ -833,7 +833,7 @@ SDNode *PPCDAGToDAGISel::Select(SDNode *N) {
   case PPCISD::MFCR: {
     SDValue InFlag = N->getOperand(1);
     // Use MFOCRF if supported.
-    if (PPCSubTarget.isGigaProcessor())
+    if (PPCSubTarget.hasMFOCRF())
       return CurDAG->getMachineNode(PPC::MFOCRF, dl, MVT::i32,
                                     N->getOperand(0), InFlag);
     else
