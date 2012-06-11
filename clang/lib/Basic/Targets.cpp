@@ -575,10 +575,45 @@ class PPCTargetInfo : public TargetInfo {
   static const Builtin::Info BuiltinInfo[];
   static const char * const GCCRegNames[];
   static const TargetInfo::GCCRegAlias GCCRegAliases[];
+  std::string CPU;
 public:
   PPCTargetInfo(const std::string& triple) : TargetInfo(triple) {
     LongDoubleWidth = LongDoubleAlign = 128;
     LongDoubleFormat = &llvm::APFloat::PPCDoubleDouble;
+  }
+
+  virtual bool setCPU(const std::string &Name) {
+    bool CPUKnown = llvm::StringSwitch<bool>(Name)
+      .Case("generic", true)
+      .Case("440", true)
+      .Case("450", true)
+      .Case("601", true)
+      .Case("602", true)
+      .Case("603", true)
+      .Case("603e", true)
+      .Case("603ev", true)
+      .Case("604", true)
+      .Case("604e", true)
+      .Case("620", true)
+      .Case("g3", true)
+      .Case("7400", true)
+      .Case("g4", true)
+      .Case("7450", true)
+      .Case("g4+", true)
+      .Case("750", true)
+      .Case("970", true)
+      .Case("g5", true)
+      .Case("a2", true)
+      .Case("pwr6", true)
+      .Case("pwr7", true)
+      .Case("ppc", true)
+      .Case("ppc64", true)
+      .Default(false);
+
+    if (CPUKnown)
+      CPU = Name;
+
+    return CPUKnown;
   }
 
   virtual void getTargetBuiltins(const Builtin::Info *&Records,
@@ -743,6 +778,20 @@ void PPCTargetInfo::getTargetDefines(const LangOptions &Opts,
   if (Opts.AltiVec) {
     Builder.defineMacro("__VEC__", "10206");
     Builder.defineMacro("__ALTIVEC__");
+  }
+
+  // CPU identification.
+  if (CPU == "440") {
+     Builder.defineMacro("_ARCH_440");
+  } else if (CPU == "450") {
+    Builder.defineMacro("_ARCH_440");
+    Builder.defineMacro("_ARCH_450");
+  } else if (CPU == "970") {
+    Builder.defineMacro("_ARCH_970");
+  } else if (CPU == "pwr6") {
+    Builder.defineMacro("_ARCH_PWR6");
+  } else if (CPU == "pwr7") {
+    Builder.defineMacro("_ARCH_PWR7");
   }
 }
 

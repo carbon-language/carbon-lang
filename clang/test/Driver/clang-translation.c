@@ -51,3 +51,23 @@
 // ARMV5E: clang
 // ARMV5E: "-cc1"
 // ARMV5E: "-target-cpu" "arm1022e"
+
+// RUN: %clang -target powerpc64-unknown-linux-gnu -### -S %s 2> %t.log \
+// RUN:   -mcpu=G5
+// RUN: FileCheck -check-prefix=PPCG5 %s < %t.log
+// PPCG5: clang
+// PPCG5: "-cc1"
+// PPCG5: "-target-cpu" "g5"
+
+// RUN: %clang -target powerpc64-unknown-linux-gnu -### -S %s 2> %t.log \
+// RUN:   -mcpu=power7
+// RUN: FileCheck -check-prefix=PPCPWR7 %s < %t.log
+// PPCPWR7: clang
+// PPCPWR7: "-cc1"
+// PPCPWR7: "-target-cpu" "pwr7"
+
+// RUN: %clang -target powerpc64-unknown-linux-gnu -### -S %s 2> %t.log
+// RUN: FileCheck -check-prefix=PPC64NS %s < %t.log
+// PPC64NS: clang
+// PPC64NS: "-cc1"
+// PPC64NS: "-target-cpu" "ppc64"

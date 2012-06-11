@@ -902,6 +902,72 @@ void Clang::AddMIPSTargetArgs(const ArgList &Args,
   }
 }
 
+/// getPPCTargetCPU - Get the (LLVM) name of the PowerPC cpu we are targeting.
+static std::string getPPCTargetCPU(const ArgList &Args) {
+  if (Arg *A = Args.getLastArg(options::OPT_mcpu_EQ)) {
+    StringRef CPUName = A->getValue(Args);
+
+    if (CPUName == "native") {
+      std::string CPU = llvm::sys::getHostCPUName();
+      if (!CPU.empty() && CPU != "generic")
+        return CPU;
+      else
+        return "";
+    }
+
+    return llvm::StringSwitch<const char *>(CPUName)
+      .Case("common", "generic")
+      .Case("440", "440")
+      .Case("440fp", "440")
+      .Case("450", "450")
+      .Case("601", "601")
+      .Case("602", "602")
+      .Case("603", "603")
+      .Case("603e", "603e")
+      .Case("603ev", "603ev")
+      .Case("604", "604")
+      .Case("604e", "604e")
+      .Case("620", "620")
+      .Case("G3", "g3")
+      .Case("7400", "7400")
+      .Case("G4", "g4")
+      .Case("7450", "7450")
+      .Case("G4+", "g4+")
+      .Case("750", "750")
+      .Case("970", "970")
+      .Case("G5", "g5")
+      .Case("a2", "a2")
+      .Case("power6", "pwr6")
+      .Case("power7", "pwr7")
+      .Case("powerpc", "ppc")
+      .Case("powerpc64", "ppc64")
+      .Default("");
+  }
+
+  return "";
+}
+
+void Clang::AddPPCTargetArgs(const ArgList &Args,
+                             ArgStringList &CmdArgs) const {
+  std::string TargetCPUName = getPPCTargetCPU(Args);
+
+  // LLVM may default to generating code for the native CPU,
+  // but, like gcc, we default to a more generic option for
+  // each architecture. (except on Darwin)
+  llvm::Triple Triple = getToolChain().getTriple();
+  if (TargetCPUName.empty() && !Triple.isOSDarwin()) {
+    if (Triple.getArch() == llvm::Triple::ppc64)
+      TargetCPUName = "ppc64";
+    else
+      TargetCPUName = "ppc";
+  }
+
+  if (!TargetCPUName.empty()) {
+    CmdArgs.push_back("-target-cpu");
+    CmdArgs.push_back(Args.MakeArgString(TargetCPUName.c_str()));
+  }
+}
+
 void Clang::AddSparcTargetArgs(const ArgList &Args,
                              ArgStringList &CmdArgs) const {
   const Driver &D = getToolChain().getDriver();
@@ -1776,6 +1842,11 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   case llvm::Triple::mips64:
   case llvm::Triple::mips64el:
     AddMIPSTargetArgs(Args, CmdArgs);
+    break;
+
+  case llvm::Triple::ppc:
+  case llvm::Triple::ppc64:
+    AddPPCTargetArgs(Args, CmdArgs);
     break;
 
   case llvm::Triple::sparc:

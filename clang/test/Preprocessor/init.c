@@ -967,10 +967,11 @@
 // MSP430:#define __WINT_WIDTH__ 16
 // MSP430:#define __clang__ 1
 //
-// RUN: %clang_cc1 -E -dM -ffreestanding -triple=powerpc64-none-none -fno-signed-char < /dev/null | FileCheck -check-prefix PPC64 %s
+// RUN: %clang_cc1 -E -dM -ffreestanding -triple=powerpc64-none-none -target-cpu pwr7 -fno-signed-char < /dev/null | FileCheck -check-prefix PPC64 %s
 //
 // PPC64:#define _ARCH_PPC 1
 // PPC64:#define _ARCH_PPC64 1
+// PPC64:#define _ARCH_PWR7 1
 // PPC64:#define _BIG_ENDIAN 1
 // PPC64:#define _LP64 1
 // PPC64:#define __BIG_ENDIAN__ 1
