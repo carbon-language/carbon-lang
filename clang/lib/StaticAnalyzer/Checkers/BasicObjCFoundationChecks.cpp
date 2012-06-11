@@ -29,6 +29,7 @@
 #include "clang/AST/ExprObjC.h"
 #include "clang/AST/ASTContext.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/ADT/StringMap.h"
 
 using namespace clang;
 using namespace ento;
@@ -50,15 +51,34 @@ static const char* GetReceiverNameType(const ObjCMessage &msg) {
   return 0;
 }
 
-static bool isReceiverClassOrSuperclass(const ObjCInterfaceDecl *ID,
-                                        StringRef ClassName) {
-  if (ID->getIdentifier()->getName() == ClassName)
-    return true;
+enum FoundationClass {
+  FC_None,
+  FC_NSArray,
+  FC_NSDictionary,
+  FC_NSEnumerator,
+  FC_NSOrderedSet,
+  FC_NSSet,
+  FC_NSString
+};
 
-  if (const ObjCInterfaceDecl *Super = ID->getSuperClass())
-    return isReceiverClassOrSuperclass(Super, ClassName);
+static FoundationClass findKnownClass(const ObjCInterfaceDecl *ID) {
+  static llvm::StringMap<FoundationClass> Classes;
+  if (Classes.empty()) {
+    Classes["NSArray"] = FC_NSArray;
+    Classes["NSDictionary"] = FC_NSDictionary;
+    Classes["NSEnumerator"] = FC_NSEnumerator;
+    Classes["NSOrderedSet"] = FC_NSOrderedSet;
+    Classes["NSSet"] = FC_NSSet;
+    Classes["NSString"] = FC_NSString;
+  }
 
-  return false;
+  // FIXME: Should we cache this at all?
+  FoundationClass result = Classes.lookup(ID->getIdentifier()->getName());
+  if (result == FC_None)
+    if (const ObjCInterfaceDecl *Super = ID->getSuperClass())
+      return findKnownClass(Super);
+
+  return result;
 }
 
 static inline bool isNil(SVal X) {
@@ -106,7 +126,7 @@ void NilArgChecker::checkPreObjCMessage(ObjCMessage msg,
   if (!ID)
     return;
   
-  if (isReceiverClassOrSuperclass(ID, "NSString")) {
+  if (findKnownClass(ID) == FC_NSString) {
     Selector S = msg.getSelector();
     
     if (S.isUnarySelector())
@@ -517,50 +537,32 @@ VariadicMethodTypeChecker::isVariadicMessage(const ObjCMessage &msg) const {
     // gains that this analysis gives.
     const ObjCInterfaceDecl *Class = MD->getClassInterface();
 
-    // -[NSArray initWithObjects:]
-    if (isReceiverClassOrSuperclass(Class, "NSArray") &&
-        S == initWithObjectsS)
-      return true;
-
-    // -[NSDictionary initWithObjectsAndKeys:]
-    if (isReceiverClassOrSuperclass(Class, "NSDictionary") &&
-        S == initWithObjectsAndKeysS)
-      return true;
-
-    // -[NSSet initWithObjects:]
-    if (isReceiverClassOrSuperclass(Class, "NSSet") &&
-        S == initWithObjectsS)
-      return true;
-
-    // -[NSOrderedSet initWithObjects:]
-    if (isReceiverClassOrSuperclass(Class, "NSOrderedSet") &&
-        S == initWithObjectsS)
-      return true;
+    switch (findKnownClass(Class)) {
+    case FC_NSArray:
+    case FC_NSOrderedSet:
+    case FC_NSSet:
+      return S == initWithObjectsS;
+    case FC_NSDictionary:
+      return S == initWithObjectsAndKeysS;
+    default:
+      return false;
+    }
   } else {
     const ObjCInterfaceDecl *Class = msg.getReceiverInterface();
 
-    // -[NSArray arrayWithObjects:]
-    if (isReceiverClassOrSuperclass(Class, "NSArray") &&
-        S == arrayWithObjectsS)
-      return true;
-
-    // -[NSDictionary dictionaryWithObjectsAndKeys:]
-    if (isReceiverClassOrSuperclass(Class, "NSDictionary") &&
-        S == dictionaryWithObjectsAndKeysS)
-      return true;
-
-    // -[NSSet setWithObjects:]
-    if (isReceiverClassOrSuperclass(Class, "NSSet") &&
-        S == setWithObjectsS)
-      return true;
-
-    // -[NSOrderedSet orderedSetWithObjects:]
-    if (isReceiverClassOrSuperclass(Class, "NSOrderedSet") &&
-        S == orderedSetWithObjectsS)
-      return true;
+    switch (findKnownClass(Class)) {
+      case FC_NSArray:
+        return S == arrayWithObjectsS;
+      case FC_NSOrderedSet:
+        return S == orderedSetWithObjectsS;
+      case FC_NSSet:
+        return S == setWithObjectsS;
+      case FC_NSDictionary:
+        return S == dictionaryWithObjectsAndKeysS;
+      default:
+        return false;
+    }
   }
-
-  return false;
 }
 
 void VariadicMethodTypeChecker::checkPreObjCMessage(ObjCMessage msg,
