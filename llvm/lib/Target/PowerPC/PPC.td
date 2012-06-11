@@ -91,8 +91,8 @@ def : Processor<"g5", G5Itineraries,
                    FeatureMFOCRF, FeatureFSqrt, FeatureSTFIWX,
                    Feature64Bit /*, Feature64BitRegs */]>;
 def : Processor<"a2",  PPCA2Itineraries, [DirectiveA2, FeatureBookE,
-                                          FeatureFSqrt, FeatureSTFIWX,
-                                          Feature64Bit
+                                          FeatureMFOCRF, FeatureFSqrt,
+                                          FeatureSTFIWX, Feature64Bit
                                       /*, Feature64BitRegs */]>;
 def : Processor<"pwr6", G5Itineraries,
                   [DirectivePwr6, FeatureAltivec,
