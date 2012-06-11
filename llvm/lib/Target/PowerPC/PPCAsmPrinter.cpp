@@ -451,6 +451,8 @@ void PPCDarwinAsmPrinter::EmitStartOfAsmFile(Module &M) {
     "ppc750",
     "ppc970",
     "ppcA2",
+    "power6",
+    "power7",
     "ppc64"
   };
 
