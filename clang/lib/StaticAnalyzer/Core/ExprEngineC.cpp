@@ -279,6 +279,7 @@ void ExprEngine::VisitCast(const CastExpr *CastE, const Expr *Ex,
       case CK_Dependent:
       case CK_ArrayToPointerDecay:
       case CK_BitCast:
+      case CK_LValueBitCast:
       case CK_IntegralCast:
       case CK_NullToPointer:
       case CK_IntegralToPointer:
@@ -377,8 +378,7 @@ void ExprEngine::VisitCast(const CastExpr *CastE, const Expr *Ex,
       case CK_UserDefinedConversion:
       case CK_ConstructorConversion:
       case CK_VectorSplat:
-      case CK_MemberPointerToBoolean:
-      case CK_LValueBitCast: {
+      case CK_MemberPointerToBoolean: {
         // Recover some path-sensitivty by conjuring a new value.
         QualType resultType = CastE->getType();
         if (CastE->isGLValue())

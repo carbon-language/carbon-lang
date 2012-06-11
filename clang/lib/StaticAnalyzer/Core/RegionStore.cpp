@@ -878,10 +878,15 @@ SVal RegionStoreManager::ArrayToPointer(Loc Array) {
   if (!ArrayR)
     return UnknownVal();
 
-  // Strip off typedefs from the ArrayRegion's ValueType.
-  QualType T = ArrayR->getValueType().getDesugaredType(Ctx);
-  const ArrayType *AT = cast<ArrayType>(T);
-  T = AT->getElementType();
+  // Extract the element type from the array region's ValueType.
+  // Be careful about weird things happening due to user-written casts.
+  QualType T = ArrayR->getValueType();
+  if (const ArrayType *AT = Ctx.getAsArrayType(T))
+    T = AT->getElementType();
+  else if (const PointerType *PT = T->getAs<PointerType>())
+    T = PT->getPointeeType();
+  else
+    return UnknownVal();
 
   NonLoc ZeroIdx = svalBuilder.makeZeroArrayIndex();
   return loc::MemRegionVal(MRMgr.getElementRegion(T, ZeroIdx, ArrayR, Ctx));
