@@ -74,7 +74,6 @@ void ExprEngine::VisitObjCForCollectionStmt(const ObjCForCollectionStmt *S,
   const Stmt *elem = S->getElement();
   ProgramStateRef state = Pred->getState();
   SVal elementV;
-  StmtNodeBuilder Bldr(Pred, Dst, *currentBuilderContext);
   
   if (const DeclStmt *DS = dyn_cast<DeclStmt>(elem)) {
     const VarDecl *elemD = cast<VarDecl>(DS->getSingleDecl());
@@ -86,10 +85,11 @@ void ExprEngine::VisitObjCForCollectionStmt(const ObjCForCollectionStmt *S,
   }
   
   ExplodedNodeSet dstLocation;
-  Bldr.takeNodes(Pred);
   evalLocation(dstLocation, S, elem, Pred, state, elementV, NULL, false);
-  Bldr.addNodes(dstLocation);
-  
+
+  ExplodedNodeSet Tmp;
+  StmtNodeBuilder Bldr(Pred, Tmp, *currentBuilderContext);
+
   for (ExplodedNodeSet::iterator NI = dstLocation.begin(),
        NE = dstLocation.end(); NI!=NE; ++NI) {
     Pred = *NI;
@@ -126,6 +126,10 @@ void ExprEngine::VisitObjCForCollectionStmt(const ObjCForCollectionStmt *S,
     Bldr.generateNode(S, Pred, hasElems);
     Bldr.generateNode(S, Pred, noElems);
   }
+
+  // Finally, run any custom checkers.
+  // FIXME: Eventually all pre- and post-checks should live in VisitStmt.
+  getCheckerManager().runCheckersForPostStmt(Dst, Tmp, S, *this);
 }
 
 void ExprEngine::VisitObjCMessage(const ObjCMessage &msg,

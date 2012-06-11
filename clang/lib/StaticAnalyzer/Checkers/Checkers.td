@@ -393,6 +393,10 @@ def ObjCSelfInitChecker : Checker<"SelfInit">,
   HelpText<"Check that 'self' is properly initialized inside an initializer method">,
   DescFile<"ObjCSelfInitChecker.cpp">;
 
+def ObjCLoopChecker : Checker<"Loops">,
+  HelpText<"Improved modeling of loops using Cocoa collection types">,
+  DescFile<"BasicObjCFoundationChecks.cpp">;
+
 def NSErrorChecker : Checker<"NSError">,
   HelpText<"Check usage of NSError** parameters">,
   DescFile<"NSErrorChecker.cpp">;

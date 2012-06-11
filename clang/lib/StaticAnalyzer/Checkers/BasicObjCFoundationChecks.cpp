@@ -27,6 +27,7 @@
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/ExprObjC.h"
+#include "clang/AST/StmtObjC.h"
 #include "clang/AST/ASTContext.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringMap.h"
@@ -650,6 +651,75 @@ void VariadicMethodTypeChecker::checkPreObjCMessage(ObjCMessage msg,
 }
 
 //===----------------------------------------------------------------------===//
+// Improves the modeling of loops over Cocoa collections.
+//===----------------------------------------------------------------------===//
+
+namespace {
+class ObjCLoopChecker
+  : public Checker<check::PostStmt<ObjCForCollectionStmt> > {
+  
+public:
+  void checkPostStmt(const ObjCForCollectionStmt *FCS, CheckerContext &C) const;
+};
+}
+
+static bool isKnownNonNilCollectionType(QualType T) {
+  const ObjCObjectPointerType *PT = T->getAs<ObjCObjectPointerType>();
+  if (!PT)
+    return false;
+  
+  const ObjCInterfaceDecl *ID = PT->getInterfaceDecl();
+  if (!ID)
+    return false;
+
+  switch (findKnownClass(ID)) {
+  case FC_NSArray:
+  case FC_NSDictionary:
+  case FC_NSEnumerator:
+  case FC_NSOrderedSet:
+  case FC_NSSet:
+    return true;
+  default:
+    return false;
+  }
+}
+
+void ObjCLoopChecker::checkPostStmt(const ObjCForCollectionStmt *FCS,
+                                    CheckerContext &C) const {
+  ProgramStateRef State = C.getState();
+  
+  // Check if this is the branch for the end of the loop.
+  SVal CollectionSentinel = State->getSVal(FCS, C.getLocationContext());
+  if (CollectionSentinel.isZeroConstant())
+    return;
+  
+  // See if the collection is one where we /know/ the elements are non-nil.
+  const Expr *Collection = FCS->getCollection();
+  if (!isKnownNonNilCollectionType(Collection->getType()))
+    return;
+  
+  // FIXME: Copied from ExprEngineObjC.
+  const Stmt *Element = FCS->getElement();
+  SVal ElementVar;
+  if (const DeclStmt *DS = dyn_cast<DeclStmt>(Element)) {
+    const VarDecl *ElemDecl = cast<VarDecl>(DS->getSingleDecl());
+    assert(ElemDecl->getInit() == 0);
+    ElementVar = State->getLValue(ElemDecl, C.getLocationContext());
+  } else {
+    ElementVar = State->getSVal(Element, C.getLocationContext());
+  }
+
+  if (!isa<Loc>(ElementVar))
+    return;
+
+  // Go ahead and assume the value is non-nil.
+  SVal Val = State->getSVal(cast<Loc>(ElementVar));
+  State = State->assume(cast<DefinedOrUnknownSVal>(Val), true);
+  C.addTransition(State);
+}
+
+
+//===----------------------------------------------------------------------===//
 // Check registration.
 //===----------------------------------------------------------------------===//
 
@@ -671,4 +741,8 @@ void ento::registerClassReleaseChecker(CheckerManager &mgr) {
 
 void ento::registerVariadicMethodTypeChecker(CheckerManager &mgr) {
   mgr.registerChecker<VariadicMethodTypeChecker>();
+}
+
+void ento::registerObjCLoopChecker(CheckerManager &mgr) {
+  mgr.registerChecker<ObjCLoopChecker>();
 }
