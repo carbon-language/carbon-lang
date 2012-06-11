@@ -131,7 +131,7 @@ private:
 
 };
 
-void mach_header::recordLoadCommand(const load_command *lc) {
+inline void mach_header::recordLoadCommand(const load_command *lc) {
   ++ncmds;
   sizeofcmds += lc->cmdsize;
 }
@@ -140,6 +140,7 @@ void mach_header::recordLoadCommand(const load_command *lc) {
 enum {
   LC_SEGMENT        = 0x00000001,
   LC_SYMTAB         = 0x00000002,
+  LC_UNIXTHREAD     = 0x00000005,
   LC_LOAD_DYLIB     = 0x0000000C,
   LC_LOAD_DYLINKER  = 0x0000000E,
   LC_SEGMENT_64     = 0x00000019,
@@ -373,6 +374,95 @@ public:
     }
   }
 };
+
+
+//
+// The thread_command load command holds the set of initial register values
+// for a dynamic executable.  In reality, only the PC and SP are used.
+//
+class thread_command : public load_command {
+public:
+	uint32_t	fields_flavor;
+	uint32_t	fields_count;
+private:
+  uint32_t   _cpuType;
+  uint8_t   *_registerArray;
+
+public:
+  thread_command(uint32_t cpuType, bool is64) 
+    : load_command(LC_UNIXTHREAD, 16+registersBufferSize(cpuType), is64),
+      fields_count(registersBufferSize(cpuType)/4), _cpuType(cpuType) {
+    switch ( cpuType ) {
+      case CPU_TYPE_I386:
+        fields_flavor = 1;  // i386_THREAD_STATE
+        break;
+      case CPU_TYPE_X86_64:
+        fields_flavor = 4;  // x86_THREAD_STATE64;
+        break;
+      case CPU_TYPE_ARM:
+        fields_flavor = 1;  // ARM_THREAD_STATE
+        break;
+      default:
+        assert(0 && "unsupported cpu type");
+    }
+    _registerArray = reinterpret_cast<uint8_t*>(
+                                    ::calloc(registersBufferSize(cpuType), 1));
+    assert(_registerArray);
+  }
+  
+  virtual void copyTo(uint8_t *to, bool swap=false) {
+    if ( swap ) {
+      assert(0 && "non-native endianness not supported yet");
+    }
+    else {
+      // in-memory matches on-disk, so copy fixed fields 
+      ::memcpy(to, (uint8_t*)&cmd, 16);
+      // that register array
+      ::memcpy(&to[16], _registerArray, registersBufferSize(_cpuType));
+    }
+  }
+  
+  void setPC(uint64_t pc) {
+    uint32_t *regs32 = reinterpret_cast<uint32_t*>(_registerArray);
+    uint64_t *regs64 = reinterpret_cast<uint64_t*>(_registerArray);
+    switch ( _cpuType ) {
+      case CPU_TYPE_I386:
+        regs32[10] = pc;
+        break;
+      case CPU_TYPE_X86_64:
+        regs64[16] = pc;
+        break;
+      case CPU_TYPE_ARM:
+        regs32[15] = pc;
+        break;
+      default:
+        assert(0 && "unsupported cpu type");
+    }
+  }
+  
+  virtual ~thread_command() {
+    ::free(_registerArray); 
+  }
+
+private:
+  uint32_t registersBufferSize(uint32_t cpuType) {
+    switch ( cpuType ) {
+      case CPU_TYPE_I386:
+        return 64;        // i386_THREAD_STATE_COUNT * 4
+      case CPU_TYPE_X86_64:
+        return 168;       // x86_THREAD_STATE64_COUNT * 4
+      case CPU_TYPE_ARM:
+        return 68;        // ARM_THREAD_STATE_COUNT * 4
+    }
+    assert(0 && "unsupported cpu type");
+    return 0;
+  }
+    
+    
+  
+};
+
+
 
 
 

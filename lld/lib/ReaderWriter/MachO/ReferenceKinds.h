@@ -19,51 +19,104 @@ namespace lld {
 namespace mach_o {
 
 
-class ReferenceKind {
+///
+/// The KindHandler class is the abstract interface to Reference::Kind
+/// values for mach-o files.  Particular Kind values (e.g. 3) has a different
+/// meaning for each architecture.
+///
+class KindHandler {
 public:
-  // x86_64 Reference Kinds
-  enum {
-    x86_64_none        = 0,
-    x86_64_call32      = 1,
-    x86_64_pcRel32     = 2,
-    x86_64_gotLoad32   = 3,
-    x86_64_gotUse32    = 4,
-    x86_64_lea32WasGot = 5,
-    x86_64_lazyTarget  = 6,
-    x86_64_lazyImm     = 7,
-    x86_64_gotTarget   = 8,
-    x86_64_pointer64   = 9,
+  typedef Reference::Kind Kind;
+  
+  static KindHandler *makeHandler(WriterOptionsMachO::Architecture arch);
+  virtual             ~KindHandler();
+  virtual Kind        stringToKind(StringRef str) = 0;
+  virtual StringRef   kindToString(Kind) = 0;
+  virtual bool        isCallSite(Kind) = 0;
+  virtual bool        isPointer(Kind) = 0; 
+  virtual bool        isLazyImmediate(Kind) = 0; 
+  virtual bool        isLazyTarget(Kind) = 0; 
+  virtual void        applyFixup(Kind kind, uint64_t addend, uint8_t *location, 
+                           uint64_t fixupAddress, uint64_t targetAddress) = 0;
+  
+protected:
+  KindHandler();
+};
+
+
+
+class KindHandler_x86_64 : public KindHandler {
+public:
+  enum Kinds {
+    none        = 0,
+    call32      = 1,
+    ripRel32    = 2,
+    gotLoad32   = 3,
+    gotUse32    = 4,
+    lea32WasGot = 5,
+    lazyTarget  = 6,
+    lazyImm     = 7,
+    gotTarget   = 8,
+    pointer64   = 9
   };
 
-  // x86 Reference Kinds
- enum {
-    x86_none        = 0,
-    x86_call32      = 1,
-    x86_pointer32   = 2,
-    x86_lazyTarget  = 3,
-    x86_lazyImm     = 4,
+  virtual ~KindHandler_x86_64();
+  virtual Kind stringToKind(StringRef str);
+  virtual StringRef kindToString(Kind);
+  virtual bool isCallSite(Kind);
+  virtual bool isPointer(Kind); 
+  virtual bool isLazyImmediate(Kind); 
+  virtual bool isLazyTarget(Kind); 
+  virtual void applyFixup(Kind kind, uint64_t addend, uint8_t *location, 
+                  uint64_t fixupAddress, uint64_t targetAddress);
+
+};
+
+
+class KindHandler_x86 : public KindHandler {
+public:
+  enum Kinds {
+    none        = 0,
+    call32      = 1,
+    abs32       = 2,
+    pointer32   = 3,
+    lazyTarget  = 4,
+    lazyImm     = 5
+  };
+
+  virtual ~KindHandler_x86();
+  virtual Kind stringToKind(StringRef str);
+  virtual StringRef kindToString(Kind);
+  virtual bool isCallSite(Kind);
+  virtual bool isPointer(Kind); 
+  virtual bool isLazyImmediate(Kind); 
+  virtual bool isLazyTarget(Kind); 
+  virtual void applyFixup(Kind kind, uint64_t addend, uint8_t *location, 
+                  uint64_t fixupAddress, uint64_t targetAddress);
+
+};
+
+class KindHandler_arm : public KindHandler {
+public:
+  enum Kinds {
+    none        = 0,
+    br22        = 1,
+    pointer32   = 2,
+    lazyTarget  = 3,
+    lazyImm     = 4
     // FIXME
   };
 
-  // ARM Reference Kinds
- enum {
-    arm_none        = 0,
-    arm_br22        = 1,
-    arm_pointer32   = 2,
-    arm_lazyTarget  = 3,
-    arm_lazyImm     = 4,
-    // FIXME
-  };
+  virtual ~KindHandler_arm();
+  virtual Kind stringToKind(StringRef str);
+  virtual StringRef kindToString(Kind);
+  virtual bool isCallSite(Kind);
+  virtual bool isPointer(Kind); 
+  virtual bool isLazyImmediate(Kind); 
+  virtual bool isLazyTarget(Kind); 
+  virtual void applyFixup(Kind kind, uint64_t addend, uint8_t *location, 
+                  uint64_t fixupAddress, uint64_t targetAddress);
 
-  static bool isCallSite(WriterOptionsMachO::Architecture arch, 
-                                                    Reference::Kind kindValue);
-  
-  static bool isRipRel32(Reference::Kind kindValue);
-
-
-  static Reference::Kind fromString(StringRef kindName); 
-  static StringRef toString(Reference::Kind kindValue);
-  
 };
 
 

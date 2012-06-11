@@ -129,10 +129,6 @@ private:
                              const WriterOptionsMachO &options,
                              class MachOWriter &writer);
 
-  void          applyFixup(Reference::Kind kind, uint64_t addend,  
-                           uint8_t* location, uint64_t fixupAddress,
-                                                     uint64_t targetAddress);
-                                                     
   StringRef                 _segmentName;
   StringRef                 _sectionName;
   const WriterOptionsMachO &_options;
@@ -206,6 +202,7 @@ private:
   segment_command             *_linkEditSegment;
   symtab_command              *_symbolTableLoadCommand;
   entry_point_command         *_entryPointLoadCommand;
+  thread_command              *_threadLoadCommand;
   dyld_info_command           *_dyldInfoLoadCommand;
   std::vector<load_command*>   _loadCmds;
   std::vector<ChunkSegInfo>    _sectionInfo;
@@ -354,11 +351,14 @@ public:
                                 uint64_t *segStartAddr, uint64_t *segEndAddr);
 
   const std::vector<Chunk*> chunks() { return _chunks; }
+  KindHandler *kindHandler() { return _referenceKindHandler; }
+
   bool use64BitMachO() const;
   
 private:
   friend class LoadCommandsChunk;
   friend class LazyBindingInfoChunk;
+  friend class BindingInfoChunk;
 
   void        build(const lld::File &file);
   void        createChunks(const lld::File &file);
@@ -373,6 +373,7 @@ private:
   typedef llvm::DenseMap<const Atom*, uint64_t> AtomToAddress;
 
   const WriterOptionsMachO   &_options;
+  KindHandler                *_referenceKindHandler;
   StubsPass                   _stubsPass;
   GOTPass                     _gotPass;
   CRuntimeFile                _cRuntimeFile;
@@ -386,7 +387,7 @@ private:
   LazyBindingInfoChunk       *_lazyBindingInfo;
   SymbolTableChunk           *_symbolTableChunk;
   SymbolStringsChunk         *_stringsChunk;
-  const DefinedAtom          *_mainAtom;
+  const DefinedAtom          *_entryAtom;
   uint64_t                    _linkEditStartOffset;
   uint64_t                    _linkEditStartAddress;
 };
@@ -582,32 +583,11 @@ void SectionChunk::write(uint8_t *chunkBuffer) {
       if ( ref->target() != nullptr )
         targetAddress = _writer.addressOfAtom(ref->target());
       uint64_t fixupAddress = _writer.addressOfAtom(atomInfo.atom) + offset;
-      this->applyFixup(ref->kind(), ref->addend(), &atomContent[offset],
-                                              fixupAddress, targetAddress);
+      _writer.kindHandler()->applyFixup(ref->kind(), ref->addend(), 
+                            &atomContent[offset], fixupAddress, targetAddress);
     }
   }
 }
-
-
-
-void SectionChunk::applyFixup(Reference::Kind kind, uint64_t addend,  
-                                  uint8_t* location, uint64_t fixupAddress, 
-                                                     uint64_t targetAddress) {
-  //fprintf(stderr, "applyFixup(kind=%s, addend=0x%0llX, "
-  //                "fixupAddress=0x%0llX, targetAddress=0x%0llX\n", 
-  //                kindToString(kind).data(), addend, 
-  //                fixupAddress, targetAddress);
-  if ( ReferenceKind::isRipRel32(kind) ) {
-    // compute rip relative value and update.
-    int32_t* loc32 = reinterpret_cast<int32_t*>(location);
-    *loc32 = (targetAddress - (fixupAddress+4)) + addend;
-  }
-  else if ( kind == ReferenceKind::x86_64_pointer64 ) {
-    uint64_t* loc64 = reinterpret_cast<uint64_t*>(location);
-    *loc64 = targetAddress + addend;
-  }
-}
-
 
 
 //===----------------------------------------------------------------------===//
@@ -687,7 +667,8 @@ LoadCommandsChunk::LoadCommandsChunk(MachHeaderChunk &mh,
                                      MachOWriter& writer)
  : _mh(mh), _options(options), _writer(writer),
    _linkEditSegment(nullptr), _symbolTableLoadCommand(nullptr),
-   _entryPointLoadCommand(nullptr), _dyldInfoLoadCommand(nullptr) {
+   _entryPointLoadCommand(nullptr), _threadLoadCommand(nullptr), 
+   _dyldInfoLoadCommand(nullptr) {
 }
 
 
@@ -815,15 +796,19 @@ void LoadCommandsChunk::computeSize(const lld::File &file) {
   this->addLoadCommand(_dyldInfoLoadCommand);
 
   // Add entry point load command to main executables
-  if (_options.outputKind() == WriterOptionsMachO::outputDynamicExecutable) {
+  if ( _options.addEntryPointLoadCommand() ) {
     _entryPointLoadCommand = new entry_point_command(is64);
     this->addLoadCommand(_entryPointLoadCommand);
+  }
+  else if ( _options.addUnixThreadLoadCommand() ) {
+    _threadLoadCommand = new thread_command(_options.cpuType(), is64);
+    this->addLoadCommand(_threadLoadCommand);
   }
   
   // Compute total size.
   _size = _mh.loadCommandsSize();
 }
-
+ 
 
 void LoadCommandsChunk::updateLoadCommandContent(const lld::File &file) {
   // Update segment/section information in segment load commands
@@ -887,11 +872,17 @@ void LoadCommandsChunk::updateLoadCommandContent(const lld::File &file) {
 
   // Update entry point
   if ( _entryPointLoadCommand != nullptr ) {
-    const Atom *mainAtom = _writer._mainAtom;
+    const Atom *mainAtom = _writer._entryAtom;
     assert(mainAtom != nullptr);
     uint32_t entryOffset = _writer.addressOfAtom(mainAtom) - _mh.address();
     _entryPointLoadCommand->entryoff = entryOffset;
   }
+  else if ( _threadLoadCommand != nullptr ) {
+    const Atom *startAtom = _writer._entryAtom;
+    assert(startAtom != nullptr);
+    _threadLoadCommand->setPC(_writer.addressOfAtom(startAtom));
+  }
+  
 }
 
 
@@ -1037,9 +1028,9 @@ void BindingInfoChunk::computeSize(const lld::File &file,
           const SharedLibraryAtom *shlTarget
                                         = dyn_cast<SharedLibraryAtom>(target);
           if ( shlTarget != nullptr ) {
-            assert(ref->kind() == ReferenceKind::x86_64_pointer64);
+            assert(_writer.kindHandler()->isPointer(ref->kind()));
             targetName = shlTarget->name();
-            ordinal = 1;
+            ordinal = 1; // FIXME
           }
         }
       }
@@ -1096,15 +1087,22 @@ const char* LazyBindingInfoChunk::info() {
   return "lazy binding info";
 }
 
+//
+// Called when lazy-binding-info is being laid out in __LINKEDIT.  We need 
+// to find the helper atom which contains the instruction which loads an
+// immediate value that is the offset into the lazy-binding-info, and set
+// that immediate value to be the offset parameter.
 void LazyBindingInfoChunk::updateHelper(const DefinedAtom *lazyPointerAtom,
                                         uint32_t offset) {
   for (const Reference *ref : *lazyPointerAtom ) {
-    if ( ref->kind() != ReferenceKind::x86_64_pointer64 )
+    if ( ! _writer.kindHandler()->isPointer(ref->kind() ) )
       continue;
-    const DefinedAtom *helperAtom = dyn_cast<DefinedAtom>(ref->target());
+    const Atom *targ = ref->target();
+    const DefinedAtom *helperAtom = dyn_cast<DefinedAtom>(targ);
     assert(helperAtom != nullptr);
+    // Found helper atom.  Search it for Reference that is lazy immediate value.
     for (const Reference *href : *helperAtom ) {
-      if ( href->kind() == ReferenceKind::x86_64_lazyImm ) {
+      if ( _writer.kindHandler()->isLazyImmediate(href->kind()) ) {
         (const_cast<Reference*>(href))->setAddend(offset);
         return;
       }
@@ -1154,7 +1152,7 @@ void LazyBindingInfoChunk::computeSize(const lld::File &file,
       int flags = 0;
       StringRef name;
       for (const Reference *ref : *lazyPointerAtom ) {
-        if ( ref->kind() == ReferenceKind::x86_64_lazyTarget ) {
+        if ( _writer.kindHandler()->isLazyTarget(ref->kind()) ) {
           const Atom *shlib = ref->target();
           assert(shlib != nullptr);
           name = shlib->name();
@@ -1298,9 +1296,11 @@ uint32_t SymbolStringsChunk::stringIndex(StringRef str) {
 //===----------------------------------------------------------------------===//
 
 MachOWriter::MachOWriter(const WriterOptionsMachO &options)
-  : _options(options), _stubsPass(options), _cRuntimeFile(options), 
+  : _options(options), 
+    _referenceKindHandler(KindHandler::makeHandler(_options.architecture())), 
+    _stubsPass(options), _cRuntimeFile(options), 
     _bindingInfo(nullptr), _lazyBindingInfo(nullptr),
-    _symbolTableChunk(nullptr), _stringsChunk(nullptr), _mainAtom(nullptr),
+    _symbolTableChunk(nullptr), _stringsChunk(nullptr), _entryAtom(nullptr),
     _linkEditStartOffset(0), _linkEditStartAddress(0) {
 }
 
@@ -1388,16 +1388,16 @@ void MachOWriter::addLinkEditChunk(LinkEditChunk *chunk) {
 void MachOWriter::buildAtomToAddressMap() {
   DEBUG_WITH_TYPE("WriterMachO-layout", llvm::dbgs() 
                    << "assign atom addresses:\n");
-  const bool lookForMain = 
+  const bool lookForEntry = 
       (_options.outputKind() == WriterOptionsMachO::outputDynamicExecutable);
   for (SectionChunk *chunk : _sectionChunks ) {
     for (const SectionChunk::AtomInfo &info : chunk->atoms() ) {
       _atomToAddress[info.atom] = chunk->address() + info.offsetInSection;
-      if (       lookForMain
+      if (       lookForEntry
               && (info.atom->contentType() == DefinedAtom::typeCode)
               && (info.atom->size() != 0)
-              &&  info.atom->name().equals("_main") ) {
-        _mainAtom = info.atom;
+              &&  info.atom->name().equals(_options.entryPointName()) ) {
+        _entryAtom = info.atom;
       }
       DEBUG_WITH_TYPE("WriterMachO-layout", llvm::dbgs()  
               << "   address="
@@ -1544,23 +1544,10 @@ void MachOWriter::addFiles(InputFiles &inputFiles) {
 
 } // namespace mach_o
 
+
 Writer* createWriterMachO(const WriterOptionsMachO &options) {
   return new lld::mach_o::MachOWriter(options);
 }
-
-WriterOptionsMachO::WriterOptionsMachO() 
- : _outputkind(outputDynamicExecutable),
-   _archName("x86_64"),
-   _architecture(arch_x86_64),
-   _pageZeroSize(0x100000000),
-   _cpuType(mach_o::CPU_TYPE_X86_64),
-   _cpuSubtype(mach_o::CPU_SUBTYPE_X86_64_ALL),
-   _noTextRelocations(true) {
-}
-
-WriterOptionsMachO::~WriterOptionsMachO() {
-}
-
 
 } // namespace lld
 

@@ -28,7 +28,9 @@ namespace mach_o {
 
 class StubsPass : public lld::StubsPass {
 public:
-  StubsPass(const WriterOptionsMachO &options) : _options(options) {
+  StubsPass(const WriterOptionsMachO &options) 
+    : _options(options), 
+      _kindHandler(KindHandler::makeHandler(options.architecture())) {
   }
 
   virtual bool noTextRelocs() {
@@ -36,7 +38,7 @@ public:
   }
 
   virtual bool isCallSite(Reference::Kind kind) {
-    return ReferenceKind::isCallSite(_options.architecture(), kind);
+    return _kindHandler->isCallSite(kind);
   }
 
   virtual const DefinedAtom* getStub(const Atom& target) {
@@ -60,7 +62,8 @@ public:
       case WriterOptionsMachO::arch_x86:
         return makeStub_x86(target);
 
-      case WriterOptionsMachO::arch_arm:
+      case WriterOptionsMachO::arch_armv6:
+      case WriterOptionsMachO::arch_armv7:
         return makeStub_arm(target);
     }
   }
@@ -87,8 +90,24 @@ public:
   }
 
   const DefinedAtom* makeStub_x86(const Atom& target) {
-    assert(0 && "stubs not yet implemented for x86");
-    return nullptr;
+    if ( _helperCommonAtom == nullptr ) {
+      // Lazily create common helper code and data.
+      _helperCacheAtom = new X86NonLazyPointerAtom(_file);
+      _binderAtom = new StubBinderAtom(_file);
+      _helperBinderAtom = new X86NonLazyPointerAtom(_file, *_binderAtom);
+      _helperCommonAtom = new X86StubHelperCommonAtom(_file,
+                                       *_helperCacheAtom, *_helperBinderAtom);
+    }
+    const DefinedAtom* helper = new X86StubHelperAtom(_file,
+                                                          *_helperCommonAtom);
+    _stubHelperAtoms.push_back(helper);
+    const DefinedAtom* lp = new X86LazyPointerAtom(_file, *helper, target);
+    assert(lp->contentType() == DefinedAtom::typeLazyPointer);
+    _lazyPointers.push_back(lp);
+    const DefinedAtom* stub = new X86StubAtom(_file, *lp);
+     assert(stub->contentType() == DefinedAtom::typeStub);
+    _targetToStub[&target] = stub;
+    return stub;
   }
 
   const DefinedAtom* makeStub_arm(const Atom& target) {
@@ -127,6 +146,7 @@ private:
   };
 
   const WriterOptionsMachO                       &_options;
+  KindHandler                                    *_kindHandler;
   File                                            _file;
   llvm::DenseMap<const Atom*, const DefinedAtom*> _targetToStub;
   std::vector<const DefinedAtom*>                 _lazyPointers;

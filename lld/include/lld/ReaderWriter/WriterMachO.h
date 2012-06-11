@@ -51,25 +51,27 @@ public:
   enum Architecture {
     arch_x86_64,
     arch_x86,
-    arch_arm,
+    arch_armv6,
+    arch_armv7,
   };
   
-  OutputKind outputKind() const       { return _outputkind; }
-  Architecture architecture() const   { return _architecture; }
-  StringRef archName() const          { return _archName; }
-  uint64_t  pageZeroSize() const      { return _pageZeroSize; }
-  uint32_t  cpuType() const           { return _cpuType; }
-  uint32_t  cpuSubtype() const        { return _cpuSubtype; }
-  bool      noTextRelocations() const { return _noTextRelocations; }
-  
+  OutputKind   outputKind() const       { return _outputkind; }
+  Architecture architecture() const     { return _architecture; }
+  StringRef    archName() const;
+  uint32_t     cpuType() const;
+  uint32_t     cpuSubtype() const;
+  uint64_t     pageZeroSize() const;
+  bool         noTextRelocations() const { return _noTextRelocations; }
+  bool         addEntryPointLoadCommand() const;
+  bool         addUnixThreadLoadCommand() const;
+  StringRef    entryPointName() const;
+
 protected:
   OutputKind      _outputkind;
-  StringRef       _archName;
   Architecture    _architecture;
   uint64_t        _pageZeroSize;
-  uint32_t        _cpuType;
-  uint32_t        _cpuSubtype;
   bool            _noTextRelocations;
+  StringRef       _customEntryPointName;
 };
  
 

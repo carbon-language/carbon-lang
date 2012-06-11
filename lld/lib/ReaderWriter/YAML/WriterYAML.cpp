@@ -196,7 +196,6 @@ public:
             << spacePadding(strlen("scope"))
             << KeyValues::scope(atom.scope())
             << "\n";
-      hasDash = true;
     }
 
      if ( atom.interposable() != KeyValues::interposableDefault ) {
