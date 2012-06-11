@@ -1,5 +1,4 @@
-##===- tools/Makefile --------------------------------------*- Makefile -*-===##
-#
+##===- polly/lib/GPURuntime/Makefile -----------------------*- Makefile -*-===##
 #                     The LLVM Compiler Infrastructure
 #
 # This file is distributed under the University of Illinois Open Source
@@ -7,14 +6,11 @@
 #
 ##===----------------------------------------------------------------------===##
 
-LEVEL := ..
-DIRS :=
+LEVEL = ../..
+
+LIBRARYNAME = libGPURuntime
+LOADABLE_MODULE = 1
 
 include $(LEVEL)/Makefile.config
-
-# GPU Runtime Support
-ifeq ($(CUDALIB_FOUND), yes)
- DIRS += GPURuntime
-endif
-
+CPP.Flags += $(POLLY_INC)
 include $(LEVEL)/Makefile.common
