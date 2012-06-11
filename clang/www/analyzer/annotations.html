@@ -541,7 +541,8 @@ some action that depends on that condition (e.g., dereferencing a pointer).</p>
 <p>The analyzer knows about several well-known assertion handlers, but can
 automatically infer if a function should be treated as an assertion handler if
 it is annotated with the 'noreturn' attribute or the (Clang-specific)
-'analyzer_noreturn' attribute.</p>
+'analyzer_noreturn' attribute. Note that, currently, clang does not support 
+these attributes on Objective-C methods and C++ methods.</p>
 
 <h4 id="attr_noreturn">Attribute 'noreturn'</h4>
 
