@@ -1434,13 +1434,13 @@ enum CXCursorKind {
   CXCursor_VarDecl                       = 9,
   /** \brief A function or method parameter. */
   CXCursor_ParmDecl                      = 10,
-  /** \brief An Objective-C @interface. */
+  /** \brief An Objective-C \@interface. */
   CXCursor_ObjCInterfaceDecl             = 11,
-  /** \brief An Objective-C @interface for a category. */
+  /** \brief An Objective-C \@interface for a category. */
   CXCursor_ObjCCategoryDecl              = 12,
-  /** \brief An Objective-C @protocol declaration. */
+  /** \brief An Objective-C \@protocol declaration. */
   CXCursor_ObjCProtocolDecl              = 13,
-  /** \brief An Objective-C @property declaration. */
+  /** \brief An Objective-C \@property declaration. */
   CXCursor_ObjCPropertyDecl              = 14,
   /** \brief An Objective-C instance variable. */
   CXCursor_ObjCIvarDecl                  = 15,
@@ -1448,9 +1448,9 @@ enum CXCursorKind {
   CXCursor_ObjCInstanceMethodDecl        = 16,
   /** \brief An Objective-C class method. */
   CXCursor_ObjCClassMethodDecl           = 17,
-  /** \brief An Objective-C @implementation. */
+  /** \brief An Objective-C \@implementation. */
   CXCursor_ObjCImplementationDecl        = 18,
-  /** \brief An Objective-C @implementation for a category. */
+  /** \brief An Objective-C \@implementation for a category. */
   CXCursor_ObjCCategoryImplDecl          = 19,
   /** \brief A typedef */
   CXCursor_TypedefDecl                   = 20,
@@ -1799,7 +1799,7 @@ enum CXCursorKind {
    */
   CXCursor_ObjCSelectorExpr              = 139,
 
-  /** \brief An Objective-C @protocol expression.
+  /** \brief An Objective-C \@protocol expression.
    */
   CXCursor_ObjCProtocolExpr              = 140,
 

@@ -3210,11 +3210,11 @@ public:
 ///
 /// An import declaration imports the named module (or submodule). For example:
 /// \code
-///   \@__experimental_modules_import std.vector;
+///   @__experimental_modules_import std.vector;
 /// \endcode
 ///
-/// Import declarations can also be implicitly generated from #include/#import 
-/// directives.
+/// Import declarations can also be implicitly generated from
+/// \#include/\#import directives.
 class ImportDecl : public Decl {
   /// \brief The imported module, along with a bit that indicates whether
   /// we have source-location information for each identifier in the module

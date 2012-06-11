@@ -179,7 +179,7 @@ public:
                            const ObjCMethodDecl *Method = 0) = 0;
 
   /// Emit the code to return the named protocol as an object, as in a
-  /// @protocol expression.
+  /// \@protocol expression.
   virtual llvm::Value *GenerateProtocolRef(CGBuilderTy &Builder,
                                            const ObjCProtocolDecl *OPD) = 0;
 
