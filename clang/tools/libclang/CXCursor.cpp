@@ -148,6 +148,10 @@ CXCursor cxcursor::MakeCXCursor(Stmt *S, Decl *Parent, CXTranslationUnit TU,
   case Stmt::AsmStmtClass:
     K = CXCursor_AsmStmt;
     break;
+
+  case Stmt::MSAsmStmtClass:
+    K = CXCursor_MSAsmStmt;
+    break;
   
   case Stmt::ObjCAtTryStmtClass:
     K = CXCursor_ObjCAtTryStmt;

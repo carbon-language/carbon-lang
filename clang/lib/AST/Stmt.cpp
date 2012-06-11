@@ -550,6 +550,12 @@ AsmStmt::AsmStmt(ASTContext &C, SourceLocation asmloc, bool issimple,
   std::copy(clobbers, clobbers + NumClobbers, Clobbers);
 }
 
+MSAsmStmt::MSAsmStmt(ASTContext &C, SourceLocation asmloc, std::string &asmstr,
+                     SourceLocation endloc)
+  : Stmt(MSAsmStmtClass), AsmLoc(asmloc), EndLoc(endloc), AsmStr(asmstr),
+    IsSimple(true), IsVolatile(true) {
+}
+
 ObjCForCollectionStmt::ObjCForCollectionStmt(Stmt *Elem, Expr *Collect,
                                              Stmt *Body,  SourceLocation FCL,
                                              SourceLocation RPL)

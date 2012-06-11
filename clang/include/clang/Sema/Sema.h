@@ -2530,6 +2530,9 @@ public:
                           SourceLocation RParenLoc,
                           bool MSAsm = false);
 
+  StmtResult ActOnMSAsmStmt(SourceLocation AsmLoc,
+                            std::string &AsmString,
+                            SourceLocation EndLoc);
 
   VarDecl *BuildObjCExceptionDecl(TypeSourceInfo *TInfo, QualType ExceptionType,
                                   SourceLocation StartLoc,

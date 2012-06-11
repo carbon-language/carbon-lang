@@ -249,6 +249,11 @@ void ASTStmtWriter::VisitAsmStmt(AsmStmt *S) {
   Code = serialization::STMT_ASM;
 }
 
+void ASTStmtWriter::VisitMSAsmStmt(MSAsmStmt *S) {
+  // FIXME: Statement writer not yet implemented for MS style inline asm.
+  VisitStmt(S);
+}
+
 void ASTStmtWriter::VisitExpr(Expr *E) {
   VisitStmt(E);
   Writer.AddTypeRef(E->getType(), Record);

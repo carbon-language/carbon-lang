@@ -1996,6 +1996,10 @@ enum CXCursorKind {
    */
   CXCursor_SEHFinallyStmt                = 228,
 
+  /** \brief A MS inline assembly statement extension.
+   */
+  CXCursor_MSAsmStmt                     = 229,
+
   /** \brief The null satement ";": C99 6.8.3p3.
    *
    * This cursor kind is used to describe the null statement.

@@ -31,6 +31,9 @@ def DefaultStmt : DStmt<SwitchCase>;
 // GNU Extensions
 def AsmStmt : Stmt;
 
+// MS Extensions
+def MSAsmStmt : Stmt;
+
 // Obj-C statements
 def ObjCAtTryStmt : Stmt;
 def ObjCAtCatchStmt : Stmt;

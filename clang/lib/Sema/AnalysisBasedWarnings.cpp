@@ -189,6 +189,12 @@ static ControlFlowKind CheckFallThrough(AnalysisDeclContext &AC) {
         continue;
       }
     }
+    if (isa<MSAsmStmt>(S)) {
+      // TODO: Verify this is correct.
+      HasFakeEdge = true;
+      HasLiveReturn = true;
+      continue;
+    }
     if (isa<CXXTryStmt>(S)) {
       HasAbnormalEdge = true;
       continue;

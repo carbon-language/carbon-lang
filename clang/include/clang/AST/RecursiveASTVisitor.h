@@ -1826,6 +1826,11 @@ DEF_TRAVERSE_STMT(AsmStmt, {
     // children() iterates over inputExpr and outputExpr.
   })
 
+DEF_TRAVERSE_STMT(MSAsmStmt, { 
+    // FIXME: MS Asm doesn't currently parse Constraints, Clobbers, etc.  Once
+    // added this needs to be implemented.
+  })
+
 DEF_TRAVERSE_STMT(CXXCatchStmt, {
     TRY_TO(TraverseDecl(S->getExceptionDecl()));
     // children() iterates over the handler block.

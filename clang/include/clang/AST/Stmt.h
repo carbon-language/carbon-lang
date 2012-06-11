@@ -1606,6 +1606,52 @@ public:
   }
 };
 
+/// MSAsmStmt - This represents a MS inline-assembly statement extension.
+///
+class MSAsmStmt : public Stmt {
+  SourceLocation AsmLoc, EndLoc;
+  std::string AsmStr;
+
+  bool IsSimple;
+  bool IsVolatile;
+
+  Stmt **Exprs;
+
+public:
+  MSAsmStmt(ASTContext &C, SourceLocation asmloc, std::string &asmstr,
+            SourceLocation endloc);
+
+  SourceLocation getAsmLoc() const { return AsmLoc; }
+  void setAsmLoc(SourceLocation L) { AsmLoc = L; }
+  SourceLocation getEndLoc() const { return EndLoc; }
+  void setEndLoc(SourceLocation L) { EndLoc = L; }
+
+  bool isVolatile() const { return IsVolatile; }
+  void setVolatile(bool V) { IsVolatile = V; }
+  bool isSimple() const { return IsSimple; }
+  void setSimple(bool V) { IsSimple = V; }
+
+  //===--- Asm String Analysis ---===//
+
+  const std::string *getAsmString() const { return &AsmStr; }
+  std::string *getAsmString() { return &AsmStr; }
+  void setAsmString(StringRef &E) { AsmStr = E.str(); }
+
+  //===--- Other ---===//
+
+  SourceRange getSourceRange() const LLVM_READONLY {
+    return SourceRange(AsmLoc, EndLoc);
+  }
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == MSAsmStmtClass;
+  }
+  static bool classof(const MSAsmStmt *) { return true; }
+
+  child_range children() {
+    return child_range(&Exprs[0], &Exprs[0]);
+  }
+};
+
 class SEHExceptStmt : public Stmt {
   SourceLocation  Loc;
   Stmt           *Children[2];

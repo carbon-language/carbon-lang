@@ -2670,6 +2670,15 @@ StmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc, bool IsSimple,
   return Owned(NS);
 }
 
+StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc,
+                                std::string &AsmString,
+                                SourceLocation EndLoc) {
+  MSAsmStmt *NS =
+    new (Context) MSAsmStmt(Context, AsmLoc, AsmString, EndLoc);
+
+  return Owned(NS);
+}
+
 StmtResult
 Sema::ActOnObjCAtCatchStmt(SourceLocation AtLoc,
                            SourceLocation RParen, Decl *Parm,

@@ -429,6 +429,11 @@ void StmtPrinter::VisitAsmStmt(AsmStmt *Node) {
   OS << ");\n";
 }
 
+void StmtPrinter::VisitMSAsmStmt(MSAsmStmt *Node) {
+  // FIXME: Implement MS style inline asm statement printer.
+  Indent() << "asm ()";
+}
+
 void StmtPrinter::VisitObjCAtTryStmt(ObjCAtTryStmt *Node) {
   Indent() << "@try";
   if (CompoundStmt *TS = dyn_cast<CompoundStmt>(Node->getTryBody())) {

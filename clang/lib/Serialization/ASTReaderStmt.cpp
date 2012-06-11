@@ -317,6 +317,11 @@ void ASTStmtReader::VisitAsmStmt(AsmStmt *S) {
                                     Clobbers.data(), NumClobbers);
 }
 
+void ASTStmtReader::VisitMSAsmStmt(MSAsmStmt *S) {
+  // FIXME: Statement reader not yet implemented for MS style inline asm.
+  VisitStmt(S);
+}
+
 void ASTStmtReader::VisitExpr(Expr *E) {
   VisitStmt(E);
   E->setType(Reader.readType(F, Record, Idx));

@@ -178,6 +178,11 @@ void StmtProfiler::VisitAsmStmt(const AsmStmt *S) {
     VisitStringLiteral(S->getClobber(I));
 }
 
+void StmtProfiler::VisitMSAsmStmt(const MSAsmStmt *S) {
+  // FIXME: Implement MS style inline asm statement profiler.
+  VisitStmt(S);
+}
+
 void StmtProfiler::VisitCXXCatchStmt(const CXXCatchStmt *S) {
   VisitStmt(S);
   VisitType(S->getCaughtType());
