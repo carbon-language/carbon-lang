@@ -143,10 +143,7 @@ public:
     IterTy MII;
 
   public:
-    bundle_iterator(IterTy mii) : MII(mii) {
-      assert(!MII->isInsideBundle() &&
-             "It's not legal to initialize bundle_iterator with a bundled MI");
-    }
+    bundle_iterator(IterTy mii) : MII(mii) {}
 
     bundle_iterator(Ty &mi) : MII(mi) {
       assert(!mi.isInsideBundle() &&
@@ -176,29 +173,24 @@ public:
 
     // Increment and decrement operators...
     bundle_iterator &operator--() {      // predecrement - Back up
-      do {
-        --MII;
-      } while (MII->isInsideBundle());
+      do --MII;
+      while (MII->isInsideBundle());
       return *this;
     }
     bundle_iterator &operator++() {      // preincrement - Advance
-      do {
-        ++MII;
-      } while (MII->isInsideBundle());
+      IterTy E = MII->getParent()->instr_end();
+      do ++MII;
+      while (MII != E && MII->isInsideBundle());
       return *this;
     }
     bundle_iterator operator--(int) {    // postdecrement operators...
       bundle_iterator tmp = *this;
-      do {
-        --MII;
-      } while (MII->isInsideBundle());
+      --*this;
       return tmp;
     }
     bundle_iterator operator++(int) {    // postincrement operators...
       bundle_iterator tmp = *this;
-      do {
-        ++MII;
-      } while (MII->isInsideBundle());
+      ++*this;
       return tmp;
     }
 
@@ -238,42 +230,14 @@ public:
   reverse_instr_iterator       instr_rend  ()       { return Insts.rend();   }
   const_reverse_instr_iterator instr_rend  () const { return Insts.rend();   }
 
-  iterator                begin()       { return Insts.begin();  }
-  const_iterator          begin() const { return Insts.begin();  }
-  iterator                  end()       {
-    instr_iterator II = instr_end();
-    if (II != instr_begin()) {
-      while (II->isInsideBundle())
-        --II;
-    }
-    return II;
-  }
-  const_iterator            end() const {
-    const_instr_iterator II = instr_end();
-    if (II != instr_begin()) {
-      while (II->isInsideBundle())
-        --II;
-    }
-    return II;
-  }
-  reverse_iterator       rbegin()       {
-    reverse_instr_iterator II = instr_rbegin();
-    if (II != instr_rend()) {
-      while (II->isInsideBundle())
-        ++II;
-    }
-    return II;
-  }
-  const_reverse_iterator rbegin() const {
-    const_reverse_instr_iterator II = instr_rbegin();
-    if (II != instr_rend()) {
-      while (II->isInsideBundle())
-        ++II;
-    }
-    return II;
-  }
-  reverse_iterator       rend  ()       { return Insts.rend();   }
-  const_reverse_iterator rend  () const { return Insts.rend();   }
+  iterator                begin()       { return instr_begin();  }
+  const_iterator          begin() const { return instr_begin();  }
+  iterator                end  ()       { return instr_end();    }
+  const_iterator          end  () const { return instr_end();    }
+  reverse_iterator       rbegin()       { return instr_rbegin(); }
+  const_reverse_iterator rbegin() const { return instr_rbegin(); }
+  reverse_iterator       rend  ()       { return instr_rend();   }
+  const_reverse_iterator rend  () const { return instr_rend();   }
 
 
   // Machine-CFG iterators
