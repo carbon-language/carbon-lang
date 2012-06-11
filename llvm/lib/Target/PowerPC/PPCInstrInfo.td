@@ -1125,7 +1125,7 @@ def MFCR : XFXForm_3<31, 19, (outs GPRC:$rT), (ins),
                      PPC970_MicroCode, PPC970_Unit_CRU;
 
 def MFOCRF: XFXForm_5a<31, 19, (outs GPRC:$rT), (ins crbitm:$FXM),
-                       "mfcr $rT, $FXM", SprMFCR>,
+                       "mfocrf $rT, $FXM", SprMFCR>,
             PPC970_DGroup_First, PPC970_Unit_CRU;
 
 // Instructions to manipulate FPSCR.  Only long double handling uses these.
