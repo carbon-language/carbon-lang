@@ -1684,41 +1684,6 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
 }
 
 void CodeGenFunction::EmitMSAsmStmt(const MSAsmStmt &S) {
-  // Analyze the asm string to decompose it into its pieces.  We know that Sema
-  // has already done this, so it is guaranteed to be successful.
-
-  // Get all the output and input constraints together.
-
-  std::vector<llvm::Value*> Args;
-  std::vector<llvm::Type *> ArgTypes;
-  std::string Constraints;
-
-  // Keep track of inout constraints.
-  
-  // Append the "input" part of inout constraints last.
-
-  // Clobbers
-
-  // Add machine specific clobbers
-  std::string MachineClobbers = Target.getClobbers();
-  if (!MachineClobbers.empty()) {
-    if (!Constraints.empty())
-      Constraints += ',';
-    Constraints += MachineClobbers;
-  }
-
-  llvm::Type *ResultType = VoidTy;
-
-  llvm::FunctionType *FTy =
-    llvm::FunctionType::get(ResultType, ArgTypes, false);
-
-  llvm::InlineAsm *IA =
-    llvm::InlineAsm::get(FTy, *S.getAsmString(), Constraints, true);
-  llvm::CallInst *Result = Builder.CreateCall(IA, Args);
-  Result->addAttribute(~0, llvm::Attribute::NoUnwind);
-
-  // Slap the source location of the inline asm into a !srcloc metadata on the
-  // call.
-
-  // Extract all of the register value results from the asm.
+  // Analyze the asm string to decompose it into its pieces.
+  llvm::report_fatal_error("MS-style asm codegen isn't yet supported.");
 }
