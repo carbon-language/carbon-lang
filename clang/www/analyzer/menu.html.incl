@@ -16,9 +16,10 @@
   User Manual
   <ul>
     <li><a href="/installation.html">Obtaining the Analyzer</a></li>
-    <li><a href="/scan-build.html">Command line usage</a></li>
+    <li><a href="/scan-build.html">Command Line Usage</a></li>
     <li><a href="/xcode.html">Using within Xcode</a></li>
     <li><a href="/available_checks.html">Available Checks</a></li>
+    <li><a href="/faq.html">FAQ and How to Deal with False Positives</a></li>
     <li><a href="/annotations.html">Source-level Annotations</a></li>
   </ul>
 </li>
@@ -26,7 +27,7 @@
   Development
   <ul>
     <li><a href="/checker_dev_manual.html">Checker Developer Manual</a></li>
-    <li><a href="/dev_cxx.html">Analysis support for C++</a></li>
+    <li><a href="/dev_cxx.html">Analysis Support for C++</a></li>
   </ul>
 </li>
 <li>
