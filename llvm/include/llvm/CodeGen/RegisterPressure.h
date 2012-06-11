@@ -249,19 +249,22 @@ public:
 
   /// Get the pressure of each PSet after traversing this instruction bottom-up.
   void getUpwardPressure(const MachineInstr *MI,
-                         std::vector<unsigned> &PressureResult);
+                         std::vector<unsigned> &PressureResult,
+                         std::vector<unsigned> &MaxPressureResult);
 
   /// Get the pressure of each PSet after traversing this instruction top-down.
   void getDownwardPressure(const MachineInstr *MI,
-                           std::vector<unsigned> &PressureResult);
+                           std::vector<unsigned> &PressureResult,
+                           std::vector<unsigned> &MaxPressureResult);
 
   void getPressureAfterInst(const MachineInstr *MI,
-                            std::vector<unsigned> &PressureResult) {
+                            std::vector<unsigned> &PressureResult,
+                            std::vector<unsigned> &MaxPressureResult) {
     if (isTopClosed())
-      return getUpwardPressure(MI, PressureResult);
+      return getUpwardPressure(MI, PressureResult, MaxPressureResult);
 
     assert(isBottomClosed() && "Uninitialized pressure tracker");
-    return getDownwardPressure(MI, PressureResult);
+    return getDownwardPressure(MI, PressureResult, MaxPressureResult);
   }
 
 protected:

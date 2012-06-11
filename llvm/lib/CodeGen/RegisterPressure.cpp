@@ -811,25 +811,31 @@ getMaxDownwardPressureDelta(const MachineInstr *MI, RegPressureDelta &Delta,
 /// Get the pressure of each PSet after traversing this instruction bottom-up.
 void RegPressureTracker::
 getUpwardPressure(const MachineInstr *MI,
-                  std::vector<unsigned> &PressureResult) {
+                  std::vector<unsigned> &PressureResult,
+                  std::vector<unsigned> &MaxPressureResult) {
   // Snapshot pressure.
   PressureResult = CurrSetPressure;
+  MaxPressureResult = P.MaxSetPressure;
 
   bumpUpwardPressure(MI);
 
   // Current pressure becomes the result. Restore current pressure.
+  P.MaxSetPressure.swap(MaxPressureResult);
   CurrSetPressure.swap(PressureResult);
 }
 
 /// Get the pressure of each PSet after traversing this instruction top-down.
 void RegPressureTracker::
 getDownwardPressure(const MachineInstr *MI,
-                    std::vector<unsigned> &PressureResult) {
+                    std::vector<unsigned> &PressureResult,
+                    std::vector<unsigned> &MaxPressureResult) {
   // Snapshot pressure.
   PressureResult = CurrSetPressure;
+  MaxPressureResult = P.MaxSetPressure;
 
   bumpDownwardPressure(MI);
 
   // Current pressure becomes the result. Restore current pressure.
+  P.MaxSetPressure.swap(MaxPressureResult);
   CurrSetPressure.swap(PressureResult);
 }
