@@ -169,6 +169,16 @@ class SourceLocation(Structure):
         """
         return SourceLocation_getLocation(tu, file, line, column)
 
+    @staticmethod
+    def from_offset(tu, file, offset):
+        """Retrieve a SourceLocation from a given character offset.
+
+        tu -- TranslationUnit file belongs to
+        file -- File instance to obtain offset from
+        offset -- Integer character offset within file
+        """
+        return SourceLocation_getLocationForOffset(tu, file, offset)
+
     @property
     def file(self):
         """Get the file represented by this source location."""
@@ -2109,6 +2119,10 @@ SourceLocation_getLocation.restype = SourceLocation
 SourceLocation_equalLocations = lib.clang_equalLocations
 SourceLocation_equalLocations.argtypes = [SourceLocation, SourceLocation]
 SourceLocation_equalLocations.restype = bool
+
+SourceLocation_getLocationForOffset = lib.clang_getLocationForOffset
+SourceLocation_getLocationForOffset.argtypes = [TranslationUnit, File, c_uint]
+SourceLocation_getLocationForOffset.restype = SourceLocation
 
 # Source Range Functions
 SourceRange_getRange = lib.clang_getRange

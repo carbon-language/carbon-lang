@@ -60,6 +60,15 @@ def test_location():
     location3 = SourceLocation.from_position(tu, file, 1, 4)
     assert location2 != location3
 
+    offset_location = SourceLocation.from_offset(tu, file, 5)
+    cursor = Cursor.from_location(tu, offset_location)
+    verified = False
+    for n in [n for n in tu.cursor.get_children() if n.spelling == 'one']:
+        assert n == cursor
+        verified = True
+
+    assert verified
+
 def test_extent():
     tu = get_tu(baseInput)
     one = get_cursor(tu, 'one')
