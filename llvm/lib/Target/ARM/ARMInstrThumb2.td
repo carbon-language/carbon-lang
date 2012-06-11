@@ -2849,20 +2849,64 @@ def : T2Pat<(ARMcmpZ  GPRnopc:$lhs, rGPR:$rhs),
 def : T2Pat<(ARMcmpZ  GPRnopc:$lhs, t2_so_reg:$rhs),
             (t2CMPrs  GPRnopc:$lhs, t2_so_reg:$rhs)>;
 
-//FIXME: Disable CMN, as CCodes are backwards from compare expectations
-//       Compare-to-zero still works out, just not the relationals
-//defm t2CMN  : T2I_cmp_irs<0b1000, "cmn",
-//                          BinOpFrag<(ARMcmp node:$LHS,(ineg node:$RHS))>>;
-defm t2CMNz : T2I_cmp_irs<0b1000, "cmn",
-                          IIC_iCMPi, IIC_iCMPr, IIC_iCMPsi,
-                          BinOpFrag<(ARMcmpZ node:$LHS,(ineg node:$RHS))>,
-                          "t2CMNz">;
+let isCompare = 1, Defs = [CPSR] in {
+   // shifted imm
+   def t2CMNri : T2OneRegCmpImm<
+                (outs), (ins GPRnopc:$Rn, t2_so_imm:$imm), IIC_iCMPi,
+                "cmn", ".w\t$Rn, $imm",
+                [(ARMcmn GPRnopc:$Rn, (ineg t2_so_imm:$imm))]> {
+     let Inst{31-27} = 0b11110;
+     let Inst{25} = 0;
+     let Inst{24-21} = 0b1000;
+     let Inst{20} = 1; // The S bit.
+     let Inst{15} = 0;
+     let Inst{11-8} = 0b1111; // Rd
+   }
+   // register
+   def t2CMNzrr : T2TwoRegCmp<
+                (outs), (ins GPRnopc:$Rn, rGPR:$Rm), IIC_iCMPr,
+                "cmn", ".w\t$Rn, $Rm",
+                [(BinOpFrag<(ARMcmpZ node:$LHS,(ineg node:$RHS))>
+                  GPRnopc:$Rn, rGPR:$Rm)]> {
+     let Inst{31-27} = 0b11101;
+     let Inst{26-25} = 0b01;
+     let Inst{24-21} = 0b1000;
+     let Inst{20} = 1; // The S bit.
+     let Inst{14-12} = 0b000; // imm3
+     let Inst{11-8} = 0b1111; // Rd
+     let Inst{7-6} = 0b00; // imm2
+     let Inst{5-4} = 0b00; // type
+   }
+   // shifted register
+   def t2CMNzrs : T2OneRegCmpShiftedReg<
+                (outs), (ins GPRnopc:$Rn, t2_so_reg:$ShiftedRm), IIC_iCMPsi,
+                "cmn", ".w\t$Rn, $ShiftedRm",
+                [(BinOpFrag<(ARMcmpZ node:$LHS,(ineg node:$RHS))>
+                  GPRnopc:$Rn, t2_so_reg:$ShiftedRm)]> {
+     let Inst{31-27} = 0b11101;
+     let Inst{26-25} = 0b01;
+     let Inst{24-21} = 0b1000;
+     let Inst{20} = 1; // The S bit.
+     let Inst{11-8} = 0b1111; // Rd
+   }
+}
 
-//def : T2Pat<(ARMcmp  GPR:$src, t2_so_imm_neg:$imm),
-//            (t2CMNri GPR:$src, t2_so_imm_neg:$imm)>;
+// Assembler aliases w/o the ".w" suffix.
+// No alias here for 'rr' version as not all instantiations of this multiclass
+// want one (CMP in particular, does not).
+def : t2InstAlias<!strconcat("cmn", "${p}", " $Rn, $imm"),
+   (!cast<Instruction>(!strconcat("t2CMN", "ri")) GPRnopc:$Rn,
+                                                  t2_so_imm:$imm, pred:$p)>;
+def : t2InstAlias<!strconcat("cmn", "${p}", " $Rn, $shift"),
+   (!cast<Instruction>(!strconcat("t2CMNz", "rs")) GPRnopc:$Rn,
+                                                  t2_so_reg:$shift,
+                                                  pred:$p)>;
 
-def : T2Pat<(ARMcmpZ  GPRnopc:$src, t2_so_imm_neg:$imm),
-            (t2CMNzri GPRnopc:$src, t2_so_imm_neg:$imm)>;
+def : T2Pat<(ARMcmp  GPR:$src, t2_so_imm_neg:$imm),
+            (t2CMNri GPR:$src, t2_so_imm_neg:$imm)>;
+
+def : T2Pat<(ARMcmpZ GPRnopc:$src, t2_so_imm_neg:$imm),
+            (t2CMNri GPRnopc:$src, t2_so_imm_neg:$imm)>;
 
 defm t2TST  : T2I_cmp_irs<0b0000, "tst",
                           IIC_iTSTi, IIC_iTSTr, IIC_iTSTsi,
@@ -4224,7 +4268,7 @@ def : t2InstAlias<"add${s}${p} $Rd, $imm",
                            pred:$p, cc_out:$s)>;
 // Same for CMP <--> CMN via t2_so_imm_neg
 def : t2InstAlias<"cmp${p} $Rd, $imm",
-                  (t2CMNzri rGPR:$Rd, t2_so_imm_neg:$imm, pred:$p)>;
+                  (t2CMNri rGPR:$Rd, t2_so_imm_neg:$imm, pred:$p)>;
 def : t2InstAlias<"cmn${p} $Rd, $imm",
                   (t2CMPri rGPR:$Rd, t2_so_imm_neg:$imm, pred:$p)>;
 

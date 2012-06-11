@@ -1420,12 +1420,12 @@ bool ARMFastISel::ARMEmitCmp(const Value *Src1Value, const Value *Src2Value,
         if (!UseImm)
           CmpOpc = ARM::t2CMPrr;
         else
-          CmpOpc = isNegativeImm ? ARM::t2CMNzri : ARM::t2CMPri;
+          CmpOpc = isNegativeImm ? ARM::t2CMNri : ARM::t2CMPri;
       } else {
         if (!UseImm)
           CmpOpc = ARM::CMPrr;
         else
-          CmpOpc = isNegativeImm ? ARM::CMNzri : ARM::CMPri;
+          CmpOpc = isNegativeImm ? ARM::CMNri : ARM::CMPri;
       }
       break;
   }
