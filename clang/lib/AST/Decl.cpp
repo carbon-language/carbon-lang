@@ -381,7 +381,7 @@ static LinkageInfo getLVForNamespaceScopeDecl(const NamedDecl *D,
       LinkageInfo ArgsLV = getLVForTemplateArgumentList(templateArgs,
                                                         OnlyTemplate);
       if (shouldConsiderTemplateVis(Function, specInfo)) {
-        LV.merge(TempLV);
+        LV.mergeWithMin(TempLV);
         LV.mergeWithMin(ArgsLV);
       } else {
         LV.mergeLinkage(TempLV);
@@ -412,7 +412,7 @@ static LinkageInfo getLVForNamespaceScopeDecl(const NamedDecl *D,
       LinkageInfo ArgsLV = getLVForTemplateArgumentList(TemplateArgs,
                                                         OnlyTemplate);
       if (shouldConsiderTemplateVis(spec)) {
-        LV.merge(TempLV);
+        LV.mergeWithMin(TempLV);
         LV.mergeWithMin(ArgsLV);
       } else {
         LV.mergeLinkage(TempLV);
@@ -544,7 +544,7 @@ static LinkageInfo getLVForClassMember(const NamedDecl *D, bool OnlyTemplate) {
       if (shouldConsiderTemplateVis(MD, spec)) {
         LV.mergeWithMin(ArgsLV);
         if (!OnlyTemplate)
-          LV.merge(ParamsLV);
+          LV.mergeWithMin(ParamsLV);
       } else {
         LV.mergeLinkage(ArgsLV);
         if (!OnlyTemplate)
@@ -569,7 +569,7 @@ static LinkageInfo getLVForClassMember(const NamedDecl *D, bool OnlyTemplate) {
       if (shouldConsiderTemplateVis(spec)) {
         LV.mergeWithMin(ArgsLV);
         if (!OnlyTemplate)
-          LV.merge(ParamsLV);
+          LV.mergeWithMin(ParamsLV);
       } else {
         LV.mergeLinkage(ArgsLV);
         if (!OnlyTemplate)
