@@ -12,13 +12,28 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "CallingConvEmitter.h"
 #include "CodeGenTarget.h"
 #include "llvm/TableGen/Record.h"
+#include "llvm/TableGen/TableGenBackend.h"
+#include <cassert>
 using namespace llvm;
 
+namespace {
+class CallingConvEmitter {
+  RecordKeeper &Records;
+public:
+  explicit CallingConvEmitter(RecordKeeper &R) : Records(R) {}
+
+  void run(raw_ostream &o);
+
+private:
+  void EmitCallingConv(Record *CC, raw_ostream &O);
+  void EmitAction(Record *Action, unsigned Indent, raw_ostream &O);
+  unsigned Counter;
+};
+} // End anonymous namespace
+
 void CallingConvEmitter::run(raw_ostream &O) {
-  EmitSourceFileHeader("Calling Convention Implementation Fragment", O);
 
   std::vector<Record*> CCs = Records.getAllDerivedDefinitions("CallingConv");
   
@@ -210,3 +225,12 @@ void CallingConvEmitter::EmitAction(Record *Action,
     }
   }
 }
+
+namespace llvm {
+
+void EmitCallingConv(RecordKeeper &RK, raw_ostream &OS) {
+  emitSourceFileHeader("Calling Convention Implementation Fragment", OS);
+  CallingConvEmitter(RK).run(OS);
+}
+
+} // End llvm namespace

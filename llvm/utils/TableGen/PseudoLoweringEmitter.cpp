@@ -9,15 +9,61 @@
 
 #define DEBUG_TYPE "pseudo-lowering"
 #include "CodeGenInstruction.h"
-#include "PseudoLoweringEmitter.h"
+#include "CodeGenTarget.h"
+#include "llvm/ADT/IndexedMap.h"
+#include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/StringMap.h"
+#include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/TableGen/Error.h"
 #include "llvm/TableGen/Record.h"
-#include "llvm/ADT/IndexedMap.h"
-#include "llvm/ADT/StringMap.h"
-#include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/Debug.h"
+#include "llvm/TableGen/TableGenBackend.h"
 #include <vector>
 using namespace llvm;
+
+namespace {
+class PseudoLoweringEmitter {
+  struct OpData {
+    enum MapKind { Operand, Imm, Reg };
+    MapKind Kind;
+    union {
+      unsigned Operand;   // Operand number mapped to.
+      uint64_t Imm;       // Integer immedate value.
+      Record *Reg;        // Physical register.
+    } Data;
+  };
+  struct PseudoExpansion {
+    CodeGenInstruction Source;  // The source pseudo instruction definition.
+    CodeGenInstruction Dest;    // The destination instruction to lower to.
+    IndexedMap<OpData> OperandMap;
+
+    PseudoExpansion(CodeGenInstruction &s, CodeGenInstruction &d,
+                    IndexedMap<OpData> &m) :
+      Source(s), Dest(d), OperandMap(m) {}
+  };
+
+  RecordKeeper &Records;
+
+  // It's overkill to have an instance of the full CodeGenTarget object,
+  // but it loads everything on demand, not in the constructor, so it's
+  // lightweight in performance, so it works out OK.
+  CodeGenTarget Target;
+
+  SmallVector<PseudoExpansion, 64> Expansions;
+
+  unsigned addDagOperandMapping(Record *Rec, DagInit *Dag,
+                                CodeGenInstruction &Insn,
+                                IndexedMap<OpData> &OperandMap,
+                                unsigned BaseIdx);
+  void evaluateExpansion(Record *Pseudo);
+  void emitLoweringEmitter(raw_ostream &o);
+public:
+  PseudoLoweringEmitter(RecordKeeper &R) : Records(R), Target(R) {}
+
+  /// run - Output the pseudo-lowerings.
+  void run(raw_ostream &o);
+};
+} // End anonymous namespace
 
 // FIXME: This pass currently can only expand a pseudo to a single instruction.
 //        The pseudo expansion really should take a list of dags, not just
@@ -150,7 +196,7 @@ void PseudoLoweringEmitter::evaluateExpansion(Record *Rec) {
 
 void PseudoLoweringEmitter::emitLoweringEmitter(raw_ostream &o) {
   // Emit file header.
-  EmitSourceFileHeader("Pseudo-instruction MC lowering Source Fragment", o);
+  emitSourceFileHeader("Pseudo-instruction MC lowering Source Fragment", o);
 
   o << "bool " << Target.getName() + "AsmPrinter" << "::\n"
     << "emitPseudoExpansionLowering(MCStreamer &OutStreamer,\n"
@@ -242,3 +288,10 @@ void PseudoLoweringEmitter::run(raw_ostream &o) {
   emitLoweringEmitter(o);
 }
 
+namespace llvm {
+
+void EmitPseudoLowering(RecordKeeper &RK, raw_ostream &OS) {
+  PseudoLoweringEmitter(RK).run(OS);
+}
+
+} // End llvm namespace

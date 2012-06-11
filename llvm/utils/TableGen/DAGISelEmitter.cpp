@@ -11,11 +11,23 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "DAGISelEmitter.h"
+#include "CodeGenDAGPatterns.h"
 #include "DAGISelMatcher.h"
-#include "llvm/TableGen/Record.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/TableGen/Record.h"
+#include "llvm/TableGen/TableGenBackend.h"
 using namespace llvm;
+
+namespace {
+/// DAGISelEmitter - The top-level class which coordinates construction
+/// and emission of the instruction selector.
+class DAGISelEmitter {
+  CodeGenDAGPatterns CGP;
+public:
+  explicit DAGISelEmitter(RecordKeeper &R) : CGP(R) {}
+  void run(raw_ostream &OS);
+};
+} // End anonymous namespace
 
 //===----------------------------------------------------------------------===//
 // DAGISelEmitter Helper methods
@@ -104,11 +116,11 @@ struct PatternSortingPredicate {
     return LHS->ID < RHS->ID;
   }
 };
-}
+} // End anonymous namespace
 
 
 void DAGISelEmitter::run(raw_ostream &OS) {
-  EmitSourceFileHeader("DAG Instruction Selector for the " +
+  emitSourceFileHeader("DAG Instruction Selector for the " +
                        CGP.getTargetInfo().getName() + " target", OS);
 
   OS << "// *** NOTE: This file is #included into the middle of the target\n"
@@ -153,3 +165,11 @@ void DAGISelEmitter::run(raw_ostream &OS) {
   EmitMatcherTable(TheMatcher, CGP, OS);
   delete TheMatcher;
 }
+
+namespace llvm {
+
+void EmitDAGISel(RecordKeeper &RK, raw_ostream &OS) {
+  DAGISelEmitter(RK).run(OS);
+}
+
+} // End llvm namespace

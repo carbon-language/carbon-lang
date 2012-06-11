@@ -96,7 +96,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "AsmMatcherEmitter.h"
 #include "CodeGenTarget.h"
 #include "StringToOffsetTable.h"
 #include "llvm/ADT/OwningPtr.h"
@@ -111,6 +110,8 @@
 #include "llvm/TableGen/Error.h"
 #include "llvm/TableGen/Record.h"
 #include "llvm/TableGen/StringMatcher.h"
+#include "llvm/TableGen/TableGenBackend.h"
+#include <cassert>
 #include <map>
 #include <set>
 using namespace llvm;
@@ -122,6 +123,14 @@ MatchPrefix("match-prefix", cl::init(""),
 namespace {
 class AsmMatcherInfo;
 struct SubtargetFeatureInfo;
+
+class AsmMatcherEmitter {
+  RecordKeeper &Records;
+public:
+  AsmMatcherEmitter(RecordKeeper &R) : Records(R) {}
+
+  void run(raw_ostream &o);
+};
 
 /// ClassInfo - Helper class for storing the information about a particular
 /// class of operands which can be matched.
@@ -642,7 +651,7 @@ public:
   }
 };
 
-}
+} // End anonymous namespace
 
 void MatchableInfo::dump() {
   errs() << TheDef->getName() << " -- " << "flattened:\"" << AsmString <<"\"\n";
@@ -2353,8 +2362,6 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
 
   // Write the output.
 
-  EmitSourceFileHeader("Assembly Matcher Source Fragment", OS);
-
   // Information for the class declaration.
   OS << "\n#ifdef GET_ASSEMBLER_HEADER\n";
   OS << "#undef GET_ASSEMBLER_HEADER\n";
@@ -2659,3 +2666,12 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
 
   OS << "#endif // GET_MATCHER_IMPLEMENTATION\n\n";
 }
+
+namespace llvm {
+
+void EmitAsmMatcher(RecordKeeper &RK, raw_ostream &OS) {
+  emitSourceFileHeader("Assembly Matcher Source Fragment", OS);
+  AsmMatcherEmitter(RK).run(OS);
+}
+
+} // End llvm namespace

@@ -13,20 +13,57 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "RegisterInfoEmitter.h"
-#include "CodeGenTarget.h"
 #include "CodeGenRegisters.h"
+#include "CodeGenTarget.h"
 #include "SequenceToOffsetTable.h"
-#include "llvm/TableGen/Error.h"
-#include "llvm/TableGen/Record.h"
 #include "llvm/ADT/BitVector.h"
-#include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/Format.h"
+#include "llvm/TableGen/Error.h"
+#include "llvm/TableGen/Record.h"
+#include "llvm/TableGen/TableGenBackend.h"
 #include <algorithm>
 #include <set>
+#include <vector>
 using namespace llvm;
+
+namespace {
+class RegisterInfoEmitter {
+  RecordKeeper &Records;
+public:
+  RegisterInfoEmitter(RecordKeeper &R) : Records(R) {}
+
+  // runEnums - Print out enum values for all of the registers.
+  void runEnums(raw_ostream &o, CodeGenTarget &Target, CodeGenRegBank &Bank);
+
+  // runMCDesc - Print out MC register descriptions.
+  void runMCDesc(raw_ostream &o, CodeGenTarget &Target, CodeGenRegBank &Bank);
+
+  // runTargetHeader - Emit a header fragment for the register info emitter.
+  void runTargetHeader(raw_ostream &o, CodeGenTarget &Target,
+                       CodeGenRegBank &Bank);
+
+  // runTargetDesc - Output the target register and register file descriptions.
+  void runTargetDesc(raw_ostream &o, CodeGenTarget &Target,
+                     CodeGenRegBank &Bank);
+
+  // run - Output the register file description.
+  void run(raw_ostream &o);
+
+private:
+  void EmitRegMapping(raw_ostream &o,
+                      const std::vector<CodeGenRegister*> &Regs, bool isCtor);
+  void EmitRegMappingTables(raw_ostream &o,
+                            const std::vector<CodeGenRegister*> &Regs,
+                            bool isCtor);
+  void EmitRegClasses(raw_ostream &OS, CodeGenTarget &Target);
+
+  void EmitRegUnitPressure(raw_ostream &OS, const CodeGenRegBank &RegBank,
+                           const std::string &ClassName);
+};
+} // End anonymous namespace
 
 // runEnums - Print out enum values for all of the registers.
 void RegisterInfoEmitter::runEnums(raw_ostream &OS,
@@ -38,7 +75,7 @@ void RegisterInfoEmitter::runEnums(raw_ostream &OS,
 
   std::string Namespace = Registers[0]->TheDef->getValueAsString("Namespace");
 
-  EmitSourceFileHeader("Target Register Enum Values", OS);
+  emitSourceFileHeader("Target Register Enum Values", OS);
 
   OS << "\n#ifdef GET_REGINFO_ENUM\n";
   OS << "#undef GET_REGINFO_ENUM\n";
@@ -490,7 +527,7 @@ static void printDiff16(raw_ostream &OS, uint16_t Val) {
 void
 RegisterInfoEmitter::runMCDesc(raw_ostream &OS, CodeGenTarget &Target,
                                CodeGenRegBank &RegBank) {
-  EmitSourceFileHeader("MC Register Information", OS);
+  emitSourceFileHeader("MC Register Information", OS);
 
   OS << "\n#ifdef GET_REGINFO_MC_DESC\n";
   OS << "#undef GET_REGINFO_MC_DESC\n";
@@ -774,7 +811,7 @@ RegisterInfoEmitter::runMCDesc(raw_ostream &OS, CodeGenTarget &Target,
 void
 RegisterInfoEmitter::runTargetHeader(raw_ostream &OS, CodeGenTarget &Target,
                                      CodeGenRegBank &RegBank) {
-  EmitSourceFileHeader("Register Information Header Fragment", OS);
+  emitSourceFileHeader("Register Information Header Fragment", OS);
 
   OS << "\n#ifdef GET_REGINFO_HEADER\n";
   OS << "#undef GET_REGINFO_HEADER\n";
@@ -830,7 +867,7 @@ RegisterInfoEmitter::runTargetHeader(raw_ostream &OS, CodeGenTarget &Target,
 void
 RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
                                    CodeGenRegBank &RegBank){
-  EmitSourceFileHeader("Target Register and Register Classes Information", OS);
+  emitSourceFileHeader("Target Register and Register Classes Information", OS);
 
   OS << "\n#ifdef GET_REGINFO_TARGET_DESC\n";
   OS << "#undef GET_REGINFO_TARGET_DESC\n";
@@ -1186,3 +1223,11 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
   runTargetHeader(OS, Target, RegBank);
   runTargetDesc(OS, Target, RegBank);
 }
+
+namespace llvm {
+
+void EmitRegisterInfo(RecordKeeper &RK, raw_ostream &OS) {
+  RegisterInfoEmitter(RK).run(OS);
+}
+
+} // End llvm namespace

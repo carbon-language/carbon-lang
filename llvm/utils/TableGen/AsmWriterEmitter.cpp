@@ -12,7 +12,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "AsmWriterEmitter.h"
 #include "AsmWriterInst.h"
 #include "CodeGenTarget.h"
 #include "StringToOffsetTable.h"
@@ -22,8 +21,40 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/TableGen/Error.h"
 #include "llvm/TableGen/Record.h"
+#include "llvm/TableGen/TableGenBackend.h"
 #include <algorithm>
+#include <cassert>
+#include <map>
+#include <vector>
 using namespace llvm;
+
+namespace {
+class AsmWriterEmitter {
+  RecordKeeper &Records;
+  std::map<const CodeGenInstruction*, AsmWriterInst*> CGIAWIMap;
+  std::vector<const CodeGenInstruction*> NumberedInstructions;
+public:
+  AsmWriterEmitter(RecordKeeper &R) : Records(R) {}
+
+  void run(raw_ostream &o);
+
+private:
+  void EmitPrintInstruction(raw_ostream &o);
+  void EmitGetRegisterName(raw_ostream &o);
+  void EmitPrintAliasInstruction(raw_ostream &O);
+
+  AsmWriterInst *getAsmWriterInstByID(unsigned ID) const {
+    assert(ID < NumberedInstructions.size());
+    std::map<const CodeGenInstruction*, AsmWriterInst*>::const_iterator I =
+      CGIAWIMap.find(NumberedInstructions[ID]);
+    assert(I != CGIAWIMap.end() && "Didn't find inst!");
+    return I->second;
+  }
+  void FindUniqueOperandCommands(std::vector<std::string> &UOC,
+                                 std::vector<unsigned> &InstIdxs,
+                                 std::vector<unsigned> &InstOpsUsed) const;
+};
+} // end anonymous namespace
 
 static void PrintCases(std::vector<std::pair<std::string,
                        AsmWriterOperand> > &OpsToPrint, raw_ostream &O) {
@@ -928,10 +959,17 @@ void AsmWriterEmitter::EmitPrintAliasInstruction(raw_ostream &O) {
 }
 
 void AsmWriterEmitter::run(raw_ostream &O) {
-  EmitSourceFileHeader("Assembly Writer Source Fragment", O);
-
   EmitPrintInstruction(O);
   EmitGetRegisterName(O);
   EmitPrintAliasInstruction(O);
 }
 
+
+namespace llvm {
+
+void EmitAsmWriter(RecordKeeper &RK, raw_ostream &OS) {
+  emitSourceFileHeader("Assembly Writer Source Fragment", OS);
+  AsmWriterEmitter(RK).run(OS);
+}
+
+} // End llvm namespace

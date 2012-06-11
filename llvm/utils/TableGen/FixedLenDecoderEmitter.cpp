@@ -14,19 +14,81 @@
 
 #define DEBUG_TYPE "decoder-emitter"
 
-#include "FixedLenDecoderEmitter.h"
 #include "CodeGenTarget.h"
 #include "llvm/TableGen/Record.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/Support/DataTypes.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/TableGen/TableGenBackend.h"
 
 #include <vector>
 #include <map>
 #include <string>
 
 using namespace llvm;
+
+namespace {
+struct EncodingField {
+  unsigned Base, Width, Offset;
+  EncodingField(unsigned B, unsigned W, unsigned O)
+    : Base(B), Width(W), Offset(O) { }
+};
+} // End anonymous namespace
+
+namespace {
+struct OperandInfo {
+  std::vector<EncodingField> Fields;
+  std::string Decoder;
+
+  OperandInfo(std::string D)
+    : Decoder(D) { }
+
+  void addField(unsigned Base, unsigned Width, unsigned Offset) {
+    Fields.push_back(EncodingField(Base, Width, Offset));
+  }
+
+  unsigned numFields() const { return Fields.size(); }
+
+  typedef std::vector<EncodingField>::const_iterator const_iterator;
+
+  const_iterator begin() const { return Fields.begin(); }
+  const_iterator end() const   { return Fields.end();   }
+};
+} // End anonymous namespace
+
+namespace {
+class FixedLenDecoderEmitter {
+public:
+
+  // Defaults preserved here for documentation, even though they aren't
+  // strictly necessary given the way that this is currently being called.
+  FixedLenDecoderEmitter(RecordKeeper &R,
+                         std::string PredicateNamespace,
+                         std::string GPrefix  = "if (",
+                         std::string GPostfix = " == MCDisassembler::Fail)"
+                         " return MCDisassembler::Fail;",
+                         std::string ROK      = "MCDisassembler::Success",
+                         std::string RFail    = "MCDisassembler::Fail",
+                         std::string L        = "") :
+    Target(R),
+    PredicateNamespace(PredicateNamespace),
+    GuardPrefix(GPrefix), GuardPostfix(GPostfix),
+    ReturnOK(ROK), ReturnFail(RFail), Locals(L) {}
+
+  // run - Output the code emitter
+  void run(raw_ostream &o);
+
+private:
+  CodeGenTarget Target;
+public:
+  std::string PredicateNamespace;
+  std::string GuardPrefix, GuardPostfix;
+  std::string ReturnOK, ReturnFail;
+  std::string Locals;
+};
+} // End anonymous namespace
 
 // The set (BIT_TRUE, BIT_FALSE, BIT_UNSET) represents a ternary logic system
 // for a bit value.
@@ -83,7 +145,9 @@ static BitsInit &getBitsField(const Record &def, const char *str) {
 }
 
 // Forward declaration.
+namespace {
 class FilterChooser;
+} // End anonymous namespace
 
 // Representation of the instruction to work on.
 typedef std::vector<bit_value_t> insn_t;
@@ -124,6 +188,7 @@ typedef std::vector<bit_value_t> insn_t;
 /// decoder could try to decode the even/odd register numbering and assign to
 /// VST4q8a or VST4q8b, but for the time being, the decoder chooses the "a"
 /// version and return the Opcode since the two have the same Asm format string.
+namespace {
 class Filter {
 protected:
   const FilterChooser *Owner;// points to the FilterChooser who owns this filter
@@ -180,6 +245,7 @@ public:
   // the filter distinguishes more categories of instructions.
   unsigned usefulness() const;
 }; // End of class Filter
+} // End anonymous namespace
 
 // These are states of our finite state machines used in FilterChooser's
 // filterProcessor() which produces the filter candidates to use.
@@ -206,6 +272,7 @@ typedef enum {
 /// It is useful to think of a Filter as governing the switch stmts of the
 /// decoding tree.  And each case is delegated to an inferior FilterChooser to
 /// decide what further remaining bits to look at.
+namespace {
 class FilterChooser {
 protected:
   friend class Filter;
@@ -385,6 +452,7 @@ protected:
   // the instruction at this level or the instruction is not decodeable.
   bool emit(raw_ostream &o, unsigned &Indentation) const;
 };
+} // End anonymous namespace
 
 ///////////////////////////
 //                       //
@@ -1573,3 +1641,18 @@ void FixedLenDecoderEmitter::run(raw_ostream &o) {
 
   o << "\n} // End llvm namespace \n";
 }
+
+namespace llvm {
+
+void EmitFixedLenDecoder(RecordKeeper &RK, raw_ostream &OS,
+                         std::string PredicateNamespace,
+                         std::string GPrefix,
+                         std::string GPostfix,
+                         std::string ROK,
+                         std::string RFail,
+                         std::string L) {
+  FixedLenDecoderEmitter(RK, PredicateNamespace, GPrefix, GPostfix,
+                         ROK, RFail, L).run(OS);
+}
+
+} // End llvm namespace

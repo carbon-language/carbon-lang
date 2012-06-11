@@ -13,192 +13,199 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "EDEmitter.h"
-
 #include "AsmWriterInst.h"
 #include "CodeGenTarget.h"
-
-#include "llvm/TableGen/Record.h"
 #include "llvm/MC/EDInstInfo.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/raw_ostream.h"
-
+#include "llvm/TableGen/Record.h"
+#include "llvm/TableGen/TableGenBackend.h"
 #include <string>
 #include <vector>
 
 using namespace llvm;
 
+// TODO: There's a suspiciously large amount of "table" data in this
+// backend which should probably be in the TableGen file itself.
+
 ///////////////////////////////////////////////////////////
 // Support classes for emitting nested C data structures //
 ///////////////////////////////////////////////////////////
 
+// TODO: These classes are probably generally useful to other backends;
+// add them to TableGen's "helper" API's.
+
 namespace {
+class EnumEmitter {
+private:
+  std::string Name;
+  std::vector<std::string> Entries;
+public:
+  EnumEmitter(const char *N) : Name(N) {
+  }
+  int addEntry(const char *e) {
+    Entries.push_back(std::string(e));
+    return Entries.size() - 1;
+  }
+  void emit(raw_ostream &o, unsigned int &i) {
+    o.indent(i) << "enum " << Name.c_str() << " {" << "\n";
+    i += 2;
 
-  class EnumEmitter {
-  private:
-    std::string Name;
-    std::vector<std::string> Entries;
-  public:
-    EnumEmitter(const char *N) : Name(N) {
-    }
-    int addEntry(const char *e) {
-      Entries.push_back(std::string(e));
-      return Entries.size() - 1;
-    }
-    void emit(raw_ostream &o, unsigned int &i) {
-      o.indent(i) << "enum " << Name.c_str() << " {" << "\n";
-      i += 2;
-
-      unsigned int index = 0;
-      unsigned int numEntries = Entries.size();
-      for (index = 0; index < numEntries; ++index) {
-        o.indent(i) << Entries[index];
-        if (index < (numEntries - 1))
-          o << ",";
-        o << "\n";
-      }
-
-      i -= 2;
-      o.indent(i) << "};" << "\n";
+    unsigned int index = 0;
+    unsigned int numEntries = Entries.size();
+    for (index = 0; index < numEntries; ++index) {
+      o.indent(i) << Entries[index];
+      if (index < (numEntries - 1))
+        o << ",";
+      o << "\n";
     }
 
-    void emitAsFlags(raw_ostream &o, unsigned int &i) {
-      o.indent(i) << "enum " << Name.c_str() << " {" << "\n";
-      i += 2;
+    i -= 2;
+    o.indent(i) << "};" << "\n";
+  }
 
-      unsigned int index = 0;
-      unsigned int numEntries = Entries.size();
-      unsigned int flag = 1;
-      for (index = 0; index < numEntries; ++index) {
-        o.indent(i) << Entries[index] << " = " << format("0x%x", flag);
-        if (index < (numEntries - 1))
-          o << ",";
-        o << "\n";
-        flag <<= 1;
-      }
+  void emitAsFlags(raw_ostream &o, unsigned int &i) {
+    o.indent(i) << "enum " << Name.c_str() << " {" << "\n";
+    i += 2;
 
-      i -= 2;
-      o.indent(i) << "};" << "\n";
+    unsigned int index = 0;
+    unsigned int numEntries = Entries.size();
+    unsigned int flag = 1;
+    for (index = 0; index < numEntries; ++index) {
+      o.indent(i) << Entries[index] << " = " << format("0x%x", flag);
+      if (index < (numEntries - 1))
+        o << ",";
+      o << "\n";
+      flag <<= 1;
     }
+
+    i -= 2;
+    o.indent(i) << "};" << "\n";
+  }
+};
+} // End anonymous namespace
+
+namespace {
+class ConstantEmitter {
+public:
+  virtual ~ConstantEmitter() { }
+  virtual void emit(raw_ostream &o, unsigned int &i) = 0;
+};
+} // End anonymous namespace
+
+namespace {
+class LiteralConstantEmitter : public ConstantEmitter {
+private:
+  bool IsNumber;
+  union {
+    int Number;
+    const char* String;
   };
+public:
+  LiteralConstantEmitter(int number = 0) :
+    IsNumber(true),
+    Number(number) {
+  }
+  void set(const char *string) {
+    IsNumber = false;
+    Number = 0;
+    String = string;
+  }
+  bool is(const char *string) {
+    return !strcmp(String, string);
+  }
+  void emit(raw_ostream &o, unsigned int &i) {
+    if (IsNumber)
+      o << Number;
+    else
+      o << String;
+  }
+};
+} // End anonymous namespace
 
-  class ConstantEmitter {
-  public:
-    virtual ~ConstantEmitter() { }
-    virtual void emit(raw_ostream &o, unsigned int &i) = 0;
-  };
+namespace {
+class CompoundConstantEmitter : public ConstantEmitter {
+private:
+  unsigned int Padding;
+  std::vector<ConstantEmitter *> Entries;
+public:
+  CompoundConstantEmitter(unsigned int padding = 0) : Padding(padding) {
+  }
+  CompoundConstantEmitter &addEntry(ConstantEmitter *e) {
+    Entries.push_back(e);
 
-  class LiteralConstantEmitter : public ConstantEmitter {
-  private:
-    bool IsNumber;
-    union {
-      int Number;
-      const char* String;
-    };
-  public:
-    LiteralConstantEmitter(int number = 0) :
-      IsNumber(true),
-      Number(number) {
+    return *this;
+  }
+  ~CompoundConstantEmitter() {
+    while (Entries.size()) {
+      ConstantEmitter *entry = Entries.back();
+      Entries.pop_back();
+      delete entry;
     }
-    void set(const char *string) {
-      IsNumber = false;
-      Number = 0;
-      String = string;
+  }
+  void emit(raw_ostream &o, unsigned int &i) {
+    o << "{" << "\n";
+    i += 2;
+
+    unsigned int index;
+    unsigned int numEntries = Entries.size();
+
+    unsigned int numToPrint;
+
+    if (Padding) {
+      if (numEntries > Padding) {
+        fprintf(stderr, "%u entries but %u padding\n", numEntries, Padding);
+        llvm_unreachable("More entries than padding");
+      }
+      numToPrint = Padding;
+    } else {
+      numToPrint = numEntries;
     }
-    bool is(const char *string) {
-      return !strcmp(String, string);
-    }
-    void emit(raw_ostream &o, unsigned int &i) {
-      if (IsNumber)
-        o << Number;
+
+    for (index = 0; index < numToPrint; ++index) {
+      o.indent(i);
+      if (index < numEntries)
+        Entries[index]->emit(o, i);
       else
-        o << String;
+        o << "-1";
+
+      if (index < (numToPrint - 1))
+        o << ",";
+      o << "\n";
     }
-  };
 
-  class CompoundConstantEmitter : public ConstantEmitter {
-  private:
-    unsigned int Padding;
-    std::vector<ConstantEmitter *> Entries;
-  public:
-    CompoundConstantEmitter(unsigned int padding = 0) : Padding(padding) {
+    i -= 2;
+    o.indent(i) << "}";
+  }
+};
+} // End anonymous namespace
+
+namespace {
+class FlagsConstantEmitter : public ConstantEmitter {
+private:
+  std::vector<std::string> Flags;
+public:
+  FlagsConstantEmitter() {
+  }
+  FlagsConstantEmitter &addEntry(const char *f) {
+    Flags.push_back(std::string(f));
+    return *this;
+  }
+  void emit(raw_ostream &o, unsigned int &i) {
+    unsigned int index;
+    unsigned int numFlags = Flags.size();
+    if (numFlags == 0)
+      o << "0";
+
+    for (index = 0; index < numFlags; ++index) {
+      o << Flags[index].c_str();
+      if (index < (numFlags - 1))
+        o << " | ";
     }
-    CompoundConstantEmitter &addEntry(ConstantEmitter *e) {
-      Entries.push_back(e);
-
-      return *this;
-    }
-    ~CompoundConstantEmitter() {
-      while (Entries.size()) {
-        ConstantEmitter *entry = Entries.back();
-        Entries.pop_back();
-        delete entry;
-      }
-    }
-    void emit(raw_ostream &o, unsigned int &i) {
-      o << "{" << "\n";
-      i += 2;
-
-      unsigned int index;
-      unsigned int numEntries = Entries.size();
-
-      unsigned int numToPrint;
-
-      if (Padding) {
-        if (numEntries > Padding) {
-          fprintf(stderr, "%u entries but %u padding\n", numEntries, Padding);
-          llvm_unreachable("More entries than padding");
-        }
-        numToPrint = Padding;
-      } else {
-        numToPrint = numEntries;
-      }
-
-      for (index = 0; index < numToPrint; ++index) {
-        o.indent(i);
-        if (index < numEntries)
-          Entries[index]->emit(o, i);
-        else
-          o << "-1";
-
-        if (index < (numToPrint - 1))
-          o << ",";
-        o << "\n";
-      }
-
-      i -= 2;
-      o.indent(i) << "}";
-    }
-  };
-
-  class FlagsConstantEmitter : public ConstantEmitter {
-  private:
-    std::vector<std::string> Flags;
-  public:
-    FlagsConstantEmitter() {
-    }
-    FlagsConstantEmitter &addEntry(const char *f) {
-      Flags.push_back(std::string(f));
-      return *this;
-    }
-    void emit(raw_ostream &o, unsigned int &i) {
-      unsigned int index;
-      unsigned int numFlags = Flags.size();
-      if (numFlags == 0)
-        o << "0";
-
-      for (index = 0; index < numFlags; ++index) {
-        o << Flags[index].c_str();
-        if (index < (numFlags - 1))
-          o << " | ";
-      }
-    }
-  };
-}
-
-EDEmitter::EDEmitter(RecordKeeper &R) : Records(R) {
-}
+  }
+};
+} // End anonymous namespace
 
 /// populateOperandOrder - Accepts a CodeGenInstruction and generates its
 ///   AsmWriterInst for the desired assembly syntax, giving an ordered list of
@@ -213,9 +220,9 @@ EDEmitter::EDEmitter(RecordKeeper &R) : Records(R) {
 ///                     representing an index in the operand descriptor array.
 /// @arg inst         - The instruction to use when looking up the operands
 /// @arg syntax       - The syntax to use, according to LLVM's enumeration
-void populateOperandOrder(CompoundConstantEmitter *operandOrder,
-                          const CodeGenInstruction &inst,
-                          unsigned syntax) {
+static void populateOperandOrder(CompoundConstantEmitter *operandOrder,
+                                 const CodeGenInstruction &inst,
+                                 unsigned syntax) {
   unsigned int numArgs = 0;
 
   AsmWriterInst awInst(inst, syntax, -1, -1);
@@ -975,17 +982,23 @@ static void emitCommonEnums(raw_ostream &o, unsigned int &i) {
   o << "\n";
 }
 
-void EDEmitter::run(raw_ostream &o) {
+namespace llvm {
+
+void EmitEnhancedDisassemblerInfo(RecordKeeper &RK, raw_ostream &OS) {
+  emitSourceFileHeader("Enhanced Disassembler Info", OS);
   unsigned int i = 0;
 
   CompoundConstantEmitter infoArray;
-  CodeGenTarget target(Records);
+  CodeGenTarget target(RK);
 
   populateInstInfo(infoArray, target);
 
-  emitCommonEnums(o, i);
+  emitCommonEnums(OS, i);
 
-  o << "static const llvm::EDInstInfo instInfo" << target.getName() << "[] = ";
-  infoArray.emit(o, i);
-  o << ";" << "\n";
+  OS << "static const llvm::EDInstInfo instInfo"
+     << target.getName() << "[] = ";
+  infoArray.emit(OS, i);
+  OS << ";" << "\n";
 }
+
+} // End llvm namespace

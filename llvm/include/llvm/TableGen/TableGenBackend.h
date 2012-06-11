@@ -38,6 +38,10 @@ public:   // Useful helper routines...
 
 };
 
+/// emitSourceFileHeader - Output a LLVM style file header to the specified
+/// ostream.
+void emitSourceFileHeader(StringRef Desc, raw_ostream &OS);
+
 } // End llvm namespace
 
 #endif

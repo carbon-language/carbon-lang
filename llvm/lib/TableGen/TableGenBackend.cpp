@@ -19,9 +19,12 @@ void TableGenBackend::anchor() { }
 
 void TableGenBackend::EmitSourceFileHeader(StringRef Desc,
                                            raw_ostream &OS) const {
+  emitSourceFileHeader(Desc, OS);
+}
+
+void llvm::emitSourceFileHeader(StringRef Desc, raw_ostream &OS) {
   OS << "//===- TableGen'erated file -------------------------------------*-"
        " C++ -*-===//\n//\n// " << Desc << "\n//\n// Automatically generate"
        "d file, do not edit!\n//\n//===------------------------------------"
        "----------------------------------===//\n\n";
 }
-

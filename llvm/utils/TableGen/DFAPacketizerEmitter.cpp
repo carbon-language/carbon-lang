@@ -15,12 +15,45 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/TableGen/Record.h"
 #include "CodeGenTarget.h"
-#include "DFAPacketizerEmitter.h"
+#include "llvm/ADT/DenseSet.h"
+#include "llvm/TableGen/Record.h"
+#include "llvm/TableGen/TableGenBackend.h"
 #include <list>
-
+#include <map>
+#include <string>
 using namespace llvm;
+
+//
+// class DFAPacketizerEmitter: class that generates and prints out the DFA
+// for resource tracking.
+//
+namespace {
+class DFAPacketizerEmitter {
+private:
+  std::string TargetName;
+  //
+  // allInsnClasses is the set of all possible resources consumed by an
+  // InstrStage.
+  //
+  DenseSet<unsigned> allInsnClasses;
+  RecordKeeper &Records;
+
+public:
+  DFAPacketizerEmitter(RecordKeeper &R);
+
+  //
+  // collectAllInsnClasses: Populate allInsnClasses which is a set of units
+  // used in each stage.
+  //
+  void collectAllInsnClasses(const std::string &Name,
+                             Record *ItinData,
+                             unsigned &NStages,
+                             raw_ostream &OS);
+
+  void run(raw_ostream &OS);
+};
+} // End anonymous namespace.
 
 //
 //
@@ -266,7 +299,7 @@ bool DFA::isValidTransition(State *From, unsigned InsnClass) {
 int State::currentStateNum = 0;
 int Transition::currentTransitionNum = 0;
 
-DFAGen::DFAGen(RecordKeeper &R):
+DFAPacketizerEmitter::DFAPacketizerEmitter(RecordKeeper &R):
   TargetName(CodeGenTarget(R).getName()),
   allInsnClasses(), Records(R) {}
 
@@ -346,7 +379,7 @@ void DFA::writeTableAndAPI(raw_ostream &OS, const std::string &TargetName) {
 // collectAllInsnClasses - Populate allInsnClasses which is a set of units
 // used in each stage.
 //
-void DFAGen::collectAllInsnClasses(const std::string &Name,
+void DFAPacketizerEmitter::collectAllInsnClasses(const std::string &Name,
                                   Record *ItinData,
                                   unsigned &NStages,
                                   raw_ostream &OS) {
@@ -402,8 +435,7 @@ void DFAGen::collectAllInsnClasses(const std::string &Name,
 //
 // Run the worklist algorithm to generate the DFA.
 //
-void DFAGen::run(raw_ostream &OS) {
-  EmitSourceFileHeader("Target DFA Packetizer Tables", OS);
+void DFAPacketizerEmitter::run(raw_ostream &OS) {
 
   // Collect processor iteraries.
   std::vector<Record*> ProcItinList =
@@ -510,3 +542,12 @@ void DFAGen::run(raw_ostream &OS) {
   // Print out the table.
   D.writeTableAndAPI(OS, TargetName);
 }
+
+namespace llvm {
+
+void EmitDFAPacketizer(RecordKeeper &RK, raw_ostream &OS) {
+  emitSourceFileHeader("Target DFA Packetizer Tables", OS);
+  DFAPacketizerEmitter(RK).run(OS);
+}
+
+} // End llvm namespace
