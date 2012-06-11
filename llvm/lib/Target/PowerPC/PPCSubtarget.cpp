@@ -149,6 +149,7 @@ static const char *GetCurrentPowerPCCPU() {
     .Case("PPC970MP", "970")
     .Case("G5", "g5")
     .Case("POWER5", "g5")
+    .Case("A2", "a2")
     .Case("POWER6", "pwr6")
     .Case("POWER7", "pwr7")
     .Default(generic);
