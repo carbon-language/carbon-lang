@@ -14,8 +14,12 @@
 #include "PPCSubtarget.h"
 #include "PPCRegisterInfo.h"
 #include "PPC.h"
+#include "llvm/ADT/StringRef.h"
+#include "llvm/ADT/StringSwitch.h"
 #include "llvm/GlobalValue.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Support/DataStream.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/TargetRegistry.h"
 #include <cstdlib>
 
@@ -60,6 +64,95 @@ static const char *GetCurrentPowerPCCPU() {
   
   return "generic";
 }
+#elif defined(__linux__) && (defined(__ppc__) || defined(__powerpc__))
+static const char *GetCurrentPowerPCCPU() {
+  // Access to the Processor Version Register (PVR) on PowerPC is privileged,
+  // and so we must use an operating-system interface to determine the current
+  // processor type. On Linux, this is exposed through the /proc/cpuinfo file.
+  const char *generic = "generic";
+
+  // Note: We cannot mmap /proc/cpuinfo here and then process the resulting
+  // memory buffer because the 'file' has 0 size (it can be read from only
+  // as a stream).
+
+  std::string Err;
+  DataStreamer *DS = getDataFileStreamer("/proc/cpuinfo", &Err);
+  if (!DS) {
+    DEBUG(dbgs() << "Unable to open /proc/cpuinfo: " << Err << "\n");
+    return generic;
+  }
+
+  // The cpu line is second (after the 'processor: 0' line), so if this
+  // buffer is too small then something has changed (or is wrong).
+  char buffer[1024];
+  size_t CPUInfoSize = DS->GetBytes((unsigned char*) buffer, sizeof(buffer));
+  delete DS;
+
+  const char *CPUInfoStart = buffer;
+  const char *CPUInfoEnd = buffer + CPUInfoSize;
+
+  const char *CIP = CPUInfoStart;
+
+  const char *CPUStart = 0;
+  size_t CPULen = 0;
+
+  // We need to find the first line which starts with cpu, spaces, and a colon.
+  // After the colon, there may be some additional spaces and then the cpu type.
+  while (CIP < CPUInfoEnd && CPUStart == 0) {
+    if (CIP < CPUInfoEnd && *CIP == '\n')
+      ++CIP;
+
+    if (CIP < CPUInfoEnd && *CIP == 'c') {
+      ++CIP;
+      if (CIP < CPUInfoEnd && *CIP == 'p') {
+        ++CIP;
+        if (CIP < CPUInfoEnd && *CIP == 'u') {
+          ++CIP;
+          while (CIP < CPUInfoEnd && (*CIP == ' ' || *CIP == '\t'))
+            ++CIP;
+  
+          if (CIP < CPUInfoEnd && *CIP == ':') {
+            ++CIP;
+            while (CIP < CPUInfoEnd && (*CIP == ' ' || *CIP == '\t'))
+              ++CIP;
+  
+            if (CIP < CPUInfoEnd) {
+              CPUStart = CIP;
+              while (CIP < CPUInfoEnd && (*CIP != ' ' && *CIP != '\t' &&
+                                          *CIP != ',' && *CIP != '\n'))
+                ++CIP;
+              CPULen = CIP - CPUStart;
+            }
+          }
+        }
+      }
+    }
+
+    if (CPUStart == 0)
+      while (CIP < CPUInfoEnd && *CIP != '\n')
+        ++CIP;
+  }
+
+  if (CPUStart == 0)
+    return generic;
+
+  return StringSwitch<const char *>(StringRef(CPUStart, CPULen))
+    .Case("604e", "604e")
+    .Case("604", "604")
+    .Case("7400", "7400")
+    .Case("7410", "7400")
+    .Case("7447", "7400")
+    .Case("7455", "7450")
+    .Case("G4", "g4")
+    .Case("POWER4", "g4")
+    .Case("PPC970FX", "970")
+    .Case("PPC970MP", "970")
+    .Case("G5", "g5")
+    .Case("POWER5", "g5")
+    .Case("POWER6", "pwr6")
+    .Case("POWER7", "pwr7")
+    .Default(generic);
+}
 #endif
 
 
@@ -84,7 +177,8 @@ PPCSubtarget::PPCSubtarget(const std::string &TT, const std::string &CPU,
   std::string CPUName = CPU;
   if (CPUName.empty())
     CPUName = "generic";
-#if defined(__APPLE__)
+#if defined(__APPLE__) || \
+      (defined(__linux__) && (defined(__ppc__) || defined(__powerpc__)))
   if (CPUName == "generic")
     CPUName = GetCurrentPowerPCCPU();
 #endif
