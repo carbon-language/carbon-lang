@@ -1533,6 +1533,24 @@ MachProcess::LaunchForDebug
         m_pid = MachProcess::ForkChildForPTraceDebugging (path, argv, envp, this, launch_err);
         break;
 
+#ifdef WITH_SPRINGBOARD
+
+    case eLaunchFlavorSpringBoard:
+        {
+            const char *app_ext = strstr(path, ".app");
+            if (app_ext != NULL)
+            {
+                std::string app_bundle_path(path, app_ext + strlen(".app"));
+                if (SBLaunchForDebug (app_bundle_path.c_str(), argv, envp, no_stdio, launch_err) != 0)
+                    return m_pid; // A successful SBLaunchForDebug() returns and assigns a non-zero m_pid.
+            }
+        }
+        // In case the executable name has a ".app" fragment which confuses our debugserver,
+        // let's do an intentional fallthrough here...
+        launch_flavor = eLaunchFlavorPosixSpawn;
+
+#endif
+
     case eLaunchFlavorPosixSpawn:
         m_pid = MachProcess::PosixSpawnChildForPTraceDebugging (path, 
                                                                 DNBArchProtocol::GetArchitecture (),
@@ -1547,21 +1565,6 @@ MachProcess::LaunchForDebug
                                                                 disable_aslr, 
                                                                 launch_err);
         break;
-
-#ifdef WITH_SPRINGBOARD
-
-    case eLaunchFlavorSpringBoard:
-        {
-            const char *app_ext = strstr(path, ".app");
-            if (app_ext != NULL)
-            {
-                std::string app_bundle_path(path, app_ext + strlen(".app"));
-                return SBLaunchForDebug (app_bundle_path.c_str(), argv, envp, no_stdio, launch_err);
-            }
-        }
-        break;
-
-#endif
 
     default:
         // Invalid  launch
