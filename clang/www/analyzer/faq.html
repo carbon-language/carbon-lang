@@ -19,15 +19,36 @@
 
 <h1>FAQ and How to Deal with Common False Positives</h1>
 
-<h4 class="faq">Q: How do I tell the analyzer that I do not want the bug being
+<ol>
+  <li><a href="#custom_assert">How do I tell the analyzer that I do not want the bug being
+reported here since my custom error handler will safely end the execution before
+the bug is reached?</a></li>
+  <li><a href="#null_pointer">The analyzer reports a null dereference, but I know that the
+pointer is never null. How can I tell the analyzer that a pointer can never be
+null?</a></li>
+  <li><a href="#use_assert">The analyzer assumes that a loop body is never entered.  How can I tell it that the loop body will be entered at least once?</a></li>
+  <li><a href="#suppress_issue">How can I suppress a specific analyzer warning?</a></li>
+</ol>
+
+
+<h4 id="custom_assert" class="faq">Q: How do I tell the analyzer that I do not want the bug being
 reported here since my custom error handler will safely end the execution before
 the bug is reached?</h4>
 
 <img src="images/example_custom_assert.png" alt="example custom assert">
 
-<p>You can tell the analyzer that this path is unreachable by teaching it about your <a href = "annotations.html#custom_assertions" >custom assertion handlers</a>.</p>
+<p>You can tell the analyzer that this path is unreachable by teaching it about your <a href = "annotations.html#custom_assertions" >custom assertion handlers</a>. For example, you can modify the code segment as following.</p>
 
-<h4 class="faq">Q: The analyzer reports a null dereference, but I know that the
+<pre class="code_example">
+void customAssert() <span class="code_highlight">__attribute__((analyzer_noreturn))</span>;
+int foo(int *b) {
+  if (!b)
+    customAssert();
+  return *b;
+}</pre>
+
+
+<h4 id="null_pointer" class="faq">Q: The analyzer reports a null dereference, but I know that the
 pointer is never null. How can I tell the analyzer that a pointer can never be
 null?</h4>
 
@@ -35,7 +56,14 @@ null?</h4>
 
 <p>The reason the analyzer often thinks that a pointer can be null is because the preceding code checked compared it against null. So if you are absolutely sure that it cannot be null, remove the preceding check and, preferably, add an assertion as well. For example, in the code segment above, it will be sufficient to remove the <tt>if (!b)</tt> check. </p>
 
-<h4 class="faq">Q: The analyzer assumes that a loop body is never entered.  How can I tell it that the loop body will be entered at least once?</h4>
+<pre class="code_example">
+void usePointer(int *b);
+int foo(int *b) {
+  usePointer(b);
+  return *b;
+}</pre>
+
+<h4 id="use_assert" class="faq">Q: The analyzer assumes that a loop body is never entered.  How can I tell it that the loop body will be entered at least once?</h4>
 
 <img src="images/example_use_assert.png" alt="example use assert">
 
@@ -47,9 +75,17 @@ the code might know that the loop is always entered because the input parameter
 suppressed by asserting this knowledge, adding <tt>assert(length > 0)</tt> in
 the beginning of the function.</p>
 
-<h4 class="faq">Q: How can I suppress a specific analyzer warning?</h4>
+<pre class="code_example">
+int foo(int length) {
+  int x = 0;
+  <span class="code_highlight">assert(length > 0);</span>
+  for (int i = 0; i < length; i++)
+    x += 1;
+  return length/x;
+}
+</pre>
 
-<img src="images/example_null_pointer.png" alt="example null pointer">
+<h4 id="suppress_issue" class="faq">Q: How can I suppress a specific analyzer warning?</h4>
 
 <p>There is currently no mechanism for suppressing the analyzer warning,
 although this is currently being investigated. If you encounter an analyzer
