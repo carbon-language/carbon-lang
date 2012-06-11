@@ -54,7 +54,7 @@ namespace rdar7853795 {
 }
 
 namespace rdar7796492 {
-  class A { int x, y; A(); };
+  struct A { int x, y; A(); };
 
   A::A()
     : x(1) y(2) { // expected-error{{missing ',' between base or member initializers}}

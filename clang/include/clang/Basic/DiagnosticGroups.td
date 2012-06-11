@@ -312,7 +312,7 @@ def Unused : DiagGroup<"unused",
                        [UnusedArgument, UnusedFunction, UnusedLabel,
                         // UnusedParameter, (matches GCC's behavior)
                         // UnusedMemberFunction, (clean-up llvm before enabling)
-                        // UnusedPrivateField, (clean-up llvm before enabling)
+                        UnusedPrivateField,
                         UnusedValue, UnusedVariable]>,
                         DiagCategory<"Unused Entity Issue">;
 
