@@ -118,7 +118,7 @@ FileType("filetype", cl::init(TargetMachine::CGFT_AssemblyFile),
        clEnumValN(TargetMachine::CGFT_AssemblyFile, "asm",
                   "Emit an assembly ('.s') file"),
        clEnumValN(TargetMachine::CGFT_ObjectFile, "obj",
-                  "Emit a native object ('.o') file [experimental]"),
+                  "Emit a native object ('.o') file"),
        clEnumValN(TargetMachine::CGFT_Null, "null",
                   "Emit nothing, for performance testing"),
        clEnumValEnd));
