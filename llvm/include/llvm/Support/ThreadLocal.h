@@ -15,6 +15,7 @@
 #define LLVM_SYSTEM_THREAD_LOCAL_H
 
 #include "llvm/Support/Threading.h"
+#include "llvm/Support/DataTypes.h"
 #include <cassert>
 
 namespace llvm {
@@ -22,7 +23,12 @@ namespace llvm {
     // ThreadLocalImpl - Common base class of all ThreadLocal instantiations.
     // YOU SHOULD NEVER USE THIS DIRECTLY.
     class ThreadLocalImpl {
-      void* data;
+      typedef uint64_t ThreadLocalDataTy;
+      /// \brief Platform-specific thread local data.
+      ///
+      /// This is embedded in the class and we avoid malloc'ing/free'ing it,
+      /// to make this class more safe for use along with CrashRecoveryContext.
+      ThreadLocalDataTy data;
     public:
       ThreadLocalImpl();
       virtual ~ThreadLocalImpl();

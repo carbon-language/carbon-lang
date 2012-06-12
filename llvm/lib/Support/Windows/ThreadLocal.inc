@@ -22,26 +22,25 @@
 namespace llvm {
 using namespace sys;
 
-ThreadLocalImpl::ThreadLocalImpl() {
-  DWORD* tls = new DWORD;
+ThreadLocalImpl::ThreadLocalImpl() : data(0) {
+  typedef int SIZE_TOO_BIG[sizeof(DWORD) <= sizeof(data) ? 1 : -1];
+  DWORD* tls = reinterpret_cast<DWORD*>(&data);
   *tls = TlsAlloc();
   assert(*tls != TLS_OUT_OF_INDEXES);
-  data = tls;
 }
 
 ThreadLocalImpl::~ThreadLocalImpl() {
-  DWORD* tls = static_cast<DWORD*>(data);
+  DWORD* tls = reinterpret_cast<DWORD*>(&data);
   TlsFree(*tls);
-  delete tls;
 }
 
 const void* ThreadLocalImpl::getInstance() {
-  DWORD* tls = static_cast<DWORD*>(data);
+  DWORD* tls = reinterpret_cast<DWORD*>(&data);
   return TlsGetValue(*tls);
 }
 
 void ThreadLocalImpl::setInstance(const void* d){
-  DWORD* tls = static_cast<DWORD*>(data);
+  DWORD* tls = reinterpret_cast<DWORD*>(&data);
   int errorcode = TlsSetValue(*tls, const_cast<void*>(d));
   assert(errorcode != 0);
   (void)errorcode;
