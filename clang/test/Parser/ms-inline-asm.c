@@ -27,6 +27,12 @@ int t7() {
     pop ebx
   }
 }
+void t8() {
+  __asm nop __asm nop __asm nop
+}
+void t9() {
+  __asm nop __asm nop ; __asm nop
+}
 int t_fail() { // expected-note {{to match this}}
   __asm
   __asm { // expected-error 3 {{expected}} expected-note {{to match this}}

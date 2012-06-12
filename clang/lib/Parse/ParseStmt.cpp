@@ -1710,6 +1710,11 @@ StmtResult Parser::ParseMicrosoftAsmStatement(SourceLocation AsmLoc) {
       if (Tok.is(tok::eof))
         break;
 
+      // The asm keyword is a statement separator, so multiple asm statements
+      // are allowed.
+      if (!InAsmComment && Tok.is(tok::kw_asm))
+        break;
+
       if (!InAsmComment && Tok.is(tok::semi)) {
         // A semicolon in an asm is the start of a comment.
         InAsmComment = true;
