@@ -917,6 +917,11 @@ public:
     return getLShr(C1, C2, true);
   }
 
+  /// getBinOpIdentity - Return the identity for the given binary operation,
+  /// i.e. a constant C such that X op C = X and C op X = X for every X.  It
+  /// is an error to call this for an operation that doesn't have an identity.
+  static Constant *getBinOpIdentity(unsigned Opcode, Type *Ty);
+
   /// Transparently provide more efficient getOperand methods.
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Constant);
 

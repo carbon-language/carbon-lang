@@ -2007,6 +2007,26 @@ Constant *ConstantExpr::getAShr(Constant *C1, Constant *C2, bool isExact) {
              isExact ? PossiblyExactOperator::IsExact : 0);
 }
 
+/// getBinOpIdentity - Return the identity for the given binary operation,
+/// i.e. a constant C such that X op C = X and C op X = X for every X.  It
+/// is an error to call this for an operation that doesn't have an identity.
+Constant *ConstantExpr::getBinOpIdentity(unsigned Opcode, Type *Ty) {
+  switch (Opcode) {
+  default:
+    llvm_unreachable("Not a binary operation with identity");
+  case Instruction::Add:
+  case Instruction::Or:
+  case Instruction::Xor:
+    return Constant::getNullValue(Ty);
+
+  case Instruction::Mul:
+    return ConstantInt::get(Ty, 1);
+
+  case Instruction::And:
+    return Constant::getAllOnesValue(Ty);
+  }
+}
+
 // destroyConstant - Remove the constant from the constant table...
 //
 void ConstantExpr::destroyConstant() {

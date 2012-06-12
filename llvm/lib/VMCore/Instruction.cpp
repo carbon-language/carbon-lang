@@ -395,6 +395,29 @@ bool Instruction::isCommutative(unsigned op) {
   }
 }
 
+/// isIdempotent - Return true if the instruction is idempotent:
+///
+///   Idempotent operators satisfy:  x op x === x
+///
+/// In LLVM, the And and Or operators are idempotent.
+///
+bool Instruction::isIdempotent(unsigned Opcode) {
+  return Opcode == And || Opcode == Or;
+}
+
+/// isNilpotent - Return true if the instruction is nilpotent:
+///
+///   Nilpotent operators satisfy:  x op x === Id,
+///
+///   where Id is the identity for the operator, i.e. a constant such that
+///     x op Id === x and Id op x === x for all x.
+///
+/// In LLVM, the Xor operator is nilpotent.
+///
+bool Instruction::isNilpotent(unsigned Opcode) {
+  return Opcode == Xor;
+}
+
 Instruction *Instruction::clone() const {
   Instruction *New = clone_impl();
   New->SubclassOptionalData = SubclassOptionalData;

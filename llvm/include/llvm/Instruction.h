@@ -215,6 +215,27 @@ public:
   bool isCommutative() const { return isCommutative(getOpcode()); }
   static bool isCommutative(unsigned op);
 
+  /// isIdempotent - Return true if the instruction is idempotent:
+  ///
+  ///   Idempotent operators satisfy:  x op x === x
+  ///
+  /// In LLVM, the And and Or operators are idempotent.
+  ///
+  bool isIdempotent() const { return isIdempotent(getOpcode()); }
+  static bool isIdempotent(unsigned op);
+
+  /// isNilpotent - Return true if the instruction is nilpotent:
+  ///
+  ///   Nilpotent operators satisfy:  x op x === Id,
+  ///
+  ///   where Id is the identity for the operator, i.e. a constant such that
+  ///     x op Id === x and Id op x === x for all x.
+  ///
+  /// In LLVM, the Xor operator is nilpotent.
+  ///
+  bool isNilpotent() const { return isNilpotent(getOpcode()); }
+  static bool isNilpotent(unsigned op);
+
   /// mayWriteToMemory - Return true if this instruction may modify memory.
   ///
   bool mayWriteToMemory() const;
