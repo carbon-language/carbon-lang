@@ -5,7 +5,15 @@ Development
 
 lld is developed as part of the `LLVM <http://llvm.org>`_ project.
 
-See the :ref:`getting started <getting_started>` guide.
+Creating a Reader
+-----------------
+
+See the :ref:`Creating a Reader <Readers>` guide.
+
+
+
+Documentation
+-------------
 
 The project documentation is written in reStructuredText and generated using the
 `Sphinx <http://sphinx.pocoo.org/>`_ documentation generator. For more
