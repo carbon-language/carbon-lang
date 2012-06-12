@@ -190,7 +190,7 @@ class ARMFastISel : public FastISel {
     unsigned ARMMaterializeGV(const GlobalValue *GV, EVT VT);
     unsigned ARMMoveToFPReg(EVT VT, unsigned SrcReg);
     unsigned ARMMoveToIntReg(EVT VT, unsigned SrcReg);
-    unsigned ARMSelectCallOp(const GlobalValue *GV);
+    unsigned ARMSelectCallOp(bool UseReg);
 
     // Call handling routines.
   private:
@@ -202,6 +202,7 @@ class ARMFastISel : public FastISel {
                          SmallVectorImpl<unsigned> &RegArgs,
                          CallingConv::ID CC,
                          unsigned &NumBytes);
+    unsigned getLibcallReg(const Twine &Name);
     bool FinishCall(MVT RetVT, SmallVectorImpl<unsigned> &UsedRegs,
                     const Instruction *I, CallingConv::ID CC,
                     unsigned &NumBytes);
@@ -2108,8 +2109,17 @@ bool ARMFastISel::SelectRet(const Instruction *I) {
   return true;
 }
 
-unsigned ARMFastISel::ARMSelectCallOp(const GlobalValue *GV) {
-  return isThumb2 ? ARM::tBL : ARM::BL;
+unsigned ARMFastISel::ARMSelectCallOp(bool UseReg) {
+  if (UseReg)
+    return isThumb2 ? ARM::tBLXr : ARM::BLX;
+  else
+    return isThumb2 ? ARM::tBL : ARM::BL;
+}
+
+unsigned ARMFastISel::getLibcallReg(const Twine &Name) {
+  GlobalValue *GV = new GlobalVariable(Type::getInt32Ty(*Context), false,
+                                       GlobalValue::ExternalLinkage, 0, Name);
+  return ARMMaterializeGV(GV, TLI.getValueType(GV->getType()));
 }
 
 // A quick function that will emit a call for a named libcall in F with the
@@ -2129,9 +2139,6 @@ bool ARMFastISel::ARMEmitLibcall(const Instruction *I, RTLIB::Libcall Call) {
     RetVT = MVT::isVoid;
   else if (!isTypeLegal(RetTy, RetVT))
     return false;
-
-  // TODO: For now if we have long calls specified we don't handle the call.
-  if (EnableARMLongCalls) return false;
 
   // Can't handle non-double multi-reg retvals.
   if (RetVT != MVT::isVoid && RetVT != MVT::i32) {  
@@ -2176,20 +2183,32 @@ bool ARMFastISel::ARMEmitLibcall(const Instruction *I, RTLIB::Libcall Call) {
   if (!ProcessCallArgs(Args, ArgRegs, ArgVTs, ArgFlags, RegArgs, CC, NumBytes))
     return false;
 
-  // Issue the call.
-  MachineInstrBuilder MIB;
-  unsigned CallOpc = ARMSelectCallOp(NULL);
-  if (isThumb2)
-    // Explicitly adding the predicate here.
-    MIB = AddDefaultPred(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
-                         TII.get(CallOpc)))
-                         .addExternalSymbol(TLI.getLibcallName(Call));
-  else
-    // Explicitly adding the predicate here.
-    MIB = AddDefaultPred(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
-                         TII.get(CallOpc))
-          .addExternalSymbol(TLI.getLibcallName(Call)));
+  unsigned CalleeReg = 0;
+  if (EnableARMLongCalls) {
+    CalleeReg = getLibcallReg(TLI.getLibcallName(Call));
+    if (CalleeReg == 0) return false;
+  }
 
+  // Issue the call.
+  unsigned CallOpc = ARMSelectCallOp(EnableARMLongCalls);
+  MachineInstrBuilder MIB = BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt,
+                                    DL, TII.get(CallOpc));
+  if (isThumb2) {
+    // Explicitly adding the predicate here.
+    AddDefaultPred(MIB);
+    if (EnableARMLongCalls)
+      MIB.addReg(CalleeReg);
+    else
+      MIB.addExternalSymbol(TLI.getLibcallName(Call));
+  } else {
+    if (EnableARMLongCalls)
+      MIB.addReg(CalleeReg);
+    else
+      MIB.addExternalSymbol(TLI.getLibcallName(Call));
+
+    // Explicitly adding the predicate here.
+    AddDefaultPred(MIB);
+  }
   // Add implicit physical register uses to the call.
   for (unsigned i = 0, e = RegArgs.size(); i != e; ++i)
     MIB.addReg(RegArgs[i]);
@@ -2236,9 +2255,6 @@ bool ARMFastISel::SelectCall(const Instruction *I,
   else if (!isTypeLegal(RetTy, RetVT) && RetVT != MVT::i16 &&
            RetVT != MVT::i8  && RetVT != MVT::i1)
     return false;
-
-  // TODO: For now if we have long calls specified we don't handle the call.
-  if (EnableARMLongCalls) return false;
 
   // Can't handle non-double multi-reg retvals.
   if (RetVT != MVT::isVoid && RetVT != MVT::i1 && RetVT != MVT::i8 &&
@@ -2306,43 +2322,43 @@ bool ARMFastISel::SelectCall(const Instruction *I,
   if (!ProcessCallArgs(Args, ArgRegs, ArgVTs, ArgFlags, RegArgs, CC, NumBytes))
     return false;
 
-  // Issue the call.
-  MachineInstrBuilder MIB;
+  bool UseReg = false;
   const GlobalValue *GV = dyn_cast<GlobalValue>(Callee);
-  unsigned CallOpc = ARMSelectCallOp(GV);
-  unsigned CalleeReg = 0;
+  if (!GV || EnableARMLongCalls) UseReg = true;
 
-  if (!GV){
-    CallOpc = isThumb2 ? ARM::tBLXr : ARM::BLX;
-    CalleeReg = getRegForValue(Callee);
+  unsigned CalleeReg = 0;
+  if (UseReg) {
+    if (IntrMemName)
+      CalleeReg = getLibcallReg(IntrMemName);
+    else
+      CalleeReg = getRegForValue(Callee);
+
     if (CalleeReg == 0) return false;
   }
 
-  // Explicitly adding the predicate here.
+  // Issue the call.
+  unsigned CallOpc = ARMSelectCallOp(UseReg);
+  MachineInstrBuilder MIB = BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt,
+                                    DL, TII.get(CallOpc));
   if(isThumb2) {
     // Explicitly adding the predicate here.
-    MIB = AddDefaultPred(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
-                                 TII.get(CallOpc)));
-    if (!GV)
+    AddDefaultPred(MIB);
+    if (UseReg)
       MIB.addReg(CalleeReg);
     else if (!IntrMemName)
       MIB.addGlobalAddress(GV, 0, 0);
     else 
       MIB.addExternalSymbol(IntrMemName, 0);
   } else {
-    if (!GV)
-      MIB = AddDefaultPred(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
-                                   TII.get(CallOpc))
-            .addReg(CalleeReg));
+    if (UseReg)
+      MIB.addReg(CalleeReg);
     else if (!IntrMemName)
-      // Explicitly adding the predicate here.
-      MIB = AddDefaultPred(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
-                                   TII.get(CallOpc))
-            .addGlobalAddress(GV, 0, 0));
+      MIB.addGlobalAddress(GV, 0, 0);
     else
-      MIB = AddDefaultPred(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
-                                   TII.get(CallOpc))
-            .addExternalSymbol(IntrMemName, 0));
+      MIB.addExternalSymbol(IntrMemName, 0);
+
+    // Explicitly adding the predicate here.
+    AddDefaultPred(MIB);
   }
   
   // Add implicit physical register uses to the call.

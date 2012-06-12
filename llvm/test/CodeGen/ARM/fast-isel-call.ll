@@ -1,5 +1,7 @@
 ; RUN: llc < %s -O0 -fast-isel-abort -relocation-model=dynamic-no-pic -mtriple=armv7-apple-ios | FileCheck %s --check-prefix=ARM
 ; RUN: llc < %s -O0 -fast-isel-abort -relocation-model=dynamic-no-pic -mtriple=thumbv7-apple-ios | FileCheck %s --check-prefix=THUMB
+; RUN: llc < %s -O0 -fast-isel-abort -relocation-model=dynamic-no-pic -mtriple=armv7-apple-ios -arm-long-calls | FileCheck %s --check-prefix=ARM-LONG
+; RUN: llc < %s -O0 -fast-isel-abort -relocation-model=dynamic-no-pic -mtriple=thumbv7-apple-ios -arm-long-calls | FileCheck %s --check-prefix=THUMB-LONG
 
 define i32 @t0(i1 zeroext %a) nounwind {
   %1 = zext i1 %a to i32
@@ -99,6 +101,11 @@ entry:
 ; ARM: uxtb r9, r12
 ; ARM: str r9, [sp, #4]
 ; ARM: bl _bar
+; ARM-LONG: @t10
+; ARM-LONG: movw lr, :lower16:L_bar$non_lazy_ptr
+; ARM-LONG: movt lr, :upper16:L_bar$non_lazy_ptr
+; ARM-LONG: ldr lr, [lr]
+; ARM-LONG: blx lr
 ; THUMB: @t10
 ; THUMB: movs r0, #0
 ; THUMB: movt r0, #0
@@ -121,6 +128,11 @@ entry:
 ; THUMB: uxtb.w r9, r12
 ; THUMB: str.w r9, [sp, #4]
 ; THUMB: bl _bar
+; THUMB-LONG: @t10
+; THUMB-LONG: movw lr, :lower16:L_bar$non_lazy_ptr
+; THUMB-LONG: movt lr, :upper16:L_bar$non_lazy_ptr
+; THUMB-LONG: ldr.w lr, [lr]
+; THUMB-LONG: blx lr
   %call = call i32 @bar(i8 zeroext 0, i8 zeroext -8, i8 zeroext -69, i8 zeroext 28, i8 zeroext 40, i8 zeroext -70)
   ret i32 0
 }
@@ -145,4 +157,24 @@ define void @foo3() uwtable {
   %1 = load i32 (i32)** %fptr, align 8
   %call = call i32 %1(i32 0)
   ret void
+}
+
+define i32 @LibCall(i32 %a, i32 %b) {
+entry:
+; ARM: LibCall
+; ARM: bl ___udivsi3
+; ARM-LONG: LibCall
+; ARM-LONG: movw r2, :lower16:L___udivsi3$non_lazy_ptr
+; ARM-LONG: movt r2, :upper16:L___udivsi3$non_lazy_ptr
+; ARM-LONG: ldr r2, [r2]
+; ARM-LONG: blx r2
+; THUMB: LibCall
+; THUMB: bl ___udivsi3
+; THUMB-LONG: LibCall
+; THUMB-LONG: movw r2, :lower16:L___udivsi3$non_lazy_ptr
+; THUMB-LONG: movt r2, :upper16:L___udivsi3$non_lazy_ptr
+; THUMB-LONG: ldr r2, [r2]
+; THUMB-LONG: blx r2
+        %tmp1 = udiv i32 %a, %b         ; <i32> [#uses=1]
+        ret i32 %tmp1
 }

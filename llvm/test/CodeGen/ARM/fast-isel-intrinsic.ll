@@ -1,5 +1,7 @@
 ; RUN: llc < %s -O0 -fast-isel-abort -relocation-model=dynamic-no-pic -mtriple=armv7-apple-ios | FileCheck %s --check-prefix=ARM
 ; RUN: llc < %s -O0 -fast-isel-abort -relocation-model=dynamic-no-pic -mtriple=thumbv7-apple-ios | FileCheck %s --check-prefix=THUMB
+; RUN: llc < %s -O0 -fast-isel-abort -relocation-model=dynamic-no-pic -mtriple=armv7-apple-ios -arm-long-calls | FileCheck %s --check-prefix=ARM-LONG
+; RUN: llc < %s -O0 -fast-isel-abort -relocation-model=dynamic-no-pic -mtriple=thumbv7-apple-ios -arm-long-calls | FileCheck %s --check-prefix=THUMB-LONG
 
 @message1 = global [60 x i8] c"The LLVM Compiler Infrastructure\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00", align 1
 @temp = common global [60 x i8] zeroinitializer, align 1
@@ -13,6 +15,11 @@ define void @t1() nounwind ssp {
 ; ARM: movw r2, #10
 ; ARM: uxtb r1, r1
 ; ARM: bl _memset
+; ARM-LONG: t1
+; ARM-LONG: movw r3, :lower16:L_memset$non_lazy_ptr
+; ARM-LONG: movt r3, :upper16:L_memset$non_lazy_ptr
+; ARM-LONG: ldr r3, [r3]
+; ARM-LONG: blx r3
 ; THUMB: t1
 ; THUMB: movw r0, :lower16:_message1
 ; THUMB: movt r0, :upper16:_message1
@@ -23,6 +30,11 @@ define void @t1() nounwind ssp {
 ; THUMB: movt r2, #0
 ; THUMB: uxtb r1, r1
 ; THUMB: bl _memset
+; THUMB-LONG: t1
+; THUMB-LONG: movw r3, :lower16:L_memset$non_lazy_ptr
+; THUMB-LONG: movt r3, :upper16:L_memset$non_lazy_ptr
+; THUMB-LONG: ldr r3, [r3]
+; THUMB-LONG: blx r3
   call void @llvm.memset.p0i8.i32(i8* getelementptr inbounds ([60 x i8]* @message1, i32 0, i32 5), i8 64, i32 10, i32 1, i1 false)
   ret void
 }
@@ -41,6 +53,11 @@ define void @t2() nounwind ssp {
 ; ARM: mov r0, r1
 ; ARM: ldr r1, [sp]                @ 4-byte Reload
 ; ARM: bl _memcpy
+; ARM-LONG: t2
+; ARM-LONG: movw r3, :lower16:L_memcpy$non_lazy_ptr
+; ARM-LONG: movt r3, :upper16:L_memcpy$non_lazy_ptr
+; ARM-LONG: ldr r3, [r3]
+; ARM-LONG: blx r3
 ; THUMB: t2
 ; THUMB: movw r0, :lower16:L_temp$non_lazy_ptr
 ; THUMB: movt r0, :upper16:L_temp$non_lazy_ptr
@@ -51,6 +68,11 @@ define void @t2() nounwind ssp {
 ; THUMB: movt r2, #0
 ; THUMB: mov r0, r1
 ; THUMB: bl _memcpy
+; THUMB-LONG: t2
+; THUMB-LONG: movw r3, :lower16:L_memcpy$non_lazy_ptr
+; THUMB-LONG: movt r3, :upper16:L_memcpy$non_lazy_ptr
+; THUMB-LONG: ldr r3, [r3]
+; THUMB-LONG: blx r3
   call void @llvm.memcpy.p0i8.p0i8.i32(i8* getelementptr inbounds ([60 x i8]* @temp, i32 0, i32 4), i8* getelementptr inbounds ([60 x i8]* @temp, i32 0, i32 16), i32 17, i32 1, i1 false)
   ret void
 }
@@ -67,6 +89,11 @@ define void @t3() nounwind ssp {
 ; ARM: movw r2, #10
 ; ARM: mov r0, r1
 ; ARM: bl _memmove
+; ARM-LONG: t3
+; ARM-LONG: movw r3, :lower16:L_memmove$non_lazy_ptr
+; ARM-LONG: movt r3, :upper16:L_memmove$non_lazy_ptr
+; ARM-LONG: ldr r3, [r3]
+; ARM-LONG: blx r3
 ; THUMB: t3
 ; THUMB: movw r0, :lower16:L_temp$non_lazy_ptr
 ; THUMB: movt r0, :upper16:L_temp$non_lazy_ptr
@@ -77,6 +104,11 @@ define void @t3() nounwind ssp {
 ; THUMB: movt r2, #0
 ; THUMB: mov r0, r1
 ; THUMB: bl _memmove
+; THUMB-LONG: t3
+; THUMB-LONG: movw r3, :lower16:L_memmove$non_lazy_ptr
+; THUMB-LONG: movt r3, :upper16:L_memmove$non_lazy_ptr
+; THUMB-LONG: ldr r3, [r3]
+; THUMB-LONG: blx r3
   call void @llvm.memmove.p0i8.p0i8.i32(i8* getelementptr inbounds ([60 x i8]* @temp, i32 0, i32 4), i8* getelementptr inbounds ([60 x i8]* @temp, i32 0, i32 16), i32 10, i32 1, i1 false)
   ret void
 }
