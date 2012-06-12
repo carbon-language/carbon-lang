@@ -100,8 +100,8 @@ class X86StubHelperAtom : public SimpleDefinedAtom {
 public:
   X86StubHelperAtom(const File &file, const Atom &helperCommon) 
   : SimpleDefinedAtom(file) {
-    this->addReference(KindHandler_x86::lazyImm, 1, nullptr, 0);
-    this->addReference(KindHandler_x86::call32, 6, &helperCommon, 0);
+    this->addReference(KindHandler_x86::lazyImmediate, 1, nullptr, 0);
+    this->addReference(KindHandler_x86::branch32, 6, &helperCommon, 0);
   }
   
   virtual ContentType contentType() const  {

@@ -101,7 +101,7 @@ class X86_64StubHelperAtom : public SimpleDefinedAtom {
 public:
   X86_64StubHelperAtom(const File &file, const Atom &helperCommon) 
   : SimpleDefinedAtom(file) {
-    this->addReference(KindHandler_x86_64::lazyImm, 1, nullptr, 0);
+    this->addReference(KindHandler_x86_64::lazyImmediate, 1, nullptr, 0);
     this->addReference(KindHandler_x86_64::ripRel32, 6, &helperCommon, 0);
   }
   
