@@ -696,7 +696,7 @@ void SubtargetEmitter::ParseFeaturesFunction(raw_ostream &OS,
   OS << Target;
   OS << "Subtarget::ParseSubtargetFeatures(StringRef CPU, StringRef FS) {\n"
      << "  DEBUG(dbgs() << \"\\nFeatures:\" << FS);\n"
-     << "  DEBUG(dbgs() << \"\\nCPU:\" << CPU);\n";
+     << "  DEBUG(dbgs() << \"\\nCPU:\" << CPU << \"\\n\\n\");\n";
 
   if (Features.empty()) {
     OS << "}\n";
