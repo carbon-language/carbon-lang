@@ -30,9 +30,7 @@ namespace llvm {
       /// to make this class more safe for use along with CrashRecoveryContext.
       union {
         char data[sizeof(ThreadLocalDataTy)];
-        struct {
-          ThreadLocalDataTy align_data;
-        };
+        ThreadLocalDataTy align_data;
       };
     public:
       ThreadLocalImpl();
