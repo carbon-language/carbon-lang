@@ -1641,7 +1641,7 @@ void ExprEngine::evalLoad(ExplodedNodeSet &Dst,
   assert(!isa<NonLoc>(location) && "location cannot be a NonLoc.");
   assert(!isa<loc::ObjCPropRef>(location));
 
-  // Are we loading from a reference?  This actually results in two loads; one
+  // Are we loading from a region?  This actually results in two loads; one
   // to fetch the address of the referenced value and one to fetch the
   // referenced value.
   if (const TypedValueRegion *TR =
