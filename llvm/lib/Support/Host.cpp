@@ -440,7 +440,7 @@ std::string sys::getHostCPUName() {
     .Case("7447", "7400")
     .Case("7455", "7450")
     .Case("G4", "g4")
-    .Case("POWER4", "g4")
+    .Case("POWER4", "970")
     .Case("PPC970FX", "970")
     .Case("PPC970MP", "970")
     .Case("G5", "g5")

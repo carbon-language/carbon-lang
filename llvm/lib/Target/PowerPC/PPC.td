@@ -76,12 +76,12 @@ def : Processor<"603ev", G3Itineraries, [Directive603]>;
 def : Processor<"604", G3Itineraries, [Directive604]>;
 def : Processor<"604e", G3Itineraries, [Directive604]>;
 def : Processor<"620", G3Itineraries, [Directive620]>;
-def : Processor<"g3", G3Itineraries, [Directive7400]>;
+def : Processor<"750", G4Itineraries, [Directive750]>;
+def : Processor<"g3", G3Itineraries, [Directive750]>;
 def : Processor<"7400", G4Itineraries, [Directive7400, FeatureAltivec]>;
 def : Processor<"g4", G4Itineraries, [Directive7400, FeatureAltivec]>;
 def : Processor<"7450", G4PlusItineraries, [Directive7400, FeatureAltivec]>;
-def : Processor<"g4+", G4PlusItineraries, [Directive750, FeatureAltivec]>;
-def : Processor<"750", G4Itineraries, [Directive750, FeatureAltivec]>;
+def : Processor<"g4+", G4PlusItineraries, [Directive7400, FeatureAltivec]>;
 def : Processor<"970", G5Itineraries,
                   [Directive970, FeatureAltivec,
                    FeatureMFOCRF, FeatureFSqrt, FeatureSTFIWX,
