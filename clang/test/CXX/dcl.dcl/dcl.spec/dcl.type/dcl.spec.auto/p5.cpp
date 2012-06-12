@@ -64,5 +64,4 @@ template<typename T = auto> struct G { }; // expected-error{{'auto' not allowed 
 
 using A = auto; // expected-error{{'auto' not allowed in type alias}}
 
-// FIXME: don't issue the second diagnostic for this error.
-auto k() -> auto; // expected-error{{'auto' not allowed in function return type}} unexpected-error{{without trailing return type}}
+auto k() -> auto; // expected-error{{'auto' not allowed in function return type}}

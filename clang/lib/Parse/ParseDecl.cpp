@@ -4276,7 +4276,7 @@ void Parser::ParseFunctionDeclarator(Declarator &D,
   SmallVector<SourceRange, 2> DynamicExceptionRanges;
   ExprResult NoexceptExpr;
   ParsedAttributes FnAttrs(AttrFactory);
-  ParsedType TrailingReturnType;
+  TypeResult TrailingReturnType;
 
   Actions.ActOnStartFunctionDeclarator();
 
@@ -4358,7 +4358,7 @@ void Parser::ParseFunctionDeclarator(Declarator &D,
       if (getLangOpts().CPlusPlus0x && Tok.is(tok::arrow)) {
         Diag(Tok, diag::warn_cxx98_compat_trailing_return_type);
         SourceRange Range;
-        TrailingReturnType = ParseTrailingReturnType(Range).get();
+        TrailingReturnType = ParseTrailingReturnType(Range);
         if (Range.getEnd().isValid())
           EndLoc = Range.getEnd();
       }

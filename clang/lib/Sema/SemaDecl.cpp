@@ -5158,7 +5158,7 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
       QualType T = R->getAs<FunctionType>()->getResultType();
       DeclaratorChunk &C = D.getTypeObject(0);
       if (!T->isVoidType() && C.Fun.NumArgs == 0 && !C.Fun.isVariadic &&
-          !C.Fun.TrailingReturnType &&
+          !C.Fun.hasTrailingReturnType() &&
           C.Fun.getExceptionSpecType() == EST_None) {
         SourceRange ParenRange(C.Loc, C.EndLoc);
         Diag(C.Loc, diag::warn_empty_parens_are_function_decl) << ParenRange;

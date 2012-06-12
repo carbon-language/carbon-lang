@@ -1901,7 +1901,7 @@ static QualType GetDeclSpecTypeForDeclarator(TypeProcessingState &state,
         DeclaratorChunk &DeclType = D.getTypeObject(chunkIndex);
         if (DeclType.Kind == DeclaratorChunk::Function) {
           const DeclaratorChunk::FunctionTypeInfo &FTI = DeclType.Fun;
-          if (FTI.TrailingReturnType) {
+          if (FTI.hasTrailingReturnType()) {
             Error = -1;
             break;
           }
@@ -2176,12 +2176,12 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
         // trailing-return-type is only required if we're declaring a function,
         // and not, for instance, a pointer to a function.
         if (D.getDeclSpec().getTypeSpecType() == DeclSpec::TST_auto &&
-            !FTI.TrailingReturnType && chunkIndex == 0) {
+            !FTI.hasTrailingReturnType() && chunkIndex == 0) {
           S.Diag(D.getDeclSpec().getTypeSpecTypeLoc(),
                diag::err_auto_missing_trailing_return);
           T = Context.IntTy;
           D.setInvalidType(true);
-        } else if (FTI.TrailingReturnType) {
+        } else if (FTI.hasTrailingReturnType()) {
           // T must be exactly 'auto' at this point. See CWG issue 681.
           if (isa<ParenType>(T)) {
             S.Diag(D.getDeclSpec().getTypeSpecTypeLoc(),
@@ -2195,10 +2195,12 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
               << T << D.getDeclSpec().getSourceRange();
             D.setInvalidType(true);
           }
-
-          T = S.GetTypeFromParser(
-            ParsedType::getFromOpaquePtr(FTI.TrailingReturnType),
-            &TInfo);
+          T = S.GetTypeFromParser(FTI.getTrailingReturnType(), &TInfo);
+          if (T.isNull()) {
+            // An error occurred parsing the trailing return type.
+            T = Context.IntTy;
+            D.setInvalidType(true);
+          }
         }
       }
 
@@ -2301,7 +2303,7 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
 
         FunctionProtoType::ExtProtoInfo EPI;
         EPI.Variadic = FTI.isVariadic;
-        EPI.HasTrailingReturn = FTI.TrailingReturnType;
+        EPI.HasTrailingReturn = FTI.hasTrailingReturnType();
         EPI.TypeQuals = FTI.TypeQuals;
         EPI.RefQualifier = !FTI.hasRefQualifier()? RQ_None
                     : FTI.RefQualifierIsLValueRef? RQ_LValue
@@ -3119,7 +3121,7 @@ namespace {
       assert(Chunk.Kind == DeclaratorChunk::Function);
       TL.setLocalRangeBegin(Chunk.Loc);
       TL.setLocalRangeEnd(Chunk.EndLoc);
-      TL.setTrailingReturn(!!Chunk.Fun.TrailingReturnType);
+      TL.setTrailingReturn(Chunk.Fun.hasTrailingReturnType());
 
       const DeclaratorChunk::FunctionTypeInfo &FTI = Chunk.Fun;
       for (unsigned i = 0, e = TL.getNumArgs(), tpi = 0; i != e; ++i) {

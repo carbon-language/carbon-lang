@@ -21,7 +21,4 @@ void f() {
 
 // And for trailing-type-specifier-seq
 
-// FIXME: Don't treat an ill-formed trailing-return-type the same as no
-//        trailing-return-type, and avoid the second diagnostic.
-auto f() -> unknown; // expected-error{{unknown type name 'unknown'}} \
-                        expected-error{{'auto' return without trailing return type}}
+auto f() -> unknown; // expected-error{{unknown type name 'unknown'}}

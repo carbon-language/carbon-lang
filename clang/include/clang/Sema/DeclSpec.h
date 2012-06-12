@@ -1104,6 +1104,10 @@ struct DeclaratorChunk {
     /// DeleteArgInfo - If this is true, we need to delete[] ArgInfo.
     unsigned DeleteArgInfo : 1;
 
+    /// HasTrailingReturnType - If this is true, a trailing return type was
+    /// specified.
+    unsigned HasTrailingReturnType : 1;
+
     /// When isVariadic is true, the location of the ellipsis in the source.
     unsigned EllipsisLoc;
 
@@ -1154,10 +1158,9 @@ struct DeclaratorChunk {
       Expr *NoexceptExpr;
     };
 
-    /// TrailingReturnType - If this isn't null, it's the trailing return type
-    /// specified. This is actually a ParsedType, but stored as void* to
-    /// allow union storage.
-    void *TrailingReturnType;
+    /// TrailingReturnType - If HasTrailingReturnType is true, this is the
+    /// trailing return type specified.
+    UnionParsedType TrailingReturnType;
 
     /// freeArgs - reset the argument list to having zero arguments.  This is
     /// used in various places for error recovery.
@@ -1222,6 +1225,13 @@ struct DeclaratorChunk {
     ExceptionSpecificationType getExceptionSpecType() const {
       return static_cast<ExceptionSpecificationType>(ExceptionSpecType);
     }
+
+    /// \brief Determine whether this function declarator had a
+    /// trailing-return-type.
+    bool hasTrailingReturnType() const { return HasTrailingReturnType; }
+
+    /// \brief Get the trailing-return-type for this function declarator.
+    ParsedType getTrailingReturnType() const { return TrailingReturnType; }
   };
 
   struct BlockPointerTypeInfo : TypeInfoCommon {
@@ -1352,8 +1362,8 @@ struct DeclaratorChunk {
                                      SourceLocation LocalRangeBegin,
                                      SourceLocation LocalRangeEnd,
                                      Declarator &TheDeclarator,
-                                     ParsedType TrailingReturnType =
-                                                    ParsedType());
+                                     TypeResult TrailingReturnType =
+                                                    TypeResult());
 
   /// getBlockPointer - Return a DeclaratorChunk for a block.
   ///
