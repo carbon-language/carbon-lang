@@ -274,3 +274,23 @@ __m128i test_mm_com_epi64(__m128i a, __m128i b) {
   // CHECK: @llvm.x86.xop.vpcomq
   return _mm_com_epi64(a, b, 0);
 }
+
+__m128d test_mm_permute2_pd(__m128d a, __m128d b, __m128i c) {
+  // CHECK: @llvm.x86.xop.vpermil2pd
+  return _mm_permute2_pd(a, b, c, 0);
+}
+
+__m256d test_mm256_permute2_pd(__m256d a, __m256d b, __m256i c) {
+  // CHECK: @llvm.x86.xop.vpermil2pd.256
+  return _mm256_permute2_pd(a, b, c, 0);
+}
+
+__m128 test_mm_permute2_ps(__m128 a, __m128 b, __m128i c) {
+  // CHECK: @llvm.x86.xop.vpermil2ps
+  return _mm_permute2_ps(a, b, c, 0);
+}
+
+__m256 test_mm256_permute2_ps(__m256 a, __m256 b, __m256i c) {
+  // CHECK: @llvm.x86.xop.vpermil2ps.256
+  return _mm256_permute2_ps(a, b, c, 0);
+}

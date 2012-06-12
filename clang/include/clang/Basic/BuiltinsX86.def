@@ -697,5 +697,9 @@ BUILTIN(__builtin_ia32_vpcomb, "V16cV16cV16cIc", "")
 BUILTIN(__builtin_ia32_vpcomw, "V8sV8sV8sIc", "")
 BUILTIN(__builtin_ia32_vpcomd, "V4iV4iV4iIc", "")
 BUILTIN(__builtin_ia32_vpcomq, "V2LLiV2LLiV2LLiIc", "")
+BUILTIN(__builtin_ia32_vpermil2pd, "V2dV2dV2dV2LLiIc", "")
+BUILTIN(__builtin_ia32_vpermil2pd256, "V4dV4dV4dV4LLiIc", "")
+BUILTIN(__builtin_ia32_vpermil2ps, "V4fV4fV4fV4iIc", "")
+BUILTIN(__builtin_ia32_vpermil2ps256, "V8fV8fV8fV8iIc", "")
 
 #undef BUILTIN

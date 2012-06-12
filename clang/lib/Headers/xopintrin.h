@@ -342,6 +342,34 @@ _mm_sha_epi64(__m128i __A, __m128i __B)
   __m128i __B = (B); \
   (__m128i)__builtin_ia32_vpcomq((__v2di)__A, (__v2di)__B, (N)); })
 
+#define _mm_permute2_pd(X, Y, C, I) __extension__ ({ \
+  __m128d __X = (X); \
+  __m128d __Y = (Y); \
+  __m128i __C = (C); \
+  (__m128d)__builtin_ia32_vpermil2pd((__v2df)__X, (__v2df)__Y, \
+                                     (__v2di)__C, (I)); })
+
+#define _mm256_permute2_pd(X, Y, C, I) __extension__ ({ \
+  __m256d __X = (X); \
+  __m256d __Y = (Y); \
+  __m256i __C = (C); \
+  (__m256d)__builtin_ia32_vpermil2pd256((__v4df)__X, (__v4df)__Y, \
+                                        (__v4di)__C, (I)); })
+
+#define _mm_permute2_ps(X, Y, C, I) __extension__ ({ \
+  __m128 __X = (X); \
+  __m128 __Y = (Y); \
+  __m128i __C = (C); \
+  (__m128)__builtin_ia32_vpermil2ps((__v4sf)__X, (__v4sf)__Y, \
+                                    (__v4si)__C, (I)); })
+
+#define _mm256_permute2_ps(X, Y, C, I) __extension__ ({ \
+  __m256 __X = (X); \
+  __m256 __Y = (Y); \
+  __m256i __C = (C); \
+  (__m256)__builtin_ia32_vpermil2ps256((__v8sf)__X, (__v8sf)__Y, \
+                                       (__v8si)__C, (I)); })
+
 #endif /* __XOP__ */
 
 #endif /* __XOPINTRIN_H */
