@@ -67,3 +67,19 @@ _33:                                              ; preds = %_33, %_
   %tmp367 = add i32 %tmp365, %tmp366
   br label %_33
 }
+
+define void @test(i32 %a, i32 %b, i32 %c, i32 %d) {
+  %tmp.2 = xor i32 %a, %b		; <i32> [#uses=1]
+  %tmp.5 = xor i32 %c, %d		; <i32> [#uses=1]
+  %tmp.6 = xor i32 %tmp.2, %tmp.5		; <i32> [#uses=1]
+  %tmp.9 = xor i32 %c, %a		; <i32> [#uses=1]
+  %tmp.12 = xor i32 %b, %d		; <i32> [#uses=1]
+  %tmp.13 = xor i32 %tmp.9, %tmp.12		; <i32> [#uses=1]
+  %tmp.16 = xor i32 %tmp.6, %tmp.13		; <i32> [#uses=0]
+  ret void
+}
+
+define i128 @foo() {
+  %mul = mul i128 0, 0
+  ret i128 %mul
+}

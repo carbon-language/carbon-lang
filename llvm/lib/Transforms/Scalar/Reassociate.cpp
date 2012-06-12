@@ -38,7 +38,6 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/ADT/SetVector.h"
-#include "llvm/ADT/SmallMap.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Statistic.h"
 #include <algorithm>
@@ -486,7 +485,7 @@ static bool LinearizeExprTree(BinaryOperator *I,
 
   // Leaves - Keeps track of the set of putative leaves as well as the number of
   // paths to each leaf seen so far.
-  typedef SmallMap<Value*, APInt, 8> LeafMap;
+  typedef std::map<Value*, APInt> LeafMap;
   LeafMap Leaves; // Leaf -> Total weight so far.
   SmallVector<Value*, 8> LeafOrder; // Ensure deterministic leaf output order.
 
