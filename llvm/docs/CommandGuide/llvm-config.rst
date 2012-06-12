@@ -25,7 +25,7 @@ EXAMPLES
 To link against the JIT:
 
 
-.. code-block:: perl
+.. code-block:: sh
 
    g++ `llvm-config --cxxflags` -o HowToUseJIT.o -c HowToUseJIT.cpp
    g++ `llvm-config --ldflags` -o HowToUseJIT HowToUseJIT.o \

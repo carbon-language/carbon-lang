@@ -211,7 +211,7 @@ OPTIONS
  testcase and pass the name of an executable compile-command script in this form:
 
 
- .. code-block:: perl
+ .. code-block:: sh
 
       #!/bin/sh
       llc "$@"
