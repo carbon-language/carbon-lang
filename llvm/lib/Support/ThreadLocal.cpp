@@ -40,7 +40,7 @@ void ThreadLocalImpl::removeInstance() { data = 0; }
 namespace llvm {
 using namespace sys;
 
-ThreadLocalImpl::ThreadLocalImpl() : data(0) {
+ThreadLocalImpl::ThreadLocalImpl() : data() {
   typedef int SIZE_TOO_BIG[sizeof(pthread_key_t) <= sizeof(data) ? 1 : -1];
   pthread_key_t* key = reinterpret_cast<pthread_key_t*>(&data);
   int errorcode = pthread_key_create(key, NULL);

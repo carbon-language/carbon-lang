@@ -22,7 +22,7 @@
 namespace llvm {
 using namespace sys;
 
-ThreadLocalImpl::ThreadLocalImpl() : data(0) {
+ThreadLocalImpl::ThreadLocalImpl() : data() {
   typedef int SIZE_TOO_BIG[sizeof(DWORD) <= sizeof(data) ? 1 : -1];
   DWORD* tls = reinterpret_cast<DWORD*>(&data);
   *tls = TlsAlloc();

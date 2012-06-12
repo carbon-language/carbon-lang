@@ -28,7 +28,12 @@ namespace llvm {
       ///
       /// This is embedded in the class and we avoid malloc'ing/free'ing it,
       /// to make this class more safe for use along with CrashRecoveryContext.
-      ThreadLocalDataTy data;
+      union {
+        char data[sizeof(ThreadLocalDataTy)];
+        struct {
+          ThreadLocalDataTy align_data;
+        };
+      };
     public:
       ThreadLocalImpl();
       virtual ~ThreadLocalImpl();
