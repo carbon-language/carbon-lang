@@ -138,9 +138,9 @@ testing different architectural variants with llc.  Here's a simple example:
 .. code-block:: perl
 
    ; RUN: llvm-as < %s | llc -mtriple=i686-apple-darwin9 -mattr=sse41 \
-   ; RUN:              | FileCheck %s -check-prefix=X32>
+   ; RUN:              | FileCheck %s -check-prefix=X32
    ; RUN: llvm-as < %s | llc -mtriple=x86_64-apple-darwin9 -mattr=sse41 \
-   ; RUN:              | FileCheck %s -check-prefix=X64>
+   ; RUN:              | FileCheck %s -check-prefix=X64
 
    define <4 x i32> @pinsrd_1(i32 %s, <4 x i32> %tmp) nounwind {
            %tmp1 = insertelement <4 x i32>; %tmp, i32 %s, i32 1
@@ -170,13 +170,13 @@ example, something like this works as you'd expect:
 
 .. code-block:: perl
 
-   define void @t2(<2 x double>* %r, <2 x double&gt;* %A, double %B) {
- 	%tmp3 = load <2 x double&gt;* %A, align 16
- 	%tmp7 = insertelement <2 x double&gt; undef, double %B, i32 0
- 	%tmp9 = shufflevector <2 x double&gt; %tmp3,
-                               <2 x double&gt; %tmp7,
-                               <2 x i32&gt; < i32 0, i32 2 &gt;
- 	store <2 x double&gt; %tmp9, <2 x double&gt;* %r, align 16
+   define void @t2(<2 x double>* %r, <2 x double>* %A, double %B) {
+ 	%tmp3 = load <2 x double>* %A, align 16
+ 	%tmp7 = insertelement <2 x double> undef, double %B, i32 0
+ 	%tmp9 = shufflevector <2 x double> %tmp3,
+                               <2 x double> %tmp7,
+                               <2 x i32> < i32 0, i32 2 >
+ 	store <2 x double> %tmp9, <2 x double>* %r, align 16
  	ret void
 
    ; CHECK:          t2:
