@@ -522,8 +522,6 @@ public:
   void setLocalFastQualifiers(unsigned Quals) { Value.setInt(Quals); }
 
   /// Retrieves a pointer to the underlying (unqualified) type.
-  /// This should really return a const Type, but it's not worth
-  /// changing all the users right now.
   ///
   /// This function requires that the type not be NULL. If the type might be
   /// NULL, use the (slightly less efficient) \c getTypePtrOrNull().
