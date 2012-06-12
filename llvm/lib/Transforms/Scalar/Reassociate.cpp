@@ -485,7 +485,7 @@ static bool LinearizeExprTree(BinaryOperator *I,
 
   // Leaves - Keeps track of the set of putative leaves as well as the number of
   // paths to each leaf seen so far.
-  typedef std::map<Value*, APInt> LeafMap;
+  typedef DenseMap<Value*, APInt> LeafMap;
   LeafMap Leaves; // Leaf -> Total weight so far.
   SmallVector<Value*, 8> LeafOrder; // Ensure deterministic leaf output order.
 
