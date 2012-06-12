@@ -16,6 +16,7 @@ def IU4    : FuncUnit; // integer unit 4 (7450 simple)
 
 def G4PlusItineraries : ProcessorItineraries<
   [IU1, IU2, IU3, IU4, BPU, SLU, FPU1, VFPU, VIU1, VIU2, VPU], [], [
+  InstrItinData<IntSimple   , [InstrStage<1, [IU1, IU2, IU3, IU4]>]>,
   InstrItinData<IntGeneral  , [InstrStage<1, [IU1, IU2, IU3, IU4]>]>,
   InstrItinData<IntCompare  , [InstrStage<1, [IU1, IU2, IU3, IU4]>]>,
   InstrItinData<IntDivW     , [InstrStage<23, [IU2]>]>,

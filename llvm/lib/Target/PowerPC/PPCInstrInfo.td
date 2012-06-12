@@ -859,10 +859,10 @@ def SYNC : XForm_24_sync<31, 598, (outs), (ins),
 
 let PPC970_Unit = 1 in {  // FXU Operations.
 def ADDI   : DForm_2<14, (outs GPRC:$rD), (ins GPRC:$rA, s16imm:$imm),
-                     "addi $rD, $rA, $imm", IntGeneral,
+                     "addi $rD, $rA, $imm", IntSimple,
                      [(set GPRC:$rD, (add GPRC:$rA, immSExt16:$imm))]>;
 def ADDIL  : DForm_2<14, (outs GPRC:$rD), (ins GPRC:$rA, symbolLo:$imm),
-                     "addi $rD, $rA, $imm", IntGeneral,
+                     "addi $rD, $rA, $imm", IntSimple,
                      [(set GPRC:$rD, (add GPRC:$rA, immSExt16:$imm))]>;
 let Defs = [CARRY] in {
 def ADDIC  : DForm_2<12, (outs GPRC:$rD), (ins GPRC:$rA, s16imm:$imm),
@@ -874,7 +874,7 @@ def ADDICo : DForm_2<13, (outs GPRC:$rD), (ins GPRC:$rA, s16imm:$imm),
                      []>;
 }
 def ADDIS  : DForm_2<15, (outs GPRC:$rD), (ins GPRC:$rA, symbolHi:$imm),
-                     "addis $rD, $rA, $imm", IntGeneral,
+                     "addis $rD, $rA, $imm", IntSimple,
                      [(set GPRC:$rD, (add GPRC:$rA, imm16ShiftedSExt:$imm))]>;
 def LA     : DForm_2<14, (outs GPRC:$rD), (ins GPRC:$rA, symbolLo:$sym),
                      "la $rD, $sym($rA)", IntGeneral,
@@ -891,10 +891,10 @@ def SUBFIC : DForm_2< 8, (outs GPRC:$rD), (ins GPRC:$rA, s16imm:$imm),
 
 let isReMaterializable = 1 in {
   def LI  : DForm_2_r0<14, (outs GPRC:$rD), (ins symbolLo:$imm),
-                       "li $rD, $imm", IntGeneral,
+                       "li $rD, $imm", IntSimple,
                        [(set GPRC:$rD, immSExt16:$imm)]>;
   def LIS : DForm_2_r0<15, (outs GPRC:$rD), (ins symbolHi:$imm),
-                       "lis $rD, $imm", IntGeneral,
+                       "lis $rD, $imm", IntSimple,
                        [(set GPRC:$rD, imm16ShiftedSExt:$imm)]>;
 }
 }
@@ -909,18 +909,18 @@ def ANDISo : DForm_4<29, (outs GPRC:$dst), (ins GPRC:$src1, u16imm:$src2),
                     [(set GPRC:$dst, (and GPRC:$src1,imm16ShiftedZExt:$src2))]>,
                     isDOT;
 def ORI   : DForm_4<24, (outs GPRC:$dst), (ins GPRC:$src1, u16imm:$src2),
-                    "ori $dst, $src1, $src2", IntGeneral,
+                    "ori $dst, $src1, $src2", IntSimple,
                     [(set GPRC:$dst, (or GPRC:$src1, immZExt16:$src2))]>;
 def ORIS  : DForm_4<25, (outs GPRC:$dst), (ins GPRC:$src1, u16imm:$src2),
-                    "oris $dst, $src1, $src2", IntGeneral,
+                    "oris $dst, $src1, $src2", IntSimple,
                     [(set GPRC:$dst, (or GPRC:$src1, imm16ShiftedZExt:$src2))]>;
 def XORI  : DForm_4<26, (outs GPRC:$dst), (ins GPRC:$src1, u16imm:$src2),
-                    "xori $dst, $src1, $src2", IntGeneral,
+                    "xori $dst, $src1, $src2", IntSimple,
                     [(set GPRC:$dst, (xor GPRC:$src1, immZExt16:$src2))]>;
 def XORIS : DForm_4<27, (outs GPRC:$dst), (ins GPRC:$src1, u16imm:$src2),
-                    "xoris $dst, $src1, $src2", IntGeneral,
+                    "xoris $dst, $src1, $src2", IntSimple,
                     [(set GPRC:$dst, (xor GPRC:$src1,imm16ShiftedZExt:$src2))]>;
-def NOP   : DForm_4_zero<24, (outs), (ins), "nop", IntGeneral,
+def NOP   : DForm_4_zero<24, (outs), (ins), "nop", IntSimple,
                          []>;
 def CMPWI : DForm_5_ext<11, (outs CRRC:$crD), (ins GPRC:$rA, s16imm:$imm),
                         "cmpwi $crD, $rA, $imm", IntCompare>;
@@ -931,28 +931,28 @@ def CMPLWI : DForm_6_ext<10, (outs CRRC:$dst), (ins GPRC:$src1, u16imm:$src2),
 
 let PPC970_Unit = 1 in {  // FXU Operations.
 def NAND : XForm_6<31, 476, (outs GPRC:$rA), (ins GPRC:$rS, GPRC:$rB),
-                   "nand $rA, $rS, $rB", IntGeneral,
+                   "nand $rA, $rS, $rB", IntSimple,
                    [(set GPRC:$rA, (not (and GPRC:$rS, GPRC:$rB)))]>;
 def AND  : XForm_6<31,  28, (outs GPRC:$rA), (ins GPRC:$rS, GPRC:$rB),
-                   "and $rA, $rS, $rB", IntGeneral,
+                   "and $rA, $rS, $rB", IntSimple,
                    [(set GPRC:$rA, (and GPRC:$rS, GPRC:$rB))]>;
 def ANDC : XForm_6<31,  60, (outs GPRC:$rA), (ins GPRC:$rS, GPRC:$rB),
-                   "andc $rA, $rS, $rB", IntGeneral,
+                   "andc $rA, $rS, $rB", IntSimple,
                    [(set GPRC:$rA, (and GPRC:$rS, (not GPRC:$rB)))]>;
 def OR   : XForm_6<31, 444, (outs GPRC:$rA), (ins GPRC:$rS, GPRC:$rB),
-                   "or $rA, $rS, $rB", IntGeneral,
+                   "or $rA, $rS, $rB", IntSimple,
                    [(set GPRC:$rA, (or GPRC:$rS, GPRC:$rB))]>;
 def NOR  : XForm_6<31, 124, (outs GPRC:$rA), (ins GPRC:$rS, GPRC:$rB),
-                   "nor $rA, $rS, $rB", IntGeneral,
+                   "nor $rA, $rS, $rB", IntSimple,
                    [(set GPRC:$rA, (not (or GPRC:$rS, GPRC:$rB)))]>;
 def ORC  : XForm_6<31, 412, (outs GPRC:$rA), (ins GPRC:$rS, GPRC:$rB),
-                   "orc $rA, $rS, $rB", IntGeneral,
+                   "orc $rA, $rS, $rB", IntSimple,
                    [(set GPRC:$rA, (or GPRC:$rS, (not GPRC:$rB)))]>;
 def EQV  : XForm_6<31, 284, (outs GPRC:$rA), (ins GPRC:$rS, GPRC:$rB),
-                   "eqv $rA, $rS, $rB", IntGeneral,
+                   "eqv $rA, $rS, $rB", IntSimple,
                    [(set GPRC:$rA, (not (xor GPRC:$rS, GPRC:$rB)))]>;
 def XOR  : XForm_6<31, 316, (outs GPRC:$rA), (ins GPRC:$rS, GPRC:$rB),
-                   "xor $rA, $rS, $rB", IntGeneral,
+                   "xor $rA, $rS, $rB", IntSimple,
                    [(set GPRC:$rA, (xor GPRC:$rS, GPRC:$rB))]>;
 def SLW  : XForm_6<31,  24, (outs GPRC:$rA), (ins GPRC:$rS, GPRC:$rB),
                    "slw $rA, $rS, $rB", IntGeneral,
@@ -977,10 +977,10 @@ def CNTLZW : XForm_11<31,  26, (outs GPRC:$rA), (ins GPRC:$rS),
                       "cntlzw $rA, $rS", IntGeneral,
                       [(set GPRC:$rA, (ctlz GPRC:$rS))]>;
 def EXTSB  : XForm_11<31, 954, (outs GPRC:$rA), (ins GPRC:$rS),
-                      "extsb $rA, $rS", IntGeneral,
+                      "extsb $rA, $rS", IntSimple,
                       [(set GPRC:$rA, (sext_inreg GPRC:$rS, i8))]>;
 def EXTSH  : XForm_11<31, 922, (outs GPRC:$rA), (ins GPRC:$rS),
-                      "extsh $rA, $rS", IntGeneral,
+                      "extsh $rA, $rS", IntSimple,
                       [(set GPRC:$rA, (sext_inreg GPRC:$rS, i16))]>;
 
 def CMPW   : XForm_16_ext<31, 0, (outs CRRC:$crD), (ins GPRC:$rA, GPRC:$rB),
@@ -1169,7 +1169,7 @@ let PPC970_Unit = 1 in {  // FXU Operations.
 // XO-Form instructions.  Arithmetic instructions that can set overflow bit
 //
 def ADD4  : XOForm_1<31, 266, 0, (outs GPRC:$rT), (ins GPRC:$rA, GPRC:$rB),
-                     "add $rT, $rA, $rB", IntGeneral,
+                     "add $rT, $rA, $rB", IntSimple,
                      [(set GPRC:$rT, (add GPRC:$rA, GPRC:$rB))]>;
 let Defs = [CARRY] in {
 def ADDC  : XOForm_1<31, 10, 0, (outs GPRC:$rT), (ins GPRC:$rA, GPRC:$rB),
@@ -1204,7 +1204,7 @@ def SUBFC : XOForm_1<31, 8, 0, (outs GPRC:$rT), (ins GPRC:$rA, GPRC:$rB),
                      PPC970_DGroup_Cracked;
 }
 def NEG    : XOForm_3<31, 104, 0, (outs GPRC:$rT), (ins GPRC:$rA),
-                      "neg $rT, $rA", IntGeneral,
+                      "neg $rT, $rA", IntSimple,
                       [(set GPRC:$rT, (ineg GPRC:$rA))]>;
 let Uses = [CARRY], Defs = [CARRY] in {
 def ADDE  : XOForm_1<31, 138, 0, (outs GPRC:$rT), (ins GPRC:$rA, GPRC:$rB),

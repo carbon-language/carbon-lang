@@ -13,6 +13,7 @@
 
 def G5Itineraries : ProcessorItineraries<
   [IU1, IU2, SLU, BPU, FPU1, FPU2, VFPU, VIU1, VIU2, VPU], [], [
+  InstrItinData<IntSimple   , [InstrStage<2, [IU1, IU2]>]>,
   InstrItinData<IntGeneral  , [InstrStage<2, [IU1, IU2]>]>,
   InstrItinData<IntCompare  , [InstrStage<3, [IU1, IU2]>]>,
   InstrItinData<IntDivD     , [InstrStage<68, [IU1]>]>,
