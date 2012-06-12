@@ -702,11 +702,6 @@ getLocationOfByte(unsigned ByteNo, const SourceManager &SM,
     
     const char *StrData = Buffer.data()+LocInfo.second;
     
-    // Create a langops struct and enable trigraphs.  This is sufficient for
-    // relexing tokens.
-    LangOptions LangOpts;
-    LangOpts.Trigraphs = true;
-    
     // Create a lexer starting at the beginning of this token.
     Lexer TheLexer(SM.getLocForStartOfFile(LocInfo.first), Features,
                    Buffer.begin(), StrData, Buffer.end());
