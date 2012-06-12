@@ -8,7 +8,7 @@
 - (int)getInt;
 - (id)getSelf;
 @end
-
+@protocol P1;
 @protocol P2<P1>
 + (id)alloc;
 @end

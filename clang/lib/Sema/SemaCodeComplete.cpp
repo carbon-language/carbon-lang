@@ -3334,7 +3334,25 @@ void Sema::CodeCompletePostfixExpression(Scope *S, ExprResult E) {
 /// property name.
 typedef llvm::SmallPtrSet<IdentifierInfo*, 16> AddedPropertiesSet;
 
-static void AddObjCProperties(ObjCContainerDecl *Container, 
+/// \brief Retrieve the container definition, if any?
+static ObjCContainerDecl *getContainerDef(ObjCContainerDecl *Container) {
+  if (ObjCInterfaceDecl *Interface = dyn_cast<ObjCInterfaceDecl>(Container)) {
+    if (Interface->hasDefinition())
+      return Interface->getDefinition();
+    
+    return Interface;
+  }
+  
+  if (ObjCProtocolDecl *Protocol = dyn_cast<ObjCProtocolDecl>(Container)) {
+    if (Protocol->hasDefinition())
+      return Protocol->getDefinition();
+    
+    return Protocol;
+  }
+  return Container;
+}
+
+static void AddObjCProperties(ObjCContainerDecl *Container,
                               bool AllowCategories,
                               bool AllowNullaryMethods,
                               DeclContext *CurContext,
@@ -3342,6 +3360,9 @@ static void AddObjCProperties(ObjCContainerDecl *Container,
                               ResultBuilder &Results) {
   typedef CodeCompletionResult Result;
 
+  // Retrieve the definition.
+  Container = getContainerDef(Container);
+  
   // Add properties in this container.
   for (ObjCContainerDecl::prop_iterator P = Container->prop_begin(),
                                      PEnd = Container->prop_end();
@@ -3617,6 +3638,8 @@ void Sema::CodeCompleteCase(Scope *S) {
   // Code-complete the cases of a switch statement over an enumeration type
   // by providing the list of 
   EnumDecl *Enum = type->castAs<EnumType>()->getDecl();
+  if (EnumDecl *Def = Enum->getDefinition())
+    Enum = Def;
   
   // Determine which enumerators we have already seen in the switch statement.
   // FIXME: Ideally, we would also be able to look *past* the code-completion
@@ -4695,6 +4718,7 @@ static void AddObjCMethods(ObjCContainerDecl *Container,
                            ResultBuilder &Results,
                            bool InOriginalClass = true) {
   typedef CodeCompletionResult Result;
+  Container = getContainerDef(Container);
   for (ObjCContainerDecl::method_iterator M = Container->meth_begin(),
                                        MEnd = Container->meth_end();
        M != MEnd; ++M) {
@@ -5826,7 +5850,8 @@ void Sema::CodeCompleteObjCPropertyDefinition(Scope *S) {
     return; 
 
   // Ignore any properties that have already been implemented.
-  for (DeclContext::decl_iterator D = Container->decls_begin(), 
+  Container = getContainerDef(Container);
+  for (DeclContext::decl_iterator D = Container->decls_begin(),
                                DEnd = Container->decls_end();
        D != DEnd; ++D)
     if (ObjCPropertyImplDecl *PropertyImpl = dyn_cast<ObjCPropertyImplDecl>(*D))
@@ -5959,9 +5984,12 @@ static void FindImplementableMethods(ASTContext &Context,
                                      KnownMethodsMap &KnownMethods,
                                      bool InOriginalClass = true) {
   if (ObjCInterfaceDecl *IFace = dyn_cast<ObjCInterfaceDecl>(Container)) {
-    // Recurse into protocols.
+    // Make sure we have a definition; that's what we'll walk.
     if (!IFace->hasDefinition())
       return;
+
+    IFace = IFace->getDefinition();
+    Container = IFace;
     
     const ObjCList<ObjCProtocolDecl> &Protocols
       = IFace->getReferencedProtocols();
@@ -6003,16 +6031,20 @@ static void FindImplementableMethods(ASTContext &Context,
   }
 
   if (ObjCProtocolDecl *Protocol = dyn_cast<ObjCProtocolDecl>(Container)) {
-    if (Protocol->hasDefinition()) {
-      // Recurse into protocols.
-      const ObjCList<ObjCProtocolDecl> &Protocols
-        = Protocol->getReferencedProtocols();
-      for (ObjCList<ObjCProtocolDecl>::iterator I = Protocols.begin(),
-             E = Protocols.end(); 
-           I != E; ++I)
-        FindImplementableMethods(Context, *I, WantInstanceMethods, ReturnType,
-                                 KnownMethods, false);
-    }
+    // Make sure we have a definition; that's what we'll walk.
+    if (!Protocol->hasDefinition())
+      return;
+    Protocol = Protocol->getDefinition();
+    Container = Protocol;
+        
+    // Recurse into protocols.
+    const ObjCList<ObjCProtocolDecl> &Protocols
+      = Protocol->getReferencedProtocols();
+    for (ObjCList<ObjCProtocolDecl>::iterator I = Protocols.begin(),
+           E = Protocols.end(); 
+         I != E; ++I)
+      FindImplementableMethods(Context, *I, WantInstanceMethods, ReturnType,
+                               KnownMethods, false);
   }
 
   // Add methods in this container. This operation occurs last because

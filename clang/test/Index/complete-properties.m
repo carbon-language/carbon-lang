@@ -45,6 +45,17 @@ id test(I3 *i3) {
 @synthesize Prop2 = Prop2_;
 @end
 
+@protocol P1
+@property int Prop5;
+@end
+
+@class P1;
+
+@interface I5<P1>
+@end
+@implementation I5
+@synthesize Prop5;
+@end
 // RUN: c-index-test -code-completion-at=%s:20:13 %s | FileCheck -check-prefix=CHECK-CC1 %s
 // CHECK-CC1: ObjCPropertyDecl:{ResultType int}{TypedText Prop0}
 // CHECK-CC1: ObjCPropertyDecl:{ResultType int}{TypedText Prop1}
@@ -80,3 +91,6 @@ id test(I3 *i3) {
 // CHECK-CC7-NOT: ObjCIvarDecl:{ResultType id}{TypedText _Prop2}
 // CHECK-CC7: ObjCIvarDecl:{ResultType I4 *}{TypedText Prop1} (17)
 // CHECK-CC7: ObjCIvarDecl:{ResultType id}{TypedText Prop2_} (7)
+
+// RUN: c-index-test -code-completion-at=%s:57:13 -fobjc-nonfragile-abi %s | FileCheck -check-prefix=CHECK-CC8 %s
+// CHECK-CC8: ObjCPropertyDecl:{ResultType int}{TypedText Prop5} (35)
