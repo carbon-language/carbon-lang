@@ -455,6 +455,10 @@ static bool LinearizeExprTree(BinaryOperator *I,
   assert(Instruction::isAssociative(Opcode) &&
          Instruction::isCommutative(Opcode) &&
          "Expected an associative and commutative operation!");
+  // If we see an absorbing element then the entire expression must be equal to
+  // it.  For example, if this is a multiplication expression and zero occurs as
+  // an operand somewhere in it then the result of the expression must be zero.
+  Constant *Absorber = ConstantExpr::getBinOpAbsorber(Opcode, I->getType());
 
   // Visit all operands of the expression, keeping track of their weight (the
   // number of paths from the expression root to the operand, or if you like
@@ -501,6 +505,13 @@ static bool LinearizeExprTree(BinaryOperator *I,
       APInt Weight = P.second; // Number of paths to this operand.
       DEBUG(dbgs() << "OPERAND: " << *Op << " (" << Weight << ")\n");
       assert(!Op->use_empty() && "No uses, so how did we get to it?!");
+
+      // If the expression contains an absorbing element then there is no need
+      // to analyze it further: it must evaluate to the absorbing element.
+      if (Op == Absorber && !Weight.isMinValue()) {
+        Ops.push_back(std::make_pair(Absorber, APInt(Bitwidth, 1)));
+        return MadeChange;
+      }
 
       // If this is a binary operation of the right kind with only one use then
       // add its operands to the expression.
@@ -617,14 +628,15 @@ static bool LinearizeExprTree(BinaryOperator *I,
 
   // Add any constants back into Ops, all globbed together and reduced to having
   // weight 1 for the convenience of users.
-  if (Cst && Cst != ConstantExpr::getBinOpIdentity(Opcode, I->getType()))
+  Constant *Identity = ConstantExpr::getBinOpIdentity(Opcode, I->getType());
+  if (Cst && Cst != Identity)
     Ops.push_back(std::make_pair(Cst, APInt(Bitwidth, 1)));
 
   // For nilpotent operations or addition there may be no operands, for example
   // because the expression was "X xor X" or consisted of 2^Bitwidth additions:
   // in both cases the weight reduces to 0 causing the value to be skipped.
   if (Ops.empty()) {
-    Constant *Identity = ConstantExpr::getBinOpIdentity(Opcode, I->getType());
+    assert(Identity && "Associative operation without identity!");
     Ops.push_back(std::make_pair(Identity, APInt(Bitwidth, 1)));
   }
 
@@ -1425,44 +1437,6 @@ Value *Reassociate::OptimizeExpression(BinaryOperator *I,
   if (Ops.size() == 1) return Ops[0].Op;
 
   unsigned Opcode = I->getOpcode();
-
-  if (Constant *V1 = dyn_cast<Constant>(Ops[Ops.size()-2].Op))
-    if (Constant *V2 = dyn_cast<Constant>(Ops.back().Op)) {
-      Ops.pop_back();
-      Ops.back().Op = ConstantExpr::get(Opcode, V1, V2);
-      return OptimizeExpression(I, Ops);
-    }
-
-  // Check for destructive annihilation due to a constant being used.
-  if (ConstantInt *CstVal = dyn_cast<ConstantInt>(Ops.back().Op))
-    switch (Opcode) {
-    default: break;
-    case Instruction::And:
-      if (CstVal->isZero())                  // X & 0 -> 0
-        return CstVal;
-      if (CstVal->isAllOnesValue())          // X & -1 -> X
-        Ops.pop_back();
-      break;
-    case Instruction::Mul:
-      if (CstVal->isZero()) {                // X * 0 -> 0
-        ++NumAnnihil;
-        return CstVal;
-      }
-
-      if (cast<ConstantInt>(CstVal)->isOne())
-        Ops.pop_back();                      // X * 1 -> X
-      break;
-    case Instruction::Or:
-      if (CstVal->isAllOnesValue())          // X | -1 -> -1
-        return CstVal;
-      // FALLTHROUGH!
-    case Instruction::Add:
-    case Instruction::Xor:
-      if (CstVal->isZero())                  // X [|^+] 0 -> X
-        Ops.pop_back();
-      break;
-    }
-  if (Ops.size() == 1) return Ops[0].Op;
 
   // Handle destructive annihilation due to identities between elements in the
   // argument list here.

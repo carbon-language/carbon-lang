@@ -919,8 +919,14 @@ public:
 
   /// getBinOpIdentity - Return the identity for the given binary operation,
   /// i.e. a constant C such that X op C = X and C op X = X for every X.  It
-  /// is an error to call this for an operation that doesn't have an identity.
+  /// returns null if the operator doesn't have an identity.
   static Constant *getBinOpIdentity(unsigned Opcode, Type *Ty);
+
+  /// getBinOpAbsorber - Return the absorbing element for the given binary
+  /// operation, i.e. a constant C such that X op C = C and C op X = C for
+  /// every X.  For example, this returns zero for integer multiplication.
+  /// It returns null if the operator doesn't have an absorbing element.
+  static Constant *getBinOpAbsorber(unsigned Opcode, Type *Ty);
 
   /// Transparently provide more efficient getOperand methods.
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Constant);

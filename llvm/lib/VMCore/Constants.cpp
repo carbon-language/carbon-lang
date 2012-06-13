@@ -2009,11 +2009,13 @@ Constant *ConstantExpr::getAShr(Constant *C1, Constant *C2, bool isExact) {
 
 /// getBinOpIdentity - Return the identity for the given binary operation,
 /// i.e. a constant C such that X op C = X and C op X = X for every X.  It
-/// is an error to call this for an operation that doesn't have an identity.
+/// returns null if the operator doesn't have an identity.
 Constant *ConstantExpr::getBinOpIdentity(unsigned Opcode, Type *Ty) {
   switch (Opcode) {
   default:
-    llvm_unreachable("Not a binary operation with identity");
+    // Doesn't have an identity.
+    return 0;
+
   case Instruction::Add:
   case Instruction::Or:
   case Instruction::Xor:
@@ -2024,6 +2026,25 @@ Constant *ConstantExpr::getBinOpIdentity(unsigned Opcode, Type *Ty) {
 
   case Instruction::And:
     return Constant::getAllOnesValue(Ty);
+  }
+}
+
+/// getBinOpAbsorber - Return the absorbing element for the given binary
+/// operation, i.e. a constant C such that X op C = C and C op X = C for
+/// every X.  For example, this returns zero for integer multiplication.
+/// It returns null if the operator doesn't have an absorbing element.
+Constant *ConstantExpr::getBinOpAbsorber(unsigned Opcode, Type *Ty) {
+  switch (Opcode) {
+  default:
+    // Doesn't have an absorber.
+    return 0;
+
+  case Instruction::Or:
+    return Constant::getAllOnesValue(Ty);
+
+  case Instruction::And:
+  case Instruction::Mul:
+    return Constant::getNullValue(Ty);
   }
 }
 
