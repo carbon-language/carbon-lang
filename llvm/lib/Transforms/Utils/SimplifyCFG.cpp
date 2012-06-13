@@ -122,6 +122,47 @@ static bool SafeToMergeTerminators(TerminatorInst *SI1, TerminatorInst *SI2) {
   return true;
 }
 
+/// isProfitableToFoldUnconditional - Return true if it is safe and profitable
+/// to merge these two terminator instructions together, where SI1 is an
+/// unconditional branch. PhiNodes will store all PHI nodes in common
+/// successors.
+///
+static bool isProfitableToFoldUnconditional(BranchInst *SI1,
+                                          BranchInst *SI2,
+                                          Instruction* Cond,
+                                          SmallVectorImpl<PHINode*> &PhiNodes) {
+  if (SI1 == SI2) return false;  // Can't merge with self!
+  assert(SI1->isUnconditional() && SI2->isConditional());
+
+  // We fold the unconditional branch if we can easily update all PHI nodes in
+  // common successors: 
+  // 1> We have a constant incoming value for the conditional branch;
+  // 2> We have "Cond" as the incoming value for the unconditional branch;
+  // 3> SI2->getCondition() and Cond have same operands.
+  CmpInst *Ci2 = dyn_cast<CmpInst>(SI2->getCondition());
+  if (!Ci2) return false;
+  if (!(Cond->getOperand(0) == Ci2->getOperand(0) &&
+        Cond->getOperand(1) == Ci2->getOperand(1)) &&
+      !(Cond->getOperand(0) == Ci2->getOperand(1) &&
+        Cond->getOperand(1) == Ci2->getOperand(0)))
+    return false;
+
+  BasicBlock *SI1BB = SI1->getParent();
+  BasicBlock *SI2BB = SI2->getParent();
+  SmallPtrSet<BasicBlock*, 16> SI1Succs(succ_begin(SI1BB), succ_end(SI1BB));
+  for (succ_iterator I = succ_begin(SI2BB), E = succ_end(SI2BB); I != E; ++I)
+    if (SI1Succs.count(*I))
+      for (BasicBlock::iterator BBI = (*I)->begin();
+           isa<PHINode>(BBI); ++BBI) {
+        PHINode *PN = cast<PHINode>(BBI);
+        if (PN->getIncomingValueForBlock(SI1BB) != Cond ||
+            !isa<Constant>(PN->getIncomingValueForBlock(SI2BB)))
+          return false;
+        PhiNodes.push_back(PN);
+      }
+  return true;
+}
+
 /// AddPredecessorToBlock - Update PHI nodes in Succ to indicate that there will
 /// now be entries in it from the 'NewPred' block.  The values that will be
 /// flowing into the PHI nodes will be the same as those coming in from
@@ -1506,6 +1547,23 @@ static APInt MultiplyAndLosePrecision(APInt &A, APInt &B, APInt &C, APInt &D,
   return Result;
 }
 
+/// checkCSEInPredecessor - Return true if the given instruction is available
+/// in its predecessor block. If yes, the instruction will be removed.
+///
+bool checkCSEInPredecessor(Instruction *Inst, BasicBlock *PB) {
+  if (!isa<BinaryOperator>(Inst) && !isa<CmpInst>(Inst))
+    return false;
+  for (BasicBlock::iterator I = PB->begin(), E = PB->end(); I != E; I++) {
+    Instruction *PBI = &*I;
+    // Check whether Inst and PBI generate the same value.
+    if (Inst->isIdenticalTo(PBI)) {
+      Inst->replaceAllUsesWith(PBI);
+      Inst->eraseFromParent();
+      return true;
+    }
+  }
+  return false;
+}
 
 /// FoldBranchToCommonDest - If this basic block is simple enough, and if a
 /// predecessor branches to us and one of our successors, fold the block into
@@ -1513,7 +1571,36 @@ static APInt MultiplyAndLosePrecision(APInt &A, APInt &B, APInt &C, APInt &D,
 bool llvm::FoldBranchToCommonDest(BranchInst *BI) {
   BasicBlock *BB = BI->getParent();
 
-  Instruction *Cond = dyn_cast<Instruction>(BI->getCondition());
+  Instruction *Cond = 0;
+  if (BI->isConditional())
+    Cond = dyn_cast<Instruction>(BI->getCondition());
+  else {
+    // For unconditional branch, check for a simple CFG pattern, where
+    // BB has a single predecessor and BB's successor is also its predecessor's
+    // successor. If such pattern exisits, check for CSE between BB and its
+    // predecessor.
+    if (BasicBlock *PB = BB->getSinglePredecessor())
+      if (BranchInst *PBI = dyn_cast<BranchInst>(PB->getTerminator()))
+        if (PBI->isConditional() &&
+            (BI->getSuccessor(0) == PBI->getSuccessor(0) ||
+             BI->getSuccessor(0) == PBI->getSuccessor(1))) {
+          for (BasicBlock::iterator I = BB->begin(), E = BB->end();
+               I != E; ) {
+            Instruction *Curr = I++;
+            if (isa<CmpInst>(Curr)) {
+              Cond = Curr;
+              break;
+            }
+            // Quit if we can't remove this instruction.
+            if (!checkCSEInPredecessor(Curr, PB))
+              return false;
+          }
+        }
+
+    if (Cond == 0)
+      return false;
+  }
+     
   if (Cond == 0 || (!isa<CmpInst>(Cond) && !isa<BinaryOperator>(Cond)) ||
     Cond->getParent() != BB || !Cond->hasOneUse())
   return false;
@@ -1565,7 +1652,7 @@ bool llvm::FoldBranchToCommonDest(BranchInst *BI) {
   
   // Finally, don't infinitely unroll conditional loops.
   BasicBlock *TrueDest  = BI->getSuccessor(0);
-  BasicBlock *FalseDest = BI->getSuccessor(1);
+  BasicBlock *FalseDest = (BI->isConditional()) ? BI->getSuccessor(1) : 0;
   if (TrueDest == BB || FalseDest == BB)
     return false;
 
@@ -1576,23 +1663,33 @@ bool llvm::FoldBranchToCommonDest(BranchInst *BI) {
     // Check that we have two conditional branches.  If there is a PHI node in
     // the common successor, verify that the same value flows in from both
     // blocks.
-    if (PBI == 0 || PBI->isUnconditional() || !SafeToMergeTerminators(BI, PBI))
+    SmallVector<PHINode*, 4> PHIs;
+    if (PBI == 0 || PBI->isUnconditional() ||
+        (BI->isConditional() && 
+         !SafeToMergeTerminators(BI, PBI)) ||
+        (!BI->isConditional() &&
+         !isProfitableToFoldUnconditional(BI, PBI, Cond, PHIs)))
       continue;
     
     // Determine if the two branches share a common destination.
     Instruction::BinaryOps Opc;
     bool InvertPredCond = false;
     
-    if (PBI->getSuccessor(0) == TrueDest)
-      Opc = Instruction::Or;
-    else if (PBI->getSuccessor(1) == FalseDest)
-      Opc = Instruction::And;
-    else if (PBI->getSuccessor(0) == FalseDest)
-      Opc = Instruction::And, InvertPredCond = true;
-    else if (PBI->getSuccessor(1) == TrueDest)
-      Opc = Instruction::Or, InvertPredCond = true;
-    else
-      continue;
+    if (BI->isConditional()) {
+      if (PBI->getSuccessor(0) == TrueDest)
+        Opc = Instruction::Or;
+      else if (PBI->getSuccessor(1) == FalseDest)
+        Opc = Instruction::And;
+      else if (PBI->getSuccessor(0) == FalseDest)
+        Opc = Instruction::And, InvertPredCond = true;
+      else if (PBI->getSuccessor(1) == TrueDest)
+        Opc = Instruction::Or, InvertPredCond = true;
+      else
+        continue;
+    } else {
+      if (PBI->getSuccessor(0) != TrueDest && PBI->getSuccessor(1) != TrueDest)
+        continue;
+    }
 
     // Ensure that any values used in the bonus instruction are also used
     // by the terminator of the predecessor.  This means that those values
@@ -1668,17 +1765,69 @@ bool llvm::FoldBranchToCommonDest(BranchInst *BI) {
     New->takeName(Cond);
     Cond->setName(New->getName()+".old");
     
-    Instruction *NewCond = 
-      cast<Instruction>(Builder.CreateBinOp(Opc, PBI->getCondition(),
+    if (BI->isConditional()) {
+      Instruction *NewCond = 
+        cast<Instruction>(Builder.CreateBinOp(Opc, PBI->getCondition(),
                                             New, "or.cond"));
-    PBI->setCondition(NewCond);
-    if (PBI->getSuccessor(0) == BB) {
-      AddPredecessorToBlock(TrueDest, PredBlock, BB);
-      PBI->setSuccessor(0, TrueDest);
-    }
-    if (PBI->getSuccessor(1) == BB) {
-      AddPredecessorToBlock(FalseDest, PredBlock, BB);
-      PBI->setSuccessor(1, FalseDest);
+      PBI->setCondition(NewCond);
+
+      if (PBI->getSuccessor(0) == BB) {
+        AddPredecessorToBlock(TrueDest, PredBlock, BB);
+        PBI->setSuccessor(0, TrueDest);
+      }
+      if (PBI->getSuccessor(1) == BB) {
+        AddPredecessorToBlock(FalseDest, PredBlock, BB);
+        PBI->setSuccessor(1, FalseDest);
+      }
+    } else {
+      // Update PHI nodes in the common successors.
+      for (unsigned i = 0, e = PHIs.size(); i != e; ++i) {
+        ConstantInt *PBI_C = dyn_cast<ConstantInt>(
+          PHIs[i]->getIncomingValueForBlock(PBI->getParent()));
+        assert(PBI_C->getType()->isIntegerTy(1));
+        Instruction *MergedCond = 0;
+        if (PBI->getSuccessor(0) == TrueDest) {
+          // Create (PBI_Cond and PBI_C) or (!PBI_Cond and BI_Value)
+          // PBI_C is true: PBI_Cond or (!PBI_Cond and BI_Value)
+          //       is false: !PBI_Cond and BI_Value
+          Instruction *NotCond =
+            cast<Instruction>(Builder.CreateNot(PBI->getCondition(),
+                                "not.cond"));
+          MergedCond =
+            cast<Instruction>(Builder.CreateBinOp(Instruction::And,
+                                NotCond, New,
+                                "and.cond"));
+          if (PBI_C->isOne())
+            MergedCond =
+              cast<Instruction>(Builder.CreateBinOp(Instruction::Or,
+                                  PBI->getCondition(), MergedCond,
+                                  "or.cond"));
+        } else {
+          // Create (PBI_Cond and BI_Value) or (!PBI_Cond and PBI_C)
+          // PBI_C is true: (PBI_Cond and BI_Value) or (!PBI_Cond)
+          //       is false: PBI_Cond and BI_Value
+          MergedCond = 
+            cast<Instruction>(Builder.CreateBinOp(Instruction::And,
+                                PBI->getCondition(), New,
+                                "and.cond"));
+          if (PBI_C->isOne()) {
+            Instruction *NotCond =
+              cast<Instruction>(Builder.CreateNot(PBI->getCondition(),
+                                  "not.cond"));
+            MergedCond = 
+              cast<Instruction>(Builder.CreateBinOp(Instruction::Or,
+                                  NotCond, MergedCond,
+                                  "or.cond"));
+          }
+        }
+        // Update PHI Node.
+        PHIs[i]->setIncomingValue(PHIs[i]->getBasicBlockIndex(PBI->getParent()),
+                                  MergedCond);
+      }
+      // Change PBI from Conditional to Unconditional.
+      BranchInst *New_PBI = BranchInst::Create(TrueDest, PBI);
+      EraseTerminatorInstAndDCECond(PBI);
+      PBI = New_PBI;
     }
 
     // TODO: If BB is reachable from all paths through PredBlock, then we
@@ -1686,7 +1835,8 @@ bool llvm::FoldBranchToCommonDest(BranchInst *BI) {
 
     // Merge probability data into PredBlock's branch.
     APInt A, B, C, D;
-    if (ExtractBranchMetadata(PBI, C, D) && ExtractBranchMetadata(BI, A, B)) {
+    if (PBI->isConditional() && BI->isConditional() &&
+        ExtractBranchMetadata(PBI, C, D) && ExtractBranchMetadata(BI, A, B)) {
       // Given IR which does:
       //   bbA:
       //     br i1 %x, label %bbB, label %bbC
@@ -2772,6 +2922,12 @@ bool SimplifyCFGOpt::SimplifyUncondBranch(BranchInst *BI, IRBuilder<> &Builder){
         return true;
     }
   
+  // If this basic block is ONLY a compare and a branch, and if a predecessor
+  // branches to us and our successor, fold the comparison into the
+  // predecessor and use logical operations to update the incoming value
+  // for PHI nodes in common successor.
+  if (FoldBranchToCommonDest(BI))
+    return SimplifyCFG(BB) | true;
   return false;
 }
 
