@@ -639,7 +639,8 @@ iterateChainSucc(AliasAnalysis *AA, const MachineFrameInfo *MFI,
 /// checks whether SU can be aliasing any node dominated
 /// by it.
 static void adjustChainDeps(AliasAnalysis *AA, const MachineFrameInfo *MFI,
-            SUnit *SU, SUnit *ExitSU, std::set<SUnit *> &CheckList) {
+                            SUnit *SU, SUnit *ExitSU, std::set<SUnit *> &CheckList,
+                            unsigned LatencyToLoad) {
   if (!SU)
     return;
 
@@ -650,9 +651,11 @@ static void adjustChainDeps(AliasAnalysis *AA, const MachineFrameInfo *MFI,
        I != IE; ++I) {
     if (SU == *I)
       continue;
-    if (MIsNeedChainEdge(AA, MFI, SU->getInstr(), (*I)->getInstr()))
-      (*I)->addPred(SDep(SU, SDep::Order, /*Latency=*/0, /*Reg=*/0,
+    if (MIsNeedChainEdge(AA, MFI, SU->getInstr(), (*I)->getInstr())) {
+      unsigned Latency = ((*I)->getInstr()->mayLoad()) ? LatencyToLoad : 0;
+      (*I)->addPred(SDep(SU, SDep::Order, Latency, /*Reg=*/0,
                          /*isNormalMemory=*/true));
+    }
     // Now go through all the chain successors and iterate from them.
     // Keep track of visited nodes.
     for (SUnit::const_succ_iterator J = (*I)->Succs.begin(),
@@ -815,8 +818,7 @@ void ScheduleDAGInstrs::buildSchedGraph(AliasAnalysis *AA,
     // after stack slots are lowered to actual addresses.
     // TODO: Use an AliasAnalysis and do real alias-analysis queries, and
     // produce more precise dependence information.
-#define STORE_LOAD_LATENCY 1
-    unsigned TrueMemOrderLatency = 0;
+    unsigned TrueMemOrderLatency = MI->mayStore() ? 1 : 0;
     if (isGlobalMemoryObject(AA, MI)) {
       // Be conservative with these and add dependencies on all memory
       // references, even those that are known to not alias.
@@ -835,7 +837,8 @@ void ScheduleDAGInstrs::buildSchedGraph(AliasAnalysis *AA,
       BarrierChain = SU;
       // This is a barrier event that acts as a pivotal node in the DAG,
       // so it is safe to clear list of exposed nodes.
-      adjustChainDeps(AA, MFI, SU, &ExitSU, RejectMemNodes);
+      adjustChainDeps(AA, MFI, SU, &ExitSU, RejectMemNodes,
+                      TrueMemOrderLatency);
       RejectMemNodes.clear();
       NonAliasMemDefs.clear();
       NonAliasMemUses.clear();
@@ -843,8 +846,13 @@ void ScheduleDAGInstrs::buildSchedGraph(AliasAnalysis *AA,
       // fall-through
     new_alias_chain:
       // Chain all possibly aliasing memory references though SU.
-      if (AliasChain)
-        addChainDependency(AA, MFI, SU, AliasChain, RejectMemNodes);
+      if (AliasChain) {
+        unsigned ChainLatency = 0;
+        if (AliasChain->getInstr()->mayLoad())
+          ChainLatency = TrueMemOrderLatency;
+        addChainDependency(AA, MFI, SU, AliasChain, RejectMemNodes,
+                           ChainLatency);
+      }
       AliasChain = SU;
       for (unsigned k = 0, m = PendingLoads.size(); k != m; ++k)
         addChainDependency(AA, MFI, SU, PendingLoads[k], RejectMemNodes,
@@ -858,13 +866,13 @@ void ScheduleDAGInstrs::buildSchedGraph(AliasAnalysis *AA,
           addChainDependency(AA, MFI, SU, I->second[i], RejectMemNodes,
                              TrueMemOrderLatency);
       }
-      adjustChainDeps(AA, MFI, SU, &ExitSU, RejectMemNodes);
+      adjustChainDeps(AA, MFI, SU, &ExitSU, RejectMemNodes,
+                      TrueMemOrderLatency);
       PendingLoads.clear();
       AliasMemDefs.clear();
       AliasMemUses.clear();
     } else if (MI->mayStore()) {
       bool MayAlias = true;
-      TrueMemOrderLatency = STORE_LOAD_LATENCY;
       if (const Value *V = getUnderlyingObjectForInstr(MI, MFI, MayAlias)) {
         // A store to a specific PseudoSourceValue. Add precise dependencies.
         // Record the def in MemDefs, first adding a dep if there is
@@ -905,7 +913,8 @@ void ScheduleDAGInstrs::buildSchedGraph(AliasAnalysis *AA,
             addChainDependency(AA, MFI, SU, AliasChain, RejectMemNodes);
           // But we also should check dependent instructions for the
           // SU in question.
-          adjustChainDeps(AA, MFI, SU, &ExitSU, RejectMemNodes);
+          adjustChainDeps(AA, MFI, SU, &ExitSU, RejectMemNodes,
+                          TrueMemOrderLatency);
         }
         // Add dependence on barrier chain, if needed.
         // There is no point to check aliasing on barrier event. Even if
@@ -927,7 +936,6 @@ void ScheduleDAGInstrs::buildSchedGraph(AliasAnalysis *AA,
                             /*isArtificial=*/true));
     } else if (MI->mayLoad()) {
       bool MayAlias = true;
-      TrueMemOrderLatency = 0;
       if (MI->isInvariantLoad(AA)) {
         // Invariant load, no chain dependencies needed!
       } else {
@@ -955,7 +963,7 @@ void ScheduleDAGInstrs::buildSchedGraph(AliasAnalysis *AA,
           MayAlias = true;
         }
         if (MayAlias)
-          adjustChainDeps(AA, MFI, SU, &ExitSU, RejectMemNodes);
+          adjustChainDeps(AA, MFI, SU, &ExitSU, RejectMemNodes, /*Latency=*/0);
         // Add dependencies on alias and barrier chains, if needed.
         if (MayAlias && AliasChain)
           addChainDependency(AA, MFI, SU, AliasChain, RejectMemNodes);
