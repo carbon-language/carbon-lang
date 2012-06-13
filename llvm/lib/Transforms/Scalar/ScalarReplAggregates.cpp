@@ -1764,6 +1764,12 @@ bool SROA::TypeHasComponent(Type *T, uint64_t Offset, uint64_t Size) {
     if (Offset >= AT->getNumElements() * EltSize)
       return false;
     Offset %= EltSize;
+  } else if (VectorType *VT = dyn_cast<VectorType>(T)) {
+    EltTy = VT->getElementType();
+    EltSize = TD->getTypeAllocSize(EltTy);
+    if (Offset >= VT->getNumElements() * EltSize)
+      return false;
+    Offset %= EltSize;
   } else {
     return false;
   }
