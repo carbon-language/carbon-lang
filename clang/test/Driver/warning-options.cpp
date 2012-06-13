@@ -13,3 +13,6 @@
 // NO_PEDANTIC-NOT: -pedantic
 // RUN: %clang -### -pedantic -pedantic -no-pedantic -pedantic %s 2>&1 | FileCheck -check-prefix=PEDANTIC %s
 // PEDANTIC: -pedantic
+
+// PR12920: They use gcc driver. Clang tends to pass -pedantic to gcc-as and gcc-ld.
+// XFAIL: cygwin,mingw32
