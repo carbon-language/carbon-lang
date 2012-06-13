@@ -58,9 +58,14 @@ void MipsAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     return;
   }
 
-  MCInst TmpInst0;
-  MCInstLowering.Lower(MI, TmpInst0);
-  OutStreamer.EmitInstruction(TmpInst0);
+  MachineBasicBlock::const_instr_iterator I = MI;
+  MachineBasicBlock::const_instr_iterator E = MI->getParent()->instr_end();
+
+  do {
+    MCInst TmpInst0;
+    MCInstLowering.Lower(I++, TmpInst0);
+    OutStreamer.EmitInstruction(TmpInst0);
+  } while ((I != E) && I->isInsideBundle());
 }
 
 //===----------------------------------------------------------------------===//
