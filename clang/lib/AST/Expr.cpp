@@ -679,7 +679,8 @@ void StringLiteral::setString(ASTContext &C, StringRef Str,
 SourceLocation StringLiteral::
 getLocationOfByte(unsigned ByteNo, const SourceManager &SM,
                   const LangOptions &Features, const TargetInfo &Target) const {
-  assert(Kind == StringLiteral::Ascii && "This only works for ASCII strings");
+  assert((Kind == StringLiteral::Ascii || Kind == StringLiteral::UTF8) &&
+         "Only narrow string literals are currently supported");
 
   // Loop over all of the tokens in this string until we find the one that
   // contains the byte we're looking for.

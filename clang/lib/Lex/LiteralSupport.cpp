@@ -250,6 +250,39 @@ static bool ProcessUCNEscape(const char *ThisTokBegin, const char *&ThisTokBuf,
   return true;
 }
 
+/// MeasureUCNEscape - Determine the number of bytes within the resulting string
+/// which this UCN will occupy.
+static int MeasureUCNEscape(const char *ThisTokBegin, const char *&ThisTokBuf,
+                            const char *ThisTokEnd, unsigned CharByteWidth,
+                            const LangOptions &Features, bool &HadError) {
+  // UTF-32: 4 bytes per escape.
+  if (CharByteWidth == 4)
+    return 4;
+
+  uint32_t UcnVal = 0;
+  unsigned short UcnLen = 0;
+  FullSourceLoc Loc;
+
+  if (!ProcessUCNEscape(ThisTokBegin, ThisTokBuf, ThisTokEnd, UcnVal,
+                        UcnLen, Loc, 0, Features, true)) {
+    HadError = true;
+    return 0;
+  }
+
+  // UTF-16: 2 bytes for BMP, 4 bytes otherwise.
+  if (CharByteWidth == 2)
+    return UcnVal <= 0xFFFF ? 2 : 4;
+
+  // UTF-8.
+  if (UcnVal < 0x80)
+    return 1;
+  if (UcnVal < 0x800)
+    return 2;
+  if (UcnVal < 0x10000)
+    return 3;
+  return 4;
+}
+
 /// EncodeUCNEscape - Read the Universal Character Name, check constraints and
 /// convert the UTF32 to UTF8 or UTF16. This is a subroutine of
 /// StringLiteralParser. When we decide to implement UCN's for identifiers,
@@ -265,7 +298,7 @@ static void EncodeUCNEscape(const char *ThisTokBegin, const char *&ThisTokBuf,
   unsigned short UcnLen = 0;
   if (!ProcessUCNEscape(ThisTokBegin, ThisTokBuf, ThisTokEnd, UcnVal, UcnLen,
                         Loc, Diags, Features, true)) {
-    HadError = 1;
+    HadError = true;
     return;
   }
 
@@ -1369,14 +1402,31 @@ unsigned StringLiteralParser::getOffsetOfStringByte(const Token &Tok,
   if (StringInvalid)
     return 0;
 
-  assert(SpellingPtr[0] != 'L' && SpellingPtr[0] != 'u' &&
-         SpellingPtr[0] != 'U' && "Doesn't handle wide or utf strings yet");
-
-
   const char *SpellingStart = SpellingPtr;
   const char *SpellingEnd = SpellingPtr+TokLen;
 
-  // Skip over the leading quote.
+  // Handle UTF-8 strings just like narrow strings.
+  if (SpellingPtr[0] == 'u' && SpellingPtr[1] == '8')
+    SpellingPtr += 2;
+
+  assert(SpellingPtr[0] != 'L' && SpellingPtr[0] != 'u' &&
+         SpellingPtr[0] != 'U' && "Doesn't handle wide or utf strings yet");
+
+  // For raw string literals, this is easy.
+  if (SpellingPtr[0] == 'R') {
+    assert(SpellingPtr[1] == '"' && "Should be a raw string literal!");
+    // Skip 'R"'.
+    SpellingPtr += 2;
+    while (*SpellingPtr != '(') {
+      ++SpellingPtr;
+      assert(SpellingPtr < SpellingEnd && "Missing ( for raw string literal");
+    }
+    // Skip '('.
+    ++SpellingPtr;
+    return SpellingPtr - SpellingStart + ByteNo;
+  }
+
+  // Skip over the leading quote
   assert(SpellingPtr[0] == '"' && "Should be a string literal!");
   ++SpellingPtr;
 
@@ -1393,11 +1443,23 @@ unsigned StringLiteralParser::getOffsetOfStringByte(const Token &Tok,
 
     // Otherwise, this is an escape character.  Advance over it.
     bool HadError = false;
-    ProcessCharEscape(SpellingPtr, SpellingEnd, HadError,
-                      FullSourceLoc(Tok.getLocation(), SM),
-                      CharByteWidth*8, Diags);
+    if (SpellingPtr[1] == 'u' || SpellingPtr[1] == 'U') {
+      const char *EscapePtr = SpellingPtr;
+      unsigned Len = MeasureUCNEscape(SpellingStart, SpellingPtr, SpellingEnd,
+                                      1, Features, HadError);
+      if (Len > ByteNo) {
+        // ByteNo is somewhere within the escape sequence.
+        SpellingPtr = EscapePtr;
+        break;
+      }
+      ByteNo -= Len;
+    } else {
+      ProcessCharEscape(SpellingPtr, SpellingEnd, HadError,
+                        FullSourceLoc(Tok.getLocation(), SM),
+                        CharByteWidth*8, Diags);
+      --ByteNo;
+    }
     assert(!HadError && "This method isn't valid on erroneous strings");
-    --ByteNo;
   }
 
   return SpellingPtr-SpellingStart;

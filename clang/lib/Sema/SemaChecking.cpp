@@ -2633,7 +2633,7 @@ void Sema::CheckFormatString(const StringLiteral *FExpr,
                              bool inFunctionCall) {
   
   // CHECK: is the format string a wide literal?
-  if (!FExpr->isAscii()) {
+  if (!FExpr->isAscii() && !FExpr->isUTF8()) {
     CheckFormatHandler::EmitFormatDiagnostic(
       *this, inFunctionCall, Args[format_idx],
       PDiag(diag::warn_format_string_is_wide_literal), FExpr->getLocStart(),
