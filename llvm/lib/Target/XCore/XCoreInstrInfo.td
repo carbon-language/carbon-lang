@@ -796,7 +796,7 @@ def MKMSK_rus : _FRUS<(outs GRRegs:$dst), (ins i32imm:$size),
 
 def MKMSK_2r : _FRUS<(outs GRRegs:$dst), (ins GRRegs:$size),
                  "mkmsk $dst, $size",
-                 [(set GRRegs:$dst, (add (shl 1, GRRegs:$size), 0xffffffff))]>;
+                 [(set GRRegs:$dst, (add (shl 1, GRRegs:$size), -1))]>;
 
 def GETR_rus : _FRUS<(outs GRRegs:$dst), (ins i32imm:$type),
                  "getr $dst, $type",
