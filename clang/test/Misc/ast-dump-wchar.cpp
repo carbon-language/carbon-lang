@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -std=c++11 -ast-dump %s | FileCheck %s 
+// RUN: %clang_cc1 -std=c++11 -ast-dump %s -triple x86_64-linux-gnu | FileCheck %s 
 
 char c8[] = u8"test\0\\\"\t\a\b\234";
 // CHECK: char c8[12] = (StringLiteral {{.*}} lvalue u8"test\000\\\"\t\a\b\234")
