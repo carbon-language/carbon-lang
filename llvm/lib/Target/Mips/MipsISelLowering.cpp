@@ -2605,7 +2605,9 @@ MipsTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   CCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(),
                  getTargetMachine(), ArgLocs, *DAG.getContext());
 
-  if (IsO32)
+  if (CallConv == CallingConv::Fast)
+    CCInfo.AnalyzeCallOperands(Outs, CC_Mips_FastCC);
+  else if (IsO32)
     CCInfo.AnalyzeCallOperands(Outs, CC_MipsO32);
   else if (HasMips64)
     AnalyzeMips64CallOperands(CCInfo, Outs);
@@ -2630,7 +2632,7 @@ MipsTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   // Update size of the maximum argument space.
   // For O32, a minimum of four words (16 bytes) of argument space is
   // allocated.
-  if (IsO32)
+  if (IsO32 && (CallConv != CallingConv::Fast))
     NextStackOffset = std::max(NextStackOffset, (unsigned)16);
 
   unsigned MaxCallFrameSize = MipsFI->getMaxCallFrameSize();
@@ -2990,7 +2992,9 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
   CCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(),
                  getTargetMachine(), ArgLocs, *DAG.getContext());
 
-  if (IsO32)
+  if (CallConv == CallingConv::Fast)
+    CCInfo.AnalyzeFormalArguments(Ins, CC_Mips_FastCC);
+  else if (IsO32)
     CCInfo.AnalyzeFormalArguments(Ins, CC_MipsO32);
   else
     CCInfo.AnalyzeFormalArguments(Ins, CC_Mips);
