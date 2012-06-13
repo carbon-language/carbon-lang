@@ -295,6 +295,7 @@ MipsTargetLowering(MipsTargetMachine &TM)
   setTargetDAGCombine(ISD::SELECT);
   setTargetDAGCombine(ISD::AND);
   setTargetDAGCombine(ISD::OR);
+  setTargetDAGCombine(ISD::ADD);
 
   setMinFunctionAlignment(HasMips64 ? 3 : 2);
 
@@ -733,6 +734,33 @@ static SDValue PerformORCombine(SDNode *N, SelectionDAG& DAG,
                      DAG.getConstant(SMSize0, MVT::i32), And0.getOperand(0));
 }
 
+static SDValue PerformADDCombine(SDNode *N, SelectionDAG& DAG,
+                                 TargetLowering::DAGCombinerInfo &DCI,
+                                 const MipsSubtarget* Subtarget) {
+  // (add v0, (add v1, abs_lo(tjt))) => (add (add v0, v1), abs_lo(tjt))
+
+  if (DCI.isBeforeLegalizeOps())
+    return SDValue();
+
+  SDValue Add = N->getOperand(1);
+
+  if (Add.getOpcode() != ISD::ADD)
+    return SDValue();
+
+  SDValue Lo = Add.getOperand(1);
+
+  if ((Lo.getOpcode() != MipsISD::Lo) ||
+      (Lo.getOperand(0).getOpcode() != ISD::TargetJumpTable))
+    return SDValue();
+
+  EVT ValTy = N->getValueType(0);
+  DebugLoc DL = N->getDebugLoc();
+
+  SDValue Add1 = DAG.getNode(ISD::ADD, DL, ValTy, N->getOperand(0),
+                             Add.getOperand(0));
+  return DAG.getNode(ISD::ADD, DL, ValTy, Add1, Lo);
+}
+
 SDValue  MipsTargetLowering::PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI)
   const {
   SelectionDAG &DAG = DCI.DAG;
@@ -753,6 +781,8 @@ SDValue  MipsTargetLowering::PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI)
     return PerformANDCombine(N, DAG, DCI, Subtarget);
   case ISD::OR:
     return PerformORCombine(N, DAG, DCI, Subtarget);
+  case ISD::ADD:
+    return PerformADDCombine(N, DAG, DCI, Subtarget);
   }
 
   return SDValue();

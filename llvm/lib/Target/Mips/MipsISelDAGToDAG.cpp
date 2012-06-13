@@ -335,11 +335,11 @@ SelectAddr(SDNode *Parent, SDValue Addr, SDValue &Base, SDValue &Offset) {
     //  lui $2, %hi($CPI1_0)
     //  lwc1 $f0, %lo($CPI1_0)($2)
     if (Addr.getOperand(1).getOpcode() == MipsISD::Lo) {
-      SDValue LoVal = Addr.getOperand(1);
-      if (isa<ConstantPoolSDNode>(LoVal.getOperand(0)) ||
-          isa<GlobalAddressSDNode>(LoVal.getOperand(0))) {
+      SDValue LoVal = Addr.getOperand(1), Opnd0 = LoVal.getOperand(0);
+      if (isa<ConstantPoolSDNode>(Opnd0) || isa<GlobalAddressSDNode>(Opnd0) ||
+          isa<JumpTableSDNode>(Opnd0)) {
         Base = Addr.getOperand(0);
-        Offset = LoVal.getOperand(0);
+        Offset = Opnd0;
         return true;
       }
     }
