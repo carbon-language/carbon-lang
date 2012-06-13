@@ -39,21 +39,15 @@ let isAsmParserOnly = 1 in {
 }
 
 // Scalar load 2 addr operand instructions
-let Constraints = "$src1 = $dst" in {
 multiclass xop2opsld<bits<8> opc, string OpcodeStr, Intrinsic Int,
                      Operand memop, ComplexPattern mem_cpat> {
-  def rr : IXOP<opc, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src1,
-                                                        VR128:$src2),
-           !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
-           [(set VR128:$dst, (Int VR128:$src1, VR128:$src2))]>, VEX;
-  def rm : IXOP<opc, MRMSrcMem, (outs VR128:$dst), (ins VR128:$src1,
-                                                        memop:$src2),
-           !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
-           [(set VR128:$dst, (Int VR128:$src1,
-                                  (bitconvert mem_cpat:$src2)))]>, VEX;
+  def rr : IXOP<opc, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
+           !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
+           [(set VR128:$dst, (Int VR128:$src))]>, VEX;
+  def rm : IXOP<opc, MRMSrcMem, (outs VR128:$dst), (ins memop:$src),
+           !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
+           [(set VR128:$dst, (Int (bitconvert mem_cpat:$src)))]>, VEX;
 }
-
-} // Constraints = "$src1 = $dst"
 
 let isAsmParserOnly = 1 in {
   defm VFRCZSS   : xop2opsld<0x82, "vfrczss", int_x86_xop_vfrcz_ss,

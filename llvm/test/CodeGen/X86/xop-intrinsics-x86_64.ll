@@ -875,37 +875,37 @@ define <8 x i16> @test_int_x86_xop_vpshlw_mr(<8 x i16>* %a0, <8 x i16> %a1) {
 }
 declare <8 x i16> @llvm.x86.xop.vpshlw(<8 x i16>, <8 x i16>) nounwind readnone
 
-define <4 x float> @test_int_x86_xop_vfrcz_ss(<4 x float> %a0, <4 x float> %a1) {
+define <4 x float> @test_int_x86_xop_vfrcz_ss(<4 x float> %a0) {
   ; CHECK-NOT: mov
   ; CHECK: vfrczss
-  %res = call <4 x float> @llvm.x86.xop.vfrcz.ss(<4 x float> %a0, <4 x float> %a1) ;
+  %res = call <4 x float> @llvm.x86.xop.vfrcz.ss(<4 x float> %a0) ;
   ret <4 x float> %res
 }
-define <4 x float> @test_int_x86_xop_vfrcz_ss_mem(<4 x float> %a0, float* %a1) {
+define <4 x float> @test_int_x86_xop_vfrcz_ss_mem(float* %a0) {
   ; CHECK-NOT: mov
   ; CHECK: vfrczss
-  %elem = load float* %a1
+  %elem = load float* %a0
   %vec = insertelement <4 x float> undef, float %elem, i32 0
-  %res = call <4 x float> @llvm.x86.xop.vfrcz.ss(<4 x float> %a0, <4 x float> %vec) ;
+  %res = call <4 x float> @llvm.x86.xop.vfrcz.ss(<4 x float> %vec) ;
   ret <4 x float> %res
 }
-declare <4 x float> @llvm.x86.xop.vfrcz.ss(<4 x float>, <4 x float>) nounwind readnone
+declare <4 x float> @llvm.x86.xop.vfrcz.ss(<4 x float>) nounwind readnone
 
-define <2 x double> @test_int_x86_xop_vfrcz_sd(<2 x double> %a0, <2 x double> %a1) {
+define <2 x double> @test_int_x86_xop_vfrcz_sd(<2 x double> %a0) {
   ; CHECK-NOT: mov
   ; CHECK: vfrczsd
-  %res = call <2 x double> @llvm.x86.xop.vfrcz.sd(<2 x double> %a0, <2 x double> %a1) ;
+  %res = call <2 x double> @llvm.x86.xop.vfrcz.sd(<2 x double> %a0) ;
   ret <2 x double> %res
 }
-define <2 x double> @test_int_x86_xop_vfrcz_sd_mem(<2 x double> %a0, double* %a1) {
+define <2 x double> @test_int_x86_xop_vfrcz_sd_mem(double* %a0) {
   ; CHECK-NOT: mov
   ; CHECK: vfrczsd
-  %elem = load double* %a1
+  %elem = load double* %a0
   %vec = insertelement <2 x double> undef, double %elem, i32 0
-  %res = call <2 x double> @llvm.x86.xop.vfrcz.sd(<2 x double> %a0, <2 x double> %vec) ;
+  %res = call <2 x double> @llvm.x86.xop.vfrcz.sd(<2 x double> %vec) ;
   ret <2 x double> %res
 }
-declare <2 x double> @llvm.x86.xop.vfrcz.sd(<2 x double>, <2 x double>) nounwind readnone
+declare <2 x double> @llvm.x86.xop.vfrcz.sd(<2 x double>) nounwind readnone
 
 define <2 x double> @test_int_x86_xop_vfrcz_pd(<2 x double> %a0) {
   ; CHECK: vfrczpd

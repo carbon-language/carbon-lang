@@ -89,6 +89,19 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
       if (Name == "x86.sse41.ptestnzc")
         return UpgradeSSE41Function(F, Intrinsic::x86_sse41_ptestnzc, NewFn);
     }
+    // frcz.ss/sd may need to have an argument dropped
+    if (Name.startswith("x86.xop.vfrcz.ss") && F->arg_size() == 2) {
+      F->setName(Name + ".old");
+      NewFn = Intrinsic::getDeclaration(F->getParent(),
+                                        Intrinsic::x86_xop_vfrcz_ss);
+      return true;
+    }
+    if (Name.startswith("x86.xop.vfrcz.sd") && F->arg_size() == 2) {
+      F->setName(Name + ".old");
+      NewFn = Intrinsic::getDeclaration(F->getParent(),
+                                        Intrinsic::x86_xop_vfrcz_sd);
+      return true;
+    }
     // Fix the FMA4 intrinsics to remove the 4
     if (Name.startswith("x86.fma4.")) {
       F->setName("llvm.x86.fma" + Name.substr(8));
@@ -282,9 +295,16 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
     CI->eraseFromParent();
     return;
 
+  case Intrinsic::x86_xop_vfrcz_ss:
+  case Intrinsic::x86_xop_vfrcz_sd:
+    CI->replaceAllUsesWith(Builder.CreateCall(NewFn, CI->getArgOperand(1),
+                                              Name));
+    CI->eraseFromParent();
+    return;
+
   case Intrinsic::x86_sse41_ptestc:
   case Intrinsic::x86_sse41_ptestz:
-  case Intrinsic::x86_sse41_ptestnzc:
+  case Intrinsic::x86_sse41_ptestnzc: {
     // The arguments for these intrinsics used to be v4f32, and changed
     // to v2i64. This is purely a nop, since those are bitwise intrinsics.
     // So, the only thing required is a bitcast for both arguments.
@@ -309,6 +329,7 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
     CI->replaceAllUsesWith(NewCall);
     CI->eraseFromParent();
     return;
+  }
   }
 }
 
