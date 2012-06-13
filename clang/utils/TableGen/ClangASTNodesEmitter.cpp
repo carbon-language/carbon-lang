@@ -11,9 +11,57 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "ClangASTNodesEmitter.h"
+#include "llvm/TableGen/Record.h"
+#include "llvm/TableGen/TableGenBackend.h"
+#include <cctype>
+#include <map>
 #include <set>
+#include <string>
 using namespace llvm;
+
+/// ClangASTNodesEmitter - The top-level class emits .inc files containing
+///  declarations of Clang statements.
+///
+namespace {
+class ClangASTNodesEmitter {
+  // A map from a node to each of its derived nodes.
+  typedef std::multimap<Record*, Record*> ChildMap;
+  typedef ChildMap::const_iterator ChildIterator;
+
+  RecordKeeper &Records;
+  Record Root;
+  const std::string &BaseSuffix;
+
+  // Create a macro-ized version of a name
+  static std::string macroName(std::string S) {
+    for (unsigned i = 0; i < S.size(); ++i)
+      S[i] = std::toupper(S[i]);
+
+    return S;
+  }
+
+  // Return the name to be printed in the base field. Normally this is
+  // the record's name plus the base suffix, but if it is the root node and
+  // the suffix is non-empty, it's just the suffix.
+  std::string baseName(Record &R) {
+    if (&R == &Root && !BaseSuffix.empty())
+      return BaseSuffix;
+
+    return R.getName() + BaseSuffix;
+  }
+
+  std::pair<Record *, Record *> EmitNode (const ChildMap &Tree, raw_ostream& OS,
+                                          Record *Base);
+public:
+  explicit ClangASTNodesEmitter(RecordKeeper &R, const std::string &N,
+                                const std::string &S)
+    : Records(R), Root(N, SMLoc(), R), BaseSuffix(S)
+    {}
+
+  // run - Output the .inc file contents
+  void run(raw_ostream &OS);
+};
+} // end anonymous namespace
 
 //===----------------------------------------------------------------------===//
 // Statement Node Tables (.inc file) generation.
@@ -124,7 +172,15 @@ void ClangASTNodesEmitter::run(raw_ostream &OS) {
   OS << "#undef ABSTRACT_" << macroName(Root.getName()) << "\n";
 }
 
-void ClangDeclContextEmitter::run(raw_ostream &OS) {
+namespace clang {
+void EmitClangASTNodes(RecordKeeper &RK, raw_ostream &OS,
+                       const std::string &N, const std::string &S) {
+  ClangASTNodesEmitter(RK, N, S).run(OS);
+}
+
+// Emits and addendum to a .inc file to enumerate the clang declaration
+// contexts.
+void EmitClangDeclContext(RecordKeeper &Records, raw_ostream &OS) {
   // FIXME: Find a .td file format to allow for this to be represented better.
 
   OS << "#ifndef DECL_CONTEXT\n";
@@ -166,3 +222,4 @@ void ClangDeclContextEmitter::run(raw_ostream &OS) {
   OS << "#undef DECL_CONTEXT\n";
   OS << "#undef DECL_CONTEXT_BASE\n";
 }
+} // end namespace clang

@@ -11,9 +11,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "ClangSACheckersEmitter.h"
-#include "llvm/TableGen/Record.h"
 #include "llvm/ADT/DenseSet.h"
+#include "llvm/TableGen/Record.h"
+#include "llvm/TableGen/TableGenBackend.h"
 #include <map>
 #include <string>
 using namespace llvm;
@@ -93,7 +93,8 @@ static void addPackageToCheckerGroup(const Record *package, const Record *group,
     addPackageToCheckerGroup(*I, group, recordGroupMap);
 }
 
-void ClangSACheckersEmitter::run(raw_ostream &OS) {
+namespace clang {
+void EmitClangSACheckers(RecordKeeper &Records, raw_ostream &OS) {
   std::vector<Record*> checkers = Records.getAllDerivedDefinitions("Checker");
   llvm::DenseMap<const Record *, unsigned> checkerRecIndexMap;
   for (unsigned i = 0, e = checkers.size(); i != e; ++i)
@@ -317,3 +318,4 @@ void ClangSACheckersEmitter::run(raw_ostream &OS) {
   }
   OS << "#endif // GET_CHECKNAME_TABLE\n\n";
 }
+} // end namespace clang
