@@ -1509,7 +1509,7 @@ void MicrosoftMangleContext::mangleCXXDtorThunk(const CXXDestructorDecl *DD,
 }
 void MicrosoftMangleContext::mangleCXXVTable(const CXXRecordDecl *RD,
                                              raw_ostream &Out) {
-  // <mangled-name> ::= ? <operator-name> <class-name> <storage-class> \
+  // <mangled-name> ::= ? <operator-name> <class-name> <storage-class>
   //                      <cvr-qualifiers> [<name>] @
   // <operator-name> ::= _7 # vftable
   //                 ::= _8 # vbtable
