@@ -303,6 +303,8 @@ MipsTargetLowering(MipsTargetMachine &TM)
 
   setExceptionPointerRegister(IsN64 ? Mips::A0_64 : Mips::A0);
   setExceptionSelectorRegister(IsN64 ? Mips::A1_64 : Mips::A1);
+
+  maxStoresPerMemcpy = 16;
 }
 
 bool MipsTargetLowering::allowsUnalignedMemoryAccesses(EVT VT) const {
@@ -3453,6 +3455,16 @@ bool
 MipsTargetLowering::isOffsetFoldingLegal(const GlobalAddressSDNode *GA) const {
   // The Mips target isn't yet aware of offsets.
   return false;
+}
+
+EVT MipsTargetLowering::getOptimalMemOpType(uint64_t Size, unsigned DstAlign,
+                                            unsigned SrcAlign, bool IsZeroVal,
+                                            bool MemcpyStrSrc,
+                                            MachineFunction &MF) const {
+  if (Subtarget->hasMips64())
+    return MVT::i64;
+
+  return MVT::i32;
 }
 
 bool MipsTargetLowering::isFPImmLegal(const APFloat &Imm, EVT VT) const {
