@@ -320,7 +320,7 @@ public:
   /// being executed is given by Probability, and Confidence is a measure
   /// of our confidence that it will be properly predicted.
   virtual
-  bool isProfitableToIfCvt(MachineBasicBlock &MBB, unsigned NumCyles,
+  bool isProfitableToIfCvt(MachineBasicBlock &MBB, unsigned NumCycles,
                            unsigned ExtraPredCycles,
                            const BranchProbability &Probability) const {
     return false;
@@ -348,7 +348,7 @@ public:
   /// Probability, and Confidence is a measure of our confidence that it
   /// will be properly predicted.
   virtual bool
-  isProfitableToDupForIfCvt(MachineBasicBlock &MBB, unsigned NumCyles,
+  isProfitableToDupForIfCvt(MachineBasicBlock &MBB, unsigned NumCycles,
                             const BranchProbability &Probability) const {
     return false;
   }
