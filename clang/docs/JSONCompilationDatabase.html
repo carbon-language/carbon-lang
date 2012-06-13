@@ -13,11 +13,11 @@
 <div id="content">
 
 <h1>JSON Compilation Database Format Specification</h1>
-<p>This document describes a format to specify how to replay
+<p>This document describes a format for specifying how to replay
 single compilations independently of the build system.</p>
 
 <h2>Background</h2>
-<p>Tools based on the C++ AST need full information how to
+<p>Tools based on the C++ Abstract Syntax Tree need full information how to
 parse a translation unit. Usually this information is implicitly
 available in the build system, but running tools as part of
 the build system is not necessarily the best solution:
@@ -37,7 +37,7 @@ according to the build dependency graph.</li>
 </p>
 
 <h2>Supported Systems</h2>
-<p>Currently <a href="http://cmake.org">CMake</a> support generation of compilation
+<p>Currently <a href="http://cmake.org">CMake</a> (since 2.8.5) supports generation of compilation
 databases for Unix Makefile builds (Ninja builds in the works) with the option
 CMAKE_EXPORT_COMPILE_COMMANDS.</p>
 <p>Clang's tooling interface supports reading compilation databases; see
@@ -46,9 +46,9 @@ is in the works.</p>
 
 <h2>Format</h2>
 <p>A compilation database is a JSON file, which consist of an array of
-objects, where each object specifies one way a translation unit
+"command objects", where each command object specifies one way a translation unit
 is compiled in the project.</p>
-<p>Each object contains the translation unit's main file, the working
+<p>Each command object contains the translation unit's main file, the working
 directory of the compile run and the actual compile command.</p>
 <p>Example:
 <pre>
@@ -66,7 +66,7 @@ in the <b>command</b> or <b>file</b> fields must be either absolute or relative 
 this directory.</li>
 <li><b>file:</b> The main translation unit source processed by this compilation step.
 This is used by tools as the key into the compilation database. There can be multiple
-compile objects for the same file, for example if the same translation unit is
+command objects for the same file, for example if the same source file is
 compiled with different configurations.</li>
 <li><b>command:</b> The compile command executed. After JSON unescaping, this must
 be a valid command to rerun the exact compilation step for the translation unit in
