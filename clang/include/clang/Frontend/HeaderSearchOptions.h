@@ -69,12 +69,27 @@ public:
         IsInternal(isInternal), ImplicitExternC(implicitExternC) {}
   };
 
+  struct SystemHeaderPrefix {
+    /// A prefix to be matched against paths in #include directives.
+    std::string Prefix;
+
+    /// True if paths beginning with this prefix should be treated as system
+    /// headers.
+    bool IsSystemHeader;
+
+    SystemHeaderPrefix(StringRef Prefix, bool IsSystemHeader)
+      : Prefix(Prefix), IsSystemHeader(IsSystemHeader) {}
+  };
+
   /// If non-empty, the directory to use as a "virtual system root" for include
   /// paths.
   std::string Sysroot;
 
   /// User specified include entries.
   std::vector<Entry> UserEntries;
+
+  /// User-specified system header prefixes.
+  std::vector<SystemHeaderPrefix> SystemHeaderPrefixes;
 
   /// The directory which holds the compiler resource files (builtin includes,
   /// etc.).
@@ -116,6 +131,13 @@ public:
                bool IsInternal = false, bool ImplicitExternC = false) {
     UserEntries.push_back(Entry(Path, Group, IsUserSupplied, IsFramework,
                                 IgnoreSysRoot, IsInternal, ImplicitExternC));
+  }
+
+  /// AddSystemHeaderPrefix - Override whether #include directives naming a
+  /// path starting with \arg Prefix should be considered as naming a system
+  /// header.
+  void AddSystemHeaderPrefix(StringRef Prefix, bool IsSystemHeader) {
+    SystemHeaderPrefixes.push_back(SystemHeaderPrefix(Prefix, IsSystemHeader));
   }
 };
 

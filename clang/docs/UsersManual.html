@@ -43,6 +43,7 @@ td {
    <li><a href="#diagnostics_categories">Diagnostic Categories</a></li>
    <li><a href="#diagnostics_commandline">Controlling Diagnostics via Command Line Flags</a></li>
    <li><a href="#diagnostics_pragmas">Controlling Diagnostics via Pragmas</a></li>
+   <li><a href="#diagnostics_systemheader">Controlling Diagnostics in System Headers</a></li>
    <li><a href="#diagnostics_enable_everything">Enabling All Warnings</a></li>
    <li><a href="#analyzer_diagnositics">Controlling Static Analyzer Diagnostics</a></li>
    </ul>
@@ -653,6 +654,45 @@ pragmas. It should be noted that while Clang supports the GCC pragma, Clang and
 GCC do not support the exact same set of warnings, so even when using GCC
 compatible #pragmas there is no guarantee that they will have identical behaviour
 on both compilers. </p>
+
+<h4 id="diagnostics_systemheader">Controlling Diagnostics in System Headers</h4>
+
+<p>Warnings are suppressed when they occur in system headers. By default, an
+included file is treated as a system header if it is found in an include path
+specified by <tt>-isystem</tt>, but this can be overridden in several ways.</p>
+
+<p>The <tt>system_header</tt> pragma can be used to mark the current file as
+being a system header. No warnings will be produced from the location of the
+pragma onwards within the same file.</p>
+
+<pre>
+char a = 'xy'; // warning
+
+#pragma clang system_header
+
+char b = 'ab'; // no warning
+</pre>
+
+<p>The <tt>-isystem-prefix</tt> and <tt>-ino-system-prefix</tt> command-line
+arguments can be used to override whether subsets of an include path are treated
+as system headers. When the name in a <tt>#include</tt> directive is found
+within a header search path and starts with a system prefix, the header is
+treated as a system header. The last prefix on the command-line which matches
+the specified header name takes precedence. For instance:</p>
+
+<pre>
+clang -Ifoo -isystem bar -isystem-prefix x/ -ino-system-prefix x/y/
+</pre>
+
+<p>Here, <tt>#include "x/a.h"</tt> is treated as including a system header, even
+if the header is found in <tt>foo</tt>, and <tt>#include "x/y/b.h"</tt> is
+treated as not including a system header, even if the header is found in
+<tt>bar</tt>.
+</p>
+
+<p>A <tt>#include</tt> directive which finds a file relative to the current
+directory is treated as including a system header if the including file is
+treated as a system header.</p>
 
 <h4 id="diagnostics_enable_everything">Enabling All Warnings</h4>
 

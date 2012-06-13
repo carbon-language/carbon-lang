@@ -16,6 +16,7 @@
 
 #include "clang/Lex/DirectoryLookup.h"
 #include "clang/Lex/ModuleMap.h"
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringSet.h"
 #include "llvm/Support/Allocator.h"
@@ -144,6 +145,12 @@ class HeaderSearch {
   unsigned SystemDirIdx;
   bool NoCurDirSearch;
 
+  /// #include prefixes for which the 'system header' property is overridden.
+  /// For a #include "x" or #include <x> directive, the last string in this
+  /// list which is a prefix of 'x' determines whether the file is treated as
+  /// a system header.
+  std::vector<std::pair<std::string, bool> > SystemHeaderPrefixes;
+
   /// \brief The path to the module cache.
   std::string ModuleCachePath;
   
@@ -233,6 +240,11 @@ public:
     if (!isAngled)
       AngledDirIdx++;
     SystemDirIdx++;
+  }
+
+  /// SetSystemHeaderPrefixes - Set the list of system header prefixes.
+  void SetSystemHeaderPrefixes(ArrayRef<std::pair<std::string, bool> > P) {
+    SystemHeaderPrefixes.assign(P.begin(), P.end());
   }
 
   /// HasIncludeAliasMap - Checks whether the map exists or not

@@ -510,6 +510,16 @@ const FileEntry *HeaderSearch::LookupFile(
     if (HFI.DirInfo == SrcMgr::C_User && InUserSpecifiedSystemFramework)
       HFI.DirInfo = SrcMgr::C_System;
 
+    // If the filename matches a known system header prefix, override
+    // whether the file is a system header.
+    for (unsigned i = SystemHeaderPrefixes.size(); i; --i) {
+      if (Filename.startswith(SystemHeaderPrefixes[i-1].first)) {
+        HFI.DirInfo = SystemHeaderPrefixes[i-1].second ? SrcMgr::C_System
+                                                       : SrcMgr::C_User;
+        break;
+      }
+    }
+
     // If this file is found in a header map and uses the framework style of
     // includes, then this header is part of a framework we're building.
     if (CurDir->isIndexHeaderMap()) {

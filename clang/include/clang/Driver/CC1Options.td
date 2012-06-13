@@ -471,6 +471,14 @@ def internal_externc_isystem : JoinedOrSeparate<"-internal-externc-isystem">,
            "implicit extern \"C\" semantics; these are assumed to not be "
            "user-provided and are used to model system and standard headers' "
            "paths.">;
+def isystem_prefix : JoinedOrSeparate<"-isystem-prefix">,
+  MetaVarName<"<prefix>">,
+  HelpText<"Treat all #include paths starting with <prefix> as including a "
+           "system header.">;
+def ino_system_prefix : JoinedOrSeparate<"-ino-system-prefix">,
+  MetaVarName<"<prefix>">,
+  HelpText<"Treat all #include paths starting with <prefix> as not including a "
+           "system header.">;
 
 //===----------------------------------------------------------------------===//
 // Preprocessor Options

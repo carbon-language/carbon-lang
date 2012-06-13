@@ -624,6 +624,16 @@ static void HeaderSearchOptsToArgs(const HeaderSearchOptions &Opts,
     Res.push_back(E.Path);
   }
 
+  /// User-specified system header prefixes.
+  for (unsigned i = 0, e = Opts.SystemHeaderPrefixes.size(); i != e; ++i) {
+    if (Opts.SystemHeaderPrefixes[i].IsSystemHeader)
+      Res.push_back("-isystem-prefix");
+    else
+      Res.push_back("-ino-system-prefix");
+
+    Res.push_back(Opts.SystemHeaderPrefixes[i].Prefix);
+  }
+
   if (!Opts.ResourceDir.empty())
     Res.push_back("-resource-dir", Opts.ResourceDir);
   if (!Opts.ModuleCachePath.empty())
@@ -1688,6 +1698,14 @@ static void ParseHeaderSearchArgs(HeaderSearchOptions &Opts, ArgList &Args) {
     Opts.AddPath((*I)->getValue(Args), frontend::System,
                  false, false, /*IgnoreSysRoot=*/true, /*IsInternal=*/true,
                  (*I)->getOption().matches(OPT_internal_externc_isystem));
+
+  // Add the path prefixes which are implicitly treated as being system headers.
+  for (arg_iterator I = Args.filtered_begin(OPT_isystem_prefix,
+                                            OPT_ino_system_prefix),
+                    E = Args.filtered_end();
+       I != E; ++I)
+    Opts.AddSystemHeaderPrefix((*I)->getValue(Args),
+                               (*I)->getOption().matches(OPT_isystem_prefix));
 }
 
 void CompilerInvocation::setLangDefaults(LangOptions &Opts, InputKind IK,
