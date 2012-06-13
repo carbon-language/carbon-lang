@@ -389,11 +389,20 @@ StandardConversionSequence::getNarrowingKind(ASTContext &Ctx,
     const unsigned ToWidth = Ctx.getIntWidth(ToType);
 
     if (FromWidth > ToWidth ||
-        (FromWidth == ToWidth && FromSigned != ToSigned)) {
+        (FromWidth == ToWidth && FromSigned != ToSigned) ||
+        (FromSigned && !ToSigned)) {
       // Not all values of FromType can be represented in ToType.
       llvm::APSInt InitializerValue;
       const Expr *Initializer = IgnoreNarrowingConversion(Converted);
-      if (Initializer->isIntegerConstantExpr(InitializerValue, Ctx)) {
+      if (!Initializer->isIntegerConstantExpr(InitializerValue, Ctx)) {
+        // Such conversions on variables are always narrowing.
+        return NK_Variable_Narrowing;
+      } else if (FromWidth < ToWidth) {
+        // Negative -> unsigned is narrowing. Otherwise, more bits is never
+        // narrowing.
+        if (InitializerValue.isSigned() && InitializerValue.isNegative())
+          return NK_Constant_Narrowing;
+      } else {
         ConstantValue = APValue(InitializerValue);
 
         // Add a bit to the InitializerValue so we don't have to worry about
@@ -411,9 +420,6 @@ StandardConversionSequence::getNarrowingKind(ASTContext &Ctx,
           ConstantType = Initializer->getType();
           return NK_Constant_Narrowing;
         }
-      } else {
-        // Variables are always narrowings.
-        return NK_Variable_Narrowing;
       }
     }
     return NK_Not_Narrowing;
