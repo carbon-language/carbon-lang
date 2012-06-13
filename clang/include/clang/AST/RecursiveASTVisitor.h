@@ -149,8 +149,8 @@ public:
   bool shouldWalkTypesOfTypeLocs() const { return true; }
 
   /// \brief Return whether this visitor should recurse into implicit
-  /// declarations, e.g., implicit constructors and destructors.
-  bool shouldVisitImplicitDeclarations() const { return false; }
+  /// code, e.g., implicit constructors and destructors.
+  bool shouldVisitImplicitCode() const { return false; }
 
   /// \brief Return whether \param S should be traversed using data recursion
   /// to avoid a stack overflow with extreme cases.
@@ -607,7 +607,7 @@ bool RecursiveASTVisitor<Derived>::TraverseDecl(Decl *D) {
 
   // As a syntax visitor, by default we want to ignore declarations for
   // implicit declarations (ones not typed explicitly by the user).
-  if (!getDerived().shouldVisitImplicitDeclarations() && D->isImplicit())
+  if (!getDerived().shouldVisitImplicitCode() && D->isImplicit())
     return true;
 
   switch (D->getKind()) {
@@ -1755,7 +1755,8 @@ template<typename Derived>
 bool RecursiveASTVisitor<Derived>::TraverseVarHelper(VarDecl *D) {
   TRY_TO(TraverseDeclaratorHelper(D));
   // Default params are taken care of when we traverse the ParmVarDecl.
-  if (!isa<ParmVarDecl>(D))
+  if (!isa<ParmVarDecl>(D) &&
+      (!D->isCXXForRangeDecl() || shouldVisitImplicitCode()))
     TRY_TO(TraverseStmt(D->getInit()));
   return true;
 }
@@ -1873,7 +1874,14 @@ DEF_TRAVERSE_STMT(ObjCAtThrowStmt, { })
 DEF_TRAVERSE_STMT(ObjCAtTryStmt, { })
 DEF_TRAVERSE_STMT(ObjCForCollectionStmt, { })
 DEF_TRAVERSE_STMT(ObjCAutoreleasePoolStmt, { })
-DEF_TRAVERSE_STMT(CXXForRangeStmt, { })
+DEF_TRAVERSE_STMT(CXXForRangeStmt, {
+  if (!shouldVisitImplicitCode()) {
+    TRY_TO(TraverseStmt(S->getLoopVarStmt()));
+    TRY_TO(TraverseStmt(S->getRangeInit()));
+    // Visit everything else only if shouldVisitImplicitCode().
+    return true;
+  }
+})
 DEF_TRAVERSE_STMT(MSDependentExistsStmt, {
     TRY_TO(TraverseNestedNameSpecifierLoc(S->getQualifierLoc()));
     TRY_TO(TraverseDeclarationNameInfo(S->getNameInfo()));

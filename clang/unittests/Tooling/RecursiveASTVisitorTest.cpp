@@ -142,6 +142,14 @@ public:
   }
 };
 
+class VarDeclVisitor : public ExpectedLocationVisitor<VarDeclVisitor> {
+public:
+ bool VisitVarDecl(VarDecl *Variable) {
+   Match(Variable->getNameAsString(), Variable->getLocStart());
+   return true;
+ }
+};
+
 class CXXMemberCallVisitor
   : public ExpectedLocationVisitor<CXXMemberCallVisitor> {
 public:
@@ -248,6 +256,22 @@ TEST(RecursiveASTVisitor, VisitsBaseClassTemplateArguments) {
   Visitor.ExpectMatch("x", 2, 3);
   EXPECT_TRUE(Visitor.runOver(
     "void x(); template <void (*T)()> class X {};\nX<x> y;"));
+}
+
+TEST(RecursiveASTVisitor, VisitsCXXForRangeStmtRange) {
+  DeclRefExprVisitor Visitor;
+  Visitor.ExpectMatch("x", 2, 25);
+  EXPECT_TRUE(Visitor.runOver(
+    "int x[5];\n"
+    "void f() { for (int i : x) {} }"));
+}
+
+TEST(RecursiveASTVisitor, VisitsCXXForRangeStmtLoopVariable) {
+  VarDeclVisitor Visitor;
+  Visitor.ExpectMatch("i", 2, 17);
+  EXPECT_TRUE(Visitor.runOver(
+    "int x[5];\n"
+    "void f() { for (int i : x) {} }"));
 }
 
 TEST(RecursiveASTVisitor, VisitsCallExpr) {
@@ -452,7 +476,7 @@ TEST(RecursiveASTVisitor, VisitsClassTemplateTemplateParmDefaultArgument) {
 class ImplicitCtorVisitor
     : public ExpectedLocationVisitor<ImplicitCtorVisitor> {
 public:
-  bool shouldVisitImplicitDeclarations() const { return true; }
+  bool shouldVisitImplicitCode() const { return true; }
 
   bool VisitCXXConstructorDecl(CXXConstructorDecl* Ctor) {
     if (Ctor->isImplicit()) {  // Was not written in source code
