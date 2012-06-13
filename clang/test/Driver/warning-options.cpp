@@ -8,3 +8,8 @@
 // CHECK: unknown warning option '-Wmonkey'
 // CHECK: unknown warning option '-Wno-monkey'
 // CHECK: unknown warning option '-Wno-unused-command-line-arguments'; did you mean '-Wno-unused-command-line-argument'?
+
+// RUN: %clang -### -pedantic -no-pedantic %s 2>&1 | FileCheck -check-prefix=NO_PEDANTIC %s
+// NO_PEDANTIC-NOT: -pedantic
+// RUN: %clang -### -pedantic -pedantic -no-pedantic -pedantic %s 2>&1 | FileCheck -check-prefix=PEDANTIC %s
+// PEDANTIC: -pedantic
