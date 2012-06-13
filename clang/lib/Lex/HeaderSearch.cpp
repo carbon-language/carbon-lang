@@ -512,9 +512,9 @@ const FileEntry *HeaderSearch::LookupFile(
 
     // If the filename matches a known system header prefix, override
     // whether the file is a system header.
-    for (unsigned i = SystemHeaderPrefixes.size(); i; --i) {
-      if (Filename.startswith(SystemHeaderPrefixes[i-1].first)) {
-        HFI.DirInfo = SystemHeaderPrefixes[i-1].second ? SrcMgr::C_System
+    for (unsigned j = SystemHeaderPrefixes.size(); j; --j) {
+      if (Filename.startswith(SystemHeaderPrefixes[j-1].first)) {
+        HFI.DirInfo = SystemHeaderPrefixes[j-1].second ? SrcMgr::C_System
                                                        : SrcMgr::C_User;
         break;
       }
