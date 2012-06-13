@@ -568,8 +568,8 @@ bool TokenLexer::PasteTokens(Token &Tok) {
             << Buffer.str();
         }
 
-        // Do not consume the RHS.
-        --CurToken;
+        // An error has occurred so exit loop.
+        break;
       }
 
       // Turn ## into 'unknown' to avoid # ## # from looking like a paste
