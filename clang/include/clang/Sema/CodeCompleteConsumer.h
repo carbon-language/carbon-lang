@@ -237,7 +237,7 @@ public:
     /// This context usually implies that no completions should be added,
     /// unless they come from an appropriate natural-language dictionary.
     CCC_NaturalLanguage,
-    /// \brief Code completion for a selector, as in an @selector expression.
+    /// \brief Code completion for a selector, as in an \@selector expression.
     CCC_SelectorName,
     /// \brief Code completion within a type-qualifier list.
     CCC_TypeQualifiers,
@@ -379,7 +379,7 @@ public:
     CK_Equal,
     /// \brief Horizontal whitespace (' ').
     CK_HorizontalSpace,
-    /// \brief Verticle whitespace ('\n' or '\r\n', depending on the
+    /// \brief Vertical whitespace ('\\n' or '\\r\\n', depending on the
     /// platform).
     CK_VerticalSpace
   };

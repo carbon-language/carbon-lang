@@ -163,7 +163,7 @@ public:
   const FileEntry *getFileEntry() const;
 
   /// \brief Iterator that traverses the current stack of preprocessor
-  /// conditional directives (#if/#ifdef/#ifndef).
+  /// conditional directives (\#if/\#ifdef/\#ifndef).
   typedef SmallVectorImpl<PPConditionalInfo>::const_iterator 
     conditional_iterator;
 

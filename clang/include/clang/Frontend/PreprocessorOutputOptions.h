@@ -18,7 +18,7 @@ class PreprocessorOutputOptions {
 public:
   unsigned ShowCPP : 1;            ///< Print normal preprocessed output.
   unsigned ShowComments : 1;       ///< Show comments.
-  unsigned ShowLineMarkers : 1;    ///< Show #line markers.
+  unsigned ShowLineMarkers : 1;    ///< Show \#line markers.
   unsigned ShowMacroComments : 1;  ///< Show comments, even in macros.
   unsigned ShowMacros : 1;         ///< Print macro definitions.
 

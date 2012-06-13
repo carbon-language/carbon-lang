@@ -74,7 +74,7 @@ public:
   ///
   ScopeKind Kind;
 
-  /// \brief Whether this function contains a VLA, @try, try, C++
+  /// \brief Whether this function contains a VLA, \@try, try, C++
   /// initializer, or anything else that can't be jumped past.
   bool HasBranchProtectedScope;
 

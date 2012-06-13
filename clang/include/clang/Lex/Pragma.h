@@ -26,12 +26,12 @@ namespace clang {
   class PragmaNamespace;
 
   /**
-   * \brief Describes how the pragma was introduced, e.g., with #pragma, 
+   * \brief Describes how the pragma was introduced, e.g., with \#pragma,
    * _Pragma, or __pragma.
    */
   enum PragmaIntroducerKind {
     /**
-     * \brief The pragma was introduced via #pragma.
+     * \brief The pragma was introduced via \#pragma.
      */
     PIK_HashPragma,
     
@@ -54,7 +54,7 @@ namespace clang {
 /// pragmas the handler with a null identifier is invoked, if it exists.
 ///
 /// Note that the PragmaNamespace class can be used to subdivide pragmas, e.g.
-/// we treat "#pragma STDC" and "#pragma GCC" as namespaces that contain other
+/// we treat "\#pragma STDC" and "\#pragma GCC" as namespaces that contain other
 /// pragmas.
 class PragmaHandler {
   std::string Name;
@@ -84,8 +84,8 @@ public:
 
 /// PragmaNamespace - This PragmaHandler subdivides the namespace of pragmas,
 /// allowing hierarchical pragmas to be defined.  Common examples of namespaces
-/// are "#pragma GCC", "#pragma STDC", and "#pragma omp", but any namespaces may
-/// be (potentially recursively) defined.
+/// are "\#pragma GCC", "\#pragma STDC", and "\#pragma omp", but any namespaces
+/// may be (potentially recursively) defined.
 class PragmaNamespace : public PragmaHandler {
   /// Handlers - This is a map of the handlers in this namespace with their name
   /// as key.

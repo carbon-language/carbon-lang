@@ -49,7 +49,7 @@ static void DefineBuiltinMacro(MacroBuilder &Builder, StringRef Macro,
   }
 }
 
-/// AddImplicitInclude - Add an implicit #include of the specified file to the
+/// AddImplicitInclude - Add an implicit \#include of the specified file to the
 /// predefines buffer.
 static void AddImplicitInclude(MacroBuilder &Builder, StringRef File,
                                FileManager &FileMgr) {
@@ -66,8 +66,8 @@ static void AddImplicitIncludeMacros(MacroBuilder &Builder,
   Builder.append("##"); // ##?
 }
 
-/// AddImplicitIncludePTH - Add an implicit #include using the original file
-///  used to generate a PTH cache.
+/// AddImplicitIncludePTH - Add an implicit \#include using the original file
+/// used to generate a PTH cache.
 static void AddImplicitIncludePTH(MacroBuilder &Builder, Preprocessor &PP,
                                   StringRef ImplicitIncludePTH) {
   PTHManager *P = PP.getPTHManager();

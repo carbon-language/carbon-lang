@@ -500,8 +500,8 @@ namespace clang {
       PP_MACRO_OBJECT_LIKE = 1,
 
       /// \brief A function-like macro definition.
-      /// [PP_MACRO_FUNCTION_LIKE, <ObjectLikeStuff>, IsC99Varargs, IsGNUVarars,
-      ///  NumArgs, ArgIdentInfoID* ]
+      /// [PP_MACRO_FUNCTION_LIKE, \<ObjectLikeStuff>, IsC99Varargs,
+      /// IsGNUVarars, NumArgs, ArgIdentInfoID* ]
       PP_MACRO_FUNCTION_LIKE = 2,
 
       /// \brief Describes one token.

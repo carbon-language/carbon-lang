@@ -30,11 +30,11 @@ struct LineEntry {
   /// FileOffset - The offset in this file that the line entry occurs at.
   unsigned FileOffset;
 
-  /// LineNo - The presumed line number of this line entry: #line 4.
+  /// LineNo - The presumed line number of this line entry: \#line 4.
   unsigned LineNo;
 
   /// FilenameID - The ID of the filename identified by this line entry:
-  /// #line 4 "foo.c".  This is -1 if not specified.
+  /// \#line 4 "foo.c".  This is -1 if not specified.
   int FilenameID;
 
   /// Flags - Set the 0 if no flags, 1 if a system header,

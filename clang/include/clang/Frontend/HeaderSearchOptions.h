@@ -17,12 +17,12 @@ namespace clang {
 
 namespace frontend {
   /// IncludeDirGroup - Identifiers the group a include entry belongs to, which
-  /// represents its relative positive in the search list.  A #include of a ""
+  /// represents its relative positive in the search list.  A \#include of a ""
   /// path starts at the -iquote group, then searches the Angled group, then
   /// searches the system group, etc.
   enum IncludeDirGroup {
-    Quoted = 0,     ///< '#include ""' paths, added by'gcc -iquote'.
-    Angled,         ///< Paths for '#include <>' added by '-I'.
+    Quoted = 0,     ///< '\#include ""' paths, added by 'gcc -iquote'.
+    Angled,         ///< Paths for '\#include <>' added by '-I'.
     IndexHeaderMap, ///< Like Angled, but marks header maps used when
                        ///  building frameworks.
     System,         ///< Like Angled, but marks system directories.

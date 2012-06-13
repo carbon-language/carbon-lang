@@ -71,7 +71,7 @@ public:
     FunctionPrototypeScope = 0x100,
 
     /// AtCatchScope - This is a scope that corresponds to the Objective-C
-    /// @catch statement.
+    /// \@catch statement.
     AtCatchScope = 0x200,
     
     /// ObjCMethodScope - This scope corresponds to an Objective-C method body.
@@ -270,7 +270,7 @@ public:
     return getFlags() & Scope::FunctionPrototypeScope;
   }
 
-  /// isAtCatchScope - Return true if this scope is @catch.
+  /// isAtCatchScope - Return true if this scope is \@catch.
   bool isAtCatchScope() const {
     return getFlags() & Scope::AtCatchScope;
   }

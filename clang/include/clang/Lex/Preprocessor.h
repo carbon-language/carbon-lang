@@ -780,25 +780,24 @@ public:
     getDiagnostics().setSuppressAllDiagnostics(true);
   }
 
-  /// \brief The location of the currently-active #pragma clang
+  /// \brief The location of the currently-active \#pragma clang
   /// arc_cf_code_audited begin.  Returns an invalid location if there
   /// is no such pragma active.
   SourceLocation getPragmaARCCFCodeAuditedLoc() const {
     return PragmaARCCFCodeAuditedLoc;
   }
 
-  /// \brief Set the location of the currently-active #pragma clang
+  /// \brief Set the location of the currently-active \#pragma clang
   /// arc_cf_code_audited begin.  An invalid location ends the pragma.
   void setPragmaARCCFCodeAuditedLoc(SourceLocation Loc) {
     PragmaARCCFCodeAuditedLoc = Loc;
   }
 
-  /// \brief Instruct the preprocessor to skip part of the main
-  /// the main source file.
+  /// \brief Instruct the preprocessor to skip part of the main source file.
   ///
-  /// \brief Bytes The number of bytes in the preamble to skip.
+  /// \param Bytes The number of bytes in the preamble to skip.
   ///
-  /// \brief StartOfLine Whether skipping these bytes puts the lexer at the
+  /// \param StartOfLine Whether skipping these bytes puts the lexer at the
   /// start of a line.
   void setSkipMainFilePreamble(unsigned Bytes, bool StartOfLine) {
     SkipMainFilePreamble.first = Bytes;

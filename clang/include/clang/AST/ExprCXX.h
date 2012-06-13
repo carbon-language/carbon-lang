@@ -2228,7 +2228,7 @@ public:
 
 
 /// \brief A reference to an overloaded function set, either an
-/// \t UnresolvedLookupExpr or an \t UnresolvedMemberExpr.
+/// \c UnresolvedLookupExpr or an \c UnresolvedMemberExpr.
 class OverloadExpr : public Expr {
   /// The common name of these declarations.
   DeclarationNameInfo NameInfo;

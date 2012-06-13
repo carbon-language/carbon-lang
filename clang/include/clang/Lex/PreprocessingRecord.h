@@ -59,8 +59,8 @@ namespace clang {
       /// \brief A macro definition.
       MacroDefinitionKind,
       
-      /// \brief An inclusion directive, such as \c #include, \c
-      /// #import, or \c #include_next.
+      /// \brief An inclusion directive, such as \c \#include, \c
+      /// \#import, or \c \#include_next.
       InclusionDirectiveKind,
 
       /// @}
@@ -197,19 +197,19 @@ namespace clang {
   };
 
   /// \brief Record the location of an inclusion directive, such as an
-  /// \c #include or \c #import statement.
+  /// \c \#include or \c \#import statement.
   class InclusionDirective : public PreprocessingDirective {
   public:
     /// \brief The kind of inclusion directives known to the
     /// preprocessor.
     enum InclusionKind {
-      /// \brief An \c #include directive.
+      /// \brief An \c \#include directive.
       Include,
-      /// \brief An Objective-C \c #import directive.
+      /// \brief An Objective-C \c \#import directive.
       Import,
-      /// \brief A GNU \c #include_next directive.
+      /// \brief A GNU \c \#include_next directive.
       IncludeNext,
-      /// \brief A Clang \c #__include_macros directive.
+      /// \brief A Clang \c \#__include_macros directive.
       IncludeMacros
     };
 
@@ -551,7 +551,7 @@ namespace clang {
     ///
     /// Can be used to avoid implicit deserializations of preallocated
     /// preprocessed entities if we only care about entities of a specific file
-    /// and not from files #included in the range given at
+    /// and not from files \#included in the range given at
     /// \see getPreprocessedEntitiesInRange.
     bool isEntityInFileID(iterator PPEI, FileID FID);
 
@@ -565,7 +565,7 @@ namespace clang {
     }
 
     /// \brief Returns true if the given range intersects with a conditional
-    /// directive. if a #if/#endif block is fully contained within the range,
+    /// directive. if a \#if/\#endif block is fully contained within the range,
     /// this function will return false.
     bool rangeIntersectsConditionalDirective(SourceRange Range) const;
 

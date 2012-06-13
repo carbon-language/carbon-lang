@@ -3701,7 +3701,7 @@ public:
   unsigned getNumArgs() const { return NumArgs; }
 
   /// \brief Retrieve a specific template argument as a type.
-  /// \precondition @c isArgType(Arg)
+  /// \pre @c isArgType(Arg)
   const TemplateArgument &getArg(unsigned Idx) const; // in TemplateBase.h
 
   bool isSugared() const {

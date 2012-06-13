@@ -895,7 +895,7 @@ public:
     return SourceLocation::getFileLoc(FileOffset + getFileIDSize(FID) - 1);
   }
 
-  /// \brief Returns the include location if \p FID is a #include'd file
+  /// \brief Returns the include location if \p FID is a \#include'd file
   /// otherwise it returns an invalid location.
   SourceLocation getIncludeLoc(FileID FID) const {
     bool Invalid = false;

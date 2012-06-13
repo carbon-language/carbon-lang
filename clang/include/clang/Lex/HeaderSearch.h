@@ -32,12 +32,12 @@ class FileManager;
 class IdentifierInfo;
 
 /// HeaderFileInfo - The preprocessor keeps track of this information for each
-/// file that is #included.
+/// file that is \#included.
 struct HeaderFileInfo {
-  /// isImport - True if this is a #import'd or #pragma once file.
+  /// isImport - True if this is a \#import'd or \#pragma once file.
   unsigned isImport : 1;
 
-  /// isPragmaOnce - True if this is  #pragma once file.
+  /// isPragmaOnce - True if this is  \#pragma once file.
   unsigned isPragmaOnce : 1;
 
   /// DirInfo - Keep track of whether this is a system header, and if so,
@@ -391,17 +391,17 @@ public:
 
   /// SetFileControllingMacro - Mark the specified file as having a controlling
   /// macro.  This is used by the multiple-include optimization to eliminate
-  /// no-op #includes.
+  /// no-op \#includes.
   void SetFileControllingMacro(const FileEntry *File,
                                const IdentifierInfo *ControllingMacro) {
     getFileInfo(File).ControllingMacro = ControllingMacro;
   }
 
   /// \brief Determine whether this file is intended to be safe from
-  /// multiple inclusions, e.g., it has #pragma once or a controlling
+  /// multiple inclusions, e.g., it has \#pragma once or a controlling
   /// macro.
   ///
-  /// This routine does not consider the effect of #import 
+  /// This routine does not consider the effect of \#import
   bool isFileMultipleIncludeGuarded(const FileEntry *File);
 
   /// CreateHeaderMap - This method returns a HeaderMap for the specified
