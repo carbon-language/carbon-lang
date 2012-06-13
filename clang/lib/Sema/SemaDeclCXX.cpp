@@ -1646,6 +1646,7 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
       // effects and are not part of a dependent type declaration.
       if (!FD->isImplicit() && FD->getDeclName() &&
           FD->getAccess() == AS_private &&
+          !FD->hasAttr<UnusedAttr>() &&
           !FD->getParent()->getTypeForDecl()->isDependentType() &&
           !InitializationHasSideEffects(*FD))
         UnusedPrivateFields.insert(FD);

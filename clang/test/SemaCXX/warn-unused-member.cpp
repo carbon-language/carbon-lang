@@ -115,6 +115,8 @@ class A {
   Trivial user_constructor_;
   NonTrivialConstructor non_trivial_constructor_;
   NonTrivialDestructor non_trivial_destructor_;
+
+  int attr_  __attribute__((unused));
 };
 
 class EverythingUsed {
