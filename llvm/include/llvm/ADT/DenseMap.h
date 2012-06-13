@@ -38,9 +38,9 @@ template<typename KeyT, typename ValueT,
          typename KeyInfoT = DenseMapInfo<KeyT> >
 class DenseMap {
   typedef std::pair<KeyT, ValueT> BucketT;
-  unsigned NumBuckets;
   BucketT *Buckets;
 
+  unsigned NumBuckets;
   unsigned NumEntries;
   unsigned NumTombstones;
 public:
