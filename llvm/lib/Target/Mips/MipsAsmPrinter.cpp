@@ -200,7 +200,8 @@ void MipsAsmPrinter::EmitFunctionEntryLabel() {
       OutStreamer.EmitRawText(StringRef("\t.set\tmips16"));
     else
       OutStreamer.EmitRawText(StringRef("\t.set\tnomips16"));
-    OutStreamer.EmitRawText(StringRef("\t.set\tnomicromips"));
+    // leave out until FSF available gas has micromips changes
+    // OutStreamer.EmitRawText(StringRef("\t.set\tnomicromips"));
     OutStreamer.EmitRawText("\t.ent\t" + Twine(CurrentFnSym->getName()));
   }
   OutStreamer.EmitLabel(CurrentFnSym);

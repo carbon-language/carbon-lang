@@ -6,7 +6,7 @@ entry:
   ret i32 0
 
 ; 16: 	.set	mips16                  # @main
-; 16:	.set	nomicromips
+
 
 ; 16:	jr	$ra
 
