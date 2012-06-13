@@ -629,8 +629,13 @@ static bool LinearizeExprTree(BinaryOperator *I,
   // Add any constants back into Ops, all globbed together and reduced to having
   // weight 1 for the convenience of users.
   Constant *Identity = ConstantExpr::getBinOpIdentity(Opcode, I->getType());
-  if (Cst && Cst != Identity)
+  if (Cst && Cst != Identity) {
+    // If combining multiple constants resulted in the absorber then the entire
+    // expression must evaluate to the absorber.
+    if (Cst == Absorber)
+      Ops.clear();
     Ops.push_back(std::make_pair(Cst, APInt(Bitwidth, 1)));
+  }
 
   // For nilpotent operations or addition there may be no operands, for example
   // because the expression was "X xor X" or consisted of 2^Bitwidth additions:
