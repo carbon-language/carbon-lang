@@ -633,6 +633,99 @@ StringLiteral *StringLiteral::CreateEmpty(ASTContext &C, unsigned NumStrs) {
   return SL;
 }
 
+void StringLiteral::outputString(raw_ostream &OS) {
+  switch (getKind()) {
+  case Ascii: break; // no prefix.
+  case Wide:  OS << 'L'; break;
+  case UTF8:  OS << "u8"; break;
+  case UTF16: OS << 'u'; break;
+  case UTF32: OS << 'U'; break;
+  }
+  OS << '"';
+  static const char Hex[] = "0123456789ABCDEF";
+
+  unsigned LastSlashX = getLength();
+  for (unsigned I = 0, N = getLength(); I != N; ++I) {
+    switch (uint32_t Char = getCodeUnit(I)) {
+    default:
+      // FIXME: Convert UTF-8 back to codepoints before rendering.
+
+      // Convert UTF-16 surrogate pairs back to codepoints before rendering.
+      // Leave invalid surrogates alone; we'll use \x for those.
+      if (getKind() == UTF16 && I != N - 1 && Char >= 0xd800 && 
+          Char <= 0xdbff) {
+        uint32_t Trail = getCodeUnit(I + 1);
+        if (Trail >= 0xdc00 && Trail <= 0xdfff) {
+          Char = 0x10000 + ((Char - 0xd800) << 10) + (Trail - 0xdc00);
+          ++I;
+        }
+      }
+
+      if (Char > 0xff) {
+        // If this is a wide string, output characters over 0xff using \x
+        // escapes. Otherwise, this is a UTF-16 or UTF-32 string, and Char is a
+        // codepoint: use \x escapes for invalid codepoints.
+        if (getKind() == Wide ||
+            (Char >= 0xd800 && Char <= 0xdfff) || Char >= 0x110000) {
+          // FIXME: Is this the best way to print wchar_t?
+          OS << "\\x";
+          int Shift = 28;
+          while ((Char >> Shift) == 0)
+            Shift -= 4;
+          for (/**/; Shift >= 0; Shift -= 4)
+            OS << Hex[(Char >> Shift) & 15];
+          LastSlashX = I;
+          break;
+        }
+
+        if (Char > 0xffff)
+          OS << "\\U00"
+             << Hex[(Char >> 20) & 15]
+             << Hex[(Char >> 16) & 15];
+        else
+          OS << "\\u";
+        OS << Hex[(Char >> 12) & 15]
+           << Hex[(Char >>  8) & 15]
+           << Hex[(Char >>  4) & 15]
+           << Hex[(Char >>  0) & 15];
+        break;
+      }
+
+      // If we used \x... for the previous character, and this character is a
+      // hexadecimal digit, prevent it being slurped as part of the \x.
+      if (LastSlashX + 1 == I) {
+        switch (Char) {
+          case '0': case '1': case '2': case '3': case '4':
+          case '5': case '6': case '7': case '8': case '9':
+          case 'a': case 'b': case 'c': case 'd': case 'e': case 'f':
+          case 'A': case 'B': case 'C': case 'D': case 'E': case 'F':
+            OS << "\"\"";
+        }
+      }
+
+      assert(Char <= 0xff &&
+             "Characters above 0xff should already have been handled.");
+
+      if (isprint(Char))
+        OS << (char)Char;
+      else  // Output anything hard as an octal escape.
+        OS << '\\'
+           << (char)('0' + ((Char >> 6) & 7))
+           << (char)('0' + ((Char >> 3) & 7))
+           << (char)('0' + ((Char >> 0) & 7));
+      break;
+    // Handle some common non-printable cases to make dumps prettier.
+    case '\\': OS << "\\\\"; break;
+    case '"': OS << "\\\""; break;
+    case '\n': OS << "\\n"; break;
+    case '\t': OS << "\\t"; break;
+    case '\a': OS << "\\a"; break;
+    case '\b': OS << "\\b"; break;
+    }
+  }
+  OS << '"';
+}
+
 void StringLiteral::setString(ASTContext &C, StringRef Str,
                               StringKind Kind, bool IsPascal) {
   //FIXME: we assume that the string data comes from a target that uses the same
