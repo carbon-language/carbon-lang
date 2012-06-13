@@ -1764,18 +1764,6 @@ then <tt>__attribute__((myattribute("Hello", 3)))</tt> will be a valid use.</p>
 
 <h4>Boilerplate</h4>
 
-<p>Add an element to the <tt>AttributeList::Kind</tt> enum in <a
-href="http://llvm.org/viewvc/llvm-project/cfe/trunk/include/clang/Sema/AttributeList.h?view=markup">include/clang/Sema/AttributeList.h</a>
-named <tt>AT_lower_with_underscores</tt>.  That is, a CamelCased
-<tt>AttributeName</tt> in <tt>Attr.td</tt> name should become
-<tt>AT_attribute_name</tt>.</p>
-
-<p>Add a case to the <tt>StringSwitch</tt> in <tt>AttributeList::getKind()</tt>
-in <a
-href="http://llvm.org/viewvc/llvm-project/cfe/trunk/lib/Sema/AttributeList.cpp?view=markup">lib/Sema/AttributeList.cpp</a>
-for each spelling of your attribute.  Less common attributes should come toward
-the end of that list.</p>
-
 <p>Write a new <tt>HandleYourAttr()</tt> function in <a
 href="http://llvm.org/viewvc/llvm-project/cfe/trunk/lib/Sema/SemaDeclAttr.cpp?view=markup">lib/Sema/SemaDeclAttr.cpp</a>,
 and add a case to the switch in <tt>ProcessNonInheritableDeclAttr()</tt> or
