@@ -2070,17 +2070,15 @@ SDValue MipsTargetLowering::LowerShiftRightParts(SDValue Op, SelectionDAG& DAG,
 
 static SDValue CreateLoadLR(unsigned Opc, SelectionDAG &DAG, LoadSDNode *LD,
                             SDValue Chain, SDValue Src, unsigned Offset) {
-  SDValue BasePtr = LD->getBasePtr(), Ptr;
+  SDValue Ptr = LD->getBasePtr();
   EVT VT = LD->getValueType(0), MemVT = LD->getMemoryVT();
-  EVT BasePtrVT = BasePtr.getValueType();
+  EVT BasePtrVT = Ptr.getValueType();
   DebugLoc DL = LD->getDebugLoc();
   SDVTList VTList = DAG.getVTList(VT, MVT::Other);
 
   if (Offset)
-    Ptr = DAG.getNode(ISD::ADD, DL, BasePtrVT, BasePtr,
+    Ptr = DAG.getNode(ISD::ADD, DL, BasePtrVT, Ptr,
                       DAG.getConstant(Offset, BasePtrVT));
-  else
-    Ptr = BasePtr;
 
   SDValue Ops[] = { Chain, Ptr, Src };
   return DAG.getMemIntrinsicNode(Opc, DL, VTList, Ops, 3, MemVT,
@@ -2151,17 +2149,14 @@ SDValue MipsTargetLowering::LowerLOAD(SDValue Op, SelectionDAG &DAG) const {
 
 static SDValue CreateStoreLR(unsigned Opc, SelectionDAG &DAG, StoreSDNode *SD,
                              SDValue Chain, unsigned Offset) {
-  SDValue BasePtr = SD->getBasePtr(), Ptr, Value = SD->getValue();
-  EVT MemVT = SD->getMemoryVT();
-  EVT BasePtrVT = BasePtr.getValueType();
+  SDValue Ptr = SD->getBasePtr(), Value = SD->getValue();
+  EVT MemVT = SD->getMemoryVT(), BasePtrVT = Ptr.getValueType();
   DebugLoc DL = SD->getDebugLoc();
   SDVTList VTList = DAG.getVTList(MVT::Other);
 
   if (Offset)
-    Ptr = DAG.getNode(ISD::ADD, DL, BasePtrVT, BasePtr,
+    Ptr = DAG.getNode(ISD::ADD, DL, BasePtrVT, Ptr,
                       DAG.getConstant(Offset, BasePtrVT));
-  else
-    Ptr = BasePtr;
 
   SDValue Ops[] = { Chain, Value, Ptr };
   return DAG.getMemIntrinsicNode(Opc, DL, VTList, Ops, 3, MemVT,
