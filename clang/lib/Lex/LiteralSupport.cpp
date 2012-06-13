@@ -322,7 +322,7 @@ static void EncodeUCNEscape(const char *ThisTokBegin, const char *&ThisTokBuf,
     // using reinterpret_cast.
     UTF16 *ResultPtr = reinterpret_cast<UTF16*>(ResultBuf);
 
-    if (UcnVal < (UTF32)0xFFFF) {
+    if (UcnVal <= (UTF32)0xFFFF) {
       *ResultPtr = UcnVal;
       ResultBuf += 2;
       return;
