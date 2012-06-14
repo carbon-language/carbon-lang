@@ -33,7 +33,6 @@ entry:
 bb1:                                              ; preds = %entry
   ret i32 2
 
-; CHECK: STATIC-O32: $BB0_2
 bb2:                                              ; preds = %entry
   ret i32 0
 

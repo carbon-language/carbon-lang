@@ -29,11 +29,11 @@ entry:
   ret i32 %tmp
 
 ; CHECK: va1:
-; CHECK: addiu   $sp, $sp, -16
-; CHECK: sw      $7, 28($sp)
-; CHECK: sw      $6, 24($sp)
-; CHECK: sw      $5, 20($sp)
-; CHECK: lw      $2, 20($sp)
+; CHECK: addiu   $sp, $sp, -24
+; CHECK: sw      $7, 36($sp)
+; CHECK: sw      $6, 32($sp)
+; CHECK: sw      $5, 28($sp)
+; CHECK: lw      $2, 28($sp)
 }
 
 ; check whether the variable double argument will be accessed from the 8-byte
@@ -55,11 +55,11 @@ entry:
   ret double %tmp
 
 ; CHECK: va2:
-; CHECK: addiu   $sp, $sp, -16
-; CHECK: sw      $7, 28($sp)
-; CHECK: sw      $6, 24($sp)
-; CHECK: sw      $5, 20($sp)
-; CHECK: addiu   $[[R0:[0-9]+]], $sp, 20
+; CHECK: addiu   $sp, $sp, -24
+; CHECK: sw      $7, 36($sp)
+; CHECK: sw      $6, 32($sp)
+; CHECK: sw      $5, 28($sp)
+; CHECK: addiu   $[[R0:[0-9]+]], $sp, 28
 ; CHECK: addiu   $[[R1:[0-9]+]], $[[R0]], 7
 ; CHECK: addiu   $[[R2:[0-9]+]], $zero, -8
 ; CHECK: and     $[[R3:[0-9]+]], $[[R1]], $[[R2]]
@@ -83,10 +83,10 @@ entry:
   ret i32 %tmp
 
 ; CHECK: va3:
-; CHECK: addiu   $sp, $sp, -16
-; CHECK: sw      $7, 28($sp)
-; CHECK: sw      $6, 24($sp)
-; CHECK: lw      $2, 24($sp)
+; CHECK: addiu   $sp, $sp, -24
+; CHECK: sw      $7, 36($sp)
+; CHECK: sw      $6, 32($sp)
+; CHECK: lw      $2, 32($sp)
 }
 
 ; double
@@ -106,11 +106,11 @@ entry:
   ret double %tmp
 
 ; CHECK: va4:
-; CHECK: addiu   $sp, $sp, -24
-; CHECK: sw      $7, 36($sp)
-; CHECK: sw      $6, 32($sp)
-; CHECK: addiu   ${{[0-9]+}}, $sp, 32
-; CHECK: ldc1    $f0, 32($sp)
+; CHECK: addiu   $sp, $sp, -32
+; CHECK: sw      $7, 44($sp)
+; CHECK: sw      $6, 40($sp)
+; CHECK: addiu   ${{[0-9]+}}, $sp, 40
+; CHECK: ldc1    $f0, 40($sp)
 }
 
 ; int
@@ -134,9 +134,9 @@ entry:
   ret i32 %tmp
 
 ; CHECK: va5:
-; CHECK: addiu   $sp, $sp, -24
-; CHECK: sw      $7, 36($sp)
-; CHECK: lw      $2, 36($sp)
+; CHECK: addiu   $sp, $sp, -32
+; CHECK: sw      $7, 44($sp)
+; CHECK: lw      $2, 44($sp)
 }
 
 ; double
@@ -160,9 +160,9 @@ entry:
   ret double %tmp
 
 ; CHECK: va6:
-; CHECK: addiu   $sp, $sp, -24
-; CHECK: sw      $7, 36($sp)
-; CHECK: addiu   $[[R0:[0-9]+]], $sp, 36
+; CHECK: addiu   $sp, $sp, -32
+; CHECK: sw      $7, 44($sp)
+; CHECK: addiu   $[[R0:[0-9]+]], $sp, 44
 ; CHECK: addiu   $[[R1:[0-9]+]], $[[R0]], 7
 ; CHECK: addiu   $[[R2:[0-9]+]], $zero, -8
 ; CHECK: and     $[[R3:[0-9]+]], $[[R1]], $[[R2]]
@@ -188,8 +188,8 @@ entry:
   ret i32 %tmp
 
 ; CHECK: va7:
-; CHECK: addiu   $sp, $sp, -24
-; CHECK: lw      $2, 40($sp)
+; CHECK: addiu   $sp, $sp, -32
+; CHECK: lw      $2, 48($sp)
 }
 
 ; double
@@ -211,9 +211,9 @@ entry:
   ret double %tmp
 
 ; CHECK: va8:
-; CHECK: addiu   $sp, $sp, -32
-; CHECK: addiu   ${{[0-9]+}}, $sp, 48
-; CHECK: ldc1    $f0, 48($sp)
+; CHECK: addiu   $sp, $sp, -40
+; CHECK: addiu   ${{[0-9]+}}, $sp, 56
+; CHECK: ldc1    $f0, 56($sp)
 }
 
 ; int
@@ -237,8 +237,8 @@ entry:
   ret i32 %tmp
 
 ; CHECK: va9:
-; CHECK: addiu   $sp, $sp, -32
-; CHECK: lw      $2, 52($sp)
+; CHECK: addiu   $sp, $sp, -40
+; CHECK: lw      $2, 60($sp)
 }
 
 ; double
@@ -262,8 +262,8 @@ entry:
   ret double %tmp
 
 ; CHECK: va10:
-; CHECK: addiu   $sp, $sp, -32
-; CHECK: addiu   $[[R0:[0-9]+]], $sp, 52
+; CHECK: addiu   $sp, $sp, -40
+; CHECK: addiu   $[[R0:[0-9]+]], $sp, 60
 ; CHECK: addiu   $[[R1:[0-9]+]], $[[R0]], 7
 ; CHECK: addiu   $[[R2:[0-9]+]], $zero, -8
 ; CHECK: and     $[[R3:[0-9]+]], $[[R1]], $[[R2]]
