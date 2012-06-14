@@ -561,6 +561,7 @@ class CBranch<bits<6> op, string instr_asm, PatFrag cond_op, RegisterClass RC>:
   let isBranch = 1;
   let isTerminator = 1;
   let hasDelaySlot = 1;
+  let Defs = [AT];
 }
 
 class CBranchZero<bits<6> op, bits<5> _rt, string instr_asm, PatFrag cond_op,
@@ -572,6 +573,7 @@ class CBranchZero<bits<6> op, bits<5> _rt, string instr_asm, PatFrag cond_op,
   let isBranch = 1;
   let isTerminator = 1;
   let hasDelaySlot = 1;
+  let Defs = [AT];
 }
 
 // SetCC
@@ -601,6 +603,7 @@ class JumpFJ<bits<6> op, string instr_asm>:
   let hasDelaySlot = 1;
   let Predicates = [RelocStatic, HasStandardEncoding];
   let DecoderMethod = "DecodeJumpTarget";
+  let Defs = [AT];
 }
 
 // Unconditional branch
@@ -614,6 +617,7 @@ class UncondBranch<bits<6> op, string instr_asm>:
   let isBarrier = 1;
   let hasDelaySlot = 1;
   let Predicates = [RelocPIC, HasStandardEncoding];
+  let Defs = [AT];
 }
 
 let isBranch=1, isTerminator=1, isBarrier=1, rd=0, hasDelaySlot = 1,
