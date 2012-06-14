@@ -3,8 +3,8 @@
 # Subdirectory makefiles must define:
 #   SubDirs - The subdirectories to traverse.
 #   ObjNames - The objects available in that directory.
-#   Implementation - The library configuration the objects should go in (Generic or
-#                    Optimized)
+#   Implementation - The library configuration the objects should go in (Generic
+#                    or Optimized)
 #   Dependencies - Any dependences for the object files.
 #
 # Subdirectory makefiles may define:
