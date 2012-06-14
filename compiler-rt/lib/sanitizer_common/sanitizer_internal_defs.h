@@ -47,6 +47,7 @@ typedef unsigned long    DWORD;  // NOLINT
 # define ALWAYS_INLINE __attribute__((always_inline))
 # define LIKELY(x)     __builtin_expect(!!(x), 1)
 # define UNLIKELY(x)   __builtin_expect(!!(x), 0)
+# define UNUSED __attribute__((unused))
 # define USED __attribute__((used))
 #endif
 

@@ -10,6 +10,7 @@
 // This file is a part of ThreadSanitizer (TSan), a race detector.
 //
 //===----------------------------------------------------------------------===//
+#include "sanitizer_common/sanitizer_internal_defs.h"
 #include "tsan_atomic.h"
 #include "tsan_mutex.h"
 #include "gtest/gtest.h"
@@ -45,7 +46,7 @@ class TestData {
   static const int kSize = 64;
   typedef u64 T;
   Mutex mtx_;
-  char pad_[kCacheLineSize];
+  char pad_[kCacheLineSize] UNUSED;
   T data_[kSize];
 };
 

@@ -1,6 +1,8 @@
 DEBUG=0
 LDFLAGS=-ldl -lpthread -pie
-CXXFLAGS = -fPIE -g -Wall -Werror  -DTSAN_DEBUG=$(DEBUG)
+CXXFLAGS = -fPIE -g -Wall -Werror -DTSAN_DEBUG=$(DEBUG)
+# Gtest has unused private field. GCC doesn't know -Wunused-private-field warning
+CXXFLAGS += -Wno-unused-private-field -Wno-attributes
 ifeq ($(DEBUG), 0)
 	CXXFLAGS += -O3
 endif
