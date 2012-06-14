@@ -250,7 +250,8 @@ bool InclusionRewriter::Process(FileID FileId,
 {
   bool Invalid;
   const MemoryBuffer &FromFile = *SM.getBuffer(FileId, &Invalid);
-  assert(!Invalid && "Invalid FileID while trying to rewrite includes");
+  if (Invalid) // invalid inclusion
+    return true;
   const char *FileName = FromFile.getBufferIdentifier();
   Lexer RawLex(FileId, &FromFile, PP.getSourceManager(), PP.getLangOpts());
   RawLex.SetCommentRetentionState(false);
