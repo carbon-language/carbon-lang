@@ -177,7 +177,6 @@ class ARMFastISel : public FastISel {
     bool ARMEmitLoad(EVT VT, unsigned &ResultReg, Address &Addr,
                      unsigned Alignment = 0, bool isZExt = true,
                      bool allocReg = true);
-                     
     bool ARMEmitStore(EVT VT, unsigned SrcReg, Address &Addr,
                       unsigned Alignment = 0);
     bool ARMComputeAddress(const Value *Obj, Address &Addr);
@@ -1356,7 +1355,7 @@ bool ARMFastISel::SelectIndirectBr(const Instruction *I) {
   unsigned Opc = isThumb2 ? ARM::tBRIND : ARM::BX;
   AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(Opc))
                   .addReg(AddrReg));
-  return true;  
+  return true;
 }
 
 bool ARMFastISel::ARMEmitCmp(const Value *Src1Value, const Value *Src2Value,
@@ -1735,7 +1734,7 @@ bool ARMFastISel::SelectBinaryIntOp(const Instruction *I, unsigned ISDOpcode) {
   // type and the target independent selector doesn't know how to handle it.
   if (DestVT != MVT::i16 && DestVT != MVT::i8 && DestVT != MVT::i1)
     return false;
-  
+
   unsigned Opc;
   switch (ISDOpcode) {
     default: return false;
@@ -2141,7 +2140,7 @@ bool ARMFastISel::ARMEmitLibcall(const Instruction *I, RTLIB::Libcall Call) {
     return false;
 
   // Can't handle non-double multi-reg retvals.
-  if (RetVT != MVT::isVoid && RetVT != MVT::i32) {  
+  if (RetVT != MVT::isVoid && RetVT != MVT::i32) {
     SmallVector<CCValAssign, 16> RVLocs;
     CCState CCInfo(CC, false, *FuncInfo.MF, TM, RVLocs, *Context);
     CCInfo.AnalyzeCallResult(RetVT, CCAssignFnForCall(CC, true));
@@ -2347,7 +2346,7 @@ bool ARMFastISel::SelectCall(const Instruction *I,
       MIB.addReg(CalleeReg);
     else if (!IntrMemName)
       MIB.addGlobalAddress(GV, 0, 0);
-    else 
+    else
       MIB.addExternalSymbol(IntrMemName, 0);
   } else {
     if (UseReg)
@@ -2360,7 +2359,7 @@ bool ARMFastISel::SelectCall(const Instruction *I,
     // Explicitly adding the predicate here.
     AddDefaultPred(MIB);
   }
-  
+
   // Add implicit physical register uses to the call.
   for (unsigned i = 0, e = RegArgs.size(); i != e; ++i)
     MIB.addReg(RegArgs[i]);
@@ -2481,10 +2480,10 @@ bool ARMFastISel::SelectIntrinsicCall(const IntrinsicInst &I) {
           return true;
       }
     }
-    
+
     if (!MTI.getLength()->getType()->isIntegerTy(32))
       return false;
-    
+
     if (MTI.getSourceAddressSpace() > 255 || MTI.getDestAddressSpace() > 255)
       return false;
 
@@ -2496,13 +2495,13 @@ bool ARMFastISel::SelectIntrinsicCall(const IntrinsicInst &I) {
     // Don't handle volatile.
     if (MSI.isVolatile())
       return false;
-    
+
     if (!MSI.getLength()->getType()->isIntegerTy(32))
       return false;
-    
+
     if (MSI.getDestAddressSpace() > 255)
       return false;
-    
+
     return SelectCall(&I, "memset");
   }
   case Intrinsic::trap: {
@@ -2513,7 +2512,7 @@ bool ARMFastISel::SelectIntrinsicCall(const IntrinsicInst &I) {
 }
 
 bool ARMFastISel::SelectTrunc(const Instruction *I) {
-  // The high bits for a type smaller than the register size are assumed to be 
+  // The high bits for a type smaller than the register size are assumed to be
   // undefined.
   Value *Op = I->getOperand(0);
 
@@ -2704,7 +2703,7 @@ bool ARMFastISel::TryToFoldLoad(MachineInstr *MI, unsigned OpNo,
   // See if we can handle this address.
   Address Addr;
   if (!ARMComputeAddress(LI->getOperand(0), Addr)) return false;
-  
+
   unsigned ResultReg = MI->getOperand(0).getReg();
   if (!ARMEmitLoad(VT, ResultReg, Addr, LI->getAlignment(), isZExt, false))
     return false;
