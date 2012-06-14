@@ -45,8 +45,8 @@ class MipsJITInfo : public TargetJITInfo {
     /// emitFunctionStub - Use the specified JITCodeEmitter object to emit a
     /// small native function that simply calls the function at the specified
     /// address.
-    virtual void *emitFunctionStub(const Function* F, void *Fn,
-        JITCodeEmitter &JCE);
+    virtual void *emitFunctionStub(const Function *F, void *Fn,
+                                   JITCodeEmitter &JCE);
 
     /// getLazyResolverFunction - Expose the lazy resolver to the JIT.
     virtual LazyResolverFn getLazyResolverFunction(JITCompilerFn);
@@ -55,7 +55,7 @@ class MipsJITInfo : public TargetJITInfo {
     /// it must rewrite the code to contain the actual addresses of any
     /// referenced global symbols.
     virtual void relocate(void *Function, MachineRelocation *MR,
-        unsigned NumRelocs, unsigned char* GOTBase);
+                          unsigned NumRelocs, unsigned char *GOTBase);
 
     /// Initialize - Initialize internal stage for the function being JITted.
     void Initialize(const MachineFunction &MF, bool isPIC) {

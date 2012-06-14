@@ -386,7 +386,7 @@ void MipsAsmPrinter::printOperand(const MachineInstr *MI, int opNum,
       break;
 
     case MachineOperand::MO_BlockAddress: {
-      MCSymbol* BA = GetBlockAddressSymbol(MO.getBlockAddress());
+      MCSymbol *BA = GetBlockAddressSymbol(MO.getBlockAddress());
       O << BA->getName();
       break;
     }
@@ -447,7 +447,7 @@ printMemOperandEA(const MachineInstr *MI, int opNum, raw_ostream &O) {
 void MipsAsmPrinter::
 printFCCOperand(const MachineInstr *MI, int opNum, raw_ostream &O,
                 const char *Modifier) {
-  const MachineOperand& MO = MI->getOperand(opNum);
+  const MachineOperand &MO = MI->getOperand(opNum);
   O << Mips::MipsFCCToString((Mips::CondCode)MO.getImm());
 }
 

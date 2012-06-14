@@ -248,7 +248,7 @@ void MipsFrameLowering::emitEpilogue(MachineFunction &MF,
 void MipsFrameLowering::
 processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
                                      RegScavenger *RS) const {
-  MachineRegisterInfo& MRI = MF.getRegInfo();
+  MachineRegisterInfo &MRI = MF.getRegInfo();
   unsigned FP = STI.isABI_N64() ? Mips::FP_64 : Mips::FP;
 
   // FIXME: remove this code if register allocator can correctly mark

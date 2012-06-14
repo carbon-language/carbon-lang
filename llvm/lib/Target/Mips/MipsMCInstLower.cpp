@@ -29,7 +29,7 @@ using namespace llvm;
 MipsMCInstLower::MipsMCInstLower(MipsAsmPrinter &asmprinter)
   : AsmPrinter(asmprinter) {}
 
-void MipsMCInstLower::Initialize(Mangler *M, MCContext* C) {
+void MipsMCInstLower::Initialize(Mangler *M, MCContext *C) {
   Mang = M;
   Ctx = C;
 }
@@ -105,14 +105,14 @@ MCOperand MipsMCInstLower::LowerSymbolOperand(const MachineOperand &MO,
   assert(Offset > 0);
 
   const MCConstantExpr *OffsetExpr =  MCConstantExpr::Create(Offset, *Ctx);
-  const MCBinaryExpr *AddExpr = MCBinaryExpr::CreateAdd(MCSym, OffsetExpr, *Ctx);
-  return MCOperand::CreateExpr(AddExpr);
+  const MCBinaryExpr *Add = MCBinaryExpr::CreateAdd(MCSym, OffsetExpr, *Ctx);
+  return MCOperand::CreateExpr(Add);
 }
 
 /*
-static void CreateMCInst(MCInst& Inst, unsigned Opc, const MCOperand& Opnd0,
-                         const MCOperand& Opnd1,
-                         const MCOperand& Opnd2 = MCOperand()) {
+static void CreateMCInst(MCInst& Inst, unsigned Opc, const MCOperand &Opnd0,
+                         const MCOperand &Opnd1,
+                         const MCOperand &Opnd2 = MCOperand()) {
   Inst.setOpcode(Opc);
   Inst.addOperand(Opnd0);
   Inst.addOperand(Opnd1);
@@ -121,7 +121,7 @@ static void CreateMCInst(MCInst& Inst, unsigned Opc, const MCOperand& Opnd0,
 }
 */
 
-MCOperand MipsMCInstLower::LowerOperand(const MachineOperand& MO,
+MCOperand MipsMCInstLower::LowerOperand(const MachineOperand &MO,
                                         unsigned offset) const {
   MachineOperandType MOTy = MO.getType();
 

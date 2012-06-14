@@ -69,9 +69,7 @@ namespace llvm {
 
     // Pass Pipeline Configuration
     virtual TargetPassConfig *createPassConfig(PassManagerBase &PM);
-    virtual bool addCodeEmitter(PassManagerBase &PM,
-				 JITCodeEmitter &JCE);
-
+    virtual bool addCodeEmitter(PassManagerBase &PM, JITCodeEmitter &JCE);
   };
 
 /// MipsebTargetMachine - Mips32 big endian target machine.

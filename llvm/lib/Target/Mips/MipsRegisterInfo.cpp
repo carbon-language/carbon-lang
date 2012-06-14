@@ -55,8 +55,7 @@ unsigned MipsRegisterInfo::getPICCallReg() { return Mips::T9; }
 
 /// Mips Callee Saved Registers
 const uint16_t* MipsRegisterInfo::
-getCalleeSavedRegs(const MachineFunction *MF) const
-{
+getCalleeSavedRegs(const MachineFunction *MF) const {
   if (Subtarget.isSingleFloat())
     return CSR_SingleFloatOnly_SaveList;
   else if (!Subtarget.hasMips64())
@@ -65,12 +64,11 @@ getCalleeSavedRegs(const MachineFunction *MF) const
     return CSR_N32_SaveList;
 
   assert(Subtarget.isABI_N64());
-  return CSR_N64_SaveList;  
+  return CSR_N64_SaveList;
 }
 
 const uint32_t*
-MipsRegisterInfo::getCallPreservedMask(CallingConv::ID) const
-{  
+MipsRegisterInfo::getCallPreservedMask(CallingConv::ID) const {
   if (Subtarget.isSingleFloat())
     return CSR_SingleFloatOnly_RegMask;
   else if (!Subtarget.hasMips64())
@@ -79,7 +77,7 @@ MipsRegisterInfo::getCallPreservedMask(CallingConv::ID) const
     return CSR_N32_RegMask;
 
   assert(Subtarget.isABI_N64());
-  return CSR_N64_RegMask;  
+  return CSR_N64_RegMask;
 }
 
 BitVector MipsRegisterInfo::

@@ -76,14 +76,14 @@ namespace {
                        InstrIter candidate);
 
     void insertCallUses(InstrIter MI,
-                        SmallSet<unsigned, 32>& RegDefs,
-                        SmallSet<unsigned, 32>& RegUses);
+                        SmallSet<unsigned, 32> &RegDefs,
+                        SmallSet<unsigned, 32> &RegUses);
 
     void insertDefsUses(InstrIter MI,
-                        SmallSet<unsigned, 32>& RegDefs,
-                        SmallSet<unsigned, 32>& RegUses);
+                        SmallSet<unsigned, 32> &RegDefs,
+                        SmallSet<unsigned, 32> &RegUses);
 
-    bool IsRegInSet(SmallSet<unsigned, 32>& RegSet,
+    bool IsRegInSet(SmallSet<unsigned, 32> &RegSet,
                     unsigned Reg);
 
     bool delayHasHazard(InstrIter candidate,
@@ -230,8 +230,8 @@ bool Filler::delayHasHazard(InstrIter candidate,
 
 // Insert Defs and Uses of MI into the sets RegDefs and RegUses.
 void Filler::insertDefsUses(InstrIter MI,
-                            SmallSet<unsigned, 32>& RegDefs,
-                            SmallSet<unsigned, 32>& RegUses) {
+                            SmallSet<unsigned, 32> &RegDefs,
+                            SmallSet<unsigned, 32> &RegUses) {
   // If MI is a call or return, just examine the explicit non-variadic operands.
   MCInstrDesc MCID = MI->getDesc();
   unsigned e = MI->isCall() || MI->isReturn() ? MCID.getNumOperands() :
@@ -256,7 +256,7 @@ void Filler::insertDefsUses(InstrIter MI,
 }
 
 //returns true if the Reg or its alias is in the RegSet.
-bool Filler::IsRegInSet(SmallSet<unsigned, 32>& RegSet, unsigned Reg) {
+bool Filler::IsRegInSet(SmallSet<unsigned, 32> &RegSet, unsigned Reg) {
   // Check Reg and all aliased Registers.
   for (MCRegAliasIterator AI(Reg, TM.getRegisterInfo(), true);
        AI.isValid(); ++AI)

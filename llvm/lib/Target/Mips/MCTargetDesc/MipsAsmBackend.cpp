@@ -115,7 +115,8 @@ public:
       CurVal |= (uint64_t)((uint8_t)Data[Offset + Idx]) << (i*8);
     }
 
-    uint64_t Mask = ((uint64_t)(-1) >> (64 - getFixupKindInfo(Kind).TargetSize));
+    uint64_t Mask = ((uint64_t)(-1) >>
+                     (64 - getFixupKindInfo(Kind).TargetSize));
     CurVal |= Value & Mask;
 
     // Write out the fixed up bytes back to the code/data bits.

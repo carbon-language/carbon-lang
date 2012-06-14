@@ -144,7 +144,8 @@ void MipsDAGToDAGISel::InitGlobalBaseReg(MachineFunction &MF) {
     const GlobalValue *FName = MF.getFunction();
     BuildMI(MBB, I, DL, TII.get(Mips::LUi64), V0)
       .addGlobalAddress(FName, 0, MipsII::MO_GPOFF_HI);
-    BuildMI(MBB, I, DL, TII.get(Mips::DADDu), V1).addReg(V0).addReg(Mips::T9_64);
+    BuildMI(MBB, I, DL, TII.get(Mips::DADDu), V1).addReg(V0)
+      .addReg(Mips::T9_64);
     BuildMI(MBB, I, DL, TII.get(Mips::DADDiu), GlobalBaseReg).addReg(V1)
       .addGlobalAddress(FName, 0, MipsII::MO_GPOFF_LO);
     MII->storeRegToStackSlot(MBB, I, GlobalBaseReg, false, FI, RC,
@@ -281,7 +282,7 @@ SelectAddr(SDNode *Parent, SDValue Addr, SDValue &Base, SDValue &Offset) {
 
   // If Parent is an unaligned f32 load or store, select a (base + index)
   // floating point load/store instruction (luxc1 or suxc1).
-  const LSBaseSDNode* LS = 0;
+  const LSBaseSDNode *LS = 0;
 
   if (Parent && (LS = dyn_cast<LSBaseSDNode>(Parent))) {
     EVT VT = LS->getMemoryVT();
@@ -352,7 +353,8 @@ SelectAddr(SDNode *Parent, SDValue Addr, SDValue &Base, SDValue &Offset) {
     }
 
     // If an indexed floating point load/store can be emitted, return false.
-    if (LS && (LS->getMemoryVT() == MVT::f32 || LS->getMemoryVT() == MVT::f64) &&
+    if (LS &&
+        (LS->getMemoryVT() == MVT::f32 || LS->getMemoryVT() == MVT::f64) &&
         Subtarget.hasMips32r2Or64())
       return false;
   }

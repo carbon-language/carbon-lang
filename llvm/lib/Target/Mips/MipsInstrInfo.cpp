@@ -330,9 +330,9 @@ unsigned Mips::GetOppositeBranchOpc(unsigned Opc)
   }
 }
 
-static void AnalyzeCondBr(const MachineInstr* Inst, unsigned Opc,
+static void AnalyzeCondBr(const MachineInstr *Inst, unsigned Opc,
                           MachineBasicBlock *&BB,
-                          SmallVectorImpl<MachineOperand>& Cond) {
+                          SmallVectorImpl<MachineOperand> &Cond) {
   assert(GetAnalyzableBrOpc(Opc) && "Not an analyzable branch");
   int NumOp = Inst->getNumExplicitOperands();
 

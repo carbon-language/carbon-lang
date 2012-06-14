@@ -154,8 +154,8 @@ TargetJITInfo::StubLayout MipsJITInfo::getStubLayout() {
   return Result;
 }
 
-void *MipsJITInfo::emitFunctionStub(const Function* F, void *Fn,
-    JITCodeEmitter &JCE) {
+void *MipsJITInfo::emitFunctionStub(const Function *F, void *Fn,
+                                    JITCodeEmitter &JCE) {
   JCE.emitAlignment(4);
   void *Addr = (void*) (JCE.getCurrentPCValue());
   if (!sys::Memory::setRangeWritable(Addr, 16))
@@ -193,7 +193,7 @@ void *MipsJITInfo::emitFunctionStub(const Function* F, void *Fn,
 /// it must rewrite the code to contain the actual addresses of any
 /// referenced global symbols.
 void MipsJITInfo::relocate(void *Function, MachineRelocation *MR,
-    unsigned NumRelocs, unsigned char* GOTBase) {
+                           unsigned NumRelocs, unsigned char *GOTBase) {
   for (unsigned i = 0; i != NumRelocs; ++i, ++MR) {
 
     void *RelocPos = (char*) Function + MR->getMachineCodeOffset();

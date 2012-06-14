@@ -187,7 +187,7 @@ void MipsELFObjectWriter::sortRelocs(const MCAssembler &Asm,
   // Call the defualt function first. Relocations are sorted in descending
   // order of r_offset.
   MCELFObjectTargetWriter::sortRelocs(Asm, Relocs);
-  
+
   RelLs RelocLs;
   std::vector<RelLsIter> Unmatched;
 
