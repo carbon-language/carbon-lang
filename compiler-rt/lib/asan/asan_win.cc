@@ -22,7 +22,6 @@
 #include "asan_interceptors.h"
 #include "asan_internal.h"
 #include "asan_lock.h"
-#include "asan_procmaps.h"
 #include "asan_thread.h"
 
 // Should not add dependency on libstdc++,

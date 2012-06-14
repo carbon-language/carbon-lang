@@ -13,7 +13,6 @@
 //===----------------------------------------------------------------------===//
 #include "asan_interceptors.h"
 #include "asan_lock.h"
-#include "asan_procmaps.h"
 #include "asan_stack.h"
 #include "asan_thread.h"
 #include "asan_thread_registry.h"

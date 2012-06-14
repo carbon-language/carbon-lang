@@ -16,7 +16,6 @@
 #include "asan_internal.h"
 #include "asan_interceptors.h"
 #include "asan_mapping.h"
-#include "asan_procmaps.h"
 #include "asan_stack.h"
 #include "asan_thread_registry.h"
 #include "sanitizer_common/sanitizer_libc.h"
