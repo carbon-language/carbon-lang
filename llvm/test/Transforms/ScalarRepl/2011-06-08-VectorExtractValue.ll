@@ -10,8 +10,7 @@ target triple = "x86_64-apple-macosx10.7.0"
 
 ; CHECK: main
 ; CHECK-NOT: alloca
-; CHECK: %[[A:[a-z0-9]*]] = and i128
-; CHECK: %[[B:[a-z0-9]*]] = trunc i128 %[[A]] to i32
+; CHECK: extractelement <2 x float> zeroinitializer, i32 0
 
 define void @main() uwtable ssp {
 entry:
@@ -28,8 +27,7 @@ entry:
 
 ; CHECK: test1
 ; CHECK-NOT: alloca
-; CHECK: %[[A:[a-z0-9]*]] = and i128
-; CHECK: %[[B:[a-z0-9]*]] = trunc i128 %[[A]] to i32
+; CHECK: extractelement <2 x float> zeroinitializer, i32 0
 
 define void @test1() uwtable ssp {
 entry:
@@ -43,9 +41,8 @@ entry:
 
 ; CHECK: test2
 ; CHECK-NOT: alloca
-; CHECK: and i128
-; CHECK: or i128
-; CHECK: trunc i128
+; CHECK: %[[A:[a-z0-9]*]] = extractelement <2 x float> zeroinitializer, i32 0
+; CHECK: fadd float %[[A]], 1.000000e+00
 ; CHECK-NOT: insertelement
 ; CHECK-NOT: extractelement
 
@@ -61,4 +58,18 @@ entry:
   %r2 = load float* %tmpcast2, align 4
   %r = fadd float %r1, %r2
   ret float %r
+}
+
+; CHECK: test3
+; CHECK: %[[A:[a-z0-9]*]] = extractelement <2 x float> <float 2.000000e+00, float 3.000000e+00>, i32 1
+; CHECK: ret float %[[A]]
+
+define float @test3() {
+entry:
+  %ai = alloca { <2 x float>, <2 x float> }, align 8
+  store { <2 x float>, <2 x float> } {<2 x float> <float 0.0, float 1.0>, <2 x float> <float 2.0, float 3.0>}, { <2 x float>, <2 x float> }* %ai, align 8
+  %tmpcast = bitcast { <2 x float>, <2 x float> }* %ai to [4 x float]*
+  %arrayidx = getelementptr inbounds [4 x float]* %tmpcast, i64 0, i64 3
+  %f = load float* %arrayidx, align 4
+  ret float %f
 }
