@@ -3284,7 +3284,8 @@ ARMAsmParser::OperandMatchResultTy ARMAsmParser::
 parseProcIFlagsOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   SMLoc S = Parser.getTok().getLoc();
   const AsmToken &Tok = Parser.getTok();
-  assert(Tok.is(AsmToken::Identifier) && "Token is not an Identifier");
+  if (!Tok.is(AsmToken::Identifier)) 
+    return MatchOperand_NoMatch;
   StringRef IFlagsStr = Tok.getString();
 
   // An iflags string of "none" is interpreted to mean that none of the AIF

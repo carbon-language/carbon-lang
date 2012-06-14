@@ -315,3 +315,9 @@
 @ CHECK-ERRORS: error: coprocessor option must be an immediate in range [0, 255]
 @ CHECK-ERRORS:         ldc2 p2, c8, [r1], { -1 }
 @ CHECK-ERRORS:                              ^
+
+        @ Bad CPS instruction format.
+        cps f,#1
+@ CHECK-ERRORS: error: invalid operand for instruction
+@ CHECK-ERRORS:         cps f,#1
+@ CHECK-ERRORS:               ^
