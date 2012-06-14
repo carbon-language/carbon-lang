@@ -223,12 +223,12 @@ we have chased down ended up being bugs in the program being compiled, not
  LLVM.</p>
 
 <p>Once you determine that the program itself is not buggy, you should choose 
-which code generator you wish to compile the program with (e.g. C backend, the 
-JIT, or LLC) and optionally a series of LLVM passes to run.  For example:</p>
+which code generator you wish to compile the program with (e.g. LLC or the JIT)
+and optionally a series of LLVM passes to run.  For example:</p>
 
 <div class="doc_code">
 <p><tt>
-<b>bugpoint</b> -run-cbe [... optzn passes ...] file-to-test.bc --args -- [program arguments]</tt></p>
+<b>bugpoint</b> -run-llc [... optzn passes ...] file-to-test.bc --args -- [program arguments]</tt></p>
 </div>
 
 <p><tt>bugpoint</tt> will try to narrow down your list of passes to the one pass

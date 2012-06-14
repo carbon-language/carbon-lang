@@ -85,7 +85,7 @@ malformed output (which causes the verifier to abort), <tt>bugpoint</tt> starts
 the <a href="#crashdebug">crash debugger</a>.</p>
 
 <p>Otherwise, if the <tt>-output</tt> option was not specified,
-<tt>bugpoint</tt> runs the test program with the C backend (which is assumed to
+<tt>bugpoint</tt> runs the test program with the "safe" backend (which is assumed to
 generate good code) to generate a reference output.  Once <tt>bugpoint</tt> has
 a reference output for the test program, it tries executing it with the
 selected code generator.  If the selected code generator crashes,
@@ -138,13 +138,13 @@ reproduce the failure with <tt>opt</tt> or <tt>llc</tt>.</p>
 <p>The code generator debugger attempts to narrow down the amount of code that
 is being miscompiled by the selected code generator.  To do this, it takes the
 test program and partitions it into two pieces: one piece which it compiles
-with the C backend (into a shared object), and one piece which it runs with
+with the "safe" backend (into a shared object), and one piece which it runs with
 either the JIT or the static LLC compiler.  It uses several techniques to
 reduce the amount of code pushed through the LLVM code generator, to reduce the
 potential scope of the problem.  After it is finished, it emits two bitcode
 files (called "test" [to be compiled with the code generator] and "safe" [to be
-compiled with the C backend], respectively), and instructions for reproducing
-the problem.  The code generator debugger assumes that the C backend produces
+compiled with the "safe" backend], respectively), and instructions for reproducing
+the problem.  The code generator debugger assumes that the "safe" backend produces
 good code.</p>
 
 </div>

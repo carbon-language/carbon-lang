@@ -218,7 +218,8 @@
    support completely non-traditional code generation targets.  For example, the
    C backend does not require register allocation, instruction selection, or any
    of the other standard components provided by the system.  As such, it only
-   implements these two interfaces, and does its own thing.  Another example of
+   implements these two interfaces, and does its own thing. Note that C backend
+   was removed from the trunk since LLVM 3.1 release. Another example of
    a code generator like this is a (purely hypothetical) backend that converts
    LLVM to the GCC RTL form and uses GCC to emit machine code for a target.</p>
 
