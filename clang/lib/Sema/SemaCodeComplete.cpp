@@ -158,7 +158,7 @@ namespace {
     /// \brief The completion context in which we are gathering results.
     CodeCompletionContext CompletionContext;
     
-    /// \brief If we are in an instance method definition, the @implementation
+    /// \brief If we are in an instance method definition, the \@implementation
     /// object.
     ObjCImplementationDecl *ObjCImplementation;
     
@@ -4297,27 +4297,28 @@ void Sema::CodeCompleteLambdaIntroducer(Scope *S, LambdaIntroducer &Intro,
                             Results.data(), Results.size());
 }
 
-// Macro that expands to @Keyword or Keyword, depending on whether NeedAt is
-// true or false.
-#define OBJC_AT_KEYWORD_NAME(NeedAt,Keyword) NeedAt? "@" #Keyword : #Keyword
+/// Macro that optionally prepends an "@" to the string literal passed in via
+/// Keyword, depending on whether NeedAt is true or false.
+#define OBJC_AT_KEYWORD_NAME(NeedAt,Keyword) ((NeedAt)? "@" Keyword : Keyword)
+
 static void AddObjCImplementationResults(const LangOptions &LangOpts,
                                          ResultBuilder &Results,
                                          bool NeedAt) {
   typedef CodeCompletionResult Result;
   // Since we have an implementation, we can end it.
-  Results.AddResult(Result(OBJC_AT_KEYWORD_NAME(NeedAt,end)));
+  Results.AddResult(Result(OBJC_AT_KEYWORD_NAME(NeedAt,"end")));
   
   CodeCompletionBuilder Builder(Results.getAllocator(),
                                 Results.getCodeCompletionTUInfo());
   if (LangOpts.ObjC2) {
     // @dynamic
-    Builder.AddTypedTextChunk(OBJC_AT_KEYWORD_NAME(NeedAt,dynamic));
+    Builder.AddTypedTextChunk(OBJC_AT_KEYWORD_NAME(NeedAt,"dynamic"));
     Builder.AddChunk(CodeCompletionString::CK_HorizontalSpace);
     Builder.AddPlaceholderChunk("property");
     Results.AddResult(Result(Builder.TakeString()));
     
     // @synthesize
-    Builder.AddTypedTextChunk(OBJC_AT_KEYWORD_NAME(NeedAt,synthesize));
+    Builder.AddTypedTextChunk(OBJC_AT_KEYWORD_NAME(NeedAt,"synthesize"));
     Builder.AddChunk(CodeCompletionString::CK_HorizontalSpace);
     Builder.AddPlaceholderChunk("property");
     Results.AddResult(Result(Builder.TakeString()));
@@ -4330,17 +4331,17 @@ static void AddObjCInterfaceResults(const LangOptions &LangOpts,
   typedef CodeCompletionResult Result;
   
   // Since we have an interface or protocol, we can end it.
-  Results.AddResult(Result(OBJC_AT_KEYWORD_NAME(NeedAt,end)));
+  Results.AddResult(Result(OBJC_AT_KEYWORD_NAME(NeedAt,"end")));
   
   if (LangOpts.ObjC2) {
     // @property
-    Results.AddResult(Result(OBJC_AT_KEYWORD_NAME(NeedAt,property)));
+    Results.AddResult(Result(OBJC_AT_KEYWORD_NAME(NeedAt,"property")));
   
     // @required
-    Results.AddResult(Result(OBJC_AT_KEYWORD_NAME(NeedAt,required)));
+    Results.AddResult(Result(OBJC_AT_KEYWORD_NAME(NeedAt,"required")));
   
     // @optional
-    Results.AddResult(Result(OBJC_AT_KEYWORD_NAME(NeedAt,optional)));
+    Results.AddResult(Result(OBJC_AT_KEYWORD_NAME(NeedAt,"optional")));
   }
 }
 
@@ -4350,7 +4351,7 @@ static void AddObjCTopLevelResults(ResultBuilder &Results, bool NeedAt) {
                                 Results.getCodeCompletionTUInfo());
   
   // @class name ;
-  Builder.AddTypedTextChunk(OBJC_AT_KEYWORD_NAME(NeedAt,class));
+  Builder.AddTypedTextChunk(OBJC_AT_KEYWORD_NAME(NeedAt,"class"));
   Builder.AddChunk(CodeCompletionString::CK_HorizontalSpace);
   Builder.AddPlaceholderChunk("name");
   Results.AddResult(Result(Builder.TakeString()));
@@ -4359,26 +4360,26 @@ static void AddObjCTopLevelResults(ResultBuilder &Results, bool NeedAt) {
     // @interface name 
     // FIXME: Could introduce the whole pattern, including superclasses and 
     // such.
-    Builder.AddTypedTextChunk(OBJC_AT_KEYWORD_NAME(NeedAt,interface));
+    Builder.AddTypedTextChunk(OBJC_AT_KEYWORD_NAME(NeedAt,"interface"));
     Builder.AddChunk(CodeCompletionString::CK_HorizontalSpace);
     Builder.AddPlaceholderChunk("class");
     Results.AddResult(Result(Builder.TakeString()));
   
     // @protocol name
-    Builder.AddTypedTextChunk(OBJC_AT_KEYWORD_NAME(NeedAt,protocol));
+    Builder.AddTypedTextChunk(OBJC_AT_KEYWORD_NAME(NeedAt,"protocol"));
     Builder.AddChunk(CodeCompletionString::CK_HorizontalSpace);
     Builder.AddPlaceholderChunk("protocol");
     Results.AddResult(Result(Builder.TakeString()));
     
     // @implementation name
-    Builder.AddTypedTextChunk(OBJC_AT_KEYWORD_NAME(NeedAt,implementation));
+    Builder.AddTypedTextChunk(OBJC_AT_KEYWORD_NAME(NeedAt,"implementation"));
     Builder.AddChunk(CodeCompletionString::CK_HorizontalSpace);
     Builder.AddPlaceholderChunk("class");
     Results.AddResult(Result(Builder.TakeString()));
   }
   
   // @compatibility_alias name
-  Builder.AddTypedTextChunk(OBJC_AT_KEYWORD_NAME(NeedAt,compatibility_alias));
+  Builder.AddTypedTextChunk(OBJC_AT_KEYWORD_NAME(NeedAt,"compatibility_alias"));
   Builder.AddChunk(CodeCompletionString::CK_HorizontalSpace);
   Builder.AddPlaceholderChunk("alias");
   Builder.AddChunk(CodeCompletionString::CK_HorizontalSpace);
@@ -4415,7 +4416,7 @@ static void AddObjCExpressionResults(ResultBuilder &Results, bool NeedAt) {
       Results.getSema().getLangOpts().ConstStrings)
     EncodeType = " const char[]";
   Builder.AddResultTypeChunk(EncodeType);
-  Builder.AddTypedTextChunk(OBJC_AT_KEYWORD_NAME(NeedAt,encode));
+  Builder.AddTypedTextChunk(OBJC_AT_KEYWORD_NAME(NeedAt,"encode"));
   Builder.AddChunk(CodeCompletionString::CK_LeftParen);
   Builder.AddPlaceholderChunk("type-name");
   Builder.AddChunk(CodeCompletionString::CK_RightParen);
@@ -4423,7 +4424,7 @@ static void AddObjCExpressionResults(ResultBuilder &Results, bool NeedAt) {
   
   // @protocol ( protocol-name )
   Builder.AddResultTypeChunk("Protocol *");
-  Builder.AddTypedTextChunk(OBJC_AT_KEYWORD_NAME(NeedAt,protocol));
+  Builder.AddTypedTextChunk(OBJC_AT_KEYWORD_NAME(NeedAt,"protocol"));
   Builder.AddChunk(CodeCompletionString::CK_LeftParen);
   Builder.AddPlaceholderChunk("protocol-name");
   Builder.AddChunk(CodeCompletionString::CK_RightParen);
@@ -4431,14 +4432,14 @@ static void AddObjCExpressionResults(ResultBuilder &Results, bool NeedAt) {
 
   // @selector ( selector )
   Builder.AddResultTypeChunk("SEL");
-  Builder.AddTypedTextChunk(OBJC_AT_KEYWORD_NAME(NeedAt,selector));
+  Builder.AddTypedTextChunk(OBJC_AT_KEYWORD_NAME(NeedAt,"selector"));
   Builder.AddChunk(CodeCompletionString::CK_LeftParen);
   Builder.AddPlaceholderChunk("selector");
   Builder.AddChunk(CodeCompletionString::CK_RightParen);
   Results.AddResult(Result(Builder.TakeString()));
   
   // @[ objects, ... ]
-  Builder.AddTypedTextChunk(OBJC_AT_KEYWORD_NAME(NeedAt,[));
+  Builder.AddTypedTextChunk(OBJC_AT_KEYWORD_NAME(NeedAt,"["));
   Builder.AddChunk(CodeCompletionString::CK_HorizontalSpace);
   Builder.AddPlaceholderChunk("objects, ...");
   Builder.AddChunk(CodeCompletionString::CK_HorizontalSpace);
@@ -4446,7 +4447,7 @@ static void AddObjCExpressionResults(ResultBuilder &Results, bool NeedAt) {
   Results.AddResult(Result(Builder.TakeString()));
 
   // @{ key : object, ... }
-  Builder.AddTypedTextChunk(OBJC_AT_KEYWORD_NAME(NeedAt,{));
+  Builder.AddTypedTextChunk(OBJC_AT_KEYWORD_NAME(NeedAt,"{"));
   Builder.AddChunk(CodeCompletionString::CK_HorizontalSpace);
   Builder.AddPlaceholderChunk("key");
   Builder.AddChunk(CodeCompletionString::CK_HorizontalSpace);
@@ -4466,7 +4467,7 @@ static void AddObjCStatementResults(ResultBuilder &Results, bool NeedAt) {
   if (Results.includeCodePatterns()) {
     // @try { statements } @catch ( declaration ) { statements } @finally
     //   { statements }
-    Builder.AddTypedTextChunk(OBJC_AT_KEYWORD_NAME(NeedAt,try));
+    Builder.AddTypedTextChunk(OBJC_AT_KEYWORD_NAME(NeedAt,"try"));
     Builder.AddChunk(CodeCompletionString::CK_LeftBrace);
     Builder.AddPlaceholderChunk("statements");
     Builder.AddChunk(CodeCompletionString::CK_RightBrace);
@@ -4485,14 +4486,14 @@ static void AddObjCStatementResults(ResultBuilder &Results, bool NeedAt) {
   }
   
   // @throw
-  Builder.AddTypedTextChunk(OBJC_AT_KEYWORD_NAME(NeedAt,throw));
+  Builder.AddTypedTextChunk(OBJC_AT_KEYWORD_NAME(NeedAt,"throw"));
   Builder.AddChunk(CodeCompletionString::CK_HorizontalSpace);
   Builder.AddPlaceholderChunk("expression");
   Results.AddResult(Result(Builder.TakeString()));
   
   if (Results.includeCodePatterns()) {
     // @synchronized ( expression ) { statements }
-    Builder.AddTypedTextChunk(OBJC_AT_KEYWORD_NAME(NeedAt,synchronized));
+    Builder.AddTypedTextChunk(OBJC_AT_KEYWORD_NAME(NeedAt,"synchronized"));
     Builder.AddChunk(CodeCompletionString::CK_HorizontalSpace);
     Builder.AddChunk(CodeCompletionString::CK_LeftParen);
     Builder.AddPlaceholderChunk("expression");
@@ -4508,11 +4509,11 @@ static void AddObjCVisibilityResults(const LangOptions &LangOpts,
                                      ResultBuilder &Results,
                                      bool NeedAt) {
   typedef CodeCompletionResult Result;
-  Results.AddResult(Result(OBJC_AT_KEYWORD_NAME(NeedAt,private)));
-  Results.AddResult(Result(OBJC_AT_KEYWORD_NAME(NeedAt,protected)));
-  Results.AddResult(Result(OBJC_AT_KEYWORD_NAME(NeedAt,public)));
+  Results.AddResult(Result(OBJC_AT_KEYWORD_NAME(NeedAt,"private")));
+  Results.AddResult(Result(OBJC_AT_KEYWORD_NAME(NeedAt,"protected")));
+  Results.AddResult(Result(OBJC_AT_KEYWORD_NAME(NeedAt,"public")));
   if (LangOpts.ObjC2)
-    Results.AddResult(Result(OBJC_AT_KEYWORD_NAME(NeedAt,package)));    
+    Results.AddResult(Result(OBJC_AT_KEYWORD_NAME(NeedAt,"package")));
 }
 
 void Sema::CodeCompleteObjCAtVisibility(Scope *S) {
@@ -4697,8 +4698,8 @@ namespace {
 ///
 /// \param Container the container in which we'll look to find methods.
 ///
-/// \param WantInstance whether to add instance methods (only); if false, this
-/// routine will add factory methods (only).
+/// \param WantInstanceMethods Whether to add instance methods (only); if
+/// false, this routine will add factory methods (only).
 ///
 /// \param CurContext the context in which we're performing the lookup that
 /// finds methods.
