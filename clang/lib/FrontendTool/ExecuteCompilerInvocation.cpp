@@ -71,9 +71,13 @@ static FrontendAction *CreateFrontendBaseAction(CompilerInstance &CI) {
 
   case PrintDeclContext:       return new DeclContextPrintAction();
   case PrintPreamble:          return new PrintPreambleAction();
-  case PrintPreprocessedInput: return new PrintPreprocessedAction();
+  case PrintPreprocessedInput: {
+    if (CI.getPreprocessorOutputOpts().RewriteIncludes)
+      return new RewriteIncludesAction();
+    return new PrintPreprocessedAction();
+  }
+
   case RewriteMacros:          return new RewriteMacrosAction();
-  case RewriteIncludes:        return new RewriteIncludesAction();
   case RewriteObjC:            return new RewriteObjCAction();
   case RewriteTest:            return new RewriteTestAction();
   case RunAnalysis:            return new ento::AnalysisAction();

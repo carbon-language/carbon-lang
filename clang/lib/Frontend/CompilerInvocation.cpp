@@ -445,7 +445,6 @@ static const char *getActionName(frontend::ActionKind Kind) {
   case frontend::PrintPreamble:          return "-print-preamble";
   case frontend::PrintPreprocessedInput: return "-E";
   case frontend::RewriteMacros:          return "-rewrite-macros";
-  case frontend::RewriteIncludes:        return "-frewrite-includes";
   case frontend::RewriteObjC:            return "-rewrite-objc";
   case frontend::RewriteTest:            return "-rewrite-test";
   case frontend::RunAnalysis:            return "-analyze";
@@ -1446,8 +1445,6 @@ static InputKind ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args,
       Opts.ProgramAction = frontend::PrintPreprocessedInput; break;
     case OPT_rewrite_macros:
       Opts.ProgramAction = frontend::RewriteMacros; break;
-    case OPT_frewrite_includes:
-      Opts.ProgramAction = frontend::RewriteIncludes; break;
     case OPT_rewrite_objc:
       Opts.ProgramAction = frontend::RewriteObjC; break;
     case OPT_rewrite_test:
@@ -2144,6 +2141,7 @@ static void ParsePreprocessorOutputArgs(PreprocessorOutputOptions &Opts,
   Opts.ShowLineMarkers = !Args.hasArg(OPT_P);
   Opts.ShowMacroComments = Args.hasArg(OPT_CC);
   Opts.ShowMacros = Args.hasArg(OPT_dM) || Args.hasArg(OPT_dD);
+  Opts.RewriteIncludes = Args.hasArg(OPT_frewrite_includes);
 }
 
 static void ParseTargetArgs(TargetOptions &Opts, ArgList &Args) {
