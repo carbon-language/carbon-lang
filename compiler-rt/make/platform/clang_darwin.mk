@@ -12,6 +12,7 @@ CheckArches = \
   $(shell \
     result=""; \
     for arch in $(1); do \
+      if [ "$$arch" = "armv6" -o "$$arch" = "armv7" ]; then continue; fi; \
       if $(CC) -arch $$arch -c \
 	  -integrated-as \
 	  $(ProjSrcRoot)/make/platform/clang_darwin_test_input.c \
