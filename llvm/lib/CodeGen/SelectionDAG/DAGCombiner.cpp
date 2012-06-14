@@ -5604,7 +5604,7 @@ SDValue DAGCombiner::visitFADD(SDNode *N) {
     if (FoldedVOp.getNode()) return FoldedVOp;
   }
 
-  // fold (fadd c1, c2) -> (fadd c1, c2)
+  // fold (fadd c1, c2) -> c1 + c2
   if (N0CFP && N1CFP && VT != MVT::ppcf128)
     return DAG.getNode(ISD::FADD, N->getDebugLoc(), VT, N0, N1);
   // canonicalize constant to RHS
