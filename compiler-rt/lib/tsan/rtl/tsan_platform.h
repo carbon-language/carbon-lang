@@ -64,6 +64,16 @@ static inline uptr ShadowToMem(uptr shadow) {
 #endif
 }
 
+// For COMPAT mapping returns an alternative address
+// that mapped to the same shadow address.
+static inline uptr AlternativeAddress(uptr addr) {
+#if defined(TSAN_COMPAT_SHADOW) && TSAN_COMPAT_SHADOW
+  return addr | kLinuxAppMemMsk;
+#else
+  return 0;
+#endif
+}
+
 uptr GetShadowMemoryConsumption();
 void FlushShadowMemory();
 

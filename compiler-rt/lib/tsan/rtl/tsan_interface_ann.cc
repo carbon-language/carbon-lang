@@ -18,6 +18,7 @@
 #include "tsan_rtl.h"
 #include "tsan_mman.h"
 #include "tsan_flags.h"
+#include "tsan_platform.h"
 
 #define CALLERPC ((uptr)__builtin_return_address(0))
 
@@ -123,6 +124,8 @@ static ExpectRace *FindRace(ExpectRace *list, uptr addr, uptr size) {
 
 static bool CheckContains(ExpectRace *list, uptr addr, uptr size) {
   ExpectRace *race = FindRace(list, addr, size);
+  if (race == 0 && AlternativeAddress(addr))
+    race = FindRace(list, AlternativeAddress(addr), size);
   if (race == 0)
     return false;
   DPrintf("Hit expected/benign race: %s addr=%zx:%d %s:%d\n",
