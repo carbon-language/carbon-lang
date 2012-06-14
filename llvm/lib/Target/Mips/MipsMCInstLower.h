@@ -33,7 +33,6 @@ public:
   MipsMCInstLower(MipsAsmPrinter &asmprinter);
   void Initialize(Mangler *mang, MCContext* C);
   void Lower(const MachineInstr *MI, MCInst &OutMI) const;
-  void LowerSETGP01(SmallVector<MCInst, 4>& MCInsts);
 private:
   MCOperand LowerSymbolOperand(const MachineOperand &MO,
                                MachineOperandType MOTy, unsigned Offset) const;

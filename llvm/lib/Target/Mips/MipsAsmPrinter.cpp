@@ -230,15 +230,6 @@ void MipsAsmPrinter::EmitFunctionBodyStart() {
     if (MipsFI->getEmitNOAT())
       OutStreamer.EmitRawText(StringRef("\t.set\tnoat"));
   }
-
-  if ((MF->getTarget().getRelocationModel() == Reloc::PIC_) &&
-      Subtarget->isABI_O32() && MipsFI->globalBaseRegSet()) {
-    SmallVector<MCInst, 4> MCInsts;
-    MCInstLowering.LowerSETGP01(MCInsts);
-    for (SmallVector<MCInst, 4>::iterator I = MCInsts.begin();
-         I != MCInsts.end(); ++I)
-      OutStreamer.EmitInstruction(*I);
-  }
 }
 
 /// EmitFunctionBodyEnd - Targets can override this to emit stuff after

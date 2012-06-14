@@ -109,6 +109,7 @@ MCOperand MipsMCInstLower::LowerSymbolOperand(const MachineOperand &MO,
   return MCOperand::CreateExpr(AddExpr);
 }
 
+/*
 static void CreateMCInst(MCInst& Inst, unsigned Opc, const MCOperand& Opnd0,
                          const MCOperand& Opnd1,
                          const MCOperand& Opnd2 = MCOperand()) {
@@ -118,6 +119,7 @@ static void CreateMCInst(MCInst& Inst, unsigned Opc, const MCOperand& Opnd0,
   if (Opnd2.isValid())
     Inst.addOperand(Opnd2);
 }
+*/
 
 MCOperand MipsMCInstLower::LowerOperand(const MachineOperand& MO,
                                         unsigned offset) const {
@@ -155,24 +157,4 @@ void MipsMCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
     if (MCOp.isValid())
       OutMI.addOperand(MCOp);
   }
-}
-
-// Create the following two instructions:
-//  "lui   $2, %hi(_gp_disp)"
-//  "addiu $2, $2, %lo(_gp_disp)"
-void MipsMCInstLower::LowerSETGP01(SmallVector<MCInst, 4>& MCInsts) {
-  MCOperand RegOpnd = MCOperand::CreateReg(Mips::V0);
-  StringRef SymName("_gp_disp");
-  const MCSymbol *Sym = Ctx->GetOrCreateSymbol(SymName);
-  const MCSymbolRefExpr *MCSym;
-
-  MCSym = MCSymbolRefExpr::Create(Sym, MCSymbolRefExpr::VK_Mips_ABS_HI, *Ctx);
-  MCOperand SymHi = MCOperand::CreateExpr(MCSym);
-  MCSym = MCSymbolRefExpr::Create(Sym, MCSymbolRefExpr::VK_Mips_ABS_LO, *Ctx);
-  MCOperand SymLo = MCOperand::CreateExpr(MCSym);
-
-  MCInsts.resize(2);
-
-  CreateMCInst(MCInsts[0], Mips::LUi, RegOpnd, SymHi);
-  CreateMCInst(MCInsts[1], Mips::ADDiu, RegOpnd, RegOpnd, SymLo);
 }
