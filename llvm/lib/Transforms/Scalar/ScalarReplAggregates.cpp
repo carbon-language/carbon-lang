@@ -1764,12 +1764,6 @@ bool SROA::TypeHasComponent(Type *T, uint64_t Offset, uint64_t Size) {
     if (Offset >= AT->getNumElements() * EltSize)
       return false;
     Offset %= EltSize;
-  } else if (VectorType *VT = dyn_cast<VectorType>(T)) {
-    EltTy = VT->getElementType();
-    EltSize = TD->getTypeAllocSize(EltTy);
-    if (Offset >= VT->getNumElements() * EltSize)
-      return false;
-    Offset %= EltSize;
   } else {
     return false;
   }
@@ -1937,16 +1931,9 @@ uint64_t SROA::FindElementAndOffset(Type *&T, uint64_t &Offset,
     Offset -= Layout->getElementOffset(Idx);
     IdxTy = Type::getInt32Ty(T->getContext());
     return Idx;
-  } else if (ArrayType *AT = dyn_cast<ArrayType>(T)) {
-    T = AT->getElementType();
-    uint64_t EltSize = TD->getTypeAllocSize(T);
-    Idx = Offset / EltSize;
-    Offset -= Idx * EltSize;
-    IdxTy = Type::getInt64Ty(T->getContext());
-    return Idx;
   }
-  VectorType *VT = cast<VectorType>(T);
-  T = VT->getElementType();
+  ArrayType *AT = cast<ArrayType>(T);
+  T = AT->getElementType();
   uint64_t EltSize = TD->getTypeAllocSize(T);
   Idx = Offset / EltSize;
   Offset -= Idx * EltSize;
