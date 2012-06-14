@@ -94,38 +94,6 @@ bool MipsFrameLowering::targetHandlesStackFrameRounding() const {
   return true;
 }
 
-// Build an instruction sequence to load an immediate that is too large to fit
-// in 16-bit and add the result to Reg.
-static void expandLargeImm(unsigned Reg, int64_t Imm, bool IsN64,
-                           const MipsInstrInfo &TII, MachineBasicBlock& MBB,
-                           MachineBasicBlock::iterator II, DebugLoc DL) {
-  unsigned LUi = IsN64 ? Mips::LUi64 : Mips::LUi;
-  unsigned ADDu = IsN64 ? Mips::DADDu : Mips::ADDu;
-  unsigned ZEROReg = IsN64 ? Mips::ZERO_64 : Mips::ZERO;
-  unsigned ATReg = IsN64 ? Mips::AT_64 : Mips::AT;
-  MipsAnalyzeImmediate AnalyzeImm;
-  const MipsAnalyzeImmediate::InstSeq &Seq =
-    AnalyzeImm.Analyze(Imm, IsN64 ? 64 : 32, false /* LastInstrIsADDiu */);
-  MipsAnalyzeImmediate::InstSeq::const_iterator Inst = Seq.begin();
-
-  // The first instruction can be a LUi, which is different from other
-  // instructions (ADDiu, ORI and SLL) in that it does not have a register
-  // operand.
-  if (Inst->Opc == LUi)
-    BuildMI(MBB, II, DL, TII.get(LUi), ATReg)
-      .addImm(SignExtend64<16>(Inst->ImmOpnd));
-  else
-    BuildMI(MBB, II, DL, TII.get(Inst->Opc), ATReg).addReg(ZEROReg)
-      .addImm(SignExtend64<16>(Inst->ImmOpnd));
-
-  // Build the remaining instructions in Seq.
-  for (++Inst; Inst != Seq.end(); ++Inst)
-    BuildMI(MBB, II, DL, TII.get(Inst->Opc), ATReg).addReg(ATReg)
-      .addImm(SignExtend64<16>(Inst->ImmOpnd));
-
-  BuildMI(MBB, II, DL, TII.get(ADDu), Reg).addReg(Reg).addReg(ATReg);
-}
-
 void MipsFrameLowering::emitPrologue(MachineFunction &MF) const {
   MachineBasicBlock &MBB   = MF.front();
   MachineFrameInfo *MFI    = MF.getFrameInfo();
@@ -144,9 +112,8 @@ void MipsFrameLowering::emitPrologue(MachineFunction &MF) const {
 
   // First, compute final stack size.
   unsigned StackAlign = getStackAlignment();
-  uint64_t StackSize =
-    RoundUpToAlignment(MipsFI->getMaxCallFrameSize(), StackAlign) +
-    RoundUpToAlignment(MFI->getStackSize(), StackAlign);
+  uint64_t StackSize = MFI->getObjectOffset(MipsFI->getGlobalRegFI()) +
+    StackAlign + RoundUpToAlignment(MFI->getStackSize(), StackAlign);
 
    // Update stack size
   MFI->setStackSize(StackSize);
@@ -162,8 +129,12 @@ void MipsFrameLowering::emitPrologue(MachineFunction &MF) const {
   if (isInt<16>(-StackSize)) // addi sp, sp, (-stacksize)
     BuildMI(MBB, MBBI, dl, TII.get(ADDiu), SP).addReg(SP).addImm(-StackSize);
   else { // Expand immediate that doesn't fit in 16-bit.
-    MipsFI->setEmitNOAT();
-    expandLargeImm(SP, -StackSize, STI.isABI_N64(), TII, MBB, MBBI, dl);
+    unsigned ATReg = STI.isABI_N64() ? Mips::AT_64 : Mips::AT;
+
+    MF.getInfo<MipsFunctionInfo>()->setEmitNOAT();
+    Mips::loadImmediate(-StackSize, STI.isABI_N64(), TII, MBB, MBBI, dl, false,
+                        0);
+    BuildMI(MBB, MBBI, dl, TII.get(ADDu), SP).addReg(SP).addReg(ATReg);
   }
 
   // emit ".cfi_def_cfa_offset StackSize"
@@ -264,8 +235,14 @@ void MipsFrameLowering::emitEpilogue(MachineFunction &MF,
   // Adjust stack.
   if (isInt<16>(StackSize)) // addi sp, sp, (-stacksize)
     BuildMI(MBB, MBBI, dl, TII.get(ADDiu), SP).addReg(SP).addImm(StackSize);
-  else // Expand immediate that doesn't fit in 16-bit.
-    expandLargeImm(SP, StackSize, STI.isABI_N64(), TII, MBB, MBBI, dl);
+  else { // Expand immediate that doesn't fit in 16-bit.
+    unsigned ATReg = STI.isABI_N64() ? Mips::AT_64 : Mips::AT;
+
+    MF.getInfo<MipsFunctionInfo>()->setEmitNOAT();
+    Mips::loadImmediate(StackSize, STI.isABI_N64(), TII, MBB, MBBI, dl, false,
+                        0);
+    BuildMI(MBB, MBBI, dl, TII.get(ADDu), SP).addReg(SP).addReg(ATReg);
+  }
 }
 
 void MipsFrameLowering::
