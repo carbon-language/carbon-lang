@@ -96,11 +96,13 @@ namespace llvm {
 
 
   void copyFrom(const self &RHS) {
-    memcpy(Array, RHS.Array, sizeof(value_type) * (MaxArraySize + 1));
+    std::copy(RHS.Array, RHS.Array + MaxArraySize + 1, Array);
     NumElements = RHS.NumElements;
   }
 
   void init () {
+    // Even if Array contains non POD, use memset for last element,
+    // since it is used as end() iterator only.
     memset(Array + MaxArraySize, 0, sizeof(value_type));
     NumElements = 0;
   }
