@@ -129,7 +129,7 @@ void MipsLongBranch::splitMBB(MachineBasicBlock *MBB) {
       (!LastBr->isConditionalBranch() && !LastBr->isUnconditionalBranch()))
     return;
 
-  ReverseIter FirstBr = getNonDebugInstr(next(LastBr), End);
+  ReverseIter FirstBr = getNonDebugInstr(llvm::next(LastBr), End);
 
   // MBB has only one branch instruction if FirstBr is not a branch
   // instruction.
@@ -149,7 +149,7 @@ void MipsLongBranch::splitMBB(MachineBasicBlock *MBB) {
   NewMBB->removeSuccessor(Tgt);
   MBB->addSuccessor(NewMBB);
   MBB->addSuccessor(Tgt);
-  MF->insert(next(MachineFunction::iterator(MBB)), NewMBB);
+  MF->insert(llvm::next(MachineFunction::iterator(MBB)), NewMBB);
 
   NewMBB->splice(NewMBB->end(), MBB, (++LastBr).base(), MBB->end());
 }
@@ -319,10 +319,12 @@ void MipsLongBranch::expandToLongBranch(MBBInfo &I) {
     //   addiu $at, $at, %lo($tgt)
     //   jr $at
     //   nop
-    I.Size += (addLongBranch(*MBB, next(Iter(I.Br)), Tgt, DL, true) - 1) * 4;
+    I.Size += (addLongBranch(*MBB, llvm::next(Iter(I.Br)), Tgt, DL, true)
+               - 1) * 4;
 
     // Remove branch and clear InsideBundle bit of the next instruction.
-    next(MachineBasicBlock::instr_iterator(I.Br))->setIsInsideBundle(false);
+    llvm::next(MachineBasicBlock::instr_iterator(I.Br))
+      ->setIsInsideBundle(false);
     I.Br->eraseFromParent();
     return;
   }
@@ -346,7 +348,7 @@ void MipsLongBranch::expandToLongBranch(MBBInfo &I) {
   //  FallThrough:
 
   MachineBasicBlock *NewMBB = MF->CreateMachineBasicBlock(MBB->getBasicBlock());
-  MF->insert(next(MachineFunction::iterator(MBB)), NewMBB);
+  MF->insert(llvm::next(MachineFunction::iterator(MBB)), NewMBB);
   MBB->removeSuccessor(Tgt);
   MBB->addSuccessor(NewMBB);
   NewMBB->addSuccessor(Tgt);
