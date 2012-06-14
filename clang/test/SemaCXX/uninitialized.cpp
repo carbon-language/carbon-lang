@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -Wall -Wuninitialized -std=c++11 -verify %s
+// RUN: %clang_cc1 -fsyntax-only -Wall -Wuninitialized -Wno-unused-value -std=c++11 -verify %s
 
 int foo(int x);
 int bar(int* x);
@@ -152,9 +152,9 @@ struct S {
 
   S(bool (*)[1]) : x(x) {} // expected-warning {{field is uninitialized when used here}}
   S(bool (*)[2]) : x(x + 1) {} // expected-warning {{field is uninitialized when used here}}
-  S(bool (*)[3]) : x(x + x) {} // expected-warning {{field is uninitialized when used here}}
+  S(bool (*)[3]) : x(x + x) {} // expected-warning 2{{field is uninitialized when used here}}
   S(bool (*)[4]) : x(static_cast<long>(x) + 1) {} // expected-warning {{field is uninitialized when used here}}
-  S(bool (*)[5]) : x(foo(x)) {} // FIXME: This should warn!
+  S(bool (*)[5]) : x(foo(x)) {} // expected-warning {{field is uninitialized when used here}}
 
   // These don't actually require the value of x and so shouldn't warn.
   S(char (*)[1]) : x(sizeof(x)) {} // rdar://8610363
@@ -212,4 +212,84 @@ int pr12325(int params) {
 int test_lambda() {
   auto f1 = [] (int x, int y) { int z; return x + y + z; }; // expected-warning{{variable 'z' is uninitialized when used here}} expected-note {{initialize the variable 'z' to silence this warning}}
   return f1(1, 2);
+}
+
+namespace {
+  struct A {
+    enum { A1 };
+    static int A2() {return 5;}
+    int A3;
+    int A4() { return 5;}
+  };
+
+  struct B {
+    A a;
+  };
+
+  struct C {
+    C() {}
+    C(int x) {}
+    static A a;
+    B b;
+  };
+  A C::a = A();
+
+  // Accessing non-static members will give a warning.
+  struct D {
+    C c;
+    D(char (*)[1]) : c(c.b.a.A1) {}
+    D(char (*)[2]) : c(c.b.a.A2()) {}
+    D(char (*)[3]) : c(c.b.a.A3) {}    // expected-warning {{field is uninitialized when used here}}
+    D(char (*)[4]) : c(c.b.a.A4()) {}  // expected-warning {{field is uninitialized when used here}}
+
+    // c::a is static, so it is already initialized
+    D(char (*)[5]) : c(c.a.A1) {}
+    D(char (*)[6]) : c(c.a.A2()) {}
+    D(char (*)[7]) : c(c.a.A3) {}
+    D(char (*)[8]) : c(c.a.A4()) {}
+  };
+
+  struct E {
+    int a, b, c;
+    E(char (*)[1]) : a(a ? b : c) {}  // expected-warning {{field is uninitialized when used here}}
+    E(char (*)[2]) : a(b ? a : a) {} // expected-warning 2{{field is uninitialized when used here}}
+    E(char (*)[3]) : a(b ? (a) : c) {} // expected-warning {{field is uninitialized when used here}}
+    E(char (*)[4]) : a(b ? c : (a+c)) {} // expected-warning {{field is uninitialized when used here}}
+    E(char (*)[5]) : a(b ? c : b) {}
+
+    E(char (*)[6]) : a(a ?: a) {} // expected-warning 2{{field is uninitialized when used here}}
+    E(char (*)[7]) : a(b ?: a) {} // expected-warning {{field is uninitialized when used here}}
+    E(char (*)[8]) : a(a ?: c) {} // expected-warning {{field is uninitialized when used here}}
+    E(char (*)[9]) : a(b ?: c) {}
+
+    E(char (*)[10]) : a((a, a, b)) {}
+    E(char (*)[11]) : a((c + a, a + 1, b)) {} // expected-warning 2{{field is uninitialized when used here}}
+    E(char (*)[12]) : a((b + c, c, a)) {} // expected-warning {{field is uninitialized when used here}}
+    E(char (*)[13]) : a((a, a, a, a)) {} // expected-warning {{field is uninitialized when used here}}
+    E(char (*)[14]) : a((b, c, c)) {}
+  };
+
+  struct F {
+    int a;
+    F* f;
+    F(int) {}
+    F() {}
+  };
+
+  int F::*ptr = &F::a;
+  F* F::*f_ptr = &F::f;
+  struct G {
+    F f1, f2;
+    F *f3, *f4;
+    G(char (*)[1]) : f1(f1) {} // expected-warning {{field is uninitialized when used here}}
+    G(char (*)[2]) : f2(f1) {}
+    G(char (*)[3]) : f2(F()) {}
+
+    G(char (*)[4]) : f1(f1.*ptr) {} // expected-warning {{field is uninitialized when used here}}
+    G(char (*)[5]) : f2(f1.*ptr) {}
+
+    G(char (*)[6]) : f3(f3) {}  // expected-warning {{field is uninitialized when used here}}
+    G(char (*)[7]) : f3(f3->*f_ptr) {} // expected-warning {{field is uninitialized when used here}}
+    G(char (*)[8]) : f3(new F(f3->*ptr)) {} // expected-warning {{field is uninitialized when used here}}
+  };
 }

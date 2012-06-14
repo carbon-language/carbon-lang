@@ -23,6 +23,7 @@
 #include "clang/AST/CharUnits.h"
 #include "clang/AST/CXXInheritance.h"
 #include "clang/AST/DeclVisitor.h"
+#include "clang/AST/EvaluatedExprVisitor.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/RecordLayout.h"
 #include "clang/AST/RecursiveASTVisitor.h"
@@ -2038,73 +2039,95 @@ static void CheckForDanglingReferenceOrPointer(Sema &S, ValueDecl *Member,
     << (unsigned)IsPointer;
 }
 
-/// Checks an initializer expression for use of uninitialized fields, such as
-/// containing the field that is being initialized. Returns true if there is an
-/// uninitialized field was used an updates the SourceLocation parameter; false
-/// otherwise.
-static bool InitExprContainsUninitializedFields(const Stmt *S,
-                                                const ValueDecl *LhsField,
-                                                SourceLocation *L) {
-  assert(isa<FieldDecl>(LhsField) || isa<IndirectFieldDecl>(LhsField));
-
-  if (isa<CallExpr>(S)) {
-    // Do not descend into function calls or constructors, as the use
-    // of an uninitialized field may be valid. One would have to inspect
-    // the contents of the function/ctor to determine if it is safe or not.
-    // i.e. Pass-by-value is never safe, but pass-by-reference and pointers
-    // may be safe, depending on what the function/ctor does.
-    return false;
-  }
-  if (const MemberExpr *ME = dyn_cast<MemberExpr>(S)) {
-    const NamedDecl *RhsField = ME->getMemberDecl();
-
-    if (const VarDecl *VD = dyn_cast<VarDecl>(RhsField)) {
-      // The member expression points to a static data member.
-      assert(VD->isStaticDataMember() && 
-             "Member points to non-static data member!");
-      (void)VD;
-      return false;
-    }
-    
-    if (isa<EnumConstantDecl>(RhsField)) {
-      // The member expression points to an enum.
-      return false;
+namespace {
+  class UninitializedFieldVisitor
+      : public EvaluatedExprVisitor<UninitializedFieldVisitor> {
+    Sema &S;
+    ValueDecl *VD;
+  public:
+    typedef EvaluatedExprVisitor<UninitializedFieldVisitor> Inherited;
+    UninitializedFieldVisitor(Sema &S, ValueDecl *VD) : Inherited(S.Context),
+                                                        S(S), VD(VD) {
     }
 
-    if (RhsField == LhsField) {
-      // Initializing a field with itself. Throw a warning.
-      // But wait; there are exceptions!
-      // Exception #1:  The field may not belong to this record.
-      // e.g. Foo(const Foo& rhs) : A(rhs.A) {}
-      const Expr *base = ME->getBase();
-      if (base != NULL && !isa<CXXThisExpr>(base->IgnoreParenCasts())) {
-        // Even though the field matches, it does not belong to this record.
-        return false;
+    void HandleExpr(Expr *E) {
+      if (!E) return;
+
+      // Expressions like x(x) sometimes lack the surrounding expressions
+      // but need to be checked anyways.
+      HandleValue(E);
+      Visit(E);
+    }
+
+    void HandleValue(Expr *E) {
+      E = E->IgnoreParens();
+
+      if (MemberExpr* ME = dyn_cast<MemberExpr>(E)) {
+        if (isa<EnumConstantDecl>(ME->getMemberDecl()))
+            return;
+        Expr* Base = E;
+        while (isa<MemberExpr>(Base)) {
+          ME = dyn_cast<MemberExpr>(Base);
+          if (VarDecl *VarD = dyn_cast<VarDecl>(ME->getMemberDecl()))
+            if (VarD->hasGlobalStorage())
+              return;
+          Base = ME->getBase();
+        }
+
+        if (VD == ME->getMemberDecl() && isa<CXXThisExpr>(Base)) {
+          S.Diag(ME->getExprLoc(), diag::warn_field_is_uninit);
+          return;
+        }
       }
-      // None of the exceptions triggered; return true to indicate an
-      // uninitialized field was used.
-      *L = ME->getMemberLoc();
-      return true;
+
+      if (ConditionalOperator *CO = dyn_cast<ConditionalOperator>(E)) {
+        HandleValue(CO->getTrueExpr());
+        HandleValue(CO->getFalseExpr());
+        return;
+      }
+
+      if (BinaryConditionalOperator *BCO =
+              dyn_cast<BinaryConditionalOperator>(E)) {
+        HandleValue(BCO->getCommon());
+        HandleValue(BCO->getFalseExpr());
+        return;
+      }
+
+      if (BinaryOperator *BO = dyn_cast<BinaryOperator>(E)) {
+        switch (BO->getOpcode()) {
+        default:
+          return;
+        case(BO_PtrMemD):
+        case(BO_PtrMemI):
+          HandleValue(BO->getLHS());
+          return;
+        case(BO_Comma):
+          HandleValue(BO->getRHS());
+          return;
+        }
+      }
     }
-  } else if (isa<UnaryExprOrTypeTraitExpr>(S)) {
-    // sizeof/alignof doesn't reference contents, do not warn.
-    return false;
-  } else if (const UnaryOperator *UOE = dyn_cast<UnaryOperator>(S)) {
-    // address-of doesn't reference contents (the pointer may be dereferenced
-    // in the same expression but it would be rare; and weird).
-    if (UOE->getOpcode() == UO_AddrOf)
-      return false;
-  }
-  for (Stmt::const_child_range it = S->children(); it; ++it) {
-    if (!*it) {
-      // An expression such as 'member(arg ?: "")' may trigger this.
-      continue;
+
+    void VisitImplicitCastExpr(ImplicitCastExpr *E) {
+      if (E->getCastKind() == CK_LValueToRValue)
+        HandleValue(E->getSubExpr());
+
+      Inherited::VisitImplicitCastExpr(E);
     }
-    if (InitExprContainsUninitializedFields(*it, LhsField, L))
-      return true;
+
+    void VisitCXXMemberCallExpr(CXXMemberCallExpr *E) {
+      Expr *Callee = E->getCallee();
+      if (isa<MemberExpr>(Callee))
+        HandleValue(Callee);
+
+      Inherited::VisitCXXMemberCallExpr(E);
+    }
+  };
+  static void CheckInitExprContainsUninitializedFields(Sema &S, Expr *E,
+                                                       ValueDecl *VD) {
+    UninitializedFieldVisitor(S, VD).HandleExpr(E);
   }
-  return false;
-}
+} // namespace
 
 MemInitResult
 Sema::BuildMemberInitializer(ValueDecl *Member, Expr *Init,
@@ -2153,18 +2176,16 @@ Sema::BuildMemberInitializer(ValueDecl *Member, Expr *Init,
     }
   }
 
-  for (unsigned i = 0; i < NumArgs; ++i) {
-    SourceLocation L;
-    if (InitExprContainsUninitializedFields(Args[i], Member, &L)) {
-      // FIXME: Return true in the case when other fields are used before being
+  if (getDiagnostics().getDiagnosticLevel(diag::warn_field_is_uninit, IdLoc)
+        != DiagnosticsEngine::Ignored)
+    for (unsigned i = 0; i < NumArgs; ++i)
+      // FIXME: Warn about the case when other fields are used before being
       // uninitialized. For example, let this field be the i'th field. When
       // initializing the i'th field, throw a warning if any of the >= i'th
       // fields are used, as they are not yet initialized.
       // Right now we are only handling the case where the i'th field uses
       // itself in its initializer.
-      Diag(L, diag::warn_field_is_uninit);
-    }
-  }
+      CheckInitExprContainsUninitializedFields(*this, Args[i], Member);
 
   SourceRange InitRange = Init->getSourceRange();
 
