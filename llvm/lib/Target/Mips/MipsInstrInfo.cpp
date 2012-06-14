@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "MipsAnalyzeImmediate.h"
 #include "MipsInstrInfo.h"
 #include "MipsTargetMachine.h"
 #include "MipsMachineFunction.h"
@@ -505,3 +506,58 @@ ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const
   return false;
 }
 
+/// Return the number of bytes of code the specified instruction may be.
+unsigned MipsInstrInfo::GetInstSizeInBytes(const MachineInstr *MI) const {
+  switch (MI->getOpcode()) {
+  default:
+    return MI->getDesc().getSize();
+  case  TargetOpcode::INLINEASM: {       // Inline Asm: Variable size.
+    const MachineFunction *MF = MI->getParent()->getParent();
+    const char *AsmStr = MI->getOperand(0).getSymbolName();
+    return getInlineAsmLength(AsmStr, *MF->getTarget().getMCAsmInfo());
+  }
+  }
+}
+
+unsigned
+llvm::Mips::loadImmediate(int64_t Imm, bool IsN64, const TargetInstrInfo &TII,
+                          MachineBasicBlock& MBB,
+                          MachineBasicBlock::iterator II, DebugLoc DL,
+                          bool LastInstrIsADDiu,
+                          MipsAnalyzeImmediate::Inst *LastInst) {
+  MipsAnalyzeImmediate AnalyzeImm;
+  unsigned Size = IsN64 ? 64 : 32;
+  unsigned LUi = IsN64 ? Mips::LUi64 : Mips::LUi;
+  unsigned ZEROReg = IsN64 ? Mips::ZERO_64 : Mips::ZERO;
+  unsigned ATReg = IsN64 ? Mips::AT_64 : Mips::AT;
+
+  const MipsAnalyzeImmediate::InstSeq &Seq =
+    AnalyzeImm.Analyze(Imm, Size, LastInstrIsADDiu);
+  MipsAnalyzeImmediate::InstSeq::const_iterator Inst = Seq.begin();
+
+  if (LastInst && (Seq.size() == 1)) {
+    *LastInst = *Inst;
+    return 0;
+  }
+
+  // The first instruction can be a LUi, which is different from other
+  // instructions (ADDiu, ORI and SLL) in that it does not have a register
+  // operand.
+  if (Inst->Opc == LUi)
+    BuildMI(MBB, II, DL, TII.get(LUi), ATReg)
+      .addImm(SignExtend64<16>(Inst->ImmOpnd));
+  else
+    BuildMI(MBB, II, DL, TII.get(Inst->Opc), ATReg).addReg(ZEROReg)
+      .addImm(SignExtend64<16>(Inst->ImmOpnd));
+
+  // Build the remaining instructions in Seq. Skip the last instruction if
+  // LastInst is not 0.
+  for (++Inst; Inst != Seq.end() - !!LastInst; ++Inst)
+    BuildMI(MBB, II, DL, TII.get(Inst->Opc), ATReg).addReg(ATReg)
+      .addImm(SignExtend64<16>(Inst->ImmOpnd));
+
+  if (LastInst)
+    *LastInst = *Inst;
+
+  return Seq.size() - !!LastInst;
+}
