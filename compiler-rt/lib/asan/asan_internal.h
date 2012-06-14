@@ -122,7 +122,6 @@ void ReplaceSystemMalloc();
 // asan_linux.cc / asan_mac.cc / asan_win.cc
 void *AsanDoesNotSupportStaticLinkage();
 bool AsanShadowRangeIsAvailable();
-const char *AsanGetEnv(const char *name);
 void AsanDumpProcessMap();
 
 void *AsanMmapFixedNoReserve(uptr fixed_addr, uptr size);

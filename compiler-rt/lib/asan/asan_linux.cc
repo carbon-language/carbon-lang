@@ -86,34 +86,6 @@ void *AsanMprotect(uptr fixed_addr, uptr size) {
                        0, 0);
 }
 
-// Like getenv, but reads env directly from /proc and does not use libc.
-// This function should be called first inside __asan_init.
-const char* AsanGetEnv(const char* name) {
-  static char *environ;
-  static uptr len;
-  static bool inited;
-  if (!inited) {
-    inited = true;
-    uptr environ_size;
-    len = ReadFileToBuffer("/proc/self/environ",
-                           &environ, &environ_size, 1 << 26);
-  }
-  if (!environ || len == 0) return 0;
-  uptr namelen = internal_strlen(name);
-  const char *p = environ;
-  while (*p != '\0') {  // will happen at the \0\0 that terminates the buffer
-    // proc file has the format NAME=value\0NAME=value\0NAME=value\0...
-    const char* endp =
-        (char*)internal_memchr(p, '\0', len - (p - environ));
-    if (endp == 0)  // this entry isn't NUL terminated
-      return 0;
-    else if (!internal_memcmp(p, name, namelen) && p[namelen] == '=')  // Match.
-      return p + namelen + 1;  // point after =
-    p = endp + 1;
-  }
-  return 0;  // Not found.
-}
-
 AsanLock::AsanLock(LinkerInitialized) {
   // We assume that pthread_mutex_t initialized to all zeroes is a valid
   // unlocked mutex. We can not use PTHREAD_MUTEX_INITIALIZER as it triggers

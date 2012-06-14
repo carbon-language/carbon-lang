@@ -111,26 +111,6 @@ void *AsanMprotect(uptr fixed_addr, uptr size) {
                        0, 0);
 }
 
-const char *AsanGetEnv(const char *name) {
-  char ***env_ptr = _NSGetEnviron();
-  CHECK(env_ptr);
-  char **environ = *env_ptr;
-  CHECK(environ);
-  uptr name_len = internal_strlen(name);
-  while (*environ != 0) {
-    uptr len = internal_strlen(*environ);
-    if (len > name_len) {
-      const char *p = *environ;
-      if (!internal_memcmp(p, name, name_len) &&
-          p[name_len] == '=') {  // Match.
-        return *environ + name_len + 1;  // String starting after =.
-      }
-    }
-    environ++;
-  }
-  return 0;
-}
-
 AsanLock::AsanLock(LinkerInitialized) {
   // We assume that OS_SPINLOCK_INIT is zero
 }

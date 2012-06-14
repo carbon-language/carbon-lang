@@ -48,6 +48,7 @@ void Report(const char *format, ...);
 // Returns the number of read bytes or 0 if file can not be opened.
 uptr ReadFileToBuffer(const char *file_name, char **buff,
                       uptr *buff_size, uptr max_len);
+const char *GetEnv(const char *name);
 
 // Bit twiddling.
 inline bool IsPowerOfTwo(uptr x) {

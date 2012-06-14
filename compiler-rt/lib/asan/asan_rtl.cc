@@ -493,7 +493,7 @@ void __asan_init() {
   }
 #endif
   // flags
-  const char *options = AsanGetEnv("ASAN_OPTIONS");
+  const char *options = GetEnv("ASAN_OPTIONS");
   ParseAsanOptions(options);
 
   if (FLAG_v && options) {

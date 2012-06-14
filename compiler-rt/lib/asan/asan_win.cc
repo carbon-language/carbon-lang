@@ -203,22 +203,6 @@ u8 AtomicExchange(u8 *a, u8 new_val) {
   return t;
 }
 
-const char* AsanGetEnv(const char* name) {
-  static char env_buffer[32767] = {};
-
-  // Note: this implementation stores the result in a static buffer so we only
-  // allow it to be called just once.
-  static bool called_once = false;
-  if (called_once)
-    UNIMPLEMENTED();
-  called_once = true;
-
-  DWORD rv = GetEnvironmentVariableA(name, env_buffer, sizeof(env_buffer));
-  if (rv > 0 && rv < sizeof(env_buffer))
-    return env_buffer;
-  return 0;
-}
-
 void AsanDumpProcessMap() {
   UNIMPLEMENTED();
 }
