@@ -117,15 +117,15 @@ private:
 void MipsDAGToDAGISel::InitGlobalBaseReg(MachineFunction &MF) {
   MipsFunctionInfo *MipsFI = MF.getInfo<MipsFunctionInfo>();
 
-  if (!MipsFI->globalBaseRegSet())
-    return;
-
   MachineBasicBlock &MBB = MF.front();
   MachineBasicBlock::iterator I = MBB.begin();
   MachineRegisterInfo &RegInfo = MF.getRegInfo();
+  const MipsRegisterInfo *TargetRegInfo = TM.getRegisterInfo();
+  const MipsInstrInfo *MII = TM.getInstrInfo();
   const TargetInstrInfo &TII = *MF.getTarget().getInstrInfo();
   DebugLoc DL = I != MBB.end() ? I->getDebugLoc() : DebugLoc();
   unsigned V0, V1, GlobalBaseReg = MipsFI->getGlobalBaseReg();
+  int FI = MipsFI->initGlobalRegFI();
 
   const TargetRegisterClass *RC = Subtarget.isABI_N64() ?
     (const TargetRegisterClass*)&Mips::CPU64RegsRegClass :
@@ -147,6 +147,8 @@ void MipsDAGToDAGISel::InitGlobalBaseReg(MachineFunction &MF) {
     BuildMI(MBB, I, DL, TII.get(Mips::DADDu), V1).addReg(V0).addReg(Mips::T9_64);
     BuildMI(MBB, I, DL, TII.get(Mips::DADDiu), GlobalBaseReg).addReg(V1)
       .addGlobalAddress(FName, 0, MipsII::MO_GPOFF_LO);
+    MII->storeRegToStackSlot(MBB, I, GlobalBaseReg, false, FI, RC,
+                             TargetRegInfo);
     return;
   }
 
@@ -159,6 +161,8 @@ void MipsDAGToDAGISel::InitGlobalBaseReg(MachineFunction &MF) {
       .addExternalSymbol("__gnu_local_gp", MipsII::MO_ABS_HI);
     BuildMI(MBB, I, DL, TII.get(Mips::ADDiu), GlobalBaseReg).addReg(V0)
       .addExternalSymbol("__gnu_local_gp", MipsII::MO_ABS_LO);
+    MII->storeRegToStackSlot(MBB, I, GlobalBaseReg, false, FI, RC,
+                             TargetRegInfo);
     return;
   }
 
@@ -175,6 +179,8 @@ void MipsDAGToDAGISel::InitGlobalBaseReg(MachineFunction &MF) {
     BuildMI(MBB, I, DL, TII.get(Mips::ADDu), V1).addReg(V0).addReg(Mips::T9);
     BuildMI(MBB, I, DL, TII.get(Mips::ADDiu), GlobalBaseReg).addReg(V1)
       .addGlobalAddress(FName, 0, MipsII::MO_GPOFF_LO);
+    MII->storeRegToStackSlot(MBB, I, GlobalBaseReg, false, FI, RC,
+                             TargetRegInfo);
     return;
   }
 
@@ -201,6 +207,7 @@ void MipsDAGToDAGISel::InitGlobalBaseReg(MachineFunction &MF) {
   MBB.addLiveIn(Mips::V0);
   BuildMI(MBB, I, DL, TII.get(Mips::ADDu), GlobalBaseReg)
     .addReg(Mips::V0).addReg(Mips::T9);
+  MII->storeRegToStackSlot(MBB, I, GlobalBaseReg, false, FI, RC, TargetRegInfo);
 }
 
 bool MipsDAGToDAGISel::ReplaceUsesWithZeroReg(MachineRegisterInfo *MRI,
