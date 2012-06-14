@@ -407,6 +407,10 @@ def fno_trapping_math : Flag<"-fno-trapping-math">, Group<f_Group>;
 def ffor_scope : Flag<"-ffor-scope">, Group<f_Group>;
 def fno_for_scope : Flag<"-fno-for-scope">, Group<f_Group>;
 
+def frewrite_includes : Flag<"-frewrite-includes">, Group<f_Group>,
+  Flags<[CC1Option]>;
+def fno_rewrite_includes : Flag<"-fno-rewrite-includes">, Group<f_Group>;
+
 def ffreestanding : Flag<"-ffreestanding">, Group<f_Group>, Flags<[CC1Option]>,
   HelpText<"Assert that the compilation takes place in a freestanding environment">;
 def fgnu_keywords : Flag<"-fgnu-keywords">, Group<f_Group>, Flags<[CC1Option]>,

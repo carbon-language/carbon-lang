@@ -493,8 +493,6 @@ def token_cache : Separate<"-token-cache">, MetaVarName<"<path>">,
   HelpText<"Use specified token cache file">;
 def detailed_preprocessing_record : Flag<"-detailed-preprocessing-record">,
   HelpText<"include a detailed record of preprocessing actions">;
-def frewrite_includes : Flag<"-frewrite-includes">,
-  HelpText<"Expand includes without full preprocessing">;
 
 //===----------------------------------------------------------------------===//
 // OpenCL Options
