@@ -172,6 +172,10 @@ def NoNaNsFPMath :    Predicate<"TM.Options.NoNaNsFPMath">,
 def HasStandardEncoding : Predicate<"Subtarget.hasStandardEncoding()">,
                           AssemblerPredicate<"!FeatureMips16">;
 
+class MipsPat<dag pattern, dag result> : Pat<pattern, result> {
+  let Predicates = [HasStandardEncoding];
+}
+
 //===----------------------------------------------------------------------===//
 // Instruction format superclass
 //===----------------------------------------------------------------------===//
@@ -1058,67 +1062,67 @@ def INS : InsBase<4, "ins", CPURegs>;
 //===----------------------------------------------------------------------===//
 
 // Small immediates
-def : Pat<(i32 immSExt16:$in),
-          (ADDiu ZERO, imm:$in)>;
-def : Pat<(i32 immZExt16:$in),
-          (ORi ZERO, imm:$in)>;
-def : Pat<(i32 immLow16Zero:$in),
-          (LUi (HI16 imm:$in))>;
+def : MipsPat<(i32 immSExt16:$in),
+              (ADDiu ZERO, imm:$in)>;
+def : MipsPat<(i32 immZExt16:$in),
+              (ORi ZERO, imm:$in)>;
+def : MipsPat<(i32 immLow16Zero:$in),
+              (LUi (HI16 imm:$in))>;
 
 // Arbitrary immediates
-def : Pat<(i32 imm:$imm),
+def : MipsPat<(i32 imm:$imm),
           (ORi (LUi (HI16 imm:$imm)), (LO16 imm:$imm))>;
 
-// Carry patterns
-def : Pat<(subc CPURegs:$lhs, CPURegs:$rhs),
-          (SUBu CPURegs:$lhs, CPURegs:$rhs)>;
-def : Pat<(addc CPURegs:$lhs, CPURegs:$rhs),
-          (ADDu CPURegs:$lhs, CPURegs:$rhs)>;
-def : Pat<(addc  CPURegs:$src, immSExt16:$imm),
-          (ADDiu CPURegs:$src, imm:$imm)>;
+// Carry MipsPatterns
+def : MipsPat<(subc CPURegs:$lhs, CPURegs:$rhs),
+              (SUBu CPURegs:$lhs, CPURegs:$rhs)>;
+def : MipsPat<(addc CPURegs:$lhs, CPURegs:$rhs),
+              (ADDu CPURegs:$lhs, CPURegs:$rhs)>;
+def : MipsPat<(addc  CPURegs:$src, immSExt16:$imm),
+              (ADDiu CPURegs:$src, imm:$imm)>;
 
 // Call
-def : Pat<(MipsJmpLink (i32 tglobaladdr:$dst)),
-          (JAL tglobaladdr:$dst)>;
-def : Pat<(MipsJmpLink (i32 texternalsym:$dst)),
-          (JAL texternalsym:$dst)>;
-//def : Pat<(MipsJmpLink CPURegs:$dst),
-//          (JALR CPURegs:$dst)>;
+def : MipsPat<(MipsJmpLink (i32 tglobaladdr:$dst)),
+              (JAL tglobaladdr:$dst)>;
+def : MipsPat<(MipsJmpLink (i32 texternalsym:$dst)),
+              (JAL texternalsym:$dst)>;
+//def : MipsPat<(MipsJmpLink CPURegs:$dst),
+//              (JALR CPURegs:$dst)>;
 
 // hi/lo relocs
-def : Pat<(MipsHi tglobaladdr:$in), (LUi tglobaladdr:$in)>;
-def : Pat<(MipsHi tblockaddress:$in), (LUi tblockaddress:$in)>;
-def : Pat<(MipsHi tjumptable:$in), (LUi tjumptable:$in)>;
-def : Pat<(MipsHi tconstpool:$in), (LUi tconstpool:$in)>;
-def : Pat<(MipsHi tglobaltlsaddr:$in), (LUi tglobaltlsaddr:$in)>;
+def : MipsPat<(MipsHi tglobaladdr:$in), (LUi tglobaladdr:$in)>;
+def : MipsPat<(MipsHi tblockaddress:$in), (LUi tblockaddress:$in)>;
+def : MipsPat<(MipsHi tjumptable:$in), (LUi tjumptable:$in)>;
+def : MipsPat<(MipsHi tconstpool:$in), (LUi tconstpool:$in)>;
+def : MipsPat<(MipsHi tglobaltlsaddr:$in), (LUi tglobaltlsaddr:$in)>;
 
-def : Pat<(MipsLo tglobaladdr:$in), (ADDiu ZERO, tglobaladdr:$in)>;
-def : Pat<(MipsLo tblockaddress:$in), (ADDiu ZERO, tblockaddress:$in)>;
-def : Pat<(MipsLo tjumptable:$in), (ADDiu ZERO, tjumptable:$in)>;
-def : Pat<(MipsLo tconstpool:$in), (ADDiu ZERO, tconstpool:$in)>;
-def : Pat<(MipsLo tglobaltlsaddr:$in), (ADDiu ZERO, tglobaltlsaddr:$in)>;
+def : MipsPat<(MipsLo tglobaladdr:$in), (ADDiu ZERO, tglobaladdr:$in)>;
+def : MipsPat<(MipsLo tblockaddress:$in), (ADDiu ZERO, tblockaddress:$in)>;
+def : MipsPat<(MipsLo tjumptable:$in), (ADDiu ZERO, tjumptable:$in)>;
+def : MipsPat<(MipsLo tconstpool:$in), (ADDiu ZERO, tconstpool:$in)>;
+def : MipsPat<(MipsLo tglobaltlsaddr:$in), (ADDiu ZERO, tglobaltlsaddr:$in)>;
 
-def : Pat<(add CPURegs:$hi, (MipsLo tglobaladdr:$lo)),
-          (ADDiu CPURegs:$hi, tglobaladdr:$lo)>;
-def : Pat<(add CPURegs:$hi, (MipsLo tblockaddress:$lo)),
-          (ADDiu CPURegs:$hi, tblockaddress:$lo)>;
-def : Pat<(add CPURegs:$hi, (MipsLo tjumptable:$lo)),
-          (ADDiu CPURegs:$hi, tjumptable:$lo)>;
-def : Pat<(add CPURegs:$hi, (MipsLo tconstpool:$lo)),
-          (ADDiu CPURegs:$hi, tconstpool:$lo)>;
-def : Pat<(add CPURegs:$hi, (MipsLo tglobaltlsaddr:$lo)),
-          (ADDiu CPURegs:$hi, tglobaltlsaddr:$lo)>;
+def : MipsPat<(add CPURegs:$hi, (MipsLo tglobaladdr:$lo)),
+              (ADDiu CPURegs:$hi, tglobaladdr:$lo)>;
+def : MipsPat<(add CPURegs:$hi, (MipsLo tblockaddress:$lo)),
+              (ADDiu CPURegs:$hi, tblockaddress:$lo)>;
+def : MipsPat<(add CPURegs:$hi, (MipsLo tjumptable:$lo)),
+              (ADDiu CPURegs:$hi, tjumptable:$lo)>;
+def : MipsPat<(add CPURegs:$hi, (MipsLo tconstpool:$lo)),
+              (ADDiu CPURegs:$hi, tconstpool:$lo)>;
+def : MipsPat<(add CPURegs:$hi, (MipsLo tglobaltlsaddr:$lo)),
+              (ADDiu CPURegs:$hi, tglobaltlsaddr:$lo)>;
 
 // gp_rel relocs
-def : Pat<(add CPURegs:$gp, (MipsGPRel tglobaladdr:$in)),
-          (ADDiu CPURegs:$gp, tglobaladdr:$in)>;
-def : Pat<(add CPURegs:$gp, (MipsGPRel tconstpool:$in)),
-          (ADDiu CPURegs:$gp, tconstpool:$in)>;
+def : MipsPat<(add CPURegs:$gp, (MipsGPRel tglobaladdr:$in)),
+              (ADDiu CPURegs:$gp, tglobaladdr:$in)>;
+def : MipsPat<(add CPURegs:$gp, (MipsGPRel tconstpool:$in)),
+              (ADDiu CPURegs:$gp, tconstpool:$in)>;
 
 // wrapper_pic
 class WrapperPat<SDNode node, Instruction ADDiuOp, RegisterClass RC>:
-      Pat<(MipsWrapper RC:$gp, node:$in),
-          (ADDiuOp RC:$gp, node:$in)>;
+      MipsPat<(MipsWrapper RC:$gp, node:$in),
+              (ADDiuOp RC:$gp, node:$in)>;
 
 def : WrapperPat<tglobaladdr, ADDiu, CPURegs>;
 def : WrapperPat<tconstpool, ADDiu, CPURegs>;
@@ -1128,58 +1132,58 @@ def : WrapperPat<tjumptable, ADDiu, CPURegs>;
 def : WrapperPat<tglobaltlsaddr, ADDiu, CPURegs>;
 
 // Mips does not have "not", so we expand our way
-def : Pat<(not CPURegs:$in),
-          (NOR CPURegs:$in, ZERO)>;
+def : MipsPat<(not CPURegs:$in),
+              (NOR CPURegs:$in, ZERO)>;
 
 // extended loads
 let Predicates = [NotN64, HasStandardEncoding] in {
-  def : Pat<(i32 (extloadi1  addr:$src)), (LBu addr:$src)>;
-  def : Pat<(i32 (extloadi8  addr:$src)), (LBu addr:$src)>;
-  def : Pat<(i32 (extloadi16_a addr:$src)), (LHu addr:$src)>;
-  def : Pat<(i32 (extloadi16_u addr:$src)), (ULHu addr:$src)>;
+  def : MipsPat<(i32 (extloadi1  addr:$src)), (LBu addr:$src)>;
+  def : MipsPat<(i32 (extloadi8  addr:$src)), (LBu addr:$src)>;
+  def : MipsPat<(i32 (extloadi16_a addr:$src)), (LHu addr:$src)>;
+  def : MipsPat<(i32 (extloadi16_u addr:$src)), (ULHu addr:$src)>;
 }
 let Predicates = [IsN64, HasStandardEncoding] in {
-  def : Pat<(i32 (extloadi1  addr:$src)), (LBu_P8 addr:$src)>;
-  def : Pat<(i32 (extloadi8  addr:$src)), (LBu_P8 addr:$src)>;
-  def : Pat<(i32 (extloadi16_a addr:$src)), (LHu_P8 addr:$src)>;
-  def : Pat<(i32 (extloadi16_u addr:$src)), (ULHu_P8 addr:$src)>;
+  def : MipsPat<(i32 (extloadi1  addr:$src)), (LBu_P8 addr:$src)>;
+  def : MipsPat<(i32 (extloadi8  addr:$src)), (LBu_P8 addr:$src)>;
+  def : MipsPat<(i32 (extloadi16_a addr:$src)), (LHu_P8 addr:$src)>;
+  def : MipsPat<(i32 (extloadi16_u addr:$src)), (ULHu_P8 addr:$src)>;
 }
 
 // peepholes
 let Predicates = [NotN64, HasStandardEncoding] in {
-  def : Pat<(store_a (i32 0), addr:$dst), (SW ZERO, addr:$dst)>;
-  def : Pat<(store_u (i32 0), addr:$dst), (USW ZERO, addr:$dst)>;
+  def : MipsPat<(store_a (i32 0), addr:$dst), (SW ZERO, addr:$dst)>;
+  def : MipsPat<(store_u (i32 0), addr:$dst), (USW ZERO, addr:$dst)>;
 }
 let Predicates = [IsN64, HasStandardEncoding] in {
-  def : Pat<(store_a (i32 0), addr:$dst), (SW_P8 ZERO, addr:$dst)>;
-  def : Pat<(store_u (i32 0), addr:$dst), (USW_P8 ZERO, addr:$dst)>;
+  def : MipsPat<(store_a (i32 0), addr:$dst), (SW_P8 ZERO, addr:$dst)>;
+  def : MipsPat<(store_u (i32 0), addr:$dst), (USW_P8 ZERO, addr:$dst)>;
 }
 
 // brcond patterns
 multiclass BrcondPats<RegisterClass RC, Instruction BEQOp, Instruction BNEOp,
                       Instruction SLTOp, Instruction SLTuOp, Instruction SLTiOp,
                       Instruction SLTiuOp, Register ZEROReg> {
-def : Pat<(brcond (i32 (setne RC:$lhs, 0)), bb:$dst),
-          (BNEOp RC:$lhs, ZEROReg, bb:$dst)>;
-def : Pat<(brcond (i32 (seteq RC:$lhs, 0)), bb:$dst),
-          (BEQOp RC:$lhs, ZEROReg, bb:$dst)>;
+def : MipsPat<(brcond (i32 (setne RC:$lhs, 0)), bb:$dst),
+              (BNEOp RC:$lhs, ZEROReg, bb:$dst)>;
+def : MipsPat<(brcond (i32 (seteq RC:$lhs, 0)), bb:$dst),
+              (BEQOp RC:$lhs, ZEROReg, bb:$dst)>;
 
-def : Pat<(brcond (i32 (setge RC:$lhs, RC:$rhs)), bb:$dst),
-          (BEQ (SLTOp RC:$lhs, RC:$rhs), ZERO, bb:$dst)>;
-def : Pat<(brcond (i32 (setuge RC:$lhs, RC:$rhs)), bb:$dst),
-          (BEQ (SLTuOp RC:$lhs, RC:$rhs), ZERO, bb:$dst)>;
-def : Pat<(brcond (i32 (setge RC:$lhs, immSExt16:$rhs)), bb:$dst),
-          (BEQ (SLTiOp RC:$lhs, immSExt16:$rhs), ZERO, bb:$dst)>;
-def : Pat<(brcond (i32 (setuge RC:$lhs, immSExt16:$rhs)), bb:$dst),
-          (BEQ (SLTiuOp RC:$lhs, immSExt16:$rhs), ZERO, bb:$dst)>;
+def : MipsPat<(brcond (i32 (setge RC:$lhs, RC:$rhs)), bb:$dst),
+              (BEQ (SLTOp RC:$lhs, RC:$rhs), ZERO, bb:$dst)>;
+def : MipsPat<(brcond (i32 (setuge RC:$lhs, RC:$rhs)), bb:$dst),
+              (BEQ (SLTuOp RC:$lhs, RC:$rhs), ZERO, bb:$dst)>;
+def : MipsPat<(brcond (i32 (setge RC:$lhs, immSExt16:$rhs)), bb:$dst),
+              (BEQ (SLTiOp RC:$lhs, immSExt16:$rhs), ZERO, bb:$dst)>;
+def : MipsPat<(brcond (i32 (setuge RC:$lhs, immSExt16:$rhs)), bb:$dst),
+              (BEQ (SLTiuOp RC:$lhs, immSExt16:$rhs), ZERO, bb:$dst)>;
 
-def : Pat<(brcond (i32 (setle RC:$lhs, RC:$rhs)), bb:$dst),
-          (BEQ (SLTOp RC:$rhs, RC:$lhs), ZERO, bb:$dst)>;
-def : Pat<(brcond (i32 (setule RC:$lhs, RC:$rhs)), bb:$dst),
-          (BEQ (SLTuOp RC:$rhs, RC:$lhs), ZERO, bb:$dst)>;
+def : MipsPat<(brcond (i32 (setle RC:$lhs, RC:$rhs)), bb:$dst),
+              (BEQ (SLTOp RC:$rhs, RC:$lhs), ZERO, bb:$dst)>;
+def : MipsPat<(brcond (i32 (setule RC:$lhs, RC:$rhs)), bb:$dst),
+              (BEQ (SLTuOp RC:$rhs, RC:$lhs), ZERO, bb:$dst)>;
 
-def : Pat<(brcond RC:$cond, bb:$dst),
-          (BNEOp RC:$cond, ZEROReg, bb:$dst)>;
+def : MipsPat<(brcond RC:$cond, bb:$dst),
+              (BNEOp RC:$cond, ZEROReg, bb:$dst)>;
 }
 
 defm : BrcondPats<CPURegs, BEQ, BNE, SLT, SLTu, SLTi, SLTiu, ZERO>;
@@ -1187,39 +1191,39 @@ defm : BrcondPats<CPURegs, BEQ, BNE, SLT, SLTu, SLTi, SLTiu, ZERO>;
 // setcc patterns
 multiclass SeteqPats<RegisterClass RC, Instruction SLTiuOp, Instruction XOROp,
                      Instruction SLTuOp, Register ZEROReg> {
-  def : Pat<(seteq RC:$lhs, RC:$rhs),
-            (SLTiuOp (XOROp RC:$lhs, RC:$rhs), 1)>;
-  def : Pat<(setne RC:$lhs, RC:$rhs),
-            (SLTuOp ZEROReg, (XOROp RC:$lhs, RC:$rhs))>;
+  def : MipsPat<(seteq RC:$lhs, RC:$rhs),
+                (SLTiuOp (XOROp RC:$lhs, RC:$rhs), 1)>;
+  def : MipsPat<(setne RC:$lhs, RC:$rhs),
+                (SLTuOp ZEROReg, (XOROp RC:$lhs, RC:$rhs))>;
 }
 
 multiclass SetlePats<RegisterClass RC, Instruction SLTOp, Instruction SLTuOp> {
-  def : Pat<(setle RC:$lhs, RC:$rhs),
-            (XORi (SLTOp RC:$rhs, RC:$lhs), 1)>;
-  def : Pat<(setule RC:$lhs, RC:$rhs),
-            (XORi (SLTuOp RC:$rhs, RC:$lhs), 1)>;
+  def : MipsPat<(setle RC:$lhs, RC:$rhs),
+                (XORi (SLTOp RC:$rhs, RC:$lhs), 1)>;
+  def : MipsPat<(setule RC:$lhs, RC:$rhs),
+                (XORi (SLTuOp RC:$rhs, RC:$lhs), 1)>;
 }
 
 multiclass SetgtPats<RegisterClass RC, Instruction SLTOp, Instruction SLTuOp> {
-  def : Pat<(setgt RC:$lhs, RC:$rhs),
-            (SLTOp RC:$rhs, RC:$lhs)>;
-  def : Pat<(setugt RC:$lhs, RC:$rhs),
-            (SLTuOp RC:$rhs, RC:$lhs)>;
+  def : MipsPat<(setgt RC:$lhs, RC:$rhs),
+                (SLTOp RC:$rhs, RC:$lhs)>;
+  def : MipsPat<(setugt RC:$lhs, RC:$rhs),
+                (SLTuOp RC:$rhs, RC:$lhs)>;
 }
 
 multiclass SetgePats<RegisterClass RC, Instruction SLTOp, Instruction SLTuOp> {
-  def : Pat<(setge RC:$lhs, RC:$rhs),
-            (XORi (SLTOp RC:$lhs, RC:$rhs), 1)>;
-  def : Pat<(setuge RC:$lhs, RC:$rhs),
-            (XORi (SLTuOp RC:$lhs, RC:$rhs), 1)>;
+  def : MipsPat<(setge RC:$lhs, RC:$rhs),
+                (XORi (SLTOp RC:$lhs, RC:$rhs), 1)>;
+  def : MipsPat<(setuge RC:$lhs, RC:$rhs),
+                (XORi (SLTuOp RC:$lhs, RC:$rhs), 1)>;
 }
 
 multiclass SetgeImmPats<RegisterClass RC, Instruction SLTiOp,
                         Instruction SLTiuOp> {
-  def : Pat<(setge RC:$lhs, immSExt16:$rhs),
-            (XORi (SLTiOp RC:$lhs, immSExt16:$rhs), 1)>;
-  def : Pat<(setuge RC:$lhs, immSExt16:$rhs),
-            (XORi (SLTiuOp RC:$lhs, immSExt16:$rhs), 1)>;
+  def : MipsPat<(setge RC:$lhs, immSExt16:$rhs),
+                (XORi (SLTiOp RC:$lhs, immSExt16:$rhs), 1)>;
+  def : MipsPat<(setuge RC:$lhs, immSExt16:$rhs),
+                (XORi (SLTiuOp RC:$lhs, immSExt16:$rhs), 1)>;
 }
 
 defm : SeteqPats<CPURegs, SLTiu, XOR, SLTu, ZERO>;
@@ -1229,10 +1233,10 @@ defm : SetgePats<CPURegs, SLT, SLTu>;
 defm : SetgeImmPats<CPURegs, SLTi, SLTiu>;
 
 // select MipsDynAlloc
-def : Pat<(MipsDynAlloc addr:$f), (DynAlloc addr:$f)>;
+def : MipsPat<(MipsDynAlloc addr:$f), (DynAlloc addr:$f)>;
 
 // bswap pattern
-def : Pat<(bswap CPURegs:$rt), (ROTR (WSBH CPURegs:$rt), 16)>;
+def : MipsPat<(bswap CPURegs:$rt), (ROTR (WSBH CPURegs:$rt), 16)>;
 
 //===----------------------------------------------------------------------===//
 // Floating Point Support
