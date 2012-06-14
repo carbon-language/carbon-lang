@@ -142,6 +142,13 @@ class EverythingUsed {
   int by_initializer_;
 };
 
+namespace templates {
+class B {
+  template <typename T> void f(T t);
+  int a;
+};
+}  // namespace templates
+
 namespace mutual_friends {
 // Undefined methods make mutual friends undefined.
 class A {
