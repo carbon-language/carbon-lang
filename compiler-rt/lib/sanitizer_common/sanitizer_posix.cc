@@ -51,6 +51,20 @@ void UnmapOrDie(void *addr, uptr size) {
   }
 }
 
+void *MmapFixedNoReserve(uptr fixed_addr, uptr size) {
+  return internal_mmap((void*)fixed_addr, size,
+                      PROT_READ | PROT_WRITE,
+                      MAP_PRIVATE | MAP_ANON | MAP_FIXED | MAP_NORESERVE,
+                      0, 0);
+}
+
+void *Mprotect(uptr fixed_addr, uptr size) {
+  return internal_mmap((void*)fixed_addr, size,
+                       PROT_NONE,
+                       MAP_PRIVATE | MAP_ANON | MAP_FIXED | MAP_NORESERVE,
+                       0, 0);
+}
+
 int internal_sscanf(const char *str, const char *format, ...) {
   va_list args;
   va_start(args, format);

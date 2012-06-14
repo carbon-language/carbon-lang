@@ -56,6 +56,16 @@ void UnmapOrDie(void *addr, uptr size) {
   }
 }
 
+void *MmapFixedNoReserve(uptr fixed_addr, uptr size) {
+  return VirtualAlloc((LPVOID)fixed_addr, size,
+                      MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
+}
+
+void *Mprotect(uptr fixed_addr, uptr size) {
+  return VirtualAlloc((LPVOID)fixed_addr, size,
+                      MEM_RESERVE | MEM_COMMIT, PAGE_NOACCESS);
+}
+
 const char *GetEnv(const char *name) {
   static char env_buffer[32767] = {};
 

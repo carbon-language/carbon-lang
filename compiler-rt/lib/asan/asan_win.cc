@@ -30,17 +30,6 @@
 
 namespace __asan {
 
-// ---------------------- Memory management ---------------- {{{1
-void *AsanMmapFixedNoReserve(uptr fixed_addr, uptr size) {
-  return VirtualAlloc((LPVOID)fixed_addr, size,
-                      MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
-}
-
-void *AsanMprotect(uptr fixed_addr, uptr size) {
-  return VirtualAlloc((LPVOID)fixed_addr, size,
-                      MEM_RESERVE | MEM_COMMIT, PAGE_NOACCESS);
-}
-
 // ---------------------- Stacktraces, symbols, etc. ---------------- {{{1
 static AsanLock dbghelp_lock(LINKER_INITIALIZED);
 static bool dbghelp_initialized = false;

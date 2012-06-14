@@ -124,10 +124,6 @@ void *AsanDoesNotSupportStaticLinkage();
 bool AsanShadowRangeIsAvailable();
 void AsanDumpProcessMap();
 
-void *AsanMmapFixedNoReserve(uptr fixed_addr, uptr size);
-void *AsanMmapFixedReserve(uptr fixed_addr, uptr size);
-void *AsanMprotect(uptr fixed_addr, uptr size);
-
 void AsanDisableCoreDumper();
 void GetPcSpBp(void *context, uptr *pc, uptr *sp, uptr *bp);
 

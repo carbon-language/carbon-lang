@@ -127,7 +127,7 @@ static void ReserveShadowMemoryRange(uptr beg, uptr end) {
   CHECK((beg % kPageSize) == 0);
   CHECK(((end + 1) % kPageSize) == 0);
   uptr size = end - beg + 1;
-  void *res = AsanMmapFixedNoReserve(beg, size);
+  void *res = MmapFixedNoReserve(beg, size);
   CHECK(res == (void*)beg && "ReserveShadowMemoryRange failed");
 }
 
@@ -547,7 +547,7 @@ void __asan_init() {
     // mmap the high shadow.
     ReserveShadowMemoryRange(kHighShadowBeg, kHighShadowEnd);
     // protect the gap
-    void *prot = AsanMprotect(kShadowGapBeg, kShadowGapEnd - kShadowGapBeg + 1);
+    void *prot = Mprotect(kShadowGapBeg, kShadowGapEnd - kShadowGapBeg + 1);
     CHECK(prot == (void*)kShadowGapBeg);
   } else {
     Report("Shadow memory range interleaves with an existing memory mapping. "
