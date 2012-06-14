@@ -26,7 +26,7 @@ void RewriteMacrosInInput(Preprocessor &PP, raw_ostream *OS);
 /// DoRewriteTest - A simple test for the TokenRewriter class.
 void DoRewriteTest(Preprocessor &PP, raw_ostream *OS);
 
-/// RewriteIncludesInInput - Implement -rewrite-includes mode.
+/// RewriteIncludesInInput - Implement -frewrite-includes mode.
 void RewriteIncludesInInput(Preprocessor &PP, raw_ostream *OS,
                             const PreprocessorOutputOptions &Opts);
 
