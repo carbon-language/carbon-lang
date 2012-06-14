@@ -3271,9 +3271,6 @@ struct Sema::CodeCompleteExpressionData {
 
 /// \brief Perform code-completion in an expression context when we know what
 /// type we're looking for.
-///
-/// \param IntegralConstantExpression Only permit integral constant 
-/// expressions.
 void Sema::CodeCompleteExpression(Scope *S, 
                                   const CodeCompleteExpressionData &Data) {
   typedef CodeCompletionResult Result;

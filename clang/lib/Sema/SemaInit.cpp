@@ -4408,7 +4408,7 @@ static SourceLocation getInitializationLoc(const InitializedEntity &Entity,
 /// \param T The type of the temporary object, which must either be
 /// the type of the initializer expression or a superclass thereof.
 ///
-/// \param Enter The entity being initialized.
+/// \param Entity The entity being initialized.
 ///
 /// \param CurInit The initializer expression.
 ///

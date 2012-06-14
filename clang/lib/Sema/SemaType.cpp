@@ -573,7 +573,8 @@ static void maybeSynthesizeBlockSignature(TypeProcessingState &state,
 
 /// \brief Convert the specified declspec to the appropriate type
 /// object.
-/// \param D  the declarator containing the declaration specifier.
+/// \param state Specifies the declarator containing the declaration specifier
+/// to be converted, along with other associated processing state.
 /// \returns The type described by the declaration specifiers.  This function
 /// never returns null.
 static QualType ConvertDeclSpecToType(TypeProcessingState &state) {
@@ -4165,9 +4166,6 @@ bool Sema::RequireCompleteExprType(Expr *E, unsigned DiagID) {
 /// diagnostic should refer to.
 ///
 /// @param T  The type that this routine is examining for completeness.
-///
-/// @param PD The partial diagnostic that will be printed out if T is not a
-/// complete type.
 ///
 /// @returns @c true if @p T is incomplete and a diagnostic was emitted,
 /// @c false otherwise.

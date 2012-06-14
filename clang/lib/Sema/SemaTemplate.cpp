@@ -5112,7 +5112,7 @@ static bool CheckNonTypeClassTemplatePartialSpecializationArgs(Sema &S,
 /// \param TemplateParams the template parameters of the primary class
 /// template.
 ///
-/// \param TemplateArg the template arguments of the class template
+/// \param TemplateArgs the template arguments of the class template
 /// partial specialization.
 ///
 /// \returns true if there was an error, false otherwise.

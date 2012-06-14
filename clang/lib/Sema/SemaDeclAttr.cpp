@@ -4237,7 +4237,7 @@ void Sema::checkUnusedDeclAttributes(Declarator &D) {
 }
 
 /// DeclClonePragmaWeak - clone existing decl (maybe definition),
-/// #pragma weak needs a non-definition decl and source may not have one
+/// \#pragma weak needs a non-definition decl and source may not have one.
 NamedDecl * Sema::DeclClonePragmaWeak(NamedDecl *ND, IdentifierInfo *II,
                                       SourceLocation Loc) {
   assert(isa<FunctionDecl>(ND) || isa<VarDecl>(ND));
@@ -4287,7 +4287,7 @@ NamedDecl * Sema::DeclClonePragmaWeak(NamedDecl *ND, IdentifierInfo *II,
   return NewD;
 }
 
-/// DeclApplyPragmaWeak - A declaration (maybe definition) needs #pragma weak
+/// DeclApplyPragmaWeak - A declaration (maybe definition) needs \#pragma weak
 /// applied to it, possibly with an alias.
 void Sema::DeclApplyPragmaWeak(Scope *S, NamedDecl *ND, WeakInfo &W) {
   if (W.getUsed()) return; // only do this once

@@ -1899,7 +1899,7 @@ static bool isSameTemplateArg(ASTContext &Context,
 ///
 /// \param S The semantic analysis object.
 ///
-/// \param The template argument we are producing template argument
+/// \param Arg The template argument we are producing template argument
 /// location information for.
 ///
 /// \param NTTPType For a declaration template argument, the type of
@@ -2199,7 +2199,7 @@ static bool isSimpleTemplateIdType(QualType T) {
 /// \param FunctionTemplate the function template into which the explicit
 /// template arguments will be substituted.
 ///
-/// \param ExplicitTemplateArguments the explicitly-specified template
+/// \param ExplicitTemplateArgs the explicitly-specified template
 /// arguments.
 ///
 /// \param Deduced the deduced template arguments, which will be populated

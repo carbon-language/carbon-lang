@@ -1383,7 +1383,7 @@ TemplateInstantiator::TransformSubstTemplateTypeParmPackType(
 /// substituted. If this type is not dependent, it will be returned
 /// immediately.
 ///
-/// \param TemplateArgs the template arguments that will be
+/// \param Args the template arguments that will be
 /// substituted for the top-level template parameters within T.
 ///
 /// \param Loc the location in the source code where this substitution
