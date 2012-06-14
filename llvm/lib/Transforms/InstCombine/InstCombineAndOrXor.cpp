@@ -995,9 +995,11 @@ Value *InstCombiner::FoldAndOfFCmps(FCmpInst *LHS, FCmpInst *RHS) {
       std::swap(Op0Ordered, Op1Ordered);
     }
     if (Op0Pred == 0) {
-      // uno && ueq -> uno && (uno || eq) -> ueq
+      // uno && ueq -> uno && (uno || eq) -> uno
       // ord && olt -> ord && (ord && lt) -> olt
-      if (Op0Ordered == Op1Ordered)
+      if (!Op0Ordered && (Op0Ordered == Op1Ordered))
+        return LHS;
+      if (Op0Ordered && (Op0Ordered == Op1Ordered))
         return RHS;
       
       // uno && oeq -> uno && (ord && eq) -> false
