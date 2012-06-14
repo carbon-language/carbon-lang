@@ -2062,10 +2062,10 @@ namespace {
     void HandleValue(Expr *E) {
       E = E->IgnoreParens();
 
-      if (MemberExpr* ME = dyn_cast<MemberExpr>(E)) {
+      if (MemberExpr *ME = dyn_cast<MemberExpr>(E)) {
         if (isa<EnumConstantDecl>(ME->getMemberDecl()))
             return;
-        Expr* Base = E;
+        Expr *Base = E;
         while (isa<MemberExpr>(Base)) {
           ME = dyn_cast<MemberExpr>(Base);
           if (VarDecl *VarD = dyn_cast<VarDecl>(ME->getMemberDecl()))
