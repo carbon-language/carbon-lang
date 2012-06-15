@@ -74,7 +74,6 @@ Reference::Kind KindHandler_x86_64::stringToKind(StringRef str) {
     .Case("subordinateLSDA",       subordinateLSDA);
 
   llvm_unreachable("invalid x86_64 Reference kind");
-  return 0;
 }
 
 StringRef KindHandler_x86_64::kindToString(Reference::Kind kind) {
@@ -115,7 +114,6 @@ StringRef KindHandler_x86_64::kindToString(Reference::Kind kind) {
       return StringRef("subordinateLSDA");
   }
   llvm_unreachable("invalid x86_64 Reference kind");
-  return StringRef();
 }
 
 bool KindHandler_x86_64::isCallSite(Kind kind) {
@@ -199,7 +197,6 @@ Reference::Kind KindHandler_x86::stringToKind(StringRef str) {
     .Case("lazyImmediate",         lazyImmediate);
   
   llvm_unreachable("invalid x86 Reference kind");
-  return 0;
 }
 
 StringRef KindHandler_x86::kindToString(Reference::Kind kind) {
@@ -224,7 +221,6 @@ StringRef KindHandler_x86::kindToString(Reference::Kind kind) {
       return StringRef("subordinateLSDA");
   }
   llvm_unreachable("invalid x86 Reference kind");
-  return StringRef();
 }
 
 bool KindHandler_x86::isCallSite(Kind kind) {
@@ -294,7 +290,6 @@ Reference::Kind KindHandler_arm::stringToKind(StringRef str) {
     .Case("subordinateLSDA",    subordinateLSDA);
 
   llvm_unreachable("invalid ARM Reference kind");
-  return 0;
 }
 
 StringRef KindHandler_arm::kindToString(Reference::Kind kind) {
@@ -325,7 +320,6 @@ StringRef KindHandler_arm::kindToString(Reference::Kind kind) {
       return StringRef("subordinateLSDA");
   }
   llvm_unreachable("invalid ARM Reference kind");
-  return StringRef();
 }
 
 bool KindHandler_arm::isCallSite(Kind kind) {

@@ -42,7 +42,6 @@ StringRef WriterOptionsMachO::archName() const {
        return StringRef("armv7");
   }
   llvm_unreachable("unknown arch");
-  return StringRef("???");
 } 
 
 uint32_t WriterOptionsMachO::cpuType() const {
@@ -56,7 +55,6 @@ uint32_t WriterOptionsMachO::cpuType() const {
        return mach_o::CPU_TYPE_ARM;
   }
   llvm_unreachable("unknown arch");
-  return 0;
 }
 
 uint32_t WriterOptionsMachO::cpuSubtype() const {
@@ -71,7 +69,6 @@ uint32_t WriterOptionsMachO::cpuSubtype() const {
        return mach_o::CPU_SUBTYPE_ARM_V7;
   }
   llvm_unreachable("unknown arch");
-  return 0;
 }
 
 uint64_t WriterOptionsMachO::pageZeroSize() const { 
@@ -85,7 +82,6 @@ uint64_t WriterOptionsMachO::pageZeroSize() const {
       return 0;
   }
   llvm_unreachable("unknown outputkind");
-  return 0;
 }
 
 bool WriterOptionsMachO::addEntryPointLoadCommand() const {
@@ -99,7 +95,6 @@ bool WriterOptionsMachO::addEntryPointLoadCommand() const {
       return false;
   }
   llvm_unreachable("unknown outputkind");
-  return false;
 }
 
 bool WriterOptionsMachO::addUnixThreadLoadCommand() const {
@@ -113,7 +108,6 @@ bool WriterOptionsMachO::addUnixThreadLoadCommand() const {
       return false;
   }
   llvm_unreachable("unknown outputkind");
-  return false;
 }
 
 StringRef WriterOptionsMachO::entryPointName() const {
@@ -136,7 +130,6 @@ StringRef WriterOptionsMachO::entryPointName() const {
       return StringRef();
   }
   llvm_unreachable("unknown outputkind");
-  return StringRef();
 }
 
 
