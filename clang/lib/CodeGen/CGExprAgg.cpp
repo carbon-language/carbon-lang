@@ -1164,9 +1164,6 @@ static void CheckAggExprForMemSetUse(AggValueSlot &Slot, const Expr *E,
 /// type.  The result is computed into DestPtr.  Note that if DestPtr is null,
 /// the value of the aggregate expression is not needed.  If VolatileDest is
 /// true, DestPtr cannot be 0.
-///
-/// \param IsInitializer - true if this evaluation is initializing an
-/// object whose lifetime is already being managed.
 void CodeGenFunction::EmitAggExpr(const Expr *E, AggValueSlot Slot,
                                   bool IgnoreResult) {
   assert(E && hasAggregateLLVMType(E->getType()) &&

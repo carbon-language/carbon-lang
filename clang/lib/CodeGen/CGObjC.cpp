@@ -698,8 +698,9 @@ PropertyImplStrategy::PropertyImplStrategy(CodeGenModule &CGM,
   Kind = Native;
 }
 
-/// GenerateObjCGetter - Generate an Objective-C property getter
-/// function. The given Decl must be an ObjCImplementationDecl. @synthesize
+/// \brief Generate an Objective-C property getter function.
+///
+/// The given Decl must be an ObjCImplementationDecl. \@synthesize
 /// is illegal within a category.
 void CodeGenFunction::GenerateObjCGetter(ObjCImplementationDecl *IMP,
                                          const ObjCPropertyImplDecl *PID) {
@@ -1209,8 +1210,9 @@ CodeGenFunction::generateObjCSetterBody(const ObjCImplementationDecl *classImpl,
   EmitStmt(&assign);
 }
 
-/// GenerateObjCSetter - Generate an Objective-C property setter
-/// function. The given Decl must be an ObjCImplementationDecl. @synthesize
+/// \brief Generate an Objective-C property setter function.
+///
+/// The given Decl must be an ObjCImplementationDecl. \@synthesize
 /// is illegal within a category.
 void CodeGenFunction::GenerateObjCSetter(ObjCImplementationDecl *IMP,
                                          const ObjCPropertyImplDecl *PID) {

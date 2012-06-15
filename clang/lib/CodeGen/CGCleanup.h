@@ -131,7 +131,7 @@ public:
 /// A scope which attempts to handle some, possibly all, types of
 /// exceptions.
 ///
-/// Objective C @finally blocks are represented using a cleanup scope
+/// Objective C \@finally blocks are represented using a cleanup scope
 /// after the catch scope.
 class EHCatchScope : public EHScope {
   // In effect, we have a flexible array member
