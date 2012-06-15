@@ -132,7 +132,7 @@ namespace {
   private:
     void BuildRankMap(Function &F);
     unsigned getRank(Value *V);
-    Value *ReassociateExpression(BinaryOperator *I);
+    void ReassociateExpression(BinaryOperator *I);
     void RewriteExprTree(BinaryOperator *I, SmallVectorImpl<ValueEntry> &Ops);
     Value *OptimizeExpression(BinaryOperator *I,
                               SmallVectorImpl<ValueEntry> &Ops);
@@ -1480,12 +1480,14 @@ void Reassociate::EraseInst(Instruction *I) {
   ValueRankMap.erase(I);
   I->eraseFromParent();
   // Optimize its operands.
+  SmallPtrSet<Instruction *, 8> Visited; // Detect self-referential nodes.
   for (unsigned i = 0, e = Ops.size(); i != e; ++i)
     if (Instruction *Op = dyn_cast<Instruction>(Ops[i])) {
       // If this is a node in an expression tree, climb to the expression root
       // and add that since that's where optimization actually happens.
       unsigned Opcode = Op->getOpcode();
-      while (Op->hasOneUse() && Op->use_back()->getOpcode() == Opcode)
+      while (Op->hasOneUse() && Op->use_back()->getOpcode() == Opcode &&
+             Visited.insert(Op))
         Op = Op->use_back();
       RedoInsts.insert(Op);
     }
@@ -1585,7 +1587,7 @@ void Reassociate::OptimizeInst(Instruction *I) {
   ReassociateExpression(BO);
 }
 
-Value *Reassociate::ReassociateExpression(BinaryOperator *I) {
+void Reassociate::ReassociateExpression(BinaryOperator *I) {
 
   // First, walk the expression tree, linearizing the tree, collecting the
   // operand information.
@@ -1612,6 +1614,9 @@ Value *Reassociate::ReassociateExpression(BinaryOperator *I) {
   // OptimizeExpression - Now that we have the expression tree in a convenient
   // sorted form, optimize it globally if possible.
   if (Value *V = OptimizeExpression(I, Ops)) {
+    if (V == I)
+      // Self-referential expression in unreachable code.
+      return;
     // This expression tree simplified to something that isn't a tree,
     // eliminate it.
     DEBUG(dbgs() << "Reassoc to scalar: " << *V << '\n');
@@ -1620,7 +1625,7 @@ Value *Reassociate::ReassociateExpression(BinaryOperator *I) {
       VI->setDebugLoc(I->getDebugLoc());
     RedoInsts.insert(I);
     ++NumAnnihil;
-    return V;
+    return;
   }
 
   // We want to sink immediates as deeply as possible except in the case where
@@ -1638,19 +1643,22 @@ Value *Reassociate::ReassociateExpression(BinaryOperator *I) {
   DEBUG(dbgs() << "RAOut:\t"; PrintOps(I, Ops); dbgs() << '\n');
 
   if (Ops.size() == 1) {
+    if (Ops[0].Op == I)
+      // Self-referential expression in unreachable code.
+      return;
+
     // This expression tree simplified to something that isn't a tree,
     // eliminate it.
     I->replaceAllUsesWith(Ops[0].Op);
     if (Instruction *OI = dyn_cast<Instruction>(Ops[0].Op))
       OI->setDebugLoc(I->getDebugLoc());
     RedoInsts.insert(I);
-    return Ops[0].Op;
+    return;
   }
 
   // Now that we ordered and optimized the expressions, splat them back into
   // the expression tree, removing any unneeded nodes.
   RewriteExprTree(I, Ops);
-  return I;
 }
 
 bool Reassociate::runOnFunction(Function &F) {

@@ -83,3 +83,28 @@ define i128 @foo() {
   %mul = mul i128 0, 0
   ret i128 %mul
 }
+
+define void @infinite_loop() {
+entry:
+  br label %loop
+loop:
+  %x = phi i32 [undef, %entry], [%x, %loop]
+  %dead = add i32 %x, 0
+  br label %loop
+unreachable1:
+  %y1 = add i32 %y1, 0
+  %z1 = add i32 %y1, 0
+  ret void
+unreachable2:
+  %y2 = add i32 %y2, 0
+  %z2 = add i32 %y2, %y2
+  ret void
+unreachable3:
+  %y3 = add i32 %y3, %y3
+  %z3 = add i32 %y3, 0
+  ret void
+unreachable4:
+  %y4 = add i32 %y4, %y4
+  %z4 = add i32 %y4, %y4
+  ret void
+}
