@@ -155,12 +155,6 @@ DiagnosticsEngine::GetDiagStatePointForLoc(SourceLocation L) const {
   return Pos;
 }
 
-/// \brief This allows the client to specify that certain
-/// warnings are ignored.  Notes can never be mapped, errors can only be
-/// mapped to fatal, and WARNINGs and EXTENSIONs can be mapped arbitrarily.
-///
-/// \param The source location that this change of diagnostic state should
-/// take affect. It can be null if we are setting the latest state.
 void DiagnosticsEngine::setDiagnosticMapping(diag::kind Diag, diag::Mapping Map,
                                              SourceLocation L) {
   assert(Diag < diag::DIAG_UPPER_LIMIT &&

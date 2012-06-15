@@ -259,10 +259,6 @@ void FileManager::addAncestorsAsVirtualDirs(StringRef Path) {
   addAncestorsAsVirtualDirs(DirName);
 }
 
-/// getDirectory - Lookup, cache, and verify the specified directory
-/// (real or virtual).  This returns NULL if the directory doesn't
-/// exist.
-///
 const DirectoryEntry *FileManager::getDirectory(StringRef DirName,
                                                 bool CacheFailure) {
   // stat doesn't like trailing separators.
@@ -315,9 +311,6 @@ const DirectoryEntry *FileManager::getDirectory(StringRef DirName,
   return &UDE;
 }
 
-/// getFile - Lookup, cache, and verify the specified file (real or
-/// virtual).  This returns NULL if the file doesn't exist.
-///
 const FileEntry *FileManager::getFile(StringRef Filename, bool openFile,
                                       bool CacheFailure) {
   ++NumFileLookups;
