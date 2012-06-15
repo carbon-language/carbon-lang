@@ -1351,10 +1351,15 @@ RetainSummaryManager::getStandardMethodSummary(const ObjCMethodDecl *MD,
   // because the reference count is quite possibly handled by a delegate
   // method.
   if (S.isKeywordSelector()) {
-    const std::string &str = S.getAsString();
-    assert(!str.empty());
-    if (StrInStrNoCase(str, "delegate:") != StringRef::npos)
-      ReceiverEff = StopTracking;
+    for (unsigned i = 0, e = S.getNumArgs(); i != e; ++i) {
+      StringRef Slot = S.getNameForSlot(i);
+      if (Slot.substr(Slot.size() - 8).equals_lower("delegate")) {
+        if (ResultEff == ObjCInitRetE)
+          ResultEff = RetEffect::MakeNoRet();
+        else
+          ReceiverEff = StopTracking;
+      }
+    }
   }
 
   if (ScratchArgs.isEmpty() && ReceiverEff == DoNothing &&

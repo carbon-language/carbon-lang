@@ -111,3 +111,21 @@ extern void *_NSConstantStringClassReference;
 }
 @end
 
+
+@interface ObjectThatRequiresDelegate : NSObject
+- (id)initWithDelegate:(id)delegate;
+- (id)initWithNumber:(int)num delegate:(id)delegate;
+@end
+
+
+@interface DelegateRequirerTest
+@end
+@implementation DelegateRequirerTest
+
+- (void)test {
+  (void)[[ObjectThatRequiresDelegate alloc] initWithDelegate:self];
+  (void)[[ObjectThatRequiresDelegate alloc] initWithNumber:0 delegate:self];
+  // no leak warnings -- these objects could be released in callback methods
+}
+
+@end
