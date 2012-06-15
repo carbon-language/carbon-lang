@@ -131,7 +131,7 @@ ASTConsumer *GenerateModuleAction::CreateASTConsumer(CompilerInstance &CI,
 ///
 /// \param Module The module we're collecting includes from.
 ///
-/// \param Includes Will be augmented with the set of #includes or #imports
+/// \param Includes Will be augmented with the set of \#includes or \#imports
 /// needed to load all of the named headers.
 static void collectModuleHeaderIncludes(const LangOptions &LangOpts,
                                         FileManager &FileMgr,
