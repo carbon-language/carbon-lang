@@ -1142,7 +1142,7 @@ public:
   /// inline, its enclosing namespace, recursively.
   bool InEnclosingNamespaceSetOf(const DeclContext *NS) const;
 
-  /// \\brief Collects all of the declaration contexts that are semantically
+  /// \brief Collects all of the declaration contexts that are semantically
   /// connected to this declaration context.
   ///
   /// For declaration contexts that have multiple semantically connected but
