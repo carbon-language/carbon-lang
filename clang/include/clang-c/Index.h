@@ -190,8 +190,9 @@ CINDEX_LINKAGE void clang_disposeString(CXString string);
  */
 
 /**
- * \brief clang_createIndex() provides a shared context for creating
- * translation units. It provides two options:
+ * \brief Provides a shared context for creating translation units.
+ *
+ * It provides two options:
  *
  * - excludeDeclarationsFromPCH: When non-zero, allows enumeration of "local"
  * declarations (when loading any new translation units). A "local" declaration
@@ -201,6 +202,7 @@ CINDEX_LINKAGE void clang_disposeString(CXString string);
  *
  * Here is an example:
  *
+ * \code
  *   // excludeDeclsFromPCH = 1, displayDiagnostics=1
  *   Idx = clang_createIndex(1, 1);
  *
@@ -221,6 +223,7 @@ CINDEX_LINKAGE void clang_disposeString(CXString string);
  *   clang_visitChildren(clang_getTranslationUnitCursor(TU),
  *                       TranslationUnitVisitor, 0);
  *   clang_disposeTranslationUnit(TU);
+ * \endcode
  *
  * This process of creating the 'pch', loading it separately, and using it (via
  * -include-pch) allows 'excludeDeclsFromPCH' to remove redundant callbacks
@@ -246,16 +249,18 @@ typedef enum {
   /**
    * \brief Used to indicate that threads that libclang creates for indexing
    * purposes should use background priority.
-   * Affects \see clang_indexSourceFile, \see clang_indexTranslationUnit,
-   * \see clang_parseTranslationUnit, \see clang_saveTranslationUnit.
+   *
+   * Affects #clang_indexSourceFile, #clang_indexTranslationUnit,
+   * #clang_parseTranslationUnit, #clang_saveTranslationUnit.
    */
   CXGlobalOpt_ThreadBackgroundPriorityForIndexing = 0x1,
 
   /**
    * \brief Used to indicate that threads that libclang creates for editing
    * purposes should use background priority.
-   * Affects \see clang_reparseTranslationUnit, \see clang_codeCompleteAt,
-   * \see clang_annotateTokens
+   *
+   * Affects #clang_reparseTranslationUnit, #clang_codeCompleteAt,
+   * #clang_annotateTokens
    */
   CXGlobalOpt_ThreadBackgroundPriorityForEditing = 0x2,
 
@@ -270,7 +275,7 @@ typedef enum {
 } CXGlobalOptFlags;
 
 /**
- * \brief Sets general options associated with a CXIndex. 
+ * \brief Sets general options associated with a CXIndex.
  *
  * For example:
  * \code
@@ -317,7 +322,7 @@ CINDEX_LINKAGE time_t clang_getFileTime(CXFile SFile);
 /**
  * \brief Determine whether the given header is guarded against
  * multiple inclusions, either with the conventional
- * #ifndef/#define/#endif macro guards or with #pragma once.
+ * \#ifndef/\#define/\#endif macro guards or with \#pragma once.
  */
 CINDEX_LINKAGE unsigned 
 clang_isFileMultipleIncludeGuarded(CXTranslationUnit tu, CXFile file);
@@ -382,7 +387,7 @@ typedef struct {
 CINDEX_LINKAGE CXSourceLocation clang_getNullLocation();
 
 /**
- * \determine Determine whether two source locations, which must refer into
+ * \brief Determine whether two source locations, which must refer into
  * the same translation unit, refer to exactly the same point in the source
  * code.
  *
@@ -467,12 +472,14 @@ CINDEX_LINKAGE void clang_getExpansionLocation(CXSourceLocation location,
  *
  * Example: given the following source code in a file somefile.c
  *
+ * \code
  * #123 "dummy.c" 1
  *
  * static int func(void)
  * {
  *     return 0;
  * }
+ * \endcode
  *
  * the location information returned by this function would be
  *
@@ -509,7 +516,7 @@ CINDEX_LINKAGE void clang_getPresumedLocation(CXSourceLocation location,
  * by the given source location.
  *
  * This interface has been replaced by the newer interface
- * \see clang_getExpansionLocation(). See that interface's documentation for
+ * #clang_getExpansionLocation(). See that interface's documentation for
  * details.
  */
 CINDEX_LINKAGE void clang_getInstantiationLocation(CXSourceLocation location,
@@ -622,7 +629,7 @@ CINDEX_LINKAGE unsigned clang_getNumDiagnosticsInSet(CXDiagnosticSet Diags);
 /**
  * \brief Retrieve a diagnostic associated with the given CXDiagnosticSet.
  *
- * \param Unit the CXDiagnosticSet to query.
+ * \param Diags the CXDiagnosticSet to query.
  * \param Index the zero-based diagnostic number to retrieve.
  *
  * \returns the requested diagnostic. This diagnostic must be freed
@@ -656,23 +663,23 @@ enum CXLoadDiag_Error {
   
   /**
    * \brief Indicates that the serialized diagnostics file is invalid or
-   *  corrupt.
+   * corrupt.
    */
   CXLoadDiag_InvalidFile = 3
 };
   
 /**
  * \brief Deserialize a set of diagnostics from a Clang diagnostics bitcode
- *  file.
+ * file.
  *
- * \param The name of the file to deserialize.
- * \param A pointer to a enum value recording if there was a problem
+ * \param file The name of the file to deserialize.
+ * \param error A pointer to a enum value recording if there was a problem
  *        deserializing the diagnostics.
- * \param A pointer to a CXString for recording the error string
+ * \param errorString A pointer to a CXString for recording the error string
  *        if the file was not successfully loaded.
  *
  * \returns A loaded CXDiagnosticSet if successful, and NULL otherwise.  These
- *  diagnostics should be released using clang_disposeDiagnosticSet().
+ * diagnostics should be released using clang_disposeDiagnosticSet().
  */
 CINDEX_LINKAGE CXDiagnosticSet clang_loadDiagnostics(const char *file,
                                                   enum CXLoadDiag_Error *error,
@@ -684,8 +691,10 @@ CINDEX_LINKAGE CXDiagnosticSet clang_loadDiagnostics(const char *file,
 CINDEX_LINKAGE void clang_disposeDiagnosticSet(CXDiagnosticSet Diags);
 
 /**
- * \brief Retrieve the child diagnostics of a CXDiagnostic.  This
- *  CXDiagnosticSet does not need to be released by clang_diposeDiagnosticSet.
+ * \brief Retrieve the child diagnostics of a CXDiagnostic. 
+ *
+ * This CXDiagnosticSet does not need to be released by
+ * clang_diposeDiagnosticSet.
  */
 CINDEX_LINKAGE CXDiagnosticSet clang_getChildDiagnostics(CXDiagnostic D);
 
@@ -878,7 +887,6 @@ CXString clang_getDiagnosticCategoryName(unsigned Category);
 /**
  * \brief Retrieve the diagnostic category text for a given diagnostic.
  *
- *
  * \returns The text of the given diagnostic category.
  */
 CINDEX_LINKAGE CXString clang_getDiagnosticCategoryText(CXDiagnostic);
@@ -974,12 +982,12 @@ clang_getTranslationUnitSpelling(CXTranslationUnit CTUnit);
  *   '-c'
  *   '-emit-ast'
  *   '-fsyntax-only'
- *   '-o <output file>'  (both '-o' and '<output file>' are ignored)
+ *   '-o \<output file>'  (both '-o' and '\<output file>' are ignored)
  *
  * \param CIdx The index object with which the translation unit will be
  * associated.
  *
- * \param source_filename - The name of the source file to load, or NULL if the
+ * \param source_filename The name of the source file to load, or NULL if the
  * source file is included in \p clang_command_line_args.
  *
  * \param num_clang_command_line_args The number of command-line arguments in
@@ -989,7 +997,7 @@ clang_getTranslationUnitSpelling(CXTranslationUnit CTUnit);
  * passed to the \c clang executable if it were being invoked out-of-process.
  * These command-line options will be parsed and will affect how the translation
  * unit is parsed. Note that the following options are ignored: '-c',
- * '-emit-ast', '-fsyntax-only' (which is the default), and '-o <output file>'.
+ * '-emit-ast', '-fsyntax-only' (which is the default), and '-o \<output file>'.
  *
  * \param num_unsaved_files the number of unsaved file entries in \p
  * unsaved_files.
@@ -1138,7 +1146,7 @@ CINDEX_LINKAGE unsigned clang_defaultEditingTranslationUnitOptions(void);
  * passed to the \c clang executable if it were being invoked out-of-process.
  * These command-line options will be parsed and will affect how the translation
  * unit is parsed. Note that the following options are ignored: '-c', 
- * '-emit-ast', '-fsyntax-only' (which is the default), and '-o <output file>'.
+ * '-emit-ast', '-fsyntax-only' (which is the default), and '-o \<output file>'.
  *
  * \param num_command_line_args The number of command-line arguments in
  * \p command_line_args.
@@ -1486,9 +1494,9 @@ enum CXCursorKind {
   CXCursor_UsingDeclaration              = 35,
   /** \brief A C++ alias declaration */
   CXCursor_TypeAliasDecl                 = 36,
-  /** \brief An Objective-C @synthesize definition. */
+  /** \brief An Objective-C \@synthesize definition. */
   CXCursor_ObjCSynthesizeDecl            = 37,
-  /** \brief An Objective-C @dynamic definition. */
+  /** \brief An Objective-C \@dynamic definition. */
   CXCursor_ObjCDynamicDecl               = 38,
   /** \brief An access specifier. */
   CXCursor_CXXAccessSpecifier            = 39,
@@ -1791,11 +1799,11 @@ enum CXCursorKind {
    */
   CXCursor_ObjCStringLiteral             = 137,
 
-  /** \brief An Objective-C @encode expression.
+  /** \brief An Objective-C \@encode expression.
    */
   CXCursor_ObjCEncodeExpr                = 138,
 
-  /** \brief An Objective-C @selector expression.
+  /** \brief An Objective-C \@selector expression.
    */
   CXCursor_ObjCSelectorExpr              = 139,
 
@@ -1944,23 +1952,23 @@ enum CXCursorKind {
    */
   CXCursor_AsmStmt                       = 215,
 
-  /** \brief Objective-C's overall @try-@catch-@finally statement.
+  /** \brief Objective-C's overall \@try-\@catch-\@finally statement.
    */
   CXCursor_ObjCAtTryStmt                 = 216,
 
-  /** \brief Objective-C's @catch statement.
+  /** \brief Objective-C's \@catch statement.
    */
   CXCursor_ObjCAtCatchStmt               = 217,
 
-  /** \brief Objective-C's @finally statement.
+  /** \brief Objective-C's \@finally statement.
    */
   CXCursor_ObjCAtFinallyStmt             = 218,
 
-  /** \brief Objective-C's @throw statement.
+  /** \brief Objective-C's \@throw statement.
    */
   CXCursor_ObjCAtThrowStmt               = 219,
 
-  /** \brief Objective-C's @synchronized statement.
+  /** \brief Objective-C's \@synchronized statement.
    */
   CXCursor_ObjCAtSynchronizedStmt        = 220,
 
@@ -2252,7 +2260,7 @@ typedef struct CXPlatformAvailability {
  * provided along with the unconditional deprecation of this entity. The client
  * is responsible for deallocating this string.
  *
- * \param always_unavailabile If non-NULL, will be set to indicate whether the
+ * \param always_unavailable If non-NULL, will be set to indicate whether the
  * entity is unavailable on all platforms.
  *
  * \param unavailable_message If non-NULL, will be set to the message text
@@ -2687,10 +2695,10 @@ CINDEX_LINKAGE int clang_Cursor_getNumArguments(CXCursor C);
 CINDEX_LINKAGE CXCursor clang_Cursor_getArgument(CXCursor C, unsigned i);
 
 /**
- * \determine Determine whether two CXTypes represent the same type.
+ * \brief Determine whether two CXTypes represent the same type.
  *
- * \returns non-zero if the CXTypes represent the same type and 
-            zero otherwise.
+ * \returns non-zero if the CXTypes represent the same type and
+ *          zero otherwise.
  */
 CINDEX_LINKAGE unsigned clang_equalTypes(CXType A, CXType B);
 
@@ -2705,26 +2713,28 @@ CINDEX_LINKAGE unsigned clang_equalTypes(CXType A, CXType B);
 CINDEX_LINKAGE CXType clang_getCanonicalType(CXType T);
 
 /**
- *  \determine Determine whether a CXType has the "const" qualifier set, 
- *  without looking through typedefs that may have added "const" at a different level.
+ * \brief Determine whether a CXType has the "const" qualifier set,
+ * without looking through typedefs that may have added "const" at a
+ * different level.
  */
 CINDEX_LINKAGE unsigned clang_isConstQualifiedType(CXType T);
 
 /**
- *  \determine Determine whether a CXType has the "volatile" qualifier set,
- *  without looking through typedefs that may have added "volatile" at a different level.
+ * \brief Determine whether a CXType has the "volatile" qualifier set,
+ * without looking through typedefs that may have added "volatile" at
+ * a different level.
  */
 CINDEX_LINKAGE unsigned clang_isVolatileQualifiedType(CXType T);
 
 /**
- *  \determine Determine whether a CXType has the "restrict" qualifier set,
- *  without looking through typedefs that may have added "restrict" at a different level.
+ * \brief Determine whether a CXType has the "restrict" qualifier set,
+ * without looking through typedefs that may have added "restrict" at a
+ * different level.
  */
 CINDEX_LINKAGE unsigned clang_isRestrictQualifiedType(CXType T);
 
 /**
  * \brief For pointer types, returns the type of the pointee.
- *
  */
 CINDEX_LINKAGE CXType clang_getPointeeType(CXType T);
 
@@ -2758,7 +2768,8 @@ CINDEX_LINKAGE enum CXCallingConv clang_getFunctionTypeCallingConv(CXType T);
 CINDEX_LINKAGE CXType clang_getResultType(CXType T);
 
 /**
- * \brief Retrieve the number of non-variadic arguments associated with a function type.
+ * \brief Retrieve the number of non-variadic arguments associated with a
+ * function type.
  *
  * If a non-function type is passed in, -1 is returned.
  */
@@ -2767,14 +2778,13 @@ CINDEX_LINKAGE int clang_getNumArgTypes(CXType T);
 /**
  * \brief Retrieve the type of an argument of a function type.
  *
- * If a non-function type is passed in or the function does not have enough parameters,
- * an invalid type is returned.
+ * If a non-function type is passed in or the function does not have enough
+ * parameters, an invalid type is returned.
  */
 CINDEX_LINKAGE CXType clang_getArgType(CXType T, unsigned i);
 
 /**
  * \brief Return 1 if the CXType is a variadic function type, and 0 otherwise.
- *
  */
 CINDEX_LINKAGE unsigned clang_isFunctionTypeVariadic(CXType T);
 
@@ -3168,7 +3178,7 @@ CINDEX_LINKAGE CXCursor clang_getCanonicalCursor(CXCursor);
  * \brief If the cursor points to a selector identifier in a objc method or
  * message expression, this returns the selector index.
  *
- * After getting a cursor with \see clang_getCursor, this can be called to
+ * After getting a cursor with #clang_getCursor, this can be called to
  * determine if the location points to a selector identifier.
  *
  * \returns The selector index if the cursor is an objc method or message
@@ -3282,8 +3292,8 @@ enum CXNameRefFlags {
   CXNameRange_WantQualifier = 0x1,
   
   /**
-   * \brief Include the explicit template arguments, e.g. <int> in x.f<int>, in 
-   * the range.
+   * \brief Include the explicit template arguments, e.g. \<int> in x.f<int>,
+   * in the range.
    */
   CXNameRange_WantTemplateArgs = 0x2,
 
@@ -3802,7 +3812,7 @@ clang_getCompletionAnnotation(CXCompletionString completion_string,
  * \param kind If non-NULL, will be set to the kind of the parent context,
  * or CXCursor_NotImplemented if there is no context.
  *
- * \param Returns the name of the completion parent, e.g., "NSObject" if
+ * \returns The name of the completion parent, e.g., "NSObject" if
  * the completion string represents a method in the NSObject class.
  */
 CINDEX_LINKAGE CXString
@@ -4102,7 +4112,7 @@ unsigned clang_codeCompleteGetNumDiagnostics(CXCodeCompleteResults *Results);
 /**
  * \brief Retrieve a diagnostic associated with the given code completion.
  *
- * \param Result the code completion results to query.
+ * \param Results the code completion results to query.
  * \param Index the zero-based diagnostic number to retrieve.
  *
  * \returns the requested diagnostic. This diagnostic must be freed
@@ -4194,8 +4204,8 @@ CINDEX_LINKAGE CXString clang_getClangVersion();
 /**
  * \brief Enable/disable crash recovery.
  *
- * \param Flag to indicate if crash recovery is enabled.  A non-zero value
- *        enables crash recovery, while 0 disables it.
+ * \param isEnabled Flag to indicate if crash recovery is enabled.  A non-zero
+ *        value enables crash recovery, while 0 disables it.
  */
 CINDEX_LINKAGE void clang_toggleCrashRecovery(unsigned isEnabled);
   
@@ -4204,7 +4214,7 @@ CINDEX_LINKAGE void clang_toggleCrashRecovery(unsigned isEnabled);
   *        (used with clang_getInclusions()).
   *
   * This visitor function will be invoked by clang_getInclusions() for each
-  * file included (either at the top-level or by #include directives) within
+  * file included (either at the top-level or by \#include directives) within
   * a translation unit.  The first argument is the file being included, and
   * the second and third arguments provide the inclusion stack.  The
   * array is sorted in order of immediate inclusion.  For example,
@@ -4362,19 +4372,19 @@ typedef struct {
 } CXIdxLoc;
 
 /**
- * \brief Data for \see ppIncludedFile callback.
+ * \brief Data for ppIncludedFile callback.
  */
 typedef struct {
   /**
-   * \brief Location of '#' in the #include/#import directive.
+   * \brief Location of '#' in the \#include/\#import directive.
    */
   CXIdxLoc hashLoc;
   /**
-   * \brief Filename as written in the #include/#import directive.
+   * \brief Filename as written in the \#include/\#import directive.
    */
   const char *filename;
   /**
-   * \brief The actual file that the #include/#import directive resolved to.
+   * \brief The actual file that the \#include/\#import directive resolved to.
    */
   CXFile file;
   int isImport;
@@ -4382,7 +4392,7 @@ typedef struct {
 } CXIdxIncludedFileInfo;
 
 /**
- * \brief Data for \see importedASTFile callback.
+ * \brief Data for IndexerCallbacks#importedASTFile.
  */
 typedef struct {
   CXFile file;
@@ -4496,7 +4506,7 @@ typedef struct {
   CXIdxLoc loc;
   const CXIdxContainerInfo *semanticContainer;
   /**
-   * \brief Generally same as \see semanticContainer but can be different in
+   * \brief Generally same as #semanticContainer but can be different in
    * cases like out-of-line C++ member functions.
    */
   const CXIdxContainerInfo *lexicalContainer;
@@ -4568,7 +4578,7 @@ typedef struct {
 } CXIdxCXXClassDeclInfo;
 
 /**
- * \brief Data for \see indexEntityReference callback.
+ * \brief Data for IndexerCallbacks#indexEntityReference.
  */
 typedef enum {
   /**
@@ -4583,7 +4593,7 @@ typedef enum {
 } CXIdxEntityRefKind;
 
 /**
- * \brief Data for \see indexEntityReference callback.
+ * \brief Data for IndexerCallbacks#indexEntityReference.
  */
 typedef struct {
   CXIdxEntityRefKind kind;
@@ -4614,6 +4624,10 @@ typedef struct {
   const CXIdxContainerInfo *container;
 } CXIdxEntityRefInfo;
 
+/**
+ * \brief A group of callbacks used by #clang_indexSourceFile and
+ * #clang_indexTranslationUnit.
+ */
 typedef struct {
   /**
    * \brief Called periodically to check whether indexing should be aborted.
@@ -4628,10 +4642,10 @@ typedef struct {
                      CXDiagnosticSet, void *reserved);
 
   CXIdxClientFile (*enteredMainFile)(CXClientData client_data,
-                               CXFile mainFile, void *reserved);
+                                     CXFile mainFile, void *reserved);
   
   /**
-   * \brief Called when a file gets #included/#imported.
+   * \brief Called when a file gets \#included/\#imported.
    */
   CXIdxClientFile (*ppIncludedFile)(CXClientData client_data,
                                     const CXIdxIncludedFileInfo *);
@@ -4744,9 +4758,9 @@ typedef enum {
   CXIndexOpt_None = 0x0,
   
   /**
-   * \brief Used to indicate that \see indexEntityReference should be invoked
-   * for only one reference of an entity per source file that does not also
-   * include a declaration/definition of the entity.
+   * \brief Used to indicate that IndexerCallbacks#indexEntityReference should
+   * be invoked for only one reference of an entity per source file that does
+   * not also include a declaration/definition of the entity.
    */
   CXIndexOpt_SuppressRedundantRefs = 0x1,
 
@@ -4770,7 +4784,7 @@ typedef enum {
 
 /**
  * \brief Index the given source file and the translation unit corresponding
- * to that file via callbacks implemented through \see IndexerCallbacks.
+ * to that file via callbacks implemented through #IndexerCallbacks.
  *
  * \param client_data pointer data supplied by the client, which will
  * be passed to the invoked callbacks.
@@ -4778,7 +4792,7 @@ typedef enum {
  * \param index_callbacks Pointer to indexing callbacks that the client
  * implements.
  *
- * \param index_callbacks_size Size of \see IndexerCallbacks structure that gets
+ * \param index_callbacks_size Size of #IndexerCallbacks structure that gets
  * passed in index_callbacks.
  *
  * \param index_options A bitmask of options that affects how indexing is
@@ -4790,7 +4804,7 @@ typedef enum {
  * \returns If there is a failure from which the there is no recovery, returns
  * non-zero, otherwise returns 0.
  *
- * The rest of the parameters are the same as \see clang_parseTranslationUnit.
+ * The rest of the parameters are the same as #clang_parseTranslationUnit.
  */
 CINDEX_LINKAGE int clang_indexSourceFile(CXIndexAction,
                                          CXClientData client_data,
@@ -4807,7 +4821,7 @@ CINDEX_LINKAGE int clang_indexSourceFile(CXIndexAction,
 
 /**
  * \brief Index the given translation unit via callbacks implemented through
- * \see IndexerCallbacks.
+ * #IndexerCallbacks.
  * 
  * The order of callback invocations is not guaranteed to be the same as
  * when indexing a source file. The high level order will be:
@@ -4816,7 +4830,7 @@ CINDEX_LINKAGE int clang_indexSourceFile(CXIndexAction,
  *   -Declaration/reference callbacks invocations
  *   -Diagnostic callback invocations
  *
- * The parameters are the same as \see clang_indexSourceFile.
+ * The parameters are the same as #clang_indexSourceFile.
  * 
  * \returns If there is a failure from which the there is no recovery, returns
  * non-zero, otherwise returns 0.
