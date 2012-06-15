@@ -271,11 +271,9 @@ void MachineBasicBlock::print(raw_ostream &OS, SlotIndexes *Indexes) const {
   }
   if (isLandingPad()) { OS << Comma << "EH LANDING PAD"; Comma = ", "; }
   if (hasAddressTaken()) { OS << Comma << "ADDRESS TAKEN"; Comma = ", "; }
-  if (Alignment) {
+  if (Alignment)
     OS << Comma << "Align " << Alignment << " (" << (1u << Alignment)
        << " bytes)";
-    Comma = ", ";
-  }
 
   OS << '\n';
 
