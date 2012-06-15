@@ -60,8 +60,16 @@ for.end:                                          ; preds = %entry
   ret void
 }
 
+; Check that pseudo-expansion preserves <undef> flags.
+define void @foo3(i8* %p) nounwind ssp {
+entry:
+  tail call void @llvm.arm.neon.vst2.v4f32(i8* %p, <4 x float> undef, <4 x float> undef, i32 4)
+  ret void
+}
+
 declare arm_aapcs_vfpcc void @bar(i8*, float, float, float)
 declare void @llvm.arm.neon.vst1.v4f32(i8*, <4 x float>, i32) nounwind
+declare void @llvm.arm.neon.vst2.v4f32(i8*, <4 x float>, <4 x float>, i32) nounwind
 
 !0 = metadata !{metadata !"omnipotent char", metadata !1}
 !1 = metadata !{metadata !"Simple C/C++ TBAA", null}

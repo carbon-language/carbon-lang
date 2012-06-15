@@ -459,22 +459,23 @@ void ARMExpandPseudo::ExpandVST(MachineBasicBlock::iterator &MBBI) {
     MIB.addOperand(MI.getOperand(OpIdx++));
 
   bool SrcIsKill = MI.getOperand(OpIdx).isKill();
+  bool SrcIsUndef = MI.getOperand(OpIdx).isUndef();
   unsigned SrcReg = MI.getOperand(OpIdx++).getReg();
   unsigned D0, D1, D2, D3;
   GetDSubRegs(SrcReg, RegSpc, TRI, D0, D1, D2, D3);
-  MIB.addReg(D0);
+  MIB.addReg(D0, getUndefRegState(SrcIsUndef));
   if (NumRegs > 1 && TableEntry->copyAllListRegs)
-    MIB.addReg(D1);
+    MIB.addReg(D1, getUndefRegState(SrcIsUndef));
   if (NumRegs > 2 && TableEntry->copyAllListRegs)
-    MIB.addReg(D2);
+    MIB.addReg(D2, getUndefRegState(SrcIsUndef));
   if (NumRegs > 3 && TableEntry->copyAllListRegs)
-    MIB.addReg(D3);
+    MIB.addReg(D3, getUndefRegState(SrcIsUndef));
 
   // Copy the predicate operands.
   MIB.addOperand(MI.getOperand(OpIdx++));
   MIB.addOperand(MI.getOperand(OpIdx++));
 
-  if (SrcIsKill) // Add an implicit kill for the super-reg.
+  if (SrcIsKill && !SrcIsUndef) // Add an implicit kill for the super-reg.
     MIB->addRegisterKilled(SrcReg, TRI, true);
   TransferImpOps(MI, MIB, MIB);
 
