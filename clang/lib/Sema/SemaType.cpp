@@ -1595,10 +1595,6 @@ QualType Sema::BuildMemberPointerType(QualType T, QualType Class,
 ///
 /// \param CVR The cvr-qualifiers to be applied to the block pointer type.
 ///
-/// \param Loc The location of the entity whose type involves this
-/// block pointer type or, if there is no such entity, the location of the
-/// type that will have block pointer type.
-///
 /// \param Entity The name of the entity that involves the block pointer
 /// type, if known.
 ///

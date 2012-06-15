@@ -603,7 +603,7 @@ static void setImpliedPropertyAttributeForReadOnlyProperty(
 
 /// ActOnPropertyImplDecl - This routine performs semantic checks and
 /// builds the AST node for a property implementation declaration; declared
-/// as @synthesize or @dynamic.
+/// as \@synthesize or \@dynamic.
 ///
 Decl *Sema::ActOnPropertyImplDecl(Scope *S,
                                   SourceLocation AtLoc,
@@ -1453,8 +1453,8 @@ static IdentifierInfo * getDefaultSynthIvarName(ObjCPropertyDecl *Prop,
   return &Ctx.Idents.get(ivarName.str());
 }
 
-/// DefaultSynthesizeProperties - This routine default synthesizes all
-/// properties which must be synthesized in class's @implementation.
+/// \brief Default synthesizes all properties which must be synthesized
+/// in class's \@implementation.
 void Sema::DefaultSynthesizeProperties(Scope *S, ObjCImplDecl* IMPDecl,
                                        ObjCInterfaceDecl *IDecl) {
   

@@ -745,7 +745,7 @@ Decl *Sema::ActOnNonTypeTemplateParameter(Scope *S, Declarator &D,
 }
 
 /// ActOnTemplateTemplateParameter - Called when a C++ template template
-/// parameter (e.g. T in template <template <typename> class T> class array)
+/// parameter (e.g. T in template <template \<typename> class T> class array)
 /// has been parsed. S is the current scope.
 Decl *Sema::ActOnTemplateTemplateParameter(Scope* S,
                                            SourceLocation TmpLoc,

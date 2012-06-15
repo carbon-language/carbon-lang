@@ -5218,7 +5218,7 @@ Sema::ConvertToIntegralOrEnumerationType(SourceLocation Loc, Expr *From,
 /// @p SuppressUserConversions, then don't allow user-defined
 /// conversions via constructors or conversion operators.
 ///
-/// \para PartialOverloading true if we are performing "partial" overloading
+/// \param PartialOverloading true if we are performing "partial" overloading
 /// based on an incomplete set of function arguments. This feature is used by
 /// code completion.
 void
