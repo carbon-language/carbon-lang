@@ -156,7 +156,11 @@ namespace {
 /// \brief An adjustment to be made to the temporary created when emitting a
 /// reference binding, which accesses a particular subobject of that temporary.
   struct SubobjectAdjustment {
-    enum { DerivedToBaseAdjustment, FieldAdjustment } Kind;
+    enum {
+      DerivedToBaseAdjustment,
+      FieldAdjustment,
+      MemberPointerAdjustment
+    } Kind;
 
     union {
       struct {
@@ -165,6 +169,11 @@ namespace {
       } DerivedToBase;
 
       FieldDecl *Field;
+
+      struct {
+        const MemberPointerType *MPT;
+        llvm::Value *Ptr;
+      } Ptr;
     };
 
     SubobjectAdjustment(const CastExpr *BasePath,
@@ -177,6 +186,12 @@ namespace {
     SubobjectAdjustment(FieldDecl *Field)
       : Kind(FieldAdjustment) {
       this->Field = Field;
+    }
+
+    SubobjectAdjustment(const MemberPointerType *MPT, llvm::Value *Ptr)
+      : Kind(MemberPointerAdjustment) {
+      this->Ptr.MPT = MPT;
+      this->Ptr.Ptr = Ptr;
     }
   };
 }
@@ -345,6 +360,15 @@ EmitExprForReferenceBinding(CodeGenFunction &CGF, const Expr *E,
             continue;
           }
         }
+      } else if (const BinaryOperator *BO = dyn_cast<BinaryOperator>(E)) {
+        if (BO->isPtrMemOp()) {
+          assert(BO->getLHS()->isRValue());
+          E = BO->getLHS();
+          const MemberPointerType *MPT =
+              BO->getRHS()->getType()->getAs<MemberPointerType>();
+          llvm::Value *Ptr = CGF.EmitScalarExpr(BO->getRHS());
+          Adjustments.push_back(SubobjectAdjustment(MPT, Ptr));
+        }
       }
 
       if (const OpaqueValueExpr *opaque = dyn_cast<OpaqueValueExpr>(E))
@@ -417,6 +441,11 @@ EmitExprForReferenceBinding(CodeGenFunction &CGF, const Expr *E,
           break;
         }
 
+        case SubobjectAdjustment::MemberPointerAdjustment: {
+          Object = CGF.CGM.getCXXABI().EmitMemberDataPointerAddress(
+                        CGF, Object, Adjustment.Ptr.Ptr, Adjustment.Ptr.MPT);
+          break;
+        }
         }
       }
 

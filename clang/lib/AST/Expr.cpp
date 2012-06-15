@@ -2376,6 +2376,10 @@ bool Expr::isTemporaryObject(ASTContext &C, const CXXRecordDecl *TempTy) const {
   if (isa<MemberExpr>(E))
     return false;
 
+  if (const BinaryOperator *BO = dyn_cast<BinaryOperator>(E))
+    if (BO->isPtrMemOp())
+      return false;
+
   // - opaque values (all)
   if (isa<OpaqueValueExpr>(E))
     return false;

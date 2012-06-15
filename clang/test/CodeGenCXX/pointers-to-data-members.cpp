@@ -240,3 +240,17 @@ namespace PR11487 {
   // CHECK-GLOBAL: @_ZN7PR114871xE = global %"union.PR11487::U" { i64 -1, [8 x i8] zeroinitializer }, align 8
   
 }
+
+namespace PR13097 {
+  struct X { int x; X(const X&); };
+  struct A {
+    int qq;
+      X x;
+  };
+  A f();
+  X g() { return f().*&A::x; }
+  // CHECK: define void @_ZN7PR130971gEv
+  // CHECK: call void @_ZN7PR130971fEv
+  // CHECK-NOT: memcpy
+  // CHECK: call void @_ZN7PR130971XC1ERKS0_
+}
