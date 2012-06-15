@@ -70,7 +70,7 @@ public:
   };
 
   struct SystemHeaderPrefix {
-    /// A prefix to be matched against paths in #include directives.
+    /// A prefix to be matched against paths in \#include directives.
     std::string Prefix;
 
     /// True if paths beginning with this prefix should be treated as system
@@ -133,7 +133,7 @@ public:
                                 IgnoreSysRoot, IsInternal, ImplicitExternC));
   }
 
-  /// AddSystemHeaderPrefix - Override whether #include directives naming a
+  /// AddSystemHeaderPrefix - Override whether \#include directives naming a
   /// path starting with \arg Prefix should be considered as naming a system
   /// header.
   void AddSystemHeaderPrefix(StringRef Prefix, bool IsSystemHeader) {
