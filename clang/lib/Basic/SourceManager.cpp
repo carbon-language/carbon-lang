@@ -189,7 +189,7 @@ unsigned LineTableInfo::getLineTableFilenameID(StringRef Name) {
 }
 
 /// AddLineNote - Add a line note to the line table that indicates that there
-/// is a #line at the specified FID/Offset location which changes the presumed
+/// is a \#line at the specified FID/Offset location which changes the presumed
 /// location to LineNo/FilenameID.
 void LineTableInfo::AddLineNote(FileID FID, unsigned Offset,
                                 unsigned LineNo, int FilenameID) {
