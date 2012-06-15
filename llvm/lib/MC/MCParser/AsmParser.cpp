@@ -206,6 +206,9 @@ private:
 
   void EatToEndOfStatement();
 
+  bool ParseMacroArgument(MacroArgument &MA);
+  bool ParseMacroArguments(const Macro *M, std::vector<MacroArgument> &A);
+
   /// \brief Parse up to the end of statement and a return the contents from the
   /// current token until the end of the statement; the current token on exit
   /// will be either the EndOfStatement or EOF.
@@ -273,6 +276,7 @@ private:
   void InstantiateMacroLikeBody(Macro *M, SMLoc DirectiveLoc,
                                 raw_svector_ostream &OS);
   bool ParseDirectiveRept(SMLoc DirectiveLoc); // ".rept"
+  bool ParseDirectiveIrp(SMLoc DirectiveLoc);  // ".irp"
   bool ParseDirectiveEndr(SMLoc DirectiveLoc); // ".endr"
 };
 
@@ -1274,6 +1278,8 @@ bool AsmParser::ParseStatement() {
     // Macro-like directives
     if (IDVal == ".rept")
       return ParseDirectiveRept(IDLoc);
+    if (IDVal == ".irp")
+      return ParseDirectiveIrp(IDLoc);
     if (IDVal == ".endr")
       return ParseDirectiveEndr(IDLoc);
 
@@ -1537,6 +1543,66 @@ MacroInstantiation::MacroInstantiation(const Macro *M, SMLoc IL, SMLoc EL,
 {
 }
 
+/// ParseMacroArgument - Extract AsmTokens for a macro argument.
+/// This is used for both default macro parameter values and the
+/// arguments in macro invocations
+bool AsmParser::ParseMacroArgument(MacroArgument &MA) {
+  unsigned ParenLevel = 0;
+
+  for (;;) {
+    SMLoc LastTokenLoc;
+
+    if (Lexer.is(AsmToken::Eof) || Lexer.is(AsmToken::Equal))
+      return TokError("unexpected token in macro instantiation");
+
+    // HandleMacroEntry relies on not advancing the lexer here
+    // to be able to fill in the remaining default parameter values
+    if (Lexer.is(AsmToken::EndOfStatement))
+      break;
+    if (ParenLevel == 0 && Lexer.is(AsmToken::Comma))
+      break;
+
+    // Adjust the current parentheses level.
+    if (Lexer.is(AsmToken::LParen))
+      ++ParenLevel;
+    else if (Lexer.is(AsmToken::RParen) && ParenLevel)
+      --ParenLevel;
+
+    // Append the token to the current argument list.
+    MA.push_back(getTok());
+    Lex();
+  }
+  if (ParenLevel != 0)
+    return TokError("unbalanced parenthesises in macro argument");
+  return false;
+}
+
+// Parse the macro instantiation arguments.
+bool AsmParser::ParseMacroArguments(const Macro *M,
+                                    std::vector<MacroArgument> &A) {
+  const unsigned NParameters = M ? M->Parameters.size() : 0;
+
+  // Parse two kinds of macro invocations:
+  // - macros defined without any parameters accept an arbitrary number of them
+  // - macros defined with parameters accept at most that many of them
+  for (unsigned Parameter = 0; !NParameters || Parameter < NParameters;
+       ++Parameter) {
+    MacroArgument MA;
+
+    if (ParseMacroArgument(MA))
+      return true;
+
+    if (!MA.empty())
+      A.push_back(MA);
+    if (Lexer.is(AsmToken::EndOfStatement))
+      return false;
+
+    if (Lexer.is(AsmToken::Comma))
+      Lex();
+  }
+  return TokError("Too many arguments");
+}
+
 bool AsmParser::HandleMacroEntry(StringRef Name, SMLoc NameLoc,
                                  const Macro *M) {
   // Arbitrarily limit macro nesting depth, to match 'as'. We can eliminate
@@ -1544,37 +1610,9 @@ bool AsmParser::HandleMacroEntry(StringRef Name, SMLoc NameLoc,
   if (ActiveMacros.size() == 20)
     return TokError("macros cannot be nested more than 20 levels deep");
 
-  // Parse the macro instantiation arguments.
   std::vector<MacroArgument> MacroArguments;
-  MacroArguments.push_back(MacroArgument());
-  unsigned ParenLevel = 0;
-  for (;;) {
-    if (Lexer.is(AsmToken::Eof))
-      return TokError("unexpected token in macro instantiation");
-    if (Lexer.is(AsmToken::EndOfStatement))
-      break;
-
-    // If we aren't inside parentheses and this is a comma, start a new token
-    // list.
-    if (ParenLevel == 0 && Lexer.is(AsmToken::Comma)) {
-      MacroArguments.push_back(MacroArgument());
-    } else {
-      // Adjust the current parentheses level.
-      if (Lexer.is(AsmToken::LParen))
-        ++ParenLevel;
-      else if (Lexer.is(AsmToken::RParen) && ParenLevel)
-        --ParenLevel;
-
-      // Append the token to the current argument list.
-      MacroArguments.back().push_back(getTok());
-    }
-    Lex();
-  }
-  // If the last argument didn't end up with any tokens, it's not a real
-  // argument and we should remove it from the list. This happens with either
-  // a tailing comma or an empty argument list.
-  if (MacroArguments.back().empty())
-    MacroArguments.pop_back();
+  if (ParseMacroArguments(M, MacroArguments))
+    return true;
 
   // Macro instantiation is lexical, unfortunately. We construct a new buffer
   // to hold the macro body with substitutions.
@@ -3234,6 +3272,53 @@ bool AsmParser::ParseDirectiveRept(SMLoc DirectiveLoc) {
     if (expandMacro(OS, M->Body, Parameters, A, getTok().getLoc()))
       return true;
   }
+  InstantiateMacroLikeBody(M, DirectiveLoc, OS);
+
+  return false;
+}
+
+/// ParseDirectiveIrp
+/// ::= .irp symbol,values
+bool AsmParser::ParseDirectiveIrp(SMLoc DirectiveLoc) {
+  std::vector<StringRef> Parameters;
+  StringRef Parameter;
+
+  if (ParseIdentifier(Parameter))
+    return TokError("expected identifier in '.irp' directive");
+
+  Parameters.push_back(Parameter);
+
+  if (Lexer.isNot(AsmToken::Comma))
+    return TokError("expected comma in '.irp' directive");
+
+  Lex();
+
+  std::vector<MacroArgument> A;
+  if (ParseMacroArguments(0, A))
+    return true;
+
+  // Eat the end of statement.
+  Lex();
+
+  // Lex the irp definition.
+  Macro *M = ParseMacroLikeBody(DirectiveLoc);
+  if (!M)
+    return true;
+
+  // Macro instantiation is lexical, unfortunately. We construct a new buffer
+  // to hold the macro body with substitutions.
+  SmallString<256> Buf;
+  raw_svector_ostream OS(Buf);
+
+  for (std::vector<MacroArgument>::iterator i = A.begin(), e = A.end(); i != e;
+       ++i) {
+    std::vector<MacroArgument> Args;
+    Args.push_back(*i);
+
+    if (expandMacro(OS, M->Body, Parameters, Args, getTok().getLoc()))
+      return true;
+  }
+
   InstantiateMacroLikeBody(M, DirectiveLoc, OS);
 
   return false;
