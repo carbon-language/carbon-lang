@@ -42,7 +42,7 @@ namespace clang {
 
 
 /// IdentifierInfo - One of these records is kept for each identifier that
-/// is lexed.  This contains information about whether the token was #define'd,
+/// is lexed.  This contains information about whether the token was \#define'd,
 /// is a language keyword, or if it is a front-end token of some sort (e.g. a
 /// variable or function name).  The preprocessor keeps this information in a
 /// set, and all tok::identifier tokens have a pointer to one of these.
@@ -67,7 +67,7 @@ class IdentifierInfo {
   bool OutOfDate              : 1; // True if there may be additional
                                    // information about this identifier
                                    // stored externally.
-  bool IsModulesImport               : 1; // True if this is the 'import' contextual
+  bool IsModulesImport        : 1; // True if this is the 'import' contextual
                                    // keyword.
   // 1 bit left in 32-bit word.
   
@@ -83,15 +83,16 @@ public:
   IdentifierInfo();
 
 
-  /// isStr - Return true if this is the identifier for the specified string.
+  /// \brief Return true if this is the identifier for the specified string.
+  ///
   /// This is intended to be used for string literals only: II->isStr("foo").
   template <std::size_t StrLen>
   bool isStr(const char (&Str)[StrLen]) const {
     return getLength() == StrLen-1 && !memcmp(getNameStart(), Str, StrLen-1);
   }
 
-  /// getNameStart - Return the beginning of the actual string for this
-  /// identifier.  The returned string is properly null terminated.
+  /// \brief Return the beginning of the actual null-terminated string for this
+  /// identifier.
   ///
   const char *getNameStart() const {
     if (Entry) return Entry->getKeyData();
@@ -104,7 +105,7 @@ public:
     return ((const actualtype*) this)->second;
   }
 
-  /// getLength - Efficiently return the length of this identifier info.
+  /// \brief Efficiently return the length of this identifier info.
   ///
   unsigned getLength() const {
     if (Entry) return Entry->getKeyLength();
@@ -118,13 +119,12 @@ public:
     return (((unsigned) p[0]) | (((unsigned) p[1]) << 8)) - 1;
   }
 
-  /// getName - Return the actual identifier string.
+  /// \brief Return the actual identifier string.
   StringRef getName() const {
     return StringRef(getNameStart(), getLength());
   }
 
-  /// hasMacroDefinition - Return true if this identifier is #defined to some
-  /// other value.
+  /// \brief Return true if this identifier is \#defined to some other value.
   bool hasMacroDefinition() const {
     return HasMacro;
   }
@@ -158,13 +158,14 @@ public:
     RevertedTokenID = true;
   }
 
-  /// getPPKeywordID - Return the preprocessor keyword ID for this identifier.
+  /// \brief Return the preprocessor keyword ID for this identifier.
+  ///
   /// For example, "define" will return tok::pp_define.
   tok::PPKeywordKind getPPKeywordID() const;
 
-  /// getObjCKeywordID - Return the Objective-C keyword ID for the this
-  /// identifier.  For example, 'class' will return tok::objc_class if ObjC is
-  /// enabled.
+  /// \brief Return the Objective-C keyword ID for the this identifier.
+  ///
+  /// For example, 'class' will return tok::objc_class if ObjC is enabled.
   tok::ObjCKeywordKind getObjCKeywordID() const {
     if (ObjCOrBuiltinID < tok::NUM_OBJC_KEYWORDS)
       return tok::ObjCKeywordKind(ObjCOrBuiltinID);
