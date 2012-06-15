@@ -126,7 +126,7 @@ public:
 
   /// \brief Retrieve a module with the given name.
   ///
-  /// \param The name of the module to look up.
+  /// \param Name The name of the module to look up.
   ///
   /// \returns The named module, if known; otherwise, returns null.
   Module *findModule(StringRef Name);
@@ -134,7 +134,7 @@ public:
   /// \brief Retrieve a module with the given name using lexical name lookup,
   /// starting at the given context.
   ///
-  /// \param The name of the module to look up.
+  /// \param Name The name of the module to look up.
   ///
   /// \param Context The module context, from which we will perform lexical
   /// name lookup.
