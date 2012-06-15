@@ -89,6 +89,18 @@ inline uptr RoundUpTo(uptr size, uptr boundary) {
 template<class T> T Min(T a, T b) { return a < b ? a : b; }
 template<class T> T Max(T a, T b) { return a > b ? a : b; }
 
+// Char handling
+inline bool IsSpace(int c) {
+  return (c == ' ') || (c == '\n') || (c == '\t') ||
+         (c == '\f') || (c == '\r') || (c == '\v');
+}
+inline bool IsDigit(int c) {
+  return (c >= '0') && (c <= '9');
+}
+inline int ToLower(int c) {
+  return (c >= 'A' && c <= 'Z') ? (c + 'a' - 'A') : c;
+}
+
 #if __WORDSIZE == 64
 # define FIRST_32_SECOND_64(a, b) (b)
 #else

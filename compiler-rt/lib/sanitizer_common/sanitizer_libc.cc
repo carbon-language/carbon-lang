@@ -15,7 +15,8 @@
 
 namespace __sanitizer {
 
-void MiniLibcStub() {
+s64 internal_atoll(const char *nptr) {
+  return internal_simple_strtoll(nptr, (char**)0, 10);
 }
 
 void *internal_memchr(const void *s, int c, uptr n) {
@@ -99,6 +100,15 @@ uptr internal_strlen(const char *s) {
   return i;
 }
 
+char *internal_strncat(char *dst, const char *src, uptr n) {
+  uptr len = internal_strlen(dst);
+  uptr i;
+  for (i = 0; i < n && src[i]; i++)
+    dst[len + i] = src[i];
+  dst[len + i] = 0;
+  return dst;
+}
+
 char *internal_strncpy(char *dst, const char *src, uptr n) {
   uptr i;
   for (i = 0; i < n && src[i]; i++)
@@ -106,6 +116,55 @@ char *internal_strncpy(char *dst, const char *src, uptr n) {
   for (; i < n; i++)
     dst[i] = '\0';
   return dst;
+}
+
+uptr internal_strnlen(const char *s, uptr maxlen) {
+  uptr i = 0;
+  while (i < maxlen && s[i]) i++;
+  return i;
+}
+
+char *internal_strstr(const char *haystack, const char *needle) {
+  // This is O(N^2), but we are not using it in hot places.
+  uptr len1 = internal_strlen(haystack);
+  uptr len2 = internal_strlen(needle);
+  if (len1 < len2) return 0;
+  for (uptr pos = 0; pos <= len1 - len2; pos++) {
+    if (internal_memcmp(haystack + pos, needle, len2) == 0)
+      return (char*)haystack + pos;
+  }
+  return 0;
+}
+
+s64 internal_simple_strtoll(const char *nptr, char **endptr, int base) {
+  CHECK(base == 10);
+  while (IsSpace(*nptr)) nptr++;
+  int sgn = 1;
+  u64 res = 0;
+  bool have_digits = false;
+  char *old_nptr = (char*)nptr;
+  if (*nptr == '+') {
+    sgn = 1;
+    nptr++;
+  } else if (*nptr == '-') {
+    sgn = -1;
+    nptr++;
+  }
+  while (IsDigit(*nptr)) {
+    res = (res <= UINT64_MAX / 10) ? res * 10 : UINT64_MAX;
+    int digit = ((*nptr) - '0');
+    res = (res <= UINT64_MAX - digit) ? res + digit : UINT64_MAX;
+    have_digits = true;
+    nptr++;
+  }
+  if (endptr != 0) {
+    *endptr = (have_digits) ? (char*)nptr : old_nptr;
+  }
+  if (sgn > 0) {
+    return (s64)(Min((u64)INT64_MAX, res));
+  } else {
+    return (res > INT64_MAX) ? INT64_MIN : ((s64)res * -1);
+  }
 }
 
 }  // namespace __sanitizer

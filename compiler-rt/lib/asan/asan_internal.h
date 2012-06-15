@@ -27,28 +27,6 @@ extern "C" void* _ReturnAddress(void);
 # pragma intrinsic(_ReturnAddress)
 #endif  // defined(_WIN32)
 
-// Limits for integral types. We have to redefine it in case we don't
-// have stdint.h (like in Visual Studio 9).
-#if __WORDSIZE == 64
-# define __INT64_C(c)  c ## L
-# define __UINT64_C(c) c ## UL
-#else
-# define __INT64_C(c)  c ## LL
-# define __UINT64_C(c) c ## ULL
-#endif  // __WORDSIZE == 64
-#undef INT32_MIN
-#define INT32_MIN              (-2147483647-1)
-#undef INT32_MAX
-#define INT32_MAX              (2147483647)
-#undef UINT32_MAX
-#define UINT32_MAX             (4294967295U)
-#undef INT64_MIN
-#define INT64_MIN              (-__INT64_C(9223372036854775807)-1)
-#undef INT64_MAX
-#define INT64_MAX              (__INT64_C(9223372036854775807))
-#undef UINT64_MAX
-#define UINT64_MAX             (__UINT64_C(18446744073709551615))
-
 #define ASAN_DEFAULT_FAILURE_EXITCODE 1
 
 #if defined(__linux__)

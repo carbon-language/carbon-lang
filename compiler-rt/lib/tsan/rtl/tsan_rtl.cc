@@ -155,7 +155,6 @@ static void InitializeMemoryFlush() {
 }
 
 void Initialize(ThreadState *thr) {
-  MiniLibcStub();
   // Thread safe because done before all threads exist.
   static bool is_initialized = false;
   if (is_initialized)

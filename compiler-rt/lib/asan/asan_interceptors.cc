@@ -171,86 +171,13 @@ static inline bool RangesOverlap(const char *offset1, uptr length1,
   } \
 } while (0)
 
-static inline bool IsSpace(int c) {
-  return (c == ' ') || (c == '\n') || (c == '\t') ||
-         (c == '\f') || (c == '\r') || (c == '\v');
-}
-
-static inline bool IsDigit(int c) {
-  return (c >= '0') && (c <= '9');
-}
-
-static inline int ToLower(int c) {
-  return (c >= 'A' && c <= 'Z') ? (c + 'a' - 'A') : c;
-}
-
-// ---------------------- Internal string functions ---------------- {{{1
-
-s64 internal_simple_strtoll(const char *nptr, char **endptr, int base) {
-  CHECK(base == 10);
-  while (IsSpace(*nptr)) nptr++;
-  int sgn = 1;
-  u64 res = 0;
-  bool have_digits = false;
-  char *old_nptr = (char*)nptr;
-  if (*nptr == '+') {
-    sgn = 1;
-    nptr++;
-  } else if (*nptr == '-') {
-    sgn = -1;
-    nptr++;
-  }
-  while (IsDigit(*nptr)) {
-    res = (res <= UINT64_MAX / 10) ? res * 10 : UINT64_MAX;
-    int digit = ((*nptr) - '0');
-    res = (res <= UINT64_MAX - digit) ? res + digit : UINT64_MAX;
-    have_digits = true;
-    nptr++;
-  }
-  if (endptr != 0) {
-    *endptr = (have_digits) ? (char*)nptr : old_nptr;
-  }
-  if (sgn > 0) {
-    return (s64)(Min((u64)INT64_MAX, res));
-  } else {
-    return (res > INT64_MAX) ? INT64_MIN : ((s64)res * -1);
-  }
-}
-
-s64 internal_atoll(const char *nptr) {
-  return internal_simple_strtoll(nptr, (char**)0, 10);
-}
-
-uptr internal_strnlen(const char *s, uptr maxlen) {
+static inline uptr MaybeRealStrnlen(const char *s, uptr maxlen) {
 #if ASAN_INTERCEPT_STRNLEN
   if (REAL(strnlen) != 0) {
     return REAL(strnlen)(s, maxlen);
   }
 #endif
-  uptr i = 0;
-  while (i < maxlen && s[i]) i++;
-  return i;
-}
-
-char *internal_strstr(const char *haystack, const char *needle) {
-  // This is O(N^2), but we are not using it in hot places.
-  uptr len1 = internal_strlen(haystack);
-  uptr len2 = internal_strlen(needle);
-  if (len1 < len2) return 0;
-  for (uptr pos = 0; pos <= len1 - len2; pos++) {
-    if (internal_memcmp(haystack + pos, needle, len2) == 0)
-      return (char*)haystack + pos;
-  }
-  return 0;
-}
-
-char *internal_strncat(char *dst, const char *src, uptr n) {
-  uptr len = internal_strlen(dst);
-  uptr i;
-  for (i = 0; i < n && src[i]; i++)
-    dst[len + i] = src[i];
-  dst[len + i] = 0;
-  return dst;
+  return internal_strnlen(s, maxlen);
 }
 
 }  // namespace __asan
@@ -479,7 +406,7 @@ INTERCEPTOR(char*, strcat, char *to, const char *from) {  // NOLINT
 INTERCEPTOR(char*, strncat, char *to, const char *from, uptr size) {
   ENSURE_ASAN_INITED();
   if (FLAG_replace_str && size > 0) {
-    uptr from_length = internal_strnlen(from, size);
+    uptr from_length = MaybeRealStrnlen(from, size);
     ASAN_READ_RANGE(from, Min(size, from_length + 1));
     uptr to_length = REAL(strlen)(to);
     ASAN_READ_RANGE(to, to_length);
@@ -582,7 +509,7 @@ INTERCEPTOR(int, strncmp, const char *s1, const char *s2, uptr size) {
 INTERCEPTOR(char*, strncpy, char *to, const char *from, uptr size) {
   ENSURE_ASAN_INITED();
   if (FLAG_replace_str) {
-    uptr from_size = Min(size, internal_strnlen(from, size) + 1);
+    uptr from_size = Min(size, MaybeRealStrnlen(from, size) + 1);
     CHECK_RANGES_OVERLAP("strncpy", to, from_size, from, from_size);
     ASAN_READ_RANGE(from, from_size);
     ASAN_WRITE_RANGE(to, size);

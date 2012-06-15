@@ -30,16 +30,7 @@ DECLARE_REAL(int, sigaction, int signum, const struct sigaction *act,
 
 namespace __asan {
 
-// __asan::internal_X() is the implementation of X() for use in RTL.
-s64 internal_atoll(const char *nptr);
-uptr internal_strnlen(const char *s, uptr maxlen);
-char *internal_strstr(const char *haystack, const char *needle);
-char *internal_strncat(char *dst, const char *src, uptr n);
-// Works only for base=10 and doesn't set errno.
-s64 internal_simple_strtoll(const char *nptr, char **endptr, int base);
-
 void InitializeAsanInterceptors();
-
 #if defined(__APPLE__)
 void InitializeMacInterceptors();
 #endif  // __APPLE__
