@@ -1308,8 +1308,8 @@ static bool isLegalUse(const TargetLowering::AddrMode &AM,
     return !AM.BaseGV && AM.Scale == 0 && AM.BaseOffs == 0;
 
   case LSRUse::Special:
-    // Only handle -1 scales, or no scale.
-    return AM.Scale == 0 || AM.Scale == -1;
+    // Special case Basic to handle -1 scales.
+    return !AM.BaseGV && (AM.Scale == 0 || AM.Scale == -1) && AM.BaseOffs == 0;
   }
 
   llvm_unreachable("Invalid LSRUse Kind!");
