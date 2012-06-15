@@ -969,7 +969,7 @@ static CanQualType GetConversionType(ASTContext &Context, NamedDecl *Conv) {
 
 /// Collect the visible conversions of a base class.
 ///
-/// \param Base a base class of the class we're considering
+/// \param Record a base class of the class we're considering
 /// \param InVirtual whether this base class is a virtual base (or a base
 ///   of a virtual base)
 /// \param Access the access along the inheritance path to this base
