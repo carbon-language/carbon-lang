@@ -1642,6 +1642,8 @@ void SROA::isSafeGEP(GetElementPtrInst *GEPI,
   gep_type_iterator GEPIt = gep_type_begin(GEPI), E = gep_type_end(GEPI);
   if (GEPIt == E)
     return;
+  bool NonConstant = false;
+  unsigned NonConstantIdxSize = 0;
 
   // Walk through the GEP type indices, checking the types that this indexes
   // into.
@@ -1651,15 +1653,30 @@ void SROA::isSafeGEP(GetElementPtrInst *GEPI,
       continue;
 
     ConstantInt *IdxVal = dyn_cast<ConstantInt>(GEPIt.getOperand());
-    if (!IdxVal)
-      return MarkUnsafe(Info, GEPI);
+    if (!IdxVal) {
+      // Non constant GEPs are only a problem on arrays, structs, and pointers
+      // Vectors can be dynamically indexed.
+      // FIXME: Add support for dynamic indexing on arrays.  This should be
+      // ok on any subarrays of the alloca array, eg, a[0][i] is ok, but a[i][0]
+      // isn't.
+      if (!(*GEPIt)->isVectorTy())
+        return MarkUnsafe(Info, GEPI);
+      NonConstant = true;
+      NonConstantIdxSize = TD->getTypeAllocSize(*GEPIt);
+    }
   }
 
   // Compute the offset due to this GEP and check if the alloca has a
   // component element at that offset.
   SmallVector<Value*, 8> Indices(GEPI->op_begin() + 1, GEPI->op_end());
+  // If this GEP is non constant then the last operand must have been a
+  // dynamic index into a vector.  Pop this now as it has no impact on the
+  // constant part of the offset.
+  if (NonConstant)
+    Indices.pop_back();
   Offset += TD->getIndexedOffset(GEPI->getPointerOperandType(), Indices);
-  if (!TypeHasComponent(Info.AI->getAllocatedType(), Offset, 0))
+  if (!TypeHasComponent(Info.AI->getAllocatedType(), Offset,
+                        NonConstantIdxSize))
     MarkUnsafe(Info, GEPI);
 }
 
@@ -1961,6 +1978,13 @@ void SROA::RewriteGEP(GetElementPtrInst *GEPI, AllocaInst *AI, uint64_t Offset,
                       SmallVector<AllocaInst*, 32> &NewElts) {
   uint64_t OldOffset = Offset;
   SmallVector<Value*, 8> Indices(GEPI->op_begin() + 1, GEPI->op_end());
+  // If the GEP was dynamic then it must have been a dynamic vector lookup.
+  // In this case, it must be the last GEP operand which is dynamic so keep that
+  // aside until we've found the constant GEP offset then add it back in at the
+  // end.
+  Value* NonConstantIdx = 0;
+  if (!GEPI->hasAllConstantIndices())
+    NonConstantIdx = Indices.pop_back_val();
   Offset += TD->getIndexedOffset(GEPI->getPointerOperandType(), Indices);
 
   RewriteForScalarRepl(GEPI, AI, Offset, NewElts);
@@ -1987,6 +2011,8 @@ void SROA::RewriteGEP(GetElementPtrInst *GEPI, AllocaInst *AI, uint64_t Offset,
     uint64_t EltIdx = FindElementAndOffset(T, EltOffset, IdxTy);
     NewArgs.push_back(ConstantInt::get(IdxTy, EltIdx));
   }
+  if (NonConstantIdx)
+    NewArgs.push_back(NonConstantIdx);
   Instruction *Val = NewElts[Idx];
   if (NewArgs.size() > 1) {
     Val = GetElementPtrInst::CreateInBounds(Val, NewArgs, "", GEPI);
