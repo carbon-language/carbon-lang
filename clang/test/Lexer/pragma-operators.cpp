@@ -9,7 +9,6 @@
 // CHECK: #line
 // CHECK: #pragma warning(push)
 // CHECK:  int foo() { return 0; } }
-// CHECK: #line
 // CHECK: #pragma warning(pop)
 #define A(X) extern "C" { __pragma(warning(push)) \
   int X() { return 0; } \
