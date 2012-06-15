@@ -4268,13 +4268,6 @@ Value *LSRInstance::Expand(const LSRFixup &LF,
     Ops.push_back(SE.getUnknown(Rewriter.expandCodeFor(Reg, 0, IP)));
   }
 
-  // Flush the operand list to suppress SCEVExpander hoisting.
-  if (!Ops.empty()) {
-    Value *FullV = Rewriter.expandCodeFor(SE.getAddExpr(Ops), Ty, IP);
-    Ops.clear();
-    Ops.push_back(SE.getUnknown(FullV));
-  }
-
   // Expand the ScaledReg portion.
   Value *ICmpScaledV = 0;
   if (F.AM.Scale != 0) {
@@ -4296,23 +4289,34 @@ Value *LSRInstance::Expand(const LSRFixup &LF,
     } else {
       // Otherwise just expand the scaled register and an explicit scale,
       // which is expected to be matched as part of the address.
+
+      // Flush the operand list to suppress SCEVExpander hoisting address modes.
+      if (!Ops.empty() && LU.Kind == LSRUse::Address) {
+        Value *FullV = Rewriter.expandCodeFor(SE.getAddExpr(Ops), Ty, IP);
+        Ops.clear();
+        Ops.push_back(SE.getUnknown(FullV));
+      }
       ScaledS = SE.getUnknown(Rewriter.expandCodeFor(ScaledS, 0, IP));
       ScaledS = SE.getMulExpr(ScaledS,
                               SE.getConstant(ScaledS->getType(), F.AM.Scale));
       Ops.push_back(ScaledS);
-
-      // Flush the operand list to suppress SCEVExpander hoisting.
-      Value *FullV = Rewriter.expandCodeFor(SE.getAddExpr(Ops), Ty, IP);
-      Ops.clear();
-      Ops.push_back(SE.getUnknown(FullV));
     }
   }
 
   // Expand the GV portion.
   if (F.AM.BaseGV) {
-    Ops.push_back(SE.getUnknown(F.AM.BaseGV));
-
     // Flush the operand list to suppress SCEVExpander hoisting.
+    if (!Ops.empty()) {
+      Value *FullV = Rewriter.expandCodeFor(SE.getAddExpr(Ops), Ty, IP);
+      Ops.clear();
+      Ops.push_back(SE.getUnknown(FullV));
+    }
+    Ops.push_back(SE.getUnknown(F.AM.BaseGV));
+  }
+
+  // Flush the operand list to suppress SCEVExpander hoisting of both folded and
+  // unfolded offsets. LSR assumes they both live next to their uses.
+  if (!Ops.empty()) {
     Value *FullV = Rewriter.expandCodeFor(SE.getAddExpr(Ops), Ty, IP);
     Ops.clear();
     Ops.push_back(SE.getUnknown(FullV));
