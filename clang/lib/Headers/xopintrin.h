@@ -370,6 +370,42 @@ _mm_sha_epi64(__m128i __A, __m128i __B)
   (__m256)__builtin_ia32_vpermil2ps256((__v8sf)__X, (__v8sf)__Y, \
                                        (__v8si)__C, (I)); })
 
+static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
+_mm_frcz_ss(__m128 __A)
+{
+  return (__m128)__builtin_ia32_vfrczss((__v4sf)__A);
+}
+
+static __inline__ __m128d __attribute__((__always_inline__, __nodebug__))
+_mm_frcz_sd(__m128d __A)
+{
+  return (__m128d)__builtin_ia32_vfrczsd((__v2df)__A);
+}
+
+static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
+_mm_frcz_ps(__m128 __A)
+{
+  return (__m128)__builtin_ia32_vfrczps((__v4sf)__A);
+}
+
+static __inline__ __m128d __attribute__((__always_inline__, __nodebug__))
+_mm_frcz_pd(__m128d __A)
+{
+  return (__m128d)__builtin_ia32_vfrczpd((__v2df)__A);
+}
+
+static __inline__ __m256 __attribute__((__always_inline__, __nodebug__))
+_mm_frcz_ps(__m256 __A)
+{
+  return (__m256)__builtin_ia32_vfrczps((__v4sf)__A);
+}
+
+static __inline__ __m256d __attribute__((__always_inline__, __nodebug__))
+_mm_frcz_pd(__m256d __A)
+{
+  return (__m256d)__builtin_ia32_vfrczpd((__v2df)__A);
+}
+
 #endif /* __XOP__ */
 
 #endif /* __XOPINTRIN_H */

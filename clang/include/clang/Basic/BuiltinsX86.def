@@ -701,5 +701,11 @@ BUILTIN(__builtin_ia32_vpermil2pd, "V2dV2dV2dV2LLiIc", "")
 BUILTIN(__builtin_ia32_vpermil2pd256, "V4dV4dV4dV4LLiIc", "")
 BUILTIN(__builtin_ia32_vpermil2ps, "V4fV4fV4fV4iIc", "")
 BUILTIN(__builtin_ia32_vpermil2ps256, "V8fV8fV8fV8iIc", "")
+BUILTIN(__builtin_ia32_vfrczss, "V4fV4f", "")
+BUILTIN(__builtin_ia32_vfrczsd, "V2dV2d", "")
+BUILTIN(__builtin_ia32_vfrczps, "V4fV4f", "")
+BUILTIN(__builtin_ia32_vfrczpd, "V2dV2d", "")
+BUILTIN(__builtin_ia32_vfrczps256, "V8fV8f", "")
+BUILTIN(__builtin_ia32_vfrczpd256, "V4dV4d", "")
 
 #undef BUILTIN

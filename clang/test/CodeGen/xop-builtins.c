@@ -294,3 +294,33 @@ __m256 test_mm256_permute2_ps(__m256 a, __m256 b, __m256i c) {
   // CHECK: @llvm.x86.xop.vpermil2ps.256
   return _mm256_permute2_ps(a, b, c, 0);
 }
+
+__m128 test_mm_frcz_ss(__m128 a) {
+  // CHECK: @llvm.x86.xop.vfrcz.ss
+  return _mm_frcz_ss(a);
+}
+
+__m128d test_mm_frcz_sd(__m128d a) {
+  // CHECK: @llvm.x86.xop.vfrcz.sd
+  return _mm_frcz_sd(a);
+}
+
+__m128 test_mm_frcz_ps(__m128 a) {
+  // CHECK: @llvm.x86.xop.vfrcz.ps
+  return _mm_frcz_ps(a);
+}
+
+__m128d test_mm_frcz_pd(__m128d a) {
+  // CHECK: @llvm.x86.xop.vfrcz.pd
+  return _mm_frcz_pd(a);
+}
+
+__m256 test_mm256_frcz_ps(__m256 a) {
+  // CHECK: @llvm.x86.xop.vfrcz.ps.256
+  return _mm256_frcz_ps(a);
+}
+
+__m256d test_mm256_frcz_pd(__m256d a) {
+  // CHECK: @llvm.x86.xop.vfrcz.pd.256
+  return _mm256_frcz_pd(a);
+}
