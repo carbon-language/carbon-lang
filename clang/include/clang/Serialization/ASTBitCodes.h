@@ -469,7 +469,7 @@ namespace clang {
       ///
       /// This array can only be interpreted properly using the Objective-C
       /// categories map.
-      OBJC_CATEGORIES
+      OBJC_CATEGORIES = 54
     };
 
     /// \brief Record types used within a source manager block.
