@@ -38,7 +38,7 @@ namespace CodeGen {
   class CodeGenFunction;
   class CodeGenModule;
 
-/// Implements C++ ABI-specific code generation functions.
+/// \brief Implements C++ ABI-specific code generation functions.
 class CGCXXABI {
 protected:
   CodeGenModule &CGM;
@@ -251,7 +251,9 @@ protected:
   ///
   /// \param ptr - a pointer to the allocation made for an array, as a char*
   /// \param cookieSize - the computed cookie size of an array
+  ///
   /// Other parameters are as above.
+  ///
   /// \return a size_t
   virtual llvm::Value *readArrayCookieImpl(CodeGenFunction &IGF,
                                            llvm::Value *ptr,
