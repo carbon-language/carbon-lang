@@ -17,8 +17,10 @@
 #include "sanitizer_libc.h"
 #include "sanitizer_procmaps.h"
 
+#include <pthread.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <sys/mman.h>
 #include <sys/resource.h>
 #include <sys/time.h>
@@ -31,6 +33,10 @@ namespace __sanitizer {
 
 int GetPid() {
   return getpid();
+}
+
+uptr GetThreadSelf() {
+  return (uptr)pthread_self();
 }
 
 void *MmapOrDie(uptr size, const char *mem_type) {
@@ -88,6 +94,22 @@ void DisableCoreDumper() {
   nocore.rlim_cur = 0;
   nocore.rlim_max = 0;
   setrlimit(RLIMIT_CORE, &nocore);
+}
+
+void SleepForSeconds(int seconds) {
+  sleep(seconds);
+}
+
+void Exit(int exitcode) {
+  _exit(exitcode);
+}
+
+void Abort() {
+  abort();
+}
+
+int Atexit(void (*function)(void)) {
+  return atexit(function);
 }
 
 // -------------- sanitizer_libc.h

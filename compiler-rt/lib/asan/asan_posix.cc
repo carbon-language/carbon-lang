@@ -134,26 +134,6 @@ void InstallSignalHandlers() {
   MaybeInstallSigaction(SIGBUS, ASAN_OnSIGSEGV);
 }
 
-uptr GetThreadSelf() {
-  return (uptr)pthread_self();
-}
-
-void SleepForSeconds(int seconds) {
-  sleep(seconds);
-}
-
-void Exit(int exitcode) {
-  _exit(exitcode);
-}
-
-void Abort() {
-  abort();
-}
-
-int Atexit(void (*function)(void)) {
-  return atexit(function);
-}
-
 int AtomicInc(int *a) {
 #ifdef ANDROID
   return __atomic_inc(a) + 1;

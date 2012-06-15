@@ -28,6 +28,7 @@ const uptr kPageSize = 1UL << kPageSizeBits;
 
 // Threads
 int GetPid();
+uptr GetThreadSelf();
 void GetThreadStackTopAndBottom(bool at_initialization, uptr *stack_top,
                                 uptr *stack_bottom);
 
@@ -58,6 +59,10 @@ const char *GetEnv(const char *name);
 // Other
 void DisableCoreDumper();
 void DumpProcessMap();
+void SleepForSeconds(int seconds);
+void NORETURN Exit(int exitcode);
+void NORETURN Abort();
+int Atexit(void (*function)(void));
 
 // Bit twiddling.
 inline bool IsPowerOfTwo(uptr x) {

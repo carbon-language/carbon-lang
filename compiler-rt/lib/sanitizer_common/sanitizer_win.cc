@@ -24,6 +24,10 @@ int GetPid() {
   return GetProcessId(GetCurrentProcess());
 }
 
+uptr GetThreadSelf() {
+  return GetCurrentThreadId();
+}
+
 void GetThreadStackTopAndBottom(bool at_initialization, uptr *stack_top,
                                 uptr *stack_bottom) {
   CHECK(stack_top);
@@ -88,6 +92,23 @@ void DumpProcessMap() {
 
 void DisableCoreDumper() {
   UNIMPLEMENTED();
+}
+
+void SleepForSeconds(int seconds) {
+  Sleep(seconds * 1000);
+}
+
+void Exit(int exitcode) {
+  _exit(exitcode);
+}
+
+void Abort() {
+  abort();
+  _exit(-1);  // abort is not NORETURN on Windows.
+}
+
+int Atexit(void (*function)(void)) {
+  return atexit(function);
 }
 
 // ------------------ sanitizer_libc.h

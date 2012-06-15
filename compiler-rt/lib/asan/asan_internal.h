@@ -129,7 +129,6 @@ bool AsanInterceptsSignal(int signum);
 void SetAlternateSignalStack();
 void UnsetAlternateSignalStack();
 void InstallSignalHandlers();
-uptr GetThreadSelf();
 int AtomicInc(int *a);
 u16 AtomicExchange(u16 *a, u16 new_val);
 u8 AtomicExchange(u8 *a, u8 new_val);
@@ -199,11 +198,6 @@ extern bool asan_init_is_running;
 extern void (*death_callback)(void);
 
 enum LinkerInitialized { LINKER_INITIALIZED = 0 };
-
-void SleepForSeconds(int seconds);
-void NORETURN Exit(int exitcode);
-void NORETURN Abort();
-int Atexit(void (*function)(void));
 
 #define ASAN_ARRAY_SIZE(a) (sizeof(a)/sizeof((a)[0]))
 

@@ -192,10 +192,6 @@ u8 AtomicExchange(u8 *a, u8 new_val) {
   return t;
 }
 
-uptr GetThreadSelf() {
-  return GetCurrentThreadId();
-}
-
 void SetAlternateSignalStack() {
   // FIXME: Decide what to do on Windows.
 }
@@ -206,23 +202,6 @@ void UnsetAlternateSignalStack() {
 
 void InstallSignalHandlers() {
   // FIXME: Decide what to do on Windows.
-}
-
-void SleepForSeconds(int seconds) {
-  Sleep(seconds * 1000);
-}
-
-void Exit(int exitcode) {
-  _exit(exitcode);
-}
-
-void Abort() {
-  abort();
-  _exit(-1);  // abort is not NORETURN on Windows.
-}
-
-int Atexit(void (*function)(void)) {
-  return atexit(function);
 }
 
 void SortArray(uptr *array, uptr size) {
