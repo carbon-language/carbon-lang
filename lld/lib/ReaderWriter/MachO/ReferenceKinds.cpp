@@ -13,6 +13,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSwitch.h"
 
+#include "llvm/Support/ErrorHandling.h"
 
 namespace lld {
 namespace mach_o {
@@ -72,7 +73,7 @@ Reference::Kind KindHandler_x86_64::stringToKind(StringRef str) {
     .Case("subordinateFDE",        subordinateFDE)
     .Case("subordinateLSDA",       subordinateLSDA);
 
-  assert(0 && "invalid x86_64 Reference kind");
+  llvm_unreachable("invalid x86_64 Reference kind");
   return 0;
 }
 
@@ -113,7 +114,7 @@ StringRef KindHandler_x86_64::kindToString(Reference::Kind kind) {
     case subordinateLSDA:
       return StringRef("subordinateLSDA");
   }
-  assert(0 && "invalid x86_64 Reference kind");
+  llvm_unreachable("invalid x86_64 Reference kind");
   return StringRef();
 }
 
@@ -197,7 +198,7 @@ Reference::Kind KindHandler_x86::stringToKind(StringRef str) {
     .Case("lazyTarget",            lazyTarget)
     .Case("lazyImmediate",         lazyImmediate);
   
-  assert(0 && "invalid x86 Reference kind");
+  llvm_unreachable("invalid x86 Reference kind");
   return 0;
 }
 
@@ -222,7 +223,7 @@ StringRef KindHandler_x86::kindToString(Reference::Kind kind) {
     case subordinateLSDA:
       return StringRef("subordinateLSDA");
   }
-  assert(0 && "invalid x86 Reference kind");
+  llvm_unreachable("invalid x86 Reference kind");
   return StringRef();
 }
 
@@ -292,7 +293,7 @@ Reference::Kind KindHandler_arm::stringToKind(StringRef str) {
     .Case("lazyImmediate",      lazyImmediate)
     .Case("subordinateLSDA",    subordinateLSDA);
 
-  assert(0 && "invalid ARM Reference kind");
+  llvm_unreachable("invalid ARM Reference kind");
   return 0;
 }
 
@@ -323,7 +324,7 @@ StringRef KindHandler_arm::kindToString(Reference::Kind kind) {
     case subordinateLSDA:
       return StringRef("subordinateLSDA");
   }
-  assert(0 && "invalid ARM Reference kind");
+  llvm_unreachable("invalid ARM Reference kind");
   return StringRef();
 }
 

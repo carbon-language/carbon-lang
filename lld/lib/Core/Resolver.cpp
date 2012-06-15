@@ -359,7 +359,7 @@ void Resolver::MergedFile::addAtom(const Atom& atom) {
   } else if (const AbsoluteAtom* abAtom = dyn_cast<AbsoluteAtom>(&atom)) {
     _absoluteAtoms._atoms.push_back(abAtom);
   } else {
-    assert(0 && "atom has unknown definition kind");
+    llvm_unreachable("atom has unknown definition kind");
   }
 }
 

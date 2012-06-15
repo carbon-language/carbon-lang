@@ -45,7 +45,7 @@ public:
       _absoluteAtoms._atoms.push_back(abAtom);
     } 
     else {
-      assert(0 && "atom has unknown definition kind");
+      llvm_unreachable("atom has unknown definition kind");
     }
   }
 
