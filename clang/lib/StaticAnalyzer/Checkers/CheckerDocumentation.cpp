@@ -94,7 +94,7 @@ public:
   ///
   /// check::Location
   void checkLocation(SVal Loc, bool IsLoad, const Stmt *S,
-                     CheckerContext &C) const {}
+                     CheckerContext &) const {}
 
   /// \brief Called on binding of a value to a location.
   ///
@@ -103,7 +103,7 @@ public:
   /// \param S   The bind is performed while processing the statement S.
   ///
   /// check::Bind
-  void checkBind(SVal Loc, SVal Val, const Stmt *S, CheckerContext &C) const {}
+  void checkBind(SVal Loc, SVal Val, const Stmt *S, CheckerContext &) const {}
 
 
   /// \brief Called whenever a symbol becomes dead.
@@ -187,21 +187,23 @@ public:
 
   bool wantsRegionChangeUpdate(ProgramStateRef St) const { return true; }
   
-  /// check::RegionChanges
-  /// Allows tracking regions which get invalidated.
-  /// \param state The current program state.
-  /// \param invalidated A set of all symbols potentially touched by the change.
+  /// \brief Allows tracking regions which get invalidated.
+  ///
+  /// \param State The current program state.
+  /// \param Invalidated A set of all symbols potentially touched by the change.
   /// \param ExplicitRegions The regions explicitly requested for invalidation.
   ///   For example, in the case of a function call, these would be arguments.
   /// \param Regions The transitive closure of accessible regions,
   ///   i.e. all regions that may have been touched by this change.
-  /// \param The call expression wrapper if the regions are invalidated by a
-  ///   call, 0 otherwise.
-  /// Note, in order to be notified, the checker should also implement 
+  /// \param Call The call expression wrapper if the regions are invalidated
+  ///   by a call, 0 otherwise.
+  /// Note, in order to be notified, the checker should also implement the
   /// wantsRegionChangeUpdate callback.
+  ///
+  /// check::RegionChanges
   ProgramStateRef 
     checkRegionChanges(ProgramStateRef State,
-                       const StoreManager::InvalidatedSymbols *,
+                       const StoreManager::InvalidatedSymbols *Invalidated,
                        ArrayRef<const MemRegion *> ExplicitRegions,
                        ArrayRef<const MemRegion *> Regions,
                        const CallOrObjCMessage *Call) const {
