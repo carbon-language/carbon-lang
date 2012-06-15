@@ -2781,7 +2781,7 @@ public:
 /// type-dependent.
 ///
 /// The explicit type conversions expressed by
-/// CXXUnresolvedConstructExpr have the form <tt>T(a1, a2, ..., aN)<tt>,
+/// CXXUnresolvedConstructExpr have the form <tt>T(a1, a2, ..., aN)</tt>,
 /// where \c T is some type and \c a1, \c a2, ..., \c aN are values, and
 /// either \c T is a dependent type or one or more of the <tt>a</tt>'s is
 /// type-dependent. For example, this would occur in a template such
