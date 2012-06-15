@@ -1569,8 +1569,20 @@ void Lexer::LexNumericConstant(Token &Result, const char *CurPtr) {
   }
 
   // If we have a hex FP constant, continue.
-  if ((C == '-' || C == '+') && (PrevCh == 'P' || PrevCh == 'p'))
-    return LexNumericConstant(Result, ConsumeChar(CurPtr, Size, Result));
+  if ((C == '-' || C == '+') && (PrevCh == 'P' || PrevCh == 'p')) {
+    // Outside C99, we accept hexadecimal floating point numbers as a
+    // not-quite-conforming extension. Only do so if this looks like it's
+    // actually meant to be a hexfloat, and not if it has a ud-suffix.
+    bool IsHexFloat = true;
+    if (!LangOpts.C99) {
+      if (!isHexaLiteral(BufferPtr, LangOpts))
+        IsHexFloat = false;
+      else if (std::find(BufferPtr, CurPtr, '_') != CurPtr)
+        IsHexFloat = false;
+    }
+    if (IsHexFloat)
+      return LexNumericConstant(Result, ConsumeChar(CurPtr, Size, Result));
+  }
 
   // Update the location of token as well as BufferPtr.
   const char *TokStart = BufferPtr;

@@ -32,3 +32,10 @@ void test3() {
   (void)L"\u1234";  // expected-error {{unicode escape sequences are only valid in C99 or C++}}
   (void)L'\u1234';  // expected-error {{unicode escape sequences are only valid in C99 or C++}}
 }
+
+#define PREFIX(x) foo ## x
+int test4() {
+  int PREFIX(0p) = 0;
+  int *p = &PREFIX(0p+1);
+  return p[-1];
+}
