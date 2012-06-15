@@ -182,6 +182,38 @@ bool Sema::DiagnoseUseOfDecl(NamedDecl *D, SourceLocation Loc,
   // Warn if this is used but marked unused.
   if (D->hasAttr<UnusedAttr>())
     Diag(Loc, diag::warn_used_but_marked_unused) << D->getDeclName();
+
+  // Warn if we're in an extern inline function referring to a decl
+  // with internal linkage. (C99 6.7.4p3)
+  // FIXME: This is not explicitly forbidden in C++, but it's not clear
+  // what the correct behavior is. We should probably still have a warning.
+  // (However, in C++ const variables have internal linkage by default, while
+  // functions still have external linkage by default, so this warning becomes
+  // very noisy.)
+  if (!getLangOpts().CPlusPlus) {
+    if (FunctionDecl *Current = getCurFunctionDecl()) {
+      if (Current->isInlined() && Current->getLinkage() > InternalLinkage) {
+        if (D->getLinkage() == InternalLinkage) {
+          Diag(Loc, diag::warn_internal_in_extern_inline)
+            << !isa<FunctionDecl>(D) << D << isa<CXXMethodDecl>(Current);
+
+          // If the user didn't explicitly specify a storage class,
+          // suggest adding "static" to fix the problem.
+          const FunctionDecl *FirstDecl = Current->getCanonicalDecl();
+          if (FirstDecl->getStorageClassAsWritten() == SC_None) {
+            SourceLocation DeclBegin = FirstDecl->getSourceRange().getBegin();
+            Diag(DeclBegin, diag::note_convert_inline_to_static)
+              << Current << FixItHint::CreateInsertion(DeclBegin, "static ");
+          }
+
+          Diag(D->getCanonicalDecl()->getLocation(),
+               diag::note_internal_decl_declared_here)
+          << D;
+        }
+      }
+    }
+  }
+
   return false;
 }
 
