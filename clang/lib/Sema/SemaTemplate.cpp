@@ -5790,14 +5790,17 @@ Sema::CheckSpecializationInstantiationRedecl(SourceLocation NewLoc,
 }
 
 /// \brief Perform semantic analysis for the given dependent function
-/// template specialization.  The only possible way to get a dependent
-/// function template specialization is with a friend declaration,
-/// like so:
+/// template specialization.
 ///
-///   template <class T> void foo(T);
-///   template <class T> class A {
+/// The only possible way to get a dependent function template specialization
+/// is with a friend declaration, like so:
+///
+/// \code
+///   template \<class T> void foo(T);
+///   template \<class T> class A {
 ///     friend void foo<>(T);
 ///   };
+/// \endcode
 ///
 /// There really isn't any useful analysis we can do here, so we
 /// just store the information.

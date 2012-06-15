@@ -9973,7 +9973,7 @@ Decl *Sema::ActOnTemplatedFriendTag(Scope *S, SourceLocation FriendLoc,
 ///   friend class A<T>::B<unsigned>;
 /// We permit this as a special case; if there are any template
 /// parameters present at all, require proper matching, i.e.
-///   template <> template <class T> friend class A<int>::B;
+///   template <> template \<class T> friend class A<int>::B;
 Decl *Sema::ActOnFriendTypeDecl(Scope *S, const DeclSpec &DS,
                                 MultiTemplateParamsArg TempParams) {
   SourceLocation Loc = DS.getLocStart();

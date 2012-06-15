@@ -6,10 +6,9 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
-//  This file implements semantic analysis for C++ expressions.
-//
-//===----------------------------------------------------------------------===//
+
+// \file
+// \brief Implements semantic analysis for C++ expressions.
 
 #include "clang/Sema/SemaInternal.h"
 #include "clang/Sema/DeclSpec.h"
@@ -934,7 +933,7 @@ static bool doesUsualArrayDeleteWantSize(Sema &S, SourceLocation loc,
 }
 
 /// \brief Parsed a C++ 'new' expression (C++ 5.3.4).
-
+///
 /// E.g.:
 /// @code new (memory) int[size][4] @endcode
 /// or
@@ -947,10 +946,8 @@ static bool doesUsualArrayDeleteWantSize(Sema &S, SourceLocation loc,
 /// \param PlacementRParen Closing paren of the placement arguments.
 /// \param TypeIdParens If the type is in parens, the source range.
 /// \param D The type to be allocated, as well as array dimensions.
-/// \param ConstructorLParen Opening paren of the constructor args, empty if
-///                          initializer-list syntax is used.
-/// \param ConstructorArgs Constructor/initialization arguments.
-/// \param ConstructorRParen Closing paren of the constructor args.
+/// \param Initializer The initializing expression or initializer-list, or null
+///   if there is none.
 ExprResult
 Sema::ActOnCXXNew(SourceLocation StartLoc, bool UseGlobal,
                   SourceLocation PlacementLParen, MultiExprArg PlacementArgs,
@@ -962,7 +959,7 @@ Sema::ActOnCXXNew(SourceLocation StartLoc, bool UseGlobal,
   // If the specified type is an array, unwrap it and save the expression.
   if (D.getNumTypeObjects() > 0 &&
       D.getTypeObject(0).Kind == DeclaratorChunk::Array) {
-    DeclaratorChunk &Chunk = D.getTypeObject(0);
+     DeclaratorChunk &Chunk = D.getTypeObject(0);
     if (TypeContainsAuto)
       return ExprError(Diag(Chunk.Loc, diag::err_new_array_of_auto)
         << D.getSourceRange());
