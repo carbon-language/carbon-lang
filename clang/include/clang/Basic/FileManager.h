@@ -177,8 +177,10 @@ public:
   /// \brief Removes the specified FileSystemStatCache object from the manager.
   void removeStatCache(FileSystemStatCache *statCache);
 
-  /// getDirectory - Lookup, cache, and verify the specified directory
-  /// (real or virtual).  This returns NULL if the directory doesn't exist.
+  /// \brief Lookup, cache, and verify the specified directory (real or
+  /// virtual).
+  ///
+  /// This returns NULL if the directory doesn't exist.
   ///
   /// \param CacheFailure If true and the file does not exist, we'll cache
   /// the failure to find this file.
@@ -186,7 +188,9 @@ public:
                                      bool CacheFailure = true);
 
   /// \brief Lookup, cache, and verify the specified file (real or
-  /// virtual).  This returns NULL if the file doesn't exist.
+  /// virtual).
+  ///
+  /// This returns NULL if the file doesn't exist.
   ///
   /// \param OpenFile if true and the file exists, it will be opened.
   ///
@@ -199,8 +203,9 @@ public:
   const FileSystemOptions &getFileSystemOptions() { return FileSystemOpts; }
 
   /// \brief Retrieve a file entry for a "virtual" file that acts as
-  /// if there were a file with the given name on disk. The file
-  /// itself is not accessed.
+  /// if there were a file with the given name on disk.
+  ///
+  /// The file itself is not accessed.
   const FileEntry *getVirtualFile(StringRef Filename, off_t Size,
                                   time_t ModificationTime);
 
@@ -211,9 +216,10 @@ public:
   llvm::MemoryBuffer *getBufferForFile(StringRef Filename,
                                        std::string *ErrorStr = 0);
 
-  // getNoncachedStatValue - Will get the 'stat' information for the given path.
-  // If the path is relative, it will be resolved against the WorkingDir of the
-  // FileManager's FileSystemOptions.
+  /// \brief get the 'stat' information for the given path.
+  ///
+  /// If the path is relative, it will be resolved against the WorkingDir of the
+  /// FileManager's FileSystemOptions.
   bool getNoncachedStatValue(StringRef Path, struct stat &StatBuf);
 
   /// \brief If path is not absolute and FileSystemOptions set the working
