@@ -124,7 +124,8 @@ public:
 
   /// Check for regmask interference only.
   /// Return true if VirtReg crosses a regmask operand that clobbers PhysReg.
-  bool checkRegMaskInterference(LiveInterval &VirtReg, unsigned PhysReg);
+  /// If PhysReg is null, check if VirtReg crosses any regmask operands.
+  bool checkRegMaskInterference(LiveInterval &VirtReg, unsigned PhysReg = 0);
 
   /// Check for regunit interference only.
   /// Return true if VirtReg overlaps a fixed assignment of one of PhysRegs's
