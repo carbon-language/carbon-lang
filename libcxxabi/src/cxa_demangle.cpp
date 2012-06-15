@@ -6896,7 +6896,7 @@ __demangle_tree::__parse_unnamed_type_name(const char* first, const char* last)
 const char*
 __demangle_tree::__parse_ctor_dtor_name(const char* first, const char* last)
 {
-    if (last-first >= 2)
+    if (last-first >= 2 && __root_)
     {
         switch (first[0])
         {
