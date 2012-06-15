@@ -140,7 +140,7 @@ div.footer a {
 
 /* -- body styles ----------------------------------------------------------- */
 
-p {    
+p {
     margin: 0.8em 0 0.5em 0;
 }
 
@@ -153,7 +153,7 @@ a:hover {
     color: #2491CF;
 }
 
-div.body a {
+div.body p a{
     text-decoration: underline;
 }
 
@@ -175,9 +175,34 @@ h3 {
     font-size: 1.2em;
 }
 
+h3 a:hover {
+    text-decoration: underline;
+}
+
 div.body h1 a, div.body h2 a, div.body h3 a, div.body h4 a, div.body h5 a, div.body h6 a {
     color: black!important;
 }
+
+div.body h1,
+div.body h2,
+div.body h3,
+div.body h4,
+div.body h5,
+div.body h6 {
+    background-color: #f2f2f2;
+    font-weight: normal;
+    color: #20435c;
+    border-bottom: 1px solid #ccc;
+    margin: 20px -20px 10px -20px;
+    padding: 3px 0 3px 10px;
+}
+
+div.body h1 { margin-top: 0; font-size: 200%; }
+div.body h2 { font-size: 160%; }
+div.body h3 { font-size: 140%; }
+div.body h4 { font-size: 120%; }
+div.body h5 { font-size: 110%; }
+div.body h6 { font-size: 100%; }
 
 h1 a.anchor, h2 a.anchor, h3 a.anchor, h4 a.anchor, h5 a.anchor, h6 a.anchor {
     display: none;
@@ -217,7 +242,7 @@ cite, code, tt {
     letter-spacing: 0.01em;
 }
 
-tt {
+:not(a.reference) > tt {
     background-color: #f2f2f2;
     border-bottom: 1px solid #ddd;
     color: #333;
@@ -232,13 +257,17 @@ hr {
     margin: 2em;
 }
 
-a tt {
+p a tt {
     border: 0;
     color: #CA7900;
 }
 
-a tt:hover {
+p a tt:hover {
     color: #2491CF;
+}
+
+a tt {
+    border: none;
 }
 
 pre {
