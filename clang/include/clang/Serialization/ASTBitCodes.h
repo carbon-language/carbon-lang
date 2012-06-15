@@ -557,7 +557,7 @@ namespace clang {
     ///
     /// These type IDs correspond to predefined types in the AST
     /// context, such as built-in types (int) and special place-holder
-    /// types (the <overload> and <dependent> type markers). Such
+    /// types (the \<overload> and \<dependent> type markers). Such
     /// types are never actually serialized, since they will be built
     /// by the AST context when it is created.
     enum PredefinedTypeIDs {
