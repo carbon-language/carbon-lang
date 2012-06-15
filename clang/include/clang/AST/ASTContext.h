@@ -1705,7 +1705,7 @@ public:
   /// \brief Get the implementation of ObjCCategoryDecl, or NULL if none exists.
   ObjCCategoryImplDecl   *getObjCImplementation(ObjCCategoryDecl *D);
 
-  /// \brief returns true if there is at lease one \@implementation in TU.
+  /// \brief returns true if there is at least one \@implementation in TU.
   bool AnyObjCImplementation() {
     return !ObjCImpls.empty();
   }

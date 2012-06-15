@@ -98,7 +98,7 @@ namespace llvm {
 
 namespace clang {
 
-/// AccessSpecDecl - An access specifier followed by colon ':'.
+/// @brief Represents an access specifier followed by colon ':'.
 ///
 /// An objects of this class represents sugar for the syntactic occurrence
 /// of an access specifier followed by a colon in the list of member
@@ -110,7 +110,7 @@ namespace clang {
 /// "access declarations" (C++98 11.3 [class.access.dcl]).
 class AccessSpecDecl : public Decl {
   virtual void anchor();
-  /// ColonLoc - The location of the ':'.
+  /// \brief The location of the ':'.
   SourceLocation ColonLoc;
 
   AccessSpecDecl(AccessSpecifier AS, DeclContext *DC,
@@ -121,14 +121,14 @@ class AccessSpecDecl : public Decl {
   AccessSpecDecl(EmptyShell Empty)
     : Decl(AccessSpec, Empty) { }
 public:
-  /// getAccessSpecifierLoc - The location of the access specifier.
+  /// \brief The location of the access specifier.
   SourceLocation getAccessSpecifierLoc() const { return getLocation(); }
-  /// setAccessSpecifierLoc - Sets the location of the access specifier.
+  /// \brief Sets the location of the access specifier.
   void setAccessSpecifierLoc(SourceLocation ASLoc) { setLocation(ASLoc); }
 
-  /// getColonLoc - The location of the colon following the access specifier.
+  /// \brief The location of the colon following the access specifier.
   SourceLocation getColonLoc() const { return ColonLoc; }
-  /// setColonLoc - Sets the location of the colon.
+  /// \brief Sets the location of the colon.
   void setColonLoc(SourceLocation CLoc) { ColonLoc = CLoc; }
 
   SourceRange getSourceRange() const LLVM_READONLY {
@@ -149,7 +149,7 @@ public:
 };
 
 
-/// CXXBaseSpecifier - A base class of a C++ class.
+/// \brief Represents a base class of a C++ class.
 ///
 /// Each CXXBaseSpecifier represents a single, direct base class (or
 /// struct) of a C++ class (or struct). It specifies the type of that
@@ -175,7 +175,7 @@ class CXXBaseSpecifier {
   /// expansion.
   SourceLocation EllipsisLoc;
 
-  /// Virtual - Whether this is a virtual base class or not.
+  /// \brief Whether this is a virtual base class or not.
   bool Virtual : 1;
 
   /// BaseOfClass - Whether this is the base of a class (true) or of a
@@ -1179,12 +1179,12 @@ public:
   /// This routine will return non-NULL for (non-templated) member
   /// classes of class templates. For example, given:
   ///
-  /// \code
+  /// @code
   /// template<typename T>
   /// struct X {
   ///   struct A { };
   /// };
-  /// \endcode
+  /// @endcode
   ///
   /// The declaration for X<int>::A is a (non-templated) CXXRecordDecl
   /// whose parent is the class template specialization X<int>. For
@@ -1609,13 +1609,13 @@ public:
   ///
   /// In the following example, \c f() has an lvalue ref-qualifier, \c g()
   /// has an rvalue ref-qualifier, and \c h() has no ref-qualifier.
-  /// \code
+  /// @code
   /// struct X {
   ///   void f() &;
   ///   void g() &&;
   ///   void h();
   /// };
-  /// \endcode
+  /// @endcode
   RefQualifierKind getRefQualifier() const {
     return getType()->getAs<FunctionProtoType>()->getRefQualifier();
   }
@@ -2435,7 +2435,9 @@ public:
   friend class ASTDeclReader;
 };
 
-/// NamespaceAliasDecl - Represents a C++ namespace alias. For example:
+/// \brief Represents a C++ namespace alias.
+///
+/// For example:
 ///
 /// @code
 /// namespace Foo = Bar;
@@ -2522,17 +2524,19 @@ public:
   static bool classofKind(Kind K) { return K == NamespaceAlias; }
 };
 
-/// UsingShadowDecl - Represents a shadow declaration introduced into
-/// a scope by a (resolved) using declaration.  For example,
+/// \brief Represents a shadow declaration introduced into a scope by a
+/// (resolved) using declaration.
 ///
+/// For example,
+/// @code
 /// namespace A {
 ///   void foo();
 /// }
 /// namespace B {
-///   using A::foo(); // <- a UsingDecl
-///                   // Also creates a UsingShadowDecl for A::foo in B
+///   using A::foo; // <- a UsingDecl
+///                 // Also creates a UsingShadowDecl for A::foo() in B
 /// }
-///
+/// @endcode
 class UsingShadowDecl : public NamedDecl {
   virtual void anchor();
 
@@ -2594,8 +2598,12 @@ public:
   friend class ASTDeclWriter;
 };
 
-/// UsingDecl - Represents a C++ using-declaration. For example:
+/// \brief Represents a C++ using-declaration.
+///
+/// For example:
+/// @code
 ///    using someNameSpace::someIdentifier;
+/// @endcode
 class UsingDecl : public NamedDecl {
   virtual void anchor();
 
@@ -2610,8 +2618,10 @@ class UsingDecl : public NamedDecl {
   DeclarationNameLoc DNLoc;
 
   /// \brief The first shadow declaration of the shadow decl chain associated
-  /// with this using declaration. The bool member of the pair store whether
-  /// this decl has the 'typename' keyword.
+  /// with this using declaration.
+  ///
+  /// The bool member of the pair store whether this decl has the \c typename
+  /// keyword.
   llvm::PointerIntPair<UsingShadowDecl *, 1, bool> FirstUsingShadow;
 
   UsingDecl(DeclContext *DC, SourceLocation UL,
@@ -2720,14 +2730,17 @@ public:
   friend class ASTDeclWriter;
 };
 
-/// UnresolvedUsingValueDecl - Represents a dependent using
-/// declaration which was not marked with 'typename'.  Unlike
-/// non-dependent using declarations, these *only* bring through
+/// \brief Represents a dependent using declaration which was not marked with
+/// \c typename.
+///
+/// Unlike non-dependent using declarations, these *only* bring through
 /// non-types; otherwise they would break two-phase lookup.
 ///
-/// template <class T> class A : public Base<T> {
+/// @code
+/// template \<class T> class A : public Base<T> {
 ///   using Base<T>::foo;
 /// };
+/// @endcode
 class UnresolvedUsingValueDecl : public ValueDecl {
   virtual void anchor();
 
@@ -2791,14 +2804,16 @@ public:
   friend class ASTDeclWriter;
 };
 
-/// UnresolvedUsingTypenameDecl - Represents a dependent using
-/// declaration which was marked with 'typename'.
+/// @brief Represents a dependent using declaration which was marked with
+/// \c typename.
 ///
-/// template <class T> class A : public Base<T> {
+/// @code
+/// template \<class T> class A : public Base<T> {
 ///   using typename Base<T>::foo;
 /// };
+/// @endcode
 ///
-/// The type associated with a unresolved using typename decl is
+/// The type associated with an unresolved using typename decl is
 /// currently always a typename type.
 class UnresolvedUsingTypenameDecl : public TypeDecl {
   virtual void anchor();
@@ -2852,7 +2867,7 @@ public:
   static bool classofKind(Kind K) { return K == UnresolvedUsingTypename; }
 };
 
-/// StaticAssertDecl - Represents a C++0x static_assert declaration.
+/// \brief Represents a C++11 static_assert declaration.
 class StaticAssertDecl : public Decl {
   virtual void anchor();
   Expr *AssertExpr;
@@ -2892,7 +2907,7 @@ public:
   friend class ASTDeclReader;
 };
 
-/// Insertion operator for diagnostics.  This allows sending AccessSpecifier's
+/// Insertion operator for diagnostics.  This allows sending an AccessSpecifier
 /// into a diagnostic with <<.
 const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
                                     AccessSpecifier AS);

@@ -6,10 +6,9 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
-// This file defines the Objective-C statement AST node classes.
-//
-//===----------------------------------------------------------------------===//
+
+/// \file
+/// \brief Defines the Objective-C statement AST node classes.
 
 #ifndef LLVM_CLANG_AST_STMTOBJC_H
 #define LLVM_CLANG_AST_STMTOBJC_H
@@ -19,9 +18,9 @@
 
 namespace clang {
 
-/// ObjCForCollectionStmt - This represents Objective-c's collection statement;
-/// represented as 'for (element 'in' collection-expression)' stmt.
+/// \brief Represents Objective-C's collection statement.
 ///
+/// This is represented as 'for (element 'in' collection-expression)' stmt.
 class ObjCForCollectionStmt : public Stmt {
   enum { ELEM, COLLECTION, BODY, END_EXPR };
   Stmt* SubExprs[END_EXPR]; // SubExprs[ELEM] is an expression or declstmt.
@@ -70,7 +69,7 @@ public:
   }
 };
 
-/// ObjCAtCatchStmt - This represents objective-c's \@catch statement.
+/// \brief Represents Objective-C's \@catch statement.
 class ObjCAtCatchStmt : public Stmt {
 private:
   VarDecl *ExceptionDecl;
@@ -118,7 +117,7 @@ public:
   child_range children() { return child_range(&Body, &Body + 1); }
 };
 
-/// ObjCAtFinallyStmt - This represent objective-c's \@finally Statement
+/// \brief Represents Objective-C's \@finally statement
 class ObjCAtFinallyStmt : public Stmt {
   Stmt *AtFinallyStmt;
   SourceLocation AtFinallyLoc;
@@ -151,24 +150,23 @@ public:
   }
 };
 
-/// ObjCAtTryStmt - This represent objective-c's over-all
-/// @try ... @catch ... @finally statement.
+/// \brief Represents Objective-C's \@try ... \@catch ... \@finally statement.
 class ObjCAtTryStmt : public Stmt {
 private:
-  // The location of the 
+  // The location of the @ in the \@try.
   SourceLocation AtTryLoc;
   
   // The number of catch blocks in this statement.
   unsigned NumCatchStmts : 16;
   
-  // Whether this statement has a @finally statement.
+  // Whether this statement has a \@finally statement.
   bool HasFinally : 1;
   
-  /// \brief Retrieve the statements that are stored after this @try statement.
+  /// \brief Retrieve the statements that are stored after this \@try statement.
   ///
   /// The order of the statements in memory follows the order in the source,
-  /// with the @try body first, followed by the @catch statements (if any) and,
-  /// finally, the @finally (if it exists).
+  /// with the \@try body first, followed by the \@catch statements (if any)
+  /// and, finally, the \@finally (if it exists).
   Stmt **getStmts() { return reinterpret_cast<Stmt **> (this + 1); }
   const Stmt* const *getStmts() const { 
     return reinterpret_cast<const Stmt * const*> (this + 1); 
@@ -223,7 +221,7 @@ public:
     getStmts()[I + 1] = S;
   }
   
-  /// Retrieve the \@finally statement, if any.
+  /// \brief Retrieve the \@finally statement, if any.
   const ObjCAtFinallyStmt *getFinallyStmt() const {
     if (!HasFinally)
       return 0;
@@ -254,11 +252,14 @@ public:
   }
 };
 
-/// ObjCAtSynchronizedStmt - This is for objective-c's @synchronized statement.
-/// Example: @synchronized (sem) {
-///             do-something;
-///          }
+/// \brief Represents Objective-C's \@synchronized statement.
 ///
+/// Example:
+/// \code
+///   @synchronized (sem) {
+///     do-something;
+///   }
+/// \endcode
 class ObjCAtSynchronizedStmt : public Stmt {
 private:
   enum { SYNC_EXPR, SYNC_BODY, END_EXPR };
@@ -309,7 +310,7 @@ public:
   }
 };
 
-/// ObjCAtThrowStmt - This represents objective-c's @throw statement.
+/// \brief Represents Objective-C's \@throw statement.
 class ObjCAtThrowStmt : public Stmt {
   Stmt *Throw;
   SourceLocation AtThrowLoc;
@@ -343,8 +344,7 @@ public:
   child_range children() { return child_range(&Throw, &Throw+1); }
 };
 
-/// ObjCAutoreleasePoolStmt - This represent objective-c's 
-/// @autoreleasepool Statement
+/// \brief Represents Objective-C's \@autoreleasepool Statement
 class ObjCAutoreleasePoolStmt : public Stmt {
   Stmt *SubStmt;
   SourceLocation AtLoc;

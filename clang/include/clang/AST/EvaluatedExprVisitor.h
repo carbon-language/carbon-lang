@@ -24,7 +24,7 @@ namespace clang {
   
 class ASTContext;
   
-/// \begin Given a potentially-evaluated expression, this visitor visits all
+/// \brief Given a potentially-evaluated expression, this visitor visits all
 /// of its potentially-evaluated subexpressions, recursively.
 template<typename ImplClass>
 class EvaluatedExprVisitor : public StmtVisitor<ImplClass> {
