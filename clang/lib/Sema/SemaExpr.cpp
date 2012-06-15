@@ -9086,7 +9086,8 @@ void Sema::ActOnBlockStart(SourceLocation CaretLoc, Scope *CurScope) {
   PushExpressionEvaluationContext(PotentiallyEvaluated);  
 }
 
-void Sema::ActOnBlockArguments(Declarator &ParamInfo, Scope *CurScope) {
+void Sema::ActOnBlockArguments(SourceLocation CaretLoc, Declarator &ParamInfo,
+                               Scope *CurScope) {
   assert(ParamInfo.getIdentifier()==0 && "block-id should have no identifier!");
   assert(ParamInfo.getContext() == Declarator::BlockLiteralContext);
   BlockScopeInfo *CurBlock = getCurBlock();
@@ -9094,6 +9095,18 @@ void Sema::ActOnBlockArguments(Declarator &ParamInfo, Scope *CurScope) {
   TypeSourceInfo *Sig = GetTypeForDeclarator(ParamInfo, CurScope);
   QualType T = Sig->getType();
 
+  // FIXME: We should allow unexpanded parameter packs here, but that would,
+  // in turn, make the block expression contain unexpanded parameter packs.
+  if (DiagnoseUnexpandedParameterPack(CaretLoc, Sig, UPPC_Block)) {
+    // Drop the parameters.
+    FunctionProtoType::ExtProtoInfo EPI;
+    EPI.HasTrailingReturn = false;
+    EPI.TypeQuals |= DeclSpec::TQ_const;
+    T = Context.getFunctionType(Context.DependentTy, /*Args=*/0, /*NumArgs=*/0,
+                                EPI);
+    Sig = Context.getTrivialTypeSourceInfo(T);
+  }
+  
   // GetTypeForDeclarator always produces a function type for a block
   // literal signature.  Furthermore, it is always a FunctionProtoType
   // unless the function was written with a typedef.

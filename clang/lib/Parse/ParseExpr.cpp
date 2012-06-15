@@ -2299,7 +2299,7 @@ bool Parser::ParseExpressionList(SmallVectorImpl<Expr*> &Exprs,
 /// [clang] block-id:
 /// [clang]   specifier-qualifier-list block-declarator
 ///
-void Parser::ParseBlockId() {
+void Parser::ParseBlockId(SourceLocation CaretLoc) {
   if (Tok.is(tok::code_completion)) {
     Actions.CodeCompleteOrdinaryName(getCurScope(), Sema::PCC_Type);
     return cutOffParsing();
@@ -2319,7 +2319,7 @@ void Parser::ParseBlockId() {
   MaybeParseGNUAttributes(DeclaratorInfo);
 
   // Inform sema that we are starting a block.
-  Actions.ActOnBlockArguments(DeclaratorInfo, getCurScope());
+  Actions.ActOnBlockArguments(CaretLoc, DeclaratorInfo, getCurScope());
 }
 
 /// ParseBlockLiteralExpression - Parse a block literal, which roughly looks
@@ -2376,9 +2376,9 @@ ExprResult Parser::ParseBlockLiteralExpression() {
     MaybeParseGNUAttributes(ParamInfo);
 
     // Inform sema that we are starting a block.
-    Actions.ActOnBlockArguments(ParamInfo, getCurScope());
+    Actions.ActOnBlockArguments(CaretLoc, ParamInfo, getCurScope());
   } else if (!Tok.is(tok::l_brace)) {
-    ParseBlockId();
+    ParseBlockId(CaretLoc);
   } else {
     // Otherwise, pretend we saw (void).
     ParsedAttributes attrs(AttrFactory);
@@ -2399,7 +2399,7 @@ ExprResult Parser::ParseBlockLiteralExpression() {
     MaybeParseGNUAttributes(ParamInfo);
 
     // Inform sema that we are starting a block.
-    Actions.ActOnBlockArguments(ParamInfo, getCurScope());
+    Actions.ActOnBlockArguments(CaretLoc, ParamInfo, getCurScope());
   }
 
 

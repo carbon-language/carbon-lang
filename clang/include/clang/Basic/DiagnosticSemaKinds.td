@@ -2859,28 +2859,28 @@ def err_unexpanded_parameter_pack_0 : Error<
   "size|static assertion|fixed underlying type|enumerator value|"
   "using declaration|friend declaration|qualifier|initializer|default argument|"
   "non-type template parameter type|exception type|partial specialization|"
-  "__if_exists name|__if_not_exists name}0 "
+  "__if_exists name|__if_not_exists name|lambda|block}0 "
   "contains an unexpanded parameter pack">;
 def err_unexpanded_parameter_pack_1 : Error<
   "%select{expression|base type|declaration type|data member type|bit-field "
   "size|static assertion|fixed underlying type|enumerator value|"
   "using declaration|friend declaration|qualifier|initializer|default argument|"
   "non-type template parameter type|exception type|partial specialization|"
-  "__if_exists name|__if_not_exists name}0 "
+  "__if_exists name|__if_not_exists name|lambda|block}0 "
   "contains unexpanded parameter pack %1">;
 def err_unexpanded_parameter_pack_2 : Error<
   "%select{expression|base type|declaration type|data member type|bit-field "
   "size|static assertion|fixed underlying type|enumerator value|"
   "using declaration|friend declaration|qualifier|initializer|default argument|"
   "non-type template parameter type|exception type|partial specialization|"
-  "__if_exists name|__if_not_exists name}0 "
+  "__if_exists name|__if_not_exists name|lambda|block}0 "
   "contains unexpanded parameter packs %1 and %2">;
 def err_unexpanded_parameter_pack_3_or_more : Error<
   "%select{expression|base type|declaration type|data member type|bit-field "
   "size|static assertion|fixed underlying type|enumerator value|"
   "using declaration|friend declaration|qualifier|initializer|default argument|"
   "non-type template parameter type|exception type|partial specialization|"
-  "__if_exists name|__if_not_exists name}0 "
+  "__if_exists name|__if_not_exists name|lambda|block}0 "
   "contains unexpanded parameter packs %1, %2, ...">;
 
 def err_pack_expansion_without_parameter_packs : Error<

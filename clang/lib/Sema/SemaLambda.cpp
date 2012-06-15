@@ -269,9 +269,26 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
     FunctionProtoTypeLoc Proto = cast<FunctionProtoTypeLoc>(TL);
     Params = llvm::ArrayRef<ParmVarDecl *>(Proto.getParmArray(), 
                                            Proto.getNumArgs());
+
+    // Check for unexpanded parameter packs in the method type.
+    // FIXME: We should allow unexpanded parameter packs here, but that would,
+    // in turn, make the lambda expression contain unexpanded parameter packs.
+    if (DiagnoseUnexpandedParameterPack(Intro.Range.getBegin(), MethodTyInfo,
+                                        UPPC_Lambda)) {
+      // Drop the parameters.
+      Params = llvm::ArrayRef<ParmVarDecl *>();
+      FunctionProtoType::ExtProtoInfo EPI;
+      EPI.HasTrailingReturn = false;
+      EPI.TypeQuals |= DeclSpec::TQ_const;
+      QualType MethodTy = Context.getFunctionType(Context.DependentTy,
+                                                  /*Args=*/0, /*NumArgs=*/0, EPI);
+      MethodTyInfo = Context.getTrivialTypeSourceInfo(MethodTy);
+      ExplicitParams = false;
+      ExplicitResultType = false;
+    }
   }
   
-  CXXMethodDecl *Method = startLambdaDefinition(Class, Intro.Range, 
+  CXXMethodDecl *Method = startLambdaDefinition(Class, Intro.Range,
                                                 MethodTyInfo, EndLoc, Params);
   
   if (ExplicitParams)

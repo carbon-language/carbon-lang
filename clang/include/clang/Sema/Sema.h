@@ -3118,7 +3118,8 @@ public:
 
   /// ActOnBlockArguments - This callback allows processing of block arguments.
   /// If there are no arguments, this is still invoked.
-  void ActOnBlockArguments(Declarator &ParamInfo, Scope *CurScope);
+  void ActOnBlockArguments(SourceLocation CaretLoc, Declarator &ParamInfo,
+                           Scope *CurScope);
 
   /// ActOnBlockError - If there is an error parsing a block, this callback
   /// is invoked to pop the information about the block from the action impl.
@@ -4960,7 +4961,13 @@ public:
     UPPC_IfExists,
 
     /// \brief Microsoft __if_not_exists.
-    UPPC_IfNotExists
+    UPPC_IfNotExists,
+    
+    /// \brief Lambda expression.
+    UPPC_Lambda,
+    
+    /// \brief Block expression,
+    UPPC_Block
 };
 
   /// \brief Diagnose unexpanded parameter packs.

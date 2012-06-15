@@ -1711,7 +1711,7 @@ private:
                              = Declarator::TypeNameContext,
                            AccessSpecifier AS = AS_none,
                            Decl **OwnedType = 0);
-  void ParseBlockId();
+  void ParseBlockId(SourceLocation CaretLoc);
 
   // Check for the start of a C++11 attribute-specifier-seq in a context where
   // an attribute is not allowed.
