@@ -1342,14 +1342,6 @@ void ASTContext::setBlockVarCopyInits(VarDecl*VD, Expr* Init) {
   BlockVarCopyInits[VD] = Init;
 }
 
-/// \brief Allocate an uninitialized TypeSourceInfo.
-///
-/// The caller should initialize the memory held by TypeSourceInfo using
-/// the TypeLoc wrappers.
-///
-/// \param T the type that will be the basis for type source info. This type
-/// should refer to how the declarator was written in source code, not to
-/// what type semantic analysis resolved the declarator to.
 TypeSourceInfo *ASTContext::CreateTypeSourceInfo(QualType T,
                                                  unsigned DataSize) const {
   if (!DataSize)
