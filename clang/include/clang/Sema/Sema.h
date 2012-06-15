@@ -1124,7 +1124,7 @@ public:
                          IdentifierInfo **CorrectedII = 0);
   TypeSpecifierType isTagName(IdentifierInfo &II, Scope *S);
   bool isMicrosoftMissingTypename(const CXXScopeSpec *SS, Scope *S);
-  bool DiagnoseUnknownTypeName(const IdentifierInfo &II,
+  bool DiagnoseUnknownTypeName(IdentifierInfo *&II,
                                SourceLocation IILoc,
                                Scope *S,
                                CXXScopeSpec *SS,

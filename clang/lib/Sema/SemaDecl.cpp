@@ -395,7 +395,7 @@ bool Sema::isMicrosoftMissingTypename(const CXXScopeSpec *SS, Scope *S) {
   return CurContext->isFunctionOrMethod() || S->isFunctionPrototypeScope();
 }
 
-bool Sema::DiagnoseUnknownTypeName(const IdentifierInfo &II, 
+bool Sema::DiagnoseUnknownTypeName(IdentifierInfo *&II,
                                    SourceLocation IILoc,
                                    Scope *S,
                                    CXXScopeSpec *SS,
@@ -406,7 +406,7 @@ bool Sema::DiagnoseUnknownTypeName(const IdentifierInfo &II,
   // There may have been a typo in the name of the type. Look up typo
   // results, in case we have something that we can suggest.
   TypeNameValidatorCCC Validator(false);
-  if (TypoCorrection Corrected = CorrectTypo(DeclarationNameInfo(&II, IILoc),
+  if (TypoCorrection Corrected = CorrectTypo(DeclarationNameInfo(II, IILoc),
                                              LookupOrdinaryName, S, SS,
                                              Validator)) {
     std::string CorrectedStr(Corrected.getAsString(getLangOpts()));
@@ -414,19 +414,23 @@ bool Sema::DiagnoseUnknownTypeName(const IdentifierInfo &II,
 
     if (Corrected.isKeyword()) {
       // We corrected to a keyword.
-      // FIXME: Actually recover with the keyword we suggest, and emit a fix-it.
+      IdentifierInfo *NewII = Corrected.getCorrectionAsIdentifierInfo();
+      if (!isSimpleTypeSpecifier(NewII->getTokenID()))
+        CorrectedQuotedStr = "the keyword " + CorrectedQuotedStr;
       Diag(IILoc, diag::err_unknown_typename_suggest)
-        << &II << CorrectedQuotedStr;
+        << II << CorrectedQuotedStr
+        << FixItHint::CreateReplacement(SourceRange(IILoc), CorrectedStr);
+      II = NewII;
     } else {
       NamedDecl *Result = Corrected.getCorrectionDecl();
       // We found a similarly-named type or interface; suggest that.
       if (!SS || !SS->isSet())
         Diag(IILoc, diag::err_unknown_typename_suggest)
-          << &II << CorrectedQuotedStr
+          << II << CorrectedQuotedStr
           << FixItHint::CreateReplacement(SourceRange(IILoc), CorrectedStr);
       else if (DeclContext *DC = computeDeclContext(*SS, false))
         Diag(IILoc, diag::err_unknown_nested_typename_suggest)
-          << &II << DC << CorrectedQuotedStr << SS->getRange()
+          << II << DC << CorrectedQuotedStr << SS->getRange()
           << FixItHint::CreateReplacement(SourceRange(IILoc), CorrectedStr);
       else
         llvm_unreachable("could not have corrected a typo here");
@@ -445,7 +449,7 @@ bool Sema::DiagnoseUnknownTypeName(const IdentifierInfo &II,
   if (getLangOpts().CPlusPlus) {
     // See if II is a class template that the user forgot to pass arguments to.
     UnqualifiedId Name;
-    Name.setIdentifier(&II, IILoc);
+    Name.setIdentifier(II, IILoc);
     CXXScopeSpec EmptySS;
     TemplateTy TemplateResult;
     bool MemberOfUnknownSpecialization;
@@ -466,21 +470,21 @@ bool Sema::DiagnoseUnknownTypeName(const IdentifierInfo &II,
   // (struct, union, enum) from Parser::ParseImplicitInt here, instead?
   
   if (!SS || (!SS->isSet() && !SS->isInvalid()))
-    Diag(IILoc, diag::err_unknown_typename) << &II;
+    Diag(IILoc, diag::err_unknown_typename) << II;
   else if (DeclContext *DC = computeDeclContext(*SS, false))
     Diag(IILoc, diag::err_typename_nested_not_found) 
-      << &II << DC << SS->getRange();
+      << II << DC << SS->getRange();
   else if (isDependentScopeSpecifier(*SS)) {
     unsigned DiagID = diag::err_typename_missing;
     if (getLangOpts().MicrosoftMode && isMicrosoftMissingTypename(SS, S))
       DiagID = diag::warn_typename_missing;
 
     Diag(SS->getRange().getBegin(), DiagID)
-      << (NestedNameSpecifier *)SS->getScopeRep() << II.getName()
+      << (NestedNameSpecifier *)SS->getScopeRep() << II->getName()
       << SourceRange(SS->getRange().getBegin(), IILoc)
       << FixItHint::CreateInsertion(SS->getRange().getBegin(), "typename ");
-    SuggestedType = ActOnTypenameType(S, SourceLocation(), *SS, II, IILoc)
-                                                                         .get();
+    SuggestedType = ActOnTypenameType(S, SourceLocation(),
+                                      *SS, *II, IILoc).get();
   } else {
     assert(SS && SS->isInvalid() && 
            "Invalid scope specifier has already been diagnosed");
