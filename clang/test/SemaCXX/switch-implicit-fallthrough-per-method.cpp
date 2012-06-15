@@ -1,18 +1,18 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -std=c++11 -Wimplicit-fallthrough-per-method %s
+// RUN: %clang_cc1 -fsyntax-only -verify -std=c++11 -Wimplicit-fallthrough-per-function %s
 
 
 int fallthrough(int n) {
   switch (n / 10) {
     case 0:
       n += 100;
-    case 1:  // expected-warning{{unannotated fall-through between switch labels in partly annotated method}} expected-note{{insert '[[clang::fallthrough]];' to silence this warning}} expected-note{{insert 'break;' to avoid fall-through}}
+    case 1:  // expected-warning{{unannotated fall-through}} expected-note{{insert '[[clang::fallthrough]];' to silence this warning}} expected-note{{insert 'break;' to avoid fall-through}}
       switch (n) {
       case 111:
         n += 111;
         [[clang::fallthrough]];
       case 112:
         n += 112;
-      case 113:  // expected-warning{{unannotated fall-through between switch labels in partly annotated method}} expected-note{{insert '[[clang::fallthrough]];' to silence this warning}} expected-note{{insert 'break;' to avoid fall-through}}
+      case 113:  // expected-warning{{unannotated fall-through}} expected-note{{insert '[[clang::fallthrough]];' to silence this warning}} expected-note{{insert 'break;' to avoid fall-through}}
         n += 113;
         break    ;
       }

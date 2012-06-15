@@ -209,9 +209,10 @@ def MethodDuplicate : DiagGroup<"duplicate-method-match">;
 def CoveredSwitchDefault : DiagGroup<"covered-switch-default">;
 def SwitchEnum     : DiagGroup<"switch-enum">;
 def Switch         : DiagGroup<"switch">;
-def ImplicitFallthroughPerMethod : DiagGroup<"implicit-fallthrough-per-method">;
+def ImplicitFallthroughPerFunction :
+  DiagGroup<"implicit-fallthrough-per-function">;
 def ImplicitFallthrough  : DiagGroup<"implicit-fallthrough",
-                                     [ImplicitFallthroughPerMethod]>;
+                                     [ImplicitFallthroughPerFunction]>;
 def Trigraphs      : DiagGroup<"trigraphs">;
 
 def : DiagGroup<"type-limits">;
