@@ -6808,9 +6808,6 @@ ARMTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     MachineRegisterInfo &MRI = Fn->getRegInfo();
     // In Thumb mode S must not be specified if source register is the SP or
     // PC and if destination register is the SP, so restrict register class
-    unsigned NewMovDstReg = MRI.createVirtualRegister(isThumb2 ?
-      (const TargetRegisterClass*)&ARM::rGPRRegClass :
-      (const TargetRegisterClass*)&ARM::GPRRegClass);
     unsigned NewRsbDstReg = MRI.createVirtualRegister(isThumb2 ?
       (const TargetRegisterClass*)&ARM::rGPRRegClass :
       (const TargetRegisterClass*)&ARM::GPRRegClass);
@@ -6827,12 +6824,10 @@ ARMTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     // fall through to SinkMBB
     RSBBB->addSuccessor(SinkBB);
 
-    // insert a movs at the end of BB
-    BuildMI(BB, dl, TII->get(isThumb2 ? ARM::t2MOVr : ARM::MOVr),
-      NewMovDstReg)
-      .addReg(ABSSrcReg, RegState::Kill)
-      .addImm((unsigned)ARMCC::AL).addReg(0)
-      .addReg(ARM::CPSR, RegState::Define);
+    // insert a cmp at the end of BB
+    AddDefaultPred(BuildMI(BB, dl, 
+                           TII->get(isThumb2 ? ARM::t2CMPri : ARM::CMPri))
+                   .addReg(ABSSrcReg).addImm(0));
 
     // insert a bcc with opposite CC to ARMCC::MI at the end of BB
     BuildMI(BB, dl,
@@ -6844,7 +6839,7 @@ ARMTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     // by if-conversion pass
     BuildMI(*RSBBB, RSBBB->begin(), dl,
       TII->get(isThumb2 ? ARM::t2RSBri : ARM::RSBri), NewRsbDstReg)
-      .addReg(NewMovDstReg, RegState::Kill)
+      .addReg(ABSSrcReg, RegState::Kill)
       .addImm(0).addImm((unsigned)ARMCC::AL).addReg(0).addReg(0);
 
     // insert PHI in SinkBB,
@@ -6852,7 +6847,7 @@ ARMTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     BuildMI(*SinkBB, SinkBB->begin(), dl,
       TII->get(ARM::PHI), ABSDstReg)
       .addReg(NewRsbDstReg).addMBB(RSBBB)
-      .addReg(NewMovDstReg).addMBB(BB);
+      .addReg(ABSSrcReg).addMBB(BB);
 
     // remove ABS instruction
     MI->eraseFromParent();

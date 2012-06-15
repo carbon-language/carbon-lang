@@ -3,10 +3,10 @@
 
 define i32 @test(i32 %a, i32 %b) {
 entry:
-; CHECK:        movs.w
+; CHECK:        cmp
 ; CHECK-NEXT:   it    mi
 ; CHECK-NEXT:   rsbmi
-; CHECK-NEXT:   movs.w
+; CHECK-NEXT:   cmp
 ; CHECK-NEXT:   it    mi
 ; CHECK-NEXT:   rsbmi
  %cmp1 = icmp slt i32 %a, 0
