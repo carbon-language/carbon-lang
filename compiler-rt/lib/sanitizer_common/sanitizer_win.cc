@@ -82,6 +82,14 @@ const char *GetEnv(const char *name) {
   return 0;
 }
 
+void DumpProcessMap() {
+  UNIMPLEMENTED();
+}
+
+void DisableCoreDumper() {
+  UNIMPLEMENTED();
+}
+
 // ------------------ sanitizer_libc.h
 void *internal_mmap(void *addr, uptr length, int prot, int flags,
                     int fd, u64 offset) {

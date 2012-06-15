@@ -536,7 +536,7 @@ void __asan_init() {
   }
 
   if (FLAG_disable_core) {
-    AsanDisableCoreDumper();
+    DisableCoreDumper();
   }
 
   if (AsanShadowRangeIsAvailable()) {
@@ -552,7 +552,7 @@ void __asan_init() {
   } else {
     Report("Shadow memory range interleaves with an existing memory mapping. "
            "ASan cannot proceed correctly. ABORTING.\n");
-    AsanDumpProcessMap();
+    DumpProcessMap();
     Die();
   }
 

@@ -122,9 +122,7 @@ void ReplaceSystemMalloc();
 // asan_linux.cc / asan_mac.cc / asan_win.cc
 void *AsanDoesNotSupportStaticLinkage();
 bool AsanShadowRangeIsAvailable();
-void AsanDumpProcessMap();
 
-void AsanDisableCoreDumper();
 void GetPcSpBp(void *context, uptr *pc, uptr *sp, uptr *bp);
 
 bool AsanInterceptsSignal(int signum);

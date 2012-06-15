@@ -134,26 +134,6 @@ void InstallSignalHandlers() {
   MaybeInstallSigaction(SIGBUS, ASAN_OnSIGSEGV);
 }
 
-void AsanDisableCoreDumper() {
-  struct rlimit nocore;
-  nocore.rlim_cur = 0;
-  nocore.rlim_max = 0;
-  setrlimit(RLIMIT_CORE, &nocore);
-}
-
-void AsanDumpProcessMap() {
-  ProcessMaps proc_maps;
-  uptr start, end;
-  const sptr kBufSize = 4095;
-  char filename[kBufSize];
-  Report("Process memory map follows:\n");
-  while (proc_maps.Next(&start, &end, /* file_offset */0,
-                        filename, kBufSize)) {
-    Printf("\t%p-%p\t%s\n", (void*)start, (void*)end, filename);
-  }
-  Report("End of process memory map.\n");
-}
-
 uptr GetThreadSelf() {
   return (uptr)pthread_self();
 }

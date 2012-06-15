@@ -15,14 +15,19 @@
 
 #include "sanitizer_common.h"
 #include "sanitizer_libc.h"
+#include "sanitizer_procmaps.h"
 
 #include <stdarg.h>
 #include <stdio.h>
 #include <sys/mman.h>
+#include <sys/resource.h>
+#include <sys/time.h>
 #include <sys/types.h>
 #include <unistd.h>
 
 namespace __sanitizer {
+
+// ------------- sanitizer_common.h
 
 int GetPid() {
   return getpid();
@@ -64,6 +69,28 @@ void *Mprotect(uptr fixed_addr, uptr size) {
                        MAP_PRIVATE | MAP_ANON | MAP_FIXED | MAP_NORESERVE,
                        0, 0);
 }
+
+void DumpProcessMap() {
+  ProcessMaps proc_maps;
+  uptr start, end;
+  const sptr kBufSize = 4095;
+  char filename[kBufSize];
+  Report("Process memory map follows:\n");
+  while (proc_maps.Next(&start, &end, /* file_offset */0,
+                        filename, kBufSize)) {
+    Printf("\t%p-%p\t%s\n", (void*)start, (void*)end, filename);
+  }
+  Report("End of process memory map.\n");
+}
+
+void DisableCoreDumper() {
+  struct rlimit nocore;
+  nocore.rlim_cur = 0;
+  nocore.rlim_max = 0;
+  setrlimit(RLIMIT_CORE, &nocore);
+}
+
+// -------------- sanitizer_libc.h
 
 int internal_sscanf(const char *str, const char *format, ...) {
   va_list args;

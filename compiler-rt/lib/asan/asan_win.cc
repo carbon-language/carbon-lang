@@ -192,10 +192,6 @@ u8 AtomicExchange(u8 *a, u8 new_val) {
   return t;
 }
 
-void AsanDumpProcessMap() {
-  UNIMPLEMENTED();
-}
-
 uptr GetThreadSelf() {
   return GetCurrentThreadId();
 }
@@ -210,10 +206,6 @@ void UnsetAlternateSignalStack() {
 
 void InstallSignalHandlers() {
   // FIXME: Decide what to do on Windows.
-}
-
-void AsanDisableCoreDumper() {
-  UNIMPLEMENTED();
 }
 
 void SleepForSeconds(int seconds) {

@@ -55,6 +55,10 @@ uptr ReadFileToBuffer(const char *file_name, char **buff,
                       uptr *buff_size, uptr max_len);
 const char *GetEnv(const char *name);
 
+// Other
+void DisableCoreDumper();
+void DumpProcessMap();
+
 // Bit twiddling.
 inline bool IsPowerOfTwo(uptr x) {
   return (x & (x - 1)) == 0;
