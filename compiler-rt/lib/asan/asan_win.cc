@@ -159,11 +159,6 @@ void *AsanDoesNotSupportStaticLinkage() {
   return 0;
 }
 
-bool AsanShadowRangeIsAvailable() {
-  // FIXME: shall we do anything here on Windows?
-  return true;
-}
-
 void SetAlternateSignalStack() {
   // FIXME: Decide what to do on Windows.
 }

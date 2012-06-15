@@ -70,6 +70,11 @@ void *Mprotect(uptr fixed_addr, uptr size) {
                       MEM_RESERVE | MEM_COMMIT, PAGE_NOACCESS);
 }
 
+bool MemoryRangeIsAvailable(uptr range_start, uptr range_end) {
+  // FIXME: shall we do anything here on Windows?
+  return true;
+}
+
 const char *GetEnv(const char *name) {
   static char env_buffer[32767] = {};
 

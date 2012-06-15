@@ -25,6 +25,11 @@ const uptr kWordSize = __WORDSIZE / 8;
 const uptr kWordSizeInBits = 8 * kWordSize;
 const uptr kPageSizeBits = 12;
 const uptr kPageSize = 1UL << kPageSizeBits;
+#ifndef _WIN32
+const uptr kMmapGranularity = kPageSize;
+#else
+const uptr kMmapGranularity = 1UL << 16;
+#endif
 
 // Threads
 int GetPid();
@@ -37,6 +42,8 @@ void *MmapOrDie(uptr size, const char *mem_type);
 void UnmapOrDie(void *addr, uptr size);
 void *MmapFixedNoReserve(uptr fixed_addr, uptr size);
 void *Mprotect(uptr fixed_addr, uptr size);
+// Used to check if we can map shadow memory to a fixed location.
+bool MemoryRangeIsAvailable(uptr range_start, uptr range_end);
 
 // Internal allocator
 void *InternalAlloc(uptr size);

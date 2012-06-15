@@ -121,7 +121,6 @@ void ReplaceSystemMalloc();
 
 // asan_linux.cc / asan_mac.cc / asan_win.cc
 void *AsanDoesNotSupportStaticLinkage();
-bool AsanShadowRangeIsAvailable();
 
 void GetPcSpBp(void *context, uptr *pc, uptr *sp, uptr *bp);
 
@@ -203,22 +202,12 @@ enum LinkerInitialized { LINKER_INITIALIZED = 0 };
 # define GET_CURRENT_FRAME() (uptr)0xDEADBEEF
 #endif
 
-#ifndef _WIN32
-const uptr kMmapGranularity = kPageSize;
-# define THREAD_CALLING_CONV
-typedef void* thread_return_t;
-#else
-const uptr kMmapGranularity = 1UL << 16;
-# define THREAD_CALLING_CONV __stdcall
-typedef DWORD thread_return_t;
-
+#ifdef _WIN32
 # ifndef ASAN_USE_EXTERNAL_SYMBOLIZER
 #  define ASAN_USE_EXTERNAL_SYMBOLIZER __asan_WinSymbolize
 bool __asan_WinSymbolize(const void *addr, char *out_buffer, int buffer_size);
 # endif
-#endif
-
-typedef thread_return_t (THREAD_CALLING_CONV *thread_callback_t)(void* arg);
+#endif  // _WIN32
 
 // These magic values are written to shadow for better error reporting.
 const int kAsanHeapLeftRedzoneMagic = 0xfa;

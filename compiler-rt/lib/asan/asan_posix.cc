@@ -32,31 +32,6 @@ static const uptr kAltStackSize = SIGSTKSZ * 4;  // SIGSTKSZ is not enough.
 
 namespace __asan {
 
-static inline bool IntervalsAreSeparate(uptr start1, uptr end1,
-                                        uptr start2, uptr end2) {
-  CHECK(start1 <= end1);
-  CHECK(start2 <= end2);
-  return (end1 < start2) || (end2 < start1);
-}
-
-// FIXME: this is thread-unsafe, but should not cause problems most of the time.
-// When the shadow is mapped only a single thread usually exists (plus maybe
-// several worker threads on Mac, which aren't expected to map big chunks of
-// memory).
-bool AsanShadowRangeIsAvailable() {
-  ProcessMaps procmaps;
-  uptr start, end;
-  uptr shadow_start = kLowShadowBeg;
-  if (kLowShadowBeg > 0) shadow_start -= kMmapGranularity;
-  uptr shadow_end = kHighShadowEnd;
-  while (procmaps.Next(&start, &end,
-                       /*offset*/0, /*filename*/0, /*filename_size*/0)) {
-    if (!IntervalsAreSeparate(start, end, shadow_start, shadow_end))
-      return false;
-  }
-  return true;
-}
-
 static void MaybeInstallSigaction(int signum,
                                   void (*handler)(int, siginfo_t *, void *)) {
   if (!AsanInterceptsSignal(signum))

@@ -51,6 +51,15 @@ typedef unsigned long    DWORD;  // NOLINT
 # define USED __attribute__((used))
 #endif
 
+#if defined(_WIN32)
+typedef DWORD thread_return_t;
+# define THREAD_CALLING_CONV __stdcall
+#else  // _WIN32
+typedef void* thread_return_t;
+# define THREAD_CALLING_CONV
+#endif  // _WIN32
+typedef thread_return_t (THREAD_CALLING_CONV *thread_callback_t)(void* arg);
+
 // If __WORDSIZE was undefined by the platform, define it in terms of the
 // compiler built-ins __LP64__ and _WIN64.
 #ifndef __WORDSIZE

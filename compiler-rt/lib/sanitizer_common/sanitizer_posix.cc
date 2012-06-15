@@ -80,6 +80,28 @@ void *Mprotect(uptr fixed_addr, uptr size) {
                        0, 0);
 }
 
+static inline bool IntervalsAreSeparate(uptr start1, uptr end1,
+                                        uptr start2, uptr end2) {
+  CHECK(start1 <= end1);
+  CHECK(start2 <= end2);
+  return (end1 < start2) || (end2 < start1);
+}
+
+// FIXME: this is thread-unsafe, but should not cause problems most of the time.
+// When the shadow is mapped only a single thread usually exists (plus maybe
+// several worker threads on Mac, which aren't expected to map big chunks of
+// memory).
+bool MemoryRangeIsAvailable(uptr range_start, uptr range_end) {
+  ProcessMaps procmaps;
+  uptr start, end;
+  while (procmaps.Next(&start, &end,
+                       /*offset*/0, /*filename*/0, /*filename_size*/0)) {
+    if (!IntervalsAreSeparate(start, end, range_start, range_end))
+      return false;
+  }
+  return true;
+}
+
 void DumpProcessMap() {
   ProcessMaps proc_maps;
   uptr start, end;

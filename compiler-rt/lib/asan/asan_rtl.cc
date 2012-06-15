@@ -539,7 +539,10 @@ void __asan_init() {
     DisableCoreDumper();
   }
 
-  if (AsanShadowRangeIsAvailable()) {
+  uptr shadow_start = kLowShadowBeg;
+  if (kLowShadowBeg > 0) shadow_start -= kMmapGranularity;
+  uptr shadow_end = kHighShadowEnd;
+  if (MemoryRangeIsAvailable(shadow_start, shadow_end)) {
     if (kLowShadowBeg != kLowShadowEnd) {
       // mmap the low shadow plus at least one page.
       ReserveShadowMemoryRange(kLowShadowBeg - kMmapGranularity, kLowShadowEnd);
