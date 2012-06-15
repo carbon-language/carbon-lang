@@ -1596,9 +1596,9 @@ void ExprEngine::evalBind(ExplodedNodeSet &Dst, const Stmt *StoreE,
 
 /// evalStore - Handle the semantics of a store via an assignment.
 ///  @param Dst The node set to store generated state nodes
-///  @param AssignE The assignment expression if the store happens in an 
+///  @param AssignE The assignment expression if the store happens in an
 ///         assignment.
-///  @param LocatioinE The location expression that is stored to.
+///  @param LocationE The location expression that is stored to.
 ///  @param state The current simulation state
 ///  @param location The location to store the value
 ///  @param Val The value to be stored
