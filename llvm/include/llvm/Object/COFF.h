@@ -168,6 +168,9 @@ public:
   virtual section_iterator begin_sections() const;
   virtual section_iterator end_sections() const;
 
+  const coff_section *getCOFFSection(section_iterator &It) const;
+  const coff_symbol *getCOFFSymbol(symbol_iterator &It) const;
+
   virtual uint8_t getBytesInAddress() const;
   virtual StringRef getFileFormatName() const;
   virtual unsigned getArch() const;
@@ -184,6 +187,8 @@ public:
     return ec;
   }
   error_code getSymbolName(const coff_symbol *symbol, StringRef &Res) const;
+  ArrayRef<uint8_t> getSymbolAuxData(const coff_symbol *symbol) const;
+
   error_code getSectionName(const coff_section *Sec, StringRef &Res) const;
   error_code getSectionContents(const coff_section *Sec,
                                 ArrayRef<uint8_t> &Res) const;

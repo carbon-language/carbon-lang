@@ -622,6 +622,28 @@ error_code COFFObjectFile::getSymbolName(const coff_symbol *symbol,
   return object_error::success;
 }
 
+ArrayRef<uint8_t> COFFObjectFile::getSymbolAuxData(
+                                  const coff_symbol *symbol) const {
+  const uint8_t *aux = NULL;
+  
+  if ( symbol->NumberOfAuxSymbols > 0 ) {
+  // AUX data comes immediately after the symbol in COFF
+    aux = reinterpret_cast<const uint8_t *>(symbol + 1);
+# ifndef NDEBUG
+    // Verify that the aux symbol points to a valid entry in the symbol table.
+    uintptr_t offset = uintptr_t(aux) - uintptr_t(base());
+    if (offset < Header->PointerToSymbolTable
+        || offset >= Header->PointerToSymbolTable
+           + (Header->NumberOfSymbols * sizeof(coff_symbol)))
+      report_fatal_error("Aux Symbol data was outside of symbol table.");
+
+    assert((offset - Header->PointerToSymbolTable) % sizeof(coff_symbol)
+         == 0 && "Aux Symbol data did not point to the beginning of a symbol");
+  }
+# endif
+  return ArrayRef<uint8_t>(aux, symbol->NumberOfAuxSymbols * sizeof(coff_symbol));
+}
+
 error_code COFFObjectFile::getSectionName(const coff_section *Sec,
                                           StringRef &Res) const {
   StringRef Name;
@@ -693,6 +715,15 @@ error_code COFFObjectFile::getRelocationType(DataRefImpl Rel,
   Res = R->Type;
   return object_error::success;
 }
+
+const coff_section *COFFObjectFile::getCOFFSection(section_iterator &It) const {
+  return toSec(It->getRawDataRefImpl());
+}
+
+const coff_symbol *COFFObjectFile::getCOFFSymbol(symbol_iterator &It) const {
+  return toSymb(It->getRawDataRefImpl());
+}
+
 
 #define LLVM_COFF_SWITCH_RELOC_TYPE_NAME(enum) \
   case COFF::enum: res = #enum; break;
