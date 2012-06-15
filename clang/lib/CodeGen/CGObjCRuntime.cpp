@@ -334,7 +334,7 @@ void CGObjCRuntime::EmitAtSynchronizedStmt(CodeGenFunction &CGF,
 ///
 /// \param method - may be null
 /// \param resultType - the result type to use if there's no method
-/// \param argInfo - the actual arguments, including implicit ones
+/// \param callArgs - the actual arguments, including implicit ones
 CGObjCRuntime::MessageSendInfo
 CGObjCRuntime::getMessageSendInfo(const ObjCMethodDecl *method,
                                   QualType resultType,
