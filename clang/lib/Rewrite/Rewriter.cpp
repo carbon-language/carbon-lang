@@ -30,7 +30,7 @@ raw_ostream &RewriteBuffer::write(raw_ostream &os) const {
 }
 
 /// \brief Return true if this character is non-new-line whitespace:
-/// ' ', '\t', '\f', '\v', '\r'.
+/// ' ', '\\t', '\\f', '\\v', '\\r'.
 static inline bool isWhitespace(unsigned char c) {
   switch (c) {
   case ' ':
