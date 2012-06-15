@@ -136,6 +136,7 @@ void llvm_gcda_start_file(const char *orig_filename) {
     output_file = fopen(filename, "w+b");
     if (!output_file) {
       fprintf(stderr, "profiling:%s: cannot open\n", filename);
+      free(filename);
       return;
     }
   }
