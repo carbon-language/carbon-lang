@@ -106,13 +106,14 @@ void DumpProcessMap() {
   ProcessMaps proc_maps;
   uptr start, end;
   const sptr kBufSize = 4095;
-  char filename[kBufSize];
+  char *filename = (char*)MmapOrDie(kBufSize, __FUNCTION__);
   Report("Process memory map follows:\n");
   while (proc_maps.Next(&start, &end, /* file_offset */0,
                         filename, kBufSize)) {
     Printf("\t%p-%p\t%s\n", (void*)start, (void*)end, filename);
   }
   Report("End of process memory map.\n");
+  UnmapOrDie(filename, kBufSize);
 }
 
 void DisableCoreDumper() {
