@@ -2631,7 +2631,7 @@ LexNextToken:
       ParsingPreprocessorDirective = false;
 
       // Restore comment saving mode, in case it was disabled for directive.
-      if (!LexingRawMode)
+      if (PP)
         SetCommentRetentionState(PP->getCommentRetentionState());
 
       // Since we consumed a newline, we are back at the start of a line.

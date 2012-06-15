@@ -6,3 +6,7 @@
 /* bar */
 // CHECK: /* bar */
 
+#if FOO
+#endif
+/* baz */
+// CHECK: /* baz */
