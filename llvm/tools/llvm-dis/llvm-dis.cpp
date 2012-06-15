@@ -93,7 +93,6 @@ public:
         DIVariable Var(DDI->getVariable());
         if (!Padded) {
           OS.PadToColumn(50);
-          Padded = true;
           OS << ";";
         }
         OS << " [debug variable = " << Var.getName() << "]";
@@ -102,7 +101,6 @@ public:
         DIVariable Var(DVI->getVariable());
         if (!Padded) {
           OS.PadToColumn(50);
-          Padded = true;
           OS << ";";
         }
         OS << " [debug variable = " << Var.getName() << "]";
