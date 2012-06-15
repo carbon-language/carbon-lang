@@ -39,21 +39,18 @@ struct AddressInfo {
   int line;
   int column;
 
-  // Deletes all strings.
+  AddressInfo() {
+    internal_memset(this, 0, sizeof(AddressInfo));
+  }
+  // Deletes all strings and sets all fields to zero.
   void Clear();
 };
 
-struct AddressInfoList {
-  AddressInfoList *next;
-  AddressInfo info;
-
-  // Deletes all nodes in a list.
-  void Clear();
-};
-
-// Returns a list of descriptions for a given address (in all inlined
-// functions). The ownership is transferred to the caller.
-AddressInfoList* SymbolizeCode(uptr address);
+// Fills at most "max_frames" elements of "frames" with descriptions
+// for a given address (in all inlined functions). Returns the number
+// of descriptions actually filled.
+// This function should NOT be called from two threads simultaneously.
+uptr SymbolizeCode(uptr address, AddressInfo *frames, uptr max_frames);
 
 }  // namespace __sanitizer
 

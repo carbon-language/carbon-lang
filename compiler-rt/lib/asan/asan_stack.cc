@@ -42,22 +42,27 @@ void AsanStackTrace::PrintStack(uptr *addr, uptr size) {
   ProcessMaps proc_maps;
   uptr frame_num = 0;
   for (uptr i = 0; i < size && addr[i]; i++) {
-    proc_maps.Reset();
     uptr pc = addr[i];
-    uptr offset;
-    char filename[4096];
+    AddressInfo addr_frames[64];
+    uptr addr_frames_num = 0;
     if (FLAG_symbolize) {
-      AddressInfoList *address_info_list = SymbolizeCode(pc);
-      for (AddressInfoList *entry = address_info_list; entry;
-           entry = entry->next) {
-        AddressInfo info = entry->info;
-        AsanPrintf("    #%zu 0x%zx %s:%d:%d\n", frame_num, pc,
-                                                (info.file) ? info.file : "",
-                                                info.line, info.column);
+      addr_frames_num = SymbolizeCode(pc, addr_frames,
+                                      ASAN_ARRAY_SIZE(addr_frames));
+    }
+    if (addr_frames_num > 0) {
+      for (uptr j = 0; j < addr_frames_num; j++) {
+        AddressInfo &info = addr_frames[j];
+        AsanPrintf("    #%zu 0x%zx", frame_num, pc);
+        if (info.module) {
+          AsanPrintf(" (%s+0x%zx)", info.module, info.module_offset);
+        }
+        AsanPrintf("\n");
+        info.Clear();
         frame_num++;
       }
-      address_info_list->Clear();
     } else {
+      uptr offset;
+      char filename[4096];
       if (proc_maps.GetObjectNameAndOffset(pc, &offset,
                                            filename, sizeof(filename))) {
         AsanPrintf("    #%zu 0x%zx (%s+0x%zx)\n", frame_num, pc, filename,
