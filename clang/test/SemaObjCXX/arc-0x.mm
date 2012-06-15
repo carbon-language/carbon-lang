@@ -60,15 +60,21 @@ void testAutoId(id obj) {
   auto x = obj; // expected-warning{{'auto' deduced as 'id' in declaration of 'x'}}
 }
 
+@interface Array
++ (instancetype)new;
+- (id)objectAtIndex:(int)index;
+@end
+
 // ...but don't warn if it's coming from a template parameter.
-template<typename T>
-void autoTemplateFunction(T param, id obj) {
+template<typename T, int N>
+void autoTemplateFunction(T param, id obj, Array *arr) {
   auto x = param; // no-warning
   auto y = obj; // expected-warning{{'auto' deduced as 'id' in declaration of 'y'}}
+  auto z = [arr objectAtIndex:N]; // expected-warning{{'auto' deduced as 'id' in declaration of 'z'}}
 }
 
 void testAutoIdTemplate(id obj) {
-  autoTemplateFunction(obj, obj); // no-warning
+  autoTemplateFunction<id, 2>(obj, obj, [Array new]); // no-warning
 }
 
 
