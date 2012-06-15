@@ -63,16 +63,24 @@ void SleepForSeconds(int seconds);
 void NORETURN Exit(int exitcode);
 void NORETURN Abort();
 int Atexit(void (*function)(void));
+void SortArray(uptr *array, uptr size);
 
-// Bit twiddling.
+// Atomics
+int AtomicInc(int *a);
+u16 AtomicExchange(u16 *a, u16 new_val);
+u8 AtomicExchange(u8 *a, u8 new_val);
+
+// Math
 inline bool IsPowerOfTwo(uptr x) {
   return (x & (x - 1)) == 0;
 }
 inline uptr RoundUpTo(uptr size, uptr boundary) {
-  // FIXME: Use CHECK here.
-  RAW_CHECK(IsPowerOfTwo(boundary));
+  CHECK(IsPowerOfTwo(boundary));
   return (size + boundary - 1) & ~(boundary - 1);
 }
+// Don't use std::min and std::max, to minimize dependency on libstdc++.
+template<class T> T Min(T a, T b) { return a < b ? a : b; }
+template<class T> T Max(T a, T b) { return a > b ? a : b; }
 
 #if __WORDSIZE == 64
 # define FIRST_32_SECOND_64(a, b) (b)

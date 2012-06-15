@@ -129,9 +129,6 @@ bool AsanInterceptsSignal(int signum);
 void SetAlternateSignalStack();
 void UnsetAlternateSignalStack();
 void InstallSignalHandlers();
-int AtomicInc(int *a);
-u16 AtomicExchange(u16 *a, u16 new_val);
-u8 AtomicExchange(u8 *a, u8 new_val);
 
 // Wrapper for TLS/TSD.
 void AsanTSDInit(void (*destructor)(void *tsd));
@@ -142,12 +139,6 @@ void AppendToErrorMessageBuffer(const char *buffer);
 // asan_printf.cc
 void AsanPrintf(const char *format, ...);
 void AsanReport(const char *format, ...);
-
-// Don't use std::min and std::max, to minimize dependency on libstdc++.
-template<class T> T Min(T a, T b) { return a < b ? a : b; }
-template<class T> T Max(T a, T b) { return a > b ? a : b; }
-
-void SortArray(uptr *array, uptr size);
 
 // asan_poisoning.cc
 // Poisons the shadow memory for "size" bytes starting from "addr".

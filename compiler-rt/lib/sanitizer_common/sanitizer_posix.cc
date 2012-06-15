@@ -27,6 +27,10 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#ifdef ANDROID
+#include <sys/atomics.h>
+#endif
+
 namespace __sanitizer {
 
 // ------------- sanitizer_common.h
@@ -110,6 +114,22 @@ void Abort() {
 
 int Atexit(void (*function)(void)) {
   return atexit(function);
+}
+
+int AtomicInc(int *a) {
+#ifdef ANDROID
+  return __atomic_inc(a) + 1;
+#else
+  return __sync_add_and_fetch(a, 1);
+#endif
+}
+
+u16 AtomicExchange(u16 *a, u16 new_val) {
+  return __sync_lock_test_and_set(a, new_val);
+}
+
+u8 AtomicExchange(u8 *a, u8 new_val) {
+  return __sync_lock_test_and_set(a, new_val);
 }
 
 // -------------- sanitizer_libc.h

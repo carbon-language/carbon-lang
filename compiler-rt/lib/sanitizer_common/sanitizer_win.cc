@@ -111,6 +111,30 @@ int Atexit(void (*function)(void)) {
   return atexit(function);
 }
 
+int AtomicInc(int *a) {
+  return InterlockedExchangeAdd((LONG*)a, 1) + 1;
+}
+
+u16 AtomicExchange(u16 *a, u16 new_val) {
+  // InterlockedExchange16 seems unavailable on some MSVS installations.
+  // Everybody stand back, I pretend to know inline assembly!
+  // FIXME: I assume VC is smart enough to save/restore eax/ecx?
+  __asm {
+    mov eax, a
+    mov cx, new_val
+    xchg [eax], cx  ; NOLINT
+    mov new_val, cx
+  }
+  return new_val;
+}
+
+u8 AtomicExchange(u8 *a, u8 new_val) {
+  // FIXME: can we do this with a proper xchg intrinsic?
+  u8 t = *a;
+  *a = new_val;
+  return t;
+}
+
 // ------------------ sanitizer_libc.h
 void *internal_mmap(void *addr, uptr length, int prot, int flags,
                     int fd, u64 offset) {

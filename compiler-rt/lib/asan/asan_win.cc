@@ -24,10 +24,6 @@
 #include "asan_lock.h"
 #include "asan_thread.h"
 
-// Should not add dependency on libstdc++,
-// since most of the stuff here is inlinable.
-#include <algorithm>
-
 namespace __asan {
 
 // ---------------------- Stacktraces, symbols, etc. ---------------- {{{1
@@ -168,30 +164,6 @@ bool AsanShadowRangeIsAvailable() {
   return true;
 }
 
-int AtomicInc(int *a) {
-  return InterlockedExchangeAdd((LONG*)a, 1) + 1;
-}
-
-u16 AtomicExchange(u16 *a, u16 new_val) {
-  // InterlockedExchange16 seems unavailable on some MSVS installations.
-  // Everybody stand back, I pretend to know inline assembly!
-  // FIXME: I assume VC is smart enough to save/restore eax/ecx?
-  __asm {
-    mov eax, a
-    mov cx, new_val
-    xchg [eax], cx  ; NOLINT
-    mov new_val, cx
-  }
-  return new_val;
-}
-
-u8 AtomicExchange(u8 *a, u8 new_val) {
-  // FIXME: can we do this with a proper xchg intrinsic?
-  u8 t = *a;
-  *a = new_val;
-  return t;
-}
-
 void SetAlternateSignalStack() {
   // FIXME: Decide what to do on Windows.
 }
@@ -202,10 +174,6 @@ void UnsetAlternateSignalStack() {
 
 void InstallSignalHandlers() {
   // FIXME: Decide what to do on Windows.
-}
-
-void SortArray(uptr *array, uptr size) {
-  std::sort(array, array + size);
 }
 
 }  // namespace __asan

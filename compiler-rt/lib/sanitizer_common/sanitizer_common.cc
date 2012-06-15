@@ -14,6 +14,10 @@
 #include "sanitizer_common.h"
 #include "sanitizer_libc.h"
 
+// Should not add dependency on libstdc++,
+// since most of the stuff here is inlinable.
+#include <algorithm>
+
 namespace __sanitizer {
 
 void RawWrite(const char *buffer) {
@@ -54,6 +58,10 @@ uptr ReadFileToBuffer(const char *file_name, char **buff,
       break;
   }
   return read_len;
+}
+
+void SortArray(uptr *array, uptr size) {
+  std::sort(array, array + size);
 }
 
 }  // namespace __sanitizer

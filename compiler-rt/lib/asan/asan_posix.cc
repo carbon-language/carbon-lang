@@ -28,14 +28,6 @@
 #include <sys/resource.h>
 #include <unistd.h>
 
-#ifdef ANDROID
-#include <sys/atomics.h>
-#endif
-
-// Should not add dependency on libstdc++,
-// since most of the stuff here is inlinable.
-#include <algorithm>
-
 static const uptr kAltStackSize = SIGSTKSZ * 4;  // SIGSTKSZ is not enough.
 
 namespace __asan {
@@ -132,26 +124,6 @@ void InstallSignalHandlers() {
   if (FLAG_use_sigaltstack) SetAlternateSignalStack();
   MaybeInstallSigaction(SIGSEGV, ASAN_OnSIGSEGV);
   MaybeInstallSigaction(SIGBUS, ASAN_OnSIGSEGV);
-}
-
-int AtomicInc(int *a) {
-#ifdef ANDROID
-  return __atomic_inc(a) + 1;
-#else
-  return __sync_add_and_fetch(a, 1);
-#endif
-}
-
-u16 AtomicExchange(u16 *a, u16 new_val) {
-  return __sync_lock_test_and_set(a, new_val);
-}
-
-u8 AtomicExchange(u8 *a, u8 new_val) {
-  return __sync_lock_test_and_set(a, new_val);
-}
-
-void SortArray(uptr *array, uptr size) {
-  std::sort(array, array + size);
 }
 
 // ---------------------- TSD ---------------- {{{1
