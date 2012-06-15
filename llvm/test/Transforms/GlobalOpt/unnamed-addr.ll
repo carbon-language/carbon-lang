@@ -4,11 +4,23 @@
 @b = internal global i32 0, align 4
 @c = internal global i32 0, align 4
 @d = internal constant [4 x i8] c"foo\00", align 1
+@e = linkonce_odr global i32 0
 
 ; CHECK: @a = internal global i32 0, align 4
 ; CHECK: @b = internal global i32 0, align 4
 ; CHECK: @c = internal unnamed_addr global i32 0, align 4
 ; CHECK: @d = internal unnamed_addr constant [4 x i8] c"foo\00", align 1
+; CHECK: @e = linkonce_odr global i32 0
+
+define i32 @get_e() {
+       %t = load i32* @e
+       ret i32 %t
+}
+
+define void @set_e(i32 %x) {
+       store i32 %x, i32* @e
+       ret void
+}
 
 define i1 @bah(i64 %i) nounwind readonly optsize ssp {
 entry:

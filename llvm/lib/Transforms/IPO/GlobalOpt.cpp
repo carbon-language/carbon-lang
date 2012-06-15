@@ -1729,6 +1729,9 @@ bool GlobalOpt::ProcessGlobal(GlobalVariable *GV,
     return true;
   }
 
+  if (!GV->hasLocalLinkage())
+    return false;
+
   SmallPtrSet<const PHINode*, 16> PHIUsers;
   GlobalStatus GS;
 
