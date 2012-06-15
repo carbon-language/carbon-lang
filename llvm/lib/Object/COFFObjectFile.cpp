@@ -639,8 +639,8 @@ ArrayRef<uint8_t> COFFObjectFile::getSymbolAuxData(
 
     assert((offset - Header->PointerToSymbolTable) % sizeof(coff_symbol)
          == 0 && "Aux Symbol data did not point to the beginning of a symbol");
-  }
 # endif
+  }
   return ArrayRef<uint8_t>(aux, symbol->NumberOfAuxSymbols * sizeof(coff_symbol));
 }
 
