@@ -11,6 +11,7 @@
 #include "ReferenceKinds.h"
 
 #include "llvm/ADT/StringRef.h"
+#include "llvm/ADT/StringSwitch.h"
 
 
 namespace lld {
@@ -52,41 +53,25 @@ KindHandler_x86_64::~KindHandler_x86_64() {
 }
 
 Reference::Kind KindHandler_x86_64::stringToKind(StringRef str) {
-  if ( str.equals("none") )
-    return none;
-  else if ( str.equals("branch32") )
-    return branch32;
-  else if ( str.equals("ripRel32") )
-    return ripRel32;
-  else if ( str.equals("ripRel32_1") )
-    return ripRel32_1;
-  else if ( str.equals("ripRel32_2") )
-    return ripRel32_2;
-  else if ( str.equals("ripRel32_4") )
-    return ripRel32_4;
-  else if ( str.equals("gotLoadRipRel32") )
-    return gotLoadRipRel32;
-  else if ( str.equals("gotLoadRipRel32NowLea") )
-    return gotLoadRipRel32NowLea;
-  else if ( str.equals("gotUseRipRel32") )
-    return gotUseRipRel32;
-  else if ( str.equals("tlvLoadRipRel32") )
-    return tlvLoadRipRel32;
-  else if ( str.equals("tlvLoadRipRel32NowLea") )
-    return tlvLoadRipRel32NowLea;
-  else if ( str.equals("pointer64") )
-    return pointer64;
-  else if ( str.equals("pointerRel32") )
-    return pointerRel32;
-  else if ( str.equals("lazyTarget") )
-    return lazyTarget;
-  else if ( str.equals("lazyImmediate") )
-    return lazyImmediate;
-  else if ( str.equals("subordinateFDE") )
-    return subordinateFDE;
-  else if ( str.equals("subordinateLSDA") )
-    return subordinateLSDA;
-  
+  return llvm::StringSwitch<Reference::Kind>(str)
+    .Case("none",                  none)
+    .Case("branch32",              branch32)
+    .Case("ripRel32",              ripRel32)
+    .Case("ripRel32_1",            ripRel32_1)
+    .Case("ripRel32_2",            ripRel32_2)
+    .Case("ripRel32_4",            ripRel32_4)
+    .Case("gotLoadRipRel32",       gotLoadRipRel32)
+    .Case("gotLoadRipRel32NowLea", gotLoadRipRel32NowLea)
+    .Case("gotUseRipRel32",        gotUseRipRel32)
+    .Case("tlvLoadRipRel32",       tlvLoadRipRel32)
+    .Case("tlvLoadRipRel32NowLea", tlvLoadRipRel32NowLea)
+    .Case("pointer64",             pointer64)
+    .Case("pointerRel32",          pointerRel32)
+    .Case("lazyTarget",            lazyTarget)
+    .Case("lazyImmediate",         lazyImmediate)
+    .Case("subordinateFDE",        subordinateFDE)
+    .Case("subordinateLSDA",       subordinateLSDA);
+
   assert(0 && "invalid x86_64 Reference kind");
   return 0;
 }
@@ -203,20 +188,14 @@ KindHandler_x86::~KindHandler_x86() {
 }
 
 Reference::Kind KindHandler_x86::stringToKind(StringRef str) {
-  if ( str.equals("none") )
-    return none;
-  else if ( str.equals("branch32") )
-    return branch32;
-  else if ( str.equals("abs32") )
-    return abs32;
-  else if ( str.equals("funcRel32") )
-    return funcRel32;
-  else if ( str.equals("pointer32") )
-    return pointer32;
-  else if ( str.equals("lazyTarget") )
-    return lazyTarget;
-  else if ( str.equals("lazyImmediate") )
-    return lazyImmediate;
+  return llvm::StringSwitch<Reference::Kind>(str)
+    .Case("none",                  none)
+    .Case("branch32",              branch32)
+    .Case("abs32",                 abs32)
+    .Case("funcRel32",             funcRel32)
+    .Case("pointer32",             pointer32)
+    .Case("lazyTarget",            lazyTarget)
+    .Case("lazyImmediate",         lazyImmediate);
   
   assert(0 && "invalid x86 Reference kind");
   return 0;
@@ -299,30 +278,19 @@ KindHandler_arm::~KindHandler_arm() {
 }
 
 Reference::Kind KindHandler_arm::stringToKind(StringRef str) {
-  if ( str.equals("none") )
-    return none;
-  else if ( str.equals("thumbBranch22") )
-    return thumbBranch22;
-  else if ( str.equals("armBranch24") )
-    return armBranch24;
-  else if ( str.equals("thumbAbsLow16") )
-    return thumbAbsLow16;
-  else if ( str.equals("thumbAbsHigh16") )
-    return thumbAbsHigh16;
-  else if ( str.equals("thumbPcRelLow16") )
-    return thumbPcRelLow16;
-  else if ( str.equals("thumbPcRelHigh16") )
-    return thumbPcRelHigh16;
-  else if ( str.equals("abs32") )
-    return abs32;
-  else if ( str.equals("pointer32") )
-    return pointer32;
-  else if ( str.equals("lazyTarget") )
-    return lazyTarget;
-  else if ( str.equals("lazyImmediate") )
-    return lazyImmediate;
-  else if ( str.equals("subordinateLSDA") )
-    return subordinateLSDA;
+ return llvm::StringSwitch<Reference::Kind>(str)
+    .Case("none",               none)
+    .Case("thumbBranch22",      thumbBranch22)
+    .Case("armBranch24",        armBranch24)
+    .Case("thumbAbsLow16",      thumbAbsLow16)
+    .Case("thumbAbsHigh16",     thumbAbsHigh16)
+    .Case("thumbPcRelLow16",    thumbPcRelLow16)
+    .Case("thumbPcRelHigh16",   thumbPcRelHigh16)
+    .Case("abs32",              abs32)
+    .Case("pointer32",          pointer32)
+    .Case("lazyTarget",         lazyTarget)
+    .Case("lazyImmediate",      lazyImmediate)
+    .Case("subordinateLSDA",    subordinateLSDA);
 
   assert(0 && "invalid ARM Reference kind");
   return 0;
