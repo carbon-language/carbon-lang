@@ -154,8 +154,8 @@ static void AddCXXOperatorKeyword(StringRef Keyword,
   Info.setIsCPlusPlusOperatorKeyword();
 }
 
-/// AddObjCKeyword - Register an Objective-C @keyword like "class" "selector" or
-/// "property".
+/// AddObjCKeyword - Register an Objective-C \@keyword like "class" "selector"
+/// or "property".
 static void AddObjCKeyword(StringRef Name,
                            tok::ObjCKeywordKind ObjCID,
                            IdentifierTable &Table) {
