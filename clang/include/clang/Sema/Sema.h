@@ -1112,6 +1112,8 @@ public:
 
   void DiagnoseUseOfUnimplementedSelectors();
 
+  bool isSimpleTypeSpecifier(tok::TokenKind Kind) const;
+
   ParsedType getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
                          Scope *S, CXXScopeSpec *SS = 0,
                          bool isClassName = false,

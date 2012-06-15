@@ -1377,39 +1377,6 @@ bool Parser::ParseCXXCondition(ExprResult &ExprOut,
   return false;
 }
 
-/// \brief Determine whether the current token starts a C++
-/// simple-type-specifier.
-bool Parser::isCXXSimpleTypeSpecifier() const {
-  switch (Tok.getKind()) {
-  case tok::annot_typename:
-  case tok::kw_short:
-  case tok::kw_long:
-  case tok::kw___int64:
-  case tok::kw___int128:
-  case tok::kw_signed:
-  case tok::kw_unsigned:
-  case tok::kw_void:
-  case tok::kw_char:
-  case tok::kw_int:
-  case tok::kw_half:
-  case tok::kw_float:
-  case tok::kw_double:
-  case tok::kw_wchar_t:
-  case tok::kw_char16_t:
-  case tok::kw_char32_t:
-  case tok::kw_bool:
-  case tok::kw_decltype:
-  case tok::kw_typeof:
-  case tok::kw___underlying_type:
-    return true;
-
-  default:
-    break;
-  }
-
-  return false;
-}
-
 /// ParseCXXSimpleTypeSpecifier - [C++ 7.1.5.2] Simple type specifiers.
 /// This should only be called when the current token is known to be part of
 /// simple-type-specifier.
