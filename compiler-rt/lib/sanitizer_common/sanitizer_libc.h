@@ -29,6 +29,7 @@ int internal_memcmp(const void* s1, const void* s2, uptr n);
 void *internal_memcpy(void *dest, const void *src, uptr n);
 // Should not be used in performance-critical places.
 void *internal_memset(void *s, int c, uptr n);
+char* internal_strchr(const char *s, int c);
 int internal_strcmp(const char *s1, const char *s2);
 char *internal_strdup(const char *s);
 uptr internal_strlen(const char *s);

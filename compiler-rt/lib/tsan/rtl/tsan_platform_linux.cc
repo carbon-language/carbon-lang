@@ -221,7 +221,7 @@ void GetThreadStackAndTls(bool main, uptr *stk_addr, uptr *stk_size,
       end += read;
     }
     end[0] = 0;
-    end = (char*)internal_strstr(buf, "[stack]");
+    end = (char*)REAL(strstr)(buf, "[stack]");
     if (end == 0) {
       TsanPrintf("Can't find [stack] in /proc/self/maps\n");
       Die();

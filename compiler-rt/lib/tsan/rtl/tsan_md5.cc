@@ -166,11 +166,11 @@ void MD5_Update(MD5_CTX *ctx, void *data, ulong_t size) {
     free = 64 - used;
 
     if (size < free) {
-      real_memcpy(&ctx->buffer[used], data, size);
+      REAL(memcpy)(&ctx->buffer[used], data, size);
       return;
     }
 
-    real_memcpy(&ctx->buffer[used], data, free);
+    REAL(memcpy)(&ctx->buffer[used], data, free);
     data = (unsigned char *)data + free;
     size -= free;
     body(ctx, ctx->buffer, 64);
@@ -181,7 +181,7 @@ void MD5_Update(MD5_CTX *ctx, void *data, ulong_t size) {
     size &= 0x3f;
   }
 
-  real_memcpy(ctx->buffer, data, size);
+  REAL(memcpy)(ctx->buffer, data, size);
 }
 
 void MD5_Final(unsigned char *result, MD5_CTX *ctx) {
@@ -194,13 +194,13 @@ void MD5_Final(unsigned char *result, MD5_CTX *ctx) {
   free = 64 - used;
 
   if (free < 8) {
-    real_memset(&ctx->buffer[used], 0, free);
+    REAL(memset)(&ctx->buffer[used], 0, free);
     body(ctx, ctx->buffer, 64);
     used = 0;
     free = 64;
   }
 
-  real_memset(&ctx->buffer[used], 0, free - 8);
+  REAL(memset)(&ctx->buffer[used], 0, free - 8);
 
   ctx->lo <<= 3;
   ctx->buffer[56] = ctx->lo;
@@ -231,7 +231,7 @@ void MD5_Final(unsigned char *result, MD5_CTX *ctx) {
   result[14] = ctx->d >> 16;
   result[15] = ctx->d >> 24;
 
-  real_memset(ctx, 0, sizeof(*ctx));
+  REAL(memset)(ctx, 0, sizeof(*ctx));
 }
 
 MD5Hash md5_hash(const void *data, uptr size) {

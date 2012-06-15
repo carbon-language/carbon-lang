@@ -287,7 +287,7 @@ TSAN_INTERCEPTOR(void*, calloc, uptr size, uptr n) {
   {
     SCOPED_INTERCEPTOR_RAW(calloc, size, n);
     p = user_alloc(thr, pc, n * size);
-    real_memset(p, 0, n * size);
+    REAL(memset)(p, 0, n * size);
   }
   invoke_malloc_hook(p, n * size);
   return p;
@@ -1283,7 +1283,7 @@ TSAN_INTERCEPTOR(int, sigaction, int sig, sigaction_t *act, sigaction_t *old) {
 TSAN_INTERCEPTOR(sighandler_t, signal, int sig, sighandler_t h) {
   sigaction_t act = {};
   act.sa_handler = h;
-  real_memset(&act.sa_mask, -1, sizeof(act.sa_mask));
+  REAL(memset)(&act.sa_mask, -1, sizeof(act.sa_mask));
   act.sa_flags = 0;
   sigaction_t old = {};
   int res = sigaction(sig, &act, &old);
@@ -1519,30 +1519,6 @@ void InitializeInterceptors() {
     TsanPrintf("ThreadSanitizer: failed to create thread key\n");
     Die();
   }
-}
-
-void real_memset(void *ptr, int c, uptr size) {
-  REAL(memset)(ptr, c, size);
-}
-
-void real_memcpy(void *dst, const void *src, uptr size) {
-  REAL(memcpy)(dst, src, size);
-}
-
-int internal_strncmp(const char *s1, const char *s2, uptr size) {
-  return REAL(strncmp)(s1, s2, size);
-}
-
-void internal_strcpy(char *s1, const char *s2) {
-  REAL(strcpy)(s1, s2);  // NOLINT
-}
-
-const char *internal_strstr(const char *where, const char *what) {
-  return REAL(strstr)(where, what);
-}
-
-const char *internal_strchr(const char *where, char what) {
-  return (const char*)REAL(strchr)((void*)where, what);
 }
 
 void internal_start_thread(void(*func)(void *arg), void *arg) {

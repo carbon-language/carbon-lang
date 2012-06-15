@@ -232,16 +232,6 @@ uptr internal_strnlen(const char *s, uptr maxlen) {
   return i;
 }
 
-char* internal_strchr(const char *s, int c) {
-  while (true) {
-    if (*s == (char)c)
-      return (char*)s;
-    if (*s == 0)
-      return 0;
-    s++;
-  }
-}
-
 char *internal_strstr(const char *haystack, const char *needle) {
   // This is O(N^2), but we are not using it in hot places.
   uptr len1 = internal_strlen(haystack);

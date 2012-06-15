@@ -14,6 +14,7 @@
 #ifndef TSAN_DEFS_H
 #define TSAN_DEFS_H
 
+#include "interception/interception.h"
 #include "sanitizer_common/sanitizer_internal_defs.h"
 #include "sanitizer_common/sanitizer_libc.h"
 #include "tsan_stat.h"
@@ -134,13 +135,6 @@ T RoundUp(T p, int align) {
   return (T)(((u64)p + align - 1) & ~(align - 1));
 }
 
-void real_memset(void *ptr, int c, uptr size);
-void real_memcpy(void *dst, const void *src, uptr size);
-int internal_strncmp(const char *s1, const char *s2, uptr size);
-void internal_strcpy(char *s1, const char *s2);
-const char *internal_strstr(const char *where, const char *what);
-const char *internal_strchr(const char *where, char what);
-
 struct MD5Hash {
   u64 hash[2];
   bool operator==(const MD5Hash &other) const {
@@ -159,5 +153,10 @@ class RegionAlloc;
 class StackTrace;
 
 }  // namespace __tsan
+
+DECLARE_REAL(void*, memset, void *ptr, int v, uptr size);
+DECLARE_REAL(void*, memcpy, void *dst, const void *src, uptr size);
+DECLARE_REAL(int, strncmp, const char *s1, const char *s2, uptr n);
+DECLARE_REAL(const char*, strstr, const char *s1, const char *s2);
 
 #endif  // TSAN_DEFS_H

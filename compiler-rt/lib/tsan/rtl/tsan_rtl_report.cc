@@ -50,9 +50,9 @@ static void StackStripMain(ReportStack *stack) {
   const char *path_prefix = flags()->strip_path_prefix;
   uptr path_prefix_len = internal_strlen(path_prefix);
   for (ReportStack *ent = stack; ent; ent = ent->next) {
-    if (ent->func && 0 == internal_strncmp(ent->func, prefix, prefix_len))
+    if (ent->func && 0 == REAL(strncmp)(ent->func, prefix, prefix_len))
       ent->func += prefix_len;
-    if (ent->file && 0 == internal_strncmp(ent->file, path_prefix,
+    if (ent->file && 0 == REAL(strncmp)(ent->file, path_prefix,
                                            path_prefix_len))
       ent->file += path_prefix_len;
     if (ent->file && ent->file[0] == '.' && ent->file[1] == '/')

@@ -68,7 +68,7 @@ bool SuppressionMatch(char *templ, const char *str) {
     tpos = (char*)internal_strchr(templ, '*');
     if (tpos != 0)
       tpos[0] = 0;
-    spos = internal_strstr(str, templ);
+    spos = REAL(strstr)(str, templ);
     str = spos + internal_strlen(templ);
     templ = tpos;
     if (tpos)
@@ -93,18 +93,18 @@ Suppression *SuppressionParse(const char* supp) {
       while (line != end2 && (end2[-1] == ' ' || end2[-1] == '\t'))
         end2--;
       SuppressionType stype;
-      if (0 == internal_strncmp(line, "race:", sizeof("race:") - 1)) {
+      if (0 == REAL(strncmp)(line, "race:", sizeof("race:") - 1)) {
         stype = SuppressionRace;
         line += sizeof("race:") - 1;
-      } else if (0 == internal_strncmp(line, "thread:",
+      } else if (0 == REAL(strncmp)(line, "thread:",
           sizeof("thread:") - 1)) {
         stype = SuppressionThread;
         line += sizeof("thread:") - 1;
-      } else if (0 == internal_strncmp(line, "mutex:",
+      } else if (0 == REAL(strncmp)(line, "mutex:",
           sizeof("mutex:") - 1)) {
         stype = SuppressionMutex;
         line += sizeof("mutex:") - 1;
-      } else if (0 == internal_strncmp(line, "signal:",
+      } else if (0 == REAL(strncmp)(line, "signal:",
           sizeof("signal:") - 1)) {
         stype = SuppressionSignal;
         line += sizeof("signal:") - 1;
@@ -118,7 +118,7 @@ Suppression *SuppressionParse(const char* supp) {
       head = s;
       s->type = stype;
       s->templ = (char*)internal_alloc(MBlockSuppression, end2 - line + 1);
-      real_memcpy(s->templ, line, end2 - line);
+      REAL(memcpy)(s->templ, line, end2 - line);
       s->templ[end2 - line] = 0;
     }
     if (end[0] == 0)

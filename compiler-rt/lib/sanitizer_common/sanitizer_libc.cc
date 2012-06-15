@@ -75,6 +75,16 @@ int internal_strcmp(const char *s1, const char *s2) {
   return 0;
 }
 
+char* internal_strchr(const char *s, int c) {
+  while (true) {
+    if (*s == (char)c)
+      return (char*)s;
+    if (*s == 0)
+      return 0;
+    s++;
+  }
+}
+
 char *internal_strrchr(const char *s, int c) {
   const char *res = 0;
   for (uptr i = 0; s[i]; i++) {

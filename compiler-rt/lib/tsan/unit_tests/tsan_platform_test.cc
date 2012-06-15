@@ -79,7 +79,7 @@ TEST(Platform, FileOps) {
   EXPECT_EQ(len1, internal_read(fd, buf, len1));
   EXPECT_EQ(0, internal_memcmp(buf, str1, len1));
   EXPECT_EQ((char)0, buf[len1 + 1]);
-  real_memset(buf, 0, len1);
+  REAL(memset)(buf, 0, len1);
   EXPECT_EQ(len2, internal_read(fd, buf, len2));
   EXPECT_EQ(0, internal_memcmp(buf, str2, len2));
   internal_close(fd);
