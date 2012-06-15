@@ -3354,22 +3354,22 @@ parseMSRMaskOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
       .Case("xpsr_nzcvq", 0x803)
       .Case("xpsr_g", 0x403)
       .Case("xpsr_nzcvqg", 0xc03)
-      .Case("ipsr", 5)
-      .Case("epsr", 6)
-      .Case("iepsr", 7)
-      .Case("msp", 8)
-      .Case("psp", 9)
-      .Case("primask", 16)
-      .Case("basepri", 17)
-      .Case("basepri_max", 18)
-      .Case("faultmask", 19)
-      .Case("control", 20)
+      .Case("ipsr", 0x805)
+      .Case("epsr", 0x806)
+      .Case("iepsr", 0x807)
+      .Case("msp", 0x808)
+      .Case("psp", 0x809)
+      .Case("primask", 0x810)
+      .Case("basepri", 0x811)
+      .Case("basepri_max", 0x812)
+      .Case("faultmask", 0x813)
+      .Case("control", 0x814)
       .Default(~0U);
 
     if (FlagsVal == ~0U)
       return MatchOperand_NoMatch;
 
-    if (!hasV7Ops() && FlagsVal >= 17 && FlagsVal <= 19)
+    if (!hasV7Ops() && FlagsVal >= 0x811 && FlagsVal <= 0x813)
       // basepri, basepri_max and faultmask only valid for V7m.
       return MatchOperand_NoMatch;
 
