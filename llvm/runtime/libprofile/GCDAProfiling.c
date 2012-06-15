@@ -117,6 +117,7 @@ void llvm_gcda_start_file(const char *orig_filename) {
       fprintf(stderr, "LLVM profiling runtime: cannot open '%s': ",
               cptr ? cptr + 1 : orig_filename);
       perror("");
+      free(filename);
       return;
     }
   }
