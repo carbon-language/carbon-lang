@@ -71,13 +71,16 @@ Reference::Kind KindHandler_x86_64::stringToKind(StringRef str) {
     .Case("lazyTarget",            lazyTarget)
     .Case("lazyImmediate",         lazyImmediate)
     .Case("subordinateFDE",        subordinateFDE)
-    .Case("subordinateLSDA",       subordinateLSDA);
+    .Case("subordinateLSDA",       subordinateLSDA)
+    .Default(invalid);
 
   llvm_unreachable("invalid x86_64 Reference kind");
 }
 
 StringRef KindHandler_x86_64::kindToString(Reference::Kind kind) {
   switch ( (Kinds)kind ) {
+    case invalid:
+      return StringRef("invalid");
     case none:
       return StringRef("none");
     case branch32: 
@@ -175,6 +178,9 @@ void KindHandler_x86_64::applyFixup(Kind kind, uint64_t addend,
     case subordinateLSDA:
       // do nothing
       break;
+    case invalid:
+      assert(0 && "invalid Reference Kind");
+      break;
   }
 }
 
@@ -194,13 +200,16 @@ Reference::Kind KindHandler_x86::stringToKind(StringRef str) {
     .Case("funcRel32",             funcRel32)
     .Case("pointer32",             pointer32)
     .Case("lazyTarget",            lazyTarget)
-    .Case("lazyImmediate",         lazyImmediate);
+    .Case("lazyImmediate",         lazyImmediate)
+    .Default(invalid);
   
   llvm_unreachable("invalid x86 Reference kind");
 }
 
 StringRef KindHandler_x86::kindToString(Reference::Kind kind) {
   switch ( (Kinds)kind ) {
+    case invalid:
+      return StringRef("invalid");
     case none:
       return StringRef("none");
     case branch32: 
@@ -263,6 +272,9 @@ void KindHandler_x86::applyFixup(Kind kind, uint64_t addend, uint8_t *location,
     case subordinateLSDA:
       // do nothing
       break;
+    case invalid:
+      assert(0 && "invalid Reference Kind");
+      break;
   }
 }
 
@@ -287,13 +299,16 @@ Reference::Kind KindHandler_arm::stringToKind(StringRef str) {
     .Case("pointer32",          pointer32)
     .Case("lazyTarget",         lazyTarget)
     .Case("lazyImmediate",      lazyImmediate)
-    .Case("subordinateLSDA",    subordinateLSDA);
+    .Case("subordinateLSDA",    subordinateLSDA)
+    .Default(invalid);
 
   llvm_unreachable("invalid ARM Reference kind");
 }
 
 StringRef KindHandler_arm::kindToString(Reference::Kind kind) {
   switch ( (Kinds)kind ) {
+    case invalid:
+      return StringRef("invalid");
     case none:
       return StringRef("none");
     case thumbBranch22: 
@@ -374,6 +389,9 @@ void KindHandler_arm::applyFixup(Kind kind, uint64_t addend, uint8_t *location,
     case lazyImmediate:
     case subordinateLSDA:
       // do nothing
+      break;
+    case invalid:
+      assert(0 && "invalid Reference Kind");
       break;
   }
 }

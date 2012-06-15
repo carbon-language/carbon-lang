@@ -48,6 +48,7 @@ protected:
 class KindHandler_x86_64 : public KindHandler {
 public:
   enum Kinds {
+    invalid,         // used to denote an error creating a Reference
     none,
     branch32,        // CALL or JMP 32-bit pc-rel
     ripRel32,        // RIP-rel access pc-rel to fix up location
@@ -83,6 +84,7 @@ public:
 class KindHandler_x86 : public KindHandler {
 public:
   enum Kinds {
+    invalid,         // used to denote an error creating a Reference
     none,
     branch32,        // CALL or JMP 32-bit pc-rel
     abs32,           // 32-bit absolute address embedded in instruction
@@ -109,6 +111,7 @@ public:
 class KindHandler_arm : public KindHandler {
 public:
   enum Kinds {
+    invalid,         // used to denote an error creating a Reference
     none,
     thumbBranch22,   // thumb b or bl with 22/24-bits of displacement
     armBranch24,     // arm b or bl with 24-bits of displacement
