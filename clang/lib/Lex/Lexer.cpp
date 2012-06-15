@@ -1091,20 +1091,21 @@ static inline bool isIdentifierBody(unsigned char c) {
 }
 
 /// isHorizontalWhitespace - Return true if this character is horizontal
-/// whitespace: ' ', '\t', '\f', '\v'.  Note that this returns false for '\0'.
+/// whitespace: ' ', '\\t', '\\f', '\\v'.  Note that this returns false for
+/// '\\0'.
 static inline bool isHorizontalWhitespace(unsigned char c) {
   return (CharInfo[c] & CHAR_HORZ_WS) ? true : false;
 }
 
 /// isVerticalWhitespace - Return true if this character is vertical
-/// whitespace: '\n', '\r'.  Note that this returns false for '\0'.
+/// whitespace: '\\n', '\\r'.  Note that this returns false for '\\0'.
 static inline bool isVerticalWhitespace(unsigned char c) {
   return (CharInfo[c] & CHAR_VERT_WS) ? true : false;
 }
 
 /// isWhitespace - Return true if this character is horizontal or vertical
-/// whitespace: ' ', '\t', '\f', '\v', '\n', '\r'.  Note that this returns false
-/// for '\0'.
+/// whitespace: ' ', '\\t', '\\f', '\\v', '\\n', '\\r'.  Note that this returns
+/// false for '\\0'.
 static inline bool isWhitespace(unsigned char c) {
   return (CharInfo[c] & (CHAR_HORZ_WS|CHAR_VERT_WS)) ? true : false;
 }
