@@ -32,7 +32,7 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
 using namespace llvm;
@@ -71,7 +71,7 @@ namespace {
     bool HandleFree(CallInst *F);
     bool handleEndBlock(BasicBlock &BB);
     void RemoveAccessedObjects(const AliasAnalysis::Location &LoadedLoc,
-                               SmallPtrSet<Value*, 16> &DeadStackObjects);
+                               SmallSetVector<Value*, 16> &DeadStackObjects);
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesCFG();
@@ -106,7 +106,7 @@ FunctionPass *llvm::createDeadStoreEliminationPass() { return new DSE(); }
 ///
 static void DeleteDeadInstruction(Instruction *I,
                                   MemoryDependenceAnalysis &MD,
-                                  SmallPtrSet<Value*, 16> *ValueSet = 0) {
+                                  SmallSetVector<Value*, 16> *ValueSet = 0) {
   SmallVector<Instruction*, 32> NowDeadInsts;
 
   NowDeadInsts.push_back(I);
@@ -136,7 +136,7 @@ static void DeleteDeadInstruction(Instruction *I,
 
     DeadInst->eraseFromParent();
 
-    if (ValueSet) ValueSet->erase(DeadInst);
+    if (ValueSet) ValueSet->remove(DeadInst);
   } while (!NowDeadInsts.empty());
 }
 
@@ -700,7 +700,7 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
 
   // Keep track of all of the stack objects that are dead at the end of the
   // function.
-  SmallPtrSet<Value*, 16> DeadStackObjects;
+  SmallSetVector<Value*, 16> DeadStackObjects;
 
   // Find all of the alloca'd pointers in the entry block.
   BasicBlock *Entry = BB.getParent()->begin();
@@ -774,17 +774,17 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
     }
 
     if (AllocaInst *A = dyn_cast<AllocaInst>(BBI)) {
-      DeadStackObjects.erase(A);
+      DeadStackObjects.remove(A);
       continue;
     }
 
     if (CallInst *CI = extractMallocCall(BBI)) {
-      DeadStackObjects.erase(CI);
+      DeadStackObjects.remove(CI);
       continue;
     }
 
     if (CallInst *CI = extractCallocCall(BBI)) {
-      DeadStackObjects.erase(CI);
+      DeadStackObjects.remove(CI);
       continue;
     }
 
@@ -797,7 +797,7 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
       // If the call might load from any of our allocas, then any store above
       // the call is live.
       SmallVector<Value*, 8> LiveAllocas;
-      for (SmallPtrSet<Value*, 16>::iterator I = DeadStackObjects.begin(),
+      for (SmallSetVector<Value*, 16>::iterator I = DeadStackObjects.begin(),
            E = DeadStackObjects.end(); I != E; ++I) {
         // See if the call site touches it.
         AliasAnalysis::ModRefResult A =
@@ -809,7 +809,7 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
 
       for (SmallVector<Value*, 8>::iterator I = LiveAllocas.begin(),
            E = LiveAllocas.end(); I != E; ++I)
-        DeadStackObjects.erase(*I);
+        DeadStackObjects.remove(*I);
 
       // If all of the allocas were clobbered by the call then we're not going
       // to find anything else to process.
@@ -856,7 +856,7 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
 /// of the stack objects in the DeadStackObjects set.  If so, they become live
 /// because the location is being loaded.
 void DSE::RemoveAccessedObjects(const AliasAnalysis::Location &LoadedLoc,
-                                SmallPtrSet<Value*, 16> &DeadStackObjects) {
+                                SmallSetVector<Value*, 16> &DeadStackObjects) {
   const Value *UnderlyingPointer = GetUnderlyingObject(LoadedLoc.Ptr);
 
   // A constant can't be in the dead pointer set.
@@ -866,12 +866,12 @@ void DSE::RemoveAccessedObjects(const AliasAnalysis::Location &LoadedLoc,
   // If the kill pointer can be easily reduced to an alloca, don't bother doing
   // extraneous AA queries.
   if (isa<AllocaInst>(UnderlyingPointer) || isa<Argument>(UnderlyingPointer)) {
-    DeadStackObjects.erase(const_cast<Value*>(UnderlyingPointer));
+    DeadStackObjects.remove(const_cast<Value*>(UnderlyingPointer));
     return;
   }
 
   SmallVector<Value*, 16> NowLive;
-  for (SmallPtrSet<Value*, 16>::iterator I = DeadStackObjects.begin(),
+  for (SmallSetVector<Value*, 16>::iterator I = DeadStackObjects.begin(),
        E = DeadStackObjects.end(); I != E; ++I) {
     // See if the loaded location could alias the stack location.
     AliasAnalysis::Location StackLoc(*I, getPointerSize(*I, *AA));
@@ -881,5 +881,5 @@ void DSE::RemoveAccessedObjects(const AliasAnalysis::Location &LoadedLoc,
 
   for (SmallVector<Value*, 16>::iterator I = NowLive.begin(), E = NowLive.end();
        I != E; ++I)
-    DeadStackObjects.erase(*I);
+    DeadStackObjects.remove(*I);
 }
