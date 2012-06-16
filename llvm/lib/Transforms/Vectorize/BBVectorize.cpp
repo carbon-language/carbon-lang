@@ -23,6 +23,7 @@
 #include "llvm/IntrinsicInst.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/LLVMContext.h"
+#include "llvm/Metadata.h"
 #include "llvm/Pass.h"
 #include "llvm/Type.h"
 #include "llvm/ADT/DenseMap.h"
@@ -302,6 +303,8 @@ namespace {
                      std::multimap<Value *, Value *> &LoadMoveSet,
                      Instruction *&InsertionPt,
                      Instruction *I, Instruction *J);
+
+    void combineMetadata(Instruction *K, const Instruction *J);
 
     bool vectorizeBB(BasicBlock &BB) {
       bool changed = false;
@@ -1784,6 +1787,31 @@ namespace {
     }
   }
 
+  // When the first instruction in each pair is cloned, it will inherit its
+  // parent's metadata. This metadata must be combined with that of the other
+  // instruction in a safe way.
+  void BBVectorize::combineMetadata(Instruction *K, const Instruction *J) {
+    SmallVector<std::pair<unsigned, MDNode*>, 4> Metadata;
+    K->getAllMetadataOtherThanDebugLoc(Metadata);
+    for (unsigned i = 0, n = Metadata.size(); i < n; ++i) {
+      unsigned Kind = Metadata[i].first;
+      MDNode *JMD = J->getMetadata(Kind);
+      MDNode *KMD = Metadata[i].second;
+
+      switch (Kind) {
+      default:
+        K->setMetadata(Kind, 0); // Remove unknown metadata
+        break;
+      case LLVMContext::MD_tbaa:
+        K->setMetadata(Kind, MDNode::getMostGenericTBAA(JMD, KMD));
+        break;
+      case LLVMContext::MD_fpmath:
+        K->setMetadata(Kind, MDNode::getMostGenericFPMath(JMD, KMD));
+        break;
+      }
+    }
+  }
+
   // This function fuses the chosen instruction pairs into vector instructions,
   // taking care preserve any needed scalar outputs and, then, it reorders the
   // remaining instructions as needed (users of the first member of the pair
@@ -1862,6 +1890,8 @@ namespace {
 
       if (!isa<StoreInst>(K))
         K->mutateType(getVecTypeForPair(I->getType()));
+
+      combineMetadata(K, J);
 
       for (unsigned o = 0; o < NumOperands; ++o)
         K->setOperand(o, ReplacedOperands[o]);
