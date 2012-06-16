@@ -166,6 +166,7 @@ set(LLVM_LINK_COMPONENTS
   )
 
 add_llvm_unittest(Support
+  Support/AlignOfTest.cpp
   Support/AllocatorTest.cpp
   Support/Casting.cpp
   Support/CommandLineTest.cpp
