@@ -67,50 +67,54 @@ struct V7 : virtual V2, virtual V6 { virtual ~V7(); };
 struct V8 : V5, virtual V6, V7 { double zz; virtual ~V8(); };
 
 // Ensure alignment is a compile-time constant.
-char LLVM_ATTRIBUTE_UNUSED test_arr
-  [AlignOf<char>::Alignment]
-  [AlignOf<short>::Alignment]
-  [AlignOf<int>::Alignment]
-  [AlignOf<long>::Alignment]
-  [AlignOf<long long>::Alignment]
-  [AlignOf<float>::Alignment]
-  [AlignOf<double>::Alignment]
-  [AlignOf<long double>::Alignment]
-  [AlignOf<void *>::Alignment]
-  [AlignOf<int *>::Alignment]
-  [AlignOf<double (*)(double)>::Alignment]
-  [AlignOf<double (S6::*)()>::Alignment]
-  [AlignOf<A1>::Alignment]
-  [AlignOf<A2>::Alignment]
-  [AlignOf<A4>::Alignment]
-  [AlignOf<A8>::Alignment]
-  [AlignOf<SA1>::Alignment]
-  [AlignOf<SA2>::Alignment]
-  [AlignOf<SA4>::Alignment]
-  [AlignOf<SA8>::Alignment]
-  [AlignOf<S1>::Alignment]
-  [AlignOf<S2>::Alignment]
-  [AlignOf<S3>::Alignment]
-  [AlignOf<S4>::Alignment]
-  [AlignOf<S5>::Alignment]
-  [AlignOf<S6>::Alignment]
-  [AlignOf<D1>::Alignment]
-  [AlignOf<D2>::Alignment]
-  [AlignOf<D3>::Alignment]
-  [AlignOf<D4>::Alignment]
-  [AlignOf<D5>::Alignment]
-  [AlignOf<D6>::Alignment]
-  [AlignOf<D7>::Alignment]
-  [AlignOf<D8>::Alignment]
-  [AlignOf<D9>::Alignment]
-  [AlignOf<V1>::Alignment]
-  [AlignOf<V2>::Alignment]
-  [AlignOf<V3>::Alignment]
-  [AlignOf<V4>::Alignment]
-  [AlignOf<V5>::Alignment]
-  [AlignOf<V6>::Alignment]
-  [AlignOf<V7>::Alignment]
-  [AlignOf<V8>::Alignment];
+char LLVM_ATTRIBUTE_UNUSED test_arr1
+  [AlignOf<char>::Alignment > 0]
+  [AlignOf<short>::Alignment > 0]
+  [AlignOf<int>::Alignment > 0]
+  [AlignOf<long>::Alignment > 0]
+  [AlignOf<long long>::Alignment > 0]
+  [AlignOf<float>::Alignment > 0]
+  [AlignOf<double>::Alignment > 0]
+  [AlignOf<long double>::Alignment > 0]
+  [AlignOf<void *>::Alignment > 0]
+  [AlignOf<int *>::Alignment > 0]
+  [AlignOf<double (*)(double)>::Alignment > 0]
+  [AlignOf<double (S6::*)()>::Alignment > 0];
+char LLVM_ATTRIBUTE_UNUSED test_arr2
+  [AlignOf<A1>::Alignment > 0]
+  [AlignOf<A2>::Alignment > 0]
+  [AlignOf<A4>::Alignment > 0]
+  [AlignOf<A8>::Alignment > 0]
+  [AlignOf<SA1>::Alignment > 0]
+  [AlignOf<SA2>::Alignment > 0]
+  [AlignOf<SA4>::Alignment > 0]
+  [AlignOf<SA8>::Alignment > 0];
+char LLVM_ATTRIBUTE_UNUSED test_arr3
+  [AlignOf<S1>::Alignment > 0]
+  [AlignOf<S2>::Alignment > 0]
+  [AlignOf<S3>::Alignment > 0]
+  [AlignOf<S4>::Alignment > 0]
+  [AlignOf<S5>::Alignment > 0]
+  [AlignOf<S6>::Alignment > 0];
+char LLVM_ATTRIBUTE_UNUSED test_arr4
+  [AlignOf<D1>::Alignment > 0]
+  [AlignOf<D2>::Alignment > 0]
+  [AlignOf<D3>::Alignment > 0]
+  [AlignOf<D4>::Alignment > 0]
+  [AlignOf<D5>::Alignment > 0]
+  [AlignOf<D6>::Alignment > 0]
+  [AlignOf<D7>::Alignment > 0]
+  [AlignOf<D8>::Alignment > 0]
+  [AlignOf<D9>::Alignment > 0];
+char LLVM_ATTRIBUTE_UNUSED test_arr5
+  [AlignOf<V1>::Alignment > 0]
+  [AlignOf<V2>::Alignment > 0]
+  [AlignOf<V3>::Alignment > 0]
+  [AlignOf<V4>::Alignment > 0]
+  [AlignOf<V5>::Alignment > 0]
+  [AlignOf<V6>::Alignment > 0]
+  [AlignOf<V7>::Alignment > 0]
+  [AlignOf<V8>::Alignment > 0];
 
 TEST(AlignOfTest, BasicAlignmentInvariants) {
   // For a very strange reason, many compilers do not support this. Both Clang
