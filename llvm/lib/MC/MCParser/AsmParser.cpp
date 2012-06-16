@@ -277,6 +277,7 @@ private:
                                 raw_svector_ostream &OS);
   bool ParseDirectiveRept(SMLoc DirectiveLoc); // ".rept"
   bool ParseDirectiveIrp(SMLoc DirectiveLoc);  // ".irp"
+  bool ParseDirectiveIrpc(SMLoc DirectiveLoc); // ".irpc"
   bool ParseDirectiveEndr(SMLoc DirectiveLoc); // ".endr"
 };
 
@@ -1280,6 +1281,8 @@ bool AsmParser::ParseStatement() {
       return ParseDirectiveRept(IDLoc);
     if (IDVal == ".irp")
       return ParseDirectiveIrp(IDLoc);
+    if (IDVal == ".irpc")
+      return ParseDirectiveIrpc(IDLoc);
     if (IDVal == ".endr")
       return ParseDirectiveEndr(IDLoc);
 
@@ -3314,6 +3317,60 @@ bool AsmParser::ParseDirectiveIrp(SMLoc DirectiveLoc) {
        ++i) {
     std::vector<MacroArgument> Args;
     Args.push_back(*i);
+
+    if (expandMacro(OS, M->Body, Parameters, Args, getTok().getLoc()))
+      return true;
+  }
+
+  InstantiateMacroLikeBody(M, DirectiveLoc, OS);
+
+  return false;
+}
+
+/// ParseDirectiveIrpc
+/// ::= .irpc symbol,values
+bool AsmParser::ParseDirectiveIrpc(SMLoc DirectiveLoc) {
+  std::vector<StringRef> Parameters;
+  StringRef Parameter;
+
+  if (ParseIdentifier(Parameter))
+    return TokError("expected identifier in '.irpc' directive");
+
+  Parameters.push_back(Parameter);
+
+  if (Lexer.isNot(AsmToken::Comma))
+    return TokError("expected comma in '.irpc' directive");
+
+  Lex();
+
+  std::vector<MacroArgument> A;
+  if (ParseMacroArguments(0, A))
+    return true;
+
+  if (A.size() != 1 || A.front().size() != 1)
+    return TokError("unexpected token in '.irpc' directive");
+
+  // Eat the end of statement.
+  Lex();
+
+  // Lex the irpc definition.
+  Macro *M = ParseMacroLikeBody(DirectiveLoc);
+  if (!M)
+    return true;
+
+  // Macro instantiation is lexical, unfortunately. We construct a new buffer
+  // to hold the macro body with substitutions.
+  SmallString<256> Buf;
+  raw_svector_ostream OS(Buf);
+
+  StringRef Values = A.front().front().getString();
+  std::size_t I, End = Values.size();
+  for (I = 0; I < End; ++I) {
+    MacroArgument Arg;
+    Arg.push_back(AsmToken(AsmToken::Identifier, Values.slice(I, I+1)));
+
+    std::vector<MacroArgument> Args;
+    Args.push_back(Arg);
 
     if (expandMacro(OS, M->Body, Parameters, Args, getTok().getLoc()))
       return true;
