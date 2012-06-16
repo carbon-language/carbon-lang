@@ -46,3 +46,10 @@ typedef struct {
 
 int dealocateMemWhenDoneByVal(void*, StWithCallback);
 int dealocateMemWhenDoneByRef(StWithCallback*, const void*);
+
+typedef struct CGContext *CGContextRef;
+CGContextRef CGBitmapContextCreate(void *data/*, size_t width, size_t height,
+                                   size_t bitsPerComponent, size_t bytesPerRow,
+                                   CGColorSpaceRef space,
+                                   CGBitmapInfo bitmapInfo*/);
+void *CGBitmapContextGetData(CGContextRef context);

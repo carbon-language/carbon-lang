@@ -955,3 +955,22 @@ void test_double_assign_ints_positive()
   (void*)(long)(unsigned long)ptr; // expected-warning {{unused}} expected-warning {{leak}}
 }
 
+
+void testCGContextNoLeak()
+{
+  void *ptr = malloc(16);
+  CGContextRef context = CGBitmapContextCreate(ptr);
+
+  // Because you can get the data back out like this, even much later,
+  // CGBitmapContextCreate is one of our "stop-tracking" exceptions.
+  free(CGBitmapContextGetData(context));
+}
+
+void testCGContextLeak()
+{
+  void *ptr = malloc(16);
+  CGContextRef context = CGBitmapContextCreate(ptr);
+  // However, this time we're just leaking the data, because the context
+  // object doesn't escape and it hasn't been freed in this function.
+}
+

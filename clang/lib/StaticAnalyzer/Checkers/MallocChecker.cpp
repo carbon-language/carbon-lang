@@ -1334,12 +1334,14 @@ bool MallocChecker::doesNotFreeMemory(const CallOrObjCMessage *Call,
                 return false;
     }
 
-    // A bunch of other functions, which take ownership of a pointer (See retain
-    // release checker). Not all the parameters here are invalidated, but the
-    // Malloc checker cannot differentiate between them. The right way of doing
-    // this would be to implement a pointer escapes callback.
-    if (FName == "CVPixelBufferCreateWithBytes" ||
+    // A bunch of other functions which either take ownership of a pointer or
+    // wrap the result up in a struct or object, meaning it can be freed later.
+    // (See RetainCountChecker.) Not all the parameters here are invalidated,
+    // but the Malloc checker cannot differentiate between them. The right way
+    // of doing this would be to implement a pointer escapes callback.
+    if (FName == "CGBitmapContextCreate" ||
         FName == "CGBitmapContextCreateWithData" ||
+        FName == "CVPixelBufferCreateWithBytes" ||
         FName == "CVPixelBufferCreateWithPlanarBytes" ||
         FName == "OSAtomicEnqueue") {
       return false;
