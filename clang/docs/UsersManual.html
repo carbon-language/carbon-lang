@@ -708,36 +708,11 @@ treated as a system header.</p>
 
 <p>While not strictly part of the compiler, the diagnostics from Clang's <a
 href="http://clang-analyzer.llvm.org">static analyzer</a> can also be influenced
-by the user via changes to the source code.  This can be done in two ways:
-
-<ul>
-
-<li id="analyzer_annotations"><b>Annotations</b>: The static analyzer recognizes various GCC-style
-attributes (e.g., <tt>__attribute__((nonnull)))</tt>) that can either suppress
-static analyzer warnings or teach the analyzer about code invariants which
-enable it to find more bugs. While many of these attributes are standard GCC
-attributes, additional ones have been added to Clang to specifically support the
-static analyzer. Detailed information on these annotations can be found in the
-<a href="http://clang-analyzer.llvm.org/annotations.html">analyzer's
-documentation</a>.</li>
-
-<li><b><tt>__clang_analyzer__</tt></b>: When the static analyzer is using Clang
-to parse source files, it implicitly defines the preprocessor macro
-<tt>__clang_analyzer__</tt>. While discouraged, code can use this macro to
-selectively exclude code the analyzer examines.  Here is an example:
-
-<pre>
-#ifndef __clang_analyzer__
-// Code not to be analyzed
-#endif
-</pre>
-
-In general, this usage is discouraged. Instead, we prefer that users file bugs
-against the analyzer when it flags false positives. There is also active
-discussion of allowing users in the future to selectively silence specific
-analyzer warnings (some of which can already be done using <a
-href="#analyzer_annotations">annotations</a>).</li>
-
+by the user via changes to the source code. See the avaliable 
+<a href = "http://clang-analyzer.llvm.org/annotations.html" >annotations</a> and 
+the analyzer's 
+<a href= "http://clang-analyzer.llvm.org/faq.html#exclude_code" >FAQ page</a> for 
+more information.
 </ul>
 
 <!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
