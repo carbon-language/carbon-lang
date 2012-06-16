@@ -2011,8 +2011,17 @@ void SROA::RewriteGEP(GetElementPtrInst *GEPI, AllocaInst *AI, uint64_t Offset,
     uint64_t EltIdx = FindElementAndOffset(T, EltOffset, IdxTy);
     NewArgs.push_back(ConstantInt::get(IdxTy, EltIdx));
   }
-  if (NonConstantIdx)
+  if (NonConstantIdx) {
+    Type* GepTy = T;
+    // This GEP has a dynamic index.  We need to add "i32 0" to index through
+    // any structs or arrays in the original type until we get to the vector
+    // to index.
+    while (!isa<VectorType>(GepTy)) {
+      NewArgs.push_back(Constant::getNullValue(i32Ty));
+      GepTy = cast<CompositeType>(GepTy)->getTypeAtIndex(0U);
+    }
     NewArgs.push_back(NonConstantIdx);
+  }
   Instruction *Val = NewElts[Idx];
   if (NewArgs.size() > 1) {
     Val = GetElementPtrInst::CreateInBounds(Val, NewArgs, "", GEPI);

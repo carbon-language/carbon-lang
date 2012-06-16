@@ -80,4 +80,59 @@ entry:
   ret float %ret
 }
 
+; CHECK: test5
+; CHECK: %[[alloc0:[\.a-z0-9]*]] = alloca <4 x float>
+; CHECK: %[[alloc1:[\.a-z0-9]*]] = alloca <4 x float>
+; CHECK: store <4 x float> zeroinitializer, <4 x float>* %[[alloc0]]
+; CHECK: store <4 x float> zeroinitializer, <4 x float>* %[[alloc1]]
+; CHECK: %ptr1 = getelementptr inbounds <4 x float>* %[[alloc0]], i32 0, i32 %idx1
+; CHECK: store float 1.000000e+00, float* %ptr1
+; CHECK: %ptr2 = getelementptr inbounds <4 x float>* %[[alloc1]], i32 0, i32 %idx2
+; CHECK: %ret = load float* %ptr2
+
+%vector.pair = type { %vector.anon, %vector.anon }
+%vector.anon = type { %vector }
+%vector = type { <4 x float> }
+
+; Dynamic GEPs on vectors were crashing when the vector was inside a struct
+; as the new GEP for the new alloca might not include all the indices from
+; the original GEP, just the indices it needs to get to the correct offset of
+; some type, not necessarily the dynamic vector.
+; This test makes sure we don't have this crash.
+define float @test5(i32 %idx1, i32 %idx2) {
+entry:
+  %0 = alloca %vector.pair
+  store %vector.pair zeroinitializer, %vector.pair* %0
+  %ptr1 = getelementptr %vector.pair* %0, i32 0, i32 0, i32 0, i32 0, i32 %idx1
+  store float 1.0, float* %ptr1
+  %ptr2 = getelementptr %vector.pair* %0, i32 0, i32 1, i32 0, i32 0, i32 %idx2
+  %ret = load float* %ptr2
+  ret float %ret
+}
+
+; CHECK: test6
+; CHECK: %[[alloc0:[\.a-z0-9]*]] = alloca <4 x float>
+; CHECK: %[[alloc1:[\.a-z0-9]*]] = alloca <4 x float>
+; CHECK: store <4 x float> zeroinitializer, <4 x float>* %[[alloc0]]
+; CHECK: store <4 x float> zeroinitializer, <4 x float>* %[[alloc1]]
+; CHECK: %ptr1 = getelementptr inbounds <4 x float>* %[[alloc0]], i32 0, i32 %idx1
+; CHECK: store float 1.000000e+00, float* %ptr1
+; CHECK: %ptr2 = getelementptr inbounds <4 x float>* %[[alloc1]], i32 0, i32 %idx2
+; CHECK: %ret = load float* %ptr2
+
+%array.pair = type { [2 x %array.anon], %array.anon }
+%array.anon = type { [2 x %vector] }
+
+; This is the same as test5 and tests the same crash, but on arrays.
+define float @test6(i32 %idx1, i32 %idx2) {
+entry:
+  %0 = alloca %array.pair
+  store %array.pair zeroinitializer, %array.pair* %0
+  %ptr1 = getelementptr %array.pair* %0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 %idx1
+  store float 1.0, float* %ptr1
+  %ptr2 = getelementptr %array.pair* %0, i32 0, i32 1, i32 0, i32 0, i32 0, i32 %idx2
+  %ret = load float* %ptr2
+  ret float %ret
+}
+
 declare void @llvm.memset.p0i8.i32(i8*, i8, i32, i32, i1)
