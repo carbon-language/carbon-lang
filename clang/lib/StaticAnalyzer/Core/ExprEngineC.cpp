@@ -408,7 +408,7 @@ void ExprEngine::VisitCompoundLiteralExpr(const CompoundLiteralExpr *CL,
   const LocationContext *LC = Pred->getLocationContext();
   state = state->bindCompoundLiteral(CL, LC, ILV);
   
-  if (CL->isGLValue())
+  if (CL->isGLValue() || CL->getType()->isArrayType())
     B.generateNode(CL, Pred, state->BindExpr(CL, LC, state->getLValue(CL, LC)));
   else
     B.generateNode(CL, Pred, state->BindExpr(CL, LC, ILV));

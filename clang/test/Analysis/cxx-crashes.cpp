@@ -70,3 +70,8 @@ void vla(int n) {
   clang_analyzer_eval(structs[0].x == 1); // expected-warning{{TRUE}}
 }
 
+void useIntArray(int []);
+void testIntArrayLiteral() {
+  useIntArray((int []){ 1, 2, 3 });
+}
+
