@@ -73,7 +73,6 @@ add_llvm_unittest(ADT
   ADT/IntervalMapTest.cpp
   ADT/IntrusiveRefCntPtrTest.cpp
   ADT/PackedVectorTest.cpp
-  ADT/SmallBitVectorTest.cpp
   ADT/SmallStringTest.cpp
   ADT/SmallVectorTest.cpp
   ADT/SparseBitVectorTest.cpp
