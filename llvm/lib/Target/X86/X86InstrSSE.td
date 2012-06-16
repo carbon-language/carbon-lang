@@ -2010,10 +2010,10 @@ def VCVTTPD2DQXrm : VPDI<0xE6, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
 
 // YMM only
 def VCVTTPD2DQYrr : VPDI<0xE6, MRMSrcReg, (outs VR128:$dst), (ins VR256:$src),
-                         "cvttpd2dqy\t{$src, $dst|$dst, $src}", [],
+                         "cvttpd2dq{y}\t{$src, $dst|$dst, $src}", [],
                          IIC_SSE_CVT_PD_RR>, VEX;
 def VCVTTPD2DQYrm : VPDI<0xE6, MRMSrcMem, (outs VR128:$dst), (ins f256mem:$src),
-                         "cvttpd2dqy\t{$src, $dst|$dst, $src}", [],
+                         "cvttpd2dq{y}\t{$src, $dst|$dst, $src}", [],
                          IIC_SSE_CVT_PD_RM>, VEX, VEX_L;
 
 // Convert packed single to packed double
@@ -2083,10 +2083,10 @@ def VCVTPD2PSXrm : VPDI<0x5A, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
 
 // YMM only
 def VCVTPD2PSYrr : VPDI<0x5A, MRMSrcReg, (outs VR128:$dst), (ins VR256:$src),
-                        "cvtpd2psy\t{$src, $dst|$dst, $src}", [],
+                        "cvtpd2ps{y}\t{$src, $dst|$dst, $src}", [],
                         IIC_SSE_CVT_PD_RR>, VEX;
 def VCVTPD2PSYrm : VPDI<0x5A, MRMSrcMem, (outs VR128:$dst), (ins f256mem:$src),
-                        "cvtpd2psy\t{$src, $dst|$dst, $src}", [],
+                        "cvtpd2ps{y}\t{$src, $dst|$dst, $src}", [],
                         IIC_SSE_CVT_PD_RM>, VEX, VEX_L;
 def CVTPD2PSrr : PDI<0x5A, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                      "cvtpd2ps\t{$src, $dst|$dst, $src}", [],
@@ -4910,9 +4910,9 @@ def VCVTPD2DQXrm : S3DI<0xE6, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
 
 // YMM only
 def VCVTPD2DQYrr : S3DI<0xE6, MRMSrcReg, (outs VR128:$dst), (ins VR256:$src),
-                      "vcvtpd2dqy\t{$src, $dst|$dst, $src}", []>, VEX;
+                      "vcvtpd2dq{y}\t{$src, $dst|$dst, $src}", []>, VEX;
 def VCVTPD2DQYrm : S3DI<0xE6, MRMSrcMem, (outs VR128:$dst), (ins f256mem:$src),
-                      "vcvtpd2dqy\t{$src, $dst|$dst, $src}", []>, VEX, VEX_L;
+                      "vcvtpd2dq{y}\t{$src, $dst|$dst, $src}", []>, VEX, VEX_L;
 }
 
 def CVTPD2DQrm  : S3DI<0xE6, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
