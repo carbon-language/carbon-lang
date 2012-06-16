@@ -9,170 +9,185 @@
 
 #include "gtest/gtest.h"
 #include "llvm/ADT/DenseMap.h"
+#include <map>
 
 using namespace llvm;
 
 namespace {
 
 // Test fixture
+template <typename T>
 class DenseMapTest : public testing::Test {
 protected:
-  DenseMap<uint32_t, uint32_t> uintMap;
-  DenseMap<uint32_t *, uint32_t *> uintPtrMap;
-  uint32_t dummyInt;
+  T Map;
+
+  typename T::key_type getKey(int i = 0);
+  typename T::mapped_type getValue(int i = 0);
 };
 
-// Empty map tests
-TEST_F(DenseMapTest, EmptyIntMapTest) {
-  // Size tests
-  EXPECT_EQ(0u, uintMap.size());
-  EXPECT_TRUE(uintMap.empty());
-
-  // Iterator tests
-  EXPECT_TRUE(uintMap.begin() == uintMap.end());
-
-  // Lookup tests
-  EXPECT_FALSE(uintMap.count(0u));
-  EXPECT_TRUE(uintMap.find(0u) == uintMap.end());
-  EXPECT_EQ(0u, uintMap.lookup(0u));
+template <>
+uint32_t DenseMapTest<DenseMap<uint32_t, uint32_t> >::getKey(int i) {
+  return i;
 }
 
-// Empty map tests for pointer map
-TEST_F(DenseMapTest, EmptyPtrMapTest) {
+template <>
+uint32_t DenseMapTest<DenseMap<uint32_t, uint32_t> >::getValue(int i) {
+  return 42 + i;
+}
+
+template <>
+uint32_t *DenseMapTest<DenseMap<uint32_t *, uint32_t *> >::getKey(int i) {
+  static uint32_t dummy_arr1[8192];
+  assert(i < 8192 && "Only support 8192 dummy keys.");
+  return &dummy_arr1[i];
+}
+
+template <>
+uint32_t *DenseMapTest<DenseMap<uint32_t *, uint32_t *> >::getValue(int i) {
+  static uint32_t dummy_arr2[8192];
+  assert(i < 8192 && "Only support 8192 dummy values.");
+  return &dummy_arr2[i];
+}
+
+// Register these types for testing.
+typedef ::testing::Types<DenseMap<uint32_t, uint32_t>,
+                         DenseMap<uint32_t *, uint32_t *> > DenseMapTestTypes;
+TYPED_TEST_CASE(DenseMapTest, DenseMapTestTypes);
+
+// Empty map tests
+TYPED_TEST(DenseMapTest, EmptyIntMapTest) {
   // Size tests
-  EXPECT_EQ(0u, uintPtrMap.size());
-  EXPECT_TRUE(uintPtrMap.empty());
+  EXPECT_EQ(0u, this->Map.size());
+  EXPECT_TRUE(this->Map.empty());
 
   // Iterator tests
-  EXPECT_TRUE(uintPtrMap.begin() == uintPtrMap.end());
+  EXPECT_TRUE(this->Map.begin() == this->Map.end());
 
   // Lookup tests
-  EXPECT_FALSE(uintPtrMap.count(&dummyInt));
-  EXPECT_TRUE(uintPtrMap.find(&dummyInt) == uintPtrMap.begin());
-  EXPECT_EQ(0, uintPtrMap.lookup(&dummyInt));
+  EXPECT_FALSE(this->Map.count(this->getKey()));
+  EXPECT_TRUE(this->Map.find(this->getKey()) == this->Map.end());
+  EXPECT_EQ(typename TypeParam::mapped_type(),
+            this->Map.lookup(this->getKey()));
 }
 
 // Constant map tests
-TEST_F(DenseMapTest, ConstEmptyMapTest) {
-  const DenseMap<uint32_t, uint32_t> & constUintMap = uintMap;
-  const DenseMap<uint32_t *, uint32_t *> & constUintPtrMap = uintPtrMap;
-  EXPECT_EQ(0u, constUintMap.size());
-  EXPECT_EQ(0u, constUintPtrMap.size());
-  EXPECT_TRUE(constUintMap.empty());
-  EXPECT_TRUE(constUintPtrMap.empty());
-  EXPECT_TRUE(constUintMap.begin() == constUintMap.end());
-  EXPECT_TRUE(constUintPtrMap.begin() == constUintPtrMap.end());
+TYPED_TEST(DenseMapTest, ConstEmptyMapTest) {
+  const TypeParam &ConstMap = this->Map;
+  EXPECT_EQ(0u, ConstMap.size());
+  EXPECT_TRUE(ConstMap.empty());
+  EXPECT_TRUE(ConstMap.begin() == ConstMap.end());
 }
 
 // A map with a single entry
-TEST_F(DenseMapTest, SingleEntryMapTest) {
-  uintMap[0] = 1;
+TYPED_TEST(DenseMapTest, SingleEntryMapTest) {
+  this->Map[this->getKey()] = this->getValue();
 
   // Size tests
-  EXPECT_EQ(1u, uintMap.size());
-  EXPECT_FALSE(uintMap.begin() == uintMap.end());
-  EXPECT_FALSE(uintMap.empty());
+  EXPECT_EQ(1u, this->Map.size());
+  EXPECT_FALSE(this->Map.begin() == this->Map.end());
+  EXPECT_FALSE(this->Map.empty());
 
   // Iterator tests
-  DenseMap<uint32_t, uint32_t>::iterator it = uintMap.begin();
-  EXPECT_EQ(0u, it->first);
-  EXPECT_EQ(1u, it->second);
+  typename TypeParam::iterator it = this->Map.begin();
+  EXPECT_EQ(this->getKey(), it->first);
+  EXPECT_EQ(this->getValue(), it->second);
   ++it;
-  EXPECT_TRUE(it == uintMap.end());
+  EXPECT_TRUE(it == this->Map.end());
 
   // Lookup tests
-  EXPECT_TRUE(uintMap.count(0u));
-  EXPECT_TRUE(uintMap.find(0u) == uintMap.begin());
-  EXPECT_EQ(1u, uintMap.lookup(0u));
-  EXPECT_EQ(1u, uintMap[0]);
+  EXPECT_TRUE(this->Map.count(this->getKey()));
+  EXPECT_TRUE(this->Map.find(this->getKey()) == this->Map.begin());
+  EXPECT_EQ(this->getValue(), this->Map.lookup(this->getKey()));
+  EXPECT_EQ(this->getValue(), this->Map[this->getKey()]);
 }
 
 // Test clear() method
-TEST_F(DenseMapTest, ClearTest) {
-  uintMap[0] = 1;
-  uintMap.clear();
+TYPED_TEST(DenseMapTest, ClearTest) {
+  this->Map[this->getKey()] = this->getValue();
+  this->Map.clear();
 
-  EXPECT_EQ(0u, uintMap.size());
-  EXPECT_TRUE(uintMap.empty());
-  EXPECT_TRUE(uintMap.begin() == uintMap.end());
+  EXPECT_EQ(0u, this->Map.size());
+  EXPECT_TRUE(this->Map.empty());
+  EXPECT_TRUE(this->Map.begin() == this->Map.end());
 }
 
 // Test erase(iterator) method
-TEST_F(DenseMapTest, EraseTest) {
-  uintMap[0] = 1;
-  uintMap.erase(uintMap.begin());
+TYPED_TEST(DenseMapTest, EraseTest) {
+  this->Map[this->getKey()] = this->getValue();
+  this->Map.erase(this->Map.begin());
 
-  EXPECT_EQ(0u, uintMap.size());
-  EXPECT_TRUE(uintMap.empty());
-  EXPECT_TRUE(uintMap.begin() == uintMap.end());
+  EXPECT_EQ(0u, this->Map.size());
+  EXPECT_TRUE(this->Map.empty());
+  EXPECT_TRUE(this->Map.begin() == this->Map.end());
 }
 
 // Test erase(value) method
-TEST_F(DenseMapTest, EraseTest2) {
-  uintMap[0] = 1;
-  uintMap.erase(0);
+TYPED_TEST(DenseMapTest, EraseTest2) {
+  this->Map[this->getKey()] = this->getValue();
+  this->Map.erase(this->getKey());
 
-  EXPECT_EQ(0u, uintMap.size());
-  EXPECT_TRUE(uintMap.empty());
-  EXPECT_TRUE(uintMap.begin() == uintMap.end());
+  EXPECT_EQ(0u, this->Map.size());
+  EXPECT_TRUE(this->Map.empty());
+  EXPECT_TRUE(this->Map.begin() == this->Map.end());
 }
 
 // Test insert() method
-TEST_F(DenseMapTest, InsertTest) {
-  uintMap.insert(std::make_pair(0u, 1u));
-  EXPECT_EQ(1u, uintMap.size());
-  EXPECT_EQ(1u, uintMap[0]);
+TYPED_TEST(DenseMapTest, InsertTest) {
+  this->Map.insert(std::make_pair(this->getKey(), this->getValue()));
+  EXPECT_EQ(1u, this->Map.size());
+  EXPECT_EQ(this->getValue(), this->Map[this->getKey()]);
 }
 
 // Test copy constructor method
-TEST_F(DenseMapTest, CopyConstructorTest) {
-  uintMap[0] = 1;
-  DenseMap<uint32_t, uint32_t> copyMap(uintMap);
+TYPED_TEST(DenseMapTest, CopyConstructorTest) {
+  this->Map[this->getKey()] = this->getValue();
+  TypeParam copyMap(this->Map);
 
   EXPECT_EQ(1u, copyMap.size());
-  EXPECT_EQ(1u, copyMap[0]);
+  EXPECT_EQ(this->getValue(), copyMap[this->getKey()]);
 }
 
 // Test assignment operator method
-TEST_F(DenseMapTest, AssignmentTest) {
-  uintMap[0] = 1;
-  DenseMap<uint32_t, uint32_t> copyMap = uintMap;
+TYPED_TEST(DenseMapTest, AssignmentTest) {
+  this->Map[this->getKey()] = this->getValue();
+  TypeParam copyMap = this->Map;
 
   EXPECT_EQ(1u, copyMap.size());
-  EXPECT_EQ(1u, copyMap[0]);
+  EXPECT_EQ(this->getValue(), copyMap[this->getKey()]);
 }
 
 // A more complex iteration test
-TEST_F(DenseMapTest, IterationTest) {
+TYPED_TEST(DenseMapTest, IterationTest) {
   bool visited[100];
+  std::map<typename TypeParam::key_type, unsigned> visitedIndex;
 
   // Insert 100 numbers into the map
   for (int i = 0; i < 100; ++i) {
     visited[i] = false;
-    uintMap[i] = 3;
+    visitedIndex[this->getKey(i)] = i;
+
+    this->Map[this->getKey(i)] = this->getValue(i);
   }
 
   // Iterate over all numbers and mark each one found.
-  for (DenseMap<uint32_t, uint32_t>::iterator it = uintMap.begin();
-      it != uintMap.end(); ++it) {
-    visited[it->first] = true;
-  }
+  for (typename TypeParam::iterator it = this->Map.begin();
+       it != this->Map.end(); ++it)
+    visited[visitedIndex[it->first]] = true;
 
   // Ensure every number was visited.
-  for (int i = 0; i < 100; ++i) {
+  for (int i = 0; i < 100; ++i)
     ASSERT_TRUE(visited[i]) << "Entry #" << i << " was never visited";
-  }
 }
 
 // const_iterator test
-TEST_F(DenseMapTest, ConstIteratorTest) {
+TYPED_TEST(DenseMapTest, ConstIteratorTest) {
   // Check conversion from iterator to const_iterator.
-  DenseMap<uint32_t, uint32_t>::iterator it = uintMap.begin();
-  DenseMap<uint32_t, uint32_t>::const_iterator cit(it);
+  typename TypeParam::iterator it = this->Map.begin();
+  typename TypeParam::const_iterator cit(it);
   EXPECT_TRUE(it == cit);
 
   // Check copying of const_iterators.
-  DenseMap<uint32_t, uint32_t>::const_iterator cit2(cit);
+  typename TypeParam::const_iterator cit2(cit);
   EXPECT_TRUE(cit == cit2);
 }
 
@@ -194,7 +209,7 @@ struct TestDenseMapInfo {
 };
 
 // find_as() tests
-TEST_F(DenseMapTest, FindAsTest) {
+TEST(DenseMapCustomTest, FindAsTest) {
   DenseMap<unsigned, unsigned, TestDenseMapInfo> map;
   map[0] = 1;
   map[1] = 2;
