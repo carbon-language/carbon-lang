@@ -108,13 +108,18 @@ namespace {
     /// particular GlobalVariable so that we can reuse them if necessary.
     GlobalToIndirectSymMapTy GlobalToIndirectSymMap;
 
+#ifndef NDEBUG
     /// Instance of the JIT this ResolverState serves.
     JIT *TheJIT;
+#endif
 
   public:
     JITResolverState(JIT *jit) : FunctionToLazyStubMap(this),
-                                 FunctionToCallSitesMap(this),
-                                 TheJIT(jit) {}
+                                 FunctionToCallSitesMap(this) {
+#ifndef NDEBUG
+      TheJIT = jit;
+#endif
+    }
 
     FunctionToLazyStubMapTy& getFunctionToLazyStubMap(
       const MutexGuard& locked) {
@@ -186,17 +191,12 @@ namespace {
 
     JITEmitter &JE;
 
-#ifndef NDEBUG
     /// Instance of JIT corresponding to this Resolver.
     JIT *TheJIT;
-#endif
 
   public:
     explicit JITResolver(JIT &jit, JITEmitter &je)
-      : state(&jit), nextGOTIndex(0), JE(je) {
-#ifndef NDEBUG
-      TheJIT = &jit;
-#endif
+      : state(&jit), nextGOTIndex(0), JE(je), TheJIT(&jit) {
       LazyResolverFn = jit.getJITInfo().getLazyResolverFunction(JITCompilerFn);
     }
 
