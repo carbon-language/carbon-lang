@@ -975,6 +975,10 @@ QualType Sema::UsualArithmeticConversions(ExprResult &LHS, ExprResult &RHS,
   QualType RHSType =
     Context.getCanonicalType(RHS.get()->getType()).getUnqualifiedType();
 
+  // For conversion purposes, we ignore any atomic qualifier on the LHS.
+  if (const AtomicType *AtomicLHS = LHSType->getAs<AtomicType>())
+    LHSType = AtomicLHS->getValueType();
+
   // If both types are identical, no conversion is needed.
   if (LHSType == RHSType)
     return LHSType;
@@ -982,7 +986,7 @@ QualType Sema::UsualArithmeticConversions(ExprResult &LHS, ExprResult &RHS,
   // If either side is a non-arithmetic type (e.g. a pointer), we are done.
   // The caller can deal with this (e.g. pointer + int).
   if (!LHSType->isArithmeticType() || !RHSType->isArithmeticType())
-    return LHSType;
+    return QualType();
 
   // Apply unary and bitfield promotions to the LHS's type.
   QualType LHSUnpromotedType = LHSType;
@@ -4115,11 +4119,6 @@ CastKind Sema::PrepareScalarCast(ExprResult &Src, QualType DestTy) {
   // pointers.  Everything else should be possible.
 
   QualType SrcTy = Src.get()->getType();
-  if (const AtomicType *SrcAtomicTy = SrcTy->getAs<AtomicType>())
-    SrcTy = SrcAtomicTy->getValueType();
-  if (const AtomicType *DestAtomicTy = DestTy->getAs<AtomicType>())
-    DestTy = DestAtomicTy->getValueType();
-
   if (Context.hasSameUnqualifiedType(SrcTy, DestTy))
     return CK_NoOp;
 
@@ -5443,20 +5442,18 @@ Sema::CheckAssignmentConstraints(QualType LHSType, ExprResult &RHS,
     return Compatible;
   }
 
+  // If we have an atomic type, try a non-atomic assignment, then just add an
+  // atomic qualification step.
   if (const AtomicType *AtomicTy = dyn_cast<AtomicType>(LHSType)) {
-    if (AtomicTy->getValueType() == RHSType) {
-      Kind = CK_NonAtomicToAtomic;
-      return Compatible;
-    }
+    Sema::AssignConvertType result =
+      CheckAssignmentConstraints(AtomicTy->getValueType(), RHS, Kind);
+    if (result != Compatible)
+      return result;
+    if (Kind != CK_NoOp)
+      RHS = ImpCastExprToType(RHS.take(), AtomicTy->getValueType(), Kind);
+    Kind = CK_NonAtomicToAtomic;
+    return Compatible;
   }
-
-  if (const AtomicType *AtomicTy = dyn_cast<AtomicType>(RHSType)) {
-    if (AtomicTy->getValueType() == LHSType) {
-      Kind = CK_AtomicToNonAtomic;
-      return Compatible;
-    }
-  }
-
 
   // If the left-hand side is a reference type, then we are in a
   // (rare!) case where we've allowed the use of references in C,
@@ -5997,14 +5994,8 @@ QualType Sema::CheckMultiplyDivideOperands(ExprResult &LHS, ExprResult &RHS,
     return QualType();
 
 
-  if (!LHS.get()->getType()->isArithmeticType() ||
-      !RHS.get()->getType()->isArithmeticType()) {
-    if (IsCompAssign &&
-        LHS.get()->getType()->isAtomicType() &&
-        RHS.get()->getType()->isArithmeticType())
-      return compType;
+  if (compType.isNull() || !compType->isArithmeticType())
     return InvalidOperands(Loc, LHS, RHS);
-  }
 
   // Check for division by zero.
   if (IsDiv &&
@@ -6032,8 +6023,7 @@ QualType Sema::CheckRemainderOperands(
   if (LHS.isInvalid() || RHS.isInvalid())
     return QualType();
 
-  if (!LHS.get()->getType()->isIntegerType() ||
-      !RHS.get()->getType()->isIntegerType())
+  if (compType.isNull() || !compType->isIntegerType())
     return InvalidOperands(Loc, LHS, RHS);
 
   // Check for remainder by zero.
@@ -6269,15 +6259,8 @@ QualType Sema::CheckAdditionOperands( // C99 6.5.6
     diagnoseStringPlusInt(*this, Loc, LHS.get(), RHS.get());
 
   // handle the common case first (both operands are arithmetic).
-  if (LHS.get()->getType()->isArithmeticType() &&
-      RHS.get()->getType()->isArithmeticType()) {
+  if (!compType.isNull() && compType->isArithmeticType()) {
     if (CompLHSTy) *CompLHSTy = compType;
-    return compType;
-  }
-
-  if (LHS.get()->getType()->isAtomicType() &&
-      RHS.get()->getType()->isArithmeticType()) {
-    *CompLHSTy = LHS.get()->getType();
     return compType;
   }
 
@@ -6335,15 +6318,8 @@ QualType Sema::CheckSubtractionOperands(ExprResult &LHS, ExprResult &RHS,
   // Enforce type constraints: C99 6.5.6p3.
 
   // Handle the common case first (both operands are arithmetic).
-  if (LHS.get()->getType()->isArithmeticType() &&
-      RHS.get()->getType()->isArithmeticType()) {
+  if (!compType.isNull() && compType->isArithmeticType()) {
     if (CompLHSTy) *CompLHSTy = compType;
-    return compType;
-  }
-
-  if (LHS.get()->getType()->isAtomicType() &&
-      RHS.get()->getType()->isArithmeticType()) {
-    *CompLHSTy = LHS.get()->getType();
     return compType;
   }
 
@@ -7248,8 +7224,7 @@ inline QualType Sema::CheckBitwiseOperands(
   LHS = LHSResult.take();
   RHS = RHSResult.take();
 
-  if (LHS.get()->getType()->isIntegralOrUnscopedEnumerationType() &&
-      RHS.get()->getType()->isIntegralOrUnscopedEnumerationType())
+  if (!compType.isNull() && compType->isIntegralOrUnscopedEnumerationType())
     return compType;
   return InvalidOperands(Loc, LHS, RHS);
 }
