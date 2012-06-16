@@ -165,6 +165,11 @@ public:
   static bool classof(const Value *V) {
     return V->getValueID() == MDNodeVal;
   }
+
+  /// Methods for metadata merging.
+  static MDNode *getMostGenericTBAA(MDNode *A, MDNode *B);
+  static MDNode *getMostGenericFPMath(MDNode *A, MDNode *B);
+  static MDNode *getMostGenericRange(MDNode *A, MDNode *B);
 private:
   // destroy - Delete this node.  Only when there are no uses.
   void destroy();
