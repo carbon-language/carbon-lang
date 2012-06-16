@@ -189,7 +189,7 @@ void llvm::sys::SetInterruptFunction(void (*IF)()) {
 bool llvm::sys::RemoveFileOnSignal(const sys::Path &Filename,
                                    std::string* ErrMsg) {
   SignalsMutex.acquire();
-  std::string *OldPtr = &FilesToRemove[0];
+  std::string *OldPtr = FilesToRemove.empty() ? 0 : &FilesToRemove[0];
   FilesToRemove.push_back(Filename.str());
 
   // We want to call 'c_str()' on every std::string in this vector so that if
