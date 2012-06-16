@@ -180,6 +180,10 @@ void Sema::Initialize() {
     if (IdResolver.begin(Protocol) == IdResolver.end())
       PushOnScopeChains(Context.getObjCProtocolDecl(), TUScope);
   }
+
+  DeclarationName BuiltinVaList = &Context.Idents.get("__builtin_va_list");
+  if (IdResolver.begin(BuiltinVaList) == IdResolver.end())
+    PushOnScopeChains(Context.getBuiltinVaListDecl(), TUScope);
 }
 
 Sema::~Sema() {

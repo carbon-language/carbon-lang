@@ -738,28 +738,26 @@ namespace clang {
     /// The constants in this enumeration are indices into the
     /// SPECIAL_TYPES record.
     enum SpecialTypeIDs {
-      /// \brief __builtin_va_list
-      SPECIAL_TYPE_BUILTIN_VA_LIST             = 0,
       /// \brief CFConstantString type
-      SPECIAL_TYPE_CF_CONSTANT_STRING          = 1,
+      SPECIAL_TYPE_CF_CONSTANT_STRING          = 0,
       /// \brief C FILE typedef type
-      SPECIAL_TYPE_FILE                        = 2,
+      SPECIAL_TYPE_FILE                        = 1,
       /// \brief C jmp_buf typedef type
-      SPECIAL_TYPE_JMP_BUF                     = 3,
+      SPECIAL_TYPE_JMP_BUF                     = 2,
       /// \brief C sigjmp_buf typedef type
-      SPECIAL_TYPE_SIGJMP_BUF                  = 4,
+      SPECIAL_TYPE_SIGJMP_BUF                  = 3,
       /// \brief Objective-C "id" redefinition type
-      SPECIAL_TYPE_OBJC_ID_REDEFINITION        = 5,
+      SPECIAL_TYPE_OBJC_ID_REDEFINITION        = 4,
       /// \brief Objective-C "Class" redefinition type
-      SPECIAL_TYPE_OBJC_CLASS_REDEFINITION     = 6,
+      SPECIAL_TYPE_OBJC_CLASS_REDEFINITION     = 5,
       /// \brief Objective-C "SEL" redefinition type
-      SPECIAL_TYPE_OBJC_SEL_REDEFINITION       = 7,
+      SPECIAL_TYPE_OBJC_SEL_REDEFINITION       = 6,
       /// \brief C ucontext_t typedef type
-      SPECIAL_TYPE_UCONTEXT_T                  = 8
+      SPECIAL_TYPE_UCONTEXT_T                  = 7
     };
     
     /// \brief The number of special type IDs.
-    const unsigned NumSpecialTypeIDs = 9;
+    const unsigned NumSpecialTypeIDs = 8;
 
     /// \brief Predefined declaration IDs.
     ///
@@ -793,14 +791,17 @@ namespace clang {
       PREDEF_DECL_UNSIGNED_INT_128_ID = 7,
       
       /// \brief The internal 'instancetype' typedef.
-      PREDEF_DECL_OBJC_INSTANCETYPE_ID = 8
+      PREDEF_DECL_OBJC_INSTANCETYPE_ID = 8,
+
+      /// \brief The internal '__builtin_va_list' typedef.
+      PREDEF_DECL_BUILTIN_VA_LIST_ID = 9
     };
 
     /// \brief The number of declaration IDs that are predefined.
     ///
     /// For more information about predefined declarations, see the
     /// \c PredefinedDeclIDs type and the PREDEF_DECL_*_ID constants.
-    const unsigned int NUM_PREDEF_DECL_IDS = 9;
+    const unsigned int NUM_PREDEF_DECL_IDS = 10;
     
     /// \brief Record codes for each kind of declaration.
     ///

@@ -128,6 +128,29 @@ public:
     LongDouble
   };
 
+  /// BuiltinVaListKind - The different kinds of __builtin_va_list types
+  /// defined by the target implementation.
+  enum BuiltinVaListKind {
+    /// typedef char* __builtin_va_list;
+    CharPtrBuiltinVaList = 0,
+
+    /// typedef void* __builtin_va_list;
+    VoidPtrBuiltinVaList,
+
+    /// __builtin_va_list as defined by the PNaCl ABI:
+    /// http://www.chromium.org/nativeclient/pnacl/bitcode-abi#TOC-Machine-Types
+    PNaClABIBuiltinVaList,
+
+    /// __builtin_va_list as defined by the Power ABI:
+    /// https://www.power.org
+    ///        /resources/downloads/Power-Arch-32-bit-ABI-supp-1.0-Embedded.pdf
+    PowerABIBuiltinVaList,
+
+    /// __builtin_va_list as defined by the x86-64 ABI:
+    /// http://www.x86-64.org/documentation/abi.pdf
+    X86_64ABIBuiltinVaList
+  };
+
 protected:
   IntType SizeType, IntMaxType, UIntMaxType, PtrDiffType, IntPtrType, WCharType,
           WIntType, Char16Type, Char32Type, Int64Type, SigAtomicType;
@@ -379,9 +402,9 @@ public:
   /// idea to avoid optimizing based on that undef behavior.
   virtual bool isCLZForZeroUndef() const { return true; }
 
-  /// getVAListDeclaration - Return the declaration to use for
-  /// __builtin_va_list, which is target-specific.
-  virtual const char *getVAListDeclaration() const = 0;
+  /// getBuiltinVaListKind - Returns the kind of __builtin_va_list
+  /// type that should be used with this target.
+  virtual BuiltinVaListKind getBuiltinVaListKind() const = 0;
 
   /// isValidClobber - Returns whether the passed in string is
   /// a valid clobber in an inline asm statement. This is used by

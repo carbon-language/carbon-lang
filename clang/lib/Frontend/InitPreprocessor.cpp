@@ -519,9 +519,6 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
   if (TI.getLongLongWidth() > TI.getLongWidth())
     DefineExactWidthIntType(TargetInfo::SignedLongLong, TI, Builder);
 
-  // Add __builtin_va_list typedef.
-  Builder.append(TI.getVAListDeclaration());
-
   if (const char *Prefix = TI.getUserLabelPrefix())
     Builder.defineMacro("__USER_LABEL_PREFIX__", Prefix);
 

@@ -929,15 +929,9 @@ public:
     }
   }
 
-  virtual const char *getVAListDeclaration() const {
+  virtual BuiltinVaListKind getBuiltinVaListKind() const {
     // This is the ELF definition, and is overridden by the Darwin sub-target
-    return "typedef struct __va_list_tag {"
-           "  unsigned char gpr;"
-           "  unsigned char fpr;"
-           "  unsigned short reserved;"
-           "  void* overflow_arg_area;"
-           "  void* reg_save_area;"
-           "} __builtin_va_list[1];";
+    return TargetInfo::PowerABIBuiltinVaList;
   }
 };
 } // end anonymous namespace.
@@ -958,8 +952,8 @@ public:
       LongDoubleFormat = &llvm::APFloat::IEEEdouble;
     }
   }
-  virtual const char *getVAListDeclaration() const {
-    return "typedef char* __builtin_va_list;";
+  virtual BuiltinVaListKind getBuiltinVaListKind() const {
+    return TargetInfo::CharPtrBuiltinVaList;
   }
 };
 } // end anonymous namespace.
@@ -978,8 +972,8 @@ public:
     DescriptionString = "E-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-"
                         "i64:32:64-f32:32:32-f64:64:64-v128:128:128-n32";
   }
-  virtual const char *getVAListDeclaration() const {
-    return "typedef char* __builtin_va_list;";
+  virtual BuiltinVaListKind getBuiltinVaListKind() const {
+    return TargetInfo::CharPtrBuiltinVaList;
   }
 };
 
@@ -1047,9 +1041,9 @@ namespace {
       // FIXME: Is this really right?
       return "";
     }
-    virtual const char *getVAListDeclaration() const {
+    virtual BuiltinVaListKind getBuiltinVaListKind() const {
       // FIXME: implement
-      return "typedef char* __builtin_va_list;";
+      return TargetInfo::CharPtrBuiltinVaList;
     }
     virtual bool setCPU(const std::string &Name) {
       return Name == "sm_10" || Name == "sm_13" || Name == "sm_20";
@@ -1138,8 +1132,8 @@ public:
     return Feature == "mblaze";
   }
   
-  virtual const char *getVAListDeclaration() const {
-    return "typedef char* __builtin_va_list;";
+  virtual BuiltinVaListKind getBuiltinVaListKind() const {
+    return TargetInfo::CharPtrBuiltinVaList;
   }
   virtual const char *getTargetPrefix() const {
     return "mblaze";
@@ -2344,8 +2338,8 @@ public:
     // MaxAtomicInlineWidth. (cmpxchg8b is an i586 instruction.)
     MaxAtomicPromoteWidth = MaxAtomicInlineWidth = 64;
   }
-  virtual const char *getVAListDeclaration() const {
-    return "typedef char* __builtin_va_list;";
+  virtual BuiltinVaListKind getBuiltinVaListKind() const {
+    return TargetInfo::CharPtrBuiltinVaList;
   }
 
   int getEHDataRegisterNumber(unsigned RegNo) const {
@@ -2604,14 +2598,8 @@ public:
     MaxAtomicPromoteWidth = 128;
     MaxAtomicInlineWidth = 64;
   }
-  virtual const char *getVAListDeclaration() const {
-    return "typedef struct __va_list_tag {"
-           "  unsigned gp_offset;"
-           "  unsigned fp_offset;"
-           "  void* overflow_arg_area;"
-           "  void* reg_save_area;"
-           "} __va_list_tag;"
-           "typedef __va_list_tag __builtin_va_list[1];";
+  virtual BuiltinVaListKind getBuiltinVaListKind() const {
+    return TargetInfo::X86_64ABIBuiltinVaList;
   }
 
   int getEHDataRegisterNumber(unsigned RegNo) const {
@@ -2645,8 +2633,8 @@ public:
     WindowsTargetInfo<X86_64TargetInfo>::getTargetDefines(Opts, Builder);
     Builder.defineMacro("_WIN64");
   }
-  virtual const char *getVAListDeclaration() const {
-    return "typedef char* __builtin_va_list;";
+  virtual BuiltinVaListKind getBuiltinVaListKind() const {
+    return TargetInfo::CharPtrBuiltinVaList;
   }
 };
 } // end anonymous namespace
@@ -2977,8 +2965,8 @@ public:
     NumRecords = clang::ARM::LastTSBuiltin-Builtin::FirstTSBuiltin;
   }
   virtual bool isCLZForZeroUndef() const { return false; }
-  virtual const char *getVAListDeclaration() const {
-    return "typedef void* __builtin_va_list;";
+  virtual BuiltinVaListKind getBuiltinVaListKind() const {
+    return TargetInfo::VoidPtrBuiltinVaList;
   }
   virtual void getGCCRegNames(const char * const *&Names,
                               unsigned &NumNames) const;
@@ -3158,8 +3146,8 @@ public:
     return Feature == "hexagon";
   }
   
-  virtual const char *getVAListDeclaration() const {
-    return "typedef char* __builtin_va_list;";
+  virtual BuiltinVaListKind getBuiltinVaListKind() const {
+    return TargetInfo::CharPtrBuiltinVaList;
   }
   virtual void getGCCRegNames(const char * const *&Names,
                               unsigned &NumNames) const;
@@ -3325,8 +3313,8 @@ public:
                                  unsigned &NumRecords) const {
     // FIXME: Implement!
   }
-  virtual const char *getVAListDeclaration() const {
-    return "typedef void* __builtin_va_list;";
+  virtual BuiltinVaListKind getBuiltinVaListKind() const {
+    return TargetInfo::VoidPtrBuiltinVaList;
   }
   virtual void getGCCRegNames(const char * const *&Names,
                               unsigned &NumNames) const;
@@ -3469,9 +3457,9 @@ namespace {
       // FIXME: Is this really right?
       return "";
     }
-    virtual const char *getVAListDeclaration() const {
+    virtual BuiltinVaListKind getBuiltinVaListKind() const {
       // FIXME: implement
-      return "typedef char* __builtin_va_list;";
+      return TargetInfo::CharPtrBuiltinVaList;
    }
   };
 
@@ -3553,8 +3541,8 @@ namespace {
     virtual const char *getClobbers() const {
       return "";
     }
-    virtual const char *getVAListDeclaration() const {
-      return "typedef void* __builtin_va_list;";
+    virtual BuiltinVaListKind getBuiltinVaListKind() const {
+      return TargetInfo::VoidPtrBuiltinVaList;
     }
     virtual void getGCCRegNames(const char * const *&Names,
                                 unsigned &NumNames) const {}
@@ -3623,8 +3611,8 @@ public:
   virtual bool hasFeature(StringRef Feature) const {
     return Feature == "mips";
   }
-  virtual const char *getVAListDeclaration() const {
-    return "typedef void* __builtin_va_list;";
+  virtual BuiltinVaListKind getBuiltinVaListKind() const {
+    return TargetInfo::VoidPtrBuiltinVaList;
   }
   virtual void getGCCRegNames(const char * const *&Names,
                               unsigned &NumNames) const {
@@ -3997,8 +3985,8 @@ public:
   virtual void getTargetBuiltins(const Builtin::Info *&Records,
                                  unsigned &NumRecords) const {
   }
-  virtual const char *getVAListDeclaration() const {
-    return "typedef int __builtin_va_list[4];";
+  virtual BuiltinVaListKind getBuiltinVaListKind() const {
+    return TargetInfo::PNaClABIBuiltinVaList;
   }
   virtual void getGCCRegNames(const char * const *&Names,
                               unsigned &NumNames) const;

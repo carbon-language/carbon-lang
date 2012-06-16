@@ -198,10 +198,9 @@ class ASTContext : public RefCountedBase<ASTContext> {
   /// \brief The typedef for the __uint128_t type.
   mutable TypedefDecl *UInt128Decl;
   
-  /// BuiltinVaListType - built-in va list type.
-  /// This is initially null and set by Sema::LazilyCreateBuiltin when
-  /// a builtin that takes a valist is encountered.
-  QualType BuiltinVaListType;
+  /// \brief The typedef for the target specific predefined
+  /// __builtin_va_list type.
+  mutable TypedefDecl *BuiltinVaListDecl;
 
   /// \brief The typedef for the predefined 'id' type.
   mutable TypedefDecl *ObjCIdDecl;
@@ -1153,8 +1152,14 @@ public:
     return getObjCInterfaceType(getObjCProtocolDecl());
   }
   
-  void setBuiltinVaListType(QualType T);
-  QualType getBuiltinVaListType() const { return BuiltinVaListType; }
+  /// \brief Retrieve the C type declaration corresponding to the predefined
+  /// __builtin_va_list type.
+  TypedefDecl *getBuiltinVaListDecl() const;
+
+  /// \brief Retrieve the type of the __builtin_va_list type.
+  QualType getBuiltinVaListType() const {
+    return getTypeDeclType(getBuiltinVaListDecl());
+  }
 
   /// getCVRQualifiedType - Returns a type with additional const,
   /// volatile, or restrict qualifiers.

@@ -2851,11 +2851,6 @@ void ASTReader::InitializeContext() {
   
   // Load the special types.
   if (SpecialTypes.size() >= NumSpecialTypeIDs) {
-    if (Context.getBuiltinVaListType().isNull()) {
-      Context.setBuiltinVaListType(
-        GetType(SpecialTypes[SPECIAL_TYPE_BUILTIN_VA_LIST]));
-    }
-    
     if (unsigned String = SpecialTypes[SPECIAL_TYPE_CF_CONSTANT_STRING]) {
       if (!Context.CFConstantStringTypeDecl)
         Context.setCFConstantStringType(GetType(String));
@@ -4646,6 +4641,9 @@ Decl *ASTReader::GetDecl(DeclID ID) {
         
     case PREDEF_DECL_OBJC_INSTANCETYPE_ID:
       return Context.getObjCInstanceTypeDecl();
+
+    case PREDEF_DECL_BUILTIN_VA_LIST_ID:
+      return Context.getBuiltinVaListDecl();
     }
   }
   

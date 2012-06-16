@@ -53,11 +53,11 @@ class FindTopLevelDeclConsumer : public clang::ASTConsumer {
 };
 } // end namespace
 
-TEST(runToolOnCode, FindsTopLevelDeclOnEmptyCode) {
+TEST(runToolOnCode, FindsNoTopLevelDeclOnEmptyCode) {
   bool FoundTopLevelDecl = false;
   EXPECT_TRUE(runToolOnCode(
       new TestAction(new FindTopLevelDeclConsumer(&FoundTopLevelDecl)), ""));
-  EXPECT_TRUE(FoundTopLevelDecl);
+  EXPECT_FALSE(FoundTopLevelDecl);
 }
 
 namespace {

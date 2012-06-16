@@ -229,6 +229,7 @@ ASTContext::ASTContext(LangOptions& LOpts, SourceManager &SM,
     SubstTemplateTemplateParmPacks(this_()),
     GlobalNestedNameSpecifier(0), 
     Int128Decl(0), UInt128Decl(0),
+    BuiltinVaListDecl(0),
     ObjCIdDecl(0), ObjCSelDecl(0), ObjCClassDecl(0), ObjCProtocolClassDecl(0),
     CFConstantStringTypeDecl(0), ObjCInstanceTypeDecl(0),
     FILEDecl(0), 
@@ -477,8 +478,6 @@ void ASTContext::InitBuiltinTypes(const TargetInfo &Target) {
   FloatComplexTy      = getComplexType(FloatTy);
   DoubleComplexTy     = getComplexType(DoubleTy);
   LongDoubleComplexTy = getComplexType(LongDoubleTy);
-
-  BuiltinVaListType = QualType();
 
   // Builtin types for 'id', 'Class', and 'SEL'.
   InitBuiltinType(ObjCBuiltinIdTy, BuiltinType::ObjCId);
@@ -4870,12 +4869,6 @@ void ASTContext::getObjCEncodingForTypeQualifier(Decl::ObjCDeclQualifier QT,
     S += 'V';
 }
 
-void ASTContext::setBuiltinVaListType(QualType T) {
-  assert(BuiltinVaListType.isNull() && "__builtin_va_list type already set!");
-
-  BuiltinVaListType = T;
-}
-
 TypedefDecl *ASTContext::getObjCIdDecl() const {
   if (!ObjCIdDecl) {
     QualType T = getObjCObjectType(ObjCBuiltinIdTy, 0, 0);
@@ -4927,6 +4920,230 @@ ObjCInterfaceDecl *ASTContext::getObjCProtocolDecl() const {
   }
   
   return ObjCProtocolClassDecl;
+}
+
+//===----------------------------------------------------------------------===//
+// __builtin_va_list Construction Functions
+//===----------------------------------------------------------------------===//
+
+static TypedefDecl *CreateCharPtrBuiltinVaListDecl(const ASTContext *Context) {
+  // typedef char* __builtin_va_list;
+  QualType CharPtrType = Context->getPointerType(Context->CharTy);
+  TypeSourceInfo *TInfo
+    = Context->getTrivialTypeSourceInfo(CharPtrType);
+
+  TypedefDecl *VaListTypeDecl
+    = TypedefDecl::Create(const_cast<ASTContext &>(*Context),
+                          Context->getTranslationUnitDecl(),
+                          SourceLocation(), SourceLocation(),
+                          &Context->Idents.get("__builtin_va_list"),
+                          TInfo);
+  return VaListTypeDecl;
+}
+
+static TypedefDecl *CreateVoidPtrBuiltinVaListDecl(const ASTContext *Context) {
+  // typedef void* __builtin_va_list;
+  QualType VoidPtrType = Context->getPointerType(Context->VoidTy);
+  TypeSourceInfo *TInfo
+    = Context->getTrivialTypeSourceInfo(VoidPtrType);
+
+  TypedefDecl *VaListTypeDecl
+    = TypedefDecl::Create(const_cast<ASTContext &>(*Context),
+                          Context->getTranslationUnitDecl(),
+                          SourceLocation(), SourceLocation(),
+                          &Context->Idents.get("__builtin_va_list"),
+                          TInfo);
+  return VaListTypeDecl;
+}
+
+static TypedefDecl *CreatePowerABIBuiltinVaListDecl(const ASTContext *Context) {
+  // typedef struct __va_list_tag {
+  RecordDecl *VaListTagDecl;
+
+  VaListTagDecl = CreateRecordDecl(*Context, TTK_Struct,
+                                   Context->getTranslationUnitDecl(),
+                                   &Context->Idents.get("__va_list_tag"));
+  VaListTagDecl->startDefinition();
+
+  const size_t NumFields = 5;
+  QualType FieldTypes[NumFields];
+  const char *FieldNames[NumFields];
+
+  //   unsigned char gpr;
+  FieldTypes[0] = Context->UnsignedCharTy;
+  FieldNames[0] = "gpr";
+
+  //   unsigned char fpr;
+  FieldTypes[1] = Context->UnsignedCharTy;
+  FieldNames[1] = "fpr";
+
+  //   unsigned short reserved;
+  FieldTypes[2] = Context->UnsignedShortTy;
+  FieldNames[2] = "reserved";
+
+  //   void* overflow_arg_area;
+  FieldTypes[3] = Context->getPointerType(Context->VoidTy);
+  FieldNames[3] = "overflow_arg_area";
+
+  //   void* reg_save_area;
+  FieldTypes[4] = Context->getPointerType(Context->VoidTy);
+  FieldNames[4] = "reg_save_area";
+
+  // Create fields
+  for (unsigned i = 0; i < NumFields; ++i) {
+    FieldDecl *Field = FieldDecl::Create(*Context, VaListTagDecl,
+                                         SourceLocation(),
+                                         SourceLocation(),
+                                         &Context->Idents.get(FieldNames[i]),
+                                         FieldTypes[i], /*TInfo=*/0,
+                                         /*BitWidth=*/0,
+                                         /*Mutable=*/false,
+                                         ICIS_NoInit);
+    Field->setAccess(AS_public);
+    VaListTagDecl->addDecl(Field);
+  }
+  VaListTagDecl->completeDefinition();
+  QualType VaListTagType = Context->getRecordType(VaListTagDecl);
+
+  // } __va_list_tag;
+  TypedefDecl *VaListTagTypedefDecl
+    = TypedefDecl::Create(const_cast<ASTContext &>(*Context),
+                          Context->getTranslationUnitDecl(),
+                          SourceLocation(), SourceLocation(),
+                          &Context->Idents.get("__va_list_tag"),
+                          Context->getTrivialTypeSourceInfo(VaListTagType));
+  QualType VaListTagTypedefType =
+    Context->getTypedefType(VaListTagTypedefDecl);
+
+  // typedef __va_list_tag __builtin_va_list[1];
+  llvm::APInt Size(Context->getTypeSize(Context->getSizeType()), 1);
+  QualType VaListTagArrayType
+    = Context->getConstantArrayType(VaListTagTypedefType,
+                                    Size, ArrayType::Normal, 0);
+  TypeSourceInfo *TInfo
+    = Context->getTrivialTypeSourceInfo(VaListTagArrayType);
+  TypedefDecl *VaListTypedefDecl
+    = TypedefDecl::Create(const_cast<ASTContext &>(*Context),
+                          Context->getTranslationUnitDecl(),
+                          SourceLocation(), SourceLocation(),
+                          &Context->Idents.get("__builtin_va_list"),
+                          TInfo);
+
+  return VaListTypedefDecl;
+}
+
+static TypedefDecl *
+CreateX86_64ABIBuiltinVaListDecl(const ASTContext *Context) {
+  // typedef struct __va_list_tag {
+  RecordDecl *VaListTagDecl;
+  VaListTagDecl = CreateRecordDecl(*Context, TTK_Struct,
+                                   Context->getTranslationUnitDecl(),
+                                   &Context->Idents.get("__va_list_tag"));
+  VaListTagDecl->startDefinition();
+
+  const size_t NumFields = 4;
+  QualType FieldTypes[NumFields];
+  const char *FieldNames[NumFields];
+
+  //   unsigned gp_offset;
+  FieldTypes[0] = Context->UnsignedIntTy;
+  FieldNames[0] = "gp_offset";
+
+  //   unsigned fp_offset;
+  FieldTypes[1] = Context->UnsignedIntTy;
+  FieldNames[1] = "fp_offset";
+
+  //   void* overflow_arg_area;
+  FieldTypes[2] = Context->getPointerType(Context->VoidTy);
+  FieldNames[2] = "overflow_arg_area";
+
+  //   void* reg_save_area;
+  FieldTypes[3] = Context->getPointerType(Context->VoidTy);
+  FieldNames[3] = "reg_save_area";
+
+  // Create fields
+  for (unsigned i = 0; i < NumFields; ++i) {
+    FieldDecl *Field = FieldDecl::Create(const_cast<ASTContext &>(*Context),
+                                         VaListTagDecl,
+                                         SourceLocation(),
+                                         SourceLocation(),
+                                         &Context->Idents.get(FieldNames[i]),
+                                         FieldTypes[i], /*TInfo=*/0,
+                                         /*BitWidth=*/0,
+                                         /*Mutable=*/false,
+                                         ICIS_NoInit);
+    Field->setAccess(AS_public);
+    VaListTagDecl->addDecl(Field);
+  }
+  VaListTagDecl->completeDefinition();
+  QualType VaListTagType = Context->getRecordType(VaListTagDecl);
+
+  // } __va_list_tag;
+  TypedefDecl *VaListTagTypedefDecl
+    = TypedefDecl::Create(const_cast<ASTContext &>(*Context),
+                          Context->getTranslationUnitDecl(),
+                          SourceLocation(), SourceLocation(),
+                          &Context->Idents.get("__va_list_tag"),
+                          Context->getTrivialTypeSourceInfo(VaListTagType));
+  QualType VaListTagTypedefType =
+    Context->getTypedefType(VaListTagTypedefDecl);
+
+  // typedef __va_list_tag __builtin_va_list[1];
+  llvm::APInt Size(Context->getTypeSize(Context->getSizeType()), 1);
+  QualType VaListTagArrayType
+    = Context->getConstantArrayType(VaListTagTypedefType,
+                                      Size, ArrayType::Normal,0);
+  TypeSourceInfo *TInfo
+    = Context->getTrivialTypeSourceInfo(VaListTagArrayType);
+  TypedefDecl *VaListTypedefDecl
+    = TypedefDecl::Create(const_cast<ASTContext &>(*Context),
+                          Context->getTranslationUnitDecl(),
+                          SourceLocation(), SourceLocation(),
+                          &Context->Idents.get("__builtin_va_list"),
+                          TInfo);
+
+  return VaListTypedefDecl;
+}
+
+static TypedefDecl *CreatePNaClABIBuiltinVaListDecl(const ASTContext *Context) {
+  // typedef int __builtin_va_list[4];
+  llvm::APInt Size(Context->getTypeSize(Context->getSizeType()), 4);
+  QualType IntArrayType
+    = Context->getConstantArrayType(Context->IntTy,
+				    Size, ArrayType::Normal, 0);
+  TypedefDecl *VaListTypedefDecl
+    = TypedefDecl::Create(const_cast<ASTContext &>(*Context),
+                          Context->getTranslationUnitDecl(),
+                          SourceLocation(), SourceLocation(),
+                          &Context->Idents.get("__builtin_va_list"),
+                          Context->getTrivialTypeSourceInfo(IntArrayType));
+
+  return VaListTypedefDecl;
+}
+
+static TypedefDecl *CreateVaListDecl(const ASTContext *Context,
+                                     TargetInfo::BuiltinVaListKind Kind) {
+  switch (Kind) {
+  case TargetInfo::CharPtrBuiltinVaList:
+    return CreateCharPtrBuiltinVaListDecl(Context);
+  case TargetInfo::VoidPtrBuiltinVaList:
+    return CreateVoidPtrBuiltinVaListDecl(Context);
+  case TargetInfo::PowerABIBuiltinVaList:
+    return CreatePowerABIBuiltinVaListDecl(Context);
+  case TargetInfo::X86_64ABIBuiltinVaList:
+    return CreateX86_64ABIBuiltinVaListDecl(Context);
+  case TargetInfo::PNaClABIBuiltinVaList:
+    return CreatePNaClABIBuiltinVaListDecl(Context);
+  }
+
+  llvm_unreachable("Unhandled __builtin_va_list type kind");
+}
+
+TypedefDecl *ASTContext::getBuiltinVaListDecl() const {
+  if (!BuiltinVaListDecl)
+    BuiltinVaListDecl = CreateVaListDecl(this, Target->getBuiltinVaListKind());
+
+  return BuiltinVaListDecl;
 }
 
 void ASTContext::setObjCConstantStringInterface(ObjCInterfaceDecl *Decl) {
