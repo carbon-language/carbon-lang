@@ -354,6 +354,19 @@ public:
     return (*this)[Idx];
   }
 
+  /// Test if any common bits are set.
+  bool anyCommon(const SmallBitVector &RHS) const {
+    if (isSmall() && RHS.isSmall())
+      return (getSmallBits() & RHS.getSmallBits()) != 0;
+    if (!isSmall() && !RHS.isSmall())
+      return getPointer()->anyCommon(*RHS.getPointer());
+
+    for (unsigned i = 0, e = std::min(size(), RHS.size()); i != e; ++i)
+      if (test(i) && RHS.test(i))
+        return true;
+    return false;
+  }
+
   // Comparison operators.
   bool operator==(const SmallBitVector &RHS) const {
     if (size() != RHS.size())
@@ -441,6 +454,59 @@ public:
 
   void swap(SmallBitVector &RHS) {
     std::swap(X, RHS.X);
+  }
+
+  /// setBitsInMask - Add '1' bits from Mask to this vector. Don't resize.
+  /// This computes "*this |= Mask".
+  void setBitsInMask(const uint32_t *Mask, unsigned MaskWords = ~0u) {
+    if (isSmall())
+      applyMask<true, false>(Mask, MaskWords);
+    else
+      getPointer()->setBitsInMask(Mask, MaskWords);
+  }
+
+  /// clearBitsInMask - Clear any bits in this vector that are set in Mask.
+  /// Don't resize. This computes "*this &= ~Mask".
+  void clearBitsInMask(const uint32_t *Mask, unsigned MaskWords = ~0u) {
+    if (isSmall())
+      applyMask<false, false>(Mask, MaskWords);
+    else
+      getPointer()->clearBitsInMask(Mask, MaskWords);
+  }
+
+  /// setBitsNotInMask - Add a bit to this vector for every '0' bit in Mask.
+  /// Don't resize.  This computes "*this |= ~Mask".
+  void setBitsNotInMask(const uint32_t *Mask, unsigned MaskWords = ~0u) {
+    if (isSmall())
+      applyMask<true, true>(Mask, MaskWords);
+    else
+      getPointer()->setBitsNotInMask(Mask, MaskWords);
+  }
+
+  /// clearBitsNotInMask - Clear a bit in this vector for every '0' bit in Mask.
+  /// Don't resize.  This computes "*this &= Mask".
+  void clearBitsNotInMask(const uint32_t *Mask, unsigned MaskWords = ~0u) {
+    if (isSmall())
+      applyMask<false, true>(Mask, MaskWords);
+    else
+      getPointer()->clearBitsNotInMask(Mask, MaskWords);
+  }
+
+private:
+  template<bool AddBits, bool InvertMask>
+  void applyMask(const uint32_t *Mask, unsigned MaskWords) {
+    assert((NumBaseBits == 64 || NumBaseBits == 32) && "Unsupported word size");
+    if (NumBaseBits == 64 && MaskWords >= 2) {
+      uint64_t M = Mask[0] | (uint64_t(Mask[1]) << 32);
+      if (InvertMask) M = ~M;
+      if (AddBits) setSmallBits(getSmallBits() | M);
+      else         setSmallBits(getSmallBits() & ~M);
+    } else {
+      uint32_t M = Mask[0];
+      if (InvertMask) M = ~M;
+      if (AddBits) setSmallBits(getSmallBits() | M);
+      else         setSmallBits(getSmallBits() & ~M);
+    }
   }
 };
 
