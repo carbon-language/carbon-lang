@@ -451,7 +451,8 @@ void ObjCMethodDecl::setMethodParams(ASTContext &C,
   if (isImplicit())
     return setParamsAndSelLocs(C, Params, ArrayRef<SourceLocation>());
 
-  SelLocsKind = hasStandardSelectorLocs(getSelector(), SelLocs, Params, EndLoc);
+  SelLocsKind = hasStandardSelectorLocs(getSelector(), SelLocs, Params,
+                                        DeclEndLoc);
   if (SelLocsKind != SelLoc_NonStandard)
     return setParamsAndSelLocs(C, Params, ArrayRef<SourceLocation>());
 
@@ -521,6 +522,12 @@ ObjCMethodDecl *ObjCMethodDecl::getCanonicalDecl() {
                                                     isInstanceMethod());
 
   return this;
+}
+
+SourceLocation ObjCMethodDecl::getLocEnd() const {
+  if (Stmt *Body = getBody())
+    return Body->getLocEnd();
+  return DeclEndLoc;
 }
 
 ObjCMethodFamily ObjCMethodDecl::getMethodFamily() const {

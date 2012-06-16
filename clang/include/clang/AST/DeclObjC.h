@@ -171,7 +171,7 @@ private:
   unsigned NumParams;
 
   /// List of attributes for this method declaration.
-  SourceLocation EndLoc; // the location of the ';' or '}'.
+  SourceLocation DeclEndLoc; // the location of the ';' or '{'.
 
   // The following are only used for method definitions, null otherwise.
   // FIXME: space savings opportunity, consider a sub-class.
@@ -242,7 +242,7 @@ private:
     SelLocsKind(SelLoc_StandardNoSpace), IsOverriding(0),
     MethodDeclType(T), ResultTInfo(ResultTInfo),
     ParamsAndSelLocs(0), NumParams(0),
-    EndLoc(endLoc), Body(0), SelfDecl(0), CmdDecl(0) {
+    DeclEndLoc(endLoc), Body(0), SelfDecl(0), CmdDecl(0) {
     setImplicit(isImplicitlyDeclared);
   }
 
@@ -290,12 +290,16 @@ public:
   bool isRedeclaration() const { return IsRedeclaration; }
   void setAsRedeclaration(const ObjCMethodDecl *PrevMethod);
 
+  /// \brief Returns the location where the declarator ends. It will be
+  /// the location of ';' for a method declaration and the location of '{'
+  /// for a method definition.
+  SourceLocation getDeclaratorEndLoc() const { return DeclEndLoc; }
+
   // Location information, modeled after the Stmt API.
   SourceLocation getLocStart() const LLVM_READONLY { return getLocation(); }
-  SourceLocation getLocEnd() const LLVM_READONLY { return EndLoc; }
-  void setEndLoc(SourceLocation Loc) { EndLoc = Loc; }
+  SourceLocation getLocEnd() const LLVM_READONLY;
   virtual SourceRange getSourceRange() const LLVM_READONLY {
-    return SourceRange(getLocation(), EndLoc);
+    return SourceRange(getLocation(), getLocEnd());
   }
 
   SourceLocation getSelectorStartLoc() const {
@@ -310,7 +314,7 @@ public:
                                    getSelLocsKind() == SelLoc_StandardWithSpace,
                       llvm::makeArrayRef(const_cast<ParmVarDecl**>(getParams()),
                                          NumParams),
-                                   EndLoc);
+                                   DeclEndLoc);
     return getStoredSelLocs()[Index];
   }
 

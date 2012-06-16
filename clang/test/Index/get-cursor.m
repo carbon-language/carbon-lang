@@ -82,6 +82,13 @@ void foo3(Test3 *test3) {
 @implementation Test5
 @synthesize prop1, prop2;
 @dynamic prop3, prop4;
+
+-(id)meth1 {
+  return 0;
+}
+-(id)meth2{
+  return 0;
+}
 @end
 
 // RUN: c-index-test -cursor-at=%s:4:28 -cursor-at=%s:5:28 %s | FileCheck -check-prefix=CHECK-PROP %s
@@ -124,3 +131,7 @@ void foo3(Test3 *test3) {
 // CHECK-MULTISYNTH: 83:20 ObjCSynthesizeDecl=prop2:77:23 (Definition) Extent=[83:1 - 83:25] Spelling=prop2 ([83:20 - 83:25])
 // CHECK-MULTISYNTH: 84:10 ObjCDynamicDecl=prop3:78:23 (Definition) Extent=[84:1 - 84:15] Spelling=prop3 ([84:10 - 84:15])
 // CHECK-MULTISYNTH: 84:17 ObjCDynamicDecl=prop4:79:23 (Definition) Extent=[84:1 - 84:22] Spelling=prop4 ([84:17 - 84:22])
+
+// RUN: c-index-test -cursor-at=%s:86:7 -cursor-at=%s:89:7 %s | FileCheck -check-prefix=CHECK-SELECTORLOC %s
+// CHECK-SELECTORLOC: 86:6 ObjCInstanceMethodDecl=meth1:86:6 (Definition) Extent=[86:1 - 88:2] Spelling=meth1 ([86:6 - 86:11]) Selector index=0
+// CHECK-SELECTORLOC: 89:6 ObjCInstanceMethodDecl=meth2:89:6 (Definition) Extent=[89:1 - 91:2] Spelling=meth2 ([89:6 - 89:11]) Selector index=0

@@ -116,4 +116,4 @@
 // CHECK: overrides.m:81:23: ObjCInstanceMethodDecl=setProp::81:23 [Overrides @77:8] Extent=[81:23 - 81:27]
 // CHECK: overrides.m:92:8: ObjCInstanceMethodDecl=meth:92:8 Extent=[92:1 - 92:13]
 // CHECK: overrides.m:95:17: ObjCImplementationDecl=I5:95:17 (Definition) Extent=[95:1 - 97:2]
-// CHECK: overrides.m:96:9: ObjCInstanceMethodDecl=meth:96:9 (Definition) [Overrides @92:8] Extent=[96:1 - 96:14]
+// CHECK: overrides.m:96:8: ObjCInstanceMethodDecl=meth:96:8 (Definition) [Overrides @92:8] Extent=[96:1 - 96:14]
