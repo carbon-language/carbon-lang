@@ -261,10 +261,12 @@ void FileManager::addAncestorsAsVirtualDirs(StringRef Path) {
 
 const DirectoryEntry *FileManager::getDirectory(StringRef DirName,
                                                 bool CacheFailure) {
-  // stat doesn't like trailing separators.
+  // stat doesn't like trailing separators except for root directory.
   // At least, on Win32 MSVCRT, stat() cannot strip trailing '/'.
   // (though it can strip '\\')
-  if (DirName.size() > 1 && llvm::sys::path::is_separator(DirName.back()))
+  if (DirName.size() > 1 &&
+      DirName != llvm::sys::path::root_path(DirName) &&
+      llvm::sys::path::is_separator(DirName.back()))
     DirName = DirName.substr(0, DirName.size()-1);
 
   ++NumDirLookups;
