@@ -351,15 +351,21 @@ class ScheduleDAGMI : public ScheduleDAGInstrs {
   IntervalPressure BotPressure;
   RegPressureTracker BotRPTracker;
 
+#ifndef NDEBUG
   /// The number of instructions scheduled so far. Used to cut off the
   /// scheduler at the point determined by misched-cutoff.
   unsigned NumInstrsScheduled;
+#endif
 public:
   ScheduleDAGMI(MachineSchedContext *C, MachineSchedStrategy *S):
     ScheduleDAGInstrs(*C->MF, *C->MLI, *C->MDT, /*IsPostRA=*/false, C->LIS),
     AA(C->AA), RegClassInfo(C->RegClassInfo), SchedImpl(S),
     RPTracker(RegPressure), CurrentTop(), TopRPTracker(TopPressure),
-    CurrentBottom(), BotRPTracker(BotPressure), NumInstrsScheduled(0) {}
+    CurrentBottom(), BotRPTracker(BotPressure) {
+#ifndef NDEBUG
+    NumInstrsScheduled = 0;
+#endif
+  }
 
   ~ScheduleDAGMI() {
     delete SchedImpl;

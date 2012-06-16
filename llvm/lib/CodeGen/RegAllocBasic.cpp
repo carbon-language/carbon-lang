@@ -64,8 +64,10 @@ class RABasic : public MachineFunctionPass, public RegAllocBase
   // context
   MachineFunction *MF;
 
+#ifndef NDEBUG
   // analyses
   RenderMachineFunction *RMF;
+#endif
 
   // state
   std::auto_ptr<Spiller> SpillerInstance;

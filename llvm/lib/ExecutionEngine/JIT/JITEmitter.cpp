@@ -186,12 +186,17 @@ namespace {
 
     JITEmitter &JE;
 
+#ifndef NDEBUG
     /// Instance of JIT corresponding to this Resolver.
     JIT *TheJIT;
+#endif
 
   public:
     explicit JITResolver(JIT &jit, JITEmitter &je)
-      : state(&jit), nextGOTIndex(0), JE(je), TheJIT(&jit) {
+      : state(&jit), nextGOTIndex(0), JE(je) {
+#ifndef NDEBUG
+      TheJIT = &jit;
+#endif
       LazyResolverFn = jit.getJITInfo().getLazyResolverFunction(JITCompilerFn);
     }
 
