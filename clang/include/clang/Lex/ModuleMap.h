@@ -145,7 +145,7 @@ public:
   /// \brief Retrieve a module with the given name within the given context,
   /// using direct (qualified) name lookup.
   ///
-  /// \param The name of the module to look up.
+  /// \param Name The name of the module to look up.
   /// 
   /// \param Context The module for which we will look for a submodule. If
   /// null, we will look for a top-level module.
