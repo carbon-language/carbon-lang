@@ -17,6 +17,10 @@ add_clang_executable(diagtool
   ShowEnabledWarnings.cpp
 )
 
+add_dependencies(diagtool
+  ClangDiagnosticIndexName
+  )
+
 if(UNIX)
   set(CLANGXX_LINK_OR_COPY create_symlink)
 else()
