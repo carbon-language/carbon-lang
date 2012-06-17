@@ -10,6 +10,7 @@
 #include "gtest/gtest.h"
 #include "llvm/ADT/DenseMap.h"
 #include <map>
+#include <set>
 
 using namespace llvm;
 
@@ -28,6 +29,47 @@ uint32_t *getTestValue(int i, uint32_t **) {
   assert(i < 8192 && "Only support 8192 dummy keys.");
   return &dummy_arr1[i];
 }
+
+/// \brief A test class that tries to check that construction and destruction
+/// occur correctly.
+class CtorTester {
+  static std::set<CtorTester *> Constructed;
+  int Value;
+
+public:
+  explicit CtorTester(int Value = 0) : Value(Value) {
+    EXPECT_TRUE(Constructed.insert(this).second);
+  }
+  CtorTester(uint32_t Value) : Value(Value) {
+    EXPECT_TRUE(Constructed.insert(this).second);
+  }
+  CtorTester(const CtorTester &Arg) : Value(Arg.Value) {
+    EXPECT_TRUE(Constructed.insert(this).second);
+  }
+  ~CtorTester() {
+    EXPECT_EQ(1u, Constructed.erase(this));
+  }
+  operator uint32_t() const { return Value; }
+
+  int getValue() const { return Value; }
+  bool operator==(const CtorTester &RHS) const { return Value == RHS.Value; }
+};
+
+std::set<CtorTester *> CtorTester::Constructed;
+
+struct CtorTesterMapInfo {
+  static inline CtorTester getEmptyKey() { return CtorTester(-1); }
+  static inline CtorTester getTombstoneKey() { return CtorTester(-2); }
+  static unsigned getHashValue(const CtorTester &Val) {
+    return Val.getValue() * 37u;
+  }
+  static bool isEqual(const CtorTester &LHS, const CtorTester &RHS) {
+    return LHS == RHS;
+  }
+};
+
+CtorTester getTestKey(int i, CtorTester *) { return CtorTester(i); }
+CtorTester getTestValue(int i, CtorTester *) { return CtorTester(42 + i); }
 
 // Test fixture, with helper functions implemented by forwarding to global
 // function overloads selected by component types of the type parameter. This
@@ -57,8 +99,11 @@ typename T::mapped_type *const DenseMapTest<T>::dummy_value_ptr = 0;
 // Register these types for testing.
 typedef ::testing::Types<DenseMap<uint32_t, uint32_t>,
                          DenseMap<uint32_t *, uint32_t *>,
+                         DenseMap<CtorTester, CtorTester, CtorTesterMapInfo>,
                          SmallDenseMap<uint32_t, uint32_t>,
-                         SmallDenseMap<uint32_t *, uint32_t *>
+                         SmallDenseMap<uint32_t *, uint32_t *>,
+                         SmallDenseMap<CtorTester, CtorTester, 4,
+                                       CtorTesterMapInfo>
                          > DenseMapTestTypes;
 TYPED_TEST_CASE(DenseMapTest, DenseMapTestTypes);
 

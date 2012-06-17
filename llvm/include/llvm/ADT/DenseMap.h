@@ -310,7 +310,6 @@ protected:
     std::swap(getNumTombstones(), RHS.getNumTombstones());
   }
 
-private:
   static unsigned getHashValue(const KeyT &Val) {
     return KeyInfoT::getHashValue(Val);
   }
@@ -325,6 +324,7 @@ private:
     return KeyInfoT::getTombstoneKey();
   }
 
+private:
   unsigned getNumEntries() const {
     return static_cast<const DerivedT *>(this)->getNumEntries();
   }
@@ -803,24 +803,34 @@ public:
       if (AtLeast <= InlineBuckets)
         return; // Nothing to do.
 
-      // First grow an allocated bucket array in another map and move our
-      // entries into it.
-      // FIXME: This is wasteful, we don't need the inline buffer here, and we
-      // certainly don't need to initialize it to empty.
-      SmallDenseMap TmpMap;
-      TmpMap.Small = false;
-      new (TmpMap.getLargeRep()) LargeRep(allocateBuckets(AtLeast));
-      TmpMap.moveFromOldBuckets(getInlineBuckets(),
-                                getInlineBuckets()+InlineBuckets);
+      // First move the inline buckets into a temporary storage.
+      typename AlignedCharArray<BucketT[InlineBuckets]>::union_type
+        TmpStorage;
+      BucketT *TmpBegin = reinterpret_cast<BucketT *>(TmpStorage.buffer);
+      BucketT *TmpEnd = TmpBegin;
 
-      // Now steal the innards back into this map, and arrange for the
-      // temporary map to be cleanly torn down.
-      assert(NumEntries == TmpMap.NumEntries);
+      // Loop over the buckets, moving non-empty, non-tombstones into the
+      // temporary storage. Have the loop move the TmpEnd forward as it goes.
+      const KeyT EmptyKey = this->getEmptyKey();
+      const KeyT TombstoneKey = this->getTombstoneKey();
+      for (BucketT *P = getBuckets(), *E = P + InlineBuckets; P != E; ++P) {
+        if (!KeyInfoT::isEqual(P->first, EmptyKey) &&
+            !KeyInfoT::isEqual(P->first, TombstoneKey)) {
+          assert((TmpEnd - TmpBegin) < InlineBuckets &&
+                 "Too many inline buckets!");
+          new (&TmpEnd->first) KeyT(llvm_move(P->first));
+          new (&TmpEnd->second) ValueT(llvm_move(P->second));
+          ++TmpEnd;
+          P->second.~ValueT();
+        }
+        P->first.~KeyT();
+      }
+
+      // Now make this map use the large rep, and move all the entries back
+      // into it.
       Small = false;
-      NumTombstones = llvm_move(TmpMap.NumTombstones);
-      new (getLargeRep()) LargeRep(llvm_move(*TmpMap.getLargeRep()));
-      TmpMap.getLargeRep()->~LargeRep();
-      TmpMap.Small = true;
+      new (getLargeRep()) LargeRep(allocateBuckets(AtLeast));
+      this->moveFromOldBuckets(TmpBegin, TmpEnd);
       return;
     }
 
