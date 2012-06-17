@@ -19,7 +19,7 @@
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/Type.h"
 #include "clang/AST/TypeOrdering.h"
-#include "llvm/ADT/SmallMap.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include <list>
@@ -128,7 +128,7 @@ class CXXBasePaths {
   /// while the element contains the number of non-virtual base
   /// class subobjects for that class type. The key of the map is
   /// the cv-unqualified canonical type of the base class subobject.
-  llvm::SmallMap<QualType, std::pair<bool, unsigned>, 8> ClassSubobjects;
+  llvm::SmallDenseMap<QualType, std::pair<bool, unsigned>, 8> ClassSubobjects;
   
   /// FindAmbiguities - Whether Sema::IsDerivedFrom should try find
   /// ambiguous paths while it is looking for a path from a derived
