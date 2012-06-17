@@ -34,7 +34,7 @@ TEST(BlockFrequencyTest, MaxToHalfMax) {
   BlockFrequency Freq(UINT64_MAX);
   BranchProbability Prob(UINT32_MAX / 2, UINT32_MAX);
   Freq *= Prob;
-  EXPECT_EQ(Freq.getFrequency(), 9223372034707292159LLu);
+  EXPECT_EQ(Freq.getFrequency(), 9223372034707292159ULL);
 }
 
 TEST(BlockFrequencyTest, BigToBig) {
