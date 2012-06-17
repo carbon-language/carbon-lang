@@ -219,7 +219,7 @@ void LineTableInfo::AddLineNote(FileID FID, unsigned Offset,
 
 /// AddLineNote This is the same as the previous version of AddLineNote, but is
 /// used for GNU line markers.  If EntryExit is 0, then this doesn't change the
-/// presumed #include stack.  If it is 1, this is a file entry, if it is 2 then
+/// presumed \#include stack.  If it is 1, this is a file entry, if it is 2 then
 /// this is a file exit.  FileKind specifies whether this is a system header or
 /// extern C system header.
 void LineTableInfo::AddLineNote(FileID FID, unsigned Offset,
@@ -1325,7 +1325,7 @@ SourceManager::getFileCharacteristic(SourceLocation Loc) const {
 }
 
 /// Return the filename or buffer identifier of the buffer the location is in.
-/// Note that this name does not respect #line directives.  Use getPresumedLoc
+/// Note that this name does not respect \#line directives.  Use getPresumedLoc
 /// for normal clients.
 const char *SourceManager::getBufferName(SourceLocation Loc, 
                                          bool *Invalid) const {
@@ -1336,7 +1336,7 @@ const char *SourceManager::getBufferName(SourceLocation Loc,
 
 
 /// getPresumedLoc - This method returns the "presumed" location of a
-/// SourceLocation specifies.  A "presumed location" can be modified by #line
+/// SourceLocation specifies.  A "presumed location" can be modified by \#line
 /// or GNU line marker directives.  This provides a view on the data that a
 /// user should see in diagnostics, for example.
 ///
