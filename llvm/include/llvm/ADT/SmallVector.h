@@ -542,7 +542,7 @@ public:
   iterator insert(iterator I, size_type NumToInsert, const T &Elt) {
     if (I == this->end()) {  // Important special case for empty vector.
       append(NumToInsert, Elt);
-      return this->end()-1;
+      return NumToInsert == 0 ? this->end() : this->end()-1;
     }
 
     // Convert iterator to elt# to avoid invalidating iterator when we reserve()
@@ -590,7 +590,7 @@ public:
   iterator insert(iterator I, ItTy From, ItTy To) {
     if (I == this->end()) {  // Important special case for empty vector.
       append(From, To);
-      return this->end()-1;
+      return From == To ? this->end() : this->end()-1;
     }
 
     size_t NumToInsert = std::distance(From, To);

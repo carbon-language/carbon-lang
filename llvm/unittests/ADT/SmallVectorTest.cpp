@@ -353,6 +353,9 @@ TEST_F(SmallVectorTest, InsertRepeatedTest) {
   makeSequence(theVector, 10, 15);
   theVector.insert(theVector.begin() + 1, 2, Constructable(16));
   assertValuesInOrder(theVector, 8u, 10, 16, 16, 11, 12, 13, 14, 15);
+
+  EXPECT_EQ(theVector.end(),
+            theVector.insert(theVector.end(), 0, Constructable(42)));
 }
 
 // Insert range.
@@ -362,6 +365,10 @@ TEST_F(SmallVectorTest, InsertRangeTest) {
   makeSequence(theVector, 1, 3);
   theVector.insert(theVector.begin() + 1, 3, Constructable(77));
   assertValuesInOrder(theVector, 6u, 1, 77, 77, 77, 2, 3);
+
+  EXPECT_EQ(theVector.end(), theVector.insert(theVector.end(),
+                                              theVector.begin(),
+                                              theVector.begin()));
 }
 
 // Comparison tests.
