@@ -100,7 +100,7 @@ void PragmaNamespace::HandlePragma(Preprocessor &PP,
 // Preprocessor Pragma Directive Handling.
 //===----------------------------------------------------------------------===//
 
-/// HandlePragmaDirective - The "#pragma" directive has been parsed.  Lex the
+/// HandlePragmaDirective - The "\#pragma" directive has been parsed.  Lex the
 /// rest of the pragma, passing it to the registered pragma handlers.
 void Preprocessor::HandlePragmaDirective(unsigned Introducer) {
   if (!PragmasEnabled)
@@ -317,7 +317,7 @@ void Preprocessor::HandleMicrosoft__pragma(Token &Tok) {
   return Lex(Tok);
 }
 
-/// HandlePragmaOnce - Handle #pragma once.  OnceTok is the 'once'.
+/// HandlePragmaOnce - Handle \#pragma once.  OnceTok is the 'once'.
 ///
 void Preprocessor::HandlePragmaOnce(Token &OnceTok) {
   if (isInPrimaryFile()) {
@@ -339,7 +339,7 @@ void Preprocessor::HandlePragmaMark() {
 }
 
 
-/// HandlePragmaPoison - Handle #pragma GCC poison.  PoisonTok is the 'poison'.
+/// HandlePragmaPoison - Handle \#pragma GCC poison.  PoisonTok is the 'poison'.
 ///
 void Preprocessor::HandlePragmaPoison(Token &PoisonTok) {
   Token Tok;
@@ -381,7 +381,7 @@ void Preprocessor::HandlePragmaPoison(Token &PoisonTok) {
   }
 }
 
-/// HandlePragmaSystemHeader - Implement #pragma GCC system_header.  We know
+/// HandlePragmaSystemHeader - Implement \#pragma GCC system_header.  We know
 /// that the whole directive has been parsed.
 void Preprocessor::HandlePragmaSystemHeader(Token &SysHeaderTok) {
   if (isInPrimaryFile()) {
@@ -414,7 +414,7 @@ void Preprocessor::HandlePragmaSystemHeader(Token &SysHeaderTok) {
                         false, false, true, false);
 }
 
-/// HandlePragmaDependency - Handle #pragma GCC dependency "foo" blah.
+/// HandlePragmaDependency - Handle \#pragma GCC dependency "foo" blah.
 ///
 void Preprocessor::HandlePragmaDependency(Token &DependencyTok) {
   Token FilenameTok;
@@ -467,9 +467,12 @@ void Preprocessor::HandlePragmaDependency(Token &DependencyTok) {
   }
 }
 
-/// HandlePragmaComment - Handle the microsoft #pragma comment extension.  The
-/// syntax is:
-///   #pragma comment(linker, "foo")
+/// \brief Handle the microsoft \#pragma comment extension.
+///
+/// The syntax is:
+/// \code
+///   \#pragma comment(linker, "foo")
+/// \endcode
 /// 'linker' is one of five identifiers: compiler, exestr, lib, linker, user.
 /// "foo" is a string, which is fully macro expanded, and permits string
 /// concatenation, embedded escape characters etc.  See MSDN for more details.
@@ -555,11 +558,15 @@ void Preprocessor::HandlePragmaComment(Token &Tok) {
     Callbacks->PragmaComment(CommentLoc, II, ArgumentString);
 }
 
-/// HandlePragmaMessage - Handle the microsoft and gcc #pragma message
+/// HandlePragmaMessage - Handle the microsoft and gcc \#pragma message
 /// extension.  The syntax is:
-///   #pragma message(string)
+/// \code
+///   \#pragma message(string)
+/// \endcode
 /// OR, in GCC mode:
-///   #pragma message string
+/// \code
+///   \#pragma message string
+/// \endcode
 /// string is a string, which is fully macro expanded, and permits string
 /// concatenation, embedded escape characters, etc... See MSDN for more details.
 void Preprocessor::HandlePragmaMessage(Token &Tok) {
@@ -682,9 +689,12 @@ IdentifierInfo *Preprocessor::ParsePragmaPushOrPopMacro(Token &Tok) {
   return LookUpIdentifierInfo(MacroTok);
 }
 
-/// HandlePragmaPushMacro - Handle #pragma push_macro.  
+/// \brief Handle \#pragma push_macro.
+///
 /// The syntax is:
-///   #pragma push_macro("macro")
+/// \code
+///   \#pragma push_macro("macro")
+/// \endcode
 void Preprocessor::HandlePragmaPushMacro(Token &PushMacroTok) {
   // Parse the pragma directive and get the macro IdentifierInfo*.
   IdentifierInfo *IdentInfo = ParsePragmaPushOrPopMacro(PushMacroTok);
@@ -706,9 +716,12 @@ void Preprocessor::HandlePragmaPushMacro(Token &PushMacroTok) {
   PragmaPushMacroInfo[IdentInfo].push_back(MacroCopyToPush);
 }
 
-/// HandlePragmaPopMacro - Handle #pragma pop_macro.  
+/// \brief Handle \#pragma pop_macro.
+///
 /// The syntax is:
+/// \code
 ///   #pragma pop_macro("macro")
+/// \endcode
 void Preprocessor::HandlePragmaPopMacro(Token &PopMacroTok) {
   SourceLocation MessageLoc = PopMacroTok.getLocation();
 
@@ -934,7 +947,7 @@ bool Preprocessor::LexOnOffSwitch(tok::OnOffSwitch &Result) {
 }
 
 namespace {
-/// PragmaOnceHandler - "#pragma once" marks the file as atomically included.
+/// PragmaOnceHandler - "\#pragma once" marks the file as atomically included.
 struct PragmaOnceHandler : public PragmaHandler {
   PragmaOnceHandler() : PragmaHandler("once") {}
   virtual void HandlePragma(Preprocessor &PP, PragmaIntroducerKind Introducer,
@@ -944,7 +957,7 @@ struct PragmaOnceHandler : public PragmaHandler {
   }
 };
 
-/// PragmaMarkHandler - "#pragma mark ..." is ignored by the compiler, and the
+/// PragmaMarkHandler - "\#pragma mark ..." is ignored by the compiler, and the
 /// rest of the line is not lexed.
 struct PragmaMarkHandler : public PragmaHandler {
   PragmaMarkHandler() : PragmaHandler("mark") {}
@@ -954,7 +967,7 @@ struct PragmaMarkHandler : public PragmaHandler {
   }
 };
 
-/// PragmaPoisonHandler - "#pragma poison x" marks x as not usable.
+/// PragmaPoisonHandler - "\#pragma poison x" marks x as not usable.
 struct PragmaPoisonHandler : public PragmaHandler {
   PragmaPoisonHandler() : PragmaHandler("poison") {}
   virtual void HandlePragma(Preprocessor &PP, PragmaIntroducerKind Introducer,
@@ -963,7 +976,7 @@ struct PragmaPoisonHandler : public PragmaHandler {
   }
 };
 
-/// PragmaSystemHeaderHandler - "#pragma system_header" marks the current file
+/// PragmaSystemHeaderHandler - "\#pragma system_header" marks the current file
 /// as a system header, which silences warnings in it.
 struct PragmaSystemHeaderHandler : public PragmaHandler {
   PragmaSystemHeaderHandler() : PragmaHandler("system_header") {}
@@ -1026,7 +1039,7 @@ struct PragmaDebugHandler : public PragmaHandler {
 
 };
 
-/// PragmaDiagnosticHandler - e.g. '#pragma GCC diagnostic ignored "-Wformat"'
+/// PragmaDiagnosticHandler - e.g. '\#pragma GCC diagnostic ignored "-Wformat"'
 struct PragmaDiagnosticHandler : public PragmaHandler {
 private:
   const char *Namespace;
@@ -1120,7 +1133,7 @@ public:
   }
 };
 
-/// PragmaCommentHandler - "#pragma comment ...".
+/// PragmaCommentHandler - "\#pragma comment ...".
 struct PragmaCommentHandler : public PragmaHandler {
   PragmaCommentHandler() : PragmaHandler("comment") {}
   virtual void HandlePragma(Preprocessor &PP, PragmaIntroducerKind Introducer,
@@ -1129,7 +1142,7 @@ struct PragmaCommentHandler : public PragmaHandler {
   }
 };
 
-/// PragmaIncludeAliasHandler - "#pragma include_alias("...")".
+/// PragmaIncludeAliasHandler - "\#pragma include_alias("...")".
 struct PragmaIncludeAliasHandler : public PragmaHandler {
   PragmaIncludeAliasHandler() : PragmaHandler("include_alias") {}
   virtual void HandlePragma(Preprocessor &PP, PragmaIntroducerKind Introducer,
@@ -1138,7 +1151,7 @@ struct PragmaIncludeAliasHandler : public PragmaHandler {
   }
 };
 
-/// PragmaMessageHandler - "#pragma message("...")".
+/// PragmaMessageHandler - "\#pragma message("...")".
 struct PragmaMessageHandler : public PragmaHandler {
   PragmaMessageHandler() : PragmaHandler("message") {}
   virtual void HandlePragma(Preprocessor &PP, PragmaIntroducerKind Introducer,
@@ -1147,7 +1160,7 @@ struct PragmaMessageHandler : public PragmaHandler {
   }
 };
 
-/// PragmaPushMacroHandler - "#pragma push_macro" saves the value of the
+/// PragmaPushMacroHandler - "\#pragma push_macro" saves the value of the
 /// macro on the top of the stack.
 struct PragmaPushMacroHandler : public PragmaHandler {
   PragmaPushMacroHandler() : PragmaHandler("push_macro") {}
@@ -1158,7 +1171,7 @@ struct PragmaPushMacroHandler : public PragmaHandler {
 };
 
 
-/// PragmaPopMacroHandler - "#pragma pop_macro" sets the value of the
+/// PragmaPopMacroHandler - "\#pragma pop_macro" sets the value of the
 /// macro to the value on the top of the stack.
 struct PragmaPopMacroHandler : public PragmaHandler {
   PragmaPopMacroHandler() : PragmaHandler("pop_macro") {}
@@ -1170,7 +1183,7 @@ struct PragmaPopMacroHandler : public PragmaHandler {
 
 // Pragma STDC implementations.
 
-/// PragmaSTDC_FENV_ACCESSHandler - "#pragma STDC FENV_ACCESS ...".
+/// PragmaSTDC_FENV_ACCESSHandler - "\#pragma STDC FENV_ACCESS ...".
 struct PragmaSTDC_FENV_ACCESSHandler : public PragmaHandler {
   PragmaSTDC_FENV_ACCESSHandler() : PragmaHandler("FENV_ACCESS") {}
   virtual void HandlePragma(Preprocessor &PP, PragmaIntroducerKind Introducer,
@@ -1183,7 +1196,7 @@ struct PragmaSTDC_FENV_ACCESSHandler : public PragmaHandler {
   }
 };
 
-/// PragmaSTDC_CX_LIMITED_RANGEHandler - "#pragma STDC CX_LIMITED_RANGE ...".
+/// PragmaSTDC_CX_LIMITED_RANGEHandler - "\#pragma STDC CX_LIMITED_RANGE ...".
 struct PragmaSTDC_CX_LIMITED_RANGEHandler : public PragmaHandler {
   PragmaSTDC_CX_LIMITED_RANGEHandler()
     : PragmaHandler("CX_LIMITED_RANGE") {}
@@ -1194,7 +1207,7 @@ struct PragmaSTDC_CX_LIMITED_RANGEHandler : public PragmaHandler {
   }
 };
 
-/// PragmaSTDC_UnknownHandler - "#pragma STDC ...".
+/// PragmaSTDC_UnknownHandler - "\#pragma STDC ...".
 struct PragmaSTDC_UnknownHandler : public PragmaHandler {
   PragmaSTDC_UnknownHandler() {}
   virtual void HandlePragma(Preprocessor &PP, PragmaIntroducerKind Introducer,
@@ -1205,7 +1218,7 @@ struct PragmaSTDC_UnknownHandler : public PragmaHandler {
 };
 
 /// PragmaARCCFCodeAuditedHandler - 
-///   #pragma clang arc_cf_code_audited begin/end
+///   \#pragma clang arc_cf_code_audited begin/end
 struct PragmaARCCFCodeAuditedHandler : public PragmaHandler {
   PragmaARCCFCodeAuditedHandler() : PragmaHandler("arc_cf_code_audited") {}
   virtual void HandlePragma(Preprocessor &PP, PragmaIntroducerKind Introducer,
@@ -1262,7 +1275,7 @@ struct PragmaARCCFCodeAuditedHandler : public PragmaHandler {
 
 
 /// RegisterBuiltinPragmas - Install the standard preprocessor pragmas:
-/// #pragma GCC poison/system_header/dependency and #pragma once.
+/// \#pragma GCC poison/system_header/dependency and \#pragma once.
 void Preprocessor::RegisterBuiltinPragmas() {
   AddPragmaHandler(new PragmaOnceHandler());
   AddPragmaHandler(new PragmaMarkHandler());
