@@ -1473,7 +1473,7 @@ public:
   /// be used to refer to a given template. For most templates, this
   /// expression is just the template declaration itself. For example,
   /// the template std::vector can be referred to via a variety of
-  /// names---std::vector, ::std::vector, vector (if vector is in
+  /// names---std::vector, \::std::vector, vector (if vector is in
   /// scope), etc.---but all of these names map down to the same
   /// TemplateDecl, which is used to form the canonical template name.
   ///
