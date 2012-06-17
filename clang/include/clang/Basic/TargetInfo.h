@@ -355,8 +355,7 @@ public:
     return ZeroLengthBitfieldBoundary;
   }
 
-  /// hasAlignMac68kSupport - Check whether this target support '#pragma options
-  /// align=mac68k'.
+  /// \brief Check whether this target support '\#pragma options align=mac68k'.
   bool hasAlignMac68kSupport() const {
     return HasAlignMac68kSupport;
   }
@@ -383,7 +382,7 @@ public:
 
   ///===---- Other target property query methods --------------------------===//
 
-  /// getTargetDefines - Appends the target-specific #define values for this
+  /// \brief Appends the target-specific \#define values for this
   /// target set to the specified buffer.
   virtual void getTargetDefines(const LangOptions &Opts,
                                 MacroBuilder &Builder) const = 0;
