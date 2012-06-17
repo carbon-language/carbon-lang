@@ -789,6 +789,7 @@ NumericLiteralParser::GetFloatValue(llvm::APFloat &Result) {
 }
 
 
+/// \verbatim
 ///       user-defined-character-literal: [C++11 lex.ext]
 ///         character-literal ud-suffix
 ///       ud-suffix:
@@ -824,6 +825,7 @@ NumericLiteralParser::GetFloatValue(llvm::APFloat &Result) {
 ///         \U hex-quad hex-quad
 ///       hex-quad:
 ///         hex-digit hex-digit hex-digit hex-digit
+/// \endverbatim
 ///
 CharLiteralParser::CharLiteralParser(const char *begin, const char *end,
                                      SourceLocation Loc, Preprocessor &PP,
