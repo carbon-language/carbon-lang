@@ -42,7 +42,7 @@ struct LineEntry {
 
   /// IncludeOffset - This is the offset of the virtual include stack location,
   /// which is manipulated by GNU linemarker directives.  If this is 0 then
-  /// there is no virtual #includer.
+  /// there is no virtual \#includer.
   unsigned IncludeOffset;
 
   static LineEntry get(unsigned Offs, unsigned Line, int Filename,
@@ -73,18 +73,18 @@ inline bool operator<(unsigned Offset, const LineEntry &E) {
 }
 
 /// LineTableInfo - This class is used to hold and unique data used to
-/// represent #line information.
+/// represent \#line information.
 class LineTableInfo {
   /// FilenameIDs - This map is used to assign unique IDs to filenames in
-  /// #line directives.  This allows us to unique the filenames that
+  /// \#line directives.  This allows us to unique the filenames that
   /// frequently reoccur and reference them with indices.  FilenameIDs holds
   /// the mapping from string -> ID, and FilenamesByID holds the mapping of ID
   /// to string.
   llvm::StringMap<unsigned, llvm::BumpPtrAllocator> FilenameIDs;
   std::vector<llvm::StringMapEntry<unsigned>*> FilenamesByID;
 
-  /// LineEntries - This is a map from FileIDs to a list of line entries (sorted
-  /// by the offset they occur in the file.
+  /// \brief Map from FileIDs to a list of line entries (sorted by the offset
+  /// at which they occur in the file).
   std::map<FileID, std::vector<LineEntry> > LineEntries;
 public:
   LineTableInfo() {
