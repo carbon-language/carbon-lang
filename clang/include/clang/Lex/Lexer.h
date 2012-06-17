@@ -341,7 +341,7 @@ public:
   ///
   /// -begin or end range lies at the start or end of a macro expansion, in
   ///  which case the location will be set to the expansion point, e.g:
-  ///    #define M 1 2
+  ///    \#define M 1 2
   ///    a M
   /// If you have a range [a, 2] (where 2 came from the macro), the function
   /// will return a range for "a M"
@@ -350,8 +350,8 @@ public:
   ///
   /// -The macro is a function macro and the range can be mapped to the macro
   ///  arguments, e.g:
-  ///    #define M 1 2
-  ///    #define FM(x) x
+  ///    \#define M 1 2
+  ///    \#define FM(x) x
   ///    FM(a b M)
   /// if you have range [b, 2], the function will return the file range "b M"
   /// inside the macro arguments.
