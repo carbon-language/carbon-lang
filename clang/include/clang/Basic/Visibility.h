@@ -16,7 +16,7 @@
 
 namespace clang {
 
-/// \link Describes the different kinds of visibility that a
+/// Describes the different kinds of visibility that a
 /// declaration may have.  Visibility determines how a declaration
 /// interacts with the dynamic linker.  It may also affect whether the
 /// symbol can be found by runtime symbol lookup APIs.
