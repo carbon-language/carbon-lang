@@ -716,11 +716,40 @@ public:
   }
 
   void swap(SmallDenseMap& RHS) {
-    std::swap(NumEntries, RHS.NumEntries);
+    unsigned TmpNumEntries = RHS.NumEntries;
+    RHS.NumEntries = NumEntries;
+    NumEntries = TmpNumEntries;
     std::swap(NumTombstones, RHS.NumTombstones);
+
+    const KeyT EmptyKey = this->getEmptyKey();
+    const KeyT TombstoneKey = this->getTombstoneKey();
     if (Small && RHS.Small) {
-      for (unsigned i = 0, e = InlineBuckets; i != e; ++i)
-        std::swap(getInlineBuckets()[i], RHS.getInlineBuckes()[i]);
+      // If we're swapping inline bucket arrays, we have to cope with some of
+      // the tricky bits of DenseMap's storage system: the buckets are not
+      // fully initialized. Thus we swap every key, but we may have
+      // a one-directional move of the value.
+      for (unsigned i = 0, e = InlineBuckets; i != e; ++i) {
+        BucketT *LHSB = &getInlineBuckets()[i],
+                *RHSB = &RHS.getInlineBuckets()[i];
+        bool hasLHSValue = (!KeyInfoT::isEqual(LHSB->first, EmptyKey) &&
+                            !KeyInfoT::isEqual(LHSB->first, TombstoneKey));
+        bool hasRHSValue = (!KeyInfoT::isEqual(RHSB->first, EmptyKey) &&
+                            !KeyInfoT::isEqual(RHSB->first, TombstoneKey));
+        if (hasLHSValue && hasRHSValue) {
+          // Swap together if we can...
+          std::swap(*LHSB, *RHSB);
+          continue;
+        }
+        // Swap separately and handle any assymetry.
+        std::swap(LHSB->first, RHSB->first);
+        if (hasLHSValue) {
+          new (&RHSB->second) ValueT(llvm_move(LHSB->second));
+          LHSB->second.~ValueT();
+        } else if (hasRHSValue) {
+          new (&LHSB->second) ValueT(llvm_move(RHSB->second));
+          RHSB->second.~ValueT();
+        }
+      }
       return;
     }
     if (!Small && !RHS.Small) {
@@ -737,16 +766,14 @@ public:
     LargeSide.getLargeRep()->~LargeRep();
     LargeSide.Small = true;
     // This is similar to the standard move-from-old-buckets, but the bucket
-    // count hasn't actually rotate in this case. So we have to carefully
+    // count hasn't actually rotated in this case. So we have to carefully
     // move construct the keys and values into their new locations, but there
     // is no need to re-hash things.
-    const KeyT EmptyKey = this->getEmptyKey();
-    const KeyT TombstoneKey = this->getTombstoneKey();
     for (unsigned i = 0, e = InlineBuckets; i != e; ++i) {
       BucketT *NewB = &LargeSide.getInlineBuckets()[i],
               *OldB = &SmallSide.getInlineBuckets()[i];
       new (&NewB->first) KeyT(llvm_move(OldB->first));
-      NewB->first.~KeyT();
+      OldB->first.~KeyT();
       if (!KeyInfoT::isEqual(NewB->first, EmptyKey) &&
           !KeyInfoT::isEqual(NewB->first, TombstoneKey)) {
         new (&NewB->second) ValueT(llvm_move(OldB->second));

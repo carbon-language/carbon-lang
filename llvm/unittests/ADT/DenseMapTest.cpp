@@ -218,6 +218,42 @@ TYPED_TEST(DenseMapTest, AssignmentTest) {
   EXPECT_EQ(this->getValue(), copyMap[this->getKey()]);
 }
 
+// Test swap method
+TYPED_TEST(DenseMapTest, SwapTest) {
+  this->Map[this->getKey()] = this->getValue();
+  TypeParam otherMap;
+
+  this->Map.swap(otherMap);
+  EXPECT_EQ(0u, this->Map.size());
+  EXPECT_TRUE(this->Map.empty());
+  EXPECT_EQ(1u, otherMap.size());
+  EXPECT_EQ(this->getValue(), otherMap[this->getKey()]);
+
+  this->Map.swap(otherMap);
+  EXPECT_EQ(0u, otherMap.size());
+  EXPECT_TRUE(otherMap.empty());
+  EXPECT_EQ(1u, this->Map.size());
+  EXPECT_EQ(this->getValue(), this->Map[this->getKey()]);
+
+  // Make this more interesting by inserting 100 numbers into the map.
+  for (int i = 0; i < 100; ++i)
+    this->Map[this->getKey(i)] = this->getValue(i);
+
+  this->Map.swap(otherMap);
+  EXPECT_EQ(0u, this->Map.size());
+  EXPECT_TRUE(this->Map.empty());
+  EXPECT_EQ(100u, otherMap.size());
+  for (int i = 0; i < 100; ++i)
+    EXPECT_EQ(this->getValue(i), otherMap[this->getKey(i)]);
+
+  this->Map.swap(otherMap);
+  EXPECT_EQ(0u, otherMap.size());
+  EXPECT_TRUE(otherMap.empty());
+  EXPECT_EQ(100u, this->Map.size());
+  for (int i = 0; i < 100; ++i)
+    EXPECT_EQ(this->getValue(i), this->Map[this->getKey(i)]);
+}
+
 // A more complex iteration test
 TYPED_TEST(DenseMapTest, IterationTest) {
   bool visited[100];
