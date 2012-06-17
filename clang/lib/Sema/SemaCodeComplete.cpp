@@ -1181,7 +1181,7 @@ bool ResultBuilder::IsImpossibleToSatisfy(NamedDecl *ND) const {
   return false;
 }
 
-/// \rief Determines whether the given declaration is an Objective-C
+/// \brief Determines whether the given declaration is an Objective-C
 /// instance variable.
 bool ResultBuilder::IsObjCIvar(NamedDecl *ND) const {
   return isa<ObjCIvarDecl>(ND);
@@ -4656,7 +4656,7 @@ void Sema::CodeCompleteObjCPropertyFlags(Scope *S, ObjCDeclSpec &ODS) {
                             Results.data(),Results.size());
 }
 
-/// \brief Descripts the kind of Objective-C method that we want to find
+/// \brief Describes the kind of Objective-C method that we want to find
 /// via code completion.
 enum ObjCMethodKind {
   MK_Any, ///< Any kind of method, provided it means other specified criteria.
