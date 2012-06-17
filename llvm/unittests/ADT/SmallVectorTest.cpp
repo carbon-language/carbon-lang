@@ -342,7 +342,9 @@ TEST_F(SmallVectorTest, InsertTest) {
   SCOPED_TRACE("InsertTest");
 
   makeSequence(theVector, 1, 3);
-  theVector.insert(theVector.begin() + 1, Constructable(77));
+  VectorType::iterator I =
+    theVector.insert(theVector.begin() + 1, Constructable(77));
+  EXPECT_EQ(theVector.begin() + 1, I);
   assertValuesInOrder(theVector, 4u, 1, 77, 2, 3);
 }
 
@@ -351,24 +353,48 @@ TEST_F(SmallVectorTest, InsertRepeatedTest) {
   SCOPED_TRACE("InsertRepeatedTest");
 
   makeSequence(theVector, 10, 15);
-  theVector.insert(theVector.begin() + 1, 2, Constructable(16));
+  VectorType::iterator I =
+    theVector.insert(theVector.begin() + 1, 2, Constructable(16));
+  EXPECT_EQ(theVector.begin() + 1, I);
   assertValuesInOrder(theVector, 8u, 10, 16, 16, 11, 12, 13, 14, 15);
 
+  // Insert at end.
+  I = theVector.insert(theVector.end(), 2, Constructable(16));
+  EXPECT_EQ(theVector.begin() + 8, I);
+  assertValuesInOrder(theVector, 10u, 10, 16, 16, 11, 12, 13, 14, 15, 16, 16);
+
+  // Empty insert.
   EXPECT_EQ(theVector.end(),
             theVector.insert(theVector.end(), 0, Constructable(42)));
+  EXPECT_EQ(theVector.begin() + 1,
+            theVector.insert(theVector.begin() + 1, 0, Constructable(42)));
 }
 
 // Insert range.
 TEST_F(SmallVectorTest, InsertRangeTest) {
-  SCOPED_TRACE("InsertRepeatedTest");
+  SCOPED_TRACE("InsertRangeTest");
+
+  Constructable Arr[3] =
+    { Constructable(77), Constructable(77), Constructable(77) };
 
   makeSequence(theVector, 1, 3);
-  theVector.insert(theVector.begin() + 1, 3, Constructable(77));
+  VectorType::iterator I =
+    theVector.insert(theVector.begin() + 1, Arr, Arr+3);
+  EXPECT_EQ(theVector.begin() + 1, I);
   assertValuesInOrder(theVector, 6u, 1, 77, 77, 77, 2, 3);
 
+  // Insert at end.
+  I = theVector.insert(theVector.end(), Arr, Arr+3);
+  EXPECT_EQ(theVector.begin() + 6, I);
+  assertValuesInOrder(theVector, 9u, 1, 77, 77, 77, 2, 3, 77, 77, 77);
+
+  // Empty insert.
   EXPECT_EQ(theVector.end(), theVector.insert(theVector.end(),
                                               theVector.begin(),
                                               theVector.begin()));
+  EXPECT_EQ(theVector.begin() + 1, theVector.insert(theVector.begin() + 1,
+                                                    theVector.begin(),
+                                                    theVector.begin()));
 }
 
 // Comparison tests.

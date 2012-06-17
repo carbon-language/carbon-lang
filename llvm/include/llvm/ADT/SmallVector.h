@@ -540,13 +540,13 @@ public:
   }
 
   iterator insert(iterator I, size_type NumToInsert, const T &Elt) {
-    if (I == this->end()) {  // Important special case for empty vector.
-      append(NumToInsert, Elt);
-      return NumToInsert == 0 ? this->end() : this->end()-1;
-    }
-
     // Convert iterator to elt# to avoid invalidating iterator when we reserve()
     size_t InsertElt = I - this->begin();
+
+    if (I == this->end()) {  // Important special case for empty vector.
+      append(NumToInsert, Elt);
+      return this->begin()+InsertElt;
+    }
 
     // Ensure there is enough space.
     reserve(static_cast<unsigned>(this->size() + NumToInsert));
@@ -588,14 +588,15 @@ public:
 
   template<typename ItTy>
   iterator insert(iterator I, ItTy From, ItTy To) {
+    // Convert iterator to elt# to avoid invalidating iterator when we reserve()
+    size_t InsertElt = I - this->begin();
+
     if (I == this->end()) {  // Important special case for empty vector.
       append(From, To);
-      return From == To ? this->end() : this->end()-1;
+      return this->begin()+InsertElt;
     }
 
     size_t NumToInsert = std::distance(From, To);
-    // Convert iterator to elt# to avoid invalidating iterator when we reserve()
-    size_t InsertElt = I - this->begin();
 
     // Ensure there is enough space.
     reserve(static_cast<unsigned>(this->size() + NumToInsert));
@@ -628,9 +629,9 @@ public:
     this->uninitialized_copy(I, OldEnd, this->end()-NumOverwritten);
 
     // Replace the overwritten part.
-    for (; NumOverwritten > 0; --NumOverwritten) {
-      *I = *From;
-      ++I; ++From;
+    for (T *J = I; NumOverwritten > 0; --NumOverwritten) {
+      *J = *From;
+      ++J; ++From;
     }
 
     // Insert the non-overwritten middle part.
