@@ -243,7 +243,7 @@ public:
     return Umbrella && Umbrella.is<const DirectoryEntry *>();
   }
 
-  /// \briaf Add the given feature requirement to the list of features
+  /// \brief Add the given feature requirement to the list of features
   /// required by this module.
   ///
   /// \param Feature The feature that is required by this module (and
