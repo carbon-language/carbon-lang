@@ -73,6 +73,8 @@ add_llvm_unittest(ADT
   ADT/IntervalMapTest.cpp
   ADT/IntrusiveRefCntPtrTest.cpp
   ADT/PackedVectorTest.cpp
+  ADT/SCCIteratorTest.cpp
+  ADT/SmallPtrSetTest.cpp
   ADT/SmallStringTest.cpp
   ADT/SmallVectorTest.cpp
   ADT/SparseBitVectorTest.cpp
@@ -139,12 +141,12 @@ add_llvm_unittest(Transforms/Utils
 
 set(VMCoreSources
   VMCore/ConstantsTest.cpp
+  VMCore/DominatorTreeTest.cpp
   VMCore/InstructionsTest.cpp
   VMCore/MetadataTest.cpp
   VMCore/PassManagerTest.cpp
   VMCore/ValueMapTest.cpp
   VMCore/VerifierTest.cpp
-  VMCore/DominatorTreeTest.cpp
   )
 
 # MSVC9 and 8 cannot compile ValueMapTest.cpp due to their bug.
@@ -167,12 +169,18 @@ set(LLVM_LINK_COMPONENTS
 add_llvm_unittest(Support
   Support/AlignOfTest.cpp
   Support/AllocatorTest.cpp
+  Support/BlockFrequencyTest.cpp
   Support/Casting.cpp
   Support/CommandLineTest.cpp
   Support/ConstantRangeTest.cpp
+  Support/DataExtractorTest.cpp
   Support/EndianTest.cpp
+  Support/IntegersSubsetTest.cpp
+  Support/IRBuilderTest.cpp
   Support/LeakDetectorTest.cpp
+  Support/ManagedStatic.cpp
   Support/MathExtrasTest.cpp
+  Support/MDBuilderTest.cpp
   Support/Path.cpp
   Support/raw_ostream_test.cpp
   Support/RegexTest.cpp
