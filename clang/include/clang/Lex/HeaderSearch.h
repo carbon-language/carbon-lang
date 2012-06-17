@@ -31,18 +31,18 @@ class FileEntry;
 class FileManager;
 class IdentifierInfo;
 
-/// HeaderFileInfo - The preprocessor keeps track of this information for each
+/// \brief The preprocessor keeps track of this information for each
 /// file that is \#included.
 struct HeaderFileInfo {
-  /// isImport - True if this is a \#import'd or \#pragma once file.
+  /// \brief True if this is a \#import'd or \#pragma once file.
   unsigned isImport : 1;
 
-  /// isPragmaOnce - True if this is  \#pragma once file.
+  /// \brief True if this is a \#pragma once file.
   unsigned isPragmaOnce : 1;
 
   /// DirInfo - Keep track of whether this is a system header, and if so,
   /// whether it is C++ clean or not.  This can be set by the include paths or
-  /// by #pragma gcc system_header.  This is an instance of
+  /// by \#pragma gcc system_header.  This is an instance of
   /// SrcMgr::CharacteristicKind.
   unsigned DirInfo : 2;
 
@@ -62,8 +62,7 @@ struct HeaderFileInfo {
   /// those framework headers.
   unsigned IndexHeaderMapHeader : 1;
   
-  /// NumIncludes - This is the number of times the file has been included
-  /// already.
+  /// \brief The number of times the file has been included already.
   unsigned short NumIncludes;
 
   /// \brief The ID number of the controlling macro.
@@ -73,8 +72,8 @@ struct HeaderFileInfo {
   /// external storage.
   unsigned ControllingMacroID;
 
-  /// ControllingMacro - If this file has a #ifndef XXX (or equivalent) guard
-  /// that protects the entire contents of the file, this is the identifier
+  /// If this file has a \#ifndef XXX (or equivalent) guard that
+  /// protects the entire contents of the file, this is the identifier
   /// for the macro that controls whether or not it has any effect.
   ///
   /// Note: Most clients should use getControllingMacro() to access
@@ -118,8 +117,8 @@ public:
   virtual HeaderFileInfo GetHeaderFileInfo(const FileEntry *FE) = 0;
 };
   
-/// HeaderSearch - This class encapsulates the information needed to find the
-/// file referenced by a #include or #include_next, (sub-)framework lookup, etc.
+/// \brief Encapsulates the information needed to find the file referenced
+/// by a \#include or \#include_next, (sub-)framework lookup, etc.
 class HeaderSearch {
   /// This structure is used to record entries in our framework cache.
   struct FrameworkCacheEntry {
@@ -134,8 +133,8 @@ class HeaderSearch {
 
   FileManager &FileMgr;
   DiagnosticsEngine &Diags;
-  /// #include search path information.  Requests for #include "x" search the
-  /// directory of the #including file first, then each directory in SearchDirs
+  /// \#include search path information.  Requests for \#include "x" search the
+  /// directory of the \#including file first, then each directory in SearchDirs
   /// consecutively. Requests for <x> search the current dir first, then each
   /// directory in SearchDirs, starting at AngledDirIdx, consecutively.  If
   /// NoCurDirSearch is true, then the check for the file in the current
@@ -145,8 +144,10 @@ class HeaderSearch {
   unsigned SystemDirIdx;
   bool NoCurDirSearch;
 
-  /// #include prefixes for which the 'system header' property is overridden.
-  /// For a #include "x" or #include <x> directive, the last string in this
+  /// \brief \#include prefixes for which the 'system header' property is
+  /// overridden.
+  ///
+  /// For a \#include "x" or \#include \<x> directive, the last string in this
   /// list which is a prefix of 'x' determines whether the file is treated as
   /// a system header.
   std::vector<std::pair<std::string, bool> > SystemHeaderPrefixes;
@@ -154,21 +155,21 @@ class HeaderSearch {
   /// \brief The path to the module cache.
   std::string ModuleCachePath;
   
-  /// FileInfo - This contains all of the preprocessor-specific data about files
-  /// that are included.  The vector is indexed by the FileEntry's UID.
-  ///
+  /// \brief All of the preprocessor-specific data about files that are
+  /// included, indexed by the FileEntry's UID.
   std::vector<HeaderFileInfo> FileInfo;
 
-  /// LookupFileCache - This is keeps track of each lookup performed by
-  /// LookupFile.  The first part of the value is the starting index in
-  /// SearchDirs that the cached search was performed from.  If there is a hit
-  /// and this value doesn't match the current query, the cache has to be
-  /// ignored.  The second value is the entry in SearchDirs that satisfied the
-  /// query.
+  /// \brief Keeps track of each lookup performed by LookupFile.
+  ///
+  /// The first part of the value is the starting index in SearchDirs
+  /// that the cached search was performed from.  If there is a hit and
+  /// this value doesn't match the current query, the cache has to be
+  /// ignored.  The second value is the entry in SearchDirs that satisfied
+  /// the query.
   llvm::StringMap<std::pair<unsigned, unsigned>, llvm::BumpPtrAllocator>
     LookupFileCache;
 
-  /// FrameworkMap - This is a collection mapping a framework or subframework
+  /// \brief Collection mapping a framework or subframework
   /// name like "Carbon" to the Carbon.framework directory.
   llvm::StringMap<FrameworkCacheEntry, llvm::BumpPtrAllocator> FrameworkMap;
 
@@ -219,8 +220,7 @@ public:
 
   FileManager &getFileMgr() const { return FileMgr; }
 
-  /// SetSearchPaths - Interface for setting the file search paths.
-  ///
+  /// \brief Interface for setting the file search paths.
   void SetSearchPaths(const std::vector<DirectoryLookup> &dirs,
                       unsigned angledDirIdx, unsigned systemDirIdx,
                       bool noCurDirSearch) {
@@ -233,7 +233,7 @@ public:
     //LookupFileCache.clear();
   }
 
-  /// AddSearchPath - Add an additional search path.
+  /// \brief Add an additional search path.
   void AddSearchPath(const DirectoryLookup &dir, bool isAngled) {
     unsigned idx = isAngled ? SystemDirIdx : AngledDirIdx;
     SearchDirs.insert(SearchDirs.begin() + idx, dir);
@@ -242,17 +242,18 @@ public:
     SystemDirIdx++;
   }
 
-  /// SetSystemHeaderPrefixes - Set the list of system header prefixes.
+  /// \brief Set the list of system header prefixes.
   void SetSystemHeaderPrefixes(ArrayRef<std::pair<std::string, bool> > P) {
     SystemHeaderPrefixes.assign(P.begin(), P.end());
   }
 
-  /// HasIncludeAliasMap - Checks whether the map exists or not
+  /// \brief Checks whether the map exists or not.
   bool HasIncludeAliasMap() const {
     return IncludeAliases;
   }
 
-  /// AddIncludeAlias - Map the source include name to the dest include name.
+  /// \brief Map the source include name to the dest include name.
+  ///
   /// The Source should include the angle brackets or quotes, the dest 
   /// should not.  This allows for distinction between <> and "" headers.
   void AddIncludeAlias(StringRef Source, StringRef Dest) {
@@ -283,7 +284,7 @@ public:
   /// \brief Retrieve the path to the module cache.
   StringRef getModuleCachePath() const { return ModuleCachePath; }
   
-  /// ClearFileInfo - Forget everything we know about headers so far.
+  /// \brief Forget everything we know about headers so far.
   void ClearFileInfo() {
     FileInfo.clear();
   }
@@ -305,7 +306,7 @@ public:
   /// already known.
   void setTarget(const TargetInfo &Target);
   
-  /// LookupFile - Given a "foo" or <foo> reference, look up the indicated file,
+  /// \brief Given a "foo" or <foo> reference, look up the indicated file,
   /// return null on failure.
   ///
   /// \returns If successful, this returns 'UsedDir', the DirectoryLookup member
@@ -314,9 +315,9 @@ public:
   /// \param isAngled indicates whether the file reference is a <> reference.
   ///
   /// \param CurDir If non-null, the file was found in the specified directory
-  /// search location.  This is used to implement #include_next.
+  /// search location.  This is used to implement \#include_next.
   ///
-  /// \param CurFileEnt If non-null, indicates where the #including file is, in
+  /// \param CurFileEnt If non-null, indicates where the \#including file is, in
   /// case a relative search is needed.
   ///
   /// \param SearchPath If non-null, will be set to the search path relative
@@ -339,58 +340,61 @@ public:
                               Module **SuggestedModule,
                               bool SkipCache = false);
 
-  /// LookupSubframeworkHeader - Look up a subframework for the specified
-  /// #include file.  For example, if #include'ing <HIToolbox/HIToolbox.h> from
-  /// within ".../Carbon.framework/Headers/Carbon.h", check to see if HIToolbox
-  /// is a subframework within Carbon.framework.  If so, return the FileEntry
-  /// for the designated file, otherwise return null.
+  /// \brief Look up a subframework for the specified \#include file.
+  ///
+  /// For example, if \#include'ing <HIToolbox/HIToolbox.h> from
+  /// within ".../Carbon.framework/Headers/Carbon.h", check to see if
+  /// HIToolbox is a subframework within Carbon.framework.  If so, return
+  /// the FileEntry for the designated file, otherwise return null.
   const FileEntry *LookupSubframeworkHeader(
       StringRef Filename,
       const FileEntry *RelativeFileEnt,
       SmallVectorImpl<char> *SearchPath,
       SmallVectorImpl<char> *RelativePath);
 
-  /// LookupFrameworkCache - Look up the specified framework name in our
-  /// framework cache, returning the DirectoryEntry it is in if we know,
-  /// otherwise, return null.
+  /// \brief Look up the specified framework name in our framework cache.
+  /// \returns The DirectoryEntry it is in if we know, null otherwise.
   FrameworkCacheEntry &LookupFrameworkCache(StringRef FWName) {
     return FrameworkMap.GetOrCreateValue(FWName).getValue();
   }
 
-  /// ShouldEnterIncludeFile - Mark the specified file as a target of of a
-  /// #include, #include_next, or #import directive.  Return false if #including
-  /// the file will have no effect or true if we should include it.
+  /// \brief Mark the specified file as a target of of a \#include,
+  /// \#include_next, or \#import directive.
+  ///
+  /// \return false if \#including the file will have no effect or true
+  /// if we should include it.
   bool ShouldEnterIncludeFile(const FileEntry *File, bool isImport);
 
 
-  /// getFileDirFlavor - Return whether the specified file is a normal header,
+  /// \brief Return whether the specified file is a normal header,
   /// a system header, or a C++ friendly system header.
   SrcMgr::CharacteristicKind getFileDirFlavor(const FileEntry *File) {
     return (SrcMgr::CharacteristicKind)getFileInfo(File).DirInfo;
   }
 
-  /// MarkFileIncludeOnce - Mark the specified file as a "once only" file, e.g.
-  /// due to #pragma once.
+  /// \brief Mark the specified file as a "once only" file, e.g. due to
+  /// \#pragma once.
   void MarkFileIncludeOnce(const FileEntry *File) {
     HeaderFileInfo &FI = getFileInfo(File);
     FI.isImport = true;
     FI.isPragmaOnce = true;
   }
 
-  /// MarkFileSystemHeader - Mark the specified file as a system header, e.g.
-  /// due to #pragma GCC system_header.
+  /// \brief Mark the specified file as a system header, e.g. due to
+  /// \#pragma GCC system_header.
   void MarkFileSystemHeader(const FileEntry *File) {
     getFileInfo(File).DirInfo = SrcMgr::C_System;
   }
 
-  /// IncrementIncludeCount - Increment the count for the number of times the
-  /// specified FileEntry has been entered.
+  /// \brief Increment the count for the number of times the specified
+  /// FileEntry has been entered.
   void IncrementIncludeCount(const FileEntry *File) {
     ++getFileInfo(File).NumIncludes;
   }
 
-  /// SetFileControllingMacro - Mark the specified file as having a controlling
-  /// macro.  This is used by the multiple-include optimization to eliminate
+  /// \brief Mark the specified file as having a controlling macro.
+  ///
+  /// This is used by the multiple-include optimization to eliminate
   /// no-op \#includes.
   void SetFileControllingMacro(const FileEntry *File,
                                const IdentifierInfo *ControllingMacro) {
@@ -457,8 +461,6 @@ public:
   ///
   /// \param File The module map file.
   ///
-  /// \param OnlyModule If non-NULL, this will receive the 
-  ///
   /// \returns true if an error occurred, false otherwise.
   bool loadModuleMapFile(const FileEntry *File);
 
@@ -492,8 +494,7 @@ public:
   // Used by ASTReader.
   void setHeaderFileInfoForUID(HeaderFileInfo HFI, unsigned UID);
 
-  /// getFileInfo - Return the HeaderFileInfo structure for the specified
-  /// FileEntry.
+  /// \brief Return the HeaderFileInfo structure for the specified FileEntry.
   const HeaderFileInfo &getFileInfo(const FileEntry *FE) const {
     return const_cast<HeaderSearch*>(this)->getFileInfo(FE);
   }
@@ -564,8 +565,7 @@ private:
   /// named directory.
   LoadModuleMapResult loadModuleMapFile(const DirectoryEntry *Dir);
 
-  /// getFileInfo - Return the HeaderFileInfo structure for the specified
-  /// FileEntry.
+  /// \brief Return the HeaderFileInfo structure for the specified FileEntry.
   HeaderFileInfo &getFileInfo(const FileEntry *FE);
 };
 
