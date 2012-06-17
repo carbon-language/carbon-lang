@@ -314,7 +314,7 @@ public:
       // in-memory matches on-disk, so copy first fields followed by path
       ::memcpy(to, (uint8_t*)&cmd, 12);
       ::memcpy(&to[12], _name.data(), _name.size());
-      ::bzero(&to[12+_name.size()], cmdsize-(12+_name.size()));
+      ::memset(&to[12+_name.size()], 0, cmdsize-(12+_name.size()));
     }
   }
 
@@ -494,7 +494,7 @@ public:
       // in-memory matches on-disk, so copy first fields followed by path
       ::memcpy(to, (uint8_t*)&cmd, 24);
       ::memcpy(&to[24], _loadPath.data(), _loadPath.size());
-      ::bzero(&to[12+_loadPath.size()], cmdsize-(12+_loadPath.size()));
+      ::memset(&to[12+_loadPath.size()], 0, cmdsize-(12+_loadPath.size()));
     }
   }
 
