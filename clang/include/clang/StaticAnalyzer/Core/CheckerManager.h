@@ -287,9 +287,9 @@ public:
   ///   For example, in the case of a function call, these would be arguments.
   /// \param Regions The transitive closure of accessible regions,
   ///   i.e. all regions that may have been touched by this change.
-  /// \param The call expression wrapper if the regions are invalidated by a
-  ///   call.
-  ProgramStateRef 
+  /// \param Call The call expression wrapper if the regions are invalidated
+  ///   by a call.
+  ProgramStateRef
   runCheckersForRegionChanges(ProgramStateRef state,
                             const StoreManager::InvalidatedSymbols *invalidated,
                               ArrayRef<const MemRegion *> ExplicitRegions,
