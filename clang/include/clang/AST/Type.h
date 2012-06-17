@@ -1659,7 +1659,7 @@ public:
   const ArrayType *getAsArrayTypeUnsafe() const;
 
   /// Member-template castAs<specific type>.  Look through sugar for
-  /// the underlying instance of <specific type>.
+  /// the underlying instance of \<specific type>.
   ///
   /// This method has the same relationship to getAs<T> as cast<T> has
   /// to dyn_cast<T>; which is to say, the underlying type *must*
