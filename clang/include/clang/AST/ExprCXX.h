@@ -2520,8 +2520,8 @@ public:
   /// argument-dependent lookup.
   bool requiresADL() const { return RequiresADL; }
 
-  /// True if namespace ::std should be artificially added to the set of
-  /// associated namespaecs for argument-dependent lookup purposes.
+  /// True if namespace \::std should be artificially added to the set of
+  /// associated namespaces for argument-dependent lookup purposes.
   bool isStdAssociatedNamespace() const { return StdIsAssociatedNamespace; }
 
   /// True if this lookup is overloaded.
