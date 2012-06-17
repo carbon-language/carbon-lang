@@ -15,43 +15,51 @@ using namespace llvm;
 
 namespace {
 
-// Test fixture
-template <typename T>
-class DenseMapTest : public testing::Test {
-protected:
-  T Map;
+uint32_t getTestKey(int i, uint32_t *) { return i; }
+uint32_t getTestValue(int i, uint32_t *) { return 42 + i; }
 
-  typename T::key_type getKey(int i = 0);
-  typename T::mapped_type getValue(int i = 0);
-};
-
-template <>
-uint32_t DenseMapTest<DenseMap<uint32_t, uint32_t> >::getKey(int i) {
-  return i;
+uint32_t *getTestKey(int i, uint32_t **) {
+  static uint32_t dummy_arr1[8192];
+  assert(i < 8192 && "Only support 8192 dummy keys.");
+  return &dummy_arr1[i];
 }
-
-template <>
-uint32_t DenseMapTest<DenseMap<uint32_t, uint32_t> >::getValue(int i) {
-  return 42 + i;
-}
-
-template <>
-uint32_t *DenseMapTest<DenseMap<uint32_t *, uint32_t *> >::getKey(int i) {
+uint32_t *getTestValue(int i, uint32_t **) {
   static uint32_t dummy_arr1[8192];
   assert(i < 8192 && "Only support 8192 dummy keys.");
   return &dummy_arr1[i];
 }
 
-template <>
-uint32_t *DenseMapTest<DenseMap<uint32_t *, uint32_t *> >::getValue(int i) {
-  static uint32_t dummy_arr2[8192];
-  assert(i < 8192 && "Only support 8192 dummy values.");
-  return &dummy_arr2[i];
-}
+// Test fixture, with helper functions implemented by forwarding to global
+// function overloads selected by component types of the type parameter. This
+// allows all of the map implementations to be tested with shared
+// implementations of helper routines.
+template <typename T>
+class DenseMapTest : public ::testing::Test {
+protected:
+  T Map;
+
+  static typename T::key_type *const dummy_key_ptr;
+  static typename T::mapped_type *const dummy_value_ptr;
+
+  typename T::key_type getKey(int i = 0) {
+    return getTestKey(i, dummy_key_ptr);
+  }
+  typename T::mapped_type getValue(int i = 0) {
+    return getTestValue(i, dummy_value_ptr);
+  }
+};
+
+template <typename T>
+typename T::key_type *const DenseMapTest<T>::dummy_key_ptr = 0;
+template <typename T>
+typename T::mapped_type *const DenseMapTest<T>::dummy_value_ptr = 0;
 
 // Register these types for testing.
 typedef ::testing::Types<DenseMap<uint32_t, uint32_t>,
-                         DenseMap<uint32_t *, uint32_t *> > DenseMapTestTypes;
+                         DenseMap<uint32_t *, uint32_t *>,
+                         SmallDenseMap<uint32_t, uint32_t>,
+                         SmallDenseMap<uint32_t *, uint32_t *>
+                         > DenseMapTestTypes;
 TYPED_TEST_CASE(DenseMapTest, DenseMapTestTypes);
 
 // Empty map tests
