@@ -438,6 +438,10 @@ void test54() {
   ASSIGN(int, c, d);  // expected-warning {{variable 'c' is uninitialized when used here}}
 }
 
+// Taking the address is fine
+struct { struct { void *p; } a; } test55 = { { &test55.a }}; // no-warning
+struct { struct { void *p; } a; } test56 = { { &(test56.a) }}; // no-warning
+
 void uninit_in_loop() {
   int produce(void);
   void consume(int);

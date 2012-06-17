@@ -6232,7 +6232,7 @@ namespace {
     void VisitUnaryOperator(UnaryOperator *E) {
       // For POD record types, addresses of its own members are well-defined.
       if (E->getOpcode() == UO_AddrOf && isRecordType && isPODType &&
-          isa<MemberExpr>(E->getSubExpr())) return;
+          isa<MemberExpr>(E->getSubExpr()->IgnoreParens())) return;
       Inherited::VisitUnaryOperator(E);
     } 
 
