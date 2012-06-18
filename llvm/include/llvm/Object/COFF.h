@@ -170,7 +170,8 @@ public:
 
   const coff_section *getCOFFSection(section_iterator &It) const;
   const coff_symbol *getCOFFSymbol(symbol_iterator &It) const;
-
+  const coff_relocation *getCOFFRelocation(relocation_iterator &It) const;
+  
   virtual uint8_t getBytesInAddress() const;
   virtual StringRef getFileFormatName() const;
   virtual unsigned getArch() const;

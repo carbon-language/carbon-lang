@@ -724,6 +724,11 @@ const coff_symbol *COFFObjectFile::getCOFFSymbol(symbol_iterator &It) const {
   return toSymb(It->getRawDataRefImpl());
 }
 
+const coff_relocation *COFFObjectFile::getCOFFRelocation(
+                                             relocation_iterator &It) const {
+  return toRel(It->getRawDataRefImpl());
+}
+
 
 #define LLVM_COFF_SWITCH_RELOC_TYPE_NAME(enum) \
   case COFF::enum: res = #enum; break;

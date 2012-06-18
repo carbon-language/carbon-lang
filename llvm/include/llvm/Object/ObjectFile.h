@@ -126,6 +126,8 @@ public:
   ///
   /// This is for display purposes only.
   error_code getValueString(SmallVectorImpl<char> &Result) const;
+
+  DataRefImpl getRawDataRefImpl() const;
 };
 typedef content_iterator<RelocationRef> relocation_iterator;
 
@@ -570,6 +572,11 @@ inline error_code RelocationRef::getValueString(SmallVectorImpl<char> &Result)
 inline error_code RelocationRef::getHidden(bool &Result) const {
   return OwningObject->getRelocationHidden(RelocationPimpl, Result);
 }
+
+inline DataRefImpl RelocationRef::getRawDataRefImpl() const {
+  return RelocationPimpl;
+}
+
 // Inline function definitions.
 inline LibraryRef::LibraryRef(DataRefImpl LibraryP, const ObjectFile *Owner)
   : LibraryPimpl(LibraryP)
