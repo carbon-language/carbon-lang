@@ -33,6 +33,7 @@ int internal_strcmp(const char *s1, const char *s2);
 char *internal_strdup(const char *s);
 uptr internal_strlen(const char *s);
 char *internal_strncat(char *dst, const char *src, uptr n);
+int internal_strncmp(const char *s1, const char *s2, uptr n);
 char *internal_strncpy(char *dst, const char *src, uptr n);
 uptr internal_strnlen(const char *s, uptr maxlen);
 char *internal_strrchr(const char *s, int c);
