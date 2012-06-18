@@ -24,6 +24,7 @@
 #include <mach-o/dyld.h>
 #include <mach-o/loader.h>
 #include <pthread.h>
+#include <sched.h>
 #include <sys/mman.h>
 #include <sys/resource.h>
 #include <sys/stat.h>
@@ -68,6 +69,10 @@ uptr internal_filesize(fd_t fd) {
 
 int internal_dup2(int oldfd, int newfd) {
   return dup2(oldfd, newfd);
+}
+
+int internal_sched_yield() {
+  return sched_yield();
 }
 
 // ----------------- sanitizer_common.h

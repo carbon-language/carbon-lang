@@ -91,6 +91,10 @@ const char *GetEnv(const char *name) {
   return 0;
 }
 
+const char *GetPwd() {
+  UNIMPLEMENTED();
+}
+
 void DumpProcessMap() {
   UNIMPLEMENTED();
 }
@@ -101,6 +105,10 @@ void DisableCoreDumper() {
 
 void SleepForSeconds(int seconds) {
   Sleep(seconds * 1000);
+}
+
+void SleepForMillis(int millis) {
+  Sleep(millis);
 }
 
 void Exit(int exitcode) {
@@ -179,6 +187,10 @@ uptr internal_filesize(fd_t fd) {
 }
 
 int internal_dup2(int oldfd, int newfd) {
+  UNIMPLEMENTED();
+}
+
+int internal_sched_yield() {
   UNIMPLEMENTED();
 }
 

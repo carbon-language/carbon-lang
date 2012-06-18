@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "sanitizer_common/sanitizer_common.h"
 #include "sanitizer_common/sanitizer_libc.h"
 #include "tsan_suppressions.h"
 #include "tsan_rtl.h"
@@ -29,7 +30,7 @@ static char *ReadFile(const char *filename) {
   if (filename[0] == '/')
     SNPrintf(tmp, tmp.Size(), "%s", filename);
   else
-    SNPrintf(tmp, tmp.Size(), "%s/%s", internal_getpwd(), filename);
+    SNPrintf(tmp, tmp.Size(), "%s/%s", GetPwd(), filename);
   fd_t fd = internal_open(tmp, false);
   if (fd == kInvalidFd) {
     TsanPrintf("ThreadSanitizer: failed to open suppressions file '%s'\n",

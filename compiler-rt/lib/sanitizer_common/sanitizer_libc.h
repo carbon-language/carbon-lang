@@ -57,6 +57,9 @@ uptr internal_filesize(fd_t fd);  // -1 on error.
 int internal_dup2(int oldfd, int newfd);
 int internal_sscanf(const char *str, const char *format, ...);
 
+// Threading
+int internal_sched_yield();
+
 }  // namespace __sanitizer
 
 #endif  // SANITIZER_LIBC_H

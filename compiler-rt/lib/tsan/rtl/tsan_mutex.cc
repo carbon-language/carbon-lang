@@ -10,6 +10,7 @@
 // This file is a part of ThreadSanitizer (TSan), a race detector.
 //
 //===----------------------------------------------------------------------===//
+#include "sanitizer_common/sanitizer_libc.h"
 #include "tsan_mutex.h"
 #include "tsan_platform.h"
 #include "tsan_rtl.h"
@@ -164,7 +165,7 @@ class Backoff {
     if (iter_++ < kActiveSpinIters)
       proc_yield(kActiveSpinCnt);
     else
-      internal_yield();
+      internal_sched_yield();
     return true;
   }
 

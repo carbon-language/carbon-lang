@@ -62,11 +62,13 @@ void Report(const char *format, ...);
 uptr ReadFileToBuffer(const char *file_name, char **buff,
                       uptr *buff_size, uptr max_len);
 const char *GetEnv(const char *name);
+const char *GetPwd();
 
 // Other
 void DisableCoreDumper();
 void DumpProcessMap();
 void SleepForSeconds(int seconds);
+void SleepForMillis(int millis);
 void NORETURN Exit(int exitcode);
 void NORETURN Abort();
 int Atexit(void (*function)(void));

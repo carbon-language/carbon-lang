@@ -20,6 +20,7 @@
 
 #include <fcntl.h>
 #include <pthread.h>
+#include <sched.h>
 #include <sys/mman.h>
 #include <sys/resource.h>
 #include <sys/stat.h>
@@ -70,6 +71,10 @@ uptr internal_filesize(fd_t fd) {
 
 int internal_dup2(int oldfd, int newfd) {
   return syscall(__NR_dup2, oldfd, newfd);
+}
+
+int internal_sched_yield() {
+  return syscall(__NR_sched_yield);
 }
 
 // ----------------- sanitizer_common.h

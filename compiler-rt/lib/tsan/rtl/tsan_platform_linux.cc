@@ -74,19 +74,6 @@ void FlushShadowMemory() {
           MADV_DONTNEED);
 }
 
-void internal_yield() {
-  ScopedInRtl in_rtl;
-  syscall(__NR_sched_yield);
-}
-
-void internal_sleep_ms(u32 ms) {
-  usleep(ms * 1000);
-}
-
-const char *internal_getpwd() {
-  return getenv("PWD");
-}
-
 static void ProtectRange(uptr beg, uptr end) {
   ScopedInRtl in_rtl;
   CHECK_LE(beg, end);

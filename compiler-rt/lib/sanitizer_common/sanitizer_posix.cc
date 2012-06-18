@@ -116,6 +116,10 @@ void DumpProcessMap() {
   UnmapOrDie(filename, kBufSize);
 }
 
+const char *GetPwd() {
+  return GetEnv("PWD");
+}
+
 void DisableCoreDumper() {
   struct rlimit nocore;
   nocore.rlim_cur = 0;
@@ -125,6 +129,10 @@ void DisableCoreDumper() {
 
 void SleepForSeconds(int seconds) {
   sleep(seconds);
+}
+
+void SleepForMillis(int millis) {
+  usleep(millis * 1000);
 }
 
 void Exit(int exitcode) {

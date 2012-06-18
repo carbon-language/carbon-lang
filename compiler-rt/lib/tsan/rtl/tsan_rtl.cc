@@ -12,6 +12,7 @@
 // Main file (entry points) for the TSan run-time.
 //===----------------------------------------------------------------------===//
 
+#include "sanitizer_common/sanitizer_common.h"
 #include "sanitizer_common/sanitizer_libc.h"
 #include "sanitizer_common/sanitizer_placement_new.h"
 #include "tsan_defs.h"
@@ -120,7 +121,7 @@ static void MemoryProfileThread(void *arg) {
     InternalScopedBuf<char> buf(4096);
     WriteMemoryProfile(buf.Ptr(), buf.Size(), i);
     internal_write(fd, buf.Ptr(), internal_strlen(buf.Ptr()));
-    internal_sleep_ms(1000);
+    SleepForSeconds(1);
   }
 }
 
@@ -141,7 +142,7 @@ static void InitializeMemoryProfile() {
 static void MemoryFlushThread(void *arg) {
   ScopedInRtl in_rtl;
   for (int i = 0; ; i++) {
-    internal_sleep_ms(flags()->flush_memory_ms);
+    SleepForMillis(flags()->flush_memory_ms);
     FlushShadowMemory();
   }
 }

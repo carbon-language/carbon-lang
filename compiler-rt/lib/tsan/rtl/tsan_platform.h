@@ -80,12 +80,7 @@ void FlushShadowMemory();
 const char *InitializePlatform();
 void FinalizePlatform();
 
-void internal_yield();
-void internal_sleep_ms(u32 ms);
-
 void internal_start_thread(void(*func)(void*), void *arg);
-
-const char *internal_getpwd();
 
 uptr GetTlsSize();
 void GetThreadStackAndTls(bool main, uptr *stk_addr, uptr *stk_size,
