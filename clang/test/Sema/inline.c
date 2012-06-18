@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify -x c++ %s
 
 #if defined(INCLUDE)
 // -------
@@ -40,7 +41,7 @@ int d(inline int a); // expected-error{{'inline' can only appear on functions}}
 // Check that the warnings from the "header file" aren't on by default in
 // the main source file.
 
-inline int useStaticMain () {
+inline int useStaticMainFile () {
   staticFunction(); // no-warning
   return staticVar; // no-warning
 }

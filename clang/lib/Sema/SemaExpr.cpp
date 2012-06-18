@@ -130,6 +130,103 @@ void Sema::NoteDeletedFunction(FunctionDecl *Decl) {
     << 1 << Decl->isDeleted();
 }
 
+/// \brief Determine whether a FunctionDecl was ever declared with an
+/// explicit storage class.
+static bool hasAnyExplicitStorageClass(const FunctionDecl *D) {
+  for (FunctionDecl::redecl_iterator I = D->redecls_begin(),
+                                     E = D->redecls_end();
+       I != E; ++I) {
+    if (I->getStorageClassAsWritten() != SC_None)
+      return true;
+  }
+  return false;
+}
+
+/// \brief Check whether we're in an extern inline function and referring to a
+/// variable or function with internal linkage.
+///
+/// This also applies to anonymous-namespaced objects, which are effectively
+/// internal.
+/// This is only a warning because we used to silently accept this code, but
+/// most likely it will not do what the user intends.
+static void diagnoseUseOfInternalDeclInInlineFunction(Sema &S,
+                                                      const NamedDecl *D,
+                                                      SourceLocation Loc) {
+  // C11 6.7.4p3: An inline definition of a function with external linkage...
+  //   shall not contain a reference to an identifier with internal linkage.
+  // C++11 [basic.def.odr]p6: ...in each definition of D, corresponding names,
+  //   looked up according to 3.4, shall refer to an entity defined within the
+  //   definition of D, or shall refer to the same entity, after overload
+  //   resolution (13.3) and after matching of partial template specialization
+  //   (14.8.3), except that a name can refer to a const object with internal or
+  //   no linkage if the object has the same literal type in all definitions of
+  //   D, and the object is initialized with a constant expression (5.19), and
+  //   the value (but not the address) of the object is used, and the object has
+  //   the same value in all definitions of D; ...
+
+  // Check if this is an inlined function or method.
+  FunctionDecl *Current = S.getCurFunctionDecl();
+  if (!Current)
+    return;
+  if (!Current->isInlined())
+    return;
+  if (Current->getLinkage() != ExternalLinkage)
+    return;
+  
+  // Check if the decl has internal linkage.
+  Linkage UsedLinkage = D->getLinkage();
+  switch (UsedLinkage) {
+  case NoLinkage:
+    return;
+  case InternalLinkage:
+  case UniqueExternalLinkage:
+    break;
+  case ExternalLinkage:
+    return;
+  }
+
+  // Check C++'s exception for const variables. This is in the standard
+  // because in C++ const variables have internal linkage unless
+  // explicitly declared extern.
+  // Note that we don't do any of the cross-TU checks, and this code isn't
+  // even particularly careful about checking if the variable "has the
+  // same value in all definitions" of the inline function. It just does a
+  // sanity check to make sure there is an initializer at all.
+  // FIXME: We should still be checking to see if we're using a constant
+  // as a glvalue anywhere, but we don't have the necessary information to
+  // do that here, and as long as this is a warning and not a hard error
+  // it's not appropriate to change the semantics of the program (i.e.
+  // by having BuildDeclRefExpr use VK_RValue for constants like these).
+  const VarDecl *VD = dyn_cast<VarDecl>(D);
+  if (VD && S.getLangOpts().CPlusPlus)
+    if (VD->getType().isConstant(S.getASTContext()) && VD->getAnyInitializer())
+      return;
+
+  // Don't warn unless -pedantic is on if the inline function is in the main
+  // source file. These functions will most likely not be inlined into another
+  // translation unit, so they're effectively internal.
+  bool IsInMainFile = S.getSourceManager().isFromMainFile(Loc);
+  S.Diag(Loc, IsInMainFile ? diag::ext_internal_in_extern_inline
+                           : diag::warn_internal_in_extern_inline)
+    << (bool)VD
+    << D
+    << (UsedLinkage == UniqueExternalLinkage)
+    << isa<CXXMethodDecl>(Current);
+
+  // Suggest "static" on the inline function, if possible.
+  if (!isa<CXXMethodDecl>(Current) &&
+      !hasAnyExplicitStorageClass(Current)) {
+    const FunctionDecl *FirstDecl = Current->getCanonicalDecl();
+    SourceLocation DeclBegin = FirstDecl->getSourceRange().getBegin();
+    S.Diag(DeclBegin, diag::note_convert_inline_to_static)
+      << Current << FixItHint::CreateInsertion(DeclBegin, "static ");
+  }
+
+  S.Diag(D->getCanonicalDecl()->getLocation(),
+         diag::note_internal_decl_declared_here)
+    << D;
+}
+
 /// \brief Determine whether the use of this declaration is valid, and
 /// emit any corresponding diagnostics.
 ///
@@ -183,42 +280,7 @@ bool Sema::DiagnoseUseOfDecl(NamedDecl *D, SourceLocation Loc,
   if (D->hasAttr<UnusedAttr>())
     Diag(Loc, diag::warn_used_but_marked_unused) << D->getDeclName();
 
-  // Warn if we're in an extern inline function referring to a decl
-  // with internal linkage. (C99 6.7.4p3)
-  // FIXME: This is not explicitly forbidden in C++, but it's not clear
-  // what the correct behavior is. We should probably still have a warning.
-  // (However, in C++ const variables have internal linkage by default, while
-  // functions still have external linkage by default, so this warning becomes
-  // very noisy.)
-  if (!getLangOpts().CPlusPlus) {
-    if (FunctionDecl *Current = getCurFunctionDecl()) {
-      if (Current->isInlined() && Current->getLinkage() > InternalLinkage) {
-        if (D->getLinkage() == InternalLinkage) {
-          // We won't warn by default if the inline function is in the main
-          // source file; in these cases it is almost certain that the inlining
-          // will only occur in this file, even if there is an external
-          // declaration as well.
-          bool IsFromMainFile = getSourceManager().isFromMainFile(Loc);
-          Diag(Loc, IsFromMainFile ? diag::ext_internal_in_extern_inline
-                                   : diag::warn_internal_in_extern_inline)
-            << !isa<FunctionDecl>(D) << D << isa<CXXMethodDecl>(Current);
-
-          // If the user didn't explicitly specify a storage class,
-          // suggest adding "static" to fix the problem.
-          const FunctionDecl *FirstDecl = Current->getCanonicalDecl();
-          if (FirstDecl->getStorageClassAsWritten() == SC_None) {
-            SourceLocation DeclBegin = FirstDecl->getSourceRange().getBegin();
-            Diag(DeclBegin, diag::note_convert_inline_to_static)
-              << Current << FixItHint::CreateInsertion(DeclBegin, "static ");
-          }
-
-          Diag(D->getCanonicalDecl()->getLocation(),
-               diag::note_internal_decl_declared_here)
-          << D;
-        }
-      }
-    }
-  }
+  diagnoseUseOfInternalDeclInInlineFunction(*this, D, Loc);
 
   return false;
 }
