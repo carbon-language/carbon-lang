@@ -1760,9 +1760,22 @@ void CompilerInvocation::setLangDefaults(LangOptions &Opts, InputKind IK,
   Opts.HexFloats = Std.hasHexFloats();
   Opts.ImplicitInt = Std.hasImplicitInt();
 
-  // OpenCL has some additional defaults.
+  // Set OpenCL Version.
   if (LangStd == LangStandard::lang_opencl) {
     Opts.OpenCL = 1;
+    Opts.OpenCLVersion = 100;
+  }
+  else if (LangStd == LangStandard::lang_opencl11) {
+      Opts.OpenCL = 1;
+      Opts.OpenCLVersion = 110;
+  }
+  else if (LangStd == LangStandard::lang_opencl12) {
+    Opts.OpenCL = 1;
+    Opts.OpenCLVersion = 120;
+  }
+  
+  // OpenCL has some additional defaults.
+  if (Opts.OpenCL) {
     Opts.AltiVec = 0;
     Opts.CXXOperatorNames = 1;
     Opts.LaxVectorConversions = 0;
