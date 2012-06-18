@@ -923,6 +923,12 @@ static void possibleTransparentUnionPointerType(QualType &T) {
 }
 
 static void handleAllocSizeAttr(Sema &S, Decl *D, const AttributeList &Attr) {
+  if (!isFunctionOrMethod(D)) {
+    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
+    << "alloc_size" << ExpectedFunctionOrMethod;
+    return;
+  }
+
   if (!checkAttributeAtLeastNumArgs(S, Attr, 1))
     return;
 
