@@ -70,14 +70,14 @@ void *MmapFixedNoReserve(uptr fixed_addr, uptr size) {
   return internal_mmap((void*)fixed_addr, size,
                       PROT_READ | PROT_WRITE,
                       MAP_PRIVATE | MAP_ANON | MAP_FIXED | MAP_NORESERVE,
-                      0, 0);
+                      -1, 0);
 }
 
 void *Mprotect(uptr fixed_addr, uptr size) {
   return internal_mmap((void*)fixed_addr, size,
                        PROT_NONE,
                        MAP_PRIVATE | MAP_ANON | MAP_FIXED | MAP_NORESERVE,
-                       0, 0);
+                       -1, 0);
 }
 
 static inline bool IntervalsAreSeparate(uptr start1, uptr end1,
