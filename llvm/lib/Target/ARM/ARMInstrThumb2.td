@@ -3457,21 +3457,18 @@ let imod = 0, iflags = 0, M = 1 in
 
 // A6.3.4 Branches and miscellaneous control
 // Table A6-14 Change Processor State, and hint instructions
-class T2I_hint<bits<8> op7_0, string opc, string asm>
-  : T2I<(outs), (ins), NoItinerary, opc, asm, []> {
-  let Inst{31-20} = 0xf3a;
-  let Inst{19-16} = 0b1111;
-  let Inst{15-14} = 0b10;
-  let Inst{12} = 0;
-  let Inst{10-8} = 0b000;
-  let Inst{7-0} = op7_0;
+def t2HINT : T2I<(outs), (ins imm0_255:$imm), NoItinerary, "hint", "\t$imm",[]>{
+  bits<8> imm;
+  let Inst{31-8} = 0b111100111010111110000000;
+  let Inst{7-0} = imm;
 }
 
-def t2NOP   : T2I_hint<0b00000000, "nop",   ".w">;
-def t2YIELD : T2I_hint<0b00000001, "yield", ".w">;
-def t2WFE   : T2I_hint<0b00000010, "wfe",   ".w">;
-def t2WFI   : T2I_hint<0b00000011, "wfi",   ".w">;
-def t2SEV   : T2I_hint<0b00000100, "sev",   ".w">;
+def : t2InstAlias<"hint$p.w $imm", (t2HINT imm0_255:$imm, pred:$p)>;
+def : t2InstAlias<"nop$p.w", (t2HINT 0, pred:$p)>;
+def : t2InstAlias<"yield$p.w", (t2HINT 1, pred:$p)>;
+def : t2InstAlias<"wfe$p.w", (t2HINT 2, pred:$p)>;
+def : t2InstAlias<"wfi$p.w", (t2HINT 3, pred:$p)>;
+def : t2InstAlias<"sev$p.w", (t2HINT 4, pred:$p)>;
 
 def t2DBG : T2I<(outs), (ins imm0_15:$opt), NoItinerary, "dbg", "\t$opt", []> {
   bits<4> opt;

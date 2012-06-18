@@ -1585,33 +1585,18 @@ def ATOMCMPXCHG6432 : PseudoInst<(outs GPR:$dst1, GPR:$dst2),
                                  NoItinerary, []>;
 }
 
-def NOP : AI<(outs), (ins), MiscFrm, NoItinerary, "nop", "", []>,
-          Requires<[IsARM, HasV6T2]> {
-  let Inst{27-16} = 0b001100100000;
-  let Inst{15-8} = 0b11110000;
-  let Inst{7-0} = 0b00000000;
+def HINT : AI<(outs), (ins imm0_255:$imm), MiscFrm, NoItinerary,
+              "hint", "\t$imm", []>, Requires<[IsARM, HasV6]> {
+  bits<8> imm;
+  let Inst{27-8} = 0b00110010000011110000;
+  let Inst{7-0} = imm;
 }
 
-def YIELD : AI<(outs), (ins), MiscFrm, NoItinerary, "yield", "", []>,
-          Requires<[IsARM, HasV6T2]> {
-  let Inst{27-16} = 0b001100100000;
-  let Inst{15-8} = 0b11110000;
-  let Inst{7-0} = 0b00000001;
-}
-
-def WFE : AI<(outs), (ins), MiscFrm, NoItinerary, "wfe", "", []>,
-          Requires<[IsARM, HasV6T2]> {
-  let Inst{27-16} = 0b001100100000;
-  let Inst{15-8} = 0b11110000;
-  let Inst{7-0} = 0b00000010;
-}
-
-def WFI : AI<(outs), (ins), MiscFrm, NoItinerary, "wfi", "", []>,
-          Requires<[IsARM, HasV6T2]> {
-  let Inst{27-16} = 0b001100100000;
-  let Inst{15-8} = 0b11110000;
-  let Inst{7-0} = 0b00000011;
-}
+def : InstAlias<"nop$p", (HINT 0, pred:$p)>, Requires<[IsARM, HasV6T2]>;
+def : InstAlias<"yield$p", (HINT 1, pred:$p)>, Requires<[IsARM, HasV6T2]>;
+def : InstAlias<"wfe$p", (HINT 2, pred:$p)>, Requires<[IsARM, HasV6T2]>;
+def : InstAlias<"wfi$p", (HINT 3, pred:$p)>, Requires<[IsARM, HasV6T2]>;
+def : InstAlias<"sev$p", (HINT 4, pred:$p)>, Requires<[IsARM, HasV6T2]>;
 
 def SEL : AI<(outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm), DPFrm, NoItinerary, "sel",
              "\t$Rd, $Rn, $Rm", []>, Requires<[IsARM, HasV6]> {
@@ -1624,18 +1609,10 @@ def SEL : AI<(outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm), DPFrm, NoItinerary, "sel",
   let Inst{27-20} = 0b01101000;
   let Inst{7-4} = 0b1011;
   let Inst{11-8} = 0b1111;
-  
   let Unpredictable{11-8} = 0b1111;
 }
 
-def SEV : AI<(outs), (ins), MiscFrm, NoItinerary, "sev", "",
-             []>, Requires<[IsARM, HasV6T2]> {
-  let Inst{27-16} = 0b001100100000;
-  let Inst{15-8} = 0b11110000;
-  let Inst{7-0} = 0b00000100;
-}
-
-// The i32imm operand $val can be used by a debugger to store more information
+// The 16-bit operand $val can be used by a debugger to store more information
 // about the breakpoint.
 def BKPT : AI<(outs), (ins imm0_65535:$val), MiscFrm, NoItinerary,
               "bkpt", "\t$val", []>, Requires<[IsARM]> {

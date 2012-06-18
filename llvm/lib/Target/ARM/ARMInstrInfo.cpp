@@ -31,7 +31,8 @@ ARMInstrInfo::ARMInstrInfo(const ARMSubtarget &STI)
 /// getNoopForMachoTarget - Return the noop instruction to use for a noop.
 void ARMInstrInfo::getNoopForMachoTarget(MCInst &NopInst) const {
   if (hasNOP()) {
-    NopInst.setOpcode(ARM::NOP);
+    NopInst.setOpcode(ARM::HINT);
+    NopInst.addOperand(MCOperand::CreateImm(0));
     NopInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
     NopInst.addOperand(MCOperand::CreateReg(0));
   } else {

@@ -52,6 +52,27 @@ void ARMInstPrinter::printInst(const MCInst *MI, raw_ostream &O,
                                StringRef Annot) {
   unsigned Opcode = MI->getOpcode();
 
+  // Check for HINT instructions w/ canonical names.
+  if (Opcode == ARM::HINT || Opcode == ARM::t2HINT) {
+    switch (MI->getOperand(0).getImm()) {
+    case 0: O << "\tnop"; break;
+    case 1: O << "\tyield"; break;
+    case 2: O << "\twfe"; break;
+    case 3: O << "\twfi"; break;
+    case 4: O << "\tsev"; break;
+    default:
+      // Anything else should just print normally.
+      printInstruction(MI, O);
+      printAnnotation(O, Annot);
+      return;
+    }
+    printPredicateOperand(MI, 1, O);
+    if (Opcode == ARM::t2HINT)
+      O << ".w";
+    printAnnotation(O, Annot);
+    return;
+  }
+
   // Check for MOVs and print canonical forms, instead.
   if (Opcode == ARM::MOVsr) {
     // FIXME: Thumb variants?

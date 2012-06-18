@@ -3369,7 +3369,7 @@ _func:
 @ CHECK: uxth.w	r7, r8                  @ encoding: [0x1f,0xfa,0x88,0xf7]
 
 @------------------------------------------------------------------------------
-@ WFE/WFI/YIELD
+@ WFE/WFI/YIELD/HINT
 @------------------------------------------------------------------------------
         wfe
         wfi
@@ -3378,6 +3378,13 @@ _func:
         wfelt
         wfige
         yieldlt
+        hint #5
+        hint.w #5
+        hint.w #4
+        hint #3
+        hint #2
+        hint #1
+        hint #0
 
 @ CHECK: wfe                            @ encoding: [0x20,0xbf]
 @ CHECK: wfi                            @ encoding: [0x30,0xbf]
@@ -3386,6 +3393,13 @@ _func:
 @ CHECK: wfelt                          @ encoding: [0x20,0xbf]
 @ CHECK: wfige                          @ encoding: [0x30,0xbf]
 @ CHECK: yieldlt                        @ encoding: [0x10,0xbf]
+@ CHECK: hint	#5                      @ encoding: [0xaf,0xf3,0x05,0x80]
+@ CHECK: hint	#5                      @ encoding: [0xaf,0xf3,0x05,0x80]
+@ CHECK: sev.w                          @ encoding: [0xaf,0xf3,0x04,0x80]
+@ CHECK: wfi.w                          @ encoding: [0xaf,0xf3,0x03,0x80]
+@ CHECK: wfe.w                          @ encoding: [0xaf,0xf3,0x02,0x80]
+@ CHECK: yield.w                        @ encoding: [0xaf,0xf3,0x01,0x80]
+@ CHECK: nop.w                          @ encoding: [0xaf,0xf3,0x00,0x80]
 
 
 @------------------------------------------------------------------------------
