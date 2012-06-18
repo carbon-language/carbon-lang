@@ -105,7 +105,6 @@
           <li><a href="#tbaa">'<tt>tbaa</tt>' Metadata</a></li>
           <li><a href="#fpmath">'<tt>fpmath</tt>' Metadata</a></li>
           <li><a href="#range">'<tt>range</tt>' Metadata</a></li>
-          <li><a href="#alloc">'<tt>alloc</tt>' Metadata</a></li>
         </ol>
       </li>
     </ol>
@@ -3078,49 +3077,6 @@ call void @llvm.dbg.value(metadata !24, i64 0, metadata !25)
 </pre>
 </div>
 </div>
-
-<!-- _______________________________________________________________________ -->
-<h4>
-  <a name="alloc">'<tt>alloc</tt>' Metadata</a>
-</h4>
- 
-<div>
-
-<p><tt>alloc</tt> metadata may be attached to any instruction returning a
-   pointer. It can be used to express the size and offset relative to the
-   beginning of the buffer pointed by.</p>
-
-<blockquote>
-
-<p>The first parameter is a function that returns the size of the buffer, and
-   the second (optional) parameter is a function that returns the offset from
-   the beginning of the buffer. If the second parameter is not present or null,
-   the offset is assumed to be null. Both functions must be either readonly or
-   readnone.</p>
-<p><tt>alloc</tt> metadata can have additional parameters, which are passed to
-   the size and offset functions when they are evaluated. Therefore the size and
-   offset functions must have the same signature.</p>
-
-</blockquote>
-
-
-<p>Examples:</p>
-<div class="doc_code">
-<pre>
-  ; size of buffer allocated by this call is my_malloc_size(%s), and offset=0
-  %a = call my_malloc(%s), !alloc !{i32 (i32)* @my_malloc_size, null, i32 %s}
-
-  ; size of the buffer pointed by *ptr is size(%x), and offset=offset(%x)
-  %b = load i8** %foo, !alloc !{i32 (i32)* @size, i32 (i32)* @offset, i32 %x}
-
-  ; size of buffer allocated by this call is foo_size(), and offset=0
-  %a = call alloc_foo(%s), !alloc !0
-...
-!0 = metadata {i32 ()* @foo_size}
-</pre>
-</div>
-</div>
-
 </div>
 
 </div>

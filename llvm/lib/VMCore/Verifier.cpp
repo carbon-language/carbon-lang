@@ -1672,39 +1672,6 @@ void Verifier::visitInstruction(Instruction &I) {
     }
   }
 
-  if (MDNode *MD = I.getMetadata(LLVMContext::MD_alloc)) {
-    Assert1(I.getType()->isPointerTy(), "alloc requires a pointer result", &I);
-    Assert1(MD->getNumOperands() >= 1, "alloc takes at least one operand", &I);
-    Function *SizeFn = dyn_cast<Function>(MD->getOperand(0));
-    Function *OffsetFn = MD->getNumOperands() >= 2 ?
-                         dyn_cast_or_null<Function>(MD->getOperand(1)) : 0;
-    Assert1(SizeFn, "first parameter of alloc must be a function", &I);
-    Assert1(MD->getNumOperands() == 1 || !MD->getOperand(1) || OffsetFn,
-            "second parameter of alloc must be either a function or null", &I);
-    Assert1(SizeFn->onlyReadsMemory(),
-            "size function must be readonly/readnone", &I);
-    Assert1(!OffsetFn || OffsetFn->onlyReadsMemory(),
-            "offset function must be readonly/readnone", &I);
-    Assert1(SizeFn->getReturnType()->isIntegerTy(),
-            "size function must return an integer", &I);
-    Assert1(!OffsetFn || OffsetFn->getReturnType()->isIntegerTy(),
-            "offset function must return an integer", &I);
-
-    FunctionType *SizeFnTy = SizeFn->getFunctionType();
-    FunctionType *OffsetFnTy = OffsetFn ? OffsetFn->getFunctionType() : 0;
-    Assert1(SizeFnTy->getNumParams() == MD->getNumOperands()-2,
-            "size function number of parameters mismatch", &I);
-    Assert1(!OffsetFnTy || OffsetFnTy->getNumParams() == MD->getNumOperands()-2,
-            "offset function number of parameters mismatch", &I);
-    for (unsigned i = 0, e = SizeFnTy->getNumParams(); i != e; ++i) {
-      Assert1(SizeFnTy->getParamType(i) == MD->getOperand(i+2)->getType(),
-              "size function parameter type mismatch", &I);
-      if (OffsetFnTy)
-        Assert1(OffsetFnTy->getParamType(i) == MD->getOperand(i+2)->getType(),
-                "offset function parameter type mismatch", &I);
-    }
-  }
-
   MDNode *MD = I.getMetadata(LLVMContext::MD_range);
   Assert1(!MD || isa<LoadInst>(I), "Ranges are only for loads!", &I);
 

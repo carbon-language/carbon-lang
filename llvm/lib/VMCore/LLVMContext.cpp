@@ -53,11 +53,6 @@ LLVMContext::LLVMContext() : pImpl(new LLVMContextImpl(*this)) {
   unsigned RangeID = getMDKindID("range");
   assert(RangeID == MD_range && "range kind id drifted");
   (void)RangeID;
-
-  // Create the 'alloc' metadata kind.
-  unsigned AllocID = getMDKindID("alloc");
-  assert(AllocID == MD_alloc && "alloc kind id drifted");
-  (void)AllocID;
 }
 LLVMContext::~LLVMContext() { delete pImpl; }
 
