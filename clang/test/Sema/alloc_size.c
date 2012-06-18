@@ -17,6 +17,6 @@ char fn6(unsigned) __attribute__((alloc_size(1))); // expected-warning{{only app
 
 void* fn7(unsigned) __attribute__((alloc_size)); // expected-error {{attribute takes at least 1 argument}}
 
-void *fn8(int, int) __attribute__((alloc_size(1, 1))); // expected-error {{attribute parameter 2 is duplicated}}
+void *fn8(int, int) __attribute__((alloc_size(1, 1))); // OK
 
 void* fn9(unsigned) __attribute__((alloc_size(12345678901234567890123))); // expected-warning {{integer constant is too large for its type}} // expected-error {{attribute parameter 1 is out of bounds}}
