@@ -1215,6 +1215,8 @@ private:
   // C++ Expressions
   ExprResult ParseCXXIdExpression(bool isAddressOfOperand = false);
 
+  bool areTokensAdjacent(const Token &A, const Token &B);
+
   void CheckForTemplateAndDigraph(Token &Next, ParsedType ObjectTypePtr,
                                   bool EnteringContext, IdentifierInfo &II,
                                   CXXScopeSpec &SS);

@@ -10,3 +10,18 @@ A<int x; // expected-error {{expected '>'}}
 // PR8912
 template <bool> struct S {};
 S<bool(2 > 1)> s;
+
+// Test behavior when a template-id is ended by a token which starts with '>'.
+namespace greatergreater {
+  template<typename T> struct S { S(); S(T); };
+  void f(S<int>=0); // expected-error {{a space is required between a right angle bracket and an equals sign (use '> =')}}
+  void f(S<S<int>>=S<int>()); // expected-error {{use '> >'}} expected-error {{use '> ='}}
+  template<typename T> void t();
+  void g() {
+    void (*p)() = &t<int>;
+    (void)(&t<int>==p); // expected-error {{use '> ='}}
+    (void)(&t<int>>=p); // expected-error {{use '> >'}}
+    (void)(&t<S<int>>>=p); // expected-error {{use '> >'}}
+    (void)(&t<S<int>>==p); // expected-error {{use '> >'}} expected-error {{use '> ='}}
+  }
+}

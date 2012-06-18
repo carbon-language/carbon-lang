@@ -316,6 +316,11 @@ bool Parser::ParseTemplateParameters(unsigned Depth,
     Failed = ParseTemplateParameterList(Depth, TemplateParams);
 
   if (Tok.is(tok::greatergreater)) {
+    // No diagnostic required here: a template-parameter-list can only be
+    // followed by a declaration or, for a template template parameter, the
+    // 'class' keyword. Therefore, the second '>' will be diagnosed later.
+    // This matters for elegant diagnosis of:
+    //   template<template<typename>> struct S;
     Tok.setKind(tok::greater);
     RAngleLoc = Tok.getLocation();
     Tok.setLocation(Tok.getLocation().getLocWithOffset(1));
@@ -713,34 +718,104 @@ Parser::ParseTemplateIdAfterTemplateName(TemplateTy Template,
     }
   }
 
-  if (Tok.isNot(tok::greater) && Tok.isNot(tok::greatergreater)) {
+  // What will be left once we've consumed the '>'.
+  tok::TokenKind RemainingToken;
+  const char *ReplacementStr = "> >";
+
+  switch (Tok.getKind()) {
+  default:
     Diag(Tok.getLocation(), diag::err_expected_greater);
     return true;
+
+  case tok::greater:
+    // Determine the location of the '>' token. Only consume this token
+    // if the caller asked us to.
+    RAngleLoc = Tok.getLocation();
+    if (ConsumeLastToken)
+      ConsumeToken();
+    return false;
+
+  case tok::greatergreater:
+    RemainingToken = tok::greater;
+    break;
+
+  case tok::greatergreatergreater:
+    RemainingToken = tok::greatergreater;
+    break;
+
+  case tok::greaterequal:
+    RemainingToken = tok::equal;
+    ReplacementStr = "> =";
+    break;
+
+  case tok::greatergreaterequal:
+    RemainingToken = tok::greaterequal;
+    break;
   }
 
-  // Determine the location of the '>' or '>>'. Only consume this
-  // token if the caller asked us to.
+  // This template-id is terminated by a token which starts with a '>'. Outside
+  // C++11, this is now error recovery, and in C++11, this is error recovery if
+  // the token isn't '>>'.
+
   RAngleLoc = Tok.getLocation();
 
-  if (Tok.is(tok::greatergreater)) {
-    const char *ReplaceStr = "> >";
-    if (NextToken().is(tok::greater) || NextToken().is(tok::greatergreater))
-      ReplaceStr = "> > ";
+  // The source range of the '>>' or '>=' at the start of the token.
+  CharSourceRange ReplacementRange =
+      CharSourceRange::getCharRange(RAngleLoc,
+          Lexer::AdvanceToTokenCharacter(RAngleLoc, 2, PP.getSourceManager(),
+                                         getLangOpts()));
 
-    Diag(Tok.getLocation(), getLangOpts().CPlusPlus0x ?
-         diag::warn_cxx98_compat_two_right_angle_brackets :
-         diag::err_two_right_angle_brackets_need_space)
-      << FixItHint::CreateReplacement(SourceRange(Tok.getLocation()),
-                                      ReplaceStr);
+  // A hint to put a space between the '>>'s. In order to make the hint as
+  // clear as possible, we include the characters either side of the space in
+  // the replacement, rather than just inserting a space at SecondCharLoc.
+  FixItHint Hint1 = FixItHint::CreateReplacement(ReplacementRange,
+                                                 ReplacementStr);
 
-    Tok.setKind(tok::greater);
-    if (!ConsumeLastToken) {
-      // Since we're not supposed to consume the '>>' token, we need
-      // to insert a second '>' token after the first.
-      PP.EnterToken(Tok);
-    }
-  } else if (ConsumeLastToken)
+  // A hint to put another space after the token, if it would otherwise be
+  // lexed differently.
+  FixItHint Hint2;
+  Token Next = NextToken();
+  if ((RemainingToken == tok::greater ||
+       RemainingToken == tok::greatergreater) &&
+      (Next.is(tok::greater) || Next.is(tok::greatergreater) ||
+       Next.is(tok::greatergreatergreater) || Next.is(tok::equal) ||
+       Next.is(tok::greaterequal) || Next.is(tok::greatergreaterequal) ||
+       Next.is(tok::equalequal)) &&
+      areTokensAdjacent(Tok, Next))
+    Hint2 = FixItHint::CreateInsertion(Next.getLocation(), " ");
+
+  unsigned DiagId = diag::err_two_right_angle_brackets_need_space;
+  if (getLangOpts().CPlusPlus0x && Tok.is(tok::greatergreater))
+    DiagId = diag::warn_cxx98_compat_two_right_angle_brackets;
+  else if (Tok.is(tok::greaterequal))
+    DiagId = diag::err_right_angle_bracket_equal_needs_space;
+  Diag(Tok.getLocation(), DiagId) << Hint1 << Hint2;
+
+  // Strip the initial '>' from the token.
+  if (RemainingToken == tok::equal && Next.is(tok::equal) &&
+      areTokensAdjacent(Tok, Next)) {
+    // Join two adjacent '=' tokens into one, for cases like:
+    //   void (*p)() = f<int>;
+    //   return f<int>==p;
     ConsumeToken();
+    Tok.setKind(tok::equalequal);
+    Tok.setLength(Tok.getLength() + 1);
+  } else {
+    Tok.setKind(RemainingToken);
+    Tok.setLength(Tok.getLength() - 1);
+  }
+  Tok.setLocation(Lexer::AdvanceToTokenCharacter(RAngleLoc, 1,
+                                                 PP.getSourceManager(),
+                                                 getLangOpts()));
+
+  if (!ConsumeLastToken) {
+    // Since we're not supposed to consume the '>' token, we need to push
+    // this token and revert the current token back to the '>'.
+    PP.EnterToken(Tok);
+    Tok.setKind(tok::greater);
+    Tok.setLength(1);
+    Tok.setLocation(RAngleLoc);
+  }
 
   return false;
 }

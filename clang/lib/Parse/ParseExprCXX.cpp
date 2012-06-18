@@ -36,7 +36,7 @@ static int SelectDigraphErrorMessage(tok::TokenKind Kind) {
 }
 
 // Are the two tokens adjacent in the same source file?
-static bool AreTokensAdjacent(Preprocessor &PP, Token &First, Token &Second) {
+bool Parser::areTokensAdjacent(const Token &First, const Token &Second) {
   SourceManager &SM = PP.getSourceManager();
   SourceLocation FirstLoc = SM.getSpellingLoc(First.getLocation());
   SourceLocation FirstEnd = FirstLoc.getLocWithOffset(First.getLength());
@@ -80,7 +80,7 @@ void Parser::CheckForTemplateAndDigraph(Token &Next, ParsedType ObjectType,
     return;
 
   Token SecondToken = GetLookAheadToken(2);
-  if (!SecondToken.is(tok::colon) || !AreTokensAdjacent(PP, Next, SecondToken))
+  if (!SecondToken.is(tok::colon) || !areTokensAdjacent(Next, SecondToken))
     return;
 
   TemplateTy Template;
@@ -921,7 +921,7 @@ ExprResult Parser::ParseCXXCasts() {
   // diagnose error, suggest fix, and recover parsing.
   Token Next = NextToken();
   if (Tok.is(tok::l_square) && Tok.getLength() == 2 && Next.is(tok::colon) &&
-      AreTokensAdjacent(PP, Tok, Next))
+      areTokensAdjacent(Tok, Next))
     FixDigraph(*this, PP, Tok, Next, Kind, /*AtDigraph*/true);
 
   if (ExpectAndConsume(tok::less, diag::err_expected_less_after, CastName))
