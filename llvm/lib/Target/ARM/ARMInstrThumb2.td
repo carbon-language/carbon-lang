@@ -62,6 +62,15 @@ def t2_so_imm_neg_XFORM : SDNodeXForm<imm, [{
   return CurDAG->getTargetConstant(-((int)N->getZExtValue()), MVT::i32);
 }]>;
 
+// so_imm_notSext_XFORM - Return a so_imm value packed into the format
+// described for so_imm_notSext def below, with sign extension from 16
+// bits.
+def t2_so_imm_notSext16_XFORM : SDNodeXForm<imm, [{
+  APInt apIntN = N->getAPIntValue();
+  unsigned N16bitSignExt = apIntN.trunc(16).sext(32).getZExtValue();
+  return CurDAG->getTargetConstant(~N16bitSignExt, MVT::i32);
+}]>;
+
 // t2_so_imm - Match a 32-bit immediate operand, which is an
 // 8-bit immediate rotated by an arbitrary number of bits, or an 8-bit
 // immediate splatted into multiple bytes of the word.
@@ -83,6 +92,17 @@ def t2_so_imm_not_asmoperand : AsmOperandClass { let Name = "T2SOImmNot"; }
 def t2_so_imm_not : Operand<i32>, PatLeaf<(imm), [{
   return ARM_AM::getT2SOImmVal(~((uint32_t)N->getZExtValue())) != -1;
 }], t2_so_imm_not_XFORM> {
+  let ParserMatchClass = t2_so_imm_not_asmoperand;
+}
+
+// t2_so_imm_notSext - match an immediate that is a complement of a t2_so_imm
+// if the upper 16 bits are zero.
+def t2_so_imm_notSext : Operand<i32>, PatLeaf<(imm), [{
+    APInt apIntN = N->getAPIntValue();
+    if (!apIntN.isIntN(16)) return false;
+    unsigned N16bitSignExt = apIntN.trunc(16).sext(32).getZExtValue();
+    return ARM_AM::getT2SOImmVal(~N16bitSignExt) != -1;
+  }], t2_so_imm_notSext16_XFORM> {
   let ParserMatchClass = t2_so_imm_not_asmoperand;
 }
 
@@ -2331,6 +2351,17 @@ defm t2MVN  : T2I_un_irs <0b0011, "mvn",
 let AddedComplexity = 1 in
 def : T2Pat<(and     rGPR:$src, t2_so_imm_not:$imm),
             (t2BICri rGPR:$src, t2_so_imm_not:$imm)>;
+
+// top16Zero - answer true if the upper 16 bits of $src are 0, false otherwise
+def top16Zero: PatLeaf<(i32 rGPR:$src), [{
+  return CurDAG->MaskedValueIsZero(SDValue(N,0), APInt::getHighBitsSet(32, 16));
+  }]>;
+
+// so_imm_notSext is needed instead of so_imm_not, as the value of imm
+// will match the extended, not the original bitWidth for $src.
+def : T2Pat<(and top16Zero:$src, t2_so_imm_notSext:$imm),
+            (t2BICri rGPR:$src, t2_so_imm_notSext:$imm)>;
+
 
 // FIXME: Disable this pattern on Darwin to workaround an assembler bug.
 def : T2Pat<(or      rGPR:$src, t2_so_imm_not:$imm),
