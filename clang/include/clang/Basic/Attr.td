@@ -824,6 +824,10 @@ def DLLImport : InheritableAttr {
   let Spellings = ["dllimport"];
 }
 
+def ForceInline : InheritableAttr {
+  let Spellings = ["__forceinline"];
+}
+
 def Win64 : InheritableAttr {
   let Spellings = ["__w64"];
 }

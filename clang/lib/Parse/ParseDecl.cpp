@@ -2251,9 +2251,14 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       continue;
 
     // Microsoft single token adornments.
-    case tok::kw___forceinline:
-      // FIXME: Add handling here!
-      break;
+    case tok::kw___forceinline: {
+      isInvalid = DS.SetFunctionSpecInline(Loc, PrevSpec, DiagID);
+      IdentifierInfo *AttrName = Tok.getIdentifierInfo();
+      SourceLocation AttrNameLoc = ConsumeToken();
+      DS.getAttributes().addNew(AttrName, AttrNameLoc, 0, AttrNameLoc, 0,
+                                SourceLocation(), 0, 0);
+      continue;
+    }
 
     case tok::kw___ptr64:
     case tok::kw___ptr32:

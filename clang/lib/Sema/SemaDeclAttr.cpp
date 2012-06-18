@@ -3888,6 +3888,13 @@ static void handlePortabilityAttr(Sema &S, Decl *D, const AttributeList &Attr) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << Attr.getName();
 }
 
+static void handleForceInlineAttr(Sema &S, Decl *D, const AttributeList &Attr) {
+  if (S.LangOpts.MicrosoftExt)
+    D->addAttr(::new (S.Context) ForceInlineAttr(Attr.getRange(), S.Context));
+  else
+    S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << Attr.getName();
+}
+
 //===----------------------------------------------------------------------===//
 // Top Level Sema Entry Points
 //===----------------------------------------------------------------------===//
@@ -4081,6 +4088,9 @@ static void ProcessInheritableDeclAttr(Sema &S, Scope *scope, Decl *D,
   case AttributeList::AT_ptr32:
   case AttributeList::AT_ptr64:
     handlePortabilityAttr(S, D, Attr);
+    break;
+  case AttributeList::AT_forceinline:
+    handleForceInlineAttr(S, D, Attr);
     break;
 
   // Thread safety attributes:

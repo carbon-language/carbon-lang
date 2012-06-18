@@ -518,7 +518,7 @@ void CodeGenModule::SetLLVMFunctionAttributesForDefinition(const Decl *D,
     F->addFnAttr(llvm::Attribute::NoInline);
 
   // (noinline wins over always_inline, and we can't specify both in IR)
-  if (D->hasAttr<AlwaysInlineAttr>() &&
+  if ((D->hasAttr<AlwaysInlineAttr>() || D->hasAttr<ForceInlineAttr>()) &&
       !F->hasFnAttr(llvm::Attribute::NoInline))
     F->addFnAttr(llvm::Attribute::AlwaysInline);
 
@@ -935,7 +935,7 @@ CodeGenModule::shouldEmitFunction(const FunctionDecl *F) {
   if (getFunctionLinkage(F) != llvm::Function::AvailableExternallyLinkage)
     return true;
   if (CodeGenOpts.OptimizationLevel == 0 &&
-      !F->hasAttr<AlwaysInlineAttr>())
+      !F->hasAttr<AlwaysInlineAttr>() && !F->hasAttr<ForceInlineAttr>())
     return false;
   // PR9614. Avoid cases where the source code is lying to us. An available
   // externally function should have an equivalent function somewhere else,
