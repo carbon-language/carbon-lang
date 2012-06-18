@@ -92,7 +92,7 @@ __mulsf3(fp_t a, fp_t b) {
     if (productExponent <= 0) {
         // Result is denormal before rounding, the exponent is zero and we
         // need to shift the significand.
-        wideRightShiftWithSticky(&productHi, &productLo, 1 - productExponent);
+        wideRightShiftWithSticky(&productHi, &productLo, 1U - (unsigned)productExponent);
     }
     
     else {

@@ -96,7 +96,7 @@ __muldf3(fp_t a, fp_t b) {
         // a zero of the appropriate sign.  Mathematically there is no need to
         // handle this case separately, but we make it a special case to
         // simplify the shift logic.
-        const int shift = 1 - productExponent;
+        const unsigned int shift = 1U - (unsigned int)productExponent;
         if (shift >= typeWidth) return fromRep(productSign);
         
         // Otherwise, shift the significand of the result so that the round

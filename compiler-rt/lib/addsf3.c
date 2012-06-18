@@ -84,7 +84,7 @@ fp_t __addsf3(fp_t a, fp_t b) {
     
     // Shift the significand of b by the difference in exponents, with a sticky
     // bottom bit to get rounding correct.
-    const int align = aExponent - bExponent;
+    const unsigned int align = aExponent - bExponent;
     if (align) {
         if (align < typeWidth) {
             const bool sticky = bSignificand << (typeWidth - align);

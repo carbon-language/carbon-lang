@@ -124,7 +124,7 @@ static inline void wideLeftShift(rep_t *hi, rep_t *lo, int count) {
     *lo = *lo << count;
 }
 
-static inline void wideRightShiftWithSticky(rep_t *hi, rep_t *lo, int count) {
+static inline void wideRightShiftWithSticky(rep_t *hi, rep_t *lo, unsigned int count) {
     if (count < typeWidth) {
         const bool sticky = *lo << (typeWidth - count);
         *lo = *hi << (typeWidth - count) | *lo >> count | sticky;
