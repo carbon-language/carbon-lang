@@ -6260,11 +6260,12 @@ EmitStructByval(MachineInstr *MI, MachineBasicBlock *BB) const {
   bool isThumb2 = Subtarget->isThumb2();
   MachineFunction *MF = BB->getParent();
   MachineRegisterInfo &MRI = MF->getRegInfo();
-  unsigned ldrOpc, strOpc, UnitSize;
+  unsigned ldrOpc, strOpc, UnitSize = 0;
 
   const TargetRegisterClass *TRC = isThumb2 ?
     (const TargetRegisterClass*)&ARM::tGPRRegClass :
     (const TargetRegisterClass*)&ARM::GPRRegClass;
+  const TargetRegisterClass *TRC_Vec = 0;
 
   if (Align & 1) {
     ldrOpc = isThumb2 ? ARM::t2LDRB_POST : ARM::LDRB_POST_IMM;
@@ -6275,10 +6276,30 @@ EmitStructByval(MachineInstr *MI, MachineBasicBlock *BB) const {
     strOpc = isThumb2 ? ARM::t2STRH_POST : ARM::STRH_POST;
     UnitSize = 2;
   } else {
-    ldrOpc = isThumb2 ? ARM::t2LDR_POST : ARM::LDR_POST_IMM;
-    strOpc = isThumb2 ? ARM::t2STR_POST : ARM::STR_POST_IMM;
-    UnitSize = 4;
+    // Check whether we can use NEON instructions.
+    if (!MF->getFunction()->hasFnAttr(Attribute::NoImplicitFloat) &&
+        Subtarget->hasNEON()) {
+      if ((Align % 16 == 0) && SizeVal >= 16) {
+        ldrOpc = ARM::VLD1q32wb_fixed;
+        strOpc = ARM::VST1q32wb_fixed;
+        UnitSize = 16;
+        TRC_Vec = (const TargetRegisterClass*)&ARM::DPairRegClass;
+      }
+      else if ((Align % 8 == 0) && SizeVal >= 8) {
+        ldrOpc = ARM::VLD1d32wb_fixed;
+        strOpc = ARM::VST1d32wb_fixed;
+        UnitSize = 8;
+        TRC_Vec = (const TargetRegisterClass*)&ARM::DPRRegClass;
+      }
+    }
+    // Can't use NEON instructions.
+    if (UnitSize == 0) {
+      ldrOpc = isThumb2 ? ARM::t2LDR_POST : ARM::LDR_POST_IMM;
+      strOpc = isThumb2 ? ARM::t2STR_POST : ARM::STR_POST_IMM;
+      UnitSize = 4;
+    }
   }
+
   unsigned BytesLeft = SizeVal % UnitSize;
   unsigned LoopSize = SizeVal - BytesLeft;
 
@@ -6289,10 +6310,17 @@ EmitStructByval(MachineInstr *MI, MachineBasicBlock *BB) const {
     unsigned srcIn = src;
     unsigned destIn = dest;
     for (unsigned i = 0; i < LoopSize; i+=UnitSize) {
-      unsigned scratch = MRI.createVirtualRegister(TRC);
+      unsigned scratch = MRI.createVirtualRegister(UnitSize >= 8 ? TRC_Vec:TRC);
       unsigned srcOut = MRI.createVirtualRegister(TRC);
       unsigned destOut = MRI.createVirtualRegister(TRC);
-      if (isThumb2) {
+      if (UnitSize >= 8) {
+        AddDefaultPred(BuildMI(*BB, MI, dl,
+          TII->get(ldrOpc), scratch)
+          .addReg(srcOut, RegState::Define).addReg(srcIn).addImm(0));
+
+        AddDefaultPred(BuildMI(*BB, MI, dl, TII->get(strOpc), destOut)
+          .addReg(destIn).addImm(0).addReg(scratch));
+      } else if (isThumb2) {
         AddDefaultPred(BuildMI(*BB, MI, dl,
           TII->get(ldrOpc), scratch)
           .addReg(srcOut, RegState::Define).addReg(srcIn).addImm(UnitSize));
@@ -6434,8 +6462,14 @@ EmitStructByval(MachineInstr *MI, MachineBasicBlock *BB) const {
 
   //   [scratch, srcLoop] = LDR_POST(srcPhi, UnitSize)
   //   [destLoop] = STR_POST(scratch, destPhi, UnitSiz)
-  unsigned scratch = MRI.createVirtualRegister(TRC);
-  if (isThumb2) {
+  unsigned scratch = MRI.createVirtualRegister(UnitSize >= 8 ? TRC_Vec:TRC);
+  if (UnitSize >= 8) {
+    AddDefaultPred(BuildMI(BB, dl, TII->get(ldrOpc), scratch)
+      .addReg(srcLoop, RegState::Define).addReg(srcPhi).addImm(0));
+
+    AddDefaultPred(BuildMI(BB, dl, TII->get(strOpc), destLoop)
+      .addReg(destPhi).addImm(0).addReg(scratch));
+  } else if (isThumb2) {
     AddDefaultPred(BuildMI(BB, dl, TII->get(ldrOpc), scratch)
       .addReg(srcLoop, RegState::Define).addReg(srcPhi).addImm(UnitSize));
 

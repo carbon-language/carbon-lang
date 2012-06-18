@@ -28,5 +28,19 @@ entry:
   ret i32 0
 }
 
+; Generate a loop using NEON instructions
+define i32 @h() nounwind ssp {
+entry:
+; CHECK: h:
+; CHECK: vld1
+; CHECK: sub
+; CHECK: vst1
+; CHECK: bne
+  %st = alloca %struct.LargeStruct, align 16
+  %call = call i32 @e3(%struct.LargeStruct* byval align 16 %st)
+  ret i32 0
+}
+
 declare i32 @e1(%struct.SmallStruct* nocapture byval %in) nounwind
 declare i32 @e2(%struct.LargeStruct* nocapture byval %in) nounwind
+declare i32 @e3(%struct.LargeStruct* nocapture byval align 16 %in) nounwind
