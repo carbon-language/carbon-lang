@@ -2575,6 +2575,7 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   OS << "  bool HadMatchOtherThanFeatures = false;\n";
   OS << "  bool HadMatchOtherThanPredicate = false;\n";
   OS << "  unsigned RetCode = Match_InvalidOperand;\n";
+  OS << "  unsigned MissingFeatures = ~0U;\n";
   OS << "  // Set ErrorInfo to the operand that mismatches if it is\n";
   OS << "  // wrong for all instances of the instruction.\n";
   OS << "  ErrorInfo = ~0U;\n";
@@ -2622,7 +2623,11 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   OS << "    if ((AvailableFeatures & it->RequiredFeatures) "
      << "!= it->RequiredFeatures) {\n";
   OS << "      HadMatchOtherThanFeatures = true;\n";
-  OS << "      ErrorInfo = it->RequiredFeatures & ~AvailableFeatures;\n";
+  OS << "      unsigned NewMissingFeatures = it->RequiredFeatures & "
+        "~AvailableFeatures;\n";
+  OS << "      if (CountPopulation_32(NewMissingFeatures) <= "
+        "CountPopulation_32(MissingFeatures))\n";
+  OS << "        MissingFeatures = NewMissingFeatures;\n";
   OS << "      continue;\n";
   OS << "    }\n";
   OS << "\n";
@@ -2656,8 +2661,9 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
 
   OS << "  // Okay, we had no match.  Try to return a useful error code.\n";
   OS << "  if (HadMatchOtherThanPredicate || !HadMatchOtherThanFeatures)";
-  OS << " return RetCode;\n";
-  OS << "  assert(ErrorInfo && \"missing feature(s) but what?!\");";
+  OS << "  return RetCode;\n";
+  OS << "  // Missing feature matches return which features were missing\n";
+  OS << "  ErrorInfo = MissingFeatures;\n";
   OS << "  return Match_MissingFeature;\n";
   OS << "}\n\n";
 
