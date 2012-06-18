@@ -490,7 +490,7 @@ private:
 
   template <typename LookupKeyT>
   bool LookupBucketFor(const LookupKeyT &Val, BucketT *&FoundBucket) {
-    const BucketT *ConstFoundBucket = FoundBucket;
+    const BucketT *ConstFoundBucket;
     bool Result = const_cast<const DenseMapBase *>(this)
       ->LookupBucketFor(Val, ConstFoundBucket);
     FoundBucket = const_cast<BucketT *>(ConstFoundBucket);
