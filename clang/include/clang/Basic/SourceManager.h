@@ -1378,6 +1378,65 @@ public:
     return !isLoadedFileID(FID);
   }
 
+  /// Get a presumed location suitable for displaying in a diagnostic message,
+  /// taking into account macro arguments and expansions.
+  PresumedLoc getPresumedLocForDisplay(SourceLocation Loc) const {
+    // This is a condensed form of the algorithm used by emitCaretDiagnostic to
+    // walk to the top of the macro call stack.
+    while (Loc.isMacroID()) {
+      Loc = skipToMacroArgExpansion(Loc);
+      Loc = getImmediateMacroCallerLoc(Loc);
+    }
+
+    return getPresumedLoc(Loc);
+  }
+
+  /// Look through spelling locations for a macro argument expansion, and if
+  /// found skip to it so that we can trace the argument rather than the macros
+  /// in which that argument is used. If no macro argument expansion is found,
+  /// don't skip anything and return the starting location.
+  SourceLocation skipToMacroArgExpansion(SourceLocation StartLoc) const {
+    for (SourceLocation L = StartLoc; L.isMacroID();
+         L = getImmediateSpellingLoc(L)) {
+      if (isMacroArgExpansion(L))
+        return L;
+    }
+    // Otherwise just return initial location, there's nothing to skip.
+    return StartLoc;
+  }
+
+  /// Gets the location of the immediate macro caller, one level up the stack
+  /// toward the initial macro typed into the source.
+  SourceLocation getImmediateMacroCallerLoc(SourceLocation Loc) const {
+    if (!Loc.isMacroID()) return Loc;
+
+    // When we have the location of (part of) an expanded parameter, its
+    // spelling location points to the argument as typed into the macro call,
+    // and therefore is used to locate the macro caller.
+    if (isMacroArgExpansion(Loc))
+      return getImmediateSpellingLoc(Loc);
+
+    // Otherwise, the caller of the macro is located where this macro is
+    // expanded (while the spelling is part of the macro definition).
+    return getImmediateExpansionRange(Loc).first;
+  }
+
+  /// Gets the location of the immediate macro callee, one level down the stack
+  /// toward the leaf macro.
+  SourceLocation getImmediateMacroCalleeLoc(SourceLocation Loc) const {
+    if (!Loc.isMacroID()) return Loc;
+
+    // When we have the location of (part of) an expanded parameter, its
+    // expansion location points to the unexpanded parameter reference within
+    // the macro definition (or callee).
+    if (isMacroArgExpansion(Loc))
+      return getImmediateExpansionRange(Loc).first;
+
+    // Otherwise, the callee of the macro is located where this location was
+    // spelled inside the macro definition.
+    return getImmediateSpellingLoc(Loc);
+  }
+
 private:
   const llvm::MemoryBuffer *getFakeBufferForRecovery() const;
   const SrcMgr::ContentCache *getFakeContentCacheForRecovery() const;
