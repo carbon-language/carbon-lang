@@ -62,7 +62,7 @@ struct InstrStage {
   };
 
   unsigned Cycles_;  ///< Length of stage in machine cycles
-  unsigned Units_;   ///< Choice of functional units
+  uint64_t Units_;   ///< Choice of functional units
   int NextCycles_;   ///< Number of machine cycles to next stage
   ReservationKinds Kind_; ///< Kind of the FU reservation
 
@@ -72,7 +72,7 @@ struct InstrStage {
   }
 
   /// getUnits - returns the choice of FUs
-  unsigned getUnits() const {
+  uint64_t getUnits() const {
     return Units_;
   }
 

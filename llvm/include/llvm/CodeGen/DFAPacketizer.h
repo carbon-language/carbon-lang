@@ -42,7 +42,7 @@ class SUnit;
 
 class DFAPacketizer {
 private:
-  typedef std::pair<unsigned, unsigned> UnsignPair;
+  typedef std::pair<unsigned, uint64_t> UnsignPair;
   const InstrItineraryData *InstrItins;
   int CurrentState;
   const int (*DFAStateInputTable)[2];

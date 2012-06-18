@@ -66,7 +66,7 @@ void DFAPacketizer::ReadTable(unsigned int state) {
 bool DFAPacketizer::canReserveResources(const llvm::MCInstrDesc *MID) {
   unsigned InsnClass = MID->getSchedClass();
   const llvm::InstrStage *IS = InstrItins->beginStage(InsnClass);
-  unsigned FuncUnits = IS->getUnits();
+  uint64_t FuncUnits = IS->getUnits();
   UnsignPair StateTrans = UnsignPair(CurrentState, FuncUnits);
   ReadTable(CurrentState);
   return (CachedTable.count(StateTrans) != 0);
@@ -78,7 +78,7 @@ bool DFAPacketizer::canReserveResources(const llvm::MCInstrDesc *MID) {
 void DFAPacketizer::reserveResources(const llvm::MCInstrDesc *MID) {
   unsigned InsnClass = MID->getSchedClass();
   const llvm::InstrStage *IS = InstrItins->beginStage(InsnClass);
-  unsigned FuncUnits = IS->getUnits();
+  uint64_t FuncUnits = IS->getUnits();
   UnsignPair StateTrans = UnsignPair(CurrentState, FuncUnits);
   ReadTable(CurrentState);
   assert(CachedTable.count(StateTrans) != 0);

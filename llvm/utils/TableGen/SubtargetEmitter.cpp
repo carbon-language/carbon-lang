@@ -379,8 +379,8 @@ void SubtargetEmitter::EmitStageAndOperandCycleData(raw_ostream &OS,
        << "namespace " << Name << "FU {\n";
 
     for (unsigned j = 0, FUN = FUs.size(); j < FUN; ++j)
-      OS << "  const unsigned " << FUs[j]->getName()
-         << " = 1 << " << j << ";\n";
+      OS << "  const uint64_t " << FUs[j]->getName()
+         << " = 1ULL << " << j << ";\n";
 
     OS << "}\n";
 

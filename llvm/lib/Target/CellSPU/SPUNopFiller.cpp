@@ -138,7 +138,7 @@ SPUNopFiller::SPUOpPlace
 SPUNopFiller::getOpPlacement( MachineInstr &instr ) {
   int sc = instr.getDesc().getSchedClass();
   const InstrStage *stage = IID->beginStage(sc);
-  unsigned FUs = stage->getUnits();
+  uint64_t FUs = stage->getUnits();
   SPUOpPlace retval;
 
   switch( FUs ) {
