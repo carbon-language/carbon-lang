@@ -48,7 +48,7 @@ static Attr *handleFallThroughAttr(Sema &S, Stmt *St, const AttributeList &A,
 static Attr *ProcessStmtAttribute(Sema &S, Stmt *St, const AttributeList &A,
                                   SourceRange Range) {
   switch (A.getKind()) {
-  case AttributeList::AT_clang___fallthrough:
+  case AttributeList::AT_fallthrough:
     return handleFallThroughAttr(S, St, A, Range);
   default:
     // if we're here, then we parsed an attribute, but didn't recognize it as a

@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/TableGen/Record.h"
 #include "llvm/TableGen/StringMatcher.h"
@@ -1128,6 +1129,8 @@ void EmitClangAttrParsedAttrKinds(RecordKeeper &Records, raw_ostream &OS) {
     if (SemaHandler || Ignored) {
       std::vector<StringRef> Spellings =
         getValueAsListOfStrings(Attr, "Spellings");
+      std::vector<StringRef> Namespaces =
+        getValueAsListOfStrings(Attr, "Namespaces");
 
       for (std::vector<StringRef>::const_iterator I = Spellings.begin(),
            E = Spellings.end(); I != E; ++I) {
@@ -1136,16 +1139,35 @@ void EmitClangAttrParsedAttrKinds(RecordKeeper &Records, raw_ostream &OS) {
                                                  : Spellings.front());
         StringRef Spelling = NormalizeAttrSpelling(*I);
 
+        for (std::vector<StringRef>::const_iterator NI = Namespaces.begin(),
+             NE = Namespaces.end(); NI != NE; ++NI) {
+          SmallString<64> Buf;
+          Buf += *NI;
+          Buf += "::";
+          Buf += Spelling;
+
+          if (SemaHandler)
+            Matches.push_back(
+              StringMatcher::StringPair(
+                Buf.str(),
+                "return AttributeList::AT_" + AttrName.str() + ";"));
+          else
+            Matches.push_back(
+              StringMatcher::StringPair(
+                Buf.str(),
+                "return AttributeList::IgnoredAttribute;"));
+        }
+
         if (SemaHandler)
           Matches.push_back(
             StringMatcher::StringPair(
               Spelling,
-              std::string("return AttributeList::AT_")+AttrName.str() + ";"));
+              "return AttributeList::AT_" + AttrName.str() + ";"));
         else
           Matches.push_back(
             StringMatcher::StringPair(
               Spelling,
-              std::string("return AttributeList::IgnoredAttribute;")));
+              "return AttributeList::IgnoredAttribute;"));
       }
     }
   }

@@ -37,3 +37,15 @@ int fallthrough2(int n) {
   }
   return n;
 }
+
+void unscoped(int n) {
+  switch (n % 2) {
+    case 0:
+      // FIXME: This should be typo-corrected, probably.
+      [[fallthrough]];
+    case 2: // expected-warning{{unannotated fall-through}} expected-note{{clang::fallthrough}} expected-note{{break;}}
+      [[clang::fallthrough]];
+    case 1:
+      break;
+  }
+}

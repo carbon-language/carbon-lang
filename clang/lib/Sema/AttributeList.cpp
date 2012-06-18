@@ -95,13 +95,15 @@ AttributePool::createIntegerAttribute(ASTContext &C, IdentifierInfo *Name,
                                       SourceLocation TokLoc, int Arg) {
   Expr *IArg = IntegerLiteral::Create(C, llvm::APInt(32, (uint64_t) Arg),
                                       C.IntTy, TokLoc);
-  return create(Name, TokLoc, 0, TokLoc, 0, TokLoc, &IArg, 1, 0);
+  return create(Name, TokLoc, 0, TokLoc, 0, TokLoc, &IArg, 1,
+                AttributeList::AS_GNU);
 }
 
 #include "clang/Sema/AttrParsedAttrKinds.inc"
 
 AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name,
-                                           const IdentifierInfo *ScopeName) {
+                                           const IdentifierInfo *ScopeName,
+                                           Syntax SyntaxUsed) {
   StringRef AttrName = Name->getName();
 
   // Normalize the attribute name, __foo__ becomes foo.
@@ -109,10 +111,14 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name,
       AttrName.size() >= 4)
     AttrName = AttrName.substr(2, AttrName.size() - 4);
 
-  // FIXME: implement attribute namespacing correctly.
   SmallString<64> Buf;
   if (ScopeName)
-    AttrName = ((Buf += ScopeName->getName()) += "___") += AttrName;
+    Buf += ScopeName->getName();
+  // Ensure that in the case of C++11 attributes, we look for '::foo' if it is
+  // unscoped.
+  if (ScopeName || SyntaxUsed == AS_CXX11)
+    Buf += "::";
+  Buf += AttrName;
 
-  return ::getAttrKind(AttrName);
+  return ::getAttrKind(Buf);
 }

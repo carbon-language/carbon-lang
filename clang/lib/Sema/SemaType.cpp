@@ -2728,8 +2728,7 @@ static void transferARCOwnershipToDeclaratorChunk(TypeProcessingState &state,
     .create(&S.Context.Idents.get("objc_ownership"), SourceLocation(),
             /*scope*/ 0, SourceLocation(),
             &S.Context.Idents.get(attrStr), SourceLocation(),
-            /*args*/ 0, 0,
-            /*declspec*/ false, /*C++0x*/ false);
+            /*args*/ 0, 0, AttributeList::AS_GNU);
   spliceAttrIntoList(*attr, chunk.getAttrListRef());
 
   // TODO: mark whether we did this inference?

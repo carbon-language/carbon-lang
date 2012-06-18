@@ -159,7 +159,7 @@ void Parser::ParseGNUAttributes(ParsedAttributes &attrs,
         }
       } else {
         attrs.addNew(AttrName, AttrNameLoc, 0, AttrNameLoc,
-                     0, SourceLocation(), 0, 0);
+                     0, SourceLocation(), 0, 0, AttributeList::AS_GNU);
       }
     }
     if (ExpectAndConsume(tok::r_paren, diag::err_expected_rparen))
@@ -275,7 +275,8 @@ void Parser::ParseGNUAttributeArgs(IdentifierInfo *AttrName,
   if (!ExpectAndConsume(tok::r_paren, diag::err_expected_rparen)) {
     AttributeList *attr =
       Attrs.addNew(AttrName, SourceRange(AttrNameLoc, RParen), 0, AttrNameLoc,
-                   ParmName, ParmLoc, ArgExprs.take(), ArgExprs.size());
+                   ParmName, ParmLoc, ArgExprs.take(), ArgExprs.size(),
+                   AttributeList::AS_GNU);
     if (BuiltinType && attr->getKind() == AttributeList::AT_iboutletcollection)
       Diag(Tok, diag::err_iboutletcollection_builtintype);
   }
@@ -319,13 +320,14 @@ void Parser::ParseMicrosoftDeclSpec(ParsedAttributes &attrs) {
       if (!ArgExpr.isInvalid()) {
         Expr *ExprList = ArgExpr.take();
         attrs.addNew(AttrName, AttrNameLoc, 0, AttrNameLoc, 0,
-                     SourceLocation(), &ExprList, 1, true);
+                     SourceLocation(), &ExprList, 1,
+                     AttributeList::AS_Declspec);
       }
       if (ExpectAndConsume(tok::r_paren, diag::err_expected_rparen))
         SkipUntil(tok::r_paren, false);
     } else {
       attrs.addNew(AttrName, AttrNameLoc, 0, AttrNameLoc,
-                   0, SourceLocation(), 0, 0, true);
+                   0, SourceLocation(), 0, 0, AttributeList::AS_Declspec);
     }
   }
   if (ExpectAndConsume(tok::r_paren, diag::err_expected_rparen))
@@ -344,7 +346,7 @@ void Parser::ParseMicrosoftTypeAttributes(ParsedAttributes &attrs) {
     IdentifierInfo *AttrName = Tok.getIdentifierInfo();
     SourceLocation AttrNameLoc = ConsumeToken();
     attrs.addNew(AttrName, AttrNameLoc, 0, AttrNameLoc, 0,
-                 SourceLocation(), 0, 0, true);
+                 SourceLocation(), 0, 0, AttributeList::AS_Declspec);
   }
 }
 
@@ -354,7 +356,7 @@ void Parser::ParseBorlandTypeAttributes(ParsedAttributes &attrs) {
     IdentifierInfo *AttrName = Tok.getIdentifierInfo();
     SourceLocation AttrNameLoc = ConsumeToken();
     attrs.addNew(AttrName, AttrNameLoc, 0, AttrNameLoc, 0,
-                 SourceLocation(), 0, 0, true);
+                 SourceLocation(), 0, 0, AttributeList::AS_Declspec);
   }
 }
 
@@ -364,7 +366,7 @@ void Parser::ParseOpenCLAttributes(ParsedAttributes &attrs) {
     SourceLocation AttrNameLoc = ConsumeToken();
     attrs.addNew(PP.getIdentifierInfo("opencl_kernel_function"),
                  AttrNameLoc, 0, AttrNameLoc, 0,
-                 SourceLocation(), 0, 0, false);
+                 SourceLocation(), 0, 0, AttributeList::AS_GNU);
   }
 }
 
@@ -700,7 +702,7 @@ void Parser::ParseAvailabilityAttribute(IdentifierInfo &Availability,
                Changes[Deprecated],
                Changes[Obsoleted], 
                UnavailableLoc, MessageExpr.take(),
-               false, false);
+               AttributeList::AS_GNU);
 }
 
 
@@ -905,7 +907,7 @@ void Parser::ParseThreadSafetyAttribute(IdentifierInfo &AttrName,
   // Match the ')'.
   if (ArgExprsOk && !T.consumeClose()) {
     Attrs.addNew(&AttrName, AttrNameLoc, 0, AttrNameLoc, 0, SourceLocation(),
-                 ArgExprs.take(), ArgExprs.size());
+                 ArgExprs.take(), ArgExprs.size(), AttributeList::AS_GNU);
   }
   if (EndLoc)
     *EndLoc = T.getCloseLocation();
@@ -1874,7 +1876,8 @@ void Parser::ParseAlignmentSpecifier(ParsedAttributes &Attrs,
   ExprVector ArgExprs(Actions);
   ArgExprs.push_back(ArgExpr.release());
   Attrs.addNew(PP.getIdentifierInfo("aligned"), KWLoc, 0, KWLoc,
-               0, T.getOpenLocation(), ArgExprs.take(), 1, false, true);
+               0, T.getOpenLocation(), ArgExprs.take(), 1,
+               AttributeList::AS_CXX11);
 }
 
 /// ParseDeclarationSpecifiers
@@ -2255,8 +2258,10 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       isInvalid = DS.SetFunctionSpecInline(Loc, PrevSpec, DiagID);
       IdentifierInfo *AttrName = Tok.getIdentifierInfo();
       SourceLocation AttrNameLoc = ConsumeToken();
+      // FIXME: This does not work correctly if it is set to be a declspec
+      //        attribute, and a GNU attribute is simply incorrect.
       DS.getAttributes().addNew(AttrName, AttrNameLoc, 0, AttrNameLoc, 0,
-                                SourceLocation(), 0, 0);
+                                SourceLocation(), 0, 0, AttributeList::AS_GNU);
       continue;
     }
 

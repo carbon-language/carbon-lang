@@ -320,8 +320,9 @@ def ExtVectorType : Attr {
 }
 
 def FallThrough : Attr {
-  let Spellings = ["clang___fallthrough"];
-  let Subjects = [CaseStmt, DefaultStmt];
+  let Namespaces = ["clang"];
+  let Spellings = ["fallthrough"];
+  let Subjects = [NullStmt];
 }
 
 def FastCall : InheritableAttr {
