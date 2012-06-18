@@ -51,6 +51,7 @@ On Unix-like Systems
     it is installed in an alternate location, you'll need to tell the cmake tool
     the location of the C and C++ compiler via CMAKE_C_COMPILER and
     CMAKE_CXX_COMPILER. For example::
+
         $ cmake -DCMAKE_CXX_COMPILER=/path/to/clang++ -DCMAKE_C_COMPILER=/path/to/clang ...
 
 5. Test::
