@@ -7,6 +7,7 @@ User Guides
    :hidden:
 
    CommandGuide/index
+   FAQ
 
 \
 
@@ -45,7 +46,7 @@ User Guides
 
     A list of optimizations and analyses implemented in LLVM.
     
- * `Frequently Asked Questions <FAQ.html>`_
+ * :ref:`faq`
 
     A list of common questions and problems and their solutions.
     
