@@ -194,7 +194,13 @@ bool Sema::DiagnoseUseOfDecl(NamedDecl *D, SourceLocation Loc,
     if (FunctionDecl *Current = getCurFunctionDecl()) {
       if (Current->isInlined() && Current->getLinkage() > InternalLinkage) {
         if (D->getLinkage() == InternalLinkage) {
-          Diag(Loc, diag::warn_internal_in_extern_inline)
+          // We won't warn by default if the inline function is in the main
+          // source file; in these cases it is almost certain that the inlining
+          // will only occur in this file, even if there is an external
+          // declaration as well.
+          bool IsFromMainFile = getSourceManager().isFromMainFile(Loc);
+          Diag(Loc, IsFromMainFile ? diag::ext_internal_in_extern_inline
+                                   : diag::warn_internal_in_extern_inline)
             << !isa<FunctionDecl>(D) << D << isa<CXXMethodDecl>(Current);
 
           // If the user didn't explicitly specify a storage class,

@@ -3000,6 +3000,10 @@ def warn_internal_in_extern_inline : ExtWarn<
   "%select{function|variable}0 %1 has internal linkage but is used in an "
   "inline %select{function|method}2 with external linkage">,
   InGroup<DiagGroup<"internal-linkage-in-inline"> >;
+def ext_internal_in_extern_inline : Extension<
+  "%select{function|variable}0 %1 has internal linkage but is used in an "
+  "inline %select{function|method}2 with external linkage">,
+  InGroup<DiagGroup<"internal-linkage-in-inline"> >;
 def note_internal_decl_declared_here : Note<
   "%0 declared here">;
 def note_convert_inline_to_static : Note<
