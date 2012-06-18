@@ -95,14 +95,14 @@ inline int useStaticMainFile () {
   return staticVar; // no-warning
 }
 
-// Check that the warnings show up when explicitly requested.
+// Check that the warnings don't show up even when explicitly requested in C++.
 
 #pragma clang diagnostic push
 #pragma clang diagnostic warning "-Winternal-linkage-in-inline"
 
-inline int useStaticAgain () { // expected-note 2 {{use 'static' to give inline function 'useStaticAgain' internal linkage}}
-  anonFunction(); // expected-warning{{function 'anonFunction' is in an anonymous namespace but is used in an inline function with external linkage}}
-  return staticVar; // expected-warning{{variable 'staticVar' has internal linkage but is used in an inline function with external linkage}}
+inline int useStaticAgain () {
+  anonFunction(); // no-warning
+  return staticVar; // no-warning
 }
 
 #pragma clang diagnostic pop

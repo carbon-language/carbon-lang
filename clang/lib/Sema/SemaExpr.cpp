@@ -203,15 +203,23 @@ static void diagnoseUseOfInternalDeclInInlineFunction(Sema &S,
       return;
 
   // Don't warn unless -pedantic is on if the inline function is in the main
-  // source file. These functions will most likely not be inlined into another
-  // translation unit, so they're effectively internal.
+  // source file, and in C++ don't warn at all, since the one-definition rule is
+  // still satisfied. This function will most likely not be inlined into
+  // another translation unit, so it's effectively internal.
   bool IsInMainFile = S.getSourceManager().isFromMainFile(Loc);
-  S.Diag(Loc, IsInMainFile ? diag::ext_internal_in_extern_inline
-                           : diag::warn_internal_in_extern_inline)
-    << (bool)VD
-    << D
-    << (UsedLinkage == UniqueExternalLinkage)
-    << isa<CXXMethodDecl>(Current);
+  if (S.getLangOpts().CPlusPlus) {
+    if (IsInMainFile)
+      return;
+
+    S.Diag(Loc, diag::warn_internal_in_extern_inline_cxx)
+      << (bool)VD << D
+      << (UsedLinkage == UniqueExternalLinkage)
+      << isa<CXXMethodDecl>(Current);
+  } else {
+    S.Diag(Loc, IsInMainFile ? diag::ext_internal_in_extern_inline
+                             : diag::warn_internal_in_extern_inline)
+      << (bool)VD << D;
+  }
 
   // Suggest "static" on the inline function, if possible.
   if (!isa<CXXMethodDecl>(Current) &&

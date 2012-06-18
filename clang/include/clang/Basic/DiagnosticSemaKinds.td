@@ -2997,11 +2997,14 @@ def warn_undefined_internal : Warning<
 def note_used_here : Note<"used here">;
 
 def warn_internal_in_extern_inline : ExtWarn<
-  "%select{function|variable}0 %1 %select{has internal linkage|is in an anonymous"
-  " namespace}2 but is used in an inline %select{function|method}3 with"
-  " external linkage">,
+  "%select{function|variable}0 %1 has internal linkage but is used in an "
+  "inline function with external linkage">,
   InGroup<DiagGroup<"internal-linkage-in-inline"> >;
 def ext_internal_in_extern_inline : Extension<
+  "%select{function|variable}0 %1 has internal linkage but is used in an "
+  "inline function with external linkage">,
+  InGroup<DiagGroup<"internal-linkage-in-inline"> >;
+def warn_internal_in_extern_inline_cxx : Warning<
   "%select{function|variable}0 %1 %select{has internal linkage|is in an anonymous"
   " namespace}2 but is used in an inline %select{function|method}3 with"
   " external linkage">,
