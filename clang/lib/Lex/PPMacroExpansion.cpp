@@ -791,6 +791,7 @@ static bool HasAttribute(const IdentifierInfo *II) {
   if (Name.startswith("__") && Name.endswith("__") && Name.size() >= 4)
     Name = Name.substr(2, Name.size() - 4);
 
+  // FIXME: Do we need to handle namespaces here?
   return llvm::StringSwitch<bool>(Name)
 #include "clang/Lex/AttrSpellings.inc"
         .Default(false);

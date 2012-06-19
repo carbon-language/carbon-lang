@@ -249,27 +249,27 @@ public:
   }
 
   const AvailabilityChange &getAvailabilityIntroduced() const {
-    assert(getKind() == AT_availability && "Not an availability attribute");
+    assert(getKind() == AT_Availability && "Not an availability attribute");
     return getAvailabilitySlot(IntroducedSlot);
   }
 
   const AvailabilityChange &getAvailabilityDeprecated() const {
-    assert(getKind() == AT_availability && "Not an availability attribute");
+    assert(getKind() == AT_Availability && "Not an availability attribute");
     return getAvailabilitySlot(DeprecatedSlot);
   }
 
   const AvailabilityChange &getAvailabilityObsoleted() const {
-    assert(getKind() == AT_availability && "Not an availability attribute");
+    assert(getKind() == AT_Availability && "Not an availability attribute");
     return getAvailabilitySlot(ObsoletedSlot);
   }
 
   SourceLocation getUnavailableLoc() const {
-    assert(getKind() == AT_availability && "Not an availability attribute");
+    assert(getKind() == AT_Availability && "Not an availability attribute");
     return UnavailableLoc;
   }
   
   const Expr * getMessageExpr() const {
-    assert(getKind() == AT_availability && "Not an availability attribute");
+    assert(getKind() == AT_Availability && "Not an availability attribute");
     return MessageExpr;
   }
 };

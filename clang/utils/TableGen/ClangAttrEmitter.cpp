@@ -769,7 +769,7 @@ void EmitClangAttrImpl(RecordKeeper &Records, raw_ostream &OS) {
       continue;
     
     std::vector<Record*> ArgRecords = R.getValueAsListOfDefs("Args");
-    std::vector<StringRef> Spellings = getValueAsListOfStrings(R, "Spellings");
+    std::vector<Record*> Spellings = R.getValueAsListOfDefs("Spellings");
     std::vector<Argument*> Args;
     for (ri = ArgRecords.begin(), re = ArgRecords.end(); ri != re; ++ri)
       Args.push_back(createArgument(**ri, R.getName()));
@@ -789,9 +789,10 @@ void EmitClangAttrImpl(RecordKeeper &Records, raw_ostream &OS) {
     OS << "void " << R.getName() << "Attr::printPretty("
        << "llvm::raw_ostream &OS, ASTContext &Ctx) const {\n";
     if (Spellings.begin() != Spellings.end()) {
-      OS << "  OS << \" __attribute__((" << *Spellings.begin();
+      StringRef Spelling = (*Spellings.begin())->getValueAsString("Name");
+      OS << "  OS << \" __attribute__((" << Spelling;
       if (Args.size()) OS << "(";
-      if (*Spellings.begin()=="availability") {
+      if (Spelling == "availability") {
         writeAvailabilityValue(OS);
       } else {
         for (ai = Args.begin(); ai != ae; ++ai) {
@@ -962,10 +963,10 @@ void EmitClangAttrSpellingList(RecordKeeper &Records, raw_ostream &OS) {
   for (std::vector<Record*>::iterator I = Attrs.begin(), E = Attrs.end(); I != E; ++I) {
     Record &Attr = **I;
 
-    std::vector<StringRef> Spellings = getValueAsListOfStrings(Attr, "Spellings");
+    std::vector<Record*> Spellings = Attr.getValueAsListOfDefs("Spellings");
 
-    for (std::vector<StringRef>::const_iterator I = Spellings.begin(), E = Spellings.end(); I != E; ++I) {
-      StringRef Spelling = *I;
+    for (std::vector<Record*>::const_iterator I = Spellings.begin(), E = Spellings.end(); I != E; ++I) {
+      StringRef Spelling = (*I)->getValueAsString("Name");
       OS << ".Case(\"" << Spelling << "\", true)\n";
     }
   }
@@ -985,12 +986,16 @@ void EmitClangAttrLateParsedList(RecordKeeper &Records, raw_ostream &OS) {
     bool LateParsed = Attr.getValueAsBit("LateParsed");
 
     if (LateParsed) {
-      std::vector<StringRef> Spellings =
-        getValueAsListOfStrings(Attr, "Spellings");
+      std::vector<Record*> Spellings =
+        Attr.getValueAsListOfDefs("Spellings");
 
-      for (std::vector<StringRef>::const_iterator I = Spellings.begin(),
+      // FIXME: Handle non-GNU attributes
+      for (std::vector<Record*>::const_iterator I = Spellings.begin(),
            E = Spellings.end(); I != E; ++I) {
-        OS << ".Case(\"" << (*I) << "\", " << LateParsed << ")\n";
+        if ((*I)->getValueAsString("Variety") != "GNU")
+          continue;
+        OS << ".Case(\"" << (*I)->getValueAsString("Name") << "\", "
+           << LateParsed << ")\n";
       }
     }
   }
@@ -1088,24 +1093,26 @@ void EmitClangAttrParsedAttrList(RecordKeeper &Records, raw_ostream &OS) {
     bool DistinctSpellings = Attr.getValueAsBit("DistinctSpellings");
 
     if (SemaHandler) {
-      std::vector<StringRef> Spellings =
-        getValueAsListOfStrings(Attr, "Spellings");
-      
-      for (std::vector<StringRef>::const_iterator I = Spellings.begin(),
-           E = Spellings.end(); I != E; ++I) {
-        StringRef AttrName = *I;
-
-        AttrName = NormalizeAttrName(AttrName);
-        // skip if a normalized version has been processed.
-        if (ProcessedAttrs.find(AttrName) != ProcessedAttrs.end())
-          continue;
-        else
-          ProcessedAttrs.insert(AttrName);
-
-        OS << "PARSED_ATTR(" << AttrName << ")\n";
+      if (DistinctSpellings) {
+        std::vector<Record*> Spellings = Attr.getValueAsListOfDefs("Spellings");
         
-        if (!DistinctSpellings)
-          break;
+        for (std::vector<Record*>::const_iterator I = Spellings.begin(),
+             E = Spellings.end(); I != E; ++I) {
+          StringRef AttrName = (*I)->getValueAsString("Name");
+
+          AttrName = NormalizeAttrName(AttrName);
+          // skip if a normalized version has been processed.
+          if (ProcessedAttrs.find(AttrName) != ProcessedAttrs.end())
+            continue;
+          else
+            ProcessedAttrs.insert(AttrName);
+
+          OS << "PARSED_ATTR(" << AttrName << ")\n";
+        }
+      } else {
+        StringRef AttrName = Attr.getName();
+        AttrName = NormalizeAttrName(AttrName);
+        OS << "PARSED_ATTR(" << AttrName << ")\n";
       }
     }
   }
@@ -1127,46 +1134,31 @@ void EmitClangAttrParsedAttrKinds(RecordKeeper &Records, raw_ostream &OS) {
     bool Ignored = Attr.getValueAsBit("Ignored");
     bool DistinctSpellings = Attr.getValueAsBit("DistinctSpellings");
     if (SemaHandler || Ignored) {
-      std::vector<StringRef> Spellings =
-        getValueAsListOfStrings(Attr, "Spellings");
-      std::vector<StringRef> Namespaces =
-        getValueAsListOfStrings(Attr, "Namespaces");
+      std::vector<Record*> Spellings = Attr.getValueAsListOfDefs("Spellings");
 
-      for (std::vector<StringRef>::const_iterator I = Spellings.begin(),
+      for (std::vector<Record*>::const_iterator I = Spellings.begin(),
            E = Spellings.end(); I != E; ++I) {
+        StringRef RawSpelling = (*I)->getValueAsString("Name");
         StringRef AttrName = NormalizeAttrName(DistinctSpellings
-                                                 ? *I
-                                                 : Spellings.front());
-        StringRef Spelling = NormalizeAttrSpelling(*I);
+                                                 ? RawSpelling
+                                                 : StringRef(Attr.getName()));
 
-        for (std::vector<StringRef>::const_iterator NI = Namespaces.begin(),
-             NE = Namespaces.end(); NI != NE; ++NI) {
-          SmallString<64> Buf;
-          Buf += *NI;
-          Buf += "::";
-          Buf += Spelling;
-
-          if (SemaHandler)
-            Matches.push_back(
-              StringMatcher::StringPair(
-                Buf.str(),
-                "return AttributeList::AT_" + AttrName.str() + ";"));
-          else
-            Matches.push_back(
-              StringMatcher::StringPair(
-                Buf.str(),
-                "return AttributeList::IgnoredAttribute;"));
+        SmallString<64> Spelling;
+        if ((*I)->getValueAsString("Variety") == "CXX11") {
+          Spelling += (*I)->getValueAsString("Namespace");
+          Spelling += "::";
         }
+        Spelling += NormalizeAttrSpelling(RawSpelling);
 
         if (SemaHandler)
           Matches.push_back(
             StringMatcher::StringPair(
-              Spelling,
+              StringRef(Spelling),
               "return AttributeList::AT_" + AttrName.str() + ";"));
         else
           Matches.push_back(
             StringMatcher::StringPair(
-              Spelling,
+              StringRef(Spelling),
               "return AttributeList::IgnoredAttribute;"));
       }
     }

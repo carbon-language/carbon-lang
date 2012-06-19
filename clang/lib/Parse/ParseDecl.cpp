@@ -277,7 +277,7 @@ void Parser::ParseGNUAttributeArgs(IdentifierInfo *AttrName,
       Attrs.addNew(AttrName, SourceRange(AttrNameLoc, RParen), 0, AttrNameLoc,
                    ParmName, ParmLoc, ArgExprs.take(), ArgExprs.size(),
                    AttributeList::AS_GNU);
-    if (BuiltinType && attr->getKind() == AttributeList::AT_iboutletcollection)
+    if (BuiltinType && attr->getKind() == AttributeList::AT_IBOutletCollection)
       Diag(Tok, diag::err_iboutletcollection_builtintype);
   }
 }
@@ -1875,9 +1875,12 @@ void Parser::ParseAlignmentSpecifier(ParsedAttributes &Attrs,
 
   ExprVector ArgExprs(Actions);
   ArgExprs.push_back(ArgExpr.release());
+  // FIXME: This should not be GNU, but we since the attribute used is
+  //        based on the spelling, and there is no true spelling for
+  //        C++11 attributes, this isn't accepted.
   Attrs.addNew(PP.getIdentifierInfo("aligned"), KWLoc, 0, KWLoc,
                0, T.getOpenLocation(), ArgExprs.take(), 1,
-               AttributeList::AS_CXX11);
+               AttributeList::AS_GNU);
 }
 
 /// ParseDeclarationSpecifiers

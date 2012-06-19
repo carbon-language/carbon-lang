@@ -2902,11 +2902,11 @@ void Parser::ParseCXX11AttributeSpecifier(ParsedAttributes &attrs,
     switch (AttributeList::getKind(AttrName, ScopeName,
                                    AttributeList::AS_CXX11)) {
     // No arguments
-    case AttributeList::AT_carries_dependency:
+    case AttributeList::AT_CarriesDependency:
     // FIXME: implement generic support of attributes with C++11 syntax
     // see Parse/ParseDecl.cpp: ParseGNUAttributes
-    case AttributeList::AT_fallthrough:
-    case AttributeList::AT_noreturn: {
+    case AttributeList::AT_FallThrough:
+    case AttributeList::AT_NoReturn: {
       if (Tok.is(tok::l_paren)) {
         Diag(Tok.getLocation(), diag::err_cxx11_attribute_forbids_arguments)
           << AttrName->getName();
