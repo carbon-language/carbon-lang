@@ -1,4 +1,4 @@
-; RUN: llc < %s | FileCheck --check-prefix=CTOR %s
+; RUN: llc -mtriple x86_64-pc-linux < %s | FileCheck --check-prefix=CTOR %s
 ; RUN: llc -mtriple x86_64-pc-linux -use-init-array < %s | FileCheck --check-prefix=INIT-ARRAY %s
 @llvm.global_ctors = appending global [2 x { i32, void ()* }] [{ i32, void ()* } { i32 65535, void ()* @f }, { i32, void ()* } { i32 15, void ()* @g }]
 
