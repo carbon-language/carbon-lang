@@ -11,11 +11,14 @@
 // run-time libraries.
 // These tools can not use some of the libc functions directly because those
 // functions are intercepted. Instead, we implement a tiny subset of libc here.
+// NOTE: This file may be included into user code.
 //===----------------------------------------------------------------------===//
 #ifndef SANITIZER_LIBC_H
 #define SANITIZER_LIBC_H
 
-#include "sanitizer_internal_defs.h"
+// ----------- ATTENTION -------------
+// This header should NOT include any other headers from sanitizer runtime.
+#include "sanitizer_interface_defs.h"
 
 namespace __sanitizer {
 
