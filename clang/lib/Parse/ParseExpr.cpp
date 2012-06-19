@@ -6,7 +6,7 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-
+///
 /// \file
 /// \brief Provides the Expression parsing implementation.
 ///
@@ -18,6 +18,8 @@
 /// operator (e.g. '/') or a ternary operator ("?:").  The unary leaves are
 /// handled by ParseCastExpression, the higher level pieces are handled by
 /// ParseBinaryExpression.
+///
+//===----------------------------------------------------------------------===//
 
 #include "clang/Parse/Parser.h"
 #include "clang/Sema/DeclSpec.h"
