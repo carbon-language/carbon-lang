@@ -420,19 +420,27 @@ const char *DeclSpec::getSpecifierName(TQ T) {
 bool DeclSpec::SetStorageClassSpec(Sema &S, SCS SC, SourceLocation Loc,
                                    const char *&PrevSpec,
                                    unsigned &DiagID) {
-  // OpenCL 1.1 6.8g: "The extern, static, auto and register storage-class
-  // specifiers are not supported."
+  // OpenCL v1.1 s6.8g: "The extern, static, auto and register storage-class
+  // specifiers are not supported.
   // It seems sensible to prohibit private_extern too
   // The cl_clang_storage_class_specifiers extension enables support for
   // these storage-class specifiers.
+  // OpenCL v1.2 s6.8 changes this to "The auto and register storage-class
+  // specifiers are not supported."
   if (S.getLangOpts().OpenCL &&
       !S.getOpenCLOptions().cl_clang_storage_class_specifiers) {
     switch (SC) {
     case SCS_extern:
     case SCS_private_extern:
+    case SCS_static:
+        if (S.getLangOpts().OpenCLVersion < 120) {
+          DiagID   = diag::err_not_opencl_storage_class_specifier;
+          PrevSpec = getSpecifierName(SC);
+          return true;
+        }
+        break;
     case SCS_auto:
     case SCS_register:
-    case SCS_static:
       DiagID   = diag::err_not_opencl_storage_class_specifier;
       PrevSpec = getSpecifierName(SC);
       return true;

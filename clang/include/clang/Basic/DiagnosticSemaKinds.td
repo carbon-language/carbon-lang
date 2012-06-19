@@ -5622,6 +5622,10 @@ def err_filter_expression_integral : Error<
 // OpenCL warnings and errors.
 def err_invalid_astype_of_different_size : Error<
   "invalid reinterpretation: sizes of %0 and %1 must match">;
+def err_static_kernel : Error<
+  "kernel functions cannot be declared static">;
+def err_static_function_scope : Error<
+  "variables in function scope cannot be declared static">;
 
 } // end of sema category
 

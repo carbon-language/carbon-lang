@@ -4456,6 +4456,15 @@ bool Sema::CheckVariableDeclaration(VarDecl *NewVD,
     return false;
   }
 
+  // OpenCL v1.2 s6.8 -- The static qualifier is valid only in program
+  // scope.
+  if ((getLangOpts().OpenCLVersion >= 120)
+      && NewVD->isStaticLocal()) {
+    Diag(NewVD->getLocation(), diag::err_static_function_scope);
+    NewVD->setInvalidDecl();
+    return false;
+  }
+
   if (NewVD->hasLocalStorage() && T.isObjCGCWeak()
       && !NewVD->hasAttr<BlocksAttr>()) {
     if (getLangOpts().getGC() != LangOptions::NonGC)
@@ -5773,6 +5782,14 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
         FunctionTemplate->setInvalidDecl();
       return FunctionTemplate;
     }
+  }
+
+  // OpenCL v1.2 s6.8 static is invalid for kernel functions.
+  if ((getLangOpts().OpenCLVersion >= 120)
+      && NewFD->hasAttr<OpenCLKernelAttr>()
+      && (SC == SC_Static)) {
+    Diag(D.getIdentifierLoc(), diag::err_static_kernel);
+    D.setInvalidType();
   }
 
   MarkUnusedFileScopedDecl(NewFD);

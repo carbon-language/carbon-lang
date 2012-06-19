@@ -1848,13 +1848,24 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
     }
   }
 
+  // -cl-std only applies for OpenCL language standards.
+  // Override the -std option in this case.
   if (const Arg *A = Args.getLastArg(OPT_cl_std_EQ)) {
-    if (strcmp(A->getValue(Args), "CL1.1") != 0) {
+    LangStandard::Kind OpenCLLangStd
+    = llvm::StringSwitch<LangStandard::Kind>(A->getValue(Args))
+    .Case("CL", LangStandard::lang_opencl)
+    .Case("CL1.1", LangStandard::lang_opencl11)
+    .Case("CL1.2", LangStandard::lang_opencl12)
+    .Default(LangStandard::lang_unspecified);
+    
+    if (OpenCLLangStd == LangStandard::lang_unspecified) {
       Diags.Report(diag::err_drv_invalid_value)
-        << A->getAsString(Args) << A->getValue(Args);
+      << A->getAsString(Args) << A->getValue(Args);
     }
+    else
+      LangStd = OpenCLLangStd;
   }
-
+  
   CompilerInvocation::setLangDefaults(Opts, IK, LangStd);
 
   // We abuse '-f[no-]gnu-keywords' to force overriding all GNU-extension
