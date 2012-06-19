@@ -280,7 +280,7 @@ Variables for Building Programs
     For example, to link ``libsample.so``, you would have the following line in
     your ``Makefile``:
 
-        .. code-block:: Makefile
+        .. code-block:: makefile
 
           LIBS += -lsample
 
