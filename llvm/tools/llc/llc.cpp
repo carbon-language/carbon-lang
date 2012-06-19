@@ -156,8 +156,8 @@ DisableFPElimNonLeaf("disable-non-leaf-fp-elim",
   cl::init(false));
 
 static cl::opt<bool>
-DisableExcessPrecision("disable-excess-fp-precision",
-  cl::desc("Disable optimizations that may increase FP precision"),
+EnableExcessPrecision("enable-excess-fp-precision",
+  cl::desc("Enable optimizations that may increase FP precision"),
   cl::init(false));
 
 static cl::opt<bool>
@@ -404,7 +404,7 @@ int main(int argc, char **argv) {
   Options.LessPreciseFPMADOption = EnableFPMAD;
   Options.NoFramePointerElim = DisableFPElim;
   Options.NoFramePointerElimNonLeaf = DisableFPElimNonLeaf;
-  Options.NoExcessFPPrecision = DisableExcessPrecision;
+  Options.AllowExcessFPPrecision = EnableExcessPrecision;
   Options.UnsafeFPMath = EnableUnsafeFPMath;
   Options.NoInfsFPMath = EnableNoInfsFPMath;
   Options.NoNaNsFPMath = EnableNoNaNsFPMath;

@@ -5633,6 +5633,26 @@ SDValue DAGCombiner::visitFADD(SDNode *N) {
                        DAG.getNode(ISD::FADD, N->getDebugLoc(), VT,
                                    N0.getOperand(1), N1));
 
+  // FADD -> FMA combines:
+  if ((DAG.getTarget().Options.AllowExcessFPPrecision ||
+       DAG.getTarget().Options.UnsafeFPMath) &&
+      DAG.getTarget().getTargetLowering()->isFMAFasterThanMulAndAdd(VT) &&
+      TLI.isOperationLegal(ISD::FMA, VT)) {
+
+    // fold (fadd (fmul x, y), z) -> (fma x, y, z)
+    if (N0.getOpcode() == ISD::FMUL && N0->hasOneUse()) {
+      return DAG.getNode(ISD::FMA, N->getDebugLoc(), VT,
+                         N0.getOperand(0), N0.getOperand(1), N1);
+    }
+  
+    // fold (fadd x, (fmul y, z)) -> (fma x, y, z)
+    // Note: Commutes FADD operands.
+    if (N1.getOpcode() == ISD::FMUL && N1->hasOneUse()) {
+      return DAG.getNode(ISD::FMA, N->getDebugLoc(), VT,
+                         N1.getOperand(0), N1.getOperand(1), N0);
+    }
+  }
+
   return SDValue();
 }
 
@@ -5687,6 +5707,29 @@ SDValue DAGCombiner::visitFSUB(SDNode *N) {
       else if (N11 == N0 && isNegatibleForFree(N10, LegalOperations, TLI,
                                                &DAG.getTarget().Options))
         return GetNegatedExpression(N10, DAG, LegalOperations);
+    }
+  }
+
+  // FSUB -> FMA combines:
+  if ((DAG.getTarget().Options.AllowExcessFPPrecision ||
+       DAG.getTarget().Options.UnsafeFPMath) &&
+      DAG.getTarget().getTargetLowering()->isFMAFasterThanMulAndAdd(VT) &&
+      TLI.isOperationLegal(ISD::FMA, VT)) {
+
+    // fold (fsub (fmul x, y), z) -> (fma x, y, (fneg z))
+    if (N0.getOpcode() == ISD::FMUL && N0->hasOneUse()) {
+      return DAG.getNode(ISD::FMA, N->getDebugLoc(), VT,
+                         N0.getOperand(0), N0.getOperand(1),
+                         DAG.getNode(ISD::FNEG, N1->getDebugLoc(), VT, N1));
+    }
+
+    // fold (fsub x, (fmul y, z)) -> (fma (fneg y), z, x)
+    // Note: Commutes FSUB operands.
+    if (N1.getOpcode() == ISD::FMUL && N1->hasOneUse()) {
+      return DAG.getNode(ISD::FMA, N->getDebugLoc(), VT,
+                         DAG.getNode(ISD::FNEG, N1->getDebugLoc(), VT,
+                         N1.getOperand(0)),
+                         N1.getOperand(1), N0);
     }
   }
 

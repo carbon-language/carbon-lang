@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=ppc32 -mcpu=440 | FileCheck %s
+; RUN: llc < %s -march=ppc32 -mcpu=440 -enable-excess-fp-precision | FileCheck %s
 
 %0 = type { double, double }
 

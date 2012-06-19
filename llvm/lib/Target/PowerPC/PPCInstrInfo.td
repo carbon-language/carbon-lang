@@ -353,7 +353,7 @@ def xaddroff : ComplexPattern<iPTR, 1, "SelectAddrIdxOffs", [], []>;
 
 //===----------------------------------------------------------------------===//
 // PowerPC Instruction Predicate Definitions.
-def FPContractions : Predicate<"!TM.Options.NoExcessFPPrecision">;
+def FPContractions : Predicate<"TM.Options.AllowExcessFPPrecision">;
 def In32BitMode  : Predicate<"!PPCSubTarget.isPPC64()">;
 def In64BitMode  : Predicate<"PPCSubTarget.isPPC64()">;
 def IsBookE  : Predicate<"PPCSubTarget.isBookE()">;
