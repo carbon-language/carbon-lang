@@ -966,9 +966,7 @@ void EmitClangAttrSpellingList(RecordKeeper &Records, raw_ostream &OS) {
     std::vector<Record*> Spellings = Attr.getValueAsListOfDefs("Spellings");
 
     for (std::vector<Record*>::const_iterator I = Spellings.begin(), E = Spellings.end(); I != E; ++I) {
-      SmallString<64> Spelling;
-      Spelling += (*I)->getValueAsString("Name");
-      OS << ".Case(\"" << Spelling << "\", true)\n";
+      OS << ".Case(\"" << (*I)->getValueAsString("Name") << "\", true)\n";
     }
   }
 
@@ -1101,8 +1099,7 @@ void EmitClangAttrParsedAttrList(RecordKeeper &Records, raw_ostream &OS) {
         
         for (std::vector<Record*>::const_iterator I = Spellings.begin(),
              E = Spellings.end(); I != E; ++I) {
-          SmallString<64> AttrName;
-          AttrName += (*I)->getValueAsString("Name");
+          std::string AttrName = (*I)->getValueAsString("Name");
 
           StringRef Spelling = NormalizeAttrName(AttrName);
 
@@ -1137,8 +1134,7 @@ void EmitClangAttrParsedAttrKinds(RecordKeeper &Records, raw_ostream &OS) {
 
       for (std::vector<Record*>::const_iterator I = Spellings.begin(),
            E = Spellings.end(); I != E; ++I) {
-        SmallString<64> RawSpelling;
-        RawSpelling += (*I)->getValueAsString("Name");
+        std::string RawSpelling = (*I)->getValueAsString("Name");
         StringRef AttrName = NormalizeAttrName(DistinctSpellings
                                                  ? StringRef(RawSpelling)
                                                  : StringRef(Attr.getName()));
