@@ -75,7 +75,6 @@ const std::string StringMapTest::testKeyStr(testKey);
 
 // Empty map tests.
 TEST_F(StringMapTest, EmptyMapTest) {
-  SCOPED_TRACE("EmptyMapTest");
   assertEmptyMap();
 }
 
@@ -102,14 +101,12 @@ TEST_F(StringMapTest, ConstEmptyMapTest) {
 
 // A map with a single entry.
 TEST_F(StringMapTest, SingleEntryMapTest) {
-  SCOPED_TRACE("SingleEntryMapTest");
   testMap[testKey] = testValue;
   assertSingleItemMap();
 }
 
 // Test clear() method.
 TEST_F(StringMapTest, ClearTest) {
-  SCOPED_TRACE("ClearTest");
   testMap[testKey] = testValue;
   testMap.clear();
   assertEmptyMap();
@@ -117,7 +114,6 @@ TEST_F(StringMapTest, ClearTest) {
 
 // Test erase(iterator) method.
 TEST_F(StringMapTest, EraseIteratorTest) {
-  SCOPED_TRACE("EraseIteratorTest");
   testMap[testKey] = testValue;
   testMap.erase(testMap.begin());
   assertEmptyMap();
@@ -125,7 +121,6 @@ TEST_F(StringMapTest, EraseIteratorTest) {
 
 // Test erase(value) method.
 TEST_F(StringMapTest, EraseValueTest) {
-  SCOPED_TRACE("EraseValueTest");
   testMap[testKey] = testValue;
   testMap.erase(testKey);
   assertEmptyMap();
@@ -133,7 +128,6 @@ TEST_F(StringMapTest, EraseValueTest) {
 
 // Test inserting two values and erasing one.
 TEST_F(StringMapTest, InsertAndEraseTest) {
-  SCOPED_TRACE("InsertAndEraseTest");
   testMap[testKey] = testValue;
   testMap["otherKey"] = 2;
   testMap.erase("otherKey");
