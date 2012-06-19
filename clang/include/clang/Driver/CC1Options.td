@@ -196,6 +196,8 @@ def mrelocation_model : Separate<"-mrelocation-model">,
   HelpText<"The relocation model to use">;
 def munwind_tables : Flag<"-munwind-tables">,
   HelpText<"Generate unwinding tables for all functions">;
+def fuse_init_array : Flag<"-fuse-init-array">,
+  HelpText<"Use .init_array instead of .ctors">;
 def mconstructor_aliases : Flag<"-mconstructor-aliases">,
   HelpText<"Emit complete constructors and destructors as aliases when possible">;
 def mlink_bitcode_file : Separate<"-mlink-bitcode-file">,

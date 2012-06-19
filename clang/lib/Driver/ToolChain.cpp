@@ -189,6 +189,9 @@ void ToolChain::AddClangSystemIncludeArgs(const ArgList &DriverArgs,
   // Each toolchain should provide the appropriate include flags.
 }
 
+void ToolChain::addClangTargetOptions(ArgStringList &CC1Args) const {
+}
+
 ToolChain::RuntimeLibType ToolChain::GetRuntimeLibType(
   const ArgList &Args) const
 {

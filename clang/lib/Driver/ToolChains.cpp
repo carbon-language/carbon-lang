@@ -2116,6 +2116,12 @@ Tool &Linux::SelectTool(const Compilation &C, const JobAction &JA,
   return *T;
 }
 
+void Linux::addClangTargetOptions(ArgStringList &CC1Args) const {
+  const Generic_GCC::GCCVersion &V = GCCInstallation.getVersion();
+  if (V >= Generic_GCC::GCCVersion::Parse("4.7.0"))
+    CC1Args.push_back("-fuse-init-array");
+}
+
 void Linux::AddClangSystemIncludeArgs(const ArgList &DriverArgs,
                                       ArgStringList &CC1Args) const {
   const Driver &D = getDriver();
@@ -2258,7 +2264,7 @@ void Linux::AddClangCXXStdlibIncludeArgs(const ArgList &DriverArgs,
   // equivalent to '/usr/include/c++/X.Y' in almost all cases.
   StringRef LibDir = GCCInstallation.getParentLibPath();
   StringRef InstallDir = GCCInstallation.getInstallPath();
-  StringRef Version = GCCInstallation.getVersion();
+  StringRef Version = GCCInstallation.getVersion().Text;
   if (!addLibStdCXXIncludePaths(LibDir + "/../include/c++/" + Version,
                                 (GCCInstallation.getTriple().str() +
                                  GCCInstallation.getMultiarchSuffix()),

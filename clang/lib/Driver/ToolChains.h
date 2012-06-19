@@ -99,7 +99,7 @@ protected:
     StringRef getParentLibPath() const { return GCCParentLibPath; }
 
     /// \brief Get the detected GCC version string.
-    StringRef getVersion() const { return Version.Text; }
+    const GCCVersion &getVersion() const { return Version; }
 
   private:
     static void CollectLibDirsAndTriples(
@@ -538,6 +538,7 @@ public:
 
   virtual void AddClangSystemIncludeArgs(const ArgList &DriverArgs,
                                          ArgStringList &CC1Args) const;
+  virtual void addClangTargetOptions(ArgStringList &CC1Args) const;
   virtual void AddClangCXXStdlibIncludeArgs(const ArgList &DriverArgs,
                                             ArgStringList &CC1Args) const;
 

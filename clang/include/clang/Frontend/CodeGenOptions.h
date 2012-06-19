@@ -118,6 +118,8 @@ public:
 
   unsigned StackRealignment  : 1; ///< Control whether to permit stack
                                   ///< realignment.
+  unsigned UseInitArray      : 1; ///< Control whether to use .init_array or
+                                  ///< .ctors.
   unsigned StackAlignment;        ///< Overrides default stack alignment,
                                   ///< if not 0.
 
@@ -228,6 +230,7 @@ public:
     StackRealignment = 0;
     StackAlignment = 0;
     BoundsChecking = 0;
+    UseInitArray = 0;
 
     DebugInfo = NoDebugInfo;
     Inlining = NoInlining;
