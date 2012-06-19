@@ -310,14 +310,14 @@ you do a ``Debug``, ``Release``, or ``Profile`` build.
 Libraries
 
     All libraries (static and dynamic) will be stored in
-    ``PROJ_OBJ_ROOT/<type>/lib``, where *``type``* is ``Debug``, ``Release``, or
+    ``PROJ_OBJ_ROOT/<type>/lib``, where *type* is ``Debug``, ``Release``, or
     ``Profile`` for a debug, optimized, or profiled build, respectively.
 
 Executables
 
-    All executables will be stored in ``PROJ_OBJ_ROOT/<type>/bin``, where
-    *``type``* is ``Debug``, ``Release``, or ``Profile`` for a debug, optimized,
-    or profiled build, respectively.
+    All executables will be stored in ``PROJ_OBJ_ROOT/<type>/bin``, where *type*
+    is ``Debug``, ``Release``, or ``Profile`` for a debug, optimized, or
+    profiled build, respectively.
 
 Further Help
 ============
