@@ -17,13 +17,13 @@ these facilities, a ``Makefile`` from a project must do the following things:
 * Set ``make`` variables. There are several variables that a ``Makefile`` needs
   to set to use the LLVM build system:
 
-  * ``PROJECT_NAME`` &mdash; The name by which your project is known.
-  * ``LLVM_SRC_ROOT`` &mdash; The root of the LLVM source tree.
-  * ``LLVM_OBJ_ROOT`` &mdash; The root of the LLVM object tree.
-  * ``PROJ_SRC_ROOT`` &mdash; The root of the project's source tree.
-  * ``PROJ_OBJ_ROOT`` &mdash; The root of the project's object tree.
-  * ``PROJ_INSTALL_ROOT`` &mdash; The root installation directory.
-  * ``LEVEL`` &mdash; The relative path from the current directory to the
+  * ``PROJECT_NAME`` - The name by which your project is known.
+  * ``LLVM_SRC_ROOT`` - The root of the LLVM source tree.
+  * ``LLVM_OBJ_ROOT`` - The root of the LLVM object tree.
+  * ``PROJ_SRC_ROOT`` - The root of the project's source tree.
+  * ``PROJ_OBJ_ROOT`` - The root of the project's object tree.
+  * ``PROJ_INSTALL_ROOT`` - The root installation directory.
+  * ``LEVEL`` - The relative path from the current directory to the
     project's root ``($PROJ_OBJ_ROOT)``.
 
 * Include ``Makefile.config`` from ``$(LLVM_OBJ_ROOT)``.
@@ -63,34 +63,32 @@ Follow these simple steps to start your project:
 #. If you want your project to be configured with the ``configure`` script then
    you need to edit ``autoconf/configure.ac`` as follows:
 
-   * **``AC_INIT``** &mdash; Place the name of your project, its version number
-     and a contact email address for your project as the arguments to this macro
+   * **AC_INIT** - Place the name of your project, its version number and a
+     contact email address for your project as the arguments to this macro
  
-   * **``AC_CONFIG_AUX_DIR``** &mdash; If your project isn't in the
-     ``llvm/projects`` directory then you might need to adjust this so that it
-     specifies a relative path to the ``llvm/autoconf`` directory.
+   * **AC_CONFIG_AUX_DIR** - If your project isn't in the ``llvm/projects``
+     directory then you might need to adjust this so that it specifies a
+     relative path to the ``llvm/autoconf`` directory.
 
-   * **``LLVM_CONFIG_PROJECT``** &mdash; Just leave this alone.
+   * **LLVM_CONFIG_PROJECT** - Just leave this alone.
 
-   * **``AC_CONFIG_SRCDIR``** &mdash; Specify a path to a file name that
-     identifies your project; or just leave it at ``Makefile.common.in``.
+   * **AC_CONFIG_SRCDIR** - Specify a path to a file name that identifies your
+     project; or just leave it at ``Makefile.common.in``.
 
-   * **``AC_CONFIG_FILES``** &mdash; Do not change.
+   * **AC_CONFIG_FILES** - Do not change.
 
-   * **``AC_CONFIG_MAKEFILE``** &mdash; Use one of these macros for each
-     Makefile that your project uses. This macro arranges for your makefiles to
-     be copied from the source directory, unmodified, to the build directory.
+   * **AC_CONFIG_MAKEFILE** - Use one of these macros for each Makefile that
+     your project uses. This macro arranges for your makefiles to be copied from
+     the source directory, unmodified, to the build directory.
 
 #. After updating ``autoconf/configure.ac``, regenerate the configure script
-   with these commands:
+   with these commands. (You must be using ``Autoconf`` version 2.59 or later
+   and your ``aclocal`` version should be 1.9 or later.)
 
 .. code-block:: bash
 
    % cd autoconf
    % ./AutoRegen.sh
-
-   You must be using Autoconf version 2.59 or later and your ``aclocal`` version
-   should be 1.9 or later.
 
 #. Run ``configure`` in the directory in which you want to place object code.
    Use the following options to tell your project where it can find LLVM:
@@ -120,34 +118,34 @@ add to it if you want.
 
 Underneath your top level directory, you should have the following directories:
 
-**``lib``**
+**lib**
 
     This subdirectory should contain all of your library source code.  For each
-    library that you build, you will have one directory in **``lib``** that will
+    library that you build, you will have one directory in **lib** that will
     contain that library's source code.
 
-    Libraries can be object files, archives, or dynamic libraries.  The
-    **``lib``** directory is just a convenient place for libraries as it places
-    them all in a directory from which they can be linked later.
+    Libraries can be object files, archives, or dynamic libraries.  The **lib**
+    directory is just a convenient place for libraries as it places them all in
+    a directory from which they can be linked later.
 
-**``include``**
+**include**
 
     This subdirectory should contain any header files that are global to your
     project. By global, we mean that they are used by more than one library or
     executable of your project.
 
-    By placing your header files in **``include``**, they will be found
+    By placing your header files in **include**, they will be found
     automatically by the LLVM build system.  For example, if you have a file
-    **``include/jazz/note.h``**, then your source files can include it simply
-    with **``#include "jazz/note.h"``**.
+    **include/jazz/note.h**, then your source files can include it simply with
+    **#include "jazz/note.h"**.
 
-**``tools``**
+**tools**
 
     This subdirectory should contain all of your source code for executables.
-    For each program that you build, you will have one directory in
-    **``tools``** that will contain that program's source code.
+    For each program that you build, you will have one directory in **tools**
+    that will contain that program's source code.
 
-**``test``**
+**test**
 
     This subdirectory should contain tests that verify that your code works
     correctly.  Automated tests are especially useful.
@@ -158,7 +156,7 @@ Underneath your top level directory, you should have the following directories:
 * LLVM provides a ``tcl`` procedure that is used by ``Dejagnu`` to run tests.
   It can be found in ``llvm/lib/llvm-dg.exp``.  This test procedure uses ``RUN``
   lines in the actual test case to determine how to run the test.  See the
-  `TestingGuide`_TestingGuide.html for more details. You can easily write
+  `TestingGuide <TestingGuide.html>`_ for more details. You can easily write
   Makefile support similar to the Makefiles in ``llvm/test`` to use ``Dejagnu``
   to run your project's tests.
 
@@ -171,8 +169,8 @@ Underneath your top level directory, you should have the following directories:
   testing harness. You will simply need to find a way to use the source
   provided within that directory on your own.
 
-Typically, you will want to build your **``lib``** directory first followed by
-your **``tools``** directory.
+Typically, you will want to build your **lib** directory first followed by your
+**tools** directory.
 
 Writing LLVM Style Makefiles
 ============================
@@ -244,7 +242,7 @@ Variables for Building Programs
 
     This variable holds a space separated list of libraries that should be
     linked into the program.  These libraries must be libraries that come from
-    your **``lib``** directory.  The libraries must be specified without their
+    your **lib** directory.  The libraries must be specified without their
     ``lib`` prefix.  For example, to link ``libsample.a``, you would set
     ``USEDLIBS`` to ``sample.a``.
 
@@ -326,4 +324,5 @@ Further Help
 
 If you have any questions or need any help creating an LLVM project, the LLVM
 team would be more than happy to help.  You can always post your questions to
-the `LLVM Developers Mailing List`_http://mail.cs.uiuc.edu/mailman/listinfo/llvmdev.
+the `LLVM Developers Mailing List
+<http://mail.cs.uiuc.edu/mailman/listinfo/llvmdev>`_.
