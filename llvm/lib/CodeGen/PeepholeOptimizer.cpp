@@ -145,8 +145,7 @@ optimizeExtInstr(MachineInstr *MI, MachineBasicBlock *MBB,
       TargetRegisterInfo::isPhysicalRegister(SrcReg))
     return false;
 
-  MachineRegisterInfo::use_nodbg_iterator UI = MRI->use_nodbg_begin(SrcReg);
-  if (++UI == MRI->use_nodbg_end())
+  if (MRI->hasOneNonDBGUse(SrcReg))
     // No other uses.
     return false;
 
@@ -160,8 +159,8 @@ optimizeExtInstr(MachineInstr *MI, MachineBasicBlock *MBB,
   // The source has other uses. See if we can replace the other uses with use of
   // the result of the extension.
   SmallPtrSet<MachineBasicBlock*, 4> ReachedBBs;
-  UI = MRI->use_nodbg_begin(DstReg);
-  for (MachineRegisterInfo::use_nodbg_iterator UE = MRI->use_nodbg_end();
+  for (MachineRegisterInfo::use_nodbg_iterator
+       UI = MRI->use_nodbg_begin(DstReg), UE = MRI->use_nodbg_end();
        UI != UE; ++UI)
     ReachedBBs.insert(UI->getParent());
 
@@ -172,8 +171,8 @@ optimizeExtInstr(MachineInstr *MI, MachineBasicBlock *MBB,
   SmallVector<MachineOperand*, 8> ExtendedUses;
 
   bool ExtendLife = true;
-  UI = MRI->use_nodbg_begin(SrcReg);
-  for (MachineRegisterInfo::use_nodbg_iterator UE = MRI->use_nodbg_end();
+  for (MachineRegisterInfo::use_nodbg_iterator
+       UI = MRI->use_nodbg_begin(SrcReg), UE = MRI->use_nodbg_end();
        UI != UE; ++UI) {
     MachineOperand &UseMO = UI.getOperand();
     MachineInstr *UseMI = &*UI;
@@ -239,9 +238,9 @@ optimizeExtInstr(MachineInstr *MI, MachineBasicBlock *MBB,
     // Look for PHI uses of the extended result, we don't want to extend the
     // liveness of a PHI input. It breaks all kinds of assumptions down
     // stream. A PHI use is expected to be the kill of its source values.
-    UI = MRI->use_nodbg_begin(DstReg);
     for (MachineRegisterInfo::use_nodbg_iterator
-           UE = MRI->use_nodbg_end(); UI != UE; ++UI)
+         UI = MRI->use_nodbg_begin(DstReg), UE = MRI->use_nodbg_end();
+         UI != UE; ++UI)
       if (UI->isPHI())
         PHIBBs.insert(UI->getParent());
 
