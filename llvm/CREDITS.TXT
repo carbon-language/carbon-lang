@@ -19,12 +19,12 @@ E: resistor@mac.com
 D: LCSSA pass and related LoopUnswitch work
 D: GVNPRE pass, TargetData refactoring, random improvements
 
+N: Henrik Bach
+D: MingW Win32 API portability layer
+
 N: Aaron Ballman
 E: aaron@aaronballman.com
 D: __declspec attributes, Windows support, general bug fixing
-
-N: Henrik Bach
-D: MingW Win32 API portability layer
 
 N: Nate Begeman
 E: natebegeman@mac.com
