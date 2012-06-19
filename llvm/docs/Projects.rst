@@ -290,8 +290,7 @@ Note that ``LIBS`` must occur in the Makefile after the inclusion of
 Miscellaneous Variables
 -----------------------
 
-``CFLAGS``
-``CPPFLAGS``
+``CFLAGS`` & ``CPPFLAGS``
 
     This variable can be used to add options to the C and C++ compiler,
     respectively.  It is typically used to add options that tell the compiler
