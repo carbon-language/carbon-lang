@@ -32,6 +32,10 @@ public:
 
     virtual
     ~CommandObjectMultiwordWatchpoint ();
+
+    static bool
+    VerifyWatchpointIDs(Args &args, std::vector<uint32_t> &wp_ids);
+
 };
 
 } // namespace lldb_private
