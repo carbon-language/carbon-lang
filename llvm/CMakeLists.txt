@@ -401,6 +401,7 @@ add_subdirectory(utils/count)
 add_subdirectory(utils/not)
 add_subdirectory(utils/llvm-lit)
 add_subdirectory(utils/yaml-bench)
+add_subdirectory(utils/obj2yaml)
 
 add_subdirectory(projects)
 
