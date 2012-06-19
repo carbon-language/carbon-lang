@@ -20,13 +20,13 @@
 
 namespace __sanitizer {
 #if (__WORDSIZE == 64) || defined(__APPLE__)
-typedef __sanitizer::uptr operator_new_ptr_type;
+typedef uptr operator_new_ptr_type;
 #else
-typedef __sanitizer::u32 operator_new_ptr_type;
+typedef u32 operator_new_ptr_type;
 #endif
 }  // namespace __sanitizer
 
-inline void *operator new(operator_new_ptr_type sz, void *p) {
+inline void *operator new(__sanitizer::operator_new_ptr_type sz, void *p) {
   return p;
 }
 
