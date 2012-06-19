@@ -8,11 +8,17 @@
 //===----------------------------------------------------------------------===//
 //
 // This file is a part of ThreadSanitizer (TSan), a race detector.
-//
+// NOTE: This file may be included into user code.
 //===----------------------------------------------------------------------===//
 
 #ifndef TSAN_FLAGS_H
 #define TSAN_FLAGS_H
+
+// ----------- ATTENTION -------------
+// ThreadSanitizer user may provide its implementation of weak
+// symbol __tsan::OverrideFlags(__tsan::Flags). Therefore, this
+// header may be included in the user code, and shouldn't include
+// other headers from TSan or common sanitizer runtime.
 
 namespace __tsan {
 
