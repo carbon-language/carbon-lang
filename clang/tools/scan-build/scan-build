@@ -28,7 +28,7 @@ my $BuildName;
 my $BuildDate;
 
 my $TERM = $ENV{'TERM'};
-my $UseColor = (defined $TERM and $TERM eq 'xterm-color' and -t STDOUT
+my $UseColor = (defined $TERM and $TERM =~ 'xterm-.*color' and -t STDOUT
                 and defined $ENV{'SCAN_BUILD_COLOR'});
 
 my $UserName = HtmlEscape(getpwuid($<) || 'unknown');
