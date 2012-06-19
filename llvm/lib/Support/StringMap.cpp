@@ -189,7 +189,7 @@ void StringMapImpl::RehashTable() {
   // grow/rehash the table.
   if (NumItems*4 > NumBuckets*3) {
     NewSize = NumBuckets*2;
-  } else if (NumBuckets-(NumItems+NumTombstones) < NumBuckets/8) {
+  } else if (NumBuckets-(NumItems+NumTombstones) <= NumBuckets/8) {
     NewSize = NumBuckets;
   } else {
     return;

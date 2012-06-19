@@ -134,6 +134,28 @@ TEST_F(StringMapTest, InsertAndEraseTest) {
   assertSingleItemMap();
 }
 
+TEST_F(StringMapTest, SmallFullMapTest) {
+  // StringMap has a tricky corner case when the map is small (<8 buckets) and
+  // it fills up through a balanced pattern of inserts and erases. This can
+  // lead to inf-loops in some cases (PR13148) so we test it explicitly here.
+  llvm::StringMap<int> Map(2);
+
+  Map["eins"] = 1;
+  Map["zwei"] = 2;
+  Map["drei"] = 3;
+  Map.erase("drei");
+  Map.erase("eins");
+  Map["veir"] = 4;
+  Map["funf"] = 5;
+
+  EXPECT_EQ(3u, Map.size());
+  EXPECT_EQ(0, Map.lookup("eins"));
+  EXPECT_EQ(2, Map.lookup("zwei"));
+  EXPECT_EQ(0, Map.lookup("drei"));
+  EXPECT_EQ(4, Map.lookup("veir"));
+  EXPECT_EQ(5, Map.lookup("funf"));
+}
+
 // A more complex iteration test.
 TEST_F(StringMapTest, IterationTest) {
   bool visited[100];
