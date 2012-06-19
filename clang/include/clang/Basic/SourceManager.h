@@ -591,9 +591,6 @@ class SourceManager : public RefCountedBase<SourceManager> {
   /// \brief The file ID for the precompiled preamble there is one.
   FileID PreambleFileID;
 
-  /// \brief The file ID for the preprocessor's predefines.
-  FileID PredefinesFileID;
-
   // Statistics for -print-stats.
   mutable unsigned NumLinearScans, NumBinaryProbes;
 
@@ -638,14 +635,6 @@ public:
     MainFileID = createFileIDForMemBuffer(Buffer);
     return MainFileID;
   }
-  
-  /// \brief Create the FileID for a memory buffer that contains the
-  /// preprocessor's predefines.
-  FileID createPredefinesFileIDForMemBuffer(const llvm::MemoryBuffer *Buffer) {
-    assert(PredefinesFileID.isInvalid() && "PredefinesFileID already set!");
-    PredefinesFileID = createFileIDForMemBuffer(Buffer);
-    return PredefinesFileID;
-  }
 
   //===--------------------------------------------------------------------===//
   // MainFileID creation and querying methods.
@@ -653,9 +642,6 @@ public:
 
   /// getMainFileID - Returns the FileID of the main source file.
   FileID getMainFileID() const { return MainFileID; }
-
-  /// \brief Returns the FileID of the preprocessor predefines buffer.
-  FileID getPredefinesFileID() const { return PredefinesFileID; }
 
   /// createMainFileID - Create the FileID for the main source file.
   FileID createMainFileID(const FileEntry *SourceFile, 
@@ -1136,12 +1122,6 @@ public:
   ///   the main file.
   bool isFromMainFile(SourceLocation Loc) const {
     return getFileID(Loc) == getMainFileID();
-  }
-
-  /// isFromPredefines - Returns true if the provided SourceLocation is
-  ///   within the processor's predefines buffer.
-  bool isFromPredefines(SourceLocation Loc) const {
-    return getFileID(Loc) == getPredefinesFileID();
   }
 
   /// isInSystemHeader - Returns if a SourceLocation is in a system header.
