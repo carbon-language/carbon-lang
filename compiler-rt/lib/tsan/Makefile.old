@@ -1,8 +1,9 @@
 DEBUG=0
 LDFLAGS=-ldl -lpthread -pie
 CXXFLAGS = -fPIE -g -Wall -Werror -DTSAN_DEBUG=$(DEBUG)
-# Gtest has unused private field. GCC doesn't know -Wunused-private-field warning
-CXXFLAGS += -Wno-unused-private-field -Wno-attributes
+# Silence warnings that Clang produces for gtest code.
+# Use -Wno-attributes so that gcc doesn't complain about unknown warning types.
+CXXFLAGS += -Wno-unused-private-field -Wno-internal-linkage-in-inline -Wno-attributes
 ifeq ($(DEBUG), 0)
 	CXXFLAGS += -O3
 endif
