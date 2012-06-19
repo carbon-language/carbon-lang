@@ -368,9 +368,9 @@ void PPCFrameLowering::emitPrologue(MachineFunction &MF) const {
       BuildMI(MBB, MBBI, dl, TII.get(PPC::SUBFIC) ,PPC::R0)
         .addReg(PPC::R0, RegState::Kill)
         .addImm(NegFrameSize);
-      BuildMI(MBB, MBBI, dl, TII.get(PPC::STWUX))
+      BuildMI(MBB, MBBI, dl, TII.get(PPC::STWUX), PPC::R1)
         .addReg(PPC::R1, RegState::Kill)
-        .addReg(PPC::R1, RegState::Define)
+        .addReg(PPC::R1)
         .addReg(PPC::R0);
     } else if (isInt<16>(NegFrameSize)) {
       BuildMI(MBB, MBBI, dl, TII.get(PPC::STWU), PPC::R1)
@@ -383,9 +383,9 @@ void PPCFrameLowering::emitPrologue(MachineFunction &MF) const {
       BuildMI(MBB, MBBI, dl, TII.get(PPC::ORI), PPC::R0)
         .addReg(PPC::R0, RegState::Kill)
         .addImm(NegFrameSize & 0xFFFF);
-      BuildMI(MBB, MBBI, dl, TII.get(PPC::STWUX))
+      BuildMI(MBB, MBBI, dl, TII.get(PPC::STWUX), PPC::R1)
         .addReg(PPC::R1, RegState::Kill)
-        .addReg(PPC::R1, RegState::Define)
+        .addReg(PPC::R1)
         .addReg(PPC::R0);
     }
   } else {    // PPC64.
@@ -401,9 +401,9 @@ void PPCFrameLowering::emitPrologue(MachineFunction &MF) const {
       BuildMI(MBB, MBBI, dl, TII.get(PPC::SUBFIC8), PPC::X0)
         .addReg(PPC::X0)
         .addImm(NegFrameSize);
-      BuildMI(MBB, MBBI, dl, TII.get(PPC::STDUX))
+      BuildMI(MBB, MBBI, dl, TII.get(PPC::STDUX), PPC::X1)
         .addReg(PPC::X1, RegState::Kill)
-        .addReg(PPC::X1, RegState::Define)
+        .addReg(PPC::X1)
         .addReg(PPC::X0);
     } else if (isInt<16>(NegFrameSize)) {
       BuildMI(MBB, MBBI, dl, TII.get(PPC::STDU), PPC::X1)
@@ -416,9 +416,9 @@ void PPCFrameLowering::emitPrologue(MachineFunction &MF) const {
       BuildMI(MBB, MBBI, dl, TII.get(PPC::ORI8), PPC::X0)
         .addReg(PPC::X0, RegState::Kill)
         .addImm(NegFrameSize & 0xFFFF);
-      BuildMI(MBB, MBBI, dl, TII.get(PPC::STDUX))
+      BuildMI(MBB, MBBI, dl, TII.get(PPC::STDUX), PPC::X1)
         .addReg(PPC::X1, RegState::Kill)
-        .addReg(PPC::X1, RegState::Define)
+        .addReg(PPC::X1)
         .addReg(PPC::X0);
     }
   }

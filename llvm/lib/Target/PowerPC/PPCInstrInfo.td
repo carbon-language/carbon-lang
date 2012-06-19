@@ -349,6 +349,7 @@ def ixaddr : ComplexPattern<iPTR, 2, "SelectAddrImmShift", [], []>; // "std"
 
 /// This is just the offset part of iaddr, used for preinc.
 def iaddroff : ComplexPattern<iPTR, 1, "SelectAddrImmOffs", [], []>;
+def xaddroff : ComplexPattern<iPTR, 1, "SelectAddrIdxOffs", [], []>;
 
 //===----------------------------------------------------------------------===//
 // PowerPC Instruction Predicate Definitions.
@@ -822,12 +823,49 @@ def STWX  : XForm_8<31, 151, (outs), (ins GPRC:$rS, memrr:$dst),
                    "stwx $rS, $dst", LdStStore,
                    [(store GPRC:$rS, xaddr:$dst)]>,
                    PPC970_DGroup_Cracked;
-                   
-let mayStore = 1 in {
-def STWUX : XForm_8<31, 183, (outs), (ins GPRC:$rS, GPRC:$rA, GPRC:$rB),
-                   "stwux $rS, $rA, $rB", LdStStore,
-                   []>;
-}
+ 
+def STBUX : XForm_8<31, 247, (outs ptr_rc:$ea_res),
+                             (ins GPRC:$rS, ptr_rc:$ptroff, ptr_rc:$ptrreg),
+                   "stbux $rS, $ptroff, $ptrreg", LdStStore,
+                   [(set ptr_rc:$ea_res,
+                      (pre_truncsti8 GPRC:$rS,
+                                     ptr_rc:$ptrreg, xaddroff:$ptroff))]>,
+                   RegConstraint<"$ptroff = $ea_res">, NoEncode<"$ea_res">,
+                   PPC970_DGroup_Cracked;
+ 
+def STHUX : XForm_8<31, 439, (outs ptr_rc:$ea_res),
+                             (ins GPRC:$rS, ptr_rc:$ptroff, ptr_rc:$ptrreg),
+                   "sthux $rS, $ptroff, $ptrreg", LdStStore,
+                   [(set ptr_rc:$ea_res,
+                      (pre_truncsti16 GPRC:$rS,
+                                      ptr_rc:$ptrreg, xaddroff:$ptroff))]>,
+                   RegConstraint<"$ptroff = $ea_res">, NoEncode<"$ea_res">,
+                   PPC970_DGroup_Cracked;
+                 
+def STWUX : XForm_8<31, 183, (outs ptr_rc:$ea_res),
+                             (ins GPRC:$rS, ptr_rc:$ptroff, ptr_rc:$ptrreg),
+                   "stwux $rS, $ptroff, $ptrreg", LdStStore,
+                   [(set ptr_rc:$ea_res,
+                      (pre_store GPRC:$rS, ptr_rc:$ptrreg, xaddroff:$ptroff))]>,
+                   RegConstraint<"$ptroff = $ea_res">, NoEncode<"$ea_res">,
+                   PPC970_DGroup_Cracked;
+
+def STFSUX : XForm_8<31, 695, (outs ptr_rc:$ea_res),
+                              (ins F4RC:$rS, ptr_rc:$ptroff, ptr_rc:$ptrreg),
+                    "stfsux $rS, $ptroff, $ptrreg", LdStStore,
+                    [(set ptr_rc:$ea_res,
+                       (pre_store F4RC:$rS, ptr_rc:$ptrreg, xaddroff:$ptroff))]>,
+                    RegConstraint<"$ptroff = $ea_res">, NoEncode<"$ea_res">,
+                    PPC970_DGroup_Cracked;
+
+def STFDUX : XForm_8<31, 759, (outs ptr_rc:$ea_res),
+                              (ins F8RC:$rS, ptr_rc:$ptroff, ptr_rc:$ptrreg),
+                    "stfdux $rS, $ptroff, $ptrreg", LdStStore,
+                    [(set ptr_rc:$ea_res,
+                       (pre_store F8RC:$rS, ptr_rc:$ptrreg, xaddroff:$ptroff))]>,
+                    RegConstraint<"$ptroff = $ea_res">, NoEncode<"$ea_res">,
+                    PPC970_DGroup_Cracked;
+
 def STHBRX: XForm_8<31, 918, (outs), (ins GPRC:$rS, memrr:$dst),
                    "sthbrx $rS, $dst", LdStStore,
                    [(PPCstbrx GPRC:$rS, xoaddr:$dst, i16)]>, 

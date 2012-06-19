@@ -680,10 +680,41 @@ def STDU : DSForm_1a<62, 1, (outs ptr_rc:$ea_res), (ins G8RC:$rS,
                     RegConstraint<"$ptrreg = $ea_res">, NoEncode<"$ea_res">,
                     isPPC64;
 
-let mayStore = 1 in
-def STDUX : XForm_8<31, 181, (outs), (ins G8RC:$rS, memrr:$dst),
-                   "stdux $rS, $dst", LdStSTD,
-                   []>, isPPC64;
+
+def STBUX8 : XForm_8<31, 247, (outs ptr_rc:$ea_res),
+                              (ins G8RC:$rS, ptr_rc:$ptroff, ptr_rc:$ptrreg),
+                    "stbux $rS, $ptroff, $ptrreg", LdStStore,
+                    [(set ptr_rc:$ea_res,
+                       (pre_truncsti8 G8RC:$rS,
+                                      ptr_rc:$ptrreg, xaddroff:$ptroff))]>,
+                    RegConstraint<"$ptroff = $ea_res">, NoEncode<"$ea_res">,
+                    PPC970_DGroup_Cracked;
+
+def STHUX8 : XForm_8<31, 439, (outs ptr_rc:$ea_res),
+                              (ins G8RC:$rS, ptr_rc:$ptroff, ptr_rc:$ptrreg),
+                    "sthux $rS, $ptroff, $ptrreg", LdStStore,
+                    [(set ptr_rc:$ea_res,
+                       (pre_truncsti16 G8RC:$rS,
+                                       ptr_rc:$ptrreg, xaddroff:$ptroff))]>,
+                    RegConstraint<"$ptroff = $ea_res">, NoEncode<"$ea_res">,
+                    PPC970_DGroup_Cracked;
+
+def STWUX8 : XForm_8<31, 183, (outs ptr_rc:$ea_res),
+                              (ins G8RC:$rS, ptr_rc:$ptroff, ptr_rc:$ptrreg),
+                    "stwux $rS, $ptroff, $ptrreg", LdStStore,
+                    [(set ptr_rc:$ea_res,
+                       (pre_truncsti32 G8RC:$rS,
+                                       ptr_rc:$ptrreg, xaddroff:$ptroff))]>,
+                    RegConstraint<"$ptroff = $ea_res">, NoEncode<"$ea_res">,
+                    PPC970_DGroup_Cracked;
+
+def STDUX : XForm_8<31, 181, (outs ptr_rc:$ea_res),
+                              (ins G8RC:$rS, ptr_rc:$ptroff, ptr_rc:$ptrreg),
+                    "stdux $rS, $ptroff, $ptrreg", LdStStore,
+                    [(set ptr_rc:$ea_res,
+                       (pre_store G8RC:$rS, ptr_rc:$ptrreg, xaddroff:$ptroff))]>,
+                    RegConstraint<"$ptroff = $ea_res">, NoEncode<"$ea_res">,
+                    PPC970_DGroup_Cracked, isPPC64;
 
 // STD_32/STDX_32 - Just like STD/STDX, but uses a '32-bit' input register.
 def STD_32  : DSForm_1<62, 0, (outs), (ins GPRC:$rT, memrix:$dst),

@@ -111,6 +111,18 @@ namespace {
     /// immediate field.  Because preinc imms have already been validated, just
     /// accept it.
     bool SelectAddrImmOffs(SDValue N, SDValue &Out) const {
+      if (isa<ConstantSDNode>(N)) {
+        Out = N;
+        return true;
+      }
+
+      return false;
+    }
+
+    /// SelectAddrIdxOffs - Return true if the operand is valid for a preinc
+    /// index field.  Because preinc imms have already been validated, just
+    /// accept it.
+    bool SelectAddrIdxOffs(SDValue N, SDValue &Out) const {
       Out = N;
       return true;
     }
