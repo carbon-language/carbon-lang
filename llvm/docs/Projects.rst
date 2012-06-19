@@ -273,14 +273,14 @@ Variables for Building Programs
 
 ``LIBS``
 
-    To link dynamic libraries, add <tt>-l&lt;library base name&gt;</tt> to the
-    ``LIBS`` variable.  The LLVM build system will look in the same places for
-    dynamic libraries as it does for static libraries.
+    To link dynamic libraries, add ``-l<library base name>`` to the ``LIBS``
+    variable.  The LLVM build system will look in the same places for dynamic
+    libraries as it does for static libraries.
 
     For example, to link ``libsample.so``, you would have the following line in
     your ``Makefile``:
 
-.. code-block: Makefile
+.. code-block:: Makefile
 
   LIBS += -lsample
 
