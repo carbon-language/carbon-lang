@@ -744,6 +744,8 @@ error_code has_magic(const Twine &path, const Twine &magic, bool &result) {
 
 /// @brief Identify the magic in magic.
 file_magic identify_magic(StringRef magic) {
+  if (magic.size() < 4)
+    return file_magic::unknown;
   switch ((unsigned char)magic[0]) {
     case 0xDE:  // 0x0B17C0DE = BC wraper
       if (magic[1] == (char)0xC0 && magic[2] == (char)0x17 &&
