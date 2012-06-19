@@ -630,6 +630,9 @@ def warn_auto_synthesizing_protocol_property :Warning<
   "auto property synthesis will not synthesize property"
   " declared in a protocol">,
   InGroup<DiagGroup<"objc-protocol-property-synthesis">>;
+def warn_autosynthesis_property_ivar_match :Warning<
+  "auto autosynthesized property has same name as an existing ivar">,
+  InGroup<DiagGroup<"objc-autosynthesis-property-ivar-name-match">>;
 def warn_missing_explicit_synthesis : Warning <
   "auto property synthesis is synthesizing property not explicitly synthesized">,
   InGroup<DiagGroup<"objc-missing-property-synthesis">>, DefaultIgnore;

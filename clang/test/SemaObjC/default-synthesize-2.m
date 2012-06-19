@@ -41,12 +41,13 @@
 // Test3
 @interface Test3 
 { 
-  id uid; 
+  id uid;  // expected-note {{ivar is declared here}}
 } 
-@property (readwrite, assign) id uid; 
+@property (readwrite, assign) id uid;  // expected-note {{property declared here}}
 @end
 
-@implementation Test3
+// rdar://11671080
+@implementation Test3 // expected-warning {{auto autosynthesized property has same name as an existing ivar}}
 // Oops, forgot to write @synthesize! will be default synthesized
 - (void) myMethod { 
    self.uid = 0; // Use of the “setter” 
