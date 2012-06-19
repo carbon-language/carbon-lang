@@ -490,6 +490,14 @@ static bool isAccessedBy(const VarDecl &var, const Stmt *s) {
 
     if (const DeclRefExpr *ref = dyn_cast<DeclRefExpr>(e))
       return (ref->getDecl() == &var);
+    if (const BlockExpr *be = dyn_cast<BlockExpr>(e)) {
+      const BlockDecl *block = be->getBlockDecl();
+      for (BlockDecl::capture_const_iterator i = block->capture_begin(),
+           e = block->capture_end(); i != e; ++i) {
+        if (i->getVariable() == &var)
+          return true;
+      }
+    }
   }
 
   for (Stmt::const_child_range children = s->children(); children; ++children)

@@ -521,3 +521,14 @@ void test15_helper(void (^block)(void), int x);
 void test15(int a) {
   test15_helper(^{ (void) a; }, ({ a; }));
 }
+
+// rdar://11016025
+void test16() {
+  void (^BLKVAR)(void) = ^{ BLKVAR(); };
+
+  // CHECK: define void @test16(
+  // CHECK: [[BLKVAR:%.*]]  = alloca void ()*, align 8
+  // CHECK-NEXT:  [[BLOCK:%.*]] = alloca [[BLOCK_T:<{.*}>]],
+  // CHECK-NEXT:  [[SLOTREL:%.*]] = getelementptr inbounds [[BLOCK_T]]* [[BLOCK]], i32 0, i32 5
+  // CHECK-NEXT:  store void ()* null, void ()** [[BLKVAR]], align 8
+}
