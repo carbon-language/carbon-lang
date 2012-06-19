@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=experimental.osx.cocoa.Dealloc '-DIBOutlet=__attribute__((iboutlet))' %s -verify
+// RUN: %clang_cc1 -analyze -analyzer-checker=experimental.osx.cocoa.Dealloc %s -verify
 typedef signed char BOOL;
 @protocol NSObject
 - (BOOL)isEqual:(id)object;
@@ -52,10 +52,6 @@ typedef struct objc_selector *SEL;
 
 //===------------------------------------------------------------------------===
 //  Don't warn about iVars that are IBOutlets.
-
-#ifndef IBOutlet
-#define IBOutlet
-#endif
 
 @class NSWindow;
 

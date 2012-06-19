@@ -377,6 +377,11 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
 
     if (LangOpts.NeXTRuntime)
       Builder.defineMacro("__NEXT_RUNTIME__");
+
+    Builder.defineMacro("IBOutlet", "__attribute__((iboutlet))");
+    Builder.defineMacro("IBOutletCollection(ClassName)",
+                        "__attribute__((iboutletcollection(ClassName)))");
+    Builder.defineMacro("IBAction", "void)__attribute__((ibaction)");
   }
 
   // darwin_constant_cfstrings controls this. This is also dependent

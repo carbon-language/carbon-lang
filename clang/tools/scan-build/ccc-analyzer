@@ -182,11 +182,6 @@ sub Analyze {
   }
   else {
     $Cmd = $Clang;
-    if ($Lang eq "objective-c" || $Lang eq "objective-c++") {
-      push @Args,'-DIBOutlet=__attribute__((iboutlet))';
-      push @Args,'-DIBOutletCollection(ClassName)=__attribute__((iboutletcollection)))';
-      push @Args,'-DIBAction=void)__attribute__((ibaction)';
-    }
 
     # Create arguments for doing regular parsing.
     my $SyntaxArgs = GetCCArgs("-fsyntax-only", \@Args);
