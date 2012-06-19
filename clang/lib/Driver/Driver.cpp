@@ -382,15 +382,15 @@ void Driver::generateCompilationDiagnostics(Compilation &C,
   if (FailingCommand && FailingCommand->getCreator().isLinkJob())
     return;
 
+  // Print the version of the compiler.
+  PrintVersion(C, llvm::errs());
+
   Diag(clang::diag::note_drv_command_failed_diag_msg)
     << "\n********************\n********************\n\n"
     "PLEASE submit a BUG REPORT to " BUG_REPORT_URL " and _INCLUDE_ the "
     "crash backtrace, all command line arguments, PREPROCESSED SOURCE, "
     "and associated RUN SCRIPT.\n"
     "\n********************\n********************";
-
-  // Print the version of the compiler.
-  PrintVersion(C, llvm::errs());
 
   // Suppress driver output and emit preprocessor output to temp file.
   CCCIsCPP = true;
