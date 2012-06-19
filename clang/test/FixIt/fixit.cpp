@@ -219,6 +219,7 @@ void Foo::SetBar(Bar bar) { bar_ = bar; } // expected-error {{must use 'enum' ta
 
 #define NULL __null
 char c = NULL; // expected-warning {{implicit conversion of NULL constant to 'char'}}
+double dbl = NULL; // expected-warning {{implicit conversion of NULL constant to 'double'}}
 
 namespace arrow_suggest {
 

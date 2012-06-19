@@ -69,6 +69,7 @@ void test3() {
   char ch = NULL; // expected-warning {{implicit conversion of NULL constant to 'char'}}
   unsigned char uch = NULL; // expected-warning {{implicit conversion of NULL constant to 'unsigned char'}}
   short sh = NULL; // expected-warning {{implicit conversion of NULL constant to 'short'}}
+  double dbl = NULL; // expected-warning {{implicit conversion of NULL constant to 'double'}}
 
   // Use FileCheck to ensure we don't get any unnecessary macro-expansion notes 
   // (that don't appear as 'real' notes & can't be seen/tested by -verify)
