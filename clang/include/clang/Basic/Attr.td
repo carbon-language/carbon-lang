@@ -143,7 +143,7 @@ def Alias : InheritableAttr {
 def Aligned : InheritableAttr {
   let Spellings = [GNU<"aligned">, GNU<"align">];
   let Subjects = [NonBitField, NormalVar, Tag];
-  let Args = [AlignedArgument<"Alignment">];
+  let Args = [AlignedArgument<"Alignment">, BoolArgument<"IsMSDeclSpec">];
 }
 
 def AlignMac68k : InheritableAttr {
