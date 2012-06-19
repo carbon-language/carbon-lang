@@ -254,8 +254,8 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
     bool PHIJoin = LV->isPHIJoin(interval.reg);
 
     if (PHIJoin) {
-      // A phi join register is killed at the end of the MBB and revived as a new
-      // valno in the killing blocks.
+      // A phi join register is killed at the end of the MBB and revived as a
+      // new valno in the killing blocks.
       assert(vi.AliveBlocks.empty() && "Phi join can't pass through blocks");
       DEBUG(dbgs() << " phi-join");
       ValNo->setHasPHIKill(true);
@@ -266,7 +266,8 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
       for (SparseBitVector<>::iterator I = vi.AliveBlocks.begin(),
                E = vi.AliveBlocks.end(); I != E; ++I) {
         MachineBasicBlock *aliveBlock = MF->getBlockNumbered(*I);
-        LiveRange LR(getMBBStartIdx(aliveBlock), getMBBEndIdx(aliveBlock), ValNo);
+        LiveRange LR(getMBBStartIdx(aliveBlock), getMBBEndIdx(aliveBlock),
+                     ValNo);
         interval.addRange(LR);
         DEBUG(dbgs() << " +" << LR);
       }
@@ -1254,7 +1255,8 @@ private:
           Entering.insert(std::make_pair(LI, LR));
       }
       if (MO.isDef()) {
-        assert(!MO.isEarlyClobber() && "Early clobbers not allowed in bundles.");
+        assert(!MO.isEarlyClobber() &&
+               "Early clobbers not allowed in bundles.");
         assert(!MO.isDead() && "Dead-defs not allowed in bundles.");
         LiveRange* LR = LI->getLiveRangeContaining(MIEndIdx.getDeadSlot());
         assert(LR != 0 && "Internal ranges not allowed in bundles.");
@@ -1263,7 +1265,9 @@ private:
     }
   }
 
-  BundleRanges createBundleRanges(RangeSet& Entering, RangeSet& Internal, RangeSet& Exiting) {
+  BundleRanges createBundleRanges(RangeSet& Entering,
+                                  RangeSet& Internal,
+                                  RangeSet& Exiting) {
     BundleRanges BR;
 
     for (RangeSet::iterator EI = Entering.begin(), EE = Entering.end();
@@ -1300,7 +1304,8 @@ private:
       return; // Bail out if we don't have kill flags on the old register.
     MachineInstr* NewKillMI = LIS.getInstructionFromIndex(newKillIdx);
     assert(OldKillMI->killsRegister(reg) && "Old 'kill' instr isn't a kill.");
-    assert(!NewKillMI->killsRegister(reg) && "New kill instr is already a kill.");
+    assert(!NewKillMI->killsRegister(reg) &&
+           "New kill instr is already a kill.");
     OldKillMI->clearRegisterKills(reg, &TRI);
     NewKillMI->addRegisterKilled(reg, &TRI);
   }
@@ -1553,7 +1558,8 @@ void LiveIntervals::handleMove(MachineInstr* MI) {
   HME.moveAllRangesFrom(MI, OldIndex);
 }
 
-void LiveIntervals::handleMoveIntoBundle(MachineInstr* MI, MachineInstr* BundleStart) {
+void LiveIntervals::handleMoveIntoBundle(MachineInstr* MI,
+                                         MachineInstr* BundleStart) {
   SlotIndex NewIndex = Indexes->getInstructionIndex(BundleStart);
   HMEditor HME(*this, *MRI, *TRI, NewIndex);
   HME.moveAllRangesInto(MI, BundleStart);
