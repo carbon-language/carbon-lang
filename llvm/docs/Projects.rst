@@ -49,18 +49,18 @@ Create a Project from the Sample Project
 
 Follow these simple steps to start your project:
 
-#. Copy the ``llvm/projects/sample`` directory to any place of your choosing.
+1. Copy the ``llvm/projects/sample`` directory to any place of your choosing.
    You can place it anywhere you like. Rename the directory to match the name
    of your project.
 
-#. If you downloaded LLVM using Subversion, remove all the directories named
+2. If you downloaded LLVM using Subversion, remove all the directories named
    ``.svn`` (and all the files therein) from your project's new source tree.
    This will keep Subversion from thinking that your project is inside
    ``llvm/trunk/projects/sample``.
 
-#. Add your source code and Makefiles to your source tree.
+3. Add your source code and Makefiles to your source tree.
 
-#. If you want your project to be configured with the ``configure`` script then
+4. If you want your project to be configured with the ``configure`` script then
    you need to edit ``autoconf/configure.ac`` as follows:
 
    * **AC_INIT** - Place the name of your project, its version number and a
@@ -81,7 +81,7 @@ Follow these simple steps to start your project:
      your project uses. This macro arranges for your makefiles to be copied from
      the source directory, unmodified, to the build directory.
 
-#. After updating ``autoconf/configure.ac``, regenerate the configure script
+5. After updating ``autoconf/configure.ac``, regenerate the configure script
    with these commands. (You must be using ``Autoconf`` version 2.59 or later
    and your ``aclocal`` version should be 1.9 or later.)
 
@@ -90,7 +90,7 @@ Follow these simple steps to start your project:
    % cd autoconf
    % ./AutoRegen.sh
 
-#. Run ``configure`` in the directory in which you want to place object code.
+6. Run ``configure`` in the directory in which you want to place object code.
    Use the following options to tell your project where it can find LLVM:
 
    ``--with-llvmsrc=<directory>``
