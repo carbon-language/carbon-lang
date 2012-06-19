@@ -15,8 +15,8 @@ class CommandLineCompletionTestCase(TestBase):
     @classmethod
     def classCleanup(cls):
         """Cleanup the test byproducts."""
-        system(["/bin/sh", "-c", "rm -f child_send.txt"])
-        system(["/bin/sh", "-c", "rm -f child_read.txt"])
+        os.remove("child_send.txt")
+        os.remove("child_read.txt")
 
     def test_process_attach_dash_dash_con(self):
         """Test that 'process attach --con' completes to 'process attach --continue '."""

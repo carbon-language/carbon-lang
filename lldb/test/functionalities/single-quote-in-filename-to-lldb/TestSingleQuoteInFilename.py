@@ -16,9 +16,9 @@ class SingleQuoteInCommandLineTestCase(TestBase):
     @classmethod
     def classCleanup(cls):
         """Cleanup the test byproducts."""
-        system(["/bin/sh", "-c", "rm -f child_send.txt"])
-        system(["/bin/sh", "-c", "rm -f child_read.txt"])
-        system(["/bin/sh", "-c", "rm -f \"%s\"" % cls.myexe])
+        os.remove("child_send.txt")
+        os.remove("child_read.txt")
+        os.remove(cls.myexe)
 
     def test_lldb_invocation_with_single_quote_in_filename(self):
         """Test that 'lldb my_file_name' works where my_file_name is a string with a single quote char in it."""
