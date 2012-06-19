@@ -553,6 +553,9 @@ bool CXXDynamicCastExpr::isAlwaysNull() const
     DestType = DestType->castAs<PointerType>()->getPointeeType();
   }
 
+  if (DestType->isVoidType())
+    return false;
+
   const CXXRecordDecl *SrcRD = 
     cast<CXXRecordDecl>(SrcType->castAs<RecordType>()->getDecl());
 
