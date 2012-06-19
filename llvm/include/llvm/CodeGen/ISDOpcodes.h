@@ -585,8 +585,8 @@ namespace ISD {
     // DEBUGTRAP - Trap intended to get the attention of a debugger.
     DEBUGTRAP,
 
-    // PREFETCH - This corresponds to a prefetch intrinsic. It takes chains are
-    // their first operand. The other operands are the address to prefetch,
+    // PREFETCH - This corresponds to a prefetch intrinsic. The first operand
+    // is the chain.  The other operands are the address to prefetch,
     // read / write specifier, locality specifier and instruction / data cache
     // specifier.
     PREFETCH,
