@@ -383,8 +383,11 @@ void Driver::generateCompilationDiagnostics(Compilation &C,
     return;
 
   Diag(clang::diag::note_drv_command_failed_diag_msg)
-    << "Please submit a bug report to " BUG_REPORT_URL " and include command"
-    " line arguments and all diagnostic information.";
+    << "\n********************\n********************\n\n"
+    "PLEASE submit a BUG REPORT to " BUG_REPORT_URL " and _INCLUDE_ the "
+    "crash backtrace, all command line arguments, PREPROCESSED SOURCE, "
+    "and associated RUN SCRIPT.\n"
+    "\n********************\n********************";
 
   // Print the version of the compiler.
   PrintVersion(C, llvm::errs());
