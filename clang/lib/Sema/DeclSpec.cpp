@@ -761,7 +761,7 @@ void DeclSpec::SaveWrittenBuiltinSpecs() {
   writtenBS.ModeAttr = false;
   AttributeList* attrs = getAttributes().getList();
   while (attrs) {
-    if (attrs->getKind() == AttributeList::AT_mode) {
+    if (attrs->getKind() == AttributeList::AT_Mode) {
       writtenBS.ModeAttr = true;
       break;
     }

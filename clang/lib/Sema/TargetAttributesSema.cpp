@@ -244,9 +244,9 @@ namespace {
       if (Triple.getOS() == llvm::Triple::Win32 ||
           Triple.getOS() == llvm::Triple::MinGW32) {
         switch (Attr.getKind()) {
-        case AttributeList::AT_dllimport: HandleDLLImportAttr(D, Attr, S);
+        case AttributeList::AT_DLLImport: HandleDLLImportAttr(D, Attr, S);
                                           return true;
-        case AttributeList::AT_dllexport: HandleDLLExportAttr(D, Attr, S);
+        case AttributeList::AT_DLLExport: HandleDLLExportAttr(D, Attr, S);
                                           return true;
         default:                          break;
         }

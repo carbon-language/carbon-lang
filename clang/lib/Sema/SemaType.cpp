@@ -59,12 +59,12 @@ static void diagnoseBadTypeAttribute(Sema &S, const AttributeList &attr,
 
   unsigned diagID = 0;
   switch (attr.getKind()) {
-  case AttributeList::AT_objc_gc:
+  case AttributeList::AT_ObjCGC:
     diagID = diag::warn_pointer_attribute_wrong_type;
     useExpansionLoc = true;
     break;
 
-  case AttributeList::AT_objc_ownership:
+  case AttributeList::AT_ObjCOwnership:
     diagID = diag::warn_objc_object_attribute_wrong_type;
     useExpansionLoc = true;
     break;
@@ -93,19 +93,19 @@ static void diagnoseBadTypeAttribute(Sema &S, const AttributeList &attr,
 // objc_gc applies to Objective-C pointers or, otherwise, to the
 // smallest available pointer type (i.e. 'void*' in 'void**').
 #define OBJC_POINTER_TYPE_ATTRS_CASELIST \
-    case AttributeList::AT_objc_gc: \
-    case AttributeList::AT_objc_ownership
+    case AttributeList::AT_ObjCGC: \
+    case AttributeList::AT_ObjCOwnership
 
 // Function type attributes.
 #define FUNCTION_TYPE_ATTRS_CASELIST \
-    case AttributeList::AT_noreturn: \
-    case AttributeList::AT_cdecl: \
-    case AttributeList::AT_fastcall: \
-    case AttributeList::AT_stdcall: \
-    case AttributeList::AT_thiscall: \
-    case AttributeList::AT_pascal: \
-    case AttributeList::AT_regparm: \
-    case AttributeList::AT_pcs \
+    case AttributeList::AT_NoReturn: \
+    case AttributeList::AT_CDecl: \
+    case AttributeList::AT_FastCall: \
+    case AttributeList::AT_StdCall: \
+    case AttributeList::AT_ThisCall: \
+    case AttributeList::AT_Pascal: \
+    case AttributeList::AT_Regparm: \
+    case AttributeList::AT_Pcs \
 
 namespace {
   /// An object which stores processing state for the entire
@@ -284,9 +284,9 @@ static bool handleObjCOwnershipTypeAttr(TypeProcessingState &state,
 
 static bool handleObjCPointerTypeAttr(TypeProcessingState &state,
                                       AttributeList &attr, QualType &type) {
-  if (attr.getKind() == AttributeList::AT_objc_gc)
+  if (attr.getKind() == AttributeList::AT_ObjCGC)
     return handleObjCGCTypeAttr(state, attr, type);
-  assert(attr.getKind() == AttributeList::AT_objc_ownership);
+  assert(attr.getKind() == AttributeList::AT_ObjCOwnership);
   return handleObjCOwnershipTypeAttr(state, attr, type);
 }
 
@@ -505,7 +505,7 @@ static void distributeTypeAttrsFromDeclarator(TypeProcessingState &state,
       distributeObjCPointerTypeAttrFromDeclarator(state, *attr, declSpecType);
       break;
 
-    case AttributeList::AT_ns_returns_retained:
+    case AttributeList::AT_NSReturnsRetained:
       if (!state.getSema().getLangOpts().ObjCAutoRefCount)
         break;
       // fallthrough
@@ -1719,7 +1719,7 @@ static void inferARCWriteback(TypeProcessingState &state,
       return;
     for (const AttributeList *attr = chunk.getAttrs(); attr;
            attr = attr->getNext())
-      if (attr->getKind() == AttributeList::AT_objc_ownership)
+      if (attr->getKind() == AttributeList::AT_ObjCOwnership)
         return;
 
     transferARCOwnershipToDeclaratorChunk(state, Qualifiers::OCL_Autoreleasing,
@@ -2280,7 +2280,7 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
           bool Overloadable = false;
           for (const AttributeList *Attrs = D.getAttributes();
                Attrs; Attrs = Attrs->getNext()) {
-            if (Attrs->getKind() == AttributeList::AT_overloadable) {
+            if (Attrs->getKind() == AttributeList::AT_Overloadable) {
               Overloadable = true;
               break;
             }
@@ -2710,7 +2710,7 @@ static void transferARCOwnershipToDeclaratorChunk(TypeProcessingState &state,
   DeclaratorChunk &chunk = D.getTypeObject(chunkIndex);
   for (const AttributeList *attr = chunk.getAttrs(); attr;
          attr = attr->getNext())
-    if (attr->getKind() == AttributeList::AT_objc_ownership)
+    if (attr->getKind() == AttributeList::AT_ObjCOwnership)
       return;
 
   const char *attrStr = 0;
@@ -2806,33 +2806,33 @@ TypeSourceInfo *Sema::GetTypeForDeclaratorCast(Declarator &D, QualType FromTy) {
 static AttributeList::Kind getAttrListKind(AttributedType::Kind kind) {
   switch (kind) {
   case AttributedType::attr_address_space:
-    return AttributeList::AT_address_space;
+    return AttributeList::AT_AddressSpace;
   case AttributedType::attr_regparm:
-    return AttributeList::AT_regparm;
+    return AttributeList::AT_Regparm;
   case AttributedType::attr_vector_size:
-    return AttributeList::AT_vector_size;
+    return AttributeList::AT_VectorSize;
   case AttributedType::attr_neon_vector_type:
-    return AttributeList::AT_neon_vector_type;
+    return AttributeList::AT_NeonVectorType;
   case AttributedType::attr_neon_polyvector_type:
-    return AttributeList::AT_neon_polyvector_type;
+    return AttributeList::AT_NeonPolyVectorType;
   case AttributedType::attr_objc_gc:
-    return AttributeList::AT_objc_gc;
+    return AttributeList::AT_ObjCGC;
   case AttributedType::attr_objc_ownership:
-    return AttributeList::AT_objc_ownership;
+    return AttributeList::AT_ObjCOwnership;
   case AttributedType::attr_noreturn:
-    return AttributeList::AT_noreturn;
+    return AttributeList::AT_NoReturn;
   case AttributedType::attr_cdecl:
-    return AttributeList::AT_cdecl;
+    return AttributeList::AT_CDecl;
   case AttributedType::attr_fastcall:
-    return AttributeList::AT_fastcall;
+    return AttributeList::AT_FastCall;
   case AttributedType::attr_stdcall:
-    return AttributeList::AT_stdcall;
+    return AttributeList::AT_StdCall;
   case AttributedType::attr_thiscall:
-    return AttributeList::AT_thiscall;
+    return AttributeList::AT_ThisCall;
   case AttributedType::attr_pascal:
-    return AttributeList::AT_pascal;
+    return AttributeList::AT_Pascal;
   case AttributedType::attr_pcs:
-    return AttributeList::AT_pcs;
+    return AttributeList::AT_Pcs;
   }
   llvm_unreachable("unexpected attribute kind!");
 }
@@ -3667,7 +3667,7 @@ static bool handleFunctionTypeAttr(TypeProcessingState &state,
 
   FunctionTypeUnwrapper unwrapped(S, type);
 
-  if (attr.getKind() == AttributeList::AT_noreturn) {
+  if (attr.getKind() == AttributeList::AT_NoReturn) {
     if (S.CheckNoReturnAttr(attr))
       return true;
 
@@ -3683,7 +3683,7 @@ static bool handleFunctionTypeAttr(TypeProcessingState &state,
 
   // ns_returns_retained is not always a type attribute, but if we got
   // here, we're treating it as one right now.
-  if (attr.getKind() == AttributeList::AT_ns_returns_retained) {
+  if (attr.getKind() == AttributeList::AT_NSReturnsRetained) {
     assert(S.getLangOpts().ObjCAutoRefCount &&
            "ns_returns_retained treated as type attribute in non-ARC");
     if (attr.getNumArgs()) return true;
@@ -3698,7 +3698,7 @@ static bool handleFunctionTypeAttr(TypeProcessingState &state,
     return true;
   }
 
-  if (attr.getKind() == AttributeList::AT_regparm) {
+  if (attr.getKind() == AttributeList::AT_Regparm) {
     unsigned value;
     if (S.CheckRegparmAttr(attr, value))
       return true;
@@ -3986,12 +3986,12 @@ static void processTypeAttrs(TypeProcessingState &state, QualType &type,
     switch (attr.getKind()) {
     default: break;
 
-    case AttributeList::AT_may_alias:
+    case AttributeList::AT_MayAlias:
       // FIXME: This attribute needs to actually be handled, but if we ignore
       // it it breaks large amounts of Linux software.
       attr.setUsedAsTypeAttr();
       break;
-    case AttributeList::AT_address_space:
+    case AttributeList::AT_AddressSpace:
       HandleAddressSpaceTypeAttribute(type, attr, state.getSema());
       attr.setUsedAsTypeAttr();
       break;
@@ -4000,40 +4000,40 @@ static void processTypeAttrs(TypeProcessingState &state, QualType &type,
         distributeObjCPointerTypeAttr(state, attr, type);
       attr.setUsedAsTypeAttr();
       break;
-    case AttributeList::AT_vector_size:
+    case AttributeList::AT_VectorSize:
       HandleVectorSizeAttr(type, attr, state.getSema());
       attr.setUsedAsTypeAttr();
       break;
-    case AttributeList::AT_ext_vector_type:
+    case AttributeList::AT_ExtVectorType:
       if (state.getDeclarator().getDeclSpec().getStorageClassSpec()
             != DeclSpec::SCS_typedef)
         HandleExtVectorTypeAttr(type, attr, state.getSema());
       attr.setUsedAsTypeAttr();
       break;
-    case AttributeList::AT_neon_vector_type:
+    case AttributeList::AT_NeonVectorType:
       HandleNeonVectorTypeAttr(type, attr, state.getSema(),
                                VectorType::NeonVector, "neon_vector_type");
       attr.setUsedAsTypeAttr();
       break;
-    case AttributeList::AT_neon_polyvector_type:
+    case AttributeList::AT_NeonPolyVectorType:
       HandleNeonVectorTypeAttr(type, attr, state.getSema(),
                                VectorType::NeonPolyVector,
                                "neon_polyvector_type");
       attr.setUsedAsTypeAttr();
       break;
-    case AttributeList::AT_opencl_image_access:
+    case AttributeList::AT_OpenCLImageAccess:
       HandleOpenCLImageAccessAttribute(type, attr, state.getSema());
       attr.setUsedAsTypeAttr();
       break;
 
-    case AttributeList::AT_w64:
-    case AttributeList::AT_ptr32:
-    case AttributeList::AT_ptr64:
+    case AttributeList::AT_Win64:
+    case AttributeList::AT_Ptr32:
+    case AttributeList::AT_Ptr64:
       // FIXME: don't ignore these
       attr.setUsedAsTypeAttr();
       break;
 
-    case AttributeList::AT_ns_returns_retained:
+    case AttributeList::AT_NSReturnsRetained:
       if (!state.getSema().getLangOpts().ObjCAutoRefCount)
 	break;
       // fallthrough into the function attrs
