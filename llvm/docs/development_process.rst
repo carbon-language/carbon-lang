@@ -3,7 +3,14 @@
 Development Process Documentation
 =================================
 
- * `LLVM Project Guide <Projects.html>`_
+.. toctree::
+   :hidden:
+
+   Projects
+
+\
+
+ * :ref:`projects`
 
    How-to guide and templates for new projects that *use* the LLVM
    infrastructure.  The templates (directory organization, Makefiles, and test
