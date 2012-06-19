@@ -169,18 +169,18 @@ void shrink_int() {
   Agg<char> ce2 = { ConvertVar<short>() }; // expected-error {{non-constant-expression cannot be narrowed from type 'short' to 'char'}} expected-note {{override}}
 
   // Negative -> larger unsigned type.
-  unsigned long long ll1 = { -1 }; // expected-error {{cannot be narrowed}} expected-note {{override}}
+  unsigned long long ll1 = { -1 }; // expected-error {{ -1 which cannot be narrowed}} expected-note {{override}}
   unsigned long long ll2 = { 1 }; // OK
-  unsigned long long ll3 = { s }; // expected-error {{cannot be narrowed}} expected-note {{override}}
+  unsigned long long ll3 = { s }; // expected-error {{cannot be narrowed from type 'short'}} expected-note {{override}}
   unsigned long long ll4 = { us }; // OK
-  unsigned long long ll5 = { ll }; // expected-error {{cannot be narrowed}} expected-note {{override}}
-  Agg<unsigned long long> ll6 = { -1 }; // expected-error {{cannot be narrowed}} expected-note {{override}}
+  unsigned long long ll5 = { ll }; // expected-error {{cannot be narrowed from type 'long long'}} expected-note {{override}}
+  Agg<unsigned long long> ll6 = { -1 }; // expected-error {{ -1 which cannot be narrowed}} expected-note {{override}}
   Agg<unsigned long long> ll7 = { 18446744073709551615ULL }; // OK
-  Agg<unsigned long long> ll8 = { __int128(18446744073709551615ULL) + 1 }; // expected-error {{cannot be narrowed}} expected-note {{override}} expected-warning {{changes value}}
+  Agg<unsigned long long> ll8 = { __int128(18446744073709551615ULL) + 1 }; // expected-error {{ 18446744073709551616 which cannot be narrowed}} expected-note {{override}} expected-warning {{changes value}}
   signed char c = 'x';
-  unsigned short usc1 = { c }; // expected-error {{cannot be narrowed}} expected-note {{override}}
+  unsigned short usc1 = { c }; // expected-error {{non-constant-expression cannot be narrowed from type 'signed char'}} expected-note {{override}}
   unsigned short usc2 = { (signed char)'x' }; // OK
-  unsigned short usc3 = { (signed char)-1 }; // expected-error {{cannot be narrowed}} expected-note {{override}}
+  unsigned short usc3 = { (signed char)-1 }; // expected-error {{ -1 which cannot be narrowed}} expected-note {{override}}
 }
 
 // Be sure that type- and value-dependent expressions in templates get the error

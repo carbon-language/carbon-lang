@@ -397,14 +397,14 @@ StandardConversionSequence::getNarrowingKind(ASTContext &Ctx,
       if (!Initializer->isIntegerConstantExpr(InitializerValue, Ctx)) {
         // Such conversions on variables are always narrowing.
         return NK_Variable_Narrowing;
-      } else if (FromWidth < ToWidth) {
+      }
+      bool Narrowing = false;
+      if (FromWidth < ToWidth) {
         // Negative -> unsigned is narrowing. Otherwise, more bits is never
         // narrowing.
         if (InitializerValue.isSigned() && InitializerValue.isNegative())
-          return NK_Constant_Narrowing;
+          Narrowing = true;
       } else {
-        ConstantValue = APValue(InitializerValue);
-
         // Add a bit to the InitializerValue so we don't have to worry about
         // signed vs. unsigned comparisons.
         InitializerValue = InitializerValue.extend(
@@ -416,10 +416,13 @@ StandardConversionSequence::getNarrowingKind(ASTContext &Ctx,
         ConvertedValue = ConvertedValue.extend(InitializerValue.getBitWidth());
         ConvertedValue.setIsSigned(InitializerValue.isSigned());
         // If the result is different, this was a narrowing conversion.
-        if (ConvertedValue != InitializerValue) {
-          ConstantType = Initializer->getType();
-          return NK_Constant_Narrowing;
-        }
+        if (ConvertedValue != InitializerValue)
+          Narrowing = true;
+      }
+      if (Narrowing) {
+        ConstantType = Initializer->getType();
+        ConstantValue = APValue(InitializerValue);
+        return NK_Constant_Narrowing;
       }
     }
     return NK_Not_Narrowing;
