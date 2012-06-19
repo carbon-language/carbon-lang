@@ -375,7 +375,7 @@ bool MipsLongBranch::runOnMachineFunction(MachineFunction &F) {
     emitGPDisp(F, TII);
 
   if (SkipLongBranch)
-    return false;
+    return true;
 
   MF = &F;
   initMBBInfo();
@@ -393,9 +393,9 @@ bool MipsLongBranch::runOnMachineFunction(MachineFunction &F) {
       if (!I->Br || I->HasLongBranch)
         continue;
 
-      int64_t Offset = computeOffset(I->Br);
-
       if (!ForceLongBranch) {
+        int64_t Offset = computeOffset(I->Br);
+
         // Check if offset fits into 16-bit immediate field of branches.
         if ((I->Br->isConditionalBranch() || IsPIC) && isInt<16>(Offset / 4))
           continue;
@@ -414,5 +414,5 @@ bool MipsLongBranch::runOnMachineFunction(MachineFunction &F) {
   if (EverMadeChange)
     MF->RenumberBlocks();
 
-  return EverMadeChange;
+  return true;
 }
