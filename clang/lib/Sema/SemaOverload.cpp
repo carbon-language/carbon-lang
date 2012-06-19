@@ -8161,11 +8161,6 @@ void DiagnoseBadConversion(Sema &S, OverloadCandidate *Cand, unsigned I) {
     } else if (ToTy->isLValueReferenceType() && !FromExpr->isLValue() &&
                ToTy.getNonReferenceType().getCanonicalType() ==
                FromTy.getNonReferenceType().getCanonicalType()) {
-      QualType T1 = ToTy.getCanonicalType();
-      QualType T2 = ToTy.getNonReferenceType();
-      QualType T3 = T2.getUnqualifiedType();
-      QualType T4 = FromTy.getCanonicalType();
-      (void)T1; (void)T2; (void)T3; (void)T4;
       S.Diag(Fn->getLocation(), diag::note_ovl_candidate_bad_lvalue)
         << (unsigned) FnKind << FnDesc
         << (FromExpr ? FromExpr->getSourceRange() : SourceRange())
