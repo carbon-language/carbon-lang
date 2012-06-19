@@ -80,25 +80,17 @@ class EnumArgument<string name, string type, list<string> values,
   list<string> Enums = enums;
 }
 
-// This handles one spelling of an attribute.
-class Spelling<string name, string variety> {
-  string Name = name;
-  string Variety = variety;
-}
-
-class GNU<string name> : Spelling<name, "GNU">;
-class Declspec<string name> : Spelling<name, "Declspec">;
-class CXX11<string namespace, string name> : Spelling<name, "CXX11"> {
-  string Namespace = namespace;
-}
-
 class Attr {
   // The various ways in which an attribute can be spelled in source
-  list<Spelling> Spellings;
+  list<string> Spellings;
   // The things to which an attribute can appertain
   list<AttrSubject> Subjects;
   // The arguments allowed on an attribute
   list<Argument> Args = [];
+  // The namespaces in which the attribute appears in C++0x attributes.
+  // The attribute will not be permitted in C++0x attribute-specifiers if
+  // this is empty; the empty string can be used as a namespace.
+  list<string> Namespaces = [];
   // Set to true for attributes with arguments which require delayed parsing. 
   bit LateParsed = 0;  
   // Set to false to prevent an attribute from being propagated from a template
@@ -130,20 +122,21 @@ class InheritableParamAttr : InheritableAttr;
 //
 
 def AddressSpace : Attr {
-  let Spellings = [GNU<"address_space">];
+  let Spellings = ["address_space"];
   let Args = [IntArgument<"AddressSpace">];
   let ASTNode = 0;  
 }
 
 def Alias : InheritableAttr {
-  let Spellings = [GNU<"alias">];
+  let Spellings = ["alias"];
   let Args = [StringArgument<"Aliasee">];
 }
 
 def Aligned : InheritableAttr {
-  let Spellings = [GNU<"aligned">, GNU<"align">];
+  let Spellings = ["aligned", "align"];
   let Subjects = [NonBitField, NormalVar, Tag];
-  let Args = [AlignedArgument<"Alignment">, BoolArgument<"IsMSDeclSpec">];
+  let Args = [AlignedArgument<"Alignment">];
+  let Namespaces = ["", "std"];
 }
 
 def AlignMac68k : InheritableAttr {
@@ -152,20 +145,20 @@ def AlignMac68k : InheritableAttr {
 }
 
 def AllocSize : Attr {
-  let Spellings = [GNU<"alloc_size">];
+  let Spellings = ["alloc_size"];
   let Args = [VariadicUnsignedArgument<"Args">];
 }
 
 def AlwaysInline : InheritableAttr {
-  let Spellings = [GNU<"always_inline">];
+  let Spellings = ["always_inline"];
 }
 
 def AnalyzerNoReturn : InheritableAttr {
-  let Spellings = [GNU<"analyzer_noreturn">];
+  let Spellings = ["analyzer_noreturn"];
 }
 
 def Annotate : InheritableParamAttr {
-  let Spellings = [GNU<"annotate">];
+  let Spellings = ["annotate"];
   let Args = [StringArgument<"Annotation">];
 }
 
@@ -176,7 +169,7 @@ def AsmLabel : InheritableAttr {
 }
 
 def Availability : InheritableAttr {
-  let Spellings = [GNU<"availability">];
+  let Spellings = ["availability"];
   let Args = [IdentifierArgument<"platform">, VersionArgument<"introduced">,
               VersionArgument<"deprecated">, VersionArgument<"obsoleted">,
               BoolArgument<"unavailable">, StringArgument<"message">];
@@ -189,26 +182,31 @@ def Availability : InheritableAttr {
 } }];
 }
 
+def BaseCheck : Attr {
+  let Spellings = ["base_check"];
+  let ASTNode = 0;
+}
+
 def Blocks : InheritableAttr {
-  let Spellings = [GNU<"blocks">];
+  let Spellings = ["blocks"];
   let Args = [EnumArgument<"Type", "BlockType", ["byref"], ["ByRef"]>];
 }
 
 def Bounded : Attr {
-  let Spellings = [GNU<"bounded">];
+  let Spellings = ["bounded"];
   let ASTNode = 0;
   let SemaHandler = 0;
   let Ignored = 1;
 }
 
 def CarriesDependency : InheritableParamAttr {
-  let Spellings = [GNU<"carries_dependency">, CXX11<"","carries_dependency">,
-                   CXX11<"std","carries_dependency">];
+  let Spellings = ["carries_dependency"];
   let Subjects = [ParmVar, Function];
+  let Namespaces = ["", "std"];
 }
 
 def CDecl : InheritableAttr {
-  let Spellings = [GNU<"cdecl">, GNU<"__cdecl">];
+  let Spellings = ["cdecl", "__cdecl"];
 }
 
 // cf_audited_transfer indicates that the given function has been
@@ -216,7 +214,7 @@ def CDecl : InheritableAttr {
 // cf_returns_retained attributes.  It is generally applied by
 // '#pragma clang arc_cf_code_audited' rather than explicitly.
 def CFAuditedTransfer : InheritableAttr {
-  let Spellings = [GNU<"cf_audited_transfer">];
+  let Spellings = ["cf_audited_transfer"];
   let Subjects = [Function];
 }
 
@@ -224,151 +222,152 @@ def CFAuditedTransfer : InheritableAttr {
 // It indicates that the function has unknown or unautomatable
 // transfer semantics.
 def CFUnknownTransfer : InheritableAttr {
-  let Spellings = [GNU<"cf_unknown_transfer">];
+  let Spellings = ["cf_unknown_transfer"];
   let Subjects = [Function];
 }
 
 def CFReturnsAutoreleased : Attr {
-  let Spellings = [GNU<"cf_returns_autoreleased">];
+  let Spellings = ["cf_returns_autoreleased"];
   let ASTNode = 0;
 }
 
 def CFReturnsRetained : InheritableAttr {
-  let Spellings = [GNU<"cf_returns_retained">];
+  let Spellings = ["cf_returns_retained"];
   let Subjects = [ObjCMethod, Function];
 }
 
 def CFReturnsNotRetained : InheritableAttr {
-  let Spellings = [GNU<"cf_returns_not_retained">];
+  let Spellings = ["cf_returns_not_retained"];
   let Subjects = [ObjCMethod, Function];
 }
 
 def CFConsumed : InheritableParamAttr {
-  let Spellings = [GNU<"cf_consumed">];
+  let Spellings = ["cf_consumed"];
   let Subjects = [ParmVar];
 }
 
 def Cleanup : InheritableAttr {
-  let Spellings = [GNU<"cleanup">];
+  let Spellings = ["cleanup"];
   let Args = [FunctionArgument<"FunctionDecl">];
 }
 
 def Cold : InheritableAttr {
-  let Spellings = [GNU<"cold">];
+  let Spellings = ["cold"];
 }
 
 def Common : InheritableAttr {
-  let Spellings = [GNU<"common">];
+  let Spellings = ["common"];
 }
 
 def Const : InheritableAttr {
-  let Spellings = [GNU<"const">, GNU<"__const">];
+  let Spellings = ["const", "__const"];
 }
 
 def Constructor : InheritableAttr {
-  let Spellings = [GNU<"constructor">];
+  let Spellings = ["constructor"];
   let Args = [IntArgument<"Priority">];
 }
 
 def CUDAConstant : InheritableAttr {
-  let Spellings = [GNU<"constant">];
+  let Spellings = ["constant"];
 }
 
 def CUDADevice : InheritableAttr {
-  let Spellings = [GNU<"device">];
+  let Spellings = ["device"];
 }
 
 def CUDAGlobal : InheritableAttr {
-  let Spellings = [GNU<"global">];
+  let Spellings = ["global"];
 }
 
 def CUDAHost : InheritableAttr {
-  let Spellings = [GNU<"host">];
+  let Spellings = ["host"];
 }
 
 def CUDALaunchBounds : InheritableAttr {
-  let Spellings = [GNU<"launch_bounds">];
+  let Spellings = ["launch_bounds"];
   let Args = [IntArgument<"MaxThreads">, DefaultIntArgument<"MinBlocks", 0>];
 }
 
 def CUDAShared : InheritableAttr {
-  let Spellings = [GNU<"shared">];
+  let Spellings = ["shared"];
 }
 
 def OpenCLKernel : Attr {
-  let Spellings = [GNU<"opencl_kernel_function">];
+  let Spellings = ["opencl_kernel_function"];
 }
 
 def OpenCLImageAccess : Attr {
-  let Spellings = [GNU<"opencl_image_access">];
+  let Spellings = ["opencl_image_access"];
   let Args = [IntArgument<"Access">];
   let ASTNode = 0;
 }
 
 def Deprecated : InheritableAttr {
-  let Spellings = [GNU<"deprecated">];
+  let Spellings = ["deprecated"];
   let Args = [StringArgument<"Message">];
 }
 
 def Destructor : InheritableAttr {
-  let Spellings = [GNU<"destructor">];
+  let Spellings = ["destructor"];
   let Args = [IntArgument<"Priority">];
 }
 
 def ExtVectorType : Attr {
-  let Spellings = [GNU<"ext_vector_type">];
+  let Spellings = ["ext_vector_type"];
   let Args = [ExprArgument<"NumElements">];
   let ASTNode = 0;
 }
 
 def FallThrough : Attr {
-  let Spellings = [GNU<"fallthrough">, CXX11<"clang","fallthrough">];
+  let Namespaces = ["clang"];
+  let Spellings = ["fallthrough"];
   let Subjects = [NullStmt];
 }
 
 def FastCall : InheritableAttr {
-  let Spellings = [GNU<"fastcall">, GNU<"__fastcall">];
+  let Spellings = ["fastcall", "__fastcall"];
 }
 
-def Final : InheritableAttr {
+def Final : InheritableAttr { 
   let Spellings = [];
   let SemaHandler = 0;
 }
 
 def Format : InheritableAttr {
-  let Spellings = [GNU<"format">];
+  let Spellings = ["format"];
   let Args = [StringArgument<"Type">, IntArgument<"FormatIdx">,
               IntArgument<"FirstArg">];
 }
 
 def FormatArg : InheritableAttr {
-  let Spellings = [GNU<"format_arg">];
+  let Spellings = ["format_arg"];
   let Args = [IntArgument<"FormatIdx">];
 }
 
 def GNUInline : InheritableAttr {
-  let Spellings = [GNU<"gnu_inline">];
+  let Spellings = ["gnu_inline"];
 }
 
 def Hot : InheritableAttr {
-  let Spellings = [GNU<"hot">];
+  let Spellings = ["hot"];
 }
 
 def IBAction : InheritableAttr {
-  let Spellings = [GNU<"ibaction">];
+  let Spellings = ["ibaction"];
 }
 
 def IBOutlet : InheritableAttr {
-  let Spellings = [GNU<"iboutlet">];
+  let Spellings = ["iboutlet"];
 }
 
 def IBOutletCollection : InheritableAttr {
-  let Spellings = [GNU<"iboutletcollection">];
+  let Spellings = ["iboutletcollection"];
   let Args = [TypeArgument<"Interface">, SourceLocArgument<"InterfaceLoc">];
 }
 
 def Malloc : InheritableAttr {
-  let Spellings = [GNU<"malloc">];
+  let Spellings = ["malloc"];
 }
 
 def MaxFieldAlignment : InheritableAttr {
@@ -378,7 +377,7 @@ def MaxFieldAlignment : InheritableAttr {
 }
 
 def MayAlias : InheritableAttr {
-  let Spellings = [GNU<"may_alias">];
+  let Spellings = ["may_alias"];
 }
 
 def MSP430Interrupt : InheritableAttr {
@@ -398,45 +397,45 @@ def MBlazeSaveVolatiles : InheritableAttr {
 }
 
 def Mode : Attr {
-  let Spellings = [GNU<"mode">];
+  let Spellings = ["mode"];
   let Args = [IdentifierArgument<"Mode">];
   let ASTNode = 0;
 }
 
 def Naked : InheritableAttr {
-  let Spellings = [GNU<"naked">];
+  let Spellings = ["naked"];
 }
 
 def NeonPolyVectorType : Attr {
-  let Spellings = [GNU<"neon_polyvector_type">];
+  let Spellings = ["neon_polyvector_type"];
   let Args = [IntArgument<"NumElements">];
   let ASTNode = 0;
 }
 
 def NeonVectorType : Attr {
-  let Spellings = [GNU<"neon_vector_type">];
+  let Spellings = ["neon_vector_type"];
   let Args = [IntArgument<"NumElements">];
   let ASTNode = 0;
 }
 
 def ReturnsTwice : InheritableAttr {
-  let Spellings = [GNU<"returns_twice">];
+  let Spellings = ["returns_twice"];
 }
 
 def NoCommon : InheritableAttr {
-  let Spellings = [GNU<"nocommon">];
+  let Spellings = ["nocommon"];
 }
 
 def NoDebug : InheritableAttr {
-  let Spellings = [GNU<"nodebug">];
+  let Spellings = ["nodebug"];
 }
 
 def NoInline : InheritableAttr {
-  let Spellings = [GNU<"noinline">];
+  let Spellings = ["noinline"];
 }
 
 def NonNull : InheritableAttr {
-  let Spellings = [GNU<"nonnull">];
+  let Spellings = ["nonnull"];
   let Args = [VariadicUnsignedArgument<"Args">];
   let AdditionalMembers =
 [{bool isNonNull(unsigned idx) const {
@@ -449,58 +448,58 @@ def NonNull : InheritableAttr {
 }
 
 def NoReturn : InheritableAttr {
-  let Spellings = [GNU<"noreturn">, CXX11<"","noreturn">,
-                   CXX11<"std","noreturn">];
+  let Spellings = ["noreturn"];
   // FIXME: Does GCC allow this on the function instead?
   let Subjects = [Function];
+  let Namespaces = ["", "std"];
 }
 
 def NoInstrumentFunction : InheritableAttr {
-  let Spellings = [GNU<"no_instrument_function">];
+  let Spellings = ["no_instrument_function"];
   let Subjects = [Function];
 }
 
 def NoThrow : InheritableAttr {
-  let Spellings = [GNU<"nothrow">];
+  let Spellings = ["nothrow"];
 }
 
 def NSBridged : InheritableAttr {
-  let Spellings = [GNU<"ns_bridged">];
+  let Spellings = ["ns_bridged"];
   let Subjects = [Record];
   let Args = [IdentifierArgument<"BridgedType">];
 }
 
 def NSReturnsRetained : InheritableAttr {
-  let Spellings = [GNU<"ns_returns_retained">];
+  let Spellings = ["ns_returns_retained"];
   let Subjects = [ObjCMethod, Function];
 }
 
 def NSReturnsNotRetained : InheritableAttr {
-  let Spellings = [GNU<"ns_returns_not_retained">];
+  let Spellings = ["ns_returns_not_retained"];
   let Subjects = [ObjCMethod, Function];
 }
 
 def NSReturnsAutoreleased : InheritableAttr {
-  let Spellings = [GNU<"ns_returns_autoreleased">];
+  let Spellings = ["ns_returns_autoreleased"];
   let Subjects = [ObjCMethod, Function];
 }
 
 def NSConsumesSelf : InheritableAttr {
-  let Spellings = [GNU<"ns_consumes_self">];
+  let Spellings = ["ns_consumes_self"];
   let Subjects = [ObjCMethod];
 }
 
 def NSConsumed : InheritableParamAttr {
-  let Spellings = [GNU<"ns_consumed">];
+  let Spellings = ["ns_consumed"];
   let Subjects = [ParmVar];
 }
 
 def ObjCException : InheritableAttr {
-  let Spellings = [GNU<"objc_exception">];
+  let Spellings = ["objc_exception"];
 }
 
 def ObjCMethodFamily : InheritableAttr {
-  let Spellings = [GNU<"objc_method_family">];
+  let Spellings = ["objc_method_family"];
   let Subjects = [ObjCMethod];
   let Args = [EnumArgument<"Family", "FamilyKind",
                ["none", "alloc", "copy", "init", "mutableCopy", "new"],
@@ -509,26 +508,26 @@ def ObjCMethodFamily : InheritableAttr {
 }
 
 def ObjCNSObject : InheritableAttr {
-  let Spellings = [GNU<"NSObject">];
+  let Spellings = ["NSObject"];
 }
 
 def ObjCPreciseLifetime : Attr {
-  let Spellings = [GNU<"objc_precise_lifetime">];
+  let Spellings = ["objc_precise_lifetime"];
   let Subjects = [Var];
 }
 
 def ObjCReturnsInnerPointer : Attr {
-  let Spellings = [GNU<"objc_returns_inner_pointer">];
+  let Spellings = ["objc_returns_inner_pointer"];
   let Subjects = [ObjCMethod];
 }
 
 def ObjCRootClass : Attr {
-  let Spellings = [GNU<"objc_root_class">];
+  let Spellings = ["objc_root_class"];
   let Subjects = [ObjCInterface];
 }
 
 def Overloadable : Attr {
-  let Spellings = [GNU<"overloadable">];
+  let Spellings = ["overloadable"];
 }
 
 def Override : InheritableAttr { 
@@ -537,8 +536,7 @@ def Override : InheritableAttr {
 }
 
 def Ownership : InheritableAttr {
-  let Spellings = [GNU<"ownership_holds">, GNU<"ownership_returns">,
-                   GNU<"ownership_takes">];
+  let Spellings = ["ownership_holds", "ownership_returns", "ownership_takes"];
   let DistinctSpellings = 1;
   let Args = [EnumArgument<"OwnKind", "OwnershipKind",
                     ["ownership_holds", "ownership_returns", "ownership_takes"],
@@ -547,112 +545,112 @@ def Ownership : InheritableAttr {
 }
 
 def Packed : InheritableAttr {
-  let Spellings = [GNU<"packed">];
+  let Spellings = ["packed"];
 }
 
 def Pcs : InheritableAttr {
-  let Spellings = [GNU<"pcs">];
+  let Spellings = ["pcs"];
   let Args = [EnumArgument<"PCS", "PCSType",
                            ["aapcs", "aapcs-vfp"],
                            ["AAPCS", "AAPCS_VFP"]>];
 }
 
 def Pure : InheritableAttr {
-  let Spellings = [GNU<"pure">];
+  let Spellings = ["pure"];
 }
 
 def Regparm : InheritableAttr {
-  let Spellings = [GNU<"regparm">];
+  let Spellings = ["regparm"];
   let Args = [UnsignedArgument<"NumParams">];
 }
 
 def ReqdWorkGroupSize : InheritableAttr {
-  let Spellings = [GNU<"reqd_work_group_size">];
+  let Spellings = ["reqd_work_group_size"];
   let Args = [UnsignedArgument<"XDim">, UnsignedArgument<"YDim">,
               UnsignedArgument<"ZDim">];
 }
 
 def InitPriority : InheritableAttr {
-  let Spellings = [GNU<"init_priority">];
+  let Spellings = ["init_priority"];
   let Args = [UnsignedArgument<"Priority">];
 }
 
 def Section : InheritableAttr {
-  let Spellings = [GNU<"section">];
+  let Spellings = ["section"];
   let Args = [StringArgument<"Name">];
 }
 
 def Sentinel : InheritableAttr {
-  let Spellings = [GNU<"sentinel">];
+  let Spellings = ["sentinel"];
   let Args = [DefaultIntArgument<"Sentinel", 0>,
               DefaultIntArgument<"NullPos", 0>];
 }
 
 def StdCall : InheritableAttr {
-  let Spellings = [GNU<"stdcall">, GNU<"__stdcall">];
+  let Spellings = ["stdcall", "__stdcall"];
 }
 
 def ThisCall : InheritableAttr {
-  let Spellings = [GNU<"thiscall">, GNU<"__thiscall">];
+  let Spellings = ["thiscall", "__thiscall"];
 }
 
 def Pascal : InheritableAttr {
-  let Spellings = [GNU<"pascal">];
+  let Spellings = ["pascal", "__pascal"];
 }
 
 def TransparentUnion : InheritableAttr {
-  let Spellings = [GNU<"transparent_union">];
+  let Spellings = ["transparent_union"];
 }
 
 def Unavailable : InheritableAttr {
-  let Spellings = [GNU<"unavailable">];
+  let Spellings = ["unavailable"];
   let Args = [StringArgument<"Message">];
 }
 
 def ArcWeakrefUnavailable : InheritableAttr {
-  let Spellings = [GNU<"objc_arc_weak_reference_unavailable">];
+  let Spellings = ["objc_arc_weak_reference_unavailable"];
   let Subjects = [ObjCInterface];
 }
 
 def ObjCGC : Attr {
-  let Spellings = [GNU<"objc_gc">];
+  let Spellings = ["objc_gc"];
   let Args = [IdentifierArgument<"Kind">];
   let ASTNode = 0;
 }
 
 def ObjCOwnership : Attr {
-  let Spellings = [GNU<"objc_ownership">];
+  let Spellings = ["objc_ownership"];
   let Args = [IdentifierArgument<"Kind">];
   let ASTNode = 0;
 }
 
 def ObjCRequiresPropertyDefs : InheritableAttr {
-  let Spellings = [GNU<"objc_requires_property_definitions">];
+  let Spellings = ["objc_requires_property_definitions"];
   let Subjects = [ObjCInterface];
 }
 
 def Unused : InheritableAttr {
-  let Spellings = [GNU<"unused">];
+  let Spellings = ["unused"];
 }
 
 def Used : InheritableAttr {
-  let Spellings = [GNU<"used">];
+  let Spellings = ["used"];
 }
 
 def Uuid : InheritableAttr {
-  let Spellings = [GNU<"uuid">];
+  let Spellings = ["uuid"];
   let Args = [StringArgument<"Guid">];
   let Subjects = [CXXRecord];
 }
 
 def VectorSize : Attr {
-  let Spellings = [GNU<"vector_size">];
+  let Spellings = ["vector_size"];
   let Args = [ExprArgument<"NumBytes">];
   let ASTNode = 0;
 }
 
 def VecTypeHint : Attr {
-  let Spellings = [GNU<"vec_type_hint">];
+  let Spellings = ["vec_type_hint"];
   let ASTNode = 0;
   let SemaHandler = 0;
   let Ignored = 1;
@@ -660,31 +658,31 @@ def VecTypeHint : Attr {
 
 def Visibility : InheritableAttr {
   let Clone = 0;
-  let Spellings = [GNU<"visibility">];
+  let Spellings = ["visibility"];
   let Args = [EnumArgument<"Visibility", "VisibilityType",
                            ["default", "hidden", "internal", "protected"],
                            ["Default", "Hidden", "Hidden", "Protected"]>];
 }
 
 def VecReturn : InheritableAttr {
-  let Spellings = [GNU<"vecreturn">];
+  let Spellings = ["vecreturn"];
   let Subjects = [CXXRecord];
 }
 
 def WarnUnusedResult : InheritableAttr {
-  let Spellings = [GNU<"warn_unused_result">];
+  let Spellings = ["warn_unused_result"];
 }
 
 def Weak : InheritableAttr {
-  let Spellings = [GNU<"weak">];
+  let Spellings = ["weak"];
 }
 
 def WeakImport : InheritableAttr {
-  let Spellings = [GNU<"weak_import">];
+  let Spellings = ["weak_import"];
 }
 
 def WeakRef : InheritableAttr {
-  let Spellings = [GNU<"weakref">];
+  let Spellings = ["weakref"];
 }
 
 def X86ForceAlignArgPointer : InheritableAttr {
@@ -693,68 +691,68 @@ def X86ForceAlignArgPointer : InheritableAttr {
 
 // AddressSafety attribute (e.g. for AddressSanitizer)
 def NoAddressSafetyAnalysis : InheritableAttr {
-  let Spellings = [GNU<"no_address_safety_analysis">];
+  let Spellings = ["no_address_safety_analysis"];
 }
 
 // C/C++ Thread safety attributes (e.g. for deadlock, data race checking)
 
 def GuardedVar : InheritableAttr {
-  let Spellings = [GNU<"guarded_var">];
+  let Spellings = ["guarded_var"];
 }
 
 def PtGuardedVar : InheritableAttr {
-  let Spellings = [GNU<"pt_guarded_var">];
+  let Spellings = ["pt_guarded_var"];
 }
 
 def Lockable : InheritableAttr {
-  let Spellings = [GNU<"lockable">];
+  let Spellings = ["lockable"];
 }
 
 def ScopedLockable : InheritableAttr {
-  let Spellings = [GNU<"scoped_lockable">];
+  let Spellings = ["scoped_lockable"];
 }
 
 def NoThreadSafetyAnalysis : InheritableAttr {
-  let Spellings = [GNU<"no_thread_safety_analysis">];
+  let Spellings = ["no_thread_safety_analysis"];
 }
 
 def GuardedBy : InheritableAttr {
-  let Spellings = [GNU<"guarded_by">];
+  let Spellings = ["guarded_by"];
   let Args = [ExprArgument<"Arg">];
   let LateParsed = 1;
   let TemplateDependent = 1;
 }
 
 def PtGuardedBy : InheritableAttr {
-  let Spellings = [GNU<"pt_guarded_by">];
+  let Spellings = ["pt_guarded_by"];
   let Args = [ExprArgument<"Arg">];
   let LateParsed = 1;
   let TemplateDependent = 1;
 }
 
 def AcquiredAfter : InheritableAttr {
-  let Spellings = [GNU<"acquired_after">];
+  let Spellings = ["acquired_after"];
   let Args = [VariadicExprArgument<"Args">];
   let LateParsed = 1;
   let TemplateDependent = 1;
 }
 
 def AcquiredBefore : InheritableAttr {
-  let Spellings = [GNU<"acquired_before">];
+  let Spellings = ["acquired_before"];
   let Args = [VariadicExprArgument<"Args">];
   let LateParsed = 1;
   let TemplateDependent = 1;
 }
 
 def ExclusiveLockFunction : InheritableAttr {
-  let Spellings = [GNU<"exclusive_lock_function">];
+  let Spellings = ["exclusive_lock_function"];
   let Args = [VariadicExprArgument<"Args">];
   let LateParsed = 1;
   let TemplateDependent = 1;
 }
 
 def SharedLockFunction : InheritableAttr {
-  let Spellings = [GNU<"shared_lock_function">];
+  let Spellings = ["shared_lock_function"];
   let Args = [VariadicExprArgument<"Args">];
   let LateParsed = 1;
   let TemplateDependent = 1;
@@ -763,7 +761,7 @@ def SharedLockFunction : InheritableAttr {
 // The first argument is an integer or boolean value specifying the return value
 // of a successful lock acquisition.
 def ExclusiveTrylockFunction : InheritableAttr {
-  let Spellings = [GNU<"exclusive_trylock_function">];
+  let Spellings = ["exclusive_trylock_function"];
   let Args = [ExprArgument<"SuccessValue">, VariadicExprArgument<"Args">];
   let LateParsed = 1;
   let TemplateDependent = 1;
@@ -772,42 +770,42 @@ def ExclusiveTrylockFunction : InheritableAttr {
 // The first argument is an integer or boolean value specifying the return value
 // of a successful lock acquisition.
 def SharedTrylockFunction : InheritableAttr {
-  let Spellings = [GNU<"shared_trylock_function">];
+  let Spellings = ["shared_trylock_function"];
   let Args = [ExprArgument<"SuccessValue">, VariadicExprArgument<"Args">];
   let LateParsed = 1;
   let TemplateDependent = 1;
 }
 
 def UnlockFunction : InheritableAttr {
-  let Spellings = [GNU<"unlock_function">];
+  let Spellings = ["unlock_function"];
   let Args = [VariadicExprArgument<"Args">];
   let LateParsed = 1;
   let TemplateDependent = 1;
 }
 
 def LockReturned : InheritableAttr {
-  let Spellings = [GNU<"lock_returned">];
+  let Spellings = ["lock_returned"];
   let Args = [ExprArgument<"Arg">];
   let LateParsed = 1;
   let TemplateDependent = 1;
 }
 
 def LocksExcluded : InheritableAttr {
-  let Spellings = [GNU<"locks_excluded">];
+  let Spellings = ["locks_excluded"];
   let Args = [VariadicExprArgument<"Args">];
   let LateParsed = 1;
   let TemplateDependent = 1;
 }
 
 def ExclusiveLocksRequired : InheritableAttr {
-  let Spellings = [GNU<"exclusive_locks_required">];
+  let Spellings = ["exclusive_locks_required"];
   let Args = [VariadicExprArgument<"Args">];
   let LateParsed = 1;
   let TemplateDependent = 1;
 }
 
 def SharedLocksRequired : InheritableAttr {
-  let Spellings = [GNU<"shared_locks_required">];
+  let Spellings = ["shared_locks_required"];
   let Args = [VariadicExprArgument<"Args">];
   let LateParsed = 1;
   let TemplateDependent = 1;
@@ -816,41 +814,41 @@ def SharedLocksRequired : InheritableAttr {
 // Microsoft-related attributes
 
 def MsStruct : InheritableAttr {
-  let Spellings = [Declspec<"ms_struct">];
+  let Spellings = ["__ms_struct__"];
 }
 
 def DLLExport : InheritableAttr {
-  let Spellings = [Declspec<"dllexport">];
+  let Spellings = ["dllexport"];
 }
 
 def DLLImport : InheritableAttr {
-  let Spellings = [Declspec<"dllimport">];
+  let Spellings = ["dllimport"];
 }
 
 def ForceInline : InheritableAttr {
-  let Spellings = [Declspec<"__forceinline">];
+  let Spellings = ["__forceinline"];
 }
 
 def Win64 : InheritableAttr {
-  let Spellings = [Declspec<"w64">];
+  let Spellings = ["__w64"];
 }
 
 def Ptr32 : InheritableAttr {
-  let Spellings = [Declspec<"__ptr32">];
+  let Spellings = ["__ptr32"];
 }
 
 def Ptr64 : InheritableAttr {
-  let Spellings = [Declspec<"__ptr64">];
+  let Spellings = ["__ptr64"];
 }
 
 def SingleInheritance : InheritableAttr {
-  let Spellings = [Declspec<"__single_inheritance">];
+  let Spellings = ["__single_inheritance"];
 }
 
 def MultipleInheritance : InheritableAttr {
-  let Spellings = [Declspec<"__multiple_inheritance">];
+  let Spellings = ["__multiple_inheritance"];
 }
 
 def VirtualInheritance : InheritableAttr {
-  let Spellings = [Declspec<"__virtual_inheritance">];
+  let Spellings = ["__virtual_inheritance"];
 }

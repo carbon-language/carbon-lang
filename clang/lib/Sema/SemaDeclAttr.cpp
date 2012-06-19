@@ -2894,34 +2894,30 @@ static void handleAlignedAttr(Sema &S, Decl *D, const AttributeList &Attr) {
     S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 1;
     return;
   }
-
+  
   //FIXME: The C++0x version of this attribute has more limited applicabilty
   //       than GNU's, and should error out when it is used to specify a
   //       weaker alignment, rather than being silently ignored.
 
   if (Attr.getNumArgs() == 0) {
-    D->addAttr(::new (S.Context) AlignedAttr(Attr.getRange(), S.Context, 
-               true, 0, Attr.isDeclspecAttribute()));
+    D->addAttr(::new (S.Context) AlignedAttr(Attr.getRange(), S.Context, true, 0));
     return;
   }
 
-  S.AddAlignedAttr(Attr.getRange(), D, Attr.getArg(0), 
-                   Attr.isDeclspecAttribute());
+  S.AddAlignedAttr(Attr.getRange(), D, Attr.getArg(0));
 }
 
-void Sema::AddAlignedAttr(SourceRange AttrRange, Decl *D, Expr *E, 
-                          bool isDeclSpec) {
+void Sema::AddAlignedAttr(SourceRange AttrRange, Decl *D, Expr *E) {
   // FIXME: Handle pack-expansions here.
   if (DiagnoseUnexpandedParameterPack(E))
     return;
 
   if (E->isTypeDependent() || E->isValueDependent()) {
     // Save dependent expressions in the AST to be instantiated.
-    D->addAttr(::new (Context) AlignedAttr(AttrRange, Context, true, E, 
-                                           isDeclSpec));
+    D->addAttr(::new (Context) AlignedAttr(AttrRange, Context, true, E));
     return;
   }
-  
+
   SourceLocation AttrLoc = AttrRange.getBegin();
   // FIXME: Cache the number on the Attr object?
   llvm::APSInt Alignment(32);
@@ -2936,26 +2932,14 @@ void Sema::AddAlignedAttr(SourceRange AttrRange, Decl *D, Expr *E,
       << E->getSourceRange();
     return;
   }
-  if (isDeclSpec) {
-    // We've already verified it's a power of 2, now let's make sure it's
-    // 8192 or less.
-    if (Alignment.getZExtValue() > 8192) {
-      Diag(AttrLoc, diag::err_attribute_aligned_greater_than_8192) 
-        << E->getSourceRange();
-      return;
-    }
-  }
 
-  D->addAttr(::new (Context) AlignedAttr(AttrRange, Context, true, ICE.take(), 
-                                         isDeclSpec));
+  D->addAttr(::new (Context) AlignedAttr(AttrRange, Context, true, ICE.take()));
 }
 
-void Sema::AddAlignedAttr(SourceRange AttrRange, Decl *D, TypeSourceInfo *TS, 
-                          bool isDeclSpec) {
+void Sema::AddAlignedAttr(SourceRange AttrRange, Decl *D, TypeSourceInfo *TS) {
   // FIXME: Cache the number on the Attr object if non-dependent?
   // FIXME: Perform checking of type validity
-  D->addAttr(::new (Context) AlignedAttr(AttrRange, Context, false, TS, 
-                                         isDeclSpec));
+  D->addAttr(::new (Context) AlignedAttr(AttrRange, Context, false, TS));
   return;
 }
 
@@ -3322,22 +3306,22 @@ static void handleCallConvAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   }
 
   switch (Attr.getKind()) {
-  case AttributeList::AT_FastCall:
+  case AttributeList::AT_fastcall:
     D->addAttr(::new (S.Context) FastCallAttr(Attr.getRange(), S.Context));
     return;
-  case AttributeList::AT_StdCall:
+  case AttributeList::AT_stdcall:
     D->addAttr(::new (S.Context) StdCallAttr(Attr.getRange(), S.Context));
     return;
-  case AttributeList::AT_ThisCall:
+  case AttributeList::AT_thiscall:
     D->addAttr(::new (S.Context) ThisCallAttr(Attr.getRange(), S.Context));
     return;
-  case AttributeList::AT_CDecl:
+  case AttributeList::AT_cdecl:
     D->addAttr(::new (S.Context) CDeclAttr(Attr.getRange(), S.Context));
     return;
-  case AttributeList::AT_Pascal:
+  case AttributeList::AT_pascal:
     D->addAttr(::new (S.Context) PascalAttr(Attr.getRange(), S.Context));
     return;
-  case AttributeList::AT_Pcs: {
+  case AttributeList::AT_pcs: {
     Expr *Arg = Attr.getArg(0);
     StringLiteral *Str = dyn_cast<StringLiteral>(Arg);
     if (!Str || !Str->isAscii()) {
@@ -3376,7 +3360,7 @@ bool Sema::CheckCallingConvAttr(const AttributeList &attr, CallingConv &CC) {
     return true;
 
   if ((attr.getNumArgs() != 0 &&
-      !(attr.getKind() == AttributeList::AT_Pcs && attr.getNumArgs() == 1)) ||
+      !(attr.getKind() == AttributeList::AT_pcs && attr.getNumArgs() == 1)) ||
       attr.getParameterName()) {
     Diag(attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
     attr.setInvalid();
@@ -3386,12 +3370,12 @@ bool Sema::CheckCallingConvAttr(const AttributeList &attr, CallingConv &CC) {
   // TODO: diagnose uses of these conventions on the wrong target. Or, better
   // move to TargetAttributesSema one day.
   switch (attr.getKind()) {
-  case AttributeList::AT_CDecl: CC = CC_C; break;
-  case AttributeList::AT_FastCall: CC = CC_X86FastCall; break;
-  case AttributeList::AT_StdCall: CC = CC_X86StdCall; break;
-  case AttributeList::AT_ThisCall: CC = CC_X86ThisCall; break;
-  case AttributeList::AT_Pascal: CC = CC_X86Pascal; break;
-  case AttributeList::AT_Pcs: {
+  case AttributeList::AT_cdecl: CC = CC_C; break;
+  case AttributeList::AT_fastcall: CC = CC_X86FastCall; break;
+  case AttributeList::AT_stdcall: CC = CC_X86StdCall; break;
+  case AttributeList::AT_thiscall: CC = CC_X86ThisCall; break;
+  case AttributeList::AT_pascal: CC = CC_X86Pascal; break;
+  case AttributeList::AT_pcs: {
     Expr *Arg = attr.getArg(0);
     StringLiteral *Str = dyn_cast<StringLiteral>(Arg);
     if (!Str || !Str->isAscii()) {
@@ -3542,7 +3526,7 @@ static void handleNSConsumedAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   }
 
   bool typeOK, cf;
-  if (Attr.getKind() == AttributeList::AT_NSConsumed) {
+  if (Attr.getKind() == AttributeList::AT_ns_consumed) {
     typeOK = isValidSubjectOfNSAttribute(S, param->getType());
     cf = false;
   } else {
@@ -3583,7 +3567,7 @@ static void handleNSReturnsRetainedAttr(Sema &S, Decl *D,
   else if (ObjCPropertyDecl *PD = dyn_cast<ObjCPropertyDecl>(D))
     returnType = PD->getType();
   else if (S.getLangOpts().ObjCAutoRefCount && hasDeclarator(D) &&
-           (Attr.getKind() == AttributeList::AT_NSReturnsRetained))
+           (Attr.getKind() == AttributeList::AT_ns_returns_retained))
     return; // ignore: was handled as a type attribute
   else if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
     returnType = FD->getResultType();
@@ -3598,15 +3582,15 @@ static void handleNSReturnsRetainedAttr(Sema &S, Decl *D,
   bool cf;
   switch (Attr.getKind()) {
   default: llvm_unreachable("invalid ownership attribute");
-  case AttributeList::AT_NSReturnsAutoreleased:
-  case AttributeList::AT_NSReturnsRetained:
-  case AttributeList::AT_NSReturnsNotRetained:
+  case AttributeList::AT_ns_returns_autoreleased:
+  case AttributeList::AT_ns_returns_retained:
+  case AttributeList::AT_ns_returns_not_retained:
     typeOK = isValidSubjectOfNSAttribute(S, returnType);
     cf = false;
     break;
 
-  case AttributeList::AT_CFReturnsRetained:
-  case AttributeList::AT_CFReturnsNotRetained:
+  case AttributeList::AT_cf_returns_retained:
+  case AttributeList::AT_cf_returns_not_retained:
     typeOK = isValidSubjectOfCFAttribute(S, returnType);
     cf = true;
     break;
@@ -3621,23 +3605,23 @@ static void handleNSReturnsRetainedAttr(Sema &S, Decl *D,
   switch (Attr.getKind()) {
     default:
       llvm_unreachable("invalid ownership attribute");
-    case AttributeList::AT_NSReturnsAutoreleased:
+    case AttributeList::AT_ns_returns_autoreleased:
       D->addAttr(::new (S.Context) NSReturnsAutoreleasedAttr(Attr.getRange(),
                                                              S.Context));
       return;
-    case AttributeList::AT_CFReturnsNotRetained:
+    case AttributeList::AT_cf_returns_not_retained:
       D->addAttr(::new (S.Context) CFReturnsNotRetainedAttr(Attr.getRange(),
                                                             S.Context));
       return;
-    case AttributeList::AT_NSReturnsNotRetained:
+    case AttributeList::AT_ns_returns_not_retained:
       D->addAttr(::new (S.Context) NSReturnsNotRetainedAttr(Attr.getRange(),
                                                             S.Context));
       return;
-    case AttributeList::AT_CFReturnsRetained:
+    case AttributeList::AT_cf_returns_retained:
       D->addAttr(::new (S.Context) CFReturnsRetainedAttr(Attr.getRange(),
                                                          S.Context));
       return;
-    case AttributeList::AT_NSReturnsRetained:
+    case AttributeList::AT_ns_returns_retained:
       D->addAttr(::new (S.Context) NSReturnsRetainedAttr(Attr.getRange(),
                                                          S.Context));
       return;
@@ -3681,7 +3665,7 @@ static void handleCFTransferAttr(Sema &S, Decl *D, const AttributeList &A) {
     return;
   }
 
-  bool IsAudited = (A.getKind() == AttributeList::AT_CFAuditedTransfer);
+  bool IsAudited = (A.getKind() == AttributeList::AT_cf_audited_transfer);
 
   // Check whether there's a conflicting attribute already present.
   Attr *Existing;
@@ -3792,6 +3776,22 @@ static void handleObjCPreciseLifetimeAttr(Sema &S, Decl *D,
                  ObjCPreciseLifetimeAttr(Attr.getRange(), S.Context));
 }
 
+static bool isKnownDeclSpecAttr(const AttributeList &Attr) {
+  switch (Attr.getKind()) {
+  default:
+    return false;
+  case AttributeList::AT_dllimport:
+  case AttributeList::AT_dllexport:
+  case AttributeList::AT_uuid:
+  case AttributeList::AT_deprecated:
+  case AttributeList::AT_noreturn:
+  case AttributeList::AT_nothrow:
+  case AttributeList::AT_naked:
+  case AttributeList::AT_noinline:
+    return true;
+  }
+}
+
 //===----------------------------------------------------------------------===//
 // Microsoft specific attribute handlers.
 //===----------------------------------------------------------------------===//
@@ -3853,13 +3853,13 @@ static void handleUuidAttr(Sema &S, Decl *D, const AttributeList &Attr) {
 static void handleInheritanceAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   if (S.LangOpts.MicrosoftExt) {
     AttributeList::Kind Kind = Attr.getKind();
-    if (Kind == AttributeList::AT_SingleInheritance)
+    if (Kind == AttributeList::AT_single_inheritance)
       D->addAttr(
           ::new (S.Context) SingleInheritanceAttr(Attr.getRange(), S.Context));
-    else if (Kind == AttributeList::AT_MultipleInheritance)
+    else if (Kind == AttributeList::AT_multiple_inheritance)
       D->addAttr(
           ::new (S.Context) MultipleInheritanceAttr(Attr.getRange(), S.Context));
-    else if (Kind == AttributeList::AT_VirtualInheritance)
+    else if (Kind == AttributeList::AT_virtual_inheritance)
       D->addAttr(
           ::new (S.Context) VirtualInheritanceAttr(Attr.getRange(), S.Context));
   } else
@@ -3869,13 +3869,13 @@ static void handleInheritanceAttr(Sema &S, Decl *D, const AttributeList &Attr) {
 static void handlePortabilityAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   if (S.LangOpts.MicrosoftExt) {
     AttributeList::Kind Kind = Attr.getKind();
-    if (Kind == AttributeList::AT_Ptr32)
+    if (Kind == AttributeList::AT_ptr32)
       D->addAttr(
           ::new (S.Context) Ptr32Attr(Attr.getRange(), S.Context));
-    else if (Kind == AttributeList::AT_Ptr64)
+    else if (Kind == AttributeList::AT_ptr64)
       D->addAttr(
           ::new (S.Context) Ptr64Attr(Attr.getRange(), S.Context));
-    else if (Kind == AttributeList::AT_Win64)
+    else if (Kind == AttributeList::AT_w64)
       D->addAttr(
           ::new (S.Context) Win64Attr(Attr.getRange(), S.Context));
   } else
@@ -3896,9 +3896,9 @@ static void handleForceInlineAttr(Sema &S, Decl *D, const AttributeList &Attr) {
 static void ProcessNonInheritableDeclAttr(Sema &S, Scope *scope, Decl *D,
                                           const AttributeList &Attr) {
   switch (Attr.getKind()) {
-  case AttributeList::AT_CUDADevice:  handleDeviceAttr      (S, D, Attr); break;
-  case AttributeList::AT_CUDAHost:    handleHostAttr        (S, D, Attr); break;
-  case AttributeList::AT_Overloadable:handleOverloadableAttr(S, D, Attr); break;
+  case AttributeList::AT_device:      handleDeviceAttr      (S, D, Attr); break;
+  case AttributeList::AT_host:        handleHostAttr        (S, D, Attr); break;
+  case AttributeList::AT_overloadable:handleOverloadableAttr(S, D, Attr); break;
   default:
     break;
   }
@@ -3907,242 +3907,242 @@ static void ProcessNonInheritableDeclAttr(Sema &S, Scope *scope, Decl *D,
 static void ProcessInheritableDeclAttr(Sema &S, Scope *scope, Decl *D,
                                        const AttributeList &Attr) {
   switch (Attr.getKind()) {
-    case AttributeList::AT_IBAction:          handleIBAction(S, D, Attr); break;
-    case AttributeList::AT_IBOutlet:          handleIBOutlet(S, D, Attr); break;
-    case AttributeList::AT_IBOutletCollection:
+    case AttributeList::AT_ibaction:            handleIBAction(S, D, Attr); break;
+    case AttributeList::AT_iboutlet:          handleIBOutlet(S, D, Attr); break;
+    case AttributeList::AT_iboutletcollection:
       handleIBOutletCollection(S, D, Attr); break;
-  case AttributeList::AT_AddressSpace:
-  case AttributeList::AT_OpenCLImageAccess:
-  case AttributeList::AT_ObjCGC:
-  case AttributeList::AT_VectorSize:
-  case AttributeList::AT_NeonVectorType:
-  case AttributeList::AT_NeonPolyVectorType:
+  case AttributeList::AT_address_space:
+  case AttributeList::AT_opencl_image_access:
+  case AttributeList::AT_objc_gc:
+  case AttributeList::AT_vector_size:
+  case AttributeList::AT_neon_vector_type:
+  case AttributeList::AT_neon_polyvector_type:
     // Ignore these, these are type attributes, handled by
     // ProcessTypeAttributes.
     break;
-  case AttributeList::AT_CUDADevice:
-  case AttributeList::AT_CUDAHost:
-  case AttributeList::AT_Overloadable:
+  case AttributeList::AT_device:
+  case AttributeList::AT_host:
+  case AttributeList::AT_overloadable:
     // Ignore, this is a non-inheritable attribute, handled
     // by ProcessNonInheritableDeclAttr.
     break;
-  case AttributeList::AT_Alias:       handleAliasAttr       (S, D, Attr); break;
-  case AttributeList::AT_Aligned:     handleAlignedAttr     (S, D, Attr); break;
-  case AttributeList::AT_AllocSize:   handleAllocSizeAttr   (S, D, Attr); break;
-  case AttributeList::AT_AlwaysInline:
+  case AttributeList::AT_alias:       handleAliasAttr       (S, D, Attr); break;
+  case AttributeList::AT_aligned:     handleAlignedAttr     (S, D, Attr); break;
+  case AttributeList::AT_alloc_size:  handleAllocSizeAttr   (S, D, Attr); break;
+  case AttributeList::AT_always_inline:
     handleAlwaysInlineAttr  (S, D, Attr); break;
-  case AttributeList::AT_AnalyzerNoReturn:
+  case AttributeList::AT_analyzer_noreturn:
     handleAnalyzerNoReturnAttr  (S, D, Attr); break;
-  case AttributeList::AT_Annotate:    handleAnnotateAttr    (S, D, Attr); break;
-  case AttributeList::AT_Availability:handleAvailabilityAttr(S, D, Attr); break;
-  case AttributeList::AT_CarriesDependency:
+  case AttributeList::AT_annotate:    handleAnnotateAttr    (S, D, Attr); break;
+  case AttributeList::AT_availability:handleAvailabilityAttr(S, D, Attr); break;
+  case AttributeList::AT_carries_dependency:
                                       handleDependencyAttr  (S, D, Attr); break;
-  case AttributeList::AT_Common:      handleCommonAttr      (S, D, Attr); break;
-  case AttributeList::AT_CUDAConstant:handleConstantAttr    (S, D, Attr); break;
-  case AttributeList::AT_Constructor: handleConstructorAttr (S, D, Attr); break;
-  case AttributeList::AT_Deprecated:
+  case AttributeList::AT_common:      handleCommonAttr      (S, D, Attr); break;
+  case AttributeList::AT_constant:    handleConstantAttr    (S, D, Attr); break;
+  case AttributeList::AT_constructor: handleConstructorAttr (S, D, Attr); break;
+  case AttributeList::AT_deprecated:
     handleAttrWithMessage<DeprecatedAttr>(S, D, Attr, "deprecated");
     break;
-  case AttributeList::AT_Destructor:  handleDestructorAttr  (S, D, Attr); break;
-  case AttributeList::AT_ExtVectorType:
+  case AttributeList::AT_destructor:  handleDestructorAttr  (S, D, Attr); break;
+  case AttributeList::AT_ext_vector_type:
     handleExtVectorTypeAttr(S, scope, D, Attr);
     break;
-  case AttributeList::AT_Format:      handleFormatAttr      (S, D, Attr); break;
-  case AttributeList::AT_FormatArg:   handleFormatArgAttr   (S, D, Attr); break;
-  case AttributeList::AT_CUDAGlobal:  handleGlobalAttr      (S, D, Attr); break;
-  case AttributeList::AT_GNUInline:   handleGNUInlineAttr   (S, D, Attr); break;
-  case AttributeList::AT_CUDALaunchBounds:
+  case AttributeList::AT_format:      handleFormatAttr      (S, D, Attr); break;
+  case AttributeList::AT_format_arg:  handleFormatArgAttr   (S, D, Attr); break;
+  case AttributeList::AT_global:      handleGlobalAttr      (S, D, Attr); break;
+  case AttributeList::AT_gnu_inline:  handleGNUInlineAttr   (S, D, Attr); break;
+  case AttributeList::AT_launch_bounds:
     handleLaunchBoundsAttr(S, D, Attr);
     break;
-  case AttributeList::AT_Mode:        handleModeAttr        (S, D, Attr); break;
-  case AttributeList::AT_Malloc:      handleMallocAttr      (S, D, Attr); break;
-  case AttributeList::AT_MayAlias:    handleMayAliasAttr    (S, D, Attr); break;
-  case AttributeList::AT_NoCommon:    handleNoCommonAttr    (S, D, Attr); break;
-  case AttributeList::AT_NonNull:     handleNonNullAttr     (S, D, Attr); break;
+  case AttributeList::AT_mode:        handleModeAttr        (S, D, Attr); break;
+  case AttributeList::AT_malloc:      handleMallocAttr      (S, D, Attr); break;
+  case AttributeList::AT_may_alias:   handleMayAliasAttr    (S, D, Attr); break;
+  case AttributeList::AT_nocommon:    handleNoCommonAttr    (S, D, Attr); break;
+  case AttributeList::AT_nonnull:     handleNonNullAttr     (S, D, Attr); break;
   case AttributeList::AT_ownership_returns:
   case AttributeList::AT_ownership_takes:
   case AttributeList::AT_ownership_holds:
       handleOwnershipAttr     (S, D, Attr); break;
-  case AttributeList::AT_Cold:        handleColdAttr        (S, D, Attr); break;
-  case AttributeList::AT_Hot:         handleHotAttr         (S, D, Attr); break;
-  case AttributeList::AT_Naked:       handleNakedAttr       (S, D, Attr); break;
-  case AttributeList::AT_NoReturn:    handleNoReturnAttr    (S, D, Attr); break;
-  case AttributeList::AT_NoThrow:     handleNothrowAttr     (S, D, Attr); break;
-  case AttributeList::AT_CUDAShared:  handleSharedAttr      (S, D, Attr); break;
-  case AttributeList::AT_VecReturn:   handleVecReturnAttr   (S, D, Attr); break;
+  case AttributeList::AT_cold:        handleColdAttr        (S, D, Attr); break;
+  case AttributeList::AT_hot:         handleHotAttr         (S, D, Attr); break;
+  case AttributeList::AT_naked:       handleNakedAttr       (S, D, Attr); break;
+  case AttributeList::AT_noreturn:    handleNoReturnAttr    (S, D, Attr); break;
+  case AttributeList::AT_nothrow:     handleNothrowAttr     (S, D, Attr); break;
+  case AttributeList::AT_shared:      handleSharedAttr      (S, D, Attr); break;
+  case AttributeList::AT_vecreturn:   handleVecReturnAttr   (S, D, Attr); break;
 
-  case AttributeList::AT_ObjCOwnership:
+  case AttributeList::AT_objc_ownership:
     handleObjCOwnershipAttr(S, D, Attr); break;
-  case AttributeList::AT_ObjCPreciseLifetime:
+  case AttributeList::AT_objc_precise_lifetime:
     handleObjCPreciseLifetimeAttr(S, D, Attr); break;
 
-  case AttributeList::AT_ObjCReturnsInnerPointer:
+  case AttributeList::AT_objc_returns_inner_pointer:
     handleObjCReturnsInnerPointerAttr(S, D, Attr); break;
 
-  case AttributeList::AT_NSBridged:
+  case AttributeList::AT_ns_bridged:
     handleNSBridgedAttr(S, scope, D, Attr); break;
 
-  case AttributeList::AT_CFAuditedTransfer:
-  case AttributeList::AT_CFUnknownTransfer:
+  case AttributeList::AT_cf_audited_transfer:
+  case AttributeList::AT_cf_unknown_transfer:
     handleCFTransferAttr(S, D, Attr); break;
 
   // Checker-specific.
-  case AttributeList::AT_CFConsumed:
-  case AttributeList::AT_NSConsumed:  handleNSConsumedAttr  (S, D, Attr); break;
-  case AttributeList::AT_NSConsumesSelf:
+  case AttributeList::AT_cf_consumed:
+  case AttributeList::AT_ns_consumed: handleNSConsumedAttr  (S, D, Attr); break;
+  case AttributeList::AT_ns_consumes_self:
     handleNSConsumesSelfAttr(S, D, Attr); break;
 
-  case AttributeList::AT_NSReturnsAutoreleased:
-  case AttributeList::AT_NSReturnsNotRetained:
-  case AttributeList::AT_CFReturnsNotRetained:
-  case AttributeList::AT_NSReturnsRetained:
-  case AttributeList::AT_CFReturnsRetained:
+  case AttributeList::AT_ns_returns_autoreleased:
+  case AttributeList::AT_ns_returns_not_retained:
+  case AttributeList::AT_cf_returns_not_retained:
+  case AttributeList::AT_ns_returns_retained:
+  case AttributeList::AT_cf_returns_retained:
     handleNSReturnsRetainedAttr(S, D, Attr); break;
 
-  case AttributeList::AT_ReqdWorkGroupSize:
+  case AttributeList::AT_reqd_work_group_size:
     handleReqdWorkGroupSize(S, D, Attr); break;
 
-  case AttributeList::AT_InitPriority: 
+  case AttributeList::AT_init_priority: 
       handleInitPriorityAttr(S, D, Attr); break;
       
-  case AttributeList::AT_Packed:      handlePackedAttr      (S, D, Attr); break;
-  case AttributeList::AT_Section:     handleSectionAttr     (S, D, Attr); break;
-  case AttributeList::AT_Unavailable:
+  case AttributeList::AT_packed:      handlePackedAttr      (S, D, Attr); break;
+  case AttributeList::AT_section:     handleSectionAttr     (S, D, Attr); break;
+  case AttributeList::AT_unavailable:
     handleAttrWithMessage<UnavailableAttr>(S, D, Attr, "unavailable");
     break;
-  case AttributeList::AT_ArcWeakrefUnavailable: 
+  case AttributeList::AT_objc_arc_weak_reference_unavailable: 
     handleArcWeakrefUnavailableAttr (S, D, Attr); 
     break;
-  case AttributeList::AT_ObjCRootClass:
+  case AttributeList::AT_objc_root_class:
     handleObjCRootClassAttr(S, D, Attr);
     break;
-  case AttributeList::AT_ObjCRequiresPropertyDefs: 
+  case AttributeList::AT_objc_requires_property_definitions: 
     handleObjCRequiresPropertyDefsAttr (S, D, Attr); 
     break;
-  case AttributeList::AT_Unused:      handleUnusedAttr      (S, D, Attr); break;
-  case AttributeList::AT_ReturnsTwice:
+  case AttributeList::AT_unused:      handleUnusedAttr      (S, D, Attr); break;
+  case AttributeList::AT_returns_twice:
     handleReturnsTwiceAttr(S, D, Attr);
     break;
-  case AttributeList::AT_Used:        handleUsedAttr        (S, D, Attr); break;
-  case AttributeList::AT_Visibility:  handleVisibilityAttr  (S, D, Attr); break;
-  case AttributeList::AT_WarnUnusedResult: handleWarnUnusedResult(S, D, Attr);
+  case AttributeList::AT_used:        handleUsedAttr        (S, D, Attr); break;
+  case AttributeList::AT_visibility:  handleVisibilityAttr  (S, D, Attr); break;
+  case AttributeList::AT_warn_unused_result: handleWarnUnusedResult(S, D, Attr);
     break;
-  case AttributeList::AT_Weak:        handleWeakAttr        (S, D, Attr); break;
-  case AttributeList::AT_WeakRef:     handleWeakRefAttr     (S, D, Attr); break;
-  case AttributeList::AT_WeakImport:  handleWeakImportAttr  (S, D, Attr); break;
-  case AttributeList::AT_TransparentUnion:
+  case AttributeList::AT_weak:        handleWeakAttr        (S, D, Attr); break;
+  case AttributeList::AT_weakref:     handleWeakRefAttr     (S, D, Attr); break;
+  case AttributeList::AT_weak_import: handleWeakImportAttr  (S, D, Attr); break;
+  case AttributeList::AT_transparent_union:
     handleTransparentUnionAttr(S, D, Attr);
     break;
-  case AttributeList::AT_ObjCException:
+  case AttributeList::AT_objc_exception:
     handleObjCExceptionAttr(S, D, Attr);
     break;
-  case AttributeList::AT_ObjCMethodFamily:
+  case AttributeList::AT_objc_method_family:
     handleObjCMethodFamilyAttr(S, D, Attr);
     break;
-  case AttributeList::AT_ObjCNSObject:handleObjCNSObject    (S, D, Attr); break;
-  case AttributeList::AT_Blocks:      handleBlocksAttr      (S, D, Attr); break;
-  case AttributeList::AT_Sentinel:    handleSentinelAttr    (S, D, Attr); break;
-  case AttributeList::AT_Const:       handleConstAttr       (S, D, Attr); break;
-  case AttributeList::AT_Pure:        handlePureAttr        (S, D, Attr); break;
-  case AttributeList::AT_Cleanup:     handleCleanupAttr     (S, D, Attr); break;
-  case AttributeList::AT_NoDebug:     handleNoDebugAttr     (S, D, Attr); break;
-  case AttributeList::AT_NoInline:    handleNoInlineAttr    (S, D, Attr); break;
-  case AttributeList::AT_Regparm:     handleRegparmAttr     (S, D, Attr); break;
+  case AttributeList::AT_NSObject:    handleObjCNSObject    (S, D, Attr); break;
+  case AttributeList::AT_blocks:      handleBlocksAttr      (S, D, Attr); break;
+  case AttributeList::AT_sentinel:    handleSentinelAttr    (S, D, Attr); break;
+  case AttributeList::AT_const:       handleConstAttr       (S, D, Attr); break;
+  case AttributeList::AT_pure:        handlePureAttr        (S, D, Attr); break;
+  case AttributeList::AT_cleanup:     handleCleanupAttr     (S, D, Attr); break;
+  case AttributeList::AT_nodebug:     handleNoDebugAttr     (S, D, Attr); break;
+  case AttributeList::AT_noinline:    handleNoInlineAttr    (S, D, Attr); break;
+  case AttributeList::AT_regparm:     handleRegparmAttr     (S, D, Attr); break;
   case AttributeList::IgnoredAttribute:
     // Just ignore
     break;
-  case AttributeList::AT_NoInstrumentFunction:  // Interacts with -pg.
+  case AttributeList::AT_no_instrument_function:  // Interacts with -pg.
     handleNoInstrumentFunctionAttr(S, D, Attr);
     break;
-  case AttributeList::AT_StdCall:
-  case AttributeList::AT_CDecl:
-  case AttributeList::AT_FastCall:
-  case AttributeList::AT_ThisCall:
-  case AttributeList::AT_Pascal:
-  case AttributeList::AT_Pcs:
+  case AttributeList::AT_stdcall:
+  case AttributeList::AT_cdecl:
+  case AttributeList::AT_fastcall:
+  case AttributeList::AT_thiscall:
+  case AttributeList::AT_pascal:
+  case AttributeList::AT_pcs:
     handleCallConvAttr(S, D, Attr);
     break;
-  case AttributeList::AT_OpenCLKernel:
+  case AttributeList::AT_opencl_kernel_function:
     handleOpenCLKernelAttr(S, D, Attr);
     break;
 
   // Microsoft attributes:
-  case AttributeList::AT_MsStruct:
+  case AttributeList::AT_ms_struct:
     handleMsStructAttr(S, D, Attr);
     break;
-  case AttributeList::AT_Uuid:
+  case AttributeList::AT_uuid:
     handleUuidAttr(S, D, Attr);
     break;
-  case AttributeList::AT_SingleInheritance:
-  case AttributeList::AT_MultipleInheritance:
-  case AttributeList::AT_VirtualInheritance:
+  case AttributeList::AT_single_inheritance:
+  case AttributeList::AT_multiple_inheritance:
+  case AttributeList::AT_virtual_inheritance:
     handleInheritanceAttr(S, D, Attr);
     break;
-  case AttributeList::AT_Win64:
-  case AttributeList::AT_Ptr32:
-  case AttributeList::AT_Ptr64:
+  case AttributeList::AT_w64:
+  case AttributeList::AT_ptr32:
+  case AttributeList::AT_ptr64:
     handlePortabilityAttr(S, D, Attr);
     break;
-  case AttributeList::AT_ForceInline:
+  case AttributeList::AT_forceinline:
     handleForceInlineAttr(S, D, Attr);
     break;
 
   // Thread safety attributes:
-  case AttributeList::AT_GuardedVar:
+  case AttributeList::AT_guarded_var:
     handleGuardedVarAttr(S, D, Attr);
     break;
-  case AttributeList::AT_PtGuardedVar:
+  case AttributeList::AT_pt_guarded_var:
     handleGuardedVarAttr(S, D, Attr, /*pointer = */true);
     break;
-  case AttributeList::AT_ScopedLockable:
+  case AttributeList::AT_scoped_lockable:
     handleLockableAttr(S, D, Attr, /*scoped = */true);
     break;
-  case AttributeList::AT_NoAddressSafetyAnalysis:
+  case AttributeList::AT_no_address_safety_analysis:
     handleNoAddressSafetyAttr(S, D, Attr);
     break;
-  case AttributeList::AT_NoThreadSafetyAnalysis:
+  case AttributeList::AT_no_thread_safety_analysis:
     handleNoThreadSafetyAttr(S, D, Attr);
     break;
-  case AttributeList::AT_Lockable:
+  case AttributeList::AT_lockable:
     handleLockableAttr(S, D, Attr);
     break;
-  case AttributeList::AT_GuardedBy:
+  case AttributeList::AT_guarded_by:
     handleGuardedByAttr(S, D, Attr);
     break;
-  case AttributeList::AT_PtGuardedBy:
+  case AttributeList::AT_pt_guarded_by:
     handleGuardedByAttr(S, D, Attr, /*pointer = */true);
     break;
-  case AttributeList::AT_ExclusiveLockFunction:
+  case AttributeList::AT_exclusive_lock_function:
     handleLockFunAttr(S, D, Attr, /*exclusive = */true);
     break;
-  case AttributeList::AT_ExclusiveLocksRequired:
+  case AttributeList::AT_exclusive_locks_required:
     handleLocksRequiredAttr(S, D, Attr, /*exclusive = */true);
     break;
-  case AttributeList::AT_ExclusiveTrylockFunction:
+  case AttributeList::AT_exclusive_trylock_function:
     handleTrylockFunAttr(S, D, Attr, /*exclusive = */true);
     break;
-  case AttributeList::AT_LockReturned:
+  case AttributeList::AT_lock_returned:
     handleLockReturnedAttr(S, D, Attr);
     break;
-  case AttributeList::AT_LocksExcluded:
+  case AttributeList::AT_locks_excluded:
     handleLocksExcludedAttr(S, D, Attr);
     break;
-  case AttributeList::AT_SharedLockFunction:
+  case AttributeList::AT_shared_lock_function:
     handleLockFunAttr(S, D, Attr);
     break;
-  case AttributeList::AT_SharedLocksRequired:
+  case AttributeList::AT_shared_locks_required:
     handleLocksRequiredAttr(S, D, Attr);
     break;
-  case AttributeList::AT_SharedTrylockFunction:
+  case AttributeList::AT_shared_trylock_function:
     handleTrylockFunAttr(S, D, Attr);
     break;
-  case AttributeList::AT_UnlockFunction:
+  case AttributeList::AT_unlock_function:
     handleUnlockFunAttr(S, D, Attr);
     break;
-  case AttributeList::AT_AcquiredBefore:
+  case AttributeList::AT_acquired_before:
     handleAcquireOrderAttr(S, D, Attr, /*before = */true);
     break;
-  case AttributeList::AT_AcquiredAfter:
+  case AttributeList::AT_acquired_after:
     handleAcquireOrderAttr(S, D, Attr, /*before = */false);
     break;
 
@@ -4150,9 +4150,8 @@ static void ProcessInheritableDeclAttr(Sema &S, Scope *scope, Decl *D,
     // Ask target about the attribute.
     const TargetAttributesSema &TargetAttrs = S.getTargetAttributesSema();
     if (!TargetAttrs.ProcessDeclAttribute(scope, D, Attr, S))
-      S.Diag(Attr.getLoc(), Attr.isDeclspecAttribute() ? 
-             diag::warn_unhandled_ms_attribute_ignored : 
-             diag::warn_unknown_attribute_ignored) << Attr.getName();
+      S.Diag(Attr.getLoc(), diag::warn_unknown_attribute_ignored)
+        << Attr.getName();
     break;
   }
 }
@@ -4167,11 +4166,8 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
   if (Attr.isInvalid())
     return;
 
-  // Type attributes are still treated as declaration attributes by 
-  // ParseMicrosoftTypeAttributes and ParseBorlandTypeAttributes.  We don't 
-  // want to process them, however, because we will simply warn about ignoring 
-  // them.  So instead, we will bail out early.
-  if (Attr.isMSTypespecAttribute())
+  if (Attr.isDeclspecAttribute() && !isKnownDeclSpecAttr(Attr))
+    // FIXME: Try to deal with other __declspec attributes!
     return;
 
   if (NonInheritable)
@@ -4205,7 +4201,7 @@ void Sema::ProcessDeclAttributeList(Scope *S, Decl *D,
 bool Sema::ProcessAccessDeclAttributeList(AccessSpecDecl *ASDecl,
                                           const AttributeList *AttrList) {
   for (const AttributeList* l = AttrList; l; l = l->getNext()) {
-    if (l->getKind() == AttributeList::AT_Annotate) {
+    if (l->getKind() == AttributeList::AT_annotate) {
       handleAnnotateAttr(*this, ASDecl, *l);
     } else {
       Diag(l->getLoc(), diag::err_only_annotate_after_access_spec);

@@ -6338,10 +6338,8 @@ public:
   void AddCFAuditedAttribute(Decl *D);
 
   /// AddAlignedAttr - Adds an aligned attribute to a particular declaration.
-  void AddAlignedAttr(SourceRange AttrRange, Decl *D, Expr *E, 
-                      bool isDeclSpec);
-  void AddAlignedAttr(SourceRange AttrRange, Decl *D, TypeSourceInfo *T, 
-                      bool isDeclSpec);
+  void AddAlignedAttr(SourceRange AttrRange, Decl *D, Expr *E);
+  void AddAlignedAttr(SourceRange AttrRange, Decl *D, TypeSourceInfo *T);
 
   /// \brief The kind of conversion being performed.
   enum CheckedConversionKind {

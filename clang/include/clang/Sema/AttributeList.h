@@ -57,10 +57,7 @@ public:
   enum Syntax {
     AS_GNU,
     AS_CXX11,
-    AS_Declspec,
-    // eg) __w64, __ptr32, etc.  It is implied that an MSTypespec is also
-    // a declspec.
-    AS_MSTypespec   
+    AS_Declspec
   };
 private:
   IdentifierInfo *AttrName;
@@ -184,12 +181,8 @@ public:
   IdentifierInfo *getParameterName() const { return ParmName; }
   SourceLocation getParameterLoc() const { return ParmLoc; }
 
-  /// Returns true if the attribute is a pure __declspec or a synthesized
-  /// declspec representing a type specification (like __w64 or __ptr32).
-  bool isDeclspecAttribute() const { return SyntaxUsed == AS_Declspec ||
-                                            SyntaxUsed == AS_MSTypespec; }
+  bool isDeclspecAttribute() const { return SyntaxUsed == AS_Declspec; }
   bool isCXX0XAttribute() const { return SyntaxUsed == AS_CXX11; }
-  bool isMSTypespecAttribute() const { return SyntaxUsed == AS_MSTypespec; }
 
   bool isInvalid() const { return Invalid; }
   void setInvalid(bool b = true) const { Invalid = b; }
@@ -256,27 +249,27 @@ public:
   }
 
   const AvailabilityChange &getAvailabilityIntroduced() const {
-    assert(getKind() == AT_Availability && "Not an availability attribute");
+    assert(getKind() == AT_availability && "Not an availability attribute");
     return getAvailabilitySlot(IntroducedSlot);
   }
 
   const AvailabilityChange &getAvailabilityDeprecated() const {
-    assert(getKind() == AT_Availability && "Not an availability attribute");
+    assert(getKind() == AT_availability && "Not an availability attribute");
     return getAvailabilitySlot(DeprecatedSlot);
   }
 
   const AvailabilityChange &getAvailabilityObsoleted() const {
-    assert(getKind() == AT_Availability && "Not an availability attribute");
+    assert(getKind() == AT_availability && "Not an availability attribute");
     return getAvailabilitySlot(ObsoletedSlot);
   }
 
   SourceLocation getUnavailableLoc() const {
-    assert(getKind() == AT_Availability && "Not an availability attribute");
+    assert(getKind() == AT_availability && "Not an availability attribute");
     return UnavailableLoc;
   }
   
   const Expr * getMessageExpr() const {
-    assert(getKind() == AT_Availability && "Not an availability attribute");
+    assert(getKind() == AT_availability && "Not an availability attribute");
     return MessageExpr;
   }
 };

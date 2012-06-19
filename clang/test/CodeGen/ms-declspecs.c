@@ -1,13 +1,5 @@
 // RUN: %clang_cc1 -triple i386-pc-win32 %s -emit-llvm -fms-compatibility -o - | FileCheck %s
 
-struct __declspec(align(16)) S {
-  char x;
-};
-union { struct S s; } u;
-
-// CHECK: @u = {{.*}}zeroinitializer, align 16
-
-
 // CHECK: define void @t3() nounwind noinline naked {
 __declspec(naked) void t3() {}
 

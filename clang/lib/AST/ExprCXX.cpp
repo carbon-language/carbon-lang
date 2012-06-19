@@ -556,6 +556,9 @@ bool CXXDynamicCastExpr::isAlwaysNull() const
   const CXXRecordDecl *SrcRD = 
     cast<CXXRecordDecl>(SrcType->castAs<RecordType>()->getDecl());
 
+  if (!SrcRD->hasAttr<FinalAttr>())
+    return false;
+
   const CXXRecordDecl *DestRD = 
     cast<CXXRecordDecl>(DestType->castAs<RecordType>()->getDecl());
 
