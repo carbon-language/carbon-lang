@@ -4,6 +4,8 @@
         bleq some_label
         bl some_label
         blx some_label
+        beq some_label
+        b some_label
 // OBJ: .rel.text
 
 // OBJ: 'r_offset', 0x00000000
@@ -17,6 +19,14 @@
 // OBJ: 'r_offset', 0x00000008
 // OBJ-NEXT:  'r_sym', 0x000004
 // OBJ-NEXT: 'r_type', 0x1c
+
+// OBJ: 'r_offset', 0x0000000c
+// OBJ-NEXT:  'r_sym', 0x000004
+// OBJ-NEXT: 'r_type', 0x1d
+
+// OBJ: 'r_offset', 0x00000010
+// OBJ-NEXT:  'r_sym', 0x000004
+// OBJ-NEXT: 'r_type', 0x1d
 
 // OBJ: .symtab
 // OBJ: Symbol 4
