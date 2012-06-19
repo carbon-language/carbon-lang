@@ -1790,7 +1790,14 @@ private:
   }
   void ParseMicrosoftAttributes(ParsedAttributes &attrs,
                                 SourceLocation *endLoc = 0);
-  void ParseMicrosoftDeclSpec(ParsedAttributes &attrs);
+  void ParseMicrosoftDeclSpec(ParsedAttributes &Attrs);
+  bool IsSimpleMicrosoftDeclSpec(IdentifierInfo *Ident);
+  void ParseComplexMicrosoftDeclSpec(IdentifierInfo *Ident, 
+                                     SourceLocation Loc,
+                                     ParsedAttributes &Attrs);
+  void ParseMicrosoftDeclSpecWithSingleArg(IdentifierInfo *AttrName, 
+                                           SourceLocation AttrNameLoc, 
+                                           ParsedAttributes &Attrs);
   void ParseMicrosoftTypeAttributes(ParsedAttributes &attrs);
   void ParseMicrosoftInheritanceClassAttributes(ParsedAttributes &attrs);
   void ParseBorlandTypeAttributes(ParsedAttributes &attrs);

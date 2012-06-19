@@ -3,10 +3,10 @@ __stdcall int func0();
 int __stdcall func();
 typedef int (__cdecl *tptr)();
 void (*__fastcall fastpfunc)();
-struct __declspec(uuid("00000000-0000-0000-C000-000000000046")) __declspec(novtable) IUnknown {};
+struct __declspec(uuid("00000000-0000-0000-C000-000000000046")) __declspec(novtable) IUnknown {}; /* expected-warning{{__declspec attribute 'novtable' is not supported}} */
 extern __declspec(dllimport) void __stdcall VarR4FromDec();
 __declspec(deprecated) __declspec(deprecated) char * __cdecl ltoa( long _Val, char * _DstBuf, int _Radix);
-__declspec(noalias) __declspec(restrict) void * __cdecl xxx( void * _Memory );
+__declspec(noalias) __declspec(restrict) void * __cdecl xxx( void * _Memory ); /* expected-warning{{__declspec attribute 'noalias' is not supported}} expected-warning{{__declspec attribute 'restrict' is not supported}} */
 typedef __w64 unsigned long ULONG_PTR, *PULONG_PTR;
 
 void * __ptr64 PtrToPtr64(const void *p)
@@ -69,7 +69,7 @@ void deprecated_enum_test(void)
 [repeatable][source_annotation_attribute( Parameter|ReturnValue )]
 struct SA_Post{ SA_Post(); int attr; };
 
-[returnvalue:SA_Post( attr=1)] 
+[returnvalue:SA_Post( attr=1)]
 int foo1([SA_Post(attr=1)] void *param);
 
 
@@ -79,4 +79,26 @@ void ms_intrinsics(int a)
   __noop();
   __assume(a);
   __debugbreak();
+}
+
+struct __declspec(frobble) S1 {};	/* expected-warning {{unknown __declspec attribute 'frobble' ignored}} */
+struct __declspec(12) S2 {};	/* expected-error {{__declspec attributes must be an identifier or string literal}} */
+struct __declspec("testing") S3 {}; /* expected-warning {{__declspec attribute '"testing"' is not supported}} */
+
+/* Ensure multiple declspec attributes are supported */
+struct __declspec(align(8) deprecated) S4 {};
+
+/* But multiple declspecs must still be legal */
+struct __declspec(deprecated frobble "testing") S5 {};  /* expected-warning {{unknown __declspec attribute 'frobble' ignored}} expected-warning {{__declspec attribute '"testing"' is not supported}} */
+struct __declspec(unknown(12) deprecated) S6 {};	/* expected-warning {{unknown __declspec attribute 'unknown' ignored}}*/
+
+struct S7 {
+	int foo() { return 12; }
+	__declspec(property(get=foo) deprecated) int t;
+};
+
+/* Technically, this is legal (though it does nothing) */
+__declspec() void quux( void ) {
+  struct S7 s;
+  int i = s.t;	/* expected-warning {{'t' is deprecated}} */
 }

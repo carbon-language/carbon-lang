@@ -2894,30 +2894,34 @@ static void handleAlignedAttr(Sema &S, Decl *D, const AttributeList &Attr) {
     S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 1;
     return;
   }
-  
+
   //FIXME: The C++0x version of this attribute has more limited applicabilty
   //       than GNU's, and should error out when it is used to specify a
   //       weaker alignment, rather than being silently ignored.
 
   if (Attr.getNumArgs() == 0) {
-    D->addAttr(::new (S.Context) AlignedAttr(Attr.getRange(), S.Context, true, 0));
+    D->addAttr(::new (S.Context) AlignedAttr(Attr.getRange(), S.Context, 
+               true, 0, Attr.isDeclspecAttribute()));
     return;
   }
 
-  S.AddAlignedAttr(Attr.getRange(), D, Attr.getArg(0));
+  S.AddAlignedAttr(Attr.getRange(), D, Attr.getArg(0), 
+                   Attr.isDeclspecAttribute());
 }
 
-void Sema::AddAlignedAttr(SourceRange AttrRange, Decl *D, Expr *E) {
+void Sema::AddAlignedAttr(SourceRange AttrRange, Decl *D, Expr *E, 
+                          bool isDeclSpec) {
   // FIXME: Handle pack-expansions here.
   if (DiagnoseUnexpandedParameterPack(E))
     return;
 
   if (E->isTypeDependent() || E->isValueDependent()) {
     // Save dependent expressions in the AST to be instantiated.
-    D->addAttr(::new (Context) AlignedAttr(AttrRange, Context, true, E));
+    D->addAttr(::new (Context) AlignedAttr(AttrRange, Context, true, E, 
+                                           isDeclSpec));
     return;
   }
-
+  
   SourceLocation AttrLoc = AttrRange.getBegin();
   // FIXME: Cache the number on the Attr object?
   llvm::APSInt Alignment(32);
@@ -2932,14 +2936,26 @@ void Sema::AddAlignedAttr(SourceRange AttrRange, Decl *D, Expr *E) {
       << E->getSourceRange();
     return;
   }
+  if (isDeclSpec) {
+    // We've already verified it's a power of 2, now let's make sure it's
+    // 8192 or less.
+    if (Alignment.getZExtValue() > 8192) {
+      Diag(AttrLoc, diag::err_attribute_aligned_greater_than_8192) 
+        << E->getSourceRange();
+      return;
+    }
+  }
 
-  D->addAttr(::new (Context) AlignedAttr(AttrRange, Context, true, ICE.take()));
+  D->addAttr(::new (Context) AlignedAttr(AttrRange, Context, true, ICE.take(), 
+                                         isDeclSpec));
 }
 
-void Sema::AddAlignedAttr(SourceRange AttrRange, Decl *D, TypeSourceInfo *TS) {
+void Sema::AddAlignedAttr(SourceRange AttrRange, Decl *D, TypeSourceInfo *TS, 
+                          bool isDeclSpec) {
   // FIXME: Cache the number on the Attr object if non-dependent?
   // FIXME: Perform checking of type validity
-  D->addAttr(::new (Context) AlignedAttr(AttrRange, Context, false, TS));
+  D->addAttr(::new (Context) AlignedAttr(AttrRange, Context, false, TS, 
+                                         isDeclSpec));
   return;
 }
 
@@ -3776,22 +3792,6 @@ static void handleObjCPreciseLifetimeAttr(Sema &S, Decl *D,
                  ObjCPreciseLifetimeAttr(Attr.getRange(), S.Context));
 }
 
-static bool isKnownDeclSpecAttr(const AttributeList &Attr) {
-  switch (Attr.getKind()) {
-  default:
-    return false;
-  case AttributeList::AT_dllimport:
-  case AttributeList::AT_dllexport:
-  case AttributeList::AT_uuid:
-  case AttributeList::AT_deprecated:
-  case AttributeList::AT_noreturn:
-  case AttributeList::AT_nothrow:
-  case AttributeList::AT_naked:
-  case AttributeList::AT_noinline:
-    return true;
-  }
-}
-
 //===----------------------------------------------------------------------===//
 // Microsoft specific attribute handlers.
 //===----------------------------------------------------------------------===//
@@ -4150,8 +4150,9 @@ static void ProcessInheritableDeclAttr(Sema &S, Scope *scope, Decl *D,
     // Ask target about the attribute.
     const TargetAttributesSema &TargetAttrs = S.getTargetAttributesSema();
     if (!TargetAttrs.ProcessDeclAttribute(scope, D, Attr, S))
-      S.Diag(Attr.getLoc(), diag::warn_unknown_attribute_ignored)
-        << Attr.getName();
+      S.Diag(Attr.getLoc(), Attr.isDeclspecAttribute() ? 
+             diag::warn_unhandled_ms_attribute_ignored : 
+             diag::warn_unknown_attribute_ignored) << Attr.getName();
     break;
   }
 }
@@ -4166,8 +4167,11 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
   if (Attr.isInvalid())
     return;
 
-  if (Attr.isDeclspecAttribute() && !isKnownDeclSpecAttr(Attr))
-    // FIXME: Try to deal with other __declspec attributes!
+  // Type attributes are still treated as declaration attributes by 
+  // ParseMicrosoftTypeAttributes and ParseBorlandTypeAttributes.  We don't 
+  // want to process them, however, because we will simply warn about ignoring 
+  // them.  So instead, we will bail out early.
+  if (Attr.isMSTypespecAttribute())
     return;
 
   if (NonInheritable)

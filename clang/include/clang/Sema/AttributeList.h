@@ -57,7 +57,10 @@ public:
   enum Syntax {
     AS_GNU,
     AS_CXX11,
-    AS_Declspec
+    AS_Declspec,
+    // eg) __w64, __ptr32, etc.  It is implied that an MSTypespec is also
+    // a declspec.
+    AS_MSTypespec   
   };
 private:
   IdentifierInfo *AttrName;
@@ -181,8 +184,12 @@ public:
   IdentifierInfo *getParameterName() const { return ParmName; }
   SourceLocation getParameterLoc() const { return ParmLoc; }
 
-  bool isDeclspecAttribute() const { return SyntaxUsed == AS_Declspec; }
+  /// Returns true if the attribute is a pure __declspec or a synthesized
+  /// declspec representing a type specification (like __w64 or __ptr32).
+  bool isDeclspecAttribute() const { return SyntaxUsed == AS_Declspec ||
+                                            SyntaxUsed == AS_MSTypespec; }
   bool isCXX0XAttribute() const { return SyntaxUsed == AS_CXX11; }
+  bool isMSTypespecAttribute() const { return SyntaxUsed == AS_MSTypespec; }
 
   bool isInvalid() const { return Invalid; }
   void setInvalid(bool b = true) const { Invalid = b; }

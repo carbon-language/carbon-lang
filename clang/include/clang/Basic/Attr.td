@@ -135,7 +135,7 @@ def Alias : InheritableAttr {
 def Aligned : InheritableAttr {
   let Spellings = ["aligned", "align"];
   let Subjects = [NonBitField, NormalVar, Tag];
-  let Args = [AlignedArgument<"Alignment">];
+  let Args = [AlignedArgument<"Alignment">, BoolArgument<"IsMSDeclSpec">];
   let Namespaces = ["", "std"];
 }
 
