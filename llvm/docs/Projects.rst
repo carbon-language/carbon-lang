@@ -325,4 +325,4 @@ Further Help
 If you have any questions or need any help creating an LLVM project, the LLVM
 team would be more than happy to help.  You can always post your questions to
 the `LLVM Developers Mailing List
-<http://mail.cs.uiuc.edu/mailman/listinfo/llvmdev>`_.
+<http://lists.cs.uiuc.edu/pipermail/llvmdev/>`_.
