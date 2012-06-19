@@ -8153,12 +8153,27 @@ void DiagnoseBadConversion(Sema &S, OverloadCandidate *Cand, unsigned I) {
               FromIface->isSuperClassOf(ToIface))
             BaseToDerivedConversion = 2;
   } else if (const ReferenceType *ToRefTy = ToTy->getAs<ReferenceType>()) {
-      if (ToRefTy->getPointeeType().isAtLeastAsQualifiedAs(FromTy) &&
-          !FromTy->isIncompleteType() &&
-          !ToRefTy->getPointeeType()->isIncompleteType() &&
-          S.IsDerivedFrom(ToRefTy->getPointeeType(), FromTy))
-        BaseToDerivedConversion = 3;
+    if (ToRefTy->getPointeeType().isAtLeastAsQualifiedAs(FromTy) &&
+        !FromTy->isIncompleteType() &&
+        !ToRefTy->getPointeeType()->isIncompleteType() &&
+        S.IsDerivedFrom(ToRefTy->getPointeeType(), FromTy)) {
+      BaseToDerivedConversion = 3;
+    } else if (ToTy->isLValueReferenceType() && !FromExpr->isLValue() &&
+               ToTy.getNonReferenceType().getCanonicalType() ==
+               FromTy.getNonReferenceType().getCanonicalType()) {
+      QualType T1 = ToTy.getCanonicalType();
+      QualType T2 = ToTy.getNonReferenceType();
+      QualType T3 = T2.getUnqualifiedType();
+      QualType T4 = FromTy.getCanonicalType();
+      (void)T1; (void)T2; (void)T3; (void)T4;
+      S.Diag(Fn->getLocation(), diag::note_ovl_candidate_bad_lvalue)
+        << (unsigned) FnKind << FnDesc
+        << (FromExpr ? FromExpr->getSourceRange() : SourceRange())
+        << (unsigned) isObjectArgument << I + 1;
+      MaybeEmitInheritedConstructorNote(S, Fn);
+      return;
     }
+  }
 
   if (BaseToDerivedConversion) {
     S.Diag(Fn->getLocation(),
