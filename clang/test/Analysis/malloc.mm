@@ -179,3 +179,26 @@ void testCallWithBlockCallbackInSystem() {
   void *l = malloc(12);
   SystemHeaderFunctionWithBlockParam(l, ^(void *i) { free(i); }, sizeof(char *));
 }
+
+// Test escape into NSPointerArray. radar://11691035, PR13140
+void foo(NSPointerArray* pointerArray) {
+  
+  void* p1 = malloc (1024);
+  if (p1) {
+    [pointerArray addPointer:p1];
+  }
+
+  void* p2 = malloc (1024);
+  if (p2) {
+    [pointerArray insertPointer:p2 atIndex:1];
+  }
+
+  void* p3 = malloc (1024);
+  if (p3) {
+    [pointerArray replacePointerAtIndex:1 withPointer:p3];
+  }
+
+  // Freeing the buffer is allowed.
+  void* buffer = [pointerArray pointerAtIndex:0];
+  free(buffer);
+}

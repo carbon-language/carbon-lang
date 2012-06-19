@@ -1384,6 +1384,16 @@ bool MallocChecker::doesNotFreeMemory(const CallOrObjCMessage *Call,
       return false;
     }
 
+    // If the first selector starts with addPointer, insertPointer,
+    // or replacePointer, assume we are dealing with NSPointerArray or similar.
+    // This is similar to C++ containers (vector); we still might want to check
+    // that the pointers get freed, by following the container itself.
+    if (S.getNameForSlot(0).startswith("addPointer") ||
+        S.getNameForSlot(0).startswith("insertPointer") ||
+        S.getNameForSlot(0).startswith("replacePointer")) {
+      return false;
+    }
+
     // If the call has a callback as an argument, assume the memory
     // can be freed.
     if (Call->hasNonZeroCallbackArg())

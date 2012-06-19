@@ -114,3 +114,11 @@ extern CFStringRef CFStringCreateWithCStringNoCopy(CFAllocatorRef alloc, const c
 extern void CFStringAppend(CFMutableStringRef theString, CFStringRef appendedString);
 
 void SystemHeaderFunctionWithBlockParam(void *, void (^block)(void *), unsigned);
+
+@interface NSPointerArray : NSObject <NSFastEnumeration, NSCopying, NSCoding>
+- (void)addPointer:(void *)pointer;
+- (void)insertPointer:(void *)item atIndex:(NSUInteger)index;
+- (void)replacePointerAtIndex:(NSUInteger)index withPointer:(void *)item;
+- (void *)pointerAtIndex:(NSUInteger)index;
+@end
+
