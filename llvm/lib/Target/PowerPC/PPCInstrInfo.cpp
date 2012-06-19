@@ -79,6 +79,22 @@ ScheduleHazardRecognizer *PPCInstrInfo::CreateTargetPostRAHazardRecognizer(
 
   return new PPCScoreboardHazardRecognizer(II, DAG);
 }
+
+// Detect 32 -> 64-bit extensions where we may reuse the low sub-register.
+bool PPCInstrInfo::isCoalescableExtInstr(const MachineInstr &MI,
+                                         unsigned &SrcReg, unsigned &DstReg,
+                                         unsigned &SubIdx) const {
+  switch (MI.getOpcode()) {
+  default: return false;
+  case PPC::EXTSW:
+  case PPC::EXTSW_32_64:
+    SrcReg = MI.getOperand(1).getReg();
+    DstReg = MI.getOperand(0).getReg();
+    SubIdx = PPC::sub_32;
+    return true;
+  }
+}
+
 unsigned PPCInstrInfo::isLoadFromStackSlot(const MachineInstr *MI,
                                            int &FrameIndex) const {
   switch (MI->getOpcode()) {

@@ -156,6 +156,14 @@ optimizeExtInstr(MachineInstr *MI, MachineBasicBlock *MBB,
   if (!DstRC)
     return false;
 
+  // The ext instr may be operating on a sub-register of SrcReg as well.
+  // PPC::EXTSW is a 32 -> 64-bit sign extension, but it reads a 64-bit
+  // register.
+  // If UseSrcSubIdx is Set, SubIdx also applies to SrcReg, and only uses of
+  // SrcReg:SubIdx should be replaced.
+  bool UseSrcSubIdx = TM->getRegisterInfo()->
+    getSubClassWithSubReg(MRI->getRegClass(SrcReg), SubIdx) != 0;
+
   // The source has other uses. See if we can replace the other uses with use of
   // the result of the extension.
   SmallPtrSet<MachineBasicBlock*, 4> ReachedBBs;
@@ -183,6 +191,10 @@ optimizeExtInstr(MachineInstr *MI, MachineBasicBlock *MBB,
       ExtendLife = false;
       continue;
     }
+
+    // Only accept uses of SrcReg:SubIdx.
+    if (UseSrcSubIdx && UseMO.getSubReg() != SubIdx)
+      continue;
 
     // It's an error to translate this:
     //
@@ -259,10 +271,14 @@ optimizeExtInstr(MachineInstr *MI, MachineBasicBlock *MBB,
       }
 
       unsigned NewVR = MRI->createVirtualRegister(RC);
-      BuildMI(*UseMBB, UseMI, UseMI->getDebugLoc(),
-              TII->get(TargetOpcode::COPY), NewVR)
+      MachineInstr *Copy = BuildMI(*UseMBB, UseMI, UseMI->getDebugLoc(),
+                                   TII->get(TargetOpcode::COPY), NewVR)
         .addReg(DstReg, 0, SubIdx);
-
+      // SubIdx applies to both SrcReg and DstReg when UseSrcSubIdx is set.
+      if (UseSrcSubIdx) {
+        Copy->getOperand(0).setSubReg(SubIdx);
+        Copy->getOperand(0).setIsUndef();
+      }
       UseMO->setReg(NewVR);
       ++NumReuse;
       Changed = true;
