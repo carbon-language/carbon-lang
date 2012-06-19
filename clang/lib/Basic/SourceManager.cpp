@@ -1015,9 +1015,10 @@ unsigned SourceManager::getColumnNumber(FileID FID, unsigned FilePos,
   if (MyInvalid)
     return 1;
 
-  if (FilePos >= MemBuf->getBufferSize()) {
+  // It is okay to request a position just past the end of the buffer.
+  if (FilePos > MemBuf->getBufferSize()) {
     if (Invalid)
-      *Invalid = MyInvalid;
+      *Invalid = true;
     return 1;
   }
 

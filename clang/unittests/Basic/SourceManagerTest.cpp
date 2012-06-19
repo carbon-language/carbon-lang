@@ -107,6 +107,54 @@ TEST_F(SourceManagerTest, isBeforeInTranslationUnit) {
   EXPECT_TRUE(SourceMgr.isBeforeInTranslationUnit(idLoc, macroExpEndLoc));
 }
 
+TEST_F(SourceManagerTest, getColumnNumber) {
+  const char *Source =
+    "int x;\n"
+    "int y;";
+
+  MemoryBuffer *Buf = MemoryBuffer::getMemBuffer(Source);
+  FileID MainFileID = SourceMgr.createMainFileIDForMemBuffer(Buf);
+
+  bool Invalid;
+
+  Invalid = false;
+  EXPECT_EQ(1U, SourceMgr.getColumnNumber(MainFileID, 0, &Invalid));
+  EXPECT_TRUE(!Invalid);
+
+  Invalid = false;
+  EXPECT_EQ(5U, SourceMgr.getColumnNumber(MainFileID, 4, &Invalid));
+  EXPECT_TRUE(!Invalid);
+
+  Invalid = false;
+  EXPECT_EQ(1U, SourceMgr.getColumnNumber(MainFileID, 7, &Invalid));
+  EXPECT_TRUE(!Invalid);
+
+  Invalid = false;
+  EXPECT_EQ(5U, SourceMgr.getColumnNumber(MainFileID, 11, &Invalid));
+  EXPECT_TRUE(!Invalid);
+
+  Invalid = false;
+  EXPECT_EQ(7U, SourceMgr.getColumnNumber(MainFileID, strlen(Source),
+                                         &Invalid));
+  EXPECT_TRUE(!Invalid);
+
+  Invalid = false;
+  SourceMgr.getColumnNumber(MainFileID, strlen(Source)+1, &Invalid);
+  EXPECT_TRUE(Invalid);
+
+  // Test invalid files
+  Invalid = false;
+  SourceMgr.getColumnNumber(FileID(), 0, &Invalid);
+  EXPECT_TRUE(Invalid);
+
+  Invalid = false;
+  SourceMgr.getColumnNumber(FileID(), 1, &Invalid);
+  EXPECT_TRUE(Invalid);
+
+  // Test with no invalid flag.
+  EXPECT_EQ(1U, SourceMgr.getColumnNumber(MainFileID, 0, NULL));
+}
+
 #if defined(LLVM_ON_UNIX)
 
 TEST_F(SourceManagerTest, getMacroArgExpandedLocation) {
