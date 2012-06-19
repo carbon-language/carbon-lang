@@ -84,9 +84,13 @@ MachineFunction::~MachineFunction() {
     MFInfo->~MachineFunctionInfo();
     Allocator.Deallocate(MFInfo);
   }
-  FrameInfo->~MachineFrameInfo();         Allocator.Deallocate(FrameInfo);
-  ConstantPool->~MachineConstantPool();   Allocator.Deallocate(ConstantPool);
-  
+
+  FrameInfo->~MachineFrameInfo();
+  Allocator.Deallocate(FrameInfo);
+
+  ConstantPool->~MachineConstantPool();
+  Allocator.Deallocate(ConstantPool);
+
   if (JumpTableInfo) {
     JumpTableInfo->~MachineJumpTableInfo();
     Allocator.Deallocate(JumpTableInfo);
@@ -98,7 +102,7 @@ MachineFunction::~MachineFunction() {
 MachineJumpTableInfo *MachineFunction::
 getOrCreateJumpTableInfo(unsigned EntryKind) {
   if (JumpTableInfo) return JumpTableInfo;
-  
+
   JumpTableInfo = new (Allocator)
     MachineJumpTableInfo((MachineJumpTableInfo::JTEntryKind)EntryKind);
   return JumpTableInfo;
@@ -116,12 +120,12 @@ void MachineFunction::RenumberBlocks(MachineBasicBlock *MBB) {
     MBBI = begin();
   else
     MBBI = MBB;
-  
+
   // Figure out the block number this should have.
   unsigned BlockNo = 0;
   if (MBBI != begin())
     BlockNo = prior(MBBI)->getNumber()+1;
-  
+
   for (; MBBI != E; ++MBBI, ++BlockNo) {
     if (MBBI->getNumber() != (int)BlockNo) {
       // Remove use of the old number.
@@ -130,7 +134,7 @@ void MachineFunction::RenumberBlocks(MachineBasicBlock *MBB) {
                "MBB number mismatch!");
         MBBNumbering[MBBI->getNumber()] = 0;
       }
-      
+
       // If BlockNo is already taken, set that block's number to -1.
       if (MBBNumbering[BlockNo])
         MBBNumbering[BlockNo]->setNumber(-1);
@@ -138,7 +142,7 @@ void MachineFunction::RenumberBlocks(MachineBasicBlock *MBB) {
       MBBNumbering[BlockNo] = MBBI;
       MBBI->setNumber(BlockNo);
     }
-  }    
+  }
 
   // Okay, all the blocks are renumbered.  If we have compactified the block
   // numbering, shrink MBBNumbering now.
@@ -295,16 +299,16 @@ void MachineFunction::print(raw_ostream &OS, SlotIndexes *Indexes) const {
 
   // Print Frame Information
   FrameInfo->print(*this, OS);
-  
+
   // Print JumpTable Information
   if (JumpTableInfo)
     JumpTableInfo->print(OS);
 
   // Print Constant Pool
   ConstantPool->print(OS);
-  
+
   const TargetRegisterInfo *TRI = getTarget().getRegisterInfo();
-  
+
   if (RegInfo && !RegInfo->livein_empty()) {
     OS << "Function Live Ins: ";
     for (MachineRegisterInfo::livein_iterator
@@ -324,7 +328,7 @@ void MachineFunction::print(raw_ostream &OS, SlotIndexes *Indexes) const {
       OS << ' ' << PrintReg(*I, TRI);
     OS << '\n';
   }
-  
+
   for (const_iterator BB = begin(), E = end(); BB != E; ++BB) {
     OS << '\n';
     BB->print(OS, Indexes);
@@ -411,10 +415,9 @@ unsigned MachineFunction::addLiveIn(unsigned PReg,
 MCSymbol *MachineFunction::getJTISymbol(unsigned JTI, MCContext &Ctx, 
                                         bool isLinkerPrivate) const {
   assert(JumpTableInfo && "No jump tables");
-  
   assert(JTI < JumpTableInfo->getJumpTables().size() && "Invalid JTI!");
   const MCAsmInfo &MAI = *getTarget().getMCAsmInfo();
-  
+
   const char *Prefix = isLinkerPrivate ? MAI.getLinkerPrivateGlobalPrefix() :
                                          MAI.getPrivateGlobalPrefix();
   SmallString<60> Name;
@@ -691,7 +694,7 @@ static bool CanShareConstantPoolEntry(const Constant *A, const Constant *B,
   else if (B->getType() != IntTy)
     B = ConstantFoldInstOperands(Instruction::BitCast, IntTy,
                                  const_cast<Constant*>(B), TD);
-  
+
   return A == B;
 }
 
@@ -714,7 +717,7 @@ unsigned MachineConstantPool::getConstantPoolIndex(const Constant *C,
         Constants[i].Alignment = Alignment;
       return i;
     }
-  
+
   Constants.push_back(MachineConstantPoolEntry(C, Alignment));
   return Constants.size()-1;
 }
@@ -723,7 +726,7 @@ unsigned MachineConstantPool::getConstantPoolIndex(MachineConstantPoolValue *V,
                                                    unsigned Alignment) {
   assert(Alignment && "Alignment must be specified!");
   if (Alignment > PoolAlignment) PoolAlignment = Alignment;
-  
+
   // Check to see if we already have this constant.
   //
   // FIXME, this could be made much more efficient for large constant pools.
