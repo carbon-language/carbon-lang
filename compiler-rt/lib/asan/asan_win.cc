@@ -23,6 +23,7 @@
 #include "asan_internal.h"
 #include "asan_lock.h"
 #include "asan_thread.h"
+#include "sanitizer_common/sanitizer_libc.h"
 
 namespace __asan {
 
@@ -85,11 +86,11 @@ bool __asan_WinSymbolize(const void *addr, char *out_buffer, int buffer_size) {
   out_buffer[0] = '\0';
   // FIXME: it might be useful to print out 'obj' or 'obj+offset' info too.
   if (got_fileline) {
-    written += SNPrintf(out_buffer + written, buffer_size - written,
+    written += internal_snprintf(out_buffer + written, buffer_size - written,
                         " %s %s:%d", symbol->Name,
                         info.FileName, info.LineNumber);
   } else {
-    written += SNPrintf(out_buffer + written, buffer_size - written,
+    written += internal_snprintf(out_buffer + written, buffer_size - written,
                         " %s+0x%p", symbol->Name, offset);
   }
   return true;

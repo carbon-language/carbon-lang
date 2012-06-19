@@ -28,9 +28,9 @@ static char *ReadFile(const char *filename) {
     return 0;
   InternalScopedBuf<char> tmp(4*1024);
   if (filename[0] == '/')
-    SNPrintf(tmp, tmp.Size(), "%s", filename);
+    internal_snprintf(tmp, tmp.Size(), "%s", filename);
   else
-    SNPrintf(tmp, tmp.Size(), "%s/%s", GetPwd(), filename);
+    internal_snprintf(tmp, tmp.Size(), "%s/%s", GetPwd(), filename);
   fd_t fd = internal_open(tmp, false);
   if (fd == kInvalidFd) {
     TsanPrintf("ThreadSanitizer: failed to open suppressions file '%s'\n",

@@ -52,7 +52,6 @@ void InternalFree(void *addr);
 // IO
 void RawWrite(const char *buffer);
 void Printf(const char *format, ...);
-int SNPrintf(char *buffer, uptr length, const char *format, ...);
 void Report(const char *format, ...);
 
 // Opens the file 'file_name" and reads up to 'max_len' bytes.

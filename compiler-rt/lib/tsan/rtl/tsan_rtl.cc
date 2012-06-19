@@ -105,9 +105,9 @@ static void WriteMemoryProfile(char *buf, uptr buf_size, int num) {
   uptr nsync = 0;
   uptr syncmem = CTX()->synctab.GetMemoryConsumption(&nsync);
 
-  SNPrintf(buf, buf_size, "%d: shadow=%zuMB"
-                          " thread=%zuMB(total=%d/live=%d)"
-                          " sync=%zuMB(cnt=%zu)\n",
+  internal_snprintf(buf, buf_size, "%d: shadow=%zuMB"
+                                   " thread=%zuMB(total=%d/live=%d)"
+                                   " sync=%zuMB(cnt=%zu)\n",
     num,
     shadow >> 20,
     threadmem >> 20, nthread, nlivethread,
@@ -129,7 +129,7 @@ static void InitializeMemoryProfile() {
   if (flags()->profile_memory == 0 || flags()->profile_memory[0] == 0)
     return;
   InternalScopedBuf<char> filename(4096);
-  SNPrintf(filename.Ptr(), filename.Size(), "%s.%d",
+  internal_snprintf(filename.Ptr(), filename.Size(), "%s.%d",
       flags()->profile_memory, GetPid());
   fd_t fd = internal_open(filename.Ptr(), true);
   if (fd == kInvalidFd) {

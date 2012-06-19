@@ -20,7 +20,7 @@ namespace __tsan {
 
 TEST(Printf, Basic) {
   char buf[1024];
-  uptr len = SNPrintf(buf, sizeof(buf),
+  uptr len = internal_snprintf(buf, sizeof(buf),
       "a%db%zdc%ue%zuf%xh%zxq%pe%sr",
       (int)-1, (long)-2, // NOLINT
       (unsigned)-4, (unsigned long)5, // NOLINT
@@ -33,7 +33,7 @@ TEST(Printf, Basic) {
 
 TEST(Printf, OverflowStr) {
   char buf[] = "123456789";
-  uptr len = SNPrintf(buf, 4, "%s", "abcdef");
+  uptr len = internal_snprintf(buf, 4, "%s", "abcdef");  // NOLINT
   EXPECT_EQ(len, (uptr)6);
   EXPECT_EQ(0, strcmp(buf, "abc"));
   EXPECT_EQ(buf[3], 0);
@@ -47,7 +47,7 @@ TEST(Printf, OverflowStr) {
 
 TEST(Printf, OverflowInt) {
   char buf[] = "123456789";
-  SNPrintf(buf, 4, "%d", -123456789);
+  internal_snprintf(buf, 4, "%d", -123456789);  // NOLINT
   EXPECT_EQ(0, strcmp(buf, "-12"));
   EXPECT_EQ(buf[3], 0);
   EXPECT_EQ(buf[4], '5');
@@ -60,7 +60,7 @@ TEST(Printf, OverflowInt) {
 
 TEST(Printf, OverflowUint) {
   char buf[] = "123456789";
-  SNPrintf(buf, 4, "a%zx", (unsigned long)0x123456789);  // NOLINT
+  internal_snprintf(buf, 4, "a%zx", (unsigned long)0x123456789);  // NOLINT
   EXPECT_EQ(0, strcmp(buf, "a12"));
   EXPECT_EQ(buf[3], 0);
   EXPECT_EQ(buf[4], '5');
@@ -73,7 +73,7 @@ TEST(Printf, OverflowUint) {
 
 TEST(Printf, OverflowPtr) {
   char buf[] = "123456789";
-  SNPrintf(buf, 4, "%p", (void*)0x123456789);
+  internal_snprintf(buf, 4, "%p", (void*)0x123456789);  // NOLINT
   EXPECT_EQ(0, strcmp(buf, "0x0"));
   EXPECT_EQ(buf[3], 0);
   EXPECT_EQ(buf[4], '5');
@@ -87,7 +87,7 @@ TEST(Printf, OverflowPtr) {
 template<typename T>
 static void TestMinMax(const char *fmt, T min, T max) {
   char buf[1024];
-  uptr len = SNPrintf(buf, sizeof(buf), fmt, min, max);
+  uptr len = internal_snprintf(buf, sizeof(buf), fmt, min, max);
   char buf2[1024];
   snprintf(buf2, sizeof(buf2), fmt, min, max);
   EXPECT_EQ(len, strlen(buf));

@@ -85,7 +85,7 @@ static int dl_iterate_phdr_cb(dl_phdr_info *info, size_t size, void *arg) {
   DlIteratePhdrCtx *ctx = (DlIteratePhdrCtx*)arg;
   InternalScopedBuf<char> tmp(128);
   if (ctx->is_first) {
-    SNPrintf(tmp.Ptr(), tmp.Size(), "/proc/%d/exe", GetPid());
+    internal_snprintf(tmp.Ptr(), tmp.Size(), "/proc/%d/exe", GetPid());
     info->dlpi_name = tmp.Ptr();
   }
   ctx->is_first = false;
@@ -159,7 +159,7 @@ ReportStack *SymbolizeCode(uptr addr) {
   ModuleDesc *m = s->module;
   uptr offset = addr - m->base;
   char addrstr[32];
-  SNPrintf(addrstr, sizeof(addrstr), "%p\n", (void*)offset);
+  internal_snprintf(addrstr, sizeof(addrstr), "%p\n", (void*)offset);
   if (0 >= internal_write(m->out_fd, addrstr, internal_strlen(addrstr))) {
     TsanPrintf("ThreadSanitizer: can't write from symbolizer (%d, %d)\n",
         m->out_fd, errno);
@@ -199,7 +199,7 @@ ReportStack *SymbolizeData(uptr addr) {
     base = GetImageBase();
   int res = 0;
   InternalScopedBuf<char> cmd(1024);
-  SNPrintf(cmd, cmd.Size(),
+  internal_snprintf(cmd, cmd.Size(),
   "nm -alC %s|grep \"%zx\"|awk '{printf(\"%%s\\n%%s\", $3, $4)}' > tsan.tmp2",
     exe, (addr - base));
   if (system(cmd))

@@ -44,7 +44,7 @@ void AsanPrintf(const char *format, ...) {
 void AsanReport(const char *format, ...) {
   const int kLen = 1024 * 4;
   char buffer[kLen];
-  int needed_length = SNPrintf(buffer, kLen, "==%d== ", GetPid());
+  int needed_length = internal_snprintf(buffer, kLen, "==%d== ", GetPid());
   RAW_CHECK_MSG(needed_length < kLen, "Buffer in Report is too short!\n");
   va_list args;
   va_start(args, format);
