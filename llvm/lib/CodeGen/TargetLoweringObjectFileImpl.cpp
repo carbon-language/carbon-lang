@@ -349,10 +349,17 @@ TargetLoweringObjectFileELF::getStaticCtorSection(unsigned Priority) const {
   if (Priority == 65535)
     return StaticCtorSection;
 
-  std::string Name = std::string(".ctors.") + utostr(65535 - Priority);
-  return getContext().getELFSection(Name, ELF::SHT_PROGBITS,
-                                    ELF::SHF_ALLOC |ELF::SHF_WRITE,
-                                    SectionKind::getDataRel());
+  if (UseInitArray) {
+    std::string Name = std::string(".init_array.") + utostr(Priority);
+    return getContext().getELFSection(Name, ELF::SHT_INIT_ARRAY,
+                                      ELF::SHF_ALLOC | ELF::SHF_WRITE,
+                                      SectionKind::getDataRel());
+  } else {
+    std::string Name = std::string(".ctors.") + utostr(65535 - Priority);
+    return getContext().getELFSection(Name, ELF::SHT_PROGBITS,
+                                      ELF::SHF_ALLOC |ELF::SHF_WRITE,
+                                      SectionKind::getDataRel());
+  }
 }
 
 const MCSection *
@@ -362,10 +369,35 @@ TargetLoweringObjectFileELF::getStaticDtorSection(unsigned Priority) const {
   if (Priority == 65535)
     return StaticDtorSection;
 
-  std::string Name = std::string(".dtors.") + utostr(65535 - Priority);
-  return getContext().getELFSection(Name, ELF::SHT_PROGBITS,
-                                    ELF::SHF_ALLOC |ELF::SHF_WRITE,
-                                    SectionKind::getDataRel());
+  if (UseInitArray) {
+    std::string Name = std::string(".fini_array.") + utostr(Priority);
+    return getContext().getELFSection(Name, ELF::SHT_FINI_ARRAY,
+                                      ELF::SHF_ALLOC | ELF::SHF_WRITE,
+                                      SectionKind::getDataRel());
+  } else {
+    std::string Name = std::string(".dtors.") + utostr(65535 - Priority);
+    return getContext().getELFSection(Name, ELF::SHT_PROGBITS,
+                                      ELF::SHF_ALLOC |ELF::SHF_WRITE,
+                                      SectionKind::getDataRel());
+  }
+}
+
+void
+TargetLoweringObjectFileELF::InitializeELF(bool UseInitArray_) {
+  UseInitArray = UseInitArray_;
+  if (!UseInitArray)
+    return;
+
+  StaticCtorSection =
+    getContext().getELFSection(".init_array", ELF::SHT_INIT_ARRAY,
+                               ELF::SHF_WRITE |
+                               ELF::SHF_ALLOC,
+                               SectionKind::getDataRel());
+  StaticDtorSection =
+    getContext().getELFSection(".fini_array", ELF::SHT_FINI_ARRAY,
+                               ELF::SHF_WRITE |
+                               ELF::SHF_ALLOC,
+                               SectionKind::getDataRel());
 }
 
 //===----------------------------------------------------------------------===//

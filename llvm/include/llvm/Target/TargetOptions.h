@@ -43,7 +43,7 @@ namespace llvm {
           StackAlignmentOverride(0), RealignStack(true),
           DisableJumpTables(false), EnableFastISel(false),
           PositionIndependentExecutable(false), EnableSegmentedStacks(false),
-          TrapFuncName(""), FloatABIType(FloatABI::Default)
+          UseInitArray(false), TrapFuncName(""), FloatABIType(FloatABI::Default)
     {}
 
     /// PrintMachineCode - This flag is enabled when the -print-machineinstrs
@@ -171,6 +171,10 @@ namespace llvm {
     unsigned PositionIndependentExecutable : 1;
 
     unsigned EnableSegmentedStacks : 1;
+
+    /// UseInitArray - Use .init_array instead of .ctors for static
+    /// constructors.
+    unsigned UseInitArray : 1;
 
     /// getTrapFunctionName - If this returns a non-empty string, this means
     /// isel should lower Intrinsic::trap to a call to the specified function

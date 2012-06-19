@@ -9,12 +9,15 @@
 
 #include "X86TargetObjectFile.h"
 #include "X86TargetMachine.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/CodeGen/MachineModuleInfoImpls.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
+#include "llvm/MC/MCSectionELF.h"
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/Target/Mangler.h"
 #include "llvm/Support/Dwarf.h"
+#include "llvm/Support/ELF.h"
 using namespace llvm;
 using namespace dwarf;
 
@@ -41,4 +44,10 @@ MCSymbol *X8664_MachoTargetObjectFile::
 getCFIPersonalitySymbol(const GlobalValue *GV, Mangler *Mang,
                         MachineModuleInfo *MMI) const {
   return Mang->getSymbol(GV);
+}
+
+void
+X86LinuxTargetObjectFile::Initialize(MCContext &Ctx, const TargetMachine &TM) {
+  TargetLoweringObjectFileELF::Initialize(Ctx, TM);
+  InitializeELF(TM.Options.UseInitArray);
 }

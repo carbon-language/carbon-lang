@@ -32,6 +32,12 @@ namespace llvm {
                             MachineModuleInfo *MMI) const;
   };
 
+  /// X86LinuxTargetObjectFile - This implementation is used for linux x86
+  /// and x86-64.
+  class X86LinuxTargetObjectFile : public TargetLoweringObjectFileELF {
+    virtual void Initialize(MCContext &Ctx, const TargetMachine &TM);
+  };
+
 } // end namespace llvm
 
 #endif
