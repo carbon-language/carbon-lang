@@ -15,10 +15,10 @@ class CommandLineCompletionTestCase(TestBase):
     @classmethod
     def classCleanup(cls):
         """Cleanup the test byproducts."""
-        system(["/bin/sh", "-c", "rm -f child_send1.txt"])
-        system(["/bin/sh", "-c", "rm -f child_read1.txt"])
-        system(["/bin/sh", "-c", "rm -f child_send2.txt"])
-        system(["/bin/sh", "-c", "rm -f child_read2.txt"])
+        cls.RemoveTempFile("child_send1.txt")
+        cls.RemoveTempFile("child_read1.txt")
+        cls.RemoveTempFile("child_send2.txt")
+        cls.RemoveTempFile("child_read2.txt")
 
     def test_stty_dash_a_before_and_afetr_invoking_lldb_command(self):
         """Test that 'stty -a' displays the same output before and after running the lldb command."""

@@ -14,8 +14,8 @@ class UUIDMismatchWarningCase(TestBase):
     @classmethod
     def classCleanup(cls):
         """Cleanup the test byproducts."""
-        system(["/bin/sh", "-c", "rm -f child_send.txt"])
-        system(["/bin/sh", "-c", "rm -f child_read.txt"])
+        cls.RemoveTempFile("child_send.txt")
+        cls.RemoveTempFile("child_read.txt")
 
     def setUp(self):
         TestBase.setUp(self)

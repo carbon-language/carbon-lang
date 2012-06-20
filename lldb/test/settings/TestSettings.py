@@ -14,10 +14,10 @@ class SettingsCommandTestCase(TestBase):
     @classmethod
     def classCleanup(cls):
         """Cleanup the test byproducts."""
-        system(["/bin/sh", "-c", "rm -f output1.txt"])
-        system(["/bin/sh", "-c", "rm -f output2.txt"])
-        system(["/bin/sh", "-c", "rm -f stderr.txt"])
-        system(["/bin/sh", "-c", "rm -f stdout.txt"])
+        cls.RemoveTempFile("output1.txt")
+        cls.RemoveTempFile("output2.txt")
+        cls.RemoveTempFile("stderr.txt")
+        cls.RemoveTempFile("stdout.txt")
 
     def test_apropos_should_also_search_settings_description(self):
         """Test that 'apropos' command should also search descriptions for the settings variables."""

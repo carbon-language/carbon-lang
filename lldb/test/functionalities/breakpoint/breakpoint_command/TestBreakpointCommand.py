@@ -14,7 +14,8 @@ class BreakpointCommandTestCase(TestBase):
     @classmethod
     def classCleanup(cls):
         """Cleanup the test byproduct of breakpoint_command_sequence(self)."""
-        system(["/bin/sh", "-c", "rm -f output.txt output2.txt"])
+        cls.RemoveTempFile("output.txt")
+        cls.RemoveTempFile("output2.txt")
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @dsym_test
@@ -109,10 +110,8 @@ class BreakpointCommandTestCase(TestBase):
                      patterns = ["Breakpoint created: [0-9]+: source regex = \"is about to return \[12\]0\", locations = 1"])
       
         # Run the program.  Remove 'output.txt' if it exists.
-        if os.path.exists('output.txt'):
-            os.remove('output.txt')
-        if os.path.exists('output2.txt'):
-            os.remove('output2.txt')
+        self.RemoveTempFile("output.txt")
+        self.RemoveTempFile("output2.txt")
         self.runCmd("run", RUN_SUCCEEDED)
 
         # Check that the file 'output.txt' exists and contains the string "lldb".
