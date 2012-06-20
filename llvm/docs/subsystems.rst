@@ -3,6 +3,11 @@
 Subsystem Documentation
 =======================
 
+.. toctree::
+   :hidden:
+
+   AliasAnalysis
+
  * `Writing an LLVM Pass <WritingAnLLVMPass.html>`_
     
     Information on how to write LLVM transformations and analyses.
@@ -22,7 +27,7 @@ Subsystem Documentation
     Describes the TableGen tool, which is used heavily by the LLVM code
     generator.
     
- * `Alias Analysis in LLVM <AliasAnalysis.html>`_
+ * :ref:`alias_analysis`
     
     Information on how to write a new alias analysis implementation or how to
     use existing analyses.
