@@ -7,6 +7,7 @@ Subsystem Documentation
    :hidden:
 
    AliasAnalysis
+   BranchWeightMetadata
    LinkTimeOptimization
 
 * `Writing an LLVM Pass <WritingAnLLVMPass.html>`_
@@ -75,6 +76,6 @@ Subsystem Documentation
     
    How to debug JITed code with GDB.
     
-* `Branch Weight Metadata <BranchWeightMetadata.html>`_
+* :ref:`branch_weight`
     
    Provides information about Branch Prediction Information.
