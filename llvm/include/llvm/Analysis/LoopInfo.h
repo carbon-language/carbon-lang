@@ -97,6 +97,9 @@ public:
   BlockT *getHeader() const { return Blocks.front(); }
   LoopT *getParentLoop() const { return ParentLoop; }
 
+  /// setParentLoop is a raw interface for bypassing addChildLoop.
+  void setParentLoop(LoopT *L) { ParentLoop = L; }
+
   /// contains - Return true if the specified loop is contained within in
   /// this loop.
   ///
@@ -122,6 +125,7 @@ public:
   /// iterator/begin/end - Return the loops contained entirely within this loop.
   ///
   const std::vector<LoopT *> &getSubLoops() const { return SubLoops; }
+  std::vector<LoopT *> &getSubLoopsVector() { return SubLoops; }
   typedef typename std::vector<LoopT *>::const_iterator iterator;
   iterator begin() const { return SubLoops.begin(); }
   iterator end() const { return SubLoops.end(); }
@@ -130,6 +134,7 @@ public:
   /// getBlocks - Get a list of the basic blocks which make up this loop.
   ///
   const std::vector<BlockT*> &getBlocks() const { return Blocks; }
+  std::vector<BlockT*> &getBlocksVector() { return Blocks; }
   typedef typename std::vector<BlockT*>::const_iterator block_iterator;
   block_iterator block_begin() const { return Blocks.begin(); }
   block_iterator block_end() const { return Blocks.end(); }
@@ -527,6 +532,9 @@ public:
   /// the parent loop contains a loop which should contain L, the loop gets
   /// inserted into L instead.
   void InsertLoopInto(LoopT *L, LoopT *Parent);
+
+  /// Create the loop forest using a stable algorithm.
+  void Analyze(DominatorTreeBase<BlockT> &DomTree);
 
   // Debugging
 

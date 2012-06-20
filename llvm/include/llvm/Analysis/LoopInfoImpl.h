@@ -16,6 +16,7 @@
 #define LLVM_ANALYSIS_LOOP_INFO_IMPL_H
 
 #include "llvm/Analysis/LoopInfo.h"
+#include "llvm/ADT/PostOrderIterator.h"
 
 namespace llvm {
 
@@ -529,6 +530,204 @@ void LoopInfoBase<BlockT, LoopT>::InsertLoopInto(LoopT *L, LoopT *Parent) {
   // If not, insert it here!
   Parent->SubLoops.push_back(L);
   L->ParentLoop = Parent;
+}
+
+//===----------------------------------------------------------------------===//
+/// Stable LoopInfo Analysis - Build a loop tree using stable iterators so the
+/// result does / not depend on use list (block predecessor) order.
+///
+
+/// Discover a subloop with the specified backedges such that: All blocks within
+/// this loop are mapped to this loop or a subloop. And all subloops within this
+/// loop have their parent loop set to this loop or a subloop.
+template<class BlockT, class LoopT>
+static void discoverAndMapSubloop(LoopT *L, ArrayRef<BlockT*> Backedges,
+                                  LoopInfoBase<BlockT, LoopT> *LI,
+                                  DominatorTreeBase<BlockT> &DomTree) {
+  typedef GraphTraits<Inverse<BlockT*> > InvBlockTraits;
+
+  unsigned NumBlocks = 0;
+  unsigned NumSubloops = 0;
+
+  // Perform a backward CFG traversal using a worklist.
+  std::vector<BlockT *> ReverseCFGWorklist(Backedges.begin(), Backedges.end());
+  while (!ReverseCFGWorklist.empty()) {
+    BlockT *PredBB = ReverseCFGWorklist.back();
+    ReverseCFGWorklist.pop_back();
+
+    LoopT *Subloop = LI->getLoopFor(PredBB);
+    if (!Subloop) {
+      if (!DomTree.isReachableFromEntry(PredBB))
+        continue;
+
+      // This is an undiscovered block. Map it to the current loop.
+      LI->changeLoopFor(PredBB, L);
+      ++NumBlocks;
+      if (PredBB == L->getHeader())
+          continue;
+      // Push all block predecessors on the worklist.
+      ReverseCFGWorklist.insert(ReverseCFGWorklist.end(),
+                                InvBlockTraits::child_begin(PredBB),
+                                InvBlockTraits::child_end(PredBB));
+    }
+    else {
+      // This is a discovered block. Find its outermost discovered loop.
+      while (LoopT *Parent = Subloop->getParentLoop())
+        Subloop = Parent;
+
+      // If it is already discovered to be a subloop of this loop, continue.
+      if (Subloop == L)
+        continue;
+
+      // Discover a subloop of this loop.
+      Subloop->setParentLoop(L);
+      ++NumSubloops;
+      NumBlocks += Subloop->getBlocks().capacity();
+      PredBB = Subloop->getHeader();
+      // Continue traversal along predecessors that are not loop-back edges from
+      // within this subloop tree itself. Note that a predecessor may directly
+      // reach another subloop that is not yet discovered to be a subloop of
+      // this loop, which we must traverse.
+      for (typename InvBlockTraits::ChildIteratorType PI =
+             InvBlockTraits::child_begin(PredBB),
+             PE = InvBlockTraits::child_end(PredBB); PI != PE; ++PI) {
+        if (LI->getLoopFor(*PI) != Subloop)
+          ReverseCFGWorklist.push_back(*PI);
+      }
+    }
+  }
+  L->getSubLoopsVector().reserve(NumSubloops);
+  L->getBlocksVector().reserve(NumBlocks);
+}
+
+namespace {
+/// Populate all loop data in a stable order during a single forward DFS.
+template<class BlockT, class LoopT>
+class PopulateLoopsDFS {
+  typedef GraphTraits<BlockT*> BlockTraits;
+  typedef typename BlockTraits::ChildIteratorType SuccIterTy;
+
+  LoopInfoBase<BlockT, LoopT> *LI;
+  DenseSet<const BlockT *> VisitedBlocks;
+  std::vector<std::pair<BlockT*, SuccIterTy> > DFSStack;
+
+public:
+  PopulateLoopsDFS(LoopInfoBase<BlockT, LoopT> *li):
+    LI(li) {}
+
+  void traverse(BlockT *EntryBlock);
+
+protected:
+  void reverseInsertIntoLoop(BlockT *Block);
+
+  BlockT *dfsSource() { return DFSStack.back().first; }
+  SuccIterTy &dfsSucc() { return DFSStack.back().second; }
+  SuccIterTy dfsSuccEnd() { return BlockTraits::child_end(dfsSource()); }
+
+  void pushBlock(BlockT *Block) {
+    DFSStack.push_back(std::make_pair(Block, BlockTraits::child_begin(Block)));
+  }
+};
+} // anonymous
+
+/// Top-level driver for the forward DFS within the loop.
+template<class BlockT, class LoopT>
+void PopulateLoopsDFS<BlockT, LoopT>::traverse(BlockT *EntryBlock) {
+  pushBlock(EntryBlock);
+  VisitedBlocks.insert(EntryBlock);
+  while (!DFSStack.empty()) {
+    // Traverse the leftmost path as far as possible.
+    while (dfsSucc() != dfsSuccEnd()) {
+      BlockT *BB = *dfsSucc();
+      ++dfsSucc();
+      if (!VisitedBlocks.insert(BB).second)
+        continue;
+
+      // Push the next DFS successor onto the stack.
+      pushBlock(BB);
+    }
+    // Visit the top of the stack in postorder and backtrack.
+    reverseInsertIntoLoop(dfsSource());
+    DFSStack.pop_back();
+  }
+}
+
+/// Add a single Block to its ancestor loops in PostOrder. If the block is a
+/// subloop header, add the subloop to its parent in PostOrder, then reverse the
+/// Block and Subloop vectors of the now complete subloop to achieve RPO.
+template<class BlockT, class LoopT>
+void PopulateLoopsDFS<BlockT, LoopT>::reverseInsertIntoLoop(BlockT *Block) {
+  for (LoopT *Subloop = LI->getLoopFor(Block);
+       Subloop; Subloop = Subloop->getParentLoop()) {
+
+    if (Block != Subloop->getHeader()) {
+      Subloop->getBlocksVector().push_back(Block);
+      continue;
+    }
+    if (Subloop->getParentLoop())
+      Subloop->getParentLoop()->getSubLoopsVector().push_back(Subloop);
+    else
+      LI->addTopLevelLoop(Subloop);
+
+    // For convenience, Blocks and Subloops are inserted in postorder. Reverse
+    // the lists, except for the loop header, which is always at the beginning.
+    std::reverse(Subloop->getBlocksVector().begin()+1,
+                 Subloop->getBlocksVector().end());
+    std::reverse(Subloop->getSubLoopsVector().begin(),
+                 Subloop->getSubLoopsVector().end());
+  }
+}
+
+/// Analyze LoopInfo discovers loops during a postorder DominatorTree traversal
+/// interleaved with backward CFG traversals within each subloop
+/// (discoverAndMapSubloop). The backward traversal skips inner subloops, so
+/// this part of the algorithm is linear in the number of CFG edges. Subloop and
+/// Block vectors are then populated during a single forward CFG traversal
+/// (PopulateLoopDFS).
+///
+/// During the two CFG traversals each block is seen three times:
+/// 1) Discovered and mapped by a reverse CFG traversal.
+/// 2) Visited during a forward DFS CFG traversal.
+/// 3) Reverse-inserted in the loop in postorder following forward DFS.
+///
+/// The Block vectors are inclusive, so step 3 requires loop-depth number of
+/// insertions per block.
+template<class BlockT, class LoopT>
+void LoopInfoBase<BlockT, LoopT>::
+Analyze(DominatorTreeBase<BlockT> &DomTree) {
+
+  // Postorder traversal of the dominator tree.
+  DomTreeNodeBase<BlockT>* DomRoot = DomTree.getRootNode();
+  for (po_iterator<DomTreeNodeBase<BlockT>*> DomIter = po_begin(DomRoot),
+         DomEnd = po_end(DomRoot); DomIter != DomEnd; ++DomIter) {
+
+    BlockT *Header = DomIter->getBlock();
+    SmallVector<BlockT *, 4> Backedges;
+
+    // Check each predecessor of the potential loop header.
+    typedef GraphTraits<Inverse<BlockT*> > InvBlockTraits;
+    for (typename InvBlockTraits::ChildIteratorType PI =
+           InvBlockTraits::child_begin(Header),
+           PE = InvBlockTraits::child_end(Header); PI != PE; ++PI) {
+
+      BlockT *Backedge = *PI;
+
+      // If Header dominates predBB, this is a new loop. Collect the backedges.
+      if (DomTree.dominates(Header, Backedge)
+          && DomTree.isReachableFromEntry(Backedge)) {
+        Backedges.push_back(Backedge);
+      }
+    }
+    // Perform a backward CFG traversal to discover and map blocks in this loop.
+    if (!Backedges.empty()) {
+      LoopT *L = new LoopT(Header);
+      discoverAndMapSubloop(L, ArrayRef<BlockT*>(Backedges), this, DomTree);
+    }
+  }
+  // Perform a single forward CFG traversal to populate block and subloop
+  // vectors for all loops.
+  PopulateLoopsDFS<BlockT, LoopT> DFS(this);
+  DFS.traverse(DomRoot->getBlock());
 }
 
 // Debugging
