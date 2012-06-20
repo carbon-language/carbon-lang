@@ -92,8 +92,8 @@ Parser::Parser(Preprocessor &pp, Sema &actions, bool SkipFunctionBodies)
     PP.AddPragmaHandler("OPENCL", FPContractHandler.get());
   }
 
-  CommentHandler.reset(new ActionCommentHandler(actions));
-  PP.addCommentHandler(CommentHandler.get());
+  CommentSemaHandler.reset(new ActionCommentHandler(actions));
+  PP.addCommentHandler(CommentSemaHandler.get());
 
   PP.setCodeCompletionHandler(*this);
 }
@@ -440,7 +440,7 @@ Parser::~Parser() {
   PP.RemovePragmaHandler("STDC", FPContractHandler.get());
   FPContractHandler.reset();
 
-  PP.removeCommentHandler(CommentHandler.get());
+  PP.removeCommentHandler(CommentSemaHandler.get());
 
   PP.clearCodeCompletionHandler();
 
