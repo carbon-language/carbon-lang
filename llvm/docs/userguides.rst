@@ -7,6 +7,7 @@ User Guides
    :hidden:
 
    CommandGuide/index
+   DeveloperPolicy
    FAQ
    Lexicon
 
@@ -32,7 +33,7 @@ User Guides
    A walk through the process of using LLVM for a custom language, and the
    facilities LLVM offers in tutorial form.
 
-* `Developer Policy <DeveloperPolicy.html>`_
+* :ref:`developer_policy`
 
    The LLVM project's policy towards developers and their contributions.
 
