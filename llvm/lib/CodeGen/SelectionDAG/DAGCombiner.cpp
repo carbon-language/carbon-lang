@@ -1322,6 +1322,9 @@ SDValue DAGCombiner::visitMERGE_VALUES(SDNode *N) {
   // Replacing results may cause a different MERGE_VALUES to suddenly
   // be CSE'd with N, and carry its uses with it. Iterate until no
   // uses remain, to ensure that the node can be safely deleted.
+  // First add the users of this node to the work list so that they
+  // can be tried again once they have new operands.
+  AddUsersToWorkList(N);
   do {
     for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
       DAG.ReplaceAllUsesOfValueWith(SDValue(N, i), N->getOperand(i));
