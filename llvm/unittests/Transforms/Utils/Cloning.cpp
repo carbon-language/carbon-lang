@@ -18,6 +18,7 @@
 using namespace llvm;
 
 namespace {
+
 class CloneInstruction : public ::testing::Test {
 protected:
   virtual void SetUp() {
@@ -48,7 +49,6 @@ protected:
   LLVMContext context;
   Value *V;
 };
-}
 
 TEST_F(CloneInstruction, OverflowBits) {
   V = new Argument(Type::getInt32Ty(context));
@@ -141,4 +141,6 @@ TEST_F(CloneInstruction, Exact) {
 
   SDiv->setIsExact(true);
   EXPECT_TRUE(this->clone(SDiv)->isExact());
+}
+
 }
