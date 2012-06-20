@@ -1224,54 +1224,6 @@ private:
     }
   }
 
-  // Collect IntRangePairs for all operands of MI that may need fixing.
-  void collectRangesInBundle(MachineInstr* MI, RangeSet& Entering,
-                             RangeSet& Exiting, SlotIndex MIStartIdx,
-                             SlotIndex MIEndIdx) {
-    for (MachineInstr::mop_iterator MOI = MI->operands_begin(),
-                                    MOE = MI->operands_end();
-         MOI != MOE; ++MOI) {
-      const MachineOperand& MO = *MOI;
-      assert(!MO.isRegMask() && "Can't have RegMasks in bundles.");
-      if (!MO.isReg() || MO.getReg() == 0)
-        continue;
-
-      unsigned Reg = MO.getReg();
-
-      // TODO: Currently we're skipping uses that are reserved or have no
-      // interval, but we're not updating their kills. This should be
-      // fixed.
-      if (TargetRegisterInfo::isPhysicalRegister(Reg) && LIS.isReserved(Reg))
-        continue;
-
-      if (TargetRegisterInfo::isPhysicalRegister(Reg) && LIS.trackingRegUnits())
-          for (MCRegUnitIterator Units(Reg, &TRI); Units.isValid(); ++Units)
-            collectRangesInBundle(MO, &LIS.getRegUnit(*Units),
-                                  Entering, Exiting, MIStartIdx, MIEndIdx);
-      else if (LIS.hasInterval(Reg))
-        collectRangesInBundle(MO, &LIS.getInterval(Reg),
-                              Entering, Exiting, MIStartIdx, MIEndIdx);
-    }
-  }
-
-  void collectRangesInBundle(const MachineOperand &MO, LiveInterval *LI,
-                             RangeSet &Entering, RangeSet &Exiting,
-                             SlotIndex MIStartIdx, SlotIndex MIEndIdx) {
-    if (MO.readsReg()) {
-      LiveRange* LR = LI->getLiveRangeContaining(MIStartIdx);
-      if (LR != 0)
-        Entering.insert(std::make_pair(LI, LR));
-    }
-    if (MO.isDef()) {
-      assert(!MO.isEarlyClobber() &&
-             "Early clobbers not allowed in bundles.");
-      assert(!MO.isDead() && "Dead-defs not allowed in bundles.");
-      LiveRange* LR = LI->getLiveRangeContaining(MIEndIdx.getDeadSlot());
-      assert(LR != 0 && "Internal ranges not allowed in bundles.");
-      Exiting.insert(std::make_pair(LI, LR));
-    }
-  }
-
   BundleRanges createBundleRanges(RangeSet& Entering,
                                   RangeSet& Internal,
                                   RangeSet& Exiting) {
