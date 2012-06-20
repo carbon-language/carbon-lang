@@ -1737,6 +1737,17 @@ ASTReader::ReadASTBlock(ModuleFile &F) {
         }
         break;
 
+      case COMMENTS_BLOCK_ID: {
+        llvm::BitstreamCursor C = Stream;
+        if (Stream.SkipBlock() ||
+            ReadBlockAbbrevs(C, COMMENTS_BLOCK_ID)) {
+          Error("malformed comments block in AST file");
+          return Failure;
+        }
+        CommentsCursors.push_back(std::make_pair(C, &F));
+        break;
+      }
+
       default:
         if (!Stream.SkipBlock())
           break;
@@ -6256,6 +6267,61 @@ SwitchCase *ASTReader::getSwitchCaseWithID(unsigned ID) {
 
 void ASTReader::ClearSwitchCaseIDs() {
   CurrSwitchCaseStmts->clear();
+}
+
+void ASTReader::ReadComments() {
+  std::vector<RawComment> Comments;
+  for (SmallVectorImpl<std::pair<llvm::BitstreamCursor,
+                                 serialization::ModuleFile *> >::iterator
+       I = CommentsCursors.begin(),
+       E = CommentsCursors.end();
+       I != E; ++I) {
+    llvm::BitstreamCursor &Cursor = I->first;
+    serialization::ModuleFile &F = *I->second;
+    SavedStreamPosition SavedPosition(Cursor);
+
+    RecordData Record;
+    while (true) {
+      unsigned Code = Cursor.ReadCode();
+      if (Code == llvm::bitc::END_BLOCK)
+        break;
+
+      if (Code == llvm::bitc::ENTER_SUBBLOCK) {
+        // No known subblocks, always skip them.
+        Cursor.ReadSubBlockID();
+        if (Cursor.SkipBlock()) {
+          Error("malformed block record in AST file");
+          return;
+        }
+        continue;
+      }
+
+      if (Code == llvm::bitc::DEFINE_ABBREV) {
+        Cursor.ReadAbbrevRecord();
+        continue;
+      }
+
+      // Read a record.
+      Record.clear();
+      switch ((CommentRecordTypes) Cursor.ReadRecord(Code, Record)) {
+        default:  // Default behavior: ignore.
+          break;
+
+        case COMMENTS_RAW_COMMENT: {
+          unsigned Idx = 0;
+          SourceRange SR = ReadSourceRange(F, Record, Idx);
+          RawComment::CommentKind Kind =
+              (RawComment::CommentKind) Record[Idx++];
+          bool IsTrailingComment = Record[Idx++];
+          bool IsAlmostTrailingComment = Record[Idx++];
+          Comments.push_back(RawComment(SR, Kind, IsTrailingComment,
+                                        IsAlmostTrailingComment));
+          break;
+      }
+      }
+    }
+  }
+  Context.Comments.addCommentsToFront(Comments);
 }
 
 void ASTReader::finishPendingActions() {

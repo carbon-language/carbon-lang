@@ -3188,6 +3188,19 @@ CINDEX_LINKAGE CXCursor clang_getCanonicalCursor(CXCursor);
 CINDEX_LINKAGE int clang_Cursor_getObjCSelectorIndex(CXCursor);
 
 /**
+ * \brief Given a cursor that represents a declaration, return the associated
+ * comment's source range.  The range may include multiple consecutive comments
+ * with whitespace in between.
+ */
+CINDEX_LINKAGE CXSourceRange clang_Cursor_getCommentRange(CXCursor C);
+
+/**
+ * \brief Given a cursor that represents a declaration, return the associated
+ * comment text, including comment markers.
+ */
+CINDEX_LINKAGE CXString clang_Cursor_getRawCommentText(CXCursor C);
+
+/**
  * @}
  */
 

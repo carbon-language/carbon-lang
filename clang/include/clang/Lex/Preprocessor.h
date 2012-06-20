@@ -510,12 +510,12 @@ public:
   }
 
   /// \brief Add the specified comment handler to the preprocessor.
-  void AddCommentHandler(CommentHandler *Handler);
+  void addCommentHandler(CommentHandler *Handler);
 
   /// \brief Remove the specified comment handler.
   ///
   /// It is an error to remove a handler that has not been registered.
-  void RemoveCommentHandler(CommentHandler *Handler);
+  void removeCommentHandler(CommentHandler *Handler);
 
   /// \brief Set the code completion handler to the given object.
   void setCodeCompletionHandler(CodeCompletionHandler &Handler) {

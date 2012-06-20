@@ -1014,6 +1014,11 @@ LambdaScopeInfo *Sema::getCurLambda() {
   return dyn_cast<LambdaScopeInfo>(FunctionScopes.back());  
 }
 
+void Sema::ActOnComment(SourceRange Comment) {
+  RawComment RC(SourceMgr, Comment);
+  Context.addComment(RC);
+}
+
 // Pin this vtable to this file.
 ExternalSemaSource::~ExternalSemaSource() {}
 

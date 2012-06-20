@@ -44,7 +44,7 @@ static bool isEmptyARCMTMacroStatement(NullStmt *S,
   SourceManager &SM = Ctx.getSourceManager();
   std::vector<SourceLocation>::iterator
     I = std::upper_bound(MacroLocs.begin(), MacroLocs.end(), SemiLoc,
-                         SourceManager::LocBeforeThanCompare(SM));
+                         BeforeThanCompare<SourceLocation>(SM));
   --I;
   SourceLocation
       AfterMacroLoc = I->getLocWithOffset(getARCMTMacroName().size());

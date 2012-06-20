@@ -218,7 +218,9 @@ static void PrintCursor(CXCursor Cursor) {
     CXPlatformAvailability PlatformAvailability[2];
     int NumPlatformAvailability;
     int I;
-    
+    CXString Comment;
+    const char *CommentCString;
+
     ks = clang_getCursorKindSpelling(Cursor.kind);
     string = want_display_name? clang_getCursorDisplayName(Cursor) 
                               : clang_getCursorSpelling(Cursor);
@@ -398,6 +400,22 @@ static void PrintCursor(CXCursor Cursor) {
       if (!clang_equalRanges(CursorExtent, RefNameRange))
         PrintRange(RefNameRange, "RefName");
     }
+
+    Comment = clang_Cursor_getRawCommentText(Cursor);
+    CommentCString = clang_getCString(Comment);
+    if (CommentCString != NULL && CommentCString[0] != '\0') {
+      printf(" Comment=[");
+      for ( ; *CommentCString; ++CommentCString) {
+        if (*CommentCString != '\n')
+          putchar(*CommentCString);
+        else
+          printf("\\n");
+      }
+      printf("]");
+
+      PrintRange(clang_Cursor_getCommentRange(Cursor), "CommentRange");
+    }
+    clang_disposeString(Comment);
   }
 }
 

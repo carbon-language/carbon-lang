@@ -5,6 +5,8 @@ clang_CXIndex_setGlobalOptions
 clang_CXXMethod_isStatic
 clang_CXXMethod_isVirtual
 clang_Cursor_getArgument
+clang_Cursor_getCommentRange
+clang_Cursor_getRawCommentText
 clang_Cursor_getNumArguments
 clang_Cursor_getObjCSelectorIndex
 clang_Cursor_getSpellingNameRange

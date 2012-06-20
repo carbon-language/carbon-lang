@@ -6,6 +6,7 @@ set(LLVM_USED_LIBS
   clangSerialization
   clangSema
   clangEdit
+  clangComments
   clangAST
   clangLex
   clangBasic)

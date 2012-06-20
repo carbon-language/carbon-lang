@@ -1,5 +1,6 @@
 set(LLVM_USED_LIBS
   clangARCMigrate
+  clangComments
   clangEdit
   clangRewrite
   )

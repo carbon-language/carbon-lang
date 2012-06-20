@@ -53,6 +53,107 @@ enum FloatingRank {
   HalfRank, FloatRank, DoubleRank, LongDoubleRank
 };
 
+const RawComment *ASTContext::getRawCommentForDeclNoCache(const Decl *D) const {
+  if (!CommentsLoaded && ExternalSource) {
+    ExternalSource->ReadComments();
+    CommentsLoaded = true;
+  }
+
+  assert(D);
+
+  // TODO: handle comments for function parameters properly.
+  if (isa<ParmVarDecl>(D))
+    return NULL;
+
+  ArrayRef<RawComment> RawComments = Comments.getComments();
+
+  // If there are no comments anywhere, we won't find anything.
+  if (RawComments.empty())
+    return NULL;
+
+  // If the declaration doesn't map directly to a location in a file, we
+  // can't find the comment.
+  SourceLocation DeclLoc = D->getLocation();
+  if (DeclLoc.isInvalid() || !DeclLoc.isFileID())
+    return NULL;
+
+  // Find the comment that occurs just after this declaration.
+  ArrayRef<RawComment>::iterator Comment
+      = std::lower_bound(RawComments.begin(),
+                         RawComments.end(),
+                         SourceRange(DeclLoc),
+                         BeforeThanCompare<RawComment>(SourceMgr));
+
+  // Decompose the location for the declaration and find the beginning of the
+  // file buffer.
+  std::pair<FileID, unsigned> DeclLocDecomp = SourceMgr.getDecomposedLoc(DeclLoc);
+
+  // First check whether we have a trailing comment.
+  if (Comment != RawComments.end() &&
+      Comment->isDoxygen() && Comment->isTrailingComment() &&
+      !isa<TagDecl>(D) && !isa<NamespaceDecl>(D)) {
+    std::pair<FileID, unsigned> CommentBeginDecomp
+      = SourceMgr.getDecomposedLoc(Comment->getSourceRange().getBegin());
+    // Check that Doxygen trailing comment comes after the declaration, starts
+    // on the same line and in the same file as the declaration.
+    if (DeclLocDecomp.first == CommentBeginDecomp.first &&
+        SourceMgr.getLineNumber(DeclLocDecomp.first, DeclLocDecomp.second)
+          == SourceMgr.getLineNumber(CommentBeginDecomp.first,
+                                     CommentBeginDecomp.second)) {
+      return &*Comment;
+    }
+  }
+
+  // The comment just after the declaration was not a trailing comment.
+  // Let's look at the previous comment.
+  if (Comment == RawComments.begin())
+    return NULL;
+  --Comment;
+
+  // Check that we actually have a non-member Doxygen comment.
+  if (!Comment->isDoxygen() || Comment->isTrailingComment())
+    return NULL;
+
+  // Decompose the end of the comment.
+  std::pair<FileID, unsigned> CommentEndDecomp
+    = SourceMgr.getDecomposedLoc(Comment->getSourceRange().getEnd());
+
+  // If the comment and the declaration aren't in the same file, then they
+  // aren't related.
+  if (DeclLocDecomp.first != CommentEndDecomp.first)
+    return NULL;
+
+  // Get the corresponding buffer.
+  bool Invalid = false;
+  const char *Buffer = SourceMgr.getBufferData(DeclLocDecomp.first,
+                                               &Invalid).data();
+  if (Invalid)
+    return NULL;
+
+  // Extract text between the comment and declaration.
+  StringRef Text(Buffer + CommentEndDecomp.second,
+                 DeclLocDecomp.second - CommentEndDecomp.second);
+
+  // There should be no other declarations between comment and declaration.
+  if (Text.find_first_of(",;{}") != StringRef::npos)
+    return NULL;
+
+  return &*Comment;
+}
+
+const RawComment *ASTContext::getRawCommentForDecl(const Decl *D) const {
+  // Check whether we have cached a comment string for this declaration
+  // already.
+  llvm::DenseMap<const Decl *, const RawComment *>::iterator Pos
+      = DeclComments.find(D);
+  if (Pos != DeclComments.end())
+      return Pos->second;
+
+  const RawComment *RC = getRawCommentForDeclNoCache(D);
+  DeclComments[D] = RC;
+  return RC;
+}
+
 void 
 ASTContext::CanonicalTemplateTemplateParm::Profile(llvm::FoldingSetNodeID &ID, 
                                                TemplateTemplateParmDecl *Parm) {
@@ -244,6 +345,7 @@ ASTContext::ASTContext(LangOptions& LOpts, SourceManager &SM,
     BuiltinInfo(builtins),
     DeclarationNames(*this),
     ExternalSource(0), Listener(0),
+    Comments(SM), CommentsLoaded(false),
     LastSDM(0, 0),
     UniqueBlockByRefTypeID(0) 
 {

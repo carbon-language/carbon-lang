@@ -1244,19 +1244,6 @@ public:
   /// \returns true if LHS source location comes before RHS, false otherwise.
   bool isBeforeInTranslationUnit(SourceLocation LHS, SourceLocation RHS) const;
 
-  /// \brief Comparison function class.
-  class LocBeforeThanCompare : public std::binary_function<SourceLocation,
-                                                         SourceLocation, bool> {
-    SourceManager &SM;
-
-  public:
-    explicit LocBeforeThanCompare(SourceManager &SM) : SM(SM) { }
-
-    bool operator()(SourceLocation LHS, SourceLocation RHS) const {
-      return SM.isBeforeInTranslationUnit(LHS, RHS);
-    }
-  };
-
   /// \brief Determines the order of 2 source locations in the "source location
   /// address space".
   bool isBeforeInSLocAddrSpace(SourceLocation LHS, SourceLocation RHS) const {
@@ -1500,6 +1487,35 @@ private:
   friend class ASTWriter;
 };
 
+/// \brief Comparison function object.
+template<typename T>
+class BeforeThanCompare;
+
+/// \brief Compare two source locations.
+template<>
+class BeforeThanCompare<SourceLocation> {
+  SourceManager &SM;
+
+public:
+  explicit BeforeThanCompare(SourceManager &SM) : SM(SM) { }
+
+  bool operator()(SourceLocation LHS, SourceLocation RHS) const {
+    return SM.isBeforeInTranslationUnit(LHS, RHS);
+  }
+};
+
+/// \brief Compare two non-overlapping source ranges.
+template<>
+class BeforeThanCompare<SourceRange> {
+  SourceManager &SM;
+
+public:
+  explicit BeforeThanCompare(SourceManager &SM) : SM(SM) { }
+
+  bool operator()(SourceRange LHS, SourceRange RHS) {
+    return SM.isBeforeInTranslationUnit(LHS.getBegin(), RHS.getBegin());
+  }
+};
 
 }  // end namespace clang
 

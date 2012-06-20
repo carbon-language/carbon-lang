@@ -207,7 +207,10 @@ namespace clang {
       PREPROCESSOR_DETAIL_BLOCK_ID,
       
       /// \brief The block containing the submodule structure.
-      SUBMODULE_BLOCK_ID
+      SUBMODULE_BLOCK_ID,
+
+      /// \brief The block containing comments.
+      COMMENTS_BLOCK_ID
     };
 
     /// \brief Record types that occur within the AST block itself.
@@ -545,7 +548,12 @@ namespace clang {
       /// \brief Specifies a required feature.
       SUBMODULE_REQUIRES = 7
     };
-    
+
+    /// \brief Record types used within a comments block.
+    enum CommentRecordTypes {
+      COMMENTS_RAW_COMMENT = 0
+    };
+
     /// \defgroup ASTAST AST file AST constants
     ///
     /// The constants in this group describe various components of the
