@@ -1298,6 +1298,12 @@ bool MallocChecker::doesNotFreeMemory(const CallOrObjCMessage *Call,
     if (FName.equals("pthread_setspecific"))
       return false;
 
+    // White list xpc connection context.
+    // TODO: Ensure that the deallocation actually happens, need to reason
+    // about "xpc_connection_set_finalizer_f".
+    if (FName.equals("xpc_connection_set_context"))
+      return false;
+
     // White list the 'XXXNoCopy' ObjC functions.
     if (FName.endswith("NoCopy")) {
       // Look for the deallocator argument. We know that the memory ownership

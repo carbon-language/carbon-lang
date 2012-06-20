@@ -974,3 +974,16 @@ void testCGContextLeak()
   // object doesn't escape and it hasn't been freed in this function.
 }
 
+// Allow xpc context to escape. radar://11635258
+// TODO: Would be great if we checked that the finalize_connection_context actually releases it.
+static void finalize_connection_context(void *ctx) {
+  int *context = ctx;
+  free(context);
+}
+void foo (xpc_connection_t peer) {
+  int *ctx = calloc(1, sizeof(int));
+  xpc_connection_set_context(peer, ctx);
+  xpc_connection_set_finalizer_f(peer, finalize_connection_context);
+  xpc_connection_resume(peer);
+}
+
