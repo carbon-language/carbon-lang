@@ -108,12 +108,6 @@ namespace llvm {
     // Calculate the spill weight to assign to a single instruction.
     static float getSpillWeight(bool isDef, bool isUse, unsigned loopDepth);
 
-    typedef Reg2IntervalMap::iterator iterator;
-    typedef Reg2IntervalMap::const_iterator const_iterator;
-    const_iterator begin() const { return R2IMap.begin(); }
-    const_iterator end() const { return R2IMap.end(); }
-    iterator begin() { return R2IMap.begin(); }
-    iterator end() { return R2IMap.end(); }
     unsigned getNumIntervals() const { return (unsigned)R2IMap.size(); }
 
     LiveInterval &getInterval(unsigned reg) {
