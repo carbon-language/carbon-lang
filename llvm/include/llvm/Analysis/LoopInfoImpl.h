@@ -618,7 +618,7 @@ public:
   void traverse(BlockT *EntryBlock);
 
 protected:
-  void reverseInsertIntoLoop(BlockT *Block);
+  void insertIntoLoop(BlockT *Block);
 
   BlockT *dfsSource() { return DFSStack.back().first; }
   SuccIterTy &dfsSucc() { return DFSStack.back().second; }
@@ -647,7 +647,7 @@ void PopulateLoopsDFS<BlockT, LoopT>::traverse(BlockT *EntryBlock) {
       pushBlock(BB);
     }
     // Visit the top of the stack in postorder and backtrack.
-    reverseInsertIntoLoop(dfsSource());
+    insertIntoLoop(dfsSource());
     DFSStack.pop_back();
   }
 }
@@ -656,14 +656,11 @@ void PopulateLoopsDFS<BlockT, LoopT>::traverse(BlockT *EntryBlock) {
 /// subloop header, add the subloop to its parent in PostOrder, then reverse the
 /// Block and Subloop vectors of the now complete subloop to achieve RPO.
 template<class BlockT, class LoopT>
-void PopulateLoopsDFS<BlockT, LoopT>::reverseInsertIntoLoop(BlockT *Block) {
-  for (LoopT *Subloop = LI->getLoopFor(Block);
-       Subloop; Subloop = Subloop->getParentLoop()) {
-
-    if (Block != Subloop->getHeader()) {
-      Subloop->getBlocksVector().push_back(Block);
-      continue;
-    }
+void PopulateLoopsDFS<BlockT, LoopT>::insertIntoLoop(BlockT *Block) {
+  LoopT *Subloop = LI->getLoopFor(Block);
+  if (Subloop && Block == Subloop->getHeader()) {
+    // We reach this point once per subloop after processing all the blocks in
+    // the subloop.
     if (Subloop->getParentLoop())
       Subloop->getParentLoop()->getSubLoopsVector().push_back(Subloop);
     else
@@ -675,7 +672,11 @@ void PopulateLoopsDFS<BlockT, LoopT>::reverseInsertIntoLoop(BlockT *Block) {
                  Subloop->getBlocksVector().end());
     std::reverse(Subloop->getSubLoopsVector().begin(),
                  Subloop->getSubLoopsVector().end());
+
+    Subloop = Subloop->getParentLoop();
   }
+  for (; Subloop; Subloop = Subloop->getParentLoop())
+    Subloop->getBlocksVector().push_back(Block);
 }
 
 /// Analyze LoopInfo discovers loops during a postorder DominatorTree traversal
