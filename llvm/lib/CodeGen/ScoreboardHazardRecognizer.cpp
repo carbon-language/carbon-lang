@@ -98,7 +98,7 @@ void ScoreboardHazardRecognizer::Scoreboard::dump() const {
     uint64_t FUs = (*this)[i];
     dbgs() << "\t";
     for (int j = 63; j >= 0; j--)
-      dbgs() << ((FUs & (1 << j)) ? '1' : '0');
+      dbgs() << ((FUs & (1ULL << j)) ? '1' : '0');
     dbgs() << '\n';
   }
 }
