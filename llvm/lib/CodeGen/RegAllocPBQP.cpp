@@ -566,9 +566,6 @@ bool RegAllocPBQP::mapPBQPToRegAlloc(const PBQPRAProblem &problem,
 
 
 void RegAllocPBQP::finalizeAlloc() const {
-  typedef LiveIntervals::iterator LIIterator;
-  typedef LiveInterval::Ranges::const_iterator LRIterator;
-
   // First allocate registers for the empty intervals.
   for (RegSet::const_iterator
          itr = emptyIntervalVRegs.begin(), end = emptyIntervalVRegs.end();
