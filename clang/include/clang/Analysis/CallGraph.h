@@ -121,6 +121,8 @@ public:
     return true;
   }
 
+  bool shouldWalkTypesOfTypeLocs() const { return false; }
+
 private:
   /// \brief Add the given declaration to the call graph.
   void addNodeForDecl(Decl *D, bool IsGlobal);
