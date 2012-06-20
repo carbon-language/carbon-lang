@@ -47,6 +47,7 @@ template<typename T> class SmallVectorImpl;
 class TargetRegisterInfo;
 class VirtRegMap;
 class LiveIntervals;
+class LiveRegMatrix;
 class Spiller;
 
 /// RegAllocBase provides the register allocation driver and interface that can
@@ -73,9 +74,10 @@ protected:
   MachineRegisterInfo *MRI;
   VirtRegMap *VRM;
   LiveIntervals *LIS;
+  LiveRegMatrix *Matrix;
   RegisterClassInfo RegClassInfo;
 
-  RegAllocBase(): UserTag(0), TRI(0), MRI(0), VRM(0), LIS(0) {}
+  RegAllocBase(): UserTag(0), TRI(0), MRI(0), VRM(0), LIS(0), Matrix(0) {}
 
   virtual ~RegAllocBase() {}
 

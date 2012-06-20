@@ -14,6 +14,7 @@
 
 #define DEBUG_TYPE "regalloc"
 #include "RegAllocBase.h"
+#include "LiveRegMatrix.h"
 #include "Spiller.h"
 #include "VirtRegMap.h"
 #include "llvm/ADT/Statistic.h"
@@ -134,6 +135,11 @@ void RegAllocBase::seedLiveRegs() {
 }
 
 void RegAllocBase::assign(LiveInterval &VirtReg, unsigned PhysReg) {
+  // FIXME: This diversion is temporary.
+  if (Matrix) {
+    Matrix->assign(VirtReg, PhysReg);
+    return;
+  }
   DEBUG(dbgs() << "assigning " << PrintReg(VirtReg.reg, TRI)
                << " to " << PrintReg(PhysReg, TRI) << '\n');
   assert(!VRM->hasPhys(VirtReg.reg) && "Duplicate VirtReg assignment");
@@ -144,6 +150,11 @@ void RegAllocBase::assign(LiveInterval &VirtReg, unsigned PhysReg) {
 }
 
 void RegAllocBase::unassign(LiveInterval &VirtReg, unsigned PhysReg) {
+  // FIXME: This diversion is temporary.
+  if (Matrix) {
+    Matrix->unassign(VirtReg);
+    return;
+  }
   DEBUG(dbgs() << "unassigning " << PrintReg(VirtReg.reg, TRI)
                << " from " << PrintReg(PhysReg, TRI) << '\n');
   assert(VRM->getPhys(VirtReg.reg) == PhysReg && "Inconsistent unassign");
@@ -170,6 +181,8 @@ void RegAllocBase::allocatePhysRegs() {
 
     // Invalidate all interference queries, live ranges could have changed.
     invalidateVirtRegs();
+    if (Matrix)
+      Matrix->invalidateVirtRegs();
 
     // selectOrSplit requests the allocator to return an available physical
     // register if possible and populate a list of new live intervals that
