@@ -6,8 +6,9 @@ Development Process Documentation
 .. toctree::
    :hidden:
 
-   Projects
    CodingStandards
+   MakefileGuide
+   Projects
 
 \
 
@@ -29,7 +30,7 @@ Development Process Documentation
    Describes the LLVMBuild organization and files used by LLVM to specify
    component descriptions.
 
- * `LLVM Makefile Guide <MakefileGuide.html>`_
+ * :ref:`makefile_guide`
 
    Describes how the LLVM makefiles work and how to use them.
 
