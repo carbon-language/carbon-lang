@@ -19,7 +19,7 @@ NO_INSTALL = 1
 LINK_COMPONENTS := support mc
 USEDLIBS = clangARCMigrate.a clangRewrite.a \
 		 clangFrontend.a clangDriver.a clangSerialization.a clangParse.a \
-		 clangSema.a clangEdit.a clangAnalysis.a clangAST.a clangLex.a clangComments.a \
+		 clangSema.a clangEdit.a clangAnalysis.a clangAST.a clangLex.a \
 		 clangBasic.a
 
 include $(CLANG_LEVEL)/Makefile

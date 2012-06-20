@@ -27,7 +27,7 @@
 #include "clang/AST/TemplateName.h"
 #include "clang/AST/Type.h"
 #include "clang/AST/CanonicalType.h"
-#include "clang/Comments/RawCommentList.h"
+#include "clang/AST/RawCommentList.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"

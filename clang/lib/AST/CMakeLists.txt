@@ -35,6 +35,7 @@ add_clang_library(clangAST
   NestedNameSpecifier.cpp
   NSAPI.cpp
   ParentMap.cpp
+  RawCommentList.cpp
   RecordLayout.cpp
   RecordLayoutBuilder.cpp
   SelectorLocationsKind.cpp

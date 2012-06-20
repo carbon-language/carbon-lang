@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Comments/RawCommentList.h"
+#include "clang/AST/RawCommentList.h"
 #include "clang/AST/ASTContext.h"
 #include "llvm/ADT/STLExtras.h"
 

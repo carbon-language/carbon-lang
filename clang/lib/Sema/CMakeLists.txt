@@ -4,7 +4,6 @@ set(LLVM_USED_LIBS
   clangBasic
   clangEdit
   clangLex
-  clangComments
   )
 
 add_clang_library(clangSema

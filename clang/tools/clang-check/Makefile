@@ -18,7 +18,7 @@ TOOL_NO_EXPORTS = 1
 LINK_COMPONENTS := support mc
 USEDLIBS = clangFrontend.a clangSerialization.a clangDriver.a \
            clangTooling.a clangParse.a clangSema.a clangAnalysis.a \
-           clangEdit.a clangAST.a clangLex.a clangComments.a clangBasic.a
+           clangEdit.a clangAST.a clangLex.a clangBasic.a
 
 include $(CLANG_LEVEL)/Makefile
 
