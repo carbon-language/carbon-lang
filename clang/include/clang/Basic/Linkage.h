@@ -59,7 +59,7 @@ inline bool isExternalLinkage(Linkage L) {
 }
 
 /// \brief Compute the minimum linkage given two linages.
-static inline Linkage minLinkage(Linkage L1, Linkage L2) {
+inline Linkage minLinkage(Linkage L1, Linkage L2) {
   return L1 < L2? L1 : L2;
 }
 
