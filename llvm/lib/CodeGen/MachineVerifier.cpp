@@ -1092,20 +1092,21 @@ void MachineVerifier::verifyLiveVariables() {
 
 void MachineVerifier::verifyLiveIntervals() {
   assert(LiveInts && "Don't call verifyLiveIntervals without LiveInts");
-  for (LiveIntervals::const_iterator LVI = LiveInts->begin(),
-       LVE = LiveInts->end(); LVI != LVE; ++LVI) {
-    const LiveInterval &LI = *LVI->second;
+  for (unsigned i = 0, e = MRI->getNumVirtRegs(); i != e; ++i) {
+    unsigned Reg = TargetRegisterInfo::index2VirtReg(i);
 
     // Spilling and splitting may leave unused registers around. Skip them.
-    if (MRI->reg_nodbg_empty(LI.reg))
+    if (MRI->reg_nodbg_empty(Reg))
       continue;
 
-    // Physical registers have much weirdness going on, mostly from coalescing.
-    // We should probably fix it, but for now just ignore them.
-    if (TargetRegisterInfo::isPhysicalRegister(LI.reg))
+    if (!LiveInts->hasInterval(Reg)) {
+      report("Missing live interval for virtual register", MF);
+      *OS << PrintReg(Reg, TRI) << " still has defs or uses\n";
       continue;
+    }
 
-    assert(LVI->first == LI.reg && "Invalid reg to interval mapping");
+    const LiveInterval &LI = LiveInts->getInterval(Reg);
+    assert(Reg == LI.reg && "Invalid reg to interval mapping");
 
     for (LiveInterval::const_vni_iterator I = LI.vni_begin(), E = LI.vni_end();
          I!=E; ++I) {

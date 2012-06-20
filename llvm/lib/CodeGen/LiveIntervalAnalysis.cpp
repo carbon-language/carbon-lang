@@ -884,13 +884,11 @@ bool LiveIntervals::shrinkToUses(LiveInterval *li,
 //
 
 void LiveIntervals::addKillFlags() {
-  for (iterator I = begin(), E = end(); I != E; ++I) {
-    unsigned Reg = I->first;
-    if (TargetRegisterInfo::isPhysicalRegister(Reg))
-      continue;
+  for (unsigned i = 0, e = MRI->getNumVirtRegs(); i != e; ++i) {
+    unsigned Reg = TargetRegisterInfo::index2VirtReg(i);
     if (MRI->reg_nodbg_empty(Reg))
       continue;
-    LiveInterval *LI = I->second;
+    LiveInterval *LI = &getInterval(Reg);
 
     // Every instruction that kills Reg corresponds to a live range end point.
     for (LiveInterval::iterator RI = LI->begin(), RE = LI->end(); RI != RE;
