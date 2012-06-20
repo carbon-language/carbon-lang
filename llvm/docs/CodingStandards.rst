@@ -680,7 +680,7 @@ style of lower-case words separated by underscores (e.g. ``begin()``,
 
 Here are some examples of good and bad names:
 
-.. code-block::c++
+.. code-block:: c++
 
   class VehicleMaker {
     ...
