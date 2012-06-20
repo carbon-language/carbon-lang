@@ -41,7 +41,7 @@
 using namespace llvm;
 
 // Temporary option to enable regunit liveness.
-static cl::opt<bool> LiveRegUnits("live-regunits", cl::Hidden);
+static cl::opt<bool> LiveRegUnits("live-regunits", cl::Hidden, cl::init(true));
 
 STATISTIC(numIntervals , "Number of original intervals");
 
