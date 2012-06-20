@@ -2524,7 +2524,14 @@ SDValue DAGCombiner::visitAND(SDNode *N) {
                               Load->getOffset(), Load->getMemoryVT(),
                               Load->getMemOperand());
         // Replace uses of the EXTLOAD with the new ZEXTLOAD.
-        CombineTo(Load, NewLoad.getValue(0), NewLoad.getValue(1));
+        if (Load->getNumValues() == 3) {
+          // PRE/POST_INC loads have 3 values.
+          SDValue To[] = { NewLoad.getValue(0), NewLoad.getValue(1),
+                           NewLoad.getValue(2) };
+          CombineTo(Load, To, 3, true);
+        } else {
+          CombineTo(Load, NewLoad.getValue(0), NewLoad.getValue(1));
+        }
       }
 
       // Fold the AND away, taking care not to fold to the old load node if we
