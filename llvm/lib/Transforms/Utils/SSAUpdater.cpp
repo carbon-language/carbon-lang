@@ -230,28 +230,6 @@ void SSAUpdater::RewriteUseAfterInsertions(Use &U) {
   U.set(V);
 }
 
-/// PHIiter - Iterator for PHI operands.  This is used for the PHI_iterator
-/// in the SSAUpdaterImpl template.
-namespace {
-  class PHIiter {
-  private:
-    PHINode *PHI;
-    unsigned idx;
-
-  public:
-    explicit PHIiter(PHINode *P) // begin iterator
-      : PHI(P), idx(0) {}
-    PHIiter(PHINode *P, bool) // end iterator
-      : PHI(P), idx(PHI->getNumIncomingValues()) {}
-
-    PHIiter &operator++() { ++idx; return *this; } 
-    bool operator==(const PHIiter& x) const { return idx == x.idx; }
-    bool operator!=(const PHIiter& x) const { return !operator==(x); }
-    Value *getIncomingValue() { return PHI->getIncomingValue(idx); }
-    BasicBlock *getIncomingBlock() { return PHI->getIncomingBlock(idx); }
-  };
-}
-
 /// SSAUpdaterTraits<SSAUpdater> - Traits for the SSAUpdaterImpl template,
 /// specialized for SSAUpdater.
 namespace llvm {
@@ -266,9 +244,26 @@ public:
   static BlkSucc_iterator BlkSucc_begin(BlkT *BB) { return succ_begin(BB); }
   static BlkSucc_iterator BlkSucc_end(BlkT *BB) { return succ_end(BB); }
 
-  typedef PHIiter PHI_iterator;
-  static inline PHI_iterator PHI_begin(PhiT *PHI) { return PHI_iterator(PHI); }
-  static inline PHI_iterator PHI_end(PhiT *PHI) {
+  class PHI_iterator {
+  private:
+    PHINode *PHI;
+    unsigned idx;
+
+  public:
+    explicit PHI_iterator(PHINode *P) // begin iterator
+      : PHI(P), idx(0) {}
+    PHI_iterator(PHINode *P, bool) // end iterator
+      : PHI(P), idx(PHI->getNumIncomingValues()) {}
+
+    PHI_iterator &operator++() { ++idx; return *this; } 
+    bool operator==(const PHI_iterator& x) const { return idx == x.idx; }
+    bool operator!=(const PHI_iterator& x) const { return !operator==(x); }
+    Value *getIncomingValue() { return PHI->getIncomingValue(idx); }
+    BasicBlock *getIncomingBlock() { return PHI->getIncomingBlock(idx); }
+  };
+
+  static PHI_iterator PHI_begin(PhiT *PHI) { return PHI_iterator(PHI); }
+  static PHI_iterator PHI_end(PhiT *PHI) {
     return PHI_iterator(PHI, true);
   }
 
