@@ -852,8 +852,9 @@ static bool rewriteToNumericBoxedExpression(const ObjCMessageExpr *Msg,
     DiagnosticsEngine &Diags = Ctx.getDiagnostics(); 
     // FIXME: Use a custom category name to distinguish migration diagnostics.
     unsigned diagID = Diags.getCustomDiagID(DiagnosticsEngine::Warning,
-                      "converting to boxing syntax requires a cast");
-    Diags.Report(Msg->getExprLoc(), diagID) << Msg->getSourceRange();
+                       "converting to boxing syntax requires casting %0 to %1");
+    Diags.Report(Msg->getExprLoc(), diagID) << OrigTy << FinalTy
+        << Msg->getSourceRange();
     return false;
   }
 

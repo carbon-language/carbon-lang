@@ -81,7 +81,7 @@ void foo() {
   MyEnm myenum; 
   [NSNumber numberWithInteger:myenum];
   [NSNumber numberWithInteger:ME_foo];
-  [NSNumber numberWithDouble:cppb]; // expected-warning {{converting to boxing syntax requires a cast}}
+  [NSNumber numberWithDouble:cppb]; // expected-warning {{converting to boxing syntax requires casting 'bool' to 'double'}}
 }
 
 void boxString() {
