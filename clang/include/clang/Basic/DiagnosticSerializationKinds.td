@@ -10,7 +10,7 @@
 let Component = "Serialization" in {
 
 def err_fe_unable_to_read_pch_file : Error<
-    "unable to read PCH file: '%0'">;
+    "unable to read PCH file %0: '%1'">;
 def err_fe_not_a_pch_file : Error<
     "input is not a PCH file: '%0'">;
 def err_fe_pch_malformed : Error<
