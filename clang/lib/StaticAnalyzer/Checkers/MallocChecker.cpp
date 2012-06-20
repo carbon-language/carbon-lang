@@ -34,15 +34,24 @@ using namespace ento;
 namespace {
 
 class RefState {
-  enum Kind { AllocateUnchecked, AllocateFailed, Released, Escaped,
+  enum Kind { // Reference to allocated memory.
+              Allocated,
+              // Reference to released/freed memory.
+              Released,
+              // Reference to escaped memory - no assumptions can be made of
+              // the state after the reference escapes.
+              Escaped,
+              // The responsibility for freeing resources has transfered from
+              // this reference. A relinquished symbol should not be freed.
               Relinquished } K;
   const Stmt *S;
 
 public:
   RefState(Kind k, const Stmt *s) : K(k), S(s) {}
 
-  bool isAllocated() const { return K == AllocateUnchecked; }
+  bool isAllocated() const { return K == Allocated; }
   bool isReleased() const { return K == Released; }
+  bool isRelinquished() const { return K == Relinquished; }
 
   const Stmt *getStmt() const { return S; }
 
@@ -50,11 +59,8 @@ public:
     return K == X.K && S == X.S;
   }
 
-  static RefState getAllocateUnchecked(const Stmt *s) { 
-    return RefState(AllocateUnchecked, s); 
-  }
-  static RefState getAllocateFailed() {
-    return RefState(AllocateFailed, 0);
+  static RefState getAllocated(const Stmt *s) {
+    return RefState(Allocated, s);
   }
   static RefState getReleased(const Stmt *s) { return RefState(Released, s); }
   static RefState getEscaped(const Stmt *s) { return RefState(Escaped, s); }
@@ -528,7 +534,7 @@ ProgramStateRef MallocChecker::MallocUpdateRefState(CheckerContext &C,
   assert(Sym);
 
   // Set the symbol's state to Allocated.
-  return state->set<RegionState>(Sym, RefState::getAllocateUnchecked(CE));
+  return state->set<RegionState>(Sym, RefState::getAllocated(CE));
 
 }
 
@@ -628,7 +634,8 @@ ProgramStateRef MallocChecker::FreeMemAux(CheckerContext &C,
     return 0;
 
   // Check double free.
-  if (RS->isReleased()) {
+  // TODO: Split the 2 cases for better error messages.
+  if (RS->isReleased() || RS->isRelinquished()) {
     if (ExplodedNode *N = C.generateSink()) {
       if (!BT_DoubleFree)
         BT_DoubleFree.reset(
@@ -1237,7 +1244,7 @@ ProgramStateRef MallocChecker::evalAssume(ProgramStateRef state,
       if (RS) {
         if (RS->isReleased() && ! I.getData().IsFreeOnFailure)
           state = state->set<RegionState>(ReallocSym,
-                             RefState::getAllocateUnchecked(RS->getStmt()));
+                             RefState::getAllocated(RS->getStmt()));
       }
       state = state->remove<ReallocPairs>(I.getKey());
     }

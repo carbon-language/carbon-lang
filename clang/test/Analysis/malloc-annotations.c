@@ -123,12 +123,12 @@ void af2e() {
   free(p); // no-warning
 }
 
-// This case would inflict a double-free elsewhere.
-// However, this case is considered an analyzer bug since it causes false-positives.
+// This case inflicts a possible double-free.
+// TODO: Better error message.
 void af3() {
   int *p = my_malloc(12);
   my_hold(p);
-  free(p); // no-warning
+  free(p); // expected-warning{{Attempt to free released memory}}
 }
 
 int * af4() {
