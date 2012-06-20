@@ -7,6 +7,7 @@ Subsystem Documentation
    :hidden:
 
    AliasAnalysis
+   LinkTimeOptimization
 
 * `Writing an LLVM Pass <WritingAnLLVMPass.html>`_
     
@@ -61,7 +62,7 @@ Subsystem Documentation
    This document describes the LLVM System Library (<tt>lib/System</tt>) and
    how to keep LLVM source code portable
     
-* `Link Time Optimization <LinkTimeOptimization.html>`_
+* :ref:`lto`
     
    This document describes the interface between LLVM intermodular optimizer
    and the linker and its design
