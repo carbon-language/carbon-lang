@@ -20,7 +20,7 @@ void * __ptr32 PtrToPtr32(const void *p)
 
 void __forceinline InterlockedBitTestAndSet (long *Base, long Bit)
 {
-  __asm {
+  __asm { // expected-warning {{MS-style inline assembly is not supported}}
     mov eax, Bit
     mov ecx, Base
     lock bts [ecx], eax

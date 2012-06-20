@@ -2673,6 +2673,9 @@ StmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc, bool IsSimple,
 StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc,
                                 std::string &AsmString,
                                 SourceLocation EndLoc) {
+  // MS-style inline assembly is not fully supported, so emit a warning.
+  Diag(AsmLoc, diag::warn_unsupported_msasm);
+
   MSAsmStmt *NS =
     new (Context) MSAsmStmt(Context, AsmLoc, AsmString, EndLoc);
 

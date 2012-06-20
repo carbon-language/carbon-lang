@@ -1683,6 +1683,5 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
 }
 
 void CodeGenFunction::EmitMSAsmStmt(const MSAsmStmt &S) {
-  // Analyze the asm string to decompose it into its pieces.
-  llvm::report_fatal_error("MS-style asm codegen isn't yet supported.");
+  // MS-style inline assembly is not fully supported, so sema emits a warning.
 }
