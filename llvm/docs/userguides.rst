@@ -8,6 +8,7 @@ User Guides
 
    CommandGuide/index
    FAQ
+   Lexicon
 
 * `The LLVM Getting Started Guide <GettingStarted.html>`_
     
@@ -69,7 +70,7 @@ User Guides
 
    Advice on packaging LLVM into a distribution.
     
-* `The LLVM Lexicon <Lexicon.html>`_
+* :ref:`lexicon`
 
    Definition of acronyms, terms and concepts used in LLVM.
 
