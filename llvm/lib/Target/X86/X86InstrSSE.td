@@ -2119,41 +2119,43 @@ def Int_CVTPD2PSrm : PDI<0x5A, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
 // AVX 256-bit register conversion intrinsics
 // FIXME: Migrate SSE conversion intrinsics matching to use patterns as below
 // whenever possible to avoid declaring two versions of each one.
-def : Pat<(int_x86_avx_cvtdq2_ps_256 VR256:$src),
-          (VCVTDQ2PSYrr VR256:$src)>;
-def : Pat<(int_x86_avx_cvtdq2_ps_256 (bitconvert (memopv4i64 addr:$src))),
-          (VCVTDQ2PSYrm addr:$src)>;
+let Predicates = [HasAVX] in {
+  def : Pat<(int_x86_avx_cvtdq2_ps_256 VR256:$src),
+            (VCVTDQ2PSYrr VR256:$src)>;
+  def : Pat<(int_x86_avx_cvtdq2_ps_256 (bitconvert (memopv4i64 addr:$src))),
+            (VCVTDQ2PSYrm addr:$src)>;
 
-def : Pat<(int_x86_avx_cvt_pd2_ps_256 VR256:$src),
-          (VCVTPD2PSYrr VR256:$src)>;
-def : Pat<(int_x86_avx_cvt_pd2_ps_256 (memopv4f64 addr:$src)),
-          (VCVTPD2PSYrm addr:$src)>;
+  def : Pat<(int_x86_avx_cvt_pd2_ps_256 VR256:$src),
+            (VCVTPD2PSYrr VR256:$src)>;
+  def : Pat<(int_x86_avx_cvt_pd2_ps_256 (memopv4f64 addr:$src)),
+            (VCVTPD2PSYrm addr:$src)>;
 
-def : Pat<(int_x86_avx_cvt_ps2dq_256 VR256:$src),
-          (VCVTPS2DQYrr VR256:$src)>;
-def : Pat<(int_x86_avx_cvt_ps2dq_256 (memopv8f32 addr:$src)),
-          (VCVTPS2DQYrm addr:$src)>;
+  def : Pat<(int_x86_avx_cvt_ps2dq_256 VR256:$src),
+            (VCVTPS2DQYrr VR256:$src)>;
+  def : Pat<(int_x86_avx_cvt_ps2dq_256 (memopv8f32 addr:$src)),
+            (VCVTPS2DQYrm addr:$src)>;
 
-def : Pat<(int_x86_avx_cvt_ps2_pd_256 VR128:$src),
-          (VCVTPS2PDYrr VR128:$src)>;
-def : Pat<(int_x86_avx_cvt_ps2_pd_256 (memopv4f32 addr:$src)),
-          (VCVTPS2PDYrm addr:$src)>;
+  def : Pat<(int_x86_avx_cvt_ps2_pd_256 VR128:$src),
+            (VCVTPS2PDYrr VR128:$src)>;
+  def : Pat<(int_x86_avx_cvt_ps2_pd_256 (memopv4f32 addr:$src)),
+            (VCVTPS2PDYrm addr:$src)>;
 
-def : Pat<(int_x86_avx_cvtt_pd2dq_256 VR256:$src),
-          (VCVTTPD2DQYrr VR256:$src)>;
-def : Pat<(int_x86_avx_cvtt_pd2dq_256 (memopv4f64 addr:$src)),
-          (VCVTTPD2DQYrm addr:$src)>;
+  def : Pat<(int_x86_avx_cvtt_pd2dq_256 VR256:$src),
+            (VCVTTPD2DQYrr VR256:$src)>;
+  def : Pat<(int_x86_avx_cvtt_pd2dq_256 (memopv4f64 addr:$src)),
+            (VCVTTPD2DQYrm addr:$src)>;
 
-// Match fround and fextend for 128/256-bit conversions
-def : Pat<(v4f32 (fround (v4f64 VR256:$src))),
-          (VCVTPD2PSYrr VR256:$src)>;
-def : Pat<(v4f32 (fround (loadv4f64 addr:$src))),
-          (VCVTPD2PSYrm addr:$src)>;
+  // Match fround and fextend for 128/256-bit conversions
+  def : Pat<(v4f32 (fround (v4f64 VR256:$src))),
+            (VCVTPD2PSYrr VR256:$src)>;
+  def : Pat<(v4f32 (fround (loadv4f64 addr:$src))),
+            (VCVTPD2PSYrm addr:$src)>;
 
-def : Pat<(v4f64 (fextend (v4f32 VR128:$src))),
-          (VCVTPS2PDYrr VR128:$src)>;
-def : Pat<(v4f64 (fextend (loadv4f32 addr:$src))),
-          (VCVTPS2PDYrm addr:$src)>;
+  def : Pat<(v4f64 (fextend (v4f32 VR128:$src))),
+            (VCVTPS2PDYrr VR128:$src)>;
+  def : Pat<(v4f64 (fextend (loadv4f32 addr:$src))),
+            (VCVTPS2PDYrm addr:$src)>;
+}
 
 //===----------------------------------------------------------------------===//
 // SSE 1 & 2 - Compare Instructions
