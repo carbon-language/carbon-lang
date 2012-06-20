@@ -7,6 +7,7 @@ Development Process Documentation
    :hidden:
 
    Projects
+   CodingStandards
 
 \
 
@@ -16,6 +17,12 @@ Development Process Documentation
    infrastructure.  The templates (directory organization, Makefiles, and test
    tree) allow the project code to be located outside (or inside) the ``llvm/``
    tree, while using LLVM header files and libraries.
+
+ * :ref:`coding_standards`
+
+   Describes a few coding standards that are used in the LLVM source tree. All
+   code submissions must follow the coding standards before being allowed into
+   the source tree.
 
  * `LLVMBuild Documentation <LLVMBuild.html>`_
 
