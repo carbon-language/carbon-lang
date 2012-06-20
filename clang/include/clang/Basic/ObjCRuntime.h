@@ -160,6 +160,18 @@ public:
     llvm_unreachable("bad kind");
   }
 
+  /// Does this runtime support weakly importing classes?
+  bool hasWeakClassImport() const {
+    switch (getKind()) {
+    case MacOSX: return true;
+    case iOS: return true;
+    case FragileMacOSX: return false;
+    case FragileGNU: return false;
+    case GNU: return false;
+    }
+    llvm_unreachable("bad kind");
+  }
+
   /// Try to parse an Objective-C runtime specification from the given string.
   ///
   /// Return true on error.

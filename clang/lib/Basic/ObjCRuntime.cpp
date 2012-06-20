@@ -43,8 +43,9 @@ bool ObjCRuntime::tryParse(StringRef input) {
   // Look for the last dash.
   std::size_t dash = input.rfind('-');
 
-  // We permit (1) dashes in the runtime name and (2) the version to
-  // be omitted, so ignore dashes that aren't followed by a digit.
+  // We permit dashes in the runtime name, and we also permit the
+  // version to be omitted, so if we see a dash not followed by a
+  // digit then we need to ignore it.
   if (dash != StringRef::npos && dash + 1 != input.size() &&
       (input[dash+1] < '0' || input[dash+1] > '9')) {
     dash = StringRef::npos;
