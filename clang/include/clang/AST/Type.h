@@ -1647,7 +1647,7 @@ public:
   AutoType *getContainedAutoType() const;
 
   /// Member-template getAs<specific type>'.  Look through sugar for
-  /// an instance of <specific type>.   This scheme will eventually
+  /// an instance of \<specific type>.   This scheme will eventually
   /// replace the specific getAsXXXX methods above.
   ///
   /// There are some specializations of this member template listed
@@ -5034,7 +5034,7 @@ struct ArrayType_cannot_be_used_with_getAs { };
 template<typename T>
 struct ArrayType_cannot_be_used_with_getAs<T, true>;
 
-/// Member-template getAs<specific type>'.
+// Member-template getAs<specific type>'.
 template <typename T> const T *Type::getAs() const {
   ArrayType_cannot_be_used_with_getAs<T> at;
   (void)at;
