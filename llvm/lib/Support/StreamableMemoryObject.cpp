@@ -20,7 +20,7 @@ class RawMemoryObject : public StreamableMemoryObject {
 public:
   RawMemoryObject(const unsigned char *Start, const unsigned char *End) :
     FirstChar(Start), LastChar(End) {
-    assert(LastChar > FirstChar && "Invalid start/end range");
+    assert(LastChar >= FirstChar && "Invalid start/end range");
   }
 
   virtual uint64_t getBase() const { return 0; }
