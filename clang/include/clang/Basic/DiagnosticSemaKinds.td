@@ -631,8 +631,8 @@ def warn_auto_synthesizing_protocol_property :Warning<
   " declared in a protocol">,
   InGroup<DiagGroup<"objc-protocol-property-synthesis">>;
 def warn_autosynthesis_property_ivar_match :Warning<
-  "autosynthesized property %0 will use %select{|synthesized}1 instance variable "
-  "%2, not existing instance variable %3">,
+  "autosynthesized property '%0' will use %select{|synthesized}1 instance variable "
+  "'%2', not existing instance variable '%3'">,
   InGroup<DiagGroup<"objc-autosynthesis-property-ivar-name-match">>;
 def warn_missing_explicit_synthesis : Warning <
   "auto property synthesis is synthesizing property not explicitly synthesized">,

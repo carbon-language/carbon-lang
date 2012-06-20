@@ -47,7 +47,7 @@
 @end
 
 // rdar://11671080
-@implementation Test3 // expected-warning {{autosynthesized property uid will use synthesized instance variable _uid, not existing instance variable uid}}
+@implementation Test3 // expected-warning {{autosynthesized property 'uid' will use synthesized instance variable '_uid', not existing instance variable 'uid'}}
 // Oops, forgot to write @synthesize! will be default synthesized
 - (void) myMethod { 
    self.uid = 0; // Use of the “setter” 
@@ -125,5 +125,5 @@ int* _object;
 @end
 
 
-@implementation Test8 @end // expected-warning {{autosynthesized property y will use  instance variable _y, not existing instance variable y}}
+@implementation Test8 @end // expected-warning {{autosynthesized property 'y' will use  instance variable '_y', not existing instance variable 'y'}}
 
