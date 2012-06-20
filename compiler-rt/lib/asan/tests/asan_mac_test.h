@@ -14,4 +14,5 @@ extern "C" {
   void TestGCDSourceCancel();
   void TestGCDGroupAsync();
   void TestOOBNSObjects();
+  void TestNSURLDeallocation();
 }
