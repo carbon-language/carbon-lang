@@ -67,18 +67,18 @@ void RegAllocBase::verify() {
   }
 
   // Verify vreg coverage.
-  for (LiveIntervals::iterator liItr = LIS->begin(), liEnd = LIS->end();
-       liItr != liEnd; ++liItr) {
-    unsigned reg = liItr->first;
-    LiveInterval* li = liItr->second;
-    if (TargetRegisterInfo::isPhysicalRegister(reg)) continue;
-    if (!VRM->hasPhys(reg)) continue; // spilled?
-    if (li->empty()) continue; // unionVRegs will only be filled if li is
-                               // non-empty
-    unsigned PhysReg = VRM->getPhys(reg);
-    if (!unionVRegs[PhysReg].test(reg)) {
-      dbgs() << "LiveVirtReg " << PrintReg(reg, TRI) << " not in union " <<
-        TRI->getName(PhysReg) << "\n";
+  for (unsigned i = 0, e = MRI->getNumVirtRegs(); i != e; ++i) {
+    unsigned Reg = TargetRegisterInfo::index2VirtReg(i);
+    if (MRI->reg_nodbg_empty(Reg))
+      continue;
+    if (!VRM->hasPhys(Reg)) continue; // spilled?
+    LiveInterval &LI = LIS->getInterval(Reg);
+    if (LI.empty()) continue; // unionVRegs will only be filled if li is
+                              // non-empty
+    unsigned PhysReg = VRM->getPhys(Reg);
+    if (!unionVRegs[PhysReg].test(Reg)) {
+      dbgs() << "LiveVirtReg " << PrintReg(Reg, TRI) << " not in union "
+             << TRI->getName(PhysReg) << "\n";
       llvm_unreachable("unallocated live vreg");
     }
   }
@@ -117,13 +117,19 @@ void RegAllocBase::releaseMemory() {
 // them on the priority queue for later assignment.
 void RegAllocBase::seedLiveRegs() {
   NamedRegionTimer T("Seed Live Regs", TimerGroupName, TimePassesIsEnabled);
-  for (LiveIntervals::iterator I = LIS->begin(), E = LIS->end(); I != E; ++I) {
-    unsigned RegNum = I->first;
-    LiveInterval &VirtReg = *I->second;
-    if (TargetRegisterInfo::isPhysicalRegister(RegNum))
-      PhysReg2LiveUnion[RegNum].unify(VirtReg);
-    else
-      enqueue(&VirtReg);
+  // Physregs.
+  for (unsigned Reg = 1, e = TRI->getNumRegs(); Reg != e; ++Reg) {
+    if (!LIS->hasInterval(Reg))
+      continue;
+    PhysReg2LiveUnion[Reg].unify(LIS->getInterval(Reg));
+  }
+
+  // Virtregs.
+  for (unsigned i = 0, e = MRI->getNumVirtRegs(); i != e; ++i) {
+    unsigned Reg = TargetRegisterInfo::index2VirtReg(i);
+    if (MRI->reg_nodbg_empty(Reg))
+      continue;
+    enqueue(&LIS->getInterval(Reg));
   }
 }
 

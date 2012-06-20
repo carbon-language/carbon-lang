@@ -205,12 +205,11 @@ std::auto_ptr<PBQPRAProblem> PBQPBuilder::build(MachineFunction *mf,
   RegSet pregs;
 
   // Collect the set of preg intervals, record that they're used in the MF.
-  for (LiveIntervals::const_iterator itr = lis->begin(), end = lis->end();
-       itr != end; ++itr) {
-    if (TargetRegisterInfo::isPhysicalRegister(itr->first)) {
-      pregs.insert(itr->first);
-      mri->setPhysRegUsed(itr->first);
-    }
+  for (unsigned Reg = 1, e = tri->getNumRegs(); Reg != e; ++Reg) {
+    if (!lis->hasInterval(Reg))
+      continue;
+    pregs.insert(Reg);
+    mri->setPhysRegUsed(Reg);
   }
 
   BitVector reservedRegs = tri->getReservedRegs(*mf);
@@ -501,14 +500,11 @@ void RegAllocPBQP::getAnalysisUsage(AnalysisUsage &au) const {
 void RegAllocPBQP::findVRegIntervalsToAlloc() {
 
   // Iterate over all live ranges.
-  for (LiveIntervals::iterator itr = lis->begin(), end = lis->end();
-       itr != end; ++itr) {
-
-    // Ignore physical ones.
-    if (TargetRegisterInfo::isPhysicalRegister(itr->first))
+  for (unsigned i = 0, e = mri->getNumVirtRegs(); i != e; ++i) {
+    unsigned Reg = TargetRegisterInfo::index2VirtReg(i);
+    if (mri->reg_nodbg_empty(Reg))
       continue;
-
-    LiveInterval *li = itr->second;
+    LiveInterval *li = &lis->getInterval(Reg);
 
     // If this live interval is non-empty we will use pbqp to allocate it.
     // Empty intervals we allocate in a simple post-processing stage in
