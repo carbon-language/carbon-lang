@@ -220,7 +220,7 @@ error_code MemoryBuffer::getFile(const char *Filename,
   error_code err = sys::fs::is_directory(Filename, is_dir);
   if (err)
     return err;
-  else if (is_dir)
+  if (is_dir)
     return make_error_code(errc::is_a_directory);
 
   int OpenFlags = O_RDONLY;
