@@ -9,6 +9,7 @@ Subsystem Documentation
    AliasAnalysis
    BranchWeightMetadata
    LinkTimeOptimization
+   SegmentedStacks
 
 * `Writing an LLVM Pass <WritingAnLLVMPass.html>`_
     
@@ -38,7 +39,7 @@ Subsystem Documentation
     
    The interfaces source-language compilers should use for compiling GC'd
    programs.
-    
+
 * `Source Level Debugging with LLVM <SourceLevelDebugging.html>`_
     
    This document describes the design and philosophy behind the LLVM
@@ -79,3 +80,7 @@ Subsystem Documentation
 * :ref:`branch_weight`
     
    Provides information about Branch Prediction Information.
+
+* :ref:`segmented_stacks`
+
+   This document describes segmented stacks and how they are used in LLVM.
