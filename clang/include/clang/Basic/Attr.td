@@ -322,7 +322,7 @@ def ExtVectorType : Attr {
 }
 
 def FallThrough : Attr {
-  let Spellings = [GNU<"fallthrough">, CXX11<"clang","fallthrough">];
+  let Spellings = [CXX11<"clang","fallthrough">];
   let Subjects = [NullStmt];
 }
 
