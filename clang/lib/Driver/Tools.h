@@ -18,6 +18,8 @@
 #include "llvm/Support/Compiler.h"
 
 namespace clang {
+  class ObjCRuntime;
+
 namespace driver {
   class Driver;
 
@@ -43,6 +45,11 @@ namespace tools {
     void AddSparcTargetArgs(const ArgList &Args, ArgStringList &CmdArgs) const;
     void AddX86TargetArgs(const ArgList &Args, ArgStringList &CmdArgs) const;
     void AddHexagonTargetArgs (const ArgList &Args, ArgStringList &CmdArgs) const;
+
+    enum RewriteKind { RK_None, RK_Fragile, RK_NonFragile };
+
+    ObjCRuntime AddObjCRuntimeArgs(const ArgList &args, ArgStringList &cmdArgs,
+                                   RewriteKind rewrite) const;
 
   public:
     Clang(const ToolChain &TC) : Tool("clang", "clang frontend", TC) {}

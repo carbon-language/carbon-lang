@@ -126,7 +126,7 @@ static llvm::Constant *getTerminateFn(CodeGenFunction &CGF) {
   if (CGF.getLangOpts().CPlusPlus)
     name = "_ZSt9terminatev"; // FIXME: mangling!
   else if (CGF.getLangOpts().ObjC1 &&
-           CGF.CGM.getCodeGenOpts().ObjCRuntimeHasTerminate)
+           CGF.getLangOpts().ObjCRuntime.hasTerminate())
     name = "objc_terminate";
   else
     name = "abort";
@@ -180,12 +180,17 @@ static const EHPersonality &getCPersonality(const LangOptions &L) {
 }
 
 static const EHPersonality &getObjCPersonality(const LangOptions &L) {
-  if (L.NeXTRuntime) {
-    if (L.ObjCNonFragileABI) return EHPersonality::NeXT_ObjC;
-    else return getCPersonality(L);
-  } else {
+  switch (L.ObjCRuntime.getKind()) {
+  case ObjCRuntime::FragileMacOSX:
+    return getCPersonality(L);
+  case ObjCRuntime::MacOSX:
+  case ObjCRuntime::iOS:
+    return EHPersonality::NeXT_ObjC;
+  case ObjCRuntime::GNU:
+  case ObjCRuntime::FragileGNU:
     return EHPersonality::GNU_ObjC;
   }
+  llvm_unreachable("bad runtime kind");
 }
 
 static const EHPersonality &getCXXPersonality(const LangOptions &L) {
@@ -198,22 +203,26 @@ static const EHPersonality &getCXXPersonality(const LangOptions &L) {
 /// Determines the personality function to use when both C++
 /// and Objective-C exceptions are being caught.
 static const EHPersonality &getObjCXXPersonality(const LangOptions &L) {
+  switch (L.ObjCRuntime.getKind()) {
   // The ObjC personality defers to the C++ personality for non-ObjC
   // handlers.  Unlike the C++ case, we use the same personality
   // function on targets using (backend-driven) SJLJ EH.
-  if (L.NeXTRuntime) {
-    if (L.ObjCNonFragileABI)
-      return EHPersonality::NeXT_ObjC;
+  case ObjCRuntime::MacOSX:
+  case ObjCRuntime::iOS:
+    return EHPersonality::NeXT_ObjC;
 
-    // In the fragile ABI, just use C++ exception handling and hope
-    // they're not doing crazy exception mixing.
-    else
-      return getCXXPersonality(L);
-  }
+  // In the fragile ABI, just use C++ exception handling and hope
+  // they're not doing crazy exception mixing.
+  case ObjCRuntime::FragileMacOSX:
+    return getCXXPersonality(L);
 
   // The GNU runtime's personality function inherently doesn't support
   // mixed EH.  Use the C++ personality just to avoid returning null.
-  return EHPersonality::GNU_ObjCXX;
+  case ObjCRuntime::GNU:
+  case ObjCRuntime::FragileGNU:
+    return EHPersonality::GNU_ObjCXX;
+  }
+  llvm_unreachable("bad runtime kind");
 }
 
 const EHPersonality &EHPersonality::get(const LangOptions &L) {

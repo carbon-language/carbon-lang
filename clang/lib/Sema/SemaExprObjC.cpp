@@ -579,9 +579,10 @@ ExprResult Sema::BuildObjCSubscriptExpression(SourceLocation RB, Expr *BaseExpr,
                                         Expr *IndexExpr,
                                         ObjCMethodDecl *getterMethod,
                                         ObjCMethodDecl *setterMethod) {
-  // Feature support is for modern abi.
-  if (!LangOpts.ObjCNonFragileABI)
+  // Subscripting is only supported in the non-fragile ABI.
+  if (LangOpts.ObjCRuntime.isFragile())
     return ExprError();
+
   // If the expression is type-dependent, there's nothing for us to do.
   assert ((!BaseExpr->isTypeDependent() && !IndexExpr->isTypeDependent()) &&
           "base or index cannot have dependent type here");

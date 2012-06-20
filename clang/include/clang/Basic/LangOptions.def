@@ -50,8 +50,6 @@ LANGOPT(CPlusPlus         , 1, 0, "C++")
 LANGOPT(CPlusPlus0x       , 1, 0, "C++0x")
 LANGOPT(ObjC1             , 1, 0, "Objective-C 1")
 LANGOPT(ObjC2             , 1, 0, "Objective-C 2")
-LANGOPT(ObjCNonFragileABI , 1, 0, "Objective-C modern abi")
-LANGOPT(ObjCNonFragileABI2 , 1, 0, "Objective-C enhanced modern abi")
 BENIGN_LANGOPT(ObjCDefaultSynthProperties , 1, 0, 
                "Objective-C auto-synthesized properties")
 BENIGN_LANGOPT(ObjCInferRelatedResultType , 1, 1, 
@@ -80,7 +78,6 @@ LANGOPT(SjLjExceptions    , 1, 0, "setjmp-longjump exception handling")
 LANGOPT(TraditionalCPP    , 1, 0, "traditional CPP emulation")
 LANGOPT(RTTI              , 1, 1, "run-time type information")
 LANGOPT(MSBitfields       , 1, 0, "Microsoft-compatible structure layout")
-LANGOPT(NeXTRuntime       , 1, 1, "NeXT Objective-C runtime")
 LANGOPT(Freestanding, 1, 0, "freestanding implementation")
 LANGOPT(NoBuiltin         , 1, 0, "disable builtin functions")
 

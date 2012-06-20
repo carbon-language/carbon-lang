@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fcxx-exceptions -fexceptions -fobjc-fragile-abi -fsyntax-only -verify %s 
+// RUN: %clang_cc1 -fcxx-exceptions -fexceptions -fobjc-runtime=macosx-fragile-10.5 -fsyntax-only -verify %s 
 
 @interface NSException @end
 void opaque();

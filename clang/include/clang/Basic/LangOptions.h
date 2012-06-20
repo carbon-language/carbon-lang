@@ -16,6 +16,7 @@
 
 #include <string>
 #include "clang/Basic/LLVM.h"
+#include "clang/Basic/ObjCRuntime.h"
 #include "clang/Basic/Visibility.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 
@@ -55,6 +56,8 @@ public:
   };
 
 public:
+  clang::ObjCRuntime ObjCRuntime;
+
   std::string ObjCConstantStringClass;
   
   /// The name of the handler function to be called when -ftrapv is specified.

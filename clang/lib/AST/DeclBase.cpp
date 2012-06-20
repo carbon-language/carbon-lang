@@ -411,23 +411,32 @@ AvailabilityResult Decl::getAvailability(std::string *Message) const {
 
 bool Decl::canBeWeakImported(bool &IsDefinition) const {
   IsDefinition = false;
+
+  // Variables, if they aren't definitions.
   if (const VarDecl *Var = dyn_cast<VarDecl>(this)) {
     if (!Var->hasExternalStorage() || Var->getInit()) {
       IsDefinition = true;
       return false;
     }
+    return true;
+
+  // Functions, if they aren't definitions.
   } else if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(this)) {
     if (FD->hasBody()) {
       IsDefinition = true;
       return false;
     }
-  } else if (isa<ObjCPropertyDecl>(this) || isa<ObjCMethodDecl>(this))
-    return false;
-  else if (!(getASTContext().getLangOpts().ObjCNonFragileABI &&
-             isa<ObjCInterfaceDecl>(this)))
-    return false;
+    return true;
 
-  return true;
+  // Objective-C classes, if this is the non-fragile runtime.
+  } else if (isa<ObjCInterfaceDecl>(this) &&
+             getASTContext().getLangOpts().ObjCRuntime.isNonFragile()) {
+    return true;
+
+  // Nothing else.
+  } else {
+    return false;
+  }
 }
 
 bool Decl::isWeakImported() const {

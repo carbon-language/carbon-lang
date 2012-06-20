@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -triple x86_64-unknown-unknown -fobjc-fragile-abi -fobjc-gc -emit-llvm -o %t %s
-// RUN: %clang_cc1 -x objective-c++ -triple x86_64-unknown-unknown -fobjc-fragile-abi -fobjc-gc -emit-llvm -o %t %s
+// RUN: %clang_cc1 -triple x86_64-unknown-unknown -fobjc-runtime=macosx-fragile-10.5 -fobjc-gc -emit-llvm -o %t %s
+// RUN: %clang_cc1 -x objective-c++ -triple x86_64-unknown-unknown -fobjc-runtime=macosx-fragile-10.5 -fobjc-gc -emit-llvm -o %t %s
 
 @interface I {
   __attribute__((objc_gc(strong))) int *i_IdocumentIDs;

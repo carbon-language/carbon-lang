@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -rewrite-objc -fobjc-fragile-abi -fobjc-exceptions -verify %s -o -
+// RUN: %clang_cc1 -rewrite-objc -fobjc-runtime=macosx-fragile-10.5 -fobjc-exceptions -verify %s -o -
 
 int main() {
   @try {

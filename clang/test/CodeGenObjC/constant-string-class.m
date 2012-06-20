@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple i386-apple-darwin9 -fobjc-fragile-abi -fno-constant-cfstrings -fconstant-string-class Foo -emit-llvm -o %t %s
+// RUN: %clang_cc1 -triple i386-apple-darwin9 -fobjc-runtime=macosx-fragile-10.5 -fno-constant-cfstrings -fconstant-string-class Foo -emit-llvm -o %t %s
 // RUN: FileCheck --check-prefix CHECK-FRAGILE < %t %s
 
 // RUN: %clang_cc1 -triple x86_64-apple-darwin10 -fno-constant-cfstrings -fconstant-string-class Foo -emit-llvm -o %t %s

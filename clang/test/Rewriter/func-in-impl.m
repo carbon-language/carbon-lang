@@ -1,5 +1,5 @@
 // RUN: %clang_cc1 -E %s -o %t.m
-// RUN: %clang_cc1 -fobjc-fragile-abi -rewrite-objc %t.m -o - | FileCheck %s
+// RUN: %clang_cc1 -fobjc-runtime=macosx-fragile-10.5 -rewrite-objc %t.m -o - | FileCheck %s
 
 @interface I {
   id _delegate;

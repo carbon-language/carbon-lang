@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -emit-llvm -triple x86_64-apple-darwin -fobjc-fragile-abi -o - | FileCheck %s
+// RUN: %clang_cc1 %s -emit-llvm -triple x86_64-apple-darwin -fobjc-runtime=macosx-fragile-10.5 -o - | FileCheck %s
 // Bitfield references must not touch memory outside of the enclosing
 // struct.   Radar 7639995
 typedef signed char BOOL;

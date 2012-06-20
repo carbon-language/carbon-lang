@@ -1039,7 +1039,7 @@ void Sema::CheckImplementationIvars(ObjCImplementationDecl *ImpDecl,
     return;
 
   assert(ivars && "missing @implementation ivars");
-  if (LangOpts.ObjCNonFragileABI2) {
+  if (LangOpts.ObjCRuntime.isNonFragile()) {
     if (ImpDecl->getSuperClass())
       Diag(ImpDecl->getLocation(), diag::warn_on_superclass_use);
     for (unsigned i = 0; i < numIvars; i++) {
@@ -1501,7 +1501,7 @@ void Sema::CheckProtocolMethodDefs(SourceLocation ImpLoc,
   
   ObjCInterfaceDecl *Super = IDecl->getSuperClass();
   ObjCInterfaceDecl *NSIDecl = 0;
-  if (getLangOpts().NeXTRuntime) {
+  if (getLangOpts().ObjCRuntime.isNeXTFamily()) {
     // check to see if class implements forwardInvocation method and objects
     // of this class are derived from 'NSProxy' so that to forward requests
     // from one object to another.
@@ -1730,8 +1730,9 @@ void Sema::ImplMethodsVsClassMethods(Scope *S, ObjCImplDecl* IMPDecl,
   // an implementation or 2) there is a @synthesize/@dynamic implementation
   // of the property in the @implementation.
   if (const ObjCInterfaceDecl *IDecl = dyn_cast<ObjCInterfaceDecl>(CDecl))
-    if  (!(LangOpts.ObjCDefaultSynthProperties && LangOpts.ObjCNonFragileABI2) ||
-      IDecl->isObjCRequiresPropertyDefs())
+    if  (!(LangOpts.ObjCDefaultSynthProperties &&
+           LangOpts.ObjCRuntime.isNonFragile()) ||
+         IDecl->isObjCRequiresPropertyDefs())
       DiagnoseUnimplementedProperties(S, IMPDecl, CDecl, InsMap);
       
   SelectorSet ClsMap;
@@ -2360,7 +2361,7 @@ Decl *Sema::ActOnAtEnd(Scope *S, SourceRange AtEnd,
         Diag(IDecl->getLocation(), diag::err_objc_root_class_subclass);
       }
 
-      if (LangOpts.ObjCNonFragileABI2) {
+      if (LangOpts.ObjCRuntime.isNonFragile()) {
         while (IDecl->getSuperClass()) {
           DiagnoseDuplicateIvars(IDecl, IDecl->getSuperClass());
           IDecl = IDecl->getSuperClass();
@@ -2958,7 +2959,7 @@ void Sema::ActOnDefs(Scope *S, Decl *TagD, SourceLocation DeclStart,
     Diag(DeclStart, diag::err_undef_interface) << ClassName;
     return;
   }
-  if (LangOpts.ObjCNonFragileABI) {
+  if (LangOpts.ObjCRuntime.isNonFragile()) {
     Diag(DeclStart, diag::err_atdef_nonfragile_interface);
     return;
   }

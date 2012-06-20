@@ -90,6 +90,12 @@ PCHValidator::ReadLanguageOptions(const LangOptions &LangOpts) {
 #define BENIGN_LANGOPT(Name, Bits, Default, Description)
 #define BENIGN_ENUM_LANGOPT(Name, Type, Bits, Default, Description)
 #include "clang/Basic/LangOptions.def"
+
+  if (PPLangOpts.ObjCRuntime != LangOpts.ObjCRuntime) {
+    Reader.Diag(diag::err_pch_langopt_value_mismatch)
+      << "target Objective-C runtime";
+    return true;
+  }
   
   return false;
 }
@@ -3323,8 +3329,7 @@ ASTReader::ASTReadResult ASTReader::ReadSubmoduleBlock(ModuleFile &F) {
 /// them to the AST listener if one is set.
 ///
 /// \returns true if the listener deems the file unacceptable, false otherwise.
-bool ASTReader::ParseLanguageOptions(
-                             const SmallVectorImpl<uint64_t> &Record) {
+bool ASTReader::ParseLanguageOptions(const RecordData &Record) {
   if (Listener) {
     LangOptions LangOpts;
     unsigned Idx = 0;
@@ -3333,6 +3338,10 @@ bool ASTReader::ParseLanguageOptions(
 #define ENUM_LANGOPT(Name, Type, Bits, Default, Description) \
   LangOpts.set##Name(static_cast<LangOptions::Type>(Record[Idx++]));
 #include "clang/Basic/LangOptions.def"
+
+    ObjCRuntime::Kind runtimeKind = (ObjCRuntime::Kind) Record[Idx++];
+    VersionTuple runtimeVersion = ReadVersionTuple(Record, Idx);
+    LangOpts.ObjCRuntime = ObjCRuntime(runtimeKind, runtimeVersion);
     
     unsigned Length = Record[Idx++];
     LangOpts.CurrentModule.assign(Record.begin() + Idx, 

@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fblocks -triple i386-apple-darwin9 -fobjc-gc -rewrite-objc -fobjc-fragile-abi  %s -o -
+// RUN: %clang_cc1 -fblocks -triple i386-apple-darwin9 -fobjc-gc -rewrite-objc -fobjc-runtime=macosx-fragile-10.5  %s -o -
 
 #define nil 0
 int main() {

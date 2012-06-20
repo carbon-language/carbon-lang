@@ -2913,7 +2913,7 @@ static bool CheckObjCTraitOperandConstraints(Sema &S, QualType T,
                                              SourceRange ArgRange,
                                              UnaryExprOrTypeTrait TraitKind) {
   // Reject sizeof(interface) and sizeof(interface<proto>) in 64-bit mode.
-  if (S.LangOpts.ObjCNonFragileABI && T->isObjCObjectType()) {
+  if (S.LangOpts.ObjCRuntime.isNonFragile() && T->isObjCObjectType()) {
     S.Diag(Loc, diag::err_sizeof_nonfragile_interface)
       << T << (TraitKind == UETT_SizeOf)
       << ArgRange;
@@ -3362,7 +3362,7 @@ Sema::CreateBuiltinArraySubscriptExpr(Expr *Base, SourceLocation LLoc,
     return ExprError();
 
   // Diagnose bad cases where we step over interface counts.
-  if (ResultType->isObjCObjectType() && LangOpts.ObjCNonFragileABI) {
+  if (ResultType->isObjCObjectType() && LangOpts.ObjCRuntime.isNonFragile()) {
     Diag(LLoc, diag::err_subscript_nonfragile_interface)
       << ResultType << BaseExpr->getSourceRange();
     return ExprError();
@@ -6256,7 +6256,7 @@ static bool checkArithmethicPointerOnNonFragileABI(Sema &S,
                                                    Expr *Op) {
   assert(Op->getType()->isAnyPointerType());
   QualType PointeeTy = Op->getType()->getPointeeType();
-  if (!PointeeTy->isObjCObjectType() || !S.LangOpts.ObjCNonFragileABI)
+  if (!PointeeTy->isObjCObjectType() || S.LangOpts.ObjCRuntime.isFragile())
     return true;
 
   S.Diag(OpLoc, diag::err_arithmetic_nonfragile_interface)

@@ -1,6 +1,6 @@
-// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -fobjc-fragile-abi -fblocks -fobjc-gc -emit-llvm -o %t %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -fobjc-runtime=macosx-fragile-10.5 -fblocks -fobjc-gc -emit-llvm -o %t %s
 // RUN: grep -F '@objc_assign_strongCast' %t  | count 4
-// RUN: %clang_cc1 -x objective-c++ -triple x86_64-apple-darwin10 -fobjc-fragile-abi -fblocks -fobjc-gc -emit-llvm -o %t %s
+// RUN: %clang_cc1 -x objective-c++ -triple x86_64-apple-darwin10 -fobjc-runtime=macosx-fragile-10.5 -fblocks -fobjc-gc -emit-llvm -o %t %s
 // RUN: grep -F '@objc_assign_strongCast' %t  | count 4
 
 @interface DSATextSearch @end

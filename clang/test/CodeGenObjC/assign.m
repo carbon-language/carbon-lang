@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple x86_64 -fobjc-fragile-abi -emit-llvm -o - %s | FileCheck %s
+// RUN: %clang_cc1 -triple x86_64 -fobjc-runtime=macosx-fragile-10.5 -emit-llvm -o - %s | FileCheck %s
 
 struct s0 {
   int x;

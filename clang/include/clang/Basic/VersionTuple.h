@@ -114,6 +114,11 @@ public:
 
   /// \brief Retrieve a string representation of the version number/
   std::string getAsString() const;
+
+  /// \brief Try to parse the given string as a version number.
+  /// Returns true if the string does not match the regular expression
+  ///   [0-9]+(\.[0-9]+(\.[0-9]+))
+  bool tryParse(StringRef string);
 };
 
 /// \brief Print a version number.

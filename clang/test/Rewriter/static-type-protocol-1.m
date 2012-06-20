@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -rewrite-objc -fobjc-fragile-abi  %s -o -
+// RUN: %clang_cc1 -rewrite-objc -fobjc-runtime=macosx-fragile-10.5  %s -o -
 
 @protocol Proto
 - (void) ProtoDidget;

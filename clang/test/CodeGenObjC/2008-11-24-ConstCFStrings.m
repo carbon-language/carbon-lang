@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm -triple x86_64-apple-darwin -fobjc-fragile-abi %s -o - | FileCheck %s
+// RUN: %clang_cc1 -emit-llvm -triple x86_64-apple-darwin -fobjc-runtime=macosx-fragile-10.5 %s -o - | FileCheck %s
 
 // CHECK: _unnamed_cfstring_
 

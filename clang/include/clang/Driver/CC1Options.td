@@ -386,18 +386,12 @@ def fconstant_string_class : Separate<"-fconstant-string-class">,
   HelpText<"Specify the class to use for constant Objective-C string objects.">;
 def fobjc_arc_cxxlib_EQ : Joined<"-fobjc-arc-cxxlib=">,
   HelpText<"Objective-C++ Automatic Reference Counting standard library kind">;
-def fobjc_runtime_has_arc : Flag<"-fobjc-runtime-has-arc">,
-  HelpText<"The target Objective-C runtime provides ARC entrypoints">;
 def fobjc_runtime_has_weak : Flag<"-fobjc-runtime-has-weak">,
   HelpText<"The target Objective-C runtime supports ARC weak operations">;
-def fobjc_runtime_has_terminate : Flag<"-fobjc-runtime-has-terminate">,
-  HelpText<"The target Objective-C runtime provides an objc_terminate entrypoint">;
 def fobjc_dispatch_method_EQ : Joined<"-fobjc-dispatch-method=">,
   HelpText<"Objective-C dispatch method to use">;
 def fobjc_default_synthesize_properties : Flag<"-fobjc-default-synthesize-properties">,
   HelpText<"enable the default synthesis of Objective-C properties">;
-def fobjc_fragile_abi : Flag<"-fobjc-fragile-abi">,
-  HelpText<"Use Objective-C's fragile ABI">;
 def pic_level : Separate<"-pic-level">,
   HelpText<"Value for __PIC__">;
 def pie_level : Separate<"-pie-level">,

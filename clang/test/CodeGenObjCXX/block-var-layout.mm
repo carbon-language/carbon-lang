@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -x objective-c++ -fblocks -fobjc-gc -triple x86_64-apple-darwin -fobjc-fragile-abi -emit-llvm %s -o %t-64.ll
+// RUN: %clang_cc1 -x objective-c++ -fblocks -fobjc-gc -triple x86_64-apple-darwin -fobjc-runtime=macosx-fragile-10.5 -emit-llvm %s -o %t-64.ll
 // RUN: FileCheck -check-prefix LP64 --input-file=%t-64.ll %s
 
 // See commentary in test/CodeGenObjC/block-var-layout.m, from which

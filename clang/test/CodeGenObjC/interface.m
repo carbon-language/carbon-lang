@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple i386-apple-darwin9 -fobjc-fragile-abi -O3 -emit-llvm -o %t %s
+// RUN: %clang_cc1 -triple i386-apple-darwin9 -fobjc-runtime=macosx-fragile-10.5 -O3 -emit-llvm -o %t %s
 // RUN: grep 'ret i32 385' %t
 
 void *alloca();

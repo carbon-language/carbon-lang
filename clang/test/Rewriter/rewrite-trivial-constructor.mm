@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fms-extensions -rewrite-objc -fobjc-fragile-abi -x objective-c++ -fblocks -o - %s
+// RUN: %clang_cc1 -fms-extensions -rewrite-objc -fobjc-runtime=macosx-fragile-10.5 -x objective-c++ -fblocks -o - %s
 // radar 7537770
 
 typedef struct {

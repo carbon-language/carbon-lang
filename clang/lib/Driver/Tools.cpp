@@ -16,11 +16,11 @@
 #include "clang/Driver/DriverDiagnostic.h"
 #include "clang/Driver/Compilation.h"
 #include "clang/Driver/Job.h"
-#include "clang/Driver/ObjCRuntime.h"
 #include "clang/Driver/Option.h"
 #include "clang/Driver/Options.h"
 #include "clang/Driver/ToolChain.h"
 #include "clang/Driver/Util.h"
+#include "clang/Basic/ObjCRuntime.h"
 
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringSwitch.h"
@@ -1187,13 +1187,12 @@ void Clang::AddHexagonTargetArgs(const ArgList &Args,
 }
 
 static bool
-shouldUseExceptionTablesForObjCExceptions(unsigned objcABIVersion,
+shouldUseExceptionTablesForObjCExceptions(const ObjCRuntime &runtime,
                                           const llvm::Triple &Triple) {
   // We use the zero-cost exception tables for Objective-C if the non-fragile
   // ABI is enabled or when compiling for x86_64 and ARM on Snow Leopard and
   // later.
-
-  if (objcABIVersion >= 2)
+  if (runtime.isNonFragile())
     return true;
 
   if (!Triple.isOSDarwin())
@@ -1212,7 +1211,7 @@ shouldUseExceptionTablesForObjCExceptions(unsigned objcABIVersion,
 static void addExceptionArgs(const ArgList &Args, types::ID InputType,
                              const llvm::Triple &Triple,
                              bool KernelOrKext,
-                             unsigned objcABIVersion,
+                             const ObjCRuntime &objcRuntime,
                              ArgStringList &CmdArgs) {
   if (KernelOrKext) {
     // -mkernel and -fapple-kext imply no exceptions, so claim exception related
@@ -1258,7 +1257,7 @@ static void addExceptionArgs(const ArgList &Args, types::ID InputType,
     CmdArgs.push_back("-fobjc-exceptions");
 
     ShouldUseExceptionTables |=
-      shouldUseExceptionTablesForObjCExceptions(objcABIVersion, Triple);
+      shouldUseExceptionTablesForObjCExceptions(objcRuntime, Triple);
   }
 
   if (types::isCXX(InputType)) {
@@ -1444,8 +1443,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   CmdArgs.push_back(Args.MakeArgString(TripleStr));
 
   // Select the appropriate action.
-  bool IsRewriter = false;
-  bool IsModernRewriter = false;
+  RewriteKind rewriteKind = RK_None;
   
   if (isa<AnalyzeJobAction>(JA)) {
     assert(JA.getType() == types::TY_Plist && "Invalid output type.");
@@ -1517,10 +1515,10 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       CmdArgs.push_back("-emit-pch");
     } else if (JA.getType() == types::TY_RewrittenObjC) {
       CmdArgs.push_back("-rewrite-objc");
-      IsModernRewriter = true;
+      rewriteKind = RK_NonFragile;
     } else if (JA.getType() == types::TY_RewrittenLegacyObjC) {
       CmdArgs.push_back("-rewrite-objc");
-      IsRewriter = true;
+      rewriteKind = RK_Fragile;
     } else {
       assert(JA.getType() == types::TY_PP_Asm &&
              "Unexpected output type!");
@@ -2442,80 +2440,11 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   if (Args.hasArg(options::OPT_fno_inline_functions))
     CmdArgs.push_back("-fno-inline-functions");
 
-  // -fobjc-nonfragile-abi=0 is default.
-  ObjCRuntime objCRuntime;
-  unsigned objcABIVersion = 0;
-  bool NeXTRuntimeIsDefault
-    = (IsRewriter || IsModernRewriter ||
-       getToolChain().getTriple().isOSDarwin());
-  if (Args.hasFlag(options::OPT_fnext_runtime, options::OPT_fgnu_runtime,
-                   NeXTRuntimeIsDefault)) {
-    objCRuntime.setKind(ObjCRuntime::NeXT);
-  } else {
-    CmdArgs.push_back("-fgnu-runtime");
-    objCRuntime.setKind(ObjCRuntime::GNU);
-  }
-  getToolChain().configureObjCRuntime(objCRuntime);
-  if (objCRuntime.HasARC)
-    CmdArgs.push_back("-fobjc-runtime-has-arc");
-  if (objCRuntime.HasWeak)
-    CmdArgs.push_back("-fobjc-runtime-has-weak");
-  if (objCRuntime.HasTerminate)
-    CmdArgs.push_back("-fobjc-runtime-has-terminate");
+  ObjCRuntime objcRuntime = AddObjCRuntimeArgs(Args, CmdArgs, rewriteKind);
 
-  // Compute the Objective-C ABI "version" to use. Version numbers are
-  // slightly confusing for historical reasons:
-  //   1 - Traditional "fragile" ABI
-  //   2 - Non-fragile ABI, version 1
-  //   3 - Non-fragile ABI, version 2
-  objcABIVersion = 1;
-  // If -fobjc-abi-version= is present, use that to set the version.
-  if (Arg *A = Args.getLastArg(options::OPT_fobjc_abi_version_EQ)) {
-    if (StringRef(A->getValue(Args)) == "1")
-      objcABIVersion = 1;
-    else if (StringRef(A->getValue(Args)) == "2")
-      objcABIVersion = 2;
-    else if (StringRef(A->getValue(Args)) == "3")
-      objcABIVersion = 3;
-    else
-      D.Diag(diag::err_drv_clang_unsupported) << A->getAsString(Args);
-  } else {
-    // Otherwise, determine if we are using the non-fragile ABI.
-    bool NonFragileABIIsDefault = 
-      (IsModernRewriter || 
-       (!IsRewriter && getToolChain().IsObjCNonFragileABIDefault()));
-    if (Args.hasFlag(options::OPT_fobjc_nonfragile_abi,
-                     options::OPT_fno_objc_nonfragile_abi,
-                     NonFragileABIIsDefault)) {
-      // Determine the non-fragile ABI version to use.
-#ifdef DISABLE_DEFAULT_NONFRAGILEABI_TWO
-      unsigned NonFragileABIVersion = 1;
-#else
-      unsigned NonFragileABIVersion = 2;
-#endif
-
-      if (Arg *A = Args.getLastArg(
-            options::OPT_fobjc_nonfragile_abi_version_EQ)) {
-        if (StringRef(A->getValue(Args)) == "1")
-          NonFragileABIVersion = 1;
-        else if (StringRef(A->getValue(Args)) == "2")
-          NonFragileABIVersion = 2;
-        else
-          D.Diag(diag::err_drv_clang_unsupported)
-            << A->getAsString(Args);
-      }
-
-      objcABIVersion = 1 + NonFragileABIVersion;
-    } else {
-      objcABIVersion = 1;
-    }
-  }
-
-  if (objcABIVersion == 1) {
-    CmdArgs.push_back("-fobjc-fragile-abi");
-  } else {
-    // -fobjc-dispatch-method is only relevant with the nonfragile-abi, and
-    // legacy is the default.
+  // -fobjc-dispatch-method is only relevant with the nonfragile-abi, and
+  // legacy is the default.
+  if (objcRuntime.isNonFragile()) {
     if (!Args.hasFlag(options::OPT_fobjc_legacy_dispatch,
                       options::OPT_fno_objc_legacy_dispatch,
                       getToolChain().IsObjCLegacyDispatchDefault())) {
@@ -2561,7 +2490,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   // -fobjc-infer-related-result-type is the default, except in the Objective-C
   // rewriter.
-  if (IsRewriter || IsModernRewriter)
+  if (rewriteKind != RK_None)
     CmdArgs.push_back("-fno-objc-infer-related-result-type");
 
   // Handle -fobjc-gc and -fobjc-gc-only. They are exclusive, and -fobjc-gc-only
@@ -2584,7 +2513,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   // Add exception args.
   addExceptionArgs(Args, InputType, getToolChain().getTriple(),
-                   KernelOrKext, objcABIVersion, CmdArgs);
+                   KernelOrKext, objcRuntime, CmdArgs);
 
   if (getToolChain().UseSjLjExceptions())
     CmdArgs.push_back("-fsjlj-exceptions");
@@ -2871,6 +2800,126 @@ void ClangAs::AddARMTargetArgs(const ArgList &Args,
   // Honor -mfpmath=.
   if (const Arg *A = Args.getLastArg(options::OPT_mfpmath_EQ))
     addFPMathArgs(D, A, Args, CmdArgs, getARMTargetCPU(Args, Triple));
+}
+
+/// Add options related to the Objective-C runtime/ABI.
+///
+/// Returns true if the runtime is non-fragile.
+ObjCRuntime Clang::AddObjCRuntimeArgs(const ArgList &args,
+                                      ArgStringList &cmdArgs,
+                                      RewriteKind rewriteKind) const {
+  // Look for the controlling runtime option.
+  Arg *runtimeArg = args.getLastArg(options::OPT_fnext_runtime,
+                                    options::OPT_fgnu_runtime,
+                                    options::OPT_fobjc_runtime_EQ);
+
+  // Just forward -fobjc-runtime= to the frontend.  This supercedes
+  // options about fragility.
+  if (runtimeArg &&
+      runtimeArg->getOption().matches(options::OPT_fobjc_runtime_EQ)) {
+    ObjCRuntime runtime;
+    StringRef value = runtimeArg->getValue(args);
+    if (runtime.tryParse(value)) {
+      getToolChain().getDriver().Diag(diag::err_drv_unknown_objc_runtime)
+        << value;
+    }
+
+    runtimeArg->render(args, cmdArgs);
+    return runtime;
+  }
+
+  // Otherwise, we'll need the ABI "version".  Version numbers are
+  // slightly confusing for historical reasons:
+  //   1 - Traditional "fragile" ABI
+  //   2 - Non-fragile ABI, version 1
+  //   3 - Non-fragile ABI, version 2
+  unsigned objcABIVersion = 1;
+  // If -fobjc-abi-version= is present, use that to set the version.
+  if (Arg *abiArg = args.getLastArg(options::OPT_fobjc_abi_version_EQ)) {
+    StringRef value = abiArg->getValue(args);
+    if (value == "1")
+      objcABIVersion = 1;
+    else if (value == "2")
+      objcABIVersion = 2;
+    else if (value == "3")
+      objcABIVersion = 3;
+    else
+      getToolChain().getDriver().Diag(diag::err_drv_clang_unsupported)
+        << value;
+  } else {
+    // Otherwise, determine if we are using the non-fragile ABI.
+    bool nonFragileABIIsDefault = 
+      (rewriteKind == RK_NonFragile || 
+       (rewriteKind == RK_None &&
+        getToolChain().IsObjCNonFragileABIDefault()));
+    if (args.hasFlag(options::OPT_fobjc_nonfragile_abi,
+                     options::OPT_fno_objc_nonfragile_abi,
+                     nonFragileABIIsDefault)) {
+      // Determine the non-fragile ABI version to use.
+#ifdef DISABLE_DEFAULT_NONFRAGILEABI_TWO
+      unsigned nonFragileABIVersion = 1;
+#else
+      unsigned nonFragileABIVersion = 2;
+#endif
+
+      if (Arg *abiArg = args.getLastArg(
+            options::OPT_fobjc_nonfragile_abi_version_EQ)) {
+        StringRef value = abiArg->getValue(args);
+        if (value == "1")
+          nonFragileABIVersion = 1;
+        else if (value == "2")
+          nonFragileABIVersion = 2;
+        else
+          getToolChain().getDriver().Diag(diag::err_drv_clang_unsupported)
+            << value;
+      }
+
+      objcABIVersion = 1 + nonFragileABIVersion;
+    } else {
+      objcABIVersion = 1;
+    }
+  }
+
+  // We don't actually care about the ABI version other than whether
+  // it's non-fragile.
+  bool isNonFragile = objcABIVersion != 1;
+
+  // If we have no runtime argument, ask the toolchain for its default runtime.
+  // However, the rewriter only really supports the Mac runtime, so assume that.
+  ObjCRuntime runtime;
+  if (!runtimeArg) {
+    switch (rewriteKind) {
+    case RK_None:
+      runtime = getToolChain().getDefaultObjCRuntime(isNonFragile);
+      break;
+    case RK_Fragile:
+      runtime = ObjCRuntime(ObjCRuntime::FragileMacOSX, VersionTuple());
+      break;
+    case RK_NonFragile:
+      runtime = ObjCRuntime(ObjCRuntime::MacOSX, VersionTuple());
+      break;
+    }
+
+  // -fnext-runtime
+  } else if (runtimeArg->getOption().matches(options::OPT_fnext_runtime)) {
+    // On Darwin, make this use the default behavior for the toolchain.
+    if (getToolChain().getTriple().isOSDarwin()) {
+      runtime = getToolChain().getDefaultObjCRuntime(isNonFragile);
+
+    // Otherwise, build for a generic macosx port.
+    } else {
+      runtime = ObjCRuntime(ObjCRuntime::MacOSX, VersionTuple());
+    }
+
+  // -fgnu-runtime
+  } else {
+    assert(runtimeArg->getOption().matches(options::OPT_fgnu_runtime));
+    runtime = ObjCRuntime(ObjCRuntime::GNU, VersionTuple());
+  }
+
+  cmdArgs.push_back(args.MakeArgString(
+                                 "-fobjc-runtime=" + runtime.getAsString()));
+  return runtime;
 }
 
 void ClangAs::ConstructJob(Compilation &C, const JobAction &JA,
@@ -4340,11 +4389,11 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
       // If we don't have ARC or subscripting runtime support, link in the
       // runtime stubs.  We have to do this *before* adding any of the normal
       // linker inputs so that its initializer gets run first.
-      ObjCRuntime runtime;
-      getDarwinToolChain().configureObjCRuntime(runtime);
+      ObjCRuntime runtime =
+        getDarwinToolChain().getDefaultObjCRuntime(/*nonfragile*/ true);
       // We use arclite library for both ARC and subscripting support.
-      if ((!runtime.HasARC && isObjCAutoRefCount(Args)) ||
-          !runtime.HasSubscripting)
+      if ((!runtime.hasARC() && isObjCAutoRefCount(Args)) ||
+          !runtime.hasSubscripting())
         getDarwinToolChain().AddLinkARCArgs(Args, CmdArgs);
     }
     CmdArgs.push_back("-framework");

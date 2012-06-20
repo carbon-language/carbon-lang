@@ -176,22 +176,6 @@ private:
   // the argument translation business.
   mutable bool TargetInitialized;
 
-  // FIXME: Remove this once there is a proper way to detect an ARC runtime
-  // for the simulator.
- public:
-  mutable enum {
-    ARCSimulator_None,
-    ARCSimulator_HasARCRuntime,
-    ARCSimulator_NoARCRuntime
-  } ARCRuntimeForSimulator;
-
-  mutable enum {
-    LibCXXSimulator_None,
-    LibCXXSimulator_NotAvailable,
-    LibCXXSimulator_Available
-  } LibCXXForSimulator;
-
-private:
   /// Whether we are targeting iPhoneOS target.
   mutable bool TargetIsIPhoneOS;
 
@@ -201,6 +185,12 @@ private:
   /// The OS version we are targeting.
   mutable VersionTuple TargetVersion;
 
+protected:
+  // FIXME: Remove this once there is a proper way to detect an ARC runtime
+  // for the simulator.
+  mutable VersionTuple TargetSimulatorVersionFromDefines;
+
+private:
   /// The default macosx-version-min of this tool chain; empty until
   /// initialized.
   std::string MacosxVersionMin;
@@ -208,9 +198,6 @@ private:
   /// The default ios-version-min of this tool chain; empty until
   /// initialized.
   std::string iOSVersionMin;
-
-  bool hasARCRuntime() const;
-  bool hasSubscriptingRuntime() const;
 
 private:
   void AddDeploymentTarget(DerivedArgList &Args) const;
@@ -258,7 +245,7 @@ public:
   bool isTargetMacOS() const {
     return !isTargetIOSSimulator() &&
            !isTargetIPhoneOS() &&
-           ARCRuntimeForSimulator == ARCSimulator_None;
+           TargetSimulatorVersionFromDefines == VersionTuple();
   }
 
   bool isTargetInitialized() const { return TargetInitialized; }
@@ -300,7 +287,7 @@ public:
 
   virtual bool HasNativeLLVMSupport() const;
 
-  virtual void configureObjCRuntime(ObjCRuntime &runtime) const;
+  virtual ObjCRuntime getDefaultObjCRuntime(bool isNonFragile) const;
   virtual bool hasBlocksRuntime() const;
 
   virtual DerivedArgList *TranslateArgs(const DerivedArgList &Args,

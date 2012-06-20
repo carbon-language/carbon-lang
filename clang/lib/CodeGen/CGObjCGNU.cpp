@@ -889,7 +889,7 @@ llvm::Constant *CGObjCGNU::GetEHType(QualType T) {
         // foreign exceptions.  With the new ABI, we use __objc_id_typeinfo as
         // a pointer indicating object catchalls, and NULL to indicate real
         // catchalls
-        if (CGM.getLangOpts().ObjCNonFragileABI) {
+        if (CGM.getLangOpts().ObjCRuntime.isNonFragile()) {
           return MakeConstantString("@id");
         } else {
           return 0;
@@ -1984,7 +1984,7 @@ void CGObjCGNU::GenerateClass(const ObjCImplementationDecl *OID) {
     Context.getASTObjCInterfaceLayout(SuperClassDecl).getSize().getQuantity();
   // For non-fragile ivars, set the instance size to 0 - {the size of just this
   // class}.  The runtime will then set this to the correct value on load.
-  if (CGM.getContext().getLangOpts().ObjCNonFragileABI) {
+  if (CGM.getContext().getLangOpts().ObjCRuntime.isNonFragile()) {
     instanceSize = 0 - (instanceSize - superInstanceSize);
   }
 
@@ -1999,7 +1999,7 @@ void CGObjCGNU::GenerateClass(const ObjCImplementationDecl *OID) {
       // Get the offset
       uint64_t BaseOffset = ComputeIvarBaseOffset(CGM, OID, IVD);
       uint64_t Offset = BaseOffset;
-      if (CGM.getContext().getLangOpts().ObjCNonFragileABI) {
+      if (CGM.getContext().getLangOpts().ObjCRuntime.isNonFragile()) {
         Offset = BaseOffset - superInstanceSize;
       }
       llvm::Constant *OffsetValue = llvm::ConstantInt::get(IntTy, Offset);
@@ -2640,7 +2640,7 @@ static const ObjCInterfaceDecl *FindIvarInterface(ASTContext &Context,
 llvm::Value *CGObjCGNU::EmitIvarOffset(CodeGenFunction &CGF,
                          const ObjCInterfaceDecl *Interface,
                          const ObjCIvarDecl *Ivar) {
-  if (CGM.getLangOpts().ObjCNonFragileABI) {
+  if (CGM.getLangOpts().ObjCRuntime.isNonFragile()) {
     Interface = FindIvarInterface(CGM.getContext(), Interface, Ivar);
     if (RuntimeVersion < 10)
       return CGF.Builder.CreateZExtOrBitCast(
@@ -2665,7 +2665,17 @@ llvm::Value *CGObjCGNU::EmitIvarOffset(CodeGenFunction &CGF,
 
 CGObjCRuntime *
 clang::CodeGen::CreateGNUObjCRuntime(CodeGenModule &CGM) {
-  if (CGM.getLangOpts().ObjCNonFragileABI)
+  switch (CGM.getLangOpts().ObjCRuntime.getKind()) {
+  case ObjCRuntime::GNU:
     return new CGObjCGNUstep(CGM);
-  return new CGObjCGCC(CGM);
+
+  case ObjCRuntime::FragileGNU:
+    return new CGObjCGCC(CGM);
+
+  case ObjCRuntime::FragileMacOSX:
+  case ObjCRuntime::MacOSX:
+  case ObjCRuntime::iOS:
+    llvm_unreachable("these runtimes are not GNU runtimes");
+  }
+  llvm_unreachable("bad runtime");
 }

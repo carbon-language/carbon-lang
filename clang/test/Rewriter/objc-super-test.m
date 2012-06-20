@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -rewrite-objc -fobjc-fragile-abi  %s -o - | grep objc_msgSendSuper | grep MainMethod
+// RUN: %clang_cc1 -rewrite-objc -fobjc-runtime=macosx-fragile-10.5  %s -o - | grep objc_msgSendSuper | grep MainMethod
 
 typedef struct objc_selector    *SEL;
 typedef struct objc_object *id;

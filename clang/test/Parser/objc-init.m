@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -fsyntax-only -fobjc-fragile-abi -verify -pedantic -Wno-objc-root-class %s
-// RUN: %clang_cc1 -fsyntax-only -fobjc-fragile-abi -verify -x objective-c++ -Wno-objc-root-class %s
+// RUN: %clang_cc1 -fsyntax-only -fobjc-runtime=macosx-fragile -verify -pedantic -Wno-objc-root-class %s
+// RUN: %clang_cc1 -fsyntax-only -fobjc-runtime=macosx-fragile -verify -x objective-c++ -Wno-objc-root-class %s
 // rdar://5707001
 
 @interface NSNumber;

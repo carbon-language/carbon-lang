@@ -1690,9 +1690,10 @@ static llvm::Constant *createARCRuntimeFunction(CodeGenModule &CGM,
                                                 StringRef fnName) {
   llvm::Constant *fn = CGM.CreateRuntimeFunction(type, fnName);
 
-  // In -fobjc-no-arc-runtime, emit weak references to the runtime
-  // support library.
-  if (!CGM.getCodeGenOpts().ObjCRuntimeHasARC)
+  // If the target runtime doesn't naturally support ARC, emit weak
+  // references to the runtime support library.  We don't really
+  // permit this to fail, but we need a particular relocation style.
+  if (!CGM.getLangOpts().ObjCRuntime.hasARC())
     if (llvm::Function *f = dyn_cast<llvm::Function>(fn))
       f->setLinkage(llvm::Function::ExternalWeakLinkage);
 
@@ -2722,7 +2723,7 @@ void CodeGenFunction::EmitObjCAutoreleasePoolStmt(
 
   // Keep track of the current cleanup stack depth.
   RunCleanupsScope Scope(*this);
-  if (CGM.getCodeGenOpts().ObjCRuntimeHasARC) {
+  if (CGM.getLangOpts().ObjCRuntime.hasARC()) {
     llvm::Value *token = EmitObjCAutoreleasePoolPush();
     EHStack.pushCleanup<CallObjCAutoreleasePoolObject>(NormalCleanup, token);
   } else {
@@ -2754,6 +2755,11 @@ void CodeGenFunction::EmitExtendGCLifetime(llvm::Value *object) {
   Builder.CreateCall(extender, object)->setDoesNotThrow();
 }
 
+static bool hasAtomicCopyHelperAPI(const ObjCRuntime &runtime) {
+  // For now, only NeXT has these APIs.
+  return runtime.isNeXTFamily();
+}
+
 /// GenerateObjCAtomicSetterCopyHelperFunction - Given a c++ object type with
 /// non-trivial copy assignment function, produce following helper function.
 /// static void copyHelper(Ty *dest, const Ty *source) { *dest = *source; }
@@ -2762,7 +2768,8 @@ llvm::Constant *
 CodeGenFunction::GenerateObjCAtomicSetterCopyHelperFunction(
                                         const ObjCPropertyImplDecl *PID) {
   // FIXME. This api is for NeXt runtime only for now.
-  if (!getLangOpts().CPlusPlus || !getLangOpts().NeXTRuntime)
+  if (!getLangOpts().CPlusPlus ||
+      !hasAtomicCopyHelperAPI(getLangOpts().ObjCRuntime))
     return 0;
   QualType Ty = PID->getPropertyIvarDecl()->getType();
   if (!Ty->isRecordType())
@@ -2846,7 +2853,8 @@ llvm::Constant *
 CodeGenFunction::GenerateObjCAtomicGetterCopyHelperFunction(
                                             const ObjCPropertyImplDecl *PID) {
   // FIXME. This api is for NeXt runtime only for now.
-  if (!getLangOpts().CPlusPlus || !getLangOpts().NeXTRuntime)
+  if (!getLangOpts().CPlusPlus ||
+      !hasAtomicCopyHelperAPI(getLangOpts().ObjCRuntime))
     return 0;
   const ObjCPropertyDecl *PD = PID->getPropertyDecl();
   QualType Ty = PD->getType();

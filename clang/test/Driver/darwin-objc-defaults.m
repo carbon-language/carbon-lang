@@ -7,7 +7,7 @@
 // RUN: FileCheck --check-prefix CHECK-I386_OSX10_5 < %t %s
 
 // CHECK-CHECK-I386_OSX10_5: "-cc1"
-// CHECK-CHECK-I386_OSX10_5: -fobjc-fragile-abi
+// CHECK-CHECK-I386_OSX10_5: -fobjc-runtime=macosx-fragile-10.5
 // CHECK-CHECK-I386_OSX10_5-NOT: -fobjc-dispatch-method
 // CHECK-CHECK-I386_OSX10_5: darwin-objc-defaults
 
@@ -16,7 +16,7 @@
 // RUN: FileCheck --check-prefix CHECK-I386_OSX10_6 < %t %s
 
 // CHECK-CHECK-I386_OSX10_6: "-cc1"
-// CHECK-CHECK-I386_OSX10_6: -fobjc-fragile-abi
+// CHECK-CHECK-I386_OSX10_6: -fobjc-runtime=macosx-fragile-10.6
 // CHECK-CHECK-I386_OSX10_6-NOT: -fobjc-dispatch-method
 // CHECK-CHECK-I386_OSX10_6: darwin-objc-defaults
 
@@ -25,7 +25,7 @@
 // RUN: FileCheck --check-prefix CHECK-I386_IPHONE3_0 < %t %s
 
 // CHECK-CHECK-I386_IPHONE3_0: "-cc1"
-// CHECK-CHECK-I386_IPHONE3_0: -fobjc-fragile-abi
+// CHECK-CHECK-I386_IPHONE3_0: -fobjc-runtime=ios-3.0
 // CHECK-CHECK-I386_IPHONE3_0-NOT: -fobjc-dispatch-method
 // CHECK-CHECK-I386_IPHONE3_0: darwin-objc-defaults
 
@@ -36,7 +36,7 @@
 // RUN: FileCheck --check-prefix CHECK-X86_64_OSX10_5 < %t %s
 
 // CHECK-CHECK-X86_64_OSX10_5: "-cc1"
-// CHECK-CHECK-X86_64_OSX10_5-NOT: -fobjc-fragile-abi
+// CHECK-CHECK-X86_64_OSX10_5: -fobjc-runtime=macosx-10.5
 // CHECK-CHECK-X86_64_OSX10_5: -fobjc-dispatch-method=non-legacy
 // CHECK-CHECK-X86_64_OSX10_5: darwin-objc-defaults
 
@@ -45,7 +45,7 @@
 // RUN: FileCheck --check-prefix CHECK-X86_64_OSX10_6 < %t %s
 
 // CHECK-CHECK-X86_64_OSX10_6: "-cc1"
-// CHECK-CHECK-X86_64_OSX10_6-NOT: -fobjc-fragile-abi
+// CHECK-CHECK-X86_64_OSX10_6: -fobjc-runtime=macosx-10.6
 // CHECK-CHECK-X86_64_OSX10_6: -fobjc-dispatch-method=mixed
 // CHECK-CHECK-X86_64_OSX10_6: darwin-objc-defaults
 
@@ -54,7 +54,7 @@
 // RUN: FileCheck --check-prefix CHECK-X86_64_IPHONE3_0 < %t %s
 
 // CHECK-CHECK-X86_64_IPHONE3_0: "-cc1"
-// CHECK-CHECK-X86_64_IPHONE3_0-NOT: -fobjc-fragile-abi
+// CHECK-CHECK-X86_64_IPHONE3_0: -fobjc-runtime=ios-3.0
 // CHECK-CHECK-X86_64_IPHONE3_0: -fobjc-dispatch-method=mixed
 // CHECK-CHECK-X86_64_IPHONE3_0: darwin-objc-defaults
 
@@ -65,7 +65,7 @@
 // RUN: FileCheck --check-prefix CHECK-ARMV7_OSX10_5 < %t %s
 
 // CHECK-CHECK-ARMV7_OSX10_5: "-cc1"
-// CHECK-CHECK-ARMV7_OSX10_5-NOT: -fobjc-fragile-abi
+// CHECK-CHECK-ARMV7_OSX10_5: -fobjc-runtime=macosx-10.5
 // CHECK-CHECK-ARMV7_OSX10_5-NOT: -fobjc-dispatch-method
 // CHECK-CHECK-ARMV7_OSX10_5: darwin-objc-defaults
 
@@ -74,7 +74,7 @@
 // RUN: FileCheck --check-prefix CHECK-ARMV7_OSX10_6 < %t %s
 
 // CHECK-CHECK-ARMV7_OSX10_6: "-cc1"
-// CHECK-CHECK-ARMV7_OSX10_6-NOT: -fobjc-fragile-abi
+// CHECK-CHECK-ARMV7_OSX10_6: -fobjc-runtime=macosx-10.6
 // CHECK-CHECK-ARMV7_OSX10_6-NOT: -fobjc-dispatch-method
 // CHECK-CHECK-ARMV7_OSX10_6: darwin-objc-defaults
 
@@ -83,6 +83,6 @@
 // RUN: FileCheck --check-prefix CHECK-ARMV7_IPHONE3_0 < %t %s
 
 // CHECK-CHECK-ARMV7_IPHONE3_0: "-cc1"
-// CHECK-CHECK-ARMV7_IPHONE3_0-NOT: -fobjc-fragile-abi
+// CHECK-CHECK-ARMV7_IPHONE3_0: -fobjc-runtime=ios-3.0
 // CHECK-CHECK-ARMV7_IPHONE3_0-NOT: -fobjc-dispatch-method
 // CHECK-CHECK-ARMV7_IPHONE3_0: darwin-objc-defaults

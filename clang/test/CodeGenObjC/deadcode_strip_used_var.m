@@ -1,6 +1,6 @@
-// RUN: %clang_cc1 %s -emit-llvm -o %t -triple i386-apple-darwin10 -fobjc-fragile-abi
+// RUN: %clang_cc1 %s -emit-llvm -o %t -triple i386-apple-darwin10 -fobjc-runtime=macosx-fragile-10.5
 // RUN: grep "llvm.used" %t | count 1
-// RUN: %clang_cc1 %s -emit-llvm -o %t -triple x86_64-apple-darwin10 -fobjc-fragile-abi
+// RUN: %clang_cc1 %s -emit-llvm -o %t -triple x86_64-apple-darwin10 -fobjc-runtime=macosx-fragile-10.5
 // RUN: grep "llvm.used" %t | count 1 
 
 

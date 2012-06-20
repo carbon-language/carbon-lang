@@ -10,6 +10,7 @@ add_clang_library(clangBasic
   IdentifierTable.cpp
   LangOptions.cpp
   Module.cpp
+  ObjCRuntime.cpp
   SourceLocation.cpp
   SourceManager.cpp
   TargetInfo.cpp

@@ -365,7 +365,7 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
     Builder.defineMacro("__GXX_EXPERIMENTAL_CXX0X__");
 
   if (LangOpts.ObjC1) {
-    if (LangOpts.ObjCNonFragileABI) {
+    if (LangOpts.ObjCRuntime.isNonFragile()) {
       Builder.defineMacro("__OBJC2__");
       
       if (LangOpts.ObjCExceptions)
@@ -375,7 +375,7 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
     if (LangOpts.getGC() != LangOptions::NonGC)
       Builder.defineMacro("__OBJC_GC__");
 
-    if (LangOpts.NeXTRuntime)
+    if (LangOpts.ObjCRuntime.isNeXTFamily())
       Builder.defineMacro("__NEXT_RUNTIME__");
 
     Builder.defineMacro("IBOutlet", "__attribute__((iboutlet))");

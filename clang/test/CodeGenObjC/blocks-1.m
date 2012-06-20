@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -emit-llvm -o %t -fobjc-gc -fblocks -triple i386-apple-darwin10 -fobjc-fragile-abi
+// RUN: %clang_cc1 %s -emit-llvm -o %t -fobjc-gc -fblocks -triple i386-apple-darwin10 -fobjc-runtime=macosx-fragile-10.5
 // RUN: grep "_Block_object_dispose" %t | count 6
 // RUN: grep "__copy_helper_block_" %t | count 4
 // RUN: grep "__destroy_helper_block_" %t | count 4
@@ -8,7 +8,7 @@
 // RUN: grep "_Block_object_assign" %t | count 4
 // RUN: grep "objc_read_weak" %t | count 2
 // RUN: grep "objc_assign_weak" %t | count 3
-// RUN: %clang_cc1 -x objective-c++ %s -emit-llvm -o %t -fobjc-gc -fblocks -triple i386-apple-darwin10 -fobjc-fragile-abi
+// RUN: %clang_cc1 -x objective-c++ %s -emit-llvm -o %t -fobjc-gc -fblocks -triple i386-apple-darwin10 -fobjc-runtime=macosx-fragile-10.5
 // RUN: grep "_Block_object_dispose" %t | count 6
 // RUN: grep "__copy_helper_block_" %t | count 4
 // RUN: grep "__destroy_helper_block_" %t | count 4
