@@ -927,12 +927,44 @@ SDNode *PPCDAGToDAGISel::Select(SDNode *N) {
       SDValue Chain = LD->getChain();
       SDValue Base = LD->getBasePtr();
       SDValue Ops[] = { Offset, Base, Chain };
-      // FIXME: PPC64
       return CurDAG->getMachineNode(Opcode, dl, LD->getValueType(0),
                                     PPCLowering.getPointerTy(),
                                     MVT::Other, Ops, 3);
     } else {
-      llvm_unreachable("R+R preindex loads not supported yet!");
+      unsigned Opcode;
+      bool isSExt = LD->getExtensionType() == ISD::SEXTLOAD;
+      if (LD->getValueType(0) != MVT::i64) {
+        // Handle PPC32 integer and normal FP loads.
+        assert((!isSExt || LoadedVT == MVT::i16) && "Invalid sext update load");
+        switch (LoadedVT.getSimpleVT().SimpleTy) {
+          default: llvm_unreachable("Invalid PPC load type!");
+          case MVT::f64: Opcode = PPC::LFDUX; break;
+          case MVT::f32: Opcode = PPC::LFSUX; break;
+          case MVT::i32: Opcode = PPC::LWZUX; break;
+          case MVT::i16: Opcode = isSExt ? PPC::LHAUX : PPC::LHZUX; break;
+          case MVT::i1:
+          case MVT::i8:  Opcode = PPC::LBZUX; break;
+        }
+      } else {
+        assert(LD->getValueType(0) == MVT::i64 && "Unknown load result type!");
+        assert((!isSExt || LoadedVT == MVT::i16 || LoadedVT == MVT::i32) &&
+               "Invalid sext update load");
+        switch (LoadedVT.getSimpleVT().SimpleTy) {
+          default: llvm_unreachable("Invalid PPC load type!");
+          case MVT::i64: Opcode = PPC::LDUX; break;
+          case MVT::i32: Opcode = isSExt ? PPC::LWAUX  : PPC::LWZUX8; break;
+          case MVT::i16: Opcode = isSExt ? PPC::LHAUX8 : PPC::LHZUX8; break;
+          case MVT::i1:
+          case MVT::i8:  Opcode = PPC::LBZUX8; break;
+        }
+      }
+
+      SDValue Chain = LD->getChain();
+      SDValue Base = LD->getBasePtr();
+      SDValue Ops[] = { Offset, Base, Chain };
+      return CurDAG->getMachineNode(Opcode, dl, LD->getValueType(0),
+                                    PPCLowering.getPointerTy(),
+                                    MVT::Other, Ops, 3);
     }
   }
 

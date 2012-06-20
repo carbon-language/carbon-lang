@@ -323,7 +323,7 @@ def memri : Operand<iPTR> {
 }
 def memrr : Operand<iPTR> {
   let PrintMethod = "printMemRegReg";
-  let MIOperandInfo = (ops ptr_rc, ptr_rc);
+  let MIOperandInfo = (ops ptr_rc:$offreg, ptr_rc:$ptrreg);
 }
 def memrix : Operand<iPTR> {   // memri where the imm is shifted 2 bits.
   let PrintMethod = "printMemRegImmShifted";
@@ -711,6 +711,44 @@ def LFSU : DForm_1<49, (outs F4RC:$rD, ptr_rc:$ea_result), (ins memri:$addr),
 def LFDU : DForm_1<51, (outs F8RC:$rD, ptr_rc:$ea_result), (ins memri:$addr),
                   "lfd $rD, $addr", LdStLFD,
                   []>, RegConstraint<"$addr.reg = $ea_result">,
+                   NoEncode<"$ea_result">;
+
+
+// Indexed (r+r) Loads with Update (preinc).
+def LBZUX : XForm_1<31, 119, (outs GPRC:$rD, ptr_rc:$ea_result),
+                   (ins memrr:$addr),
+                   "lbzux $rD, $addr", LdStLoad,
+                   []>, RegConstraint<"$addr.offreg = $ea_result">,
+                   NoEncode<"$ea_result">;
+
+def LHAUX : XForm_1<31, 375, (outs GPRC:$rD, ptr_rc:$ea_result),
+                   (ins memrr:$addr),
+                   "lhaux $rD, $addr", LdStLoad,
+                   []>, RegConstraint<"$addr.offreg = $ea_result">,
+                   NoEncode<"$ea_result">;
+
+def LHZUX : XForm_1<31, 331, (outs GPRC:$rD, ptr_rc:$ea_result),
+                   (ins memrr:$addr),
+                   "lhzux $rD, $addr", LdStLoad,
+                   []>, RegConstraint<"$addr.offreg = $ea_result">,
+                   NoEncode<"$ea_result">;
+
+def LWZUX : XForm_1<31, 55, (outs GPRC:$rD, ptr_rc:$ea_result),
+                   (ins memrr:$addr),
+                   "lwzux $rD, $addr", LdStLoad,
+                   []>, RegConstraint<"$addr.offreg = $ea_result">,
+                   NoEncode<"$ea_result">;
+
+def LFSUX : XForm_1<31, 567, (outs F4RC:$rD, ptr_rc:$ea_result),
+                   (ins memrr:$addr),
+                   "lfsux $rD, $addr", LdStLoad,
+                   []>, RegConstraint<"$addr.offreg = $ea_result">,
+                   NoEncode<"$ea_result">;
+
+def LFDUX : XForm_1<31, 631, (outs F8RC:$rD, ptr_rc:$ea_result),
+                   (ins memrr:$addr),
+                   "lfdux $rD, $addr", LdStLoad,
+                   []>, RegConstraint<"$addr.offreg = $ea_result">,
                    NoEncode<"$ea_result">;
 }
 }

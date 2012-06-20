@@ -1106,13 +1106,8 @@ bool PPCTargetLowering::getPreIndexedAddressParts(SDNode *N, SDValue &Base,
     return false;
 
   if (SelectAddressRegReg(Ptr, Offset, Base, DAG)) {
-    if (isa<StoreSDNode>(N)) {
-      AM = ISD::PRE_INC;
-      return true;
-    }
-
-    // FIXME: reg+reg preinc loads
-    return false;
+    AM = ISD::PRE_INC;
+    return true;
   }
 
   // LDU/STU use reg+imm*4, others use reg+imm.

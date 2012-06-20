@@ -533,6 +533,16 @@ def LHAU8 : DForm_1a<43, (outs G8RC:$rD, ptr_rc:$ea_result), (ins symbolLo:$disp
                     NoEncode<"$ea_result">;
 // NO LWAU!
 
+def LHAUX8 : XForm_1<31, 375, (outs G8RC:$rD, ptr_rc:$ea_result),
+                    (ins memrr:$addr),
+                    "lhaux $rD, $addr", LdStLoad,
+                    []>, RegConstraint<"$addr.offreg = $ea_result">,
+                    NoEncode<"$ea_result">;
+def LWAUX : XForm_1<31, 375, (outs G8RC:$rD, ptr_rc:$ea_result),
+                    (ins memrr:$addr),
+                    "lwaux $rD, $addr", LdStLoad,
+                    []>, RegConstraint<"$addr.offreg = $ea_result">,
+                    NoEncode<"$ea_result">, isPPC64;
 }
 
 // Zero extending loads.
@@ -572,6 +582,22 @@ def LWZU8 : DForm_1<33, (outs G8RC:$rD, ptr_rc:$ea_result), (ins memri:$addr),
                     "lwzu $rD, $addr", LdStLoad,
                     []>, RegConstraint<"$addr.reg = $ea_result">,
                     NoEncode<"$ea_result">;
+
+def LBZUX8 : XForm_1<31, 119, (outs G8RC:$rD, ptr_rc:$ea_result),
+                   (ins memrr:$addr),
+                   "lbzux $rD, $addr", LdStLoad,
+                   []>, RegConstraint<"$addr.offreg = $ea_result">,
+                   NoEncode<"$ea_result">;
+def LHZUX8 : XForm_1<31, 331, (outs G8RC:$rD, ptr_rc:$ea_result),
+                   (ins memrr:$addr),
+                   "lhzux $rD, $addr", LdStLoad,
+                   []>, RegConstraint<"$addr.offreg = $ea_result">,
+                   NoEncode<"$ea_result">;
+def LWZUX8 : XForm_1<31, 55, (outs G8RC:$rD, ptr_rc:$ea_result),
+                   (ins memrr:$addr),
+                   "lwzux $rD, $addr", LdStLoad,
+                   []>, RegConstraint<"$addr.offreg = $ea_result">,
+                   NoEncode<"$ea_result">;
 }
 }
 
@@ -607,6 +633,11 @@ def LDU  : DSForm_1<58, 1, (outs G8RC:$rD, ptr_rc:$ea_result), (ins memrix:$addr
                     []>, RegConstraint<"$addr.reg = $ea_result">, isPPC64,
                     NoEncode<"$ea_result">;
 
+def LDUX : XForm_1<31, 53, (outs G8RC:$rD, ptr_rc:$ea_result),
+                   (ins memrr:$addr),
+                   "ldux $rD, $addr", LdStLoad,
+                   []>, RegConstraint<"$addr.offreg = $ea_result">,
+                   NoEncode<"$ea_result">, isPPC64;
 }
 
 def : Pat<(PPCload ixaddr:$src),
