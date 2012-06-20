@@ -35,18 +35,22 @@ class TextDiagnosticBuffer;
 ///
 /// Here's an example:
 ///
+/// \code
 ///   int A = B; // expected-error {{use of undeclared identifier 'B'}}
+/// \endcode
 ///
 /// You can place as many diagnostics on one line as you wish. To make the code
 /// more readable, you can use slash-newline to separate out the diagnostics.
 ///
 /// The simple syntax above allows each specification to match exactly one
 /// error.  You can use the extended syntax to customize this. The extended
-/// syntax is "expected-<type> <n> {{diag text}}", where <type> is one of
-/// "error", "warning" or "note", and <n> is a positive integer. This allows the
-/// diagnostic to appear as many times as specified. Example:
+/// syntax is "expected-<type> <n> {{diag text}}", where \<type> is one of
+/// "error", "warning" or "note", and \<n> is a positive integer. This allows
+/// the diagnostic to appear as many times as specified. Example:
 ///
+/// \code
 ///   void f(); // expected-note 2 {{previous declaration is here}}
+/// \endcode
 ///
 /// Regex matching mode may be selected by appending '-re' to type. Example:
 ///
@@ -75,7 +79,7 @@ private:
   void CheckDiagnostics();
 
 public:
-  /// Create a new verifying diagnostic client, which will issue errors to \arg
+  /// Create a new verifying diagnostic client, which will issue errors to
   /// the currently-attached diagnostic client when a diagnostic does not match 
   /// what is expected (as indicated in the source file).
   VerifyDiagnosticConsumer(DiagnosticsEngine &Diags);
