@@ -528,11 +528,10 @@ example, this is *bad*:
       if (Type.isNull()) {
         Error = ASTContext::GE_Missing_jmp_buf;
         return QualType();
-      <b>} else {
+      } else {
         break;
-      }</b>
+      }
     }
-  }
   }
 
 It is better to write it like this:
