@@ -3,6 +3,11 @@
 Programming Documentation
 =========================
 
+.. toctree::
+   :hidden:
+
+   CodingStandards
+
 * `LLVM Language Reference Manual <LangRef.html>`_
 
   Defines the LLVM intermediate representation and the assembly form of the
@@ -17,7 +22,7 @@ Programming Documentation
 
   Provides information on using the command line parsing library.
 
-* `LLVM Coding standards <CodingStandards.html>`_
+* :ref:`coding_standards`
 
   Details the LLVM coding standards and provides useful information on writing
   efficient C++ code.
