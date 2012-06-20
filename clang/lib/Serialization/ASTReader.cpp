@@ -6313,19 +6313,16 @@ void ASTReader::ReadComments() {
       // Read a record.
       Record.clear();
       switch ((CommentRecordTypes) Cursor.ReadRecord(Code, Record)) {
-        default:  // Default behavior: ignore.
-          break;
-
-        case COMMENTS_RAW_COMMENT: {
-          unsigned Idx = 0;
-          SourceRange SR = ReadSourceRange(F, Record, Idx);
-          RawComment::CommentKind Kind =
-              (RawComment::CommentKind) Record[Idx++];
-          bool IsTrailingComment = Record[Idx++];
-          bool IsAlmostTrailingComment = Record[Idx++];
-          Comments.push_back(RawComment(SR, Kind, IsTrailingComment,
-                                        IsAlmostTrailingComment));
-          break;
+      case COMMENTS_RAW_COMMENT: {
+        unsigned Idx = 0;
+        SourceRange SR = ReadSourceRange(F, Record, Idx);
+        RawComment::CommentKind Kind =
+            (RawComment::CommentKind) Record[Idx++];
+        bool IsTrailingComment = Record[Idx++];
+        bool IsAlmostTrailingComment = Record[Idx++];
+        Comments.push_back(RawComment(SR, Kind, IsTrailingComment,
+                                      IsAlmostTrailingComment));
+        break;
       }
       }
     }
