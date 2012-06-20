@@ -4,7 +4,6 @@ set( LLVM_LINK_COMPONENTS
 
 set( LLVM_USED_LIBS
   clangBasic
-  clangComments
   clangLex
   clangSema
   clangFrontend
