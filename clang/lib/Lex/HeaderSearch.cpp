@@ -390,10 +390,10 @@ void HeaderSearch::setTarget(const TargetInfo &Target) {
 //===----------------------------------------------------------------------===//
 
 
-/// LookupFile - Given a "foo" or <foo> reference, look up the indicated file,
+/// LookupFile - Given a "foo" or \<foo> reference, look up the indicated file,
 /// return null on failure.  isAngled indicates whether the file reference is
-/// for system #include's or not (i.e. using <> instead of "").  CurFileEnt, if
-/// non-null, indicates where the #including file is, in case a relative search
+/// for system \#include's or not (i.e. using <> instead of "").  CurFileEnt, if
+/// non-null, indicates where the \#including file is, in case a relative search
 /// is needed.
 const FileEntry *HeaderSearch::LookupFile(
     StringRef Filename,
@@ -566,7 +566,7 @@ const FileEntry *HeaderSearch::LookupFile(
 }
 
 /// LookupSubframeworkHeader - Look up a subframework for the specified
-/// #include file.  For example, if #include'ing <HIToolbox/HIToolbox.h> from
+/// \#include file.  For example, if \#include'ing <HIToolbox/HIToolbox.h> from
 /// within ".../Carbon.framework/Headers/Carbon.h", check to see if HIToolbox
 /// is a subframework within Carbon.framework.  If so, return the FileEntry
 /// for the designated file, otherwise return null.
@@ -749,9 +749,6 @@ void HeaderSearch::setHeaderFileInfoForUID(HeaderFileInfo HFI, unsigned UID) {
   FileInfo[UID] = HFI;
 }
 
-/// ShouldEnterIncludeFile - Mark the specified file as a target of of a
-/// #include, #include_next, or #import directive.  Return false if #including
-/// the file will have no effect or true if we should include it.
 bool HeaderSearch::ShouldEnterIncludeFile(const FileEntry *File, bool isImport){
   ++NumIncluded; // Count # of attempted #includes.
 
@@ -1042,4 +1039,3 @@ void HeaderSearch::collectAllModules(llvm::SmallVectorImpl<Module *> &Modules) {
     Modules.push_back(M->getValue());
   }
 }
-
