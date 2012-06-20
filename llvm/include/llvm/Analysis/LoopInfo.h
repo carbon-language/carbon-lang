@@ -316,6 +316,11 @@ raw_ostream& operator<<(raw_ostream &OS, const LoopBase<BlockT, LoopT> &Loop) {
   return OS;
 }
 
+// Implementation in LoopInfoImpl.h
+#ifdef __GNUC__
+__extension__ extern template class LoopBase<BasicBlock, Loop>;
+#endif
+
 class Loop : public LoopBase<BasicBlock, Loop> {
 public:
   Loop() {}
@@ -540,6 +545,11 @@ public:
 
   void print(raw_ostream &OS) const;
 };
+
+// Implementation in LoopInfoImpl.h
+#ifdef __GNUC__
+__extension__ extern template class LoopInfoBase<BasicBlock, Loop>;
+#endif
 
 class LoopInfo : public FunctionPass {
   LoopInfoBase<BasicBlock, Loop> LI;

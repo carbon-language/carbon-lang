@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file defines the MachineLoopInfo class that is used to identify natural 
+// This file defines the MachineLoopInfo class that is used to identify natural
 // loops and determine the loop depth of various nodes of the CFG.  Note that
 // natural loops may actually be several loops that share the same header node.
 //
@@ -35,6 +35,12 @@
 
 namespace llvm {
 
+// Implementation in LoopInfoImpl.h
+#ifdef __GNUC__
+class MachineLoop;
+__extension__ extern template class LoopBase<MachineBasicBlock, MachineLoop>;
+#endif
+
 class MachineLoop : public LoopBase<MachineBasicBlock, MachineLoop> {
 public:
   MachineLoop();
@@ -56,6 +62,12 @@ private:
   explicit MachineLoop(MachineBasicBlock *MBB)
     : LoopBase<MachineBasicBlock, MachineLoop>(MBB) {}
 };
+
+// Implementation in LoopInfoImpl.h
+#ifdef __GNUC__
+__extension__ extern template
+class LoopInfoBase<MachineBasicBlock, MachineLoop>;
+#endif
 
 class MachineLoopInfo : public MachineFunctionPass {
   LoopInfoBase<MachineBasicBlock, MachineLoop> LI;
