@@ -149,7 +149,7 @@ char *internal_strstr(const char *haystack, const char *needle) {
 }
 
 s64 internal_simple_strtoll(const char *nptr, char **endptr, int base) {
-  CHECK(base == 10);
+  CHECK_EQ(base, 10);
   while (IsSpace(*nptr)) nptr++;
   int sgn = 1;
   u64 res = 0;

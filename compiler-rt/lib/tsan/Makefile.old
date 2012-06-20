@@ -15,6 +15,8 @@ GTEST_INCLUDE=-I$(GTEST_ROOT)/include
 GTEST_BUILD_DIR=$(GTEST_ROOT)/build
 GTEST_LIB=$(GTEST_BUILD_DIR)/gtest-all.o
 
+SANITIZER_COMMON_TESTS_SRC=$(wildcard ../sanitizer_common/tests/*.cc)
+SANITIZER_COMMON_TESTS_OBJ=$(patsubst %.cc,%.o,$(SANITIZER_COMMON_TESTS_SRC))
 RTL_TEST_SRC=$(wildcard rtl_tests/*.cc)
 RTL_TEST_OBJ=$(patsubst %.cc,%.o,$(RTL_TEST_SRC))
 UNIT_TEST_SRC=$(wildcard unit_tests/*_test.cc)
@@ -39,13 +41,14 @@ $(LIBTSAN): libtsan
 libtsan:
 	$(MAKE) -C rtl -f Makefile.old DEBUG=$(DEBUG)
 
-unit_tests/%_test.o: unit_tests/%_test.cc $(UNIT_TEST_HDR)
+%.o: %.cc $(UNIT_TEST_HDR)
 	$(CXX) $(CXXFLAGS) $(CFLAGS) $(INCLUDES) -o $@ -c $<
 
-rtl_tests/%.o: rtl_tests/%.cc $(LIBTSAN_HEADERS)
-	$(CXX) $(CXXFLAGS) $(CFLAGS) $(INCLUDES) -o $@ -c $<
+#rtl_tests/%.o: rtl_tests/%.cc $(LIBTSAN_HEADERS)
+#	$(CXX) $(CXXFLAGS) $(CFLAGS) $(INCLUDES) -o $@ -c $<
 
-tsan_test: $(TEST_OBJ) $(UNIT_TEST_OBJ) $(RTL_TEST_OBJ) $(LIBTSAN) $(GTEST_LIB)
+tsan_test: $(TEST_OBJ) $(UNIT_TEST_OBJ) $(RTL_TEST_OBJ) \
+           $(SANITIZER_COMMON_TESTS_OBJ) $(LIBTSAN) $(GTEST_LIB)
 	$(CXX) $^ -o $@ $(LDFLAGS)
 
 test: libtsan tsan_test
@@ -75,9 +78,11 @@ RTL_LINT_FITLER=-legal/copyright,-build/include,-readability/casting,-build/head
 
 lint: lint_tsan lint_tests
 lint_tsan:
-	third_party/cpplint/cpplint.py --filter=$(RTL_LINT_FITLER) rtl/*.{cc,h}
+	third_party/cpplint/cpplint.py --filter=$(RTL_LINT_FITLER) rtl/*.{cc,h} \
+        ../sanitizer_common/*.{cc,h}
 lint_tests:
-	third_party/cpplint/cpplint.py --filter=$(RTL_LINT_FITLER) rtl_tests/*.{cc,h} unit_tests/*.cc
+	third_party/cpplint/cpplint.py --filter=$(RTL_LINT_FITLER) \
+        rtl_tests/*.{cc,h} unit_tests/*.cc ../sanitizer_common/tests/*.cc
 
 install_deps:
 	rm -rf third_party

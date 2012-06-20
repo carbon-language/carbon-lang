@@ -86,7 +86,7 @@ void GetThreadStackTopAndBottom(bool at_initialization, uptr *stack_top,
   if (at_initialization) {
     // This is the main thread. Libpthread may not be initialized yet.
     struct rlimit rl;
-    CHECK(getrlimit(RLIMIT_STACK, &rl) == 0);
+    CHECK_EQ(getrlimit(RLIMIT_STACK, &rl), 0);
 
     // Find the mapping that contains a stack variable.
     ProcessMaps proc_maps;
@@ -114,7 +114,7 @@ void GetThreadStackTopAndBottom(bool at_initialization, uptr *stack_top,
     return;
   }
   pthread_attr_t attr;
-  CHECK(pthread_getattr_np(pthread_self(), &attr) == 0);
+  CHECK_EQ(pthread_getattr_np(pthread_self(), &attr), 0);
   uptr stacksize = 0;
   void *stackaddr = 0;
   pthread_attr_getstack(&attr, &stackaddr, (size_t*)&stacksize);
@@ -158,7 +158,7 @@ ProcessMaps::ProcessMaps() {
   proc_self_maps_buff_len_ =
       ReadFileToBuffer("/proc/self/maps", &proc_self_maps_buff_,
                        &proc_self_maps_buff_mmaped_size_, 1 << 26);
-  CHECK(proc_self_maps_buff_len_ > 0);
+  CHECK_GT(proc_self_maps_buff_len_, 0);
   // internal_write(2, proc_self_maps_buff_, proc_self_maps_buff_len_);
   Reset();
 }

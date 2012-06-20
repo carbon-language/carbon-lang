@@ -29,6 +29,7 @@ class ProcessMaps {
   bool GetObjectNameAndOffset(uptr addr, uptr *offset,
                               char filename[], uptr filename_size);
   ~ProcessMaps();
+
  private:
   // Default implementation of GetObjectNameAndOffset.
   // Quite slow, because it iterates through the whole process map for each

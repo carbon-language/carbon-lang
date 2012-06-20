@@ -33,7 +33,7 @@ void GetThreadStackTopAndBottom(bool at_initialization, uptr *stack_top,
   CHECK(stack_top);
   CHECK(stack_bottom);
   MEMORY_BASIC_INFORMATION mbi;
-  CHECK(VirtualQuery(&mbi /* on stack */, &mbi, sizeof(mbi)) != 0);
+  CHECK_NE(VirtualQuery(&mbi /* on stack */, &mbi, sizeof(mbi)), 0);
   // FIXME: is it possible for the stack to not be a single allocation?
   // Are these values what ASan expects to get (reserved, not committed;
   // including stack guard page) ?
