@@ -24,6 +24,9 @@
 #if HAVE_FCNTL_H
 #include <fcntl.h>
 #endif
+#ifdef HAVE_SYS_MMAN_H
+#include <sys/mman.h>
+#endif
 #if HAVE_DIRENT_H
 # include <dirent.h>
 # define NAMLEN(dirent) strlen((dirent)->d_name)
@@ -325,23 +328,54 @@ error_code status(const Twine &path, file_status &result) {
     return ec;
   }
 
+  perms prms = static_cast<perms>(status.st_mode & perms_mask);
+  
   if (S_ISDIR(status.st_mode))
-    result = file_status(file_type::directory_file);
+    result = file_status(file_type::directory_file, prms);
   else if (S_ISREG(status.st_mode))
-    result = file_status(file_type::regular_file);
+    result = file_status(file_type::regular_file, prms);
   else if (S_ISBLK(status.st_mode))
-    result = file_status(file_type::block_file);
+    result = file_status(file_type::block_file, prms);
   else if (S_ISCHR(status.st_mode))
-    result = file_status(file_type::character_file);
+    result = file_status(file_type::character_file, prms);
   else if (S_ISFIFO(status.st_mode))
-    result = file_status(file_type::fifo_file);
+    result = file_status(file_type::fifo_file, prms);
   else if (S_ISSOCK(status.st_mode))
-    result = file_status(file_type::socket_file);
+    result = file_status(file_type::socket_file, prms);
   else
-    result = file_status(file_type::type_unknown);
+    result = file_status(file_type::type_unknown, prms);
 
   result.fs_st_dev = status.st_dev;
   result.fs_st_ino = status.st_ino;
+
+  return error_code::success();
+}
+
+// Modifies permissions on a file.
+error_code permissions(const Twine &path, perms prms) {
+  if ((prms & add_perms) && (prms & remove_perms))
+    llvm_unreachable("add_perms and remove_perms are mutually exclusive");
+
+  // Get current permissions
+  file_status info;
+  if (error_code ec = status(path, info)) {
+    return ec;
+  }
+  
+  // Set updated permissions.
+  SmallString<128> path_storage;
+  StringRef p = path.toNullTerminatedStringRef(path_storage);
+  perms permsToSet;
+  if (prms & add_perms) {
+    permsToSet = (info.permissions() | prms) & perms_mask;
+  } else if (prms & remove_perms) {
+    permsToSet = (info.permissions() & ~prms) & perms_mask;
+  } else {
+    permsToSet = prms & perms_mask;
+  }
+  if (::chmod(p.begin(), static_cast<mode_t>(permsToSet))) {
+    return error_code(errno, system_category()); 
+  }
 
   return error_code::success();
 }
@@ -494,6 +528,36 @@ error_code get_magic(const Twine &path, uint32_t len,
   result.set_size(len);
   return error_code::success();
 }
+
+error_code map_file_pages(const Twine &path, off_t file_offset, size_t size,  
+                                            bool map_writable, void *&result) {
+  SmallString<128> path_storage;
+  StringRef name = path.toNullTerminatedStringRef(path_storage);
+  int oflags = map_writable ? O_RDWR : O_RDONLY;
+  int ofd = ::open(name.begin(), oflags);
+  if ( ofd == -1 )
+    return error_code(errno, system_category());
+  AutoFD fd(ofd);
+  int flags = map_writable ? MAP_SHARED : MAP_PRIVATE;
+  int prot = map_writable ? (PROT_READ|PROT_WRITE) : PROT_READ;
+#ifdef MAP_FILE
+  flags |= MAP_FILE;
+#endif
+  result = ::mmap(0, size, prot, flags, fd, file_offset);
+  if (result == MAP_FAILED) {
+    return error_code(errno, system_category());
+  }
+  
+  return error_code::success();
+}
+
+error_code unmap_file_pages(void *base, size_t size) {
+  if ( ::munmap(base, size) == -1 )
+    return error_code(errno, system_category());
+   
+  return error_code::success();
+}
+
 
 } // end namespace fs
 } // end namespace sys

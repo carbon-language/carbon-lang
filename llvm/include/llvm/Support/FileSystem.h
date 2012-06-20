@@ -94,6 +94,55 @@ struct space_info {
   uint64_t available;
 };
 
+
+enum perms {
+  no_perms     = 0,
+  owner_read   = 0400, 
+  owner_write  = 0200, 
+  owner_exe    = 0100, 
+  owner_all    = owner_read | owner_write | owner_exe,
+  group_read   =  040, 
+  group_write  =  020, 
+  group_exe    =  010, 
+  group_all    = group_read | group_write | group_exe,
+  others_read  =   04, 
+  others_write =   02, 
+  others_exe   =   01, 
+  others_all   = others_read | others_write | others_exe, 
+  all_all      = owner_all | group_all | others_all,
+  set_uid_on_exe  = 04000, 
+  set_gid_on_exe  = 02000, 
+  sticky_bit      = 01000,
+  perms_mask      = all_all | set_uid_on_exe | set_gid_on_exe | sticky_bit, 
+  perms_not_known = 0xFFFF,
+  add_perms       = 0x1000,
+  remove_perms    = 0x2000, 
+  symlink_perms   = 0x4000
+};
+
+// Helper functions so that you can use & and | to manipulate perms bits:
+inline perms operator|(perms l , perms r) {
+  return static_cast<perms>(
+             static_cast<unsigned short>(l) | static_cast<unsigned short>(r)); 
+}
+inline perms operator&(perms l , perms r) {
+  return static_cast<perms>(
+             static_cast<unsigned short>(l) & static_cast<unsigned short>(r)); 
+}
+inline perms &operator|=(perms &l, perms r) {
+  l = l | r; 
+  return l; 
+}
+inline perms &operator&=(perms &l, perms r) {
+  l = l & r; 
+  return l; 
+}
+inline perms operator~(perms x) {
+  return static_cast<perms>(~static_cast<unsigned short>(x));
+}
+
+
+ 
 /// file_status - Represents the result of a call to stat and friends. It has
 ///               a platform specific member to store the result.
 class file_status
@@ -113,12 +162,19 @@ class file_status
   friend bool equivalent(file_status A, file_status B);
   friend error_code status(const Twine &path, file_status &result);
   file_type Type;
+  perms Perms;
 public:
-  explicit file_status(file_type v=file_type::status_error)
-    : Type(v) {}
+  explicit file_status(file_type v=file_type::status_error, 
+                      perms prms=perms_not_known)
+    : Type(v), Perms(prms) {}
 
+  // getters
   file_type type() const { return Type; }
+  perms permissions() const { return Perms; }
+  
+  // setters
   void type(file_type v) { Type = v; }
+  void permissions(perms p) { Perms = p; }
 };
 
 /// file_magic - An "enum class" enumeration of file types based on magic (the first
@@ -395,6 +451,13 @@ error_code is_symlink(const Twine &path, bool &result);
 ///          platform specific error_code.
 error_code status(const Twine &path, file_status &result);
 
+/// @brief Modifies permission bits on a file
+///
+/// @param path Input path.
+/// @results errc::success if permissions have been changed, otherwise a
+///          platform specific error_code.
+error_code permissions(const Twine &path, perms prms);
+
 /// @brief Is status available?
 ///
 /// @param path Input path.
@@ -512,6 +575,33 @@ error_code FindLibrary(const Twine &short_name, SmallVectorImpl<char> &result);
 ///          platform specific error_code.
 error_code GetMainExecutable(const char *argv0, void *MainAddr,
                              SmallVectorImpl<char> &result);
+
+
+/// @brief Memory maps the contents of a file
+///
+/// @param path Path to file to map.
+/// @param file_offset Byte offset in file where mapping should begin.
+/// @param size_t Byte length of range of the file to map.
+/// @param map_writable If true, the file will be mapped in r/w such
+///        that changes to the the mapped buffer will be flushed back
+///        to the file.  If false, the file will be mapped read-only
+///        and the buffer will be read-only.
+/// @param result Set to the start address of the mapped buffer.
+/// @results errc::success if result has been successfully set, otherwise a
+///          platform specific error_code.
+error_code map_file_pages(const Twine &path, off_t file_offset, size_t size,  
+                          bool map_writable, void *&result);
+
+
+/// @brief Memory unmaps the contents of a file
+///
+/// @param base Pointer to the start of the buffer.
+/// @param size Byte length of the range to unmmap.
+/// @results errc::success if result has been successfully set, otherwise a
+///          platform specific error_code.
+error_code unmap_file_pages(void *base, size_t size);
+
+
 
 /// @}
 /// @name Iterators

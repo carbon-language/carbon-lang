@@ -312,4 +312,69 @@ TEST_F(FileSystemTest, Magic) {
   }
 }
 
+
+TEST_F(FileSystemTest, Permissions) {
+  // Create a temp file.
+  int FileDescriptor;
+  SmallString<64> TempPath;
+  ASSERT_NO_ERROR(
+    fs::unique_file("%%-%%-%%-%%.temp", FileDescriptor, TempPath));
+
+  // Mark file as read-only
+  const fs::perms AllWrite = fs::owner_write|fs::group_write|fs::others_write;
+  ASSERT_NO_ERROR(fs::permissions(Twine(TempPath), fs::remove_perms|AllWrite));
+ 
+  // Verify file is read-only
+  fs::file_status Status;
+  ASSERT_NO_ERROR(fs::status(Twine(TempPath), Status));
+  bool AnyWriteBits = (Status.permissions() & AllWrite);
+  EXPECT_FALSE(AnyWriteBits);
+  
+  // Mark file as read-write
+  ASSERT_NO_ERROR(fs::permissions(Twine(TempPath), fs::add_perms|AllWrite));
+  
+  // Verify file is read-write
+  ASSERT_NO_ERROR(fs::status(Twine(TempPath), Status));
+  AnyWriteBits = (Status.permissions() & AllWrite);
+  EXPECT_TRUE(AnyWriteBits);
+}
+
+TEST_F(FileSystemTest, FileMapping) {
+  // Create a temp file.
+  int FileDescriptor;
+  SmallString<64> TempPath;
+  ASSERT_NO_ERROR(
+    fs::unique_file("%%-%%-%%-%%.temp", FileDescriptor, TempPath));
+
+  // Grow temp file to be 4096 bytes 
+  ASSERT_NO_ERROR(sys::fs::resize_file(Twine(TempPath), 4096));
+  
+  // Map in temp file and add some content
+  void* MappedMemory;
+  ASSERT_NO_ERROR(fs::map_file_pages(Twine(TempPath), 0, 4096, 
+                                true /*writable*/, MappedMemory));
+  char* Memory = reinterpret_cast<char*>(MappedMemory);
+  strcpy(Memory, "hello there");
+  
+  // Unmap temp file
+  ASSERT_NO_ERROR(fs::unmap_file_pages(MappedMemory, 4096));
+  MappedMemory = NULL;
+  Memory = NULL;
+  
+  // Map it back in read-only
+  ASSERT_NO_ERROR(fs::map_file_pages(Twine(TempPath), 0, 4096, 
+                                false /*read-only*/, MappedMemory));
+  
+  // Verify content
+  Memory = reinterpret_cast<char*>(MappedMemory);
+  bool SAME = (strcmp(Memory, "hello there") == 0);
+  EXPECT_TRUE(SAME);
+  
+  // Unmap temp file
+  ASSERT_NO_ERROR(fs::unmap_file_pages(MappedMemory, 4096));
+  MappedMemory = NULL;
+  Memory = NULL;
+}
+
+
 } // anonymous namespace
