@@ -30,12 +30,25 @@
 // ---------------------- Replacement functions ---------------- {{{1
 using namespace __asan;  // NOLINT
 
+// TODO(glider): do we need both zones?
+static malloc_zone_t *system_malloc_zone = 0;
+static malloc_zone_t *system_purgeable_zone = 0;
+CFAllocatorRef cf_asan = 0;
+
 // The free() implementation provided by OS X calls malloc_zone_from_ptr()
 // to find the owner of |ptr|. If the result is 0, an invalid free() is
 // reported. Our implementation falls back to asan_free() in this case
 // in order to print an ASan-style report.
-extern "C"
-void free(void *ptr) {
+//
+// For the objects created by _CFRuntimeCreateInstance a CFAllocatorRef is
+// placed at the beginning of the allocated chunk and the pointer returned by
+// our allocator is off by sizeof(CFAllocatorRef). This pointer can be then
+// passed directly to free(), which will lead to errors.
+// To overcome this we're checking whether |ptr-sizeof(CFAllocatorRef)|
+// contains a pointer to our CFAllocator (assuming no other allocator is used).
+// See http://code.google.com/p/address-sanitizer/issues/detail?id=70 for more
+// info.
+INTERCEPTOR(void, free, void *ptr) {
   malloc_zone_t *zone = malloc_zone_from_ptr(ptr);
   if (zone) {
 #if defined(MAC_OS_X_VERSION_10_6) && \
@@ -49,16 +62,22 @@ void free(void *ptr) {
     malloc_zone_free(zone, ptr);
 #endif
   } else {
+    if (FLAG_replace_cfallocator) {
+      // Make sure we're not hitting the previous page. This may be incorrect
+      // if ASan's malloc returns an address ending with 0xFF8, which will be
+      // then padded to a page boundary with a CFAllocatorRef.
+      uptr arith_ptr = (uptr)ptr;
+      if ((arith_ptr & 0xFFF) > sizeof(CFAllocatorRef)) {
+        CFAllocatorRef *saved =
+            (CFAllocatorRef*)(arith_ptr - sizeof(CFAllocatorRef));
+        if ((*saved == cf_asan) && asan_mz_size(saved)) ptr = (void*)saved;
+      }
+    }
     GET_STACK_TRACE_HERE_FOR_FREE(ptr);
     asan_free(ptr, &stack);
   }
 }
 
-// TODO(glider): do we need both zones?
-static malloc_zone_t *system_malloc_zone = 0;
-static malloc_zone_t *system_purgeable_zone = 0;
-
-// We need to provide wrappers around all the libc functions.
 namespace {
 // TODO(glider): the mz_* functions should be united with the Linux wrappers,
 // as they are basically copied from there.
@@ -388,8 +407,7 @@ void ReplaceSystemMalloc() {
           /*reallocate*/ &cf_realloc,
           /*deallocate*/ &cf_free,
           /*preferredSize*/ 0 };
-    CFAllocatorRef cf_asan =
-        CFAllocatorCreate(kCFAllocatorUseContext, &asan_context);
+    cf_asan = CFAllocatorCreate(kCFAllocatorUseContext, &asan_context);
     CFAllocatorSetDefault(cf_asan);
   }
 }

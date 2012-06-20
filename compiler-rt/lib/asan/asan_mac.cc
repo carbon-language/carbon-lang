@@ -29,8 +29,9 @@
 #include <sys/resource.h>
 #include <sys/sysctl.h>
 #include <sys/ucontext.h>
-#include <pthread.h>
 #include <fcntl.h>
+#include <pthread.h>
+#include <stdlib.h>  // for free()
 #include <unistd.h>
 #include <libkern/OSAtomic.h>
 #include <CoreFoundation/CFString.h>
@@ -294,6 +295,8 @@ INTERCEPTOR(void, dispatch_async_f, dispatch_queue_t dq, void *ctxt,
                                 asan_dispatch_call_block_and_release);
 }
 
+DECLARE_REAL_AND_INTERCEPTOR(void, free, void *ptr);
+
 INTERCEPTOR(void, dispatch_sync_f, dispatch_queue_t dq, void *ctxt,
                                    dispatch_function_t func) {
   GET_STACK_TRACE_HERE(kStackTraceMax);
@@ -447,6 +450,9 @@ void InitializeMacInterceptors() {
   // Until this problem is fixed we need to check that the string is
   // non-constant before calling CFStringCreateCopy.
   CHECK(INTERCEPT_FUNCTION(CFStringCreateCopy));
+  // Some of the library functions call free() directly, so we have to
+  // intercept it.
+  CHECK(INTERCEPT_FUNCTION(free));
 }
 
 }  // namespace __asan

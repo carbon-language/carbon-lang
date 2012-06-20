@@ -2053,7 +2053,7 @@ TEST(AddressSanitizerMac, NSObjectOOB) {
 // Make sure that correct pointer is passed to free() when deallocating a
 // NSURL object.
 // See http://code.google.com/p/address-sanitizer/issues/detail?id=70.
-TEST(AddressSanitizerMac, DISABLED_NSURLDeallocation) {
+TEST(AddressSanitizerMac, NSURLDeallocation) {
   TestNSURLDeallocation();
 }
 #endif  // __APPLE__
