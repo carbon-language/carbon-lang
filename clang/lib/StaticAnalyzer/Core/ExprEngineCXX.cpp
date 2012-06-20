@@ -170,6 +170,16 @@ void ExprEngine::VisitCXXDestructor(const CXXDestructorDecl *DD,
   Bldr.generateNode(PP, Pred, state);
 }
 
+static bool isPointerToConst(const ParmVarDecl *ParamDecl) {
+  // FIXME: Copied from ExprEngineCallAndReturn.cpp
+  QualType PointeeTy = ParamDecl->getOriginalType()->getPointeeType();
+  if (PointeeTy != QualType() && PointeeTy.isConstQualified() &&
+      !PointeeTy->isAnyPointerType() && !PointeeTy->isReferenceType()) {
+    return true;
+  }
+  return false;
+}
+
 void ExprEngine::VisitCXXNewExpr(const CXXNewExpr *CNE, ExplodedNode *Pred,
                                    ExplodedNodeSet &Dst) {
   StmtNodeBuilder Bldr(Pred, Dst, *currentBuilderContext);
@@ -182,18 +192,108 @@ void ExprEngine::VisitCXXNewExpr(const CXXNewExpr *CNE, ExplodedNode *Pred,
   QualType ObjTy = CNE->getType()->getAs<PointerType>()->getPointeeType();
   const ElementRegion *EleReg = 
     getStoreManager().GetElementZeroRegion(NewReg, ObjTy);
+  ProgramStateRef State = Pred->getState();
 
   if (CNE->isArray()) {
     // FIXME: allocating an array requires simulating the constructors.
     // For now, just return a symbolicated region.
-    ProgramStateRef state = Pred->getState();
-    state = state->BindExpr(CNE, Pred->getLocationContext(),
+    State = State->BindExpr(CNE, Pred->getLocationContext(),
                             loc::MemRegionVal(EleReg));
-    Bldr.generateNode(CNE, Pred, state);
+    Bldr.generateNode(CNE, Pred, State);
     return;
   }
 
-  // FIXME: Update for AST changes.
+  FunctionDecl *FD = CNE->getOperatorNew();
+  if (FD && FD->isReservedGlobalPlacementOperator()) {
+    // Non-array placement new should always return the placement location.
+    SVal PlacementLoc = State->getSVal(CNE->getPlacementArg(0), LCtx);
+    State = State->BindExpr(CNE, LCtx, PlacementLoc);
+    // FIXME: Once we have proper support for CXXConstructExprs inside
+    // CXXNewExpr, we need to make sure that the constructed object is not
+    // immediately invalidated here. (The placement call should happen before
+    // the constructor call anyway.)
+  }
+
+  // Invalidate placement args.
+
+  // FIXME: This is largely copied from invalidateArguments, because
+  // CallOrObjCMessage is not general enough to handle new-expressions yet.
+  SmallVector<const MemRegion *, 4> RegionsToInvalidate;
+
+  unsigned Index = 0;
+  for (CXXNewExpr::const_arg_iterator I = CNE->placement_arg_begin(),
+                                      E = CNE->placement_arg_end();
+       I != E; ++I) {
+    // Pre-increment the argument index to skip over the implicit size arg.
+    ++Index;
+    if (FD && Index < FD->getNumParams())
+      if (isPointerToConst(FD->getParamDecl(Index)))
+        continue;
+    
+    SVal V = State->getSVal(*I, LCtx);
+    
+    // If we are passing a location wrapped as an integer, unwrap it and
+    // invalidate the values referred by the location.
+    if (nonloc::LocAsInteger *Wrapped = dyn_cast<nonloc::LocAsInteger>(&V))
+      V = Wrapped->getLoc();
+    else if (!isa<Loc>(V))
+      continue;
+    
+    if (const MemRegion *R = V.getAsRegion()) {
+      // Invalidate the value of the variable passed by reference.
+      
+      // Are we dealing with an ElementRegion?  If the element type is
+      // a basic integer type (e.g., char, int) and the underlying region
+      // is a variable region then strip off the ElementRegion.
+      // FIXME: We really need to think about this for the general case
+      //   as sometimes we are reasoning about arrays and other times
+      //   about (char*), etc., is just a form of passing raw bytes.
+      //   e.g., void *p = alloca(); foo((char*)p);
+      if (const ElementRegion *ER = dyn_cast<ElementRegion>(R)) {
+        // Checking for 'integral type' is probably too promiscuous, but
+        // we'll leave it in for now until we have a systematic way of
+        // handling all of these cases.  Eventually we need to come up
+        // with an interface to StoreManager so that this logic can be
+        // appropriately delegated to the respective StoreManagers while
+        // still allowing us to do checker-specific logic (e.g.,
+        // invalidating reference counts), probably via callbacks.
+        if (ER->getElementType()->isIntegralOrEnumerationType()) {
+          const MemRegion *superReg = ER->getSuperRegion();
+          if (isa<VarRegion>(superReg) || isa<FieldRegion>(superReg) ||
+              isa<ObjCIvarRegion>(superReg))
+            R = cast<TypedRegion>(superReg);
+        }
+        // FIXME: What about layers of ElementRegions?
+      }
+      
+      // Mark this region for invalidation.  We batch invalidate regions
+      // below for efficiency.
+      RegionsToInvalidate.push_back(R);
+    } else {
+      // Nuke all other arguments passed by reference.
+      // FIXME: is this necessary or correct? This handles the non-Region
+      //  cases.  Is it ever valid to store to these?
+      State = State->unbindLoc(cast<Loc>(V));
+    }
+  }
+  
+  // Invalidate designated regions using the batch invalidation API.
+  
+  // FIXME: We can have collisions on the conjured symbol if the
+  //  expression *I also creates conjured symbols.  We probably want
+  //  to identify conjured symbols by an expression pair: the enclosing
+  //  expression (the context) and the expression itself.  This should
+  //  disambiguate conjured symbols.
+  unsigned Count = currentBuilderContext->getCurrentBlockCount();
+  
+  // NOTE: Even if RegionsToInvalidate is empty, we may still invalidate
+  //  global variables.
+  State = State->invalidateRegions(RegionsToInvalidate, CNE, Count, LCtx);
+  Bldr.generateNode(CNE, Pred, State);
+  return;
+
+  // FIXME: The below code is long-since dead. However, constructor handling
+  // in new-expressions is far from complete. See PR12014 for more details.
 #if 0
   // Evaluate constructor arguments.
   const FunctionProtoType *FnType = NULL;
