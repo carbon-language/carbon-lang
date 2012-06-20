@@ -76,13 +76,13 @@ public:
   }
 };
 
-static bool operator ==(const DataRefImpl &a, const DataRefImpl &b) {
+inline bool operator ==(const DataRefImpl &a, const DataRefImpl &b) {
   // Check bitwise identical. This is the only legal way to compare a union w/o
   // knowing which member is in use.
   return std::memcmp(&a, &b, sizeof(DataRefImpl)) == 0;
 }
 
-static bool operator <(const DataRefImpl &a, const DataRefImpl &b) {
+inline bool operator <(const DataRefImpl &a, const DataRefImpl &b) {
   // Check bitwise identical. This is the only legal way to compare a union w/o
   // knowing which member is in use.
   return std::memcmp(&a, &b, sizeof(DataRefImpl)) < 0;

@@ -46,7 +46,7 @@
 namespace llvm {
 
 template<typename T>
-static void RemoveFromVector(std::vector<T*> &V, T *N) {
+inline void RemoveFromVector(std::vector<T*> &V, T *N) {
   typename std::vector<T*>::iterator I = std::find(V.begin(), V.end(), N);
   assert(I != V.end() && "N is not in this list!");
   V.erase(I);

@@ -57,7 +57,7 @@ struct AlignOf {
 ///  class besides some cosmetic cleanliness.  Example usage:
 ///  alignOf<int>() returns the alignment of an int.
 template <typename T>
-static inline unsigned alignOf() { return AlignOf<T>::Alignment; }
+inline unsigned alignOf() { return AlignOf<T>::Alignment; }
 
 
 /// \brief Helper for building an aligned character array type.

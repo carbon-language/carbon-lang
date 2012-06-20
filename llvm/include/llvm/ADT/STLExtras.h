@@ -59,7 +59,7 @@ struct greater_ptr : public std::binary_function<Ty, Ty, bool> {
 //   for_each(V.begin(), B.end(), deleter<Interval>);
 //
 template <class T>
-static inline void deleter(T *Ptr) {
+inline void deleter(T *Ptr) {
   delete Ptr;
 }
 
@@ -238,7 +238,7 @@ inline size_t array_lengthof(T (&)[N]) {
 /// array_pod_sort_comparator - This is helper function for array_pod_sort,
 /// which just uses operator< on T.
 template<typename T>
-static inline int array_pod_sort_comparator(const void *P1, const void *P2) {
+inline int array_pod_sort_comparator(const void *P1, const void *P2) {
   if (*reinterpret_cast<const T*>(P1) < *reinterpret_cast<const T*>(P2))
     return -1;
   if (*reinterpret_cast<const T*>(P2) < *reinterpret_cast<const T*>(P1))
@@ -249,7 +249,7 @@ static inline int array_pod_sort_comparator(const void *P1, const void *P2) {
 /// get_array_pad_sort_comparator - This is an internal helper function used to
 /// get type deduction of T right.
 template<typename T>
-static int (*get_array_pad_sort_comparator(const T &))
+inline int (*get_array_pad_sort_comparator(const T &))
              (const void*, const void*) {
   return array_pod_sort_comparator<T>;
 }
@@ -270,7 +270,7 @@ static int (*get_array_pad_sort_comparator(const T &))
 /// NOTE: If qsort_r were portable, we could allow a custom comparator and
 /// default to std::less.
 template<class IteratorTy>
-static inline void array_pod_sort(IteratorTy Start, IteratorTy End) {
+inline void array_pod_sort(IteratorTy Start, IteratorTy End) {
   // Don't dereference start iterator of empty sequence.
   if (Start == End) return;
   qsort(&*Start, End-Start, sizeof(*Start),
@@ -278,7 +278,7 @@ static inline void array_pod_sort(IteratorTy Start, IteratorTy End) {
 }
 
 template<class IteratorTy>
-static inline void array_pod_sort(IteratorTy Start, IteratorTy End,
+inline void array_pod_sort(IteratorTy Start, IteratorTy End,
                                   int (*Compare)(const void*, const void*)) {
   // Don't dereference start iterator of empty sequence.
   if (Start == End) return;

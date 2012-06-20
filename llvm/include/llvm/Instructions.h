@@ -701,7 +701,7 @@ DEFINE_TRANSPARENT_OPERAND_ACCESSORS(AtomicRMWInst, Value)
 // checkGEPType - Simple wrapper function to give a better assertion failure
 // message on bad indexes for a gep instruction.
 //
-static inline Type *checkGEPType(Type *Ty) {
+inline Type *checkGEPType(Type *Ty) {
   assert(Ty && "Invalid GetElementPtrInst indices for type!");
   return Ty;
 }

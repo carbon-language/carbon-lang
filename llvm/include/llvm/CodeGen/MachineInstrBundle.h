@@ -43,14 +43,14 @@ bool finalizeBundles(MachineFunction &MF);
 
 /// getBundleStart - Returns the first instruction in the bundle containing MI.
 ///
-static inline MachineInstr *getBundleStart(MachineInstr *MI) {
+inline MachineInstr *getBundleStart(MachineInstr *MI) {
   MachineBasicBlock::instr_iterator I = MI;
   while (I->isInsideBundle())
     --I;
   return I;
 }
 
-static inline const MachineInstr *getBundleStart(const MachineInstr *MI) {
+inline const MachineInstr *getBundleStart(const MachineInstr *MI) {
   MachineBasicBlock::const_instr_iterator I = MI;
   while (I->isInsideBundle())
     --I;
