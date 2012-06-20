@@ -3029,11 +3029,6 @@ def ext_internal_in_extern_inline : Extension<
   "%select{function|variable}0 %1 has internal linkage but is used in an "
   "inline function with external linkage">,
   InGroup<DiagGroup<"internal-linkage-in-inline"> >;
-def warn_internal_in_extern_inline_cxx : Warning<
-  "%select{function|variable}0 %1 %select{has internal linkage|is in an anonymous"
-  " namespace}2 but is used in an inline %select{function|method}3 with"
-  " external linkage">,
-  InGroup<DiagGroup<"internal-linkage-in-inline"> >;
 def note_convert_inline_to_static : Note<
   "use 'static' to give inline function %0 internal linkage">;
 def note_internal_decl_declared_here : Note<
