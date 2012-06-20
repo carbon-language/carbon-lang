@@ -3,6 +3,11 @@
 LLVM Design & Overview
 ======================
 
+.. toctree::
+   :hidden:
+
+   GetElementPtr
+
 * `LLVM Language Reference Manual <LangRef.html>`_
 
   Defines the LLVM intermediate representation.
@@ -25,7 +30,7 @@ LLVM Design & Overview
 
   More details (quite old now).
 
-* `GetElementPtr FAQ <GetElementPtr.html>`_
+* :ref:`gep`
 
   Answers to some very frequent questions about LLVM's most frequently
   misunderstood instruction.
