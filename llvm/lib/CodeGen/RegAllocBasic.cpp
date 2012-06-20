@@ -169,7 +169,6 @@ void RABasic::getAnalysisUsage(AnalysisUsage &AU) const {
 
 void RABasic::releaseMemory() {
   SpillerInstance.reset(0);
-  RegAllocBase::releaseMemory();
 }
 
 
@@ -287,8 +286,9 @@ bool RABasic::runOnMachineFunction(MachineFunction &mf) {
   MF = &mf;
   DEBUG(RMF = &getAnalysis<RenderMachineFunction>());
 
-  RegAllocBase::init(getAnalysis<VirtRegMap>(), getAnalysis<LiveIntervals>());
-  Matrix = &getAnalysis<LiveRegMatrix>();
+  RegAllocBase::init(getAnalysis<VirtRegMap>(),
+                     getAnalysis<LiveIntervals>(),
+                     getAnalysis<LiveRegMatrix>());
   SpillerInstance.reset(createInlineSpiller(*this, *MF, *VRM));
 
   allocatePhysRegs();

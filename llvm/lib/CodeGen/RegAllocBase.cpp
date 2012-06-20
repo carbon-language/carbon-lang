@@ -35,8 +35,6 @@
 
 using namespace llvm;
 
-STATISTIC(NumAssigned     , "Number of registers assigned");
-STATISTIC(NumUnassigned   , "Number of registers unassigned");
 STATISTIC(NumNewQueued    , "Number of new live ranges queued");
 
 // Temporary verification option until we can put verification inside
@@ -48,69 +46,20 @@ VerifyRegAlloc("verify-regalloc", cl::location(RegAllocBase::VerifyEnabled),
 const char *RegAllocBase::TimerGroupName = "Register Allocation";
 bool RegAllocBase::VerifyEnabled = false;
 
-#ifndef NDEBUG
-// Verify each LiveIntervalUnion.
-void RegAllocBase::verify() {
-  LiveVirtRegBitSet VisitedVRegs;
-  OwningArrayPtr<LiveVirtRegBitSet>
-    unionVRegs(new LiveVirtRegBitSet[TRI->getNumRegs()]);
-
-  // Verify disjoint unions.
-  for (unsigned PhysReg = 0, NumRegs = TRI->getNumRegs(); PhysReg != NumRegs;
-       ++PhysReg) {
-    DEBUG(PhysReg2LiveUnion[PhysReg].print(dbgs(), TRI));
-    LiveVirtRegBitSet &VRegs = unionVRegs[PhysReg];
-    PhysReg2LiveUnion[PhysReg].verify(VRegs);
-    // Union + intersection test could be done efficiently in one pass, but
-    // don't add a method to SparseBitVector unless we really need it.
-    assert(!VisitedVRegs.intersects(VRegs) && "vreg in multiple unions");
-    VisitedVRegs |= VRegs;
-  }
-
-  // Verify vreg coverage.
-  for (unsigned i = 0, e = MRI->getNumVirtRegs(); i != e; ++i) {
-    unsigned Reg = TargetRegisterInfo::index2VirtReg(i);
-    if (MRI->reg_nodbg_empty(Reg))
-      continue;
-    if (!VRM->hasPhys(Reg)) continue; // spilled?
-    LiveInterval &LI = LIS->getInterval(Reg);
-    if (LI.empty()) continue; // unionVRegs will only be filled if li is
-                              // non-empty
-    unsigned PhysReg = VRM->getPhys(Reg);
-    if (!unionVRegs[PhysReg].test(Reg)) {
-      dbgs() << "LiveVirtReg " << PrintReg(Reg, TRI) << " not in union "
-             << TRI->getName(PhysReg) << "\n";
-      llvm_unreachable("unallocated live vreg");
-    }
-  }
-  // FIXME: I'm not sure how to verify spilled intervals.
-}
-#endif //!NDEBUG
-
 //===----------------------------------------------------------------------===//
 //                         RegAllocBase Implementation
 //===----------------------------------------------------------------------===//
 
-void RegAllocBase::init(VirtRegMap &vrm, LiveIntervals &lis) {
-  NamedRegionTimer T("Initialize", TimerGroupName, TimePassesIsEnabled);
+void RegAllocBase::init(VirtRegMap &vrm,
+                        LiveIntervals &lis,
+                        LiveRegMatrix &mat) {
   TRI = &vrm.getTargetRegInfo();
   MRI = &vrm.getRegInfo();
   VRM = &vrm;
   LIS = &lis;
+  Matrix = &mat;
   MRI->freezeReservedRegs(vrm.getMachineFunction());
   RegClassInfo.runOnMachineFunction(vrm.getMachineFunction());
-
-  const unsigned NumRegs = TRI->getNumRegs();
-  if (NumRegs != PhysReg2LiveUnion.size()) {
-    PhysReg2LiveUnion.init(UnionAllocator, NumRegs);
-    // Cache an interferece query for each physical reg
-    Queries.reset(new LiveIntervalUnion::Query[NumRegs]);
-  }
-}
-
-void RegAllocBase::releaseMemory() {
-  for (unsigned r = 0, e = PhysReg2LiveUnion.size(); r != e; ++r)
-    PhysReg2LiveUnion[r].clear();
 }
 
 // Visit all the live registers. If they are already assigned to a physical
@@ -118,49 +67,12 @@ void RegAllocBase::releaseMemory() {
 // them on the priority queue for later assignment.
 void RegAllocBase::seedLiveRegs() {
   NamedRegionTimer T("Seed Live Regs", TimerGroupName, TimePassesIsEnabled);
-  // Physregs.
-  for (unsigned Reg = 1, e = TRI->getNumRegs(); Reg != e; ++Reg) {
-    if (!LIS->hasInterval(Reg))
-      continue;
-    PhysReg2LiveUnion[Reg].unify(LIS->getInterval(Reg));
-  }
-
-  // Virtregs.
   for (unsigned i = 0, e = MRI->getNumVirtRegs(); i != e; ++i) {
     unsigned Reg = TargetRegisterInfo::index2VirtReg(i);
     if (MRI->reg_nodbg_empty(Reg))
       continue;
     enqueue(&LIS->getInterval(Reg));
   }
-}
-
-void RegAllocBase::assign(LiveInterval &VirtReg, unsigned PhysReg) {
-  // FIXME: This diversion is temporary.
-  if (Matrix) {
-    Matrix->assign(VirtReg, PhysReg);
-    return;
-  }
-  DEBUG(dbgs() << "assigning " << PrintReg(VirtReg.reg, TRI)
-               << " to " << PrintReg(PhysReg, TRI) << '\n');
-  assert(!VRM->hasPhys(VirtReg.reg) && "Duplicate VirtReg assignment");
-  VRM->assignVirt2Phys(VirtReg.reg, PhysReg);
-  MRI->setPhysRegUsed(PhysReg);
-  PhysReg2LiveUnion[PhysReg].unify(VirtReg);
-  ++NumAssigned;
-}
-
-void RegAllocBase::unassign(LiveInterval &VirtReg, unsigned PhysReg) {
-  // FIXME: This diversion is temporary.
-  if (Matrix) {
-    Matrix->unassign(VirtReg);
-    return;
-  }
-  DEBUG(dbgs() << "unassigning " << PrintReg(VirtReg.reg, TRI)
-               << " from " << PrintReg(PhysReg, TRI) << '\n');
-  assert(VRM->getPhys(VirtReg.reg) == PhysReg && "Inconsistent unassign");
-  PhysReg2LiveUnion[PhysReg].extract(VirtReg);
-  VRM->clearVirt(VirtReg.reg);
-  ++NumUnassigned;
 }
 
 // Top-level driver to manage the queue of unassigned VirtRegs and call the
@@ -180,9 +92,7 @@ void RegAllocBase::allocatePhysRegs() {
     }
 
     // Invalidate all interference queries, live ranges could have changed.
-    invalidateVirtRegs();
-    if (Matrix)
-      Matrix->invalidateVirtRegs();
+    Matrix->invalidateVirtRegs();
 
     // selectOrSplit requests the allocator to return an available physical
     // register if possible and populate a list of new live intervals that
@@ -214,7 +124,7 @@ void RegAllocBase::allocatePhysRegs() {
     }
 
     if (AvailablePhysReg)
-      assign(*VirtReg, AvailablePhysReg);
+      Matrix->assign(*VirtReg, AvailablePhysReg);
 
     for (VirtRegVec::iterator I = SplitVRegs.begin(), E = SplitVRegs.end();
          I != E; ++I) {
@@ -232,15 +142,4 @@ void RegAllocBase::allocatePhysRegs() {
       ++NumNewQueued;
     }
   }
-}
-
-// Check if this live virtual register interferes with a physical register. If
-// not, then check for interference on each register that aliases with the
-// physical register. Return the interfering register.
-unsigned RegAllocBase::checkPhysRegInterference(LiveInterval &VirtReg,
-                                                unsigned PhysReg) {
-  for (MCRegAliasIterator AI(PhysReg, TRI, true); AI.isValid(); ++AI)
-    if (query(VirtReg, *AI).checkInterference())
-      return *AI;
-  return 0;
 }

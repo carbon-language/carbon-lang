@@ -57,18 +57,6 @@ class Spiller;
 /// live range splitting. They must also override enqueue/dequeue to provide an
 /// assignment order.
 class RegAllocBase {
-  LiveIntervalUnion::Allocator UnionAllocator;
-
-  // Cache tag for PhysReg2LiveUnion entries. Increment whenever virtual
-  // registers may have changed.
-  unsigned UserTag;
-
-  LiveIntervalUnion::Array PhysReg2LiveUnion;
-
-  // Current queries, one per physreg. They must be reinitialized each time we
-  // query on a new live virtual register.
-  OwningArrayPtr<LiveIntervalUnion::Query> Queries;
-
 protected:
   const TargetRegisterInfo *TRI;
   MachineRegisterInfo *MRI;
@@ -77,30 +65,12 @@ protected:
   LiveRegMatrix *Matrix;
   RegisterClassInfo RegClassInfo;
 
-  RegAllocBase(): UserTag(0), TRI(0), MRI(0), VRM(0), LIS(0), Matrix(0) {}
+  RegAllocBase(): TRI(0), MRI(0), VRM(0), LIS(0), Matrix(0) {}
 
   virtual ~RegAllocBase() {}
 
   // A RegAlloc pass should call this before allocatePhysRegs.
-  void init(VirtRegMap &vrm, LiveIntervals &lis);
-
-  // Get an initialized query to check interferences between lvr and preg.  Note
-  // that Query::init must be called at least once for each physical register
-  // before querying a new live virtual register. This ties Queries and
-  // PhysReg2LiveUnion together.
-  LiveIntervalUnion::Query &query(LiveInterval &VirtReg, unsigned PhysReg) {
-    Queries[PhysReg].init(UserTag, &VirtReg, &PhysReg2LiveUnion[PhysReg]);
-    return Queries[PhysReg];
-  }
-
-  // Get direct access to the underlying LiveIntervalUnion for PhysReg.
-  LiveIntervalUnion &getLiveUnion(unsigned PhysReg) {
-    return PhysReg2LiveUnion[PhysReg];
-  }
-
-  // Invalidate all cached information about virtual registers - live ranges may
-  // have changed.
-  void invalidateVirtRegs() { ++UserTag; }
+  void init(VirtRegMap &vrm, LiveIntervals &lis, LiveRegMatrix &mat);
 
   // The top-level driver. The output is a VirtRegMap that us updated with
   // physical register assignments.
@@ -121,28 +91,6 @@ protected:
   // converge quickly toward fully spilled live ranges.
   virtual unsigned selectOrSplit(LiveInterval &VirtReg,
                                  SmallVectorImpl<LiveInterval*> &splitLVRs) = 0;
-
-  // A RegAlloc pass should call this when PassManager releases its memory.
-  virtual void releaseMemory();
-
-  // Helper for checking interference between a live virtual register and a
-  // physical register, including all its register aliases. If an interference
-  // exists, return the interfering register, which may be preg or an alias.
-  unsigned checkPhysRegInterference(LiveInterval& VirtReg, unsigned PhysReg);
-
-  /// assign - Assign VirtReg to PhysReg.
-  /// This should not be called from selectOrSplit for the current register.
-  void assign(LiveInterval &VirtReg, unsigned PhysReg);
-
-  /// unassign - Undo a previous assignment of VirtReg to PhysReg.
-  /// This can be invoked from selectOrSplit, but be careful to guarantee that
-  /// allocation is making progress.
-  void unassign(LiveInterval &VirtReg, unsigned PhysReg);
-
-#ifndef NDEBUG
-  // Verify each LiveIntervalUnion.
-  void verify();
-#endif
 
   // Use this group name for NamedRegionTimer.
   static const char *TimerGroupName;

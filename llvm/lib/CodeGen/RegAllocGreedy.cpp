@@ -390,7 +390,6 @@ void RAGreedy::releaseMemory() {
   SpillerInstance.reset(0);
   ExtraRegInfo.clear();
   GlobalCand.clear();
-  RegAllocBase::releaseMemory();
 }
 
 void RAGreedy::enqueue(LiveInterval *LI) {
@@ -1754,8 +1753,9 @@ bool RAGreedy::runOnMachineFunction(MachineFunction &mf) {
   if (VerifyEnabled)
     MF->verify(this, "Before greedy register allocator");
 
-  RegAllocBase::init(getAnalysis<VirtRegMap>(), getAnalysis<LiveIntervals>());
-  Matrix = &getAnalysis<LiveRegMatrix>();
+  RegAllocBase::init(getAnalysis<VirtRegMap>(),
+                     getAnalysis<LiveIntervals>(),
+                     getAnalysis<LiveRegMatrix>());
   Indexes = &getAnalysis<SlotIndexes>();
   DomTree = &getAnalysis<MachineDominatorTree>();
   SpillerInstance.reset(createInlineSpiller(*this, *MF, *VRM));
