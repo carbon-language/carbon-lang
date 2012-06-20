@@ -201,7 +201,7 @@ public:
   ///
   /// Several cases are filtered out before this method is called:
   ///   - non-array allocations never need a cookie
-  ///   - calls to ::operator new(size_t, void*) never need a cookie
+  ///   - calls to \::operator new(size_t, void*) never need a cookie
   ///
   /// \param ElementType - the allocated type of the expression,
   ///   i.e. the pointee type of the expression result type
