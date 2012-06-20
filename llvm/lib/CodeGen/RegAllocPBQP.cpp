@@ -196,7 +196,7 @@ std::auto_ptr<PBQPRAProblem> PBQPBuilder::build(MachineFunction *mf,
                                                 const RegSet &vregs) {
 
   typedef std::vector<const LiveInterval*> LIVector;
-  ArrayRef<SlotIndex> regMaskSlots = lis->getRegMaskSlots();
+  LiveIntervals *LIS = const_cast<LiveIntervals*>(lis);
   MachineRegisterInfo *mri = &mf->getRegInfo();
   const TargetRegisterInfo *tri = mf->getTarget().getRegisterInfo();
 
@@ -206,7 +206,7 @@ std::auto_ptr<PBQPRAProblem> PBQPBuilder::build(MachineFunction *mf,
 
   // Collect the set of preg intervals, record that they're used in the MF.
   for (unsigned Reg = 1, e = tri->getNumRegs(); Reg != e; ++Reg) {
-    if (!lis->hasInterval(Reg))
+    if (mri->def_empty(Reg))
       continue;
     pregs.insert(Reg);
     mri->setPhysRegUsed(Reg);
@@ -219,7 +219,11 @@ std::auto_ptr<PBQPRAProblem> PBQPBuilder::build(MachineFunction *mf,
        vregItr != vregEnd; ++vregItr) {
     unsigned vreg = *vregItr;
     const TargetRegisterClass *trc = mri->getRegClass(vreg);
-    const LiveInterval *vregLI = &lis->getInterval(vreg);
+    LiveInterval *vregLI = &LIS->getInterval(vreg);
+
+    // Record any overlaps with regmask operands.
+    BitVector regMaskOverlaps(tri->getNumRegs());
+    LIS->checkRegMaskInterference(*vregLI, regMaskOverlaps);
 
     // Compute an initial allowed set for the current vreg.
     typedef std::vector<unsigned> VRAllowed;
@@ -227,9 +231,28 @@ std::auto_ptr<PBQPRAProblem> PBQPBuilder::build(MachineFunction *mf,
     ArrayRef<uint16_t> rawOrder = trc->getRawAllocationOrder(*mf);
     for (unsigned i = 0; i != rawOrder.size(); ++i) {
       unsigned preg = rawOrder[i];
-      if (!reservedRegs.test(preg)) {
-        vrAllowed.push_back(preg);
+      if (reservedRegs.test(preg))
+        continue;
+
+      // vregLI crosses a regmask operand that clobbers preg.
+      if (!regMaskOverlaps.empty() && !regMaskOverlaps.test(preg))
+        continue;
+
+      // vregLI overlaps fixed regunit interference.
+      if (LIS->trackingRegUnits()) {
+        bool Interference = false;
+        for (MCRegUnitIterator Units(preg, tri); Units.isValid(); ++Units) {
+          if (vregLI->overlaps(LIS->getRegUnit(*Units))) {
+            Interference = true;
+            break;
+          }
+        }
+        if (Interference)
+          continue;
       }
+
+      // preg is usable for this virtual register.
+      vrAllowed.push_back(preg);
     }
 
     RegSet overlappingPRegs;
@@ -239,7 +262,9 @@ std::auto_ptr<PBQPRAProblem> PBQPBuilder::build(MachineFunction *mf,
                                 pregEnd = pregs.end();
          pregItr != pregEnd; ++pregItr) {
       unsigned preg = *pregItr;
-      const LiveInterval *pregLI = &lis->getInterval(preg);
+      if (!LIS->hasInterval(preg))
+        continue;
+      const LiveInterval *pregLI = &LIS->getInterval(preg);
 
       if (pregLI->empty()) {
         continue;
@@ -247,33 +272,6 @@ std::auto_ptr<PBQPRAProblem> PBQPBuilder::build(MachineFunction *mf,
 
       if (vregLI->overlaps(*pregLI))
         overlappingPRegs.insert(preg);      
-    }
-
-    // Record any overlaps with regmask operands.
-    BitVector regMaskOverlaps(tri->getNumRegs());
-    for (ArrayRef<SlotIndex>::iterator rmItr = regMaskSlots.begin(),
-                                       rmEnd = regMaskSlots.end();
-         rmItr != rmEnd; ++rmItr) {
-      SlotIndex rmIdx = *rmItr;
-      if (vregLI->liveAt(rmIdx)) {
-        MachineInstr *rmMI = lis->getInstructionFromIndex(rmIdx);
-        const uint32_t* regMask = 0;
-        for (MachineInstr::mop_iterator mopItr = rmMI->operands_begin(),
-                                        mopEnd = rmMI->operands_end();
-             mopItr != mopEnd; ++mopItr) {
-          if (mopItr->isRegMask()) {
-            regMask = mopItr->getRegMask();
-            break;
-          }
-        }
-        assert(regMask != 0 && "Couldn't find register mask.");
-        regMaskOverlaps.setBitsNotInMask(regMask);
-      }
-    }
-
-    for (unsigned preg = 0; preg < tri->getNumRegs(); ++preg) {
-      if (regMaskOverlaps.test(preg))
-        overlappingPRegs.insert(preg);
     }
 
     for (RegSet::const_iterator pregItr = overlappingPRegs.begin(),
