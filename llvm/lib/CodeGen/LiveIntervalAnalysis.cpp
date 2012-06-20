@@ -27,7 +27,6 @@
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
@@ -39,9 +38,6 @@
 #include <limits>
 #include <cmath>
 using namespace llvm;
-
-// Temporary option to enable regunit liveness.
-static cl::opt<bool> LiveRegUnits("live-regunits", cl::Hidden, cl::init(true));
 
 STATISTIC(numIntervals , "Number of original intervals");
 
@@ -62,8 +58,7 @@ void LiveIntervals::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<LiveVariables>();
   AU.addPreserved<LiveVariables>();
   AU.addPreservedID(MachineLoopInfoID);
-  if (LiveRegUnits)
-    AU.addRequiredTransitiveID(MachineDominatorsID);
+  AU.addRequiredTransitiveID(MachineDominatorsID);
   AU.addPreservedID(MachineDominatorsID);
   AU.addPreserved<SlotIndexes>();
   AU.addRequiredTransitive<SlotIndexes>();
@@ -109,9 +104,8 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
   AA = &getAnalysis<AliasAnalysis>();
   LV = &getAnalysis<LiveVariables>();
   Indexes = &getAnalysis<SlotIndexes>();
-  if (LiveRegUnits)
-    DomTree = &getAnalysis<MachineDominatorTree>();
-  if (LiveRegUnits && !LRCalc)
+  DomTree = &getAnalysis<MachineDominatorTree>();
+  if (!LRCalc)
     LRCalc = new LiveRangeCalc();
   AllocatableRegs = TRI->getAllocatableSet(fn);
   ReservedRegs = TRI->getReservedRegs(fn);
@@ -120,9 +114,7 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
 
   numIntervals += getNumIntervals();
 
-  if (LiveRegUnits) {
-    computeLiveInRegUnits();
-  }
+  computeLiveInRegUnits();
 
   DEBUG(dump());
   return true;
