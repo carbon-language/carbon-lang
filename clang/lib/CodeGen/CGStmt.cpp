@@ -156,7 +156,7 @@ void CodeGenFunction::EmitStmt(const Stmt *S) {
   case Stmt::ObjCAutoreleasePoolStmtClass:
     EmitObjCAutoreleasePoolStmt(cast<ObjCAutoreleasePoolStmt>(*S));
     break;
-      
+
   case Stmt::CXXTryStmtClass:
     EmitCXXTryStmt(cast<CXXTryStmt>(*S));
     break;
@@ -361,15 +361,14 @@ void CodeGenFunction::EmitIndirectGotoStmt(const IndirectGotoStmt &S) {
   llvm::Value *V = Builder.CreateBitCast(EmitScalarExpr(S.getTarget()),
                                          Int8PtrTy, "addr");
   llvm::BasicBlock *CurBB = Builder.GetInsertBlock();
-  
 
   // Get the basic block for the indirect goto.
   llvm::BasicBlock *IndGotoBB = GetIndirectGotoBlock();
-  
+
   // The first instruction in the block has to be the PHI for the switch dest,
   // add an entry for this branch.
   cast<llvm::PHINode>(IndGotoBB->begin())->addIncoming(V, CurBB);
-  
+
   EmitBranch(IndGotoBB);
 }
 
@@ -463,12 +462,12 @@ void CodeGenFunction::EmitWhileStmt(const WhileStmt &S) {
 
   if (S.getConditionVariable())
     EmitAutoVarDecl(*S.getConditionVariable());
-  
+
   // Evaluate the conditional in the while header.  C99 6.8.5.1: The
   // evaluation of the controlling expression takes place before each
   // execution of the loop body.
   llvm::Value *BoolCondVal = EvaluateExprAsBool(S.getCond());
-   
+
   // while(1) is common, avoid extra exit blocks.  Be sure
   // to correctly handle break/continue though.
   bool EmitBoolCondBranch = true;
@@ -490,7 +489,7 @@ void CodeGenFunction::EmitWhileStmt(const WhileStmt &S) {
       EmitBranchThroughCleanup(LoopExit);
     }
   }
- 
+
   // Emit the loop body.  We have to emit this in a cleanup scope
   // because it might be a singleton DeclStmt.
   {
@@ -585,7 +584,7 @@ void CodeGenFunction::EmitForStmt(const ForStmt &S) {
 
   // Create a cleanup scope for the condition variable cleanups.
   RunCleanupsScope ConditionScope(*this);
-  
+
   llvm::Value *BoolCondVal = 0;
   if (S.getCond()) {
     // If the for statement has a condition scope, emit the local variable
@@ -599,7 +598,7 @@ void CodeGenFunction::EmitForStmt(const ForStmt &S) {
     // create a block to stage a loop exit along.
     if (ForScope.requiresCleanups())
       ExitBlock = createBasicBlock("for.cond.cleanup");
-    
+
     // As long as the condition is true, iterate the loop.
     llvm::BasicBlock *ForBody = createBasicBlock("for.body");
 
@@ -680,7 +679,7 @@ void CodeGenFunction::EmitCXXForRangeStmt(const CXXForRangeStmt &S) {
   llvm::BasicBlock *ExitBlock = LoopExit.getBlock();
   if (ForScope.requiresCleanups())
     ExitBlock = createBasicBlock("for.cond.cleanup");
-  
+
   // The loop body, consisting of the specified body and the loop variable.
   llvm::BasicBlock *ForBody = createBasicBlock("for.body");
 
@@ -751,7 +750,7 @@ void CodeGenFunction::EmitReturnStmt(const ReturnStmt &S) {
     // Apply the named return value optimization for this return statement,
     // which means doing nothing: the appropriate result has already been
     // constructed into the NRVO variable.
-    
+
     // If there is an NRVO flag for this variable, set it to 1 into indicate
     // that the cleanup code should not destroy the variable.
     if (llvm::Value *NRVOFlag = NRVOFlags[S.getNRVOCandidate()])
@@ -902,7 +901,7 @@ void CodeGenFunction::EmitCaseStmt(const CaseStmt &S) {
   // try to not emit an empty block.
   if ((CGM.getCodeGenOpts().OptimizationLevel > 0) && isa<BreakStmt>(S.getSubStmt())) {
     JumpDest Block = BreakContinueStack.back().BreakBlock;
-    
+
     // Only do this optimization if there are no cleanups that need emitting.
     if (isObviouslyBranchWithoutCleanups(Block)) {
       SwitchInsn->addCase(CaseVal, Block.getBlock());
@@ -916,7 +915,7 @@ void CodeGenFunction::EmitCaseStmt(const CaseStmt &S) {
       return;
     }
   }
-  
+
   EmitBlock(createBasicBlock("sw.bb"));
   llvm::BasicBlock *CaseDest = Builder.GetInsertBlock();
   SwitchInsn->addCase(CaseVal, CaseDest);
@@ -985,7 +984,7 @@ static CSFC_Result CollectStatementsForCase(const Stmt *S,
   // If this is a null statement, just succeed.
   if (S == 0)
     return Case ? CSFC_Success : CSFC_FallThrough;
-    
+
   // If this is the switchcase (case 4: or default) that we're looking for, then
   // we're in business.  Just add the substatement.
   if (const SwitchCase *SC = dyn_cast<SwitchCase>(S)) {
@@ -994,7 +993,7 @@ static CSFC_Result CollectStatementsForCase(const Stmt *S,
       return CollectStatementsForCase(SC->getSubStmt(), 0, FoundCase,
                                       ResultStmts);
     }
-    
+
     // Otherwise, this is some other case or default statement, just ignore it.
     return CollectStatementsForCase(SC->getSubStmt(), Case, FoundCase,
                                     ResultStmts);
@@ -1004,7 +1003,7 @@ static CSFC_Result CollectStatementsForCase(const Stmt *S,
   // return a success!
   if (Case == 0 && isa<BreakStmt>(S))
     return CSFC_Success;
-  
+
   // If this is a switch statement, then it might contain the SwitchCase, the
   // break, or neither.
   if (const CompoundStmt *CS = dyn_cast<CompoundStmt>(S)) {
@@ -1016,12 +1015,12 @@ static CSFC_Result CollectStatementsForCase(const Stmt *S,
       // using the declaration even if it is skipped, so we can't optimize out
       // the decl if the kept statements might refer to it.
       bool HadSkippedDecl = false;
-      
+
       // If we're looking for the case, just see if we can skip each of the
       // substatements.
       for (; Case && I != E; ++I) {
         HadSkippedDecl |= isa<DeclStmt>(*I);
-        
+
         switch (CollectStatementsForCase(*I, Case, FoundCase, ResultStmts)) {
         case CSFC_Failure: return CSFC_Failure;
         case CSFC_Success:
@@ -1034,7 +1033,7 @@ static CSFC_Result CollectStatementsForCase(const Stmt *S,
             // optimization.
             if (HadSkippedDecl)
               return CSFC_Failure;
-            
+
             for (++I; I != E; ++I)
               if (CodeGenFunction::ContainsLabel(*I, true))
                 return CSFC_Failure;
@@ -1048,7 +1047,7 @@ static CSFC_Result CollectStatementsForCase(const Stmt *S,
           assert(FoundCase && "Didn't find case but returned fallthrough?");
           // We recursively found Case, so we're not looking for it anymore.
           Case = 0;
-            
+
           // If we found the case and skipped declarations, we can't do the
           // optimization.
           if (HadSkippedDecl)
@@ -1075,9 +1074,9 @@ static CSFC_Result CollectStatementsForCase(const Stmt *S,
           if (CodeGenFunction::ContainsLabel(*I, true))
             return CSFC_Failure;
         return CSFC_Success;
-      }      
+      }
     }
-    
+
     return Case ? CSFC_Success : CSFC_FallThrough;
   }
 
@@ -1089,11 +1088,11 @@ static CSFC_Result CollectStatementsForCase(const Stmt *S,
       return CSFC_Failure;
     return CSFC_Success;
   }
-  
+
   // Otherwise, we want to include this statement.  Everything is cool with that
   // so long as it doesn't contain a break out of the switch we're in.
   if (CodeGenFunction::containsBreak(S)) return CSFC_Failure;
-  
+
   // Otherwise, everything is great.  Include the statement and tell the caller
   // that we fall through and include the next statement as well.
   ResultStmts.push_back(S);
@@ -1112,7 +1111,7 @@ static bool FindCaseStatementsForValue(const SwitchStmt &S,
   // efficiently by scanning the SwitchCase list.
   const SwitchCase *Case = S.getSwitchCaseList();
   const DefaultStmt *DefaultCase = 0;
-  
+
   for (; Case; Case = Case->getNextSwitchCase()) {
     // It's either a default or case.  Just remember the default statement in
     // case we're not jumping to any numbered cases.
@@ -1120,17 +1119,17 @@ static bool FindCaseStatementsForValue(const SwitchStmt &S,
       DefaultCase = DS;
       continue;
     }
-    
+
     // Check to see if this case is the one we're looking for.
     const CaseStmt *CS = cast<CaseStmt>(Case);
     // Don't handle case ranges yet.
     if (CS->getRHS()) return false;
-    
+
     // If we found our case, remember it as 'case'.
     if (CS->getLHS()->EvaluateKnownConstInt(C) == ConstantCondValue)
       break;
   }
-  
+
   // If we didn't find a matching case, we use a default if it exists, or we
   // elide the whole switch body!
   if (Case == 0) {
@@ -1193,7 +1192,7 @@ void CodeGenFunction::EmitSwitchStmt(const SwitchStmt &S) {
       return;
     }
   }
-    
+
   llvm::Value *CondV = EmitScalarExpr(S.getCond());
 
   // Create basic block to hold stuff that comes after switch
@@ -1381,7 +1380,7 @@ static llvm::MDNode *getAsmSrcLocInfo(const StringLiteral *Str,
   if (!StrVal.empty()) {
     const SourceManager &SM = CGF.CGM.getContext().getSourceManager();
     const LangOptions &LangOpts = CGF.CGM.getLangOpts();
-    
+
     // Add the location of the start of each subsequent line of the asm to the
     // MDNode.
     for (unsigned i = 0, e = StrVal.size()-1; i != e; ++i) {
@@ -1391,8 +1390,8 @@ static llvm::MDNode *getAsmSrcLocInfo(const StringLiteral *Str,
       Locs.push_back(llvm::ConstantInt::get(CGF.Int32Ty,
                                             LineLoc.getRawEncoding()));
     }
-  }    
-  
+  }
+
   return llvm::MDNode::get(CGF.getLLVMContext(), Locs);
 }
 
@@ -1657,7 +1656,7 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
     // the expression, do the conversion.
     if (ResultRegTypes[i] != ResultTruncRegTypes[i]) {
       llvm::Type *TruncTy = ResultTruncRegTypes[i];
-      
+
       // Truncate the integer result to the right size, note that TruncTy can be
       // a pointer.
       if (TruncTy->isFloatingPointTy())
