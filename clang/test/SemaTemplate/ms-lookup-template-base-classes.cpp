@@ -143,3 +143,32 @@ public:
 template class A<C>;
 
 }
+
+namespace PR12701 {
+
+class A {};
+class B {};
+
+template <class T>
+class Base {
+ public:
+  bool base_fun(void* p) { return false; }  // expected-note {{must qualify identifier to find this declaration in dependent base clas}}
+  operator T*() const { return 0; }
+};
+
+template <class T>
+class Container : public Base<T> {
+ public:
+  template <typename S>
+  bool operator=(const Container<S>& rhs) {
+    return base_fun(rhs);  // expected-warning {{use of identifier 'base_fun' found via unqualified lookup into dependent bases of class templates is a Microsoft extension}}
+  }
+};
+
+void f() {
+  Container<A> text_provider;
+  Container<B> text_provider2;
+  text_provider2 = text_provider;  // expected-note {{in instantiation of function template specialization}}
+}
+
+}  // namespace PR12701

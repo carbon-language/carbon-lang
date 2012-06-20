@@ -1466,14 +1466,14 @@ bool Sema::DiagnoseEmptyLookup(Scope *S, CXXScopeSpec &SS, LookupResult &R,
         // Give a code modification hint to insert 'this->'.
         // TODO: fixit for inserting 'Base<T>::' in the other cases.
         // Actually quite difficult!
+        if (getLangOpts().MicrosoftMode)
+          diagnostic = diag::warn_found_via_dependent_bases_lookup;
         if (isInstance) {
           UnresolvedLookupExpr *ULE = cast<UnresolvedLookupExpr>(
               CallsUndergoingInstantiation.back()->getCallee());
           CXXMethodDecl *DepMethod = cast_or_null<CXXMethodDecl>(
               CurMethod->getInstantiatedFromMemberFunction());
           if (DepMethod) {
-            if (getLangOpts().MicrosoftMode)
-              diagnostic = diag::warn_found_via_dependent_bases_lookup;
             Diag(R.getNameLoc(), diagnostic) << Name
               << FixItHint::CreateInsertion(R.getNameLoc(), "this->");
             QualType DepThisType = DepMethod->getThisType(Context);
@@ -1500,8 +1500,6 @@ bool Sema::DiagnoseEmptyLookup(Scope *S, CXXScopeSpec &SS, LookupResult &R,
             Diag(R.getNameLoc(), diagnostic) << Name;
           }
         } else {
-          if (getLangOpts().MicrosoftMode)
-            diagnostic = diag::warn_found_via_dependent_bases_lookup;
           Diag(R.getNameLoc(), diagnostic) << Name;
         }
 
