@@ -7,7 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// InterferenceCache remembers per-block interference in LiveIntervalUnions.
+// InterferenceCache remembers per-block interference from LiveIntervalUnions,
+// fixed RegUnit interference, and register masks.
 //
 //===----------------------------------------------------------------------===//
 
@@ -59,14 +60,31 @@ class InterferenceCache {
     /// PrevPos - The previous position the iterators were moved to.
     SlotIndex PrevPos;
 
-    /// AliasTags - A LiveIntervalUnion pointer and tag for each alias of
-    /// PhysReg.
-    SmallVector<std::pair<LiveIntervalUnion*, unsigned>, 8> Aliases;
+    /// RegUnitInfo - Information tracked about each RegUnit in PhysReg.
+    /// When PrevPos is set, the iterators are valid as if advanceTo(PrevPos)
+    /// had just been called.
+    struct RegUnitInfo {
+      /// Iterator pointing into the LiveIntervalUnion containing virtual
+      /// register interference.
+      LiveIntervalUnion::SegmentIter VirtI;
 
-    typedef LiveIntervalUnion::SegmentIter Iter;
+      /// Tag of the LIU last time we looked.
+      unsigned VirtTag;
 
-    /// Iters - an iterator for each alias
-    SmallVector<Iter, 8> Iters;
+      /// Fixed interference in RegUnit.
+      LiveInterval *Fixed;
+
+      /// Iterator pointing into the fixed RegUnit interference.
+      LiveInterval::iterator FixedI;
+
+      RegUnitInfo(LiveIntervalUnion &LIU) : VirtTag(LIU.getTag()), Fixed(0) {
+        VirtI.setMap(LIU.getMap());
+      }
+    };
+
+    /// Info for each RegUnit in PhysReg. It is very rare ofr a PHysReg to have
+    /// more than 4 RegUnits.
+    SmallVector<RegUnitInfo, 4> RegUnits;
 
     /// Blocks - Interference for each block in the function.
     SmallVector<BlockInterference, 8> Blocks;
@@ -91,7 +109,7 @@ class InterferenceCache {
 
     bool hasRefs() const { return RefCount > 0; }
 
-    void revalidate();
+    void revalidate(LiveIntervalUnion *LIUArray, const TargetRegisterInfo *TRI);
 
     /// valid - Return true if this is a valid entry for physReg.
     bool valid(LiveIntervalUnion *LIUArray, const TargetRegisterInfo *TRI);

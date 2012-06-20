@@ -16,6 +16,7 @@
 #include "AllocationOrder.h"
 #include "InterferenceCache.h"
 #include "LiveDebugVariables.h"
+#include "LiveRegMatrix.h"
 #include "RegAllocBase.h"
 #include "Spiller.h"
 #include "SpillPlacement.h"
@@ -167,19 +168,6 @@ class RAGreedy : public MachineFunctionPass,
     }
   };
 
-  // Register mask interference. The current VirtReg is checked for register
-  // mask interference on entry to selectOrSplit().  If there is no
-  // interference, UsableRegs is left empty.  If there is interference,
-  // UsableRegs has a bit mask of registers that can be used without register
-  // mask interference.
-  BitVector UsableRegs;
-
-  /// clobberedByRegMask - Returns true if PhysReg is not directly usable
-  /// because of register mask clobbers.
-  bool clobberedByRegMask(unsigned PhysReg) const {
-    return !UsableRegs.empty() && !UsableRegs.test(PhysReg);
-  }
-
   // splitting state.
   std::auto_ptr<SplitAnalysis> SA;
   std::auto_ptr<SplitEditor> SE;
@@ -328,6 +316,7 @@ RAGreedy::RAGreedy(): MachineFunctionPass(ID) {
   initializeMachineDominatorTreePass(*PassRegistry::getPassRegistry());
   initializeMachineLoopInfoPass(*PassRegistry::getPassRegistry());
   initializeVirtRegMapPass(*PassRegistry::getPassRegistry());
+  initializeLiveRegMatrixPass(*PassRegistry::getPassRegistry());
   initializeEdgeBundlesPass(*PassRegistry::getPassRegistry());
   initializeSpillPlacementPass(*PassRegistry::getPassRegistry());
 }
@@ -351,6 +340,8 @@ void RAGreedy::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addPreserved<MachineLoopInfo>();
   AU.addRequired<VirtRegMap>();
   AU.addPreserved<VirtRegMap>();
+  AU.addRequired<LiveRegMatrix>();
+  AU.addPreserved<LiveRegMatrix>();
   AU.addRequired<EdgeBundles>();
   AU.addRequired<SpillPlacement>();
   MachineFunctionPass::getAnalysisUsage(AU);
@@ -362,8 +353,8 @@ void RAGreedy::getAnalysisUsage(AnalysisUsage &AU) const {
 //===----------------------------------------------------------------------===//
 
 bool RAGreedy::LRE_CanEraseVirtReg(unsigned VirtReg) {
-  if (unsigned PhysReg = VRM->getPhys(VirtReg)) {
-    unassign(LIS->getInterval(VirtReg), PhysReg);
+  if (VRM->hasPhys(VirtReg)) {
+    Matrix->unassign(LIS->getInterval(VirtReg));
     return true;
   }
   // Unassigned virtreg is probably in the priority queue.
@@ -372,13 +363,12 @@ bool RAGreedy::LRE_CanEraseVirtReg(unsigned VirtReg) {
 }
 
 void RAGreedy::LRE_WillShrinkVirtReg(unsigned VirtReg) {
-  unsigned PhysReg = VRM->getPhys(VirtReg);
-  if (!PhysReg)
+  if (!VRM->hasPhys(VirtReg))
     return;
 
   // Register is assigned, put it back on the queue for reassignment.
   LiveInterval &LI = LIS->getInterval(VirtReg);
-  unassign(LI, PhysReg);
+  Matrix->unassign(LI);
   enqueue(&LI);
 }
 
@@ -452,12 +442,9 @@ unsigned RAGreedy::tryAssign(LiveInterval &VirtReg,
                              SmallVectorImpl<LiveInterval*> &NewVRegs) {
   Order.rewind();
   unsigned PhysReg;
-  while ((PhysReg = Order.next())) {
-    if (clobberedByRegMask(PhysReg))
-      continue;
-    if (!checkPhysRegInterference(VirtReg, PhysReg))
+  while ((PhysReg = Order.next()))
+    if (!Matrix->checkInterference(VirtReg, PhysReg))
       break;
-  }
   if (!PhysReg || Order.isHint(PhysReg))
     return PhysReg;
 
@@ -466,7 +453,7 @@ unsigned RAGreedy::tryAssign(LiveInterval &VirtReg,
   // If we missed a simple hint, try to cheaply evict interference from the
   // preferred register.
   if (unsigned Hint = MRI->getSimpleHint(VirtReg.reg))
-    if (Order.isHint(Hint) && !clobberedByRegMask(Hint)) {
+    if (Order.isHint(Hint)) {
       DEBUG(dbgs() << "missed hint " << PrintReg(Hint, TRI) << '\n');
       EvictionCost MaxCost(1);
       if (canEvictInterference(VirtReg, Hint, true, MaxCost)) {
@@ -529,6 +516,10 @@ bool RAGreedy::shouldEvict(LiveInterval &A, bool IsHint,
 /// @returns True when interference can be evicted cheaper than MaxCost.
 bool RAGreedy::canEvictInterference(LiveInterval &VirtReg, unsigned PhysReg,
                                     bool IsHint, EvictionCost &MaxCost) {
+  // It is only possible to evict virtual register interference.
+  if (Matrix->checkInterference(VirtReg, PhysReg) > LiveRegMatrix::IK_VirtReg)
+    return false;
+
   // Find VirtReg's cascade number. This will be unassigned if VirtReg was never
   // involved in an eviction before. If a cascade number was assigned, deny
   // evicting anything with the same or a newer cascade number. This prevents
@@ -541,8 +532,8 @@ bool RAGreedy::canEvictInterference(LiveInterval &VirtReg, unsigned PhysReg,
     Cascade = NextCascade;
 
   EvictionCost Cost;
-  for (MCRegAliasIterator AI(PhysReg, TRI, true); AI.isValid(); ++AI) {
-    LiveIntervalUnion::Query &Q = query(VirtReg, *AI);
+  for (MCRegUnitIterator Units(PhysReg, TRI); Units.isValid(); ++Units) {
+    LiveIntervalUnion::Query &Q = Matrix->query(VirtReg, *Units);
     // If there is 10 or more interferences, chances are one is heavier.
     if (Q.collectInterferingVRegs(10) >= 10)
       return false;
@@ -550,8 +541,8 @@ bool RAGreedy::canEvictInterference(LiveInterval &VirtReg, unsigned PhysReg,
     // Check if any interfering live range is heavier than MaxWeight.
     for (unsigned i = Q.interferingVRegs().size(); i; --i) {
       LiveInterval *Intf = Q.interferingVRegs()[i - 1];
-      if (TargetRegisterInfo::isPhysicalRegister(Intf->reg))
-        return false;
+      assert(TargetRegisterInfo::isVirtualRegister(Intf->reg) &&
+             "Only expecting virtual register interference from query");
       // Never evict spill products. They cannot split or spill.
       if (getStage(*Intf) == RS_Done)
         return false;
@@ -605,19 +596,29 @@ void RAGreedy::evictInterference(LiveInterval &VirtReg, unsigned PhysReg,
 
   DEBUG(dbgs() << "evicting " << PrintReg(PhysReg, TRI)
                << " interference: Cascade " << Cascade << '\n');
-  for (MCRegAliasIterator AI(PhysReg, TRI, true); AI.isValid(); ++AI) {
-    LiveIntervalUnion::Query &Q = query(VirtReg, *AI);
+
+  // Collect all interfering virtregs first.
+  SmallVector<LiveInterval*, 8> Intfs;
+  for (MCRegUnitIterator Units(PhysReg, TRI); Units.isValid(); ++Units) {
+    LiveIntervalUnion::Query &Q = Matrix->query(VirtReg, *Units);
     assert(Q.seenAllInterferences() && "Didn't check all interfererences.");
-    for (unsigned i = 0, e = Q.interferingVRegs().size(); i != e; ++i) {
-      LiveInterval *Intf = Q.interferingVRegs()[i];
-      unassign(*Intf, VRM->getPhys(Intf->reg));
-      assert((ExtraRegInfo[Intf->reg].Cascade < Cascade ||
-              VirtReg.isSpillable() < Intf->isSpillable()) &&
-             "Cannot decrease cascade number, illegal eviction");
-      ExtraRegInfo[Intf->reg].Cascade = Cascade;
-      ++NumEvicted;
-      NewVRegs.push_back(Intf);
-    }
+    ArrayRef<LiveInterval*> IVR = Q.interferingVRegs();
+    Intfs.append(IVR.begin(), IVR.end());
+  }
+
+  // Evict them second. This will invalidate the queries.
+  for (unsigned i = 0, e = Intfs.size(); i != e; ++i) {
+    LiveInterval *Intf = Intfs[i];
+    // The same VirtReg may be present in multiple RegUnits. Skip duplicates.
+    if (!VRM->hasPhys(Intf->reg))
+      continue;
+    Matrix->unassign(*Intf);
+    assert((ExtraRegInfo[Intf->reg].Cascade < Cascade ||
+            VirtReg.isSpillable() < Intf->isSpillable()) &&
+           "Cannot decrease cascade number, illegal eviction");
+    ExtraRegInfo[Intf->reg].Cascade = Cascade;
+    ++NumEvicted;
+    NewVRegs.push_back(Intf);
   }
 }
 
@@ -644,8 +645,6 @@ unsigned RAGreedy::tryEvict(LiveInterval &VirtReg,
 
   Order.rewind();
   while (unsigned PhysReg = Order.next()) {
-    if (clobberedByRegMask(PhysReg))
-      continue;
     if (TRI->getCostPerUse(PhysReg) >= CostPerUseLimit)
       continue;
     // The first use of a callee-saved register in a function has cost 1.
@@ -1358,9 +1357,9 @@ void RAGreedy::calcGapWeights(unsigned PhysReg,
   GapWeight.assign(NumGaps, 0.0f);
 
   // Add interference from each overlapping register.
-  for (MCRegAliasIterator AI(PhysReg, TRI, true); AI.isValid(); ++AI) {
-    if (!query(const_cast<LiveInterval&>(SA->getParent()), *AI)
-           .checkInterference())
+  for (MCRegUnitIterator Units(PhysReg, TRI); Units.isValid(); ++Units) {
+    if (!Matrix->query(const_cast<LiveInterval&>(SA->getParent()), *Units)
+          .checkInterference())
       continue;
 
     // We know that VirtReg is a continuous interval from FirstInstr to
@@ -1370,7 +1369,8 @@ void RAGreedy::calcGapWeights(unsigned PhysReg,
     // surrounding the instruction. The exception is interference before
     // StartIdx and after StopIdx.
     //
-    LiveIntervalUnion::SegmentIter IntI = getLiveUnion(*AI).find(StartIdx);
+    LiveIntervalUnion::SegmentIter IntI =
+      Matrix->getLiveUnions()[*Units] .find(StartIdx);
     for (unsigned Gap = 0; IntI.valid() && IntI.start() < StopIdx; ++IntI) {
       // Skip the gaps before IntI.
       while (Uses[Gap+1].getBoundaryIndex() < IntI.start())
@@ -1384,6 +1384,30 @@ void RAGreedy::calcGapWeights(unsigned PhysReg,
       for (; Gap != NumGaps; ++Gap) {
         GapWeight[Gap] = std::max(GapWeight[Gap], weight);
         if (Uses[Gap+1].getBaseIndex() >= IntI.stop())
+          break;
+      }
+      if (Gap == NumGaps)
+        break;
+    }
+  }
+
+  // Add fixed interference.
+  for (MCRegUnitIterator Units(PhysReg, TRI); Units.isValid(); ++Units) {
+    const LiveInterval &LI = LIS->getRegUnit(*Units);
+    LiveInterval::const_iterator I = LI.find(StartIdx);
+    LiveInterval::const_iterator E = LI.end();
+
+    // Same loop as above. Mark any overlapped gaps as HUGE_VALF.
+    for (unsigned Gap = 0; I != E && I->start < StopIdx; ++I) {
+      while (Uses[Gap+1].getBoundaryIndex() < I->start)
+        if (++Gap == NumGaps)
+          break;
+      if (Gap == NumGaps)
+        break;
+
+      for (; Gap != NumGaps; ++Gap) {
+        GapWeight[Gap] = HUGE_VALF;
+        if (Uses[Gap+1].getBaseIndex() >= I->end)
           break;
       }
       if (Gap == NumGaps)
@@ -1422,7 +1446,7 @@ unsigned RAGreedy::tryLocalSplit(LiveInterval &VirtReg, AllocationOrder &Order,
   // If VirtReg is live across any register mask operands, compute a list of
   // gaps with register masks.
   SmallVector<unsigned, 8> RegMaskGaps;
-  if (!UsableRegs.empty()) {
+  if (Matrix->checkRegMaskInterference(VirtReg)) {
     // Get regmask slots for the whole block.
     ArrayRef<SlotIndex> RMS = LIS->getRegMaskSlotsInBlock(BI.MBB->getNumber());
     DEBUG(dbgs() << RMS.size() << " regmasks in block:");
@@ -1484,7 +1508,7 @@ unsigned RAGreedy::tryLocalSplit(LiveInterval &VirtReg, AllocationOrder &Order,
     calcGapWeights(PhysReg, GapWeight);
 
     // Remove any gaps with regmask clobbers.
-    if (clobberedByRegMask(PhysReg))
+    if (Matrix->checkRegMaskInterference(VirtReg, PhysReg))
       for (unsigned i = 0, e = RegMaskGaps.size(); i != e; ++i)
         GapWeight[RegMaskGaps[i]] = HUGE_VALF;
 
@@ -1644,7 +1668,7 @@ unsigned RAGreedy::trySplit(LiveInterval &VirtReg, AllocationOrder &Order,
   // an assertion when the coalescer is fixed.
   if (SA->didRepairRange()) {
     // VirtReg has changed, so all cached queries are invalid.
-    invalidateVirtRegs();
+    Matrix->invalidateVirtRegs();
     if (unsigned PhysReg = tryAssign(VirtReg, Order, NewVRegs))
       return PhysReg;
   }
@@ -1669,11 +1693,6 @@ unsigned RAGreedy::trySplit(LiveInterval &VirtReg, AllocationOrder &Order,
 
 unsigned RAGreedy::selectOrSplit(LiveInterval &VirtReg,
                                  SmallVectorImpl<LiveInterval*> &NewVRegs) {
-  // Check if VirtReg is live across any calls.
-  UsableRegs.clear();
-  if (LIS->checkRegMaskInterference(VirtReg, UsableRegs))
-    DEBUG(dbgs() << "Live across regmasks.\n");
-
   // First try assigning a free register.
   AllocationOrder Order(VirtReg.reg, *VRM, RegClassInfo);
   if (unsigned PhysReg = tryAssign(VirtReg, Order, NewVRegs))
@@ -1736,6 +1755,7 @@ bool RAGreedy::runOnMachineFunction(MachineFunction &mf) {
     MF->verify(this, "Before greedy register allocator");
 
   RegAllocBase::init(getAnalysis<VirtRegMap>(), getAnalysis<LiveIntervals>());
+  Matrix = &getAnalysis<LiveRegMatrix>();
   Indexes = &getAnalysis<SlotIndexes>();
   DomTree = &getAnalysis<MachineDominatorTree>();
   SpillerInstance.reset(createInlineSpiller(*this, *MF, *VRM));
@@ -1749,7 +1769,7 @@ bool RAGreedy::runOnMachineFunction(MachineFunction &mf) {
   ExtraRegInfo.clear();
   ExtraRegInfo.resize(MRI->getNumVirtRegs());
   NextCascade = 1;
-  IntfCache.init(MF, &getLiveUnion(0), Indexes, LIS, TRI);
+  IntfCache.init(MF, Matrix->getLiveUnions(), Indexes, LIS, TRI);
   GlobalCand.resize(32);  // This will grow as needed.
 
   allocatePhysRegs();
