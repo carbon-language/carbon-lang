@@ -306,7 +306,7 @@ public:
   /// already known.
   void setTarget(const TargetInfo &Target);
   
-  /// \brief Given a "foo" or <foo> reference, look up the indicated file,
+  /// \brief Given a "foo" or \<foo> reference, look up the indicated file,
   /// return null on failure.
   ///
   /// \returns If successful, this returns 'UsedDir', the DirectoryLookup member
