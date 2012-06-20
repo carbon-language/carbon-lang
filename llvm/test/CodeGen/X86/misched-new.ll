@@ -1,4 +1,5 @@
 ; RUN: llc -march=x86-64 -mcpu=core2 -enable-misched -misched=shuffle -misched-bottomup < %s
+; RUN: llc -march=x86-64 -mcpu=core2 -enable-misched -misched=shuffle -misched-bottomup -live-regunits < %s
 ; REQUIRES: asserts
 ;
 ; Interesting MachineScheduler cases.

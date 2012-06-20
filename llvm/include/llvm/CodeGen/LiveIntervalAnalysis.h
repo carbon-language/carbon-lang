@@ -347,6 +347,12 @@ namespace llvm {
       return *LI;
     }
 
+    /// getCachedRegUnit - Return the live range for Unit if it has already
+    /// been computed, or NULL if it hasn't been computed yet.
+    LiveInterval *getCachedRegUnit(unsigned Unit) {
+      return RegUnitIntervals[Unit];
+    }
+
     /// trackingRegUnits - Does LiveIntervals curently track register units?
     /// This function will be removed when regunit tracking is permanently
     /// enabled.
