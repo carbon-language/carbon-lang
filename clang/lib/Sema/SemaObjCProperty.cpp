@@ -612,7 +612,6 @@ DiagnoseClassAndClassExtPropertyMismatch(Sema &S, ObjCInterfaceDecl *ClassDecl,
   bool warn = (Attributes & ObjCDeclSpec::DQ_PR_readonly);
   for (const ObjCCategoryDecl *CDecl = ClassDecl->getFirstClassExtension();
        CDecl; CDecl = CDecl->getNextClassExtension()) {
-    warn = false;
     ObjCPropertyDecl *ClassExtProperty = 0;
     for (ObjCContainerDecl::prop_iterator P = CDecl->prop_begin(),
          E = CDecl->prop_end(); P != E; ++P) {
@@ -622,6 +621,7 @@ DiagnoseClassAndClassExtPropertyMismatch(Sema &S, ObjCInterfaceDecl *ClassDecl,
       }
     }
     if (ClassExtProperty) {
+      warn = false;
       unsigned classExtPropertyAttr = 
         ClassExtProperty->getPropertyAttributesAsWritten();
       // We are issuing the warning that we postponed because class extensions

@@ -15,6 +15,7 @@
 
 @interface MyClass : Super
 @property(nonatomic, copy, readonly) NSString *prop;
+@property(nonatomic, copy, readonly) id warnProp; // expected-warning {{property attributes 'readonly' and 'copy' are mutually exclusive}}
 @end
 
 @interface MyClass ()
@@ -23,11 +24,13 @@
 
 @implementation MyClass
 @synthesize prop;
+@synthesize warnProp;
 @end
 
 
 @protocol P
 @property(nonatomic, copy, readonly) NSString *prop;
+@property(nonatomic, copy, readonly) id warnProp; // expected-warning {{property attributes 'readonly' and 'copy' are mutually exclusive}}
 @end
 
 @interface YourClass : Super <P>
@@ -39,5 +42,6 @@
 
 @implementation YourClass 
 @synthesize prop;
+@synthesize warnProp;
 @end
 
