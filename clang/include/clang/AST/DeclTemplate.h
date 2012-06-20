@@ -6,9 +6,10 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
-//  This file defines the C++ template declaration subclasses.
-//
+///
+/// \file
+/// \brief Defines the C++ template declaration subclasses.
+///
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_CLANG_AST_DECLTEMPLATE_H
@@ -38,8 +39,8 @@ class TypeAliasTemplateDecl;
 typedef llvm::PointerUnion3<TemplateTypeParmDecl*, NonTypeTemplateParmDecl*,
                             TemplateTemplateParmDecl*> TemplateParameter;
 
-/// TemplateParameterList - Stores a list of template parameters for a
-/// TemplateDecl and its derived classes.
+/// \brief Stores a list of template parameters for a TemplateDecl and its
+/// derived classes.
 class TemplateParameterList {
   /// The location of the 'template' keyword.
   SourceLocation TemplateLoc;
@@ -64,10 +65,10 @@ public:
                                        unsigned NumParams,
                                        SourceLocation RAngleLoc);
 
-  /// iterator - Iterates through the template parameters in this list.
+  /// \brief Iterates through the template parameters in this list.
   typedef NamedDecl** iterator;
 
-  /// const_iterator - Iterates through the template parameters in this list.
+  /// \brief Iterates through the template parameters in this list.
   typedef NamedDecl* const* const_iterator;
 
   iterator begin() { return reinterpret_cast<NamedDecl **>(this + 1); }
@@ -90,9 +91,10 @@ public:
   }
 
   /// \brief Returns the minimum number of arguments needed to form a
-  /// template specialization. This may be fewer than the number of
-  /// template parameters, if some of the parameters have default
-  /// arguments or if there is a parameter pack.
+  /// template specialization.
+  ///
+  /// This may be fewer than the number of template parameters, if some of
+  /// the parameters have default arguments or if there is a parameter pack.
   unsigned getMinRequiredArguments() const;
 
   /// \brief Get the depth of this template parameter list in the set of
@@ -111,8 +113,8 @@ public:
   }
 };
 
-/// FixedSizeTemplateParameterList - Stores a list of template parameters for a
-/// TemplateDecl and its derived classes. Suitable for creating on the stack.
+/// \brief Stores a list of template parameters for a TemplateDecl and its
+/// derived classes. Suitable for creating on the stack.
 template<size_t N>
 class FixedSizeTemplateParameterList : public TemplateParameterList {
   NamedDecl *Params[N];
@@ -195,10 +197,11 @@ public:
 // Kinds of Templates
 //===----------------------------------------------------------------------===//
 
-/// TemplateDecl - The base class of all kinds of template declarations (e.g.,
-/// class, function, etc.). The TemplateDecl class stores the list of template
-/// parameters and a reference to the templated scoped declaration: the
-/// underlying AST node.
+/// \brief The base class of all kinds of template declarations (e.g.,
+/// class, function, etc.).
+///
+/// The TemplateDecl class stores the list of template parameters and a
+/// reference to the templated scoped declaration: the underlying AST node.
 class TemplateDecl : public NamedDecl {
   virtual void anchor();
 protected:
@@ -404,16 +407,19 @@ public:
 };
 
 /// \brief Provides information about a dependent function-template
-/// specialization declaration.  Since explicit function template
-/// specialization and instantiation declarations can only appear in
-/// namespace scope, and you can only specialize a member of a
-/// fully-specialized class, the only way to get one of these is in
-/// a friend declaration like the following:
+/// specialization declaration.
 ///
-///   template <class T> void foo(T);
-///   template <class T> class A {
+/// Since explicit function template specialization and instantiation
+/// declarations can only appear in namespace scope, and you can only
+/// specialize a member of a fully-specialized class, the only way to
+/// get one of these is in a friend declaration like the following:
+///
+/// \code
+///   template \<class T> void foo(T);
+///   template \<class T> class A {
 ///     friend void foo<>(T);
 ///   };
+/// \endcode
 class DependentFunctionTemplateSpecializationInfo {
   union {
     // Force sizeof to be a multiple of sizeof(void*) so that the
@@ -584,7 +590,7 @@ protected:
 public:
   template <class decl_type> friend class RedeclarableTemplate;
 
-  /// Retrieves the canonical declaration of this template.
+  /// \brief Retrieves the canonical declaration of this template.
   RedeclarableTemplateDecl *getCanonicalDecl() { return getFirstDeclaration(); }
   const RedeclarableTemplateDecl *getCanonicalDecl() const { 
     return getFirstDeclaration(); 
@@ -647,7 +653,7 @@ public:
   ///
   /// which was itself created during the instantiation of \c X<int>. Calling
   /// getInstantiatedFromMemberTemplate() on this FunctionTemplateDecl will
-  /// retrieve the FunctionTemplateDecl for the original template "f" within
+  /// retrieve the FunctionTemplateDecl for the original template \c f within
   /// the class template \c X<T>, i.e.,
   ///
   /// \code
@@ -832,8 +838,10 @@ public:
 // Kinds of Template Parameters
 //===----------------------------------------------------------------------===//
 
-/// The TemplateParmPosition class defines the position of a template parameter
-/// within a template parameter list. Because template parameter can be listed
+/// \brief Defines the position of a template parameter within a template
+/// parameter list.
+///
+/// Because template parameter can be listed
 /// sequentially for out-of-line template members, each template parameter is
 /// given a Depth - the nesting of template parameter scopes - and a Position -
 /// the occurrence within the parameter list.
@@ -868,15 +876,17 @@ public:
   unsigned getIndex() const { return Position; }
 };
 
-/// TemplateTypeParmDecl - Declaration of a template type parameter,
-/// e.g., "T" in
-/// @code
+/// \brief Declaration of a template type parameter.
+///
+/// For example, "T" in
+/// \code
 /// template<typename T> class vector;
-/// @endcode
+/// \endcode
 class TemplateTypeParmDecl : public TypeDecl {
   /// \brief Whether this template type parameter was declaration with
-  /// the 'typename' keyword. If false, it was declared with the
-  /// 'class' keyword.
+  /// the 'typename' keyword.
+  ///
+  /// If false, it was declared with the 'class' keyword.
   bool Typename : 1;
 
   /// \brief Whether this template type parameter inherited its
@@ -906,8 +916,9 @@ public:
                                                   unsigned ID);
 
   /// \brief Whether this template type parameter was declared with
-  /// the 'typename' keyword. If not, it was declared with the 'class'
-  /// keyword.
+  /// the 'typename' keyword.
+  ///
+  /// If not, it was declared with the 'class' keyword.
   bool wasDeclaredWithTypename() const { return Typename; }
 
   /// \brief Determine whether this template parameter has a default
@@ -1734,18 +1745,18 @@ protected:
   }
 
 public:
-  /// Get the underlying class declarations of the template.
+  /// \brief Get the underlying class declarations of the template.
   CXXRecordDecl *getTemplatedDecl() const {
     return static_cast<CXXRecordDecl *>(TemplatedDecl);
   }
 
-  /// Returns whether this template declaration defines the primary
+  /// \brief Returns whether this template declaration defines the primary
   /// class pattern.
   bool isThisDeclarationADefinition() const {
     return getTemplatedDecl()->isThisDeclarationADefinition();
   }
 
-  /// Create a class template node.
+  /// \brief Create a class template node.
   static ClassTemplateDecl *Create(ASTContext &C, DeclContext *DC,
                                    SourceLocation L,
                                    DeclarationName Name,
@@ -1753,7 +1764,7 @@ public:
                                    NamedDecl *Decl,
                                    ClassTemplateDecl *PrevDecl);
 
-  /// Create an empty class template node.
+  /// \brief Create an empty class template node.
   static ClassTemplateDecl *CreateDeserialized(ASTContext &C, unsigned ID);
 
   /// \brief Return the specialization with the provided arguments if it exists,
@@ -1882,14 +1893,18 @@ public:
   friend class ASTDeclWriter;
 };
 
-/// Declaration of a friend template.  For example:
+/// \brief Declaration of a friend template.
 ///
-/// template <typename T> class A {
+/// For example:
+/// \code
+/// template \<typename T> class A {
 ///   friend class MyVector<T>; // not a friend template
-///   template <typename U> friend class B; // not a friend template
-///   template <typename U> friend class Foo<T>::Nested; // friend template
+///   template \<typename U> friend class B; // not a friend template
+///   template \<typename U> friend class Foo<T>::Nested; // friend template
 /// };
-/// NOTE: This class is not currently in use.  All of the above
+/// \endcode
+///
+/// \note This class is not currently in use.  All of the above
 /// will yield a FriendDecl, not a FriendTemplateDecl.
 class FriendTemplateDecl : public Decl {
   virtual void anchor();
@@ -1952,7 +1967,7 @@ public:
     return Friend.dyn_cast<NamedDecl*>();
   }
 
-  /// Retrieves the location of the 'friend' keyword.
+  /// \brief Retrieves the location of the 'friend' keyword.
   SourceLocation getFriendLoc() const {
     return FriendLoc;
   }
@@ -1974,9 +1989,12 @@ public:
   friend class ASTDeclReader;
 };
 
-/// Declaration of an alias template.  For example:
+/// \brief Declaration of an alias template.
 ///
-/// template <typename T> using V = std::map<T*, int, MyCompare<T>>;
+/// For example:
+/// \code
+/// template \<typename T> using V = std::map<T*, int, MyCompare<T>>;
+/// \endcode
 class TypeAliasTemplateDecl : public RedeclarableTemplateDecl {
   static void DeallocateCommon(void *Ptr);
 
@@ -2048,14 +2066,18 @@ public:
   friend class ASTDeclWriter;
 };
 
-/// Declaration of a function specialization at template class scope.
+/// \brief Declaration of a function specialization at template class scope.
+///
 /// This is a non standard extension needed to support MSVC.
+///
 /// For example:
+/// \code
 /// template <class T>
 /// class A {
 ///    template <class U> void foo(U a) { }
 ///    template<> void foo(int a) { }
 /// }
+/// \endcode
 ///
 /// "template<> foo(int a)" will be saved in Specialization as a normal
 /// CXXMethodDecl. Then during an instantiation of class A, it will be
