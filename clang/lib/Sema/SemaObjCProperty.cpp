@@ -753,24 +753,26 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
           Context.getObjCGCQualType(PropertyIvarType, Qualifiers::Weak);
       }
     }
-
-    if (!Ivar) {
-      if (AtLoc.isInvalid()) {
-        // Check when default synthesizing a property that there is 
-        // an ivar matching property name and issue warning; since this
-        // is the most common case of not using an ivar used for backing
-        // property in non-default synthesis case.
-        ObjCInterfaceDecl *ClassDeclared=0;
-        ObjCIvarDecl *originalIvar = 
-          IDecl->lookupInstanceVariable(property->getIdentifier(), 
-                                        ClassDeclared);
-        if (originalIvar) {
-          Diag(PropertyDiagLoc, 
-               diag::warn_autosynthesis_property_ivar_match);
-          Diag(property->getLocation(), diag::note_property_declare);
-          Diag(originalIvar->getLocation(), diag::note_ivar_decl);
-        }
+    if (AtLoc.isInvalid()) {
+      // Check when default synthesizing a property that there is 
+      // an ivar matching property name and issue warning; since this
+      // is the most common case of not using an ivar used for backing
+      // property in non-default synthesis case.
+      ObjCInterfaceDecl *ClassDeclared=0;
+      ObjCIvarDecl *originalIvar = 
+      IDecl->lookupInstanceVariable(property->getIdentifier(), 
+                                    ClassDeclared);
+      if (originalIvar) {
+        Diag(PropertyDiagLoc, 
+             diag::warn_autosynthesis_property_ivar_match)
+        << property->getName() << (Ivar == 0) << PropertyIvar->getName() 
+        << originalIvar->getName();
+        Diag(property->getLocation(), diag::note_property_declare);
+        Diag(originalIvar->getLocation(), diag::note_ivar_decl);
       }
+    }
+    
+    if (!Ivar) {
       // In ARC, give the ivar a lifetime qualifier based on the
       // property attributes.
       if (getLangOpts().ObjCAutoRefCount &&
