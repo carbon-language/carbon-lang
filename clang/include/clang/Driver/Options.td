@@ -838,7 +838,6 @@ def no_canonical_prefixes : Flag<"-no-canonical-prefixes">, Flags<[HelpHidden]>,
 def no_cpp_precomp : Flag<"-no-cpp-precomp">, Group<clang_ignored_f_Group>;
 def no_integrated_as : Flag<"-no-integrated-as">, Flags<[DriverOption]>;
 def no_integrated_cpp : Flag<"-no-integrated-cpp">, Flags<[DriverOption]>;
-def no_pedantic : Flag<"-no-pedantic">, Group<pedantic_Group>;
 def no__dead__strip__inits__and__terms : Flag<"-no_dead_strip_inits_and_terms">;
 def nobuiltininc : Flag<"-nobuiltininc">, Flags<[CC1Option]>,
   HelpText<"Disable builtin #include directories">;
@@ -1041,7 +1040,6 @@ def _machine_EQ : Joined<"--machine=">, Alias<m_Joined>;
 def _machine : Separate<"--machine">, Alias<m_Joined>;
 def _no_integrated_cpp : Flag<"--no-integrated-cpp">, Alias<no_integrated_cpp>;
 def _no_line_commands : Flag<"--no-line-commands">, Alias<P>;
-def _no_pedantic : Flag<"--no-pedantic">, Alias<no_pedantic>;
 def _no_standard_includes : Flag<"--no-standard-includes">, Alias<nostdinc>;
 def _no_standard_libraries : Flag<"--no-standard-libraries">, Alias<nostdlib>;
 def _no_undefined : Flag<"--no-undefined">, Flags<[LinkerInput]>;

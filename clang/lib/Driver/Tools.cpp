@@ -2034,8 +2034,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   }
 
   Args.AddAllArgs(CmdArgs, options::OPT_W_Group);
-  if (Args.hasFlag(options::OPT_pedantic, options::OPT_no_pedantic, false))
-    CmdArgs.push_back("-pedantic");
+  Args.AddLastArg(CmdArgs, options::OPT_pedantic);
   Args.AddLastArg(CmdArgs, options::OPT_pedantic_errors);
   Args.AddLastArg(CmdArgs, options::OPT_w);
 
