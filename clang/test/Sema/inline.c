@@ -8,15 +8,17 @@
 // Check the use of static variables in non-static inline functions.
 static int staticVar; // expected-note + {{'staticVar' declared here}}
 static int staticFunction(); // expected-note + {{'staticFunction' declared here}}
+static struct { int x; } staticStruct; // expected-note + {{'staticStruct' declared here}}
 
-inline int useStatic () { // expected-note 2 {{use 'static' to give inline function 'useStatic' internal linkage}}
-  staticFunction(); // expected-warning{{function 'staticFunction' has internal linkage but is used in an inline function with external linkage}}
-  return staticVar; // expected-warning{{variable 'staticVar' has internal linkage but is used in an inline function with external linkage}}
+inline int useStatic () { // expected-note 3 {{use 'static' to give inline function 'useStatic' internal linkage}}
+  staticFunction(); // expected-warning{{static function 'staticFunction' is used in an inline function with external linkage}}
+  (void)staticStruct.x; // expected-warning{{static variable 'staticStruct' is used in an inline function with external linkage}}
+  return staticVar; // expected-warning{{static variable 'staticVar' is used in an inline function with external linkage}}
 }
 
 extern inline int useStaticFromExtern () { // no suggestions
-  staticFunction(); // expected-warning{{function 'staticFunction' has internal linkage but is used in an inline function with external linkage}}
-  return staticVar; // expected-warning{{variable 'staticVar' has internal linkage but is used in an inline function with external linkage}}
+  staticFunction(); // expected-warning{{static function 'staticFunction' is used in an inline function with external linkage}}
+  return staticVar; // expected-warning{{static variable 'staticVar' is used in an inline function with external linkage}}
 }
 
 static inline int useStaticFromStatic () {
@@ -48,11 +50,11 @@ inline int useStaticMainFile () {
 // Check that the warnings show up when explicitly requested.
 
 #pragma clang diagnostic push
-#pragma clang diagnostic warning "-Winternal-linkage-in-inline"
+#pragma clang diagnostic warning "-Wstatic-in-inline"
 
 inline int useStaticAgain () { // expected-note 2 {{use 'static' to give inline function 'useStaticAgain' internal linkage}}
-  staticFunction(); // expected-warning{{function 'staticFunction' has internal linkage but is used in an inline function with external linkage}}
-  return staticVar; // expected-warning{{variable 'staticVar' has internal linkage but is used in an inline function with external linkage}}
+  staticFunction(); // expected-warning{{static function 'staticFunction' is used in an inline function with external linkage}}
+  return staticVar; // expected-warning{{static variable 'staticVar' is used in an inline function with external linkage}}
 }
 
 #pragma clang diagnostic pop

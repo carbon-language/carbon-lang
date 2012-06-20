@@ -3022,13 +3022,11 @@ def warn_undefined_internal : Warning<
 def note_used_here : Note<"used here">;
 
 def warn_internal_in_extern_inline : ExtWarn<
-  "%select{function|variable}0 %1 has internal linkage but is used in an "
-  "inline function with external linkage">,
-  InGroup<DiagGroup<"internal-linkage-in-inline"> >;
+  "static %select{function|variable}0 %1 is used in an inline function with "
+  "external linkage">, InGroup<DiagGroup<"static-in-inline"> >;
 def ext_internal_in_extern_inline : Extension<
-  "%select{function|variable}0 %1 has internal linkage but is used in an "
-  "inline function with external linkage">,
-  InGroup<DiagGroup<"internal-linkage-in-inline"> >;
+  "static %select{function|variable}0 %1 is used in an inline function with "
+  "external linkage">, InGroup<DiagGroup<"static-in-inline"> >;
 def note_convert_inline_to_static : Note<
   "use 'static' to give inline function %0 internal linkage">;
 def note_internal_decl_declared_here : Note<
