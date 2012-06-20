@@ -195,8 +195,18 @@ createInvocationForMigration(CompilerInvocation &origCI) {
   CInvok->getLangOpts()->ObjCAutoRefCount = true;
   CInvok->getLangOpts()->setGC(LangOptions::NonGC);
   CInvok->getDiagnosticOpts().ErrorLimit = 0;
-  CInvok->getDiagnosticOpts().Warnings.push_back(
-                                            "error=arc-unsafe-retained-assign");
+
+  // Ignore -Werror flags when migrating.
+  std::vector<std::string> WarnOpts;
+  for (std::vector<std::string>::iterator
+         I = CInvok->getDiagnosticOpts().Warnings.begin(),
+         E = CInvok->getDiagnosticOpts().Warnings.end(); I != E; ++I) {
+    if (!StringRef(*I).startswith("error"))
+      WarnOpts.push_back(*I);
+  }
+  WarnOpts.push_back("error=arc-unsafe-retained-assign");
+  CInvok->getDiagnosticOpts().Warnings = WarnOpts;
+
   CInvok->getLangOpts()->ObjCRuntimeHasWeak = HasARCRuntime(origCI);
 
   return CInvok.take();

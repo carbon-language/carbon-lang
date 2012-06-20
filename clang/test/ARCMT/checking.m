@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -arcmt-check -verify -triple x86_64-apple-darwin10 %s
+// RUN: %clang_cc1 -arcmt-check -verify -triple x86_64-apple-darwin10 -fblocks -Werror %s
 // DISABLE: mingw32
 
 #if __has_feature(objc_arc)
@@ -332,3 +332,13 @@ void rdar9504750(id p) {
   self->x = [NSObject new]; // expected-error {{assigning retained object}}
 }
 @end
+
+@interface Test10 : NSObject
+@property (retain) id prop;
+-(void)foo;
+@end
+
+void test(Test10 *x) {
+  x.prop = ^{ [x foo]; }; // expected-warning {{likely to lead to a retain cycle}} \
+                          // expected-note {{retained by the captured object}}
+}
