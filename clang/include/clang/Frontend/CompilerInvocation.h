@@ -85,10 +85,10 @@ class CompilerInvocation : public CompilerInvocationBase {
   /// Options controlling the frontend itself.
   FrontendOptions FrontendOpts;
 
-  /// Options controlling the #include directive.
+  /// Options controlling the \#include directive.
   HeaderSearchOptions HeaderSearchOpts;
 
-  /// Options controlling the preprocessor (aside from #include handling).
+  /// Options controlling the preprocessor (aside from \#include handling).
   PreprocessorOptions PreprocessorOpts;
 
   /// Options controlling preprocessed output.
