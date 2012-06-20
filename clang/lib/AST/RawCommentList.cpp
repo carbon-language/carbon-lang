@@ -8,7 +8,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/AST/RawCommentList.h"
-#include "clang/AST/ASTContext.h"
 #include "llvm/ADT/STLExtras.h"
 
 using namespace clang;
@@ -155,7 +154,7 @@ bool onlyWhitespaceBetweenComments(SourceManager &SM,
 }
 } // unnamed namespace
 
-void RawCommentList::addComment(const RawComment &RC, ASTContext &Context) {
+void RawCommentList::addComment(const RawComment &RC) {
   if (RC.isInvalid())
     return;
 

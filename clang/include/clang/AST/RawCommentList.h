@@ -15,7 +15,6 @@
 
 namespace clang {
 
-class ASTContext;
 class ASTReader;
 
 class RawComment {
@@ -143,7 +142,7 @@ public:
   RawCommentList(SourceManager &SourceMgr) :
     SourceMgr(SourceMgr), OnlyWhitespaceSeen(true) { }
 
-  void addComment(const RawComment &RC, ASTContext &Context);
+  void addComment(const RawComment &RC);
 
   ArrayRef<RawComment> getComments() const {
     return Comments;

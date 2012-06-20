@@ -435,7 +435,7 @@ public:
 
 public:
   void addComment(const RawComment &RC) {
-    Comments.addComment(RC, *this);
+    Comments.addComment(RC);
   }
 
   /// \brief Return the Doxygen-style comment attached to a given declaration.
