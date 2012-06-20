@@ -1341,10 +1341,9 @@ Instruction *InstCombiner::commonPointerCastTransforms(CastInst &CI) {
     // non-type-safe code.
     if (TD && GEP->hasOneUse() && isa<BitCastInst>(GEP->getOperand(0)) &&
         GEP->hasAllConstantIndices()) {
-      // We are guaranteed to get a constant from EmitGEPOffset.
-      ConstantInt *OffsetV = cast<ConstantInt>(EmitGEPOffset(GEP));
-      int64_t Offset = OffsetV->getSExtValue();
-      
+      SmallVector<Value*, 8> Ops(GEP->idx_begin(), GEP->idx_end());
+      int64_t Offset = TD->getIndexedOffset(GEP->getPointerOperandType(), Ops);
+
       // Get the base pointer input of the bitcast, and the type it points to.
       Value *OrigBase = cast<BitCastInst>(GEP->getOperand(0))->getOperand(0);
       Type *GEPIdxTy =

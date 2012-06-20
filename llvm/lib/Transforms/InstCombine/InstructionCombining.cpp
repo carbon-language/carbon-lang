@@ -1058,10 +1058,9 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
         !isa<BitCastInst>(BCI->getOperand(0)) && GEP.hasAllConstantIndices() &&
         StrippedPtrTy->getAddressSpace() == GEP.getPointerAddressSpace()) {
 
-      // Determine how much the GEP moves the pointer.  We are guaranteed to get
-      // a constant back from EmitGEPOffset.
-      ConstantInt *OffsetV = cast<ConstantInt>(EmitGEPOffset(&GEP));
-      int64_t Offset = OffsetV->getSExtValue();
+      // Determine how much the GEP moves the pointer.
+      SmallVector<Value*, 8> Ops(GEP.idx_begin(), GEP.idx_end());
+      int64_t Offset = TD->getIndexedOffset(GEP.getPointerOperandType(), Ops);
 
       // If this GEP instruction doesn't move the pointer, just replace the GEP
       // with a bitcast of the real input to the dest type.
