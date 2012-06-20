@@ -16,7 +16,6 @@
 #include "AllocationOrder.h"
 #include "RegAllocBase.h"
 #include "LiveDebugVariables.h"
-#include "RenderMachineFunction.h"
 #include "Spiller.h"
 #include "VirtRegMap.h"
 #include "LiveRegMatrix.h"
@@ -65,11 +64,6 @@ class RABasic : public MachineFunctionPass, public RegAllocBase
 {
   // context
   MachineFunction *MF;
-
-#ifndef NDEBUG
-  // analyses
-  RenderMachineFunction *RMF;
-#endif
 
   // state
   std::auto_ptr<Spiller> SpillerInstance;
@@ -140,7 +134,6 @@ RABasic::RABasic(): MachineFunctionPass(ID) {
   initializeMachineLoopInfoPass(*PassRegistry::getPassRegistry());
   initializeVirtRegMapPass(*PassRegistry::getPassRegistry());
   initializeLiveRegMatrixPass(*PassRegistry::getPassRegistry());
-  initializeRenderMachineFunctionPass(*PassRegistry::getPassRegistry());
 }
 
 void RABasic::getAnalysisUsage(AnalysisUsage &AU) const {
@@ -163,7 +156,6 @@ void RABasic::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addPreserved<VirtRegMap>();
   AU.addRequired<LiveRegMatrix>();
   AU.addPreserved<LiveRegMatrix>();
-  DEBUG(AU.addRequired<RenderMachineFunction>());
   MachineFunctionPass::getAnalysisUsage(AU);
 }
 
@@ -284,8 +276,6 @@ bool RABasic::runOnMachineFunction(MachineFunction &mf) {
                << ((Value*)mf.getFunction())->getName() << '\n');
 
   MF = &mf;
-  DEBUG(RMF = &getAnalysis<RenderMachineFunction>());
-
   RegAllocBase::init(getAnalysis<VirtRegMap>(),
                      getAnalysis<LiveIntervals>(),
                      getAnalysis<LiveRegMatrix>());
@@ -295,9 +285,6 @@ bool RABasic::runOnMachineFunction(MachineFunction &mf) {
 
   // Diagnostic output before rewriting
   DEBUG(dbgs() << "Post alloc VirtRegMap:\n" << *VRM << "\n");
-
-  // optional HTML output
-  DEBUG(RMF->renderMachineFunction("After basic register allocation.", VRM));
 
   releaseMemory();
   return true;

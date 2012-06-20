@@ -31,7 +31,6 @@
 
 #define DEBUG_TYPE "regalloc"
 
-#include "RenderMachineFunction.h"
 #include "Spiller.h"
 #include "VirtRegMap.h"
 #include "RegisterCoalescer.h"
@@ -98,7 +97,6 @@ public:
     initializeLiveStacksPass(*PassRegistry::getPassRegistry());
     initializeMachineLoopInfoPass(*PassRegistry::getPassRegistry());
     initializeVirtRegMapPass(*PassRegistry::getPassRegistry());
-    initializeRenderMachineFunctionPass(*PassRegistry::getPassRegistry());
   }
 
   /// Return the pass name.
@@ -134,7 +132,6 @@ private:
   const TargetInstrInfo *tii;
   const MachineLoopInfo *loopInfo;
   MachineRegisterInfo *mri;
-  RenderMachineFunction *rmf;
 
   std::auto_ptr<Spiller> spiller;
   LiveIntervals *lis;
@@ -491,7 +488,6 @@ void RegAllocPBQP::getAnalysisUsage(AnalysisUsage &au) const {
   au.addRequired<MachineLoopInfo>();
   au.addPreserved<MachineLoopInfo>();
   au.addRequired<VirtRegMap>();
-  au.addRequired<RenderMachineFunction>();
   MachineFunctionPass::getAnalysisUsage(au);
 }
 
@@ -601,7 +597,6 @@ bool RegAllocPBQP::runOnMachineFunction(MachineFunction &MF) {
   lis = &getAnalysis<LiveIntervals>();
   lss = &getAnalysis<LiveStacks>();
   loopInfo = &getAnalysis<MachineLoopInfo>();
-  rmf = &getAnalysis<RenderMachineFunction>();
 
   vrm = &getAnalysis<VirtRegMap>();
   spiller.reset(createInlineSpiller(*this, MF, *vrm));
@@ -665,9 +660,6 @@ bool RegAllocPBQP::runOnMachineFunction(MachineFunction &MF) {
 
   // Finalise allocation, allocate empty ranges.
   finalizeAlloc();
-
-  rmf->renderMachineFunction("After PBQP register allocation.", vrm);
-
   vregsToAlloc.clear();
   emptyIntervalVRegs.clear();
 
