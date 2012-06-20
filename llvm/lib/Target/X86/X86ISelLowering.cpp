@@ -99,6 +99,10 @@ static SDValue Extract128BitVector(SDValue Vec, unsigned IdxVal,
 static SDValue Insert128BitVector(SDValue Result, SDValue Vec,
                                   unsigned IdxVal, SelectionDAG &DAG,
                                   DebugLoc dl) {
+  // Inserting UNDEF is Result
+  if (Vec.getOpcode() == ISD::UNDEF)
+    return Result;
+
   EVT VT = Vec.getValueType();
   assert(VT.getSizeInBits() == 128 && "Unexpected vector size!");
 
@@ -114,9 +118,8 @@ static SDValue Insert128BitVector(SDValue Result, SDValue Vec,
                                * ElemsPerChunk);
 
   SDValue VecIdx = DAG.getConstant(NormalizedIdxVal, MVT::i32);
-  Result = DAG.getNode(ISD::INSERT_SUBVECTOR, dl, ResultVT, Result, Vec,
-                       VecIdx);
-  return Result;
+  return DAG.getNode(ISD::INSERT_SUBVECTOR, dl, ResultVT, Result, Vec,
+                     VecIdx);
 }
 
 /// Concat two 128-bit vectors into a 256 bit vector using VINSERTF128

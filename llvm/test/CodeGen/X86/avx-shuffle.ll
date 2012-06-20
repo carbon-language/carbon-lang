@@ -219,3 +219,11 @@ define <16 x i16> @narrow(<16 x i16> %a) nounwind alwaysinline {
   %t = shufflevector <16 x i16> %a, <16 x i16> undef, <16 x i32> <i32 2, i32 3, i32 undef, i32 1, i32 6, i32 7, i32 4, i32 5, i32 10, i32 11, i32 8, i32 undef, i32 14, i32 15, i32 undef, i32 undef>
   ret <16 x i16> %t
 }
+
+;CHECK: test17
+;CHECK-NOT: vinsertf128
+;CHECK: ret
+define   <8 x float> @test17(<4 x float> %y) {
+  %x = shufflevector <4 x float> %y, <4 x float> undef, <8 x i32> <i32 undef, i32 1, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
+  ret <8 x float> %x
+}
