@@ -917,24 +917,24 @@ Instruction *InstCombiner::visitCallSite(CallSite CS) {
     }
 
   if (isa<ConstantPointerNull>(Callee) || isa<UndefValue>(Callee)) {
-    // This instruction is not reachable, just remove it.  We insert a store to
-    // undef so that we know that this code is not reachable, despite the fact
-    // that we can't modify the CFG here.
-    new StoreInst(ConstantInt::getTrue(Callee->getContext()),
-               UndefValue::get(Type::getInt1PtrTy(Callee->getContext())),
-                  CS.getInstruction());
-
     // If CS does not return void then replaceAllUsesWith undef.
     // This allows ValueHandlers and custom metadata to adjust itself.
     if (!CS.getInstruction()->getType()->isVoidTy())
       ReplaceInstUsesWith(*CS.getInstruction(),
                           UndefValue::get(CS.getInstruction()->getType()));
 
-    if (InvokeInst *II = dyn_cast<InvokeInst>(CS.getInstruction())) {
-      // Don't break the CFG, insert a dummy cond branch.
-      BranchInst::Create(II->getNormalDest(), II->getUnwindDest(),
-                         ConstantInt::getTrue(Callee->getContext()), II);
+    if (isa<InvokeInst>(CS.getInstruction())) {
+      // Can't remove an invoke because we cannot change the CFG.
+      return 0;
     }
+
+    // This instruction is not reachable, just remove it.  We insert a store to
+    // undef so that we know that this code is not reachable, despite the fact
+    // that we can't modify the CFG here.
+    new StoreInst(ConstantInt::getTrue(Callee->getContext()),
+                  UndefValue::get(Type::getInt1PtrTy(Callee->getContext())),
+                  CS.getInstruction());
+
     return EraseInstFromFunction(*CS.getInstruction());
   }
 
