@@ -111,7 +111,8 @@ namespace {
     /// immediate field.  Because preinc imms have already been validated, just
     /// accept it.
     bool SelectAddrImmOffs(SDValue N, SDValue &Out) const {
-      if (isa<ConstantSDNode>(N)) {
+      if (isa<ConstantSDNode>(N) || N.getOpcode() == PPCISD::Lo ||
+          N.getOpcode() == ISD::TargetGlobalAddress) {
         Out = N;
         return true;
       }
@@ -123,6 +124,10 @@ namespace {
     /// index field.  Because preinc imms have already been validated, just
     /// accept it.
     bool SelectAddrIdxOffs(SDValue N, SDValue &Out) const {
+      if (isa<ConstantSDNode>(N) || N.getOpcode() == PPCISD::Lo ||
+          N.getOpcode() == ISD::TargetGlobalAddress)
+        return false;
+
       Out = N;
       return true;
     }
