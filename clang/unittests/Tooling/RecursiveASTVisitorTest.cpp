@@ -261,9 +261,10 @@ TEST(RecursiveASTVisitor, VisitsBaseClassTemplateArguments) {
 TEST(RecursiveASTVisitor, VisitsCXXForRangeStmtRange) {
   DeclRefExprVisitor Visitor;
   Visitor.ExpectMatch("x", 2, 25);
+  Visitor.ExpectMatch("x", 2, 30);
   EXPECT_TRUE(Visitor.runOver(
     "int x[5];\n"
-    "void f() { for (int i : x) {} }"));
+    "void f() { for (int i : x) { x[0] = 1; } }"));
 }
 
 TEST(RecursiveASTVisitor, VisitsCXXForRangeStmtLoopVariable) {

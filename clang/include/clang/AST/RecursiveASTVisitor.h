@@ -1878,6 +1878,7 @@ DEF_TRAVERSE_STMT(CXXForRangeStmt, {
   if (!shouldVisitImplicitCode()) {
     TRY_TO(TraverseStmt(S->getLoopVarStmt()));
     TRY_TO(TraverseStmt(S->getRangeInit()));
+    TRY_TO(TraverseStmt(S->getBody()));
     // Visit everything else only if shouldVisitImplicitCode().
     return true;
   }
