@@ -112,7 +112,8 @@ void MipsFrameLowering::emitPrologue(MachineFunction &MF) const {
 
   // First, compute final stack size.
   unsigned StackAlign = getStackAlignment();
-  uint64_t StackSize = MFI->getObjectOffset(MipsFI->getGlobalRegFI()) +
+  uint64_t StackSize = STI.inMips16Mode()? 0:
+    MFI->getObjectOffset(MipsFI->getGlobalRegFI()) +
     StackAlign + RoundUpToAlignment(MFI->getStackSize(), StackAlign);
 
    // Update stack size
