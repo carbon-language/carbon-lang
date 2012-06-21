@@ -10720,7 +10720,7 @@ Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
 
   DiagnoseSentinelCalls(Method, LParenLoc, Args, NumArgs);
 
-  if (CheckFunctionCall(Method, TheCall, Proto))
+  if (CheckFunctionCall(Method, TheCall))
     return ExprError();
 
   if ((isa<CXXConstructorDecl>(CurContext) || 
@@ -11028,7 +11028,7 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Obj,
 
   DiagnoseSentinelCalls(Method, LParenLoc, Args, NumArgs);
 
-  if (CheckFunctionCall(Method, TheCall, Proto))
+  if (CheckFunctionCall(Method, TheCall))
     return true;
 
   return MaybeBindToTemporary(TheCall);
@@ -11208,7 +11208,7 @@ ExprResult Sema::BuildLiteralOperatorCall(LookupResult &R,
   if (CheckCallReturnType(FD->getResultType(), UDSuffixLoc, UDL, FD))
     return ExprError();
 
-  if (CheckFunctionCall(FD, UDL, NULL))
+  if (CheckFunctionCall(FD, UDL))
     return ExprError();
 
   return MaybeBindToTemporary(UDL);

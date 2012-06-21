@@ -6409,21 +6409,6 @@ public:
     VariadicDoesNotApply
   };
 
-  VariadicCallType getVariadicCallType(FunctionDecl *FDecl,
-                                       const FunctionProtoType *Proto,
-                                       Expr *Fn);
-
-  // Used for determining in which context a type is allowed to be passed to a
-  // vararg function.
-  enum VarArgKind {
-    VAK_Valid,
-    VAK_ValidInCXX11,
-    VAK_Invalid
-  };
-
-  // Determines which VarArgKind fits an expression.
-  VarArgKind isValidVarArgType(const QualType &Ty);
-
   /// GatherArgumentsForCall - Collector argument expressions for various
   /// form of call prototypes.
   bool GatherArgumentsForCall(SourceLocation CallLoc,
@@ -6436,13 +6421,9 @@ public:
                               bool AllowExplicit = false);
 
   // DefaultVariadicArgumentPromotion - Like DefaultArgumentPromotion, but
-  // will return ExprError() if the resulting type is not a POD type.
+  // will warn if the resulting type is not a POD type.
   ExprResult DefaultVariadicArgumentPromotion(Expr *E, VariadicCallType CT,
                                               FunctionDecl *FDecl);
-
-  /// Checks to see if the given expression is a valid argument to a variadic
-  /// function, issuing a diagnostic and returning NULL if not.
-  bool variadicArgumentPODCheck(const Expr *E, VariadicCallType CT);
 
   // UsualArithmeticConversions - performs the UsualUnaryConversions on it's
   // operands and then handles various conversions that are common to binary
@@ -7018,33 +6999,10 @@ private:
                         const ArraySubscriptExpr *ASE=0,
                         bool AllowOnePastEnd=true, bool IndexNegated=false);
   void CheckArrayAccess(const Expr *E);
-  // Used to grab the relevant information from a FormatAttr and a
-  // FunctionDeclaration.
-  struct FormatStringInfo {
-    unsigned FormatIdx;
-    unsigned FirstDataArg;
-    bool HasVAListArg;
-  };
-
-  bool getFormatStringInfo(const FormatAttr *Format, bool IsCXXMember,
-                           FormatStringInfo *FSI);
-  bool CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCall,
-                         const FunctionProtoType *Proto);
+  bool CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCall);
   bool CheckObjCMethodCall(ObjCMethodDecl *Method, SourceLocation loc, 
                            Expr **Args, unsigned NumArgs);
-  bool CheckBlockCall(NamedDecl *NDecl, CallExpr *TheCall,
-                      const FunctionProtoType *Proto);
-  void CheckConstructorCall(FunctionDecl *FDecl,
-                            Expr **Args,
-                            unsigned NumArgs,
-                            const FunctionProtoType *Proto,
-                            SourceLocation Loc);
-
-  void checkCall(NamedDecl *FDecl, Expr **Args, unsigned NumArgs,
-                 unsigned NumProtoArgs, bool IsMemberFunction,
-                 SourceLocation Loc, SourceRange Range,
-                 VariadicCallType CallType);
-
+  bool CheckBlockCall(NamedDecl *NDecl, CallExpr *TheCall);
 
   bool CheckObjCString(Expr *Arg);
 
@@ -7079,31 +7037,21 @@ private:
     FST_Unknown
   };
   static FormatStringType GetFormatStringType(const FormatAttr *Format);
-
-  enum StringLiteralCheckType {
-    SLCT_NotALiteral,
-    SLCT_UncheckedLiteral,
-    SLCT_CheckedLiteral
-  };
-
-  StringLiteralCheckType checkFormatStringExpr(const Expr *E,
-                                               Expr **Args, unsigned NumArgs,
-                                               bool HasVAListArg,
-                                               unsigned format_idx,
-                                               unsigned firstDataArg,
-                                               FormatStringType Type,
-                                               bool inFunctionCall = true);
+  bool SemaCheckStringLiteral(const Expr *E, Expr **Args, unsigned NumArgs,
+                              bool HasVAListArg, unsigned format_idx,
+                              unsigned firstDataArg, FormatStringType Type,
+                              bool inFunctionCall = true);
 
   void CheckFormatString(const StringLiteral *FExpr, const Expr *OrigFormatExpr,
                          Expr **Args, unsigned NumArgs, bool HasVAListArg,
                          unsigned format_idx, unsigned firstDataArg,
                          FormatStringType Type, bool inFunctionCall);
 
-  bool CheckFormatArguments(const FormatAttr *Format, CallExpr *TheCall);
-  bool CheckFormatArguments(const FormatAttr *Format, Expr **Args,
+  void CheckFormatArguments(const FormatAttr *Format, CallExpr *TheCall);
+  void CheckFormatArguments(const FormatAttr *Format, Expr **Args,
                             unsigned NumArgs, bool IsCXXMember,
                             SourceLocation Loc, SourceRange Range);
-  bool CheckFormatArguments(Expr **Args, unsigned NumArgs,
+  void CheckFormatArguments(Expr **Args, unsigned NumArgs,
                             bool HasVAListArg, unsigned format_idx,
                             unsigned firstDataArg, FormatStringType Type,
                             SourceLocation Loc, SourceRange range);

@@ -598,59 +598,12 @@ ExprResult Sema::DefaultArgumentPromotion(Expr *E) {
   return Owned(E);
 }
 
-/// Determine the degree of POD-ness for an expression.
-/// Incomplete types are considered POD, since this check can be performed
-/// when we're in an unevaluated context.
-Sema::VarArgKind Sema::isValidVarArgType(const QualType &Ty) {
-  if (Ty->isIncompleteType() || Ty.isCXX98PODType(Context))
-    return VAK_Valid;
-  // C++0x [expr.call]p7:
-  //   Passing a potentially-evaluated argument of class type (Clause 9) 
-  //   having a non-trivial copy constructor, a non-trivial move constructor,
-  //   or a non-trivial destructor, with no corresponding parameter, 
-  //   is conditionally-supported with implementation-defined semantics.
-
-  if (getLangOpts().CPlusPlus0x && !Ty->isDependentType())
-    if (CXXRecordDecl *Record = Ty->getAsCXXRecordDecl())
-      if (Record->hasTrivialCopyConstructor() &&
-          Record->hasTrivialMoveConstructor() &&
-          Record->hasTrivialDestructor())
-        return VAK_ValidInCXX11;
-
-  if (getLangOpts().ObjCAutoRefCount && Ty->isObjCLifetimeType())
-    return VAK_Valid;
-  return VAK_Invalid;
-}
-
-bool Sema::variadicArgumentPODCheck(const Expr *E, VariadicCallType CT) {
-  // Don't allow one to pass an Objective-C interface to a vararg.
-  const QualType & Ty = E->getType();
-
-  // Complain about passing non-POD types through varargs.
-  switch (isValidVarArgType(Ty)) {
-  case VAK_Valid:
-    break;
-  case VAK_ValidInCXX11:
-    DiagRuntimeBehavior(E->getLocStart(), 0,
-        PDiag(diag::warn_cxx98_compat_pass_non_pod_arg_to_vararg)
-        << E->getType() << CT);
-    break;
-  case VAK_Invalid:
-    return DiagRuntimeBehavior(E->getLocStart(), 0,
-                   PDiag(diag::warn_cannot_pass_non_pod_arg_to_vararg)
-                   << getLangOpts().CPlusPlus0x << Ty << CT);
-  }
-  // c++ rules are enforced elsewhere.
-  return false;
-}
-
 /// DefaultVariadicArgumentPromotion - Like DefaultArgumentPromotion, but
 /// will warn if the resulting type is not a POD type, and rejects ObjC
 /// interfaces passed by value.
 ExprResult Sema::DefaultVariadicArgumentPromotion(Expr *E, VariadicCallType CT,
                                                   FunctionDecl *FDecl) {
-  const QualType &Ty = E->getType();
-  if (const BuiltinType *PlaceholderTy = Ty->getAsPlaceholderType()) {
+  if (const BuiltinType *PlaceholderTy = E->getType()->getAsPlaceholderType()) {
     // Strip the unbridged-cast placeholder expression off, if applicable.
     if (PlaceholderTy->getKind() == BuiltinType::ARCUnbridgedCast &&
         (CT == VariadicMethod ||
@@ -671,44 +624,77 @@ ExprResult Sema::DefaultVariadicArgumentPromotion(Expr *E, VariadicCallType CT,
     return ExprError();
   E = ExprRes.take();
 
-  if (Ty->isObjCObjectType() &&
+  // Don't allow one to pass an Objective-C interface to a vararg.
+  if (E->getType()->isObjCObjectType() &&
     DiagRuntimeBehavior(E->getLocStart(), 0,
                         PDiag(diag::err_cannot_pass_objc_interface_to_vararg)
-                          << Ty << CT))
+                          << E->getType() << CT))
     return ExprError();
 
-  // Diagnostics regarding non-POD argument types are
-  // emitted along with format string checking in Sema::CheckFunctionCall().
-  if (isValidVarArgType(Ty) == VAK_Invalid) {
-    // Turn this into a trap.
-    CXXScopeSpec SS;
-    SourceLocation TemplateKWLoc;
-    UnqualifiedId Name;
-    Name.setIdentifier(PP.getIdentifierInfo("__builtin_trap"),
-                       E->getLocStart());
-    ExprResult TrapFn = ActOnIdExpression(TUScope, SS, TemplateKWLoc,
-                                          Name, true, false);
-    if (TrapFn.isInvalid())
-      return ExprError();
+  // Complain about passing non-POD types through varargs. However, don't
+  // perform this check for incomplete types, which we can get here when we're
+  // in an unevaluated context.
+  if (!E->getType()->isIncompleteType() &&
+      !E->getType().isCXX98PODType(Context)) {
+    // C++0x [expr.call]p7:
+    //   Passing a potentially-evaluated argument of class type (Clause 9) 
+    //   having a non-trivial copy constructor, a non-trivial move constructor,
+    //   or a non-trivial destructor, with no corresponding parameter, 
+    //   is conditionally-supported with implementation-defined semantics.
+    bool TrivialEnough = false;
+    if (getLangOpts().CPlusPlus0x && !E->getType()->isDependentType())  {
+      if (CXXRecordDecl *Record = E->getType()->getAsCXXRecordDecl()) {
+        if (Record->hasTrivialCopyConstructor() &&
+            Record->hasTrivialMoveConstructor() &&
+            Record->hasTrivialDestructor()) {
+          DiagRuntimeBehavior(E->getLocStart(), 0,
+            PDiag(diag::warn_cxx98_compat_pass_non_pod_arg_to_vararg)
+              << E->getType() << CT);
+          TrivialEnough = true;
+        }
+      }
+    }
 
-    ExprResult Call = ActOnCallExpr(TUScope, TrapFn.get(),
-                                    E->getLocStart(), MultiExprArg(),
-                                    E->getLocEnd());
-    if (Call.isInvalid())
-      return ExprError();
+    if (!TrivialEnough &&
+        getLangOpts().ObjCAutoRefCount &&
+        E->getType()->isObjCLifetimeType())
+      TrivialEnough = true;
+      
+    if (TrivialEnough) {
+      // Nothing to diagnose. This is okay.
+    } else if (DiagRuntimeBehavior(E->getLocStart(), 0,
+                          PDiag(diag::warn_cannot_pass_non_pod_arg_to_vararg)
+                            << getLangOpts().CPlusPlus0x << E->getType() 
+                            << CT)) {
+      // Turn this into a trap.
+      CXXScopeSpec SS;
+      SourceLocation TemplateKWLoc;
+      UnqualifiedId Name;
+      Name.setIdentifier(PP.getIdentifierInfo("__builtin_trap"),
+                         E->getLocStart());
+      ExprResult TrapFn = ActOnIdExpression(TUScope, SS, TemplateKWLoc, Name,
+                                            true, false);
+      if (TrapFn.isInvalid())
+        return ExprError();
 
-    ExprResult Comma = ActOnBinOp(TUScope, E->getLocStart(), tok::comma,
-                                  Call.get(), E);
-    if (Comma.isInvalid())
-      return ExprError();
-    return Comma.get();
+      ExprResult Call = ActOnCallExpr(TUScope, TrapFn.get(), E->getLocStart(),
+                                      MultiExprArg(), E->getLocEnd());
+      if (Call.isInvalid())
+        return ExprError();
+      
+      ExprResult Comma = ActOnBinOp(TUScope, E->getLocStart(), tok::comma,
+                                    Call.get(), E);
+      if (Comma.isInvalid())
+        return ExprError();      
+      E = Comma.get();
+    }
   }
-
+  // c++ rules are enforced elsewhere.
   if (!getLangOpts().CPlusPlus &&
       RequireCompleteType(E->getExprLoc(), E->getType(),
                           diag::err_call_incomplete_argument))
     return ExprError();
-
+  
   return Owned(E);
 }
 
@@ -3437,25 +3423,6 @@ ExprResult Sema::BuildCXXDefaultArgExpr(SourceLocation CallLoc,
   return Owned(CXXDefaultArgExpr::Create(Context, CallLoc, Param));
 }
 
-
-Sema::VariadicCallType
-Sema::getVariadicCallType(FunctionDecl *FDecl, const FunctionProtoType *Proto,
-                          Expr *Fn) {
-  if (Proto && Proto->isVariadic()) {
-    if (dyn_cast_or_null<CXXConstructorDecl>(FDecl))
-      return VariadicConstructor;
-    else if (Fn && Fn->getType()->isBlockPointerType())
-      return VariadicBlock;
-    else if (FDecl) {
-      if (CXXMethodDecl *Method = dyn_cast_or_null<CXXMethodDecl>(FDecl))
-        if (Method->isInstance())
-          return VariadicMethod;
-      return VariadicFunction;
-    }
-  }
-  return VariadicDoesNotApply;
-}
-
 /// ConvertArgumentsForCall - Converts the arguments specified in
 /// Args/NumArgs to the parameter types of the function FDecl with
 /// function prototype Proto. Call is the call expression itself, and
@@ -3547,8 +3514,12 @@ Sema::ConvertArgumentsForCall(CallExpr *Call, Expr *Fn,
     }
   }
   SmallVector<Expr *, 8> AllArgs;
-  VariadicCallType CallType = getVariadicCallType(FDecl, Proto, Fn);
-  
+  VariadicCallType CallType =
+    Proto->isVariadic() ? VariadicFunction : VariadicDoesNotApply;
+  if (Fn->getType()->isBlockPointerType())
+    CallType = VariadicBlock; // Block
+  else if (isa<MemberExpr>(Fn))
+    CallType = VariadicMethod;
   Invalid = GatherArgumentsForCall(Call->getLocStart(), FDecl,
                                    Proto, 0, Args, NumArgs, AllArgs, CallType);
   if (Invalid)
@@ -3637,6 +3608,7 @@ bool Sema::GatherArgumentsForCall(SourceLocation CallLoc,
 
   // If this is a variadic call, handle args passed through "...".
   if (CallType != VariadicDoesNotApply) {
+
     // Assume that extern "C" functions with variadic arguments that
     // return __unknown_anytype aren't *really* variadic.
     if (Proto->getResultType() == Context.UnknownAnyTy &&
@@ -3974,8 +3946,7 @@ Sema::BuildResolvedCallExpr(Expr *Fn, NamedDecl *NDecl,
   TheCall->setType(FuncT->getCallResultType(Context));
   TheCall->setValueKind(Expr::getValueKindForType(FuncT->getResultType()));
 
-  const FunctionProtoType *Proto = dyn_cast<FunctionProtoType>(FuncT);
-  if (Proto) {
+  if (const FunctionProtoType *Proto = dyn_cast<FunctionProtoType>(FuncT)) {
     if (ConvertArgumentsForCall(TheCall, Fn, FDecl, Proto, Args, NumArgs,
                                 RParenLoc, IsExecConfig))
       return ExprError();
@@ -3987,7 +3958,8 @@ Sema::BuildResolvedCallExpr(Expr *Fn, NamedDecl *NDecl,
       // on our knowledge of the function definition.
       const FunctionDecl *Def = 0;
       if (FDecl->hasBody(Def) && NumArgs != Def->param_size()) {
-        Proto = Def->getType()->getAs<FunctionProtoType>();
+        const FunctionProtoType *Proto 
+          = Def->getType()->getAs<FunctionProtoType>();
         if (!Proto || !(Proto->isVariadic() && NumArgs >= Def->param_size()))
           Diag(RParenLoc, diag::warn_call_wrong_number_of_arguments)
             << (NumArgs > Def->param_size()) << FDecl << Fn->getSourceRange();
@@ -4045,13 +4017,13 @@ Sema::BuildResolvedCallExpr(Expr *Fn, NamedDecl *NDecl,
 
   // Do special checking on direct calls to functions.
   if (FDecl) {
-    if (CheckFunctionCall(FDecl, TheCall, Proto))
+    if (CheckFunctionCall(FDecl, TheCall))
       return ExprError();
 
     if (BuiltinID)
       return CheckBuiltinFunctionCall(BuiltinID, TheCall);
   } else if (NDecl) {
-    if (CheckBlockCall(NDecl, TheCall, Proto))
+    if (CheckBlockCall(NDecl, TheCall))
       return ExprError();
   }
 
