@@ -2,13 +2,6 @@ set( LLVM_LINK_COMPONENTS
   support
   )
 
-set( LLVM_USED_LIBS
-  clangBasic
-  clangLex
-  clangSema
-  clangFrontend
-  )
-
 add_clang_executable(diagtool
   diagtool_main.cpp
   DiagTool.cpp
@@ -19,6 +12,13 @@ add_clang_executable(diagtool
 
 add_dependencies(diagtool
   ClangDiagnosticIndexName
+  )
+
+target_link_libraries(diagtool
+  clangBasic
+  clangLex
+  clangSema
+  clangFrontend
   )
 
 if(UNIX)

@@ -1,5 +1,3 @@
-set(LLVM_USED_LIBS clangBasic clangAST clangParse clangFrontend clangRewrite)
-
 add_clang_library(clangARCMigrate
   ARCMT.cpp
   ARCMTActions.cpp
@@ -27,3 +25,11 @@ add_dependencies(clangARCMigrate
   ClangAttrList
   ClangDeclNodes
   ClangStmtNodes)
+
+target_link_libraries(clangARCMigrate
+  clangBasic
+  clangAST
+  clangParse
+  clangFrontend
+  clangRewrite
+  )

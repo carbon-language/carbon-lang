@@ -192,7 +192,6 @@ macro(add_clang_library name)
     add_dependencies( ${name} ${LLVM_COMMON_DEPENDS} )
   endif( LLVM_COMMON_DEPENDS )
 
-  target_link_libraries( ${name} ${LLVM_USED_LIBS} )
   llvm_config( ${name} ${LLVM_LINK_COMPONENTS} )
   target_link_libraries( ${name} ${LLVM_COMMON_LIBS} )
   link_system_libs( ${name} )

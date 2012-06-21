@@ -1,5 +1,3 @@
-set(LLVM_USED_LIBS libclang)
-
 set( LLVM_LINK_COMPONENTS
   support
   mc
@@ -7,6 +5,10 @@ set( LLVM_LINK_COMPONENTS
 
 add_clang_executable(c-index-test
   c-index-test.c
+  )
+
+target_link_libraries(c-index-test
+  libclang
   )
 
 set_target_properties(c-index-test

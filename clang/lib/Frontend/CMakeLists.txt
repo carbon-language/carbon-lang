@@ -1,14 +1,3 @@
-set( LLVM_USED_LIBS
-  clangAST
-  clangBasic
-  clangDriver
-  clangEdit
-  clangLex
-  clangParse
-  clangSema
-  clangSerialization
-  )
-
 add_clang_library(clangFrontend
   ASTConsumers.cpp
   ASTMerge.cpp
@@ -41,7 +30,6 @@ add_clang_library(clangFrontend
   Warnings.cpp
   )
 
-
 add_dependencies(clangFrontend
   ClangAttrClasses
   ClangAttrList
@@ -50,4 +38,16 @@ add_dependencies(clangFrontend
   ClangDiagnosticSema
   ClangDriverOptions
   ClangDeclNodes
-  ClangStmtNodes)
+  ClangStmtNodes
+  )
+
+target_link_libraries(clangFrontend
+  clangAST
+  clangBasic
+  clangDriver
+  clangEdit
+  clangLex
+  clangParse
+  clangSema
+  clangSerialization
+  )

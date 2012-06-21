@@ -1,7 +1,5 @@
 set(LLVM_LINK_COMPONENTS support)
 
-set(LLVM_USED_LIBS clangBasic clangLex clangAST clangFrontend clangRewrite)
-
 add_clang_library(clangStaticAnalyzerCore
   AnalysisManager.cpp
   APSIntType.cpp
@@ -42,5 +40,17 @@ add_clang_library(clangStaticAnalyzerCore
   TextPathDiagnostics.cpp
   )
 
-add_dependencies(clangStaticAnalyzerCore ClangAttrClasses ClangAttrList ClangDeclNodes
-                 ClangStmtNodes)
+add_dependencies(clangStaticAnalyzerCore
+  ClangAttrClasses
+  ClangAttrList
+  ClangDeclNodes
+  ClangStmtNodes
+  )
+
+target_link_libraries(clangStaticAnalyzerCore
+  clangBasic
+  clangLex
+  clangAST
+  clangFrontend
+  clangRewrite
+  )

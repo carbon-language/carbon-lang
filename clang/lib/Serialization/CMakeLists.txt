@@ -1,5 +1,3 @@
-set(LLVM_USED_LIBS clangSema)
-
 add_clang_library(clangSerialization
   ASTCommon.h
   ASTReaderInternals.h
@@ -24,4 +22,9 @@ add_dependencies(clangSerialization
   ClangDiagnosticSema
   ClangDiagnosticSerialization
   ClangDeclNodes
-  ClangStmtNodes)
+  ClangStmtNodes
+  )
+
+target_link_libraries(clangSerialization
+  clangSema
+  )
