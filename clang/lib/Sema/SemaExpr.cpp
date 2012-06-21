@@ -172,13 +172,21 @@ static void diagnoseUseOfInternalDeclInInlineFunction(Sema &S,
   if (D->getLinkage() != InternalLinkage)
     return;
 
-  // Don't warn unless -pedantic is on if the inline function is in the main
-  // source file. This function will most likely not be inlined into
-  // another translation unit, so it's effectively internal.
-  bool IsInMainFile = S.getSourceManager().isFromMainFile(Loc);
-  S.Diag(Loc, IsInMainFile ? diag::ext_internal_in_extern_inline
-                           : diag::warn_internal_in_extern_inline)
-    << isa<VarDecl>(D) << D;
+  // Downgrade from ExtWarn to Extension if
+  //  (1) the supposedly external inline function is in the main file,
+  //      and probably won't be included anywhere else.
+  //  (2) the thing we're referencing is a pure function.
+  //  (3) the thing we're referencing is another inline function.
+  // This last can give us false negatives, but it's better than warning on
+  // wrappers for simple C library functions.
+  const FunctionDecl *UsedFn = dyn_cast<FunctionDecl>(D);
+  bool DowngradeWarning = S.getSourceManager().isFromMainFile(Loc);
+  if (!DowngradeWarning && UsedFn)
+    DowngradeWarning = UsedFn->isInlined() || UsedFn->hasAttr<ConstAttr>();
+
+  S.Diag(Loc, DowngradeWarning ? diag::ext_internal_in_extern_inline
+                               : diag::warn_internal_in_extern_inline)
+    << /*IsVar=*/!UsedFn << D;
 
   // Suggest "static" on the inline function, if possible.
   if (!hasAnyExplicitStorageClass(Current)) {

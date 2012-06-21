@@ -26,6 +26,20 @@ static inline int useStaticFromStatic () {
   return staticVar; // no-warning
 }
 
+extern inline int useStaticInlineFromExtern () {
+  // Heuristic: if the function we're using is also inline, don't warn.
+  // This can still be wrong (in this case, we end up inlining calls to
+  // staticFunction and staticVar) but this got very noisy even using
+  // standard headers.
+  return useStaticFromStatic(); // no-warning
+}
+
+static int constFunction() __attribute__((const));
+
+inline int useConst () {
+  return constFunction(); // no-warning
+}
+
 #else
 // -------
 // This is the main source file.
