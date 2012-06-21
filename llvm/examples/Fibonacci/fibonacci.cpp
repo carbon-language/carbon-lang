@@ -40,7 +40,7 @@ static Function *CreateFibFunction(Module *M, LLVMContext &Context) {
   // Create the fib function and insert it into module M.  This function is said
   // to return an int and take an int parameter.
   Function *FibF =
-    cast<Function>(M->getOrInsertFunction("fib", Type::getInt32Ty(Context), 
+    cast<Function>(M->getOrInsertFunction("fib", Type::getInt32Ty(Context),
                                           Type::getInt32Ty(Context),
                                           (Type *)0));
 
@@ -94,7 +94,7 @@ int main(int argc, char **argv) {
 
   InitializeNativeTarget();
   LLVMContext Context;
-  
+
   // Create some module to put our function into it.
   OwningPtr<Module> M(new Module("test", Context));
 
@@ -132,6 +132,6 @@ int main(int argc, char **argv) {
 
   // import result of execution
   outs() << "Result: " << GV.IntVal << "\n";
-  
+
   return 0;
 }
