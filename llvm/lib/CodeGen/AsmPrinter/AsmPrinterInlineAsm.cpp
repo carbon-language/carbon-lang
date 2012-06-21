@@ -420,9 +420,14 @@ bool AsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
     default:
       return true;  // Unknown modifier.
     case 'c': // Substitute immediate value without immediate syntax
-      if ((MO.getType()) != MachineOperand::MO_Immediate)
+      if (MO.getType() != MachineOperand::MO_Immediate)
         return true;
       O << MO.getImm();
+      return false;
+    case 'n':  // Negate the immediate constant.
+      if (MO.getType() != MachineOperand::MO_Immediate)
+        return true;
+      O << -MO.getImm();
       return false;
     }
   }
