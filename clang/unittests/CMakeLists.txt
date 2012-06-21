@@ -1,16 +1,13 @@
 include(LLVMParseArguments)
 
 # add_clang_unittest(test_dirname file1.cpp file2.cpp ...
-#                    [USED_LIBS lib1 lib2]
-#                    [LINK_COMPONENTS component1 component2])
+#                    [USED_LIBS lib1 lib2])
 #
 # Will compile the list of files together and link against the clang
-# libraries in the USED_LIBS list and the llvm-config components in
-# the LINK_COMPONENTS list.  Produces a binary named
+# libraries in the USED_LIBS. Produces a binary named
 # 'basename(test_dirname)Tests'.
 function(add_clang_unittest)
-  PARSE_ARGUMENTS(CLANG_UNITTEST "USED_LIBS;LINK_COMPONENTS" "" ${ARGN})
-  set(LLVM_LINK_COMPONENTS ${CLANG_UNITTEST_LINK_COMPONENTS})
+  parse_arguments(CLANG_UNITTEST "USED_LIBS" "" ${ARGN})
   set(LLVM_USED_LIBS ${CLANG_UNITTEST_USED_LIBS})
   list(GET CLANG_UNITTEST_DEFAULT_ARGS 0 test_dirname)
   list(REMOVE_AT CLANG_UNITTEST_DEFAULT_ARGS 0)
@@ -35,6 +32,7 @@ add_custom_target(ClangUnitTests)
 set_target_properties(ClangUnitTests PROPERTIES FOLDER "Clang tests")
 
 include_directories(${LLVM_MAIN_SRC_DIR}/utils/unittest/googletest/include)
+
 add_definitions(-DGTEST_HAS_RTTI=0)
 if( LLVM_COMPILER_IS_GCC_COMPATIBLE )
   llvm_replace_compiler_option(CMAKE_CXX_FLAGS "-frtti" "-fno-rtti")
