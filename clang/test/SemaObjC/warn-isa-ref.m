@@ -5,6 +5,7 @@ typedef struct objc_object {
 } *id;
 
 @interface NSObject {
+  id firstobj;
   struct objc_class *isa;
 }
 @end
@@ -33,3 +34,50 @@ static void func() {
                     expected-warning{{receiver type 'struct objc_class *' is not 'id' or interface pointer, consider casting it to 'id'}} \
                     expected-warning{{method '-self' not found (return type defaults to 'id')}}
 }
+
+// rdar://11702488
+// If an ivar is (1) the first ivar in a root class and (2) named `isa`,
+// then it should get the same warnings that id->isa gets.
+
+@interface BaseClass {
+@public
+    Class isa; // expected-note 3 {{ivar is declared here}}
+}
+@end
+
+@interface OtherClass {
+@public
+    id    firstIvar;
+    Class isa; // note, not first ivar;
+}
+@end
+
+@interface Subclass : BaseClass @end
+
+@interface SiblingClass : BaseClass @end
+
+@interface Root @end
+
+@interface hasIsa : Root {
+@public
+  Class isa; // note, isa is not in root class
+}
+@end
+
+@implementation Subclass
+-(void)method {
+    hasIsa *u;
+    id v;
+    BaseClass *w;
+    Subclass *x;
+    SiblingClass *y;
+    OtherClass *z;
+    (void)v->isa; // expected-warning {{direct access to objective-c's isa is deprecated}}
+    (void)w->isa; // expected-warning {{direct access to objective-c's isa is deprecated}}
+    (void)x->isa; // expected-warning {{direct access to objective-c's isa is deprecated}}
+    (void)y->isa; // expected-warning {{direct access to objective-c's isa is deprecated}}
+    (void)z->isa;
+    (void)u->isa;
+}
+@end
+
