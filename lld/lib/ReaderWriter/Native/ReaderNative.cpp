@@ -322,7 +322,8 @@ public:
                     << ", size=" << a->size()
                     << "\n");
       for (const Reference *r : *a ) {
-       DEBUG_WITH_TYPE("ReaderNative", llvm::dbgs() 
+        (void)r;
+        DEBUG_WITH_TYPE("ReaderNative", llvm::dbgs() 
                     << "        offset=" 
                     << llvm::format("0x%03X", r->offsetInAtom())
                     << ", kind=" << r->kind()
