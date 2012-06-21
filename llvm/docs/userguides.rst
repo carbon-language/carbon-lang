@@ -10,6 +10,7 @@ User Guides
    DeveloperPolicy
    FAQ
    Lexicon
+   Packaging
 
 * `The LLVM Getting Started Guide <GettingStarted.html>`_
     
@@ -67,7 +68,7 @@ User Guides
 
    Instructions for building the clang front-end from source.
     
-* `Packaging guide <Packaging.html>`_
+* :ref:`packaging`
 
    Advice on packaging LLVM into a distribution.
     
