@@ -317,7 +317,6 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
     } else if (Directive[0] == 'e') {
       StringRef Sub = Directive.substr(1);
       if (Sub == "ndif") {  // "endif"
-        CheckEndOfDirective("endif");
         PPConditionalInfo CondInfo;
         CondInfo.WasSkipping = true; // Silence bogus warning.
         bool InCond = CurPPLexer->popConditionalLevel(CondInfo);
@@ -326,9 +325,12 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
 
         // If we popped the outermost skipping block, we're done skipping!
         if (!CondInfo.WasSkipping) {
+          CheckEndOfDirective("endif");
           if (Callbacks)
             Callbacks->Endif(Tok.getLocation(), CondInfo.IfLoc);
           break;
+        } else {
+          DiscardUntilEndOfDirective();
         }
       } else if (Sub == "lse") { // "else".
         // #else directive in a skipping conditional.  If not in some other
