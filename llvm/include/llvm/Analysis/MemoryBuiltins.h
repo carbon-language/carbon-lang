@@ -192,15 +192,16 @@ public:
 };
 
 typedef std::pair<Value*, Value*> SizeOffsetEvalType;
-typedef IRBuilder<true, TargetFolder> BuilderTy;
-typedef DenseMap<const Value*, SizeOffsetEvalType> CacheMapTy;
-typedef SmallPtrSet<const Value*, 8> PtrSetTy;
 
 
 /// \brief Evaluate the size and offset of an object ponted by a Value*.
 /// May create code to compute the result at run-time.
 class ObjectSizeOffsetEvaluator
   : public InstVisitor<ObjectSizeOffsetEvaluator, SizeOffsetEvalType> {
+
+  typedef IRBuilder<true, TargetFolder> BuilderTy;
+  typedef DenseMap<const Value*, SizeOffsetEvalType> CacheMapTy;
+  typedef SmallPtrSet<const Value*, 8> PtrSetTy;
 
   const TargetData *TD;
   LLVMContext &Context;
