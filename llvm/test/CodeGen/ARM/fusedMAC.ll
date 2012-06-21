@@ -141,6 +141,15 @@ entry:
   ret double %tmp2
 }
 
+define float @test_fnms_f32(float %a, float %b, float* %c) nounwind readnone ssp {
+; CHECK: test_fnms_f32
+; CHECK: vfnms.f32
+  %tmp1 = load float* %c, align 4
+  %tmp2 = fsub float -0.0, %tmp1
+  %tmp3 = tail call float @llvm.fma.f32(float %a, float %b, float %tmp2) nounwind readnone
+  ret float %tmp3 
+}
+
 define double @test_fnms_f64(double %a, double %b, double %c) nounwind readnone ssp {
 entry:
 ; CHECK: test_fnms_f64
