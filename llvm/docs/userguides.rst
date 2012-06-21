@@ -8,6 +8,7 @@ User Guides
 
    CommandGuide/index
    DeveloperPolicy
+   GettingStartedVS
    FAQ
    Lexicon
    Packaging
