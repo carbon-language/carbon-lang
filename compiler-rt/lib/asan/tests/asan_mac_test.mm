@@ -9,7 +9,8 @@
 #import <Foundation/NSObject.h>
 #import <Foundation/NSURL.h>
 
-void CFAllocatorDefaultDoubleFree() {
+// This is a (void*)(void*) function so it can be passed to pthread_create.
+void *CFAllocatorDefaultDoubleFree(void *unused) {
   void *mem =  CFAllocatorAllocate(kCFAllocatorDefault, 5, 0);
   CFAllocatorDeallocate(kCFAllocatorDefault, mem);
   CFAllocatorDeallocate(kCFAllocatorDefault, mem);

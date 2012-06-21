@@ -1902,9 +1902,19 @@ TEST(AddressSanitizer, BufferOverflowAfterManyFrees) {
 #include "asan_mac_test.h"
 TEST(AddressSanitizerMac, CFAllocatorDefaultDoubleFree) {
   EXPECT_DEATH(
-      CFAllocatorDefaultDoubleFree(),
+      CFAllocatorDefaultDoubleFree(NULL),
       "attempting double-free");
 }
+
+void CFAllocator_DoubleFreeOnPthread() {
+  pthread_t child;
+  pthread_create(&child, NULL, CFAllocatorDefaultDoubleFree, NULL);
+  pthread_join(child, NULL);  // Shouldn't be reached.
+}
+
+TEST(AddressSanitizerMac, DISABLED_CFAllocatorDefaultDoubleFree_ChildPhread) {
+  EXPECT_DEATH(CFAllocator_DoubleFreeOnPthread(), "attempting double-free");
+} 
 
 // TODO(glider): figure out whether we still need these tests. Is it correct
 // to intercept the non-default CFAllocators?
@@ -1914,6 +1924,7 @@ TEST(AddressSanitizerMac, DISABLED_CFAllocatorSystemDefaultDoubleFree) {
       "attempting double-free");
 }
 
+// We're intercepting malloc, so kCFAllocatorMalloc is routed to ASan.
 TEST(AddressSanitizerMac, CFAllocatorMallocDoubleFree) {
   EXPECT_DEATH(CFAllocatorMallocDoubleFree(), "attempting double-free");
 }
