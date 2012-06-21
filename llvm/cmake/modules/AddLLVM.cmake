@@ -149,14 +149,12 @@ macro(add_llvm_external_project name)
 endmacro(add_llvm_external_project)
 
 # Generic support for adding a unittest.
-function(add_unittest test_suite test_dirname)
-  string(REGEX MATCH "([^/]+)$" test_name ${test_dirname})
+function(add_unittest test_suite test_name)
   if (CMAKE_BUILD_TYPE)
     set(CMAKE_RUNTIME_OUTPUT_DIRECTORY
-      ${CMAKE_CURRENT_BINARY_DIR}/${test_dirname}/${CMAKE_BUILD_TYPE})
+      ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE})
   else()
-    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY
-      ${CMAKE_CURRENT_BINARY_DIR}/${test_dirname})
+    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   endif()
   if( NOT LLVM_BUILD_TESTS )
     set(EXCLUDE_FROM_ALL ON)

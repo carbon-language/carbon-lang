@@ -1,0 +1,29 @@
+set(LLVM_LINK_COMPONENTS
+  Support
+  Core
+  )
+
+add_llvm_unittest(SupportTests
+  AlignOfTest.cpp
+  AllocatorTest.cpp
+  BlockFrequencyTest.cpp
+  Casting.cpp
+  CommandLineTest.cpp
+  ConstantRangeTest.cpp
+  DataExtractorTest.cpp
+  EndianTest.cpp
+  IntegersSubsetTest.cpp
+  IRBuilderTest.cpp
+  LeakDetectorTest.cpp
+  ManagedStatic.cpp
+  MathExtrasTest.cpp
+  MDBuilderTest.cpp
+  Path.cpp
+  raw_ostream_test.cpp
+  RegexTest.cpp
+  SwapByteOrderTest.cpp
+  TimeValue.cpp
+  TypeBuilderTest.cpp
+  ValueHandleTest.cpp
+  YAMLParserTest.cpp
+  )

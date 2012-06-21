@@ -1,0 +1,32 @@
+set(LLVM_LINK_COMPONENTS
+  Support
+  )
+
+add_llvm_unittest(ADTTests
+  APFloatTest.cpp
+  APIntTest.cpp
+  BitVectorTest.cpp
+  DAGDeltaAlgorithmTest.cpp
+  DeltaAlgorithmTest.cpp
+  DenseMapTest.cpp
+  DenseSetTest.cpp
+  FoldingSet.cpp
+  HashingTest.cpp
+  ilistTest.cpp
+  ImmutableSetTest.cpp
+  IntEqClassesTest.cpp
+  IntervalMapTest.cpp
+  IntrusiveRefCntPtrTest.cpp
+  PackedVectorTest.cpp
+  SCCIteratorTest.cpp
+  SmallPtrSetTest.cpp
+  SmallStringTest.cpp
+  SmallVectorTest.cpp
+  SparseBitVectorTest.cpp
+  SparseSetTest.cpp
+  StringMapTest.cpp
+  StringRefTest.cpp
+  TripleTest.cpp
+  TwineTest.cpp
+  VariadicFunctionTest.cpp
+ )

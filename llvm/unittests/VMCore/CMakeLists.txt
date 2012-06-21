@@ -1,0 +1,27 @@
+set(LLVM_LINK_COMPONENTS
+  asmparser
+  analysis
+  core
+  ipa
+  target
+  )
+
+set(VMCoreSources
+  ConstantsTest.cpp
+  DominatorTreeTest.cpp
+  InstructionsTest.cpp
+  MetadataTest.cpp
+  PassManagerTest.cpp
+  ValueMapTest.cpp
+  VerifierTest.cpp
+  )
+
+# MSVC9 and 8 cannot compile ValueMapTest.cpp due to their bug.
+# See issue#331418 in Visual Studio.
+if(MSVC AND MSVC_VERSION LESS 1600)
+  list(REMOVE_ITEM VMCoreSources ValueMapTest.cpp)
+endif()
+
+add_llvm_unittest(VMCoreTests
+  ${VMCoreSources}
+  )
