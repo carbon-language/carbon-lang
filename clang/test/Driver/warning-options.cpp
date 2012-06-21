@@ -8,7 +8,3 @@
 // CHECK: unknown warning option '-Wmonkey'
 // CHECK: unknown warning option '-Wno-monkey'
 // CHECK: unknown warning option '-Wno-unused-command-line-arguments'; did you mean '-Wno-unused-command-line-argument'?
-
-// PR12920: They use gcc driver. Clang tends to pass -pedantic to gcc-as and gcc-ld.
-// XFAIL: cygwin,mingw32
-
