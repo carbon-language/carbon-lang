@@ -14,12 +14,8 @@
 
 #define DEBUG_TYPE "bounds-checking"
 #include "llvm/Transforms/Scalar.h"
-#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/Statistic.h"
-#include "llvm/Analysis/LoopInfo.h"
-#include "llvm/Analysis/ScalarEvolution.h"
-#include "llvm/Analysis/ScalarEvolutionExpander.h"
-#include "llvm/Analysis/ScalarEvolutionExpressions.h"
+#include "llvm/Analysis/MemoryBuiltins.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/InstIterator.h"
@@ -27,42 +23,20 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/TargetFolder.h"
 #include "llvm/Target/TargetData.h"
-#include "llvm/Transforms/Utils/Local.h"
-#include "llvm/GlobalVariable.h"
-#include "llvm/Instructions.h"
 #include "llvm/Intrinsics.h"
-#include "llvm/Metadata.h"
-#include "llvm/Operator.h"
 #include "llvm/Pass.h"
 using namespace llvm;
 
-static cl::opt<bool> ManyTrapBB("bounds-checking-multiple-traps",
-                                cl::desc("Use one trap block per assertion"));
+static cl::opt<bool> SingleTrapBB("bounds-checking-single-trap",
+                                  cl::desc("Use one trap block per function"));
 
 STATISTIC(ChecksAdded, "Bounds checks added");
 STATISTIC(ChecksSkipped, "Bounds checks skipped");
 STATISTIC(ChecksUnable, "Bounds checks unable to add");
-STATISTIC(ChecksUnableInterproc, "Bounds checks unable to add (interprocedural)");
-STATISTIC(ChecksUnableLoad, "Bounds checks unable to add (LoadInst)");
 
 typedef IRBuilder<true, TargetFolder> BuilderTy;
 
 namespace {
-  // FIXME: can use unions here to save space
-  struct CacheData {
-    APInt Offset;
-    Value *OffsetValue;
-    APInt Size;
-    Value *SizeValue;
-    bool ReturnVal;
-    CacheData() {}
-    CacheData(APInt Off, Value *OffVal, APInt Sz, Value *SzVal, bool Ret) :
-      Offset(Off), OffsetValue(OffVal), Size(Sz), SizeValue(SzVal),
-      ReturnVal(Ret) {}
-  };
-  typedef DenseMap<Value*, CacheData> CacheMapTy;
-  typedef SmallPtrSet<Value*, 8> PtrSetTy;
-
   struct BoundsChecking : public FunctionPass {
     static char ID;
 
@@ -74,20 +48,15 @@ namespace {
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<TargetData>();
-      AU.addRequired<LoopInfo>();
-      AU.addRequired<ScalarEvolution>();
     }
 
   private:
     const TargetData *TD;
-    LoopInfo *LI;
-    ScalarEvolution *SE;
+    ObjectSizeOffsetEvaluator *ObjSizeEval;
     BuilderTy *Builder;
     Function *Fn;
     BasicBlock *TrapBB;
     unsigned Penalty;
-    CacheMapTy CacheMap;
-    PtrSetTy SeenPtrs;
 
     BasicBlock *getTrapBB();
     void emitBranchToTrap(Value *Cmp = 0);
@@ -108,7 +77,7 @@ INITIALIZE_PASS_END(BoundsChecking, "bounds-checking",
 /// getTrapBB - create a basic block that traps. All overflowing conditions
 /// branch to this block. There's only one trap block per function.
 BasicBlock *BoundsChecking::getTrapBB() {
-  if (TrapBB && !ManyTrapBB)
+  if (TrapBB && SingleTrapBB)
     return TrapBB;
 
   BasicBlock::iterator PrevInsertPoint = Builder->GetInsertPoint();
@@ -129,6 +98,16 @@ BasicBlock *BoundsChecking::getTrapBB() {
 /// emitBranchToTrap - emit a branch instruction to a trap block.
 /// If Cmp is non-null, perform a jump only if its value evaluates to true.
 void BoundsChecking::emitBranchToTrap(Value *Cmp) {
+  // check if the comparison is always false
+  ConstantInt *C = dyn_cast_or_null<ConstantInt>(Cmp);
+  if (C) {
+    ++ChecksSkipped;
+    if (!C->getZExtValue())
+      return;
+    else
+      Cmp = 0; // unconditional branch
+  }
+
   Instruction *Inst = Builder->GetInsertPoint();
   BasicBlock *OldBB = Inst->getParent();
   BasicBlock *Cont = OldBB->splitBasicBlock(Inst);
@@ -138,310 +117,6 @@ void BoundsChecking::emitBranchToTrap(Value *Cmp) {
     BranchInst::Create(getTrapBB(), Cont, Cmp, OldBB);
   else
     BranchInst::Create(getTrapBB(), OldBB);
-}
-
-
-#define GET_VALUE(Val, Int) \
-  if (!Val) \
-    Val = ConstantInt::get(IntTy, Int)
-
-#define RETURN(Val) \
-  do { ReturnVal = Val; goto cache_and_return; } while (0)
-
-/// computeAllocSize - compute the object size and the offset within the object
-/// pointed by Ptr. OffsetValue/SizeValue will be null if they are constant, and
-/// therefore the result is given in Offset/Size variables instead.
-/// Returns true if the offset and size could be computed within the given
-/// maximum run-time penalty.
-bool BoundsChecking::computeAllocSize(Value *Ptr, APInt &Offset,
-                                      Value* &OffsetValue, APInt &Size,
-                                      Value* &SizeValue) {
-  Ptr = Ptr->stripPointerCasts();
-
-  // lookup to see if we've seen the Ptr before
-  CacheMapTy::iterator CacheIt = CacheMap.find(Ptr);
-  if (CacheIt != CacheMap.end()) {
-    CacheData &Cache = CacheIt->second;
-    Offset = Cache.Offset;
-    OffsetValue = Cache.OffsetValue;
-    Size = Cache.Size;
-    SizeValue = Cache.SizeValue;
-    return Cache.ReturnVal;
-  }
-
-  // record the pointers that were handled in this run, so that they can be
-  // cleaned later if something fails
-  SeenPtrs.insert(Ptr);
-
-  IntegerType *IntTy = TD->getIntPtrType(Fn->getContext());
-  unsigned IntTyBits = IntTy->getBitWidth();
-  bool ReturnVal;
-
-  // always generate code immediately before the instruction being processed, so
-  // that the generated code dominates the same BBs
-  Instruction *PrevInsertPoint = Builder->GetInsertPoint();
-  if (Instruction *I = dyn_cast<Instruction>(Ptr))
-    Builder->SetInsertPoint(I);
-
-  // initalize with "don't know" state: offset=0 and size=uintmax
-  Offset = 0;
-  Size = APInt::getMaxValue(TD->getTypeSizeInBits(IntTy));
-  OffsetValue = SizeValue = 0;
-
-  if (GEPOperator *GEP = dyn_cast<GEPOperator>(Ptr)) {
-    APInt PtrOffset(IntTyBits, 0);
-    Value *PtrOffsetValue = 0;
-    if (!computeAllocSize(GEP->getPointerOperand(), PtrOffset, PtrOffsetValue,
-                          Size, SizeValue))
-      RETURN(false);
-
-    if (GEP->hasAllConstantIndices()) {
-      SmallVector<Value*, 8> Ops(GEP->idx_begin(), GEP->idx_end());
-      Offset = TD->getIndexedOffset(GEP->getPointerOperandType(), Ops);
-      // if PtrOffset is constant, return immediately
-      if (!PtrOffsetValue) {
-        Offset += PtrOffset;
-        RETURN(true);
-      }
-      OffsetValue = ConstantInt::get(IntTy, Offset);
-    } else if (Penalty > 1) {
-      OffsetValue = EmitGEPOffset(Builder, *TD, GEP);
-      GET_VALUE(PtrOffsetValue, PtrOffset);
-    } else
-      RETURN(false);
-
-    OffsetValue = Builder->CreateAdd(PtrOffsetValue, OffsetValue);
-    RETURN(true);
-
-  // global variable with definitive size
-  } else if (GlobalVariable *GV = dyn_cast<GlobalVariable>(Ptr)) {
-    if (GV->hasDefinitiveInitializer()) {
-      Constant *C = GV->getInitializer();
-      Size = TD->getTypeAllocSize(C->getType());
-      RETURN(true);
-    }
-    RETURN(false);
-
-  // stack allocation
-  } else if (AllocaInst *AI = dyn_cast<AllocaInst>(Ptr)) {
-    if (!AI->getAllocatedType()->isSized())
-      RETURN(false);
-
-    Size = TD->getTypeAllocSize(AI->getAllocatedType());
-    if (!AI->isArrayAllocation())
-      RETURN(true); // we are done
-
-    Value *ArraySize = AI->getArraySize();
-    if (const ConstantInt *C = dyn_cast<ConstantInt>(ArraySize)) {
-      Size *= C->getValue();
-      RETURN(true);
-    }
-
-    if (Penalty < 2)
-      RETURN(false);
-
-    // VLA: compute size dynamically
-    SizeValue = ConstantInt::get(ArraySize->getType(), Size);
-    SizeValue = Builder->CreateMul(SizeValue, ArraySize);
-    RETURN(true);
-
-  // function arguments
-  } else if (Argument *A = dyn_cast<Argument>(Ptr)) {
-    // right now we only support byval arguments, so that no interprocedural
-    // analysis is necessary
-    if (!A->hasByValAttr()) {
-      ++ChecksUnableInterproc;
-      RETURN(false);
-    }
-
-    PointerType *PT = cast<PointerType>(A->getType());
-    Size = TD->getTypeAllocSize(PT->getElementType());
-    RETURN(true);
-
-  // ptr = select(ptr1, ptr2)
-  } else if (SelectInst *SI = dyn_cast<SelectInst>(Ptr)) {
-    APInt OffsetTrue(IntTyBits, 0), OffsetFalse(IntTyBits, 0);
-    APInt SizeTrue(IntTyBits, 0), SizeFalse(IntTyBits, 0);
-    Value *OffsetValueTrue = 0, *OffsetValueFalse = 0;
-    Value *SizeValueTrue = 0, *SizeValueFalse = 0;
-
-    bool TrueAlloc = computeAllocSize(SI->getTrueValue(), OffsetTrue,
-                                      OffsetValueTrue, SizeTrue, SizeValueTrue);
-    bool FalseAlloc = computeAllocSize(SI->getFalseValue(), OffsetFalse,
-                                       OffsetValueFalse, SizeFalse,
-                                       SizeValueFalse);
-    if (!TrueAlloc || !FalseAlloc)
-      RETURN(false);
-
-    // fold constant sizes & offsets if they are equal
-    if (!OffsetValueTrue && !OffsetValueFalse && OffsetTrue == OffsetFalse)
-      Offset = OffsetTrue;
-    else if (Penalty > 1) {
-      GET_VALUE(OffsetValueTrue, OffsetTrue);
-      GET_VALUE(OffsetValueFalse, OffsetFalse);
-      OffsetValue = Builder->CreateSelect(SI->getCondition(), OffsetValueTrue,
-                                          OffsetValueFalse);
-    } else
-      RETURN(false);
-
-    if (!SizeValueTrue && !SizeValueFalse && SizeTrue == SizeFalse)
-      Size = SizeTrue;
-    else if (Penalty > 1) {
-      GET_VALUE(SizeValueTrue, SizeTrue);
-      GET_VALUE(SizeValueFalse, SizeFalse);
-      SizeValue = Builder->CreateSelect(SI->getCondition(), SizeValueTrue,
-                                        SizeValueFalse);
-    } else
-      RETURN(false);
-    RETURN(true);
-
-  // call allocation function
-  } else if (CallInst *CI = dyn_cast<CallInst>(Ptr)) {
-    SmallVector<unsigned, 4> Args;
-
-    if (MDNode *MD = CI->getMetadata("alloc_size")) {
-      for (unsigned i = 0, e = MD->getNumOperands(); i != e; ++i)
-        Args.push_back(cast<ConstantInt>(MD->getOperand(i))->getZExtValue());
-
-    } else if (Function *Callee = CI->getCalledFunction()) {
-      FunctionType *FTy = Callee->getFunctionType();
-
-      // alloc(size)
-      if (FTy->getNumParams() == 1 && FTy->getParamType(0)->isIntegerTy()) {
-        if ((Callee->getName() == "malloc" ||
-             Callee->getName() == "valloc" ||
-             Callee->getName() == "_Znwj"  || // operator new(unsigned int)
-             Callee->getName() == "_Znwm"  || // operator new(unsigned long)
-             Callee->getName() == "_Znaj"  || // operator new[](unsigned int)
-             Callee->getName() == "_Znam")) {
-          Args.push_back(0);
-        }
-      } else if (FTy->getNumParams() == 2) {
-        // alloc(_, x)
-        if (FTy->getParamType(1)->isIntegerTy() &&
-            ((Callee->getName() == "realloc" ||
-              Callee->getName() == "reallocf"))) {
-          Args.push_back(1);
-
-        // alloc(x, y)
-        } else if (FTy->getParamType(0)->isIntegerTy() &&
-                   FTy->getParamType(1)->isIntegerTy() &&
-                   Callee->getName() == "calloc") {
-          Args.push_back(0);
-          Args.push_back(1);
-        }
-      } else if (FTy->getNumParams() == 3) {
-        // alloc(_, _, x)
-        if (FTy->getParamType(2)->isIntegerTy() &&
-            Callee->getName() == "posix_memalign") {
-          Args.push_back(2);
-        }
-      }
-    }
-
-    if (Args.empty())
-      RETURN(false);
-
-    // check if all arguments are constant. if so, the object size is also const
-    bool AllConst = true;
-    for (SmallVectorImpl<unsigned>::iterator I = Args.begin(), E = Args.end();
-         I != E; ++I) {
-      if (!isa<ConstantInt>(CI->getArgOperand(*I))) {
-        AllConst = false;
-        break;
-      }
-    }
-
-    if (AllConst) {
-      Size = 1;
-      for (SmallVectorImpl<unsigned>::iterator I = Args.begin(), E = Args.end();
-           I != E; ++I) {
-        ConstantInt *Arg = cast<ConstantInt>(CI->getArgOperand(*I));
-        Size *= Arg->getValue().zextOrSelf(IntTyBits);
-      }
-      RETURN(true);
-    }
-
-    if (Penalty < 2)
-      RETURN(false);
-
-    // not all arguments are constant, so create a sequence of multiplications
-    for (SmallVectorImpl<unsigned>::iterator I = Args.begin(), E = Args.end();
-         I != E; ++I) {
-      Value *Arg = Builder->CreateZExt(CI->getArgOperand(*I), IntTy);
-      if (!SizeValue) {
-        SizeValue = Arg;
-        continue;
-      }
-      SizeValue = Builder->CreateMul(SizeValue, Arg);
-    }
-    RETURN(true);
-
-    // TODO: handle more standard functions (+ wchar cousins):
-    // - strdup / strndup
-    // - strcpy / strncpy
-    // - strcat / strncat
-    // - memcpy / memmove
-    // - strcat / strncat
-    // - memset
-
-  } else if (PHINode *PHI = dyn_cast<PHINode>(Ptr)) {
-    // create 2 PHIs: one for offset and another for size
-    PHINode *OffsetPHI = Builder->CreatePHI(IntTy, PHI->getNumIncomingValues());
-    PHINode *SizePHI   = Builder->CreatePHI(IntTy, PHI->getNumIncomingValues());
-
-    // insert right away in the cache to handle recursive PHIs
-    CacheMap[Ptr] = CacheData(APInt(), OffsetPHI, APInt(), SizePHI, true);
-
-    // compute offset/size for each PHI incoming pointer
-    for (unsigned i = 0, e = PHI->getNumIncomingValues(); i != e; ++i) {
-      Builder->SetInsertPoint(PHI->getIncomingBlock(i)->getFirstInsertionPt());
-
-      APInt PhiOffset(IntTyBits, 0), PhiSize(IntTyBits, 0);
-      Value *PhiOffsetValue = 0, *PhiSizeValue = 0;
-
-      if (!computeAllocSize(PHI->getIncomingValue(i), PhiOffset, PhiOffsetValue,
-                            PhiSize, PhiSizeValue)) {
-        OffsetPHI->replaceAllUsesWith(UndefValue::get(IntTy));
-        OffsetPHI->eraseFromParent();
-        SizePHI->replaceAllUsesWith(UndefValue::get(IntTy));
-        SizePHI->eraseFromParent();
-        RETURN(false);
-      }
-
-      GET_VALUE(PhiOffsetValue, PhiOffset);
-      GET_VALUE(PhiSizeValue, PhiSize);
-
-      OffsetPHI->addIncoming(PhiOffsetValue, PHI->getIncomingBlock(i));
-      SizePHI->addIncoming(PhiSizeValue, PHI->getIncomingBlock(i));
-    }
-
-    OffsetValue = OffsetPHI;
-    SizeValue = SizePHI;
-    RETURN(true);    
-
-  } else if (isa<UndefValue>(Ptr) || isa<ConstantPointerNull>(Ptr)) {
-    Size = 0;
-    RETURN(true);
-
-  } else if (isa<LoadInst>(Ptr)) {
-    ++ChecksUnableLoad;
-    RETURN(false);
-  }
-
-  DEBUG(dbgs() << "computeAllocSize unhandled value:\n" << *Ptr << "\n");
-  RETURN(false);
-
-cache_and_return:
-  // cache the result and return
-  CacheMap[Ptr] = CacheData(Offset, OffsetValue, Size, SizeValue, ReturnVal);
-
-  // non-computable results can be safely cached
-  if (!ReturnVal)
-    SeenPtrs.erase(Ptr);
-
-  Builder->SetInsertPoint(PrevInsertPoint);
-  return ReturnVal;
 }
 
 
@@ -455,67 +130,29 @@ bool BoundsChecking::instrument(Value *Ptr, Value *InstVal) {
   DEBUG(dbgs() << "Instrument " << *Ptr << " for " << Twine(NeededSize)
               << " bytes\n");
 
-  IntegerType *IntTy = TD->getIntPtrType(Fn->getContext());
-  unsigned IntTyBits = IntTy->getBitWidth();
+  SizeOffsetEvalType SizeOffset = ObjSizeEval->compute(Ptr);
 
-  APInt Offset(IntTyBits, 0), Size(IntTyBits, 0);
-  Value *OffsetValue = 0, *SizeValue = 0;
-
-  if (!computeAllocSize(Ptr, Offset, OffsetValue, Size, SizeValue)) {
-    DEBUG(dbgs() << "computeAllocSize failed:\n" << *Ptr << "\n");
-
-    // erase everything that was computed in this iteration from the cache, so
-    // that no dangling references are left behind. We could be a bit smarter if
-    // we kept a dependency graph. It's probably not worth the complexity,
-    // though.
-    for (PtrSetTy::iterator I=SeenPtrs.begin(), E=SeenPtrs.end(); I != E; ++I)
-      CacheMap.erase(*I);
-    SeenPtrs.clear();
-
+  if (!ObjSizeEval->bothKnown(SizeOffset)) {
     ++ChecksUnable;
     return false;
   }
+
+  Value *Size   = SizeOffset.first;
+  Value *Offset = SizeOffset.second;
+
+  IntegerType *IntTy = TD->getIntPtrType(Fn->getContext());
+  Value *NeededSizeVal = ConstantInt::get(IntTy, NeededSize);
 
   // three checks are required to ensure safety:
   // . Offset >= 0  (since the offset is given from the base ptr)
   // . Size >= Offset  (unsigned)
   // . Size - Offset >= NeededSize  (unsigned)
-  if (!OffsetValue && !SizeValue) {
-    if (Offset.slt(0) || Size.ult(Offset) || (Size - Offset).ult(NeededSize)) {
-      // Out of bounds
-      emitBranchToTrap();
-      ++ChecksAdded;
-      return true;
-    }
-    // in bounds
-    ++ChecksSkipped;
-    return false;
-  }
-
-  // emit check for offset < 0
-  Value *CmpOffset = 0;
-  if (OffsetValue)
-    CmpOffset = Builder->CreateICmpSLT(OffsetValue, ConstantInt::get(IntTy, 0));
-  else if (Offset.slt(0)) {
-    // offset proved to be negative
-    emitBranchToTrap();
-    ++ChecksAdded;
-    return true;
-  }
-
-  // we couldn't determine statically if the memory access is safe; emit a
-  // run-time check
-  GET_VALUE(OffsetValue, Offset);
-  GET_VALUE(SizeValue, Size);
-
-  Value *NeededSizeVal = ConstantInt::get(IntTy, NeededSize);
   // FIXME: add NSW/NUW here?  -- we dont care if the subtraction overflows
-  Value *ObjSize = Builder->CreateSub(SizeValue, OffsetValue);
-  Value *Cmp1 = Builder->CreateICmpULT(SizeValue, OffsetValue);
-  Value *Cmp2 = Builder->CreateICmpULT(ObjSize, NeededSizeVal);
-  Value *Or = Builder->CreateOr(Cmp1, Cmp2);
-  if (CmpOffset)
-    Or = Builder->CreateOr(CmpOffset, Or);
+  Value *ObjSize = Builder->CreateSub(Size, Offset);
+  Value *Cmp1 = Builder->CreateICmpSLT(Offset, ConstantInt::get(IntTy, 0));
+  Value *Cmp2 = Builder->CreateICmpULT(Size, Offset);
+  Value *Cmp3 = Builder->CreateICmpULT(ObjSize, NeededSizeVal);
+  Value *Or = Builder->CreateOr(Cmp1, Builder->CreateOr(Cmp2, Cmp3));
   emitBranchToTrap(Or);
 
   ++ChecksAdded;
@@ -524,13 +161,13 @@ bool BoundsChecking::instrument(Value *Ptr, Value *InstVal) {
 
 bool BoundsChecking::runOnFunction(Function &F) {
   TD = &getAnalysis<TargetData>();
-  LI = &getAnalysis<LoopInfo>();
-  SE = &getAnalysis<ScalarEvolution>();
 
   TrapBB = 0;
   Fn = &F;
   BuilderTy TheBuilder(F.getContext(), TargetFolder(TD));
   Builder = &TheBuilder;
+  ObjectSizeOffsetEvaluator TheObjSizeEval(TD, F.getContext());
+  ObjSizeEval = &TheObjSizeEval;
 
   // check HANDLE_MEMORY_INST in include/llvm/Instruction.def for memory
   // touching instructions
