@@ -172,7 +172,7 @@ Instruction *InstCombiner::SimplifyMemSet(MemSetInst *MI) {
 Instruction *InstCombiner::visitCallInst(CallInst &CI) {
   if (isFreeCall(&CI))
     return visitFree(CI);
-  if (extractMallocCall(&CI) || extractCallocCall(&CI))
+  if (isAllocLikeFn(&CI))
     return visitMalloc(CI);
 
   // If the caller function is nounwind, mark the call as nounwind, even if the
@@ -246,84 +246,10 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
   switch (II->getIntrinsicID()) {
   default: break;
   case Intrinsic::objectsize: {
-    // We need target data for just about everything so depend on it.
-    if (!TD) return 0;
-
-    Type *ReturnTy = CI.getType();
-    uint64_t DontKnow = II->getArgOperand(1) == Builder->getTrue() ? 0 : -1ULL;
-
-    // Get to the real allocated thing and offset as fast as possible.
-    Value *Op1 = II->getArgOperand(0)->stripPointerCasts();
-
-    uint64_t Offset = 0;
-    uint64_t Size = -1ULL;
-
-    // Try to look through constant GEPs.
-    if (GEPOperator *GEP = dyn_cast<GEPOperator>(Op1)) {
-      if (!GEP->hasAllConstantIndices()) return 0;
-
-      // Get the current byte offset into the thing. Use the original
-      // operand in case we're looking through a bitcast.
-      SmallVector<Value*, 8> Ops(GEP->idx_begin(), GEP->idx_end());
-      if (!GEP->getPointerOperandType()->isPointerTy())
-        return 0;
-      Offset = TD->getIndexedOffset(GEP->getPointerOperandType(), Ops);
-
-      Op1 = GEP->getPointerOperand()->stripPointerCasts();
-
-      // Make sure we're not a constant offset from an external
-      // global.
-      if (GlobalVariable *GV = dyn_cast<GlobalVariable>(Op1))
-        if (!GV->hasDefinitiveInitializer()) return 0;
-    }
-
-    // If we've stripped down to a single global variable that we
-    // can know the size of then just return that.
-    if (GlobalVariable *GV = dyn_cast<GlobalVariable>(Op1)) {
-      if (GV->hasDefinitiveInitializer()) {
-        Constant *C = GV->getInitializer();
-        Size = TD->getTypeAllocSize(C->getType());
-      } else {
-        // Can't determine size of the GV.
-        Constant *RetVal = ConstantInt::get(ReturnTy, DontKnow);
-        return ReplaceInstUsesWith(CI, RetVal);
-      }
-    } else if (AllocaInst *AI = dyn_cast<AllocaInst>(Op1)) {
-      // Get alloca size.
-      if (AI->getAllocatedType()->isSized()) {
-        Size = TD->getTypeAllocSize(AI->getAllocatedType());
-        if (AI->isArrayAllocation()) {
-          const ConstantInt *C = dyn_cast<ConstantInt>(AI->getArraySize());
-          if (!C) return 0;
-          Size *= C->getZExtValue();
-        }
-      }
-    } else if (CallInst *MI = extractMallocCall(Op1)) {
-      // Get allocation size.
-      Value *Arg = MI->getArgOperand(0);
-      if (ConstantInt *CI = dyn_cast<ConstantInt>(Arg))
-          Size = CI->getZExtValue();
-
-    } else if (CallInst *MI = extractCallocCall(Op1)) {
-      // Get allocation size.
-      Value *Arg1 = MI->getArgOperand(0);
-      Value *Arg2 = MI->getArgOperand(1);
-      if (ConstantInt *CI1 = dyn_cast<ConstantInt>(Arg1))
-        if (ConstantInt *CI2 = dyn_cast<ConstantInt>(Arg2))
-          Size = (CI1->getValue() * CI2->getValue()).getZExtValue();
-    }
-
-    // Do not return "I don't know" here. Later optimization passes could
-    // make it possible to evaluate objectsize to a constant.
-    if (Size == -1ULL)
-      return 0;
-
-    if (Size < Offset) {
-      // Out of bound reference? Negative index normalized to large
-      // index? Just return "I don't know".
-      return ReplaceInstUsesWith(CI, ConstantInt::get(ReturnTy, DontKnow));
-    }
-    return ReplaceInstUsesWith(CI, ConstantInt::get(ReturnTy, Size-Offset));
+    uint64_t Size;
+    if (getObjectSize(II->getArgOperand(0), Size, TD))
+      return ReplaceInstUsesWith(CI, ConstantInt::get(CI.getType(), Size));
+    return 0;
   }
   case Intrinsic::bswap:
     // bswap(bswap(x)) -> x
@@ -768,7 +694,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     TerminatorInst *TI = II->getParent()->getTerminator();
     bool CannotRemove = false;
     for (++BI; &*BI != TI; ++BI) {
-      if (isa<AllocaInst>(BI) || isMalloc(BI)) {
+      if (isa<AllocaInst>(BI)) {
         CannotRemove = true;
         break;
       }

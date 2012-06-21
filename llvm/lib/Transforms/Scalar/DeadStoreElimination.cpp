@@ -275,39 +275,9 @@ static Value *getStoredPointerOperand(Instruction *I) {
 }
 
 static uint64_t getPointerSize(const Value *V, AliasAnalysis &AA) {
-  const TargetData *TD = AA.getTargetData();
-
-  if (const CallInst *CI = extractMallocCall(V)) {
-    if (const ConstantInt *C = dyn_cast<ConstantInt>(CI->getArgOperand(0)))
-      return C->getZExtValue();
-  }
-
-  if (const CallInst *CI = extractCallocCall(V)) {
-    if (const ConstantInt *C1 = dyn_cast<ConstantInt>(CI->getArgOperand(0)))
-      if (const ConstantInt *C2 = dyn_cast<ConstantInt>(CI->getArgOperand(1)))
-       return (C1->getValue() * C2->getValue()).getZExtValue();
-  }
-
-  if (TD == 0)
-    return AliasAnalysis::UnknownSize;
-
-  if (const AllocaInst *A = dyn_cast<AllocaInst>(V)) {
-    // Get size information for the alloca
-    if (const ConstantInt *C = dyn_cast<ConstantInt>(A->getArraySize()))
-      return C->getZExtValue() * TD->getTypeAllocSize(A->getAllocatedType());
-  }
-
-  if (const Argument *A = dyn_cast<Argument>(V)) {
-    if (A->hasByValAttr())
-      if (PointerType *PT = dyn_cast<PointerType>(A->getType()))
-        return TD->getTypeAllocSize(PT->getElementType());
-  }
-
-  if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(V)) {
-    if (!GV->mayBeOverridden())
-      return TD->getTypeAllocSize(GV->getType()->getElementType());
-  }
-
+  uint64_t Size;
+  if (getObjectSize(V, Size, AA.getTargetData()))
+    return Size;
   return AliasAnalysis::UnknownSize;
 }
 
@@ -705,16 +675,13 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
   // Find all of the alloca'd pointers in the entry block.
   BasicBlock *Entry = BB.getParent()->begin();
   for (BasicBlock::iterator I = Entry->begin(), E = Entry->end(); I != E; ++I) {
-    if (AllocaInst *AI = dyn_cast<AllocaInst>(I))
-      DeadStackObjects.insert(AI);
+    if (isa<AllocaInst>(I))
+      DeadStackObjects.insert(I);
 
     // Okay, so these are dead heap objects, but if the pointer never escapes
     // then it's leaked by this function anyways.
-    CallInst *CI = extractMallocCall(I);
-    if (!CI)
-      CI = extractCallocCall(I);
-    if (CI && !PointerMayBeCaptured(CI, true, true))
-      DeadStackObjects.insert(CI);
+    else if (isAllocLikeFn(I) && !PointerMayBeCaptured(I, true, true))
+      DeadStackObjects.insert(I);
   }
 
   // Treat byval arguments the same, stores to them are dead at the end of the
@@ -773,18 +740,8 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
       continue;
     }
 
-    if (AllocaInst *A = dyn_cast<AllocaInst>(BBI)) {
-      DeadStackObjects.remove(A);
-      continue;
-    }
-
-    if (CallInst *CI = extractMallocCall(BBI)) {
-      DeadStackObjects.remove(CI);
-      continue;
-    }
-
-    if (CallInst *CI = extractCallocCall(BBI)) {
-      DeadStackObjects.remove(CI);
+    if (isa<AllocaInst>(BBI) || isAllocLikeFn(BBI)) {
+      DeadStackObjects.remove(BBI);
       continue;
     }
 

@@ -329,15 +329,8 @@ bool GlobalsModRef::AnalyzeIndirectGlobalMemory(GlobalValue *GV) {
       // Check the value being stored.
       Value *Ptr = GetUnderlyingObject(SI->getOperand(0));
 
-      if (isMalloc(Ptr)) {
-        // Okay, easy case.
-      } else if (CallInst *CI = dyn_cast<CallInst>(Ptr)) {
-        Function *F = CI->getCalledFunction();
-        if (!F || !F->isDeclaration()) return false;     // Too hard to analyze.
-        if (F->getName() != "calloc") return false;   // Not calloc.
-      } else {
+      if (!isAllocLikeFn(Ptr))
         return false;  // Too hard to analyze.
-      }
 
       // Analyze all uses of the allocation.  If any of them are used in a
       // non-simple way (e.g. stored to another global) bail out.
@@ -454,19 +447,18 @@ void GlobalsModRef::AnalyzeCallGraph(CallGraph &CG, Module &M) {
       for (inst_iterator II = inst_begin(SCC[i]->getFunction()),
              E = inst_end(SCC[i]->getFunction());
            II != E && FunctionEffect != ModRef; ++II)
-        if (isa<LoadInst>(*II)) {
+        if (LoadInst *LI = dyn_cast<LoadInst>(&*II)) {
           FunctionEffect |= Ref;
-          if (cast<LoadInst>(*II).isVolatile())
+          if (LI->isVolatile())
             // Volatile loads may have side-effects, so mark them as writing
             // memory (for example, a flag inside the processor).
             FunctionEffect |= Mod;
-        } else if (isa<StoreInst>(*II)) {
+        } else if (StoreInst *SI = dyn_cast<StoreInst>(&*II)) {
           FunctionEffect |= Mod;
-          if (cast<StoreInst>(*II).isVolatile())
+          if (SI->isVolatile())
             // Treat volatile stores as reading memory somewhere.
             FunctionEffect |= Ref;
-        } else if (isMalloc(&cast<Instruction>(*II)) ||
-                   isFreeCall(&cast<Instruction>(*II))) {
+        } else if (isAllocationFn(&*II) || isFreeCall(&*II)) {
           FunctionEffect |= ModRef;
         } else if (IntrinsicInst *Intrinsic = dyn_cast<IntrinsicInst>(&*II)) {
           // The callgraph doesn't include intrinsic calls.

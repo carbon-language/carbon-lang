@@ -42,7 +42,7 @@ define i32 @f() nounwind {
 
 define i1 @baz() nounwind {
 ; CHECK: @baz
-; CHECK-NEXT: ret i1 true
+; CHECK-NEXT: objectsize
   %1 = tail call i32 @llvm.objectsize.i32(i8* getelementptr inbounds ([0 x i8]* @window, i32 0, i32 0), i1 false)
   %2 = icmp eq i32 %1, -1
   ret i1 %2

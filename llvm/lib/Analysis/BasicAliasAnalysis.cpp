@@ -86,47 +86,10 @@ static bool isEscapeSource(const Value *V) {
 /// UnknownSize if unknown.
 static uint64_t getObjectSize(const Value *V, const TargetData &TD,
                               bool RoundToAlign = false) {
-  Type *AccessTy;
-  unsigned Align;
-  if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(V)) {
-    if (!GV->hasDefinitiveInitializer())
-      return AliasAnalysis::UnknownSize;
-    AccessTy = GV->getType()->getElementType();
-    Align = GV->getAlignment();
-  } else if (const AllocaInst *AI = dyn_cast<AllocaInst>(V)) {
-    if (!AI->isArrayAllocation())
-      AccessTy = AI->getType()->getElementType();
-    else
-      return AliasAnalysis::UnknownSize;
-    Align = AI->getAlignment();
-  } else if (const CallInst* CI = extractMallocCall(V)) {
-    if (!RoundToAlign && !isArrayMalloc(V, &TD))
-      // The size is the argument to the malloc call.
-      if (const ConstantInt* C = dyn_cast<ConstantInt>(CI->getArgOperand(0)))
-        return C->getZExtValue();
-    return AliasAnalysis::UnknownSize;
-  } else if (const Argument *A = dyn_cast<Argument>(V)) {
-    if (A->hasByValAttr()) {
-      AccessTy = cast<PointerType>(A->getType())->getElementType();
-      Align = A->getParamAlignment();
-    } else {
-      return AliasAnalysis::UnknownSize;
-    }
-  } else {
-    return AliasAnalysis::UnknownSize;
-  }
-
-  if (!AccessTy->isSized())
-    return AliasAnalysis::UnknownSize;
-
-  uint64_t Size = TD.getTypeAllocSize(AccessTy);
-  // If there is an explicitly specified alignment, and we need to
-  // take alignment into account, round up the size. (If the alignment
-  // is implicit, getTypeAllocSize is sufficient.)
-  if (RoundToAlign && Align)
-    Size = RoundUpToAlignment(Size, Align);
-
-  return Size;
+  uint64_t Size;
+  if (getObjectSize(V, Size, &TD, RoundToAlign))
+    return Size;
+  return AliasAnalysis::UnknownSize;
 }
 
 /// isObjectSmallerThan - Return true if we can prove that the object specified
