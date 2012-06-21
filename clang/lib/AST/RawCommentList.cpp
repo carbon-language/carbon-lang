@@ -158,13 +158,15 @@ void RawCommentList::addComment(const RawComment &RC) {
   if (RC.isInvalid())
     return;
 
-  assert((Comments.empty() ||
-          Comments.back().getSourceRange().getEnd() ==
-              RC.getSourceRange().getBegin() ||
-          SourceMgr.isBeforeInTranslationUnit(
-              Comments.back().getSourceRange().getEnd(),
-              RC.getSourceRange().getBegin())) &&
-         "comments are not coming in source order");
+  // Check if the comments are not in source order.
+  while (!Comments.empty() &&
+         !SourceMgr.isBeforeInTranslationUnit(
+              Comments.back().getSourceRange().getBegin(),
+              RC.getSourceRange().getBegin())) {
+    // If they are, just pop a few last comments that don't fit.
+    // This happens if an \#include directive contains comments.
+    Comments.pop_back();
+  }
 
   if (OnlyWhitespaceSeen) {
     if (!onlyWhitespaceBetweenComments(SourceMgr, LastComment, RC))
