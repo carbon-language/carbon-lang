@@ -43,7 +43,7 @@ struct AllocFnsTy {
   AllocType AllocTy;
   unsigned char NumParams;
   // First and Second size parameters (or -1 if unused)
-  unsigned char FstParam, SndParam;
+  signed char FstParam, SndParam;
 };
 
 static const AllocFnsTy AllocationFnData[] = {
@@ -100,16 +100,16 @@ static const AllocFnsTy *getAllocationData(const Value *V, AllocType AllocTy,
 
   // Check function prototype.
   // FIXME: Check the nobuiltin metadata?? (PR5130)
-  unsigned FstParam = FnData->FstParam;
-  unsigned SndParam = FnData->SndParam;
+  int FstParam = FnData->FstParam;
+  int SndParam = FnData->SndParam;
   FunctionType *FTy = Callee->getFunctionType();
 
   if (FTy->getReturnType() == Type::getInt8PtrTy(FTy->getContext()) &&
       FTy->getNumParams() == FnData->NumParams &&
-      (FstParam == (unsigned char)-1 ||
+      (FstParam < 0 ||
        (FTy->getParamType(FstParam)->isIntegerTy(32) ||
         FTy->getParamType(FstParam)->isIntegerTy(64))) &&
-      (SndParam == (unsigned char)-1 ||
+      (SndParam < 0 ||
        FTy->getParamType(SndParam)->isIntegerTy(32) ||
        FTy->getParamType(SndParam)->isIntegerTy(64)))
     return FnData;
@@ -421,7 +421,7 @@ SizeOffsetType ObjectSizeOffsetVisitor::visitCallSite(CallSite CS) {
 
   APInt Size = Arg->getValue().zextOrSelf(IntTyBits);
   // size determined by just 1 parameter
-  if (FnData->SndParam == (unsigned char)-1)
+  if (FnData->SndParam < 0)
     return std::make_pair(Size, Zero);
 
   Arg = dyn_cast<ConstantInt>(CS.getArgument(FnData->SndParam));
@@ -604,7 +604,7 @@ SizeOffsetEvalType ObjectSizeOffsetEvaluator::visitCallSite(CallSite CS) {
 
   Value *FirstArg = CS.getArgument(FnData->FstParam);
   FirstArg = Builder.CreateZExt(FirstArg, IntTy);
-  if (FnData->SndParam == (unsigned char)-1)
+  if (FnData->SndParam < 0)
     return std::make_pair(FirstArg, Zero);
 
   Value *SecondArg = CS.getArgument(FnData->SndParam);
