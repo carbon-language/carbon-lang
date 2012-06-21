@@ -1,16 +1,8 @@
-include(LLVMParseArguments)
-
-# add_clang_unittest(test_dirname file1.cpp file2.cpp ...
-#                    [USED_LIBS lib1 lib2])
+# add_clang_unittest(test_dirname file1.cpp file2.cpp)
 #
 # Will compile the list of files together and link against the clang
-# libraries in the USED_LIBS. Produces a binary named
-# 'basename(test_dirname)Tests'.
-function(add_clang_unittest)
-  parse_arguments(CLANG_UNITTEST "USED_LIBS" "" ${ARGN})
-  list(GET CLANG_UNITTEST_DEFAULT_ARGS 0 test_dirname)
-  list(REMOVE_AT CLANG_UNITTEST_DEFAULT_ARGS 0)
-
+# Produces a binary named 'basename(test_dirname)'.
+function(add_clang_unittest test_dirname)
   string(REGEX MATCH "([^/]+)$" test_name ${test_dirname})
   if (CMAKE_BUILD_TYPE)
     set(CMAKE_RUNTIME_OUTPUT_DIRECTORY
@@ -22,10 +14,16 @@ function(add_clang_unittest)
   if( NOT LLVM_BUILD_TESTS )
     set(EXCLUDE_FROM_ALL ON)
   endif()
-  add_clang_executable(${test_name}Tests ${CLANG_UNITTEST_DEFAULT_ARGS})
-  target_link_libraries(${test_name}Tests ${CLANG_UNITTEST_USED_LIBS})
-  add_dependencies(ClangUnitTests ${test_name}Tests)
-  set_target_properties(${test_name}Tests PROPERTIES FOLDER "Clang tests")
+
+  add_clang_executable(${test_name} ${ARGN})
+  target_link_libraries(${test_name}
+    gtest
+    gtest_main
+    LLVMSupport # gtest needs it for raw_ostream.
+    )
+
+  add_dependencies(ClangUnitTests ${test_name})
+  set_target_properties(${test_name} PROPERTIES FOLDER "Clang tests")
 endfunction()
 
 add_custom_target(ClangUnitTests)
@@ -48,27 +46,37 @@ if(SUPPORTS_NO_VARIADIC_MACROS_FLAG)
   add_definitions("-Wno-variadic-macros")
 endif()
 
-add_clang_unittest(Basic
+add_clang_unittest(BasicTests
   Basic/FileManagerTest.cpp
   Basic/SourceManagerTest.cpp
-  USED_LIBS gtest gtest_main clangLex
- )
+  )
+target_link_libraries(BasicTests
+  clangLex
+  )
 
-add_clang_unittest(Lex
+add_clang_unittest(LexTests
   Lex/LexerTest.cpp
-  USED_LIBS gtest gtest_main clangLex
- )
+  )
+target_link_libraries(LexTests
+  clangLex
+  )
 
-add_clang_unittest(Frontend
+add_clang_unittest(FrontendTests
   Frontend/FrontendActionTest.cpp
-  USED_LIBS gtest gtest_main clangFrontend
- )
+  )
+target_link_libraries(FrontendTests
+  clangFrontend
+  )
 
-add_clang_unittest(Tooling
+add_clang_unittest(ToolingTests
   Tooling/CompilationDatabaseTest.cpp
   Tooling/ToolingTest.cpp
   Tooling/RecursiveASTVisitorTest.cpp
   Tooling/RefactoringTest.cpp
   Tooling/RewriterTest.cpp
-  USED_LIBS gtest gtest_main clangAST clangTooling clangRewrite
- )
+  )
+target_link_libraries(ToolingTests
+  clangAST
+  clangTooling
+  clangRewrite
+  )
