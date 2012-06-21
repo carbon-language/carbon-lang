@@ -90,6 +90,14 @@ void test3() {
     ;
   do ;
   while(NULL_COND(true));
+  int *ip = NULL;
+  int (*fp)() = NULL;
+  struct foo {
+    int n;
+    void func();
+  };
+  int foo::*datamem = NULL;
+  int (foo::*funmem)() = NULL;
 }
 
 namespace test4 {
