@@ -147,3 +147,53 @@ macro(add_llvm_external_project name)
     endif()
   endif()
 endmacro(add_llvm_external_project)
+
+# Generic support for adding a unittest.
+function(add_unittest test_suite test_dirname)
+  string(REGEX MATCH "([^/]+)$" test_name ${test_dirname})
+  if (CMAKE_BUILD_TYPE)
+    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY
+      ${CMAKE_CURRENT_BINARY_DIR}/${test_dirname}/${CMAKE_BUILD_TYPE})
+  else()
+    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY
+      ${CMAKE_CURRENT_BINARY_DIR}/${test_dirname})
+  endif()
+  if( NOT LLVM_BUILD_TESTS )
+    set(EXCLUDE_FROM_ALL ON)
+  endif()
+
+  add_llvm_executable(${test_name} ${ARGN})
+  target_link_libraries(${test_name}
+    gtest
+    gtest_main
+    LLVMSupport # gtest needs it for raw_ostream.
+    )
+
+  add_dependencies(${test_suite} ${test_name})
+  get_target_property(test_suite_folder ${test_suite} FOLDER)
+  if (NOT ${test_suite_folder} STREQUAL "NOTFOUND")
+    set_property(TARGET ${test_name} PROPERTY FOLDER "${test_suite_folder}")
+  endif ()
+
+  # Visual Studio 2012 only supports up to 8 template parameters in
+  # std::tr1::tuple by default, but gtest requires 10
+  if (MSVC AND MSVC_VERSION EQUAL 1700)
+    set_property(TARGET ${test_name} APPEND PROPERTY COMPILE_DEFINITIONS _VARIADIC_MAX=10)
+  endif ()
+
+  include_directories(${LLVM_MAIN_SRC_DIR}/utils/unittest/googletest/include)
+  set_property(TARGET ${test_name} APPEND PROPERTY COMPILE_DEFINITIONS GTEST_HAS_RTTI=0)
+  if (LLVM_COMPILER_IS_GCC_COMPATIBLE)
+    set_property(TARGET ${test_name} APPEND_STRING PROPERTY COMPILE_FLAGS " -fno-rtti")
+  elseif (MSVC)
+    set_property(TARGET ${test_name} APPEND_STRING PROPERTY COMPILE_FLAGS " /GR-")
+  endif ()
+
+  if (NOT LLVM_ENABLE_THREADS)
+    set_property(TARGET ${test_name} APPEND PROPERTY COMPILE_DEFINITIONS GTEST_HAS_PTHREAD=0)
+  endif ()
+
+  if (SUPPORTS_NO_VARIADIC_MACROS_FLAG)
+    set_property(TARGET ${test_name} APPEND_STRING PROPERTY COMPILE_FLAGS " -Wno-variadic-macros")
+  endif ()
+endfunction()

@@ -1,51 +1,9 @@
-function(add_llvm_unittest test_dirname)
-  string(REGEX MATCH "([^/]+)$" test_name ${test_dirname})
-  if (CMAKE_BUILD_TYPE)
-    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY
-      ${LLVM_BINARY_DIR}/unittests/${test_dirname}/${CMAKE_BUILD_TYPE})
-  else()
-    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY
-      ${LLVM_BINARY_DIR}/unittests/${test_dirname})
-  endif()
-  if( NOT LLVM_BUILD_TESTS )
-    set(EXCLUDE_FROM_ALL ON)
-  endif()
-
-  add_llvm_executable(${test_name} ${ARGN})
-  target_link_libraries(${test_name}
-    gtest
-    gtest_main
-    LLVMSupport # gtest needs it for raw_ostream.
-    )
-
-  add_dependencies(UnitTests ${test_name})
-  set_target_properties(${test_name} PROPERTIES FOLDER "Tests")
-endfunction()
-
-# Visual Studio 2012 only supports up to 8 template parameters in
-# std::tr1::tuple by default, but gtest requires 10
-if(MSVC AND MSVC_VERSION EQUAL 1700)
-  add_definitions(-D_VARIADIC_MAX=10)
-endif ()
-
 add_custom_target(UnitTests)
 set_target_properties(UnitTests PROPERTIES FOLDER "Tests")
 
-include_directories(${LLVM_MAIN_SRC_DIR}/utils/unittest/googletest/include)
-add_definitions(-DGTEST_HAS_RTTI=0)
-if( LLVM_COMPILER_IS_GCC_COMPATIBLE )
-  llvm_replace_compiler_option(CMAKE_CXX_FLAGS "-frtti" "-fno-rtti")
-elseif( MSVC )
-  llvm_replace_compiler_option(CMAKE_CXX_FLAGS "/GR" "/GR-")
-endif()
-
-if (NOT LLVM_ENABLE_THREADS)
-  add_definitions(-DGTEST_HAS_PTHREAD=0)
-endif()
-
-if(SUPPORTS_NO_VARIADIC_MACROS_FLAG)
-  add_definitions("-Wno-variadic-macros")
-endif()
+function(add_llvm_unittest test_dirname)
+  add_unittest(UnitTests ${test_dirname} ${ARGN})
+endfunction()
 
 set(LLVM_LINK_COMPONENTS
   jit
