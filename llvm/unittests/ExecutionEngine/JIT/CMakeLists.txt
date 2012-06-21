@@ -1,6 +1,9 @@
 set(LLVM_LINK_COMPONENTS
-  jit
+  asmparser
+  bitreader
+  bitwriter
   interpreter
+  jit
   nativecodegen
   )
 
