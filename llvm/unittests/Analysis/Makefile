@@ -9,7 +9,7 @@
 
 LEVEL = ../..
 TESTNAME = Analysis
-LINK_COMPONENTS := core support target analysis ipa
+LINK_COMPONENTS := analysis
 
 include $(LEVEL)/Makefile.config
 include $(LLVM_SRC_ROOT)/unittests/Makefile.unittest

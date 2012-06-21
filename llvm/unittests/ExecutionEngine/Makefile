@@ -9,7 +9,7 @@
 
 LEVEL = ../..
 TESTNAME = ExecutionEngine
-LINK_COMPONENTS := engine interpreter
+LINK_COMPONENTS :=interpreter
 PARALLEL_DIRS = JIT
 
 include $(LEVEL)/Makefile.config

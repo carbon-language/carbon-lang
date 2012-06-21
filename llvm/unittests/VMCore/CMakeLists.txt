@@ -1,9 +1,7 @@
 set(LLVM_LINK_COMPONENTS
   asmparser
-  analysis
   core
   ipa
-  target
   )
 
 set(VMCoreSources

@@ -9,7 +9,7 @@
 
 LEVEL = ../..
 TESTNAME = VMCore
-LINK_COMPONENTS := core support target ipa asmparser
+LINK_COMPONENTS := core ipa asmparser
 
 include $(LEVEL)/Makefile.config
 include $(LLVM_SRC_ROOT)/unittests/Makefile.unittest
