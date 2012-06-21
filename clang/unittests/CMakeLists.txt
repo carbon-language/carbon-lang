@@ -9,37 +9,7 @@ function(add_clang_unittest test_dirname)
   add_unittest(ClangUnitTests ${test_dirname} ${ARGN})
 endfunction()
 
-add_clang_unittest(BasicTests
-  Basic/FileManagerTest.cpp
-  Basic/SourceManagerTest.cpp
-  )
-target_link_libraries(BasicTests
-  clangLex
-  )
-
-add_clang_unittest(LexTests
-  Lex/LexerTest.cpp
-  )
-target_link_libraries(LexTests
-  clangLex
-  )
-
-add_clang_unittest(FrontendTests
-  Frontend/FrontendActionTest.cpp
-  )
-target_link_libraries(FrontendTests
-  clangFrontend
-  )
-
-add_clang_unittest(ToolingTests
-  Tooling/CompilationDatabaseTest.cpp
-  Tooling/ToolingTest.cpp
-  Tooling/RecursiveASTVisitorTest.cpp
-  Tooling/RefactoringTest.cpp
-  Tooling/RewriterTest.cpp
-  )
-target_link_libraries(ToolingTests
-  clangAST
-  clangTooling
-  clangRewrite
-  )
+add_subdirectory(Basic)
+add_subdirectory(Lex)
+add_subdirectory(Frontend)
+add_subdirectory(Tooling)
