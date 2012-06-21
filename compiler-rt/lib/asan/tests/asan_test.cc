@@ -1900,21 +1900,21 @@ TEST(AddressSanitizer, BufferOverflowAfterManyFrees) {
 
 #ifdef __APPLE__
 #include "asan_mac_test.h"
-// TODO(glider): figure out whether we still need these tests. Is it correct
-// to intercept CFAllocator?
-TEST(AddressSanitizerMac, DISABLED_CFAllocatorDefaultDoubleFree) {
+TEST(AddressSanitizerMac, CFAllocatorDefaultDoubleFree) {
   EXPECT_DEATH(
       CFAllocatorDefaultDoubleFree(),
       "attempting double-free");
 }
 
+// TODO(glider): figure out whether we still need these tests. Is it correct
+// to intercept the non-default CFAllocators?
 TEST(AddressSanitizerMac, DISABLED_CFAllocatorSystemDefaultDoubleFree) {
   EXPECT_DEATH(
       CFAllocatorSystemDefaultDoubleFree(),
       "attempting double-free");
 }
 
-TEST(AddressSanitizerMac, DISABLED_CFAllocatorMallocDoubleFree) {
+TEST(AddressSanitizerMac, CFAllocatorMallocDoubleFree) {
   EXPECT_DEATH(CFAllocatorMallocDoubleFree(), "attempting double-free");
 }
 
