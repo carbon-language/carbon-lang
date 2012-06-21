@@ -253,9 +253,9 @@ types are:
 Class type
     Specifying a class name in a type context means that the defined value must
     be a subclass of the specified class.  This is useful in conjunction with
-    the **``list``** type, for example, to constrain the elements of the list to
-    a common base class (e.g., a ``**list**<Register>`` can only contain
-    definitions derived from the "``Register``" class).
+    the ``list`` type, for example, to constrain the elements of the list to a
+    common base class (e.g., a ``list<Register>`` can only contain definitions
+    derived from the "``Register``" class).
 
 ``dag``
     This type represents a nestable directed graph of elements.
@@ -354,13 +354,13 @@ supported include:
 ``str1#str2``
     "#" (paste) is a shorthand for !strconcat.  It may concatenate things that
     are not quoted strings, in which case an implicit !cast<string> is done on
-    the operand of the paste.</dd>
+    the operand of the paste.
 
 ``!cast<type>(a)``
     A symbol of type *type* obtained by looking up the string 'a' in the symbol
     table.  If the type of 'a' does not match *type*, TableGen aborts with an
     error. !cast<string> is a special case in that the argument must be an
-    object defined by a 'def' construct.</dd>
+    object defined by a 'def' construct.
 
 ``!subst(a, b, c)``
     If 'a' and 'b' are of string type or are symbol references, substitute 'b'
