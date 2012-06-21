@@ -49,7 +49,7 @@ if(MSVC)
   list(APPEND JITTestsSources JITTests.def)
 endif()
 
-add_llvm_unittest(ExecutionEngine/JITTests
+add_llvm_unittest(JITTests
   ${JITTestsSources}
   )
 
