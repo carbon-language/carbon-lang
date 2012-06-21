@@ -172,8 +172,6 @@ Instruction *InstCombiner::SimplifyMemSet(MemSetInst *MI) {
 Instruction *InstCombiner::visitCallInst(CallInst &CI) {
   if (isFreeCall(&CI))
     return visitFree(CI);
-  if (isAllocLikeFn(&CI))
-    return visitMalloc(CI);
 
   // If the caller function is nounwind, mark the call as nounwind, even if the
   // callee isn't.
@@ -881,6 +879,9 @@ static IntrinsicInst *FindInitTrampoline(Value *Callee) {
 // visitCallSite - Improvements for call and invoke instructions.
 //
 Instruction *InstCombiner::visitCallSite(CallSite CS) {
+  if (isAllocLikeFn(CS.getInstruction()))
+    return visitMalloc(*CS.getInstruction());
+
   bool Changed = false;
 
   // If the callee is a pointer to a function, attempt to move any casts to the

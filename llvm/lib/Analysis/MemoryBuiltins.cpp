@@ -65,11 +65,17 @@ static const AllocFnsTy AllocationFnData[] = {
 static Function *getCalledFunction(const Value *V, bool LookThroughBitCast) {
   if (LookThroughBitCast)
     V = V->stripPointerCasts();
-  const CallInst *CI = dyn_cast<CallInst>(V);
-  if (!CI)
+
+  Value *I = const_cast<Value*>(V);
+  CallSite CS;
+  if (CallInst *CI = dyn_cast<CallInst>(I))
+    CS = CallSite(CI);
+  else if (InvokeInst *II = dyn_cast<InvokeInst>(I))
+    CS = CallSite(II);
+  else
     return 0;
 
-  Function *Callee = CI->getCalledFunction();
+  Function *Callee = CS.getCalledFunction();
   if (!Callee || !Callee->isDeclaration())
     return 0;
   return Callee;
@@ -122,39 +128,40 @@ static bool hasNoAliasAttr(const Value *V, bool LookThroughBitCast) {
 }
 
 
-/// \brief Tests if a value is a call to a library function that allocates or
-/// reallocates memory (either malloc, calloc, realloc, or strdup like).
+/// \brief Tests if a value is a call or invoke to a library function that
+/// allocates or reallocates memory (either malloc, calloc, realloc, or strdup
+/// like).
 bool llvm::isAllocationFn(const Value *V, bool LookThroughBitCast) {
   return getAllocationData(V, AnyAlloc, LookThroughBitCast);
 }
 
-/// \brief Tests if a value is a call to a function that returns a NoAlias
-/// pointer (including malloc/calloc/strdup-like functions).
+/// \brief Tests if a value is a call or invoke to a function that returns a
+/// NoAlias pointer (including malloc/calloc/strdup-like functions).
 bool llvm::isNoAliasFn(const Value *V, bool LookThroughBitCast) {
   return isAllocLikeFn(V, LookThroughBitCast) ||
          hasNoAliasAttr(V, LookThroughBitCast);
 }
 
-/// \brief Tests if a value is a call to a library function that allocates
-/// uninitialized memory (such as malloc).
+/// \brief Tests if a value is a call or invoke to a library function that
+/// allocates uninitialized memory (such as malloc).
 bool llvm::isMallocLikeFn(const Value *V, bool LookThroughBitCast) {
   return getAllocationData(V, MallocLike, LookThroughBitCast);
 }
 
-/// \brief Tests if a value is a call to a library function that allocates
-/// zero-filled memory (such as calloc).
+/// \brief Tests if a value is a call or invoke to a library function that
+/// allocates zero-filled memory (such as calloc).
 bool llvm::isCallocLikeFn(const Value *V, bool LookThroughBitCast) {
   return getAllocationData(V, CallocLike, LookThroughBitCast);
 }
 
-/// \brief Tests if a value is a call to a library function that allocates
-/// memory (either malloc, calloc, or strdup like).
+/// \brief Tests if a value is a call or invoke to a library function that
+/// allocates memory (either malloc, calloc, or strdup like).
 bool llvm::isAllocLikeFn(const Value *V, bool LookThroughBitCast) {
   return getAllocationData(V, AllocLike, LookThroughBitCast);
 }
 
-/// \brief Tests if a value is a call to a library function that reallocates
-/// memory (such as realloc).
+/// \brief Tests if a value is a call or invoke to a library function that
+/// reallocates memory (such as realloc).
 bool llvm::isReallocLikeFn(const Value *V, bool LookThroughBitCast) {
   return getAllocationData(V, ReallocLike, LookThroughBitCast);
 }

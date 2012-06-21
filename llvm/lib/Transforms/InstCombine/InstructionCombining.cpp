@@ -1167,6 +1167,10 @@ Instruction *InstCombiner::visitMalloc(Instruction &MI) {
       }
       EraseInstFromFunction(*I);
     }
+
+    if (InvokeInst *II = dyn_cast<InvokeInst>(&MI)) {
+      BranchInst::Create(II->getNormalDest(), II->getParent());
+    }
     return EraseInstFromFunction(MI);
   }
   return 0;

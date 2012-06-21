@@ -31,28 +31,29 @@ class Type;
 class Value;
 
 
-/// \brief Tests if a value is a call to a library function that allocates or
-/// reallocates memory (either malloc, calloc, realloc, or strdup like).
+/// \brief Tests if a value is a call or invoke to a library function that
+/// allocates or reallocates memory (either malloc, calloc, realloc, or strdup
+/// like).
 bool isAllocationFn(const Value *V, bool LookThroughBitCast = false);
 
-/// \brief Tests if a value is a call to a function that returns a NoAlias
-/// pointer (including malloc/calloc/strdup-like functions).
+/// \brief Tests if a value is a call or invoke to a function that returns a
+/// NoAlias pointer (including malloc/calloc/strdup-like functions).
 bool isNoAliasFn(const Value *V, bool LookThroughBitCast = false);
 
-/// \brief Tests if a value is a call to a library function that allocates
-/// uninitialized memory (such as malloc).
+/// \brief Tests if a value is a call or invoke to a library function that
+/// allocates uninitialized memory (such as malloc).
 bool isMallocLikeFn(const Value *V, bool LookThroughBitCast = false);
 
-/// \brief Tests if a value is a call to a library function that allocates
-/// zero-filled memory (such as calloc).
+/// \brief Tests if a value is a call or invoke to a library function that
+/// allocates zero-filled memory (such as calloc).
 bool isCallocLikeFn(const Value *V, bool LookThroughBitCast = false);
 
-/// \brief Tests if a value is a call to a library function that allocates
-/// memory (either malloc, calloc, or strdup like).
+/// \brief Tests if a value is a call or invoke to a library function that
+/// allocates memory (either malloc, calloc, or strdup like).
 bool isAllocLikeFn(const Value *V, bool LookThroughBitCast = false);
 
-/// \brief Tests if a value is a call to a library function that reallocates
-/// memory (such as realloc).
+/// \brief Tests if a value is a call or invoke to a library function that
+/// reallocates memory (such as realloc).
 bool isReallocLikeFn(const Value *V, bool LookThroughBitCast = false);
 
 
