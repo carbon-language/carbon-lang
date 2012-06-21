@@ -797,12 +797,10 @@ bool RegisterCoalescer::reMaterializeTrivialDef(LiveInterval &SrcInt,
 
   SlotIndex NewMIIdx = LIS->getInstructionIndex(NewMI);
   for (unsigned i = 0, e = NewMIImplDefs.size(); i != e; ++i) {
-    unsigned reg = NewMIImplDefs[i];
-    LiveInterval &li = LIS->getInterval(reg);
-    VNInfo *DeadDefVN = li.getNextValue(NewMIIdx.getRegSlot(),
-                                        LIS->getVNInfoAllocator());
-    LiveRange lr(NewMIIdx.getRegSlot(), NewMIIdx.getDeadSlot(), DeadDefVN);
-    li.addRange(lr);
+    unsigned Reg = NewMIImplDefs[i];
+    for (MCRegUnitIterator Units(Reg, TRI); Units.isValid(); ++Units)
+      if (LiveInterval *LI = LIS->getCachedRegUnit(*Units))
+        LI->createDeadDef(NewMIIdx.getRegSlot(), LIS->getVNInfoAllocator());
   }
 
   CopyMI->eraseFromParent();
