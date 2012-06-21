@@ -10,7 +10,14 @@ function(add_llvm_unittest test_dirname)
   if( NOT LLVM_BUILD_TESTS )
     set(EXCLUDE_FROM_ALL ON)
   endif()
+
   add_llvm_executable(${test_name}Tests ${ARGN})
+  target_link_libraries(${test_name}Tests
+    gtest
+    gtest_main
+    LLVMSupport # gtest needs it for raw_ostream.
+    )
+
   add_dependencies(UnitTests ${test_name}Tests)
   set_target_properties(${test_name}Tests PROPERTIES FOLDER "Tests")
 endfunction()
@@ -49,12 +56,6 @@ set(LLVM_LINK_COMPONENTS
   AsmParser
   Core
   Support
-  )
-
-set(LLVM_USED_LIBS
-  gtest
-  gtest_main
-  LLVMSupport # gtest needs it for raw_ostream.
   )
 
 add_llvm_unittest(ADT
