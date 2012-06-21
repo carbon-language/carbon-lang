@@ -877,10 +877,12 @@ DerivedArgList *Darwin::TranslateArgs(const DerivedArgList &Args,
     StringRef where;
 
     // Complain about targetting iOS < 5.0 in any way.
-    if ((TargetSimulatorVersionFromDefines != VersionTuple() &&
-         TargetSimulatorVersionFromDefines < VersionTuple(5, 0)) ||
-        (isTargetIPhoneOS() && isIPhoneOSVersionLT(5, 0))) {
-      where = "iOS 5.0";
+    if (TargetSimulatorVersionFromDefines != VersionTuple()) {
+      if (TargetSimulatorVersionFromDefines < VersionTuple(5, 0))
+        where = "iOS 5.0";
+    } else if (isTargetIPhoneOS()) {
+      if (isIPhoneOSVersionLT(5, 0))
+        where = "iOS 5.0";
     }
 
     if (where != StringRef()) {
