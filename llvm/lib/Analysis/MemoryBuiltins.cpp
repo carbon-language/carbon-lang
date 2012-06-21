@@ -419,7 +419,7 @@ SizeOffsetType ObjectSizeOffsetVisitor::visitCallSite(CallSite CS) {
   if (!Arg)
     return unknown();
 
-  APInt Size = Arg->getValue();
+  APInt Size = Arg->getValue().zextOrSelf(IntTyBits);
   // size determined by just 1 parameter
   if (FnData->SndParam == (unsigned char)-1)
     return std::make_pair(Size, Zero);
@@ -428,7 +428,7 @@ SizeOffsetType ObjectSizeOffsetVisitor::visitCallSite(CallSite CS) {
   if (!Arg)
     return unknown();
 
-  Size *= Arg->getValue();
+  Size *= Arg->getValue().zextOrSelf(IntTyBits);
   return std::make_pair(Size, Zero);
 
   // TODO: handle more standard functions (+ wchar cousins):
@@ -602,11 +602,13 @@ SizeOffsetEvalType ObjectSizeOffsetEvaluator::visitCallSite(CallSite CS) {
     return unknown();
   }
 
-  Value *FirstArg  = CS.getArgument(FnData->FstParam);
+  Value *FirstArg = CS.getArgument(FnData->FstParam);
+  FirstArg = Builder.CreateZExt(FirstArg, IntTy);
   if (FnData->SndParam == (unsigned char)-1)
     return std::make_pair(FirstArg, Zero);
 
   Value *SecondArg = CS.getArgument(FnData->SndParam);
+  SecondArg = Builder.CreateZExt(SecondArg, IntTy);
   Value *Size = Builder.CreateMul(FirstArg, SecondArg);
   return std::make_pair(Size, Zero);
 
