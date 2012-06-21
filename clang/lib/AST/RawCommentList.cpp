@@ -159,8 +159,10 @@ void RawCommentList::addComment(const RawComment &RC) {
     return;
 
   assert((Comments.empty() ||
+          Comments.back().getSourceRange().getEnd() ==
+              RC.getSourceRange().getBegin() ||
           SourceMgr.isBeforeInTranslationUnit(
-              Comments[0].getSourceRange().getEnd(),
+              Comments.back().getSourceRange().getEnd(),
               RC.getSourceRange().getBegin())) &&
          "comments are not coming in source order");
 
