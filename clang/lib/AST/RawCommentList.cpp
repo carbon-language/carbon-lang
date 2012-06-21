@@ -60,7 +60,7 @@ RawComment::RawComment(const SourceManager &SourceMgr, SourceRange SR,
     Range(SR), RawTextValid(false), IsAlmostTrailingComment(false),
     BeginLineValid(false), EndLineValid(false) {
   // Extract raw comment text, if possible.
-  if (getRawText(SourceMgr).empty()) {
+  if (SR.getBegin() == SR.getEnd() || getRawText(SourceMgr).empty()) {
     Kind = CK_Invalid;
     return;
   }

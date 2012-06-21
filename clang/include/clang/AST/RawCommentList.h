@@ -129,9 +129,9 @@ class BeforeThanCompare<RawComment> {
 public:
   explicit BeforeThanCompare(const SourceManager &SM) : SM(SM) { }
 
-  bool operator()(const RawComment &LHS, const SourceRange &RHS) {
+  bool operator()(const RawComment &LHS, const RawComment &RHS) {
     return SM.isBeforeInTranslationUnit(LHS.getSourceRange().getBegin(),
-                                        RHS.getBegin());
+                                        RHS.getSourceRange().getBegin());
   }
 };
 

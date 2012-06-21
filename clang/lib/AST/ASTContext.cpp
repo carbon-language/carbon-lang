@@ -81,7 +81,7 @@ const RawComment *ASTContext::getRawCommentForDeclNoCache(const Decl *D) const {
   ArrayRef<RawComment>::iterator Comment
       = std::lower_bound(RawComments.begin(),
                          RawComments.end(),
-                         SourceRange(DeclLoc),
+                         RawComment(SourceMgr, SourceRange(DeclLoc)),
                          BeforeThanCompare<RawComment>(SourceMgr));
 
   // Decompose the location for the declaration and find the beginning of the
