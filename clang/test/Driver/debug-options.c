@@ -2,49 +2,43 @@
 // rdar://10383444
 
 // RUN: %clang -### -c -g %s 2>&1 | FileCheck -check-prefix=G %s
-// RUN: %clang -### -c -g2 %s 2>&1 | FileCheck -check-prefix=G2 %s
-// RUN: %clang -### -c -g3 %s 2>&1 | FileCheck -check-prefix=G3 %s
-// RUN: %clang -### -c -ganything %s 2>&1 | FileCheck -check-prefix=GANY %s
-// RUN: %clang -### -c -ggdb %s 2>&1 | FileCheck -check-prefix=GGDB %s
-// RUN: %clang -### -c -gfoo %s 2>&1 | FileCheck -check-prefix=GFOO %s
-// RUN: %clang -### -c -g -g0 %s 2>&1 | FileCheck -check-prefix=GG0 %s
+// RUN: %clang -### -c -g2 %s 2>&1 | FileCheck -check-prefix=G %s
+// RUN: %clang -### -c -g3 %s 2>&1 | FileCheck -check-prefix=G %s
+// RUN: %clang -### -c -ggdb %s 2>&1 | FileCheck -check-prefix=G %s
+// RUN: %clang -### -c -ggdb1 %s 2>&1 | FileCheck -check-prefix=G %s
+// RUN: %clang -### -c -ggdb3 %s 2>&1 | FileCheck -check-prefix=G %s
+// RUN: %clang -### -c -gdwarf-2 %s 2>&1 | FileCheck -check-prefix=G %s
+//
+// RUN: %clang -### -c -gfoo %s 2>&1 | FileCheck -check-prefix=G_NO %s
+// RUN: %clang -### -c -g -g0 %s 2>&1 | FileCheck -check-prefix=G_NO %s
+// RUN: %clang -### -c -ggdb0 %s 2>&1 | FileCheck -check-prefix=G_NO %s
+//
 // RUN: %clang -### -c -gline-tables-only %s 2>&1 \
-// RUN:             | FileCheck -check-prefix=GLTO %s
+// RUN:             | FileCheck -check-prefix=GLTO_ONLY %s
 // RUN: %clang -### -c -gline-tables-only -g %s 2>&1 \
-// RUN:             | FileCheck -check-prefix=GLTO2 %s
+// RUN:             | FileCheck -check-prefix=G_ONLY %s
 // RUN: %clang -### -c -gline-tables-only -g0 %s 2>&1 \
-// RUN:             | FileCheck -check-prefix=GLTO3 %s
+// RUN:             | FileCheck -check-prefix=GLTO_NO %s
+//
+// RUN: %clang -c -grecord-gcc-switches -gno-record-gcc-switches \
+// RUN:           -gstrict-dwarf -gno-strict-dwarf %s 2>&1 \
+// RUN:        | not grep "argument unused during compilation"
 //
 // G: "-cc1"
 // G: "-g"
 //
-// G2: "-cc1"
-// G2: "-g"
+// G_NO: "-cc1"
+// G_NO-NOT: "-g"
 //
-// G3: "-cc1"
-// G3: "-g"
+// GLTO_ONLY: "-cc1"
+// GLTO_ONLY-NOT: "-g"
+// GLTO_ONLY: "-gline-tables-only"
+// GLTO_ONLY-NOT: "-g"
 //
-// GANY: "-cc1"
-// GANY-NOT: "-g"
+// G_ONLY: "-cc1"
+// G_ONLY-NOT: "-gline-tables-only"
+// G_ONLY: "-g"
+// G_ONLY-NOT: "-gline-tables-only"
 //
-// GGDB: "-cc1"
-// GGDB: "-g"
-//
-// GFOO: "-cc1"
-// GFOO-NOT: "-g"
-//
-// GG0: "-cc1"
-// GG0-NOT: "-g"
-//
-// GLTO: "-cc1"
-// GLTO-NOT: "-g"
-// GLTO: "-gline-tables-only"
-// GLTO-NOT: "-g"
-//
-// GLTO2: "-cc1"
-// GLTO2-NOT: "-gline-tables-only"
-// GLTO2: "-g"
-// GLTO2-NOT: "-gline-tables-only"
-//
-// GLTO3: "-cc1"
-// GLTO3-NOT: "-gline-tables-only"
+// GLTO_NO: "-cc1"
+// GLTO_NO-NOT: "-gline-tables-only"

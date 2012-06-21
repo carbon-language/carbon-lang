@@ -33,6 +33,7 @@ def d_Group               : OptionGroup<"<d group>">;
 def f_Group               : OptionGroup<"<f group>">, Group<CompileOnly_Group>;
 def f_clang_Group         : OptionGroup<"<f (clang-only) group>">, Group<CompileOnly_Group>;
 def g_Group               : OptionGroup<"<g group>">;
+def g_flags_Group         : OptionGroup<"<g flags group>">;
 def i_Group               : OptionGroup<"<i group>">, Group<CompileOnly_Group>;
 def clang_i_Group         : OptionGroup<"<clang i group>">, Group<i_Group>;
 def m_Group               : OptionGroup<"<m group>">, Group<CompileOnly_Group>;
@@ -671,21 +672,34 @@ def ffunction_sections: Flag <"-ffunction-sections">, Group<f_Group>,
 def fdata_sections : Flag <"-fdata-sections">, Group<f_Group>, Flags<[CC1Option]>,
   HelpText<"Place each data in its own section (ELF Only)">;
 def f : Joined<"-f">, Group<f_Group>;
-def g0 : Flag<"-g0">, Group<g_Group>;
-def g2 : Flag<"-g2">, Group<g_Group>;
-def g3 : Flag<"-g3">, Group<g_Group>;
-def gdwarf2 : Flag<"-gdwarf-2">, Group<g_Group>;
-def gfull : Flag<"-gfull">, Group<g_Group>;
-def ggdb : Flag<"-ggdb">, Group<g_Group>;
-def gstabs : Flag<"-gstabs">, Group<g_Group>;
-def gstabsplus : Flag<"-gstabs+">, Group<g_Group>;
-def gstabs1 : Flag<"-gstabs1">, Group<g_Group>;
-def gstabs2 : Flag<"-gstabs2">, Group<g_Group>;
-def gused : Flag<"-gused">, Group<g_Group>;
-def g_Flag : Flag<"-g">, Group<g_Group>, HelpText<"Generate source level debug information">,
-    Flags<[CC1Option]>;
+def g_Flag : Flag<"-g">, Group<g_Group>,
+  HelpText<"Generate source level debug information">, Flags<[CC1Option]>;
 def gline_tables_only : Flag<"-gline-tables-only">, Group<g_Group>,
   HelpText<"Emit debug line number tables only">, Flags<[CC1Option]>;
+def g0 : Flag<"-g0">, Group<g_Group>;
+def g1 : Flag<"-g1">, Group<g_Group>;
+def g2 : Flag<"-g2">, Group<g_Group>;
+def g3 : Flag<"-g3">, Group<g_Group>;
+def ggdb : Flag<"-ggdb">, Group<g_Group>;
+def ggdb0 : Flag<"-ggdb0">, Group<g_Group>;
+def ggdb1 : Flag<"-ggdb1">, Group<g_Group>;
+def ggdb2 : Flag<"-ggdb2">, Group<g_Group>;
+def ggdb3 : Flag<"-ggdb3">, Group<g_Group>;
+def gdwarf_2 : Flag<"-gdwarf-2">, Group<g_Group>;
+def gdwarf_3 : Flag<"-gdwarf-3">, Group<g_Group>;
+def gdwarf_4 : Flag<"-gdwarf-4">, Group<g_Group>;
+def gfull : Flag<"-gfull">, Group<g_Group>;
+def gused : Flag<"-gused">, Group<g_Group>;
+def gstabs : Joined<"-gstabs">, Group<g_Group>, Flags<[Unsupported]>;
+def gcoff : Joined<"-gcoff">, Group<g_Group>, Flags<[Unsupported]>;
+def gxcoff : Joined<"-gxcoff">, Group<g_Group>, Flags<[Unsupported]>;
+def gvms : Joined<"-gvms">, Group<g_Group>, Flags<[Unsupported]>;
+def gtoggle : Flag<"-gtoggle">, Group<g_flags_Group>, Flags<[Unsupported]>;
+def grecord_gcc_switches : Flag<"-grecord-gcc-switches">, Group<g_flags_Group>;
+def gno_record_gcc_switches : Flag<"-gno-record-gcc-switches">,
+  Group<g_flags_Group>;
+def gstrict_dwarf : Flag<"-gstrict-dwarf">, Group<g_flags_Group>;
+def gno_strict_dwarf : Flag<"-gno-strict-dwarf">, Group<g_flags_Group>;
 def headerpad__max__install__names : Joined<"-headerpad_max_install_names">;
 def help : Flag<"-help">, Flags<[CC1Option]>,
   HelpText<"Display available options">;
