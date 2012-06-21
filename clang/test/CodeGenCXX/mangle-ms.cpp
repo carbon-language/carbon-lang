@@ -132,3 +132,12 @@ typedef double RGB[3];
 RGB color1;
 extern const RGB color2 = {};
 extern RGB const ((color3)[5]) = {};
+
+// PR12603
+enum E {};
+// CHECK: "\01?fooE@@YA?AW4E@@XZ"
+E fooE() { return E(); }
+
+class X {};
+// CHECK: "\01?fooX@@YA?AVX@@XZ"
+X fooX() { return X(); }

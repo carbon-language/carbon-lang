@@ -31,6 +31,9 @@ class MicrosoftCXXNameMangler {
   MangleContext &Context;
   raw_ostream &Out;
 
+  typedef llvm::DenseMap<const IdentifierInfo*, unsigned> BackRefMap;
+  BackRefMap BackReferences;
+
   ASTContext &getASTContext() const { return Context.getASTContext(); }
 
 public:
@@ -641,7 +644,16 @@ void MicrosoftCXXNameMangler::mangleOperatorName(OverloadedOperatorKind OO,
 
 void MicrosoftCXXNameMangler::mangleSourceName(const IdentifierInfo *II) {
   // <source name> ::= <identifier> @
-  Out << II->getName() << '@';
+  BackRefMap::iterator Found = BackReferences.find(II);
+  if (Found == BackReferences.end()) {
+    Out << II->getName() << '@';
+    if (BackReferences.size() < 10) {
+      size_t Size = BackReferences.size();
+      BackReferences[II] = Size;
+    }
+  } else {
+    Out << Found->second;
+  }
 }
 
 void MicrosoftCXXNameMangler::mangleObjCMethodName(const ObjCMethodDecl *MD) {
@@ -938,17 +950,19 @@ void MicrosoftCXXNameMangler::mangleType(const BuiltinType *T,
   case BuiltinType::ObjCId: Out << "PAUobjc_object@@"; break;
   case BuiltinType::ObjCClass: Out << "PAUobjc_class@@"; break;
   case BuiltinType::ObjCSel: Out << "PAUobjc_selector@@"; break;
+ 
+  case BuiltinType::NullPtr: Out << "$$T"; break;
 
   case BuiltinType::Char16:
   case BuiltinType::Char32:
-  case BuiltinType::Half:
-  case BuiltinType::NullPtr: {
+  case BuiltinType::Half: {
     DiagnosticsEngine &Diags = Context.getDiags();
     unsigned DiagID = Diags.getCustomDiagID(DiagnosticsEngine::Error,
       "cannot mangle this built-in %0 type yet");
     Diags.Report(Range.getBegin(), DiagID)
       << T->getName(Context.getASTContext().getPrintingPolicy())
       << Range;
+    break;
   }
   }
 }
@@ -986,11 +1000,16 @@ void MicrosoftCXXNameMangler::mangleType(const FunctionType *T,
   //               ::= @ # structors (they have no declared return type)
   if (IsStructor)
     Out << '@';
-  else
+  else {
+    QualType Result = Proto->getResultType();
+    const Type* RT = Result.getTypePtr();
+    if(isa<TagType>(RT) && !RT->isAnyPointerType() && !RT->isReferenceType())
+        Out << "?A";
     // FIXME: Get the source range for the result type. Or, better yet,
     // implement the unimplemented stuff so we don't need accurate source
     // location info anymore :).
-    mangleType(Proto->getResultType(), SourceRange());
+    mangleType(Result, SourceRange());
+  }
 
   // <argument-list> ::= X # void
   //                 ::= <type>+ @
@@ -998,17 +1017,28 @@ void MicrosoftCXXNameMangler::mangleType(const FunctionType *T,
   if (Proto->getNumArgs() == 0 && !Proto->isVariadic()) {
     Out << 'X';
   } else {
+    typedef llvm::DenseMap<void*, unsigned> BackRef;
+    BackRef BackReferences;
     if (D) {
       // If we got a decl, use the type-as-written to make sure arrays
       // get mangled right.  Note that we can't rely on the TSI
       // existing if (for example) the parameter was synthesized.
       for (FunctionDecl::param_const_iterator Parm = D->param_begin(),
              ParmEnd = D->param_end(); Parm != ParmEnd; ++Parm) {
-        if (TypeSourceInfo *typeAsWritten = (*Parm)->getTypeSourceInfo())
-          mangleType(typeAsWritten->getType(),
-                     typeAsWritten->getTypeLoc().getSourceRange());
-        else
-          mangleType((*Parm)->getType(), SourceRange());
+        TypeSourceInfo *TSI = (*Parm)->getTypeSourceInfo();
+        QualType Type = TSI ? TSI->getType() : (*Parm)->getType();
+        CanQualType Canonical = getASTContext().getCanonicalType(Type);
+        void *TypePtr = Canonical.getAsOpaquePtr();
+        BackRef::iterator Found = BackReferences.find(TypePtr);
+        if (Found == BackReferences.end()) {
+          mangleType(Type, (*Parm)->getSourceRange());
+          if (BackReferences.size() < 10 && (Canonical->getTypeClass() != Type::Builtin)) {
+            size_t Size = BackReferences.size();
+            BackReferences[TypePtr] = Size;
+          }
+        } else {
+          Out << Found->second;
+        }
       }
     } else {
       for (FunctionProtoType::arg_type_iterator Arg = Proto->arg_type_begin(),
@@ -1316,13 +1346,16 @@ void MicrosoftCXXNameMangler::mangleType(const LValueReferenceType *T,
   mangleType(PointeeTy, Range);
 }
 
+// <type> ::= <r-value-reference-type>
+// <r-value-reference-type> ::= $$Q <cvr-qualifiers> <type>
 void MicrosoftCXXNameMangler::mangleType(const RValueReferenceType *T,
                                          SourceRange Range) {
-  DiagnosticsEngine &Diags = Context.getDiags();
-  unsigned DiagID = Diags.getCustomDiagID(DiagnosticsEngine::Error,
-    "cannot mangle this r-value reference type yet");
-  Diags.Report(Range.getBegin(), DiagID)
-    << Range;
+  Out << "$$Q";
+  QualType PointeeTy = T->getPointeeType();
+  if (!PointeeTy.hasQualifiers())
+    // Lack of qualifiers is mangled as 'A'.
+    Out << 'A';
+  mangleType(PointeeTy, Range);
 }
 
 void MicrosoftCXXNameMangler::mangleType(const ComplexType *T,
