@@ -11,15 +11,15 @@ function(add_llvm_unittest test_dirname)
     set(EXCLUDE_FROM_ALL ON)
   endif()
 
-  add_llvm_executable(${test_name}Tests ${ARGN})
-  target_link_libraries(${test_name}Tests
+  add_llvm_executable(${test_name} ${ARGN})
+  target_link_libraries(${test_name}
     gtest
     gtest_main
     LLVMSupport # gtest needs it for raw_ostream.
     )
 
-  add_dependencies(UnitTests ${test_name}Tests)
-  set_target_properties(${test_name}Tests PROPERTIES FOLDER "Tests")
+  add_dependencies(UnitTests ${test_name})
+  set_target_properties(${test_name} PROPERTIES FOLDER "Tests")
 endfunction()
 
 # Visual Studio 2012 only supports up to 8 template parameters in
@@ -58,7 +58,7 @@ set(LLVM_LINK_COMPONENTS
   Support
   )
 
-add_llvm_unittest(ADT
+add_llvm_unittest(ADTTests
   ADT/APFloatTest.cpp
   ADT/APIntTest.cpp
   ADT/BitVectorTest.cpp
@@ -87,11 +87,11 @@ add_llvm_unittest(ADT
   ADT/VariadicFunctionTest.cpp
  )
 
-add_llvm_unittest(Analysis
+add_llvm_unittest(AnalysisTests
   Analysis/ScalarEvolutionTest.cpp
   )
 
-add_llvm_unittest(ExecutionEngine
+add_llvm_unittest(ExecutionEngineTests
   ExecutionEngine/ExecutionEngineTest.cpp
   )
 
@@ -130,13 +130,15 @@ if(MSVC)
   list(APPEND JITTestsSources ExecutionEngine/JIT/JITTests.def)
 endif()
 
-add_llvm_unittest(ExecutionEngine/JIT ${JITTestsSources})
+add_llvm_unittest(ExecutionEngine/JITTests
+  ${JITTestsSources}
+  )
 
 if(MINGW OR CYGWIN)
   set_property(TARGET JITTests PROPERTY LINK_FLAGS -Wl,--export-all-symbols)
 endif()
 
-add_llvm_unittest(Transforms/Utils
+add_llvm_unittest(Transforms/UtilsTests
   Transforms/Utils/Cloning.cpp
   )
 
@@ -156,9 +158,11 @@ if(MSVC AND MSVC_VERSION LESS 1600)
   list(REMOVE_ITEM VMCoreSources VMCore/ValueMapTest.cpp)
 endif()
 
-add_llvm_unittest(VMCore ${VMCoreSources})
+add_llvm_unittest(VMCoreTests
+  ${VMCoreSources}
+  )
 
-add_llvm_unittest(Bitcode
+add_llvm_unittest(BitcodeTests
   Bitcode/BitReaderTest.cpp
   )
 
@@ -167,7 +171,7 @@ set(LLVM_LINK_COMPONENTS
   Core
   )
 
-add_llvm_unittest(Support
+add_llvm_unittest(SupportTests
   Support/AlignOfTest.cpp
   Support/AllocatorTest.cpp
   Support/BlockFrequencyTest.cpp
