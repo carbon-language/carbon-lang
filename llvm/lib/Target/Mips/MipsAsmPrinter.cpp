@@ -301,7 +301,8 @@ bool MipsAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNum,
     const MachineOperand &MO = MI->getOperand(OpNum);
     switch (ExtraCode[0]) {
     default:
-      return true;  // Unknown modifier.
+      // See if this is a generic print operand
+      return AsmPrinter::PrintAsmOperand(MI,OpNum,AsmVariant,ExtraCode,O);
     case 'X': // hex const int
       if ((MO.getType()) != MachineOperand::MO_Immediate)
         return true;
