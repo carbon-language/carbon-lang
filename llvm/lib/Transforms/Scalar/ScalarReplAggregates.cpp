@@ -60,12 +60,25 @@ STATISTIC(NumGlobals,   "Number of allocas copied from constant global");
 
 namespace {
   struct SROA : public FunctionPass {
-    SROA(int T, bool hasDT, char &ID)
+    SROA(int T, bool hasDT, char &ID, int ST, int AT, int SLT)
       : FunctionPass(ID), HasDomTree(hasDT) {
       if (T == -1)
         SRThreshold = 128;
       else
         SRThreshold = T;
+      if (ST == -1)
+        StructMemberThreshold = 32;
+      else
+        StructMemberThreshold = ST;
+      if (AT == -1)
+        ArrayElementThreshold = 8;
+      else
+        ArrayElementThreshold = AT;
+      if (SLT == -1)
+        // Do not limit the scalar integer load size if no threshold is given.
+        ScalarLoadThreshold = -1;
+      else
+        ScalarLoadThreshold = SLT;
     }
 
     bool runOnFunction(Function &F);
@@ -87,7 +100,7 @@ namespace {
     struct AllocaInfo {
       /// The alloca to promote.
       AllocaInst *AI;
-      
+
       /// CheckedPHIs - This is a set of verified PHI nodes, to prevent infinite
       /// looping and avoid redundant work.
       SmallPtrSet<PHINode*, 8> CheckedPHIs;
@@ -116,7 +129,20 @@ namespace {
           hasSubelementAccess(false), hasALoadOrStore(false) {}
     };
 
+    /// SRThreshold - The maximum alloca size to considered for SROA.
     unsigned SRThreshold;
+
+    /// StructMemberThreshold - The maximum number of members a struct can
+    /// contain to be considered for SROA.
+    unsigned StructMemberThreshold;
+
+    /// ArrayElementThreshold - The maximum number of elements an array can
+    /// have to be considered for SROA.
+    unsigned ArrayElementThreshold;
+
+    /// ScalarLoadThreshold - The maximum size in bits of scalars to load when
+    /// converting to scalar
+    unsigned ScalarLoadThreshold;
 
     void MarkUnsafe(AllocaInfo &I, Instruction *User) {
       I.isUnsafe = true;
@@ -156,6 +182,7 @@ namespace {
                                        SmallVector<AllocaInst*, 32> &NewElts);
     void RewriteLoadUserOfWholeAlloca(LoadInst *LI, AllocaInst *AI,
                                       SmallVector<AllocaInst*, 32> &NewElts);
+    bool ShouldAttemptScalarRepl(AllocaInst *AI);
 
     static MemTransferInst *isOnlyCopiedFromConstantGlobal(
         AllocaInst *AI, SmallVector<Instruction*, 4> &ToDelete);
@@ -165,7 +192,8 @@ namespace {
   struct SROA_DT : public SROA {
     static char ID;
   public:
-    SROA_DT(int T = -1) : SROA(T, true, ID) {
+    SROA_DT(int T = -1, int ST = -1, int AT = -1, int SLT = -1) :
+        SROA(T, true, ID, ST, AT, SLT) {
       initializeSROA_DTPass(*PassRegistry::getPassRegistry());
     }
     
@@ -181,7 +209,8 @@ namespace {
   struct SROA_SSAUp : public SROA {
     static char ID;
   public:
-    SROA_SSAUp(int T = -1) : SROA(T, false, ID) {
+    SROA_SSAUp(int T = -1, int ST = -1, int AT = -1, int SLT = -1) :
+        SROA(T, false, ID, ST, AT, SLT) {
       initializeSROA_SSAUpPass(*PassRegistry::getPassRegistry());
     }
     
@@ -210,10 +239,15 @@ INITIALIZE_PASS_END(SROA_SSAUp, "scalarrepl-ssa",
 
 // Public interface to the ScalarReplAggregates pass
 FunctionPass *llvm::createScalarReplAggregatesPass(int Threshold,
-                                                   bool UseDomTree) {
+                                                   bool UseDomTree,
+                                                   int StructMemberThreshold,
+                                                   int ArrayElementThreshold,
+                                                   int ScalarLoadThreshold) {
   if (UseDomTree)
-    return new SROA_DT(Threshold);
-  return new SROA_SSAUp(Threshold);
+    return new SROA_DT(Threshold, StructMemberThreshold, ArrayElementThreshold,
+                       ScalarLoadThreshold);
+  return new SROA_SSAUp(Threshold, StructMemberThreshold,
+                        ArrayElementThreshold, ScalarLoadThreshold);
 }
 
 
@@ -229,6 +263,7 @@ class ConvertToScalarInfo {
   /// AllocaSize - The size of the alloca being considered in bytes.
   unsigned AllocaSize;
   const TargetData &TD;
+  unsigned ScalarLoadThreshold;
 
   /// IsNotTrivial - This is set to true if there is some access to the object
   /// which means that mem2reg can't promote it.
@@ -270,9 +305,11 @@ class ConvertToScalarInfo {
   bool HadDynamicAccess;
 
 public:
-  explicit ConvertToScalarInfo(unsigned Size, const TargetData &td)
-    : AllocaSize(Size), TD(td), IsNotTrivial(false), ScalarKind(Unknown),
-      VectorTy(0), HadNonMemTransferAccess(false), HadDynamicAccess(false) { }
+  explicit ConvertToScalarInfo(unsigned Size, const TargetData &td,
+                               unsigned SLT)
+    : AllocaSize(Size), TD(td), ScalarLoadThreshold(SLT), IsNotTrivial(false),
+    ScalarKind(Unknown), VectorTy(0), HadNonMemTransferAccess(false),
+    HadDynamicAccess(false) { }
 
   AllocaInst *TryConvert(AllocaInst *AI);
 
@@ -324,6 +361,12 @@ AllocaInst *ConvertToScalarInfo::TryConvert(AllocaInst *AI) {
     NewTy = VectorTy;  // Use the vector type.
   } else {
     unsigned BitWidth = AllocaSize * 8;
+
+    // Do not convert to scalar integer if the alloca size exceeds the
+    // scalar load threshold.
+    if (BitWidth > ScalarLoadThreshold)
+      return 0;
+
     if ((ScalarKind == ImplicitVector || ScalarKind == Integer) &&
         !HadNonMemTransferAccess && !TD.fitsInLegalInteger(BitWidth))
       return 0;
@@ -1406,15 +1449,14 @@ bool SROA::performPromotion(Function &F) {
 
 /// ShouldAttemptScalarRepl - Decide if an alloca is a good candidate for
 /// SROA.  It must be a struct or array type with a small number of elements.
-static bool ShouldAttemptScalarRepl(AllocaInst *AI) {
+bool SROA::ShouldAttemptScalarRepl(AllocaInst *AI) {
   Type *T = AI->getAllocatedType();
-  // Do not promote any struct into more than 32 separate vars.
+  // Do not promote any struct that has too many members.
   if (StructType *ST = dyn_cast<StructType>(T))
-    return ST->getNumElements() <= 32;
-  // Arrays are much less likely to be safe for SROA; only consider
-  // them if they are very small.
+    return ST->getNumElements() <= StructMemberThreshold;
+  // Do not promote any array that has too many elements.
   if (ArrayType *AT = dyn_cast<ArrayType>(T))
-    return AT->getNumElements() <= 8;
+    return AT->getNumElements() <= ArrayElementThreshold;
   return false;
 }
 
@@ -1519,8 +1561,8 @@ bool SROA::performScalarRepl(Function &F) {
     // promoted itself.  If so, we don't want to transform it needlessly.  Note
     // that we can't just check based on the type: the alloca may be of an i32
     // but that has pointer arithmetic to set byte 3 of it or something.
-    if (AllocaInst *NewAI =
-          ConvertToScalarInfo((unsigned)AllocaSize, *TD).TryConvert(AI)) {
+    if (AllocaInst *NewAI = ConvertToScalarInfo(
+              (unsigned)AllocaSize, *TD, ScalarLoadThreshold).TryConvert(AI)) {
       NewAI->takeName(AI);
       AI->eraseFromParent();
       ++NumConverted;
