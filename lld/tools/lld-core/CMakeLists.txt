@@ -1,5 +1,4 @@
 set(LLVM_USED_LIBS
-  lldCore
   lldPasses
   lldMachO
   lldPECOFF
@@ -7,6 +6,7 @@ set(LLVM_USED_LIBS
   lldNative
   lldYAML
   lldReaderWriter
+  lldCore
  )
 
 set(LLVM_LINK_COMPONENTS
