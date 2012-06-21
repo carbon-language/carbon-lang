@@ -2128,10 +2128,32 @@ Sema::ActOnCapScopeReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
         return StmtError();
       RetValExp = Result.take();
 
-      if (!RetValExp->isTypeDependent())
+      if (!RetValExp->isTypeDependent()) {
         ReturnT = RetValExp->getType();
-      else
+
+        // In C, enum constants have the type of their underlying integer type,
+        // not the enum. When inferring block return values, we should infer
+        // the enum type if an enum constant is used, unless the enum is
+        // anonymous (in which case there can be no variables of its type).
+        if (!getLangOpts().CPlusPlus) {
+          Expr *InsideExpr = RetValExp->IgnoreParenImpCasts();
+          if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(InsideExpr)) {
+            Decl *D = DRE->getDecl();
+            if (EnumConstantDecl *ECD = dyn_cast<EnumConstantDecl>(D)) {
+              EnumDecl *Enum = cast<EnumDecl>(ECD->getDeclContext());
+              if (Enum->getDeclName() || Enum->getTypedefNameForAnonDecl()) {
+                ReturnT = Context.getTypeDeclType(Enum);
+                ExprResult Casted = ImpCastExprToType(RetValExp, ReturnT,
+                                                      CK_IntegralCast);
+                assert(Casted.isUsable());
+                RetValExp = Casted.take();
+              }
+            }
+          }
+        }
+      } else {
         ReturnT = Context.DependentTy;
+      }
     } else { 
       if (RetValExp) {
         // C++11 [expr.lambda.prim]p4 bans inferring the result from an
@@ -2147,7 +2169,7 @@ Sema::ActOnCapScopeReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
     if (!CurCap->ReturnType.isNull() &&
         !CurCap->ReturnType->isDependentType() &&
         !ReturnT->isDependentType() &&
-        !Context.hasSameType(ReturnT, CurCap->ReturnType)) { 
+        !Context.hasSameType(ReturnT, CurCap->ReturnType)) {
       Diag(ReturnLoc, diag::err_typecheck_missing_return_type_incompatible) 
           << ReturnT << CurCap->ReturnType
           << (getCurLambda() != 0);
