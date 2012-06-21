@@ -10,6 +10,7 @@ Subsystem Documentation
    BranchWeightMetadata
    LinkTimeOptimization
    SegmentedStacks
+   TableGenFundamentals
 
 * `Writing an LLVM Pass <WritingAnLLVMPass.html>`_
     
@@ -25,8 +26,8 @@ Subsystem Documentation
    working on retargetting LLVM to a new architecture, designing a new codegen
    pass, or enhancing existing components.
     
-* `TableGen Fundamentals <TableGenFundamentals.html>`_
-    
+* :ref:`tablegen`
+
    Describes the TableGen tool, which is used heavily by the LLVM code
    generator.
     
