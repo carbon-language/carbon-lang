@@ -1914,7 +1914,7 @@ void CFAllocator_DoubleFreeOnPthread() {
 
 TEST(AddressSanitizerMac, DISABLED_CFAllocatorDefaultDoubleFree_ChildPhread) {
   EXPECT_DEATH(CFAllocator_DoubleFreeOnPthread(), "attempting double-free");
-} 
+}
 
 // TODO(glider): figure out whether we still need these tests. Is it correct
 // to intercept the non-default CFAllocators?
