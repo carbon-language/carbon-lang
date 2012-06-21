@@ -10,4 +10,4 @@
 // RUN: %clang -c -gvms0 %s 2>&1 | FileCheck %s
 // RUN: %clang -c -gtoggle %s 2>&1 | FileCheck %s
 //
-// CHECK: clang: error: unsupported option
+// CHECK: error: unsupported option
