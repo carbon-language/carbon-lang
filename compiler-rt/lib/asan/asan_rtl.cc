@@ -73,6 +73,7 @@ bool    FLAG_symbolize = 0;
 s64 FLAG_demangle = 1;
 s64 FLAG_debug = 0;
 bool    FLAG_replace_cfallocator = 1;  // Used on Mac only.
+bool    FLAG_mac_ignore_invalid_free = 0;  // Used on Mac only.
 bool    FLAG_replace_str = 1;
 bool    FLAG_replace_intrin = 1;
 bool    FLAG_use_fake_stack = 1;
@@ -458,6 +459,7 @@ static void ParseAsanOptions(const char *options) {
   IntFlagValue(options, "demangle=", &FLAG_demangle);
   IntFlagValue(options, "debug=", &FLAG_debug);
   BoolFlagValue(options, "replace_cfallocator=", &FLAG_replace_cfallocator);
+  BoolFlagValue(options, "mac_ignore_invalid_free=", &FLAG_mac_ignore_invalid_free);
   BoolFlagValue(options, "replace_str=", &FLAG_replace_str);
   BoolFlagValue(options, "replace_intrin=", &FLAG_replace_intrin);
   BoolFlagValue(options, "use_fake_stack=", &FLAG_use_fake_stack);

@@ -148,6 +148,7 @@ extern uptr  FLAG_malloc_context_size;
 extern bool    FLAG_replace_str;
 extern bool    FLAG_replace_intrin;
 extern bool    FLAG_replace_cfallocator;
+extern bool    FLAG_mac_ignore_invalid_free;
 extern bool    FLAG_fast_unwind;
 extern bool    FLAG_use_fake_stack;
 extern uptr  FLAG_max_malloc_fill_size;

@@ -149,8 +149,7 @@ void print_zone_for_ptr(void *ptr) {
   }
 }
 
-// TODO(glider): the allocation callbacks need to be refactored.
-void mz_free(malloc_zone_t *zone, void *ptr) {
+void ALWAYS_INLINE free_common(void *context, void *ptr) {
   if (!ptr) return;
   malloc_zone_t *orig_zone = malloc_zone_from_ptr(ptr);
   // For some reason Chromium calls mz_free() for pointers that belong to
@@ -160,12 +159,12 @@ void mz_free(malloc_zone_t *zone, void *ptr) {
     system_purgeable_zone->free(system_purgeable_zone, ptr);
     return;
   }
-  if (asan_mz_size(ptr)) {
+  if (!FLAG_mac_ignore_invalid_free || asan_mz_size(ptr)) {
     GET_STACK_TRACE_HERE_FOR_FREE(ptr);
     asan_free(ptr, &stack);
   } else {
     // Let us just leak this memory for now.
-    AsanPrintf("mz_free(%p) -- attempting to free unallocated memory.\n"
+    AsanPrintf("free_common(%p) -- attempting to free unallocated memory.\n"
                "AddressSanitizer is ignoring this error on Mac OS now.\n",
                ptr);
     print_zone_for_ptr(ptr);
@@ -175,29 +174,13 @@ void mz_free(malloc_zone_t *zone, void *ptr) {
   }
 }
 
+// TODO(glider): the allocation callbacks need to be refactored.
+void mz_free(malloc_zone_t *zone, void *ptr) {
+  free_common(zone, ptr);
+}
+
 void cf_free(void *ptr, void *info) {
-  if (!ptr) return;
-  malloc_zone_t *orig_zone = malloc_zone_from_ptr(ptr);
-  // For some reason Chromium calls mz_free() for pointers that belong to
-  // DefaultPurgeableMallocZone instead of asan_zone. We might want to
-  // fix this someday.
-  if (orig_zone == system_purgeable_zone) {
-    system_purgeable_zone->free(system_purgeable_zone, ptr);
-    return;
-  }
-  if (asan_mz_size(ptr)) {
-    GET_STACK_TRACE_HERE_FOR_FREE(ptr);
-    asan_free(ptr, &stack);
-  } else {
-    // Let us just leak this memory for now.
-    AsanPrintf("cf_free(%p) -- attempting to free unallocated memory.\n"
-               "AddressSanitizer is ignoring this error on Mac OS now.\n",
-               ptr);
-    print_zone_for_ptr(ptr);
-    GET_STACK_TRACE_HERE_FOR_FREE(ptr);
-    stack.PrintStack();
-    return;
-  }
+  free_common(info, ptr);
 }
 
 void *mz_realloc(malloc_zone_t *zone, void *ptr, size_t size) {
