@@ -16,6 +16,12 @@ using namespace llvm;
 
 namespace {
 
+// Disable warnings about questionable type definitions.
+// We're testing that even questionable types work with the alignment utilities.
+#ifdef _MSC_VER
+#pragma warning(disable:4584)
+#endif
+
 // Define some fixed alignment types to use in these tests.
 #if __cplusplus == 201103L || __has_feature(cxx_alignas)
 typedef char alignas(1) A1;
