@@ -7,7 +7,7 @@ int object;
 @class NSString, NSArray;
 
 @interface Test 
-- Func:(int)XXXX, id object;
+- Func:(int)XXXX, id object; // expected-warning {{use of C-style parameters in Objective-C method declarations is deprecated}}
 
 - doSomethingElseWith:(id)object;
 
@@ -23,7 +23,7 @@ int object;
     return object; // expected-warning {{incompatible pointer types returning 'NSArray *' from a function with result type 'NSString *'}}
 }
 
-- Func:(int)XXXX, id object { return object; }
+- Func:(int)XXXX, id object { return object; } // expected-warning {{use of C-style parameters in Objective-C method declarations is deprecated}}
 
 - doSomethingElseWith:(id)object { return object; }
 

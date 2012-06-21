@@ -1106,7 +1106,7 @@ Decl *Parser::ParseObjCMethodDecl(SourceLocation mLoc,
   }
 
   bool isVariadic = false;
-
+  bool cStyleParamWarned = false;
   // Parse the (optional) parameter list.
   while (Tok.is(tok::comma)) {
     ConsumeToken();
@@ -1114,6 +1114,10 @@ Decl *Parser::ParseObjCMethodDecl(SourceLocation mLoc,
       isVariadic = true;
       ConsumeToken();
       break;
+    }
+    if (!cStyleParamWarned) {
+      Diag(Tok, diag::warn_cstyle_param);
+      cStyleParamWarned = true;
     }
     DeclSpec DS(AttrFactory);
     ParseDeclarationSpecifiers(DS);
@@ -1126,7 +1130,6 @@ Decl *Parser::ParseObjCMethodDecl(SourceLocation mLoc,
                                                     ParmDecl.getIdentifierLoc(), 
                                                     Param,
                                                    0));
-
   }
 
   // FIXME: Add support for optional parameter list...

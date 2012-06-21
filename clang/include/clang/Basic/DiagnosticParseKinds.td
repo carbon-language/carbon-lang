@@ -339,6 +339,9 @@ def err_illegal_super_cast : Error<
   "cannot cast 'super' (it isn't an expression)">;
 def err_nsnumber_nonliteral_unary : Error<
   "@%0 must be followed by a number to form an NSNumber object">;
+def warn_cstyle_param : Warning<
+  "use of C-style parameters in Objective-C method declarations"
+  " is deprecated">, InGroup<DeprecatedDeclarations>;
 
 let CategoryName = "ARC Parse Issue" in {
 def err_arc_bridge_retain : Error<

@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -verify -Wno-objc-root-class %s
+// RUN: %clang_cc1 -verify -Wno-deprecated-declarations -Wno-objc-root-class %s
 
 @interface Unrelated
 @end
