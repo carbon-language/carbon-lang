@@ -29,5 +29,11 @@ __divsi3(si_int a, si_int b)
     a = (a ^ s_a) - s_a;                         /* negate if s_a == -1 */
     b = (b ^ s_b) - s_b;                         /* negate if s_b == -1 */
     s_a ^= s_b;                                  /* sign of quotient */
-    return (__udivsi3(a, b) ^ s_a) - s_a;        /* negate if s_a == -1 */
+    /*
+     * On CPUs without unsigned hardware division support,
+     *  this calls __udivsi3 (notice the cast to su_int).
+     * On CPUs with unsigned hardware division support,
+     *  this uses the unsigned division instruction.
+     */
+    return ((su_int)a/(su_int)b ^ s_a) - s_a;    /* negate if s_a == -1 */
 }
