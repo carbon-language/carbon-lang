@@ -398,11 +398,6 @@ bool RegisterCoalescer::adjustCopiesBackFrom(const CoalescerPair &CP,
   assert(!CP.isPartial() && "This doesn't work for partial copies.");
   assert(!CP.isPhys() && "This doesn't work for physreg copies.");
 
-  // Bail if there is no dst interval - can happen when merging physical subreg
-  // operations.
-  if (!LIS->hasInterval(CP.getDstReg()))
-    return false;
-
   LiveInterval &IntA =
     LIS->getInterval(CP.isFlipped() ? CP.getDstReg() : CP.getSrcReg());
   LiveInterval &IntB =
@@ -463,19 +458,6 @@ bool RegisterCoalescer::adjustCopiesBackFrom(const CoalescerPair &CP,
   // [ValLR.end, BLR.begin) of either value number, then we merge the
   // two value numbers.
   IntB.addRange(LiveRange(FillerStart, FillerEnd, BValNo));
-
-  // If the IntB live range is assigned to a physical register, and if that
-  // physreg has sub-registers, update their live intervals as well.
-  if (TargetRegisterInfo::isPhysicalRegister(IntB.reg)) {
-    for (MCSubRegIterator SR(IntB.reg, TRI); SR.isValid(); ++SR) {
-      if (!LIS->hasInterval(*SR))
-        continue;
-      LiveInterval &SRLI = LIS->getInterval(*SR);
-      SRLI.addRange(LiveRange(FillerStart, FillerEnd,
-                              SRLI.getNextValue(FillerStart,
-                                                LIS->getVNInfoAllocator())));
-    }
-  }
 
   // Okay, merge "B1" into the same value number as "B0".
   if (BValNo != ValLR->valno) {
@@ -557,10 +539,6 @@ bool RegisterCoalescer::hasOtherReachingDefs(LiveInterval &IntA,
 bool RegisterCoalescer::removeCopyByCommutingDef(const CoalescerPair &CP,
                                                  MachineInstr *CopyMI) {
   assert (!CP.isPhys());
-
-  // Bail if there is no dst interval.
-  if (!LIS->hasInterval(CP.getDstReg()))
-    return false;
 
   SlotIndex CopyIdx = LIS->getInstructionIndex(CopyMI).getRegSlot();
 
