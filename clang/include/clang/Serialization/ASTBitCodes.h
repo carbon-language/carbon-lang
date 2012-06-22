@@ -871,7 +871,7 @@ namespace clang {
       /// in the order in which those declarations were added to the
       /// declaration context. This data is used when iterating over
       /// the contents of a DeclContext, e.g., via
-      /// DeclContext::decls_begin()/DeclContext::decls_end().
+      /// DeclContext::decls_begin() and DeclContext::decls_end().
       DECL_CONTEXT_LEXICAL,
       /// \brief A record that stores the set of declarations that are
       /// visible from a given DeclContext.
