@@ -84,7 +84,6 @@ MCAsmInfo::MCAsmInfo() {
   SupportsDebugInformation = false;
   ExceptionsType = ExceptionHandling::None;
   DwarfUsesInlineInfoSection = false;
-  DwarfRequiresRelocationForSectionOffset = true;
   DwarfSectionOffsetDirective = 0;
   DwarfUsesRelocationsAcrossSections = true;
   DwarfUsesRelocationsForStringPool = true;

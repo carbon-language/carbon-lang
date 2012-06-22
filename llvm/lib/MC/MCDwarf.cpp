@@ -705,7 +705,7 @@ void MCGenDwarfInfo::Emit(MCStreamer *MCOS, const MCSymbol *LineSectionSymbol) {
   MCOS->SwitchSection(context.getObjectFileInfo()->getDwarfInfoSection());
   MCOS->SwitchSection(context.getObjectFileInfo()->getDwarfAbbrevSection());
   MCSymbol *AbbrevSectionSymbol;
-  if (AsmInfo.doesDwarfRequireRelocationForSectionOffset()) {
+  if (AsmInfo.doesDwarfUseRelocationsAcrossSections()) {
     AbbrevSectionSymbol = context.CreateTempSymbol();
     MCOS->EmitLabel(AbbrevSectionSymbol);
   } else {
@@ -1285,7 +1285,7 @@ MCSymbol *FrameEmitterImpl::EmitFDE(MCStreamer &streamer,
                                                  0);
     if (verboseAsm) streamer.AddComment("FDE CIE Offset");
     streamer.EmitAbsValue(offset, 4);
-  } else if (!asmInfo.doesDwarfRequireRelocationForSectionOffset()) {
+  } else if (!asmInfo.doesDwarfUseRelocationsAcrossSections()) {
     const MCExpr *offset = MakeStartMinusEndExpr(streamer, *SectionStart,
                                                  cieStart, 0);
     streamer.EmitAbsValue(offset, 4);

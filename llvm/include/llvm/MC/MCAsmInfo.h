@@ -315,14 +315,8 @@ namespace llvm {
     /// DwarfSectionOffsetDirective - Special section offset directive.
     const char* DwarfSectionOffsetDirective; // Defaults to NULL
 
-    /// DwarfRequiresRelocationForSectionOffset - True if we need to produce a
-    /// relocation when we want a section offset in dwarf.
-    bool DwarfRequiresRelocationForSectionOffset;  // Defaults to true;
-
     /// DwarfUsesRelocationsAcrossSections - True if Dwarf2 output generally
     /// uses relocations for references to other .debug_* sections.
-    // FIXME: Can we replace DwarfRequiresRelocationForSectionOffset
-    // with this?
     bool DwarfUsesRelocationsAcrossSections;
 
     /// DwarfUsesRelocationsForStringPool - True if this Dwarf output must use
@@ -550,9 +544,6 @@ namespace llvm {
     }
     const char *getDwarfSectionOffsetDirective() const {
       return DwarfSectionOffsetDirective;
-    }
-    bool doesDwarfRequireRelocationForSectionOffset() const {
-      return DwarfRequiresRelocationForSectionOffset;
     }
     bool doesDwarfUseRelocationsAcrossSections() const {
       return DwarfUsesRelocationsAcrossSections;
