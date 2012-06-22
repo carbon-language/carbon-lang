@@ -9,12 +9,11 @@
 
 #define DEBUG_TYPE "processimplicitdefs"
 
-#include "llvm/CodeGen/ProcessImplicitDefs.h"
-
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/CodeGen/LiveVariables.h"
+#include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/Passes.h"
@@ -24,6 +23,32 @@
 
 
 using namespace llvm;
+
+namespace {
+/// Process IMPLICIT_DEF instructions and make sure there is one implicit_def
+/// for each use. Add isUndef marker to implicit_def defs and their uses.
+class ProcessImplicitDefs : public MachineFunctionPass {
+  const TargetInstrInfo *TII;
+  const TargetRegisterInfo *TRI;
+  MachineRegisterInfo *MRI;
+  LiveVariables *LV;
+
+  bool CanTurnIntoImplicitDef(MachineInstr *MI, unsigned Reg,
+                              unsigned OpIdx,
+                              SmallSet<unsigned, 8> &ImpDefRegs);
+
+public:
+  static char ID;
+
+  ProcessImplicitDefs() : MachineFunctionPass(ID) {
+    initializeProcessImplicitDefsPass(*PassRegistry::getPassRegistry());
+  }
+
+  virtual void getAnalysisUsage(AnalysisUsage &au) const;
+
+  virtual bool runOnMachineFunction(MachineFunction &fn);
+};
+} // end anonymous namespace
 
 char ProcessImplicitDefs::ID = 0;
 char &llvm::ProcessImplicitDefsID = ProcessImplicitDefs::ID;
