@@ -85,7 +85,13 @@ typedef double NSTimeInterval;
 - (id)initWithBytes:(const void *)bytes length:(NSUInteger)len encoding:(NSStringEncoding)encoding;
 - (id)initWithBytesNoCopy:(void *)bytes length:(NSUInteger)len encoding:(NSStringEncoding)encoding freeWhenDone:(BOOL)freeBuffer;
 + (id)stringWithUTF8String:(const char *)nullTerminatedCString;
++ (id)stringWithString:(NSString *)string;
 @end        @class NSString, NSURL, NSError;
+
+@interface NSMutableString : NSString
+- (void)appendFormat:(NSString *)format, ... __attribute__((format(__NSString__, 1, 2)));
+@end
+
 @interface NSData : NSObject <NSCopying, NSMutableCopying, NSCoding>  - (NSUInteger)length;
 + (id)dataWithBytesNoCopy:(void *)bytes length:(NSUInteger)length;
 + (id)dataWithBytesNoCopy:(void *)bytes length:(NSUInteger)length freeWhenDone:(BOOL)b;

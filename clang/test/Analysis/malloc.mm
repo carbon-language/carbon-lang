@@ -207,3 +207,8 @@ void foo(NSPointerArray* pointerArray) {
   void* buffer = [pointerArray pointerAtIndex:0];
   free(buffer);
 }
+
+void noCrashOnVariableArgumentSelector() {
+  NSMutableString *myString = [NSMutableString stringWithString:@"some text"];
+  [myString appendFormat:@"some text = %d", 3];
+}
