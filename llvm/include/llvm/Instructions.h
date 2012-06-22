@@ -2732,8 +2732,7 @@ public:
     Self operator++() {
       // Check index correctness after increment.
       // Note: Index == getNumCases() means end().
-      unsigned NumCases = SI->getNumCases();
-      assert(Index+1 <= NumCases && "Index out the number of cases.");
+      assert(Index+1 <= SI->getNumCases() && "Index out the number of cases.");
       ++Index;
       if (Index == 0)
         SubsetIt = SI->TheSubsets.begin();
