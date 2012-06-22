@@ -347,11 +347,6 @@ namespace llvm {
       return RegUnitIntervals[Unit];
     }
 
-    /// trackingRegUnits - Does LiveIntervals curently track register units?
-    /// This function will be removed when regunit tracking is permanently
-    /// enabled.
-    bool trackingRegUnits() const { return !RegUnitIntervals.empty(); }
-
   private:
     /// computeIntervals - Compute live intervals.
     void computeIntervals();

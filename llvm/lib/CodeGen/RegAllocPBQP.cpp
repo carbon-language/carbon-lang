@@ -236,62 +236,18 @@ std::auto_ptr<PBQPRAProblem> PBQPBuilder::build(MachineFunction *mf,
         continue;
 
       // vregLI overlaps fixed regunit interference.
-      if (LIS->trackingRegUnits()) {
-        bool Interference = false;
-        for (MCRegUnitIterator Units(preg, tri); Units.isValid(); ++Units) {
-          if (vregLI->overlaps(LIS->getRegUnit(*Units))) {
-            Interference = true;
-            break;
-          }
+      bool Interference = false;
+      for (MCRegUnitIterator Units(preg, tri); Units.isValid(); ++Units) {
+        if (vregLI->overlaps(LIS->getRegUnit(*Units))) {
+          Interference = true;
+          break;
         }
-        if (Interference)
-          continue;
       }
+      if (Interference)
+        continue;
 
       // preg is usable for this virtual register.
       vrAllowed.push_back(preg);
-    }
-
-    RegSet overlappingPRegs;
-
-    // Record physical registers whose ranges overlap.
-    for (RegSet::const_iterator pregItr = pregs.begin(),
-                                pregEnd = pregs.end();
-         pregItr != pregEnd; ++pregItr) {
-      unsigned preg = *pregItr;
-      if (!LIS->hasInterval(preg))
-        continue;
-      const LiveInterval *pregLI = &LIS->getInterval(preg);
-
-      if (pregLI->empty()) {
-        continue;
-      }
-
-      if (vregLI->overlaps(*pregLI))
-        overlappingPRegs.insert(preg);      
-    }
-
-    for (RegSet::const_iterator pregItr = overlappingPRegs.begin(),
-                                pregEnd = overlappingPRegs.end();
-         pregItr != pregEnd; ++pregItr) {
-      unsigned preg = *pregItr;
-
-      // Remove the register from the allowed set.
-      VRAllowed::iterator eraseItr =
-        std::find(vrAllowed.begin(), vrAllowed.end(), preg);
-
-      if (eraseItr != vrAllowed.end()) {
-        vrAllowed.erase(eraseItr);
-      }
-
-      // Also remove any aliases.
-      for (MCRegAliasIterator AI(preg, tri, false); AI.isValid(); ++AI) {
-        VRAllowed::iterator eraseItr =
-          std::find(vrAllowed.begin(), vrAllowed.end(), *AI);
-        if (eraseItr != vrAllowed.end()) {
-          vrAllowed.erase(eraseItr);
-        }
-      }
     }
 
     // Construct the node.

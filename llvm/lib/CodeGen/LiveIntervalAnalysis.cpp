@@ -1188,7 +1188,7 @@ private:
 
       // Collect ranges for register units. These live ranges are computed on
       // demand, so just skip any that haven't been computed yet.
-      if (TargetRegisterInfo::isPhysicalRegister(Reg) && LIS.trackingRegUnits())
+      if (TargetRegisterInfo::isPhysicalRegister(Reg))
         for (MCRegUnitIterator Units(Reg, &TRI); Units.isValid(); ++Units)
           if (LiveInterval *LI = LIS.getCachedRegUnit(*Units))
             collectRanges(MO, LI, Entering, Internal, Exiting, OldIdx);

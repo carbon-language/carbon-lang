@@ -1100,26 +1100,12 @@ bool RegisterCoalescer::joinReservedPhysReg(CoalescerPair &CP) {
 
   // Deny any overlapping intervals.  This depends on all the reserved
   // register live ranges to look like dead defs.
-  if (LIS->trackingRegUnits()) {
-    for (MCRegUnitIterator UI(CP.getDstReg(), TRI); UI.isValid(); ++UI)
-      if (RHS.overlaps(LIS->getRegUnit(*UI))) {
-        DEBUG(dbgs() << "\t\tInterference: " << PrintRegUnit(*UI, TRI) << '\n');
-        return false;
-      }
-  } else {
-    for (MCRegAliasIterator AS(CP.getDstReg(), TRI, true); AS.isValid(); ++AS) {
-      if (!LIS->hasInterval(*AS)) {
-        // Make sure at least DstReg itself exists before attempting a join.
-        if (*AS == CP.getDstReg())
-          LIS->getOrCreateInterval(CP.getDstReg());
-        continue;
-      }
-      if (RHS.overlaps(LIS->getInterval(*AS))) {
-        DEBUG(dbgs() << "\t\tInterference: " << PrintReg(*AS, TRI) << '\n');
-        return false;
-      }
+  for (MCRegUnitIterator UI(CP.getDstReg(), TRI); UI.isValid(); ++UI)
+    if (RHS.overlaps(LIS->getRegUnit(*UI))) {
+      DEBUG(dbgs() << "\t\tInterference: " << PrintRegUnit(*UI, TRI) << '\n');
+      return false;
     }
-  }
+
   // Skip any value computations, we are not adding new values to the
   // reserved register.  Also skip merging the live ranges, the reserved
   // register live range doesn't need to be accurate as long as all the
