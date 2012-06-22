@@ -6,9 +6,11 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-
-// \file
-// \brief Implements semantic analysis for C++ expressions.
+///
+/// \file
+/// \brief Implements semantic analysis for C++ expressions.
+///
+//===----------------------------------------------------------------------===//
 
 #include "clang/Sema/SemaInternal.h"
 #include "clang/Sema/DeclSpec.h"
