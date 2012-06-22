@@ -39,7 +39,7 @@ public:
   virtual void EmitLabel(MCSymbol *Symbol);
   virtual void EmitAssignment(MCSymbol *Symbol, const MCExpr *Value);
   virtual void EmitZerofill(const MCSection *Section, MCSymbol *Symbol = 0,
-                            unsigned Size = 0, unsigned ByteAlignment = 0);
+                            uint64_t Size = 0, unsigned ByteAlignment = 0);
   virtual void EmitBytes(StringRef Data, unsigned AddrSpace);
   virtual void EmitValueToAlignment(unsigned ByteAlignment, int64_t Value = 0,
                                     unsigned ValueSize = 1,
@@ -144,7 +144,7 @@ void MCPureStreamer::EmitAssignment(MCSymbol *Symbol, const MCExpr *Value) {
 }
 
 void MCPureStreamer::EmitZerofill(const MCSection *Section, MCSymbol *Symbol,
-                                  unsigned Size, unsigned ByteAlignment) {
+                                  uint64_t Size, unsigned ByteAlignment) {
   report_fatal_error("not yet implemented in pure streamer");
 }
 

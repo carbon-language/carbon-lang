@@ -67,7 +67,7 @@ public:
   virtual void EmitLocalCommonSymbol(MCSymbol *Symbol, uint64_t Size,
                                      unsigned ByteAlignment);
   virtual void EmitZerofill(const MCSection *Section, MCSymbol *Symbol,
-                            unsigned Size,unsigned ByteAlignment);
+                            uint64_t Size,unsigned ByteAlignment);
   virtual void EmitTBSSSymbol(const MCSection *Section, MCSymbol *Symbol,
                               uint64_t Size, unsigned ByteAlignment);
   virtual void EmitBytes(StringRef Data, unsigned AddrSpace);
@@ -324,7 +324,7 @@ void WinCOFFStreamer::EmitLocalCommonSymbol(MCSymbol *Symbol, uint64_t Size,
 }
 
 void WinCOFFStreamer::EmitZerofill(const MCSection *Section, MCSymbol *Symbol,
-                                   unsigned Size,unsigned ByteAlignment) {
+                                   uint64_t Size,unsigned ByteAlignment) {
   llvm_unreachable("not implemented");
 }
 

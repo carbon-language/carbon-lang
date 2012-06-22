@@ -326,7 +326,7 @@ namespace llvm {
     /// @param ByteAlignment - The alignment of the zerofill symbol if
     /// non-zero. This must be a power of 2 on some targets.
     virtual void EmitZerofill(const MCSection *Section, MCSymbol *Symbol = 0,
-                              unsigned Size = 0,unsigned ByteAlignment = 0) = 0;
+                              uint64_t Size = 0,unsigned ByteAlignment = 0) = 0;
 
     /// EmitTBSSSymbol - Emit a thread local bss (.tbss) symbol.
     ///

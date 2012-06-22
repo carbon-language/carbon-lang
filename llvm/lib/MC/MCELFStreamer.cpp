@@ -91,7 +91,7 @@ public:
                                      unsigned ByteAlignment);
 
   virtual void EmitZerofill(const MCSection *Section, MCSymbol *Symbol = 0,
-                            unsigned Size = 0, unsigned ByteAlignment = 0) {
+                            uint64_t Size = 0, unsigned ByteAlignment = 0) {
     llvm_unreachable("ELF doesn't support this directive");
   }
   virtual void EmitTBSSSymbol(const MCSection *Section, MCSymbol *Symbol,
