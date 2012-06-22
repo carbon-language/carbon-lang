@@ -1,3 +1,10 @@
+# First, add the subdirectories which contain feature-based runtime libraries.
+add_subdirectory(sanitizer_common)
+add_subdirectory(asan)
+
+# FIXME: Add support for the profile library.
+
+
 # The top-level lib directory contains a large amount of C code which provides
 # generic implementations of the core runtime library along with optimized
 # architecture-specific code in various subdirectories.
@@ -142,7 +149,7 @@ if(CAN_TARGET_X86_64)
     x86_64/floatundixf.S
     ${GENERIC_SOURCES}
     )
-  set_target_properties(clang_rt.x86_64 PROPERTIES COMPILE_FLAGS "${TARGET_X86_64_CFLAGS}")
+  set_target_properties(clang_rt.x86_64 PROPERTIES COMPILE_FLAGS "-std=c99 ${TARGET_X86_64_CFLAGS}")
 endif()
 if(CAN_TARGET_I386)
   add_library(clang_rt.i386 STATIC
@@ -162,12 +169,5 @@ if(CAN_TARGET_I386)
     i386/umoddi3.S
     ${GENERIC_SOURCES}
     )
-  set_target_properties(clang_rt.i386 PROPERTIES COMPILE_FLAGS "${TARGET_I386_CFLAGS}")
+  set_target_properties(clang_rt.i386 PROPERTIES COMPILE_FLAGS "-std=c99 ${TARGET_I386_CFLAGS}")
 endif()
-
-# Also support building feature-based runtime libraries in their various
-# subdircetories.
-add_subdirectory(sanitizer_common)
-add_subdirectory(asan)
-
-# FIXME: Add support for the profile library.
