@@ -45,5 +45,8 @@ try_compile(CAN_TARGET_I386 ${CMAKE_BINARY_DIR} ${SIMPLE_SOURCE32}
 add_subdirectory(lib)
 
 if(LLVM_INCLUDE_TESTS)
-  add_subdirectory(test)
+  # Currently the tests have not been ported to CMake, so disable this
+  # directory.
+  #
+  #add_subdirectory(test)
 endif()
