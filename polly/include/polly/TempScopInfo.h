@@ -65,6 +65,7 @@ public:
 
   bool isRead() const { return Type == READ; }
 
+  bool isWrite() const { return Type == WRITE; }
 };
 
 class Comparison {
