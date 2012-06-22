@@ -438,6 +438,9 @@ my $StoreModel = $ENV{'CCC_ANALYZER_STORE_MODEL'};
 # Get the constraints engine.
 my $ConstraintsModel = $ENV{'CCC_ANALYZER_CONSTRAINTS_MODEL'};
 
+#Get the internal stats setting.
+my $InternalStats = $ENV{'CCC_ANALYZER_INTERNAL_STATS'};
+
 # Get the output format.
 my $OutputFormat = $ENV{'CCC_ANALYZER_OUTPUT_FORMAT'};
 if (!defined $OutputFormat) { $OutputFormat = "html"; }
@@ -641,6 +644,10 @@ if ($Action eq 'compile' or $Action eq 'link') {
 
     if (defined $ConstraintsModel) {
       push @AnalyzeArgs, "-analyzer-constraints=$ConstraintsModel";
+    }
+
+    if (defined $InternalStats) {
+      push @AnalyzeArgs, "-analyzer-stats";
     }
     
     if (defined $Analyses) {

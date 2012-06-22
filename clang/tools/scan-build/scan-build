@@ -1025,7 +1025,8 @@ ADVANCED OPTIONS:
  -maxloop N - specifiy the number of times a block can be visited before giving
               up. Default is 4. Increase for more comprehensive coverage at a
               cost of speed.
-
+ -internal-stats - Generate internal analyzer statistics.
+ 
 CONTROLLING CHECKERS:
 
  A default group of checkers are always run unless explicitly disabled.
@@ -1194,6 +1195,7 @@ my $ExitStatusFoundBugs = 0; # Exit status reflects whether bugs were found
 my @AnalysesToRun;
 my $StoreModel;
 my $ConstraintsModel;
+my $InternalStats;
 my $OutputFormat = "html";
 my $AnalyzerStats = 0;
 my $MaxLoop = 0;
@@ -1325,6 +1327,12 @@ while (@ARGV) {
     $ConstraintsModel = shift @ARGV;
     next;
   }
+
+  if ($arg eq "-internal-stats") {
+    shift @ARGV;
+    $InternalStats = 1;
+    next;
+  }
   
   if ($arg eq "-plist") {
     shift @ARGV;
@@ -1441,6 +1449,9 @@ if (defined $StoreModel) {
 }
 if (defined $ConstraintsModel) {
   $ENV{'CCC_ANALYZER_CONSTRAINTS_MODEL'} = $ConstraintsModel;
+}
+if (defined $InternalStats) {
+  $ENV{'CCC_ANALYZER_INTERNAL_STATS'} = 1;
 }
 if (defined $OutputFormat) {
   $ENV{'CCC_ANALYZER_OUTPUT_FORMAT'} = $OutputFormat;

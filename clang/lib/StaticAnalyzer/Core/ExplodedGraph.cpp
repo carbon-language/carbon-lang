@@ -11,6 +11,7 @@
 //  which represent a path-sensitive, intra-procedural "exploded graph."
 //
 //===----------------------------------------------------------------------===//
+#define DEBUG_TYPE "CoreEngine"
 
 #include "clang/StaticAnalyzer/Core/PathSensitive/ExplodedGraph.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ObjCMessage.h"
@@ -20,10 +21,14 @@
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/Statistic.h"
 #include <vector>
 
 using namespace clang;
 using namespace ento;
+
+STATISTIC(NumNodesWithMoreThanTwoSucc,
+            "The # of nodes with more than 2 successors.");
 
 //===----------------------------------------------------------------------===//
 // Node auditing.
@@ -170,6 +175,8 @@ void ExplodedNode::addPredecessor(ExplodedNode *V, ExplodedGraph &G) {
   assert (!V->isSink());
   Preds.addNode(V, G);
   V->Succs.addNode(this, G);
+  if (V->Succs.size() == 3)
+    NumNodesWithMoreThanTwoSucc++;
 #ifndef NDEBUG
   if (NodeAuditor) NodeAuditor->AddEdge(V, this);
 #endif
