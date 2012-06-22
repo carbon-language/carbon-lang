@@ -5022,29 +5022,9 @@ static bool isIntegralOrEnumerationType(QualType T, bool AllowScopedEnum) {
 /// \param Loc The source location of the construct that requires the
 /// conversion.
 ///
-/// \param FromE The expression we're converting from.
+/// \param From The expression we're converting from.
 ///
-/// \param NotIntDiag The diagnostic to be emitted if the expression does not
-/// have integral or enumeration type.
-///
-/// \param IncompleteDiag The diagnostic to be emitted if the expression has
-/// incomplete class type.
-///
-/// \param ExplicitConvDiag The diagnostic to be emitted if we're calling an
-/// explicit conversion function (because no implicit conversion functions
-/// were available). This is a recovery mode.
-///
-/// \param ExplicitConvNote The note to be emitted with \p ExplicitConvDiag,
-/// showing which conversion was picked.
-///
-/// \param AmbigDiag The diagnostic to be emitted if there is more than one
-/// conversion function that could convert to integral or enumeration type.
-///
-/// \param AmbigNote The note to be emitted with \p AmbigDiag for each
-/// usable conversion function.
-///
-/// \param ConvDiag The diagnostic to be emitted if we are calling a conversion
-/// function, which may be an extension in this case.
+/// \param Diagnoser Used to output any diagnostics.
 ///
 /// \param AllowScopedEnumerations Specifies whether conversions to scoped
 /// enumerations should be considered.
@@ -9851,7 +9831,7 @@ static bool IsOverloaded(const UnresolvedSetImpl &Functions) {
 /// \param OpcIn The UnaryOperator::Opcode that describes this
 /// operator.
 ///
-/// \param Functions The set of non-member functions that will be
+/// \param Fns The set of non-member functions that will be
 /// considered by overload resolution. The caller needs to build this
 /// set based on the context using, e.g.,
 /// LookupOverloadedOperatorName() and ArgumentDependentLookup(). This
@@ -10051,7 +10031,7 @@ Sema::CreateOverloadedUnaryOp(SourceLocation OpLoc, unsigned OpcIn,
 /// \param OpcIn The BinaryOperator::Opcode that describes this
 /// operator.
 ///
-/// \param Functions The set of non-member functions that will be
+/// \param Fns The set of non-member functions that will be
 /// considered by overload resolution. The caller needs to build this
 /// set based on the context using, e.g.,
 /// LookupOverloadedOperatorName() and ArgumentDependentLookup(). This

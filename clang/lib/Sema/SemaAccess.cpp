@@ -1711,13 +1711,10 @@ Sema::AccessResult Sema::CheckAddressOfMemberAccess(Expr *OvlExpr,
 
 /// Checks access for a hierarchy conversion.
 ///
-/// \param IsBaseToDerived whether this is a base-to-derived conversion (true)
-///     or a derived-to-base conversion (false)
 /// \param ForceCheck true if this check should be performed even if access
 ///     control is disabled;  some things rely on this for semantics
 /// \param ForceUnprivileged true if this check should proceed as if the
 ///     context had no special privileges
-/// \param ADK controls the kind of diagnostics that are used
 Sema::AccessResult Sema::CheckBaseClassAccess(SourceLocation AccessLoc,
                                               QualType Base,
                                               QualType Derived,

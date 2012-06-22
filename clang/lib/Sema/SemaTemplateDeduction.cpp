@@ -2965,7 +2965,7 @@ DeduceTemplateArgumentByListElement(Sema &S,
 /// \param FunctionTemplate the function template for which we are performing
 /// template argument deduction.
 ///
-/// \param ExplicitTemplateArguments the explicit template arguments provided
+/// \param ExplicitTemplateArgs the explicit template arguments provided
 /// for this call.
 ///
 /// \param Args the function call arguments
@@ -3225,7 +3225,7 @@ Sema::DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
 /// \param FunctionTemplate the function template for which we are performing
 /// template argument deduction.
 ///
-/// \param ExplicitTemplateArguments the explicitly-specified template
+/// \param ExplicitTemplateArgs the explicitly-specified template
 /// arguments.
 ///
 /// \param ArgFunctionType the function type that will be used as the
@@ -3408,7 +3408,7 @@ Sema::DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
 /// \param FunctionTemplate the function template for which we are performing
 /// template argument deduction.
 ///
-/// \param ExplicitTemplateArguments the explicitly-specified template
+/// \param ExplicitTemplateArgs the explicitly-specified template
 /// arguments.
 ///
 /// \param Specialization if template argument deduction was successful,
