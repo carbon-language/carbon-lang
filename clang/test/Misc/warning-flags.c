@@ -1,4 +1,4 @@
-RUN: diagtool list-warnings 2>&1 | FileCheck %s
+RUN: diagtool list-warnings | FileCheck %s
 
 This test serves two purposes:
 
