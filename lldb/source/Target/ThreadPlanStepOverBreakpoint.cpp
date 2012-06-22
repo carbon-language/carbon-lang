@@ -60,7 +60,16 @@ ThreadPlanStepOverBreakpoint::ValidatePlan (Stream *error)
 bool
 ThreadPlanStepOverBreakpoint::PlanExplainsStop ()
 {
-    return true;
+    StopInfoSP stop_info_sp = GetPrivateStopReason();
+    if (stop_info_sp)
+    {
+        StopReason reason = stop_info_sp->GetStopReason();
+        if (reason == eStopReasonTrace || reason == eStopReasonNone)
+            return true;
+        else
+            return false;
+    }
+    return false;
 }
 
 bool
