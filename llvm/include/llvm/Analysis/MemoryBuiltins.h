@@ -69,13 +69,6 @@ static inline CallInst *extractMallocCall(Value *I) {
   return const_cast<CallInst*>(extractMallocCall((const Value*)I));
 }
 
-/// extractMallocCallFromBitCast - Returns the corresponding CallInst if the
-/// instruction is a bitcast of the result of a malloc call.
-const CallInst *extractMallocCallFromBitCast(const Value *I);
-static inline CallInst *extractMallocCallFromBitCast(Value *I) {
-  return const_cast<CallInst*>(extractMallocCallFromBitCast((const Value*)I));
-}
-
 /// isArrayMalloc - Returns the corresponding CallInst if the instruction 
 /// is a call to malloc whose array size can be determined and the array size
 /// is not constant 1.  Otherwise, return NULL.

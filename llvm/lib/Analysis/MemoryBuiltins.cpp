@@ -170,14 +170,7 @@ bool llvm::isReallocLikeFn(const Value *V, bool LookThroughBitCast) {
 /// is a malloc call.  Since CallInst::CreateMalloc() only creates calls, we
 /// ignore InvokeInst here.
 const CallInst *llvm::extractMallocCall(const Value *I) {
-  return isMallocLikeFn(I) ? cast<CallInst>(I) : 0;
-}
-
-/// extractMallocCallFromBitCast - Returns the corresponding CallInst if the
-/// instruction is a bitcast of the result of a malloc call.
-const CallInst *llvm::extractMallocCallFromBitCast(const Value *I) {
-  const BitCastInst *BCI = dyn_cast<BitCastInst>(I);
-  return BCI ? extractMallocCall(BCI->getOperand(0)) : 0;
+  return isMallocLikeFn(I) ? dyn_cast<CallInst>(I) : 0;
 }
 
 static Value *computeArraySize(const CallInst *CI, const TargetData *TD,
