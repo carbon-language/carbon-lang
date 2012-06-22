@@ -82,11 +82,15 @@ bool LiveRangeEdit::allUsesAvailableAt(const MachineInstr *OrigMI,
   UseIdx = UseIdx.getRegSlot(true);
   for (unsigned i = 0, e = OrigMI->getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = OrigMI->getOperand(i);
-    if (!MO.isReg() || !MO.getReg() || MO.isDef())
+    if (!MO.isReg() || !MO.getReg() || !MO.readsReg())
       continue;
-    // Reserved registers are OK.
-    if (MO.isUndef() || !LIS.hasInterval(MO.getReg()))
-      continue;
+
+    // We can't remat physreg uses, unless it is a constant.
+    if (TargetRegisterInfo::isPhysicalRegister(MO.getReg())) {
+      if (MRI.isConstantPhysReg(MO.getReg(), VRM->getMachineFunction()))
+        continue;
+      return false;
+    }
 
     LiveInterval &li = LIS.getInterval(MO.getReg());
     const VNInfo *OVNI = li.getVNInfoAt(OrigIdx);
