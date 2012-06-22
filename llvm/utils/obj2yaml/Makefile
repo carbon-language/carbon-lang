@@ -9,7 +9,7 @@
 
 LEVEL = ../..
 TOOLNAME = obj2yaml
-LINK_COMPONENTS := object
+USEDLIBS = LLVMObject.a LLVMSupport.a
 
 # This tool has no plugins, optimize startup time.
 TOOL_NO_EXPORTS = 1
