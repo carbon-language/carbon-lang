@@ -156,11 +156,6 @@ DisableFPElimNonLeaf("disable-non-leaf-fp-elim",
   cl::init(false));
 
 static cl::opt<bool>
-EnableExcessPrecision("enable-excess-fp-precision",
-  cl::desc("Enable optimizations that may increase FP precision"),
-  cl::init(false));
-
-static cl::opt<bool>
 EnableUnsafeFPMath("enable-unsafe-fp-math",
   cl::desc("Enable optimizations that may decrease FP precision"),
   cl::init(false));
@@ -197,6 +192,19 @@ FloatABIForCalls("float-abi",
                "Soft float ABI (implied by -soft-float)"),
     clEnumValN(FloatABI::Hard, "hard",
                "Hard float ABI (uses FP registers)"),
+    clEnumValEnd));
+
+static cl::opt<llvm::FPOpFusion::FPOpFusionMode>
+FuseFPOps("fuse-fp-ops",
+  cl::desc("Enable aggresive formation of fused FP ops"),
+  cl::init(FPOpFusion::Standard),
+  cl::values(
+    clEnumValN(FPOpFusion::Fast, "fast",
+               "Fuse FP ops whenever profitable"),
+    clEnumValN(FPOpFusion::Standard, "standard",
+               "Only fuse 'blessed' FP ops."),
+    clEnumValN(FPOpFusion::Strict, "strict",
+               "Only fuse FP ops when the result won't be effected."),
     clEnumValEnd));
 
 static cl::opt<bool>
@@ -404,7 +412,7 @@ int main(int argc, char **argv) {
   Options.LessPreciseFPMADOption = EnableFPMAD;
   Options.NoFramePointerElim = DisableFPElim;
   Options.NoFramePointerElimNonLeaf = DisableFPElimNonLeaf;
-  Options.AllowExcessFPPrecision = EnableExcessPrecision;
+  Options.AllowFPOpFusion = FuseFPOps;
   Options.UnsafeFPMath = EnableUnsafeFPMath;
   Options.NoInfsFPMath = EnableNoInfsFPMath;
   Options.NoNaNsFPMath = EnableNoNaNsFPMath;

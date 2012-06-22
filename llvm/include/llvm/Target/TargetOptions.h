@@ -30,12 +30,20 @@ namespace llvm {
     };
   }
 
+  namespace FPOpFusion {
+    enum FPOpFusionMode {
+      Fast,     // Enable fusion of FP ops wherever it's profitable.
+      Standard, // Only allow fusion of 'blessed' ops (currently just fmuladd).
+      Strict    // Never fuse FP-ops.
+    };
+  }
+
   class TargetOptions {
   public:
     TargetOptions()
         : PrintMachineCode(false), NoFramePointerElim(false),
           NoFramePointerElimNonLeaf(false), LessPreciseFPMADOption(false),
-          AllowExcessFPPrecision(false), UnsafeFPMath(false), NoInfsFPMath(false),
+          UnsafeFPMath(false), NoInfsFPMath(false),
           NoNaNsFPMath(false), HonorSignDependentRoundingFPMathOption(false),
           UseSoftFloat(false), NoZerosInBSS(false), JITExceptionHandling(false),
           JITEmitDebugInfo(false), JITEmitDebugInfoToDisk(false),
@@ -43,7 +51,8 @@ namespace llvm {
           StackAlignmentOverride(0), RealignStack(true),
           DisableJumpTables(false), EnableFastISel(false),
           PositionIndependentExecutable(false), EnableSegmentedStacks(false),
-          UseInitArray(false), TrapFuncName(""), FloatABIType(FloatABI::Default)
+          UseInitArray(false), TrapFuncName(""), FloatABIType(FloatABI::Default),
+          AllowFPOpFusion(FPOpFusion::Standard)
     {}
 
     /// PrintMachineCode - This flag is enabled when the -print-machineinstrs
@@ -73,14 +82,6 @@ namespace llvm {
     /// operations individually.
     unsigned LessPreciseFPMADOption : 1;
     bool LessPreciseFPMAD() const;
-
-    /// AllowExcessFPPrecision - This flag is enabled when the
-    /// -enable-excess-fp-precision flag is specified on the command line. This
-    /// flag is OFF by default. When it is turned on, the code generator is
-    /// allowed to produce results that are "more precise" than IEEE allows.
-    /// This includes use of FMA-like operations and use of the X86 FP registers
-    /// without rounding all over the place.
-    unsigned AllowExcessFPPrecision : 1;
 
     /// UnsafeFPMath - This flag is enabled when the
     /// -enable-unsafe-fp-math flag is specified on the command line.  When
@@ -189,6 +190,25 @@ namespace llvm {
     /// Such a combination is unfortunately popular (e.g. arm-apple-darwin).
     /// Hard presumes that the normal FP ABI is used.
     FloatABI::ABIType FloatABIType;
+
+    /// AllowFPOpFusion - This flag is set by the -fuse-fp-ops=xxx option.
+    /// This controls the creation of fused FP ops that store intermediate
+    /// results in higher precision than IEEE allows (E.g. FMAs).
+    ///
+    /// Fast mode - allows formation of fused FP ops whenever they're
+    /// profitable.
+    /// Standard mode - allow fusion only for 'blessed' FP ops. At present the
+    /// only blessed op is the fmuladd intrinsic. In the future more blessed ops
+    /// may be added.
+    /// Strict mode - allow fusion only if/when it can be proven that the excess
+    /// precision won't effect the result.
+    ///
+    /// Note: This option only controls formation of fused ops by the optimizers.
+    /// Fused operations that are explicitly specified (e.g. FMA via the
+    /// llvm.fma.* intrinsic) will always be honored, regardless of the value of
+    /// this option.
+    FPOpFusion::FPOpFusionMode AllowFPOpFusion;
+
   };
 } // End llvm namespace
 

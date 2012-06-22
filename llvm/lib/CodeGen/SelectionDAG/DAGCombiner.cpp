@@ -5644,7 +5644,7 @@ SDValue DAGCombiner::visitFADD(SDNode *N) {
                                    N0.getOperand(1), N1));
 
   // FADD -> FMA combines:
-  if ((DAG.getTarget().Options.AllowExcessFPPrecision ||
+  if ((DAG.getTarget().Options.AllowFPOpFusion == FPOpFusion::Fast ||
        DAG.getTarget().Options.UnsafeFPMath) &&
       DAG.getTarget().getTargetLowering()->isFMAFasterThanMulAndAdd(VT) &&
       TLI.isOperationLegal(ISD::FMA, VT)) {
@@ -5721,7 +5721,7 @@ SDValue DAGCombiner::visitFSUB(SDNode *N) {
   }
 
   // FSUB -> FMA combines:
-  if ((DAG.getTarget().Options.AllowExcessFPPrecision ||
+  if ((DAG.getTarget().Options.AllowFPOpFusion == FPOpFusion::Fast ||
        DAG.getTarget().Options.UnsafeFPMath) &&
       DAG.getTarget().getTargetLowering()->isFMAFasterThanMulAndAdd(VT) &&
       TLI.isOperationLegal(ISD::FMA, VT)) {

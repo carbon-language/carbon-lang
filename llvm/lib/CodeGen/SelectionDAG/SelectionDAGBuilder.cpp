@@ -4934,7 +4934,9 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
     return 0;
   case Intrinsic::fmuladd: {
     EVT VT = TLI.getValueType(I.getType());
-    if (TLI.isOperationLegal(ISD::FMA, VT) && TLI.isFMAFasterThanMulAndAdd(VT)){
+    if (TM.Options.AllowFPOpFusion != FPOpFusion::Strict &&
+        TLI.isOperationLegal(ISD::FMA, VT) &&
+        TLI.isFMAFasterThanMulAndAdd(VT)){
       setValue(&I, DAG.getNode(ISD::FMA, dl,
                                getValue(I.getArgOperand(0)).getValueType(),
                                getValue(I.getArgOperand(0)),

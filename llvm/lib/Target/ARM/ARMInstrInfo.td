@@ -236,7 +236,8 @@ def UseFPVMLx        : Predicate<"Subtarget->useFPVMLx()">;
 // Prefer fused MAC for fp mul + add over fp VMLA / VMLS if they are available.
 // But only select them if more precision in FP computation is allowed.
 // Do not use them for Darwin platforms.
-def UseFusedMAC      : Predicate<"TM.Options.AllowExcessFPPrecision && "
+def UseFusedMAC      : Predicate<"(TM.Options.AllowFPOpFusion =="
+                                 " FPOpFusion::Fast) && "
                                  "!Subtarget->isTargetDarwin()">;
 def DontUseFusedMAC  : Predicate<"!Subtarget->hasVFP4() || "
                                  "Subtarget->isTargetDarwin()">;
