@@ -3183,7 +3183,7 @@ bool HexagonPacketizerList::ignorePseudoInstruction(MachineInstr *MI,
   unsigned SchedClass = TID.getSchedClass();
   const InstrStage* IS =
                     ResourceTracker->getInstrItins()->beginStage(SchedClass);
-  uint64_t FuncUnits = IS->getUnits();
+  unsigned FuncUnits = IS->getUnits();
   return !FuncUnits;
 }
 
