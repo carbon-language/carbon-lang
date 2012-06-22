@@ -664,7 +664,8 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
     TheSwitch->setCondition(call);
     TheSwitch->setDefaultDest(TheSwitch->getSuccessor(NumExitBlocks));
     // Remove redundant case
-    TheSwitch->removeCase(SwitchInst::CaseIt(TheSwitch, NumExitBlocks-1));
+    SwitchInst::CaseIt ToBeRemoved(TheSwitch, NumExitBlocks-1);
+    TheSwitch->removeCase(ToBeRemoved);
     break;
   }
 }
