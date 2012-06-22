@@ -2746,11 +2746,12 @@ ARMBaseInstrInfo::getOperandLatency(const InstrItineraryData *ItinData,
     unsigned NewUseIdx;
     const MachineInstr *NewUseMI = getBundledUseMI(&getRegisterInfo(), UseMI,
                                                    Reg, NewUseIdx, UseAdj);
-    if (NewUseMI) {
-      UseMI = NewUseMI;
-      UseIdx = NewUseIdx;
-      UseMCID = &UseMI->getDesc();
-    }
+    if (!NewUseMI)
+      return -1;
+
+    UseMI = NewUseMI;
+    UseIdx = NewUseIdx;
+    UseMCID = &UseMI->getDesc();
   }
 
   if (Reg == ARM::CPSR) {
@@ -2777,6 +2778,9 @@ ARMBaseInstrInfo::getOperandLatency(const InstrItineraryData *ItinData,
     }
     return Latency;
   }
+
+  if (DefMO.isImplicit() || UseMI->getOperand(UseIdx).isImplicit())
+    return -1;
 
   unsigned DefAlign = DefMI->hasOneMemOperand()
     ? (*DefMI->memoperands_begin())->getAlignment() : 0;
