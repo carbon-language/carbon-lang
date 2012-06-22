@@ -179,7 +179,7 @@ static void expandTabs(std::string &SourceLine, unsigned TabStop) {
 ///
 ///    "a \t \u3042" -> {0,1,2,8,9,-1,-1,11}
 ///
-///  (\u3042 is represented in UTF-8 by three bytes and takes two columns to
+///  (\\u3042 is represented in UTF-8 by three bytes and takes two columns to
 ///   display)
 static void byteToColumn(StringRef SourceLine, unsigned TabStop,
                          SmallVectorImpl<int> &out) {
@@ -213,7 +213,7 @@ static void byteToColumn(StringRef SourceLine, unsigned TabStop,
 ///
 ///    "a \t \u3042" -> {0,1,2,-1,-1,-1,-1,-1,3,4,-1,7}
 ///
-///  (\u3042 is represented in UTF-8 by three bytes and takes two columns to
+///  (\\u3042 is represented in UTF-8 by three bytes and takes two columns to
 ///   display)
 static void columnToByte(StringRef SourceLine, unsigned TabStop,
                          SmallVectorImpl<int> &out) {
