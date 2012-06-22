@@ -66,13 +66,8 @@ static Function *getCalledFunction(const Value *V, bool LookThroughBitCast) {
   if (LookThroughBitCast)
     V = V->stripPointerCasts();
 
-  Value *I = const_cast<Value*>(V);
-  CallSite CS;
-  if (CallInst *CI = dyn_cast<CallInst>(I))
-    CS = CallSite(CI);
-  else if (InvokeInst *II = dyn_cast<InvokeInst>(I))
-    CS = CallSite(II);
-  else
+  CallSite CS(const_cast<Value*>(V));
+  if (!CS.getInstruction())
     return 0;
 
   Function *Callee = CS.getCalledFunction();
