@@ -96,10 +96,12 @@ class SizeClassAllocator64 {
     CHECK_EQ(AllocBeg(), reinterpret_cast<uptr>(MmapFixedNoReserve(
              AllocBeg(), AllocSize())));
   }
+  NOINLINE
   void *Allocate(uptr size) {
     CHECK_LE(size, SizeClassMap::kMaxSize);
     return AllocateBySizeClass(SizeClassMap::ClassID(size));
   }
+  NOINLINE
   void Deallocate(void *p) {
     DeallocateBySizeClass(p, GetSizeClass(p));
   }
@@ -108,6 +110,13 @@ class SizeClassAllocator64 {
   }
   uptr GetSizeClass(void *p) {
     return (reinterpret_cast<uptr>(p) / kRegionSize) % kNumClasses;
+  }
+
+  uptr GetMetaData(void *p) {
+    uptr class_id = GetSizeClass(p);
+    uptr chunk_idx = GetChunkIdx(reinterpret_cast<uptr>(p), class_id);
+    return kSpaceBeg + (kRegionSize * (class_id + 1)) -
+        (1 + chunk_idx) * kMetadataSize;
   }
 
   uptr TotalMemoryUsedIncludingFreeLists() {
@@ -125,6 +134,7 @@ class SizeClassAllocator64 {
   static const uptr kNumClasses = 256;  // Power of two <= 256
   COMPILER_CHECK(kNumClasses <= SizeClassMap::kNumClasses);
   static const uptr kRegionSize = kSpaceSize / kNumClasses;
+  COMPILER_CHECK((kRegionSize >> 32) > 0);  // kRegionSize must be >= 2^32.
   // Populate the free list with at most this number of bytes at once
   // or with one element if its size is greater.
   static const uptr kPopulateSize = 1 << 18;
@@ -161,6 +171,14 @@ class SizeClassAllocator64 {
     LifoListNode *res = *list;
     *list = (*list)->next;
     return res;
+  }
+
+  uptr GetChunkIdx(uptr chunk, uptr class_id) {
+    u32 offset = chunk % kRegionSize;
+    // Here we divide by a non-constant. This is costly.
+    // We require that kRegionSize is at least 2^32 so that offset is 32-bit.
+    // We save 2x by using 32-bit div, but may need to use a 256-way switch.
+    return offset / (u32)SizeClassMap::Size(class_id);
   }
 
   LifoListNode *PopulateFreeList(uptr class_id, RegionInfo *region) {

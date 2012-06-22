@@ -47,13 +47,13 @@ TEST(SanitizerCommon, DefaultSizeClassMap) {
   }
 }
 
+static const uptr kAllocatorSpace = 0x600000000000ULL;
+static const uptr kAllocatorSize = 0x10000000000;  // 1T.
+
 TEST(SanitizerCommon, SizeClassAllocator64) {
-  const uptr space_beg  = 0x600000000000ULL;
-  const uptr space_size = 0x10000000000;  // 1T
-  const uptr metadata_size = 16;
   typedef DefaultSizeClassMap SCMap;
-  typedef SizeClassAllocator64<space_beg, space_size,
-                               metadata_size, SCMap> Allocator;
+  typedef SizeClassAllocator64<kAllocatorSpace, kAllocatorSize,
+                               16, SCMap> Allocator;
 
   Allocator a;
   a.Init();
@@ -76,17 +76,51 @@ TEST(SanitizerCommon, SizeClassAllocator64) {
         CHECK(a.PointerIsMine(x));
         uptr class_id = a.GetSizeClass(x);
         CHECK_EQ(class_id, SCMap::ClassID(size));
+        uptr *metadata = reinterpret_cast<uptr*>(a.GetMetaData(x));
+        metadata[0] = reinterpret_cast<uptr>(x) + 1;
+        metadata[1] = 0xABCD;
       }
     }
     // Deallocate all.
     for (uptr i = 0; i < allocated.size(); i++) {
-      a.Deallocate(allocated[i]);
+      void *x = allocated[i];
+      uptr *metadata = reinterpret_cast<uptr*>(a.GetMetaData(x));
+      CHECK_EQ(metadata[0], reinterpret_cast<uptr>(x) + 1);
+      CHECK_EQ(metadata[1], 0xABCD);
+      a.Deallocate(x);
     }
     allocated.clear();
     uptr total_allocated = a.TotalMemoryUsedIncludingFreeLists();
     if (last_total_allocated == 0)
       last_total_allocated = total_allocated;
     CHECK_EQ(last_total_allocated, total_allocated);
+  }
+
+  a.TestOnlyUnmap();
+}
+
+
+TEST(SanitizerCommon, SizeClassAllocator64MetadataStress) {
+  typedef DefaultSizeClassMap SCMap;
+  typedef SizeClassAllocator64<kAllocatorSpace, kAllocatorSize,
+          16, SCMap> Allocator;
+  Allocator a;
+  a.Init();
+  static volatile uptr sink;
+
+  const uptr kNumAllocs = 10000;
+  void *allocated[kNumAllocs];
+  for (uptr i = 0; i < kNumAllocs; i++) {
+    uptr size = (i % 4096) + 1;
+    void *x = a.Allocate(size);
+    allocated[i] = x;
+  }
+  // Get Metadata kNumAllocs^2 times.
+  for (uptr i = 0; i < kNumAllocs * kNumAllocs; i++) {
+    sink = a.GetMetaData(allocated[i % kNumAllocs]);
+  }
+  for (uptr i = 0; i < kNumAllocs; i++) {
+    a.Deallocate(allocated[i]);
   }
 
   a.TestOnlyUnmap();
