@@ -31,8 +31,8 @@ namespace clang {
 
 class SourceManager;
 
-/// FileID - This is an opaque identifier used by SourceManager which refers to
-/// a source file (MemoryBuffer) along with its #include path and #line data.
+/// \brief An opaque identifier used by SourceManager which refers to a
+/// source file (MemoryBuffer) along with its \#include path and \#line data.
 ///
 class FileID {
   /// ID - Opaque identifier, 0 is "invalid". >0 is this module, <-1 is
@@ -135,24 +135,28 @@ public:
     return L;
   }
 
-  /// getRawEncoding - When a SourceLocation itself cannot be used, this returns
-  /// an (opaque) 32-bit integer encoding for it.  This should only be passed
-  /// to SourceLocation::getFromRawEncoding, it should not be inspected
-  /// directly.
+  /// \brief When a SourceLocation itself cannot be used, this returns
+  /// an (opaque) 32-bit integer encoding for it.
+  ///
+  /// This should only be passed to SourceLocation::getFromRawEncoding, it
+  /// should not be inspected directly.
   unsigned getRawEncoding() const { return ID; }
 
-  /// getFromRawEncoding - Turn a raw encoding of a SourceLocation object into
+  /// \brief Turn a raw encoding of a SourceLocation object into
   /// a real SourceLocation.
+  ///
+  /// \see getRawEncoding.
   static SourceLocation getFromRawEncoding(unsigned Encoding) {
     SourceLocation X;
     X.ID = Encoding;
     return X;
   }
 
-  /// getPtrEncoding - When a SourceLocation itself cannot be used, this returns
-  /// an (opaque) pointer encoding for it.  This should only be passed
-  /// to SourceLocation::getFromPtrEncoding, it should not be inspected
-  /// directly.
+  /// \brief When a SourceLocation itself cannot be used, this returns
+  /// an (opaque) pointer encoding for it.
+  ///
+  /// This should only be passed to SourceLocation::getFromPtrEncoding, it
+  /// should not be inspected directly.
   void* getPtrEncoding() const {
     // Double cast to avoid a warning "cast to pointer from integer of different
     // size".
@@ -342,7 +346,7 @@ public:
 
 /// PresumedLoc - This class represents an unpacked "presumed" location which
 /// can be presented to the user.  A 'presumed' location can be modified by
-/// #line and GNU line marker directives and is always the expansion point of
+/// \#line and GNU line marker directives and is always the expansion point of
 /// a normal location.
 ///
 /// You can get a PresumedLoc from a SourceLocation with SourceManager.
@@ -358,23 +362,27 @@ public:
 
   /// isInvalid - Return true if this object is invalid or uninitialized. This
   /// occurs when created with invalid source locations or when walking off
-  /// the top of a #include stack.
+  /// the top of a \#include stack.
   bool isInvalid() const { return Filename == 0; }
   bool isValid() const { return Filename != 0; }
 
-  /// getFilename - Return the presumed filename of this location.  This can be
-  /// affected by #line etc.
+  /// \brief Return the presumed filename of this location.
+  ///
+  /// This can be affected by \#line etc.
   const char *getFilename() const { return Filename; }
 
-  /// getLine - Return the presumed line number of this location.  This can be
-  /// affected by #line etc.
+  /// \brief Return the presumed line number of this location.
+  ///
+  /// This can be affected by \#line etc.
   unsigned getLine() const { return Line; }
 
-  /// getColumn - Return the presumed column number of this location.  This can
-  /// not be affected by #line, but is packaged here for convenience.
+  /// \brief Return the presumed column number of this location.
+  ///
+  /// This cannot be affected by \#line, but is packaged here for convenience.
   unsigned getColumn() const { return Col; }
 
-  /// getIncludeLoc - Return the presumed include location of this location.
+  /// \brief Return the presumed include location of this location.
+  ///
   /// This can be affected by GNU linemarker directives.
   SourceLocation getIncludeLoc() const { return IncludeLoc; }
 };
