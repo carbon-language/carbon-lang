@@ -48,7 +48,7 @@ PreprocessingRecord::PreprocessingRecord(SourceManager &SM,
 }
 
 /// \brief Returns a pair of [Begin, End) iterators of preprocessed entities
-/// that source range \arg R encompasses.
+/// that source range \p Range encompasses.
 std::pair<PreprocessingRecord::iterator, PreprocessingRecord::iterator>
 PreprocessingRecord::getPreprocessedEntitiesInRange(SourceRange Range) {
   if (Range.isInvalid())
@@ -89,7 +89,7 @@ static bool isPreprocessedEntityIfInFileID(PreprocessedEntity *PPE, FileID FID,
 ///
 /// Can be used to avoid implicit deserializations of preallocated
 /// preprocessed entities if we only care about entities of a specific file
-/// and not from files #included in the range given at
+/// and not from files \#included in the range given at
 /// \see getPreprocessedEntitiesInRange.
 bool PreprocessingRecord::isEntityInFileID(iterator PPEI, FileID FID) {
   if (FID.isInvalid())
