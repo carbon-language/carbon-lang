@@ -6,9 +6,11 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-
+///
 /// \file
 /// \brief Defines the MultipleIncludeOpt interface.
+//
+//===----------------------------------------------------------------------===//
 
 #ifndef LLVM_CLANG_MULTIPLEINCLUDEOPT_H
 #define LLVM_CLANG_MULTIPLEINCLUDEOPT_H
@@ -94,8 +96,8 @@ public:
 
   /// \brief Invoked when a top level conditional (except \#ifndef) is found.
   void EnterTopLevelConditional() {
-    /// If a conditional directive (except #ifndef) is found at the top level,
-    /// there is a chunk of the file not guarded by the controlling macro.
+    // If a conditional directive (except #ifndef) is found at the top level,
+    // there is a chunk of the file not guarded by the controlling macro.
     Invalidate();
   }
 
