@@ -26,6 +26,8 @@
 using namespace clang;
 using namespace ento;
 
+STATISTIC(NumSteps,
+            "The # of steps executed.");
 STATISTIC(NumReachedMaxSteps,
             "The # of times we reached the max number of steps.");
 STATISTIC(NumPathsExplored,
@@ -206,6 +208,8 @@ bool CoreEngine::ExecuteWorkList(const LocationContext *L, unsigned Steps,
       }
       --Steps;
     }
+
+    NumSteps++;
 
     const WorkListUnit& WU = WList->dequeue();
 
