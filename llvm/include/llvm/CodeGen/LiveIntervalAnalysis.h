@@ -352,8 +352,7 @@ namespace llvm {
     void computeIntervals();
 
     /// handleRegisterDef - update intervals for a register def
-    /// (calls handlePhysicalRegisterDef and
-    /// handleVirtualRegisterDef)
+    /// (calls handleVirtualRegisterDef)
     void handleRegisterDef(MachineBasicBlock *MBB,
                            MachineBasicBlock::iterator MI,
                            SlotIndex MIIdx,
@@ -372,18 +371,6 @@ namespace llvm {
                                   SlotIndex MIIdx, MachineOperand& MO,
                                   unsigned MOIdx,
                                   LiveInterval& interval);
-
-    /// handlePhysicalRegisterDef - update intervals for a physical register
-    /// def.
-    void handlePhysicalRegisterDef(MachineBasicBlock* mbb,
-                                   MachineBasicBlock::iterator mi,
-                                   SlotIndex MIIdx, MachineOperand& MO,
-                                   LiveInterval &interval);
-
-    /// handleLiveInRegister - Create interval for a livein register.
-    void handleLiveInRegister(MachineBasicBlock* mbb,
-                              SlotIndex MIIdx,
-                              LiveInterval &interval);
 
     static LiveInterval* createInterval(unsigned Reg);
 
