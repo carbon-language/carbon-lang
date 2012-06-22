@@ -109,8 +109,6 @@ namespace llvm {
     // Calculate the spill weight to assign to a single instruction.
     static float getSpillWeight(bool isDef, bool isUse, unsigned loopDepth);
 
-    unsigned getNumIntervals() const { return (unsigned)VirtRegIntervals.size(); }
-
     LiveInterval &getInterval(unsigned Reg) {
       LiveInterval *LI = VirtRegIntervals[Reg];
       assert(LI && "Interval does not exist for virtual register");

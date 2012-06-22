@@ -31,15 +31,12 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/DenseSet.h"
-#include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
 #include "LiveRangeCalc.h"
 #include <algorithm>
 #include <limits>
 #include <cmath>
 using namespace llvm;
-
-STATISTIC(numIntervals , "Number of original intervals");
 
 char LiveIntervals::ID = 0;
 INITIALIZE_PASS_BEGIN(LiveIntervals, "liveintervals",
@@ -109,9 +106,6 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
   ReservedRegs = TRI->getReservedRegs(fn);
 
   computeIntervals();
-
-  numIntervals += getNumIntervals();
-
   computeLiveInRegUnits();
 
   DEBUG(dump());
