@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_COMMENTS_RAW_COMMENT_LIST_H
-#define LLVM_CLANG_COMMENTS_RAW_COMMENT_LIST_H
+#ifndef LLVM_CLANG_AST_RAW_COMMENT_LIST_H
+#define LLVM_CLANG_AST_RAW_COMMENT_LIST_H
 
 #include "clang/Basic/SourceManager.h"
 #include "llvm/ADT/ArrayRef.h"
