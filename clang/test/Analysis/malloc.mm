@@ -21,6 +21,16 @@ void testNSDataFreeWhenDoneYES2(NSUInteger dataLength) {
   NSData *nsdata = [[NSData alloc] initWithBytesNoCopy:data length:dataLength freeWhenDone:1]; // no-warning
 }
 
+void testNSStringFreeWhenDoneYES3(NSUInteger dataLength) {
+  unsigned char *data = (unsigned char *)malloc(42);
+  NSString *nsstr = [[NSString alloc] initWithBytesNoCopy:data length:dataLength encoding:NSUTF8StringEncoding freeWhenDone:1];
+}
+
+void testNSStringFreeWhenDoneYES4(NSUInteger dataLength) {
+  unichar *data = (unichar*)malloc(42);
+  NSString *nsstr = [[NSString alloc] initWithCharactersNoCopy:data length:dataLength freeWhenDone:1];
+  free(data); //expected-warning {{Attempt to free non-owned memory}}
+}
 
 void testNSStringFreeWhenDoneYES(NSUInteger dataLength) {
   unsigned char *data = (unsigned char *)malloc(42);

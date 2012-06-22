@@ -504,7 +504,9 @@ void MallocChecker::checkPreObjCMessage(const ObjCMessage &Msg,
   // Ex:  [NSData dataWithBytesNoCopy:bytes length:10];
   // Unless 'freeWhenDone' param set to 0.
   // TODO: Check that the memory was allocated with malloc.
-  if (S.getNameForSlot(0) == "dataWithBytesNoCopy" &&
+  if ((S.getNameForSlot(0) == "dataWithBytesNoCopy" ||
+       S.getNameForSlot(0) == "initWithBytesNoCopy" ||
+       S.getNameForSlot(0) == "initWithCharactersNoCopy") &&
       !isFreeWhenDoneSetToZero(Call, S)){
     unsigned int argIdx  = 0;
     C.addTransition(FreeMemAux(C, Call.getArg(argIdx),
