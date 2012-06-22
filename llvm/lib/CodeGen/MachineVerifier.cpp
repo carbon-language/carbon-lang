@@ -866,12 +866,13 @@ void MachineVerifier::checkLiveness(const MachineOperand *MO, unsigned MONum) {
     // Check LiveInts for a live range, but only for virtual registers.
     if (LiveInts && TargetRegisterInfo::isVirtualRegister(Reg) &&
         !LiveInts->isNotInMIMap(MI)) {
-      SlotIndex DefIdx = LiveInts->getInstructionIndex(MI).getRegSlot();
+      SlotIndex DefIdx = LiveInts->getInstructionIndex(MI);
+      DefIdx = DefIdx.getRegSlot(MO->isEarlyClobber());
       if (LiveInts->hasInterval(Reg)) {
         const LiveInterval &LI = LiveInts->getInterval(Reg);
         if (const VNInfo *VNI = LI.getVNInfoAt(DefIdx)) {
           assert(VNI && "NULL valno is not allowed");
-          if (VNI->def != DefIdx && !MO->isEarlyClobber()) {
+          if (VNI->def != DefIdx) {
             report("Inconsistent valno->def", MO, MONum);
             *OS << "Valno " << VNI->id << " is not defined at "
               << DefIdx << " in " << LI << '\n';
