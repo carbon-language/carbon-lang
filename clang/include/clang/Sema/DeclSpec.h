@@ -6,15 +6,18 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
-// This file defines the classes used to store parsed information about
-// declaration-specifiers and declarators.
-//
-//   static const int volatile x, *y, *(*(*z)[10])(const void *x);
-//   ------------------------- -  --  ---------------------------
-//     declaration-specifiers  \  |   /
-//                            declarators
-//
+///
+/// \file
+/// \brief This file defines the classes used to store parsed information about
+/// declaration-specifiers and declarators.
+///
+/// \verbatim
+///   static const int volatile x, *y, *(*(*z)[10])(const void *x);
+///   ------------------------- -  --  ---------------------------
+///     declaration-specifiers  \  |   /
+///                            declarators
+/// \endverbatim
+///
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_CLANG_SEMA_DECLSPEC_H
@@ -48,8 +51,9 @@ namespace clang {
   class Declarator;
   struct TemplateIdAnnotation;
 
-/// CXXScopeSpec - Represents a C++ nested-name-specifier or a global scope
-/// specifier.  These can be in 3 states:
+/// \brief Represents a C++ nested-name-specifier or a global scope specifier.
+///
+/// These can be in 3 states:
 ///   1) Not present, identified by isEmpty()
 ///   2) Present, identified by isNotEmpty()
 ///      2.a) Valid, idenified by isValid()
@@ -158,9 +162,14 @@ public:
   NestedNameSpecifierLoc getWithLocInContext(ASTContext &Context) const;
 
   /// \brief Retrieve the location of the name in the last qualifier
-  /// in this nested name specifier.  For example:
-  ///   ::foo::bar<0>::
-  ///          ^~~
+  /// in this nested name specifier.
+  ///
+  /// For example, the location of \c bar
+  /// in
+  /// \verbatim
+  ///   \::foo::bar<0>::
+  ///           ^~~
+  /// \endverbatim
   SourceLocation getLastQualifierNameLoc() const;
 
   /// No scope specifier.
@@ -199,13 +208,14 @@ public:
   unsigned location_size() const { return Builder.getBuffer().second; }
 };
 
-/// DeclSpec - This class captures information about "declaration specifiers",
-/// which encompasses storage-class-specifiers, type-specifiers,
-/// type-qualifiers, and function-specifiers.
+/// \brief Captures information about "declaration specifiers".
+///
+/// "Declaration specifiers" encompasses storage-class-specifiers,
+/// type-specifiers, type-qualifiers, and function-specifiers.
 class DeclSpec {
 public:
-  // storage-class-specifier
-  // Note: The order of these enumerators is important for diagnostics.
+  /// \brief storage-class-specifier
+  /// \note The order of these enumerators is important for diagnostics.
   enum SCS {
     SCS_unspecified = 0,
     SCS_typedef,
@@ -466,8 +476,7 @@ public:
   SourceRange getTypeofParensRange() const { return TypeofParensRange; }
   void setTypeofParensRange(SourceRange range) { TypeofParensRange = range; }
 
-  /// getSpecifierName - Turn a type-specifier-type into a string like "_Bool"
-  /// or "union".
+  /// \brief Turn a type-specifier-type into a string like "_Bool" or "union".
   static const char *getSpecifierName(DeclSpec::TST T);
   static const char *getSpecifierName(DeclSpec::TQ Q);
   static const char *getSpecifierName(DeclSpec::TSS S);
@@ -510,7 +519,7 @@ public:
     FS_explicitLoc = SourceLocation();
   }
 
-  /// hasTypeSpecifier - Return true if any type-specifier has been found.
+  /// \brief Return true if any type-specifier has been found.
   bool hasTypeSpecifier() const {
     return getTypeSpecType() != DeclSpec::TST_unspecified ||
            getTypeSpecWidth() != DeclSpec::TSW_unspecified ||
@@ -518,9 +527,8 @@ public:
            getTypeSpecSign() != DeclSpec::TSS_unspecified;
   }
 
-  /// getParsedSpecifiers - Return a bitmask of which flavors of specifiers this
+  /// \brief Return a bitmask of which flavors of specifiers this
   /// DeclSpec includes.
-  ///
   unsigned getParsedSpecifiers() const;
 
   SCS getStorageClassSpecAsWritten() const {
@@ -624,17 +632,22 @@ public:
     return Attrs.getPool();
   }
 
-  /// AddAttributes - contatenates two attribute lists.
+  /// \brief Concatenates two attribute lists.
+  ///
   /// The GCC attribute syntax allows for the following:
   ///
+  /// \code
   /// short __attribute__(( unused, deprecated ))
   /// int __attribute__(( may_alias, aligned(16) )) var;
+  /// \endcode
   ///
   /// This declares 4 attributes using 2 lists. The following syntax is
   /// also allowed and equivalent to the previous declaration.
   ///
+  /// \code
   /// short __attribute__((unused)) __attribute__((deprecated))
   /// int __attribute__((may_alias)) __attribute__((aligned(16))) var;
+  /// \endcode
   ///
   void addAttributes(AttributeList *AL) {
     Attrs.addAll(AL);
@@ -648,7 +661,7 @@ public:
   ParsedAttributes &getAttributes() { return Attrs; }
   const ParsedAttributes &getAttributes() const { return Attrs; }
 
-  /// TakeAttributes - Return the current attribute list and remove them from
+  /// \brief Return the current attribute list and remove them from
   /// the DeclSpec so that it doesn't own them.
   ParsedAttributes takeAttributes() {
     // The non-const "copy" constructor clears the operand automatically.
@@ -684,13 +697,14 @@ public:
   ObjCDeclSpec *getObjCQualifiers() const { return ObjCQualifiers; }
   void setObjCQualifiers(ObjCDeclSpec *quals) { ObjCQualifiers = quals; }
 
-  /// isMissingDeclaratorOk - This checks if this DeclSpec can stand alone,
-  /// without a Declarator. Only tag declspecs can stand alone.
+  /// \brief Checks if this DeclSpec can stand alone, without a Declarator.
+  ///
+  /// Only tag declspecs can stand alone.
   bool isMissingDeclaratorOk();
 };
 
-/// ObjCDeclSpec - This class captures information about
-/// "declaration specifiers" specific to objective-c
+/// \brief Captures information about "declaration specifiers" specific to
+/// Objective-C.
 class ObjCDeclSpec {
 public:
   /// ObjCDeclQualifier - Qualifier used on types in method
@@ -981,12 +995,11 @@ public:
   SourceLocation getLocStart() const LLVM_READONLY { return StartLocation; }
   SourceLocation getLocEnd() const LLVM_READONLY { return EndLocation; }
 };
-  
-/// CachedTokens - A set of tokens that has been cached for later
-/// parsing.
+
+/// \brief A set of tokens that has been cached for later parsing.
 typedef SmallVector<Token, 4> CachedTokens;
 
-/// DeclaratorChunk - One instance of this struct is used for each type in a
+/// \brief One instance of this struct is used for each type in a
 /// declarator that is parsed.
 ///
 /// This is intended to be a small value object.
@@ -1158,12 +1171,13 @@ struct DeclaratorChunk {
       Expr *NoexceptExpr;
     };
 
-    /// TrailingReturnType - If HasTrailingReturnType is true, this is the
-    /// trailing return type specified.
+    /// \brief If HasTrailingReturnType is true, this is the trailing return
+    /// type specified.
     UnionParsedType TrailingReturnType;
 
-    /// freeArgs - reset the argument list to having zero arguments.  This is
-    /// used in various places for error recovery.
+    /// \brief Reset the argument list to having zero arguments.
+    ///
+    /// This is used in various places for error recovery.
     void freeArgs() {
       if (DeleteArgInfo) {
         delete[] ArgInfo;
@@ -1285,7 +1299,7 @@ struct DeclaratorChunk {
     }
   }
 
-  /// getAttrs - If there are attributes applied to this declaratorchunk, return
+  /// \brief If there are attributes applied to this declaratorchunk, return
   /// them.
   const AttributeList *getAttrs() const {
     return Common.AttrList;
@@ -1295,8 +1309,7 @@ struct DeclaratorChunk {
     return Common.AttrList;
   }
 
-  /// getPointer - Return a DeclaratorChunk for a pointer.
-  ///
+  /// \brief Return a DeclaratorChunk for a pointer.
   static DeclaratorChunk getPointer(unsigned TypeQuals, SourceLocation Loc,
                                     SourceLocation ConstQualLoc,
                                     SourceLocation VolatileQualLoc,
@@ -1312,8 +1325,7 @@ struct DeclaratorChunk {
     return I;
   }
 
-  /// getReference - Return a DeclaratorChunk for a reference.
-  ///
+  /// \brief Return a DeclaratorChunk for a reference.
   static DeclaratorChunk getReference(unsigned TypeQuals, SourceLocation Loc,
                                       bool lvalue) {
     DeclaratorChunk I;
@@ -1325,8 +1337,7 @@ struct DeclaratorChunk {
     return I;
   }
 
-  /// getArray - Return a DeclaratorChunk for an array.
-  ///
+  /// \brief Return a DeclaratorChunk for an array.
   static DeclaratorChunk getArray(unsigned TypeQuals,
                                   bool isStatic, bool isStar, Expr *NumElts,
                                   SourceLocation LBLoc, SourceLocation RBLoc) {
@@ -1365,8 +1376,7 @@ struct DeclaratorChunk {
                                      TypeResult TrailingReturnType =
                                                     TypeResult());
 
-  /// getBlockPointer - Return a DeclaratorChunk for a block.
-  ///
+  /// \brief Return a DeclaratorChunk for a block.
   static DeclaratorChunk getBlockPointer(unsigned TypeQuals,
                                          SourceLocation Loc) {
     DeclaratorChunk I;
@@ -1389,8 +1399,7 @@ struct DeclaratorChunk {
     return I;
   }
 
-  /// getParen - Return a DeclaratorChunk for a paren.
-  ///
+  /// \brief Return a DeclaratorChunk for a paren.
   static DeclaratorChunk getParen(SourceLocation LParenLoc,
                                   SourceLocation RParenLoc) {
     DeclaratorChunk I;
@@ -1411,10 +1420,12 @@ enum FunctionDefinitionKind {
   FDK_Defaulted,
   FDK_Deleted
 };
-  
-/// Declarator - Information about one declarator, including the parsed type
-/// information and the identifier.  When the declarator is fully formed, this
-/// is turned into the appropriate Decl object.
+
+/// \brief Information about one declarator, including the parsed type
+/// information and the identifier.
+///
+/// When the declarator is fully formed, this is turned into the appropriate
+/// Decl object.
 ///
 /// Declarators come in two types: normal declarators and abstract declarators.
 /// Abstract declarators are used when parsing types, and don't have an
@@ -1453,8 +1464,7 @@ private:
   UnqualifiedId Name;
   SourceRange Range;
 
-  /// Context - Where we are parsing this declarator.
-  ///
+  /// \brief Where we are parsing this declarator.
   TheContext Context;
 
   /// DeclTypeInfo - This holds each type that the declarator includes as it is
@@ -1475,13 +1485,13 @@ private:
   /// Actually a FunctionDefinitionKind.
   unsigned FunctionDefinition : 2;
 
-  // Redeclaration - Is this Declarator is a redeclaration.
+  /// \brief Is this Declarator a redeclaration?
   bool Redeclaration : 1;
 
   /// Attrs - Attributes.
   ParsedAttributes Attrs;
 
-  /// AsmLabel - The asm label, if specified.
+  /// \brief The asm label, if specified.
   Expr *AsmLabel;
 
   /// InlineParams - This is a local array used for the first function decl
@@ -1490,7 +1500,7 @@ private:
   DeclaratorChunk::ParamInfo InlineParams[16];
   bool InlineParamsUsed;
 
-  /// Extension - true if the declaration is preceded by __extension__.
+  /// \brief true if the declaration is preceded by \c __extension__.
   bool Extension : 1;
 
   /// \brief If this is the second or subsequent declarator in this declaration,
@@ -1548,7 +1558,7 @@ public:
             Context == ObjCResultContext);
   }
 
-  /// getSourceRange - Get the source range that spans this declarator.
+  /// \brief Get the source range that spans this declarator.
   const SourceRange &getSourceRange() const LLVM_READONLY { return Range; }
   SourceLocation getLocStart() const LLVM_READONLY { return Range.getBegin(); }
   SourceLocation getLocEnd() const LLVM_READONLY { return Range.getEnd(); }
@@ -1576,7 +1586,7 @@ public:
       Range.setEnd(SR.getEnd());
   }
 
-  /// clear - Reset the contents of this Declarator.
+  /// \brief Reset the contents of this Declarator.
   void clear() {
     SS.clear();
     Name.clear();
@@ -1742,13 +1752,12 @@ public:
       SetRangeEnd(EndLoc);
   }
 
-  /// AddInnermostTypeInfo - Add a new innermost chunk to this declarator.
+  /// \brief Add a new innermost chunk to this declarator.
   void AddInnermostTypeInfo(const DeclaratorChunk &TI) {
     DeclTypeInfo.insert(DeclTypeInfo.begin(), TI);
   }
 
-  /// getNumTypeObjects() - Return the number of types applied to this
-  /// declarator.
+  /// \brief Return the number of types applied to this declarator.
   unsigned getNumTypeObjects() const { return DeclTypeInfo.size(); }
 
   /// Return the specified TypeInfo from this declarator.  TypeInfo #0 is
@@ -1914,7 +1923,7 @@ public:
   bool isRedeclaration() const { return Redeclaration; }
 };
 
-/// FieldDeclarator - This little struct is used to capture information about
+/// \brief This little struct is used to capture information about
 /// structure field declarators, which is basically just a bitfield size.
 struct FieldDeclarator {
   Declarator D;
@@ -1924,7 +1933,7 @@ struct FieldDeclarator {
   }
 };
 
-/// VirtSpecifiers - Represents a C++0x virt-specifier-seq.
+/// \brief Represents a C++11 virt-specifier-seq.
 class VirtSpecifiers {
 public:
   enum Specifier {
@@ -1957,7 +1966,7 @@ private:
   SourceLocation LastLocation;
 };
 
-/// LambdaCapture - An individual capture in a lambda introducer.
+/// \brief An individual capture in a lambda introducer.
 struct LambdaCapture {
   LambdaCaptureKind Kind;
   SourceLocation Loc;
@@ -1971,7 +1980,7 @@ struct LambdaCapture {
   {}
 };
 
-/// LambdaIntroducer - Represents a complete lambda introducer.
+/// \brief Represents a complete lambda introducer.
 struct LambdaIntroducer {
   SourceRange Range;
   SourceLocation DefaultLoc;
@@ -1981,7 +1990,7 @@ struct LambdaIntroducer {
   LambdaIntroducer()
     : Default(LCD_None) {}
 
-  /// addCapture - Append a capture in a lambda introducer.
+  /// \brief Append a capture in a lambda introducer.
   void addCapture(LambdaCaptureKind Kind,
                   SourceLocation Loc,
                   IdentifierInfo* Id = 0, 
