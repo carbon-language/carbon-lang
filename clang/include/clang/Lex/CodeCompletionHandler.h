@@ -43,7 +43,7 @@ public:
   /// where the name of a macro is expected.
   ///
   /// \param IsDefinition Whether this is the definition of a macro, e.g.,
-  /// in a #define.
+  /// in a \#define.
   virtual void CodeCompleteMacroName(bool IsDefinition) { }
   
   /// \brief Callback invoked when performing code completion in a preprocessor
