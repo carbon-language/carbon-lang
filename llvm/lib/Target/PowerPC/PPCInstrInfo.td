@@ -1398,6 +1398,13 @@ let Uses = [RM] in {
 }
 
 let PPC970_Unit = 1 in {  // FXU Operations.
+  def ISEL  : AForm_1<31, 15,
+                     (outs GPRC:$rT), (ins GPRC:$rA, GPRC:$rB, pred:$cond),
+                     "isel $rT, $rA, $rB, $cond", IntGeneral,
+                     []>;
+}
+
+let PPC970_Unit = 1 in {  // FXU Operations.
 // M-Form instructions.  rotate and mask instructions.
 //
 let isCommutable = 1 in {

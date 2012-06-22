@@ -4937,11 +4937,37 @@ PPCTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
 
   MachineFunction *F = BB->getParent();
 
-  if (MI->getOpcode() == PPC::SELECT_CC_I4 ||
-      MI->getOpcode() == PPC::SELECT_CC_I8 ||
-      MI->getOpcode() == PPC::SELECT_CC_F4 ||
-      MI->getOpcode() == PPC::SELECT_CC_F8 ||
-      MI->getOpcode() == PPC::SELECT_CC_VRRC) {
+  if (PPCSubTarget.hasISEL() && (MI->getOpcode() == PPC::SELECT_CC_I4 ||
+                                 MI->getOpcode() == PPC::SELECT_CC_I8)) {
+    unsigned OpCode = MI->getOpcode() == PPC::SELECT_CC_I8 ?
+                                         PPC::ISEL8 : PPC::ISEL;
+    unsigned SelectPred = MI->getOperand(4).getImm();
+    DebugLoc dl = MI->getDebugLoc();
+
+    // The SelectPred is ((BI << 5) | BO) for a BCC
+    unsigned BO = SelectPred & 0xF;
+    assert((BO == 12 || BO == 4) && "invalid predicate BO field for isel");
+
+    unsigned TrueOpNo, FalseOpNo;
+    if (BO == 12) {
+      TrueOpNo = 2;
+      FalseOpNo = 3;
+    } else {
+      TrueOpNo = 3;
+      FalseOpNo = 2;
+      SelectPred = PPC::InvertPredicate((PPC::Predicate)SelectPred);
+    }
+
+    BuildMI(*BB, MI, dl, TII->get(OpCode), MI->getOperand(0).getReg())
+      .addReg(MI->getOperand(TrueOpNo).getReg())
+      .addReg(MI->getOperand(FalseOpNo).getReg())
+      .addImm(SelectPred).addReg(MI->getOperand(1).getReg());
+  } else if (MI->getOpcode() == PPC::SELECT_CC_I4 ||
+             MI->getOpcode() == PPC::SELECT_CC_I8 ||
+             MI->getOpcode() == PPC::SELECT_CC_F4 ||
+             MI->getOpcode() == PPC::SELECT_CC_F8 ||
+             MI->getOpcode() == PPC::SELECT_CC_VRRC) {
+
 
     // The incoming instruction knows the destination vreg to set, the
     // condition code register to branch on, the true/false values to
