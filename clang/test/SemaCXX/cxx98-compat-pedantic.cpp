@@ -9,7 +9,7 @@
 #line 32768 // expected-warning {{#line number greater than 32767 is incompatible with C++98}}
 
 #define VA_MACRO(x, ...) x // expected-warning {{variadic macros are incompatible with C++98}}
-VA_MACRO(,x) // expected-warning {{empty macro argument list is incompatible with C++98}}
+VA_MACRO(,x) // expected-warning {{empty macro arguments are incompatible with C++98}}
 
 ; // expected-warning {{extra ';' outside of a function is incompatible with C++98}}
 

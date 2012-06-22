@@ -252,9 +252,9 @@ void TokenLexer::ExpandFunctionArguments() {
     const Token *ArgToks = ActualArgs->getUnexpArgument(ArgNo);
     unsigned NumToks = MacroArgs::getArgLength(ArgToks);
     if (NumToks) {  // Not an empty argument?
-      // If this is the GNU ", ## __VA_ARG__" extension, and we just learned
-      // that __VA_ARG__ expands to multiple tokens, avoid a pasting error when
-      // the expander trys to paste ',' with the first token of the __VA_ARG__
+      // If this is the GNU ", ## __VA_ARGS__" extension, and we just learned
+      // that __VA_ARGS__ expands to multiple tokens, avoid a pasting error when
+      // the expander trys to paste ',' with the first token of the __VA_ARGS__
       // expansion.
       if (PasteBefore && ResultToks.size() >= 2 &&
           ResultToks[ResultToks.size()-2].is(tok::comma) &&

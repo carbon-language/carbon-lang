@@ -17,7 +17,7 @@ This test serves two purposes:
 
 The list of warnings below should NEVER grow.  It should gradually shrink to 0.
 
-CHECK: Warnings without flags (241):
+CHECK: Warnings without flags (238):
 CHECK-NEXT:   ext_anonymous_struct_union_qualified
 CHECK-NEXT:   ext_binary_literal
 CHECK-NEXT:   ext_cast_fn_obj
@@ -25,7 +25,6 @@ CHECK-NEXT:   ext_delete_void_ptr_operand
 CHECK-NEXT:   ext_designated_init
 CHECK-NEXT:   ext_duplicate_declspec
 CHECK-NEXT:   ext_ellipsis_exception_spec
-CHECK-NEXT:   ext_empty_fnmacro_arg
 CHECK-NEXT:   ext_enum_friend
 CHECK-NEXT:   ext_enum_value_not_int
 CHECK-NEXT:   ext_enumerator_list_comma
@@ -44,12 +43,10 @@ CHECK-NEXT:   ext_integer_complex
 CHECK-NEXT:   ext_integer_increment_complex
 CHECK-NEXT:   ext_invalid_sign_spec
 CHECK-NEXT:   ext_missing_declspec
-CHECK-NEXT:   ext_missing_varargs_arg
 CHECK-NEXT:   ext_missing_whitespace_after_macro_name
 CHECK-NEXT:   ext_new_paren_array_nonconst
 CHECK-NEXT:   ext_nonstandard_escape
 CHECK-NEXT:   ext_param_not_declared
-CHECK-NEXT:   ext_paste_comma
 CHECK-NEXT:   ext_plain_complex
 CHECK-NEXT:   ext_pp_bad_vaargs_use
 CHECK-NEXT:   ext_pp_comma_expr

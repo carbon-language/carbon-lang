@@ -252,7 +252,7 @@ def ext_pp_comma_expr : Extension<"comma operator in operand of #if">;
 def ext_pp_bad_vaargs_use : Extension<
   "__VA_ARGS__ can only appear in the expansion of a C99 variadic macro">;
 def ext_pp_macro_redef : ExtWarn<"%0 macro redefined">;
-def ext_variadic_macro : Extension<"variadic macros were introduced in C99">,
+def ext_variadic_macro : Extension<"variadic macros are a C99 feature">,
   InGroup<VariadicMacros>;
 def warn_cxx98_compat_variadic_macro : Warning<
   "variadic macros are incompatible with C++98">,
@@ -265,12 +265,14 @@ def ext_embedded_directive : Extension<
   "embedding a directive within macro arguments has undefined behavior">,
   InGroup<DiagGroup<"embedded-directive">>;
 def ext_missing_varargs_arg : Extension<
-  "varargs argument missing, but tolerated as an extension">;
+  "must specify at least one argument for '...' parameter of variadic macro">,
+  InGroup<GNU>;
 def ext_empty_fnmacro_arg : Extension<
-  "empty macro arguments were standardized in C99">;
+  "empty macro arguments are a C99 feature">, InGroup<C99>;
 def warn_cxx98_compat_empty_fnmacro_arg : Warning<
-  "empty macro argument list is incompatible with C++98">,
+  "empty macro arguments are incompatible with C++98">,
   InGroup<CXX98CompatPedantic>, DefaultIgnore;
+def note_macro_here : Note<"macro %0 defined here">;
 
 def err_pp_invalid_directive : Error<"invalid preprocessing directive">;
 def err_pp_file_not_found : Error<"'%0' file not found">, DefaultFatal;
@@ -395,7 +397,7 @@ def err_paste_at_start : Error<
   "'##' cannot appear at start of macro expansion">;
 def err_paste_at_end : Error<"'##' cannot appear at end of macro expansion">;
 def ext_paste_comma : Extension<
-  "Use of comma pasting extension is non-portable">;
+  "token pasting of ',' and __VA_ARGS__ is a GNU extension">, InGroup<GNU>;
 def err_unterm_macro_invoc : Error<
   "unterminated function-like macro invocation">;
 def err_too_many_args_in_macro_invoc : Error<
