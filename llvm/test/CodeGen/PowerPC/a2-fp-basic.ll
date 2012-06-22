@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=ppc64 -mcpu=a2 -fuse-fp-ops=fast | FileCheck %s
+; RUN: llc < %s -march=ppc64 -mcpu=a2 -fp-contract=fast | FileCheck %s
 
 %0 = type { double, double }
 

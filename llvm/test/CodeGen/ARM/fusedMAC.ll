@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=armv7-eabi -mattr=+neon,+vfp4 -fuse-fp-ops=fast | FileCheck %s
+; RUN: llc < %s -mtriple=armv7-eabi -mattr=+neon,+vfp4 -fp-contract=fast | FileCheck %s
 ; Check generated fused MAC and MLS.
 
 define double @fusedMACTest1(double %d1, double %d2, double %d3) {

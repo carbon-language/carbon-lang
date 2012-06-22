@@ -195,15 +195,15 @@ FloatABIForCalls("float-abi",
     clEnumValEnd));
 
 static cl::opt<llvm::FPOpFusion::FPOpFusionMode>
-FuseFPOps("fuse-fp-ops",
+FuseFPOps("fp-contract",
   cl::desc("Enable aggresive formation of fused FP ops"),
   cl::init(FPOpFusion::Standard),
   cl::values(
     clEnumValN(FPOpFusion::Fast, "fast",
                "Fuse FP ops whenever profitable"),
-    clEnumValN(FPOpFusion::Standard, "standard",
+    clEnumValN(FPOpFusion::Standard, "on",
                "Only fuse 'blessed' FP ops."),
-    clEnumValN(FPOpFusion::Strict, "strict",
+    clEnumValN(FPOpFusion::Strict, "off",
                "Only fuse FP ops when the result won't be effected."),
     clEnumValEnd));
 
