@@ -38,20 +38,20 @@ template<typename T> void eat(T);
 template<typename E, typename T>
 void fast_enumeration_test(T collection) {
   for (E element in collection) { // expected-error{{selector element type 'int' is not a valid object}} \
-    // expected-error{{collection expression type 'vector' is not a valid object}}
+    // expected-error{{the type 'vector' is not a pointer to a fast-enumerable object}}
     eat(element);
   }
 
   E element;
   for (element in collection) // expected-error{{selector element type 'int' is not a valid object}} \
-    // expected-error{{collection expression type 'vector' is not a valid object}}
+    // expected-error{{the type 'vector' is not a pointer to a fast-enumerable object}}
     eat(element);
 
-  for (NSString *str in collection) // expected-error{{collection expression type 'vector' is not a valid object}}
+  for (NSString *str in collection) // expected-error{{the type 'vector' is not a pointer to a fast-enumerable object}}
     eat(str);
 
   NSString *str;
-  for (str in collection) // expected-error{{collection expression type 'vector' is not a valid object}}
+  for (str in collection) // expected-error{{the type 'vector' is not a pointer to a fast-enumerable object}}
     eat(str);
 }
 

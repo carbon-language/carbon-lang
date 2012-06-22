@@ -26,12 +26,12 @@ typedef struct objc_object {
 
         int i=0;
         for (int * elem in elem) // expected-error {{selector element type 'int *' is not a valid object}} \
-				    expected-error {{collection expression type 'int *' is not a valid object}}
+				    expected-error {{the type 'int *' is not a pointer to a fast-enumerable object}}
            ++i;
         for (i in elem)  // expected-error {{use of undeclared identifier 'elem'}} \
 			    expected-error {{selector element type 'int' is not a valid object}}
            ++i;
-        for (id se in i) // expected-error {{collection expression type 'int' is not a valid object}} 
+        for (id se in i) // expected-error {{the type 'int' is not a pointer to a fast-enumerable object}} 
            ++i;
 }
 @end

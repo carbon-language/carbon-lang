@@ -5485,7 +5485,7 @@ def err_selector_element_not_lvalue : Error<
 def err_selector_element_type : Error<
   "selector element type %0 is not a valid object">;
 def err_collection_expr_type : Error<
-  "collection expression type %0 is not a valid object">;
+  "the type %0 is not a pointer to a fast-enumerable object">;
 def warn_collection_expr_type : Warning<
   "collection expression type %0 may not respond to %1">;
 
