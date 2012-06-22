@@ -353,7 +353,6 @@ def xaddroff : ComplexPattern<iPTR, 1, "SelectAddrIdxOffs", [], []>;
 
 //===----------------------------------------------------------------------===//
 // PowerPC Instruction Predicate Definitions.
-def FPContractions : Predicate<"TM.Options.AllowExcessFPPrecision">;
 def In32BitMode  : Predicate<"!PPCSubTarget.isPPC64()">;
 def In64BitMode  : Predicate<"PPCSubTarget.isPPC64()">;
 def IsBookE  : Predicate<"PPCSubTarget.isBookE()">;
@@ -1312,51 +1311,43 @@ let Uses = [RM] in {
   def FMADD : AForm_1<63, 29, 
                       (outs F8RC:$FRT), (ins F8RC:$FRA, F8RC:$FRC, F8RC:$FRB),
                       "fmadd $FRT, $FRA, $FRC, $FRB", FPFused,
-                      [(set F8RC:$FRT, (fadd (fmul F8RC:$FRA, F8RC:$FRC),
-                                             F8RC:$FRB))]>,
-                      Requires<[FPContractions]>;
+                      [(set F8RC:$FRT,
+                            (fma F8RC:$FRA, F8RC:$FRC, F8RC:$FRB))]>;
   def FMADDS : AForm_1<59, 29,
                       (outs F4RC:$FRT), (ins F4RC:$FRA, F4RC:$FRC, F4RC:$FRB),
                       "fmadds $FRT, $FRA, $FRC, $FRB", FPGeneral,
-                      [(set F4RC:$FRT, (fadd (fmul F4RC:$FRA, F4RC:$FRC),
-                                             F4RC:$FRB))]>,
-                      Requires<[FPContractions]>;
+                      [(set F4RC:$FRT,
+                            (fma F4RC:$FRA, F4RC:$FRC, F4RC:$FRB))]>;
   def FMSUB : AForm_1<63, 28,
                       (outs F8RC:$FRT), (ins F8RC:$FRA, F8RC:$FRC, F8RC:$FRB),
                       "fmsub $FRT, $FRA, $FRC, $FRB", FPFused,
-                      [(set F8RC:$FRT, (fsub (fmul F8RC:$FRA, F8RC:$FRC),
-                                             F8RC:$FRB))]>,
-                      Requires<[FPContractions]>;
+                      [(set F8RC:$FRT,
+                            (fma F8RC:$FRA, F8RC:$FRC, (fneg F8RC:$FRB)))]>;
   def FMSUBS : AForm_1<59, 28,
                       (outs F4RC:$FRT), (ins F4RC:$FRA, F4RC:$FRC, F4RC:$FRB),
                       "fmsubs $FRT, $FRA, $FRC, $FRB", FPGeneral,
-                      [(set F4RC:$FRT, (fsub (fmul F4RC:$FRA, F4RC:$FRC),
-                                             F4RC:$FRB))]>,
-                      Requires<[FPContractions]>;
+                      [(set F4RC:$FRT,
+                            (fma F4RC:$FRA, F4RC:$FRC, (fneg F4RC:$FRB)))]>;
   def FNMADD : AForm_1<63, 31,
                       (outs F8RC:$FRT), (ins F8RC:$FRA, F8RC:$FRC, F8RC:$FRB),
                       "fnmadd $FRT, $FRA, $FRC, $FRB", FPFused,
-                      [(set F8RC:$FRT, (fneg (fadd (fmul F8RC:$FRA, F8RC:$FRC),
-                                                   F8RC:$FRB)))]>,
-                      Requires<[FPContractions]>;
+                      [(set F8RC:$FRT,
+                            (fneg (fma F8RC:$FRA, F8RC:$FRC, F8RC:$FRB)))]>;
   def FNMADDS : AForm_1<59, 31,
                       (outs F4RC:$FRT), (ins F4RC:$FRA, F4RC:$FRC, F4RC:$FRB),
                       "fnmadds $FRT, $FRA, $FRC, $FRB", FPGeneral,
-                      [(set F4RC:$FRT, (fneg (fadd (fmul F4RC:$FRA, F4RC:$FRC),
-                                                   F4RC:$FRB)))]>,
-                      Requires<[FPContractions]>;
+                      [(set F4RC:$FRT,
+                            (fneg (fma F4RC:$FRA, F4RC:$FRC, F4RC:$FRB)))]>;
   def FNMSUB : AForm_1<63, 30,
                       (outs F8RC:$FRT), (ins F8RC:$FRA, F8RC:$FRC, F8RC:$FRB),
                       "fnmsub $FRT, $FRA, $FRC, $FRB", FPFused,
-                      [(set F8RC:$FRT, (fneg (fsub (fmul F8RC:$FRA, F8RC:$FRC),
-                                                   F8RC:$FRB)))]>,
-                      Requires<[FPContractions]>;
+                      [(set F8RC:$FRT, (fneg (fma F8RC:$FRA, F8RC:$FRC,
+                                                  (fneg F8RC:$FRB))))]>;
   def FNMSUBS : AForm_1<59, 30,
                       (outs F4RC:$FRT), (ins F4RC:$FRA, F4RC:$FRC, F4RC:$FRB),
                       "fnmsubs $FRT, $FRA, $FRC, $FRB", FPGeneral,
-                      [(set F4RC:$FRT, (fneg (fsub (fmul F4RC:$FRA, F4RC:$FRC),
-                                                   F4RC:$FRB)))]>,
-                      Requires<[FPContractions]>;
+                      [(set F4RC:$FRT, (fneg (fma F4RC:$FRA, F4RC:$FRC,
+                                                  (fneg F4RC:$FRB))))]>;
 }
 // FSEL is artificially split into 4 and 8-byte forms for the result.  To avoid
 // having 4 of these, force the comparison to always be an 8-byte double (code
@@ -1516,14 +1507,6 @@ def : Pat<(add GPRC:$in, (PPChi tjumptable:$g, 0)),
           (ADDIS GPRC:$in, tjumptable:$g)>;
 def : Pat<(add GPRC:$in, (PPChi tblockaddress:$g, 0)),
           (ADDIS GPRC:$in, tblockaddress:$g)>;
-
-// Fused negative multiply subtract, alternate pattern
-def : Pat<(fsub F8RC:$B, (fmul F8RC:$A, F8RC:$C)),
-          (FNMSUB F8RC:$A, F8RC:$C, F8RC:$B)>,
-          Requires<[FPContractions]>;
-def : Pat<(fsub F4RC:$B, (fmul F4RC:$A, F4RC:$C)),
-          (FNMSUBS F4RC:$A, F4RC:$C, F4RC:$B)>,
-          Requires<[FPContractions]>;
 
 // Standard shifts.  These are represented separately from the real shifts above
 // so that we can distinguish between shifts that allow 5-bit and 6-bit shift

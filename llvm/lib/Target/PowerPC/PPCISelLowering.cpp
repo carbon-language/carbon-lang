@@ -132,12 +132,12 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
   setOperationAction(ISD::FCOS , MVT::f64, Expand);
   setOperationAction(ISD::FREM , MVT::f64, Expand);
   setOperationAction(ISD::FPOW , MVT::f64, Expand);
-  setOperationAction(ISD::FMA  , MVT::f64, Expand);
+  setOperationAction(ISD::FMA  , MVT::f64, Legal);
   setOperationAction(ISD::FSIN , MVT::f32, Expand);
   setOperationAction(ISD::FCOS , MVT::f32, Expand);
   setOperationAction(ISD::FREM , MVT::f32, Expand);
   setOperationAction(ISD::FPOW , MVT::f32, Expand);
-  setOperationAction(ISD::FMA  , MVT::f32, Expand);
+  setOperationAction(ISD::FMA  , MVT::f32, Legal);
 
   setOperationAction(ISD::FLT_ROUNDS_, MVT::i32, Custom);
 
@@ -378,6 +378,7 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
     addRegisterClass(MVT::v16i8, &PPC::VRRCRegClass);
 
     setOperationAction(ISD::MUL, MVT::v4f32, Legal);
+    setOperationAction(ISD::FMA, MVT::v4f32, Legal);
     setOperationAction(ISD::MUL, MVT::v4i32, Custom);
     setOperationAction(ISD::MUL, MVT::v8i16, Custom);
     setOperationAction(ISD::MUL, MVT::v16i8, Custom);
@@ -5874,6 +5875,26 @@ EVT PPCTargetLowering::getOptimalMemOpType(uint64_t Size,
   } else {
     return MVT::i32;
   }
+}
+
+/// isFMAFasterThanMulAndAdd - Return true if an FMA operation is faster than
+/// a pair of mul and add instructions. fmuladd intrinsics will be expanded to
+/// FMAs when this method returns true (and FMAs are legal), otherwise fmuladd
+/// is expanded to mul + add.
+bool PPCTargetLowering::isFMAFasterThanMulAndAdd(EVT VT) const {
+  if (!VT.isSimple())
+    return false;
+
+  switch (VT.getSimpleVT().SimpleTy) {
+  case MVT::f32:
+  case MVT::f64:
+  case MVT::v4f32:
+    return true;
+  default:
+    break;
+  }
+
+  return false;
 }
 
 Sched::Preference PPCTargetLowering::getSchedulingPreference(SDNode *N) const {
