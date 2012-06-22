@@ -2998,9 +2998,7 @@ ARMBaseInstrInfo::getOutputLatency(const InstrItineraryData *ItinData,
     return 1;
 
   // If the second MI is predicated, then there is an implicit use dependency.
-  int Latency = getOperandLatency(ItinData, DefMI, DefIdx, DepMI,
-                                  DepMI->getNumOperands());
-  return (Latency <= 0) ? 1 : Latency;
+  return getInstrLatency(ItinData, DefMI);
 }
 
 unsigned ARMBaseInstrInfo::getInstrLatency(const InstrItineraryData *ItinData,

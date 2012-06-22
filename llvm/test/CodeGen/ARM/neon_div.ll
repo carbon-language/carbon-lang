@@ -1,9 +1,9 @@
-; RUN: llc < %s -march=arm -mattr=+neon -pre-RA-sched=source | FileCheck %s
+; RUN: llc < %s -march=arm -mattr=+neon -pre-RA-sched=source -disable-post-ra | FileCheck %s
 
 define <8 x i8> @sdivi8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 ;CHECK: vrecpe.f32
-;CHECK: vrecpe.f32
 ;CHECK: vmovn.i32
+;CHECK: vrecpe.f32
 ;CHECK: vmovn.i32
 ;CHECK: vmovn.i16
 	%tmp1 = load <8 x i8>* %A
@@ -15,9 +15,9 @@ define <8 x i8> @sdivi8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 define <8 x i8> @udivi8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 ;CHECK: vrecpe.f32
 ;CHECK: vrecps.f32
+;CHECK: vmovn.i32
 ;CHECK: vrecpe.f32
 ;CHECK: vrecps.f32
-;CHECK: vmovn.i32
 ;CHECK: vmovn.i32
 ;CHECK: vqmovun.s16
 	%tmp1 = load <8 x i8>* %A
