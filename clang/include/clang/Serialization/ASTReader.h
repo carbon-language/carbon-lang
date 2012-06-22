@@ -910,8 +910,8 @@ public:
   ///
   /// \param Mod The module whose names should be made visible.
   ///
-  /// \param Visibility The level of visibility to give the names in the module.
-  /// Visibility can only be increased over time.
+  /// \param NameVisibility The level of visibility to give the names in the
+  /// module.  Visibility can only be increased over time.
   void makeModuleVisible(Module *Mod, 
                          Module::NameVisibilityKind NameVisibility);
   

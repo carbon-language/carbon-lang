@@ -1355,7 +1355,7 @@ void Sema::ActOnEndFunctionDeclarator() {
 ///
 /// \param IdLoc The location of the name in the translation unit.
 ///
-/// \param TypoCorrection If true, this routine will attempt typo correction
+/// \param DoTypoCorrection If true, this routine will attempt typo correction
 /// if there is no class with the given name.
 ///
 /// \returns The declaration of the named Objective-C class, or NULL if the

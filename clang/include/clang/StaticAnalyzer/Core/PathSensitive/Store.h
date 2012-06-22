@@ -49,7 +49,7 @@ public:
   virtual ~StoreManager() {}
 
   /// Return the value bound to specified location in a given state.
-  /// \param[in] state The analysis state.
+  /// \param[in] store The analysis state.
   /// \param[in] loc The symbolic memory location.
   /// \param[in] T An optional type that provides a hint indicating the
   ///   expected type of the returned value.  This is used if the value is
@@ -58,12 +58,12 @@ public:
   virtual SVal getBinding(Store store, Loc loc, QualType T = QualType()) = 0;
 
   /// Return a state with the specified value bound to the given location.
-  /// \param[in] state The analysis state.
+  /// \param[in] store The analysis state.
   /// \param[in] loc The symbolic memory location.
   /// \param[in] val The value to bind to location \c loc.
-  /// \return A pointer to a ProgramState object that contains the same bindings as
-  ///   \c state with the addition of having the value specified by \c val bound
-  ///   to the location given for \c loc.
+  /// \return A pointer to a ProgramState object that contains the same
+  ///   bindings as \c state with the addition of having the value specified
+  ///   by \c val bound to the location given for \c loc.
   virtual StoreRef Bind(Store store, Loc loc, SVal val) = 0;
 
   virtual StoreRef BindDefault(Store store, const MemRegion *R, SVal V);
@@ -176,8 +176,7 @@ public:
   ///  invalidate additional regions that may have changed based on accessing
   ///  the given regions. Optionally, invalidates non-static globals as well.
   /// \param[in] store The initial store
-  /// \param[in] Begin A pointer to the first region to invalidate.
-  /// \param[in] End A pointer just past the last region to invalidate.
+  /// \param[in] Regions The regions to invalidate.
   /// \param[in] E The current statement being evaluated. Used to conjure
   ///   symbols to mark the values of invalidated regions.
   /// \param[in] Count The current block count. Used to conjure
@@ -186,7 +185,7 @@ public:
   ///   accessible. Pass \c NULL if this information will not be used.
   /// \param[in] Call The call expression which will be used to determine which
   ///   globals should get invalidated.
-  /// \param[in,out] Regions A vector to fill with any regions being
+  /// \param[in,out] Invalidated A vector to fill with any regions being
   ///   invalidated. This should include any regions explicitly invalidated
   ///   even if they do not currently have bindings. Pass \c NULL if this
   ///   information will not be used.

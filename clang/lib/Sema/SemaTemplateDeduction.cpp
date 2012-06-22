@@ -4455,13 +4455,13 @@ MarkUsedTemplateParameters(ASTContext &Ctx,
   }
 }
 
-/// \brief Mark the template parameters can be deduced by the given
+/// \brief Mark which template parameters can be deduced from a given
 /// template argument list.
 ///
 /// \param TemplateArgs the template argument list from which template
 /// parameters will be deduced.
 ///
-/// \param Deduced a bit vector whose elements will be set to \c true
+/// \param Used a bit vector whose elements will be set to \c true
 /// to indicate when the corresponding template parameter will be
 /// deduced.
 void
