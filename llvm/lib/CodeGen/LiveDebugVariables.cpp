@@ -243,7 +243,7 @@ public:
 
   /// computeIntervals - Compute the live intervals of all locations after
   /// collecting all their def points.
-  void computeIntervals(MachineRegisterInfo &MRI,
+  void computeIntervals(MachineRegisterInfo &MRI, const TargetRegisterInfo &TRI,
                         LiveIntervals &LIS, MachineDominatorTree &MDT,
                         UserValueScopes &UVS);
 
@@ -618,6 +618,7 @@ UserValue::addDefsFromCopies(LiveInterval *LI, unsigned LocNo,
 
 void
 UserValue::computeIntervals(MachineRegisterInfo &MRI,
+                            const TargetRegisterInfo &TRI,
                             LiveIntervals &LIS,
                             MachineDominatorTree &MDT,
                             UserValueScopes &UVS) {
@@ -634,15 +635,27 @@ UserValue::computeIntervals(MachineRegisterInfo &MRI,
     unsigned LocNo = Defs[i].second;
     const MachineOperand &Loc = locations[LocNo];
 
+    if (!Loc.isReg()) {
+      extendDef(Idx, LocNo, 0, 0, 0, LIS, MDT, UVS);
+      continue;
+    }
+
     // Register locations are constrained to where the register value is live.
-    if (Loc.isReg() && LIS.hasInterval(Loc.getReg())) {
+    if (TargetRegisterInfo::isVirtualRegister(Loc.getReg())) {
       LiveInterval *LI = &LIS.getInterval(Loc.getReg());
       const VNInfo *VNI = LI->getVNInfoAt(Idx);
       SmallVector<SlotIndex, 16> Kills;
       extendDef(Idx, LocNo, LI, VNI, &Kills, LIS, MDT, UVS);
       addDefsFromCopies(LI, LocNo, Kills, Defs, MRI, LIS);
-    } else
-      extendDef(Idx, LocNo, 0, 0, 0, LIS, MDT, UVS);
+      continue;
+    }
+
+    // For physregs, use the live range of the first regunit as a guide.
+    unsigned Unit = *MCRegUnitIterator(Loc.getReg(), &TRI);
+    LiveInterval *LI = &LIS.getRegUnit(Unit);
+    const VNInfo *VNI = LI->getVNInfoAt(Idx);
+    // Don't track copies from physregs, it is too expensive.
+    extendDef(Idx, LocNo, LI, VNI, 0, LIS, MDT, UVS);
   }
 
   // Finally, erase all the undefs.
@@ -656,7 +669,7 @@ UserValue::computeIntervals(MachineRegisterInfo &MRI,
 void LDVImpl::computeIntervals() {
   for (unsigned i = 0, e = userValues.size(); i != e; ++i) {
     UserValueScopes UVS(userValues[i]->getDebugLoc(), LS);
-    userValues[i]->computeIntervals(MF->getRegInfo(), *LIS, *MDT, UVS);
+    userValues[i]->computeIntervals(MF->getRegInfo(), *TRI, *LIS, *MDT, UVS);
     userValues[i]->mapVirtRegs(this);
   }
 }
