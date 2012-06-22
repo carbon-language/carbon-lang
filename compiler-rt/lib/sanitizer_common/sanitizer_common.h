@@ -25,6 +25,7 @@ const uptr kWordSize = __WORDSIZE / 8;
 const uptr kWordSizeInBits = 8 * kWordSize;
 const uptr kPageSizeBits = 12;
 const uptr kPageSize = 1UL << kPageSizeBits;
+const uptr kCacheLineSize = 64;
 #ifndef _WIN32
 const uptr kMmapGranularity = kPageSize;
 #else
