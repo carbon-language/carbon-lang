@@ -27,6 +27,7 @@ td {
   <li><a href="#whatsnew">What's New in Clang 3.2?</a>
     <ul>
       <li><a href="#majorfeatures">Major New Features</a></li>
+      <li><a href="#newflags">New Compiler Flags</a></li>
       <li><a href="#cchanges">C Language Changes</a></li>
       <li><a href="#cxxchanges">C++ Language Changes</a></li>
       <li><a href="#objcchanges">Objective-C Language Changes</a></li>
@@ -122,6 +123,17 @@ int f(bool b) {
   flag.</li>
 </ul>
 
+<!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
+<h3 id="newflags">New Compiler Flags</h3>
+<!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
+<ul>
+  <li><tt>-gline-tables-only</tt> controls the
+  <a href="http://clang.llvm.org/docs/UsersManual.html#debuginfosize">size of debug information</a>.
+  This flag tells Clang to emit debug info which is just enough to obtain stack traces with
+  function names, file names and line numbers (by such tools as gdb or addr2line).
+  Debug info for variables or function parameters is not produced, which reduces
+  the size of the resulting binary.
+</ul>
 
 <!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
 <h3 id="cchanges">C Language Changes in Clang</h3>
