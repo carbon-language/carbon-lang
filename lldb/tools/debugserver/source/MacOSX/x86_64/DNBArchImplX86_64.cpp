@@ -110,7 +110,7 @@ CPUHasAVX()
                 }
             }
         }
-        DNBLogThreadedIf (LOG_THREAD, "CPUHasAVX(): g_has_avx = %i (err = %i, errno = %i, xnu_version = %llu)\n", g_has_avx, err, errno, xnu_version);
+        DNBLogThreadedIf (LOG_THREAD, "CPUHasAVX(): g_has_avx = %i (err = %i, errno = %i, xnu_version = %llu)", g_has_avx, err, errno, xnu_version);
     }
     
     return (g_has_avx == eAVXPresent);
