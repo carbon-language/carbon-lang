@@ -648,10 +648,8 @@ static bool CanEvaluateZExtd(Value *V, Type *Ty, unsigned &BitsToClear) {
   if (!I) return false;
   
   // If the input is a truncate from the destination type, we can trivially
-  // eliminate it, even if it has multiple uses.
-  // FIXME: This is currently disabled until codegen can handle this without
-  // pessimizing code, PR5997.
-  if (0 && isa<TruncInst>(I) && I->getOperand(0)->getType() == Ty)
+  // eliminate it.
+  if (isa<TruncInst>(I) && I->getOperand(0)->getType() == Ty)
     return true;
   
   // We can't extend or shrink something that has multiple uses: doing so would
@@ -992,11 +990,8 @@ static bool CanEvaluateSExtd(Value *V, Type *Ty) {
   Instruction *I = dyn_cast<Instruction>(V);
   if (!I) return false;
   
-  // If this is a truncate from the dest type, we can trivially eliminate it,
-  // even if it has multiple uses.
-  // FIXME: This is currently disabled until codegen can handle this without
-  // pessimizing code, PR5997.
-  if (0 && isa<TruncInst>(I) && I->getOperand(0)->getType() == Ty)
+  // If this is a truncate from the dest type, we can trivially eliminate it.
+  if (isa<TruncInst>(I) && I->getOperand(0)->getType() == Ty)
     return true;
   
   // We can't extend or shrink something that has multiple uses: doing so would

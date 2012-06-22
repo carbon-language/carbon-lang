@@ -12,8 +12,8 @@ define i64 @test1(i64 %a) {
   call void @use(i32 %b)
   ret i64 %d
 ; CHECK: @test1
-; CHECK: %d = and i64 %a, 15
-; CHECK: ret i64 %d
+; CHECK-NOT: ext
+; CHECK: ret
 }
 define i64 @test2(i64 %a) {
   %b = trunc i64 %a to i32
@@ -34,8 +34,8 @@ define i64 @test3(i64 %a) {
   call void @use(i32 %b)
   ret i64 %d
 ; CHECK: @test3
-; CHECK: %d = and i64 %a, 8
-; CHECK: ret i64 %d
+; CHECK-NOT: ext
+; CHECK: ret
 }
 define i64 @test4(i64 %a) {
   %b = trunc i64 %a to i32
@@ -46,8 +46,9 @@ define i64 @test4(i64 %a) {
   ret i64 %d
 ; CHECK: @test4
 ; CHECK: = and i64 %a, 8
-; CHECK: %d = xor i64 {{.*}}, 8
-; CHECK: ret i64 %d
+; CHECK: = xor i64 {{.*}}, 8
+; CHECK-NOT: ext
+; CHECK: ret
 }
 
 define i32 @test5(i32 %A) {
