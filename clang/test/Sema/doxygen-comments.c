@@ -1,8 +1,8 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s
-// RUN: %clang_cc1 -fsyntax-only -fdiagnostics-parseable-fixits %s 2>&1 | FileCheck %s
+// RUN: %clang_cc1 -fsyntax-only -Wdoxygen -verify %s
+// RUN: %clang_cc1 -fsyntax-only -Wdoxygen -fdiagnostics-parseable-fixits %s 2>&1 | FileCheck %s
 // RUN: cp %s %t
-// RUN: %clang_cc1 -fsyntax-only -fixit %t
-// RUN: %clang_cc1 -fsyntax-only -Werror %t
+// RUN: %clang_cc1 -fsyntax-only -Wdoxygen -fixit %t
+// RUN: %clang_cc1 -fsyntax-only -Wdoxygen -Werror %t
 
 struct a {
   int x; //< comment // expected-warning {{not a Doxygen trailing comment}}

@@ -5667,7 +5667,7 @@ def err_module_private_definition : Error<
 
 let CategoryName = "Documentation Issue" in {
 def warn_not_a_doxygen_trailing_member_comment : Warning<
-  "not a Doxygen trailing comment">, InGroup<Doxygen>;
+  "not a Doxygen trailing comment">, InGroup<Doxygen>, DefaultIgnore;
 } // end of documentation issue category
 
 } // end of sema component.
