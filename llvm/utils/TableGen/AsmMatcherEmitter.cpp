@@ -186,6 +186,8 @@ struct ClassInfo {
   /// For register classes, the records for all the registers in this class.
   std::set<Record*> Registers;
 
+  /// For custom match classes, he diagnostic kind for when the predicate fails.
+  std::string DiagnosticType;
 public:
   /// isRegisterClass() - Check if this is a register class.
   bool isRegisterClass() const {
@@ -593,15 +595,15 @@ public:
   /// Map of Predicate records to their subtarget information.
   std::map<Record*, SubtargetFeatureInfo*> SubtargetFeatures;
 
+  /// Map of AsmOperandClass records to their class information.
+  std::map<Record*, ClassInfo*> AsmOperandClasses;
+
 private:
   /// Map of token to class information which has already been constructed.
   std::map<std::string, ClassInfo*> TokenClasses;
 
   /// Map of RegisterClass records to their class information.
   std::map<Record*, ClassInfo*> RegisterClassClasses;
-
-  /// Map of AsmOperandClass records to their class information.
-  std::map<Record*, ClassInfo*> AsmOperandClasses;
 
 private:
   /// getTokenClass - Lookup or create the class for the given token.
@@ -960,6 +962,7 @@ ClassInfo *AsmMatcherInfo::getTokenClass(StringRef Token) {
     Entry->PredicateMethod = "<invalid>";
     Entry->RenderMethod = "<invalid>";
     Entry->ParserMethod = "";
+    Entry->DiagnosticType = "";
     Classes.push_back(Entry);
   }
 
@@ -1085,6 +1088,8 @@ buildRegisterClasses(SmallPtrSet<Record*, 16> &SingletonRegisters) {
     CI->PredicateMethod = ""; // unused
     CI->RenderMethod = "addRegOperands";
     CI->Registers = *it;
+    // FIXME: diagnostic type.
+    CI->DiagnosticType = "";
     Classes.push_back(CI);
     RegisterSetClasses.insert(std::make_pair(*it, CI));
   }
@@ -1199,6 +1204,12 @@ void AsmMatcherInfo::buildOperandClasses() {
     Init *PRMName = (*it)->getValueInit("ParserMethod");
     if (StringInit *SI = dynamic_cast<StringInit*>(PRMName))
       CI->ParserMethod = SI->getValue();
+
+    // Get the diagnostic type or leave it as empty.
+    // Get the parse method name or leave it as empty.
+    Init *DiagnosticType = (*it)->getValueInit("DiagnosticType");
+    if (StringInit *SI = dynamic_cast<StringInit*>(DiagnosticType))
+      CI->DiagnosticType = SI->getValue();
 
     AsmOperandClasses[*it] = CI;
     Classes.push_back(CI);
@@ -1802,19 +1813,21 @@ static void emitMatchClassEnumeration(CodeGenTarget &Target,
 /// emitValidateOperandClass - Emit the function to validate an operand class.
 static void emitValidateOperandClass(AsmMatcherInfo &Info,
                                      raw_ostream &OS) {
-  OS << "static bool validateOperandClass(MCParsedAsmOperand *GOp, "
+  OS << "static unsigned validateOperandClass(MCParsedAsmOperand *GOp, "
      << "MatchClassKind Kind) {\n";
   OS << "  " << Info.Target.getName() << "Operand &Operand = *("
      << Info.Target.getName() << "Operand*)GOp;\n";
 
   // The InvalidMatchClass is not to match any operand.
   OS << "  if (Kind == InvalidMatchClass)\n";
-  OS << "    return false;\n\n";
+  OS << "    return MCTargetAsmParser::Match_InvalidOperand;\n\n";
 
   // Check for Token operands first.
+  // FIXME: Use a more specific diagnostic type.
   OS << "  if (Operand.isToken())\n";
-  OS << "    return isSubclass(matchTokenString(Operand.getToken()), Kind);"
-     << "\n\n";
+  OS << "    return isSubclass(matchTokenString(Operand.getToken()), Kind) ?\n"
+     << "             MCTargetAsmParser::Match_Success :\n"
+     << "             MCTargetAsmParser::Match_InvalidOperand;\n\n";
 
   // Check for register operands, including sub-classes.
   OS << "  if (Operand.isReg()) {\n";
@@ -1828,8 +1841,9 @@ static void emitValidateOperandClass(AsmMatcherInfo &Info,
        << it->first->getName() << ": OpKind = " << it->second->Name
        << "; break;\n";
   OS << "    }\n";
-  OS << "    return isSubclass(OpKind, Kind);\n";
-  OS << "  }\n\n";
+  OS << "    return isSubclass(OpKind, Kind) ? "
+     << "MCTargetAsmParser::Match_Success :\n                             "
+     << "         MCTargetAsmParser::Match_InvalidOperand;\n  }\n\n";
 
   // Check the user classes. We don't care what order since we're only
   // actually matching against one of them.
@@ -1841,13 +1855,18 @@ static void emitValidateOperandClass(AsmMatcherInfo &Info,
       continue;
 
     OS << "  // '" << CI.ClassName << "' class\n";
-    OS << "  if (Kind == " << CI.Name
-       << " && Operand." << CI.PredicateMethod << "()) {\n";
-    OS << "    return true;\n";
+    OS << "  if (Kind == " << CI.Name << ") {\n";
+    OS << "    if (Operand." << CI.PredicateMethod << "())\n";
+    OS << "      return MCTargetAsmParser::Match_Success;\n";
+    if (!CI.DiagnosticType.empty())
+      OS << "    return " << Info.Target.getName() << "AsmParser::Match_"
+         << CI.DiagnosticType << ";\n";
     OS << "  }\n\n";
   }
 
-  OS << "  return false;\n";
+  // Generic fallthrough match failure case for operands that don't have
+  // specialized diagnostic types.
+  OS << "  return MCTargetAsmParser::Match_InvalidOperand;\n";
   OS << "}\n\n";
 }
 
@@ -1961,6 +1980,26 @@ static void emitSubtargetFeatureFlagEnumeration(AsmMatcherInfo &Info,
   }
   OS << "  Feature_None = 0\n";
   OS << "};\n\n";
+}
+
+/// emitOperandDiagnosticTypes - Emit the operand matching diagnostic types.
+static void emitOperandDiagnosticTypes(AsmMatcherInfo &Info, raw_ostream &OS) {
+  // Get the set of diagnostic types from all of the operand classes.
+  std::set<StringRef> Types;
+  for (std::map<Record*, ClassInfo*>::const_iterator
+       I = Info.AsmOperandClasses.begin(),
+       E = Info.AsmOperandClasses.end(); I != E; ++I) {
+    if (!I->second->DiagnosticType.empty())
+      Types.insert(I->second->DiagnosticType);
+  }
+
+  if (Types.empty()) return;
+
+  // Now emit the enum entries.
+  for (std::set<StringRef>::const_iterator I = Types.begin(), E = Types.end();
+       I != E; ++I)
+    OS << "  Match_" << *I << ",\n";
+  OS << "  END_OPERAND_DIAGNOSTIC_TYPES\n";
 }
 
 /// emitGetSubtargetFeatureName - Emit the helper function to get the
@@ -2394,6 +2433,13 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
 
   OS << "#endif // GET_ASSEMBLER_HEADER_INFO\n\n";
 
+  // Emit the operand match diagnostic enum names.
+  OS << "\n#ifdef GET_OPERAND_DIAGNOSTIC_TYPES\n";
+  OS << "#undef GET_OPERAND_DIAGNOSTIC_TYPES\n\n";
+  emitOperandDiagnosticTypes(Info, OS);
+  OS << "#endif // GET_OPERAND_DIAGNOSTIC_TYPES\n\n";
+
+
   OS << "\n#ifdef GET_REGISTER_MATCHER\n";
   OS << "#undef GET_REGISTER_MATCHER\n\n";
 
@@ -2605,13 +2651,20 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   OS << "        OperandsValid = (it->Classes[i] == " <<"InvalidMatchClass);\n";
   OS << "        break;\n";
   OS << "      }\n";
-  OS << "      if (validateOperandClass(Operands[i+1], "
-                                       "(MatchClassKind)it->Classes[i]))\n";
+  OS << "      unsigned Diag = validateOperandClass(Operands[i+1],\n";
+  OS.indent(43);
+  OS << "(MatchClassKind)it->Classes[i]);\n";
+  OS << "      if (Diag == Match_Success)\n";
   OS << "        continue;\n";
   OS << "      // If this operand is broken for all of the instances of this\n";
   OS << "      // mnemonic, keep track of it so we can report loc info.\n";
-  OS << "      if (it == MnemonicRange.first || ErrorInfo <= i+1)\n";
+  OS << "      // If we already had a match that only failed due to a\n";
+  OS << "      // target predicate, that diagnostic is preferred.\n";
+  OS << "      if (!HadMatchOtherThanPredicate &&\n";
+  OS << "          (it == MnemonicRange.first || ErrorInfo <= i+1)) {\n";
   OS << "        ErrorInfo = i+1;\n";
+  OS << "        RetCode = Diag;\n";
+  OS << "      }\n";
   OS << "      // Otherwise, just reject this instance of the mnemonic.\n";
   OS << "      OperandsValid = false;\n";
   OS << "      break;\n";

@@ -523,6 +523,11 @@ class AsmOperandClass {
   /// to immediates or registers and are very instruction specific (as flags to
   /// set in a processor register, coprocessor number, ...).
   string ParserMethod = ?;
+
+  // The diagnostic type to present when referencing this operand in a
+  // match failure error message. By default, use a generic "invalid operand"
+  // diagnostic. The target AsmParser maps these codes to text.
+  string DiagnosticType = "";
 }
 
 def ImmAsmOperand : AsmOperandClass {
