@@ -1494,7 +1494,6 @@ struct lldb_copy_dyld_cache_header
 	uint64_t	localSymbolsOffset;
 	uint64_t	localSymbolsSize;
 };
-
 struct lldb_copy_dyld_cache_local_symbols_info
 {
         uint32_t        nlistOffset;
@@ -1504,13 +1503,24 @@ struct lldb_copy_dyld_cache_local_symbols_info
         uint32_t        entriesOffset;
         uint32_t        entriesCount;
 };
-
 struct lldb_copy_dyld_cache_local_symbols_entry
 {
         uint32_t        dylibOffset;
         uint32_t        nlistStartIndex;
         uint32_t        nlistCount;
 };
+
+            /* The dyld_cache_header has a pointer to the dyld_cache_local_symbols_info structure (localSymbolsOffset).
+               The dyld_cache_local_symbols_info structure gives us three things:
+                 1. The start and count of the nlist records in the dyld_shared_cache file
+                 2. The start and size of the strings for these nlist records
+                 3. The start and count of dyld_cache_local_symbols_entry entries
+
+               There is one dyld_cache_local_symbols_entry per dylib/framework in the dyld shared cache.
+               The "dylibOffset" field is the Mach-O header of this dylib/framework in the dyld shared cache.
+               The dyld_cache_local_symbols_entry also lists the start of this dylib/framework's nlist records 
+               and the count of how many nlist records there are for this dylib/framework.
+            */
 
             // Process the dsc header to find the unmapped symbols
             //
@@ -1520,9 +1530,7 @@ struct lldb_copy_dyld_cache_local_symbols_entry
             {
                 DataExtractor dsc_header_data(dsc_data_sp, m_data.GetByteOrder(), m_data.GetAddressByteSize());
 
-                struct lldb_copy_dyld_cache_header* dsc_header_dummy = NULL;
-
-                uint32_t offset = sizeof(dsc_header_dummy->magic);
+                uint32_t offset = offsetof (struct lldb_copy_dyld_cache_header, mappingOffset); 
                 uint32_t mappingOffset = dsc_header_data.GetU32(&offset);
 
                 // If the mappingOffset points to a location inside the header, we've
@@ -1530,7 +1538,7 @@ struct lldb_copy_dyld_cache_local_symbols_entry
                 if (mappingOffset >= sizeof(struct lldb_copy_dyld_cache_header)) 
                 {
 
-                    offset = (uint32_t)(uintptr_t)&dsc_header_dummy->localSymbolsOffset;
+                    offset = offsetof (struct lldb_copy_dyld_cache_header, localSymbolsOffset);
                     uint64_t localSymbolsOffset = dsc_header_data.GetU64(&offset);
                     uint64_t localSymbolsSize = dsc_header_data.GetU64(&offset);
 
