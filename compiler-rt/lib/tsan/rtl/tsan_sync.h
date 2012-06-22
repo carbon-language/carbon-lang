@@ -25,6 +25,9 @@ class SlabCache;
 class StackTrace {
  public:
   StackTrace();
+  // Initialized the object in "static mode",
+  // in this mode it never calls malloc/free but uses the provided buffer.
+  StackTrace(uptr *buf, uptr cnt);
   ~StackTrace();
   void Reset();
 
@@ -39,6 +42,7 @@ class StackTrace {
  private:
   uptr n_;
   uptr *s_;
+  const uptr c_;
 
   StackTrace(const StackTrace&);
   void operator = (const StackTrace&);

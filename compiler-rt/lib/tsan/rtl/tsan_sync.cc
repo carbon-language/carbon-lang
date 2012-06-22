@@ -133,7 +133,16 @@ int SyncTab::PartIdx(uptr addr) {
 
 StackTrace::StackTrace()
     : n_()
-    , s_() {
+    , s_()
+    , c_() {
+}
+
+StackTrace::StackTrace(uptr *buf, uptr cnt)
+    : n_()
+    , s_(buf)
+    , c_(cnt) {
+  CHECK_NE(buf, 0);
+  CHECK_NE(cnt, 0);
 }
 
 StackTrace::~StackTrace() {
@@ -141,21 +150,26 @@ StackTrace::~StackTrace() {
 }
 
 void StackTrace::Reset() {
-  if (s_) {
+  if (s_ && !c_) {
     CHECK_NE(n_, 0);
     internal_free(s_);
     s_ = 0;
-    n_ = 0;
   }
+  n_ = 0;
 }
 
 void StackTrace::Init(const uptr *pcs, uptr cnt) {
   Reset();
   if (cnt == 0)
     return;
+  if (c_) {
+    CHECK_NE(s_, 0);
+    CHECK_LE(cnt, c_);
+  } else {
+    s_ = (uptr*)internal_alloc(MBlockStackTrace, cnt * sizeof(s_[0]));
+  }
   n_ = cnt;
-  s_ = (uptr*)internal_alloc(MBlockStackTrace, cnt * sizeof(s_[0]));
-  REAL(memcpy)(s_, pcs, cnt * sizeof(s_[0]));
+  internal_memcpy(s_, pcs, cnt * sizeof(s_[0]));
 }
 
 void StackTrace::ObtainCurrent(ThreadState *thr, uptr toppc) {
@@ -163,7 +177,13 @@ void StackTrace::ObtainCurrent(ThreadState *thr, uptr toppc) {
   n_ = thr->shadow_stack_pos - &thr->shadow_stack[0];
   if (n_ + !!toppc == 0)
     return;
-  s_ = (uptr*)internal_alloc(MBlockStackTrace, (n_ + !!toppc) * sizeof(s_[0]));
+  if (c_) {
+    CHECK_NE(s_, 0);
+    CHECK_LE(n_ + !!toppc, c_);
+  } else {
+    s_ = (uptr*)internal_alloc(MBlockStackTrace,
+                               (n_ + !!toppc) * sizeof(s_[0]));
+  }
   for (uptr i = 0; i < n_; i++)
     s_[i] = thr->shadow_stack[i];
   if (toppc) {

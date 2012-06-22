@@ -219,12 +219,14 @@ int Finalize(ThreadState *thr) {
 }
 
 static void TraceSwitch(ThreadState *thr) {
+  thr->nomalloc++;
   ScopedInRtl in_rtl;
   Lock l(&thr->trace.mtx);
   unsigned trace = (thr->fast_state.epoch() / kTracePartSize) % kTraceParts;
   TraceHeader *hdr = &thr->trace.headers[trace];
   hdr->epoch0 = thr->fast_state.epoch();
   hdr->stack0.ObtainCurrent(thr, 0);
+  thr->nomalloc--;
 }
 
 extern "C" void __tsan_trace_switch() {

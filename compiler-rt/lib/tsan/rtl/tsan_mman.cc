@@ -104,12 +104,20 @@ MBlock *user_mblock(ThreadState *thr, void *p) {
 void *internal_alloc(MBlockType typ, uptr sz) {
   ThreadState *thr = cur_thread();
   CHECK_GT(thr->in_rtl, 0);
+  if (thr->nomalloc) {
+    thr->nomalloc = 0;  // CHECK calls internal_malloc().
+    CHECK(0);
+  }
   return InternalAlloc(sz);
 }
 
 void internal_free(void *p) {
   ThreadState *thr = cur_thread();
   CHECK_GT(thr->in_rtl, 0);
+  if (thr->nomalloc) {
+    thr->nomalloc = 0;  // CHECK calls internal_malloc().
+    CHECK(0);
+  }
   InternalFree(p);
 }
 

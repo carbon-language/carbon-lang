@@ -204,7 +204,6 @@ class Shadow: public FastState {
 const u64 kShadowFreed = 0xfffffffffffffff8ull;
 
 const int kSigCount = 128;
-const int kShadowStackSize = 1024;
 
 struct my_siginfo_t {
   int opaque[128];
@@ -255,6 +254,9 @@ struct ThreadState {
   int int_signal_send;
   int pending_signal_count;
   SignalDesc pending_signals[kSigCount];
+  // Set in regions of runtime that must be signal-safe and fork-safe.
+  // If set, malloc must not be called.
+  int nomalloc;
 
   explicit ThreadState(Context *ctx, int tid, u64 epoch,
                        uptr stk_addr, uptr stk_size,
