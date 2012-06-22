@@ -178,14 +178,11 @@ void sls_fun_bad_3() {
 
 void sls_fun_bad_4() {
   if (getBool())
-    sls_mu.Lock(); // \
-  expected-warning{{mutex 'sls_mu2' is not locked on every path through here}} \
-  expected-note{{mutex acquired here}}
-
+    sls_mu.Lock();  // expected-note{{mutex acquired here}}
   else
-    sls_mu2.Lock(); // \
-  expected-note{{mutex acquired here}}
-} // expected-warning{{mutex 'sls_mu' is not locked on every path through here}}
+    sls_mu2.Lock(); // expected-note{{mutex acquired here}}
+} // expected-warning{{mutex 'sls_mu' is not locked on every path through here}}  \
+  // expected-warning{{mutex 'sls_mu2' is not locked on every path through here}}
 
 void sls_fun_bad_5() {
   sls_mu.Lock(); // expected-note {{mutex acquired here}}
@@ -226,15 +223,14 @@ void sls_fun_bad_7() {
 void sls_fun_bad_8() {
   sls_mu.Lock(); // expected-note{{mutex acquired here}}
 
-  // FIXME: TERRIBLE SOURCE LOCATION!
-  do { // expected-warning{{expecting mutex 'sls_mu' to be locked at start of each loop}}
-    sls_mu.Unlock();
+  do {
+    sls_mu.Unlock(); // expected-warning{{expecting mutex 'sls_mu' to be locked at start of each loop}}
   } while (getBool());
 }
 
 void sls_fun_bad_9() {
   do {
-    sls_mu.Lock(); // \
+    sls_mu.Lock();  // \
       // expected-warning{{expecting mutex 'sls_mu' to be locked at start of each loop}} \
       // expected-note{{mutex acquired here}}
   } while (getBool());
@@ -242,15 +238,15 @@ void sls_fun_bad_9() {
 }
 
 void sls_fun_bad_10() {
-  sls_mu.Lock(); // expected-note 2{{mutex acquired here}}
-  while(getBool()) {
-    sls_mu.Unlock(); // expected-warning{{expecting mutex 'sls_mu' to be locked at start of each loop}}
+  sls_mu.Lock();  // expected-note 2{{mutex acquired here}}
+  while(getBool()) {  // expected-warning{{expecting mutex 'sls_mu' to be locked at start of each loop}}
+    sls_mu.Unlock();
   }
 } // expected-warning{{mutex 'sls_mu' is still locked at the end of function}}
 
 void sls_fun_bad_11() {
   while (getBool()) { // \
-   expected-warning{{expecting mutex 'sls_mu' to be locked at start of each loop}}
+      expected-warning{{expecting mutex 'sls_mu' to be locked at start of each loop}}
     sls_mu.Lock(); // expected-note {{mutex acquired here}}
   }
   sls_mu.Unlock(); // \
@@ -2239,6 +2235,26 @@ void test() {
 }
 
 
-} // end namespace
+} // end namespace MoreLockExpressions
+
+
+namespace TrylockJoinPoint {
+
+class Foo {
+  Mutex mu;
+  bool c;
+
+  void foo() {
+    if (c) {
+      if (!mu.TryLock())
+        return;
+    } else {
+      mu.Lock();
+    }
+    mu.Unlock();
+  }
+};
+
+} // end namespace TrylockJoinPoint
 
 
