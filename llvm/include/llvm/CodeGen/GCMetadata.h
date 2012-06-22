@@ -71,7 +71,8 @@ namespace llvm {
   struct GCRoot {
     int Num;            ///< Usually a frame index.
     int StackOffset;    ///< Offset from the stack pointer.
-    const Constant *Metadata;//< Metadata straight from the call to llvm.gcroot.
+    const Constant *Metadata; ///< Metadata straight from the call
+                              ///< to llvm.gcroot.
 
     GCRoot(int N, const Constant *MD) : Num(N), StackOffset(-1), Metadata(MD) {}
   };
