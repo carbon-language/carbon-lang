@@ -642,11 +642,16 @@ UserValue::computeIntervals(MachineRegisterInfo &MRI,
 
     // Register locations are constrained to where the register value is live.
     if (TargetRegisterInfo::isVirtualRegister(Loc.getReg())) {
-      LiveInterval *LI = &LIS.getInterval(Loc.getReg());
-      const VNInfo *VNI = LI->getVNInfoAt(Idx);
+      LiveInterval *LI = 0;
+      const VNInfo *VNI = 0;
+      if (LIS.hasInterval(Loc.getReg())) {
+        LI = &LIS.getInterval(Loc.getReg());
+        VNI = LI->getVNInfoAt(Idx);
+      }
       SmallVector<SlotIndex, 16> Kills;
       extendDef(Idx, LocNo, LI, VNI, &Kills, LIS, MDT, UVS);
-      addDefsFromCopies(LI, LocNo, Kills, Defs, MRI, LIS);
+      if (LI)
+        addDefsFromCopies(LI, LocNo, Kills, Defs, MRI, LIS);
       continue;
     }
 
