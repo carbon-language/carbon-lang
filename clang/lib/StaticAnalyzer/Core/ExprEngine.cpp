@@ -161,7 +161,7 @@ ProgramStateRef ExprEngine::getInitialState(const LocationContext *InitLoc) {
       // analyzing an "open" program.
       const StackFrameContext *SFC = InitLoc->getCurrentStackFrame();
       if (SFC->getParent() == 0) {
-        loc::MemRegionVal L(getCXXThisRegion(MD, SFC));
+        loc::MemRegionVal L = svalBuilder.getCXXThis(MD, SFC);
         SVal V = state->getSVal(L);
         if (const Loc *LV = dyn_cast<Loc>(&V)) {
           state = state->assume(*LV, true);
@@ -373,9 +373,8 @@ void ExprEngine::ProcessInitializer(const CFGInitializer Init,
                            cast<StackFrameContext>(Pred->getLocationContext());
   const CXXConstructorDecl *decl =
                            cast<CXXConstructorDecl>(stackFrame->getDecl());
-  const CXXThisRegion *thisReg = getCXXThisRegion(decl, stackFrame);
-
-  SVal thisVal = Pred->getState()->getSVal(thisReg);
+  SVal thisVal = Pred->getState()->getSVal(svalBuilder.getCXXThis(decl,
+                                                                  stackFrame));
 
   if (BMI->isAnyMemberInitializer()) {
     // Evaluate the initializer.
@@ -1511,6 +1510,7 @@ void ExprEngine::VisitMemberExpr(const MemberExpr *M, ExplodedNode *Pred,
   StmtNodeBuilder Bldr(Pred, TopDst, *currentBuilderContext);
   ExplodedNodeSet Dst;
   Decl *member = M->getMemberDecl();
+
   if (VarDecl *VD = dyn_cast<VarDecl>(member)) {
     assert(M->isGLValue());
     Bldr.takeNodes(Pred);
@@ -1518,7 +1518,18 @@ void ExprEngine::VisitMemberExpr(const MemberExpr *M, ExplodedNode *Pred,
     Bldr.addNodes(Dst);
     return;
   }
-  
+
+  // Handle C++ method calls.
+  if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(member)) {
+    Bldr.takeNodes(Pred);
+    SVal MDVal = svalBuilder.getFunctionPointer(MD);
+    ProgramStateRef state =
+      Pred->getState()->BindExpr(M, Pred->getLocationContext(), MDVal);
+    Bldr.generateNode(M, Pred, state);
+    return;
+  }
+
+
   FieldDecl *field = dyn_cast<FieldDecl>(member);
   if (!field) // FIXME: skipping member expressions for non-fields
     return;

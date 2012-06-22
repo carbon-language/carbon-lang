@@ -592,3 +592,23 @@ void rdar11401827() {
   }
 }
 
+//===---------------------------------------------------------------------===//
+// Handle inlining of C++ method calls.
+//===---------------------------------------------------------------------===//
+
+struct A {
+  int *p;
+  void foo(int *q) {
+    p = q;
+  }
+  void bar() {
+    *p = 0; // expected-warning {{null pointer}}
+  }
+};
+
+void test_inline() {
+  A a;
+  a.foo(0);
+  a.bar();
+}
+

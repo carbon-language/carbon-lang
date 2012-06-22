@@ -41,7 +41,7 @@ void ExprEngine::processCallEnter(CallEnter CE, ExplodedNode *Pred) {
   // formal arguments.
   const LocationContext *callerCtx = Pred->getLocationContext();
   ProgramStateRef state = Pred->getState()->enterStackFrame(callerCtx,
-                                                                calleeCtx);
+                                                            calleeCtx);
   
   // Construct a new node and add it to the worklist.
   bool isNew;
@@ -127,10 +127,10 @@ void ExprEngine::processCallExit(ExplodedNode *CEBNode) {
 
   // Bind the constructed object value to CXXConstructExpr.
   if (const CXXConstructExpr *CCE = dyn_cast<CXXConstructExpr>(CE)) {
-    const CXXThisRegion *ThisR =
-        getCXXThisRegion(CCE->getConstructor()->getParent(), calleeCtx);
+    loc::MemRegionVal This =
+      svalBuilder.getCXXThis(CCE->getConstructor()->getParent(), calleeCtx);
+    SVal ThisV = state->getSVal(This);
 
-    SVal ThisV = state->getSVal(ThisR);
     // Always bind the region to the CXXConstructExpr.
     state = state->BindExpr(CCE, CEBNode->getLocationContext(), ThisV);
   }
@@ -225,34 +225,27 @@ bool ExprEngine::shouldInlineDecl(const Decl *D, ExplodedNode *Pred) {
   if (CalleeCFG->getNumBlockIDs() > AMgr.InlineMaxFunctionSize)
     return false;
 
-  return true;
-}
-
-// For now, skip inlining variadic functions.
-// We also don't inline blocks.
-static bool shouldInlineCallExpr(const CallExpr *CE, ExprEngine *E) {
-  if (!E->getAnalysisManager().shouldInlineCall())
-    return false;
-  QualType callee = CE->getCallee()->getType();
-  const FunctionProtoType *FT = 0;
-  if (const PointerType *PT = callee->getAs<PointerType>())
-    FT = dyn_cast<FunctionProtoType>(PT->getPointeeType());
-  else if (const BlockPointerType *BT = callee->getAs<BlockPointerType>()) {
-    FT = dyn_cast<FunctionProtoType>(BT->getPointeeType());
+  // Do not inline variadic calls (for now).
+  if (const BlockDecl *BD = dyn_cast<BlockDecl>(D)) {
+    if (BD->isVariadic())
+      return false;
   }
-  // If we have no prototype, assume the function is okay.
-  if (!FT)
-    return true;
+  else if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
+    if (FD->isVariadic())
+      return false;
+  }
 
-  // Skip inlining of variadic functions.
-  return !FT->isVariadic();
+  return true;
 }
 
 bool ExprEngine::InlineCall(ExplodedNodeSet &Dst,
                             const CallExpr *CE, 
                             ExplodedNode *Pred) {
-  if (!shouldInlineCallExpr(CE, this))
+  if (!getAnalysisManager().shouldInlineCall())
     return false;
+
+  //  if (!shouldInlineCallExpr(CE, this))
+  //    return false;
 
   const StackFrameContext *CallerSFC =
     Pred->getLocationContext()->getCurrentStackFrame();
@@ -269,8 +262,8 @@ bool ExprEngine::InlineCall(ExplodedNodeSet &Dst,
   
     switch (CE->getStmtClass()) {
       default:
-        // FIXME: Handle C++.
         break;
+      case Stmt::CXXMemberCallExprClass:
       case Stmt::CallExprClass: {
         D = FD;
         break;

@@ -397,13 +397,6 @@ public:
   void CreateCXXTemporaryObject(const MaterializeTemporaryExpr *ME,
                                 ExplodedNode *Pred, 
                                 ExplodedNodeSet &Dst);
-
-  /// Synthesize CXXThisRegion.
-  const CXXThisRegion *getCXXThisRegion(const CXXRecordDecl *RD,
-                                        const StackFrameContext *SFC);
-
-  const CXXThisRegion *getCXXThisRegion(const CXXMethodDecl *decl,
-                                        const StackFrameContext *frameCtx);
   
   /// evalEagerlyAssume - Given the nodes in 'Src', eagerly assume symbolic
   ///  expressions of the form 'x != 0' and generate new nodes (stored in Dst)

@@ -310,6 +310,13 @@ public:
     return loc::ConcreteInt(BasicVals.getValue(integer));
   }
 
+  /// Return a memory region for the 'this' object reference.
+  loc::MemRegionVal getCXXThis(const CXXMethodDecl *D,
+                               const StackFrameContext *SFC);
+
+  /// Return a memory region for the 'this' object reference.
+  loc::MemRegionVal getCXXThis(const CXXRecordDecl *D,
+                               const StackFrameContext *SFC);
 };
 
 SValBuilder* createSimpleSValBuilder(llvm::BumpPtrAllocator &alloc,

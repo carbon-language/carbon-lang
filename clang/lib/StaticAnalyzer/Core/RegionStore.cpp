@@ -2097,8 +2097,19 @@ StoreRef RegionStoreManager::enterStackFrame(ProgramStateRef state,
                    svalBuilder.makeLoc(MRMgr.getVarRegion(*PI, calleeCtx)),
                    ArgVal);
     }
-  } else if (const CXXConstructExpr *CE =
-               dyn_cast<CXXConstructExpr>(calleeCtx->getCallSite())) {
+
+    // For C++ method calls, also include the 'this' pointer.
+    if (const CXXMemberCallExpr *CME = dyn_cast<CXXMemberCallExpr>(CE)) {
+      loc::MemRegionVal This =
+        svalBuilder.getCXXThis(cast<CXXMethodDecl>(CME->getCalleeDecl()),
+                               calleeCtx);
+      SVal CalledObj = state->getSVal(CME->getImplicitObjectArgument(),
+                                      callerCtx);
+      store = Bind(store.getStore(), This, CalledObj);
+    }
+  }
+  else if (const CXXConstructExpr *CE =
+            dyn_cast<CXXConstructExpr>(calleeCtx->getCallSite())) {
     CXXConstructExpr::const_arg_iterator AI = CE->arg_begin(),
       AE = CE->arg_end();
 
@@ -2109,8 +2120,10 @@ StoreRef RegionStoreManager::enterStackFrame(ProgramStateRef state,
                    svalBuilder.makeLoc(MRMgr.getVarRegion(*PI, calleeCtx)),
                    ArgVal);
     }
-  } else
+  }
+  else {
     assert(isa<CXXDestructorDecl>(calleeCtx->getDecl()));
+  }
 
   return store;
 }

@@ -21,19 +21,6 @@
 using namespace clang;
 using namespace ento;
 
-const CXXThisRegion *ExprEngine::getCXXThisRegion(const CXXRecordDecl *D,
-                                                 const StackFrameContext *SFC) {
-  const Type *T = D->getTypeForDecl();
-  QualType PT = getContext().getPointerType(QualType(T, 0));
-  return svalBuilder.getRegionManager().getCXXThisRegion(PT, SFC);
-}
-
-const CXXThisRegion *ExprEngine::getCXXThisRegion(const CXXMethodDecl *decl,
-                                            const StackFrameContext *frameCtx) {
-  return svalBuilder.getRegionManager().
-                    getCXXThisRegion(decl->getThisType(getContext()), frameCtx);
-}
-
 void ExprEngine::CreateCXXTemporaryObject(const MaterializeTemporaryExpr *ME,
                                           ExplodedNode *Pred,
                                           ExplodedNodeSet &Dst) {
@@ -161,12 +148,10 @@ void ExprEngine::VisitCXXDestructor(const CXXDestructorDecl *DD,
       getStackFrame(Pred->getLocationContext(), S,
       currentBuilderContext->getBlock(), currentStmtIdx);
 
-  const CXXThisRegion *ThisR = getCXXThisRegion(DD->getParent(), SFC);
-
   CallEnter PP(S, SFC, Pred->getLocationContext());
-
   ProgramStateRef state = Pred->getState();
-  state = state->bindLoc(loc::MemRegionVal(ThisR), loc::MemRegionVal(Dest));
+  state = state->bindLoc(svalBuilder.getCXXThis(DD->getParent(), SFC),
+                         loc::MemRegionVal(Dest));
   Bldr.generateNode(PP, Pred, state);
 }
 
