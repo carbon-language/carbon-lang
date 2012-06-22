@@ -9838,7 +9838,7 @@ static bool IsOverloaded(const UnresolvedSetImpl &Functions) {
 /// set should not contain any member functions; those will be added
 /// by CreateOverloadedUnaryOp().
 ///
-/// \param input The input argument.
+/// \param Input The input argument.
 ExprResult
 Sema::CreateOverloadedUnaryOp(SourceLocation OpLoc, unsigned OpcIn,
                               const UnresolvedSetImpl &Fns,
