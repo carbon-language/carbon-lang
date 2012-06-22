@@ -76,3 +76,15 @@ int f3(int* x) {
   return *x; // no-warning
 }
 
+
+@interface CustomException : NSException
+@end
+
+int testCustomException(int *x) {
+  if (x != 0) return 0;
+
+  [CustomException raise:@"Blah" format:@"abc"];
+
+  return *x; // no-warning
+}
+

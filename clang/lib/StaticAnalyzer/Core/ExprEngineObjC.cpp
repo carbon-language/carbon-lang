@@ -132,6 +132,14 @@ void ExprEngine::VisitObjCForCollectionStmt(const ObjCForCollectionStmt *S,
   getCheckerManager().runCheckersForPostStmt(Dst, Tmp, S, *this);
 }
 
+static bool isSubclass(const ObjCInterfaceDecl *Class, IdentifierInfo *II) {
+  if (!Class)
+    return false;
+  if (Class->getIdentifier() == II)
+    return true;
+  return isSubclass(Class->getSuperClass(), II);
+}
+
 void ExprEngine::VisitObjCMessage(const ObjCMessage &msg,
                                   ExplodedNode *Pred,
                                   ExplodedNodeSet &Dst) {
@@ -177,47 +185,50 @@ void ExprEngine::VisitObjCMessage(const ObjCMessage &msg,
         // Dispatch to plug-in transfer function.
         evalObjCMessage(Bldr, msg, Pred, notNilState, RaisesException);
       }
-    }
-    else if (const ObjCInterfaceDecl *Iface = msg.getReceiverInterface()) {
-      IdentifierInfo* ClsName = Iface->getIdentifier();
-      Selector S = msg.getSelector();
-      
-      // Check for special instance methods.
-      if (!NSExceptionII) {
-        ASTContext &Ctx = getContext();
-        NSExceptionII = &Ctx.Idents.get("NSException");
-      }
-      
-      if (ClsName == NSExceptionII) {
-        enum { NUM_RAISE_SELECTORS = 2 };
-        
-        // Lazily create a cache of the selectors.
-        if (!NSExceptionInstanceRaiseSelectors) {
+    } else if (const ObjCInterfaceDecl *Iface = msg.getReceiverInterface()) {
+      // Note that this branch also handles messages to super, not just
+      // class methods!
+
+      // Check for special class methods.
+      if (!msg.isInstanceMessage()) {
+        if (!NSExceptionII) {
           ASTContext &Ctx = getContext();
-          NSExceptionInstanceRaiseSelectors =
-          new Selector[NUM_RAISE_SELECTORS];
-          SmallVector<IdentifierInfo*, NUM_RAISE_SELECTORS> II;
-          unsigned idx = 0;
-          
-          // raise:format:
-          II.push_back(&Ctx.Idents.get("raise"));
-          II.push_back(&Ctx.Idents.get("format"));
-          NSExceptionInstanceRaiseSelectors[idx++] =
-          Ctx.Selectors.getSelector(II.size(), &II[0]);
-          
-          // raise:format::arguments:
-          II.push_back(&Ctx.Idents.get("arguments"));
-          NSExceptionInstanceRaiseSelectors[idx++] =
-          Ctx.Selectors.getSelector(II.size(), &II[0]);
+          NSExceptionII = &Ctx.Idents.get("NSException");
         }
         
-        for (unsigned i = 0; i < NUM_RAISE_SELECTORS; ++i)
-          if (S == NSExceptionInstanceRaiseSelectors[i]) {
-            RaisesException = true;
-            break;
+        if (isSubclass(Iface, NSExceptionII)) {
+          enum { NUM_RAISE_SELECTORS = 2 };
+          
+          // Lazily create a cache of the selectors.
+          if (!NSExceptionInstanceRaiseSelectors) {
+            ASTContext &Ctx = getContext();
+            NSExceptionInstanceRaiseSelectors =
+              new Selector[NUM_RAISE_SELECTORS];
+            SmallVector<IdentifierInfo*, NUM_RAISE_SELECTORS> II;
+            unsigned idx = 0;
+            
+            // raise:format:
+            II.push_back(&Ctx.Idents.get("raise"));
+            II.push_back(&Ctx.Idents.get("format"));
+            NSExceptionInstanceRaiseSelectors[idx++] =
+              Ctx.Selectors.getSelector(II.size(), &II[0]);
+            
+            // raise:format:arguments:
+            II.push_back(&Ctx.Idents.get("arguments"));
+            NSExceptionInstanceRaiseSelectors[idx++] =
+              Ctx.Selectors.getSelector(II.size(), &II[0]);
           }
+          
+          Selector S = msg.getSelector();
+          for (unsigned i = 0; i < NUM_RAISE_SELECTORS; ++i) {
+            if (S == NSExceptionInstanceRaiseSelectors[i]) {
+              RaisesException = true;
+              break;
+            }
+          }
+        }
       }
-      
+
       // If we raise an exception, for now treat it as a sink.
       // Eventually we will want to handle exceptions properly.
       // Dispatch to plug-in transfer function.
