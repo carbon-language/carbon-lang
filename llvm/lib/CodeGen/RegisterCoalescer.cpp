@@ -1053,8 +1053,12 @@ bool RegisterCoalescer::joinCopy(MachineInstr *CopyMI, bool &Again) {
   // Update regalloc hint.
   TRI->UpdateRegAllocHint(CP.getSrcReg(), CP.getDstReg(), *MF);
 
-  DEBUG(dbgs() << "\tJoined. Result = " << PrintReg(CP.getDstReg(), TRI)
-               << ' ' << LIS->getInterval(CP.getDstReg()) << '\n');
+  DEBUG({
+    dbgs() << "\tJoined. Result = " << PrintReg(CP.getDstReg(), TRI);
+    if (!CP.isPhys())
+      dbgs() << LIS->getInterval(CP.getDstReg());
+     dbgs() << '\n';
+  });
 
   ++numJoins;
   return true;
