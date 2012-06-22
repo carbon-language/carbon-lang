@@ -76,11 +76,9 @@ LiveIntervals::~LiveIntervals() {
 
 void LiveIntervals::releaseMemory() {
   // Free the live intervals themselves.
-  for (DenseMap<unsigned, LiveInterval*>::iterator I = R2IMap.begin(),
-       E = R2IMap.end(); I != E; ++I)
-    delete I->second;
-
-  R2IMap.clear();
+  for (unsigned i = 0, e = VirtRegIntervals.size(); i != e; ++i)
+    delete VirtRegIntervals[TargetRegisterInfo::index2VirtReg(i)];
+  VirtRegIntervals.clear();
   RegMaskSlots.clear();
   RegMaskBits.clear();
   RegMaskBlocks.clear();
@@ -124,21 +122,17 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
 void LiveIntervals::print(raw_ostream &OS, const Module* ) const {
   OS << "********** INTERVALS **********\n";
 
-  // Dump the physregs.
-  for (unsigned Reg = 1, RegE = TRI->getNumRegs(); Reg != RegE; ++Reg)
-    if (const LiveInterval *LI = R2IMap.lookup(Reg))
-      OS << PrintReg(Reg, TRI) << '\t' << *LI << '\n';
-
   // Dump the regunits.
   for (unsigned i = 0, e = RegUnitIntervals.size(); i != e; ++i)
     if (LiveInterval *LI = RegUnitIntervals[i])
       OS << PrintRegUnit(i, TRI) << " = " << *LI << '\n';
 
   // Dump the virtregs.
-  for (unsigned Reg = 0, RegE = MRI->getNumVirtRegs(); Reg != RegE; ++Reg)
-    if (const LiveInterval *LI =
-        R2IMap.lookup(TargetRegisterInfo::index2VirtReg(Reg)))
-      OS << PrintReg(LI->reg) << '\t' << *LI << '\n';
+  for (unsigned i = 0, e = MRI->getNumVirtRegs(); i != e; ++i) {
+    unsigned Reg = TargetRegisterInfo::index2VirtReg(i);
+    if (hasInterval(Reg))
+      OS << PrintReg(Reg) << " = " << getInterval(Reg) << '\n';
+  }
 
   printInstrs(OS);
 }
