@@ -3158,6 +3158,7 @@ SwitchInst::SwitchInst(const SwitchInst &SI)
     OL[i] = InOL[i];
     OL[i+1] = InOL[i+1];
   }
+  TheSubsets = SI.TheSubsets;
   SubclassOptionalData = SI.SubclassOptionalData;
 }
 
@@ -3186,8 +3187,11 @@ void SwitchInst::addCase(IntegersSubset& OnVal, BasicBlock *Dest) {
   // Initialize some new operands.
   assert(OpNo+1 < ReservedSpace && "Growing didn't work!");
   NumOperands = OpNo+2;
-  CaseIt Case(this, NewCaseIdx);
-  Case.setValueEx(OnVal);
+
+  SubsetsIt TheSubsetsIt = TheSubsets.insert(TheSubsets.end(), OnVal);
+  
+  CaseIt Case(this, NewCaseIdx, TheSubsetsIt);
+  Case.updateCaseValueOperand(OnVal);
   Case.setSuccessor(Dest);
 }
 
@@ -3210,6 +3214,11 @@ void SwitchInst::removeCase(CaseIt i) {
   // Nuke the last value.
   OL[NumOps-2].set(0);
   OL[NumOps-2+1].set(0);
+
+  // Do the same with TheCases collection:
+  *i.SubsetIt = TheSubsets.back();
+  TheSubsets.pop_back();
+  
   NumOperands = NumOps-2;
 }
 

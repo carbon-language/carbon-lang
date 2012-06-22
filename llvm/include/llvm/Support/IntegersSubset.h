@@ -40,26 +40,26 @@ namespace llvm {
 
 #define INT_ITEM_DEFINE_COMPARISON(op,func) \
   bool operator op (const APInt& RHS) const { \
-    return ConstantIntVal->getValue().func(RHS); \
+    return getAPIntValue().func(RHS); \
   }
   
 #define INT_ITEM_DEFINE_UNARY_OP(op) \
   IntItem operator op () const { \
-    APInt res = op(ConstantIntVal->getValue()); \
+    APInt res = op(getAPIntValue()); \
     Constant *NewVal = ConstantInt::get(ConstantIntVal->getContext(), res); \
     return IntItem(cast<ConstantInt>(NewVal)); \
   }
   
 #define INT_ITEM_DEFINE_BINARY_OP(op) \
   IntItem operator op (const APInt& RHS) const { \
-    APInt res = ConstantIntVal->getValue() op RHS; \
+    APInt res = getAPIntValue() op RHS; \
     Constant *NewVal = ConstantInt::get(ConstantIntVal->getContext(), res); \
     return IntItem(cast<ConstantInt>(NewVal)); \
   }
   
 #define INT_ITEM_DEFINE_ASSIGNMENT_BY_OP(op) \
   IntItem& operator op (const APInt& RHS) {\
-    APInt res = ConstantIntVal->getValue();\
+    APInt res = getAPIntValue();\
     res op RHS; \
     Constant *NewVal = ConstantInt::get(ConstantIntVal->getContext(), res); \
     ConstantIntVal = cast<ConstantInt>(NewVal); \
@@ -68,7 +68,7 @@ namespace llvm {
   
 #define INT_ITEM_DEFINE_PREINCDEC(op) \
     IntItem& operator op () { \
-      APInt res = ConstantIntVal->getValue(); \
+      APInt res = getAPIntValue(); \
       op(res); \
       Constant *NewVal = ConstantInt::get(ConstantIntVal->getContext(), res); \
       ConstantIntVal = cast<ConstantInt>(NewVal); \
@@ -77,7 +77,7 @@ namespace llvm {
 
 #define INT_ITEM_DEFINE_POSTINCDEC(op) \
     IntItem& operator op (int) { \
-      APInt res = ConstantIntVal->getValue();\
+      APInt res = getAPIntValue();\
       op(res); \
       Constant *NewVal = ConstantInt::get(ConstantIntVal->getContext(), res); \
       OldConstantIntVal = ConstantIntVal; \
@@ -87,18 +87,24 @@ namespace llvm {
   
 #define INT_ITEM_DEFINE_OP_STANDARD_INT(RetTy, op, IntTy) \
   RetTy operator op (IntTy RHS) const { \
-    return (*this) op APInt(ConstantIntVal->getValue().getBitWidth(), RHS); \
+    return (*this) op APInt(getAPIntValue().getBitWidth(), RHS); \
   }  
 
 class IntItem {
   ConstantInt *ConstantIntVal;
-  IntItem(const ConstantInt *V) : ConstantIntVal(const_cast<ConstantInt*>(V)) {}
+  const APInt* APIntVal;
+  IntItem(const ConstantInt *V) :
+    ConstantIntVal(const_cast<ConstantInt*>(V)),
+    APIntVal(&ConstantIntVal->getValue()){}
+  const APInt& getAPIntValue() const {
+    return *APIntVal;
+  }
 public:
   
   IntItem() {}
   
   operator const APInt&() const {
-    return (const APInt&)ConstantIntVal->getValue();
+    return getAPIntValue();
   }  
   
   // Propagate APInt operators.
@@ -137,7 +143,7 @@ public:
   
   // Special case for <<=
   IntItem& operator <<= (unsigned RHS) {
-    APInt res = ConstantIntVal->getValue();
+    APInt res = getAPIntValue();
     res <<= RHS;
     Constant *NewVal = ConstantInt::get(ConstantIntVal->getContext(), res);
     ConstantIntVal = cast<ConstantInt>(NewVal);
@@ -278,9 +284,9 @@ public:
   // In short, for more compact memory consumption we can store flat
   // numbers collection, and define range as pair of indices.
   // In that case we can safe some memory on 32 bit machines.
-  typedef std::list<IntTy> FlatCollectionTy;
+  typedef std::vector<IntTy> FlatCollectionTy;
   typedef std::pair<IntTy*, IntTy*> RangeLinkTy;
-  typedef SmallVector<RangeLinkTy, 64> RangeLinksTy;
+  typedef std::vector<RangeLinkTy> RangeLinksTy;
   typedef typename RangeLinksTy::const_iterator RangeLinksConstIt;
   
   typedef IntegersSubsetGeneric<IntTy> self;
@@ -290,21 +296,33 @@ protected:
   FlatCollectionTy FlatCollection;
   RangeLinksTy RangeLinks;
   
+  bool IsSingleNumber;
+  bool IsSingleNumbersOnly;
+  
 public:
   
   template<class RangesCollectionTy>
   explicit IntegersSubsetGeneric(const RangesCollectionTy& Links) {
     assert(Links.size() && "Empty ranges are not allowed.");
+    
+    // In case of big set of single numbers consumes additional RAM space,
+    // but allows to avoid additional reallocation.
+    FlatCollection.reserve(Links.size() * 2);
+    RangeLinks.reserve(Links.size());        
+    IsSingleNumbersOnly = true;
     for (typename RangesCollectionTy::const_iterator i = Links.begin(),
          e = Links.end(); i != e; ++i) {
       RangeLinkTy RangeLink;
       FlatCollection.push_back(i->getLow());
       RangeLink.first = &FlatCollection.back();
-      if (i->getLow() != i->getHigh())
+      if (i->getLow() != i->getHigh()) {
         FlatCollection.push_back(i->getHigh());
+        IsSingleNumbersOnly = false;
+      }
       RangeLink.second = &FlatCollection.back();
       RangeLinks.push_back(RangeLink);
     }
+    IsSingleNumber = IsSingleNumbersOnly && RangeLinks.size() == 1;
   }
   
   IntegersSubsetGeneric(const self& RHS) {
@@ -314,6 +332,8 @@ public:
   self& operator=(const self& RHS) {
     FlatCollection.clear();
     RangeLinks.clear();
+    FlatCollection.reserve(RHS.RangeLinks.size() * 2);
+    RangeLinks.reserve(RHS.RangeLinks.size());
     for (RangeLinksConstIt i = RHS.RangeLinks.begin(), e = RHS.RangeLinks.end();
          i != e; ++i) {
       RangeLinkTy RangeLink;
@@ -324,6 +344,8 @@ public:
       RangeLink.second = &FlatCollection.back();
       RangeLinks.push_back(RangeLink);
     }
+    IsSingleNumber = RHS.IsSingleNumber;
+    IsSingleNumbersOnly = RHS.IsSingleNumbersOnly;
     return *this;
   }
   
@@ -333,6 +355,13 @@ public:
   /// true if it equals to one of contained values or belongs to the one of
   /// contained ranges.
   bool isSatisfies(const IntTy &CheckingVal) const {
+    if (IsSingleNumber)
+      return FlatCollection.front() == CheckingVal;
+    if (IsSingleNumbersOnly)
+      return std::find(FlatCollection.begin(),
+                       FlatCollection.end(),
+                       CheckingVal) != FlatCollection.end();
+    
     for (unsigned i = 0, e = getNumItems(); i < e; ++i) {
       if (RangeLinks[i].first == RangeLinks[i].second) {
         if (*RangeLinks[i].first == CheckingVal)
@@ -360,8 +389,12 @@ public:
   
   /// Returns true if whole subset contains single element.
   bool isSingleNumber() const {
-    return RangeLinks.size() == 1 &&
-           RangeLinks[0].first == RangeLinks[0].second;
+    return IsSingleNumber;
+  }
+  
+  /// Returns true if whole subset contains only single numbers, no ranges.
+  bool isSingleNumbersOnly() const {
+    return IsSingleNumbersOnly;
   }
 
   /// Does the same like getItem(idx).isSingleNumber(), but
@@ -385,7 +418,7 @@ public:
     }
     return sz.getZExtValue();    
   }
-  
+    
   /// Allows to access single value even if it belongs to some range.
   /// Ranges set is considered as flat numbers collection.
   /// [<1>, <4,8>] is considered as [1,4,5,6,7,8] 
@@ -408,6 +441,14 @@ public:
     }
     assert(0 && "Index exceeds high border.");
     return sz;    
+  }
+  
+  /// Does the same as getSingleValue, but works only if subset contains
+  /// single numbers only.
+  const IntTy& getSingleNumber(unsigned idx) const {
+    assert(IsSingleNumbersOnly && "This method works properly if subset "
+                                  "contains single numbers only.");
+    return FlatCollection[idx];
   }
 };  
 
@@ -455,9 +496,9 @@ class IntegersSubset : public IntegersSubsetGeneric<IntItem> {
   }
   
 public:
-  
-  IntegersSubset(Constant *C) : ParentTy(rangesFromConstant(C)),
-                                Holder(C) {}
+
+  explicit IntegersSubset(Constant *C) : ParentTy(rangesFromConstant(C)),
+                          Holder(C) {}
   
   template<class RangesCollectionTy>
   explicit IntegersSubset(const RangesCollectionTy& Src) : ParentTy(Src) {
