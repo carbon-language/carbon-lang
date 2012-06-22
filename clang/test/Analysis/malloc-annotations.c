@@ -124,11 +124,10 @@ void af2e() {
 }
 
 // This case inflicts a possible double-free.
-// TODO: Better error message.
 void af3() {
   int *p = my_malloc(12);
   my_hold(p);
-  free(p); // expected-warning{{Attempt to free released memory}}
+  free(p); // expected-warning{{Attempt to free non-owned memory}}
 }
 
 int * af4() {

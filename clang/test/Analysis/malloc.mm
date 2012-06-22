@@ -9,7 +9,6 @@ void free(void *);
 void testNSDatafFreeWhenDoneNoError(NSUInteger dataLength) {
   unsigned char *data = (unsigned char *)malloc(42);
   NSData *nsdata = [NSData dataWithBytesNoCopy:data length:dataLength];
-  free(data); // no warning
 }
 
 void testNSDataFreeWhenDoneYES(NSUInteger dataLength) {
@@ -55,11 +54,17 @@ void testNSStringFreeWhenDoneNO2(NSUInteger dataLength) {
   NSString *nsstr = [[NSString alloc] initWithCharactersNoCopy:data length:dataLength freeWhenDone:0]; // expected-warning{{leak}}
 }
 
-// TODO: False Negative.
-void testNSDatafFreeWhenDoneFN(NSUInteger dataLength) {
-  unsigned char *data = (unsigned char *)malloc(42);
-  NSData *nsdata = [NSData dataWithBytesNoCopy:data length:dataLength freeWhenDone:1];
-  free(data); // false negative
+void testRelinquished1() {
+  void *data = malloc(42);
+  NSData *nsdata = [NSData dataWithBytesNoCopy:data length:42 freeWhenDone:1];
+  free(data); // expected-warning {{Attempt to free non-owned memory}}
+}
+
+void testRelinquished2() {
+  void *data = malloc(42);
+  NSData *nsdata;
+  free(data);
+  [NSData dataWithBytesNoCopy:data length:42]; // expected-warning {{Attempt to free released memory}}
 }
 
 // Test CF/NS...NoCopy. PR12100: Pointers can escape when custom deallocators are provided.
