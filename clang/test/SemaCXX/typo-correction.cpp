@@ -219,3 +219,11 @@ namespace PR13051 {
     f(&S<int>::foo); // expected-error-re{{no member named 'foo' in 'PR13051::S<int>'$}}
   }
 }
+
+namespace PR6325 {
+class foo { }; // expected-note{{'foo' declared here}}
+// Note that for this example (pulled from the PR), if keywords are not excluded
+// as correction candidates then no suggestion would be given; correcting
+// 'boo' to 'bool' is the same edit distance as correcting 'boo' to 'foo'.
+class bar : boo { }; // expected-error{{unknown class name 'boo'; did you mean 'foo'?}}
+}

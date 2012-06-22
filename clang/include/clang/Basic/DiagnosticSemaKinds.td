@@ -5550,6 +5550,8 @@ def warn_missing_method_return_type : Warning<
   InGroup<MissingMethodReturnType>, DefaultIgnore;
 
 // Spell-checking diagnostics
+def err_unknown_type_or_class_name_suggest : Error<
+  "unknown %select{type|class}2 name %0; did you mean %1?">;
 def err_unknown_typename_suggest : Error<
   "unknown type name %0; did you mean %1?">;
 def err_unknown_nested_typename_suggest : Error<

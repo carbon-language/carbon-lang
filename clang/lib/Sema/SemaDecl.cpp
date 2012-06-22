@@ -60,7 +60,8 @@ namespace {
 
 class TypeNameValidatorCCC : public CorrectionCandidateCallback {
  public:
-  TypeNameValidatorCCC(bool AllowInvalid) : AllowInvalidDecl(AllowInvalid) {
+  TypeNameValidatorCCC(bool AllowInvalid, bool WantClass=false)
+      : AllowInvalidDecl(AllowInvalid), WantClassName(WantClass) {
     WantExpressionKeywords = false;
     WantCXXNamedCasts = false;
     WantRemainingKeywords = false;
@@ -71,11 +72,12 @@ class TypeNameValidatorCCC : public CorrectionCandidateCallback {
       return (isa<TypeDecl>(ND) || isa<ObjCInterfaceDecl>(ND)) &&
           (AllowInvalidDecl || !ND->isInvalidDecl());
     else
-      return candidate.isKeyword();
+      return !WantClassName && candidate.isKeyword();
   }
 
  private:
   bool AllowInvalidDecl;
+  bool WantClassName;
 };
 
 }
@@ -209,7 +211,7 @@ ParsedType Sema::getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
   case LookupResult::NotFound:
   case LookupResult::NotFoundInCurrentInstantiation:
     if (CorrectedII) {
-      TypeNameValidatorCCC Validator(true);
+      TypeNameValidatorCCC Validator(true, isClassName);
       TypoCorrection Correction = CorrectTypo(Result.getLookupNameInfo(),
                                               Kind, S, SS, Validator);
       IdentifierInfo *NewII = Correction.getCorrectionAsIdentifierInfo();
@@ -238,8 +240,8 @@ ParsedType Sema::getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
           std::string CorrectedStr(Correction.getAsString(getLangOpts()));
           std::string CorrectedQuotedStr(
               Correction.getQuoted(getLangOpts()));
-          Diag(NameLoc, diag::err_unknown_typename_suggest)
-              << Result.getLookupName() << CorrectedQuotedStr
+          Diag(NameLoc, diag::err_unknown_type_or_class_name_suggest)
+              << Result.getLookupName() << CorrectedQuotedStr << isClassName
               << FixItHint::CreateReplacement(SourceRange(NameLoc),
                                               CorrectedStr);
           if (NamedDecl *FirstDecl = Correction.getCorrectionDecl())
