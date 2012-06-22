@@ -16,7 +16,7 @@
 #define SINGLE_PRECISION
 #include "fp_lib.h"
 
-ARM_EABI_FNALIAS(f2iz, fixsfsi);
+ARM_EABI_FNALIAS(f2iz, fixsfsi)
 
 COMPILER_RT_ABI int
 __fixsfsi(fp_t a) {

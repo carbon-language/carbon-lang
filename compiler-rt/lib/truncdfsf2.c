@@ -64,7 +64,7 @@ static inline dst_t dstFromRep(dst_rep_t x) {
 
 // End helper routines.  Conversion implementation follows.
 
-ARM_EABI_FNALIAS(d2f, truncdfsf2);
+ARM_EABI_FNALIAS(d2f, truncdfsf2)
 
 COMPILER_RT_ABI dst_t
 __truncdfsf2(src_t a) {

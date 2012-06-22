@@ -18,7 +18,7 @@
 
 /* Translated from Figure 3-40 of The PowerPC Compiler Writer's Guide */
 
-ARM_EABI_FNALIAS(uidiv, udivsi3);
+ARM_EABI_FNALIAS(uidiv, udivsi3)
 
 /* This function should not call __divsi3! */
 COMPILER_RT_ABI su_int

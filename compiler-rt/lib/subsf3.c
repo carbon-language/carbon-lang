@@ -17,7 +17,7 @@
 
 fp_t COMPILER_RT_ABI __addsf3(fp_t a, fp_t b);
 
-ARM_EABI_FNALIAS(fsub, subsf3);
+ARM_EABI_FNALIAS(fsub, subsf3)
 
 // Subtraction; flip the sign bit of b and add.
 COMPILER_RT_ABI fp_t

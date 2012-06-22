@@ -26,7 +26,7 @@
 
 /* seee eeee eeee mmmm mmmm mmmm mmmm mmmm | mmmm mmmm mmmm mmmm mmmm mmmm mmmm mmmm */
 
-ARM_EABI_FNALIAS(d2ulz, fixunsdfdi);
+ARM_EABI_FNALIAS(d2ulz, fixunsdfdi)
 
 COMPILER_RT_ABI du_int
 __fixunsdfdi(double a)

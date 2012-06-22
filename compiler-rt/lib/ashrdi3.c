@@ -18,7 +18,7 @@
 
 /* Precondition:  0 <= b < bits_in_dword */
 
-ARM_EABI_FNALIAS(lasr, ashrdi3);
+ARM_EABI_FNALIAS(lasr, ashrdi3)
 
 COMPILER_RT_ABI di_int
 __ashrdi3(di_int a, si_int b)

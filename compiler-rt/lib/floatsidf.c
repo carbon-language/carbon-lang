@@ -18,7 +18,7 @@
 
 #include "int_lib.h"
 
-ARM_EABI_FNALIAS(i2d, floatsidf);
+ARM_EABI_FNALIAS(i2d, floatsidf)
 
 fp_t __floatsidf(int a) {
     

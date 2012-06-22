@@ -22,7 +22,7 @@
 
 /* seee eeee eeee mmmm mmmm mmmm mmmm mmmm | mmmm mmmm mmmm mmmm mmmm mmmm mmmm mmmm */
 
-ARM_EABI_FNALIAS(l2d, floatdidf);
+ARM_EABI_FNALIAS(l2d, floatdidf)
 
 #ifndef __SOFT_FP__
 /* Support for systems that have hardware floating-point; we'll set the inexact flag

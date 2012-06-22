@@ -23,7 +23,7 @@
 
 /* seee eeee emmm mmmm mmmm mmmm mmmm mmmm */
 
-ARM_EABI_FNALIAS(d2lz, fixsfdi);
+ARM_EABI_FNALIAS(d2lz, fixsfdi)
 
 COMPILER_RT_ABI di_int
 __fixsfdi(float a)

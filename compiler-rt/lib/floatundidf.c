@@ -22,7 +22,7 @@
 
 #include "int_lib.h"
 
-ARM_EABI_FNALIAS(ul2d, floatundidf);
+ARM_EABI_FNALIAS(ul2d, floatundidf)
 
 #ifndef __SOFT_FP__
 /* Support for systems that have hardware floating-point; we'll set the inexact flag

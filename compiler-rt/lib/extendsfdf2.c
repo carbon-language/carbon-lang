@@ -66,7 +66,7 @@ static inline dst_t dstFromRep(dst_rep_t x) {
 
 // End helper routines.  Conversion implementation follows.
 
-ARM_EABI_FNALIAS(f2d, extendsfdf2);
+ARM_EABI_FNALIAS(f2d, extendsfdf2)
 
 dst_t __extendsfdf2(src_t a) {
     

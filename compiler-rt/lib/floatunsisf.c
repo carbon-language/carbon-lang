@@ -18,7 +18,7 @@
 
 #include "int_lib.h"
 
-ARM_EABI_FNALIAS(ui2f, floatunsisf);
+ARM_EABI_FNALIAS(ui2f, floatunsisf)
 
 fp_t __floatunsisf(unsigned int a) {
     

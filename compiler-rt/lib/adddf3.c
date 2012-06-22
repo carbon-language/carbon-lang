@@ -15,7 +15,7 @@
 #define DOUBLE_PRECISION
 #include "fp_lib.h"
 
-ARM_EABI_FNALIAS(dadd, adddf3);
+ARM_EABI_FNALIAS(dadd, adddf3)
 
 COMPILER_RT_ABI fp_t
 __adddf3(fp_t a, fp_t b) {

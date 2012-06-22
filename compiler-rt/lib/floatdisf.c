@@ -22,7 +22,7 @@
 
 #include "int_lib.h"
 
-ARM_EABI_FNALIAS(l2f, floatdisf);
+ARM_EABI_FNALIAS(l2f, floatdisf)
 
 COMPILER_RT_ABI float
 __floatdisf(di_int a)

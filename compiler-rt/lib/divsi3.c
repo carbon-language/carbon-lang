@@ -18,7 +18,7 @@ su_int COMPILER_RT_ABI __udivsi3(su_int n, su_int d);
 
 /* Returns: a / b */
 
-ARM_EABI_FNALIAS(idiv, divsi3);
+ARM_EABI_FNALIAS(idiv, divsi3)
 
 COMPILER_RT_ABI si_int
 __divsi3(si_int a, si_int b)
