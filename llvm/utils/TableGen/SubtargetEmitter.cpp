@@ -422,15 +422,18 @@ void SubtargetEmitter::EmitStageAndOperandCycleData(raw_ostream &OS,
     // Get processor itinerary name
     const std::string &Name = Proc->getName();
 
-    // Skip default
-    if (Name == "NoItineraries") continue;
-
-    // Create and expand processor itinerary to cover all itinerary classes
-    std::vector<InstrItinerary> ItinList;
-    ItinList.resize(NItinClasses);
-
     // Get itinerary data list
     std::vector<Record*> ItinDataList = Proc->getValueAsListOfDefs("IID");
+    std::vector<InstrItinerary> ItinList;
+
+    // Add an empty itinerary.
+    if (ItinDataList.empty()) {
+      ProcList.push_back(ItinList);
+      continue;
+    }
+
+    // Expand processor itinerary to cover all itinerary classes
+    ItinList.resize(NItinClasses);
 
     // For each itinerary data
     for (unsigned j = 0, M = ItinDataList.size(); j < M; j++) {
@@ -559,8 +562,6 @@ EmitProcessorData(raw_ostream &OS,
     const std::string &Name = Itin->getName();
 
     // Skip default
-    if (Name == "NoItineraries") continue;
-
     // Begin processor itinerary properties
     OS << "\n";
     OS << "static const llvm::InstrItineraryProps " << Name << "Props(\n";
@@ -570,42 +571,45 @@ EmitProcessorData(raw_ostream &OS,
     EmitItineraryProp(OS, Itin, "HighLatency", ' ');
     OS << ");\n";
 
-    // Begin processor itinerary table
-    OS << "\n";
-    OS << "static const llvm::InstrItinerary " << Name << "Entries"
-       << "[] = {\n";
-
     // For each itinerary class
     std::vector<InstrItinerary> &ItinList = *ProcListIter++;
-    assert(ItinList.size() == ItinClassList.size() && "bad itinerary");
-    for (unsigned j = 0, M = ItinList.size(); j < M; ++j) {
-      InstrItinerary &Intinerary = ItinList[j];
+    if (!ItinList.empty()) {
+      assert(ItinList.size() == ItinClassList.size() && "bad itinerary");
 
-      // Emit in the form of
-      // { firstStage, lastStage, firstCycle, lastCycle } // index
-      if (Intinerary.FirstStage == 0) {
-        OS << "  { 1, 0, 0, 0, 0 }";
-      } else {
-        OS << "  { " <<
-          Intinerary.NumMicroOps << ", " <<
-          Intinerary.FirstStage << ", " <<
-          Intinerary.LastStage << ", " <<
-          Intinerary.FirstOperandCycle << ", " <<
-          Intinerary.LastOperandCycle << " }";
+      // Begin processor itinerary table
+      OS << "\n";
+      OS << "static const llvm::InstrItinerary " << Name << "Entries"
+         << "[] = {\n";
+
+      for (unsigned j = 0, M = ItinList.size(); j < M; ++j) {
+        InstrItinerary &Intinerary = ItinList[j];
+
+        // Emit in the form of
+        // { firstStage, lastStage, firstCycle, lastCycle } // index
+        if (Intinerary.FirstStage == 0) {
+          OS << "  { 1, 0, 0, 0, 0 }";
+        } else {
+          OS << "  { " <<
+            Intinerary.NumMicroOps << ", " <<
+            Intinerary.FirstStage << ", " <<
+            Intinerary.LastStage << ", " <<
+            Intinerary.FirstOperandCycle << ", " <<
+            Intinerary.LastOperandCycle << " }";
+        }
+        OS << ", // " << j << " " << ItinClassList[j]->getName() << "\n";
       }
-
-      OS << ", // " << j << " " << ItinClassList[j]->getName() << "\n";
+      // End processor itinerary table
+      OS << "  { 1, ~0U, ~0U, ~0U, ~0U } // end marker\n";
+      OS << "};\n";
     }
-
-    // End processor itinerary table
-    OS << "  { 1, ~0U, ~0U, ~0U, ~0U } // end marker\n";
-    OS << "};\n";
-
     OS << '\n';
     OS << "static const llvm::InstrItinerarySubtargetValue "
        << Name << " = {\n";
     OS << "  &" << Name << "Props,\n";
-    OS << "  " << Name << "Entries\n";
+    if (ItinList.empty())
+      OS << "  0\n";
+    else
+      OS << "  " << Name << "Entries\n";
     OS << "};\n";
   }
 }

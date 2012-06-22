@@ -133,7 +133,8 @@ class ProcessorItineraries<list<FuncUnit> fu, list<Bypass> bp,
 }
 
 // NoItineraries - A marker that can be used by processors without schedule
-// info.
+// info. Subtargets using NoItineraries can bypass the scheduler's
+// expensive HazardRecognizer because no reservation table is needed.
 def NoItineraries : ProcessorItineraries<[], [], []>;
 
 // Processor itineraries with non-unit issue width. This allows issue

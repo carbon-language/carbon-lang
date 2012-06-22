@@ -141,7 +141,7 @@ def ProcA9      : SubtargetFeature<"a9", "ARMProcFamily", "CortexA9",
                                     FeatureAvoidPartialCPSR]>;
 
 class ProcNoItin<string Name, list<SubtargetFeature> Features>
- : Processor<Name, GenericItineraries, Features>;
+ : Processor<Name, NoItineraries, Features>;
 
 // V4 Processors.
 def : ProcNoItin<"generic",         []>;

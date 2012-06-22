@@ -50,7 +50,7 @@ def FeatureSqrt        : SubtargetFeature<"sqrt", "HasSqrt", "true",
 // MBlaze processors supported.
 //===----------------------------------------------------------------------===//
 
-def : Processor<"mblaze",  MBlazeGenericItineraries, []>;
+def : Processor<"mblaze",  NoItineraries, []>;
 def : Processor<"mblaze3", MBlazePipe3Itineraries, []>;
 def : Processor<"mblaze5", MBlazePipe5Itineraries, []>;
 

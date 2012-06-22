@@ -40,11 +40,6 @@ def IIC_WDC    : InstrItinClass;
 def IIC_Pseudo : InstrItinClass;
 
 //===----------------------------------------------------------------------===//
-// MBlaze generic instruction itineraries.
-//===----------------------------------------------------------------------===//
-def MBlazeGenericItineraries : ProcessorItineraries<[], [], []>;
-
-//===----------------------------------------------------------------------===//
 // MBlaze instruction itineraries for three stage pipeline.
 //===----------------------------------------------------------------------===//
 include "MBlazeSchedule3.td"
