@@ -86,7 +86,7 @@ MCAsmInfo::MCAsmInfo() {
   DwarfUsesInlineInfoSection = false;
   DwarfRequiresRelocationForSectionOffset = true;
   DwarfSectionOffsetDirective = 0;
-  DwarfUsesLabelOffsetForRanges = true;
+  DwarfUsesRelocationsAcrossSections = true;
   DwarfUsesRelocationsForStringPool = true;
   DwarfRegNumForCFI = false;
   HasMicrosoftFastStdCallMangling = false;

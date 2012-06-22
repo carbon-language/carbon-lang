@@ -1624,7 +1624,7 @@ void DwarfDebug::emitDIE(DIE *Die) {
       // DW_AT_range Value encodes offset in debug_range section.
       DIEInteger *V = cast<DIEInteger>(Values[i]);
 
-      if (Asm->MAI->doesDwarfUseLabelOffsetForRanges()) {
+      if (Asm->MAI->doesDwarfUseRelocationsAcrossSections()) {
         Asm->EmitLabelPlusOffset(DwarfDebugRangeSectionSym,
                                  V->getValue(),
                                  4);
@@ -1637,10 +1637,14 @@ void DwarfDebug::emitDIE(DIE *Die) {
       break;
     }
     case dwarf::DW_AT_location: {
-      if (DIELabel *L = dyn_cast<DIELabel>(Values[i]))
-        Asm->EmitLabelDifference(L->getValue(), DwarfDebugLocSectionSym, 4);
-      else
+      if (DIELabel *L = dyn_cast<DIELabel>(Values[i])) {
+        if (Asm->MAI->doesDwarfUseRelocationsAcrossSections())
+          Asm->EmitLabelReference(L->getValue(), 4);
+        else
+          Asm->EmitLabelDifference(L->getValue(), DwarfDebugLocSectionSym, 4);
+      } else {
         Values[i]->EmitValue(Asm, Form);
+      }
       break;
     }
     case dwarf::DW_AT_accessibility: {

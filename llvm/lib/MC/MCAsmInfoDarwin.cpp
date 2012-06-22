@@ -60,6 +60,6 @@ MCAsmInfoDarwin::MCAsmInfoDarwin() {
   HasSymbolResolver = true;
 
   DwarfRequiresRelocationForSectionOffset = false;
-  DwarfUsesLabelOffsetForRanges = false;
+  DwarfUsesRelocationsAcrossSections = false;
   DwarfUsesRelocationsForStringPool = false;
 }

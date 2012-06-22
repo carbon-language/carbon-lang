@@ -319,9 +319,11 @@ namespace llvm {
     /// relocation when we want a section offset in dwarf.
     bool DwarfRequiresRelocationForSectionOffset;  // Defaults to true;
 
-    /// DwarfUsesLabelOffsetDifference - True if Dwarf2 output can
-    /// use EmitLabelOffsetDifference.
-    bool DwarfUsesLabelOffsetForRanges;
+    /// DwarfUsesRelocationsAcrossSections - True if Dwarf2 output generally
+    /// uses relocations for references to other .debug_* sections.
+    // FIXME: Can we replace DwarfRequiresRelocationForSectionOffset
+    // with this?
+    bool DwarfUsesRelocationsAcrossSections;
 
     /// DwarfUsesRelocationsForStringPool - True if this Dwarf output must use
     /// relocations to refer to entries in the string pool.
@@ -552,8 +554,8 @@ namespace llvm {
     bool doesDwarfRequireRelocationForSectionOffset() const {
       return DwarfRequiresRelocationForSectionOffset;
     }
-    bool doesDwarfUseLabelOffsetForRanges() const {
-      return DwarfUsesLabelOffsetForRanges;
+    bool doesDwarfUseRelocationsAcrossSections() const {
+      return DwarfUsesRelocationsAcrossSections;
     }
     bool doesDwarfUseRelocationsForStringPool() const {
       return DwarfUsesRelocationsForStringPool;

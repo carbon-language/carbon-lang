@@ -354,6 +354,13 @@ namespace llvm {
     void EmitLabelPlusOffset(const MCSymbol *Label, uint64_t Offset,
                                    unsigned Size) const;
 
+    /// EmitLabelReference - Emit something like ".long Label"
+    /// where the size in bytes of the directive is specified by Size and Label
+    /// specifies the label.
+    void EmitLabelReference(const MCSymbol *Label, unsigned Size) const {
+      EmitLabelPlusOffset(Label, 0, Size);
+    }
+
     //===------------------------------------------------------------------===//
     // Dwarf Emission Helper Routines
     //===------------------------------------------------------------------===//

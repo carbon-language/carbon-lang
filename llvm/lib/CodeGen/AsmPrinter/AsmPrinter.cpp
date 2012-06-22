@@ -1388,13 +1388,14 @@ void AsmPrinter::EmitLabelPlusOffset(const MCSymbol *Label, uint64_t Offset,
                                       unsigned Size)
   const {
 
-  // Emit Label+Offset
-  const MCExpr *Plus =
-    MCBinaryExpr::CreateAdd(MCSymbolRefExpr::Create(Label, OutContext),
-                            MCConstantExpr::Create(Offset, OutContext),
-                            OutContext);
+  // Emit Label+Offset (or just Label if Offset is zero)
+  const MCExpr *Expr = MCSymbolRefExpr::Create(Label, OutContext);
+  if (Offset)
+    Expr = MCBinaryExpr::CreateAdd(Expr,
+                                   MCConstantExpr::Create(Offset, OutContext),
+                                   OutContext);
 
-  OutStreamer.EmitValue(Plus, 4, 0/*AddrSpace*/);
+  OutStreamer.EmitValue(Expr, Size, 0/*AddrSpace*/);
 }
 
 
