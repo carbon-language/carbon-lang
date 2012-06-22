@@ -319,10 +319,6 @@ namespace llvm {
     /// uses relocations for references to other .debug_* sections.
     bool DwarfUsesRelocationsAcrossSections;
 
-    /// DwarfUsesRelocationsForStringPool - True if this Dwarf output must use
-    /// relocations to refer to entries in the string pool.
-    bool DwarfUsesRelocationsForStringPool;
-
     /// DwarfRegNumForCFI - True if dwarf register numbers are printed
     /// instead of symbolic register names in .cfi_* directives.
     bool DwarfRegNumForCFI;  // Defaults to false;
@@ -547,9 +543,6 @@ namespace llvm {
     }
     bool doesDwarfUseRelocationsAcrossSections() const {
       return DwarfUsesRelocationsAcrossSections;
-    }
-    bool doesDwarfUseRelocationsForStringPool() const {
-      return DwarfUsesRelocationsForStringPool;
     }
     bool useDwarfRegNumForCFI() const {
       return DwarfRegNumForCFI;

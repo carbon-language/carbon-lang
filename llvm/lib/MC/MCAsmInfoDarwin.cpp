@@ -60,5 +60,4 @@ MCAsmInfoDarwin::MCAsmInfoDarwin() {
   HasSymbolResolver = true;
 
   DwarfUsesRelocationsAcrossSections = false;
-  DwarfUsesRelocationsForStringPool = false;
 }

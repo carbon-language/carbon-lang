@@ -613,7 +613,7 @@ bool AsmPrinter::needsSEHMoves() {
 }
 
 bool AsmPrinter::needsRelocationsForDwarfStringPool() const {
-  return MAI->doesDwarfUseRelocationsForStringPool();
+  return MAI->doesDwarfUseRelocationsAcrossSections();
 }
 
 void AsmPrinter::emitPrologLabel(const MachineInstr &MI) {
