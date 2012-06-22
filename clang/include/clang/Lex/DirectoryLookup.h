@@ -25,7 +25,7 @@ class HeaderSearch;
 class Module;
   
 /// DirectoryLookup - This class represents one entry in the search list that
-/// specifies the search order for directories in #include directives.  It
+/// specifies the search order for directories in \#include directives.  It
 /// represents either a directory, a framework, or a headermap.
 ///
 class DirectoryLookup {
