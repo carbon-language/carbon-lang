@@ -1570,7 +1570,7 @@ static bool TryToOptimizeStoreOfMallocToGlobal(GlobalVariable *GV,
       if (BitCastInst *BCI = dyn_cast<BitCastInst>(Malloc))
         CI = cast<CallInst>(BCI->getOperand(0));
       else
-      CI = cast<CallInst>(Malloc);
+        CI = cast<CallInst>(Malloc);
     }
 
     GVI = PerformHeapAllocSRoA(GV, CI, getMallocArraySize(CI, TD, true), TD);
