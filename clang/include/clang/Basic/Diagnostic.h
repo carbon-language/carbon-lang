@@ -467,47 +467,56 @@ public:
   void DecrementAllExtensionsSilenced() { --AllExtensionsSilenced; }
   bool hasAllExtensionsSilenced() { return AllExtensionsSilenced != 0; }
 
-  /// \brief This allows the client to specify that certain
-  /// warnings are ignored.  Notes can never be mapped, errors can only be
-  /// mapped to fatal, and WARNINGs and EXTENSIONs can be mapped arbitrarily.
+  /// \brief This allows the client to specify that certain warnings are
+  /// ignored.
+  ///
+  /// Notes can never be mapped, errors can only be mapped to fatal, and
+  /// WARNINGs and EXTENSIONs can be mapped arbitrarily.
   ///
   /// \param Loc The source location that this change of diagnostic state should
   /// take affect. It can be null if we are setting the latest state.
   void setDiagnosticMapping(diag::kind Diag, diag::Mapping Map,
                             SourceLocation Loc);
 
-  /// setDiagnosticGroupMapping - Change an entire diagnostic group (e.g.
-  /// "unknown-pragmas" to have the specified mapping.  This returns true and
-  /// ignores the request if "Group" was unknown, false otherwise.
+  /// \brief Change an entire diagnostic group (e.g. "unknown-pragmas") to
+  /// have the specified mapping.
   ///
-  /// 'Loc' is the source location that this change of diagnostic state should
+  /// \returns true (and ignores the request) if "Group" was unknown, false
+  /// otherwise.
+  ///
+  /// \param Loc The source location that this change of diagnostic state should
   /// take affect. It can be null if we are setting the state from command-line.
   bool setDiagnosticGroupMapping(StringRef Group, diag::Mapping Map,
                                  SourceLocation Loc = SourceLocation());
 
-  /// \brief Set the warning-as-error flag for the given diagnostic. This
-  /// function always only operates on the current diagnostic state.
+  /// \brief Set the warning-as-error flag for the given diagnostic.
+  ///
+  /// This function always only operates on the current diagnostic state.
   void setDiagnosticWarningAsError(diag::kind Diag, bool Enabled);
 
-  /// \brief Set the warning-as-error flag for the given diagnostic group. This
-  /// function always only operates on the current diagnostic state.
+  /// \brief Set the warning-as-error flag for the given diagnostic group.
+  ///
+  /// This function always only operates on the current diagnostic state.
   ///
   /// \returns True if the given group is unknown, false otherwise.
   bool setDiagnosticGroupWarningAsError(StringRef Group, bool Enabled);
 
-  /// \brief Set the error-as-fatal flag for the given diagnostic. This function
-  /// always only operates on the current diagnostic state.
+  /// \brief Set the error-as-fatal flag for the given diagnostic.
+  ///
+  /// This function always only operates on the current diagnostic state.
   void setDiagnosticErrorAsFatal(diag::kind Diag, bool Enabled);
 
-  /// \brief Set the error-as-fatal flag for the given diagnostic group. This
-  /// function always only operates on the current diagnostic state.
+  /// \brief Set the error-as-fatal flag for the given diagnostic group.
+  ///
+  /// This function always only operates on the current diagnostic state.
   ///
   /// \returns True if the given group is unknown, false otherwise.
   bool setDiagnosticGroupErrorAsFatal(StringRef Group, bool Enabled);
 
-  /// \brief Add the specified mapping to all diagnostics. Mainly to be used
-  /// by -Wno-everything to disable all warnings but allow subsequent -W options
-  /// to enable specific warnings.
+  /// \brief Add the specified mapping to all diagnostics.
+  ///
+  /// Mainly to be used by -Wno-everything to disable all warnings but allow
+  /// subsequent -W options to enable specific warnings.
   void setMappingToAllDiagnostics(diag::Mapping Map,
                                   SourceLocation Loc = SourceLocation());
 
@@ -525,15 +534,16 @@ public:
     this->NumWarnings = NumWarnings;
   }
 
-  /// getCustomDiagID - Return an ID for a diagnostic with the specified message
-  /// and level.  If this is the first request for this diagnosic, it is
-  /// registered and created, otherwise the existing ID is returned.
+  /// \brief Return an ID for a diagnostic with the specified message and level.
+  ///
+  /// If this is the first request for this diagnosic, it is registered and
+  /// created, otherwise the existing ID is returned.
   unsigned getCustomDiagID(Level L, StringRef Message) {
     return Diags->getCustomDiagID((DiagnosticIDs::Level)L, Message);
   }
 
-  /// ConvertArgToString - This method converts a diagnostic argument (as an
-  /// intptr_t) into the string that represents it.
+  /// \brief Converts a diagnostic argument (as an intptr_t) into the string
+  /// that represents it.
   void ConvertArgToString(ArgumentKind Kind, intptr_t Val,
                           const char *Modifier, unsigned ModLen,
                           const char *Argument, unsigned ArgLen,
@@ -568,10 +578,13 @@ public:
     return (Level)Diags->getDiagnosticLevel(DiagID, Loc, *this);
   }
 
-  /// Report - Issue the message to the client.  @c DiagID is a member of the
-  /// @c diag::kind enum.  This actually returns aninstance of DiagnosticBuilder
-  /// which emits the diagnostics (through @c ProcessDiag) when it is destroyed.
-  /// @c Pos represents the source location associated with the diagnostic,
+  /// \brief Issue the message to the client.
+  ///
+  /// This actually returns an instance of DiagnosticBuilder which emits the
+  /// diagnostics (through @c ProcessDiag) when it is destroyed.
+  ///
+  /// \param DiagID A member of the @c diag::kind enum.
+  /// \param Pos Represents the source location associated with the diagnostic,
   /// which can be an invalid location if no position information is available.
   inline DiagnosticBuilder Report(SourceLocation Pos, unsigned DiagID);
   inline DiagnosticBuilder Report(unsigned DiagID);
@@ -624,33 +637,34 @@ private:
   friend class PartialDiagnostic;
   friend class DiagnosticErrorTrap;
   
-  /// CurDiagLoc - This is the location of the current diagnostic that is in
-  /// flight.
+  /// \brief The location of the current diagnostic that is in flight.
   SourceLocation CurDiagLoc;
 
-  /// CurDiagID - This is the ID of the current diagnostic that is in flight.
+  /// \brief The ID of the current diagnostic that is in flight.
+  ///
   /// This is set to ~0U when there is no diagnostic in flight.
   unsigned CurDiagID;
 
   enum {
-    /// MaxArguments - The maximum number of arguments we can hold. We currently
+    /// \brief The maximum number of arguments we can hold.
+    ///
+    /// We currently
     /// only support up to 10 arguments (%0-%9).  A single diagnostic with more
     /// than that almost certainly has to be simplified anyway.
     MaxArguments = 10,
 
-    /// MaxRanges - The maximum number of ranges we can hold.
+    /// \brief The maximum number of ranges we can hold.
     MaxRanges = 10,
 
-    /// MaxFixItHints - The maximum number of ranges we can hold.
+    /// \brief The maximum number of ranges we can hold.
     MaxFixItHints = 10
   };
 
-  /// NumDiagArgs - This contains the number of entries in Arguments.
+  /// \brief The number of entries in Arguments.
   signed char NumDiagArgs;
-  /// NumDiagRanges - This is the number of ranges in the DiagRanges array.
+  /// \brief The number of ranges in the DiagRanges array.
   unsigned char NumDiagRanges;
-  /// NumDiagFixItHints - This is the number of hints in the DiagFixItHints
-  /// array.
+  /// \brief The number of hints in the DiagFixItHints array.
   unsigned char NumDiagFixItHints;
 
   /// DiagArgumentsKind - This is an array of ArgumentKind::ArgumentKind enum
@@ -658,21 +672,23 @@ private:
   /// is in DiagArgumentsStr or in DiagArguments.
   unsigned char DiagArgumentsKind[MaxArguments];
 
-  /// DiagArgumentsStr - This holds the values of each string argument for the
-  /// current diagnostic.  This value is only used when the corresponding
-  /// ArgumentKind is ak_std_string.
+  /// \brief holds the values of each string argument for the current
+  /// diagnostic.
+  ///
+  /// This is only used when the corresponding ArgumentKind is ak_std_string.
   std::string DiagArgumentsStr[MaxArguments];
 
-  /// DiagArgumentsVal - The values for the various substitution positions. This
-  /// is used when the argument is not an std::string.  The specific value is
-  /// mangled into an intptr_t and the interpretation depends on exactly what
-  /// sort of argument kind it is.
+  /// \brief The values for the various substitution positions.
+  ///
+  /// This is used when the argument is not an std::string.  The specific
+  /// value is mangled into an intptr_t and the interpretation depends on
+  /// exactly what sort of argument kind it is.
   intptr_t DiagArgumentsVal[MaxArguments];
 
-  /// DiagRanges - The list of ranges added to this diagnostic.
+  /// \brief The list of ranges added to this diagnostic.
   CharSourceRange DiagRanges[MaxRanges];
 
-  /// FixItHints - If valid, provides a hint with some code to insert, remove,
+  /// \brief If valid, provides a hint with some code to insert, remove,
   /// or modify at a particular position.
   FixItHint DiagFixItHints[MaxFixItHints];
 
@@ -691,11 +707,9 @@ private:
     return MappingInfo;
   }
 
-  /// ProcessDiag - This is the method used to report a diagnostic that is
-  /// finally fully formed.
+  /// \brief Used to report a diagnostic that is finally fully formed.
   ///
-  /// \returns true if the diagnostic was emitted, false if it was
-  /// suppressed.
+  /// \returns true if the diagnostic was emitted, false if it was suppressed.
   bool ProcessDiag() {
     return Diags->ProcessDiag(*this);
   }
@@ -757,11 +771,12 @@ public:
 // DiagnosticBuilder
 //===----------------------------------------------------------------------===//
 
-/// DiagnosticBuilder - This is a little helper class used to produce
-/// diagnostics.  This is constructed by the DiagnosticsEngine::Report method,
-/// and allows insertion of extra information (arguments and source ranges) into
-/// the currently "in flight" diagnostic.  When the temporary for the builder is
-/// destroyed, the diagnostic is issued.
+/// \brief A little helper class used to produce diagnostics.
+///
+/// This is constructed by the DiagnosticsEngine::Report method, and
+/// allows insertion of extra information (arguments and source ranges) into
+/// the currently "in flight" diagnostic.  When the temporary for the builder
+/// is destroyed, the diagnostic is issued.
 ///
 /// Note that many of these will be created as temporary objects (many call
 /// sites), so we want them to be small and we never want their address taken.
@@ -805,7 +820,7 @@ protected:
     IsActive = false;
   }
 
-  /// isActive - Determine whether this diagnostic is still active.
+  /// \brief Determine whether this diagnostic is still active.
   bool isActive() const { return IsActive; }
 
   /// \brief Force the diagnostic builder to emit the diagnostic now.
@@ -850,7 +865,7 @@ public:
     return DiagnosticBuilder();
   }
 
-  /// Destructor - The dtor emits the diagnostic.
+  /// \brief Emits the diagnostic.
   ~DiagnosticBuilder() {
     Emit();
   }
@@ -978,9 +993,9 @@ inline DiagnosticBuilder DiagnosticsEngine::Report(unsigned DiagID) {
 // Diagnostic
 //===----------------------------------------------------------------------===//
 
-/// Diagnostic - This is a little helper class (which is basically a smart
-/// pointer that forward info from DiagnosticsEngine) that allows clients to
-/// enquire about the currently in-flight diagnostic.
+/// A little helper class (which is basically a smart pointer that forwards
+/// info from DiagnosticsEngine) that allows clients to enquire about the
+/// currently in-flight diagnostic.
 class Diagnostic {
   const DiagnosticsEngine *DiagObj;
   StringRef StoredDiagMessage;
