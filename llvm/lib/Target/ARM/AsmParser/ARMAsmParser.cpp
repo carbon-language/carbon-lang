@@ -236,7 +236,10 @@ public:
     Match_RequiresITBlock = FIRST_TARGET_MATCH_RESULT_TY,
     Match_RequiresNotITBlock,
     Match_RequiresV6,
-    Match_RequiresThumb2
+    Match_RequiresThumb2,
+#define GET_OPERAND_DIAGNOSTIC_TYPES
+#include "ARMGenAsmMatcher.inc"
+
   };
 
   ARMAsmParser(MCSubtargetInfo &_STI, MCAsmParser &_Parser)
@@ -7411,6 +7414,11 @@ MatchAndEmitInstruction(SMLoc IDLoc,
     return Error(IDLoc, "instruction variant requires ARMv6 or later");
   case Match_RequiresThumb2:
     return Error(IDLoc, "instruction variant requires Thumb2");
+  case Match_ImmRange0_15: {
+    SMLoc ErrorLoc = ((ARMOperand*)Operands[ErrorInfo])->getStartLoc();
+    if (ErrorLoc == SMLoc()) ErrorLoc = IDLoc;
+    return Error(ErrorLoc, "immediate operand must be in the range [0,15]");
+  }
   }
 
   llvm_unreachable("Implement any new match types added!");

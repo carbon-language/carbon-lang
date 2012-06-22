@@ -587,7 +587,10 @@ def imm1_31 : Operand<i32>, ImmLeaf<i32, [{ return Imm > 0 && Imm < 32; }]> {
 }
 
 /// imm0_15 predicate - Immediate in the range [0,15].
-def Imm0_15AsmOperand: ImmAsmOperand { let Name = "Imm0_15"; }
+def Imm0_15AsmOperand: ImmAsmOperand {
+  let Name = "Imm0_15";
+  let DiagnosticType = "ImmRange0_15";
+}
 def imm0_15 : Operand<i32>, ImmLeaf<i32, [{
   return Imm >= 0 && Imm < 16;
 }]> {
