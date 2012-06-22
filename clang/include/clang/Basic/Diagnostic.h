@@ -584,9 +584,9 @@ public:
   /// diagnostics (through @c ProcessDiag) when it is destroyed.
   ///
   /// \param DiagID A member of the @c diag::kind enum.
-  /// \param Pos Represents the source location associated with the diagnostic,
+  /// \param Loc Represents the source location associated with the diagnostic,
   /// which can be an invalid location if no position information is available.
-  inline DiagnosticBuilder Report(SourceLocation Pos, unsigned DiagID);
+  inline DiagnosticBuilder Report(SourceLocation Loc, unsigned DiagID);
   inline DiagnosticBuilder Report(unsigned DiagID);
 
   void Report(const StoredDiagnostic &storedDiag);
@@ -975,9 +975,6 @@ inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
   return DB;
 }
 
-/// Report - Issue the message to the client.  DiagID is a member of the
-/// diag::kind enum.  This actually returns a new instance of DiagnosticBuilder
-/// which emits the diagnostics (through ProcessDiag) when it is destroyed.
 inline DiagnosticBuilder DiagnosticsEngine::Report(SourceLocation Loc,
                                             unsigned DiagID){
   assert(CurDiagID == ~0U && "Multiple diagnostics in flight at once!");

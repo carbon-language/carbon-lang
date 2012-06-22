@@ -855,8 +855,8 @@ public:
   ///
   /// \param BaseType the base type to which we will be casting.
   ///
-  /// \param IsLValue true if the result of this cast will be treated as 
-  /// an lvalue.
+  /// \param Category Indicates whether the result will be treated as an
+  /// rvalue, an xvalue, or an lvalue.
   void AddDerivedToBaseCastStep(QualType BaseType,
                                 ExprValueKind Category);
      
@@ -865,9 +865,6 @@ public:
   /// \param BindingTemporary True if we are binding a reference to a temporary
   /// object (thereby extending its lifetime); false if we are binding to an
   /// lvalue or an lvalue treated as an rvalue.
-  ///
-  /// \param UnnecessaryCopy True if we should check for a copy
-  /// constructor for a completely unnecessary but
   void AddReferenceBindingStep(QualType T, bool BindingTemporary);
 
   /// \brief Add a new step that makes an extraneous copy of the input

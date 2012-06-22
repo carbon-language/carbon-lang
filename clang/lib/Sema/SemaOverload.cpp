@@ -7826,13 +7826,11 @@ isBetterOverloadCandidate(Sema &S,
 /// \brief Computes the best viable function (C++ 13.3.3)
 /// within an overload candidate set.
 ///
-/// \param CandidateSet the set of candidate functions.
-///
-/// \param Loc the location of the function name (or operator symbol) for
+/// \param Loc The location of the function name (or operator symbol) for
 /// which overload resolution occurs.
 ///
-/// \param Best f overload resolution was successful or found a deleted
-/// function, Best points to the candidate function found.
+/// \param Best If overload resolution was successful or found a deleted
+/// function, \p Best points to the candidate function found.
 ///
 /// \returns The result of overload resolution.
 OverloadingResult

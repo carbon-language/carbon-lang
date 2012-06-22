@@ -140,7 +140,7 @@ public:
 
   /// \brief Callback invoked when a \#pragma message directive is read.
   /// \param Loc The location of the message directive.
-  /// \param str The text of the message directive.
+  /// \param Str The text of the message directive.
   virtual void PragmaMessage(SourceLocation Loc, StringRef Str) {
   }
 
@@ -177,7 +177,7 @@ public:
   virtual void MacroUndefined(const Token &MacroNameTok, const MacroInfo *MI) {
   }
   
-  /// Defined - This hook is called whenever the 'defined' operator is seen.
+  /// \brief Hook called whenever the 'defined' operator is seen.
   virtual void Defined(const Token &MacroNameTok) {
   }
   
@@ -206,13 +206,13 @@ public:
 
   /// \brief Hook called whenever an \#ifdef is seen.
   /// \param Loc the source location of the directive.
-  /// \param II Information on the token being tested.
+  /// \param MacroNameTok Information on the token being tested.
   virtual void Ifdef(SourceLocation Loc, const Token &MacroNameTok) {
   }
 
   /// \brief Hook called whenever an \#ifndef is seen.
   /// \param Loc the source location of the directive.
-  /// \param II Information on the token being tested.
+  /// \param MacroNameTok Information on the token being tested.
   virtual void Ifndef(SourceLocation Loc, const Token &MacroNameTok) {
   }
 

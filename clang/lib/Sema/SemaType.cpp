@@ -1231,9 +1231,7 @@ static bool isArraySizeVLA(Sema &S, Expr *ArraySize, llvm::APSInt &SizeVal) {
 ///
 /// \param ArraySize Expression describing the size of the array.
 ///
-/// \param Loc The location of the entity whose type involves this
-/// array type or, if there is no such entity, the location of the
-/// type that will have array type.
+/// \param Brackets The range from the opening '[' to the closing ']'.
 ///
 /// \param Entity The name of the entity that involves the array
 /// type, if known.
@@ -1593,7 +1591,7 @@ QualType Sema::BuildMemberPointerType(QualType T, QualType Class,
 ///
 /// \param T The type to which we'll be building a block pointer.
 ///
-/// \param CVR The cvr-qualifiers to be applied to the block pointer type.
+/// \param Loc The source location, used for diagnostics.
 ///
 /// \param Entity The name of the entity that involves the block pointer
 /// type, if known.

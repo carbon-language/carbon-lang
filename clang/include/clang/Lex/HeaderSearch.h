@@ -424,7 +424,7 @@ public:
   /// \brief Retrieve the name of the module file that should be used to 
   /// load a module with the given name.
   ///
-  /// \param Module The module whose module file name will be returned.
+  /// \param ModuleName The module whose module file name will be returned.
   ///
   /// \returns The name of the module file that corresponds to this module,
   /// or an empty string if this module does not correspond to any module file.

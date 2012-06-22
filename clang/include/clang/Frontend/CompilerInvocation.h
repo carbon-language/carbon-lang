@@ -38,10 +38,13 @@ namespace driver {
 class ArgList;
 }
 
-/// CompilerInvocation - Fill out Opts based on the options given in Args.
+/// \brief Fill out Opts based on the options given in Args.
+///
 /// Args must have been created from the OptTable returned by
-/// createCC1OptTable(). When errors are encountered, return false and,
-/// if Diags is non-null, report the error(s).
+/// createCC1OptTable().
+///
+/// When errors are encountered, return false and, if Diags is non-null,
+/// report the error(s).
 bool ParseDiagnosticArgs(DiagnosticOptions &Opts, driver::ArgList &Args,
                          DiagnosticsEngine *Diags = 0);
   
@@ -58,8 +61,7 @@ public:
   const LangOptions *getLangOpts() const { return LangOpts.getPtr(); }
 };
   
-/// CompilerInvocation - Helper class for holding the data necessary to invoke
-/// the compiler.
+/// \brief Helper class for holding the data necessary to invoke the compiler.
 ///
 /// This class is designed to represent an abstract "invocation" of the
 /// compiler, including data such as the include paths, the code generation
@@ -103,10 +105,10 @@ public:
   /// @name Utility Methods
   /// @{
 
-  /// CreateFromArgs - Create a compiler invocation from a list of input
-  /// options. Returns true on success.
+  /// \brief Create a compiler invocation from a list of input options.
+  /// \returns true on success.
   ///
-  /// \param Res [out] - The resulting invocation.
+  /// \param [out] Res - The resulting invocation.
   /// \param ArgBegin - The first element in the argument vector.
   /// \param ArgEnd - The last element in the argument vector.
   /// \param Diags - The diagnostic engine to use for errors.
@@ -115,7 +117,7 @@ public:
                              const char* const *ArgEnd,
                              DiagnosticsEngine &Diags);
 
-  /// GetBuiltinIncludePath - Get the directory where the compiler headers
+  /// \brief Get the directory where the compiler headers
   /// reside, relative to the compiler binary (found by the passed in
   /// arguments).
   ///
@@ -125,11 +127,11 @@ public:
   /// executable), for finding the builtin compiler path.
   static std::string GetResourcesPath(const char *Argv0, void *MainAddr);
 
-  /// toArgs - Convert the CompilerInvocation to a list of strings suitable for
+  /// \brief Convert the CompilerInvocation to a list of strings suitable for
   /// passing to CreateFromArgs.
   void toArgs(std::vector<std::string> &Res) const;
 
-  /// setLangDefaults - Set language defaults for the given input language and
+  /// \brief Set language defaults for the given input language and
   /// language standard in this CompilerInvocation.
   ///
   /// \param IK - The input language.
@@ -139,10 +141,10 @@ public:
     setLangDefaults(*getLangOpts(), IK, LangStd);
   }
 
-  /// setLangDefaults - Set language defaults for the given input language and
+  /// \brief Set language defaults for the given input language and
   /// language standard in the given LangOptions object.
   ///
-  /// \param LangOpts - The LangOptions object to set up.
+  /// \param Opts - The LangOptions object to set up.
   /// \param IK - The input language.
   /// \param LangStd - The input language standard.
   static void setLangDefaults(LangOptions &Opts, InputKind IK,
