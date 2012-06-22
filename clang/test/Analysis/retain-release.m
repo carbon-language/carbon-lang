@@ -753,7 +753,7 @@ typedef CFTypeRef OtherRef;
 @end
 
 //===----------------------------------------------------------------------===//
-//<rdar://problem/6320065> false positive - init method returns an object
+// <rdar://problem/6320065> false positive - init method returns an object
 // owned by caller
 //===----------------------------------------------------------------------===//
 

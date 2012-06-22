@@ -1016,6 +1016,24 @@ LambdaScopeInfo *Sema::getCurLambda() {
 
 void Sema::ActOnComment(SourceRange Comment) {
   RawComment RC(SourceMgr, Comment);
+  if (RC.isAlmostTrailingComment()) {
+    SourceRange MagicMarkerRange(Comment.getBegin(),
+                                 Comment.getBegin().getLocWithOffset(3));
+    StringRef MagicMarkerText;
+    switch (RC.getKind()) {
+    case RawComment::CK_OrdinaryBCPL:
+      MagicMarkerText = "///<";
+      break;
+    case RawComment::CK_OrdinaryC:
+      MagicMarkerText = "/**<";
+      break;
+    default:
+      llvm_unreachable("if this is an almost Doxygen comment, "
+                       "it should be ordinary");
+    }
+    Diag(Comment.getBegin(), diag::warn_not_a_doxygen_trailing_member_comment) <<
+      FixItHint::CreateReplacement(MagicMarkerRange, MagicMarkerText);
+  }
   Context.addComment(RC);
 }
 

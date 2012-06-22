@@ -5665,5 +5665,10 @@ def err_module_private_definition : Error<
   "definition of %0 must be imported before it is required">;
 }
 
+let CategoryName = "Documentation Issue" in {
+def warn_not_a_doxygen_trailing_member_comment : Warning<
+  "not a Doxygen trailing comment">, InGroup<Doxygen>;
+} // end of documentation issue category
+
 } // end of sema component.
 
