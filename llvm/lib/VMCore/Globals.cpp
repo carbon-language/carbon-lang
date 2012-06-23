@@ -80,51 +80,6 @@ bool GlobalValue::isDeclaration() const {
 // GlobalVariable Implementation
 //===----------------------------------------------------------------------===//
 
-// TODO: Remove once clang is updated.
-GlobalVariable::GlobalVariable(Type *Ty, bool constant, LinkageTypes Link,
-                               Constant *InitVal, const Twine &Name,
-                               bool ThreadLocal, unsigned AddressSpace)
-  : GlobalValue(PointerType::get(Ty, AddressSpace),
-                Value::GlobalVariableVal,
-                OperandTraits<GlobalVariable>::op_begin(this),
-                InitVal != 0, Link, Name),
-    isConstantGlobal(constant),
-    threadLocalMode(ThreadLocal ? GeneralDynamicTLSModel : NotThreadLocal) {
-  if (InitVal) {
-    assert(InitVal->getType() == Ty &&
-           "Initializer should be the same type as the GlobalVariable!");
-    Op<0>() = InitVal;
-  }
-
-  LeakDetector::addGarbageObject(this);
-}
-
-// TODO: Remove once clang is updated.
-GlobalVariable::GlobalVariable(Module &M, Type *Ty, bool constant,
-                               LinkageTypes Link, Constant *InitVal,
-                               const Twine &Name,
-                               GlobalVariable *Before, bool ThreadLocal,
-                               unsigned AddressSpace)
-  : GlobalValue(PointerType::get(Ty, AddressSpace),
-                Value::GlobalVariableVal,
-                OperandTraits<GlobalVariable>::op_begin(this),
-                InitVal != 0, Link, Name),
-    isConstantGlobal(constant),
-    threadLocalMode(ThreadLocal ? GeneralDynamicTLSModel : NotThreadLocal) {
-  if (InitVal) {
-    assert(InitVal->getType() == Ty &&
-           "Initializer should be the same type as the GlobalVariable!");
-    Op<0>() = InitVal;
-  }
-
-  LeakDetector::addGarbageObject(this);
-
-  if (Before)
-    Before->getParent()->getGlobalList().insert(Before, this);
-  else
-    M.getGlobalList().push_back(this);
-}
-
 GlobalVariable::GlobalVariable(Type *Ty, bool constant, LinkageTypes Link,
                                Constant *InitVal, const Twine &Name,
                                ThreadLocalMode TLMode, unsigned AddressSpace)
@@ -147,7 +102,7 @@ GlobalVariable::GlobalVariable(Module &M, Type *Ty, bool constant,
                                const Twine &Name,
                                GlobalVariable *Before, ThreadLocalMode TLMode,
                                unsigned AddressSpace)
-  : GlobalValue(PointerType::get(Ty, AddressSpace), 
+  : GlobalValue(PointerType::get(Ty, AddressSpace),
                 Value::GlobalVariableVal,
                 OperandTraits<GlobalVariable>::op_begin(this),
                 InitVal != 0, Link, Name),
