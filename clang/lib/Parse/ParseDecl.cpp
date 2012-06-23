@@ -1126,10 +1126,12 @@ Parser::DeclGroupPtrTy Parser::ParseDeclaration(StmtVector &Stmts,
 
 ///       simple-declaration: [C99 6.7: declaration] [C++ 7p1: dcl.dcl]
 ///         declaration-specifiers init-declarator-list[opt] ';'
+/// [C++11] attribute-specifier-seq decl-specifier-seq[opt]
+///             init-declarator-list ';'
 ///[C90/C++]init-declarator-list ';'                             [TODO]
 /// [OMP]   threadprivate-directive                              [TODO]
 ///
-///       for-range-declaration: [C++0x 6.5p1: stmt.ranged]
+///       for-range-declaration: [C++11 6.5p1: stmt.ranged]
 ///         attribute-specifier-seq[opt] type-specifier-seq declarator
 ///
 /// If RequireSemi is false, this does not check for a ';' at the end of the
@@ -1138,12 +1140,11 @@ Parser::DeclGroupPtrTy Parser::ParseDeclaration(StmtVector &Stmts,
 /// If FRI is non-null, we might be parsing a for-range-declaration instead
 /// of a simple-declaration. If we find that we are, we also parse the
 /// for-range-initializer, and place it here.
-Parser::DeclGroupPtrTy Parser::ParseSimpleDeclaration(StmtVector &Stmts, 
-                                                      unsigned Context,
-                                                      SourceLocation &DeclEnd,
-                                                      ParsedAttributes &attrs,
-                                                      bool RequireSemi,
-                                                      ForRangeInit *FRI) {
+Parser::DeclGroupPtrTy
+Parser::ParseSimpleDeclaration(StmtVector &Stmts, unsigned Context,
+                               SourceLocation &DeclEnd,
+                               ParsedAttributesWithRange &attrs,
+                               bool RequireSemi, ForRangeInit *FRI) {
   // Parse the common declaration-specifiers piece.
   ParsingDeclSpec DS(*this);
   DS.takeAttributesFrom(attrs);
@@ -2026,6 +2027,8 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
   }
   
   bool EnteringContext = (DSContext == DSC_class || DSContext == DSC_top_level);
+  bool AttrsLastTime = false;
+  ParsedAttributesWithRange attrs(AttrFactory);
   while (1) {
     bool isInvalid = false;
     const char *PrevSpec = 0;
@@ -2036,13 +2039,31 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
     switch (Tok.getKind()) {
     default:
     DoneWithDeclSpec:
-      // [C++0x] decl-specifier-seq: decl-specifier attribute-specifier-seq[opt]
-      MaybeParseCXX0XAttributes(DS.getAttributes());
+      if (!AttrsLastTime)
+        ProhibitAttributes(attrs);
+      else
+        DS.takeAttributesFrom(attrs);
 
       // If this is not a declaration specifier token, we're done reading decl
       // specifiers.  First verify that DeclSpec's are consistent.
       DS.Finish(Diags, PP);
       return;
+
+    case tok::l_square:
+    case tok::kw_alignas:
+      if (!isCXX11AttributeSpecifier())
+        goto DoneWithDeclSpec;
+
+      ProhibitAttributes(attrs);
+      // FIXME: It would be good to recover by accepting the attributes,
+      //        but attempting to do that now would cause serious
+      //        madness in terms of diagnostics.
+      attrs.clear();
+      attrs.Range = SourceRange();
+
+      ParseCXX11Attributes(attrs);
+      AttrsLastTime = true;
+      continue; 
 
     case tok::code_completion: {
       Sema::ParserCompletionContext CCC = Sema::PCC_Namespace;
@@ -2696,6 +2717,8 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
     DS.SetRangeEnd(Tok.getLocation());
     if (DiagID != diag::err_bool_redeclaration)
       ConsumeToken();
+
+    AttrsLastTime = false;
   }
 }
 
@@ -2941,6 +2964,15 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
     return cutOffParsing();
   }
 
+  // If attributes exist after tag, parse them.
+  ParsedAttributesWithRange attrs(AttrFactory);
+  MaybeParseGNUAttributes(attrs);
+  MaybeParseCXX0XAttributes(attrs);
+
+  // If declspecs exist after tag, parse them.
+  while (Tok.is(tok::kw___declspec))
+    ParseMicrosoftDeclSpec(attrs);
+
   SourceLocation ScopedEnumKWLoc;
   bool IsScopedUsingClassTag = false;
 
@@ -2949,6 +2981,10 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
     Diag(Tok, diag::warn_cxx98_compat_scoped_enum);
     IsScopedUsingClassTag = Tok.is(tok::kw_class);
     ScopedEnumKWLoc = ConsumeToken();
+    
+    ProhibitAttributes(attrs);
+    // Recovery: assume that the attributes came after the tag.
+    MaybeParseCXX0XAttributes(attrs);
   }
 
   // C++11 [temp.explicit]p12:
@@ -2961,14 +2997,6 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
     (TemplateInfo.Kind == ParsedTemplateInfo::ExplicitInstantiation ||
      TemplateInfo.Kind == ParsedTemplateInfo::ExplicitSpecialization);
   SuppressAccessChecks diagsFromTag(*this, shouldDelayDiagsInTag);
-
-  // If attributes exist after tag, parse them.
-  ParsedAttributes attrs(AttrFactory);
-  MaybeParseGNUAttributes(attrs);
-
-  // If declspecs exist after tag, parse them.
-  while (Tok.is(tok::kw___declspec))
-    ParseMicrosoftDeclSpec(attrs);
 
   // Enum definitions should not be parsed in a trailing-return-type.
   bool AllowDeclaration = DSC != DSC_trailing;
@@ -3154,6 +3182,9 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
     TParams = MultiTemplateParamsArg(TemplateInfo.TemplateParams->data(),
                                      TemplateInfo.TemplateParams->size());
   }
+  
+  if (TUK == Sema::TUK_Reference)
+    ProhibitAttributes(attrs);
 
   if (!Name && TUK != Sema::TUK_Definition) {
     Diag(Tok, diag::err_enumerator_unnamed_no_def);
@@ -3252,8 +3283,10 @@ void Parser::ParseEnumBody(SourceLocation StartLoc, Decl *EnumDecl) {
     SourceLocation IdentLoc = ConsumeToken();
 
     // If attributes exist after the enumerator, parse them.
-    ParsedAttributes attrs(AttrFactory);
+    ParsedAttributesWithRange attrs(AttrFactory);
     MaybeParseGNUAttributes(attrs);
+    MaybeParseCXX0XAttributes(attrs);
+    ProhibitAttributes(attrs);
 
     SourceLocation EqualLoc;
     ExprResult AssignedVal;

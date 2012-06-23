@@ -1296,7 +1296,12 @@ bool Parser::ParseCXXCondition(ExprResult &ExprOut,
     return true;
   }
 
+  ParsedAttributesWithRange attrs(AttrFactory);
+  MaybeParseCXX0XAttributes(attrs);
+
   if (!isCXXConditionDeclaration()) {
+    ProhibitAttributes(attrs);
+
     // Parse the expression.
     ExprOut = ParseExpression(); // expression
     DeclOut = 0;

@@ -444,6 +444,13 @@ Decl *Parser::ParseUsingDeclaration(unsigned Context,
   CXXScopeSpec SS;
   SourceLocation TypenameLoc;
   bool IsTypeName;
+  ParsedAttributesWithRange attrs(AttrFactory);
+
+  // FIXME: Simply skip the attributes and diagnose, don't bother parsing them.
+  MaybeParseCXX0XAttributes(attrs);
+  ProhibitAttributes(attrs);
+  attrs.clear();
+  attrs.Range = SourceRange();
 
   // Ignore optional 'typename'.
   // FIXME: This is wrong; we should parse this as a typename-specifier.
@@ -480,7 +487,7 @@ Decl *Parser::ParseUsingDeclaration(unsigned Context,
     return 0;
   }
 
-  ParsedAttributes attrs(AttrFactory);
+  MaybeParseCXX0XAttributes(attrs);
 
   // Maybe this is an alias-declaration.
   bool IsAliasDecl = Tok.is(tok::equal);
@@ -533,9 +540,14 @@ Decl *Parser::ParseUsingDeclaration(unsigned Context,
     TypeAlias = ParseTypeName(0, TemplateInfo.Kind ?
                               Declarator::AliasTemplateContext :
                               Declarator::AliasDeclContext, AS, OwnedType);
-  } else
+  } else {
+    // C++11 attributes are not allowed on a using-declaration, but GNU ones
+    // are.
+    ProhibitAttributes(attrs);
+
     // Parse (optional) attributes (most likely GNU strong-using extension).
     MaybeParseGNUAttributes(attrs);
+  }
 
   // Eat ';'.
   DeclEnd = Tok.getLocation();
@@ -572,6 +584,7 @@ Decl *Parser::ParseUsingDeclaration(unsigned Context,
     MultiTemplateParamsArg TemplateParamsArg(Actions,
       TemplateParams ? TemplateParams->data() : 0,
       TemplateParams ? TemplateParams->size() : 0);
+    // FIXME: Propagate attributes.
     return Actions.ActOnAliasDeclaration(getCurScope(), AS, TemplateParamsArg,
                                          UsingLoc, Name, TypeAlias);
   }
@@ -989,7 +1002,7 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
      TemplateInfo.Kind == ParsedTemplateInfo::ExplicitSpecialization);
   SuppressAccessChecks diagsFromTag(*this, shouldDelayDiagsInTag);
 
-  ParsedAttributes attrs(AttrFactory);
+  ParsedAttributesWithRange attrs(AttrFactory);
   // If attributes exist after tag, parse them.
   if (Tok.is(tok::kw___attribute))
     ParseGNUAttributes(attrs);
@@ -1202,6 +1215,8 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
     if (TemplateInfo.Kind == ParsedTemplateInfo::ExplicitInstantiation &&
         TUK == Sema::TUK_Declaration) {
       // This is an explicit instantiation of a class template.
+      ProhibitAttributes(attrs);
+
       TagOrTempResult
         = Actions.ActOnExplicitInstantiation(getCurScope(),
                                              TemplateInfo.ExternLoc,
@@ -1223,6 +1238,7 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
     } else if (TUK == Sema::TUK_Reference ||
                (TUK == Sema::TUK_Friend &&
                 TemplateInfo.Kind == ParsedTemplateInfo::NonTemplate)) {
+      ProhibitAttributes(attrs);
       TypeResult = Actions.ActOnTagTemplateIdType(TUK, TagType, StartLoc,
                                                   TemplateId->SS,
                                                   TemplateId->TemplateKWLoc,
@@ -1287,6 +1303,8 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
     //
     //   template struct Outer<int>::Inner;
     //
+    ProhibitAttributes(attrs);
+
     TagOrTempResult
       = Actions.ActOnExplicitInstantiation(getCurScope(),
                                            TemplateInfo.ExternLoc,
@@ -1295,6 +1313,8 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
                                            NameLoc, attrs.getList());
   } else if (TUK == Sema::TUK_Friend &&
              TemplateInfo.Kind != ParsedTemplateInfo::NonTemplate) {
+    ProhibitAttributes(attrs);
+
     TagOrTempResult =
       Actions.ActOnTemplatedFriendTag(getCurScope(), DS.getFriendSpecLoc(),
                                       TagType, StartLoc, SS,
@@ -1307,6 +1327,9 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
         TUK == Sema::TUK_Definition) {
       // FIXME: Diagnose this particular error.
     }
+
+    if (TUK != Sema::TUK_Declaration && TUK != Sema::TUK_Definition)
+      ProhibitAttributes(attrs);
 
     bool IsDependent = false;
 
@@ -2951,7 +2974,7 @@ void Parser::ParseCXX11AttributeSpecifier(ParsedAttributes &attrs,
     SkipUntil(tok::r_square, false);
 }
 
-/// ParseCXX11Attributes - Parse a C++0x attribute-specifier-seq.
+/// ParseCXX11Attributes - Parse a C++11 attribute-specifier-seq.
 ///
 /// attribute-specifier-seq:
 ///       attribute-specifier-seq[opt] attribute-specifier

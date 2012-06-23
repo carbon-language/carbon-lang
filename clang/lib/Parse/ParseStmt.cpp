@@ -1259,6 +1259,12 @@ StmtResult Parser::ParseDoStatement() {
   // Parse the parenthesized condition.
   BalancedDelimiterTracker T(*this, tok::l_paren);
   T.consumeOpen();
+  
+  // FIXME: Do not just parse the attribute contents and throw them away
+  ParsedAttributesWithRange attrs(AttrFactory);
+  MaybeParseCXX0XAttributes(attrs);
+  ProhibitAttributes(attrs);
+
   ExprResult Cond = ParseExpression();
   T.consumeClose();
   DoScope.Exit();
@@ -1347,8 +1353,12 @@ StmtResult Parser::ParseForStatement(SourceLocation *TrailingElseLoc) {
     return StmtError();
   }
 
+  ParsedAttributesWithRange attrs(AttrFactory);
+  MaybeParseCXX0XAttributes(attrs);
+
   // Parse the first part of the for specifier.
   if (Tok.is(tok::semi)) {  // for (;
+    ProhibitAttributes(attrs);
     // no first part, eat the ';'.
     ConsumeToken();
   } else if (isForInitDeclaration()) {  // for (int X = 4;
@@ -1393,6 +1403,7 @@ StmtResult Parser::ParseForStatement(SourceLocation *TrailingElseLoc) {
       Diag(Tok, diag::err_expected_semi_for);
     }
   } else {
+    ProhibitAttributes(attrs);
     Value = ParseExpression();
 
     ForEach = isTokIdentifier_in();

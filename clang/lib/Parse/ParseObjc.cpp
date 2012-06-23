@@ -420,7 +420,7 @@ void Parser::ParseObjCInterfaceDeclList(tok::ObjCKeywordKind contextKey,
       // erroneous r_brace would cause an infinite loop if not handled here.
       if (Tok.is(tok::r_brace))
         break;
-      ParsedAttributes attrs(AttrFactory);
+      ParsedAttributesWithRange attrs(AttrFactory);
       allTUVariables.push_back(ParseDeclarationOrFunctionDefinition(attrs));
       continue;
     }
