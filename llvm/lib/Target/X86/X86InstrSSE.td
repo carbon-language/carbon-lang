@@ -4909,17 +4909,17 @@ let Predicates = [HasAVX] in {
 
 // Convert Packed DW Integers to Packed Double FP
 let Predicates = [HasAVX] in {
-def VCVTDQ2PDrm  : SSDI<0xE6, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
+def VCVTDQ2PDrm  : SSDI<0xE6, MRMSrcMem, (outs VR128:$dst), (ins i64mem:$src),
                      "vcvtdq2pd\t{$src, $dst|$dst, $src}", []>, VEX;
 def VCVTDQ2PDrr  : SSDI<0xE6, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                      "vcvtdq2pd\t{$src, $dst|$dst, $src}", []>, VEX;
-def VCVTDQ2PDYrm  : SSDI<0xE6, MRMSrcMem, (outs VR256:$dst), (ins f128mem:$src),
+def VCVTDQ2PDYrm  : SSDI<0xE6, MRMSrcMem, (outs VR256:$dst), (ins i128mem:$src),
                      "vcvtdq2pd\t{$src, $dst|$dst, $src}", []>, VEX;
 def VCVTDQ2PDYrr  : SSDI<0xE6, MRMSrcReg, (outs VR256:$dst), (ins VR128:$src),
                      "vcvtdq2pd\t{$src, $dst|$dst, $src}", []>, VEX;
 }
 
-def CVTDQ2PDrm  : SSDI<0xE6, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
+def CVTDQ2PDrm  : SSDI<0xE6, MRMSrcMem, (outs VR128:$dst), (ins i64mem:$src),
                        "cvtdq2pd\t{$src, $dst|$dst, $src}", [],
                        IIC_SSE_CVT_PD_RR>;
 def CVTDQ2PDrr  : SSDI<0xE6, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
