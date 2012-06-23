@@ -1622,7 +1622,7 @@ defm Int_CVTTSD2SI64 : sse12_cvt_sint<0x2C, VR128, GR64,
                                     "cvttsd2si{q}", SSE_CVT_SD2SI>,
                                     XD, REX_W;
 
-let Pattern = []<dag> in {
+let Pattern = []<dag>, neverHasSideEffects = 1 in {
 defm VCVTSS2SI   : sse12_cvt_s<0x2D, FR32, GR32, undef, f32mem, load,
                                "cvtss2si{l}\t{$src, $dst|$dst, $src}",
                                SSE_CVT_SS2SI_32>, XS, VEX, VEX_LIG;
@@ -1639,7 +1639,7 @@ defm VCVTDQ2PSY  : sse12_cvt_p<0x5B, VR256, VR256, undef, i256mem, load,
                                Requires<[HasAVX]>;
 }
 
-let Pattern = []<dag> in {
+let Pattern = []<dag>, neverHasSideEffects = 1 in {
 defm CVTSS2SI : sse12_cvt_s<0x2D, FR32, GR32, undef, f32mem, load /*dummy*/,
                           "cvtss2si{l}\t{$src, $dst|$dst, $src}",
                           SSE_CVT_SS2SI_32>, XS;
@@ -1790,32 +1790,6 @@ def Int_CVTSS2SDrm: I<0x5A, MRMSrcMem,
                     Requires<[HasSSE2]>;
 }
 
-// Convert doubleword to packed single/double fp
-// SSE2 instructions without OpSize prefix
-def Int_VCVTDQ2PSrr : I<0x5B, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
-                       "vcvtdq2ps\t{$src, $dst|$dst, $src}",
-                       [(set VR128:$dst, (int_x86_sse2_cvtdq2ps VR128:$src))],
-                       IIC_SSE_CVT_PS_RR>,
-                     TB, VEX, Requires<[HasAVX]>;
-def Int_VCVTDQ2PSrm : I<0x5B, MRMSrcMem, (outs VR128:$dst), (ins i128mem:$src),
-                      "vcvtdq2ps\t{$src, $dst|$dst, $src}",
-                      [(set VR128:$dst, (int_x86_sse2_cvtdq2ps
-                                        (bitconvert (memopv2i64 addr:$src))))],
-                                        IIC_SSE_CVT_PS_RM>,
-                     TB, VEX, Requires<[HasAVX]>;
-def Int_CVTDQ2PSrr : I<0x5B, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
-                       "cvtdq2ps\t{$src, $dst|$dst, $src}",
-                       [(set VR128:$dst, (int_x86_sse2_cvtdq2ps VR128:$src))],
-                       IIC_SSE_CVT_PS_RR>,
-                     TB, Requires<[HasSSE2]>;
-def Int_CVTDQ2PSrm : I<0x5B, MRMSrcMem, (outs VR128:$dst), (ins i128mem:$src),
-                      "cvtdq2ps\t{$src, $dst|$dst, $src}",
-                      [(set VR128:$dst, (int_x86_sse2_cvtdq2ps
-                                        (bitconvert (memopv2i64 addr:$src))))],
-                                        IIC_SSE_CVT_PS_RM>,
-                     TB, Requires<[HasSSE2]>;
-
-
 // Convert packed single/double fp to doubleword
 def VCVTPS2DQrr : VPDI<0x5B, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                        "cvtps2dq\t{$src, $dst|$dst, $src}", [],
@@ -1948,9 +1922,14 @@ def CVTTPS2DQrm : SSI<0x5B, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
 
 let Predicates = [HasAVX] in {
   def : Pat<(v4f32 (sint_to_fp (v4i32 VR128:$src))),
-            (Int_VCVTDQ2PSrr VR128:$src)>;
+            (VCVTDQ2PSrr VR128:$src)>;
   def : Pat<(v4f32 (sint_to_fp (bc_v4i32 (memopv2i64 addr:$src)))),
-            (Int_VCVTDQ2PSrm addr:$src)>;
+            (VCVTDQ2PSrm addr:$src)>;
+
+  def : Pat<(int_x86_sse2_cvtdq2ps VR128:$src),
+            (VCVTDQ2PSrr VR128:$src)>;
+  def : Pat<(int_x86_sse2_cvtdq2ps (bitconvert (memopv2i64 addr:$src))),
+            (VCVTDQ2PSrm addr:$src)>;
 
   def : Pat<(v4i32 (fp_to_sint (v4f32 VR128:$src))),
             (VCVTTPS2DQrr VR128:$src)>;
@@ -1970,9 +1949,14 @@ let Predicates = [HasAVX] in {
 
 let Predicates = [HasSSE2] in {
   def : Pat<(v4f32 (sint_to_fp (v4i32 VR128:$src))),
-            (Int_CVTDQ2PSrr VR128:$src)>;
+            (CVTDQ2PSrr VR128:$src)>;
   def : Pat<(v4f32 (sint_to_fp (bc_v4i32 (memopv2i64 addr:$src)))),
-            (Int_CVTDQ2PSrm addr:$src)>;
+            (CVTDQ2PSrm addr:$src)>;
+
+  def : Pat<(int_x86_sse2_cvtdq2ps VR128:$src),
+            (CVTDQ2PSrr VR128:$src)>;
+  def : Pat<(int_x86_sse2_cvtdq2ps (bitconvert (memopv2i64 addr:$src))),
+            (CVTDQ2PSrm addr:$src)>;
 
   def : Pat<(v4i32 (fp_to_sint (v4f32 VR128:$src))),
             (CVTTPS2DQrr VR128:$src)>;
