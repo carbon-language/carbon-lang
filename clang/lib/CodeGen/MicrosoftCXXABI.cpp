@@ -60,6 +60,8 @@ public:
                        llvm::GlobalVariable *DeclPtr,
                        bool PerformInit);
 
+  void EmitVTables(const CXXRecordDecl *Class);
+
 
   // ==== Notes on array cookies =========
   //
@@ -163,6 +165,10 @@ void MicrosoftCXXABI::EmitGuardedInit(CodeGenFunction &CGF, const VarDecl &D,
 
   // Emit the initializer and add a global destructor if appropriate.
   CGF.EmitCXXGlobalVarDeclInit(D, DeclPtr, PerformInit);
+}
+
+void MicrosoftCXXABI::EmitVTables(const CXXRecordDecl *Class) {
+  // FIXME: implement
 }
 
 CGCXXABI *clang::CodeGen::CreateMicrosoftCXXABI(CodeGenModule &CGM) {

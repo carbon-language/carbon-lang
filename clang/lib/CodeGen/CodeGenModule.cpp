@@ -668,7 +668,7 @@ void CodeGenModule::EmitDeferred() {
     if (!DeferredVTables.empty()) {
       const CXXRecordDecl *RD = DeferredVTables.back();
       DeferredVTables.pop_back();
-      getVTables().GenerateClassData(getVTableLinkage(RD), RD);
+      getCXXABI().EmitVTables(RD);
       continue;
     }
 
@@ -1312,7 +1312,7 @@ void CodeGenModule::EmitTentativeDefinition(const VarDecl *D) {
 
 void CodeGenModule::EmitVTable(CXXRecordDecl *Class, bool DefinitionRequired) {
   if (DefinitionRequired)
-    getVTables().GenerateClassData(getVTableLinkage(Class), Class);
+    getCXXABI().EmitVTables(Class);
 }
 
 llvm::GlobalVariable::LinkageTypes 
