@@ -645,12 +645,13 @@ bool LLParser::ParseGlobal(const std::string &Name, LocTy NameLoc,
                            unsigned Linkage, bool HasLinkage,
                            unsigned Visibility) {
   unsigned AddrSpace;
-  bool ThreadLocal, IsConstant, UnnamedAddr;
+  bool IsConstant, UnnamedAddr;
+  GlobalVariable::ThreadLocalMode TLM;
   LocTy UnnamedAddrLoc;
   LocTy TyLoc;
 
   Type *Ty = 0;
-  if (ParseOptionalToken(lltok::kw_thread_local, ThreadLocal) ||
+  if (ParseOptionalThreadLocal(TLM) ||
       ParseOptionalAddrSpace(AddrSpace) ||
       ParseOptionalToken(lltok::kw_unnamed_addr, UnnamedAddr,
                          &UnnamedAddrLoc) ||
@@ -691,7 +692,8 @@ bool LLParser::ParseGlobal(const std::string &Name, LocTy NameLoc,
 
   if (GV == 0) {
     GV = new GlobalVariable(*M, Ty, false, GlobalValue::ExternalLinkage, 0,
-                            Name, 0, false, AddrSpace);
+                            Name, 0, GlobalVariable::NotThreadLocal,
+                            AddrSpace);
   } else {
     if (GV->getType()->getElementType() != Ty)
       return Error(TyLoc,
@@ -710,7 +712,7 @@ bool LLParser::ParseGlobal(const std::string &Name, LocTy NameLoc,
   GV->setConstant(IsConstant);
   GV->setLinkage((GlobalValue::LinkageTypes)Linkage);
   GV->setVisibility((GlobalValue::VisibilityTypes)Visibility);
-  GV->setThreadLocal(ThreadLocal);
+  GV->setThreadLocalMode(TLM);
   GV->setUnnamedAddr(UnnamedAddr);
 
   // Parse attributes on the global.
@@ -858,6 +860,46 @@ bool LLParser::ParseUInt32(unsigned &Val) {
   return false;
 }
 
+/// ParseTLSModel
+///   := 'localdynamic'
+///   := 'initialexec'
+///   := 'localexec'
+bool LLParser::ParseTLSModel(GlobalVariable::ThreadLocalMode &TLM) {
+  switch (Lex.getKind()) {
+    default:
+      return TokError("expected localdynamic, initialexec or localexec");
+    case lltok::kw_localdynamic:
+      TLM = GlobalVariable::LocalDynamicTLSModel;
+      break;
+    case lltok::kw_initialexec:
+      TLM = GlobalVariable::InitialExecTLSModel;
+      break;
+    case lltok::kw_localexec:
+      TLM = GlobalVariable::LocalExecTLSModel;
+      break;
+  }
+
+  Lex.Lex();
+  return false;
+}
+
+/// ParseOptionalThreadLocal
+///   := /*empty*/
+///   := 'thread_local'
+///   := 'thread_local' '(' tlsmodel ')'
+bool LLParser::ParseOptionalThreadLocal(GlobalVariable::ThreadLocalMode &TLM) {
+  TLM = GlobalVariable::NotThreadLocal;
+  if (!EatIfPresent(lltok::kw_thread_local))
+    return false;
+
+  TLM = GlobalVariable::GeneralDynamicTLSModel;
+  if (Lex.getKind() == lltok::lparen) {
+    Lex.Lex();
+    return ParseTLSModel(TLM) ||
+      ParseToken(lltok::rparen, "expected ')' after thread local model");
+  }
+  return false;
+}
 
 /// ParseOptionalAddrSpace
 ///   := /*empty*/

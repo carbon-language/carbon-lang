@@ -379,6 +379,17 @@ static unsigned getEncodedVisibility(const GlobalValue *GV) {
   llvm_unreachable("Invalid visibility");
 }
 
+static unsigned getEncodedThreadLocalMode(const GlobalVariable *GV) {
+  switch (GV->getThreadLocalMode()) {
+    case GlobalVariable::NotThreadLocal:         return 0;
+    case GlobalVariable::GeneralDynamicTLSModel: return 1;
+    case GlobalVariable::LocalDynamicTLSModel:   return 2;
+    case GlobalVariable::InitialExecTLSModel:    return 3;
+    case GlobalVariable::LocalExecTLSModel:      return 4;
+  }
+  llvm_unreachable("Invalid TLS model");
+}
+
 // Emit top-level description of module, including target triple, inline asm,
 // descriptors for global variables, and function prototype info.
 static void WriteModuleInfo(const Module *M, const ValueEnumerator &VE,
@@ -487,7 +498,7 @@ static void WriteModuleInfo(const Module *M, const ValueEnumerator &VE,
         GV->getVisibility() != GlobalValue::DefaultVisibility ||
         GV->hasUnnamedAddr()) {
       Vals.push_back(getEncodedVisibility(GV));
-      Vals.push_back(GV->isThreadLocal());
+      Vals.push_back(getEncodedThreadLocalMode(GV));
       Vals.push_back(GV->hasUnnamedAddr());
     } else {
       AbbrevToUse = SimpleGVarAbbrev;

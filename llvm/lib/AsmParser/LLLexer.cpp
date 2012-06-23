@@ -474,6 +474,9 @@ lltok::Kind LLLexer::LexIdentifier() {
   KEYWORD(extern_weak);
   KEYWORD(external);
   KEYWORD(thread_local);
+  KEYWORD(localdynamic);
+  KEYWORD(initialexec);
+  KEYWORD(localexec);
   KEYWORD(zeroinitializer);
   KEYWORD(undef);
   KEYWORD(null);

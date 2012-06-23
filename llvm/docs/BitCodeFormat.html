@@ -864,7 +864,7 @@ library name referenced.</p>
 <h4><a name="MODULE_CODE_GLOBALVAR">MODULE_CODE_GLOBALVAR Record</a></h4>
 
 <div>
-<p><tt>[GLOBALVAR, pointer type, isconst, initid, linkage, alignment, section, visibility, threadlocal]</tt></p>
+<p><tt>[GLOBALVAR, pointer type, isconst, initid, linkage, alignment, section, visibility, threadlocal, unnamed_addr]</tt></p>
 
 <p>The <tt>GLOBALVAR</tt> record (code 7) marks the declaration or
 definition of a global variable. The operand fields are:</p>
@@ -915,8 +915,16 @@ encoding of the visibility of this variable:
   </ul>
 </li>
 
-<li><i>threadlocal</i>: If present and non-zero, indicates that the variable
-is <tt>thread_local</tt></li>
+<li><i>threadlocal</i>: If present, an encoding of the thread local storage
+mode of the variable:
+  <ul>
+    <li><tt>not thread local</tt>: code 0</li>
+    <li><tt>thread local; default TLS model</tt>: code 1</li>
+    <li><tt>localdynamic</tt>: code 2</li>
+    <li><tt>initialexec</tt>: code 3</li>
+    <li><tt>localexec</tt>: code 4</li>
+  </ul>
+</li>
 
 <li><i>unnamed_addr</i>: If present and non-zero, indicates that the variable
 has <tt>unnamed_addr</tt></li>

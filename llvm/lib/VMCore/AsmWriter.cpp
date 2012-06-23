@@ -1376,6 +1376,26 @@ static void PrintVisibility(GlobalValue::VisibilityTypes Vis,
   }
 }
 
+static void PrintThreadLocalModel(GlobalVariable::ThreadLocalMode TLM,
+                                  formatted_raw_ostream &Out) {
+  switch (TLM) {
+    case GlobalVariable::NotThreadLocal:
+      break;
+    case GlobalVariable::GeneralDynamicTLSModel:
+      Out << "thread_local ";
+      break;
+    case GlobalVariable::LocalDynamicTLSModel:
+      Out << "thread_local(localdynamic) ";
+      break;
+    case GlobalVariable::InitialExecTLSModel:
+      Out << "thread_local(initialexec) ";
+      break;
+    case GlobalVariable::LocalExecTLSModel:
+      Out << "thread_local(localexec) ";
+      break;
+  }
+}
+
 void AssemblyWriter::printGlobal(const GlobalVariable *GV) {
   if (GV->isMaterializable())
     Out << "; Materializable\n";
@@ -1388,8 +1408,8 @@ void AssemblyWriter::printGlobal(const GlobalVariable *GV) {
 
   PrintLinkage(GV->getLinkage(), Out);
   PrintVisibility(GV->getVisibility(), Out);
+  PrintThreadLocalModel(GV->getThreadLocalMode(), Out);
 
-  if (GV->isThreadLocal()) Out << "thread_local ";
   if (unsigned AddressSpace = GV->getType()->getAddressSpace())
     Out << "addrspace(" << AddressSpace << ") ";
   if (GV->hasUnnamedAddr()) Out << "unnamed_addr ";

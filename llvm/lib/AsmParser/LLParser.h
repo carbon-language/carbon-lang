@@ -171,6 +171,9 @@ namespace llvm {
       Loc = Lex.getLoc();
       return ParseUInt32(Val);
     }
+
+    bool ParseTLSModel(GlobalVariable::ThreadLocalMode &TLM);
+    bool ParseOptionalThreadLocal(GlobalVariable::ThreadLocalMode &TLM);
     bool ParseOptionalAddrSpace(unsigned &AddrSpace);
     bool ParseOptionalAttrs(Attributes &Attrs, unsigned AttrKind);
     bool ParseOptionalLinkage(unsigned &Linkage, bool &HasLinkage);

@@ -511,7 +511,7 @@ bool AddressSanitizer::insertGlobalRedzones(Module &M) {
     // Create a new global variable with enough space for a redzone.
     GlobalVariable *NewGlobal = new GlobalVariable(
         M, NewTy, G->isConstant(), G->getLinkage(),
-        NewInitializer, "", G, G->isThreadLocal());
+        NewInitializer, "", G, G->getThreadLocalMode());
     NewGlobal->copyAttributesFrom(G);
     NewGlobal->setAlignment(RedzoneSize);
 

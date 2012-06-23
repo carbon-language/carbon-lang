@@ -448,7 +448,7 @@ bool GCOVProfiler::emitProfileArcs() {
         new GlobalVariable(*M, CounterTy, false,
                            GlobalValue::InternalLinkage,
                            Constant::getNullValue(CounterTy),
-                           "__llvm_gcov_ctr", 0, false, 0);
+                           "__llvm_gcov_ctr");
       CountersBySP.push_back(std::make_pair(Counters, (MDNode*)SP));
       
       UniqueVector<BasicBlock *> ComplexEdgePreds;

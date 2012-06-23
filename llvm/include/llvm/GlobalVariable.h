@@ -41,24 +41,47 @@ class GlobalVariable : public GlobalValue, public ilist_node<GlobalVariable> {
   void setParent(Module *parent);
 
   bool isConstantGlobal : 1;           // Is this a global constant?
-  bool isThreadLocalSymbol : 1;        // Is this symbol "Thread Local"?
+  unsigned threadLocalMode : 3;        // Is this symbol "Thread Local",
+                                       // if so, what is the desired model?
 
 public:
   // allocate space for exactly one operand
   void *operator new(size_t s) {
     return User::operator new(s, 1);
   }
-  /// GlobalVariable ctor - If a parent module is specified, the global is
-  /// automatically inserted into the end of the specified modules global list.
+
+  enum ThreadLocalMode {
+    NotThreadLocal = 0,
+    GeneralDynamicTLSModel,
+    LocalDynamicTLSModel,
+    InitialExecTLSModel,
+    LocalExecTLSModel
+  };
+
+  // TODO: Remove these once Clang is updated.
   GlobalVariable(Type *Ty, bool isConstant, LinkageTypes Linkage,
                  Constant *Initializer = 0, const Twine &Name = "",
                  bool ThreadLocal = false, unsigned AddressSpace = 0);
+  GlobalVariable(Module &M, Type *Ty, bool isConstant,
+                 LinkageTypes Linkage, Constant *Initializer,
+                 const Twine &Name = "",
+                 GlobalVariable *InsertBefore = 0, bool ThreadLocal = false,
+                 unsigned AddressSpace = 0);
+
+  /// GlobalVariable ctor - If a parent module is specified, the global is
+  /// automatically inserted into the end of the specified modules global list.
+  // TODO: Put default param values back when ctors above are removed.
+  GlobalVariable(Type *Ty, bool isConstant, LinkageTypes Linkage,
+                 Constant *Initializer, const Twine &Name,
+                 ThreadLocalMode, unsigned AddressSpace = 0);
   /// GlobalVariable ctor - This creates a global and inserts it before the
   /// specified other global.
+  // TODO: Put default param values back when ctors above are removed.
   GlobalVariable(Module &M, Type *Ty, bool isConstant,
                  LinkageTypes Linkage, Constant *Initializer,
                  const Twine &Name,
-                 GlobalVariable *InsertBefore = 0, bool ThreadLocal = false,
+                 GlobalVariable *InsertBefore,
+                 ThreadLocalMode,
                  unsigned AddressSpace = 0);
 
   ~GlobalVariable() {
@@ -135,8 +158,14 @@ public:
   void setConstant(bool Val) { isConstantGlobal = Val; }
 
   /// If the value is "Thread Local", its value isn't shared by the threads.
-  bool isThreadLocal() const { return isThreadLocalSymbol; }
-  void setThreadLocal(bool Val) { isThreadLocalSymbol = Val; }
+  bool isThreadLocal() const { return threadLocalMode != NotThreadLocal; }
+  void setThreadLocal(bool Val) {
+    threadLocalMode = Val ? GeneralDynamicTLSModel : NotThreadLocal;
+  }
+  void setThreadLocalMode(ThreadLocalMode Val) { threadLocalMode = Val; }
+  ThreadLocalMode getThreadLocalMode() const {
+    return static_cast<ThreadLocalMode>(threadLocalMode);
+  }
 
   /// copyAttributesFrom - copy all additional attributes (those not needed to
   /// create a GlobalVariable) from the GlobalVariable Src to this one.

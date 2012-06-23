@@ -684,7 +684,7 @@ bool ModuleLinker::linkAppendingVarProto(GlobalVariable *DstGV,
   GlobalVariable *NG =
     new GlobalVariable(*DstGV->getParent(), NewType, SrcGV->isConstant(),
                        DstGV->getLinkage(), /*init*/0, /*name*/"", DstGV,
-                       DstGV->isThreadLocal(),
+                       DstGV->getThreadLocalMode(),
                        DstGV->getType()->getAddressSpace());
   
   // Propagate alignment, visibility and section info.
@@ -759,7 +759,7 @@ bool ModuleLinker::linkGlobalProto(GlobalVariable *SGV) {
     new GlobalVariable(*DstM, TypeMap.get(SGV->getType()->getElementType()),
                        SGV->isConstant(), SGV->getLinkage(), /*init*/0,
                        SGV->getName(), /*insertbefore*/0,
-                       SGV->isThreadLocal(),
+                       SGV->getThreadLocalMode(),
                        SGV->getType()->getAddressSpace());
   // Propagate alignment, visibility and section info.
   copyGVAttributes(NewDGV, SGV);

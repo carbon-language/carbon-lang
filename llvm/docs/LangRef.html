@@ -838,9 +838,32 @@ define i32 @main() {   <i>; i32()* </i>&nbsp;
 <p>Global variables define regions of memory allocated at compilation time
    instead of run-time.  Global variables may optionally be initialized, may
    have an explicit section to be placed in, and may have an optional explicit
-   alignment specified.  A variable may be defined as "thread_local", which
+   alignment specified.</p>
+
+<p>A variable may be defined as <tt>thread_local</tt>, which
    means that it will not be shared by threads (each thread will have a
-   separated copy of the variable).  A variable may be defined as a global
+   separated copy of the variable).  Not all targets support thread-local
+   variables.  Optionally, a TLS model may be specified:</p>
+
+<dl>
+  <dt><b><tt>localdynamic</tt></b>:</dt>
+  <dd>For variables that are only used within the current shared library.</dd>
+
+  <dt><b><tt>initialexec</tt></b>:</dt>
+  <dd>For variables in modules that will not be loaded dynamically.</dd>
+
+  <dt><b><tt>localexec</tt></b>:</dt>
+  <dd>For variables defined in the executable and only used within it.</dd>
+</dl>
+
+<p>The models correspond to the ELF TLS models; see
+   <a href="http://people.redhat.com/drepper/tls.pdf">ELF
+   Handling For Thread-Local Storage</a> for more information on under which
+   circumstances the different models may be used.  The target may choose a
+   different TLS model if the specified model is not supported, or if a better
+   choice of model can be made.</p>
+
+<p>A variable may be defined as a global
    "constant," which indicates that the contents of the variable
    will <b>never</b> be modified (enabling better optimization, allowing the
    global data to be placed in the read-only section of an executable, etc).
@@ -891,6 +914,13 @@ define i32 @main() {   <i>; i32()* </i>&nbsp;
 
 <pre class="doc_code">
 @G = addrspace(5) constant float 1.0, section "foo", align 4
+</pre>
+
+<p>The following example defines a thread-local global with
+   the <tt>initialexec</tt> TLS model:</p>
+
+<pre class="doc_code">
+@G = thread_local(initialexec) global i32 0, align 4
 </pre>
 
 </div>

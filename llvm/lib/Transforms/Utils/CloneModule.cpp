@@ -53,7 +53,7 @@ Module *llvm::CloneModule(const Module *M, ValueToValueMapTy &VMap) {
                                             I->isConstant(), I->getLinkage(),
                                             (Constant*) 0, I->getName(),
                                             (GlobalVariable*) 0,
-                                            I->isThreadLocal(),
+                                            I->getThreadLocalMode(),
                                             I->getType()->getAddressSpace());
     GV->copyAttributesFrom(I);
     VMap[I] = GV;
