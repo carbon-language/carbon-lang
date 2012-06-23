@@ -104,9 +104,9 @@ void PPCInstPrinter::printPredicateOperand(const MCInst *MI, unsigned OpNo,
 
     // Print the CR bit number. The Code is ((BI << 5) | BO) for a
     // BCC, but we must have the positive form here (BO == 12)
-    unsigned BO = Code & 0xF;
     unsigned BI = Code >> 5;
-    assert(BO == 12 && "BO in predicate bit must have the positive form");
+    assert((Code & 0xF) == 12 &&
+           "BO in predicate bit must have the positive form");
 
     unsigned Value = 4*RegNo + BI;
     O << Value;
