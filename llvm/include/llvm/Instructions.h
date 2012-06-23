@@ -2705,8 +2705,7 @@ public:
     }
 
     /// Resolves case value for current case.
-//    IntegersSubsetRef getCaseValueEx() {
-    IntegersSubset getCaseValueEx() {
+    IntegersSubsetRef getCaseValueEx() {
       assert(Index < SI->getNumCases() && "Index out the number of cases.");
       return *SubsetIt;
     }

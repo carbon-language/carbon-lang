@@ -1157,19 +1157,38 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
       Vals64.push_back(SI.getNumCases());
       for (SwitchInst::CaseIt i = SI.case_begin(), e = SI.case_end();
            i != e; ++i) {
-        IntegersSubset CaseRanges = i.getCaseValueEx();
-        Vals64.push_back(CaseRanges.getNumItems());
-        for (unsigned ri = 0, rn = CaseRanges.getNumItems(); ri != rn; ++ri) {
-          IntegersSubset::Range r = CaseRanges.getItem(ri);
-          bool IsSingleNumber = r.isSingleNumber();
-
-          Vals64.push_back(IsSingleNumber);
-
-          unsigned Code, Abbrev; // will unused.
+        IntegersSubset& CaseRanges = i.getCaseValueEx();
+        unsigned Code, Abbrev; // will unused.
+        
+        if (CaseRanges.isSingleNumber()) {
+          Vals64.push_back(1/*NumItems = 1*/);
+          Vals64.push_back(true/*IsSingleNumber = true*/);
+          EmitAPInt(Vals64, Code, Abbrev, CaseRanges.getSingleNumber(0), true);
+        } else {
           
-          EmitAPInt(Vals64, Code, Abbrev, r.getLow(), true);
-          if (!IsSingleNumber)
-            EmitAPInt(Vals64, Code, Abbrev, r.getHigh(), true);
+          Vals64.push_back(CaseRanges.getNumItems());
+          
+          if (CaseRanges.isSingleNumbersOnly()) {
+            for (unsigned ri = 0, rn = CaseRanges.getNumItems();
+                 ri != rn; ++ri) {
+              
+              Vals64.push_back(true/*IsSingleNumber = true*/);
+              
+              EmitAPInt(Vals64, Code, Abbrev,
+                        CaseRanges.getSingleNumber(ri), true);
+            }
+          } else
+            for (unsigned ri = 0, rn = CaseRanges.getNumItems();
+                 ri != rn; ++ri) {
+              IntegersSubset::Range r = CaseRanges.getItem(ri);
+              bool IsSingleNumber = CaseRanges.isSingleNumber(ri);
+    
+              Vals64.push_back(IsSingleNumber);
+              
+              EmitAPInt(Vals64, Code, Abbrev, r.getLow(), true);
+              if (!IsSingleNumber)
+                EmitAPInt(Vals64, Code, Abbrev, r.getHigh(), true);
+            }
         }
         Vals64.push_back(VE.getValueID(i.getCaseSuccessor()));
       }

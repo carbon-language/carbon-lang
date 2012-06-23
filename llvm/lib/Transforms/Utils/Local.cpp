@@ -169,11 +169,11 @@ bool llvm::ConstantFoldTerminator(BasicBlock *BB, bool DeleteDeadConditions) {
       // Otherwise, we can fold this switch into a conditional branch
       // instruction if it has only one non-default destination.
       SwitchInst::CaseIt FirstCase = SI->case_begin();
-      IntegersSubset CaseRanges = FirstCase.getCaseValueEx();
-      if (CaseRanges.getNumItems() == 1 && CaseRanges.isSingleNumber(0)) {
+      IntegersSubset& Case = FirstCase.getCaseValueEx();
+      if (Case.isSingleNumber()) {
         // FIXME: Currently work with ConstantInt based numbers.
         Value *Cond = Builder.CreateICmpEQ(SI->getCondition(),
-            CaseRanges.getItem(0).getLow().toConstantInt(),
+             Case.getSingleNumber(0).toConstantInt(),
             "cond");
 
         // Insert the new branch.
@@ -183,7 +183,6 @@ bool llvm::ConstantFoldTerminator(BasicBlock *BB, bool DeleteDeadConditions) {
         // Delete the old switch.
         SI->eraseFromParent();
         return true;
-        
       }
     }
     return false;
