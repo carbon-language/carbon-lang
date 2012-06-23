@@ -366,6 +366,7 @@ class VPSI<bits<8> o, Format F, dag outs, dag ins, string asm,
 // 
 //   SDI    - SSE2 instructions with XD prefix.
 //   SDIi8  - SSE2 instructions with ImmT == Imm8 and XD prefix.
+//   SSDI   - SSE2 instructions with XD prefix.
 //   SSDIi8 - SSE2 instructions with ImmT == Imm8 and XS prefix.
 //   PDI    - SSE2 instructions with TB and OpSize prefixes.
 //   PDIi8  - SSE2 instructions with ImmT == Imm8 and TB and OpSize prefixes.
