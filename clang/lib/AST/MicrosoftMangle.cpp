@@ -31,8 +31,8 @@ class MicrosoftCXXNameMangler {
   MangleContext &Context;
   raw_ostream &Out;
 
-  typedef llvm::DenseMap<const IdentifierInfo*, unsigned> BackRefMap;
-  BackRefMap BackReferences;
+  typedef llvm::DenseMap<void*, unsigned> BackRefMap;
+  BackRefMap NameBackReferences, TypeBackReferences;
 
   ASTContext &getASTContext() const { return Context.getASTContext(); }
 
@@ -65,6 +65,8 @@ private:
                       const SmallVectorImpl<TemplateArgumentLoc> &TemplateArgs);
   void mangleObjCMethodName(const ObjCMethodDecl *MD);
   void mangleLocalName(const FunctionDecl *FD);
+
+  void mangleTypeRepeated(QualType T, SourceRange Range);
 
   // Declare manglers for every type class.
 #define ABSTRACT_TYPE(CLASS, PARENT)
@@ -644,12 +646,12 @@ void MicrosoftCXXNameMangler::mangleOperatorName(OverloadedOperatorKind OO,
 
 void MicrosoftCXXNameMangler::mangleSourceName(const IdentifierInfo *II) {
   // <source name> ::= <identifier> @
-  BackRefMap::iterator Found = BackReferences.find(II);
-  if (Found == BackReferences.end()) {
+  BackRefMap::iterator Found = NameBackReferences.find((void*)II);
+  if (Found == NameBackReferences.end()) {
     Out << II->getName() << '@';
-    if (BackReferences.size() < 10) {
-      size_t Size = BackReferences.size();
-      BackReferences[II] = Size;
+    if (NameBackReferences.size() < 10) {
+      size_t Size = NameBackReferences.size();
+      NameBackReferences[(void*)II] = Size;
     }
   } else {
     Out << Found->second;
@@ -852,6 +854,28 @@ void MicrosoftCXXNameMangler::mangleQualifiers(Qualifiers Quals,
   // FIXME: For now, just drop all extension qualifiers on the floor.
 }
 
+void MicrosoftCXXNameMangler::mangleTypeRepeated(QualType T, SourceRange Range) {
+  void *TypePtr = getASTContext().getCanonicalType(T).getAsOpaquePtr();
+  BackRefMap::iterator Found = TypeBackReferences.find(TypePtr);
+
+  if (Found == TypeBackReferences.end()) {
+    size_t OutSizeBefore = Out.GetNumBytesInBuffer();
+
+    mangleType(T,Range);
+
+    // See if it's worth creating a back reference.
+    // Only types longer than 1 character are considered
+    // and only 10 back references slots are available:
+    bool LongerThanOneChar = (Out.GetNumBytesInBuffer() - OutSizeBefore > 1);
+    if (LongerThanOneChar && TypeBackReferences.size() < 10) {
+      size_t Size = TypeBackReferences.size();
+      TypeBackReferences[TypePtr] = Size;
+    }
+  } else {
+    Out << Found->second;
+  }
+}
+
 void MicrosoftCXXNameMangler::mangleType(QualType T, SourceRange Range) {
   // Only operate on the canonical type!
   T = getASTContext().getCanonicalType(T);
@@ -1026,8 +1050,6 @@ void MicrosoftCXXNameMangler::mangleType(const FunctionType *T,
   if (Proto->getNumArgs() == 0 && !Proto->isVariadic()) {
     Out << 'X';
   } else {
-    typedef llvm::DenseMap<void*, unsigned> BackRef;
-    BackRef BackReferences;
     if (D) {
       // If we got a decl, use the type-as-written to make sure arrays
       // get mangled right.  Note that we can't rely on the TSI
@@ -1036,24 +1058,14 @@ void MicrosoftCXXNameMangler::mangleType(const FunctionType *T,
              ParmEnd = D->param_end(); Parm != ParmEnd; ++Parm) {
         TypeSourceInfo *TSI = (*Parm)->getTypeSourceInfo();
         QualType Type = TSI ? TSI->getType() : (*Parm)->getType();
-        CanQualType Canonical = getASTContext().getCanonicalType(Type);
-        void *TypePtr = Canonical.getAsOpaquePtr();
-        BackRef::iterator Found = BackReferences.find(TypePtr);
-        if (Found == BackReferences.end()) {
-          mangleType(Type, (*Parm)->getSourceRange());
-          if (BackReferences.size() < 10 && (Canonical->getTypeClass() != Type::Builtin)) {
-            size_t Size = BackReferences.size();
-            BackReferences[TypePtr] = Size;
-          }
-        } else {
-          Out << Found->second;
-        }
+        mangleTypeRepeated(Type, (*Parm)->getSourceRange());
       }
     } else {
+      // Happens for function pointer type arguments for example.
       for (FunctionProtoType::arg_type_iterator Arg = Proto->arg_type_begin(),
            ArgEnd = Proto->arg_type_end();
            Arg != ArgEnd; ++Arg)
-        mangleType(*Arg, SourceRange());
+        mangleTypeRepeated(*Arg, SourceRange());
     }
     // <builtin-type>      ::= Z  # ellipsis
     if (Proto->isVariadic())
