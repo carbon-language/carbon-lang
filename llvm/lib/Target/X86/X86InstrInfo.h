@@ -145,9 +145,9 @@ class X86InstrInfo : public X86GenInstrInfo {
                    std::pair<unsigned, unsigned> > MemOp2RegOpTableType;
   MemOp2RegOpTableType MemOp2RegOpTable;
 
-  void AddTableEntry(RegOp2MemOpTableType &R2MTable,
-                     MemOp2RegOpTableType &M2RTable,
-                     unsigned RegOp, unsigned MemOp, unsigned Flags);
+  static void AddTableEntry(RegOp2MemOpTableType &R2MTable,
+                            MemOp2RegOpTableType &M2RTable,
+                            unsigned RegOp, unsigned MemOp, unsigned Flags);
 
 public:
   explicit X86InstrInfo(X86TargetMachine &tm);
