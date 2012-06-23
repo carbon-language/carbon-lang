@@ -54,7 +54,7 @@ namespace {
     const TargetData *TD;
     ObjectSizeOffsetEvaluator *ObjSizeEval;
     BuilderTy *Builder;
-    Function *Fn;
+    Instruction *Inst;
     BasicBlock *TrapBB;
     unsigned Penalty;
 
@@ -80,6 +80,7 @@ BasicBlock *BoundsChecking::getTrapBB() {
   if (TrapBB && SingleTrapBB)
     return TrapBB;
 
+  Function *Fn = Inst->getParent()->getParent();
   BasicBlock::iterator PrevInsertPoint = Builder->GetInsertPoint();
   TrapBB = BasicBlock::Create(Fn->getContext(), "trap", Fn);
   Builder->SetInsertPoint(TrapBB);
@@ -88,6 +89,7 @@ BasicBlock *BoundsChecking::getTrapBB() {
   CallInst *TrapCall = Builder->CreateCall(F);
   TrapCall->setDoesNotReturn();
   TrapCall->setDoesNotThrow();
+  TrapCall->setDebugLoc(Inst->getDebugLoc());
   Builder->CreateUnreachable();
 
   Builder->SetInsertPoint(PrevInsertPoint);
@@ -140,7 +142,7 @@ bool BoundsChecking::instrument(Value *Ptr, Value *InstVal) {
   Value *Size   = SizeOffset.first;
   Value *Offset = SizeOffset.second;
 
-  IntegerType *IntTy = TD->getIntPtrType(Fn->getContext());
+  IntegerType *IntTy = TD->getIntPtrType(Inst->getContext());
   Value *NeededSizeVal = ConstantInt::get(IntTy, NeededSize);
 
   // three checks are required to ensure safety:
@@ -163,7 +165,6 @@ bool BoundsChecking::runOnFunction(Function &F) {
   TD = &getAnalysis<TargetData>();
 
   TrapBB = 0;
-  Fn = &F;
   BuilderTy TheBuilder(F.getContext(), TargetFolder(TD));
   Builder = &TheBuilder;
   ObjectSizeOffsetEvaluator TheObjSizeEval(TD, F.getContext());
@@ -182,16 +183,16 @@ bool BoundsChecking::runOnFunction(Function &F) {
   bool MadeChange = false;
   for (std::vector<Instruction*>::iterator i = WorkList.begin(),
        e = WorkList.end(); i != e; ++i) {
-    Instruction *I = *i;
+    Inst = *i;
 
-    Builder->SetInsertPoint(I);
-    if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
+    Builder->SetInsertPoint(Inst);
+    if (LoadInst *LI = dyn_cast<LoadInst>(Inst)) {
       MadeChange |= instrument(LI->getPointerOperand(), LI);
-    } else if (StoreInst *SI = dyn_cast<StoreInst>(I)) {
+    } else if (StoreInst *SI = dyn_cast<StoreInst>(Inst)) {
       MadeChange |= instrument(SI->getPointerOperand(), SI->getValueOperand());
-    } else if (AtomicCmpXchgInst *AI = dyn_cast<AtomicCmpXchgInst>(I)) {
+    } else if (AtomicCmpXchgInst *AI = dyn_cast<AtomicCmpXchgInst>(Inst)) {
       MadeChange |= instrument(AI->getPointerOperand(),AI->getCompareOperand());
-    } else if (AtomicRMWInst *AI = dyn_cast<AtomicRMWInst>(I)) {
+    } else if (AtomicRMWInst *AI = dyn_cast<AtomicRMWInst>(Inst)) {
       MadeChange |= instrument(AI->getPointerOperand(), AI->getValOperand());
     } else {
       llvm_unreachable("unknown Instruction type");
