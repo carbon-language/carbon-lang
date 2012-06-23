@@ -744,7 +744,16 @@ MicrosoftCXXNameMangler::mangleTemplateArgs(
     case TemplateArgument::Integral:
       mangleIntegerLiteral(TA.getIntegralType(), TA.getAsIntegral());
       break;
-    default: {
+    case TemplateArgument::Expression: {
+      // See if this is a constant expression.
+      Expr *TAE = TA.getAsExpr();
+      llvm::APSInt Value;
+      if (TAE->isIntegerConstantExpr(Value, Context.getASTContext())) {
+        mangleIntegerLiteral(TAE->getType(), Value);
+        break;
+      }
+      /* fallthrough */
+    } default: {
       // Issue a diagnostic.
       DiagnosticsEngine &Diags = Context.getDiags();
       unsigned DiagID = Diags.getCustomDiagID(DiagnosticsEngine::Error,

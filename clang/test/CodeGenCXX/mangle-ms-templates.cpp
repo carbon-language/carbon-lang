@@ -23,6 +23,13 @@ class IntTemplate {
   IntTemplate() {}
 };
 
+template<>
+class BoolTemplate<true> {
+ public:
+  BoolTemplate() {}
+  template<class T> void Foo(T arg) {}
+};
+
 void template_mangling() {
   Class<Typename> c1;
   c1.method();
@@ -36,7 +43,10 @@ void template_mangling() {
 // CHECK: call {{.*}} @"\01??0?$BoolTemplate@$0A@@@QAE@XZ"
 
   BoolTemplate<true> _true;
+  // PR13158
+  _true.Foo(1);
 // CHECK: call {{.*}} @"\01??0?$BoolTemplate@$00@@QAE@XZ"
+// CHECK: call {{.*}} @"\01??$Foo@H@?$BoolTemplate@$00@@QAEXH@Z"
 
   IntTemplate<5> five;
 // CHECK: call {{.*}} @"\01??0?$IntTemplate@$04@@QAE@XZ"
