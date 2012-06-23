@@ -207,3 +207,8 @@ void baz () {
   for ([[]] int n : { 1, 2, 3 }) {
   }
 }
+
+enum class __attribute__((visibility("hidden"))) SecretKeepers {
+  one, /* rest are deprecated */ two, three
+};
+enum class [[]] EvenMoreSecrets {};

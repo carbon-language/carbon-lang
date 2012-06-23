@@ -2976,15 +2976,22 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
   SourceLocation ScopedEnumKWLoc;
   bool IsScopedUsingClassTag = false;
 
+  // In C++11, recognize 'enum class' and 'enum struct'.
   if (getLangOpts().CPlusPlus0x &&
       (Tok.is(tok::kw_class) || Tok.is(tok::kw_struct))) {
     Diag(Tok, diag::warn_cxx98_compat_scoped_enum);
     IsScopedUsingClassTag = Tok.is(tok::kw_class);
     ScopedEnumKWLoc = ConsumeToken();
     
+    // Attributes are not allowed between these keywords.  Diagnose,
+    // but then just treat them like they appeared in the right place.
     ProhibitAttributes(attrs);
-    // Recovery: assume that the attributes came after the tag.
+
+    // They are allowed afterwards, though.
+    MaybeParseGNUAttributes(attrs);
     MaybeParseCXX0XAttributes(attrs);
+    while (Tok.is(tok::kw___declspec))
+      ParseMicrosoftDeclSpec(attrs);
   }
 
   // C++11 [temp.explicit]p12:
