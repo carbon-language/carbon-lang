@@ -7419,11 +7419,6 @@ X86TargetLowering::LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const {
   const GlobalValue *GV = GA->getGlobal();
 
   if (Subtarget->isTargetELF()) {
-    // If GV is an alias then use the aliasee for determining
-    // thread-localness.
-    if (const GlobalAlias *GA = dyn_cast<GlobalAlias>(GV))
-      GV = GA->resolveAliasedGlobal(false);
-
     TLSModel::Model model = getTargetMachine().getTLSModel(GV);
 
     switch (model) {
