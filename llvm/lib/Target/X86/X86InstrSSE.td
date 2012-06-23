@@ -1418,10 +1418,10 @@ multiclass sse12_cvt_s<bits<8> opc, RegisterClass SrcRC, RegisterClass DstRC,
 multiclass sse12_cvt_p<bits<8> opc, RegisterClass SrcRC, RegisterClass DstRC,
                          SDNode OpNode, X86MemOperand x86memop, PatFrag ld_frag,
                          string asm, Domain d, OpndItins itins> {
-  def rr : PI<opc, MRMSrcReg, (outs DstRC:$dst), (ins SrcRC:$src), asm,
+  def rr : I<opc, MRMSrcReg, (outs DstRC:$dst), (ins SrcRC:$src), asm,
                         [(set DstRC:$dst, (OpNode SrcRC:$src))],
                         itins.rr, d>;
-  def rm : PI<opc, MRMSrcMem, (outs DstRC:$dst), (ins x86memop:$src), asm,
+  def rm : I<opc, MRMSrcMem, (outs DstRC:$dst), (ins x86memop:$src), asm,
                         [(set DstRC:$dst, (OpNode (ld_frag addr:$src)))],
                         itins.rm, d>;
 }
@@ -1630,11 +1630,13 @@ defm VCVTSS2SI64 : sse12_cvt_s<0x2D, FR32, GR64, undef, f32mem, load,
                                "cvtss2si\t{$src, $dst|$dst, $src}",
                                SSE_CVT_SS2SI_64>, XS, VEX, VEX_W, VEX_LIG;
 defm VCVTDQ2PS   : sse12_cvt_p<0x5B, VR128, VR128, undef, i128mem, load,
-                               "cvtdq2ps\t{$src, $dst|$dst, $src}",
-                               SSEPackedSingle, SSE_CVT_PS>, TB, VEX;
+                               "vcvtdq2ps\t{$src, $dst|$dst, $src}",
+                               SSEPackedSingle, SSE_CVT_PS>, TB, VEX,
+                               Requires<[HasAVX]>;
 defm VCVTDQ2PSY  : sse12_cvt_p<0x5B, VR256, VR256, undef, i256mem, load,
-                               "cvtdq2ps\t{$src, $dst|$dst, $src}",
-                               SSEPackedSingle, SSE_CVT_PS>, TB, VEX;
+                               "vcvtdq2ps\t{$src, $dst|$dst, $src}",
+                               SSEPackedSingle, SSE_CVT_PS>, TB, VEX,
+                               Requires<[HasAVX]>;
 }
 
 let Pattern = []<dag> in {
@@ -1646,8 +1648,8 @@ defm CVTSS2SI64 : sse12_cvt_s<0x2D, FR32, GR64, undef, f32mem, load /*dummy*/,
                           SSE_CVT_SS2SI_64>, XS, REX_W;
 defm CVTDQ2PS : sse12_cvt_p<0x5B, VR128, VR128, undef, i128mem, load /*dummy*/,
                             "cvtdq2ps\t{$src, $dst|$dst, $src}",
-                            SSEPackedSingle, SSE_CVT_PS>,
-                            TB; /* PD SSE3 form is avaiable */
+                            SSEPackedSingle, SSE_CVT_PS>, TB,
+                            Requires<[HasSSE2]>;
 }
 
 let Predicates = [HasAVX] in {
