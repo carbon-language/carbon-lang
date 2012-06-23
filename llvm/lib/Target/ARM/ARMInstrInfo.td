@@ -253,9 +253,9 @@ class RegConstraint<string C> {
 //  ARM specific transformation functions and pattern fragments.
 //
 
-// so_imm_neg_XFORM - Return a so_imm value packed into the format described for
-// so_imm_neg def below.
-def so_imm_neg_XFORM : SDNodeXForm<imm, [{
+// imm_neg_XFORM - Return a imm value packed into the format described for
+// imm_neg defs below.
+def imm_neg_XFORM : SDNodeXForm<imm, [{
   return CurDAG->getTargetConstant(-(int)N->getZExtValue(), MVT::i32);
 }]>;
 
@@ -274,7 +274,7 @@ def so_imm_neg_asmoperand : AsmOperandClass { let Name = "ARMSOImmNeg"; }
 def so_imm_neg : Operand<i32>, PatLeaf<(imm), [{
     int64_t Value = -(int)N->getZExtValue();
     return Value && ARM_AM::getSOImmVal(Value) != -1;
-  }], so_imm_neg_XFORM> {
+  }], imm_neg_XFORM> {
   let ParserMatchClass = so_imm_neg_asmoperand;
 }
 
@@ -634,6 +634,11 @@ def imm0_65535 : Operand<i32>, ImmLeaf<i32, [{
 }]> {
   let ParserMatchClass = Imm0_65535AsmOperand;
 }
+
+// imm0_65535_neg - An immediate whose negative value is in the range [0.65535].
+def imm0_65535_neg : Operand<i32>, ImmLeaf<i32, [{
+  return -Imm >= 0 && -Imm < 65536;
+}]>;
 
 // imm0_65535_expr - For movt/movw - 16-bit immediate that can also reference
 // a relocatable expression.
@@ -3076,6 +3081,11 @@ def : ARMPat<(add     GPR:$src, so_imm_neg:$imm),
              (SUBri   GPR:$src, so_imm_neg:$imm)>;
 def : ARMPat<(ARMaddc GPR:$src, so_imm_neg:$imm),
              (SUBSri  GPR:$src, so_imm_neg:$imm)>;
+
+def : ARMPat<(add     GPR:$src, imm0_65535_neg:$imm),
+             (SUBrr   GPR:$src, (MOVi16 (imm_neg_XFORM imm:$imm)))>;
+def : ARMPat<(ARMaddc GPR:$src, imm0_65535_neg:$imm),
+             (SUBSrr  GPR:$src, (MOVi16 (imm_neg_XFORM imm:$imm)))>;
 
 // The with-carry-in form matches bitwise not instead of the negation.
 // Effectively, the inverse interpretation of the carry flag already accounts
