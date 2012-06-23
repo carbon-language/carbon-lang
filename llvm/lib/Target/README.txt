@@ -964,6 +964,12 @@ optimized with "clang -emit-llvm-bc | opt -std-compile-opts".
 
 //===---------------------------------------------------------------------===//
 
+unsigned f(unsigned x) { return ((x & 7) + 1) & 15; }
+The & 15 part should be optimized away, it doesn't change the result. Currently
+not optimized with "clang -emit-llvm-bc | opt -std-compile-opts".
+
+//===---------------------------------------------------------------------===//
+
 This was noticed in the entryblock for grokdeclarator in 403.gcc:
 
         %tmp = icmp eq i32 %decl_context, 4          
