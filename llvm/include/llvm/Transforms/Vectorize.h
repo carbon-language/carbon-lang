@@ -49,6 +49,9 @@ struct VectorizeConfig {
   /// @brief Vectorize select instructions.
   bool VectorizeSelect;
 
+  /// @brief Vectorize comparison instructions.
+  bool VectorizeCmp;
+
   /// @brief Vectorize getelementptr instructions.
   bool VectorizeGEP;
 

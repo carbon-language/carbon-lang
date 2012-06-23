@@ -105,6 +105,10 @@ NoSelect("bb-vectorize-no-select", cl::init(false), cl::Hidden,
   cl::desc("Don't try to vectorize select instructions"));
 
 static cl::opt<bool>
+NoCmp("bb-vectorize-no-cmp", cl::init(false), cl::Hidden,
+  cl::desc("Don't try to vectorize comparison instructions"));
+
+static cl::opt<bool>
 NoGEP("bb-vectorize-no-gep", cl::init(false), cl::Hidden,
   cl::desc("Don't try to vectorize getelementptr instructions"));
 
@@ -569,6 +573,9 @@ namespace {
         return false;
     } else if (isa<SelectInst>(I)) {
       if (!Config.VectorizeSelect)
+        return false;
+    } else if (isa<CmpInst>(I)) {
+      if (!Config.VectorizeCmp)
         return false;
     } else if (GetElementPtrInst *G = dyn_cast<GetElementPtrInst>(I)) {
       if (!Config.VectorizeGEP)
@@ -1990,6 +1997,7 @@ VectorizeConfig::VectorizeConfig() {
   VectorizeMath = !::NoMath;
   VectorizeFMA = !::NoFMA;
   VectorizeSelect = !::NoSelect;
+  VectorizeCmp = !::NoCmp;
   VectorizeGEP = !::NoGEP;
   VectorizeMemOps = !::NoMemOps;
   AlignedOnly = ::AlignedOnly;
