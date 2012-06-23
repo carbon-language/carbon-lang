@@ -573,7 +573,8 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &mf) {
         unsigned MOReg = MO.getReg();
         if (MO.isUse()) {
           MO.setIsKill(false);
-          UseRegs.push_back(MOReg);
+          if (MO.readsReg())
+            UseRegs.push_back(MOReg);
         } else /*MO.isDef()*/ {
           MO.setIsDead(false);
           DefRegs.push_back(MOReg);
@@ -729,8 +730,9 @@ void LiveVariables::analyzePHINodes(const MachineFunction& Fn) {
     for (MachineBasicBlock::const_iterator BBI = I->begin(), BBE = I->end();
          BBI != BBE && BBI->isPHI(); ++BBI)
       for (unsigned i = 1, e = BBI->getNumOperands(); i != e; i += 2)
-        PHIVarInfo[BBI->getOperand(i + 1).getMBB()->getNumber()]
-          .push_back(BBI->getOperand(i).getReg());
+        if (BBI->getOperand(i).readsReg())
+          PHIVarInfo[BBI->getOperand(i + 1).getMBB()->getNumber()]
+            .push_back(BBI->getOperand(i).getReg());
 }
 
 bool LiveVariables::VarInfo::isLiveIn(const MachineBasicBlock &MBB,
