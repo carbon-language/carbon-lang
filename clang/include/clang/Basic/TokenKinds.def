@@ -342,6 +342,9 @@ KEYWORD(__PRETTY_FUNCTION__         , KEYALL)
 // GNU Extensions (outside impl-reserved namespace)
 KEYWORD(typeof                      , KEYGNU)
 
+// MS Extensions
+KEYWORD(L__FUNCTION__               , KEYMS)
+
 // GNU and MS Type Traits
 KEYWORD(__has_nothrow_assign        , KEYCXX)
 KEYWORD(__has_nothrow_copy          , KEYCXX)

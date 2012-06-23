@@ -21,6 +21,7 @@
 #include "TargetInfo.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclObjC.h"
+#include "clang/Basic/ConvertUTF.h"
 #include "clang/Frontend/CodeGenOptions.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/LLVMContext.h"
@@ -1701,6 +1702,73 @@ LValue CodeGenFunction::EmitObjCEncodeExprLValue(const ObjCEncodeExpr *E) {
                         E->getType());
 }
 
+static llvm::Constant*
+GetAddrOfConstantWideString(StringRef Str,
+                            const char *GlobalName,
+                            ASTContext &Context,
+                            QualType Ty, SourceLocation Loc,
+                            CodeGenModule &CGM) {
+
+  StringLiteral *SL = StringLiteral::Create(Context,
+                                            Str,
+                                            StringLiteral::Wide,
+                                            /*Pascal = */false,
+                                            Ty, Loc);
+  llvm::Constant *C = CGM.GetConstantArrayFromStringLiteral(SL);
+  llvm::GlobalVariable *GV =
+    new llvm::GlobalVariable(CGM.getModule(), C->getType(),
+                             !CGM.getLangOpts().WritableStrings,
+                             llvm::GlobalValue::PrivateLinkage,
+                             C, GlobalName);
+  const unsigned WideAlignment =
+    Context.getTypeAlignInChars(Ty).getQuantity();
+  GV->setAlignment(WideAlignment);
+  return GV;
+}
+
+// FIXME: Mostly copied from StringLiteralParser::CopyStringFragment
+static void ConvertUTF8ToWideString(unsigned CharByteWidth, StringRef Source,
+                                    SmallString<32>& Target) {
+  Target.resize(CharByteWidth * (Source.size() + 1));
+  char* ResultPtr = &Target[0];
+
+  assert(CharByteWidth==1 || CharByteWidth==2 || CharByteWidth==4);
+  ConversionResult result = conversionOK;
+  // Copy the character span over.
+  if (CharByteWidth == 1) {
+    if (!isLegalUTF8String(reinterpret_cast<const UTF8*>(&*Source.begin()),
+                           reinterpret_cast<const UTF8*>(&*Source.end())))
+      result = sourceIllegal;
+    memcpy(ResultPtr, Source.data(), Source.size());
+    ResultPtr += Source.size();
+  } else if (CharByteWidth == 2) {
+    UTF8 const *sourceStart = (UTF8 const *)Source.data();
+    // FIXME: Make the type of the result buffer correct instead of
+    // using reinterpret_cast.
+    UTF16 *targetStart = reinterpret_cast<UTF16*>(ResultPtr);
+    ConversionFlags flags = strictConversion;
+    result = ConvertUTF8toUTF16(
+      &sourceStart,sourceStart + Source.size(),
+        &targetStart,targetStart + 2*Source.size(),flags);
+    if (result==conversionOK)
+      ResultPtr = reinterpret_cast<char*>(targetStart);
+  } else if (CharByteWidth == 4) {
+    UTF8 const *sourceStart = (UTF8 const *)Source.data();
+    // FIXME: Make the type of the result buffer correct instead of
+    // using reinterpret_cast.
+    UTF32 *targetStart = reinterpret_cast<UTF32*>(ResultPtr);
+    ConversionFlags flags = strictConversion;
+    result = ConvertUTF8toUTF32(
+        &sourceStart,sourceStart + Source.size(),
+        &targetStart,targetStart + 4*Source.size(),flags);
+    if (result==conversionOK)
+      ResultPtr = reinterpret_cast<char*>(targetStart);
+  }
+  assert((result != targetExhausted)
+         && "ConvertUTF8toUTFXX exhausted target buffer");
+  assert(result == conversionOK);
+  Target.resize(ResultPtr - &Target[0]);
+}
 
 LValue CodeGenFunction::EmitPredefinedLValue(const PredefinedExpr *E) {
   switch (E->getIdentType()) {
@@ -1709,17 +1777,21 @@ LValue CodeGenFunction::EmitPredefinedLValue(const PredefinedExpr *E) {
 
   case PredefinedExpr::Func:
   case PredefinedExpr::Function:
+  case PredefinedExpr::LFunction:
   case PredefinedExpr::PrettyFunction: {
-    unsigned Type = E->getIdentType();
+    unsigned IdentType = E->getIdentType();
     std::string GlobalVarName;
 
-    switch (Type) {
+    switch (IdentType) {
     default: llvm_unreachable("Invalid type");
     case PredefinedExpr::Func:
       GlobalVarName = "__func__.";
       break;
     case PredefinedExpr::Function:
       GlobalVarName = "__FUNCTION__.";
+      break;
+    case PredefinedExpr::LFunction:
+      GlobalVarName = "L__FUNCTION__.";
       break;
     case PredefinedExpr::PrettyFunction:
       GlobalVarName = "__PRETTY_FUNCTION__.";
@@ -1738,10 +1810,27 @@ LValue CodeGenFunction::EmitPredefinedLValue(const PredefinedExpr *E) {
     std::string FunctionName =
         (isa<BlockDecl>(CurDecl)
          ? FnName.str()
-         : PredefinedExpr::ComputeName((PredefinedExpr::IdentType)Type, CurDecl));
+         : PredefinedExpr::ComputeName((PredefinedExpr::IdentType)IdentType,
+                                       CurDecl));
 
-    llvm::Constant *C =
-      CGM.GetAddrOfConstantCString(FunctionName, GlobalVarName.c_str());
+    const Type* ElemType = E->getType()->getArrayElementTypeNoTypeQual();
+    llvm::Constant *C;
+    if (ElemType->isWideCharType()) {
+      SmallString<32> RawChars;
+      ConvertUTF8ToWideString(
+          getContext().getTypeSizeInChars(ElemType).getQuantity(),
+          FunctionName, RawChars);
+      C = GetAddrOfConstantWideString(RawChars,
+                                      GlobalVarName.c_str(),
+                                      getContext(),
+                                      E->getType(),
+                                      E->getLocation(),
+                                      CGM);
+    } else {
+      C = CGM.GetAddrOfConstantCString(FunctionName,
+                                       GlobalVarName.c_str(),
+                                       1);
+    }
     return MakeAddrLValue(C, E->getType());
   }
   }

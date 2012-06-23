@@ -643,6 +643,9 @@ void StmtPrinter::VisitPredefinedExpr(PredefinedExpr *Node) {
     case PredefinedExpr::Function:
       OS << "__FUNCTION__";
       break;
+    case PredefinedExpr::LFunction:
+      OS << "L__FUNCTION__";
+      break;
     case PredefinedExpr::PrettyFunction:
       OS << "__PRETTY_FUNCTION__";
       break;
