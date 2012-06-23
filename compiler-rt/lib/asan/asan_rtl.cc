@@ -112,8 +112,9 @@ static void PrintBytes(const char *before, uptr *a) {
 
 void AppendToErrorMessageBuffer(const char *buffer) {
   if (error_message_buffer) {
-    uptr length = (uptr)internal_strlen(buffer);
-    int remaining = error_message_buffer_size - error_message_buffer_pos;
+    uptr length = internal_strlen(buffer);
+    CHECK_GE(error_message_buffer_size, error_message_buffer_pos);
+    uptr remaining = error_message_buffer_size - error_message_buffer_pos;
     internal_strncpy(error_message_buffer + error_message_buffer_pos,
                      buffer, remaining);
     error_message_buffer[error_message_buffer_size - 1] = '\0';
@@ -135,7 +136,7 @@ static void ReserveShadowMemoryRange(uptr beg, uptr end) {
 // ---------------------- LowLevelAllocator ------------- {{{1
 void *LowLevelAllocator::Allocate(uptr size) {
   CHECK((size & (size - 1)) == 0 && "size must be a power of two");
-  if (allocated_end_ - allocated_current_ < size) {
+  if (allocated_end_ - allocated_current_ < (sptr)size) {
     uptr size_to_allocate = Max(size, kPageSize);
     allocated_current_ =
         (char*)MmapOrDie(size_to_allocate, __FUNCTION__);
@@ -143,7 +144,7 @@ void *LowLevelAllocator::Allocate(uptr size) {
     PoisonShadow((uptr)allocated_current_, size_to_allocate,
                  kAsanInternalHeapMagic);
   }
-  CHECK(allocated_end_ - allocated_current_ >= size);
+  CHECK(allocated_end_ - allocated_current_ >= (sptr)size);
   void *res = allocated_current_;
   allocated_current_ += size;
   return res;
