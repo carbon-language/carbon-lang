@@ -160,6 +160,12 @@ def AlwaysInline : InheritableAttr {
   let Spellings = [GNU<"always_inline">];
 }
 
+def TLSModel : InheritableAttr {
+  let Spellings = [GNU<"tls_model">];
+  let Subjects = [Var];
+  let Args = [StringArgument<"Model">];
+}
+
 def AnalyzerNoReturn : InheritableAttr {
   let Spellings = [GNU<"analyzer_noreturn">];
 }

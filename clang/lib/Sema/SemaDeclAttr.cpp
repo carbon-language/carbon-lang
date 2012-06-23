@@ -43,7 +43,8 @@ enum AttributeDeclKind {
   ExpectedMethod,
   ExpectedVariableFunctionOrLabel,
   ExpectedFieldOrGlobalVar,
-  ExpectedStruct
+  ExpectedStruct,
+  ExpectedTLSVar
 };
 
 //===----------------------------------------------------------------------===//
@@ -1438,6 +1439,42 @@ static void handleAlwaysInlineAttr(Sema &S, Decl *D,
   }
 
   D->addAttr(::new (S.Context) AlwaysInlineAttr(Attr.getRange(), S.Context));
+}
+
+static void handleTLSModelAttr(Sema &S, Decl *D,
+                               const AttributeList &Attr) {
+  // Check the attribute arguments.
+  if (Attr.getNumArgs() != 1) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 1;
+    return;
+  }
+
+  Expr *Arg = Attr.getArg(0);
+  Arg = Arg->IgnoreParenCasts();
+  StringLiteral *Str = dyn_cast<StringLiteral>(Arg);
+
+  // Check that it is a string.
+  if (!Str) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_not_string) << "tls_model";
+    return;
+  }
+
+  if (!isa<VarDecl>(D) || !cast<VarDecl>(D)->isThreadSpecified()) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_decl_type)
+      << Attr.getName() << ExpectedTLSVar;
+    return;
+  }
+
+  // Check that the value.
+  StringRef Model = Str->getString();
+  if (Model != "global-dynamic" && Model != "local-dynamic"
+      && Model != "initial-exec" && Model != "local-exec") {
+    S.Diag(Attr.getLoc(), diag::err_attr_tlsmodel_arg);
+    return;
+  }
+
+  D->addAttr(::new (S.Context) TLSModelAttr(Attr.getRange(), S.Context,
+                                            Model));
 }
 
 static void handleMallocAttr(Sema &S, Decl *D, const AttributeList &Attr) {
@@ -3939,6 +3976,7 @@ static void ProcessInheritableDeclAttr(Sema &S, Scope *scope, Decl *D,
     handleAlwaysInlineAttr  (S, D, Attr); break;
   case AttributeList::AT_AnalyzerNoReturn:
     handleAnalyzerNoReturnAttr  (S, D, Attr); break;
+  case AttributeList::AT_TLSModel:    handleTLSModelAttr    (S, D, Attr); break;
   case AttributeList::AT_Annotate:    handleAnnotateAttr    (S, D, Attr); break;
   case AttributeList::AT_Availability:handleAvailabilityAttr(S, D, Attr); break;
   case AttributeList::AT_CarriesDependency:

@@ -123,6 +123,20 @@ int f(bool b) {
   flag.</li>
 </ul>
 
+<h4 id="tlsmodel">Support for <code>tls_model</code> attribute</h4>
+
+<p>Clang now supports the <code>tls_model</code> attribute, allowing code that
+uses thread-local storage to explicitly select which model to use. The available
+models are <code>"global-dynamic"</code>, <code>"local-dynamic"</code>,
+<code>"initial-exec"</code> and <code>"local-exec"</code>. See
+<a href="http://www.akkadia.org/drepper/tls.pdf">ELF Handling For Thread-Local
+ Storage</a> for more information.</p>
+
+<p>The compiler is free to choose a different model if the specified model is not
+supported by the target, or if the compiler determines that a more specific
+model can be used.
+</p>
+
 <!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
 <h3 id="newflags">New Compiler Flags</h3>
 <!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->

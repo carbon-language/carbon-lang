@@ -1603,6 +1603,8 @@ def err_objc_literal_comparison : Error<
   "direct comparison of %select{a string literal|an array literal|"
   "a dictionary literal|a numeric literal|a boxed expression|}0 is not "
   "allowed%select{|; use -isEqual: instead}1">;
+def err_attr_tlsmodel_arg : Error<"tls_model must be \"global-dynamic\", "
+  "\"local-dynamic\", \"initial-exec\" or \"local-exec\"">;
 
 let CategoryName = "Cocoa API Issue" in {
 def warn_objc_redundant_literal_use : Warning<
@@ -1670,13 +1672,13 @@ def warn_attribute_wrong_decl_type : Warning<
   "functions, methods and blocks|functions, methods, and parameters|"
   "classes|variables|methods|variables, functions and labels|"
   "fields and global variables|structs|"
-  "variables, functions and tag types}1">;
+  "variables, functions and tag types|thread-local variables}1">;
 def err_attribute_wrong_decl_type : Error<
   "%0 attribute only applies to %select{functions|unions|"
   "variables and functions|functions and methods|parameters|"
   "functions, methods and blocks|functions, methods, and parameters|"
   "classes|variables|methods|variables, functions and labels|"
-  "fields and global variables|structs}1">;
+  "fields and global variables|structs|thread-local variables}1">;
 def warn_function_attribute_wrong_type : Warning<
   "'%0' only applies to function types; type here is %1">;
 def warn_pointer_attribute_wrong_type : Warning<

@@ -183,12 +183,22 @@ CodeGenFunction::CreateStaticVarDecl(const VarDecl &D,
   else
     Name = GetStaticDeclName(*this, D, Separator);
 
+  llvm::GlobalVariable::ThreadLocalMode TLM;
+  TLM = D.isThreadSpecified() ? llvm::GlobalVariable::GeneralDynamicTLSModel
+                              : llvm::GlobalVariable::NotThreadLocal;
+
+  // Set the TLS mode if it it's explicitly specified.
+  if (D.hasAttr<TLSModelAttr>()) {
+    assert(D.isThreadSpecified() && "Can't have TLS model on non-tls var.");
+    const TLSModelAttr *Attr = D.getAttr<TLSModelAttr>();
+    TLM = CodeGenModule::GetLLVMTLSModel(Attr->getModel());
+  }
+
   llvm::Type *LTy = CGM.getTypes().ConvertTypeForMem(Ty);
   llvm::GlobalVariable *GV =
     new llvm::GlobalVariable(CGM.getModule(), LTy,
                              Ty.isConstant(getContext()), Linkage,
-                             CGM.EmitNullConstant(D.getType()), Name, 0,
-                             D.isThreadSpecified(),
+                             CGM.EmitNullConstant(D.getType()), Name, 0, TLM,
                              CGM.getContext().getTargetAddressSpace(Ty));
   GV->setAlignment(getContext().getDeclAlign(&D).getQuantity());
   if (Linkage != llvm::GlobalValue::InternalLinkage)
@@ -239,7 +249,7 @@ CodeGenFunction::AddInitializerToStaticVarDecl(const VarDecl &D,
                                   OldGV->isConstant(),
                                   OldGV->getLinkage(), Init, "",
                                   /*InsertBefore*/ OldGV,
-                                  D.isThreadSpecified(),
+                                  OldGV->getThreadLocalMode(),
                            CGM.getContext().getTargetAddressSpace(D.getType()));
     GV->setVisibility(OldGV->getVisibility());
 
@@ -1066,7 +1076,7 @@ void CodeGenFunction::EmitAutoVarInit(const AutoVarEmission &emission) {
     llvm::GlobalVariable *GV =
       new llvm::GlobalVariable(CGM.getModule(), constant->getType(), true,
                                llvm::GlobalValue::PrivateLinkage,
-                               constant, Name, 0, false, 0);
+                               constant, Name);
     GV->setAlignment(alignment.getQuantity());
     GV->setUnnamedAddr(true);
 

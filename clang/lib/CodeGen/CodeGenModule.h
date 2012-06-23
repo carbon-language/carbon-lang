@@ -496,6 +496,15 @@ public:
     llvm_unreachable("unknown visibility!");
   }
 
+  static llvm::GlobalVariable::ThreadLocalMode GetLLVMTLSModel(StringRef S) {
+    return llvm::StringSwitch<llvm::GlobalVariable::ThreadLocalMode>(S)
+        .Case("global-dynamic", llvm::GlobalVariable::GeneralDynamicTLSModel)
+        .Case("local-dynamic", llvm::GlobalVariable::LocalDynamicTLSModel)
+        .Case("initial-exec", llvm::GlobalVariable::InitialExecTLSModel)
+        .Case("local-exec", llvm::GlobalVariable::LocalExecTLSModel)
+        .Default(llvm::GlobalVariable::NotThreadLocal);
+  }
+
   llvm::Constant *GetAddrOfGlobal(GlobalDecl GD) {
     if (isa<CXXConstructorDecl>(GD.getDecl()))
       return GetAddrOfCXXConstructor(cast<CXXConstructorDecl>(GD.getDecl()),

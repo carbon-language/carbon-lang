@@ -932,7 +932,8 @@ public:
         C = new llvm::GlobalVariable(CGM.getModule(), C->getType(),
                                      E->getType().isConstant(CGM.getContext()),
                                      llvm::GlobalValue::InternalLinkage,
-                                     C, ".compoundliteral", 0, false,
+                                     C, ".compoundliteral", 0,
+                                     llvm::GlobalVariable::NotThreadLocal,
                           CGM.getContext().getTargetAddressSpace(E->getType()));
       return C;
     }
