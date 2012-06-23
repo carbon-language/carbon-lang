@@ -1813,30 +1813,6 @@ def Int_CVTDQ2PSrm : I<0x5B, MRMSrcMem, (outs VR128:$dst), (ins i128mem:$src),
                                         IIC_SSE_CVT_PS_RM>,
                      TB, Requires<[HasSSE2]>;
 
-// SSE2 instructions with XS prefix
-def Int_VCVTDQ2PDrr : I<0xE6, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
-                       "vcvtdq2pd\t{$src, $dst|$dst, $src}",
-                       [(set VR128:$dst, (int_x86_sse2_cvtdq2pd VR128:$src))],
-                       IIC_SSE_CVT_PD_RR>,
-                     XS, VEX, Requires<[HasAVX]>;
-def Int_VCVTDQ2PDrm : I<0xE6, MRMSrcMem, (outs VR128:$dst), (ins i64mem:$src),
-                       "vcvtdq2pd\t{$src, $dst|$dst, $src}",
-                       [(set VR128:$dst, (int_x86_sse2_cvtdq2pd
-                                        (bitconvert (memopv2i64 addr:$src))))],
-                                        IIC_SSE_CVT_PD_RM>,
-                     XS, VEX, Requires<[HasAVX]>;
-def Int_CVTDQ2PDrr : I<0xE6, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
-                       "cvtdq2pd\t{$src, $dst|$dst, $src}",
-                       [(set VR128:$dst, (int_x86_sse2_cvtdq2pd VR128:$src))],
-                       IIC_SSE_CVT_PD_RR>,
-                     XS, Requires<[HasSSE2]>;
-def Int_CVTDQ2PDrm : I<0xE6, MRMSrcMem, (outs VR128:$dst), (ins i64mem:$src),
-                     "cvtdq2pd\t{$src, $dst|$dst, $src}",
-                     [(set VR128:$dst, (int_x86_sse2_cvtdq2pd
-                                        (bitconvert (memopv2i64 addr:$src))))],
-                                        IIC_SSE_CVT_PD_RM>,
-                     XS, Requires<[HasSSE2]>;
-
 
 // Convert packed single/double fp to doubleword
 def VCVTPS2DQrr : VPDI<0x5B, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
@@ -4949,6 +4925,15 @@ def CVTDQ2PDrm  : SSDI<0xE6, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
 def CVTDQ2PDrr  : SSDI<0xE6, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                        "cvtdq2pd\t{$src, $dst|$dst, $src}", [],
                        IIC_SSE_CVT_PD_RM>;
+
+// 128 bit register conversion intrinsics
+let Predicates = [HasAVX] in
+def : Pat<(int_x86_sse2_cvtdq2pd VR128:$src),
+           (VCVTDQ2PDrr VR128:$src)>;
+
+let Predicates = [HasSSE2] in
+def : Pat<(int_x86_sse2_cvtdq2pd VR128:$src),
+           (CVTDQ2PDrr VR128:$src)>;
 
 // AVX 256-bit register conversion intrinsics
 let Predicates = [HasAVX] in {
