@@ -108,3 +108,14 @@ unreachable4:
   %z4 = add i32 %y4, %y4
   ret void
 }
+
+; PR13185
+define void @pr13185(i16 %p) {
+entry:
+  br label %for.cond
+
+for.cond:                                         ; preds = %for.cond, %entry
+  %x.0 = phi i32 [ undef, %entry ], [ %conv, %for.cond ]
+  %conv = zext i16 %p to i32
+  br label %for.cond
+}
