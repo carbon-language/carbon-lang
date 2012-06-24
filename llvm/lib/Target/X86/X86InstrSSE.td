@@ -2130,25 +2130,19 @@ def CVTPD2PSrm : PDI<0x5A, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
                      IIC_SSE_CVT_PD_RM>;
 
 
-def Int_VCVTPD2PSrr : VPDI<0x5A, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
-                         "cvtpd2ps\t{$src, $dst|$dst, $src}",
-                        [(set VR128:$dst, (int_x86_sse2_cvtpd2ps VR128:$src))],
-                        IIC_SSE_CVT_PD_RR>;
-def Int_VCVTPD2PSrm : VPDI<0x5A, MRMSrcMem, (outs VR128:$dst),
-                         (ins f128mem:$src),
-                         "cvtpd2ps\t{$src, $dst|$dst, $src}",
-                         [(set VR128:$dst, (int_x86_sse2_cvtpd2ps
-                                            (memop addr:$src)))],
-                                            IIC_SSE_CVT_PD_RM>;
-def Int_CVTPD2PSrr : PDI<0x5A, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
-                         "cvtpd2ps\t{$src, $dst|$dst, $src}",
-                        [(set VR128:$dst, (int_x86_sse2_cvtpd2ps VR128:$src))],
-                        IIC_SSE_CVT_PD_RR>;
-def Int_CVTPD2PSrm : PDI<0x5A, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
-                         "cvtpd2ps\t{$src, $dst|$dst, $src}",
-                         [(set VR128:$dst, (int_x86_sse2_cvtpd2ps
-                                            (memop addr:$src)))],
-                                            IIC_SSE_CVT_PD_RM>;
+let Predicates = [HasAVX] in {
+  def : Pat<(int_x86_sse2_cvtpd2ps VR128:$src),
+            (VCVTPD2PSrr VR128:$src)>;
+  def : Pat<(int_x86_sse2_cvtpd2ps (memopv2f64 addr:$src)),
+            (VCVTPD2PSrr VR128:$src)>;
+}
+
+let Predicates = [HasSSE2] in {
+  def : Pat<(int_x86_sse2_cvtpd2ps VR128:$src),
+            (CVTPD2PSrr VR128:$src)>;
+  def : Pat<(int_x86_sse2_cvtpd2ps (memopv2f64 addr:$src)),
+            (CVTPD2PSrr VR128:$src)>;
+}
 
 // AVX 256-bit register conversion intrinsics
 // FIXME: Migrate SSE conversion intrinsics matching to use patterns as below
