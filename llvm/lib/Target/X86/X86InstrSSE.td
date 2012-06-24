@@ -1861,30 +1861,19 @@ def CVTPD2DQrr  : SDI<0xE6, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                       "cvtpd2dq\t{$src, $dst|$dst, $src}", [],
                       IIC_SSE_CVT_PD_RR>;
 
-// SSE2 packed instructions with XD prefix
-def Int_VCVTPD2DQrr : I<0xE6, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
-                       "vcvtpd2dq\t{$src, $dst|$dst, $src}",
-                       [(set VR128:$dst, (int_x86_sse2_cvtpd2dq VR128:$src))],
-                       IIC_SSE_CVT_PD_RR>,
-                     XD, VEX, Requires<[HasAVX]>;
-def Int_VCVTPD2DQrm : I<0xE6, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
-                       "vcvtpd2dq\t{$src, $dst|$dst, $src}",
-                       [(set VR128:$dst, (int_x86_sse2_cvtpd2dq
-                                          (memop addr:$src)))],
-                                          IIC_SSE_CVT_PD_RM>,
-                     XD, VEX, Requires<[HasAVX]>;
-def Int_CVTPD2DQrr : I<0xE6, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
-                       "cvtpd2dq\t{$src, $dst|$dst, $src}",
-                       [(set VR128:$dst, (int_x86_sse2_cvtpd2dq VR128:$src))],
-                       IIC_SSE_CVT_PD_RR>,
-                     XD, Requires<[HasSSE2]>;
-def Int_CVTPD2DQrm : I<0xE6, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
-                       "cvtpd2dq\t{$src, $dst|$dst, $src}",
-                       [(set VR128:$dst, (int_x86_sse2_cvtpd2dq
-                                          (memop addr:$src)))],
-                                          IIC_SSE_CVT_PD_RM>,
-                     XD, Requires<[HasSSE2]>;
+let Predicates = [HasAVX] in {
+  def : Pat<(int_x86_sse2_cvtpd2dq VR128:$src),
+            (VCVTPD2DQrr VR128:$src)>;
+  def : Pat<(int_x86_sse2_cvtpd2dq (memopv2f64 addr:$src)),
+            (VCVTPD2DQXrm addr:$src)>;
+}
 
+let Predicates = [HasSSE2] in {
+  def : Pat<(int_x86_sse2_cvtpd2dq VR128:$src),
+            (CVTPD2DQrr VR128:$src)>;
+  def : Pat<(int_x86_sse2_cvtpd2dq (memopv2f64 addr:$src)),
+            (CVTPD2DQrm addr:$src)>;
+}
 
 // Convert with truncation packed single/double fp to doubleword
 // SSE2 packed instructions with XS prefix

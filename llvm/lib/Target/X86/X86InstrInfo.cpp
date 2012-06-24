@@ -410,7 +410,6 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
     { X86::IMUL64rri8,      X86::IMUL64rmi8,          0 },
     { X86::Int_COMISDrr,    X86::Int_COMISDrm,        0 },
     { X86::Int_COMISSrr,    X86::Int_COMISSrm,        0 },
-    { X86::Int_CVTPD2DQrr,  X86::Int_CVTPD2DQrm,      TB_ALIGN_16 },
     { X86::Int_CVTPD2PSrr,  X86::Int_CVTPD2PSrm,      TB_ALIGN_16 },
     { X86::Int_CVTPS2DQrr,  X86::Int_CVTPS2DQrm,      TB_ALIGN_16 },
     { X86::Int_CVTPS2PDrr,  X86::Int_CVTPS2PDrm,      0 },
@@ -494,7 +493,6 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
     // AVX 128-bit versions of foldable instructions
     { X86::Int_VCOMISDrr,   X86::Int_VCOMISDrm,       0 },
     { X86::Int_VCOMISSrr,   X86::Int_VCOMISSrm,       0 },
-    { X86::Int_VCVTPD2DQrr, X86::Int_VCVTPD2DQrm,     TB_ALIGN_16 },
     { X86::Int_VCVTPD2PSrr, X86::Int_VCVTPD2PSrm,     TB_ALIGN_16 },
     { X86::Int_VCVTPS2DQrr, X86::Int_VCVTPS2DQrm,     TB_ALIGN_16 },
     { X86::Int_VCVTPS2PDrr, X86::Int_VCVTPS2PDrm,     0 },
