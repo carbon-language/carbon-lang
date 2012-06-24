@@ -50,3 +50,21 @@ c:
   %o2 = phi i1 [ false, %a ], [ %phitmp, %b ], [ false, %entry ]
   ret i1 %o2
 }
+
+; PR13180
+define void @pr13180(i8 %p) {
+entry:
+  %tobool = icmp eq i8 %p, 0
+  br i1 %tobool, label %cond.false, label %cond.true
+
+cond.true:                                        ; preds = %entry
+  br label %cond.end
+
+cond.false:                                       ; preds = %entry
+  %phitmp = icmp eq i8 %p, 0
+  br label %cond.end
+
+cond.end:                                         ; preds = %cond.false, %cond.true
+  %cond = phi i1 [ undef, %cond.true ], [ %phitmp, %cond.false ]
+  unreachable
+}

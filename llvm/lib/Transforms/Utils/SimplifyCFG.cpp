@@ -129,7 +129,7 @@ static bool SafeToMergeTerminators(TerminatorInst *SI1, TerminatorInst *SI2) {
 ///
 static bool isProfitableToFoldUnconditional(BranchInst *SI1,
                                           BranchInst *SI2,
-                                          Instruction* Cond,
+                                          Instruction *Cond,
                                           SmallVectorImpl<PHINode*> &PhiNodes) {
   if (SI1 == SI2) return false;  // Can't merge with self!
   assert(SI1->isUnconditional() && SI2->isConditional());
@@ -156,7 +156,7 @@ static bool isProfitableToFoldUnconditional(BranchInst *SI1,
            isa<PHINode>(BBI); ++BBI) {
         PHINode *PN = cast<PHINode>(BBI);
         if (PN->getIncomingValueForBlock(SI1BB) != Cond ||
-            !isa<Constant>(PN->getIncomingValueForBlock(SI2BB)))
+            !isa<ConstantInt>(PN->getIncomingValueForBlock(SI2BB)))
           return false;
         PhiNodes.push_back(PN);
       }
@@ -1782,7 +1782,7 @@ bool llvm::FoldBranchToCommonDest(BranchInst *BI) {
     } else {
       // Update PHI nodes in the common successors.
       for (unsigned i = 0, e = PHIs.size(); i != e; ++i) {
-        ConstantInt *PBI_C = dyn_cast<ConstantInt>(
+        ConstantInt *PBI_C = cast<ConstantInt>(
           PHIs[i]->getIncomingValueForBlock(PBI->getParent()));
         assert(PBI_C->getType()->isIntegerTy(1));
         Instruction *MergedCond = 0;
