@@ -23,6 +23,8 @@ add_llvm_target(MSP430CodeGen
   MSP430MCInstLower.cpp
   )
 
+add_dependencies(LLVMMSP430CodeGen intrinsics_gen)
+
 add_subdirectory(InstPrinter)
 add_subdirectory(TargetInfo)
 add_subdirectory(MCTargetDesc)

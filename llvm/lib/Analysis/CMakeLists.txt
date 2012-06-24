@@ -59,4 +59,6 @@ add_llvm_library(LLVMAnalysis
   ValueTracking.cpp
   )
 
+add_dependencies(LLVMAnalysis intrinsics_gen)
+
 add_subdirectory(IPA)

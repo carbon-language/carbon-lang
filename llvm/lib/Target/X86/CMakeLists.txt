@@ -52,6 +52,8 @@ endif()
 
 add_llvm_target(X86CodeGen ${sources})
 
+add_dependencies(LLVMX86CodeGen intrinsics_gen)
+
 add_subdirectory(AsmParser)
 add_subdirectory(Disassembler)
 add_subdirectory(InstPrinter)

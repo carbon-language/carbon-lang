@@ -45,3 +45,5 @@ set_property(
   PROPERTY COMPILE_FLAGS "/Og-"
   )
 endif()
+
+add_dependencies(LLVMCore intrinsics_gen)

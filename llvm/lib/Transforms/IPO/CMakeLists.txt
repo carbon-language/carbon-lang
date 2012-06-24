@@ -20,3 +20,5 @@ add_llvm_library(LLVMipo
   StripDeadPrototypes.cpp
   StripSymbols.cpp
   )
+
+add_dependencies(LLVMipo intrinsics_gen)

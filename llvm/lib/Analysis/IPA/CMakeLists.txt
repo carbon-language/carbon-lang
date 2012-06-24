@@ -5,3 +5,5 @@ add_llvm_library(LLVMipa
   GlobalsModRef.cpp
   IPA.cpp
   )
+
+add_dependencies(LLVMipa intrinsics_gen)
