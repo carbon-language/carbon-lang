@@ -52,7 +52,7 @@ std::string StrError(int errnum) {
 # endif
 #elif HAVE_DECL_STRERROR_S // "Windows Secure API"
     if (errnum)
-      strerror_s(buffer, errnum);
+      strerror_s(buffer, MaxErrStrLen - 1, errnum);
 #elif defined(HAVE_STRERROR)
   // Copy the thread un-safe result of strerror into
   // the buffer as fast as possible to minimize impact
