@@ -115,6 +115,9 @@ void DAGTypeLegalizer::ScalarizeVectorResult(SDNode *N, unsigned ResNo) {
   case ISD::SRL:
     R = ScalarizeVecRes_BinOp(N);
     break;
+  case ISD::FMA:
+    R = ScalarizeVecRes_TernaryOp(N);
+    break;
   }
 
   // If R is null, the sub-method took care of registering the result.
@@ -127,6 +130,14 @@ SDValue DAGTypeLegalizer::ScalarizeVecRes_BinOp(SDNode *N) {
   SDValue RHS = GetScalarizedVector(N->getOperand(1));
   return DAG.getNode(N->getOpcode(), N->getDebugLoc(),
                      LHS.getValueType(), LHS, RHS);
+}
+
+SDValue DAGTypeLegalizer::ScalarizeVecRes_TernaryOp(SDNode *N) {
+  SDValue Op0 = GetScalarizedVector(N->getOperand(0));
+  SDValue Op1 = GetScalarizedVector(N->getOperand(1));
+  SDValue Op2 = GetScalarizedVector(N->getOperand(2));
+  return DAG.getNode(N->getOpcode(), N->getDebugLoc(),
+                     Op0.getValueType(), Op0, Op1, Op2);
 }
 
 SDValue DAGTypeLegalizer::ScalarizeVecRes_MERGE_VALUES(SDNode *N,
@@ -529,6 +540,9 @@ void DAGTypeLegalizer::SplitVectorResult(SDNode *N, unsigned ResNo) {
   case ISD::FREM:
     SplitVecRes_BinOp(N, Lo, Hi);
     break;
+  case ISD::FMA:
+    SplitVecRes_TernaryOp(N, Lo, Hi);
+    break;
   }
 
   // If Lo/Hi is null, the sub-method took care of registering results etc.
@@ -546,6 +560,22 @@ void DAGTypeLegalizer::SplitVecRes_BinOp(SDNode *N, SDValue &Lo,
 
   Lo = DAG.getNode(N->getOpcode(), dl, LHSLo.getValueType(), LHSLo, RHSLo);
   Hi = DAG.getNode(N->getOpcode(), dl, LHSHi.getValueType(), LHSHi, RHSHi);
+}
+
+void DAGTypeLegalizer::SplitVecRes_TernaryOp(SDNode *N, SDValue &Lo,
+                                             SDValue &Hi) {
+  SDValue Op0Lo, Op0Hi;
+  GetSplitVector(N->getOperand(0), Op0Lo, Op0Hi);
+  SDValue Op1Lo, Op1Hi;
+  GetSplitVector(N->getOperand(1), Op1Lo, Op1Hi);
+  SDValue Op2Lo, Op2Hi;
+  GetSplitVector(N->getOperand(2), Op2Lo, Op2Hi);
+  DebugLoc dl = N->getDebugLoc();
+
+  Lo = DAG.getNode(N->getOpcode(), dl, Op0Lo.getValueType(),
+                   Op0Lo, Op1Lo, Op2Lo);
+  Hi = DAG.getNode(N->getOpcode(), dl, Op0Hi.getValueType(),
+                   Op0Hi, Op1Hi, Op2Hi);
 }
 
 void DAGTypeLegalizer::SplitVecRes_BITCAST(SDNode *N, SDValue &Lo,

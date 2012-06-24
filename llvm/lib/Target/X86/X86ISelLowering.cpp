@@ -715,6 +715,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::FSUB, (MVT::SimpleValueType)VT, Expand);
     setOperationAction(ISD::MUL , (MVT::SimpleValueType)VT, Expand);
     setOperationAction(ISD::FMUL, (MVT::SimpleValueType)VT, Expand);
+    setOperationAction(ISD::FMA,  (MVT::SimpleValueType)VT, Custom);
     setOperationAction(ISD::SDIV, (MVT::SimpleValueType)VT, Expand);
     setOperationAction(ISD::UDIV, (MVT::SimpleValueType)VT, Expand);
     setOperationAction(ISD::FDIV, (MVT::SimpleValueType)VT, Expand);
@@ -10893,6 +10894,7 @@ SDValue X86TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::SUBE:               return LowerADDC_ADDE_SUBC_SUBE(Op, DAG);
   case ISD::ADD:                return LowerADD(Op, DAG);
   case ISD::SUB:                return LowerSUB(Op, DAG);
+  case ISD::FMA:                return SDValue();
   }
 }
 

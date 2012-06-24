@@ -206,7 +206,19 @@ define float @test_fma_canonicalize(float %a, float %b) nounwind {
   ret float %ret
 }
 
+; Check that very wide vector fma's can be split into legal fma's.
+define void @test_fma_v8f32(<8 x float> %a, <8 x float> %b, <8 x float> %c, <8 x float>* %p) nounwind readnone ssp {
+; CHECK: test_fma_v8f32
+; CHECK: vfma.f32
+; CHECK: vfma.f32
+entry:
+  %call = tail call <8 x float> @llvm.fma.v8f32(<8 x float> %a, <8 x float> %b, <8 x float> %c) nounwind readnone
+  store <8 x float> %call, <8 x float>* %p, align 16
+  ret void
+}
+
 
 declare float @llvm.fma.f32(float, float, float) nounwind readnone
 declare double @llvm.fma.f64(double, double, double) nounwind readnone
 declare <2 x float> @llvm.fma.v2f32(<2 x float>, <2 x float>, <2 x float>) nounwind readnone
+declare <8 x float> @llvm.fma.v8f32(<8 x float>, <8 x float>, <8 x float>) nounwind readnone
