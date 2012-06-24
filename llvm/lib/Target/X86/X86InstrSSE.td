@@ -2134,14 +2134,14 @@ let Predicates = [HasAVX] in {
   def : Pat<(int_x86_sse2_cvtpd2ps VR128:$src),
             (VCVTPD2PSrr VR128:$src)>;
   def : Pat<(int_x86_sse2_cvtpd2ps (memopv2f64 addr:$src)),
-            (VCVTPD2PSrr VR128:$src)>;
+            (VCVTPD2PSXrm addr:$src)>;
 }
 
 let Predicates = [HasSSE2] in {
   def : Pat<(int_x86_sse2_cvtpd2ps VR128:$src),
             (CVTPD2PSrr VR128:$src)>;
   def : Pat<(int_x86_sse2_cvtpd2ps (memopv2f64 addr:$src)),
-            (CVTPD2PSrr VR128:$src)>;
+            (CVTPD2PSrm addr:$src)>;
 }
 
 // AVX 256-bit register conversion intrinsics
