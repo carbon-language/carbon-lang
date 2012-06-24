@@ -500,6 +500,10 @@ public:
   explicit IntegersSubset(Constant *C) : ParentTy(rangesFromConstant(C)),
                           Holder(C) {}
 
+  IntegersSubset(const IntegersSubset& RHS) :
+    ParentTy(*(const ParentTy *)&RHS), // FIXME: tweak for msvc.
+    Holder(RHS.Holder) {}
+
   template<class RangesCollectionTy>
   explicit IntegersSubset(const RangesCollectionTy& Src) : ParentTy(Src) {
     std::vector<Constant*> Elts;
