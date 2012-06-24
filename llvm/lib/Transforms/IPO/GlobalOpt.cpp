@@ -2710,7 +2710,7 @@ static bool EvaluateStaticConstructor(Function *F, const TargetData *TD,
           << " stores.\n");
     for (DenseMap<Constant*, Constant*>::const_iterator I =
            Eval.getMutatedMemory().begin(), E = Eval.getMutatedMemory().end();
-	 I != E; ++I)
+         I != E; ++I)
       CommitValueTo(I->second, I->first);
     for (SmallPtrSet<GlobalVariable*, 8>::const_iterator I =
            Eval.getInvariants().begin(), E = Eval.getInvariants().end();
