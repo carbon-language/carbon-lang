@@ -77,6 +77,10 @@ MaxCandPairsForCycleCheck("bb-vectorize-max-cycle-check-pairs", cl::init(200),
                        " a full cycle check"));
 
 static cl::opt<bool>
+NoBools("bb-vectorize-no-bools", cl::init(false), cl::Hidden,
+  cl::desc("Don't try to vectorize boolean (i1) values"));
+
+static cl::opt<bool>
 NoInts("bb-vectorize-no-ints", cl::init(false), cl::Hidden,
   cl::desc("Don't try to vectorize integer values"));
 
@@ -614,10 +618,15 @@ namespace {
         !(VectorType::isValidElementType(T2) || T2->isVectorTy()))
       return false;
 
-    if (!Config.VectorizeInts
-        && (T1->isIntOrIntVectorTy() || T2->isIntOrIntVectorTy()))
-      return false;
-
+    if (T1->getScalarSizeInBits() == 1 && T2->getScalarSizeInBits() == 1) {
+      if (!Config.VectorizeBools)
+        return false;
+    } else {
+      if (!Config.VectorizeInts
+          && (T1->isIntOrIntVectorTy() || T2->isIntOrIntVectorTy()))
+        return false;
+    }
+  
     if (!Config.VectorizeFloats
         && (T1->isFPOrFPVectorTy() || T2->isFPOrFPVectorTy()))
       return false;
@@ -1990,6 +1999,7 @@ llvm::vectorizeBasicBlock(Pass *P, BasicBlock &BB, const VectorizeConfig &C) {
 //===----------------------------------------------------------------------===//
 VectorizeConfig::VectorizeConfig() {
   VectorBits = ::VectorBits;
+  VectorizeBools = !::NoBools;
   VectorizeInts = !::NoInts;
   VectorizeFloats = !::NoFloats;
   VectorizePointers = !::NoPointers;

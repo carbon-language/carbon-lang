@@ -28,6 +28,9 @@ struct VectorizeConfig {
   /// @brief The size of the native vector registers.
   unsigned VectorBits;
 
+  /// @brief Vectorize boolean values.
+  bool VectorizeBools;
+
   /// @brief Vectorize integer values.
   bool VectorizeInts;
 
