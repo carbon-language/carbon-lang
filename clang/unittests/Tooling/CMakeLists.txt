@@ -1,4 +1,5 @@
 add_clang_unittest(ToolingTests
+  CommentHandlerTest.cpp
   CompilationDatabaseTest.cpp
   ToolingTest.cpp
   RecursiveASTVisitorTest.cpp

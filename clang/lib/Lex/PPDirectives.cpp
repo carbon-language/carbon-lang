@@ -329,7 +329,11 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
 
         // If we popped the outermost skipping block, we're done skipping!
         if (!CondInfo.WasSkipping) {
+          // Restore the value of LexingRawMode so that trailing comments
+          // are handled correctly, if we've reached the outermost block.
+          CurPPLexer->LexingRawMode = false;
           CheckEndOfDirective("endif");
+          CurPPLexer->LexingRawMode = true;
           if (Callbacks)
             Callbacks->Endif(Tok.getLocation(), CondInfo.IfLoc);
           break;
@@ -352,7 +356,11 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
         // entered, enter the #else block now.
         if (!CondInfo.WasSkipping && !CondInfo.FoundNonSkip) {
           CondInfo.FoundNonSkip = true;
+          // Restore the value of LexingRawMode so that trailing comments
+          // are handled correctly.
+          CurPPLexer->LexingRawMode = false;
           CheckEndOfDirective("else");
+          CurPPLexer->LexingRawMode = true;
           if (Callbacks)
             Callbacks->Else(Tok.getLocation(), CondInfo.IfLoc);
           break;
