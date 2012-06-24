@@ -9824,7 +9824,6 @@ SDValue X86TargetLowering::LowerFRAME_TO_ARGS_OFFSET(SDValue Op,
 }
 
 SDValue X86TargetLowering::LowerEH_RETURN(SDValue Op, SelectionDAG &DAG) const {
-  MachineFunction &MF = DAG.getMachineFunction();
   SDValue Chain     = Op.getOperand(0);
   SDValue Offset    = Op.getOperand(1);
   SDValue Handler   = Op.getOperand(2);
@@ -9841,7 +9840,6 @@ SDValue X86TargetLowering::LowerEH_RETURN(SDValue Op, SelectionDAG &DAG) const {
   Chain = DAG.getStore(Chain, dl, Handler, StoreAddr, MachinePointerInfo(),
                        false, false, 0);
   Chain = DAG.getCopyToReg(Chain, dl, StoreAddrReg, StoreAddr);
-  MF.getRegInfo().addLiveOut(StoreAddrReg);
 
   return DAG.getNode(X86ISD::EH_RETURN, dl,
                      MVT::Other,
