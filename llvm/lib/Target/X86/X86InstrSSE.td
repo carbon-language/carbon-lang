@@ -2020,28 +2020,15 @@ def CVTPS2PDrm : I<0x5A, MRMSrcMem, (outs VR128:$dst), (ins f64mem:$src),
                        "cvtps2pd\t{$src, $dst|$dst, $src}", [],
                        IIC_SSE_CVT_PD_RM>, TB;
 
-def Int_VCVTPS2PDrr : I<0x5A, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
-                       "vcvtps2pd\t{$src, $dst|$dst, $src}",
-                       [(set VR128:$dst, (int_x86_sse2_cvtps2pd VR128:$src))],
-                       IIC_SSE_CVT_PD_RR>,
-                     TB, VEX, Requires<[HasAVX]>;
-def Int_VCVTPS2PDrm : I<0x5A, MRMSrcMem, (outs VR128:$dst), (ins f64mem:$src),
-                       "vcvtps2pd\t{$src, $dst|$dst, $src}",
-                       [(set VR128:$dst, (int_x86_sse2_cvtps2pd
-                                          (load addr:$src)))],
-                                          IIC_SSE_CVT_PD_RM>,
-                     TB, VEX, Requires<[HasAVX]>;
-def Int_CVTPS2PDrr : I<0x5A, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
-                       "cvtps2pd\t{$src, $dst|$dst, $src}",
-                       [(set VR128:$dst, (int_x86_sse2_cvtps2pd VR128:$src))],
-                       IIC_SSE_CVT_PD_RR>,
-                     TB, Requires<[HasSSE2]>;
-def Int_CVTPS2PDrm : I<0x5A, MRMSrcMem, (outs VR128:$dst), (ins f64mem:$src),
-                       "cvtps2pd\t{$src, $dst|$dst, $src}",
-                       [(set VR128:$dst, (int_x86_sse2_cvtps2pd
-                                          (load addr:$src)))],
-                                          IIC_SSE_CVT_PD_RM>,
-                     TB, Requires<[HasSSE2]>;
+let Predicates = [HasAVX] in {
+  def : Pat<(int_x86_sse2_cvtps2pd VR128:$src),
+            (VCVTPS2PDrr VR128:$src)>;
+}
+
+let Predicates = [HasSSE2] in {
+  def : Pat<(int_x86_sse2_cvtps2pd VR128:$src),
+            (CVTPS2PDrr VR128:$src)>;
+}
 
 // Convert Packed DW Integers to Packed Double FP
 let Predicates = [HasAVX] in {
