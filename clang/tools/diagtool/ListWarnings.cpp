@@ -25,6 +25,7 @@ DEF_DIAGTOOL("list-warnings",
              ListWarnings)
   
 using namespace clang;
+using namespace diagtool;
 
 namespace {
 struct Entry {
@@ -52,9 +53,11 @@ int ListWarnings::run(unsigned int argc, char **argv, llvm::raw_ostream &out) {
   std::vector<Entry> Flagged, Unflagged;
   llvm::StringMap<std::vector<unsigned> > flagHistogram;
   
-  for (const diagtool::DiagnosticRecord *di = diagtool::BuiltinDiagnostics,
-       *de = di + diagtool::BuiltinDiagnosticsCount; di != de; ++di) {
-    
+  ArrayRef<DiagnosticRecord> AllDiagnostics = getBuiltinDiagnosticsByName();
+
+  for (ArrayRef<DiagnosticRecord>::iterator di = AllDiagnostics.begin(),
+                                            de = AllDiagnostics.end();
+       di != de; ++di) {
     unsigned diagID = di->DiagID;
     
     if (DiagnosticIDs::isBuiltinNote(diagID))
@@ -74,9 +77,6 @@ int ListWarnings::run(unsigned int argc, char **argv, llvm::raw_ostream &out) {
     }
   }
   
-  std::sort(Flagged.begin(), Flagged.end());
-  std::sort(Unflagged.begin(), Unflagged.end());
-
   out << "Warnings with flags (" << Flagged.size() << "):\n";
   printEntries(Flagged, out);
   

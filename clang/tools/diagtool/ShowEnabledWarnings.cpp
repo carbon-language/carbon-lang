@@ -21,6 +21,7 @@ DEF_DIAGTOOL("show-enabled",
              ShowEnabledWarnings)
 
 using namespace clang;
+using namespace diagtool;
 
 namespace {
   struct PrettyDiag {
@@ -109,10 +110,12 @@ int ShowEnabledWarnings::run(unsigned int argc, char **argv, raw_ostream &Out) {
   // which ones are turned on.
   // FIXME: It would be very nice to print which flags are turning on which
   // diagnostics, but this can be done with a diff.
+  ArrayRef<DiagnosticRecord> AllDiagnostics = getBuiltinDiagnosticsByName();
   std::vector<PrettyDiag> Active;
 
-  for (const diagtool::DiagnosticRecord *I = diagtool::BuiltinDiagnostics,
-       *E = I + diagtool::BuiltinDiagnosticsCount; I != E; ++I) {
+  for (ArrayRef<DiagnosticRecord>::iterator I = AllDiagnostics.begin(),
+                                            E = AllDiagnostics.end();
+       I != E; ++I) {
     unsigned DiagID = I->DiagID;
     
     if (DiagnosticIDs::isBuiltinNote(DiagID))
@@ -129,8 +132,6 @@ int ShowEnabledWarnings::run(unsigned int argc, char **argv, raw_ostream &Out) {
     StringRef WarningOpt = DiagnosticIDs::getWarningOptionForDiag(DiagID);
     Active.push_back(PrettyDiag(I->getName(), WarningOpt, DiagLevel));
   }
-
-  std::sort(Active.begin(), Active.end());
 
   // Print them all out.
   for (std::vector<PrettyDiag>::const_iterator I = Active.begin(),

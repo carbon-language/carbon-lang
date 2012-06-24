@@ -8,6 +8,7 @@ add_clang_executable(diagtool
   DiagnosticNames.cpp
   ListWarnings.cpp
   ShowEnabledWarnings.cpp
+  TreeView.cpp
 )
 
 add_dependencies(diagtool
