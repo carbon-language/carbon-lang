@@ -1049,7 +1049,7 @@ void MachineVerifier::visitMachineFunctionAfter() {
   // Now check liveness info if available
   calcRegsRequired();
 
-  if (MRI->isSSA() && !MF->empty()) {
+  if (!MF->empty()) {
     BBInfo &MInfo = MBBInfoMap[&MF->front()];
     for (RegSet::iterator
          I = MInfo.vregsRequired.begin(), E = MInfo.vregsRequired.end(); I != E;
@@ -1332,15 +1332,18 @@ void MachineVerifier::verifyLiveIntervals() {
           ++MFI;
           continue;
         }
+
+        // Is VNI a PHI-def in the current block?
+        bool IsPHI = VNI->isPHIDef() &&
+                     VNI->def == LiveInts->getMBBStartIdx(MFI);
+
         // Check that VNI is live-out of all predecessors.
         for (MachineBasicBlock::const_pred_iterator PI = MFI->pred_begin(),
              PE = MFI->pred_end(); PI != PE; ++PI) {
           SlotIndex PEnd = LiveInts->getMBBEndIdx(*PI);
           const VNInfo *PVNI = LI.getVNInfoBefore(PEnd);
 
-          if (VNI->isPHIDef() && VNI->def == LiveInts->getMBBStartIdx(MFI))
-            continue;
-
+          // All predecessors must have a live-out value.
           if (!PVNI) {
             report("Register not marked live out of predecessor", *PI);
             *OS << "Valno #" << VNI->id << " live into BB#" << MFI->getNumber()
@@ -1349,12 +1352,14 @@ void MachineVerifier::verifyLiveIntervals() {
             continue;
           }
 
-          if (PVNI != VNI) {
+          // Only PHI-defs can take different predecessor values.
+          if (!IsPHI && PVNI != VNI) {
             report("Different value live out of predecessor", *PI);
             *OS << "Valno #" << PVNI->id << " live out of BB#"
                 << (*PI)->getNumber() << '@' << PEnd
                 << "\nValno #" << VNI->id << " live into BB#" << MFI->getNumber()
-                << '@' << LiveInts->getMBBStartIdx(MFI) << " in " << LI << '\n';
+                << '@' << LiveInts->getMBBStartIdx(MFI) << " in "
+                << PrintReg(Reg) << ": " << LI << '\n';
           }
         }
         if (&*MFI == EndMBB)
