@@ -122,7 +122,7 @@ class SizeClassAllocator64 {
   uptr TotalMemoryUsedIncludingFreeLists() {
     uptr res = 0;
     for (uptr i = 0; i < kNumClasses; i++)
-      res += GetRegionInfo(i)->allocated;
+      res += GetRegionInfo(i)->allocated_user;
     return res;
   }
 
@@ -130,6 +130,7 @@ class SizeClassAllocator64 {
   void TestOnlyUnmap() {
     UnmapOrDie(reinterpret_cast<void*>(AllocBeg()), AllocSize());
   }
+
  private:
   static const uptr kNumClasses = 256;  // Power of two <= 256
   COMPILER_CHECK(kNumClasses <= SizeClassMap::kNumClasses);
@@ -146,9 +147,11 @@ class SizeClassAllocator64 {
   struct RegionInfo {
     uptr mutex;  // FIXME
     LifoListNode *free_list;
-    uptr allocated;
+    uptr allocated_user;  // Bytes allocated for user memory.
+    uptr allocated_meta;  // Bytes allocated for metadata.
     char padding[kCacheLineSize -
-                 sizeof(mutex) - sizeof(free_list) - sizeof(allocated)];
+                 sizeof(mutex) - sizeof(free_list) -
+                 sizeof(allocated_user) - sizeof(allocated_meta)];
   };
   COMPILER_CHECK(sizeof(RegionInfo) == kCacheLineSize);
 
@@ -183,18 +186,21 @@ class SizeClassAllocator64 {
 
   LifoListNode *PopulateFreeList(uptr class_id, RegionInfo *region) {
     uptr size = SizeClassMap::Size(class_id);
-    uptr beg_idx = region->allocated;
+    uptr beg_idx = region->allocated_user;
     uptr end_idx = beg_idx + kPopulateSize;
     LifoListNode *res = 0;
     uptr region_beg = kSpaceBeg + kRegionSize * class_id;
     uptr idx = beg_idx;
+    uptr i = 0;
     do {  // do-while loop because we need to put at least one item.
       uptr p = region_beg + idx;
       PushLifoList(&res, reinterpret_cast<LifoListNode*>(p));
       idx += size;
+      i++;
     } while (idx < end_idx);
-    CHECK_LT(idx, kRegionSize);
-    region->allocated += idx - beg_idx;
+    region->allocated_user += idx - beg_idx;
+    region->allocated_meta += i * kMetadataSize;
+    CHECK_LT(region->allocated_user + region->allocated_meta, kRegionSize);
     return res;
   }
 

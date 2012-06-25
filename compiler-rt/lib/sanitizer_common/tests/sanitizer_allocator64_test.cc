@@ -125,3 +125,22 @@ TEST(SanitizerCommon, SizeClassAllocator64MetadataStress) {
 
   a.TestOnlyUnmap();
 }
+
+void FailInAssertionOnOOM() {
+  typedef DefaultSizeClassMap SCMap;
+  typedef SizeClassAllocator64<kAllocatorSpace, kAllocatorSize,
+          16, SCMap> Allocator;
+  Allocator a;
+  a.Init();
+  const uptr size = 1 << 20;
+  for (int i = 0; i < 1000000; i++) {
+    a.Allocate(size);
+  }
+
+  a.TestOnlyUnmap();
+}
+
+TEST(SanitizerCommon, SizeClassAllocator64Overflow) {
+  EXPECT_DEATH(FailInAssertionOnOOM(),
+               "allocated_user.*allocated_meta.*kRegionSize");
+}
