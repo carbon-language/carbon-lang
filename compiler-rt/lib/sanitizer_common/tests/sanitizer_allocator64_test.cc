@@ -90,7 +90,7 @@ TEST(SanitizerCommon, SizeClassAllocator64) {
       a.Deallocate(x);
     }
     allocated.clear();
-    uptr total_allocated = a.TotalMemoryUsedIncludingFreeLists();
+    uptr total_allocated = a.TotalMemoryUsed();
     if (last_total_allocated == 0)
       last_total_allocated = total_allocated;
     CHECK_EQ(last_total_allocated, total_allocated);

@@ -103,6 +103,7 @@ class SizeClassAllocator64 {
   }
   NOINLINE
   void Deallocate(void *p) {
+    CHECK(PointerIsMine(p));
     DeallocateBySizeClass(p, GetSizeClass(p));
   }
   bool PointerIsMine(void *p) {
@@ -119,7 +120,7 @@ class SizeClassAllocator64 {
         (1 + chunk_idx) * kMetadataSize;
   }
 
-  uptr TotalMemoryUsedIncludingFreeLists() {
+  uptr TotalMemoryUsed() {
     uptr res = 0;
     for (uptr i = 0; i < kNumClasses; i++)
       res += GetRegionInfo(i)->allocated_user;
@@ -153,7 +154,11 @@ class SizeClassAllocator64 {
   };
   COMPILER_CHECK(sizeof(RegionInfo) == kCacheLineSize);
 
-  uptr AdditionalSize() { return sizeof(RegionInfo) * kNumClasses; }
+  uptr AdditionalSize() { 
+    uptr res = sizeof(RegionInfo) * kNumClasses;
+    CHECK_EQ(res % kPageSize, 0);
+    return res;
+  }
   uptr AllocBeg()  { return kSpaceBeg  - AdditionalSize(); }
   uptr AllocSize() { return kSpaceSize + AdditionalSize(); }
 
@@ -170,7 +175,7 @@ class SizeClassAllocator64 {
 
   LifoListNode *PopLifoList(LifoListNode **list) {
     LifoListNode *res = *list;
-    *list = (*list)->next;
+    *list = res->next;
     return res;
   }
 
