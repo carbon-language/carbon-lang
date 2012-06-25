@@ -9028,13 +9028,6 @@ Sema::BuildCXXConstructExpr(SourceLocation ConstructLoc, QualType DeclInitType,
   unsigned NumExprs = ExprArgs.size();
   Expr **Exprs = (Expr **)ExprArgs.release();
 
-  for (specific_attr_iterator<NonNullAttr>
-           i = Constructor->specific_attr_begin<NonNullAttr>(),
-           e = Constructor->specific_attr_end<NonNullAttr>(); i != e; ++i) {
-    const NonNullAttr *NonNull = *i;
-    CheckNonNullArguments(NonNull, ExprArgs.get(), ConstructLoc);
-  }
-
   MarkFunctionReferenced(ConstructLoc, Constructor);
   return Owned(CXXConstructExpr::Create(Context, DeclInitType, ConstructLoc,
                                         Constructor, Elidable, Exprs, NumExprs,
@@ -9100,7 +9093,7 @@ void Sema::FinalizeVarWithDestructor(VarDecl *VD, const RecordType *Record) {
 bool 
 Sema::CompleteConstructorCall(CXXConstructorDecl *Constructor,
                               MultiExprArg ArgsPtr,
-                              SourceLocation Loc,                                    
+                              SourceLocation Loc,
                               ASTOwningVector<Expr*> &ConvertedArgs,
                               bool AllowExplicit) {
   // FIXME: This duplicates a lot of code from Sema::ConvertArgumentsForCall.
@@ -9128,7 +9121,8 @@ Sema::CompleteConstructorCall(CXXConstructorDecl *Constructor,
 
   DiagnoseSentinelCalls(Constructor, Loc, AllArgs.data(), AllArgs.size());
 
-  // FIXME: Missing call to CheckFunctionCall or equivalent
+  CheckConstructorCall(Constructor, AllArgs.data(), AllArgs.size(),
+                       Proto, Loc);
 
   return Invalid;
 }
