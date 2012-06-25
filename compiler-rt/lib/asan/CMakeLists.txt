@@ -1,7 +1,5 @@
 # Build for the AddressSanitizer runtime support library.
 
-include_directories(..)
-
 set(ASAN_SOURCES
   asan_allocator.cc
   asan_globals.cc
@@ -23,13 +21,14 @@ set(ASAN_SOURCES
   asan_win.cc
   )
 
-set(ASAN_CFLAGS "-fvisibility=hidden")
+include_directories(..)
+
+set(ASAN_CFLAGS "-fPIC -fno-exceptions -funwind-tables -fvisibility=hidden")
 
 set(ASAN_COMMON_DEFINITIONS
-	ASAN_UAR=0
 	ASAN_HAS_EXCEPTIONS=1
-	ASAN_HAS_BLACKLIST=1
-	ASAN_NEEDS_SEGV=1)
+	ASAN_NEEDS_SEGV=1
+  )
 
 if(CAN_TARGET_X86_64)
   add_library(clang_rt.asan-x86_64 STATIC
@@ -52,4 +51,8 @@ if(CAN_TARGET_I386)
 		"${ASAN_CFLAGS} ${TARGET_I386_CFLAGS}")
 	set_property(TARGET clang_rt.asan-x86_64 APPEND PROPERTY COMPILE_DEFINITIONS
 		${ASAN_COMMON_DEFINITIONS})
+endif()
+
+if(LLVM_INCLUDE_TESTS)
+  add_subdirectory(tests)
 endif()

@@ -13,7 +13,7 @@ set(SANITIZER_SOURCES
   sanitizer_win.cc
   )
 
-set(SANITIZER_CFLAGS "-fvisibility=hidden")
+set(SANITIZER_CFLAGS "-fPIC -fno-exceptions -funwind-tables -fvisibility=hidden")
 
 set(SANITIZER_COMMON_DEFINITIONS
 	SANITIZER_HAS_EXCEPTIONS=1)

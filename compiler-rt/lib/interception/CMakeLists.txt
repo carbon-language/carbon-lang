@@ -13,7 +13,7 @@ if (APPLE)
   list(APPEND INTERCEPTION_SOURCES mach_override/mach_override.c)
 endif ()
 
-set(INTERCEPTION_CFLAGS "-fvisibility=hidden")
+set(INTERCEPTION_CFLAGS "-fPIC -fno-exceptions -funwind-tables -fvisibility=hidden")
 
 set(INTERCEPTION_COMMON_DEFINITIONS
 	INTERCEPTION_HAS_EXCEPTIONS=1)
