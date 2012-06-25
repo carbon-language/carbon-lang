@@ -19,7 +19,7 @@ INSTALL_DIR=$(DSTROOT)/$(INSTALL_PREFIX)
 .PHONY: help installsrc clean installheaders do-installhdrs install
 
 help::
-	echo Use make install DSTROOT=<destination>
+	@echo "Use make install DSTROOT=<destination>"
 
 installsrc:: $(SRCROOT)
 
