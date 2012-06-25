@@ -1338,8 +1338,7 @@ bool MallocChecker::doesNotFreeMemory(const CallOrObjCMessage *Call,
   }
 
   // If it's not a system call, assume it frees memory.
-  SourceManager &SM = ASTC.getSourceManager();
-  if (!SM.isInSystemHeader(D->getLocation()))
+  if (!Call->isInSystemHeader())
     return false;
 
   // Process C/ObjC functions.

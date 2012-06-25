@@ -5,6 +5,21 @@ void clang_analyzer_eval(bool);
 typedef typeof(sizeof(int)) size_t;
 extern "C" void *malloc(size_t);
 
+int someGlobal;
+void testImplicitlyDeclaredGlobalNew() {
+  if (someGlobal != 0)
+    return;
+
+  // This used to crash because the global operator new is being implicitly
+  // declared and it does not have a valid source location. (PR13090)
+  void *x = ::operator new(0);
+  ::operator delete(x);
+
+  // Check that the new/delete did not invalidate someGlobal;
+  clang_analyzer_eval(someGlobal == 0); // expected-warning{{TRUE}}
+}
+
+
 // This is the standard placement new.
 inline void* operator new(size_t, void* __p) throw()
 {

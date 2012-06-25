@@ -199,10 +199,16 @@ public:
 
   /// Check if the callee is declared in the system header.
   bool isInSystemHeader() const {
-    if (const Decl *FD = getDecl()) {
+    if (const Decl *D = getDecl()) {
       const SourceManager &SM =
         State->getStateManager().getContext().getSourceManager();
-      return SM.isInSystemHeader(FD->getLocation());
+      SourceLocation Loc = D->getLocation();
+      // Be careful: the implicit declarations of operator new/delete have
+      // invalid source locations but should still count as system files.
+      if (Loc.isValid())
+        return SM.isInSystemHeader(D->getLocation());
+      else if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
+        return FD->isOverloadedOperator() && FD->isImplicit() && FD->isGlobal();
     }
     return false;
   }
