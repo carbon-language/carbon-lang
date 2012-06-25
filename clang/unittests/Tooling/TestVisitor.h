@@ -23,7 +23,7 @@
 
 namespace clang {
 
-/// \brief Base class for sipmle RecursiveASTVisitor based tests.
+/// \brief Base class for simple RecursiveASTVisitor based tests.
 ///
 /// This is a drop-in replacement for RecursiveASTVisitor itself, with the
 /// additional capability of running it over a snippet of code.
@@ -33,6 +33,8 @@ template <typename T>
 class TestVisitor : public RecursiveASTVisitor<T> {
 public:
   TestVisitor() { }
+
+  virtual ~TestVisitor() { }
 
   /// \brief Runs the current AST visitor over the given code.
   bool runOver(StringRef Code) {
@@ -89,7 +91,7 @@ public:
   ExpectedLocationVisitor()
     : ExpectedLine(0), ExpectedColumn(0), Found(false) {}
 
-  ~ExpectedLocationVisitor() {
+  virtual ~ExpectedLocationVisitor() {
     EXPECT_TRUE(Found)
       << "Expected \"" << ExpectedMatch << "\" at " << ExpectedLine
       << ":" << ExpectedColumn << PartialMatches;
