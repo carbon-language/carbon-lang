@@ -184,6 +184,11 @@ public:
     CALLSITE_DELEGATE_SETTER(setAttributes(PAL));
   }
 
+  /// \brief Return true if this function has the given attribute.
+  bool hasFnAttr(Attributes N) const {
+    CALLSITE_DELEGATE_GETTER(hasFnAttr(N));
+  }
+
   /// paramHasAttr - whether the call or the callee has the given attribute.
   bool paramHasAttr(uint16_t i, Attributes attr) const {
     CALLSITE_DELEGATE_GETTER(paramHasAttr(i, attr));
