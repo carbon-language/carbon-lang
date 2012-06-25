@@ -171,19 +171,26 @@ bool PHIElimination::EliminatePHINodes(MachineFunction &MF,
   return true;
 }
 
+/// isImplicitlyDefined - Return true if all defs of VirtReg are implicit-defs.
+/// This includes registers with no defs.
+static bool isImplicitlyDefined(unsigned VirtReg,
+                                const MachineRegisterInfo *MRI) {
+  for (MachineRegisterInfo::def_iterator DI = MRI->def_begin(VirtReg),
+       DE = MRI->def_end(); DI != DE; ++DI)
+    if (!DI->isImplicitDef())
+      return false;
+  return true;
+}
+
 /// isSourceDefinedByImplicitDef - Return true if all sources of the phi node
 /// are implicit_def's.
 static bool isSourceDefinedByImplicitDef(const MachineInstr *MPhi,
                                          const MachineRegisterInfo *MRI) {
-  for (unsigned i = 1; i != MPhi->getNumOperands(); i += 2) {
-    unsigned SrcReg = MPhi->getOperand(i).getReg();
-    const MachineInstr *DefMI = MRI->getVRegDef(SrcReg);
-    if (!DefMI || !DefMI->isImplicitDef())
+  for (unsigned i = 1; i != MPhi->getNumOperands(); i += 2)
+    if (!isImplicitlyDefined(MPhi->getOperand(i).getReg(), MRI))
       return false;
-  }
   return true;
 }
-
 
 
 /// LowerAtomicPHINode - Lower the PHI node at the top of the specified block,
@@ -287,21 +294,14 @@ void PHIElimination::LowerAtomicPHINode(
   for (int i = NumSrcs - 1; i >= 0; --i) {
     unsigned SrcReg = MPhi->getOperand(i*2+1).getReg();
     unsigned SrcSubReg = MPhi->getOperand(i*2+1).getSubReg();
-
+    bool SrcUndef = MPhi->getOperand(i*2+1).isUndef() ||
+      isImplicitlyDefined(SrcReg, MRI);
     assert(TargetRegisterInfo::isVirtualRegister(SrcReg) &&
            "Machine PHI Operands must all be virtual registers!");
 
     // Get the MachineBasicBlock equivalent of the BasicBlock that is the source
     // path the PHI.
     MachineBasicBlock &opBlock = *MPhi->getOperand(i*2+2).getMBB();
-
-    // If source is defined by an implicit def, there is no need to insert a
-    // copy.
-    MachineInstr *DefMI = MRI->getVRegDef(SrcReg);
-    if (DefMI->isImplicitDef()) {
-      ImpDefs.insert(DefMI);
-      continue;
-    }
 
     // Check to make sure we haven't already emitted the copy for this block.
     // This can happen because PHI nodes may have multiple entries for the same
@@ -315,12 +315,27 @@ void PHIElimination::LowerAtomicPHINode(
       findPHICopyInsertPoint(&opBlock, &MBB, SrcReg);
 
     // Insert the copy.
-    if (!reusedIncoming && IncomingReg)
-      BuildMI(opBlock, InsertPos, MPhi->getDebugLoc(),
-              TII->get(TargetOpcode::COPY), IncomingReg).addReg(SrcReg, 0, SrcSubReg);
+    if (!reusedIncoming && IncomingReg) {
+      if (SrcUndef) {
+        // The source register is undefined, so there is no need for a real
+        // COPY, but we still need to ensure joint dominance by defs.
+        // Insert an IMPLICIT_DEF instruction.
+        BuildMI(opBlock, InsertPos, MPhi->getDebugLoc(),
+                TII->get(TargetOpcode::IMPLICIT_DEF), IncomingReg);
+
+        // Clean up the old implicit-def, if there even was one.
+        if (MachineInstr *DefMI = MRI->getVRegDef(SrcReg))
+          if (DefMI->isImplicitDef())
+            ImpDefs.insert(DefMI);
+      } else {
+        BuildMI(opBlock, InsertPos, MPhi->getDebugLoc(),
+                TII->get(TargetOpcode::COPY), IncomingReg)
+          .addReg(SrcReg, 0, SrcSubReg);
+      }
+    }
 
     // Now update live variable information if we have it.  Otherwise we're done
-    if (!LV) continue;
+    if (SrcUndef || !LV) continue;
 
     // We want to be able to insert a kill of the register if this PHI (aka, the
     // copy we just inserted) is the last use of the source value.  Live
