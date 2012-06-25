@@ -1878,7 +1878,7 @@ def VCVTTPS2DQrr : VSSI<0x5B, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
 def VCVTTPS2DQrm : VSSI<0x5B, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
                         "cvttps2dq\t{$src, $dst|$dst, $src}",
                         [(set VR128:$dst, (int_x86_sse2_cvttps2dq
-                                           (memop addr:$src)))],
+                                           (memopv4f32 addr:$src)))],
                                            IIC_SSE_CVT_PS_RM>, VEX;
 def VCVTTPS2DQYrr : VSSI<0x5B, MRMSrcReg, (outs VR256:$dst), (ins VR256:$src),
                          "cvttps2dq\t{$src, $dst|$dst, $src}",
@@ -1899,7 +1899,7 @@ def CVTTPS2DQrr : SSI<0x5B, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
 def CVTTPS2DQrm : SSI<0x5B, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
                       "cvttps2dq\t{$src, $dst|$dst, $src}",
                       [(set VR128:$dst,
-                            (int_x86_sse2_cvttps2dq (memop addr:$src)))],
+                            (int_x86_sse2_cvttps2dq (memopv4f32 addr:$src)))],
                             IIC_SSE_CVT_PS_RM>;
 
 let Predicates = [HasAVX] in {
@@ -1910,7 +1910,7 @@ let Predicates = [HasAVX] in {
 
   def : Pat<(int_x86_sse2_cvtdq2ps VR128:$src),
             (VCVTDQ2PSrr VR128:$src)>;
-  def : Pat<(int_x86_sse2_cvtdq2ps (bitconvert (memopv2i64 addr:$src))),
+  def : Pat<(int_x86_sse2_cvtdq2ps (bc_v4i32 (memopv2i64 addr:$src))),
             (VCVTDQ2PSrm addr:$src)>;
 
   def : Pat<(v4i32 (fp_to_sint (v4f32 VR128:$src))),
@@ -1937,7 +1937,7 @@ let Predicates = [HasSSE2] in {
 
   def : Pat<(int_x86_sse2_cvtdq2ps VR128:$src),
             (CVTDQ2PSrr VR128:$src)>;
-  def : Pat<(int_x86_sse2_cvtdq2ps (bitconvert (memopv2i64 addr:$src))),
+  def : Pat<(int_x86_sse2_cvtdq2ps (bc_v4i32 (memopv2i64 addr:$src))),
             (CVTDQ2PSrm addr:$src)>;
 
   def : Pat<(v4i32 (fp_to_sint (v4f32 VR128:$src))),
@@ -1951,12 +1951,7 @@ def VCVTTPD2DQrr : VPDI<0xE6, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                         [(set VR128:$dst,
                               (int_x86_sse2_cvttpd2dq VR128:$src))],
                               IIC_SSE_CVT_PD_RR>, VEX;
-let isCodeGenOnly = 1 in
-def VCVTTPD2DQrm : VPDI<0xE6, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
-                        "cvttpd2dq\t{$src, $dst|$dst, $src}",
-                        [(set VR128:$dst, (int_x86_sse2_cvttpd2dq
-                                               (memop addr:$src)))],
-                                               IIC_SSE_CVT_PD_RM>, VEX;
+
 def CVTTPD2DQrr : PDI<0xE6, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                       "cvttpd2dq\t{$src, $dst|$dst, $src}",
                       [(set VR128:$dst, (int_x86_sse2_cvttpd2dq VR128:$src))],
@@ -1964,7 +1959,7 @@ def CVTTPD2DQrr : PDI<0xE6, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
 def CVTTPD2DQrm : PDI<0xE6, MRMSrcMem, (outs VR128:$dst),(ins f128mem:$src),
                       "cvttpd2dq\t{$src, $dst|$dst, $src}",
                       [(set VR128:$dst, (int_x86_sse2_cvttpd2dq
-                                        (memop addr:$src)))],
+                                        (memopv2f64 addr:$src)))],
                                         IIC_SSE_CVT_PD_RM>;
 
 // The assembler can recognize rr 256-bit instructions by seeing a ymm
@@ -1979,7 +1974,9 @@ def VCVTTPD2DQXrr : VPDI<0xE6, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                          "cvttpd2dqx\t{$src, $dst|$dst, $src}", [],
                          IIC_SSE_CVT_PD_RR>, VEX;
 def VCVTTPD2DQXrm : VPDI<0xE6, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
-                         "cvttpd2dqx\t{$src, $dst|$dst, $src}", [],
+                         "cvttpd2dqx\t{$src, $dst|$dst, $src}",
+                         [(set VR128:$dst, (int_x86_sse2_cvttpd2dq
+                                            (memopv2f64 addr:$src)))],
                          IIC_SSE_CVT_PD_RM>, VEX;
 
 // YMM only
