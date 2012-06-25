@@ -149,9 +149,7 @@ class SizeClassAllocator64 {
     LifoListNode *free_list;
     uptr allocated_user;  // Bytes allocated for user memory.
     uptr allocated_meta;  // Bytes allocated for metadata.
-    char padding[kCacheLineSize -
-                 sizeof(mutex) - sizeof(free_list) -
-                 sizeof(allocated_user) - sizeof(allocated_meta)];
+    char padding[kCacheLineSize - 4 * sizeof(uptr)];
   };
   COMPILER_CHECK(sizeof(RegionInfo) == kCacheLineSize);
 
