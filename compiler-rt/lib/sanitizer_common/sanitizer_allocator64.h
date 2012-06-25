@@ -154,7 +154,7 @@ class SizeClassAllocator64 {
   };
   COMPILER_CHECK(sizeof(RegionInfo) == kCacheLineSize);
 
-  uptr AdditionalSize() { 
+  uptr AdditionalSize() {
     uptr res = sizeof(RegionInfo) * kNumClasses;
     CHECK_EQ(res % kPageSize, 0);
     return res;
