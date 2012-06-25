@@ -287,7 +287,9 @@ namespace {
     /// parameters' function scope indices.
     const APValue *Arguments;
 
-    typedef llvm::DenseMap<const Expr*, APValue> MapTy;
+    // Note that we intentionally use std::map here so that references to
+    // values are stable.
+    typedef std::map<const Expr*, APValue> MapTy;
     typedef MapTy::const_iterator temp_iterator;
     /// Temporaries - Temporary lvalues materialized within this stack frame.
     MapTy Temporaries;
@@ -361,7 +363,9 @@ namespace {
     /// NextCallIndex - The next call index to assign.
     unsigned NextCallIndex;
 
-    typedef llvm::DenseMap<const OpaqueValueExpr*, APValue> MapTy;
+    // Note that we intentionally use std::map here so that references
+    // to values are stable.
+    typedef std::map<const OpaqueValueExpr*, APValue> MapTy;
     /// OpaqueValues - Values used as the common expression in a
     /// BinaryConditionalOperator.
     MapTy OpaqueValues;
