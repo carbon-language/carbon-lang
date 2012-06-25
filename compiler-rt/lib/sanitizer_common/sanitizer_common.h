@@ -48,7 +48,10 @@ bool MemoryRangeIsAvailable(uptr range_start, uptr range_end);
 
 // Internal allocator
 void *InternalAlloc(uptr size);
-void InternalFree(void *addr);
+void InternalFree(void *p);
+// Given the pointer p into a valid allocated block,
+// returns a pointer to the beginning of the block.
+void *InternalAllocBlock(void *p);
 
 // IO
 void RawWrite(const char *buffer);

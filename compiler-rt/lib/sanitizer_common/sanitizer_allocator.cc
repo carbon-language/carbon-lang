@@ -28,20 +28,27 @@ extern "C" void __libc_free(void *ptr);
 
 namespace __sanitizer {
 
-static const u64 kInternalAllocBlockMagic = 0x7A6CB03ABCEBC042ull;
+const u64 kBlockMagic = 0x6A6CB03ABCEBC041ull;
 
 void *InternalAlloc(uptr size) {
   void *p = LIBC_MALLOC(size + sizeof(u64));
-  ((u64*)p)[0] = kInternalAllocBlockMagic;
+  ((u64*)p)[0] = kBlockMagic;
   return (char*)p + sizeof(u64);
 }
 
 void InternalFree(void *addr) {
   if (!addr) return;
   addr = (char*)addr - sizeof(u64);
-  CHECK_EQ(((u64*)addr)[0], kInternalAllocBlockMagic);
+  CHECK_EQ(((u64*)addr)[0], kBlockMagic);
   ((u64*)addr)[0] = 0;
   LIBC_FREE(addr);
+}
+
+void *InternalAllocBlock(void *p) {
+  CHECK_NE(p, (void*)0);
+  u64 *pp = (u64*)((uptr)p & ~0x7);
+  for (; pp[0] != kBlockMagic; pp--) {}
+  return pp + 1;
 }
 
 }  // namespace __sanitizer
