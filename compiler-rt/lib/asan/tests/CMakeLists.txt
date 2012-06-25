@@ -38,7 +38,6 @@ set(HOST_HAS_ASAN on)
 if(HOST_HAS_ASAN)
 	add_asan_test(AsanInstrumentationTests
 		asan_globals_test.cc
-		asan_interface_test.cc
 		asan_test.cc
 		asan_break_optimization.cc
 		)
