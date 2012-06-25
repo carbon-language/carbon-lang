@@ -671,12 +671,3 @@ ReturnInst *llvm::FoldReturnIntoUncondBranch(ReturnInst *RI, BasicBlock *BB,
   return cast<ReturnInst>(NewRet);
 }
 
-/// GetFirstDebugLocInBasicBlock - Return first valid DebugLoc entry in a 
-/// given basic block.
-DebugLoc llvm::GetFirstDebugLocInBasicBlock(const BasicBlock *BB) {
-  if (const Instruction *I = BB->getFirstNonPHI())
-    return I->getDebugLoc();
-  // Scanning entire block may be too expensive, if the first instruction
-  // does not have valid location info.
-  return DebugLoc();
-}

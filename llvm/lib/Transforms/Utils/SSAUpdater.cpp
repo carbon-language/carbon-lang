@@ -190,8 +190,11 @@ Value *SSAUpdater::GetValueInMiddleOfBlock(BasicBlock *BB) {
     return V;
   }
 
-  // Set DebugLoc.
-  InsertedPHI->setDebugLoc(GetFirstDebugLocInBasicBlock(BB));
+  // Set the DebugLoc of the inserted PHI, if available.
+  DebugLoc DL;
+  if (const Instruction *I = BB->getFirstNonPHI())
+      DL = I->getDebugLoc();
+  InsertedPHI->setDebugLoc(DL);
 
   // If the client wants to know about all new instructions, tell it.
   if (InsertedPHIs) InsertedPHIs->push_back(InsertedPHI);
