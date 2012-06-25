@@ -12,7 +12,6 @@ CheckArches = \
   $(shell \
     result=""; \
     for arch in $(1); do \
-      if [ "$$arch" = "armv6" -o "$$arch" = "armv7" ]; then continue; fi; \
       if $(CC) -arch $$arch -c \
 	  -integrated-as \
 	  $(ProjSrcRoot)/make/platform/clang_darwin_test_input.c \
@@ -45,12 +44,6 @@ UniversalArchs.eprintf := $(call CheckArches,i386,eprintf)
 Configs += 10.4
 UniversalArchs.10.4 := $(call CheckArches,i386 x86_64,10.4)
 
-# Configuration for targetting iOS, for some ARMv6 functions, which must be
-# in the same linkage unit, and for a couple of other functions that didn't
-# make it into libSystem.
-Configs += ios
-UniversalArchs.ios := $(call CheckArches,i386 x86_64 armv6 armv7,ios)
-
 # Configuration for targetting OSX. These functions may not be in libSystem
 # so we should provide our own.
 Configs += osx
@@ -58,13 +51,11 @@ UniversalArchs.osx := $(call CheckArches,i386 x86_64,osx)
 
 # Configuration for use with kernel/kexts.
 Configs += cc_kext
-UniversalArchs.cc_kext := $(call CheckArches,armv6 armv7 i386 x86_64,cc_kext)
+UniversalArchs.cc_kext := $(call CheckArches,i386 x86_64,cc_kext)
 
 # Configurations which define the profiling support functions.
 Configs += profile_osx
 UniversalArchs.profile_osx := $(call CheckArches,i386 x86_64,profile_osx)
-Configs += profile_ios
-UniversalArchs.profile_ios := $(call CheckArches,i386 x86_64 armv6 armv7,profile_ios)
 
 # Configurations which define the ASAN support functions.
 Configs += asan_osx
@@ -96,54 +87,28 @@ CFLAGS := -Wall -Werror -O3 -fomit-frame-pointer
 # supported deployment target -- nothing in the compiler-rt libraries should
 # actually depend on the deployment target.
 OSX_DEPLOYMENT_ARGS := -mmacosx-version-min=10.4
-IOS_DEPLOYMENT_ARGS := -miphoneos-version-min=1.0
-IOSSIM_DEPLOYMENT_ARGS := -miphoneos-version-min=1.0
 
 # Use our stub SDK as the sysroot to support more portable building.
 OSX_DEPLOYMENT_ARGS += -isysroot $(ProjSrcRoot)/SDKs/darwin
-IOS_DEPLOYMENT_ARGS += -isysroot $(ProjSrcRoot)/SDKs/darwin
-IOSSIM_DEPLOYMENT_ARGS += -isysroot $(ProjSrcRoot)/SDKs/darwin
 
 CFLAGS.eprintf		:= $(CFLAGS) $(OSX_DEPLOYMENT_ARGS)
 CFLAGS.10.4		:= $(CFLAGS) $(OSX_DEPLOYMENT_ARGS)
 # FIXME: We can't build ASAN with our stub SDK yet.
 CFLAGS.asan_osx         := $(CFLAGS) -mmacosx-version-min=10.5 -fno-builtin
 
-CFLAGS.ios.i386		:= $(CFLAGS) $(IOSSIM_DEPLOYMENT_ARGS)
-CFLAGS.ios.x86_64	:= $(CFLAGS) $(IOSSIM_DEPLOYMENT_ARGS)
-CFLAGS.ios.armv6	:= $(CFLAGS) $(IOS_DEPLOYMENT_ARGS)
-CFLAGS.ios.armv7	:= $(CFLAGS) $(IOS_DEPLOYMENT_ARGS)
 CFLAGS.osx.i386		:= $(CFLAGS) $(OSX_DEPLOYMENT_ARGS)
 CFLAGS.osx.x86_64	:= $(CFLAGS) $(OSX_DEPLOYMENT_ARGS)
 CFLAGS.cc_kext.i386	:= $(CFLAGS) $(OSX_DEPLOYMENT_ARGS)
 CFLAGS.cc_kext.x86_64	:= $(CFLAGS) $(OSX_DEPLOYMENT_ARGS)
-CFLAGS.cc_kext.armv6	:= $(CFLAGS) $(IOS_DEPLOYMENT_ARGS) -mthumb
-CFLAGS.cc_kext.armv7	:= $(CFLAGS) $(IOS_DEPLOYMENT_ARGS)
 CFLAGS.profile_osx.i386   := $(CFLAGS) $(OSX_DEPLOYMENT_ARGS)
 CFLAGS.profile_osx.x86_64 := $(CFLAGS) $(OSX_DEPLOYMENT_ARGS)
-CFLAGS.profile_ios.i386   := $(CFLAGS) $(IOSSIM_DEPLOYMENT_ARGS)
-CFLAGS.profile_ios.x86_64 := $(CFLAGS) $(IOSSIM_DEPLOYMENT_ARGS)
-CFLAGS.profile_ios.armv6  := $(CFLAGS) $(IOS_DEPLOYMENT_ARGS)
-CFLAGS.profile_ios.armv7  := $(CFLAGS) $(IOS_DEPLOYMENT_ARGS)
 
 FUNCTIONS.eprintf := eprintf
 FUNCTIONS.10.4 := eprintf floatundidf floatundisf floatundixf
 
-FUNCTIONS.ios	    := divmodsi4 udivmodsi4 mulosi4 mulodi4 muloti4
-# On x86, the divmod functions reference divsi.
-FUNCTIONS.ios.i386   := $(FUNCTIONS.ios) \
-                        divsi3 udivsi3
-FUNCTIONS.ios.x86_64 := $(FUNCTIONS.ios) \
-                        divsi3 udivsi3
-FUNCTIONS.ios.armv6 := $(FUNCTIONS.ios) \
-                       sync_synchronize \
-                       switch16 switch32 switch8 switchu8 \
-                       save_vfp_d8_d15_regs restore_vfp_d8_d15_regs
-
 FUNCTIONS.osx	:= mulosi4 mulodi4 muloti4
 
 FUNCTIONS.profile_osx := GCDAProfiling
-FUNCTIONS.profile_ios := GCDAProfiling
 
 FUNCTIONS.asan_osx := $(AsanFunctions) $(InterceptionFunctions) \
                                        $(SanitizerCommonFunctions)
@@ -259,43 +224,6 @@ CCKEXT_ARM_FUNCTIONS := $(CCKEXT_COMMON_FUNCTIONS) \
 	unorddf2 \
 	unordsf2
 
-CCKEXT_ARMVFP_FUNCTIONS := $(CCKEXT_ARM_FUNCTIONS) \
-	adddf3vfp \
-	addsf3vfp \
-	divdf3vfp \
-	divsf3vfp \
-	eqdf2vfp \
-	eqsf2vfp \
-	extendsfdf2vfp \
-	fixdfsivfp \
-	fixsfsivfp \
-	fixunsdfsivfp \
-	fixunssfsivfp \
-	floatsidfvfp \
-	floatsisfvfp \
-	floatunssidfvfp \
-	floatunssisfvfp \
-	gedf2vfp \
-	gesf2vfp \
-	gtdf2vfp \
-	gtsf2vfp \
-	ledf2vfp \
-	lesf2vfp \
-	ltdf2vfp \
-	ltsf2vfp \
-	muldf3vfp \
-	mulsf3vfp \
-	nedf2vfp \
-	nesf2vfp \
-	subdf3vfp \
-	subsf3vfp \
-	truncdfsf2vfp \
-	unorddf2vfp \
-	unordsf2vfp
-
-FUNCTIONS.cc_kext.armv6 := $(CCKEXT_ARMVFP_FUNCTIONS)
-FUNCTIONS.cc_kext.armv7 := $(CCKEXT_ARMVFP_FUNCTIONS)
-
 CCKEXT_X86_FUNCTIONS := $(CCKEXT_COMMON_FUNCTIONS) \
 	divxc3 \
 	fixunsxfdi \
@@ -369,10 +297,6 @@ CCKEXT_MISSING_FUNCTIONS := \
 	aeabi_fcmpge aeabi_fcmpgt aeabi_fcmple aeabi_fcmplt aeabi_frsub aeabi_idivmod \
 	aeabi_uidivmod
 
-FUNCTIONS.cc_kext.armv6 := \
-	$(filter-out $(CCKEXT_MISSING_FUNCTIONS),$(FUNCTIONS.cc_kext.armv6))
-FUNCTIONS.cc_kext.armv7 := \
-	$(filter-out $(CCKEXT_MISSING_FUNCTIONS),$(FUNCTIONS.cc_kext.armv7))
 FUNCTIONS.cc_kext.i386 := \
 	$(filter-out $(CCKEXT_MISSING_FUNCTIONS),$(FUNCTIONS.cc_kext.i386))
 FUNCTIONS.cc_kext.x86_64 := \
