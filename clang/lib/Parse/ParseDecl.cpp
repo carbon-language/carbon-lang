@@ -3156,8 +3156,17 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
     } else {
       TUK = Sema::TUK_Definition;
     }
-  } else if (Tok.is(tok::semi) && DSC != DSC_type_specifier) {
-    TUK = (DS.isFriendSpecified() ? Sema::TUK_Friend : Sema::TUK_Declaration);
+  } else if (DSC != DSC_type_specifier &&
+             (Tok.is(tok::semi) ||
+              (Tok.isAtStartOfLine() && !isValidAfterTypeSpecifier()))) {
+    TUK = DS.isFriendSpecified() ? Sema::TUK_Friend : Sema::TUK_Declaration;
+    if (Tok.isNot(tok::semi)) {
+      // A semicolon was missing after this declaration. Diagnose and recover.
+      ExpectAndConsume(tok::semi, diag::err_expected_semi_after_tagdecl,
+                       "enum");
+      PP.EnterToken(Tok);
+      Tok.setKind(tok::semi);
+    }
   } else {
     TUK = Sema::TUK_Reference;
   }
@@ -3248,9 +3257,8 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
     return;
   }
 
-  if (Tok.is(tok::l_brace) && TUK != Sema::TUK_Reference) {
+  if (Tok.is(tok::l_brace) && TUK != Sema::TUK_Reference)
     ParseEnumBody(StartLoc, TagDecl);
-  }
 
   if (DS.SetTypeSpecType(DeclSpec::TST_enum, StartLoc,
                          NameLoc.isValid() ? NameLoc : StartLoc,
@@ -3355,6 +3363,17 @@ void Parser::ParseEnumBody(SourceLocation StartLoc, Decl *EnumDecl) {
   EnumScope.Exit();
   Actions.ActOnTagFinishDefinition(getCurScope(), EnumDecl,
                                    T.getCloseLocation());
+
+  // The next token must be valid after an enum definition. If not, a ';'
+  // was probably forgotten.
+  if (!isValidAfterTypeSpecifier()) {
+    ExpectAndConsume(tok::semi, diag::err_expected_semi_after_tagdecl, "enum");
+    // Push this token back into the preprocessor and change our current token
+    // to ';' so that the rest of the code recovers as though there were an
+    // ';' after the definition.
+    PP.EnterToken(Tok);
+    Tok.setKind(tok::semi);
+  }
 }
 
 /// isTypeSpecifierQualifier - Return true if the current token could be the

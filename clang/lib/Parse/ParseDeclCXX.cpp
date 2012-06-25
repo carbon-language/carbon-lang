@@ -926,6 +926,64 @@ void Parser::ParseMicrosoftInheritanceClassAttributes(ParsedAttributes &attrs) {
   }
 }
 
+/// Determine whether the following tokens are valid after a type-specifier
+/// which could be a standalone declaration. This will conservatively return
+/// true if there's any doubt, and is appropriate for insert-';' fixits.
+bool Parser::isValidAfterTypeSpecifier() {
+  // This switch enumerates the valid "follow" set for type-specifiers.
+  switch (Tok.getKind()) {
+  default: break;
+  case tok::semi:               // struct foo {...} ;
+  case tok::star:               // struct foo {...} *         P;
+  case tok::amp:                // struct foo {...} &         R = ...
+  case tok::identifier:         // struct foo {...} V         ;
+  case tok::r_paren:            //(struct foo {...} )         {4}
+  case tok::annot_cxxscope:     // struct foo {...} a::       b;
+  case tok::annot_typename:     // struct foo {...} a         ::b;
+  case tok::annot_template_id:  // struct foo {...} a<int>    ::b;
+  case tok::l_paren:            // struct foo {...} (         x);
+  case tok::comma:              // __builtin_offsetof(struct foo{...} ,
+    return true;
+  // Type qualifiers
+  case tok::kw_const:           // struct foo {...} const     x;
+  case tok::kw_volatile:        // struct foo {...} volatile  x;
+  case tok::kw_restrict:        // struct foo {...} restrict  x;
+  case tok::kw_inline:          // struct foo {...} inline    foo() {};
+  // Storage-class specifiers
+  case tok::kw_static:          // struct foo {...} static    x;
+  case tok::kw_extern:          // struct foo {...} extern    x;
+  case tok::kw_typedef:         // struct foo {...} typedef   x;
+  case tok::kw_register:        // struct foo {...} register  x;
+  case tok::kw_auto:            // struct foo {...} auto      x;
+  case tok::kw_mutable:         // struct foo {...} mutable   x;
+  case tok::kw_constexpr:       // struct foo {...} constexpr x;
+    // As shown above, type qualifiers and storage class specifiers absolutely
+    // can occur after class specifiers according to the grammar.  However,
+    // almost no one actually writes code like this.  If we see one of these,
+    // it is much more likely that someone missed a semi colon and the
+    // type/storage class specifier we're seeing is part of the *next*
+    // intended declaration, as in:
+    //
+    //   struct foo { ... }
+    //   typedef int X;
+    //
+    // We'd really like to emit a missing semicolon error instead of emitting
+    // an error on the 'int' saying that you can't have two type specifiers in
+    // the same declaration of X.  Because of this, we look ahead past this
+    // token to see if it's a type specifier.  If so, we know the code is
+    // otherwise invalid, so we can produce the expected semi error.
+    if (!isKnownToBeTypeSpecifier(NextToken()))
+      return true;
+    break;
+  case tok::r_brace:  // struct bar { struct foo {...} }
+    // Missing ';' at end of struct is accepted as an extension in C mode.
+    if (!getLangOpts().CPlusPlus)
+      return true;
+    break;
+  }
+  return false;
+}
+
 /// ParseClassSpecifier - Parse a C++ class-specifier [C++ class] or
 /// elaborated-type-specifier [C++ dcl.type.elab]; we can't tell which
 /// until we reach the start of a definition or see a token that
@@ -1176,9 +1234,19 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
       // Okay, this is a class definition.
       TUK = Sema::TUK_Definition;
     }
-  } else if (Tok.is(tok::semi) && DSC != DSC_type_specifier)
+  } else if (DSC != DSC_type_specifier &&
+             (Tok.is(tok::semi) ||
+              (Tok.isAtStartOfLine() && !isValidAfterTypeSpecifier()))) {
     TUK = DS.isFriendSpecified() ? Sema::TUK_Friend : Sema::TUK_Declaration;
-  else
+    if (Tok.isNot(tok::semi)) {
+      // A semicolon was missing after this declaration. Diagnose and recover.
+      ExpectAndConsume(tok::semi, diag::err_expected_semi_after_tagdecl,
+                       TagType == DeclSpec::TST_class ? "class" :
+                       TagType == DeclSpec::TST_struct ? "struct" : "union");
+      PP.EnterToken(Tok);
+      Tok.setKind(tok::semi);
+    }
+  } else
     TUK = Sema::TUK_Reference;
 
   // If this is an elaborated type specifier, and we delayed
@@ -1394,77 +1462,19 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
   // impossible token occurs next, we assume that the programmer forgot a ; at
   // the end of the declaration and recover that way.
   //
-  // This switch enumerates the valid "follow" set for definition.
-  if (TUK == Sema::TUK_Definition) {
-    bool ExpectedSemi = true;
-    switch (Tok.getKind()) {
-    default: break;
-    case tok::semi:               // struct foo {...} ;
-    case tok::star:               // struct foo {...} *         P;
-    case tok::amp:                // struct foo {...} &         R = ...
-    case tok::identifier:         // struct foo {...} V         ;
-    case tok::r_paren:            //(struct foo {...} )         {4}
-    case tok::annot_cxxscope:     // struct foo {...} a::       b;
-    case tok::annot_typename:     // struct foo {...} a         ::b;
-    case tok::annot_template_id:  // struct foo {...} a<int>    ::b;
-    case tok::l_paren:            // struct foo {...} (         x);
-    case tok::comma:              // __builtin_offsetof(struct foo{...} ,
-      ExpectedSemi = false;
-      break;
-    // Type qualifiers
-    case tok::kw_const:           // struct foo {...} const     x;
-    case tok::kw_volatile:        // struct foo {...} volatile  x;
-    case tok::kw_restrict:        // struct foo {...} restrict  x;
-    case tok::kw_inline:          // struct foo {...} inline    foo() {};
-    // Storage-class specifiers
-    case tok::kw_static:          // struct foo {...} static    x;
-    case tok::kw_extern:          // struct foo {...} extern    x;
-    case tok::kw_typedef:         // struct foo {...} typedef   x;
-    case tok::kw_register:        // struct foo {...} register  x;
-    case tok::kw_auto:            // struct foo {...} auto      x;
-    case tok::kw_mutable:         // struct foo {...} mutable   x;
-    case tok::kw_constexpr:       // struct foo {...} constexpr x;
-      // As shown above, type qualifiers and storage class specifiers absolutely
-      // can occur after class specifiers according to the grammar.  However,
-      // almost no one actually writes code like this.  If we see one of these,
-      // it is much more likely that someone missed a semi colon and the
-      // type/storage class specifier we're seeing is part of the *next*
-      // intended declaration, as in:
-      //
-      //   struct foo { ... }
-      //   typedef int X;
-      //
-      // We'd really like to emit a missing semicolon error instead of emitting
-      // an error on the 'int' saying that you can't have two type specifiers in
-      // the same declaration of X.  Because of this, we look ahead past this
-      // token to see if it's a type specifier.  If so, we know the code is
-      // otherwise invalid, so we can produce the expected semi error.
-      if (!isKnownToBeTypeSpecifier(NextToken()))
-        ExpectedSemi = false;
-      break;
-
-    case tok::r_brace:  // struct bar { struct foo {...} }
-      // Missing ';' at end of struct is accepted as an extension in C mode.
-      if (!getLangOpts().CPlusPlus)
-        ExpectedSemi = false;
-      break;
-    }
-
-    // C++ [temp]p3 In a template-declaration which defines a class, no
-    // declarator is permitted.
-    if (TemplateInfo.Kind)
-      ExpectedSemi = true;
-
-    if (ExpectedSemi) {
-      ExpectAndConsume(tok::semi, diag::err_expected_semi_after_tagdecl,
-                       TagType == DeclSpec::TST_class ? "class"
-                       : TagType == DeclSpec::TST_struct? "struct" : "union");
-      // Push this token back into the preprocessor and change our current token
-      // to ';' so that the rest of the code recovers as though there were an
-      // ';' after the definition.
-      PP.EnterToken(Tok);
-      Tok.setKind(tok::semi);
-    }
+  // Also enforce C++ [temp]p3:
+  //   In a template-declaration which defines a class, no declarator
+  //   is permitted.
+  if (TUK == Sema::TUK_Definition &&
+      (TemplateInfo.Kind || !isValidAfterTypeSpecifier())) {
+    ExpectAndConsume(tok::semi, diag::err_expected_semi_after_tagdecl,
+                     TagType == DeclSpec::TST_class ? "class" :
+                     TagType == DeclSpec::TST_struct ? "struct" : "union");
+    // Push this token back into the preprocessor and change our current token
+    // to ';' so that the rest of the code recovers as though there were an
+    // ';' after the definition.
+    PP.EnterToken(Tok);
+    Tok.setKind(tok::semi);
   }
 }
 

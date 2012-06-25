@@ -57,7 +57,7 @@ namespace bitfield {
   // This could be a bit-field, but would be ill-formed due to the anonymous
   // member being initialized.
   struct S5 {
-    enum E : int { a = 1 } { b = 2 }; // expected-error {{expected member name}}
+    enum E : int { a = 1 } { b = 2 }; // expected-error {{expected ';' after enum}} expected-error {{expected member name}}
   };
   // This could be a bit-field.
   struct S6 {

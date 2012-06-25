@@ -100,3 +100,11 @@ int noSemiAfterLabel(int n) {
   }
   return 1;
 }
+
+struct noSemiAfterStruct // expected-error {{expected ';' after struct}}
+struct noSemiAfterStruct {
+  int n // expected-warning {{';'}}
+} // expected-error {{expected ';' after struct}}
+enum noSemiAfterEnum {
+  e1
+} // expected-error {{expected ';' after enum}}

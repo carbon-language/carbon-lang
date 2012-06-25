@@ -108,3 +108,17 @@ void func();
 template<int *ip> struct IP { }; // expected-note{{declared here}}
 IP<0> ip0; // expected-error{{null non-type template argument must be cast to template parameter type 'int *'}}
 
+namespace MissingSemi {
+  struct a // expected-error {{expected ';' after struct}}
+  struct b // expected-error {{expected ';' after struct}}
+  enum x : int { x1, x2, x3 } // expected-error {{expected ';' after enum}}
+  struct c // expected-error {{expected ';' after struct}}
+  enum x : int // expected-error {{expected ';' after enum}}
+  // FIXME: The following gives a poor diagnostic (we parse the 'int' and the
+  // 'struct' as part of the same enum-base.
+  //   enum x : int
+  //   struct y
+  namespace N {
+    struct d // expected-error {{expected ';' after struct}}
+  }
+}
