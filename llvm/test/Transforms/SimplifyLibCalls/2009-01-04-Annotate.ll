@@ -1,5 +1,5 @@
 ; RUN: opt < %s -simplify-libcalls -S > %t
-; RUN: grep noalias %t | count 2
+; RUN: grep noalias %t | count 1
 ; RUN: grep nocapture %t | count 3
 ; RUN: grep nounwind %t | count 3
 ; RUN: grep readonly %t | count 1

@@ -1942,7 +1942,6 @@ void SimplifyLibCalls::inferPrototypeAttributes(Function &F) {
           !FTy->getReturnType()->isPointerTy())
         return;
       setDoesNotThrow(F);
-      setDoesNotAlias(F, 0);
       setDoesNotCapture(F, 1);
     } else if (Name == "read") {
       if (FTy->getNumParams() != 3 ||
