@@ -2258,3 +2258,106 @@ class Foo {
 } // end namespace TrylockJoinPoint
 
 
+namespace LockReturned {
+
+class Foo {
+public:
+  int a             GUARDED_BY(mu_);
+  void foo()        EXCLUSIVE_LOCKS_REQUIRED(mu_);
+  void foo2(Foo* f) EXCLUSIVE_LOCKS_REQUIRED(mu_, f->mu_);
+
+  static void sfoo(Foo* f) EXCLUSIVE_LOCKS_REQUIRED(f->mu_);
+
+  Mutex* getMu() LOCK_RETURNED(mu_);
+
+  Mutex mu_;
+
+  static Mutex* getMu(Foo* f) LOCK_RETURNED(f->mu_);
+};
+
+
+// Calls getMu() directly to lock and unlock
+void test1(Foo* f1, Foo* f2) {
+  f1->a = 0;       // expected-warning {{writing variable 'a' requires locking 'mu_' exclusively}}
+  f1->foo();       // expected-warning {{calling function 'foo' requires exclusive lock on 'mu_'}}
+
+  f1->foo2(f2);    // expected-warning 2{{calling function 'foo2' requires exclusive lock on 'mu_'}}
+  Foo::sfoo(f1);   // expected-warning {{calling function 'sfoo' requires exclusive lock on 'mu_'}}
+
+  f1->getMu()->Lock();
+
+  f1->a = 0;
+  f1->foo();
+  f1->foo2(f2);    // expected-warning {{calling function 'foo2' requires exclusive lock on 'mu_'}}
+
+  Foo::getMu(f2)->Lock();
+  f1->foo2(f2);
+  Foo::getMu(f2)->Unlock();
+
+  Foo::sfoo(f1);
+
+  f1->getMu()->Unlock();
+}
+
+
+Mutex* getFooMu(Foo* f) LOCK_RETURNED(Foo::getMu(f));
+
+class Bar : public Foo {
+public:
+  int  b            GUARDED_BY(getMu());
+  void bar()        EXCLUSIVE_LOCKS_REQUIRED(getMu());
+  void bar2(Bar* g) EXCLUSIVE_LOCKS_REQUIRED(getMu(this), g->getMu());
+
+  static void sbar(Bar* g)  EXCLUSIVE_LOCKS_REQUIRED(g->getMu());
+  static void sbar2(Bar* g) EXCLUSIVE_LOCKS_REQUIRED(getFooMu(g));
+};
+
+
+
+// Use getMu() within other attributes.
+// This requires at lest levels of substitution, more in the case of
+void test2(Bar* b1, Bar* b2) {
+  b1->b = 0;       // expected-warning {{writing variable 'b' requires locking 'mu_' exclusively}}
+  b1->bar();       // expected-warning {{calling function 'bar' requires exclusive lock on 'mu_'}}
+  b1->bar2(b2);    // expected-warning 2{{calling function 'bar2' requires exclusive lock on 'mu_'}}
+  Bar::sbar(b1);   // expected-warning {{calling function 'sbar' requires exclusive lock on 'mu_'}}
+  Bar::sbar2(b1);  // expected-warning {{calling function 'sbar2' requires exclusive lock on 'mu_'}}
+
+  b1->getMu()->Lock();
+
+  b1->b = 0;
+  b1->bar();
+  b1->bar2(b2);    // expected-warning {{calling function 'bar2' requires exclusive lock on 'mu_'}}
+
+  b2->getMu()->Lock();
+  b1->bar2(b2);
+
+  b2->getMu()->Unlock();
+
+  Bar::sbar(b1);
+  Bar::sbar2(b1);
+
+  b1->getMu()->Unlock();
+}
+
+
+// Sanity check -- lock the mutex directly, but use attributes that call getMu()
+// Also lock the mutex using getFooMu, which calls a lock_returned function.
+void test3(Bar* b1, Bar* b2) {
+  b1->mu_.Lock();
+  b1->b = 0;
+  b1->bar();
+
+  getFooMu(b2)->Lock();
+  b1->bar2(b2);
+  getFooMu(b2)->Unlock();
+
+  Bar::sbar(b1);
+  Bar::sbar2(b1);
+
+  b1->mu_.Unlock();
+}
+
+} // end namespace LockReturned
+
+
