@@ -60,8 +60,11 @@ sys::IdentifyFileType(const char *magic, unsigned length) {
 
     case '\177':
       if (magic[1] == 'E' && magic[2] == 'L' && magic[3] == 'F') {
-        if (length >= 18 && magic[17] == 0)
-          switch (magic[16]) {
+        bool Data2MSB = magic[5] == 2;
+        unsigned high = Data2MSB ? 16 : 17;
+        unsigned low  = Data2MSB ? 17 : 16;
+        if (length >= 18 && magic[high] == 0)
+          switch (magic[low]) {
             default: break;
             case 1: return ELF_Relocatable_FileType;
             case 2: return ELF_Executable_FileType;
