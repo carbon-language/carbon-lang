@@ -32,3 +32,15 @@ entry:
   %sub. = select i1 %cmp, i32 %sub, i32 %b
   ret i32 %sub.
 }
+
+; rdar://11725965
+define i32 @i(i32 %a, i32 %b) nounwind readnone ssp {
+entry:
+; CHECK: i:
+; CHECK: subs
+; CHECK-NOT: cmp
+  %cmp = icmp ult i32 %a, %b
+  %sub = sub i32 %b, %a
+  %sub. = select i1 %cmp, i32 %sub, i32 0
+  ret i32 %sub.
+}

@@ -1875,7 +1875,9 @@ OptimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg, int CmpMask,
     }
 
     // Check whether the current instruction is SUB(r1, r2) or SUB(r2, r1).
-    if (SrcReg2 != 0 && Instr.getOpcode() == ARM::SUBrr &&
+    if (SrcReg2 != 0 &&
+        (Instr.getOpcode() == ARM::SUBrr ||
+         Instr.getOpcode() == ARM::t2SUBrr) &&
         ((Instr.getOperand(1).getReg() == SrcReg &&
           Instr.getOperand(2).getReg() == SrcReg2) ||
          (Instr.getOperand(1).getReg() == SrcReg2 &&
@@ -1976,6 +1978,12 @@ OptimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg, int CmpMask,
           case ARMCC::LT:
           case ARMCC::GT:
           case ARMCC::LE:
+          case ARMCC::HS:
+          case ARMCC::LS:
+          case ARMCC::HI:
+          case ARMCC::LO:
+          case ARMCC::EQ:
+          case ARMCC::NE:
             // If we have SUB(r1, r2) and CMP(r2, r1), the condition code based
             // on CMP needs to be updated to be based on SUB.
             // Push the condition code operands to OperandsToUpdate.
@@ -2023,7 +2031,15 @@ OptimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg, int CmpMask,
       case ARMCC::GE: NewCC = ARMCC::LE; break;
       case ARMCC::LT: NewCC = ARMCC::GT; break;
       case ARMCC::GT: NewCC = ARMCC::LT; break;
-      case ARMCC::LE: NewCC = ARMCC::GT; break;
+      case ARMCC::LE: NewCC = ARMCC::GE; break;
+      case ARMCC::HS: NewCC = ARMCC::LS; break;
+      case ARMCC::LS: NewCC = ARMCC::HS; break;
+      case ARMCC::HI: NewCC = ARMCC::LO; break;
+      case ARMCC::LO: NewCC = ARMCC::HI; break;
+      case ARMCC::EQ:
+      case ARMCC::NE:
+        NewCC = CC;
+        break;
       }
       OperandsToUpdate[i]->setImm(NewCC);
     }
