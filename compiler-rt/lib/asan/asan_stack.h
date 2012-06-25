@@ -63,7 +63,7 @@ struct AsanStackTrace {
   uptr bp = GET_CURRENT_FRAME();              \
   uptr pc = GET_CALLER_PC();                  \
   uptr local_stack;                           \
-  uptr sp = (uptr)&local_stack;
+  uptr sp = (uptr)&local_stack
 
 // Use this macro if you want to print stack trace with the current
 // function in the top frame.
@@ -71,7 +71,7 @@ struct AsanStackTrace {
   uptr bp = GET_CURRENT_FRAME();              \
   uptr pc = AsanStackTrace::GetCurrentPc();   \
   uptr local_stack;                           \
-  uptr sp = (uptr)&local_stack;
+  uptr sp = (uptr)&local_stack
 
 // Get the stack trace with the given pc and bp.
 // The pc will be in the position 0 of the resulting stack trace.
@@ -79,7 +79,7 @@ struct AsanStackTrace {
 // fast_unwind is currently unused.
 #define GET_STACK_TRACE_WITH_PC_AND_BP(max_s, pc, bp)               \
   AsanStackTrace stack;                                             \
-  stack.GetStackTrace(max_s, pc, bp);                               \
+  stack.GetStackTrace(max_s, pc, bp)
 
 // NOTE: A Rule of thumb is to retrieve stack trace in the interceptors
 // as early as possible (in functions exposed to the user), as we generally
@@ -87,7 +87,7 @@ struct AsanStackTrace {
 
 #define GET_STACK_TRACE_HERE(max_size)                        \
   GET_STACK_TRACE_WITH_PC_AND_BP(max_size,                    \
-      AsanStackTrace::GetCurrentPc(), GET_CURRENT_FRAME())    \
+      AsanStackTrace::GetCurrentPc(), GET_CURRENT_FRAME())
 
 #define GET_STACK_TRACE_HERE_FOR_MALLOC                             \
   GET_STACK_TRACE_HERE(FLAG_malloc_context_size)
@@ -99,6 +99,6 @@ struct AsanStackTrace {
   {                                              \
     GET_STACK_TRACE_HERE(kStackTraceMax);        \
     stack.PrintStack();                          \
-  }                                              \
+  }
 
 #endif  // ASAN_STACK_H

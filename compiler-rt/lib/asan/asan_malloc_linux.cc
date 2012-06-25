@@ -103,7 +103,7 @@ INTERCEPTOR(size_t, malloc_usable_size, void *ptr) {
   return asan_malloc_usable_size(ptr, &stack);
 }
 
-INTERCEPTOR(struct mallinfo, mallinfo) {
+INTERCEPTOR(struct mallinfo, mallinfo, void) {
   struct mallinfo res;
   REAL(memset)(&res, 0, sizeof(res));
   return res;

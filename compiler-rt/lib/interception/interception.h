@@ -105,20 +105,20 @@
 #define REAL(x) __interception::PTR_TO_REAL(x)
 #define FUNC_TYPE(x) x##_f
 
-#define DECLARE_REAL(ret_type, func, ...); \
+#define DECLARE_REAL(ret_type, func, ...) \
   typedef ret_type (*FUNC_TYPE(func))(__VA_ARGS__); \
   namespace __interception { \
     extern FUNC_TYPE(func) PTR_TO_REAL(func); \
   }
 
-#define DECLARE_REAL_AND_INTERCEPTOR(ret_type, func, ...); \
+#define DECLARE_REAL_AND_INTERCEPTOR(ret_type, func, ...) \
   DECLARE_REAL(ret_type, func, ##__VA_ARGS__); \
   extern "C" ret_type WRAP(func)(__VA_ARGS__);
 
 // FIXME(timurrrr): We might need to add DECLARE_REAL_EX etc to support
 // different calling conventions later.
 
-#define DEFINE_REAL_EX(ret_type, convention, func, ...); \
+#define DEFINE_REAL_EX(ret_type, convention, func, ...) \
   typedef ret_type (convention *FUNC_TYPE(func))(__VA_ARGS__); \
   namespace __interception { \
     FUNC_TYPE(func) PTR_TO_REAL(func); \
@@ -130,11 +130,11 @@
 // foo with an interceptor for other function.
 #define DEFAULT_CONVENTION
 
-#define DEFINE_REAL(ret_type, func, ...); \
+#define DEFINE_REAL(ret_type, func, ...) \
   DEFINE_REAL_EX(ret_type, DEFAULT_CONVENTION, func, __VA_ARGS__);
 
 #define INTERCEPTOR_EX(ret_type, convention, func, ...) \
-  DEFINE_REAL_EX(ret_type, convention, func, __VA_ARGS__); \
+  DEFINE_REAL_EX(ret_type, convention, func, __VA_ARGS__) \
   DECLARE_WRAPPER(ret_type, convention, func, __VA_ARGS__); \
   extern "C" \
   INTERCEPTOR_ATTRIBUTE \
