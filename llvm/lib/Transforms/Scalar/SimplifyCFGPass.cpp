@@ -157,11 +157,16 @@ static bool MarkAliveBlocks(BasicBlock *BB,
     }
 
     // Turn invokes that call 'nounwind' functions into ordinary calls.
-    if (InvokeInst *II = dyn_cast<InvokeInst>(BB->getTerminator()))
-      if (II->doesNotThrow()) {
+    if (InvokeInst *II = dyn_cast<InvokeInst>(BB->getTerminator())) {
+      Value *Callee = II->getCalledValue();
+      if (isa<ConstantPointerNull>(Callee) || isa<UndefValue>(Callee)) {
+        ChangeToUnreachable(II, true);
+        Changed = true;
+      } else if (II->doesNotThrow()) {
         ChangeToCall(II);
         Changed = true;
       }
+    }
 
     Changed |= ConstantFoldTerminator(BB, true);
     for (succ_iterator SI = succ_begin(BB), SE = succ_end(BB); SI != SE; ++SI)
