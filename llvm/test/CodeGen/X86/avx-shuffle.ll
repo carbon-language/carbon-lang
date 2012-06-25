@@ -90,8 +90,8 @@ define i32 @test9(<4 x i32> %a) nounwind {
 ; Extract a value which is the result of an undef mask.
 define i32 @test10(<4 x i32> %a) nounwind {
 ; CHECK: @test10
-; CHECK-NEXT: #
-; CHECK-NEXT: ret
+; CHECK-NOT: {{^[^#]*[a-z]}}
+; CHECK: ret
   %b = shufflevector <4 x i32> %a, <4 x i32> undef, <8 x i32> <i32 1, i32 1, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
   %r = extractelement <8 x i32> %b, i32 2
   ret i32 %r

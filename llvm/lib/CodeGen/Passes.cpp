@@ -572,6 +572,8 @@ void TargetPassConfig::addFastRegAlloc(FunctionPass *RegAllocPass) {
 /// optimized register allocation, including coalescing, machine instruction
 /// scheduling, and register allocation itself.
 void TargetPassConfig::addOptimizedRegAlloc(FunctionPass *RegAllocPass) {
+  addPass(ProcessImplicitDefsID);
+
   // LiveVariables currently requires pure SSA form.
   //
   // FIXME: Once TwoAddressInstruction pass no longer uses kill flags,
@@ -589,12 +591,6 @@ void TargetPassConfig::addOptimizedRegAlloc(FunctionPass *RegAllocPass) {
     addPass(PHIEliminationID);
   }
   addPass(TwoAddressInstructionPassID);
-
-  // FIXME: Either remove this pass completely, or fix it so that it works on
-  // SSA form. We could modify LiveIntervals to be independent of this pass, But
-  // it would be even better to simply eliminate *all* IMPLICIT_DEFs before
-  // leaving SSA.
-  addPass(ProcessImplicitDefsID);
 
   if (EnableStrongPHIElim)
     addPass(StrongPHIEliminationID);
