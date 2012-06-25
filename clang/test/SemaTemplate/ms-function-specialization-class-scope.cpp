@@ -69,3 +69,24 @@ void test2()
    b.f(100);
 }
 
+
+namespace PR12709 {
+
+template<class T>
+class TemplateClass {
+  void member_function() {
+    specialized_member_template<false>();
+  }
+
+  template<bool b>
+  void specialized_member_template() {}
+
+  template<>
+  void specialized_member_template<false>() {}  // expected-warning{{explicit specialization of 'specialized_member_template' within class scope is a Microsoft extension}}
+};
+
+void f() {
+  TemplateClass<int> t;
+}
+
+}

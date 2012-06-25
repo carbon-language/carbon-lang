@@ -2086,23 +2086,33 @@ class ClassScopeFunctionSpecializationDecl : public Decl {
   virtual void anchor();
 
   ClassScopeFunctionSpecializationDecl(DeclContext *DC, SourceLocation Loc,
-                                       CXXMethodDecl *FD)
+                                       CXXMethodDecl *FD, bool Args,
+                                       TemplateArgumentListInfo TemplArgs)
     : Decl(Decl::ClassScopeFunctionSpecialization, DC, Loc),
-      Specialization(FD) {}
+      Specialization(FD), HasExplicitTemplateArgs(Args),
+      TemplateArgs(TemplArgs) {}
 
   ClassScopeFunctionSpecializationDecl(EmptyShell Empty)
     : Decl(Decl::ClassScopeFunctionSpecialization, Empty) {}
 
   CXXMethodDecl *Specialization;
+  bool HasExplicitTemplateArgs;
+  TemplateArgumentListInfo TemplateArgs;
 
 public:
   CXXMethodDecl *getSpecialization() const { return Specialization; }
+  bool hasExplicitTemplateArgs() const { return HasExplicitTemplateArgs; }
+  const TemplateArgumentListInfo& templateArgs() const { return TemplateArgs; }
 
   static ClassScopeFunctionSpecializationDecl *Create(ASTContext &C,
                                                       DeclContext *DC,
                                                       SourceLocation Loc,
-                                                      CXXMethodDecl *FD) {
-    return new (C) ClassScopeFunctionSpecializationDecl(DC , Loc, FD);
+                                                      CXXMethodDecl *FD,
+                                                   bool HasExplicitTemplateArgs,
+                                        TemplateArgumentListInfo TemplateArgs) {
+    return new (C) ClassScopeFunctionSpecializationDecl(DC , Loc, FD,
+                                                        HasExplicitTemplateArgs,
+                                                        TemplateArgs);
   }
 
   static ClassScopeFunctionSpecializationDecl *
