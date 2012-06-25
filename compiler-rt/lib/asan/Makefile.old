@@ -287,7 +287,6 @@ TEST_OBJECTS_COMMON=\
 	     $(BIN)/asan_globals_test$(SUFF).o \
 	     $(BIN)/asan_break_optimization$(SUFF).o \
 	     $(BIN)/asan_noinst_test$(SUFF).o \
-	     $(BIN)/asan_interface_test$(SUFF).o \
 	     $(BIN)/asan_test$(SUFF).o
 
 BENCHMARK_OBJECTS=\
