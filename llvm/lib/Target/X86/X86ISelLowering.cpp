@@ -16030,12 +16030,15 @@ X86TargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
     // wrong class.  This can happen with constraints like {xmm0} where the
     // target independent register mapper will just pick the first match it can
     // find, ignoring the required type.
-    if (VT == MVT::f32)
+
+    if (VT == MVT::f32 || VT == MVT::i32)
       Res.second = &X86::FR32RegClass;
-    else if (VT == MVT::f64)
+    else if (VT == MVT::f64 || VT == MVT::i64)
       Res.second = &X86::FR64RegClass;
     else if (X86::VR128RegClass.hasType(VT))
       Res.second = &X86::VR128RegClass;
+    else if (X86::VR256RegClass.hasType(VT))
+      Res.second = &X86::VR256RegClass;
   }
 
   return Res;
