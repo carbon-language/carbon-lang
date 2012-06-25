@@ -1,6 +1,8 @@
-# First, add the subdirectories which contain feature-based runtime libraries.
-add_subdirectory(sanitizer_common)
+# First, add the subdirectories which contain feature-based runtime libraries
+# and several convenience helper libraries.
 add_subdirectory(asan)
+add_subdirectory(interception)
+add_subdirectory(sanitizer_common)
 
 # FIXME: Add support for the profile library.
 

@@ -23,11 +23,33 @@ set(ASAN_SOURCES
   asan_win.cc
   )
 
+set(ASAN_CFLAGS "-fvisibility=hidden")
+
+set(ASAN_COMMON_DEFINITIONS
+	ASAN_UAR=0
+	ASAN_HAS_EXCEPTIONS=1
+	ASAN_HAS_BLACKLIST=1
+	ASAN_NEEDS_SEGV=1)
+
 if(CAN_TARGET_X86_64)
-  add_library(clang_rt.asan-x86_64 STATIC ${ASAN_SOURCES})
-  set_target_properties(clang_rt.asan-x86_64 PROPERTIES COMPILE_FLAGS "${TARGET_X86_64_CFLAGS}")
+  add_library(clang_rt.asan-x86_64 STATIC
+    ${ASAN_SOURCES}
+    $<TARGET_OBJECTS:RTInterception.x86_64>
+    $<TARGET_OBJECTS:RTSanitizerCommon.x86_64>
+    )
+	set_property(TARGET clang_rt.asan-x86_64 PROPERTY COMPILE_FLAGS
+		"${ASAN_CFLAGS} ${TARGET_X86_64_CFLAGS}")
+	set_property(TARGET clang_rt.asan-x86_64 APPEND PROPERTY COMPILE_DEFINITIONS
+		${ASAN_COMMON_DEFINITIONS})
 endif()
 if(CAN_TARGET_I386)
-  add_library(clang_rt.asan-i386 STATIC ${ASAN_SOURCES})
-  set_target_properties(clang_rt.asan-i386 PROPERTIES COMPILE_FLAGS "${TARGET_I386_CFLAGS}")
+  add_library(clang_rt.asan-i386 STATIC
+    ${ASAN_SOURCES}
+    $<TARGET_OBJECTS:RTInterception.i386>
+    $<TARGET_OBJECTS:RTSanitizerCommon.i386>
+    )
+  set_property(TARGET clang_rt.asan-i386 PROPERTY COMPILE_FLAGS
+		"${ASAN_CFLAGS} ${TARGET_I386_CFLAGS}")
+	set_property(TARGET clang_rt.asan-x86_64 APPEND PROPERTY COMPILE_DEFINITIONS
+		${ASAN_COMMON_DEFINITIONS})
 endif()

@@ -9,6 +9,12 @@
 
 include(LLVMParseArguments)
 
+# The CompilerRT build system requires CMake version 2.8.8 or higher in order
+# to use its support for building convenience "libraries" as a collection of
+# .o files. This is particularly useful in producing larger, more complex
+# runtime libraries.
+cmake_minimum_required(VERSION 2.8.8)
+
 # FIXME: Below we assume that the target build of LLVM/Clang is x86, which is
 # not at all valid. Much of this can be fixed just by switching to use
 # a just-built-clang binary for the compiles.

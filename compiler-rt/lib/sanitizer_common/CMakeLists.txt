@@ -13,11 +13,22 @@ set(SANITIZER_SOURCES
   sanitizer_win.cc
   )
 
+set(SANITIZER_CFLAGS "-fvisibility=hidden")
+
+set(SANITIZER_COMMON_DEFINITIONS
+	SANITIZER_HAS_EXCEPTIONS=1)
+
 if(CAN_TARGET_X86_64)
-  add_library(clang_rt.sanitizer-x86_64 STATIC ${SANITIZER_SOURCES})
-  set_target_properties(clang_rt.sanitizer-x86_64 PROPERTIES COMPILE_FLAGS "${TARGET_X86_64_CFLAGS}")
+  add_library(RTSanitizerCommon.x86_64 OBJECT ${SANITIZER_SOURCES})
+  set_property(TARGET RTSanitizerCommon.x86_64 PROPERTY COMPILE_FLAGS
+		"${SANITIZER_CFLAGS} ${TARGET_X86_64_CFLAGS}")
+  set_property(TARGET RTSanitizerCommon.x86_64 APPEND PROPERTY COMPILE_DEFINITIONS
+		${SANITIZER_COMMON_DEFINITIONS})
 endif()
 if(CAN_TARGET_I386)
-  add_library(clang_rt.sanitizer-i386 STATIC ${SANITIZER_SOURCES})
-  set_target_properties(clang_rt.sanitizer-i386 PROPERTIES COMPILE_FLAGS "${TARGET_I386_CFLAGS}")
+  add_library(RTSanitizerCommon.i386 OBJECT ${SANITIZER_SOURCES})
+  set_property(TARGET RTSanitizerCommon.i386 PROPERTY COMPILE_FLAGS
+		"${SANITIZER_CFLAGS} ${TARGET_I386_CFLAGS}")
+  set_property(TARGET RTSanitizerCommon.i386 APPEND PROPERTY COMPILE_DEFINITIONS
+		${SANITIZER_COMMON_DEFINITIONS})
 endif()
