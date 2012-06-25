@@ -118,8 +118,8 @@ static const AllocFnsTy *getAllocationData(const Value *V, AllocType AllocTy,
 }
 
 static bool hasNoAliasAttr(const Value *V, bool LookThroughBitCast) {
-  Function *Callee = getCalledFunction(V, LookThroughBitCast);
-  return Callee && Callee->hasFnAttr(Attribute::NoAlias);
+  ImmutableCallSite CS(LookThroughBitCast ? V->stripPointerCasts() : V);
+  return CS && CS.hasFnAttr(Attribute::NoAlias);
 }
 
 
