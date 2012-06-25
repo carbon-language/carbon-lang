@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -Wunused-private-field -verify -std=c++11 %s
+// RUN: %clang_cc1 -fsyntax-only -Wunused-private-field -Wused-but-marked-unused -verify -std=c++11 %s
 
 class NotFullyDefined {
  public:
@@ -93,6 +93,7 @@ class A {
         trivial_(), user_constructor_(42),
         initialized_with_side_effect_(side_effect()) {
     used_ = 42;
+    attr_used_ = 42; // expected-warning{{'attr_used_' was marked unused but was used}}
   }
 
   A(int x, A* a) : pointer_(a) {}
@@ -116,7 +117,8 @@ class A {
   NonTrivialConstructor non_trivial_constructor_;
   NonTrivialDestructor non_trivial_destructor_;
 
-  int attr_  __attribute__((unused));
+  int attr_ __attribute__((unused));
+  int attr_used_ __attribute__((unused));
 };
 
 class EverythingUsed {
