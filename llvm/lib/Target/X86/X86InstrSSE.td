@@ -2010,12 +2010,15 @@ def VCVTPS2PDYrm : I<0x5A, MRMSrcMem, (outs VR256:$dst), (ins f128mem:$src),
                      "vcvtps2pd\t{$src, $dst|$dst, $src}", [],
                      IIC_SSE_CVT_PD_RM>, TB, VEX;
 }
+
+let Predicates = [HasSSE2] in {
 def CVTPS2PDrr : I<0x5A, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                        "cvtps2pd\t{$src, $dst|$dst, $src}", [],
                        IIC_SSE_CVT_PD_RR>, TB;
 def CVTPS2PDrm : I<0x5A, MRMSrcMem, (outs VR128:$dst), (ins f64mem:$src),
                        "cvtps2pd\t{$src, $dst|$dst, $src}", [],
                        IIC_SSE_CVT_PD_RM>, TB;
+}
 
 let Predicates = [HasAVX] in {
   def : Pat<(int_x86_sse2_cvtps2pd VR128:$src),
