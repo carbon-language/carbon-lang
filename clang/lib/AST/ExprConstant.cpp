@@ -366,9 +366,6 @@ namespace {
     // Note that we intentionally use std::map here so that references
     // to values are stable.
     typedef std::map<const OpaqueValueExpr*, APValue> MapTy;
-    /// OpaqueValues - Values used as the common expression in a
-    /// BinaryConditionalOperator.
-    MapTy OpaqueValues;
 
     /// BottomFrame - The frame in which evaluation started. This must be
     /// initialized after CurrentCall and CallStackDepth.
@@ -397,12 +394,6 @@ namespace {
         BottomFrame(*this, SourceLocation(), 0, 0, 0),
         EvaluatingDecl(0), EvaluatingDeclValue(0), HasActiveDiagnostic(false),
         CheckingPotentialConstantExpression(false) {}
-
-    const APValue *getOpaqueValue(const OpaqueValueExpr *e) const {
-      MapTy::const_iterator i = OpaqueValues.find(e);
-      if (i == OpaqueValues.end()) return 0;
-      return &i->second;
-    }
 
     void setEvaluatingDecl(const VarDecl *VD, APValue &Value) {
       EvaluatingDecl = VD;
@@ -2364,32 +2355,6 @@ public:
   bool VisitSizeOfPackExpr(const SizeOfPackExpr *) { return false; }
 };
 
-class OpaqueValueEvaluation {
-  EvalInfo &info;
-  OpaqueValueExpr *opaqueValue;
-
-public:
-  OpaqueValueEvaluation(EvalInfo &info, OpaqueValueExpr *opaqueValue,
-                        Expr *value)
-    : info(info), opaqueValue(opaqueValue) {
-
-    // If evaluation fails, fail immediately.
-    if (!Evaluate(info.OpaqueValues[opaqueValue], info, value)) {
-      this->opaqueValue = 0;
-      return;
-    }
-  }
-
-  bool hasError() const { return opaqueValue == 0; }
-
-  ~OpaqueValueEvaluation() {
-    // FIXME: For a recursive constexpr call, an outer stack frame might have
-    // been using this opaque value too, and will now have to re-evaluate the
-    // source expression.
-    if (opaqueValue) info.OpaqueValues.erase(opaqueValue);
-  }
-};
-  
 } // end anonymous namespace
 
 //===----------------------------------------------------------------------===//
@@ -2532,9 +2497,10 @@ public:
   }
 
   RetTy VisitBinaryConditionalOperator(const BinaryConditionalOperator *E) {
-    // Cache the value of the common expression.
-    OpaqueValueEvaluation opaque(Info, E->getOpaqueValue(), E->getCommon());
-    if (opaque.hasError())
+    // Evaluate and cache the common expression. We treat it as a temporary,
+    // even though it's not quite the same thing.
+    if (!Evaluate(Info.CurrentCall->Temporaries[E->getOpaqueValue()],
+                  Info, E->getCommon()))
       return false;
 
     return HandleConditionalOperator(E);
@@ -2568,8 +2534,8 @@ public:
   }
 
   RetTy VisitOpaqueValueExpr(const OpaqueValueExpr *E) {
-    const APValue *Value = Info.getOpaqueValue(E);
-    if (!Value) {
+    APValue &Value = Info.CurrentCall->Temporaries[E];
+    if (Value.isUninit()) {
       const Expr *Source = E->getSourceExpr();
       if (!Source)
         return Error(E);
@@ -2579,7 +2545,7 @@ public:
       }
       return StmtVisitorTy::Visit(Source);
     }
-    return DerivedSuccess(*Value, E);
+    return DerivedSuccess(Value, E);
   }
 
   RetTy VisitCallExpr(const CallExpr *E) {
