@@ -13,10 +13,10 @@ void calla();
 void callb();
 void callc();
 
-// CHECK: @test
-// CHECK: @calla()
-// CHECK: @callb()
-// CHECK: @callc()
+// CHECK: @test1
+// CHECK: @calla
+// CHECK: @callb
+// CHECK: @callc
 // CHECK: ret void
 void test1(int a) {
   if (a)
@@ -26,10 +26,10 @@ void test1(int a) {
   callc();
 }
 
-// CHECK: @test
-// CHECK: @callb()
-// CHECK: @calla()
-// CHECK: @callc()
+// CHECK: @test2
+// CHECK: @callb
+// CHECK: @calla
+// CHECK: @callc
 // CHECK: ret void
 void test2(int a) {
   if (!a)
