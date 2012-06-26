@@ -175,6 +175,18 @@ protected:
   /// LLVMTargetMachine provides standard regalloc passes for most targets.
   virtual void addOptimizedRegAlloc(FunctionPass *RegAllocPass);
 
+  /// addPreRewrite - Add passes to the optimized register allocation pipeline
+  /// after register allocation is complete, but before virtual registers are
+  /// rewritten to physical registers.
+  ///
+  /// These passes must preserve VirtRegMap and LiveIntervals, and when running
+  /// after RABasic or RAGreedy, they should take advantage of LiveRegMatrix.
+  /// When these passes run, VirtRegMap contains legal physreg assignments for
+  /// all virtual registers.
+  virtual bool addPreRewrite() {
+    return false;
+  }
+
   /// addFinalizeRegAlloc - This method may be implemented by targets that want
   /// to run passes within the regalloc pipeline, immediately after the register
   /// allocation pass itself. These passes run as soon as virtual regisiters

@@ -603,7 +603,11 @@ void TargetPassConfig::addOptimizedRegAlloc(FunctionPass *RegAllocPass) {
 
   // Add the selected register allocation pass.
   PM->add(RegAllocPass);
-  printAndVerify("After Register Allocation");
+  printAndVerify("After Register Allocation, before rewriter");
+
+  // Allow targets to change the register assignments before rewriting.
+  if (addPreRewrite())
+    printAndVerify("After pre-rewrite passes");
 
   // Finally rewrite virtual registers.
   addPass(VirtRegRewriterID);
