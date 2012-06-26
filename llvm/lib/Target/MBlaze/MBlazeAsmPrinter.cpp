@@ -200,7 +200,13 @@ PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
                 unsigned AsmVariant,const char *ExtraCode, raw_ostream &O) {
   // Does this asm operand have a single letter operand modifier?
   if (ExtraCode && ExtraCode[0])
-    return true; // Unknown modifier.
+    if (ExtraCode[1] != 0) return true; // Unknown modifier.
+
+    switch (ExtraCode[0]) {
+    default:
+      // See if this is a generic print operand
+      return AsmPrinter::PrintAsmOperand(MI, OpNo, AsmVariant, ExtraCode, O);
+    }
 
   printOperand(MI, OpNo, O);
   return false;
