@@ -544,11 +544,6 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
       if (Instruction *R = FoldOpIntoSelect(I, SI))
         return R;
 
-    // C - zext(bool) -> bool ? C - 1 : C
-    if (ZExtInst *ZI = dyn_cast<ZExtInst>(Op1))
-      if (ZI->getSrcTy()->isIntegerTy(1))
-        return SelectInst::Create(ZI->getOperand(0), SubOne(C), C);
-
     // C-(X+C2) --> (C-C2)-X
     ConstantInt *C2;
     if (match(Op1, m_Add(m_Value(X), m_ConstantInt(C2))))
