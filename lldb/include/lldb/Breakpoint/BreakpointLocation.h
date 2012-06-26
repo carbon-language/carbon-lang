@@ -336,6 +336,12 @@ protected:
     bool
     SetBreakpointSite (lldb::BreakpointSiteSP& bp_site_sp);
 
+    void
+    DecrementIgnoreCount();
+
+    bool
+    IgnoreCountShouldStop();
+
 private:
 
     //------------------------------------------------------------------

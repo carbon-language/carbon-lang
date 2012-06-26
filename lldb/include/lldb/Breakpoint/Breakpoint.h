@@ -345,7 +345,7 @@ public:
     //------------------------------------------------------------------
     uint32_t
     GetIgnoreCount () const;
-
+    
     //------------------------------------------------------------------
     /// Return the current hit count for all locations.
     /// @return
@@ -551,6 +551,18 @@ protected:
     //------------------------------------------------------------------
     // This is the generic constructor
     Breakpoint(Target &target, lldb::SearchFilterSP &filter_sp, lldb::BreakpointResolverSP &resolver_sp);
+    
+    friend class BreakpointLocation;  // To call the following two when determining whether to stop.
+
+    void
+    DecrementIgnoreCount();
+
+    // BreakpointLocation::IgnoreCountShouldStop & Breakpoint::IgnoreCountShouldStop can only be called once per stop, 
+    // and BreakpointLocation::IgnoreCountShouldStop should be tested first, and if it returns false we should
+    // continue, otherwise we should test Breakpoint::IgnoreCountShouldStop.
+    
+    bool
+    IgnoreCountShouldStop ();
 
 private:
     //------------------------------------------------------------------

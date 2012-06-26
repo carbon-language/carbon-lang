@@ -254,6 +254,34 @@ BreakpointLocation::SetIgnoreCount (uint32_t n)
     SendBreakpointLocationChangedEvent (eBreakpointEventTypeIgnoreChanged);
 }
 
+void
+BreakpointLocation::DecrementIgnoreCount()
+{
+    if (m_options_ap.get() != NULL)
+    {
+        uint32_t loc_ignore = m_options_ap->GetIgnoreCount();
+        if (loc_ignore != 0)
+            m_options_ap->SetIgnoreCount(loc_ignore - 1);
+    }
+}
+
+bool
+BreakpointLocation::IgnoreCountShouldStop()
+{
+    if (m_options_ap.get() != NULL)
+    {
+        uint32_t loc_ignore = m_options_ap->GetIgnoreCount();
+        if (loc_ignore != 0)
+        {
+            m_owner.DecrementIgnoreCount();
+            DecrementIgnoreCount();          // Have to decrement our owners' ignore count, since it won't get a
+                                             // chance to.
+            return false;
+        }
+    }
+    return true;
+}
+
 const BreakpointOptions *
 BreakpointLocation::GetOptionsNoCreate () const
 {
@@ -297,7 +325,10 @@ BreakpointLocation::ShouldStop (StoppointCallbackContext *context)
     if (!IsEnabled())
         return false;
 
-    if (GetHitCount() <= GetIgnoreCount())
+    if (!IgnoreCountShouldStop())
+        return false;
+    
+    if (!m_owner.IgnoreCountShouldStop())
         return false;
 
     // We only run synchronous callbacks in ShouldStop:

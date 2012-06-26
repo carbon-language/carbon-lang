@@ -69,12 +69,6 @@ public:
         return m_hit_count;
     }
 
-    void
-    IncrementHitCount ()
-    {
-        ++m_hit_count;
-    }
-
     uint32_t
     GetHardwareIndex () const
     {
@@ -132,6 +126,13 @@ protected:
                                     // software breakpoints, or the optional length in bytes for
                                     // hardware breakpoints, or the length of the watchpoint.
     uint32_t    m_hit_count;        // Number of times this breakpoint/watchpoint has been hit
+
+    // If you override this, be sure to call the base class to increment the internal counter.
+    void
+    IncrementHitCount ()
+    {
+        ++m_hit_count;
+    }
 
 private:
     //------------------------------------------------------------------
