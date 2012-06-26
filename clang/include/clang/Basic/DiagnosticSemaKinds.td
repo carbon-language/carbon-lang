@@ -3517,7 +3517,7 @@ def err_arc_receiver_forward_instance : Error<
   "receiver type %0 for instance message is a forward declaration">;
 def warn_receiver_forward_instance : Warning<
   "receiver type %0 for instance message is a forward declaration">,
-  InGroup<DiagGroup<"receiver-forward-class">>, DefaultIgnore;
+  InGroup<ForwardClassReceiver>, DefaultIgnore;
 def err_arc_collection_forward : Error<
   "collection expression type %0 is a forward declaration">;
 def err_arc_multiple_method_decl : Error< 
@@ -4077,13 +4077,17 @@ def err_imaginary_not_supported : Error<"imaginary types are not supported">;
 
 // Obj-c expressions
 def warn_root_inst_method_not_found : Warning<
-  "instance method %0 is being used on 'Class' which is not in the root class">;
+  "instance method %0 is being used on 'Class' which is not in the root class">,
+  InGroup<MethodAccess>;
 def warn_class_method_not_found : Warning<
-  "class method %objcclass0 not found (return type defaults to 'id')">;
+  "class method %objcclass0 not found (return type defaults to 'id')">,
+  InGroup<MethodAccess>;
 def warn_instance_method_on_class_found : Warning<
-  "instance method %0 found instead of class method %1">;
+  "instance method %0 found instead of class method %1">,
+  InGroup<MethodAccess>;
 def warn_inst_method_not_found : Warning<
-  "instance method %objcinstance0 not found (return type defaults to 'id')">;
+  "instance method %objcinstance0 not found (return type defaults to 'id')">,
+  InGroup<MethodAccess>;
 def error_no_super_class_message : Error<
   "no @interface declaration found in class messaging of %0">;
 def error_root_class_cannot_use_super : Error<
@@ -4098,7 +4102,7 @@ def err_missing_open_square_message_send : Error<
   "missing '[' at start of message send expression">;
 def warn_bad_receiver_type : Warning<
   "receiver type %0 is not 'id' or interface pointer, consider "
-  "casting it to 'id'">;
+  "casting it to 'id'">,InGroup<ObjCReceiver>;
 def err_bad_receiver_type : Error<"bad receiver type %0">;
 def err_unknown_receiver_suggest : Error<
   "unknown receiver %0; did you mean %1?">;
@@ -5503,7 +5507,8 @@ def err_invalid_conversion_between_ext_vectors : Error<
 // Type
 def ext_invalid_sign_spec : Extension<"'%0' cannot be signed or unsigned">;
 def warn_receiver_forward_class : Warning<
-    "receiver %0 is a forward class and corresponding @interface may not exist">;
+    "receiver %0 is a forward class and corresponding @interface may not exist">,
+    InGroup<ForwardClassReceiver>;
 def note_method_sent_forward_class : Note<"method %0 is used for the forward class">;
 def ext_missing_declspec : ExtWarn<
   "declaration specifier missing, defaulting to 'int'">;

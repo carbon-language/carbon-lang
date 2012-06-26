@@ -17,7 +17,7 @@ This test serves two purposes:
 
 The list of warnings below should NEVER grow.  It should gradually shrink to 0.
 
-CHECK: Warnings without flags (238):
+CHECK: Warnings without flags (232):
 CHECK-NEXT:   ext_anonymous_struct_union_qualified
 CHECK-NEXT:   ext_binary_literal
 CHECK-NEXT:   ext_cast_fn_obj
@@ -105,7 +105,6 @@ CHECK-NEXT:   warn_attribute_weak_import_invalid_on_definition
 CHECK-NEXT:   warn_attribute_weak_on_field
 CHECK-NEXT:   warn_attribute_weak_on_local
 CHECK-NEXT:   warn_attribute_wrong_decl_type
-CHECK-NEXT:   warn_bad_receiver_type
 CHECK-NEXT:   warn_bitfield_width_exceeds_type_size
 CHECK-NEXT:   warn_bool_switch_condition
 CHECK-NEXT:   warn_braces_around_scalar_init
@@ -114,7 +113,6 @@ CHECK-NEXT:   warn_call_to_pure_virtual_member_function_from_ctor_dtor
 CHECK-NEXT:   warn_call_wrong_number_of_arguments
 CHECK-NEXT:   warn_case_empty_range
 CHECK-NEXT:   warn_char_constant_too_large
-CHECK-NEXT:   warn_class_method_not_found
 CHECK-NEXT:   warn_cmdline_missing_macro_defs
 CHECK-NEXT:   warn_collection_expr_type
 CHECK-NEXT:   warn_conflicting_param_types
@@ -159,8 +157,6 @@ CHECK-NEXT:   warn_implements_nscopying
 CHECK-NEXT:   warn_incompatible_qualified_id
 CHECK-NEXT:   warn_initializer_string_for_char_array_too_long
 CHECK-NEXT:   warn_inline_namespace_reopened_noninline
-CHECK-NEXT:   warn_inst_method_not_found
-CHECK-NEXT:   warn_instance_method_on_class_found
 CHECK-NEXT:   warn_integer_too_large
 CHECK-NEXT:   warn_integer_too_large_for_signed
 CHECK-NEXT:   warn_invalid_asm_cast_lvalue
@@ -224,13 +220,11 @@ CHECK-NEXT:   warn_property_attribute
 CHECK-NEXT:   warn_property_getter_owning_mismatch
 CHECK-NEXT:   warn_property_types_are_incompatible
 CHECK-NEXT:   warn_readonly_property
-CHECK-NEXT:   warn_receiver_forward_class
 CHECK-NEXT:   warn_redecl_library_builtin
 CHECK-NEXT:   warn_redeclaration_without_attribute_prev_attribute_ignored
 CHECK-NEXT:   warn_register_objc_catch_parm
 CHECK-NEXT:   warn_related_result_type_compatibility_class
 CHECK-NEXT:   warn_related_result_type_compatibility_protocol
-CHECK-NEXT:   warn_root_inst_method_not_found
 CHECK-NEXT:   warn_second_parameter_of_va_start_not_last_named_argument
 CHECK-NEXT:   warn_second_parameter_to_va_arg_never_compatible
 CHECK-NEXT:   warn_standalone_specifier
