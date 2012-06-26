@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Support/DataStream.h"
@@ -449,6 +450,60 @@ std::string sys::getHostCPUName() {
     .Case("POWER6", "pwr6")
     .Case("POWER7", "pwr7")
     .Default(generic);
+}
+#elif defined(__linux__) && defined(__arm__)
+std::string sys::getHostCPUName() {
+  // The cpuid register on arm is not accessible from user space. On Linux,
+  // it is exposed through the /proc/cpuinfo file.
+  // Note: We cannot mmap /proc/cpuinfo here and then process the resulting
+  // memory buffer because the 'file' has 0 size (it can be read from only
+  // as a stream).
+
+  std::string Err;
+  DataStreamer *DS = getDataFileStreamer("/proc/cpuinfo", &Err);
+  if (!DS) {
+    DEBUG(dbgs() << "Unable to open /proc/cpuinfo: " << Err << "\n");
+    return "generic";
+  }
+
+  // Read 1024 bytes from /proc/cpuinfo, which should contain the CPU part line
+  // in all cases.
+  char buffer[1024];
+  size_t CPUInfoSize = DS->GetBytes((unsigned char*) buffer, sizeof(buffer));
+  delete DS;
+
+  StringRef Str(buffer, CPUInfoSize);
+
+  SmallVector<StringRef, 32> Lines;
+  Str.split(Lines, "\n");
+
+  // Look for the CPU implementer line.
+  StringRef Implementer;
+  for (unsigned I = 0, E = Lines.size(); I != E; ++I)
+    if (Lines[I].startswith("CPU implementer"))
+      Implementer = Lines[I].substr(15).ltrim("\t :");
+
+  if (Implementer == "0x41") // ARM Ltd.
+    // Look for the CPU part line.
+    for (unsigned I = 0, E = Lines.size(); I != E; ++I)
+      if (Lines[I].startswith("CPU part"))
+        // The CPU part is a 3 digit hexadecimal number with a 0x prefix. The
+        // values correspond to the "Part number" in the CP15/c0 register. The
+        // contents are specified in the various processor manuals.
+        return StringSwitch<const char *>(Lines[I].substr(8).ltrim("\t :"))
+          .Case("0x926", "arm926ej-s")
+          .Case("0xb02", "mpcore")
+          .Case("0xb36", "arm1136j-s")
+          .Case("0xb56", "arm1156t2-s")
+          .Case("0xb76", "arm1176jz-s")
+          .Case("0xc08", "cortex-a8")
+          .Case("0xc09", "cortex-a9")
+          .Case("0xc20", "cortex-m0")
+          .Case("0xc23", "cortex-m3")
+          .Case("0xc24", "cortex-m4")
+          .Default("generic");
+
+  return "generic";
 }
 #else
 std::string sys::getHostCPUName() {
