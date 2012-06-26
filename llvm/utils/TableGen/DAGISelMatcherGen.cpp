@@ -690,6 +690,13 @@ EmitResultInstructionAsOperand(const TreePatternNode *N,
   bool NodeHasChain = InstPatNode &&
                       InstPatNode->TreeHasProperty(SDNPHasChain, CGP);
 
+  // Instructions which load and store from memory should have a chain,
+  // regardless of whether they happen to have an internal pattern saying so.
+  if (Pattern.getSrcPattern()->TreeHasProperty(SDNPHasChain, CGP)
+      && (II.hasCtrlDep || II.mayLoad || II.mayStore || II.canFoldAsLoad ||
+          II.hasSideEffects))
+      NodeHasChain = true;
+
   bool isRoot = N == Pattern.getDstPattern();
 
   // TreeHasOutGlue - True if this tree has glue.
