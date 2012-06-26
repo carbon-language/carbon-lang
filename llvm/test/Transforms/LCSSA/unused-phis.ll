@@ -2,9 +2,9 @@
 ; CHECK: exit1:
 ; CHECK: .lcssa =
 ; CHECK: exit2:
-; CHECK: .lcssa2 =
+; CHECK: .lcssa1 =
 ; CHECK: exit3:
-; CHECK-NOT: .lcssa1 =
+; CHECK-NOT: .lcssa
 
 ; Test to ensure that when there are multiple exit blocks, PHI nodes are
 ; only inserted by LCSSA when there is a use dominated by a given exit

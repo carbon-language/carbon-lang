@@ -35,11 +35,11 @@
 ; CHECK:      loop_begin.us1:                                   ; preds = %loop_begin.backedge.us5, %.split.split.us
 ; CHECK-NEXT:   %var_val.us2 = load i32* %var
 ; CHECK-NEXT:   switch i32 2, label %default.us-lcssa.us-lcssa.us [
-; CHECK-NEXT:     i32 1, label %inc.us3
-; CHECK-NEXT:     i32 2, label %dec.us4
+; CHECK-NEXT:     i32 1, label %inc.us4
+; CHECK-NEXT:     i32 2, label %dec.us3
 ; CHECK-NEXT:   ]
 
-; CHECK:      dec.us4:                                          ; preds = %loop_begin.us1
+; CHECK:      dec.us3:                                          ; preds = %loop_begin.us1
 ; CHECK-NEXT:   call void @decf() noreturn nounwind
 ; CHECK-NEXT:   br label %loop_begin.backedge.us5
 
@@ -81,7 +81,7 @@ inc:
 dec:
   call void @decf() noreturn nounwind
   br label %loop_begin
-default:  
+default:
   br label %loop_exit
 loop_exit:
   ret i32 0

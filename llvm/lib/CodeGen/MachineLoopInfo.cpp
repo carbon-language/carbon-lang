@@ -18,17 +18,12 @@
 #include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/Analysis/LoopInfoImpl.h"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 using namespace llvm;
 
 // Explicitly instantiate methods in LoopInfoImpl.h for MI-level Loops.
 template class llvm::LoopBase<MachineBasicBlock, MachineLoop>;
 template class llvm::LoopInfoBase<MachineBasicBlock, MachineLoop>;
-
-static cl::opt<bool>
-StableLoopInfo("stable-machine-loops", cl::Hidden, cl::init(false),
-               cl::desc("Compute a stable loop tree."));
 
 char MachineLoopInfo::ID = 0;
 INITIALIZE_PASS_BEGIN(MachineLoopInfo, "machine-loops",
@@ -41,10 +36,7 @@ char &llvm::MachineLoopInfoID = MachineLoopInfo::ID;
 
 bool MachineLoopInfo::runOnMachineFunction(MachineFunction &) {
   releaseMemory();
-  if (StableLoopInfo)
-    LI.Analyze(getAnalysis<MachineDominatorTree>().getBase());
-  else
-    LI.Calculate(getAnalysis<MachineDominatorTree>().getBase());    // Update
+  LI.Analyze(getAnalysis<MachineDominatorTree>().getBase());
   return false;
 }
 

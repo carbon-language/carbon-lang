@@ -127,8 +127,12 @@ public:
   const std::vector<LoopT *> &getSubLoops() const { return SubLoops; }
   std::vector<LoopT *> &getSubLoopsVector() { return SubLoops; }
   typedef typename std::vector<LoopT *>::const_iterator iterator;
+  typedef typename std::vector<LoopT *>::const_reverse_iterator
+    reverse_iterator;
   iterator begin() const { return SubLoops.begin(); }
   iterator end() const { return SubLoops.end(); }
+  reverse_iterator rbegin() const { return SubLoops.rbegin(); }
+  reverse_iterator rend() const { return SubLoops.rend(); }
   bool empty() const { return SubLoops.empty(); }
 
   /// getBlocks - Get a list of the basic blocks which make up this loop.
@@ -431,8 +435,12 @@ public:
   /// function.
   ///
   typedef typename std::vector<LoopT *>::const_iterator iterator;
+  typedef typename std::vector<LoopT *>::const_reverse_iterator
+    reverse_iterator;
   iterator begin() const { return TopLevelLoops.begin(); }
   iterator end() const { return TopLevelLoops.end(); }
+  reverse_iterator rbegin() const { return TopLevelLoops.rbegin(); }
+  reverse_iterator rend() const { return TopLevelLoops.rend(); }
   bool empty() const { return TopLevelLoops.empty(); }
 
   /// getLoopFor - Return the inner most loop that BB lives in.  If a basic
@@ -525,19 +533,6 @@ public:
     return isNotAlreadyContainedIn(SubLoop->getParentLoop(), ParentLoop);
   }
 
-  void Calculate(DominatorTreeBase<BlockT> &DT);
-
-  LoopT *ConsiderForLoop(BlockT *BB, DominatorTreeBase<BlockT> &DT);
-
-  /// MoveSiblingLoopInto - This method moves the NewChild loop to live inside
-  /// of the NewParent Loop, instead of being a sibling of it.
-  void MoveSiblingLoopInto(LoopT *NewChild, LoopT *NewParent);
-
-  /// InsertLoopInto - This inserts loop L into the specified parent loop.  If
-  /// the parent loop contains a loop which should contain L, the loop gets
-  /// inserted into L instead.
-  void InsertLoopInto(LoopT *L, LoopT *Parent);
-
   /// Create the loop forest using a stable algorithm.
   void Analyze(DominatorTreeBase<BlockT> &DomTree);
 
@@ -570,8 +565,11 @@ public:
   /// function.
   ///
   typedef LoopInfoBase<BasicBlock, Loop>::iterator iterator;
+  typedef LoopInfoBase<BasicBlock, Loop>::reverse_iterator reverse_iterator;
   inline iterator begin() const { return LI.begin(); }
   inline iterator end() const { return LI.end(); }
+  inline reverse_iterator rbegin() const { return LI.rbegin(); }
+  inline reverse_iterator rend() const { return LI.rend(); }
   bool empty() const { return LI.empty(); }
 
   /// getLoopFor - Return the inner most loop that BB lives in.  If a basic

@@ -162,7 +162,7 @@ void LPPassManager::deleteSimpleAnalysisValue(Value *V, Loop *L) {
 // Recurse through all subloops and all loops  into LQ.
 static void addLoopIntoQueue(Loop *L, std::deque<Loop *> &LQ) {
   LQ.push_back(L);
-  for (Loop::iterator I = L->begin(), E = L->end(); I != E; ++I)
+  for (Loop::reverse_iterator I = L->rbegin(), E = L->rend(); I != E; ++I)
     addLoopIntoQueue(*I, LQ);
 }
 
@@ -183,8 +183,12 @@ bool LPPassManager::runOnFunction(Function &F) {
   // Collect inherited analysis from Module level pass manager.
   populateInheritedAnalysis(TPM->activeStack);
 
-  // Populate Loop Queue
-  for (LoopInfo::iterator I = LI->begin(), E = LI->end(); I != E; ++I)
+  // Populate the loop queue in reverse program order. There is no clear need to
+  // process sibling loops in either forward or reverse order. There may be some
+  // advantage in deleting uses in a later loop before optimizing the
+  // definitions in an earlier loop. If we find a clear reason to process in
+  // forward order, then a forward variant of LoopPassManager should be created.
+  for (LoopInfo::reverse_iterator I = LI->rbegin(), E = LI->rend(); I != E; ++I)
     addLoopIntoQueue(*I, LQ);
 
   if (LQ.empty()) // No loops, skip calling finalizers

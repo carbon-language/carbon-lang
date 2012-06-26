@@ -19,14 +19,14 @@
 ; CHECK:        switch i32 1, label %second_switch.us [
 ; CHECK-NEXT:     i32 1, label %inc.us
 
-; CHECK:      inc.us:                                           ; preds = %second_switch.us, %loop_begin.us
-; CHECK-NEXT:   call void @incf() noreturn nounwind
-; CHECK-NEXT:   br label %loop_begin.backedge.us
-
 ; CHECK:      second_switch.us:                                 ; preds = %loop_begin.us
 ; CHECK-NEXT:   switch i32 %d, label %default.us [
 ; CHECK-NEXT:     i32 1, label %inc.us
 ; CHECK-NEXT:   ]
+
+; CHECK:      inc.us:                                           ; preds = %second_switch.us, %loop_begin.us
+; CHECK-NEXT:   call void @incf() noreturn nounwind
+; CHECK-NEXT:   br label %loop_begin.backedge.us
 
 ; CHECK:      .split:                                           ; preds = %..split_crit_edge
 ; CHECK-NEXT:   br label %loop_begin
@@ -73,7 +73,7 @@ inc:
   call void @incf() noreturn nounwind
   br label %loop_begin
 
-default:  
+default:
   br label %loop_begin
 
 loop_exit:
