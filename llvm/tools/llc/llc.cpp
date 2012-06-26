@@ -353,6 +353,10 @@ int main(int argc, char **argv) {
   InitializeAllAsmPrinters();
   InitializeAllAsmParsers();
 
+  // Initialize codegen so that the -print-after and -print-before options
+  // work.
+  initializeCodeGen(*PassRegistry::getPassRegistry());
+
   // Register the target printer for --version.
   cl::AddExtraVersionPrinter(TargetRegistry::printRegisteredTargetsForVersion);
 
