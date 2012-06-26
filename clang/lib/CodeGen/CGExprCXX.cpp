@@ -56,30 +56,6 @@ RValue CodeGenFunction::EmitCXXMemberCall(const CXXMethodDecl *MD,
                   Callee, ReturnValue, Args, MD);
 }
 
-static const CXXRecordDecl *getMostDerivedClassDecl(const Expr *Base) {
-  const Expr *E = Base;
-  
-  while (true) {
-    E = E->IgnoreParens();
-    if (const CastExpr *CE = dyn_cast<CastExpr>(E)) {
-      if (CE->getCastKind() == CK_DerivedToBase || 
-          CE->getCastKind() == CK_UncheckedDerivedToBase ||
-          CE->getCastKind() == CK_NoOp) {
-        E = CE->getSubExpr();
-        continue;
-      }
-    }
-
-    break;
-  }
-
-  QualType DerivedType = E->getType();
-  if (const PointerType *PTy = DerivedType->getAs<PointerType>())
-    DerivedType = PTy->getPointeeType();
-
-  return cast<CXXRecordDecl>(DerivedType->castAs<RecordType>()->getDecl());
-}
-
 // FIXME: Ideally Expr::IgnoreParenNoopCasts should do this, but it doesn't do
 // quite what we want.
 static const Expr *skipNoOpCastsAndParens(const Expr *E) {
@@ -126,7 +102,8 @@ static bool canDevirtualizeMemberFunctionCalls(ASTContext &Context,
   //   b->f();
   // }
   //
-  const CXXRecordDecl *MostDerivedClassDecl = getMostDerivedClassDecl(Base);
+  const CXXRecordDecl *MostDerivedClassDecl =
+    Base->getMostDerivedClassDeclForType();
   if (MostDerivedClassDecl->hasAttr<FinalAttr>())
     return true;
 
@@ -247,10 +224,13 @@ RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE,
   //
   // We also don't emit a virtual call if the base expression has a record type
   // because then we know what the type is.
-  bool UseVirtualCall;
-  UseVirtualCall = MD->isVirtual() && !ME->hasQualifier()
-                   && !canDevirtualizeMemberFunctionCalls(getContext(),
-                                                          ME->getBase(), MD);
+  const Expr *Base = ME->getBase();
+  bool UseVirtualCall = MD->isVirtual() && !ME->hasQualifier()
+                        && !canDevirtualizeMemberFunctionCalls(getContext(),
+                                                               Base, MD);
+  const CXXRecordDecl *MostDerivedClassDecl =
+    Base->getMostDerivedClassDeclForType();
+
   llvm::Value *Callee;
   if (const CXXDestructorDecl *Dtor = dyn_cast<CXXDestructorDecl>(MD)) {
     if (UseVirtualCall) {
@@ -260,8 +240,13 @@ RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE,
           MD->isVirtual() &&
           ME->hasQualifier())
         Callee = BuildAppleKextVirtualCall(MD, ME->getQualifier(), Ty);
-      else
-        Callee = CGM.GetAddrOfFunction(GlobalDecl(Dtor, Dtor_Complete), Ty);
+      else {
+        const CXXMethodDecl *DM =
+          Dtor->getCorrespondingMethodInClass(MostDerivedClassDecl);
+        assert(DM);
+        const CXXDestructorDecl *DDtor = cast<CXXDestructorDecl>(DM);
+        Callee = CGM.GetAddrOfFunction(GlobalDecl(DDtor, Dtor_Complete), Ty);
+      }
     }
   } else if (const CXXConstructorDecl *Ctor =
                dyn_cast<CXXConstructorDecl>(MD)) {
@@ -273,8 +258,12 @@ RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE,
         MD->isVirtual() &&
         ME->hasQualifier())
       Callee = BuildAppleKextVirtualCall(MD, ME->getQualifier(), Ty);
-    else 
-      Callee = CGM.GetAddrOfFunction(MD, Ty);
+    else {
+      const CXXMethodDecl *DerivedMethod =
+        MD->getCorrespondingMethodInClass(MostDerivedClassDecl);
+      assert(DerivedMethod);
+      Callee = CGM.GetAddrOfFunction(DerivedMethod, Ty);
+    }
   }
 
   return EmitCXXMemberCall(MD, Callee, ReturnValue, This, /*VTT=*/0,

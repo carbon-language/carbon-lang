@@ -665,6 +665,13 @@ public:
 
   static bool hasAnyTypeDependentArguments(llvm::ArrayRef<Expr *> Exprs);
 
+  /// \brief If we have class type (or pointer to class type), return the
+  /// class decl. Return NULL otherwise.
+  ///
+  /// If this expression is a cast, this method looks through it to find the
+  /// most derived decl that can be infered from the expression.
+  const CXXRecordDecl *getMostDerivedClassDeclForType() const;
+
   static bool classof(const Stmt *T) {
     return T->getStmtClass() >= firstExprConstant &&
            T->getStmtClass() <= lastExprConstant;

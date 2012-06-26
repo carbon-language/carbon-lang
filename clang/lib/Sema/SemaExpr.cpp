@@ -10844,6 +10844,22 @@ static void MarkExprReferenced(Sema &SemaRef, SourceLocation Loc,
   }
 
   SemaRef.MarkAnyDeclReferenced(Loc, D);
+
+  // If this is a call to a method via a cast, also mark the method in the
+  // derived class used in case codegen can devirtualize the call.
+  const MemberExpr *ME = dyn_cast<MemberExpr>(E);
+  if (!ME)
+    return;
+  CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(ME->getMemberDecl());
+  if (!MD)
+    return;
+  const Expr *Base = ME->getBase();
+  const CXXRecordDecl *MostDerivedClassDecl
+    = Base->getMostDerivedClassDeclForType();
+  if (!MostDerivedClassDecl)
+    return;
+  CXXMethodDecl *DM = MD->getCorrespondingMethodInClass(MostDerivedClassDecl);
+  SemaRef.MarkAnyDeclReferenced(Loc, DM);
 } 
 
 /// \brief Perform reference-marking and odr-use handling for a DeclRefExpr.

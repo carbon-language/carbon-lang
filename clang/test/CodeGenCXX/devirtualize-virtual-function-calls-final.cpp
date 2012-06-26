@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -emit-llvm -o - | FileCheck %s
+// RUN: %clang_cc1 -std=c++11 %s -emit-llvm -o - | FileCheck %s
 
 namespace Test1 {
   struct A {
@@ -47,5 +47,63 @@ namespace Test3 {
   int f(void *v) {
     // CHECK: call i32 @_ZN5Test31A1fEv
     return static_cast<B*>(v)->f();
+  }
+}
+
+namespace Test4 {
+  struct A {
+    virtual void f();
+  };
+
+  struct B final : A {
+    virtual void f();
+  };
+
+  // CHECK: define void @_ZN5Test41fEPNS_1BE
+  void f(B* d) {
+    // CHECK: call void @_ZN5Test41B1fEv
+    static_cast<A*>(d)->f();
+  }
+}
+
+namespace Test5 {
+  struct A {
+    virtual void f();
+  };
+
+  struct B : A {
+    virtual void f();
+  };
+
+  struct C final : B {
+  };
+
+  // CHECK: define void @_ZN5Test51fEPNS_1CE
+  void f(C* d) {
+    // CHECK: call void @_ZN5Test51B1fEv
+    static_cast<A*>(d)->f();
+  }
+}
+
+namespace Test6 {
+  struct A {
+    virtual ~A();
+  };
+
+  struct B : public A {
+    virtual ~B();
+  };
+
+  struct C {
+    virtual ~C();
+  };
+
+  struct D final : public C, public B {
+  };
+
+  // CHECK: define void @_ZN5Test61fEPNS_1DE
+  void f(D* d) {
+    // CHECK: call void @_ZN5Test61DD1Ev
+    static_cast<A*>(d)->~A();
   }
 }

@@ -1630,7 +1630,20 @@ public:
   /// supplied by IR generation to either forward to the function call operator
   /// or clone the function call operator.
   bool isLambdaStaticInvoker() const;
-  
+
+  /// \brief Find the method in RD that corresponds to this one.
+  ///
+  /// Find if RD or one of the classes it inherits from override this method.
+  /// If so, return it. RD is assumed to be a base class of the class defining
+  /// this method (or be the class itself).
+  CXXMethodDecl *
+  getCorrespondingMethodInClass(const CXXRecordDecl *RD);
+
+  const CXXMethodDecl *
+  getCorrespondingMethodInClass(const CXXRecordDecl *RD) const {
+    return const_cast<CXXMethodDecl*>(this)->getCorrespondingMethodInClass(RD);
+  }
+
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const CXXMethodDecl *D) { return true; }
