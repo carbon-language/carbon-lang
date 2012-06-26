@@ -3503,7 +3503,6 @@ static
 SDValue Compact8x32ShuffleNode(ShuffleVectorSDNode *SVOp,
                                SelectionDAG &DAG) {
   EVT VT = SVOp->getValueType(0);
-  unsigned NumElts = VT.getVectorNumElements();
   DebugLoc dl = SVOp->getDebugLoc();
 
   if (VT != MVT::v8i32 && VT != MVT::v8f32)
