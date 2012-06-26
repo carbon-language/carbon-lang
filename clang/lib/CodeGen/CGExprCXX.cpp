@@ -240,6 +240,8 @@ RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE,
           MD->isVirtual() &&
           ME->hasQualifier())
         Callee = BuildAppleKextVirtualCall(MD, ME->getQualifier(), Ty);
+      else if (ME->hasQualifier())
+        Callee = CGM.GetAddrOfFunction(GlobalDecl(Dtor, Dtor_Complete), Ty);
       else {
         const CXXMethodDecl *DM =
           Dtor->getCorrespondingMethodInClass(MostDerivedClassDecl);
@@ -258,6 +260,8 @@ RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE,
         MD->isVirtual() &&
         ME->hasQualifier())
       Callee = BuildAppleKextVirtualCall(MD, ME->getQualifier(), Ty);
+    else if (ME->hasQualifier())
+      Callee = CGM.GetAddrOfFunction(MD, Ty);
     else {
       const CXXMethodDecl *DerivedMethod =
         MD->getCorrespondingMethodInClass(MostDerivedClassDecl);
