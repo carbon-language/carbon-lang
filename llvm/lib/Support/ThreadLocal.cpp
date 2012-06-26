@@ -30,10 +30,12 @@ void ThreadLocalImpl::setInstance(const void* d) {
   void **pd = reinterpret_cast<void**>(&data);
   *pd = const_cast<void*>(d);
 }
-const void* ThreadLocalImpl::getInstance() { return data; }
-void ThreadLocalImpl::removeInstance() {
+const void* ThreadLocalImpl::getInstance() {
   void **pd = reinterpret_cast<void**>(&data);
-  *pd = 0;
+  return *pd;
+}
+void ThreadLocalImpl::removeInstance() {
+  setInstance(0);
 }
 }
 #else
