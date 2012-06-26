@@ -1802,6 +1802,8 @@ static bool isSuitableForMask(MachineInstr *&MI, unsigned SrcReg,
 bool ARMBaseInstrInfo::
 OptimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg, int CmpMask,
                      int CmpValue, const MachineRegisterInfo *MRI) const {
+  if (MRI->def_empty(SrcReg))
+    return false;
 
   MachineRegisterInfo::def_iterator DI = MRI->def_begin(SrcReg);
   if (llvm::next(DI) != MRI->def_end())
