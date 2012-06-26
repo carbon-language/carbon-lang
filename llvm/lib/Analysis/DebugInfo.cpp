@@ -694,131 +694,139 @@ void DILexicalBlockFile::anchor() { }
 // DIDescriptor: dump routines for all descriptors.
 //===----------------------------------------------------------------------===//
 
+/// dump - Print descriptor to dbgs() with a newline.
+void DIDescriptor::dump() const {
+  print(dbgs()); dbgs() << '\n';
+}
 
 /// print - Print descriptor.
 void DIDescriptor::print(raw_ostream &OS) const {
-  OS << "[" << dwarf::TagString(getTag()) << "] ";
-  OS.write_hex((intptr_t) &*DbgNode) << ']';
+  if (!DbgNode) return;
+
+  OS << "[" << dwarf::TagString(getTag()) << ']';
+
+  if (this->isSubrange()) {
+    DISubrange(DbgNode).printInternal(OS);
+  } else if (this->isScope()) {
+    DIScope(DbgNode).printInternal(OS);
+  } else if (this->isCompileUnit()) {
+    DICompileUnit(DbgNode).printInternal(OS);
+  } else if (this->isFile()) {
+    DIFile(DbgNode).printInternal(OS);
+  } else if (this->isEnumerator()) {
+    DIEnumerator(DbgNode).printInternal(OS);
+  } else if (this->isBasicType()) {
+    DIType(DbgNode).printInternal(OS);
+  } else if (this->isDerivedType()) {
+    DIDerivedType(DbgNode).printInternal(OS);
+  } else if (this->isCompositeType()) {
+    DICompositeType(DbgNode).printInternal(OS);
+  } else if (this->isSubprogram()) {
+    DISubprogram(DbgNode).printInternal(OS);
+  } else if (this->isGlobalVariable()) {
+    DIGlobalVariable(DbgNode).printInternal(OS);
+  } else if (this->isVariable()) {
+    DIVariable(DbgNode).printInternal(OS);
+  }
 }
 
-/// print - Print compile unit.
-void DICompileUnit::print(raw_ostream &OS) const {
-  if (getLanguage())
-    OS << " [" << dwarf::LanguageString(getLanguage()) << "] ";
-
-  OS << " [" << getDirectory() << "/" << getFilename() << "]";
+void DISubrange::printInternal(raw_ostream &OS) const {
+  OS << " [" << getLo() << ", " << getHi() << ']';
 }
 
-/// print - Print type.
-void DIType::print(raw_ostream &OS) const {
+void DIScope::printInternal(raw_ostream &OS) const {
+  OS << " [" << getDirectory() << "/" << getFilename() << ']';
+}
+
+void DICompileUnit::printInternal(raw_ostream &OS) const {
+  DIScope::printInternal(OS);
+  if (unsigned Lang = getLanguage())
+    OS << " [" << dwarf::LanguageString(Lang) << ']';
+}
+
+void DIEnumerator::printInternal(raw_ostream &OS) const {
+  OS << " [" << getName() << " :: " << getEnumValue() << ']';
+}
+
+void DIType::printInternal(raw_ostream &OS) const {
   if (!DbgNode) return;
 
   StringRef Res = getName();
   if (!Res.empty())
-    OS << " [" << Res << "] ";
+    OS << " [" << Res << "]";
 
-  unsigned Tag = getTag();
-  OS << " [" << dwarf::TagString(Tag) << "] ";
+  // TODO: Print context?
 
-  // TODO : Print context
-  OS << " ["
-         << "line " << getLineNumber() << ", "
-         << getSizeInBits() << " bits, "
-         << getAlignInBits() << " bit alignment, "
-         << getOffsetInBits() << " bit offset"
-         << "] ";
+  OS << " [line " << getLineNumber()
+     << ", size " << getSizeInBits()
+     << ", align " << getAlignInBits()
+     << ", offset " << getOffsetInBits();
+  if (isBasicType())
+    OS << ", enc "
+       << dwarf::AttributeEncodingString(DIBasicType(DbgNode).getEncoding());
+  OS << "]";
 
   if (isPrivate())
-    OS << " [private] ";
+    OS << " [private]";
   else if (isProtected())
-    OS << " [protected] ";
+    OS << " [protected]";
 
   if (isForwardDecl())
-    OS << " [fwd] ";
-
-  if (isBasicType())
-    DIBasicType(DbgNode).print(OS);
-  else if (isDerivedType()) {
-    DIDerivedType DTy = DIDerivedType(DbgNode);
-    DTy.print(OS);
-    DICompositeType CTy = getDICompositeType(DTy);
-    if (CTy.Verify())
-      CTy.print(OS);
-  }
-  else if (isCompositeType())
-    DICompositeType(DbgNode).print(OS);
-  else {
-    OS << "Invalid DIType\n";
-    return;
-  }
-
-  OS << "\n";
+    OS << " [fwd]";
 }
 
-/// print - Print basic type.
-void DIBasicType::print(raw_ostream &OS) const {
-  OS << " [" << dwarf::AttributeEncodingString(getEncoding()) << "] ";
+void DIDerivedType::printInternal(raw_ostream &OS) const {
+  DIType::printInternal(OS);
+  OS << " [from " << getTypeDerivedFrom().getName() << ']';
 }
 
-/// print - Print derived type.
-void DIDerivedType::print(raw_ostream &OS) const {
-  OS << "\n\t Derived From: ";
-  getTypeDerivedFrom().print(OS);
-  OS << "\n\t";
-}
-
-/// print - Print composite type.
-void DICompositeType::print(raw_ostream &OS) const {
+void DICompositeType::printInternal(raw_ostream &OS) const {
+  DIType::printInternal(OS);
   DIArray A = getTypeArray();
   OS << " [" << A.getNumElements() << " elements]";
 }
 
-/// print - Print subprogram.
-void DISubprogram::print(raw_ostream &OS) const {
+void DISubprogram::printInternal(raw_ostream &OS) const {
   StringRef Res = getName();
   if (!Res.empty())
-    OS << " [" << Res << "] ";
-
-  unsigned Tag = getTag();
-  OS << " [" << dwarf::TagString(Tag) << "] ";
+    OS << " [" << Res << ']';
 
   // TODO : Print context
-  OS << " [" << getLineNumber() << "] ";
+
+  OS << " [line " << getLineNumber() << ']';
 
   if (isLocalToUnit())
-    OS << " [local] ";
+    OS << " [local]";
 
   if (isDefinition())
-    OS << " [def] ";
+    OS << " [def]";
 
   if (getScopeLineNumber() != getLineNumber())
-    OS << " [Scope: " << getScopeLineNumber() << "] ";
-
-  OS << "\n";
+    OS << " [scope " << getScopeLineNumber() << "]";
 }
 
-/// print - Print global variable.
-void DIGlobalVariable::print(raw_ostream &OS) const {
-  OS << " [";
+void DIGlobalVariable::printInternal(raw_ostream &OS) const {
   StringRef Res = getName();
   if (!Res.empty())
-    OS << " [" << Res << "] ";
+    OS << " [" << Res << ']';
 
-  unsigned Tag = getTag();
-  OS << " [" << dwarf::TagString(Tag) << "] ";
+  OS << " [line " << getLineNumber() << ']';
 
   // TODO : Print context
-  OS << " [" << getLineNumber() << "] ";
 
   if (isLocalToUnit())
-    OS << " [local] ";
+    OS << " [local]";
 
   if (isDefinition())
-    OS << " [def] ";
+    OS << " [def]";
+}
 
-  if (isGlobalVariable())
-    DIGlobalVariable(DbgNode).print(OS);
-  OS << "]\n";
+void DIVariable::printInternal(raw_ostream &OS) const {
+  StringRef Res = getName();
+  if (!Res.empty())
+    OS << " [" << Res << ']';
+
+  OS << " [line " << getLineNumber() << ']';
 }
 
 static void printDebugLoc(DebugLoc DL, raw_ostream &CommentOS,
@@ -855,64 +863,6 @@ void DIVariable::printExtendedName(raw_ostream &OS) const {
       OS << "]";
     }
   }
-}
-
-/// print - Print variable.
-void DIVariable::print(raw_ostream &OS) const {
-  StringRef Res = getName();
-  if (!Res.empty())
-    OS << " [" << Res << "] ";
-
-  OS << " [" << getLineNumber() << "] ";
-  getType().print(OS);
-  OS << "\n";
-
-  // FIXME: Dump complex addresses
-}
-
-/// dump - Print descriptor to dbgs() with a newline.
-void DIDescriptor::dump() const {
-  print(dbgs()); dbgs() << '\n';
-}
-
-/// dump - Print compile unit to dbgs() with a newline.
-void DICompileUnit::dump() const {
-  print(dbgs()); dbgs() << '\n';
-}
-
-/// dump - Print type to dbgs() with a newline.
-void DIType::dump() const {
-  print(dbgs()); dbgs() << '\n';
-}
-
-/// dump - Print basic type to dbgs() with a newline.
-void DIBasicType::dump() const {
-  print(dbgs()); dbgs() << '\n';
-}
-
-/// dump - Print derived type to dbgs() with a newline.
-void DIDerivedType::dump() const {
-  print(dbgs()); dbgs() << '\n';
-}
-
-/// dump - Print composite type to dbgs() with a newline.
-void DICompositeType::dump() const {
-  print(dbgs()); dbgs() << '\n';
-}
-
-/// dump - Print subprogram to dbgs() with a newline.
-void DISubprogram::dump() const {
-  print(dbgs()); dbgs() << '\n';
-}
-
-/// dump - Print global variable.
-void DIGlobalVariable::dump() const {
-  print(dbgs()); dbgs() << '\n';
-}
-
-/// dump - Print variable.
-void DIVariable::dump() const {
-  print(dbgs()); dbgs() << '\n';
 }
 
 /// fixupObjcLikeName - Replace contains special characters used

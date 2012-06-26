@@ -104,12 +104,6 @@ namespace llvm {
       return getUnsignedField(0) & ~LLVMDebugVersionMask;
     }
 
-    /// print - print descriptor.
-    void print(raw_ostream &OS) const;
-
-    /// dump - print descriptor to dbgs() with a newline.
-    void dump() const;
-
     bool isDerivedType() const;
     bool isCompositeType() const;
     bool isBasicType() const;
@@ -130,10 +124,18 @@ namespace llvm {
     bool isTemplateTypeParameter() const;
     bool isTemplateValueParameter() const;
     bool isObjCProperty() const;
+
+    /// print - print descriptor.
+    void print(raw_ostream &OS) const;
+
+    /// dump - print descriptor to dbgs() with a newline.
+    void dump() const;
   };
 
   /// DISubrange - This is used to represent ranges, for array bounds.
   class DISubrange : public DIDescriptor {
+    friend class DIDescriptor;
+    void printInternal(raw_ostream &OS) const;
   public:
     explicit DISubrange(const MDNode *N = 0) : DIDescriptor(N) {}
 
@@ -156,6 +158,9 @@ namespace llvm {
   /// DIScope - A base class for various scopes.
   class DIScope : public DIDescriptor {
     virtual void anchor();
+  protected:
+    friend class DIDescriptor;
+    void printInternal(raw_ostream &OS) const;
   public:
     explicit DIScope(const MDNode *N = 0) : DIDescriptor (N) {}
     virtual ~DIScope() {}
@@ -167,6 +172,8 @@ namespace llvm {
   /// DICompileUnit - A wrapper for a compile unit.
   class DICompileUnit : public DIScope {
     virtual void anchor();
+    friend class DIDescriptor;
+    void printInternal(raw_ostream &OS) const;
   public:
     explicit DICompileUnit(const MDNode *N = 0) : DIScope(N) {}
 
@@ -196,17 +203,13 @@ namespace llvm {
 
     /// Verify - Verify that a compile unit is well formed.
     bool Verify() const;
-
-    /// print - print compile unit.
-    void print(raw_ostream &OS) const;
-
-    /// dump - print compile unit to dbgs() with a newline.
-    void dump() const;
   };
 
   /// DIFile - This is a wrapper for a file.
   class DIFile : public DIScope {
     virtual void anchor();
+    friend class DIDescriptor;
+    void printInternal(raw_ostream &OS) const {} // FIXME: Output something?
   public:
     explicit DIFile(const MDNode *N = 0) : DIScope(N) {
       if (DbgNode && !isFile())
@@ -224,6 +227,8 @@ namespace llvm {
   /// FIXME: it seems strange that this doesn't have either a reference to the
   /// type/precision or a file/line pair for location info.
   class DIEnumerator : public DIDescriptor {
+    friend class DIDescriptor;
+    void printInternal(raw_ostream &OS) const;
   public:
     explicit DIEnumerator(const MDNode *N = 0) : DIDescriptor(N) {}
 
@@ -237,12 +242,12 @@ namespace llvm {
   class DIType : public DIScope {
     virtual void anchor();
   protected:
+    friend class DIDescriptor;
+    void printInternal(raw_ostream &OS) const;
     // This ctor is used when the Tag has already been validated by a derived
     // ctor.
     DIType(const MDNode *N, bool, bool) : DIScope(N) {}
-
   public:
-
     /// Verify - Verify that a type descriptor is well formed.
     bool Verify() const;
     explicit DIType(const MDNode *N);
@@ -314,12 +319,6 @@ namespace llvm {
     /// this descriptor.
     void replaceAllUsesWith(DIDescriptor &D);
     void replaceAllUsesWith(MDNode *D);
-
-    /// print - print type.
-    void print(raw_ostream &OS) const;
-
-    /// dump - print type to dbgs() with a newline.
-    void dump() const;
   };
 
   /// DIBasicType - A basic type, like 'int' or 'float'.
@@ -332,18 +331,14 @@ namespace llvm {
 
     /// Verify - Verify that a basic type descriptor is well formed.
     bool Verify() const;
-
-    /// print - print basic type.
-    void print(raw_ostream &OS) const;
-
-    /// dump - print basic type to dbgs() with a newline.
-    void dump() const;
   };
 
   /// DIDerivedType - A simple derived type, like a const qualified type,
   /// a typedef, a pointer or reference, etc.
   class DIDerivedType : public DIType {
     virtual void anchor();
+    friend class DIDescriptor;
+    void printInternal(raw_ostream &OS) const;
   protected:
     explicit DIDerivedType(const MDNode *N, bool, bool)
       : DIType(N, true, true) {}
@@ -401,12 +396,6 @@ namespace llvm {
 
     /// Verify - Verify that a derived type descriptor is well formed.
     bool Verify() const;
-
-    /// print - print derived type.
-    void print(raw_ostream &OS) const;
-
-    /// dump - print derived type to dbgs() with a newline.
-    void dump() const;
   };
 
   /// DICompositeType - This descriptor holds a type that can refer to multiple
@@ -414,6 +403,8 @@ namespace llvm {
   /// FIXME: Why is this a DIDerivedType??
   class DICompositeType : public DIDerivedType {
     virtual void anchor();
+    friend class DIDescriptor;
+    void printInternal(raw_ostream &OS) const;
   public:
     explicit DICompositeType(const MDNode *N = 0)
       : DIDerivedType(N, true, true) {
@@ -430,12 +421,6 @@ namespace llvm {
 
     /// Verify - Verify that a composite type descriptor is well formed.
     bool Verify() const;
-
-    /// print - print composite type.
-    void print(raw_ostream &OS) const;
-
-    /// dump - print composite type to dbgs() with a newline.
-    void dump() const;
   };
 
   /// DITemplateTypeParameter - This is a wrapper for template type parameter.
@@ -478,6 +463,8 @@ namespace llvm {
   /// DISubprogram - This is a wrapper for a subprogram (e.g. a function).
   class DISubprogram : public DIScope {
     virtual void anchor();
+    friend class DIDescriptor;
+    void printInternal(raw_ostream &OS) const;
   public:
     explicit DISubprogram(const MDNode *N = 0) : DIScope(N) {}
 
@@ -576,12 +563,6 @@ namespace llvm {
     /// Verify - Verify that a subprogram descriptor is well formed.
     bool Verify() const;
 
-    /// print - print subprogram.
-    void print(raw_ostream &OS) const;
-
-    /// dump - print subprogram to dbgs() with a newline.
-    void dump() const;
-
     /// describes - Return true if this subprogram provides debugging
     /// information for the function F.
     bool describes(const Function *F);
@@ -597,6 +578,8 @@ namespace llvm {
 
   /// DIGlobalVariable - This is a wrapper for a global variable.
   class DIGlobalVariable : public DIDescriptor {
+    friend class DIDescriptor;
+    void printInternal(raw_ostream &OS) const;
   public:
     explicit DIGlobalVariable(const MDNode *N = 0) : DIDescriptor(N) {}
 
@@ -634,17 +617,13 @@ namespace llvm {
 
     /// Verify - Verify that a global variable descriptor is well formed.
     bool Verify() const;
-
-    /// print - print global variable.
-    void print(raw_ostream &OS) const;
-
-    /// dump - print global variable to dbgs() with a newline.
-    void dump() const;
   };
 
   /// DIVariable - This is a wrapper for a variable (e.g. parameter, local,
   /// global etc).
   class DIVariable : public DIDescriptor {
+    friend class DIDescriptor;
+    void printInternal(raw_ostream &OS) const;
   public:
     explicit DIVariable(const MDNode *N = 0)
       : DIDescriptor(N) {}
@@ -706,13 +685,7 @@ namespace llvm {
     /// information for an inlined function arguments.
     bool isInlinedFnArgument(const Function *CurFn);
 
-    /// print - print variable.
-    void print(raw_ostream &OS) const;
-
     void printExtendedName(raw_ostream &OS) const;
-
-    /// dump - print variable to dbgs() with a newline.
-    void dump() const;
   };
 
   /// DILexicalBlock - This is a wrapper for a lexical block.
@@ -830,12 +803,6 @@ namespace llvm {
 
     /// Verify - Verify that a derived type descriptor is well formed.
     bool Verify() const;
-
-    /// print - print derived type.
-    void print(raw_ostream &OS) const;
-
-    /// dump - print derived type to dbgs() with a newline.
-    void dump() const;
   };
 
   /// getDISubprogram - Find subprogram that is enclosing this scope.
