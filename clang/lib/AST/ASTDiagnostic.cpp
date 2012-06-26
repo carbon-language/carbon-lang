@@ -893,7 +893,7 @@ class TemplateDiff {
       ArgType = Iter->getAsType();
     else if (!isVariadic)
       ArgType = DefaultTTPD->getDefaultArgument();
-  };
+  }
 
   /// GetExpr - Retrieves the template expression argument, including default
   /// arguments.
@@ -1230,7 +1230,7 @@ public:
                  ToOrigTST->getTemplateName().getAsTemplateDecl());
 
     DiffTemplate(FromOrigTST, ToOrigTST);
-  };
+  }
 
   /// MakeString - When the two types given are templated types with the same
   /// base template, a string representation of the type difference will be
