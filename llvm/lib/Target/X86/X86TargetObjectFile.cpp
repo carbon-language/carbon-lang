@@ -21,7 +21,7 @@
 using namespace llvm;
 using namespace dwarf;
 
-const MCExpr *X8664_MachoTargetObjectFile::
+const MCExpr *X86_64MachoTargetObjectFile::
 getExprForDwarfGlobalReference(const GlobalValue *GV, Mangler *Mang,
                                MachineModuleInfo *MMI, unsigned Encoding,
                                MCStreamer &Streamer) const {
@@ -40,7 +40,7 @@ getExprForDwarfGlobalReference(const GlobalValue *GV, Mangler *Mang,
     getExprForDwarfGlobalReference(GV, Mang, MMI, Encoding, Streamer);
 }
 
-MCSymbol *X8664_MachoTargetObjectFile::
+MCSymbol *X86_64MachoTargetObjectFile::
 getCFIPersonalitySymbol(const GlobalValue *GV, Mangler *Mang,
                         MachineModuleInfo *MMI) const {
   return Mang->getSymbol(GV);

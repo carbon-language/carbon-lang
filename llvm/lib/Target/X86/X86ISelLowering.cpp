@@ -139,7 +139,7 @@ static TargetLoweringObjectFile *createTLOF(X86TargetMachine &TM) {
 
   if (Subtarget->isTargetEnvMacho()) {
     if (is64Bit)
-      return new X8664_MachoTargetObjectFile();
+      return new X86_64MachoTargetObjectFile();
     return new TargetLoweringObjectFileMachO();
   }
 
