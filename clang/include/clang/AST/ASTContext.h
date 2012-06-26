@@ -429,7 +429,7 @@ public:
   /// with a given declaration.
   mutable llvm::DenseMap<const Decl *, const RawComment *> DeclComments;
 
-  /// \brief Return the Doxygen-style comment attached to a given declaration,
+  /// \brief Return the documentation comment attached to a given declaration,
   /// without looking into cache.
   const RawComment *getRawCommentForDeclNoCache(const Decl *D) const;
 
@@ -438,7 +438,7 @@ public:
     Comments.addComment(RC);
   }
 
-  /// \brief Return the Doxygen-style comment attached to a given declaration.
+  /// \brief Return the documentation comment attached to a given declaration.
   /// Returns NULL if no comment is attached.
   const RawComment *getRawCommentForDecl(const Decl *D) const;
 
