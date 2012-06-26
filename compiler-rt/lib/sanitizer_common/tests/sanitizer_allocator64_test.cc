@@ -106,7 +106,7 @@ TEST(SanitizerCommon, SizeClassAllocator64MetadataStress) {
           16, SCMap> Allocator;
   Allocator a;
   a.Init();
-  static volatile uptr sink;
+  static volatile void *sink;
 
   const uptr kNumAllocs = 10000;
   void *allocated[kNumAllocs];
@@ -143,4 +143,45 @@ void FailInAssertionOnOOM() {
 TEST(SanitizerCommon, SizeClassAllocator64Overflow) {
   EXPECT_DEATH(FailInAssertionOnOOM(),
                "allocated_user.*allocated_meta.*kRegionSize");
+}
+
+TEST(SanitizerCommon, LargeMmapAllocator) {
+  LargeMmapAllocator a;
+  a.Init();
+
+  static const int kNumAllocs = 100;
+  void *allocated[kNumAllocs];
+  static const uptr size = 1000;
+  // Allocate some.
+  for (int i = 0; i < kNumAllocs; i++) {
+    allocated[i] = a.Allocate(size);
+  }
+  // Deallocate all.
+  CHECK_GT(a.TotalMemoryUsed(), size * kNumAllocs);
+  for (int i = 0; i < kNumAllocs; i++) {
+    void *p = allocated[i];
+    CHECK(a.PointerIsMine(p));
+    a.Deallocate(p);
+  }
+  // Check that non left.
+  CHECK_EQ(a.TotalMemoryUsed(), 0);
+
+  // Allocate some more, also add metadata.
+  for (int i = 0; i < kNumAllocs; i++) {
+    void *x = a.Allocate(size);
+    uptr *meta = reinterpret_cast<uptr*>(a.GetMetaData(x));
+    *meta = i;
+    allocated[i] = x;
+  }
+  CHECK_GT(a.TotalMemoryUsed(), size * kNumAllocs);
+  // Deallocate all in reverse order.
+  for (int i = 0; i < kNumAllocs; i++) {
+    int idx = kNumAllocs - i - 1;
+    void *p = allocated[idx];
+    uptr *meta = reinterpret_cast<uptr*>(a.GetMetaData(p));
+    CHECK_EQ(*meta, idx);
+    CHECK(a.PointerIsMine(p));
+    a.Deallocate(p);
+  }
+  CHECK_EQ(a.TotalMemoryUsed(), 0);
 }

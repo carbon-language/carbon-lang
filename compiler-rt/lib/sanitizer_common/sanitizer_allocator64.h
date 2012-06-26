@@ -19,6 +19,7 @@
 
 #include "sanitizer_common.h"
 #include "sanitizer_internal_defs.h"
+#include "sanitizer_libc.h"
 
 namespace __sanitizer {
 
@@ -113,11 +114,11 @@ class SizeClassAllocator64 {
     return (reinterpret_cast<uptr>(p) / kRegionSize) % kNumClasses;
   }
 
-  uptr GetMetaData(void *p) {
+  void *GetMetaData(void *p) {
     uptr class_id = GetSizeClass(p);
     uptr chunk_idx = GetChunkIdx(reinterpret_cast<uptr>(p), class_id);
-    return kSpaceBeg + (kRegionSize * (class_id + 1)) -
-        (1 + chunk_idx) * kMetadataSize;
+    return reinterpret_cast<void*>(kSpaceBeg + (kRegionSize * (class_id + 1)) -
+                                   (1 + chunk_idx) * kMetadataSize);
   }
 
   uptr TotalMemoryUsed() {
@@ -224,6 +225,97 @@ class SizeClassAllocator64 {
     // FIXME: Lock region->mutex;
     PushLifoList(&region->free_list, reinterpret_cast<LifoListNode*>(p));
   }
+};
+
+// This class can (de)allocate only large chunks of memory using mmap/unmap.
+// The main purpose of this allocator is to cover large and rare allocation
+// sizes not covered by more efficient allocators (e.g. SizeClassAllocator64).
+// The result is always page-aligned.
+class LargeMmapAllocator {
+ public:
+  void Init() {
+    internal_memset(this, 0, sizeof(*this));
+  }
+  void *Allocate(uptr size) {
+    uptr map_size = RoundUpMapSize(size);
+    void *map = MmapOrDie(map_size, "LargeMmapAllocator");
+    void *res = reinterpret_cast<void*>(reinterpret_cast<uptr>(map)
+                                        + kPageSize);
+    Header *h = GetHeader(res);
+    h->size = size;
+    {
+      // FIXME: lock
+      h->next = list_;
+      h->prev = 0;
+      if (list_)
+        list_->prev = h;
+      list_ = h;
+    }
+    return res;
+  }
+
+  void Deallocate(void *p) {
+    Header *h = GetHeader(p);
+    uptr map_size = RoundUpMapSize(h->size);
+    {
+      // FIXME: lock
+      Header *prev = h->prev;
+      Header *next = h->next;
+      if (prev)
+        prev->next = next;
+      if (next)
+        next->prev = prev;
+      if (h == list_)
+        list_ = next;
+    }
+    UnmapOrDie(h, map_size);
+  }
+
+  uptr TotalMemoryUsed() {
+    // FIXME: lock
+    uptr res = 0;
+    for (Header *l = list_; l; l = l->next) {
+      res += RoundUpMapSize(l->size);
+    }
+    return res;
+  }
+
+  bool PointerIsMine(void *p) {
+    // Fast check.
+    if ((reinterpret_cast<uptr>(p) % kPageSize) != 0) return false;
+    // FIXME: lock
+    for (Header *l = list_; l; l = l->next) {
+      if (GetUser(l) == p) return true;
+    }
+    return false;
+  }
+
+  // At least kPageSize/2 metadata bytes is available.
+  void *GetMetaData(void *p) {
+    return GetHeader(p) + 1;
+  }
+
+ private:
+  struct Header {
+    uptr size;
+    Header *next;
+    Header *prev;
+  };
+
+  Header *GetHeader(void *p) {
+    return reinterpret_cast<Header*>(reinterpret_cast<uptr>(p) - kPageSize);
+  }
+
+  void *GetUser(Header *h) {
+    return reinterpret_cast<void*>(reinterpret_cast<uptr>(h) + kPageSize);
+  }
+
+  uptr RoundUpMapSize(uptr size) {
+    return RoundUpTo(size, kPageSize) + kPageSize;
+  }
+
+  Header *list_;
+  uptr lock_;  // FIXME
 };
 
 }  // namespace __sanitizer
