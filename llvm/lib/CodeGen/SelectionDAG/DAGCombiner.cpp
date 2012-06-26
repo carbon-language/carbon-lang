@@ -5020,6 +5020,10 @@ SDValue DAGCombiner::ReduceLoadWidth(SDNode *N) {
   LoadSDNode *LN0 = cast<LoadSDNode>(N0);
   EVT PtrType = N0.getOperand(1).getValueType();
 
+  if (PtrType == MVT::Untyped || PtrType.isExtended())
+    // It's not possible to generate a constant of extended or untyped type.
+    return SDValue();
+
   // For big endian targets, we need to adjust the offset to the pointer to
   // load the correct bytes.
   if (TLI.isBigEndian()) {
