@@ -48,6 +48,9 @@ DiagnosticsEngine::DiagnosticsEngine(
   ErrorsAsFatal = false;
   SuppressSystemWarnings = false;
   SuppressAllDiagnostics = false;
+  ElideType = true;
+  PrintTemplateTree = false;
+  ShowColors = false;
   ShowOverloads = Ovl_All;
   ExtBehavior = Ext_Ignore;
 
@@ -660,6 +663,8 @@ FormatDiagnostic(const char *DiagStr, const char *DiagEnd,
   /// QualTypeVals - Pass a vector of arrays so that QualType names can be
   /// compared to see if more information is needed to be printed.
   SmallVector<intptr_t, 2> QualTypeVals;
+  SmallVector<char, 64> Tree;
+
   for (unsigned i = 0, e = getNumArgs(); i < e; ++i)
     if (getArgKind(i) == DiagnosticsEngine::ak_qualtype)
       QualTypeVals.push_back(getRawArg(i));
@@ -711,7 +716,20 @@ FormatDiagnostic(const char *DiagStr, const char *DiagEnd,
     assert(isdigit(*DiagStr) && "Invalid format for argument in diagnostic");
     unsigned ArgNo = *DiagStr++ - '0';
 
+    // Only used for type diffing.
+    unsigned ArgNo2 = ArgNo;
+
     DiagnosticsEngine::ArgumentKind Kind = getArgKind(ArgNo);
+    if (Kind == DiagnosticsEngine::ak_qualtype &&
+        ModifierIs(Modifier, ModifierLen, "diff")) {
+      Kind = DiagnosticsEngine::ak_qualtype_pair;
+      assert(*DiagStr == ',' && isdigit(*(DiagStr + 1)) &&
+             "Invalid format for diff modifier");
+      ++DiagStr;  // Comma.
+      ArgNo2 = *DiagStr++ - '0';
+      assert(getArgKind(ArgNo2) == DiagnosticsEngine::ak_qualtype &&
+             "Second value of type diff must be a qualtype");
+    }
     
     switch (Kind) {
     // ---- STRINGS ----
@@ -796,18 +814,77 @@ FormatDiagnostic(const char *DiagStr, const char *DiagEnd,
                                      FormattedArgs.data(), FormattedArgs.size(),
                                      OutStr, QualTypeVals);
       break;
+    case DiagnosticsEngine::ak_qualtype_pair:
+      // Create a struct with all the info needed for printing.
+      TemplateDiffTypes TDT;
+      TDT.FromType = getRawArg(ArgNo);
+      TDT.ToType = getRawArg(ArgNo2);
+      TDT.ElideType = getDiags()->ElideType;
+      TDT.ShowColors = getDiags()->ShowColors;
+      intptr_t val = reinterpret_cast<intptr_t>(&TDT);
+
+      // Print the tree.
+      if (getDiags()->PrintTemplateTree) {
+        TDT.PrintFromType = true;
+        TDT.PrintTree = true;
+        getDiags()->ConvertArgToString(Kind, val,
+                                       Modifier, ModifierLen,
+                                       Argument, ArgumentLen,
+                                       FormattedArgs.data(),
+                                       FormattedArgs.size(),
+                                       Tree, QualTypeVals);
+        // If there is no tree information, fall back to regular printing.
+        if (!Tree.empty())
+          break;
+      }
+
+      // Non-tree printing, also the fall-back when tree printing fails.
+      // The fall-back is triggered when the types compared are not templates.
+      const char *ArgumentEnd = Argument + ArgumentLen;
+      const char *FirstPipe = ScanFormat(Argument, ArgumentEnd, '|');
+      const char *SecondPipe = ScanFormat(FirstPipe + 1, ArgumentEnd, '|');
+
+      // Append before text
+      FormatDiagnostic(Argument, FirstPipe, OutStr);
+
+      // Append first type
+      TDT.PrintTree = false;
+      TDT.PrintFromType = true;
+      getDiags()->ConvertArgToString(Kind, val,
+                                     Modifier, ModifierLen,
+                                     Argument, ArgumentLen,
+                                     FormattedArgs.data(), FormattedArgs.size(),
+                                     OutStr, QualTypeVals);
+      // Append middle text
+      FormatDiagnostic(FirstPipe + 1, SecondPipe, OutStr);
+
+      // Append second type
+      TDT.PrintFromType = false;
+      getDiags()->ConvertArgToString(Kind, val,
+                                     Modifier, ModifierLen,
+                                     Argument, ArgumentLen,
+                                     FormattedArgs.data(), FormattedArgs.size(),
+                                     OutStr, QualTypeVals);
+      // Append end text
+      FormatDiagnostic(SecondPipe + 1, ArgumentEnd, OutStr);
+      break;
     }
     
     // Remember this argument info for subsequent formatting operations.  Turn
     // std::strings into a null terminated string to make it be the same case as
     // all the other ones.
-    if (Kind != DiagnosticsEngine::ak_std_string)
+    if (Kind == DiagnosticsEngine::ak_qualtype_pair)
+      continue;
+    else if (Kind != DiagnosticsEngine::ak_std_string)
       FormattedArgs.push_back(std::make_pair(Kind, getRawArg(ArgNo)));
     else
       FormattedArgs.push_back(std::make_pair(DiagnosticsEngine::ak_c_string,
                                         (intptr_t)getArgStdStr(ArgNo).c_str()));
     
   }
+
+  // Append the type tree to the end of the diagnostics.
+  OutStr.append(Tree.begin(), Tree.end());
 }
 
 StoredDiagnostic::StoredDiagnostic() { }

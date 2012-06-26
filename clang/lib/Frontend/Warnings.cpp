@@ -53,7 +53,11 @@ void clang::ProcessWarningOptions(DiagnosticsEngine &Diags,
   Diags.setIgnoreAllWarnings(Opts.IgnoreWarnings);
   Diags.setShowOverloads(
     static_cast<DiagnosticsEngine::OverloadsShown>(Opts.ShowOverloads));
-  
+
+  Diags.setElideType(Opts.ElideType);
+  Diags.setPrintTemplateTree(Opts.ShowTemplateTree);
+  Diags.setShowColors(Opts.ShowColors);
+ 
   // Handle -ferror-limit
   if (Opts.ErrorLimit)
     Diags.setErrorLimit(Opts.ErrorLimit);

@@ -153,7 +153,8 @@ public:
     ak_declarationname, // DeclarationName
     ak_nameddecl,       // NamedDecl *
     ak_nestednamespec,  // NestedNameSpecifier *
-    ak_declcontext      // DeclContext *
+    ak_declcontext,     // DeclContext *
+    ak_qualtype_pair    // pair<QualType, QualType>
   };
 
   /// Specifies which overload candidates to display when overload resolution
@@ -175,6 +176,9 @@ private:
   bool ErrorsAsFatal;            // Treat errors like fatal errors.
   bool SuppressSystemWarnings;   // Suppress warnings in system headers.
   bool SuppressAllDiagnostics;   // Suppress all diagnostics.
+  bool ElideType;                // Elide common types of templates.
+  bool PrintTemplateTree;        // Print a tree when comparing templates.
+  bool ShowColors;               // Color printing is enabled.
   OverloadsShown ShowOverloads;  // Which overload candidates to show.
   unsigned ErrorLimit;           // Cap of # errors emitted, 0 -> no limit.
   unsigned TemplateBacktraceLimit; // Cap on depth of template backtrace stack,
@@ -438,7 +442,22 @@ public:
     SuppressAllDiagnostics = Val; 
   }
   bool getSuppressAllDiagnostics() const { return SuppressAllDiagnostics; }
-  
+
+  /// \brief Set type eliding, to skip outputting same types occurring in
+  /// template types.
+  void setElideType(bool Val = true) { ElideType = Val; }
+  bool getElideType() { return ElideType; }
+ 
+  /// \brief Set tree printing, to outputting the template difference in a
+  /// tree format.
+  void setPrintTemplateTree(bool Val = false) { PrintTemplateTree = Val; }
+  bool getPrintTemplateTree() { return PrintTemplateTree; }
+ 
+  /// \brief Set color printing, so the type diffing will inject color markers
+  /// into the output.
+  void setShowColors(bool Val = false) { ShowColors = Val; }
+  bool getShowColors() { return ShowColors; }
+
   /// \brief Specify which overload candidates to show when overload resolution
   /// fails.  By default, we show all candidates.
   void setShowOverloads(OverloadsShown Val) {
@@ -1058,7 +1077,6 @@ public:
     return DiagObj->DiagArgumentsVal[Idx];
   }
 
-
   /// getNumRanges - Return the number of source ranges associated with this
   /// diagnostic.
   unsigned getNumRanges() const {
@@ -1222,6 +1240,20 @@ class IgnoringDiagConsumer : public DiagnosticConsumer {
     return new IgnoringDiagConsumer();
   }
 };
+
+// Struct used for sending info about how a type should be printed.
+struct TemplateDiffTypes {
+  intptr_t FromType;
+  intptr_t ToType;
+  unsigned PrintTree : 1;
+  unsigned PrintFromType : 1;
+  unsigned ElideType : 1;
+  unsigned ShowColors : 1;
+};
+
+/// Special character that the diagnostic printer will use to toggle the bold
+/// attribute.  The character itself will be not be printed.
+const char ToggleHighlight = 127;
 
 }  // end namespace clang
 

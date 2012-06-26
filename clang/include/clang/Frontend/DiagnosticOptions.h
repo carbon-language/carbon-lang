@@ -47,6 +47,9 @@ public:
                                  /// diagnostics, indicated by markers in the
                                  /// input source file.
 
+  unsigned ElideType: 1;         /// Elide identical types in template diffing
+  unsigned ShowTemplateTree: 1;  /// Print a template tree when diffing
+
   unsigned ErrorLimit;           /// Limit # errors emitted.
   unsigned MacroBacktraceLimit;  /// Limit depth of macro expansion backtrace.
   unsigned TemplateBacktraceLimit; /// Limit depth of instantiation backtrace.

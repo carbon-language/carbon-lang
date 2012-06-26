@@ -14,7 +14,11 @@
 
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclObjC.h"
+#include "clang/AST/TemplateBase.h"
+#include "clang/AST/ExprCXX.h"
+#include "clang/AST/DeclTemplate.h"
 #include "clang/AST/Type.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/Support/raw_ostream.h"
 
 using namespace clang;
@@ -225,6 +229,11 @@ ConvertTypeToDiagnosticString(ASTContext &Context, QualType Ty,
   return S;
 }
 
+static bool FormatTemplateTypeDiff(ASTContext &Context, QualType FromType,
+                                   QualType ToType, bool PrintTree,
+                                   bool PrintFromType, bool ElideType,
+                                   bool ShowColors, std::string &S);
+
 void clang::FormatASTNodeDiagnosticArgument(
     DiagnosticsEngine::ArgumentKind Kind,
     intptr_t Val,
@@ -244,6 +253,32 @@ void clang::FormatASTNodeDiagnosticArgument(
   
   switch (Kind) {
     default: llvm_unreachable("unknown ArgumentKind");
+    case DiagnosticsEngine::ak_qualtype_pair: {
+      const TemplateDiffTypes &TDT = *reinterpret_cast<TemplateDiffTypes*>(Val);
+      QualType FromType =
+          QualType::getFromOpaquePtr(reinterpret_cast<void*>(TDT.FromType));
+      QualType ToType =
+          QualType::getFromOpaquePtr(reinterpret_cast<void*>(TDT.ToType));
+
+      if (FormatTemplateTypeDiff(Context, FromType, ToType, TDT.PrintTree,
+                                 TDT.PrintFromType, TDT.ElideType,
+                                 TDT.ShowColors, S)) {
+        NeedQuotes = !TDT.PrintTree;
+        break;
+      }
+
+      // Don't fall-back during tree printing.  The caller will handle
+      // this case.
+      if (TDT.PrintTree)
+        return;
+
+      // Attempting to do a templete diff on non-templates.  Set the variables
+      // and continue with regular type printing of the appropriate type.
+      Val = TDT.PrintFromType ? TDT.FromType : TDT.ToType;
+      ModLen = 0;
+      ArgLen = 0;
+      // Fall through
+    }
     case DiagnosticsEngine::ak_qualtype: {
       assert(ModLen == 0 && ArgLen == 0 &&
              "Invalid modifier for QualType argument");
@@ -328,4 +363,902 @@ void clang::FormatASTNodeDiagnosticArgument(
   
   if (NeedQuotes)
     Output.push_back('\'');
+}
+
+/// TemplateDiff - A class that constructs a pretty string for a pair of
+/// QualTypes.  For the pair of types, a diff tree will be created containing
+/// all the information about the templates and template arguments.  Afterwards,
+/// the tree is transformed to a string according to the options passed in.
+namespace {
+class TemplateDiff {
+  /// Context - The ASTContext which is used for comparing template arguments.
+  ASTContext &Context;
+
+  /// Policy - Used during expression printing.
+  PrintingPolicy Policy;
+
+  /// ElideType - Option to elide identical types.
+  bool ElideType;
+
+  /// PrintTree - Format output string as a tree.
+  bool PrintTree;
+
+  /// ShowColor - Diagnostics support color, so bolding will be used.
+  bool ShowColor;
+
+  /// FromType - When single type printing is selected, this is the type to be
+  /// be printed.  When tree printing is selected, this type will show up first
+  /// in the tree.
+  QualType FromType;
+
+  /// ToType - The type that FromType is compared to.  Only in tree printing
+  /// will this type be outputed.
+  QualType ToType;
+
+  /// Str - Storage for the output stream.
+  llvm::SmallString<128> Str;
+
+  /// OS - The stream used to construct the output strings.
+  llvm::raw_svector_ostream OS;
+
+  /// IsBold - Keeps track of the bold formatting for the output string.
+  bool IsBold;
+
+  /// DiffTree - A tree representation the differences between two types.
+  class DiffTree {
+    /// DiffNode - The root node stores the original type.  Each child node
+    /// stores template arguments of their parents.  For templated types, the
+    /// template decl is also stored.
+    struct DiffNode {
+      /// NextNode - The index of the next sibling node or 0.
+      unsigned NextNode;
+
+      /// ChildNode - The index of the first child node or 0.
+      unsigned ChildNode;
+
+      /// ParentNode - The index of the parent node.
+      unsigned ParentNode;
+
+      /// FromType, ToType - The type arguments.
+      QualType FromType, ToType;
+
+      /// FromExpr, ToExpr - The expression arguments.
+      Expr *FromExpr, *ToExpr;
+
+      /// FromTD, ToTD - The template decl for template template
+      /// arguments or the type arguments that are templates.
+      TemplateDecl *FromTD, *ToTD;
+
+      /// FromDefault, ToDefault - Whether the argument is a default argument.
+      bool FromDefault, ToDefault;
+
+      /// Same - Whether the two arguments evaluate to the same value.
+      bool Same;
+
+      DiffNode(unsigned ParentNode = 0)
+        : NextNode(0), ChildNode(0), ParentNode(ParentNode),
+          FromType(), ToType(), FromExpr(0), ToExpr(0), FromTD(0), ToTD(0),
+          FromDefault(false), ToDefault(false), Same(false) { }
+    };
+
+    /// FlatTree - A flattened tree used to store the DiffNodes.
+    llvm::SmallVector<DiffNode, 16> FlatTree;
+
+    /// CurrentNode - The index of the current node being used.
+    unsigned CurrentNode;
+
+    /// NextFreeNode - The index of the next unused node.  Used when creating
+    /// child nodes.
+    unsigned NextFreeNode;
+
+    /// ReadNode - The index of the current node being read.
+    unsigned ReadNode;
+  
+  public:
+    DiffTree() :
+        CurrentNode(0), NextFreeNode(1) {
+      FlatTree.push_back(DiffNode());
+    }
+
+    // Node writing functions.
+    /// SetNode - Sets FromTD and ToTD of the current node.
+    void SetNode(TemplateDecl *FromTD, TemplateDecl *ToTD) {
+      FlatTree[CurrentNode].FromTD = FromTD;
+      FlatTree[CurrentNode].ToTD = ToTD;
+    }
+
+    /// SetNode - Sets FromType and ToType of the current node.
+    void SetNode(QualType FromType, QualType ToType) {
+      FlatTree[CurrentNode].FromType = FromType;
+      FlatTree[CurrentNode].ToType = ToType;
+    }
+
+    /// SetNode - Set FromExpr and ToExpr of the current node.
+    void SetNode(Expr *FromExpr, Expr *ToExpr) {
+      FlatTree[CurrentNode].FromExpr = FromExpr;
+      FlatTree[CurrentNode].ToExpr = ToExpr;
+    }
+
+    /// SetSame - Sets the same flag of the current node.
+    void SetSame(bool Same) {
+      FlatTree[CurrentNode].Same = Same;
+    }
+
+    /// SetDefault - Sets FromDefault and ToDefault flags of the current node.
+    void SetDefault(bool FromDefault, bool ToDefault) {
+      FlatTree[CurrentNode].FromDefault = FromDefault;
+      FlatTree[CurrentNode].ToDefault = ToDefault;
+    }
+
+    /// Up - Changes the node to the parent of the current node.
+    void Up() {
+      CurrentNode = FlatTree[CurrentNode].ParentNode;
+    }
+
+    /// AddNode - Adds a child node to the current node, then sets that node
+    /// node as the current node.
+    void AddNode() {
+      FlatTree.push_back(DiffNode(CurrentNode));
+      DiffNode &Node = FlatTree[CurrentNode];
+      if (Node.ChildNode == 0) {
+        // If a child node doesn't exist, add one.
+        Node.ChildNode = NextFreeNode;
+      } else {
+        // If a child node exists, find the last child node and add a
+        // next node to it.
+        unsigned i;
+        for (i = Node.ChildNode; FlatTree[i].NextNode != 0;
+             i = FlatTree[i].NextNode) {
+        }
+        FlatTree[i].NextNode = NextFreeNode;
+      }
+      CurrentNode = NextFreeNode;
+      ++NextFreeNode;
+    }
+
+    // Node reading functions.
+    /// StartTraverse - Prepares the tree for recursive traversal.
+    void StartTraverse() {
+      ReadNode = 0;
+      CurrentNode = NextFreeNode;
+      NextFreeNode = 0;
+    }
+
+    /// Parent - Move the current read node to its parent.
+    void Parent() {
+      ReadNode = FlatTree[ReadNode].ParentNode;
+    }
+
+    /// NodeIsTemplate - Returns true if a template decl is set, and types are
+    /// set.
+    bool NodeIsTemplate() {
+      return (FlatTree[ReadNode].FromTD &&
+              !FlatTree[ReadNode].ToType.isNull()) ||
+             (FlatTree[ReadNode].ToTD && !FlatTree[ReadNode].ToType.isNull());
+    }
+
+    /// NodeIsQualType - Returns true if a Qualtype is set.
+    bool NodeIsQualType() {
+      return !FlatTree[ReadNode].FromType.isNull() ||
+             !FlatTree[ReadNode].ToType.isNull();
+    }
+
+    /// NodeIsExpr - Returns true if an expr is set.
+    bool NodeIsExpr() {
+      return FlatTree[ReadNode].FromExpr || FlatTree[ReadNode].ToExpr;
+    }
+
+    /// NodeIsTemplateTemplate - Returns true if the argument is a template
+    /// template type.
+    bool NodeIsTemplateTemplate() {
+      return FlatTree[ReadNode].FromType.isNull() &&
+             FlatTree[ReadNode].ToType.isNull() &&
+             (FlatTree[ReadNode].FromTD || FlatTree[ReadNode].ToTD);
+    }
+
+    /// GetNode - Gets the FromType and ToType.
+    void GetNode(QualType &FromType, QualType &ToType) {
+      FromType = FlatTree[ReadNode].FromType;
+      ToType = FlatTree[ReadNode].ToType;
+    }
+
+    /// GetNode - Gets the FromExpr and ToExpr.
+    void GetNode(Expr *&FromExpr, Expr *&ToExpr) {
+      FromExpr = FlatTree[ReadNode].FromExpr;
+      ToExpr = FlatTree[ReadNode].ToExpr;
+    }
+
+    /// GetNode - Gets the FromTD and ToTD.
+    void GetNode(TemplateDecl *&FromTD, TemplateDecl *&ToTD) {
+      FromTD = FlatTree[ReadNode].FromTD;
+      ToTD = FlatTree[ReadNode].ToTD;
+    }
+
+    /// NodeIsSame - Returns true the arguments are the same.
+    bool NodeIsSame() {
+      return FlatTree[ReadNode].Same;
+    }
+
+    /// HasChildrend - Returns true if the node has children.
+    bool HasChildren() {
+      return FlatTree[ReadNode].ChildNode != 0;
+    }
+
+    /// MoveToChild - Moves from the current node to its child.
+    void MoveToChild() {
+      ReadNode = FlatTree[ReadNode].ChildNode;
+    }
+
+    /// AdvanceSibling - If there is a next sibling, advance to it and return
+    /// true.  Otherwise, return false.
+    bool AdvanceSibling() {
+      if (FlatTree[ReadNode].NextNode == 0)
+        return false;
+
+      ReadNode = FlatTree[ReadNode].NextNode;
+      return true;
+    }
+
+    /// HasNextSibling - Return true if the node has a next sibling.
+    bool HasNextSibling() {
+      return FlatTree[ReadNode].NextNode != 0;
+    }
+
+    /// FromDefault - Return true if the from argument is the default.
+    bool FromDefault() {
+      return FlatTree[ReadNode].FromDefault;
+    }
+
+    /// ToDefault - Return true if the to argument is the default.
+    bool ToDefault() {
+      return FlatTree[ReadNode].ToDefault;
+    }
+
+    /// Empty - Returns true if the tree has no information.
+    bool Empty() {
+      return !FlatTree[0].FromTD && !FlatTree[0].ToTD &&
+             !FlatTree[0].FromExpr && !FlatTree[0].ToExpr &&
+             FlatTree[0].FromType.isNull() && FlatTree[0].ToType.isNull();
+    }
+  };
+
+  DiffTree Tree;
+
+  /// TSTiterator - an iterator that is used to enter a
+  /// TemplateSpecializationType and read TemplateArguments inside template
+  /// parameter packs in order with the rest of the TemplateArguments.
+  struct TSTiterator {
+    typedef const TemplateArgument& reference;
+    typedef const TemplateArgument* pointer;
+
+    /// TST - the template specialization whose arguments this iterator
+    /// traverse over.
+    const TemplateSpecializationType *TST;
+
+    /// Index - the index of the template argument in TST.
+    unsigned Index;
+
+    /// CurrentTA - if CurrentTA is not the same as EndTA, then CurrentTA
+    /// points to a TemplateArgument within a parameter pack.
+    TemplateArgument::pack_iterator CurrentTA;
+
+    /// EndTA - the end iterator of a parameter pack
+    TemplateArgument::pack_iterator EndTA;
+
+    /// TSTiterator - Constructs an iterator and sets it to the first template
+    /// argument.
+    TSTiterator(const TemplateSpecializationType *TST)
+        : TST(TST), Index(0), CurrentTA(0), EndTA(0) {
+      if (isEnd()) return;
+
+      // Set to first template argument.  If not a parameter pack, done.
+      TemplateArgument TA = TST->getArg(0);
+      if (TA.getKind() != TemplateArgument::Pack) return;
+
+      // Start looking into the parameter pack.
+      CurrentTA = TA.pack_begin();
+      EndTA = TA.pack_end();
+
+      // Found a valid template argument.
+      if (CurrentTA != EndTA) return;
+
+      // Parameter pack is empty, use the increment to get to a valid
+      // template argument.
+      ++(*this);
+    }
+
+    /// isEnd - Returns true if the iterator is one past the end.
+    bool isEnd() const {
+      return Index == TST->getNumArgs();
+    }
+
+    /// &operator++ - Increment the iterator to the next template argument.
+    TSTiterator &operator++() {
+      assert(!isEnd() && "Iterator incremented past end of arguments.");
+
+      // If in a parameter pack, advance in the parameter pack.
+      if (CurrentTA != EndTA) {
+        ++CurrentTA;
+        if (CurrentTA != EndTA)
+          return *this;
+      }
+
+      // Loop until a template argument is found, or the end is reached.
+      while (true) {
+        // Advance to the next template argument.  Break if reached the end.
+        if (++Index == TST->getNumArgs()) break;
+
+        // If the TemplateArgument is not a parameter pack, done.
+        TemplateArgument TA = TST->getArg(Index);
+        if (TA.getKind() != TemplateArgument::Pack) break;
+
+        // Handle parameter packs.
+        CurrentTA = TA.pack_begin();
+        EndTA = TA.pack_end();
+
+        // If the parameter pack is empty, try to advance again.
+        if (CurrentTA != EndTA) break;
+      }
+      return *this;
+    }
+
+    /// operator* - Returns the appropriate TemplateArgument.
+    reference operator*() const {
+      assert(!isEnd() && "Index exceeds number of arguments.");
+      if (CurrentTA == EndTA)
+        return TST->getArg(Index);
+      else
+        return *CurrentTA;
+    }
+
+    /// operator-> - Allow access to the underlying TemplateArgument.
+    pointer operator->() const {
+      return &operator*();
+    }
+  };
+
+  // These functions build up the template diff tree, including functions to
+  // retrieve and compare template arguments. 
+
+  static const TemplateSpecializationType * GetTemplateSpecializationType(
+      ASTContext &Context, QualType Ty) {
+    if (const TemplateSpecializationType *TST =
+            Ty->getAs<TemplateSpecializationType>())
+      return TST;
+
+    const RecordType *RT = Ty->getAs<RecordType>();
+
+    if (!RT)
+      return 0;
+
+    const ClassTemplateSpecializationDecl *CTSD =
+        dyn_cast<ClassTemplateSpecializationDecl>(RT->getDecl());
+
+    if (!CTSD)
+      return 0;
+
+    Ty = Context.getTemplateSpecializationType(
+             TemplateName(CTSD->getSpecializedTemplate()),
+             CTSD->getTemplateArgs().data(),
+             CTSD->getTemplateArgs().size(),
+             Ty.getCanonicalType());
+
+    return Ty->getAs<TemplateSpecializationType>();
+  }
+
+  /// DiffTemplate - recursively visits template arguments and stores the
+  /// argument info into a tree.
+  void DiffTemplate(const TemplateSpecializationType *FromTST,
+                    const TemplateSpecializationType *ToTST) {
+    // Begin descent into diffing template tree.
+    TemplateParameterList *Params =
+        FromTST->getTemplateName().getAsTemplateDecl()->getTemplateParameters();
+    unsigned TotalArgs = 0;
+    for (TSTiterator FromIter(FromTST), ToIter(ToTST);
+         !FromIter.isEnd() || !ToIter.isEnd(); ++TotalArgs) {
+      Tree.AddNode();
+
+      // Get the parameter at index TotalArgs.  If index is larger
+      // than the total number of parameters, then there is an
+      // argument pack, so re-use the last parameter.
+      NamedDecl *ParamND = Params->getParam(
+          (TotalArgs < Params->size()) ? TotalArgs
+                                       : Params->size() - 1);
+      // Handle Types
+      if (TemplateTypeParmDecl *DefaultTTPD =
+              dyn_cast<TemplateTypeParmDecl>(ParamND)) {
+        QualType FromType, ToType;
+        GetType(FromIter, DefaultTTPD, FromType);
+        GetType(ToIter, DefaultTTPD, ToType);
+        Tree.SetNode(FromType, ToType);
+        Tree.SetDefault(FromIter.isEnd() && !FromType.isNull(),
+                        ToIter.isEnd() && !ToType.isNull());
+        if (!FromType.isNull() && !ToType.isNull()) {
+          if (Context.hasSameType(FromType, ToType)) {
+            Tree.SetSame(true);
+          } else {
+            const TemplateSpecializationType *FromArgTST =
+                GetTemplateSpecializationType(Context, FromType);
+            const TemplateSpecializationType *ToArgTST =
+                GetTemplateSpecializationType(Context, ToType);
+
+            if (FromArgTST && ToArgTST) {
+              bool SameTemplate = hasSameTemplate(FromArgTST, ToArgTST);
+              if (SameTemplate) {
+                Tree.SetNode(FromArgTST->getTemplateName().getAsTemplateDecl(),
+                             ToArgTST->getTemplateName().getAsTemplateDecl());
+                DiffTemplate(FromArgTST, ToArgTST);
+              }
+            }
+          }
+        }
+      }
+
+      // Handle Expressions
+      if (NonTypeTemplateParmDecl *DefaultNTTPD =
+              dyn_cast<NonTypeTemplateParmDecl>(ParamND)) {
+        Expr *FromExpr, *ToExpr;
+        GetExpr(FromIter, DefaultNTTPD, FromExpr);
+        GetExpr(ToIter, DefaultNTTPD, ToExpr);
+        Tree.SetNode(FromExpr, ToExpr);
+        Tree.SetSame(IsEqualExpr(Context, FromExpr, ToExpr));
+        Tree.SetDefault(FromIter.isEnd() && FromExpr,
+                        ToIter.isEnd() && ToExpr);
+      }
+
+      // Handle Templates
+      if (TemplateTemplateParmDecl *DefaultTTPD =
+              dyn_cast<TemplateTemplateParmDecl>(ParamND)) {
+        TemplateDecl *FromDecl, *ToDecl;
+        GetTemplateDecl(FromIter, DefaultTTPD, FromDecl);
+        GetTemplateDecl(ToIter, DefaultTTPD, ToDecl);
+        Tree.SetNode(FromDecl, ToDecl);
+        Tree.SetSame(FromDecl && ToDecl &&
+                     FromDecl->getIdentifier() == ToDecl->getIdentifier());
+      }
+
+      if (!FromIter.isEnd()) ++FromIter;
+      if (!ToIter.isEnd()) ++ToIter;
+      Tree.Up();
+    }
+  }
+
+  /// hasSameTemplate - Returns true if both types are specialized from the
+  /// same template declaration.  If they come from different template aliases,
+  /// do a parallel ascension search to determine the highest template alias in
+  /// common and set the arguments to them.
+  static bool hasSameTemplate(const TemplateSpecializationType *&FromTST,
+                              const TemplateSpecializationType *&ToTST) {
+    // Check the top templates if they are the same.
+    if (FromTST->getTemplateName().getAsTemplateDecl()->getIdentifier() ==
+        ToTST->getTemplateName().getAsTemplateDecl()->getIdentifier())
+      return true;
+
+    // Create vectors of template aliases.
+    SmallVector<const TemplateSpecializationType*, 1> FromTemplateList,
+                                                      ToTemplateList;
+
+    const TemplateSpecializationType *TempToTST = ToTST, *TempFromTST = FromTST;
+    FromTemplateList.push_back(FromTST);
+    ToTemplateList.push_back(ToTST);
+
+    // Dump every template alias into the vectors.
+    while (TempFromTST->isTypeAlias()) {
+      TempFromTST =
+          TempFromTST->getAliasedType()->getAs<TemplateSpecializationType>();
+      if (!TempFromTST)
+        break;
+      FromTemplateList.push_back(TempFromTST);
+    }
+    while (TempToTST->isTypeAlias()) {
+      TempToTST =
+          TempToTST->getAliasedType()->getAs<TemplateSpecializationType>();
+      if (!TempToTST)
+        break;
+      ToTemplateList.push_back(TempToTST);
+    }
+
+    SmallVector<const TemplateSpecializationType*, 1>::reverse_iterator
+        FromIter = FromTemplateList.rbegin(), FromEnd = FromTemplateList.rend(),
+        ToIter = ToTemplateList.rbegin(), ToEnd = ToTemplateList.rend();
+
+    // Check if the lowest template types are the same.  If not, return.
+    if ((*FromIter)->getTemplateName().getAsTemplateDecl()->getIdentifier() !=
+        (*ToIter)->getTemplateName().getAsTemplateDecl()->getIdentifier())
+      return false;
+
+    // Begin searching up the template aliases.  The bottom most template
+    // matches so move up until one pair does not match.  Use the template
+    // right before that one.
+    for (; FromIter != FromEnd && ToIter != ToEnd; ++FromIter, ++ToIter) {
+      if ((*FromIter)->getTemplateName().getAsTemplateDecl()->getIdentifier() !=
+          (*ToIter)->getTemplateName().getAsTemplateDecl()->getIdentifier())
+        break;
+    }
+
+    FromTST = FromIter[-1];
+    ToTST = ToIter[-1];
+
+    return true;
+  }
+
+  /// GetType - Retrieves the template type arguments, including default
+  /// arguments.
+  void GetType(const TSTiterator &Iter, TemplateTypeParmDecl *DefaultTTPD,
+               QualType &ArgType) {
+    ArgType = QualType();
+    bool isVariadic = DefaultTTPD->isParameterPack();
+
+    if (!Iter.isEnd())
+      ArgType = Iter->getAsType();
+    else if (!isVariadic)
+      ArgType = DefaultTTPD->getDefaultArgument();
+  };
+
+  /// GetExpr - Retrieves the template expression argument, including default
+  /// arguments.
+  void GetExpr(const TSTiterator &Iter, NonTypeTemplateParmDecl *DefaultNTTPD,
+               Expr *&ArgExpr) {
+    ArgExpr = 0;
+    bool isVariadic = DefaultNTTPD->isParameterPack();
+
+    if (!Iter.isEnd())
+      ArgExpr = Iter->getAsExpr();
+    else if (!isVariadic)
+      ArgExpr = DefaultNTTPD->getDefaultArgument();
+
+    if (ArgExpr)
+      while (SubstNonTypeTemplateParmExpr *SNTTPE =
+                 dyn_cast<SubstNonTypeTemplateParmExpr>(ArgExpr))
+        ArgExpr = SNTTPE->getReplacement();
+  }
+
+  /// GetTemplateDecl - Retrieves the template template arguments, including
+  /// default arguments.
+  void GetTemplateDecl(const TSTiterator &Iter,
+                       TemplateTemplateParmDecl *DefaultTTPD,
+                       TemplateDecl *&ArgDecl) {
+    ArgDecl = 0;
+    bool isVariadic = DefaultTTPD->isParameterPack();
+
+    TemplateArgument TA = DefaultTTPD->getDefaultArgument().getArgument();
+    TemplateDecl *DefaultTD = TA.getAsTemplate().getAsTemplateDecl();
+
+    if (!Iter.isEnd())
+      ArgDecl = Iter->getAsTemplate().getAsTemplateDecl();
+    else if (!isVariadic)
+      ArgDecl = DefaultTD;
+  }
+
+  /// IsEqualExpr - Returns true if the expressions evaluate to the same value.
+  static bool IsEqualExpr(ASTContext &Context, Expr *FromExpr, Expr *ToExpr) {
+    if (FromExpr == ToExpr)
+      return true;
+
+    if (!FromExpr || !ToExpr)
+      return false;
+
+    FromExpr = FromExpr->IgnoreParens();
+    ToExpr = ToExpr->IgnoreParens();
+
+    DeclRefExpr *FromDRE = dyn_cast<DeclRefExpr>(FromExpr),
+                *ToDRE = dyn_cast<DeclRefExpr>(ToExpr);
+
+    if (FromDRE || ToDRE) {
+      if (!FromDRE || !ToDRE)
+        return false;
+      return FromDRE->getDecl() == ToDRE->getDecl();
+    }
+
+    Expr::EvalResult FromResult, ToResult;
+    if (!FromExpr->EvaluateAsRValue(FromResult, Context) ||
+        !ToExpr->EvaluateAsRValue(ToResult, Context))
+      assert(0 && "Template arguments must be known at compile time.");
+
+    APValue &FromVal = FromResult.Val;
+    APValue &ToVal = ToResult.Val;
+
+    if (FromVal.getKind() != ToVal.getKind()) return false;
+
+    switch (FromVal.getKind()) {
+      case APValue::Int:
+        return FromVal.getInt() == ToVal.getInt();
+      case APValue::LValue: {
+        APValue::LValueBase FromBase = FromVal.getLValueBase();
+        APValue::LValueBase ToBase = ToVal.getLValueBase();
+        if (FromBase.isNull() && ToBase.isNull())
+          return true;
+        if (FromBase.isNull() || ToBase.isNull())
+          return false;
+        return FromBase.get<const ValueDecl*>() ==
+               ToBase.get<const ValueDecl*>();
+      }
+      case APValue::MemberPointer:
+        return FromVal.getMemberPointerDecl() == ToVal.getMemberPointerDecl();
+      default:
+        llvm_unreachable("Unknown template argument expression.");
+    }
+  }
+
+  // These functions converts the tree representation of the template
+  // differences into the internal character vector.
+
+  /// TreeToString - Converts the Tree object into a character stream which
+  /// will later be turned into the output string.
+  void TreeToString(int Indent = 1) {
+    if (PrintTree) {
+      OS << '\n';
+      for (int i = 0; i < Indent; ++i)
+        OS << "  ";
+      ++Indent;
+    }
+
+    // Handle cases where the difference is not templates with different
+    // arguments.
+    if (!Tree.NodeIsTemplate()) {
+      if (Tree.NodeIsQualType()) {
+        QualType FromType, ToType;
+        Tree.GetNode(FromType, ToType);
+        PrintTypeNames(FromType, ToType, Tree.FromDefault(), Tree.ToDefault(),
+                       Tree.NodeIsSame());
+        return;
+      }
+      if (Tree.NodeIsExpr()) {
+        Expr *FromExpr, *ToExpr;
+        Tree.GetNode(FromExpr, ToExpr);
+        PrintExpr(FromExpr, ToExpr, Tree.FromDefault(), Tree.ToDefault(),
+                  Tree.NodeIsSame());
+        return;
+      }
+      if (Tree.NodeIsTemplateTemplate()) {
+        TemplateDecl *FromTD, *ToTD;
+        Tree.GetNode(FromTD, ToTD);
+        PrintTemplateTemplate(FromTD, ToTD, Tree.FromDefault(),
+                              Tree.ToDefault(), Tree.NodeIsSame());
+        return;
+      }
+      llvm_unreachable("Unable to deduce template difference.");
+    }
+
+    // Node is root of template.  Recurse on children.
+    TemplateDecl *FromTD, *ToTD;
+    Tree.GetNode(FromTD, ToTD);
+
+    assert(Tree.HasChildren() && "Template difference not found in diff tree.");
+
+    OS << FromTD->getNameAsString() << '<'; 
+    Tree.MoveToChild();
+    unsigned NumElideArgs = 0;
+    do {
+      if (ElideType) {
+        if (Tree.NodeIsSame()) {
+          ++NumElideArgs;
+          continue;
+        }
+        if (NumElideArgs > 0) {
+          PrintElideArgs(NumElideArgs, Indent);
+          NumElideArgs = 0;
+          OS << ", ";
+        }
+      }
+      TreeToString(Indent);
+      if (Tree.HasNextSibling())
+        OS << ", ";
+    } while (Tree.AdvanceSibling());
+    if (NumElideArgs > 0)
+      PrintElideArgs(NumElideArgs, Indent);
+
+    Tree.Parent();
+    OS << ">";
+  }
+
+  // To signal to the text printer that a certain text needs to be bolded,
+  // a special character is injected into the character stream which the
+  // text printer will later strip out.
+
+  /// Bold - Start bolding text.
+  void Bold() {
+    assert(!IsBold && "Attempting to bold text that is already bold.");
+    IsBold = true;
+    if (ShowColor)
+      OS << ToggleHighlight;
+  }
+
+  /// Unbold - Stop bolding text.
+  void Unbold() {
+    assert(IsBold && "Attempting to remove bold from unbold text.");
+    IsBold = false;
+    if (ShowColor)
+      OS << ToggleHighlight;
+  }
+
+  // Functions to print out the arguments and highlighting the difference.
+
+  /// PrintTypeNames - prints the typenames, bolding differences.  Will detect
+  /// typenames that are the same and attempt to disambiguate them by using
+  /// canonical typenames.
+  void PrintTypeNames(QualType FromType, QualType ToType,
+                      bool FromDefault, bool ToDefault, bool Same) {
+    assert((!FromType.isNull() || !ToType.isNull()) &&
+           "Only one template argument may be missing.");
+
+    if (Same) {
+      OS << FromType.getAsString();
+      return;
+    }
+
+    std::string FromTypeStr = FromType.isNull() ? "(no argument)"
+                                                : FromType.getAsString();
+    std::string ToTypeStr = ToType.isNull() ? "(no argument)"
+                                            : ToType.getAsString();
+    // Switch to canonical typename if it is better.
+    // TODO: merge this with other aka printing above.
+    if (FromTypeStr == ToTypeStr) {
+      std::string FromCanTypeStr = FromType.getCanonicalType().getAsString();
+      std::string ToCanTypeStr = ToType.getCanonicalType().getAsString();
+      if (FromCanTypeStr != ToCanTypeStr) {
+        FromTypeStr = FromCanTypeStr;
+        ToTypeStr = ToCanTypeStr;
+      }
+    }
+
+    if (PrintTree) OS << '[';
+    OS << (FromDefault ? "(default) " : "");
+    Bold();
+    OS << FromTypeStr;
+    Unbold();
+    if (PrintTree) {
+      OS << " != " << (ToDefault ? "(default) " : "");
+      Bold();
+      OS << ToTypeStr;
+      Unbold();
+      OS << "]";
+    }
+    return;
+  }
+
+  /// PrintExpr - Prints out the expr template arguments, highlighting argument
+  /// differences.
+  void PrintExpr(const Expr *FromExpr, const Expr *ToExpr,
+                 bool FromDefault, bool ToDefault, bool Same) {
+    assert((FromExpr || ToExpr) &&
+            "Only one template argument may be missing.");
+    if (Same) {
+      PrintExpr(FromExpr);
+    } else if (!PrintTree) {
+      OS << (FromDefault ? "(default) " : "");
+      Bold();
+      PrintExpr(FromExpr);
+      Unbold();
+    } else {
+      OS << (FromDefault ? "[(default) " : "[");
+      Bold();
+      PrintExpr(FromExpr);
+      Unbold();
+      OS << " != " << (ToDefault ? "(default) " : "");
+      Bold();
+      PrintExpr(ToExpr);
+      Unbold();
+      OS << ']';
+    }
+  }
+
+  /// PrintExpr - Actual formatting and printing of expressions.
+  void PrintExpr(const Expr *E) {
+    if (!E)
+      OS << "(no argument)";
+    else
+      E->printPretty(OS, Context, 0, Policy); return;
+  }
+
+  /// PrintTemplateTemplate - Handles printing of template template arguments,
+  /// highlighting argument differences.
+  void PrintTemplateTemplate(TemplateDecl *FromTD, TemplateDecl *ToTD,
+                             bool FromDefault, bool ToDefault, bool Same) {
+    assert((FromTD || ToTD) && "Only one template argument may be missing.");
+    if (Same) {
+      OS << "template " << FromTD->getNameAsString();
+    } else if (!PrintTree) {
+      OS << (FromDefault ? "(default) template " : "template ");
+      Bold();
+      OS << (FromTD ? FromTD->getNameAsString() : "(no argument)");
+      Unbold();
+    } else {
+      OS << (FromDefault ? "[(default) template " : "[template ");
+      Bold();
+      OS << (FromTD ? FromTD->getNameAsString() : "(no argument)");
+      Unbold();
+      OS << " != " << (ToDefault ? "(default) template " : "template ");
+      Bold();
+      OS << (ToTD ? ToTD->getNameAsString() : "(no argument)");
+      Unbold();
+      OS << ']';
+    }
+  }
+
+  // Prints the appropriate placeholder for elided template arguments.
+  void PrintElideArgs(unsigned NumElideArgs, unsigned Indent) {
+    if (PrintTree) {
+      OS << '\n';
+      for (unsigned i = 0; i < Indent; ++i)
+        OS << "  ";
+    }
+    if (NumElideArgs == 0) return;
+    if (NumElideArgs == 1)
+      OS << "[...]";
+    else
+      OS << "[" << NumElideArgs << " * ...]";
+  }
+
+public:
+
+  TemplateDiff(ASTContext &Context, QualType FromType, QualType ToType,
+               bool PrintTree, bool PrintFromType, bool ElideType,
+               bool ShowColor)
+    : Context(Context),
+      Policy(Context.getLangOpts()),
+      ElideType(ElideType),
+      PrintTree(PrintTree),
+      ShowColor(ShowColor),
+      // When printing a single type, the FromType is the one printed.
+      FromType(PrintFromType ? FromType : ToType),
+      ToType(PrintFromType ? ToType : FromType),
+      OS(Str),
+      IsBold(false) {
+  }
+
+  /// DiffTemplate - Start the template type diffing.
+  void DiffTemplate() {
+    const TemplateSpecializationType *FromOrigTST =
+        GetTemplateSpecializationType(Context, FromType);
+    const TemplateSpecializationType *ToOrigTST =
+        GetTemplateSpecializationType(Context, ToType);
+
+    // Only checking templates.
+    if (!FromOrigTST || !ToOrigTST)
+      return;
+
+    // Different base templates.
+    if (!hasSameTemplate(FromOrigTST, ToOrigTST)) {
+      return;
+    }
+
+    Tree.SetNode(FromType, ToType);
+
+    // Same base template, but different arguments.
+    Tree.SetNode(FromOrigTST->getTemplateName().getAsTemplateDecl(),
+                 ToOrigTST->getTemplateName().getAsTemplateDecl());
+
+    DiffTemplate(FromOrigTST, ToOrigTST);
+  };
+
+  /// MakeString - When the two types given are templated types with the same
+  /// base template, a string representation of the type difference will be
+  /// loaded into S and return true.  Otherwise, return false.
+  bool MakeString(std::string &S) {
+    Tree.StartTraverse();
+    if (Tree.Empty())
+      return false;
+
+    TreeToString();
+    assert(!IsBold && "Bold is applied to end of string.");
+    S = OS.str();
+    return true;
+  }
+}; // end class TemplateDiff
+}  // end namespace
+
+/// FormatTemplateTypeDiff - A helper static function to start the template
+/// diff and return the properly formatted string.  Returns true if the diff
+/// is successful.
+static bool FormatTemplateTypeDiff(ASTContext &Context, QualType FromType,
+                                   QualType ToType, bool PrintTree,
+                                   bool PrintFromType, bool ElideType, 
+                                   bool ShowColors, std::string &S) {
+  if (PrintTree)
+    PrintFromType = true;
+  TemplateDiff TD(Context, FromType, ToType, PrintTree, PrintFromType,
+                  ElideType, ShowColors);
+  TD.DiffTemplate();
+  return TD.MakeString(S);
 }

@@ -31,11 +31,28 @@ static const enum raw_ostream::Colors caretColor =
   raw_ostream::GREEN;
 static const enum raw_ostream::Colors warningColor =
   raw_ostream::MAGENTA;
+static const enum raw_ostream::Colors templateColor =
+  raw_ostream::CYAN;
 static const enum raw_ostream::Colors errorColor = raw_ostream::RED;
 static const enum raw_ostream::Colors fatalColor = raw_ostream::RED;
 // Used for changing only the bold attribute.
 static const enum raw_ostream::Colors savedColor =
   raw_ostream::SAVEDCOLOR;
+
+/// \brief Add highlights to differences in template strings.
+static void applyTemplateHighlighting(raw_ostream &OS, StringRef Str,
+                                      bool &Normal) {
+  for (unsigned i = 0, e = Str.size(); i < e; ++i)
+    if (Str[i] != ToggleHighlight) {
+      OS << Str[i];
+    } else {
+      if (Normal)
+        OS.changeColor(templateColor, true);
+      else
+        OS.resetColor();
+      Normal = !Normal;
+    }
+}
 
 /// \brief Number of spaces to indent when word-wrapping.
 const unsigned WordWrapIndentation = 6;
@@ -578,6 +595,7 @@ static bool printWordWrapped(raw_ostream &OS, StringRef Str,
                              unsigned Column = 0,
                              unsigned Indentation = WordWrapIndentation) {
   const unsigned Length = std::min(Str.find('\n'), Str.size());
+  bool TextNormal = true;
 
   // The string used to indent each line.
   SmallString<16> IndentStr;
@@ -601,7 +619,8 @@ static bool printWordWrapped(raw_ostream &OS, StringRef Str,
         OS << ' ';
         Column += 1;
       }
-      OS << Str.substr(WordStart, WordLength);
+      applyTemplateHighlighting(OS, Str.substr(WordStart, WordLength),
+                                TextNormal);
       Column += WordLength;
       continue;
     }
@@ -610,13 +629,16 @@ static bool printWordWrapped(raw_ostream &OS, StringRef Str,
     // line.
     OS << '\n';
     OS.write(&IndentStr[0], Indentation);
-    OS << Str.substr(WordStart, WordLength);
+    applyTemplateHighlighting(OS, Str.substr(WordStart, WordLength),
+                              TextNormal);
     Column = Indentation + WordLength;
     Wrapped = true;
   }
 
   // Append any remaning text from the message with its existing formatting.
-  OS << Str.substr(Length);
+  applyTemplateHighlighting(OS, Str.substr(Length), TextNormal);
+
+  assert(TextNormal && "Text highlighted at end of diagnostic message.");
 
   return Wrapped;
 }
