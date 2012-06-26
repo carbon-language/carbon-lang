@@ -959,3 +959,67 @@ _mm_srlv_epi64(__m128i __X, __m128i __Y)
 {
   return (__m128i)__builtin_ia32_psrlv2di(__X, __Y);
 }
+
+#define _mm_mask_i32gather_pd(a, m, i, mask, s) __extension__ ({ \
+  __m128d __a = (a); \
+  double const *__m = (m); \
+  __m128i __i = (i); \
+  __m128d __mask = (mask); \
+  (__m128d)__builtin_ia32_gatherd_pd((__v2df)__a, (const __v2df *)__m, \
+             (__v4si)__i, (__v2df)__mask, (s)); })
+
+#define _mm256_mask_i32gather_pd(a, m, i, mask, s) __extension__ ({ \
+  __m256d __a = (a); \
+  double const *__m = (m); \
+  __m256i __i = (i); \
+  __m256d __mask = (mask); \
+  (__m256d)__builtin_ia32_gatherd_pd256((__v4df)__a, (const __v4df *)__m, \
+             (__v8si)__i, (__v4df)__mask, (s)); })
+
+#define _mm_mask_i64gather_pd(a, m, i, mask, s) __extension__ ({ \
+  __m128d __a = (a); \
+  double const *__m = (m); \
+  __m128i __i = (i); \
+  __m128d __mask = (mask); \
+  (__m128d)__builtin_ia32_gatherq_pd((__v2df)__a, (const __v2df *)__m, \
+             (__v2di)__i, (__v2df)__mask, (s)); })
+
+#define _mm256_mask_i64gather_pd(a, m, i, mask, s) __extension__ ({ \
+  __m256d __a = (a); \
+  double const *__m = (m); \
+  __m256i __i = (i); \
+  __m256d __mask = (mask); \
+  (__m256d)__builtin_ia32_gatherq_pd256((__v4df)__a, (const __v4df *)__m, \
+             (__v4di)__i, (__v4df)__mask, (s)); })
+
+#define _mm_mask_i32gather_ps(a, m, i, mask, s) __extension__ ({ \
+  __m128 __a = (a); \
+  float const *__m = (m); \
+  __m128i __i = (i); \
+  __m128 __mask = (mask); \
+  (__m128)__builtin_ia32_gatherd_ps((__v4sf)__a, (const __v4sf *)__m, \
+            (__v4si)__i, (__v4sf)__mask, (s)); })
+
+#define _mm256_mask_i32gather_ps(a, m, i, mask, s) __extension__ ({ \
+  __m256 __a = (a); \
+  float const *__m = (m); \
+  __m256i __i = (i); \
+  __m256 __mask = (mask); \
+  (__m256)__builtin_ia32_gatherd_ps256((__v8sf)__a, (const __v8sf *)__m, \
+            (__v8si)__i, (__v8sf)__mask, (s)); })
+
+#define _mm_mask_i64gather_ps(a, m, i, mask, s) __extension__ ({ \
+  __m128 __a = (a); \
+  float const *__m = (m); \
+  __m128i __i = (i); \
+  __m128 __mask = (mask); \
+  (__m128)__builtin_ia32_gatherq_ps((__v4sf)__a, (const __v4sf *)__m, \
+            (__v2di)__i, (__v4sf)__mask, (s)); })
+
+#define _mm256_mask_i64gather_ps(a, m, i, mask, s) __extension__ ({ \
+  __m256 __a = (a); \
+  float const *__m = (m); \
+  __m256i __i = (i); \
+  __m256 __mask = (mask); \
+  (__m256)__builtin_ia32_gatherq_ps256((__v8sf)__a, (const __v8sf *)__m, \
+            (__v4di)__i, (__v8sf)__mask, (s)); })

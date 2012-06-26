@@ -595,6 +595,16 @@ BUILTIN(__builtin_ia32_psrlv4si, "V4iV4iV4i", "")
 BUILTIN(__builtin_ia32_psrlv4di, "V4LLiV4LLiV4LLi", "")
 BUILTIN(__builtin_ia32_psrlv2di, "V2LLiV2LLiV2LLi", "")
 
+// GATHER
+BUILTIN(__builtin_ia32_gatherd_pd, "V2dV2dV2dC*V4iV2dIc", "")
+BUILTIN(__builtin_ia32_gatherd_pd256, "V4dV4dV4dC*V8iV4dIc", "")
+BUILTIN(__builtin_ia32_gatherq_pd, "V2dV2dV2dC*V2LLiV2dIc", "")
+BUILTIN(__builtin_ia32_gatherq_pd256, "V4dV4dV4dC*V4LLiV4dIc", "")
+BUILTIN(__builtin_ia32_gatherd_ps, "V4fV4fV4fC*V4iV4fIc", "")
+BUILTIN(__builtin_ia32_gatherd_ps256, "V8fV8fV8fC*V8iV8fIc", "")
+BUILTIN(__builtin_ia32_gatherq_ps, "V4fV4fV4fC*V2LLiV4fIc", "")
+BUILTIN(__builtin_ia32_gatherq_ps256, "V8fV8fV8fC*V4LLiV8fIc", "")
+
 // BMI
 BUILTIN(__builtin_ia32_bextr_u32, "UiUiUi", "")
 BUILTIN(__builtin_ia32_bextr_u64, "ULLiULLiULLi", "")
