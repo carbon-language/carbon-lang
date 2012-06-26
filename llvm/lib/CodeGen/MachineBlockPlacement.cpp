@@ -63,17 +63,13 @@ namespace {
 ///
 /// This is the datastructure representing a chain of consecutive blocks that
 /// are profitable to layout together in order to maximize fallthrough
-/// probabilities. We also can use a block chain to represent a sequence of
-/// basic blocks which have some external (correctness) requirement for
-/// sequential layout.
+/// probabilities and code locality. We also can use a block chain to represent
+/// a sequence of basic blocks which have some external (correctness)
+/// requirement for sequential layout.
 ///
-/// Eventually, the block chains will form a directed graph over the function.
-/// We provide an SCC-supporting-iterator in order to quicky build and walk the
-/// SCCs of block chains within a function.
-///
-/// The block chains also have support for calculating and caching probability
-/// information related to the chain itself versus other chains. This is used
-/// for ranking during the final layout of block chains.
+/// Chains can be built around a single basic block and can be merged to grow
+/// them. They participate in a block-to-chain mapping, which is updated
+/// automatically as chains are merged together.
 class BlockChain {
   /// \brief The sequence of blocks belonging to this chain.
   ///
@@ -179,10 +175,11 @@ class MachineBlockPlacement : public MachineFunctionPass {
 
   /// \brief Allocator and owner of BlockChain structures.
   ///
-  /// We build BlockChains lazily by merging together high probability BB
-  /// sequences according to the "Algo2" in the paper mentioned at the top of
-  /// the file. To reduce malloc traffic, we allocate them using this slab-like
-  /// allocator, and destroy them after the pass completes.
+  /// We build BlockChains lazily while processing the loop structure of
+  /// a function. To reduce malloc traffic, we allocate them using this
+  /// slab-like allocator, and destroy them after the pass completes. An
+  /// important guarantee is that this allocator produces stable pointers to
+  /// the chains.
   SpecificBumpPtrAllocator<BlockChain> ChainAllocator;
 
   /// \brief Function wide BasicBlock to BlockChain mapping.
