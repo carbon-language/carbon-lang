@@ -601,9 +601,6 @@ void LoopInfo::verifyAnalysis() const {
   }
 
   // Verify that blocks are mapped to valid loops.
-  //
-  // FIXME: With an up-to-date DFS (see LoopIterator.h) and DominatorTree, we
-  // could also verify that the blocks are still in the correct loops.
   for (DenseMap<BasicBlock*, Loop*>::const_iterator I = LI.BBMap.begin(),
          E = LI.BBMap.end(); I != E; ++I) {
     assert(Loops.count(I->second) && "orphaned loop");
