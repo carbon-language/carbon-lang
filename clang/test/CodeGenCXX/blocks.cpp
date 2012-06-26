@@ -2,8 +2,8 @@
 
 namespace test0 {
   // CHECK: define void @_ZN5test04testEi(
-  // CHECK: define internal void @__test_block_invoke_{{.*}}(
-  // CHECK: define internal void @__block_global_{{.*}}(
+  // CHECK: define internal void @___ZN5test04testEi_block_invoke{{.*}}(
+  // CHECK: define internal void @___ZN5test04testEi_block_invoke_2{{.*}}(
   void test(int x) {
     ^{ ^{ (void) x; }; };
   }
@@ -119,7 +119,7 @@ namespace test4 {
     consume(^{ return foo(A()); });
   }
   // CHECK: define void @_ZN5test44testEv()
-  // CHECK: define internal void @__test_block_invoke
+  // CHECK: define internal void @___ZN5test44testEv_block_invoke
   // CHECK:      [[TMP:%.*]] = alloca [[A:%.*]], align 1
   // CHECK-NEXT: bitcast i8*
   // CHECK-NEXT: call void @_ZN5test41AC1Ev([[A]]* [[TMP]])

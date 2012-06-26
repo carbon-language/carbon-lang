@@ -351,6 +351,8 @@ class CodeGenModule : public CodeGenTypeCache {
   struct {
     int GlobalUniqueCount;
   } Block;
+  
+  GlobalDecl initializedGlobalDecl;
 
   /// @}
 public:
@@ -596,7 +598,7 @@ public:
 
   /// getUniqueBlockCount - Fetches the global unique block count.
   int getUniqueBlockCount() { return ++Block.GlobalUniqueCount; }
-
+  
   /// getBlockDescriptorType - Fetches the type of a generic block
   /// descriptor.
   llvm::Type *getBlockDescriptorType();

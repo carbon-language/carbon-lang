@@ -28,7 +28,7 @@
 using namespace clang;
 using namespace CodeGen;
 
-CodeGenFunction::CodeGenFunction(CodeGenModule &cgm)
+CodeGenFunction::CodeGenFunction(CodeGenModule &cgm, bool suppressNewContext)
   : CodeGenTypeCache(cgm), CGM(cgm),
     Target(CGM.getContext().getTargetInfo()),
     Builder(cgm.getModule().getContext()),
@@ -42,7 +42,8 @@ CodeGenFunction::CodeGenFunction(CodeGenModule &cgm)
     TerminateHandler(0), TrapBB(0) {
 
   CatchUndefined = getContext().getLangOpts().CatchUndefined;
-  CGM.getCXXABI().getMangleContext().startNewFunction();
+  if (!suppressNewContext)
+    CGM.getCXXABI().getMangleContext().startNewFunction();
 }
 
 CodeGenFunction::~CodeGenFunction() {

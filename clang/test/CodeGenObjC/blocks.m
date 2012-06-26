@@ -18,7 +18,7 @@ void foo(T *P) {
 -(void) im0;
 @end
 
-// CHECK: define internal i32 @"__8-[A im0]_block_invoke_0"(
+// CHECK: define internal i32 @"__8-[A im0]_block_invoke"(
 @implementation A
 -(void) im0 {
   (void) ^{ return 1; }();
@@ -91,7 +91,7 @@ void test2(Test2 *x) {
 // rdar://problem/9124263
 // In the test above, check that the use in the invocation function
 // doesn't require a read barrier.
-// CHECK:    define internal void @__test2_block_invoke_
+// CHECK:    define internal void @__test2_block_invoke
 // CHECK:      [[BLOCK:%.*]] = bitcast i8* {{%.*}} to [[BLOCK_T]]*
 // CHECK-NEXT: [[T0:%.*]] = getelementptr inbounds [[BLOCK_T]]* [[BLOCK]], i32 0, i32 5
 // CHECK-NEXT: [[T1:%.*]] = load i8** [[T0]]

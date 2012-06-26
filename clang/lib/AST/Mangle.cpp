@@ -40,7 +40,11 @@ static void mangleFunctionBlock(MangleContext &Context,
                                 StringRef Outer,
                                 const BlockDecl *BD,
                                 raw_ostream &Out) {
-  Out << "__" << Outer << "_block_invoke_" << Context.getBlockId(BD, true);
+  unsigned discriminator = Context.getBlockId(BD, true);
+  if (discriminator == 0)
+    Out << "__" << Outer << "_block_invoke";
+  else
+    Out << "__" << Outer << "_block_invoke_" << discriminator+1; 
 }
 
 static void checkMangleDC(const DeclContext *DC, const BlockDecl *BD) {
@@ -62,8 +66,20 @@ static void checkMangleDC(const DeclContext *DC, const BlockDecl *BD) {
 void MangleContext::anchor() { }
 
 void MangleContext::mangleGlobalBlock(const BlockDecl *BD,
+                                      const NamedDecl *ID,
                                       raw_ostream &Out) {
-  Out << "__block_global_" << getBlockId(BD, false);
+  unsigned discriminator = getBlockId(BD, false);
+  if (ID) {
+    if (shouldMangleDeclName(ID))
+      mangleName(ID, Out);
+    else {
+      Out << ID->getIdentifier()->getName();
+    }
+  }
+  if (discriminator == 0)
+    Out << "_block_invoke";
+  else
+    Out << "_block_invoke_" << discriminator+1;
 }
 
 void MangleContext::mangleCtorBlock(const CXXConstructorDecl *CD,
@@ -99,8 +115,8 @@ void MangleContext::mangleBlock(const DeclContext *DC, const BlockDecl *BD,
     mangleObjCMethodName(Method, Stream);
   } else {
     const NamedDecl *ND = cast<NamedDecl>(DC);
-    if (IdentifierInfo *II = ND->getIdentifier())
-      Stream << II->getName();
+    if (!shouldMangleDeclName(ND) && ND->getIdentifier())
+      Stream << ND->getIdentifier()->getName();
     else {
       // FIXME: We were doing a mangleUnqualifiedName() before, but that's
       // a private member of a class that will soon itself be private to the
@@ -131,12 +147,13 @@ void MangleContext::mangleObjCMethodName(const ObjCMethodDecl *MD,
 }
 
 void MangleContext::mangleBlock(const BlockDecl *BD,
-                                raw_ostream &Out) {
+                                raw_ostream &Out,
+                                const NamedDecl *ID) {
   const DeclContext *DC = BD->getDeclContext();
   while (isa<BlockDecl>(DC) || isa<EnumDecl>(DC))
     DC = DC->getParent();
   if (DC->isFunctionOrMethod())
     mangleBlock(DC, BD, Out);
   else
-    mangleGlobalBlock(BD, Out);
+    mangleGlobalBlock(BD, ID, Out);
 }

@@ -124,7 +124,7 @@ void test4(void) {
   // CHECK-NEXT: [[T1:%.*]] = load i8** [[T0]]
   // CHECK-NEXT: call void @objc_release(i8* [[T1]])
 
-  // CHECK:    define internal void @__test4_block_invoke_
+  // CHECK:    define internal void @__test4_block_invoke
   // CHECK:      [[SLOT:%.*]] = getelementptr inbounds {{.*}}, i32 0, i32 6
   // CHECK-NEXT: [[T0:%.*]] = load i8** [[SLOT]], align 8
   // CHECK-NEXT: store i8* null, i8** [[SLOT]],
@@ -200,7 +200,7 @@ void test6(void) {
   // CHECK:      [[T0:%.*]] = getelementptr inbounds [[BYREF_T]]* {{%.*}}, i32 0, i32 6
   // CHECK-NEXT: call void @objc_destroyWeak(i8** [[T0]])
 
-  // CHECK:    define internal void @__test6_block_invoke_
+  // CHECK:    define internal void @__test6_block_invoke
   // CHECK:      [[SLOT:%.*]] = getelementptr inbounds {{.*}}, i32 0, i32 6
   // CHECK-NEXT: call i8* @objc_storeWeak(i8** [[SLOT]], i8* null)
   // CHECK-NEXT: ret void
@@ -238,7 +238,7 @@ void test7(void) {
   // CHECK-NEXT: call void @objc_destroyWeak(i8** [[VAR]])
   // CHECK-NEXT: ret void
 
-  // CHECK:    define internal void @__test7_block_invoke_
+  // CHECK:    define internal void @__test7_block_invoke
   // CHECK:      [[SLOT:%.*]] = getelementptr inbounds [[BLOCK_T]]* {{%.*}}, i32 0, i32 5
   // CHECK-NEXT: [[T0:%.*]] = call i8* @objc_loadWeak(i8** [[SLOT]])
   // CHECK-NEXT: call void @test7_consume(i8* [[T0]])

@@ -4,7 +4,7 @@
 
 
 // CHECK: define i8* @{{.*}}test0
-// CHECK: define internal void @__test0_block_invoke_0(
+// CHECK: define internal void @{{.*}}_block_invoke(
 // CHECK:      call i8* @objc_assign_strongCast(
 // CHECK-NEXT: ret void
 id test0(id x) {

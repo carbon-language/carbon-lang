@@ -9,7 +9,7 @@ fp f() { auto x = []{ return 3; }; return x; }
 // MRC: define i32 ()* @_Z1fv(
 // MRC: define internal i32 ()* @"_ZZ1fvENK3$_0cvU13block_pointerFivEEv"
 // MRC: store i8* bitcast (i8** @_NSConcreteStackBlock to i8*)
-// MRC: store i8* bitcast (i32 (i8*)* @"___ZZ1fvENK3$_0cvU13block_pointerFivEEv_block_invoke_0" to i8*)
+// MRC: store i8* bitcast (i32 (i8*)* @"___ZZ1fvENK3$_0cvU13block_pointerFivEEv_block_invoke" to i8*)
 // MRC: call i32 ()* (i8*, i8*)* bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to i32 ()* (i8*, i8*)*)
 // MRC: call i32 ()* (i8*, i8*)* bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to i32 ()* (i8*, i8*)*)
 // MRC: ret i32 ()*
@@ -17,7 +17,7 @@ fp f() { auto x = []{ return 3; }; return x; }
 // ARC: define i32 ()* @_Z1fv(
 // ARC: define internal i32 ()* @"_ZZ1fvENK3$_0cvU13block_pointerFivEEv"
 // ARC: store i8* bitcast (i8** @_NSConcreteStackBlock to i8*)
-// ARC: store i8* bitcast (i32 (i8*)* @"___ZZ1fvENK3$_0cvU13block_pointerFivEEv_block_invoke_0" to i8*)
+// ARC: store i8* bitcast (i32 (i8*)* @"___ZZ1fvENK3$_0cvU13block_pointerFivEEv_block_invoke" to i8*)
 // ARC: call i8* @objc_retainBlock
 // ARC: call i8* @objc_autoreleaseReturnValue
 
@@ -26,14 +26,14 @@ fp global;
 void f2() { global = []{ return 3; }; }
 
 // MRC: define void @_Z2f2v() nounwind {
-// MRC: store i8* bitcast (i32 (i8*)* @__f2_block_invoke_0 to i8*),
+// MRC: store i8* bitcast (i32 (i8*)* @___Z2f2v_block_invoke to i8*),
 // MRC-NOT: call
 // MRC: ret void
 // ("global" contains a dangling pointer after this function runs.)
 
 // ARC: define void @_Z2f2v() nounwind {
-// ARC: store i8* bitcast (i32 (i8*)* @__f2_block_invoke_0 to i8*),
+// ARC: store i8* bitcast (i32 (i8*)* @___Z2f2v_block_invoke to i8*),
 // ARC: call i8* @objc_retainBlock
 // ARC: call void @objc_release
-// ARC: define internal i32 @__f2_block_invoke_0
+// ARC: define internal i32 @___Z2f2v_block_invoke
 // ARC: call i32 @"_ZZ2f2vENK3$_1clEv
