@@ -33,3 +33,9 @@ int TemplateAddressSafetyOk() { return i; }
 
 int force_instance = TemplateAddressSafetyOk<42>()
                    + TemplateNoAddressSafety<42>();
+
+// Check that __cxx_global_var_init* get the address_safety attribute.
+int global1 = 0;
+int global2 = *(int*)((char*)&global1+1);
+// CHECK-NOT: @__cxx_global_var_init{{.*}}address_safety
+// ASAN: @__cxx_global_var_init{{.*}}address_safety
