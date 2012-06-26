@@ -187,6 +187,7 @@ namespace {
 
   private:
     SDNode *Select(SDNode *N);
+    SDNode *SelectGather(SDNode *N, unsigned Opc);
     SDNode *SelectAtomic64(SDNode *Node, unsigned Opc);
     SDNode *SelectAtomicLoadAdd(SDNode *Node, EVT NVT);
     SDNode *SelectAtomicLoadArith(SDNode *Node, EVT NVT);
@@ -1952,6 +1953,29 @@ static unsigned getFusedLdStOpcode(EVT &LdVT, unsigned Opc) {
   llvm_unreachable("unrecognized size for LdVT");
 }
 
+/// SelectGather - Customized ISel for GATHER operations.
+///
+SDNode *X86DAGToDAGISel::SelectGather(SDNode *Node, unsigned Opc) {
+  // Operands of Gather: VSrc, Base, VIdx, VMask, Scale
+  SDValue Chain = Node->getOperand(0);
+  SDValue VSrc = Node->getOperand(2);
+  SDValue Base = Node->getOperand(3);
+  SDValue VIdx = Node->getOperand(4);
+  SDValue VMask = Node->getOperand(5);
+  ConstantSDNode *Scale = dyn_cast<ConstantSDNode>(Node->getOperand(6));
+  assert(Scale && "Scale should be a constant for GATHER operations");
+
+  // Memory Operands: Base, Scale, Index, Disp, Segment
+  SDValue Disp = CurDAG->getTargetConstant(0, MVT::i32);
+  SDValue Segment = CurDAG->getRegister(0, MVT::i32);
+  const SDValue Ops[] = { VSrc, Base, getI8Imm(Scale->getSExtValue()), VIdx,
+                          Disp, Segment, VMask, Chain};
+  SDNode *ResNode = CurDAG->getMachineNode(Opc, Node->getDebugLoc(),
+                                           VSrc.getValueType(), MVT::Other,
+                                           Ops, array_lengthof(Ops));
+  return ResNode;
+}
+
 SDNode *X86DAGToDAGISel::Select(SDNode *Node) {
   EVT NVT = Node->getValueType(0);
   unsigned Opc, MOpc;
@@ -1967,6 +1991,29 @@ SDNode *X86DAGToDAGISel::Select(SDNode *Node) {
 
   switch (Opcode) {
   default: break;
+  case ISD::INTRINSIC_W_CHAIN: {
+    unsigned IntNo = cast<ConstantSDNode>(Node->getOperand(1))->getZExtValue();
+    switch (IntNo) {
+    default: break;
+    case Intrinsic::x86_avx2_gather_d_pd:
+      return SelectGather(Node, X86::VGATHERDPDrm);
+    case Intrinsic::x86_avx2_gather_d_pd_256:
+      return SelectGather(Node, X86::VGATHERDPDYrm);
+    case Intrinsic::x86_avx2_gather_q_pd:
+      return SelectGather(Node, X86::VGATHERQPDrm);
+    case Intrinsic::x86_avx2_gather_q_pd_256:
+      return SelectGather(Node, X86::VGATHERQPDYrm);
+    case Intrinsic::x86_avx2_gather_d_ps:
+      return SelectGather(Node, X86::VGATHERDPSrm);
+    case Intrinsic::x86_avx2_gather_d_ps_256:
+      return SelectGather(Node, X86::VGATHERDPSYrm);
+    case Intrinsic::x86_avx2_gather_q_ps:
+      return SelectGather(Node, X86::VGATHERQPSrm);
+    case Intrinsic::x86_avx2_gather_q_ps_256:
+      return SelectGather(Node, X86::VGATHERQPSYrm);
+    }
+    break;
+  }
   case X86ISD::GlobalBaseReg:
     return getGlobalBaseReg();
 

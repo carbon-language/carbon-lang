@@ -325,6 +325,14 @@ def f128mem : X86MemOperand<"printf128mem"> {
   let ParserMatchClass = X86Mem128AsmOperand; }
 def f256mem : X86MemOperand<"printf256mem">{ 
   let ParserMatchClass = X86Mem256AsmOperand; }
+def v128mem : Operand<iPTR> {
+  let PrintMethod = "printf128mem";
+  let MIOperandInfo = (ops ptr_rc, i8imm, VR128, i32imm, i8imm);
+  let ParserMatchClass = X86Mem128AsmOperand; }
+def v256mem : Operand<iPTR> {
+  let PrintMethod = "printf256mem";
+  let MIOperandInfo = (ops ptr_rc, i8imm, VR256, i32imm, i8imm);
+  let ParserMatchClass = X86Mem256AsmOperand; }
 }
 
 // A version of i8mem for use on x86-64 that uses GR64_NOREX instead of

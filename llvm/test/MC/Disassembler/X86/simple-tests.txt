@@ -725,6 +725,12 @@
 # CHECK: vpermil2ps $1, 4(%rax), %xmm2, %xmm3, %xmm0
 0xc4 0xe3 0xe1 0x48 0x40 0x04 0x21
 
+# CHECK: vgatherdpd %xmm0, (%rdi,%xmm1,2), %xmm2
+0xc4 0xe2 0xe9 0x92 0x04 0x4f
+
+# CHECK: vgatherqps %ymm8, (%r15,%ymm9,2), %ymm10
+0xc4 0x02 0x2d 0x93 0x04 0x4f
+
 # rdar://8812056 lldb doesn't print the x86 lock prefix when disassembling
 # CHECK: lock
 # CHECK-NEXT: xaddq	%rcx, %rbx

@@ -621,7 +621,12 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
       VEX_X = 0x0;
 
     if (HasVEX_4VOp3)
-      VEX_4V = getVEXRegisterEncoding(MI, X86::AddrNumOperands+1);
+      // Instruction format for 4VOp3:
+      //   src1(ModR/M), MemAddr, src3(VEX_4V)
+      // CurOp points to start of the MemoryOperand,
+      //   it skips TIED_TO operands if exist, then increments past src1.
+      // CurOp + X86::AddrNumOperands will point to src3.
+      VEX_4V = getVEXRegisterEncoding(MI, CurOp+X86::AddrNumOperands);
     break;
   case X86II::MRM0m: case X86II::MRM1m:
   case X86II::MRM2m: case X86II::MRM3m:

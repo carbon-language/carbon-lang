@@ -310,11 +310,14 @@ typedef enum {
  * SIBIndex - All possible values of the SIB index field.
  *   Borrows entries from ALL_EA_BASES with the special case that
  *   sib is synonymous with NONE.
+ * Vector SIB: index can be XMM or YMM.
  */
 typedef enum {
   SIB_INDEX_NONE,
 #define ENTRY(x) SIB_INDEX_##x,
   ALL_EA_BASES
+  REGS_XMM
+  REGS_YMM
 #undef ENTRY
   SIB_INDEX_max
 } SIBIndex;

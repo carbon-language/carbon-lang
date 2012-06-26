@@ -498,7 +498,30 @@ static bool translateRMMemory(MCInst &mcInst, InternalInstruction &insn,
     } else {
       baseReg = MCOperand::CreateReg(0);
     }
-    
+
+    // Check whether we are handling VSIB addressing mode for GATHER.
+    // If sibIndex was set to SIB_INDEX_NONE, index offset is 4 and
+    // we should use SIB_INDEX_XMM4|YMM4 for VSIB.
+    // I don't see a way to get the correct IndexReg in readSIB:
+    //   We can tell whether it is VSIB or SIB after instruction ID is decoded,
+    //   but instruction ID may not be decoded yet when calling readSIB.
+    uint32_t Opcode = mcInst.getOpcode();
+    bool IsGather = (Opcode == X86::VGATHERDPDrm ||
+                     Opcode == X86::VGATHERQPDrm ||
+                     Opcode == X86::VGATHERDPSrm ||
+                     Opcode == X86::VGATHERQPSrm);
+    bool IsGatherY = (Opcode == X86::VGATHERDPDYrm ||
+                      Opcode == X86::VGATHERQPDYrm ||
+                      Opcode == X86::VGATHERDPSYrm ||
+                      Opcode == X86::VGATHERQPSYrm);
+    if (IsGather || IsGatherY) {
+      unsigned IndexOffset = insn.sibIndex -
+                         (insn.addressSize == 8 ? SIB_INDEX_RAX:SIB_INDEX_EAX);
+      SIBIndex IndexBase = IsGatherY ? SIB_INDEX_YMM0 : SIB_INDEX_XMM0;
+      insn.sibIndex = (SIBIndex)(IndexBase + 
+                           (insn.sibIndex == SIB_INDEX_NONE ? 4 : IndexOffset));
+    }
+
     if (insn.sibIndex != SIB_INDEX_NONE) {
       switch (insn.sibIndex) {
       default:
@@ -509,6 +532,8 @@ static bool translateRMMemory(MCInst &mcInst, InternalInstruction &insn,
         indexReg = MCOperand::CreateReg(X86::x); break;
       EA_BASES_32BIT
       EA_BASES_64BIT
+      REGS_XMM
+      REGS_YMM
 #undef ENTRY
       }
     } else {

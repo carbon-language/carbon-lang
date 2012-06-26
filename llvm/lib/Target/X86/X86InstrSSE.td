@@ -7994,3 +7994,40 @@ defm VPSLLVQ : avx2_var_shift<0x47, "vpsllvq", shl, v2i64, v4i64>, VEX_W;
 defm VPSRLVD : avx2_var_shift<0x45, "vpsrlvd", srl, v4i32, v8i32>;
 defm VPSRLVQ : avx2_var_shift<0x45, "vpsrlvq", srl, v2i64, v4i64>, VEX_W;
 defm VPSRAVD : avx2_var_shift<0x46, "vpsravd", sra, v4i32, v8i32>;
+
+//===----------------------------------------------------------------------===//
+// VGATHER - GATHER Operations
+//
+//            [(set VR128:$dst, (IntGather128 VR128:$src1, addr:$src2, VR128:$idx,
+//                               VR128:$mask, (i8 imm:$sc)))]>, VEX_4VOp3;
+//            [(set VR256:$dst, (IntGather256 VR256:$src1, addr:$src2, VR256:$idx,
+//                               VR256:$mask, (i8 imm:$sc)))]>, VEX_4VOp3;
+multiclass avx2_gather<bits<8> opc, string OpcodeStr,
+                       Intrinsic IntGather128, Intrinsic IntGather256> {
+  def rm  : AVX28I<opc, MRMSrcMem, (outs VR128:$dst),
+            (ins VR128:$src1, v128mem:$src2, VR128:$mask),
+            !strconcat(OpcodeStr,
+              "\t{$src1, $src2, $mask|$mask, $src2, $src1}"),
+            []>, VEX_4VOp3;
+  def Yrm : AVX28I<opc, MRMSrcMem, (outs VR256:$dst),
+            (ins VR256:$src1, v256mem:$src2, VR256:$mask),
+            !strconcat(OpcodeStr,
+              "\t{$src1, $src2, $mask|$mask, $src2, $src1}"),
+            []>, VEX_4VOp3;
+}
+
+//let Constraints = "$src1 = $dst, $mask = $mask_wb" in {
+let Constraints = "$src1 = $dst" in {
+  defm VGATHERDPD : avx2_gather<0x92, "vgatherdpd",
+                                int_x86_avx2_gather_d_pd,
+                                int_x86_avx2_gather_d_pd_256>, VEX_W;
+  defm VGATHERQPD : avx2_gather<0x93, "vgatherqpd",
+                                int_x86_avx2_gather_q_pd,
+                                int_x86_avx2_gather_q_pd_256>, VEX_W;
+  defm VGATHERDPS : avx2_gather<0x92, "vgatherdps",
+                                int_x86_avx2_gather_d_ps,
+                                int_x86_avx2_gather_d_ps_256>;
+  defm VGATHERQPS : avx2_gather<0x93, "vgatherqps",
+                                int_x86_avx2_gather_q_ps,
+                                int_x86_avx2_gather_q_ps_256>;
+}

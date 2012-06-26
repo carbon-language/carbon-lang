@@ -4121,3 +4121,11 @@ _foo:
 _foo2:
   nop
   vblendvps %ymm1, _foo2(%rip), %ymm0, %ymm0
+
+// CHECK: vgatherdpd %xmm0, (%rdi,%xmm1,2), %xmm2
+// CHECK: encoding: [0xc4,0xe2,0xe9,0x92,0x04,0x4f]
+          vgatherdpd %xmm0, (%rdi,%xmm1,2), %xmm2
+
+// CHECK: vgatherqps %ymm8, (%r15,%ymm9,2), %ymm10
+// CHECK: encoding: [0xc4,0x02,0x2d,0x93,0x04,0x4f]
+          vgatherqps %ymm8, (%r15,%ymm9,2), %ymm10

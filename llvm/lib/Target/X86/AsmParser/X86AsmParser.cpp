@@ -916,15 +916,18 @@ X86Operand *X86AsmParser::ParseMemOperand(unsigned SegReg, SMLoc MemStart) {
 
   // If we have both a base register and an index register make sure they are
   // both 64-bit or 32-bit registers.
+  // To support VSIB, IndexReg can be 128-bit or 256-bit registers.
   if (BaseReg != 0 && IndexReg != 0) {
     if (X86MCRegisterClasses[X86::GR64RegClassID].contains(BaseReg) &&
-        !X86MCRegisterClasses[X86::GR64RegClassID].contains(IndexReg) &&
+        (X86MCRegisterClasses[X86::GR16RegClassID].contains(IndexReg) ||
+         X86MCRegisterClasses[X86::GR32RegClassID].contains(IndexReg)) &&
         IndexReg != X86::RIZ) {
       Error(IndexLoc, "index register is 32-bit, but base register is 64-bit");
       return 0;
     }
     if (X86MCRegisterClasses[X86::GR32RegClassID].contains(BaseReg) &&
-        !X86MCRegisterClasses[X86::GR32RegClassID].contains(IndexReg) &&
+        (X86MCRegisterClasses[X86::GR16RegClassID].contains(IndexReg) ||
+         X86MCRegisterClasses[X86::GR64RegClassID].contains(IndexReg)) &&
         IndexReg != X86::EIZ){
       Error(IndexLoc, "index register is 64-bit, but base register is 32-bit");
       return 0;

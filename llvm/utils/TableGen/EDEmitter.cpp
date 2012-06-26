@@ -316,6 +316,8 @@ static int X86TypeFromOpName(LiteralConstantEmitter *type,
   MEM("i256mem");
   MEM("f128mem");
   MEM("f256mem");
+  MEM("v128mem");
+  MEM("v256mem");
   MEM("opaque512mem");
 
   // all R, I, R, I

@@ -1744,6 +1744,42 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
                         [IntrNoMem]>;
 }
 
+// Gather ops
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_avx2_gather_d_pd : GCCBuiltin<"__builtin_ia32_gatherd_pd">,
+      Intrinsic<[llvm_v2f64_ty],
+        [llvm_v2f64_ty, llvm_ptr_ty, llvm_v4i32_ty, llvm_v2f64_ty, llvm_i8_ty],
+        [IntrReadMem]>;
+  def int_x86_avx2_gather_d_pd_256 : GCCBuiltin<"__builtin_ia32_gatherd_pd256">,
+      Intrinsic<[llvm_v4f64_ty],
+        [llvm_v4f64_ty, llvm_ptr_ty, llvm_v8i32_ty, llvm_v4f64_ty, llvm_i8_ty],
+        [IntrReadMem]>;
+  def int_x86_avx2_gather_q_pd : GCCBuiltin<"__builtin_ia32_gatherq_pd">,
+      Intrinsic<[llvm_v2f64_ty],
+        [llvm_v2f64_ty, llvm_ptr_ty, llvm_v2i64_ty, llvm_v2f64_ty, llvm_i8_ty],
+        [IntrReadMem]>;
+  def int_x86_avx2_gather_q_pd_256 : GCCBuiltin<"__builtin_ia32_gatherq_pd256">,
+      Intrinsic<[llvm_v4f64_ty],
+        [llvm_v4f64_ty, llvm_ptr_ty, llvm_v4i64_ty, llvm_v4f64_ty, llvm_i8_ty],
+        [IntrReadMem]>;
+  def int_x86_avx2_gather_d_ps : GCCBuiltin<"__builtin_ia32_gatherd_ps">,
+      Intrinsic<[llvm_v4f32_ty],
+        [llvm_v4f32_ty, llvm_ptr_ty, llvm_v4i32_ty, llvm_v4f32_ty, llvm_i8_ty],
+        [IntrReadMem]>;
+  def int_x86_avx2_gather_d_ps_256 : GCCBuiltin<"__builtin_ia32_gatherd_ps256">,
+      Intrinsic<[llvm_v8f32_ty],
+        [llvm_v8f32_ty, llvm_ptr_ty, llvm_v8i32_ty, llvm_v8f32_ty, llvm_i8_ty],
+        [IntrReadMem]>;
+  def int_x86_avx2_gather_q_ps : GCCBuiltin<"__builtin_ia32_gatherq_ps">,
+      Intrinsic<[llvm_v4f32_ty],
+        [llvm_v4f32_ty, llvm_ptr_ty, llvm_v2i64_ty, llvm_v4f32_ty, llvm_i8_ty],
+        [IntrReadMem]>;
+  def int_x86_avx2_gather_q_ps_256 : GCCBuiltin<"__builtin_ia32_gatherq_ps256">,
+      Intrinsic<[llvm_v8f32_ty],
+        [llvm_v8f32_ty, llvm_ptr_ty, llvm_v4i64_ty, llvm_v8f32_ty, llvm_i8_ty],
+        [IntrReadMem]>;
+}
+
 // Misc.
 let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_avx2_pmovmskb : GCCBuiltin<"__builtin_ia32_pmovmskb256">,
