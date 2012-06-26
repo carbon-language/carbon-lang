@@ -193,6 +193,7 @@ namespace {
       const unsigned_ranges IntersectRes,
       unsigned IntersectResSize
       ) {
+    
     Mapping::RangesCollection Ranges;
     
     Mapping LHSMapping;
@@ -248,6 +249,9 @@ namespace {
   }  
   
   TEST(IntegersSubsetTest, DiffTest) {
+    
+    static const unsigned NOT_A_NUMBER = 0xffff;
+    
     {
       unsigned_ranges LHS = { { 0, 4 }, { 7, 10 }, { 13, 17 } };
       unsigned_ranges RHS = { { 3, 14 } };
@@ -279,7 +283,7 @@ namespace {
     {
       unsigned_ranges LHS = { { 2, 4 } };
       unsigned_ranges RHS = { { 0, 5 } };
-      unsigned_ranges ExcludeRes = { {-1UL, -1UL} };
+      unsigned_ranges ExcludeRes = { {NOT_A_NUMBER, NOT_A_NUMBER} };
       unsigned_ranges IntersectRes = { { 2, 4 } };
 
       TestDiff(LHS, 1, RHS, 1, ExcludeRes, 0, IntersectRes, 1);
@@ -289,7 +293,7 @@ namespace {
       unsigned_ranges LHS = { { 2, 4 } };
       unsigned_ranges RHS = { { 7, 8 } };
       unsigned_ranges ExcludeRes = { { 2, 4 } };
-      unsigned_ranges IntersectRes = { {-1UL, -1UL} };
+      unsigned_ranges IntersectRes = { {NOT_A_NUMBER, NOT_A_NUMBER} };
 
       TestDiff(LHS, 1, RHS, 1, ExcludeRes, 1, IntersectRes, 0);
     }
@@ -306,7 +310,7 @@ namespace {
     {
       unsigned_ranges LHS = { { 0, 7 } };
       unsigned_ranges RHS = { { 0, 5 }, { 6, 9 } };
-      unsigned_ranges ExcludeRes = { {-1UL, -1UL} };
+      unsigned_ranges ExcludeRes = { {NOT_A_NUMBER, NOT_A_NUMBER} };
       unsigned_ranges IntersectRes = { { 0, 5 }, {6, 7} };
 
       TestDiff(LHS, 1, RHS, 2, ExcludeRes, 0, IntersectRes, 2);
@@ -316,7 +320,7 @@ namespace {
       unsigned_ranges LHS = { { 17, 17 } };
       unsigned_ranges RHS = { { 4, 4 } };
       unsigned_ranges ExcludeRes = { {17, 17} };
-      unsigned_ranges IntersectRes = { { -1UL, -1UL } };
+      unsigned_ranges IntersectRes = { { NOT_A_NUMBER, NOT_A_NUMBER } };
 
       TestDiff(LHS, 1, RHS, 1, ExcludeRes, 1, IntersectRes, 0);
     }     
