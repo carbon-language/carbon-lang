@@ -41,6 +41,11 @@
 // CHECK-UNSUPPORTED2: cc1plus"
 // CHECK-UNSUPPORTED2-NOT: "-Wconstant-logical-operand"
 
+// Check that -serialize-diagnostics does not cause an "argument unused" error.
+// RUN: %clang -target i386-apple-darwin10 \
+// RUN:   -Wall -fapple-kext -### -serialize-diagnostics %t.dia -c %s 2>&1 | \
+// RUN:   FileCheck --check-prefix=CHECK-UNUSED %s
+
 // Check that --serialize-diagnostics does not cause an "argument unused" error.
 // RUN: %clang -target i386-apple-darwin10 \
 // RUN:   -Wall -fapple-kext -### --serialize-diagnostics %t.dia -c %s 2>&1 | \

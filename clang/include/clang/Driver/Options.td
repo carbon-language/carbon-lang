@@ -1123,6 +1123,7 @@ def _write_dependencies : Flag<"--write-dependencies">, Alias<MD>;
 def _write_user_dependencies : Flag<"--write-user-dependencies">, Alias<MMD>;
 def _ : Joined<"--">, Flags<[Unsupported]>;
 def mieee_rnd_near : Flag<"-mieee-rnd-near">, Group<m_hexagon_Features_Group>;
+def serialize_diags : Separate<"-serialize-diagnostics">, Alias<_serialize_diags>;
 
 // Special internal option to handle -Xlinker --no-demangle.
 def Z_Xlinker__no_demangle : Flag<"-Z-Xlinker-no-demangle">,
