@@ -5,8 +5,11 @@ target datalayout = "E-p:64:64:64-a0:0:8-f32:32:32-f64:64:64-i1:8:8-i8:8:8-i16:1
 
 declare void @use(...)
 
-; Zero byte allocas should be deleted.
+@int = global i32 zeroinitializer
+
+; Zero byte allocas should be merged if they can't be deleted.
 ; CHECK: @test
+; CHECK: alloca
 ; CHECK-NOT: alloca
 define void @test() {
         %X = alloca [0 x i32]           ; <[0 x i32]*> [#uses=1]
@@ -15,6 +18,9 @@ define void @test() {
         call void (...)* @use( i32* %Y )
         %Z = alloca {  }                ; <{  }*> [#uses=1]
         call void (...)* @use( {  }* %Z )
+        %size = load i32* @int
+        %A = alloca {{}}, i32 %size
+        call void (...)* @use( {{}}* %A )
         ret void
 }
 

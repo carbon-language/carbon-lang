@@ -106,7 +106,6 @@ Instruction *InstCombiner::visitAllocaInst(AllocaInst &AI) {
     if (const ConstantInt *C = dyn_cast<ConstantInt>(AI.getArraySize())) {
       Type *NewTy = 
         ArrayType::get(AI.getAllocatedType(), C->getZExtValue());
-      assert(isa<AllocaInst>(AI) && "Unknown type of allocation inst!");
       AllocaInst *New = Builder->CreateAlloca(NewTy, 0, AI.getName());
       New->setAlignment(AI.getAlignment());
 
@@ -135,16 +134,49 @@ Instruction *InstCombiner::visitAllocaInst(AllocaInst &AI) {
     }
   }
 
-  if (TD && isa<AllocaInst>(AI) && AI.getAllocatedType()->isSized()) {
-    // If alloca'ing a zero byte object, replace the alloca with a null pointer.
-    // Note that we only do this for alloca's, because malloc should allocate
-    // and return a unique pointer, even for a zero byte allocation.
-    if (TD->getTypeAllocSize(AI.getAllocatedType()) == 0)
-      return ReplaceInstUsesWith(AI, Constant::getNullValue(AI.getType()));
-
+  if (TD && AI.getAllocatedType()->isSized()) {
     // If the alignment is 0 (unspecified), assign it the preferred alignment.
     if (AI.getAlignment() == 0)
       AI.setAlignment(TD->getPrefTypeAlignment(AI.getAllocatedType()));
+
+    // Move all alloca's of zero byte objects to the entry block and merge them
+    // together.  Note that we only do this for alloca's, because malloc should
+    // allocate and return a unique pointer, even for a zero byte allocation.
+    if (TD->getTypeAllocSize(AI.getAllocatedType()) == 0) {
+      // For a zero sized alloca there is no point in doing an array allocation.
+      // This is helpful if the array size is a complicated expression not used
+      // elsewhere.
+      if (AI.isArrayAllocation()) {
+        AI.setOperand(0, ConstantInt::get(AI.getArraySize()->getType(), 1));
+        return &AI;
+      }
+
+      // Get the first instruction in the entry block.
+      BasicBlock &EntryBlock = AI.getParent()->getParent()->getEntryBlock();
+      Instruction *FirstInst = EntryBlock.getFirstNonPHIOrDbg();
+      if (FirstInst != &AI) {
+        // If the entry block doesn't start with a zero-size alloca then move
+        // this one to the start of the entry block.  There is no problem with
+        // dominance as the array size was forced to a constant earlier already.
+        AllocaInst *EntryAI = dyn_cast<AllocaInst>(FirstInst);
+        if (!EntryAI || !EntryAI->getAllocatedType()->isSized() ||
+            TD->getTypeAllocSize(EntryAI->getAllocatedType()) != 0) {
+          AI.moveBefore(FirstInst);
+          return &AI;
+        }
+
+        // Replace this zero-sized alloca with the one at the start of the entry
+        // block after ensuring that the address will be aligned enough for both
+        // types.
+        unsigned MaxAlign =
+          std::max(TD->getPrefTypeAlignment(EntryAI->getAllocatedType()),
+                   TD->getPrefTypeAlignment(AI.getAllocatedType()));
+        EntryAI->setAlignment(MaxAlign);
+        if (AI.getType() != EntryAI->getType())
+          return new BitCastInst(EntryAI, AI.getType());
+        return ReplaceInstUsesWith(AI, EntryAI);
+      }
+    }
   }
 
   // Try to aggressively remove allocas which are only used for GEPs, lifetime
