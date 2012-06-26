@@ -804,14 +804,7 @@ static bool GetLineValue(Token &DigitTok, unsigned &Val,
     Val = NextVal;
   }
 
-  // Reject 0, this is needed both by #line numbers and flags.
-  if (Val == 0) {
-    PP.Diag(DigitTok, DiagID);
-    PP.DiscardUntilEndOfDirective();
-    return true;
-  }
-
-  if (DigitTokBegin[0] == '0')
+  if (DigitTokBegin[0] == '0' && Val)
     PP.Diag(DigitTok.getLocation(), diag::warn_pp_line_decimal);
 
   return false;
@@ -834,6 +827,9 @@ void Preprocessor::HandleLineDirective(Token &Tok) {
   unsigned LineNo;
   if (GetLineValue(DigitTok, LineNo, diag::err_pp_line_requires_integer,*this))
     return;
+  
+  if (LineNo == 0)
+    Diag(DigitTok, diag::ext_pp_line_zero);
 
   // Enforce C99 6.10.4p3: "The digit sequence shall not specify ... a
   // number greater than 2147483647".  C90 requires that the line # be <= 32767.

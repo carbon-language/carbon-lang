@@ -415,6 +415,9 @@ def err_pp_illegal_floating_literal : Error<
   "floating point literal in preprocessor expression">;
 def err_pp_line_requires_integer : Error<
   "#line directive requires a positive integer argument">;
+def ext_pp_line_zero : Extension<
+  "#line directive with zero argument is a GNU extension">, 
+  InGroup<GNU>;
 def err_pp_line_invalid_filename : Error<
   "invalid filename for #line directive">;
 def warn_pp_line_decimal : Warning<
