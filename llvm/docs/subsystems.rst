@@ -8,6 +8,7 @@ Subsystem Documentation
 
    AliasAnalysis
    BranchWeightMetadata
+   Bugpoint
    LinkTimeOptimization
    SegmentedStacks
    TableGenFundamentals
@@ -51,7 +52,7 @@ Subsystem Documentation
    This document describes the design and implementation of exception handling
    in LLVM.
     
-* `Bugpoint <Bugpoint.html>`_
+* :ref:`bugpoint`
     
    Automatic bug finder and test-case reducer description and usage
    information.
