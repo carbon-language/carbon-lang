@@ -3496,6 +3496,53 @@ static bool isMOVLHPSMask(ArrayRef<int> Mask, EVT VT) {
   return true;
 }
 
+//
+// Some special combinations that can be optimized.
+//
+static
+SDValue Compact8x32ShuffleNode(ShuffleVectorSDNode *SVOp,
+                               SelectionDAG &DAG) {
+  EVT VT = SVOp->getValueType(0);
+  unsigned NumElts = VT.getVectorNumElements();
+  DebugLoc dl = SVOp->getDebugLoc();
+
+  if (VT != MVT::v8i32 && VT != MVT::v8f32)
+    return SDValue();
+
+  ArrayRef<int> Mask = SVOp->getMask();
+
+  // These are the special masks that may be optimized.
+  static const int MaskToOptimizeEven[] = {0, 8, 2, 10, 4, 12, 6, 14};
+  static const int MaskToOptimizeOdd[]  = {1, 9, 3, 11, 5, 13, 7, 15};
+  bool MatchEvenMask = true;
+  bool MatchOddMask  = true;
+  for (int i=0; i<8; ++i) {
+    if (!isUndefOrEqual(Mask[i], MaskToOptimizeEven[i]))
+      MatchEvenMask = false;
+    if (!isUndefOrEqual(Mask[i], MaskToOptimizeOdd[i]))
+      MatchOddMask = false;
+  }
+  static const int CompactionMaskEven[] = {0, 2, -1, -1, 4, 6, -1, -1};
+  static const int CompactionMaskOdd [] = {1, 3, -1, -1, 5, 7, -1, -1};
+
+  const int *CompactionMask;
+  if (MatchEvenMask)
+    CompactionMask = CompactionMaskEven;
+  else if (MatchOddMask)
+    CompactionMask = CompactionMaskOdd;
+  else
+    return SDValue();
+
+  SDValue UndefNode = DAG.getNode(ISD::UNDEF, dl, VT);
+
+  SDValue Op0 = DAG.getVectorShuffle(VT, dl, SVOp->getOperand(0),
+                                     UndefNode, CompactionMask);
+  SDValue Op1 = DAG.getVectorShuffle(VT, dl, SVOp->getOperand(1),
+                                     UndefNode, CompactionMask);
+  static const int UnpackMask[] = {0, 8, 1, 9, 4, 12, 5, 13};
+  return DAG.getVectorShuffle(VT, dl, Op0, Op1, UnpackMask);
+}
+
 /// isUNPCKLMask - Return true if the specified VECTOR_SHUFFLE operand
 /// specifies a shuffle of elements that is suitable for input to UNPCKL.
 static bool isUNPCKLMask(ArrayRef<int> Mask, EVT VT,
@@ -5982,6 +6029,11 @@ static SDValue getVZextMovL(EVT VT, EVT OpVT,
 /// which could not be matched by any known target speficic shuffle
 static SDValue
 LowerVECTOR_SHUFFLE_256(ShuffleVectorSDNode *SVOp, SelectionDAG &DAG) {
+
+  SDValue NewOp = Compact8x32ShuffleNode(SVOp, DAG);
+  if (NewOp.getNode())
+    return NewOp;
+
   EVT VT = SVOp->getValueType(0);
 
   unsigned NumElems = VT.getVectorNumElements();
