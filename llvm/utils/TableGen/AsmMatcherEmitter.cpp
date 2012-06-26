@@ -2663,7 +2663,9 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   OS << "      if (!HadMatchOtherThanPredicate &&\n";
   OS << "          (it == MnemonicRange.first || ErrorInfo <= i+1)) {\n";
   OS << "        ErrorInfo = i+1;\n";
-  OS << "        RetCode = Diag;\n";
+  OS << "        // InvalidOperand is the default. Prefer specificity.\n";
+  OS << "        if (Diag != Match_InvalidOperand)\n";
+  OS << "          RetCode = Diag;\n";
   OS << "      }\n";
   OS << "      // Otherwise, just reject this instance of the mnemonic.\n";
   OS << "      OperandsValid = false;\n";
