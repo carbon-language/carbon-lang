@@ -363,10 +363,6 @@ namespace {
     /// NextCallIndex - The next call index to assign.
     unsigned NextCallIndex;
 
-    // Note that we intentionally use std::map here so that references
-    // to values are stable.
-    typedef std::map<const OpaqueValueExpr*, APValue> MapTy;
-
     /// BottomFrame - The frame in which evaluation started. This must be
     /// initialized after CurrentCall and CallStackDepth.
     CallStackFrame BottomFrame;
