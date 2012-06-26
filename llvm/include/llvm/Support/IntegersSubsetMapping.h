@@ -31,6 +31,10 @@ template <class SuccessorClass,
           class IntegersSubsetTy = IntegersSubset,
           class IntTy = IntItem>
 class IntegersSubsetMapping {
+  // FIXME: To much similar iterators typedefs, similar names. 
+  //        - Rename RangeIterator to the cluster iterator.
+  //        - Remove unused "add" methods.
+  //        - Class contents needs cleaning.
 public:
   
   typedef IntRange<IntTy> RangeTy;
@@ -47,14 +51,16 @@ public:
 
   typedef std::pair<RangeEx, SuccessorClass*> Cluster;
 
+  typedef std::list<RangeTy> RangesCollection;
+  typedef typename RangesCollection::iterator RangesCollectionIt;
+  typedef typename RangesCollection::const_iterator RangesCollectionConstIt;
+  typedef IntegersSubsetMapping<SuccessorClass, IntegersSubsetTy, IntTy> self;
+  
 protected:
 
   typedef std::list<Cluster> CaseItems;
   typedef typename CaseItems::iterator CaseItemIt;
   typedef typename CaseItems::const_iterator CaseItemConstIt;
-  
-  typedef std::list<RangeTy> RangesCollection;
-  typedef typename RangesCollection::iterator RangesCollectionIt;
   
   // TODO: Change unclean CRS prefixes to SubsetMap for example.
   typedef std::map<SuccessorClass*, RangesCollection > CRSMap;
@@ -96,6 +102,149 @@ protected:
       Sorted = true;
     }
   }
+  
+  enum DiffProcessState {
+    L_OPENED,
+    INTERSECT_OPENED,
+    R_OPENED,
+    ALL_IS_CLOSED
+  };
+  
+  class DiffStateMachine {
+    
+    DiffProcessState State;
+    IntTy OpenPt;
+    SuccessorClass *CurrentLSuccessor;
+    SuccessorClass *CurrentRSuccessor;
+    
+    self *LeftMapping;
+    self *IntersectionMapping;
+    self *RightMapping;
+
+  public:
+    
+    typedef
+      IntegersSubsetMapping<SuccessorClass, IntegersSubsetTy, IntTy> MappingTy;
+    
+    DiffStateMachine(MappingTy *L,
+                                 MappingTy *Intersection,
+                                 MappingTy *R) :
+                                 State(ALL_IS_CLOSED),
+                                 LeftMapping(L),
+                                 IntersectionMapping(Intersection),
+                                 RightMapping(R)
+                                 {}
+    
+    void onLOpen(const IntTy &Pt, SuccessorClass *S) {
+      switch (State) {
+      case R_OPENED:
+        if (Pt > OpenPt/*Don't add empty ranges.*/ && RightMapping) 
+          RightMapping->add(OpenPt, Pt-1, CurrentRSuccessor);
+        State = INTERSECT_OPENED;
+        break;
+      case ALL_IS_CLOSED:
+        State = L_OPENED;
+        break;
+      default:
+        assert(0 && "Got unexpected point.");
+        break;
+      }
+      CurrentLSuccessor = S;
+      OpenPt = Pt;
+    }
+    
+    void onLClose(const IntTy &Pt) {
+      switch (State) {
+      case L_OPENED:
+        assert(Pt >= OpenPt &&
+               "Subset is not sorted or contains overlapped ranges");
+        if (LeftMapping)
+          LeftMapping->add(OpenPt, Pt, CurrentLSuccessor);
+        State = ALL_IS_CLOSED;
+        break;
+      case INTERSECT_OPENED:
+        if (IntersectionMapping)
+          IntersectionMapping->add(OpenPt, Pt, CurrentLSuccessor);
+        OpenPt = Pt + 1;
+        State = R_OPENED;
+        break;
+      default:
+        assert(0 && "Got unexpected point.");
+        break;
+      }
+    }
+    
+    void onROpen(const IntTy &Pt, SuccessorClass *S) {
+      switch (State) {
+      case L_OPENED:
+        if (Pt > OpenPt && LeftMapping)
+          LeftMapping->add(OpenPt, Pt-1, CurrentLSuccessor);
+        State = INTERSECT_OPENED;
+        break;
+      case ALL_IS_CLOSED:
+        State = R_OPENED;
+        break;
+      default:
+        assert(0 && "Got unexpected point.");
+        break;
+      }
+      CurrentRSuccessor = S;
+      OpenPt = Pt;      
+    }
+    
+    void onRClose(const IntTy &Pt) {
+      switch (State) {
+      case R_OPENED:
+        assert(Pt >= OpenPt &&
+               "Subset is not sorted or contains overlapped ranges");
+        if (RightMapping)
+          RightMapping->add(OpenPt, Pt, CurrentRSuccessor);
+        State = ALL_IS_CLOSED;
+        break;
+      case INTERSECT_OPENED:
+        if (IntersectionMapping)
+          IntersectionMapping->add(OpenPt, Pt, CurrentLSuccessor);
+        OpenPt = Pt + 1;
+        State = L_OPENED;
+        break;
+      default:
+        assert(0 && "Got unexpected point.");
+        break;
+      }
+    }
+    
+    void onRLOpen(const IntTy &Pt,
+                  SuccessorClass *LS,
+                  SuccessorClass *RS) {
+      switch (State) {
+      case ALL_IS_CLOSED:
+        State = INTERSECT_OPENED;
+        break;
+      default:
+        assert(0 && "Got unexpected point.");
+        break;
+      }
+      CurrentLSuccessor = LS;
+      CurrentRSuccessor = RS;
+      OpenPt = Pt;        
+    }
+    
+    void onRLClose(const IntTy &Pt) {
+      switch (State) {
+      case INTERSECT_OPENED:
+        if (IntersectionMapping)
+          IntersectionMapping->add(OpenPt, Pt, CurrentLSuccessor);
+        State = ALL_IS_CLOSED;
+        break;
+      default:
+        assert(0 && "Got unexpected point.");
+        break;        
+      }
+    }
+    
+    bool isLOpened() { return State == L_OPENED; }
+    bool isROpened() { return State == R_OPENED; }
+  };
 
 public:
   
@@ -187,8 +336,109 @@ public:
     }
   }
   
+  void add(self& RHS) {
+    Items.insert(Items.end(), RHS.Items.begin(), RHS.Items.end());
+  }
+  
+  void add(const RangesCollection& RHS, SuccessorClass *S = 0) {
+    for (RangesCollectionConstIt i = RHS.begin(), e = RHS.end(); i != e; ++i)
+      add(*i, S);
+  }  
+  
   /// Removes items from set.
   void removeItem(RangeIterator i) { Items.erase(i); }
+  
+  /// Calculates the difference between this mapping and RHS.
+  /// THIS without RHS is placed into LExclude,
+  /// RHS without THIS is placed into RExclude,
+  /// THIS intersect RHS is placed into Intersection.
+  void diff(self *LExclude, self *Intersection, self *RExclude,
+                             const self& RHS) {
+    
+    DiffStateMachine Machine(LExclude, Intersection, RExclude);
+    
+    CaseItemConstIt L = Items.begin(), R = RHS.Items.begin();
+    while (L != Items.end() && R != RHS.Items.end()) {
+      const Cluster &LCluster = *L;
+      const RangeEx &LRange = LCluster.first;
+      const Cluster &RCluster = *R;
+      const RangeEx &RRange = RCluster.first;
+      
+      if (LRange.getHigh() < RRange.getLow()) {
+        Machine.onLOpen(LRange.getLow(), LCluster.second);
+        Machine.onLClose(LRange.getHigh());
+        ++L;
+        continue;
+      }
+      
+      if (LRange.getLow() > RRange.getHigh()) {
+        Machine.onROpen(RRange.getLow(), RCluster.second);
+        Machine.onRClose(RRange.getHigh());
+        ++R;
+        continue;
+      }
+      
+      if (LRange.getLow() < RRange.getLow()) {
+        // May be opened in previous iteration.
+        if (!Machine.isLOpened())
+          Machine.onLOpen(LRange.getLow(), LCluster.second);
+        Machine.onROpen(RRange.getLow(), RCluster.second);
+      }
+      else if (RRange.getLow() < LRange.getLow()) {
+        if (!Machine.isROpened())
+          Machine.onROpen(RRange.getLow(), RCluster.second);
+        Machine.onLOpen(LRange.getLow(), LCluster.second);
+      }
+      else
+        Machine.onRLOpen(LRange.getLow(), LCluster.second, RCluster.second);
+      
+      if (LRange.getHigh() < RRange.getHigh()) {
+        Machine.onLClose(LRange.getHigh());
+        ++L;
+        while(L != Items.end() && L->first.getHigh() < RRange.getHigh()) {
+          Machine.onLOpen(L->first.getLow(), L->second);
+          Machine.onLClose(L->first.getHigh());
+          ++L;
+        }
+      }
+      else if (RRange.getHigh() < LRange.getHigh()) {
+        Machine.onRClose(RRange.getHigh());
+        ++R;
+        while(R != RHS.Items.end() && R->first.getHigh() < LRange.getHigh()) {
+          Machine.onROpen(R->first.getLow(), R->second);
+          Machine.onRClose(R->first.getHigh());
+          ++R;
+        }
+      }
+      else {
+        Machine.onRLClose(LRange.getHigh());
+        ++L;
+        ++R;
+      }
+    }
+    
+    if (L != Items.end()) {
+      if (Machine.isLOpened()) {
+        Machine.onLClose(L->first.getHigh());
+        ++L;
+      }
+      if (LExclude)
+        while (L != Items.end()) {
+          LExclude->add(L->first, L->second);
+          ++L;
+        }
+    } else if (R != RHS.Items.end()) {
+      if (Machine.isROpened()) {
+        Machine.onRClose(R->first.getHigh());
+        ++R;
+      }
+      if (RExclude)
+        while (R != RHS.Items.end()) {
+          RExclude->add(R->first, R->second);
+          ++R;
+        }
+    }
+  }  
   
   /// Builds the finalized case objects.
   void getCases(Cases& TheCases) {
@@ -217,6 +467,11 @@ public:
     // 1. For empty mapping it matters nothing.
     // 2. After first item will added Sorted flag will cleared.
   }  
+  
+  // Returns number of clusters
+  unsigned size() const {
+    return Items.size();
+  }
   
   RangeIterator begin() { return Items.begin(); }
   RangeIterator end() { return Items.end(); }

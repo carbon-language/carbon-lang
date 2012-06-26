@@ -21,6 +21,7 @@ namespace {
   
   class Int : public APInt {
   public:
+    Int() {}
     Int(uint64_t V) : APInt(64, V) {}
     Int(const APInt& Src) : APInt(Src) {}
     bool operator < (const APInt& RHS) const { return ult(RHS); }
@@ -178,4 +179,146 @@ namespace {
       EXPECT_EQ(CaseIt->second.getItem(0), Range(Int(i * 10), Int(i * 10 + 9)));
     }
   }
+  
+  typedef unsigned unsigned_pair[2];
+  typedef unsigned_pair unsigned_ranges[];
+  
+  void TestDiff(
+      const unsigned_ranges LHS,
+      unsigned LSize,
+      const unsigned_ranges RHS,
+      unsigned RSize,
+      const unsigned_ranges ExcludeRes,
+      unsigned ExcludeResSize,
+      const unsigned_ranges IntersectRes,
+      unsigned IntersectResSize
+      ) {
+    Mapping::RangesCollection Ranges;
+    
+    Mapping LHSMapping;
+    for (unsigned i = 0; i < LSize; ++i)
+      Ranges.push_back(Range(Int(LHS[i][0]), Int(LHS[i][1])));
+    LHSMapping.add(Ranges);
+    
+    Ranges.clear();
+
+    Mapping RHSMapping;
+    for (unsigned i = 0; i < RSize; ++i)
+      Ranges.push_back(Range(Int(RHS[i][0]), Int(RHS[i][1])));
+    RHSMapping.add(Ranges);
+    
+    Mapping LExclude, Intersection;
+    
+    LHSMapping.diff(&LExclude, &Intersection, 0, RHSMapping);
+    
+    if (ExcludeResSize) {
+      EXPECT_EQ(LExclude.size(), ExcludeResSize);
+      
+      unsigned i = 0;
+      for (Mapping::RangeIterator rei = LExclude.begin(),
+           e = LExclude.end(); rei != e; ++rei, ++i)
+        EXPECT_EQ(rei->first, Range(ExcludeRes[i][0], ExcludeRes[i][1]));
+    } else
+      EXPECT_TRUE(LExclude.empty());
+    
+    if (IntersectResSize) {
+      EXPECT_EQ(Intersection.size(), IntersectResSize);
+      
+      unsigned i = 0;
+      for (Mapping::RangeIterator ii = Intersection.begin(),
+           e = Intersection.end(); ii != e; ++ii, ++i)
+        EXPECT_EQ(ii->first, Range(IntersectRes[i][0], IntersectRes[i][1]));
+    } else
+      EXPECT_TRUE(Intersection.empty());
+
+    LExclude.clear();
+    Intersection.clear();
+    RHSMapping.diff(0, &Intersection, &LExclude, LHSMapping);
+    
+    // Check LExclude again.
+    if (ExcludeResSize) {
+      EXPECT_EQ(LExclude.size(), ExcludeResSize);
+      
+      unsigned i = 0;
+      for (Mapping::RangeIterator rei = LExclude.begin(),
+           e = LExclude.end(); rei != e; ++rei, ++i)
+        EXPECT_EQ(rei->first, Range(ExcludeRes[i][0], ExcludeRes[i][1]));
+    } else
+      EXPECT_TRUE(LExclude.empty());    
+  }  
+  
+  TEST(IntegersSubsetTest, DiffTest) {
+    {
+      unsigned_ranges LHS = { { 0, 4 }, { 7, 10 }, { 13, 17 } };
+      unsigned_ranges RHS = { { 3, 14 } };
+      unsigned_ranges ExcludeRes = { { 0, 2 }, { 15, 17 } };
+      unsigned_ranges IntersectRes = { { 3, 4 }, { 7, 10 }, { 13, 14 } };
+
+      TestDiff(LHS, 3, RHS, 1, ExcludeRes, 2, IntersectRes, 3);
+    }
+
+    {
+      unsigned_ranges LHS = { { 0, 4 }, { 7, 10 }, { 13, 17 } };
+      unsigned_ranges RHS = { { 0, 4 }, { 13, 17 } };
+      unsigned_ranges ExcludeRes = { { 7, 10 } };
+      unsigned_ranges IntersectRes = { { 0, 4 }, { 13, 17 } };
+
+      TestDiff(LHS, 3, RHS, 2, ExcludeRes, 1, IntersectRes, 2);
+    }
+
+    {
+      unsigned_ranges LHS = { { 0, 17 } };
+      unsigned_ranges RHS = { { 1, 5 }, { 10, 12 }, { 15, 16 } };
+      unsigned_ranges ExcludeRes =
+          { { 0, 0 }, { 6, 9 }, { 13, 14 }, { 17, 17 } };
+      unsigned_ranges IntersectRes = { { 1, 5 }, { 10, 12 }, { 15, 16 } };
+
+      TestDiff(LHS, 1, RHS, 3, ExcludeRes, 4, IntersectRes, 3);
+    }
+
+    {
+      unsigned_ranges LHS = { { 2, 4 } };
+      unsigned_ranges RHS = { { 0, 5 } };
+      unsigned_ranges ExcludeRes = { {-1UL, -1UL} };
+      unsigned_ranges IntersectRes = { { 2, 4 } };
+
+      TestDiff(LHS, 1, RHS, 1, ExcludeRes, 0, IntersectRes, 1);
+    }
+
+    {
+      unsigned_ranges LHS = { { 2, 4 } };
+      unsigned_ranges RHS = { { 7, 8 } };
+      unsigned_ranges ExcludeRes = { { 2, 4 } };
+      unsigned_ranges IntersectRes = { {-1UL, -1UL} };
+
+      TestDiff(LHS, 1, RHS, 1, ExcludeRes, 1, IntersectRes, 0);
+    }
+
+    {
+      unsigned_ranges LHS = { { 3, 7 } };
+      unsigned_ranges RHS = { { 1, 4 } };
+      unsigned_ranges ExcludeRes = { { 5, 7 } };
+      unsigned_ranges IntersectRes = { { 3, 4 } };
+
+      TestDiff(LHS, 1, RHS, 1, ExcludeRes, 1, IntersectRes, 1);
+    }
+    
+    {
+      unsigned_ranges LHS = { { 0, 7 } };
+      unsigned_ranges RHS = { { 0, 5 }, { 6, 9 } };
+      unsigned_ranges ExcludeRes = { {-1UL, -1UL} };
+      unsigned_ranges IntersectRes = { { 0, 5 }, {6, 7} };
+
+      TestDiff(LHS, 1, RHS, 2, ExcludeRes, 0, IntersectRes, 2);
+    }
+    
+    {
+      unsigned_ranges LHS = { { 17, 17 } };
+      unsigned_ranges RHS = { { 4, 4 } };
+      unsigned_ranges ExcludeRes = { {17, 17} };
+      unsigned_ranges IntersectRes = { { -1UL, -1UL } };
+
+      TestDiff(LHS, 1, RHS, 1, ExcludeRes, 1, IntersectRes, 0);
+    }     
+  }   
 }
