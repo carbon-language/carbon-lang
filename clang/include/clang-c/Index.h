@@ -3201,6 +3201,12 @@ CINDEX_LINKAGE CXSourceRange clang_Cursor_getCommentRange(CXCursor C);
 CINDEX_LINKAGE CXString clang_Cursor_getRawCommentText(CXCursor C);
 
 /**
+ * \brief Given a cursor that represents a declaration, return the associated
+ * \\brief paragraph; otherwise return the first paragraph.
+ */
+CINDEX_LINKAGE CXString clang_Cursor_getBriefCommentText(CXCursor C);
+
+/**
  * @}
  */
 

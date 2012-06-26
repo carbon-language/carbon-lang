@@ -90,7 +90,7 @@ const RawComment *ASTContext::getRawCommentForDeclNoCache(const Decl *D) const {
 
   // First check whether we have a trailing comment.
   if (Comment != RawComments.end() &&
-      Comment->isDoxygen() && Comment->isTrailingComment() &&
+      Comment->isDocumentation() && Comment->isTrailingComment() &&
       !isa<TagDecl>(D) && !isa<NamespaceDecl>(D)) {
     std::pair<FileID, unsigned> CommentBeginDecomp
       = SourceMgr.getDecomposedLoc(Comment->getSourceRange().getBegin());
@@ -111,7 +111,7 @@ const RawComment *ASTContext::getRawCommentForDeclNoCache(const Decl *D) const {
   --Comment;
 
   // Check that we actually have a non-member Doxygen comment.
-  if (!Comment->isDoxygen() || Comment->isTrailingComment())
+  if (!Comment->isDocumentation() || Comment->isTrailingComment())
     return NULL;
 
   // Decompose the end of the comment.

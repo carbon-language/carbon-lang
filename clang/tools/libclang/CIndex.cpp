@@ -5707,6 +5707,24 @@ CXString clang_Cursor_getRawCommentText(CXCursor C) {
 
 } // end: extern "C"
 
+CXString clang_Cursor_getBriefCommentText(CXCursor C) {
+  if (!clang_isDeclaration(C.kind))
+    return createCXString((const char *) NULL);
+
+  const Decl *D = getCursorDecl(C);
+  const ASTContext &Context = getCursorContext(C);
+  const RawComment *RC = Context.getRawCommentForDecl(D);
+
+  if (RC && RC->isDocumentation()) {
+    StringRef BriefText = RC->getBriefText(Context);
+
+    // Don't duplicate the string because RawComment ensures that this memory
+    // will not go away.
+    return createCXString(BriefText, false);
+  }
+
+  return createCXString((const char *) NULL);
+}
 
 //===----------------------------------------------------------------------===//
 // C++ AST instrospection.

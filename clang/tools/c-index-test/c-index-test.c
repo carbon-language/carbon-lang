@@ -162,6 +162,24 @@ int parse_remapped_files(int argc, const char **argv, int start_arg,
 /* Pretty-printing.                                                           */
 /******************************************************************************/
 
+static void PrintCString(const char *Prefix, const char *CStr) {
+  printf(" %s=[", Prefix);
+  if (CStr != NULL && CStr[0] != '\0') {
+    for ( ; *CStr; ++CStr) {
+      const char C = *CStr;
+      switch (C) {
+        case '\n': printf("\\n"); break;
+        case '\r': printf("\\r"); break;
+        case '\t': printf("\\t"); break;
+        case '\v': printf("\\v"); break;
+        case '\f': printf("\\f"); break;
+        default:   putchar(C);    break;
+      }
+    }
+  }
+  printf("]");
+}
+
 static void PrintRange(CXSourceRange R, const char *str) {
   CXFile begin_file, end_file;
   unsigned begin_line, begin_column, end_line, end_column;
@@ -218,8 +236,10 @@ static void PrintCursor(CXCursor Cursor) {
     CXPlatformAvailability PlatformAvailability[2];
     int NumPlatformAvailability;
     int I;
-    CXString Comment;
-    const char *CommentCString;
+    CXString RawComment;
+    const char *RawCommentCString;
+    CXString BriefComment;
+    const char *BriefCommentCString;
 
     ks = clang_getCursorKindSpelling(Cursor.kind);
     string = want_display_name? clang_getCursorDisplayName(Cursor) 
@@ -401,21 +421,19 @@ static void PrintCursor(CXCursor Cursor) {
         PrintRange(RefNameRange, "RefName");
     }
 
-    Comment = clang_Cursor_getRawCommentText(Cursor);
-    CommentCString = clang_getCString(Comment);
-    if (CommentCString != NULL && CommentCString[0] != '\0') {
-      printf(" Comment=[");
-      for ( ; *CommentCString; ++CommentCString) {
-        if (*CommentCString != '\n')
-          putchar(*CommentCString);
-        else
-          printf("\\n");
-      }
-      printf("]");
+    RawComment = clang_Cursor_getRawCommentText(Cursor);
+    RawCommentCString = clang_getCString(RawComment);
+    if (RawCommentCString != NULL && RawCommentCString[0] != '\0') {
+      PrintCString("RawComment", RawCommentCString);
+      PrintRange(clang_Cursor_getCommentRange(Cursor), "RawCommentRange");
 
-      PrintRange(clang_Cursor_getCommentRange(Cursor), "CommentRange");
+      BriefComment = clang_Cursor_getBriefCommentText(Cursor);
+      BriefCommentCString = clang_getCString(BriefComment);
+      if (BriefCommentCString != NULL && BriefCommentCString[0] != '\0')
+        PrintCString("BriefComment", BriefCommentCString);
+      clang_disposeString(BriefComment);
     }
-    clang_disposeString(Comment);
+    clang_disposeString(RawComment);
   }
 }
 

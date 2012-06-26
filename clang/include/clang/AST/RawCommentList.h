@@ -15,6 +15,7 @@
 
 namespace clang {
 
+class ASTContext;
 class ASTReader;
 
 class RawComment {
@@ -27,7 +28,7 @@ public:
     CK_BCPLExcl,     ///< \code //! stuff \endcode
     CK_JavaDoc,      ///< \code /** stuff */ \endcode
     CK_Qt,           ///< \code /*! stuff */ \endcode, also used by HeaderDoc
-    CK_Merged        ///< Two or more Doxygen comments merged together
+    CK_Merged        ///< Two or more documentation comments merged together
   };
 
   RawComment() : Kind(CK_Invalid), IsAlmostTrailingComment(false) { }
@@ -53,7 +54,7 @@ public:
   /// \code /**< stuff */ \endcode
   /// \code /*!< stuff */ \endcode
   bool isTrailingComment() const LLVM_READONLY {
-    assert(isDoxygen());
+    assert(isDocumentation());
     return IsTrailingComment;
   }
 
@@ -64,13 +65,13 @@ public:
     return IsAlmostTrailingComment;
   }
 
-  /// Returns true if this comment is not a Doxygen comment.
+  /// Returns true if this comment is not a documentation comment.
   bool isOrdinary() const LLVM_READONLY {
     return (Kind == CK_OrdinaryBCPL) || (Kind == CK_OrdinaryC);
   }
 
-  /// Returns true if this comment any kind of a Doxygen comment.
-  bool isDoxygen() const LLVM_READONLY {
+  /// Returns true if this comment any kind of a documentation comment.
+  bool isDocumentation() const LLVM_READONLY {
     return !isInvalid() && !isOrdinary();
   }
 
@@ -91,11 +92,21 @@ public:
   unsigned getBeginLine(const SourceManager &SM) const;
   unsigned getEndLine(const SourceManager &SM) const;
 
+  StringRef getBriefText(const ASTContext &Context) const {
+    if (BriefTextValid)
+      return BriefText;
+
+    return extractBriefText(Context);
+  }
+
 private:
   SourceRange Range;
 
   mutable StringRef RawText;
-  mutable bool RawTextValid : 1; ///< True if RawText is valid
+  mutable StringRef BriefText;
+
+  mutable bool RawTextValid : 1;   ///< True if RawText is valid
+  mutable bool BriefTextValid : 1; ///< True if BriefText is valid
 
   unsigned Kind : 3;
 
@@ -117,6 +128,8 @@ private:
   { }
 
   StringRef getRawTextSlow(const SourceManager &SourceMgr) const;
+
+  StringRef extractBriefText(const ASTContext &Context) const;
 
   friend class ASTReader;
 };

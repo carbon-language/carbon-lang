@@ -163,6 +163,37 @@ class test42 {
   int isdoxy42; /* NOT_DOXYGEN */ ///< isdoxy42 IS_DOXYGEN_SINGLE
 };
 
+/// IS_DOXYGEN_START
+/// It is fine to have a command at the end of comment.
+///\brief
+///
+/// Some malformed command.
+/* \*/
+/**
+ * \brief Aaa aaaaaaa aaaa.
+ * IS_DOXYGEN_END
+ */
+void isdoxy43(void);
+
+/// IS_DOXYGEN_START Aaa bbb
+/// ccc.
+///
+/// Ddd eee.
+/// Fff.
+///
+/// Ggg. IS_DOXYGEN_END
+void isdoxy44(void);
+
+/// IS_DOXYGEN_START Aaa bbb
+/// ccc.
+///
+/// \brief
+/// Ddd eee.
+/// Fff.
+///
+/// Ggg. IS_DOXYGEN_END
+void isdoxy45(void);
+
 #endif
 
 // RUN: rm -rf %t
@@ -187,8 +218,8 @@ class test42 {
 // WRONG-NOT: IS_DOXYGEN_NOT_ATTACHED
 
 // Ensure we don't pick up extra comments.
-// WRONG-NOT: IS_DOXYGEN_START{{.*}}IS_DOXYGEN_START
-// WRONG-NOT: IS_DOXYGEN_END{{.*}}IS_DOXYGEN_END
+// WRONG-NOT: IS_DOXYGEN_START{{.*}}IS_DOXYGEN_START{{.*}}BriefComment=
+// WRONG-NOT: IS_DOXYGEN_END{{.*}}IS_DOXYGEN_END{{.*}}BriefComment=
 
 // RUN: FileCheck %s < %t/out.c-index-direct
 // RUN: FileCheck %s < %t/out.c-index-pch
@@ -226,4 +257,8 @@ class test42 {
 // CHECK: annotate-comments.cpp:155:6: FunctionDecl=isdoxy40:{{.*}} isdoxy40 IS_DOXYGEN_SINGLE
 // CHECK: annotate-comments.cpp:160:5: FunctionDecl=isdoxy41:{{.*}} isdoxy41 IS_DOXYGEN_SINGLE
 // CHECK: annotate-comments.cpp:163:7: FieldDecl=isdoxy42:{{.*}} isdoxy42 IS_DOXYGEN_SINGLE
+// CHECK: annotate-comments.cpp:176:6: FunctionDecl=isdoxy43:{{.*}} IS_DOXYGEN_START{{.*}} IS_DOXYGEN_END
+
+// CHECK: annotate-comments.cpp:185:6: FunctionDecl=isdoxy44:{{.*}} BriefComment=[ IS_DOXYGEN_START Aaa bbb\n ccc.\n]
+// CHECK: annotate-comments.cpp:195:6: FunctionDecl=isdoxy45:{{.*}} BriefComment=[\n Ddd eee.\n Fff.\n]
 
