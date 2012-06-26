@@ -9,7 +9,7 @@ void f2(const char* a, char* b) {}
 void f3(int a, const char* b, const char* c) {}
 // CHECK: "\01?f3@@YAXHPBD0@Z"
 
-const char *f4(const char* a, const char* b) {}
+const char *f4(const char* a, const char* b) { return 0; }
 // CHECK: "\01?f4@@YAPBDPBD0@Z"
 
 void f5(char const* a, unsigned int b, char c, void const* d, char const* e, unsigned int f) {}
@@ -46,7 +46,7 @@ void g4(const char* a, struct S* b, const char* c, struct S* d) {
 // built-ins.
 typedef unsigned int uintptr_t;
 typedef unsigned int size_t;
-void *h(size_t a, uintptr_t b) {}
+void *h(size_t a, uintptr_t b) { return 0; }
 // CHECK: "\01?h@@YAPAXII@Z"
 
 // Function pointers might be mangled in a complex way.
@@ -61,3 +61,64 @@ void h2(void (*f_ptr)(void *), void *arg) {}
 
 PInt3Func h3(PInt3Func x, PInt3Func y, int* z) { return 0; }
 // CHECK: "\01?h3@@YAP6APAHPAH0@ZP6APAH00@Z10@Z"
+
+namespace PR13207 {
+class A {};
+class B {};
+class C {};
+
+template<class X>
+class I {};
+template<class X, class Y>
+class J {};
+template<class X, class Y, class Z>
+class K {};
+
+class L {
+ public:
+  void foo(I<A> x) {}
+};
+// CHECK: "\01?foo@L@PR13207@@QAEXV?$I@VA@PR13207@@@2@@Z"
+
+void call_l_foo(L* l) { l->foo(I<A>()); }
+
+void foo(I<A> x) {}
+// CHECK: "\01?foo@PR13207@@YAXV?$I@VA@PR13207@@@1@@Z"
+void foo2(I<A> x, I<A> y) { }
+// CHECK "\01?foo2@PR13207@@YAXV?$I@VA@PR13207@@@1@0@Z"
+void bar(J<A,B> x) {}
+// CHECK: "\01?bar@PR13207@@YAXV?$J@VA@PR13207@@VB@2@@1@@Z"
+void spam(K<A,B,C> x) {}
+// CHECK: "\01?spam@PR13207@@YAXV?$K@VA@PR13207@@VB@2@VC@2@@1@@Z"
+
+namespace NA {
+class X {};
+template<class T> class Y {};
+void foo(Y<X> x) {}
+// CHECK: "\01?foo@NA@PR13207@@YAXV?$Y@VX@NA@PR13207@@@12@@Z"
+}
+
+namespace NB {
+class X {};
+template<class T> class Y {};
+void foo(Y<NA::X> x) {}
+// CHECK: "\01?foo@NB@PR13207@@YAXV?$Y@VX@NA@PR13207@@@12@@Z"
+
+void bar(NA::Y<X> x) {}
+// CHECK: "\01?bar@NB@PR13207@@YAXV?$Y@VX@NB@PR13207@@@NA@2@@Z"
+
+void spam(NA::Y<NA::X> x) {}
+// CHECK: "\01?spam@NB@PR13207@@YAXV?$Y@VX@NA@PR13207@@@NA@2@@Z"
+}
+
+namespace NC {
+class X {};
+template<class T> class Y {};
+
+void foo(Y<NB::X> x) {}
+// CHECK: "\01?foo@NC@PR13207@@YAXV?$Y@VX@NB@PR13207@@@12@@Z"
+
+void foobar(NC::Y<NB::Y<NA::Y<NA::X> > > x) {}
+// CHECK: "\01?foobar@NC@PR13207@@YAXV?$Y@V?$Y@V?$Y@VX@NA@PR13207@@@NA@PR13207@@@NB@PR13207@@@12@@Z"
+}
+}
