@@ -123,6 +123,7 @@ SBCommandInterpreter::HandleCompletion (const char *current_line,
                                         int max_return_elements,
                                         SBStringList &matches)
 {
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     int num_completions = 0;
     
     // Sanity check the arguments that are passed in:
@@ -137,6 +138,10 @@ SBCommandInterpreter::HandleCompletion (const char *current_line,
     if (cursor - current_line > current_line_size || last_char - current_line > current_line_size)
         return 0;
         
+    if (log)
+        log->Printf ("SBCommandInterpreter(%p)::HandleCompletion (current_line=\"%s\", cursor at: %ld, last char at: %ld, match_start_point: %d, max_return_elements: %d)",
+                     m_opaque_ptr, current_line, cursor - current_line, last_char - current_line, match_start_point, max_return_elements);
+                     
     if (m_opaque_ptr)
     {
         lldb_private::StringList lldb_matches;
@@ -146,6 +151,9 @@ SBCommandInterpreter::HandleCompletion (const char *current_line,
         SBStringList temp_list (&lldb_matches);
         matches.AppendList (temp_list);
     }
+    if (log)
+        log->Printf ("SBCommandInterpreter(%p)::HandleCompletion - Found %d completions.", m_opaque_ptr, num_completions);
+        
     return num_completions;
 }
 
