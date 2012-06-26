@@ -422,49 +422,6 @@ void Clang::AddPreprocessingOptions(Compilation &C,
   getToolChain().AddClangSystemIncludeArgs(Args, CmdArgs);
 }
 
-/// getARMTargetCPU - Get the (LLVM) name of the ARM cpu we are targeting.
-//
-// FIXME: tblgen this.
-static const char *getARMTargetCPU(const ArgList &Args,
-                                   const llvm::Triple &Triple) {
-  // FIXME: Warn on inconsistent use of -mcpu and -march.
-
-  // If we have -mcpu=, use that.
-  if (Arg *A = Args.getLastArg(options::OPT_mcpu_EQ))
-    return A->getValue(Args);
-
-  StringRef MArch;
-  if (Arg *A = Args.getLastArg(options::OPT_march_EQ)) {
-    // Otherwise, if we have -march= choose the base CPU for that arch.
-    MArch = A->getValue(Args);
-  } else {
-    // Otherwise, use the Arch from the triple.
-    MArch = Triple.getArchName();
-  }
-
-  return llvm::StringSwitch<const char *>(MArch)
-    .Cases("armv2", "armv2a","arm2")
-    .Case("armv3", "arm6")
-    .Case("armv3m", "arm7m")
-    .Cases("armv4", "armv4t", "arm7tdmi")
-    .Cases("armv5", "armv5t", "arm10tdmi")
-    .Cases("armv5e", "armv5te", "arm1022e")
-    .Case("armv5tej", "arm926ej-s")
-    .Cases("armv6", "armv6k", "arm1136jf-s")
-    .Case("armv6j", "arm1136j-s")
-    .Cases("armv6z", "armv6zk", "arm1176jzf-s")
-    .Case("armv6t2", "arm1156t2-s")
-    .Cases("armv7", "armv7a", "armv7-a", "cortex-a8")
-    .Cases("armv7r", "armv7-r", "cortex-r4")
-    .Cases("armv7m", "armv7-m", "cortex-m3")
-    .Case("ep9312", "ep9312")
-    .Case("iwmmxt", "iwmmxt")
-    .Case("xscale", "xscale")
-    .Cases("armv6m", "armv6-m", "cortex-m0")
-    // If all else failed, return the most base CPU LLVM supports.
-    .Default("arm7tdmi");
-}
-
 /// getLLVMArchSuffixForARM - Get the LLVM arch name to use for a particular
 /// CPU.
 //
@@ -488,6 +445,67 @@ static const char *getLLVMArchSuffixForARM(StringRef CPU) {
     .Case("cortex-m4", "v7m")
     .Case("cortex-m0", "v6m")
     .Default("");
+}
+
+/// getARMTargetCPU - Get the (LLVM) name of the ARM cpu we are targeting.
+//
+// FIXME: tblgen this.
+static std::string getARMTargetCPU(const ArgList &Args,
+                                   const llvm::Triple &Triple) {
+  // FIXME: Warn on inconsistent use of -mcpu and -march.
+
+  // If we have -mcpu=, use that.
+  if (Arg *A = Args.getLastArg(options::OPT_mcpu_EQ)) {
+    StringRef MCPU = A->getValue(Args);
+    // Handle -mcpu=native.
+    if (MCPU == "native")
+      return llvm::sys::getHostCPUName();
+    else
+      return MCPU;
+  }
+
+  StringRef MArch;
+  if (Arg *A = Args.getLastArg(options::OPT_march_EQ)) {
+    // Otherwise, if we have -march= choose the base CPU for that arch.
+    MArch = A->getValue(Args);
+  } else {
+    // Otherwise, use the Arch from the triple.
+    MArch = Triple.getArchName();
+  }
+
+  // Handle -march=native.
+  std::string NativeMArch;
+  if (MArch == "native") {
+    std::string CPU = llvm::sys::getHostCPUName();
+    if (CPU != "generic") {
+      // Translate the native cpu into the architecture. The switch below will
+      // then chose the minimum cpu for that arch.
+      NativeMArch = std::string("arm") + getLLVMArchSuffixForARM(CPU);
+      MArch = NativeMArch;
+    }
+  }
+
+  return llvm::StringSwitch<const char *>(MArch)
+    .Cases("armv2", "armv2a","arm2")
+    .Case("armv3", "arm6")
+    .Case("armv3m", "arm7m")
+    .Cases("armv4", "armv4t", "arm7tdmi")
+    .Cases("armv5", "armv5t", "arm10tdmi")
+    .Cases("armv5e", "armv5te", "arm1022e")
+    .Case("armv5tej", "arm926ej-s")
+    .Cases("armv6", "armv6k", "arm1136jf-s")
+    .Case("armv6j", "arm1136j-s")
+    .Cases("armv6z", "armv6zk", "arm1176jzf-s")
+    .Case("armv6t2", "arm1156t2-s")
+    .Cases("armv7", "armv7a", "armv7-a", "cortex-a8")
+    .Cases("armv7r", "armv7-r", "cortex-r4")
+    .Cases("armv7m", "armv7-m", "cortex-m3")
+    .Case("ep9312", "ep9312")
+    .Case("iwmmxt", "iwmmxt")
+    .Case("xscale", "xscale")
+    .Cases("armv6m", "armv6-m", "cortex-m0")
+    // If all else failed, return the most base CPU LLVM supports.
+    .Default("arm7tdmi");
 }
 
 // FIXME: Move to target hook.
@@ -601,9 +619,10 @@ static StringRef getARMFloatABI(const Driver &D,
       // Darwin defaults to "softfp" for v6 and v7.
       //
       // FIXME: Factor out an ARM class so we can cache the arch somewhere.
-      StringRef ArchName =
+      std::string ArchName =
         getLLVMArchSuffixForARM(getARMTargetCPU(Args, Triple));
-      if (ArchName.startswith("v6") || ArchName.startswith("v7"))
+      if (StringRef(ArchName).startswith("v6") ||
+          StringRef(ArchName).startswith("v7"))
         FloatABI = "softfp";
       else
         FloatABI = "soft";
@@ -628,9 +647,9 @@ static StringRef getARMFloatABI(const Driver &D,
         FloatABI = "softfp";
         break;
       case llvm::Triple::ANDROIDEABI: {
-        StringRef ArchName =
+        std::string ArchName =
           getLLVMArchSuffixForARM(getARMTargetCPU(Args, Triple));
-        if (ArchName.startswith("v7"))
+        if (StringRef(ArchName).startswith("v7"))
           FloatABI = "softfp";
         else
           FloatABI = "soft";
@@ -680,7 +699,7 @@ void Clang::AddARMTargetArgs(const ArgList &Args,
 
   // Set the CPU based on -march= and -mcpu=.
   CmdArgs.push_back("-target-cpu");
-  CmdArgs.push_back(getARMTargetCPU(Args, Triple));
+  CmdArgs.push_back(Args.MakeArgString(getARMTargetCPU(Args, Triple)));
 
   // Determine floating point ABI from the options & target defaults.
   StringRef FloatABI = getARMFloatABI(D, Args, Triple);
@@ -2790,7 +2809,7 @@ void ClangAs::AddARMTargetArgs(const ArgList &Args,
 
   // Set the CPU based on -march= and -mcpu=.
   CmdArgs.push_back("-target-cpu");
-  CmdArgs.push_back(getARMTargetCPU(Args, Triple));
+  CmdArgs.push_back(Args.MakeArgString(getARMTargetCPU(Args, Triple)));
 
   // Honor -mfpu=.
   if (const Arg *A = Args.getLastArg(options::OPT_mfpu_EQ))
