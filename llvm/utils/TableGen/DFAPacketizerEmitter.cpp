@@ -94,7 +94,12 @@ class State {
   // PossibleStates is the set of valid resource states that ensue from valid
   // transitions.
   //
-  bool canAddInsnClass(unsigned InsnClass, std::set<unsigned> &PossibleStates);
+  bool canAddInsnClass(unsigned InsnClass) const;
+  //
+  // AddInsnClass - Return all combinations of resource reservation
+  // which are possible from this state (PossibleStates).
+  //
+  void AddInsnClass(unsigned InsnClass, std::set<unsigned> &PossibleStates);
 };
 } // End anonymous namespace.
 
@@ -120,6 +125,10 @@ namespace {
 struct ltState {
   bool operator()(const State *s1, const State *s2) const;
 };
+
+struct ltTransition {
+  bool operator()(const Transition *s1, const Transition *s2) const;
+};
 } // End anonymous namespace.
 
 
@@ -135,7 +144,8 @@ public:
   std::set<State*, ltState> states;
 
   // Map from a state to the list of transitions with that state as source.
-  std::map<State*, SmallVector<Transition*, 16>, ltState> stateTransitions;
+  std::map<State*, std::set<Transition*, ltTransition>, ltState>
+    stateTransitions;
   State *currentState;
 
   // Highest valued Input seen.
@@ -193,21 +203,19 @@ bool ltState::operator()(const State *s1, const State *s2) const {
     return (s1->stateNum < s2->stateNum);
 }
 
+bool ltTransition::operator()(const Transition *s1, const Transition *s2) const {
+    return (s1->input < s2->input);
+}
 
 //
-// canAddInsnClass - Returns true if an instruction of type InsnClass is a
-// valid transition from this state i.e., can an instruction of type InsnClass
-// be added to the packet represented by this state.
+// AddInsnClass - Return all combinations of resource reservation
+// which are possible from this state (PossibleStates).
 //
-// PossibleStates is the set of valid resource states that ensue from valid
-// transitions.
-//
-bool State::canAddInsnClass(unsigned InsnClass,
+void State::AddInsnClass(unsigned InsnClass,
                             std::set<unsigned> &PossibleStates) {
   //
   // Iterate over all resource states in currentState.
   //
-  bool AddedState = false;
 
   for (std::set<unsigned>::iterator SI = stateInfo.begin();
        SI != stateInfo.end(); ++SI) {
@@ -240,13 +248,26 @@ bool State::canAddInsnClass(unsigned InsnClass,
             (VisitedResourceStates.count(ResultingResourceState) == 0)) {
           VisitedResourceStates.insert(ResultingResourceState);
           PossibleStates.insert(ResultingResourceState);
-          AddedState = true;
         }
       }
     }
   }
 
-  return AddedState;
+}
+
+
+//
+// canAddInsnClass - Quickly verifies if an instruction of type InsnClass is a
+// valid transition from this state i.e., can an instruction of type InsnClass
+// be added to the packet represented by this state.
+//
+bool State::canAddInsnClass(unsigned InsnClass) const {
+  for (std::set<unsigned>::iterator SI = stateInfo.begin();
+       SI != stateInfo.end(); ++SI) {
+    if (~*SI & InsnClass)
+      return true;
+  }
+  return false;
 }
 
 
@@ -267,7 +288,8 @@ void DFA::addTransition(Transition *T) {
     LargestInput = T->input;
 
   // Add the new transition.
-  stateTransitions[T->from].push_back(T);
+  bool Added = stateTransitions[T->from].insert(T).second;
+  assert(Added && "Cannot have multiple states for the same input");
 }
 
 
@@ -281,11 +303,13 @@ State *DFA::getTransition(State *From, unsigned I) {
     return NULL;
 
   // Do we have a transition from state From with Input I?
-  for (SmallVector<Transition*, 16>::iterator VI =
-         stateTransitions[From].begin();
-         VI != stateTransitions[From].end(); ++VI)
-    if ((*VI)->input == I)
-      return (*VI)->to;
+  Transition TVal(NULL, I, NULL);
+  // Do not count this temporal instance
+  Transition::currentTransitionNum--;
+  std::set<Transition*, ltTransition>::iterator T =
+    stateTransitions[From].find(&TVal);
+  if (T != stateTransitions[From].end())
+    return (*T)->to;
 
   return NULL;
 }
@@ -331,11 +355,12 @@ void DFA::writeTableAndAPI(raw_ostream &OS, const std::string &TargetName) {
     StateEntry[i] = ValidTransitions;
     for (unsigned j = 0; j <= LargestInput; ++j) {
       assert (((*SI)->stateNum == (int) i) && "Mismatch in state numbers");
-      if (!isValidTransition(*SI, j))
+      State *To = getTransition(*SI, j);
+      if (To == NULL)
         continue;
 
       OS << "{" << j << ", "
-         << getTransition(*SI, j)->stateNum
+         << To->stateNum
          << "},    ";
       ++ValidTransitions;
     }
@@ -514,8 +539,10 @@ void DFAPacketizerEmitter::run(raw_ostream &OS) {
       // and the state can accommodate this InsnClass, create a transition.
       //
       if (!D.getTransition(current, InsnClass) &&
-          current->canAddInsnClass(InsnClass, NewStateResources)) {
+          current->canAddInsnClass(InsnClass)) {
         State *NewState = NULL;
+        current->AddInsnClass(InsnClass, NewStateResources);
+        assert(NewStateResources.size() && "New states must be generated");
 
         //
         // If we have seen this state before, then do not create a new state.
