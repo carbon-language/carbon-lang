@@ -95,7 +95,7 @@ class FastState {
 //   is_write        : 1
 //   size_log        : 2
 //   addr0           : 3
-class Shadow: public FastState {
+class Shadow : public FastState {
  public:
   explicit Shadow(u64 x) : FastState(x) { }
 
@@ -203,17 +203,7 @@ class Shadow: public FastState {
 // As if 8-byte write by thread 0xff..f at epoch 0xff..f, races with everything.
 const u64 kShadowFreed = 0xfffffffffffffff8ull;
 
-const int kSigCount = 128;
-
-struct my_siginfo_t {
-  int opaque[128];
-};
-
-struct SignalDesc {
-  bool armed;
-  bool sigaction;
-  my_siginfo_t siginfo;
-};
+struct SignalContext;
 
 // This struct is stored in TLS.
 struct ThreadState {
@@ -251,9 +241,8 @@ struct ThreadState {
   DeadlockDetector deadlock_detector;
 
   bool in_signal_handler;
-  int int_signal_send;
-  int pending_signal_count;
-  SignalDesc pending_signals[kSigCount];
+  SignalContext *signal_ctx;
+
   // Set in regions of runtime that must be signal-safe and fork-safe.
   // If set, malloc must not be called.
   int nomalloc;
