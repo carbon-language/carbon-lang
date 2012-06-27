@@ -10854,8 +10854,9 @@ static void MarkExprReferenced(Sema &SemaRef, SourceLocation Loc,
   if (!MD)
     return;
   const Expr *Base = ME->getBase();
-  const CXXRecordDecl *MostDerivedClassDecl
-    = Base->getMostDerivedClassDeclForType();
+  if (Base->getType()->isDependentType())
+    return;
+  const CXXRecordDecl *MostDerivedClassDecl = Base->getBestDynamicClassType();
   if (!MostDerivedClassDecl)
     return;
   CXXMethodDecl *DM = MD->getCorrespondingMethodInClass(MostDerivedClassDecl);

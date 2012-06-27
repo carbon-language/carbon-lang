@@ -33,7 +33,7 @@
 #include <cstring>
 using namespace clang;
 
-const CXXRecordDecl *Expr::getMostDerivedClassDeclForType() const {
+const CXXRecordDecl *Expr::getBestDynamicClassType() const {
   const Expr *E = this;
 
   while (true) {
@@ -51,15 +51,10 @@ const CXXRecordDecl *Expr::getMostDerivedClassDeclForType() const {
   }
 
   QualType DerivedType = E->getType();
-  if (DerivedType->isDependentType())
-    return NULL;
   if (const PointerType *PTy = DerivedType->getAs<PointerType>())
     DerivedType = PTy->getPointeeType();
 
   const RecordType *Ty = DerivedType->castAs<RecordType>();
-  if (!Ty)
-    return NULL;
-
   Decl *D = Ty->getDecl();
   return cast<CXXRecordDecl>(D);
 }

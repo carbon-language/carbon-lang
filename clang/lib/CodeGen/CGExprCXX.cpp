@@ -102,8 +102,7 @@ static bool canDevirtualizeMemberFunctionCalls(ASTContext &Context,
   //   b->f();
   // }
   //
-  const CXXRecordDecl *MostDerivedClassDecl =
-    Base->getMostDerivedClassDeclForType();
+  const CXXRecordDecl *MostDerivedClassDecl = Base->getBestDynamicClassType();
   if (MostDerivedClassDecl->hasAttr<FinalAttr>())
     return true;
 
@@ -228,8 +227,7 @@ RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE,
   bool UseVirtualCall = MD->isVirtual() && !ME->hasQualifier()
                         && !canDevirtualizeMemberFunctionCalls(getContext(),
                                                                Base, MD);
-  const CXXRecordDecl *MostDerivedClassDecl =
-    Base->getMostDerivedClassDeclForType();
+  const CXXRecordDecl *MostDerivedClassDecl = Base->getBestDynamicClassType();
 
   llvm::Value *Callee;
   if (const CXXDestructorDecl *Dtor = dyn_cast<CXXDestructorDecl>(MD)) {
