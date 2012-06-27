@@ -33,7 +33,7 @@ struct sigset_t {
 };
 
 struct ucontext_t {
-  u64 opaque[1024];
+  uptr opaque[117];
 };
 
 extern "C" int pthread_attr_init(void *attr);
@@ -48,7 +48,6 @@ extern "C" int pthread_yield();
 extern "C" int pthread_sigmask(int how, const sigset_t *set, sigset_t *oldset);
 extern "C" int sigfillset(sigset_t *set);
 extern "C" void *pthread_self();
-extern "C" int getcontext(ucontext_t *ucp);
 extern "C" void _exit(int status);
 extern "C" int __cxa_atexit(void (*func)(void *arg), void *arg, void *dso);
 extern "C" int *__errno_location();
@@ -1289,6 +1288,8 @@ static void ALWAYS_INLINE rtl_generic_sighandler(bool sigact, int sig,
     signal->sigaction = sigact;
     if (info)
       signal->siginfo = *info;
+    if (ctx)
+      signal->ctx = *(ucontext_t*)ctx;
     sctx->pending_signal_count++;
   }
 }
@@ -1381,9 +1382,7 @@ static void process_pending_signals(ThreadState *thr) {
   thr->in_signal_handler = true;
   sctx->pending_signal_count = 0;
   // These are too big for stack.
-  static THREADLOCAL ucontext_t uctx;
   static THREADLOCAL sigset_t emptyset, oldset;
-  getcontext(&uctx);
   sigfillset(&emptyset);
   pthread_sigmask(SIG_SETMASK, &emptyset, &oldset);
   for (int sig = 0; sig < kSigCount; sig++) {
@@ -1396,7 +1395,7 @@ static void process_pending_signals(ThreadState *thr) {
         const int saved_errno = errno;
         errno = 0;
         if (signal->sigaction)
-          sigactions[sig].sa_sigaction(sig, &signal->siginfo, &uctx);
+          sigactions[sig].sa_sigaction(sig, &signal->siginfo, &signal->ctx);
         else
           sigactions[sig].sa_handler(sig);
         if (errno != 0) {
