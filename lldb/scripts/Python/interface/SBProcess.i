@@ -341,7 +341,7 @@ public:
             '''An accessor function that returns a list() that contains all threads in a lldb.SBProcess object.'''
             threads = []
             for idx in range(self.GetNumThreads()):
-                threads.append(GetThreadAtIndex(idx))
+                threads.append(self.threads_access(idx))
             return threads
         
         __swig_getmethods__["threads"] = get_process_thread_list
