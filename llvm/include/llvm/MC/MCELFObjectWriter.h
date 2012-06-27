@@ -54,11 +54,13 @@ class MCELFObjectTargetWriter {
   const uint16_t EMachine;
   const unsigned HasRelocationAddend : 1;
   const unsigned Is64Bit : 1;
+  const unsigned IsN64 : 1;
 
 protected:
 
   MCELFObjectTargetWriter(bool Is64Bit_, uint8_t OSABI_,
-                          uint16_t EMachine_,  bool HasRelocationAddend_);
+                          uint16_t EMachine_,  bool HasRelocationAddend,
+                          bool IsN64=false);
 
 public:
   static uint8_t getOSABI(Triple::OSType OSType) {
@@ -95,7 +97,47 @@ public:
   uint16_t getEMachine() { return EMachine; }
   bool hasRelocationAddend() { return HasRelocationAddend; }
   bool is64Bit() const { return Is64Bit; }
+  bool isN64() const { return IsN64; }
   /// @}
+
+  // Instead of changing everyone's API we pack the N64 Type fields
+  // into the existing 32 bit data unsigned.
+#define R_TYPE_SHIFT 0
+#define R_TYPE_MASK 0xffffff00
+#define R_TYPE2_SHIFT 8
+#define R_TYPE2_MASK 0xffff00ff
+#define R_TYPE3_SHIFT 16
+#define R_TYPE3_MASK 0xff00ffff
+#define R_SSYM_SHIFT 24
+#define R_SSYM_MASK 0x00ffffff
+
+  // N64 relocation type accessors
+  unsigned getRType(uint32_t Type) const {
+    return (unsigned)((Type >> R_TYPE_SHIFT) & 0xff);
+  }
+  unsigned getRType2(uint32_t Type) const {
+    return (unsigned)((Type >> R_TYPE2_SHIFT) & 0xff);
+  }
+  unsigned getRType3(uint32_t Type) const {
+    return (unsigned)((Type >> R_TYPE3_SHIFT) & 0xff);
+  }
+  unsigned getRSsym(uint32_t Type) const {
+    return (unsigned)((Type >> R_SSYM_SHIFT) & 0xff);
+  }
+
+  // N64 relocation type setting
+  unsigned setRType(unsigned Value, unsigned Type) const {
+    return ((Type & R_TYPE_MASK) | ((Value & 0xff) << R_TYPE_SHIFT));
+  }
+  unsigned setRType2(unsigned Value, unsigned Type) const {
+    return (Type & R_TYPE2_MASK) | ((Value & 0xff) << R_TYPE2_SHIFT);
+  }
+  unsigned setRType3(unsigned Value, unsigned Type) const {
+    return (Type & R_TYPE3_MASK) | ((Value & 0xff) << R_TYPE3_SHIFT);
+  }
+  unsigned setRSsym(unsigned Value, unsigned Type) const {
+    return (Type & R_SSYM_MASK) | ((Value & 0xff) << R_SSYM_SHIFT);
+  }
 };
 
 /// \brief Construct a new ELF writer instance.

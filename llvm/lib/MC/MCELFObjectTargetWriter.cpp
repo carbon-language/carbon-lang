@@ -15,9 +15,11 @@ using namespace llvm;
 MCELFObjectTargetWriter::MCELFObjectTargetWriter(bool Is64Bit_,
                                                  uint8_t OSABI_,
                                                  uint16_t EMachine_,
-                                                 bool HasRelocationAddend_)
+                                                 bool HasRelocationAddend_,
+                                                 bool IsN64_)
   : OSABI(OSABI_), EMachine(EMachine_),
-    HasRelocationAddend(HasRelocationAddend_), Is64Bit(Is64Bit_) {
+    HasRelocationAddend(HasRelocationAddend_), Is64Bit(Is64Bit_),
+    IsN64(IsN64_){
 }
 
 /// Default e_flags = 0

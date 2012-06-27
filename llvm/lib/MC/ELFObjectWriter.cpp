@@ -1061,11 +1061,19 @@ void ELFObjectWriter::WriteRelocationsFragment(const MCAssembler &Asm,
       entry.Index += LocalSymbolData.size();
     if (is64Bit()) {
       String64(*F, entry.r_offset);
+      if (TargetObjectWriter->isN64()) {
+        String32(*F, entry.Index);
 
-      struct ELF::Elf64_Rela ERE64;
-      ERE64.setSymbolAndType(entry.Index, entry.Type);
-      String64(*F, ERE64.r_info);
-
+        String8(*F, TargetObjectWriter->getRSsym(entry.Type));
+        String8(*F, TargetObjectWriter->getRType3(entry.Type));
+        String8(*F, TargetObjectWriter->getRType2(entry.Type));
+        String8(*F, TargetObjectWriter->getRType(entry.Type));
+      }
+      else {
+        struct ELF::Elf64_Rela ERE64;
+        ERE64.setSymbolAndType(entry.Index, entry.Type);
+        String64(*F, ERE64.r_info);
+      }
       if (hasRelocationAddend())
         String64(*F, entry.r_addend);
     } else {

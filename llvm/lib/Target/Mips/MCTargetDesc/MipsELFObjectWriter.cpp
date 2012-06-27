@@ -34,7 +34,7 @@ namespace {
 
   class MipsELFObjectWriter : public MCELFObjectTargetWriter {
   public:
-    MipsELFObjectWriter(bool _is64Bit, uint8_t OSABI);
+    MipsELFObjectWriter(bool _is64Bit, uint8_t OSABI, bool _isN64);
 
     virtual ~MipsELFObjectWriter();
 
@@ -52,9 +52,11 @@ namespace {
   };
 }
 
-MipsELFObjectWriter::MipsELFObjectWriter(bool _is64Bit, uint8_t OSABI)
+MipsELFObjectWriter::MipsELFObjectWriter(bool _is64Bit, uint8_t OSABI,
+                                         bool _isN64)
   : MCELFObjectTargetWriter(_is64Bit, OSABI, ELF::EM_MIPS,
-                            /*HasRelocationAddend*/ false) {}
+                            /*HasRelocationAddend*/ false,
+                            /*IsN64*/ _isN64) {}
 
 MipsELFObjectWriter::~MipsELFObjectWriter() {}
 
@@ -149,7 +151,6 @@ unsigned MipsELFObjectWriter::GetRelocType(const MCValue &Target,
     Type = ELF::R_MIPS_PC16;
     break;
   }
-
   return Type;
 }
 
@@ -184,7 +185,7 @@ static int CompareOffset(const RelEntry &R0, const RelEntry &R1) {
 
 void MipsELFObjectWriter::sortRelocs(const MCAssembler &Asm,
                                      std::vector<ELFRelocationEntry> &Relocs) {
-  // Call the defualt function first. Relocations are sorted in descending
+  // Call the default function first. Relocations are sorted in descending
   // order of r_offset.
   MCELFObjectTargetWriter::sortRelocs(Asm, Relocs);
 
@@ -244,6 +245,7 @@ MCObjectWriter *llvm::createMipsELFObjectWriter(raw_ostream &OS,
                                                 uint8_t OSABI,
                                                 bool IsLittleEndian,
                                                 bool Is64Bit) {
-  MCELFObjectTargetWriter *MOTW = new MipsELFObjectWriter(Is64Bit, OSABI);
+  MCELFObjectTargetWriter *MOTW = new MipsELFObjectWriter(Is64Bit, OSABI,
+                                                (Is64Bit) ? true : false);
   return createELFObjectWriter(MOTW, OS, IsLittleEndian);
 }
