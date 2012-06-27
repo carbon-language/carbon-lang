@@ -401,6 +401,7 @@
 		26C72C961243229A0068DC16 /* SBStream.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26C72C951243229A0068DC16 /* SBStream.cpp */; };
 		26D265A2136B40EE002EEE45 /* SharingPtr.h in Headers */ = {isa = PBXBuildFile; fileRef = 261B5A5311C3F2AD00AABD0A /* SharingPtr.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		26D265BC136B4269002EEE45 /* lldb-public.h in Headers */ = {isa = PBXBuildFile; fileRef = 26651A14133BEC76005B64B7 /* lldb-public.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		26D55235159A7DB100708D8D /* libxml2.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 26D55234159A7DB100708D8D /* libxml2.dylib */; };
 		26D5E15F135BAEA2006EA0A7 /* OptionGroupArchitecture.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26D5E15E135BAEA2006EA0A7 /* OptionGroupArchitecture.cpp */; };
 		26D5E163135BB054006EA0A7 /* OptionGroupPlatform.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26D5E162135BB054006EA0A7 /* OptionGroupPlatform.cpp */; };
 		26D7E45D13D5E30A007FD12B /* SocketAddress.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26D7E45C13D5E30A007FD12B /* SocketAddress.cpp */; };
@@ -1207,6 +1208,7 @@
 		26D0DD5510FE555900271C65 /* BreakpointResolverName.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = BreakpointResolverName.cpp; path = source/Breakpoint/BreakpointResolverName.cpp; sourceTree = "<group>"; };
 		26D27C9D11ED3A4E0024D721 /* ELFHeader.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ELFHeader.cpp; sourceTree = "<group>"; };
 		26D27C9E11ED3A4E0024D721 /* ELFHeader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ELFHeader.h; sourceTree = "<group>"; };
+		26D55234159A7DB100708D8D /* libxml2.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libxml2.dylib; path = ../../../../../../usr/lib/libxml2.dylib; sourceTree = "<group>"; };
 		26D5E15E135BAEA2006EA0A7 /* OptionGroupArchitecture.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = OptionGroupArchitecture.cpp; path = source/Interpreter/OptionGroupArchitecture.cpp; sourceTree = "<group>"; };
 		26D5E160135BAEB0006EA0A7 /* OptionGroupArchitecture.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = OptionGroupArchitecture.h; path = include/lldb/Interpreter/OptionGroupArchitecture.h; sourceTree = "<group>"; };
 		26D5E161135BB040006EA0A7 /* OptionGroupPlatform.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = OptionGroupPlatform.h; path = include/lldb/Interpreter/OptionGroupPlatform.h; sourceTree = "<group>"; };
@@ -1564,6 +1566,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				26D55235159A7DB100708D8D /* libxml2.dylib in Frameworks */,
 				268901161335BBC300698AC0 /* liblldb-core.a in Frameworks */,
 				2668022F115FD19D008E1FE4 /* CoreFoundation.framework in Frameworks */,
 				26680233115FD1A7008E1FE4 /* libobjc.dylib in Frameworks */,
@@ -1620,6 +1623,7 @@
 		08FB7794FE84155DC02AAC07 /* lldb */ = {
 			isa = PBXGroup;
 			children = (
+				26D55234159A7DB100708D8D /* libxml2.dylib */,
 				AFF87C8E150FF688000E1742 /* com.apple.debugserver.applist.plist */,
 				AFF87C8C150FF680000E1742 /* com.apple.debugserver.applist.plist */,
 				AFF87C8A150FF677000E1742 /* com.apple.debugserver.applist.plist */,
@@ -4367,6 +4371,7 @@
 				);
 				GCC_ENABLE_OBJC_GC = supported;
 				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = /usr/include/libxml2;
 				LD_DYLIB_INSTALL_NAME = "$(DEVELOPER_DIR)/Library/PrivateFrameworks/LLDB.framework/Resources/lldb-core.a";
 				MACH_O_TYPE = staticlib;
 				MACOSX_DEPLOYMENT_TARGET = 10.6;
@@ -4396,6 +4401,7 @@
 				);
 				GCC_ENABLE_OBJC_GC = supported;
 				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = /usr/include/libxml2;
 				LD_DYLIB_INSTALL_NAME = "$(DEVELOPER_DIR)/Library/PrivateFrameworks/LLDB.framework/Resources/lldb-core.a";
 				MACH_O_TYPE = staticlib;
 				MACOSX_DEPLOYMENT_TARGET = 10.6;
@@ -4425,6 +4431,7 @@
 				);
 				GCC_ENABLE_OBJC_GC = supported;
 				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = /usr/include/libxml2;
 				LD_DYLIB_INSTALL_NAME = "$(DEVELOPER_DIR)/Library/PrivateFrameworks/LLDB.framework/Resources/lldb-core.a";
 				MACH_O_TYPE = staticlib;
 				MACOSX_DEPLOYMENT_TARGET = 10.6;

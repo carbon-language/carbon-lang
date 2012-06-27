@@ -66,6 +66,9 @@ public:
     GetFileAddress ();
 
     lldb::addr_t
+    GetLoadAddress (lldb::SBTarget &target);
+    
+    lldb::addr_t
     GetByteSize ();
 
     uint64_t

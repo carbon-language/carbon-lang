@@ -9,6 +9,10 @@
 
 #include "SymbolVendorMacOSX.h"
 
+#include <libxml/parser.h>
+#include <libxml/tree.h>
+#include <string.h>
+
 #include <AvailabilityMacros.h>
 
 #include "lldb/Core/Module.h"
@@ -172,6 +176,100 @@ SymbolVendorMacOSX::CreateInstance (const lldb::ModuleSP &module_sp)
                 dsym_objfile_sp = ObjectFile::FindPlugin(module_sp, &dsym_fspec, 0, dsym_fspec.GetByteSize(), dsym_file_data_sp);
                 if (UUIDsMatch(module_sp.get(), dsym_objfile_sp.get()))
                 {
+                    char dsym_path[PATH_MAX];
+                    if (module_sp->GetSourceMappingList().IsEmpty() && dsym_fspec.GetPath(dsym_path, sizeof(dsym_path)))
+                    {
+                        lldb_private::UUID dsym_uuid;
+                        if (dsym_objfile_sp->GetUUID(&dsym_uuid))
+                        {
+                            char uuid_cstr_buf[64];
+                            const char *uuid_cstr = dsym_uuid.GetAsCString (uuid_cstr_buf, sizeof(uuid_cstr_buf));
+                            if (uuid_cstr)
+                            {
+                                char *resources = strstr (dsym_path, "/Contents/Resources/");
+                                if (resources)
+                                {
+                                    char dsym_uuid_plist_path[PATH_MAX];
+                                    resources[strlen("/Contents/Resources/")] = '\0';
+                                    snprintf(dsym_uuid_plist_path, sizeof(dsym_uuid_plist_path), "%s%s.plist", dsym_path, uuid_cstr);
+                                    FileSpec dsym_uuid_plist_spec(dsym_uuid_plist_path, false);
+                                    if (dsym_uuid_plist_spec.Exists())
+                                    {
+                                        xmlDoc *doc = ::xmlReadFile (dsym_uuid_plist_path, NULL, 0);
+                                        if (doc)
+                                        {
+                                            char DBGBuildSourcePath[PATH_MAX];
+                                            char DBGSourcePath[PATH_MAX];
+                                            DBGBuildSourcePath[0] = '\0';
+                                            DBGSourcePath[0] = '\0';
+                                            for (xmlNode *node = doc->children; node; node = node ? node->next : NULL)
+                                            {
+                                                if (node->type == XML_ELEMENT_NODE)
+                                                {
+                                                    if (node->name && strcmp((const char*)node->name, "plist") == 0)
+                                                    {
+                                                        xmlNode *dict_node = node->children;
+                                                        while (dict_node && dict_node->type != XML_ELEMENT_NODE)
+                                                            dict_node = dict_node->next;
+                                                        if (dict_node && dict_node->name && strcmp((const char *)dict_node->name, "dict") == 0)
+                                                        {
+                                                            for (xmlNode *key_node = dict_node->children; key_node; key_node = key_node->next)
+                                                            {
+                                                                if (key_node && key_node->type == XML_ELEMENT_NODE && key_node->name)
+                                                                {
+                                                                    if (strcmp((const char *)key_node->name, "key") == 0)
+                                                                    {
+                                                                        const char *key_name = (const char *)::xmlNodeGetContent(key_node);
+                                                                        if (strcmp(key_name, "DBGBuildSourcePath") == 0)
+                                                                        {
+                                                                            xmlNode *value_node = key_node->next;
+                                                                            while (value_node && value_node->type != XML_ELEMENT_NODE)
+                                                                                value_node = value_node->next;
+                                                                            if (strcmp((const char *)value_node->name, "string") == 0)
+                                                                            {
+                                                                                const char *node_content = (const char *)::xmlNodeGetContent(value_node);
+                                                                                if (node_content)
+                                                                                {
+                                                                                    strncpy(DBGBuildSourcePath, node_content, sizeof(DBGBuildSourcePath));
+                                                                                }
+                                                                            }
+                                                                            key_node = value_node;
+                                                                        }
+                                                                        else if (strcmp(key_name, "DBGSourcePath") == 0)
+                                                                        {
+                                                                            xmlNode *value_node = key_node->next;
+                                                                            while (value_node && value_node->type != XML_ELEMENT_NODE)
+                                                                                value_node = value_node->next;
+                                                                            if (strcmp((const char *)value_node->name, "string") == 0)
+                                                                            {
+                                                                                const char *node_content = (const char *)::xmlNodeGetContent(value_node);
+                                                                                if (node_content)
+                                                                                {
+                                                                                    strncpy(DBGSourcePath, node_content, sizeof(DBGSourcePath));
+                                                                                }
+                                                                            }
+                                                                            key_node = value_node;
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                            ::xmlFreeDoc (doc);
+                                            
+                                            if (DBGBuildSourcePath[0] && DBGSourcePath[0])
+                                            {
+                                                module_sp->GetSourceMappingList().Append (ConstString(DBGBuildSourcePath), ConstString(DBGSourcePath), true);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
                     ReplaceDSYMSectionsWithExecutableSections (obj_file, dsym_objfile_sp.get());
                     symbol_vendor->AddSymbolFileRepresentation(dsym_objfile_sp);
                     return symbol_vendor;

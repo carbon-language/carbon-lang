@@ -9,6 +9,7 @@
 
 #include "lldb/API/SBSection.h"
 #include "lldb/API/SBStream.h"
+#include "lldb/API/SBTarget.h"
 #include "lldb/Core/DataBuffer.h"
 #include "lldb/Core/DataExtractor.h"
 #include "lldb/Core/Log.h"
@@ -124,6 +125,22 @@ SBSection::GetFileAddress ()
         return section_sp->GetFileAddress();
     return file_addr;
 }
+
+lldb::addr_t
+SBSection::GetLoadAddress (lldb::SBTarget &sb_target)
+{
+    TargetSP target_sp(sb_target.GetSP());
+    if (target_sp)
+    {
+        SectionSP section_sp (GetSP());
+        if (section_sp)
+            return section_sp->GetLoadBaseAddress(target_sp.get());
+    }
+    return LLDB_INVALID_ADDRESS;
+    
+}
+
+
 
 lldb::addr_t
 SBSection::GetByteSize ()

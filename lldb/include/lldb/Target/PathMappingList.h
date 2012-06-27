@@ -57,6 +57,12 @@ public:
     void
     Dump (Stream *s, int pair_index=-1);
 
+    bool
+    IsEmpty() const
+    {
+        return m_pairs.empty();
+    }
+
     size_t
     GetSize () const
     {
