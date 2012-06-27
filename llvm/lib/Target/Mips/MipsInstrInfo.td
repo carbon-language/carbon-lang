@@ -220,6 +220,7 @@ def mem : Operand<i32> {
 def mem64 : Operand<i64> {
   let PrintMethod = "printMemOperand";
   let MIOperandInfo = (ops CPU64Regs, simm16_64);
+  let EncoderMethod = "getMemEncoding";
 }
 
 def mem_ea : Operand<i32> {
