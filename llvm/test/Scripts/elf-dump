@@ -15,6 +15,7 @@ class Reader:
             self.file = open(path, "rb")
         self.isLSB = None
         self.is64Bit = None
+        self.isN64 = False
 
     def seek(self, pos):
         self.file.seek(pos)
@@ -122,15 +123,28 @@ def dumpRel(f, section, dumprela = False):
         f.seek(section.sh_offset[0] + index * section.sh_entsize[0])
         print "    # Relocation %s" % index
         print "    (('r_offset', %s)" % common_dump.HexDump(f.readWord())
-        r_info = f.readWord()[0]
-        if f.is64Bit:
-            r_sym = (r_info >> 32, 32)
-            r_type = (r_info & 0xffffffff, 32)
+
+        if f.isN64:
+            r_sym =   f.read32()
+            r_ssym =  f.read8()
+            r_type3 = f.read8()
+            r_type2 = f.read8()
+            r_type =  f.read8()
+            print "     ('r_sym', %s)" % common_dump.HexDump(r_sym)
+            print "     ('r_ssym', %s)" % common_dump.HexDump(r_ssym)
+            print "     ('r_type3', %s)" % common_dump.HexDump(r_type3)
+            print "     ('r_type2', %s)" % common_dump.HexDump(r_type2)
+            print "     ('r_type', %s)" % common_dump.HexDump(r_type)
         else:
-            r_sym = (r_info >> 8, 24)
-            r_type = (r_info & 0xff, 8)
-        print "     ('r_sym', %s)" % common_dump.HexDump(r_sym)
-        print "     ('r_type', %s)" % common_dump.HexDump(r_type)
+            r_info = f.readWord()[0]
+            if f.is64Bit:
+                r_sym = (r_info >> 32, 32)
+                r_type = (r_info & 0xffffffff, 32)
+            else:
+                r_sym = (r_info >> 8, 24)
+                r_type = (r_info & 0xff, 8)
+            print "     ('r_sym', %s)" % common_dump.HexDump(r_sym)
+            print "     ('r_type', %s)" % common_dump.HexDump(r_type)
         if dumprela:
             print "     ('r_addend', %s)" % common_dump.HexDump(f.readWord())
         print "    ),"
@@ -166,7 +180,13 @@ def dumpELF(path, opts):
     f.seek(16) # Seek to end of e_ident.
 
     print "('e_type', %s)" % common_dump.HexDump(f.read16())
-    print "('e_machine', %s)" % common_dump.HexDump(f.read16())
+
+    # Does any other architecture use N64?
+    e_machine = f.read16()
+    if e_machine[0] == 0x0008 and f.is64Bit: # EM_MIPS && 64 bit
+        f.isN64 = True 
+    
+    print "('e_machine', %s)" % common_dump.HexDump(e_machine)
     print "('e_version', %s)" % common_dump.HexDump(f.read32())
     print "('e_entry', %s)" % common_dump.HexDump(f.readWord())
     print "('e_phoff', %s)" % common_dump.HexDump(f.readWord())

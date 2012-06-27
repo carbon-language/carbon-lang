@@ -150,6 +150,22 @@ unsigned MipsELFObjectWriter::GetRelocType(const MCValue &Target,
   case Mips::fixup_Mips_PC16:
     Type = ELF::R_MIPS_PC16;
     break;
+  case Mips::fixup_Mips_GOT_PAGE:
+    Type = ELF::R_MIPS_GOT_PAGE;
+    break;
+  case Mips::fixup_Mips_GOT_OFST:
+    Type = ELF::R_MIPS_GOT_OFST;
+    break;
+  case Mips::fixup_Mips_GPOFF_HI:
+    Type = setRType((unsigned)ELF::R_MIPS_GPREL16, Type);
+    Type = setRType2((unsigned)ELF::R_MIPS_SUB, Type);
+    Type = setRType3((unsigned)ELF::R_MIPS_HI16, Type);
+    break;
+  case Mips::fixup_Mips_GPOFF_LO:
+    Type = setRType((unsigned)ELF::R_MIPS_GPREL16, Type);
+    Type = setRType2((unsigned)ELF::R_MIPS_SUB, Type);
+    Type = setRType3((unsigned)ELF::R_MIPS_LO16, Type);
+    break;
   }
   return Type;
 }

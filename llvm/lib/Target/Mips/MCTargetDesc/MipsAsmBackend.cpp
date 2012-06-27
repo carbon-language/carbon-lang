@@ -36,6 +36,10 @@ static unsigned adjustFixupValue(unsigned Kind, uint64_t Value) {
   case FK_GPRel_4:
   case FK_Data_4:
   case Mips::fixup_Mips_LO16:
+  case Mips::fixup_Mips_GPOFF_HI:
+  case Mips::fixup_Mips_GPOFF_LO:
+  case Mips::fixup_Mips_GOT_PAGE:
+  case Mips::fixup_Mips_GOT_OFST:
     break;
   case Mips::fixup_Mips_PC16:
     // So far we are only using this type for branches.
@@ -157,7 +161,11 @@ public:
       { "fixup_Mips_TLSLDM",       0,     16,   0 },
       { "fixup_Mips_DTPREL_HI",    0,     16,   0 },
       { "fixup_Mips_DTPREL_LO",    0,     16,   0 },
-      { "fixup_Mips_Branch_PCRel", 0,     16,  MCFixupKindInfo::FKF_IsPCRel }
+      { "fixup_Mips_Branch_PCRel", 0,     16,  MCFixupKindInfo::FKF_IsPCRel },
+      { "fixup_Mips_GPOFF_HI",     0,     16,   0 },
+      { "fixup_Mips_GPOFF_LO",     0,     16,   0 },
+      { "fixup_Mips_GOT_PAGE",     0,     16,   0 },
+      { "fixup_Mips_GOT_OFST",     0,     16,   0 }
     };
 
     if (Kind < FirstTargetFixupKind)
