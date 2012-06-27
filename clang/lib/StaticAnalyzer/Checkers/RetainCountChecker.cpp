@@ -67,7 +67,7 @@ public:
 enum ArgEffect { DoNothing, Autorelease, Dealloc, DecRef, DecRefMsg,
                  DecRefBridgedTransfered,
                  IncRefMsg, IncRef, MakeCollectable, MayEscape,
-                 NewAutoreleasePool, SelfOwn, StopTracking };
+                 NewAutoreleasePool, StopTracking };
 
 namespace llvm {
 template <> struct FoldingSetTrait<ArgEffect> {
@@ -3029,9 +3029,6 @@ RetainCountChecker::updateSymbol(ProgramStateRef state, SymbolRef sym,
       }
       break;
 
-    case SelfOwn:
-      V = V ^ RefVal::NotOwned;
-      // Fall-through.
     case DecRef:
     case DecRefBridgedTransfered:
       switch (V.getKind()) {
