@@ -71,3 +71,15 @@ namespace test2 {
     b->foo::~foo();
   }
 }
+
+namespace test3 {
+  // Test that we don't crash in this case.
+  struct B {
+  };
+  struct D : public B {
+  };
+  void f(D d) {
+    // CHECK: define void @_ZN5test31fENS_1DE
+    d.B::~B();
+  }
+}

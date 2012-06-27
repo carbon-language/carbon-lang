@@ -1290,7 +1290,7 @@ CXXMethodDecl::getCorrespondingMethodInClass(const CXXRecordDecl *RD) {
   // Lookup doesn't work for destructors, so handle them separately.
   if (isa<CXXDestructorDecl>(this)) {
     CXXMethodDecl *MD = RD->getDestructor();
-    if (recursivelyOverrides(MD, this))
+    if (MD && recursivelyOverrides(MD, this))
       return MD;
     return NULL;
   }
