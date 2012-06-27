@@ -27,7 +27,6 @@ $(warning GREP_OPTIONS environment variable may interfere with test results)
 endif
 
 ifdef VERBOSE
-RUNTESTFLAGS := $(VERBOSE)
 LIT_ARGS := -v
 else
 LIT_ARGS := -s -v
@@ -42,7 +41,6 @@ ifdef TESTSUITE
 LIT_TESTSUITE := $(TESTSUITE)
 CLEANED_TESTSUITE := $(patsubst %/,%,$(TESTSUITE))
 CLEANED_TESTSUITE := $(patsubst test/%,%,$(CLEANED_TESTSUITE))
-RUNTESTFLAGS += --tool $(CLEANED_TESTSUITE)
 else
 LIT_TESTSUITE := .
 endif
@@ -70,16 +68,6 @@ endif
 endif
 endif
 
-IGNORE_TESTS :=
-
-ifndef RUNLLVM2CPP
-IGNORE_TESTS += llvm2cpp.exp
-endif
-
-ifdef IGNORE_TESTS
-RUNTESTFLAGS += --ignore "$(strip $(IGNORE_TESTS))"
-endif
-
 # ulimits like these are redundantly enforced by the buildbots, so
 # just removing them here won't work.
 # Both AuroraUX & Solaris do not have the -m flag for ulimit
@@ -93,16 +81,6 @@ else # !AuroraUX
 ULIMIT=ulimit -t 600 ; ulimit -d 512000 ; ulimit -m 512000 ; ulimit -v 1024000 ;
 endif # AuroraUX
 endif # SunOS
-
-ifneq ($(RUNTEST),)
-check-local-dg:: site.exp
-	( $(ULIMIT) \
-	  PATH="$(LLVMToolDir):$(LLVM_SRC_ROOT)/test/Scripts:$(LLVMGCCDIR)/bin:$(PATH)" \
-	  $(RUNTEST) $(RUNTESTFLAGS) )
-else
-check-local-dg:: site.exp
-	@echo "*** dejagnu not found.  Make sure 'runtest' is in your PATH, then reconfigure LLVM."
-endif
 
 check-local-lit:: lit.site.cfg Unit/lit.site.cfg
 	( $(ULIMIT) \
