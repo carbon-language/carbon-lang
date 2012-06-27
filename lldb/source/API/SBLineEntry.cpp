@@ -110,7 +110,7 @@ SBLineEntry::GetEndAddress () const
 bool
 SBLineEntry::IsValid () const
 {
-    return m_opaque_ap.get() != NULL;
+    return m_opaque_ap.get() && m_opaque_ap->IsValid();
 }
 
 
