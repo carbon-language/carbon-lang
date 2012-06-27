@@ -417,6 +417,48 @@ quotes(as &quot;\&quot;&quot;) and non-printable characters (as octal
 &quot;\xxx&quot;).</p>
 </dd>
 
+<dt id="opt_fno-elide-type">
+<b>-fno-elide-type</b>:
+Turns off elision in template type printing.</td>
+<dd><p>The default for template type printing is to elide as many template
+arguments as possible, removing those which are the same in both template types,
+leaving only the differences.  Adding this flag will print all the template
+arguments.  If supported by the terminal, highlighting will still appear on
+differing arguments.</p>
+
+Default:
+<pre>
+t.cc:4:5: <span class="note">note</span>: candidate function not viable: no known conversion from 'vector&lt;map&lt;[...], map&lt;<span class="template-highlight">float</span>, [...]&gt;&gt;&gt;' to 'vector&lt;map&lt;[...], map&lt;<span class="template-highlight">double</span>, [...]&gt;&gt;&gt;' for 1st argument;
+</pre>
+-fno-elide-type:
+<pre>
+t.cc:4:5: <span class="note">note</span>: candidate function not viable: no known conversion from 'vector&lt;map&lt;int, map&lt;<span class="template-highlight">float</span>, int&gt;&gt;&gt;' to 'vector&lt;map&lt;int, map&lt;<span class="template-highlight">double</span>, int&gt;&gt;&gt;' for 1st argument;
+</pre>
+</dd>
+
+<dt id="opt_fdiagnostics-show-template-tree">
+<b>-fdiagnostics-show-template-tree</b>:
+Template type diffing prints a text tree.</td>
+<dd><p>For diffing large templated types, this option will cause Clang to
+display the templates as an indented text tree, one argument per line, with
+differences marked inline.  This is compatible with -fno-elide-type.</p>
+
+Default:
+<pre>
+t.cc:4:5: <span class="note">note</span>: candidate function not viable: no known conversion from 'vector&lt;map&lt;[...], map&lt;<span class="template-highlight">float</span>, [...]&gt;&gt;&gt;' to 'vector&lt;map&lt;[...], map&lt;<span class="template-highlight">double</span>, [...]&gt;&gt;&gt;' for 1st argument;
+</pre>
+-fdiagnostics-show-template-tree
+<pre>
+t.cc:4:5: <span class="note">note</span>: candidate function not viable: no known conversion for 1st argument;
+  vector&lt;
+    map&lt;
+      [...],
+      map&lt;
+        [<span class="template-highlight">float</span> != <span class="template-highlight">float</span>],
+        [...]&gt;&gt;&gt;
+</pre>
+</dd>
+
 </dl>
 
 

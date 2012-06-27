@@ -27,6 +27,7 @@ span.error { color:red }
 span.warning { color:purple }
 span.note { color:gray }
 span.caret { color:green; font-weight:bold }
+span.template-highlight { color:cyan }
 
 /* Tables */
 tr { vertical-align:top }

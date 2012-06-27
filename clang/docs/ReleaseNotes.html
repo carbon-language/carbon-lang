@@ -121,6 +121,55 @@ int f(bool b) {
   This functionality can be enabled or disabled separately from
   <tt>-Wuninitialized</tt> with the <tt>-Wsometimes-uninitialized</tt> warning
   flag.</li>
+
+  <li>Template type diffing improves the display of diagnostics with templated
+  types in them.
+
+<pre>
+int f(vector&lt;map&lt;int, double&gt;&gt;);
+int x = f(vector&lt;map&lt;int, float&gt;&gt;());
+</pre>
+  The error message is the same, but the note is different based on the options selected.
+<pre>
+<b>template-diff.cpp:5:9: <span class="error">error:</span> no matching function for call to 'f'</b>
+int x = f(vector&lt;map&lt;int, float&gt;&gt;());
+        <span class="caret">^</span>
+</pre>
+  Templated type diffing with type elision (default):
+<pre>
+<b>template-diff.cpp:4:5: <span class="note">note:</span></b> candidate function not viable: no known conversion from 'vector&lt;map&lt;[...], <span class="template-highlight">float</span>&gt;&gt;' to 'vector&lt;map&lt;[...], <span class="template-highlight">double</span>&gt;&gt;' for 1st argument;
+int f(vector&lt;map&lt;int, double&gt;&gt;);
+    <span class="caret">^</span>
+</pre>
+  Templated type diffing without type elision (-fno-elide-type):
+<pre>
+<b>template-diff.cpp:4:5: <span class="note">note:</span></b> candidate function not viable: no known conversion from 'vector&lt;map&lt;int, <span class="template-highlight">float</span>&gt;&gt;' to 'vector&lt;map&lt;int, <span class="template-highlight">double</span>&gt;&gt;' for 1st argument;
+int f(vector&lt;map&lt;int, double&gt;&gt;);
+    <span class="caret">^</span>
+</pre>
+  Templated tree printing with type elision (-fdiagnostics-show-template-tree):
+<pre>
+<b>template-diff.cpp:4:5: <span class="note">note:</span></b> candidate function not viable: no known conversion for 1st argument;
+  vector&lt;
+    map&lt;
+      [...],
+      [<span class="template-highlight">float</span> != <span class="template-highlight">double</span>]&gt;&gt;
+int f(vector&lt;map&lt;int, double&gt;&gt;);
+    <span class="caret">^</span>
+</pre>
+  Templated tree printing without type elision (-fdiagnostics-show-template-tree -fno-elide-type):
+<pre>
+<b>template-diff.cpp:4:5: <span class="note">note:</span></b> candidate function not viable: no known conversion for 1st argument;
+  vector&lt;
+    map&lt;
+      int,
+      [<span class="template-highlight">float</span> != <span class="template-highlight">double</span>]&gt;&gt;
+int f(vector&lt;map&lt;int, double&gt;&gt;);
+    <span class="caret">^</span>
+</pre>
+
+  </li>
+
 </ul>
 
 <h4 id="tlsmodel">Support for <code>tls_model</code> attribute</h4>

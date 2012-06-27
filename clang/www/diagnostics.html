@@ -263,6 +263,39 @@ diagnostic.<p>
     <span class="snip">template&lt;&gt; </span>
 </pre>
 
+<h2>Template Type Diffing</h2>
+
+<p>Templates types can be long and difficult to read.  Moreso when part of an
+error message.  Instead of just printing out the type name, Clang has enough
+information to remove the common elements and highlight the differences.  To
+show the template structure more clearly, the templated type can also be
+printed as an indented text tree.</p>
+
+Default: template diff with type elision
+<pre>
+t.cc:4:5: <span class="note">note:</span> candidate function not viable: no known conversion from 'vector&lt;map&lt;[...], <span class="template-highlight">float</span>&gt;&gt;' to 'vector&lt;map&lt;[...], <span class="template-highlight">double</span>&gt;&gt;' for 1st argument;
+</pre>
+-fno-elide-type: template diff without elision
+<pre>
+t.cc:4:5: <span class="note">note:</span> candidate function not viable: no known conversion from 'vector&lt;map&lt;int, <span class="template-highlight">float</span>&gt;&gt;' to 'vector&lt;map&lt;int, <span class="template-highlight">double</span>&gt;&gt;' for 1st argument;
+</pre>
+-fdiagnostics-show-template-tree: template tree printing with elision
+<pre>
+t.cc:4:5: <span class="note">note:</span> candidate function not viable: no known conversion for 1st argument;
+  vector&lt;
+    map&lt;
+      [...], 
+      [<span class="template-highlight">float</span> != <span class="template-highlight">double</span>]&gt;&gt;
+</pre>
+-fdiagnostics-show-template-tree -fno-elide-type: template tree printing with no elision
+<pre>
+t.cc:4:5: <span class="note">note:M</span> candidate function not viable: no known conversion for 1st argument;
+  vector&lt;
+    map&lt;
+      int, 
+      [<span class="template-highlight">float</span> != <span class="template-highlight">double</span>]&gt;&gt;
+</pre>
+
 <h2>Automatic Macro Expansion</h2>
 
 <p>Many errors happen in macros that are sometimes deeply nested.  With
