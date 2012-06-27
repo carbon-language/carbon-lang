@@ -3256,7 +3256,8 @@ ARMAsmParser::OperandMatchResultTy ARMAsmParser::
 parseMemBarrierOptOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   SMLoc S = Parser.getTok().getLoc();
   const AsmToken &Tok = Parser.getTok();
-  assert(Tok.is(AsmToken::Identifier) && "Token is not an Identifier");
+  if (!Tok.is(AsmToken::Identifier))
+    return MatchOperand_NoMatch;
   StringRef OptStr = Tok.getString();
 
   unsigned Opt = StringSwitch<unsigned>(OptStr.slice(0, OptStr.size()))
