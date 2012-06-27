@@ -332,6 +332,7 @@ bool Commit::canReplaceText(SourceLocation loc, StringRef text,
   if (invalidTemp)
     return false;
 
+  Len = text.size();
   return file.substr(Offs.getOffset()).startswith(text);
 }
 
