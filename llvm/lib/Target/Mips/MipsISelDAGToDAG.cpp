@@ -129,7 +129,7 @@ void MipsDAGToDAGISel::InitGlobalBaseReg(MachineFunction &MF) {
   const TargetInstrInfo &TII = *MF.getTarget().getInstrInfo();
   DebugLoc DL = I != MBB.end() ? I->getDebugLoc() : DebugLoc();
   unsigned V0, V1, GlobalBaseReg = MipsFI->getGlobalBaseReg();
-  int FI;  // should initialize this to some kind of null
+  int FI = 0; 
 
   if (!Subtarget.inMips16Mode())
     FI= MipsFI->initGlobalRegFI();
