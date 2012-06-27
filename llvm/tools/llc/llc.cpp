@@ -365,20 +365,29 @@ int main(int argc, char **argv) {
   // Load the module to be compiled...
   SMDiagnostic Err;
   std::auto_ptr<Module> M;
+  Module *mod = 0;
+  Triple TheTriple;
 
-  M.reset(ParseIRFile(InputFilename, Err, Context));
-  if (M.get() == 0) {
-    Err.print(argv[0], errs());
-    return 1;
+  bool SkipModule = MCPU == "help" ||
+                    (!MAttrs.empty() && MAttrs.front() == "help");
+
+  // If user just wants to list available options, skip module loading
+  if (!SkipModule) {
+    M.reset(ParseIRFile(InputFilename, Err, Context));
+    mod = M.get();
+    if (mod == 0) {
+      Err.print(argv[0], errs());
+      return 1;
+    }
+
+    // If we are supposed to override the target triple, do so now.
+    if (!TargetTriple.empty())
+      mod->setTargetTriple(Triple::normalize(TargetTriple));
+    TheTriple = Triple(mod->getTargetTriple());
+  } else {
+    TheTriple = Triple(Triple::normalize(TargetTriple));
   }
-  Module &mod = *M.get();
 
-  // If we are supposed to override the target triple, do so now.
-  if (!TargetTriple.empty())
-    mod.setTargetTriple(Triple::normalize(TargetTriple));
-
-  // Figure out the target triple.
-  Triple TheTriple(mod.getTargetTriple());
   if (TheTriple.getTriple().empty())
     TheTriple.setTriple(sys::getDefaultTargetTriple());
 
@@ -441,6 +450,7 @@ int main(int argc, char **argv) {
                                           MCPU, FeaturesStr, Options,
                                           RelocModel, CMModel, OLvl));
   assert(target.get() && "Could not allocate target machine!");
+  assert(mod && "Should have exited after outputting help!");
   TargetMachine &Target = *target.get();
 
   if (DisableDotLoc)
@@ -472,7 +482,7 @@ int main(int argc, char **argv) {
   if (const TargetData *TD = Target.getTargetData())
     PM.add(new TargetData(*TD));
   else
-    PM.add(new TargetData(&mod));
+    PM.add(new TargetData(mod));
 
   // Override default to generate verbose assembly.
   Target.setAsmVerbosityDefault(true);
@@ -498,7 +508,7 @@ int main(int argc, char **argv) {
     // Before executing passes, print the final values of the LLVM options.
     cl::PrintOptionValues();
 
-    PM.run(mod);
+    PM.run(*mod);
   }
 
   // Declare success.
