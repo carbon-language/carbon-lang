@@ -29,9 +29,11 @@
 import lldb
 import commands
 import cmd
+import datetime
 import glob
 import optparse
 import os
+import platform
 import plistlib
 import pprint # pp = pprint.PrettyPrinter(indent=4); pp.pprint(command_args)
 import re
@@ -480,7 +482,84 @@ def interactive_crashlogs(options, args):
     interpreter.do_list()
     interpreter.cmdloop()
     
+
+def save_crashlog(debugger, command, result, dict):
+    usage = "usage: %prog [options] <output-path>"
+    description='''Export the state of current target into a crashlog file'''
+    parser = optparse.OptionParser(description=description, prog='save_crashlog',usage=usage)
+    parser.add_option('-v', '--verbose', action='store_true', dest='verbose', help='display verbose debug info', default=False)
+    try:
+        (options, args) = parser.parse_args(shlex.split(command))
+    except:
+        result.PutCString ("error: invalid options");
+        return
+    if len(args) != 1:
+        result.PutCString ("error: invalid arguments, a single output file is the only valid argument")
+        return
+    out_file = open(args[0], 'w')
+    if not out_file:
+        result.PutCString ("error: failed to open file '%s' for writing...", args[0]);
+        return
+    if lldb.target:
+        identifier = lldb.target.executable.basename
+        if lldb.process:
+            pid = lldb.process.id
+            if pid != lldb.LLDB_INVALID_PROCESS_ID:
+                out_file.write('Process:         %s [%u]\n' % (identifier, pid))
+        out_file.write('Path:            %s\n' % (lldb.target.executable.fullpath))
+        out_file.write('Identifier:      %s\n' % (identifier))
+        out_file.write('\nDate/Time:       %s\n' % (datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+        out_file.write('OS Version:      Mac OS X %s (%s)\n' % (platform.mac_ver()[0], commands.getoutput('sysctl -n kern.osversion')));
+        out_file.write('Report Version:  9\n')
+        for thread_idx in range(lldb.process.num_threads):
+            thread = lldb.process.thread[thread_idx]
+            out_file.write('\nThread %u:\n' % (thread_idx))
+            for (frame_idx, frame) in enumerate(thread.frames):
+                frame_pc = frame.pc
+                frame_offset = 0
+                if frame.function:
+                    block = frame.GetFrameBlock()
+                    block_range = block.range[frame.addr]
+                    if block_range:
+                        block_start_addr = block_range[0]
+                        frame_offset = frame_pc - block_start_addr.load_addr
+                    else:
+                        frame_offset = frame_pc - frame.function.addr.load_addr
+                elif frame.symbol:
+                    frame_offset = frame_pc - frame.symbol.addr.load_addr
+                out_file.write('%-3u %-32s 0x%16.16x %s' % (frame_idx, frame.module.file.basename, frame_pc, frame.name))
+                if frame_offset > 0: 
+                    out_file.write(' + %u' % (frame_offset))
+                line_entry = frame.line_entry
+                if line_entry:
+                    if options.verbose:
+                        # This will output the fullpath + line + column
+                        out_file.write(' %s' % (line_entry))
+                    else:
+                        out_file.write(' %s:%u' % (line_entry.file.basename, line_entry.line))
+                        column = line_entry.column
+                        if column: 
+                            out_file.write(':%u' % (column))
+                out_file.write('\n')
+                
+        out_file.write('\nBinary Images:\n')
+        for module in lldb.target.modules:
+            text_segment = module.section['__TEXT']
+            if text_segment:
+                text_segment_load_addr = text_segment.GetLoadAddress(lldb.target)
+                if text_segment_load_addr != lldb.LLDB_INVALID_ADDRESS:
+                    text_segment_end_load_addr = text_segment_load_addr + text_segment.size
+                    identifier = module.file.basename
+                    module_version = '???'
+                    module_version_array = module.GetVersion()
+                    if module_version_array:
+                        module_version = '.'.join(map(str,module_version_array))
+                    out_file.write ('    0x%16.16x - 0x%16.16x  %s (%s - ???) <%s> %s\n' % (text_segment_load_addr, text_segment_end_load_addr, identifier, module_version, module.GetUUIDString(), module.file.fullpath))
+        out_file.close()
+    else:
+        result.PutCString ("error: invalid target");
         
+    
 def Symbolicate(debugger, command, result, dict):
     try:
         SymbolicateCrashLogs (shlex.split(command))
@@ -623,5 +702,6 @@ if __name__ == '__main__':
     SymbolicateCrashLogs (sys.argv[1:])
 elif getattr(lldb, 'debugger', None):
     lldb.debugger.HandleCommand('command script add -f lldb.macosx.crashlog.Symbolicate crashlog')
-    print '"crashlog" command installed, type "crashlog --help" for detailed help'
+    lldb.debugger.HandleCommand('command script add -f lldb.macosx.crashlog.save_crashlog save_crashlog')
+    print '"crashlog" and "save_crashlog" command installed, use the "--help" option for detailed help'
 
