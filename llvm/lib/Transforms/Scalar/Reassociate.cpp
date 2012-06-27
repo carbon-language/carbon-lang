@@ -673,16 +673,10 @@ void Reassociate::RewriteExprTree(BinaryOperator *I,
   // original in some non-trivial way, requiring the clearing of optional flags.
   // Flags are cleared from the operator in ExpressionChanged up to I inclusive.
   BinaryOperator *ExpressionChanged = 0;
-  BinaryOperator *Previous;
-  BinaryOperator *Op = 0;
-  for (unsigned i = 0, e = Ops.size(); i != e; ++i) {
+  for (unsigned i = 0; ; ++i) {
     assert(!NodesToRewrite.empty() &&
            "Optimized expressions has more nodes than original!");
-    Previous = Op; Op = NodesToRewrite.pop_back_val();
-    if (ExpressionChanged)
-      // Compactify the tree instructions together with each other to guarantee
-      // that the expression tree is dominated by all of Ops.
-      Op->moveBefore(Previous);
+    BinaryOperator *Op = NodesToRewrite.pop_back_val();
 
     // The last operation (which comes earliest in the IR) is special as both
     // operands will come from Ops, rather than just one with the other being
@@ -771,15 +765,17 @@ void Reassociate::RewriteExprTree(BinaryOperator *I,
   }
 
   // If the expression changed non-trivially then clear out all subclass data
-  // starting from the operator specified in ExpressionChanged.
-  if (ExpressionChanged) {
+  // starting from the operator specified in ExpressionChanged, and compactify
+  // the operators to just before the expression root to guarantee that the
+  // expression tree is dominated by all of Ops.
+  if (ExpressionChanged)
     do {
       ExpressionChanged->clearSubclassOptionalData();
       if (ExpressionChanged == I)
         break;
+      ExpressionChanged->moveBefore(I);
       ExpressionChanged = cast<BinaryOperator>(*ExpressionChanged->use_begin());
     } while (1);
-  }
 
   // Throw away any left over nodes from the original expression.
   for (unsigned i = 0, e = NodesToRewrite.size(); i != e; ++i)
