@@ -568,7 +568,11 @@ void FileManager::InvalidateCache(const FileEntry* Entry) {
     return;
 
   SeenFileEntries.erase(Entry->getName());
+#ifdef LLVM_ON_WIN32
+  UniqueRealFiles.UniqueFiles.erase(Entry->getName());
+#else
   UniqueRealFiles.UniqueFiles.erase(*Entry);
+#endif
 }
 
 
