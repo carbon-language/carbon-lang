@@ -222,6 +222,9 @@ public:
   /// FileManager's FileSystemOptions.
   bool getNoncachedStatValue(StringRef Path, struct stat &StatBuf);
 
+  /// \brief Remove the real file Entry from the cache.
+  void InvalidateCache(const FileEntry* Entry);
+
   /// \brief If path is not absolute and FileSystemOptions set the working
   /// directory, the path is modified to be relative to the given
   /// working directory.
