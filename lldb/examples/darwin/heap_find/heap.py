@@ -44,8 +44,9 @@ def load_dylib():
             # Remake the dylib
             make_command = '(cd "%s" ; make EXE="%s" ARCH=%s)' % (heap_code_directory, libheap_dylib_path, string.split(triple, '-')[0])
             # print make_command
-            make_output = commands.getoutput(make_command)
-            # print make_output
+            (make_exit_status, make_output) = commands.getstatusoutput(make_command)
+            if make_exit_status != 0:
+                print make_output
         if os.path.exists(libheap_dylib_path):
             libheap_dylib_spec = lldb.SBFileSpec(libheap_dylib_path)
             if lldb.target.FindModule(libheap_dylib_spec):
