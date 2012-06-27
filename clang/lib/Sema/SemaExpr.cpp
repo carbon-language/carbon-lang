@@ -649,8 +649,7 @@ bool Sema::variadicArgumentPODCheck(const Expr *E, VariadicCallType CT) {
 /// interfaces passed by value.
 ExprResult Sema::DefaultVariadicArgumentPromotion(Expr *E, VariadicCallType CT,
                                                   FunctionDecl *FDecl) {
-  const QualType &Ty = E->getType();
-  if (const BuiltinType *PlaceholderTy = Ty->getAsPlaceholderType()) {
+  if (const BuiltinType *PlaceholderTy = E->getType()->getAsPlaceholderType()) {
     // Strip the unbridged-cast placeholder expression off, if applicable.
     if (PlaceholderTy->getKind() == BuiltinType::ARCUnbridgedCast &&
         (CT == VariadicMethod ||
@@ -671,10 +670,10 @@ ExprResult Sema::DefaultVariadicArgumentPromotion(Expr *E, VariadicCallType CT,
     return ExprError();
   E = ExprRes.take();
 
-  if (Ty->isObjCObjectType() &&
+  if (E->getType()->isObjCObjectType() &&
     DiagRuntimeBehavior(E->getLocStart(), 0,
                         PDiag(diag::err_cannot_pass_objc_interface_to_vararg)
-                          << Ty << CT))
+                          << E->getType() << CT))
     return ExprError();
 
   // Diagnostics regarding non-POD argument types are
