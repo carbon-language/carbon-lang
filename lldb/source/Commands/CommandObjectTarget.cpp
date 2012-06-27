@@ -2865,6 +2865,10 @@ protected:
     {
         Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
         const bool use_global_module_list = m_options.m_use_global_module_list;
+        // Define a local module list here to ensure it lives longer than any "locker"
+        // object which might lock its contents below (through the "module_list_ptr"
+        // variable).
+        ModuleList module_list;
         if (target == NULL && use_global_module_list == false)
         {
             result.AppendError ("invalid target, create a debug target using the 'target create' command");
@@ -2919,8 +2923,6 @@ protected:
             Mutex::Locker locker;      // This locker will be locked on the mutex in module_list_ptr if it is non-NULL.
                                        // Otherwise it will lock the AllocationModuleCollectionMutex when accessing
                                        // the global module list directly.
-            
-            ModuleList module_list;
             ModuleList *module_list_ptr = NULL;
             const size_t argc = command.GetArgumentCount();
             if (argc == 0)
