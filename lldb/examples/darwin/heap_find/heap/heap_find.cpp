@@ -68,14 +68,80 @@
 #include <ctype.h>
 #include <mach/mach.h>
 #include <malloc/malloc.h>
-extern "C" {
-#include <stack_logging.h>
-}
 #include <stdio.h>
 #include <stdlib.h>
 #include <vector>
 
+//----------------------------------------------------------------------
+// Redefine private types from "/usr/local/include/stack_logging.h"
+//----------------------------------------------------------------------
+typedef struct {
+	uint32_t		type_flags;
+	uint64_t		stack_identifier;
+	uint64_t		argument;
+	mach_vm_address_t	address;
+} mach_stack_logging_record_t;
+
+//----------------------------------------------------------------------
+// Redefine private defines from "/usr/local/include/stack_logging.h"
+//----------------------------------------------------------------------
+#define stack_logging_type_free		0
+#define stack_logging_type_generic	1
+#define stack_logging_type_alloc	2
+#define stack_logging_type_dealloc	4
+
+//----------------------------------------------------------------------
+// Redefine private function prototypes from 
+// "/usr/local/include/stack_logging.h"
+//----------------------------------------------------------------------
+extern "C" kern_return_t 
+__mach_stack_logging_set_file_path (
+    task_t task, 
+    char* file_path
+);
+
+extern "C" kern_return_t 
+__mach_stack_logging_get_frames (
+    task_t task, 
+    mach_vm_address_t address, 
+    mach_vm_address_t *stack_frames_buffer, 
+    uint32_t max_stack_frames, 
+    uint32_t *count
+);
+
+extern "C" kern_return_t
+__mach_stack_logging_enumerate_records (
+    task_t task,
+    mach_vm_address_t address, 
+    void enumerator(mach_stack_logging_record_t, void *), 
+    void *context
+);
+
+extern "C" kern_return_t
+__mach_stack_logging_frames_for_uniqued_stack (
+    task_t task, 
+    uint64_t stack_identifier, 
+    mach_vm_address_t *stack_frames_buffer, 
+    uint32_t max_stack_frames, 
+    uint32_t *count
+);
+
+//----------------------------------------------------------------------
+// Redefine private gloval variables prototypes from 
+// "/usr/local/include/stack_logging.h"
+//----------------------------------------------------------------------
+
+extern "C" int stack_logging_enable_logging;
+extern "C" int stack_logging_dontcompact;
+
+//----------------------------------------------------------------------
+// Local defines
+//----------------------------------------------------------------------
 #define MAX_FRAMES 1024
+
+//----------------------------------------------------------------------
+// Local Typedefs and Types
+//----------------------------------------------------------------------
 typedef void range_callback_t (task_t task, void *baton, unsigned type, uint64_t ptr_addr, uint64_t ptr_size);
 typedef void zone_callback_t (void *info, const malloc_zone_t *zone);
 
@@ -127,7 +193,9 @@ struct malloc_stack_entry
     std::vector<uintptr_t> frames;
 };
 
-
+//----------------------------------------------------------------------
+// Local global variables
+//----------------------------------------------------------------------
 std::vector<malloc_match> g_matches;
 const void *g_lookup_addr = 0;
 std::vector<malloc_stack_entry> g_malloc_stack_history;
