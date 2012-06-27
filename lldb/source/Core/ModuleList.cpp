@@ -37,8 +37,12 @@ ModuleList::ModuleList() :
 // Copy constructor
 //----------------------------------------------------------------------
 ModuleList::ModuleList(const ModuleList& rhs) :
-    m_modules(rhs.m_modules)
+    m_modules(),
+    m_modules_mutex (Mutex::eMutexTypeRecursive)
 {
+    Mutex::Locker lhs_locker(m_modules_mutex);
+    Mutex::Locker rhs_locker(rhs.m_modules_mutex);
+    m_modules = rhs.m_modules;
 }
 
 //----------------------------------------------------------------------
@@ -49,7 +53,8 @@ ModuleList::operator= (const ModuleList& rhs)
 {
     if (this != &rhs)
     {
-        Mutex::Locker locker(m_modules_mutex);
+        Mutex::Locker lhs_locker(m_modules_mutex);
+        Mutex::Locker rhs_locker(rhs.m_modules_mutex);
         m_modules = rhs.m_modules;
     }
     return *this;
