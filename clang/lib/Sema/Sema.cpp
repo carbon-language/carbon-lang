@@ -682,9 +682,17 @@ void Sema::ActOnEndOfTranslationUnit() {
           if (isa<CXXMethodDecl>(DiagD))
             Diag(DiagD->getLocation(), diag::warn_unneeded_member_function)
                   << DiagD->getDeclName();
-          else
-            Diag(DiagD->getLocation(), diag::warn_unneeded_internal_decl)
-                  << /*function*/0 << DiagD->getDeclName();
+          else {
+            if (FD->getStorageClassAsWritten() == SC_Static &&
+                !FD->isInlineSpecified() &&
+                !SourceMgr.isFromMainFile(
+                   SourceMgr.getExpansionLoc(FD->getLocation())))
+              Diag(DiagD->getLocation(), diag::warn_unneeded_static_internal_decl)
+                << DiagD->getDeclName();
+            else
+              Diag(DiagD->getLocation(), diag::warn_unneeded_internal_decl)
+                   << /*function*/0 << DiagD->getDeclName();
+          }
         } else {
           Diag(DiagD->getLocation(),
                isa<CXXMethodDecl>(DiagD) ? diag::warn_unused_member_function

@@ -170,6 +170,10 @@ def warn_used_but_marked_unused: Warning<"%0 was marked unused but was used">,
 def warn_unneeded_internal_decl : Warning<
   "%select{function|variable}0 %1 is not needed and will not be emitted">,
   InGroup<UnneededInternalDecl>, DefaultIgnore;
+def warn_unneeded_static_internal_decl : Warning<
+  "'static' function %0 declared in header file "
+  "should be declared 'static inline'">,
+  InGroup<UnneededInternalDecl>, DefaultIgnore;
 def warn_unneeded_member_function : Warning<
   "member function %0 is not needed and will not be emitted">,
   InGroup<UnneededMemberFunction>, DefaultIgnore;
