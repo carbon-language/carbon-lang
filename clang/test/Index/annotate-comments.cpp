@@ -194,6 +194,10 @@ void isdoxy44(void);
 /// Ggg. IS_DOXYGEN_END
 void isdoxy45(void);
 
+/// IS_DOXYGEN_NOT_ATTACHED
+#define FOO
+void notdoxy46(void);
+
 #endif
 
 // RUN: rm -rf %t

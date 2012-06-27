@@ -134,8 +134,9 @@ const RawComment *ASTContext::getRawCommentForDeclNoCache(const Decl *D) const {
   StringRef Text(Buffer + CommentEndDecomp.second,
                  DeclLocDecomp.second - CommentEndDecomp.second);
 
-  // There should be no other declarations between comment and declaration.
-  if (Text.find_first_of(",;{}") != StringRef::npos)
+  // There should be no other declarations or preprocessor directives between
+  // comment and declaration.
+  if (Text.find_first_of(",;{}#") != StringRef::npos)
     return NULL;
 
   return &*Comment;
