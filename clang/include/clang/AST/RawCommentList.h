@@ -121,7 +121,7 @@ private:
   /// \brief Constructor for AST deserialization.
   RawComment(SourceRange SR, CommentKind K, bool IsTrailingComment,
              bool IsAlmostTrailingComment) :
-    Range(SR), RawTextValid(false), Kind(K),
+    Range(SR), RawTextValid(false), BriefTextValid(false), Kind(K),
     IsTrailingComment(IsTrailingComment),
     IsAlmostTrailingComment(IsAlmostTrailingComment),
     BeginLineValid(false), EndLineValid(false)
