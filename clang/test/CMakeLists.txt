@@ -1,31 +1,3 @@
-set(CLANG_TEST_DIRECTORIES
-  "Analysis"
-  "CodeCompletion"
-  "CodeGen"
-  "CodeGenCUDA"
-  "CodeGenCXX"
-  "CodeGenObjC"
-  "CodeGenOpenCL"
-  "Coverage"
-  "CXX"
-  "Driver"
-  "FixIt"
-  "Frontend"
-  "Headers"
-  "Index"
-  "Lexer"
-  "Misc"
-  "PCH"
-  "Parser"
-  "Preprocessor"
-  "Rewriter"
-  "Sema"
-  "SemaCUDA"
-  "SemaCXX"
-  "SemaObjC"
-  "SemaObjCXX"
-  "SemaOpenCL"
-  "SemaTemplate")
 
 set(LLVM_SOURCE_DIR "${LLVM_MAIN_SRC_DIR}")
 set(LLVM_BINARY_DIR "${LLVM_BINARY_DIR}")
