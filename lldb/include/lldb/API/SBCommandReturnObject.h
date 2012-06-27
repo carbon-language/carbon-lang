@@ -61,6 +61,9 @@ public:
 
     lldb::ReturnStatus
     GetStatus();
+    
+    void
+    SetStatus (lldb::ReturnStatus status);
 
     bool
     Succeeded ();

@@ -160,6 +160,13 @@ SBCommandReturnObject::GetStatus()
     return lldb::eReturnStatusInvalid;
 }
 
+void
+SBCommandReturnObject::SetStatus(lldb::ReturnStatus status)
+{
+    if (m_opaque_ap.get())
+         m_opaque_ap->SetStatus(status);
+}
+
 bool
 SBCommandReturnObject::Succeeded ()
 {

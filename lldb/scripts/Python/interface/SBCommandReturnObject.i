@@ -50,6 +50,9 @@ public:
     void
     Clear();
 
+    void
+    SetStatus (lldb::ReturnStatus status);
+
     lldb::ReturnStatus
     GetStatus();
 

@@ -1214,6 +1214,8 @@ protected:
         
         Error error;
         
+        result.SetStatus(eReturnStatusInvalid);
+        
         if (!scripter || scripter->RunScriptBasedCommand(m_function_name.c_str(),
                                                          raw_command_line,
                                                          m_synchro,
@@ -1224,7 +1226,16 @@ protected:
             result.SetStatus(eReturnStatusFailed);
         }
         else
-            result.SetStatus(eReturnStatusSuccessFinishNoResult);
+        {
+            // Don't change the status if the command already set it...
+            if (result.GetStatus() == eReturnStatusInvalid)
+            {
+                if (result.GetOutputData() == NULL || result.GetOutputData()[0] == '\0')
+                    result.SetStatus(eReturnStatusSuccessFinishNoResult);
+                else
+                    result.SetStatus(eReturnStatusSuccessFinishResult);
+            }
+        }
         
         return result.Succeeded();
     }
