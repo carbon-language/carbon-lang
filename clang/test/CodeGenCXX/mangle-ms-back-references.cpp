@@ -74,6 +74,8 @@ class B {};
 class C {};
 
 template<class X>
+class F {};
+template<class X>
 class I {};
 template<class X, class Y>
 class J {};
@@ -97,6 +99,18 @@ void bar(J<A,B> x) {}
 void spam(K<A,B,C> x) {}
 // CHECK: "\01?spam@PR13207@@YAXV?$K@VA@PR13207@@VB@2@VC@2@@1@@Z"
 
+// The following CURRENT line is here to improve the precision of the "scanning
+// from here" reports of FileCheck.
+// CURRENT: "\01?spam@PR13207@@YAXV?$K@VA@PR13207@@VB@2@VC@2@@1@@Z"
+
+// The tests below currently fail:
+void baz(K<char, F<char>, I<char> >) {}
+// CURRENT: "\01?baz@PR13207@@YAXV?$K@DV?$F@D@PR13207@@V?$I@D@1@@1@@Z"
+// CORRECT: "\01?baz@PR13207@@YAXV?$K@DV?$F@D@PR13207@@V?$I@D@2@@1@@Z"
+void qux(K<char, I<char>, I<char> >) {}
+// CURRENT: "\01?qux@PR13207@@YAXV?$K@DV?$I@D@PR13207@@V?$I@D@1@@1@@Z"
+// CORRECT: "\01?qux@PR13207@@YAXV?$K@DV?$I@D@PR13207@@V12@@1@@Z
+
 namespace NA {
 class X {};
 template<class T> class Y {};
@@ -115,10 +129,6 @@ void bar(NA::Y<X> x) {}
 
 void spam(NA::Y<NA::X> x) {}
 // CHECK: "\01?spam@NB@PR13207@@YAXV?$Y@VX@NA@PR13207@@@NA@2@@Z"
-
-// The following CURRENT line is here to improve the precision of the "scanning
-// from here" reports of FileCheck.
-// CURRENT: "\01?spam@NB@PR13207@@YAXV?$Y@VX@NA@PR13207@@@NA@2@@Z"
 
 // The tests below currently fail:
 void foobar(NA::Y<Y<X> > a, Y<Y<X> >) {}
