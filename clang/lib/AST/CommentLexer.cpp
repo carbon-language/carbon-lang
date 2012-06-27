@@ -264,6 +264,9 @@ void Lexer::lexCommentText(Token &T) {
   case LS_VerbatimBlockBody:
     lexVerbatimBlockBody(T);
     return;
+  case LS_VerbatimLineText:
+    lexVerbatimLineText(T);
+    return;
   case LS_HTMLOpenTag:
     lexHTMLOpenTag(T);
     return;
@@ -333,7 +336,7 @@ void Lexer::lexCommentText(Token &T) {
           return;
         }
         if (isVerbatimLineCommand(CommandName)) {
-          lexVerbatimLine(T, TokenPtr);
+          setupAndLexVerbatimLine(T, TokenPtr);
           return;
         }
         formTokenWithChars(T, TokenPtr, tok::command);
@@ -444,16 +447,24 @@ void Lexer::lexVerbatimBlockBody(Token &T) {
   lexVerbatimBlockFirstLine(T);
 }
 
-void Lexer::lexVerbatimLine(Token &T, const char *TextBegin) {
+void Lexer::setupAndLexVerbatimLine(Token &T, const char *TextBegin) {
+  const StringRef Name(BufferPtr + 1, TextBegin - BufferPtr - 1);
+  formTokenWithChars(T, TextBegin, tok::verbatim_line_name);
+  T.setVerbatimLineName(Name);
+
+  State = LS_VerbatimLineText;
+}
+
+void Lexer::lexVerbatimLineText(Token &T) {
+  assert(State == LS_VerbatimLineText);
+
   // Extract current line.
   const char *Newline = findNewline(BufferPtr, CommentEnd);
-
-  const StringRef Name(BufferPtr + 1, TextBegin - BufferPtr - 1);
-  const StringRef Text(TextBegin, Newline - TextBegin);
-
-  formTokenWithChars(T, Newline, tok::verbatim_line);
-  T.setVerbatimLineName(Name);
+  const StringRef Text(BufferPtr, Newline - BufferPtr);
+  formTokenWithChars(T, Newline, tok::verbatim_line_text);
   T.setVerbatimLineText(Text);
+
+  State = LS_Normal;
 }
 
 void Lexer::setupAndLexHTMLOpenTag(Token &T) {

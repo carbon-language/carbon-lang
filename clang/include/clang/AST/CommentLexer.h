@@ -34,7 +34,8 @@ enum TokenKind {
   verbatim_block_begin,
   verbatim_block_line,
   verbatim_block_end,
-  verbatim_line,
+  verbatim_line_name,
+  verbatim_line_text,
   html_tag_open,      // <tag
   html_ident,         // attr
   html_equals,        // =
@@ -74,10 +75,6 @@ class Token {
   /// Contains text value associated with a token.
   const char *TextPtr1;
   unsigned TextLen1;
-
-  /// Contains text value associated with a token.
-  const char *TextPtr2;
-  unsigned TextLen2;
 
 public:
   SourceLocation getLocation() const LLVM_READONLY { return Loc; }
@@ -138,25 +135,25 @@ public:
 
   /// Returns the name of verbatim line command.
   StringRef getVerbatimLineName() const LLVM_READONLY {
-    assert(is(tok::verbatim_line));
+    assert(is(tok::verbatim_line_name));
     return StringRef(TextPtr1, TextLen1);
   }
 
   void setVerbatimLineName(StringRef Name) {
-    assert(is(tok::verbatim_line));
+    assert(is(tok::verbatim_line_name));
     TextPtr1 = Name.data();
     TextLen1 = Name.size();
   }
 
   StringRef getVerbatimLineText() const LLVM_READONLY {
-    assert(is(tok::verbatim_line));
-    return StringRef(TextPtr2, TextLen2);
+    assert(is(tok::verbatim_line_text));
+    return StringRef(TextPtr1, TextLen1);
   }
 
   void setVerbatimLineText(StringRef Text) {
-    assert(is(tok::verbatim_line));
-    TextPtr2 = Text.data();
-    TextLen2 = Text.size();
+    assert(is(tok::verbatim_line_text));
+    TextPtr1 = Text.data();
+    TextLen1 = Text.size();
   }
 
   StringRef getHTMLTagOpenName() const LLVM_READONLY {
@@ -245,6 +242,10 @@ private:
     /// decorations.
     LS_VerbatimBlockBody,
 
+    /// Finished lexing verbatim line beginning command, will lex text (one
+    /// line).
+    LS_VerbatimLineText,
+
     /// Finished lexing \verbatim <TAG \endverbatim part, lexing tag attributes.
     LS_HTMLOpenTag
   };
@@ -292,8 +293,6 @@ private:
 #ifndef NDEBUG
     Result.TextPtr1 = "<UNSET>";
     Result.TextLen1 = 7;
-    Result.TextPtr2 = "<UNSET>";
-    Result.TextLen2 = 7;
 #endif
     BufferPtr = TokEnd;
   }
@@ -320,7 +319,9 @@ private:
 
   void lexVerbatimBlockBody(Token &T);
 
-  void lexVerbatimLine(Token &T, const char *TextBegin);
+  void setupAndLexVerbatimLine(Token &T, const char *TextBegin);
+
+  void lexVerbatimLineText(Token &T);
 
   void setupAndLexHTMLOpenTag(Token &T);
 

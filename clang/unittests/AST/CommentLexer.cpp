@@ -588,15 +588,14 @@ TEST_F(CommentLexerTest, VerbatimLine1) {
 
     ASSERT_EQ(4U, Toks.size());
 
-    ASSERT_EQ(tok::text,          Toks[0].getKind());
-    ASSERT_EQ(StringRef(" "),     Toks[0].getText());
+    ASSERT_EQ(tok::text,               Toks[0].getKind());
+    ASSERT_EQ(StringRef(" "),          Toks[0].getText());
 
-    ASSERT_EQ(tok::verbatim_line, Toks[1].getKind());
-    ASSERT_EQ(StringRef("fn"),    Toks[1].getVerbatimLineName());
-    ASSERT_EQ(StringRef(""),      Toks[1].getVerbatimLineText());
+    ASSERT_EQ(tok::verbatim_line_name, Toks[1].getKind());
+    ASSERT_EQ(StringRef("fn"),         Toks[1].getVerbatimLineName());
 
-    ASSERT_EQ(tok::newline,       Toks[2].getKind());
-    ASSERT_EQ(tok::newline,       Toks[3].getKind());
+    ASSERT_EQ(tok::newline,            Toks[2].getKind());
+    ASSERT_EQ(tok::newline,            Toks[3].getKind());
   }
 }
 
@@ -612,18 +611,20 @@ TEST_F(CommentLexerTest, VerbatimLine2) {
 
     lexString(Sources[i], Toks);
 
-    ASSERT_EQ(4U, Toks.size());
+    ASSERT_EQ(5U, Toks.size());
 
-    ASSERT_EQ(tok::text,          Toks[0].getKind());
-    ASSERT_EQ(StringRef(" "),     Toks[0].getText());
+    ASSERT_EQ(tok::text,               Toks[0].getKind());
+    ASSERT_EQ(StringRef(" "),          Toks[0].getText());
 
-    ASSERT_EQ(tok::verbatim_line, Toks[1].getKind());
-    ASSERT_EQ(StringRef("fn"),    Toks[1].getVerbatimLineName());
+    ASSERT_EQ(tok::verbatim_line_name, Toks[1].getKind());
+    ASSERT_EQ(StringRef("fn"),         Toks[1].getVerbatimLineName());
+
+    ASSERT_EQ(tok::verbatim_line_text, Toks[2].getKind());
     ASSERT_EQ(StringRef(" void *foo(const char *zzz = \"\\$\");"),
-                                  Toks[1].getVerbatimLineText());
+                                       Toks[2].getVerbatimLineText());
 
-    ASSERT_EQ(tok::newline,       Toks[2].getKind());
-    ASSERT_EQ(tok::newline,       Toks[3].getKind());
+    ASSERT_EQ(tok::newline,            Toks[3].getKind());
+    ASSERT_EQ(tok::newline,            Toks[4].getKind());
   }
 }
 
@@ -638,26 +639,28 @@ TEST_F(CommentLexerTest, VerbatimLine3) {
 
   lexString(Source, Toks);
 
-  ASSERT_EQ(8U, Toks.size());
+  ASSERT_EQ(9U, Toks.size());
 
-  ASSERT_EQ(tok::text,          Toks[0].getKind());
-  ASSERT_EQ(StringRef(" "),     Toks[0].getText());
+  ASSERT_EQ(tok::text,               Toks[0].getKind());
+  ASSERT_EQ(StringRef(" "),          Toks[0].getText());
 
-  ASSERT_EQ(tok::verbatim_line, Toks[1].getKind());
-  ASSERT_EQ(StringRef("fn"),    Toks[1].getVerbatimLineName());
+  ASSERT_EQ(tok::verbatim_line_name, Toks[1].getKind());
+  ASSERT_EQ(StringRef("fn"),         Toks[1].getVerbatimLineName());
+
+  ASSERT_EQ(tok::verbatim_line_text, Toks[2].getKind());
   ASSERT_EQ(StringRef(" void *foo(const char *zzz = \"\\$\");"),
-                                Toks[1].getVerbatimLineText());
-  ASSERT_EQ(tok::newline,       Toks[2].getKind());
+                                     Toks[2].getVerbatimLineText());
+  ASSERT_EQ(tok::newline,            Toks[3].getKind());
 
-  ASSERT_EQ(tok::text,          Toks[3].getKind());
-  ASSERT_EQ(StringRef(" Meow"), Toks[3].getText());
-  ASSERT_EQ(tok::newline,       Toks[4].getKind());
+  ASSERT_EQ(tok::text,               Toks[4].getKind());
+  ASSERT_EQ(StringRef(" Meow"),      Toks[4].getText());
+  ASSERT_EQ(tok::newline,            Toks[5].getKind());
 
-  ASSERT_EQ(tok::text,          Toks[5].getKind());
-  ASSERT_EQ(StringRef(" "),     Toks[5].getText());
+  ASSERT_EQ(tok::text,               Toks[6].getKind());
+  ASSERT_EQ(StringRef(" "),          Toks[6].getText());
 
-  ASSERT_EQ(tok::newline,       Toks[6].getKind());
-  ASSERT_EQ(tok::newline,       Toks[7].getKind());
+  ASSERT_EQ(tok::newline,            Toks[7].getKind());
+  ASSERT_EQ(tok::newline,            Toks[8].getKind());
 }
 
 TEST_F(CommentLexerTest, HTML1) {
