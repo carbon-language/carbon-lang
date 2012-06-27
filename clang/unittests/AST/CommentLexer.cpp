@@ -683,6 +683,28 @@ TEST_F(CommentLexerTest, HTML1) {
 }
 
 TEST_F(CommentLexerTest, HTML2) {
+  const char *Source =
+    "// < tag";
+
+  std::vector<Token> Toks;
+
+  lexString(Source, Toks);
+
+  ASSERT_EQ(4U, Toks.size());
+
+  ASSERT_EQ(tok::text,         Toks[0].getKind());
+  ASSERT_EQ(StringRef(" "),    Toks[0].getText());
+
+  ASSERT_EQ(tok::text,         Toks[1].getKind());
+  ASSERT_EQ(StringRef("<"),    Toks[1].getText());
+
+  ASSERT_EQ(tok::text,         Toks[2].getKind());
+  ASSERT_EQ(StringRef(" tag"), Toks[2].getText());
+
+  ASSERT_EQ(tok::newline,      Toks[3].getKind());
+}
+
+TEST_F(CommentLexerTest, HTML3) {
   const char *Sources[] = {
     "// <tag",
     "// <tag "
@@ -705,7 +727,7 @@ TEST_F(CommentLexerTest, HTML2) {
   }
 }
 
-TEST_F(CommentLexerTest, HTML3) {
+TEST_F(CommentLexerTest, HTML4) {
   const char *Source = "// <tag=";
 
   std::vector<Token> Toks;
@@ -726,7 +748,7 @@ TEST_F(CommentLexerTest, HTML3) {
   ASSERT_EQ(tok::newline,       Toks[3].getKind());
 }
 
-TEST_F(CommentLexerTest, HTML4) {
+TEST_F(CommentLexerTest, HTML5) {
   const char *Sources[] = {
     "// <tag attr",
     "// <tag attr "
@@ -752,7 +774,7 @@ TEST_F(CommentLexerTest, HTML4) {
   }
 }
 
-TEST_F(CommentLexerTest, HTML5) {
+TEST_F(CommentLexerTest, HTML6) {
   const char *Sources[] = {
     "// <tag attr=",
     "// <tag attr ="
@@ -780,7 +802,7 @@ TEST_F(CommentLexerTest, HTML5) {
   }
 }
 
-TEST_F(CommentLexerTest, HTML6) {
+TEST_F(CommentLexerTest, HTML7) {
   const char *Sources[] = {
     "// <tag attr=\"",
     "// <tag attr = \"",
@@ -813,7 +835,7 @@ TEST_F(CommentLexerTest, HTML6) {
   }
 }
 
-TEST_F(CommentLexerTest, HTML7) {
+TEST_F(CommentLexerTest, HTML8) {
   const char *Source = "// <tag attr=@";
 
   std::vector<Token> Toks;
@@ -839,7 +861,7 @@ TEST_F(CommentLexerTest, HTML7) {
   ASSERT_EQ(tok::newline,       Toks[5].getKind());
 }
 
-TEST_F(CommentLexerTest, HTML8) {
+TEST_F(CommentLexerTest, HTML9) {
   const char *Sources[] = {
     "// <tag attr=\"val\\\"\\'val",
     "// <tag attr=\"val\\\"\\'val\"",
@@ -872,7 +894,7 @@ TEST_F(CommentLexerTest, HTML8) {
   }
 }
 
-TEST_F(CommentLexerTest, HTML9) {
+TEST_F(CommentLexerTest, HTML10) {
   const char *Sources[] = {
     "// <tag attr=\"val\\\"\\'val\">",
     "// <tag attr=\'val\\\"\\'val\'>"
@@ -905,7 +927,7 @@ TEST_F(CommentLexerTest, HTML9) {
   }
 }
 
-TEST_F(CommentLexerTest, HTML10) {
+TEST_F(CommentLexerTest, HTML11) {
   const char *Source = "// </";
 
   std::vector<Token> Toks;
@@ -924,7 +946,7 @@ TEST_F(CommentLexerTest, HTML10) {
 }
 
 
-TEST_F(CommentLexerTest, HTML11) {
+TEST_F(CommentLexerTest, HTML12) {
   const char *Source = "// </@";
 
   std::vector<Token> Toks;
@@ -945,7 +967,7 @@ TEST_F(CommentLexerTest, HTML11) {
   ASSERT_EQ(tok::newline,        Toks[3].getKind());
 }
 
-TEST_F(CommentLexerTest, HTML12) {
+TEST_F(CommentLexerTest, HTML13) {
   const char *Sources[] = {
     "// </tag",
     "// </tag>",

@@ -357,6 +357,11 @@ void Lexer::lexCommentText(Token &T) {
           setupAndLexHTMLOpenTag(T);
         else if (C == '/')
           lexHTMLCloseTag(T);
+        else {
+          StringRef Text(BufferPtr, TokenPtr - BufferPtr);
+          formTokenWithChars(T, TokenPtr, tok::text);
+          T.setText(Text);
+        }
         return;
       }
 
