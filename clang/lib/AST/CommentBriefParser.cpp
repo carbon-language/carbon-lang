@@ -13,33 +13,29 @@ namespace clang {
 namespace comments {
 
 std::string BriefParser::Parse() {
-  std::string FirstParagraph;
-  std::string Brief;
+  std::string Paragraph;
   bool InFirstParagraph = true;
   bool InBrief = false;
   bool BriefDone = false;
 
   while (Tok.isNot(tok::eof)) {
     if (Tok.is(tok::text)) {
-      if (InFirstParagraph)
-        FirstParagraph += Tok.getText();
-      if (InBrief)
-        Brief += Tok.getText();
+      if (InFirstParagraph || InBrief)
+        Paragraph += Tok.getText();
       ConsumeToken();
       continue;
     }
 
     if (!BriefDone && Tok.is(tok::command) && Tok.getCommandName() == "brief") {
+      Paragraph.clear();
       InBrief = true;
       ConsumeToken();
       continue;
     }
 
     if (Tok.is(tok::newline)) {
-      if (InFirstParagraph)
-        FirstParagraph += '\n';
-      if (InBrief)
-        Brief += '\n';
+      if (InFirstParagraph || InBrief)
+        Paragraph += '\n';
       ConsumeToken();
 
       if (Tok.is(tok::newline)) {
@@ -58,10 +54,7 @@ std::string BriefParser::Parse() {
     ConsumeToken();
   }
 
-  if (Brief.size() > 0)
-    return Brief;
-
-  return FirstParagraph;
+  return Paragraph;
 }
 
 BriefParser::BriefParser(Lexer &L) : L(L)
