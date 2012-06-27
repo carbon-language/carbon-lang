@@ -69,6 +69,8 @@ static void NOINLINE InitModule(ModuleDesc *m) {
     internal_close(outfd[1]);
     internal_close(infd[0]);
     internal_close(infd[1]);
+    for (int fd = getdtablesize(); fd > 2; fd--)
+      internal_close(fd);
     execl("/usr/bin/addr2line", "/usr/bin/addr2line", "-Cfe", m->fullname, 0);
     _exit(0);
   } else if (pid < 0) {
