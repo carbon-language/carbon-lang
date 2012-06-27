@@ -279,8 +279,9 @@ void Lexer::lexCommentText(Token &T) {
       case '@': {
         TokenPtr++;
         if (TokenPtr == CommentEnd) {
+          StringRef Text(BufferPtr, TokenPtr - BufferPtr);
           formTokenWithChars(T, TokenPtr, tok::text);
-          T.setText(StringRef(BufferPtr - T.getLength(), T.getLength()));
+          T.setText(Text);
           return;
         }
         char C = *TokenPtr;
@@ -297,16 +298,17 @@ void Lexer::lexCommentText(Token &T) {
             // This is the \:: escape sequence.
             TokenPtr++;
           }
+          StringRef UnescapedText(BufferPtr + 1, TokenPtr - (BufferPtr + 1));
           formTokenWithChars(T, TokenPtr, tok::text);
-          T.setText(StringRef(BufferPtr - (T.getLength() - 1),
-                              T.getLength() - 1));
+          T.setText(UnescapedText);
           return;
         }
 
         // Don't make zero-length commands.
         if (!isCommandNameCharacter(*TokenPtr)) {
+          StringRef Text(BufferPtr, TokenPtr - BufferPtr);
           formTokenWithChars(T, TokenPtr, tok::text);
-          T.setText(StringRef(BufferPtr - T.getLength(), T.getLength()));
+          T.setText(Text);
           return;
         }
 
@@ -342,8 +344,9 @@ void Lexer::lexCommentText(Token &T) {
       case '<': {
         TokenPtr++;
         if (TokenPtr == CommentEnd) {
+          StringRef Text(BufferPtr, TokenPtr - BufferPtr);
           formTokenWithChars(T, TokenPtr, tok::text);
-          T.setText(StringRef(BufferPtr - T.getLength(), T.getLength()));
+          T.setText(Text);
           return;
         }
         const char C = *TokenPtr;
@@ -373,8 +376,9 @@ void Lexer::lexCommentText(Token &T) {
              C == '\\' || C == '@' || C == '<')
             break;
         }
+        StringRef Text(BufferPtr, TokenPtr - BufferPtr);
         formTokenWithChars(T, TokenPtr, tok::text);
-        T.setText(StringRef(BufferPtr - T.getLength(), T.getLength()));
+        T.setText(Text);
         return;
       }
     }
@@ -388,9 +392,9 @@ void Lexer::setupAndLexVerbatimBlock(Token &T,
   VerbatimBlockEndCommandName.append(Marker == '\\' ? "\\" : "@");
   VerbatimBlockEndCommandName.append(EndName);
 
+  StringRef Name(BufferPtr + 1, TextBegin - (BufferPtr + 1));
   formTokenWithChars(T, TextBegin, tok::verbatim_block_begin);
-  T.setVerbatimBlockName(StringRef(TextBegin - (T.getLength() - 1),
-                                   T.getLength() - 1));
+  T.setVerbatimBlockName(Name);
 
   State = LS_VerbatimBlockFirstLine;
 }
@@ -414,9 +418,9 @@ void Lexer::lexVerbatimBlockFirstLine(Token &T) {
   } else if (Pos == 0) {
     // Current line contains just an end command.
     const char *End = BufferPtr + VerbatimBlockEndCommandName.size();
+    StringRef Name(BufferPtr + 1, End - (BufferPtr + 1));
     formTokenWithChars(T, End, tok::verbatim_block_end);
-    T.setVerbatimBlockName(StringRef(End - (T.getLength() - 1),
-                                     T.getLength() - 1));
+    T.setVerbatimBlockName(Name);
     State = LS_Normal;
     return;
   } else {
@@ -424,8 +428,9 @@ void Lexer::lexVerbatimBlockFirstLine(Token &T) {
     NextLine = BufferPtr + Pos;
   }
 
+  StringRef Text(BufferPtr, NextLine - BufferPtr);
   formTokenWithChars(T, NextLine, tok::verbatim_block_line);
-  T.setVerbatimBlockText(StringRef(NextLine - T.getLength(), T.getLength()));
+  T.setVerbatimBlockText(Text);
 
   State = LS_VerbatimBlockBody;
 }
@@ -455,9 +460,9 @@ void Lexer::setupAndLexHTMLOpenTag(Token &T) {
   assert(BufferPtr[0] == '<' && isHTMLIdentifierCharacter(BufferPtr[1]));
   const char *TagNameEnd = skipHTMLIdentifier(BufferPtr + 2, CommentEnd);
 
+  StringRef Name(BufferPtr + 1, TagNameEnd - (BufferPtr + 1));
   formTokenWithChars(T, TagNameEnd, tok::html_tag_open);
-  T.setHTMLTagOpenName(StringRef(TagNameEnd - (T.getLength() - 1),
-                                 T.getLength() - 1));
+  T.setHTMLTagOpenName(Name);
 
   BufferPtr = skipWhitespace(BufferPtr, CommentEnd);
 
@@ -477,8 +482,9 @@ void Lexer::lexHTMLOpenTag(Token &T) {
   char C = *TokenPtr;
   if (isHTMLIdentifierCharacter(C)) {
     TokenPtr = skipHTMLIdentifier(TokenPtr, CommentEnd);
+    StringRef Ident(BufferPtr, TokenPtr - BufferPtr);
     formTokenWithChars(T, TokenPtr, tok::html_ident);
-    T.setHTMLIdent(StringRef(TokenPtr - T.getLength(), T.getLength()));
+    T.setHTMLIdent(Ident);
   } else {
     switch (C) {
     case '=':
