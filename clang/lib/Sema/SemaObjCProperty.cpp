@@ -2143,8 +2143,7 @@ void Sema::CheckObjCPropertyAttributes(Decl *PDecl,
       && getLangOpts().getGC() == LangOptions::GCOnly
       && PropertyTy->isBlockPointerType())
     Diag(Loc, diag::warn_objc_property_copy_missing_on_block);
-  else if (getLangOpts().ObjCAutoRefCount &&
-           (Attributes & ObjCDeclSpec::DQ_PR_retain) &&
+  else if ((Attributes & ObjCDeclSpec::DQ_PR_retain) &&
            !(Attributes & ObjCDeclSpec::DQ_PR_readonly) &&
            !(Attributes & ObjCDeclSpec::DQ_PR_strong) &&
            PropertyTy->isBlockPointerType())

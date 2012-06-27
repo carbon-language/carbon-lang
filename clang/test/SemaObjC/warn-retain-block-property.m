@@ -1,5 +1,7 @@
 // RUN: %clang_cc1 -fsyntax-only -fblocks -fobjc-arc -verify -Wno-objc-root-class %s
 // rdar://9829425
+// RUN: %clang_cc1 -fsyntax-only -fblocks -verify -Wno-objc-root-class %s
+// rdar://11761511
 
 extern void doSomething();
 
