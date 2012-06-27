@@ -9,6 +9,7 @@ Subsystem Documentation
    AliasAnalysis
    BranchWeightMetadata
    Bugpoint
+   ExceptionHandling
    LinkTimeOptimization
    SegmentedStacks
    TableGenFundamentals
@@ -47,7 +48,7 @@ Subsystem Documentation
    This document describes the design and philosophy behind the LLVM
    source-level debugger.
     
-* `Zero Cost Exception handling in LLVM <ExceptionHandling.html>`_
+* :ref:`exception_handling`
     
    This document describes the design and implementation of exception handling
    in LLVM.
