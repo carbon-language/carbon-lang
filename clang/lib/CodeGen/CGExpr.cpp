@@ -1047,6 +1047,9 @@ RValue CodeGenFunction::EmitLoadOfBitfieldLValue(LValue LV) {
   llvm::Value *Res = 0;
   for (unsigned i = 0, e = Info.getNumComponents(); i != e; ++i) {
     const CGBitFieldInfo::AccessInfo &AI = Info.getComponent(i);
+    CharUnits AccessAlignment = AI.AccessAlignment;
+    if (!LV.getAlignment().isZero())
+      AccessAlignment = std::min(AccessAlignment, LV.getAlignment());
 
     // Get the field pointer.
     llvm::Value *Ptr = LV.getBitFieldBaseAddr();
@@ -1070,8 +1073,7 @@ RValue CodeGenFunction::EmitLoadOfBitfieldLValue(LValue LV) {
 
     // Perform the load.
     llvm::LoadInst *Load = Builder.CreateLoad(Ptr, LV.isVolatileQualified());
-    if (!AI.AccessAlignment.isZero())
-      Load->setAlignment(AI.AccessAlignment.getQuantity());
+    Load->setAlignment(AccessAlignment.getQuantity());
 
     // Shift out unused low bits and mask out unused high bits.
     llvm::Value *Val = Load;
@@ -1270,6 +1272,9 @@ void CodeGenFunction::EmitStoreThroughBitfieldLValue(RValue Src, LValue Dst,
   // Iterate over the components, writing each piece to memory.
   for (unsigned i = 0, e = Info.getNumComponents(); i != e; ++i) {
     const CGBitFieldInfo::AccessInfo &AI = Info.getComponent(i);
+    CharUnits AccessAlignment = AI.AccessAlignment;
+    if (!Dst.getAlignment().isZero())
+      AccessAlignment = std::min(AccessAlignment, Dst.getAlignment());
 
     // Get the field pointer.
     llvm::Value *Ptr = Dst.getBitFieldBaseAddr();
@@ -1316,8 +1321,7 @@ void CodeGenFunction::EmitStoreThroughBitfieldLValue(RValue Src, LValue Dst,
     // If necessary, load and OR in bits that are outside of the bit-field.
     if (AI.TargetBitWidth != AI.AccessWidth) {
       llvm::LoadInst *Load = Builder.CreateLoad(Ptr, Dst.isVolatileQualified());
-      if (!AI.AccessAlignment.isZero())
-        Load->setAlignment(AI.AccessAlignment.getQuantity());
+      Load->setAlignment(AccessAlignment.getQuantity());
 
       // Compute the mask for zeroing the bits that are part of the bit-field.
       llvm::APInt InvMask =
@@ -1331,8 +1335,7 @@ void CodeGenFunction::EmitStoreThroughBitfieldLValue(RValue Src, LValue Dst,
     // Write the value.
     llvm::StoreInst *Store = Builder.CreateStore(Val, Ptr,
                                                  Dst.isVolatileQualified());
-    if (!AI.AccessAlignment.isZero())
-      Store->setAlignment(AI.AccessAlignment.getQuantity());
+    Store->setAlignment(AccessAlignment.getQuantity());
   }
 }
 
@@ -2084,16 +2087,6 @@ LValue CodeGenFunction::EmitMemberExpr(const MemberExpr *E) {
   llvm_unreachable("Unhandled member declaration!");
 }
 
-LValue CodeGenFunction::EmitLValueForBitfield(llvm::Value *BaseValue,
-                                              const FieldDecl *Field,
-                                              unsigned CVRQualifiers) {
-  const CGRecordLayout &RL =
-    CGM.getTypes().getCGRecordLayout(Field->getParent());
-  const CGBitFieldInfo &Info = RL.getBitFieldInfo(Field);
-  return LValue::MakeBitfield(BaseValue, Info,
-                          Field->getType().withCVRQualifiers(CVRQualifiers));
-}
-
 /// EmitLValueForAnonRecordField - Given that the field is a member of
 /// an anonymous struct or union buried inside a record, and given
 /// that the base value is a pointer to the enclosing record, derive
@@ -2118,9 +2111,15 @@ LValue CodeGenFunction::EmitLValueForAnonRecordField(llvm::Value *BaseValue,
 
 LValue CodeGenFunction::EmitLValueForField(LValue base,
                                            const FieldDecl *field) {
-  if (field->isBitField())
-    return EmitLValueForBitfield(base.getAddress(), field,
-                                 base.getVRQualifiers());
+  if (field->isBitField()) {
+    const CGRecordLayout &RL =
+      CGM.getTypes().getCGRecordLayout(field->getParent());
+    const CGBitFieldInfo &Info = RL.getBitFieldInfo(field);
+    QualType fieldType =
+      field->getType().withCVRQualifiers(base.getVRQualifiers());
+    return LValue::MakeBitfield(base.getAddress(), Info, fieldType,
+                                base.getAlignment());
+  }
 
   const RecordDecl *rec = field->getParent();
   QualType type = field->getType();

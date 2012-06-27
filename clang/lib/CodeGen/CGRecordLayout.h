@@ -64,12 +64,7 @@ public:
     /// Bit width of the memory access to perform.
     unsigned AccessWidth;
 
-    /// The alignment of the memory access, or 0 if the default alignment should
-    /// be used.
-    //
-    // FIXME: Remove use of 0 to encode default, instead have IRgen do the right
-    // thing when it generates the code, if avoiding align directives is
-    // desired.
+    /// The alignment of the memory access, assuming the parent is aligned.
     CharUnits AccessAlignment;
 
     /// Offset for the target value.

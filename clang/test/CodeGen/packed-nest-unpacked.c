@@ -45,3 +45,21 @@ void test6() {
   // CHECK: call void @llvm.memcpy.p0i8.p0i8.i64(i8* bitcast (%struct.X* getelementptr inbounds (%struct.Y* @g, i32 0, i32 1) to i8*), i8* %{{.*}}, i64 24, i32 1, i1 false)
   g.y = foo();
 }
+
+
+struct XBitfield {
+  unsigned b1 : 10;
+  unsigned b2 : 12;
+  unsigned b3 : 10;
+};
+struct YBitfield {
+  char x;
+  struct XBitfield y;
+} __attribute((packed));
+struct YBitfield gbitfield;
+
+unsigned test7() {
+  // CHECK: @test7
+  // CHECK: load i32* bitcast (%struct.XBitfield* getelementptr inbounds (%struct.YBitfield* @gbitfield, i32 0, i32 1) to i32*), align 1
+  return gbitfield.y.b2;
+}

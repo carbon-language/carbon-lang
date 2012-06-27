@@ -120,6 +120,8 @@ LValue CGObjCRuntime::EmitValueForIvarAtOffset(CodeGen::CodeGenFunction &CGF,
   uint64_t ContainingTypeAlign = CGF.CGM.getContext().getTargetInfo().getCharAlign();
   uint64_t ContainingTypeSize = TypeSizeInBits - (FieldBitOffset - BitOffset);
   uint64_t BitFieldSize = Ivar->getBitWidthValue(CGF.getContext());
+  CharUnits ContainingTypeAlignCharUnits = 
+    CGF.CGM.getContext().toCharUnitsFromBits(ContainingTypeAlign);
 
   // Allocate a new CGBitFieldInfo object to describe this access.
   //
@@ -132,7 +134,8 @@ LValue CGObjCRuntime::EmitValueForIvarAtOffset(CodeGen::CodeGenFunction &CGF,
                              ContainingTypeSize, ContainingTypeAlign));
 
   return LValue::MakeBitfield(V, *Info,
-                              IvarTy.withCVRQualifiers(CVRQualifiers));
+                              IvarTy.withCVRQualifiers(CVRQualifiers),
+                              ContainingTypeAlignCharUnits);
 }
 
 namespace {
