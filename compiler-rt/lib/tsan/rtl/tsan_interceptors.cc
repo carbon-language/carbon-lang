@@ -66,6 +66,8 @@ typedef long long_t;  // NOLINT
 
 typedef void (*sighandler_t)(int sig);
 
+#define errno (*__errno_location())
+
 union pthread_attr_t {
   char size[kPthreadAttrSize];
   void *align;
@@ -450,7 +452,7 @@ static bool fix_mmap_addr(void **addr, long_t sz, int flags) {
   if (*addr) {
     if (!IsAppMem((uptr)*addr) || !IsAppMem((uptr)*addr + sz - 1)) {
       if (flags & MAP_FIXED) {
-        *__errno_location() = EINVAL;
+        errno = EINVAL;
         return false;
       } else {
         *addr = 0;
@@ -1349,10 +1351,25 @@ static void process_pending_signals(ThreadState *thr) {
       signal->armed = false;
       if (sigactions[sig].sa_handler != SIG_DFL
           && sigactions[sig].sa_handler != SIG_IGN) {
+        // Insure that the handler does not spoil errno.
+        const int saved_errno = errno;
+        errno = 0;
         if (signal->sigaction)
           sigactions[sig].sa_sigaction(sig, &signal->siginfo, &uctx);
         else
           sigactions[sig].sa_handler(sig);
+        if (errno != 0) {
+          ScopedInRtl in_rtl;
+          StackTrace stack;
+          uptr pc = signal->sigaction ?
+              (uptr)sigactions[sig].sa_sigaction :
+              (uptr)sigactions[sig].sa_handler;
+          stack.Init(&pc, 1);
+          ScopedReport rep(ReportTypeErrnoInSignal);
+          rep.AddStack(&stack);
+          OutputReport(rep, rep.GetReport()->stacks[0]);
+        }
+        errno = saved_errno;
       }
     }
   }
