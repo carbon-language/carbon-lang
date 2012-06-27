@@ -52,15 +52,6 @@ STATISTIC(NumTimesRetriedWithoutInlining,
             "The # of times we re-evaluated a call without inlining");
 
 //===----------------------------------------------------------------------===//
-// Utility functions.
-//===----------------------------------------------------------------------===//
-
-static inline Selector GetNullarySelector(const char* name, ASTContext &Ctx) {
-  IdentifierInfo* II = &Ctx.Idents.get(name);
-  return Ctx.Selectors.getSelector(0, &II);
-}
-
-//===----------------------------------------------------------------------===//
 // Engine construction and deletion.
 //===----------------------------------------------------------------------===//
 
