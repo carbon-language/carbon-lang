@@ -30,26 +30,39 @@ add_asan_test(AsanNoInstrumentationTests
 	asan_break_optimization.cc
 	)
 
-# FIXME: Currently, this detection isn't working. Assume we're doing
-# a bootstrap build for now.
-set(HOST_HAS_ASAN on)
-#check_cxx_compiler_flag("-faddress-sanitizer" HOST_HAS_ASAN)
 
-if(HOST_HAS_ASAN)
+# We only support building instrumented tests when we're not cross compiling
+# and targeting a unix-like system where we can predict viable compilation and
+# linking strategies.
+if("${CMAKE_HOST_SYSTEM}" STREQUAL "${CMAKE_SYSTEM}" AND UNIX)
+
+  # This function is a custom routine to manage manually compiling source files
+  # for unit tests with the just-built Clang binary, using the ASan
+  # instrumentation, and linking them into a test executable.
+  function(add_asan_compile_command source)
+    add_custom_command(
+      OUTPUT "${source}.asan.o"
+      COMMAND clang
+              -faddress-sanitizer ${ASAN_CFLAGS}
+              -mllvm "-asan-blacklist=${CMAKE_CURRENT_SOURCE_DIR}/asan_test.ignore"
+              -DASAN_HAS_BLACKLIST=1
+              -DASAN_HAS_EXCEPTIONS=1
+              -DASAN_NEEDS_SEGV=1
+              -DASAN_UAR=0
+              -c -o "${source}.asan.o"
+              ${CMAKE_CURRENT_SOURCE_DIR}/${source}
+      MAIN_DEPENDENCY ${source}
+      DEPENDS clang ${ARGN}
+      )
+  endfunction()
+
+  add_asan_compile_command(asan_globals_test.cc)
+  add_asan_compile_command(asan_test.cc)
+
 	add_asan_test(AsanInstrumentationTests
-		asan_globals_test.cc
-		asan_test.cc
+		asan_globals_test.cc.asan.o
+		asan_test.cc.asan.o
 		asan_break_optimization.cc
 		)
-	set_property(TARGET AsanInstrumentationTests APPEND_STRING PROPERTY COMPILE_FLAGS
-		" -faddress-sanitizer ${ASAN_CFLAGS}")
-	set_property(TARGET AsanInstrumentationTests APPEND_STRING PROPERTY COMPILE_FLAGS
-		" -mllvm -asan-blacklist=${CMAKE_CURRENT_SOURCE_DIR}/asan_test.ignore")
-	set_property(TARGET AsanInstrumentationTests APPEND PROPERTY COMPILE_DEFINITIONS
-		ASAN_HAS_BLACKLIST=1
-		ASAN_HAS_EXCEPTIONS=1
-		ASAN_NEEDS_SEGV=1
-		ASAN_UAR=0
-		)
-endif()
 
+endif()
