@@ -100,7 +100,7 @@ if(PYTHONINTERP_FOUND)
     add_dependencies(check-all clang-test.deps)
     if ( LLVM_INCLUDE_TESTS )
       add_dependencies(clang-test.deps ClangUnitTests)
-      add_dependencies(check-all check.deps)
+      add_dependencies(check-all check-llvm.deps)
     endif ( LLVM_INCLUDE_TESTS )
     add_dependencies(clang-test.deps
                      llvm-dis llc opt
