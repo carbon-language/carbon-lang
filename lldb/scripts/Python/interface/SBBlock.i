@@ -123,6 +123,10 @@ public:
                 count = len(self)
                 if type(key) is int:
                     return self.sbblock.get_range_at_index (key);
+                if isinstance(key, SBAddress):
+                    range_idx = self.sbblock.GetRangeIndexForBlockAddress(key);
+                    if range_idx < len(self):
+                        return [self.sbblock.GetRangeStartAddress(range_idx), self.sbblock.GetRangeEndAddress(range_idx)]
                 else:
                     print "error: unsupported item type: %s" % type(key)
                 return None
