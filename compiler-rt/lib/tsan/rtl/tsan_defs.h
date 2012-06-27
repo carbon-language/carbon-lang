@@ -14,7 +14,6 @@
 #ifndef TSAN_DEFS_H
 #define TSAN_DEFS_H
 
-#include "interception/interception.h"
 #include "sanitizer_common/sanitizer_internal_defs.h"
 #include "sanitizer_common/sanitizer_libc.h"
 #include "tsan_stat.h"
@@ -155,9 +154,29 @@ class StackTrace;
 
 }  // namespace __tsan
 
-DECLARE_REAL(void*, memset, void *ptr, int v, uptr size);
-DECLARE_REAL(void*, memcpy, void *dst, const void *src, uptr size);
-DECLARE_REAL(int, strncmp, const char *s1, const char *s2, uptr n);
-DECLARE_REAL(const char*, strstr, const char *s1, const char *s2);
+extern "C" inline void *ALWAYS_INLINE
+memset(void *ptr, int v, uptr size) NOTHROW {
+  for (uptr i = 0; i < size; i++)
+    ((char*)ptr)[i] = (char)v;
+  return ptr;
+}
+
+extern "C" inline void *ALWAYS_INLINE
+memcpy(void *dst, const void *src, uptr size) NOTHROW {
+  for (uptr i = 0; i < size; i++)
+    ((char*)dst)[i] = ((char*)src)[i];
+  return dst;
+}
+
+extern "C" inline int ALWAYS_INLINE
+memcmp(const void *p1, const void *p2, uptr size) NOTHROW {
+  for (uptr i = 0; i < size; i++) {
+    if (((unsigned char*)p1)[i] < ((unsigned char*)p2)[i])
+      return -1;
+    if (((unsigned char*)p1)[i] > ((unsigned char*)p2)[i])
+      return 1;
+  }
+  return 0;
+}
 
 #endif  // TSAN_DEFS_H

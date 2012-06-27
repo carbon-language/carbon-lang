@@ -149,7 +149,7 @@ static SectionDesc *GetSectionDesc(uptr addr) {
 static ReportStack *NewFrame(uptr addr) {
   ReportStack *ent = (ReportStack*)internal_alloc(MBlockReportStack,
                                                   sizeof(ReportStack));
-  REAL(memset)(ent, 0, sizeof(*ent));
+  internal_memset(ent, 0, sizeof(*ent));
   ent->pc = addr;
   return ent;
 }
@@ -181,12 +181,12 @@ ReportStack *SymbolizeCode(uptr addr) {
   char *pos = (char*)internal_strchr(func, '\n');
   if (pos && func[0] != '?') {
     res->func = (char*)internal_alloc(MBlockReportStack, pos - func + 1);
-    REAL(memcpy)(res->func, func, pos - func);
+    internal_memcpy(res->func, func, pos - func);
     res->func[pos - func] = 0;
     char *pos2 = (char*)internal_strchr(pos, ':');
     if (pos2) {
       res->file = (char*)internal_alloc(MBlockReportStack, pos2 - pos - 1 + 1);
-      REAL(memcpy)(res->file, pos + 1, pos2 - pos - 1);
+      internal_memcpy(res->file, pos + 1, pos2 - pos - 1);
       res->file[pos2 - pos - 1] = 0;
       res->line = atoi(pos2 + 1);
      }
@@ -196,43 +196,6 @@ ReportStack *SymbolizeCode(uptr addr) {
 
 ReportStack *SymbolizeData(uptr addr) {
   return 0;
-  /*
-  if (base == 0)
-    base = GetImageBase();
-  int res = 0;
-  InternalScopedBuf<char> cmd(1024);
-  internal_snprintf(cmd, cmd.Size(),
-  "nm -alC %s|grep \"%zx\"|awk '{printf(\"%%s\\n%%s\", $3, $4)}' > tsan.tmp2",
-    exe, (addr - base));
-  if (system(cmd))
-    return 0;
-  FILE* f3 = fopen("tsan.tmp2", "rb");
-  if (f3) {
-    InternalScopedBuf<char> tmp(1024);
-    if (fread(tmp, 1, tmp.Size(), f3) <= 0)
-      return 0;
-    char *pos = strchr(tmp, '\n');
-    if (pos && tmp[0] != '?') {
-      res = 1;
-      symb[0].module = 0;
-      symb[0].offset = addr;
-      symb[0].name = alloc->Alloc<char>(pos - tmp + 1);
-      REAL(memcpy)(symb[0].name, tmp, pos - tmp);
-      symb[0].name[pos - tmp] = 0;
-      symb[0].file = 0;
-      symb[0].line = 0;
-      char *pos2 = strchr(pos, ':');
-      if (pos2) {
-        symb[0].file = alloc->Alloc<char>(pos2 - pos - 1 + 1);
-        REAL(memcpy)(symb[0].file, pos + 1, pos2 - pos - 1);
-        symb[0].file[pos2 - pos - 1] = 0;
-        symb[0].line = atoi(pos2 + 1);
-      }
-    }
-    fclose(f3);
-  }
-  return res;
-  */
 }
 
 }  // namespace __tsan

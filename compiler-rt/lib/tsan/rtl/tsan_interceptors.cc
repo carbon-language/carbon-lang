@@ -172,6 +172,17 @@ class ScopedInterceptor {
       return REAL(func)(__VA_ARGS__); \
 /**/
 
+#define SCOPED_INTERCEPTOR_LIBC(func, ...) \
+    ThreadState *thr = cur_thread(); \
+    StatInc(thr, StatInterceptor); \
+    StatInc(thr, StatInt_##func); \
+    ScopedInterceptor si(thr, #func, callpc); \
+    const uptr pc = (uptr)&func; \
+    (void)pc; \
+    if (thr->in_rtl > 1) \
+      return REAL(func)(__VA_ARGS__); \
+/**/
+
 #define TSAN_INTERCEPTOR(ret, func, ...) INTERCEPTOR(ret, func, __VA_ARGS__)
 #define TSAN_INTERCEPT(func) INTERCEPT_FUNCTION(func)
 
@@ -321,7 +332,7 @@ TSAN_INTERCEPTOR(void*, calloc, uptr size, uptr n) {
   {
     SCOPED_INTERCEPTOR_RAW(calloc, size, n);
     p = user_alloc(thr, pc, n * size);
-    REAL(memset)(p, 0, n * size);
+    internal_memset(p, 0, n * size);
   }
   invoke_malloc_hook(p, n * size);
   return p;
@@ -354,24 +365,46 @@ TSAN_INTERCEPTOR(void, cfree, void *p) {
   user_free(thr, pc, p);
 }
 
-TSAN_INTERCEPTOR(uptr, strlen, const void *s) {
+TSAN_INTERCEPTOR(uptr, strlen, const char *s) {
   SCOPED_TSAN_INTERCEPTOR(strlen, s);
-  uptr len = REAL(strlen)(s);
+  uptr len = internal_strlen(s);
   MemoryAccessRange(thr, pc, (uptr)s, len + 1, false);
   return len;
 }
 
-TSAN_INTERCEPTOR(void*, memset, void *dst, int v, uptr size) {
-  SCOPED_TSAN_INTERCEPTOR(memset, dst, v, size);
+DECLARE_REAL(void*, memset, void *dst, int v, uptr size);
+DECLARE_REAL(void*, memcpy, void *dst, const void *src, uptr size);
+DECLARE_REAL(int, memcmp, const void *s1, const void *s2, uptr n);
+extern "C" void *__interceptor_memset(void *dst, int v, uptr size);
+extern "C" void *__interceptor_memcpy(void *dst, const void *src, uptr size);
+extern "C" int __interceptor_memcmp(const void *s1, const void *s2, uptr n);
+
+namespace __tsan {
+void *intercept_memset(uptr callpc, void *dst, int v, uptr size) {
+  SCOPED_INTERCEPTOR_LIBC(memset, dst, v, size);
   MemoryAccessRange(thr, pc, (uptr)dst, size, true);
   return REAL(memset)(dst, v, size);
 }
 
-TSAN_INTERCEPTOR(void*, memcpy, void *dst, const void *src, uptr size) {
-  SCOPED_TSAN_INTERCEPTOR(memcpy, dst, src, size);
+void *intercept_memcpy(uptr callpc, void *dst, const void *src, uptr size) {
+  SCOPED_INTERCEPTOR_LIBC(memcpy, dst, src, size);
   MemoryAccessRange(thr, pc, (uptr)dst, size, true);
   MemoryAccessRange(thr, pc, (uptr)src, size, false);
   return REAL(memcpy)(dst, src, size);
+}
+
+int intercept_memcmp(uptr callpc, const void *s1, const void *s2, uptr n) {
+  SCOPED_INTERCEPTOR_LIBC(memcmp, s1, s2, n);
+  int res = 0;
+  uptr len = 0;
+  for (; len < n; len++) {
+    if ((res = ((unsigned char*)s1)[len] - ((unsigned char*)s2)[len]))
+      break;
+  }
+  MemoryAccessRange(thr, pc, (uptr)s1, len < n ? len + 1 : n, false);
+  MemoryAccessRange(thr, pc, (uptr)s2, len < n ? len + 1 : n, false);
+  return res;
+}
 }
 
 TSAN_INTERCEPTOR(int, strcmp, const char *s1, const char *s2) {
@@ -419,52 +452,39 @@ TSAN_INTERCEPTOR(void*, memmove, void *dst, void *src, uptr n) {
   return REAL(memmove)(dst, src, n);
 }
 
-TSAN_INTERCEPTOR(int, memcmp, const void *s1, const void *s2, uptr n) {
-  SCOPED_TSAN_INTERCEPTOR(memcmp, s1, s2, n);
-  int res = 0;
-  uptr len = 0;
-  for (; len < n; len++) {
-    if ((res = ((unsigned char*)s1)[len] - ((unsigned char*)s2)[len]))
-      break;
-  }
-  MemoryAccessRange(thr, pc, (uptr)s1, len < n ? len + 1 : n, false);
-  MemoryAccessRange(thr, pc, (uptr)s2, len < n ? len + 1 : n, false);
-  return res;
-}
-
-TSAN_INTERCEPTOR(void*, strchr, void *s, int c) {
+TSAN_INTERCEPTOR(char*, strchr, char *s, int c) {
   SCOPED_TSAN_INTERCEPTOR(strchr, s, c);
-  void *res = REAL(strchr)(s, c);
-  uptr len = res ? (char*)res - (char*)s + 1 : REAL(strlen)(s) + 1;
+  char *res = REAL(strchr)(s, c);
+  uptr len = res ? (char*)res - (char*)s + 1 : internal_strlen(s) + 1;
   MemoryAccessRange(thr, pc, (uptr)s, len, false);
   return res;
 }
 
-TSAN_INTERCEPTOR(void*, strchrnul, void *s, int c) {
+TSAN_INTERCEPTOR(char*, strchrnul, char *s, int c) {
   SCOPED_TSAN_INTERCEPTOR(strchrnul, s, c);
-  void *res = REAL(strchrnul)(s, c);
+  char *res = REAL(strchrnul)(s, c);
   uptr len = (char*)res - (char*)s + 1;
   MemoryAccessRange(thr, pc, (uptr)s, len, false);
   return res;
 }
 
-TSAN_INTERCEPTOR(void*, strrchr, void *s, int c) {
+TSAN_INTERCEPTOR(char*, strrchr, char *s, int c) {
   SCOPED_TSAN_INTERCEPTOR(strrchr, s, c);
-  MemoryAccessRange(thr, pc, (uptr)s, REAL(strlen)(s) + 1, false);
+  MemoryAccessRange(thr, pc, (uptr)s, internal_strlen(s) + 1, false);
   return REAL(strrchr)(s, c);
 }
 
-TSAN_INTERCEPTOR(void*, strcpy, void *dst, const void *src) {  // NOLINT
+TSAN_INTERCEPTOR(char*, strcpy, char *dst, const char *src) {  // NOLINT
   SCOPED_TSAN_INTERCEPTOR(strcpy, dst, src);  // NOLINT
-  uptr srclen = REAL(strlen)(src);
+  uptr srclen = internal_strlen(src);
   MemoryAccessRange(thr, pc, (uptr)dst, srclen + 1, true);
   MemoryAccessRange(thr, pc, (uptr)src, srclen + 1, false);
   return REAL(strcpy)(dst, src);  // NOLINT
 }
 
-TSAN_INTERCEPTOR(void*, strncpy, void *dst, void *src, uptr n) {
+TSAN_INTERCEPTOR(char*, strncpy, char *dst, char *src, uptr n) {
   SCOPED_TSAN_INTERCEPTOR(strncpy, dst, src, n);
-  uptr srclen = REAL(strlen)(src);
+  uptr srclen = internal_strlen(src);
   MemoryAccessRange(thr, pc, (uptr)dst, n, true);
   MemoryAccessRange(thr, pc, (uptr)src, min(srclen + 1, n), false);
   return REAL(strncpy)(dst, src, n);
@@ -473,8 +493,8 @@ TSAN_INTERCEPTOR(void*, strncpy, void *dst, void *src, uptr n) {
 TSAN_INTERCEPTOR(const char*, strstr, const char *s1, const char *s2) {
   SCOPED_TSAN_INTERCEPTOR(strstr, s1, s2);
   const char *res = REAL(strstr)(s1, s2);
-  uptr len1 = REAL(strlen)(s1);
-  uptr len2 = REAL(strlen)(s2);
+  uptr len1 = internal_strlen(s1);
+  uptr len2 = internal_strlen(s2);
   MemoryAccessRange(thr, pc, (uptr)s1, len1 + 1, false);
   MemoryAccessRange(thr, pc, (uptr)s2, len2 + 1, false);
   return res;
@@ -1224,7 +1244,7 @@ TSAN_INTERCEPTOR(uptr, fwrite, const void *p, uptr size, uptr nmemb, void *f) {
 
 TSAN_INTERCEPTOR(int, puts, const char *s) {
   SCOPED_TSAN_INTERCEPTOR(puts, s);
-  MemoryAccessRange(thr, pc, (uptr)s, REAL(strlen)(s), false);
+  MemoryAccessRange(thr, pc, (uptr)s, internal_strlen(s), false);
   return REAL(puts)(s);
 }
 

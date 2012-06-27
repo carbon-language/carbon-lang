@@ -94,7 +94,7 @@ class Vector {
       cap = size;
     T *p = (T*)internal_alloc(typ_, cap * sizeof(T));
     if (cap0) {
-      REAL(memcpy)(p, begin_, cap0 * sizeof(T));
+      internal_memcpy(p, begin_, cap0 * sizeof(T));
       internal_free(begin_);
     }
     begin_ = p;

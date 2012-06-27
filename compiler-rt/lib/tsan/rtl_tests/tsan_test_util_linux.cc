@@ -33,6 +33,9 @@ static __thread bool expect_report;
 static __thread bool expect_report_reported;
 static __thread ReportType expect_report_type;
 
+extern "C" void *__interceptor_memcpy(void*, const void*, uptr);
+extern "C" void *__interceptor_memset(void*, int, uptr);
+
 static void *BeforeInitThread(void *param) {
   (void)param;
   return 0;
@@ -298,10 +301,10 @@ void ScopedThread::Impl::HandleEvent(Event *ev) {
     static_cast<Mutex*>(ev->ptr)->ReadUnlock();
     break;
   case Event::MEMCPY:
-    memcpy(ev->ptr, (void*)ev->arg, ev->arg2);
+    __interceptor_memcpy(ev->ptr, (void*)ev->arg, ev->arg2);
     break;
   case Event::MEMSET:
-    memset(ev->ptr, ev->arg, ev->arg2);
+    __interceptor_memset(ev->ptr, ev->arg, ev->arg2);
     break;
   default: CHECK(0);
   }
