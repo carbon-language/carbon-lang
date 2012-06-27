@@ -144,6 +144,13 @@ class EverythingUsed {
   int by_initializer_;
 };
 
+class HasFeatureTest {
+#if __has_feature(attribute_unused_on_fields)
+  int unused_; // expected-warning{{private field 'unused_' is not used}}
+  int unused2_ __attribute__((unused)); // no-warning
+#endif
+};
+
 namespace templates {
 class B {
   template <typename T> void f(T t);
