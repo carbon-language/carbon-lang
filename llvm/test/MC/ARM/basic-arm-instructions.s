@@ -601,6 +601,12 @@ Lforward:
 @ CHECK: dsb	oshst                   @ encoding: [0x42,0xf0,0x7f,0xf5]
 @ CHECK: dsb	sy                      @ encoding: [0x4f,0xf0,0x7f,0xf5]
 
+@ With capitals
+        dsb SY
+        dsb OSHST
+
+@ CHECK: dsb	sy                      @ encoding: [0x4f,0xf0,0x7f,0xf5]
+@ CHECK: dsb	oshst                   @ encoding: [0x42,0xf0,0x7f,0xf5]
 @------------------------------------------------------------------------------
 @ EOR
 @------------------------------------------------------------------------------

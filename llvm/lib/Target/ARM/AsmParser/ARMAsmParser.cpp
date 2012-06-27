@@ -3260,7 +3260,7 @@ parseMemBarrierOptOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
     return MatchOperand_NoMatch;
   StringRef OptStr = Tok.getString();
 
-  unsigned Opt = StringSwitch<unsigned>(OptStr.slice(0, OptStr.size()))
+  unsigned Opt = StringSwitch<unsigned>(OptStr.slice(0, OptStr.size()).lower())
     .Case("sy",    ARM_MB::SY)
     .Case("st",    ARM_MB::ST)
     .Case("sh",    ARM_MB::ISH)
