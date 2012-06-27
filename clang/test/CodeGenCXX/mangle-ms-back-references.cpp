@@ -1,5 +1,11 @@
 // RUN: %clang_cc1 -fms-extensions -fblocks -emit-llvm %s -o - -cxx-abi microsoft -triple=i386-pc-win32 | FileCheck %s
 
+// NOTE on the "CURRENT" prefix: some things are mangled incorrectly as of
+// writing. If you find a CURRENT-test that fails with your patch, please test
+// if your patch has actually fixed a problem in the mangler and replace the
+// corresponding CORRECT line with a CHECK.
+// RUN: %clang_cc1 -fms-extensions -fblocks -emit-llvm %s -o - -cxx-abi microsoft -triple=i386-pc-win32 | FileCheck -check-prefix CURRENT %s
+
 void f1(const char* a, const char* b) {}
 // CHECK: "\01?f1@@YAXPBD0@Z"
 
@@ -109,6 +115,27 @@ void bar(NA::Y<X> x) {}
 
 void spam(NA::Y<NA::X> x) {}
 // CHECK: "\01?spam@NB@PR13207@@YAXV?$Y@VX@NA@PR13207@@@NA@2@@Z"
+
+// The following CURRENT line is here to improve the precision of the "scanning
+// from here" reports of FileCheck.
+// CURRENT: "\01?spam@NB@PR13207@@YAXV?$Y@VX@NA@PR13207@@@NA@2@@Z"
+
+// The tests below currently fail:
+void foobar(NA::Y<Y<X> > a, Y<Y<X> >) {}
+// CURRENT: "\01?foobar@NB@PR13207@@YAXV?$Y@V?$Y@VX@NB@PR13207@@@NB@PR13207@@@NA@2@V?$Y@V?$Y@VX@NB@PR13207@@@NB@PR13207@@@12@@Z"
+// CORRECT: "\01?foobar@NB@PR13207@@YAXV?$Y@V?$Y@VX@NB@PR13207@@@NB@PR13207@@@NA@2@V312@@Z"
+
+void foobarspam(Y<X> a, NA::Y<Y<X> > b, Y<Y<X> >) {}
+// CURRENT: "\01?foobarspam@NB@PR13207@@YAXV?$Y@VX@NB@PR13207@@@12@V?$Y@V?$Y@VX@NB@PR13207@@@NB@PR13207@@@NA@2@V?$Y@V?$Y@VX@NB@PR13207@@@NB@PR13207@@@12@@Z"
+// CORRECT: "\01?foobarspam@NB@PR13207@@YAXV?$Y@VX@NB@PR13207@@@12@V?$Y@V?$Y@VX@NB@PR13207@@@NB@PR13207@@@NA@2@V412@@Z"
+
+void foobarbaz(Y<X> a, NA::Y<Y<X> > b, Y<Y<X> >, Y<Y<X> > c) {}
+// CURRENT: "\01?foobarbaz@NB@PR13207@@YAXV?$Y@VX@NB@PR13207@@@12@V?$Y@V?$Y@VX@NB@PR13207@@@NB@PR13207@@@NA@2@V?$Y@V?$Y@VX@NB@PR13207@@@NB@PR13207@@@12@2@Z"
+// CORRECT: "\01?foobarbaz@NB@PR13207@@YAXV?$Y@VX@NB@PR13207@@@12@V?$Y@V?$Y@VX@NB@PR13207@@@NB@PR13207@@@NA@2@V412@2@Z"
+
+void foobarbazqux(Y<X> a, NA::Y<Y<X> > b, Y<Y<X> >, Y<Y<X> > c , NA::Y<Y<Y<X> > > d) {}
+// CURRENT: "\01?foobarbazqux@NB@PR13207@@YAXV?$Y@VX@NB@PR13207@@@12@V?$Y@V?$Y@VX@NB@PR13207@@@NB@PR13207@@@NA@2@V?$Y@V?$Y@VX@NB@PR13207@@@NB@PR13207@@@12@2V?$Y@V?$Y@V?$Y@VX@NB@PR13207@@@NB@PR13207@@@NB@PR13207@@@32@@Z"
+// CORRECT: "\01?foobarbazqux@NB@PR13207@@YAXV?$Y@VX@NB@PR13207@@@12@V?$Y@V?$Y@VX@NB@PR13207@@@NB@PR13207@@@NA@2@V412@2V?$Y@V?$Y@V?$Y@VX@NB@PR13207@@@NB@PR13207@@@NB@PR13207@@@52@@Z"
 }
 
 namespace NC {
