@@ -117,6 +117,10 @@ private:
 void MipsDAGToDAGISel::InitGlobalBaseReg(MachineFunction &MF) {
   MipsFunctionInfo *MipsFI = MF.getInfo<MipsFunctionInfo>();
 
+  if (((MF.getTarget().getRelocationModel() == Reloc::Static) ||
+       Subtarget.inMips16Mode()) && !MipsFI->globalBaseRegSet())
+    return;
+
   MachineBasicBlock &MBB = MF.front();
   MachineBasicBlock::iterator I = MBB.begin();
   MachineRegisterInfo &RegInfo = MF.getRegInfo();
