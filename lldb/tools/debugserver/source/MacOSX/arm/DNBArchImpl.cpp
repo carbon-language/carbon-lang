@@ -62,8 +62,6 @@
 // I'm seeing this, instead.
 #define WATCHPOINT_OCCURRED     ((uint32_t)(10u))
 
-//#define DNB_ARCH_MACH_ARM_DEBUG_SW_STEP 1
-
 static const uint8_t g_arm_breakpoint_opcode[] = { 0xFE, 0xDE, 0xFF, 0xE7 };
 static const uint8_t g_thumb_breakpooint_opcode[] = { 0xFE, 0xDE };
 
@@ -340,23 +338,20 @@ DNBArchMachARM::ThreadWillResume()
     // Do we need to step this thread? If so, let the mach thread tell us so.
     if (m_thread->IsStepping())
     {
-        bool step_handled = false;
         // This is the primary thread, let the arch do anything it needs
         if (NumSupportedHardwareBreakpoints() > 0)
         {
-#if defined (DNB_ARCH_MACH_ARM_DEBUG_SW_STEP)
-            bool half_step = m_hw_single_chained_step_addr != INVALID_NUB_ADDRESS;
-#endif
-            step_handled = EnableHardwareSingleStep(true) == KERN_SUCCESS;
-#if defined (DNB_ARCH_MACH_ARM_DEBUG_SW_STEP)
-            if (!half_step)
-                step_handled = false;
-#endif
+            if (EnableHardwareSingleStep(true) != KERN_SUCCESS)
+            {
+                DNBLogThreaded("DNBArchMachARM::ThreadWillResume() failed to enable hardware single step");
+            }
         }
-
-        if (!step_handled)
+        else
         {
-            SetSingleStepSoftwareBreakpoints();
+            if (SetSingleStepSoftwareBreakpoints() != KERN_SUCCESS)
+            {
+                DNBLogThreaded("DNBArchMachARM::ThreadWillResume() failed to enable software single step");
+            }
         }
     }
 
@@ -434,32 +429,6 @@ DNBArchMachARM::ThreadDidStop()
         // We are single stepping, was this the primary thread?
         if (m_thread->IsStepping())
         {
-#if defined (DNB_ARCH_MACH_ARM_DEBUG_SW_STEP)
-            success = EnableHardwareSingleStep(false) == KERN_SUCCESS;
-            // Hardware single step must work if we are going to test software
-            // single step functionality
-            assert(success);
-            if (m_hw_single_chained_step_addr == INVALID_NUB_ADDRESS && m_sw_single_step_next_pc != INVALID_NUB_ADDRESS)
-            {
-                uint32_t sw_step_next_pc = m_sw_single_step_next_pc & 0xFFFFFFFEu;
-                bool sw_step_next_pc_is_thumb = (m_sw_single_step_next_pc & 1) != 0;
-                bool actual_next_pc_is_thumb = (m_state.context.gpr.__cpsr & 0x20) != 0;
-                if (m_state.context.gpr.__pc != sw_step_next_pc)
-                {
-                    DNBLogError("curr pc = 0x%8.8x - calculated single step target PC was incorrect: 0x%8.8x != 0x%8.8x", m_state.context.gpr.__pc, sw_step_next_pc, m_state.context.gpr.__pc);
-                    exit(1);
-                }
-                if (actual_next_pc_is_thumb != sw_step_next_pc_is_thumb)
-                {
-                    DNBLogError("curr pc = 0x%8.8x - calculated single step calculated mode mismatch: sw single mode = %s != %s",
-                                m_state.context.gpr.__pc,
-                                actual_next_pc_is_thumb ? "Thumb" : "ARM",
-                                sw_step_next_pc_is_thumb ? "Thumb" : "ARM");
-                    exit(1);
-                }
-                m_sw_single_step_next_pc = INVALID_NUB_ADDRESS;
-            }
-#else
             // Are we software single stepping?
             if (NUB_BREAK_ID_IS_VALID(m_sw_single_step_break_id) || m_sw_single_step_itblock_break_count)
             {
@@ -512,7 +481,6 @@ DNBArchMachARM::ThreadDidStop()
             }
             else
                 success = EnableHardwareSingleStep(false) == KERN_SUCCESS;
-#endif
         }
         else
         {
@@ -2153,11 +2121,6 @@ DNBArchMachARM::SetSingleStepSoftwareBreakpoints()
     {
         err = KERN_SUCCESS;
 
-#if defined DNB_ARCH_MACH_ARM_DEBUG_SW_STEP
-        m_sw_single_step_next_pc = next_pc;
-        if (next_pc_is_thumb)
-            m_sw_single_step_next_pc |= 1;  // Set bit zero if the next PC is expected to be Thumb
-#else
         const DNBBreakpoint *bp = m_thread->Process()->Breakpoints().FindByAddress(next_pc);
 
         if (bp == NULL)
@@ -2167,7 +2130,6 @@ DNBArchMachARM::SetSingleStepSoftwareBreakpoints()
                 err = KERN_INVALID_ARGUMENT;
             DNBLogThreadedIf(LOG_STEP, "%s: software single step breakpoint with breakID=%d set at 0x%8.8x", __FUNCTION__, m_sw_single_step_break_id, next_pc);
         }
-#endif
     }
 #else
     err.LogThreaded("%s: ARMDisassembler.framework support is disabled", __FUNCTION__);
