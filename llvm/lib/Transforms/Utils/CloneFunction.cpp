@@ -15,6 +15,7 @@
 
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Constants.h"
+#include "llvm/DebugInfo.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Instructions.h"
 #include "llvm/IntrinsicInst.h"
@@ -28,7 +29,6 @@
 #include "llvm/Transforms/Utils/ValueMapper.h"
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Analysis/InstructionSimplify.h"
-#include "llvm/Analysis/DebugInfo.h"
 #include "llvm/ADT/SmallVector.h"
 #include <map>
 using namespace llvm;

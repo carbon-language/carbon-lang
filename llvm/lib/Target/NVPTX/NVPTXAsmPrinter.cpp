@@ -12,17 +12,19 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "NVPTXAsmPrinter.h"
 #include "NVPTX.h"
 #include "NVPTXInstrInfo.h"
 #include "NVPTXTargetMachine.h"
 #include "NVPTXRegisterInfo.h"
-#include "NVPTXAsmPrinter.h"
+#include "NVPTXUtilities.h"
 #include "MCTargetDesc/NVPTXMCAsmInfo.h"
 #include "NVPTXNumRegisters.h"
-#include "../lib/CodeGen/AsmPrinter/DwarfDebug.h"
+#include "../lib/CodeGen/AsmPrinter/DwarfDebug.h" // FIXME: layering violation!
 #include "llvm/ADT/StringExtras.h"
-#include "llvm/GlobalVariable.h"
+#include "llvm/DebugInfo.h"
 #include "llvm/Function.h"
+#include "llvm/GlobalVariable.h"
 #include "llvm/Module.h"
 #include "llvm/CodeGen/Analysis.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
@@ -36,17 +38,13 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/DerivedTypes.h"
-#include "NVPTXUtilities.h"
 #include "llvm/Support/TimeValue.h"
-#include <sstream>
 #include "llvm/Support/CommandLine.h"
-#include "llvm/Analysis/DebugInfo.h"
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Assembly/Writer.h"
 #include "cl_common_defines.h"
-
-
+#include <sstream>
 using namespace llvm;
 
 

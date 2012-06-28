@@ -20,6 +20,7 @@
 #include "MipsSubtarget.h"
 #include "MipsMachineFunction.h"
 #include "llvm/Constants.h"
+#include "llvm/DebugInfo.h"
 #include "llvm/Type.h"
 #include "llvm/Function.h"
 #include "llvm/CodeGen/ValueTypes.h"
@@ -36,7 +37,6 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/STLExtras.h"
-#include "llvm/Analysis/DebugInfo.h"
 
 #define GET_REGINFO_TARGET_DESC
 #include "MipsGenRegisterInfo.inc"

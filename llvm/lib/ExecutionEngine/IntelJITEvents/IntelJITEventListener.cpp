@@ -16,11 +16,11 @@
 #include "llvm/ExecutionEngine/JITEventListener.h"
 
 #define DEBUG_TYPE "amplifier-jit-event-listener"
+#include "llvm/DebugInfo.h"
 #include "llvm/Function.h"
 #include "llvm/Metadata.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/OwningPtr.h"
-#include "llvm/Analysis/DebugInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/ExecutionEngine/IntelJITEventsWrapper.h"
 #include "llvm/Support/Debug.h"

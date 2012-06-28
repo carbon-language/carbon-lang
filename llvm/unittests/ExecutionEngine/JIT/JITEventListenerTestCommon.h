@@ -10,14 +10,14 @@
 #ifndef JIT_EVENT_LISTENER_TEST_COMMON_H
 #define JIT_EVENT_LISTENER_TEST_COMMON_H
 
+#include "llvm/DebugInfo.h"
+#include "llvm/Instructions.h"
+#include "llvm/Module.h"
 #include "llvm/Analysis/DIBuilder.h"
-#include "llvm/Analysis/DebugInfo.h"
 #include "llvm/CodeGen/MachineCodeInfo.h"
 #include "llvm/Config/config.h"
 #include "llvm/ExecutionEngine/JIT.h"
 #include "llvm/ExecutionEngine/JITEventListener.h"
-#include "llvm/Instructions.h"
-#include "llvm/Module.h"
 #include "llvm/Support/IRBuilder.h"
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/TypeBuilder.h"

@@ -16,14 +16,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Pass.h"
+#include "llvm/DebugInfo.h"
 #include "llvm/Function.h"
 #include "llvm/IntrinsicInst.h"
 #include "llvm/Metadata.h"
 #include "llvm/Module.h"
-#include "llvm/Assembly/Writer.h"
-#include "llvm/Analysis/DebugInfo.h"
+#include "llvm/Pass.h"
 #include "llvm/Analysis/Passes.h"
+#include "llvm/Assembly/Writer.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/raw_ostream.h"

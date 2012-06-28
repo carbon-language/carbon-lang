@@ -14,8 +14,8 @@
 #ifndef EVENT_LISTENER_COMMON_H
 #define EVENT_LISTENER_COMMON_H
 
+#include "llvm/DebugInfo.h"
 #include "llvm/Metadata.h"
-#include "llvm/Analysis/DebugInfo.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/Support/ValueHandle.h"
 #include "llvm/Support/Path.h"
