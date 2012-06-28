@@ -14,6 +14,7 @@ void *CFAllocatorDefaultDoubleFree(void *unused) {
   void *mem =  CFAllocatorAllocate(kCFAllocatorDefault, 5, 0);
   CFAllocatorDeallocate(kCFAllocatorDefault, mem);
   CFAllocatorDeallocate(kCFAllocatorDefault, mem);
+  return 0;
 }
 
 void CFAllocatorSystemDefaultDoubleFree() {
