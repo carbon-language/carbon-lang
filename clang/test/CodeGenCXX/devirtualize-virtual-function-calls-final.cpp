@@ -152,3 +152,37 @@ namespace Test8 {
     return static_cast<B*>(c)->foo();
   }
 }
+
+namespace Test9 {
+  struct A {
+    int a;
+  };
+  struct B {
+    int b;
+  };
+  struct C : public B, public A {
+  };
+  struct RA {
+    virtual A *f() {
+      return 0;
+    }
+  };
+  struct RC final : public RA {
+    virtual C *f() {
+      C *x = new C();
+      x->a = 1;
+      x->b = 2;
+      return x;
+    }
+  };
+  // CHECK: define {{.*}} @_ZN5Test91fEPNS_2RCE
+  A *f(RC *x) {
+    // FIXME: It should be possible to devirtualize this case, but that is
+    // not implemented yet.
+    // CHECK: getelementptr
+    // CHECK-NEXT: %[[FUNC:.*]] = load
+    // CHECK-NEXT: bitcast
+    // CHECK-NEXT: = call {{.*}} %[[FUNC]]
+    return static_cast<RA*>(x)->f();
+  }
+}

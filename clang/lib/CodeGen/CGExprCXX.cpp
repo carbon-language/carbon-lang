@@ -202,6 +202,9 @@ RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE,
       // we don't have support for that yet, so do a virtual call.
       DevirtualizedMethod = NULL;
     }
+    if (DevirtualizedMethod && DevirtualizedMethod->getResultType() !=
+        MD->getResultType())
+      DevirtualizedMethod = NULL;
   }
 
   llvm::Value *This;
