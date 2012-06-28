@@ -277,7 +277,7 @@ namespace {
                       bool UseCycleCheck);
 
     Value *getReplacementPointerInput(LLVMContext& Context, Instruction *I,
-                     Instruction *J, unsigned o, bool &FlipMemInputs);
+                     Instruction *J, unsigned o, bool FlipMemInputs);
 
     void fillNewShuffleMask(LLVMContext& Context, Instruction *J,
                      unsigned MaskOffset, unsigned NumInElem,
@@ -297,12 +297,12 @@ namespace {
 
     void getReplacementInputsForPair(LLVMContext& Context, Instruction *I,
                      Instruction *J, SmallVector<Value *, 3> &ReplacedOperands,
-                     bool &FlipMemInputs);
+                     bool FlipMemInputs);
 
     void replaceOutputsOfPair(LLVMContext& Context, Instruction *I,
                      Instruction *J, Instruction *K,
                      Instruction *&InsertionPt, Instruction *&K1,
-                     Instruction *&K2, bool &FlipMemInputs);
+                     Instruction *&K2, bool FlipMemInputs);
 
     void collectPairLoadMoveSet(BasicBlock &BB,
                      DenseMap<Value *, Value *> &ChosenPairs,
@@ -313,6 +313,10 @@ namespace {
                      std::vector<Value *> &PairableInsts,
                      DenseMap<Value *, Value *> &ChosenPairs,
                      std::multimap<Value *, Value *> &LoadMoveSet);
+
+    void collectPtrInfo(std::vector<Value *> &PairableInsts,
+                        DenseMap<Value *, Value *> &ChosenPairs,
+                        DenseSet<Value *> &LowPtrInsts);
 
     bool canMoveUsesOfIAfterJ(BasicBlock &BB,
                      std::multimap<Value *, Value *> &LoadMoveSet,
@@ -1487,19 +1491,21 @@ namespace {
   // instruction that fuses I with J.
   Value *BBVectorize::getReplacementPointerInput(LLVMContext& Context,
                      Instruction *I, Instruction *J, unsigned o,
-                     bool &FlipMemInputs) {
+                     bool FlipMemInputs) {
     Value *IPtr, *JPtr;
     unsigned IAlignment, JAlignment;
     int64_t OffsetInElmts;
+
+    // Note: the analysis might fail here, that is why FlipMemInputs has
+    // been precomputed (OffsetInElmts must be unused here).
     (void) getPairPtrInfo(I, J, IPtr, JPtr, IAlignment, JAlignment,
                           OffsetInElmts);
 
     // The pointer value is taken to be the one with the lowest offset.
     Value *VPtr;
-    if (OffsetInElmts > 0) {
+    if (!FlipMemInputs) {
       VPtr = IPtr;
     } else {
-      FlipMemInputs = true;
       VPtr = JPtr;
     }
 
@@ -1970,8 +1976,7 @@ namespace {
   void BBVectorize::getReplacementInputsForPair(LLVMContext& Context,
                      Instruction *I, Instruction *J,
                      SmallVector<Value *, 3> &ReplacedOperands,
-                     bool &FlipMemInputs) {
-    FlipMemInputs = false;
+                     bool FlipMemInputs) {
     unsigned NumOperands = I->getNumOperands();
 
     for (unsigned p = 0, o = NumOperands-1; p < NumOperands; ++p, --o) {
@@ -2022,7 +2027,7 @@ namespace {
                      Instruction *J, Instruction *K,
                      Instruction *&InsertionPt,
                      Instruction *&K1, Instruction *&K2,
-                     bool &FlipMemInputs) {
+                     bool FlipMemInputs) {
     if (isa<StoreInst>(I)) {
       AA->replaceWithNewValue(I, K);
       AA->replaceWithNewValue(J, K);
@@ -2176,6 +2181,36 @@ namespace {
     }
   }
 
+  // As with the aliasing information, SCEV can also change because of
+  // vectorization. This information is used to compute relative pointer
+  // offsets; the necessary information will be cached here prior to
+  // fusion.
+  void BBVectorize::collectPtrInfo(std::vector<Value *> &PairableInsts,
+                                   DenseMap<Value *, Value *> &ChosenPairs,
+                                   DenseSet<Value *> &LowPtrInsts) {
+    for (std::vector<Value *>::iterator PI = PairableInsts.begin(),
+      PIE = PairableInsts.end(); PI != PIE; ++PI) {
+      DenseMap<Value *, Value *>::iterator P = ChosenPairs.find(*PI);
+      if (P == ChosenPairs.end()) continue;
+
+      Instruction *I = cast<Instruction>(P->first);
+      Instruction *J = cast<Instruction>(P->second);
+
+      if (!isa<LoadInst>(I) && !isa<StoreInst>(I))
+        continue;
+
+      Value *IPtr, *JPtr;
+      unsigned IAlignment, JAlignment;
+      int64_t OffsetInElmts;
+      if (!getPairPtrInfo(I, J, IPtr, JPtr, IAlignment, JAlignment,
+                          OffsetInElmts) || abs64(OffsetInElmts) != 1)
+        llvm_unreachable("Pre-fusion pointer analysis failed");
+
+      Value *LowPI = (OffsetInElmts > 0) ? I : J;
+      LowPtrInsts.insert(LowPI);
+    }
+  }
+
   // When the first instruction in each pair is cloned, it will inherit its
   // parent's metadata. This metadata must be combined with that of the other
   // instruction in a safe way.
@@ -2227,6 +2262,9 @@ namespace {
     std::multimap<Value *, Value *> LoadMoveSet;
     collectLoadMoveSet(BB, PairableInsts, ChosenPairs, LoadMoveSet);
 
+    DenseSet<Value *> LowPtrInsts;
+    collectPtrInfo(PairableInsts, ChosenPairs, LowPtrInsts);
+
     DEBUG(dbgs() << "BBV: initial: \n" << BB << "\n");
 
     for (BasicBlock::iterator PI = BB.getFirstInsertionPt(); PI != BB.end();) {
@@ -2266,7 +2304,10 @@ namespace {
         continue;
       }
 
-      bool FlipMemInputs;
+      bool FlipMemInputs = false;
+      if (isa<LoadInst>(I) || isa<StoreInst>(I))
+        FlipMemInputs = (LowPtrInsts.find(I) == LowPtrInsts.end());
+
       unsigned NumOperands = I->getNumOperands();
       SmallVector<Value *, 3> ReplacedOperands(NumOperands);
       getReplacementInputsForPair(Context, I, J, ReplacedOperands,
