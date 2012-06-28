@@ -1379,10 +1379,12 @@ static void DiagnoseARCUseOfWeakReceiver(Sema &S, Expr *Receiver) {
     ObjCMethodDecl *Method = ME->getMethodDecl();
     if (Method && Method->isSynthesized()) {
       Selector Sel = Method->getSelector();
-      if (Sel.getNumArgs() == 0)
+      if (Sel.getNumArgs() == 0) {
+        const DeclContext *Container = Method->getDeclContext();
         PDecl = 
-          S.LookupPropertyDecl(Method->getClassInterface(), 
+          S.LookupPropertyDecl(cast<ObjCContainerDecl>(Container),
                                Sel.getIdentifierInfoForSlot(0));
+      }
       if (PDecl)
         T = PDecl->getType();
     }
