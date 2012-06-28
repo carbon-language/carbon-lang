@@ -43,21 +43,21 @@
 // You can access original function by calling REAL(foo)(bar, baz).
 // By default, REAL(foo) will be visible only inside your interceptor, and if
 // you want to use it in other parts of RTL, you'll need to:
-//      3a) add DECLARE_REAL(int, foo, const char*, double); to a
+//      3a) add DECLARE_REAL(int, foo, const char*, double) to a
 //          header file.
 // However, if the call "INTERCEPT_FUNCTION(foo)" and definition for
 // INTERCEPTOR(..., foo, ...) are in different files, you'll instead need to:
-//      3b) add DECLARE_REAL_AND_INTERCEPTOR(int, foo, const char*, double);
+//      3b) add DECLARE_REAL_AND_INTERCEPTOR(int, foo, const char*, double)
 //          to a header file.
 
 // Notes: 1. Things may not work properly if macro INTERCEPT(...) {...} or
-//           DECLARE_REAL(...); are located inside namespaces.
+//           DECLARE_REAL(...) are located inside namespaces.
 //        2. On Mac you can also use: "OVERRIDE_FUNCTION(foo, zoo);" to
 //           effectively redirect calls from "foo" to "zoo". In this case
 //           you aren't required to implement
-//           INTERCEPTOR(int, foo, const char *bar, double baz);
+//           INTERCEPTOR(int, foo, const char *bar, double baz) {...}
 //           but instead you'll have to add
-//           DEFINE_REAL(int, foo, const char *bar, double baz); in your
+//           DEFINE_REAL(int, foo, const char *bar, double baz) in your
 //           source file (to define a pointer to overriden function).
 
 // How it works:

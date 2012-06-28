@@ -371,7 +371,7 @@ INTERCEPTOR(char*, strchr, const char *str, int c) {
 INTERCEPTOR(char*, index, const char *string, int c)
   ALIAS(WRAPPER_NAME(strchr));
 #else
-DEFINE_REAL(char*, index, const char *string, int c);
+DEFINE_REAL(char*, index, const char *string, int c)
 #endif
 
 INTERCEPTOR(int, strcasecmp, const char *s1, const char *s2) {

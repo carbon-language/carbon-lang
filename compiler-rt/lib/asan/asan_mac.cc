@@ -55,7 +55,7 @@ enum {
   MACOS_VERSION_UNKNOWN = 0,
   MACOS_VERSION_LEOPARD,
   MACOS_VERSION_SNOW_LEOPARD,
-  MACOS_VERSION_LION,
+  MACOS_VERSION_LION
 };
 
 static int GetMacosVersion() {
@@ -295,7 +295,7 @@ INTERCEPTOR(void, dispatch_async_f, dispatch_queue_t dq, void *ctxt,
                                 asan_dispatch_call_block_and_release);
 }
 
-DECLARE_REAL_AND_INTERCEPTOR(void, free, void *ptr);
+DECLARE_REAL_AND_INTERCEPTOR(void, free, void *ptr)
 
 INTERCEPTOR(void, dispatch_sync_f, dispatch_queue_t dq, void *ctxt,
                                    dispatch_function_t func) {

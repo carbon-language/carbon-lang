@@ -153,7 +153,7 @@ enum {
   CHUNK_AVAILABLE  = 0x57,
   CHUNK_ALLOCATED  = 0x32,
   CHUNK_QUARANTINE = 0x19,
-  CHUNK_MEMALIGN   = 0xDC,
+  CHUNK_MEMALIGN   = 0xDC
 };
 
 struct ChunkBase {
