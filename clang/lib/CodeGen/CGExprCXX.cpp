@@ -202,8 +202,14 @@ RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE,
       // we don't have support for that yet, so do a virtual call.
       DevirtualizedMethod = NULL;
     }
-    if (DevirtualizedMethod && DevirtualizedMethod->getResultType() !=
-        MD->getResultType())
+    // If the return types are not the same, this might be a case where more
+    // code needs to run to compensate for it. For example, the derived
+    // method might return a type that inherits form from the return
+    // type of MD and has a prefix.
+    // For now we just avoid devirtualizing these covariant cases.
+    if (DevirtualizedMethod &&
+        DevirtualizedMethod->getResultType().getCanonicalType() !=
+        MD->getResultType().getCanonicalType())
       DevirtualizedMethod = NULL;
   }
 
