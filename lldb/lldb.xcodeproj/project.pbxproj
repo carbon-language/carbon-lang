@@ -1208,7 +1208,7 @@
 		26D0DD5510FE555900271C65 /* BreakpointResolverName.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = BreakpointResolverName.cpp; path = source/Breakpoint/BreakpointResolverName.cpp; sourceTree = "<group>"; };
 		26D27C9D11ED3A4E0024D721 /* ELFHeader.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ELFHeader.cpp; sourceTree = "<group>"; };
 		26D27C9E11ED3A4E0024D721 /* ELFHeader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ELFHeader.h; sourceTree = "<group>"; };
-		26D55234159A7DB100708D8D /* libxml2.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libxml2.dylib; path = ../../../../../../usr/lib/libxml2.dylib; sourceTree = "<group>"; };
+		26D55234159A7DB100708D8D /* libxml2.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libxml2.dylib; path = /usr/lib/libxml2.dylib; sourceTree = "<absolute>"; };
 		26D5E15E135BAEA2006EA0A7 /* OptionGroupArchitecture.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = OptionGroupArchitecture.cpp; path = source/Interpreter/OptionGroupArchitecture.cpp; sourceTree = "<group>"; };
 		26D5E160135BAEB0006EA0A7 /* OptionGroupArchitecture.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = OptionGroupArchitecture.h; path = include/lldb/Interpreter/OptionGroupArchitecture.h; sourceTree = "<group>"; };
 		26D5E161135BB040006EA0A7 /* OptionGroupPlatform.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = OptionGroupPlatform.h; path = include/lldb/Interpreter/OptionGroupPlatform.h; sourceTree = "<group>"; };
@@ -1623,17 +1623,11 @@
 		08FB7794FE84155DC02AAC07 /* lldb */ = {
 			isa = PBXGroup;
 			children = (
-				26D55234159A7DB100708D8D /* libxml2.dylib */,
-				AFF87C8E150FF688000E1742 /* com.apple.debugserver.applist.plist */,
-				AFF87C8C150FF680000E1742 /* com.apple.debugserver.applist.plist */,
-				AFF87C8A150FF677000E1742 /* com.apple.debugserver.applist.plist */,
-				AFF87C88150FF672000E1742 /* com.apple.debugserver-secure.plist */,
-				AFF87C86150FF669000E1742 /* com.apple.debugserver.plist */,
 				26F5C32810F3DF7D009D5894 /* Libraries */,
+				264E8576159BE51A00E9D7A2 /* Resources */,
 				08FB7795FE84155DC02AAC07 /* Source */,
 				26F5C22410F3D950009D5894 /* Tools */,
 				1AB674ADFE9D54B511CA2CBB /* Products */,
-				2689FFCA13353D7A00698AC0 /* liblldb-core.a */,
 			);
 			name = lldb;
 			sourceTree = "<group>";
@@ -2091,6 +2085,18 @@
 				264A97BE133918BC0017F0BE /* PlatformRemoteGDBServer.h */,
 			);
 			name = "GDB Server";
+			sourceTree = "<group>";
+		};
+		264E8576159BE51A00E9D7A2 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				AFF87C8E150FF688000E1742 /* com.apple.debugserver.applist.plist */,
+				AFF87C8C150FF680000E1742 /* com.apple.debugserver.applist.plist */,
+				AFF87C8A150FF677000E1742 /* com.apple.debugserver.applist.plist */,
+				AFF87C88150FF672000E1742 /* com.apple.debugserver-secure.plist */,
+				AFF87C86150FF669000E1742 /* com.apple.debugserver.plist */,
+			);
+			name = Resources;
 			sourceTree = "<group>";
 		};
 		26579F55126A255E0007C5CB /* darwin-debug */ = {
@@ -2995,9 +3001,11 @@
 				265ABF6210F42EE900531910 /* DebugSymbols.framework */,
 				260C876910F538E700BB2B04 /* Foundation.framework */,
 				26F5C32A10F3DFDD009D5894 /* libedit.dylib */,
+				2689FFCA13353D7A00698AC0 /* liblldb-core.a */,
 				26F5C37410F3F61B009D5894 /* libobjc.dylib */,
 				26F5C32410F3DF23009D5894 /* libpython.dylib */,
 				26F5C32B10F3DFDD009D5894 /* libtermcap.dylib */,
+				26D55234159A7DB100708D8D /* libxml2.dylib */,
 				4C74CB6212288704006A8171 /* Carbon.framework */,
 				EDB919B414F6F10D008FF64B /* Security.framework */,
 			);
