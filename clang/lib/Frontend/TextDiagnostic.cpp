@@ -720,8 +720,11 @@ TextDiagnostic::printDiagnosticMessage(raw_ostream &OS,
 
   if (Columns)
     printWordWrapped(OS, Message, Columns, CurrentColumn);
-  else
-    OS << Message;
+  else {
+    bool Normal = true;
+    applyTemplateHighlighting(OS, Message, Normal);
+    assert(Normal && "Formatting should have returned to normal");
+  }
 
   if (ShowColors)
     OS.resetColor();
