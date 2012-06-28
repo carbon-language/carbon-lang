@@ -98,3 +98,47 @@ return:
   %retval.0 = phi i32 [ 42, %sw.default ], [ 4, %if.then ], [ 9, %if.end ]
   ret i32 %retval.0
 }
+
+; CHECK: @test5
+define i1 @test5(i32 %c) nounwind {
+  %cmp = icmp slt i32 %c, 5
+  br i1 %cmp, label %if.then, label %if.end
+
+if.then:
+  %cmp1 = icmp eq i32 %c, 4
+  br i1 %cmp1, label %if.end, label %if.end8
+
+if.end:
+  ret i1 true
+
+if.end8:
+  %cmp2 = icmp eq i32 %c, 3
+  %cmp3 = icmp eq i32 %c, 4
+  %cmp4 = icmp eq i32 %c, 6
+; CHECK: %or = or i1 false, false
+  %or = or i1 %cmp3, %cmp4
+; CHECK: ret i1 %cmp2
+  ret i1 %cmp2
+}
+
+; CHECK: @test6
+define i1 @test6(i32 %c) nounwind {
+  %cmp = icmp ule i32 %c, 7
+  br i1 %cmp, label %if.then, label %if.end
+
+if.then:
+; CHECK: icmp eq i32 %c, 6
+; CHECK: br i1
+  switch i32 %c, label %if.end [
+    i32 6, label %sw.bb
+    i32 8, label %sw.bb
+  ]
+
+if.end:
+  ret i1 true
+
+sw.bb:
+  %cmp2 = icmp eq i32 %c, 6
+; CHECK: ret i1 true
+  ret i1 %cmp2
+}
