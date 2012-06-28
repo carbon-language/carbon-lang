@@ -469,7 +469,7 @@ def interactive_crashlogs(options, args):
         if crash_log.error:
             print crash_log.error
             continue
-        if options.verbose:
+        if options.debug:
             crash_log.dump()
         if not crash_log.images:
             print 'error: no images in crash log "%s"' % (crash_log)
@@ -570,7 +570,7 @@ def SymbolicateCrashLog(crash_log, options):
     if crash_log.error:
         print crash_log.error
         return
-    if options.verbose:
+    if options.debug:
         crash_log.dump()
     if not crash_log.images:
         print 'error: no images in crash log'
@@ -616,10 +616,10 @@ def SymbolicateCrashLog(crash_log, options):
         for frame_idx, frame in enumerate(thread.frames):
             disassemble = (this_thread_crashed or options.disassemble_all_threads) and frame_idx < options.disassemble_depth;
             if frame_idx == 0:
-                symbolicated_frame_addresses = crash_log.symbolicate (frame.pc)
+                symbolicated_frame_addresses = crash_log.symbolicate (frame.pc, options.verbose)
             else:
                 # Any frame above frame zero and we have to subtract one to get the previous line entry
-                symbolicated_frame_addresses = crash_log.symbolicate (frame.pc - 1)
+                symbolicated_frame_addresses = crash_log.symbolicate (frame.pc - 1, options.verbose)
             
             if symbolicated_frame_addresses:
                 symbolicated_frame_address_idx = 0
@@ -651,9 +651,10 @@ def CreateSymbolicateCrashLogOptions(command_name, description, add_interactive_
     usage = "usage: %prog [options] <FILE> [FILE ...]"
     option_parser = optparse.OptionParser(description=description, prog='crashlog',usage=usage)
     option_parser.add_option('-v', '--verbose', action='store_true', dest='verbose', help='display verbose debug info', default=False)
+    option_parser.add_option('-g', '--debug', action='store_true', dest='debug', help='display verbose debug logging', default=False)
     option_parser.add_option('-a', '--load-all', action='store_true', dest='load_all_images', help='load all executable images, not just the images found in the crashed stack frames', default=False)
     option_parser.add_option('--images', action='store_true', dest='dump_image_list', help='show image list', default=False)
-    option_parser.add_option('-g', '--debug-delay', type='int', dest='debug_delay', metavar='NSEC', help='pause for NSEC seconds for debugger', default=0)
+    option_parser.add_option('--debug-delay', type='int', dest='debug_delay', metavar='NSEC', help='pause for NSEC seconds for debugger', default=0)
     option_parser.add_option('-c', '--crashed-only', action='store_true', dest='crashed_only', help='only symbolicate the crashed thread', default=False)
     option_parser.add_option('-d', '--disasm-depth', type='int', dest='disassemble_depth', help='set the depth in stack frames that should be disassembled (default is 1)', default=1)
     option_parser.add_option('-D', '--disasm-all', action='store_true', dest='disassemble_all_threads', help='enabled disassembly of frames on all threads (not just the crashed thread)', default=False)
@@ -678,7 +679,7 @@ be disassembled and lookups can be performed using the addresses found in the cr
     except:
         return
         
-    if options.verbose:
+    if options.debug:
         print 'command_args = %s' % command_args
         print 'options', options
         print 'args', args

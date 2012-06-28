@@ -83,7 +83,7 @@ class Address:
             return sym_ctx.GetSymbol().GetInstructions(self.target)
         return None
     
-    def symbolicate(self):
+    def symbolicate(self, verbose = False):
         if self.symbolication == None:
             self.symbolication = ''
             self.inlined = False
@@ -91,7 +91,11 @@ class Address:
             if sym_ctx:
                 module = sym_ctx.GetModule()
                 if module:
-                    self.symbolication += module.GetFileSpec().GetFilename() + '`'
+                    # Print full source file path in verbose mode
+                    if verbose:
+                        self.symbolication += str(module.GetFileSpec()) + '`'
+                    else:
+                        self.symbolication += module.GetFileSpec().GetFilename() + '`'
                     function_start_load_addr = -1
                     function = sym_ctx.GetFunction()
                     block = sym_ctx.GetBlock()
@@ -126,11 +130,15 @@ class Address:
 
                     # Print out any line information if any is available
                     if line_entry.GetFileSpec():
+                        # Print full source file path in verbose mode
+                        if verbose:
+                            self.symbolication += ' at %s' % line_entry.GetFileSpec()
+                        else:
                             self.symbolication += ' at %s' % line_entry.GetFileSpec().GetFilename()
-                            self.symbolication += ':%u' % line_entry.GetLine ()
-                            column = line_entry.GetColumn()
-                            if column > 0:
-                                self.symbolication += ':%u' % column
+                        self.symbolication += ':%u' % line_entry.GetLine ()
+                        column = line_entry.GetColumn()
+                        if column > 0:
+                            self.symbolication += ':%u' % column
                     return True
         return False
 
@@ -393,7 +401,7 @@ class Symbolicator:
                     return self.target
         return None
     
-    def symbolicate(self, load_addr):
+    def symbolicate(self, load_addr, verbose = False):
         if not self.target:
             self.create_target()
         if self.target:
@@ -401,7 +409,7 @@ class Symbolicator:
             if image:
                 image.add_module (self.target)
                 symbolicated_address = Address(self.target, load_addr)
-                if symbolicated_address.symbolicate ():
+                if symbolicated_address.symbolicate (verbose):
             
                     if symbolicated_address.so_addr:
                         symbolicated_addresses = list()
@@ -418,7 +426,7 @@ class Symbolicator:
                             symbolicated_address = Address(self.target, inlined_parent_so_addr.GetLoadAddress(self.target))
                             symbolicated_address.sym_ctx = inlined_parent_sym_ctx
                             symbolicated_address.so_addr = inlined_parent_so_addr
-                            symbolicated_address.symbolicate ()
+                            symbolicated_address.symbolicate (verbose)
                 
                             # push the new frame onto the new frame stack
                             symbolicated_addresses.append (symbolicated_address)
@@ -532,7 +540,7 @@ def Symbolicate(command_args):
     if target:
         for addr_str in args:
             addr = int(addr_str, 0)
-            symbolicated_addrs = symbolicator.symbolicate(addr)
+            symbolicated_addrs = symbolicator.symbolicate(addr, options.verbose)
             for symbolicated_addr in symbolicated_addrs:
                 print symbolicated_addr
             print
