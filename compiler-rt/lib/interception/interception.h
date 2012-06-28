@@ -98,7 +98,7 @@
 # define INTERCEPTOR_ATTRIBUTE __attribute__((visibility("default")))
 # define DECLARE_WRAPPER(ret_type, convention, func, ...) \
     extern "C" ret_type convention func(__VA_ARGS__) \
-    __attribute__((weak, alias("__interceptor_" #func), visibility("default")))
+    __attribute__((weak, alias("__interceptor_" #func), visibility("default")));
 #endif
 
 #define PTR_TO_REAL(x) real_##x
@@ -112,7 +112,7 @@
   }
 
 #define DECLARE_REAL_AND_INTERCEPTOR(ret_type, func, ...) \
-  DECLARE_REAL(ret_type, func, ##__VA_ARGS__); \
+  DECLARE_REAL(ret_type, func, ##__VA_ARGS__) \
   extern "C" ret_type WRAP(func)(__VA_ARGS__);
 
 // FIXME(timurrrr): We might need to add DECLARE_REAL_EX etc to support
@@ -131,11 +131,11 @@
 #define DEFAULT_CONVENTION
 
 #define DEFINE_REAL(ret_type, func, ...) \
-  DEFINE_REAL_EX(ret_type, DEFAULT_CONVENTION, func, __VA_ARGS__);
+  DEFINE_REAL_EX(ret_type, DEFAULT_CONVENTION, func, __VA_ARGS__)
 
 #define INTERCEPTOR_EX(ret_type, convention, func, ...) \
   DEFINE_REAL_EX(ret_type, convention, func, __VA_ARGS__) \
-  DECLARE_WRAPPER(ret_type, convention, func, __VA_ARGS__); \
+  DECLARE_WRAPPER(ret_type, convention, func, __VA_ARGS__) \
   extern "C" \
   INTERCEPTOR_ATTRIBUTE \
   ret_type convention WRAP(func)(__VA_ARGS__)
