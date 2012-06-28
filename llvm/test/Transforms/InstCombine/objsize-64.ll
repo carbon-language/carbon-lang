@@ -19,7 +19,7 @@ define i64 @f1() {
 ; CHECK: @f2
 define i64 @f2() nounwind uwtable ssp {
 entry:
-; CHECK: invoke i8 @llvm.expect.i8(i8 0, i8 0)
+; CHECK: invoke void @llvm.donothing()
   %call = invoke noalias i8* @_Znwm(i64 13)
           to label %invoke.cont unwind label %lpad
 

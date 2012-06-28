@@ -1169,14 +1169,11 @@ Instruction *InstCombiner::visitMalloc(Instruction &MI) {
     }
 
     if (InvokeInst *II = dyn_cast<InvokeInst>(&MI)) {
-      // Replace invoke with a NOOP intrinsic to maintain the original CFG
+      // Replace invoke with a NOP intrinsic to maintain the original CFG
       Module *M = II->getParent()->getParent()->getParent();
-      IntegerType *Ty = IntegerType::get(II->getContext(), 8);
-      ConstantInt *CI = ConstantInt::get(Ty, 0);
-      Value *Args[] = {CI, CI};
-      Function *F = Intrinsic::getDeclaration(M, Intrinsic::expect, Ty);
-      InvokeInst::Create(F, II->getNormalDest(), II->getUnwindDest(), Args,
-                         "dummy", II->getParent());
+      Function *F = Intrinsic::getDeclaration(M, Intrinsic::donothing);
+      InvokeInst::Create(F, II->getNormalDest(), II->getUnwindDest(),
+                         ArrayRef<Value *>(), "", II->getParent());
     }
     return EraseInstFromFunction(MI);
   }
