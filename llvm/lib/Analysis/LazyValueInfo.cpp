@@ -835,24 +835,23 @@ static bool getEdgeValueLocal(Value *Val, BasicBlock *BBFrom,
   // If the edge was formed by a switch on the value, then we may know exactly
   // what it is.
   if (SwitchInst *SI = dyn_cast<SwitchInst>(BBFrom->getTerminator())) {
-    if (SI->getCondition() == Val) {
-      // We don't know anything in the default case.
-      if (SI->getDefaultDest() == BBTo) {
-        Result.markOverdefined();
-        return true;
-      }
-      
-      unsigned BitWidth = Val->getType()->getIntegerBitWidth();
-      ConstantRange EdgesVals(BitWidth, false/*isFullSet*/);
-      for (SwitchInst::CaseIt i = SI->case_begin(), e = SI->case_end();
-           i != e; ++i) {
-        if (i.getCaseSuccessor() != BBTo) continue;
-        ConstantRange EdgeVal(i.getCaseValue()->getValue());
+    if (SI->getCondition() != Val)
+      return false;
+
+    bool DefaultCase = SI->getDefaultDest() == BBTo;
+    unsigned BitWidth = Val->getType()->getIntegerBitWidth();
+    ConstantRange EdgesVals(BitWidth, DefaultCase/*isFullSet*/);
+
+    for (SwitchInst::CaseIt i = SI->case_begin(), e = SI->case_end();
+         i != e; ++i) {
+      ConstantRange EdgeVal(i.getCaseValue()->getValue());
+      if (DefaultCase)
+        EdgesVals = EdgesVals.difference(EdgeVal);
+      else if (i.getCaseSuccessor() == BBTo)
         EdgesVals = EdgesVals.unionWith(EdgeVal);
-      }
-      Result = LVILatticeVal::getRange(EdgesVals);
-      return true;
     }
+    Result = LVILatticeVal::getRange(EdgesVals);
+    return true;
   }
   return false;
 }

@@ -142,3 +142,26 @@ sw.bb:
 ; CHECK: ret i1 true
   ret i1 %cmp2
 }
+
+; CHECK: @test7
+define i1 @test7(i32 %c) nounwind {
+entry:
+ switch i32 %c, label %sw.default [
+   i32 6, label %sw.bb
+   i32 7, label %sw.bb
+ ]
+
+sw.bb:
+ ret i1 true
+
+sw.default:
+ %cmp5 = icmp eq i32 %c, 5
+ %cmp6 = icmp eq i32 %c, 6
+ %cmp7 = icmp eq i32 %c, 7
+ %cmp8 = icmp eq i32 %c, 8
+; CHECK: %or = or i1 %cmp5, false
+ %or = or i1 %cmp5, %cmp6
+; CHECK: %or2 = or i1 false, %cmp8
+ %or2 = or i1 %cmp7, %cmp8
+ ret i1 false
+}
