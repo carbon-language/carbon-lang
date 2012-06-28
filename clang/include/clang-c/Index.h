@@ -20,29 +20,11 @@
 #include <time.h>
 #include <stdio.h>
 
+#include "clang-c/Platform.h"
+#include "clang-c/CXString.h"
+
 #ifdef __cplusplus
 extern "C" {
-#endif
-
-/* MSVC DLL import/export. */
-#ifdef _MSC_VER
-  #ifdef _CINDEX_LIB_
-    #define CINDEX_LINKAGE __declspec(dllexport)
-  #else
-    #define CINDEX_LINKAGE __declspec(dllimport)
-  #endif
-#else
-  #define CINDEX_LINKAGE
-#endif
-
-#ifdef __GNUC__
-  #define CINDEX_DEPRECATED __attribute__((deprecated))
-#else
-  #ifdef _MSC_VER
-    #define CINDEX_DEPRECATED __declspec(deprecated)
-  #else
-    #define CINDEX_DEPRECATED
-  #endif
 #endif
 
 /** \defgroup CINDEX libclang: C Interface to Clang
@@ -156,39 +138,6 @@ typedef struct CXVersion {
   int Subminor;
 } CXVersion;
   
-/**
- * \defgroup CINDEX_STRING String manipulation routines
- *
- * @{
- */
-
-/**
- * \brief A character string.
- *
- * The \c CXString type is used to return strings from the interface when
- * the ownership of that string might different from one call to the next.
- * Use \c clang_getCString() to retrieve the string data and, once finished
- * with the string data, call \c clang_disposeString() to free the string.
- */
-typedef struct {
-  void *data;
-  unsigned private_flags;
-} CXString;
-
-/**
- * \brief Retrieve the character data associated with the given string.
- */
-CINDEX_LINKAGE const char *clang_getCString(CXString string);
-
-/**
- * \brief Free the given string,
- */
-CINDEX_LINKAGE void clang_disposeString(CXString string);
-
-/**
- * @}
- */
-
 /**
  * \brief Provides a shared context for creating translation units.
  *
