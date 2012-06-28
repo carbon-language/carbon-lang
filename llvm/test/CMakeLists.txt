@@ -27,10 +27,6 @@ endif()
 set(LIT_ARGS "${LLVM_LIT_ARGS}")
 separate_arguments(LIT_ARGS)
 
-configure_file(
-  ${CMAKE_CURRENT_SOURCE_DIR}/site.exp.in
-  ${CMAKE_CURRENT_BINARY_DIR}/site.exp)
-
 MAKE_DIRECTORY(${CMAKE_CURRENT_BINARY_DIR}/Unit)
 
 # Configuration-time: See Unit/lit.site.cfg.in
