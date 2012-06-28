@@ -20,7 +20,6 @@
 #include "NVPTXUtilities.h"
 #include "MCTargetDesc/NVPTXMCAsmInfo.h"
 #include "NVPTXNumRegisters.h"
-#include "../lib/CodeGen/AsmPrinter/DwarfDebug.h" // FIXME: layering violation!
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/DebugInfo.h"
 #include "llvm/Function.h"
