@@ -5715,7 +5715,7 @@ CXString clang_Cursor_getBriefCommentText(CXCursor C) {
   const ASTContext &Context = getCursorContext(C);
   const RawComment *RC = Context.getRawCommentForDecl(D);
 
-  if (RC && RC->isDocumentation()) {
+  if (RC) {
     StringRef BriefText = RC->getBriefText(Context);
 
     // Don't duplicate the string because RawComment ensures that this memory
