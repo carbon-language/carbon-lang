@@ -993,7 +993,8 @@ void DIDescriptor::dump() const {
 void DIDescriptor::print(raw_ostream &OS) const {
   if (!DbgNode) return;
 
-  OS << "[" << dwarf::TagString(getTag()) << ']';
+  if (const char *Tag = dwarf::TagString(getTag()))
+    OS << "[ " << Tag << " ]";
 
   if (this->isSubrange()) {
     DISubrange(DbgNode).printInternal(OS);
