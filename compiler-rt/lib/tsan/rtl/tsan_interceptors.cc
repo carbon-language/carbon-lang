@@ -113,7 +113,7 @@ struct SignalContext {
 
 static SignalContext *SigCtx(ThreadState *thr) {
   SignalContext *ctx = (SignalContext*)thr->signal_ctx;
-  if (ctx == 0) {
+  if (ctx == 0 && thr->is_alive) {
     ScopedInRtl in_rtl;
     ctx = (SignalContext*)internal_alloc(
         MBlockSignal, sizeof(*ctx));
@@ -682,10 +682,12 @@ static void thread_finalize(void *v) {
   {
     ScopedInRtl in_rtl;
     ThreadState *thr = cur_thread();
-    SignalContext *sctx = thr->signal_ctx;
     ThreadFinish(thr);
-    if (sctx)
+    SignalContext *sctx = thr->signal_ctx;
+    if (sctx) {
+      thr->signal_ctx = 0;
       internal_free(sctx);
+    }
   }
 }
 
@@ -1285,8 +1287,9 @@ static void ALWAYS_INLINE rtl_generic_sighandler(bool sigact, int sig,
   ThreadState *thr = cur_thread();
   SignalContext *sctx = SigCtx(thr);
   // Don't mess with synchronous signals.
-  if (sig == SIGSEGV || sig == SIGBUS || sig == SIGILL || sig == SIGABRT ||
-      sig == SIGFPE || sig == SIGPIPE || sig == sctx->int_signal_send) {
+  if (sig == SIGSEGV || sig == SIGBUS || sig == SIGILL ||
+      sig == SIGABRT || sig == SIGFPE || sig == SIGPIPE ||
+      (sctx && sig == sctx->int_signal_send)) {
     CHECK(thr->in_rtl == 0 || thr->in_rtl == 1);
     int in_rtl = thr->in_rtl;
     thr->in_rtl = 0;
@@ -1302,6 +1305,8 @@ static void ALWAYS_INLINE rtl_generic_sighandler(bool sigact, int sig,
     return;
   }
 
+  if (sctx == 0)
+    return;
   SignalDesc *signal = &sctx->pending_signals[sig];
   if (signal->armed == false) {
     signal->armed = true;
@@ -1356,6 +1361,7 @@ TSAN_INTERCEPTOR(sighandler_t, signal, int sig, sighandler_t h) {
 TSAN_INTERCEPTOR(int, raise, int sig) {
   SCOPED_TSAN_INTERCEPTOR(raise, sig);
   SignalContext *sctx = SigCtx(thr);
+  CHECK_NE(sctx, 0);
   int prev = sctx->int_signal_send;
   sctx->int_signal_send = sig;
   int res = REAL(raise)(sig);
@@ -1367,6 +1373,7 @@ TSAN_INTERCEPTOR(int, raise, int sig) {
 TSAN_INTERCEPTOR(int, kill, int pid, int sig) {
   SCOPED_TSAN_INTERCEPTOR(kill, pid, sig);
   SignalContext *sctx = SigCtx(thr);
+  CHECK_NE(sctx, 0);
   int prev = sctx->int_signal_send;
   if (pid == GetPid()) {
     sctx->int_signal_send = sig;
@@ -1382,6 +1389,7 @@ TSAN_INTERCEPTOR(int, kill, int pid, int sig) {
 TSAN_INTERCEPTOR(int, pthread_kill, void *tid, int sig) {
   SCOPED_TSAN_INTERCEPTOR(pthread_kill, tid, sig);
   SignalContext *sctx = SigCtx(thr);
+  CHECK_NE(sctx, 0);
   int prev = sctx->int_signal_send;
   if (tid == pthread_self()) {
     sctx->int_signal_send = sig;
@@ -1397,7 +1405,7 @@ TSAN_INTERCEPTOR(int, pthread_kill, void *tid, int sig) {
 static void process_pending_signals(ThreadState *thr) {
   CHECK_EQ(thr->in_rtl, 0);
   SignalContext *sctx = SigCtx(thr);
-  if (sctx->pending_signal_count == 0 || thr->in_signal_handler)
+  if (sctx == 0 || sctx->pending_signal_count == 0 || thr->in_signal_handler)
     return;
   thr->in_signal_handler = true;
   sctx->pending_signal_count = 0;

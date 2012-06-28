@@ -233,6 +233,7 @@ struct ThreadState {
   u64 stat[StatCnt];
   const int tid;
   int in_rtl;
+  bool is_alive;
   const uptr stk_addr;
   const uptr stk_size;
   const uptr tls_addr;

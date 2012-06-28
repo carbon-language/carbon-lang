@@ -173,6 +173,7 @@ void ThreadStart(ThreadState *thr, int tid) {
   DPrintf("#%d: ThreadStart epoch=%zu stk_addr=%zx stk_size=%zx "
           "tls_addr=%zx tls_size=%zx\n",
           tid, (uptr)tctx->epoch0, stk_addr, stk_size, tls_addr, tls_size);
+  thr->is_alive = true;
 }
 
 void ThreadFinish(ThreadState *thr) {
@@ -189,6 +190,7 @@ void ThreadFinish(ThreadState *thr) {
     MemoryResetRange(thr, /*pc=*/ 5,
         thr_end, thr->tls_addr + thr->tls_size - thr_end);
   }
+  thr->is_alive = false;
   Context *ctx = CTX();
   Lock l(&ctx->thread_mtx);
   ThreadContext *tctx = ctx->threads[thr->tid];
