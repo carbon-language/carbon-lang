@@ -117,6 +117,7 @@ static SignalContext *SigCtx(ThreadState *thr) {
     ScopedInRtl in_rtl;
     ctx = (SignalContext*)internal_alloc(
         MBlockSignal, sizeof(*ctx));
+    MemoryResetRange(thr, 0, (uptr)ctx, sizeof(*ctx));
     internal_memset(ctx, 0, sizeof(*ctx));
     thr->signal_ctx = ctx;
   }
