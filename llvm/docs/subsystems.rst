@@ -7,6 +7,7 @@ Subsystem Documentation
    :hidden:
 
    AliasAnalysis
+   BitCodeFormat
    BranchWeightMetadata
    Bugpoint
    ExceptionHandling
@@ -58,7 +59,7 @@ Subsystem Documentation
    Automatic bug finder and test-case reducer description and usage
    information.
     
-* `LLVM Bitcode File Format <BitCodeFormat.html>`_
+* :ref:`bitcode_format`
     
    This describes the file format and encoding used for LLVM "bc" files.
     
