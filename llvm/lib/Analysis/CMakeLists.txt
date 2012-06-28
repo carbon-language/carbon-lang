@@ -14,7 +14,6 @@ add_llvm_library(LLVMAnalysis
   ConstantFolding.cpp
   DIBuilder.cpp
   DbgInfoPrinter.cpp
-  DebugInfo.cpp
   DomPrinter.cpp
   DominanceFrontier.cpp
   IVUsers.cpp
