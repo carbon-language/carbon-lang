@@ -66,7 +66,7 @@ BUILTIN(__builtin_mips_shra_ph, "V2sV2si", "nc")
 BUILTIN(__builtin_mips_shra_r_ph, "V2sV2si", "nc")
 BUILTIN(__builtin_mips_shll_s_w, "iii", "nc")
 BUILTIN(__builtin_mips_shra_r_w, "iii", "nc")
-BUILTIN(__builtin_mips_shilo, "iLLii", "nc")
+BUILTIN(__builtin_mips_shilo, "LLiLLii", "nc")
 
 BUILTIN(__builtin_mips_muleu_s_ph_qbl, "V2sV4ScV2s", "nc")
 BUILTIN(__builtin_mips_muleu_s_ph_qbr, "V2sV4ScV2s", "nc")
