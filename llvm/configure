@@ -745,8 +745,6 @@ DOXYGEN
 GROFF
 GZIPBIN
 PDFROFF
-RUNTEST
-TCLSH
 ZIP
 OCAMLC
 OCAMLOPT
@@ -1447,7 +1445,6 @@ Optional Packages:
   --with-bug-report-url   Specify the URL where bug reports should be
                           submitted (default=http://llvm.org/bugs/)
   --with-internal-prefix  Installation directory for internal files
-  --with-tclinclude       directory where tcl headers are
   --with-udis86=<path>    Use udis86 external x86 disassembler library
   --with-oprofile=<prefix>
                           Tell OProfile >= 0.9.4 how to symbolize JIT output
@@ -7256,136 +7253,6 @@ echo "${ECHO_T}no" >&6; }
 fi
 
 
-# Extract the first word of "runtest", so it can be a program name with args.
-set dummy runtest; ac_word=$2
-{ echo "$as_me:$LINENO: checking for $ac_word" >&5
-echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6; }
-if test "${ac_cv_path_RUNTEST+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  case $RUNTEST in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_RUNTEST="$RUNTEST" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; }; then
-    ac_cv_path_RUNTEST="$as_dir/$ac_word$ac_exec_ext"
-    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-IFS=$as_save_IFS
-
-  ;;
-esac
-fi
-RUNTEST=$ac_cv_path_RUNTEST
-if test -n "$RUNTEST"; then
-  { echo "$as_me:$LINENO: result: $RUNTEST" >&5
-echo "${ECHO_T}$RUNTEST" >&6; }
-else
-  { echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6; }
-fi
-
-
-
-no_itcl=true
-{ echo "$as_me:$LINENO: checking for the tclsh program in tclinclude directory" >&5
-echo $ECHO_N "checking for the tclsh program in tclinclude directory... $ECHO_C" >&6; }
-
-# Check whether --with-tclinclude was given.
-if test "${with_tclinclude+set}" = set; then
-  withval=$with_tclinclude; with_tclinclude=${withval}
-else
-  with_tclinclude=''
-fi
-
-if test "${ac_cv_path_tclsh+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-
-if test x"${with_tclinclude}" != x ; then
-  if test -f ${with_tclinclude}/tclsh ; then
-    ac_cv_path_tclsh=`(cd ${with_tclinclude}; pwd)`
-  elif test -f ${with_tclinclude}/src/tclsh ; then
-    ac_cv_path_tclsh=`(cd ${with_tclinclude}/src; pwd)`
-  else
-    { { echo "$as_me:$LINENO: error: ${with_tclinclude} directory doesn't contain tclsh" >&5
-echo "$as_me: error: ${with_tclinclude} directory doesn't contain tclsh" >&2;}
-   { (exit 1); exit 1; }; }
-  fi
-fi
-fi
-
-
-if test x"${ac_cv_path_tclsh}" = x ; then
-  { echo "$as_me:$LINENO: result: none" >&5
-echo "${ECHO_T}none" >&6; }
-  for ac_prog in tclsh8.4 tclsh8.4.8 tclsh8.4.7 tclsh8.4.6 tclsh8.4.5 tclsh8.4.4 tclsh8.4.3 tclsh8.4.2 tclsh8.4.1 tclsh8.4.0 tclsh8.3 tclsh8.3.5 tclsh8.3.4 tclsh8.3.3 tclsh8.3.2 tclsh8.3.1 tclsh8.3.0 tclsh
-do
-  # Extract the first word of "$ac_prog", so it can be a program name with args.
-set dummy $ac_prog; ac_word=$2
-{ echo "$as_me:$LINENO: checking for $ac_word" >&5
-echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6; }
-if test "${ac_cv_path_TCLSH+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  case $TCLSH in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_TCLSH="$TCLSH" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; }; then
-    ac_cv_path_TCLSH="$as_dir/$ac_word$ac_exec_ext"
-    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-IFS=$as_save_IFS
-
-  ;;
-esac
-fi
-TCLSH=$ac_cv_path_TCLSH
-if test -n "$TCLSH"; then
-  { echo "$as_me:$LINENO: result: $TCLSH" >&5
-echo "${ECHO_T}$TCLSH" >&6; }
-else
-  { echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6; }
-fi
-
-
-  test -n "$TCLSH" && break
-done
-
-  if test x"${TCLSH}" = x ; then
-    ac_cv_path_tclsh='';
-  else
-    ac_cv_path_tclsh="${TCLSH}";
-  fi
-else
-  { echo "$as_me:$LINENO: result: ${ac_cv_path_tclsh}" >&5
-echo "${ECHO_T}${ac_cv_path_tclsh}" >&6; }
-  TCLSH="${ac_cv_path_tclsh}"
-
-fi
-
 # Extract the first word of "zip", so it can be a program name with args.
 set dummy zip; ac_word=$2
 { echo "$as_me:$LINENO: checking for $ac_word" >&5
@@ -10343,7 +10210,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 10346 "configure"
+#line 10213 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -22167,8 +22034,6 @@ DOXYGEN!$DOXYGEN$ac_delim
 GROFF!$GROFF$ac_delim
 GZIPBIN!$GZIPBIN$ac_delim
 PDFROFF!$PDFROFF$ac_delim
-RUNTEST!$RUNTEST$ac_delim
-TCLSH!$TCLSH$ac_delim
 ZIP!$ZIP$ac_delim
 OCAMLC!$OCAMLC$ac_delim
 OCAMLOPT!$OCAMLOPT$ac_delim
@@ -22214,7 +22079,7 @@ LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 91; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 89; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5
