@@ -142,6 +142,14 @@ static bool canDevirtualizeMemberFunctionCalls(ASTContext &Context,
   return false;
 }
 
+static CXXRecordDecl *getCXXRecord(const Expr *E) {
+  QualType T = E->getType();
+  if (const PointerType *PTy = T->getAs<PointerType>())
+    T = PTy->getPointeeType();
+  const RecordType *Ty = T->castAs<RecordType>();
+  return cast<CXXRecordDecl>(Ty->getDecl());
+}
+
 // Note: This function also emit constructor calls to support a MSVC
 // extensions allowing explicit constructor function call.
 RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE,
@@ -174,18 +182,33 @@ RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE,
   // Compute the object pointer.
   const Expr *Base = ME->getBase();
   bool CanUseVirtualCall = MD->isVirtual() && !ME->hasQualifier();
-  bool Devirtualize = CanUseVirtualCall &&
-    canDevirtualizeMemberFunctionCalls(getContext(), Base, MD);
 
-  const Expr *Inner = Base;
-  if (Devirtualize)
-    Inner = Base->ignoreParenBaseCasts();
+  const CXXMethodDecl *DevirtualizedMethod = NULL;
+  if (CanUseVirtualCall &&
+      canDevirtualizeMemberFunctionCalls(getContext(), Base, MD)) {
+    const CXXRecordDecl *BestDynamicDecl = Base->getBestDynamicClassType();
+    DevirtualizedMethod = MD->getCorrespondingMethodInClass(BestDynamicDecl);
+    assert(DevirtualizedMethod);
+    const CXXRecordDecl *DevirtualizedClass = DevirtualizedMethod->getParent();
+    const Expr *Inner = Base->ignoreParenBaseCasts();
+    if (getCXXRecord(Inner) == DevirtualizedClass)
+      // If the class of the Inner expression is where the dynamic method
+      // is defined, build the this pointer from it.
+      Base = Inner;
+    else if (getCXXRecord(Base) != DevirtualizedClass) {
+      // If the method is defined in a class that is not the best dynamic
+      // one or the one of the full expression, we would have to build
+      // a derived-to-base cast to compute the correct this pointer, but
+      // we don't have support for that yet, so do a virtual call.
+      DevirtualizedMethod = NULL;
+    }
+  }
 
   llvm::Value *This;
   if (ME->isArrow())
-    This = EmitScalarExpr(Inner);
+    This = EmitScalarExpr(Base);
   else
-    This = EmitLValue(Inner).getAddress();
+    This = EmitLValue(Base).getAddress();
 
 
   if (MD->isTrivial()) {
@@ -233,8 +256,7 @@ RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE,
   //
   // We also don't emit a virtual call if the base expression has a record type
   // because then we know what the type is.
-  bool UseVirtualCall = CanUseVirtualCall && !Devirtualize;
-  const CXXRecordDecl *MostDerivedClassDecl = Inner->getBestDynamicClassType();
+  bool UseVirtualCall = CanUseVirtualCall && !DevirtualizedMethod;
 
   llvm::Value *Callee;
   if (const CXXDestructorDecl *Dtor = dyn_cast<CXXDestructorDecl>(MD)) {
@@ -245,13 +267,11 @@ RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE,
           MD->isVirtual() &&
           ME->hasQualifier())
         Callee = BuildAppleKextVirtualCall(MD, ME->getQualifier(), Ty);
-      else if (!Devirtualize)
+      else if (!DevirtualizedMethod)
         Callee = CGM.GetAddrOfFunction(GlobalDecl(Dtor, Dtor_Complete), Ty);
       else {
-        const CXXMethodDecl *DM =
-          Dtor->getCorrespondingMethodInClass(MostDerivedClassDecl);
-        assert(DM);
-        const CXXDestructorDecl *DDtor = cast<CXXDestructorDecl>(DM);
+        const CXXDestructorDecl *DDtor =
+          cast<CXXDestructorDecl>(DevirtualizedMethod);
         Callee = CGM.GetAddrOfFunction(GlobalDecl(DDtor, Dtor_Complete), Ty);
       }
     }
@@ -265,13 +285,10 @@ RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE,
         MD->isVirtual() &&
         ME->hasQualifier())
       Callee = BuildAppleKextVirtualCall(MD, ME->getQualifier(), Ty);
-    else if (!Devirtualize)
+    else if (!DevirtualizedMethod)
       Callee = CGM.GetAddrOfFunction(MD, Ty);
     else {
-      const CXXMethodDecl *DerivedMethod =
-        MD->getCorrespondingMethodInClass(MostDerivedClassDecl);
-      assert(DerivedMethod);
-      Callee = CGM.GetAddrOfFunction(DerivedMethod, Ty);
+      Callee = CGM.GetAddrOfFunction(DevirtualizedMethod, Ty);
     }
   }
 

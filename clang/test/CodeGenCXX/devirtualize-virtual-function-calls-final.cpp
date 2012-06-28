@@ -80,7 +80,11 @@ namespace Test5 {
 
   // CHECK: define void @_ZN5Test51fEPNS_1CE
   void f(C* d) {
-    // CHECK: call void @_ZN5Test51B1fEv
+    // FIXME: It should be possible to devirtualize this case, but that is
+    // not implemented yet.
+    // CHECK: getelementptr
+    // CHECK-NEXT: %[[FUNC:.*]] = load
+    // CHECK-NEXT: call void %[[FUNC]]
     static_cast<A*>(d)->f();
   }
 }
@@ -131,5 +135,20 @@ namespace Test7 {
     // CHECK-NEXT: call {{.*}} @_ZN5Test73zed1fEv
     // CHECK-NEXT: ret
     return static_cast<bar*>(z)->f();
+  }
+}
+
+namespace Test8 {
+  struct A { virtual ~A() {} };
+  struct B {
+    int b;
+    virtual int foo() { return b; }
+  };
+  struct C final : A, B {  };
+  // CHECK: define i32 @_ZN5Test84testEPNS_1CE
+  int test(C *c) {
+    // CHECK: %[[THIS:.*]] = phi
+    // CHECK-NEXT: call i32 @_ZN5Test81B3fooEv(%"struct.Test8::B"* %[[THIS]])
+    return static_cast<B*>(c)->foo();
   }
 }
