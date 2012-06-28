@@ -12,9 +12,6 @@ DIRS  =
 
 all:: check-local
 
-# 'lit' is the default test runner.
-check-local:: check-local-lit
-
 # Include other test rules
 include Makefile.tests
 
@@ -52,8 +49,8 @@ endif
 # Check what to run for -all.
 LIT_ALL_TESTSUITES := $(LIT_TESTSUITE)
 
-extra-lit-site-cfgs::
-.PHONY: extra-lit-site-cfgs
+extra-site-cfgs::
+.PHONY: extra-site-cfgs
 
 ifneq ($(strip $(filter check-local-all,$(MAKECMDGOALS))),)
 ifndef TESTSUITE
@@ -61,9 +58,9 @@ ifeq ($(shell test -f $(PROJ_OBJ_DIR)/../tools/clang/Makefile && echo OK), OK)
 LIT_ALL_TESTSUITES += $(PROJ_OBJ_DIR)/../tools/clang/test
 
 # Force creation of Clang's lit.site.cfg.
-clang-lit-site-cfg: FORCE
+clang-site-cfg: FORCE
 	$(MAKE) -C $(PROJ_OBJ_DIR)/../tools/clang/test lit.site.cfg Unit/lit.site.cfg
-extra-lit-site-cfgs:: clang-lit-site-cfg
+extra-site-cfgs:: clang-site-cfg
 endif
 endif
 endif
@@ -82,11 +79,14 @@ ULIMIT=ulimit -t 600 ; ulimit -d 512000 ; ulimit -m 512000 ; ulimit -v 1024000 ;
 endif # AuroraUX
 endif # SunOS
 
-check-local-lit:: lit.site.cfg Unit/lit.site.cfg
+check-local:: lit.site.cfg Unit/lit.site.cfg
 	( $(ULIMIT) \
 	  $(LLVM_SRC_ROOT)/utils/lit/lit.py $(LIT_ARGS) $(LIT_TESTSUITE) )
 
-check-local-all:: lit.site.cfg Unit/lit.site.cfg extra-lit-site-cfgs
+# This is a legacy alias dating from when both DejaGNU and lit were in use.
+check-local-lit:: check-local
+
+check-local-all:: lit.site.cfg Unit/lit.site.cfg extra-site-cfgs
 	( $(ULIMIT) \
 	  $(LLVM_SRC_ROOT)/utils/lit/lit.py $(LIT_ARGS) $(LIT_ALL_TESTSUITES) )
 
