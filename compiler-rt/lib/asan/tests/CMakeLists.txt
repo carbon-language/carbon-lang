@@ -30,6 +30,13 @@ add_asan_test(AsanNoInstrumentationTests
 	asan_break_optimization.cc
 	)
 
+set(ASAN_EXTRA_CFLAGS
+  -I${LLVM_MAIN_SRC_DIR}/utils/unittest/googletest/include
+  -I${LLVM_MAIN_SRC_DIR}/include
+  -I${LLVM_BINARY_DIR}/include
+  -D__STDC_CONSTANT_MACROS
+  -D__STDC_LIMIT_MACROS
+)
 
 # We only support building instrumented tests when we're not cross compiling
 # and targeting a unix-like system where we can predict viable compilation and
@@ -43,7 +50,7 @@ if("${CMAKE_HOST_SYSTEM}" STREQUAL "${CMAKE_SYSTEM}" AND UNIX)
     add_custom_command(
       OUTPUT "${source}.asan.o"
       COMMAND clang
-              -faddress-sanitizer ${ASAN_CFLAGS}
+              -faddress-sanitizer ${ASAN_CFLAGS} ${ASAN_EXTRA_CFLAGS}
               -mllvm "-asan-blacklist=${CMAKE_CURRENT_SOURCE_DIR}/asan_test.ignore"
               -DASAN_HAS_BLACKLIST=1
               -DASAN_HAS_EXCEPTIONS=1
