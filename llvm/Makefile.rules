@@ -1964,19 +1964,8 @@ check::
 	  $(EchoCmd) No test directory ; \
 	fi
 
+# An alias dating from when both lit and DejaGNU test runners were used.
 check-lit:: check
-
-check-dg::
-	$(Verb) if test -d "$(PROJ_OBJ_ROOT)/test" ; then \
-	  if test -f "$(PROJ_OBJ_ROOT)/test/Makefile" ; then \
-	    $(EchoCmd) Running test suite ; \
-	    $(MAKE) -C $(PROJ_OBJ_ROOT)/test check-local-dg ; \
-	  else \
-	    $(EchoCmd) No Makefile in test directory ; \
-	  fi ; \
-	else \
-	  $(EchoCmd) No test directory ; \
-	fi
 
 check-all::
 	$(Verb) if test -d "$(PROJ_OBJ_ROOT)/test" ; then \
