@@ -86,6 +86,9 @@ struct VectorizeConfig {
   /// @brief The maximum number of pairing iterations.
   unsigned MaxIter;
 
+  /// @brief Don't try to form odd-length vectors.
+  bool Pow2LenOnly;
+
   /// @brief Don't boost the chain-depth contribution of loads and stores.
   bool NoMemOpBoost;
 
