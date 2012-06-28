@@ -3,7 +3,7 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 
 declare i32 @__gxx_personality_v0(...)
 declare void @__cxa_call_unexpected(i8*)
-declare i64 @llvm.objectsize.i64(i8*, i1) nounwind readonly
+declare i32 @read_only() nounwind readonly
 
 
 ; CHECK: @f1
@@ -35,6 +35,45 @@ entry:
 
 invoke.cont:
   ret i8* %call
+
+lpad:
+  %0 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+          filter [0 x i8*] zeroinitializer
+  %1 = extractvalue { i8*, i32 } %0, 0
+  tail call void @__cxa_call_unexpected(i8* %1) noreturn nounwind
+  unreachable
+}
+
+; CHECK: @f3
+define i32 @f3() nounwind uwtable ssp {
+; CHECK-NEXT: entry
+entry:
+; CHECK-NEXT: ret i32 3
+  %call = invoke i32 @read_only()
+          to label %invoke.cont unwind label %lpad
+
+invoke.cont:
+  ret i32 3
+
+lpad:
+  %0 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+          filter [0 x i8*] zeroinitializer
+  %1 = extractvalue { i8*, i32 } %0, 0
+  tail call void @__cxa_call_unexpected(i8* %1) noreturn nounwind
+  unreachable
+}
+
+; CHECK: @f4
+define i32 @f4() nounwind uwtable ssp {
+; CHECK-NEXT: entry
+entry:
+; CHECK-NEXT: call i32 @read_only()
+  %call = invoke i32 @read_only()
+          to label %invoke.cont unwind label %lpad
+
+invoke.cont:
+; CHECK-NEXT: ret i32 %call
+  ret i32 %call
 
 lpad:
   %0 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
