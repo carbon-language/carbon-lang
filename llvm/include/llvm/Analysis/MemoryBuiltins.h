@@ -37,7 +37,7 @@ class Value;
 bool isAllocationFn(const Value *V, bool LookThroughBitCast = false);
 
 /// \brief Tests if a value is a call or invoke to a function that returns a
-/// NoAlias pointer (including malloc/calloc/strdup-like functions).
+/// NoAlias pointer (including malloc/calloc/realloc/strdup-like functions).
 bool isNoAliasFn(const Value *V, bool LookThroughBitCast = false);
 
 /// \brief Tests if a value is a call or invoke to a library function that
@@ -174,6 +174,7 @@ public:
   SizeOffsetType visitArgument(Argument &A);
   SizeOffsetType visitCallSite(CallSite CS);
   SizeOffsetType visitConstantPointerNull(ConstantPointerNull&);
+  SizeOffsetType visitExtractElementInst(ExtractElementInst &I);
   SizeOffsetType visitExtractValueInst(ExtractValueInst &I);
   SizeOffsetType visitGEPOperator(GEPOperator &GEP);
   SizeOffsetType visitGlobalVariable(GlobalVariable &GV);
@@ -233,6 +234,8 @@ public:
 
   SizeOffsetEvalType visitAllocaInst(AllocaInst &I);
   SizeOffsetEvalType visitCallSite(CallSite CS);
+  SizeOffsetEvalType visitExtractElementInst(ExtractElementInst &I);
+  SizeOffsetEvalType visitExtractValueInst(ExtractValueInst &I);
   SizeOffsetEvalType visitGEPOperator(GEPOperator &GEP);
   SizeOffsetEvalType visitIntToPtrInst(IntToPtrInst&);
   SizeOffsetEvalType visitLoadInst(LoadInst &I);

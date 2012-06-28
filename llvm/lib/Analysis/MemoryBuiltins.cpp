@@ -46,19 +46,25 @@ struct AllocFnsTy {
   signed char FstParam, SndParam;
 };
 
+// FIXME: certain users need more information. E.g., SimplifyLibCalls needs to
+// know which functions are nounwind, noalias, nocapture parameters, etc.
 static const AllocFnsTy AllocationFnData[] = {
-  {"malloc",         MallocLike,  1, 0,  -1},
-  {"valloc",         MallocLike,  1, 0,  -1},
-  {"_Znwj",          MallocLike,  1, 0,  -1}, // operator new(unsigned int)
-  {"_Znwm",          MallocLike,  1, 0,  -1}, // operator new(unsigned long)
-  {"_Znaj",          MallocLike,  1, 0,  -1}, // operator new[](unsigned int)
-  {"_Znam",          MallocLike,  1, 0,  -1}, // operator new[](unsigned long)
-  {"posix_memalign", MallocLike,  3, 2,  -1},
-  {"calloc",         CallocLike,  2, 0,  1},
-  {"realloc",        ReallocLike, 2, 1,  -1},
-  {"reallocf",       ReallocLike, 2, 1,  -1},
-  {"strdup",         StrDupLike,  1, -1, -1},
-  {"strndup",        StrDupLike,  2, -1, -1}
+  {"malloc",              MallocLike,  1, 0,  -1},
+  {"valloc",              MallocLike,  1, 0,  -1},
+  {"_Znwj",               MallocLike,  1, 0,  -1}, // new(unsigned int)
+  {"_ZnwjRKSt9nothrow_t", MallocLike,  2, 0,  -1}, // new(unsigned int, nothrow)
+  {"_Znwm",               MallocLike,  1, 0,  -1}, // new(unsigned long)
+  {"_ZnwmRKSt9nothrow_t", MallocLike,  2, 0,  -1}, // new(unsigned long, nothrow)
+  {"_Znaj",               MallocLike,  1, 0,  -1}, // new[](unsigned int)
+  {"_ZnajRKSt9nothrow_t", MallocLike,  2, 0,  -1}, // new[](unsigned int, nothrow)
+  {"_Znam",               MallocLike,  1, 0,  -1}, // new[](unsigned long)
+  {"_ZnamRKSt9nothrow_t", MallocLike,  2, 0,  -1}, // new[](unsigned long, nothrow)
+  {"posix_memalign",      MallocLike,  3, 2,  -1},
+  {"calloc",              CallocLike,  2, 0,  1},
+  {"realloc",             ReallocLike, 2, 1,  -1},
+  {"reallocf",            ReallocLike, 2, 1,  -1},
+  {"strdup",              StrDupLike,  1, -1, -1},
+  {"strndup",             StrDupLike,  2, -1, -1}
 };
 
 
@@ -131,9 +137,11 @@ bool llvm::isAllocationFn(const Value *V, bool LookThroughBitCast) {
 }
 
 /// \brief Tests if a value is a call or invoke to a function that returns a
-/// NoAlias pointer (including malloc/calloc/strdup-like functions).
+/// NoAlias pointer (including malloc/calloc/realloc/strdup-like functions).
 bool llvm::isNoAliasFn(const Value *V, bool LookThroughBitCast) {
-  return isAllocLikeFn(V, LookThroughBitCast) ||
+  // it's safe to consider realloc as noalias since accessing the original
+  // pointer is undefined behavior
+  return isAllocationFn(V, LookThroughBitCast) ||
          hasNoAliasAttr(V, LookThroughBitCast);
 }
 
@@ -441,6 +449,11 @@ ObjectSizeOffsetVisitor::visitConstantPointerNull(ConstantPointerNull&) {
 }
 
 SizeOffsetType
+ObjectSizeOffsetVisitor::visitExtractElementInst(ExtractElementInst&) {
+  return unknown();
+}
+
+SizeOffsetType
 ObjectSizeOffsetVisitor::visitExtractValueInst(ExtractValueInst&) {
   // Easy cases were already folded by previous passes.
   return unknown();
@@ -614,6 +627,16 @@ SizeOffsetEvalType ObjectSizeOffsetEvaluator::visitCallSite(CallSite CS) {
   // - memcpy / memmove
   // - strcat / strncat
   // - memset
+}
+
+SizeOffsetEvalType
+ObjectSizeOffsetEvaluator::visitExtractElementInst(ExtractElementInst&) {
+  return unknown();
+}
+
+SizeOffsetEvalType
+ObjectSizeOffsetEvaluator::visitExtractValueInst(ExtractValueInst&) {
+  return unknown();
 }
 
 SizeOffsetEvalType
