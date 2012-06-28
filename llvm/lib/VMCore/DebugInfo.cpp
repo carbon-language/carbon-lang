@@ -1052,8 +1052,9 @@ void DIType::printInternal(raw_ostream &OS) const {
      << ", align " << getAlignInBits()
      << ", offset " << getOffsetInBits();
   if (isBasicType())
-    OS << ", enc "
-       << dwarf::AttributeEncodingString(DIBasicType(DbgNode).getEncoding());
+    if (const char *Enc = 
+        dwarf::AttributeEncodingString(DIBasicType(DbgNode).getEncoding()))
+      OS << ", enc " << Enc;
   OS << "]";
 
   if (isPrivate())
