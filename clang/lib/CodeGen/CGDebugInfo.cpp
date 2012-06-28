@@ -764,7 +764,7 @@ CollectRecordFields(const RecordDecl *record, llvm::DIFile tunit,
   const ASTRecordLayout &layout = CGM.getContext().getASTRecordLayout(record);
   const CXXRecordDecl *CXXDecl = dyn_cast<CXXRecordDecl>(record);
 
-  // For C++11 Lambdas a Fields will be the same as a Capture, but the Capture
+  // For C++11 Lambdas a Field will be the same as a Capture, but the Capture
   // has the name and the location of the variable so we should iterate over
   // both concurrently.
   if (CXXDecl && CXXDecl->isLambda()) {
