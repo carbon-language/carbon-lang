@@ -44,6 +44,13 @@ public:
     FullDebugInfo         // Generate complete debug info.
   };
 
+  enum TLSModel {
+    GeneralDynamicTLSModel,
+    LocalDynamicTLSModel,
+    InitialExecTLSModel,
+    LocalExecTLSModel
+  };
+
   unsigned AsmVerbose        : 1; ///< -dA, -fverbose-asm.
   unsigned ObjCAutoRefCountExceptions : 1; ///< Whether ARC should be EH-safe.
   unsigned CUDAIsDevice      : 1; ///< Set when compiling for CUDA device.
@@ -175,6 +182,9 @@ public:
   /// The run-time penalty for bounds checking, or 0 to disable.
   unsigned char BoundsChecking;
 
+  /// The default TLS model to use.
+  TLSModel DefaultTLSModel;
+
 public:
   CodeGenOptions() {
     AsmVerbose = 0;
@@ -231,6 +241,7 @@ public:
     DebugInfo = NoDebugInfo;
     Inlining = NoInlining;
     RelocationModel = "pic";
+    DefaultTLSModel = GeneralDynamicTLSModel;
   }
 
   ObjCDispatchMethodKind getObjCDispatchMethod() const {

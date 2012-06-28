@@ -474,6 +474,10 @@ public:
   /// GlobalValue.
   void setGlobalVisibility(llvm::GlobalValue *GV, const NamedDecl *D) const;
 
+  /// setTLSMode - Set the TLS mode for the given LLVM GlobalVariable
+  /// for the thread-local variable declaration D.
+  void setTLSMode(llvm::GlobalVariable *GV, const VarDecl &D) const;
+
   /// TypeVisibilityKind - The kind of global variable that is passed to 
   /// setTypeVisibility
   enum TypeVisibilityKind {
@@ -496,15 +500,6 @@ public:
     case ProtectedVisibility: return llvm::GlobalValue::ProtectedVisibility;
     }
     llvm_unreachable("unknown visibility!");
-  }
-
-  static llvm::GlobalVariable::ThreadLocalMode GetLLVMTLSModel(StringRef S) {
-    return llvm::StringSwitch<llvm::GlobalVariable::ThreadLocalMode>(S)
-        .Case("global-dynamic", llvm::GlobalVariable::GeneralDynamicTLSModel)
-        .Case("local-dynamic", llvm::GlobalVariable::LocalDynamicTLSModel)
-        .Case("initial-exec", llvm::GlobalVariable::InitialExecTLSModel)
-        .Case("local-exec", llvm::GlobalVariable::LocalExecTLSModel)
-        .Default(llvm::GlobalVariable::NotThreadLocal);
   }
 
   llvm::Constant *GetAddrOfGlobal(GlobalDecl GD) {

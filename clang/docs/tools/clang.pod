@@ -303,6 +303,14 @@ This flag sets the default visibility level.
 This flag specifies that variables without initializers get common linkage.  It
 can be disabled with B<-fno-common>.
 
+=item B<-ftls-model>
+
+Set the default thread-local storage (TLS) model to use for thread-local
+variables. Valid values are: "global-dynamic", "local-dynamic", "initial-exec"
+and "local-exec". The default is "global-dynamic". The default model can be
+overridden with the tls_model attribute. The compiler will try to choose a more
+efficient model if possible.
+
 =item B<-flto> B<-emit-llvm>
 
 Generate output files in LLVM formats, suitable for link time optimization. When

@@ -183,26 +183,20 @@ CodeGenFunction::CreateStaticVarDecl(const VarDecl &D,
   else
     Name = GetStaticDeclName(*this, D, Separator);
 
-  llvm::GlobalVariable::ThreadLocalMode TLM;
-  TLM = D.isThreadSpecified() ? llvm::GlobalVariable::GeneralDynamicTLSModel
-                              : llvm::GlobalVariable::NotThreadLocal;
-
-  // Set the TLS mode if it it's explicitly specified.
-  if (D.hasAttr<TLSModelAttr>()) {
-    assert(D.isThreadSpecified() && "Can't have TLS model on non-tls var.");
-    const TLSModelAttr *Attr = D.getAttr<TLSModelAttr>();
-    TLM = CodeGenModule::GetLLVMTLSModel(Attr->getModel());
-  }
-
   llvm::Type *LTy = CGM.getTypes().ConvertTypeForMem(Ty);
   llvm::GlobalVariable *GV =
     new llvm::GlobalVariable(CGM.getModule(), LTy,
                              Ty.isConstant(getContext()), Linkage,
-                             CGM.EmitNullConstant(D.getType()), Name, 0, TLM,
+                             CGM.EmitNullConstant(D.getType()), Name, 0,
+                             llvm::GlobalVariable::NotThreadLocal,
                              CGM.getContext().getTargetAddressSpace(Ty));
   GV->setAlignment(getContext().getDeclAlign(&D).getQuantity());
   if (Linkage != llvm::GlobalValue::InternalLinkage)
     GV->setVisibility(CurFn->getVisibility());
+
+  if (D.isThreadSpecified())
+    CGM.setTLSMode(GV, D);
+
   return GV;
 }
 

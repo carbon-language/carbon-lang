@@ -258,6 +258,45 @@ void CodeGenModule::setGlobalVisibility(llvm::GlobalValue *GV,
     GV->setVisibility(GetLLVMVisibility(LV.visibility()));
 }
 
+static llvm::GlobalVariable::ThreadLocalMode GetLLVMTLSModel(StringRef S) {
+  return llvm::StringSwitch<llvm::GlobalVariable::ThreadLocalMode>(S)
+      .Case("global-dynamic", llvm::GlobalVariable::GeneralDynamicTLSModel)
+      .Case("local-dynamic", llvm::GlobalVariable::LocalDynamicTLSModel)
+      .Case("initial-exec", llvm::GlobalVariable::InitialExecTLSModel)
+      .Case("local-exec", llvm::GlobalVariable::LocalExecTLSModel);
+}
+
+static llvm::GlobalVariable::ThreadLocalMode GetLLVMTLSModel(
+    CodeGenOptions::TLSModel M) {
+  switch (M) {
+  case CodeGenOptions::GeneralDynamicTLSModel:
+    return llvm::GlobalVariable::GeneralDynamicTLSModel;
+  case CodeGenOptions::LocalDynamicTLSModel:
+    return llvm::GlobalVariable::LocalDynamicTLSModel;
+  case CodeGenOptions::InitialExecTLSModel:
+    return llvm::GlobalVariable::InitialExecTLSModel;
+  case CodeGenOptions::LocalExecTLSModel:
+    return llvm::GlobalVariable::LocalExecTLSModel;
+  }
+  llvm_unreachable("Invalid TLS model!");
+}
+
+void CodeGenModule::setTLSMode(llvm::GlobalVariable *GV,
+                               const VarDecl &D) const {
+  assert(D.isThreadSpecified() && "setting TLS mode on non-TLS var!");
+
+  llvm::GlobalVariable::ThreadLocalMode TLM;
+  TLM = GetLLVMTLSModel(CodeGenOpts.DefaultTLSModel);
+
+  // Override the TLS model if it is explicitly specified.
+  if (D.hasAttr<TLSModelAttr>()) {
+    const TLSModelAttr *Attr = D.getAttr<TLSModelAttr>();
+    TLM = GetLLVMTLSModel(Attr->getModel());
+  }
+
+  GV->setThreadLocalMode(TLM);
+}
+
 /// Set the symbol visibility of type information (vtable and RTTI)
 /// associated with the given type.
 void CodeGenModule::setTypeVisibility(llvm::GlobalValue *GV,
@@ -1212,13 +1251,8 @@ CodeGenModule::GetOrCreateLLVMGlobal(StringRef MangledName,
         GV->setVisibility(GetLLVMVisibility(LV.visibility()));
     }
 
-    GV->setThreadLocal(D->isThreadSpecified());
-
-    // Set the TLS model if it it's explicitly specified.
-    if (D->hasAttr<TLSModelAttr>()) {
-      const TLSModelAttr *Attr = D->getAttr<TLSModelAttr>();
-      GV->setThreadLocalMode(GetLLVMTLSModel(Attr->getModel()));
-    }
+    if (D->isThreadSpecified())
+      setTLSMode(GV, *D);
   }
 
   if (AddrSpace != Ty->getAddressSpace())
