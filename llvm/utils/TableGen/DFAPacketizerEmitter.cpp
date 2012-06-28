@@ -262,7 +262,7 @@ void State::AddInsnClass(unsigned InsnClass,
 // be added to the packet represented by this state.
 //
 bool State::canAddInsnClass(unsigned InsnClass) const {
-  for (std::set<unsigned>::iterator SI = stateInfo.begin();
+  for (std::set<unsigned>::const_iterator SI = stateInfo.begin();
        SI != stateInfo.end(); ++SI) {
     if (~*SI & InsnClass)
       return true;
