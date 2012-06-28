@@ -197,3 +197,54 @@ function(add_unittest test_suite test_name)
   endif ()
   set_property(TARGET ${test_name} PROPERTY COMPILE_FLAGS "${target_compile_flags}")
 endfunction()
+
+# This function provides an automatic way to 'configure'-like generate a file
+# based on a set of common and custom variables, specifically targetting the
+# variables needed for the 'lit.site.cfg' files. This function bundles the
+# common variables that any Lit instance is likely to need, and custom
+# variables can be passed in.
+function(configure_lit_site_cfg input output)
+  foreach(c ${LLVM_TARGETS_TO_BUILD})
+    set(TARGETS_BUILT "${TARGETS_BUILT} ${c}")
+  endforeach(c)
+  set(TARGETS_TO_BUILD ${TARGETS_BUILT})
+
+  set(SHLIBEXT "${LTDL_SHLIB_EXT}")
+  set(SHLIBDIR "${LLVM_BINARY_DIR}/lib/${CMAKE_CFG_INTDIR}")
+
+  if(BUILD_SHARED_LIBS)
+    set(LLVM_SHARED_LIBS_ENABLED "1")
+  else()
+    set(LLVM_SHARED_LIBS_ENABLED "0")
+  endif(BUILD_SHARED_LIBS)
+
+  if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    set(SHLIBPATH_VAR "DYLD_LIBRARY_PATH")
+  else() # Default for all other unix like systems.
+    # CMake hardcodes the library locaction using rpath.
+    # Therefore LD_LIBRARY_PATH is not required to run binaries in the
+    # build dir. We pass it anyways.
+    set(SHLIBPATH_VAR "LD_LIBRARY_PATH")
+  endif()
+
+  # Configuration-time: See Unit/lit.site.cfg.in
+  set(LLVM_BUILD_MODE "%(build_mode)s")
+
+  set(LLVM_SOURCE_DIR ${LLVM_MAIN_SRC_DIR})
+  set(LLVM_BINARY_DIR ${LLVM_BINARY_DIR})
+  set(LLVM_TOOLS_DIR "${LLVM_TOOLS_BINARY_DIR}/%(build_config)s")
+  set(PYTHON_EXECUTABLE ${PYTHON_EXECUTABLE})
+  set(ENABLE_SHARED ${LLVM_SHARED_LIBS_ENABLED})
+  set(SHLIBPATH_VAR ${SHLIBPATH_VAR})
+
+  if(LLVM_ENABLE_ASSERTIONS AND NOT MSVC_IDE)
+    set(ENABLE_ASSERTIONS "1")
+  else()
+    set(ENABLE_ASSERTIONS "0")
+  endif()
+
+  set(HOST_OS ${CMAKE_HOST_SYSTEM_NAME})
+  set(HOST_ARCH ${CMAKE_HOST_SYSTEM_PROCESSOR})
+
+  configure_file(${input} ${output} @ONLY)
+endfunction()
