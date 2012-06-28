@@ -12,6 +12,34 @@
 namespace clang {
 namespace comments {
 
+namespace {
+/// Convert all whitespace into spaces, remove leading and trailing spaces,
+/// compress multiple spaces into one.
+void cleanupBrief(std::string &S) {
+  bool PrevWasSpace = true;
+  std::string::iterator O = S.begin();
+  for (std::string::iterator I = S.begin(), E = S.end();
+       I != E; ++I) {
+    const char C = *I;
+    if (C == ' ' || C == '\n' || C == '\r' ||
+        C == '\t' || C == '\v' || C == '\f') {
+      if (!PrevWasSpace) {
+        *O++ = ' ';
+        PrevWasSpace = true;
+      }
+      continue;
+    } else {
+      *O++ = C;
+      PrevWasSpace = false;
+    }
+  }
+  if (O != S.begin() && *(O - 1) == ' ')
+    --O;
+
+  S.resize(O - S.begin());
+}
+} // unnamed namespace
+
 std::string BriefParser::Parse() {
   std::string Paragraph;
   bool InFirstParagraph = true;
@@ -47,7 +75,7 @@ std::string BriefParser::Parse() {
 
     if (Tok.is(tok::newline)) {
       if (InFirstParagraph || InBrief)
-        Paragraph += '\n';
+        Paragraph += ' ';
       ConsumeToken();
 
       if (Tok.is(tok::newline)) {
@@ -66,6 +94,7 @@ std::string BriefParser::Parse() {
     ConsumeToken();
   }
 
+  cleanupBrief(Paragraph);
   return Paragraph;
 }
 
