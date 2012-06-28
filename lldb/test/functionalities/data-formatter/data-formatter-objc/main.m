@@ -646,6 +646,9 @@ int main (int argc, const char * argv[])
 	Class myclass4 = NSClassFromString(@"NSMutableArray");
 	Class myclass5 = [nil class];
 
+	NSArray *components = @[@"usr", @"blah", @"stuff"];
+	NSString *path = [NSString pathWithComponents: components];
+
     // Set break point at this line.
 
     [molecule addObserver:[My_KVO_Observer new] forKeyPath:@"atoms" options:0 context:NULL];

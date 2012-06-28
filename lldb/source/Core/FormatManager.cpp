@@ -1014,7 +1014,8 @@ FormatManager::LoadObjCFormatters()
     AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.CFString.CFString_SummaryProvider", ConstString("__NSCFString"), appkit_flags);
     AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.CFString.CFString_SummaryProvider", ConstString("NSCFConstantString"), appkit_flags);
     AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.CFString.CFString_SummaryProvider", ConstString("NSCFString"), appkit_flags);
-
+    AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.CFString.CFString_SummaryProvider", ConstString("NSPathStore2"), appkit_flags);
+    
     AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.NSBundle.NSBundle_SummaryProvider", ConstString("NSBundle"), appkit_flags);
     
     AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.NSData.NSData_SummaryProvider", ConstString("NSData"), appkit_flags);
