@@ -176,7 +176,7 @@ PathMappingList::RemapPath (const ConstString &path, ConstString &new_path) cons
 bool
 PathMappingList::RemapPath (const char *path, std::string &new_path) const
 {
-    if (!m_pairs.empty() || path == NULL || path[0] == '\0')
+    if (m_pairs.empty() || path == NULL || path[0] == '\0')
         return false;
 
     const_iterator pos, end = m_pairs.end();
