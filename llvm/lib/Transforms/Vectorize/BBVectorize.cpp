@@ -747,11 +747,6 @@ namespace {
       } else {
         return false;
       }
-    } else if (isa<ShuffleVectorInst>(I)) {
-      // Only merge two shuffles if they're both constant
-      return isa<Constant>(I->getOperand(2)) &&
-             isa<Constant>(J->getOperand(2));
-      // FIXME: We may want to vectorize non-constant shuffles also.
     }
 
     // The powi intrinsic is special because only the first argument is
