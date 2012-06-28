@@ -369,7 +369,6 @@ static void clang_indexSourceFile_Impl(void *UserData) {
     IndexActionCleanup(IndexAction.get());
 
   bool Persistent = requestedToGetTU;
-  StringRef ResourceFilesPath = CXXIdx->getClangResourcesPath();
   bool OnlyLocalDecls = false;
   bool PrecompilePreamble = false;
   bool CacheCodeCompletionResults = false;
@@ -393,7 +392,7 @@ static void clang_indexSourceFile_Impl(void *UserData) {
                                                        IndexAction.get(),
                                                        Unit,
                                                        Persistent,
-                                                       ResourceFilesPath,
+                                                CXXIdx->getClangResourcesPath(),
                                                        OnlyLocalDecls,
                                                     /*CaptureDiagnostics=*/true,
                                                        PrecompilePreamble,
