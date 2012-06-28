@@ -20,6 +20,7 @@
 #include "llvm/LLVMContext.h"
 #include "llvm/CallingConv.h"
 #include "llvm/Constants.h"
+#include "llvm/DebugInfo.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/InlineAsm.h"
 #include "llvm/IntrinsicInst.h"
@@ -2031,20 +2032,21 @@ static void WriteMDNodeComment(const MDNode *Node,
                                formatted_raw_ostream &Out) {
   if (Node->getNumOperands() < 1)
     return;
-  ConstantInt *CI = dyn_cast_or_null<ConstantInt>(Node->getOperand(0));
-  if (!CI) return;
-  APInt Val = CI->getValue();
-  APInt Tag = Val & ~APInt(Val.getBitWidth(), LLVMDebugVersionMask);
-  if (Val.ult(LLVMDebugVersion11))
+
+  Value *Op = Node->getOperand(0);
+  if (!Op || !isa<ConstantInt>(Op) || cast<ConstantInt>(Op)->getBitWidth() < 32)
     return;
 
+  DIDescriptor Desc(Node);
+  if (Desc.getVersion() < LLVMDebugVersion11)
+    return;
+
+  unsigned Tag = Desc.getTag();
   Out.PadToColumn(50);
   if (Tag == dwarf::DW_TAG_user_base)
     Out << "; [ DW_TAG_user_base ]";
-  else if (Tag.isIntN(32)) {
-    if (const char *TagName = dwarf::TagString(Tag.getZExtValue()))
-      Out << "; [ " << TagName << " ]";
-  }
+  else if (const char *TagName = dwarf::TagString(Tag))
+    Out << "; [ " << TagName << " ]";
 }
 
 void AssemblyWriter::writeAllMDNodes() {
