@@ -96,7 +96,7 @@ _LIBCPP_VISIBLE void* operator new(std::size_t __sz)
     throw(std::bad_alloc)
 #endif
 ;
-_LIBCPP_VISIBLE void* operator new(std::size_t __sz, const std::nothrow_t&) _NOEXCEPT;
+_LIBCPP_VISIBLE void* operator new(std::size_t __sz, const std::nothrow_t&) _NOEXCEPT _NOALIAS;
 _LIBCPP_VISIBLE void  operator delete(void* __p) _NOEXCEPT;
 _LIBCPP_VISIBLE void  operator delete(void* __p, const std::nothrow_t&) _NOEXCEPT;
 
@@ -105,7 +105,7 @@ _LIBCPP_VISIBLE void* operator new[](std::size_t __sz)
     throw(std::bad_alloc)
 #endif
 ;
-_LIBCPP_VISIBLE void* operator new[](std::size_t __sz, const std::nothrow_t&) _NOEXCEPT;
+_LIBCPP_VISIBLE void* operator new[](std::size_t __sz, const std::nothrow_t&) _NOEXCEPT _NOALIAS;
 _LIBCPP_VISIBLE void  operator delete[](void* __p) _NOEXCEPT;
 _LIBCPP_VISIBLE void  operator delete[](void* __p, const std::nothrow_t&) _NOEXCEPT;
 

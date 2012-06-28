@@ -391,6 +391,12 @@ template <unsigned> struct __static_assert_check {};
 #define _LIBCPP_CONSTEXPR constexpr
 #endif
 
+#ifdef __GNUC__
+#define _NOALIAS __attribute__((malloc))
+#else
+#define _NOALIAS
+#endif
+
 #ifndef __has_feature
 #define __has_feature(__x) 0
 #endif
