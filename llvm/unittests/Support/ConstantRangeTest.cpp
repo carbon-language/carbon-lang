@@ -289,6 +289,23 @@ TEST_F(ConstantRangeTest, UnionWith) {
               ConstantRange(16));
 }
 
+TEST_F(ConstantRangeTest, SetDifference) {
+  EXPECT_EQ(Full.difference(Empty), Full);
+  EXPECT_EQ(Full.difference(Full), Empty);
+  EXPECT_EQ(Empty.difference(Empty), Empty);
+  EXPECT_EQ(Empty.difference(Full), Empty);
+
+  ConstantRange A(APInt(16, 3), APInt(16, 7));
+  ConstantRange B(APInt(16, 5), APInt(16, 9));
+  ConstantRange C(APInt(16, 3), APInt(16, 5));
+  ConstantRange D(APInt(16, 7), APInt(16, 9));
+  ConstantRange E(APInt(16, 5), APInt(16, 4));
+  ConstantRange F(APInt(16, 7), APInt(16, 3));
+  EXPECT_EQ(A.difference(B), C);
+  EXPECT_EQ(B.difference(A), D);
+  EXPECT_EQ(E.difference(A), F);
+}
+
 TEST_F(ConstantRangeTest, SubtractAPInt) {
   EXPECT_EQ(Full.subtract(APInt(16, 4)), Full);
   EXPECT_EQ(Empty.subtract(APInt(16, 4)), Empty);
