@@ -687,9 +687,3 @@ TEST(AddressSanitizerInterface, GetOwnershipStressTest) {
   for (size_t i = 0, n = pointers.size(); i < n; i++)
     free(pointers[i]);
 }
-
-int main(int argc, char **argv) {
-  testing::GTEST_FLAG(death_test_style) = "threadsafe";
-  testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
-}
