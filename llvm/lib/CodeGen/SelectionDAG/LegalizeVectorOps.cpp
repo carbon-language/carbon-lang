@@ -71,6 +71,9 @@ class VectorLegalizer {
   // operands to a different type and bitcasting the result back to the
   // original type.
   SDValue PromoteVectorOp(SDValue Op);
+  // Implements [SU]INT_TO_FP vector promotion; this is a [zs]ext of the input
+  // operand to the next size up.
+  SDValue PromoteVectorOpINT_TO_FP(SDValue Op);
 
   public:
   bool Run();
@@ -231,9 +234,19 @@ SDValue VectorLegalizer::LegalizeOp(SDValue Op) {
 
   switch (TLI.getOperationAction(Node->getOpcode(), QueryType)) {
   case TargetLowering::Promote:
-    // "Promote" the operation by bitcasting
-    Result = PromoteVectorOp(Op);
-    Changed = true;
+    switch (Op.getOpcode()) {
+    default:
+      // "Promote" the operation by bitcasting
+      Result = PromoteVectorOp(Op);
+      Changed = true;
+      break;
+    case ISD::SINT_TO_FP:
+    case ISD::UINT_TO_FP:
+      // "Promote" the operation by extending the operand.
+      Result = PromoteVectorOpINT_TO_FP(Op);
+      Changed = true;
+      break;
+    }
     break;
   case TargetLowering::Legal: break;
   case TargetLowering::Custom: {
@@ -291,6 +304,44 @@ SDValue VectorLegalizer::PromoteVectorOp(SDValue Op) {
   Op = DAG.getNode(Op.getOpcode(), dl, NVT, &Operands[0], Operands.size());
 
   return DAG.getNode(ISD::BITCAST, dl, VT, Op);
+}
+
+SDValue VectorLegalizer::PromoteVectorOpINT_TO_FP(SDValue Op) {
+  // INT_TO_FP operations may require the input operand be promoted even
+  // when the type is otherwise legal.
+  EVT VT = Op.getOperand(0).getValueType();
+  assert(Op.getNode()->getNumValues() == 1 &&
+         "Can't promote a vector with multiple results!");
+
+  // Normal getTypeToPromoteTo() doesn't work here, as that will promote
+  // by widening the vector w/ the same element width and twice the number
+  // of elements. We want the other way around, the same number of elements,
+  // each twice the width.
+  //
+  // Increase the bitwidth of the element to the next pow-of-two
+  // (which is greater than 8 bits).
+  unsigned NumElts = VT.getVectorNumElements();
+  EVT EltVT = VT.getVectorElementType();
+  EltVT = EVT::getIntegerVT(*DAG.getContext(), 2 * EltVT.getSizeInBits());
+  assert(EltVT.isSimple() && "Promoting to a non-simple vector type!");
+
+  // Build a new vector type and check if it is legal.
+  MVT NVT = MVT::getVectorVT(EltVT.getSimpleVT(), NumElts);
+
+  DebugLoc dl = Op.getDebugLoc();
+  SmallVector<SDValue, 4> Operands(Op.getNumOperands());
+
+  unsigned Opc = Op.getOpcode() == ISD::UINT_TO_FP ? ISD::ZERO_EXTEND :
+    ISD::SIGN_EXTEND;
+  for (unsigned j = 0; j != Op.getNumOperands(); ++j) {
+    if (Op.getOperand(j).getValueType().isVector())
+      Operands[j] = DAG.getNode(Opc, dl, NVT, Op.getOperand(j));
+    else
+      Operands[j] = Op.getOperand(j);
+  }
+
+  return DAG.getNode(Op.getOpcode(), dl, Op.getValueType(), &Operands[0],
+                     Operands.size());
 }
 
 
