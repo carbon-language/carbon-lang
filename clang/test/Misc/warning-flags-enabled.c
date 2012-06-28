@@ -3,9 +3,9 @@
 // This shows warnings which are on by default.
 // We just check a few to make sure it's doing something sensible.
 //
+// CHECK: ext_unterminated_string
 // CHECK: warn_condition_is_assignment
 // CHECK: warn_null_arg
-// CHECK: warn_unterminated_string
 
 
 // RUN: diagtool show-enabled -Wno-everything %s | count 0

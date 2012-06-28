@@ -64,9 +64,12 @@ def ext_token_used : Extension<"extension used">,
 def warn_cxx11_keyword : Warning<"'%0' is a keyword in C++11">,
   InGroup<CXX11Compat>, DefaultIgnore;
 
-def warn_unterminated_string : ExtWarn<"missing terminating '\"' character">;
-def warn_unterminated_char : ExtWarn<"missing terminating ' character">;
-def err_empty_character : Error<"empty character constant">;
+def ext_unterminated_string : ExtWarn<"missing terminating '\"' character">,
+  InGroup<InvalidPPToken>;
+def ext_unterminated_char : ExtWarn<"missing terminating ' character">,
+  InGroup<InvalidPPToken>;
+def ext_empty_character : ExtWarn<"empty character constant">,
+  InGroup<InvalidPPToken>;
 def err_unterminated_block_comment : Error<"unterminated /* comment">;
 def err_invalid_character_to_charify : Error<
   "invalid argument to convert to character">;

@@ -17,7 +17,7 @@ This test serves two purposes:
 
 The list of warnings below should NEVER grow.  It should gradually shrink to 0.
 
-CHECK: Warnings without flags (232):
+CHECK: Warnings without flags (230):
 CHECK-NEXT:   ext_anonymous_struct_union_qualified
 CHECK-NEXT:   ext_binary_literal
 CHECK-NEXT:   ext_cast_fn_obj
@@ -245,8 +245,6 @@ CHECK-NEXT:   warn_undef_protocolref
 CHECK-NEXT:   warn_undefined_internal
 CHECK-NEXT:   warn_unknown_analyzer_checker
 CHECK-NEXT:   warn_unknown_method_family
-CHECK-NEXT:   warn_unterminated_char
-CHECK-NEXT:   warn_unterminated_string
 CHECK-NEXT:   warn_use_out_of_scope_declaration
 CHECK-NEXT:   warn_weak_identifier_undeclared
 CHECK-NEXT:   warn_weak_import
