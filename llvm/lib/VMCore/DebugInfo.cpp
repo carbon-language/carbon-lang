@@ -1156,29 +1156,3 @@ void DIVariable::printExtendedName(raw_ostream &OS) const {
     }
   }
 }
-
-//===----------------------------------------------------------------------===//
-// DIDescriptor: vtable anchors for all descriptors.
-//===----------------------------------------------------------------------===//
-
-void DIScope::anchor() { }
-
-void DICompileUnit::anchor() { }
-
-void DIFile::anchor() { }
-
-void DIType::anchor() { }
-
-void DIBasicType::anchor() { }
-
-void DIDerivedType::anchor() { }
-
-void DICompositeType::anchor() { }
-
-void DISubprogram::anchor() { }
-
-void DILexicalBlock::anchor() { }
-
-void DINameSpace::anchor() { }
-
-void DILexicalBlockFile::anchor() { }

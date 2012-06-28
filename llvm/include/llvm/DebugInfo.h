@@ -157,13 +157,11 @@ namespace llvm {
 
   /// DIScope - A base class for various scopes.
   class DIScope : public DIDescriptor {
-    virtual void anchor();
   protected:
     friend class DIDescriptor;
     void printInternal(raw_ostream &OS) const;
   public:
     explicit DIScope(const MDNode *N = 0) : DIDescriptor (N) {}
-    virtual ~DIScope() {}
 
     StringRef getFilename() const;
     StringRef getDirectory() const;
@@ -171,7 +169,6 @@ namespace llvm {
 
   /// DICompileUnit - A wrapper for a compile unit.
   class DICompileUnit : public DIScope {
-    virtual void anchor();
     friend class DIDescriptor;
     void printInternal(raw_ostream &OS) const;
   public:
@@ -207,7 +204,6 @@ namespace llvm {
 
   /// DIFile - This is a wrapper for a file.
   class DIFile : public DIScope {
-    virtual void anchor();
     friend class DIDescriptor;
     void printInternal(raw_ostream &OS) const {} // FIXME: Output something?
   public:
@@ -240,7 +236,6 @@ namespace llvm {
   /// FIXME: Types should be factored much better so that CV qualifiers and
   /// others do not require a huge and empty descriptor full of zeros.
   class DIType : public DIScope {
-    virtual void anchor();
   protected:
     friend class DIDescriptor;
     void printInternal(raw_ostream &OS) const;
@@ -252,7 +247,6 @@ namespace llvm {
     bool Verify() const;
     explicit DIType(const MDNode *N);
     explicit DIType() {}
-    virtual ~DIType() {}
 
     DIScope getContext() const          { return getFieldAs<DIScope>(1); }
     StringRef getName() const           { return getStringField(2);     }
@@ -323,7 +317,6 @@ namespace llvm {
 
   /// DIBasicType - A basic type, like 'int' or 'float'.
   class DIBasicType : public DIType {
-    virtual void anchor();
   public:
     explicit DIBasicType(const MDNode *N = 0) : DIType(N) {}
 
@@ -336,7 +329,6 @@ namespace llvm {
   /// DIDerivedType - A simple derived type, like a const qualified type,
   /// a typedef, a pointer or reference, etc.
   class DIDerivedType : public DIType {
-    virtual void anchor();
     friend class DIDescriptor;
     void printInternal(raw_ostream &OS) const;
   protected:
@@ -402,7 +394,6 @@ namespace llvm {
   /// other types, like a function or struct.
   /// FIXME: Why is this a DIDerivedType??
   class DICompositeType : public DIDerivedType {
-    virtual void anchor();
     friend class DIDescriptor;
     void printInternal(raw_ostream &OS) const;
   public:
@@ -462,7 +453,6 @@ namespace llvm {
 
   /// DISubprogram - This is a wrapper for a subprogram (e.g. a function).
   class DISubprogram : public DIScope {
-    virtual void anchor();
     friend class DIDescriptor;
     void printInternal(raw_ostream &OS) const;
   public:
@@ -690,7 +680,6 @@ namespace llvm {
 
   /// DILexicalBlock - This is a wrapper for a lexical block.
   class DILexicalBlock : public DIScope {
-    virtual void anchor();
   public:
     explicit DILexicalBlock(const MDNode *N = 0) : DIScope(N) {}
     DIScope getContext() const       { return getFieldAs<DIScope>(1);      }
@@ -709,7 +698,6 @@ namespace llvm {
   /// DILexicalBlockFile - This is a wrapper for a lexical block with
   /// a filename change.
   class DILexicalBlockFile : public DIScope {
-    virtual void anchor();
   public:
     explicit DILexicalBlockFile(const MDNode *N = 0) : DIScope(N) {}
     DIScope getContext() const { return getScope().getContext(); }
@@ -729,7 +717,6 @@ namespace llvm {
 
   /// DINameSpace - A wrapper for a C++ style name space.
   class DINameSpace : public DIScope { 
-    virtual void anchor();
   public:
     explicit DINameSpace(const MDNode *N = 0) : DIScope(N) {}
     DIScope getContext() const     { return getFieldAs<DIScope>(1);      }
