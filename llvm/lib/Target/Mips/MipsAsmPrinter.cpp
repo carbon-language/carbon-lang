@@ -323,8 +323,8 @@ bool MipsAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNum,
         return true;
       O << MO.getImm() - 1;
       return false;
-    case 'z': // $0 if zero, regular printing otherwise
-    {
+    case 'z': {
+      // $0 if zero, regular printing otherwise
       if (MO.getType() != MachineOperand::MO_Immediate)
         return true;
       int64_t Val = MO.getImm();
