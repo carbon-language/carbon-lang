@@ -323,6 +323,17 @@ bool MipsAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNum,
         return true;
       O << MO.getImm() - 1;
       return false;
+    case 'z': // $0 if zero, regular printing otherwise
+    {
+      if (MO.getType() != MachineOperand::MO_Immediate)
+        return true;
+      int64_t Val = MO.getImm();
+      if (Val)
+        O << Val;
+      else
+        O << "$0";
+      return false;
+    }
     }
   }
 
@@ -335,11 +346,12 @@ bool MipsAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
                                            const char *ExtraCode,
                                            raw_ostream &O) {
   if (ExtraCode && ExtraCode[0])
-     return true; // Unknown modifier.
+    return true; // Unknown modifier.
 
   const MachineOperand &MO = MI->getOperand(OpNum);
   assert(MO.isReg() && "unexpected inline asm memory operand");
   O << "0($" << MipsInstPrinter::getRegisterName(MO.getReg()) << ")";
+
   return false;
 }
 

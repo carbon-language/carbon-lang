@@ -29,5 +29,17 @@ entry:
 ;CHECK:	#NO_APP
   tail call i32 asm sideeffect "addi $0,$1,${2:m}", "=r,r,I"(i32 7, i32 -3) nounwind
 
+; z with -3
+;CHECK:	#APP
+;CHECK:	addi ${{[0-9]+}},${{[0-9]+}},-3
+;CHECK:	#NO_APP
+  tail call i32 asm sideeffect "addi $0,$1,${2:z}", "=r,r,I"(i32 7, i32 -3) nounwind
+
+; z with 0
+;CHECK:	#APP
+;CHECK:	addi ${{[0-9]+}},${{[0-9]+}},$0
+;CHECK:	#NO_APP
+  tail call i32 asm sideeffect "addi $0,$1,${2:z}", "=r,r,I"(i32 7, i32 0) nounwind
+
   ret i32 0
 }
