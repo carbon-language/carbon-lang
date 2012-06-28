@@ -16,7 +16,6 @@ std::string BriefParser::Parse() {
   std::string Paragraph;
   bool InFirstParagraph = true;
   bool InBrief = false;
-  bool BriefDone = false;
 
   while (Tok.isNot(tok::eof)) {
     if (Tok.is(tok::text)) {
@@ -26,11 +25,24 @@ std::string BriefParser::Parse() {
       continue;
     }
 
-    if (!BriefDone && Tok.is(tok::command) && Tok.getCommandName() == "brief") {
-      Paragraph.clear();
-      InBrief = true;
-      ConsumeToken();
-      continue;
+    if (Tok.is(tok::command)) {
+      StringRef Name = Tok.getCommandName();
+      if (Name == "brief") {
+        Paragraph.clear();
+        InBrief = true;
+        ConsumeToken();
+        continue;
+      }
+      // Check if this command implicitly starts a new paragraph.
+      if (Name == "param" || Name == "result" || Name == "return" ||
+          Name == "returns") {
+        // We found an implicit paragraph end.
+        InFirstParagraph = false;
+        if (InBrief) {
+          InBrief = false;
+          break;
+        }
+      }
     }
 
     if (Tok.is(tok::newline)) {
@@ -44,7 +56,7 @@ std::string BriefParser::Parse() {
         InFirstParagraph = false;
         if (InBrief) {
           InBrief = false;
-          BriefDone = true;
+          break;
         }
       }
       continue;
