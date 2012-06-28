@@ -290,6 +290,7 @@ void DFA::addTransition(Transition *T) {
   // Add the new transition.
   bool Added = stateTransitions[T->from].insert(T).second;
   assert(Added && "Cannot have multiple states for the same input");
+  (void)Added;
 }
 
 
