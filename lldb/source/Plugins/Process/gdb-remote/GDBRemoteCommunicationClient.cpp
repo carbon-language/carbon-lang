@@ -760,7 +760,7 @@ GDBRemoteCommunicationClient::GetLaunchSuccess (std::string &error_str)
     }
     else
     {
-        error_str.assign ("failed to send the qLaunchSuccess packet");
+        error_str.assign ("timed out waiting for app to launch");
     }
     return false;
 }
