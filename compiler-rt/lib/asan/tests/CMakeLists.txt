@@ -14,8 +14,9 @@ include(CheckCXXCompilerFlag)
 include_directories(..)
 include_directories(../..)
 
-set(ASAN_UNITTEST_COMMON_CFLAGS 
+set(ASAN_UNITTEST_COMMON_CFLAGS
   -Wall
+  -Wno-format
   -fvisibility=hidden
 )
 
@@ -101,7 +102,7 @@ if("${CMAKE_HOST_SYSTEM}" STREQUAL "${CMAKE_SYSTEM}" AND UNIX)
 
   add_asan_compile_cxx_command(asan_globals_test.cc)
   add_asan_compile_cxx_command(asan_test.cc)
-  set(ASAN_INSTRUMENTED_TESTS 
+  set(ASAN_INSTRUMENTED_TESTS
     asan_globals_test.cc.asan.o
     asan_test.cc.asan.o
   )

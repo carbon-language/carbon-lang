@@ -14,6 +14,9 @@ if (APPLE)
 endif ()
 
 set(INTERCEPTION_CFLAGS "-fPIC -fno-exceptions -funwind-tables -fvisibility=hidden")
+if (SUPPORTS_NO_VARIADIC_MACROS_FLAG)
+  set(INTERCEPTION_CFLAGS "${INTERCEPTION_CFLAGS} -Wno-variadic-macros")
+endif ()
 
 set(INTERCEPTION_COMMON_DEFINITIONS
 	INTERCEPTION_HAS_EXCEPTIONS=1)

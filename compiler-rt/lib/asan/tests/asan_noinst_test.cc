@@ -329,7 +329,7 @@ TEST(AddressSanitizer, ThreadedOneSizeMallocStressTest) {
 }
 
 TEST(AddressSanitizerInterface, GetEstimatedAllocatedSize) {
-  EXPECT_EQ(1, __asan_get_estimated_allocated_size(0));
+  EXPECT_EQ(1U, __asan_get_estimated_allocated_size(0));
   const size_t sizes[] = { 1, 30, 1<<30 };
   for (size_t i = 0; i < 3; i++) {
     EXPECT_EQ(sizes[i], __asan_get_estimated_allocated_size(sizes[i]));
@@ -362,7 +362,7 @@ TEST(AddressSanitizerInterface, GetAllocatedSizeAndOwnershipTest) {
 
   // NULL is not owned, but is a valid argument for __asan_get_allocated_size().
   EXPECT_EQ(false, __asan_get_ownership(NULL));
-  EXPECT_EQ(0, __asan_get_allocated_size(NULL));
+  EXPECT_EQ(0U, __asan_get_allocated_size(NULL));
 
   // When memory is freed, it's not owned, and call to GetAllocatedSize
   // is forbidden.
@@ -686,4 +686,10 @@ TEST(AddressSanitizerInterface, GetOwnershipStressTest) {
   }
   for (size_t i = 0, n = pointers.size(); i < n; i++)
     free(pointers[i]);
+}
+
+int main(int argc, char **argv) {
+  testing::GTEST_FLAG(death_test_style) = "threadsafe";
+  testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
 }
