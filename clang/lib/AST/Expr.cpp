@@ -34,21 +34,7 @@
 using namespace clang;
 
 const CXXRecordDecl *Expr::getBestDynamicClassType() const {
-  const Expr *E = this;
-
-  while (true) {
-    E = E->IgnoreParens();
-    if (const CastExpr *CE = dyn_cast<CastExpr>(E)) {
-      if (CE->getCastKind() == CK_DerivedToBase ||
-          CE->getCastKind() == CK_UncheckedDerivedToBase ||
-          CE->getCastKind() == CK_NoOp) {
-        E = CE->getSubExpr();
-        continue;
-      }
-    }
-
-    break;
-  }
+  const Expr *E = ignoreParenBaseCasts();
 
   QualType DerivedType = E->getType();
   if (const PointerType *PTy = DerivedType->getAs<PointerType>())
@@ -2231,7 +2217,27 @@ Expr *Expr::IgnoreParenLValueCasts() {
   }
   return E;
 }
-  
+
+Expr *Expr::ignoreParenBaseCasts() {
+  Expr *E = this;
+  while (true) {
+    if (ParenExpr *P = dyn_cast<ParenExpr>(E)) {
+      E = P->getSubExpr();
+      continue;
+    }
+    if (CastExpr *CE = dyn_cast<CastExpr>(E)) {
+      if (CE->getCastKind() == CK_DerivedToBase ||
+          CE->getCastKind() == CK_UncheckedDerivedToBase ||
+          CE->getCastKind() == CK_NoOp) {
+        E = CE->getSubExpr();
+        continue;
+      }
+    }
+
+    return E;
+  }
+}
+
 Expr *Expr::IgnoreParenImpCasts() {
   Expr *E = this;
   while (true) {

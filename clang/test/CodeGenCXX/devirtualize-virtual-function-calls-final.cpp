@@ -107,3 +107,29 @@ namespace Test6 {
     static_cast<A*>(d)->~A();
   }
 }
+
+namespace Test7 {
+  struct foo {
+    virtual void g() {}
+  };
+
+  struct bar {
+    virtual int f() { return 0; }
+  };
+
+  struct zed final : public foo, public bar {
+    int z;
+    virtual int f() {return z;}
+  };
+
+  // CHECK: define i32 @_ZN5Test71fEPNS_3zedE
+  int f(zed *z) {
+    // CHECK: alloca
+    // CHECK-NEXT: store
+    // CHECK-NEXT: load
+    // CHECK-NEXT: bitcast
+    // CHECK-NEXT: call {{.*}} @_ZN5Test73zed1fEv
+    // CHECK-NEXT: ret
+    return static_cast<bar*>(z)->f();
+  }
+}
