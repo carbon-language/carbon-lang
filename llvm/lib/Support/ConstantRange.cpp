@@ -316,7 +316,7 @@ ConstantRange ConstantRange::intersectWith(const ConstantRange &CR) const {
 
     return CR;
   }
-  if (CR.Upper.ult(Lower)) {
+  if (CR.Upper.ule(Lower)) {
     if (CR.Lower.ult(Lower))
       return *this;
 
