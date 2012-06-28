@@ -194,39 +194,39 @@ void test7() {
   set7(class7<nullptr>());
 }
 // CHECK-ELIDE-NOTREE: no matching function for call to 'set7'
-// CHECK-ELIDE-NOTREE: candidate function not viable: no known conversion from 'class7<&b7>' to 'class7<&a7>' for 1st argument;
+// CHECK-ELIDE-NOTREE: candidate function not viable: no known conversion from 'class7<&b7>' to 'class7<&a7>' for 1st argument
 // CHECK-ELIDE-NOTREE: no matching function for call to 'set7'
-// CHECK-ELIDE-NOTREE: candidate function not viable: no known conversion from 'class7<c7>' to 'class7<&a7>' for 1st argument;
+// CHECK-ELIDE-NOTREE: candidate function not viable: no known conversion from 'class7<c7>' to 'class7<&a7>' for 1st argument
 // CHECK-ELIDE-NOTREE: no matching function for call to 'set7'
-// CHECK-ELIDE-NOTREE: candidate function not viable: no known conversion from 'class7<nullptr>' to 'class7<&a7>' for 1st argument;
+// CHECK-ELIDE-NOTREE: candidate function not viable: no known conversion from 'class7<nullptr>' to 'class7<&a7>' for 1st argument
 // CHECK-NOELIDE-NOTREE: no matching function for call to 'set7'
-// CHECK-NOELIDE-NOTREE: candidate function not viable: no known conversion from 'class7<&b7>' to 'class7<&a7>' for 1st argument;
+// CHECK-NOELIDE-NOTREE: candidate function not viable: no known conversion from 'class7<&b7>' to 'class7<&a7>' for 1st argument
 // CHECK-NOELIDE-NOTREE: no matching function for call to 'set7'
-// CHECK-NOELIDE-NOTREE: candidate function not viable: no known conversion from 'class7<c7>' to 'class7<&a7>' for 1st argument;
+// CHECK-NOELIDE-NOTREE: candidate function not viable: no known conversion from 'class7<c7>' to 'class7<&a7>' for 1st argument
 // CHECK-NOELIDE-NOTREE: no matching function for call to 'set7'
-// CHECK-NOELIDE-NOTREE: candidate function not viable: no known conversion from 'class7<nullptr>' to 'class7<&a7>' for 1st argument;
+// CHECK-NOELIDE-NOTREE: candidate function not viable: no known conversion from 'class7<nullptr>' to 'class7<&a7>' for 1st argument
 // CHECK-ELIDE-TREE: no matching function for call to 'set7'
-// CHECK-ELIDE-TREE: candidate function not viable: no known conversion for 1st argument;
+// CHECK-ELIDE-TREE: candidate function not viable: no known conversion for 1st argument
 // CHECK-ELIDE-TREE:   class7<
 // CHECK-ELIDE-TREE:     [&b7 != &a7]>
 // CHECK-ELIDE-TREE: no matching function for call to 'set7'
-// CHECK-ELIDE-TREE: candidate function not viable: no known conversion for 1st argument;
+// CHECK-ELIDE-TREE: candidate function not viable: no known conversion for 1st argument
 // CHECK-ELIDE-TREE:   class7<
 // CHECK-ELIDE-TREE:     [c7 != &a7]>
 // CHECK-ELIDE-TREE: no matching function for call to 'set7'
-// CHECK-ELIDE-TREE: candidate function not viable: no known conversion for 1st argument;
+// CHECK-ELIDE-TREE: candidate function not viable: no known conversion for 1st argument
 // CHECK-ELIDE-TREE:   class7<
 // CHECK-ELIDE-TREE:     [nullptr != &a7]>
 // CHECK-NOELIDE-TREE: no matching function for call to 'set7'
-// CHECK-NOELIDE-TREE: candidate function not viable: no known conversion for 1st argument;
+// CHECK-NOELIDE-TREE: candidate function not viable: no known conversion for 1st argument
 // CHECK-NOELIDE-TREE:   class7<
 // CHECK-NOELIDE-TREE:     [&b7 != &a7]>
 // CHECK-NOELIDE-TREE: no matching function for call to 'set7'
-// CHECK-NOELIDE-TREE: candidate function not viable: no known conversion for 1st argument;
+// CHECK-NOELIDE-TREE: candidate function not viable: no known conversion for 1st argument
 // CHECK-NOELIDE-TREE:   class7<
 // CHECK-NOELIDE-TREE:     [c7 != &a7]>
 // CHECK-NOELIDE-TREE: no matching function for call to 'set7'
-// CHECK-NOELIDE-TREE: candidate function not viable: no known conversion for 1st argument;
+// CHECK-NOELIDE-TREE: candidate function not viable: no known conversion for 1st argument
 // CHECK-NOELIDE-TREE:   class7<
 // CHECK-NOELIDE-TREE:     [nullptr != &a7]>
 
@@ -235,16 +235,16 @@ template<typename T> using U8 = S8<int, char, T>;
 int f8(S8<int, char, double>);
 int k8 = f8(U8<char>());
 // CHECK-ELIDE-NOTREE: no matching function for call to 'f8'
-// CHECK-ELIDE-NOTREE: candidate function not viable: no known conversion from 'S8<[2 * ...], char>' to 'S8<[2 * ...], double>' for 1st argument;
+// CHECK-ELIDE-NOTREE: candidate function not viable: no known conversion from 'S8<[2 * ...], char>' to 'S8<[2 * ...], double>' for 1st argument
 // CHECK-NOELIDE-NOTREE: no matching function for call to 'f8'
-// CHECK-NOELIDE-NOTREE: candidate function not viable: no known conversion from 'S8<int, char, char>' to 'S8<int, char, double>' for 1st argument;
+// CHECK-NOELIDE-NOTREE: candidate function not viable: no known conversion from 'S8<int, char, char>' to 'S8<int, char, double>' for 1st argument
 // CHECK-ELIDE-TREE: no matching function for call to 'f8'
-// CHECK-ELIDE-TREE: candidate function not viable: no known conversion for 1st argument;
+// CHECK-ELIDE-TREE: candidate function not viable: no known conversion for 1st argument
 // CHECK-ELIDE-TREE:   S8<
 // CHECK-ELIDE-TREE:     [2 * ...], 
 // CHECK-ELIDE-TREE:     [char != double]>
 // CHECK-NOELIDE-TREE: no matching function for call to 'f8'
-// CHECK-NOELIDE-TREE: candidate function not viable: no known conversion for 1st argument;
+// CHECK-NOELIDE-TREE: candidate function not viable: no known conversion for 1st argument
 // CHECK-NOELIDE-TREE:   S8<
 // CHECK-NOELIDE-TREE:     int, 
 // CHECK-NOELIDE-TREE:     char, 
@@ -257,18 +257,18 @@ int f9(S9<int, char, U9<const double>>);
 int k9 = f9(V9<double>());
 
 // CHECK-ELIDE-NOTREE: no matching function for call to 'f9'
-// CHECK-ELIDE-NOTREE: candidate function not viable: no known conversion from 'S9<[2 * ...], S9<[2 * ...], double>>' to 'S9<[2 * ...], S9<[2 * ...], const double>>' for 1st argument;
+// CHECK-ELIDE-NOTREE: candidate function not viable: no known conversion from 'S9<[2 * ...], S9<[2 * ...], double>>' to 'S9<[2 * ...], S9<[2 * ...], const double>>' for 1st argument
 // CHECK-NOELIDE-NOTREE: no matching function for call to 'f9'
-// CHECK-NOELIDE-NOTREE: candidate function not viable: no known conversion from 'S9<int, char, S9<int, char, double>>' to 'S9<int, char, S9<int, char, const double>>' for 1st argument;
+// CHECK-NOELIDE-NOTREE: candidate function not viable: no known conversion from 'S9<int, char, S9<int, char, double>>' to 'S9<int, char, S9<int, char, const double>>' for 1st argument
 // CHECK-ELIDE-TREE: no matching function for call to 'f9'
-// CHECK-ELIDE-TREE: candidate function not viable: no known conversion for 1st argument;
+// CHECK-ELIDE-TREE: candidate function not viable: no known conversion for 1st argument
 // CHECK-ELIDE-TREE:   S9<
 // CHECK-ELIDE-TREE:     [2 * ...], 
 // CHECK-ELIDE-TREE:     S9<
 // CHECK-ELIDE-TREE:       [2 * ...], 
 // CHECK-ELIDE-TREE:       [double != const double]>>
 // CHECK-NOELIDE-TREE: no matching function for call to 'f9'
-// CHECK-NOELIDE-TREE: candidate function not viable: no known conversion for 1st argument;
+// CHECK-NOELIDE-TREE: candidate function not viable: no known conversion for 1st argument
 // CHECK-NOELIDE-TREE:   S9<
 // CHECK-NOELIDE-TREE:     int, 
 // CHECK-NOELIDE-TREE:     char, 
@@ -285,30 +285,30 @@ void test10() {
 }
 
 // CHECK-ELIDE-NOTREE: no matching function for call to 'set10'
-// CHECK-ELIDE-NOTREE: candidate function not viable: no known conversion from 'class_types<[...], (no argument)>' to 'class_types<[...], int>' for 1st argument;
+// CHECK-ELIDE-NOTREE: candidate function not viable: no known conversion from 'class_types<[...], (no argument)>' to 'class_types<[...], int>' for 1st argument
 // CHECK-ELIDE-NOTREE: no matching function for call to 'set10'
-// CHECK-ELIDE-NOTREE: candidate function not viable: no known conversion from 'class_types<[2 * ...], int>' to 'class_types<[2 * ...], (no argument)>' for 1st argument;
+// CHECK-ELIDE-NOTREE: candidate function not viable: no known conversion from 'class_types<[2 * ...], int>' to 'class_types<[2 * ...], (no argument)>' for 1st argument
 // CHECK-NOELIDE-NOTREE: no matching function for call to 'set10'
-// CHECK-NOELIDE-NOTREE: candidate function not viable: no known conversion from 'class_types<int, (no argument)>' to 'class_types<int, int>' for 1st argument;
+// CHECK-NOELIDE-NOTREE: candidate function not viable: no known conversion from 'class_types<int, (no argument)>' to 'class_types<int, int>' for 1st argument
 // CHECK-NOELIDE-NOTREE: no matching function for call to 'set10'
-// CHECK-NOELIDE-NOTREE: candidate function not viable: no known conversion from 'class_types<int, int, int>' to 'class_types<int, int, (no argument)>' for 1st argument;
+// CHECK-NOELIDE-NOTREE: candidate function not viable: no known conversion from 'class_types<int, int, int>' to 'class_types<int, int, (no argument)>' for 1st argument
 // CHECK-ELIDE-TREE: no matching function for call to 'set10'
-// CHECK-ELIDE-TREE: candidate function not viable: no known conversion for 1st argument;
+// CHECK-ELIDE-TREE: candidate function not viable: no known conversion for 1st argument
 // CHECK-ELIDE-TREE:   class_types<
 // CHECK-ELIDE-TREE:     [...], 
 // CHECK-ELIDE-TREE:     [(no argument) != int]>
 // CHECK-ELIDE-TREE: no matching function for call to 'set10'
-// CHECK-ELIDE-TREE: candidate function not viable: no known conversion for 1st argument;
+// CHECK-ELIDE-TREE: candidate function not viable: no known conversion for 1st argument
 // CHECK-ELIDE-TREE:   class_types<
 // CHECK-ELIDE-TREE:     [2 * ...], 
 // CHECK-ELIDE-TREE:     [int != (no argument)]>
 // CHECK-NOELIDE-TREE: no matching function for call to 'set10'
-// CHECK-NOELIDE-TREE: candidate function not viable: no known conversion for 1st argument;
+// CHECK-NOELIDE-TREE: candidate function not viable: no known conversion for 1st argument
 // CHECK-NOELIDE-TREE:   class_types<
 // CHECK-NOELIDE-TREE:     int, 
 // CHECK-NOELIDE-TREE:     [(no argument) != int]>
 // CHECK-NOELIDE-TREE: no matching function for call to 'set10'
-// CHECK-NOELIDE-TREE: candidate function not viable: no known conversion for 1st argument;
+// CHECK-NOELIDE-TREE: candidate function not viable: no known conversion for 1st argument
 // CHECK-NOELIDE-TREE:   class_types<
 // CHECK-NOELIDE-TREE:     int, 
 // CHECK-NOELIDE-TREE:     int, 
@@ -321,31 +321,31 @@ void test11() {
   set11(class_ints<0, 3, 6>());
 }
 // CHECK-ELIDE-NOTREE: no matching function for call to 'set11'
-// CHECK-ELIDE-NOTREE: candidate function not viable: no known conversion from 'class_ints<1, (no argument)>' to 'class_ints<2, 3>' for 1st argument;
+// CHECK-ELIDE-NOTREE: candidate function not viable: no known conversion from 'class_ints<1, (no argument)>' to 'class_ints<2, 3>' for 1st argument
 // CHECK-ELIDE-NOTREE: no matching function for call to 'set11'
-// CHECK-ELIDE-NOTREE: candidate function not viable: no known conversion from 'class_ints<0, [...], 6>' to 'class_ints<2, [...], (no argument)>' for 1st argument;
+// CHECK-ELIDE-NOTREE: candidate function not viable: no known conversion from 'class_ints<0, [...], 6>' to 'class_ints<2, [...], (no argument)>' for 1st argument
 // CHECK-NOELIDE-NOTREE: no matching function for call to 'set11'
-// CHECK-NOELIDE-NOTREE: candidate function not viable: no known conversion from 'class_ints<1, (no argument)>' to 'class_ints<2, 3>' for 1st argument;
+// CHECK-NOELIDE-NOTREE: candidate function not viable: no known conversion from 'class_ints<1, (no argument)>' to 'class_ints<2, 3>' for 1st argument
 // CHECK-NOELIDE-NOTREE: no matching function for call to 'set11'
-// CHECK-NOELIDE-NOTREE: candidate function not viable: no known conversion from 'class_ints<0, 3, 6>' to 'class_ints<2, 3, (no argument)>' for 1st argument;
+// CHECK-NOELIDE-NOTREE: candidate function not viable: no known conversion from 'class_ints<0, 3, 6>' to 'class_ints<2, 3, (no argument)>' for 1st argument
 // CHECK-ELIDE-TREE: no matching function for call to 'set11'
-// CHECK-ELIDE-TREE: candidate function not viable: no known conversion for 1st argument;
+// CHECK-ELIDE-TREE: candidate function not viable: no known conversion for 1st argument
 // CHECK-ELIDE-TREE:   class_ints<
 // CHECK-ELIDE-TREE:     [1 != 2], 
 // CHECK-ELIDE-TREE:     [(no argument) != 3]>
 // CHECK-ELIDE-TREE: no matching function for call to 'set11'
-// CHECK-ELIDE-TREE: candidate function not viable: no known conversion for 1st argument;
+// CHECK-ELIDE-TREE: candidate function not viable: no known conversion for 1st argument
 // CHECK-ELIDE-TREE:   class_ints<
 // CHECK-ELIDE-TREE:     [0 != 2], 
 // CHECK-ELIDE-TREE:     [...], 
 // CHECK-ELIDE-TREE:     [6 != (no argument)]>
 // CHECK-NOELIDE-TREE: no matching function for call to 'set11'
-// CHECK-NOELIDE-TREE: candidate function not viable: no known conversion for 1st argument;
+// CHECK-NOELIDE-TREE: candidate function not viable: no known conversion for 1st argument
 // CHECK-NOELIDE-TREE:   class_ints<
 // CHECK-NOELIDE-TREE:     [1 != 2], 
 // CHECK-NOELIDE-TREE:     [(no argument) != 3]>
 // CHECK-NOELIDE-TREE: no matching function for call to 'set11'
-// CHECK-NOELIDE-TREE: candidate function not viable: no known conversion for 1st argument;
+// CHECK-NOELIDE-TREE: candidate function not viable: no known conversion for 1st argument
 // CHECK-NOELIDE-TREE:   class_ints<
 // CHECK-NOELIDE-TREE:     [0 != 2], 
 // CHECK-NOELIDE-TREE:     3, 
@@ -360,30 +360,30 @@ void test12() {
   set12(class_template_templates<tt1, tt1, tt1>());
 }
 // CHECK-ELIDE-NOTREE: no matching function for call to 'set12'
-// CHECK-ELIDE-NOTREE: candidate function not viable: no known conversion from 'class_template_templates<template tt2, template (no argument)>' to 'class_template_templates<template tt1, template tt1>' for 1st argument;
+// CHECK-ELIDE-NOTREE: candidate function not viable: no known conversion from 'class_template_templates<template tt2, template (no argument)>' to 'class_template_templates<template tt1, template tt1>' for 1st argument
 // CHECK-ELIDE-NOTREE: no matching function for call to 'set12'
-// CHECK-ELIDE-NOTREE: candidate function not viable: no known conversion from 'class_template_templates<[2 * ...], template tt1>' to 'class_template_templates<[2 * ...], template (no argument)>' for 1st argument;
+// CHECK-ELIDE-NOTREE: candidate function not viable: no known conversion from 'class_template_templates<[2 * ...], template tt1>' to 'class_template_templates<[2 * ...], template (no argument)>' for 1st argument
 // CHECK-NOELIDE-NOTREE: no matching function for call to 'set12'
-// CHECK-NOELIDE-NOTREE: candidate function not viable: no known conversion from 'class_template_templates<template tt2, template (no argument)>' to 'class_template_templates<template tt1, template tt1>' for 1st argument;
+// CHECK-NOELIDE-NOTREE: candidate function not viable: no known conversion from 'class_template_templates<template tt2, template (no argument)>' to 'class_template_templates<template tt1, template tt1>' for 1st argument
 // CHECK-NOELIDE-NOTREE: no matching function for call to 'set12'
-// CHECK-NOELIDE-NOTREE: candidate function not viable: no known conversion from 'class_template_templates<template tt1, template tt1, template tt1>' to 'class_template_templates<template tt1, template tt1, template (no argument)>' for 1st argument;
+// CHECK-NOELIDE-NOTREE: candidate function not viable: no known conversion from 'class_template_templates<template tt1, template tt1, template tt1>' to 'class_template_templates<template tt1, template tt1, template (no argument)>' for 1st argument
 // CHECK-ELIDE-TREE: no matching function for call to 'set12'
-// CHECK-ELIDE-TREE: candidate function not viable: no known conversion for 1st argument;
+// CHECK-ELIDE-TREE: candidate function not viable: no known conversion for 1st argument
 // CHECK-ELIDE-TREE:   class_template_templates<
 // CHECK-ELIDE-TREE:     [template tt2 != template tt1], 
 // CHECK-ELIDE-TREE:     [template (no argument) != template tt1]>
 // CHECK-ELIDE-TREE: no matching function for call to 'set12'
-// CHECK-ELIDE-TREE: candidate function not viable: no known conversion for 1st argument;
+// CHECK-ELIDE-TREE: candidate function not viable: no known conversion for 1st argument
 // CHECK-ELIDE-TREE:   class_template_templates<
 // CHECK-ELIDE-TREE:     [2 * ...], 
 // CHECK-ELIDE-TREE:     [template tt1 != template (no argument)]>
 // CHECK-NOELIDE-TREE: no matching function for call to 'set12'
-// CHECK-NOELIDE-TREE: candidate function not viable: no known conversion for 1st argument;
+// CHECK-NOELIDE-TREE: candidate function not viable: no known conversion for 1st argument
 // CHECK-NOELIDE-TREE:   class_template_templates<
 // CHECK-NOELIDE-TREE:     [template tt2 != template tt1], 
 // CHECK-NOELIDE-TREE:     [template (no argument) != template tt1]>
 // CHECK-NOELIDE-TREE: no matching function for call to 'set12'
-// CHECK-NOELIDE-TREE: candidate function not viable: no known conversion for 1st argument;
+// CHECK-NOELIDE-TREE: candidate function not viable: no known conversion for 1st argument
 // CHECK-NOELIDE-TREE:   class_template_templates<
 // CHECK-NOELIDE-TREE:     template tt1, 
 // CHECK-NOELIDE-TREE:     template tt1, 
@@ -397,30 +397,30 @@ void test13() {
   set13(class_ptrss<&a13, &b13, &d13>());
 }
 // CHECK-ELIDE-NOTREE: no matching function for call to 'set13'
-// CHECK-ELIDE-NOTREE: candidate function not viable: no known conversion from 'class_ptrs<&c13, (no argument)>' to 'class_ptrs<&a13, &b13>' for 1st argument;
+// CHECK-ELIDE-NOTREE: candidate function not viable: no known conversion from 'class_ptrs<&c13, (no argument)>' to 'class_ptrs<&a13, &b13>' for 1st argument
 // CHECK-ELIDE-NOTREE: no matching function for call to 'set13'
-// CHECK-ELIDE-NOTREE: candidate function not viable: no known conversion from 'class_ptrs<[2 * ...], &d13>' to 'class_ptrs<[2 * ...], (no argument)>' for 1st argument;
+// CHECK-ELIDE-NOTREE: candidate function not viable: no known conversion from 'class_ptrs<[2 * ...], &d13>' to 'class_ptrs<[2 * ...], (no argument)>' for 1st argument
 // CHECK-NOELIDE-NOTREE: no matching function for call to 'set13'
-// CHECK-NOELIDE-NOTREE: candidate function not viable: no known conversion from 'class_ptrs<&c13, (no argument)>' to 'class_ptrs<&a13, &b13>' for 1st argument;
+// CHECK-NOELIDE-NOTREE: candidate function not viable: no known conversion from 'class_ptrs<&c13, (no argument)>' to 'class_ptrs<&a13, &b13>' for 1st argument
 // CHECK-NOELIDE-NOTREE: no matching function for call to 'set13'
-// CHECK-NOELIDE-NOTREE: candidate function not viable: no known conversion from 'class_ptrs<&a13, &b13, &d13>' to 'class_ptrs<&a13, &b13, (no argument)>' for 1st argument;
+// CHECK-NOELIDE-NOTREE: candidate function not viable: no known conversion from 'class_ptrs<&a13, &b13, &d13>' to 'class_ptrs<&a13, &b13, (no argument)>' for 1st argument
 // CHECK-ELIDE-TREE: no matching function for call to 'set13'
-// CHECK-ELIDE-TREE: candidate function not viable: no known conversion for 1st argument;
+// CHECK-ELIDE-TREE: candidate function not viable: no known conversion for 1st argument
 // CHECK-ELIDE-TREE:   class_ptrs<
 // CHECK-ELIDE-TREE:     [&c13 != &a13], 
 // CHECK-ELIDE-TREE:     [(no argument) != &b13]>
 // CHECK-ELIDE-TREE: no matching function for call to 'set13'
-// CHECK-ELIDE-TREE: candidate function not viable: no known conversion for 1st argument;
+// CHECK-ELIDE-TREE: candidate function not viable: no known conversion for 1st argument
 // CHECK-ELIDE-TREE:   class_ptrs<
 // CHECK-ELIDE-TREE:     [2 * ...], 
 // CHECK-ELIDE-TREE:     [&d13 != (no argument)]>
 // CHECK-NOELIDE-TREE: no matching function for call to 'set13'
-// CHECK-NOELIDE-TREE: candidate function not viable: no known conversion for 1st argument;
+// CHECK-NOELIDE-TREE: candidate function not viable: no known conversion for 1st argument
 // CHECK-NOELIDE-TREE:   class_ptrs<
 // CHECK-NOELIDE-TREE:     [&c13 != &a13], 
 // CHECK-NOELIDE-TREE:     [(no argument) != &b13]>
 // CHECK-NOELIDE-TREE: no matching function for call to 'set13'
-// CHECK-NOELIDE-TREE: candidate function not viable: no known conversion for 1st argument;
+// CHECK-NOELIDE-TREE: candidate function not viable: no known conversion for 1st argument
 // CHECK-NOELIDE-TREE:   class_ptrs<
 // CHECK-NOELIDE-TREE:     &a13, 
 // CHECK-NOELIDE-TREE:     &b13, 
