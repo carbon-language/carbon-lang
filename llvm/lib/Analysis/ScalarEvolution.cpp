@@ -5484,7 +5484,7 @@ ScalarEvolution::HowFarToZero(const SCEV *V, const Loop *L) {
   // to 0, it must be counting down to equal 0. Consequently, N = Start / -Step.
   // We have not yet seen any such cases.
   const SCEVConstant *StepC = dyn_cast<SCEVConstant>(Step);
-  if (StepC == 0)
+  if (StepC == 0 || StepC->getValue()->equalsInt(0))
     return getCouldNotCompute();
 
   // For positive steps (counting up until unsigned overflow):
