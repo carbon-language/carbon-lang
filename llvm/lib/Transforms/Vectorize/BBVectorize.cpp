@@ -660,30 +660,9 @@ namespace {
 
     // Loads and stores can be merged if they have different alignments,
     // but are otherwise the same.
-    LoadInst *LI, *LJ;
-    StoreInst *SI, *SJ;
-    if ((LI = dyn_cast<LoadInst>(I)) && (LJ = dyn_cast<LoadInst>(J))) {
-      if (I->getType() != J->getType())
-        return false;
-
-      if (LI->getPointerOperand()->getType() !=
-            LJ->getPointerOperand()->getType() ||
-          LI->isVolatile() != LJ->isVolatile() ||
-          LI->getOrdering() != LJ->getOrdering() ||
-          LI->getSynchScope() != LJ->getSynchScope())
-        return false;
-    } else if ((SI = dyn_cast<StoreInst>(I)) && (SJ = dyn_cast<StoreInst>(J))) {
-      if (SI->getValueOperand()->getType() !=
-            SJ->getValueOperand()->getType() ||
-          SI->getPointerOperand()->getType() !=
-            SJ->getPointerOperand()->getType() ||
-          SI->isVolatile() != SJ->isVolatile() ||
-          SI->getOrdering() != SJ->getOrdering() ||
-          SI->getSynchScope() != SJ->getSynchScope())
-        return false;
-    } else if (!J->isSameOperationAs(I)) {
+    if (!J->isSameOperationAs(I, Instruction::CompareIgnoringAlignment))
       return false;
-    }
+
     // FIXME: handle addsub-type operations!
 
     if (IsSimpleLoadStore) {

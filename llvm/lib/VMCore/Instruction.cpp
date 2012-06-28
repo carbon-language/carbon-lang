@@ -240,27 +240,38 @@ bool Instruction::isIdenticalToWhenDefined(const Instruction *I) const {
 // isSameOperationAs
 // This should be kept in sync with isEquivalentOperation in
 // lib/Transforms/IPO/MergeFunctions.cpp.
-bool Instruction::isSameOperationAs(const Instruction *I) const {
+bool Instruction::isSameOperationAs(const Instruction *I,
+                                    unsigned flags) const {
+  bool IgnoreAlignment = flags & CompareIgnoringAlignment;
+  bool UseScalarTypes  = flags & CompareUsingScalarTypes;
+
   if (getOpcode() != I->getOpcode() ||
       getNumOperands() != I->getNumOperands() ||
-      getType() != I->getType())
+      (UseScalarTypes ?
+       getType()->getScalarType() != I->getType()->getScalarType() :
+       getType() != I->getType()))
     return false;
 
   // We have two instructions of identical opcode and #operands.  Check to see
   // if all operands are the same type
   for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
-    if (getOperand(i)->getType() != I->getOperand(i)->getType())
+    if (UseScalarTypes ?
+        getOperand(i)->getType()->getScalarType() !=
+          I->getOperand(i)->getType()->getScalarType() :
+        getOperand(i)->getType() != I->getOperand(i)->getType())
       return false;
 
   // Check special state that is a part of some instructions.
   if (const LoadInst *LI = dyn_cast<LoadInst>(this))
     return LI->isVolatile() == cast<LoadInst>(I)->isVolatile() &&
-           LI->getAlignment() == cast<LoadInst>(I)->getAlignment() &&
+           (LI->getAlignment() == cast<LoadInst>(I)->getAlignment() ||
+            IgnoreAlignment) &&
            LI->getOrdering() == cast<LoadInst>(I)->getOrdering() &&
            LI->getSynchScope() == cast<LoadInst>(I)->getSynchScope();
   if (const StoreInst *SI = dyn_cast<StoreInst>(this))
     return SI->isVolatile() == cast<StoreInst>(I)->isVolatile() &&
-           SI->getAlignment() == cast<StoreInst>(I)->getAlignment() &&
+           (SI->getAlignment() == cast<StoreInst>(I)->getAlignment() ||
+            IgnoreAlignment) &&
            SI->getOrdering() == cast<StoreInst>(I)->getOrdering() &&
            SI->getSynchScope() == cast<StoreInst>(I)->getSynchScope();
   if (const CmpInst *CI = dyn_cast<CmpInst>(this))
