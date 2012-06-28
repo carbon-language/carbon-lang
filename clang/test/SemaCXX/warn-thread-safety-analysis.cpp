@@ -49,6 +49,13 @@ class __attribute__((scoped_lockable)) ReaderMutexLock {
   ~ReaderMutexLock() __attribute__((unlock_function));
 };
 
+class SCOPED_LOCKABLE ReleasableMutexLock {
+ public:
+  ReleasableMutexLock(Mutex *mu) EXCLUSIVE_LOCK_FUNCTION(mu);
+  ~ReleasableMutexLock() UNLOCK_FUNCTION();
+
+  void Release() UNLOCK_FUNCTION();
+};
 
 Mutex sls_mu;
 
@@ -1578,7 +1585,7 @@ struct TestScopedLockable {
     MutexLock mulock_a(&mu1);
     MutexLock mulock_b(&mu1); // \
       // expected-warning {{locking 'mu1' that is already locked}}
-  }   // expected-warning {{unlocking 'mu1' that was not locked}}
+  }
 
   void foo4() {
     MutexLock mulock1(&mu1), mulock2(&mu2);
@@ -2359,5 +2366,44 @@ void test3(Bar* b1, Bar* b2) {
 }
 
 } // end namespace LockReturned
+
+
+namespace ReleasableScopedLock {
+
+class Foo {
+  Mutex mu_;
+  bool c;
+  int a GUARDED_BY(mu_);
+
+  void test1();
+  void test2();
+  void test3();
+};
+
+
+void Foo::test1() {
+  ReleasableMutexLock rlock(&mu_);
+  rlock.Release();
+}
+
+void Foo::test2() {
+  ReleasableMutexLock rlock(&mu_);
+  if (c) {            // test join point -- held/not held during release
+    rlock.Release();
+  }
+}
+
+void Foo::test3() {
+  ReleasableMutexLock rlock(&mu_);
+  a = 0;
+  rlock.Release();
+  a = 1;  // expected-warning {{writing variable 'a' requires locking 'mu_' exclusively}}
+}
+
+} // end namespace ReleasableScopedLock
+
+
+
+
 
 
