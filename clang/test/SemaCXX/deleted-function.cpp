@@ -63,3 +63,6 @@ template void test2<int>();
 template<typename> void test3() = delete; // expected-note {{explicit instantiation refers here}}
 template<typename> void test3();
 template void test3<int>(); // expected-error {{explicit instantiation of undefined function template 'test3'}}
+
+void test4() {} // expected-note {{previous definition is here}}
+void test4() = delete; // expected-error {{redefinition of 'test4'}}

@@ -10318,8 +10318,8 @@ void Sema::SetDeclDeleted(Decl *Dcl, SourceLocation DelLoc) {
   if (const FunctionDecl *Prev = Fn->getPreviousDecl()) {
     // Don't consider the implicit declaration we generate for explicit
     // specializations. FIXME: Do not generate these implicit declarations.
-    if (Prev->getTemplateSpecializationKind() != TSK_ExplicitSpecialization
-        || Prev->getPreviousDecl()) {
+    if ((Prev->getTemplateSpecializationKind() != TSK_ExplicitSpecialization
+        || Prev->getPreviousDecl()) && !Prev->isDefined()) {
       Diag(DelLoc, diag::err_deleted_decl_not_first);
       Diag(Prev->getLocation(), diag::note_previous_declaration);
     }
