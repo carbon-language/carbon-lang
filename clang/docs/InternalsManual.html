@@ -361,7 +361,8 @@ Clang:</p>
 <tr><td colspan="2"><b>"diff" format</b></td></tr>
 <tr><td>Example:</td><td><tt>"no known conversion %diff{from | to | }1,2"</tt></td></tr>
 <tr><td>Class:</td><td>QualType</td></tr>
-<tr><td>Description</td><td><p>This formatter takes two QualTypes and attempts to print a template difference between the two.  If tree printing is off, the entire text inside the the braces is printed, with the formatted text replacing the pipes.  If tree printing is on, the text is not printed and a type tree is printed after the diagnostic message.</p></td></tr>
+<tr><td>Description</td><td><p>This formatter takes two QualTypes and attempts to print a template difference between the two.  If tree printing is off, the text inside the the braces before the pipe is printed, with the formatted text replacing the $.  If tree printing is on, the text after the pipe is printed and a type tree is printed after the diagnostic message.
+</p></td></tr>
     
 </table>
 

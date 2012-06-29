@@ -823,6 +823,9 @@ FormatDiagnostic(const char *DiagStr, const char *DiagEnd,
       TDT.ShowColors = getDiags()->ShowColors;
       intptr_t val = reinterpret_cast<intptr_t>(&TDT);
 
+      const char *ArgumentEnd = Argument + ArgumentLen;
+      const char *Pipe = ScanFormat(Argument, ArgumentEnd, '|');
+
       // Print the tree.
       if (getDiags()->PrintTemplateTree) {
         TDT.PrintFromType = true;
@@ -834,18 +837,19 @@ FormatDiagnostic(const char *DiagStr, const char *DiagEnd,
                                        FormattedArgs.size(),
                                        Tree, QualTypeVals);
         // If there is no tree information, fall back to regular printing.
-        if (!Tree.empty())
+        if (!Tree.empty()) {
+          FormatDiagnostic(Pipe + 1, ArgumentEnd, OutStr);
           break;
+        }
       }
 
       // Non-tree printing, also the fall-back when tree printing fails.
       // The fall-back is triggered when the types compared are not templates.
-      const char *ArgumentEnd = Argument + ArgumentLen;
-      const char *FirstPipe = ScanFormat(Argument, ArgumentEnd, '|');
-      const char *SecondPipe = ScanFormat(FirstPipe + 1, ArgumentEnd, '|');
+      const char *FirstDollar = ScanFormat(Argument, ArgumentEnd, '$');
+      const char *SecondDollar = ScanFormat(FirstDollar + 1, ArgumentEnd, '$');
 
       // Append before text
-      FormatDiagnostic(Argument, FirstPipe, OutStr);
+      FormatDiagnostic(Argument, FirstDollar, OutStr);
 
       // Append first type
       TDT.PrintTree = false;
@@ -856,7 +860,7 @@ FormatDiagnostic(const char *DiagStr, const char *DiagEnd,
                                      FormattedArgs.data(), FormattedArgs.size(),
                                      OutStr, QualTypeVals);
       // Append middle text
-      FormatDiagnostic(FirstPipe + 1, SecondPipe, OutStr);
+      FormatDiagnostic(FirstDollar + 1, SecondDollar, OutStr);
 
       // Append second type
       TDT.PrintFromType = false;
@@ -866,7 +870,7 @@ FormatDiagnostic(const char *DiagStr, const char *DiagEnd,
                                      FormattedArgs.data(), FormattedArgs.size(),
                                      OutStr, QualTypeVals);
       // Append end text
-      FormatDiagnostic(SecondPipe + 1, ArgumentEnd, OutStr);
+      FormatDiagnostic(SecondDollar + 1, Pipe, OutStr);
       break;
     }
     
