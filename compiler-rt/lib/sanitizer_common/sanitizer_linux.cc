@@ -213,23 +213,23 @@ bool ProcessMaps::Next(uptr *start, uptr *end, uptr *offset,
     next_line = last;
   // Example: 08048000-08056000 r-xp 00000000 03:0c 64593   /foo/bar
   *start = ParseHex(&current_);
-  CHECK(*current_++ == '-');
+  CHECK_EQ(*current_++, '-');
   *end = ParseHex(&current_);
-  CHECK(*current_++ == ' ');
+  CHECK_EQ(*current_++, ' ');
   CHECK(IsOnOf(*current_++, '-', 'r'));
   CHECK(IsOnOf(*current_++, '-', 'w'));
   CHECK(IsOnOf(*current_++, '-', 'x'));
   CHECK(IsOnOf(*current_++, 's', 'p'));
-  CHECK(*current_++ == ' ');
+  CHECK_EQ(*current_++, ' ');
   *offset = ParseHex(&current_);
-  CHECK(*current_++ == ' ');
+  CHECK_EQ(*current_++, ' ');
   ParseHex(&current_);
-  CHECK(*current_++ == ':');
+  CHECK_EQ(*current_++, ':');
   ParseHex(&current_);
-  CHECK(*current_++ == ' ');
+  CHECK_EQ(*current_++, ' ');
   while (IsDecimal(*current_))
     current_++;
-  CHECK(*current_++ == ' ');
+  CHECK_EQ(*current_++, ' ');
   // Skip spaces.
   while (current_ < next_line && *current_ == ' ')
     current_++;
