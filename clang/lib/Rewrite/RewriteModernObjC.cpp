@@ -3108,13 +3108,16 @@ Expr *RewriteModernObjC::SynthMsgSendStretCallExpr(FunctionDecl *MsgSendStretFla
   str += name;
   str += "(id receiver, SEL sel";
   for (unsigned i = 2; i < ArgTypes.size(); i++) {
-    str += ", "; str += ArgTypes[i].getAsString(Context->getPrintingPolicy());
-    str += " arg"; str += utostr(i);
+    std::string ArgName = "arg"; ArgName += utostr(i);
+    ArgTypes[i].getAsStringInternal(ArgName, Context->getPrintingPolicy());
+    str += ", "; str += ArgName;
   }
   // could be vararg.
   for (unsigned i = ArgTypes.size(); i < MsgExprs.size(); i++) {
-    str += ", "; str += MsgExprs[i]->getType().getAsString(Context->getPrintingPolicy());
-    str += " arg"; str += utostr(i);
+    std::string ArgName = "arg"; ArgName += utostr(i);
+    MsgExprs[i]->getType().getAsStringInternal(ArgName,
+                                               Context->getPrintingPolicy());
+    str += ", "; str += ArgName;
   }
   
   str += ") {\n";
@@ -5956,8 +5959,6 @@ void RewriteModernObjC::Initialize(ASTContext &context) {
     Preamble += "#define __block\n";
     Preamble += "#define __weak\n";
   }
-  
-  // needed for use of memset.
   Preamble += "\nextern \"C\" void * memset(void *b, int c, unsigned long len);\n";
   
   // Declarations required for modern objective-c array and dictionary literals.

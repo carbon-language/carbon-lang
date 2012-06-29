@@ -3,6 +3,7 @@
 // rdar://11359268
 
 extern "C" void *sel_registerName(const char *);
+typedef unsigned long size_t;
 
 union U {
   double d1;
@@ -34,6 +35,8 @@ struct S foo () {
   S s2 = [PI() VAMeth : 12];
 
   S s3 = [PI() VAMeth : 0, "hello", "there"];
+
+  S s4 = [PI() VAMeth : 2, ^{}, &foo];
 
   return [PI() Meth1];
 }
