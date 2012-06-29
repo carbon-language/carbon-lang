@@ -373,29 +373,21 @@ TSAN_INTERCEPTOR(uptr, strlen, const char *s) {
   return len;
 }
 
-DECLARE_REAL(void*, memset, void *dst, int v, uptr size);
-DECLARE_REAL(void*, memcpy, void *dst, const void *src, uptr size);
-DECLARE_REAL(int, memcmp, const void *s1, const void *s2, uptr n);
-extern "C" void *__interceptor_memset(void *dst, int v, uptr size);
-extern "C" void *__interceptor_memcpy(void *dst, const void *src, uptr size);
-extern "C" int __interceptor_memcmp(const void *s1, const void *s2, uptr n);
-
-namespace __tsan {
-void *intercept_memset(uptr callpc, void *dst, int v, uptr size) {
-  SCOPED_INTERCEPTOR_LIBC(memset, dst, v, size);
+TSAN_INTERCEPTOR(void*, memset, void *dst, int v, uptr size) {
+  SCOPED_TSAN_INTERCEPTOR(memset, dst, v, size);
   MemoryAccessRange(thr, pc, (uptr)dst, size, true);
-  return REAL(memset)(dst, v, size);
+  return internal_memset(dst, v, size);
 }
 
-void *intercept_memcpy(uptr callpc, void *dst, const void *src, uptr size) {
-  SCOPED_INTERCEPTOR_LIBC(memcpy, dst, src, size);
+TSAN_INTERCEPTOR(void*, memcpy, void *dst, const void *src, uptr size) {
+  SCOPED_TSAN_INTERCEPTOR(memcpy, dst, src, size);
   MemoryAccessRange(thr, pc, (uptr)dst, size, true);
   MemoryAccessRange(thr, pc, (uptr)src, size, false);
-  return REAL(memcpy)(dst, src, size);
+  return internal_memcpy(dst, src, size);
 }
 
-int intercept_memcmp(uptr callpc, const void *s1, const void *s2, uptr n) {
-  SCOPED_INTERCEPTOR_LIBC(memcmp, s1, s2, n);
+TSAN_INTERCEPTOR(int, memcmp, const void *s1, const void *s2, uptr n) {
+  SCOPED_TSAN_INTERCEPTOR(memcmp, s1, s2, n);
   int res = 0;
   uptr len = 0;
   for (; len < n; len++) {
@@ -405,7 +397,6 @@ int intercept_memcmp(uptr callpc, const void *s1, const void *s2, uptr n) {
   MemoryAccessRange(thr, pc, (uptr)s1, len < n ? len + 1 : n, false);
   MemoryAccessRange(thr, pc, (uptr)s2, len < n ? len + 1 : n, false);
   return res;
-}
 }
 
 TSAN_INTERCEPTOR(int, strcmp, const char *s1, const char *s2) {
@@ -1449,25 +1440,13 @@ static void process_pending_signals(ThreadState *thr) {
 
 namespace __tsan {
 
-// Used until we obtain real efficient functions.
-static void* poormans_memset(void *dst, int v, uptr size) {
-  for (uptr i = 0; i < size; i++)
-    ((char*)dst)[i] = (char)v;
-  return dst;
-}
-
-static void* poormans_memcpy(void *dst, const void *src, uptr size) {
-  for (uptr i = 0; i < size; i++)
-    ((char*)dst)[i] = ((char*)src)[i];
-  return dst;
-}
-
 void InitializeInterceptors() {
   CHECK_GT(cur_thread()->in_rtl, 0);
 
   // We need to setup it early, because functions like dlsym() can call it.
-  REAL(memset) = poormans_memset;
-  REAL(memcpy) = poormans_memcpy;
+  REAL(memset) = internal_memset;
+  REAL(memcpy) = internal_memcpy;
+  REAL(memcmp) = internal_memcmp;
 
   TSAN_INTERCEPT(longjmp);
   TSAN_INTERCEPT(siglongjmp);
