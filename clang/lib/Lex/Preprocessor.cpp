@@ -515,9 +515,19 @@ void Preprocessor::HandleIdentifier(Token &Identifier) {
 
   // If the information about this identifier is out of date, update it from
   // the external source.
+  // We have to treat __VA_ARGS__ in a special way, since it gets
+  // serialized with isPoisoned = true, but our preprocessor may have
+  // unpoisoned it if we're defining a C99 macro.
   if (II.isOutOfDate()) {
+    bool CurrentIsPoisoned = false;
+    if (&II == Ident__VA_ARGS__)
+      CurrentIsPoisoned = Ident__VA_ARGS__->isPoisoned();
+
     ExternalSource->updateOutOfDateIdentifier(II);
     Identifier.setKind(II.getTokenID());
+
+    if (&II == Ident__VA_ARGS__)
+      II.setIsPoisoned(CurrentIsPoisoned);
   }
   
   // If this identifier was poisoned, and if it was not produced from a macro
