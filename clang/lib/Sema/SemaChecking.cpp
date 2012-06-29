@@ -405,6 +405,11 @@ bool Sema::CheckARMBuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
 #undef GET_NEON_IMMEDIATE_CHECK
   };
 
+  // We can't check the value of a dependent argument.
+  if (TheCall->getArg(i)->isTypeDependent() ||
+      TheCall->getArg(i)->isValueDependent())
+    return false;
+
   // Check that the immediate argument is actually a constant.
   if (SemaBuiltinConstantArg(TheCall, i, Result))
     return true;
@@ -1478,7 +1483,11 @@ bool Sema::SemaBuiltinPrefetch(CallExpr *TheCall) {
   // constant integers.
   for (unsigned i = 1; i != NumArgs; ++i) {
     Expr *Arg = TheCall->getArg(i);
-    
+
+    // We can't check the value of a dependent argument.
+    if (Arg->isTypeDependent() || Arg->isValueDependent())
+      continue;
+
     llvm::APSInt Result;
     if (SemaBuiltinConstantArg(TheCall, i, Result))
       return true;
@@ -1523,7 +1532,12 @@ bool Sema::SemaBuiltinConstantArg(CallExpr *TheCall, int ArgNum,
 // For compatibility check 0-3, llvm only handles 0 and 2.
 bool Sema::SemaBuiltinObjectSize(CallExpr *TheCall) {
   llvm::APSInt Result;
-  
+
+  // We can't check the value of a dependent argument.
+  if (TheCall->getArg(1)->isTypeDependent() ||
+      TheCall->getArg(1)->isValueDependent())
+    return false;
+
   // Check constant-ness first.
   if (SemaBuiltinConstantArg(TheCall, 1, Result))
     return true;

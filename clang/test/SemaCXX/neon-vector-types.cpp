@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify "-triple" "thumbv7-apple-ios3.0.0" %s
 // rdar://9208404
 
 typedef int MP4Err;
@@ -25,3 +25,20 @@ MP4Err autoCorrelation2nd_Neon(Float32 *alphar, Float32 *alphai,
   return 0;
 }
 
+namespace rdar11688587 {
+  typedef float float32_t;
+  typedef __attribute__((neon_vector_type(4))) float32_t float32x4_t;
+
+  template<int I>
+  float test()
+  {
+    extern float32x4_t vec;
+    return __extension__ ({ 
+        float32x4_t __a = (vec); 
+        (float32_t)__builtin_neon_vgetq_lane_f32(__a, I);  // expected-error{{argument should be a value from 0 to 3}}
+      });
+  }
+
+  template float test<1>();
+  template float test<4>(); // expected-note{{in instantiation of function template specialization 'rdar11688587::test<4>' requested here}}
+}
