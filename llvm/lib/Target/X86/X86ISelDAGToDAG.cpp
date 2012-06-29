@@ -2011,6 +2011,22 @@ SDNode *X86DAGToDAGISel::Select(SDNode *Node) {
       return SelectGather(Node, X86::VGATHERQPSrm);
     case Intrinsic::x86_avx2_gather_q_ps_256:
       return SelectGather(Node, X86::VGATHERQPSYrm);
+    case Intrinsic::x86_avx2_gather_d_q:
+      return SelectGather(Node, X86::VPGATHERDQrm);
+    case Intrinsic::x86_avx2_gather_d_q_256:
+      return SelectGather(Node, X86::VPGATHERDQYrm);
+    case Intrinsic::x86_avx2_gather_q_q:
+      return SelectGather(Node, X86::VPGATHERQQrm);
+    case Intrinsic::x86_avx2_gather_q_q_256:
+      return SelectGather(Node, X86::VPGATHERQQYrm);
+    case Intrinsic::x86_avx2_gather_d_d:
+      return SelectGather(Node, X86::VPGATHERDDrm);
+    case Intrinsic::x86_avx2_gather_d_d_256:
+      return SelectGather(Node, X86::VPGATHERDDYrm);
+    case Intrinsic::x86_avx2_gather_q_d:
+      return SelectGather(Node, X86::VPGATHERQDrm);
+    case Intrinsic::x86_avx2_gather_q_d_256:
+      return SelectGather(Node, X86::VPGATHERQDYrm);
     }
     break;
   }

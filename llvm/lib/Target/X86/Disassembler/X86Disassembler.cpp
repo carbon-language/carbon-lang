@@ -506,18 +506,26 @@ static bool translateRMMemory(MCInst &mcInst, InternalInstruction &insn,
     //   We can tell whether it is VSIB or SIB after instruction ID is decoded,
     //   but instruction ID may not be decoded yet when calling readSIB.
     uint32_t Opcode = mcInst.getOpcode();
-    bool IsGather = (Opcode == X86::VGATHERDPDrm ||
-                     Opcode == X86::VGATHERQPDrm ||
-                     Opcode == X86::VGATHERDPSrm ||
-                     Opcode == X86::VGATHERQPSrm);
-    bool IsGatherY = (Opcode == X86::VGATHERDPDYrm ||
-                      Opcode == X86::VGATHERQPDYrm ||
-                      Opcode == X86::VGATHERDPSYrm ||
-                      Opcode == X86::VGATHERQPSYrm);
-    if (IsGather || IsGatherY) {
+    bool IndexIs128 = (Opcode == X86::VGATHERDPDrm ||
+                       Opcode == X86::VGATHERDPDYrm ||
+                       Opcode == X86::VGATHERQPDrm ||
+                       Opcode == X86::VGATHERDPSrm ||
+                       Opcode == X86::VGATHERQPSrm ||
+                       Opcode == X86::VPGATHERDQrm ||
+                       Opcode == X86::VPGATHERDQYrm ||
+                       Opcode == X86::VPGATHERQQrm ||
+                       Opcode == X86::VPGATHERDDrm ||
+                       Opcode == X86::VPGATHERQDrm);
+    bool IndexIs256 = (Opcode == X86::VGATHERQPDYrm ||
+                       Opcode == X86::VGATHERDPSYrm ||
+                       Opcode == X86::VGATHERQPSYrm ||
+                       Opcode == X86::VPGATHERQQYrm ||
+                       Opcode == X86::VPGATHERDDYrm ||
+                       Opcode == X86::VPGATHERQDYrm);
+    if (IndexIs128 || IndexIs256) {
       unsigned IndexOffset = insn.sibIndex -
                          (insn.addressSize == 8 ? SIB_INDEX_RAX:SIB_INDEX_EAX);
-      SIBIndex IndexBase = IsGatherY ? SIB_INDEX_YMM0 : SIB_INDEX_XMM0;
+      SIBIndex IndexBase = IndexIs256 ? SIB_INDEX_YMM0 : SIB_INDEX_XMM0;
       insn.sibIndex = (SIBIndex)(IndexBase + 
                            (insn.sibIndex == SIB_INDEX_NONE ? 4 : IndexOffset));
     }

@@ -988,14 +988,14 @@ declare <2 x double> @llvm.x86.avx2.gather.d.pd(<2 x double>, i8*,
                       <4 x i32>, <2 x double>, i8) nounwind readonly
 
 define <4 x double> @test_x86_avx2_gather_d_pd_256(<4 x double> %a0, i8* %a1,
-                     <8 x i32> %idx, <4 x double> %mask) {
+                     <4 x i32> %idx, <4 x double> %mask) {
   ; CHECK: vgatherdpd
   %res = call <4 x double> @llvm.x86.avx2.gather.d.pd.256(<4 x double> %a0,
-                            i8* %a1, <8 x i32> %idx, <4 x double> %mask, i8 2) ;
+                            i8* %a1, <4 x i32> %idx, <4 x double> %mask, i8 2) ;
   ret <4 x double> %res
 }
 declare <4 x double> @llvm.x86.avx2.gather.d.pd.256(<4 x double>, i8*,
-                      <8 x i32>, <4 x double>, i8) nounwind readonly
+                      <4 x i32>, <4 x double>, i8) nounwind readonly
 
 define <2 x double> @test_x86_avx2_gather_q_pd(<2 x double> %a0, i8* %a1,
                      <2 x i64> %idx, <2 x double> %mask) {
@@ -1047,12 +1047,92 @@ define <4 x float> @test_x86_avx2_gather_q_ps(<4 x float> %a0, i8* %a1,
 declare <4 x float> @llvm.x86.avx2.gather.q.ps(<4 x float>, i8*,
                       <2 x i64>, <4 x float>, i8) nounwind readonly
 
-define <8 x float> @test_x86_avx2_gather_q_ps_256(<8 x float> %a0, i8* %a1,
-                     <4 x i64> %idx, <8 x float> %mask) {
+define <4 x float> @test_x86_avx2_gather_q_ps_256(<4 x float> %a0, i8* %a1,
+                     <4 x i64> %idx, <4 x float> %mask) {
   ; CHECK: vgatherqps
-  %res = call <8 x float> @llvm.x86.avx2.gather.q.ps.256(<8 x float> %a0,
-                            i8* %a1, <4 x i64> %idx, <8 x float> %mask, i8 2) ;
-  ret <8 x float> %res
+  %res = call <4 x float> @llvm.x86.avx2.gather.q.ps.256(<4 x float> %a0,
+                            i8* %a1, <4 x i64> %idx, <4 x float> %mask, i8 2) ;
+  ret <4 x float> %res
 }
-declare <8 x float> @llvm.x86.avx2.gather.q.ps.256(<8 x float>, i8*,
-                      <4 x i64>, <8 x float>, i8) nounwind readonly
+declare <4 x float> @llvm.x86.avx2.gather.q.ps.256(<4 x float>, i8*,
+                      <4 x i64>, <4 x float>, i8) nounwind readonly
+
+define <2 x i64> @test_x86_avx2_gather_d_q(<2 x i64> %a0, i8* %a1,
+                     <4 x i32> %idx, <2 x i64> %mask) {
+  ; CHECK: vpgatherdq
+  %res = call <2 x i64> @llvm.x86.avx2.gather.d.q(<2 x i64> %a0,
+                            i8* %a1, <4 x i32> %idx, <2 x i64> %mask, i8 2) ;
+  ret <2 x i64> %res
+}
+declare <2 x i64> @llvm.x86.avx2.gather.d.q(<2 x i64>, i8*,
+                      <4 x i32>, <2 x i64>, i8) nounwind readonly
+
+define <4 x i64> @test_x86_avx2_gather_d_q_256(<4 x i64> %a0, i8* %a1,
+                     <4 x i32> %idx, <4 x i64> %mask) {
+  ; CHECK: vpgatherdq
+  %res = call <4 x i64> @llvm.x86.avx2.gather.d.q.256(<4 x i64> %a0,
+                            i8* %a1, <4 x i32> %idx, <4 x i64> %mask, i8 2) ;
+  ret <4 x i64> %res
+}
+declare <4 x i64> @llvm.x86.avx2.gather.d.q.256(<4 x i64>, i8*,
+                      <4 x i32>, <4 x i64>, i8) nounwind readonly
+
+define <2 x i64> @test_x86_avx2_gather_q_q(<2 x i64> %a0, i8* %a1,
+                     <2 x i64> %idx, <2 x i64> %mask) {
+  ; CHECK: vpgatherqq
+  %res = call <2 x i64> @llvm.x86.avx2.gather.q.q(<2 x i64> %a0,
+                            i8* %a1, <2 x i64> %idx, <2 x i64> %mask, i8 2) ;
+  ret <2 x i64> %res
+}
+declare <2 x i64> @llvm.x86.avx2.gather.q.q(<2 x i64>, i8*,
+                      <2 x i64>, <2 x i64>, i8) nounwind readonly
+
+define <4 x i64> @test_x86_avx2_gather_q_q_256(<4 x i64> %a0, i8* %a1,
+                     <4 x i64> %idx, <4 x i64> %mask) {
+  ; CHECK: vpgatherqq
+  %res = call <4 x i64> @llvm.x86.avx2.gather.q.q.256(<4 x i64> %a0,
+                            i8* %a1, <4 x i64> %idx, <4 x i64> %mask, i8 2) ;
+  ret <4 x i64> %res
+}
+declare <4 x i64> @llvm.x86.avx2.gather.q.q.256(<4 x i64>, i8*,
+                      <4 x i64>, <4 x i64>, i8) nounwind readonly
+
+define <4 x i32> @test_x86_avx2_gather_d_d(<4 x i32> %a0, i8* %a1,
+                     <4 x i32> %idx, <4 x i32> %mask) {
+  ; CHECK: vpgatherdd
+  %res = call <4 x i32> @llvm.x86.avx2.gather.d.d(<4 x i32> %a0,
+                            i8* %a1, <4 x i32> %idx, <4 x i32> %mask, i8 2) ;
+  ret <4 x i32> %res
+}
+declare <4 x i32> @llvm.x86.avx2.gather.d.d(<4 x i32>, i8*,
+                      <4 x i32>, <4 x i32>, i8) nounwind readonly
+
+define <8 x i32> @test_x86_avx2_gather_d_d_256(<8 x i32> %a0, i8* %a1,
+                     <8 x i32> %idx, <8 x i32> %mask) {
+  ; CHECK: vpgatherdd
+  %res = call <8 x i32> @llvm.x86.avx2.gather.d.d.256(<8 x i32> %a0,
+                            i8* %a1, <8 x i32> %idx, <8 x i32> %mask, i8 2) ;
+  ret <8 x i32> %res
+}
+declare <8 x i32> @llvm.x86.avx2.gather.d.d.256(<8 x i32>, i8*,
+                      <8 x i32>, <8 x i32>, i8) nounwind readonly
+
+define <4 x i32> @test_x86_avx2_gather_q_d(<4 x i32> %a0, i8* %a1,
+                     <2 x i64> %idx, <4 x i32> %mask) {
+  ; CHECK: vpgatherqd
+  %res = call <4 x i32> @llvm.x86.avx2.gather.q.d(<4 x i32> %a0,
+                            i8* %a1, <2 x i64> %idx, <4 x i32> %mask, i8 2) ;
+  ret <4 x i32> %res
+}
+declare <4 x i32> @llvm.x86.avx2.gather.q.d(<4 x i32>, i8*,
+                      <2 x i64>, <4 x i32>, i8) nounwind readonly
+
+define <4 x i32> @test_x86_avx2_gather_q_d_256(<4 x i32> %a0, i8* %a1,
+                     <4 x i64> %idx, <4 x i32> %mask) {
+  ; CHECK: vpgatherqd
+  %res = call <4 x i32> @llvm.x86.avx2.gather.q.d.256(<4 x i32> %a0,
+                            i8* %a1, <4 x i64> %idx, <4 x i32> %mask, i8 2) ;
+  ret <4 x i32> %res
+}
+declare <4 x i32> @llvm.x86.avx2.gather.q.d.256(<4 x i32>, i8*,
+                      <4 x i64>, <4 x i32>, i8) nounwind readonly

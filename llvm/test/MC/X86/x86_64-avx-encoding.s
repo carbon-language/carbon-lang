@@ -4126,6 +4126,30 @@ _foo2:
 // CHECK: encoding: [0xc4,0xe2,0xe9,0x92,0x04,0x4f]
           vgatherdpd %xmm0, (%rdi,%xmm1,2), %xmm2
 
-// CHECK: vgatherqps %ymm8, (%r15,%ymm9,2), %ymm10
+// CHECK: vgatherdpd %ymm0, (%rdi,%xmm1,2), %ymm2
+// CHECK: encoding: [0xc4,0xe2,0xed,0x92,0x04,0x4f]
+          vgatherdpd %ymm0, (%rdi,%xmm1,2), %ymm2
+
+// CHECK: vgatherqps %xmm8, (%r15,%xmm9,2), %xmm10
+// CHECK: encoding: [0xc4,0x02,0x29,0x93,0x04,0x4f]
+          vgatherqps %xmm8, (%r15,%xmm9,2), %xmm10
+
+// CHECK: vgatherqps %xmm8, (%r15,%ymm9,2), %xmm10
 // CHECK: encoding: [0xc4,0x02,0x2d,0x93,0x04,0x4f]
-          vgatherqps %ymm8, (%r15,%ymm9,2), %ymm10
+          vgatherqps %xmm8, (%r15,%ymm9,2), %xmm10
+
+// CHECK: vpgatherdq %xmm0, (%rdi,%xmm1,2), %xmm2
+// CHECK: encoding: [0xc4,0xe2,0xe9,0x90,0x04,0x4f]
+          vpgatherdq %xmm0, (%rdi,%xmm1,2), %xmm2
+
+// CHECK: vpgatherdq %ymm0, (%rdi,%xmm1,2), %ymm2
+// CHECK: encoding: [0xc4,0xe2,0xed,0x90,0x04,0x4f]
+          vpgatherdq %ymm0, (%rdi,%xmm1,2), %ymm2
+
+// CHECK: vpgatherqd %xmm8, (%r15,%xmm9,2), %xmm10
+// CHECK: encoding: [0xc4,0x02,0x29,0x91,0x04,0x4f]
+          vpgatherqd %xmm8, (%r15,%xmm9,2), %xmm10
+
+// CHECK: vpgatherqd %xmm8, (%r15,%ymm9,2), %xmm10
+// CHECK: encoding: [0xc4,0x02,0x2d,0x91,0x04,0x4f]
+          vpgatherqd %xmm8, (%r15,%ymm9,2), %xmm10
