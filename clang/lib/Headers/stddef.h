@@ -52,6 +52,13 @@ typedef __WCHAR_TYPE__ wchar_t;
 #  define NULL ((void*)0)
 #endif
 
+#ifdef __cplusplus
+#if defined(_MSC_EXTENSIONS) && defined(_NATIVE_NULLPTR_SUPPORTED)
+namespace std { typedef decltype(nullptr) nullptr_t; }
+using ::std::nullptr_t;
+#endif
+#endif
+
 #define offsetof(t, d) __builtin_offsetof(t, d)
 
 #endif /* __STDDEF_H */
