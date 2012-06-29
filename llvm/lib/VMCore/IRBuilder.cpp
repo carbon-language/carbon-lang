@@ -12,9 +12,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Support/IRBuilder.h"
-#include "llvm/GlobalVariable.h"
 #include "llvm/Function.h"
+#include "llvm/GlobalVariable.h"
+#include "llvm/IRBuilder.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/LLVMContext.h"
 using namespace llvm;

@@ -685,10 +685,10 @@ clang++ -g -O3 toy.cpp `llvm-config --cppflags --ldflags --libs core` -o toy
 // See example below.
 
 #include "llvm/DerivedTypes.h"
+#include "llvm/IRBuilder.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/Analysis/Verifier.h"
-#include "llvm/Support/IRBuilder.h"
 #include &lt;cstdio&gt;
 #include &lt;string&gt;
 #include &lt;map&gt;

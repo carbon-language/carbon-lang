@@ -15,9 +15,9 @@
 #define DEBUG_TYPE "loweratomic"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Function.h"
+#include "llvm/IRBuilder.h"
 #include "llvm/IntrinsicInst.h"
 #include "llvm/Pass.h"
-#include "llvm/Support/IRBuilder.h"
 using namespace llvm;
 
 static bool LowerAtomicCmpXchgInst(AtomicCmpXchgInst *CXI) {

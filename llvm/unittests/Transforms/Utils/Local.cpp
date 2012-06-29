@@ -7,12 +7,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "gtest/gtest.h"
 #include "llvm/BasicBlock.h"
+#include "llvm/IRBuilder.h"
 #include "llvm/Instructions.h"
 #include "llvm/LLVMContext.h"
-#include "llvm/Support/IRBuilder.h"
 #include "llvm/Transforms/Utils/Local.h"
+
+#include "gtest/gtest.h"
 
 using namespace llvm;
 

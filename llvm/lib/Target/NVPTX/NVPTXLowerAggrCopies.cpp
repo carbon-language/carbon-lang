@@ -11,17 +11,17 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Function.h"
-#include "llvm/Constants.h"
-#include "llvm/Module.h"
-#include "llvm/Instructions.h"
-#include "llvm/Intrinsics.h"
-#include "llvm/IntrinsicInst.h"
-#include "llvm/Support/InstIterator.h"
-#include "llvm/Support/IRBuilder.h"
 #include "NVPTXLowerAggrCopies.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/Constants.h"
+#include "llvm/Function.h"
+#include "llvm/IRBuilder.h"
+#include "llvm/Instructions.h"
+#include "llvm/IntrinsicInst.h"
+#include "llvm/Intrinsics.h"
 #include "llvm/LLVMContext.h"
+#include "llvm/Module.h"
+#include "llvm/Support/InstIterator.h"
+#include "llvm/Target/TargetData.h"
 
 using namespace llvm;
 

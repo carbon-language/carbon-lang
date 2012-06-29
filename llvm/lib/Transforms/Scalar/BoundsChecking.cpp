@@ -14,17 +14,17 @@
 
 #define DEBUG_TYPE "bounds-checking"
 #include "llvm/Transforms/Scalar.h"
+#include "llvm/IRBuilder.h"
+#include "llvm/Intrinsics.h"
+#include "llvm/Pass.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/MemoryBuiltins.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/InstIterator.h"
-#include "llvm/Support/IRBuilder.h"
-#include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/TargetFolder.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetData.h"
-#include "llvm/Intrinsics.h"
-#include "llvm/Pass.h"
 using namespace llvm;
 
 static cl::opt<bool> SingleTrapBB("bounds-checking-single-trap",

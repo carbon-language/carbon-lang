@@ -14,8 +14,8 @@
 #include "llvm/Transforms/Utils/ModuleUtils.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
+#include "llvm/IRBuilder.h"
 #include "llvm/Module.h"
-#include "llvm/Support/IRBuilder.h"
 
 using namespace llvm;
 

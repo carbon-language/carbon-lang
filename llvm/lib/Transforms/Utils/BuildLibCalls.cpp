@@ -12,18 +12,18 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Utils/BuildLibCalls.h"
-#include "llvm/Type.h"
 #include "llvm/Constants.h"
 #include "llvm/Function.h"
+#include "llvm/IRBuilder.h"
 #include "llvm/Intrinsics.h"
+#include "llvm/Intrinsics.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
-#include "llvm/Support/IRBuilder.h"
+#include "llvm/Type.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetLibraryInfo.h"
-#include "llvm/LLVMContext.h"
-#include "llvm/Intrinsics.h"
-#include "llvm/ADT/SmallString.h"
 
 using namespace llvm;
 
