@@ -1159,12 +1159,12 @@ def err_lvalue_reference_bind_to_temporary : Error<
   "%select{non-const|volatile}0 lvalue reference %diff{to type $ cannot bind "
   "to a temporary of type $|cannot bind to incompatible temporary}1,2">;
 def err_lvalue_reference_bind_to_unrelated : Error<
-  "%select{non-const|volatile}0 lvalue reference %diff{to type $ cannot bind to a value of unrelated type $|cannot bind to a value of related type}1,2">;
+  "%select{non-const|volatile}0 lvalue reference %diff{to type $ cannot bind to a value of unrelated type $|cannot bind to a value of unrelated type}1,2">;
 def err_reference_bind_drops_quals : Error<
   "binding of reference %diff{to type $ to a value of type $ drops "
   "qualifiers|drops qualifiers}0,1">;
 def err_reference_bind_failed : Error<
-  "reference %diff{to type $ could not bind to an %select{rvalue|lvalue}1 of type $|could not bing to %select{rvalue|lvalue}}0,2">;
+  "reference %diff{to type $ could not bind to an %select{rvalue|lvalue}1 of type $|could not bind to %select{rvalue|lvalue}}0,2">;
 def err_reference_bind_init_list : Error<
   "reference to type %0 cannot bind to an initializer list">;
 def warn_temporary_array_to_pointer_decay : Warning<
@@ -2168,7 +2168,8 @@ def note_ovl_candidate_bad_conv : Note<"candidate "
     "function (the implicit copy assignment operator)|"
     "function (the implicit move assignment operator)|"
     "constructor (inherited)}0%1"
-    " not viable: no known conversion %diff{from $ to $ |}2,3for "
+    " not viable: no known conversion "
+    "%diff{from $ to $|from argument type to parameter type}2,3 for "
     "%select{%ordinal5 argument|object argument}4"
     "%select{|; dereference the argument with *|"
     "; take the address of the argument with &|"
