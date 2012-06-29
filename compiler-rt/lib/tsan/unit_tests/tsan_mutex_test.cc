@@ -22,7 +22,7 @@ namespace __tsan {
 template<typename MutexType>
 class TestData {
  public:
-  TestData(MutexType *mtx)
+  explicit TestData(MutexType *mtx)
     : mtx_(mtx) {
     for (int i = 0; i < kSize; i++)
       data_[i] = 0;
