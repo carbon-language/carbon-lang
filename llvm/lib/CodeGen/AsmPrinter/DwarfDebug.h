@@ -235,7 +235,7 @@ class DwarfDebug {
   /// ScopeVariables - Collection of dbg variables of a scope.
   DenseMap<LexicalScope *, SmallVector<DbgVariable *, 8> > ScopeVariables;
 
-  /// AbstractVariables - Collection on abstract variables.
+  /// AbstractVariables - Collection of abstract variables.
   DenseMap<const MDNode *, DbgVariable *> AbstractVariables;
 
   /// DotDebugLocEntries - Collection of DotDebugLocEntry.
@@ -332,9 +332,6 @@ private:
   /// a function. Construct DIE to represent this concrete inlined copy
   /// of the function.
   DIE *constructInlinedScopeDIE(CompileUnit *TheCU, LexicalScope *Scope);
-
-  /// constructVariableDIE - Construct a DIE for the given DbgVariable.
-  DIE *constructVariableDIE(DbgVariable *DV, LexicalScope *S);
 
   /// constructScopeDIE - Construct a DIE for this scope.
   DIE *constructScopeDIE(CompileUnit *TheCU, LexicalScope *Scope);
@@ -516,9 +513,6 @@ public:
   /// source file names. If none currently exists, create a new id and insert it
   /// in the SourceIds map.
   unsigned GetOrCreateSourceID(StringRef DirName, StringRef FullName);
-
-  /// createSubprogramDIE - Create new DIE using SP.
-  DIE *createSubprogramDIE(DISubprogram SP);
 
   /// getStringPool - returns the entry into the start of the pool.
   MCSymbol *getStringPool();
