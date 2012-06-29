@@ -824,6 +824,8 @@ class ConvergingScheduler : public MachineSchedStrategy {
       return Available.getID() == ConvergingScheduler::TopQID;
     }
 
+    bool checkHazard(SUnit *SU);
+
     void releaseNode(SUnit *SU, unsigned ReadyCycle);
 
     void bumpCycle();
@@ -932,6 +934,29 @@ void ConvergingScheduler::releaseBottomNode(SUnit *SU) {
   Bot.releaseNode(SU, SU->BotReadyCycle);
 }
 
+/// Does this SU have a hazard within the current instruction group.
+///
+/// The scheduler supports two modes of hazard recognition. The first is the
+/// ScheduleHazardRecognizer API. It is a fully general hazard recognizer that
+/// supports highly complicated in-order reservation tables
+/// (ScoreboardHazardRecognizer) and arbitraty target-specific logic.
+///
+/// The second is a streamlined mechanism that checks for hazards based on
+/// simple counters that the scheduler itself maintains. It explicitly checks
+/// for instruction dispatch limitations, including the number of micro-ops that
+/// can dispatch per cycle.
+///
+/// TODO: Also check whether the SU must start a new group.
+bool ConvergingScheduler::SchedBoundary::checkHazard(SUnit *SU) {
+  if (HazardRec->isEnabled())
+    return HazardRec->getHazardType(SU) != ScheduleHazardRecognizer::NoHazard;
+
+  if (IssueCount + DAG->getNumMicroOps(SU->getInstr()) > DAG->getIssueWidth())
+    return true;
+
+  return false;
+}
+
 void ConvergingScheduler::SchedBoundary::releaseNode(SUnit *SU,
                                                      unsigned ReadyCycle) {
   if (ReadyCycle < MinReadyCycle)
@@ -939,9 +964,7 @@ void ConvergingScheduler::SchedBoundary::releaseNode(SUnit *SU,
 
   // Check for interlocks first. For the purpose of other heuristics, an
   // instruction that cannot issue appears as if it's not in the ReadyQueue.
-  if (ReadyCycle > CurrCycle
-      || (HazardRec->isEnabled() && (HazardRec->getHazardType(SU)
-                                     != ScheduleHazardRecognizer::NoHazard)))
+  if (ReadyCycle > CurrCycle || checkHazard(SU))
     Pending.push(SU);
   else
     Available.push(SU);
@@ -985,7 +1008,8 @@ void ConvergingScheduler::SchedBoundary::bumpNode(SUnit *SU) {
     }
     HazardRec->EmitInstruction(SU);
   }
-  // Check the instruction group size limit.
+  // Check the instruction group dispatch limit.
+  // TODO: Check if this SU must end a dispatch group.
   IssueCount += DAG->getNumMicroOps(SU->getInstr());
   if (IssueCount >= DAG->getIssueWidth()) {
     DEBUG(dbgs() << "*** Max instrs at cycle " << CurrCycle << '\n');
@@ -1012,8 +1036,7 @@ void ConvergingScheduler::SchedBoundary::releasePending() {
     if (ReadyCycle > CurrCycle)
       continue;
 
-    if (HazardRec->isEnabled()
-        && HazardRec->getHazardType(SU) != ScheduleHazardRecognizer::NoHazard)
+    if (checkHazard(SU))
       continue;
 
     Available.push(SU);
