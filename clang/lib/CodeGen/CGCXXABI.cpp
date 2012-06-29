@@ -23,7 +23,7 @@ static void ErrorUnsupportedABI(CodeGenFunction &CGF,
                                 StringRef S) {
   DiagnosticsEngine &Diags = CGF.CGM.getDiags();
   unsigned DiagID = Diags.getCustomDiagID(DiagnosticsEngine::Error,
-                                          "cannot yet compile %1 in this ABI");
+                                          "cannot yet compile %0 in this ABI");
   Diags.Report(CGF.getContext().getFullLoc(CGF.CurCodeDecl->getLocation()),
                DiagID)
     << S;
