@@ -1304,9 +1304,9 @@ static void ALWAYS_INLINE rtl_generic_sighandler(bool sigact, int sig,
     signal->armed = true;
     signal->sigaction = sigact;
     if (info)
-      signal->siginfo = *info;
+      internal_memcpy(&signal->siginfo, info, sizeof(*info));
     if (ctx)
-      signal->ctx = *(ucontext_t*)ctx;
+      internal_memcpy(&signal->ctx, ctx, sizeof(signal->ctx));
     sctx->pending_signal_count++;
   }
 }
@@ -1322,11 +1322,12 @@ static void rtl_sigaction(int sig, my_siginfo_t *info, void *ctx) {
 TSAN_INTERCEPTOR(int, sigaction, int sig, sigaction_t *act, sigaction_t *old) {
   SCOPED_TSAN_INTERCEPTOR(sigaction, sig, act, old);
   if (old)
-    *old = sigactions[sig];
+    internal_memcpy(old, &sigactions[sig], sizeof(*old));
   if (act == 0)
     return 0;
-  sigactions[sig] = *act;
-  sigaction_t newact = *act;
+  internal_memcpy(&sigactions[sig], act, sizeof(*act));
+  sigaction_t newact;
+  internal_memcpy(&newact, act, sizeof(newact));
   sigfillset(&newact.sa_mask);
   if (act->sa_handler != SIG_IGN && act->sa_handler != SIG_DFL) {
     if (newact.sa_flags & SA_SIGINFO)
