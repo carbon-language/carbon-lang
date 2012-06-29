@@ -1133,7 +1133,8 @@ static bool isFormingBranchFromSelectProfitable(SelectInst *SI) {
 bool CodeGenPrepare::OptimizeSelectInst(SelectInst *SI) {
   // If we have a SelectInst that will likely profit from branch prediction,
   // turn it into a branch.
-  if (DisableSelectToBranch || OptSize || !TLI->isPredictableSelectExpensive())
+  if (DisableSelectToBranch || OptSize || !TLI ||
+      !TLI->isPredictableSelectExpensive())
     return false;
 
   if (!SI->getCondition()->getType()->isIntegerTy(1) ||
