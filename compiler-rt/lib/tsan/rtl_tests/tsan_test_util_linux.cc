@@ -1,3 +1,4 @@
+
 //===-- tsan_test_util_linux.cc -------------------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
@@ -12,9 +13,9 @@
 // Test utils, linux implementation.
 //===----------------------------------------------------------------------===//
 
+#include "sanitizer_common/sanitizer_atomic.h"
 #include "tsan_interface.h"
 #include "tsan_test_util.h"
-#include "tsan_atomic.h"
 #include "tsan_report.h"
 
 #include "gtest/gtest.h"

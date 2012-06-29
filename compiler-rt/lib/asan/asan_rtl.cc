@@ -21,14 +21,15 @@
 #include "asan_stats.h"
 #include "asan_thread.h"
 #include "asan_thread_registry.h"
+#include "sanitizer_common/sanitizer_atomic.h"
 #include "sanitizer_common/sanitizer_libc.h"
 
 namespace __sanitizer {
 using namespace __asan;
 
 void Die() {
-  static int num_calls = 0;
-  if (AtomicInc(&num_calls) > 1) {
+  static atomic_uint32_t num_calls;
+  if (atomic_fetch_add(&num_calls, 1, memory_order_relaxed) != 0) {
     // Don't die twice - run a busy loop.
     while (1) { }
   }
@@ -343,8 +344,8 @@ void NOINLINE __asan_set_error_report_callback(void (*callback)(const char*)) {
 void __asan_report_error(uptr pc, uptr bp, uptr sp,
                          uptr addr, bool is_write, uptr access_size) {
   // Do not print more than one report, otherwise they will mix up.
-  static int num_calls = 0;
-  if (AtomicInc(&num_calls) > 1) return;
+  static atomic_uint32_t num_calls;
+  if (atomic_fetch_add(&num_calls, 1, memory_order_relaxed) != 0) return;
 
   AsanPrintf("===================================================="
              "=============\n");

@@ -13,7 +13,7 @@
 #ifndef TSAN_MUTEX_H
 #define TSAN_MUTEX_H
 
-#include "tsan_atomic.h"
+#include "sanitizer_common/sanitizer_atomic.h"
 #include "tsan_defs.h"
 
 namespace __tsan {

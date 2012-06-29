@@ -112,6 +112,24 @@ void NORETURN CheckFailed(const char *file, int line, const char *cond,
 #define CHECK_GT(a, b) CHECK_IMPL((a), >,  (b))
 #define CHECK_GE(a, b) CHECK_IMPL((a), >=, (b))
 
+#if TSAN_DEBUG
+#define DCHECK(a)       CHECK(a)
+#define DCHECK_EQ(a, b) CHECK_EQ(a, b)
+#define DCHECK_NE(a, b) CHECK_NE(a, b)
+#define DCHECK_LT(a, b) CHECK_LT(a, b)
+#define DCHECK_LE(a, b) CHECK_LE(a, b)
+#define DCHECK_GT(a, b) CHECK_GT(a, b)
+#define DCHECK_GE(a, b) CHECK_GE(a, b)
+#else
+#define DCHECK(a)
+#define DCHECK_EQ(a, b)
+#define DCHECK_NE(a, b)
+#define DCHECK_LT(a, b)
+#define DCHECK_LE(a, b)
+#define DCHECK_GT(a, b)
+#define DCHECK_GE(a, b)
+#endif
+
 #define UNIMPLEMENTED() CHECK("unimplemented" && 0)
 
 #define COMPILER_CHECK(pred) IMPL_COMPILER_ASSERT(pred, __LINE__)

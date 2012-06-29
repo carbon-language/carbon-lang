@@ -10,7 +10,7 @@
 // This file is a part of ThreadSanitizer (TSan), a race detector.
 //
 //===----------------------------------------------------------------------===//
-#include "tsan_atomic.h"
+#include "sanitizer_common/sanitizer_atomic.h"
 #include "tsan_interface.h"
 #include "tsan_interface_ann.h"
 #include "tsan_test_util.h"

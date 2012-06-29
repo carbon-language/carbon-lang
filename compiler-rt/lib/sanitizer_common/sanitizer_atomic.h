@@ -1,4 +1,4 @@
-//===-- tsan_rtl.h ----------------------------------------------*- C++ -*-===//
+//===-- sanitizer_atomic.h --------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -6,20 +6,13 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
-// This file is a part of ThreadSanitizer (TSan), a race detector.
-//
-// Atomic operations. For now implies IA-32/Intel64.
-//===----------------------------------------------------------------------===//
 
-#ifndef TSAN_ATOMIC_H
-#define TSAN_ATOMIC_H
+#ifndef SANITIZER_ATOMIC_H
+#define SANITIZER_ATOMIC_H
 
-#include "tsan_defs.h"
+#include "sanitizer_internal_defs.h"
 
-namespace __tsan {
-
-const int kCacheLineSize = 64;
+namespace __sanitizer {
 
 enum memory_order {
   memory_order_relaxed = 1 << 0,
@@ -28,6 +21,16 @@ enum memory_order {
   memory_order_release = 1 << 3,
   memory_order_acq_rel = 1 << 4,
   memory_order_seq_cst = 1 << 5,
+};
+
+struct atomic_uint8_t {
+  typedef u8 Type;
+  volatile Type val_dont_use;
+};
+
+struct atomic_uint16_t {
+  typedef u16 Type;
+  volatile Type val_dont_use;
 };
 
 struct atomic_uint32_t {
@@ -50,13 +53,15 @@ INLINE void atomic_signal_fence(memory_order) {
 }
 
 INLINE void atomic_thread_fence(memory_order) {
-  __asm__ __volatile__("mfence" ::: "memory");
+  __sync_synchronize();
 }
 
 INLINE void proc_yield(int cnt) {
   __asm__ __volatile__("" ::: "memory");
+#if defined(__i386__) || defined(__x86_64__)
   for (int i = 0; i < cnt; i++)
     __asm__ __volatile__("pause");
+#endif
   __asm__ __volatile__("" ::: "memory");
 }
 
@@ -109,9 +114,15 @@ INLINE typename T::Type atomic_fetch_sub(volatile T *a,
   return __sync_fetch_and_add(&a->val_dont_use, -v);
 }
 
-INLINE uptr atomic_exchange(volatile atomic_uintptr_t *a, uptr v,
-                            memory_order mo) {
-  __asm__ __volatile__("xchg %1, %0" : "+r"(v), "+m"(*a) : : "memory", "cc");
+template<typename T>
+INLINE typename T::Type atomic_exchange(volatile T *a,
+    typename T::Type v, memory_order mo) {
+  DCHECK(!((uptr)a % sizeof(*a)));
+  if (mo & (memory_order_release | memory_order_acq_rel | memory_order_seq_cst))
+    __sync_synchronize();
+  v = __sync_lock_test_and_set(&a->val_dont_use, v);
+  if (mo == memory_order_seq_cst)
+    __sync_synchronize();
   return v;
 }
 
@@ -129,12 +140,14 @@ INLINE bool atomic_compare_exchange_strong(volatile T *a,
   return false;
 }
 
-INLINE bool atomic_compare_exchange_weak(volatile atomic_uintptr_t *a,
-                                         uptr *cmp, uptr xchg,
-                                         memory_order mo) {
+template<typename T>
+INLINE bool atomic_compare_exchange_weak(volatile T *a,
+                                           typename T::Type *cmp,
+                                           typename T::Type xchg,
+                                           memory_order mo) {
   return atomic_compare_exchange_strong(a, cmp, xchg, mo);
 }
 
-}  // namespace __tsan
+}  // namespace __sanitizer
 
-#endif  // TSAN_ATOMIC_H
+#endif  // SANITIZER_ATOMIC_H

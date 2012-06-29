@@ -77,11 +77,6 @@ void NORETURN Abort();
 int Atexit(void (*function)(void));
 void SortArray(uptr *array, uptr size);
 
-// Atomics
-int AtomicInc(int *a);
-u16 AtomicExchange(u16 *a, u16 new_val);
-u8 AtomicExchange(u8 *a, u8 new_val);
-
 // Math
 inline bool IsPowerOfTwo(uptr x) {
   return (x & (x - 1)) == 0;

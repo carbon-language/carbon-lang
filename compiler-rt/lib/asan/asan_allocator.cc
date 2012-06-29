@@ -34,6 +34,7 @@
 #include "asan_stats.h"
 #include "asan_thread.h"
 #include "asan_thread_registry.h"
+#include "sanitizer_common/sanitizer_atomic.h"
 
 #if defined(_WIN32) && !defined(__clang__)
 #include <intrin.h>
@@ -159,8 +160,8 @@ enum {
 struct ChunkBase {
   // First 8 bytes.
   uptr  chunk_state : 8;
-  uptr  size_class  : 8;
   uptr  alloc_tid   : 24;
+  uptr  size_class  : 8;
   uptr  free_tid    : 24;
 
   // Second 8 bytes.
@@ -420,7 +421,7 @@ class MallocInfo {
 
  private:
   PageGroup *FindPageGroupUnlocked(uptr addr) {
-    int n = n_page_groups_;
+    int n = atomic_load(&n_page_groups_, memory_order_relaxed);
     // If the page groups are not sorted yet, sort them.
     if (n_sorted_page_groups_ < n) {
       SortArray((uptr*)page_groups_, n);
@@ -562,9 +563,9 @@ class MallocInfo {
     pg->end = pg->beg + mmap_size;
     pg->size_of_chunk = size;
     pg->last_chunk = (uptr)(mem + size * (n_chunks - 1));
-    int page_group_idx = AtomicInc(&n_page_groups_) - 1;
-    CHECK(page_group_idx < (int)ASAN_ARRAY_SIZE(page_groups_));
-    page_groups_[page_group_idx] = pg;
+    int idx = atomic_fetch_add(&n_page_groups_, 1, memory_order_relaxed);
+    CHECK(idx < (int)ASAN_ARRAY_SIZE(page_groups_));
+    page_groups_[idx] = pg;
     return res;
   }
 
@@ -573,7 +574,7 @@ class MallocInfo {
   AsanLock mu_;
 
   PageGroup *page_groups_[kMaxAvailableRam / kMinMmapSize];
-  int n_page_groups_;  // atomic
+  atomic_uint32_t n_page_groups_;
   int n_sorted_page_groups_;
 };
 
@@ -721,7 +722,8 @@ static void Deallocate(u8 *ptr, AsanStackTrace *stack) {
   AsanChunk *m = PtrToChunk((uptr)ptr);
 
   // Flip the chunk_state atomically to avoid race on double-free.
-  u8 old_chunk_state = AtomicExchange((u8*)m, CHUNK_QUARANTINE);
+  u8 old_chunk_state = atomic_exchange((atomic_uint8_t*)m, CHUNK_QUARANTINE,
+                                       memory_order_acq_rel);
 
   if (old_chunk_state == CHUNK_QUARANTINE) {
     AsanReport("ERROR: AddressSanitizer attempting double-free on %p:\n", ptr);

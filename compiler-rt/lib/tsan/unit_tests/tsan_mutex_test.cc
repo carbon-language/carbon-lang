@@ -11,7 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 #include "sanitizer_common/sanitizer_internal_defs.h"
-#include "tsan_atomic.h"
+#include "sanitizer_common/sanitizer_atomic.h"
+#include "sanitizer_common/sanitizer_common.h"
 #include "tsan_mutex.h"
 #include "gtest/gtest.h"
 

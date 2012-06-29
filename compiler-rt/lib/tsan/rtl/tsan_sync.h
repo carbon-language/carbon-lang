@@ -13,7 +13,8 @@
 #ifndef TSAN_SYNC_H
 #define TSAN_SYNC_H
 
-#include "tsan_atomic.h"
+#include "sanitizer_common/sanitizer_atomic.h"
+#include "sanitizer_common/sanitizer_common.h"
 #include "tsan_clock.h"
 #include "tsan_defs.h"
 #include "tsan_mutex.h"
