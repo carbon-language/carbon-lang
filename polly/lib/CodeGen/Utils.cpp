@@ -15,8 +15,8 @@
 
 #include "polly/ScopInfo.h"
 
+#include "llvm/IRBuilder.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Support/IRBuilder.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 
 using namespace llvm;

@@ -16,8 +16,8 @@
 #ifndef POLLY_BLOCK_GENERATORS_H
 #define POLLY_BLOCK_GENERATORS_H
 
+#include "llvm/IRBuilder.h"
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/Support/IRBuilder.h"
 
 #include "isl/map.h"
 

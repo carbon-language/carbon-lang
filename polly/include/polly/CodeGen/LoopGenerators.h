@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 #ifndef POLLY_LOOP_GENERATORS_H
 #define POLLY_LOOP_GENERATORS_H
-#include "llvm/Support/IRBuilder.h"
+#include "llvm/IRBuilder.h"
 #include "llvm/ADT/SetVector.h"
 
 #include <map>

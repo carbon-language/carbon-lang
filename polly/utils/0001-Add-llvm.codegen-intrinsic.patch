@@ -166,6 +166,7 @@ index 0000000..01253cd
 +
 +#include "llvm/CodeGen/Passes.h"
 +#include "llvm/CallingConv.h"
++#include "llvm/IRBuilder.h"
 +#include "llvm/IntrinsicInst.h"
 +#include "llvm/LLVMContext.h"
 +#include "llvm/Module.h"
@@ -178,7 +179,6 @@ index 0000000..01253cd
 +#include "llvm/Support/ErrorHandling.h"
 +#include "llvm/Support/FormattedStream.h"
 +#include "llvm/Support/Host.h"
-+#include "llvm/Support/IRBuilder.h"
 +#include "llvm/Support/raw_ostream.h"
 +#include "llvm/Support/SourceMgr.h"
 +#include "llvm/Support/TargetRegistry.h"
