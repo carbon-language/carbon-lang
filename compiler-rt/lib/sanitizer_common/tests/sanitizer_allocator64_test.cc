@@ -71,7 +71,7 @@ TEST(SanitizerCommon, SizeClassAllocator64) {
       // printf("s = %ld\n", size);
       uptr n_iter = std::max((uptr)2, 1000000 / size);
       for (uptr i = 0; i < n_iter; i++) {
-        void *x = a.Allocate(size);
+        void *x = a.Allocate(size, 1);
         allocated.push_back(x);
         CHECK(a.PointerIsMine(x));
         uptr class_id = a.GetSizeClass(x);
@@ -112,7 +112,7 @@ TEST(SanitizerCommon, SizeClassAllocator64MetadataStress) {
   void *allocated[kNumAllocs];
   for (uptr i = 0; i < kNumAllocs; i++) {
     uptr size = (i % 4096) + 1;
-    void *x = a.Allocate(size);
+    void *x = a.Allocate(size, 1);
     allocated[i] = x;
   }
   // Get Metadata kNumAllocs^2 times.
@@ -134,7 +134,7 @@ void FailInAssertionOnOOM() {
   a.Init();
   const uptr size = 1 << 20;
   for (int i = 0; i < 1000000; i++) {
-    a.Allocate(size);
+    a.Allocate(size, 1);
   }
 
   a.TestOnlyUnmap();
@@ -154,7 +154,7 @@ TEST(SanitizerCommon, LargeMmapAllocator) {
   static const uptr size = 1000;
   // Allocate some.
   for (int i = 0; i < kNumAllocs; i++) {
-    allocated[i] = a.Allocate(size);
+    allocated[i] = a.Allocate(size, 1);
   }
   // Deallocate all.
   CHECK_GT(a.TotalMemoryUsed(), size * kNumAllocs);
@@ -168,7 +168,7 @@ TEST(SanitizerCommon, LargeMmapAllocator) {
 
   // Allocate some more, also add metadata.
   for (int i = 0; i < kNumAllocs; i++) {
-    void *x = a.Allocate(size);
+    void *x = a.Allocate(size, 1);
     uptr *meta = reinterpret_cast<uptr*>(a.GetMetaData(x));
     *meta = i;
     allocated[i] = x;
@@ -184,4 +184,43 @@ TEST(SanitizerCommon, LargeMmapAllocator) {
     a.Deallocate(p);
   }
   CHECK_EQ(a.TotalMemoryUsed(), 0);
+}
+
+TEST(SanitizerCommon, CombinedAllocator) {
+  typedef DefaultSizeClassMap SCMap;
+  typedef SizeClassAllocator64<kAllocatorSpace, kAllocatorSize,
+          16, SCMap> PrimaryAllocator;
+  typedef LargeMmapAllocator SecondaryAllocator;
+  typedef CombinedAllocator<PrimaryAllocator, SecondaryAllocator> Allocator;
+
+  Allocator a;
+  a.Init();
+  const uptr kNumAllocs = 100000;
+  const uptr kNumIter = 10;
+  for (uptr iter = 0; iter < kNumIter; iter++) {
+    std::vector<void*> allocated;
+    for (uptr i = 0; i < kNumAllocs; i++) {
+      uptr size = (i % (1 << 14)) + 1;
+      if ((i % 1024) == 0)
+        size = 1 << (10 + (i % 14));
+      void *x = a.Allocate(size, 1);
+      uptr *meta = reinterpret_cast<uptr*>(a.GetMetaData(x));
+      CHECK_EQ(*meta, 0);
+      *meta = size;
+      allocated.push_back(x);
+    }
+
+    random_shuffle(allocated.begin(), allocated.end());
+
+    for (uptr i = 0; i < kNumAllocs; i++) {
+      void *x = allocated[i];
+      uptr *meta = reinterpret_cast<uptr*>(a.GetMetaData(x));
+      CHECK_NE(*meta, 0);
+      CHECK(a.PointerIsMine(x));
+      *meta = 0;
+      a.Deallocate(x);
+    }
+    allocated.clear();
+  }
+  a.TestOnlyUnmap();
 }

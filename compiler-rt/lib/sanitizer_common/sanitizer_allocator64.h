@@ -97,12 +97,17 @@ class SizeClassAllocator64 {
     CHECK_EQ(AllocBeg(), reinterpret_cast<uptr>(MmapFixedNoReserve(
              AllocBeg(), AllocSize())));
   }
-  NOINLINE
-  void *Allocate(uptr size) {
-    CHECK_LE(size, SizeClassMap::kMaxSize);
+
+  bool CanAllocate(uptr size, uptr alignment) {
+    return size <= SizeClassMap::kMaxSize &&
+      alignment <= SizeClassMap::kMaxSize;
+  }
+
+  void *Allocate(uptr size, uptr alignment) {
+    CHECK(CanAllocate(size, alignment));
     return AllocateBySizeClass(SizeClassMap::ClassID(size));
   }
-  NOINLINE
+
   void Deallocate(void *p) {
     CHECK(PointerIsMine(p));
     DeallocateBySizeClass(p, GetSizeClass(p));
@@ -236,7 +241,8 @@ class LargeMmapAllocator {
   void Init() {
     internal_memset(this, 0, sizeof(*this));
   }
-  void *Allocate(uptr size) {
+  void *Allocate(uptr size, uptr alignment) {
+    CHECK_LE(alignment, kPageSize);  // Not implemented. Do we need it?
     uptr map_size = RoundUpMapSize(size);
     void *map = MmapOrDie(map_size, "LargeMmapAllocator");
     void *res = reinterpret_cast<void*>(reinterpret_cast<uptr>(map)
@@ -316,6 +322,63 @@ class LargeMmapAllocator {
 
   Header *list_;
   uptr lock_;  // FIXME
+};
+
+// This class implements a complete memory allocator by using two
+// internal allocators:
+// PrimaryAllocator is efficient, but may not allocate some sizes (alignments).
+//  When allocating 2^x bytes it should return 2^x aligned chunk.
+// SecondaryAllocator can allocate anything, but is not efficient.
+template <class PrimaryAllocator, class SecondaryAllocator>
+class CombinedAllocator {
+ public:
+  void Init() {
+    primary_.Init();
+    secondary_.Init();
+  }
+
+  void *Allocate(uptr size, uptr alignment) {
+    CHECK_GT(size, 0);
+    if (alignment > 8)
+      size = RoundUpTo(size, alignment);
+    void *res;
+    if (primary_.CanAllocate(size, alignment))
+      res = primary_.Allocate(size, alignment);
+    else
+      res = secondary_.Allocate(size, alignment);
+    if (alignment > 8)
+      CHECK_EQ(reinterpret_cast<uptr>(res) & (alignment - 1), 0);
+    return res;
+  }
+
+  void Deallocate(void *p) {
+    if (primary_.PointerIsMine(p))
+      primary_.Deallocate(p);
+    else
+      secondary_.Deallocate(p);
+  }
+
+  bool PointerIsMine(void *p) {
+    if (primary_.PointerIsMine(p))
+      return true;
+    return secondary_.PointerIsMine(p);
+  }
+
+  void *GetMetaData(void *p) {
+    if (primary_.PointerIsMine(p))
+      return primary_.GetMetaData(p);
+    return secondary_.GetMetaData(p);
+  }
+
+  uptr TotalMemoryUsed() {
+    return primary_.TotalMemoryUsed() + secondary_.TotalMemoryUsed();
+  }
+
+  void TestOnlyUnmap() { primary_.TestOnlyUnmap(); }
+
+ private:
+  PrimaryAllocator primary_;
+  SecondaryAllocator secondary_;
 };
 
 }  // namespace __sanitizer
