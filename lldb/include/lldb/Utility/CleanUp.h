@@ -31,7 +31,7 @@ namespace lldb_utility {
 // into T.
 //
 // The cleanup function must take one argument that is of type T. 
-// The calback fucntion return type is R. The return value is currently
+// The calback function return type is R. The return value is currently
 // needed for "CallbackType". If there is an easy way to get around the
 // need for the return value we can change this class.
 //
