@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/AST/CommentBriefParser.h"
+#include "llvm/ADT/StringSwitch.h"
 
 namespace clang {
 namespace comments {
@@ -38,6 +39,21 @@ void cleanupBrief(std::string &S) {
 
   S.resize(O - S.begin());
 }
+
+bool isBlockCommand(StringRef Name) {
+  return llvm::StringSwitch<bool>(Name)
+      .Case("brief", true)
+      .Case("result", true)
+      .Case("return", true)
+      .Case("returns", true)
+      .Case("author", true)
+      .Case("authors", true)
+      .Case("pre", true)
+      .Case("post", true)
+      .Case("param", true)
+      .Case("arg", true)
+      .Default(false);
+}
 } // unnamed namespace
 
 std::string BriefParser::Parse() {
@@ -61,9 +77,8 @@ std::string BriefParser::Parse() {
         ConsumeToken();
         continue;
       }
-      // Check if this command implicitly starts a new paragraph.
-      if (Name == "param" || Name == "result" || Name == "return" ||
-          Name == "returns") {
+      // Block commands implicitly start a new paragraph.
+      if (isBlockCommand(Name)) {
         // We found an implicit paragraph end.
         InFirstParagraph = false;
         if (InBrief) {
