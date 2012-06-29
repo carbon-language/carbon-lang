@@ -379,13 +379,6 @@ void WalkAST::checkCall_getpw(const CallExpr *CE, const FunctionDecl *FD) {
 //===----------------------------------------------------------------------===//
 
 void WalkAST::checkCall_mktemp(const CallExpr *CE, const FunctionDecl *FD) {
-  if (!filter.check_mktemp) {
-    // Fall back to the security check of looking for enough 'X's in the
-    // format string, since that is a less severe warning.
-    checkCall_mkstemp(CE, FD);
-    return;
-  }
-
   const FunctionProtoType *FPT
     = dyn_cast<FunctionProtoType>(FD->getType().IgnoreParens());
   if(!FPT)
@@ -769,8 +762,9 @@ public:
 }
 
 #define REGISTER_CHECKER(name) \
+namespace { class Checker_##name : public SecuritySyntaxChecker {}; }\
 void ento::register##name(CheckerManager &mgr) {\
-  mgr.registerChecker<SecuritySyntaxChecker>()->filter.check_##name = true;\
+  mgr.registerChecker<Checker_##name>()->filter.check_##name = true;\
 }
 
 REGISTER_CHECKER(gets)
