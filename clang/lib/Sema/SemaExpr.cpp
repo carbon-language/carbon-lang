@@ -2498,7 +2498,7 @@ ExprResult Sema::ActOnPredefinedExpr(SourceLocation Loc, tok::TokenKind Kind) {
     unsigned Length = PredefinedExpr::ComputeName(IT, currentDecl).length();
 
     llvm::APInt LengthI(32, Length + 1);
-    if (Kind == tok::kw_L__FUNCTION__)
+    if (IT == PredefinedExpr::LFunction)
       ResTy = Context.WCharTy.withConst();
     else
       ResTy = Context.CharTy.withConst();
