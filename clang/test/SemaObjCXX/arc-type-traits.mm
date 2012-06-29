@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -fobjc-arc -fobjc-runtime-has-weak -verify %s
+// RUN: %clang_cc1 -fsyntax-only -fobjc-arc -fobjc-runtime-has-weak -verify -std=c++11 %s
 
 // Check the results of the various type-trait query functions on
 // lifetime-qualified types in ARC.
@@ -9,6 +9,8 @@
 
 #define TRAIT_IS_TRUE(Trait, Type) char JOIN2(Trait,__LINE__)[Trait(Type)? 1 : -1]
 #define TRAIT_IS_FALSE(Trait, Type) char JOIN2(Trait,__LINE__)[Trait(Type)? -1 : 1]
+#define TRAIT_IS_TRUE_2(Trait, Type1, Type2) char JOIN2(Trait,__LINE__)[Trait(Type1, Type2)? 1 : -1]
+#define TRAIT_IS_FALSE_2(Trait, Type1, Type2) char JOIN2(Trait,__LINE__)[Trait(Type1, Type2)? -1 : 1]
   
 // __has_nothrow_assign
 TRAIT_IS_TRUE(__has_nothrow_assign, __strong id);
@@ -87,4 +89,81 @@ TRAIT_IS_TRUE(__is_standard_layout, __strong id);
 TRAIT_IS_TRUE(__is_standard_layout, __weak id);
 TRAIT_IS_TRUE(__is_standard_layout, __autoreleasing id);
 TRAIT_IS_TRUE(__is_standard_layout, __unsafe_unretained id);
+
+// __is_trivally_assignable
+TRAIT_IS_FALSE_2(__is_trivially_assignable, __strong id&, __strong id);
+TRAIT_IS_FALSE_2(__is_trivially_assignable, __strong id&, __weak id);
+TRAIT_IS_FALSE_2(__is_trivially_assignable, __strong id&, __autoreleasing id);
+TRAIT_IS_FALSE_2(__is_trivially_assignable, __strong id&, __unsafe_unretained id);
+TRAIT_IS_FALSE_2(__is_trivially_assignable, __strong id&, __strong id&&);
+TRAIT_IS_FALSE_2(__is_trivially_assignable, __strong id&, __weak id&&);
+TRAIT_IS_FALSE_2(__is_trivially_assignable, __strong id&, __autoreleasing id&&);
+TRAIT_IS_FALSE_2(__is_trivially_assignable, __strong id&, __unsafe_unretained id&&);
+TRAIT_IS_FALSE_2(__is_trivially_assignable, __weak id&, __strong id);
+TRAIT_IS_FALSE_2(__is_trivially_assignable, __weak id&, __weak id);
+TRAIT_IS_FALSE_2(__is_trivially_assignable, __weak id&, __autoreleasing id);
+TRAIT_IS_FALSE_2(__is_trivially_assignable, __weak id&, __unsafe_unretained id);
+TRAIT_IS_FALSE_2(__is_trivially_assignable, __weak id&, __strong id&&);
+TRAIT_IS_FALSE_2(__is_trivially_assignable, __weak id&, __weak id&&);
+TRAIT_IS_FALSE_2(__is_trivially_assignable, __weak id&, __autoreleasing id&&);
+TRAIT_IS_FALSE_2(__is_trivially_assignable, __weak id&, __unsafe_unretained id&&);
+
+TRAIT_IS_FALSE_2(__is_trivially_assignable, __autoreleasing id&, __strong id);
+TRAIT_IS_FALSE_2(__is_trivially_assignable, __autoreleasing id&, __weak id);
+TRAIT_IS_FALSE_2(__is_trivially_assignable, __autoreleasing id&, __autoreleasing id);
+TRAIT_IS_FALSE_2(__is_trivially_assignable, __autoreleasing id&, __unsafe_unretained id);
+TRAIT_IS_FALSE_2(__is_trivially_assignable, __autoreleasing id&, __strong id&&);
+TRAIT_IS_FALSE_2(__is_trivially_assignable, __autoreleasing id&, __weak id&&);
+TRAIT_IS_FALSE_2(__is_trivially_assignable, __autoreleasing id&, __autoreleasing id&&);
+TRAIT_IS_FALSE_2(__is_trivially_assignable, __autoreleasing id&, __unsafe_unretained id&&);
+
+TRAIT_IS_TRUE_2(__is_trivially_assignable, __unsafe_unretained id&, __strong id);
+TRAIT_IS_TRUE_2(__is_trivially_assignable, __unsafe_unretained id&, __weak id);
+TRAIT_IS_TRUE_2(__is_trivially_assignable, __unsafe_unretained id&, __autoreleasing id);
+TRAIT_IS_TRUE_2(__is_trivially_assignable, __unsafe_unretained id&, __unsafe_unretained id);
+TRAIT_IS_TRUE_2(__is_trivially_assignable, __unsafe_unretained id&, __strong id&&);
+TRAIT_IS_TRUE_2(__is_trivially_assignable, __unsafe_unretained id&, __weak id&&);
+TRAIT_IS_TRUE_2(__is_trivially_assignable, __unsafe_unretained id&, __autoreleasing id&&);
+TRAIT_IS_TRUE_2(__is_trivially_assignable, __unsafe_unretained id&, __unsafe_unretained id&&);
+
+// __is_trivally_constructible
+TRAIT_IS_FALSE(__is_trivially_constructible, __strong id);
+TRAIT_IS_FALSE(__is_trivially_constructible, __weak id);
+TRAIT_IS_FALSE(__is_trivially_constructible, __autoreleasing id);
+TRAIT_IS_TRUE(__is_trivially_constructible, __unsafe_unretained id);
+
+TRAIT_IS_FALSE_2(__is_trivially_constructible, __strong id, __strong id);
+TRAIT_IS_FALSE_2(__is_trivially_constructible, __strong id, __weak id);
+TRAIT_IS_FALSE_2(__is_trivially_constructible, __strong id, __autoreleasing id);
+TRAIT_IS_FALSE_2(__is_trivially_constructible, __strong id, __unsafe_unretained id);
+TRAIT_IS_FALSE_2(__is_trivially_constructible, __strong id, __strong id&&);
+TRAIT_IS_FALSE_2(__is_trivially_constructible, __strong id, __weak id&&);
+TRAIT_IS_FALSE_2(__is_trivially_constructible, __strong id, __autoreleasing id&&);
+TRAIT_IS_FALSE_2(__is_trivially_constructible, __strong id, __unsafe_unretained id&&);
+TRAIT_IS_FALSE_2(__is_trivially_constructible, __weak id, __strong id);
+TRAIT_IS_FALSE_2(__is_trivially_constructible, __weak id, __weak id);
+TRAIT_IS_FALSE_2(__is_trivially_constructible, __weak id, __autoreleasing id);
+TRAIT_IS_FALSE_2(__is_trivially_constructible, __weak id, __unsafe_unretained id);
+TRAIT_IS_FALSE_2(__is_trivially_constructible, __weak id, __strong id&&);
+TRAIT_IS_FALSE_2(__is_trivially_constructible, __weak id, __weak id&&);
+TRAIT_IS_FALSE_2(__is_trivially_constructible, __weak id, __autoreleasing id&&);
+TRAIT_IS_FALSE_2(__is_trivially_constructible, __weak id, __unsafe_unretained id&&);
+
+TRAIT_IS_FALSE_2(__is_trivially_constructible, __autoreleasing id, __strong id);
+TRAIT_IS_FALSE_2(__is_trivially_constructible, __autoreleasing id, __weak id);
+TRAIT_IS_FALSE_2(__is_trivially_constructible, __autoreleasing id, __autoreleasing id);
+TRAIT_IS_FALSE_2(__is_trivially_constructible, __autoreleasing id, __unsafe_unretained id);
+TRAIT_IS_FALSE_2(__is_trivially_constructible, __autoreleasing id, __strong id&&);
+TRAIT_IS_FALSE_2(__is_trivially_constructible, __autoreleasing id, __weak id&&);
+TRAIT_IS_FALSE_2(__is_trivially_constructible, __autoreleasing id, __autoreleasing id&&);
+TRAIT_IS_FALSE_2(__is_trivially_constructible, __autoreleasing id, __unsafe_unretained id&&);
+
+TRAIT_IS_TRUE_2(__is_trivially_constructible, __unsafe_unretained id, __strong id);
+TRAIT_IS_TRUE_2(__is_trivially_constructible, __unsafe_unretained id, __weak id);
+TRAIT_IS_TRUE_2(__is_trivially_constructible, __unsafe_unretained id, __autoreleasing id);
+TRAIT_IS_TRUE_2(__is_trivially_constructible, __unsafe_unretained id, __unsafe_unretained id);
+TRAIT_IS_TRUE_2(__is_trivially_constructible, __unsafe_unretained id, __strong id&&);
+TRAIT_IS_TRUE_2(__is_trivially_constructible, __unsafe_unretained id, __weak id&&);
+TRAIT_IS_TRUE_2(__is_trivially_constructible, __unsafe_unretained id, __autoreleasing id&&);
+TRAIT_IS_TRUE_2(__is_trivially_constructible, __unsafe_unretained id, __unsafe_unretained id&&);
 
