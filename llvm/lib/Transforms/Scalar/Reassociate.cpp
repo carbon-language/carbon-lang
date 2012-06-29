@@ -674,8 +674,6 @@ void Reassociate::RewriteExprTree(BinaryOperator *I,
   // Flags are cleared from the operator in ExpressionChanged up to I inclusive.
   BinaryOperator *ExpressionChanged = 0;
   for (unsigned i = 0; ; ++i) {
-    assert(!NodesToRewrite.empty() &&
-           "Optimized expressions has more nodes than original!");
     BinaryOperator *Op = NodesToRewrite.pop_back_val();
 
     // The last operation (which comes earliest in the IR) is special as both
@@ -753,9 +751,19 @@ void Reassociate::RewriteExprTree(BinaryOperator *I,
     }
 
     // Otherwise, grab a spare node from the original expression and use that as
-    // the left-hand side.
-    assert(!NodesToRewrite.empty() &&
-           "Optimized expressions has more nodes than original!");
+    // the left-hand side.  If there are no nodes left then the optimizers made
+    // an expression with more nodes than the original!  This usually means that
+    // they did something stupid but it might mean that the problem was just too
+    // hard (finding the mimimal number of multiplications needed to realize a
+    // multiplication expression is NP-complete).  Whatever the reason, smart or
+    // stupid, create a new node if there are none left.
+    if (NodesToRewrite.empty()) {
+      Constant *Undef = UndefValue::get(I->getType());
+      BinaryOperator *N = BinaryOperator::Create(Instruction::BinaryOps(Opcode),
+                                                 Undef, Undef, "", I);
+      NodesToRewrite.push_back(N);
+    }
+
     DEBUG(dbgs() << "RA: " << *Op << '\n');
     Op->setOperand(0, NodesToRewrite.back());
     DEBUG(dbgs() << "TO: " << *Op << '\n');

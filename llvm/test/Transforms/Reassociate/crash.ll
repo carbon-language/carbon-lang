@@ -133,3 +133,14 @@ define i8 @f0(i8 %x) {
   %t7 = mul i8 %t6, %t0
   ret i8 %t7
 }
+
+define i32 @sozefx_(i32 %x, i32 %y) {
+  %t0 = sub i32 %x, %x
+  %t1 = mul i32 %t0, %t0
+  %t2 = mul i32 %x, %t0
+  %t3 = mul i32 %t1, %t1
+  %t4 = add i32 %t2, %t3
+  %t5 = mul i32 %x, %y
+  %t6 = add i32 %t4, %t5
+  ret i32 %t6
+}
