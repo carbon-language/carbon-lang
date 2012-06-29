@@ -165,6 +165,17 @@ MachineInstr *MachineRegisterInfo::getVRegDef(unsigned Reg) const {
   return !I.atEnd() ? &*I : 0;
 }
 
+/// getUniqueVRegDef - Return the unique machine instr that defines the
+/// specified virtual register or null if none is found.  If there are
+/// multiple definitions or no definition, return null.
+MachineInstr *MachineRegisterInfo::getUniqueVRegDef(unsigned Reg) const {
+  if (def_empty(Reg)) return 0;
+  def_iterator I = def_begin(Reg);
+  if (llvm::next(I) != def_end())
+    return 0;
+  return &*I;
+}
+
 bool MachineRegisterInfo::hasOneUse(unsigned RegNo) const {
   use_iterator UI = use_begin(RegNo);
   if (UI == use_end())
