@@ -40,17 +40,17 @@
 
 // C family source language (with and without preprocessing).
 TYPE("cpp-output",               PP_C,         INVALID,         "i",     "u")
-TYPE("c",                        C,            PP_C,            0,       "u")
-TYPE("cl",                       CL,           PP_C,            0,       "u")
-TYPE("cuda",                     CUDA,         PP_CXX,          0,       "u")
+TYPE("c",                        C,            PP_C,            "c",     "u")
+TYPE("cl",                       CL,           PP_C,            "cl",    "u")
+TYPE("cuda",                     CUDA,         PP_CXX,          "cpp",   "u")
 TYPE("objective-c-cpp-output",   PP_ObjC,      INVALID,         "mi",    "u")
 TYPE("objc-cpp-output",          PP_ObjC_Alias, INVALID,        "mi",    "u")
-TYPE("objective-c",              ObjC,         PP_ObjC,         0,       "u")
+TYPE("objective-c",              ObjC,         PP_ObjC,         "m",     "u")
 TYPE("c++-cpp-output",           PP_CXX,       INVALID,         "ii",    "u")
-TYPE("c++",                      CXX,          PP_CXX,          0,       "u")
+TYPE("c++",                      CXX,          PP_CXX,          "cpp",   "u")
 TYPE("objective-c++-cpp-output", PP_ObjCXX,    INVALID,         "mii",   "u")
 TYPE("objc++-cpp-output",        PP_ObjCXX_Alias, INVALID,      "mii",   "u")
-TYPE("objective-c++",            ObjCXX,       PP_ObjCXX,       0,       "u")
+TYPE("objective-c++",            ObjCXX,       PP_ObjCXX,       "mm",    "u")
 
 // C family input files to precompile.
 TYPE("c-header-cpp-output",      PP_CHeader,   INVALID,         "i",     "p")

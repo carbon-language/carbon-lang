@@ -76,6 +76,8 @@ public:
 
   const DerivedArgList &getArgs() const { return *TranslatedArgs; }
 
+  DerivedArgList &getArgs() { return *TranslatedArgs; }
+
   ActionList &getActions() { return Actions; }
   const ActionList &getActions() const { return Actions; }
 

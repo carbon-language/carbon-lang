@@ -1010,6 +1010,10 @@ struct PragmaDebugHandler : public PragmaHandler {
       llvm_unreachable("This is an assertion!");
     } else if (II->isStr("crash")) {
       *(volatile int*) 0x11 = 0;
+    } else if (II->isStr("parser_crash")) {
+      Token Crasher;
+      Crasher.setKind(tok::annot_pragma_parser_crash);
+      PP.EnterToken(Crasher);
     } else if (II->isStr("llvm_fatal_error")) {
       llvm::report_fatal_error("#pragma clang __debug llvm_fatal_error");
     } else if (II->isStr("llvm_unreachable")) {
