@@ -747,37 +747,37 @@ public:
             return modules
 
         __swig_getmethods__["modules"] = get_modules_array
-        if _newclass: x = property(get_modules_array, None)
+        if _newclass: modules = property(get_modules_array, None, doc='''A read only property that returns a list() of lldb.SBModule objects contained in this target. This list is a list all modules that the target currently is tracking (the main executable and all dependent shared libraries).''')
 
         __swig_getmethods__["module"] = get_modules_access_object
-        if _newclass: x = property(get_modules_access_object, None)
+        if _newclass: module = property(get_modules_access_object, None, doc=r'''A read only property that returns an object that implements python operator overloading with the square brackets().\n    target.module[<int>] allows array access to any modules.\n    target.module[<str>] allows access to modules by basename, full path, or uuid string value.\n    target.module[uuid.UUID()] allows module access by UUID.\n    target.module[re] allows module access using a regular expression that matches the module full path.''')
 
         __swig_getmethods__["process"] = GetProcess
-        if _newclass: x = property(GetProcess, None)
+        if _newclass: process = property(GetProcess, None, doc='''A read only property that returns an lldb object that represents the process (lldb.SBProcess) that this target owns.''')
 
         __swig_getmethods__["executable"] = GetExecutable
-        if _newclass: x = property(GetExecutable, None)
+        if _newclass: executable = property(GetExecutable, None, doc='''A read only property that returns an lldb object that represents the main executable module (lldb.SBModule) for this target.''')
 
         __swig_getmethods__["debugger"] = GetDebugger
-        if _newclass: x = property(GetDebugger, None)
+        if _newclass: debugger = property(GetDebugger, None, doc='''A read only property that returns an lldb object that represents the debugger (lldb.SBDebugger) that owns this target.''')
 
         __swig_getmethods__["num_breakpoints"] = GetNumBreakpoints
-        if _newclass: x = property(GetNumBreakpoints, None)
+        if _newclass: num_breakpoints = property(GetNumBreakpoints, None, doc='''A read only property that returns the number of breakpoints that this target has as an integer.''')
 
         __swig_getmethods__["num_watchpoints"] = GetNumWatchpoints
-        if _newclass: x = property(GetNumWatchpoints, None)
+        if _newclass: num_watchpoints = property(GetNumWatchpoints, None, doc='''A read only property that returns the number of watchpoints that this target has as an integer.''')
 
         __swig_getmethods__["broadcaster"] = GetBroadcaster
-        if _newclass: x = property(GetBroadcaster, None)
+        if _newclass: broadcaster = property(GetBroadcaster, None, doc='''A read only property that an lldb object that represents the broadcaster (lldb.SBBroadcaster) for this target.''')
         
         __swig_getmethods__["byte_order"] = GetByteOrder
-        if _newclass: x = property(GetByteOrder, None)
+        if _newclass: byte_order = property(GetByteOrder, None, doc='''A read only property that returns an lldb enumeration value (lldb.eByteOrderLittle, lldb.eByteOrderBig, lldb.eByteOrderInvalid) that represents the byte order for this target.''')
         
         __swig_getmethods__["addr_size"] = GetAddressByteSize
-        if _newclass: x = property(GetAddressByteSize, None)
+        if _newclass: addr_size = property(GetAddressByteSize, None, doc='''A read only property that returns the size in bytes of an address for this target.''')
         
         __swig_getmethods__["triple"] = GetTriple
-        if _newclass: x = property(GetTriple, None)
+        if _newclass: triple = property(GetTriple, None, doc='''A read only property that returns the target triple (arch-vendor-os) for this target as a string.''')
     %}
 
 };

@@ -72,19 +72,19 @@ namespace lldb {
         %pythoncode %{
             __swig_getmethods__["options"] = GetOptions
             __swig_setmethods__["options"] = SetOptions
-            if _newclass: x = property(GetOptions, SetOptions)        
+            if _newclass: options = property(GetOptions, SetOptions)
             
             __swig_getmethods__["is_summary_string"] = IsSummaryString
-            if _newclass: x = property(IsSummaryString, None)        
+            if _newclass: is_summary_string = property(IsSummaryString, None)
 
             __swig_getmethods__["is_function_name"] = IsFunctionName
-            if _newclass: x = property(IsFunctionName, None)        
+            if _newclass: is_function_name = property(IsFunctionName, None)
 
-            __swig_getmethods__["is_function_code"] = IsFunctionCode
-            if _newclass: x = property(IsFunctionCode, None)        
+            __swig_getmethods__["is_function_name"] = IsFunctionCode
+            if _newclass: is_function_name = property(IsFunctionCode, None)
 
             __swig_getmethods__["summary_data"] = GetData
-            if _newclass: x = property(GetData, None)
+            if _newclass: summary_data = property(GetData, None)
         %}
         
     };

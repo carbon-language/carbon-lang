@@ -49,10 +49,10 @@ namespace lldb {
                         
         %pythoncode %{
             __swig_getmethods__["name"] = GetName
-            if _newclass: x = property(GetName, None)
+            if _newclass: name = property(GetName, None)
             
             __swig_getmethods__["is_regex"] = IsRegex
-            if _newclass: x = property(IsRegex, None)
+            if _newclass: is_regex = property(IsRegex, None)
         %}
 
         

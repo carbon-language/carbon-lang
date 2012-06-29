@@ -117,20 +117,20 @@ namespace lldb {
         
         %pythoncode %{
             __swig_getmethods__["num_formats"] = GetNumFormats
-            if _newclass: x = property(GetNumFormats, None)
+            if _newclass: num_formats = property(GetNumFormats, None)
             __swig_getmethods__["num_summaries"] = GetNumSummaries
-            if _newclass: x = property(GetNumSummaries, None)
+            if _newclass: num_summaries = property(GetNumSummaries, None)
             __swig_getmethods__["num_filters"] = GetNumFilters
-            if _newclass: x = property(GetNumFilters, None)
+            if _newclass: num_filters = property(GetNumFilters, None)
             __swig_getmethods__["num_synthetics"] = GetNumSynthetics
-            if _newclass: x = property(GetNumSynthetics, None)
+            if _newclass: num_synthetics = property(GetNumSynthetics, None)
             
             __swig_getmethods__["name"] = GetName
-            if _newclass: x = property(GetName, None)
+            if _newclass: name = property(GetName, None)
             
             __swig_getmethods__["enabled"] = GetEnabled
             __swig_setmethods__["enabled"] = SetEnabled
-            if _newclass: x = property(GetEnabled, SetEnabled)
+            if _newclass: enabled = property(GetEnabled, SetEnabled)
         %}
 
     };

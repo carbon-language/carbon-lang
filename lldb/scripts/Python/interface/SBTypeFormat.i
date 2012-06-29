@@ -50,11 +50,11 @@ namespace lldb {
         %pythoncode %{
             __swig_getmethods__["format"] = GetFormat
             __swig_setmethods__["format"] = SetFormat
-            if _newclass: x = property(GetFormat, SetFormat)
+            if _newclass: format = property(GetFormat, SetFormat)
             
             __swig_getmethods__["options"] = GetOptions
             __swig_setmethods__["options"] = SetOptions
-            if _newclass: x = property(GetOptions, SetOptions)            
+            if _newclass: options = property(GetOptions, SetOptions)            
         %}
 
     };

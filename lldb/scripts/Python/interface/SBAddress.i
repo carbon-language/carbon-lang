@@ -149,49 +149,50 @@ public:
             return self.SetLoadAddress (load_addr, target)
 
         def __int__(self):
-            '''Convert an address to a load address if there is a process and that
-            process is alive, or to a file address otherwise.'''
+            '''Convert an address to a load address if there is a process and that process is alive, or to a file address otherwise.'''
             if process.is_alive:
                 return self.GetLoadAddress (target)
             else:
                 return self.GetFileAddress ()
 
         def __oct__(self):
+            '''Convert the address to an octal string'''
             return '%o' % int(self)
 
         def __hex__(self):
+            '''Convert the address to an hex string'''
             return '0x%x' % int(self)
 
         __swig_getmethods__["module"] = GetModule
-        if _newclass: module = property(GetModule, None, doc='Returns the same result as GetModule()')
+        if _newclass: module = property(GetModule, None, doc='''A read only property that returns an lldb object that represents the module (lldb.SBModule) that this address resides within.''')
 
         __swig_getmethods__["compile_unit"] = GetCompileUnit
-        if _newclass: compile_unit = property(GetCompileUnit, None, doc='Returns the same result as GetCompileUnit()')
+        if _newclass: compile_unit = property(GetCompileUnit, None, doc='''A read only property that returns an lldb object that represents the compile unit (lldb.SBCompileUnit) that this address resides within.''')
 
         __swig_getmethods__["line_entry"] = GetLineEntry
-        if _newclass: line_entry = property(GetLineEntry, None, doc='Returns the same result as GetLineEntry()')
+        if _newclass: line_entry = property(GetLineEntry, None, doc='''A read only property that returns an lldb object that represents the line entry (lldb.SBLineEntry) that this address resides within.''')
 
         __swig_getmethods__["function"] = GetFunction
-        if _newclass: function = property(GetFunction, None, doc='Returns the same result as GetFunction()')
+        if _newclass: function = property(GetFunction, None, doc='''A read only property that returns an lldb object that represents the function (lldb.SBFunction) that this address resides within.''')
 
         __swig_getmethods__["block"] = GetBlock
-        if _newclass: block = property(GetBlock, None, doc='Returns the same result as GetBlock()')
+        if _newclass: block = property(GetBlock, None, doc='''A read only property that returns an lldb object that represents the block (lldb.SBBlock) that this address resides within.''')
 
         __swig_getmethods__["symbol"] = GetSymbol
-        if _newclass: symbol = property(GetSymbol, None, doc='Returns the same result as GetSymbol()')
+        if _newclass: symbol = property(GetSymbol, None, doc='''A read only property that returns an lldb object that represents the symbol (lldb.SBSymbol) that this address resides within.''')
 
         __swig_getmethods__["offset"] = GetOffset
-        if _newclass: offset = property(GetOffset, None, doc='Returns the same result as GetOffset()')
+        if _newclass: offset = property(GetOffset, None, doc='''A read only property that returns the section offset in bytes as an integer.''')
 
         __swig_getmethods__["section"] = GetSection
-        if _newclass: section = property(GetSection, None, doc='Returns the same result as GetSection()')
+        if _newclass: section = property(GetSection, None, doc='''A read only property that returns an lldb object that represents the section (lldb.SBSection) that this address resides within.''')
 
         __swig_getmethods__["file_addr"] = GetFileAddress
-        if _newclass: file_addr = property(GetFileAddress, None, doc='Returns the same result as GetFileAddress()')
+        if _newclass: file_addr = property(GetFileAddress, None, doc='''A read only property that returns file address for the section as an integer. This is the address that represents the address as it is found in the object file that defines it.''')
 
         __swig_getmethods__["load_addr"] = __get_load_addr_property__
         __swig_setmethods__["load_addr"] = __set_load_addr_property__
-        if _newclass: load_addr = property(__get_load_addr_property__, __set_load_addr_property__, doc='Returns a corresponding load address, resolving this SBAddress via lldb.target')
+        if _newclass: load_addr = property(__get_load_addr_property__, __set_load_addr_property__, doc='''A read/write property that gets/sets the SBAddress using load address. The setter resolves SBAddress using the SBTarget from lldb.target.''')
 
     %}
 

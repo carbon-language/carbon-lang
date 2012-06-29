@@ -80,16 +80,16 @@ public:
             return None
 
         __swig_getmethods__["fullpath"] = __get_fullpath__
-        if _newclass: x = property(__get_fullpath__, None)
+        if _newclass: fullpath = property(__get_fullpath__, None, doc='''A read only property that returns the fullpath as a python string.''')
 
         __swig_getmethods__["basename"] = GetFilename
-        if _newclass: x = property(GetFilename, None)
+        if _newclass: basename = property(GetFilename, None, doc='''A read only property that returns the path basename as a python string.''')
         
         __swig_getmethods__["dirname"] = GetDirectory
-        if _newclass: x = property(GetDirectory, None)
+        if _newclass: dirname = property(GetDirectory, None, doc='''A read only property that returns the path directory name as a python string.''')
         
         __swig_getmethods__["exists"] = Exists
-        if _newclass: x = property(Exists, None)
+        if _newclass: exists = property(Exists, None, doc='''A read only property that returns a boolean value that indicates if the file exists.''')
     %}
 
 };

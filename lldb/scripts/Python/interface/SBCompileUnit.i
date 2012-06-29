@@ -91,10 +91,10 @@ public:
     
     %pythoncode %{
         __swig_getmethods__["file"] = GetFileSpec
-        if _newclass: x = property(GetFileSpec, None)
+        if _newclass: file = property(GetFileSpec, None, doc='''A read only property that returns the same result an lldb object that represents the source file (lldb.SBFileSpec) for the compile unit.''')
         
         __swig_getmethods__["num_line_entries"] = GetNumLineEntries
-        if _newclass: x = property(GetNumLineEntries, None)
+        if _newclass: num_line_entries = property(GetNumLineEntries, None, doc='''A read only property that returns the number of line entries in a compile unit as an integer.''')
     %}
 };
 

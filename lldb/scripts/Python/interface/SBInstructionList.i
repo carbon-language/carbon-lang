@@ -65,7 +65,7 @@ public:
             return int(self.GetSize())
 
         def __getitem__(self, key):
-            '''Access instructions by integer index.'''
+            '''Access instructions by integer index for array access or by lldb.SBAddress to find an instruction that matches a section offset address object.'''
             if type(key) is int:
                 # Find an instruction by index
                 if key < len(self):

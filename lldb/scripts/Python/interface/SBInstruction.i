@@ -79,22 +79,22 @@ public:
             return self.GetComment (target)
 
         __swig_getmethods__["mnemonic"] = __mnemonic_property__
-        if _newclass: x = property(__mnemonic_property__, None)
+        if _newclass: mnemonic = property(__mnemonic_property__, None, doc='''A read only property that returns the mnemonic for this instruction as a string.''')
 
         __swig_getmethods__["operands"] = __operands_property__
-        if _newclass: x = property(__operands_property__, None)
+        if _newclass: operands = property(__operands_property__, None, doc='''A read only property that returns the operands for this instruction as a string.''')
 
         __swig_getmethods__["comment"] = __comment_property__
-        if _newclass: x = property(__comment_property__, None)
+        if _newclass: comment = property(__comment_property__, None, doc='''A read only property that returns the comment for this instruction as a string.''')
 
         __swig_getmethods__["addr"] = GetAddress
-        if _newclass: x = property(GetAddress, None)
+        if _newclass: addr = property(GetAddress, None, doc='''A read only property that returns an lldb object that represents the address (lldb.SBAddress) for this instruction.''')
         
         __swig_getmethods__["size"] = GetByteSize
-        if _newclass: x = property(GetByteSize, None)
+        if _newclass: size = property(GetByteSize, None, doc='''A read only property that returns the size in bytes for this instruction as an integer.''')
 
         __swig_getmethods__["is_branch"] = DoesBranch
-        if _newclass: x = property(DoesBranch, None)
+        if _newclass: is_branch = property(DoesBranch, None, doc='''A read only property that returns a boolean value that indicates if this instruction is a branch instruction.''')
     %}
     
 

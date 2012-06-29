@@ -39,16 +39,16 @@ public:
     
     %pythoncode %{
         __swig_getmethods__["name"] = GetName
-        if _newclass: x = property(GetName, None)
+        if _newclass: name = property(GetName, None, doc='''A read only property that returns the name for this member as a string.''')
         
         __swig_getmethods__["type"] = GetType
-        if _newclass: x = property(GetType, None)
+        if _newclass: type = property(GetType, None, doc='''A read only property that returns an lldb object that represents the type (lldb.SBType) for this member.''')
         
         __swig_getmethods__["byte_offset"] = GetOffsetInBytes
-        if _newclass: x = property(GetOffsetInBytes, None)
+        if _newclass: byte_offset = property(GetOffsetInBytes, None, doc='''A read only property that returns offset in bytes for this member as an integer.''')
         
         __swig_getmethods__["bit_offset"] = GetOffsetInBits
-        if _newclass: x = property(GetOffsetInBits, None)
+        if _newclass: bit_offset = property(GetOffsetInBits, None, doc='''A read only property that returns offset in bits for this member as an integer.''')
     %}    
 
 protected:
@@ -214,37 +214,37 @@ public:
             return None
             
         __swig_getmethods__["name"] = GetName
-        if _newclass: x = property(GetName, None)
+        if _newclass: name = property(GetName, None, doc='''A read only property that returns the name for this type as a string.''')
         
         __swig_getmethods__["size"] = GetByteSize
-        if _newclass: x = property(GetByteSize, None)
+        if _newclass: size = property(GetByteSize, None, doc='''A read only property that returns size in bytes for this type as an integer.''')
         
         __swig_getmethods__["is_pointer"] = IsPointerType
-        if _newclass: x = property(IsPointerType, None)
+        if _newclass: is_pointer = property(IsPointerType, None, doc='''A read only property that returns a boolean value that indicates if this type is a pointer type.''')
         
         __swig_getmethods__["is_reference"] = IsReferenceType
-        if _newclass: x = property(IsReferenceType, None)
+        if _newclass: is_reference = property(IsReferenceType, None, doc='''A read only property that returns a boolean value that indicates if this type is a reference type.''')
 
         __swig_getmethods__["num_fields"] = GetNumberOfFields
-        if _newclass: x = property(GetNumberOfFields, None)
+        if _newclass: num_fields = property(GetNumberOfFields, None, doc='''A read only property that returns number of fields in this type as an integer.''')
         
         __swig_getmethods__["num_bases"] = GetNumberOfDirectBaseClasses
-        if _newclass: x = property(GetNumberOfDirectBaseClasses, None)
+        if _newclass: num_bases = property(GetNumberOfDirectBaseClasses, None, doc='''A read only property that returns number of direct base classes in this type as an integer.''')
         
         __swig_getmethods__["num_vbases"] = GetNumberOfVirtualBaseClasses
-        if _newclass: x = property(GetNumberOfVirtualBaseClasses, None)
+        if _newclass: num_vbases = property(GetNumberOfVirtualBaseClasses, None, doc='''A read only property that returns number of virtual base classes in this type as an integer.''')
         
         __swig_getmethods__["num_template_args"] = GetNumberOfTemplateArguments
-        if _newclass: x = property(GetNumberOfTemplateArguments, None)
+        if _newclass: num_template_args = property(GetNumberOfTemplateArguments, None, doc='''A read only property that returns number of template arguments in this type as an integer.''')
 
         __swig_getmethods__["template_args"] = template_arg_array
-        if _newclass: x = property(template_arg_array, None)
+        if _newclass: template_args = property(template_arg_array, None, doc='''A read only property that returns a list() of lldb.SBType objects that represent all template arguments in this type.''')
 
-        __swig_getmethods__["class"] = GetTypeClass
-        if _newclass: x = property(GetTypeClass, None)
+        __swig_getmethods__["type"] = GetTypeClass
+        if _newclass: type = property(GetTypeClass, None, doc='''A read only property that returns an lldb enumeration value (see enumerations that start with "lldb.eTypeClass") that represents a classification for this type.''')
         
         __swig_getmethods__["is_complete"] = IsTypeComplete
-        if _newclass: is_complete = property(IsTypeComplete, None)
+        if _newclass: is_complete = property(IsTypeComplete, None, doc='''A read only property that returns a boolean value that indicates if this type is a complete type (True) or a forward declaration (False).''')
         %}
 
 };

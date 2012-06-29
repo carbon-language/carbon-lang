@@ -60,13 +60,13 @@ namespace lldb {
         %pythoncode %{
             __swig_getmethods__["options"] = GetOptions
             __swig_setmethods__["options"] = SetOptions
-            if _newclass: x = property(GetOptions, SetOptions)        
+            if _newclass: options = property(GetOptions, SetOptions)
             
             __swig_getmethods__["contains_code"] = IsClassCode
-            if _newclass: x = property(IsClassCode, None)        
+            if _newclass: contains_code = property(IsClassCode, None)
             
             __swig_getmethods__["synthetic_data"] = GetData
-            if _newclass: x = property(GetData, None)
+            if _newclass: synthetic_data = property(GetData, None)
         %}
         
     };

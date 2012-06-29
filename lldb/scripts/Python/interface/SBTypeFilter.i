@@ -58,10 +58,10 @@ namespace lldb {
         %pythoncode %{
             __swig_getmethods__["options"] = GetOptions
             __swig_setmethods__["options"] = SetOptions
-            if _newclass: x = property(GetOptions, SetOptions)        
+            if _newclass: options = property(GetOptions, SetOptions)
             
             __swig_getmethods__["count"] = GetNumberOfExpressionPaths
-            if _newclass: x = property(GetNumberOfExpressionPaths, None)
+            if _newclass: count = property(GetNumberOfExpressionPaths, None)
         %}
                 
     };

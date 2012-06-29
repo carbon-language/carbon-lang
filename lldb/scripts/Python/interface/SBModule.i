@@ -355,43 +355,43 @@ public:
             return self.sections
 
         __swig_getmethods__["symbols"] = get_symbols_array
-        if _newclass: x = property(get_symbols_array, None)
+        if _newclass: symbols = property(get_symbols_array, None, doc='''A read only property that returns a list() of lldb.SBSymbol objects contained in this module.''')
 
         __swig_getmethods__["symbol"] = get_symbols_access_object
-        if _newclass: x = property(get_symbols_access_object, None)
+        if _newclass: symbol = property(get_symbols_access_object, None, doc='''A read only property that can be used to access symbols by index ("symbol = module.symbol[0]"), name ("symbols = module.symbol['main']"), or using a regular expression ("symbols = module.symbol[re.compile(...)]"). The return value is a single lldb.SBSymbol object for array access, and a list() of lldb.SBSymbol objects for name and regular expression access''')
 
         __swig_getmethods__["sections"] = get_sections_array
-        if _newclass: x = property(get_sections_array, None)
+        if _newclass: sections = property(get_sections_array, None, doc='''A read only property that returns a list() of lldb.SBSection objects contained in this module.''')
         
         __swig_getmethods__["section"] = get_sections_access_object
-        if _newclass: x = property(get_sections_access_object, None)
+        if _newclass: section = property(get_sections_access_object, None, doc='''A read only property that can be used to access symbols by index ("section = module.section[0]"), name ("sections = module.section[\'main\']"), or using a regular expression ("sections = module.section[re.compile(...)]"). The return value is a single lldb.SBSection object for array access, and a list() of lldb.SBSection objects for name and regular expression access''')
 
         def get_uuid(self):
             return uuid.UUID (self.GetUUIDString())
         
         __swig_getmethods__["uuid"] = get_uuid
-        if _newclass: x = property(get_uuid, None)
+        if _newclass: uuid = property(get_uuid, None, doc='''A read only property that returns a standard python uuid.UUID object that represents the UUID of this module.''')
         
         __swig_getmethods__["file"] = GetFileSpec
-        if _newclass: x = property(GetFileSpec, None)
+        if _newclass: file = property(GetFileSpec, None, doc='''A read only property that returns an lldb object that represents the file (lldb.SBFileSpec) for this object file for this module as it is represented where it is being debugged.''')
         
         __swig_getmethods__["platform_file"] = GetPlatformFileSpec
-        if _newclass: x = property(GetPlatformFileSpec, None)
+        if _newclass: platform_file = property(GetPlatformFileSpec, None, doc='''A read only property that returns an lldb object that represents the file (lldb.SBFileSpec) for this object file for this module as it is represented on the current host system.''')
         
         __swig_getmethods__["byte_order"] = GetByteOrder
-        if _newclass: x = property(GetByteOrder, None)
+        if _newclass: byte_order = property(GetByteOrder, None, doc='''A read only property that returns an lldb enumeration value (lldb.eByteOrderLittle, lldb.eByteOrderBig, lldb.eByteOrderInvalid) that represents the byte order for this module.''')
         
         __swig_getmethods__["addr_size"] = GetAddressByteSize
-        if _newclass: x = property(GetAddressByteSize, None)
+        if _newclass: addr_size = property(GetAddressByteSize, None, doc='''A read only property that returns the size in bytes of an address for this module.''')
         
         __swig_getmethods__["triple"] = GetTriple
-        if _newclass: x = property(GetTriple, None)
+        if _newclass: triple = property(GetTriple, None, doc='''A read only property that returns the target triple (arch-vendor-os) for this module.''')
 
         __swig_getmethods__["num_symbols"] = GetNumSymbols
-        if _newclass: x = property(GetNumSymbols, None)
+        if _newclass: num_symbols = property(GetNumSymbols, None, doc='''A read only property that returns number of symbols in the module symbol table as an integer.''')
         
         __swig_getmethods__["num_sections"] = GetNumSections
-        if _newclass: x = property(GetNumSections, None)
+        if _newclass: num_sections = property(GetNumSections, None, doc='''A read only property that returns number of sections in the module as an integer.''')
         
     %}
 

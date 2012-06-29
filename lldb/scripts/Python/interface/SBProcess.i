@@ -345,44 +345,44 @@ public:
             return threads
         
         __swig_getmethods__["threads"] = get_process_thread_list
-        if _newclass: x = property(get_process_thread_list, None)
+        if _newclass: threads = property(get_process_thread_list, None, doc='''A read only property that returns a list() of lldb.SBThread objects for this process.''')
         
         __swig_getmethods__["thread"] = get_threads_access_object
-        if _newclass: x = property(get_threads_access_object, None)
+        if _newclass: thread = property(get_threads_access_object, None, doc='''A read only property that returns an object that can access threads by thread index (thread = lldb.process.thread[12]).''')
 
         __swig_getmethods__["is_alive"] = __get_is_alive__
-        if _newclass: x = property(__get_is_alive__, None)
+        if _newclass: is_alive = property(__get_is_alive__, None, doc='''A read only property that returns a boolean value that indicates if this process is currently alive.''')
 
         __swig_getmethods__["is_running"] = __get_is_running__
-        if _newclass: x = property(__get_is_running__, None)
+        if _newclass: is_running = property(__get_is_running__, None, doc='''A read only property that returns a boolean value that indicates if this process is currently running.''')
 
         __swig_getmethods__["is_stopped"] = __get_is_running__
-        if _newclass: x = property(__get_is_running__, None)
+        if _newclass: is_stopped = property(__get_is_running__, None, doc='''A read only property that returns a boolean value that indicates if this process is currently stopped.''')
 
         __swig_getmethods__["id"] = GetProcessID
-        if _newclass: x = property(GetProcessID, None)
+        if _newclass: id = property(GetProcessID, None, doc='''A read only property that returns the process ID as an integer.''')
         
         __swig_getmethods__["target"] = GetTarget
-        if _newclass: x = property(GetTarget, None)
+        if _newclass: target = property(GetTarget, None, doc='''A read only property that an lldb object that represents the target (lldb.SBTarget) that owns this process.''')
         
         __swig_getmethods__["num_threads"] = GetNumThreads
-        if _newclass: x = property(GetNumThreads, None)
+        if _newclass: num_threads = property(GetNumThreads, None, doc='''A read only property that returns the number of threads in this process as an integer.''')
         
         __swig_getmethods__["selected_thread"] = GetSelectedThread
         __swig_setmethods__["selected_thread"] = SetSelectedThread
-        if _newclass: x = property(GetSelectedThread, SetSelectedThread)
+        if _newclass: selected_thread = property(GetSelectedThread, SetSelectedThread, doc='''A read/write property that gets/sets the currently selected thread in this process. The getter returns a lldb.SBThread object and the setter takes an lldb.SBThread object.''')
         
         __swig_getmethods__["state"] = GetState
-        if _newclass: x = property(GetState, None)
+        if _newclass: state = property(GetState, None, doc='''A read only property that returns an lldb enumeration value (see enumerations that start with "lldb.eState") that represents the current state of this process (running, stopped, exited, etc.).''')
         
         __swig_getmethods__["exit_state"] = GetExitStatus
-        if _newclass: x = property(GetExitStatus, None)
+        if _newclass: exit_state = property(GetExitStatus, None, doc='''A read only property that returns an exit status as an integer of this process when the process state is lldb.eStateExited.''')
         
         __swig_getmethods__["exit_description"] = GetExitDescription
-        if _newclass: x = property(GetExitDescription, None)
+        if _newclass: exit_description = property(GetExitDescription, None, doc='''A read only property that returns an exit description as a string of this process when the process state is lldb.eStateExited.''')
         
         __swig_getmethods__["broadcaster"] = GetBroadcaster
-        if _newclass: x = property(GetBroadcaster, None)
+        if _newclass: broadcaster = property(GetBroadcaster, None, doc='''A read only property that an lldb object that represents the broadcaster (lldb.SBBroadcaster) for this process.''')
     %}
 
 };
