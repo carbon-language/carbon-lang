@@ -15,13 +15,14 @@
 #ifndef SANITIZER_ATOMIC_MSVC_H
 #define SANITIZER_ATOMIC_MSVC_H
 
-void _ReadWriteBarrier();
+extern "C" void _ReadWriteBarrier();
 #pragma intrinsic(_ReadWriteBarrier)
-void _mm_mfence();
+extern "C" void _mm_mfence();
 #pragma intrinsic(_mm_mfence)
-void _mm_pause();
+extern "C" void _mm_pause();
 #pragma intrinsic(_mm_pause)
-long _InterlockedExchangeAdd(long volatile * Addend, long Value);  // NOLINT
+extern "C" long _InterlockedExchangeAdd(  // NOLINT
+    long volatile * Addend, long Value);  // NOLINT
 #pragma intrinsic(_InterlockedExchangeAdd)
 
 namespace __sanitizer {
