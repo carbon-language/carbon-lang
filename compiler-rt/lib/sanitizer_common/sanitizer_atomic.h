@@ -6,6 +6,10 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
+//
+// This file is a part of ThreadSanitizer/AddressSanitizer runtime.
+//
+//===----------------------------------------------------------------------===//
 
 #ifndef SANITIZER_ATOMIC_H
 #define SANITIZER_ATOMIC_H

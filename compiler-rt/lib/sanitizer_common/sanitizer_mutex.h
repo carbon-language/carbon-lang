@@ -6,6 +6,10 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
+//
+// This file is a part of ThreadSanitizer/AddressSanitizer runtime.
+//
+//===----------------------------------------------------------------------===//
 
 #ifndef SANITIZER_MUTEX_H
 #define SANITIZER_MUTEX_H
@@ -14,6 +18,28 @@
 #include "sanitizer_atomic.h"
 
 namespace __sanitizer {
+
+class SpinMutex {
+ public:
+  SpinMutex() {
+    atomic_store(&state_, 0, memory_order_relaxed);
+  }
+
+  void Lock() {
+    while (atomic_exchange(&state_, 1, memory_order_acquire))
+      proc_yield(10);
+  }
+
+  void Unlock() {
+    atomic_store(&state_, 0, memory_order_release);
+  }
+
+ private:
+  atomic_uint8_t state_;
+
+  SpinMutex(const SpinMutex&);
+  void operator=(const SpinMutex&);
+};
 
 template<typename MutexType>
 class GenericScopedLock {

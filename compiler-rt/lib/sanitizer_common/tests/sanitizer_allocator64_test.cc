@@ -124,6 +124,7 @@ TEST(SanitizerCommon, SizeClassAllocator64MetadataStress) {
   }
 
   a.TestOnlyUnmap();
+  (void)sink;
 }
 
 void FailInAssertionOnOOM() {

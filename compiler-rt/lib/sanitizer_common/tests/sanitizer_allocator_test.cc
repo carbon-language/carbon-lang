@@ -7,14 +7,14 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file is a part of ThreadSanitizer (TSan), a race detector.
+// This file is a part of ThreadSanitizer/AddressSanitizer runtime.
 //
 //===----------------------------------------------------------------------===//
 #include "sanitizer_common/sanitizer_common.h"
 #include "gtest/gtest.h"
 #include <stdlib.h>
 
-namespace __tsan {
+namespace __sanitizer {
 
 TEST(Allocator, Basic) {
   char *p = (char*)InternalAlloc(10);
@@ -53,4 +53,4 @@ TEST(Allocator, Stress) {
   }
 }
 
-}  // namespace __tsan
+}  // namespace __sanitizer
