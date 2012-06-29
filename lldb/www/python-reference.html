@@ -29,6 +29,54 @@
 
 				</div>
 				<div class="postfooter"></div>
+    		<div class="post">
+    			<h1 class ="postheader">Documentation</h1>
+    			<div class="postcontent">
+
+                    <p>The LLDB API is contained in a python module named <b>lldb</b>. Help is available through the standard python help and documentation. To get an overview of the <b>lldb</b> python module you can execute the following command:</p>
+<code><pre><tt>(lldb) <b>script help(lldb)</b>
+    Help on package lldb:
+
+    NAME
+        lldb - The lldb module contains the public APIs for Python binding.
+
+    FILE
+        /System/Library/PrivateFrameworks/LLDB.framework/Versions/A/Resources/Python/lldb/__init__.py
+
+    DESCRIPTION
+...
+</tt></pre></code>
+                    <p>You can also get help using a module class name. The full API that is exposed for that class will be displayed in a man page style window. Below we want to get help on the lldb.SBFrame class:</p>
+<code><pre><tt>(lldb) <b>script help(lldb.SBFrame)</b>
+    Help on class SBFrame in module lldb:
+
+    class SBFrame(__builtin__.object)
+     |  Represents one of the stack frames associated with a thread.
+     |  SBThread contains SBFrame(s). For example (from test/lldbutil.py),
+     |  
+     |  def print_stacktrace(thread, string_buffer = False):
+     |      '''Prints a simple stack trace of this thread.'''
+     |  
+...
+</tt></pre></code>
+                    <p>Or you can get help using any python object, here we use the <b>lldb.process</b> object which is a global variable in the <b>lldb</b> module which represents the currently selected process:</p>
+<code><pre><tt>(lldb) <b>script help(lldb.process)</b>
+    Help on SBProcess in module lldb object:
+
+    class SBProcess(__builtin__.object)
+     |  Represents the process associated with the target program.
+     |  
+     |  SBProcess supports thread iteration. For example (from test/lldbutil.py),
+     |  
+     |  # ==================================================
+     |  # Utility functions related to Threads and Processes
+     |  # ==================================================
+     |  
+...
+</tt></pre></code>
+
+    				</div>
+    				<div class="postfooter"></div>
 
 			<div class="post">
 				<h1 class ="postheader">Embedded Python Interpreter</h1>
