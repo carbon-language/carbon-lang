@@ -10,7 +10,7 @@
 #ifndef CLANG_CODEGEN_CGBUILDER_H
 #define CLANG_CODEGEN_CGBUILDER_H
 
-#include "llvm/Support/IRBuilder.h"
+#include "llvm/IRBuilder.h"
 
 namespace clang {
 namespace CodeGen {
