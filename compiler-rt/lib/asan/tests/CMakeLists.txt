@@ -20,6 +20,27 @@ set(ASAN_UNITTEST_COMMON_CFLAGS
   -fvisibility=hidden
 )
 
+set(ASAN_GTEST_INCLUDE_CFLAGS
+  -I${LLVM_MAIN_SRC_DIR}/utils/unittest/googletest/include
+  -I${LLVM_MAIN_SRC_DIR}/include
+  -I${LLVM_BINARY_DIR}/include
+  -D__STDC_CONSTANT_MACROS
+  -D__STDC_LIMIT_MACROS
+)
+
+set(ASAN_UNITTEST_INSTRUMENTED_CFLAGS
+  ${ASAN_UNITTEST_COMMON_CFLAGS}
+  ${ASAN_GTEST_INCLUDE_CFLAGS}
+  -faddress-sanitizer
+  -O2
+  -g
+  -mllvm "-asan-blacklist=${CMAKE_CURRENT_SOURCE_DIR}/asan_test.ignore"
+  -DASAN_HAS_BLACKLIST=1
+  -DASAN_HAS_EXCEPTIONS=1
+  -DASAN_NEEDS_SEGV=1
+  -DASAN_UAR=0
+)
+
 add_custom_target(AsanTests)
 set_target_properties(AsanTests PROPERTIES FOLDER "ASan tests")
 function(add_asan_test testname)
@@ -42,30 +63,9 @@ function(add_asan_test testname)
 	  "${compile_flags} ${add_compile_flags}")
 endfunction()
 
-add_asan_test(AsanNoInstrumentationTests
-	asan_noinst_test.cc
-	asan_break_optimization.cc
-	)
-
-set(ASAN_GTEST_INCLUDE_CFLAGS
-  -I${LLVM_MAIN_SRC_DIR}/utils/unittest/googletest/include
-  -I${LLVM_MAIN_SRC_DIR}/include
-  -I${LLVM_BINARY_DIR}/include
-  -D__STDC_CONSTANT_MACROS
-  -D__STDC_LIMIT_MACROS
-)
-
-set(ASAN_UNITTEST_INSTRUMENTED_CFLAGS
-  ${ASAN_UNITTEST_COMMON_CFLAGS}
-  ${ASAN_GTEST_INCLUDE_CFLAGS}
-  -faddress-sanitizer
-  -O2
-  -g
-  -mllvm "-asan-blacklist=${CMAKE_CURRENT_SOURCE_DIR}/asan_test.ignore"
-  -DASAN_HAS_BLACKLIST=1
-  -DASAN_HAS_EXCEPTIONS=1
-  -DASAN_NEEDS_SEGV=1
-  -DASAN_UAR=0
+set(ASAN_TEST_FILES
+  asan_noinst_test.cc
+  asan_break_optimization.cc
 )
 
 # We only support building instrumented tests when we're not cross compiling
@@ -102,21 +102,17 @@ if("${CMAKE_HOST_SYSTEM}" STREQUAL "${CMAKE_SYSTEM}" AND UNIX)
 
   add_asan_compile_cxx_command(asan_globals_test.cc)
   add_asan_compile_cxx_command(asan_test.cc)
-  set(ASAN_INSTRUMENTED_TESTS
+  list(APPEND ASAN_TEST_FILES
     asan_globals_test.cc.asan.o
     asan_test.cc.asan.o
   )
   if (APPLE)
     add_asan_compile_objc_command(asan_mac_test.mm)
-    set(ASAN_INSTRUMENTED_TESTS
-      ${ASAN_INSTRUMENTED_TESTS}
-      asan_mac_test.mm.asan.o
-    )
+    list(APPEND ASAN_TEST_FILES asan_mac_test.mm.asan.o)
   endif()
 
-	add_asan_test(AsanInstrumentationTests
-		${ASAN_INSTRUMENTED_TESTS}
-		asan_break_optimization.cc
-		)
-
 endif()
+
+add_asan_test(AsanTest
+  ${ASAN_TEST_FILES}
+)
