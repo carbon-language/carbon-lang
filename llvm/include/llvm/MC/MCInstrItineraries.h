@@ -313,13 +313,13 @@ public:
     return UseCycle;
   }
 
-  /// isMicroCoded - Return true if the instructions in the given class decode
-  /// to more than one micro-ops.
-  bool isMicroCoded(unsigned ItinClassIndx) const {
+  /// getNumMicroOps - Return the number of micro-ops that the given class
+  /// decodes to. Return -1 for classes that require dynamic lookup via
+  /// TargetInstrInfo.
+  int getNumMicroOps(unsigned ItinClassIndx) const {
     if (isEmpty())
-      return false;
-    int UOps = Itineraries[ItinClassIndx].NumMicroOps;
-    return UOps < 0 || UOps > 1;
+      return 1;
+    return Itineraries[ItinClassIndx].NumMicroOps;
   }
 };
 

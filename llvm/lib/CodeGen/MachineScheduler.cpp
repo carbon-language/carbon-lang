@@ -402,9 +402,14 @@ public:
   }
 
   /// getIssueWidth - Return the max instructions per scheduling group.
-  ///
   unsigned getIssueWidth() const {
     return InstrItins ? InstrItins->Props.IssueWidth : 1;
+  }
+
+  /// getNumMicroOps - Return the number of issue slots required for this MI.
+  unsigned getNumMicroOps(MachineInstr *MI) const {
+    int UOps = InstrItins->getNumMicroOps(MI->getDesc().getSchedClass());
+    return (UOps >= 0) ? UOps : TII->getNumMicroOps(InstrItins, MI);
   }
 
 protected:
@@ -788,6 +793,8 @@ class ConvergingScheduler : public MachineSchedStrategy {
   /// current cycle in whichever direction at has moved, and maintains the state
   /// of "hazards" and other interlocks at the current cycle.
   struct SchedBoundary {
+    ScheduleDAGMI *DAG;
+
     ReadyQueue Available;
     ReadyQueue Pending;
     bool CheckPending;
@@ -806,7 +813,7 @@ class ConvergingScheduler : public MachineSchedStrategy {
     /// Pending queues extend the ready queues with the same ID and the
     /// PendingFlag set.
     SchedBoundary(unsigned ID, const Twine &Name):
-      Available(ID, Name+".A"),
+      DAG(0), Available(ID, Name+".A"),
       Pending(ID << ConvergingScheduler::LogMaxQID, Name+".P"),
       CheckPending(false), HazardRec(0), CurrCycle(0), IssueCount(0),
       MinReadyCycle(UINT_MAX), MaxMinLatency(0) {}
@@ -821,7 +828,7 @@ class ConvergingScheduler : public MachineSchedStrategy {
 
     void bumpCycle();
 
-    void bumpNode(SUnit *SU, unsigned IssueWidth);
+    void bumpNode(SUnit *SU);
 
     void releasePending();
 
@@ -874,6 +881,8 @@ protected:
 void ConvergingScheduler::initialize(ScheduleDAGMI *dag) {
   DAG = dag;
   TRI = DAG->TRI;
+  Top.DAG = dag;
+  Bot.DAG = dag;
 
   // Initialize the HazardRecognizers.
   const TargetMachine &TM = DAG->MF.getTarget();
@@ -940,7 +949,8 @@ void ConvergingScheduler::SchedBoundary::releaseNode(SUnit *SU,
 
 /// Move the boundary of scheduled code by one cycle.
 void ConvergingScheduler::SchedBoundary::bumpCycle() {
-  IssueCount = 0;
+  unsigned Width = DAG->getIssueWidth();
+  IssueCount = (IssueCount <= Width) ? 0 : IssueCount - Width;
 
   assert(MinReadyCycle < UINT_MAX && "MinReadyCycle uninitialized");
   unsigned NextCycle = std::max(CurrCycle + 1, MinReadyCycle);
@@ -965,8 +975,7 @@ void ConvergingScheduler::SchedBoundary::bumpCycle() {
 }
 
 /// Move the boundary of scheduled code by one SUnit.
-void ConvergingScheduler::SchedBoundary::bumpNode(SUnit *SU,
-                                                  unsigned IssueWidth) {
+void ConvergingScheduler::SchedBoundary::bumpNode(SUnit *SU) {
   // Update the reservation table.
   if (HazardRec->isEnabled()) {
     if (!isTop() && SU->isCall) {
@@ -977,8 +986,8 @@ void ConvergingScheduler::SchedBoundary::bumpNode(SUnit *SU,
     HazardRec->EmitInstruction(SU);
   }
   // Check the instruction group size limit.
-  ++IssueCount;
-  if (IssueCount == IssueWidth) {
+  IssueCount += DAG->getNumMicroOps(SU->getInstr());
+  if (IssueCount >= DAG->getIssueWidth()) {
     DEBUG(dbgs() << "*** Max instrs at cycle " << CurrCycle << '\n');
     bumpCycle();
   }
@@ -1277,11 +1286,11 @@ SUnit *ConvergingScheduler::pickNode(bool &IsTopNode) {
 void ConvergingScheduler::schedNode(SUnit *SU, bool IsTopNode) {
   if (IsTopNode) {
     SU->TopReadyCycle = Top.CurrCycle;
-    Top.bumpNode(SU, DAG->getIssueWidth());
+    Top.bumpNode(SU);
   }
   else {
     SU->BotReadyCycle = Bot.CurrCycle;
-    Bot.bumpNode(SU, DAG->getIssueWidth());
+    Bot.bumpNode(SU);
   }
 }
 
