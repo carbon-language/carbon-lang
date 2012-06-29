@@ -14,6 +14,7 @@
 #ifndef ASAN_LOCK_H
 #define ASAN_LOCK_H
 
+#include "sanitizer_common/sanitizer_mutex.h"
 #include "asan_internal.h"
 
 // The locks in ASan are global objects and they are never destroyed to avoid
@@ -34,17 +35,7 @@ class AsanLock {
   uptr owner_;  // for debugging and for malloc_introspection_t interface
 };
 
-class ScopedLock {
- public:
-  explicit ScopedLock(AsanLock *mu) : mu_(mu) {
-    mu_->Lock();
-  }
-  ~ScopedLock() {
-    mu_->Unlock();
-  }
- private:
-  AsanLock *mu_;
-};
+typedef GenericScopedLock<AsanLock> ScopedLock;
 
 }  // namespace __asan
 

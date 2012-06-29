@@ -256,22 +256,4 @@ void Mutex::ReadUnlock() {
 #endif
 }
 
-Lock::Lock(Mutex *m)
-  : m_(m) {
-  m_->Lock();
-}
-
-Lock::~Lock() {
-  m_->Unlock();
-}
-
-ReadLock::ReadLock(Mutex *m)
-  : m_(m) {
-  m_->ReadLock();
-}
-
-ReadLock::~ReadLock() {
-  m_->ReadUnlock();
-}
-
 }  // namespace __tsan

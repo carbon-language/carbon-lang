@@ -14,6 +14,7 @@
 #define TSAN_MUTEX_H
 
 #include "sanitizer_common/sanitizer_atomic.h"
+#include "sanitizer_common/sanitizer_mutex.h"
 #include "tsan_defs.h"
 
 namespace __tsan {
@@ -57,29 +58,8 @@ class Mutex {
   void operator = (const Mutex&);
 };
 
-class Lock {
- public:
-  explicit Lock(Mutex *m);
-  ~Lock();
-
- private:
-  Mutex *m_;
-
-  Lock(const Lock&);
-  void operator = (const Lock&);
-};
-
-class ReadLock {
- public:
-  explicit ReadLock(Mutex *m);
-  ~ReadLock();
-
- private:
-  Mutex *m_;
-
-  ReadLock(const ReadLock&);
-  void operator = (const ReadLock&);
-};
+typedef GenericScopedLock<Mutex> Lock;
+typedef GenericScopedReadLock<Mutex> ReadLock;
 
 class DeadlockDetector {
  public:
