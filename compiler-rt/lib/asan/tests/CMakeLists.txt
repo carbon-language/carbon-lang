@@ -52,8 +52,12 @@ function(add_asan_test testname)
 	endif()
 	if (APPLE)
 		# Darwin-specific linker flags.
-		set_target_properties(${testname} PROPERTIES
-		  LINK_FLAGS "-framework Foundation")
+		set_property(TARGET ${testname} APPEND PROPERTY
+		  LINK_FLAGS "-framework CoreFoundation")
+	elseif (UNIX)
+		# Linux-specific linker flags.
+		set_property(TARGET ${testname} APPEND PROPERTY
+		  LINK_FLAGS "-lpthread -ldl -export-dynamic")
 	endif()
 	get_property(compile_flags TARGET ${testname} PROPERTY COMPILE_FLAGS)
 	foreach(arg ${ASAN_UNITTEST_COMMON_CFLAGS})
