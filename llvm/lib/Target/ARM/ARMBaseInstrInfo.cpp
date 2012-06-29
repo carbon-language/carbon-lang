@@ -1801,6 +1801,53 @@ static bool isSuitableForMask(MachineInstr *&MI, unsigned SrcReg,
   return false;
 }
 
+/// getSwappedCondition - assume the flags are set by MI(a,b), return
+/// the condition code if we modify the instructions such that flags are
+/// set by MI(b,a).
+inline static ARMCC::CondCodes getSwappedCondition(ARMCC::CondCodes CC) {
+  switch (CC) {
+  default: return ARMCC::AL;
+  case ARMCC::EQ: return ARMCC::EQ;
+  case ARMCC::NE: return ARMCC::NE;
+  case ARMCC::HS: return ARMCC::LS;
+  case ARMCC::LO: return ARMCC::HI;
+  case ARMCC::HI: return ARMCC::LO;
+  case ARMCC::LS: return ARMCC::HS;
+  case ARMCC::GE: return ARMCC::LE;
+  case ARMCC::LT: return ARMCC::GT;
+  case ARMCC::GT: return ARMCC::LT;
+  case ARMCC::LE: return ARMCC::GE;
+  }
+}
+
+/// isRedundantFlagInstr - check whether the first instruction, whose only
+/// purpose is to update flags, can be made redundant.
+/// CMPrr can be made redundant by SUBrr if the operands are the same.
+/// CMPri can be made redundant by SUBri if the operands are the same.
+/// This function can be extended later on.
+inline static bool isRedundantFlagInstr(MachineInstr *CmpI, unsigned SrcReg,
+                                        unsigned SrcReg2, int ImmValue,
+                                        MachineInstr *OI) {
+  if ((CmpI->getOpcode() == ARM::CMPrr ||
+       CmpI->getOpcode() == ARM::t2CMPrr) &&
+      (OI->getOpcode() == ARM::SUBrr ||
+       OI->getOpcode() == ARM::t2SUBrr) &&
+      ((OI->getOperand(1).getReg() == SrcReg &&
+        OI->getOperand(2).getReg() == SrcReg2) ||
+       (OI->getOperand(1).getReg() == SrcReg2 &&
+        OI->getOperand(2).getReg() == SrcReg)))
+    return true;
+
+  if ((CmpI->getOpcode() == ARM::CMPri ||
+       CmpI->getOpcode() == ARM::t2CMPri) &&
+      (OI->getOpcode() == ARM::SUBri ||
+       OI->getOpcode() == ARM::t2SUBri) &&
+      OI->getOperand(1).getReg() == SrcReg &&
+      OI->getOperand(2).getImm() == ImmValue)
+    return true;
+  return false;
+}
+
 /// optimizeCompareInstr - Convert the instruction supplying the argument to the
 /// comparison into one that sets the zero bit in the flags register;
 /// Remove a redundant Compare instruction if an earlier instruction can set the
@@ -1812,15 +1859,9 @@ bool ARMBaseInstrInfo::
 optimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg, unsigned SrcReg2,
                      int CmpMask, int CmpValue,
                      const MachineRegisterInfo *MRI) const {
-  if (MRI->def_empty(SrcReg))
-    return false;
-
-  MachineRegisterInfo::def_iterator DI = MRI->def_begin(SrcReg);
-  if (llvm::next(DI) != MRI->def_end())
-    // Only support one definition.
-    return false;
-
-  MachineInstr *MI = &*DI;
+  // Get the unique definition of SrcReg.
+  MachineInstr *MI = MRI->getUniqueVRegDef(SrcReg);
+  if (!MI) return false;
 
   // Masked compares sometimes use the same register as the corresponding 'and'.
   if (CmpMask != ~0) {
@@ -1867,40 +1908,19 @@ optimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg, unsigned SrcReg2,
 
   // Check that CPSR isn't set between the comparison instruction and the one we
   // want to change. At the same time, search for Sub.
+  const TargetRegisterInfo *TRI = &getRegisterInfo();
   --I;
   for (; I != E; --I) {
     const MachineInstr &Instr = *I;
 
-    for (unsigned IO = 0, EO = Instr.getNumOperands(); IO != EO; ++IO) {
-      const MachineOperand &MO = Instr.getOperand(IO);
-      if (MO.isRegMask() && MO.clobbersPhysReg(ARM::CPSR))
-        return false;
-      if (!MO.isReg()) continue;
-
+    if (Instr.modifiesRegister(ARM::CPSR, TRI) ||
+        Instr.readsRegister(ARM::CPSR, TRI))
       // This instruction modifies or uses CPSR after the one we want to
       // change. We can't do this transformation.
-      if (MO.getReg() == ARM::CPSR)
-        return false;
-    }
+      return false;
 
-    // Check whether the current instruction is SUB(r1, r2) or SUB(r2, r1).
-    if (SrcReg2 != 0 &&
-        (Instr.getOpcode() == ARM::SUBrr ||
-         Instr.getOpcode() == ARM::t2SUBrr) &&
-        ((Instr.getOperand(1).getReg() == SrcReg &&
-          Instr.getOperand(2).getReg() == SrcReg2) ||
-         (Instr.getOperand(1).getReg() == SrcReg2 &&
-          Instr.getOperand(2).getReg() == SrcReg))) {
-      Sub = &*I;
-      break;
-    }
-
-    // Check whether the current instruction is SUBri(r1, CmpValue).
-    if ((CmpInstr->getOpcode() == ARM::CMPri ||
-         CmpInstr->getOpcode() == ARM::t2CMPri) &&
-        Instr.getOpcode() == ARM::SUBri && CmpValue != 0 &&
-        Instr.getOperand(1).getReg() == SrcReg &&
-        Instr.getOperand(2).getImm() == CmpValue) {
+    // Check whether CmpInstr can be made redundant by the current instruction.
+    if (isRedundantFlagInstr(CmpInstr, SrcReg, SrcReg2, CmpValue, &*I)) {
       Sub = &*I;
       break;
     }
@@ -1958,7 +1978,8 @@ optimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg, unsigned SrcReg2,
     // CPSR use (i.e. used in another block), then it's not safe to perform
     // the optimization.
     // When checking against Sub, we handle the condition codes GE, LT, GT, LE.
-    SmallVector<MachineOperand*, 4> OperandsToUpdate;
+    SmallVector<std::pair<MachineOperand*, ARMCC::CondCodes>, 4>
+        OperandsToUpdate;
     bool isSafe = false;
     I = CmpInstr;
     E = CmpInstr->getParent()->end();
@@ -1979,30 +2000,20 @@ optimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg, unsigned SrcReg2,
         }
         // Condition code is after the operand before CPSR.
         ARMCC::CondCodes CC = (ARMCC::CondCodes)Instr.getOperand(IO-1).getImm();
-        if (Sub)
-          switch (CC) {
-          default:
+        if (Sub) {
+          ARMCC::CondCodes NewCC = getSwappedCondition(CC);
+          if (NewCC == ARMCC::AL)
             return false;
-          case ARMCC::GE:
-          case ARMCC::LT:
-          case ARMCC::GT:
-          case ARMCC::LE:
-          case ARMCC::HS:
-          case ARMCC::LS:
-          case ARMCC::HI:
-          case ARMCC::LO:
-          case ARMCC::EQ:
-          case ARMCC::NE:
-            // If we have SUB(r1, r2) and CMP(r2, r1), the condition code based
-            // on CMP needs to be updated to be based on SUB.
-            // Push the condition code operands to OperandsToUpdate.
-            // If it is safe to remove CmpInstr, the condition code of these
-            // operands will be modified.
-            if (SrcReg2 != 0 && Sub->getOperand(1).getReg() == SrcReg2 &&
-                Sub->getOperand(2).getReg() == SrcReg)
-              OperandsToUpdate.push_back(&((*I).getOperand(IO-1)));
-            break;
-          }
+          // If we have SUB(r1, r2) and CMP(r2, r1), the condition code based
+          // on CMP needs to be updated to be based on SUB.
+          // Push the condition code operands to OperandsToUpdate.
+          // If it is safe to remove CmpInstr, the condition code of these
+          // operands will be modified.
+          if (SrcReg2 != 0 && Sub->getOperand(1).getReg() == SrcReg2 &&
+              Sub->getOperand(2).getReg() == SrcReg)
+            OperandsToUpdate.push_back(std::make_pair(&((*I).getOperand(IO-1)),
+                                                      NewCC));
+        }
         else
           switch (CC) {
           default:
@@ -2032,26 +2043,8 @@ optimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg, unsigned SrcReg2,
     // Modify the condition code of operands in OperandsToUpdate.
     // Since we have SUB(r1, r2) and CMP(r2, r1), the condition code needs to
     // be changed from r2 > r1 to r1 < r2, from r2 < r1 to r1 > r2, etc.
-    for (unsigned i = 0; i < OperandsToUpdate.size(); i++) {
-      ARMCC::CondCodes CC = (ARMCC::CondCodes)OperandsToUpdate[i]->getImm();
-      ARMCC::CondCodes NewCC;
-      switch (CC) {
-      default: llvm_unreachable("only expecting less/greater comparisons here");
-      case ARMCC::GE: NewCC = ARMCC::LE; break;
-      case ARMCC::LT: NewCC = ARMCC::GT; break;
-      case ARMCC::GT: NewCC = ARMCC::LT; break;
-      case ARMCC::LE: NewCC = ARMCC::GE; break;
-      case ARMCC::HS: NewCC = ARMCC::LS; break;
-      case ARMCC::LS: NewCC = ARMCC::HS; break;
-      case ARMCC::HI: NewCC = ARMCC::LO; break;
-      case ARMCC::LO: NewCC = ARMCC::HI; break;
-      case ARMCC::EQ:
-      case ARMCC::NE:
-        NewCC = CC;
-        break;
-      }
-      OperandsToUpdate[i]->setImm(NewCC);
-    }
+    for (unsigned i = 0, e = OperandsToUpdate.size(); i < e; i++)
+      OperandsToUpdate[i].first->setImm(OperandsToUpdate[i].second);
     return true;
   }
   }
