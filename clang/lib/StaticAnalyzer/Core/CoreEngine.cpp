@@ -76,7 +76,7 @@ public:
   }
 
   virtual void enqueue(const WorkListUnit& U) {
-    Queue.push_front(U);
+    Queue.push_back(U);
   }
 
   virtual WorkListUnit dequeue() {

@@ -479,6 +479,10 @@ def CallGraphDumper : Checker<"DumpCallGraph">,
   HelpText<"Display Call Graph">,
   DescFile<"DebugCheckers.cpp">;
 
+def TraversalDumper : Checker<"DumpTraversal">,
+  HelpText<"Print branch conditions as they are traversed by the engine">,
+  DescFile<"TraversalChecker.cpp">;
+
 def AnalyzerStatsChecker : Checker<"Stats">,
   HelpText<"Emit warnings with analyzer statistics">,
   DescFile<"AnalyzerStatsChecker.cpp">;

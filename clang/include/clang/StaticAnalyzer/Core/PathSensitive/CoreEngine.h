@@ -65,7 +65,7 @@ private:
   /// WList - A set of queued nodes that need to be processed by the
   ///  worklist algorithm.  It is up to the implementation of WList to decide
   ///  the order that nodes are processed.
-  WorkList* WList;
+  OwningPtr<WorkList> WList;
 
   /// BCounterFactory - A factory object for created BlockCounter objects.
   ///   These are used to record for key nodes in the ExplodedGraph the
@@ -107,19 +107,14 @@ private:
   ExplodedNode *generateCallExitBeginNode(ExplodedNode *N);
 
 public:
-  /// Construct a CoreEngine object to analyze the provided CFG using
-  ///  a DFS exploration of the exploded graph.
+  /// Construct a CoreEngine object to analyze the provided CFG.
   CoreEngine(SubEngine& subengine, SetOfConstDecls *VisitedCallees,
              FunctionSummariesTy *FS)
     : SubEng(subengine), G(new ExplodedGraph()),
-      WList(WorkList::makeBFS()),
+      WList(WorkList::makeDFS()),
       BCounterFactory(G->getAllocator()),
       AnalyzedCallees(VisitedCallees),
       FunctionSummaries(FS){}
-
-  ~CoreEngine() {
-    delete WList;
-  }
 
   /// getGraph - Returns the exploded graph.
   ExplodedGraph& getGraph() { return *G.get(); }
@@ -156,7 +151,7 @@ public:
     blocksAborted.push_back(std::make_pair(block, node));
   }
   
-  WorkList *getWorkList() const { return WList; }
+  WorkList *getWorkList() const { return WList.get(); }
 
   BlocksExhausted::const_iterator blocks_exhausted_begin() const {
     return blocksExhausted.begin();
