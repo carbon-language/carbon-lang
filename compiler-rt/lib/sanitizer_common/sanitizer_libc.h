@@ -60,7 +60,6 @@ uptr internal_write(fd_t fd, const void *buf, uptr count);
 uptr internal_filesize(fd_t fd);  // -1 on error.
 int internal_dup2(int oldfd, int newfd);
 int internal_snprintf(char *buffer, uptr length, const char *format, ...);
-int internal_sscanf(const char *str, const char *format, ...);
 
 // Threading
 int internal_sched_yield();

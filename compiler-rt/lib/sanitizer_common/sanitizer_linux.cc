@@ -171,14 +171,39 @@ void ProcessMaps::Reset() {
   current_ = proc_self_maps_buff_;
 }
 
+// Parse a hex value in str and update str.
+static uptr ParseHex(char **str) {
+  uptr x = 0;
+  char *s;
+  for (s = *str; ; s++) {
+    char c = *s;
+    uptr v = 0;
+    if (c >= '0' && c <= '9')
+      v = c - '0';
+    else if (c >= 'a' && c <= 'f')
+      v = c - 'a' + 10;
+    else if (c >= 'A' && c <= 'F')
+      v = c - 'A' + 10;
+    else
+      break;
+    x = x * 16 + v;
+  }
+  *str = s;
+  return x;
+}
+
+static bool IsOnOf(char c, char c1, char c2) {
+  return c == c1 || c == c2;
+}
+
+static bool IsDecimal(char c) {
+  return c >= '0' && c <= '9';
+}
+
 bool ProcessMaps::Next(uptr *start, uptr *end, uptr *offset,
                        char filename[], uptr filename_size) {
   char *last = proc_self_maps_buff_ + proc_self_maps_buff_len_;
   if (current_ >= last) return false;
-  int consumed = 0;
-  char flags[10];
-  int major, minor;
-  uptr inode;
   uptr dummy;
   if (!start) start = &dummy;
   if (!end) end = &dummy;
@@ -186,11 +211,25 @@ bool ProcessMaps::Next(uptr *start, uptr *end, uptr *offset,
   char *next_line = (char*)internal_memchr(current_, '\n', last - current_);
   if (next_line == 0)
     next_line = last;
-  if (internal_sscanf(current_, "%lx-%lx %4s %lx %x:%x %ld %n",
-                      start, end, flags, offset, &major, &minor,
-                      &inode, &consumed) != 7)
-    return false;
-  current_ += consumed;
+  // Example: 08048000-08056000 r-xp 00000000 03:0c 64593   /foo/bar
+  *start = ParseHex(&current_);
+  CHECK(*current_++ == '-');
+  *end = ParseHex(&current_);
+  CHECK(*current_++ == ' ');
+  CHECK(IsOnOf(*current_++, '-', 'r'));
+  CHECK(IsOnOf(*current_++, '-', 'w'));
+  CHECK(IsOnOf(*current_++, '-', 'x'));
+  CHECK(IsOnOf(*current_++, 's', 'p'));
+  CHECK(*current_++ == ' ');
+  *offset = ParseHex(&current_);
+  CHECK(*current_++ == ' ');
+  ParseHex(&current_);
+  CHECK(*current_++ == ':');
+  ParseHex(&current_);
+  CHECK(*current_++ == ' ');
+  while (IsDecimal(*current_))
+    current_++;
+  CHECK(*current_++ == ' ');
   // Skip spaces.
   while (current_ < next_line && *current_ == ' ')
     current_++;

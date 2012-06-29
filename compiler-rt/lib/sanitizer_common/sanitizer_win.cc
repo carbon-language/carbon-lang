@@ -194,10 +194,6 @@ int internal_sched_yield() {
   UNIMPLEMENTED();
 }
 
-int internal_sscanf(const char *str, const char *format, ...) {
-  UNIMPLEMENTED();
-}
-
 }  // namespace __sanitizer
 
 #endif  // _WIN32

@@ -163,16 +163,6 @@ u8 AtomicExchange(u8 *a, u8 new_val) {
   return __sync_lock_test_and_set(a, new_val);
 }
 
-// -------------- sanitizer_libc.h
-
-int internal_sscanf(const char *str, const char *format, ...) {
-  va_list args;
-  va_start(args, format);
-  int res = vsscanf(str, format, args);
-  va_end(args);
-  return res;
-}
-
 }  // namespace __sanitizer
 
 #endif  // __linux__ || __APPLE_
