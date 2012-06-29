@@ -498,7 +498,7 @@ void SubtargetEmitter::EmitStageAndOperandCycleData(raw_ostream &OS,
       unsigned Find = ItinClassesMap[Name];
 
       // Set up itinerary as location and location + stage count
-      unsigned NumUOps = ItinData->getValueAsInt("NumMicroOps");
+      unsigned NumUOps = ItinClassList[Find]->getValueAsInt("NumMicroOps");
       InstrItinerary Intinerary = { NumUOps, FindStage, FindStage + NStages,
                                     FindOperandCycle,
                                     FindOperandCycle + NOperandCycles};

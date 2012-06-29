@@ -73,19 +73,19 @@ class InstrStage<int cycles, list<FuncUnit> units,
 // across all chip sets.  Thus a new chip set can be added without modifying
 // instruction information.
 //
-class InstrItinClass;
+// NumMicroOps represents the number of micro-operations that each instruction
+// in the class are decoded to. If the number is zero, then it means the
+// instruction can decode into variable number of micro-ops and it must be
+// determined dynamically.
+//
+class InstrItinClass<int ops = 1> {
+  int NumMicroOps = ops;
+}
 def NoItinerary : InstrItinClass;
 
 //===----------------------------------------------------------------------===//
 // Instruction itinerary data - These values provide a runtime map of an
 // instruction itinerary class (name) to its itinerary data.
-//
-// NumMicroOps represents the number of micro-operations that each instruction
-// in the class are decoded to. If the number is zero, then it means the
-// instruction can decode into variable number of micro-ops and it must be
-// determined dynamically. This directly relates to the itineraries
-// global IssueWidth property, which constrains the number of microops
-// that can issue per cycle.
 //
 // OperandCycles are optional "cycle counts". They specify the cycle after
 // instruction issue the values which correspond to specific operand indices
@@ -106,9 +106,8 @@ def NoItinerary : InstrItinClass;
 // is reduced by 1.
 class InstrItinData<InstrItinClass Class, list<InstrStage> stages,
                     list<int> operandcycles = [],
-                    list<Bypass> bypasses = [], int uops = 1> {
+                    list<Bypass> bypasses = []> {
   InstrItinClass TheClass = Class;
-  int NumMicroOps = uops;
   list<InstrStage> Stages = stages;
   list<int> OperandCycles = operandcycles;
   list<Bypass> Bypasses = bypasses;

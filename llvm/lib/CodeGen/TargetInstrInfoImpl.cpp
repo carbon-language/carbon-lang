@@ -560,8 +560,8 @@ TargetInstrInfoImpl::getNumMicroOps(const InstrItineraryData *ItinData,
     return 1;
 
   unsigned Class = MI->getDesc().getSchedClass();
-  int UOps = ItinData->Itineraries[Class].NumMicroOps;
-  if (UOps >= 0)
+  unsigned UOps = ItinData->Itineraries[Class].NumMicroOps;
+  if (UOps)
     return UOps;
 
   // The # of u-ops is dynamically determined. The specific target should

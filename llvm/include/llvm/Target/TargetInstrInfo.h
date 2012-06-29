@@ -648,9 +648,7 @@ public:
   }
 
   /// getNumMicroOps - Return the number of u-operations the given machine
-  /// instruction will be decoded to on the target cpu. The itinerary's
-  /// IssueWidth is the number of microops that can be dispatched each
-  /// cycle. An instruction with zero microops takes no dispatch resources.
+  /// instruction will be decoded to on the target cpu.
   virtual unsigned getNumMicroOps(const InstrItineraryData *ItinData,
                                   const MachineInstr *MI) const = 0;
 

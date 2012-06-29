@@ -95,7 +95,7 @@ struct InstrStage {
 /// operands are read and written.
 ///
 struct InstrItinerary {
-  int      NumMicroOps;        ///< # of micro-ops, -1 means it's variable
+  unsigned NumMicroOps;        ///< # of micro-ops, 0 means it's variable
   unsigned FirstStage;         ///< Index of first stage in itinerary
   unsigned LastStage;          ///< Index of last + 1 stage in itinerary
   unsigned FirstOperandCycle;  ///< Index of first operand rd/wr
@@ -322,6 +322,7 @@ public:
     return Itineraries[ItinClassIndx].NumMicroOps;
   }
 };
+
 
 } // End llvm namespace
 
