@@ -1,5 +1,5 @@
-; RUN: llc -march=x86 %s -o -
-; RUN: llc -march=x86-64 %s -o -
+; RUN: llc -march=x86 < %s -verify-machineinstrs
+; RUN: llc -march=x86-64 < %s -verify-machineinstrs
 
 ; PR6497
 
@@ -390,4 +390,39 @@ if.end:
   %t6 = inttoptr i32 %t0 to i64*
   %t11 = tail call i64 asm sideeffect "foo", "=*m,=A,{bx},{cx},1,~{memory},~{dirflag},~{fpsr},~{flags}"(i64* %t6, i32 0, i32 0, i64 0) nounwind
   ret void
+}
+
+; Avoid emitting wrong kill flags from InstrEmitter.
+; InstrEmitter::EmitSubregNode() may steal virtual registers from already
+; emitted blocks when isCoalescableExtInstr points out the opportunity.
+; Make sure kill flags are cleared on the newly global virtual register.
+define i64 @ov_read(i8* %vf, i8* nocapture %buffer, i32 %length, i32 %bigendianp, i32 %word, i32 %sgned, i32* %bitstream) nounwind uwtable ssp {
+entry:
+  br i1 undef, label %return, label %while.body.preheader
+
+while.body.preheader:                             ; preds = %entry
+  br i1 undef, label %if.then3, label %if.end7
+
+if.then3:                                         ; preds = %while.body.preheader
+  %0 = load i32* undef, align 4
+  br i1 undef, label %land.lhs.true.i255, label %if.end7
+
+land.lhs.true.i255:                               ; preds = %if.then3
+  br i1 undef, label %if.then.i256, label %if.end7
+
+if.then.i256:                                     ; preds = %land.lhs.true.i255
+  %sub.i = sub i32 0, %0
+  %conv = sext i32 %sub.i to i64
+  br i1 undef, label %if.end7, label %while.end
+
+if.end7:                                          ; preds = %if.then.i256, %land.lhs.true.i255, %if.then3, %while.body.preheader
+  unreachable
+
+while.end:                                        ; preds = %if.then.i256
+  %cmp18 = icmp sgt i32 %sub.i, 0
+  %.conv = select i1 %cmp18, i64 -131, i64 %conv
+  ret i64 %.conv
+
+return:                                           ; preds = %entry
+  ret i64 -131
 }
