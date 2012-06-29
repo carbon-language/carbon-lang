@@ -1,8 +1,6 @@
 set(LIT_ARGS "${LLVM_LIT_ARGS}")
 separate_arguments(LIT_ARGS)
 
-MAKE_DIRECTORY(${CMAKE_CURRENT_BINARY_DIR}/Unit)
-
 configure_lit_site_cfg(
   ${CMAKE_CURRENT_SOURCE_DIR}/lit.site.cfg.in
   ${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg
