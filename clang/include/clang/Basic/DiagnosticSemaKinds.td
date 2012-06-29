@@ -23,6 +23,9 @@ def warn_variables_not_in_loop_body : Warning<
 def warn_identical_enum_values : Warning<
   "all elements of %0 are initialized with literals to value %1">,
   InGroup<DiagGroup<"unique-enum">>;
+def note_identical_enum_values : Note<
+  "initialize the last element with the previous element to silence "
+  "this warning">;
 
 // Constant expressions
 def err_expr_not_ice : Error<

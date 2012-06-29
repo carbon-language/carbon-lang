@@ -10364,6 +10364,13 @@ static void CheckForUniqueEnumValues(Sema &S, Decl **Elements,
   S.Diag(Enum->getLocation(), diag::warn_identical_enum_values)
       << EnumType << FirstVal.toString(10)
       << Enum->getSourceRange();
+
+  EnumConstantDecl *Last = cast<EnumConstantDecl>(Elements[NumElements - 1]),
+                   *Next = cast<EnumConstantDecl>(Elements[NumElements - 2]);
+
+  S.Diag(Last->getLocation(), diag::note_identical_enum_values)
+    << FixItHint::CreateReplacement(Last->getInitExpr()->getSourceRange(),
+                                    Next->getName());
 }
 
 void Sema::ActOnEnumBody(SourceLocation EnumLoc, SourceLocation LBraceLoc,
