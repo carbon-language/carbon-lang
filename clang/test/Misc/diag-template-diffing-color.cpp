@@ -1,5 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -fcolor-diagnostics %s 2>&1 | FileCheck %s
-// XFAIL: cygwin,mingw32,win32
+// XFAIL: mingw32,win32
 template<typename> struct foo {};
 void func(foo<int>);
 int main() {
