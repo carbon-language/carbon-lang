@@ -1087,3 +1087,115 @@ _mm_srlv_epi64(__m128i __X, __m128i __Y)
   __m256i __mask = (mask); \
   (__m256i)__builtin_ia32_gatherq_q256((__v4di)__a, (const __v4di *)__m, \
              (__v4di)__i, (__v4di)__mask, (s)); })
+
+#define _mm_i32gather_pd(m, i, s) __extension__ ({ \
+  double const *__m = (m); \
+  __m128i __i = (i); \
+  (__m128d)__builtin_ia32_gatherd_pd((__v2df)_mm_setzero_pd(), \
+             (const __v2df *)__m, (__v4si)__i, \
+             (__v2df)_mm_set1_pd((double)(long long int)-1), (s)); })
+
+#define _mm256_i32gather_pd(m, i, s) __extension__ ({ \
+  double const *__m = (m); \
+  __m128i __i = (i); \
+  (__m256d)__builtin_ia32_gatherd_pd256((__v4df)_mm256_setzero_pd(), \
+             (const __v4df *)__m, (__v4si)__i, \
+             (__v4df)_mm256_set1_pd((double)(long long int)-1), (s)); })
+
+#define _mm_i64gather_pd(m, i, s) __extension__ ({ \
+  double const *__m = (m); \
+  __m128i __i = (i); \
+  (__m128d)__builtin_ia32_gatherq_pd((__v2df)_mm_setzero_pd(), \
+             (const __v2df *)__m, (__v2di)__i, \
+             (__v2df)_mm_set1_pd((double)(long long int)-1), (s)); })
+
+#define _mm256_i64gather_pd(m, i, s) __extension__ ({ \
+  double const *__m = (m); \
+  __m256i __i = (i); \
+  (__m256d)__builtin_ia32_gatherq_pd256((__v4df)_mm256_setzero_pd(), \
+             (const __v4df *)__m, (__v4di)__i, \
+             (__v4df)_mm256_set1_pd((double)(long long int)-1), (s)); })
+
+#define _mm_i32gather_ps(m, i, s) __extension__ ({ \
+  float const *__m = (m); \
+  __m128i __i = (i); \
+  (__m128)__builtin_ia32_gatherd_ps((__v4sf)_mm_setzero_ps(), \
+             (const __v4sf *)__m, (__v4si)__i, \
+             (__v4sf)_mm_set1_ps((float)(int)-1), (s)); })
+
+#define _mm256_i32gather_ps(m, i, s) __extension__ ({ \
+  float const *__m = (m); \
+  __m256i __i = (i); \
+  (__m256)__builtin_ia32_gatherd_ps256((__v8sf)_mm256_setzero_ps(), \
+             (const __v8sf *)__m, (__v8si)__i, \
+             (__v8sf)_mm256_set1_ps((float)(int)-1), (s)); })
+
+#define _mm_i64gather_ps(m, i, s) __extension__ ({ \
+  float const *__m = (m); \
+  __m128i __i = (i); \
+  (__m128)__builtin_ia32_gatherq_ps((__v4sf)_mm_setzero_ps(), \
+             (const __v4sf *)__m, (__v2di)__i, \
+             (__v4sf)_mm_set1_ps((float)(int)-1), (s)); })
+
+#define _mm256_i64gather_ps(m, i, s) __extension__ ({ \
+  float const *__m = (m); \
+  __m256i __i = (i); \
+  (__m128)__builtin_ia32_gatherq_ps256((__v4sf)_mm_setzero_ps(), \
+             (const __v4sf *)__m, (__v4di)__i, \
+             (__v4sf)_mm_set1_ps((float)(int)-1), (s)); })
+
+#define _mm_i32gather_epi32(m, i, s) __extension__ ({ \
+  int const *__m = (m); \
+  __m128i __i = (i); \
+  (__m128i)__builtin_ia32_gatherd_d((__v4si)_mm_setzero_si128(), \
+            (const __v4si *)__m, (__v4si)__i, \
+            (__v4si)_mm_set1_epi32(-1), (s)); })
+
+#define _mm256_i32gather_epi32(m, i, s) __extension__ ({ \
+  int const *__m = (m); \
+  __m256i __i = (i); \
+  (__m256i)__builtin_ia32_gatherd_d256((__v8si)_mm256_setzero_si256(), \
+            (const __v8si *)__m, (__v8si)__i, \
+            (__v8si)_mm256_set1_epi32(-1), (s)); })
+
+#define _mm_i64gather_epi32(m, i, s) __extension__ ({ \
+  int const *__m = (m); \
+  __m128i __i = (i); \
+  (__m128i)__builtin_ia32_gatherq_d((__v4si)_mm_setzero_si128(), \
+            (const __v4si *)__m, (__v2di)__i, \
+            (__v4si)_mm_set1_epi32(-1), (s)); })
+
+#define _mm256_i64gather_epi32(m, i, s) __extension__ ({ \
+  int const *__m = (m); \
+  __m256i __i = (i); \
+  (__m128i)__builtin_ia32_gatherq_d256((__v4si)_mm_setzero_si128(), \
+            (const __v4si *)__m, (__v4di)__i, \
+            (__v4si)_mm_set1_epi32(-1), (s)); })
+
+#define _mm_i32gather_epi64(m, i, s) __extension__ ({ \
+  int const *__m = (m); \
+  __m128i __i = (i); \
+  (__m128i)__builtin_ia32_gatherd_q((__v2di)_mm_setzero_si128(), \
+             (const __v2di *)__m, (__v4si)__i, \
+             (__v2di)_mm_set1_epi64x(-1), (s)); })
+
+#define _mm256_i32gather_epi64(m, i, s) __extension__ ({ \
+  int const *__m = (m); \
+  __m128i __i = (i); \
+  (__m256i)__builtin_ia32_gatherd_q256((__v4di)_mm256_setzero_si256(), \
+             (const __v4di *)__m, (__v4si)__i, \
+             (__v4di)_mm256_set1_epi64x(-1), (s)); })
+
+#define _mm_i64gather_epi64(m, i, s) __extension__ ({ \
+  int const *__m = (m); \
+  __m128i __i = (i); \
+  (__m128i)__builtin_ia32_gatherq_q((__v2di)_mm_setzero_si128(), \
+             (const __v2di *)__m, (__v2di)__i, \
+             (__v2di)_mm_set1_epi64x(-1), (s)); })
+
+#define _mm256_i64gather_epi64(m, i, s) __extension__ ({ \
+  int const *__m = (m); \
+  __m256i __i = (i); \
+  (__m256i)__builtin_ia32_gatherq_q256((__v4di)_mm256_setzero_si256(), \
+             (const __v4di *)__m, (__v4di)__i, \
+             (__v4di)_mm256_set1_epi64x(-1), (s)); })
