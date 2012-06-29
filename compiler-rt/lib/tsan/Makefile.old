@@ -3,11 +3,13 @@ LDFLAGS=-ldl -lpthread -pie
 CXXFLAGS = -fPIE -g -Wall -Werror -DTSAN_DEBUG=$(DEBUG)
 # Silence warnings that Clang produces for gtest code.
 # Use -Wno-attributes so that gcc doesn't complain about unknown warning types.
-CXXFLAGS += -Wno-unused-private-field -Wno-static-in-inline -Wno-attributes
+CXXFLAGS += -Wno-static-in-inline -Wno-attributes
 ifeq ($(DEBUG), 0)
 	CXXFLAGS += -O3
 endif
-
+ifeq ($(CXX), clang++)
+  CXXFLAGS+= -Wno-unused-private-field
+endif
 
 LIBTSAN=rtl/libtsan.a
 GTEST_ROOT=third_party/googletest
