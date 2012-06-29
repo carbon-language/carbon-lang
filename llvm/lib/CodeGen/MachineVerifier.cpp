@@ -1049,6 +1049,20 @@ void MachineVerifier::visitMachineFunctionAfter() {
   // Now check liveness info if available
   calcRegsRequired();
 
+  // Check for killed virtual registers that should be live out.
+  for (MachineFunction::const_iterator MFI = MF->begin(), MFE = MF->end();
+       MFI != MFE; ++MFI) {
+    BBInfo &MInfo = MBBInfoMap[MFI];
+    for (RegSet::iterator
+         I = MInfo.vregsRequired.begin(), E = MInfo.vregsRequired.end(); I != E;
+         ++I)
+      if (MInfo.regsKilled.count(*I)) {
+	report("Virtual register killed in block, but needed live out.", MFI);
+	*OS << "Virtual register " << PrintReg(*I)
+            << " is used after the block.\n";
+      }
+  }
+
   if (!MF->empty()) {
     BBInfo &MInfo = MBBInfoMap[&MF->front()];
     for (RegSet::iterator
