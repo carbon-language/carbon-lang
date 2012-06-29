@@ -7451,11 +7451,11 @@ static SDValue LowerToTLSExecModel(GlobalAddressSDNode *GA, SelectionDAG &DAG,
       Offset = DAG.getNode(ISD::ADD, dl, PtrVT,
                           DAG.getNode(X86ISD::GlobalBaseReg, DebugLoc(), PtrVT),
                            Offset);
-    } else {
-      Offset = DAG.getLoad(PtrVT, dl, DAG.getEntryNode(), Offset,
-                           MachinePointerInfo::getGOT(), false, false, false,
-                           0);
     }
+
+    Offset = DAG.getLoad(PtrVT, dl, DAG.getEntryNode(), Offset,
+                         MachinePointerInfo::getGOT(), false, false, false,
+                         0);
   }
 
   // The address of the thread local variable is the add of the thread
