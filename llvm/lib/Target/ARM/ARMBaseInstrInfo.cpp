@@ -1737,26 +1737,33 @@ bool llvm::rewriteARMFrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
   return Offset == 0;
 }
 
+/// analyzeCompare - For a comparison instruction, return the source registers
+/// in SrcReg and SrcReg2 if having two register operands, and the value it
+/// compares against in CmpValue. Return true if the comparison instruction
+/// can be analyzed.
 bool ARMBaseInstrInfo::
-AnalyzeCompare(const MachineInstr *MI, unsigned &SrcReg, int &CmpMask,
-               int &CmpValue) const {
+analyzeCompare(const MachineInstr *MI, unsigned &SrcReg, unsigned &SrcReg2,
+               int &CmpMask, int &CmpValue) const {
   switch (MI->getOpcode()) {
   default: break;
   case ARM::CMPri:
   case ARM::t2CMPri:
     SrcReg = MI->getOperand(0).getReg();
+    SrcReg2 = 0;
     CmpMask = ~0;
     CmpValue = MI->getOperand(1).getImm();
     return true;
   case ARM::CMPrr:
   case ARM::t2CMPrr:
     SrcReg = MI->getOperand(0).getReg();
+    SrcReg2 = MI->getOperand(1).getReg();
     CmpMask = ~0;
     CmpValue = 0;
     return true;
   case ARM::TSTri:
   case ARM::t2TSTri:
     SrcReg = MI->getOperand(0).getReg();
+    SrcReg2 = 0;
     CmpMask = MI->getOperand(1).getImm();
     CmpValue = 0;
     return true;
@@ -1794,14 +1801,17 @@ static bool isSuitableForMask(MachineInstr *&MI, unsigned SrcReg,
   return false;
 }
 
-/// OptimizeCompareInstr - Convert the instruction supplying the argument to the
-/// comparison into one that sets the zero bit in the flags register. Convert
-/// the SUBrr(r1,r2)|Subri(r1,CmpValue) instruction into one that sets the flags
-/// register and remove the CMPrr(r1,r2)|CMPrr(r2,r1)|CMPri(r1,CmpValue)
-/// instruction.
+/// optimizeCompareInstr - Convert the instruction supplying the argument to the
+/// comparison into one that sets the zero bit in the flags register;
+/// Remove a redundant Compare instruction if an earlier instruction can set the
+/// flags in the same way as Compare.
+/// E.g. SUBrr(r1,r2) and CMPrr(r1,r2). We also handle the case where two
+/// operands are swapped: SUBrr(r1,r2) and CMPrr(r2,r1), by updating the
+/// condition code of instructions which use the flags.
 bool ARMBaseInstrInfo::
-OptimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg, int CmpMask,
-                     int CmpValue, const MachineRegisterInfo *MRI) const {
+optimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg, unsigned SrcReg2,
+                     int CmpMask, int CmpValue,
+                     const MachineRegisterInfo *MRI) const {
   if (MRI->def_empty(SrcReg))
     return false;
 
@@ -1841,13 +1851,10 @@ OptimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg, int CmpMask,
   // For CMPrr(r1,r2), we are looking for SUB(r1,r2) or SUB(r2,r1).
   // For CMPri(r1, CmpValue), we are looking for SUBri(r1, CmpValue).
   MachineInstr *Sub = NULL;
-  unsigned SrcReg2 = 0;
-  if (CmpInstr->getOpcode() == ARM::CMPrr ||
-      CmpInstr->getOpcode() == ARM::t2CMPrr) {
-    SrcReg2 = CmpInstr->getOperand(1).getReg();
+  if (SrcReg2 != 0)
     // MI is not a candidate for CMPrr.
     MI = NULL;
-  } else if (MI->getParent() != CmpInstr->getParent() || CmpValue != 0) {
+  else if (MI->getParent() != CmpInstr->getParent() || CmpValue != 0) {
     // Conservatively refuse to convert an instruction which isn't in the same
     // BB as the comparison.
     // For CMPri, we need to check Sub, thus we can't return here.

@@ -186,16 +186,20 @@ public:
     return NumCycles == 1;
   }
 
-  /// AnalyzeCompare - For a comparison instruction, return the source register
-  /// in SrcReg and the value it compares against in CmpValue. Return true if
-  /// the comparison instruction can be analyzed.
-  virtual bool AnalyzeCompare(const MachineInstr *MI, unsigned &SrcReg,
-                              int &CmpMask, int &CmpValue) const;
+  /// analyzeCompare - For a comparison instruction, return the source registers
+  /// in SrcReg and SrcReg2 if having two register operands, and the value it
+  /// compares against in CmpValue. Return true if the comparison instruction
+  /// can be analyzed.
+  virtual bool analyzeCompare(const MachineInstr *MI, unsigned &SrcReg,
+                              unsigned &SrcReg2, int &CmpMask,
+                              int &CmpValue) const;
 
-  /// OptimizeCompareInstr - Convert the instruction to set the zero flag so
-  /// that we can remove a "comparison with zero".
-  virtual bool OptimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg,
-                                    int CmpMask, int CmpValue,
+  /// optimizeCompareInstr - Convert the instruction to set the zero flag so
+  /// that we can remove a "comparison with zero"; Remove a redundant CMP
+  /// instruction if the flags can be updated in the same way by an earlier
+  /// instruction such as SUB.
+  virtual bool optimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg,
+                                    unsigned SrcReg2, int CmpMask, int CmpValue,
                                     const MachineRegisterInfo *MRI) const;
 
   /// FoldImmediate - 'Reg' is known to be defined by a move immediate

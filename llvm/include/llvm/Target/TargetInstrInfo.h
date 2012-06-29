@@ -623,19 +623,22 @@ public:
   CreateTargetPostRAHazardRecognizer(const InstrItineraryData*,
                                      const ScheduleDAG *DAG) const = 0;
 
-  /// AnalyzeCompare - For a comparison instruction, return the source register
-  /// in SrcReg and the value it compares against in CmpValue. Return true if
-  /// the comparison instruction can be analyzed.
-  virtual bool AnalyzeCompare(const MachineInstr *MI,
-                              unsigned &SrcReg, int &Mask, int &Value) const {
+  /// analyzeCompare - For a comparison instruction, return the source registers
+  /// in SrcReg and SrcReg2 if having two register operands, and the value it
+  /// compares against in CmpValue. Return true if the comparison instruction
+  /// can be analyzed.
+  virtual bool analyzeCompare(const MachineInstr *MI,
+                              unsigned &SrcReg, unsigned &SrcReg2,
+                              int &Mask, int &Value) const {
     return false;
   }
 
-  /// OptimizeCompareInstr - See if the comparison instruction can be converted
+  /// optimizeCompareInstr - See if the comparison instruction can be converted
   /// into something more efficient. E.g., on ARM most instructions can set the
   /// flags register, obviating the need for a separate CMP.
-  virtual bool OptimizeCompareInstr(MachineInstr *CmpInstr,
-                                    unsigned SrcReg, int Mask, int Value,
+  virtual bool optimizeCompareInstr(MachineInstr *CmpInstr,
+                                    unsigned SrcReg, unsigned SrcReg2,
+                                    int Mask, int Value,
                                     const MachineRegisterInfo *MRI) const {
     return false;
   }
