@@ -829,7 +829,7 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
       if (originalIvar) {
         Diag(PropertyDiagLoc, 
              diag::warn_autosynthesis_property_ivar_match)
-        << propertyId << (Ivar == 0) << PropertyIvar 
+        << PropertyId << (Ivar == 0) << PropertyIvar 
         << originalIvar->getIdentifier();
         Diag(property->getLocation(), diag::note_property_declare);
         Diag(originalIvar->getLocation(), diag::note_ivar_decl);
