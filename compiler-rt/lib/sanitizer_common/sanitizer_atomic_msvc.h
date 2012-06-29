@@ -15,7 +15,14 @@
 #ifndef SANITIZER_ATOMIC_MSVC_H
 #define SANITIZER_ATOMIC_MSVC_H
 
-#include <intrin.h>
+void _ReadWriteBarrier();
+#pragma intrinsic(_ReadWriteBarrier)
+void _mm_mfence();
+#pragma intrinsic(_mm_mfence)
+void _mm_pause();
+#pragma intrinsic(_mm_pause)
+long _InterlockedExchangeAdd(long volatile * Addend, long Value);  // NOLINT
+#pragma intrinsic(_InterlockedExchangeAdd)
 
 namespace __sanitizer {
 
@@ -79,9 +86,9 @@ INLINE u8 atomic_exchange(volatile atomic_uint8_t *a,
   DCHECK(!((uptr)a % sizeof(*a)));
   __asm {
     mov eax, a
-    mov cx, v
-    xchg [eax], cx  // NOLINT
-    mov v, cx
+    mov cl, v
+    xchg [eax], cl  // NOLINT
+    mov v, cl
   }
   return v;
 }
@@ -92,9 +99,9 @@ INLINE u16 atomic_exchange(volatile atomic_uint16_t *a,
   DCHECK(!((uptr)a % sizeof(*a)));
   __asm {
     mov eax, a
-    mov cl, v
-    xchg [eax], cl  // NOLINT
-    mov v, cl
+    mov cx, v
+    xchg [eax], cx  // NOLINT
+    mov v, cx
   }
   return v;
 }
