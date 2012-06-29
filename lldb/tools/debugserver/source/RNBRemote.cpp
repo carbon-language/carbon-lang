@@ -97,7 +97,7 @@ RNBRemote::CreatePacketTable  ()
     // Step required to add new packets:
     // 1 - Add new enumeration to RNBRemote::PacketEnum
     // 2 - Create a the RNBRemote::HandlePacket_ function if a new function is needed
-    // 3 - Register the Packet definition with any needed callbacks in this fucntion
+    // 3 - Register the Packet definition with any needed callbacks in this function
     //          - If no response is needed for a command, then use NULL for the normal callback
     //          - If the packet is not supported while the target is running, use NULL for the async callback
     // 4 - If the packet is a standard packet (starts with a '$' character

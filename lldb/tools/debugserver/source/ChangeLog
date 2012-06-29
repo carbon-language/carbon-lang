@@ -175,7 +175,7 @@
 	(RNBRemote::GetPacket): Call RNBRemote::HandlePacket_UNIMPLEMENTED()
 	when we don't recognize a packet.
 	(RNBRemote::HandleReceivedPacket): Don't reply to packets we don't
-	recognize with unimplemented in this fucntion as that should have
+	recognize with unimplemented in this function as that should have
 	already been done for us in RNBRemote::GetPacket().
 
 2009-02-10  Greg Clayton  <gclayton@apple.com>
