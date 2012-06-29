@@ -18,8 +18,8 @@
 #include "clang/AST/Expr.h"
 #include "clang/Basic/SourceLocation.h"
 #include "llvm/DebugInfo.h"
+#include "llvm/DIBuilder.h"
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/Analysis/DIBuilder.h"
 #include "llvm/Support/ValueHandle.h"
 #include "llvm/Support/Allocator.h"
 
