@@ -11,9 +11,9 @@
 #define JIT_EVENT_LISTENER_TEST_COMMON_H
 
 #include "llvm/DebugInfo.h"
+#include "llvm/DIBuilder.h"
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
-#include "llvm/Analysis/DIBuilder.h"
 #include "llvm/CodeGen/MachineCodeInfo.h"
 #include "llvm/Config/config.h"
 #include "llvm/ExecutionEngine/JIT.h"
