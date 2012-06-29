@@ -924,7 +924,7 @@ public:
                              "Set a watchpoint on a variable. "
                              "Use the '-w' option to specify the type of watchpoint and "
                              "the '-x' option to specify the byte size to watch for. "
-                             "If no '-w' option is specified, it defaults to read_write. "
+                             "If no '-w' option is specified, it defaults to write. "
                              "If no '-x' option is specified, it defaults to the variable's "
                              "byte size. "
                              "Note that there are limited hardware resources for watchpoints. "
@@ -991,10 +991,10 @@ protected:
             return false;
         }
 
-        // If no '-w' is specified, default to '-w read_write'.
+        // If no '-w' is specified, default to '-w write'.
         if (!m_option_watchpoint.watch_type_specified)
         {
-            m_option_watchpoint.watch_type = OptionGroupWatchpoint::eWatchReadWrite;
+            m_option_watchpoint.watch_type = OptionGroupWatchpoint::eWatchWrite;
         }
 
         // We passed the sanity check for the command.
@@ -1087,7 +1087,7 @@ public:
                           "Set a watchpoint on an address by supplying an expression. "
                           "Use the '-w' option to specify the type of watchpoint and "
                           "the '-x' option to specify the byte size to watch for. "
-                          "If no '-w' option is specified, it defaults to read_write. "
+                          "If no '-w' option is specified, it defaults to write. "
                           "If no '-x' option is specified, it defaults to the target's "
                           "pointer byte size. "
                           "Note that there are limited hardware resources for watchpoints. "
@@ -1167,10 +1167,10 @@ protected:
         bool with_dash_w = m_option_watchpoint.watch_type_specified;
         bool with_dash_x = (m_option_watchpoint.watch_size != 0);
 
-        // If no '-w' is specified, default to '-w read_write'.
+        // If no '-w' is specified, default to '-w write'.
         if (!with_dash_w)
         {
-            m_option_watchpoint.watch_type = OptionGroupWatchpoint::eWatchReadWrite;
+            m_option_watchpoint.watch_type = OptionGroupWatchpoint::eWatchWrite;
         }
 
         // We passed the sanity check for the command.
