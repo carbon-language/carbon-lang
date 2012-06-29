@@ -597,13 +597,22 @@ BUILTIN(__builtin_ia32_psrlv2di, "V2LLiV2LLiV2LLi", "")
 
 // GATHER
 BUILTIN(__builtin_ia32_gatherd_pd, "V2dV2dV2dC*V4iV2dIc", "")
-BUILTIN(__builtin_ia32_gatherd_pd256, "V4dV4dV4dC*V8iV4dIc", "")
+BUILTIN(__builtin_ia32_gatherd_pd256, "V4dV4dV4dC*V4iV4dIc", "")
 BUILTIN(__builtin_ia32_gatherq_pd, "V2dV2dV2dC*V2LLiV2dIc", "")
 BUILTIN(__builtin_ia32_gatherq_pd256, "V4dV4dV4dC*V4LLiV4dIc", "")
 BUILTIN(__builtin_ia32_gatherd_ps, "V4fV4fV4fC*V4iV4fIc", "")
 BUILTIN(__builtin_ia32_gatherd_ps256, "V8fV8fV8fC*V8iV8fIc", "")
 BUILTIN(__builtin_ia32_gatherq_ps, "V4fV4fV4fC*V2LLiV4fIc", "")
-BUILTIN(__builtin_ia32_gatherq_ps256, "V8fV8fV8fC*V4LLiV8fIc", "")
+BUILTIN(__builtin_ia32_gatherq_ps256, "V4fV4fV4fC*V4LLiV4fIc", "")
+
+BUILTIN(__builtin_ia32_gatherd_q, "V2LLiV2LLiV2LLiC*V4iV2LLiIc", "")
+BUILTIN(__builtin_ia32_gatherd_q256, "V4LLiV4LLiV4LLiC*V4iV4LLiIc", "")
+BUILTIN(__builtin_ia32_gatherq_q, "V2LLiV2LLiV2LLiC*V2LLiV2LLiIc", "")
+BUILTIN(__builtin_ia32_gatherq_q256, "V4LLiV4LLiV4LLiC*V4LLiV4LLiIc", "")
+BUILTIN(__builtin_ia32_gatherd_d, "V4iV4iV4iC*V4iV4iIc", "")
+BUILTIN(__builtin_ia32_gatherd_d256, "V8iV8iV8iC*V8iV8iIc", "")
+BUILTIN(__builtin_ia32_gatherq_d, "V4iV4iV4iC*V2LLiV4iIc", "")
+BUILTIN(__builtin_ia32_gatherq_d256, "V4iV4iV4iC*V4LLiV4iIc", "")
 
 // BMI
 BUILTIN(__builtin_ia32_bextr_u32, "UiUiUi", "")
