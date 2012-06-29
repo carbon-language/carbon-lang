@@ -227,3 +227,10 @@ class foo { }; // expected-note{{'foo' declared here}}
 // 'boo' to 'bool' is the same edit distance as correcting 'boo' to 'foo'.
 class bar : boo { }; // expected-error{{unknown class name 'boo'; did you mean 'foo'?}}
 }
+
+namespace bogus_keyword_suggestion {
+void test() {
+   status = "OK"; // expected-error-re{{use of undeclared identifier 'status'$}}
+   return status; // expected-error-re{{use of undeclared identifier 'status'$}}
+ }
+}

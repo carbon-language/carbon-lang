@@ -634,6 +634,19 @@ Corrected:
     if (!SecondTry) {
       SecondTry = true;
       CorrectionCandidateCallback DefaultValidator;
+      // Try to limit which sets of keywords should be included in typo
+      // correction based on what the next token is.
+      DefaultValidator.WantTypeSpecifiers =
+          NextToken.is(tok::l_paren) || NextToken.is(tok::less) ||
+          NextToken.is(tok::identifier) || NextToken.is(tok::star) ||
+          NextToken.is(tok::amp) || NextToken.is(tok::l_square);
+      DefaultValidator.WantExpressionKeywords =
+          NextToken.is(tok::l_paren) || NextToken.is(tok::identifier) ||
+          NextToken.is(tok::arrow) || NextToken.is(tok::period);
+      DefaultValidator.WantRemainingKeywords =
+          NextToken.is(tok::l_paren) || NextToken.is(tok::semi) ||
+          NextToken.is(tok::identifier) || NextToken.is(tok::l_brace);
+      DefaultValidator.WantCXXNamedCasts = false;
       if (TypoCorrection Corrected = CorrectTypo(Result.getLookupNameInfo(),
                                                  Result.getLookupKind(), S, 
                                                  &SS, DefaultValidator)) {
