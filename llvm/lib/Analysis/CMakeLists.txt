@@ -12,7 +12,6 @@ add_llvm_library(LLVMAnalysis
   CaptureTracking.cpp
   CodeMetrics.cpp
   ConstantFolding.cpp
-  DIBuilder.cpp
   DbgInfoPrinter.cpp
   DomPrinter.cpp
   DominanceFrontier.cpp

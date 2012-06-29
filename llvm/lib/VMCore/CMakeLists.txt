@@ -10,6 +10,7 @@ add_llvm_library(LLVMCore
   Core.cpp
   DebugInfo.cpp
   DebugLoc.cpp
+  DIBuilder.cpp
   Dominators.cpp
   Function.cpp
   GCOV.cpp
