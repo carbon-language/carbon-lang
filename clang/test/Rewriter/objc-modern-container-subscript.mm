@@ -2,7 +2,7 @@
 // RUN: %clang_cc1 -fsyntax-only -fblocks -Wno-address-of-temporary -D"Class=void*" -D"id=void*" -D"SEL=void*" -D"__declspec(X)=" %t-rw.cpp
 // rdar://11203853
 
-#include <string.h>
+typedef unsigned long size_t;
 
 void *sel_registerName(const char *);
 
