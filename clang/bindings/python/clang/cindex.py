@@ -2096,6 +2096,120 @@ class FileInclusion(object):
         """True if the included file is the input file."""
         return self.depth == 0
 
+class CompilationDatabaseError(Exception):
+    """Represents an error that occurred when working with a CompilationDatabase
+
+    Each error is associated to an enumerated value, accessible under
+    e.cdb_error. Consumers can compare the value with one of the ERROR_
+    constants in this class.
+    """
+
+    # An unknown error occured
+    ERROR_UNKNOWN = 0
+
+    # The database could not be loaded
+    ERROR_CANNOTLOADDATABASE = 1
+
+    def __init__(self, enumeration, message):
+        assert isinstance(enumeration, int)
+
+        if enumeration > 1:
+            raise Exception("Encountered undefined CompilationDatabase error "
+                            "constant: %d. Please file a bug to have this "
+                            "value supported." % enumeration)
+
+        self.cdb_error = enumeration
+        Exception.__init__(self, 'Error %d: %s' % (enumeration, message))
+
+class CompileCommand(object):
+    """Represents the compile command used to build a file"""
+    def __init__(self, cmd, ccmds):
+        self.cmd = cmd
+        # Keep a reference to the originating CompileCommands
+        # to prevent garbage collection
+        self.ccmds = ccmds
+
+    @property
+    def directory(self):
+        """Get the working directory for this CompileCommand"""
+        return CompileCommand_getDirectory(self.cmd).spelling
+
+    @property
+    def arguments(self):
+        """
+        Get an iterable object providing each argument in the
+        command line for the compiler invocation as a _CXString.
+
+        Invariants :
+          - the first argument is the compiler executable
+          - the last argument is the file being compiled
+        """
+        length = CompileCommand_getNumArgs(self.cmd)
+        for i in xrange(length):
+          yield CompileCommand_getArg(self.cmd, i)
+
+class CompileCommands(object):
+    """
+    CompileCommands is an iterable object containing all CompileCommand
+    that can be used for building a specific file.
+    """
+    def __init__(self, ccmds):
+        self.ccmds = ccmds
+
+    def __del__(self):
+        CompileCommands_dispose(self.ccmds)
+
+    def __len__(self):
+        return int(CompileCommands_getSize(self.ccmds))
+
+    def __getitem__(self, i):
+        cc = CompileCommands_getCommand(self.ccmds, i)
+        if cc is None:
+            raise IndexError
+        return CompileCommand(cc, self)
+
+    @staticmethod
+    def from_result(res, fn, args):
+        if not res:
+            return None
+        return CompileCommands(res)
+
+class CompilationDatabase(ClangObject):
+    """
+    The CompilationDatabase is a wrapper class around
+    clang::tooling::CompilationDatabase
+
+    It enables querying how a specific source file can be built.
+    """
+
+    def __del__(self):
+        CompilationDatabase_dispose(self)
+
+    @staticmethod
+    def from_result(res, fn, args):
+        if not res:
+            raise CompilationDatabaseError(0,
+                                           "CompilationDatabase loading failed")
+        return CompilationDatabase(res)
+
+    @staticmethod
+    def fromDirectory(buildDir):
+        """Builds a CompilationDatabase from the database found in buildDir"""
+        errorCode = c_uint()
+        try:
+          cdb = CompilationDatabase_fromDirectory(buildDir, byref(errorCode))
+        except CompilationDatabaseError as e:
+          raise CompilationDatabaseError(int(errorCode.value),
+                                         "CompilationDatabase loading failed")
+        return cdb
+
+    def getCompileCommands(self, filename):
+        """
+        Get an iterable object providing all the CompileCommands available to
+        build filename. Raise KeyError if filename is not found in the database.
+        """
+        return CompilationDatabase_getCompileCommands(self, filename)
+
 # Additional Functions and Types
 
 # String Functions
@@ -2463,9 +2577,48 @@ _clang_getCompletionPriority = lib.clang_getCompletionPriority
 _clang_getCompletionPriority.argtypes = [c_void_p]
 _clang_getCompletionPriority.restype = c_int
 
+# Compilation Database
+CompilationDatabase_fromDirectory = lib.clang_tooling_CompilationDatabase_fromDirectory
+CompilationDatabase_fromDirectory.argtypes = [c_char_p, POINTER(c_uint)]
+CompilationDatabase_fromDirectory.restype = c_object_p
+CompilationDatabase_fromDirectory.errcheck = CompilationDatabase.from_result
+
+CompilationDatabase_dispose = lib.clang_tooling_CompilationDatabase_dispose
+CompilationDatabase_dispose.argtypes = [c_object_p]
+
+CompilationDatabase_getCompileCommands = lib.clang_tooling_CompilationDatabase_getCompileCommands
+CompilationDatabase_getCompileCommands.argtypes = [c_object_p, c_char_p]
+CompilationDatabase_getCompileCommands.restype = c_object_p
+CompilationDatabase_getCompileCommands.errcheck = CompileCommands.from_result
+
+CompileCommands_dispose = lib.clang_tooling_CompileCommands_dispose
+CompileCommands_dispose.argtypes = [c_object_p]
+
+CompileCommands_getSize = lib.clang_tooling_CompileCommands_getSize
+CompileCommands_getSize.argtypes = [c_object_p]
+CompileCommands_getSize.restype = c_uint
+
+CompileCommands_getCommand = lib.clang_tooling_CompileCommands_getCommand
+CompileCommands_getCommand.argtypes = [c_object_p, c_uint]
+CompileCommands_getCommand.restype = c_object_p
+
+CompileCommand_getDirectory = lib.clang_tooling_CompileCommand_getDirectory
+CompileCommand_getDirectory.argtypes = [c_object_p]
+CompileCommand_getDirectory.restype = _CXString
+
+CompileCommand_getNumArgs = lib.clang_tooling_CompileCommand_getNumArgs
+CompileCommand_getNumArgs.argtypes = [c_object_p]
+CompileCommand_getNumArgs.restype = c_uint
+
+CompileCommand_getArg = lib.clang_tooling_CompileCommand_getArg
+CompileCommand_getArg.argtypes = [c_object_p, c_uint]
+CompileCommand_getArg.restype = _CXString
 
 __all__ = [
     'CodeCompletionResults',
+    'CompilationDatabase',
+    'CompileCommands',
+    'CompileCommand',
     'CursorKind',
     'Cursor',
     'Diagnostic',
