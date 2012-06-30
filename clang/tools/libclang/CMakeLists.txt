@@ -8,7 +8,6 @@ set(SOURCES
   CIndex.cpp
   CIndexCXX.cpp
   CIndexCodeCompletion.cpp
-  CIndexCompilationDB.cpp
   CIndexDiagnostic.cpp
   CIndexDiagnostic.h
   CIndexHigh.cpp
@@ -18,6 +17,7 @@ set(SOURCES
   CIndexer.h
   CXCursor.cpp
   CXCursor.h
+  CXCompilationDatabase.cpp
   CXLoadedDiagnostic.cpp
   CXLoadedDiagnostic.h
   CXSourceLocation.cpp
