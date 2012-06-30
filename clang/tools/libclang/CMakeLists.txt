@@ -8,6 +8,7 @@ set(SOURCES
   CIndex.cpp
   CIndexCXX.cpp
   CIndexCodeCompletion.cpp
+  CIndexCompilationDB.cpp
   CIndexDiagnostic.cpp
   CIndexDiagnostic.h
   CIndexHigh.cpp
@@ -47,6 +48,7 @@ set(LIBRARIES
   clangEdit
   clangAST
   clangLex
+  clangTooling
   clangBasic
   )
 

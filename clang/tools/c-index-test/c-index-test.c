@@ -1,6 +1,7 @@
 /* c-index-test.c */
 
 #include "clang-c/Index.h"
+#include "clang-c/CXCompilationDatabase.h"
 #include <ctype.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -25,8 +26,25 @@ char *basename(const char* path)
 
     return((char*)path);
 }
+char *dirname(char* path)
+{
+    char* base1 = (char*)strrchr(path, '/');
+    char* base2 = (char*)strrchr(path, '\\');
+    if (base1 && base2)
+        if (base1 > base2)
+          *base1 = 0;
+        else
+          *base2 = 0;
+    else if (base1)
+        *base1 = 0
+    else if (base2)
+        *base2 = 0
+
+    return path;
+}
 #else
 extern char *basename(const char *);
+extern char *dirname(char *);
 #endif
 
 /** \brief Return the default parsing options. */
@@ -2361,6 +2379,89 @@ int perform_token_annotation(int argc, const char **argv) {
   return errorCode;
 }
 
+static int
+perform_test_compilation_db(const char *database, int argc, const char **argv) {
+  CXCompilationDatabase db;
+  CXCompileCommands CCmds;
+  CXCompileCommand CCmd;
+  CXCompilationDatabase_Error ec;
+  CXString wd;
+  CXString arg;
+  int errorCode = 0;
+  char *tmp;
+  unsigned len;
+  char *buildDir;
+  int i, j, a, numCmds, numArgs;
+
+  len = strlen(database);
+  tmp = (char *) malloc(len+1);
+  memcpy(tmp, database, len+1);
+  buildDir = dirname(tmp);
+
+  db = clang_tooling_CompilationDatabase_fromDirectory(buildDir, &ec);
+
+  if (db) {
+
+    if (ec!=CXCompilationDatabase_NoError) {
+      printf("unexpected error %d code while loading compilation database\n", ec);
+      errorCode = -1;
+      goto cdb_end;
+    }
+
+    for (i=0; i<argc && errorCode==0; ) {
+      if (strcmp(argv[i],"lookup")==0){
+        CCmds = clang_tooling_CompilationDatabase_getCompileCommands(db, argv[i+1]);
+
+        if (!CCmds) {
+          printf("file %s not found in compilation db\n", argv[i+1]);
+          errorCode = -1;
+          break;
+        }
+
+        numCmds = clang_tooling_CompileCommands_getSize(CCmds);
+
+        if (numCmds==0) {
+          fprintf(stderr, "should not get an empty compileCommand set for file"
+                          " '%s'\n", argv[i+1]);
+          errorCode = -1;
+          break;
+        }
+
+        for (j=0; j<numCmds; ++j) {
+          CCmd = clang_tooling_CompileCommands_getCommand(CCmds, j);
+
+          wd = clang_tooling_CompileCommand_getDirectory(CCmd);
+          printf("workdir:'%s'", clang_getCString(wd));
+          clang_disposeString(wd);
+
+          printf(" cmdline:'");
+          numArgs = clang_tooling_CompileCommand_getNumArgs(CCmd);
+          for (a=0; a<numArgs; ++a) {
+            if (a) printf(" ");
+            arg = clang_tooling_CompileCommand_getArg(CCmd, a);
+            printf("%s", clang_getCString(arg));
+            clang_disposeString(arg);
+          }
+          printf("'\n");
+        }
+
+        clang_tooling_CompileCommands_dispose(CCmds);
+
+        i += 2;
+      }
+    }
+    clang_tooling_CompilationDatabase_dispose(db);
+  } else {
+    printf("database loading failed with error code %d.\n", ec);
+    errorCode = -1;
+  }
+
+cdb_end:
+  free(tmp);
+
+  return errorCode;
+}
+
 /******************************************************************************/
 /* USR printing.                                                              */
 /******************************************************************************/
@@ -2801,6 +2902,8 @@ static void print_usage(void) {
     "       c-index-test -print-usr-file <file>\n"
     "       c-index-test -write-pch <file> <compiler arguments>\n");
   fprintf(stderr,
+    "       c-index-test -compilation-db [lookup <filename>] database\n");
+  fprintf(stderr,
     "       c-index-test -read-diagnostics <file>\n\n");
   fprintf(stderr,
     " <symbol filter> values:\n%s",
@@ -2886,7 +2989,9 @@ int cindextest_main(int argc, const char **argv) {
     return print_usrs_file(argv[2]);
   else if (argc > 2 && strcmp(argv[1], "-write-pch") == 0)
     return write_pch_file(argv[2], argc - 3, argv + 3);
-           
+  else if (argc > 2 && strcmp(argv[1], "-compilation-db") == 0)
+    return perform_test_compilation_db(argv[argc-1], argc - 3, argv + 2);
+
   print_usage();
   return 1;
 }
