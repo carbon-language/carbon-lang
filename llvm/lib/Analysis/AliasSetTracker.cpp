@@ -501,7 +501,7 @@ void AliasSetTracker::deleteValue(Value *PtrVal) {
   }
 
   // First, look up the PointerRec for this pointer.
-  PointerMapType::iterator I = PointerMap.find(PtrVal);
+  PointerMapType::iterator I = PointerMap.find_as(PtrVal);
   if (I == PointerMap.end()) return;  // Noop
 
   // If we found one, remove the pointer from the alias set it is in.
@@ -527,7 +527,7 @@ void AliasSetTracker::copyValue(Value *From, Value *To) {
   AA.copyValue(From, To);
 
   // First, look up the PointerRec for this pointer.
-  PointerMapType::iterator I = PointerMap.find(From);
+  PointerMapType::iterator I = PointerMap.find_as(From);
   if (I == PointerMap.end())
     return;  // Noop
   assert(I->second->hasAliasSet() && "Dead entry?");
@@ -536,7 +536,7 @@ void AliasSetTracker::copyValue(Value *From, Value *To) {
   if (Entry.hasAliasSet()) return;    // Already in the tracker!
 
   // Add it to the alias set it aliases...
-  I = PointerMap.find(From);
+  I = PointerMap.find_as(From);
   AliasSet *AS = I->second->getAliasSet(*this);
   AS->addPointer(*this, Entry, I->second->getSize(),
                  I->second->getTBAAInfo(),

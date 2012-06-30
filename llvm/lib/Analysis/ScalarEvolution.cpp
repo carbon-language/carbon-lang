@@ -2726,7 +2726,7 @@ const SCEV *ScalarEvolution::getCouldNotCompute() {
 const SCEV *ScalarEvolution::getSCEV(Value *V) {
   assert(isSCEVable(V->getType()) && "Value is not SCEVable!");
 
-  ValueExprMapType::const_iterator I = ValueExprMap.find(V);
+  ValueExprMapType::const_iterator I = ValueExprMap.find_as(V);
   if (I != ValueExprMap.end()) return I->second;
   const SCEV *S = createSCEV(V);
 
@@ -2963,7 +2963,7 @@ ScalarEvolution::ForgetSymbolicName(Instruction *PN, const SCEV *SymName) {
     if (!Visited.insert(I)) continue;
 
     ValueExprMapType::iterator It =
-      ValueExprMap.find(static_cast<Value *>(I));
+      ValueExprMap.find_as(static_cast<Value *>(I));
     if (It != ValueExprMap.end()) {
       const SCEV *Old = It->second;
 
@@ -3020,7 +3020,7 @@ const SCEV *ScalarEvolution::createNodeForPHI(PHINode *PN) {
       if (BEValueV && StartValueV) {
         // While we are analyzing this PHI node, handle its value symbolically.
         const SCEV *SymbolicName = getUnknown(PN);
-        assert(ValueExprMap.find(PN) == ValueExprMap.end() &&
+        assert(ValueExprMap.find_as(PN) == ValueExprMap.end() &&
                "PHI node already processed?");
         ValueExprMap.insert(std::make_pair(SCEVCallbackVH(PN, this), SymbolicName));
 
@@ -4084,7 +4084,7 @@ ScalarEvolution::getBackedgeTakenInfo(const Loop *L) {
       if (!Visited.insert(I)) continue;
 
       ValueExprMapType::iterator It =
-        ValueExprMap.find(static_cast<Value *>(I));
+        ValueExprMap.find_as(static_cast<Value *>(I));
       if (It != ValueExprMap.end()) {
         const SCEV *Old = It->second;
 
@@ -4135,7 +4135,8 @@ void ScalarEvolution::forgetLoop(const Loop *L) {
     Instruction *I = Worklist.pop_back_val();
     if (!Visited.insert(I)) continue;
 
-    ValueExprMapType::iterator It = ValueExprMap.find(static_cast<Value *>(I));
+    ValueExprMapType::iterator It =
+      ValueExprMap.find_as(static_cast<Value *>(I));
     if (It != ValueExprMap.end()) {
       forgetMemoizedResults(It->second);
       ValueExprMap.erase(It);
@@ -4168,7 +4169,8 @@ void ScalarEvolution::forgetValue(Value *V) {
     I = Worklist.pop_back_val();
     if (!Visited.insert(I)) continue;
 
-    ValueExprMapType::iterator It = ValueExprMap.find(static_cast<Value *>(I));
+    ValueExprMapType::iterator It =
+      ValueExprMap.find_as(static_cast<Value *>(I));
     if (It != ValueExprMap.end()) {
       forgetMemoizedResults(It->second);
       ValueExprMap.erase(It);
