@@ -2206,7 +2206,7 @@ class CompilationDatabase(ClangObject):
     def getCompileCommands(self, filename):
         """
         Get an iterable object providing all the CompileCommands available to
-        build filename. Raise KeyError if filename is not found in the database.
+        build filename. Returns None if filename is not found in the database.
         """
         return CompilationDatabase_getCompileCommands(self, filename)
 

@@ -22,7 +22,7 @@ def test_create():
     cdb = CompilationDatabase.fromDirectory(kInputsDir)
 
 def test_lookup_fail():
-    """Check an assertion is raised when file lookup failed"""
+    """Check file lookup failure"""
     cdb = CompilationDatabase.fromDirectory(kInputsDir)
     assert cdb.getCompileCommands('file_do_not_exist.cpp') == None
 
