@@ -1172,14 +1172,11 @@ static bool RegistersDefinedFromSameValue(LiveIntervals &li,
 
   MachineInstr *MI = li.getInstructionFromIndex(VNI->def);
 
-  if (!MI || !MI->isFullCopy() || CP.isPartial() || CP.isPhys())
+  if (!MI || CP.isPartial() || CP.isPhys())
     return false;
 
   unsigned Dst = MI->getOperand(0).getReg();
-  unsigned Src = MI->getOperand(1).getReg();
-
-  if (!TargetRegisterInfo::isVirtualRegister(Src) ||
-      !TargetRegisterInfo::isVirtualRegister(Dst))
+  if (!TargetRegisterInfo::isVirtualRegister(Dst))
     return false;
 
   unsigned A = CP.getDstReg();
@@ -1189,34 +1186,47 @@ static bool RegistersDefinedFromSameValue(LiveIntervals &li,
     std::swap(A, B);
   assert(Dst == A);
 
-  const MachineInstr *OtherMI = li.getInstructionFromIndex(OtherVNI->def);
+  MachineInstr *OtherMI = li.getInstructionFromIndex(OtherVNI->def);
 
-  if (!OtherMI || !OtherMI->isFullCopy())
+  if (!OtherMI)
     return false;
 
   unsigned OtherDst = OtherMI->getOperand(0).getReg();
-  unsigned OtherSrc = OtherMI->getOperand(1).getReg();
-
-  if (!TargetRegisterInfo::isVirtualRegister(OtherSrc) ||
-      !TargetRegisterInfo::isVirtualRegister(OtherDst))
+  if (!TargetRegisterInfo::isVirtualRegister(OtherDst))
     return false;
 
   assert(OtherDst == B);
 
-  if (Src != OtherSrc)
-    return false;
+  if (MI->isImplicitDef()) {
+    DupCopies.push_back(MI);
+    return true;
+  } else {
+    if (!MI->isFullCopy())
+      return false;
+    unsigned Src = MI->getOperand(1).getReg();
+    if (!TargetRegisterInfo::isVirtualRegister(Src))
+      return false;
+    if (!OtherMI->isFullCopy())
+      return false;
+    unsigned OtherSrc = OtherMI->getOperand(1).getReg();
+    if (!TargetRegisterInfo::isVirtualRegister(OtherSrc))
+      return false;
 
-  // If the copies use two different value numbers of X, we cannot merge
-  // A and B.
-  LiveInterval &SrcInt = li.getInterval(Src);
-  // getVNInfoBefore returns NULL for undef copies. In this case, the
-  // optimization is still safe.
-  if (SrcInt.getVNInfoBefore(OtherVNI->def) != SrcInt.getVNInfoBefore(VNI->def))
-    return false;
+    if (Src != OtherSrc)
+      return false;
 
-  DupCopies.push_back(MI);
+    // If the copies use two different value numbers of X, we cannot merge
+    // A and B.
+    LiveInterval &SrcInt = li.getInterval(Src);
+    // getVNInfoBefore returns NULL for undef copies. In this case, the
+    // optimization is still safe.
+    if (SrcInt.getVNInfoBefore(OtherVNI->def) !=
+        SrcInt.getVNInfoBefore(VNI->def))
+      return false;
 
-  return true;
+    DupCopies.push_back(MI);
+    return true;
+  }
 }
 
 /// joinIntervals - Attempt to join these two intervals.  On failure, this
@@ -1254,7 +1264,7 @@ bool RegisterCoalescer::joinIntervals(CoalescerPair &CP) {
       continue;
     MachineInstr *MI = LIS->getInstructionFromIndex(VNI->def);
     assert(MI && "Missing def");
-    if (!MI->isCopyLike())  // Src not defined by a copy?
+    if (!MI->isCopyLike() && !MI->isImplicitDef()) // Src not defined by a copy?
       continue;
 
     // Figure out the value # from the RHS.
@@ -1283,7 +1293,7 @@ bool RegisterCoalescer::joinIntervals(CoalescerPair &CP) {
       continue;
     MachineInstr *MI = LIS->getInstructionFromIndex(VNI->def);
     assert(MI && "Missing def");
-    if (!MI->isCopyLike())  // Src not defined by a copy?
+    if (!MI->isCopyLike() && !MI->isImplicitDef()) // Src not defined by a copy?
       continue;
 
     // Figure out the value # from the LHS.
@@ -1429,14 +1439,17 @@ bool RegisterCoalescer::joinIntervals(CoalescerPair &CP) {
     if (!ErasedInstrs.insert(MI))
       continue;
 
-    // We have pretended that the assignment to B in
+    // If MI is a copy, then we have pretended that the assignment to B in
     // A = X
     // B = X
     // was actually a copy from A. Now that we decided to coalesce A and B,
     // transform the code into
     // A = X
-    unsigned Src = MI->getOperand(1).getReg();
-    SourceRegisters.push_back(Src);
+    // In the case of the implicit_def, we just have to remove it.
+    if (!MI->isImplicitDef()) {
+      unsigned Src = MI->getOperand(1).getReg();
+      SourceRegisters.push_back(Src);
+    }
     LIS->RemoveMachineInstrFromMaps(MI);
     MI->eraseFromParent();
   }
