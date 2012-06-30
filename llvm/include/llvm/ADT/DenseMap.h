@@ -843,7 +843,7 @@ public:
       for (BucketT *P = getBuckets(), *E = P + InlineBuckets; P != E; ++P) {
         if (!KeyInfoT::isEqual(P->first, EmptyKey) &&
             !KeyInfoT::isEqual(P->first, TombstoneKey)) {
-          assert((TmpEnd - TmpBegin) < InlineBuckets &&
+          assert(size_t(TmpEnd - TmpBegin) < InlineBuckets &&
                  "Too many inline buckets!");
           new (&TmpEnd->first) KeyT(llvm_move(P->first));
           new (&TmpEnd->second) ValueT(llvm_move(P->second));
