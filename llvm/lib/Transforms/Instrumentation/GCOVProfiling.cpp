@@ -687,8 +687,7 @@ void GCOVProfiler::insertCounterWriteout(
 
   FTy = FunctionType::get(Type::getInt32Ty(*Ctx),
                           PointerType::get(FTy, 0), false);
-  Function *AtExitFn =
-    Function::Create(FTy, GlobalValue::ExternalLinkage, "atexit", M);
+  Constant *AtExitFn = M->getOrInsertFunction("atexit", FTy);
   Builder.CreateCall(AtExitFn, WriteoutF);
   Builder.CreateRetVoid();
 
