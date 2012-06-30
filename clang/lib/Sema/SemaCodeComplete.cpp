@@ -1955,6 +1955,19 @@ static void AddOrdinaryNameResults(Sema::ParserCompletionContext CCC,
       AddObjCExpressionResults(Results, true);
     }
 
+    if (SemaRef.getLangOpts().C11) {
+      // _Alignof
+      Builder.AddResultTypeChunk("size_t");
+      if (SemaRef.getASTContext().Idents.get("alignof").hasMacroDefinition())
+        Builder.AddTypedTextChunk("alignof");
+      else
+        Builder.AddTypedTextChunk("_Alignof");
+      Builder.AddChunk(CodeCompletionString::CK_LeftParen);
+      Builder.AddPlaceholderChunk("type");
+      Builder.AddChunk(CodeCompletionString::CK_RightParen);
+      Results.AddResult(Result(Builder.TakeString()));
+    }
+
     // sizeof expression
     Builder.AddResultTypeChunk("size_t");
     Builder.AddTypedTextChunk("sizeof");

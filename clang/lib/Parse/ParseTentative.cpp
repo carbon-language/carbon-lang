@@ -735,6 +735,7 @@ Parser::isExpressionOrTypeSpecifierSimple(tok::TokenKind Kind) {
   case tok::kw_alignof:
   case tok::kw_noexcept:
   case tok::kw_nullptr:
+  case tok::kw__Alignof:
   case tok::kw___null:
   case tok::kw___alignof:
   case tok::kw___builtin_choose_expr:
