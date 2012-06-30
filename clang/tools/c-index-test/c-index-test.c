@@ -36,9 +36,9 @@ char *dirname(char* path)
         else
           *base2 = 0;
     else if (base1)
-        *base1 = 0
+        *base1 = 0;
     else if (base2)
-        *base2 = 0
+        *base2 = 0;
 
     return path;
 }
