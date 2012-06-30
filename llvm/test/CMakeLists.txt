@@ -1,6 +1,3 @@
-set(LIT_ARGS "${LLVM_LIT_ARGS}")
-separate_arguments(LIT_ARGS)
-
 configure_lit_site_cfg(
   ${CMAKE_CURRENT_SOURCE_DIR}/lit.site.cfg.in
   ${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg
@@ -10,9 +7,10 @@ configure_lit_site_cfg(
   ${CMAKE_CURRENT_BINARY_DIR}/Unit/lit.site.cfg
   )
 
-# Setup the basic dependencies for running LLVM's regression and unit test
-# suites.
-add_custom_target(check-llvm.deps
+add_lit_testsuite(check-llvm "Running the LLVM regression tests"
+  ${CMAKE_CURRENT_BINARY_DIR}
+  PARAMS llvm_site_config=${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg
+         llvm_unit_site_config=${CMAKE_CURRENT_BINARY_DIR}/Unit/lit.site.cfg
   DEPENDS UnitTests
           BugpointPasses LLVMHello
           llc lli llvm-ar llvm-as llvm-dis llvm-extract llvm-dwarfdump
@@ -20,23 +18,9 @@ add_custom_target(check-llvm.deps
           macho-dump opt
           FileCheck count not
   )
-set_target_properties(check-llvm.deps PROPERTIES FOLDER "Tests")
-
-# This is the primary action target to check the LLVM regression and unit test
-# suite.
-add_custom_target(check-llvm
-  COMMAND ${PYTHON_EXECUTABLE}
-          ${LLVM_SOURCE_DIR}/utils/lit/lit.py
-          --param llvm_site_config=${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg
-          --param llvm_unit_site_config=${CMAKE_CURRENT_BINARY_DIR}/Unit/lit.site.cfg
-          --param build_config=${CMAKE_CFG_INTDIR}
-          --param build_mode=${RUNTIME_BUILD_MODE}
-          ${LIT_ARGS}
-          ${CMAKE_CURRENT_BINARY_DIR}
-          COMMENT "Running LLVM regression tests"
-  DEPENDS check-llvm.deps
-  )
+set_target_properties(check-llvm PROPERTIES FOLDER "Tests")
 
 # Setup a legacy alias for 'check-llvm'. This will likely change to be an
 # alias for 'check-all' at some point in the future.
 add_custom_target(check DEPENDS check-llvm)
+set_target_properties(check PROPERTIES FOLDER "Tests")

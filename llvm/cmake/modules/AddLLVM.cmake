@@ -1,3 +1,4 @@
+include(LLVMParseArguments)
 include(LLVMProcessSources)
 include(LLVM-Config)
 
@@ -248,4 +249,46 @@ function(configure_lit_site_cfg input output)
   set(HOST_ARCH ${CMAKE_HOST_SYSTEM_PROCESSOR})
 
   configure_file(${input} ${output} @ONLY)
+endfunction()
+
+# A raw function to create a lit target. This is used to implement the testuite
+# management functions.
+function(add_lit_target target comment)
+  parse_arguments(ARG "PARAMS;DEPENDS;ARGS" "" ${ARGN})
+  set(LIT_ARGS "${ARG_ARGS} ${LLVM_LIT_ARGS}")
+  separate_arguments(LIT_ARGS)
+  set(LIT_COMMAND
+    ${PYTHON_EXECUTABLE}
+    ${LLVM_SOURCE_DIR}/utils/lit/lit.py
+    --param build_config=${CMAKE_CFG_INTDIR}
+    --param build_mode=${RUNTIME_BUILD_MODE}
+    ${LIT_ARGS}
+    )
+  foreach(param ${ARG_PARAMS})
+    list(APPEND LIT_COMMAND --param ${param})
+  endforeach()
+  add_custom_target(${target}
+    COMMAND ${LIT_COMMAND} ${ARG_DEFAULT_ARGS}
+    COMMENT "${comment}"
+    DEPENDS ${ARG_DEPENDS}
+    )
+endfunction()
+
+# A function to add a set of lit test suites to be driven through 'check-*' targets.
+function(add_lit_testsuite target comment)
+  parse_arguments(ARG "PARAMS;DEPENDS;ARGS" "" ${ARGN})
+
+  # Register the testsuites, params and depends for the global check rule.
+  set_property(GLOBAL APPEND PROPERTY LLVM_LIT_TESTSUITES ${ARG_DEFAULT_ARGS})
+  set_property(GLOBAL APPEND PROPERTY LLVM_LIT_PARAMS ${ARG_PARAMS})
+  set_property(GLOBAL APPEND PROPERTY LLVM_LIT_DEPENDS ${ARG_DEPENDS})
+  set_property(GLOBAL APPEND PROPERTY LLVM_LIT_EXTRA_ARGS ${ARG_ARGS})
+
+  # Produce a specific suffixed check rule.
+  add_lit_target(${target} ${comment}
+    ${ARG_DEFAULT_ARGS}
+    PARAMS ${ARG_PARAMS}
+    DEPENDS ${ARG_DEPENDS}
+    ARGS ${ARG_ARGS}
+    )
 endfunction()
