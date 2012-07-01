@@ -2035,6 +2035,7 @@ SDNode *X86DAGToDAGISel::Select(SDNode *Node) {
       SDNode *RetVal = SelectGather(Node, Opc);
       if (RetVal)
         return RetVal;
+      break;
     }
     }
     break;
