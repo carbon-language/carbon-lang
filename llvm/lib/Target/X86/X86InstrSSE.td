@@ -7272,8 +7272,8 @@ let ExeDomain = SSEPackedSingle in {
                                            int_x86_avx2_vbroadcast_ss_ps_256>;
 }
 let ExeDomain = SSEPackedDouble in
-def VBROADCASTSDrr  : avx2_broadcast_reg<0x19, "vbroadcastsd", VR256,
-                                         int_x86_avx2_vbroadcast_sd_pd_256>;
+def VBROADCASTSDYrr  : avx2_broadcast_reg<0x19, "vbroadcastsd", VR256,
+                                          int_x86_avx2_vbroadcast_sd_pd_256>;
 
 let Predicates = [HasAVX2] in
 def VBROADCASTI128 : avx_broadcast<0x5A, "vbroadcasti128", VR256, i128mem,
@@ -7684,6 +7684,31 @@ let Predicates = [HasAVX2] in {
   def : Pat<(v4i64 (X86VBroadcast (loadi64 addr:$src))),
           (VPBROADCASTQYrm addr:$src)>;
 
+  def : Pat<(v16i8 (X86VBroadcast (v16i8 VR128:$src))),
+          (VPBROADCASTBrr VR128:$src)>;
+  def : Pat<(v32i8 (X86VBroadcast (v16i8 VR128:$src))),
+          (VPBROADCASTBYrr VR128:$src)>;
+  def : Pat<(v8i16 (X86VBroadcast (v8i16 VR128:$src))),
+          (VPBROADCASTWrr VR128:$src)>;
+  def : Pat<(v16i16 (X86VBroadcast (v8i16 VR128:$src))),
+          (VPBROADCASTWYrr VR128:$src)>;
+  def : Pat<(v4i32 (X86VBroadcast (v4i32 VR128:$src))),
+          (VPBROADCASTDrr VR128:$src)>;
+  def : Pat<(v8i32 (X86VBroadcast (v4i32 VR128:$src))),
+          (VPBROADCASTDYrr VR128:$src)>;
+  def : Pat<(v2i64 (X86VBroadcast (v2i64 VR128:$src))),
+          (VPBROADCASTQrr VR128:$src)>;
+  def : Pat<(v4i64 (X86VBroadcast (v2i64 VR128:$src))),
+          (VPBROADCASTQYrr VR128:$src)>;
+  def : Pat<(v4f32 (X86VBroadcast (v4f32 VR128:$src))),
+          (VBROADCASTSSrr VR128:$src)>;
+  def : Pat<(v8f32 (X86VBroadcast (v4f32 VR128:$src))),
+          (VBROADCASTSSYrr VR128:$src)>;
+  def : Pat<(v2f64 (X86VBroadcast (v2f64 VR128:$src))),
+          (VPBROADCASTQrr VR128:$src)>;
+  def : Pat<(v4f64 (X86VBroadcast (v2f64 VR128:$src))),
+          (VBROADCASTSDYrr VR128:$src)>;
+
   // Provide fallback in case the load node that is used in the patterns above
   // is used by additional users, which prevents the pattern selection.
   let AddedComplexity = 20 in {
@@ -7694,7 +7719,7 @@ let Predicates = [HasAVX2] in {
               (VBROADCASTSSYrr
               (INSERT_SUBREG (v4f32 (IMPLICIT_DEF)), FR32:$src, sub_ss))>;
     def : Pat<(v4f64 (X86VBroadcast FR64:$src)),
-              (VBROADCASTSDrr
+              (VBROADCASTSDYrr
               (INSERT_SUBREG (v2f64 (IMPLICIT_DEF)), FR64:$src, sub_sd))>;
 
     def : Pat<(v4i32 (X86VBroadcast GR32:$src)),
@@ -7704,7 +7729,7 @@ let Predicates = [HasAVX2] in {
               (VBROADCASTSSYrr
               (INSERT_SUBREG (v4i32 (IMPLICIT_DEF)), GR32:$src, sub_ss))>;
     def : Pat<(v4i64 (X86VBroadcast GR64:$src)),
-              (VBROADCASTSDrr
+              (VBROADCASTSDYrr
               (INSERT_SUBREG (v2i64 (IMPLICIT_DEF)), GR64:$src, sub_sd))>;
   }
 }

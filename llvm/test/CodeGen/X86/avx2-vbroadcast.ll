@@ -259,3 +259,99 @@ define <4 x double> @_inreg3(double %scalar) nounwind uwtable readnone ssp {
   ret <4 x double> %wide
 }
 
+;CHECK: _inreg8xfloat
+;CHECK: vbroadcastss
+;CHECK: ret
+define   <8 x float> @_inreg8xfloat(<8 x float> %a) {
+  %b = shufflevector <8 x float> %a, <8 x float> undef, <8 x i32> zeroinitializer
+  ret <8 x float> %b
+}
+
+;CHECK: _inreg4xfloat
+;CHECK: vbroadcastss
+;CHECK: ret
+define   <4 x float> @_inreg4xfloat(<4 x float> %a) {
+  %b = shufflevector <4 x float> %a, <4 x float> undef, <4 x i32> zeroinitializer
+  ret <4 x float> %b
+}
+
+;CHECK: _inreg16xi16
+;CHECK: vpbroadcastw
+;CHECK: ret
+define   <16 x i16> @_inreg16xi16(<16 x i16> %a) {
+  %b = shufflevector <16 x i16> %a, <16 x i16> undef, <16 x i32> zeroinitializer
+  ret <16 x i16> %b
+}
+
+;CHECK: _inreg8xi16
+;CHECK: vpbroadcastw
+;CHECK: ret
+define   <8 x i16> @_inreg8xi16(<8 x i16> %a) {
+  %b = shufflevector <8 x i16> %a, <8 x i16> undef, <8 x i32> zeroinitializer
+  ret <8 x i16> %b
+}
+
+
+;CHECK: _inreg4xi64
+;CHECK: vpbroadcastq
+;CHECK: ret
+define   <4 x i64> @_inreg4xi64(<4 x i64> %a) {
+  %b = shufflevector <4 x i64> %a, <4 x i64> undef, <4 x i32> zeroinitializer
+  ret <4 x i64> %b
+}
+
+;CHECK: _inreg2xi64
+;CHECK: vpbroadcastq
+;CHECK: ret
+define   <2 x i64> @_inreg2xi64(<2 x i64> %a) {
+  %b = shufflevector <2 x i64> %a, <2 x i64> undef, <2 x i32> zeroinitializer
+  ret <2 x i64> %b
+}
+
+;CHECK: _inreg4xdouble
+;CHECK: vbroadcastsd
+;CHECK: ret
+define   <4 x double> @_inreg4xdouble(<4 x double> %a) {
+  %b = shufflevector <4 x double> %a, <4 x double> undef, <4 x i32> zeroinitializer
+  ret <4 x double> %b
+}
+
+;CHECK: _inreg2xdouble
+;CHECK: vpbroadcastq
+;CHECK: ret
+define   <2 x double> @_inreg2xdouble(<2 x double> %a) {
+  %b = shufflevector <2 x double> %a, <2 x double> undef, <2 x i32> zeroinitializer
+  ret <2 x double> %b
+}
+
+;CHECK: _inreg8xi32
+;CHECK: vpbroadcastd
+;CHECK: ret
+define   <8 x i32> @_inreg8xi32(<8 x i32> %a) {
+  %b = shufflevector <8 x i32> %a, <8 x i32> undef, <8 x i32> zeroinitializer
+  ret <8 x i32> %b
+}
+
+;CHECK: _inreg4xi32
+;CHECK: vpbroadcastd
+;CHECK: ret
+define   <4 x i32> @_inreg4xi32(<4 x i32> %a) {
+  %b = shufflevector <4 x i32> %a, <4 x i32> undef, <4 x i32> zeroinitializer
+  ret <4 x i32> %b
+}
+
+;CHECK: _inreg32xi8
+;CHECK: vpbroadcastb
+;CHECK: ret
+define   <32 x i8> @_inreg32xi8(<32 x i8> %a) {
+  %b = shufflevector <32 x i8> %a, <32 x i8> undef, <32 x i32> zeroinitializer
+  ret <32 x i8> %b
+}
+
+;CHECK: _inreg16xi8
+;CHECK: vpbroadcastb
+;CHECK: ret
+define   <16 x i8> @_inreg16xi8(<16 x i8> %a) {
+  %b = shufflevector <16 x i8> %a, <16 x i8> undef, <16 x i32> zeroinitializer
+  ret <16 x i8> %b
+}

@@ -5047,8 +5047,16 @@ X86TargetLowering::LowerVectorBroadcast(SDValue &Op, SelectionDAG &DAG) const {
 
       SDValue Sc = Op.getOperand(0);
       if (Sc.getOpcode() != ISD::SCALAR_TO_VECTOR &&
-          Sc.getOpcode() != ISD::BUILD_VECTOR)
-        return SDValue();
+          Sc.getOpcode() != ISD::BUILD_VECTOR) {
+
+        if (!Subtarget->hasAVX2())
+          return SDValue();
+
+        // Use the register form of the broadcast instruction available on AVX2.
+        if (VT.is256BitVector())
+          Sc = Extract128BitVector(Sc, 0, DAG, dl);
+        return DAG.getNode(X86ISD::VBROADCAST, dl, VT, Sc);
+      }
 
       Ld = Sc.getOperand(0);
       ConstSplatVal = (Ld.getOpcode() == ISD::Constant ||
