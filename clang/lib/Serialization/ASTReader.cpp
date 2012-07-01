@@ -4461,6 +4461,9 @@ QualType ASTReader::GetType(TypeID ID) {
       T = Context.ARCUnbridgedCastTy;
       break;
 
+    case PREDEF_TYPE_VA_LIST_TAG:
+      T = Context.getVaListTagType();
+      break;
     }
 
     assert(!T.isNull() && "Unknown predefined type");

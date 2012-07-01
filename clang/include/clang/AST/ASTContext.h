@@ -599,6 +599,10 @@ public:
   mutable QualType AutoDeductTy;     // Deduction against 'auto'.
   mutable QualType AutoRRefDeductTy; // Deduction against 'auto &&'.
 
+  // Type used to help define __builtin_va_list for some targets.
+  // The type is built when constructing 'BuiltinVaListDecl'.
+  mutable QualType VaListTagTy;
+
   ASTContext(LangOptions& LOpts, SourceManager &SM, const TargetInfo *t,
              IdentifierTable &idents, SelectorTable &sels,
              Builtin::Context &builtins,
@@ -1184,6 +1188,11 @@ public:
   QualType getBuiltinVaListType() const {
     return getTypeDeclType(getBuiltinVaListDecl());
   }
+
+  /// \brief Retrieve the C type declaration corresponding to the predefined
+  /// __va_list_tag type used to help define the __builtin_va_list type for
+  /// some targets.
+  QualType getVaListTagType() const;
 
   /// getCVRQualifiedType - Returns a type with additional const,
   /// volatile, or restrict qualifiers.

@@ -640,7 +640,9 @@ namespace clang {
       /// \brief ARC's unbridged-cast placeholder type.
       PREDEF_TYPE_ARC_UNBRIDGED_CAST = 34,
       /// \brief The pseudo-object placeholder type.
-      PREDEF_TYPE_PSEUDO_OBJECT = 35
+      PREDEF_TYPE_PSEUDO_OBJECT = 35,
+      /// \brief The __va_list_tag placeholder type.
+      PREDEF_TYPE_VA_LIST_TAG = 36
     };
 
     /// \brief The number of predefined type IDs that are reserved for
