@@ -1996,37 +1996,43 @@ SDNode *X86DAGToDAGISel::Select(SDNode *Node) {
     switch (IntNo) {
     default: break;
     case Intrinsic::x86_avx2_gather_d_pd:
-      return SelectGather(Node, X86::VGATHERDPDrm);
     case Intrinsic::x86_avx2_gather_d_pd_256:
-      return SelectGather(Node, X86::VGATHERDPDYrm);
     case Intrinsic::x86_avx2_gather_q_pd:
-      return SelectGather(Node, X86::VGATHERQPDrm);
     case Intrinsic::x86_avx2_gather_q_pd_256:
-      return SelectGather(Node, X86::VGATHERQPDYrm);
     case Intrinsic::x86_avx2_gather_d_ps:
-      return SelectGather(Node, X86::VGATHERDPSrm);
     case Intrinsic::x86_avx2_gather_d_ps_256:
-      return SelectGather(Node, X86::VGATHERDPSYrm);
     case Intrinsic::x86_avx2_gather_q_ps:
-      return SelectGather(Node, X86::VGATHERQPSrm);
     case Intrinsic::x86_avx2_gather_q_ps_256:
-      return SelectGather(Node, X86::VGATHERQPSYrm);
     case Intrinsic::x86_avx2_gather_d_q:
-      return SelectGather(Node, X86::VPGATHERDQrm);
     case Intrinsic::x86_avx2_gather_d_q_256:
-      return SelectGather(Node, X86::VPGATHERDQYrm);
     case Intrinsic::x86_avx2_gather_q_q:
-      return SelectGather(Node, X86::VPGATHERQQrm);
     case Intrinsic::x86_avx2_gather_q_q_256:
-      return SelectGather(Node, X86::VPGATHERQQYrm);
     case Intrinsic::x86_avx2_gather_d_d:
-      return SelectGather(Node, X86::VPGATHERDDrm);
     case Intrinsic::x86_avx2_gather_d_d_256:
-      return SelectGather(Node, X86::VPGATHERDDYrm);
     case Intrinsic::x86_avx2_gather_q_d:
-      return SelectGather(Node, X86::VPGATHERQDrm);
-    case Intrinsic::x86_avx2_gather_q_d_256:
-      return SelectGather(Node, X86::VPGATHERQDYrm);
+    case Intrinsic::x86_avx2_gather_q_d_256: {
+      unsigned Opc;
+      switch (IntNo) {
+      default: llvm_unreachable("Impossible intrinsic.");
+      case Intrinsic::x86_avx2_gather_d_pd:     Opc = X86::VGATHERDPDrm;  break;
+      case Intrinsic::x86_avx2_gather_d_pd_256: Opc = X86::VGATHERDPDYrm; break;
+      case Intrinsic::x86_avx2_gather_q_pd:     Opc = X86::VGATHERQPDrm;  break;
+      case Intrinsic::x86_avx2_gather_q_pd_256: Opc = X86::VGATHERQPDYrm; break;
+      case Intrinsic::x86_avx2_gather_d_ps:     Opc = X86::VGATHERDPSrm;  break;
+      case Intrinsic::x86_avx2_gather_d_ps_256: Opc = X86::VGATHERDPSYrm; break;
+      case Intrinsic::x86_avx2_gather_q_ps:     Opc = X86::VGATHERQPSrm;  break;
+      case Intrinsic::x86_avx2_gather_q_ps_256: Opc = X86::VGATHERQPSYrm; break;
+      case Intrinsic::x86_avx2_gather_d_q:      Opc = X86::VPGATHERDQrm;  break;
+      case Intrinsic::x86_avx2_gather_d_q_256:  Opc = X86::VPGATHERDQYrm; break;
+      case Intrinsic::x86_avx2_gather_q_q:      Opc = X86::VPGATHERQQrm;  break;
+      case Intrinsic::x86_avx2_gather_q_q_256:  Opc = X86::VPGATHERQQYrm; break;
+      case Intrinsic::x86_avx2_gather_d_d:      Opc = X86::VPGATHERDDrm;  break;
+      case Intrinsic::x86_avx2_gather_d_d_256:  Opc = X86::VPGATHERDDYrm; break;
+      case Intrinsic::x86_avx2_gather_q_d:      Opc = X86::VPGATHERQDrm;  break;
+      case Intrinsic::x86_avx2_gather_q_d_256:  Opc = X86::VPGATHERQDYrm; break;
+      }
+      return SelectGather(Node, Opc);
+    }
     }
     break;
   }
