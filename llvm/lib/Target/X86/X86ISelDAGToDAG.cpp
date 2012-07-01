@@ -2014,7 +2014,7 @@ SDNode *X86DAGToDAGISel::Select(SDNode *Node) {
     case Intrinsic::x86_avx2_gather_q_d_256: {
       unsigned Opc;
       switch (IntNo) {
-      default: llvm_unreachable("Impossible intrinsic.");
+      default: llvm_unreachable("Impossible intrinsic");
       case Intrinsic::x86_avx2_gather_d_pd:     Opc = X86::VGATHERDPDrm;  break;
       case Intrinsic::x86_avx2_gather_d_pd_256: Opc = X86::VGATHERDPDYrm; break;
       case Intrinsic::x86_avx2_gather_q_pd:     Opc = X86::VGATHERQPDrm;  break;
@@ -2043,20 +2043,30 @@ SDNode *X86DAGToDAGISel::Select(SDNode *Node) {
   case X86ISD::GlobalBaseReg:
     return getGlobalBaseReg();
 
+
   case X86ISD::ATOMOR64_DAG:
-    return SelectAtomic64(Node, X86::ATOMOR6432);
   case X86ISD::ATOMXOR64_DAG:
-    return SelectAtomic64(Node, X86::ATOMXOR6432);
   case X86ISD::ATOMADD64_DAG:
-    return SelectAtomic64(Node, X86::ATOMADD6432);
   case X86ISD::ATOMSUB64_DAG:
-    return SelectAtomic64(Node, X86::ATOMSUB6432);
   case X86ISD::ATOMNAND64_DAG:
-    return SelectAtomic64(Node, X86::ATOMNAND6432);
   case X86ISD::ATOMAND64_DAG:
-    return SelectAtomic64(Node, X86::ATOMAND6432);
-  case X86ISD::ATOMSWAP64_DAG:
-    return SelectAtomic64(Node, X86::ATOMSWAP6432);
+  case X86ISD::ATOMSWAP64_DAG: {
+    unsigned Opc;
+    switch (Opcode) {
+    default: llvm_unreachable("Impossible intrinsic");
+    case X86ISD::ATOMOR64_DAG:   Opc = X86::ATOMOR6432;   break;
+    case X86ISD::ATOMXOR64_DAG:  Opc = X86::ATOMXOR6432;  break;
+    case X86ISD::ATOMADD64_DAG:  Opc = X86::ATOMADD6432;  break;
+    case X86ISD::ATOMSUB64_DAG:  Opc = X86::ATOMSUB6432;  break;
+    case X86ISD::ATOMNAND64_DAG: Opc = X86::ATOMNAND6432; break;
+    case X86ISD::ATOMAND64_DAG:  Opc = X86::ATOMAND6432;  break;
+    case X86ISD::ATOMSWAP64_DAG: Opc = X86::ATOMSWAP6432; break;
+    }
+    SDNode *RetVal = SelectAtomic64(Node, Opc);
+    if (RetVal)
+      return RetVal;
+    break;
+  }
 
   case ISD::ATOMIC_LOAD_ADD: {
     SDNode *RetVal = SelectAtomicLoadAdd(Node, NVT);
