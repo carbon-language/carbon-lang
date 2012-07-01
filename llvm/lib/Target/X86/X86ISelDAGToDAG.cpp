@@ -1963,7 +1963,8 @@ SDNode *X86DAGToDAGISel::SelectGather(SDNode *Node, unsigned Opc) {
   SDValue VIdx = Node->getOperand(4);
   SDValue VMask = Node->getOperand(5);
   ConstantSDNode *Scale = dyn_cast<ConstantSDNode>(Node->getOperand(6));
-  assert(Scale && "Scale should be a constant for GATHER operations");
+  if (!Scale)
+    return 0;
 
   // Memory Operands: Base, Scale, Index, Disp, Segment
   SDValue Disp = CurDAG->getTargetConstant(0, MVT::i32);
@@ -2031,7 +2032,9 @@ SDNode *X86DAGToDAGISel::Select(SDNode *Node) {
       case Intrinsic::x86_avx2_gather_q_d:      Opc = X86::VPGATHERQDrm;  break;
       case Intrinsic::x86_avx2_gather_q_d_256:  Opc = X86::VPGATHERQDYrm; break;
       }
-      return SelectGather(Node, Opc);
+      SDNode *RetVal = SelectGather(Node, Opc);
+      if (RetVal)
+        return RetVal;
     }
     }
     break;
