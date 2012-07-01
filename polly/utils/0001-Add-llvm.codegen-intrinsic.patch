@@ -1,6 +1,6 @@
-From 28e525d58b236efa5db562c2931c996e26d6996b Mon Sep 17 00:00:00 2001
+From 1bad885275c602bb285c162d8d619ab3ac5a594f Mon Sep 17 00:00:00 2001
 From: Yabin Hu <yabin.hwu@gmail.com>
-Date: Wed, 23 May 2012 09:19:36 +0800
+Date: Sat, 30 Jun 2012 10:54:52 +0800
 Subject: [PATCH] Add llvm.codegen intrinsic.
 
 The llvm.codegen intrinsic generates code for embedded LLVM-IR
@@ -16,18 +16,18 @@ different to the one of the parent module.
  lib/CodeGen/CodeGen.cpp                            |    1 +
  lib/CodeGen/CodeGenIntrinsic.cpp                   |  229 ++++++++++++++++++++
  lib/CodeGen/Passes.cpp                             |    3 +
- lib/CodeGen/SelectionDAG/SelectionDAGBuilder.cpp   |    3 +
+ lib/CodeGen/SelectionDAG/SelectionDAGBuilder.cpp   |    2 +
  lib/Target/LLVMBuild.txt                           |    2 +-
  lib/VMCore/Verifier.cpp                            |   10 +
  .../CodeGen/X86/EmbeddedCG/embedded-codegen-ptx.ll |   28 +++
  test/CodeGen/X86/EmbeddedCG/lit.local.cfg          |    5 +
- 13 files changed, 325 insertions(+), 1 deletions(-)
+ 13 files changed, 324 insertions(+), 1 deletions(-)
  create mode 100644 lib/CodeGen/CodeGenIntrinsic.cpp
  create mode 100644 test/CodeGen/X86/EmbeddedCG/embedded-codegen-ptx.ll
  create mode 100644 test/CodeGen/X86/EmbeddedCG/lit.local.cfg
 
 diff --git a/docs/LangRef.html b/docs/LangRef.html
-index 8f7a17c..23d73bd 100644
+index ba653db..b442bcc 100644
 --- a/docs/LangRef.html
 +++ b/docs/LangRef.html
 @@ -242,6 +242,7 @@
@@ -38,7 +38,7 @@ index 8f7a17c..23d73bd 100644
          </ol>
        </li>
        <li><a href="#int_libc">Standard C Library Intrinsics</a>
-@@ -7015,6 +7016,41 @@ LLVM</a>.</p>
+@@ -7055,6 +7056,41 @@ LLVM</a>.</p>
  
  </div>
  
@@ -81,10 +81,10 @@ index 8f7a17c..23d73bd 100644
  
  <!-- ======================================================================= -->
 diff --git a/include/llvm/CodeGen/Passes.h b/include/llvm/CodeGen/Passes.h
-index e76fe99..ecf3e4b 100644
+index 206bc2e..94cb65b 100644
 --- a/include/llvm/CodeGen/Passes.h
 +++ b/include/llvm/CodeGen/Passes.h
-@@ -373,6 +373,9 @@ namespace llvm {
+@@ -395,6 +395,9 @@ namespace llvm {
    /// branch folding).
    extern char &GCMachineCodeAnalysisID;
  
@@ -95,7 +95,7 @@ index e76fe99..ecf3e4b 100644
    ///
    FunctionPass *createGCInfoDeleter();
 diff --git a/include/llvm/InitializePasses.h b/include/llvm/InitializePasses.h
-index df696b1..28b146f 100644
+index c2cb7c2..fb1e575 100644
 --- a/include/llvm/InitializePasses.h
 +++ b/include/llvm/InitializePasses.h
 @@ -91,6 +91,7 @@ void initializeCorrelatedValuePropagationPass(PassRegistry&);
@@ -107,10 +107,10 @@ index df696b1..28b146f 100644
  void initializeDeadInstEliminationPass(PassRegistry&);
  void initializeDeadMachineInstructionElimPass(PassRegistry&);
 diff --git a/include/llvm/Intrinsics.td b/include/llvm/Intrinsics.td
-index 75162bf..4bcec16 100644
+index 95fd843..8088ff1 100644
 --- a/include/llvm/Intrinsics.td
 +++ b/include/llvm/Intrinsics.td
-@@ -226,6 +226,10 @@ def int_readcyclecounter : Intrinsic<[llvm_i64_ty]>;
+@@ -228,6 +228,10 @@ def int_readcyclecounter : Intrinsic<[llvm_i64_ty]>;
  // guard to the correct place on the stack frame.
  def int_stackprotector : Intrinsic<[], [llvm_ptr_ty, llvm_ptrptr_ty], []>;
  
@@ -122,7 +122,7 @@ index 75162bf..4bcec16 100644
  //
  
 diff --git a/lib/CodeGen/CMakeLists.txt b/lib/CodeGen/CMakeLists.txt
-index 855fa0c..4451922 100644
+index a2ce7a0..f070518 100644
 --- a/lib/CodeGen/CMakeLists.txt
 +++ b/lib/CodeGen/CMakeLists.txt
 @@ -6,6 +6,7 @@ add_llvm_library(LLVMCodeGen
@@ -134,7 +134,7 @@ index 855fa0c..4451922 100644
    CriticalAntiDepBreaker.cpp
    DeadMachineInstructionElim.cpp
 diff --git a/lib/CodeGen/CodeGen.cpp b/lib/CodeGen/CodeGen.cpp
-index a81bb5c..662345a 100644
+index 7b015d8..06b3979 100644
 --- a/lib/CodeGen/CodeGen.cpp
 +++ b/lib/CodeGen/CodeGen.cpp
 @@ -21,6 +21,7 @@ using namespace llvm;
@@ -147,7 +147,7 @@ index a81bb5c..662345a 100644
    initializeExpandPostRAPass(Registry);
 diff --git a/lib/CodeGen/CodeGenIntrinsic.cpp b/lib/CodeGen/CodeGenIntrinsic.cpp
 new file mode 100644
-index 0000000..01253cd
+index 0000000..8b43754
 --- /dev/null
 +++ b/lib/CodeGen/CodeGenIntrinsic.cpp
 @@ -0,0 +1,229 @@
@@ -381,10 +381,10 @@ index 0000000..01253cd
 +  return MadeChange;
 +}
 diff --git a/lib/CodeGen/Passes.cpp b/lib/CodeGen/Passes.cpp
-index 490547b..95b6e0c 100644
+index bf244a5..ed77c60 100644
 --- a/lib/CodeGen/Passes.cpp
 +++ b/lib/CodeGen/Passes.cpp
-@@ -305,6 +305,9 @@ void TargetPassConfig::addIRPasses() {
+@@ -332,6 +332,9 @@ void TargetPassConfig::addIRPasses() {
  
    PM->add(createGCLoweringPass());
  
@@ -395,21 +395,20 @@ index 490547b..95b6e0c 100644
    PM->add(createUnreachableBlockEliminationPass());
  }
 diff --git a/lib/CodeGen/SelectionDAG/SelectionDAGBuilder.cpp b/lib/CodeGen/SelectionDAG/SelectionDAGBuilder.cpp
-index f1b4d80..d87986c 100644
+index 957d00a..35c25fe 100644
 --- a/lib/CodeGen/SelectionDAG/SelectionDAGBuilder.cpp
 +++ b/lib/CodeGen/SelectionDAG/SelectionDAGBuilder.cpp
-@@ -5131,6 +5131,9 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
-   case Intrinsic::lifetime_end:
-     // Discard region information.
+@@ -5185,6 +5185,8 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
+   case Intrinsic::donothing:
+     // ignore
      return 0;
-+
 +  case Intrinsic::codegen:
 +    llvm_unreachable("failed to lower codegen intrinsic!");
    }
  }
  
 diff --git a/lib/Target/LLVMBuild.txt b/lib/Target/LLVMBuild.txt
-index 045ab9e..d9bd19f 100644
+index 8995080..c5fb7d3 100644
 --- a/lib/Target/LLVMBuild.txt
 +++ b/lib/Target/LLVMBuild.txt
 @@ -45,7 +45,7 @@ parent = Libraries
@@ -422,10 +421,10 @@ index 045ab9e..d9bd19f 100644
  ; This is a special group whose required libraries are extended (by llvm-build)
  ; with every built target, which makes it easy for tools to include every
 diff --git a/lib/VMCore/Verifier.cpp b/lib/VMCore/Verifier.cpp
-index f11efff..1031685 100644
+index 5d51f41..501fe08 100644
 --- a/lib/VMCore/Verifier.cpp
 +++ b/lib/VMCore/Verifier.cpp
-@@ -1783,6 +1783,16 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
+@@ -1872,6 +1872,16 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
      Assert1(isa<ConstantInt>(CI.getArgOperand(1)),
              "llvm.invariant.end parameter #2 must be a constant integer", &CI);
      break;
