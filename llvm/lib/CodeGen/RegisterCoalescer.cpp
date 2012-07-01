@@ -1175,27 +1175,17 @@ static bool RegistersDefinedFromSameValue(LiveIntervals &li,
   if (!MI || CP.isPartial() || CP.isPhys())
     return false;
 
-  unsigned Dst = MI->getOperand(0).getReg();
-  if (!TargetRegisterInfo::isVirtualRegister(Dst))
+  unsigned A = CP.getDstReg();
+  if (!TargetRegisterInfo::isVirtualRegister(A))
     return false;
 
-  unsigned A = CP.getDstReg();
   unsigned B = CP.getSrcReg();
-
-  if (B == Dst)
-    std::swap(A, B);
-  assert(Dst == A);
+  if (!TargetRegisterInfo::isVirtualRegister(B))
+    return false;
 
   MachineInstr *OtherMI = li.getInstructionFromIndex(OtherVNI->def);
-
   if (!OtherMI)
     return false;
-
-  unsigned OtherDst = OtherMI->getOperand(0).getReg();
-  if (!TargetRegisterInfo::isVirtualRegister(OtherDst))
-    return false;
-
-  assert(OtherDst == B);
 
   if (MI->isImplicitDef()) {
     DupCopies.push_back(MI);
