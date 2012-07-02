@@ -53,3 +53,17 @@ namespace test1 {
     c.func();
   }
 }
+
+// PR13252
+namespace test2 {
+  struct A;
+  void f(const A& a);
+  struct A {
+    friend void f(const A& a) { } 
+  };
+  void g() {
+    A a;
+    f(a);
+  }
+  // CHECK: define linkonce_odr void @_ZN5test21fERKNS_1AE
+}

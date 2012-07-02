@@ -1111,6 +1111,7 @@ CodeGenModule::GetOrCreateLLVMFunction(StringRef MangledName,
   } else if (getLangOpts().CPlusPlus && D.getDecl()) {
     // Look for a declaration that's lexically in a record.
     const FunctionDecl *FD = cast<FunctionDecl>(D.getDecl());
+    FD = FD->getMostRecentDecl();
     do {
       if (isa<CXXRecordDecl>(FD->getLexicalDeclContext())) {
         if (FD->isImplicit() && !ForVTable) {
