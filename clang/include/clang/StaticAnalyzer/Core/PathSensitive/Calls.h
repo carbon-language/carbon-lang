@@ -405,13 +405,16 @@ public:
 ///
 /// Example: obj.prop += 1;
 class ObjCPropertyAccess : public ObjCMethodCall {
+  const ObjCPropertyRefExpr *PropE;
   SourceRange EntireRange;
 
 public:
-  ObjCPropertyAccess(SourceRange range, const ObjCMessageExpr *Msg,
-                     const ProgramStateRef St, const LocationContext *LCtx)
-    : ObjCMethodCall(Msg, St, LCtx, CE_ObjCPropertyAccess), EntireRange(range)
-  {}
+  ObjCPropertyAccess(const ObjCPropertyRefExpr *pe, SourceRange range,
+                     const ObjCMessageExpr *Msg, const ProgramStateRef St,
+                     const LocationContext *LCtx)
+    : ObjCMethodCall(Msg, St, LCtx, CE_ObjCPropertyAccess), PropE(pe),
+      EntireRange(range)
+    {}
 
   /// \brief Returns true if this property access is calling the setter method.
   bool isSetter() const {
@@ -420,6 +423,10 @@ public:
 
   SourceRange getSourceRange() const {
     return EntireRange;
+  }
+
+  const ObjCPropertyRefExpr *getPropertyExpr() const {
+    return PropE;
   }
 
   static bool classof(const CallEvent *CA) {

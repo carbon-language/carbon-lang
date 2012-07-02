@@ -881,8 +881,9 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
         if (const BinaryOperator *BO = dyn_cast<BinaryOperator>(syntactic))
           syntactic = BO->getLHS();
 
-        if (isa<ObjCPropertyRefExpr>(syntactic)) {
-          VisitObjCMessage(ObjCPropertyAccess(PO->getSourceRange(), ME,
+        if (const ObjCPropertyRefExpr *PR =
+              dyn_cast<ObjCPropertyRefExpr>(syntactic)) {
+          VisitObjCMessage(ObjCPropertyAccess(PR, PO->getSourceRange(), ME,
                                               Pred->getState(), LCtx),
                            Pred, Dst);
           evaluated = true;
