@@ -4,6 +4,8 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 declare i32 @__gxx_personality_v0(...)
 declare void @__cxa_call_unexpected(i8*)
 declare i32 @read_only() nounwind readonly
+declare i32 @nounwind_fn() nounwind
+declare i32 @fn()
 
 
 ; CHECK: @f1
@@ -80,5 +82,36 @@ lpad:
           filter [0 x i8*] zeroinitializer
   %1 = extractvalue { i8*, i32 } %0, 0
   tail call void @__cxa_call_unexpected(i8* %1) noreturn nounwind
+  unreachable
+}
+
+; CHECK: @f5
+define i32 @f5(i1 %cond, i8* %a, i8* %b) {
+entry:
+  br i1 %cond, label %x, label %y
+
+x:
+; CHECK: invoke i32 @fn()
+  %call = invoke i32 @fn()
+          to label %cont unwind label %lpad
+
+y:
+; CHECK: call i32 @nounwind_fn()
+  %call2 = invoke i32 @nounwind_fn()
+           to label %cont unwind label %lpad
+
+cont:
+; CHECK: phi i32
+; CHECK: ret i32 %phi
+  %phi = phi i32 [%call, %x], [%call2, %y]
+  ret i32 %phi
+
+lpad:
+; CHECK-NOT: phi
+  %phi2 = phi i8* [%a, %x], [%b, %y]
+  %0 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+          filter [0 x i8*] zeroinitializer
+; CHECK: __cxa_call_unexpected(i8* %a)
+  tail call void @__cxa_call_unexpected(i8* %phi2) noreturn nounwind
   unreachable
 }

@@ -99,6 +99,9 @@ static void ChangeToCall(InvokeInst *II) {
 
   // Follow the call by a branch to the normal destination.
   BranchInst::Create(II->getNormalDest(), II);
+
+  // Update PHI nodes in the unwind destination
+  II->getUnwindDest()->removePredecessor(II->getParent());
   II->eraseFromParent();
 }
 
