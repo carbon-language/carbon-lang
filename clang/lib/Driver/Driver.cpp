@@ -503,7 +503,6 @@ void Driver::generateCompilationDiagnostics(Compilation &C,
         // Strip away options not necessary to reproduce the crash.
         // FIXME: This doesn't work with quotes (e.g., -D "foo bar").
         SmallVector<std::string, 16> Flag;
-        Flag.push_back("-D ");
         Flag.push_back("-F");
         Flag.push_back("-I ");
         Flag.push_back("-o ");
