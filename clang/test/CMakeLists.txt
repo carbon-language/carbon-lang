@@ -88,5 +88,6 @@ else()
 endif()
 
 # Add a legacy target spelling: clang-test
-add_custom_target(clang-test DEPENDS check-clang)
+add_custom_target(clang-test)
+add_dependencies(clang-test check-clang)
 set_target_properties(clang-test PROPERTIES FOLDER "Clang tests")
