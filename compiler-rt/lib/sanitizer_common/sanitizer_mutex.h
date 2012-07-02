@@ -79,6 +79,8 @@ class GenericScopedReadLock {
   void operator=(const GenericScopedReadLock&);
 };
 
+typedef GenericScopedLock<SpinMutex> SpinMutexLock;
+
 }  // namespace __sanitizer
 
 #endif  // SANITIZER_MUTEX_H

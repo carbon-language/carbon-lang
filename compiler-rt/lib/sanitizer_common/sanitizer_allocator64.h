@@ -20,6 +20,7 @@
 #include "sanitizer_common.h"
 #include "sanitizer_internal_defs.h"
 #include "sanitizer_libc.h"
+#include "sanitizer_mutex.h"
 
 namespace __sanitizer {
 
@@ -152,7 +153,7 @@ class SizeClassAllocator64 {
   };
 
   struct RegionInfo {
-    uptr mutex;  // FIXME
+    SpinMutex mutex;
     LifoListNode *free_list;
     uptr allocated_user;  // Bytes allocated for user memory.
     uptr allocated_meta;  // Bytes allocated for metadata.
@@ -216,7 +217,7 @@ class SizeClassAllocator64 {
   void *AllocateBySizeClass(uptr class_id) {
     CHECK_LT(class_id, kNumClasses);
     RegionInfo *region = GetRegionInfo(class_id);
-    // FIXME: Lock region->mutex;
+    SpinMutexLock l(&region->mutex);
     if (!region->free_list) {
       region->free_list = PopulateFreeList(class_id, region);
     }
@@ -227,7 +228,7 @@ class SizeClassAllocator64 {
 
   void DeallocateBySizeClass(void *p, uptr class_id) {
     RegionInfo *region = GetRegionInfo(class_id);
-    // FIXME: Lock region->mutex;
+    SpinMutexLock l(&region->mutex);
     PushLifoList(&region->free_list, reinterpret_cast<LifoListNode*>(p));
   }
 };
@@ -250,7 +251,7 @@ class LargeMmapAllocator {
     Header *h = GetHeader(res);
     h->size = size;
     {
-      // FIXME: lock
+      SpinMutexLock l(&mutex_);
       h->next = list_;
       h->prev = 0;
       if (list_)
@@ -264,7 +265,7 @@ class LargeMmapAllocator {
     Header *h = GetHeader(p);
     uptr map_size = RoundUpMapSize(h->size);
     {
-      // FIXME: lock
+      SpinMutexLock l(&mutex_);
       Header *prev = h->prev;
       Header *next = h->next;
       if (prev)
@@ -278,7 +279,7 @@ class LargeMmapAllocator {
   }
 
   uptr TotalMemoryUsed() {
-    // FIXME: lock
+    SpinMutexLock l(&mutex_);
     uptr res = 0;
     for (Header *l = list_; l; l = l->next) {
       res += RoundUpMapSize(l->size);
@@ -289,7 +290,7 @@ class LargeMmapAllocator {
   bool PointerIsMine(void *p) {
     // Fast check.
     if ((reinterpret_cast<uptr>(p) % kPageSize) != 0) return false;
-    // FIXME: lock
+    SpinMutexLock l(&mutex_);
     for (Header *l = list_; l; l = l->next) {
       if (GetUser(l) == p) return true;
     }
@@ -321,7 +322,7 @@ class LargeMmapAllocator {
   }
 
   Header *list_;
-  uptr lock_;  // FIXME
+  SpinMutex mutex_;
 };
 
 // This class implements a complete memory allocator by using two
