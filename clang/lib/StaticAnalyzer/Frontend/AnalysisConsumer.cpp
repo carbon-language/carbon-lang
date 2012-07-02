@@ -523,6 +523,10 @@ void AnalysisConsumer::ActionExprEngine(Decl *D, bool ObjCGCEnabled,
   if (!Mgr->getCFG(D))
     return;
 
+  // See if the LiveVariables analysis scales.
+  if (!Mgr->getAnalysisDeclContext(D)->getAnalysis<RelaxedLiveVariables>())
+    return;
+
   ExprEngine Eng(*Mgr, ObjCGCEnabled, VisitedCallees, &FunctionSummaries);
 
   // Set the graph auditor.

@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "clang/Analysis/Analyses/LiveVariables.h"
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ExprEngine.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/Calls.h"
@@ -242,6 +243,11 @@ bool ExprEngine::shouldInlineDecl(const Decl *D, ExplodedNode *Pred) {
   // Do not inline constructors until we can model destructors.
   // This is unfortunate, but basically necessary for smart pointers and such.
   if (isa<CXXConstructorDecl>(D))
+    return false;
+
+  // It is possible that the live variables analysis cannot be
+  // run.  If so, bail out.
+  if (!CalleeADC->getAnalysis<RelaxedLiveVariables>())
     return false;
 
   return true;

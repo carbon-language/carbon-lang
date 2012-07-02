@@ -486,6 +486,11 @@ LiveVariables::computeLiveness(AnalysisDeclContext &AC,
   if (!cfg)
     return 0;
 
+  // The analysis currently has scalability issues for very large CFGs.
+  // Bail out if it looks too large.
+  if (cfg->getNumBlockIDs() > 300000)
+    return 0;
+
   LiveVariablesImpl *LV = new LiveVariablesImpl(AC, killAtAssign);
 
   // Construct the dataflow worklist.  Enqueue the exit block as the
