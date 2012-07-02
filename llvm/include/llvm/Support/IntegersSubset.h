@@ -182,7 +182,12 @@ protected:
     IntType Low;
     IntType High;
     bool IsEmpty : 1;
-    bool IsSingleNumber : 1;
+    enum Type {
+      SINGLE_NUMBER,
+      RANGE,
+      UNKNOWN
+    };
+    Type RangeType;
 
 public:
     typedef IntRange<IntType> self;
@@ -191,15 +196,30 @@ public:
     IntRange() : IsEmpty(true) {}
     IntRange(const self &RHS) :
       Low(RHS.Low), High(RHS.High),
-      IsEmpty(RHS.IsEmpty), IsSingleNumber(RHS.IsSingleNumber) {}
+      IsEmpty(RHS.IsEmpty), RangeType(RHS.RangeType) {}
     IntRange(const IntType &C) :
-      Low(C), High(C), IsEmpty(false), IsSingleNumber(true) {}
+      Low(C), High(C), IsEmpty(false), RangeType(SINGLE_NUMBER) {}
 
     IntRange(const IntType &L, const IntType &H) : Low(L), High(H),
-      IsEmpty(false), IsSingleNumber(Low == High) {}
+      IsEmpty(false), RangeType(UNKNOWN) {}
 
     bool isEmpty() const { return IsEmpty; }
-    bool isSingleNumber() const { return IsSingleNumber; }
+    bool isSingleNumber() const {
+      switch (RangeType) {
+      case SINGLE_NUMBER:
+        return true;
+      case RANGE:
+        return false;
+      case UNKNOWN:
+      default:
+        if (Low == High) {
+          const_cast<Type&>(RangeType) = SINGLE_NUMBER;
+          return true;
+        }
+        const_cast<Type&>(RangeType) = RANGE;
+        return false;
+      }
+    }
 
     const IntType& getLow() const {
       assert(!IsEmpty && "Range is empty.");
@@ -213,13 +233,13 @@ public:
     bool operator<(const self &RHS) const {
       assert(!IsEmpty && "Left range is empty.");
       assert(!RHS.IsEmpty && "Right range is empty.");
+      if (Low < RHS.Low)
+        return true;
       if (Low == RHS.Low) {
         if (High > RHS.High)
           return true;
         return false;
       }
-      if (Low < RHS.Low)
-        return true;
       return false;
     }
 
@@ -512,7 +532,7 @@ public:
          e = Src.end(); i != e; ++i) {
       const Range &R = *i;
       std::vector<Constant*> r;
-      if (R.isSingleNumber()) {
+      if (!R.isSingleNumber()) {
         r.reserve(2);
         // FIXME: Since currently we have ConstantInt based numbers
         // use hack-conversion of IntItem to ConstantInt

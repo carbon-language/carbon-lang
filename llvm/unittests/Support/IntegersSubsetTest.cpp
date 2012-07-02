@@ -193,20 +193,20 @@ namespace {
       const unsigned_ranges IntersectRes,
       unsigned IntersectResSize
       ) {
-    
+    unsigned successors[2] = {0, 1};
     Mapping::RangesCollection Ranges;
     
     Mapping LHSMapping;
     for (unsigned i = 0; i < LSize; ++i)
       Ranges.push_back(Range(Int(LHS[i][0]), Int(LHS[i][1])));
-    LHSMapping.add(Ranges);
+    LHSMapping.add(Ranges, &successors[0]);
     
     Ranges.clear();
 
     Mapping RHSMapping;
     for (unsigned i = 0; i < RSize; ++i)
       Ranges.push_back(Range(Int(RHS[i][0]), Int(RHS[i][1])));
-    RHSMapping.add(Ranges);
+    RHSMapping.add(Ranges, &successors[1]);
     
     Mapping LExclude, Intersection;
     
@@ -217,8 +217,10 @@ namespace {
       
       unsigned i = 0;
       for (Mapping::RangeIterator rei = LExclude.begin(),
-           e = LExclude.end(); rei != e; ++rei, ++i)
+           e = LExclude.end(); rei != e; ++rei, ++i) {
         EXPECT_EQ(rei->first, Range(ExcludeRes[i][0], ExcludeRes[i][1]));
+        EXPECT_EQ(rei->second, &successors[0]);
+      }
     } else
       EXPECT_TRUE(LExclude.empty());
     
@@ -227,8 +229,10 @@ namespace {
       
       unsigned i = 0;
       for (Mapping::RangeIterator ii = Intersection.begin(),
-           e = Intersection.end(); ii != e; ++ii, ++i)
+           e = Intersection.end(); ii != e; ++ii, ++i) {
         EXPECT_EQ(ii->first, Range(IntersectRes[i][0], IntersectRes[i][1]));
+        EXPECT_EQ(ii->second, &successors[0]);
+      }
     } else
       EXPECT_TRUE(Intersection.empty());
 
@@ -241,9 +245,11 @@ namespace {
       EXPECT_EQ(LExclude.size(), ExcludeResSize);
       
       unsigned i = 0;
-      for (Mapping::RangeIterator rei = LExclude.begin(),
-           e = LExclude.end(); rei != e; ++rei, ++i)
-        EXPECT_EQ(rei->first, Range(ExcludeRes[i][0], ExcludeRes[i][1]));
+      for (Mapping::RangeIterator lei = LExclude.begin(),
+           e = LExclude.end(); lei != e; ++lei, ++i) {
+        EXPECT_EQ(lei->first, Range(ExcludeRes[i][0], ExcludeRes[i][1]));
+        EXPECT_EQ(lei->second, &successors[0]);
+      }
     } else
       EXPECT_TRUE(LExclude.empty());    
   }  

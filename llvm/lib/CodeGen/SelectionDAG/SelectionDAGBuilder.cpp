@@ -2450,22 +2450,23 @@ size_t SelectionDAGBuilder::Clusterify(CaseVector& Cases,
   size_t numCmps = 0;
   for (Clusterifier::RangeIterator i = TheClusterifier.begin(),
        e = TheClusterifier.end(); i != e; ++i, ++numCmps) {
-    Clusterifier::Cluster &C = *i;
+    const Clusterifier::RangeEx &R = i->first;
+    MachineBasicBlock *MBB = i->second;
     unsigned W = 0;
     if (BPI) {
-      W = BPI->getEdgeWeight(SI.getParent(), C.second->getBasicBlock());
+      W = BPI->getEdgeWeight(SI.getParent(), MBB->getBasicBlock());
       if (!W)
         W = 16;
-      W *= C.first.Weight;
-      BPI->setEdgeWeight(SI.getParent(), C.second->getBasicBlock(), W);  
+      W *= R.Weight;
+      BPI->setEdgeWeight(SI.getParent(), MBB->getBasicBlock(), W);  
     }
 
     // FIXME: Currently work with ConstantInt based numbers.
     // Changing it to APInt based is a pretty heavy for this commit.
-    Cases.push_back(Case(C.first.getLow().toConstantInt(),
-                         C.first.getHigh().toConstantInt(), C.second, W));
+    Cases.push_back(Case(R.getLow().toConstantInt(),
+                         R.getHigh().toConstantInt(), MBB, W));
     
-    if (C.first.getLow() != C.first.getHigh())
+    if (R.getLow() != R.getHigh())
     // A range counts double, since it requires two compares.
     ++numCmps;
   }

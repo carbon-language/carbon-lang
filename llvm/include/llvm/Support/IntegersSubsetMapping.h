@@ -58,22 +58,16 @@ public:
   
 protected:
 
-  typedef std::list<Cluster> CaseItems;
+  typedef std::map<RangeEx, SuccessorClass*> CaseItems;
   typedef typename CaseItems::iterator CaseItemIt;
   typedef typename CaseItems::const_iterator CaseItemConstIt;
   
   // TODO: Change unclean CRS prefixes to SubsetMap for example.
   typedef std::map<SuccessorClass*, RangesCollection > CRSMap;
   typedef typename CRSMap::iterator CRSMapIt;
-
-  struct ClustersCmp {
-    bool operator()(const Cluster &C1, const Cluster &C2) {
-      return C1.first < C2.first;
-    }
-  };
   
   CaseItems Items;
-  bool Sorted;
+  bool SingleNumbersOnly;
   
   bool isIntersected(CaseItemIt& LItem, CaseItemIt& RItem) {
     return LItem->first.getHigh() >= RItem->first.getLow();
@@ -89,18 +83,6 @@ protected:
     if (RLow != APInt::getNullValue(RLow.getBitWidth()))
       --RLow;
     return LItem->first.getHigh() >= RLow;
-  }
-  
-  void sort() {
-    if (!Sorted) {
-      std::vector<Cluster> clustersVector;
-      clustersVector.reserve(Items.size());
-      clustersVector.insert(clustersVector.begin(), Items.begin(), Items.end());
-      std::sort(clustersVector.begin(), clustersVector.end(), ClustersCmp());
-      Items.clear();
-      Items.insert(Items.begin(), clustersVector.begin(), clustersVector.end());
-      Sorted = true;
-    }
   }
   
   enum DiffProcessState {
@@ -213,7 +195,7 @@ protected:
       }
     }
     
-    void onRLOpen(const IntTy &Pt,
+    void onLROpen(const IntTy &Pt,
                   SuccessorClass *LS,
                   SuccessorClass *RS) {
       switch (State) {
@@ -229,7 +211,7 @@ protected:
       OpenPt = Pt;        
     }
     
-    void onRLClose(const IntTy &Pt) {
+    void onLRClose(const IntTy &Pt) {
       switch (State) {
       case INTERSECT_OPENED:
         if (IntersectionMapping)
@@ -245,6 +227,48 @@ protected:
     bool isLOpened() { return State == L_OPENED; }
     bool isROpened() { return State == R_OPENED; }
   };
+  
+  void diff_single_numbers(self *LExclude, self *Intersection, self *RExclude,
+                               const self& RHS) {
+    
+    CaseItemConstIt L = Items.begin(), R = RHS.Items.begin();
+    CaseItemConstIt el = Items.end(), er = RHS.Items.end();
+    while (L != el && R != er) {
+      const Cluster &LCluster = *L;
+      const RangeEx &LRange = LCluster.first;
+      const Cluster &RCluster = *R;
+      const RangeEx &RRange = RCluster.first;
+      
+      if (LRange.getLow() < RRange.getLow()) {
+        if (LExclude)
+          LExclude->add(LRange.getLow(), LCluster.second);
+        ++L;
+      } else if (LRange.getLow() > RRange.getLow()) {
+        if (RExclude)
+          RExclude->add(RRange.getLow(), RCluster.second);
+        ++R;
+      } else {
+        if (Intersection)
+          Intersection->add(LRange.getLow(), LCluster.second);
+        ++L;
+        ++R;
+      }
+    }
+    
+    if (L != Items.end()) {
+      if (LExclude)
+        do {
+            LExclude->add(L->first, L->second);
+            ++L;
+        } while (L != Items.end());
+    } else if (R != RHS.Items.end()) {
+      if (RExclude)
+        do {
+          RExclude->add(R->first, R->second);
+          ++R;
+        } while (R != RHS.Items.end());
+    }
+  }  
 
 public:
   
@@ -256,15 +280,18 @@ public:
   
   typedef std::pair<SuccessorClass*, IntegersSubsetTy> Case;
   typedef std::list<Case> Cases;
+  typedef typename Cases::iterator CasesIt;
   
-  IntegersSubsetMapping() {
-    Sorted = false;
+  IntegersSubsetMapping() : SingleNumbersOnly(true) {}
+  
+  bool verify() {
+    RangeIterator DummyErrItem;
+    return verify(DummyErrItem);
   }
   
   bool verify(RangeIterator& errItem) {
     if (Items.empty())
       return true;
-    sort();
     for (CaseItemIt j = Items.begin(), i = j++, e = Items.end();
          j != e; i = j++) {
       if (isIntersected(i, j) && i->second != j->second) {
@@ -275,10 +302,36 @@ public:
     return true;
   }
   
+  bool isOverlapped(self &RHS) {
+    if (Items.empty() || RHS.empty())
+      return true;
+    
+    for (CaseItemIt L = Items.begin(), R = RHS.Items.begin(),
+         el = Items.end(), er = RHS.Items.end(); L != el && R != er;) {
+      
+      const RangeTy &LRange = L->first;
+      const RangeTy &RRange = R->first;
+      
+      if (LRange.getLow() > RRange.getLow()) {
+        if (RRange.isSingleNumber() || LRange.getLow() > RRange.getHigh())
+          ++R;
+        else
+          return true;
+      } else if (LRange.getLow() < RRange.getLow()) {
+        if (LRange.isSingleNumber() || LRange.getHigh() < RRange.getLow())
+          ++L;
+        else
+          return true;
+      } else // iRange.getLow() == jRange.getLow() 
+        return true;
+    }
+    return false;
+  }
+   
+  
   void optimize() {
     if (Items.size() < 2)
       return;
-    sort();
     CaseItems OldItems = Items;
     Items.clear();
     const IntTy *Low = &OldItems.begin()->first.getLow();
@@ -303,8 +356,6 @@ public:
     }
     RangeEx R(*Low, *High, Weight);
     add(R, Successor);
-    // We recollected the Items, but we kept it sorted.
-    Sorted = true;
   }
   
   /// Adds a constant value.
@@ -323,8 +374,10 @@ public:
     add(REx, S);
   }   
   void add(const RangeEx &R, SuccessorClass *S = 0) {
-    Items.push_back(std::make_pair(R, S));
-    Sorted = false;
+    //Items.push_back(std::make_pair(R, S));
+    Items.insert(std::make_pair(R, S));
+    if (!R.isSingleNumber())
+      SingleNumbersOnly = false;
   }  
   
   /// Adds all ranges and values from given ranges set to the current
@@ -337,8 +390,16 @@ public:
   }
   
   void add(self& RHS) {
-    Items.insert(Items.end(), RHS.Items.begin(), RHS.Items.end());
+    //Items.insert(Items.begin(), RHS.Items.begin(), RHS.Items.end());
+    Items.insert(RHS.Items.begin(), RHS.Items.end());
+    if (!RHS.SingleNumbersOnly)
+      SingleNumbersOnly = false;
   }
+  
+  void add(self& RHS, SuccessorClass *S) {
+    for (CaseItemIt i = RHS.Items.begin(), e = RHS.Items.end(); i != e; ++i)
+      add(i->first, S);
+  }  
   
   void add(const RangesCollection& RHS, SuccessorClass *S = 0) {
     for (RangesCollectionConstIt i = RHS.begin(), e = RHS.end(); i != e; ++i)
@@ -348,6 +409,34 @@ public:
   /// Removes items from set.
   void removeItem(RangeIterator i) { Items.erase(i); }
   
+  /// Moves whole case from current mapping to the NewMapping object.
+  void detachCase(self& NewMapping, SuccessorClass *Succ) {
+    for (CaseItemIt i = Items.begin(); i != Items.end();)
+      if (i->second == Succ) {
+        NewMapping.add(i->first, i->second);
+        Items.erase(i++);
+      } else
+        ++i;
+  }
+  
+  /// Removes all clusters for given successor.
+  void removeCase(SuccessorClass *Succ) {
+    for (CaseItemIt i = Items.begin(); i != Items.end();)
+      if (i->second == Succ) {
+        Items.erase(i++);
+      } else
+        ++i;
+  }  
+  
+  /// Find successor that satisfies given value.
+  SuccessorClass *findSuccessor(const IntTy& Val) {
+    for (CaseItemIt i = Items.begin(); i != Items.end(); ++i) {
+      if (i->first.isInRange(Val))
+        return i->second;
+    }
+    return 0;
+  }  
+  
   /// Calculates the difference between this mapping and RHS.
   /// THIS without RHS is placed into LExclude,
   /// RHS without THIS is placed into RExclude,
@@ -355,10 +444,16 @@ public:
   void diff(self *LExclude, self *Intersection, self *RExclude,
                              const self& RHS) {
     
+    if (SingleNumbersOnly && RHS.SingleNumbersOnly) {
+      diff_single_numbers(LExclude, Intersection, RExclude, RHS);
+      return;
+    }
+    
     DiffStateMachine Machine(LExclude, Intersection, RExclude);
     
     CaseItemConstIt L = Items.begin(), R = RHS.Items.begin();
-    while (L != Items.end() && R != RHS.Items.end()) {
+    CaseItemConstIt el = Items.end(), er = RHS.Items.end();
+    while (L != el && R != er) {
       const Cluster &LCluster = *L;
       const RangeEx &LRange = LCluster.first;
       const Cluster &RCluster = *R;
@@ -377,7 +472,36 @@ public:
         ++R;
         continue;
       }
+
+      if (LRange.isSingleNumber() && RRange.isSingleNumber()) {
+        Machine.onLROpen(LRange.getLow(), LCluster.second, RCluster.second);
+        Machine.onLRClose(LRange.getLow());
+        ++L;
+        ++R;
+        continue;
+      }
       
+      if (LRange.isSingleNumber()) {
+        Machine.onLOpen(LRange.getLow(), LCluster.second);
+        Machine.onLClose(LRange.getLow());
+        ++L;
+        while(L != Items.end() && L->first.getHigh() < RRange.getHigh()) {
+          Machine.onLOpen(LRange.getLow(), LCluster.second);
+          Machine.onLClose(LRange.getLow());
+          ++L;
+        }
+        continue;
+      } else if (RRange.isSingleNumber()) {
+        Machine.onROpen(R->first.getLow(), R->second);
+        Machine.onRClose(R->first.getHigh());
+        ++R;
+        while(R != RHS.Items.end() && R->first.getHigh() < LRange.getHigh()) {
+          Machine.onROpen(R->first.getLow(), R->second);
+          Machine.onRClose(R->first.getHigh());
+          ++R;
+        }
+        continue;
+      } else
       if (LRange.getLow() < RRange.getLow()) {
         // May be opened in previous iteration.
         if (!Machine.isLOpened())
@@ -390,7 +514,7 @@ public:
         Machine.onLOpen(LRange.getLow(), LCluster.second);
       }
       else
-        Machine.onRLOpen(LRange.getLow(), LCluster.second, RCluster.second);
+        Machine.onLROpen(LRange.getLow(), LCluster.second, RCluster.second);
       
       if (LRange.getHigh() < RRange.getHigh()) {
         Machine.onLClose(LRange.getHigh());
@@ -411,7 +535,7 @@ public:
         }
       }
       else {
-        Machine.onRLClose(LRange.getHigh());
+        Machine.onLRClose(LRange.getHigh());
         ++L;
         ++R;
       }
@@ -441,7 +565,20 @@ public:
   }  
   
   /// Builds the finalized case objects.
-  void getCases(Cases& TheCases) {
+  void getCases(Cases& TheCases, bool PreventMerging = false) {
+    //FIXME: PreventMerging is a temporary parameter.
+    //Currently a set of passes is still knows nothing about
+    //switches with case ranges, and if these passes meet switch
+    //with complex case that crashs the application.
+    if (PreventMerging) {
+      for (RangeIterator i = this->begin(); i != this->end(); ++i) {
+        RangesCollection SingleRange;
+        SingleRange.push_back(i->first);
+        TheCases.push_back(std::make_pair(i->second,
+                                          IntegersSubsetTy(SingleRange)));
+      }
+      return;
+    }
     CRSMap TheCRSMap;
     for (RangeIterator i = this->begin(); i != this->end(); ++i)
       TheCRSMap[i->second].push_back(i->first);
@@ -456,6 +593,22 @@ public:
     for (RangeIterator i = this->begin(); i != this->end(); ++i)
       Ranges.push_back(i->first);
     return IntegersSubsetTy(Ranges);
+  }  
+  
+  /// Returns pointer to value of case if it is single-numbered or 0
+  /// in another case.
+  const IntTy* getCaseSingleNumber(SuccessorClass *Succ) {
+    const IntTy* Res = 0;
+    for (CaseItemIt i = Items.begin(); i != Items.end(); ++i)
+      if (i->second == Succ) {
+        if (!i->first.isSingleNumber())
+          return 0;
+        if (Res)
+          return 0;
+        else 
+          Res = &(i->first.getLow());
+      }
+    return Res;
   }  
   
   /// Returns true if there is no ranges and values inside.
