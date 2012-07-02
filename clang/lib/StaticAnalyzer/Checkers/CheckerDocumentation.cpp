@@ -76,10 +76,10 @@ public:
   void checkPostStmt(const CallExpr *DS, CheckerContext &C) const;
 
   /// \brief Pre-visit the Objective C messages.
-  void checkPreObjCMessage(const ObjCMessage &Msg, CheckerContext &C) const {}
+  void checkPreObjCMessage(const ObjCMethodCall &M, CheckerContext &C) const {}
 
   /// \brief Post-visit the Objective C messages.
-  void checkPostObjCMessage(const ObjCMessage &Msg, CheckerContext &C) const {}
+  void checkPostObjCMessage(const ObjCMethodCall &M, CheckerContext &C) const {}
 
   /// \brief Pre-visit of the condition statement of a branch (such as IfStmt).
   void checkBranchCondition(const Stmt *Condition, CheckerContext &Ctx) const {}

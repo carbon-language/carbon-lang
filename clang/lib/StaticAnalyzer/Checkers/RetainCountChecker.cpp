@@ -27,7 +27,6 @@
 #include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ProgramStateTrait.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/SymbolManager.h"
-#include "clang/StaticAnalyzer/Core/PathSensitive/ObjCMessage.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/ImmutableList.h"
@@ -2530,7 +2529,7 @@ public:
   void checkPostStmt(const ObjCDictionaryLiteral *DL, CheckerContext &C) const;
   void checkPostStmt(const ObjCBoxedExpr *BE, CheckerContext &C) const;
 
-  void checkPostObjCMessage(const ObjCMessage &Msg, CheckerContext &C) const;
+  void checkPostObjCMessage(const ObjCMethodCall &Msg, CheckerContext &C) const;
                       
   void checkSummary(const RetainSummary &Summ, const CallEvent &Call,
                     CheckerContext &C) const;
@@ -2792,17 +2791,12 @@ void RetainCountChecker::checkPostStmt(const ObjCBoxedExpr *Ex,
   C.addTransition(State);
 }
 
-void RetainCountChecker::checkPostObjCMessage(const ObjCMessage &Msg, 
+void RetainCountChecker::checkPostObjCMessage(const ObjCMethodCall &Msg,
                                               CheckerContext &C) const {
-  ProgramStateRef state = C.getState();
-  const LocationContext *LC = C.getLocationContext();
-  // FIXME: ObjCMessage is going away.
-  ObjCMessageSend Call(Msg.getMessageExpr(), state, LC);
-
   RetainSummaryManager &Summaries = getSummaryManager(C);
-  const RetainSummary *Summ = Summaries.getSummary(Call, state);
+  const RetainSummary *Summ = Summaries.getSummary(Msg, C.getState());
 
-  checkSummary(*Summ, Call, C);
+  checkSummary(*Summ, Msg, C);
 }
 
 /// GetReturnType - Used to get the return type of a message expression or

@@ -20,8 +20,7 @@
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/ExprObjC.h"
-#include "clang/StaticAnalyzer/Core/PathSensitive/ObjCMessage.h"
-#include "clang/StaticAnalyzer/Core/PathSensitive/ProgramState_Fwd.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/ProgramState.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/SVals.h"
 
 namespace clang {
@@ -113,6 +112,10 @@ public:
 
   /// \brief Returns the kind of call this is.
   Kind getKind() const { return K; }
+
+  /// \brief Returns a source range for the entire call, suitable for
+  /// outputting in diagnostics.
+  virtual SourceRange getSourceRange() const = 0;
 
   /// \brief Returns the value of a given argument at the time of the call.
   virtual SVal getArgSVal(unsigned Index) const;
@@ -213,6 +216,7 @@ public:
   const FunctionDecl *getDecl() const;
 
   unsigned getNumArgs() const { return CE->getNumArgs(); }
+  SourceRange getSourceRange() const { return CE->getSourceRange(); }
   
   const Expr *getArgExpr(unsigned Index) const {
     return CE->getArg(Index);
@@ -305,6 +309,7 @@ public:
     : AnyFunctionCall(St, LCtx, CE_CXXConstructor), CE(ce), Target(target) {}
 
   const CXXConstructExpr *getOriginExpr() const { return CE; }
+  SourceRange getSourceRange() const { return CE->getSourceRange(); }
 
   const CXXConstructorDecl *getDecl() const {
     return CE->getConstructor();
@@ -341,7 +346,9 @@ public:
   Selector getSelector() const { return Msg->getSelector(); }
   bool isInstanceMessage() const { return Msg->isInstanceMessage(); }
   ObjCMethodFamily getMethodFamily() const { return Msg->getMethodFamily(); }
+
   const ObjCMethodDecl *getDecl() const { return Msg->getMethodDecl(); }
+  SourceRange getSourceRange() const { return Msg->getSourceRange(); }
   unsigned getNumArgs() const { return Msg->getNumArgs(); }
   const Expr *getArgExpr(unsigned Index) const {
     return Msg->getArg(Index);
@@ -351,17 +358,16 @@ public:
 
   SVal getReceiverSVal() const;
 
+  const Expr *getInstanceReceiverExpr() const {
+    return Msg->getInstanceReceiver();
+  }
+
   const ObjCInterfaceDecl *getReceiverInterface() const {
     return Msg->getReceiverInterface();
   }
 
   SourceRange getReceiverSourceRange() const {
     return Msg->getReceiverRange();
-  }
-
-  // FIXME: Remove this once everything is converted to use ObjCMethodCall.
-  virtual operator ObjCMessage() const {
-    return ObjCMessage(Msg);
   }
 
   static bool classof(const CallEvent *CA) {
@@ -389,20 +395,23 @@ public:
 /// Example: obj.prop += 1;
 class ObjCPropertyAccess : public ObjCMethodCall {
   const ObjCPropertyRefExpr *PropE;
+  SourceRange EntireRange;
 
 public:
-  ObjCPropertyAccess(const ObjCPropertyRefExpr *pe, const ObjCMessageExpr *Msg,
-                     const ProgramStateRef St, const LocationContext *LCtx)
-    : ObjCMethodCall(Msg, St, LCtx, CE_ObjCPropertyAccess), PropE(pe) {}
+  ObjCPropertyAccess(const ObjCPropertyRefExpr *pe, SourceRange range,
+                     const ObjCMessageExpr *Msg, const ProgramStateRef St,
+                     const LocationContext *LCtx)
+    : ObjCMethodCall(Msg, St, LCtx, CE_ObjCPropertyAccess), PropE(pe),
+      EntireRange(range)
+    {}
 
   /// \brief Returns true if this property access is calling the setter method.
   bool isSetter() const {
     return getNumArgs() > 0;
   }
 
-  // FIXME: Remove this once everything is converted to use ObjCMethodCall.
-  operator ObjCMessage() const {
-    return ObjCMessage(getOriginExpr(), PropE, isSetter());
+  SourceRange getSourceRange() const {
+    return EntireRange;
   }
 
   static bool classof(const CallEvent *CA) {

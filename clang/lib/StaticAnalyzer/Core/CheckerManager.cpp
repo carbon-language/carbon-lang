@@ -14,7 +14,7 @@
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
 #include "clang/StaticAnalyzer/Core/Checker.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
-#include "clang/StaticAnalyzer/Core/PathSensitive/ObjCMessage.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/Calls.h"
 #include "clang/Analysis/ProgramPoint.h"
 #include "clang/AST/DeclBase.h"
 
@@ -178,14 +178,14 @@ namespace {
     typedef std::vector<CheckerManager::CheckObjCMessageFunc> CheckersTy;
     bool IsPreVisit;
     const CheckersTy &Checkers;
-    const ObjCMessage &Msg;
+    const ObjCMethodCall &Msg;
     ExprEngine &Eng;
 
     CheckersTy::const_iterator checkers_begin() { return Checkers.begin(); }
     CheckersTy::const_iterator checkers_end() { return Checkers.end(); }
 
     CheckObjCMessageContext(bool isPreVisit, const CheckersTy &checkers,
-                            const ObjCMessage &msg, ExprEngine &eng)
+                            const ObjCMethodCall &msg, ExprEngine &eng)
       : IsPreVisit(isPreVisit), Checkers(checkers), Msg(msg), Eng(eng) { }
 
     void runChecker(CheckerManager::CheckObjCMessageFunc checkFn,
@@ -193,7 +193,7 @@ namespace {
       ProgramPoint::Kind K =  IsPreVisit ? ProgramPoint::PreStmtKind :
                                            ProgramPoint::PostStmtKind;
       const ProgramPoint &L =
-        ProgramPoint::getProgramPoint(Msg.getMessageExpr(),
+        ProgramPoint::getProgramPoint(Msg.getOriginExpr(),
                                       K, Pred->getLocationContext(),
                                       checkFn.Checker);
       CheckerContext C(Bldr, Eng, Pred, L);
@@ -207,7 +207,7 @@ namespace {
 void CheckerManager::runCheckersForObjCMessage(bool isPreVisit,
                                                ExplodedNodeSet &Dst,
                                                const ExplodedNodeSet &Src,
-                                               const ObjCMessage &msg,
+                                               const ObjCMethodCall &msg,
                                                ExprEngine &Eng) {
   CheckObjCMessageContext C(isPreVisit,
                             isPreVisit ? PreObjCMessageCheckers

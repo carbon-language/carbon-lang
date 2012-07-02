@@ -15,8 +15,8 @@
 #include "ClangSACheckers.h"
 #include "clang/StaticAnalyzer/Core/Checker.h"
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/Calls.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
-#include "clang/StaticAnalyzer/Core/PathSensitive/ObjCMessage.h"
 #include "llvm/ADT/StringSwitch.h"
 #include <cstdarg>
 
@@ -29,7 +29,7 @@ class NoReturnFunctionChecker : public Checker< check::PostStmt<CallExpr>,
                                                 check::PostObjCMessage > {
 public:
   void checkPostStmt(const CallExpr *CE, CheckerContext &C) const;
-  void checkPostObjCMessage(const ObjCMessage &msg, CheckerContext &C) const;
+  void checkPostObjCMessage(const ObjCMethodCall &msg, CheckerContext &C) const;
 };
 
 }
@@ -98,7 +98,7 @@ static bool END_WITH_NULL isMultiArgSelector(const Selector *Sel, ...) {
   return (Arg == NULL);
 }
 
-void NoReturnFunctionChecker::checkPostObjCMessage(const ObjCMessage &Msg,
+void NoReturnFunctionChecker::checkPostObjCMessage(const ObjCMethodCall &Msg,
                                                    CheckerContext &C) const {
   // HACK: This entire check is to handle two messages in the Cocoa frameworks:
   // -[NSAssertionHandler

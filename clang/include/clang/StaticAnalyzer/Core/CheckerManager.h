@@ -33,7 +33,7 @@ namespace ento {
   class AnalysisManager;
   class BugReporter;
   class CheckerContext;
-  class ObjCMessage;
+  class ObjCMethodCall;
   class SVal;
   class ExplodedNode;
   class ExplodedNodeSet;
@@ -207,7 +207,7 @@ public:
   /// \brief Run checkers for pre-visiting obj-c messages.
   void runCheckersForPreObjCMessage(ExplodedNodeSet &Dst,
                                     const ExplodedNodeSet &Src,
-                                    const ObjCMessage &msg,
+                                    const ObjCMethodCall &msg,
                                     ExprEngine &Eng) {
     runCheckersForObjCMessage(/*isPreVisit=*/true, Dst, Src, msg, Eng);
   }
@@ -215,7 +215,7 @@ public:
   /// \brief Run checkers for post-visiting obj-c messages.
   void runCheckersForPostObjCMessage(ExplodedNodeSet &Dst,
                                      const ExplodedNodeSet &Src,
-                                     const ObjCMessage &msg,
+                                     const ObjCMethodCall &msg,
                                      ExprEngine &Eng) {
     runCheckersForObjCMessage(/*isPreVisit=*/false, Dst, Src, msg, Eng);
   }
@@ -224,7 +224,7 @@ public:
   void runCheckersForObjCMessage(bool isPreVisit,
                                  ExplodedNodeSet &Dst,
                                  const ExplodedNodeSet &Src,
-                                 const ObjCMessage &msg, ExprEngine &Eng);
+                                 const ObjCMethodCall &msg, ExprEngine &Eng);
 
   /// \brief Run checkers for load/store of a location.
   void runCheckersForLocation(ExplodedNodeSet &Dst,
@@ -343,7 +343,7 @@ public:
 
   typedef CheckerFn<void (const Stmt *, CheckerContext &)> CheckStmtFunc;
   
-  typedef CheckerFn<void (const ObjCMessage &, CheckerContext &)>
+  typedef CheckerFn<void (const ObjCMethodCall &, CheckerContext &)>
       CheckObjCMessageFunc;
   
   typedef CheckerFn<void (const SVal &location, bool isLoad,

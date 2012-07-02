@@ -122,7 +122,7 @@ public:
 
 class PreObjCMessage {
   template <typename CHECKER>
-  static void _checkObjCMessage(void *checker, const ObjCMessage &msg,
+  static void _checkObjCMessage(void *checker, const ObjCMethodCall &msg,
                                 CheckerContext &C) {
     ((const CHECKER *)checker)->checkPreObjCMessage(msg, C);
   }
@@ -137,7 +137,7 @@ public:
 
 class PostObjCMessage {
   template <typename CHECKER>
-  static void _checkObjCMessage(void *checker, const ObjCMessage &msg,
+  static void _checkObjCMessage(void *checker, const ObjCMethodCall &msg,
                                 CheckerContext &C) {
     ((const CHECKER *)checker)->checkPostObjCMessage(msg, C);
   }

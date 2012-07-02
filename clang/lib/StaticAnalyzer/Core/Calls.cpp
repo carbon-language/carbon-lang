@@ -14,8 +14,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/StaticAnalyzer/Core/PathSensitive/Calls.h"
-#include "clang/StaticAnalyzer/Core/PathSensitive/ObjCMessage.h"
 #include "llvm/ADT/SmallSet.h"
+#include "llvm/ADT/StringExtras.h"
 
 using namespace clang;
 using namespace ento;

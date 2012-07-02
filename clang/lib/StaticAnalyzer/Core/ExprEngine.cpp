@@ -20,7 +20,6 @@
 #include "clang/StaticAnalyzer/Core/PathSensitive/AnalysisManager.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/Calls.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ExprEngine.h"
-#include "clang/StaticAnalyzer/Core/PathSensitive/ObjCMessage.h"
 #include "clang/AST/CharUnits.h"
 #include "clang/AST/ParentMap.h"
 #include "clang/AST/StmtObjC.h"
@@ -884,7 +883,8 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
 
         if (const ObjCPropertyRefExpr *PR =
               dyn_cast<ObjCPropertyRefExpr>(syntactic)) {
-          VisitObjCMessage(ObjCPropertyAccess(PR, ME, Pred->getState(), LCtx),
+          VisitObjCMessage(ObjCPropertyAccess(PR, PO->getSourceRange(), ME,
+                                              Pred->getState(), LCtx),
                            Pred, Dst);
           evaluated = true;
         }

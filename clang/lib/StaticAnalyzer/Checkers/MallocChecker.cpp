@@ -124,7 +124,7 @@ public:
 
   void checkPreStmt(const CallExpr *S, CheckerContext &C) const;
   void checkPostStmt(const CallExpr *CE, CheckerContext &C) const;
-  void checkPreObjCMessage(const ObjCMessage &Msg, CheckerContext &C) const;
+  void checkPreObjCMessage(const ObjCMethodCall &Call, CheckerContext &C) const;
   void checkPostStmt(const BlockExpr *BE, CheckerContext &C) const;
   void checkDeadSymbols(SymbolReaper &SymReaper, CheckerContext &C) const;
   void checkEndPath(CheckerContext &C) const;
@@ -491,29 +491,21 @@ static bool isFreeWhenDoneSetToZero(const ObjCMethodCall &Call) {
   return false;
 }
 
-void MallocChecker::checkPreObjCMessage(const ObjCMessage &Msg,
+void MallocChecker::checkPreObjCMessage(const ObjCMethodCall &Call,
                                         CheckerContext &C) const {
-  const ObjCMethodDecl *MD = Msg.getMethodDecl();
-  if (!MD)
-    return;
-
-  // FIXME: ObjCMessage is going away soon.
-  ObjCMessageSend Call(Msg.getMessageExpr(), C.getState(),
-                       C.getLocationContext());
-  Selector S = Msg.getSelector();
-
   // If the first selector is dataWithBytesNoCopy, assume that the memory will
   // be released with 'free' by the new object.
   // Ex:  [NSData dataWithBytesNoCopy:bytes length:10];
   // Unless 'freeWhenDone' param set to 0.
   // TODO: Check that the memory was allocated with malloc.
+  Selector S = Call.getSelector();
   if ((S.getNameForSlot(0) == "dataWithBytesNoCopy" ||
        S.getNameForSlot(0) == "initWithBytesNoCopy" ||
        S.getNameForSlot(0) == "initWithCharactersNoCopy") &&
       !isFreeWhenDoneSetToZero(Call)){
     unsigned int argIdx  = 0;
     C.addTransition(FreeMemAux(C, Call.getArgExpr(argIdx),
-                    Msg.getMessageExpr(), C.getState(), true));
+                    Call.getOriginExpr(), C.getState(), true));
   }
 }
 

@@ -17,10 +17,10 @@
 #include "clang/Analysis/DomainSpecific/CocoaConventions.h"
 #include "clang/StaticAnalyzer/Core/Checker.h"
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/Calls.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ExplodedGraph.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ExprEngine.h"
-#include "clang/StaticAnalyzer/Core/PathSensitive/ObjCMessage.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ProgramState.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/MemRegion.h"
@@ -46,10 +46,10 @@ public:
 // Utility functions.
 //===----------------------------------------------------------------------===//
 
-static const char* GetReceiverNameType(const ObjCMessage &msg) {
+static StringRef GetReceiverInterfaceName(const ObjCMethodCall &msg) {
   if (const ObjCInterfaceDecl *ID = msg.getReceiverInterface())
-    return ID->getIdentifier()->getNameStart();
-  return 0;
+    return ID->getIdentifier()->getName();
+  return StringRef();
 }
 
 enum FoundationClass {
@@ -95,15 +95,15 @@ namespace {
     mutable OwningPtr<APIMisuse> BT;
 
     void WarnNilArg(CheckerContext &C,
-                    const ObjCMessage &msg, unsigned Arg) const;
+                    const ObjCMethodCall &msg, unsigned Arg) const;
 
   public:
-    void checkPreObjCMessage(ObjCMessage msg, CheckerContext &C) const;
+    void checkPreObjCMessage(const ObjCMethodCall &M, CheckerContext &C) const;
   };
 }
 
 void NilArgChecker::WarnNilArg(CheckerContext &C,
-                               const ObjCMessage &msg,
+                               const ObjCMethodCall &msg,
                                unsigned int Arg) const
 {
   if (!BT)
@@ -112,7 +112,7 @@ void NilArgChecker::WarnNilArg(CheckerContext &C,
   if (ExplodedNode *N = C.generateSink()) {
     SmallString<128> sbuf;
     llvm::raw_svector_ostream os(sbuf);
-    os << "Argument to '" << GetReceiverNameType(msg) << "' method '"
+    os << "Argument to '" << GetReceiverInterfaceName(msg) << "' method '"
        << msg.getSelector().getAsString() << "' cannot be nil";
 
     BugReport *R = new BugReport(*BT, os.str(), N);
@@ -121,7 +121,7 @@ void NilArgChecker::WarnNilArg(CheckerContext &C,
   }
 }
 
-void NilArgChecker::checkPreObjCMessage(ObjCMessage msg,
+void NilArgChecker::checkPreObjCMessage(const ObjCMethodCall &msg,
                                         CheckerContext &C) const {
   const ObjCInterfaceDecl *ID = msg.getReceiverInterface();
   if (!ID)
@@ -151,7 +151,7 @@ void NilArgChecker::checkPreObjCMessage(ObjCMessage msg,
         Name == "compare:options:range:locale:" ||
         Name == "componentsSeparatedByCharactersInSet:" ||
         Name == "initWithFormat:") {
-      if (isNil(msg.getArgSVal(0, C.getLocationContext(), C.getState())))
+      if (isNil(msg.getArgSVal(0)))
         WarnNilArg(C, msg, 0);
     }
   }
@@ -455,11 +455,11 @@ class ClassReleaseChecker : public Checker<check::PreObjCMessage> {
   mutable OwningPtr<BugType> BT;
 
 public:
-  void checkPreObjCMessage(ObjCMessage msg, CheckerContext &C) const;
+  void checkPreObjCMessage(const ObjCMethodCall &msg, CheckerContext &C) const;
 };
 }
 
-void ClassReleaseChecker::checkPreObjCMessage(ObjCMessage msg,
+void ClassReleaseChecker::checkPreObjCMessage(const ObjCMethodCall &msg,
                                               CheckerContext &C) const {
   
   if (!BT) {
@@ -511,18 +511,18 @@ class VariadicMethodTypeChecker : public Checker<check::PreObjCMessage> {
   mutable Selector initWithObjectsAndKeysS;
   mutable OwningPtr<BugType> BT;
 
-  bool isVariadicMessage(const ObjCMessage &msg) const;
+  bool isVariadicMessage(const ObjCMethodCall &msg) const;
 
 public:
-  void checkPreObjCMessage(ObjCMessage msg, CheckerContext &C) const;
+  void checkPreObjCMessage(const ObjCMethodCall &msg, CheckerContext &C) const;
 };
 }
 
 /// isVariadicMessage - Returns whether the given message is a variadic message,
 /// where all arguments must be Objective-C types.
 bool
-VariadicMethodTypeChecker::isVariadicMessage(const ObjCMessage &msg) const {
-  const ObjCMethodDecl *MD = msg.getMethodDecl();
+VariadicMethodTypeChecker::isVariadicMessage(const ObjCMethodCall &msg) const {
+  const ObjCMethodDecl *MD = msg.getDecl();
   
   if (!MD || !MD->isVariadic() || isa<ObjCProtocolDecl>(MD->getDeclContext()))
     return false;
@@ -566,7 +566,7 @@ VariadicMethodTypeChecker::isVariadicMessage(const ObjCMessage &msg) const {
   }
 }
 
-void VariadicMethodTypeChecker::checkPreObjCMessage(ObjCMessage msg,
+void VariadicMethodTypeChecker::checkPreObjCMessage(const ObjCMethodCall &msg,
                                                     CheckerContext &C) const {
   if (!BT) {
     BT.reset(new APIMisuse("Arguments passed to variadic method aren't all "
@@ -602,7 +602,7 @@ void VariadicMethodTypeChecker::checkPreObjCMessage(ObjCMessage msg,
   ProgramStateRef state = C.getState();
   
   for (unsigned I = variadicArgsBegin; I != variadicArgsEnd; ++I) {
-    QualType ArgTy = msg.getArgType(I);
+    QualType ArgTy = msg.getArgExpr(I)->getType();
     if (ArgTy->isObjCObjectPointerType())
       continue;
 
@@ -611,8 +611,7 @@ void VariadicMethodTypeChecker::checkPreObjCMessage(ObjCMessage msg,
       continue;
 
     // Ignore pointer constants.
-    if (isa<loc::ConcreteInt>(msg.getArgSVal(I, C.getLocationContext(),
-                                             state)))
+    if (isa<loc::ConcreteInt>(msg.getArgSVal(I)))
       continue;
     
     // Ignore pointer types annotated with 'NSObject' attribute.
@@ -624,9 +623,8 @@ void VariadicMethodTypeChecker::checkPreObjCMessage(ObjCMessage msg,
       continue;
 
     // Generate only one error node to use for all bug reports.
-    if (!errorNode.hasValue()) {
+    if (!errorNode.hasValue())
       errorNode = C.addTransition();
-    }
 
     if (!errorNode.getValue())
       continue;
@@ -634,17 +632,18 @@ void VariadicMethodTypeChecker::checkPreObjCMessage(ObjCMessage msg,
     SmallString<128> sbuf;
     llvm::raw_svector_ostream os(sbuf);
 
-    if (const char *TypeName = GetReceiverNameType(msg))
+    StringRef TypeName = GetReceiverInterfaceName(msg);
+    if (!TypeName.empty())
       os << "Argument to '" << TypeName << "' method '";
     else
       os << "Argument to method '";
 
     os << msg.getSelector().getAsString() 
-      << "' should be an Objective-C pointer type, not '" 
-      << ArgTy.getAsString() << "'";
+       << "' should be an Objective-C pointer type, not '";
+    ArgTy.print(os, C.getLangOpts());
+    os << "'";
 
-    BugReport *R = new BugReport(*BT, os.str(),
-                                             errorNode.getValue());
+    BugReport *R = new BugReport(*BT, os.str(), errorNode.getValue());
     R->addRange(msg.getArgSourceRange(I));
     C.EmitReport(R);
   }
