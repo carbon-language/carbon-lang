@@ -168,6 +168,7 @@ namespace clang {
 namespace sema {
   class AccessedEntity;
   class BlockScopeInfo;
+  class CapturingScopeInfo;
   class CompoundScopeInfo;
   class DelayedDiagnostic;
   class DelayedDiagnosticPool;
@@ -4016,6 +4017,10 @@ public:
   
   /// \brief Introduce the lambda parameters into scope.
   void addLambdaParameters(CXXMethodDecl *CallOperator, Scope *CurScope);
+
+  /// \brief Deduce a block or lambda's return type based on the return
+  /// statements present in the body.
+  void deduceClosureReturnType(sema::CapturingScopeInfo &CSI);
   
   /// ActOnStartOfLambdaDefinition - This is called just before we start
   /// parsing the body of a lambda; it analyzes the explicit captures and 

@@ -9350,7 +9350,10 @@ ExprResult Sema::ActOnBlockStmtExpr(SourceLocation CaretLoc,
   PopExpressionEvaluationContext();
 
   BlockScopeInfo *BSI = cast<BlockScopeInfo>(FunctionScopes.back());
-  
+
+  if (BSI->HasImplicitReturnType)
+    deduceClosureReturnType(*BSI);
+
   PopDeclContext();
 
   QualType RetTy = Context.VoidTy;
@@ -9423,7 +9426,12 @@ ExprResult Sema::ActOnBlockStmtExpr(SourceLocation CaretLoc,
 
   BSI->TheDecl->setBody(cast<CompoundStmt>(Body));
 
-  computeNRVO(Body, getCurBlock());
+  // Try to apply the named return value optimization. We have to check again
+  // if we can do this, though, because blocks keep return statements around
+  // to deduce an implicit return type.
+  if (getLangOpts().CPlusPlus && RetTy->isRecordType() &&
+      !BSI->TheDecl->isDependentContext())
+    computeNRVO(Body, getCurBlock());
   
   BlockExpr *Result = new (Context) BlockExpr(BSI->TheDecl, BlockTy);
   const AnalysisBasedWarnings::Policy &WP = AnalysisWarnings.getDefaultPolicy();

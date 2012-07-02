@@ -214,6 +214,141 @@ void Sema::addLambdaParameters(CXXMethodDecl *CallOperator, Scope *CurScope) {
   }
 }
 
+static bool checkReturnValueType(const ASTContext &Ctx, const Expr *E,
+                                 QualType &DeducedType,
+                                 QualType &AlternateType) {
+  // Handle ReturnStmts with no expressions.
+  if (!E) {
+    if (AlternateType.isNull())
+      AlternateType = Ctx.VoidTy;
+
+    return Ctx.hasSameType(DeducedType, Ctx.VoidTy);
+  }
+
+  QualType StrictType = E->getType();
+  QualType LooseType = StrictType;
+
+  // In C, enum constants have the type of their underlying integer type,
+  // not the enum. When inferring block return types, we should allow
+  // the enum type if an enum constant is used, unless the enum is
+  // anonymous (in which case there can be no variables of its type).
+  if (!Ctx.getLangOpts().CPlusPlus) {
+    const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E->IgnoreParenImpCasts());
+    if (DRE) {
+      const Decl *D = DRE->getDecl();
+      if (const EnumConstantDecl *ECD = dyn_cast<EnumConstantDecl>(D)) {
+        const EnumDecl *Enum = cast<EnumDecl>(ECD->getDeclContext());
+        if (Enum->getDeclName() || Enum->getTypedefNameForAnonDecl())
+          LooseType = Ctx.getTypeDeclType(Enum);
+      }
+    }
+  }
+
+  // Special case for the first return statement we find.
+  // The return type has already been tentatively set, but we might still
+  // have an alternate type we should prefer.
+  if (AlternateType.isNull())
+    AlternateType = LooseType;
+
+  if (Ctx.hasSameType(DeducedType, StrictType)) {
+    // FIXME: The loose type is different when there are constants from two
+    // different enums. We could consider warning here.
+    if (AlternateType != Ctx.DependentTy)
+      if (!Ctx.hasSameType(AlternateType, LooseType))
+        AlternateType = Ctx.VoidTy;
+    return true;
+  }
+
+  if (Ctx.hasSameType(DeducedType, LooseType)) {
+    // Use DependentTy to signal that we're using an alternate type and may
+    // need to add casts somewhere.
+    AlternateType = Ctx.DependentTy;
+    return true;
+  }
+
+  if (Ctx.hasSameType(AlternateType, StrictType) ||
+      Ctx.hasSameType(AlternateType, LooseType)) {
+    DeducedType = AlternateType;
+    // Use DependentTy to signal that we're using an alternate type and may
+    // need to add casts somewhere.
+    AlternateType = Ctx.DependentTy;
+    return true;
+  }
+
+  return false;
+}
+
+void Sema::deduceClosureReturnType(CapturingScopeInfo &CSI) {
+  assert(CSI.HasImplicitReturnType);
+
+  // First case: no return statements, implicit void return type.
+  ASTContext &Ctx = getASTContext();
+  if (CSI.Returns.empty()) {
+    // It's possible there were simply no /valid/ return statements.
+    // In this case, the first one we found may have at least given us a type.
+    if (CSI.ReturnType.isNull())
+      CSI.ReturnType = Ctx.VoidTy;
+    return;
+  }
+
+  // Second case: at least one return statement has dependent type.
+  // Delay type checking until instantiation.
+  assert(!CSI.ReturnType.isNull() && "We should have a tentative return type.");
+  if (CSI.ReturnType->isDependentType())
+    return;
+
+  // Third case: only one return statement. Don't bother doing extra work!
+  SmallVectorImpl<ReturnStmt*>::iterator I = CSI.Returns.begin(),
+                                         E = CSI.Returns.end();
+  if (I+1 == E)
+    return;
+
+  // General case: many return statements.
+  // Check that they all have compatible return types.
+  // For now, that means "identical", with an exception for enum constants.
+  // (In C, enum constants have the type of their underlying integer type,
+  // not the type of the enum. C++ uses the type of the enum.)
+  QualType AlternateType;
+
+  // We require the return types to strictly match here.
+  for (; I != E; ++I) {
+    const ReturnStmt *RS = *I;
+    const Expr *RetE = RS->getRetValue();
+    if (!checkReturnValueType(Ctx, RetE, CSI.ReturnType, AlternateType)) {
+      // FIXME: This is a poor diagnostic for ReturnStmts without expressions.
+      Diag(RS->getLocStart(),
+           diag::err_typecheck_missing_return_type_incompatible)
+        << (RetE ? RetE->getType() : Ctx.VoidTy) << CSI.ReturnType
+        << isa<LambdaScopeInfo>(CSI);
+      // Don't bother fixing up the return statements in the block if some of
+      // them are unfixable anyway.
+      AlternateType = Ctx.VoidTy;
+      // Continue iterating so that we keep emitting diagnostics.
+    }
+  }
+
+  // If our return statements turned out to be compatible, but we needed to
+  // pick a different return type, go through and fix the ones that need it.
+  if (AlternateType == Ctx.DependentTy) {
+    for (SmallVectorImpl<ReturnStmt*>::iterator I = CSI.Returns.begin(),
+                                                E = CSI.Returns.end();
+         I != E; ++I) {
+      ReturnStmt *RS = *I;
+      Expr *RetE = RS->getRetValue();
+      if (RetE->getType() == CSI.ReturnType)
+        continue;
+
+      // Right now we only support integral fixup casts.
+      assert(CSI.ReturnType->isIntegralOrUnscopedEnumerationType());
+      assert(RetE->getType()->isIntegralOrUnscopedEnumerationType());
+      ExprResult Casted = ImpCastExprToType(RetE, CSI.ReturnType,
+                                            CK_IntegralCast);
+      assert(Casted.isUsable());
+      RS->setRetValue(Casted.take());
+    }
+  }
+}
+
 void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
                                         Declarator &ParamInfo,
                                         Scope *CurScope) {
@@ -659,6 +794,8 @@ ExprResult Sema::ActOnLambdaExpr(SourceLocation StartLoc, Stmt *Body,
     //   denotes the following type:
     // FIXME: Assumes current resolution to core issue 975.
     if (LSI->HasImplicitReturnType) {
+      deduceClosureReturnType(*LSI);
+
       //   - if there are no return statements in the
       //     compound-statement, or all return statements return
       //     either an expression of type void or no expression or

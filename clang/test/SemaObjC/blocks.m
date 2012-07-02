@@ -76,8 +76,7 @@ void foo10() {
 
 // In C, enum constants have the type of the underlying integer type, not the
 // enumeration they are part of. We pretend the constants have enum type when
-// inferring block return types, so that they can be mixed-and-matched with
-// other expressions of enum type.
+// they are mixed with other expressions of enum type.
 enum CStyleEnum {
   CSE_Value = 1
 };
@@ -88,37 +87,32 @@ void testCStyleEnumInference(bool arg) {
   cse_block_t a;
 
   // No warnings here.
-  a = ^{ return CSE_Value; };
   a = ^{ return getCSE(); };
 
   a = ^{ // expected-error {{incompatible block pointer types assigning to 'cse_block_t' (aka 'enum CStyleEnum (^)()') from 'int (^)(void)'}}
     return 1;
   };
+  a = ^{ // expected-error {{incompatible block pointer types assigning to 'cse_block_t' (aka 'enum CStyleEnum (^)()') from 'int (^)(void)'}}
+    return CSE_Value;
+  };
 
   // No warnings here.
-  a = ^{ if (arg) return CSE_Value; else return CSE_Value; };
-  a = ^{ if (arg) return getCSE();  else return getCSE();  };
   a = ^{ if (arg) return CSE_Value; else return getCSE();  };
   a = ^{ if (arg) return getCSE();  else return CSE_Value; };
 
-  // Technically these two blocks should return 'int'.
-  // The first case is easy to handle -- just don't cast the enum constant
-  // to the enum type. However, the second guess would require going back
-  // and REMOVING the cast from the first return statement, which isn't really
-  // feasible (there may be more than one previous return statement with enum
-  // type). For symmetry, we just treat them the same way.
+  // These two blocks actually return 'int'
   a = ^{ // expected-error {{incompatible block pointer types assigning to 'cse_block_t' (aka 'enum CStyleEnum (^)()') from 'int (^)(void)'}}
     if (arg)
       return 1;
     else
-      return CSE_Value; // expected-error {{return type 'enum CStyleEnum' must match previous return type 'int'}}
+      return CSE_Value;
   };
 
-  a = ^{
+  a = ^{ // expected-error {{incompatible block pointer types assigning to 'cse_block_t' (aka 'enum CStyleEnum (^)()') from 'int (^)(void)'}}
     if (arg)
       return CSE_Value;
     else
-      return 1; // expected-error {{return type 'int' must match previous return type 'enum CStyleEnum'}}
+      return 1;
   };
 }
 
@@ -133,7 +127,6 @@ void testFixedTypeEnumInference(bool arg) {
   fte_block_t a;
   
   // No warnings here.
-  a = ^{ return FTE_Value; };
   a = ^{ return getFTE(); };
 
   // Since we fixed the underlying type of the enum, this is considered a
@@ -141,31 +134,29 @@ void testFixedTypeEnumInference(bool arg) {
   a = ^{
     return 1U;
   };
-  
+  a = ^{
+    return FTE_Value;
+  };
+
   // No warnings here.
   a = ^{ if (arg) return FTE_Value; else return FTE_Value; };
   a = ^{ if (arg) return getFTE();  else return getFTE();  };
   a = ^{ if (arg) return FTE_Value; else return getFTE();  };
   a = ^{ if (arg) return getFTE();  else return FTE_Value; };
   
-  // Technically these two blocks should return 'unsigned'.
-  // The first case is easy to handle -- just don't cast the enum constant
-  // to the enum type. However, the second guess would require going back
-  // and REMOVING the cast from the first return statement, which isn't really
-  // feasible (there may be more than one previous return statement with enum
-  // type). For symmetry, we just treat them the same way.
+  // These two blocks actually return 'unsigned'.
   a = ^{
     if (arg)
       return 1U;
     else
-      return FTE_Value; // expected-error{{return type 'enum FixedTypeEnum' must match previous return type 'unsigned int'}}
+      return FTE_Value;
   };
   
   a = ^{
     if (arg)
       return FTE_Value;
     else
-      return 1U; // expected-error{{return type 'unsigned int' must match previous return type 'enum FixedTypeEnum'}}
+      return 1U;
   };
 }
 
@@ -181,22 +172,25 @@ enum : short {
 typedef enum {
   TDE_Value
 } TypeDefEnum;
+TypeDefEnum getTDE();
 
 typedef enum : short {
   TDFTE_Value
 } TypeDefFixedTypeEnum;
-
+TypeDefFixedTypeEnum getTDFTE();
 
 typedef int (^int_block_t)();
 typedef short (^short_block_t)();
-void testAnonymousEnumTypes() {
+void testAnonymousEnumTypes(int arg) {
   int_block_t IB;
   IB = ^{ return AnonymousValue; };
-  IB = ^{ return TDE_Value; }; // expected-error {{incompatible block pointer types assigning to 'int_block_t' (aka 'int (^)()') from 'TypeDefEnum (^)(void)'}}
-  IB = ^{ return CSE_Value; }; // expected-error {{incompatible block pointer types assigning to 'int_block_t' (aka 'int (^)()') from 'enum CStyleEnum (^)(void)'}}
+  IB = ^{ if (arg) return TDE_Value; else return getTDE(); }; // expected-error {{incompatible block pointer}}
+  IB = ^{ if (arg) return getTDE(); else return TDE_Value; }; // expected-error {{incompatible block pointer}}
 
+  // Since we fixed the underlying type of the enum, these are considered
+  // compatible block types anyway.
   short_block_t SB;
   SB = ^{ return FixedAnonymousValue; };
-  // This is not an error anyway since the enum has a fixed underlying type.
-  SB = ^{ return TDFTE_Value; };
+  SB = ^{ if (arg) return TDFTE_Value; else return getTDFTE(); };
+  SB = ^{ if (arg) return getTDFTE(); else return TDFTE_Value; };
 }

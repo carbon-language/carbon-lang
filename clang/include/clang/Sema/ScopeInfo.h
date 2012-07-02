@@ -93,7 +93,7 @@ public:
 
   /// \brief The list of return statements that occur within the function or
   /// block, if there is any chance of applying the named return value
-  /// optimization.
+  /// optimization, or if we need to infer a return type.
   SmallVector<ReturnStmt*, 4> Returns;
 
   /// \brief The stack of currently active compound stamement scopes in the

@@ -2120,40 +2120,22 @@ Sema::ActOnCapScopeReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
   // [expr.prim.lambda]p4 in C++11; block literals follow a superset of those
   // rules which allows multiple return statements.
   CapturingScopeInfo *CurCap = cast<CapturingScopeInfo>(getCurFunction());
+  QualType FnRetType = CurCap->ReturnType;
+
+  // For blocks/lambdas with implicit return types, we check each return
+  // statement individually, and deduce the common return type when the block
+  // or lambda is completed.
   if (CurCap->HasImplicitReturnType) {
-    QualType ReturnT;
     if (RetValExp && !isa<InitListExpr>(RetValExp)) {
       ExprResult Result = DefaultFunctionArrayLvalueConversion(RetValExp);
       if (Result.isInvalid())
         return StmtError();
       RetValExp = Result.take();
 
-      if (!RetValExp->isTypeDependent()) {
-        ReturnT = RetValExp->getType();
-
-        // In C, enum constants have the type of their underlying integer type,
-        // not the enum. When inferring block return values, we should infer
-        // the enum type if an enum constant is used, unless the enum is
-        // anonymous (in which case there can be no variables of its type).
-        if (!getLangOpts().CPlusPlus) {
-          Expr *InsideExpr = RetValExp->IgnoreParenImpCasts();
-          if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(InsideExpr)) {
-            Decl *D = DRE->getDecl();
-            if (EnumConstantDecl *ECD = dyn_cast<EnumConstantDecl>(D)) {
-              EnumDecl *Enum = cast<EnumDecl>(ECD->getDeclContext());
-              if (Enum->getDeclName() || Enum->getTypedefNameForAnonDecl()) {
-                ReturnT = Context.getTypeDeclType(Enum);
-                ExprResult Casted = ImpCastExprToType(RetValExp, ReturnT,
-                                                      CK_IntegralCast);
-                assert(Casted.isUsable());
-                RetValExp = Casted.take();
-              }
-            }
-          }
-        }
-      } else {
-        ReturnT = Context.DependentTy;
-      }
+      if (!RetValExp->isTypeDependent())
+        FnRetType = RetValExp->getType();
+      else
+        FnRetType = CurCap->ReturnType = Context.DependentTy;
     } else { 
       if (RetValExp) {
         // C++11 [expr.lambda.prim]p4 bans inferring the result from an
@@ -2163,21 +2145,14 @@ Sema::ActOnCapScopeReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
           << RetValExp->getSourceRange();
       }
 
-      ReturnT = Context.VoidTy;
+      FnRetType = Context.VoidTy;
     }
-    // We require the return types to strictly match here.
-    if (!CurCap->ReturnType.isNull() &&
-        !CurCap->ReturnType->isDependentType() &&
-        !ReturnT->isDependentType() &&
-        !Context.hasSameType(ReturnT, CurCap->ReturnType)) {
-      Diag(ReturnLoc, diag::err_typecheck_missing_return_type_incompatible) 
-          << ReturnT << CurCap->ReturnType
-          << (getCurLambda() != 0);
-      return StmtError();
-    }
-    CurCap->ReturnType = ReturnT;
+
+    // Although we'll properly infer the type of the block once it's completed,
+    // make sure we provide a return type now for better error recovery.
+    if (CurCap->ReturnType.isNull())
+      CurCap->ReturnType = FnRetType;
   }
-  QualType FnRetType = CurCap->ReturnType;
   assert(!FnRetType.isNull());
 
   if (BlockScopeInfo *CurBlock = dyn_cast<BlockScopeInfo>(CurCap)) {
@@ -2245,10 +2220,12 @@ Sema::ActOnCapScopeReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
   ReturnStmt *Result = new (Context) ReturnStmt(ReturnLoc, RetValExp,
                                                 NRVOCandidate);
 
-  // If we need to check for the named return value optimization, save the
-  // return statement in our scope for later processing.
-  if (getLangOpts().CPlusPlus && FnRetType->isRecordType() && 
-      !CurContext->isDependentContext())
+  // If we need to check for the named return value optimization,
+  // or if we need to infer the return type,
+  // save the return statement in our scope for later processing.
+  if (CurCap->HasImplicitReturnType ||
+      (getLangOpts().CPlusPlus && FnRetType->isRecordType() &&
+       !CurContext->isDependentContext()))
     FunctionScopes.back()->Returns.push_back(Result);
 
   return Owned(Result);
