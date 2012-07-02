@@ -22,5 +22,6 @@ set_target_properties(check-llvm PROPERTIES FOLDER "Tests")
 
 # Setup a legacy alias for 'check-llvm'. This will likely change to be an
 # alias for 'check-all' at some point in the future.
-add_custom_target(check DEPENDS check-llvm)
+add_custom_target(check)
+add_dependencies(check check-llvm)
 set_target_properties(check PROPERTIES FOLDER "Tests")
