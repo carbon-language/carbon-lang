@@ -1270,6 +1270,31 @@ namespace InvalidClasses {
   }
 }
 
+// Constructors can be implicitly constexpr, even for a non-literal type.
+namespace ImplicitConstexpr {
+  struct Q { Q() = default; Q(const Q&) = default; Q(Q&&) = default; ~Q(); }; // expected-note 3{{here}}
+  struct R { constexpr R(); constexpr R(const R&); constexpr R(R&&); ~R(); };
+  struct S { R r; }; // expected-note 3{{here}}
+  struct T { T(const T&); T(T &&); ~T(); };
+  struct U { T t; }; // expected-note 3{{here}}
+  static_assert(!__is_literal_type(Q), "");
+  static_assert(!__is_literal_type(R), "");
+  static_assert(!__is_literal_type(S), "");
+  static_assert(!__is_literal_type(T), "");
+  static_assert(!__is_literal_type(U), "");
+  struct Test {
+    friend Q::Q() noexcept; // expected-error {{follows constexpr}}
+    friend Q::Q(Q&&) noexcept; // expected-error {{follows constexpr}}
+    friend Q::Q(const Q&) noexcept; // expected-error {{follows constexpr}}
+    friend S::S() noexcept; // expected-error {{follows constexpr}}
+    friend S::S(S&&) noexcept; // expected-error {{follows constexpr}}
+    friend S::S(const S&) noexcept; // expected-error {{follows constexpr}}
+    friend constexpr U::U() noexcept; // expected-error {{follows non-constexpr}}
+    friend constexpr U::U(U&&) noexcept; // expected-error {{follows non-constexpr}}
+    friend constexpr U::U(const U&) noexcept; // expected-error {{follows non-constexpr}}
+  };
+}
+
 // Indirectly test that an implicit lvalue to xvalue conversion performed for
 // an NRVO move operation isn't implemented as CK_LValueToRValue.
 namespace PR12826 {
