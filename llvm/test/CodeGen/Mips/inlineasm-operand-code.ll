@@ -41,5 +41,11 @@ entry:
 ;CHECK:	#NO_APP
   tail call i32 asm sideeffect "addi $0,$1,${2:z}", "=r,r,I"(i32 7, i32 0) nounwind
 
+; a long long in 32 bit mode (use to assert)
+;CHECK:	#APP
+;CHECK:	addi ${{[0-9]+}},${{[0-9]+}},3
+;CHECK:	#NO_APP
+  tail call i64 asm sideeffect "addi $0,$1,$2 \0A\09", "=r,r,X"(i64 1229801703532086340, i64 3) nounwind
+
   ret i32 0
 }
