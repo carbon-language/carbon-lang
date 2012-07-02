@@ -63,7 +63,7 @@ class AsanThreadRegistry {
   // and fills "stats" with zeroes.
   void FlushToAccumulatedStatsUnlocked(AsanStats *stats);
 
-  static const int kMaxNumberOfThreads = (1 << 22);  // 4M
+  static const u32 kMaxNumberOfThreads = (1 << 22);  // 4M
   AsanThreadSummary *thread_summaries_[kMaxNumberOfThreads];
   AsanThread main_thread_;
   AsanThreadSummary main_thread_summary_;

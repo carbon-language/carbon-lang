@@ -29,10 +29,13 @@ set(ASAN_CFLAGS
   -funwind-tables
   -fvisibility=hidden
   )
+if (SUPPORTS_NO_VARIADIC_MACROS_FLAG)
+  list(APPEND ASAN_CFLAGS -Wno-variadic-macros)
+endif ()
 
 set(ASAN_COMMON_DEFINITIONS
-	ASAN_HAS_EXCEPTIONS=1
-	ASAN_NEEDS_SEGV=1
+  ASAN_HAS_EXCEPTIONS=1
+  ASAN_NEEDS_SEGV=1
   )
 
 if(CAN_TARGET_X86_64)
@@ -42,11 +45,11 @@ if(CAN_TARGET_X86_64)
     $<TARGET_OBJECTS:RTSanitizerCommon.x86_64>
     )
   set_target_compile_flags(clang_rt.asan-x86_64
-		${ASAN_CFLAGS}
+    ${ASAN_CFLAGS}
     ${TARGET_X86_64_CFLAGS}
     )
-	set_property(TARGET clang_rt.asan-x86_64 APPEND PROPERTY COMPILE_DEFINITIONS
-		${ASAN_COMMON_DEFINITIONS})
+  set_property(TARGET clang_rt.asan-x86_64 APPEND PROPERTY COMPILE_DEFINITIONS
+    ${ASAN_COMMON_DEFINITIONS})
 endif()
 if(CAN_TARGET_I386)
   add_library(clang_rt.asan-i386 STATIC
@@ -55,11 +58,11 @@ if(CAN_TARGET_I386)
     $<TARGET_OBJECTS:RTSanitizerCommon.i386>
     )
   set_target_compile_flags(clang_rt.asan-i386
-		${ASAN_CFLAGS}
+    ${ASAN_CFLAGS}
     ${TARGET_I386_CFLAGS}
     )
-	set_property(TARGET clang_rt.asan-x86_64 APPEND PROPERTY COMPILE_DEFINITIONS
-		${ASAN_COMMON_DEFINITIONS})
+  set_property(TARGET clang_rt.asan-x86_64 APPEND PROPERTY COMPILE_DEFINITIONS
+    ${ASAN_COMMON_DEFINITIONS})
 endif()
 
 if(LLVM_INCLUDE_TESTS)
