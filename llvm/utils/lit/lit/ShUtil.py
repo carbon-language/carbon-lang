@@ -134,8 +134,6 @@ class ShLexer:
         if c == '|':
             if self.maybe_eat('|'):
                 return ('||',)
-            if self.maybe_eat('&'):
-                return ('|&',)
             return (c,)
         if c == '&':
             if self.maybe_eat('&'):
@@ -207,7 +205,7 @@ class ShParser:
 
             # Otherwise see if it is a terminator.
             assert isinstance(tok, tuple)
-            if tok[0] in ('|','|&',';','&','||','&&'):
+            if tok[0] in ('|',';','&','||','&&'):
                 break
             
             # Otherwise it must be a redirection.
@@ -226,18 +224,9 @@ class ShParser:
             negate = True
 
         commands = [self.parse_command()]
-        while 1:
-            tok = self.look()
-            if tok == ('|',):
-              self.lex()
-              commands.append(self.parse_command())
-              continue
-            if tok == ('|&',):
-              self.lex()
-              commands[-1].redirects.insert(0, (('>&',2),'1'))
-              commands.append(self.parse_command())
-              continue
-            break
+        while self.look() == ('|',):
+            self.lex()
+            commands.append(self.parse_command())
         return Pipeline(commands, negate)
             
     def parse(self):
