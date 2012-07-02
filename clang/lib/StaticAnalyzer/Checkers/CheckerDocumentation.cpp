@@ -37,6 +37,8 @@ class CheckerDocumentation : public Checker< check::PreStmt<DeclStmt>,
                                        check::PostStmt<CallExpr>,
                                        check::PreObjCMessage,
                                        check::PostObjCMessage,
+                                       check::PreCall,
+                                       check::PostCall,
                                        check::BranchCondition,
                                        check::Location,
                                        check::Bind,
@@ -72,14 +74,42 @@ public:
   /// which does not include the control flow statements such as IfStmt. The
   /// callback can be specialized to be called with any subclass of Stmt.
   ///
-  /// check::PostStmt<DeclStmt>
+  /// check::PostStmt<CallExpr>
   void checkPostStmt(const CallExpr *DS, CheckerContext &C) const;
 
-  /// \brief Pre-visit the Objective C messages.
+  /// \brief Pre-visit the Objective C message.
+  ///
+  /// This will be called before the analyzer core processes the method call.
+  /// This is called for any action which produces an Objective-C message send,
+  /// including explicit message syntax and property access. See the subclasses
+  /// of ObjCMethodCall for more details.
+  ///
+  /// check::PreObjCMessage
   void checkPreObjCMessage(const ObjCMethodCall &M, CheckerContext &C) const {}
 
-  /// \brief Post-visit the Objective C messages.
+  /// \brief Post-visit the Objective C message.
+  /// \sa checkPreObjCMessage()
+  ///
+  /// check::PostObjCMessage
   void checkPostObjCMessage(const ObjCMethodCall &M, CheckerContext &C) const {}
+
+  /// \brief Pre-visit an abstract "call" event.
+  ///
+  /// This is used for checkers that want to check arguments or attributed
+  /// behavior for functions and methods no matter how they are being invoked.
+  ///
+  /// Note that this includes ALL cross-body invocations, so if you want to
+  /// limit your checks to, say, function calls, you can either test for that
+  /// or fall back to the explicit callback (i.e. check::PreStmt).
+  ///
+  /// check::PreCall
+  void checkPreCall(const CallEvent &Call, CheckerContext &C) const {}
+
+  /// \brief Post-visit an abstract "call" event.
+  /// \sa checkPreObjCMessage()
+  ///
+  /// check::PostCall
+  void checkPostCall(const CallEvent &Call, CheckerContext &C) const {}
 
   /// \brief Pre-visit of the condition statement of a branch (such as IfStmt).
   void checkBranchCondition(const Stmt *Condition, CheckerContext &Ctx) const {}

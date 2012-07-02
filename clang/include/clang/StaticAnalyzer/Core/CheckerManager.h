@@ -221,6 +221,23 @@ public:
                                  const ExplodedNodeSet &Src,
                                  const ObjCMethodCall &msg, ExprEngine &Eng);
 
+  /// \brief Run checkers for pre-visiting obj-c messages.
+  void runCheckersForPreCall(ExplodedNodeSet &Dst, const ExplodedNodeSet &Src,
+                             const CallEvent &Call, ExprEngine &Eng) {
+    runCheckersForCallEvent(/*isPreVisit=*/true, Dst, Src, Call, Eng);
+  }
+
+  /// \brief Run checkers for post-visiting obj-c messages.
+  void runCheckersForPostCall(ExplodedNodeSet &Dst, const ExplodedNodeSet &Src,
+                              const CallEvent &Call, ExprEngine &Eng) {
+    runCheckersForCallEvent(/*isPreVisit=*/false, Dst, Src, Call, Eng);
+  }
+
+  /// \brief Run checkers for visiting obj-c messages.
+  void runCheckersForCallEvent(bool isPreVisit, ExplodedNodeSet &Dst,
+                               const ExplodedNodeSet &Src,
+                               const CallEvent &Call, ExprEngine &Eng);
+
   /// \brief Run checkers for load/store of a location.
   void runCheckersForLocation(ExplodedNodeSet &Dst,
                               const ExplodedNodeSet &Src,
@@ -339,6 +356,9 @@ public:
   
   typedef CheckerFn<void (const ObjCMethodCall &, CheckerContext &)>
       CheckObjCMessageFunc;
+
+  typedef CheckerFn<void (const CallEvent &, CheckerContext &)>
+      CheckCallFunc;
   
   typedef CheckerFn<void (const SVal &location, bool isLoad,
                           const Stmt *S,
@@ -396,6 +416,9 @@ public:
 
   void _registerForPreObjCMessage(CheckObjCMessageFunc checkfn);
   void _registerForPostObjCMessage(CheckObjCMessageFunc checkfn);
+
+  void _registerForPreCall(CheckCallFunc checkfn);
+  void _registerForPostCall(CheckCallFunc checkfn);
 
   void _registerForLocation(CheckLocationFunc checkfn);
 
@@ -517,6 +540,9 @@ private:
 
   std::vector<CheckObjCMessageFunc> PreObjCMessageCheckers;
   std::vector<CheckObjCMessageFunc> PostObjCMessageCheckers;
+
+  std::vector<CheckCallFunc> PreCallCheckers;
+  std::vector<CheckCallFunc> PostCallCheckers;
 
   std::vector<CheckLocationFunc> LocationCheckers;
 

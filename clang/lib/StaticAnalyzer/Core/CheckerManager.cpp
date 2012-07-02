@@ -25,6 +25,8 @@ bool CheckerManager::hasPathSensitiveCheckers() const {
   return !StmtCheckers.empty()              ||
          !PreObjCMessageCheckers.empty()    ||
          !PostObjCMessageCheckers.empty()   ||
+         !PreCallCheckers.empty()    ||
+         !PostCallCheckers.empty()   ||
          !LocationCheckers.empty()          ||
          !BindCheckers.empty()              ||
          !EndAnalysisCheckers.empty()       ||
@@ -213,6 +215,54 @@ void CheckerManager::runCheckersForObjCMessage(bool isPreVisit,
                             isPreVisit ? PreObjCMessageCheckers
                                        : PostObjCMessageCheckers,
                             msg, Eng);
+  expandGraphWithCheckers(C, Dst, Src);
+}
+
+namespace {
+  // FIXME: This has all the same signatures as CheckObjCMessageContext.
+  // Is there a way we can merge the two?
+  struct CheckCallContext {
+    typedef std::vector<CheckerManager::CheckCallFunc> CheckersTy;
+    bool IsPreVisit;
+    const CheckersTy &Checkers;
+    const CallEvent &Call;
+    ExprEngine &Eng;
+
+    CheckersTy::const_iterator checkers_begin() { return Checkers.begin(); }
+    CheckersTy::const_iterator checkers_end() { return Checkers.end(); }
+
+    CheckCallContext(bool isPreVisit, const CheckersTy &checkers,
+                     const CallEvent &call, ExprEngine &eng)
+    : IsPreVisit(isPreVisit), Checkers(checkers), Call(call), Eng(eng) { }
+
+    void runChecker(CheckerManager::CheckCallFunc checkFn,
+                    NodeBuilder &Bldr, ExplodedNode *Pred) {
+      // FIXME: This will be wrong as soon as we handle any calls without
+      // associated statements.
+      ProgramPoint::Kind K = IsPreVisit ? ProgramPoint::PreStmtKind
+                                        : ProgramPoint::PostStmtKind;
+      assert(Call.getOriginExpr() && "Calls without stmts not yet handled");
+      const ProgramPoint &L =
+        ProgramPoint::getProgramPoint(Call.getOriginExpr(),
+                                      K, Pred->getLocationContext(),
+                                      checkFn.Checker);
+      CheckerContext C(Bldr, Eng, Pred, L);
+
+      checkFn(Call, C);
+    }
+  };
+}
+
+/// \brief Run checkers for visiting an abstract call event.
+void CheckerManager::runCheckersForCallEvent(bool isPreVisit,
+                                             ExplodedNodeSet &Dst,
+                                             const ExplodedNodeSet &Src,
+                                             const CallEvent &Call,
+                                             ExprEngine &Eng) {
+  CheckCallContext C(isPreVisit,
+                     isPreVisit ? PreCallCheckers
+                                : PostCallCheckers,
+                     Call, Eng);
   expandGraphWithCheckers(C, Dst, Src);
 }
 
@@ -582,6 +632,13 @@ void CheckerManager::_registerForPreObjCMessage(CheckObjCMessageFunc checkfn) {
 }
 void CheckerManager::_registerForPostObjCMessage(CheckObjCMessageFunc checkfn) {
   PostObjCMessageCheckers.push_back(checkfn);
+}
+
+void CheckerManager::_registerForPreCall(CheckCallFunc checkfn) {
+  PreCallCheckers.push_back(checkfn);
+}
+void CheckerManager::_registerForPostCall(CheckCallFunc checkfn) {
+  PostCallCheckers.push_back(checkfn);
 }
 
 void CheckerManager::_registerForLocation(CheckLocationFunc checkfn) {

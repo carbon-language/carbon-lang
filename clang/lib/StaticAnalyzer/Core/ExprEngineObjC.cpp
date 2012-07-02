@@ -146,15 +146,18 @@ void ExprEngine::VisitObjCMessage(const ObjCMethodCall &msg,
   
   // Handle the previsits checks.
   ExplodedNodeSet dstPrevisit;
-  getCheckerManager().runCheckersForPreObjCMessage(dstPrevisit, Pred, 
+  getCheckerManager().runCheckersForPreObjCMessage(dstPrevisit, Pred,
                                                    msg, *this);
-  
+  ExplodedNodeSet dstGenericPrevisit;
+  getCheckerManager().runCheckersForPreCall(dstGenericPrevisit, dstPrevisit,
+                                            msg, *this);
+
   // Proceed with evaluate the message expression.
   ExplodedNodeSet dstEval;
-  StmtNodeBuilder Bldr(dstPrevisit, dstEval, *currentBuilderContext);
+  StmtNodeBuilder Bldr(dstGenericPrevisit, dstEval, *currentBuilderContext);
 
-  for (ExplodedNodeSet::iterator DI = dstPrevisit.begin(),
-       DE = dstPrevisit.end(); DI != DE; ++DI) {
+  for (ExplodedNodeSet::iterator DI = dstGenericPrevisit.begin(),
+       DE = dstGenericPrevisit.end(); DI != DE; ++DI) {
     
     ExplodedNode *Pred = *DI;
     bool RaisesException = false;
@@ -235,9 +238,13 @@ void ExprEngine::VisitObjCMessage(const ObjCMethodCall &msg,
     }
   }
   
+  ExplodedNodeSet dstPostvisit;
+  getCheckerManager().runCheckersForPostCall(dstPostvisit, dstEval, msg, *this);
+
   // Finally, perform the post-condition check of the ObjCMessageExpr and store
   // the created nodes in 'Dst'.
-  getCheckerManager().runCheckersForPostObjCMessage(Dst, dstEval, msg, *this);
+  getCheckerManager().runCheckersForPostObjCMessage(Dst, dstPostvisit,
+                                                    msg, *this);
 }
 
 void ExprEngine::evalObjCMessage(StmtNodeBuilder &Bldr,
@@ -280,7 +287,7 @@ void ExprEngine::evalObjCMessage(StmtNodeBuilder &Bldr,
   state = msg.invalidateRegions(BlockCount, state);
 
   // And create the new node.
-  Bldr.generateNode(msg.getOriginExpr(), Pred, state, GenSink);
+  Bldr.generateNode(currentStmt, Pred, state, GenSink);
   assert(Bldr.hasGeneratedNodes());
 }
 

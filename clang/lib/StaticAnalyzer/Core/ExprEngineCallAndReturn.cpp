@@ -359,7 +359,20 @@ void ExprEngine::VisitCallExpr(const CallExpr *CE, ExplodedNode *Pred,
 
 void ExprEngine::evalCall(ExplodedNodeSet &Dst, ExplodedNode *Pred,
                           const SimpleCall &Call) {
-  getCheckerManager().runCheckersForEvalCall(Dst, Pred, Call, *this);
+  // Run any pre-call checks using the generic call interface.
+  ExplodedNodeSet dstPreVisit;
+  getCheckerManager().runCheckersForPreCall(dstPreVisit, Pred, Call, *this);
+
+  // Actually evaluate the function call.  We try each of the checkers
+  // to see if the can evaluate the function call, and get a callback at
+  // defaultEvalCall if all of them fail.
+  ExplodedNodeSet dstCallEvaluated;
+  getCheckerManager().runCheckersForEvalCall(dstCallEvaluated, dstPreVisit,
+                                             Call, *this);
+
+  // Finally, run any post-call checks.
+  getCheckerManager().runCheckersForPostCall(Dst, dstCallEvaluated,
+                                             Call, *this);
 }
 
 void ExprEngine::defaultEvalCall(ExplodedNodeSet &Dst, ExplodedNode *Pred,

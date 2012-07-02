@@ -55,14 +55,19 @@ void ExprEngine::VisitCXXConstructExpr(const CXXConstructExpr *CE,
 
   ExplodedNodeSet DstPreVisit;
   getCheckerManager().runCheckersForPreStmt(DstPreVisit, Pred, CE, *this);
+  ExplodedNodeSet DstPreCall;
+  getCheckerManager().runCheckersForPreCall(DstPreCall, DstPreVisit,
+                                            Call, *this);
 
   ExplodedNodeSet DstInvalidated;
-  for (ExplodedNodeSet::iterator I = DstPreVisit.begin(), E = DstPreVisit.end();
+  for (ExplodedNodeSet::iterator I = DstPreCall.begin(), E = DstPreCall.end();
        I != E; ++I)
     defaultEvalCall(DstInvalidated, *I, Call);
 
-  getCheckerManager().runCheckersForPostStmt(destNodes, DstInvalidated,
-                                             CE, *this);
+  ExplodedNodeSet DstPostCall;
+  getCheckerManager().runCheckersForPostCall(DstPostCall, DstInvalidated,
+                                             Call, *this);
+  getCheckerManager().runCheckersForPostStmt(destNodes, DstPostCall, CE, *this);
 }
 
 void ExprEngine::VisitCXXDestructor(const CXXDestructorDecl *DD,

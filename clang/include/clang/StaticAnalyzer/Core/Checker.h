@@ -150,6 +150,36 @@ public:
   }
 };
 
+class PreCall {
+  template <typename CHECKER>
+  static void _checkCall(void *checker, const CallEvent &msg,
+                         CheckerContext &C) {
+    ((const CHECKER *)checker)->checkPreCall(msg, C);
+  }
+
+public:
+  template <typename CHECKER>
+  static void _register(CHECKER *checker, CheckerManager &mgr) {
+    mgr._registerForPreCall(
+     CheckerManager::CheckCallFunc(checker, _checkCall<CHECKER>));
+  }
+};
+
+class PostCall {
+  template <typename CHECKER>
+  static void _checkCall(void *checker, const CallEvent &msg,
+                         CheckerContext &C) {
+    ((const CHECKER *)checker)->checkPostCall(msg, C);
+  }
+
+public:
+  template <typename CHECKER>
+  static void _register(CHECKER *checker, CheckerManager &mgr) {
+    mgr._registerForPostCall(
+     CheckerManager::CheckCallFunc(checker, _checkCall<CHECKER>));
+  }
+};
+
 class Location {
   template <typename CHECKER>
   static void _checkLocation(void *checker,
@@ -372,16 +402,14 @@ template <typename CHECK1, typename CHECK2=check::_VoidCheck,
           typename CHECK11=check::_VoidCheck,typename CHECK12=check::_VoidCheck,
           typename CHECK13=check::_VoidCheck,typename CHECK14=check::_VoidCheck,
           typename CHECK15=check::_VoidCheck,typename CHECK16=check::_VoidCheck,
-          typename CHECK17=check::_VoidCheck,typename CHECK18=check::_VoidCheck>
+          typename CHECK17=check::_VoidCheck,typename CHECK18=check::_VoidCheck,
+          typename CHECK19=check::_VoidCheck,typename CHECK20=check::_VoidCheck,
+          typename CHECK21=check::_VoidCheck,typename CHECK22=check::_VoidCheck,
+          typename CHECK23=check::_VoidCheck,typename CHECK24=check::_VoidCheck>
 class Checker;
 
 template <>
-class Checker<check::_VoidCheck, check::_VoidCheck, check::_VoidCheck,
-                check::_VoidCheck, check::_VoidCheck, check::_VoidCheck,
-                check::_VoidCheck, check::_VoidCheck, check::_VoidCheck,
-                check::_VoidCheck, check::_VoidCheck, check::_VoidCheck,
-                check::_VoidCheck, check::_VoidCheck, check::_VoidCheck,
-                check::_VoidCheck, check::_VoidCheck, check::_VoidCheck>
+class Checker<check::_VoidCheck>
   : public CheckerBase 
 {
   virtual void anchor();
@@ -393,19 +421,22 @@ template <typename CHECK1, typename CHECK2, typename CHECK3, typename CHECK4,
           typename CHECK5, typename CHECK6, typename CHECK7, typename CHECK8,
           typename CHECK9, typename CHECK10,typename CHECK11,typename CHECK12,
           typename CHECK13,typename CHECK14,typename CHECK15,typename CHECK16,
-          typename CHECK17,typename CHECK18>
+          typename CHECK17,typename CHECK18,typename CHECK19,typename CHECK20,
+          typename CHECK21,typename CHECK22,typename CHECK23,typename CHECK24>
 class Checker
     : public CHECK1,
-      public Checker<CHECK2, CHECK3, CHECK4, CHECK5, CHECK6, CHECK7, CHECK8,
-                     CHECK9, CHECK10,CHECK11,CHECK12,CHECK13,CHECK14,CHECK15,
-                     CHECK16,CHECK17,CHECK18> {
+      public Checker<CHECK2, CHECK3, CHECK4, CHECK5, CHECK6, CHECK7,
+                     CHECK8, CHECK9, CHECK10,CHECK11,CHECK12,CHECK13,
+                     CHECK14,CHECK15,CHECK16,CHECK17,CHECK18,CHECK19,
+                     CHECK20,CHECK21,CHECK22,CHECK23,CHECK24> {
 public:
   template <typename CHECKER>
   static void _register(CHECKER *checker, CheckerManager &mgr) {
     CHECK1::_register(checker, mgr);
-    Checker<CHECK2, CHECK3, CHECK4, CHECK5, CHECK6, CHECK7, CHECK8,
-            CHECK9, CHECK10,CHECK11,CHECK12,CHECK13,CHECK14,CHECK15,
-            CHECK16,CHECK17,CHECK18>::_register(checker, mgr);
+    Checker<CHECK2, CHECK3, CHECK4, CHECK5, CHECK6, CHECK7,
+            CHECK8, CHECK9, CHECK10,CHECK11,CHECK12,CHECK13,
+            CHECK14,CHECK15,CHECK16,CHECK17,CHECK18,CHECK19,
+            CHECK20,CHECK21,CHECK22,CHECK23,CHECK24>::_register(checker, mgr);
   }
 };
 
