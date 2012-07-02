@@ -102,22 +102,22 @@ TargetPassConfig *HexagonTargetMachine::createPassConfig(PassManagerBase &PM) {
 }
 
 bool HexagonPassConfig::addInstSelector() {
-  PM->add(createHexagonRemoveExtendOps(getHexagonTargetMachine()));
-  PM->add(createHexagonISelDag(getHexagonTargetMachine()));
-  PM->add(createHexagonPeephole());
+  addPass(createHexagonRemoveExtendOps(getHexagonTargetMachine()));
+  addPass(createHexagonISelDag(getHexagonTargetMachine()));
+  addPass(createHexagonPeephole());
   return false;
 }
 
 
 bool HexagonPassConfig::addPreRegAlloc() {
   if (!DisableHardwareLoops) {
-    PM->add(createHexagonHardwareLoops());
+    addPass(createHexagonHardwareLoops());
   }
   return false;
 }
 
 bool HexagonPassConfig::addPostRegAlloc() {
-  PM->add(createHexagonCFGOptimizer(getHexagonTargetMachine()));
+  addPass(createHexagonCFGOptimizer(getHexagonTargetMachine()));
   return true;
 }
 
@@ -130,19 +130,19 @@ bool HexagonPassConfig::addPreSched2() {
 bool HexagonPassConfig::addPreEmitPass() {
 
   if (!DisableHardwareLoops) {
-    PM->add(createHexagonFixupHwLoops());
+    addPass(createHexagonFixupHwLoops());
   }
 
-  PM->add(createHexagonNewValueJump());
+  addPass(createHexagonNewValueJump());
 
   // Expand Spill code for predicate registers.
-  PM->add(createHexagonExpandPredSpillCode(getHexagonTargetMachine()));
+  addPass(createHexagonExpandPredSpillCode(getHexagonTargetMachine()));
 
   // Split up TFRcondsets into conditional transfers.
-  PM->add(createHexagonSplitTFRCondSets(getHexagonTargetMachine()));
+  addPass(createHexagonSplitTFRCondSets(getHexagonTargetMachine()));
 
   // Create Packets.
-  PM->add(createHexagonPacketizer());
+  addPass(createHexagonPacketizer());
 
   return false;
 }

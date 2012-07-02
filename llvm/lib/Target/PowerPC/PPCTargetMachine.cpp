@@ -98,20 +98,20 @@ TargetPassConfig *PPCTargetMachine::createPassConfig(PassManagerBase &PM) {
 
 bool PPCPassConfig::addPreRegAlloc() {
   if (!DisableCTRLoops && getOptLevel() != CodeGenOpt::None)
-    PM->add(createPPCCTRLoops());
+    addPass(createPPCCTRLoops());
 
   return false;
 }
 
 bool PPCPassConfig::addInstSelector() {
   // Install an instruction selector.
-  PM->add(createPPCISelDag(getPPCTargetMachine()));
+  addPass(createPPCISelDag(getPPCTargetMachine()));
   return false;
 }
 
 bool PPCPassConfig::addPreEmitPass() {
   // Must run branch selection immediately preceding the asm printer.
-  PM->add(createPPCBranchSelectionPass());
+  addPass(createPPCBranchSelectionPass());
   return false;
 }
 

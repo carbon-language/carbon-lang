@@ -22,6 +22,7 @@
 #include "llvm/CodeGen/RegAllocRegistry.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetOptions.h"
+#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/Assembly/PrintModulePass.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
@@ -215,7 +216,7 @@ TargetPassConfig::~TargetPassConfig() {
 // Out of line constructor provides default values for pass options and
 // registers all common codegen passes.
 TargetPassConfig::TargetPassConfig(TargetMachine *tm, PassManagerBase &pm)
-  : ImmutablePass(ID), TM(tm), PM(&pm), Impl(0), Initialized(false),
+  : ImmutablePass(ID), PM(&pm), TM(tm), Impl(0), Initialized(false),
     DisableVerify(false),
     EnableTailMerge(true) {
 
@@ -272,6 +273,11 @@ AnalysisID TargetPassConfig::getPassSubstitution(AnalysisID ID) const {
   return I->second;
 }
 
+/// Add a pass to the PassManager.
+void TargetPassConfig::addPass(Pass *P) {
+  PM->add(P);
+}
+
 /// Add a CodeGen pass at this point in the pipeline after checking for target
 /// and command line overrides.
 AnalysisID TargetPassConfig::addPass(char &ID) {
@@ -285,7 +291,7 @@ AnalysisID TargetPassConfig::addPass(char &ID) {
   Pass *P = Pass::createPass(FinalID);
   if (!P)
     llvm_unreachable("Pass ID not registered");
-  PM->add(P);
+  addPass(P);
   // Add the passes after the pass P if there is any.
   for (SmallVector<std::pair<AnalysisID, AnalysisID>, 4>::iterator
          I = Impl->InsertedPasses.begin(), E = Impl->InsertedPasses.end();
@@ -294,18 +300,18 @@ AnalysisID TargetPassConfig::addPass(char &ID) {
       assert((*I).second && "Illegal Pass ID!");
       Pass *NP = Pass::createPass((*I).second);
       assert(NP && "Pass ID not registered");
-      PM->add(NP);
+      addPass(NP);
     }
   }
   return FinalID;
 }
 
-void TargetPassConfig::printAndVerify(const char *Banner) const {
+void TargetPassConfig::printAndVerify(const char *Banner) {
   if (TM->shouldPrintMachineCode())
-    PM->add(createMachineFunctionPrinterPass(dbgs(), Banner));
+    addPass(createMachineFunctionPrinterPass(dbgs(), Banner));
 
   if (VerifyMachineCode)
-    PM->add(createMachineVerifierPass(Banner));
+    addPass(createMachineVerifierPass(Banner));
 }
 
 /// Add common target configurable passes that perform LLVM IR to IR transforms
@@ -315,46 +321,73 @@ void TargetPassConfig::addIRPasses() {
   // Add TypeBasedAliasAnalysis before BasicAliasAnalysis so that
   // BasicAliasAnalysis wins if they disagree. This is intended to help
   // support "obvious" type-punning idioms.
-  PM->add(createTypeBasedAliasAnalysisPass());
-  PM->add(createBasicAliasAnalysisPass());
+  addPass(createTypeBasedAliasAnalysisPass());
+  addPass(createBasicAliasAnalysisPass());
 
   // Before running any passes, run the verifier to determine if the input
   // coming from the front-end and/or optimizer is valid.
   if (!DisableVerify)
-    PM->add(createVerifierPass());
+    addPass(createVerifierPass());
 
   // Run loop strength reduction before anything else.
   if (getOptLevel() != CodeGenOpt::None && !DisableLSR) {
-    PM->add(createLoopStrengthReducePass(getTargetLowering()));
+    addPass(createLoopStrengthReducePass(getTargetLowering()));
     if (PrintLSR)
-      PM->add(createPrintFunctionPass("\n\n*** Code after LSR ***\n", &dbgs()));
+      addPass(createPrintFunctionPass("\n\n*** Code after LSR ***\n", &dbgs()));
   }
 
-  PM->add(createGCLoweringPass());
+  addPass(createGCLoweringPass());
 
   // Make sure that no unreachable blocks are instruction selected.
-  PM->add(createUnreachableBlockEliminationPass());
+  addPass(createUnreachableBlockEliminationPass());
+}
+
+/// Turn exception handling constructs into something the code generators can
+/// handle.
+void TargetPassConfig::addPassesToHandleExceptions() {
+  switch (TM->getMCAsmInfo()->getExceptionHandlingType()) {
+  case ExceptionHandling::SjLj:
+    // SjLj piggy-backs on dwarf for this bit. The cleanups done apply to both
+    // Dwarf EH prepare needs to be run after SjLj prepare. Otherwise,
+    // catch info can get misplaced when a selector ends up more than one block
+    // removed from the parent invoke(s). This could happen when a landing
+    // pad is shared by multiple invokes and is also a target of a normal
+    // edge from elsewhere.
+    addPass(createSjLjEHPreparePass(TM->getTargetLowering()));
+    // FALLTHROUGH
+  case ExceptionHandling::DwarfCFI:
+  case ExceptionHandling::ARM:
+  case ExceptionHandling::Win64:
+    addPass(createDwarfEHPass(TM));
+    break;
+  case ExceptionHandling::None:
+    addPass(createLowerInvokePass(TM->getTargetLowering()));
+
+    // The lower invoke pass may create unreachable code. Remove it.
+    addPass(createUnreachableBlockEliminationPass());
+    break;
+  }
 }
 
 /// Add common passes that perform LLVM IR to IR transforms in preparation for
 /// instruction selection.
 void TargetPassConfig::addISelPrepare() {
   if (getOptLevel() != CodeGenOpt::None && !DisableCGP)
-    PM->add(createCodeGenPreparePass(getTargetLowering()));
+    addPass(createCodeGenPreparePass(getTargetLowering()));
 
-  PM->add(createStackProtectorPass(getTargetLowering()));
+  addPass(createStackProtectorPass(getTargetLowering()));
 
   addPreISel();
 
   if (PrintISelInput)
-    PM->add(createPrintFunctionPass("\n\n"
+    addPass(createPrintFunctionPass("\n\n"
                                     "*** Final LLVM Code input to ISel ***\n",
                                     &dbgs()));
 
   // All passes which modify the LLVM IR are now complete; run the verifier
   // to ensure that the IR is valid.
   if (!DisableVerify)
-    PM->add(createVerifierPass());
+    addPass(createVerifierPass());
 }
 
 /// Add the complete set of target-independent postISel code generator passes.
@@ -447,7 +480,7 @@ void TargetPassConfig::addMachinePasses() {
   // GC
   addPass(GCMachineCodeAnalysisID);
   if (PrintGCInfo)
-    PM->add(createGCInfoPrinter(dbgs()));
+    addPass(createGCInfoPrinter(dbgs()));
 
   // Basic block placement.
   if (getOptLevel() != CodeGenOpt::None)
@@ -564,7 +597,7 @@ void TargetPassConfig::addFastRegAlloc(FunctionPass *RegAllocPass) {
   addPass(PHIEliminationID);
   addPass(TwoAddressInstructionPassID);
 
-  PM->add(RegAllocPass);
+  addPass(RegAllocPass);
   printAndVerify("After Register Allocation");
 }
 
@@ -602,7 +635,7 @@ void TargetPassConfig::addOptimizedRegAlloc(FunctionPass *RegAllocPass) {
     printAndVerify("After Machine Scheduling");
 
   // Add the selected register allocation pass.
-  PM->add(RegAllocPass);
+  addPass(RegAllocPass);
   printAndVerify("After Register Allocation, before rewriter");
 
   // Allow targets to change the register assignments before rewriting.

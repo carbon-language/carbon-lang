@@ -145,38 +145,38 @@ TargetPassConfig *X86TargetMachine::createPassConfig(PassManagerBase &PM) {
 
 bool X86PassConfig::addInstSelector() {
   // Install an instruction selector.
-  PM->add(createX86ISelDag(getX86TargetMachine(), getOptLevel()));
+  addPass(createX86ISelDag(getX86TargetMachine(), getOptLevel()));
 
   // For ELF, cleanup any local-dynamic TLS accesses.
   if (getX86Subtarget().isTargetELF() && getOptLevel() != CodeGenOpt::None)
-    PM->add(createCleanupLocalDynamicTLSPass());
+    addPass(createCleanupLocalDynamicTLSPass());
 
   // For 32-bit, prepend instructions to set the "global base reg" for PIC.
   if (!getX86Subtarget().is64Bit())
-    PM->add(createGlobalBaseRegPass());
+    addPass(createGlobalBaseRegPass());
 
   return false;
 }
 
 bool X86PassConfig::addPreRegAlloc() {
-  PM->add(createX86MaxStackAlignmentHeuristicPass());
+  addPass(createX86MaxStackAlignmentHeuristicPass());
   return false;  // -print-machineinstr shouldn't print after this.
 }
 
 bool X86PassConfig::addPostRegAlloc() {
-  PM->add(createX86FloatingPointStackifierPass());
+  addPass(createX86FloatingPointStackifierPass());
   return true;  // -print-machineinstr should print after this.
 }
 
 bool X86PassConfig::addPreEmitPass() {
   bool ShouldPrint = false;
   if (getOptLevel() != CodeGenOpt::None && getX86Subtarget().hasSSE2()) {
-    PM->add(createExecutionDependencyFixPass(&X86::VR128RegClass));
+    addPass(createExecutionDependencyFixPass(&X86::VR128RegClass));
     ShouldPrint = true;
   }
 
   if (getX86Subtarget().hasAVX() && UseVZeroUpper) {
-    PM->add(createX86IssueVZeroUpperPass());
+    addPass(createX86IssueVZeroUpperPass());
     ShouldPrint = true;
   }
 

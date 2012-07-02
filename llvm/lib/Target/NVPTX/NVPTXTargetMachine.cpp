@@ -120,11 +120,11 @@ TargetPassConfig *NVPTXTargetMachine::createPassConfig(PassManagerBase &PM) {
 }
 
 bool NVPTXPassConfig::addInstSelector() {
-  PM->add(createLowerAggrCopies());
-  PM->add(createSplitBBatBarPass());
-  PM->add(createAllocaHoisting());
-  PM->add(createNVPTXISelDag(getNVPTXTargetMachine(), getOptLevel()));
-  PM->add(createVectorElementizePass(getNVPTXTargetMachine()));
+  addPass(createLowerAggrCopies());
+  addPass(createSplitBBatBarPass());
+  addPass(createAllocaHoisting());
+  addPass(createNVPTXISelDag(getNVPTXTargetMachine(), getOptLevel()));
+  addPass(createVectorElementizePass(getNVPTXTargetMachine()));
   return false;
 }
 

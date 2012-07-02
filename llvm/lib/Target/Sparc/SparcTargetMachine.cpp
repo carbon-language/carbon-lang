@@ -60,7 +60,7 @@ TargetPassConfig *SparcTargetMachine::createPassConfig(PassManagerBase &PM) {
 }
 
 bool SparcPassConfig::addInstSelector() {
-  PM->add(createSparcISelDag(getSparcTargetMachine()));
+  addPass(createSparcISelDag(getSparcTargetMachine()));
   return false;
 }
 
@@ -68,8 +68,8 @@ bool SparcPassConfig::addInstSelector() {
 /// passes immediately before machine code is emitted.  This should return
 /// true if -print-machineinstrs should print out the code after the passes.
 bool SparcPassConfig::addPreEmitPass(){
-  PM->add(createSparcFPMoverPass(getSparcTargetMachine()));
-  PM->add(createSparcDelaySlotFillerPass(getSparcTargetMachine()));
+  addPass(createSparcFPMoverPass(getSparcTargetMachine()));
+  addPass(createSparcDelaySlotFillerPass(getSparcTargetMachine()));
   return true;
 }
 

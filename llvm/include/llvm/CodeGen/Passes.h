@@ -55,9 +55,11 @@ public:
   /// optimization after regalloc.
   static char PostRAMachineLICMID;
 
+private:
+  PassManagerBase *PM;
+
 protected:
   TargetMachine *TM;
-  PassManagerBase *PM;
   PassConfigImpl *Impl; // Internal data structures
   bool Initialized;     // Flagged after all passes are configured.
 
@@ -121,6 +123,9 @@ public:
   /// Add common target configurable passes that perform LLVM IR to IR
   /// transforms following machine independent optimization.
   virtual void addIRPasses();
+
+  /// Add passes to lower exception handling for the code generator.
+  void addPassesToHandleExceptions();
 
   /// Add common passes that perform LLVM IR to IR transforms in preparation for
   /// instruction selection.
@@ -235,6 +240,9 @@ protected:
   /// Return the pass that was added, or NoPassID.
   AnalysisID addPass(char &ID);
 
+  /// Add a pass to the PassManager.
+  void addPass(Pass *P);
+
   /// addMachinePasses helper to create the target-selected or overriden
   /// regalloc pass.
   FunctionPass *createRegAllocPass(bool Optimized);
@@ -242,7 +250,7 @@ protected:
   /// printAndVerify - Add a pass to dump then verify the machine function, if
   /// those steps are enabled.
   ///
-  void printAndVerify(const char *Banner) const;
+  void printAndVerify(const char *Banner);
 };
 } // namespace llvm
 
