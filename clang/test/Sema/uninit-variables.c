@@ -466,3 +466,22 @@ skip_decl:
     k = produce();
   }
 }
+
+typedef char jmp_buf[256];
+extern int setjmp(jmp_buf env); // implicitly returns_twice
+
+void do_stuff_and_longjmp(jmp_buf env, int *result) __attribute__((noreturn));
+
+int returns_twice() {
+  int a; // expected-note {{initialize}}
+  if (!a) { // expected-warning {{variable 'a' is uninitialized}}
+    jmp_buf env;
+    int b;
+    if (setjmp(env) == 0) {
+      do_stuff_and_longjmp(env, &b);
+    } else {
+      a = b; // no warning
+    }
+  }
+  return a;
+}
