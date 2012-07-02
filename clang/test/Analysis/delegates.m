@@ -96,13 +96,12 @@ extern void *_NSConstantStringClassReference;
 
 @implementation test_6062730
 - (void) foo {
-  NSString *str = [[NSString alloc] init];
+  NSString *str = [[NSString alloc] init]; // no-warning
   [test_6062730 performSelectorOnMainThread:@selector(postNotification:) withObject:str waitUntilDone:1];
 }
 
 - (void) bar {
-  NSString *str = [[NSString alloc] init]; // expected-warning{{leak}}
-  // FIXME: We need to resolve [self class] to 'test_6062730'.
+  NSString *str = [[NSString alloc] init]; // no-warning
   [[self class] performSelectorOnMainThread:@selector(postNotification:) withObject:str waitUntilDone:1];
 }
 

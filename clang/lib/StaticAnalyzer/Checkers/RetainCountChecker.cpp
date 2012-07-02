@@ -23,6 +23,7 @@
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/PathDiagnostic.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/Calls.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ProgramStateTrait.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/SymbolManager.h"
@@ -66,6 +67,7 @@ public:
 /// particular argument.
 enum ArgEffect { DoNothing, Autorelease, Dealloc, DecRef, DecRefMsg,
                  DecRefBridgedTransfered,
+                 DecRefAndStopTracking, DecRefMsgAndStopTracking,
                  IncRefMsg, IncRef, MakeCollectable, MayEscape,
                  NewAutoreleasePool, StopTracking };
 
@@ -431,6 +433,12 @@ public:
   bool isSimple() const {
     return Args.isEmpty();
   }
+
+private:
+  ArgEffects getArgEffects() const { return Args; }
+  ArgEffect getDefaultArgEffect() const { return DefaultArgEffect; }
+
+  friend class RetainSummaryManager;
 };
 } // end anonymous namespace
 
@@ -448,9 +456,6 @@ public:
 
   ObjCSummaryKey(const ObjCInterfaceDecl *d, Selector s)
     : II(d ? d->getIdentifier() : 0), S(s) {}
-
-  ObjCSummaryKey(const ObjCInterfaceDecl *d, IdentifierInfo *ii, Selector s)
-    : II(d ? d->getIdentifier() : ii), S(s) {}
 
   ObjCSummaryKey(Selector s)
     : II(0), S(s) {}
@@ -495,21 +500,16 @@ class ObjCSummaryCache {
 public:
   ObjCSummaryCache() {}
 
-  const RetainSummary * find(const ObjCInterfaceDecl *D, IdentifierInfo *ClsName,
-                Selector S) {
-    // Lookup the method using the decl for the class @interface.  If we
-    // have no decl, lookup using the class name.
-    return D ? find(D, S) : find(ClsName, S);
-  }
-
   const RetainSummary * find(const ObjCInterfaceDecl *D, Selector S) {
     // Do a lookup with the (D,S) pair.  If we find a match return
     // the iterator.
     ObjCSummaryKey K(D, S);
     MapTy::iterator I = M.find(K);
 
-    if (I != M.end() || !D)
+    if (I != M.end())
       return I->second;
+    if (!D)
+      return NULL;
 
     // Walk the super chain.  If we find a hit with a parent, we'll end
     // up returning that summary.  We actually allow that key (null,S), as
@@ -625,9 +625,6 @@ class RetainSummaryManager {
   ArgEffects getArgEffects();
 
   enum UnaryFuncKind { cfretain, cfrelease, cfmakecollectable };
-
-public:
-  RetEffect getObjAllocRetEffect() const { return ObjCAllocRetE; }
   
   const RetainSummary *getUnarySummary(const FunctionType* FT,
                                        UnaryFuncKind func);
@@ -740,42 +737,32 @@ public:
     InitializeMethodSummaries();
   }
 
-  const RetainSummary *getSummary(const FunctionDecl *FD,
-                                  const CallOrObjCMessage *CME = 0);
+  const RetainSummary *getSummary(const CallEvent &Call,
+                                  ProgramStateRef State = 0);
 
-  const RetainSummary *getMethodSummary(Selector S, IdentifierInfo *ClsName,
-                                        const ObjCInterfaceDecl *ID,
+  const RetainSummary *getFunctionSummary(const FunctionDecl *FD);
+
+  const RetainSummary *getMethodSummary(Selector S, const ObjCInterfaceDecl *ID,
                                         const ObjCMethodDecl *MD,
                                         QualType RetTy,
                                         ObjCMethodSummariesTy &CachedSummaries);
 
-  const RetainSummary *getInstanceMethodSummary(const ObjCMessage &msg,
-                                                ProgramStateRef state,
-                                                const LocationContext *LC);
+  const RetainSummary *getInstanceMethodSummary(const ObjCMessageInvocation &M,
+                                                ProgramStateRef State);
 
-  const RetainSummary *getInstanceMethodSummary(const ObjCMessage &msg,
-                                                const ObjCInterfaceDecl *ID) {
-    return getMethodSummary(msg.getSelector(), 0, ID, msg.getMethodDecl(),
-                            msg.getType(Ctx), ObjCMethodSummaries);
-  }
+  const RetainSummary *getClassMethodSummary(const ObjCMessageInvocation &M) {
+    assert(!M.isInstanceMessage());
+    const ObjCInterfaceDecl *Class = M.getReceiverInterface();
 
-  const RetainSummary *getClassMethodSummary(const ObjCMessage &msg) {
-    const ObjCInterfaceDecl *Class = 0;
-    if (!msg.isInstanceMessage())
-      Class = msg.getReceiverInterface();
-
-    return getMethodSummary(msg.getSelector(), Class->getIdentifier(),
-                            Class, msg.getMethodDecl(), msg.getType(Ctx),
-                            ObjCClassMethodSummaries);
+    return getMethodSummary(M.getSelector(), Class, M.getDecl(),
+                            M.getResultType(), ObjCClassMethodSummaries);
   }
 
   /// getMethodSummary - This version of getMethodSummary is used to query
   ///  the summary for the current method being analyzed.
   const RetainSummary *getMethodSummary(const ObjCMethodDecl *MD) {
-    // FIXME: Eventually this should be unneeded.
     const ObjCInterfaceDecl *ID = MD->getClassInterface();
     Selector S = MD->getSelector();
-    IdentifierInfo *ClsName = ID->getIdentifier();
     QualType ResultTy = MD->getResultType();
 
     ObjCMethodSummariesTy *CachedSummaries;
@@ -784,11 +771,11 @@ public:
     else
       CachedSummaries = &ObjCClassMethodSummaries;
 
-    return getMethodSummary(S, ClsName, ID, MD, ResultTy, *CachedSummaries);
+    return getMethodSummary(S, ID, MD, ResultTy, *CachedSummaries);
   }
 
   const RetainSummary *getStandardMethodSummary(const ObjCMethodDecl *MD,
-                                              Selector S, QualType RetTy);
+                                                Selector S, QualType RetTy);
 
   void updateSummaryFromAnnotations(const RetainSummary *&Summ,
                                     const ObjCMethodDecl *MD);
@@ -796,11 +783,18 @@ public:
   void updateSummaryFromAnnotations(const RetainSummary *&Summ,
                                     const FunctionDecl *FD);
 
+  void updateSummaryForCall(const RetainSummary *&Summ,
+                            const CallEvent &Call);
+
   bool isGCEnabled() const { return GCEnabled; }
 
   bool isARCEnabled() const { return ARCEnabled; }
   
   bool isARCorGCEnabled() const { return GCEnabled || ARCEnabled; }
+
+  RetEffect getObjAllocRetEffect() const { return ObjCAllocRetE; }
+
+  friend class RetainSummaryTemplate;
 };
 
 // Used to avoid allocating long-term (BPAlloc'd) memory for default retain
@@ -813,10 +807,8 @@ class RetainSummaryTemplate {
   RetainSummary ScratchSummary;
   bool Accessed;
 public:
-  RetainSummaryTemplate(const RetainSummary *&real, const RetainSummary &base, 
-                        RetainSummaryManager &mgr)
-  : Manager(mgr), RealSummary(real), ScratchSummary(real ? *real : base),
-    Accessed(false) {}
+  RetainSummaryTemplate(const RetainSummary *&real, RetainSummaryManager &mgr)
+    : Manager(mgr), RealSummary(real), ScratchSummary(*real), Accessed(false) {}
 
   ~RetainSummaryTemplate() {
     if (Accessed)
@@ -888,9 +880,98 @@ static bool isMakeCollectable(const FunctionDecl *FD, StringRef FName) {
   return FName.find("MakeCollectable") != StringRef::npos;
 }
 
+static ArgEffect getStopTrackingEquivalent(ArgEffect E) {
+  switch (E) {
+  case DoNothing:
+  case Autorelease:
+  case DecRefBridgedTransfered:
+  case IncRef:
+  case IncRefMsg:
+  case MakeCollectable:
+  case MayEscape:
+  case NewAutoreleasePool:
+  case StopTracking:
+    return StopTracking;
+  case DecRef:
+  case DecRefAndStopTracking:
+    return DecRefAndStopTracking;
+  case DecRefMsg:
+  case DecRefMsgAndStopTracking:
+    return DecRefMsgAndStopTracking;
+  case Dealloc:
+    return Dealloc;
+  }
+
+  llvm_unreachable("Unknown ArgEffect kind");
+}
+
+void RetainSummaryManager::updateSummaryForCall(const RetainSummary *&S,
+                                                const CallEvent &Call) {
+  if (Call.hasNonZeroCallbackArg()) {
+    ArgEffect RecEffect = getStopTrackingEquivalent(S->getReceiverEffect());
+    ArgEffect DefEffect = getStopTrackingEquivalent(S->getDefaultArgEffect());
+
+    ArgEffects CustomArgEffects = S->getArgEffects();
+    for (ArgEffects::iterator I = CustomArgEffects.begin(),
+                              E = CustomArgEffects.end();
+         I != E; ++I) {
+      ArgEffect Translated = getStopTrackingEquivalent(I->second);
+      if (Translated != DefEffect)
+        ScratchArgs = AF.add(ScratchArgs, I->first, Translated);
+    }
+
+    RetEffect RE = RetEffect::MakeNoRet();
+
+    // Special cases where the callback argument CANNOT free the return value.
+    // This can generally only happen if we know that the callback will only be
+    // called when the return value is already being deallocated.
+    if (const FunctionCall *FC = dyn_cast<FunctionCall>(&Call)) {
+      IdentifierInfo *Name = FC->getDecl()->getIdentifier();
+
+      // This callback frees the associated buffer.
+      if (Name->isStr("CGBitmapContextCreateWithData"))
+        RE = S->getRetEffect();
+    }
+
+    S = getPersistentSummary(RE, RecEffect, DefEffect);
+  }
+}
+
 const RetainSummary *
-RetainSummaryManager::getSummary(const FunctionDecl *FD,
-                                 const CallOrObjCMessage *CME) {
+RetainSummaryManager::getSummary(const CallEvent &Call,
+                                 ProgramStateRef State) {
+  const RetainSummary *Summ;
+  switch (Call.getKind()) {
+  case CE_Function:
+    Summ = getFunctionSummary(cast<FunctionCall>(Call).getDecl());
+    break;
+  case CE_CXXMember:
+  case CE_Block:
+  case CE_CXXConstructor:
+    // FIXME: These calls are currently unsupported.
+    return getPersistentStopSummary();
+  case CE_ObjCMessage: {
+    const ObjCMessageInvocation &Msg = cast<ObjCMessageInvocation>(Call);
+    if (Msg.isInstanceMessage())
+      Summ = getInstanceMethodSummary(Msg, State);
+    else
+      Summ = getClassMethodSummary(Msg);
+    break;
+  }
+  }
+
+  updateSummaryForCall(Summ, Call);
+
+  assert(Summ && "Unknown call type?");
+  return Summ;
+}
+
+const RetainSummary *
+RetainSummaryManager::getFunctionSummary(const FunctionDecl *FD) {
+  // If we don't know what function we're calling, use our default summary.
+  if (!FD)
+    return getDefaultSummary();
+
   // Look up a summary in our cache of FunctionDecls -> Summaries.
   FuncSummariesTy::iterator I = FuncSummaries.find(FD);
   if (I != FuncSummaries.end())
@@ -902,13 +983,6 @@ RetainSummaryManager::getSummary(const FunctionDecl *FD,
   do {
     // We generate "stop" summaries for implicitly defined functions.
     if (FD->isImplicit()) {
-      S = getPersistentStopSummary();
-      break;
-    }
-    // For C++ methods, generate an implicit "stop" summary as well.  We
-    // can relax this once we have a clear policy for C++ methods and
-    // ownership attributes.
-    if (isa<CXXMethodDecl>(FD)) {
       S = getPersistentStopSummary();
       break;
     }
@@ -1007,9 +1081,6 @@ RetainSummaryManager::getSummary(const FunctionDecl *FD,
       ScratchArgs = AF.add(ScratchArgs, 1, StopTracking);
       ScratchArgs = AF.add(ScratchArgs, 2, StopTracking);
       S = getPersistentSummary(RetEffect::MakeNoRet(), DoNothing, DoNothing);
-    } else if (CME && CME->hasNonZeroCallbackArg()) {
-      // Allow objects to escape through callbacks. radar://10973977
-      S = getPersistentStopSummary();
     }
 
     // Did we get a summary?
@@ -1100,6 +1171,10 @@ RetainSummaryManager::getSummary(const FunctionDecl *FD,
   }
   while (0);
 
+  // If we got all the way here without any luck, use a default summary.
+  if (!S)
+    S = getDefaultSummary();
+
   // Annotations override defaults.
   updateSummaryFromAnnotations(S, FD);
 
@@ -1162,7 +1237,8 @@ RetainSummaryManager::updateSummaryFromAnnotations(const RetainSummary *&Summ,
   if (!FD)
     return;
 
-  RetainSummaryTemplate Template(Summ, *getDefaultSummary(), *this);
+  assert(Summ && "Must have a summary to add annotations to.");
+  RetainSummaryTemplate Template(Summ, *this);
 
   // Effects on the parameters.
   unsigned parm_idx = 0;
@@ -1210,7 +1286,8 @@ RetainSummaryManager::updateSummaryFromAnnotations(const RetainSummary *&Summ,
   if (!MD)
     return;
 
-  RetainSummaryTemplate Template(Summ, *getDefaultSummary(), *this);
+  assert(Summ && "Must have a valid summary to add annotations to");
+  RetainSummaryTemplate Template(Summ, *this);
   bool isTrackedLoc = false;
 
   // Effects on the receiver.
@@ -1370,56 +1447,46 @@ RetainSummaryManager::getStandardMethodSummary(const ObjCMethodDecl *MD,
 }
 
 const RetainSummary *
-RetainSummaryManager::getInstanceMethodSummary(const ObjCMessage &msg,
-                                               ProgramStateRef state,
-                                               const LocationContext *LC) {
+RetainSummaryManager::getInstanceMethodSummary(const ObjCMessageInvocation &Msg,
+                                               ProgramStateRef State) {
+  const ObjCInterfaceDecl *ReceiverClass = 0;
 
-  // We need the type-information of the tracked receiver object
-  // Retrieve it from the state.
-  const Expr *Receiver = msg.getInstanceReceiver();
-  const ObjCInterfaceDecl *ID = 0;
-
-  // FIXME: Is this really working as expected?  There are cases where
-  //  we just use the 'ID' from the message expression.
-  SVal receiverV;
-
-  if (Receiver) {
-    receiverV = state->getSValAsScalarOrLoc(Receiver, LC);
-
-    // FIXME: Eventually replace the use of state->get<RefBindings> with
-    // a generic API for reasoning about the Objective-C types of symbolic
-    // objects.
-    if (SymbolRef Sym = receiverV.getAsLocSymbol())
-      if (const RefVal *T = state->get<RefBindings>(Sym))
-        if (const ObjCObjectPointerType* PT =
-            T->getType()->getAs<ObjCObjectPointerType>())
-          ID = PT->getInterfaceDecl();
-
-    // FIXME: this is a hack.  This may or may not be the actual method
-    //  that is called.
-    if (!ID) {
+  // We do better tracking of the type of the object than the core ExprEngine.
+  // See if we have its type in our private state.
+  // FIXME: Eventually replace the use of state->get<RefBindings> with
+  // a generic API for reasoning about the Objective-C types of symbolic
+  // objects.
+  SVal ReceiverV = Msg.getReceiverSVal();
+  if (SymbolRef Sym = ReceiverV.getAsLocSymbol())
+    if (const RefVal *T = State->get<RefBindings>(Sym))
       if (const ObjCObjectPointerType *PT =
-          Receiver->getType()->getAs<ObjCObjectPointerType>())
-        ID = PT->getInterfaceDecl();
-    }
-  } else {
-    // FIXME: Hack for 'super'.
-    ID = msg.getReceiverInterface();
-  }
+            T->getType()->getAs<ObjCObjectPointerType>())
+        ReceiverClass = PT->getInterfaceDecl();
+
+  // If we don't know what kind of object this is, fall back to its static type.
+  if (!ReceiverClass)
+    ReceiverClass = Msg.getReceiverInterface();
 
   // FIXME: The receiver could be a reference to a class, meaning that
   //  we should use the class method.
-  return getInstanceMethodSummary(msg, ID);
+  // id x = [NSObject class];
+  // [x performSelector:... withObject:... afterDelay:...];
+  Selector S = Msg.getSelector();
+  const ObjCMethodDecl *Method = Msg.getDecl();
+  if (!Method && ReceiverClass)
+    Method = ReceiverClass->getInstanceMethod(S);
+
+  return getMethodSummary(S, ReceiverClass, Method, Msg.getResultType(),
+                          ObjCMethodSummaries);
 }
 
 const RetainSummary *
-RetainSummaryManager::getMethodSummary(Selector S, IdentifierInfo *ClsName,
-                                       const ObjCInterfaceDecl *ID,
+RetainSummaryManager::getMethodSummary(Selector S, const ObjCInterfaceDecl *ID,
                                        const ObjCMethodDecl *MD, QualType RetTy,
                                        ObjCMethodSummariesTy &CachedSummaries) {
 
   // Look up a summary in our summary cache.
-  const RetainSummary *Summ = CachedSummaries.find(ID, ClsName, S);
+  const RetainSummary *Summ = CachedSummaries.find(ID, S);
 
   if (!Summ) {
     Summ = getStandardMethodSummary(MD, S, RetTy);
@@ -1428,7 +1495,7 @@ RetainSummaryManager::getMethodSummary(Selector S, IdentifierInfo *ClsName,
     updateSummaryFromAnnotations(Summ, MD);
 
     // Memoize the summary.
-    CachedSummaries[ObjCSummaryKey(ID, ClsName, S)] = Summ;
+    CachedSummaries[ObjCSummaryKey(ID, S)] = Summ;
   }
 
   return Summ;
@@ -1445,29 +1512,6 @@ void RetainSummaryManager::InitializeClassMethodSummaries() {
   addClassMethSummary("NSAutoreleasePool", "addObject",
                       getPersistentSummary(RetEffect::MakeNoRet(),
                                            DoNothing, Autorelease));
-
-  // Create the summaries for [NSObject performSelector...].  We treat
-  // these as 'stop tracking' for the arguments because they are often
-  // used for delegates that can release the object.  When we have better
-  // inter-procedural analysis we can potentially do something better.  This
-  // workaround is to remove false positives.
-  const RetainSummary *Summ =
-    getPersistentSummary(RetEffect::MakeNoRet(), DoNothing, StopTracking);
-  IdentifierInfo *NSObjectII = &Ctx.Idents.get("NSObject");
-  addClsMethSummary(NSObjectII, Summ, "performSelector", "withObject",
-                    "afterDelay", NULL);
-  addClsMethSummary(NSObjectII, Summ, "performSelector", "withObject",
-                    "afterDelay", "inModes", NULL);
-  addClsMethSummary(NSObjectII, Summ, "performSelectorOnMainThread",
-                    "withObject", "waitUntilDone", NULL);
-  addClsMethSummary(NSObjectII, Summ, "performSelectorOnMainThread",
-                    "withObject", "waitUntilDone", "modes", NULL);
-  addClsMethSummary(NSObjectII, Summ, "performSelector", "onThread",
-                    "withObject", "waitUntilDone", NULL);
-  addClsMethSummary(NSObjectII, Summ, "performSelector", "onThread",
-                    "withObject", "waitUntilDone", "modes", NULL);
-  addClsMethSummary(NSObjectII, Summ, "performSelectorInBackground",
-                    "withObject", NULL);
 }
 
 void RetainSummaryManager::InitializeMethodSummaries() {
@@ -2487,7 +2531,7 @@ public:
 
   void checkPostObjCMessage(const ObjCMessage &Msg, CheckerContext &C) const;
                       
-  void checkSummary(const RetainSummary &Summ, const CallOrObjCMessage &Call,
+  void checkSummary(const RetainSummary &Summ, const CallEvent &Call,
                     CheckerContext &C) const;
 
   bool evalCall(const CallExpr *CE, CheckerContext &C) const;
@@ -2652,27 +2696,26 @@ void RetainCountChecker::checkPostStmt(const CallExpr *CE,
   SVal L = state->getSVal(Callee, C.getLocationContext());
 
   RetainSummaryManager &Summaries = getSummaryManager(C);
-  const RetainSummary *Summ = 0;
 
-  // FIXME: Better support for blocks.  For now we stop tracking anything
-  // that is passed to blocks.
-  // FIXME: Need to handle variables that are "captured" by the block.
+  // FIXME: This tree of switching can go away if/when we add a check::postCall.
   if (dyn_cast_or_null<BlockDataRegion>(L.getAsRegion())) {
-    Summ = Summaries.getPersistentStopSummary();
-  } else if (const FunctionDecl *FD = L.getAsFunctionDecl()) {
-    CallOrObjCMessage CME(CE, state, C.getLocationContext());
-    Summ = Summaries.getSummary(FD, &CME);
+    // FIXME: Better support for blocks.  For now we stop tracking anything
+    // that is passed to blocks.
+    // FIXME: Need to handle variables that are "captured" by the block.
+    BlockCall Call(CE, state, C.getLocationContext());
+    const RetainSummary *Summ = Summaries.getSummary(Call, state);
+    checkSummary(*Summ, Call, C);
+
   } else if (const CXXMemberCallExpr *me = dyn_cast<CXXMemberCallExpr>(CE)) {
-    if (const CXXMethodDecl *MD = me->getMethodDecl()) {
-      CallOrObjCMessage CME(CE, state, C.getLocationContext());
-      Summ = Summaries.getSummary(MD, &CME);
-    }
+    CXXMemberCall Call(me, state, C.getLocationContext());
+    const RetainSummary *Summ = Summaries.getSummary(Call, state);
+    checkSummary(*Summ, Call, C);
+
+  } else {
+    FunctionCall Call(CE, state, C.getLocationContext());
+    const RetainSummary *Summ = Summaries.getSummary(Call, state);
+    checkSummary(*Summ, Call, C);
   }
-
-  if (!Summ)
-    Summ = Summaries.getDefaultSummary();
-
-  checkSummary(*Summ, CallOrObjCMessage(CE, state, C.getLocationContext()), C);
 }
 
 void RetainCountChecker::checkPostStmt(const CXXConstructExpr *CE,
@@ -2683,14 +2726,11 @@ void RetainCountChecker::checkPostStmt(const CXXConstructExpr *CE,
 
   RetainSummaryManager &Summaries = getSummaryManager(C);
   ProgramStateRef state = C.getState();
-  CallOrObjCMessage CME(CE, state, C.getLocationContext());
-  const RetainSummary *Summ = Summaries.getSummary(Ctor, &CME);
+  CXXConstructorCall Call(CE, state, C.getLocationContext());
 
-  // If we didn't get a summary, this constructor doesn't affect retain counts.
-  if (!Summ)
-    return;
+  const RetainSummary *Summ = Summaries.getSummary(Call, state);
 
-  checkSummary(*Summ, CallOrObjCMessage(CE, state, C.getLocationContext()), C);
+  checkSummary(*Summ, Call, C);
 }
 
 void RetainCountChecker::processObjCLiterals(CheckerContext &C,
@@ -2754,22 +2794,13 @@ void RetainCountChecker::checkPostStmt(const ObjCBoxedExpr *Ex,
 void RetainCountChecker::checkPostObjCMessage(const ObjCMessage &Msg, 
                                               CheckerContext &C) const {
   ProgramStateRef state = C.getState();
+  const LocationContext *LC = C.getLocationContext();
+  ObjCMessageInvocation Call(Msg, state, LC);
 
   RetainSummaryManager &Summaries = getSummaryManager(C);
+  const RetainSummary *Summ = Summaries.getSummary(Call, state);
 
-  const RetainSummary *Summ;
-  if (Msg.isInstanceMessage()) {
-    const LocationContext *LC = C.getLocationContext();
-    Summ = Summaries.getInstanceMethodSummary(Msg, state, LC);
-  } else {
-    Summ = Summaries.getClassMethodSummary(Msg);    
-  }
-
-  // If we didn't get a summary, this message doesn't affect retain counts.
-  if (!Summ)
-    return;
-
-  checkSummary(*Summ, CallOrObjCMessage(Msg, state, C.getLocationContext()), C);
+  checkSummary(*Summ, Call, C);
 }
 
 /// GetReturnType - Used to get the return type of a message expression or
@@ -2801,7 +2832,7 @@ static QualType GetReturnType(const Expr *RetE, ASTContext &Ctx) {
 }
 
 void RetainCountChecker::checkSummary(const RetainSummary &Summ,
-                                      const CallOrObjCMessage &CallOrMsg,
+                                      const CallEvent &CallOrMsg,
                                       CheckerContext &C) const {
   ProgramStateRef state = C.getState();
 
@@ -2827,17 +2858,19 @@ void RetainCountChecker::checkSummary(const RetainSummary &Summ,
 
   // Evaluate the effect on the message receiver.
   bool ReceiverIsTracked = false;
-  if (!hasErr && CallOrMsg.isObjCMessage()) {
-    const LocationContext *LC = C.getLocationContext();
-    SVal Receiver = CallOrMsg.getInstanceMessageReceiver(LC);
-    if (SymbolRef Sym = Receiver.getAsLocSymbol()) {
-      if (const RefVal *T = state->get<RefBindings>(Sym)) {
-        ReceiverIsTracked = true;
-        state = updateSymbol(state, Sym, *T, Summ.getReceiverEffect(),
-                             hasErr, C);
-        if (hasErr) {
-          ErrorRange = CallOrMsg.getReceiverSourceRange();
-          ErrorSym = Sym;
+  if (!hasErr) {
+    const ObjCMessageInvocation *MsgInvocation =
+      dyn_cast<ObjCMessageInvocation>(&CallOrMsg);
+    if (MsgInvocation) {
+      if (SymbolRef Sym = MsgInvocation->getReceiverSVal().getAsLocSymbol()) {
+        if (const RefVal *T = state->get<RefBindings>(Sym)) {
+          ReceiverIsTracked = true;
+          state = updateSymbol(state, Sym, *T, Summ.getReceiverEffect(),
+                               hasErr, C);
+          if (hasErr) {
+            ErrorRange = MsgInvocation->getReceiverSourceRange();
+            ErrorSym = Sym;
+          }
         }
       }
     }
@@ -2874,9 +2907,9 @@ void RetainCountChecker::checkSummary(const RetainSummary &Summ,
       if (!Sym)
         break;
 
-      // Use the result type from callOrMsg as it automatically adjusts
+      // Use the result type from the CallEvent as it automatically adjusts
       // for methods/functions that return references.
-      QualType ResultTy = CallOrMsg.getResultType(C.getASTContext());
+      QualType ResultTy = CallOrMsg.getResultType();
       state = state->set<RefBindings>(Sym, RefVal::makeOwned(RE.getObjKind(),
                                                              ResultTy));
 
@@ -2942,12 +2975,23 @@ RetainCountChecker::updateSymbol(ProgramStateRef state, SymbolRef sym,
     IgnoreRetainMsg = (bool)C.getASTContext().getLangOpts().ObjCAutoRefCount;
 
   switch (E) {
-    default: break;
-    case IncRefMsg: E = IgnoreRetainMsg ? DoNothing : IncRef; break;
-    case DecRefMsg: E = IgnoreRetainMsg ? DoNothing : DecRef; break;
-    case MakeCollectable: E = C.isObjCGCEnabled() ? DecRef : DoNothing; break;
-    case NewAutoreleasePool: E = C.isObjCGCEnabled() ? DoNothing :
-                                                      NewAutoreleasePool; break;
+  default:
+    break;
+  case IncRefMsg:
+    E = IgnoreRetainMsg ? DoNothing : IncRef;
+    break;
+  case DecRefMsg:
+    E = IgnoreRetainMsg ? DoNothing : DecRef;
+    break;
+  case DecRefMsgAndStopTracking:
+    E = IgnoreRetainMsg ? StopTracking : DecRefAndStopTracking;
+    break;
+  case MakeCollectable:
+    E = C.isObjCGCEnabled() ? DecRef : DoNothing;
+    break;
+  case NewAutoreleasePool:
+    E = C.isObjCGCEnabled() ? DoNothing : NewAutoreleasePool;
+    break;
   }
 
   // Handle all use-after-releases.
@@ -2961,6 +3005,7 @@ RetainCountChecker::updateSymbol(ProgramStateRef state, SymbolRef sym,
     case DecRefMsg:
     case IncRefMsg:
     case MakeCollectable:
+    case DecRefMsgAndStopTracking:
       llvm_unreachable("DecRefMsg/IncRefMsg/MakeCollectable already converted");
 
     case Dealloc:
@@ -3031,6 +3076,7 @@ RetainCountChecker::updateSymbol(ProgramStateRef state, SymbolRef sym,
 
     case DecRef:
     case DecRefBridgedTransfered:
+    case DecRefAndStopTracking:
       switch (V.getKind()) {
         default:
           // case 'RefVal::Released' handled above.
@@ -3041,13 +3087,18 @@ RetainCountChecker::updateSymbol(ProgramStateRef state, SymbolRef sym,
           if (V.getCount() == 1)
             V = V ^ (E == DecRefBridgedTransfered ? 
                       RefVal::NotOwned : RefVal::Released);
+          else if (E == DecRefAndStopTracking)
+            return state->remove<RefBindings>(sym);
+
           V = V - 1;
           break;
 
         case RefVal::NotOwned:
-          if (V.getCount() > 0)
+          if (V.getCount() > 0) {
+            if (E == DecRefAndStopTracking)
+              return state->remove<RefBindings>(sym);
             V = V - 1;
-          else {
+          } else {
             V = V ^ RefVal::ErrorReleaseNotOwned;
             hasErr = V.getKind();
           }
@@ -3281,22 +3332,20 @@ void RetainCountChecker::checkPreStmt(const ReturnStmt *S,
   // Consult the summary of the enclosing method.
   RetainSummaryManager &Summaries = getSummaryManager(C);
   const Decl *CD = &Pred->getCodeDecl();
+  RetEffect RE = RetEffect::MakeNoRet();
 
+  // FIXME: What is the convention for blocks? Is there one?
   if (const ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(CD)) {
-    // Unlike regular functions, /all/ ObjC methods are assumed to always
-    // follow Cocoa retain-count conventions, not just those with special
-    // names or attributes.
     const RetainSummary *Summ = Summaries.getMethodSummary(MD);
-    RetEffect RE = Summ ? Summ->getRetEffect() : RetEffect::MakeNoRet();
-    checkReturnWithRetEffect(S, C, Pred, RE, X, Sym, state);
+    RE = Summ->getRetEffect();
+  } else if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(CD)) {
+    if (!isa<CXXMethodDecl>(FD)) {
+      const RetainSummary *Summ = Summaries.getFunctionSummary(FD);
+      RE = Summ->getRetEffect();
+    }
   }
 
-  if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(CD)) {
-    if (!isa<CXXMethodDecl>(FD))
-      if (const RetainSummary *Summ = Summaries.getSummary(FD, 0))
-        checkReturnWithRetEffect(S, C, Pred, Summ->getRetEffect(), X,
-                                 Sym, state);
-  }
+  checkReturnWithRetEffect(S, C, Pred, RE, X, Sym, state);
 }
 
 void RetainCountChecker::checkReturnWithRetEffect(const ReturnStmt *S,
