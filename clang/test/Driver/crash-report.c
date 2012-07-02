@@ -1,4 +1,4 @@
-// RUN: rm %T/crash-report-*.c %T/crash-report-*.sh
+// RUN: rm -f %T/crash-report-*.c %T/crash-report-*.sh
 // RUN: TMP=%T %clang -fsyntax-only %s -DFOO=BAR 2>&1 | FileCheck %s
 // RUN: FileCheck --check-prefix=CHECKSRC %s < %T/crash-report-*.c
 // RUN: FileCheck --check-prefix=CHECKSH %s < %T/crash-report-*.sh
