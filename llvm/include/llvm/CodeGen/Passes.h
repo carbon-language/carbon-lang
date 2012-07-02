@@ -32,8 +32,6 @@ namespace llvm {
 
 namespace llvm {
 
-extern char &NoPassID; // Allow targets to choose not to run a pass.
-
 class PassConfigImpl;
 
 /// Target-Independent Code Generator Pass Configuration Options.
@@ -101,19 +99,19 @@ public:
 
   /// Allow the target to override a specific pass without overriding the pass
   /// pipeline. When passes are added to the standard pipeline at the
-  /// point where StadardID is expected, add TargetID in its place.
-  void substitutePass(char &StandardID, char &TargetID);
+  /// point where StandardID is expected, add TargetID in its place.
+  void substitutePass(AnalysisID StandardID, AnalysisID TargetID);
 
   /// Insert InsertedPassID pass after TargetPassID pass.
-  void insertPass(const char &TargetPassID, const char &InsertedPassID);
+  void insertPass(AnalysisID TargetPassID, AnalysisID InsertedPassID);
 
   /// Allow the target to enable a specific standard pass by default.
-  void enablePass(char &ID) { substitutePass(ID, ID); }
+  void enablePass(AnalysisID PassID) { substitutePass(PassID, PassID); }
 
   /// Allow the target to disable a specific standard pass by default.
-  void disablePass(char &ID) { substitutePass(ID, NoPassID); }
+  void disablePass(AnalysisID PassID) { substitutePass(PassID, 0); }
 
-  /// Return the pass ssubtituted for StandardID by the target.
+  /// Return the pass substituted for StandardID by the target.
   /// If no substitution exists, return StandardID.
   AnalysisID getPassSubstitution(AnalysisID StandardID) const;
 
@@ -237,8 +235,8 @@ protected:
   ///
 
   /// Add a CodeGen pass at this point in the pipeline after checking overrides.
-  /// Return the pass that was added, or NoPassID.
-  AnalysisID addPass(char &ID);
+  /// Return the pass that was added, or zero if no pass was added.
+  AnalysisID addPass(AnalysisID PassID);
 
   /// Add a pass to the PassManager.
   void addPass(Pass *P);

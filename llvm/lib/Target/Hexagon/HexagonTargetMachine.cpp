@@ -123,7 +123,7 @@ bool HexagonPassConfig::addPostRegAlloc() {
 
 
 bool HexagonPassConfig::addPreSched2() {
-  addPass(IfConverterID);
+  addPass(&IfConverterID);
   return true;
 }
 

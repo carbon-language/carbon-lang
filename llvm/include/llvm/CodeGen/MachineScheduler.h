@@ -19,7 +19,7 @@
 //                     createCustomMachineSched);
 //
 // Inside <Target>PassConfig:
-//   enablePass(MachineSchedulerID);
+//   enablePass(&MachineSchedulerID);
 //   MachineSchedRegistry::setDefault(createCustomMachineSched);
 //
 //===----------------------------------------------------------------------===//
