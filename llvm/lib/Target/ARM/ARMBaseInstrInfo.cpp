@@ -2176,9 +2176,9 @@ ARMBaseInstrInfo::getNumMicroOps(const InstrItineraryData *ItinData,
 
   const MCInstrDesc &Desc = MI->getDesc();
   unsigned Class = Desc.getSchedClass();
-  unsigned UOps = ItinData->Itineraries[Class].NumMicroOps;
-  if (UOps)
-    return UOps;
+  int ItinUOps = ItinData->getNumMicroOps(Class);
+  if (ItinUOps >= 0)
+    return ItinUOps;
 
   unsigned Opc = MI->getOpcode();
   switch (Opc) {
@@ -2252,19 +2252,19 @@ ARMBaseInstrInfo::getNumMicroOps(const InstrItineraryData *ItinData,
         return 2;
       // 4 registers would be issued: 2, 2.
       // 5 registers would be issued: 2, 2, 1.
-      UOps = (NumRegs / 2);
+      int A8UOps = (NumRegs / 2);
       if (NumRegs % 2)
-        ++UOps;
-      return UOps;
+        ++A8UOps;
+      return A8UOps;
     } else if (Subtarget.isCortexA9()) {
-      UOps = (NumRegs / 2);
+      int A9UOps = (NumRegs / 2);
       // If there are odd number of registers or if it's not 64-bit aligned,
       // then it takes an extra AGU (Address Generation Unit) cycle.
       if ((NumRegs % 2) ||
           !MI->hasOneMemOperand() ||
           (*MI->memoperands_begin())->getAlignment() < 8)
-        ++UOps;
-      return UOps;
+        ++A9UOps;
+      return A9UOps;
     } else {
       // Assume the worst.
       return NumRegs;
@@ -3057,7 +3057,8 @@ unsigned ARMBaseInstrInfo::getInstrLatency(const InstrItineraryData *ItinData,
   unsigned Class = MCID.getSchedClass();
 
   // For instructions with variable uops, use uops as latency.
-  if (!ItinData->isEmpty() && !ItinData->Itineraries[Class].NumMicroOps) {
+  if (!ItinData->isEmpty() && ItinData->getNumMicroOps(Class) < 0) {
+    dbgs() << "UOPS " << getNumMicroOps(ItinData, MI) << " " << *MI << '\n';
     return getNumMicroOps(ItinData, MI);
   }
   // For the common case, fall back on the itinerary's latency.

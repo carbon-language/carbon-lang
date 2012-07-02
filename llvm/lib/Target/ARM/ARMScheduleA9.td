@@ -284,7 +284,8 @@ def CortexA9Itineraries : MultiIssueItineraries<
                                 InstrStage<2, [A9_AGU], 1>,
                                 InstrStage<2, [A9_LSUnit]>],
                                [1, 1, 1, 1, 3],
-                         [NoBypass, NoBypass, NoBypass, NoBypass, A9_LdBypass]>,
+                         [NoBypass, NoBypass, NoBypass, NoBypass, A9_LdBypass],
+                         -1>, // dynamic uops
   //
   // Load multiple + update, defs are the 1st and 5th operands.
   InstrItinData<IIC_iLoad_mu , [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
@@ -292,7 +293,8 @@ def CortexA9Itineraries : MultiIssueItineraries<
                                 InstrStage<2, [A9_AGU], 1>,
                                 InstrStage<2, [A9_LSUnit]>],
                                [2, 1, 1, 1, 3],
-                         [NoBypass, NoBypass, NoBypass, NoBypass, A9_LdBypass]>,
+                         [NoBypass, NoBypass, NoBypass, NoBypass, A9_LdBypass],
+                         -1>, // dynamic uops
   //
   // Load multiple plus branch
   InstrItinData<IIC_iLoad_mBr, [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
@@ -301,7 +303,8 @@ def CortexA9Itineraries : MultiIssueItineraries<
                                 InstrStage<2, [A9_LSUnit]>,
                                 InstrStage<1, [A9_Branch]>],
                                [1, 2, 1, 1, 3],
-                         [NoBypass, NoBypass, NoBypass, NoBypass, A9_LdBypass]>,
+                         [NoBypass, NoBypass, NoBypass, NoBypass, A9_LdBypass],
+                         -1>, // dynamic uops
   //
   // Pop, def is the 3rd operand.
   InstrItinData<IIC_iPop  ,    [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
@@ -309,7 +312,8 @@ def CortexA9Itineraries : MultiIssueItineraries<
                                 InstrStage<2, [A9_AGU], 1>,
                                 InstrStage<2, [A9_LSUnit]>],
                                [1, 1, 3],
-                               [NoBypass, NoBypass, A9_LdBypass]>,
+                               [NoBypass, NoBypass, A9_LdBypass],
+                               -1>, // dynamic uops
   //
   // Pop + branch, def is the 3rd operand.
   InstrItinData<IIC_iPop_Br,   [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
@@ -318,8 +322,8 @@ def CortexA9Itineraries : MultiIssueItineraries<
                                 InstrStage<2, [A9_LSUnit]>,
                                 InstrStage<1, [A9_Branch]>],
                                [1, 1, 3],
-                               [NoBypass, NoBypass, A9_LdBypass]>,
-
+                               [NoBypass, NoBypass, A9_LdBypass],
+                               -1>, // dynamic uops
   //
   // iLoadi + iALUr for t2LDRpci_pic.
   InstrItinData<IIC_iLoadiALU, [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
@@ -413,14 +417,15 @@ def CortexA9Itineraries : MultiIssueItineraries<
   InstrItinData<IIC_iStore_m , [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                 InstrStage<1, [A9_MUX0], 0>,
                                 InstrStage<1, [A9_AGU], 0>,
-                                InstrStage<2, [A9_LSUnit]>]>,
+                                InstrStage<2, [A9_LSUnit]>],
+                [], [], -1>, // dynamic uops
   //
   // Store multiple + update
   InstrItinData<IIC_iStore_mu, [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                 InstrStage<1, [A9_MUX0], 0>,
                                 InstrStage<1, [A9_AGU], 0>,
-                                InstrStage<2, [A9_LSUnit]>], [2]>,
-
+                                InstrStage<2, [A9_LSUnit]>],
+                [2], [], -1>, // dynamic uops
   //
   // Preload
   InstrItinData<IIC_Preload,   [InstrStage<1, [A9_Issue0, A9_Issue1]>], [1, 1]>,
@@ -717,7 +722,8 @@ def CortexA9Itineraries : MultiIssueItineraries<
                                InstrStage<1, [A9_DRegsVFP], 0, Required>,
                                InstrStage<2, [A9_DRegsN],   0, Reserved>,
                                InstrStage<1, [A9_NPipe], 0>,
-                               InstrStage<2, [A9_LSUnit]>], [1, 1, 1, 1]>,
+                               InstrStage<2, [A9_LSUnit]>],
+                [1, 1, 1, 1], [], -1>, // dynamic uops
   //
   // FP Load Multiple + update
   // FIXME: assumes 2 doubles which requires 2 LS cycles.
@@ -726,7 +732,8 @@ def CortexA9Itineraries : MultiIssueItineraries<
                                InstrStage<1, [A9_DRegsVFP], 0, Required>,
                                InstrStage<2, [A9_DRegsN],   0, Reserved>,
                                InstrStage<1, [A9_NPipe], 0>,
-                               InstrStage<2, [A9_LSUnit]>], [2, 1, 1, 1]>,
+                               InstrStage<2, [A9_LSUnit]>],
+                [2, 1, 1, 1], [], -1>, // dynamic uops
   //
   // Single-precision FP Store
   InstrItinData<IIC_fpStore32,[InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
@@ -753,7 +760,8 @@ def CortexA9Itineraries : MultiIssueItineraries<
                                InstrStage<1, [A9_DRegsVFP], 0, Required>,
                                InstrStage<2, [A9_DRegsN],   0, Reserved>,
                                InstrStage<1, [A9_NPipe], 0>,
-                               InstrStage<2, [A9_LSUnit]>], [1, 1, 1, 1]>,
+                               InstrStage<2, [A9_LSUnit]>],
+                [1, 1, 1, 1], [], -1>, // dynamic uops
   //
   // FP Store Multiple + update
   // FIXME: assumes 2 doubles which requires 2 LS cycles.
@@ -762,7 +770,8 @@ def CortexA9Itineraries : MultiIssueItineraries<
                                 InstrStage<1, [A9_DRegsVFP], 0, Required>,
                                 InstrStage<2, [A9_DRegsN],   0, Reserved>,
                                 InstrStage<1, [A9_NPipe], 0>,
-                                InstrStage<2, [A9_LSUnit]>], [2, 1, 1, 1]>,
+                                InstrStage<2, [A9_LSUnit]>],
+                [2, 1, 1, 1], [], -1>, // dynamic uops
   // NEON
   // VLD1
   InstrItinData<IIC_VLD1,     [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
