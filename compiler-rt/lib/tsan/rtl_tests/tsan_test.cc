@@ -34,6 +34,7 @@ int main(int argc, char **argv) {
   __tsan_func_entry(__builtin_return_address(0));
   __tsan_func_entry((char*)&main + 1);
 
+  testing::GTEST_FLAG(death_test_style) = "threadsafe";
   testing::InitGoogleTest(&argc, argv);
   int res = RUN_ALL_TESTS();
 
