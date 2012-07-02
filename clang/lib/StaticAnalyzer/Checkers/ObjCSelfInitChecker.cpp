@@ -39,6 +39,7 @@
 #include "ClangSACheckers.h"
 #include "clang/StaticAnalyzer/Core/Checker.h"
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/Calls.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ProgramStateTrait.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ObjCMessage.h"
@@ -73,8 +74,8 @@ public:
                      CheckerContext &C) const;
   void checkBind(SVal loc, SVal val, const Stmt *S, CheckerContext &C) const;
 
-  void checkPreStmt(const CallOrObjCMessage &CE, CheckerContext &C) const;
-  void checkPostStmt(const CallOrObjCMessage &CE, CheckerContext &C) const;
+  void checkPreStmt(const CallEvent &CE, CheckerContext &C) const;
+  void checkPostStmt(const CallEvent &CE, CheckerContext &C) const;
 
 };
 } // end anonymous namespace
@@ -208,7 +209,7 @@ void ObjCSelfInitChecker::checkPostObjCMessage(ObjCMessage msg,
     return;
   }
 
-  CallOrObjCMessage MsgWrapper(msg, C.getState(), C.getLocationContext());
+  ObjCMessageInvocation MsgWrapper(msg, C.getState(), C.getLocationContext());
   checkPostStmt(MsgWrapper, C);
 
   // We don't check for an invalid 'self' in an obj-c message expression to cut
@@ -259,23 +260,51 @@ void ObjCSelfInitChecker::checkPreStmt(const ReturnStmt *S,
 
 void ObjCSelfInitChecker::checkPreStmt(const CallExpr *CE,
                                        CheckerContext &C) const {
-  CallOrObjCMessage CEWrapper(CE, C.getState(), C.getLocationContext());
-  checkPreStmt(CEWrapper, C);
+  // FIXME: This tree of switching can go away if/when we add a check::postCall.
+  const Expr *Callee = CE->getCallee()->IgnoreParens();
+  ProgramStateRef State = C.getState();
+  const LocationContext *LCtx = C.getLocationContext();
+  SVal L = State->getSVal(Callee, LCtx);
+
+  if (dyn_cast_or_null<BlockDataRegion>(L.getAsRegion())) {
+    BlockCall Call(CE, State, LCtx);
+    checkPreStmt(Call, C);
+  } else if (const CXXMemberCallExpr *me = dyn_cast<CXXMemberCallExpr>(CE)) {
+    CXXMemberCall Call(me, State, LCtx);
+    checkPreStmt(Call, C);
+  } else {
+    FunctionCall Call(CE, State, LCtx);
+    checkPreStmt(Call, C);
+  }
 }
 
 void ObjCSelfInitChecker::checkPostStmt(const CallExpr *CE,
                                         CheckerContext &C) const {
-  CallOrObjCMessage CEWrapper(CE, C.getState(), C.getLocationContext());
-  checkPostStmt(CEWrapper, C);
+  // FIXME: This tree of switching can go away if/when we add a check::postCall.
+  const Expr *Callee = CE->getCallee()->IgnoreParens();
+  ProgramStateRef State = C.getState();
+  const LocationContext *LCtx = C.getLocationContext();
+  SVal L = State->getSVal(Callee, LCtx);
+
+  if (dyn_cast_or_null<BlockDataRegion>(L.getAsRegion())) {
+    BlockCall Call(CE, State, LCtx);
+    checkPostStmt(Call, C);
+  } else if (const CXXMemberCallExpr *me = dyn_cast<CXXMemberCallExpr>(CE)) {
+    CXXMemberCall Call(me, State, LCtx);
+    checkPostStmt(Call, C);
+  } else {
+    FunctionCall Call(CE, State, LCtx);
+    checkPostStmt(Call, C);
+  }
 }
 
 void ObjCSelfInitChecker::checkPreObjCMessage(ObjCMessage Msg,
                                               CheckerContext &C) const {
-  CallOrObjCMessage MsgWrapper(Msg, C.getState(), C.getLocationContext());
+  ObjCMessageInvocation MsgWrapper(Msg, C.getState(), C.getLocationContext());
   checkPreStmt(MsgWrapper, C);
 }
 
-void ObjCSelfInitChecker::checkPreStmt(const CallOrObjCMessage &CE,
+void ObjCSelfInitChecker::checkPreStmt(const CallEvent &CE,
                                        CheckerContext &C) const {
   ProgramStateRef state = C.getState();
   unsigned NumArgs = CE.getNumArgs();
@@ -298,7 +327,7 @@ void ObjCSelfInitChecker::checkPreStmt(const CallOrObjCMessage &CE,
   }
 }
 
-void ObjCSelfInitChecker::checkPostStmt(const CallOrObjCMessage &CE,
+void ObjCSelfInitChecker::checkPostStmt(const CallEvent &CE,
                                         CheckerContext &C) const {
   ProgramStateRef state = C.getState();
   unsigned NumArgs = CE.getNumArgs();
