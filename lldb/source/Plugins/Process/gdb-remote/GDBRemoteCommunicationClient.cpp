@@ -381,6 +381,7 @@ GDBRemoteCommunicationClient::SendContinuePacketAndWaitForResponse
     StringExtractorGDBRemote &response
 )
 {
+    m_curr_tid = LLDB_INVALID_THREAD_ID;
     LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PROCESS));
     if (log)
         log->Printf ("GDBRemoteCommunicationClient::%s ()", __FUNCTION__);
