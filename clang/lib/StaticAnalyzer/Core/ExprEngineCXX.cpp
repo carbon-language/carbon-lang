@@ -46,93 +46,23 @@ void ExprEngine::VisitCXXTemporaryObjectExpr(const CXXTemporaryObjectExpr *expr,
   VisitCXXConstructExpr(expr, 0, Pred, Dst);
 }
 
-void ExprEngine::VisitCXXConstructExpr(const CXXConstructExpr *E, 
+void ExprEngine::VisitCXXConstructExpr(const CXXConstructExpr *CE,
                                        const MemRegion *Dest,
                                        ExplodedNode *Pred,
                                        ExplodedNodeSet &destNodes) {
+  CXXConstructorCall Call(CE, Dest, Pred->getState(),
+                          Pred->getLocationContext());
 
-#if 0
-  const CXXConstructorDecl *CD = E->getConstructor();
-  assert(CD);
-#endif
-  
-#if 0
-  if (!(CD->doesThisDeclarationHaveABody() && AMgr.shouldInlineCall()))
-    // FIXME: invalidate the object.
-    return;
-#endif
-  
-#if 0
-  // Is the constructor elidable?
-  if (E->isElidable()) {
-    destNodes.Add(Pred);
-    return;
-  }
-#endif
-  
-  // Perform the previsit of the constructor.
-  ExplodedNodeSet SrcNodes;
-  SrcNodes.Add(Pred);
-  ExplodedNodeSet TmpNodes;
-  getCheckerManager().runCheckersForPreStmt(TmpNodes, SrcNodes, E, *this);
-  
-  // Evaluate the constructor.  Currently we don't now allow checker-specific
-  // implementations of specific constructors (as we do with ordinary
-  // function calls.  We can re-evaluate this in the future.
-  
-#if 0
-  // Inlining currently isn't fully implemented.
+  ExplodedNodeSet DstPreVisit;
+  getCheckerManager().runCheckersForPreStmt(DstPreVisit, Pred, CE, *this);
 
-  if (AMgr.shouldInlineCall()) {
-    if (!Dest)
-      Dest =
-        svalBuilder.getRegionManager().getCXXTempObjectRegion(E,
-                                                  Pred->getLocationContext());
+  ExplodedNodeSet DstInvalidated;
+  for (ExplodedNodeSet::iterator I = DstPreVisit.begin(), E = DstPreVisit.end();
+       I != E; ++I)
+    defaultEvalCall(DstInvalidated, *I, Call);
 
-    // The callee stack frame context used to create the 'this'
-    // parameter region.
-    const StackFrameContext *SFC = 
-      AMgr.getStackFrame(CD, Pred->getLocationContext(),
-                         E, currentBuilderContext->getBlock(),
-                         currentStmtIdx);
-
-    // Create the 'this' region.
-    const CXXThisRegion *ThisR =
-      getCXXThisRegion(E->getConstructor()->getParent(), SFC);
-
-    CallEnter Loc(E, SFC, Pred->getLocationContext());
-
-    StmtNodeBuilder Bldr(SrcNodes, TmpNodes, *currentBuilderContext);
-    for (ExplodedNodeSet::iterator NI = SrcNodes.begin(),
-                                   NE = SrcNodes.end(); NI != NE; ++NI) {
-      ProgramStateRef state = (*NI)->getState();
-      // Setup 'this' region, so that the ctor is evaluated on the object pointed
-      // by 'Dest'.
-      state = state->bindLoc(loc::MemRegionVal(ThisR), loc::MemRegionVal(Dest));
-      Bldr.generateNode(Loc, *NI, state);
-    }
-  }
-#endif
-  
-  // Default semantics: invalidate all regions passed as arguments.
-  ExplodedNodeSet destCall;
-  {
-    StmtNodeBuilder Bldr(TmpNodes, destCall, *currentBuilderContext);
-    for (ExplodedNodeSet::iterator i = TmpNodes.begin(), e = TmpNodes.end();
-         i != e; ++i)
-    {
-      ExplodedNode *Pred = *i;
-      const LocationContext *LC = Pred->getLocationContext();
-      ProgramStateRef state = Pred->getState();
-
-      CXXConstructorCall Call(E, state, LC);
-      unsigned BlockCount = currentBuilderContext->getCurrentBlockCount();
-      state = Call.invalidateRegions(BlockCount);
-      Bldr.generateNode(E, Pred, state);
-    }
-  }
-  // Do the post visit.
-  getCheckerManager().runCheckersForPostStmt(destNodes, destCall, E, *this);  
+  getCheckerManager().runCheckersForPostStmt(destNodes, DstInvalidated,
+                                             CE, *this);
 }
 
 void ExprEngine::VisitCXXDestructor(const CXXDestructorDecl *DD,
