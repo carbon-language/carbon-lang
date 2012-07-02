@@ -1536,7 +1536,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
           // Emit a copy or rematerialize the definition.
           bool isCopy = false;
           const TargetRegisterClass *rc = MRI->getRegClass(regB);
-          MachineInstr *DefMI = MRI->getVRegDef(regB);
+          MachineInstr *DefMI = MRI->getUniqueVRegDef(regB);
           // If it's safe and profitable, remat the definition instead of
           // copying it.
           if (DefMI &&
@@ -1722,9 +1722,10 @@ TwoAddressInstructionPass::CoalesceExtSubRegs(SmallVector<unsigned,4> &Srcs,
       continue;
 
     // Check that the instructions are all in the same basic block.
-    MachineInstr *SrcDefMI = MRI->getVRegDef(SrcReg);
-    MachineInstr *DstDefMI = MRI->getVRegDef(DstReg);
-    if (SrcDefMI->getParent() != DstDefMI->getParent())
+    MachineInstr *SrcDefMI = MRI->getUniqueVRegDef(SrcReg);
+    MachineInstr *DstDefMI = MRI->getUniqueVRegDef(DstReg);
+    if (!SrcDefMI || !DstDefMI ||
+        SrcDefMI->getParent() != DstDefMI->getParent())
       continue;
 
     // If there are no other uses than copies which feed into
@@ -1874,7 +1875,7 @@ bool TwoAddressInstructionPass::EliminateRegSequences() {
       MachineInstr *DefMI = NULL;
       if (!MI->getOperand(i).getSubReg() &&
           !TargetRegisterInfo::isPhysicalRegister(SrcReg)) {
-        DefMI = MRI->getVRegDef(SrcReg);
+        DefMI = MRI->getUniqueVRegDef(SrcReg);
       }
 
       if (DefMI && DefMI->isImplicitDef()) {
