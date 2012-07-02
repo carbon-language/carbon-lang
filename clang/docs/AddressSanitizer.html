@@ -99,10 +99,10 @@ AddressSanitizer is enabled.
 <a href="LanguageExtensions.html#__has_feature_extension">__has_feature</a>
 can be used for this purpose.
 <pre>
-#if defined(__has_feature) &amp;&amp; __has_feature(address_sanitizer)
-  code that runs only under AddressSanitizer
-#else
-  code that does not run under AddressSanitizer
+#if defined(__has_feature)
+# if __has_feature(address_sanitizer)
+  code that builds only under AddressSanitizer
+# endif
 #endif
 </pre>
 
@@ -112,14 +112,16 @@ One may use the function attribute
 <a href="LanguageExtensions.html#address_sanitizer">
   <tt>no_address_safety_analysis</tt></a>
 to disable instrumentation of a particular function.
+This attribute may not be supported by other compilers, so we suggest to
+use it together with <tt>__has_feature(address_sanitizer)</tt>.
 Note: currently, this attribute will be lost if the function is inlined.
 
 <h2 id="platforms">Supported Platforms</h2>
 AddressSanitizer is supported on
 <ul><li>Linux x86_64 (tested on Ubuntu 10.04).
-<li>MacOS 10.6 i386/x86_64.
+<li>MacOS 10.6 and 10.7 (i386/x86_64).
 </ul>
-Support for Linux i386/ARM and MacOS 10.7 is in progress
+Support for Linux i386/ARM is in progress
 (it may work, but is not guaranteed too).
 
 
