@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/StaticAnalyzer/Core/PathSensitive/ExplodedGraph.h"
-#include "clang/StaticAnalyzer/Core/PathSensitive/ObjCMessage.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/Calls.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ProgramState.h"
 #include "clang/AST/Stmt.h"
 #include "clang/AST/ParentMap.h"
@@ -69,7 +69,7 @@ bool ExplodedGraph::shouldCollect(const ExplodedNode *node) {
   // (6) The 'GDM' is the same as the predecessor.
   // (7) The LocationContext is the same as the predecessor.
   // (8) The PostStmt is for a non-consumed Stmt or Expr.
-  // (9) The successor is a CallExpr StmtPoint (so that we would be able to
+  // (9) The successor is not a CallExpr StmtPoint (so that we would be able to
   //     find it when retrying a call with no inlining).
 
   // Conditions 1 and 2.
@@ -116,7 +116,7 @@ bool ExplodedGraph::shouldCollect(const ExplodedNode *node) {
   // Condition 9.
   const ProgramPoint SuccLoc = succ->getLocation();
   if (const StmtPoint *SP = dyn_cast<StmtPoint>(&SuccLoc))
-    if (CallOrObjCMessage::canBeInlined(SP->getStmt()))
+    if (CallEvent::mayBeInlined(SP->getStmt()))
       return false;
 
   return true;

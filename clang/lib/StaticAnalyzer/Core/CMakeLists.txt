@@ -25,7 +25,6 @@ add_clang_library(clangStaticAnalyzerCore
   FunctionSummary.cpp
   HTMLDiagnostics.cpp
   MemRegion.cpp
-  ObjCMessage.cpp
   PathDiagnostic.cpp
   PlistDiagnostics.cpp
   ProgramState.cpp

@@ -717,6 +717,18 @@ FILE *useFunOpenNoReleaseFunction() {
     return f; // expected-warning{{leak}}
 }
 
+static int readNothing(void *_ctx, char *buf, int size) {
+  return 0;
+}
+FILE *useFunOpenReadNoRelease() {
+  void *ctx = malloc(sizeof(int));
+  FILE *f = funopen(ctx, readNothing, 0, 0, 0);
+  if (f == 0) {
+    free(ctx);
+  }
+  return f; // expected-warning{{leak}}
+}
+
 // Test setbuf, setvbuf.
 int my_main_no_warning() {
     char *p = malloc(100);

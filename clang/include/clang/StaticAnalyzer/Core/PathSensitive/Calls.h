@@ -132,12 +132,25 @@ public:
   /// \brief Returns true if any of the arguments appear to represent callbacks.
   bool hasNonZeroCallbackArg() const;
 
+  /// \brief Returns true if any of the arguments are known to escape to long-
+  /// term storage, even if this method will not modify them.
+  // NOTE: The exact semantics of this are still being defined!
+  // We don't really want a list of hardcoded exceptions in the long run,
+  // but we don't want duplicated lists of known APIs in the short term either.
+  virtual bool argumentsMayEscape() const {
+    return hasNonZeroCallbackArg();
+  }
+
   /// \brief Returns a new state with all argument regions invalidated.
   ///
   /// This accepts an alternate state in case some processing has already
   /// occurred.
   ProgramStateRef invalidateRegions(unsigned BlockCount,
                                     ProgramStateRef Orig = 0) const;
+
+  /// \brief Returns true if this is a statement that can be considered for
+  /// inlining.
+  static bool mayBeInlined(const Stmt *S);
 
   // Iterator access to parameter types.
 private:
@@ -172,6 +185,8 @@ protected:
 
 public:
   virtual const FunctionDecl *getDecl() const = 0;
+
+  bool argumentsMayEscape() const;
 
   static bool classof(const CallEvent *CA) {
     return CA->getKind() >= CE_BEG_FUNCTION_CALLS &&

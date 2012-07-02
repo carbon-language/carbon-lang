@@ -18,6 +18,7 @@
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/AnalysisManager.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/Calls.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ExprEngine.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ObjCMessage.h"
 #include "clang/AST/CharUnits.h"
@@ -241,7 +242,7 @@ static bool shouldRemoveDeadBindings(AnalysisManager &AMgr,
     return true;
     
   // Run before processing a call.
-  if (CallOrObjCMessage::canBeInlined(S.getStmt()))
+  if (CallEvent::mayBeInlined(S.getStmt()))
     return true;
 
   // Is this an expression that is consumed by another expression?  If so,

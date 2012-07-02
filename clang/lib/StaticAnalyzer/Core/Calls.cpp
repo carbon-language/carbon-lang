@@ -118,51 +118,12 @@ static bool isPointerToConst(QualType Ty) {
 
 // Try to retrieve the function declaration and find the function parameter
 // types which are pointers/references to a non-pointer const.
-// We do not invalidate the corresponding argument regions.
+// We will not invalidate the corresponding argument regions.
 static void findPtrToConstParams(llvm::SmallSet<unsigned, 1> &PreserveArgs,
                                  const CallEvent &Call) {
-  const Decl *CallDecl = Call.getDecl();
-  if (!CallDecl)
-    return;
-
-  if (Call.hasNonZeroCallbackArg())
-    return;
-
-  if (const FunctionDecl *FDecl = dyn_cast<FunctionDecl>(CallDecl)) {
-    const IdentifierInfo *II = FDecl->getIdentifier();
-
-    // List the cases, where the region should be invalidated even if the
-    // argument is const.
-    // FIXME: This is conflating invalidating /contents/ and invalidating
-    // /metadata/. Now that we pass the CallEvent to the checkers, they
-    // should probably be doing this work themselves.
-    if (II) {
-      StringRef FName = II->getName();
-      //  - 'int pthread_setspecific(ptheread_key k, const void *)' stores a
-      // value into thread local storage. The value can later be retrieved with
-      // 'void *ptheread_getspecific(pthread_key)'. So even thought the
-      // parameter is 'const void *', the region escapes through the call.
-      //  - funopen - sets a buffer for future IO calls.
-      //  - ObjC functions that end with "NoCopy" can free memory, of the passed
-      // in buffer.
-      // - Many CF containers allow objects to escape through custom
-      // allocators/deallocators upon container construction.
-      // - NSXXInsertXX, for example NSMapInsertIfAbsent, since they can
-      // be deallocated by NSMapRemove.
-      // - Any call that has a callback as one of the arguments.
-      if (FName == "pthread_setspecific" ||
-          FName == "funopen" ||
-          FName.endswith("NoCopy") ||
-          (FName.startswith("NS") &&
-           (FName.find("Insert") != StringRef::npos)) ||
-          CallOrObjCMessage::isCFCGAllowingEscape(FName))
-        return;
-    }
-  }
-
   unsigned Idx = 0;
   for (CallEvent::param_type_iterator I = Call.param_type_begin(),
-                                       E = Call.param_type_end();
+                                      E = Call.param_type_end();
        I != E; ++I, ++Idx) {
     if (isPointerToConst(*I))
       PreserveArgs.insert(Idx);
@@ -178,7 +139,8 @@ ProgramStateRef CallEvent::invalidateRegions(unsigned BlockCount,
 
   // Indexes of arguments whose values will be preserved by the call.
   llvm::SmallSet<unsigned, 1> PreserveArgs;
-  findPtrToConstParams(PreserveArgs, *this);
+  if (!argumentsMayEscape())
+    findPtrToConstParams(PreserveArgs, *this);
 
   for (unsigned Idx = 0, Count = getNumArgs(); Idx != Count; ++Idx) {
     if (PreserveArgs.count(Idx))
@@ -233,6 +195,11 @@ ProgramStateRef CallEvent::invalidateRegions(unsigned BlockCount,
                                    BlockCount, LCtx, /*Symbols=*/0, this);
 }
 
+bool CallEvent::mayBeInlined(const Stmt *S) {
+  return isa<CallExpr>(S);
+}
+
+
 CallEvent::param_iterator AnyFunctionCall::param_begin() const {
   const FunctionDecl *D = getDecl();
   if (!D)
@@ -257,6 +224,63 @@ QualType AnyFunctionCall::getDeclaredResultType() const {
   return D->getResultType();
 }
 
+bool AnyFunctionCall::argumentsMayEscape() const {
+  if (CallEvent::argumentsMayEscape())
+    return true;
+
+  const FunctionDecl *D = getDecl();
+  if (!D)
+    return true;
+
+  const IdentifierInfo *II = D->getIdentifier();
+  if (!II)
+    return true;
+
+  // This set of "escaping" APIs is 
+
+  // - 'int pthread_setspecific(ptheread_key k, const void *)' stores a
+  //   value into thread local storage. The value can later be retrieved with
+  //   'void *ptheread_getspecific(pthread_key)'. So even thought the
+  //   parameter is 'const void *', the region escapes through the call.
+  if (II->isStr("pthread_setspecific"))
+    return true;
+
+  // - xpc_connection_set_context stores a value which can be retrieved later
+  //   with xpc_connection_get_context.
+  if (II->isStr("xpc_connection_set_context"))
+    return true;
+
+  // - funopen - sets a buffer for future IO calls.
+  if (II->isStr("funopen"))
+    return true;
+
+  StringRef FName = II->getName();
+
+  // - CoreFoundation functions that end with "NoCopy" can free a passed-in
+  //   buffer even if it is const.
+  if (FName.endswith("NoCopy"))
+    return true;
+
+  // - NSXXInsertXX, for example NSMapInsertIfAbsent, since they can
+  //   be deallocated by NSMapRemove.
+  if (FName.startswith("NS") && (FName.find("Insert") != StringRef::npos))
+    return true;
+
+  // - Many CF containers allow objects to escape through custom
+  //   allocators/deallocators upon container construction. (PR12101)
+  if (FName.startswith("CF") || FName.startswith("CG")) {
+    return StrInStrNoCase(FName, "InsertValue")  != StringRef::npos ||
+           StrInStrNoCase(FName, "AddValue")     != StringRef::npos ||
+           StrInStrNoCase(FName, "SetValue")     != StringRef::npos ||
+           StrInStrNoCase(FName, "WithData")     != StringRef::npos ||
+           StrInStrNoCase(FName, "AppendValue")  != StringRef::npos ||
+           StrInStrNoCase(FName, "SetAttribute") != StringRef::npos;
+  }
+
+  return false;
+}
+
+
 const FunctionDecl *SimpleCall::getDecl() const {
   const FunctionDecl *D = CE->getDirectCallee();
   if (D)
@@ -264,6 +288,7 @@ const FunctionDecl *SimpleCall::getDecl() const {
 
   return getSVal(CE->getCallee()).getAsFunctionDecl();
 }
+
 
 void CXXMemberCall::addExtraInvalidatedRegions(RegionList &Regions) const {
   const Expr *Base = getOriginExpr()->getImplicitObjectArgument();
@@ -276,6 +301,7 @@ void CXXMemberCall::addExtraInvalidatedRegions(RegionList &Regions) const {
   if (const MemRegion *R = getSVal(Base).getAsRegion())
     Regions.push_back(R);
 }
+
 
 const BlockDataRegion *BlockCall::getBlockRegion() const {
   const Expr *Callee = getOriginExpr()->getCallee();
@@ -301,10 +327,12 @@ QualType BlockCall::getDeclaredResultType() const {
   return cast<FunctionType>(BlockTy->getPointeeType())->getResultType();
 }
 
+
 void CXXConstructorCall::addExtraInvalidatedRegions(RegionList &Regions) const {
   if (Target)
     Regions.push_back(Target);
 }
+
 
 CallEvent::param_iterator ObjCMessageInvocation::param_begin() const {
   const ObjCMethodDecl *D = getDecl();

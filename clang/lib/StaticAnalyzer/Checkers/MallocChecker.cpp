@@ -1316,8 +1316,7 @@ ProgramStateRef MallocChecker::evalAssume(ProgramStateRef state,
 // functions not handled by this checker.)
 bool MallocChecker::doesNotFreeMemory(const CallEvent *Call,
                                       ProgramStateRef State) const {
-  if (!Call)
-    return false;
+  assert(Call);
 
   // For now, assume that any C++ call can free memory.
   // TODO: If we want to be more optimistic here, we'll need to make sure that
@@ -1326,15 +1325,11 @@ bool MallocChecker::doesNotFreeMemory(const CallEvent *Call,
   if (!(isa<FunctionCall>(Call) || isa<ObjCMessageInvocation>(Call)))
     return false;
 
-  // If the call has a callback as an argument, assume the memory
-  // can be freed.
-  if (Call->hasNonZeroCallbackArg())
-    return false;
-
   // Check Objective-C messages by selector name.
   if (const ObjCMessageInvocation *Msg = dyn_cast<ObjCMessageInvocation>(Call)){
-    // If it's not a framework call, assume it frees memory.
-    if (!Call->isInSystemHeader())
+    // If it's not a framework call, or if it takes a callback, assume it
+    // can free memory.
+    if (!Call->isInSystemHeader() || Call->hasNonZeroCallbackArg())
       return false;
 
     Selector S = Msg->getSelector();
@@ -1395,13 +1390,8 @@ bool MallocChecker::doesNotFreeMemory(const CallEvent *Call,
     return false;
   StringRef FName = II->getName();
 
-  // White list thread local storage.
-  if (FName.equals("pthread_setspecific"))
-    return false;
-  if (FName.equals("xpc_connection_set_context"))
-    return false;
-
   // White list the 'XXXNoCopy' CoreFoundation functions.
+  // We specifically check these before 
   if (FName.endswith("NoCopy")) {
     // Look for the deallocator argument. We know that the memory ownership
     // is not transferred only if the deallocator argument is
@@ -1417,18 +1407,13 @@ bool MallocChecker::doesNotFreeMemory(const CallEvent *Call,
     return false;
   }
 
-  // PR12101
-  // Many CoreFoundation and CoreGraphics might allow a tracked object
-  // to escape.
-  if (CallOrObjCMessage::isCFCGAllowingEscape(FName))
-    return false;
-
   // Associating streams with malloced buffers. The pointer can escape if
-  // 'closefn' is specified (and if that function does free memory).
+  // 'closefn' is specified (and if that function does free memory),
+  // but it will not if closefn is not specified.
   // Currently, we do not inspect the 'closefn' function (PR12101).
   if (FName == "funopen")
-    if (Call->getNumArgs() >= 4 && !Call->getArgSVal(4).isConstant(0))
-      return false;
+    if (Call->getNumArgs() >= 4 && Call->getArgSVal(4).isConstant(0))
+      return true;
 
   // Do not warn on pointers passed to 'setbuf' when used with std streams,
   // these leaks might be intentional when setting the buffer for stdio.
@@ -1457,9 +1442,11 @@ bool MallocChecker::doesNotFreeMemory(const CallEvent *Call,
     return false;
   }
 
-  // Whitelist NSXXInsertXX, for example NSMapInsertIfAbsent, since they can
-  // be deallocated by NSMapRemove.
-  if (FName.startswith("NS") && (FName.find("Insert") != StringRef::npos))
+  // Handle cases where we know a buffer's /address/ can escape.
+  // Note that the above checks handle some special cases where we know that
+  // even though the address escapes, it's still our responsibility to free the
+  // buffer.
+  if (Call->argumentsMayEscape())
     return false;
 
   // Otherwise, assume that the function does not free memory.
