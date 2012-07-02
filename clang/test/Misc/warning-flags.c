@@ -17,7 +17,7 @@ This test serves two purposes:
 
 The list of warnings below should NEVER grow.  It should gradually shrink to 0.
 
-CHECK: Warnings without flags (230):
+CHECK: Warnings without flags (229):
 CHECK-NEXT:   ext_anonymous_struct_union_qualified
 CHECK-NEXT:   ext_binary_literal
 CHECK-NEXT:   ext_cast_fn_obj
@@ -141,7 +141,6 @@ CHECK-NEXT:   warn_exception_caught_by_earlier_handler
 CHECK-NEXT:   warn_excess_initializers
 CHECK-NEXT:   warn_excess_initializers_in_char_array_initializer
 CHECK-NEXT:   warn_expected_qualified_after_typename
-CHECK-NEXT:   warn_extern_init
 CHECK-NEXT:   warn_extraneous_char_constant
 CHECK-NEXT:   warn_fe_cc_log_diagnostics_failure
 CHECK-NEXT:   warn_fe_cc_print_header_failure

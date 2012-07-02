@@ -3180,7 +3180,8 @@ def err_local_cant_init : Error<
   "'__local' variable cannot have an initializer">;
 def err_block_extern_cant_init : Error<
   "'extern' variable cannot have an initializer">;
-def warn_extern_init : Warning<"'extern' variable has an initializer">;
+def warn_extern_init : Warning<"'extern' variable has an initializer">,
+  InGroup<DiagGroup<"extern-initializer">>;
 def err_variable_object_no_init : Error<
   "variable-sized object may not be initialized">;
 def err_excess_initializers : Error<
