@@ -2453,8 +2453,10 @@ static void AddTypedNameChunk(ASTContext &Context, const PrintingPolicy &Policy,
 
 CodeCompletionString *CodeCompletionResult::CreateCodeCompletionString(Sema &S,
                                          CodeCompletionAllocator &Allocator,
-                                         CodeCompletionTUInfo &CCTUInfo) {
-  return CreateCodeCompletionString(S.Context, S.PP, Allocator, CCTUInfo);
+                                         CodeCompletionTUInfo &CCTUInfo,
+                                         bool IncludeBriefComments) {
+  return CreateCodeCompletionString(S.Context, S.PP, Allocator, CCTUInfo,
+                                    IncludeBriefComments);
 }
 
 /// \brief If possible, create a new code completion string for the given
@@ -2467,7 +2469,8 @@ CodeCompletionString *
 CodeCompletionResult::CreateCodeCompletionString(ASTContext &Ctx,
                                                  Preprocessor &PP,
                                            CodeCompletionAllocator &Allocator,
-                                           CodeCompletionTUInfo &CCTUInfo) {
+                                           CodeCompletionTUInfo &CCTUInfo,
+                                           bool IncludeBriefComments) {
   CodeCompletionBuilder Result(Allocator, CCTUInfo, Priority, Availability);
   
   PrintingPolicy Policy = getCompletionPrintingPolicy(Ctx, PP);
@@ -2537,7 +2540,14 @@ CodeCompletionResult::CreateCodeCompletionString(ASTContext &Ctx,
   assert(Kind == RK_Declaration && "Missed a result kind?");
   NamedDecl *ND = Declaration;
   Result.addParentContext(ND->getDeclContext());
-                          
+
+  if (IncludeBriefComments) {
+    // Add documentation comment, if it exists.
+    if (const RawComment *RC = Ctx.getRawCommentForDecl(ND)) {
+      Result.addBriefComment(RC->getBriefText(Ctx));
+    }
+  }
+
   if (StartsNestedNameSpecifier) {
     Result.AddTypedTextChunk(
                       Result.getAllocator().CopyString(ND->getNameAsString()));

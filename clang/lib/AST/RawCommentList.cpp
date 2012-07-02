@@ -130,7 +130,7 @@ StringRef RawComment::getRawTextSlow(const SourceManager &SourceMgr) const {
   return StringRef(BufferStart + BeginOffset, Length);
 }
 
-StringRef RawComment::extractBriefText(const ASTContext &Context) const {
+const char *RawComment::extractBriefText(const ASTContext &Context) const {
   // Make sure that RawText is valid.
   getRawText(Context.getSourceManager());
 
@@ -142,10 +142,10 @@ StringRef RawComment::extractBriefText(const ASTContext &Context) const {
   const unsigned BriefTextLength = Result.size();
   char *BriefTextPtr = new (Context) char[BriefTextLength + 1];
   memcpy(BriefTextPtr, Result.c_str(), BriefTextLength + 1);
-  BriefText = StringRef(BriefTextPtr, BriefTextLength);
+  BriefText = BriefTextPtr;
   BriefTextValid = true;
 
-  return BriefText;
+  return BriefTextPtr;
 }
 
 namespace {

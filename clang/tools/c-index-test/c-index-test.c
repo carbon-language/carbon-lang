@@ -59,6 +59,8 @@ static unsigned getDefaultParsingOptions() {
     options &= ~CXTranslationUnit_CacheCompletionResults;
   if (getenv("CINDEXTEST_SKIP_FUNCTION_BODIES"))
     options |= CXTranslationUnit_SkipFunctionBodies;
+  if (getenv("CINDEXTEST_COMPLETION_BRIEF_COMMENTS"))
+    options |= CXTranslationUnit_IncludeBriefCommentsInCodeCompletion;
   
   return options;
 }
@@ -1220,6 +1222,8 @@ void print_completion_result(CXCompletionResult *completion_result,
   unsigned annotationCount;
   enum CXCursorKind ParentKind;
   CXString ParentName;
+  CXString BriefComment;
+  const char *BriefCommentCString;
   
   fprintf(file, "%s:", clang_getCString(ks));
   clang_disposeString(ks);
@@ -1271,6 +1275,14 @@ void print_completion_result(CXCompletionResult *completion_result,
     }
     clang_disposeString(ParentName);
   }
+
+  BriefComment = clang_getCompletionBriefComment(
+                                        completion_result->CompletionString);
+  BriefCommentCString = clang_getCString(BriefComment);
+  if (BriefCommentCString && *BriefCommentCString != '\0') {
+    fprintf(file, "(brief comment: %s)", BriefCommentCString);
+  }
+  clang_disposeString(BriefComment);
   
   fprintf(file, "\n");
 }
@@ -1383,6 +1395,8 @@ int perform_code_completion(int argc, const char **argv, int timing_only) {
   
   if (getenv("CINDEXTEST_CODE_COMPLETE_PATTERNS"))
     completionOptions |= CXCodeComplete_IncludeCodePatterns;
+  if (getenv("CINDEXTEST_COMPLETION_BRIEF_COMMENTS"))
+    completionOptions |= CXCodeComplete_IncludeBriefComments;
   
   if (timing_only)
     input += strlen("-code-completion-timing=");

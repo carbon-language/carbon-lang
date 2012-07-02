@@ -560,8 +560,7 @@ public:
   static CodeCompleteConsumer *
   createCodeCompletionConsumer(Preprocessor &PP, const std::string &Filename,
                                unsigned Line, unsigned Column,
-                               bool ShowMacros,
-                               bool ShowCodePatterns, bool ShowGlobals,
+                               const CodeCompleteOptions &Opts,
                                raw_ostream &OS);
 
   /// \brief Create the Sema object to be used for parsing.

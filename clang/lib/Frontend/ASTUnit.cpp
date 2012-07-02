@@ -214,6 +214,7 @@ ASTUnit::ASTUnit(bool _MainFileIsAST)
     PreambleRebuildCounter(0), SavedMainFileBuffer(0), PreambleBuffer(0),
     NumWarningsInPreamble(0),
     ShouldCacheCodeCompletionResults(false),
+    IncludeBriefCommentsInCodeCompletion(false),
     CompletionCacheTopLevelHashValue(0),
     PreambleTopLevelHashValue(0),
     CurrentTopLevelHashValue(0),
@@ -358,7 +359,8 @@ void ASTUnit::CacheCodeCompletionResults() {
       CachedCodeCompletionResult CachedResult;
       CachedResult.Completion = Results[I].CreateCodeCompletionString(*TheSema,
                                                     *CachedCompletionAllocator,
-                                                    getCodeCompletionTUInfo());
+                                                    getCodeCompletionTUInfo(),
+                                          IncludeBriefCommentsInCodeCompletion);
       CachedResult.ShowInContexts = getDeclShowContexts(Results[I].Declaration,
                                                         Ctx->getLangOpts(),
                                                         IsNestedNameSpecifier);
@@ -423,7 +425,8 @@ void ASTUnit::CacheCodeCompletionResults() {
           CachedResult.Completion 
             = Results[I].CreateCodeCompletionString(*TheSema,
                                                     *CachedCompletionAllocator,
-                                                    getCodeCompletionTUInfo());
+                                                    getCodeCompletionTUInfo(),
+                                        IncludeBriefCommentsInCodeCompletion);
           CachedResult.ShowInContexts = RemainingContexts;
           CachedResult.Priority = CCP_NestedNameSpecifier;
           CachedResult.TypeClass = STC_Void;
@@ -445,7 +448,8 @@ void ASTUnit::CacheCodeCompletionResults() {
       CachedResult.Completion 
         = Results[I].CreateCodeCompletionString(*TheSema,
                                                 *CachedCompletionAllocator,
-                                                getCodeCompletionTUInfo());
+                                                getCodeCompletionTUInfo(),
+                                          IncludeBriefCommentsInCodeCompletion);
       CachedResult.ShowInContexts
         = (1 << (CodeCompletionContext::CCC_TopLevel - 1))
         | (1 << (CodeCompletionContext::CCC_ObjCInterface - 1))
@@ -1683,6 +1687,7 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocationAction(CompilerInvocation *CI,
                                              bool CaptureDiagnostics,
                                              bool PrecompilePreamble,
                                              bool CacheCodeCompletionResults,
+                                    bool IncludeBriefCommentsInCodeCompletion,
                                              OwningPtr<ASTUnit> *ErrAST) {
   assert(CI && "A CompilerInvocation is required");
 
@@ -1704,6 +1709,8 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocationAction(CompilerInvocation *CI,
     AST->PreambleRebuildCounter = 2;
   AST->TUKind = Action ? Action->getTranslationUnitKind() : TU_Complete;
   AST->ShouldCacheCodeCompletionResults = CacheCodeCompletionResults;
+  AST->IncludeBriefCommentsInCodeCompletion
+    = IncludeBriefCommentsInCodeCompletion;
 
   // Recover resources if we crash before exiting this method.
   llvm::CrashRecoveryContextCleanupRegistrar<ASTUnit>
@@ -1850,7 +1857,8 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocation(CompilerInvocation *CI,
                                              bool CaptureDiagnostics,
                                              bool PrecompilePreamble,
                                              TranslationUnitKind TUKind,
-                                             bool CacheCodeCompletionResults) {  
+                                             bool CacheCodeCompletionResults,
+                                    bool IncludeBriefCommentsInCodeCompletion) {
   // Create the AST unit.
   OwningPtr<ASTUnit> AST;
   AST.reset(new ASTUnit(false));
@@ -1860,6 +1868,8 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocation(CompilerInvocation *CI,
   AST->CaptureDiagnostics = CaptureDiagnostics;
   AST->TUKind = TUKind;
   AST->ShouldCacheCodeCompletionResults = CacheCodeCompletionResults;
+  AST->IncludeBriefCommentsInCodeCompletion
+    = IncludeBriefCommentsInCodeCompletion;
   AST->Invocation = CI;
   
   // Recover resources if we crash before exiting this method.
@@ -1884,6 +1894,7 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
                                       bool PrecompilePreamble,
                                       TranslationUnitKind TUKind,
                                       bool CacheCodeCompletionResults,
+                                      bool IncludeBriefCommentsInCodeCompletion,
                                       bool AllowPCHWithCompilerErrors,
                                       bool SkipFunctionBodies,
                                       OwningPtr<ASTUnit> *ErrAST) {
@@ -1943,6 +1954,8 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
   AST->CaptureDiagnostics = CaptureDiagnostics;
   AST->TUKind = TUKind;
   AST->ShouldCacheCodeCompletionResults = CacheCodeCompletionResults;
+  AST->IncludeBriefCommentsInCodeCompletion
+    = IncludeBriefCommentsInCodeCompletion;
   AST->NumStoredDiagnosticsFromDriver = StoredDiagnostics.size();
   AST->StoredDiagnostics.swap(StoredDiagnostics);
   AST->Invocation = CI;
@@ -2041,10 +2054,9 @@ namespace {
     
   public:
     AugmentedCodeCompleteConsumer(ASTUnit &AST, CodeCompleteConsumer &Next,
-                                  bool IncludeMacros, bool IncludeCodePatterns,
-                                  bool IncludeGlobals)
-      : CodeCompleteConsumer(IncludeMacros, IncludeCodePatterns, IncludeGlobals,
-                             Next.isOutputBinary()), AST(AST), Next(Next) 
+                                  const CodeCompleteOptions &CodeCompleteOpts)
+      : CodeCompleteConsumer(CodeCompleteOpts, Next.isOutputBinary()),
+        AST(AST), Next(Next)
     { 
       // Compute the set of contexts in which we will look when we don't have
       // any information about the specific context.
@@ -2274,6 +2286,7 @@ void ASTUnit::CodeComplete(StringRef File, unsigned Line, unsigned Column,
                            unsigned NumRemappedFiles,
                            bool IncludeMacros, 
                            bool IncludeCodePatterns,
+                           bool IncludeBriefComments,
                            CodeCompleteConsumer &Consumer,
                            DiagnosticsEngine &Diag, LangOptions &LangOpts,
                            SourceManager &SourceMgr, FileManager &FileMgr,
@@ -2290,13 +2303,17 @@ void ASTUnit::CodeComplete(StringRef File, unsigned Line, unsigned Column,
     CCInvocation(new CompilerInvocation(*Invocation));
 
   FrontendOptions &FrontendOpts = CCInvocation->getFrontendOpts();
+  CodeCompleteOptions &CodeCompleteOpts = FrontendOpts.CodeCompleteOpts;
   PreprocessorOptions &PreprocessorOpts = CCInvocation->getPreprocessorOpts();
 
-  FrontendOpts.ShowMacrosInCodeCompletion
-    = IncludeMacros && CachedCompletionResults.empty();
-  FrontendOpts.ShowCodePatternsInCodeCompletion = IncludeCodePatterns;
-  FrontendOpts.ShowGlobalSymbolsInCodeCompletion
-    = CachedCompletionResults.empty();
+  CodeCompleteOpts.IncludeMacros = IncludeMacros &&
+                                   CachedCompletionResults.empty();
+  CodeCompleteOpts.IncludeCodePatterns = IncludeCodePatterns;
+  CodeCompleteOpts.IncludeGlobals = CachedCompletionResults.empty();
+  CodeCompleteOpts.IncludeBriefComments = IncludeBriefComments;
+
+  assert(IncludeBriefComments == this->IncludeBriefCommentsInCodeCompletion);
+
   FrontendOpts.CodeCompletionAt.FileName = File;
   FrontendOpts.CodeCompletionAt.Line = Line;
   FrontendOpts.CodeCompletionAt.Column = Column;
@@ -2365,10 +2382,7 @@ void ASTUnit::CodeComplete(StringRef File, unsigned Line, unsigned Column,
   // Use the code completion consumer we were given, but adding any cached
   // code-completion results.
   AugmentedCodeCompleteConsumer *AugmentedConsumer
-    = new AugmentedCodeCompleteConsumer(*this, Consumer, 
-                                        FrontendOpts.ShowMacrosInCodeCompletion,
-                                FrontendOpts.ShowCodePatternsInCodeCompletion,
-                                FrontendOpts.ShowGlobalSymbolsInCodeCompletion);
+    = new AugmentedCodeCompleteConsumer(*this, Consumer, CodeCompleteOpts);
   Clang->setCodeCompletionConsumer(AugmentedConsumer);
 
   Clang->getFrontendOpts().SkipFunctionBodies = true;

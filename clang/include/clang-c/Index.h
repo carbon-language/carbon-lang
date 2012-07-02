@@ -1058,7 +1058,14 @@ enum CXTranslationUnit_Flags {
    * This option can be used to search for declarations/definitions while
    * ignoring the usages.
    */
-  CXTranslationUnit_SkipFunctionBodies = 0x40
+  CXTranslationUnit_SkipFunctionBodies = 0x40,
+
+  /**
+   * \brief Used to indicate that brief documentation comments should be
+   * included into the set of code completions returned from this translation
+   * unit.
+   */
+  CXTranslationUnit_IncludeBriefCommentsInCodeCompletion = 0x80
 };
 
 /**
@@ -3786,6 +3793,14 @@ clang_getCompletionAnnotation(CXCompletionString completion_string,
 CINDEX_LINKAGE CXString
 clang_getCompletionParent(CXCompletionString completion_string,
                           enum CXCursorKind *kind);
+
+/**
+ * \brief Retrieve the brief documentation comment attached to the declaration
+ * that corresponds to the given completion string.
+ */
+CINDEX_LINKAGE CXString
+clang_getCompletionBriefComment(CXCompletionString completion_string);
+
 /**
  * \brief Retrieve a completion string for an arbitrary declaration or macro
  * definition cursor.
@@ -3836,7 +3851,13 @@ enum CXCodeComplete_Flags {
    * \brief Whether to include code patterns for language constructs
    * within the set of code completions, e.g., for loops.
    */
-  CXCodeComplete_IncludeCodePatterns = 0x02
+  CXCodeComplete_IncludeCodePatterns = 0x02,
+
+  /**
+   * \brief Whether to include brief documentation within the set of code
+   * completions returned.
+   */
+  CXCodeComplete_IncludeBriefComments = 0x04
 };
 
 /**

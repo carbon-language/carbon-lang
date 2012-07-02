@@ -248,7 +248,11 @@ private:
   std::vector<serialization::DeclID> TopLevelDeclsInPreamble;
   
   /// \brief Whether we should be caching code-completion results.
-  bool ShouldCacheCodeCompletionResults;
+  bool ShouldCacheCodeCompletionResults : 1;
+
+  /// \brief Whether to include brief documentation within the set of code
+  /// completions cached.
+  bool IncludeBriefCommentsInCodeCompletion : 1;
  
   /// \brief The language options used when we load an AST file.
   LangOptions ASTFileLangOpts;
@@ -681,6 +685,7 @@ public:
                                              bool CaptureDiagnostics = false,
                                              bool PrecompilePreamble = false,
                                        bool CacheCodeCompletionResults = false,
+                              bool IncludeBriefCommentsInCodeCompletion = false,
                                        OwningPtr<ASTUnit> *ErrAST = 0);
 
   /// LoadFromCompilerInvocation - Create an ASTUnit from a source file, via a
@@ -700,7 +705,8 @@ public:
                                              bool CaptureDiagnostics = false,
                                              bool PrecompilePreamble = false,
                                       TranslationUnitKind TUKind = TU_Complete,
-                                       bool CacheCodeCompletionResults = false);
+                                       bool CacheCodeCompletionResults = false,
+                            bool IncludeBriefCommentsInCodeCompletion = false);
 
   /// LoadFromCommandLine - Create an ASTUnit from a vector of command line
   /// arguments, which must specify exactly one source file.
@@ -732,6 +738,7 @@ public:
                                       bool PrecompilePreamble = false,
                                       TranslationUnitKind TUKind = TU_Complete,
                                       bool CacheCodeCompletionResults = false,
+                            bool IncludeBriefCommentsInCodeCompletion = false,
                                       bool AllowPCHWithCompilerErrors = false,
                                       bool SkipFunctionBodies = false,
                                       OwningPtr<ASTUnit> *ErrAST = 0);
@@ -759,11 +766,15 @@ public:
   /// \param IncludeCodePatterns Whether to include code patterns (such as a 
   /// for loop) in the code-completion results.
   ///
+  /// \param IncludeBriefComments Whether to include brief documentation within
+  /// the set of code completions returned.
+  ///
   /// FIXME: The Diag, LangOpts, SourceMgr, FileMgr, StoredDiagnostics, and
   /// OwnedBuffers parameters are all disgusting hacks. They will go away.
   void CodeComplete(StringRef File, unsigned Line, unsigned Column,
                     RemappedFile *RemappedFiles, unsigned NumRemappedFiles,
                     bool IncludeMacros, bool IncludeCodePatterns,
+                    bool IncludeBriefComments,
                     CodeCompleteConsumer &Consumer,
                     DiagnosticsEngine &Diag, LangOptions &LangOpts,
                     SourceManager &SourceMgr, FileManager &FileMgr,

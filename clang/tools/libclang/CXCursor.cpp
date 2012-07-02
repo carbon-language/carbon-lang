@@ -1198,7 +1198,8 @@ CXCompletionString clang_getCursorCompletionString(CXCursor cursor) {
         = Result.CreateCodeCompletionString(unit->getASTContext(),
                                             unit->getPreprocessor(),
                                  unit->getCodeCompletionTUInfo().getAllocator(),
-                                 unit->getCodeCompletionTUInfo());
+                                 unit->getCodeCompletionTUInfo(),
+                                 true);
       return String;
     }
   }
@@ -1211,7 +1212,8 @@ CXCompletionString clang_getCursorCompletionString(CXCursor cursor) {
       = Result.CreateCodeCompletionString(unit->getASTContext(),
                                           unit->getPreprocessor(),
                                  unit->getCodeCompletionTUInfo().getAllocator(),
-                                 unit->getCodeCompletionTUInfo());
+                                 unit->getCodeCompletionTUInfo(),
+                                 false);
     return String;
   }
   return NULL;

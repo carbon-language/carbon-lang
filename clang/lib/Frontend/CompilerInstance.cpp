@@ -387,9 +387,7 @@ void CompilerInstance::createCodeCompletionConsumer() {
     setCodeCompletionConsumer(
       createCodeCompletionConsumer(getPreprocessor(),
                                    Loc.FileName, Loc.Line, Loc.Column,
-                                   getFrontendOpts().ShowMacrosInCodeCompletion,
-                             getFrontendOpts().ShowCodePatternsInCodeCompletion,
-                           getFrontendOpts().ShowGlobalSymbolsInCodeCompletion,
+                                   getFrontendOpts().CodeCompleteOpts,
                                    llvm::outs()));
     if (!CompletionConsumer)
       return;
@@ -415,16 +413,13 @@ CompilerInstance::createCodeCompletionConsumer(Preprocessor &PP,
                                                const std::string &Filename,
                                                unsigned Line,
                                                unsigned Column,
-                                               bool ShowMacros,
-                                               bool ShowCodePatterns,
-                                               bool ShowGlobals,
+                                               const CodeCompleteOptions &Opts,
                                                raw_ostream &OS) {
   if (EnableCodeCompletion(PP, Filename, Line, Column))
     return 0;
 
   // Set up the creation routine for code-completion.
-  return new PrintingCodeCompleteConsumer(ShowMacros, ShowCodePatterns,
-                                          ShowGlobals, OS);
+  return new PrintingCodeCompleteConsumer(Opts, OS);
 }
 
 void CompilerInstance::createSema(TranslationUnitKind TUKind,

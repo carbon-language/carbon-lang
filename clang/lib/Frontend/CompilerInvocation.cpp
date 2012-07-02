@@ -470,6 +470,18 @@ static void FileSystemOptsToArgs(const FileSystemOptions &Opts, ToArgsList &Res)
     Res.push_back("-working-directory", Opts.WorkingDir);
 }
 
+static void CodeCompleteOptionsToArgs(const CodeCompleteOptions &Opts,
+                                      ToArgsList &Res) {
+  if (Opts.IncludeMacros)
+    Res.push_back("-code-completion-macros");
+  if (Opts.IncludeCodePatterns)
+    Res.push_back("-code-completion-patterns");
+  if (!Opts.IncludeGlobals)
+    Res.push_back("-no-code-completion-globals");
+  if (Opts.IncludeBriefComments)
+    Res.push_back("-code-completion-brief-comments");
+}
+
 static void FrontendOptsToArgs(const FrontendOptions &Opts, ToArgsList &Res) {
   if (Opts.DisableFree)
     Res.push_back("-disable-free");
@@ -477,12 +489,6 @@ static void FrontendOptsToArgs(const FrontendOptions &Opts, ToArgsList &Res) {
     Res.push_back("-relocatable-pch");
   if (Opts.ShowHelp)
     Res.push_back("-help");
-  if (Opts.ShowMacrosInCodeCompletion)
-    Res.push_back("-code-completion-macros");
-  if (Opts.ShowCodePatternsInCodeCompletion)
-    Res.push_back("-code-completion-patterns");
-  if (!Opts.ShowGlobalSymbolsInCodeCompletion)
-    Res.push_back("-no-code-completion-globals");
   if (Opts.ShowStats)
     Res.push_back("-print-stats");
   if (Opts.ShowTimers)
@@ -510,6 +516,7 @@ static void FrontendOptsToArgs(const FrontendOptions &Opts, ToArgsList &Res) {
     Res.push_back("-arcmt-migrate");
     break;
   }
+  CodeCompleteOptionsToArgs(Opts.CodeCompleteOpts, Res);
   if (!Opts.MTMigrateDir.empty())
     Res.push_back("-mt-migrate-directory", Opts.MTMigrateDir);
   if (!Opts.ARCMTMigrateReportOut.empty())
@@ -1517,11 +1524,6 @@ static InputKind ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args,
   Opts.Plugins = Args.getAllArgValues(OPT_load);
   Opts.RelocatablePCH = Args.hasArg(OPT_relocatable_pch);
   Opts.ShowHelp = Args.hasArg(OPT_help);
-  Opts.ShowMacrosInCodeCompletion = Args.hasArg(OPT_code_completion_macros);
-  Opts.ShowCodePatternsInCodeCompletion
-    = Args.hasArg(OPT_code_completion_patterns);
-  Opts.ShowGlobalSymbolsInCodeCompletion
-    = !Args.hasArg(OPT_no_code_completion_globals);
   Opts.ShowStats = Args.hasArg(OPT_print_stats);
   Opts.ShowTimers = Args.hasArg(OPT_ftime_report);
   Opts.ShowVersion = Args.hasArg(OPT_version);
@@ -1531,6 +1533,16 @@ static InputKind ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args,
   Opts.FixOnlyWarnings = Args.hasArg(OPT_fix_only_warnings);
   Opts.FixAndRecompile = Args.hasArg(OPT_fixit_recompile);
   Opts.FixToTemporaries = Args.hasArg(OPT_fixit_to_temp);
+
+  Opts.CodeCompleteOpts.IncludeMacros
+    = Args.hasArg(OPT_code_completion_macros);
+  Opts.CodeCompleteOpts.IncludeCodePatterns
+    = Args.hasArg(OPT_code_completion_patterns);
+  Opts.CodeCompleteOpts.IncludeGlobals
+    = !Args.hasArg(OPT_no_code_completion_globals);
+  Opts.CodeCompleteOpts.IncludeBriefComments
+    = Args.hasArg(OPT_code_completion_brief_comments);
+
   Opts.OverrideRecordLayoutsFile
     = Args.getLastArgValue(OPT_foverride_record_layout_EQ);
   if (const Arg *A = Args.getLastArg(OPT_arcmt_check,

@@ -92,7 +92,7 @@ public:
   unsigned getBeginLine(const SourceManager &SM) const;
   unsigned getEndLine(const SourceManager &SM) const;
 
-  StringRef getBriefText(const ASTContext &Context) const {
+  const char *getBriefText(const ASTContext &Context) const {
     if (BriefTextValid)
       return BriefText;
 
@@ -103,7 +103,7 @@ private:
   SourceRange Range;
 
   mutable StringRef RawText;
-  mutable StringRef BriefText;
+  mutable const char *BriefText;
 
   mutable bool RawTextValid : 1;   ///< True if RawText is valid
   mutable bool BriefTextValid : 1; ///< True if BriefText is valid
@@ -129,7 +129,7 @@ private:
 
   StringRef getRawTextSlow(const SourceManager &SourceMgr) const;
 
-  StringRef extractBriefText(const ASTContext &Context) const;
+  const char *extractBriefText(const ASTContext &Context) const;
 
   friend class ASTReader;
 };

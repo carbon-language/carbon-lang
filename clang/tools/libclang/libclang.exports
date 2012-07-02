@@ -71,6 +71,7 @@ clang_getChildDiagnostics
 clang_getClangVersion
 clang_getCompletionAnnotation
 clang_getCompletionAvailability
+clang_getCompletionBriefComment
 clang_getCompletionChunkCompletionString
 clang_getCompletionChunkKind
 clang_getCompletionChunkText
