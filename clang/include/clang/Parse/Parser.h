@@ -1019,7 +1019,7 @@ private:
   void ParseLexedMethodDef(LexedMethod &LM);
   void ParseLexedMemberInitializers(ParsingClass &Class);
   void ParseLexedMemberInitializer(LateParsedMemberInitializer &MI);
-  Decl *ParseLexedObjCMethodDefs(LexedMethod &LM);
+  void ParseLexedObjCMethodDefs(LexedMethod &LM, bool parseMethod);
   bool ConsumeAndStoreFunctionPrologue(CachedTokens &Toks);
   bool ConsumeAndStoreUntil(tok::TokenKind T1,
                             CachedTokens &Toks,
@@ -1084,11 +1084,12 @@ private:
   struct ObjCImplParsingDataRAII {
     Parser &P;
     Decl *Dcl;
+    bool HasCFunction;
     typedef SmallVector<LexedMethod*, 8> LateParsedObjCMethodContainer;
     LateParsedObjCMethodContainer LateParsedObjCMethods;
 
     ObjCImplParsingDataRAII(Parser &parser, Decl *D)
-      : P(parser), Dcl(D) {
+      : P(parser), Dcl(D), HasCFunction(false) {
       P.CurParsedObjCImpl = this;
       Finished = false;
     }
@@ -1101,6 +1102,7 @@ private:
     bool Finished;
   };
   ObjCImplParsingDataRAII *CurParsedObjCImpl;
+  void StashAwayMethodOrFunctionBodyTokens(Decl *MDecl);
 
   DeclGroupPtrTy ParseObjCAtImplementationDeclaration(SourceLocation AtLoc);
   DeclGroupPtrTy ParseObjCAtEndDeclaration(SourceRange atEnd);

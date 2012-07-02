@@ -1379,6 +1379,14 @@ Parser::DeclGroupPtrTy Parser::ParseDeclGroup(ParsingDeclSpec &DS,
 
   bool ExpectSemi = Context != Declarator::ForContext;
 
+  if (CurParsedObjCImpl && D.isFunctionDeclarator() &&
+      Tok.is(tok::l_brace)) {
+    // Consume the tokens and store them for later parsing.
+    StashAwayMethodOrFunctionBodyTokens(FirstDecl);
+    CurParsedObjCImpl->HasCFunction = true;
+    ExpectSemi = false;
+  }
+  
   // If we don't have a comma, it is either the end of the list (a ';') or an
   // error, bail out.
   while (Tok.is(tok::comma)) {

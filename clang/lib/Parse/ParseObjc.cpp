@@ -1575,10 +1575,16 @@ void Parser::ObjCImplParsingDataRAII::finish(SourceRange AtEnd) {
   assert(!Finished);
   P.Actions.DefaultSynthesizeProperties(P.getCurScope(), Dcl);
   for (size_t i = 0; i < LateParsedObjCMethods.size(); ++i)
-    P.ParseLexedObjCMethodDefs(*LateParsedObjCMethods[i]);
+    P.ParseLexedObjCMethodDefs(*LateParsedObjCMethods[i], 
+                               true/*Methods*/);
 
   P.Actions.ActOnAtEnd(P.getCurScope(), AtEnd);
 
+  if (HasCFunction)
+    for (size_t i = 0; i < LateParsedObjCMethods.size(); ++i)
+      P.ParseLexedObjCMethodDefs(*LateParsedObjCMethods[i], 
+                                 false/*c-functions*/);
+  
   /// \brief Clear and free the cached objc methods.
   for (LateParsedObjCMethodContainer::iterator
          I = LateParsedObjCMethods.begin(),
@@ -1915,6 +1921,19 @@ Parser::ParseObjCAutoreleasePoolStmt(SourceLocation atLoc) {
                                                 AutoreleasePoolBody.take());
 }
 
+/// StashAwayMethodOrFunctionBodyTokens -  Consume the tokens and store them 
+/// for later parsing.
+void Parser::StashAwayMethodOrFunctionBodyTokens(Decl *MDecl) {
+  LexedMethod* LM = new LexedMethod(this, MDecl);
+  CurParsedObjCImpl->LateParsedObjCMethods.push_back(LM);
+  CachedTokens &Toks = LM->Toks;
+  // Begin by storing the '{' token.
+  Toks.push_back(Tok);
+  ConsumeBrace();
+  // Consume everything up to (and including) the matching right brace.
+  ConsumeAndStoreUntil(tok::r_brace, Toks, /*StopAtSemi=*/false);
+}
+
 ///   objc-method-def: objc-method-proto ';'[opt] '{' body '}'
 ///
 Decl *Parser::ParseObjCMethodDefinition() {
@@ -1955,15 +1974,7 @@ Decl *Parser::ParseObjCMethodDefinition() {
 
   if (CurParsedObjCImpl) {
     // Consume the tokens and store them for later parsing.
-    LexedMethod* LM = new LexedMethod(this, MDecl);
-    CurParsedObjCImpl->LateParsedObjCMethods.push_back(LM);
-    CachedTokens &Toks = LM->Toks;
-    // Begin by storing the '{' token.
-    Toks.push_back(Tok);
-    ConsumeBrace();
-    // Consume everything up to (and including) the matching right brace.
-    ConsumeAndStoreUntil(tok::r_brace, Toks, /*StopAtSemi=*/false);
-
+    StashAwayMethodOrFunctionBodyTokens(MDecl);
   } else {
     ConsumeBrace();
     SkipUntil(tok::r_brace, /*StopAtSemi=*/false);
@@ -2821,8 +2832,15 @@ ExprResult Parser::ParseObjCSelectorExpression(SourceLocation AtLoc) {
                                                    T.getCloseLocation()));
  }
 
-Decl *Parser::ParseLexedObjCMethodDefs(LexedMethod &LM) {
-
+void Parser::ParseLexedObjCMethodDefs(LexedMethod &LM, bool parseMethod) {
+  // MCDecl might be null due to error in method or c-function  prototype, etc.
+  Decl *MCDecl = LM.D;
+  bool skip = MCDecl && 
+              ((parseMethod && !Actions.isObjCMethodDecl(MCDecl)) ||
+              (!parseMethod && Actions.isObjCMethodDecl(MCDecl)));
+  if (skip)
+    return;
+  
   // Save the current token position.
   SourceLocation OrigLoc = Tok.getLocation();
 
@@ -2832,24 +2850,25 @@ Decl *Parser::ParseLexedObjCMethodDefs(LexedMethod &LM) {
   LM.Toks.push_back(Tok);
   PP.EnterTokenStream(LM.Toks.data(), LM.Toks.size(), true, false);
   
-  // MDecl might be null due to error in method prototype, etc.
-  Decl *MDecl = LM.D;
   // Consume the previously pushed token.
   ConsumeAnyToken();
     
   assert(Tok.is(tok::l_brace) && "Inline objective-c method not starting with '{'");
   SourceLocation BraceLoc = Tok.getLocation();
-  // Enter a scope for the method body.
+  // Enter a scope for the method or c-fucntion body.
   ParseScope BodyScope(this,
-                       Scope::ObjCMethodScope|Scope::FnScope|Scope::DeclScope);
+                       parseMethod
+                       ? Scope::ObjCMethodScope|Scope::FnScope|Scope::DeclScope
+                       : Scope::FnScope|Scope::DeclScope);
     
-  // Tell the actions module that we have entered a method definition with the
-  // specified Declarator for the method.
-  Actions.ActOnStartOfObjCMethodDef(getCurScope(), MDecl);
+  // Tell the actions module that we have entered a method or c-function definition 
+  // with the specified Declarator for the method/function.
+  Actions.ActOnStartOfObjCMethodOrCFunctionDef(getCurScope(), MCDecl, parseMethod);
     
   if (SkipFunctionBodies && trySkippingFunctionBody()) {
     BodyScope.Exit();
-    return Actions.ActOnFinishFunctionBody(MDecl, 0);
+    (void)Actions.ActOnFinishFunctionBody(MCDecl, 0);
+    return;
   }
     
   StmtResult FnBody(ParseCompoundStatementBody());
@@ -2864,7 +2883,7 @@ Decl *Parser::ParseLexedObjCMethodDefs(LexedMethod &LM) {
   // Leave the function body scope.
   BodyScope.Exit();
     
-  MDecl = Actions.ActOnFinishFunctionBody(MDecl, FnBody.take());
+  (void)Actions.ActOnFinishFunctionBody(MCDecl, FnBody.take());
 
   if (Tok.getLocation() != OrigLoc) {
     // Due to parsing error, we either went over the cached tokens or
@@ -2878,5 +2897,5 @@ Decl *Parser::ParseLexedObjCMethodDefs(LexedMethod &LM) {
         ConsumeAnyToken();
   }
   
-  return MDecl;
+  return;
 }

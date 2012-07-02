@@ -766,14 +766,16 @@ bool Parser::isDeclarationAfterDeclarator() {
     if (KW.is(tok::kw_default) || KW.is(tok::kw_delete))
       return false;
   }
-
+  
   return Tok.is(tok::equal) ||      // int X()=  -> not a function def
     Tok.is(tok::comma) ||           // int X(),  -> not a function def
     Tok.is(tok::semi)  ||           // int X();  -> not a function def
     Tok.is(tok::kw_asm) ||          // int X() __asm__ -> not a function def
     Tok.is(tok::kw___attribute) ||  // int X() __attr__ -> not a function def
     (getLangOpts().CPlusPlus &&
-     Tok.is(tok::l_paren));         // int X(0) -> not a function def [C++]
+     Tok.is(tok::l_paren)) ||       // int X(0) -> not a function def [C++]
+    (CurParsedObjCImpl && 
+     Tok.is(tok::l_brace));        // C-function  nested in an @implementation
 }
 
 /// \brief Determine whether the current token, if it occurs after a

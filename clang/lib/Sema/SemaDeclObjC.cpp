@@ -265,12 +265,36 @@ void Sema::AddAnyMethodToGlobalPool(Decl *D) {
     AddFactoryMethodToGlobalPool(MDecl, true);
 }
 
-/// ActOnStartOfObjCMethodDef - This routine sets up parameters; invisible
-/// and user declared, in the method definition's AST.
-void Sema::ActOnStartOfObjCMethodDef(Scope *FnBodyScope, Decl *D) {
-  assert(getCurMethodDecl() == 0 && "Method parsing confused");
+/// ActOnStartOfObjCMethodOrCFunctionDef - This routine sets up parameters; invisible
+/// and user declared, in the method definition's AST. This routine is also  called
+/// for C-functions defined in an Objective-c class implementation.
+void Sema::ActOnStartOfObjCMethodOrCFunctionDef(Scope *FnBodyScope, Decl *D,
+                                                bool parseMethod) {
+  assert((getCurMethodDecl() == 0 && getCurFunctionDecl() == 0) &&
+         "Method/c-function parsing confused");
+  if (!parseMethod) {
+    FunctionDecl *FDecl = FDecl = dyn_cast_or_null<FunctionDecl>(D);
+    // If we don't have a valid c-function decl, simply return.
+    if (!FDecl)
+      return;
+    PushDeclContext(FnBodyScope, FDecl);
+    PushFunctionScope();
+    
+    for (FunctionDecl::param_const_iterator PI = FDecl->param_begin(),
+         E = FDecl->param_end(); PI != E; ++PI) {
+      ParmVarDecl *Param = (*PI);
+      if (!Param->isInvalidDecl() &&
+          RequireCompleteType(Param->getLocation(), Param->getType(),
+                              diag::err_typecheck_decl_incomplete_type))
+        Param->setInvalidDecl();
+      if ((*PI)->getIdentifier())
+        PushOnScopeChains(*PI, FnBodyScope);
+    }
+    return;
+  }
+  
   ObjCMethodDecl *MDecl = dyn_cast_or_null<ObjCMethodDecl>(D);
-
+  
   // If we don't have a valid method decl, simply return.
   if (!MDecl)
     return;

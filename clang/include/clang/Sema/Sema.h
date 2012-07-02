@@ -1317,7 +1317,11 @@ public:
   void CheckForFunctionRedefinition(FunctionDecl *FD);
   Decl *ActOnStartOfFunctionDef(Scope *S, Declarator &D);
   Decl *ActOnStartOfFunctionDef(Scope *S, Decl *D);
-  void ActOnStartOfObjCMethodDef(Scope *S, Decl *D);
+  void ActOnStartOfObjCMethodOrCFunctionDef(Scope *S, Decl *D, 
+                                            bool parseMethod);
+  bool isObjCMethodDecl(Decl *D) {
+    return D && isa<ObjCMethodDecl>(D);
+  }
 
   void computeNRVO(Stmt *Body, sema::FunctionScopeInfo *Scope);
   Decl *ActOnFinishFunctionBody(Decl *Decl, Stmt *Body);
