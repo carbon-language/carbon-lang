@@ -2524,6 +2524,12 @@ SourceRange FieldDecl::getSourceRange() const {
   return DeclaratorDecl::getSourceRange();
 }
 
+void FieldDecl::setBitWidth(Expr *Width) {
+  assert(!InitializerOrBitWidth.getPointer() && !hasInClassInitializer() &&
+         "bit width or initializer already set");
+  InitializerOrBitWidth.setPointer(Width);
+}
+
 void FieldDecl::setInClassInitializer(Expr *Init) {
   assert(!InitializerOrBitWidth.getPointer() && hasInClassInitializer() &&
          "bit width or initializer already set");

@@ -2151,6 +2151,16 @@ public:
   }
   unsigned getBitWidthValue(const ASTContext &Ctx) const;
 
+  /// setBitWidth - Set the bit-field width for this member.
+  // Note: used by some clients (i.e., do not remove it).
+  void setBitWidth(Expr *Width);
+  /// removeBitWidth - Remove the bit-field width from this member.
+  // Note: used by some clients (i.e., do not remove it).
+  void removeBitWidth() {
+    assert(isBitField() && "no bitfield width to remove");
+    InitializerOrBitWidth.setPointer(0);
+  }
+
   /// getInClassInitStyle - Get the kind of (C++11) in-class initializer which
   /// this field has.
   InClassInitStyle getInClassInitStyle() const {
