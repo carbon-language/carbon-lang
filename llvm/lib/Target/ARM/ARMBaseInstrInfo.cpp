@@ -3057,10 +3057,9 @@ unsigned ARMBaseInstrInfo::getInstrLatency(const InstrItineraryData *ItinData,
   unsigned Class = MCID.getSchedClass();
 
   // For instructions with variable uops, use uops as latency.
-  if (!ItinData->isEmpty() && ItinData->getNumMicroOps(Class) < 0) {
-    dbgs() << "UOPS " << getNumMicroOps(ItinData, MI) << " " << *MI << '\n';
+  if (!ItinData->isEmpty() && ItinData->getNumMicroOps(Class) < 0)
     return getNumMicroOps(ItinData, MI);
-  }
+
   // For the common case, fall back on the itinerary's latency.
   unsigned Latency = ItinData->getStageLatency(Class);
 
