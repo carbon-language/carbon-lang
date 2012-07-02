@@ -1,5 +1,5 @@
 ; RUN: llc < %s -march=thumb -mattr=+thumb2 | FileCheck %s
-
+; RUN: llc < %s -march=thumb | FileCheck %s -check-prefix=THUMB1
 
 ; CHECK: f1:
 ; CHECK: 	ror.w	r0, r0, #22
@@ -13,6 +13,8 @@ define i32 @f1(i32 %a) {
 ; CHECK: f2:
 ; CHECK-NOT: and
 ; CHECK: ror
+; THUMB1: f2
+; THUMB1: and
 define i32 @f2(i32 %v, i32 %nbits) {
 entry:
   %and = and i32 %nbits, 31

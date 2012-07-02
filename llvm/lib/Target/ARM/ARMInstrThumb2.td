@@ -2161,8 +2161,8 @@ defm t2ROR  : T2I_sh_ir<0b11, "ror", imm0_31,
                         BinOpFrag<(rotr node:$LHS, node:$RHS)>, "t2ROR">;
 
 // (rotr x, (and y, 0x...1f)) ==> (ROR x, y)
-def : Pat<(rotr rGPR:$lhs, (and rGPR:$rhs, lo5AllOne)),
-          (t2RORrr rGPR:$lhs, rGPR:$rhs)>;
+def : T2Pat<(rotr rGPR:$lhs, (and rGPR:$rhs, lo5AllOne)),
+            (t2RORrr rGPR:$lhs, rGPR:$rhs)>;
 
 let Uses = [CPSR] in {
 def t2RRX : T2sTwoReg<(outs rGPR:$Rd), (ins rGPR:$Rm), IIC_iMOVsi,
