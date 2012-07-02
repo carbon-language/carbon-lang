@@ -1558,20 +1558,29 @@ Lockset ThreadSafetyAnalyzer::intersectAndWarn(const Lockset &LSet1,
 
   for (Lockset::iterator I = LSet2.begin(), E = LSet2.end(); I != E; ++I) {
     const MutexID &LSet2Mutex = I.getKey();
-    const LockData &LSet2LockData = I.getData();
-    if (const LockData *LD = LSet1.lookup(LSet2Mutex)) {
-      if (LD->LKind != LSet2LockData.LKind) {
+    const LockData &LDat2 = I.getData();
+    if (const LockData *LDat1 = LSet1.lookup(LSet2Mutex)) {
+      if (LDat1->LKind != LDat2.LKind) {
         Handler.handleExclusiveAndShared(LSet2Mutex.getName(),
-                                         LSet2LockData.AcquireLoc,
-                                         LD->AcquireLoc);
-        if (LD->LKind != LK_Exclusive)
-          Intersection = LocksetFactory.add(Intersection, LSet2Mutex,
-                                            LSet2LockData);
+                                         LDat2.AcquireLoc,
+                                         LDat1->AcquireLoc);
+        if (LDat1->LKind != LK_Exclusive)
+          Intersection = LocksetFactory.add(Intersection, LSet2Mutex, LDat2);
       }
     } else {
-      if (!LSet2LockData.Managed)
+      if (LDat2.UnderlyingMutex.isValid()) {
+        if (LSet2.lookup(LDat2.UnderlyingMutex)) {
+          // If this is a scoped lock that manages another mutex, and if the
+          // underlying mutex is still held, then warn about the underlying
+          // mutex.
+          Handler.handleMutexHeldEndOfScope(LDat2.UnderlyingMutex.getName(),
+                                            LDat2.AcquireLoc,
+                                            JoinLoc, LEK1);
+        }
+      }
+      else if (!LDat2.Managed)
         Handler.handleMutexHeldEndOfScope(LSet2Mutex.getName(),
-                                          LSet2LockData.AcquireLoc,
+                                          LDat2.AcquireLoc,
                                           JoinLoc, LEK1);
     }
   }
@@ -1579,11 +1588,21 @@ Lockset ThreadSafetyAnalyzer::intersectAndWarn(const Lockset &LSet1,
   for (Lockset::iterator I = LSet1.begin(), E = LSet1.end(); I != E; ++I) {
     if (!LSet2.contains(I.getKey())) {
       const MutexID &Mutex = I.getKey();
-      const LockData &MissingLock = I.getData();
+      const LockData &LDat1 = I.getData();
 
-      if (!MissingLock.Managed)
+      if (LDat1.UnderlyingMutex.isValid()) {
+        if (LSet1.lookup(LDat1.UnderlyingMutex)) {
+          // If this is a scoped lock that manages another mutex, and if the
+          // underlying mutex is still held, then warn about the underlying
+          // mutex.
+          Handler.handleMutexHeldEndOfScope(LDat1.UnderlyingMutex.getName(),
+                                            LDat1.AcquireLoc,
+                                            JoinLoc, LEK1);
+        }
+      }
+      else if (!LDat1.Managed)
         Handler.handleMutexHeldEndOfScope(Mutex.getName(),
-                                          MissingLock.AcquireLoc,
+                                          LDat1.AcquireLoc,
                                           JoinLoc, LEK2);
       Intersection = LocksetFactory.remove(Intersection, Mutex);
     }

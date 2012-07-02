@@ -2470,3 +2470,68 @@ public:
 } // end namespace UnlockBug
 
 
+namespace FoolishScopedLockableBug {
+
+class SCOPED_LOCKABLE WTF_ScopedLockable {
+public:
+  WTF_ScopedLockable(Mutex* mu) EXCLUSIVE_LOCK_FUNCTION(mu);
+
+  // have to call release() manually;
+  ~WTF_ScopedLockable();
+
+  void release() UNLOCK_FUNCTION();
+};
+
+
+class Foo {
+  Mutex mu_;
+  int a GUARDED_BY(mu_);
+  bool c;
+
+  void doSomething();
+
+  void test1() {
+    WTF_ScopedLockable wtf(&mu_);
+    wtf.release();
+  }
+
+  void test2() {
+    WTF_ScopedLockable wtf(&mu_);  // expected-note {{mutex acquired here}}
+  }  // expected-warning {{mutex 'mu_' is still locked at the end of function}}
+
+  void test3() {
+    if (c) {
+      WTF_ScopedLockable wtf(&mu_);
+      wtf.release();
+    }
+  }
+
+  void test4() {
+    if (c) {
+      doSomething();
+    }
+    else {
+      WTF_ScopedLockable wtf(&mu_);
+      wtf.release();
+    }
+  }
+
+  void test5() {
+    if (c) {
+      WTF_ScopedLockable wtf(&mu_);  // expected-note {{mutex acquired here}}
+    }
+  } // expected-warning {{mutex 'mu_' is not locked on every path through here}}
+
+  void test6() {
+    if (c) {
+      doSomething();
+    }
+    else {
+      WTF_ScopedLockable wtf(&mu_);  // expected-note {{mutex acquired here}}
+    }
+  } // expected-warning {{mutex 'mu_' is not locked on every path through here}}
+};
+
+
+} // end namespace FoolishScopedLockableBug
+
