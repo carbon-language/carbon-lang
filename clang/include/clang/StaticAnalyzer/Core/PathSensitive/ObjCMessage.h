@@ -53,7 +53,7 @@ public:
     return IsPropSetter;
   }
 
-  const Expr *getMessageExpr() const { 
+  const ObjCMessageExpr *getMessageExpr() const {
     return Msg;
   }
 

@@ -867,26 +867,32 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
     case Stmt::ObjCMessageExprClass: {
       Bldr.takeNodes(Pred);
       // Is this a property access?
-      const ParentMap &PM = Pred->getLocationContext()->getParentMap();
+
+      const LocationContext *LCtx = Pred->getLocationContext();
+      const ParentMap &PM = LCtx->getParentMap();
       const ObjCMessageExpr *ME = cast<ObjCMessageExpr>(S);
       bool evaluated = false;
       
       if (const PseudoObjectExpr *PO =
-          dyn_cast_or_null<PseudoObjectExpr>(PM.getParent(S))) {
+            dyn_cast_or_null<PseudoObjectExpr>(PM.getParent(S))) {
         const Expr *syntactic = PO->getSyntacticForm();
+
+        // This handles the funny case of assigning to the result of a getter.
+        // This can happen if the getter returns a non-const reference.
+        if (const BinaryOperator *BO = dyn_cast<BinaryOperator>(syntactic))
+          syntactic = BO->getLHS();
+
         if (const ObjCPropertyRefExpr *PR =
               dyn_cast<ObjCPropertyRefExpr>(syntactic)) {
-          bool isSetter = ME->getNumArgs() > 0;
-          VisitObjCMessage(ObjCMessage(ME, PR, isSetter), Pred, Dst);
+          VisitObjCMessage(ObjCPropertyAccess(PR, ME, Pred->getState(), LCtx),
+                           Pred, Dst);
           evaluated = true;
-        }
-        else if (isa<BinaryOperator>(syntactic)) {
-          VisitObjCMessage(ObjCMessage(ME, 0, true), Pred, Dst);
         }
       }
       
       if (!evaluated)
-        VisitObjCMessage(ME, Pred, Dst);
+        VisitObjCMessage(ObjCMessageSend(ME, Pred->getState(), LCtx),
+                         Pred, Dst);
 
       Bldr.addNodes(Dst);
       break;

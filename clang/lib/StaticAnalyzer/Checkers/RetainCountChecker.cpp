@@ -747,10 +747,10 @@ public:
                                         QualType RetTy,
                                         ObjCMethodSummariesTy &CachedSummaries);
 
-  const RetainSummary *getInstanceMethodSummary(const ObjCMessageInvocation &M,
+  const RetainSummary *getInstanceMethodSummary(const ObjCMethodCall &M,
                                                 ProgramStateRef State);
 
-  const RetainSummary *getClassMethodSummary(const ObjCMessageInvocation &M) {
+  const RetainSummary *getClassMethodSummary(const ObjCMethodCall &M) {
     assert(!M.isInstanceMessage());
     const ObjCInterfaceDecl *Class = M.getReceiverInterface();
 
@@ -950,8 +950,9 @@ RetainSummaryManager::getSummary(const CallEvent &Call,
   case CE_CXXConstructor:
     // FIXME: These calls are currently unsupported.
     return getPersistentStopSummary();
-  case CE_ObjCMessage: {
-    const ObjCMessageInvocation &Msg = cast<ObjCMessageInvocation>(Call);
+  case CE_ObjCMessage:
+  case CE_ObjCPropertyAccess: {
+    const ObjCMethodCall &Msg = cast<ObjCMethodCall>(Call);
     if (Msg.isInstanceMessage())
       Summ = getInstanceMethodSummary(Msg, State);
     else
@@ -1447,7 +1448,7 @@ RetainSummaryManager::getStandardMethodSummary(const ObjCMethodDecl *MD,
 }
 
 const RetainSummary *
-RetainSummaryManager::getInstanceMethodSummary(const ObjCMessageInvocation &Msg,
+RetainSummaryManager::getInstanceMethodSummary(const ObjCMethodCall &Msg,
                                                ProgramStateRef State) {
   const ObjCInterfaceDecl *ReceiverClass = 0;
 
@@ -2795,7 +2796,8 @@ void RetainCountChecker::checkPostObjCMessage(const ObjCMessage &Msg,
                                               CheckerContext &C) const {
   ProgramStateRef state = C.getState();
   const LocationContext *LC = C.getLocationContext();
-  ObjCMessageInvocation Call(Msg, state, LC);
+  // FIXME: ObjCMessage is going away.
+  ObjCMessageSend Call(Msg.getMessageExpr(), state, LC);
 
   RetainSummaryManager &Summaries = getSummaryManager(C);
   const RetainSummary *Summ = Summaries.getSummary(Call, state);
@@ -2859,8 +2861,7 @@ void RetainCountChecker::checkSummary(const RetainSummary &Summ,
   // Evaluate the effect on the message receiver.
   bool ReceiverIsTracked = false;
   if (!hasErr) {
-    const ObjCMessageInvocation *MsgInvocation =
-      dyn_cast<ObjCMessageInvocation>(&CallOrMsg);
+    const ObjCMethodCall *MsgInvocation = dyn_cast<ObjCMethodCall>(&CallOrMsg);
     if (MsgInvocation) {
       if (SymbolRef Sym = MsgInvocation->getReceiverSVal().getAsLocSymbol()) {
         if (const RefVal *T = state->get<RefBindings>(Sym)) {

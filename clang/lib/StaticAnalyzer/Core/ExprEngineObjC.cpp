@@ -141,7 +141,7 @@ static bool isSubclass(const ObjCInterfaceDecl *Class, IdentifierInfo *II) {
   return isSubclass(Class->getSuperClass(), II);
 }
 
-void ExprEngine::VisitObjCMessage(const ObjCMessage &msg,
+void ExprEngine::VisitObjCMessage(const ObjCMethodCall &msg,
                                   ExplodedNode *Pred,
                                   ExplodedNodeSet &Dst) {
   
@@ -160,18 +160,20 @@ void ExprEngine::VisitObjCMessage(const ObjCMessage &msg,
     ExplodedNode *Pred = *DI;
     bool RaisesException = false;
     
-    if (const Expr *Receiver = msg.getInstanceReceiver()) {
-      ProgramStateRef state = Pred->getState();
-      SVal recVal = state->getSVal(Receiver, Pred->getLocationContext());
+    if (msg.isInstanceMessage()) {
+      SVal recVal = msg.getReceiverSVal();
       if (!recVal.isUndef()) {
         // Bifurcate the state into nil and non-nil ones.
         DefinedOrUnknownSVal receiverVal = cast<DefinedOrUnknownSVal>(recVal);
         
+        ProgramStateRef state = Pred->getState();
         ProgramStateRef notNilState, nilState;
         llvm::tie(notNilState, nilState) = state->assume(receiverVal);
         
         // There are three cases: can be nil or non-nil, must be nil, must be
         // non-nil. We ignore must be nil, and merge the rest two into non-nil.
+        // FIXME: This ignores many potential bugs (<rdar://problem/11733396>).
+        // Revisit once we have lazier constraints.
         if (nilState && !notNilState) {
           continue;
         }
@@ -186,12 +188,9 @@ void ExprEngine::VisitObjCMessage(const ObjCMessage &msg,
         // Dispatch to plug-in transfer function.
         evalObjCMessage(Bldr, msg, Pred, notNilState, RaisesException);
       }
-    } else if (const ObjCInterfaceDecl *Iface = msg.getReceiverInterface()) {
-      // Note that this branch also handles messages to super, not just
-      // class methods!
-
+    } else {
       // Check for special class methods.
-      if (!msg.isInstanceMessage()) {
+      if (const ObjCInterfaceDecl *Iface = msg.getReceiverInterface()) {
         if (!NSExceptionII) {
           ASTContext &Ctx = getContext();
           NSExceptionII = &Ctx.Idents.get("NSException");
@@ -243,13 +242,10 @@ void ExprEngine::VisitObjCMessage(const ObjCMessage &msg,
 }
 
 void ExprEngine::evalObjCMessage(StmtNodeBuilder &Bldr,
-                                 const ObjCMessage &msg,
+                                 const ObjCMethodCall &msg,
                                  ExplodedNode *Pred,
                                  ProgramStateRef state,
                                  bool GenSink) {
-  const LocationContext *LCtx = Pred->getLocationContext();
-  unsigned BlockCount = currentBuilderContext->getCurrentBlockCount();
-
   // First handle the return value.
   SVal ReturnValue = UnknownVal();
 
@@ -261,17 +257,18 @@ void ExprEngine::evalObjCMessage(StmtNodeBuilder &Bldr,
   case OMF_retain:
   case OMF_self: {
     // These methods return their receivers.
-    const Expr *ReceiverE = msg.getInstanceReceiver();
-    if (ReceiverE)
-      ReturnValue = state->getSVal(ReceiverE, LCtx);
+    ReturnValue = msg.getReceiverSVal();
     break;
   }
   }
 
+  const LocationContext *LCtx = Pred->getLocationContext();
+  unsigned BlockCount = currentBuilderContext->getCurrentBlockCount();
+
   // If we failed to figure out the return value, use a conjured value instead.
   if (ReturnValue.isUnknown()) {
     SValBuilder &SVB = getSValBuilder();
-    QualType ResultTy = msg.getResultType(getContext());
+    QualType ResultTy = msg.getResultType();
     const Expr *CurrentE = cast<Expr>(currentStmt);
     ReturnValue = SVB.getConjuredSymbolVal(NULL, CurrentE, LCtx, ResultTy,
                                            BlockCount);
@@ -281,11 +278,10 @@ void ExprEngine::evalObjCMessage(StmtNodeBuilder &Bldr,
   state = state->BindExpr(currentStmt, LCtx, ReturnValue);
 
   // Invalidate the arguments (and the receiver)
-  ObjCMessageInvocation Invocation(msg, state, LCtx);
-  state = Invocation.invalidateRegions(BlockCount);
+  state = msg.invalidateRegions(BlockCount, state);
 
   // And create the new node.
-  Bldr.generateNode(msg.getMessageExpr(), Pred, state, GenSink);
+  Bldr.generateNode(msg.getOriginExpr(), Pred, state, GenSink);
   assert(Bldr.hasGeneratedNodes());
 }
 

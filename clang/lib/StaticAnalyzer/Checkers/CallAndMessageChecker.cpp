@@ -300,7 +300,8 @@ void CallAndMessageChecker::checkPreObjCMessage(ObjCMessage msg,
                      "Argument for property setter is an uninitialized value"
                    : "Argument in message expression is an uninitialized value";
   // Check for any arguments that are uninitialized/undefined.
-  PreVisitProcessArgs(C, ObjCMessageInvocation(msg, state, LCtx),
+  // FIXME: ObjCMessage is set to be removed soon.
+  PreVisitProcessArgs(C, ObjCMessageSend(msg.getMessageExpr(), state, LCtx),
                       bugDesc, BT_msg_arg);
 }
 

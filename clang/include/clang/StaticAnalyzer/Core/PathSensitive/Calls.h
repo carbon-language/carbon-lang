@@ -36,7 +36,10 @@ enum CallEventKind {
   CE_CXXConstructor,
   CE_BEG_FUNCTION_CALLS = CE_Function,
   CE_END_FUNCTION_CALLS = CE_CXXConstructor,
-  CE_ObjCMessage
+  CE_ObjCMessage,
+  CE_ObjCPropertyAccess,
+  CE_BEG_OBJC_CALLS = CE_ObjCMessage,
+  CE_END_OBJC_CALLS = CE_ObjCPropertyAccess
 };
 
 /// \brief Represents an abstract call to a function or method along a
@@ -318,17 +321,15 @@ public:
   }
 };
 
-/// \brief Represents any expression that causes an Objective-C message send.
-//
-// This class is mostly passthrough to ObjCMessage, because /that/ class is the
-// adapter for the different kinds of Objective-C messages in the system. The
-// difference here is that like other CallActions this refers to a specific
-// (path-sensitive) message send, while ObjCMessage is simply a wrapper for the
-// various (path-insensitive) expressions that are implemented using messages.
-class ObjCMessageInvocation : public CallEvent {
-  ObjCMessage Msg;
+/// \brief Represents any expression that calls an Objective-C method.
+class ObjCMethodCall : public CallEvent {
+  const ObjCMessageExpr *Msg;
 
 protected:
+  ObjCMethodCall(const ObjCMessageExpr *msg, ProgramStateRef St,
+                 const LocationContext *LCtx, Kind K)
+    : CallEvent(St, LCtx, K), Msg(msg) {}
+
   void addExtraInvalidatedRegions(RegionList &Regions) const;
 
   param_iterator param_begin() const;
@@ -337,31 +338,75 @@ protected:
   QualType getDeclaredResultType() const;
 
 public:
-  ObjCMessageInvocation(const ObjCMessage &msg, ProgramStateRef St,
-                        const LocationContext *LCtx)
-    : CallEvent(St, LCtx, CE_ObjCMessage), Msg(msg) {}
+  Selector getSelector() const { return Msg->getSelector(); }
+  bool isInstanceMessage() const { return Msg->isInstanceMessage(); }
+  ObjCMethodFamily getMethodFamily() const { return Msg->getMethodFamily(); }
+  const ObjCMethodDecl *getDecl() const { return Msg->getMethodDecl(); }
+  unsigned getNumArgs() const { return Msg->getNumArgs(); }
+  const Expr *getArgExpr(unsigned Index) const {
+    return Msg->getArg(Index);
+  }
 
-  Selector getSelector() const { return Msg.getSelector(); }
-  bool isInstanceMessage() const { return Msg.isInstanceMessage(); }
-  const ObjCMethodDecl *getDecl() const { return Msg.getMethodDecl(); }
-  unsigned getNumArgs() const { return Msg.getNumArgs(); }
-  const Expr *getArgExpr(unsigned Index) const { return Msg.getArgExpr(Index); }
-
-  // FIXME: for emitting warnings and such this may not be the best idea.
-  const Expr *getOriginExpr() const { return Msg.getMessageExpr(); }
+  const ObjCMessageExpr *getOriginExpr() const { return Msg; }
 
   SVal getReceiverSVal() const;
 
-  SourceRange getReceiverSourceRange() const {
-    return Msg.getReceiverSourceRange();
+  const ObjCInterfaceDecl *getReceiverInterface() const {
+    return Msg->getReceiverInterface();
   }
 
-  const ObjCInterfaceDecl *getReceiverInterface() const {
-    return Msg.getReceiverInterface();
+  SourceRange getReceiverSourceRange() const {
+    return Msg->getReceiverRange();
+  }
+
+  // FIXME: Remove this once everything is converted to use ObjCMethodCall.
+  virtual operator ObjCMessage() const {
+    return ObjCMessage(Msg);
   }
 
   static bool classof(const CallEvent *CA) {
+    return CA->getKind() >= CE_BEG_OBJC_CALLS &&
+           CA->getKind() <= CE_END_OBJC_CALLS;
+  }
+};
+
+/// \brief Represents an explicit message send to an Objective-C object.
+///
+/// Example: [obj descriptionWithLocale:locale];
+class ObjCMessageSend : public ObjCMethodCall {
+public:
+  ObjCMessageSend(const ObjCMessageExpr *Msg, ProgramStateRef St,
+                  const LocationContext *LCtx)
+    : ObjCMethodCall(Msg, St, LCtx, CE_ObjCMessage) {}
+
+  static bool classof(const CallEvent *CA) {
     return CA->getKind() == CE_ObjCMessage;
+  }
+};
+
+/// \brief Represents an Objective-C property getter or setter invocation.
+///
+/// Example: obj.prop += 1;
+class ObjCPropertyAccess : public ObjCMethodCall {
+  const ObjCPropertyRefExpr *PropE;
+
+public:
+  ObjCPropertyAccess(const ObjCPropertyRefExpr *pe, const ObjCMessageExpr *Msg,
+                     const ProgramStateRef St, const LocationContext *LCtx)
+    : ObjCMethodCall(Msg, St, LCtx, CE_ObjCPropertyAccess), PropE(pe) {}
+
+  /// \brief Returns true if this property access is calling the setter method.
+  bool isSetter() const {
+    return getNumArgs() > 0;
+  }
+
+  // FIXME: Remove this once everything is converted to use ObjCMethodCall.
+  operator ObjCMessage() const {
+    return ObjCMessage(getOriginExpr(), PropE, isSetter());
+  }
+
+  static bool classof(const CallEvent *CA) {
+    return CA->getKind() == CE_ObjCPropertyAccess;
   }
 };
 

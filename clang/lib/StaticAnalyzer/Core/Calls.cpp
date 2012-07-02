@@ -334,7 +334,7 @@ void CXXConstructorCall::addExtraInvalidatedRegions(RegionList &Regions) const {
 }
 
 
-CallEvent::param_iterator ObjCMessageInvocation::param_begin() const {
+CallEvent::param_iterator ObjCMethodCall::param_begin() const {
   const ObjCMethodDecl *D = getDecl();
   if (!D)
     return 0;
@@ -342,7 +342,7 @@ CallEvent::param_iterator ObjCMessageInvocation::param_begin() const {
   return D->param_begin();
 }
 
-CallEvent::param_iterator ObjCMessageInvocation::param_end() const {
+CallEvent::param_iterator ObjCMethodCall::param_end() const {
   const ObjCMethodDecl *D = getDecl();
   if (!D)
     return 0;
@@ -351,12 +351,12 @@ CallEvent::param_iterator ObjCMessageInvocation::param_end() const {
 }
 
 void
-ObjCMessageInvocation::addExtraInvalidatedRegions(RegionList &Regions) const {
+ObjCMethodCall::addExtraInvalidatedRegions(RegionList &Regions) const {
   if (const MemRegion *R = getReceiverSVal().getAsRegion())
     Regions.push_back(R);
 }
 
-QualType ObjCMessageInvocation::getDeclaredResultType() const {
+QualType ObjCMethodCall::getDeclaredResultType() const {
   const ObjCMethodDecl *D = getDecl();
   if (!D)
     return QualType();
@@ -364,12 +364,12 @@ QualType ObjCMessageInvocation::getDeclaredResultType() const {
   return D->getResultType();
 }
 
-SVal ObjCMessageInvocation::getReceiverSVal() const {
+SVal ObjCMethodCall::getReceiverSVal() const {
   // FIXME: Is this the best way to handle class receivers?
   if (!isInstanceMessage())
     return UnknownVal();
     
-  const Expr *Base = Msg.getInstanceReceiver();
+  const Expr *Base = Msg->getInstanceReceiver();
   if (Base)
     return getSVal(Base);
 
@@ -377,5 +377,6 @@ SVal ObjCMessageInvocation::getReceiverSVal() const {
   // In this case the object reference is the same as 'self'.
   const ImplicitParamDecl *SelfDecl = LCtx->getSelfDecl();
   assert(SelfDecl && "No message receiver Expr, but not in an ObjC method");
-  return loc::MemRegionVal(State->getRegion(SelfDecl, LCtx));
+  return State->getSVal(State->getRegion(SelfDecl, LCtx));
 }
+

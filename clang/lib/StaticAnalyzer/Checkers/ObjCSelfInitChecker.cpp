@@ -209,7 +209,9 @@ void ObjCSelfInitChecker::checkPostObjCMessage(ObjCMessage msg,
     return;
   }
 
-  ObjCMessageInvocation MsgWrapper(msg, C.getState(), C.getLocationContext());
+  // FIXME: ObjCMessage is going away.
+  ObjCMessageSend MsgWrapper(msg.getMessageExpr(), C.getState(),
+                             C.getLocationContext());
   checkPostStmt(MsgWrapper, C);
 
   // We don't check for an invalid 'self' in an obj-c message expression to cut
@@ -300,7 +302,9 @@ void ObjCSelfInitChecker::checkPostStmt(const CallExpr *CE,
 
 void ObjCSelfInitChecker::checkPreObjCMessage(ObjCMessage Msg,
                                               CheckerContext &C) const {
-  ObjCMessageInvocation MsgWrapper(Msg, C.getState(), C.getLocationContext());
+  // FIXME: ObjCMessage is going away.
+  ObjCMessageSend MsgWrapper(Msg.getMessageExpr(), C.getState(),
+                             C.getLocationContext());
   checkPreStmt(MsgWrapper, C);
 }
 

@@ -481,8 +481,8 @@ void MallocChecker::checkPostStmt(const CallExpr *CE, CheckerContext &C) const {
   C.addTransition(State);
 }
 
-static bool isFreeWhenDoneSetToZero(const ObjCMessageInvocation &Call,
-                                    Selector &S) {
+static bool isFreeWhenDoneSetToZero(const ObjCMethodCall &Call) {
+  Selector S = Call.getSelector();
   for (unsigned i = 1; i < S.getNumArgs(); ++i)
     if (S.getNameForSlot(i).equals("freeWhenDone"))
       if (Call.getArgSVal(i).isConstant(0))
@@ -497,7 +497,9 @@ void MallocChecker::checkPreObjCMessage(const ObjCMessage &Msg,
   if (!MD)
     return;
 
-  ObjCMessageInvocation Call(Msg, C.getState(), C.getLocationContext());
+  // FIXME: ObjCMessage is going away soon.
+  ObjCMessageSend Call(Msg.getMessageExpr(), C.getState(),
+                       C.getLocationContext());
   Selector S = Msg.getSelector();
 
   // If the first selector is dataWithBytesNoCopy, assume that the memory will
@@ -508,7 +510,7 @@ void MallocChecker::checkPreObjCMessage(const ObjCMessage &Msg,
   if ((S.getNameForSlot(0) == "dataWithBytesNoCopy" ||
        S.getNameForSlot(0) == "initWithBytesNoCopy" ||
        S.getNameForSlot(0) == "initWithCharactersNoCopy") &&
-      !isFreeWhenDoneSetToZero(Call, S)){
+      !isFreeWhenDoneSetToZero(Call)){
     unsigned int argIdx  = 0;
     C.addTransition(FreeMemAux(C, Call.getArgExpr(argIdx),
                     Msg.getMessageExpr(), C.getState(), true));
@@ -1322,11 +1324,11 @@ bool MallocChecker::doesNotFreeMemory(const CallEvent *Call,
   // TODO: If we want to be more optimistic here, we'll need to make sure that
   // regions escape to C++ containers. They seem to do that even now, but for
   // mysterious reasons.
-  if (!(isa<FunctionCall>(Call) || isa<ObjCMessageInvocation>(Call)))
+  if (!(isa<FunctionCall>(Call) || isa<ObjCMethodCall>(Call)))
     return false;
 
   // Check Objective-C messages by selector name.
-  if (const ObjCMessageInvocation *Msg = dyn_cast<ObjCMessageInvocation>(Call)){
+  if (const ObjCMethodCall *Msg = dyn_cast<ObjCMethodCall>(Call)) {
     // If it's not a framework call, or if it takes a callback, assume it
     // can free memory.
     if (!Call->isInSystemHeader() || Call->hasNonZeroCallbackArg())

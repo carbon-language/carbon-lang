@@ -42,7 +42,7 @@ namespace ento {
 
 class AnalysisManager;
 class CallEvent;
-class ObjCMessage;
+class ObjCMethodCall;
 
 class ExprEngine : public SubEngine {
   AnalysisManager &AMgr;
@@ -347,7 +347,7 @@ public:
   void VisitObjCForCollectionStmt(const ObjCForCollectionStmt *S, 
                                   ExplodedNode *Pred, ExplodedNodeSet &Dst);
 
-  void VisitObjCMessage(const ObjCMessage &msg, ExplodedNode *Pred,
+  void VisitObjCMessage(const ObjCMethodCall &Msg, ExplodedNode *Pred,
                         ExplodedNodeSet &Dst);
 
   /// VisitReturnStmt - Transfer function logic for return statements.
@@ -433,7 +433,7 @@ public:
   }
   
 protected:
-  void evalObjCMessage(StmtNodeBuilder &Bldr, const ObjCMessage &msg,
+  void evalObjCMessage(StmtNodeBuilder &Bldr, const ObjCMethodCall &Msg,
                        ExplodedNode *Pred, ProgramStateRef state,
                        bool GenSink);
 
