@@ -5,9 +5,9 @@
 
 #include <x86intrin.h>
 
-unsigned short test__tzcnt16(unsigned short __X) {
+unsigned short test__tzcnt_u16(unsigned short __X) {
   // CHECK: @llvm.cttz.i16
-  return __tzcnt16(__X);
+  return __tzcnt_u16(__X);
 }
 
 unsigned int test__andn_u32(unsigned int __X, unsigned int __Y) {
@@ -39,9 +39,9 @@ unsigned int test__blsr_u32(unsigned int __X) {
   return __blsr_u32(__X);
 }
 
-unsigned int test_tzcnt32(unsigned int __X) {
+unsigned int test_tzcnt_u32(unsigned int __X) {
   // CHECK: @llvm.cttz.i32
-  return __tzcnt32(__X);
+  return __tzcnt_u32(__X);
 }
 
 unsigned long long test__andn_u64(unsigned long __X, unsigned long __Y) {
@@ -73,7 +73,7 @@ unsigned long long test__blsr_u64(unsigned long long __X) {
   return __blsr_u64(__X);
 }
 
-unsigned long long test__tzcnt64(unsigned long long __X) {
+unsigned long long test__tzcnt_u64(unsigned long long __X) {
   // CHECK: @llvm.cttz.i64
-  return __tzcnt64(__X);
+  return __tzcnt_u64(__X);
 }
