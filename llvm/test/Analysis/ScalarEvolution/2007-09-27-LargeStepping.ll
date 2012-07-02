@@ -1,5 +1,5 @@
 ; RUN: opt < %s -analyze -scalar-evolution \
-; RUN:   -scalar-evolution-max-iterations=0 | grep {backedge-taken count is 13}
+; RUN:   -scalar-evolution-max-iterations=0 | grep "backedge-taken count is 13"
 ; PR1706
 
 define i32 @f() {

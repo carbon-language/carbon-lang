@@ -1,7 +1,7 @@
 ; Scalar replacement was incorrectly promoting this alloca!!
 ;
 ; RUN: opt < %s -scalarrepl -S | \
-; RUN:   sed {s/;.*//g} | grep {\\\[}
+; RUN:   sed "s/;.*//g" | grep "\["
 
 define i8* @test() {
 	%A = alloca [30 x i8]		; <[30 x i8]*> [#uses=1]

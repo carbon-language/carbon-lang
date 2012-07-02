@@ -3,7 +3,7 @@
 ; and instead nests it just inside loop "Top"
 ;
 ; RUN: opt < %s -analyze -loops | \
-; RUN:   grep {     Loop at depth 3 containing: %Inner<header><latch><exiting>}
+; RUN:   grep "     Loop at depth 3 containing: %Inner<header><latch><exiting>"
 ;
 define void @test() {
         br label %Top

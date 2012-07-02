@@ -1,4 +1,4 @@
-; RUN: opt < %s -instcombine -S | grep {fadd float}
+; RUN: opt < %s -instcombine -S | grep "fadd float"
 
 
 define float @test(<4 x float> %A, <4 x float> %B, float %f) {

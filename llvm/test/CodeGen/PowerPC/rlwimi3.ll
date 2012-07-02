@@ -1,5 +1,5 @@
 ; RUN: llc < %s -march=ppc32 -stats |& \
-; RUN:   grep {Number of machine instrs printed} | grep 12
+; RUN:   grep "Number of machine instrs printed" | grep 12
 
 define i16 @Trans16Bit(i32 %srcA, i32 %srcB, i32 %alpha) {
 	%tmp1 = shl i32 %srcA, 15		; <i32> [#uses=1]

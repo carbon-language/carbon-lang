@@ -1,4 +1,4 @@
-; RUN: opt < %s -simplify-libcalls -S | grep {select i1 %ispos}
+; RUN: opt < %s -simplify-libcalls -S | grep "select i1 %ispos"
 ; PR2337
 
 define i32 @test(i32 %x) {

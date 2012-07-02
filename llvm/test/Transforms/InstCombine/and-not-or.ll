@@ -1,5 +1,5 @@
-; RUN: opt < %s -instcombine -S | grep {and i32 %x, %y} | count 4
-; RUN: opt < %s -instcombine -S | not grep {or}
+; RUN: opt < %s -instcombine -S | grep "and i32 %x, %y" | count 4
+; RUN: opt < %s -instcombine -S | not grep "or"
 
 define i32 @func1(i32 %x, i32 %y) nounwind {
 entry:

@@ -1,8 +1,8 @@
 ; PR1307
 ; RUN: opt < %s -simplify-libcalls -instcombine -S > %t
-; RUN: grep {@str,.*i64 3} %t
-; RUN: grep {@str1,.*i64 7} %t
-; RUN: grep {ret i8.*null} %t
+; RUN: grep "@str,.*i64 3" %t
+; RUN: grep "@str1,.*i64 7" %t
+; RUN: grep "ret i8.*null" %t
 ; END.
 
 @str = internal constant [5 x i8] c"foog\00"

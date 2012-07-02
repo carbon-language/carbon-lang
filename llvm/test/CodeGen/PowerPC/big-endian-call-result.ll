@@ -1,7 +1,7 @@
 ; RUN: llc < %s -march=ppc32 -mtriple=powerpc-unknown-linux-gnu | \
-; RUN:   grep {addic 4, 4, 1}
+; RUN:   grep "addic 4, 4, 1"
 ; RUN: llc < %s -march=ppc32 -mtriple=powerpc-unknown-linux-gnu | \
-; RUN:   grep {addze 3, 3}
+; RUN:   grep "addze 3, 3"
 
 declare i64 @foo()
 

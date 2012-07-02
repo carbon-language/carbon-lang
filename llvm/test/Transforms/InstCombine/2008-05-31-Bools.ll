@@ -1,7 +1,7 @@
 ; RUN: opt < %s -instcombine -S > %t
-; RUN: grep {xor} %t
-; RUN: grep {and} %t
-; RUN: not grep {div} %t
+; RUN: grep "xor" %t
+; RUN: grep "and" %t
+; RUN: not grep "div" %t
 
 define i1 @foo1(i1 %a, i1 %b) {
   %A = sub i1 %a, %b

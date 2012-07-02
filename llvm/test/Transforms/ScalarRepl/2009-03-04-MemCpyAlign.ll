@@ -1,6 +1,6 @@
 ; The store into %p should end up with a known alignment of 1, since the memcpy
 ; is only known to access it with 1-byte alignment.
-; RUN: opt < %s -scalarrepl -S | grep {store i16 1, .*, align 1}
+; RUN: opt < %s -scalarrepl -S | grep "store i16 1, .*, align 1"
 ; PR3720
 target datalayout = "E-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64"
 

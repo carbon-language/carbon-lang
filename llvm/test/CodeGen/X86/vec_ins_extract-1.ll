@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86 -mcpu=yonah | grep {(%esp,%eax,4)} | count 4
+; RUN: llc < %s -march=x86 -mcpu=yonah | grep "(%esp,%eax,4)" | count 4
 
 ; Inserts and extracts with variable indices must be lowered
 ; to memory accesses.

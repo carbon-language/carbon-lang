@@ -1,7 +1,7 @@
 ; RUN: opt < %s -instcombine -S > %t
 ; RUN: not grep zext %t
 ; RUN: not grep slt %t
-; RUN: grep {icmp ult} %t
+; RUN: grep "icmp ult" %t
 
 ; Instcombine should convert the zext+slt into a simple ult.
 

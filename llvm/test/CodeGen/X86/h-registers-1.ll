@@ -1,6 +1,6 @@
 ; RUN: llc < %s -mtriple=x86_64-linux > %t
-; RUN: grep {movzbl	%\[abcd\]h,} %t | count 8
-; RUN: grep {%\[abcd\]h} %t | not grep {%r\[\[:digit:\]\]*d}
+; RUN: grep "movzbl	%[abcd]h," %t | count 8
+; RUN: grep "%[abcd]h" %t | not grep "%r[[:digit:]]*d"
 
 ; LLVM creates virtual registers for values live across blocks
 ; based on the type of the value. Make sure that the extracts

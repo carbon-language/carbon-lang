@@ -1,5 +1,5 @@
 ; RUN: llc < %s -march=ppc32 -fp-contract=fast | \
-; RUN:   egrep {fn?madd|fn?msub} | count 8
+; RUN:   egrep "fn?madd|fn?msub" | count 8
 
 define double @test_FMADD1(double %A, double %B, double %C) {
 	%D = fmul double %A, %B		; <double> [#uses=1]

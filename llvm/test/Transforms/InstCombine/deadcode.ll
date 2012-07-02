@@ -1,4 +1,4 @@
-; RUN: opt < %s -instcombine -S | grep {ret i32 %A}
+; RUN: opt < %s -instcombine -S | grep "ret i32 %A"
 ; RUN: opt < %s -die -S | not grep call.*llvm
 
 define i32 @test(i32 %A) {

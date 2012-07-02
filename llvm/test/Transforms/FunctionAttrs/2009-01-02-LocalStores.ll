@@ -1,5 +1,5 @@
-; RUN: opt < %s -functionattrs -S | not grep {nocapture *%%q}
-; RUN: opt < %s -functionattrs -S | grep {nocapture *%%p}
+; RUN: opt < %s -functionattrs -S | not grep "nocapture *%%q"
+; RUN: opt < %s -functionattrs -S | grep "nocapture *%%p"
 
 define i32* @a(i32** %p) {
 	%tmp = load i32** %p

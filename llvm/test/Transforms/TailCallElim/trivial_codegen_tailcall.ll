@@ -1,5 +1,5 @@
 ; RUN: opt < %s -tailcallelim -S | \
-; RUN:    grep {tail call void @foo}
+; RUN:    grep "tail call void @foo"
 
 
 declare void @foo()

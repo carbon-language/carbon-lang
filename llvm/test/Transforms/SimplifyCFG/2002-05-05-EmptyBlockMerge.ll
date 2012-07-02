@@ -1,7 +1,7 @@
 ; Basic block #2 should not be merged into BB #3!
 ;
 ; RUN: opt < %s -simplifycfg -S | \
-; RUN:   grep {br label}
+; RUN:   grep "br label"
 ;
 
 declare void @foo()

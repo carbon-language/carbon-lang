@@ -1,6 +1,6 @@
 ; PR726
 ; RUN: opt < %s -indvars -S | \
-; RUN:   grep {ret i32 27}
+; RUN:   grep "ret i32 27"
 
 ; Make sure to compute the right exit value based on negative strides.
 

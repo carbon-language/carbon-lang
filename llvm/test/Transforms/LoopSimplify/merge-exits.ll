@@ -1,6 +1,6 @@
 ; RUN: opt < %s -loop-simplify -loop-rotate -instcombine -indvars -S -verify-loop-info -verify-dom-info > %t
 ; RUN: not grep sext %t
-; RUN: grep {phi i64} %t | count 1
+; RUN: grep "phi i64" %t | count 1
 
 ; Loopsimplify should be able to merge the two loop exits
 ; into one, so that loop rotate can rotate the loop, so

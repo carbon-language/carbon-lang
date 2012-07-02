@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llvm-dis | not grep {ret.*(}
+; RUN: llvm-as < %s | llvm-dis | not grep "ret.*("
 
 ; All of these constant expressions should fold.
 

@@ -1,4 +1,4 @@
-; RUN: opt < %s -instcombine -S | grep {= or i32 %x, -5}
+; RUN: opt < %s -instcombine -S | grep "= or i32 %x, -5"
 
 @.str = internal constant [5 x i8] c"foo\0A\00"		; <[5 x i8]*> [#uses=1]
 @.str1 = internal constant [5 x i8] c"bar\0A\00"		; <[5 x i8]*> [#uses=1]

@@ -1,5 +1,5 @@
 ; RUN: opt < %s -analyze -scalar-evolution \
-; RUN:   -scalar-evolution-max-iterations=0 | grep {backedge-taken count is 10000}
+; RUN:   -scalar-evolution-max-iterations=0 | grep "backedge-taken count is 10000"
 ; PR1101
 
 @A = weak global [1000 x i32] zeroinitializer, align 32         

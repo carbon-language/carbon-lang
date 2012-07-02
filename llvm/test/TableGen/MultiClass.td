@@ -1,4 +1,4 @@
-// RUN: llvm-tblgen %s | grep {zing = 4} | count 2
+// RUN: llvm-tblgen %s | grep "zing = 4" | count 2
 // XFAIL: vg_leak
 
 class C1<int A, string B> { 

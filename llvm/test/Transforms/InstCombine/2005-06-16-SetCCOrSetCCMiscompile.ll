@@ -1,5 +1,5 @@
 ; RUN: opt < %s -instcombine -S | \
-; RUN:   grep {ret i1 true}
+; RUN:   grep "ret i1 true"
 ; PR586
 
 @g_07918478 = external global i32               ; <i32*> [#uses=1]

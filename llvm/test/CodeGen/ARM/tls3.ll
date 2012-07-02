@@ -1,5 +1,5 @@
 ; RUN: llc < %s -march=arm -mtriple=arm-linux-gnueabi | \
-; RUN:     grep {tbss}
+; RUN:     grep "tbss"
 
 %struct.anon = type { i32, i32 }
 @teste = internal thread_local global %struct.anon zeroinitializer		; <%struct.anon*> [#uses=1]

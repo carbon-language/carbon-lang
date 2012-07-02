@@ -1,5 +1,5 @@
-// RUN: llvm-tblgen %s | grep {\\\[(set} | count 2
-// RUN: llvm-tblgen %s | grep {\\\[\\\]} | count 2
+// RUN: llvm-tblgen %s | grep "\[(set" | count 2
+// RUN: llvm-tblgen %s | grep "\[\]" | count 2
 // XFAIL: vg_leak
 
 class ValueType<int size, int value> {

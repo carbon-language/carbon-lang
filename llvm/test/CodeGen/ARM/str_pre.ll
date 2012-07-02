@@ -1,5 +1,5 @@
 ; RUN: llc < %s -march=arm | \
-; RUN:   grep {str.*\\!} | count 2
+; RUN:   grep "str.*\!" | count 2
 
 define void @test1(i32* %X, i32* %A, i32** %dest) {
         %B = load i32* %A               ; <i32> [#uses=1]

@@ -1,5 +1,5 @@
-; RUN: opt < %s -instcombine -S | grep {xor i32 %a, %b} | count 4
-; RUN: opt < %s -instcombine -S | not grep {and}
+; RUN: opt < %s -instcombine -S | grep "xor i32 %a, %b" | count 4
+; RUN: opt < %s -instcombine -S | not grep "and"
 
 define i32 @func1(i32 %a, i32 %b) nounwind readnone {
 entry:

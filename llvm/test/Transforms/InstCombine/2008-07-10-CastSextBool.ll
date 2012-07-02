@@ -1,5 +1,5 @@
-; RUN: opt < %s -instcombine -S | grep {%C = xor i1 %A, true}
-; RUN: opt < %s -instcombine -S | grep {ret i1 false}
+; RUN: opt < %s -instcombine -S | grep "%C = xor i1 %A, true"
+; RUN: opt < %s -instcombine -S | grep "ret i1 false"
 ; PR2539
 
 define i1 @test1(i1 %A) {

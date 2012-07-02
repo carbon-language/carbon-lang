@@ -1,4 +1,4 @@
-; RUN: opt < %s -instcombine -S | grep {ashr i32 %val, 31}
+; RUN: opt < %s -instcombine -S | grep "ashr i32 %val, 31"
 ; PR3851
 
 define i32 @foo2(i32 %val) nounwind {

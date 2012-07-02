@@ -1,4 +1,4 @@
-; RUN: opt < %s -instcombine -S | grep {ugt.*, 1}
+; RUN: opt < %s -instcombine -S | grep "ugt.*, 1"
 
 define i1 @test(i32 %tmp1030) {
 	%tmp1037 = icmp ne i32 %tmp1030, 40		; <i1> [#uses=1]

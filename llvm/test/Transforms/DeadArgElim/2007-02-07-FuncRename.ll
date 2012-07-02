@@ -1,4 +1,4 @@
-; RUN: opt < %s -deadargelim -S | grep {@test(}
+; RUN: opt < %s -deadargelim -S | grep "@test("
 ; RUN: opt < %s -deadargelim -S | not grep dead
 
 define internal i32 @test(i32 %X, i32 %dead) {

@@ -1,8 +1,8 @@
-; RUN: llvm-as < %s | llvm-dis | grep {addrspace(33)} | count 7
-; RUN: llvm-as < %s | llvm-dis | grep {addrspace(42)} | count 2
-; RUN: llvm-as < %s | llvm-dis | grep {addrspace(66)} | count 2
-; RUN: llvm-as < %s | llvm-dis | grep {addrspace(11)} | count 6
-; RUN: llvm-as < %s | llvm-dis | grep {addrspace(22)} | count 5
+; RUN: llvm-as < %s | llvm-dis | grep "addrspace(33)" | count 7
+; RUN: llvm-as < %s | llvm-dis | grep "addrspace(42)" | count 2
+; RUN: llvm-as < %s | llvm-dis | grep "addrspace(66)" | count 2
+; RUN: llvm-as < %s | llvm-dis | grep "addrspace(11)" | count 6
+; RUN: llvm-as < %s | llvm-dis | grep "addrspace(22)" | count 5
 
 	%struct.mystruct = type { i32, i32 addrspace(33)*, i32, i32 addrspace(33)* }
 @input = weak addrspace(42) global %struct.mystruct zeroinitializer  		; <%struct.mystruct addrspace(42)*> [#uses=1]

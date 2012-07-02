@@ -1,4 +1,4 @@
-; RUN: opt < %s -instcombine -S | grep {call.*stackrestore} | count 1
+; RUN: opt < %s -instcombine -S | grep "call.*stackrestore" | count 1
 
 declare i8* @llvm.stacksave()
 declare void @llvm.stackrestore(i8*)

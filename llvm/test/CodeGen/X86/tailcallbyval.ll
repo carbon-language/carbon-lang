@@ -1,5 +1,5 @@
 ; RUN: llc < %s -march=x86 -tailcallopt | grep TAILCALL
-; RUN: llc < %s -march=x86 -tailcallopt | grep {movl\[\[:space:\]\]*4(%esp), %eax} | count 1
+; RUN: llc < %s -march=x86 -tailcallopt | grep "movl[[:space:]]*4(%esp), %eax" | count 1
 %struct.s = type {i32, i32, i32, i32, i32, i32, i32, i32,
                   i32, i32, i32, i32, i32, i32, i32, i32,
                   i32, i32, i32, i32, i32, i32, i32, i32 }

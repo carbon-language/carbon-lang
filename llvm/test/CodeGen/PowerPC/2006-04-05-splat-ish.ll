@@ -1,5 +1,5 @@
 ; RUN: llc < %s -march=ppc32 -mtriple=powerpc-apple-darwin8 -mcpu=g5 | \
-; RUN:   grep {vspltish v.*, 10}
+; RUN:   grep "vspltish v.*, 10"
 
 define void @test(<8 x i16>* %P) {
         %tmp = load <8 x i16>* %P               ; <<8 x i16>> [#uses=1]

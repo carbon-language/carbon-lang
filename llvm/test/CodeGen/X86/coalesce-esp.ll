@@ -1,4 +1,4 @@
-; RUN: llc < %s | grep {movl	%esp, %ebp}
+; RUN: llc < %s | grep "movl	%esp, %ebp"
 ; PR4572
 
 ; Don't coalesce with %esp if it would end up putting %esp in

@@ -1,7 +1,7 @@
 ; RUN: llc < %s -march=x86 >%t
 
-; RUN: grep {addl	\\\$4,} %t | count 3
-; RUN: not grep {,%} %t
+; RUN: grep "addl	\$4," %t | count 3
+; RUN: not grep ",%" %t
 
 define void @foo(float* nocapture %A, float* nocapture %B, float* nocapture %C, i32 %N) nounwind {
 entry:

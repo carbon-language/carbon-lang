@@ -1,5 +1,5 @@
-; RUN: llc < %s -march=ppc32 -mtriple=powerpc-apple-darwin8.8.0 | grep {foo r3, r4}
-; RUN: llc < %s -march=ppc32 -mtriple=powerpc-apple-darwin8.8.0 | grep {bari r3, 47}
+; RUN: llc < %s -march=ppc32 -mtriple=powerpc-apple-darwin8.8.0 | grep "foo r3, r4"
+; RUN: llc < %s -march=ppc32 -mtriple=powerpc-apple-darwin8.8.0 | grep "bari r3, 47"
 
 ; PR1351
 

@@ -1,6 +1,6 @@
 ; RUN: opt < %s -simplifycfg -S > %t
-; RUN: not grep {^BB.tomerge} %t
-; RUN: grep {^BB.nomerge} %t | count 2
+; RUN: not grep "^BB.tomerge" %t
+; RUN: grep "^BB.nomerge" %t | count 2
 
 ; ModuleID = '<stdin>' 
 declare i1 @foo()

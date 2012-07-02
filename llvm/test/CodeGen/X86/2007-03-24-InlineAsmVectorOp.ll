@@ -1,5 +1,5 @@
 ; RUN: llc < %s -mcpu=yonah -march=x86 | \
-; RUN:   grep {cmpltsd %xmm0, %xmm0}
+; RUN:   grep "cmpltsd %xmm0, %xmm0"
 target datalayout = "e-p:32:32"
 target triple = "i686-apple-darwin9"
 

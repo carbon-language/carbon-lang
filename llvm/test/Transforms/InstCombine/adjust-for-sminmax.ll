@@ -1,4 +1,4 @@
-; RUN: opt < %s -instcombine -S | grep {icmp s\[lg\]t i32 %n, 0} | count 16
+; RUN: opt < %s -instcombine -S | grep "icmp s[lg]t i32 %n, 0" | count 16
 
 ; Instcombine should recognize that this code can be adjusted
 ; to fit the canonical smax/smin pattern.

@@ -1,5 +1,5 @@
 ; RUN: llc < %s -march=ppc32 -mtriple=powerpc-apple-darwin8 | \
-; RUN:   grep {srwi r., r., 5}
+; RUN:   grep "srwi r., r., 5"
 
 define i32 @eq0(i32 %a) {
         %tmp.1 = icmp eq i32 %a, 0              ; <i1> [#uses=1]

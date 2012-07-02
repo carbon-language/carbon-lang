@@ -1,6 +1,6 @@
 ; RUN: opt < %s -S -instcombine > %t
-; RUN: grep {= getelementptr} %t | count 20
-; RUN: grep {= phi} %t | count 13
+; RUN: grep "= getelementptr" %t | count 20
+; RUN: grep "= phi" %t | count 13
 
 ; Don't push the geps through these phis, because they would require
 ; two phis each, which burdens the loop with high register pressure.

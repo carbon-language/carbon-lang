@@ -1,8 +1,8 @@
 ; RUN: llc -mtriple=i386-pc-linux-gnu < %s -o - | grep %gs:
 ; RUN: llc -mtriple=x86_64-pc-linux-gnu < %s -o - | grep %fs:
 ; RUN: llc -code-model=kernel -mtriple=x86_64-pc-linux-gnu < %s -o - | grep %gs:
-; RUN: llc -mtriple=x86_64-apple-darwin < %s -o - | grep {__stack_chk_guard}
-; RUN: llc -mtriple=x86_64-apple-darwin < %s -o - | grep {__stack_chk_fail}
+; RUN: llc -mtriple=x86_64-apple-darwin < %s -o - | grep "__stack_chk_guard"
+; RUN: llc -mtriple=x86_64-apple-darwin < %s -o - | grep "__stack_chk_fail"
 
 @"\01LC" = internal constant [11 x i8] c"buf == %s\0A\00"		; <[11 x i8]*> [#uses=1]
 

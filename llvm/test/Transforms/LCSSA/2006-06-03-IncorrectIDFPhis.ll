@@ -1,5 +1,5 @@
 ; RUN: opt < %s -loop-simplify -lcssa -S | \
-; RUN:   grep {%%SJE.0.0.lcssa = phi .struct.SetJmpMapEntry}
+; RUN:   grep "%%SJE.0.0.lcssa = phi .struct.SetJmpMapEntry"
 
         %struct.SetJmpMapEntry = type { i8*, i32, %struct.SetJmpMapEntry* }
 

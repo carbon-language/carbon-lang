@@ -1,4 +1,4 @@
-; RUN: opt < %s -instcombine -S | grep {srem <4 x i32>}
+; RUN: opt < %s -instcombine -S | grep "srem <4 x i32>"
 
 define <4 x i32> @foo(<4 x i32> %t, <4 x i32> %u)
 {

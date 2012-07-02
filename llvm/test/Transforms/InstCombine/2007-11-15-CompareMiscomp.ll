@@ -1,4 +1,4 @@
-; RUN: opt < %s -instcombine -S | grep {icmp eq i32 %In, 1}
+; RUN: opt < %s -instcombine -S | grep "icmp eq i32 %In, 1"
 ; PR1800
 
 define i1 @test(i32 %In) {

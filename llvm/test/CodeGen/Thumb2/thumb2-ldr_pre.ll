@@ -1,7 +1,7 @@
 ; RUN: llc < %s -march=thumb -mattr=+thumb2 | \
-; RUN:   grep {ldr.*\\!} | count 3
+; RUN:   grep "ldr.*\!" | count 3
 ; RUN: llc < %s -march=thumb -mattr=+thumb2 | \
-; RUN:   grep {ldrsb.*\\!} | count 1
+; RUN:   grep "ldrsb.*\!" | count 1
 
 define i32* @test1(i32* %X, i32* %dest) {
         %Y = getelementptr i32* %X, i32 4               ; <i32*> [#uses=2]

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llvm-dis | grep {align 1024}
+; RUN: llvm-as < %s | llvm-dis | grep "align 1024"
 
 define i32 @test(i32* %arg) {
 entry:

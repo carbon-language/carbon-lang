@@ -1,5 +1,5 @@
 ; RUN: llc < %s -march=ppc32 -mtriple=powerpc-apple-darwin8 | \
-; RUN:   grep {cmpwi cr0, r3, -1}
+; RUN:   grep "cmpwi cr0, r3, -1"
 
 define i32 @test(i32 %x) nounwind {
         %c = icmp eq i32 %x, -1

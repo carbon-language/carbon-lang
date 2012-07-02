@@ -1,9 +1,9 @@
-// RUN: llvm-tblgen %s | grep {Smith} | count 7
-// RUN: llvm-tblgen %s | grep {Johnson} | count 2
-// RUN: llvm-tblgen %s | grep {FIRST} | count 1
-// RUN: llvm-tblgen %s | grep {LAST} | count 1
-// RUN: llvm-tblgen %s | grep {TVAR} | count 2
-// RUN: llvm-tblgen %s | grep {Bogus} | count 1
+// RUN: llvm-tblgen %s | grep "Smith" | count 7
+// RUN: llvm-tblgen %s | grep "Johnson" | count 2
+// RUN: llvm-tblgen %s | grep "FIRST" | count 1
+// RUN: llvm-tblgen %s | grep "LAST" | count 1
+// RUN: llvm-tblgen %s | grep "TVAR" | count 2
+// RUN: llvm-tblgen %s | grep "Bogus" | count 1
 // XFAIL: vg_leak
 
 class Honorific<string t> {

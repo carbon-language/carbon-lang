@@ -1,11 +1,11 @@
-; RUN: llc < %s -mtriple=i386-apple-darwin -relocation-model=static | grep {call.*12345678}
-; RUN: llc < %s -mtriple=i386-apple-darwin -relocation-model=pic | not grep {call.*12345678}
-; RUN: llc < %s -mtriple=i386-pc-linux -relocation-model=dynamic-no-pic | grep {call.*12345678}
+; RUN: llc < %s -mtriple=i386-apple-darwin -relocation-model=static | grep "call.*12345678"
+; RUN: llc < %s -mtriple=i386-apple-darwin -relocation-model=pic | not grep "call.*12345678"
+; RUN: llc < %s -mtriple=i386-pc-linux -relocation-model=dynamic-no-pic | grep "call.*12345678"
 
 ; Call to immediate is not safe on x86-64 unless we *know* that the
 ; call will be within 32-bits pcrel from the dest immediate.
 
-; RUN: llc < %s -march=x86-64 | grep {call.*\\*%rax}
+; RUN: llc < %s -march=x86-64 | grep "call.*\*%rax"
 
 ; PR3666
 ; PR3773

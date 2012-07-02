@@ -1,4 +1,4 @@
-; RUN: opt < %s -instcombine -S | grep {ret i.* 0} | count 2
+; RUN: opt < %s -instcombine -S | grep "ret i.* 0" | count 2
 ; PR2048
 
 define i32 @i(i32 %a) {

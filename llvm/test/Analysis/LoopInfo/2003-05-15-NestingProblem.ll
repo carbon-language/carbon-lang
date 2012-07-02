@@ -2,7 +2,7 @@
 ; not a child of the loopentry.6 loop.
 ;
 ; RUN: opt < %s -analyze -loops | \
-; RUN:   grep {^            Loop at depth 4 containing: %loopentry.7<header><latch><exiting>}
+; RUN:   grep "^            Loop at depth 4 containing: %loopentry.7<header><latch><exiting>"
 
 define void @getAndMoveToFrontDecode() {
 	br label %endif.2

@@ -2,13 +2,13 @@
 ; otherwise.
 
 ; RUN: llc < %s -march=ppc32 -mtriple=powerpc-apple-darwin8 -mattr=+fsqrt | \
-; RUN:   grep {fsqrt f1, f1}
+; RUN:   grep "fsqrt f1, f1"
 ; RUN: llc < %s -march=ppc32 -mtriple=powerpc-apple-darwin8 -mcpu=g5 | \
-; RUN:   grep {fsqrt f1, f1}
+; RUN:   grep "fsqrt f1, f1"
 ; RUN: llc < %s -march=ppc32 -mtriple=powerpc-apple-darwin8 -mattr=-fsqrt | \
-; RUN:   not grep {fsqrt f1, f1}
+; RUN:   not grep "fsqrt f1, f1"
 ; RUN: llc < %s -march=ppc32 -mtriple=powerpc-apple-darwin8 -mcpu=g4 | \
-; RUN:   not grep {fsqrt f1, f1}
+; RUN:   not grep "fsqrt f1, f1"
 
 declare double @llvm.sqrt.f64(double)
 

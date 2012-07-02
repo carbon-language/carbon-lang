@@ -1,5 +1,5 @@
-; RUN: opt < %s -scalarrepl -S | grep {load volatile}
-; RUN: opt < %s -scalarrepl -S | grep {store volatile}
+; RUN: opt < %s -scalarrepl -S | grep "load volatile"
+; RUN: opt < %s -scalarrepl -S | grep "store volatile"
 
 define i32 @voltest(i32 %T) {
 	%A = alloca {i32, i32}

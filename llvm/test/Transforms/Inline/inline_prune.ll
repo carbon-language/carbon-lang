@@ -1,5 +1,5 @@
 ; RUN: opt < %s -inline -S | \
-; RUN:    not grep {callee\[12\](}
+; RUN:    not grep "callee[12]("
 ; RUN: opt < %s -inline -S | not grep mul
 
 define internal i32 @callee1(i32 %A, i32 %B) {

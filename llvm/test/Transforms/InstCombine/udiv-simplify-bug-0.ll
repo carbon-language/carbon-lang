@@ -1,4 +1,4 @@
-; RUN: opt < %s -instcombine -S | grep {ret i64 0} | count 2
+; RUN: opt < %s -instcombine -S | grep "ret i64 0" | count 2
 
 define i64 @foo(i32 %x) nounwind {
   %y = lshr i32 %x, 1

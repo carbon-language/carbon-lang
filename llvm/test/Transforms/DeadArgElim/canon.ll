@@ -1,9 +1,9 @@
 ; This test shows a few canonicalizations made by deadargelim
 ; RUN: opt < %s -deadargelim -S > %t
 ; This test should remove {} and replace it with void
-; RUN: cat %t | grep {define internal void @test}
+; RUN: cat %t | grep "define internal void @test"
 ; This test shouls replace the {i32} return value with just i32
-; RUN: cat %t | grep {define internal i32 @test2}
+; RUN: cat %t | grep "define internal i32 @test2"
 
 define internal {} @test() {
   ret {} undef

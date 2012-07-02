@@ -1,5 +1,5 @@
 ; RUN: opt < %s -analyze -scalar-evolution \
-; RUN:   -scalar-evolution-max-iterations=0 | grep {backedge-taken count is 113}
+; RUN:   -scalar-evolution-max-iterations=0 | grep "backedge-taken count is 113"
 ; PR2088
 
 define void @fun() {

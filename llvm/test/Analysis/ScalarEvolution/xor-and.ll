@@ -1,5 +1,5 @@
 ; RUN: opt < %s -scalar-evolution -analyze \
-; RUN:   | grep {\\-->  (zext i4 (-8 + (trunc i64 (8 \\* %x) to i4)) to i64)}
+; RUN:   | grep "\-->  (zext i4 (-8 + (trunc i64 (8 \* %x) to i4)) to i64)"
 
 ; ScalarEvolution shouldn't try to analyze %z into something like
 ;   -->  (zext i4 (-1 + (-1 * (trunc i64 (8 * %x) to i4))) to i64)

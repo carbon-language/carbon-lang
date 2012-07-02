@@ -1,4 +1,4 @@
-; RUN: opt < %s -simplify-libcalls -instcombine -S | grep {ret i32 -65}
+; RUN: opt < %s -simplify-libcalls -instcombine -S | grep "ret i32 -65"
 ; PR4284
 
 define i32 @test() nounwind {

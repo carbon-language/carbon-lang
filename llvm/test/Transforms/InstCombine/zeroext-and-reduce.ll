@@ -1,5 +1,5 @@
 ; RUN: opt < %s -instcombine -S | \
-; RUN:   grep {and i32 %Y, 8}
+; RUN:   grep "and i32 %Y, 8"
 
 define i32 @test1(i8 %X) {
         %Y = zext i8 %X to i32          ; <i32> [#uses=1]

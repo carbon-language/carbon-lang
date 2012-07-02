@@ -1,6 +1,6 @@
 ; RUN: opt < %s -analyze -scalar-evolution | grep smax | count 2
 ; RUN: opt < %s -analyze -scalar-evolution | grep \
-; RUN:     {%. smax %. smax %.}
+; RUN:     "%. smax %. smax %."
 ; PR1614
 
 define i32 @x(i32 %a, i32 %b, i32 %c) {

@@ -1,4 +1,4 @@
-; RUN: opt < %s -simplifycfg -S | grep {%outval = phi i32 .*mux}
+; RUN: opt < %s -simplifycfg -S | grep "%outval = phi i32 .*mux"
 ; PR2540
 ; Outval should end up with a select from 0/2, not all constants.
 

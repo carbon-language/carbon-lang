@@ -1,4 +1,4 @@
-; RUN: opt < %s -globalopt -S | grep {16 x .31 x double.. zeroinitializer}
+; RUN: opt < %s -globalopt -S | grep "16 x .31 x double.. zeroinitializer"
 
 ; The 'X' indices could be larger than 31.  Do not SROA the outer indices of this array.
 @mm = internal global [16 x [31 x double]] zeroinitializer, align 32

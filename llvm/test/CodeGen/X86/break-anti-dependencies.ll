@@ -2,11 +2,11 @@
 ; Use a subtarget that has post-RA scheduling enabled because the anti-dependency
 ; breaker requires liveness information to be kept.
 ; RUN: llc < %s -march=x86-64 -mcpu=atom -post-RA-scheduler -pre-RA-sched=list-burr -break-anti-dependencies=none > %t
-; RUN:   grep {%xmm0} %t | count 14
-; RUN:   not grep {%xmm1} %t
+; RUN:   grep "%xmm0" %t | count 14
+; RUN:   not grep "%xmm1" %t
 ; RUN: llc < %s -march=x86-64 -mcpu=atom -post-RA-scheduler -break-anti-dependencies=critical > %t
-; RUN:   grep {%xmm0} %t | count 7
-; RUN:   grep {%xmm1} %t | count 7
+; RUN:   grep "%xmm0" %t | count 7
+; RUN:   grep "%xmm1" %t | count 7
 
 define void @goo(double* %r, double* %p, double* %q) nounwind {
 entry:

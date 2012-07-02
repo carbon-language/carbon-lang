@@ -1,5 +1,5 @@
-; RUN: opt < %s -instcombine -S | grep {and i32 %a, 1} | count 4
-; RUN: opt < %s -instcombine -S | grep {or i32 %0, %b} | count 4
+; RUN: opt < %s -instcombine -S | grep "and i32 %a, 1" | count 4
+; RUN: opt < %s -instcombine -S | grep "or i32 %0, %b" | count 4
 
 
 define i32 @func1(i32 %a, i32 %b) nounwind readnone {

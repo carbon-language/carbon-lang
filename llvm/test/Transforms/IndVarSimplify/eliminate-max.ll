@@ -1,4 +1,4 @@
-; RUN: opt < %s -S -indvars | grep {= icmp} | count 3
+; RUN: opt < %s -S -indvars | grep "= icmp" | count 3
 ; PR4914.ll
 
 ; Indvars should be able to do range analysis and eliminate icmps.

@@ -1,4 +1,4 @@
-# RUN: llvm-mc --disassemble %s -triple=thumbv7-apple-darwin9 |& grep {potentially undefined instruction encoding}
+# RUN: llvm-mc --disassemble %s -triple=thumbv7-apple-darwin9 |& grep "potentially undefined instruction encoding"
 
 # Writeback is not allowed is Rn is in the target register list.
 

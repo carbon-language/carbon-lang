@@ -1,5 +1,5 @@
 ; RUN: opt < %s -scalar-evolution -analyze \
-; RUN:  | grep {\\-->  (zext i4 {-7,+,-8}<%loop> to i32)}
+; RUN:  | grep "\-->  (zext i4 {-7,+,-8}<%loop> to i32)"
 
 define fastcc void @foo() nounwind {
 entry:

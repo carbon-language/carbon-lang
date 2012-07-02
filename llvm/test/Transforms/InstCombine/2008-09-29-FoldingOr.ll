@@ -1,4 +1,4 @@
-; RUN: opt < %s -instcombine -S | grep {or i1}
+; RUN: opt < %s -instcombine -S | grep "or i1"
 ; PR2844
 
 define i32 @test(i32 %p_74) {

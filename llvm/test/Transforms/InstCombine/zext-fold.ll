@@ -1,4 +1,4 @@
-; RUN: opt < %s -instcombine -S | grep {zext } | count 1
+; RUN: opt < %s -instcombine -S | grep "zext " | count 1
 ; PR1570
 
 define i32 @test2(float %X, float %Y) {

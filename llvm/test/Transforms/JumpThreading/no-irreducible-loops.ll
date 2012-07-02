@@ -1,6 +1,6 @@
 ; RUN: opt < %s -jump-threading -loop-rotate -instcombine -indvars -loop-unroll -simplifycfg -S -verify-dom-info -verify-loop-info > %t
-; RUN: grep {store volatile} %t | count 3
-; RUN: not grep {br label} %t
+; RUN: grep "store volatile" %t | count 3
+; RUN: not grep "br label" %t
 
 ; Jump threading should not prevent this loop from being unrolled.
 

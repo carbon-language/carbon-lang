@@ -1,4 +1,4 @@
-; RUN: opt < %s -indvars -S | grep {ret i32 9900}
+; RUN: opt < %s -indvars -S | grep "ret i32 9900"
 ; PR1179
 
 define i32 @test4() {

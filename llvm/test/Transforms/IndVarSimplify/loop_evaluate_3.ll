@@ -1,4 +1,4 @@
-; RUN: opt < %s -indvars -S | grep {ret i32 600000}
+; RUN: opt < %s -indvars -S | grep "ret i32 600000"
 ; PR1179
 
 define i32 @foo() {

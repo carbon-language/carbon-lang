@@ -1,6 +1,6 @@
 ; RUN: llc < %s -march=x86 -mtriple=i686-apple-darwin8 -relocation-model=static > %t
-; RUN: grep {movl	_last} %t | count 1
-; RUN: grep {cmpl.*_last} %t | count 1
+; RUN: grep "movl	_last" %t | count 1
+; RUN: grep "cmpl.*_last" %t | count 1
 
 @block = external global i8*            ; <i8**> [#uses=1]
 @last = external global i32             ; <i32*> [#uses=3]

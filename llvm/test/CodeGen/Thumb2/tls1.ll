@@ -1,9 +1,9 @@
 ; RUN: llc < %s -mtriple=thumbv7-linux-gnueabi | \
-; RUN:     grep {i(tpoff)}
+; RUN:     grep "i(tpoff)"
 ; RUN: llc < %s -mtriple=thumbv7-linux-gnueabi | \
-; RUN:     grep {__aeabi_read_tp}
+; RUN:     grep "__aeabi_read_tp"
 ; RUN: llc < %s -mtriple=thumbv7-linux-gnueabi \
-; RUN:     -relocation-model=pic | grep {__tls_get_addr}
+; RUN:     -relocation-model=pic | grep "__tls_get_addr"
 
 
 @i = thread_local global i32 15		; <i32*> [#uses=2]

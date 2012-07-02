@@ -1,5 +1,5 @@
 ; RUN: llc < %s -mtriple=arm-linux-gnueabi -o %t
-; RUN: grep { = } %t   | count 5
+; RUN: grep " = " %t   | count 5
 ; RUN: grep globl %t | count 4
 ; RUN: grep weak %t  | count 1
 

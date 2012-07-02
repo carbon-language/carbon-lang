@@ -1,4 +1,4 @@
-; RUN: opt < %s -globalopt -S | grep {load volatile}
+; RUN: opt < %s -globalopt -S | grep "load volatile"
 @t0.1441 = internal global double 0x3FD5555555555555, align 8		; <double*> [#uses=1]
 
 define double @foo() nounwind  {

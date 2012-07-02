@@ -1,5 +1,5 @@
 ; RUN: llc < %s -march=x86-64 > %t
-; RUN: not grep {,%rsp)} %t
+; RUN: not grep ",%rsp)" %t
 ; PR1103
 
 target datalayout = "e-p:64:64"

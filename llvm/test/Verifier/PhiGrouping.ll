@@ -1,4 +1,4 @@
-; RUN: not llvm-as < %s |& grep {PHI nodes not grouped at top}
+; RUN: not llvm-as < %s |& grep "PHI nodes not grouped at top"
 
 
 

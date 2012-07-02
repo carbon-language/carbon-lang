@@ -1,6 +1,6 @@
-; RUN: opt < %s -instcombine -mem2reg -S | grep {%A = alloca} 
+; RUN: opt < %s -instcombine -mem2reg -S | grep "%A = alloca" 
 ; RUN: opt < %s -instcombine -mem2reg -S | \
-; RUN:    not grep {%B = alloca}
+; RUN:    not grep "%B = alloca"
 ; END.
 
 ; Ensure that instcombine doesn't sink the loads in entry/cond_true into 

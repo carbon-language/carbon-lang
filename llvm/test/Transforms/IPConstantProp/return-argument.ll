@@ -1,6 +1,6 @@
 ; RUN: opt < %s -ipconstprop -S > %t
-; RUN: cat %t | grep {store i32 %Z, i32\\* %Q}
-; RUN: cat %t | grep {add i32 1, 3}
+; RUN: cat %t | grep "store i32 %Z, i32\* %Q"
+; RUN: cat %t | grep "add i32 1, 3"
 
 ;; This function returns its second argument on all return statements
 define internal i32* @incdec(i1 %C, i32* %V) {

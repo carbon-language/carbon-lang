@@ -1,5 +1,5 @@
 ; Tests to make sure bit counts of constants are folded
-; RUN: opt < %s -instcombine -S | grep {ret i32 19}
+; RUN: opt < %s -instcombine -S | grep "ret i32 19"
 ; RUN: opt < %s -instcombine -S | \
 ; RUN:   grep -v declare | not grep llvm.ct
 

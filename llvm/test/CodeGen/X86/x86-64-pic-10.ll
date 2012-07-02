@@ -1,5 +1,5 @@
 ; RUN: llc < %s -mtriple=x86_64-pc-linux -relocation-model=pic -o %t1
-; RUN: grep {callq	g@PLT} %t1
+; RUN: grep "callq	g@PLT" %t1
 
 @g = alias weak i32 ()* @f
 

@@ -1,5 +1,5 @@
 ; RUN: opt < %s -scalar-evolution -analyze \
-; RUN:   | grep {\\-->  (zext} | count 2
+; RUN:   | grep "\-->  (zext" | count 2
 
 define i32 @foo(i32 %x) {
   %n = and i32 %x, 255

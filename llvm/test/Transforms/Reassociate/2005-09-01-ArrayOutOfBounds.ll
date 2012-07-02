@@ -1,5 +1,5 @@
 ; RUN: opt < %s -reassociate -instcombine -S |\
-; RUN:   grep {ret i32 0}
+; RUN:   grep "ret i32 0"
 
 define i32 @f(i32 %a0, i32 %a1, i32 %a2, i32 %a3, i32 %a4) {
 	%tmp.2 = add i32 %a4, %a3		; <i32> [#uses=1]

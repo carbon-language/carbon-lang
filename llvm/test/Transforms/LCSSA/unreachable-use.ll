@@ -1,4 +1,4 @@
-; RUN: opt < %s -lcssa -S -verify-loop-info | grep {\[%\]tmp33 = load i1\\*\\* \[%\]tmp}
+; RUN: opt < %s -lcssa -S -verify-loop-info | grep "[%]tmp33 = load i1\*\* [%]tmp"
 ; PR6546
 
 ; LCSSA doesn't need to transform uses in blocks not reachable

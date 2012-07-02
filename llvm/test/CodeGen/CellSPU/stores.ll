@@ -1,6 +1,6 @@
 ; RUN: llc < %s -march=cellspu > %t1.s
-; RUN: grep {stqd.*0(\$3)}      %t1.s | count 4
-; RUN: grep {stqd.*16(\$3)}     %t1.s | count 4
+; RUN: grep 'stqd.*0($3)'       %t1.s | count 4
+; RUN: grep 'stqd.*16($3)'      %t1.s | count 4
 ; RUN: grep 16256               %t1.s | count 2
 ; RUN: grep 16384               %t1.s | count 1
 ; RUN: grep 771                 %t1.s | count 4
@@ -8,7 +8,7 @@
 ; RUN: grep 1799                %t1.s | count 2
 ; RUN: grep 1543                %t1.s | count 5
 ; RUN: grep 1029                %t1.s | count 3
-; RUN: grep {shli.*, 4}         %t1.s | count 4
+; RUN: grep 'shli.*, 4'         %t1.s | count 4
 ; RUN: grep stqx                %t1.s | count 4
 ; RUN: grep ilhu                %t1.s | count 11
 ; RUN: grep iohl                %t1.s | count 8

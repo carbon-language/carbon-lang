@@ -1,8 +1,8 @@
 ; RUN: opt < %s -ipconstprop -S > %t
 ;; Check that the 21 constants got propagated properly
-; RUN: cat %t | grep {%M = add i32 21, 21}
+; RUN: cat %t | grep "%M = add i32 21, 21"
 ;; Check that the second return values didn't get propagated
-; RUN: cat %t | grep {%N = add i32 %B, %D}
+; RUN: cat %t | grep "%N = add i32 %B, %D"
 
 %0 = type { i32, i32 }
 

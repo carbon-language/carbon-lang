@@ -1,4 +1,4 @@
-; RUN: opt < %s -gvn -enable-pre -S | grep {b.pre}
+; RUN: opt < %s -gvn -enable-pre -S | grep "b.pre"
 
 define i32 @main(i32 %p) {
 block1:

@@ -1,6 +1,6 @@
 ; RUN: opt < %s -analyze -scalar-evolution > %t
 ; RUN: grep sext %t | count 2
-; RUN: not grep {(sext} %t
+; RUN: not grep "(sext" %t
 
 ; ScalarEvolution should be able to compute a maximum trip count
 ; value sufficient to fold away both sext casts.

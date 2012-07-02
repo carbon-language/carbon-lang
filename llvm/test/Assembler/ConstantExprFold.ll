@@ -1,7 +1,7 @@
 ; This test checks to make sure that constant exprs fold in some simple 
 ; situations
 
-; RUN: llvm-as < %s | llvm-dis | not grep {(}
+; RUN: llvm-as < %s | llvm-dis | not grep "("
 
 @A = global i64 0
 

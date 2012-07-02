@@ -1,4 +1,4 @@
-; RUN: opt < %s -instcombine -S | grep {icmp ne i32 \%a}
+; RUN: opt < %s -instcombine -S | grep "icmp ne i32 \%a"
 ; PR2330
 
 define i1 @foo(i32 %a) nounwind  {

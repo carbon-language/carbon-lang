@@ -1,5 +1,5 @@
 ; RUN: llc < %s -march=ppc32 -mtriple=powerpc-apple-darwin8 | \
-; RUN:   grep {srwi r3, r3, 31}
+; RUN:   grep "srwi r3, r3, 31"
 
 define i32 @test1(i32 %X) {
 entry:

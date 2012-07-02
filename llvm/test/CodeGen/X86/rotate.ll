@@ -1,5 +1,5 @@
 ; RUN: llc < %s -march=x86 -x86-asm-syntax=intel | \
-; RUN:   grep {ro\[rl\]} | count 12
+; RUN:   grep "ro[rl]" | count 12
 
 define i32 @rotl32(i32 %A, i8 %Amt) {
 	%shift.upgrd.1 = zext i8 %Amt to i32		; <i32> [#uses=1]

@@ -1,5 +1,5 @@
 ; RUN: opt < %s -constprop -S | \
-; RUN:   grep {i32 -1}
+; RUN:   grep "i32 -1"
 ; RUN: opt < %s -constprop -S | \
 ; RUN:   not grep zeroinitializer
 

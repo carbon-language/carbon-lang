@@ -1,5 +1,5 @@
 ; RUN: llc < %s -march=x86 -x86-asm-syntax=intel | \
-; RUN:   grep {sh\[lr\]d} | count 5
+; RUN:   grep "sh[lr]d" | count 5
 
 define i64 @test1(i64 %X, i8 %C) {
         %shift.upgrd.1 = zext i8 %C to i64              ; <i64> [#uses=1]

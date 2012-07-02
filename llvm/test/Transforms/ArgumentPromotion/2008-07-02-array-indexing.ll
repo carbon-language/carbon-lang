@@ -1,5 +1,5 @@
 ; RUN: opt < %s -argpromotion -S > %t
-; RUN: cat %t | grep {define.*@callee(.*i32\\*}
+; RUN: cat %t | grep "define.*@callee(.*i32\*"
 ; PR2498
 
 ; This test tries to convince argpromotion about promoting the load from %A + 2,

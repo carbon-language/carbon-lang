@@ -1,5 +1,5 @@
 ; RUN: opt < %s -tailcallelim -S | \
-; RUN:    grep {call i32 @foo}
+; RUN:    grep "call i32 @foo"
 
 declare void @bar(i32*)
 

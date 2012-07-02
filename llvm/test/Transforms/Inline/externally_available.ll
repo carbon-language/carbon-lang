@@ -1,6 +1,6 @@
 ; RUN: opt < %s -inline -constprop -S > %t
 ; RUN: not grep test_function %t
-; RUN: grep {ret i32 5} %t
+; RUN: grep "ret i32 5" %t
 
 
 ; test_function should not be emitted to the .s file.

@@ -1,4 +1,4 @@
-; RUN: opt -S < %s -indvars | opt -analyze -iv-users | grep {%cmp = icmp slt i32} | grep {= \{%\\.ph,+,1\}<%for.cond>}
+; RUN: opt -S < %s -indvars | opt -analyze -iv-users | grep "%cmp = icmp slt i32" | grep "= {%\.ph,+,1}<%for.cond>"
 ; PR8079
 
 ; LoopSimplify should invalidate indvars when splitting out the

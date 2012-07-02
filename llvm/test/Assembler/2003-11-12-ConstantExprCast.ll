@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llvm-dis | not grep { bitcast (}
+; RUN: llvm-as < %s | llvm-dis | not grep " bitcast ("
 
 @.Base64_1 = external constant [4 x i8]         ; <[4 x i8]*> [#uses=1]
 

@@ -1,4 +1,4 @@
-; RUN: opt < %s -inline -S | grep {ret i32 1}
+; RUN: opt < %s -inline -S | grep "ret i32 1"
 ; ModuleID = 'short.opt.bc'
 
 define i32 @testBool(i1 %X) {

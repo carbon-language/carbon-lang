@@ -1,4 +1,4 @@
-; RUN: opt < %s -constprop -S | grep {ret i13 13}
+; RUN: opt < %s -constprop -S | grep "ret i13 13"
 ; PR1816
 declare i13 @llvm.cttz.i13(i13, i1)
 

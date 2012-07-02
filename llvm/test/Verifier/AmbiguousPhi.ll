@@ -1,4 +1,4 @@
-; RUN: not llvm-as < %s |& grep {multiple entries for the same basic block}
+; RUN: not llvm-as < %s |& grep "multiple entries for the same basic block"
 
 
 

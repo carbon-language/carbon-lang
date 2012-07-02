@@ -1,5 +1,5 @@
 ; RUN: llc < %s -mtriple=x86_64-pc-linux -relocation-model=pic -o %t1
-; RUN: grep {movl	a(%rip),} %t1
+; RUN: grep "movl	a(%rip)," %t1
 ; RUN: not grep GOTPCREL %t1
 
 @a = internal global i32 0
