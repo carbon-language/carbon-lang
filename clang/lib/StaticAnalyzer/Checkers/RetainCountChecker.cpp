@@ -2379,12 +2379,10 @@ class RetainCountChecker
                     check::EndPath,
                     check::PostStmt<BlockExpr>,
                     check::PostStmt<CastExpr>,
-                    check::PostStmt<CallExpr>,
-                    check::PostStmt<CXXConstructExpr>,
                     check::PostStmt<ObjCArrayLiteral>,
                     check::PostStmt<ObjCDictionaryLiteral>,
                     check::PostStmt<ObjCBoxedExpr>,
-                    check::PostObjCMessage,
+                    check::PostCall,
                     check::PreStmt<ReturnStmt>,
                     check::RegionChanges,
                     eval::Assume,
@@ -2523,13 +2521,11 @@ public:
   void checkPostStmt(const BlockExpr *BE, CheckerContext &C) const;
   void checkPostStmt(const CastExpr *CE, CheckerContext &C) const;
 
-  void checkPostStmt(const CallExpr *CE, CheckerContext &C) const;
-  void checkPostStmt(const CXXConstructExpr *CE, CheckerContext &C) const;
   void checkPostStmt(const ObjCArrayLiteral *AL, CheckerContext &C) const;
   void checkPostStmt(const ObjCDictionaryLiteral *DL, CheckerContext &C) const;
   void checkPostStmt(const ObjCBoxedExpr *BE, CheckerContext &C) const;
 
-  void checkPostObjCMessage(const ObjCMethodCall &Msg, CheckerContext &C) const;
+  void checkPostCall(const CallEvent &Call, CheckerContext &C) const;
                       
   void checkSummary(const RetainSummary &Summ, const CallEvent &Call,
                     CheckerContext &C) const;
@@ -2685,54 +2681,6 @@ void RetainCountChecker::checkPostStmt(const CastExpr *CE,
   C.addTransition(state);
 }
 
-void RetainCountChecker::checkPostStmt(const CallExpr *CE,
-                                       CheckerContext &C) const {
-  if (C.wasInlined)
-    return;
-  
-  // Get the callee.
-  ProgramStateRef state = C.getState();
-  const Expr *Callee = CE->getCallee();
-  SVal L = state->getSVal(Callee, C.getLocationContext());
-
-  RetainSummaryManager &Summaries = getSummaryManager(C);
-
-  // FIXME: This tree of switching can go away if/when we add a check::postCall.
-  if (dyn_cast_or_null<BlockDataRegion>(L.getAsRegion())) {
-    // FIXME: Better support for blocks.  For now we stop tracking anything
-    // that is passed to blocks.
-    // FIXME: Need to handle variables that are "captured" by the block.
-    BlockCall Call(CE, state, C.getLocationContext());
-    const RetainSummary *Summ = Summaries.getSummary(Call, state);
-    checkSummary(*Summ, Call, C);
-
-  } else if (const CXXMemberCallExpr *me = dyn_cast<CXXMemberCallExpr>(CE)) {
-    CXXMemberCall Call(me, state, C.getLocationContext());
-    const RetainSummary *Summ = Summaries.getSummary(Call, state);
-    checkSummary(*Summ, Call, C);
-
-  } else {
-    FunctionCall Call(CE, state, C.getLocationContext());
-    const RetainSummary *Summ = Summaries.getSummary(Call, state);
-    checkSummary(*Summ, Call, C);
-  }
-}
-
-void RetainCountChecker::checkPostStmt(const CXXConstructExpr *CE,
-                                       CheckerContext &C) const {
-  const CXXConstructorDecl *Ctor = CE->getConstructor();
-  if (!Ctor)
-    return;
-
-  RetainSummaryManager &Summaries = getSummaryManager(C);
-  ProgramStateRef state = C.getState();
-  CXXConstructorCall Call(CE, state, C.getLocationContext());
-
-  const RetainSummary *Summ = Summaries.getSummary(Call, state);
-
-  checkSummary(*Summ, Call, C);
-}
-
 void RetainCountChecker::processObjCLiterals(CheckerContext &C,
                                              const Expr *Ex) const {
   ProgramStateRef state = C.getState();
@@ -2791,12 +2739,14 @@ void RetainCountChecker::checkPostStmt(const ObjCBoxedExpr *Ex,
   C.addTransition(State);
 }
 
-void RetainCountChecker::checkPostObjCMessage(const ObjCMethodCall &Msg,
-                                              CheckerContext &C) const {
-  RetainSummaryManager &Summaries = getSummaryManager(C);
-  const RetainSummary *Summ = Summaries.getSummary(Msg, C.getState());
+void RetainCountChecker::checkPostCall(const CallEvent &Call,
+                                       CheckerContext &C) const {
+  if (C.wasInlined)
+    return;
 
-  checkSummary(*Summ, Msg, C);
+  RetainSummaryManager &Summaries = getSummaryManager(C);
+  const RetainSummary *Summ = Summaries.getSummary(Call, C.getState());
+  checkSummary(*Summ, Call, C);
 }
 
 /// GetReturnType - Used to get the return type of a message expression or

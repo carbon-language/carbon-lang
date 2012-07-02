@@ -27,7 +27,8 @@ using namespace ento;
 
 namespace {
 class CallAndMessageChecker
-  : public Checker< check::PreStmt<CallExpr>, check::PreObjCMessage > {
+  : public Checker< check::PreStmt<CallExpr>, check::PreObjCMessage,
+                    check::PreCall > {
   mutable OwningPtr<BugType> BT_call_null;
   mutable OwningPtr<BugType> BT_call_undef;
   mutable OwningPtr<BugType> BT_call_arg;
@@ -39,15 +40,13 @@ public:
 
   void checkPreStmt(const CallExpr *CE, CheckerContext &C) const;
   void checkPreObjCMessage(const ObjCMethodCall &msg, CheckerContext &C) const;
+  void checkPreCall(const CallEvent &Call, CheckerContext &C) const;
 
 private:
-  static void PreVisitProcessArgs(CheckerContext &C, const CallEvent &Call,
-                             const char *BT_desc, OwningPtr<BugType> &BT);
-  static bool PreVisitProcessArg(CheckerContext &C, SVal V,SourceRange argRange,
-                                 const Expr *argEx,
+  static bool PreVisitProcessArg(CheckerContext &C, SVal V,
+                                 SourceRange argRange, const Expr *argEx,
                                  const bool checkUninitFields,
-                                 const char *BT_desc,
-                                 OwningPtr<BugType> &BT);
+                                 const char *BT_desc, OwningPtr<BugType> &BT);
 
   static void EmitBadCall(BugType *BT, CheckerContext &C, const CallExpr *CE);
   void emitNilReceiverBug(CheckerContext &C, const ObjCMethodCall &msg,
@@ -76,26 +75,6 @@ void CallAndMessageChecker::EmitBadCall(BugType *BT, CheckerContext &C,
   C.EmitReport(R);
 }
 
-void CallAndMessageChecker::PreVisitProcessArgs(CheckerContext &C,
-                                                const CallEvent &Call,
-                                                const char *BT_desc,
-                                                OwningPtr<BugType> &BT) {
-  // Don't check for uninitialized field values in arguments if the
-  // caller has a body that is available and we have the chance to inline it.
-  // This is a hack, but is a reasonable compromise betweens sometimes warning
-  // and sometimes not depending on if we decide to inline a function.
-  const Decl *D = Call.getDecl();
-  const bool checkUninitFields =
-    !(C.getAnalysisManager().shouldInlineCall() &&
-      (D && D->getBody()));
-  
-  for (unsigned i = 0, e = Call.getNumArgs(); i != e; ++i)
-    if (PreVisitProcessArg(C, Call.getArgSVal(i),
-                           Call.getArgSourceRange(i), Call.getArgExpr(i),
-                           checkUninitFields, BT_desc, BT))
-      return;
-}
-
 bool CallAndMessageChecker::PreVisitProcessArg(CheckerContext &C,
                                                SVal V, SourceRange argRange,
                                                const Expr *argEx,
@@ -104,10 +83,10 @@ bool CallAndMessageChecker::PreVisitProcessArg(CheckerContext &C,
                                                OwningPtr<BugType> &BT) {
   if (V.isUndef()) {
     if (ExplodedNode *N = C.generateSink()) {
-      LazyInit_BT(BT_desc, BT);
+      LazyInit_BT("Uninitialized argument value", BT);
 
       // Generate a report for this bug.
-      BugReport *R = new BugReport(*BT, BT->getName(), N);
+      BugReport *R = new BugReport(*BT, BT_desc, N);
       R->addRange(argRange);
       if (argEx)
         R->addVisitor(bugreporter::getTrackNullOrUndefValueVisitor(N, argEx,
@@ -227,24 +206,47 @@ void CallAndMessageChecker::checkPreStmt(const CallExpr *CE,
         new BuiltinBug("Called function pointer is null (null dereference)"));
     EmitBadCall(BT_call_null.get(), C, CE);
   }
+}
 
-  // FIXME: This tree of switching can go away if/when we add a check::postCall.
-  if (dyn_cast_or_null<BlockDataRegion>(L.getAsRegion())) {
-    BlockCall Call(CE, State, LCtx);
-    PreVisitProcessArgs(C, Call,
-                        "Block call argument is an uninitialized value",
-                        BT_call_arg);
-  } else if (const CXXMemberCallExpr *me = dyn_cast<CXXMemberCallExpr>(CE)) {
-    CXXMemberCall Call(me, State, LCtx);
-    PreVisitProcessArgs(C, Call,
-                        "Function call argument is an uninitialized value",
-                        BT_call_arg);
-  } else {
-    FunctionCall Call(CE, State, LCtx);
-    PreVisitProcessArgs(C, Call,
-                        "Function call argument is an uninitialized value",
-                        BT_call_arg);
+void CallAndMessageChecker::checkPreCall(const CallEvent &Call,
+                                         CheckerContext &C) const {
+  // Don't check for uninitialized field values in arguments if the
+  // caller has a body that is available and we have the chance to inline it.
+  // This is a hack, but is a reasonable compromise betweens sometimes warning
+  // and sometimes not depending on if we decide to inline a function.
+  const Decl *D = Call.getDecl();
+  const bool checkUninitFields =
+    !(C.getAnalysisManager().shouldInlineCall() &&
+      (D && D->getBody()));
+
+  OwningPtr<BugType> *BT;
+  const char *Desc;
+
+  switch (Call.getKind()) {
+  case CE_ObjCPropertyAccess:
+    BT = &BT_msg_arg;
+    // Getters do not have arguments, so we don't need to worry about this.
+    Desc = "Argument for property setter is an uninitialized value";
+    break;
+  case CE_ObjCMessage:
+    BT = &BT_msg_arg;
+    Desc = "Argument in message expression is an uninitialized value";
+    break;
+  case CE_Block:
+    BT = &BT_call_arg;
+    Desc = "Block call argument is an uninitialized value";
+    break;
+  default:
+    BT = &BT_call_arg;
+    Desc = "Function call argument is an uninitialized value";
+    break;
   }
+
+  for (unsigned i = 0, e = Call.getNumArgs(); i != e; ++i)
+    if (PreVisitProcessArg(C, Call.getArgSVal(i),
+                           Call.getArgSourceRange(i), Call.getArgExpr(i),
+                           checkUninitFields, Desc, *BT))
+      return;
 }
 
 void CallAndMessageChecker::checkPreObjCMessage(const ObjCMethodCall &msg,
@@ -289,15 +291,6 @@ void CallAndMessageChecker::checkPreObjCMessage(const ObjCMethodCall &msg,
       return;
     }
   }
-
-  const char *bugDesc = "Argument in message expression is an "
-                        "uninitialized value";
-  if (const ObjCPropertyAccess *Prop = dyn_cast<ObjCPropertyAccess>(&msg))
-    if (Prop->isSetter())
-      bugDesc = "Argument for property setter is an uninitialized value";
-
-  // Check for any arguments that are uninitialized/undefined.
-  PreVisitProcessArgs(C, msg, bugDesc, BT_msg_arg);
 }
 
 void CallAndMessageChecker::emitNilReceiverBug(CheckerContext &C,

@@ -673,7 +673,7 @@ typedef void (^RDar_7462324_Callback)(id obj);
   builder = ^(id object) {
     id x;
     if (object) {
-      builder(x); // expected-warning{{Function call argument is an uninitialized value}}
+      builder(x); // expected-warning{{Block call argument is an uninitialized value}}
     }
   };
   builder(target);
