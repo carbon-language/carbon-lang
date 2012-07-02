@@ -259,7 +259,7 @@ function(add_lit_target target comment)
   separate_arguments(LIT_ARGS)
   set(LIT_COMMAND
     ${PYTHON_EXECUTABLE}
-    ${LLVM_SOURCE_DIR}/utils/lit/lit.py
+    ${LLVM_MAIN_SRC_DIR}/utils/lit/lit.py
     --param build_config=${CMAKE_CFG_INTDIR}
     --param build_mode=${RUNTIME_BUILD_MODE}
     ${LIT_ARGS}
