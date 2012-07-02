@@ -408,6 +408,7 @@ public:
 
   /// getNumMicroOps - Return the number of issue slots required for this MI.
   unsigned getNumMicroOps(MachineInstr *MI) const {
+    if (!InstrItins) return 1;
     int UOps = InstrItins->getNumMicroOps(MI->getDesc().getSchedClass());
     return (UOps >= 0) ? UOps : TII->getNumMicroOps(InstrItins, MI);
   }
