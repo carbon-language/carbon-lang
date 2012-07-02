@@ -2403,6 +2403,33 @@ void Foo::test3() {
 } // end namespace ReleasableScopedLock
 
 
+namespace TrylockFunctionTest {
+
+class Foo {
+public:
+  Mutex mu1_;
+  Mutex mu2_;
+  bool c;
+
+  bool lockBoth() EXCLUSIVE_TRYLOCK_FUNCTION(true, mu1_, mu2_);
+};
+
+bool Foo::lockBoth() {
+  if (!mu1_.TryLock())
+    return false;
+
+  mu2_.Lock();
+  if (!c) {
+    mu1_.Unlock();
+    mu2_.Unlock();
+    return false;
+  }
+
+  return true;
+}
+
+
+}  // end namespace TrylockFunctionTest
 
 
 

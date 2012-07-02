@@ -1654,6 +1654,12 @@ void ThreadSafetyAnalyzer::runAnalysis(AnalysisDeclContext &AC) {
       } else if (isa<SharedLockFunctionAttr>(Attr)) {
         // Don't try to check lock functions for now
         return;
+      } else if (isa<ExclusiveTrylockFunctionAttr>(Attr)) {
+        // Don't try to check trylock functions for now
+        return;
+      } else if (isa<SharedTrylockFunctionAttr>(Attr)) {
+        // Don't try to check trylock functions for now
+        return;
       }
     }
   }
