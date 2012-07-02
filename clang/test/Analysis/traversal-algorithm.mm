@@ -23,43 +23,6 @@ void test(id input) {
     work();
 }
 
-// This ordering assumes that true cases happen before the false cases.
-
-// BFS: 10 IfStmt
-// BFS-NEXT: 11 IfStmt
-// BFS-NEXT: 16 IfStmt
-// BFS-NEXT: 22 IfStmt
-// BFS-NEXT: 22 IfStmt
-// BFS-NEXT: 22 IfStmt
-// BFS-NEXT: 22 IfStmt
-// BFS-NEXT: --END PATH--
-// BFS-NEXT: --END PATH--
-// BFS-NEXT: --END PATH--
-// BFS-NEXT: --END PATH--
-// BFS-NEXT: --END PATH--
-// BFS-NEXT: --END PATH--
-// BFS-NEXT: --END PATH--
-// BFS-NEXT: --END PATH--
-
-// And this ordering assumes that false cases happen before the true cases.
-
-// DFS: 10 IfStmt
-// DFS-NEXT: 16 IfStmt
-// DFS-NEXT: 22 IfStmt
-// DFS-NEXT: --END PATH--
-// DFS-NEXT: --END PATH--
-// DFS-NEXT: 22 IfStmt
-// DFS-NEXT: --END PATH--
-// DFS-NEXT: --END PATH--
-// DFS-NEXT: 11 IfStmt
-// DFS-NEXT: 22 IfStmt
-// DFS-NEXT: --END PATH--
-// DFS-NEXT: --END PATH--
-// DFS-NEXT: 22 IfStmt
-// DFS-NEXT: --END PATH--
-// DFS-NEXT: --END PATH--
-
-
 void testLoops(id input) {
   while (a()) {
     work();
@@ -85,13 +48,166 @@ void testLoops(id input) {
   }
 }
 
-// BFS: 64 WhileStmt
-// BFS: 70 ForStmt
-// BFS-NOT-NEXT: ObjCForCollectionStmt
-// BFS: 74 ObjCForCollectionStmt
-// BFS: 81 CXXForRangeStmt
+// This ordering assumes that false cases happen before the true cases.
 
-// DFS: 64 While
-// DFS-NEXT: 70 ForStmt
-// DFS-NEXT: 74 ObjCForCollectionStmt
-// DFS-NEXT: 81 CXXForRangeStmt
+// DFS:27 WhileStmt
+// DFS-next:33 ForStmt
+// DFS-next:37 ObjCForCollectionStmt
+// DFS-next:44 CXXForRangeStmt
+// DFS-next:44 CXXForRangeStmt
+// DFS-next:44 CXXForRangeStmt
+// DFS-next:44 CXXForRangeStmt
+// DFS-next:--END PATH--
+// DFS-next:37 ObjCForCollectionStmt
+// DFS-next:37 ObjCForCollectionStmt
+// DFS-next:44 CXXForRangeStmt
+// DFS-next:44 CXXForRangeStmt
+// DFS-next:44 CXXForRangeStmt
+// DFS-next:44 CXXForRangeStmt
+// DFS-next:--END PATH--
+// DFS-next:37 ObjCForCollectionStmt
+// DFS-next:37 ObjCForCollectionStmt
+// DFS-next:44 CXXForRangeStmt
+// DFS-next:37 ObjCForCollectionStmt
+// DFS-next:37 ObjCForCollectionStmt
+// DFS-next:44 CXXForRangeStmt
+// DFS-next:37 ObjCForCollectionStmt
+// DFS-next:33 ForStmt
+// DFS-next:37 ObjCForCollectionStmt
+// DFS-next:44 CXXForRangeStmt
+// DFS-next:44 CXXForRangeStmt
+// DFS-next:44 CXXForRangeStmt
+// DFS-next:44 CXXForRangeStmt
+// DFS-next:--END PATH--
+// DFS-next:37 ObjCForCollectionStmt
+// DFS-next:33 ForStmt
+// DFS-next:37 ObjCForCollectionStmt
+// DFS-next:44 CXXForRangeStmt
+// DFS-next:44 CXXForRangeStmt
+// DFS-next:44 CXXForRangeStmt
+// DFS-next:44 CXXForRangeStmt
+// DFS-next:--END PATH--
+// DFS-next:37 ObjCForCollectionStmt
+// DFS-next:33 ForStmt
+// DFS-next:37 ObjCForCollectionStmt
+// DFS-next:44 CXXForRangeStmt
+// DFS-next:44 CXXForRangeStmt
+// DFS-next:44 CXXForRangeStmt
+// DFS-next:44 CXXForRangeStmt
+// DFS-next:--END PATH--
+// DFS-next:37 ObjCForCollectionStmt
+// DFS-next:27 WhileStmt
+// DFS-next:33 ForStmt
+// DFS-next:37 ObjCForCollectionStmt
+// DFS-next:44 CXXForRangeStmt
+// DFS-next:44 CXXForRangeStmt
+// DFS-next:44 CXXForRangeStmt
+// DFS-next:44 CXXForRangeStmt
+// DFS-next:--END PATH--
+// DFS-next:37 ObjCForCollectionStmt
+// DFS-next:33 ForStmt
+// DFS-next:37 ObjCForCollectionStmt
+// DFS-next:44 CXXForRangeStmt
+// DFS-next:44 CXXForRangeStmt
+// DFS-next:44 CXXForRangeStmt
+// DFS-next:44 CXXForRangeStmt
+// DFS-next:--END PATH--
+// DFS-next:37 ObjCForCollectionStmt
+// DFS-next:33 ForStmt
+// DFS-next:37 ObjCForCollectionStmt
+// DFS-next:44 CXXForRangeStmt
+// DFS-next:44 CXXForRangeStmt
+// DFS-next:44 CXXForRangeStmt
+// DFS-next:44 CXXForRangeStmt
+// DFS-next:--END PATH--
+// DFS-next:37 ObjCForCollectionStmt
+// DFS-next:33 ForStmt
+// DFS-next:37 ObjCForCollectionStmt
+// DFS-next:44 CXXForRangeStmt
+// DFS-next:44 CXXForRangeStmt
+// DFS-next:44 CXXForRangeStmt
+// DFS-next:44 CXXForRangeStmt
+// DFS-next:--END PATH--
+// DFS-next:37 ObjCForCollectionStmt
+// DFS-next:27 WhileStmt
+// DFS-next:33 ForStmt
+// DFS-next:37 ObjCForCollectionStmt
+// DFS-next:44 CXXForRangeStmt
+// DFS-next:44 CXXForRangeStmt
+// DFS-next:44 CXXForRangeStmt
+// DFS-next:44 CXXForRangeStmt
+// DFS-next:--END PATH--
+// DFS-next:37 ObjCForCollectionStmt
+// DFS-next:33 ForStmt
+// DFS-next:37 ObjCForCollectionStmt
+// DFS-next:44 CXXForRangeStmt
+// DFS-next:44 CXXForRangeStmt
+// DFS-next:44 CXXForRangeStmt
+// DFS-next:44 CXXForRangeStmt
+// DFS-next:--END PATH--
+// DFS-next:37 ObjCForCollectionStmt
+// DFS-next:33 ForStmt
+// DFS-next:37 ObjCForCollectionStmt
+// DFS-next:44 CXXForRangeStmt
+// DFS-next:44 CXXForRangeStmt
+// DFS-next:44 CXXForRangeStmt
+// DFS-next:44 CXXForRangeStmt
+// DFS-next:--END PATH--
+// DFS-next:37 ObjCForCollectionStmt
+// DFS-next:33 ForStmt
+// DFS-next:37 ObjCForCollectionStmt
+// DFS-next:44 CXXForRangeStmt
+// DFS-next:44 CXXForRangeStmt
+// DFS-next:44 CXXForRangeStmt
+// DFS-next:44 CXXForRangeStmt
+// DFS-next:--END PATH--
+// DFS-next:37 ObjCForCollectionStmt
+// DFS-next:27 WhileStmt
+// DFS-next:33 ForStmt
+// DFS-next:37 ObjCForCollectionStmt
+// DFS-next:44 CXXForRangeStmt
+// DFS-next:44 CXXForRangeStmt
+// DFS-next:44 CXXForRangeStmt
+// DFS-next:44 CXXForRangeStmt
+// DFS-next:--END PATH--
+// DFS-next:37 ObjCForCollectionStmt
+// DFS-next:33 ForStmt
+// DFS-next:37 ObjCForCollectionStmt
+// DFS-next:44 CXXForRangeStmt
+// DFS-next:44 CXXForRangeStmt
+// DFS-next:44 CXXForRangeStmt
+// DFS-next:44 CXXForRangeStmt
+// DFS-next:--END PATH--
+// DFS-next:37 ObjCForCollectionStmt
+// DFS-next:33 ForStmt
+// DFS-next:37 ObjCForCollectionStmt
+// DFS-next:44 CXXForRangeStmt
+// DFS-next:44 CXXForRangeStmt
+// DFS-next:44 CXXForRangeStmt
+// DFS-next:44 CXXForRangeStmt
+// DFS-next:--END PATH--
+// DFS-next:37 ObjCForCollectionStmt
+// DFS-next:33 ForStmt
+// DFS-next:37 ObjCForCollectionStmt
+// DFS-next:44 CXXForRangeStmt
+// DFS-next:44 CXXForRangeStmt
+// DFS-next:44 CXXForRangeStmt
+// DFS-next:44 CXXForRangeStmt
+// DFS-next:--END PATH--
+// DFS-next:37 ObjCForCollectionStmt
+// DFS-next:10 IfStmt
+// DFS-next:16 IfStmt
+// DFS-next:22 IfStmt
+// DFS-next:--END PATH--
+// DFS-next:--END PATH--
+// DFS-next:22 IfStmt
+// DFS-next:--END PATH--
+// DFS-next:--END PATH--
+// DFS-next:11 IfStmt
+// DFS-next:22 IfStmt
+// DFS-next:--END PATH--
+// DFS-next:--END PATH--
+// DFS-next:22 IfStmt
+// DFS-next:--END PATH--
+// DFS-next:--END PATH--
+

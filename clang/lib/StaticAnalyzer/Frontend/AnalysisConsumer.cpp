@@ -22,6 +22,7 @@
 #include "clang/AST/RecursiveASTVisitor.h"
 #include "clang/Analysis/CFG.h"
 #include "clang/Analysis/CallGraph.h"
+#include "clang/Analysis/Analyses/LiveVariables.h"
 #include "clang/StaticAnalyzer/Frontend/CheckerRegistration.h"
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
 #include "clang/StaticAnalyzer/Checkers/LocalCheckers.h"
@@ -347,7 +348,7 @@ void AnalysisConsumer::HandleDeclsGallGraph(const unsigned LocalTUDeclsSize) {
   for (llvm::SmallVector<CallGraphNode*, 24>::reverse_iterator
          TI = TopLevelFunctions.rbegin(), TE = TopLevelFunctions.rend();
          TI != TE; ++TI)
-    BFSQueue.push_front(*TI);
+    BFSQueue.push_back(*TI);
 
   // BFS over all of the functions, while skipping the ones inlined into
   // the previously processed functions. Use external Visited set, which is
@@ -356,6 +357,13 @@ void AnalysisConsumer::HandleDeclsGallGraph(const unsigned LocalTUDeclsSize) {
   while(!BFSQueue.empty()) {
     CallGraphNode *N = BFSQueue.front();
     BFSQueue.pop_front();
+
+    // Push the children into the queue.
+    for (CallGraphNode::const_iterator CI = N->begin(),
+         CE = N->end(); CI != CE; ++CI) {
+      if (!Visited.count(*CI))
+        BFSQueue.push_back(*CI);
+    }
 
     // Skip the functions which have been processed already or previously
     // inlined.
@@ -377,12 +385,6 @@ void AnalysisConsumer::HandleDeclsGallGraph(const unsigned LocalTUDeclsSize) {
         Visited.insert(VN);
     }
     Visited.insert(N);
-
-    // Push the children into the queue.
-    for (CallGraphNode::const_iterator CI = N->begin(),
-                                       CE = N->end(); CI != CE; ++CI) {
-      BFSQueue.push_front(*CI);
-    }
   }
 }
 

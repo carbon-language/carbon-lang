@@ -80,11 +80,11 @@ int handleVoidInComma() {
 int marker(void) { // control reaches end of non-void function
 }
 
-// CHECK-darwin8: warning: The receiver of message 'longDoubleM' is nil and returns a value of type 'long double' that will be garbage
 // CHECK-darwin8: warning: The receiver of message 'longlongM' is nil and returns a value of type 'long long' that will be garbage
-// CHECK-darwin8: warning: The receiver of message 'doubleM' is nil and returns a value of type 'double' that will be garbage
 // CHECK-darwin8: warning: The receiver of message 'unsignedLongLongM' is nil and returns a value of type 'unsigned long long' that will be garbage
+// CHECK-darwin8: warning: The receiver of message 'doubleM' is nil and returns a value of type 'double' that will be garbage
 // CHECK-darwin8: warning: The receiver of message 'longlongM' is nil and returns a value of type 'long long' that will be garbage
+// CHECK-darwin8: warning: The receiver of message 'longDoubleM' is nil and returns a value of type 'long double' that will be garbage
 
 // CHECK-darwin9-NOT: warning: The receiver of message 'longlongM' is nil and returns a value of type 'long long' that will be garbage
 // CHECK-darwin9-NOT: warning: The receiver of message 'unsignedLongLongM' is nil and returns a value of type 'unsigned long long' that will be garbage
