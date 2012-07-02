@@ -1775,6 +1775,9 @@ def warn_double_lock : Warning<
 def warn_no_unlock : Warning<
   "mutex '%0' is still locked at the end of function">,
   InGroup<ThreadSafetyAnalysis>, DefaultIgnore;
+def warn_expecting_locked : Warning<
+  "expecting mutex '%0' to be locked at the end of function">,
+  InGroup<ThreadSafetyAnalysis>, DefaultIgnore;  
 // FIXME: improve the error message about locks not in scope
 def warn_lock_some_predecessors : Warning<
   "mutex '%0' is not locked on every path through here">,

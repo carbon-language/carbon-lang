@@ -2451,6 +2451,22 @@ void Foo::foo() EXCLUSIVE_LOCKS_REQUIRED(mu_) {
 };
 
 
+namespace UnlockBug {
 
+class Foo {
+public:
+  Mutex mutex_;
+
+  void foo1() EXCLUSIVE_LOCKS_REQUIRED(mutex_) {  // expected-note {{mutex acquired here}}
+    mutex_.Unlock();
+  }  // expected-warning {{expecting mutex 'mutex_' to be locked at the end of function}}
+
+
+  void foo2() SHARED_LOCKS_REQUIRED(mutex_) {   // expected-note {{mutex acquired here}}
+    mutex_.Unlock();
+  }  // expected-warning {{expecting mutex 'mutex_' to be locked at the end of function}}
+};
+
+} // end namespace UnlockBug
 
 

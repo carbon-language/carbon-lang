@@ -951,7 +951,13 @@ public:
                          const CFGBlock *CurrBlock);
 
   Lockset intersectAndWarn(const Lockset &LSet1, const Lockset &LSet2,
-                           SourceLocation JoinLoc, LockErrorKind LEK);
+                           SourceLocation JoinLoc,
+                           LockErrorKind LEK1, LockErrorKind LEK2);
+
+  Lockset intersectAndWarn(const Lockset &LSet1, const Lockset &LSet2,
+                           SourceLocation JoinLoc, LockErrorKind LEK1) {
+    return intersectAndWarn(LSet1, LSet2, JoinLoc, LEK1, LEK1);
+  }
 
   void runAnalysis(AnalysisDeclContext &AC);
 };
@@ -1541,11 +1547,13 @@ void BuildLockset::VisitDeclStmt(DeclStmt *S) {
 /// \param LSet1 The first lockset.
 /// \param LSet2 The second lockset.
 /// \param JoinLoc The location of the join point for error reporting
-/// \param LEK The error message to report.
+/// \param LEK1 The error message to report if a mutex is missing from LSet1
+/// \param LEK2 The error message to report if a mutex is missing from Lset2
 Lockset ThreadSafetyAnalyzer::intersectAndWarn(const Lockset &LSet1,
                                                const Lockset &LSet2,
                                                SourceLocation JoinLoc,
-                                               LockErrorKind LEK) {
+                                               LockErrorKind LEK1,
+                                               LockErrorKind LEK2) {
   Lockset Intersection = LSet1;
 
   for (Lockset::iterator I = LSet2.begin(), E = LSet2.end(); I != E; ++I) {
@@ -1564,7 +1572,7 @@ Lockset ThreadSafetyAnalyzer::intersectAndWarn(const Lockset &LSet1,
       if (!LSet2LockData.Managed)
         Handler.handleMutexHeldEndOfScope(LSet2Mutex.getName(),
                                           LSet2LockData.AcquireLoc,
-                                          JoinLoc, LEK);
+                                          JoinLoc, LEK1);
     }
   }
 
@@ -1576,7 +1584,7 @@ Lockset ThreadSafetyAnalyzer::intersectAndWarn(const Lockset &LSet1,
       if (!MissingLock.Managed)
         Handler.handleMutexHeldEndOfScope(Mutex.getName(),
                                           MissingLock.AcquireLoc,
-                                          JoinLoc, LEK);
+                                          JoinLoc, LEK2);
       Intersection = LocksetFactory.remove(Intersection, Mutex);
     }
   }
@@ -1818,7 +1826,8 @@ void ThreadSafetyAnalyzer::runAnalysis(AnalysisDeclContext &AC) {
   // FIXME: Should we call this function for all blocks which exit the function?
   intersectAndWarn(Initial->EntrySet, Final->ExitSet,
                    Final->ExitLoc,
-                   LEK_LockedAtEndOfFunction);
+                   LEK_LockedAtEndOfFunction,
+                   LEK_NotLockedAtEndOfFunction);
 }
 
 } // end anonymous namespace

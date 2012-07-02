@@ -60,7 +60,8 @@ enum AccessKind {
 enum LockErrorKind {
   LEK_LockedSomeLoopIterations,
   LEK_LockedSomePredecessors,
-  LEK_LockedAtEndOfFunction
+  LEK_LockedAtEndOfFunction,
+  LEK_NotLockedAtEndOfFunction
 };
 
 /// Handler class for thread safety warnings.
