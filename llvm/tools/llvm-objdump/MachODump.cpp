@@ -44,7 +44,7 @@ using namespace object;
 
 static cl::opt<bool>
   CFG("cfg", cl::desc("Create a CFG for every symbol in the object file and"
-                      "write it to a graphviz file (MachO-only)"));
+                      " write it to a graphviz file (MachO-only)"));
 
 static cl::opt<bool>
   UseDbg("g", cl::desc("Print line information from debug info if available"));
