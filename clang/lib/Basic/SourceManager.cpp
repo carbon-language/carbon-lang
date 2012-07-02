@@ -1854,8 +1854,6 @@ bool SourceManager::isBeforeInTranslationUnit(SourceLocation LHS,
   return LOffs.first < ROffs.first;
 }
 
-/// PrintStats - Print statistics to stderr.
-///
 void SourceManager::PrintStats() const {
   llvm::errs() << "\n*** Source Manager Stats:\n";
   llvm::errs() << FileInfos.size() << " files mapped, " << MemBufferInfos.size()
