@@ -280,11 +280,17 @@ AnalysisID TargetPassConfig::getPassSubstitution(AnalysisID ID) const {
 void TargetPassConfig::addPass(Pass *P) {
   assert(!Initialized && "PassConfig is immutable");
 
+  // Cache the Pass ID here in case the pass manager finds this pass is
+  // redundant with ones already scheduled / available, and deletes it.
+  // Fundamentally, once we add the pass to the manager, we no longer own it
+  // and shouldn't reference it.
+  AnalysisID PassID = P->getPassID();
+
   if (Started && !Stopped)
     PM->add(P);
-  if (StopAfter == P->getPassID())
+  if (StopAfter == PassID)
     Stopped = true;
-  if (StartAfter == P->getPassID())
+  if (StartAfter == PassID)
     Started = true;
   if (Stopped && !Started)
     report_fatal_error("Cannot stop compilation after pass that is not run");
