@@ -157,7 +157,6 @@ struct AddressSanitizer : public ModulePass {
   bool poisonStackInFunction(Module &M, Function &F);
   virtual bool runOnModule(Module &M);
   bool insertGlobalRedzones(Module &M);
-  BranchInst *splitBlockAndInsertIfThen(Instruction *SplitBefore, Value *Cmp);
   static char ID;  // Pass identification, replacement for typeid
 
  private:
@@ -220,29 +219,27 @@ static GlobalVariable *createPrivateGlobalForString(Module &M, StringRef Str) {
 // Split the basic block and insert an if-then code.
 // Before:
 //   Head
-//   SplitBefore
+//   Cmp
 //   Tail
 // After:
 //   Head
 //   if (Cmp)
-//     NewBasicBlock
-//   SplitBefore
+//     ThenBlock
 //   Tail
 //
-// Returns the NewBasicBlock's terminator.
-BranchInst *AddressSanitizer::splitBlockAndInsertIfThen(
-    Instruction *SplitBefore, Value *Cmp) {
+// Returns the ThenBlock's terminator.
+static BranchInst *splitBlockAndInsertIfThen(Value *Cmp) {
+  Instruction *SplitBefore = cast<Instruction>(Cmp)->getNextNode();
   BasicBlock *Head = SplitBefore->getParent();
   BasicBlock *Tail = Head->splitBasicBlock(SplitBefore);
   TerminatorInst *HeadOldTerm = Head->getTerminator();
-  BasicBlock *NewBasicBlock =
-      BasicBlock::Create(*C, "", Head->getParent());
-  BranchInst *HeadNewTerm = BranchInst::Create(/*ifTrue*/NewBasicBlock,
-                                               /*ifFalse*/Tail,
-                                               Cmp);
+  LLVMContext &C = Head->getParent()->getParent()->getContext();
+  BasicBlock *ThenBlock = BasicBlock::Create(C, "", Head->getParent());
+  BranchInst *HeadNewTerm =
+    BranchInst::Create(/*ifTrue*/ThenBlock, /*ifFalse*/Tail, Cmp);
   ReplaceInstWithInst(HeadOldTerm, HeadNewTerm);
 
-  BranchInst *CheckTerm = BranchInst::Create(Tail, NewBasicBlock);
+  BranchInst *CheckTerm = BranchInst::Create(Tail, ThenBlock);
   return CheckTerm;
 }
 
@@ -291,8 +288,8 @@ bool AddressSanitizer::instrumentMemIntrinsic(MemIntrinsic *MI) {
     IRBuilder<> IRB(InsertBefore);
 
     Value *Cmp = IRB.CreateICmpNE(Length,
-                                   Constant::getNullValue(Length->getType()));
-    InsertBefore = splitBlockAndInsertIfThen(InsertBefore, Cmp);
+                                  Constant::getNullValue(Length->getType()));
+    InsertBefore = splitBlockAndInsertIfThen(Cmp);
   }
 
   instrumentMemIntrinsicParam(MI, Dst, Length, InsertBefore, true);
@@ -389,8 +386,7 @@ void AddressSanitizer::instrumentAddress(Instruction *OrigIns,
 
   Value *Cmp = IRB.CreateICmpNE(ShadowValue, CmpVal);
 
-  Instruction *CheckTerm = splitBlockAndInsertIfThen(
-      cast<Instruction>(Cmp)->getNextNode(), Cmp);
+  Instruction *CheckTerm = splitBlockAndInsertIfThen(Cmp);
   IRBuilder<> IRB2(CheckTerm);
 
   size_t Granularity = 1 << MappingScale;
@@ -408,7 +404,7 @@ void AddressSanitizer::instrumentAddress(Instruction *OrigIns,
     // ((uint8_t) ((Addr & (Granularity-1)) + size - 1)) >= ShadowValue
     Value *Cmp2 = IRB2.CreateICmpSGE(LastAccessedByte, ShadowValue);
 
-    CheckTerm = splitBlockAndInsertIfThen(CheckTerm, Cmp2);
+    CheckTerm = splitBlockAndInsertIfThen(Cmp2);
   }
 
   IRBuilder<> IRB1(CheckTerm);
