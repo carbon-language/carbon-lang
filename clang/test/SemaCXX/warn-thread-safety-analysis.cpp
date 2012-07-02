@@ -2433,4 +2433,24 @@ bool Foo::lockBoth() {
 
 
 
+namespace DoubleLockBug {
+
+class Foo {
+public:
+  Mutex mu_;
+  int a GUARDED_BY(mu_);
+
+  void foo() EXCLUSIVE_LOCKS_REQUIRED(mu_);
+};
+
+
+void Foo::foo() EXCLUSIVE_LOCKS_REQUIRED(mu_) {
+  a = 0;
+}
+
+};
+
+
+
+
 

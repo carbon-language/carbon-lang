@@ -924,9 +924,9 @@ public:
   ThreadSafetyAnalyzer(ThreadSafetyHandler &H) : Handler(H) {}
 
   Lockset addLock(const Lockset &LSet, const MutexID &Mutex,
-                  const LockData &LDat);
+                  const LockData &LDat, bool Warn=true);
   Lockset addLock(const Lockset &LSet, Expr *MutexExp, const NamedDecl *D,
-                  const LockData &LDat);
+                  const LockData &LDat, bool Warn=true);
   Lockset removeLock(const Lockset &LSet, const MutexID &Mutex,
                      SourceLocation UnlockLoc,
                      bool Warn=true, bool FullyRemove=false);
@@ -962,11 +962,13 @@ public:
 /// \param LDat  -- the LockData for the lock
 Lockset ThreadSafetyAnalyzer::addLock(const Lockset &LSet,
                                       const MutexID &Mutex,
-                                      const LockData &LDat) {
+                                      const LockData &LDat,
+                                      bool Warn) {
   // FIXME: deal with acquired before/after annotations.
   // FIXME: Don't always warn when we have support for reentrant locks.
   if (LSet.lookup(Mutex)) {
-    Handler.handleDoubleLock(Mutex.getName(), LDat.AcquireLoc);
+    if (Warn)
+      Handler.handleDoubleLock(Mutex.getName(), LDat.AcquireLoc);
     return LSet;
   } else {
     return LocksetFactory.add(LSet, Mutex, LDat);
@@ -976,13 +978,14 @@ Lockset ThreadSafetyAnalyzer::addLock(const Lockset &LSet,
 /// \brief Construct a new mutex and add it to the lockset.
 Lockset ThreadSafetyAnalyzer::addLock(const Lockset &LSet,
                                       Expr *MutexExp, const NamedDecl *D,
-                                      const LockData &LDat) {
+                                      const LockData &LDat,
+                                      bool Warn) {
   MutexID Mutex(MutexExp, 0, D);
   if (!Mutex.isValid()) {
     MutexID::warnInvalidLock(Handler, MutexExp, 0, D);
     return LSet;
   }
-  return addLock(LSet, Mutex, LDat);
+  return addLock(LSet, Mutex, LDat, Warn);
 }
 
 
@@ -1637,14 +1640,14 @@ void ThreadSafetyAnalyzer::runAnalysis(AnalysisDeclContext &AC) {
              SLRIter = SLRAttr->args_begin(),
              SLREnd = SLRAttr->args_end(); SLRIter != SLREnd; ++SLRIter)
           InitialLockset = addLock(InitialLockset, *SLRIter, D,
-                                   LockData(AttrLoc, LK_Shared));
+                                   LockData(AttrLoc, LK_Shared), false);
       } else if (ExclusiveLocksRequiredAttr *ELRAttr
                    = dyn_cast<ExclusiveLocksRequiredAttr>(Attr)) {
         for (ExclusiveLocksRequiredAttr::args_iterator
              ELRIter = ELRAttr->args_begin(),
              ELREnd = ELRAttr->args_end(); ELRIter != ELREnd; ++ELRIter)
           InitialLockset = addLock(InitialLockset, *ELRIter, D,
-                                   LockData(AttrLoc, LK_Exclusive));
+                                   LockData(AttrLoc, LK_Exclusive), false);
       } else if (isa<UnlockFunctionAttr>(Attr)) {
         // Don't try to check unlock functions for now
         return;
