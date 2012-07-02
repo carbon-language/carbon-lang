@@ -278,16 +278,27 @@ protected:
 public:
   BlockCall(const CallExpr *CE, ProgramStateRef St,
             const LocationContext *LCtx)
-    : SimpleCall(CE, St, LCtx, CE_Block) {
-    assert(isa<BlockDataRegion>(getSVal(CE->getCallee()).getAsRegion()));
+    : SimpleCall(CE, St, LCtx, CE_Block) {}
+
+  /// \brief Returns the region associated with this instance of the block.
+  ///
+  /// This may be NULL if the block's origin is unknown.
+  const BlockDataRegion *getBlockRegion() const;
+
+  /// \brief Gets the declaration of the block.
+  ///
+  /// This is not an override of getDecl() because AnyFunctionCall has already
+  /// assumed that it's a FunctionDecl.
+  const BlockDecl *getBlockDecl() const {
+    const BlockDataRegion *BR = getBlockRegion();
+    if (!BR)
+      return 0;
+    return BR->getDecl();
   }
 
   static bool classof(const CallEvent *CA) {
     return CA->getKind() == CE_Block;
   }
-
-private:
-  const BlockDataRegion *getBlockRegion() const;
 };
 
 /// \brief Represents a call to a C++ constructor.

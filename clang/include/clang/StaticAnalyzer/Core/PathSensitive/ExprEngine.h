@@ -42,6 +42,7 @@ namespace ento {
 
 class AnalysisManager;
 class CallEvent;
+class SimpleCall;
 class ObjCMethodCall;
 
 class ExprEngine : public SubEngine {
@@ -468,6 +469,11 @@ public:
   void evalStore(ExplodedNodeSet &Dst, const Expr *AssignE, const Expr *StoreE,
                  ExplodedNode *Pred, ProgramStateRef St, SVal TargetLV, SVal Val,
                  const ProgramPointTag *tag = 0);
+
+  void evalCall(ExplodedNodeSet &Dst, ExplodedNode *Pred,
+                const SimpleCall &Call);
+  void defaultEvalCall(ExplodedNodeSet &Dst, ExplodedNode *Pred,
+                       const CallEvent &Call);
 private:
   void evalLoadCommon(ExplodedNodeSet &Dst,
                       const Expr *NodeEx,  /* Eventually will be a CFGStmt */
@@ -488,7 +494,8 @@ private:
                     const ProgramPointTag *tag, bool isLoad);
 
   bool shouldInlineDecl(const Decl *D, ExplodedNode *Pred);
-  bool InlineCall(ExplodedNodeSet &Dst, const CallExpr *CE, ExplodedNode *Pred);
+  bool inlineCall(ExplodedNodeSet &Dst, const CallEvent &Call,
+                  ExplodedNode *Pred);
 
   bool replayWithoutInlining(ExplodedNode *P, const LocationContext *CalleeLC);
 };

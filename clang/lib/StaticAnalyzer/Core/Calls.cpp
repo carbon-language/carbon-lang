@@ -307,23 +307,34 @@ const BlockDataRegion *BlockCall::getBlockRegion() const {
   const Expr *Callee = getOriginExpr()->getCallee();
   const MemRegion *DataReg = getSVal(Callee).getAsRegion();
 
-  return cast<BlockDataRegion>(DataReg);
+  return dyn_cast_or_null<BlockDataRegion>(DataReg);
 }
 
 CallEvent::param_iterator BlockCall::param_begin() const {
-  return getBlockRegion()->getDecl()->param_begin();
+  const BlockDecl *D = getBlockDecl();
+  if (!D)
+    return 0;
+  return D->param_begin();
 }
 
 CallEvent::param_iterator BlockCall::param_end() const {
-  return getBlockRegion()->getDecl()->param_end();
+  const BlockDecl *D = getBlockDecl();
+  if (!D)
+    return 0;
+  return D->param_end();
 }
 
 void BlockCall::addExtraInvalidatedRegions(RegionList &Regions) const {
-  Regions.push_back(getBlockRegion());
+  // FIXME: This also needs to invalidate captured globals.
+  if (const MemRegion *R = getBlockRegion())
+    Regions.push_back(R);
 }
 
 QualType BlockCall::getDeclaredResultType() const {
-  QualType BlockTy = getBlockRegion()->getCodeRegion()->getLocationType();
+  const BlockDataRegion *BR = getBlockRegion();
+  if (!BR)
+    return QualType();
+  QualType BlockTy = BR->getCodeRegion()->getLocationType();
   return cast<FunctionType>(BlockTy->getPointeeType())->getResultType();
 }
 

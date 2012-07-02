@@ -461,16 +461,9 @@ CheckerManager::runCheckersForEvalAssume(ProgramStateRef state,
 /// Only one checker will evaluate the call.
 void CheckerManager::runCheckersForEvalCall(ExplodedNodeSet &Dst,
                                             const ExplodedNodeSet &Src,
-                                            const CallExpr *CE,
-                                            ExprEngine &Eng,
-                                            GraphExpander *defaultEval) {
-  if (EvalCallCheckers.empty()   &&
-      InlineCallCheckers.empty() &&
-      defaultEval == 0) {
-    Dst.insert(Src);
-    return;
-  }
-
+                                            const SimpleCall &Call,
+                                            ExprEngine &Eng) {
+  const CallExpr *CE = Call.getOriginExpr();
   for (ExplodedNodeSet::iterator
          NI = Src.begin(), NE = Src.end(); NI != NE; ++NI) {
 
@@ -533,12 +526,8 @@ void CheckerManager::runCheckersForEvalCall(ExplodedNodeSet &Dst,
     }
     
     // If none of the checkers evaluated the call, ask ExprEngine to handle it.
-    if (!anyEvaluated) {
-      if (defaultEval)
-        defaultEval->expandGraph(Dst, Pred);
-      else
-        Dst.insert(Pred);
-    }
+    if (!anyEvaluated)
+      Eng.defaultEvalCall(Dst, Pred, Call);
   }
 }
 
@@ -678,6 +667,3 @@ CheckerManager::~CheckerManager() {
   for (unsigned i = 0, e = CheckerDtors.size(); i != e; ++i)
     CheckerDtors[i]();
 }
-
-// Anchor for the vtable.
-GraphExpander::~GraphExpander() { }

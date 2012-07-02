@@ -207,6 +207,10 @@ static unsigned getNumberStackFrames(const LocationContext *LCtx) {
 
 // Determine if we should inline the call.
 bool ExprEngine::shouldInlineDecl(const Decl *D, ExplodedNode *Pred) {
+  // FIXME: default constructors don't have bodies.
+  if (!D->hasBody())
+    return false;
+
   AnalysisDeclContext *CalleeADC = AMgr.getAnalysisDeclContext(D);
   const CFG *CalleeCFG = CalleeADC->getCFG();
 
@@ -235,52 +239,47 @@ bool ExprEngine::shouldInlineDecl(const Decl *D, ExplodedNode *Pred) {
       return false;
   }
 
+  // Do not inline constructors until we can model destructors.
+  // This is unfortunate, but basically necessary for smart pointers and such.
+  if (isa<CXXConstructorDecl>(D))
+    return false;
+
   return true;
 }
 
-bool ExprEngine::InlineCall(ExplodedNodeSet &Dst,
-                            const CallExpr *CE, 
+bool ExprEngine::inlineCall(ExplodedNodeSet &Dst,
+                            const CallEvent &Call,
                             ExplodedNode *Pred) {
   if (!getAnalysisManager().shouldInlineCall())
     return false;
 
-  //  if (!shouldInlineCallExpr(CE, this))
-  //    return false;
-
   const StackFrameContext *CallerSFC =
     Pred->getLocationContext()->getCurrentStackFrame();
 
-  ProgramStateRef state = Pred->getState();
-  const Expr *Callee = CE->getCallee();
-  SVal CalleeVal = state->getSVal(Callee, Pred->getLocationContext());
-  const Decl *D = 0;
+  const Decl *D = Call.getDecl();
   const LocationContext *ParentOfCallee = 0;
-  
-  if (const FunctionDecl *FD = CalleeVal.getAsFunctionDecl()) {
-    if (!FD->hasBody(FD))
+
+  switch (Call.getKind()) {
+  case CE_Function:
+  case CE_CXXConstructor:
+  case CE_CXXMember:
+    // These are always at least possible to inline.
+    break;
+  case CE_Block: {
+    const BlockDataRegion *BR = cast<BlockCall>(Call).getBlockRegion();
+    if (!BR)
       return false;
-  
-    switch (CE->getStmtClass()) {
-      default:
-        break;
-      case Stmt::CXXMemberCallExprClass:
-      case Stmt::CallExprClass: {
-        D = FD;
-        break;
-        
-      }
-    }
-  } else if (const BlockDataRegion *BR =
-              dyn_cast_or_null<BlockDataRegion>(CalleeVal.getAsRegion())) {
-    assert(CE->getStmtClass() == Stmt::CallExprClass);
-    const BlockDecl *BD = BR->getDecl();
-    D = BD;
-    AnalysisDeclContext *BlockCtx = AMgr.getAnalysisDeclContext(BD);
+    D = BR->getDecl();
+    AnalysisDeclContext *BlockCtx = AMgr.getAnalysisDeclContext(D);
     ParentOfCallee = BlockCtx->getBlockInvocationContext(CallerSFC,
-                                                         BD,
+                                                         cast<BlockDecl>(D),
                                                          BR);
-  } else {
-    // This is case we don't handle yet.
+    break;
+  }
+  case CE_ObjCMessage:
+  case CE_ObjCPropertyAccess:
+    // These always use dynamic dispatch; enabling inlining means assuming
+    // that a particular method will be called at runtime.
     return false;
   }
   
@@ -290,16 +289,19 @@ bool ExprEngine::InlineCall(ExplodedNodeSet &Dst,
   if (!ParentOfCallee)
     ParentOfCallee = CallerSFC;
 
+  const Expr *CallE = Call.getOriginExpr();
+  assert(CallE && "It is not yet possible to have calls without statements");
+
   // Construct a new stack frame for the callee.
   AnalysisDeclContext *CalleeADC = AMgr.getAnalysisDeclContext(D);
   const StackFrameContext *CalleeSFC =
-    CalleeADC->getStackFrame(ParentOfCallee, CE,
+    CalleeADC->getStackFrame(ParentOfCallee, CallE,
                              currentBuilderContext->getBlock(),
                              currentStmtIdx);
   
-  CallEnter Loc(CE, CalleeSFC, Pred->getLocationContext());
+  CallEnter Loc(CallE, CalleeSFC, Pred->getLocationContext());
   bool isNew;
-  if (ExplodedNode *N = G.getNode(Loc, state, false, &isNew)) {
+  if (ExplodedNode *N = G.getNode(Loc, Pred->getState(), false, &isNew)) {
     N->addPredecessor(Pred, G);
     if (isNew)
       Engine.getWorkList()->enqueue(N);
@@ -307,13 +309,13 @@ bool ExprEngine::InlineCall(ExplodedNodeSet &Dst,
   return true;
 }
 
-static ProgramStateRef getReplayWithoutInliningState(ExplodedNode *&N,
-                                                     const CallExpr *CE) {
+static ProgramStateRef getInlineFailedState(ExplodedNode *&N,
+                                            const Stmt *CallE) {
   void *ReplayState = N->getState()->get<ReplayWithoutInlining>();
   if (!ReplayState)
     return 0;
-  const CallExpr *ReplayCE = reinterpret_cast<const CallExpr*>(ReplayState);
-  if (CE == ReplayCE) {
+  const Stmt *ReplayCallE = reinterpret_cast<const Stmt *>(ReplayState);
+  if (CallE == ReplayCallE) {
     return N->getState()->remove<ReplayWithoutInlining>();
   }
   return 0;
@@ -324,81 +326,73 @@ void ExprEngine::VisitCallExpr(const CallExpr *CE, ExplodedNode *Pred,
   // Perform the previsit of the CallExpr.
   ExplodedNodeSet dstPreVisit;
   getCheckerManager().runCheckersForPreStmt(dstPreVisit, Pred, CE, *this);
-  
-  // Now evaluate the call itself.
-  class DefaultEval : public GraphExpander {
-    ExprEngine &Eng;
-    const CallExpr *CE;
-  public:
-    
-    DefaultEval(ExprEngine &eng, const CallExpr *ce)
-    : Eng(eng), CE(ce) {}
-    virtual void expandGraph(ExplodedNodeSet &Dst, ExplodedNode *Pred) {
 
-      ProgramStateRef state = getReplayWithoutInliningState(Pred, CE);
+  // Get the callee kind.
+  const CXXMemberCallExpr *MemberCE = dyn_cast<CXXMemberCallExpr>(CE);
+  bool IsBlock = (MemberCE ? false
+                           : CE->getCallee()->getType()->isBlockPointerType());
 
-      // First, try to inline the call.
-      if (state == 0 && Eng.InlineCall(Dst, CE, Pred))
-        return;
-
-      // First handle the return value.
-      StmtNodeBuilder Bldr(Pred, Dst, *Eng.currentBuilderContext);
-
-      // Get the callee.
-      const Expr *Callee = CE->getCallee()->IgnoreParens();
-      if (state == 0)
-        state = Pred->getState();
-      SVal L = state->getSVal(Callee, Pred->getLocationContext());
-
-      // Figure out the result type. We do this dance to handle references.
-      // FIXME: This doesn't handle C++ methods, blocks, etc.
-      QualType ResultTy;
-      if (const FunctionDecl *FD = L.getAsFunctionDecl())
-        ResultTy = FD->getResultType();
-      else
-        ResultTy = CE->getType();
-
-      if (CE->isGLValue())
-        ResultTy = Eng.getContext().getPointerType(ResultTy);
-
-      // Conjure a symbol value to use as the result.
-      SValBuilder &SVB = Eng.getSValBuilder();
-      unsigned Count = Eng.currentBuilderContext->getCurrentBlockCount();
-      const LocationContext *LCtx = Pred->getLocationContext();
-      SVal RetVal = SVB.getConjuredSymbolVal(0, CE, LCtx, ResultTy, Count);
-
-      // Generate a new state with the return value set.
-      state = state->BindExpr(CE, LCtx, RetVal);
-
-      // Invalidate the arguments.
-      if (const CXXMemberCallExpr *MemberCE = dyn_cast<CXXMemberCallExpr>(CE)) {
-        CXXMemberCall Call(MemberCE, state, LCtx);
-        state = Call.invalidateRegions(Count);
-      } else if (isa<BlockDataRegion>(L.getAsRegion())) {
-        BlockCall Call(CE, state, LCtx);
-        state = Call.invalidateRegions(Count);
-      } else {
-        FunctionCall Call(CE, state, LCtx);
-        state = Call.invalidateRegions(Count);
-      }
-
-      // And make the result node.
-      Bldr.generateNode(CE, Pred, state);
-    }
-  };
-  
-  // Finally, evaluate the function call.  We try each of the checkers
+  // Evaluate the function call.  We try each of the checkers
   // to see if the can evaluate the function call.
   ExplodedNodeSet dstCallEvaluated;
-  DefaultEval defEval(*this, CE);
-  getCheckerManager().runCheckersForEvalCall(dstCallEvaluated,
-                                             dstPreVisit,
-                                             CE, *this, &defEval);
-  
+  for (ExplodedNodeSet::iterator I = dstPreVisit.begin(), E = dstPreVisit.end();
+       I != E; ++I) {
+    ProgramStateRef State = (*I)->getState();
+    const LocationContext *LCtx = (*I)->getLocationContext();
+
+    // Evaluate the call.
+    if (MemberCE)
+      evalCall(dstCallEvaluated, *I, CXXMemberCall(MemberCE, State, LCtx));
+    else if (IsBlock)
+      evalCall(dstCallEvaluated, *I, BlockCall(CE, State, LCtx));
+    else
+      evalCall(dstCallEvaluated, *I, FunctionCall(CE, State, LCtx));
+  }
+
   // Finally, perform the post-condition check of the CallExpr and store
   // the created nodes in 'Dst'.
+  // Note that if the call was inlined, dstCallEvaluated will be empty.
+  // The post-CallExpr check will occur in processCallExit.
   getCheckerManager().runCheckersForPostStmt(dst, dstCallEvaluated, CE,
                                              *this);
+}
+
+void ExprEngine::evalCall(ExplodedNodeSet &Dst, ExplodedNode *Pred,
+                          const SimpleCall &Call) {
+  getCheckerManager().runCheckersForEvalCall(Dst, Pred, Call, *this);
+}
+
+void ExprEngine::defaultEvalCall(ExplodedNodeSet &Dst, ExplodedNode *Pred,
+                                 const CallEvent &Call) {
+  // Try to inline the call.
+  ProgramStateRef state = 0;
+  const Expr *E = Call.getOriginExpr();
+  if (E) {
+    state = getInlineFailedState(Pred, E);
+    if (state == 0 && inlineCall(Dst, Call, Pred))
+      return;
+  }
+
+  // If we can't inline it, handle the return value and invalidate the regions.
+  StmtNodeBuilder Bldr(Pred, Dst, *currentBuilderContext);
+
+  // Invalidate any regions touched by the call.
+  unsigned Count = currentBuilderContext->getCurrentBlockCount();
+  if (state == 0)
+    state = Pred->getState();
+  state = Call.invalidateRegions(Count, state);
+
+  // Conjure a symbol value to use as the result.
+  assert(Call.getOriginExpr() && "Must have an expression to bind the result");
+  QualType ResultTy = Call.getResultType();
+  SValBuilder &SVB = getSValBuilder();
+  const LocationContext *LCtx = Pred->getLocationContext();
+  SVal RetVal = SVB.getConjuredSymbolVal(0, Call.getOriginExpr(), LCtx,
+                                         ResultTy, Count);
+
+  // And make the result node.
+  state = state->BindExpr(Call.getOriginExpr(), LCtx, RetVal);
+  Bldr.generateNode(Call.getOriginExpr(), Pred, state);
 }
 
 void ExprEngine::VisitReturnStmt(const ReturnStmt *RS, ExplodedNode *Pred,

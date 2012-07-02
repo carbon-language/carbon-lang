@@ -33,6 +33,7 @@ namespace ento {
   class AnalysisManager;
   class BugReporter;
   class CheckerContext;
+  class SimpleCall;
   class ObjCMethodCall;
   class SVal;
   class ExplodedNode;
@@ -43,12 +44,6 @@ namespace ento {
   struct NodeBuilderContext;
   class MemRegion;
   class SymbolReaper;
-
-class GraphExpander {
-public:
-  virtual ~GraphExpander();
-  virtual void expandGraph(ExplodedNodeSet &Dst, ExplodedNode *Pred) = 0;
-};
 
 template <typename T> class CheckerFn;
 
@@ -303,8 +298,7 @@ public:
   /// \brief Run checkers for evaluating a call.
   void runCheckersForEvalCall(ExplodedNodeSet &Dst,
                               const ExplodedNodeSet &Src,
-                              const CallExpr *CE, ExprEngine &Eng,
-                              GraphExpander *defaultEval = 0);
+                              const SimpleCall &CE, ExprEngine &Eng);
   
   /// \brief Run checkers for the entire Translation Unit.
   void runCheckersOnEndOfTranslationUnit(const TranslationUnitDecl *TU,
