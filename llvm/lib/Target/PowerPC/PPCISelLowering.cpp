@@ -66,6 +66,7 @@ static TargetLoweringObjectFile *CreateTLOF(const PPCTargetMachine &TM) {
 
 PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
   : TargetLowering(TM, CreateTLOF(TM)), PPCSubTarget(*TM.getSubtargetImpl()) {
+  const PPCSubtarget *Subtarget = &TM.getSubtarget<PPCSubtarget>();
 
   setPow2DivIsCheap();
 
@@ -75,7 +76,8 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
 
   // On PPC32/64, arguments smaller than 4/8 bytes are extended, so all
   // arguments are at least 4/8 bytes aligned.
-  setMinStackArgumentAlignment(TM.getSubtarget<PPCSubtarget>().isPPC64() ? 8:4);
+  bool isPPC64 = Subtarget->isPPC64();
+  setMinStackArgumentAlignment(isPPC64 ? 8:4);
 
   // Set up the register classes.
   addRegisterClass(MVT::i32, &PPC::GPRCRegClass);
@@ -142,7 +144,7 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
   setOperationAction(ISD::FLT_ROUNDS_, MVT::i32, Custom);
 
   // If we're enabling GP optimizations, use hardware square root
-  if (!TM.getSubtarget<PPCSubtarget>().hasFSQRT()) {
+  if (!Subtarget->hasFSQRT()) {
     setOperationAction(ISD::FSQRT, MVT::f64, Expand);
     setOperationAction(ISD::FSQRT, MVT::f32, Expand);
   }
@@ -228,8 +230,8 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
   // VASTART needs to be custom lowered to use the VarArgsFrameIndex
   setOperationAction(ISD::VASTART           , MVT::Other, Custom);
 
-  if (TM.getSubtarget<PPCSubtarget>().isSVR4ABI()) {
-    if (TM.getSubtarget<PPCSubtarget>().isPPC64()) {
+  if (Subtarget->isSVR4ABI()) {
+    if (isPPC64) {
       // VAARG always uses double-word chunks, so promote anything smaller.
       setOperationAction(ISD::VAARG, MVT::i1, Promote);
       AddPromotedToType (ISD::VAARG, MVT::i1, MVT::i64);
@@ -273,7 +275,7 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
   setCondCodeAction(ISD::SETONE, MVT::f32, Expand);
   setCondCodeAction(ISD::SETONE, MVT::f64, Expand);
 
-  if (TM.getSubtarget<PPCSubtarget>().has64BitSupport()) {
+  if (Subtarget->has64BitSupport()) {
     // They also have instructions for converting between i64 and fp.
     setOperationAction(ISD::FP_TO_SINT, MVT::i64, Custom);
     setOperationAction(ISD::FP_TO_UINT, MVT::i64, Expand);
@@ -292,7 +294,7 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
     setOperationAction(ISD::FP_TO_UINT, MVT::i32, Expand);
   }
 
-  if (TM.getSubtarget<PPCSubtarget>().use64BitRegs()) {
+  if (Subtarget->use64BitRegs()) {
     // 64-bit PowerPC implementations can support i64 types directly
     addRegisterClass(MVT::i64, &PPC::G8RCRegClass);
     // BUILD_PAIR can't be handled natively, and should be expanded to shl/or
@@ -308,7 +310,7 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
     setOperationAction(ISD::SRL_PARTS, MVT::i32, Custom);
   }
 
-  if (TM.getSubtarget<PPCSubtarget>().hasAltivec()) {
+  if (Subtarget->hasAltivec()) {
     // First set operation action for all vector types to expand. Then we
     // will selectively turn on ones that can be effectively codegen'd.
     for (unsigned i = (unsigned)MVT::FIRST_VECTOR_VALUETYPE;
@@ -392,7 +394,7 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
     setOperationAction(ISD::BUILD_VECTOR, MVT::v4f32, Custom);
   }
 
-  if (TM.getSubtarget<PPCSubtarget>().has64BitSupport())
+  if (Subtarget->has64BitSupport())
     setOperationAction(ISD::PREFETCH, MVT::Other, Legal);
 
   setOperationAction(ISD::ATOMIC_LOAD,  MVT::i32, Expand);
@@ -401,7 +403,7 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
   setBooleanContents(ZeroOrOneBooleanContent);
   setBooleanVectorContents(ZeroOrOneBooleanContent); // FIXME: Is this correct?
 
-  if (TM.getSubtarget<PPCSubtarget>().isPPC64()) {
+  if (isPPC64) {
     setStackPointerRegisterToSaveRestore(PPC::X1);
     setExceptionPointerRegister(PPC::X3);
     setExceptionSelectorRegister(PPC::X4);
@@ -418,7 +420,7 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
   setTargetDAGCombine(ISD::BSWAP);
 
   // Darwin long double math library functions have $LDBL128 appended.
-  if (TM.getSubtarget<PPCSubtarget>().isDarwin()) {
+  if (Subtarget->isDarwin()) {
     setLibcallName(RTLIB::COS_PPCF128, "cosl$LDBL128");
     setLibcallName(RTLIB::POW_PPCF128, "powl$LDBL128");
     setLibcallName(RTLIB::REM_PPCF128, "fmodl$LDBL128");
@@ -434,6 +436,11 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
   setMinFunctionAlignment(2);
   if (PPCSubTarget.isDarwin())
     setPrefFunctionAlignment(4);
+
+  if (isPPC64 && Subtarget->isJITCodeModel())
+    // Temporary workaround for the inability of PPC64 JIT to handle jump
+    // tables.
+    setSupportJumpTables(false);
 
   setInsertFencesForAtomic(true);
 

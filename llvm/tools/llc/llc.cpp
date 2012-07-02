@@ -233,11 +233,6 @@ EnableRealignStack("realign-stack",
   cl::desc("Realign stack if needed"),
   cl::init(true));
 
-static cl::opt<bool>
-DisableSwitchTables(cl::Hidden, "disable-jump-tables",
-  cl::desc("Do not generate jump tables."),
-  cl::init(false));
-
 static cl::opt<std::string>
 TrapFuncName("trap-func", cl::Hidden,
   cl::desc("Emit a call to trap function rather than a trap instruction"),
@@ -454,7 +449,6 @@ int main(int argc, char **argv) {
   Options.DisableTailCalls = DisableTailCalls;
   Options.StackAlignmentOverride = OverrideStackAlignment;
   Options.RealignStack = EnableRealignStack;
-  Options.DisableJumpTables = DisableSwitchTables;
   Options.TrapFuncName = TrapFuncName;
   Options.PositionIndependentExecutable = EnablePIE;
   Options.EnableSegmentedStacks = SegmentedStacks;

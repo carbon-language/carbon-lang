@@ -117,12 +117,6 @@ bool PPCPassConfig::addPreEmitPass() {
 
 bool PPCTargetMachine::addCodeEmitter(PassManagerBase &PM,
                                       JITCodeEmitter &JCE) {
-  // FIXME: This should be moved to TargetJITInfo!!
-  if (Subtarget.isPPC64())
-    // Temporary workaround for the inability of PPC64 JIT to handle jump
-    // tables.
-    Options.DisableJumpTables = true;
-
   // Inform the subtarget that we are in JIT mode.  FIXME: does this break macho
   // writing?
   Subtarget.SetJITMode();

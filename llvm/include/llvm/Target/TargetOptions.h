@@ -48,8 +48,7 @@ namespace llvm {
           UseSoftFloat(false), NoZerosInBSS(false), JITExceptionHandling(false),
           JITEmitDebugInfo(false), JITEmitDebugInfoToDisk(false),
           GuaranteedTailCallOpt(false), DisableTailCalls(false),
-          StackAlignmentOverride(0), RealignStack(true),
-          DisableJumpTables(false), EnableFastISel(false),
+          StackAlignmentOverride(0), RealignStack(true), EnableFastISel(false),
           PositionIndependentExecutable(false), EnableSegmentedStacks(false),
           UseInitArray(false), TrapFuncName(""), FloatABIType(FloatABI::Default),
           AllowFPOpFusion(FPOpFusion::Standard)
@@ -155,10 +154,6 @@ namespace llvm {
     /// RealignStack - This flag indicates whether the stack should be
     /// automatically realigned, if needed.
     unsigned RealignStack : 1;
-
-    /// DisableJumpTables - This flag indicates jump tables should not be
-    /// generated.
-    unsigned DisableJumpTables : 1;
 
     /// EnableFastISel - This flag enables fast-path instruction selection
     /// which trades away generated code quality in favor of reducing
