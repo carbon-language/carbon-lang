@@ -210,8 +210,7 @@ public:
         return true;
       case RANGE:
         return false;
-      case UNKNOWN:
-      default:
+      default: // UNKNOWN
         if (Low == High) {
           const_cast<Type&>(RangeType) = SINGLE_NUMBER;
           return true;
