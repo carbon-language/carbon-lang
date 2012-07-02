@@ -4866,7 +4866,9 @@ ProcessInstanceSettings::ProcessInstanceSettings
 }
 
 ProcessInstanceSettings::ProcessInstanceSettings (const ProcessInstanceSettings &rhs) :
-    InstanceSettings (Process::GetSettingsController(), CreateInstanceName().AsCString())
+    InstanceSettings (Process::GetSettingsController(), CreateInstanceName().AsCString()),
+    m_disable_memory_cache(rhs.m_disable_memory_cache),
+    m_extra_startup_commands (rhs.m_extra_startup_commands)
 {
     if (m_instance_name != InstanceSettings::GetDefaultName())
     {
@@ -4888,6 +4890,8 @@ ProcessInstanceSettings::operator= (const ProcessInstanceSettings &rhs)
 {
     if (this != &rhs)
     {
+        m_disable_memory_cache = rhs.m_disable_memory_cache;
+        m_extra_startup_commands = rhs.m_extra_startup_commands;
     }
 
     return *this;
@@ -4919,6 +4923,10 @@ ProcessInstanceSettings::UpdateInstanceSettingsVariable (const ConstString &var_
         }
         
     }
+    else if (var_name == GetExtraStartupCommandVarName())
+    {
+        UserSettingsController::UpdateStringArrayVariable (op, index_value, m_extra_startup_commands, value, err);
+    }
 }
 
 void
@@ -4945,6 +4953,15 @@ ProcessInstanceSettings::GetInstanceSettingsValue (const SettingEntry &entry,
     if (var_name == GetDisableMemoryCacheVarName())
     {
         value.AppendString(m_disable_memory_cache ? "true" : "false");
+        return true;
+    }
+    else if (var_name == GetExtraStartupCommandVarName())
+    {
+        if (m_extra_startup_commands.GetArgumentCount() > 0)
+        {
+            for (int i = 0; i < m_extra_startup_commands.GetArgumentCount(); ++i)
+                value.AppendString (m_extra_startup_commands.GetArgumentAtIndex (i));
+        }
         return true;
     }
     else
@@ -4976,6 +4993,14 @@ ProcessInstanceSettings::GetDisableMemoryCacheVarName () const
     return disable_memory_cache_var_name;
 }
 
+const ConstString &
+ProcessInstanceSettings::GetExtraStartupCommandVarName () const
+{
+    static ConstString extra_startup_command_var_name ("extra-startup-command");
+    
+    return extra_startup_command_var_name;
+}
+
 //--------------------------------------------------
 // SettingsController Variable Tables
 //--------------------------------------------------
@@ -4999,6 +5024,7 @@ Process::SettingsController::instance_settings_table[] =
         "true",
 #endif
         NULL,       false,  false,  "Disable reading and caching of memory in fixed-size units." },
+    { "extra-startup-command", eSetVarTypeArray, NULL, NULL, false,  false,  "A list containing extra commands understood by the particular process plugin used." },
     {  NULL,            eSetVarTypeNone,        NULL,           NULL,       false,  false,  NULL }
 };
 

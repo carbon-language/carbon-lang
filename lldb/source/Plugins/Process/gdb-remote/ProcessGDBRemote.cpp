@@ -729,6 +729,14 @@ ProcessGDBRemote::ConnectToDebugserver (const char *connect_url)
     m_gdb_comm.GetListThreadsInStopReplySupported ();
     m_gdb_comm.GetHostInfo ();
     m_gdb_comm.GetVContSupported ('c');
+    
+    size_t num_cmds = GetExtraStartupCommands().GetArgumentCount();
+    for (size_t idx = 0; idx < num_cmds; idx++)
+    {
+        StringExtractorGDBRemote response;
+        printf ("Sending command: \%s.\n", GetExtraStartupCommands().GetArgumentAtIndex(idx));
+        m_gdb_comm.SendPacketAndWaitForResponse (GetExtraStartupCommands().GetArgumentAtIndex(idx), response, false);
+    }
     return error;
 }
 

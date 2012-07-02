@@ -128,8 +128,7 @@ public:
     {
         return m_breakpoints_use_platform_avoid;
     }
-    
-    
+        
     const Args &
     GetRunArguments () const
     {

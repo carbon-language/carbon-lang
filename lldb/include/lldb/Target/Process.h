@@ -87,10 +87,25 @@ public:
         return m_disable_memory_cache;
     }
     
+    const Args &
+    GetExtraStartupCommands () const
+    {
+        return m_extra_startup_commands;
+    }
+    
+    void
+    SetExtraStartupCommands (const Args &args)
+    {
+        m_extra_startup_commands = args;
+    }
+    
 protected:
     const ConstString &
     GetDisableMemoryCacheVarName () const;
     
+    const ConstString &
+    GetExtraStartupCommandVarName () const;
+
     void
     CopyInstanceSettings (const lldb::InstanceSettingsSP &new_settings,
                           bool pending);
@@ -98,7 +113,8 @@ protected:
     const ConstString
     CreateInstanceName ();
     
-    bool    m_disable_memory_cache;
+    bool        m_disable_memory_cache;
+    Args        m_extra_startup_commands;
 };
 
 //----------------------------------------------------------------------
