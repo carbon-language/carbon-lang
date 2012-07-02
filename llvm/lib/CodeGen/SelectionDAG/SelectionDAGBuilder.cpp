@@ -6250,8 +6250,15 @@ void SelectionDAGBuilder::visitInlineAsm(ImmutableCallSite CS) {
       assert((OpInfo.ConstraintType == TargetLowering::C_RegisterClass ||
               OpInfo.ConstraintType == TargetLowering::C_Register) &&
              "Unknown constraint type!");
-      assert(!OpInfo.isIndirect &&
-             "Don't know how to handle indirect register inputs yet!");
+
+      // TODO: Support this.
+      if (OpInfo.isIndirect) {
+        LLVMContext &Ctx = *DAG.getContext();
+        Ctx.emitError(CS.getInstruction(),
+                      "Don't know how to handle indirect register inputs yet "
+                      "for constraint '" + Twine(OpInfo.ConstraintCode) + "'");
+        break;
+      }
 
       // Copy the input into the appropriate registers.
       if (OpInfo.AssignedRegs.Regs.empty()) {
