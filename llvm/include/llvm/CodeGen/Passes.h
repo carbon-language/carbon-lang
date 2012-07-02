@@ -24,6 +24,7 @@ namespace llvm {
   class FunctionPass;
   class MachineFunctionPass;
   class PassInfo;
+  class PassManagerBase;
   class TargetLowering;
   class TargetRegisterClass;
   class raw_ostream;
