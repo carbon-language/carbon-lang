@@ -14,8 +14,9 @@
 #ifndef SANITIZER_MUTEX_H
 #define SANITIZER_MUTEX_H
 
-#include "sanitizer_internal_defs.h"
 #include "sanitizer_atomic.h"
+#include "sanitizer_internal_defs.h"
+#include "sanitizer_libc.h"
 
 namespace __sanitizer {
 
@@ -26,8 +27,9 @@ class SpinMutex {
   }
 
   void Lock() {
-    while (atomic_exchange(&state_, 1, memory_order_acquire))
-      proc_yield(10);
+    if (atomic_exchange(&state_, 1, memory_order_acquire) == 0)
+      return;
+    LockSlow();
   }
 
   void Unlock() {
@@ -36,6 +38,18 @@ class SpinMutex {
 
  private:
   atomic_uint8_t state_;
+
+  void NOINLINE LockSlow() {
+    for (int i = 0;; i++) {
+      if (i < 10)
+        proc_yield(10);
+      else
+        internal_sched_yield();
+      if (atomic_load(&state_, memory_order_relaxed) == 0
+          && atomic_exchange(&state_, 1, memory_order_acquire) == 0)
+        return;
+    }
+  }
 
   SpinMutex(const SpinMutex&);
   void operator=(const SpinMutex&);
