@@ -1566,6 +1566,7 @@ public:
     return LValue::MakeAddr(V, T, Alignment, getContext(),
                             CGM.getTBAAInfo(T));
   }
+
   LValue MakeNaturalAlignAddrLValue(llvm::Value *V, QualType T) {
     CharUnits Alignment;
     if (!T->isIncompleteType())
@@ -1622,8 +1623,8 @@ public:
   ///
   /// \param IgnoreResult - True if the resulting value isn't used.
   RValue EmitAnyExpr(const Expr *E,
-                     AggValueSlot AggSlot = AggValueSlot::ignored(),
-                     bool IgnoreResult = false);
+                     AggValueSlot aggSlot = AggValueSlot::ignored(),
+                     bool ignoreResult = false);
 
   // EmitVAListRef - Emit a "reference" to a va_list; this is either the address
   // or the value of the expression, depending on how va_list is defined.
@@ -1649,7 +1650,7 @@ public:
   /// volatile.
   void EmitAggregateCopy(llvm::Value *DestPtr, llvm::Value *SrcPtr,
                          QualType EltTy, bool isVolatile=false,
-                         unsigned Alignment = 0);
+                         CharUnits Alignment = CharUnits::Zero());
 
   /// StartBlock - Start new block named N. If insert block is a dummy block
   /// then reuse it.
@@ -2363,7 +2364,7 @@ public:
   /// EmitAggExpr - Emit the computation of the specified expression
   /// of aggregate type.  The result is computed into the given slot,
   /// which may be null to indicate that the value is not needed.
-  void EmitAggExpr(const Expr *E, AggValueSlot AS, bool IgnoreResult = false);
+  void EmitAggExpr(const Expr *E, AggValueSlot AS);
 
   /// EmitAggExprToLValue - Emit the computation of the specified expression of
   /// aggregate type into a temporary LValue.

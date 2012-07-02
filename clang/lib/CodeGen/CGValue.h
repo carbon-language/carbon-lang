@@ -389,7 +389,8 @@ public:
     return AV;
   }
 
-  static AggValueSlot forLValue(LValue LV, IsDestructed_t isDestructed,
+  static AggValueSlot forLValue(const LValue &LV,
+                                IsDestructed_t isDestructed,
                                 NeedsGCBarriers_t needsGC,
                                 IsAliased_t isAliased,
                                 IsZeroed_t isZeroed = IsNotZeroed) {

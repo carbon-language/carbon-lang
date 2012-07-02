@@ -109,15 +109,18 @@ void CodeGenFunction::EmitIgnoredExpr(const Expr *E) {
 /// can have any type.  The result is returned as an RValue struct.
 /// If this is an aggregate expression, AggSlot indicates where the
 /// result should be returned.
-RValue CodeGenFunction::EmitAnyExpr(const Expr *E, AggValueSlot AggSlot,
-                                    bool IgnoreResult) {
+RValue CodeGenFunction::EmitAnyExpr(const Expr *E,
+                                    AggValueSlot aggSlot,
+                                    bool ignoreResult) {
   if (!hasAggregateLLVMType(E->getType()))
-    return RValue::get(EmitScalarExpr(E, IgnoreResult));
+    return RValue::get(EmitScalarExpr(E, ignoreResult));
   else if (E->getType()->isAnyComplexType())
-    return RValue::getComplex(EmitComplexExpr(E, IgnoreResult, IgnoreResult));
+    return RValue::getComplex(EmitComplexExpr(E, ignoreResult, ignoreResult));
 
-  EmitAggExpr(E, AggSlot, IgnoreResult);
-  return AggSlot.asRValue();
+  if (!ignoreResult && aggSlot.isIgnored())
+    aggSlot = CreateAggTemp(E->getType(), "agg-temp");
+  EmitAggExpr(E, aggSlot);
+  return aggSlot.asRValue();
 }
 
 /// EmitAnyExprToTemp - Similary to EmitAnyExpr(), however, the result will

@@ -34,7 +34,6 @@ class AggExprEmitter : public StmtVisitor<AggExprEmitter> {
   CodeGenFunction &CGF;
   CGBuilderTy &Builder;
   AggValueSlot Dest;
-  bool IgnoreResult;
 
   /// We want to use 'dest' as the return slot except under two
   /// conditions:
@@ -56,12 +55,14 @@ class AggExprEmitter : public StmtVisitor<AggExprEmitter> {
     if (!Dest.isIgnored()) return Dest;
     return CGF.CreateAggTemp(T, "agg.tmp.ensured");
   }
+  void EnsureDest(QualType T) {
+    if (!Dest.isIgnored()) return;
+    Dest = CGF.CreateAggTemp(T, "agg.tmp.ensured");
+  }
 
 public:
-  AggExprEmitter(CodeGenFunction &cgf, AggValueSlot Dest,
-                 bool ignore)
-    : CGF(cgf), Builder(CGF.Builder), Dest(Dest),
-      IgnoreResult(ignore) {
+  AggExprEmitter(CodeGenFunction &cgf, AggValueSlot Dest)
+    : CGF(cgf), Builder(CGF.Builder), Dest(Dest) {
   }
 
   //===--------------------------------------------------------------------===//
@@ -74,9 +75,11 @@ public:
   void EmitAggLoadOfLValue(const Expr *E);
 
   /// EmitFinalDestCopy - Perform the final copy to DestPtr, if desired.
-  void EmitFinalDestCopy(const Expr *E, LValue Src, bool Ignore = false);
-  void EmitFinalDestCopy(const Expr *E, RValue Src, bool Ignore = false,
-                         unsigned Alignment = 0);
+  void EmitFinalDestCopy(QualType type, const LValue &src);
+  void EmitFinalDestCopy(QualType type, RValue src,
+                         CharUnits srcAlignment = CharUnits::Zero());
+  void EmitCopy(QualType type, const AggValueSlot &dest,
+                const AggValueSlot &src);
 
   void EmitMoveFromReturnSlot(const Expr *E, RValue Src);
 
@@ -119,7 +122,7 @@ public:
     if (E->getDecl()->getType()->isReferenceType()) {
       if (CodeGenFunction::ConstantEmission result
             = CGF.tryEmitAsConstant(E)) {
-        EmitFinalDestCopy(E, result.getReferenceLValue(CGF, E));
+        EmitFinalDestCopy(E->getType(), result.getReferenceLValue(CGF, E));
         return;
       }
     }
@@ -171,7 +174,7 @@ public:
   void VisitPseudoObjectExpr(PseudoObjectExpr *E) {
     if (E->isGLValue()) {
       LValue LV = CGF.EmitPseudoObjectLValue(E);
-      return EmitFinalDestCopy(E, LV);
+      return EmitFinalDestCopy(E->getType(), LV);
     }
 
     CGF.EmitPseudoObjectRValue(E, EnsureSlot(E->getType()));
@@ -198,7 +201,7 @@ public:
 /// then loads the result into DestPtr.
 void AggExprEmitter::EmitAggLoadOfLValue(const Expr *E) {
   LValue LV = CGF.EmitLValue(E);
-  EmitFinalDestCopy(E, LV);
+  EmitFinalDestCopy(E->getType(), LV);
 }
 
 /// \brief True if the given aggregate type requires special GC API calls.
@@ -228,7 +231,7 @@ bool AggExprEmitter::TypeRequiresGCollection(QualType T) {
 /// If nothing interferes, this will cause the result to be emitted
 /// directly into the return value slot.  Otherwise, a final move
 /// will be performed.
-void AggExprEmitter::EmitMoveFromReturnSlot(const Expr *E, RValue Src) {
+void AggExprEmitter::EmitMoveFromReturnSlot(const Expr *E, RValue src) {
   if (shouldUseDestForReturnSlot()) {
     // Logically, Dest.getAddr() should equal Src.getAggregateAddr().
     // The possibility of undef rvalues complicates that a lot,
@@ -236,61 +239,58 @@ void AggExprEmitter::EmitMoveFromReturnSlot(const Expr *E, RValue Src) {
     return;
   }
 
-  // Otherwise, do a final copy, 
-  assert(Dest.getAddr() != Src.getAggregateAddr());
-  std::pair<CharUnits, CharUnits> TypeInfo = 
+  // Otherwise, copy from there to the destination.
+  assert(Dest.getAddr() != src.getAggregateAddr());
+  std::pair<CharUnits, CharUnits> typeInfo = 
     CGF.getContext().getTypeInfoInChars(E->getType());
-  CharUnits Alignment = std::min(TypeInfo.second, Dest.getAlignment());
-  EmitFinalDestCopy(E, Src, /*Ignore*/ true, Alignment.getQuantity());
+  EmitFinalDestCopy(E->getType(), src, typeInfo.second);
 }
 
 /// EmitFinalDestCopy - Perform the final copy to DestPtr, if desired.
-void AggExprEmitter::EmitFinalDestCopy(const Expr *E, RValue Src, bool Ignore,
-                                       unsigned Alignment) {
-  assert(Src.isAggregate() && "value must be aggregate value!");
+void AggExprEmitter::EmitFinalDestCopy(QualType type, RValue src,
+                                       CharUnits srcAlign) {
+  assert(src.isAggregate() && "value must be aggregate value!");
+  LValue srcLV = CGF.MakeAddrLValue(src.getAggregateAddr(), type, srcAlign);
+  EmitFinalDestCopy(type, srcLV);
+}
 
+/// EmitFinalDestCopy - Perform the final copy to DestPtr, if desired.
+void AggExprEmitter::EmitFinalDestCopy(QualType type, const LValue &src) {
   // If Dest is ignored, then we're evaluating an aggregate expression
-  // in a context (like an expression statement) that doesn't care
-  // about the result.  C says that an lvalue-to-rvalue conversion is
-  // performed in these cases; C++ says that it is not.  In either
-  // case, we don't actually need to do anything unless the value is
-  // volatile.
-  if (Dest.isIgnored()) {
-    if (!Src.isVolatileQualified() ||
-        CGF.CGM.getLangOpts().CPlusPlus ||
-        (IgnoreResult && Ignore))
-      return;
+  // in a context that doesn't care about the result.  Note that loads
+  // from volatile l-values force the existence of a non-ignored
+  // destination.
+  if (Dest.isIgnored())
+    return;
 
-    // If the source is volatile, we must read from it; to do that, we need
-    // some place to put it.
-    Dest = CGF.CreateAggTemp(E->getType(), "agg.tmp");
-  }
+  AggValueSlot srcAgg =
+    AggValueSlot::forLValue(src, AggValueSlot::IsDestructed,
+                            needsGC(type), AggValueSlot::IsAliased);
+  EmitCopy(type, Dest, srcAgg);
+}
 
-  if (Dest.requiresGCollection()) {
-    CharUnits size = CGF.getContext().getTypeSizeInChars(E->getType());
-    llvm::Type *SizeTy = CGF.ConvertType(CGF.getContext().getSizeType());
-    llvm::Value *SizeVal = llvm::ConstantInt::get(SizeTy, size.getQuantity());
+/// Perform a copy from the source into the destination.
+///
+/// \param type - the type of the aggregate being copied; qualifiers are
+///   ignored
+void AggExprEmitter::EmitCopy(QualType type, const AggValueSlot &dest,
+                              const AggValueSlot &src) {
+  if (dest.requiresGCollection()) {
+    CharUnits sz = CGF.getContext().getTypeSizeInChars(type);
+    llvm::Value *size = llvm::ConstantInt::get(CGF.SizeTy, sz.getQuantity());
     CGF.CGM.getObjCRuntime().EmitGCMemmoveCollectable(CGF,
-                                                      Dest.getAddr(),
-                                                      Src.getAggregateAddr(),
-                                                      SizeVal);
+                                                      dest.getAddr(),
+                                                      src.getAddr(),
+                                                      size);
     return;
   }
+
   // If the result of the assignment is used, copy the LHS there also.
-  // FIXME: Pass VolatileDest as well.  I think we also need to merge volatile
-  // from the source as well, as we can't eliminate it if either operand
-  // is volatile, unless copy has volatile for both source and destination..
-  CGF.EmitAggregateCopy(Dest.getAddr(), Src.getAggregateAddr(), E->getType(),
-                        Dest.isVolatile()|Src.isVolatileQualified(),
-                        Alignment);
-}
-
-/// EmitFinalDestCopy - Perform the final copy to DestPtr, if desired.
-void AggExprEmitter::EmitFinalDestCopy(const Expr *E, LValue Src, bool Ignore) {
-  assert(Src.isSimple() && "Can't have aggregate bitfield, vector, etc");
-
-  CharUnits Alignment = std::min(Src.getAlignment(), Dest.getAlignment());
-  EmitFinalDestCopy(E, Src.asAggregateRValue(), Ignore, Alignment.getQuantity());
+  // It's volatile if either side is.  Use the minimum alignment of
+  // the two sides.
+  CGF.EmitAggregateCopy(dest.getAddr(), src.getAddr(), type,
+                        dest.isVolatile() || src.isVolatile(),
+                        std::min(dest.getAlignment(), src.getAlignment()));
 }
 
 static QualType GetStdInitializerListElementType(QualType T) {
@@ -526,7 +526,7 @@ void AggExprEmitter::VisitMaterializeTemporaryExpr(MaterializeTemporaryExpr *E){
 }
 
 void AggExprEmitter::VisitOpaqueValueExpr(OpaqueValueExpr *e) {
-  EmitFinalDestCopy(e, CGF.getOpaqueLValueMapping(e));
+  EmitFinalDestCopy(e->getType(), CGF.getOpaqueLValueMapping(e));
 }
 
 void
@@ -582,7 +582,15 @@ void AggExprEmitter::VisitCastExpr(CastExpr *E) {
                 "should have been unpacked before we got here");
   }
 
-  case CK_LValueToRValue: // hope for downstream optimization
+  case CK_LValueToRValue:
+    // If we're loading from a volatile type, force the destination
+    // into existence.
+    if (E->getSubExpr()->getType().isVolatileQualified()) {
+      EnsureDest(E->getType());
+      return Visit(E->getSubExpr());
+    }
+    // fallthrough
+
   case CK_NoOp:
   case CK_AtomicToNonAtomic:
   case CK_NonAtomicToAtomic:
@@ -676,7 +684,73 @@ void AggExprEmitter::VisitBinaryOperator(const BinaryOperator *E) {
 void AggExprEmitter::VisitPointerToDataMemberBinaryOperator(
                                                     const BinaryOperator *E) {
   LValue LV = CGF.EmitPointerToDataMemberBinaryExpr(E);
-  EmitFinalDestCopy(E, LV);
+  EmitFinalDestCopy(E->getType(), LV);
+}
+
+/// Is the value of the given expression possibly a reference to or
+/// into a __block variable?
+static bool isBlockVarRef(const Expr *E) {
+  // Make sure we look through parens.
+  E = E->IgnoreParens();
+
+  // Check for a direct reference to a __block variable.
+  if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E)) {
+    const VarDecl *var = dyn_cast<VarDecl>(DRE->getDecl());
+    return (var && var->hasAttr<BlocksAttr>());
+  }
+
+  // More complicated stuff.
+
+  // Binary operators.
+  if (const BinaryOperator *op = dyn_cast<BinaryOperator>(E)) {
+    // For an assignment or pointer-to-member operation, just care
+    // about the LHS.
+    if (op->isAssignmentOp() || op->isPtrMemOp())
+      return isBlockVarRef(op->getLHS());
+
+    // For a comma, just care about the RHS.
+    if (op->getOpcode() == BO_Comma)
+      return isBlockVarRef(op->getRHS());
+
+    // FIXME: pointer arithmetic?
+    return false;
+
+  // Check both sides of a conditional operator.
+  } else if (const AbstractConditionalOperator *op
+               = dyn_cast<AbstractConditionalOperator>(E)) {
+    return isBlockVarRef(op->getTrueExpr())
+        || isBlockVarRef(op->getFalseExpr());
+
+  // OVEs are required to support BinaryConditionalOperators.
+  } else if (const OpaqueValueExpr *op
+               = dyn_cast<OpaqueValueExpr>(E)) {
+    if (const Expr *src = op->getSourceExpr())
+      return isBlockVarRef(src);
+
+  // Casts are necessary to get things like (*(int*)&var) = foo().
+  // We don't really care about the kind of cast here, except
+  // we don't want to look through l2r casts, because it's okay
+  // to get the *value* in a __block variable.
+  } else if (const CastExpr *cast = dyn_cast<CastExpr>(E)) {
+    if (cast->getCastKind() == CK_LValueToRValue)
+      return false;
+    return isBlockVarRef(cast->getSubExpr());
+
+  // Handle unary operators.  Again, just aggressively look through
+  // it, ignoring the operation.
+  } else if (const UnaryOperator *uop = dyn_cast<UnaryOperator>(E)) {
+    return isBlockVarRef(uop->getSubExpr());
+
+  // Look into the base of a field access.
+  } else if (const MemberExpr *mem = dyn_cast<MemberExpr>(E)) {
+    return isBlockVarRef(mem->getBase());
+
+  // Look into the base of a subscript.
+  } else if (const ArraySubscriptExpr *sub = dyn_cast<ArraySubscriptExpr>(E)) {
+    return isBlockVarRef(sub->getBase());
+  }
+
+  return false;
 }
 
 void AggExprEmitter::VisitBinAssign(const BinaryOperator *E) {
@@ -686,20 +760,26 @@ void AggExprEmitter::VisitBinAssign(const BinaryOperator *E) {
                                                  E->getRHS()->getType())
          && "Invalid assignment");
 
-  if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E->getLHS()))
-    if (const VarDecl *VD = dyn_cast<VarDecl>(DRE->getDecl()))
-      if (VD->hasAttr<BlocksAttr>() &&
-          E->getRHS()->HasSideEffects(CGF.getContext())) {
-        // When __block variable on LHS, the RHS must be evaluated first 
-        // as it may change the 'forwarding' field via call to Block_copy.
-        LValue RHS = CGF.EmitLValue(E->getRHS());
-        LValue LHS = CGF.EmitLValue(E->getLHS());
-        Dest = AggValueSlot::forLValue(LHS, AggValueSlot::IsDestructed,
-                                       needsGC(E->getLHS()->getType()),
-                                       AggValueSlot::IsAliased);
-        EmitFinalDestCopy(E, RHS, true);
-        return;
-      }
+  // If the LHS might be a __block variable, and the RHS can
+  // potentially cause a block copy, we need to evaluate the RHS first
+  // so that the assignment goes the right place.
+  // This is pretty semantically fragile.
+  if (isBlockVarRef(E->getLHS()) &&
+      E->getRHS()->HasSideEffects(CGF.getContext())) {
+    // Ensure that we have a destination, and evaluate the RHS into that.
+    EnsureDest(E->getRHS()->getType());
+    Visit(E->getRHS());
+
+    // Now emit the LHS and copy into it.
+    LValue LHS = CGF.EmitLValue(E->getLHS());
+
+    EmitCopy(E->getLHS()->getType(),
+             AggValueSlot::forLValue(LHS, AggValueSlot::IsDestructed,
+                                     needsGC(E->getLHS()->getType()),
+                                     AggValueSlot::IsAliased),
+             Dest);
+    return;
+  }
   
   LValue LHS = CGF.EmitLValue(E->getLHS());
 
@@ -708,8 +788,10 @@ void AggExprEmitter::VisitBinAssign(const BinaryOperator *E) {
     AggValueSlot::forLValue(LHS, AggValueSlot::IsDestructed, 
                             needsGC(E->getLHS()->getType()),
                             AggValueSlot::IsAliased);
-  CGF.EmitAggExpr(E->getRHS(), LHSSlot, false);
-  EmitFinalDestCopy(E, LHS, true);
+  CGF.EmitAggExpr(E->getRHS(), LHSSlot);
+
+  // Copy into the destination if the assignment isn't ignored.
+  EmitFinalDestCopy(E->getType(), LHS);
 }
 
 void AggExprEmitter::
@@ -762,14 +844,14 @@ void AggExprEmitter::VisitVAArgExpr(VAArgExpr *VE) {
     return;
   }
 
-  EmitFinalDestCopy(VE, CGF.MakeAddrLValue(ArgPtr, VE->getType()));
+  EmitFinalDestCopy(VE->getType(), CGF.MakeAddrLValue(ArgPtr, VE->getType()));
 }
 
 void AggExprEmitter::VisitCXXBindTemporaryExpr(CXXBindTemporaryExpr *E) {
   // Ensure that we have a slot, but if we already do, remember
   // whether it was externally destructed.
   bool wasExternallyDestructed = Dest.isExternallyDestructed();
-  Dest = EnsureSlot(E->getType());
+  EnsureDest(E->getType());
 
   // We're going to push a destructor if there isn't already one.
   Dest.setExternallyDestructed();
@@ -904,7 +986,7 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
     llvm::GlobalVariable* GV =
     new llvm::GlobalVariable(CGF.CGM.getModule(), C->getType(), true,
                              llvm::GlobalValue::InternalLinkage, C, "");
-    EmitFinalDestCopy(E, CGF.MakeAddrLValue(GV, E->getType()));
+    EmitFinalDestCopy(E->getType(), CGF.MakeAddrLValue(GV, E->getType()));
     return;
   }
 #endif
@@ -1164,8 +1246,7 @@ static void CheckAggExprForMemSetUse(AggValueSlot &Slot, const Expr *E,
 /// type.  The result is computed into DestPtr.  Note that if DestPtr is null,
 /// the value of the aggregate expression is not needed.  If VolatileDest is
 /// true, DestPtr cannot be 0.
-void CodeGenFunction::EmitAggExpr(const Expr *E, AggValueSlot Slot,
-                                  bool IgnoreResult) {
+void CodeGenFunction::EmitAggExpr(const Expr *E, AggValueSlot Slot) {
   assert(E && hasAggregateLLVMType(E->getType()) &&
          "Invalid aggregate expression to emit");
   assert((Slot.getAddr() != 0 || Slot.isIgnored()) &&
@@ -1174,7 +1255,7 @@ void CodeGenFunction::EmitAggExpr(const Expr *E, AggValueSlot Slot,
   // Optimize the slot if possible.
   CheckAggExprForMemSetUse(Slot, E, *this);
  
-  AggExprEmitter(*this, Slot, IgnoreResult).Visit(const_cast<Expr*>(E));
+  AggExprEmitter(*this, Slot).Visit(const_cast<Expr*>(E));
 }
 
 LValue CodeGenFunction::EmitAggExprToLValue(const Expr *E) {
@@ -1189,7 +1270,8 @@ LValue CodeGenFunction::EmitAggExprToLValue(const Expr *E) {
 
 void CodeGenFunction::EmitAggregateCopy(llvm::Value *DestPtr,
                                         llvm::Value *SrcPtr, QualType Ty,
-                                        bool isVolatile, unsigned Alignment) {
+                                        bool isVolatile,
+                                        CharUnits alignment) {
   assert(!Ty->isAnyComplexType() && "Shouldn't happen for complex");
 
   if (getContext().getLangOpts().CPlusPlus) {
@@ -1222,8 +1304,8 @@ void CodeGenFunction::EmitAggregateCopy(llvm::Value *DestPtr,
   std::pair<CharUnits, CharUnits> TypeInfo = 
     getContext().getTypeInfoInChars(Ty);
 
-  if (!Alignment)
-    Alignment = TypeInfo.second.getQuantity();
+  if (alignment.isZero())
+    alignment = TypeInfo.second;
 
   // FIXME: Handle variable sized types.
 
@@ -1281,7 +1363,7 @@ void CodeGenFunction::EmitAggregateCopy(llvm::Value *DestPtr,
   Builder.CreateMemCpy(DestPtr, SrcPtr,
                        llvm::ConstantInt::get(IntPtrTy, 
                                               TypeInfo.first.getQuantity()),
-                       Alignment, isVolatile);
+                       alignment.getQuantity(), isVolatile);
 }
 
 void CodeGenFunction::MaybeEmitStdInitializerListCleanup(llvm::Value *loc,
