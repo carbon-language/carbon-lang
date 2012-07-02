@@ -210,7 +210,7 @@ public:
         return true;
       case RANGE:
         return false;
-      default: // UNKNOWN
+      case UNKNOWN:
         if (Low == High) {
           const_cast<Type&>(RangeType) = SINGLE_NUMBER;
           return true;
@@ -218,6 +218,8 @@ public:
         const_cast<Type&>(RangeType) = RANGE;
         return false;
       }
+      assert(!"Unknown state?!");
+      return false;
     }
 
     const IntType& getLow() const {
