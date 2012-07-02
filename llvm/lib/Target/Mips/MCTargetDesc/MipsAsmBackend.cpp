@@ -78,7 +78,8 @@ public:
     :MCAsmBackend(), OSType(_OSType), IsLittle(_isLittle), Is64Bit(_is64Bit) {}
 
   MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
-    return createMipsELFObjectWriter(OS, OSType, IsLittle, Is64Bit);
+    return createMipsELFObjectWriter(OS,
+      MCELFObjectTargetWriter::getOSABI(OSType), IsLittle, Is64Bit);
   }
 
   /// ApplyFixup - Apply the \arg Value for given \arg Fixup into the provided

@@ -30,3 +30,6 @@
 // CHECK-LE64: ('e_indent[EI_CLASS]', 0x02)
 // This is little endian.
 // CHECK-LE64: ('e_indent[EI_DATA]', 0x01)
+
+// Check that we are setting EI_OSABI to ELFOSABI_LINUX.
+// CHECK-LE64: ('e_indent[EI_OSABI]', 0x03)
