@@ -6,9 +6,10 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
-//  This file defines some OpenCL-specific enums.
-//
+///
+/// \file
+/// \brief Defines some OpenCL-specific enums.
+///
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_CLANG_BASIC_OPENCL_H

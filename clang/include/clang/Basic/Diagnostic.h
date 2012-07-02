@@ -6,9 +6,10 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
-//  This file defines the Diagnostic-related interfaces.
-//
+///
+/// \file
+/// \brief Defines the Diagnostic-related interfaces.
+///
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_CLANG_DIAGNOSTIC_H

@@ -7,9 +7,10 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file forward declares and imports various common LLVM datatypes that
-// clang wants to use unqualified.
-//
+/// \file
+/// \brief Forward declares and imports various common LLVM datatypes that
+/// clang wants to use unqualified.
+///
 //===----------------------------------------------------------------------===//
 
 #ifndef CLANG_BASIC_LLVM_H

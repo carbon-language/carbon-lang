@@ -6,10 +6,10 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
-// This file defines the Linkage enumeration and various utility
-// functions.
-//
+///
+/// \file
+/// \brief Defines the Linkage enumeration and various utility functions.
+///
 //===----------------------------------------------------------------------===//
 #ifndef LLVM_CLANG_BASIC_LINKAGE_H
 #define LLVM_CLANG_BASIC_LINKAGE_H

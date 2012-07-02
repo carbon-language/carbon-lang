@@ -6,10 +6,10 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
-//  This file defines facilities for reading and writing on-disk hash
-//  tables.
-//
+///
+/// \file
+/// \brief Defines facilities for reading and writing on-disk hash tables.
+///
 //===----------------------------------------------------------------------===//
 #ifndef LLVM_CLANG_BASIC_ON_DISK_HASH_TABLE_H
 #define LLVM_CLANG_BASIC_ON_DISK_HASH_TABLE_H

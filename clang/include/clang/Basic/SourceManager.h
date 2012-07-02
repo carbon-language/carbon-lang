@@ -7,9 +7,10 @@
 //
 //===----------------------------------------------------------------------===//
 ///
-/// \file Defines the SourceManager interface.
+/// \file
+/// \brief Defines the SourceManager interface.
 ///
-/// There are three different types of locations in a file\: a spelling
+/// There are three different types of locations in a file: a spelling
 /// location, an expansion location, and a presumed location.
 ///
 /// Given an example of:
@@ -19,7 +20,7 @@
 ///
 /// and then later on a use of min:
 /// \code
-/// \#line 17
+/// #line 17
 /// return min(a, b);
 /// \endcode
 ///

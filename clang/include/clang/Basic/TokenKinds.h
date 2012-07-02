@@ -6,9 +6,10 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
-//  This file defines the TokenKind enum and support functions.
-//
+///
+/// \file
+/// \brief Defines the clang::TokenKind enum and support functions.
+///
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_CLANG_TOKENKINDS_H

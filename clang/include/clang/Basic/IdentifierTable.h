@@ -6,10 +6,11 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
-// This file defines the IdentifierInfo, IdentifierTable, and Selector
-// interfaces.
-//
+///
+/// \file
+/// \brief Defines the clang::IdentifierInfo, clang::IdentifierTable, and
+/// clang::Selector interfaces.
+///
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_CLANG_BASIC_IDENTIFIERTABLE_H

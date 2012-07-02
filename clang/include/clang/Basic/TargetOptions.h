@@ -6,6 +6,11 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
+///
+/// \file
+/// \brief Defines the clang::TargetOptions class.
+///
+//===----------------------------------------------------------------------===//
 
 #ifndef LLVM_CLANG_FRONTEND_TARGETOPTIONS_H
 #define LLVM_CLANG_FRONTEND_TARGETOPTIONS_H

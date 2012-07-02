@@ -6,10 +6,11 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
-// This file defines enum values for all the target-independent builtin
-// functions.
-//
+///
+/// \file
+/// \brief Defines enum values for all the target-independent builtin
+/// functions.
+///
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_CLANG_BASIC_BUILTINS_H

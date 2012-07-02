@@ -6,9 +6,10 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
-//  This file defines the MacroBuilder utility class.
-//
+///
+/// \file
+/// \brief Defines the clang::MacroBuilder utility class.
+///
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_CLANG_BASIC_MACROBUILDER_H

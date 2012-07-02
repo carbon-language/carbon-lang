@@ -6,9 +6,10 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
-//  This file defines the TargetInfo interface.
-//
+///
+/// \file
+/// \brief Defines the clang::TargetInfo interface.
+///
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_CLANG_BASIC_TARGETINFO_H

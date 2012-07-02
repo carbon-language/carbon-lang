@@ -6,9 +6,10 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
-//  This file defines enumerations for the type traits support.
-//
+///
+/// \file
+/// \brief Defines enumerations for the type traits support.
+///
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_CLANG_TYPETRAITS_H

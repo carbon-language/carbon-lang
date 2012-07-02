@@ -6,6 +6,12 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
+///
+/// \file
+/// \brief Enumerates target-specific builtins in their own namespaces within
+/// namespace ::clang.
+///
+//===----------------------------------------------------------------------===//
 
 #ifndef LLVM_CLANG_BASIC_TARGET_BUILTINS_H
 #define LLVM_CLANG_BASIC_TARGET_BUILTINS_H

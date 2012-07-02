@@ -6,9 +6,10 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
-//  This file defines types useful for describing an Objective-C runtime.
-//
+///
+/// \file
+/// \brief Defines types useful for describing an Objective-C runtime.
+///
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_CLANG_OBJCRUNTIME_H

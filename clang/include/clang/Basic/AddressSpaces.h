@@ -6,10 +6,11 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
-//  This file provides definitions for the various language-specific address
-//  spaces.
-//
+///
+/// \file
+/// \brief Provides definitions for the various language-specific address
+///  spaces.
+///
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_CLANG_BASIC_ADDRESSSPACES_H

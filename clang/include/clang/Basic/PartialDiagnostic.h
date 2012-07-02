@@ -6,10 +6,11 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
-//  This file implements a partial diagnostic that can be emitted anwyhere
-//  in a DiagnosticBuilder stream.
-//
+///
+/// \file
+/// \brief Implements a partial diagnostic that can be emitted anwyhere
+/// in a DiagnosticBuilder stream.
+///
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_CLANG_PARTIALDIAGNOSTIC_H

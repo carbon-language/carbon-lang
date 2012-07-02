@@ -6,10 +6,10 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
-//  This file defines the implementation details of the SourceManager
-//  class.
-//
+///
+/// \file
+/// \brief Defines implementation details of the clang::SourceManager class.
+///
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_CLANG_SOURCEMANAGER_INTERNALS_H

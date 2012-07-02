@@ -6,10 +6,11 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
-// This file defines the Visibility enumeration and various utility
-// functions.
-//
+///
+/// \file
+/// \brief Defines the clang::Visibility enumeration and various utility
+/// functions.
+///
 //===----------------------------------------------------------------------===//
 #ifndef LLVM_CLANG_BASIC_VISIBILITY_H
 #define LLVM_CLANG_BASIC_VISIBILITY_H

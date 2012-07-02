@@ -6,10 +6,11 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
-// This header defines version macros and version-related utility functions
-// for Clang.
-//
+///
+/// \file
+/// \brief Defines version macros and version-related utility functions
+/// for Clang.
+///
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_CLANG_BASIC_VERSION_H

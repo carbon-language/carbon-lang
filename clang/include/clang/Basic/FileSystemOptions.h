@@ -6,9 +6,10 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
-//  This file defines the FileSystemOptions interface.
-//
+///
+/// \file
+/// \brief Defines the clang::FileSystemOptions interface.
+///
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_CLANG_BASIC_FILESYSTEMOPTIONS_H

@@ -6,9 +6,10 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
-//  This file defines the attr::Kind enum
-//
+///
+/// \file
+/// \brief Defines the clang::attr::Kind enum.
+///
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_CLANG_ATTRKINDS_H

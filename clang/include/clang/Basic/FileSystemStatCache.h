@@ -6,9 +6,10 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
-//  This file defines the FileSystemStatCache interface.
-//
+///
+/// \file
+/// \brief Defines the FileSystemStatCache interface.
+///
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_CLANG_FILESYSTEMSTATCACHE_H

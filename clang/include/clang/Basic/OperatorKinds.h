@@ -6,9 +6,10 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
-// This file defines C++ overloaded operators.
-//
+///
+/// \file
+/// \brief Defines an enumeration for C++ overloaded operators.
+///
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_CLANG_BASIC_OPERATOR_KINDS_H

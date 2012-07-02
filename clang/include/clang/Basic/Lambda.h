@@ -6,9 +6,11 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
-// This file defines several types used to describe C++ lambda
-// expressions that are shared between the parser and AST.
+///
+/// \file
+/// \brief  Defines several types used to describe C++ lambda expressions
+/// that are shared between the parser and AST.
+///
 //===----------------------------------------------------------------------===//
 
 

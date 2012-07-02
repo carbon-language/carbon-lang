@@ -6,10 +6,11 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
-// These enums/classes describe ABI related information about constructors,
-// destructors and thunks.
-//
+///
+/// \file
+/// \brief Enums/classes describing ABI related information about constructors,
+/// destructors and thunks.
+///
 //===----------------------------------------------------------------------===//
 
 #ifndef CLANG_BASIC_ABI_H

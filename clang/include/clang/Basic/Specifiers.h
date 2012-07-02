@@ -6,10 +6,11 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
-// This file defines various enumerations that describe declaration and
-// type specifiers.
-//
+///
+/// \file
+/// \brief Defines various enumerations that describe declaration and
+/// type specifiers.
+///
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_CLANG_BASIC_SPECIFIERS_H

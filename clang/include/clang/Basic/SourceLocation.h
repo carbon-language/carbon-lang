@@ -6,9 +6,10 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
-//  This file defines the SourceLocation class.
-//
+///
+/// \file
+/// \brief Defines the clang::SourceLocation class and associated facilities.
+///
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_CLANG_SOURCELOCATION_H

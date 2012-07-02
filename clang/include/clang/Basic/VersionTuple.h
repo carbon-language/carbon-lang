@@ -6,10 +6,11 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
-// This header defines the VersionTuple class, which represents a version in
-// the form major[.minor[.subminor]].
-//
+///
+/// \file
+/// \brief Defines the clang::VersionTuple class, which represents a version in
+/// the form major[.minor[.subminor]].
+///
 //===----------------------------------------------------------------------===//
 #ifndef LLVM_CLANG_BASIC_VERSIONTUPLE_H
 #define LLVM_CLANG_BASIC_VERSIONTUPLE_H

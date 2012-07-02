@@ -6,9 +6,10 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
-//  This file defines the LangOptions interface.
-//
+///
+/// \file
+/// \brief Defines the clang::LangOptions interface.
+///
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_CLANG_LANGOPTIONS_H

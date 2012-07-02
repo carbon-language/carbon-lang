@@ -6,9 +6,10 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
-//  This file defines the FileManager interface.
-//
+///
+/// \file
+/// \brief Defines the clang::FileManager interface and associated types.
+///
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_CLANG_FILEMANAGER_H

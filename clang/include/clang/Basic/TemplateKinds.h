@@ -6,9 +6,10 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
-//  This file defines the TemplateNameKind enum.
-//
+///
+/// \file
+/// \brief Defines the clang::TemplateNameKind enum.
+///
 //===----------------------------------------------------------------------===//
 #ifndef LLVM_CLANG_TEMPLATEKINDS_H
 #define LLVM_CLANG_TEMPLATEKINDS_H
