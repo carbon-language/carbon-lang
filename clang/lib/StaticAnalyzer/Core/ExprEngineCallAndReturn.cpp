@@ -13,7 +13,7 @@
 
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ExprEngine.h"
-#include "clang/StaticAnalyzer/Core/PathSensitive/ObjCMessage.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/Calls.h"
 #include "clang/AST/DeclCXX.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/Support/SaveAndRestore.h"
@@ -307,179 +307,6 @@ bool ExprEngine::InlineCall(ExplodedNodeSet &Dst,
   return true;
 }
 
-static bool isPointerToConst(const ParmVarDecl *ParamDecl) {
-  QualType PointeeTy = ParamDecl->getOriginalType()->getPointeeType();
-  if (PointeeTy != QualType() && PointeeTy.isConstQualified() &&
-      !PointeeTy->isAnyPointerType() && !PointeeTy->isReferenceType()) {
-    return true;
-  }
-  return false;
-}
-
-// Try to retrieve the function declaration and find the function parameter
-// types which are pointers/references to a non-pointer const.
-// We do not invalidate the corresponding argument regions.
-static void findPtrToConstParams(llvm::SmallSet<unsigned, 1> &PreserveArgs,
-                       const CallOrObjCMessage &Call) {
-  const Decl *CallDecl = Call.getDecl();
-  if (!CallDecl)
-    return;
-
-  if (const FunctionDecl *FDecl = dyn_cast<FunctionDecl>(CallDecl)) {
-    const IdentifierInfo *II = FDecl->getIdentifier();
-
-    // List the cases, where the region should be invalidated even if the
-    // argument is const.
-    if (II) {
-      StringRef FName = II->getName();
-      //  - 'int pthread_setspecific(ptheread_key k, const void *)' stores a
-      // value into thread local storage. The value can later be retrieved with
-      // 'void *ptheread_getspecific(pthread_key)'. So even thought the
-      // parameter is 'const void *', the region escapes through the call.
-      //  - funopen - sets a buffer for future IO calls.
-      //  - ObjC functions that end with "NoCopy" can free memory, of the passed
-      // in buffer.
-      // - Many CF containers allow objects to escape through custom
-      // allocators/deallocators upon container construction.
-      // - NSXXInsertXX, for example NSMapInsertIfAbsent, since they can
-      // be deallocated by NSMapRemove.
-      // - Any call that has a callback as one of the arguments.
-      if (FName == "pthread_setspecific" ||
-          FName == "funopen" ||
-          FName.endswith("NoCopy") ||
-          (FName.startswith("NS") &&
-            (FName.find("Insert") != StringRef::npos)) ||
-          Call.isCFCGAllowingEscape(FName) ||
-          Call.hasNonZeroCallbackArg())
-        return;
-    }
-
-    for (unsigned Idx = 0, E = Call.getNumArgs(); Idx != E; ++Idx) {
-      if (FDecl && Idx < FDecl->getNumParams()) {
-        if (isPointerToConst(FDecl->getParamDecl(Idx)))
-          PreserveArgs.insert(Idx);
-      }
-    }
-    return;
-  }
-
-  if (const ObjCMethodDecl *MDecl = dyn_cast<ObjCMethodDecl>(CallDecl)) {
-    assert(MDecl->param_size() <= Call.getNumArgs());
-    unsigned Idx = 0;
-
-    if (Call.hasNonZeroCallbackArg())
-      return;
-
-    for (clang::ObjCMethodDecl::param_const_iterator
-         I = MDecl->param_begin(), E = MDecl->param_end(); I != E; ++I, ++Idx) {
-      if (isPointerToConst(*I))
-        PreserveArgs.insert(Idx);
-    }
-    return;
-  }
-}
-
-ProgramStateRef 
-ExprEngine::invalidateArguments(ProgramStateRef State,
-                                const CallOrObjCMessage &Call,
-                                const LocationContext *LC) {
-  SmallVector<const MemRegion *, 8> RegionsToInvalidate;
-
-  if (Call.isObjCMessage()) {
-    // Invalidate all instance variables of the receiver of an ObjC message.
-    // FIXME: We should be able to do better with inter-procedural analysis.
-    if (const MemRegion *MR = Call.getInstanceMessageReceiver(LC).getAsRegion())
-      RegionsToInvalidate.push_back(MR);
-
-  } else if (Call.isCXXCall()) {
-    // Invalidate all instance variables for the callee of a C++ method call.
-    // FIXME: We should be able to do better with inter-procedural analysis.
-    // FIXME: We can probably do better for const versus non-const methods.
-    if (const MemRegion *Callee = Call.getCXXCallee().getAsRegion())
-      RegionsToInvalidate.push_back(Callee);
-
-  } else if (Call.isFunctionCall()) {
-    // Block calls invalidate all captured-by-reference values.
-    SVal CalleeVal = Call.getFunctionCallee();
-    if (const MemRegion *Callee = CalleeVal.getAsRegion()) {
-      if (isa<BlockDataRegion>(Callee))
-        RegionsToInvalidate.push_back(Callee);
-    }
-  }
-
-  // Indexes of arguments whose values will be preserved by the call.
-  llvm::SmallSet<unsigned, 1> PreserveArgs;
-  findPtrToConstParams(PreserveArgs, Call);
-
-  for (unsigned idx = 0, e = Call.getNumArgs(); idx != e; ++idx) {
-    if (PreserveArgs.count(idx))
-      continue;
-
-    SVal V = Call.getArgSVal(idx);
-
-    // If we are passing a location wrapped as an integer, unwrap it and
-    // invalidate the values referred by the location.
-    if (nonloc::LocAsInteger *Wrapped = dyn_cast<nonloc::LocAsInteger>(&V))
-      V = Wrapped->getLoc();
-    else if (!isa<Loc>(V))
-      continue;
-
-    if (const MemRegion *R = V.getAsRegion()) {
-      // Invalidate the value of the variable passed by reference.
-
-      // Are we dealing with an ElementRegion?  If the element type is
-      // a basic integer type (e.g., char, int) and the underlying region
-      // is a variable region then strip off the ElementRegion.
-      // FIXME: We really need to think about this for the general case
-      //   as sometimes we are reasoning about arrays and other times
-      //   about (char*), etc., is just a form of passing raw bytes.
-      //   e.g., void *p = alloca(); foo((char*)p);
-      if (const ElementRegion *ER = dyn_cast<ElementRegion>(R)) {
-        // Checking for 'integral type' is probably too promiscuous, but
-        // we'll leave it in for now until we have a systematic way of
-        // handling all of these cases.  Eventually we need to come up
-        // with an interface to StoreManager so that this logic can be
-        // appropriately delegated to the respective StoreManagers while
-        // still allowing us to do checker-specific logic (e.g.,
-        // invalidating reference counts), probably via callbacks.
-        if (ER->getElementType()->isIntegralOrEnumerationType()) {
-          const MemRegion *superReg = ER->getSuperRegion();
-          if (isa<VarRegion>(superReg) || isa<FieldRegion>(superReg) ||
-              isa<ObjCIvarRegion>(superReg))
-            R = cast<TypedRegion>(superReg);
-        }
-        // FIXME: What about layers of ElementRegions?
-      }
-
-      // Mark this region for invalidation.  We batch invalidate regions
-      // below for efficiency.
-      RegionsToInvalidate.push_back(R);
-    } else {
-      // Nuke all other arguments passed by reference.
-      // FIXME: is this necessary or correct? This handles the non-Region
-      //  cases.  Is it ever valid to store to these?
-      State = State->unbindLoc(cast<Loc>(V));
-    }
-  }
-
-  // Invalidate designated regions using the batch invalidation API.
-
-  // FIXME: We can have collisions on the conjured symbol if the
-  //  expression *I also creates conjured symbols.  We probably want
-  //  to identify conjured symbols by an expression pair: the enclosing
-  //  expression (the context) and the expression itself.  This should
-  //  disambiguate conjured symbols.
-  unsigned Count = currentBuilderContext->getCurrentBlockCount();
-  StoreManager::InvalidatedSymbols IS;
-
-  // NOTE: Even if RegionsToInvalidate is empty, we may still invalidate
-  //  global variables.
-  return State->invalidateRegions(RegionsToInvalidate,
-                                  Call.getOriginExpr(), Count, LC,
-                                  &IS, &Call);
-
-}
-
 static ProgramStateRef getReplayWithoutInliningState(ExplodedNode *&N,
                                                      const CallExpr *CE) {
   void *ReplayState = N->getState()->get<ReplayWithoutInlining>();
@@ -524,6 +351,7 @@ void ExprEngine::VisitCallExpr(const CallExpr *CE, ExplodedNode *Pred,
       SVal L = state->getSVal(Callee, Pred->getLocationContext());
 
       // Figure out the result type. We do this dance to handle references.
+      // FIXME: This doesn't handle C++ methods, blocks, etc.
       QualType ResultTy;
       if (const FunctionDecl *FD = L.getAsFunctionDecl())
         ResultTy = FD->getResultType();
@@ -543,8 +371,16 @@ void ExprEngine::VisitCallExpr(const CallExpr *CE, ExplodedNode *Pred,
       state = state->BindExpr(CE, LCtx, RetVal);
 
       // Invalidate the arguments.
-      state = Eng.invalidateArguments(state, CallOrObjCMessage(CE, state, LCtx),
-                                      LCtx);
+      if (const CXXMemberCallExpr *MemberCE = dyn_cast<CXXMemberCallExpr>(CE)) {
+        CXXMemberCall Call(MemberCE, state, LCtx);
+        state = Call.invalidateRegions(Count);
+      } else if (isa<BlockDataRegion>(L.getAsRegion())) {
+        BlockCall Call(CE, state, LCtx);
+        state = Call.invalidateRegions(Count);
+      } else {
+        FunctionCall Call(CE, state, LCtx);
+        state = Call.invalidateRegions(Count);
+      }
 
       // And make the result node.
       Bldr.generateNode(CE, Pred, state);

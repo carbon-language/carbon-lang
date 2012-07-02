@@ -206,7 +206,7 @@ public:
                        const StoreManager::InvalidatedSymbols *Invalidated,
                        ArrayRef<const MemRegion *> ExplicitRegions,
                        ArrayRef<const MemRegion *> Regions,
-                       const CallOrObjCMessage *Call) const {
+                       const CallEvent *Call) const {
     return State;
   }
 

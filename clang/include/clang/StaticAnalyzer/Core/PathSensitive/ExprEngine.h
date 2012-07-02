@@ -41,7 +41,7 @@ class ObjCForCollectionStmt;
 namespace ento {
 
 class AnalysisManager;
-class CallOrObjCMessage;
+class CallEvent;
 class ObjCMessage;
 
 class ExprEngine : public SubEngine {
@@ -240,7 +240,7 @@ public:
                        const StoreManager::InvalidatedSymbols *invalidated,
                        ArrayRef<const MemRegion *> ExplicitRegions,
                        ArrayRef<const MemRegion *> Regions,
-                       const CallOrObjCMessage *Call);
+                       const CallEvent *Call);
 
   /// printState - Called by ProgramStateManager to print checker-specific data.
   void printState(raw_ostream &Out, ProgramStateRef State,
@@ -436,10 +436,6 @@ protected:
   void evalObjCMessage(StmtNodeBuilder &Bldr, const ObjCMessage &msg,
                        ExplodedNode *Pred, ProgramStateRef state,
                        bool GenSink);
-
-  ProgramStateRef invalidateArguments(ProgramStateRef State,
-                                          const CallOrObjCMessage &Call,
-                                          const LocationContext *LC);
 
   ProgramStateRef MarkBranch(ProgramStateRef state,
                                  const Stmt *Terminator,

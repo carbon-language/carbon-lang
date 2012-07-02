@@ -105,7 +105,7 @@ public:
                        const StoreManager::InvalidatedSymbols *invalidated,
                        ArrayRef<const MemRegion *> ExplicitRegions,
                        ArrayRef<const MemRegion *> Regions,
-                       const CallOrObjCMessage *Call) = 0;
+                       const CallEvent *Call) = 0;
 
 
   inline ProgramStateRef 

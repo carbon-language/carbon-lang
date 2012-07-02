@@ -29,7 +29,7 @@ class StackFrameContext;
 
 namespace ento {
 
-class CallOrObjCMessage;
+class CallEvent;
 class ProgramState;
 class ProgramStateManager;
 class SubRegionMap;
@@ -194,7 +194,7 @@ public:
                                      const Expr *E, unsigned Count,
                                      const LocationContext *LCtx,
                                      InvalidatedSymbols &IS,
-                                     const CallOrObjCMessage *Call,
+                                     const CallEvent *Call,
                                      InvalidatedRegions *Invalidated) = 0;
 
   /// enterStackFrame - Let the StoreManager to do something when execution

@@ -266,7 +266,7 @@ class RegionChanges {
                       const StoreManager::InvalidatedSymbols *invalidated,
                       ArrayRef<const MemRegion *> Explicits,
                       ArrayRef<const MemRegion *> Regions,
-                      const CallOrObjCMessage *Call) {
+                      const CallEvent *Call) {
     return ((const CHECKER *)checker)->checkRegionChanges(state, invalidated,
                                                       Explicits, Regions, Call);
   }

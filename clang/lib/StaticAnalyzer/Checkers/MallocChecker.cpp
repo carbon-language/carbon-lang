@@ -18,7 +18,7 @@
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"
-#include "clang/StaticAnalyzer/Core/PathSensitive/ObjCMessage.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/Calls.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ProgramState.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ProgramStateTrait.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/SymbolManager.h"
@@ -140,7 +140,7 @@ public:
                      const StoreManager::InvalidatedSymbols *invalidated,
                      ArrayRef<const MemRegion *> ExplicitRegions,
                      ArrayRef<const MemRegion *> Regions,
-                     const CallOrObjCMessage *Call) const;
+                     const CallEvent *Call) const;
   bool wantsRegionChangeUpdate(ProgramStateRef state) const {
     return true;
   }
@@ -200,7 +200,7 @@ private:
 
   /// Check if the function is not known to us. So, for example, we could
   /// conservatively assume it can free/reallocate it's pointer arguments.
-  bool doesNotFreeMemory(const CallOrObjCMessage *Call,
+  bool doesNotFreeMemory(const CallEvent *Call,
                          ProgramStateRef State) const;
 
   static bool SummarizeValue(raw_ostream &os, SVal V);
@@ -481,7 +481,8 @@ void MallocChecker::checkPostStmt(const CallExpr *CE, CheckerContext &C) const {
   C.addTransition(State);
 }
 
-static bool isFreeWhenDoneSetToZero(CallOrObjCMessage Call, Selector &S) {
+static bool isFreeWhenDoneSetToZero(const ObjCMessageInvocation &Call,
+                                    Selector &S) {
   for (unsigned i = 1; i < S.getNumArgs(); ++i)
     if (S.getNameForSlot(i).equals("freeWhenDone"))
       if (Call.getArgSVal(i).isConstant(0))
@@ -491,12 +492,12 @@ static bool isFreeWhenDoneSetToZero(CallOrObjCMessage Call, Selector &S) {
 }
 
 void MallocChecker::checkPreObjCMessage(const ObjCMessage &Msg,
-                                         CheckerContext &C) const {
+                                        CheckerContext &C) const {
   const ObjCMethodDecl *MD = Msg.getMethodDecl();
   if (!MD)
     return;
 
-  CallOrObjCMessage Call(Msg, C.getState(), C.getLocationContext());
+  ObjCMessageInvocation Call(Msg, C.getState(), C.getLocationContext());
   Selector S = Msg.getSelector();
 
   // If the first selector is dataWithBytesNoCopy, assume that the memory will
@@ -509,7 +510,7 @@ void MallocChecker::checkPreObjCMessage(const ObjCMessage &Msg,
        S.getNameForSlot(0) == "initWithCharactersNoCopy") &&
       !isFreeWhenDoneSetToZero(Call, S)){
     unsigned int argIdx  = 0;
-    C.addTransition(FreeMemAux(C, Call.getArg(argIdx),
+    C.addTransition(FreeMemAux(C, Call.getArgExpr(argIdx),
                     Msg.getMessageExpr(), C.getState(), true));
   }
 }
@@ -1310,10 +1311,10 @@ ProgramStateRef MallocChecker::evalAssume(ProgramStateRef state,
 }
 
 // Check if the function is known to us. So, for example, we could
-// conservatively assume it can free/reallocate it's pointer arguments.
+// conservatively assume it can free/reallocate its pointer arguments.
 // (We assume that the pointers cannot escape through calls to system
 // functions not handled by this checker.)
-bool MallocChecker::doesNotFreeMemory(const CallOrObjCMessage *Call,
+bool MallocChecker::doesNotFreeMemory(const CallEvent *Call,
                                       ProgramStateRef State) const {
   if (!Call)
     return false;
@@ -1322,118 +1323,23 @@ bool MallocChecker::doesNotFreeMemory(const CallOrObjCMessage *Call,
   // TODO: If we want to be more optimistic here, we'll need to make sure that
   // regions escape to C++ containers. They seem to do that even now, but for
   // mysterious reasons.
-  if (Call->isCXXCall())
+  if (!(isa<FunctionCall>(Call) || isa<ObjCMessageInvocation>(Call)))
     return false;
 
-  const Decl *D = Call->getDecl();
-  if (!D)
+  // If the call has a callback as an argument, assume the memory
+  // can be freed.
+  if (Call->hasNonZeroCallbackArg())
     return false;
 
-  ASTContext &ASTC = State->getStateManager().getContext();
-
-  // If it's one of the allocation functions we can reason about, we model
-  // its behavior explicitly.
-  if (isa<FunctionDecl>(D) && isMemFunction(cast<FunctionDecl>(D), ASTC)) {
-    return true;
-  }
-
-  // If it's not a system call, assume it frees memory.
-  if (!Call->isInSystemHeader())
-    return false;
-
-  // Process C/ObjC functions.
-  if (const FunctionDecl *FD  = dyn_cast<FunctionDecl>(D)) {
-    // White list the system functions whose arguments escape.
-    const IdentifierInfo *II = FD->getIdentifier();
-    if (!II)
-      return true;
-    StringRef FName = II->getName();
-
-    // White list thread local storage.
-    if (FName.equals("pthread_setspecific"))
+  // Check Objective-C messages by selector name.
+  if (const ObjCMessageInvocation *Msg = dyn_cast<ObjCMessageInvocation>(Call)){
+    // If it's not a framework call, assume it frees memory.
+    if (!Call->isInSystemHeader())
       return false;
 
-    // White list xpc connection context.
-    // TODO: Ensure that the deallocation actually happens, need to reason
-    // about "xpc_connection_set_finalizer_f".
-    if (FName.equals("xpc_connection_set_context"))
-      return false;
+    Selector S = Msg->getSelector();
 
-    // White list the 'XXXNoCopy' ObjC functions.
-    if (FName.endswith("NoCopy")) {
-      // Look for the deallocator argument. We know that the memory ownership
-      // is not transferred only if the deallocator argument is
-      // 'kCFAllocatorNull'.
-      for (unsigned i = 1; i < Call->getNumArgs(); ++i) {
-        const Expr *ArgE = Call->getArg(i)->IgnoreParenCasts();
-        if (const DeclRefExpr *DE = dyn_cast<DeclRefExpr>(ArgE)) {
-          StringRef DeallocatorName = DE->getFoundDecl()->getName();
-          if (DeallocatorName == "kCFAllocatorNull")
-            return true;
-        }
-      }
-      return false;
-    }
-
-    // PR12101
-    // Many CoreFoundation and CoreGraphics might allow a tracked object 
-    // to escape.
-    if (Call->isCFCGAllowingEscape(FName))
-      return false;
-
-    // Associating streams with malloced buffers. The pointer can escape if
-    // 'closefn' is specified (and if that function does free memory).
-    // Currently, we do not inspect the 'closefn' function (PR12101).
-    if (FName == "funopen")
-      if (Call->getNumArgs() >= 4 && !Call->getArgSVal(4).isConstant(0))
-        return false;
-
-    // Do not warn on pointers passed to 'setbuf' when used with std streams,
-    // these leaks might be intentional when setting the buffer for stdio.
-    // http://stackoverflow.com/questions/2671151/who-frees-setvbuf-buffer
-    if (FName == "setbuf" || FName =="setbuffer" ||
-        FName == "setlinebuf" || FName == "setvbuf") {
-      if (Call->getNumArgs() >= 1)
-        if (const DeclRefExpr *Arg =
-              dyn_cast<DeclRefExpr>(Call->getArg(0)->IgnoreParenCasts()))
-          if (const VarDecl *D = dyn_cast<VarDecl>(Arg->getDecl()))
-              if (D->getCanonicalDecl()->getName().find("std")
-                                                   != StringRef::npos)
-                return false;
-    }
-
-    // A bunch of other functions which either take ownership of a pointer or
-    // wrap the result up in a struct or object, meaning it can be freed later.
-    // (See RetainCountChecker.) Not all the parameters here are invalidated,
-    // but the Malloc checker cannot differentiate between them. The right way
-    // of doing this would be to implement a pointer escapes callback.
-    if (FName == "CGBitmapContextCreate" ||
-        FName == "CGBitmapContextCreateWithData" ||
-        FName == "CVPixelBufferCreateWithBytes" ||
-        FName == "CVPixelBufferCreateWithPlanarBytes" ||
-        FName == "OSAtomicEnqueue") {
-      return false;
-    }
-
-    // Whitelist NSXXInsertXX, for example NSMapInsertIfAbsent, since they can
-    // be deallocated by NSMapRemove.
-    if (FName.startswith("NS") && (FName.find("Insert") != StringRef::npos))
-      return false;
-
-    // If the call has a callback as an argument, assume the memory
-    // can be freed.
-    if (Call->hasNonZeroCallbackArg())
-      return false;
-
-    // Otherwise, assume that the function does not free memory.
-    // Most system calls, do not free the memory.
-    return true;
-
-  // Process ObjC functions.
-  } else if (const ObjCMethodDecl * ObjCD = dyn_cast<ObjCMethodDecl>(D)) {
-    Selector S = ObjCD->getSelector();
-
-    // White list the ObjC functions which do free memory.
+    // Whitelist the ObjC methods which do free memory.
     // - Anything containing 'freeWhenDone' param set to 1.
     //   Ex: dataWithBytesNoCopy:length:freeWhenDone.
     for (unsigned i = 1; i < S.getNumArgs(); ++i) {
@@ -1448,33 +1354,117 @@ bool MallocChecker::doesNotFreeMemory(const CallOrObjCMessage *Call,
     // If the first selector ends with NoCopy, assume that the ownership is
     // transferred as well.
     // Ex:  [NSData dataWithBytesNoCopy:bytes length:10];
-    if (S.getNameForSlot(0).endswith("NoCopy")) {
+    StringRef FirstSlot = S.getNameForSlot(0);
+    if (FirstSlot.endswith("NoCopy"))
       return false;
-    }
 
     // If the first selector starts with addPointer, insertPointer,
     // or replacePointer, assume we are dealing with NSPointerArray or similar.
     // This is similar to C++ containers (vector); we still might want to check
-    // that the pointers get freed, by following the container itself.
-    if (S.getNameForSlot(0).startswith("addPointer") ||
-        S.getNameForSlot(0).startswith("insertPointer") ||
-        S.getNameForSlot(0).startswith("replacePointer")) {
+    // that the pointers get freed by following the container itself.
+    if (FirstSlot.startswith("addPointer") ||
+        FirstSlot.startswith("insertPointer") ||
+        FirstSlot.startswith("replacePointer")) {
       return false;
     }
 
-    // If the call has a callback as an argument, assume the memory
-    // can be freed.
-    if (Call->hasNonZeroCallbackArg())
-      return false;
-
-    // Otherwise, assume that the function does not free memory.
-    // Most system calls, do not free the memory.
+    // Otherwise, assume that the method does not free memory.
+    // Most framework methods do not free memory.
     return true;
   }
 
-  // Otherwise, assume that the function can free memory.
-  return false;
+  // At this point the only thing left to handle is straight function calls.
+  const FunctionDecl *FD = cast<FunctionCall>(Call)->getDecl();
+  if (!FD)
+    return false;
 
+  ASTContext &ASTC = State->getStateManager().getContext();
+
+  // If it's one of the allocation functions we can reason about, we model
+  // its behavior explicitly.
+  if (isMemFunction(FD, ASTC))
+    return true;
+
+  // If it's not a system call, assume it frees memory.
+  if (!Call->isInSystemHeader())
+    return false;
+
+  // White list the system functions whose arguments escape.
+  const IdentifierInfo *II = FD->getIdentifier();
+  if (!II)
+    return false;
+  StringRef FName = II->getName();
+
+  // White list thread local storage.
+  if (FName.equals("pthread_setspecific"))
+    return false;
+  if (FName.equals("xpc_connection_set_context"))
+    return false;
+
+  // White list the 'XXXNoCopy' CoreFoundation functions.
+  if (FName.endswith("NoCopy")) {
+    // Look for the deallocator argument. We know that the memory ownership
+    // is not transferred only if the deallocator argument is
+    // 'kCFAllocatorNull'.
+    for (unsigned i = 1; i < Call->getNumArgs(); ++i) {
+      const Expr *ArgE = Call->getArgExpr(i)->IgnoreParenCasts();
+      if (const DeclRefExpr *DE = dyn_cast<DeclRefExpr>(ArgE)) {
+        StringRef DeallocatorName = DE->getFoundDecl()->getName();
+        if (DeallocatorName == "kCFAllocatorNull")
+          return true;
+      }
+    }
+    return false;
+  }
+
+  // PR12101
+  // Many CoreFoundation and CoreGraphics might allow a tracked object
+  // to escape.
+  if (CallOrObjCMessage::isCFCGAllowingEscape(FName))
+    return false;
+
+  // Associating streams with malloced buffers. The pointer can escape if
+  // 'closefn' is specified (and if that function does free memory).
+  // Currently, we do not inspect the 'closefn' function (PR12101).
+  if (FName == "funopen")
+    if (Call->getNumArgs() >= 4 && !Call->getArgSVal(4).isConstant(0))
+      return false;
+
+  // Do not warn on pointers passed to 'setbuf' when used with std streams,
+  // these leaks might be intentional when setting the buffer for stdio.
+  // http://stackoverflow.com/questions/2671151/who-frees-setvbuf-buffer
+  if (FName == "setbuf" || FName =="setbuffer" ||
+      FName == "setlinebuf" || FName == "setvbuf") {
+    if (Call->getNumArgs() >= 1) {
+      const Expr *ArgE = Call->getArgExpr(0)->IgnoreParenCasts();
+      if (const DeclRefExpr *ArgDRE = dyn_cast<DeclRefExpr>(ArgE))
+        if (const VarDecl *D = dyn_cast<VarDecl>(ArgDRE->getDecl()))
+          if (D->getCanonicalDecl()->getName().find("std") != StringRef::npos)
+            return false;
+    }
+  }
+
+  // A bunch of other functions which either take ownership of a pointer or
+  // wrap the result up in a struct or object, meaning it can be freed later.
+  // (See RetainCountChecker.) Not all the parameters here are invalidated,
+  // but the Malloc checker cannot differentiate between them. The right way
+  // of doing this would be to implement a pointer escapes callback.
+  if (FName == "CGBitmapContextCreate" ||
+      FName == "CGBitmapContextCreateWithData" ||
+      FName == "CVPixelBufferCreateWithBytes" ||
+      FName == "CVPixelBufferCreateWithPlanarBytes" ||
+      FName == "OSAtomicEnqueue") {
+    return false;
+  }
+
+  // Whitelist NSXXInsertXX, for example NSMapInsertIfAbsent, since they can
+  // be deallocated by NSMapRemove.
+  if (FName.startswith("NS") && (FName.find("Insert") != StringRef::npos))
+    return false;
+
+  // Otherwise, assume that the function does not free memory.
+  // Most system calls do not free the memory.
+  return true;
 }
 
 // If the symbol we are tracking is invalidated, but not explicitly (ex: the &p
@@ -1485,7 +1475,7 @@ MallocChecker::checkRegionChanges(ProgramStateRef State,
                             const StoreManager::InvalidatedSymbols *invalidated,
                                     ArrayRef<const MemRegion *> ExplicitRegions,
                                     ArrayRef<const MemRegion *> Regions,
-                                    const CallOrObjCMessage *Call) const {
+                                    const CallEvent *Call) const {
   if (!invalidated || invalidated->empty())
     return State;
   llvm::SmallPtrSet<SymbolRef, 8> WhitelistedSymbols;

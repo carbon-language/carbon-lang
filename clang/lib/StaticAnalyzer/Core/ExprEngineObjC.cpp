@@ -13,6 +13,7 @@
 
 #include "clang/AST/StmtObjC.h"
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/Calls.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ExprEngine.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ObjCMessage.h"
 
@@ -246,6 +247,9 @@ void ExprEngine::evalObjCMessage(StmtNodeBuilder &Bldr,
                                  ExplodedNode *Pred,
                                  ProgramStateRef state,
                                  bool GenSink) {
+  const LocationContext *LCtx = Pred->getLocationContext();
+  unsigned BlockCount = currentBuilderContext->getCurrentBlockCount();
+
   // First handle the return value.
   SVal ReturnValue = UnknownVal();
 
@@ -259,7 +263,7 @@ void ExprEngine::evalObjCMessage(StmtNodeBuilder &Bldr,
     // These methods return their receivers.
     const Expr *ReceiverE = msg.getInstanceReceiver();
     if (ReceiverE)
-      ReturnValue = state->getSVal(ReceiverE, Pred->getLocationContext());
+      ReturnValue = state->getSVal(ReceiverE, LCtx);
     break;
   }
   }
@@ -268,18 +272,17 @@ void ExprEngine::evalObjCMessage(StmtNodeBuilder &Bldr,
   if (ReturnValue.isUnknown()) {
     SValBuilder &SVB = getSValBuilder();
     QualType ResultTy = msg.getResultType(getContext());
-    unsigned Count = currentBuilderContext->getCurrentBlockCount();
     const Expr *CurrentE = cast<Expr>(currentStmt);
-    const LocationContext *LCtx = Pred->getLocationContext();
-    ReturnValue = SVB.getConjuredSymbolVal(NULL, CurrentE, LCtx, ResultTy, Count);
+    ReturnValue = SVB.getConjuredSymbolVal(NULL, CurrentE, LCtx, ResultTy,
+                                           BlockCount);
   }
 
   // Bind the return value.
-  const LocationContext *LCtx = Pred->getLocationContext();
   state = state->BindExpr(currentStmt, LCtx, ReturnValue);
 
   // Invalidate the arguments (and the receiver)
-  state = invalidateArguments(state, CallOrObjCMessage(msg, state, LCtx), LCtx);
+  ObjCMessageInvocation Invocation(msg, state, LCtx);
+  state = Invocation.invalidateRegions(BlockCount);
 
   // And create the new node.
   Bldr.generateNode(msg.getMessageExpr(), Pred, state, GenSink);

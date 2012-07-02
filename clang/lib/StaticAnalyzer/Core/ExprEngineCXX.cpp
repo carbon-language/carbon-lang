@@ -14,7 +14,7 @@
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/AnalysisManager.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ExprEngine.h"
-#include "clang/StaticAnalyzer/Core/PathSensitive/ObjCMessage.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/Calls.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/StmtCXX.h"
 
@@ -125,7 +125,9 @@ void ExprEngine::VisitCXXConstructExpr(const CXXConstructExpr *E,
       const LocationContext *LC = Pred->getLocationContext();
       ProgramStateRef state = Pred->getState();
 
-      state = invalidateArguments(state, CallOrObjCMessage(E, state, LC), LC);
+      CXXConstructorCall Call(E, state, LC);
+      unsigned BlockCount = currentBuilderContext->getCurrentBlockCount();
+      state = Call.invalidateRegions(BlockCount);
       Bldr.generateNode(E, Pred, state);
     }
   }

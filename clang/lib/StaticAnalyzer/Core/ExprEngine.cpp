@@ -185,7 +185,7 @@ ExprEngine::processRegionChanges(ProgramStateRef state,
                             const StoreManager::InvalidatedSymbols *invalidated,
                                  ArrayRef<const MemRegion *> Explicits,
                                  ArrayRef<const MemRegion *> Regions,
-                                 const CallOrObjCMessage *Call) {
+                                 const CallEvent *Call) {
   return getCheckerManager().runCheckersForRegionChanges(state, invalidated,
                                                       Explicits, Regions, Call);
 }

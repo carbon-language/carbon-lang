@@ -157,7 +157,7 @@ ProgramState::invalidateRegions(ArrayRef<const MemRegion *> Regions,
                                 const Expr *E, unsigned Count,
                                 const LocationContext *LCtx,
                                 StoreManager::InvalidatedSymbols *IS,
-                                const CallOrObjCMessage *Call) const {
+                                const CallEvent *Call) const {
   if (!IS) {
     StoreManager::InvalidatedSymbols invalidated;
     return invalidateRegionsImpl(Regions, E, Count, LCtx,
@@ -171,7 +171,7 @@ ProgramState::invalidateRegionsImpl(ArrayRef<const MemRegion *> Regions,
                                     const Expr *E, unsigned Count,
                                     const LocationContext *LCtx,
                                     StoreManager::InvalidatedSymbols &IS,
-                                    const CallOrObjCMessage *Call) const {
+                                    const CallEvent *Call) const {
   ProgramStateManager &Mgr = getStateManager();
   SubEngine* Eng = Mgr.getOwningEngine();
  
