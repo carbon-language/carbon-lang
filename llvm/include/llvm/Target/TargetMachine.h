@@ -14,6 +14,7 @@
 #ifndef LLVM_TARGET_TARGETMACHINE_H
 #define LLVM_TARGET_TARGETMACHINE_H
 
+#include "llvm/Pass.h"
 #include "llvm/Support/CodeGen.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/ADT/StringRef.h"
@@ -247,7 +248,9 @@ public:
   virtual bool addPassesToEmitFile(PassManagerBase &,
                                    formatted_raw_ostream &,
                                    CodeGenFileType,
-                                   bool /*DisableVerify*/ = true) {
+                                   bool /*DisableVerify*/ = true,
+                                   AnalysisID StartAfter = 0,
+                                   AnalysisID StopAfter = 0) {
     return true;
   }
 
@@ -297,7 +300,9 @@ public:
   virtual bool addPassesToEmitFile(PassManagerBase &PM,
                                    formatted_raw_ostream &Out,
                                    CodeGenFileType FileType,
-                                   bool DisableVerify = true);
+                                   bool DisableVerify = true,
+                                   AnalysisID StartAfter = 0,
+                                   AnalysisID StopAfter = 0);
 
   /// addPassesToEmitMachineCode - Add passes to the specified pass manager to
   /// get machine code emitted.  This uses a JITCodeEmitter object to handle

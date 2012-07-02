@@ -213,7 +213,8 @@ TargetPassConfig::~TargetPassConfig() {
 // Out of line constructor provides default values for pass options and
 // registers all common codegen passes.
 TargetPassConfig::TargetPassConfig(TargetMachine *tm, PassManagerBase &pm)
-  : ImmutablePass(ID), PM(&pm), TM(tm), Impl(0), Initialized(false),
+  : ImmutablePass(ID), PM(&pm), StartAfter(0), StopAfter(0),
+    Started(true), Stopped(false), TM(tm), Impl(0), Initialized(false),
     DisableVerify(false),
     EnableTailMerge(true) {
 
@@ -271,11 +272,22 @@ AnalysisID TargetPassConfig::getPassSubstitution(AnalysisID ID) const {
   return I->second;
 }
 
-/// Add a pass to the PassManager.
+/// Add a pass to the PassManager if that pass is supposed to be run.  If the
+/// Started/Stopped flags indicate either that the compilation should start at
+/// a later pass or that it should stop after an earlier pass, then do not add
+/// the pass.  Finally, compare the current pass against the StartAfter
+/// and StopAfter options and change the Started/Stopped flags accordingly.
 void TargetPassConfig::addPass(Pass *P) {
   assert(!Initialized && "PassConfig is immutable");
 
-  PM->add(P);
+  if (Started && !Stopped)
+    PM->add(P);
+  if (StopAfter == P->getPassID())
+    Stopped = true;
+  if (StartAfter == P->getPassID())
+    Started = true;
+  if (Stopped && !Started)
+    report_fatal_error("Cannot stop compilation after pass that is not run");
 }
 
 /// Add a CodeGen pass at this point in the pipeline after checking for target

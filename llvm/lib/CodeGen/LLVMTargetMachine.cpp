@@ -13,6 +13,7 @@
 
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/PassManager.h"
+#include "llvm/Assembly/PrintModulePass.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/MachineFunctionAnalysis.h"
@@ -81,9 +82,12 @@ LLVMTargetMachine::LLVMTargetMachine(const Target &T, StringRef Triple,
 /// addPassesToX helper drives creation and initialization of TargetPassConfig.
 static MCContext *addPassesToGenerateCode(LLVMTargetMachine *TM,
                                           PassManagerBase &PM,
-                                          bool DisableVerify) {
+                                          bool DisableVerify,
+                                          AnalysisID StartAfter,
+                                          AnalysisID StopAfter) {
   // Targets may override createPassConfig to provide a target-specific sublass.
   TargetPassConfig *PassConfig = TM->createPassConfig(PM);
+  PassConfig->setStartStopPasses(StartAfter, StopAfter);
 
   // Set PassConfig options provided by TargetMachine.
   PassConfig->setDisableVerify(DisableVerify);
@@ -127,11 +131,24 @@ static MCContext *addPassesToGenerateCode(LLVMTargetMachine *TM,
 bool LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
                                             formatted_raw_ostream &Out,
                                             CodeGenFileType FileType,
-                                            bool DisableVerify) {
+                                            bool DisableVerify,
+                                            AnalysisID StartAfter,
+                                            AnalysisID StopAfter) {
   // Add common CodeGen passes.
-  MCContext *Context = addPassesToGenerateCode(this, PM, DisableVerify);
+  MCContext *Context = addPassesToGenerateCode(this, PM, DisableVerify,
+                                               StartAfter, StopAfter);
   if (!Context)
     return true;
+
+  if (StopAfter) {
+    // FIXME: The intent is that this should eventually write out a YAML file,
+    // containing the LLVM IR, the machine-level IR (when stopping after a
+    // machine-level pass), and whatever other information is needed to
+    // deserialize the code and resume compilation.  For now, just write the
+    // LLVM IR.
+    PM.add(createPrintModulePass(&Out));
+    return false;
+  }
 
   if (hasMCSaveTempLabels())
     Context->setAllowTemporaryLabels(false);
@@ -216,7 +233,7 @@ bool LLVMTargetMachine::addPassesToEmitMachineCode(PassManagerBase &PM,
                                                    JITCodeEmitter &JCE,
                                                    bool DisableVerify) {
   // Add common CodeGen passes.
-  MCContext *Context = addPassesToGenerateCode(this, PM, DisableVerify);
+  MCContext *Context = addPassesToGenerateCode(this, PM, DisableVerify, 0, 0);
   if (!Context)
     return true;
 
@@ -236,7 +253,7 @@ bool LLVMTargetMachine::addPassesToEmitMC(PassManagerBase &PM,
                                           raw_ostream &Out,
                                           bool DisableVerify) {
   // Add common CodeGen passes.
-  Ctx = addPassesToGenerateCode(this, PM, DisableVerify);
+  Ctx = addPassesToGenerateCode(this, PM, DisableVerify, 0, 0);
   if (!Ctx)
     return true;
 

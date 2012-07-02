@@ -55,6 +55,10 @@ public:
 
 private:
   PassManagerBase *PM;
+  AnalysisID StartAfter;
+  AnalysisID StopAfter;
+  bool Started;
+  bool Stopped;
 
 protected:
   TargetMachine *TM;
@@ -91,6 +95,18 @@ public:
   void setInitialized() { Initialized = true; }
 
   CodeGenOpt::Level getOptLevel() const { return TM->getOptLevel(); }
+
+  /// setStartStopPasses - Set the StartAfter and StopAfter passes to allow
+  /// running only a portion of the normal code-gen pass sequence.  If the
+  /// Start pass ID is zero, then compilation will begin at the normal point;
+  /// otherwise, clear the Started flag to indicate that passes should not be
+  /// added until the starting pass is seen.  If the Stop pass ID is zero,
+  /// then compilation will continue to the end.
+  void setStartStopPasses(AnalysisID Start, AnalysisID Stop) {
+    StartAfter = Start;
+    StopAfter = Stop;
+    Started = (StartAfter == 0);
+  }
 
   void setDisableVerify(bool Disable) { setOpt(DisableVerify, Disable); }
 
@@ -238,7 +254,8 @@ protected:
   /// Return the pass that was added, or zero if no pass was added.
   AnalysisID addPass(AnalysisID PassID);
 
-  /// Add a pass to the PassManager.
+  /// Add a pass to the PassManager if that pass is supposed to be run, as
+  /// determined by the StartAfter and StopAfter options.
   void addPass(Pass *P);
 
   /// addMachinePasses helper to create the target-selected or overriden

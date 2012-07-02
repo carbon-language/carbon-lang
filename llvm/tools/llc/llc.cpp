@@ -18,6 +18,7 @@
 #include "llvm/PassManager.h"
 #include "llvm/Pass.h"
 #include "llvm/ADT/Triple.h"
+#include "llvm/Assembly/PrintModulePass.h"
 #include "llvm/Support/IRReader.h"
 #include "llvm/CodeGen/LinkAllAsmWriterComponents.h"
 #include "llvm/CodeGen/LinkAllCodegenComponents.h"
@@ -257,6 +258,15 @@ UseInitArray("use-init-array",
   cl::desc("Use .init_array instead of .ctors."),
   cl::init(false));
 
+static cl::opt<std::string> StopAfter("stop-after",
+  cl::desc("Stop compilation after a specific pass"),
+  cl::value_desc("pass-name"),
+  cl::init(""));
+static cl::opt<std::string> StartAfter("start-after",
+  cl::desc("Resume compilation after a specific pass"),
+  cl::value_desc("pass-name"),
+  cl::init(""));
+
 // GetFileNameRoot - Helper function to get the basename of a filename.
 static inline std::string
 GetFileNameRoot(const std::string &InputFilename) {
@@ -353,9 +363,14 @@ int main(int argc, char **argv) {
   InitializeAllAsmPrinters();
   InitializeAllAsmParsers();
 
-  // Initialize codegen so that the -print-after and -print-before options
-  // work.
-  initializeCodeGen(*PassRegistry::getPassRegistry());
+  // Initialize codegen and IR passes used by llc so that the -print-after,
+  // -print-before, and -stop-after options work.
+  PassRegistry *Registry = PassRegistry::getPassRegistry();
+  initializeCore(*Registry);
+  initializeCodeGen(*Registry);
+  initializeLoopStrengthReducePass(*Registry);
+  initializeLowerIntrinsicsPass(*Registry);
+  initializeUnreachableBlockElimPass(*Registry);
 
   // Register the target printer for --version.
   cl::AddExtraVersionPrinter(TargetRegistry::printRegisteredTargetsForVersion);
@@ -498,8 +513,29 @@ int main(int argc, char **argv) {
   {
     formatted_raw_ostream FOS(Out->os());
 
+    AnalysisID StartAfterID = 0;
+    AnalysisID StopAfterID = 0;
+    const PassRegistry *PR = PassRegistry::getPassRegistry();
+    if (!StartAfter.empty()) {
+      const PassInfo *PI = PR->getPassInfo(StartAfter);
+      if (!PI) {
+        errs() << argv[0] << ": start-after pass is not registered.\n";
+        return 1;
+      }
+      StartAfterID = PI->getTypeInfo();
+    }
+    if (!StopAfter.empty()) {
+      const PassInfo *PI = PR->getPassInfo(StopAfter);
+      if (!PI) {
+        errs() << argv[0] << ": stop-after pass is not registered.\n";
+        return 1;
+      }
+      StopAfterID = PI->getTypeInfo();
+    }
+
     // Ask the target to add backend passes as necessary.
-    if (Target.addPassesToEmitFile(PM, FOS, FileType, NoVerify)) {
+    if (Target.addPassesToEmitFile(PM, FOS, FileType, NoVerify,
+                                   StartAfterID, StopAfterID)) {
       errs() << argv[0] << ": target does not support generation of this"
              << " file type!\n";
       return 1;

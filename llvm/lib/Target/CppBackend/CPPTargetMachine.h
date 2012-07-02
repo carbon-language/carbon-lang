@@ -31,7 +31,9 @@ struct CPPTargetMachine : public TargetMachine {
   virtual bool addPassesToEmitFile(PassManagerBase &PM,
                                    formatted_raw_ostream &Out,
                                    CodeGenFileType FileType,
-                                   bool DisableVerify);
+                                   bool DisableVerify,
+                                   AnalysisID StartAfter,
+                                   AnalysisID StopAfter);
 
   virtual const TargetData *getTargetData() const { return 0; }
 };
