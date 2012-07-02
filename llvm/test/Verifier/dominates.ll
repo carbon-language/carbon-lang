@@ -1,4 +1,4 @@
-; RUN: not llvm-as < %s -o /dev/null |& FileCheck %s
+; RUN: not llvm-as < %s -o /dev/null 2>&1 | FileCheck %s
 
 define i32 @f1(i32 %x) {
        %y = add i32 %z, 1

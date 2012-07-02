@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86 -relocation-model=static -stats |& \
+; RUN: llc < %s -march=x86 -relocation-model=static -stats 2>&1 | \
 ; RUN:   grep asm-printer | grep 14
 ;
 @size20 = external global i32		; <i32*> [#uses=1]

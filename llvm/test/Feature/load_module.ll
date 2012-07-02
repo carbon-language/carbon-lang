@@ -1,6 +1,6 @@
 ; PR1318
 ; RUN: opt < %s -load=%llvmshlibdir/LLVMHello%shlibext -hello \
-; RUN:   -disable-output |& grep Hello
+; RUN:   -disable-output 2>&1 | grep Hello
 ; REQUIRES: loadable_module
 ; FIXME: On Cygming, it might fail without building LLVMHello manually.
 

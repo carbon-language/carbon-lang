@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=thumb -stats |& \
+; RUN: llc < %s -march=thumb -stats 2>&1 | \
 ; RUN:   grep "4 .*Number of machine instrs printed"
 
 ;; Integer absolute value, should produce something as good as:

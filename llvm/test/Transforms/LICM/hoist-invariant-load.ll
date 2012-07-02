@@ -1,4 +1,4 @@
-; RUN: opt < %s -licm -stats -S |& grep "1 licm"
+; RUN: opt < %s -licm -stats -S 2>&1 | grep "1 licm"
 
 @"\01L_OBJC_METH_VAR_NAME_" = internal global [4 x i8] c"foo\00", section "__TEXT,__objc_methname,cstring_literals", align 1
 @"\01L_OBJC_SELECTOR_REFERENCES_" = internal global i8* getelementptr inbounds ([4 x i8]* @"\01L_OBJC_METH_VAR_NAME_", i32 0, i32 0), section "__DATA, __objc_selrefs, literal_pointers, no_dead_strip"

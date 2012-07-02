@@ -1,4 +1,4 @@
-; RUN: opt < %s -basicaa -aa-eval -print-all-alias-modref-info -disable-output |& FileCheck %s
+; RUN: opt < %s -basicaa -aa-eval -print-all-alias-modref-info -disable-output 2>&1 | FileCheck %s
 ; If GEP base doesn't alias Z, then GEP doesn't alias Z.
 ; rdar://7282591
 

@@ -1,6 +1,6 @@
-; RUN: llc < %s -O3 -debug-pass=Structure -print-machineinstrs=branch-folder -o /dev/null |& FileCheck %s
-; RUN: llc < %s -O3 -debug-pass=Structure -print-machineinstrs -o /dev/null |& FileCheck %s
-; RUN: llc < %s -O3 -debug-pass=Structure -print-machineinstrs= -o /dev/null |& FileCheck %s
+; RUN: llc < %s -O3 -debug-pass=Structure -print-machineinstrs=branch-folder -o /dev/null 2>&1 | FileCheck %s
+; RUN: llc < %s -O3 -debug-pass=Structure -print-machineinstrs -o /dev/null 2>&1 | FileCheck %s
+; RUN: llc < %s -O3 -debug-pass=Structure -print-machineinstrs= -o /dev/null 2>&1 | FileCheck %s
 
 define i64 @foo(i64 %a, i64 %b) nounwind {
 ; CHECK: -branch-folder -print-machineinstrs

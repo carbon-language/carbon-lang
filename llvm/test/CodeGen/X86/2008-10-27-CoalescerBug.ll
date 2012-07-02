@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=i386-apple-darwin -mattr=+sse2 -stats |& FileCheck %s
+; RUN: llc < %s -mtriple=i386-apple-darwin -mattr=+sse2 -stats 2>&1 | FileCheck %s
 ; Now this test spills one register. But a reload in the loop is cheaper than
 ; the divsd so it's a win.
 

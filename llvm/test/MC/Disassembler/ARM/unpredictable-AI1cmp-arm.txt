@@ -1,4 +1,4 @@
-# RUN: llvm-mc --disassemble %s -triple=armv7-linux-gnueabi |& FileCheck %s
+# RUN: llvm-mc --disassemble %s -triple=armv7-linux-gnueabi 2>&1 | FileCheck %s
 
 # CHECK: potentially undefined
 # CHECK: 0x01 0x10 0x50 0x03

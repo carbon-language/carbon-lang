@@ -1,4 +1,4 @@
-; RUN: not llvm-as < %s |& FileCheck %s
+; RUN: not llvm-as < %s 2>&1 | FileCheck %s
 
 ; CHECK: invalid cast opcode for cast from '<4 x i64>' to 'i8'
 

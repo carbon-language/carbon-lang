@@ -1,7 +1,7 @@
 ; RUN: opt -regions -analyze < %s | FileCheck %s
-; RUN: opt -regions -stats -analyze < %s |& FileCheck -check-prefix=STAT %s
-; RUN: opt -regions -print-region-style=bb  -analyze < %s |& FileCheck -check-prefix=BBIT %s
-; RUN: opt -regions -print-region-style=rn  -analyze < %s |& FileCheck -check-prefix=RNIT %s
+; RUN: opt -regions -stats -analyze < %s 2>&1 | FileCheck -check-prefix=STAT %s
+; RUN: opt -regions -print-region-style=bb  -analyze < %s 2>&1 | FileCheck -check-prefix=BBIT %s
+; RUN: opt -regions -print-region-style=rn  -analyze < %s 2>&1 | FileCheck -check-prefix=RNIT %s
 
 define void @BZ2_blockSort() nounwind {
 start:

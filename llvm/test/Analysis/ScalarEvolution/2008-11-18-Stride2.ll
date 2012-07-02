@@ -1,4 +1,4 @@
-; RUN: opt < %s -analyze -scalar-evolution |& grep {/u 3}
+; RUN: opt < %s -analyze -scalar-evolution 2>&1 | grep {/u 3}
 ; XFAIL: *
 
 ; This is a tricky testcase for unsigned wrap detection which ScalarEvolution

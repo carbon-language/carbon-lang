@@ -1,4 +1,4 @@
-; RUN: opt < %s -basicaa -aa-eval -disable-output |& FileCheck %s
+; RUN: opt < %s -basicaa -aa-eval -disable-output 2>&1 | FileCheck %s
 
 declare noalias i32* @_Znwj(i32 %x) nounwind
 

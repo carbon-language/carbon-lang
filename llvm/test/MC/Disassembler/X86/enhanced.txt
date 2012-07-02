@@ -1,4 +1,4 @@
-# RUN: llvm-mc --edis %s -triple=x86_64-apple-darwin9 |& FileCheck %s
+# RUN: llvm-mc --edis %s -triple=x86_64-apple-darwin9 2>&1 | FileCheck %s
 
 # CHECK: [o:jne][w:	][0-p:-][0-l:10=10] <br> 0:[RIP/112](pc)=18446744073709551606
 0x0f 0x85 0xf6 0xff 0xff 0xff

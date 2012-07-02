@@ -1,4 +1,4 @@
-; RUN: not llvm-as %s -o /dev/null |& grep "Only PHI nodes may reference their own value"
+; RUN: not llvm-as %s -o /dev/null 2>&1 | grep "Only PHI nodes may reference their own value"
 
 ; Test that self referential instructions are not allowed
 

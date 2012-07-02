@@ -1,4 +1,4 @@
-# RUN: not llvm-mc -triple i386-unknown-unknown %s |& FileCheck %s
+# RUN: not llvm-mc -triple i386-unknown-unknown %s 2>&1 | FileCheck %s
 
 .macro foo
 .err

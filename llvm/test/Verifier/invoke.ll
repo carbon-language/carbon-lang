@@ -1,4 +1,4 @@
-; RUN: not llvm-as < %s -o /dev/null |& FileCheck %s
+; RUN: not llvm-as < %s -o /dev/null 2>&1 | FileCheck %s
 
 ; PR1042
 define i32 @foo() {

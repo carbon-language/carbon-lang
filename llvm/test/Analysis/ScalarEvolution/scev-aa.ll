@@ -1,5 +1,5 @@
 ; RUN: opt < %s -scev-aa -aa-eval -print-all-alias-modref-info \
-; RUN:   |& FileCheck %s
+; RUN:   2>&1 | FileCheck %s
 
 ; At the time of this writing, -basicaa misses the example of the form
 ; A[i+(j+1)] != A[i+j], which can arise from multi-dimensional array references,

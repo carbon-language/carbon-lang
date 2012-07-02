@@ -1,4 +1,4 @@
-; RUN: opt < %s -basicaa -aa-eval -print-all-alias-modref-info |& FileCheck %s
+; RUN: opt < %s -basicaa -aa-eval -print-all-alias-modref-info 2>&1 | FileCheck %s
 ; PR4267
 
 ; CHECK: MayAlias: double* %p.0.i.0, double* %p3

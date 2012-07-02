@@ -1,4 +1,4 @@
-# RUN: yaml-bench -canonical %s |& FileCheck %s
+# RUN: yaml-bench -canonical %s 2>&1 | FileCheck %s
 #
 # This fails because even without a key token, some contexts (in this case flow
 # maps) allow implicit null keys, which mix with this in weird ways.

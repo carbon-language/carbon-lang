@@ -1,4 +1,4 @@
-; RUN: opt < %s -globalopt -stats -disable-output |& grep "1 globalopt - Number of global vars shrunk to booleans"
+; RUN: opt < %s -globalopt -stats -disable-output 2>&1 | grep "1 globalopt - Number of global vars shrunk to booleans"
 
 @Stop = internal global i32 0                     ; <i32*> [#uses=3]
 

@@ -1,5 +1,5 @@
-; RUN: llc < %s -mtriple=x86_64-linux -o /dev/null -stats |& FileCheck %s -check-prefix=STATS
-; RUN: llc < %s -mtriple=x86_64-win32 -o /dev/null -stats |& FileCheck %s -check-prefix=STATS
+; RUN: llc < %s -mtriple=x86_64-linux -o /dev/null -stats 2>&1 | FileCheck %s -check-prefix=STATS
+; RUN: llc < %s -mtriple=x86_64-win32 -o /dev/null -stats 2>&1 | FileCheck %s -check-prefix=STATS
 ; STATS: 9 asm-printer
 
 ; RUN: llc < %s -mtriple=x86_64-linux | FileCheck %s

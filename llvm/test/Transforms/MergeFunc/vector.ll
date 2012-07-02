@@ -1,4 +1,4 @@
-; RUN: opt -mergefunc -stats -disable-output < %s |& grep "functions merged"
+; RUN: opt -mergefunc -stats -disable-output < %s 2>&1 | grep "functions merged"
 
 ; This test is checks whether we can merge
 ;   vector<intptr_t>::push_back(0)

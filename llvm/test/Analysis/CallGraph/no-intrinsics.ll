@@ -1,4 +1,4 @@
-; RUN: opt < %s -print-callgraph -disable-output |& FileCheck %s
+; RUN: opt < %s -print-callgraph -disable-output 2>&1 | FileCheck %s
 
 ; Check that intrinsics aren't added to the call graph
 

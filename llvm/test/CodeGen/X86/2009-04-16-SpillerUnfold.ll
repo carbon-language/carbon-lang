@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=x86_64-apple-darwin10.0 -relocation-model=pic -disable-fp-elim -stats |& grep {Number of modref unfolded}
+; RUN: llc < %s -mtriple=x86_64-apple-darwin10.0 -relocation-model=pic -disable-fp-elim -stats 2>&1 | grep {Number of modref unfolded}
 ; XFAIL: *
 ; 69408 removed the opportunity for this optimization to work
 

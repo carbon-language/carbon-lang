@@ -1,4 +1,4 @@
-# RUN: yaml-bench -canonical %s |& FileCheck %s
+# RUN: yaml-bench -canonical %s 2>&1 | FileCheck %s
 #
 # Indent trimming is not yet implemented.
 # XFAIL: *

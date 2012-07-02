@@ -1,4 +1,4 @@
-; RUN: not llvm-link %s %p/module-flags-4-b.ll -S -o - |& FileCheck %s
+; RUN: not llvm-link %s %p/module-flags-4-b.ll -S -o - 2>&1 | FileCheck %s
 
 ; Test 'require' error.
 

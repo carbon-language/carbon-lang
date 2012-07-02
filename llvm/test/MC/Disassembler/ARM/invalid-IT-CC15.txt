@@ -1,4 +1,4 @@
-# RUN: llvm-mc --disassemble %s -triple=thumbv7-unknown-unknown |& grep und
+# RUN: llvm-mc --disassemble %s -triple=thumbv7-unknown-unknown 2>&1 | grep und
 # rdar://10841671
 
 0xe3 0xbf

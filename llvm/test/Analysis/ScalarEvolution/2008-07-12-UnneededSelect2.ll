@@ -1,4 +1,4 @@
-; RUN: opt < %s -analyze -scalar-evolution |& not grep smax
+; RUN: opt < %s -analyze -scalar-evolution 2>&1 | not grep smax
 ; PR2070
 
 define i32 @a(i32 %x) nounwind  {

@@ -1,3 +1,3 @@
-; RUN: not opt --foo |& grep "Unknown command line argument"
+; RUN: not opt --foo 2>&1 | grep "Unknown command line argument"
 
 ; there is no --foo

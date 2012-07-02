@@ -1,7 +1,7 @@
 ; This testcase consists of alias relations which should be completely
 ; resolvable by basicaa.
 
-; RUN: opt < %s -basicaa -aa-eval -print-may-aliases -disable-output |& FileCheck %s
+; RUN: opt < %s -basicaa -aa-eval -print-may-aliases -disable-output 2>&1 | FileCheck %s
 
 %T = type { i32, [10 x i8] }
 

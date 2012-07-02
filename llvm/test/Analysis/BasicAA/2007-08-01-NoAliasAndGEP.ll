@@ -1,4 +1,4 @@
-; RUN: opt < %s -basicaa -aa-eval -print-all-alias-modref-info -disable-output |& FileCheck %s
+; RUN: opt < %s -basicaa -aa-eval -print-all-alias-modref-info -disable-output 2>&1 | FileCheck %s
 
 ; CHECK: Function: foo
 ; CHECK:   MayAlias: i32* %Ipointer, i32* %Jpointer

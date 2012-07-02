@@ -1,5 +1,5 @@
-# RUN: llvm-mc --disassemble %s -triple=armv7-linux-gnueabi |& FileCheck %s -check-prefix=CHECK-WARN
-# RUN: llvm-mc --disassemble %s -triple=armv7-linux-gnueabi |& FileCheck %s
+# RUN: llvm-mc --disassemble %s -triple=armv7-linux-gnueabi 2>&1 | FileCheck %s -check-prefix=CHECK-WARN
+# RUN: llvm-mc --disassemble %s -triple=armv7-linux-gnueabi 2>&1 | FileCheck %s
 
 # CHECK-WARN: potentially undefined
 # CHECK-WARN: 0x74 0x03 0xaf 0x06

@@ -1,4 +1,4 @@
-; RUN: not llvm-as < %s |& FileCheck %s
+; RUN: not llvm-as < %s 2>&1 | FileCheck %s
 
 define void @fpmath1(i32 %i, float %f, <2 x float> %g) {
   %s = add i32 %i, %i, !fpmath !0

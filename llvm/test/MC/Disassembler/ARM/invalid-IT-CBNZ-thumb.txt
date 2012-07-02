@@ -1,4 +1,4 @@
-# RUN: llvm-mc --disassemble %s -triple=thumbv7-apple-darwin9 |& grep "potentially undefined instruction encoding"
+# RUN: llvm-mc --disassemble %s -triple=thumbv7-apple-darwin9 2>&1 | grep "potentially undefined instruction encoding"
 
 # CBZ / CBNZ not allowed in IT block.
 

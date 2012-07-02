@@ -1,4 +1,4 @@
-; RUN: opt < %s -print-callgraph -disable-output |& FileCheck %s
+; RUN: opt < %s -print-callgraph -disable-output 2>&1 | FileCheck %s
 
 ; CHECK: Call graph node <<null function>>
 ; CHECK:  CS<{{.*}}> calls function 'callee'
