@@ -57,7 +57,7 @@ struct Info {
   bool operator!=(const Info &RHS) const { return !(*this == RHS); }
 };
 
-/// Builtin::Context - This holds information about target-independent and
+/// \brief Holds information about both target-independent and
 /// target-specific builtins, allowing easy queries by clients.
 class Context {
   const Info *TSRecords;
@@ -68,7 +68,7 @@ public:
   /// \brief Perform target-specific initialization
   void InitializeTarget(const TargetInfo &Target);
   
-  /// InitializeBuiltins - Mark the identifiers for all the builtins with their
+  /// \brief Mark the identifiers for all the builtins with their
   /// appropriate builtin ID # and mark any non-portable builtin identifiers as
   /// such.
   void InitializeBuiltins(IdentifierTable &Table, const LangOptions& LangOpts);
@@ -77,39 +77,39 @@ public:
   void GetBuiltinNames(SmallVectorImpl<const char *> &Names,
                        bool NoBuiltins);
 
-  /// Builtin::GetName - Return the identifier name for the specified builtin,
+  /// \brief Return the identifier name for the specified builtin,
   /// e.g. "__builtin_abs".
   const char *GetName(unsigned ID) const {
     return GetRecord(ID).Name;
   }
 
-  /// GetTypeString - Get the type descriptor string for the specified builtin.
+  /// \brief Get the type descriptor string for the specified builtin.
   const char *GetTypeString(unsigned ID) const {
     return GetRecord(ID).Type;
   }
 
-  /// isConst - Return true if this function has no side effects and doesn't
+  /// \brief Return true if this function has no side effects and doesn't
   /// read memory.
   bool isConst(unsigned ID) const {
     return strchr(GetRecord(ID).Attributes, 'c') != 0;
   }
 
-  /// isNoThrow - Return true if we know this builtin never throws an exception.
+  /// \brief Return true if we know this builtin never throws an exception.
   bool isNoThrow(unsigned ID) const {
     return strchr(GetRecord(ID).Attributes, 'n') != 0;
   }
 
-  /// isNoReturn - Return true if we know this builtin never returns.
+  /// \brief Return true if we know this builtin never returns.
   bool isNoReturn(unsigned ID) const {
     return strchr(GetRecord(ID).Attributes, 'r') != 0;
   }
 
-  /// isReturnsTwice - Return true if we know this builtin can return twice.
+  /// \brief Return true if we know this builtin can return twice.
   bool isReturnsTwice(unsigned ID) const {
     return strchr(GetRecord(ID).Attributes, 'j') != 0;
   }
 
-  /// isLibFunction - Return true if this is a builtin for a libc/libm function,
+  /// \brief Return true if this is a builtin for a libc/libm function,
   /// with a "__builtin_" prefix (e.g. __builtin_abs).
   bool isLibFunction(unsigned ID) const {
     return strchr(GetRecord(ID).Attributes, 'F') != 0;
@@ -147,10 +147,10 @@ public:
   /// argument and whether this function as a va_list argument.
   bool isScanfLike(unsigned ID, unsigned &FormatIdx, bool &HasVAListArg);
 
-  /// isConstWithoutErrno - Return true if this function has no side
-  /// effects and doesn't read memory, except for possibly errno. Such
-  /// functions can be const when the MathErrno lang option is
-  /// disabled.
+  /// \brief Return true if this function has no side effects and doesn't
+  /// read memory, except for possibly errno.
+  ///
+  /// Such functions can be const when the MathErrno lang option is disabled.
   bool isConstWithoutErrno(unsigned ID) const {
     return strchr(GetRecord(ID).Attributes, 'e') != 0;
   }

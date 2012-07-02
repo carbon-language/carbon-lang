@@ -42,7 +42,7 @@ class TargetOptions;
 
 namespace Builtin { struct Info; }
 
-/// TargetCXXABI - The types of C++ ABIs for which we can generate code.
+/// \brief The types of C++ ABIs for which we can generate code.
 enum TargetCXXABI {
   /// The generic ("Itanium") C++ ABI, documented at:
   ///   http://www.codesourcery.com/public/cxx-abi/
@@ -58,7 +58,7 @@ enum TargetCXXABI {
   CXXABI_Microsoft
 };
 
-/// TargetInfo - This class exposes information about the current target.
+/// \brief Exposes information about the current target.
 ///
 class TargetInfo : public RefCountedBase<TargetInfo> {
   llvm::Triple Triple;
@@ -100,7 +100,7 @@ protected:
   TargetInfo(const std::string &T);
 
 public:
-  /// CreateTargetInfo - Construct a target for the given options.
+  /// \brief Construct a target for the given options.
   ///
   /// \param Opts - The options to use to initialize the target. The target may
   /// modify the options to canonicalize the target feature information to match
@@ -129,8 +129,8 @@ public:
     LongDouble
   };
 
-  /// BuiltinVaListKind - The different kinds of __builtin_va_list types
-  /// defined by the target implementation.
+  /// \brief The different kinds of __builtin_va_list types defined by
+  /// the target implementation.
   enum BuiltinVaListKind {
     /// typedef char* __builtin_va_list;
     CharPtrBuiltinVaList = 0,
@@ -156,7 +156,8 @@ protected:
   IntType SizeType, IntMaxType, UIntMaxType, PtrDiffType, IntPtrType, WCharType,
           WIntType, Char16Type, Char32Type, Int64Type, SigAtomicType;
 
-  /// Flag whether the Objective-C built-in boolean type should be signed char.
+  /// \brief Whether Objective-C's built-in boolean type should be signed char.
+  ///
   /// Otherwise, when this flag is not set, the normal built-in boolean type is
   /// used.
   unsigned UseSignedCharForObjCBool : 1;
@@ -168,10 +169,12 @@ protected:
   /// boundary.
   unsigned UseBitFieldTypeAlignment : 1;
 
-  /// Control whether zero length bitfields (e.g., int : 0;) force alignment of
-  /// the next bitfield.  If the alignment of the zero length bitfield is 
-  /// greater than the member that follows it, `bar', `bar' will be aligned as
-  /// the type of the zero-length bitfield.
+  /// \brief Whether zero length bitfields (e.g., int : 0;) force alignment of
+  /// the next bitfield.
+  ///
+  /// If the alignment of the zero length bitfield is greater than the member
+  /// that follows it, `bar', `bar' will be aligned as the type of the
+  /// zero-length bitfield.
   unsigned UseZeroLengthBitfieldAlignment : 1;
 
   /// If non-zero, specifies a fixed alignment value for bitfields that follow
@@ -194,19 +197,20 @@ public:
   IntType getSigAtomicType() const { return SigAtomicType; }
 
 
-  /// getTypeWidth - Return the width (in bits) of the specified integer type
-  /// enum. For example, SignedInt -> getIntWidth().
+  /// \brief Return the width (in bits) of the specified integer type enum.
+  ///
+  /// For example, SignedInt -> getIntWidth().
   unsigned getTypeWidth(IntType T) const;
 
-  /// getTypeAlign - Return the alignment (in bits) of the specified integer
-  /// type enum. For example, SignedInt -> getIntAlign().
+  /// \brief Return the alignment (in bits) of the specified integer type enum.
+  ///
+  /// For example, SignedInt -> getIntAlign().
   unsigned getTypeAlign(IntType T) const;
 
-  /// isTypeSigned - Return whether an integer types is signed. Returns true if
-  /// the type is signed; false otherwise.
+  /// \brief Returns true if the type is signed; false otherwise.
   static bool isTypeSigned(IntType T);
 
-  /// getPointerWidth - Return the width of pointers on this target, for the
+  /// \brief Return the width of pointers on this target, for the
   /// specified address space.
   uint64_t getPointerWidth(unsigned AddrSpace) const {
     return AddrSpace == 0 ? PointerWidth : getPointerWidthV(AddrSpace);
@@ -215,17 +219,21 @@ public:
     return AddrSpace == 0 ? PointerAlign : getPointerAlignV(AddrSpace);
   }
 
-  /// getBoolWidth/Align - Return the size of '_Bool' and C++ 'bool' for this
-  /// target, in bits.
+  /// \brief Return the size of '_Bool' and C++ 'bool' for this target, in bits.
   unsigned getBoolWidth() const { return BoolWidth; }
+
+  /// \brief Return the alignment of '_Bool' and C++ 'bool' for this target.
   unsigned getBoolAlign() const { return BoolAlign; }
 
   unsigned getCharWidth() const { return 8; } // FIXME
   unsigned getCharAlign() const { return 8; } // FIXME
 
-  /// getShortWidth/Align - Return the size of 'signed short' and
-  /// 'unsigned short' for this target, in bits.
+  /// \brief Return the size of 'signed short' and 'unsigned short' for this
+  /// target, in bits.
   unsigned getShortWidth() const { return 16; } // FIXME
+
+  /// \brief Return the alignment of 'signed short' and 'unsigned short' for
+  /// this target.
   unsigned getShortAlign() const { return 16; } // FIXME
 
   /// getIntWidth/Align - Return the size of 'signed int' and 'unsigned int' for
@@ -243,7 +251,7 @@ public:
   unsigned getLongLongWidth() const { return LongLongWidth; }
   unsigned getLongLongAlign() const { return LongLongAlign; }
 
-  /// getSuitableAlign - Return the alignment that is suitable for storing any
+  /// \brief Return the alignment that is suitable for storing any
   /// object with a fundamental alignment requirement.
   unsigned getSuitableAlign() const { return SuitableAlign; }
 
@@ -285,7 +293,7 @@ public:
     return *LongDoubleFormat;
   }
 
-  /// getFloatEvalMethod - Return the value for the C99 FLT_EVAL_METHOD macro.
+  /// \brief Return the value for the C99 FLT_EVAL_METHOD macro.
   virtual unsigned getFloatEvalMethod() const { return 0; }
 
   // getLargeArrayMinWidth/Align - Return the minimum array size that is
@@ -293,21 +301,19 @@ public:
   unsigned getLargeArrayMinWidth() const { return LargeArrayMinWidth; }
   unsigned getLargeArrayAlign() const { return LargeArrayAlign; }
 
-  /// getMaxAtomicPromoteWidth - Return the maximum width lock-free atomic
-  /// operation which will ever be supported for the given target
+  /// \brief Return the maximum width lock-free atomic operation which will
+  /// ever be supported for the given target
   unsigned getMaxAtomicPromoteWidth() const { return MaxAtomicPromoteWidth; }
-  /// getMaxAtomicInlineWidth - Return the maximum width lock-free atomic
-  /// operation which can be inlined given the supported features of the
-  /// given target.
+  /// \brief Return the maximum width lock-free atomic operation which can be
+  /// inlined given the supported features of the given target.
   unsigned getMaxAtomicInlineWidth() const { return MaxAtomicInlineWidth; }
 
-  /// getIntMaxTWidth - Return the size of intmax_t and uintmax_t for this
-  /// target, in bits.
+  /// \brief Return the size of intmax_t and uintmax_t for this target, in bits.
   unsigned getIntMaxTWidth() const {
     return getTypeWidth(IntMaxType);
   }
 
-  /// getRegisterWidth - Return the "preferred" register width on this target.
+  /// \brief Return the "preferred" register width on this target.
   uint64_t getRegisterWidth() const {
     // Currently we assume the register width on the target matches the pointer
     // width, we can introduce a new variable for this if/when some target wants
@@ -315,22 +321,24 @@ public:
     return LongWidth; 
   }
 
-  /// getUserLabelPrefix - This returns the default value of the
-  /// __USER_LABEL_PREFIX__ macro, which is the prefix given to user symbols by
-  /// default.  On most platforms this is "_", but it is "" on some, and "." on
-  /// others.
+  /// \brief Returns the default value of the __USER_LABEL_PREFIX__ macro,
+  /// which is the prefix given to user symbols by default.
+  ///
+  /// On most platforms this is "_", but it is "" on some, and "." on others.
   const char *getUserLabelPrefix() const {
     return UserLabelPrefix;
   }
 
-  /// MCountName - This returns name of the mcount instrumentation function.
+  /// \brief Returns the name of the mcount instrumentation function.
   const char *getMCountName() const {
     return MCountName;
   }
 
-  /// useSignedCharForObjCBool - Check if the Objective-C built-in boolean
-  /// type should be signed char.  Otherwise, if this returns false, the
-  /// normal built-in boolean type should also be used for Objective-C.
+  /// \brief Check if the Objective-C built-in boolean type should be signed
+  /// char.
+  ///
+  /// Otherwise, if this returns false, the normal built-in boolean type
+  /// should also be used for Objective-C.
   bool useSignedCharForObjCBool() const {
     return UseSignedCharForObjCBool;
   }
@@ -338,20 +346,20 @@ public:
     UseSignedCharForObjCBool = false;
   }
 
-  /// useBitFieldTypeAlignment() - Check whether the alignment of bit-field 
-  /// types is respected when laying out structures.
+  /// \brief Check whether the alignment of bit-field types is respected
+  /// when laying out structures.
   bool useBitFieldTypeAlignment() const {
     return UseBitFieldTypeAlignment;
   }
 
-  /// useZeroLengthBitfieldAlignment() - Check whether zero length bitfields 
-  /// should force alignment of the next member.
+  /// \brief Check whether zero length bitfields should force alignment of
+  /// the next member.
   bool useZeroLengthBitfieldAlignment() const {
     return UseZeroLengthBitfieldAlignment;
   }
 
-  /// getZeroLengthBitfieldBoundary() - Get the fixed alignment value in bits
-  /// for a member that follows a zero length bitfield.
+  /// \brief Get the fixed alignment value in bits for a member that follows
+  /// a zero length bitfield.
   unsigned getZeroLengthBitfieldBoundary() const {
     return ZeroLengthBitfieldBoundary;
   }
@@ -361,22 +369,24 @@ public:
     return HasAlignMac68kSupport;
   }
 
-  /// getTypeName - Return the user string for the specified integer type enum.
+  /// \brief Return the user string for the specified integer type enum.
+  ///
   /// For example, SignedShort -> "short".
   static const char *getTypeName(IntType T);
 
-  /// getTypeConstantSuffix - Return the constant suffix for the specified
-  /// integer type enum. For example, SignedLong -> "L".
+  /// \brief Return the constant suffix for the specified integer type enum.
+  ///
+  /// For example, SignedLong -> "L".
   static const char *getTypeConstantSuffix(IntType T);
 
   /// \brief Check whether the given real type should use the "fpret" flavor of
-  /// Obj-C message passing on this target.
+  /// Objective-C message passing on this target.
   bool useObjCFPRetForRealType(RealType T) const {
     return RealTypeUsesObjCFPRet & (1 << T);
   }
 
   /// \brief Check whether _Complex long double should use the "fp2ret" flavor
-  /// of Obj-C message passing on this target.
+  /// of Objective-C message passing on this target.
   bool useObjCFP2RetForComplexLongDouble() const {
     return ComplexLongDoubleUsesFP2Ret;
   }
@@ -389,35 +399,38 @@ public:
                                 MacroBuilder &Builder) const = 0;
 
 
-  /// getTargetBuiltins - Return information about target-specific builtins for
+  /// Return information about target-specific builtins for
   /// the current primary target, and info about which builtins are non-portable
   /// across the current set of primary and secondary targets.
   virtual void getTargetBuiltins(const Builtin::Info *&Records,
                                  unsigned &NumRecords) const = 0;
 
-  /// isCLZForZeroUndef - The __builtin_clz* and __builtin_ctz* built-in
+  /// The __builtin_clz* and __builtin_ctz* built-in
   /// functions are specified to have undefined results for zero inputs, but
   /// on targets that support these operations in a way that provides
   /// well-defined results for zero without loss of performance, it is a good
   /// idea to avoid optimizing based on that undef behavior.
   virtual bool isCLZForZeroUndef() const { return true; }
 
-  /// getBuiltinVaListKind - Returns the kind of __builtin_va_list
-  /// type that should be used with this target.
+  /// \brief Returns the kind of __builtin_va_list type that should be used
+  /// with this target.
   virtual BuiltinVaListKind getBuiltinVaListKind() const = 0;
 
-  /// isValidClobber - Returns whether the passed in string is
-  /// a valid clobber in an inline asm statement. This is used by
-  /// Sema.
+  /// \brief Returns whether the passed in string is a valid clobber in an
+  /// inline asm statement.
+  ///
+  /// This is used by Sema.
   bool isValidClobber(StringRef Name) const;
 
-  /// isValidGCCRegisterName - Returns whether the passed in string
-  /// is a valid register name according to GCC. This is used by Sema for
-  /// inline asm statements.
+  /// \brief Returns whether the passed in string is a valid register name
+  /// according to GCC.
+  ///
+  /// This is used by Sema for inline asm statements.
   bool isValidGCCRegisterName(StringRef Name) const;
 
-  // getNormalizedGCCRegisterName - Returns the "normalized" GCC register name.
-  // For example, on x86 it will return "ax" when "eax" is passed in.
+  /// \brief Returns the "normalized" GCC register name.
+  ///
+  /// For example, on x86 it will return "ax" when "eax" is passed in.
   StringRef getNormalizedGCCRegisterName(StringRef Name) const;
 
   struct ConstraintInfo {
@@ -444,13 +457,15 @@ public:
     bool allowsRegister() const { return (Flags & CI_AllowsRegister) != 0; }
     bool allowsMemory() const { return (Flags & CI_AllowsMemory) != 0; }
 
-    /// hasMatchingInput - Return true if this output operand has a matching
+    /// \brief Return true if this output operand has a matching
     /// (tied) input operand.
     bool hasMatchingInput() const { return (Flags & CI_HasMatchingInput) != 0; }
 
-    /// hasTiedOperand() - Return true if this input operand is a matching
-    /// constraint that ties it to an output operand.  If this returns true,
-    /// then getTiedOperand will indicate which output operand this is tied to.
+    /// \brief Return true if this input operand is a matching
+    /// constraint that ties it to an output operand.
+    ///
+    /// If this returns true then getTiedOperand will indicate which output
+    /// operand this is tied to.
     bool hasTiedOperand() const { return TiedOperand != -1; }
     unsigned getTiedOperand() const {
       assert(hasTiedOperand() && "Has no tied operand!");
@@ -462,9 +477,10 @@ public:
     void setAllowsRegister() { Flags |= CI_AllowsRegister; }
     void setHasMatchingInput() { Flags |= CI_HasMatchingInput; }
 
-    /// setTiedOperand - Indicate that this is an input operand that is tied to
-    /// the specified output operand.  Copy over the various constraint
-    /// information from the output.
+    /// \brief Indicate that this is an input operand that is tied to
+    /// the specified output operand. 
+    ///
+    /// Copy over the various constraint information from the output.
     void setTiedOperand(unsigned N, ConstraintInfo &Output) {
       Output.setHasMatchingInput();
       Flags = Output.Flags;
@@ -494,11 +510,11 @@ public:
     return std::string(1, *Constraint);
   }
 
-  // Returns a string of target-specific clobbers, in LLVM format.
+  /// \brief Returns a string of target-specific clobbers, in LLVM format.
   virtual const char *getClobbers() const = 0;
 
 
-  /// getTriple - Return the target triple of the primary target.
+  /// \brief Returns the target triple of the primary target.
   const llvm::Triple &getTriple() const {
     return Triple;
   }
@@ -517,8 +533,7 @@ public:
     const unsigned RegNum;
   };
 
-  /// hasProtectedVisibility - Does this target support "protected"
-  /// visibility?
+  /// \brief Does this target support "protected" visibility?
   ///
   /// Any target which dynamic libraries will naturally support
   /// something like "default" (meaning that the symbol is visible
@@ -532,28 +547,29 @@ public:
 
   virtual bool useGlobalsForAutomaticVariables() const { return false; }
 
-  /// getCFStringSection - Return the section to use for CFString
-  /// literals, or 0 if no special section is used.
+  /// \brief Return the section to use for CFString literals, or 0 if no
+  /// special section is used.
   virtual const char *getCFStringSection() const {
     return "__DATA,__cfstring";
   }
 
-  /// getNSStringSection - Return the section to use for NSString
-  /// literals, or 0 if no special section is used.
+  /// \brief Return the section to use for NSString literals, or 0 if no
+  /// special section is used.
   virtual const char *getNSStringSection() const {
     return "__OBJC,__cstring_object,regular,no_dead_strip";
   }
 
-  /// getNSStringNonFragileABISection - Return the section to use for
-  /// NSString literals, or 0 if no special section is used (NonFragile ABI).
+  /// \brief Return the section to use for NSString literals, or 0 if no
+  /// special section is used (NonFragile ABI).
   virtual const char *getNSStringNonFragileABISection() const {
     return "__DATA, __objc_stringobj, regular, no_dead_strip";
   }
 
-  /// isValidSectionSpecifier - This is an optional hook that targets can
-  /// implement to perform semantic checking on attribute((section("foo")))
-  /// specifiers.  In this case, "foo" is passed in to be checked.  If the
-  /// section specifier is invalid, the backend should return a non-empty string
+  /// \brief An optional hook that targets can implement to perform semantic
+  /// checking on attribute((section("foo"))) specifiers.
+  ///
+  /// In this case, "foo" is passed in to be checked.  If the section
+  /// specifier is invalid, the backend should return a non-empty string
   /// that indicates the problem.
   ///
   /// This hook is a simple quality of implementation feature to catch errors
@@ -564,43 +580,44 @@ public:
     return "";
   }
 
-  /// setForcedLangOptions - Set forced language options.
+  /// \brief Set forced language options.
+  ///
   /// Apply changes to the target information with respect to certain
   /// language options which change the target configuration.
   virtual void setForcedLangOptions(LangOptions &Opts);
 
-  /// getDefaultFeatures - Get the default set of target features for the CPU;
+  /// \brief Get the default set of target features for the CPU;
   /// this should include all legal feature strings on the target.
   virtual void getDefaultFeatures(llvm::StringMap<bool> &Features) const {
   }
 
-  /// getABI - Get the ABI in use.
+  /// \brief Get the ABI currently in use.
   virtual const char *getABI() const {
     return "";
   }
 
-  /// getCXXABI - Get the C++ ABI in use.
+  /// \brief Get the C++ ABI currently in use.
   virtual TargetCXXABI getCXXABI() const {
     return CXXABI;
   }
 
-  /// setCPU - Target the specific CPU.
+  /// \brief Target the specified CPU.
   ///
-  /// \return - False on error (invalid CPU name).
+  /// \return  False on error (invalid CPU name).
   virtual bool setCPU(const std::string &Name) {
     return false;
   }
 
-  /// setABI - Use the specific ABI.
+  /// \brief Use the specified ABI.
   ///
-  /// \return - False on error (invalid ABI name).
+  /// \return False on error (invalid ABI name).
   virtual bool setABI(const std::string &Name) {
     return false;
   }
 
-  /// setCXXABI - Use this specific C++ ABI.
+  /// \brief Use this specified C++ ABI.
   ///
-  /// \return - False on error (invalid C++ ABI name).
+  /// \return False on error (invalid C++ ABI name).
   bool setCXXABI(const std::string &Name) {
     static const TargetCXXABI Unknown = static_cast<TargetCXXABI>(-1);
     TargetCXXABI ABI = llvm::StringSwitch<TargetCXXABI>(Name)
@@ -612,27 +629,28 @@ public:
     return setCXXABI(ABI);
   }
 
-  /// setCXXABI - Set the C++ ABI to be used by this implementation.
+  /// \brief Set the C++ ABI to be used by this implementation.
   ///
-  /// \return - False on error (ABI not valid on this target)
+  /// \return False on error (ABI not valid on this target)
   virtual bool setCXXABI(TargetCXXABI ABI) {
     CXXABI = ABI;
     return true;
   }
 
-  /// setFeatureEnabled - Enable or disable a specific target feature,
+  /// \brief Enable or disable a specific target feature;
   /// the feature name must be valid.
   ///
-  /// \return - False on error (invalid feature name).
+  /// \return False on error (invalid feature name).
   virtual bool setFeatureEnabled(llvm::StringMap<bool> &Features,
                                  StringRef Name,
                                  bool Enabled) const {
     return false;
   }
 
-  /// HandleTargetOptions - Perform initialization based on the user configured
-  /// set of features (e.g., +sse4). The list is guaranteed to have at most one
-  /// entry per feature.
+  /// \brief Perform initialization based on the user configured
+  /// set of features (e.g., +sse4).
+  ///
+  /// The list is guaranteed to have at most one entry per feature.
   ///
   /// The target may modify the features list, to change which options are
   /// passed onwards to the backend.
@@ -644,19 +662,20 @@ public:
     return false;
   }
   
-  // getRegParmMax - Returns maximal number of args passed in registers.
+  // \brief Returns maximal number of args passed in registers.
   unsigned getRegParmMax() const {
     assert(RegParmMax < 7 && "RegParmMax value is larger than AST can handle");
     return RegParmMax;
   }
 
-  /// isTLSSupported - Whether the target supports thread-local storage.
+  /// \brief Whether the target supports thread-local storage.
   bool isTLSSupported() const {
     return TLSSupported;
   }
 
-  /// hasNoAsmVariants - Return true if {|} are normal characters in the
-  /// asm string.  If this returns false (the default), then {abc|xyz} is syntax
+  /// \brief Return true if {|} are normal characters in the asm string.
+  ///
+  /// If this returns false (the default), then {abc|xyz} is syntax
   /// that says that when compiling for asm variant #0, "abc" should be
   /// generated, but when compiling for asm variant #1, "xyz" should be
   /// generated.
@@ -664,14 +683,13 @@ public:
     return NoAsmVariants;
   }
 
-  /// getEHDataRegisterNumber - Return the register number that
-  /// __builtin_eh_return_regno would return with the specified argument.
+  /// \brief Return the register number that __builtin_eh_return_regno would
+  /// return with the specified argument.
   virtual int getEHDataRegisterNumber(unsigned RegNo) const {
     return -1;
   }
 
-  /// getStaticInitSectionSpecifier - Return the section to use for C++ static
-  /// initialization functions.
+  /// \brief Return the section to use for C++ static initialization functions.
   virtual const char *getStaticInitSectionSpecifier() const {
     return 0;
   }

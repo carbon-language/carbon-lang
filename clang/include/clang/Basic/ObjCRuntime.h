@@ -20,10 +20,10 @@
 
 namespace clang {
 
-/// The basic abstraction for the target ObjC runtime.
+/// \brief The basic abstraction for the target Objective-C runtime.
 class ObjCRuntime {
 public:
-  /// The basic Objective-C runtimes that we know about.
+  /// \brief The basic Objective-C runtimes that we know about.
   enum Kind {
     /// 'macosx' is the Apple-provided NeXT-derived runtime on Mac OS
     /// X platforms that use the non-fragile ABI; the version is a
@@ -66,7 +66,7 @@ public:
   Kind getKind() const { return TheKind; }
   const VersionTuple &getVersion() const { return Version; }
 
-  /// Does this runtime follow the set of implied behaviors for a
+  /// \brief Does this runtime follow the set of implied behaviors for a
   /// "non-fragile" ABI?
   bool isNonFragile() const {
     switch (getKind()) {
@@ -79,11 +79,11 @@ public:
     llvm_unreachable("bad kind");
   }
 
-  /// The inverse of isNonFragile():  does this runtiem follow the set of
+  /// The inverse of isNonFragile():  does this runtime follow the set of
   /// implied behaviors for a "fragile" ABI?
   bool isFragile() const { return !isNonFragile(); }
 
-  /// Is this runtime basically of the GNU family of runtimes?
+  /// \brief Is this runtime basically of the GNU family of runtimes?
   bool isGNUFamily() const {
     switch (getKind()) {
     case FragileMacOSX:
@@ -97,15 +97,16 @@ public:
     llvm_unreachable("bad kind");
   }
 
-  /// Is this runtime basically of the NeXT family of runtimes?
+  /// \brief Is this runtime basically of the NeXT family of runtimes?
   bool isNeXTFamily() const {
     // For now, this is just the inverse of isGNUFamily(), but that's
     // not inherently true.
     return !isGNUFamily();
   }
 
-  /// Does this runtime natively provide the ARC entrypoints?  ARC
-  /// cannot be directly supported on a platform that does not provide
+  /// \brief Does this runtime natively provide the ARC entrypoints? 
+  ///
+  /// ARC cannot be directly supported on a platform that does not provide
   /// these entrypoints, although it may be supportable via a stub
   /// library.
   bool hasARC() const {
@@ -123,14 +124,15 @@ public:
     llvm_unreachable("bad kind");
   }
 
-  /// Does this runtime natively provide ARC-compliant 'weak'
+  /// \brief Does this runtime natively provide ARC-compliant 'weak'
   /// entrypoints?
   bool hasWeak() const {
     // Right now, this is always equivalent to the ARC decision.
     return hasARC();
   }
 
-  /// Does this runtime directly support the subscripting methods?
+  /// \brief Does this runtime directly support the subscripting methods?
+  ///
   /// This is really a property of the library, not the runtime.
   bool hasSubscripting() const {
     switch (getKind()) {
@@ -147,8 +149,9 @@ public:
     llvm_unreachable("bad kind");
   }
 
-  /// Does this runtime provide an objc_terminate function?  This is
-  /// used in handlers for exceptions during the unwind process;
+  /// \brief Does this runtime provide an objc_terminate function?
+  ///
+  /// This is used in handlers for exceptions during the unwind process;
   /// without it, abort() must be used in pure ObjC files.
   bool hasTerminate() const {
     switch (getKind()) {
@@ -161,7 +164,7 @@ public:
     llvm_unreachable("bad kind");
   }
 
-  /// Does this runtime support weakly importing classes?
+  /// \brief Does this runtime support weakly importing classes?
   bool hasWeakClassImport() const {
     switch (getKind()) {
     case MacOSX: return true;
@@ -173,9 +176,10 @@ public:
     llvm_unreachable("bad kind");
   }
 
-  /// Try to parse an Objective-C runtime specification from the given string.
+  /// \brief Try to parse an Objective-C runtime specification from the given
+  /// string.
   ///
-  /// Return true on error.
+  /// \return true on error.
   bool tryParse(StringRef input);
 
   std::string getAsString() const;

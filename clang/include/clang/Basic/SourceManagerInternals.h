@@ -27,22 +27,23 @@ namespace clang {
 //===----------------------------------------------------------------------===//
 
 struct LineEntry {
-  /// FileOffset - The offset in this file that the line entry occurs at.
+  /// \brief The offset in this file that the line entry occurs at.
   unsigned FileOffset;
 
-  /// LineNo - The presumed line number of this line entry: \#line 4.
+  /// \brief The presumed line number of this line entry: \#line 4.
   unsigned LineNo;
 
-  /// FilenameID - The ID of the filename identified by this line entry:
+  /// \brief The ID of the filename identified by this line entry:
   /// \#line 4 "foo.c".  This is -1 if not specified.
   int FilenameID;
 
-  /// Flags - Set the 0 if no flags, 1 if a system header,
+  /// \brief Set the 0 if no flags, 1 if a system header,
   SrcMgr::CharacteristicKind FileKind;
 
-  /// IncludeOffset - This is the offset of the virtual include stack location,
-  /// which is manipulated by GNU linemarker directives.  If this is 0 then
-  /// there is no virtual \#includer.
+  /// \brief The offset of the virtual include stack location,
+  /// which is manipulated by GNU linemarker directives.
+  ///
+  /// If this is 0 then there is no virtual \#includer.
   unsigned IncludeOffset;
 
   static LineEntry get(unsigned Offs, unsigned Line, int Filename,
@@ -72,11 +73,11 @@ inline bool operator<(unsigned Offset, const LineEntry &E) {
   return Offset < E.FileOffset;
 }
 
-/// LineTableInfo - This class is used to hold and unique data used to
-/// represent \#line information.
+/// \brief Used to hold and unique data used to represent \#line information.
 class LineTableInfo {
-  /// FilenameIDs - This map is used to assign unique IDs to filenames in
-  /// \#line directives.  This allows us to unique the filenames that
+  /// \brief Map used to assign unique IDs to filenames in \#line directives. 
+  ///
+  /// This allows us to unique the filenames that
   /// frequently reoccur and reference them with indices.  FilenameIDs holds
   /// the mapping from string -> ID, and FilenamesByID holds the mapping of ID
   /// to string.
@@ -112,8 +113,9 @@ public:
                    unsigned EntryExit, SrcMgr::CharacteristicKind FileKind);
 
 
-  /// FindNearestLineEntry - Find the line entry nearest to FID that is before
-  /// it.  If there is no line entry before Offset in FID, return null.
+  /// \brief Find the line entry nearest to FID that is before it.
+  ///
+  /// If there is no line entry before \p Offset in \p FID, returns null.
   const LineEntry *FindNearestLineEntry(FileID FID, unsigned Offset);
 
   // Low-level access

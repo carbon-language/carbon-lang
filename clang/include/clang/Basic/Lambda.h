@@ -19,16 +19,15 @@
 
 namespace clang {
 
-/// LambdaCaptureDefault - The default, if any, capture method for a
-/// lambda expression.
+/// \brief The default, if any, capture method for a lambda expression.
 enum LambdaCaptureDefault {
   LCD_None,
   LCD_ByCopy,
   LCD_ByRef
 };
 
-/// LambdaCaptureKind - The different capture forms in a lambda
-/// introducer: 'this' or a copied or referenced variable.
+/// \brief The different capture forms in a lambda introducer: 'this' or a
+/// copied or referenced variable.
 enum LambdaCaptureKind {
   LCK_This,
   LCK_ByCopy,

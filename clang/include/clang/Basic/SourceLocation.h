@@ -36,8 +36,8 @@ class SourceManager;
 /// source file (MemoryBuffer) along with its \#include path and \#line data.
 ///
 class FileID {
-  /// ID - Opaque identifier, 0 is "invalid". >0 is this module, <-1 is
-  /// something loaded from another module.
+  /// \brief A mostly-opaque identifier, where 0 is "invalid", >0 is 
+  /// this module, and <-1 is something loaded from another module.
   int ID;
 public:
   FileID() : ID(0) {}
@@ -186,7 +186,7 @@ inline bool operator<(const SourceLocation &LHS, const SourceLocation &RHS) {
   return LHS.getRawEncoding() < RHS.getRawEncoding();
 }
 
-/// SourceRange - a trival tuple used to represent a source range.
+/// \brief A trival tuple used to represent a source range.
 class SourceRange {
   SourceLocation B;
   SourceLocation E;
@@ -213,7 +213,8 @@ public:
   }
 };
   
-/// CharSourceRange - This class represents a character granular source range.
+/// \brief Represents a character-granular source range.
+///
 /// The underlying SourceRange can either specify the starting/ending character
 /// of the range, or it can specify the start or the range and the start of the
 /// last token of the range (a "token range").  In the token range case, the
@@ -247,7 +248,7 @@ public:
     return getCharRange(SourceRange(B, E));
   }
   
-  /// isTokenRange - Return true if the end of this range specifies the start of
+  /// \brief Return true if the end of this range specifies the start of
   /// the last token.  Return false if the end of this range specifies the last
   /// character in the range.
   bool isTokenRange() const { return IsTokenRange; }
@@ -264,17 +265,19 @@ public:
   bool isInvalid() const { return !isValid(); }
 };
 
-/// FullSourceLoc - A SourceLocation and its associated SourceManager.  Useful
-/// for argument passing to functions that expect both objects.
+/// \brief A SourceLocation and its associated SourceManager.
+///
+/// This is useful for argument passing to functions that expect both objects.
 class FullSourceLoc : public SourceLocation {
   const SourceManager *SrcMgr;
 public:
-  /// Creates a FullSourceLoc where isValid() returns false.
+  /// \brief Creates a FullSourceLoc where isValid() returns \c false.
   explicit FullSourceLoc() : SrcMgr(0) {}
 
   explicit FullSourceLoc(SourceLocation Loc, const SourceManager &SM)
     : SourceLocation(Loc), SrcMgr(&SM) {}
 
+  /// \pre This FullSourceLoc has an associated SourceManager.
   const SourceManager &getManager() const {
     assert(SrcMgr && "SourceManager is NULL.");
     return *SrcMgr;
@@ -295,13 +298,14 @@ public:
 
   const llvm::MemoryBuffer* getBuffer(bool *Invalid = 0) const;
 
-  /// getBufferData - Return a StringRef to the source buffer data for the
+  /// \brief Return a StringRef to the source buffer data for the
   /// specified FileID.
   StringRef getBufferData(bool *Invalid = 0) const;
 
-  /// getDecomposedLoc - Decompose the specified location into a raw FileID +
-  /// Offset pair.  The first element is the FileID, the second is the
-  /// offset from the start of the buffer of the location.
+  /// \brief Decompose the specified location into a raw FileID + Offset pair.
+  ///
+  /// The first element is the FileID, the second is the offset from the
+  /// start of the buffer of the location.
   std::pair<FileID, unsigned> getDecomposedLoc() const;
 
   bool isInSystemHeader() const;
@@ -328,8 +332,9 @@ public:
     }
   };
 
-  /// Prints information about this FullSourceLoc to stderr. Useful for
-  ///  debugging.
+  /// \brief Prints information about this FullSourceLoc to stderr.
+  ///
+  /// This is useful for debugging.
   LLVM_ATTRIBUTE_USED void dump() const;
 
   friend inline bool
@@ -345,10 +350,11 @@ public:
 
 };
 
-/// PresumedLoc - This class represents an unpacked "presumed" location which
-/// can be presented to the user.  A 'presumed' location can be modified by
-/// \#line and GNU line marker directives and is always the expansion point of
-/// a normal location.
+/// \brief Represents an unpacked "presumed" location which can be presented
+/// to the user.
+///
+/// A 'presumed' location can be modified by \#line and GNU line marker
+/// directives and is always the expansion point of a normal location.
 ///
 /// You can get a PresumedLoc from a SourceLocation with SourceManager.
 class PresumedLoc {
@@ -361,9 +367,10 @@ public:
     : Filename(FN), Line(Ln), Col(Co), IncludeLoc(IL) {
   }
 
-  /// isInvalid - Return true if this object is invalid or uninitialized. This
-  /// occurs when created with invalid source locations or when walking off
-  /// the top of a \#include stack.
+  /// \brief Return true if this object is invalid or uninitialized.
+  ///
+  /// This occurs when created with invalid source locations or when walking
+  /// off the top of a \#include stack.
   bool isInvalid() const { return Filename == 0; }
   bool isValid() const { return Filename != 0; }
 

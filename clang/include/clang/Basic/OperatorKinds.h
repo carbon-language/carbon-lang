@@ -17,8 +17,8 @@
 
 namespace clang {
 
-/// OverloadedOperatorKind - Enumeration specifying the different kinds of
-/// C++ overloaded operators.
+/// \brief Enumeration specifying the different kinds of C++ overloaded
+/// operators.
 enum OverloadedOperatorKind {
   OO_None,                ///< Not an overloaded operator
 #define OVERLOADED_OPERATOR(Name,Spelling,Token,Unary,Binary,MemberOnly) \

@@ -39,9 +39,10 @@ public:
     CacheMissing   ///< We know that the file doesn't exist.
   };
 
-  /// FileSystemStatCache::get - Get the 'stat' information for the specified
-  /// path, using the cache to accellerate it if possible.  This returns true if
-  /// the path does not exist or false if it exists.
+  /// \brief Get the 'stat' information for the specified path, using the cache
+  /// to accelerate it if possible.
+  ///
+  /// \returns \c true if the path does not exist or \c false if it exists.
   ///
   /// If FileDescriptor is non-null, then this lookup should only return success
   /// for files (not directories).  If it is null this lookup should only return

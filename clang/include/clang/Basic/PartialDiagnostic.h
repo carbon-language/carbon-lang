@@ -38,25 +38,26 @@ public:
     Storage() : NumDiagArgs(0), NumDiagRanges(0) { }
 
     enum {
-        /// MaxArguments - The maximum number of arguments we can hold. We
+        /// \brief The maximum number of arguments we can hold. We
         /// currently only support up to 10 arguments (%0-%9).
+        ///
         /// A single diagnostic with more than that almost certainly has to
         /// be simplified anyway.
         MaxArguments = PartialDiagnostic::MaxArguments
     };
 
-    /// NumDiagArgs - This contains the number of entries in Arguments.
+    /// \brief The number of entries in Arguments.
     unsigned char NumDiagArgs;
 
-    /// NumDiagRanges - This is the number of ranges in the DiagRanges array.
+    /// \brief This is the number of ranges in the DiagRanges array.
     unsigned char NumDiagRanges;
 
-    /// DiagArgumentsKind - This is an array of ArgumentKind::ArgumentKind enum
-    /// values, with one for each argument.  This specifies whether the argument
-    /// is in DiagArgumentsStr or in DiagArguments.
+    /// \brief Specifies for each argument whether it is in DiagArgumentsStr
+    /// or in DiagArguments.
     unsigned char DiagArgumentsKind[MaxArguments];
 
-    /// DiagArgumentsVal - The values for the various substitution positions.
+    /// \brief The values for the various substitution positions.
+    ///
     /// This is used when the argument is not an std::string. The specific value
     /// is mangled into an intptr_t and the interpretation depends on exactly
     /// what sort of argument kind it is.
@@ -66,12 +67,13 @@ public:
     /// string arguments.
     std::string DiagArgumentsStr[MaxArguments];
 
-    /// DiagRanges - The list of ranges added to this diagnostic.  It currently
-    /// only support 10 ranges, could easily be extended if needed.
+    /// \brief The list of ranges added to this diagnostic.
+    ///
+    /// It currently only support 10 ranges, could easily be extended if needed.
     CharSourceRange DiagRanges[10];
 
-    /// FixItHints - If valid, provides a hint with some code
-    /// to insert, remove, or modify at a particular position.
+    /// \brief If valid, provides a hint with some code to insert, remove, or
+    /// modify at a particular position.
     SmallVector<FixItHint, 6>  FixItHints;
   };
 
@@ -115,10 +117,10 @@ private:
   // in the sense that its bits can be safely memcpy'ed and destructed
   // in the new location.
 
-  /// DiagID - The diagnostic ID.
+  /// \brief The diagnostic ID.
   mutable unsigned DiagID;
 
-  /// DiagStorage - Storage for args and ranges.
+  /// \brief Storage for args and ranges.
   mutable Storage *DiagStorage;
 
   /// \brief Allocator used to allocate storage for this diagnostic.

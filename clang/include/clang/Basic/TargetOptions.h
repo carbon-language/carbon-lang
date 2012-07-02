@@ -20,7 +20,7 @@
 
 namespace clang {
 
-/// TargetOptions - Options for controlling the target.
+/// \brief Options for controlling the target.
 class TargetOptions {
 public:
   /// If given, the name of the target triple to compile for. If not given the

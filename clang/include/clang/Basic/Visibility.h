@@ -17,10 +17,12 @@
 
 namespace clang {
 
-/// Describes the different kinds of visibility that a
-/// declaration may have.  Visibility determines how a declaration
-/// interacts with the dynamic linker.  It may also affect whether the
-/// symbol can be found by runtime symbol lookup APIs.
+/// \brief Describes the different kinds of visibility that a declaration
+/// may have.
+///
+/// Visibility determines how a declaration interacts with the dynamic
+/// linker.  It may also affect whether the symbol can be found by runtime
+/// symbol lookup APIs.
 ///
 /// Visibility is not described in any language standard and
 /// (nonetheless) sometimes has odd behavior.  Not all platforms

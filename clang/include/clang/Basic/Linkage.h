@@ -28,8 +28,9 @@ enum Linkage {
   /// translation units).
   InternalLinkage,
 
-  /// \brief External linkage within a unique namespace. From the
-  /// language perspective, these entities have external
+  /// \brief External linkage within a unique namespace. 
+  ///
+  /// From the language perspective, these entities have external
   /// linkage. However, since they reside in an anonymous namespace,
   /// their names are unique to this translation unit, which is
   /// equivalent to having internal linkage from the code-generation
@@ -41,8 +42,9 @@ enum Linkage {
   ExternalLinkage
 };
 
-/// \brief A more specific kind of linkage. This is relevant to CodeGen and
-/// AST file reading.
+/// \brief A more specific kind of linkage than enum Linkage.
+///
+/// This is relevant to CodeGen and AST file reading.
 enum GVALinkage {
   GVA_Internal,
   GVA_C99Inline,
@@ -52,8 +54,7 @@ enum GVALinkage {
   GVA_ExplicitTemplateInstantiation
 };
 
-/// \brief Determine whether the given linkage is semantically
-/// external.
+/// \brief Determine whether the given linkage is semantically external.
 inline bool isExternalLinkage(Linkage L) {
   return L == UniqueExternalLinkage || L == ExternalLinkage;
 }

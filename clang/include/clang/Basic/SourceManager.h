@@ -66,18 +66,20 @@ class ASTReader;
 /// SourceManager implementation.
 ///
 namespace SrcMgr {
-  /// CharacteristicKind - This is used to represent whether a file or directory
-  /// holds normal user code, system code, or system code which is implicitly
-  /// 'extern "C"' in C++ mode.  Entire directories can be tagged with this
-  /// (this is maintained by DirectoryLookup and friends) as can specific
-  /// FileInfos when a \#pragma system_header is seen or various other cases.
+  /// \brief Indicates whether a file or directory holds normal user code,
+  /// system code, or system code which is implicitly 'extern "C"' in C++ mode.
+  ///
+  /// Entire directories can be tagged with this (this is maintained by
+  /// DirectoryLookup and friends) as can specific FileInfos when a \#pragma
+  /// system_header is seen or in various other cases.
   ///
   enum CharacteristicKind {
     C_User, C_System, C_ExternCSystem
   };
 
-  /// ContentCache - One instance of this struct is kept for every file
-  /// loaded or used.  This object owns the MemoryBuffer object.
+  /// \brief One instance of this struct is kept for every file loaded or used.
+  ////
+  /// This object owns the MemoryBuffer object.
   class ContentCache {
     enum CCFlags {
       /// \brief Whether the buffer is invalid.
@@ -97,8 +99,9 @@ namespace SrcMgr {
     /// \brief Reference to the file entry representing this ContentCache.
     ///
     /// This reference does not own the FileEntry object.
-    /// It is possible for this to be NULL if
-    /// the ContentCache encapsulates an imaginary text buffer.
+    ///
+    /// It is possible for this to be NULL if the ContentCache encapsulates
+    /// an imaginary text buffer.
     const FileEntry *OrigEntry;
 
     /// \brief References the file which the contents were actually loaded from.
@@ -284,12 +287,12 @@ namespace SrcMgr {
   class ExpansionInfo {
     // Really these are all SourceLocations.
 
-    /// SpellingLoc - Where the spelling for the token can be found.
+    /// \brief Where the spelling for the token can be found.
     unsigned SpellingLoc;
 
-    /// ExpansionLocStart/ExpansionLocEnd - In a macro expansion, these
+    /// In a macro expansion, ExpansionLocStart and ExpansionLocEnd
     /// indicate the start and end of the expansion. In object-like macros,
-    /// these will be the same. In a function-like macro expansion, the start
+    /// they will be the same. In a function-like macro expansion, the start
     /// will be the identifier and the end will be the ')'. Finally, in
     /// macro-argument instantiations, the end will be 'SourceLocation()', an
     /// invalid location.
@@ -350,12 +353,12 @@ namespace SrcMgr {
     ///
     /// Given the code:
     /// \code
-    ///   \#define F(x) f(x)
+    ///   #define F(x) f(x)
     ///   F(42);
     /// \endcode
     ///
     /// When expanding '\c F(42)', the '\c x' would call this with an
-    /// SpellingLoc pointing at '\c 42' anad an ExpansionLoc pointing at its
+    /// SpellingLoc pointing at '\c 42' and an ExpansionLoc pointing at its
     /// location in the definition of '\c F'.
     static ExpansionInfo createForMacroArg(SourceLocation SpellingLoc,
                                            SourceLocation ExpansionLoc) {
@@ -427,19 +430,22 @@ public:
 /// The cache structure is complex enough to be worth breaking out of
 /// SourceManager.
 class IsBeforeInTranslationUnitCache {
-  /// L/R QueryFID - These are the FID's of the cached query.  If these match up
-  /// with a subsequent query, the result can be reused.
+  /// \brief The FileID's of the cached query.
+  ///
+  /// If these match up with a subsequent query, the result can be reused.
   FileID LQueryFID, RQueryFID;
 
-  /// \brief True if LQueryFID was created before RQueryFID. This is used
-  /// to compare macro expansion locations.
+  /// \brief True if LQueryFID was created before RQueryFID.
+  ///
+  /// This is used to compare macro expansion locations.
   bool IsLQFIDBeforeRQFID;
 
   /// \brief The file found in common between the two \#include traces, i.e.,
   /// the nearest common ancestor of the \#include tree.
   FileID CommonFID;
 
-  /// L/R CommonOffset - This is the offset of the previous query in CommonFID.
+  /// \brief The offset of the previous query in CommonFID.
+  ///
   /// Usually, this represents the location of the \#include for QueryFID, but
   /// if LQueryFID is a parent of RQueryFID (or vice versa) then these can be a
   /// random token in the parent.
@@ -447,13 +453,15 @@ class IsBeforeInTranslationUnitCache {
 public:
 
   /// \brief Return true if the currently cached values match up with
-  /// the specified LHS/RHS query.  If not, we can't use the cache.
+  /// the specified LHS/RHS query.
+  ///
+  /// If not, we can't use the cache.
   bool isCacheValid(FileID LHS, FileID RHS) const {
     return LQueryFID == LHS && RQueryFID == RHS;
   }
 
   /// \brief If the cache is valid, compute the result given the
-  /// specified offsets in the LHS/RHS FID's.
+  /// specified offsets in the LHS/RHS FileID's.
   bool getCachedResult(unsigned LOffset, unsigned ROffset) const {
     // If one of the query files is the common file, use the offset.  Otherwise,
     // use the #include loc in the common file.
@@ -471,7 +479,7 @@ public:
     return LOffset < ROffset;
   }
 
-  // Set up a new query.
+  /// \brief Set up a new query.
   void setQueryFIDs(FileID LHS, FileID RHS, bool isLFIDBeforeRFID) {
     assert(LHS != RHS);
     LQueryFID = LHS;
@@ -593,7 +601,7 @@ class SourceManager : public RefCountedBase<SourceManager> {
 
   /// \brief Holds information for \#line directives.
   ///
-  /// It is referenced by indices from SLocEntryTable.
+  /// This is referenced by indices from SLocEntryTable.
   LineTableInfo *LineTable;
 
   /// \brief These ivars serve as a cache used in the getLineNumber
@@ -774,7 +782,7 @@ public:
   }
 
   /// \brief Disable overridding the contents of a file, previously enabled
-  /// with \see overrideFileContents.
+  /// with #overrideFileContents.
   ///
   /// This should be called before parsing has begun.
   void disableFileContentsOverride(const FileEntry *File);
@@ -1464,15 +1472,14 @@ private:
     return getLoadedSLocEntry(static_cast<unsigned>(-ID - 2), Invalid);
   }
 
-  /// createExpansionLoc - Implements the common elements of storing an
-  /// expansion info struct into the SLocEntry table and producing a source
-  /// location that refers to it.
+  /// Implements the common elements of storing an expansion info struct into
+  /// the SLocEntry table and producing a source location that refers to it.
   SourceLocation createExpansionLocImpl(const SrcMgr::ExpansionInfo &Expansion,
                                         unsigned TokLength,
                                         int LoadedID = 0,
                                         unsigned LoadedOffset = 0);
 
-  /// isOffsetInFileID - Return true if the specified FileID contains the
+  /// \brief Return true if the specified FileID contains the
   /// specified SourceLocation offset.  This is a very hot method.
   inline bool isOffsetInFileID(FileID FID, unsigned SLocOffset) const {
     const SrcMgr::SLocEntry &Entry = getSLocEntry(FID);
@@ -1493,9 +1500,11 @@ private:
     return SLocOffset < getSLocEntry(FileID::get(FID.ID+1)).getOffset();
   }
 
-  /// createFileID - Create a new fileID for the specified ContentCache and
-  ///  include position.  This works regardless of whether the ContentCache
-  ///  corresponds to a file or some other input source.
+  /// \brief Create a new fileID for the specified ContentCache and
+  /// include position.
+  ///
+  /// This works regardless of whether the ContentCache corresponds to a
+  /// file or some other input source.
   FileID createFileID(const SrcMgr::ContentCache* File,
                       SourceLocation IncludePos,
                       SrcMgr::CharacteristicKind DirCharacter,
@@ -1504,8 +1513,7 @@ private:
   const SrcMgr::ContentCache *
     getOrCreateContentCache(const FileEntry *SourceFile);
 
-  /// createMemBufferContentCache - Create a new ContentCache for the specified
-  ///  memory buffer.
+  /// \brief Create a new ContentCache for the specified  memory buffer.
   const SrcMgr::ContentCache*
   createMemBufferContentCache(const llvm::MemoryBuffer *Buf);
 

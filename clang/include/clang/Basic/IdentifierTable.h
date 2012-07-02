@@ -38,11 +38,11 @@ namespace clang {
   class MultiKeywordSelector; // private class used by Selector
   class DeclarationName;      // AST class that stores declaration names
 
-  /// IdentifierLocPair - A simple pair of identifier info and location.
+  /// \brief A simple pair of identifier info and location.
   typedef std::pair<IdentifierInfo*, SourceLocation> IdentifierLocPair;
 
 
-/// IdentifierInfo - One of these records is kept for each identifier that
+/// One of these records is kept for each identifier that
 /// is lexed.  This contains information about whether the token was \#define'd,
 /// is a language keyword, or if it is a front-end token of some sort (e.g. a
 /// variable or function name).  The preprocessor keeps this information in a
@@ -402,10 +402,11 @@ public:
   virtual IdentifierInfo *GetIdentifier(unsigned ID) = 0;
 };
 
-/// IdentifierTable - This table implements an efficient mapping from strings to
-/// IdentifierInfo nodes.  It has no other purpose, but this is an
-/// extremely performance-critical piece of the code, as each occurrence of
-/// every identifier goes through here when lexed.
+/// \brief Implements an efficient mapping from strings to IdentifierInfo nodes.
+///
+/// This has no other purpose, but this is an extremely performance-critical
+/// piece of the code, as each occurrence of every identifier goes through
+/// here when lexed.
 class IdentifierTable {
   // Shark shows that using MallocAllocator is *much* slower than using this
   // BumpPtrAllocator!
@@ -415,8 +416,8 @@ class IdentifierTable {
   IdentifierInfoLookup* ExternalLookup;
 
 public:
-  /// IdentifierTable ctor - Create the identifier table, populating it with
-  /// info about the language keywords for the language specified by LangOpts.
+  /// \brief Create the identifier table, populating it with info about the
+  /// language keywords for the language specified by \p LangOpts.
   IdentifierTable(const LangOptions &LangOpts,
                   IdentifierInfoLookup* externalLookup = 0);
 
@@ -434,8 +435,8 @@ public:
     return HashTable.getAllocator();
   }
 
-  /// get - Return the identifier token info for the specified named identifier.
-  ///
+  /// \brief Return the identifier token info for the specified named
+  /// identifier.
   IdentifierInfo &get(StringRef Name) {
     llvm::StringMapEntry<IdentifierInfo*> &Entry =
       HashTable.GetOrCreateValue(Name);
@@ -509,15 +510,16 @@ public:
   iterator end() const   { return HashTable.end(); }
   unsigned size() const { return HashTable.size(); }
 
-  /// PrintStats - Print some statistics to stderr that indicate how well the
+  /// \brief Print some statistics to stderr that indicate how well the
   /// hashing is doing.
   void PrintStats() const;
 
   void AddKeywords(const LangOptions &LangOpts);
 };
 
-/// ObjCMethodFamily - A family of Objective-C methods.  These
-/// families have no inherent meaning in the language, but are
+/// \brief A family of Objective-C methods. 
+///
+/// These families have no inherent meaning in the language, but are
 /// nonetheless central enough in the existing implementations to
 /// merit direct AST support.  While, in theory, arbitrary methods can
 /// be considered to form families, we focus here on the methods
@@ -564,11 +566,13 @@ enum ObjCMethodFamily {
 /// InvalidObjCMethodFamily.
 enum { ObjCMethodFamilyBitWidth = 4 };
 
-/// An invalid value of ObjCMethodFamily.
+/// \brief An invalid value of ObjCMethodFamily.
 enum { InvalidObjCMethodFamily = (1 << ObjCMethodFamilyBitWidth) - 1 };
 
-/// Selector - This smart pointer class efficiently represents Objective-C
-/// method names. This class will either point to an IdentifierInfo or a
+/// \brief Smart pointer class that efficiently represents Objective-C method
+/// names.
+///
+/// This class will either point to an IdentifierInfo or a
 /// MultiKeywordSelector (which is private). This enables us to optimize
 /// selectors that take no arguments and selectors that take 1 argument, which
 /// accounts for 78% of all selectors in Cocoa.h.
@@ -669,12 +673,12 @@ public:
   /// name was supplied.
   StringRef getNameForSlot(unsigned argIndex) const;
   
-  /// getAsString - Derive the full selector name (e.g. "foo:bar:") and return
+  /// \brief Derive the full selector name (e.g. "foo:bar:") and return
   /// it as an std::string.
   // FIXME: Add a print method that uses a raw_ostream.
   std::string getAsString() const;
 
-  /// getMethodFamily - Derive the conventional family of this method.
+  /// \brief Derive the conventional family of this method.
   ObjCMethodFamily getMethodFamily() const {
     return getMethodFamilyImpl(*this);
   }
@@ -687,7 +691,7 @@ public:
   }
 };
 
-/// SelectorTable - This table allows us to fully hide how we implement
+/// \brief This table allows us to fully hide how we implement
 /// multi-keyword caching.
 class SelectorTable {
   void *Impl;  // Actually a SelectorTableImpl
@@ -697,9 +701,10 @@ public:
   SelectorTable();
   ~SelectorTable();
 
-  /// getSelector - This can create any sort of selector.  NumArgs indicates
-  /// whether this is a no argument selector "foo", a single argument selector
-  /// "foo:" or multi-argument "foo:bar:".
+  /// \brief Can create any sort of selector.
+  ///
+  /// \p NumArgs indicates whether this is a no argument selector "foo", a
+  /// single argument selector "foo:" or multi-argument "foo:bar:".
   Selector getSelector(unsigned NumArgs, IdentifierInfo **IIV);
 
   Selector getUnarySelector(IdentifierInfo *ID) {
@@ -709,11 +714,12 @@ public:
     return Selector(ID, 0);
   }
 
-  /// Return the total amount of memory allocated for managing selectors.
+  /// \brief Return the total amount of memory allocated for managing selectors.
   size_t getTotalMemory() const;
 
-  /// constructSetterName - Return the setter name for the given
-  /// identifier, i.e. "set" + Name where the initial character of Name
+  /// \brief Return the setter name for the given identifier.
+  ///
+  /// This is "set" + \p Name where the initial character of \p Name
   /// has been capitalized.
   static Selector constructSetterName(IdentifierTable &Idents,
                                       SelectorTable &SelTable,

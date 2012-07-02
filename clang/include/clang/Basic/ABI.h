@@ -20,27 +20,27 @@
 
 namespace clang {
 
-/// CXXCtorType - C++ constructor types
+/// \brief C++ constructor types.
 enum CXXCtorType {
-    Ctor_Complete,          // Complete object ctor
-    Ctor_Base,              // Base object ctor
-    Ctor_CompleteAllocating // Complete object allocating ctor
+    Ctor_Complete,          ///< Complete object ctor
+    Ctor_Base,              ///< Base object ctor
+    Ctor_CompleteAllocating ///< Complete object allocating ctor
 };
 
-/// CXXDtorType - C++ destructor types
+/// \brief C++ destructor types.
 enum CXXDtorType {
-    Dtor_Deleting, // Deleting dtor
-    Dtor_Complete, // Complete object dtor
-    Dtor_Base      // Base object dtor
+    Dtor_Deleting, ///< Deleting dtor
+    Dtor_Complete, ///< Complete object dtor
+    Dtor_Base      ///< Base object dtor
 };
 
-/// ReturnAdjustment - A return adjustment.
+/// \brief A return adjustment.
 struct ReturnAdjustment {
-  /// NonVirtual - The non-virtual adjustment from the derived object to its
+  /// \brief The non-virtual adjustment from the derived object to its
   /// nearest virtual base.
   int64_t NonVirtual;
   
-  /// VBaseOffsetOffset - The offset (in bytes), relative to the address point 
+  /// \brief The offset (in bytes), relative to the address point 
   /// of the virtual base class offset.
   int64_t VBaseOffsetOffset;
   
@@ -64,13 +64,13 @@ struct ReturnAdjustment {
   }
 };
   
-/// ThisAdjustment - A 'this' pointer adjustment.
+/// \brief A \c this pointer adjustment.
 struct ThisAdjustment {
-  /// NonVirtual - The non-virtual adjustment from the derived object to its
+  /// \brief The non-virtual adjustment from the derived object to its
   /// nearest virtual base.
   int64_t NonVirtual;
 
-  /// VCallOffsetOffset - The offset (in bytes), relative to the address point,
+  /// \brief The offset (in bytes), relative to the address point,
   /// of the virtual call offset.
   int64_t VCallOffsetOffset;
   
@@ -94,13 +94,13 @@ struct ThisAdjustment {
   }
 };
 
-/// ThunkInfo - The 'this' pointer adjustment as well as an optional return
+/// \brief The \c this pointer adjustment as well as an optional return
 /// adjustment for a thunk.
 struct ThunkInfo {
-  /// This - The 'this' pointer adjustment.
+  /// \brief The \c this pointer adjustment.
   ThisAdjustment This;
     
-  /// Return - The return adjustment.
+  /// \brief The return adjustment.
   ReturnAdjustment Return;
 
   ThunkInfo() { }

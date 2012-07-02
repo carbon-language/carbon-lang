@@ -41,9 +41,8 @@ namespace clang {
 class FileManager;
 class FileSystemStatCache;
 
-/// DirectoryEntry - Cached information about one directory (either on
-/// the disk or in the virtual file system).
-///
+/// \brief Cached information about one directory (either on disk or in
+/// the virtual file system).
 class DirectoryEntry {
   const char *Name;   // Name of the directory.
   friend class FileManager;
@@ -52,10 +51,11 @@ public:
   const char *getName() const { return Name; }
 };
 
-/// FileEntry - Cached information about one file (either on the disk
-/// or in the virtual file system).  If the 'FD' member is valid, then
-/// this FileEntry has an open file descriptor for the file.
+/// \brief Cached information about one file (either on disk
+/// or in the virtual file system).
 ///
+/// If the 'FD' member is valid, then this FileEntry has an open file
+/// descriptor for the file.
 class FileEntry {
   const char *Name;           // Name of the file.
   off_t Size;                 // File size in bytes.
@@ -97,8 +97,7 @@ public:
   time_t getModificationTime() const { return ModTime; }
   mode_t getFileMode() const { return FileMode; }
 
-  /// getDir - Return the directory the file lives in.
-  ///
+  /// \brief Return the directory the file lives in.
   const DirectoryEntry *getDir() const { return Dir; }
 
   bool operator<(const FileEntry &RHS) const {
@@ -106,10 +105,12 @@ public:
   }
 };
 
-/// FileManager - Implements support for file system lookup, file system
-/// caching, and directory search management.  This also handles more advanced
-/// properties, such as uniquing files based on "inode", so that a file with two
-/// names (e.g. symlinked) will be treated as a single file.
+/// \brief Implements support for file system lookup, file system caching,
+/// and directory search management.
+///
+/// This also handles more advanced properties, such as uniquing files based
+/// on "inode", so that a file with two names (e.g. symlinked) will be treated
+/// as a single file.
 ///
 class FileManager : public RefCountedBase<FileManager> {
   FileSystemOptions FileSystemOpts;
@@ -117,30 +118,37 @@ class FileManager : public RefCountedBase<FileManager> {
   class UniqueDirContainer;
   class UniqueFileContainer;
 
-  /// UniqueRealDirs/UniqueRealFiles - Cache for existing real
-  /// directories/files.
-  ///
+  /// \brief Cache for existing real directories.
   UniqueDirContainer &UniqueRealDirs;
+
+  /// \brief Cache for existing real files.
   UniqueFileContainer &UniqueRealFiles;
 
-  /// \brief The virtual directories that we have allocated.  For each
-  /// virtual file (e.g. foo/bar/baz.cpp), we add all of its parent
+  /// \brief The virtual directories that we have allocated.
+  ///
+  /// For each virtual file (e.g. foo/bar/baz.cpp), we add all of its parent
   /// directories (foo/ and foo/bar/) here.
   SmallVector<DirectoryEntry*, 4> VirtualDirectoryEntries;
   /// \brief The virtual files that we have allocated.
   SmallVector<FileEntry*, 4> VirtualFileEntries;
 
-  /// SeenDirEntries/SeenFileEntries - This is a cache that maps paths
-  /// to directory/file entries (either real or virtual) we have
-  /// looked up.  The actual Entries for real directories/files are
+  /// \brief A cache that maps paths to directory entries (either real or
+  /// virtual) we have looked up
+  ///
+  /// The actual Entries for real directories/files are
   /// owned by UniqueRealDirs/UniqueRealFiles above, while the Entries
   /// for virtual directories/files are owned by
   /// VirtualDirectoryEntries/VirtualFileEntries above.
   ///
   llvm::StringMap<DirectoryEntry*, llvm::BumpPtrAllocator> SeenDirEntries;
+
+  /// \brief A cache that maps paths to file entries (either real or
+  /// virtual) we have looked up.
+  ///
+  /// \see SeenDirEntries
   llvm::StringMap<FileEntry*, llvm::BumpPtrAllocator> SeenFileEntries;
 
-  /// NextFileUID - Each FileEntry we create is assigned a unique ID #.
+  /// \brief Each FileEntry we create is assigned a unique ID #.
   ///
   unsigned NextFileUID;
 
@@ -217,13 +225,13 @@ public:
   llvm::MemoryBuffer *getBufferForFile(StringRef Filename,
                                        std::string *ErrorStr = 0);
 
-  /// \brief get the 'stat' information for the given path.
+  /// \brief Get the 'stat' information for the given \p Path.
   ///
   /// If the path is relative, it will be resolved against the WorkingDir of the
   /// FileManager's FileSystemOptions.
   bool getNoncachedStatValue(StringRef Path, struct stat &StatBuf);
 
-  /// \brief Remove the real file Entry from the cache.
+  /// \brief Remove the real file \p Entry from the cache.
   void InvalidateCache(const FileEntry* Entry);
 
   /// \brief If path is not absolute and FileSystemOptions set the working
