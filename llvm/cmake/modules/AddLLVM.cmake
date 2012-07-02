@@ -270,8 +270,13 @@ function(add_lit_target target comment)
   add_custom_target(${target}
     COMMAND ${LIT_COMMAND} ${ARG_DEFAULT_ARGS}
     COMMENT "${comment}"
-    DEPENDS ${ARG_DEPENDS}
     )
+
+  # It would be nice to use the DEPENDS clause in add_custom_target above, but
+  # that has bugs with the CMake 2.8.0 installed on Ubuntu Lucid when the entry
+  # in the depends is another custom target. Instead we add them through an
+  # explicit add_dependencies.
+  add_dependencies(${target} ${ARG_DEPENDS})
 endfunction()
 
 # A function to add a set of lit test suites to be driven through 'check-*' targets.
