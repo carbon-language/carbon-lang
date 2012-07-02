@@ -1,4 +1,5 @@
-; RUN: not llvm-as < %s >/dev/null |& FileCheck %s
+; RUN: not llvm-as < %s >/dev/null 2> %t
+; RUN: FileCheck %s < %t
 ; Test the case of a incorrect indices type into struct
 
 ; CHECK: invalid getelementptr indices
