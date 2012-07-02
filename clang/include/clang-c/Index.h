@@ -3144,6 +3144,19 @@ CINDEX_LINKAGE CXCursor clang_getCanonicalCursor(CXCursor);
 CINDEX_LINKAGE int clang_Cursor_getObjCSelectorIndex(CXCursor);
 
 /**
+ * \brief Given a cursor pointing to a C++ method call or an ObjC message,
+ * returns non-zero if the method/message is "dynamic", meaning:
+ * 
+ * For a C++ method: the call is virtual.
+ * For an ObjC message: the receiver is an object instance, not 'super' or a
+ * specific class.
+ * 
+ * If the method/message is "static" or the cursor does not point to a
+ * method/message, it will return zero.
+ */
+CINDEX_LINKAGE int clang_Cursor_isDynamicCall(CXCursor C);
+
+/**
  * \brief Given a cursor that represents a declaration, return the associated
  * comment's source range.  The range may include multiple consecutive comments
  * with whitespace in between.

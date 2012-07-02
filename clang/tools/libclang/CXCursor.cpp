@@ -1319,5 +1319,30 @@ void clang_disposeOverriddenCursors(CXCursor *overridden) {
   
   pool.AvailableCursors.push_back(Vec);
 }
-  
+
+int clang_Cursor_isDynamicCall(CXCursor C) {
+  const Expr *E = 0;
+  if (clang_isExpression(C.kind))
+    E = getCursorExpr(C);
+  if (!E)
+    return 0;
+
+  if (const ObjCMessageExpr *MsgE = dyn_cast<ObjCMessageExpr>(E))
+    return MsgE->getReceiverKind() == ObjCMessageExpr::Instance;
+
+  const MemberExpr *ME = 0;
+  if (isa<MemberExpr>(E))
+    ME = cast<MemberExpr>(E);
+  else if (const CallExpr *CE = dyn_cast<CallExpr>(E))
+    ME = dyn_cast_or_null<MemberExpr>(CE->getCallee());
+
+  if (ME) {
+    if (const CXXMethodDecl *
+          MD = dyn_cast_or_null<CXXMethodDecl>(ME->getMemberDecl()))
+      return MD->isVirtual() && !ME->hasQualifier();
+  }
+
+  return 0;
+}
+
 } // end: extern "C"
