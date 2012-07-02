@@ -310,9 +310,9 @@ void CallAndMessageChecker::emitNilReceiverBug(CheckerContext &C,
   os << "' that will be garbage";
 
   BugReport *report = new BugReport(*BT_msg_ret, os.str(), N);
+  report->addRange(msg.getReceiverSourceRange());
   // FIXME: This won't track "self" in messages to super.
   if (const Expr *receiver = msg.getInstanceReceiverExpr()) {
-    report->addRange(receiver->getSourceRange());
     report->addVisitor(bugreporter::getTrackNullOrUndefValueVisitor(N,
                                                                     receiver,
                                                                     report));
