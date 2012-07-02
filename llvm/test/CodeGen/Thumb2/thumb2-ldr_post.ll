@@ -1,5 +1,5 @@
 ; RUN: llc < %s -march=thumb -mattr=+thumb2 | \
-; RUN:   grep {ldr.*\\\[.*\],} | count 1
+; RUN:   grep "ldr.*\[.*\]," | count 1
 
 define i32 @test(i32 %a, i32 %b, i32 %c) {
         %tmp1 = mul i32 %a, %b          ; <i32> [#uses=2]
