@@ -218,8 +218,7 @@ public:
         const_cast<Type&>(RangeType) = RANGE;
         return false;
       }
-      assert(!"Unknown state?!");
-      return false;
+      llvm_unreachable("Unknown state?!");
     }
 
     const IntType& getLow() const {
