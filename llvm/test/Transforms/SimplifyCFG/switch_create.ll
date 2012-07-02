@@ -82,8 +82,8 @@ lor.end:                                          ; preds = %lor.rhs, %lor.lhs.f
   
 ; CHECK: @test4
 ; CHECK:  switch i8 %c, label %lor.rhs [
-; CHECK:    i8 34, label %lor.end
 ; CHECK:    i8 62, label %lor.end
+; CHECK:    i8 34, label %lor.end
 ; CHECK:    i8 92, label %lor.end
 ; CHECK:  ]
 }
