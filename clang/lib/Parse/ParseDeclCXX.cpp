@@ -929,7 +929,7 @@ void Parser::ParseMicrosoftInheritanceClassAttributes(ParsedAttributes &attrs) {
 /// Determine whether the following tokens are valid after a type-specifier
 /// which could be a standalone declaration. This will conservatively return
 /// true if there's any doubt, and is appropriate for insert-';' fixits.
-bool Parser::isValidAfterTypeSpecifier() {
+bool Parser::isValidAfterTypeSpecifier(bool CouldBeBitfield) {
   // This switch enumerates the valid "follow" set for type-specifiers.
   switch (Tok.getKind()) {
   default: break;
@@ -944,6 +944,8 @@ bool Parser::isValidAfterTypeSpecifier() {
   case tok::l_paren:            // struct foo {...} (         x);
   case tok::comma:              // __builtin_offsetof(struct foo{...} ,
     return true;
+  case tok::colon:
+    return CouldBeBitfield;     // enum E { ... }   :         2;
   // Type qualifiers
   case tok::kw_const:           // struct foo {...} const     x;
   case tok::kw_volatile:        // struct foo {...} volatile  x;
@@ -1236,7 +1238,7 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
     }
   } else if (DSC != DSC_type_specifier &&
              (Tok.is(tok::semi) ||
-              (Tok.isAtStartOfLine() && !isValidAfterTypeSpecifier()))) {
+              (Tok.isAtStartOfLine() && !isValidAfterTypeSpecifier(false)))) {
     TUK = DS.isFriendSpecified() ? Sema::TUK_Friend : Sema::TUK_Declaration;
     if (Tok.isNot(tok::semi)) {
       // A semicolon was missing after this declaration. Diagnose and recover.
@@ -1466,7 +1468,7 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
   //   In a template-declaration which defines a class, no declarator
   //   is permitted.
   if (TUK == Sema::TUK_Definition &&
-      (TemplateInfo.Kind || !isValidAfterTypeSpecifier())) {
+      (TemplateInfo.Kind || !isValidAfterTypeSpecifier(false))) {
     ExpectAndConsume(tok::semi, diag::err_expected_semi_after_tagdecl,
                      TagType == DeclSpec::TST_class ? "class" :
                      TagType == DeclSpec::TST_struct ? "struct" : "union");

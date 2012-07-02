@@ -107,3 +107,8 @@ void test18() {
   int x = 4+(5-12));  // expected-error {{extraneous ')' before ';'}}
 }
 
+enum E1 { e1 }: // expected-error {{expected ';'}}
+struct EnumBitfield {
+  enum E2 { e2 } : 4; // ok
+  struct S { int n; }: // expected-error {{expected ';'}}
+};
