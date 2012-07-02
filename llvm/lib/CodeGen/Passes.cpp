@@ -273,14 +273,14 @@ AnalysisID TargetPassConfig::getPassSubstitution(AnalysisID ID) const {
 
 /// Add a pass to the PassManager.
 void TargetPassConfig::addPass(Pass *P) {
+  assert(!Initialized && "PassConfig is immutable");
+
   PM->add(P);
 }
 
 /// Add a CodeGen pass at this point in the pipeline after checking for target
 /// and command line overrides.
 AnalysisID TargetPassConfig::addPass(AnalysisID PassID) {
-  assert(!Initialized && "PassConfig is immutable");
-
   AnalysisID TargetID = getPassSubstitution(PassID);
   AnalysisID FinalID = overridePass(PassID, TargetID);
   if (FinalID == 0)
