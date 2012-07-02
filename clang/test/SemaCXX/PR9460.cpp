@@ -8,11 +8,11 @@ struct basic_string{
   basic_string(aT*);
 };
 
-struct runtime_error{
-  runtime_error(
+struct runtime_error{ // expected-note{{candidate constructor}}
+  runtime_error( // expected-note{{candidate constructor}}
 basic_string<char> struct{ // expected-error {{cannot combine with previous 'type-name' declaration specifier}}
 a(){ // expected-error {{requires a type specifier}}
-  runtime_error(0);
+  runtime_error(0); // expected-error{{no matching conversion for functional-style cast from 'int' to 'runtime_error'}}
 }
 }
 );
