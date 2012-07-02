@@ -51,7 +51,7 @@ else()
   include(FindPythonInterp)
   if(PYTHONINTERP_FOUND)
     if( LLVM_MAIN_SRC_DIR )
-      set(LIT "${LLVM_SOURCE_DIR}/utils/lit/lit.py")
+      set(LIT "${LLVM_MAIN_SRC_DIR}/utils/lit/lit.py")
     else()
       set(LIT "${PATH_TO_LLVM_BUILD}/bin/${CMAKE_CFG_INTDIR}/llvm-lit")
       # Installed LLVM does not contain ${CMAKE_CFG_INTDIR} in paths.
