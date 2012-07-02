@@ -1,0 +1,25 @@
+RUN: llvm-dwarfdump %p/Inputs/dwarfdump-test.elf-x86-64  \
+RUN:   --address=0x400589 --functions | FileCheck %s -check-prefix MAIN
+RUN: llvm-dwarfdump %p/Inputs/dwarfdump-test.elf-x86-64  \
+RUN:   --address=0x400558 --functions | FileCheck %s -check-prefix FUNCTION
+RUN: llvm-dwarfdump %p/Inputs/dwarfdump-test.elf-x86-64 \
+RUN:   --address=0x4005b6 --functions | FileCheck %s -check-prefix CTOR_WITH_SPEC
+RUN: llvm-dwarfdump %p/Inputs/dwarfdump-test2.elf-x86-64 \
+RUN:   --address=0x4004b8 --functions | FileCheck %s -check-prefix MANY_CU_1
+RUN: llvm-dwarfdump %p/Inputs/dwarfdump-test2.elf-x86-64 \
+RUN:   --address=0x4004c4 --functions | FileCheck %s -check-prefix MANY_CU_2
+
+MAIN: main
+MAIN-NEXT: dwarfdump-test.cc:16:10
+
+FUNCTION: _Z1fii
+FUNCTION-NEXT: dwarfdump-test.cc:11:18
+
+CTOR_WITH_SPEC: _ZN10DummyClassC1Ei
+CTOR_WITH_SPEC-NEXT: dwarfdump-test.cc:4:30
+
+MANY_CU_1: a
+MANY_CU_1-NEXT: a.cc:2:0
+
+MANY_CU_2: main
+MANY_CU_2-NEXT: main.cc:4:0

@@ -93,6 +93,7 @@ bool DWARFDebugAranges::generate(DWARFContext *ctx) {
         cu->buildAddressRangeTable(this, true);
     }
   }
+  sort(true, /* overlap size */ 0);
   return !isEmpty();
 }
 
@@ -221,4 +222,3 @@ bool DWARFDebugAranges::getMaxRange(uint64_t &LoPC, uint64_t &HiPC) const {
   HiPC = Aranges.back().HiPC();
   return true;
 }
-

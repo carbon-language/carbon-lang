@@ -39,6 +39,11 @@ static cl::opt<unsigned long long>
 Address("address", cl::init(-1ULL),
         cl::desc("Print line information for a given address"));
 
+static cl::opt<bool>
+PrintFunctions("functions", cl::init(false),
+               cl::desc("Print function names as well as line information "
+                        "for a given address"));
+
 static void DumpInput(const StringRef &Filename) {
   OwningPtr<MemoryBuffer> Buff;
 
@@ -92,7 +97,13 @@ static void DumpInput(const StringRef &Filename) {
     dictx->dump(outs());
   } else {
     // Print line info for the specified address.
-    DILineInfo dli = dictx->getLineInfoForAddress(Address);
+    int spec_flags = DILineInfoSpecifier::FileLineInfo;
+    if (PrintFunctions)
+      spec_flags |= DILineInfoSpecifier::FunctionName;
+    DILineInfo dli = dictx->getLineInfoForAddress(Address, spec_flags);
+    if (PrintFunctions)
+      outs() << (dli.getFunctionName() ? dli.getFunctionName() : "<unknown>")
+             << "\n";
     outs() << (dli.getFileName() ? dli.getFileName() : "<unknown>") << ':'
            << dli.getLine() << ':' << dli.getColumn() << '\n';
   }

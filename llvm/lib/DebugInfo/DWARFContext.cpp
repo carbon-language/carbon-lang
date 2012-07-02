@@ -140,30 +140,42 @@ DWARFCompileUnit *DWARFContext::getCompileUnitForOffset(uint32_t offset) {
   return 0;
 }
 
-DILineInfo DWARFContext::getLineInfoForAddress(uint64_t address) {
+DILineInfo DWARFContext::getLineInfoForAddress(uint64_t address,
+    DILineInfoSpecifier specifier) {
   // First, get the offset of the compile unit.
   uint32_t cuOffset = getDebugAranges()->findAddress(address);
   // Retrieve the compile unit.
   DWARFCompileUnit *cu = getCompileUnitForOffset(cuOffset);
   if (!cu)
-    return DILineInfo("<invalid>", 0, 0);
-  // Get the line table for this compile unit.
-  const DWARFDebugLine::LineTable *lineTable = getLineTableForCompileUnit(cu);
-  if (!lineTable)
-    return DILineInfo("<invalid>", 0, 0);
-  // Get the index of the row we're looking for in the line table.
-  uint64_t hiPC =
-    cu->getCompileUnitDIE()->getAttributeValueAsUnsigned(cu, DW_AT_high_pc,
-                                                         -1ULL);
-  uint32_t rowIndex = lineTable->lookupAddress(address, hiPC);
-  if (rowIndex == -1U)
-    return DILineInfo("<invalid>", 0, 0);
-
-  // From here, contruct the DILineInfo.
-  const DWARFDebugLine::Row &row = lineTable->Rows[rowIndex];
-  const std::string &fileName = lineTable->Prologue.FileNames[row.File-1].Name;
-
-  return DILineInfo(fileName.c_str(), row.Line, row.Column);
+    return DILineInfo();
+  const char *fileName = "<invalid>";
+  const char *functionName = "<invalid>";
+  uint32_t line = 0;
+  uint32_t column = 0;
+  if (specifier.needs(DILineInfoSpecifier::FunctionName)) {
+    const DWARFDebugInfoEntryMinimal *function_die =
+        cu->getFunctionDIEForAddress(address);
+    if (function_die)
+      functionName = function_die->getSubprogramName(cu);
+  }
+  if (specifier.needs(DILineInfoSpecifier::FileLineInfo)) {
+    // Get the line table for this compile unit.
+    const DWARFDebugLine::LineTable *lineTable = getLineTableForCompileUnit(cu);
+    if (lineTable) {
+      // Get the index of the row we're looking for in the line table.
+      uint64_t hiPC = cu->getCompileUnitDIE()->getAttributeValueAsUnsigned(
+          cu, DW_AT_high_pc, -1ULL);
+      uint32_t rowIndex = lineTable->lookupAddress(address, hiPC);
+      if (rowIndex != -1U) {
+        const DWARFDebugLine::Row &row = lineTable->Rows[rowIndex];
+        // Take file/line info from the line table.
+        fileName = lineTable->Prologue.FileNames[row.File - 1].Name.c_str();
+        line = row.Line;
+        column = row.Column;
+      }
+    }
+  }
+  return DILineInfo(fileName, functionName, line, column);
 }
 
 void DWARFContextInMemory::anchor() { }

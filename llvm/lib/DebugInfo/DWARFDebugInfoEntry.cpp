@@ -440,3 +440,51 @@ DWARFDebugInfoEntryMinimal::buildAddressRangeTable(const DWARFCompileUnit *cu,
     }
   }
 }
+
+bool
+DWARFDebugInfoEntryMinimal::addressRangeContainsAddress(
+    const DWARFCompileUnit *cu, const uint64_t address) const {
+  if (!isNULL() && getTag() == DW_TAG_subprogram) {
+    uint64_t hi_pc = -1ULL;
+    uint64_t lo_pc = getAttributeValueAsUnsigned(cu, DW_AT_low_pc, -1ULL);
+    if (lo_pc != -1ULL)
+      hi_pc = getAttributeValueAsUnsigned(cu, DW_AT_high_pc, -1ULL);
+    if (hi_pc != -1ULL) {
+      return (lo_pc <= address && address < hi_pc);
+    }
+  }
+  return false;
+}
+
+static inline const char*
+getSubprogramNameFromDie(const DWARFCompileUnit *cu,
+                         const DWARFDebugInfoEntryMinimal *die) {
+  const char *result = 0;
+  if (!die->isNULL() && die->getTag() == DW_TAG_subprogram) {
+    // Try to get mangled name if possible.
+    result = die->getAttributeValueAsString(cu, DW_AT_MIPS_linkage_name, 0);
+    if (result == 0)
+      result = die->getAttributeValueAsString(cu, DW_AT_linkage_name, 0);
+    if (result == 0)
+      result = die->getAttributeValueAsString(cu, DW_AT_name, 0);
+  }
+  return result;
+}
+
+const char*
+DWARFDebugInfoEntryMinimal::getSubprogramName(
+    const DWARFCompileUnit *cu) const {
+  if (isNULL() || getTag() != DW_TAG_subprogram)
+    return 0;
+  const char *name = getSubprogramNameFromDie(cu, this);
+  if (name == 0) {
+    // Try to get name from specification DIE.
+    uint32_t ref = getAttributeValueAsReference(cu, DW_AT_specification, -1U);
+    if (ref != -1U) {
+      DWARFDebugInfoEntryMinimal spec_die;
+      if (spec_die.extract(cu, &ref))
+        name = getSubprogramNameFromDie(cu, &spec_die);
+    }
+  }
+  return name;
+}

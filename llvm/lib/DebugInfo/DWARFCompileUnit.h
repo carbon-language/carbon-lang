@@ -104,6 +104,11 @@ public:
 
   void buildAddressRangeTable(DWARFDebugAranges *debug_aranges,
                               bool clear_dies_if_already_not_parsed);
+  /// getFunctionDIEForAddress - Returns pointer to parsed subprogram DIE,
+  /// address ranges of which contain the provided address,
+  /// or NULL if there is no such subprogram. The pointer
+  /// is valid until DWARFCompileUnit::clear() or clearDIEs() is called.
+  const DWARFDebugInfoEntryMinimal *getFunctionDIEForAddress(int64_t address);
 };
 
 }
