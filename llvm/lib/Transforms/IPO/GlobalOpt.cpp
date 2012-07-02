@@ -254,6 +254,8 @@ static bool AnalyzeGlobal(const Value *V, GlobalStatus &GS,
             GS.StoredType = GlobalStatus::isStored;
           }
         }
+      } else if (isa<BitCastInst>(I)) {
+        if (AnalyzeGlobal(I, GS, PHIUsers)) return true;
       } else if (isa<GetElementPtrInst>(I)) {
         if (AnalyzeGlobal(I, GS, PHIUsers)) return true;
       } else if (isa<SelectInst>(I)) {

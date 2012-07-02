@@ -26,7 +26,9 @@ define i1 @bah(i64 %i) nounwind readonly optsize ssp {
 entry:
   %arrayidx4 = getelementptr inbounds [4 x i8]* @d, i64 0, i64 %i
   %tmp5 = load i8* %arrayidx4, align 1
-  %cmp = icmp eq i8 %tmp5, 42
+  %array0 = bitcast [4 x i8]* @d to i8*
+  %tmp6 = load i8* %array0, align 1
+  %cmp = icmp eq i8 %tmp5, %tmp6
   ret i1 %cmp
 }
 
