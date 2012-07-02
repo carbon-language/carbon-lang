@@ -33,8 +33,9 @@ enum CallEventKind {
   CE_BEG_SIMPLE_CALLS = CE_Function,
   CE_END_SIMPLE_CALLS = CE_Block,
   CE_CXXConstructor,
+  CE_CXXAllocator,
   CE_BEG_FUNCTION_CALLS = CE_Function,
-  CE_END_FUNCTION_CALLS = CE_CXXConstructor,
+  CE_END_FUNCTION_CALLS = CE_CXXAllocator,
   CE_ObjCMessage,
   CE_ObjCPropertyAccess,
   CE_BEG_OBJC_CALLS = CE_ObjCMessage,
@@ -334,6 +335,35 @@ public:
 
   static bool classof(const CallEvent *CA) {
     return CA->getKind() == CE_CXXConstructor;
+  }
+};
+
+class CXXAllocatorCall : public AnyFunctionCall {
+  const CXXNewExpr *E;
+
+public:
+  CXXAllocatorCall(const CXXNewExpr *e, ProgramStateRef St,
+                   const LocationContext *LCtx)
+    : AnyFunctionCall(St, LCtx, CE_CXXAllocator), E(e) {}
+
+  const CXXNewExpr *getOriginExpr() const { return E; }
+  SourceRange getSourceRange() const { return E->getSourceRange(); }
+
+  const FunctionDecl *getDecl() const {
+    return E->getOperatorNew();
+  }
+
+  unsigned getNumArgs() const { return E->getNumPlacementArgs() + 1; }
+
+  const Expr *getArgExpr(unsigned Index) const {
+    // The first argument of an allocator call is the size of the allocation.
+    if (Index == 0)
+      return 0;
+    return E->getPlacementArg(Index - 1);
+  }
+
+  static bool classof(const CallEvent *CE) {
+    return CE->getKind() == CE_CXXAllocator;
   }
 };
 

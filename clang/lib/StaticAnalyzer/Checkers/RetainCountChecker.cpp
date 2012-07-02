@@ -947,6 +947,7 @@ RetainSummaryManager::getSummary(const CallEvent &Call,
   case CE_CXXMember:
   case CE_Block:
   case CE_CXXConstructor:
+  case CE_CXXAllocator:
     // FIXME: These calls are currently unsupported.
     return getPersistentStopSummary();
   case CE_ObjCMessage:

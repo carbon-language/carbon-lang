@@ -240,11 +240,6 @@ bool ExprEngine::shouldInlineDecl(const Decl *D, ExplodedNode *Pred) {
       return false;
   }
 
-  // Do not inline constructors until we can model destructors.
-  // This is unfortunate, but basically necessary for smart pointers and such.
-  if (isa<CXXConstructorDecl>(D))
-    return false;
-
   // It is possible that the live variables analysis cannot be
   // run.  If so, bail out.
   if (!CalleeADC->getAnalysis<RelaxedLiveVariables>())
@@ -267,10 +262,17 @@ bool ExprEngine::inlineCall(ExplodedNodeSet &Dst,
 
   switch (Call.getKind()) {
   case CE_Function:
-  case CE_CXXConstructor:
   case CE_CXXMember:
     // These are always at least possible to inline.
     break;
+  case CE_CXXConstructor:
+    // Do not inline constructors until we can model destructors.
+    // This is unfortunate, but basically necessary for smart pointers and such.
+    return false;
+  case CE_CXXAllocator:
+    // Do not inline allocators until we model deallocators.
+    // This is unfortunate, but basically necessary for smart pointers and such.
+    return false;
   case CE_Block: {
     const BlockDataRegion *BR = cast<BlockCall>(Call).getBlockRegion();
     if (!BR)
