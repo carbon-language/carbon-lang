@@ -1,6 +1,6 @@
 ; PR1226
 ; RUN: opt < %s -scalarrepl -S | \
-; RUN:   not grep {call void @llvm.memcpy.i32}
+; RUN:   not grep "call void @llvm.memcpy.i32"
 ; RUN: opt < %s -scalarrepl -S | grep getelementptr
 ; END.
 

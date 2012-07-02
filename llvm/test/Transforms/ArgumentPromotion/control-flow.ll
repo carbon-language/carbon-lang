@@ -1,5 +1,5 @@
 ; RUN: opt < %s -argpromotion -S | \
-; RUN:    not grep {load i32\* null}
+; RUN:    not grep "load i32* null"
 
 define internal i32 @callee(i1 %C, i32* %P) {
         br i1 %C, label %T, label %F

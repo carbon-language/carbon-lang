@@ -1,4 +1,4 @@
-; RUN: opt < %s -basicaa -gvn -S | not grep {tmp701 =}
+; RUN: opt < %s -basicaa -gvn -S | not grep "tmp701 ="
 
 @img_width = external global i16		; <i16*> [#uses=2]
 

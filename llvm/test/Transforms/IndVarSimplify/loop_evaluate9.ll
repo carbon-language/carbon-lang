@@ -1,6 +1,6 @@
 ; RUN: opt < %s -indvars -S > %t
-; RUN: grep {\[%\]tmp7 = icmp eq i8 -28, -28} %t
-; RUN: grep {\[%\]tmp8 = icmp eq i8 63, 63} %t
+; RUN: grep "[%]tmp7 = icmp eq i8 -28, -28" %t
+; RUN: grep "[%]tmp8 = icmp eq i8 63, 63" %t
 ; PR4477
 ; Indvars should compute the exit values in loop.
 ;

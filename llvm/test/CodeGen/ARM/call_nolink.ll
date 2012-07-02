@@ -1,5 +1,5 @@
 ; RUN: llc < %s -march=arm -mtriple=arm-linux-gnueabi | \
-; RUN:   not grep {bx lr}
+; RUN:   not grep "bx lr"
 
 	%struct.anon = type { i32 (i32, i32, i32)*, i32, i32, [3 x i32], i8*, i8*, i8* }
 @r = external global [14 x i32]		; <[14 x i32]*> [#uses=4]

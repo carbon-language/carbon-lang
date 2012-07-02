@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s 2>&1 | not grep {Instruction operands must be first-class}
+; RUN: llvm-as < %s 2>&1 | not grep "Instruction operands must be first-class"
 
 ; This previously was for PR826, but structs are now first-class so
 ; the following is now valid.

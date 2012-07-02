@@ -4,7 +4,7 @@
 ; case... bad.
 
 ; RUN: opt < %s -licm -loop-deletion -simplifycfg -S | \
-; RUN:   not grep {br }
+; RUN:   not grep "br "
 
 define i32 @main(i32 %argc) {
 ; <label>:0

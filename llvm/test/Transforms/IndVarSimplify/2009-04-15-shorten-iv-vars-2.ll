@@ -1,4 +1,4 @@
-; RUN: opt < %s -indvars -instcombine -S | not grep {\[sz\]ext}
+; RUN: opt < %s -indvars -instcombine -S | not grep "[sz]ext"
 ; ModuleID = '<stdin>'
 ;extern int *a, *b, *c, *d, *e, *f;  /* 64 bit */
 ;extern int K[256];

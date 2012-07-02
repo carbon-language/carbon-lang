@@ -3,7 +3,7 @@
 ;
 
 ; RUN: opt < %s -instcombine -S | \
-; RUN:   grep -v {sub i19 %Cok, %Bok} | grep -v {sub i25 0, %Aok} | not grep sub
+; RUN:   grep -v "sub i19 %Cok, %Bok" | grep -v "sub i25 0, %Aok" | not grep sub
 ; END.
 
 define i23 @test1(i23 %A) {

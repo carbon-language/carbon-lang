@@ -1,4 +1,4 @@
-; RUN: opt < %s -instcombine -S | not grep {store }
+; RUN: opt < %s -instcombine -S | not grep "store "
 ; PR2296
 
 @G = common global double 0.000000e+00, align 16

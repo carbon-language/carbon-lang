@@ -4,7 +4,7 @@
 ; the ConstantFoldTerminator function.
 
 ; RUN: opt < %s -simplifycfg -S | \
-; RUN:   not grep {br i1 %c2}
+; RUN:   not grep "br i1 %c2"
 
 declare void @noop()
 

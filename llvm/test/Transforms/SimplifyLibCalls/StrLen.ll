@@ -1,6 +1,6 @@
 ; Test that the StrCatOptimizer works correctly
 ; RUN: opt < %s -simplify-libcalls -S | \
-; RUN:    not grep {call.*strlen}
+; RUN:    not grep "call.*strlen"
 
 target datalayout = "e-p:32:32"
 @hello = constant [6 x i8] c"hello\00"		; <[6 x i8]*> [#uses=3]

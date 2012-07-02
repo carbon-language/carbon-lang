@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=arm | not grep {add.*#0}
+; RUN: llc < %s -march=arm | not grep "add.*#0"
 
 define i32 @foo() {
 entry:

@@ -1,7 +1,7 @@
 ; This test makes sure that these instructions are properly eliminated.
 ;
 ; RUN: opt < %s -instcombine -S | \
-; RUN:    not grep {tobool}
+; RUN:    not grep "tobool"
 ; END.
 define i32 @main(i32 %argc, i8** %argv) nounwind ssp {
 entry:

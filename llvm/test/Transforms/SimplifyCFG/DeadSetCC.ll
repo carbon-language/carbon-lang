@@ -1,5 +1,5 @@
 ; RUN: opt < %s -simplifycfg -S | \
-; RUN:   not grep {icmp eq}
+; RUN:   not grep "icmp eq"
 
 ; Check that simplifycfg deletes a dead 'seteq' instruction when it
 ; folds a conditional branch into a switch instruction.

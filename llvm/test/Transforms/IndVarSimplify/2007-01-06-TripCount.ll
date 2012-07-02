@@ -1,5 +1,5 @@
 ; PR1015
-; RUN: opt < %s -indvars -S | not grep {ret i32 0}
+; RUN: opt < %s -indvars -S | not grep "ret i32 0"
 
 target datalayout = "e-p:32:32"
 target triple = "i686-apple-darwin8"

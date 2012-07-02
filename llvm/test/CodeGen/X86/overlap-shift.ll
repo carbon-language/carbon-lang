@@ -7,7 +7,7 @@
 ; Check that the shift gets turned into an LEA.
 
 ; RUN: llc < %s -march=x86 -x86-asm-syntax=intel | \
-; RUN:   not grep {mov E.X, E.X}
+; RUN:   not grep "mov E.X, E.X"
 
 @G = external global i32                ; <i32*> [#uses=1]
 

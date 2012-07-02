@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86 | not grep {subl.*%esp}
+; RUN: llc < %s -march=x86 | not grep "subl.*%esp"
 
 define i32 @f(i32 %a, i32 %b) {
         %tmp.2 = mul i32 %a, %a         ; <i32> [#uses=1]

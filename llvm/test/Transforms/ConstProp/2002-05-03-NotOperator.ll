@@ -5,7 +5,7 @@
 ; Fix #2: The unary not instruction now no longer exists. Change to xor.
 
 ; RUN: opt < %s -constprop -S | \
-; RUN:   not grep {i32 0}
+; RUN:   not grep "i32 0"
 
 define i32 @test1() {
         %R = xor i32 123, -1            ; <i32> [#uses=1]

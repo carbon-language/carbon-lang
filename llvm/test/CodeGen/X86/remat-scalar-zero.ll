@@ -3,7 +3,7 @@
 ; RUN: llc < %s -mtriple=x86_64-unknown-linux-gnu > %t
 ; RUN: not grep xor %t
 ; RUN: not grep movap %t
-; RUN: grep {\\.quad.*0} %t
+; RUN: grep "\.quad.*0" %t
 
 ; Remat should be able to fold the zero constant into the div instructions
 ; as a constant-pool load.

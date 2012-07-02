@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=i386-apple-darwin -asm-verbose | grep {#} | not grep -v {##}
+; RUN: llc < %s -mtriple=i386-apple-darwin -asm-verbose | grep "#" | not grep -v "##"
 
 	%struct.AGenericCall = type { %struct.AGenericManager*, %struct.ComponentParameters*, i32* }
 	%struct.AGenericManager = type <{ i8 }>

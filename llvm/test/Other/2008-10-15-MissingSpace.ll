@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llvm-dis | not grep {void@}
+; RUN: llvm-as < %s | llvm-dis | not grep "void@"
 ; PR2894
 declare void @g()
 define void @f() {

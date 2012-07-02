@@ -2,7 +2,7 @@
 ; instructions
 
 ; RUN: opt < %s -inline -S | \
-; RUN:   not grep {call\[^e\]}
+; RUN:   not grep "call[^e]"
 
 declare void @might_throw()
 

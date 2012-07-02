@@ -1,5 +1,5 @@
 ; RUN: opt < %s -indvars -S \
-; RUN:   | grep {%b.1 = phi i32 \\\[ 2, %bb \\\], \\\[ 1, %bb2 \\\]}
+; RUN:   | grep "%b.1 = phi i32 [ 2, %bb ], [ 1, %bb2 ]"
 ;
 ; This loop has multiple exits, and the value of %b1 depends on which
 ; exit is taken. Indvars should correctly compute the exit values.

@@ -1,5 +1,5 @@
 ; RUN: opt < %s -analyze -scalar-evolution 2>&1 | \
-; RUN: grep {(((-1 \\* %i0) + (100005 smax %i0)) /u 5)}
+; RUN: grep "(((-1 * %i0) + (100005 smax %i0)) /u 5)"
 ; XFAIL: *
 
 define i32 @foo0(i32 %i0) nounwind {

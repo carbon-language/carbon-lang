@@ -1,7 +1,7 @@
 ; This test makes sure that and instructions are properly eliminated.
 ; This test is for Integer BitWidth <= 64 && BitWidth % 8 != 0.
 
-; RUN: opt < %s -instcombine -S | not grep {and }
+; RUN: opt < %s -instcombine -S | not grep "and "
 ; END.
 
 define i39 @test0(i39 %A) {

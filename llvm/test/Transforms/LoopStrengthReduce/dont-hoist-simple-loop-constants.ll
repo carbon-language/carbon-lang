@@ -1,5 +1,5 @@
 ; RUN: opt < %s -loop-reduce -S | \
-; RUN:   not grep {bitcast i32 1 to i32}
+; RUN:   not grep "bitcast i32 1 to i32"
 ; END.
 ; The setlt wants to use a value that is incremented one more than the dominant
 ; IV.  Don't insert the 1 outside the loop, preventing folding it into the add.

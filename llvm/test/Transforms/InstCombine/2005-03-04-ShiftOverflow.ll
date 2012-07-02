@@ -1,5 +1,5 @@
 ; RUN: opt < %s -instcombine -S | \
-; RUN:   not grep {ret i1 false}
+; RUN:   not grep "ret i1 false"
 
 define i1 @test(i64 %tmp.169) {
         %tmp.1710 = lshr i64 %tmp.169, 1                ; <i64> [#uses=1]

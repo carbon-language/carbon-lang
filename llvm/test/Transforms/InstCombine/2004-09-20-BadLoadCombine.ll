@@ -1,5 +1,5 @@
 ; RUN: opt < %s -instcombine -mem2reg -S | \
-; RUN:   not grep {i32 1}
+; RUN:   not grep "i32 1"
 
 ; When propagating the load through the select, make sure that the load is
 ; inserted where the original load was, not where the select is.  Not doing

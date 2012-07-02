@@ -1,5 +1,5 @@
 ; RUN: opt < %s -simplifycfg -S | \
-; RUN: not grep {br label}
+; RUN: not grep "br label"
 
 define void @test(i1 %C) {
         br i1 %C, label %A, label %B

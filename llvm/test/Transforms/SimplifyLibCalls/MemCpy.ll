@@ -1,4 +1,4 @@
-; RUN: opt < %s -constprop -instcombine -S | not grep {call.*llvm.memcpy.i32}
+; RUN: opt < %s -constprop -instcombine -S | not grep "call.*llvm.memcpy.i32"
 
 @h = constant [2 x i8] c"h\00"		; <[2 x i8]*> [#uses=1]
 @hel = constant [4 x i8] c"hel\00"		; <[4 x i8]*> [#uses=1]

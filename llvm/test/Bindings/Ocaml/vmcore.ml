@@ -84,7 +84,7 @@ let test_target () =
 (*===-- Constants ---------------------------------------------------------===*)
 
 let test_constants () =
-  (* RUN: grep {const_int.*i32.*-1} < %t.ll
+  (* RUN: grep "const_int.*i32.*-1" < %t.ll
    *)
   group "int";
   let c = const_int i32_type (-1) in
@@ -92,44 +92,44 @@ let test_constants () =
   insist (i32_type = type_of c);
   insist (is_constant c);
 
-  (* RUN: grep {const_sext_int.*i64.*-1} < %t.ll
+  (* RUN: grep "const_sext_int.*i64.*-1" < %t.ll
    *)
   group "sext int";
   let c = const_int i64_type (-1) in
   ignore (define_global "const_sext_int" c m);
   insist (i64_type = type_of c);
 
-  (* RUN: grep {const_zext_int64.*i64.*4294967295} < %t.ll
+  (* RUN: grep "const_zext_int64.*i64.*4294967295" < %t.ll
    *)
   group "zext int64";
   let c = const_of_int64 i64_type (Int64.of_string "4294967295") false in
   ignore (define_global "const_zext_int64" c m);
   insist (i64_type = type_of c);
 
-  (* RUN: grep {const_int_string.*i32.*-1} < %t.ll
+  (* RUN: grep "const_int_string.*i32.*-1" < %t.ll
    *)
   group "int string";
   let c = const_int_of_string i32_type "-1" 10 in
   ignore (define_global "const_int_string" c m);
   insist (i32_type = type_of c);
 
-  (* RUN: grep {const_string.*"cruel\\\\00world"} < %t.ll
+  (* RUN: grep 'const_string.*"cruel\00world"' < %t.ll
    *)
   group "string";
   let c = const_string context "cruel\000world" in
   ignore (define_global "const_string" c m);
   insist ((array_type i8_type 11) = type_of c);
 
-  (* RUN: grep {const_stringz.*"hi\\\\00again\\\\00"} < %t.ll
+  (* RUN: grep 'const_stringz.*"hi\00again\00"' < %t.ll
    *)
   group "stringz";
   let c = const_stringz context "hi\000again" in
   ignore (define_global "const_stringz" c m);
   insist ((array_type i8_type 9) = type_of c);
 
-  (* RUN: grep {const_single.*2.75} < %t.ll
-   * RUN: grep {const_double.*3.1459} < %t.ll
-   * RUN: grep {const_double_string.*1.25} < %t.ll
+  (* RUN: grep "const_single.*2.75" < %t.ll
+   * RUN: grep "const_double.*3.1459" < %t.ll
+   * RUN: grep "const_double_string.*1.25" < %t.ll
    *)
   begin group "real";
     let cs = const_float float_type 2.75 in
@@ -150,14 +150,14 @@ let test_constants () =
   let three = const_int i32_type 3 in
   let four = const_int i32_type 4 in
   
-  (* RUN: grep {const_array.*\\\[i32 3, i32 4\\\]} < %t.ll
+  (* RUN: grep "const_array.*[i32 3, i32 4]" < %t.ll
    *)
   group "array";
   let c = const_array i32_type [| three; four |] in
   ignore (define_global "const_array" c m);
   insist ((array_type i32_type 2) = (type_of c));
   
-  (* RUN: grep {const_vector.*<i16 1, i16 2.*>} < %t.ll
+  (* RUN: grep "const_vector.*<i16 1, i16 2.*>" < %t.ll
    *)
   group "vector";
   let c = const_vector [| one; two; one; two;
@@ -165,7 +165,7 @@ let test_constants () =
   ignore (define_global "const_vector" c m);
   insist ((vector_type i16_type 8) = (type_of c));
 
-  (* RUN: grep {const_structure.*.i16 1, i16 2, i32 3, i32 4} < %t.ll
+  (* RUN: grep "const_structure.*.i16 1, i16 2, i32 3, i32 4" < %t.ll
    *)
   group "structure";
   let c = const_struct context [| one; two; three; four |] in
@@ -173,27 +173,27 @@ let test_constants () =
   insist ((struct_type context [| i16_type; i16_type; i32_type; i32_type |])
         = (type_of c));
 
-  (* RUN: grep {const_null.*zeroinit} < %t.ll
+  (* RUN: grep "const_null.*zeroinit" < %t.ll
    *)
   group "null";
   let c = const_null (packed_struct_type context [| i1_type; i8_type; i64_type;
                                                     double_type |]) in
   ignore (define_global "const_null" c m);
   
-  (* RUN: grep {const_all_ones.*-1} < %t.ll
+  (* RUN: grep "const_all_ones.*-1" < %t.ll
    *)
   group "all ones";
   let c = const_all_ones i64_type in
   ignore (define_global "const_all_ones" c m);
 
   group "pointer null"; begin
-    (* RUN: grep {const_pointer_null = global i64\\* null} < %t.ll
+    (* RUN: grep "const_pointer_null = global i64* null" < %t.ll
      *)
     let c = const_pointer_null (pointer_type i64_type) in
     ignore (define_global "const_pointer_null" c m);
   end;
   
-  (* RUN: grep {const_undef.*undef} < %t.ll
+  (* RUN: grep "const_undef.*undef" < %t.ll
    *)
   group "undef";
   let c = undef i1_type in
@@ -202,35 +202,35 @@ let test_constants () =
   insist (is_undef c);
   
   group "constant arithmetic";
-  (* RUN: grep {@const_neg = global i64 sub} < %t.ll
-   * RUN: grep {@const_nsw_neg = global i64 sub nsw } < %t.ll
-   * RUN: grep {@const_nuw_neg = global i64 sub nuw } < %t.ll
-   * RUN: grep {@const_fneg = global double fsub } < %t.ll
-   * RUN: grep {@const_not = global i64 xor } < %t.ll
-   * RUN: grep {@const_add = global i64 add } < %t.ll
-   * RUN: grep {@const_nsw_add = global i64 add nsw } < %t.ll
-   * RUN: grep {@const_nuw_add = global i64 add nuw } < %t.ll
-   * RUN: grep {@const_fadd = global double fadd } < %t.ll
-   * RUN: grep {@const_sub = global i64 sub } < %t.ll
-   * RUN: grep {@const_nsw_sub = global i64 sub nsw } < %t.ll
-   * RUN: grep {@const_nuw_sub = global i64 sub nuw } < %t.ll
-   * RUN: grep {@const_fsub = global double fsub } < %t.ll
-   * RUN: grep {@const_mul = global i64 mul } < %t.ll
-   * RUN: grep {@const_nsw_mul = global i64 mul nsw } < %t.ll
-   * RUN: grep {@const_nuw_mul = global i64 mul nuw } < %t.ll
-   * RUN: grep {@const_fmul = global double fmul } < %t.ll
-   * RUN: grep {@const_udiv = global i64 udiv } < %t.ll
-   * RUN: grep {@const_sdiv = global i64 sdiv } < %t.ll
-   * RUN: grep {@const_exact_sdiv = global i64 sdiv exact } < %t.ll
-   * RUN: grep {@const_fdiv = global double fdiv } < %t.ll
-   * RUN: grep {@const_urem = global i64 urem } < %t.ll
-   * RUN: grep {@const_srem = global i64 srem } < %t.ll
-   * RUN: grep {@const_frem = global double frem } < %t.ll
-   * RUN: grep {@const_and = global i64 and } < %t.ll
-   * RUN: grep {@const_or = global i64 or } < %t.ll
-   * RUN: grep {@const_xor = global i64 xor } < %t.ll
-   * RUN: grep {@const_icmp = global i1 icmp sle } < %t.ll
-   * RUN: grep {@const_fcmp = global i1 fcmp ole } < %t.ll
+  (* RUN: grep "@const_neg = global i64 sub" < %t.ll
+   * RUN: grep "@const_nsw_neg = global i64 sub nsw " < %t.ll
+   * RUN: grep "@const_nuw_neg = global i64 sub nuw " < %t.ll
+   * RUN: grep "@const_fneg = global double fsub " < %t.ll
+   * RUN: grep "@const_not = global i64 xor " < %t.ll
+   * RUN: grep "@const_add = global i64 add " < %t.ll
+   * RUN: grep "@const_nsw_add = global i64 add nsw " < %t.ll
+   * RUN: grep "@const_nuw_add = global i64 add nuw " < %t.ll
+   * RUN: grep "@const_fadd = global double fadd " < %t.ll
+   * RUN: grep "@const_sub = global i64 sub " < %t.ll
+   * RUN: grep "@const_nsw_sub = global i64 sub nsw " < %t.ll
+   * RUN: grep "@const_nuw_sub = global i64 sub nuw " < %t.ll
+   * RUN: grep "@const_fsub = global double fsub " < %t.ll
+   * RUN: grep "@const_mul = global i64 mul " < %t.ll
+   * RUN: grep "@const_nsw_mul = global i64 mul nsw " < %t.ll
+   * RUN: grep "@const_nuw_mul = global i64 mul nuw " < %t.ll
+   * RUN: grep "@const_fmul = global double fmul " < %t.ll
+   * RUN: grep "@const_udiv = global i64 udiv " < %t.ll
+   * RUN: grep "@const_sdiv = global i64 sdiv " < %t.ll
+   * RUN: grep "@const_exact_sdiv = global i64 sdiv exact " < %t.ll
+   * RUN: grep "@const_fdiv = global double fdiv " < %t.ll
+   * RUN: grep "@const_urem = global i64 urem " < %t.ll
+   * RUN: grep "@const_srem = global i64 srem " < %t.ll
+   * RUN: grep "@const_frem = global double frem " < %t.ll
+   * RUN: grep "@const_and = global i64 and " < %t.ll
+   * RUN: grep "@const_or = global i64 or " < %t.ll
+   * RUN: grep "@const_xor = global i64 xor " < %t.ll
+   * RUN: grep "@const_icmp = global i1 icmp sle " < %t.ll
+   * RUN: grep "@const_fcmp = global i1 fcmp ole " < %t.ll
    *)
   let void_ptr = pointer_type i8_type in
   let five = const_int i64_type 5 in
@@ -269,18 +269,18 @@ let test_constants () =
   ignore (define_global "const_fcmp" (const_fcmp Fcmp.Ole ffoldbomb ffive) m);
   
   group "constant casts";
-  (* RUN: grep {const_trunc.*trunc} < %t.ll
-   * RUN: grep {const_sext.*sext} < %t.ll
-   * RUN: grep {const_zext.*zext} < %t.ll
-   * RUN: grep {const_fptrunc.*fptrunc} < %t.ll
-   * RUN: grep {const_fpext.*fpext} < %t.ll
-   * RUN: grep {const_uitofp.*uitofp} < %t.ll
-   * RUN: grep {const_sitofp.*sitofp} < %t.ll
-   * RUN: grep {const_fptoui.*fptoui} < %t.ll
-   * RUN: grep {const_fptosi.*fptosi} < %t.ll
-   * RUN: grep {const_ptrtoint.*ptrtoint} < %t.ll
-   * RUN: grep {const_inttoptr.*inttoptr} < %t.ll
-   * RUN: grep {const_bitcast.*bitcast} < %t.ll
+  (* RUN: grep "const_trunc.*trunc" < %t.ll
+   * RUN: grep "const_sext.*sext" < %t.ll
+   * RUN: grep "const_zext.*zext" < %t.ll
+   * RUN: grep "const_fptrunc.*fptrunc" < %t.ll
+   * RUN: grep "const_fpext.*fpext" < %t.ll
+   * RUN: grep "const_uitofp.*uitofp" < %t.ll
+   * RUN: grep "const_sitofp.*sitofp" < %t.ll
+   * RUN: grep "const_fptoui.*fptoui" < %t.ll
+   * RUN: grep "const_fptosi.*fptosi" < %t.ll
+   * RUN: grep "const_ptrtoint.*ptrtoint" < %t.ll
+   * RUN: grep "const_inttoptr.*inttoptr" < %t.ll
+   * RUN: grep "const_bitcast.*bitcast" < %t.ll
    *)
   let i128_type = integer_type context 128 in
   ignore (define_global "const_trunc" (const_trunc (const_add foldbomb five)
@@ -302,12 +302,12 @@ let test_constants () =
   ignore (define_global "const_bitcast" (const_bitcast ffoldbomb i64_type) m);
   
   group "misc constants";
-  (* RUN: grep {const_size_of.*getelementptr.*null} < %t.ll
-   * RUN: grep {const_gep.*getelementptr} < %t.ll
-   * RUN: grep {const_select.*select} < %t.ll
-   * RUN: grep {const_extractelement.*extractelement} < %t.ll
-   * RUN: grep {const_insertelement.*insertelement} < %t.ll
-   * RUN: grep {const_shufflevector = global <4 x i32> <i32 0, i32 1, i32 1, i32 0>} < %t.ll
+  (* RUN: grep "const_size_of.*getelementptr.*null" < %t.ll
+   * RUN: grep "const_gep.*getelementptr" < %t.ll
+   * RUN: grep "const_select.*select" < %t.ll
+   * RUN: grep "const_extractelement.*extractelement" < %t.ll
+   * RUN: grep "const_insertelement.*insertelement" < %t.ll
+   * RUN: grep "const_shufflevector = global <4 x i32> <i32 0, i32 1, i32 1, i32 0>" < %t.ll
    *)
   ignore (define_global "const_size_of" (size_of (pointer_type i8_type)) m);
   ignore (define_global "const_gep" (const_gep foldbomb_gv [| five |]) m);
@@ -356,7 +356,7 @@ let test_global_values () =
   let (++) x f = f x; x in
   let zero32 = const_null i32_type in
 
-  (* RUN: grep {GVal01} < %t.ll
+  (* RUN: grep "GVal01" < %t.ll
    *)
   group "naming";
   let g = define_global "TEMPORARY" zero32 m in
@@ -364,28 +364,28 @@ let test_global_values () =
   set_value_name "GVal01" g;
   insist ("GVal01" = value_name g);
 
-  (* RUN: grep {GVal02.*linkonce} < %t.ll
+  (* RUN: grep "GVal02.*linkonce" < %t.ll
    *)
   group "linkage";
   let g = define_global "GVal02" zero32 m ++
           set_linkage Linkage.Link_once in
   insist (Linkage.Link_once = linkage g);
 
-  (* RUN: grep {GVal03.*Hanalei} < %t.ll
+  (* RUN: grep "GVal03.*Hanalei" < %t.ll
    *)
   group "section";
   let g = define_global "GVal03" zero32 m ++
           set_section "Hanalei" in
   insist ("Hanalei" = section g);
   
-  (* RUN: grep {GVal04.*hidden} < %t.ll
+  (* RUN: grep "GVal04.*hidden" < %t.ll
    *)
   group "visibility";
   let g = define_global "GVal04" zero32 m ++
           set_visibility Visibility.Hidden in
   insist (Visibility.Hidden = visibility g);
   
-  (* RUN: grep {GVal05.*align 128} < %t.ll
+  (* RUN: grep "GVal05.*align 128" < %t.ll
    *)
   group "alignment";
   let g = define_global "GVal05" zero32 m ++
@@ -400,7 +400,7 @@ let test_global_variables () =
   let fourty_two32 = const_int i32_type 42 in
 
   group "declarations"; begin
-    (* RUN: grep {GVar01.*external} < %t.ll
+    (* RUN: grep "GVar01.*external" < %t.ll
      *)
     insist (None == lookup_global "GVar01" m);
     let g = declare_global i32_type "GVar01" m in
@@ -422,8 +422,8 @@ let test_global_variables () =
   end;
   
   group "definitions"; begin
-    (* RUN: grep {GVar02.*42} < %t.ll
-     * RUN: grep {GVar03.*42} < %t.ll
+    (* RUN: grep "GVar02.*42" < %t.ll
+     * RUN: grep "GVar03.*42" < %t.ll
      *)
     let g = define_global "GVar02" fourty_two32 m in
     let g2 = declare_global i32_type "GVar03" m ++
@@ -440,20 +440,20 @@ let test_global_variables () =
     insist ((global_initializer g) == (global_initializer g2));
   end;
 
-  (* RUN: grep {GVar04.*thread_local} < %t.ll
+  (* RUN: grep "GVar04.*thread_local" < %t.ll
    *)
   group "threadlocal";
   let g = define_global "GVar04" fourty_two32 m ++
           set_thread_local true in
   insist (is_thread_local g);
 
-  (* RUN: grep -v {GVar05} < %t.ll
+  (* RUN: grep -v "GVar05" < %t.ll
    *)
   group "delete";
   let g = define_global "GVar05" fourty_two32 m in
   delete_global g;
 
-  (* RUN: grep -v {ConstGlobalVar.*constant} < %t.ll
+  (* RUN: grep -v "ConstGlobalVar.*constant" < %t.ll
    *)
   group "constant";
   let g = define_global "ConstGlobalVar" fourty_two32 m in
@@ -542,7 +542,7 @@ let test_users () =
 (*===-- Aliases -----------------------------------------------------------===*)
 
 let test_aliases () =
-  (* RUN: grep {@alias = alias i32\\* @aliasee} < %t.ll
+  (* RUN: grep "@alias = alias i32* @aliasee" < %t.ll
    *)
   let v = declare_global i32_type "aliasee" m in
   ignore (add_alias m (pointer_type i32_type) v "alias")
@@ -554,7 +554,7 @@ let test_functions () =
   let ty = function_type i32_type [| i32_type; i64_type |] in
   let ty2 = function_type i8_type [| i8_type; i64_type |] in
   
-  (* RUN: grep {declare i32 @Fn1\(i32, i64\)} < %t.ll
+  (* RUN: grep "declare i32 @Fn1\(i32, i64\)" < %t.ll
    *)
   begin group "declare";
     insist (None = lookup_function "Fn1" m);
@@ -570,13 +570,13 @@ let test_functions () =
     insist (m == global_parent fn)
   end;
   
-  (* RUN: grep -v {Fn2} < %t.ll
+  (* RUN: grep -v "Fn2" < %t.ll
    *)
   group "delete";
   let fn = declare_function "Fn2" ty m in
   delete_function fn;
   
-  (* RUN: grep {define.*Fn3} < %t.ll
+  (* RUN: grep "define.*Fn3" < %t.ll
    *)
   group "define";
   let fn = define_function "Fn3" ty m in
@@ -584,7 +584,7 @@ let test_functions () =
   insist (1 = Array.length (basic_blocks fn));
   ignore (build_unreachable (builder_at_end context (entry_block fn)));
   
-  (* RUN: grep {define.*Fn4.*Param1.*Param2} < %t.ll
+  (* RUN: grep "define.*Fn4.*Param1.*Param2" < %t.ll
    *)
   group "params";
   let fn = define_function "Fn4" ty m in
@@ -598,7 +598,7 @@ let test_functions () =
   set_value_name "Param2" params.(1);
   ignore (build_unreachable (builder_at_end context (entry_block fn)));
   
-  (* RUN: grep {fastcc.*Fn5} < %t.ll
+  (* RUN: grep "fastcc.*Fn5" < %t.ll
    *)
   group "callconv";
   let fn = define_function "Fn5" ty m in
@@ -608,7 +608,7 @@ let test_functions () =
   ignore (build_unreachable (builder_at_end context (entry_block fn)));
   
   begin group "gc";
-    (* RUN: grep {Fn6.*gc.*shadowstack} < %t.ll
+    (* RUN: grep "Fn6.*gc.*shadowstack" < %t.ll
      *)
     let fn = define_function "Fn6" ty m in
     insist (None = gc fn);
@@ -694,7 +694,7 @@ let test_params () =
 let test_basic_blocks () =
   let ty = function_type void_type [| |] in
   
-  (* RUN: grep {Bb1} < %t.ll
+  (* RUN: grep "Bb1" < %t.ll
    *)
   group "entry";
   let fn = declare_function "X" ty m in
@@ -825,7 +825,7 @@ let test_builder () =
   
   group "ret void";
   begin
-    (* RUN: grep {ret void} < %t.ll
+    (* RUN: grep "ret void" < %t.ll
      *)
     let fty = function_type void_type [| |] in
     let fn = declare_function "X6" fty m in
@@ -835,7 +835,7 @@ let test_builder () =
 
   group "ret aggregate";
   begin
-      (* RUN: grep {ret \{ i8, i64 \} \{ i8 4, i64 5 \}} < %t.ll
+      (* RUN: grep "ret { i8, i64 } { i8 4, i64 5 }" < %t.ll
        *)
       let sty = struct_type context [| i8_type; i64_type |] in
       let fty = function_type sty [| |] in
@@ -895,14 +895,14 @@ let test_builder () =
   end;
 
   group "ret"; begin
-    (* RUN: grep {ret.*P1} < %t.ll
+    (* RUN: grep "ret.*P1" < %t.ll
      *)
     let ret = build_ret p1 atentry in
     position_before ret atentry
   end;
   
   group "br"; begin
-    (* RUN: grep {br.*Bb02} < %t.ll
+    (* RUN: grep "br.*Bb02" < %t.ll
      *)
     let bb02 = append_block context "Bb02" fn in
     let b = builder_at_end context bb02 in
@@ -910,7 +910,7 @@ let test_builder () =
   end;
   
   group "cond_br"; begin
-    (* RUN: grep {br.*build_br.*Bb03.*Bb00} < %t.ll
+    (* RUN: grep "br.*build_br.*Bb03.*Bb00" < %t.ll
      *)
     let bb03 = append_block context "Bb03" fn in
     let b = builder_at_end context bb03 in
@@ -919,8 +919,8 @@ let test_builder () =
   end;
   
   group "switch"; begin
-    (* RUN: grep {switch.*P1.*SwiBlock3} < %t.ll
-     * RUN: grep {2,.*SwiBlock2} < %t.ll
+    (* RUN: grep "switch.*P1.*SwiBlock3" < %t.ll
+     * RUN: grep "2,.*SwiBlock2" < %t.ll
      *)
     let bb1 = append_block context "SwiBlock1" fn in
     let bb2 = append_block context "SwiBlock2" fn in
@@ -934,9 +934,9 @@ let test_builder () =
   end;
 
   group "malloc/free"; begin
-      (* RUN: grep {call.*@malloc(i32 ptrtoint} < %t.ll
-       * RUN: grep {call.*@free(i8\*} < %t.ll
-       * RUN: grep {call.*@malloc(i32 %} < %t.ll
+      (* RUN: grep "call.*@malloc(i32 ptrtoint" < %t.ll
+       * RUN: grep "call.*@free(i8*" < %t.ll
+       * RUN: grep "call.*@malloc(i32 %" < %t.ll
        *)
       let bb1 = append_block context "MallocBlock1" fn in
       let m1 = (build_malloc (pointer_type i32_type) "m1"
@@ -947,7 +947,7 @@ let test_builder () =
   end;
 
   group "indirectbr"; begin
-    (* RUN: grep {indirectbr i8\\* blockaddress(@X7, %IBRBlock2), \\\[label %IBRBlock2, label %IBRBlock3\\\]} < %t.ll
+    (* RUN: grep "indirectbr i8* blockaddress(@X7, %IBRBlock2), [label %IBRBlock2, label %IBRBlock3]" < %t.ll
      *)
     let bb1 = append_block context "IBRBlock1" fn in
 
@@ -964,8 +964,8 @@ let test_builder () =
   end;
   
   group "invoke"; begin
-    (* RUN: grep {build_invoke.*invoke.*P1.*P2} < %t.ll
-     * RUN: grep {to.*Bb04.*unwind.*Bblpad} < %t.ll
+    (* RUN: grep "build_invoke.*invoke.*P1.*P2" < %t.ll
+     * RUN: grep "to.*Bb04.*unwind.*Bblpad" < %t.ll
      *)
     let bb04 = append_block context "Bb04" fn in
     let b = builder_at_end context bb04 in
@@ -973,7 +973,7 @@ let test_builder () =
   end;
   
   group "unreachable"; begin
-    (* RUN: grep {unreachable} < %t.ll
+    (* RUN: grep "unreachable" < %t.ll
      *)
     let bb06 = append_block context "Bb06" fn in
     let b = builder_at_end context bb06 in
@@ -984,36 +984,36 @@ let test_builder () =
     let bb07 = append_block context "Bb07" fn in
     let b = builder_at_end context bb07 in
     
-    (* RUN: grep {%build_add = add i32 %P1, %P2} < %t.ll
-     * RUN: grep {%build_nsw_add = add nsw i32 %P1, %P2} < %t.ll
-     * RUN: grep {%build_nuw_add = add nuw i32 %P1, %P2} < %t.ll
-     * RUN: grep {%build_fadd = fadd float %F1, %F2} < %t.ll
-     * RUN: grep {%build_sub = sub i32 %P1, %P2} < %t.ll
-     * RUN: grep {%build_nsw_sub = sub nsw i32 %P1, %P2} < %t.ll
-     * RUN: grep {%build_nuw_sub = sub nuw i32 %P1, %P2} < %t.ll
-     * RUN: grep {%build_fsub = fsub float %F1, %F2} < %t.ll
-     * RUN: grep {%build_mul = mul i32 %P1, %P2} < %t.ll
-     * RUN: grep {%build_nsw_mul = mul nsw i32 %P1, %P2} < %t.ll
-     * RUN: grep {%build_nuw_mul = mul nuw i32 %P1, %P2} < %t.ll
-     * RUN: grep {%build_fmul = fmul float %F1, %F2} < %t.ll
-     * RUN: grep {%build_udiv = udiv i32 %P1, %P2} < %t.ll
-     * RUN: grep {%build_sdiv = sdiv i32 %P1, %P2} < %t.ll
-     * RUN: grep {%build_exact_sdiv = sdiv exact i32 %P1, %P2} < %t.ll
-     * RUN: grep {%build_fdiv = fdiv float %F1, %F2} < %t.ll
-     * RUN: grep {%build_urem = urem i32 %P1, %P2} < %t.ll
-     * RUN: grep {%build_srem = srem i32 %P1, %P2} < %t.ll
-     * RUN: grep {%build_frem = frem float %F1, %F2} < %t.ll
-     * RUN: grep {%build_shl = shl i32 %P1, %P2} < %t.ll
-     * RUN: grep {%build_lshl = lshr i32 %P1, %P2} < %t.ll
-     * RUN: grep {%build_ashl = ashr i32 %P1, %P2} < %t.ll
-     * RUN: grep {%build_and = and i32 %P1, %P2} < %t.ll
-     * RUN: grep {%build_or = or i32 %P1, %P2} < %t.ll
-     * RUN: grep {%build_xor = xor i32 %P1, %P2} < %t.ll
-     * RUN: grep {%build_neg = sub i32 0, %P1} < %t.ll
-     * RUN: grep {%build_nsw_neg = sub nsw i32 0, %P1} < %t.ll
-     * RUN: grep {%build_nuw_neg = sub nuw i32 0, %P1} < %t.ll
-     * RUN: grep {%build_fneg = fsub float .*0.*, %F1} < %t.ll
-     * RUN: grep {%build_not = xor i32 %P1, -1} < %t.ll
+    (* RUN: grep "%build_add = add i32 %P1, %P2" < %t.ll
+     * RUN: grep "%build_nsw_add = add nsw i32 %P1, %P2" < %t.ll
+     * RUN: grep "%build_nuw_add = add nuw i32 %P1, %P2" < %t.ll
+     * RUN: grep "%build_fadd = fadd float %F1, %F2" < %t.ll
+     * RUN: grep "%build_sub = sub i32 %P1, %P2" < %t.ll
+     * RUN: grep "%build_nsw_sub = sub nsw i32 %P1, %P2" < %t.ll
+     * RUN: grep "%build_nuw_sub = sub nuw i32 %P1, %P2" < %t.ll
+     * RUN: grep "%build_fsub = fsub float %F1, %F2" < %t.ll
+     * RUN: grep "%build_mul = mul i32 %P1, %P2" < %t.ll
+     * RUN: grep "%build_nsw_mul = mul nsw i32 %P1, %P2" < %t.ll
+     * RUN: grep "%build_nuw_mul = mul nuw i32 %P1, %P2" < %t.ll
+     * RUN: grep "%build_fmul = fmul float %F1, %F2" < %t.ll
+     * RUN: grep "%build_udiv = udiv i32 %P1, %P2" < %t.ll
+     * RUN: grep "%build_sdiv = sdiv i32 %P1, %P2" < %t.ll
+     * RUN: grep "%build_exact_sdiv = sdiv exact i32 %P1, %P2" < %t.ll
+     * RUN: grep "%build_fdiv = fdiv float %F1, %F2" < %t.ll
+     * RUN: grep "%build_urem = urem i32 %P1, %P2" < %t.ll
+     * RUN: grep "%build_srem = srem i32 %P1, %P2" < %t.ll
+     * RUN: grep "%build_frem = frem float %F1, %F2" < %t.ll
+     * RUN: grep "%build_shl = shl i32 %P1, %P2" < %t.ll
+     * RUN: grep "%build_lshl = lshr i32 %P1, %P2" < %t.ll
+     * RUN: grep "%build_ashl = ashr i32 %P1, %P2" < %t.ll
+     * RUN: grep "%build_and = and i32 %P1, %P2" < %t.ll
+     * RUN: grep "%build_or = or i32 %P1, %P2" < %t.ll
+     * RUN: grep "%build_xor = xor i32 %P1, %P2" < %t.ll
+     * RUN: grep "%build_neg = sub i32 0, %P1" < %t.ll
+     * RUN: grep "%build_nsw_neg = sub nsw i32 0, %P1" < %t.ll
+     * RUN: grep "%build_nuw_neg = sub nuw i32 0, %P1" < %t.ll
+     * RUN: grep "%build_fneg = fsub float .*0.*, %F1" < %t.ll
+     * RUN: grep "%build_not = xor i32 %P1, -1" < %t.ll
      *)
     ignore (build_add p1 p2 "build_add" b);
     ignore (build_nsw_add p1 p2 "build_nsw_add" b);
@@ -1052,13 +1052,13 @@ let test_builder () =
     let bb08 = append_block context "Bb08" fn in
     let b = builder_at_end context bb08 in
 
-    (* RUN: grep {%build_alloca = alloca i32} < %t.ll
-     * RUN: grep {%build_array_alloca = alloca i32, i32 %P2} < %t.ll
-     * RUN: grep {%build_load = load i32\\* %build_array_alloca} < %t.ll
-     * RUN: grep {store i32 %P2, i32\\* %build_alloca} < %t.ll
-     * RUN: grep {%build_gep = getelementptr i32\\* %build_array_alloca, i32 %P2} < %t.ll
-     * RUN: grep {%build_in_bounds_gep = getelementptr inbounds i32\\* %build_array_alloca, i32 %P2} < %t.ll
-     * RUN: grep {%build_struct_gep = getelementptr inbounds.*%build_alloca2, i32 0, i32 1} < %t.ll
+    (* RUN: grep "%build_alloca = alloca i32" < %t.ll
+     * RUN: grep "%build_array_alloca = alloca i32, i32 %P2" < %t.ll
+     * RUN: grep "%build_load = load i32* %build_array_alloca" < %t.ll
+     * RUN: grep "store i32 %P2, i32* %build_alloca" < %t.ll
+     * RUN: grep "%build_gep = getelementptr i32* %build_array_alloca, i32 %P2" < %t.ll
+     * RUN: grep "%build_in_bounds_gep = getelementptr inbounds i32* %build_array_alloca, i32 %P2" < %t.ll
+     * RUN: grep "%build_struct_gep = getelementptr inbounds.*%build_alloca2, i32 0, i32 1" < %t.ll
      *)
     let alloca = build_alloca i32_type "build_alloca" b in
     let array_alloca = build_array_alloca i32_type p2 "build_array_alloca" b in
@@ -1090,30 +1090,30 @@ let test_builder () =
   group "casts"; begin
     let void_ptr = pointer_type i8_type in
     
-    (* RUN: grep {%build_trunc = trunc i32 %P1 to i8} < %t.ll
-     * RUN: grep {%build_trunc2 = trunc i32 %P1 to i8} < %t.ll
-     * RUN: grep {%build_trunc3 = trunc i32 %P1 to i8} < %t.ll
-     * RUN: grep {%build_zext = zext i8 %build_trunc to i32} < %t.ll
-     * RUN: grep {%build_zext2 = zext i8 %build_trunc to i32} < %t.ll
-     * RUN: grep {%build_sext = sext i32 %build_zext to i64} < %t.ll
-     * RUN: grep {%build_sext2 = sext i32 %build_zext to i64} < %t.ll
-     * RUN: grep {%build_sext3 = sext i32 %build_zext to i64} < %t.ll
-     * RUN: grep {%build_uitofp = uitofp i64 %build_sext to float} < %t.ll
-     * RUN: grep {%build_sitofp = sitofp i32 %build_zext to double} < %t.ll
-     * RUN: grep {%build_fptoui = fptoui float %build_uitofp to i32} < %t.ll
-     * RUN: grep {%build_fptosi = fptosi double %build_sitofp to i64} < %t.ll
-     * RUN: grep {%build_fptrunc = fptrunc double %build_sitofp to float} < %t.ll
-     * RUN: grep {%build_fptrunc2 = fptrunc double %build_sitofp to float} < %t.ll
-     * RUN: grep {%build_fpext = fpext float %build_fptrunc to double} < %t.ll
-     * RUN: grep {%build_fpext2 = fpext float %build_fptrunc to double} < %t.ll
-     * RUN: grep {%build_inttoptr = inttoptr i32 %P1 to i8\\*} < %t.ll
-     * RUN: grep {%build_ptrtoint = ptrtoint i8\\* %build_inttoptr to i64} < %t.ll
-     * RUN: grep {%build_ptrtoint2 = ptrtoint i8\\* %build_inttoptr to i64} < %t.ll
-     * RUN: grep {%build_bitcast = bitcast i64 %build_ptrtoint to double} < %t.ll
-     * RUN: grep {%build_bitcast2 = bitcast i64 %build_ptrtoint to double} < %t.ll
-     * RUN: grep {%build_bitcast3 = bitcast i64 %build_ptrtoint to double} < %t.ll
-     * RUN: grep {%build_bitcast4 = bitcast i64 %build_ptrtoint to double} < %t.ll
-     * RUN: grep {%build_pointercast = bitcast i8\\* %build_inttoptr to i16\\*} < %t.ll
+    (* RUN: grep "%build_trunc = trunc i32 %P1 to i8" < %t.ll
+     * RUN: grep "%build_trunc2 = trunc i32 %P1 to i8" < %t.ll
+     * RUN: grep "%build_trunc3 = trunc i32 %P1 to i8" < %t.ll
+     * RUN: grep "%build_zext = zext i8 %build_trunc to i32" < %t.ll
+     * RUN: grep "%build_zext2 = zext i8 %build_trunc to i32" < %t.ll
+     * RUN: grep "%build_sext = sext i32 %build_zext to i64" < %t.ll
+     * RUN: grep "%build_sext2 = sext i32 %build_zext to i64" < %t.ll
+     * RUN: grep "%build_sext3 = sext i32 %build_zext to i64" < %t.ll
+     * RUN: grep "%build_uitofp = uitofp i64 %build_sext to float" < %t.ll
+     * RUN: grep "%build_sitofp = sitofp i32 %build_zext to double" < %t.ll
+     * RUN: grep "%build_fptoui = fptoui float %build_uitofp to i32" < %t.ll
+     * RUN: grep "%build_fptosi = fptosi double %build_sitofp to i64" < %t.ll
+     * RUN: grep "%build_fptrunc = fptrunc double %build_sitofp to float" < %t.ll
+     * RUN: grep "%build_fptrunc2 = fptrunc double %build_sitofp to float" < %t.ll
+     * RUN: grep "%build_fpext = fpext float %build_fptrunc to double" < %t.ll
+     * RUN: grep "%build_fpext2 = fpext float %build_fptrunc to double" < %t.ll
+     * RUN: grep "%build_inttoptr = inttoptr i32 %P1 to i8*" < %t.ll
+     * RUN: grep "%build_ptrtoint = ptrtoint i8* %build_inttoptr to i64" < %t.ll
+     * RUN: grep "%build_ptrtoint2 = ptrtoint i8* %build_inttoptr to i64" < %t.ll
+     * RUN: grep "%build_bitcast = bitcast i64 %build_ptrtoint to double" < %t.ll
+     * RUN: grep "%build_bitcast2 = bitcast i64 %build_ptrtoint to double" < %t.ll
+     * RUN: grep "%build_bitcast3 = bitcast i64 %build_ptrtoint to double" < %t.ll
+     * RUN: grep "%build_bitcast4 = bitcast i64 %build_ptrtoint to double" < %t.ll
+     * RUN: grep "%build_pointercast = bitcast i8* %build_inttoptr to i16*" < %t.ll
      *)
     let inst28 = build_trunc p1 i8_type "build_trunc" atentry in
     let inst29 = build_zext inst28 i32_type "build_zext" atentry in
@@ -1143,13 +1143,13 @@ let test_builder () =
   end;
   
   group "comparisons"; begin
-    (* RUN: grep {%build_icmp_ne = icmp ne i32 %P1, %P2} < %t.ll
-     * RUN: grep {%build_icmp_sle = icmp sle i32 %P2, %P1} < %t.ll
-     * RUN: grep {%build_fcmp_false = fcmp false float %F1, %F2} < %t.ll
-     * RUN: grep {%build_fcmp_true = fcmp true float %F2, %F1} < %t.ll
-     * RUN: grep {%build_is_null.*= icmp eq.*%X0,.*null} < %t.ll
-     * RUN: grep {%build_is_not_null = icmp ne i8\\* %X1, null} < %t.ll
-     * RUN: grep {%build_ptrdiff} < %t.ll
+    (* RUN: grep "%build_icmp_ne = icmp ne i32 %P1, %P2" < %t.ll
+     * RUN: grep "%build_icmp_sle = icmp sle i32 %P2, %P1" < %t.ll
+     * RUN: grep "%build_fcmp_false = fcmp false float %F1, %F2" < %t.ll
+     * RUN: grep "%build_fcmp_true = fcmp true float %F2, %F1" < %t.ll
+     * RUN: grep "%build_is_null.*= icmp eq.*%X0,.*null" < %t.ll
+     * RUN: grep "%build_is_not_null = icmp ne i8* %X1, null" < %t.ll
+     * RUN: grep "%build_ptrdiff" < %t.ll
      *)
     ignore (build_icmp Icmp.Ne    p1 p2 "build_icmp_ne" atentry);
     ignore (build_icmp Icmp.Sle   p2 p1 "build_icmp_sle" atentry);
@@ -1165,14 +1165,14 @@ let test_builder () =
   end;
   
   group "miscellaneous"; begin
-    (* RUN: grep {%build_call = tail call cc63 i32 @.*(i32 signext %P2, i32 %P1)} < %t.ll
-     * RUN: grep {%build_select = select i1 %build_icmp, i32 %P1, i32 %P2} < %t.ll
-     * RUN: grep {%build_va_arg = va_arg i8\\*\\* null, i32} < %t.ll
-     * RUN: grep {%build_extractelement = extractelement <4 x i32> %Vec1, i32 %P2} < %t.ll
-     * RUN: grep {%build_insertelement = insertelement <4 x i32> %Vec1, i32 %P1, i32 %P2} < %t.ll
-     * RUN: grep {%build_shufflevector = shufflevector <4 x i32> %Vec1, <4 x i32> %Vec2, <4 x i32> <i32 1, i32 1, i32 0, i32 0>} < %t.ll
-     * RUN: grep {%build_insertvalue0 = insertvalue.*%bl, i32 1, 0} < %t.ll
-     * RUN: grep {%build_extractvalue = extractvalue.*%build_insertvalue1, 1} < %t.ll
+    (* RUN: grep "%build_call = tail call cc63 i32 @.*(i32 signext %P2, i32 %P1)" < %t.ll
+     * RUN: grep "%build_select = select i1 %build_icmp, i32 %P1, i32 %P2" < %t.ll
+     * RUN: grep "%build_va_arg = va_arg i8** null, i32" < %t.ll
+     * RUN: grep "%build_extractelement = extractelement <4 x i32> %Vec1, i32 %P2" < %t.ll
+     * RUN: grep "%build_insertelement = insertelement <4 x i32> %Vec1, i32 %P1, i32 %P2" < %t.ll
+     * RUN: grep "%build_shufflevector = shufflevector <4 x i32> %Vec1, <4 x i32> %Vec2, <4 x i32> <i32 1, i32 1, i32 0, i32 0>" < %t.ll
+     * RUN: grep "%build_insertvalue0 = insertvalue.*%bl, i32 1, 0" < %t.ll
+     * RUN: grep "%build_extractvalue = extractvalue.*%build_insertvalue1, 1" < %t.ll
      *)
     let ci = build_call fn [| p2; p1 |] "build_call" atentry in
     insist (CallConv.c = instruction_call_conv ci);
@@ -1215,8 +1215,8 @@ let test_builder () =
   end;
 
   group "metadata"; begin
-    (* RUN: grep {%metadata = add i32 %P1, %P2, !test !0} < %t.ll
-     * RUN: grep {!0 = metadata !\{i32 1, metadata !"metadata test"\}} < %t.ll
+    (* RUN: grep '%metadata = add i32 %P1, %P2, !test !0' < %t.ll
+     * RUN: grep '!0 = metadata !{i32 1, metadata !"metadata test"}' < %t.ll
      *)
     let i = build_add p1 p2 "metadata" atentry in
     insist ((has_metadata i) = false);
@@ -1240,8 +1240,8 @@ let test_builder () =
   end;
 
   group "dbg"; begin
-    (* RUN: grep {%dbg = add i32 %P1, %P2, !dbg !1} < %t.ll
-     * RUN: grep {!1 = metadata !\{i32 2, i32 3, metadata !2, metadata !2\}} < %t.ll
+    (* RUN: grep "%dbg = add i32 %P1, %P2, !dbg !1" < %t.ll
+     * RUN: grep "!1 = metadata !{i32 2, i32 3, metadata !2, metadata !2}" < %t.ll
      *)
     insist ((current_debug_location atentry) = None);
 
@@ -1261,7 +1261,7 @@ let test_builder () =
   end;
   
   group "phi"; begin
-    (* RUN: grep {PhiNode.*P1.*PhiBlock1.*P2.*PhiBlock2} < %t.ll
+    (* RUN: grep "PhiNode.*P1.*PhiBlock1.*P2.*PhiBlock2" < %t.ll
      *)
     let b1 = append_block context "PhiBlock1" fn in
     let b2 = append_block context "PhiBlock2" fn in

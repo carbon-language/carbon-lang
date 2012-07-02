@@ -10,7 +10,7 @@
 ; Which corresponds to test1.
 
 ; RUN: opt < %s -instcombine -S | \
-; RUN:   not grep {or }
+; RUN:   not grep "or "
 
 define i32 @test1(i32 %X, i32 %Y) {
         %A = and i32 %X, 7              ; <i32> [#uses=1]

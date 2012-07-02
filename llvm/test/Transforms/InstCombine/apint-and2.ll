@@ -1,7 +1,7 @@
 ; This test makes sure that and instructions are properly eliminated.
 ; This test is for Integer BitWidth > 64 && BitWidth <= 1024.
 
-; RUN: opt < %s -instcombine -S | not grep {and }
+; RUN: opt < %s -instcombine -S | not grep "and "
 ; END.
 
 

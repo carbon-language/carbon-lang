@@ -1,5 +1,5 @@
 ; RUN: llvm-as < %s | llvm-dis | \
-; RUN:   not grep {getelementptr.*getelementptr}
+; RUN:   not grep "getelementptr.*getelementptr"
 
 %struct.TTriangleItem = type { i8*, i8*, [3 x %struct.TUVVertex] }
 %struct.TUVVertex = type { i16, i16, i16, i16 }

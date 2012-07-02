@@ -1,7 +1,7 @@
 ; RUN: llc < %s -mtriple=x86_64-linux -relocation-model=static -o /dev/null -stats -info-output-file - > %t
 ; RUN: not grep spill %t
-; RUN: not grep {%rsp} %t
-; RUN: not grep {%rbp} %t
+; RUN: not grep "%rsp" %t
+; RUN: not grep "%rbp" %t
 
 ; The register-pressure scheduler should be able to schedule this in a
 ; way that does not require spills.

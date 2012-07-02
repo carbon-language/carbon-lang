@@ -1,6 +1,6 @@
 ; RUN: llc < %s -march=mips -o %t
-; RUN: grep {c\\..*\\.s} %t | count 3
-; RUN: grep {bc1\[tf\]} %t | count 3
+; RUN: grep "c\..*\.s" %t | count 3
+; RUN: grep "bc1[tf]" %t | count 3
 
 ; FIXME: Disabled because branch instructions are generated where
 ; conditional move instructions are expected.

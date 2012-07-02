@@ -1,6 +1,6 @@
 ; Testcase for calls to the standard C "pow" function
 ;
-; RUN: opt < %s -simplify-libcalls -S | not grep {call .pow}
+; RUN: opt < %s -simplify-libcalls -S | not grep "call .pow"
 
 
 declare double @pow(double, double)

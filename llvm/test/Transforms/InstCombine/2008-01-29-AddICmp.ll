@@ -1,4 +1,4 @@
-; RUN: opt < %s -instcombine -S | not grep {a.off}
+; RUN: opt < %s -instcombine -S | not grep "a.off"
 ; PR1949
 
 define i1 @test1(i32 %a) {

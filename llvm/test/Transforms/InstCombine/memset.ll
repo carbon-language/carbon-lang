@@ -1,4 +1,4 @@
-; RUN: opt < %s -instcombine -S | not grep {call.*llvm.memset}
+; RUN: opt < %s -instcombine -S | not grep "call.*llvm.memset"
 
 define i32 @main() {
   %target = alloca [1024 x i8]

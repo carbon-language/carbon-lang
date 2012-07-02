@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=i686-pc-linux-gnu -disable-fp-elim | not grep {addl .12, %esp}
+; RUN: llc < %s -mtriple=i686-pc-linux-gnu -disable-fp-elim | not grep "addl .12, %esp"
 ; PR1398
 
 	%struct.S = type { i32, i32 }

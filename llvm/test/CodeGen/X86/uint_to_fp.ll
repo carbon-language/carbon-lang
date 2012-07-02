@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86 -mcpu=yonah | not grep {sub.*esp}
+; RUN: llc < %s -march=x86 -mcpu=yonah | not grep "sub.*esp"
 ; RUN: llc < %s -march=x86 -mcpu=yonah | grep cvtsi2ss
 ; rdar://6034396
 

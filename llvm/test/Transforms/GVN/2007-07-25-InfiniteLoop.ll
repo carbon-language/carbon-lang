@@ -1,4 +1,4 @@
-; RUN: opt < %s -basicaa -gvn -S | not grep {tmp10 =}
+; RUN: opt < %s -basicaa -gvn -S | not grep "tmp10 ="
 
 	%struct.INT2 = type { i32, i32 }
 @blkshifts = external global %struct.INT2*		; <%struct.INT2**> [#uses=2]

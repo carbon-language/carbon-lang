@@ -1,5 +1,5 @@
 ; RUN: opt < %s -constprop -S | \
-; RUN:    not grep {ret i1 false}
+; RUN:    not grep "ret i1 false"
 
 @b = external global [2 x {  }]         ; <[2 x {  }]*> [#uses=2]
 

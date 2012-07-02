@@ -1,7 +1,7 @@
 ; RUN: llc < %s -mtriple=x86_64-apple-darwin | grep movl > %t
-; RUN: not grep {r\[abcd\]x} %t
-; RUN: not grep {r\[ds\]i} %t
-; RUN: not grep {r\[bs\]p} %t
+; RUN: not grep "r[abcd]x" %t
+; RUN: not grep "r[ds]i" %t
+; RUN: not grep "r[bs]p" %t
 
 	%struct.BITMAP = type { i16, i16, i32, i32, i32, i32, i32, i32, i8*, i8* }
 	%struct.BltData = type { float, float, float, float }

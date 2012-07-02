@@ -1,5 +1,5 @@
 ; RUN: opt < %s -simplifycfg -adce -S | \
-; RUN:   not grep {call void @f1}
+; RUN:   not grep "call void @f1"
 ; END.
 
 declare void @f1()
