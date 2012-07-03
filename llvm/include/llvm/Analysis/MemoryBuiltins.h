@@ -22,6 +22,7 @@
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Support/TargetFolder.h"
+#include "llvm/Support/ValueHandle.h"
 
 namespace llvm {
 class CallInst;
@@ -195,7 +196,8 @@ class ObjectSizeOffsetEvaluator
   : public InstVisitor<ObjectSizeOffsetEvaluator, SizeOffsetEvalType> {
 
   typedef IRBuilder<true, TargetFolder> BuilderTy;
-  typedef DenseMap<const Value*, SizeOffsetEvalType> CacheMapTy;
+  typedef std::pair<WeakVH, WeakVH> WeakEvalType;
+  typedef DenseMap<const Value*, WeakEvalType> CacheMapTy;
   typedef SmallPtrSet<const Value*, 8> PtrSetTy;
 
   const TargetData *TD;
@@ -216,19 +218,19 @@ public:
   ObjectSizeOffsetEvaluator(const TargetData *TD, LLVMContext &Context);
   SizeOffsetEvalType compute(Value *V);
 
-  bool knownSize(SizeOffsetEvalType &SizeOffset) {
+  bool knownSize(SizeOffsetEvalType SizeOffset) {
     return SizeOffset.first;
   }
 
-  bool knownOffset(SizeOffsetEvalType &SizeOffset) {
+  bool knownOffset(SizeOffsetEvalType SizeOffset) {
     return SizeOffset.second;
   }
 
-  bool anyKnown(SizeOffsetEvalType &SizeOffset) {
+  bool anyKnown(SizeOffsetEvalType SizeOffset) {
     return knownSize(SizeOffset) || knownOffset(SizeOffset);
   }
 
-  bool bothKnown(SizeOffsetEvalType &SizeOffset) {
+  bool bothKnown(SizeOffsetEvalType SizeOffset) {
     return knownSize(SizeOffset) && knownOffset(SizeOffset);
   }
 

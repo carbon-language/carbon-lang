@@ -682,7 +682,19 @@ SizeOffsetEvalType ObjectSizeOffsetEvaluator::visitPHINode(PHINode &PHI) {
     SizePHI->addIncoming(EdgeData.first, PHI.getIncomingBlock(i));
     OffsetPHI->addIncoming(EdgeData.second, PHI.getIncomingBlock(i));
   }
-  return std::make_pair(SizePHI, OffsetPHI);
+
+  Value *Size = SizePHI, *Offset = OffsetPHI, *Tmp;
+  if ((Tmp = SizePHI->hasConstantValue())) {
+    Size = Tmp;
+    SizePHI->replaceAllUsesWith(Size);
+    SizePHI->eraseFromParent();
+  }
+  if ((Tmp = OffsetPHI->hasConstantValue())) {
+    Offset = Tmp;
+    OffsetPHI->replaceAllUsesWith(Offset);
+    OffsetPHI->eraseFromParent();
+  }
+  return std::make_pair(Size, Offset);
 }
 
 SizeOffsetEvalType ObjectSizeOffsetEvaluator::visitSelectInst(SelectInst &I) {
