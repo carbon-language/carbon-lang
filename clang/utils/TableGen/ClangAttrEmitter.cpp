@@ -789,7 +789,7 @@ void EmitClangAttrImpl(RecordKeeper &Records, raw_ostream &OS) {
     OS << "void " << R.getName() << "Attr::printPretty("
        << "llvm::raw_ostream &OS, ASTContext &Ctx) const {\n";
     if (Spellings.begin() != Spellings.end()) {
-      StringRef Spelling = (*Spellings.begin())->getValueAsString("Name");
+      std::string Spelling = (*Spellings.begin())->getValueAsString("Name");
       OS << "  OS << \" __attribute__((" << Spelling;
       if (Args.size()) OS << "(";
       if (Spelling == "availability") {
