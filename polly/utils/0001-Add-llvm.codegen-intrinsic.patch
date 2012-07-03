@@ -1,4 +1,4 @@
-From ac671e78f9fc4481263f6849d5e392ec06e43164 Mon Sep 17 00:00:00 2001
+From 99a052044158acb8e53385be47c09db20019df20 Mon Sep 17 00:00:00 2001
 From: Yabin Hu <yabin.hwu@gmail.com>
 Date: Tue, 3 Jul 2012 11:21:45 +0800
 Subject: [PATCH] Add llvm.codegen intrinsic.
@@ -443,7 +443,7 @@ index 5d51f41..501fe08 100644
  
 diff --git a/test/CodeGen/X86/EmbeddedCG/embedded-codegen-ptx.ll b/test/CodeGen/X86/EmbeddedCG/embedded-codegen-ptx.ll
 new file mode 100644
-index 0000000..768790d
+index 0000000..73d34e1
 --- /dev/null
 +++ b/test/CodeGen/X86/EmbeddedCG/embedded-codegen-ptx.ll
 @@ -0,0 +1,28 @@
@@ -453,13 +453,13 @@ index 0000000..768790d
 +target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-a0:0:64-f80:32:32-n8:16:32-S128"
 +target triple = "i386-pc-linux-gnu"
 +
-+@llvm_kernel = private unnamed_addr constant [1937 x i8] c"target triple = \22ptx32-pc-linux-gnu\22\0A\0Adefine internal ptx_kernel void @gpu_codegen.ptx_subfn(i8* %ptx.Array) {\0Aptx.setup:\0A  %0 = bitcast i8* %ptx.Array to [128 x [128 x i32]]*\0A  %1 = call i32 @llvm.ptx.read.nctaid.x()\0A  %2 = zext i32 %1 to i64\0A  %3 = call i32 @llvm.ptx.read.nctaid.y()\0A  %4 = zext i32 %3 to i64\0A  %5 = call i32 @llvm.ptx.read.ntid.x()\0A  %6 = zext i32 %5 to i64\0A  %7 = call i32 @llvm.ptx.read.ntid.y()\0A  %8 = zext i32 %7 to i64\0A  %9 = call i32 @llvm.ptx.read.ctaid.x()\0A  %10 = zext i32 %9 to i64\0A  %11 = call i32 @llvm.ptx.read.ctaid.y()\0A  %12 = zext i32 %11 to i64\0A  %13 = call i32 @llvm.ptx.read.tid.x()\0A  %14 = zext i32 %13 to i64\0A  %15 = call i32 @llvm.ptx.read.tid.y()\0A  %16 = zext i32 %15 to i64\0A  br label %ptx.loop_body\0A\0Aptx.exit:                                         ; preds = %polly.stmt.for.body3\0A  ret void\0A\0Aptx.loop_body:                                    ; preds = %ptx.setup\0A  %p_gpu_index_i = mul i64 %12, %2\0A  %17 = add i64 %p_gpu_index_i, %10\0A  %p_gpu_index_j = mul i64 %16, %6\0A  %18 = add i64 %p_gpu_index_j, %14\0A  br label %polly.stmt.for.body3\0A\0Apolly.stmt.for.body3:                             ; preds = %ptx.loop_body\0A  %19 = trunc i64 %17 to i32\0A  %p_mul = shl nsw i32 %19, 7\0A  %20 = trunc i64 %18 to i32\0A  %p_add = add nsw i32 %p_mul, %20\0A  %21 = trunc i64 %17 to i32\0A  %22 = trunc i64 %18 to i32\0A  %p_arrayidx4 = getelementptr inbounds [128 x [128 x i32]]* %0, i32 0, i32 %21, i32 %22\0A  store i32 %p_add, i32* %p_arrayidx4\0A  br label %ptx.exit\0A}\0A\0Adeclare i32 @llvm.ptx.read.nctaid.x() nounwind readnone\0A\0Adeclare i32 @llvm.ptx.read.nctaid.y() nounwind readnone\0A\0Adeclare i32 @llvm.ptx.read.ctaid.x() nounwind readnone\0A\0Adeclare i32 @llvm.ptx.read.ctaid.y() nounwind readnone\0A\0Adeclare i32 @llvm.ptx.read.ntid.x() nounwind readnone\0A\0Adeclare i32 @llvm.ptx.read.ntid.y() nounwind readnone\0A\0Adeclare i32 @llvm.ptx.read.tid.x() nounwind readnone\0A\0Adeclare i32 @llvm.ptx.read.tid.y() nounwind readnone\0A\00"
++@llvm_kernel = private unnamed_addr constant [1940 x i8] c"target triple = \22nvptx-unknown-unknown\22\0A\0Adefine internal ptx_kernel void @gpu_codegen.ptx_subfn(i8* %ptx.Array) {\0Aptx.setup:\0A  %0 = bitcast i8* %ptx.Array to [128 x [128 x i32]]*\0A  %1 = call i32 @llvm.ptx.read.nctaid.x()\0A  %2 = zext i32 %1 to i64\0A  %3 = call i32 @llvm.ptx.read.nctaid.y()\0A  %4 = zext i32 %3 to i64\0A  %5 = call i32 @llvm.ptx.read.ntid.x()\0A  %6 = zext i32 %5 to i64\0A  %7 = call i32 @llvm.ptx.read.ntid.y()\0A  %8 = zext i32 %7 to i64\0A  %9 = call i32 @llvm.ptx.read.ctaid.x()\0A  %10 = zext i32 %9 to i64\0A  %11 = call i32 @llvm.ptx.read.ctaid.y()\0A  %12 = zext i32 %11 to i64\0A  %13 = call i32 @llvm.ptx.read.tid.x()\0A  %14 = zext i32 %13 to i64\0A  %15 = call i32 @llvm.ptx.read.tid.y()\0A  %16 = zext i32 %15 to i64\0A  br label %ptx.loop_body\0A\0Aptx.exit:                                         ; preds = %polly.stmt.for.body3\0A  ret void\0A\0Aptx.loop_body:                                    ; preds = %ptx.setup\0A  %p_gpu_index_i = mul i64 %12, %2\0A  %17 = add i64 %p_gpu_index_i, %10\0A  %p_gpu_index_j = mul i64 %16, %6\0A  %18 = add i64 %p_gpu_index_j, %14\0A  br label %polly.stmt.for.body3\0A\0Apolly.stmt.for.body3:                             ; preds = %ptx.loop_body\0A  %19 = trunc i64 %17 to i32\0A  %p_mul = shl nsw i32 %19, 7\0A  %20 = trunc i64 %18 to i32\0A  %p_add = add nsw i32 %p_mul, %20\0A  %21 = trunc i64 %17 to i32\0A  %22 = trunc i64 %18 to i32\0A  %p_arrayidx4 = getelementptr inbounds [128 x [128 x i32]]* %0, i32 0, i32 %21, i32 %22\0A  store i32 %p_add, i32* %p_arrayidx4\0A  br label %ptx.exit\0A}\0A\0Adeclare i32 @llvm.ptx.read.nctaid.x() nounwind readnone\0A\0Adeclare i32 @llvm.ptx.read.nctaid.y() nounwind readnone\0A\0Adeclare i32 @llvm.ptx.read.ctaid.x() nounwind readnone\0A\0Adeclare i32 @llvm.ptx.read.ctaid.y() nounwind readnone\0A\0Adeclare i32 @llvm.ptx.read.ntid.x() nounwind readnone\0A\0Adeclare i32 @llvm.ptx.read.ntid.y() nounwind readnone\0A\0Adeclare i32 @llvm.ptx.read.tid.x() nounwind readnone\0A\0Adeclare i32 @llvm.ptx.read.tid.y() nounwind readnone\0A\00"
 +
 +@.str = private unnamed_addr constant [3 x i8] c"%s\00", align 1
 +
 +define i32 @gpu_codegen() nounwind {
 +entry:
-+  %0 = call i8* @llvm.codegen(i8* getelementptr inbounds ([1937 x i8]* @llvm_kernel, i32 0, i32 0), i8* null, i8* null)
++  %0 = call i8* @llvm.codegen(i8* getelementptr inbounds ([1940 x i8]* @llvm_kernel, i32 0, i32 0), i8* null, i8* null)
 +  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([3 x i8]* @.str, i32 0, i32 0), i8* %0)
 +  ret i32 0
 +}
@@ -474,17 +474,17 @@ index 0000000..768790d
 +
 +declare i32 @printf(i8*, ...) nounwind
 +
-+; CHECK: .entry gpu_codegen_2E_ptx_subfn (.param .b32 __param_1)
++; CHECK: gpu_codegen_2E_ptx_subfn
 diff --git a/test/CodeGen/X86/EmbeddedCG/lit.local.cfg b/test/CodeGen/X86/EmbeddedCG/lit.local.cfg
 new file mode 100644
-index 0000000..346ffa1
+index 0000000..7180c84
 --- /dev/null
 +++ b/test/CodeGen/X86/EmbeddedCG/lit.local.cfg
 @@ -0,0 +1,5 @@
 +config.suffixes = ['.ll', '.c', '.cpp']
 +
 +targets = set(config.root.targets_to_build.split())
-+if not 'PTX' in targets:
++if not 'NVPTX' in targets:
 +    config.unsupported = True
 -- 
 1.7.6.5
