@@ -257,6 +257,7 @@
           <li><a href="#int_exp">'<tt>llvm.exp.*</tt>' Intrinsic</a></li>
           <li><a href="#int_log">'<tt>llvm.log.*</tt>' Intrinsic</a></li>
           <li><a href="#int_fma">'<tt>llvm.fma.*</tt>' Intrinsic</a></li>
+          <li><a href="#int_fabs">'<tt>llvm.fabs.*</tt>' Intrinsic</a></li>
         </ol>
       </li>
       <li><a href="#int_manip">Bit Manipulation Intrinsics</a>
@@ -7503,6 +7504,40 @@ LLVM</a>.</p>
 <h5>Semantics:</h5>
 <p>This function returns the same values as the libm <tt>fma</tt> functions
    would.</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<h4>
+  <a name="int_fabs">'<tt>llvm.fabs.*</tt>' Intrinsic</a>
+</h4>
+
+<div>
+
+<h5>Syntax:</h5>
+<p>This is an overloaded intrinsic. You can use <tt>llvm.fabs</tt> on any
+   floating point or vector of floating point type. Not all targets support all
+   types however.</p>
+
+<pre>
+  declare float     @llvm.fabs.f32(float  %Val)
+  declare double    @llvm.fabs.f64(double %Val)
+  declare x86_fp80  @llvm.fabs.f80(x86_fp80  %Val)
+  declare fp128     @llvm.fabs.f128(fp128 %Val)
+  declare ppc_fp128 @llvm.fabs.ppcf128(ppc_fp128  %Val)
+</pre>
+
+<h5>Overview:</h5>
+<p>The '<tt>llvm.fabs.*</tt>' intrinsics return the absolute value of
+   the operand.</p>
+
+<h5>Arguments:</h5>
+<p>The argument and return value are floating point numbers of the same
+   type.</p>
+
+<h5>Semantics:</h5>
+<p>This function returns the same values as the libm <tt>fabs</tt> functions
+   would, and handles error conditions in the same way.</p>
 
 </div>
 
