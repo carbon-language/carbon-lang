@@ -26,6 +26,7 @@
 #include "clang/AST/StmtVisitor.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/SourceLocation.h"
+#include "clang/Basic/OperatorKinds.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/ImmutableMap.h"
@@ -162,6 +163,13 @@ class MutexID {
         buildMutexID(At->getArg(), &LRCallCtx);
         return;
       }
+      // Hack to treat smart pointers and iterators as pointers;
+      // ignore any method named get().
+      if (CMCE->getMethodDecl()->getNameAsString() == "get" &&
+          CMCE->getNumArgs() == 0) {
+        buildMutexID(CMCE->getImplicitObjectArgument(), CallCtx);
+        return;
+      }
       DeclSeq.push_back(CMCE->getMethodDecl()->getCanonicalDecl());
       buildMutexID(CMCE->getImplicitObjectArgument(), CallCtx);
       unsigned NumCallArgs = CMCE->getNumArgs();
@@ -178,6 +186,15 @@ class MutexID {
         LRCallCtx.PrevCtx = CallCtx;
         buildMutexID(At->getArg(), &LRCallCtx);
         return;
+      }
+      // Treat smart pointers and iterators as pointers;
+      // ignore the * and -> operators.
+      if (CXXOperatorCallExpr *OE = dyn_cast<CXXOperatorCallExpr>(CE)) {
+        OverloadedOperatorKind k = OE->getOperator();
+        if (k == OO_Arrow || k == OO_Star) {
+          buildMutexID(OE->getArg(0), CallCtx);
+          return;
+        }
       }
       buildMutexID(CE->getCallee(), CallCtx);
       unsigned NumCallArgs = CE->getNumArgs();
@@ -208,6 +225,8 @@ class MutexID {
       buildMutexID(PE->getSubExpr(), CallCtx);
     } else if (ExprWithCleanups *EWC = dyn_cast<ExprWithCleanups>(Exp)) {
       buildMutexID(EWC->getSubExpr(), CallCtx);
+    } else if (CXXBindTemporaryExpr *E = dyn_cast<CXXBindTemporaryExpr>(Exp)) {
+      buildMutexID(E->getSubExpr(), CallCtx);
     } else if (isa<CharacterLiteral>(Exp) ||
                isa<CXXNullPtrLiteralExpr>(Exp) ||
                isa<GNUNullExpr>(Exp) ||
