@@ -646,37 +646,41 @@ public:
         StateType state = process->GetState();
         if ((state == eStateCrashed) || (state == eStateStopped) || (state == eStateSuspended))
         {
+            Mutex::Locker locker (process->GetThreadList().GetMutex());
             const uint32_t num_threads = process->GetThreadList().GetSize();
-            uint32_t idx;
             const size_t argc = command.GetArgumentCount();
             if (argc > 0)
             {
-                std::vector<uint32_t> resume_thread_indexes;
+                std::vector<Thread *> resume_threads;
                 for (uint32_t i=0; i<argc; ++i)
                 {
                     bool success;
                     const int base = 0;
-                    idx = Args::StringToUInt32 (command.GetArgumentAtIndex(i), LLDB_INVALID_INDEX32, base, &success);
-                    if (!success)
+                    uint32_t thread_idx = Args::StringToUInt32 (command.GetArgumentAtIndex(i), LLDB_INVALID_INDEX32, base, &success);
+                    if (success)
                     {
-                        result.AppendErrorWithFormat ("invalid value for thread index: %s.", command.GetArgumentAtIndex(i));
-                        result.SetStatus (eReturnStatusFailed);
-                        return false;
-                    }
-                    else if (process->GetThreadList().FindThreadByIndexID(idx))
-                    {
-                        if (find(resume_thread_indexes.begin(), resume_thread_indexes.end(), idx) == resume_thread_indexes.end())
-                            resume_thread_indexes.push_back(idx);
+                        Thread *thread = process->GetThreadList().FindThreadByIndexID(thread_idx).get();
+                        
+                        if (thread)
+                        {
+                            resume_threads.push_back(thread);
+                        }
+                        else
+                        {
+                            result.AppendErrorWithFormat("invalid thread index %u.\n", thread_idx);
+                            result.SetStatus (eReturnStatusFailed);
+                            return false;
+                        }
                     }
                     else
                     {
-                        result.AppendErrorWithFormat("thread index %u out of range.\n", idx);
+                        result.AppendErrorWithFormat ("invalid thread index argument: \"%s\".\n", command.GetArgumentAtIndex(i));
                         result.SetStatus (eReturnStatusFailed);
                         return false;
                     }
                 }
-
-                if (resume_thread_indexes.empty())
+                
+                if (resume_threads.empty())
                 {
                     result.AppendError ("no valid thread indexes were specified");
                     result.SetStatus (eReturnStatusFailed);
@@ -684,20 +688,20 @@ public:
                 }
                 else
                 {
-                    if (resume_thread_indexes.size() == 1)
+                    if (resume_threads.size() == 1)
                         result.AppendMessageWithFormat ("Resuming thread: ");
                     else
                         result.AppendMessageWithFormat ("Resuming threads: ");
-
-                    for (idx=0; idx<num_threads; ++idx)
+                    
+                    for (uint32_t idx=0; idx<num_threads; ++idx)
                     {
-                        Thread *thread = process->GetThreadList().FindThreadByIndexID(idx).get();
-                        std::vector<uint32_t>::iterator this_thread_pos = find(resume_thread_indexes.begin(), resume_thread_indexes.end(), thread->GetIndexID());
+                        Thread *thread = process->GetThreadList().GetThreadAtIndex(idx).get();
+                        std::vector<Thread *>::iterator this_thread_pos = find(resume_threads.begin(), resume_threads.end(), thread);
                         
-                        if (this_thread_pos != resume_thread_indexes.end())
+                        if (this_thread_pos != resume_threads.end())
                         {
-                            resume_thread_indexes.erase(this_thread_pos);
-                            if (resume_thread_indexes.size() > 0)
+                            resume_threads.erase(this_thread_pos);
+                            if (resume_threads.size() > 0)
                                 result.AppendMessageWithFormat ("%u, ", thread->GetIndexID());
                             else
                                 result.AppendMessageWithFormat ("%u ", thread->GetIndexID());
@@ -722,9 +726,9 @@ public:
                     return false;
                 }
                 // Set the actions that the threads should each take when resuming
-                for (idx=0; idx<num_threads; ++idx)
+                for (uint32_t idx=0; idx<num_threads; ++idx)
                 {
-                    Thread *thread = process->GetThreadList().FindThreadByIndexID(idx).get();
+                    Thread *thread = process->GetThreadList().GetThreadAtIndex(idx).get();
                     if (thread == current_thread)
                     {
                         result.AppendMessageWithFormat ("Resuming thread 0x%4.4llx in process %llu\n", thread->GetID(), process->GetID());
@@ -736,7 +740,7 @@ public:
                     }
                 }
             }
-
+            
             Error error (process->Resume());
             if (error.Success())
             {
@@ -744,7 +748,7 @@ public:
                 if (synchronous_execution)
                 {
                     state = process->WaitForProcessToStop (NULL);
-
+                    
                     result.SetDidChangeProcessState (true);
                     result.AppendMessageWithFormat ("Process %llu %s\n", process->GetID(), StateAsCString (state));
                     result.SetStatus (eReturnStatusSuccessFinishNoResult);
