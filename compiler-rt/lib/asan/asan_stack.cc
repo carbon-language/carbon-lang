@@ -46,14 +46,20 @@ void AsanStackTrace::PrintStack(uptr *addr, uptr size) {
     AddressInfo addr_frames[64];
     uptr addr_frames_num = 0;
     if (FLAG_symbolize) {
-      addr_frames_num = SymbolizeCode(pc, addr_frames,
+      bool last_frame = (i == size - 1) || !addr[i + 1];
+      addr_frames_num = SymbolizeCode(pc - !last_frame, addr_frames,
                                       ASAN_ARRAY_SIZE(addr_frames));
     }
     if (addr_frames_num > 0) {
       for (uptr j = 0; j < addr_frames_num; j++) {
         AddressInfo &info = addr_frames[j];
         AsanPrintf("    #%zu 0x%zx", frame_num, pc);
-        if (info.module) {
+        if (info.function) {
+          AsanPrintf(" %s", info.function);
+        }
+        if (info.file) {
+          AsanPrintf(" %s:%d:%d", info.file, info.line, info.column);
+        } else if (info.module) {
           AsanPrintf(" (%s+0x%zx)", info.module, info.module_offset);
         }
         AsanPrintf("\n");

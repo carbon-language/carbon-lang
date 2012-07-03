@@ -76,6 +76,18 @@ void *Mprotect(uptr fixed_addr, uptr size) {
                        -1, 0);
 }
 
+void *MapFileToMemory(const char *file_name, uptr *buff_size) {
+  fd_t fd = internal_open(file_name, false);
+  CHECK_NE(fd, kInvalidFd);
+  uptr fsize = internal_filesize(fd);
+  CHECK_NE(fsize, (uptr)-1);
+  CHECK_GT(fsize, 0);
+  *buff_size = RoundUpTo(fsize, kPageSize);
+  void *map = internal_mmap(0, *buff_size, PROT_READ, MAP_PRIVATE, fd, 0);
+  return (map == MAP_FAILED) ? 0 : map;
+}
+
+
 static inline bool IntervalsAreSeparate(uptr start1, uptr end1,
                                         uptr start2, uptr end2) {
   CHECK(start1 <= end1);

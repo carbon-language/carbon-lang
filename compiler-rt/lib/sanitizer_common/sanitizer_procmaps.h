@@ -41,7 +41,17 @@ class ProcessMaps {
     for (int i = 0; Next(&start, &end, &file_offset, filename, filename_size);
          i++) {
       if (addr >= start && addr < end) {
-        // Don't subtract 'start' for the first entry. Don't ask me why.
+        // Don't subtract 'start' for the first entry:
+        // * If a binary is compiled w/o -pie, then the first entry in
+        //   process maps is likely the binary itself (all dynamic libs
+        //   are mapped higher in address space). For such a binary,
+        //   instruction offset in binary coincides with the actual
+        //   instruction address in virtual memory (as code section
+        //   is mapped to a fixed memory range).
+        // * If a binary is compiled with -pie, all the modules are
+        //   mapped high at address space (in particular, higher than
+        //   shadow memory of the tool), so the module can't be the
+        //   first entry.
         *offset = (addr - (i ? start : 0)) + file_offset;
         return true;
       }

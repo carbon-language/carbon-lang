@@ -19,6 +19,18 @@
 
 namespace __sanitizer {
 
+bool IsFullNameOfDWARFSection(const char *full_name, const char *short_name) {
+  // Skip "__DWARF," prefix.
+  if (0 == internal_strncmp(full_name, "__DWARF,", 8)) {
+    full_name += 8;
+  }
+  // Skip . and _ prefices.
+  while (*full_name == '.' || *full_name == '_') {
+    full_name++;
+  }
+  return 0 == internal_strcmp(full_name, short_name);
+}
+
 void AddressInfo::Clear() {
   InternalFree(module);
   InternalFree(function);
@@ -26,97 +38,105 @@ void AddressInfo::Clear() {
   internal_memset(this, 0, sizeof(AddressInfo));
 }
 
-static const int kMaxModuleNameLength = 4096;
-
-struct ModuleDesc {
-  ModuleDesc *next;
-  uptr start;
-  uptr end;
-  uptr offset;
-  char *full_name;
-  char *name;
-
-  ModuleDesc(uptr _start, uptr _end, uptr _offset, const char *module_name) {
-    next = 0;
-    start = _start;
-    end = _end;
-    offset = _offset;
-    full_name = internal_strdup(module_name);
-    name = internal_strrchr(module_name, '/');
-    if (name == 0) {
-      name = full_name;
-    } else {
-      name++;
-    }
+ModuleDIContext::ModuleDIContext(const char *module_name) {
+  full_name_ = internal_strdup(module_name);
+  short_name_ = internal_strrchr(module_name, '/');
+  if (short_name_ == 0) {
+    short_name_ = full_name_;
+  } else {
+    short_name_++;
   }
-};
+  base_address_ = (uptr)-1;
+  n_ranges_ = 0;
+  mapped_addr_ = 0;
+  mapped_size_ = 0;
+}
+
+void ModuleDIContext::addAddressRange(uptr beg, uptr end) {
+  CHECK_LT(n_ranges_, kMaxNumberOfAddressRanges);
+  ranges_[n_ranges_].beg = beg;
+  ranges_[n_ranges_].end = end;
+  base_address_ = Min(base_address_, beg);
+  n_ranges_++;
+}
+
+bool ModuleDIContext::containsAddress(uptr address) const {
+  for (uptr i = 0; i < n_ranges_; i++) {
+    if (ranges_[i].beg <= address && address < ranges_[i].end)
+      return true;
+  }
+  return false;
+}
+
+void ModuleDIContext::getAddressInfo(AddressInfo *info) {
+  info->module = internal_strdup(full_name_);
+  info->module_offset = info->address - base_address_;
+  if (mapped_addr_ == 0)
+    CreateDIContext();
+  // FIXME: Use the actual debug info context here.
+  info->function = 0;
+  info->file = 0;
+  info->line = 0;
+  info->column = 0;
+}
+
+void ModuleDIContext::CreateDIContext() {
+  mapped_addr_ = (uptr)MapFileToMemory(full_name_, &mapped_size_);
+  CHECK(mapped_addr_);
+  DWARFSection debug_info;
+  DWARFSection debug_abbrev;
+  DWARFSection debug_line;
+  DWARFSection debug_aranges;
+  DWARFSection debug_str;
+  FindDWARFSection(mapped_addr_, "debug_info", &debug_info);
+  FindDWARFSection(mapped_addr_, "debug_abbrev", &debug_abbrev);
+  FindDWARFSection(mapped_addr_, "debug_line", &debug_line);
+  FindDWARFSection(mapped_addr_, "debug_aranges", &debug_aranges);
+  FindDWARFSection(mapped_addr_, "debug_str", &debug_str);
+  // FIXME: Construct actual debug info context using mapped_addr,
+  // mapped_size and pointers to DWARF sections in memory.
+}
 
 class Symbolizer {
  public:
-  void GetModuleDescriptions() {
-    ProcessMaps proc_maps;
-    uptr start, end, offset;
-    char *module_name = (char*)InternalAlloc(kMaxModuleNameLength);
-    ModuleDesc *prev_module = 0;
-    while (proc_maps.Next(&start, &end, &offset, module_name,
-                          kMaxModuleNameLength)) {
-      void *mem = InternalAlloc(sizeof(ModuleDesc));
-      ModuleDesc *cur_module = new(mem) ModuleDesc(start, end, offset,
-                                                   module_name);
-      if (!prev_module) {
-        modules_ = cur_module;
-      } else {
-        prev_module->next = cur_module;
-      }
-      prev_module = cur_module;
-    }
-    InternalFree(module_name);
-  }
-
   uptr SymbolizeCode(uptr addr, AddressInfo *frames, uptr max_frames) {
     if (max_frames == 0)
       return 0;
     AddressInfo *info = &frames[0];
     info->Clear();
     info->address = addr;
-    if (modules_ == 0) {
-      GetModuleDescriptions();
-    }
-    bool first = true;
-    for (ModuleDesc *module = modules_; module; module = module->next) {
-      if (addr >= module->start && addr < module->end) {
-        info->module = internal_strdup(module->full_name);
-        // Don't subtract 'start' for the first entry:
-        // * If a binary is compiled w/o -pie, then the first entry in
-        //   process maps is likely the binary itself (all dynamic libs
-        //   are mapped higher in address space). For such a binary,
-        //   instruction offset in binary coincides with the actual
-        //   instruction address in virtual memory (as code section
-        //   is mapped to a fixed memory range).
-        // * If a binary is compiled with -pie, all the modules are
-        //   mapped high at address space (in particular, higher than
-        //   shadow memory of the tool), so the module can't be the
-        //   first entry.
-        info->module_offset = (addr - (first ? 0 : module->start)) +
-                              module->offset;
-        // FIXME: Fill other fields here as well: create debug
-        // context for a given module and fetch file/line info from it.
-        info->function = 0;
-        info->file = 0;
-        info->line = 0;
-        info->column = 0;
-        return 1;
-      }
-      first = false;
+    ModuleDIContext *module = FindModuleForAddress(addr);
+    if (module) {
+      module->getAddressInfo(info);
+      return 1;
     }
     return 0;
   }
 
  private:
-  ModuleDesc *modules_;  // List of module descriptions is leaked.
+  ModuleDIContext *FindModuleForAddress(uptr address) {
+    if (modules_ == 0) {
+      modules_ = (ModuleDIContext*)InternalAlloc(
+          kMaxNumberOfModuleContexts * sizeof(ModuleDIContext));
+      CHECK(modules_);
+      n_modules_ = GetListOfModules(modules_, kMaxNumberOfModuleContexts);
+      CHECK_GT(n_modules_, 0);
+      CHECK_LT(n_modules_, kMaxNumberOfModuleContexts);
+    }
+    for (uptr i = 0; i < n_modules_; i++) {
+      if (modules_[i].containsAddress(address)) {
+        return &modules_[i];
+      }
+    }
+    return 0;
+  }
+  static const uptr kMaxNumberOfModuleContexts = 256;
+  // Array of module debug info contexts is leaked.
+  ModuleDIContext *modules_;
+  uptr n_modules_;
 };
 
-static Symbolizer symbolizer;
+static Symbolizer symbolizer;  // Linker initialized.
 
 uptr SymbolizeCode(uptr address, AddressInfo *frames, uptr max_frames) {
   return symbolizer.SymbolizeCode(address, frames, max_frames);

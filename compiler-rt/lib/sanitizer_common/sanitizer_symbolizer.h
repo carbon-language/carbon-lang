@@ -52,6 +52,45 @@ struct AddressInfo {
 // This function should NOT be called from two threads simultaneously.
 uptr SymbolizeCode(uptr address, AddressInfo *frames, uptr max_frames);
 
+// Debug info routines
+struct DWARFSection {
+  const char *data;
+  uptr size;
+};
+// Returns true on success.
+bool FindDWARFSection(uptr object_file_addr, const char *section_name,
+                      DWARFSection *section);
+bool IsFullNameOfDWARFSection(const char *full_name, const char *short_name);
+
+class ModuleDIContext {
+ public:
+  explicit ModuleDIContext(const char *module_name);
+  void addAddressRange(uptr beg, uptr end);
+  bool containsAddress(uptr address) const;
+  void getAddressInfo(AddressInfo *info);
+
+  const char *full_name() const { return full_name_; }
+
+ private:
+  void CreateDIContext();
+
+  struct AddressRange {
+    uptr beg;
+    uptr end;
+  };
+  char *full_name_;
+  char *short_name_;
+  uptr base_address_;
+  static const uptr kMaxNumberOfAddressRanges = 16;
+  AddressRange ranges_[kMaxNumberOfAddressRanges];
+  uptr n_ranges_;
+  uptr mapped_addr_;
+  uptr mapped_size_;
+};
+
+// OS-dependent function that gets the linked list of all loaded modules.
+uptr GetListOfModules(ModuleDIContext *modules, uptr max_modules);
+
 }  // namespace __sanitizer
 
 #endif  // SANITIZER_SYMBOLIZER_H

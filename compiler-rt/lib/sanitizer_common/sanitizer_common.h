@@ -64,6 +64,11 @@ void Report(const char *format, ...);
 // Returns the number of read bytes or 0 if file can not be opened.
 uptr ReadFileToBuffer(const char *file_name, char **buff,
                       uptr *buff_size, uptr max_len);
+// Maps given file to virtual memory, and returns pointer to it
+// (or NULL if the mapping failes). Stores the size of mmaped region
+// in '*buff_size'.
+void *MapFileToMemory(const char *file_name, uptr *buff_size);
+
 const char *GetEnv(const char *name);
 const char *GetPwd();
 
