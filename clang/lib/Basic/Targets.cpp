@@ -582,6 +582,19 @@ public:
     LongDoubleFormat = &llvm::APFloat::PPCDoubleDouble;
   }
 
+  /// \brief Flags for architecture specific defines.
+  typedef enum {
+    ArchDefineNone  = 0,
+    ArchDefineName  = 1 << 0, // <name> is substituted for arch name.
+    ArchDefinePpcgr = 1 << 1,
+    ArchDefinePpcsq = 1 << 2,
+    ArchDefine440   = 1 << 3,
+    ArchDefine603   = 1 << 4,
+    ArchDefine604   = 1 << 5,
+    ArchDefinePwr4  = 1 << 6,
+    ArchDefinePwr6  = 1 << 7
+  } ArchDefineTypes;
+
   virtual bool setCPU(const std::string &Name) {
     bool CPUKnown = llvm::StringSwitch<bool>(Name)
       .Case("generic", true)
@@ -781,17 +794,44 @@ void PPCTargetInfo::getTargetDefines(const LangOptions &Opts,
   }
 
   // CPU identification.
-  if (CPU == "440") {
-     Builder.defineMacro("_ARCH_440");
-  } else if (CPU == "450") {
+  ArchDefineTypes defs = (ArchDefineTypes)llvm::StringSwitch<int>(CPU)
+    .Case("440",   ArchDefineName)
+    .Case("450",   ArchDefineName | ArchDefine440)
+    .Case("601",   ArchDefineName)
+    .Case("602",   ArchDefineName | ArchDefinePpcgr)
+    .Case("603",   ArchDefineName | ArchDefinePpcgr)
+    .Case("603e",  ArchDefineName | ArchDefine603 | ArchDefinePpcgr)
+    .Case("603ev", ArchDefineName | ArchDefine603 | ArchDefinePpcgr)
+    .Case("604",   ArchDefineName | ArchDefinePpcgr)
+    .Case("604e",  ArchDefineName | ArchDefine604 | ArchDefinePpcgr)
+    .Case("620",   ArchDefineName | ArchDefinePpcgr)
+    .Case("7400",  ArchDefineName | ArchDefinePpcgr)
+    .Case("7450",  ArchDefineName | ArchDefinePpcgr)
+    .Case("750",   ArchDefineName | ArchDefinePpcgr)
+    .Case("970",   ArchDefineName | ArchDefinePwr4 | ArchDefinePpcgr
+                     | ArchDefinePpcsq)
+    .Case("pwr6",  ArchDefinePwr6 | ArchDefinePpcgr | ArchDefinePpcsq)
+    .Case("pwr7",  ArchDefineName | ArchDefinePwr6 | ArchDefinePpcgr
+                     | ArchDefinePpcsq)
+    .Default(ArchDefineNone);
+
+  if (defs & ArchDefineName)
+    Builder.defineMacro(Twine("_ARCH_", StringRef(CPU).upper()));
+  if (defs & ArchDefinePpcgr)
+    Builder.defineMacro("_ARCH_PPCGR");
+  if (defs & ArchDefinePpcsq)
+    Builder.defineMacro("_ARCH_PPCSQ");
+  if (defs & ArchDefine440)
     Builder.defineMacro("_ARCH_440");
-    Builder.defineMacro("_ARCH_450");
-  } else if (CPU == "970") {
-    Builder.defineMacro("_ARCH_970");
-  } else if (CPU == "pwr6") {
+  if (defs & ArchDefine603)
+    Builder.defineMacro("_ARCH_603");
+  if (defs & ArchDefine604)
+    Builder.defineMacro("_ARCH_604");
+  if (defs & (ArchDefinePwr4 | ArchDefinePwr6))
+    Builder.defineMacro("_ARCH_PWR4");
+  if (defs & ArchDefinePwr6) {
+    Builder.defineMacro("_ARCH_PWR5");
     Builder.defineMacro("_ARCH_PWR6");
-  } else if (CPU == "pwr7") {
-    Builder.defineMacro("_ARCH_PWR7");
   }
 }
 
