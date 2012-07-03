@@ -1379,8 +1379,10 @@ Parser::DeclGroupPtrTy Parser::ParseDeclGroup(ParsingDeclSpec &DS,
 
   bool ExpectSemi = Context != Declarator::ForContext;
 
+  // FIXME. make this work for Obj-C++11 parser.
   if (CurParsedObjCImpl && D.isFunctionDeclarator() &&
-      Tok.is(tok::l_brace)) {
+      Tok.is(tok::l_brace) &&
+      !getLangOpts().CPlusPlus0x) {
     // Consume the tokens and store them for later parsing.
     StashAwayMethodOrFunctionBodyTokens(FirstDecl);
     CurParsedObjCImpl->HasCFunction = true;
