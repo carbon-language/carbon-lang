@@ -58,22 +58,15 @@ public:
   
 protected:
 
-  typedef std::list<Cluster> CaseItems;
+  typedef std::map<RangeEx, SuccessorClass*> CaseItems;
   typedef typename CaseItems::iterator CaseItemIt;
   typedef typename CaseItems::const_iterator CaseItemConstIt;
   
   // TODO: Change unclean CRS prefixes to SubsetMap for example.
   typedef std::map<SuccessorClass*, RangesCollection > CRSMap;
   typedef typename CRSMap::iterator CRSMapIt;
-
-  struct ClustersCmp {
-    bool operator()(const Cluster &C1, const Cluster &C2) {
-      return C1.first < C2.first;
-    }
-  };
   
   CaseItems Items;
-  bool Sorted;
   bool SingleNumbersOnly;
   
   bool isIntersected(CaseItemIt& LItem, CaseItemIt& RItem) {
@@ -90,18 +83,6 @@ protected:
     if (RLow != APInt::getNullValue(RLow.getBitWidth()))
       --RLow;
     return LItem->first.getHigh() >= RLow;
-  }
-  
-  void sort() {
-    if (!Sorted) {
-      std::vector<Cluster> clustersVector;
-      clustersVector.reserve(Items.size());
-      clustersVector.insert(clustersVector.begin(), Items.begin(), Items.end());
-      std::sort(clustersVector.begin(), clustersVector.end(), ClustersCmp());
-      Items.clear();
-      Items.insert(Items.begin(), clustersVector.begin(), clustersVector.end());
-      Sorted = true;
-    }
   }
   
   enum DiffProcessState {
@@ -300,15 +281,11 @@ public:
   typedef std::pair<SuccessorClass*, IntegersSubsetTy> Case;
   typedef std::list<Case> Cases;
   
-  IntegersSubsetMapping() {
-    Sorted = false;
-    SingleNumbersOnly = true;
-  }
+  IntegersSubsetMapping() : SingleNumbersOnly(true) {}
   
   bool verify(RangeIterator& errItem) {
     if (Items.empty())
       return true;
-    sort();
     for (CaseItemIt j = Items.begin(), i = j++, e = Items.end();
          j != e; i = j++) {
       if (isIntersected(i, j) && i->second != j->second) {
@@ -318,11 +295,10 @@ public:
     }
     return true;
   }
-  
+
   void optimize() {
     if (Items.size() < 2)
       return;
-    sort();
     CaseItems OldItems = Items;
     Items.clear();
     const IntTy *Low = &OldItems.begin()->first.getLow();
@@ -347,8 +323,6 @@ public:
     }
     RangeEx R(*Low, *High, Weight);
     add(R, Successor);
-    // We recollected the Items, but we kept it sorted.
-    Sorted = true;
   }
   
   /// Adds a constant value.
@@ -367,7 +341,7 @@ public:
     add(REx, S);
   }   
   void add(const RangeEx &R, SuccessorClass *S = 0) {
-    Items.push_back(std::make_pair(R, S));
+    Items.insert(std::make_pair(R, S));
     if (!R.isSingleNumber())
       SingleNumbersOnly = false;
   }  
@@ -382,7 +356,7 @@ public:
   }
   
   void add(self& RHS) {
-    Items.insert(Items.end(), RHS.Items.begin(), RHS.Items.end());
+    Items.insert(RHS.Items.begin(), RHS.Items.end());
     if (!RHS.SingleNumbersOnly)
       SingleNumbersOnly = false;
   }
