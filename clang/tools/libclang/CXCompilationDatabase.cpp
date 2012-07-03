@@ -10,9 +10,8 @@ extern "C" {
 
 // FIXME: do something more usefull with the error message
 CXCompilationDatabase
-clang_tooling_CompilationDatabase_fromDirectory(
-  const char *BuildDir,
-  CXCompilationDatabase_Error *ErrorCode)
+clang_CompilationDatabase_fromDirectory(const char *BuildDir,
+                                        CXCompilationDatabase_Error *ErrorCode)
 {
   std::string ErrorMsg;
   CXCompilationDatabase_Error Err = CXCompilationDatabase_NoError;
@@ -32,7 +31,7 @@ clang_tooling_CompilationDatabase_fromDirectory(
 }
 
 void
-clang_tooling_CompilationDatabase_dispose(CXCompilationDatabase CDb)
+clang_CompilationDatabase_dispose(CXCompilationDatabase CDb)
 {
   delete static_cast<CompilationDatabase *>(CDb);
 }
@@ -47,8 +46,8 @@ struct AllocatedCXCompileCommands
 };
 
 CXCompileCommands
-clang_tooling_CompilationDatabase_getCompileCommands(CXCompilationDatabase CDb,
-                                 const char *CompleteFileName)
+clang_CompilationDatabase_getCompileCommands(CXCompilationDatabase CDb,
+                                             const char *CompleteFileName)
 {
   if (CompilationDatabase *db = static_cast<CompilationDatabase *>(CDb)) {
     const std::vector<CompileCommand>
@@ -61,13 +60,13 @@ clang_tooling_CompilationDatabase_getCompileCommands(CXCompilationDatabase CDb,
 }
 
 void
-clang_tooling_CompileCommands_dispose(CXCompileCommands Cmds)
+clang_CompileCommands_dispose(CXCompileCommands Cmds)
 {
   delete static_cast<AllocatedCXCompileCommands *>(Cmds);
 }
 
 unsigned
-clang_tooling_CompileCommands_getSize(CXCompileCommands Cmds)
+clang_CompileCommands_getSize(CXCompileCommands Cmds)
 {
   if (!Cmds)
     return 0;
@@ -79,7 +78,7 @@ clang_tooling_CompileCommands_getSize(CXCompileCommands Cmds)
 }
 
 CXCompileCommand
-clang_tooling_CompileCommands_getCommand(CXCompileCommands Cmds, unsigned I)
+clang_CompileCommands_getCommand(CXCompileCommands Cmds, unsigned I)
 {
   if (!Cmds)
     return 0;
@@ -94,7 +93,7 @@ clang_tooling_CompileCommands_getCommand(CXCompileCommands Cmds, unsigned I)
 }
 
 CXString
-clang_tooling_CompileCommand_getDirectory(CXCompileCommand CCmd)
+clang_CompileCommand_getDirectory(CXCompileCommand CCmd)
 {
   if (!CCmd)
     return createCXString((const char*)NULL);
@@ -104,7 +103,7 @@ clang_tooling_CompileCommand_getDirectory(CXCompileCommand CCmd)
 }
 
 unsigned
-clang_tooling_CompileCommand_getNumArgs(CXCompileCommand CCmd)
+clang_CompileCommand_getNumArgs(CXCompileCommand CCmd)
 {
   if (!CCmd)
     return 0;
@@ -113,7 +112,7 @@ clang_tooling_CompileCommand_getNumArgs(CXCompileCommand CCmd)
 }
 
 CXString
-clang_tooling_CompileCommand_getArg(CXCompileCommand CCmd, unsigned Arg)
+clang_CompileCommand_getArg(CXCompileCommand CCmd, unsigned Arg)
 {
   if (!CCmd)
     return createCXString((const char*)NULL);

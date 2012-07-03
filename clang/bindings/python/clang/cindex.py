@@ -2578,39 +2578,39 @@ _clang_getCompletionPriority.argtypes = [c_void_p]
 _clang_getCompletionPriority.restype = c_int
 
 # Compilation Database
-CompilationDatabase_fromDirectory = lib.clang_tooling_CompilationDatabase_fromDirectory
+CompilationDatabase_fromDirectory = lib.clang_CompilationDatabase_fromDirectory
 CompilationDatabase_fromDirectory.argtypes = [c_char_p, POINTER(c_uint)]
 CompilationDatabase_fromDirectory.restype = c_object_p
 CompilationDatabase_fromDirectory.errcheck = CompilationDatabase.from_result
 
-CompilationDatabase_dispose = lib.clang_tooling_CompilationDatabase_dispose
+CompilationDatabase_dispose = lib.clang_CompilationDatabase_dispose
 CompilationDatabase_dispose.argtypes = [c_object_p]
 
-CompilationDatabase_getCompileCommands = lib.clang_tooling_CompilationDatabase_getCompileCommands
+CompilationDatabase_getCompileCommands = lib.clang_CompilationDatabase_getCompileCommands
 CompilationDatabase_getCompileCommands.argtypes = [c_object_p, c_char_p]
 CompilationDatabase_getCompileCommands.restype = c_object_p
 CompilationDatabase_getCompileCommands.errcheck = CompileCommands.from_result
 
-CompileCommands_dispose = lib.clang_tooling_CompileCommands_dispose
+CompileCommands_dispose = lib.clang_CompileCommands_dispose
 CompileCommands_dispose.argtypes = [c_object_p]
 
-CompileCommands_getSize = lib.clang_tooling_CompileCommands_getSize
+CompileCommands_getSize = lib.clang_CompileCommands_getSize
 CompileCommands_getSize.argtypes = [c_object_p]
 CompileCommands_getSize.restype = c_uint
 
-CompileCommands_getCommand = lib.clang_tooling_CompileCommands_getCommand
+CompileCommands_getCommand = lib.clang_CompileCommands_getCommand
 CompileCommands_getCommand.argtypes = [c_object_p, c_uint]
 CompileCommands_getCommand.restype = c_object_p
 
-CompileCommand_getDirectory = lib.clang_tooling_CompileCommand_getDirectory
+CompileCommand_getDirectory = lib.clang_CompileCommand_getDirectory
 CompileCommand_getDirectory.argtypes = [c_object_p]
 CompileCommand_getDirectory.restype = _CXString
 
-CompileCommand_getNumArgs = lib.clang_tooling_CompileCommand_getNumArgs
+CompileCommand_getNumArgs = lib.clang_CompileCommand_getNumArgs
 CompileCommand_getNumArgs.argtypes = [c_object_p]
 CompileCommand_getNumArgs.restype = c_uint
 
-CompileCommand_getArg = lib.clang_tooling_CompileCommand_getArg
+CompileCommand_getArg = lib.clang_CompileCommand_getArg
 CompileCommand_getArg.argtypes = [c_object_p, c_uint]
 CompileCommand_getArg.restype = _CXString
 

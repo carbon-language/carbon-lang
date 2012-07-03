@@ -29,9 +29,11 @@ extern "C" {
  */
 
 /**
- * \brief Represents clang::tooling::CompilationDatabase
+ * A compilation database holds all information used to compile files in a
+ * project. For each file in the database, it can be queried for the working
+ * directory or the command line used for the compiler invocation.
  *
- * Must be freed by \c clang_tooling_CompilationDatabase_dispose
+ * Must be freed by \c clang_CompilationDatabase_dispose
  */
 typedef void * CXCompilationDatabase;
 
@@ -42,7 +44,7 @@ typedef void * CXCompilationDatabase;
  * return several commands, as the file may have been compiled with
  * different options in different places of the project. This choice of compile
  * commands is wrapped in this opaque data structure. It must be freed by
- * \c clang_tooling_CompileCommands_dispose.
+ * \c clang_CompileCommands_dispose.
  */
 typedef void * CXCompileCommands;
 
@@ -69,59 +71,60 @@ typedef enum  {
 
 /**
  * \brief Creates a compilation database from the database found in directory
- * buildDir. It must be freed by \c clang_tooling_CompilationDatabase_dispose.
+ * buildDir. For example, CMake can output a compile_commands.json which can
+ * be used to build the database.
+ *
+ * It must be freed by \c clang_CompilationDatabase_dispose.
  */
 CINDEX_LINKAGE CXCompilationDatabase
-clang_tooling_CompilationDatabase_fromDirectory(
-  const char *BuildDir,
-  CXCompilationDatabase_Error *ErrorCode);
+clang_CompilationDatabase_fromDirectory(const char *BuildDir,
+                                        CXCompilationDatabase_Error *ErrorCode);
 
 /**
  * \brief Free the given compilation database
  */
 CINDEX_LINKAGE void
-clang_tooling_CompilationDatabase_dispose(CXCompilationDatabase);
+clang_CompilationDatabase_dispose(CXCompilationDatabase);
 
 /**
  * \brief Find the compile commands used for a file. The compile commands
- * must be freed by \c clang_tooling_CompileCommands_dispose.
+ * must be freed by \c clang_CompileCommands_dispose.
  */
 CINDEX_LINKAGE CXCompileCommands
-clang_tooling_CompilationDatabase_getCompileCommands(
-  CXCompilationDatabase,
-  const char *CompleteFileName);
+clang_CompilationDatabase_getCompileCommands(CXCompilationDatabase,
+                                             const char *CompleteFileName);
 
 /**
  * \brief Free the given CompileCommands
  */
-CINDEX_LINKAGE void clang_tooling_CompileCommands_dispose(CXCompileCommands);
+CINDEX_LINKAGE void clang_CompileCommands_dispose(CXCompileCommands);
 
 /**
  * \brief Get the number of CompileCommand we have for a file
  */
 CINDEX_LINKAGE unsigned
-clang_tooling_CompileCommands_getSize(CXCompileCommands);
+clang_CompileCommands_getSize(CXCompileCommands);
 
 /**
  * \brief Get the I'th CompileCommand for a file
  *
- * Note : 0 <= i < clang_tooling_CompileCommands_getSize(CXCompileCommands)
+ * Note : 0 <= i < clang_CompileCommands_getSize(CXCompileCommands)
  */
 CINDEX_LINKAGE CXCompileCommand
-clang_tooling_CompileCommands_getCommand(CXCompileCommands, unsigned I);
+clang_CompileCommands_getCommand(CXCompileCommands, unsigned I);
 
 /**
  * \brief Get the working directory where the CompileCommand was executed from
  */
 CINDEX_LINKAGE CXString
-clang_tooling_CompileCommand_getDirectory(CXCompileCommand);
+clang_CompileCommand_getDirectory(CXCompileCommand);
 
 /**
  * \brief Get the number of arguments in the compiler invocation.
  *
  */
 CINDEX_LINKAGE unsigned
-clang_tooling_CompileCommand_getNumArgs(CXCompileCommand);
+clang_CompileCommand_getNumArgs(CXCompileCommand);
 
 /**
  * \brief Get the I'th argument value in the compiler invocations
@@ -130,7 +133,7 @@ clang_tooling_CompileCommand_getNumArgs(CXCompileCommand);
  *  - argument 0 is the compiler executable
  */
 CINDEX_LINKAGE CXString
-clang_tooling_CompileCommand_getArg(CXCompileCommand, unsigned I);
+clang_CompileCommand_getArg(CXCompileCommand, unsigned I);
 
 /**
  * @}

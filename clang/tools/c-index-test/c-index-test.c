@@ -2415,7 +2415,7 @@ perform_test_compilation_db(const char *database, int argc, const char **argv) {
   memcpy(tmp, database, len+1);
   buildDir = dirname(tmp);
 
-  db = clang_tooling_CompilationDatabase_fromDirectory(buildDir, &ec);
+  db = clang_CompilationDatabase_fromDirectory(buildDir, &ec);
 
   if (db) {
 
@@ -2427,7 +2427,7 @@ perform_test_compilation_db(const char *database, int argc, const char **argv) {
 
     for (i=0; i<argc && errorCode==0; ) {
       if (strcmp(argv[i],"lookup")==0){
-        CCmds = clang_tooling_CompilationDatabase_getCompileCommands(db, argv[i+1]);
+        CCmds = clang_CompilationDatabase_getCompileCommands(db, argv[i+1]);
 
         if (!CCmds) {
           printf("file %s not found in compilation db\n", argv[i+1]);
@@ -2435,7 +2435,7 @@ perform_test_compilation_db(const char *database, int argc, const char **argv) {
           break;
         }
 
-        numCmds = clang_tooling_CompileCommands_getSize(CCmds);
+        numCmds = clang_CompileCommands_getSize(CCmds);
 
         if (numCmds==0) {
           fprintf(stderr, "should not get an empty compileCommand set for file"
@@ -2445,29 +2445,29 @@ perform_test_compilation_db(const char *database, int argc, const char **argv) {
         }
 
         for (j=0; j<numCmds; ++j) {
-          CCmd = clang_tooling_CompileCommands_getCommand(CCmds, j);
+          CCmd = clang_CompileCommands_getCommand(CCmds, j);
 
-          wd = clang_tooling_CompileCommand_getDirectory(CCmd);
+          wd = clang_CompileCommand_getDirectory(CCmd);
           printf("workdir:'%s'", clang_getCString(wd));
           clang_disposeString(wd);
 
           printf(" cmdline:'");
-          numArgs = clang_tooling_CompileCommand_getNumArgs(CCmd);
+          numArgs = clang_CompileCommand_getNumArgs(CCmd);
           for (a=0; a<numArgs; ++a) {
             if (a) printf(" ");
-            arg = clang_tooling_CompileCommand_getArg(CCmd, a);
+            arg = clang_CompileCommand_getArg(CCmd, a);
             printf("%s", clang_getCString(arg));
             clang_disposeString(arg);
           }
           printf("'\n");
         }
 
-        clang_tooling_CompileCommands_dispose(CCmds);
+        clang_CompileCommands_dispose(CCmds);
 
         i += 2;
       }
     }
-    clang_tooling_CompilationDatabase_dispose(db);
+    clang_CompilationDatabase_dispose(db);
   } else {
     printf("database loading failed with error code %d.\n", ec);
     errorCode = -1;
