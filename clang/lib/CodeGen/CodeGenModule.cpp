@@ -138,8 +138,8 @@ void CodeGenModule::createObjCRuntime() {
   // This is just isGNUFamily(), but we want to force implementors of
   // new ABIs to decide how best to do this.
   switch (LangOpts.ObjCRuntime.getKind()) {
-  case ObjCRuntime::GNU:
-  case ObjCRuntime::FragileGNU:
+  case ObjCRuntime::GNUstep:
+  case ObjCRuntime::GCC:
     ObjCRuntime = CreateGNUObjCRuntime(*this);
     return;
 
@@ -546,7 +546,7 @@ static bool hasUnwindExceptions(const LangOptions &LangOpts) {
 
   // If ObjC exceptions are enabled, this depends on the ABI.
   if (LangOpts.ObjCExceptions) {
-    if (LangOpts.ObjCRuntime.isFragile()) return false;
+    return LangOpts.ObjCRuntime.hasUnwindExceptions();
   }
 
   return true;

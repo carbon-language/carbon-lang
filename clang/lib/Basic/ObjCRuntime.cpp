@@ -30,8 +30,8 @@ raw_ostream &clang::operator<<(raw_ostream &out, const ObjCRuntime &value) {
   case ObjCRuntime::MacOSX: out << "macosx"; break;
   case ObjCRuntime::FragileMacOSX: out << "macosx-fragile"; break;
   case ObjCRuntime::iOS: out << "ios"; break;
-  case ObjCRuntime::GNU: out << "gnu"; break;
-  case ObjCRuntime::FragileGNU: out << "gnu-fragile"; break;
+  case ObjCRuntime::GNUstep: out << "gnustep"; break;
+  case ObjCRuntime::GCC: out << "gcc"; break;
   }
   if (value.getVersion() > VersionTuple(0)) {
     out << '-' << value.getVersion();
@@ -60,10 +60,10 @@ bool ObjCRuntime::tryParse(StringRef input) {
     kind = ObjCRuntime::FragileMacOSX;
   } else if (runtimeName == "ios") {
     kind = ObjCRuntime::iOS;
-  } else if (runtimeName == "gnu") {
-    kind = ObjCRuntime::GNU;
-  } else if (runtimeName == "gnu-fragile") {
-    kind = ObjCRuntime::FragileGNU;
+  } else if (runtimeName == "gnustep") {
+    kind = ObjCRuntime::GNUstep;
+  } else if (runtimeName == "gcc") {
+    kind = ObjCRuntime::GCC;
   } else {
     return true;
   }

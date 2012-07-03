@@ -2934,7 +2934,7 @@ ObjCRuntime Clang::AddObjCRuntimeArgs(const ArgList &args,
   // -fgnu-runtime
   } else {
     assert(runtimeArg->getOption().matches(options::OPT_fgnu_runtime));
-    runtime = ObjCRuntime(ObjCRuntime::GNU, VersionTuple());
+    runtime = ObjCRuntime(ObjCRuntime::GCC, VersionTuple());
   }
 
   cmdArgs.push_back(args.MakeArgString(

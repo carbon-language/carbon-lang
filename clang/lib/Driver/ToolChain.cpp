@@ -50,7 +50,7 @@ bool ToolChain::HasNativeLLVMSupport() const {
 }
 
 ObjCRuntime ToolChain::getDefaultObjCRuntime(bool isNonFragile) const {
-  return ObjCRuntime(isNonFragile ? ObjCRuntime::GNU : ObjCRuntime::FragileGNU,
+  return ObjCRuntime(isNonFragile ? ObjCRuntime::GNUstep : ObjCRuntime::GCC,
                      VersionTuple());
 }
 

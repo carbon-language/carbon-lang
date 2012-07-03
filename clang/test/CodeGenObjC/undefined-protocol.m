@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm-only -fobjc-runtime=gnu %s
+// RUN: %clang_cc1 -emit-llvm-only -fobjc-runtime=gcc %s
 
 @protocol MadeUpProtocol;
 

@@ -2666,10 +2666,10 @@ llvm::Value *CGObjCGNU::EmitIvarOffset(CodeGenFunction &CGF,
 CGObjCRuntime *
 clang::CodeGen::CreateGNUObjCRuntime(CodeGenModule &CGM) {
   switch (CGM.getLangOpts().ObjCRuntime.getKind()) {
-  case ObjCRuntime::GNU:
+  case ObjCRuntime::GNUstep:
     return new CGObjCGNUstep(CGM);
 
-  case ObjCRuntime::FragileGNU:
+  case ObjCRuntime::GCC:
     return new CGObjCGCC(CGM);
 
   case ObjCRuntime::FragileMacOSX:

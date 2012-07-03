@@ -6389,8 +6389,8 @@ CodeGen::CreateMacObjCRuntime(CodeGen::CodeGenModule &CGM) {
   case ObjCRuntime::iOS:
     return new CGObjCNonFragileABIMac(CGM);
 
-  case ObjCRuntime::GNU:
-  case ObjCRuntime::FragileGNU:
+  case ObjCRuntime::GNUstep:
+  case ObjCRuntime::GCC:
     llvm_unreachable("these runtimes are not Mac runtimes");
   }
   llvm_unreachable("bad runtime");
