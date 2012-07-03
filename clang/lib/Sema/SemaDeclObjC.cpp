@@ -273,7 +273,7 @@ void Sema::ActOnStartOfObjCMethodOrCFunctionDef(Scope *FnBodyScope, Decl *D,
   assert((getCurMethodDecl() == 0 && getCurFunctionDecl() == 0) &&
          "Method/c-function parsing confused");
   if (!parseMethod) {
-    FunctionDecl *FDecl = FDecl = dyn_cast_or_null<FunctionDecl>(D);
+    FunctionDecl *FDecl = dyn_cast_or_null<FunctionDecl>(D);
     // If we don't have a valid c-function decl, simply return.
     if (!FDecl)
       return;
