@@ -1,6 +1,6 @@
-From 1bad885275c602bb285c162d8d619ab3ac5a594f Mon Sep 17 00:00:00 2001
+From ac671e78f9fc4481263f6849d5e392ec06e43164 Mon Sep 17 00:00:00 2001
 From: Yabin Hu <yabin.hwu@gmail.com>
-Date: Sat, 30 Jun 2012 10:54:52 +0800
+Date: Tue, 3 Jul 2012 11:21:45 +0800
 Subject: [PATCH] Add llvm.codegen intrinsic.
 
 The llvm.codegen intrinsic generates code for embedded LLVM-IR
@@ -81,10 +81,10 @@ index ba653db..b442bcc 100644
  
  <!-- ======================================================================= -->
 diff --git a/include/llvm/CodeGen/Passes.h b/include/llvm/CodeGen/Passes.h
-index 206bc2e..94cb65b 100644
+index 4a24ab0..2375222 100644
 --- a/include/llvm/CodeGen/Passes.h
 +++ b/include/llvm/CodeGen/Passes.h
-@@ -395,6 +395,9 @@ namespace llvm {
+@@ -419,6 +419,9 @@ namespace llvm {
    /// branch folding).
    extern char &GCMachineCodeAnalysisID;
  
@@ -381,21 +381,21 @@ index 0000000..8b43754
 +  return MadeChange;
 +}
 diff --git a/lib/CodeGen/Passes.cpp b/lib/CodeGen/Passes.cpp
-index bf244a5..ed77c60 100644
+index 9693780..db91bbe 100644
 --- a/lib/CodeGen/Passes.cpp
 +++ b/lib/CodeGen/Passes.cpp
-@@ -332,6 +332,9 @@ void TargetPassConfig::addIRPasses() {
+@@ -354,6 +354,9 @@ void TargetPassConfig::addIRPasses() {
  
-   PM->add(createGCLoweringPass());
+   addPass(createGCLoweringPass());
  
 +  // Generate target code for embedded LLVM-IR strings.
-+  PM->add(createCodeGenIntrinsicPass());
++  addPass(createCodeGenIntrinsicPass());
 +
    // Make sure that no unreachable blocks are instruction selected.
-   PM->add(createUnreachableBlockEliminationPass());
+   addPass(createUnreachableBlockEliminationPass());
  }
 diff --git a/lib/CodeGen/SelectionDAG/SelectionDAGBuilder.cpp b/lib/CodeGen/SelectionDAG/SelectionDAGBuilder.cpp
-index 957d00a..35c25fe 100644
+index 42b9099..6eba1ce 100644
 --- a/lib/CodeGen/SelectionDAG/SelectionDAGBuilder.cpp
 +++ b/lib/CodeGen/SelectionDAG/SelectionDAGBuilder.cpp
 @@ -5185,6 +5185,8 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
