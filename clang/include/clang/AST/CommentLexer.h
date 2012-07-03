@@ -41,15 +41,7 @@ enum TokenKind {
   html_equals,        // =
   html_quoted_string, // "blah\"blah" or 'blah\'blah'
   html_greater,       // >
-  html_tag_close,     // </tag>
-
-  // Markdown tokens (not supported yet).
-  ruler,
-  md_code_line,   // Line indented at least by 4 spaces.
-  md_code_inline, // `code`
-  md_emph,        // _text_ or *text*
-  md_strong,      // __text__ or *text*
-  md_header       // ### level 3 header ###
+  html_tag_close      // </tag>
 };
 } // end namespace tok
 
