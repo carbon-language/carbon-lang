@@ -1732,47 +1732,12 @@ GetAddrOfConstantWideString(StringRef Str,
   return GV;
 }
 
-// FIXME: Mostly copied from StringLiteralParser::CopyStringFragment
 static void ConvertUTF8ToWideString(unsigned CharByteWidth, StringRef Source,
                                     SmallString<32>& Target) {
   Target.resize(CharByteWidth * (Source.size() + 1));
   char* ResultPtr = &Target[0];
-
-  assert(CharByteWidth==1 || CharByteWidth==2 || CharByteWidth==4);
-  ConversionResult result = conversionOK;
-  // Copy the character span over.
-  if (CharByteWidth == 1) {
-    if (!isLegalUTF8String(reinterpret_cast<const UTF8*>(&*Source.begin()),
-                           reinterpret_cast<const UTF8*>(&*Source.end())))
-      result = sourceIllegal;
-    memcpy(ResultPtr, Source.data(), Source.size());
-    ResultPtr += Source.size();
-  } else if (CharByteWidth == 2) {
-    UTF8 const *sourceStart = (UTF8 const *)Source.data();
-    // FIXME: Make the type of the result buffer correct instead of
-    // using reinterpret_cast.
-    UTF16 *targetStart = reinterpret_cast<UTF16*>(ResultPtr);
-    ConversionFlags flags = strictConversion;
-    result = ConvertUTF8toUTF16(
-      &sourceStart,sourceStart + Source.size(),
-        &targetStart,targetStart + 2*Source.size(),flags);
-    if (result==conversionOK)
-      ResultPtr = reinterpret_cast<char*>(targetStart);
-  } else if (CharByteWidth == 4) {
-    UTF8 const *sourceStart = (UTF8 const *)Source.data();
-    // FIXME: Make the type of the result buffer correct instead of
-    // using reinterpret_cast.
-    UTF32 *targetStart = reinterpret_cast<UTF32*>(ResultPtr);
-    ConversionFlags flags = strictConversion;
-    result = ConvertUTF8toUTF32(
-        &sourceStart,sourceStart + Source.size(),
-        &targetStart,targetStart + 4*Source.size(),flags);
-    if (result==conversionOK)
-      ResultPtr = reinterpret_cast<char*>(targetStart);
-  }
-  assert((result != targetExhausted)
-         && "ConvertUTF8toUTFXX exhausted target buffer");
-  assert(result == conversionOK);
+  bool success = ConvertUTF8toWide(CharByteWidth, Source, ResultPtr);
+  assert(success);
   Target.resize(ResultPtr - &Target[0]);
 }
 

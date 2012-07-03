@@ -159,6 +159,25 @@ Boolean isLegalUTF8String(const UTF8 *source, const UTF8 *sourceEnd);
 
 #ifdef __cplusplus
 }
+
+/*************************************************************************/
+/* Below are LLVM-specific wrappers of the functions above. */
+
+#include "llvm/ADT/StringRef.h"
+
+namespace clang {
+
+/**
+ * Convert an UTF8 StringRef to UTF8, UTF16, or UTF32 depending on
+ * WideCharWidth. The converted data is written to ResultPtr, which needs to
+ * point to at least WideCharWidth * (Source.Size() + 1) bytes. On success,
+ * ResultPtr will point one after the end of the copied string.
+ * \return true on success.
+ */
+bool ConvertUTF8toWide(unsigned WideCharWidth, llvm::StringRef Source,
+                       char *&ResultPtr);
+
+}
 #endif
 
 #endif
