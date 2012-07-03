@@ -46,9 +46,11 @@ public:
         bool
         NameMatches (const Entry& rhs) const
         {
-            if (name && rhs.name)
+            if (name == rhs.name)
+                return true;
+            else if (name && rhs.name)
                 return strcmp(name, rhs.name) == 0;
-            return name == NULL && rhs.name == NULL;
+            return false;
         }
 
         // Test operator
