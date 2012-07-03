@@ -195,7 +195,7 @@ protected:
       }
     }
     
-    void onRLOpen(const IntTy &Pt,
+    void onLROpen(const IntTy &Pt,
                   SuccessorClass *LS,
                   SuccessorClass *RS) {
       switch (State) {
@@ -211,7 +211,7 @@ protected:
       OpenPt = Pt;        
     }
     
-    void onRLClose(const IntTy &Pt) {
+    void onLRClose(const IntTy &Pt) {
       switch (State) {
       case INTERSECT_OPENED:
         if (IntersectionMapping)
@@ -472,8 +472,8 @@ public:
       }
 
       if (LRange.isSingleNumber() && RRange.isSingleNumber()) {
-        Machine.onRLOpen(LRange.getLow(), LCluster.second, RCluster.second);
-        Machine.onRLClose(LRange.getLow());
+        Machine.onLROpen(LRange.getLow(), LCluster.second, RCluster.second);
+        Machine.onLRClose(LRange.getLow());
         ++L;
         ++R;
         continue;
@@ -512,7 +512,7 @@ public:
         Machine.onLOpen(LRange.getLow(), LCluster.second);
       }
       else
-        Machine.onRLOpen(LRange.getLow(), LCluster.second, RCluster.second);
+        Machine.onLROpen(LRange.getLow(), LCluster.second, RCluster.second);
       
       if (LRange.getHigh() < RRange.getHigh()) {
         Machine.onLClose(LRange.getHigh());
@@ -533,7 +533,7 @@ public:
         }
       }
       else {
-        Machine.onRLClose(LRange.getHigh());
+        Machine.onLRClose(LRange.getHigh());
         ++L;
         ++R;
       }
