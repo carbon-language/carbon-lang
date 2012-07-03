@@ -1,4 +1,6 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,experimental.core -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,experimental.core,debug.ExprInspection -verify %s
+void clang_analyzer_eval(bool);
+
 struct X0 { };
 bool operator==(const X0&, const X0&);
 
@@ -13,4 +15,19 @@ void t2() {
 
 bool PR7287(X0 a, X0 b) {
   return operator==(a, b);
+}
+
+
+// Inlining non-static member operators mistakenly treated 'this' as the first
+// argument for a while.
+
+struct IntComparable {
+  bool operator==(int x) const {
+    return x == 0;
+  }
+};
+
+void testMemberOperator(IntComparable B) {
+  // FIXME: Change this to TRUE when we re-enable inlining.
+  clang_analyzer_eval(B == 0); // expected-warning{{UNKNOWN}}
 }

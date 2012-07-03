@@ -303,6 +303,14 @@ void CXXMemberCall::addExtraInvalidatedRegions(RegionList &Regions) const {
 }
 
 
+void
+CXXMemberOperatorCall::addExtraInvalidatedRegions(RegionList &Regions) const {
+  const Expr *Base = getOriginExpr()->getArg(0);
+  if (const MemRegion *R = getSVal(Base).getAsRegion())
+    Regions.push_back(R);
+}
+
+
 const BlockDataRegion *BlockCall::getBlockRegion() const {
   const Expr *Callee = getOriginExpr()->getCallee();
   const MemRegion *DataReg = getSVal(Callee).getAsRegion();

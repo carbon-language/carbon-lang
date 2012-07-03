@@ -22,6 +22,23 @@
 using namespace clang;
 using namespace ento;
 
+static CallEventKind classifyCallExpr(const CallExpr *CE) {
+  if (isa<CXXMemberCallExpr>(CE))
+    return CE_CXXMember;
+
+  const CXXOperatorCallExpr *OpCE = dyn_cast<CXXOperatorCallExpr>(CE);
+  if (OpCE) {
+    const FunctionDecl *DirectCallee = CE->getDirectCallee();
+    if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(DirectCallee))
+      if (MD->isInstance())
+        return CE_CXXMemberOperator;
+  } else if (CE->getCallee()->getType()->isBlockPointerType()) {
+    return CE_Block;
+  }
+
+  return CE_Function;
+}
+
 void ExprEngine::processCallEnter(CallEnter CE, ExplodedNode *Pred) {
   // Get the entry block in the CFG of the callee.
   const StackFrameContext *calleeCtx = CE.getCalleeContext();
@@ -265,6 +282,12 @@ bool ExprEngine::inlineCall(ExplodedNodeSet &Dst,
   case CE_CXXMember:
     // These are always at least possible to inline.
     break;
+  case CE_CXXMemberOperator:
+    // FIXME: This should be possible to inline, but
+    // RegionStore::enterStackFrame isn't smart enough to handle the first
+    // argument being 'this'. The correct solution is to use CallEvent in
+    // enterStackFrame as well.
+    return false;
   case CE_CXXConstructor:
     // Do not inline constructors until we can model destructors.
     // This is unfortunate, but basically necessary for smart pointers and such.
@@ -336,9 +359,7 @@ void ExprEngine::VisitCallExpr(const CallExpr *CE, ExplodedNode *Pred,
   getCheckerManager().runCheckersForPreStmt(dstPreVisit, Pred, CE, *this);
 
   // Get the callee kind.
-  const CXXMemberCallExpr *MemberCE = dyn_cast<CXXMemberCallExpr>(CE);
-  bool IsBlock = (MemberCE ? false
-                           : CE->getCallee()->getType()->isBlockPointerType());
+  CallEventKind K = classifyCallExpr(CE);
 
   // Evaluate the function call.  We try each of the checkers
   // to see if the can evaluate the function call.
@@ -349,12 +370,25 @@ void ExprEngine::VisitCallExpr(const CallExpr *CE, ExplodedNode *Pred,
     const LocationContext *LCtx = (*I)->getLocationContext();
 
     // Evaluate the call.
-    if (MemberCE)
-      evalCall(dstCallEvaluated, *I, CXXMemberCall(MemberCE, State, LCtx));
-    else if (IsBlock)
-      evalCall(dstCallEvaluated, *I, BlockCall(CE, State, LCtx));
-    else
+    switch (K) {
+    case CE_Function:
       evalCall(dstCallEvaluated, *I, FunctionCall(CE, State, LCtx));
+      break;
+    case CE_CXXMember:
+      evalCall(dstCallEvaluated, *I, CXXMemberCall(cast<CXXMemberCallExpr>(CE),
+                                                   State, LCtx));
+      break;
+    case CE_CXXMemberOperator:
+      evalCall(dstCallEvaluated, *I,
+               CXXMemberOperatorCall(cast<CXXOperatorCallExpr>(CE),
+                                     State, LCtx));
+      break;
+    case CE_Block:
+      evalCall(dstCallEvaluated, *I, BlockCall(CE, State, LCtx));
+      break;
+    default:
+      llvm_unreachable("Non-CallExpr CallEventKind");
+    }
   }
 
   // Finally, perform the post-condition check of the CallExpr and store

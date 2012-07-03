@@ -29,6 +29,7 @@ namespace ento {
 enum CallEventKind {
   CE_Function,
   CE_CXXMember,
+  CE_CXXMemberOperator,
   CE_Block,
   CE_BEG_SIMPLE_CALLS = CE_Function,
   CE_END_SIMPLE_CALLS = CE_Block,
@@ -264,9 +265,36 @@ public:
   }
 };
 
+/// \brief Represents a C++ overloaded operator call where the operator is
+/// implemented as a non-static member function.
+///
+/// Example: <tt>iter + 1</tt>
+class CXXMemberOperatorCall : public SimpleCall {
+protected:
+  void addExtraInvalidatedRegions(RegionList &Regions) const;
+
+public:
+  CXXMemberOperatorCall(const CXXOperatorCallExpr *CE, ProgramStateRef St,
+                        const LocationContext *LCtx)
+    : SimpleCall(CE, St, LCtx, CE_CXXMemberOperator) {}
+
+  const CXXOperatorCallExpr *getOriginExpr() const {
+    return cast<CXXOperatorCallExpr>(SimpleCall::getOriginExpr());
+  }
+
+  unsigned getNumArgs() const { return getOriginExpr()->getNumArgs() - 1; }
+  const Expr *getArgExpr(unsigned Index) const {
+    return getOriginExpr()->getArg(Index + 1);
+  }
+
+  static bool classof(const CallEvent *CA) {
+    return CA->getKind() == CE_CXXMemberOperator;
+  }
+};
+
 /// \brief Represents a call to a block.
 ///
-/// Example: \c ^{ /* ... */ }()
+/// Example: <tt>^{ /* ... */ }()</tt>
 class BlockCall : public SimpleCall {
 protected:
   void addExtraInvalidatedRegions(RegionList &Regions) const;

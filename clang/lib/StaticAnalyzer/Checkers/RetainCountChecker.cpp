@@ -945,6 +945,7 @@ RetainSummaryManager::getSummary(const CallEvent &Call,
     Summ = getFunctionSummary(cast<FunctionCall>(Call).getDecl());
     break;
   case CE_CXXMember:
+  case CE_CXXMemberOperator:
   case CE_Block:
   case CE_CXXConstructor:
   case CE_CXXAllocator:
