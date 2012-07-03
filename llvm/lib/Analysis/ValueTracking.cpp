@@ -694,7 +694,7 @@ void llvm::ComputeMaskedBits(Value *V, APInt &KnownZero, APInt &KnownOne,
     // taking conservative care to avoid excessive recursion.
     if (Depth < MaxDepth - 1 && !KnownZero && !KnownOne) {
       // Skip if every incoming value references to ourself.
-      if (P->hasConstantValue() == P)
+      if (dyn_cast_or_null<UndefValue>(P->hasConstantValue()))
         break;
 
       KnownZero = APInt::getAllOnesValue(BitWidth);

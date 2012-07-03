@@ -167,6 +167,8 @@ Value *PHINode::hasConstantValue() const {
        // The case where the first value is this PHI.
       ConstantValue = getIncomingValue(i);
     }
+  if (ConstantValue == this)
+    return UndefValue::get(getType());
   return ConstantValue;
 }
 
