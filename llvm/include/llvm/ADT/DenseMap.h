@@ -442,11 +442,10 @@ private:
   template<typename LookupKeyT>
   bool LookupBucketFor(const LookupKeyT &Val,
                        const BucketT *&FoundBucket) const {
-    unsigned BucketNo = getHashValue(Val);
-    unsigned ProbeAmt = 1;
     const BucketT *BucketsPtr = getBuckets();
+    const unsigned NumBuckets = getNumBuckets();
 
-    if (getNumBuckets() == 0) {
+    if (NumBuckets == 0) {
       FoundBucket = 0;
       return false;
     }
@@ -459,8 +458,10 @@ private:
            !KeyInfoT::isEqual(Val, TombstoneKey) &&
            "Empty/Tombstone value shouldn't be inserted into map!");
 
+    unsigned BucketNo = getHashValue(Val) & (NumBuckets-1);
+    unsigned ProbeAmt = 1;
     while (1) {
-      const BucketT *ThisBucket = BucketsPtr + (BucketNo & (getNumBuckets()-1));
+      const BucketT *ThisBucket = BucketsPtr + BucketNo;
       // Found Val's bucket?  If so, return it.
       if (KeyInfoT::isEqual(Val, ThisBucket->first)) {
         FoundBucket = ThisBucket;
@@ -485,6 +486,7 @@ private:
       // Otherwise, it's a hash collision or a tombstone, continue quadratic
       // probing.
       BucketNo += ProbeAmt++;
+      BucketNo &= (NumBuckets-1);
     }
   }
 
