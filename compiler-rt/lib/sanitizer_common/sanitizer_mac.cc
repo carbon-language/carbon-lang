@@ -116,6 +116,7 @@ bool FindDWARFSection(uptr object_file_addr, const char *section_name,
 
 uptr GetListOfModules(ModuleDIContext *modules, uptr max_modules) {
   UNIMPLEMENTED();
+  return 0;
 };
 
 // ----------------- sanitizer_procmaps.h
