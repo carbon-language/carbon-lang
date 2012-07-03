@@ -370,6 +370,7 @@ class Interactive(cmd.Cmd):
     
     def __init__(self, crash_logs):
         cmd.Cmd.__init__(self)
+        self.use_rawinput = False
         self.intro = 'Interactive crashlogs prompt, type "help" to see a list of supported commands.'
         self.crash_logs = crash_logs
         self.prompt = '% '
