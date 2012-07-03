@@ -116,7 +116,8 @@ static OnDiskDataMap &getOnDiskDataMap() {
 }
 
 static void cleanupOnDiskMapAtExit(void) {
-  // No mutex required here since we are leaving the program.
+  // Use the mutex because there can be an alive thread destroying an ASTUnit.
+  llvm::MutexGuard Guard(getOnDiskMutex());
   OnDiskDataMap &M = getOnDiskDataMap();
   for (OnDiskDataMap::iterator I = M.begin(), E = M.end(); I != E; ++I) {
     // We don't worry about freeing the memory associated with OnDiskDataMap.
