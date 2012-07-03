@@ -19626,3 +19626,29 @@
           dppd $0x81, %xmm2, %xmm1
 // CHECK: insertps $129, %xmm2, %xmm1
           insertps $0x81, %xmm2, %xmm1
+
+// PR13253 handle implicit optional third argument that must always be xmm0
+// CHECK: pblendvb %xmm2, %xmm1
+pblendvb %xmm2, %xmm1
+// CHECK: pblendvb %xmm2, %xmm1
+pblendvb %xmm0, %xmm2, %xmm1
+// CHECK: pblendvb (%eax), %xmm1
+pblendvb (%eax), %xmm1
+// CHECK: pblendvb (%eax), %xmm1
+pblendvb %xmm0, (%eax), %xmm1
+// CHECK: blendvpd %xmm2, %xmm1
+blendvpd %xmm2, %xmm1
+// CHECK: blendvpd %xmm2, %xmm1
+blendvpd %xmm0, %xmm2, %xmm1
+// CHECK: blendvpd (%eax), %xmm1
+blendvpd (%eax), %xmm1
+// CHECK: blendvpd (%eax), %xmm1
+blendvpd %xmm0, (%eax), %xmm1
+// CHECK: blendvps %xmm2, %xmm1
+blendvps %xmm2, %xmm1
+// CHECK: blendvps %xmm2, %xmm1
+blendvps %xmm0, %xmm2, %xmm1
+// CHECK: blendvps (%eax), %xmm1
+blendvps (%eax), %xmm1
+// CHECK: blendvps (%eax), %xmm1
+blendvps %xmm0, (%eax), %xmm1
