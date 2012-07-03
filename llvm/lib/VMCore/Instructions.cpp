@@ -161,8 +161,12 @@ Value *PHINode::hasConstantValue() const {
   // Exploit the fact that phi nodes always have at least one entry.
   Value *ConstantValue = getIncomingValue(0);
   for (unsigned i = 1, e = getNumIncomingValues(); i != e; ++i)
-    if (getIncomingValue(i) != ConstantValue)
-      return 0; // Incoming values not all the same.
+    if (getIncomingValue(i) != ConstantValue && getIncomingValue(i) != this) {
+      if (ConstantValue != this)
+        return 0; // Incoming values not all the same.
+       // The case where the first value is this PHI.
+      ConstantValue = getIncomingValue(i);
+    }
   return ConstantValue;
 }
 
