@@ -2043,10 +2043,12 @@ static void WriteMDNodeComment(const MDNode *Node,
 
   unsigned Tag = Desc.getTag();
   Out.PadToColumn(50);
-  if (Tag == dwarf::DW_TAG_user_base)
+  if (dwarf::TagString(Tag)) {
+    Out << "; ";
+    Desc.print(Out);
+  } else if (Tag == dwarf::DW_TAG_user_base) {
     Out << "; [ DW_TAG_user_base ]";
-  else if (const char *TagName = dwarf::TagString(Tag))
-    Out << "; [ " << TagName << " ]";
+  }
 }
 
 void AssemblyWriter::writeAllMDNodes() {
