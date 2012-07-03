@@ -3166,14 +3166,16 @@ void MSP430TargetCodeGenInfo::SetTargetAttributes(const Decl *D,
 namespace {
 class MipsABIInfo : public ABIInfo {
   bool IsO32;
-  unsigned MinABIStackAlignInBytes;
-  llvm::Type* CoerceToIntArgs(uint64_t TySize) const;
+  unsigned MinABIStackAlignInBytes, StackAlignInBytes;
+  void CoerceToIntArgs(uint64_t TySize,
+                       SmallVector<llvm::Type*, 8> &ArgList) const;
   llvm::Type* HandleAggregates(QualType Ty, uint64_t TySize) const;
   llvm::Type* returnAggregateInRegs(QualType RetTy, uint64_t Size) const;
   llvm::Type* getPaddingType(uint64_t Align, uint64_t Offset) const;
 public:
   MipsABIInfo(CodeGenTypes &CGT, bool _IsO32) :
-    ABIInfo(CGT), IsO32(_IsO32), MinABIStackAlignInBytes(IsO32 ? 4 : 8) {}
+    ABIInfo(CGT), IsO32(_IsO32), MinABIStackAlignInBytes(IsO32 ? 4 : 8),
+    StackAlignInBytes(IsO32 ? 8 : 16) {}
 
   ABIArgInfo classifyReturnType(QualType RetTy) const;
   ABIArgInfo classifyArgumentType(QualType RetTy, uint64_t &Offset) const;
@@ -3202,10 +3204,10 @@ public:
 };
 }
 
-llvm::Type* MipsABIInfo::CoerceToIntArgs(uint64_t TySize) const {
-  SmallVector<llvm::Type*, 8> ArgList;
-  llvm::IntegerType *IntTy = llvm::IntegerType::get(getVMContext(),
-                                                    MinABIStackAlignInBytes * 8);
+void MipsABIInfo::CoerceToIntArgs(uint64_t TySize,
+                                  SmallVector<llvm::Type*, 8> &ArgList) const {
+  llvm::IntegerType *IntTy =
+    llvm::IntegerType::get(getVMContext(), MinABIStackAlignInBytes * 8);
 
   // Add (TySize / MinABIStackAlignInBytes) args of IntTy.
   for (unsigned N = TySize / (MinABIStackAlignInBytes * 8); N; --N)
@@ -3216,24 +3218,28 @@ llvm::Type* MipsABIInfo::CoerceToIntArgs(uint64_t TySize) const {
 
   if (R)
     ArgList.push_back(llvm::IntegerType::get(getVMContext(), R));
-
-  return llvm::StructType::get(getVMContext(), ArgList);
 }
 
 // In N32/64, an aligned double precision floating point field is passed in
 // a register.
 llvm::Type* MipsABIInfo::HandleAggregates(QualType Ty, uint64_t TySize) const {
-  if (IsO32)
-    return CoerceToIntArgs(TySize);
+  SmallVector<llvm::Type*, 8> ArgList, IntArgList;
+
+  if (IsO32) {
+    CoerceToIntArgs(TySize, ArgList);
+    return llvm::StructType::get(getVMContext(), ArgList);
+  }
 
   if (Ty->isComplexType())
     return CGT.ConvertType(Ty);
 
   const RecordType *RT = Ty->getAs<RecordType>();
 
-  // Unions are passed in integer registers.
-  if (!RT || !RT->isStructureOrClassType())
-    return CoerceToIntArgs(TySize);
+  // Unions/vectors are passed in integer registers.
+  if (!RT || !RT->isStructureOrClassType()) {
+    CoerceToIntArgs(TySize, ArgList);
+    return llvm::StructType::get(getVMContext(), ArgList);
+  }
 
   const RecordDecl *RD = RT->getDecl();
   const ASTRecordLayout &Layout = getContext().getASTRecordLayout(RD);
@@ -3242,7 +3248,6 @@ llvm::Type* MipsABIInfo::HandleAggregates(QualType Ty, uint64_t TySize) const {
   uint64_t LastOffset = 0;
   unsigned idx = 0;
   llvm::IntegerType *I64 = llvm::IntegerType::get(getVMContext(), 64);
-  SmallVector<llvm::Type*, 8> ArgList;
 
   // Iterate over fields in the struct/class and check if there are any aligned
   // double fields.
@@ -3267,15 +3272,8 @@ llvm::Type* MipsABIInfo::HandleAggregates(QualType Ty, uint64_t TySize) const {
     LastOffset = Offset + 64;
   }
 
-  // Add ((TySize - LastOffset) / 64) args of type i64.
-  for (unsigned N = (TySize - LastOffset) / 64; N; --N)
-    ArgList.push_back(I64);
-
-  // If the size of the remainder is not zero, add one more integer type to
-  // ArgList.
-  unsigned R = (TySize - LastOffset) % 64;
-  if (R)
-    ArgList.push_back(llvm::IntegerType::get(getVMContext(), R));
+  CoerceToIntArgs(TySize - LastOffset, IntArgList);
+  ArgList.append(IntArgList.begin(), IntArgList.end());
 
   return llvm::StructType::get(getVMContext(), ArgList);
 }
@@ -3295,11 +3293,12 @@ MipsABIInfo::classifyArgumentType(QualType Ty, uint64_t &Offset) const {
   uint64_t TySize = getContext().getTypeSize(Ty);
   uint64_t Align = getContext().getTypeAlign(Ty) / 8;
 
-  Align = std::max(Align, (uint64_t)MinABIStackAlignInBytes);
+  Align = std::min(std::max(Align, (uint64_t)MinABIStackAlignInBytes),
+                   (uint64_t)StackAlignInBytes);
   Offset = llvm::RoundUpToAlignment(Offset, Align);
   Offset += llvm::RoundUpToAlignment(TySize, Align * 8) / 8;
 
-  if (isAggregateTypeForABI(Ty)) {
+  if (isAggregateTypeForABI(Ty) || Ty->isVectorType()) {
     // Ignore empty aggregates.
     if (TySize == 0)
       return ABIArgInfo::getIgnore();
@@ -3331,7 +3330,7 @@ MipsABIInfo::classifyArgumentType(QualType Ty, uint64_t &Offset) const {
 llvm::Type*
 MipsABIInfo::returnAggregateInRegs(QualType RetTy, uint64_t Size) const {
   const RecordType *RT = RetTy->getAs<RecordType>();
-  SmallVector<llvm::Type*, 2> RTList;
+  SmallVector<llvm::Type*, 8> RTList;
 
   if (RT && RT->isStructureOrClassType()) {
     const RecordDecl *RD = RT->getDecl();
@@ -3366,11 +3365,7 @@ MipsABIInfo::returnAggregateInRegs(QualType RetTy, uint64_t Size) const {
     }
   }
 
-  RTList.push_back(llvm::IntegerType::get(getVMContext(),
-                                          std::min(Size, (uint64_t)64)));
-  if (Size > 64)
-    RTList.push_back(llvm::IntegerType::get(getVMContext(), Size - 64));
-
+  CoerceToIntArgs(Size, RTList);
   return llvm::StructType::get(getVMContext(), RTList);
 }
 
@@ -3384,6 +3379,10 @@ ABIArgInfo MipsABIInfo::classifyReturnType(QualType RetTy) const {
     if (Size <= 128) {
       if (RetTy->isAnyComplexType())
         return ABIArgInfo::getDirect();
+
+      // O32 returns integer vectors in registers.
+      if (IsO32 && RetTy->isVectorType() && !RetTy->hasFloatingRepresentation())
+        return ABIArgInfo::getDirect(returnAggregateInRegs(RetTy, Size));
 
       if (!IsO32 && !isRecordWithNonTrivialDestructorOrCopyConstructor(RetTy))
         return ABIArgInfo::getDirect(returnAggregateInRegs(RetTy, Size));
