@@ -278,7 +278,7 @@ unsigned MCContext::GetDwarfFile(StringRef Directory, StringRef FileName,
     if (!tFileName.empty()) {
       Directory = sys::path::parent_path(FileName);
       if (!Directory.empty())
-        FileName = sys::path::filename(FileName);
+        FileName = tFileName;
     }
   }
 
