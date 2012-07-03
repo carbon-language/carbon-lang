@@ -1385,9 +1385,10 @@ StmtResult Sema::ActOnForEachLValueExpr(Expr *E) {
 }
 
 ExprResult
-Sema::ActOnObjCForCollectionOperand(SourceLocation forLoc, Expr *collection) {
-  assert(collection);
-
+Sema::CheckObjCForCollectionOperand(SourceLocation forLoc, Expr *collection) {
+  if (!collection)
+    return ExprError();
+  
   // Bail out early if we've got a type-dependent expression.
   if (collection->isTypeDependent()) return Owned(collection);
 
@@ -1457,8 +1458,12 @@ Sema::ActOnObjCForCollectionOperand(SourceLocation forLoc, Expr *collection) {
 StmtResult
 Sema::ActOnObjCForCollectionStmt(SourceLocation ForLoc,
                                  SourceLocation LParenLoc,
-                                 Stmt *First, Expr *Second,
-                                 SourceLocation RParenLoc, Stmt *Body) {
+                                 Stmt *First, Expr *collection,
+                                 SourceLocation RParenLoc) {
+  
+  ExprResult CollectionExprResult = 
+    CheckObjCForCollectionOperand(ForLoc, collection);
+  
   if (First) {
     QualType FirstType;
     if (DeclStmt *DS = dyn_cast<DeclStmt>(First)) {
@@ -1486,11 +1491,15 @@ Sema::ActOnObjCForCollectionStmt(SourceLocation ForLoc,
     if (!FirstType->isDependentType() &&
         !FirstType->isObjCObjectPointerType() &&
         !FirstType->isBlockPointerType())
-        Diag(ForLoc, diag::err_selector_element_type)
-          << FirstType << First->getSourceRange();
+        return StmtError(Diag(ForLoc, diag::err_selector_element_type)
+                           << FirstType << First->getSourceRange());
   }
-
-  return Owned(new (Context) ObjCForCollectionStmt(First, Second, Body,
+  
+  if (CollectionExprResult.isInvalid())
+    return StmtError();
+  
+  return Owned(new (Context) ObjCForCollectionStmt(First, 
+                                                   CollectionExprResult.take(), 0, 
                                                    ForLoc, RParenLoc));
 }
 
@@ -1898,6 +1907,17 @@ Sema::BuildCXXForRangeStmt(SourceLocation ForLoc, SourceLocation ColonLoc,
                                              NotEqExpr.take(), IncrExpr.take(),
                                              LoopVarDS, /*Body=*/0, ForLoc,
                                              ColonLoc, RParenLoc));
+}
+
+/// FinishObjCForCollectionStmt - Attach the body to a objective-C foreach 
+/// statement.
+StmtResult Sema::FinishObjCForCollectionStmt(Stmt *S, Stmt *B) {
+  if (!S || !B)
+    return StmtError();
+  ObjCForCollectionStmt * ForStmt = cast<ObjCForCollectionStmt>(S);
+  
+  ForStmt->setBody(B);
+  return S;
 }
 
 /// FinishCXXForRangeStmt - Attach the body to a C++0x for-range statement.

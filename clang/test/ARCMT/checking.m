@@ -142,7 +142,7 @@ void rdar8861761() {
 - (void) noninit {
   self = 0; // expected-error {{cannot assign to 'self' outside of a method in the init family}}
 
-  for (id x in collection) { // expected-error {{use of undeclared identifier 'collection'}}
+  for (__strong id x in collection) { // expected-error {{use of undeclared identifier 'collection'}}
     x = 0;
   }
 }
