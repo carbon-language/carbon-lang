@@ -57,6 +57,23 @@ class SCOPED_LOCKABLE ReleasableMutexLock {
   void Release() UNLOCK_FUNCTION();
 };
 
+
+template<class T>
+class SmartPtr {
+public:
+  SmartPtr(T* p) : ptr_(p) { }
+  SmartPtr(const SmartPtr<T>& p) : ptr_(p.ptr_) { }
+  ~SmartPtr();
+
+  T* get()        const { return ptr_; }
+  T* operator->() const { return ptr_; }
+  T& operator*()  const { return ptr_; }
+
+private:
+  T* ptr_;
+};
+
+
 Mutex sls_mu;
 
 Mutex sls_mu2 __attribute__((acquired_after(sls_mu)));
@@ -2534,4 +2551,27 @@ class Foo {
 
 
 } // end namespace FoolishScopedLockableBug
+
+
+namespace TemporaryCleanupExpr {
+
+class Foo {
+  int a GUARDED_BY(getMutexPtr().get());
+
+  SmartPtr<Mutex> getMutexPtr();
+
+  void test();
+};
+
+
+void Foo::test() {
+  {
+    ReaderMutexLock lock(getMutexPtr().get());
+    int b = a;
+  }           // FIXME: handle smart pointers better.
+  int b = a;  // expected-warning {{reading variable 'a' requires locking 'get'}}
+}
+
+} // end namespace TemporaryCleanupExpr
+
 

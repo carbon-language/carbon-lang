@@ -206,15 +206,17 @@ class MutexID {
       buildMutexID(CE->getSubExpr(), CallCtx);
     } else if (ParenExpr *PE = dyn_cast<ParenExpr>(Exp)) {
       buildMutexID(PE->getSubExpr(), CallCtx);
+    } else if (ExprWithCleanups *EWC = dyn_cast<ExprWithCleanups>(Exp)) {
+      buildMutexID(EWC->getSubExpr(), CallCtx);
     } else if (isa<CharacterLiteral>(Exp) ||
-             isa<CXXNullPtrLiteralExpr>(Exp) ||
-             isa<GNUNullExpr>(Exp) ||
-             isa<CXXBoolLiteralExpr>(Exp) ||
-             isa<FloatingLiteral>(Exp) ||
-             isa<ImaginaryLiteral>(Exp) ||
-             isa<IntegerLiteral>(Exp) ||
-             isa<StringLiteral>(Exp) ||
-             isa<ObjCStringLiteral>(Exp)) {
+               isa<CXXNullPtrLiteralExpr>(Exp) ||
+               isa<GNUNullExpr>(Exp) ||
+               isa<CXXBoolLiteralExpr>(Exp) ||
+               isa<FloatingLiteral>(Exp) ||
+               isa<ImaginaryLiteral>(Exp) ||
+               isa<IntegerLiteral>(Exp) ||
+               isa<StringLiteral>(Exp) ||
+               isa<ObjCStringLiteral>(Exp)) {
       return;  // FIXME: Ignore literals for now
     } else {
       // Ignore.  FIXME: mark as invalid expression?
@@ -1523,6 +1525,10 @@ void BuildLockset::VisitDeclStmt(DeclStmt *S) {
     Decl *D = *I;
     if (VarDecl *VD = dyn_cast_or_null<VarDecl>(D)) {
       Expr *E = VD->getInit();
+      // handle constructors that involve temporaries
+      if (ExprWithCleanups *EWC = dyn_cast_or_null<ExprWithCleanups>(E))
+        E = EWC->getSubExpr();
+
       if (CXXConstructExpr *CE = dyn_cast_or_null<CXXConstructExpr>(E)) {
         NamedDecl *CtorD = dyn_cast_or_null<NamedDecl>(CE->getConstructor());
         if (!CtorD || !CtorD->hasAttrs())
