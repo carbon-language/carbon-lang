@@ -1737,6 +1737,7 @@ static void ConvertUTF8ToWideString(unsigned CharByteWidth, StringRef Source,
   Target.resize(CharByteWidth * (Source.size() + 1));
   char* ResultPtr = &Target[0];
   bool success = ConvertUTF8toWide(CharByteWidth, Source, ResultPtr);
+  (void)success;
   assert(success);
   Target.resize(ResultPtr - &Target[0]);
 }
