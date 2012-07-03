@@ -34,10 +34,14 @@ while.body.i.preheader:
 while.body.i:
 ; CHECK: phi
 ; CHECK-NEXT: phi
-; CHECK-NEXT: phi
-; CHECK: trap
+; CHECK-NOT: phi
   %c.addr.02.i = phi i8* [ %incdec.ptr.i, %while.body.i ], [ %addr, %while.body.i.preheader ]
   %incdec.ptr.i = getelementptr inbounds i8* %c.addr.02.i, i64 -1
+; CHECK: sub i64 10, %0
+; CHECK-NEXT: icmp ult i64 10, %0
+; CHECK-NEXT: icmp ult i64 {{.*}}, 1
+; CHECK-NEXT: or i1
+; CHECK-NEXT: br {{.*}}, label %trap
   store i8 100, i8* %c.addr.02.i, align 1
   %0 = load i8* %incdec.ptr.i, align 1
   %tobool.i = icmp eq i8 %0, 0

@@ -67,11 +67,8 @@ namespace {
 }
 
 char BoundsChecking::ID = 0;
-INITIALIZE_PASS_BEGIN(BoundsChecking, "bounds-checking",
-                      "Run-time bounds checking", false, false)
-INITIALIZE_PASS_DEPENDENCY(ScalarEvolution)
-INITIALIZE_PASS_END(BoundsChecking, "bounds-checking",
-                      "Run-time bounds checking", false, false)
+INITIALIZE_PASS(BoundsChecking, "bounds-checking", "Run-time bounds checking",
+                false, false)
 
 
 /// getTrapBB - create a basic block that traps. All overflowing conditions
@@ -141,6 +138,7 @@ bool BoundsChecking::instrument(Value *Ptr, Value *InstVal) {
 
   Value *Size   = SizeOffset.first;
   Value *Offset = SizeOffset.second;
+  ConstantInt *SizeCI = dyn_cast<ConstantInt>(Size);
 
   IntegerType *IntTy = TD->getIntPtrType(Inst->getContext());
   Value *NeededSizeVal = ConstantInt::get(IntTy, NeededSize);
@@ -149,12 +147,17 @@ bool BoundsChecking::instrument(Value *Ptr, Value *InstVal) {
   // . Offset >= 0  (since the offset is given from the base ptr)
   // . Size >= Offset  (unsigned)
   // . Size - Offset >= NeededSize  (unsigned)
+  //
+  // optimization: if Size >= 0 (signed), skip 1st check
   // FIXME: add NSW/NUW here?  -- we dont care if the subtraction overflows
   Value *ObjSize = Builder->CreateSub(Size, Offset);
-  Value *Cmp1 = Builder->CreateICmpSLT(Offset, ConstantInt::get(IntTy, 0));
   Value *Cmp2 = Builder->CreateICmpULT(Size, Offset);
   Value *Cmp3 = Builder->CreateICmpULT(ObjSize, NeededSizeVal);
-  Value *Or = Builder->CreateOr(Cmp1, Builder->CreateOr(Cmp2, Cmp3));
+  Value *Or = Builder->CreateOr(Cmp2, Cmp3);
+  if (!SizeCI || SizeCI->getValue().slt(0)) {
+    Value *Cmp1 = Builder->CreateICmpSLT(Offset, ConstantInt::get(IntTy, 0));
+    Or = Builder->CreateOr(Cmp1, Or);
+  }
   emitBranchToTrap(Or);
 
   ++ChecksAdded;
