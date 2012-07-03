@@ -5283,9 +5283,9 @@ def warn_stringcompare : Warning<
   "unspecified (use strncmp instead)">,
   InGroup<DiagGroup<"string-compare">>;
 
-def warn_identity_memvar_assign : Warning<
-  "assigning %select{member variable|instance variable}0 to itself">,
-  InGroup<SelfAssignmentMemvar>;
+def warn_identity_field_assign : Warning<
+  "assigning %select{field|instance variable}0 to itself">,
+  InGroup<SelfAssignmentField>;
 
 // Generic selections.
 def err_assoc_type_incomplete : Error<

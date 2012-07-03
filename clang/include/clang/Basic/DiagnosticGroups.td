@@ -169,8 +169,8 @@ def ReturnTypeCLinkage : DiagGroup<"return-type-c-linkage">;
 def ReturnType : DiagGroup<"return-type", [ReturnTypeCLinkage]>;
 def BindToTemporaryCopy : DiagGroup<"bind-to-temporary-copy",
                                     [CXX98CompatBindToTemporaryCopy]>;
-def SelfAssignmentMemvar : DiagGroup<"self-assign-memvar">;
-def SelfAssignment : DiagGroup<"self-assign", [SelfAssignmentMemvar]>;
+def SelfAssignmentField : DiagGroup<"self-assign-field">;
+def SelfAssignment : DiagGroup<"self-assign", [SelfAssignmentField]>;
 def SemiBeforeMethodBody : DiagGroup<"semicolon-before-method-body">;
 def Sentinel : DiagGroup<"sentinel">;
 def MissingMethodReturnType : DiagGroup<"missing-method-return-type">;

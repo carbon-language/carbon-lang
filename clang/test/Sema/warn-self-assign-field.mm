@@ -4,10 +4,10 @@ class S {
  public:
   int a_;
   void s(int a) {
-    a_ = a_;  // expected-warning {{assigning member variable to itself}}
+    a_ = a_;  // expected-warning {{assigning field to itself}}
 
     // Don't really care about this one either way.
-    this->a_ = a_;  // expected-warning {{assigning member variable to itself}}
+    this->a_ = a_;  // expected-warning {{assigning field to itself}}
 
     a_ += a_;  // Shouldn't warn.
   }
