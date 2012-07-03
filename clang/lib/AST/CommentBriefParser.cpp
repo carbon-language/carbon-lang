@@ -81,10 +81,8 @@ std::string BriefParser::Parse() {
       if (isBlockCommand(Name)) {
         // We found an implicit paragraph end.
         InFirstParagraph = false;
-        if (InBrief) {
-          InBrief = false;
+        if (InBrief)
           break;
-        }
       }
     }
 
@@ -97,10 +95,8 @@ std::string BriefParser::Parse() {
         ConsumeToken();
         // We found a paragraph end.
         InFirstParagraph = false;
-        if (InBrief) {
-          InBrief = false;
+        if (InBrief)
           break;
-        }
       }
       continue;
     }
