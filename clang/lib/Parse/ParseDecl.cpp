@@ -1379,10 +1379,8 @@ Parser::DeclGroupPtrTy Parser::ParseDeclGroup(ParsingDeclSpec &DS,
 
   bool ExpectSemi = Context != Declarator::ForContext;
 
-  // FIXME. make this work for Obj-C++11 parser.
   if (CurParsedObjCImpl && D.isFunctionDeclarator() &&
-      Tok.is(tok::l_brace) &&
-      !getLangOpts().CPlusPlus0x) {
+      Tok.is(tok::l_brace)) {
     // Consume the tokens and store them for later parsing.
     StashAwayMethodOrFunctionBodyTokens(FirstDecl);
     CurParsedObjCImpl->HasCFunction = true;
@@ -1615,7 +1613,8 @@ Decl *Parser::ParseDeclarationAfterDeclaratorAndAttributes(Declarator &D,
       Actions.AddInitializerToDecl(ThisDecl, Initializer.take(),
                                    /*DirectInit=*/true, TypeContainsAuto);
     }
-  } else if (getLangOpts().CPlusPlus0x && Tok.is(tok::l_brace)) {
+  } else if (getLangOpts().CPlusPlus0x && Tok.is(tok::l_brace) &&
+             !CurParsedObjCImpl) {
     // Parse C++0x braced-init-list.
     Diag(Tok, diag::warn_cxx98_compat_generalized_initializer_lists);
 

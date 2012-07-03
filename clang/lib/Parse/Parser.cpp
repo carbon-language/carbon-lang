@@ -775,7 +775,6 @@ bool Parser::isDeclarationAfterDeclarator() {
     (getLangOpts().CPlusPlus &&
      Tok.is(tok::l_paren)) ||       // int X(0) -> not a function def [C++]
     (CurParsedObjCImpl && 
-     !getLangOpts().CPlusPlus0x && // FIXME for Obj-C++11 parser.
      Tok.is(tok::l_brace));        // C-function  nested in an @implementation
 }
 

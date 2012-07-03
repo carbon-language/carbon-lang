@@ -1,5 +1,6 @@
 // RUN: %clang_cc1  -fsyntax-only -Werror -verify -Wno-objc-root-class %s
 // RUN: %clang_cc1 -x objective-c++ -fsyntax-only -Werror -verify -Wno-objc-root-class %s
+// RUN: %clang_cc1 -x objective-c++ -std=c++11 -fsyntax-only -Werror -verify -Wno-objc-root-class %s
 // rdar://10387088
 
 @interface MyClass
@@ -28,5 +29,9 @@ int gorfbar(MyClass * myObject) {
 }
 
 static int getMe;
+
+static int test() {
+  return 0;
+}
 
 @end
