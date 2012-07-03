@@ -4341,6 +4341,9 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
 
             // darwin_crt2 spec is empty.
           }
+          if (getDarwinToolChain().isTargetMacOS() &&
+              !getDarwinToolChain().isMacosxVersionLT(10, 8))
+            CmdArgs.push_back("-no_new_main");
         } else {
           if (Args.hasArg(options::OPT_static) ||
               Args.hasArg(options::OPT_object) ||
