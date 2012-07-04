@@ -238,14 +238,13 @@ unsigned LowerSwitch::Clusterify(CaseVector& Cases, SwitchInst *SI) {
   size_t numCmps = 0;
   for (IntegersSubsetToBB::RangeIterator i = TheClusterifier.begin(),
        e = TheClusterifier.end(); i != e; ++i, ++numCmps) {
-    const IntegersSubsetToBB::RangeTy &R = i->first;
-    BasicBlock *S = i->second;
+    IntegersSubsetToBB::Cluster &C = *i;
     
     // FIXME: Currently work with ConstantInt based numbers.
     // Changing it to APInt based is a pretty heavy for this commit.
-    Cases.push_back(CaseRange(R.getLow().toConstantInt(),
-                              R.getHigh().toConstantInt(), S));
-    if (R.isSingleNumber())
+    Cases.push_back(CaseRange(C.first.getLow().toConstantInt(),
+                              C.first.getHigh().toConstantInt(), C.second));
+    if (C.first.isSingleNumber())
       // A range counts double, since it requires two compares.
       ++numCmps;
   }
