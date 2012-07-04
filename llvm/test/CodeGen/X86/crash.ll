@@ -426,3 +426,19 @@ while.end:                                        ; preds = %if.then.i256
 return:                                           ; preds = %entry
   ret i64 -131
 }
+
+; The tail call to a varargs function sets %AL.
+; uitofp expands to an FCMOV instruction which splits the basic block.
+; Make sure the live range of %AL isn't split.
+@.str = private unnamed_addr constant { [1 x i8], [63 x i8] } zeroinitializer, align 32
+define void @pr13188(i64* nocapture %this) uwtable ssp address_safety align 2 {
+entry:
+  %x7 = load i64* %this, align 8
+  %sub = add i64 %x7, -1
+  %conv = uitofp i64 %sub to float
+  %div = fmul float %conv, 5.000000e-01
+  %conv2 = fpext float %div to double
+  tail call void (...)* @_Z6PrintFz(i8* getelementptr inbounds ({ [1 x i8], [63 x i8] }* @.str, i64 0, i32 0, i64 0), double %conv2)
+  ret void
+}
+declare void @_Z6PrintFz(...)

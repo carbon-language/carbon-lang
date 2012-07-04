@@ -49,6 +49,11 @@ define fastcc i32 @direct_manyargs() {
 ;  CHECK: pushq
 ; Pass the stack argument.
 ;  CHECK: movl $7, 16(%rsp)
+; This is the large code model, so &manyargs_callee may not fit into
+; the jmp instruction.  Put it into a register which won't be clobbered
+; while restoring callee-saved registers and won't be used for passing
+; arguments.
+;  CHECK: movabsq $manyargs_callee, %rax
 ; Pass the register arguments, in the right registers.
 ;  CHECK: movl $1, %edi
 ;  CHECK: movl $2, %esi
@@ -56,11 +61,6 @@ define fastcc i32 @direct_manyargs() {
 ;  CHECK: movl $4, %ecx
 ;  CHECK: movl $5, %r8d
 ;  CHECK: movl $6, %r9d
-; This is the large code model, so &manyargs_callee may not fit into
-; the jmp instruction.  Put it into R11, which won't be clobbered
-; while restoring callee-saved registers and won't be used for passing
-; arguments.
-;  CHECK: movabsq $manyargs_callee, %rax
 ; Adjust the stack to "return".
 ;  CHECK: popq
 ; And tail-call to the target.

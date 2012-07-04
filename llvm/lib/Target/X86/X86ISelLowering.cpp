@@ -2304,27 +2304,12 @@ X86TargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
     Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other,
                         &MemOpChains[0], MemOpChains.size());
 
-  // Build a sequence of copy-to-reg nodes chained together with token chain
-  // and flag operands which copy the outgoing args into registers.
-  SDValue InFlag;
-  // Tail call byval lowering might overwrite argument registers so in case of
-  // tail call optimization the copies to registers are lowered later.
-  if (!isTailCall)
-    for (unsigned i = 0, e = RegsToPass.size(); i != e; ++i) {
-      Chain = DAG.getCopyToReg(Chain, dl, RegsToPass[i].first,
-                               RegsToPass[i].second, InFlag);
-      InFlag = Chain.getValue(1);
-    }
-
   if (Subtarget->isPICStyleGOT()) {
     // ELF / PIC requires GOT in the EBX register before function calls via PLT
     // GOT pointer.
     if (!isTailCall) {
-      Chain = DAG.getCopyToReg(Chain, dl, X86::EBX,
-                               DAG.getNode(X86ISD::GlobalBaseReg,
-                                           DebugLoc(), getPointerTy()),
-                               InFlag);
-      InFlag = Chain.getValue(1);
+      RegsToPass.push_back(std::make_pair(unsigned(X86::EBX),
+               DAG.getNode(X86ISD::GlobalBaseReg, DebugLoc(), getPointerTy())));
     } else {
       // If we are tail calling and generating PIC/GOT style code load the
       // address of the callee into ECX. The value in ecx is used as target of
@@ -2362,11 +2347,9 @@ X86TargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
     assert((Subtarget->hasSSE1() || !NumXMMRegs)
            && "SSE registers cannot be used when SSE is disabled");
 
-    Chain = DAG.getCopyToReg(Chain, dl, X86::AL,
-                             DAG.getConstant(NumXMMRegs, MVT::i8), InFlag);
-    InFlag = Chain.getValue(1);
+    RegsToPass.push_back(std::make_pair(unsigned(X86::AL),
+                                        DAG.getConstant(NumXMMRegs, MVT::i8)));
   }
-
 
   // For tail calls lower the arguments to the 'real' stack slot.
   if (isTailCall) {
@@ -2381,8 +2364,6 @@ X86TargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
     SmallVector<SDValue, 8> MemOpChains2;
     SDValue FIN;
     int FI = 0;
-    // Do not flag preceding copytoreg stuff together with the following stuff.
-    InFlag = SDValue();
     if (getTargetMachine().Options.GuaranteedTailCallOpt) {
       for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
         CCValAssign &VA = ArgLocs[i];
@@ -2422,17 +2403,18 @@ X86TargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
       Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other,
                           &MemOpChains2[0], MemOpChains2.size());
 
-    // Copy arguments to their registers.
-    for (unsigned i = 0, e = RegsToPass.size(); i != e; ++i) {
-      Chain = DAG.getCopyToReg(Chain, dl, RegsToPass[i].first,
-                               RegsToPass[i].second, InFlag);
-      InFlag = Chain.getValue(1);
-    }
-    InFlag =SDValue();
-
     // Store the return address to the appropriate stack slot.
     Chain = EmitTailCallStoreRetAddr(DAG, MF, Chain, RetAddrFrIdx, Is64Bit,
                                      FPDiff, dl);
+  }
+
+  // Build a sequence of copy-to-reg nodes chained together with token chain
+  // and flag operands which copy the outgoing args into registers.
+  SDValue InFlag;
+  for (unsigned i = 0, e = RegsToPass.size(); i != e; ++i) {
+    Chain = DAG.getCopyToReg(Chain, dl, RegsToPass[i].first,
+                             RegsToPass[i].second, InFlag);
+    InFlag = Chain.getValue(1);
   }
 
   if (getTargetMachine().getCodeModel() == CodeModel::Large) {
@@ -2535,14 +2517,6 @@ X86TargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   for (unsigned i = 0, e = RegsToPass.size(); i != e; ++i)
     Ops.push_back(DAG.getRegister(RegsToPass[i].first,
                                   RegsToPass[i].second.getValueType()));
-
-  // Add an implicit use GOT pointer in EBX.
-  if (!isTailCall && Subtarget->isPICStyleGOT())
-    Ops.push_back(DAG.getRegister(X86::EBX, getPointerTy()));
-
-  // Add an implicit use of AL for non-Windows x86 64-bit vararg functions.
-  if (Is64Bit && isVarArg && !IsWin64)
-    Ops.push_back(DAG.getRegister(X86::AL, MVT::i8));
 
   // Add a register mask operand representing the call-preserved registers.
   const TargetRegisterInfo *TRI = getTargetMachine().getRegisterInfo();
