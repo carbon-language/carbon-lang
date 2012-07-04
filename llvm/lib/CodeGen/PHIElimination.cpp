@@ -194,7 +194,7 @@ static bool isSourceDefinedByImplicitDef(const MachineInstr *MPhi,
 
 
 /// LowerAtomicPHINode - Lower the PHI node at the top of the specified block,
-/// under the assuption that it needs to be lowered in a way that supports
+/// under the assumption that it needs to be lowered in a way that supports
 /// atomic execution of PHIs.  This lowering method is always correct all of the
 /// time.
 ///
@@ -355,39 +355,35 @@ void PHIElimination::LowerAtomicPHINode(
     // add a kill marker in this block saying that it kills the incoming value!
     if (!ValueIsUsed && !LV->isLiveOut(SrcReg, opBlock)) {
       // In our final twist, we have to decide which instruction kills the
-      // register.  In most cases this is the copy, however, the first
-      // terminator instruction at the end of the block may also use the value.
-      // In this case, we should mark *it* as being the killing block, not the
-      // copy.
-      MachineBasicBlock::iterator KillInst;
-      MachineBasicBlock::iterator Term = opBlock.getFirstTerminator();
-      if (Term != opBlock.end() && Term->readsRegister(SrcReg)) {
-        KillInst = Term;
+      // register.  In most cases this is the copy, however, terminator
+      // instructions at the end of the block may also use the value. In this
+      // case, we should mark the last such terminator as being the killing
+      // block, not the copy.
+      MachineBasicBlock::iterator KillInst = opBlock.end();
+      MachineBasicBlock::iterator FirstTerm = opBlock.getFirstTerminator();
+      for (MachineBasicBlock::iterator Term = FirstTerm;
+          Term != opBlock.end(); ++Term) {
+        if (Term->readsRegister(SrcReg))
+          KillInst = Term;
+      }
 
-        // Check that no other terminators use values.
-#ifndef NDEBUG
-        for (MachineBasicBlock::iterator TI = llvm::next(Term);
-             TI != opBlock.end(); ++TI) {
-          if (TI->isDebugValue())
-            continue;
-          assert(!TI->readsRegister(SrcReg) &&
-                 "Terminator instructions cannot use virtual registers unless"
-                 "they are the first terminator in a block!");
+      if (KillInst == opBlock.end()) {
+        // No terminator uses the register.
+
+        if (reusedIncoming || !IncomingReg) {
+          // We may have to rewind a bit if we didn't insert a copy this time.
+          KillInst = FirstTerm;
+          while (KillInst != opBlock.begin()) {
+            --KillInst;
+            if (KillInst->isDebugValue())
+              continue;
+            if (KillInst->readsRegister(SrcReg))
+              break;
+          }
+        } else {
+          // We just inserted this copy.
+          KillInst = prior(InsertPos);
         }
-#endif
-      } else if (reusedIncoming || !IncomingReg) {
-        // We may have to rewind a bit if we didn't insert a copy this time.
-        KillInst = Term;
-        while (KillInst != opBlock.begin()) {
-          --KillInst;
-          if (KillInst->isDebugValue())
-            continue;
-          if (KillInst->readsRegister(SrcReg))
-            break;
-        }
-      } else {
-        // We just inserted this copy.
-        KillInst = prior(InsertPos);
       }
       assert(KillInst->readsRegister(SrcReg) && "Cannot find kill instruction");
 
