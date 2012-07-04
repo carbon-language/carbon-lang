@@ -10,6 +10,7 @@
 #include "clang/ARCMigrate/ARCMTActions.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/MultiplexConsumer.h"
+#include "clang/AST/ASTContext.h"
 #include "clang/AST/RecursiveASTVisitor.h"
 #include "clang/AST/NSAPI.h"
 #include "clang/AST/ASTConsumer.h"

@@ -15,6 +15,7 @@
 
 #include "clang/Sema/Ownership.h"
 #include "clang/Sema/Overload.h"
+#include "clang/AST/ASTContext.h"
 #include "clang/AST/Type.h"
 #include "clang/AST/UnresolvedSet.h"
 #include "clang/Basic/SourceLocation.h"

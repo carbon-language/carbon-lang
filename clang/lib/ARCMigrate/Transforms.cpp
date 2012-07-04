@@ -9,13 +9,14 @@
 
 #include "Transforms.h"
 #include "Internals.h"
-#include "clang/Sema/SemaDiagnostic.h"
-#include "clang/Sema/Sema.h"
+#include "clang/Analysis/DomainSpecific/CocoaConventions.h"
+#include "clang/AST/ASTContext.h"
 #include "clang/AST/RecursiveASTVisitor.h"
 #include "clang/AST/StmtVisitor.h"
-#include "clang/Lex/Lexer.h"
 #include "clang/Basic/SourceManager.h"
-#include "clang/Analysis/DomainSpecific/CocoaConventions.h"
+#include "clang/Lex/Lexer.h"
+#include "clang/Sema/Sema.h"
+#include "clang/Sema/SemaDiagnostic.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/DenseSet.h"
 #include <map>

@@ -21,6 +21,7 @@
 
 #include "Transforms.h"
 #include "Internals.h"
+#include "clang/AST/ASTContext.h"
 #include "clang/AST/StmtVisitor.h"
 #include "clang/Basic/SourceManager.h"
 

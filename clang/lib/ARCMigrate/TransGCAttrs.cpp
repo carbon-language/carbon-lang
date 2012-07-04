@@ -9,12 +9,13 @@
 
 #include "Transforms.h"
 #include "Internals.h"
-#include "clang/Lex/Lexer.h"
+#include "clang/AST/ASTContext.h"
 #include "clang/Basic/SourceManager.h"
-#include "llvm/Support/SaveAndRestore.h"
+#include "clang/Lex/Lexer.h"
 #include "clang/Sema/SemaDiagnostic.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/TinyPtrVector.h"
+#include "llvm/Support/SaveAndRestore.h"
 
 using namespace clang;
 using namespace arcmt;

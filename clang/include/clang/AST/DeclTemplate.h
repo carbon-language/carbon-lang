@@ -15,7 +15,6 @@
 #ifndef LLVM_CLANG_AST_DECLTEMPLATE_H
 #define LLVM_CLANG_AST_DECLTEMPLATE_H
 
-#include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/Redeclarable.h"
 #include "clang/AST/TemplateBase.h"

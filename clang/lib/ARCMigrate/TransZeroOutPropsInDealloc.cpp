@@ -15,6 +15,7 @@
 
 #include "Transforms.h"
 #include "Internals.h"
+#include "clang/AST/ASTContext.h"
 
 using namespace clang;
 using namespace arcmt;

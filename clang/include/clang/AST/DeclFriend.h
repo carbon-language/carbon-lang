@@ -15,7 +15,6 @@
 #ifndef LLVM_CLANG_AST_DECLFRIEND_H
 #define LLVM_CLANG_AST_DECLFRIEND_H
 
-#include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclCXX.h"
 #include "llvm/Support/Compiler.h"
 
@@ -72,10 +71,12 @@ private:
     : Decl(Decl::Friend, Empty), NextFriend() { }
 
   FriendDecl *getNextFriend() {
-    return cast_or_null<FriendDecl>(
-                          NextFriend.get(getASTContext().getExternalSource()));
+    if (!NextFriend.isOffset())
+      return cast_or_null<FriendDecl>(NextFriend.get(0));
+    return getNextFriendSlowCase();
   }
-  
+  FriendDecl *getNextFriendSlowCase();
+
 public:
   static FriendDecl *Create(ASTContext &C, DeclContext *DC,
                             SourceLocation L, FriendUnion Friend_,
