@@ -1029,10 +1029,10 @@ void Sema::ActOnComment(SourceRange Comment) {
                                  Comment.getBegin().getLocWithOffset(3));
     StringRef MagicMarkerText;
     switch (RC.getKind()) {
-    case RawComment::CK_OrdinaryBCPL:
+    case RawComment::RCK_OrdinaryBCPL:
       MagicMarkerText = "///<";
       break;
-    case RawComment::CK_OrdinaryC:
+    case RawComment::RCK_OrdinaryC:
       MagicMarkerText = "/**<";
       break;
     default:

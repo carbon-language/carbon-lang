@@ -291,7 +291,7 @@ enum CastKind {
   CK_CopyAndAutoreleaseBlockObject
 };
 
-#define CK_Invalid ((CastKind) -1)
+static const CastKind CK_Invalid = static_cast<CastKind>(-1);
 
 enum BinaryOperatorKind {
   // Operators listed in order of precedence.

@@ -19,19 +19,19 @@ namespace {
 /// Get comment kind and bool describing if it is a trailing comment.
 std::pair<RawComment::CommentKind, bool> getCommentKind(StringRef Comment) {
   if (Comment.size() < 3 || Comment[0] != '/')
-    return std::make_pair(RawComment::CK_Invalid, false);
+    return std::make_pair(RawComment::RCK_Invalid, false);
 
   RawComment::CommentKind K;
   if (Comment[1] == '/') {
     if (Comment.size() < 3)
-      return std::make_pair(RawComment::CK_OrdinaryBCPL, false);
+      return std::make_pair(RawComment::RCK_OrdinaryBCPL, false);
 
     if (Comment[2] == '/')
-      K = RawComment::CK_BCPLSlash;
+      K = RawComment::RCK_BCPLSlash;
     else if (Comment[2] == '!')
-      K = RawComment::CK_BCPLExcl;
+      K = RawComment::RCK_BCPLExcl;
     else
-      return std::make_pair(RawComment::CK_OrdinaryBCPL, false);
+      return std::make_pair(RawComment::RCK_OrdinaryBCPL, false);
   } else {
     assert(Comment.size() >= 4);
 
@@ -40,14 +40,14 @@ std::pair<RawComment::CommentKind, bool> getCommentKind(StringRef Comment) {
     if (Comment[1] != '*' ||
         Comment[Comment.size() - 2] != '*' ||
         Comment[Comment.size() - 1] != '/')
-      return std::make_pair(RawComment::CK_Invalid, false);
+      return std::make_pair(RawComment::RCK_Invalid, false);
 
     if (Comment[2] == '*')
-      K = RawComment::CK_JavaDoc;
+      K = RawComment::RCK_JavaDoc;
     else if (Comment[2] == '!')
-      K = RawComment::CK_Qt;
+      K = RawComment::RCK_Qt;
     else
-      return std::make_pair(RawComment::CK_OrdinaryC, false);
+      return std::make_pair(RawComment::RCK_OrdinaryC, false);
   }
   const bool TrailingComment = (Comment.size() > 3) && (Comment[3] == '<');
   return std::make_pair(K, TrailingComment);
@@ -65,7 +65,7 @@ RawComment::RawComment(const SourceManager &SourceMgr, SourceRange SR,
     BeginLineValid(false), EndLineValid(false) {
   // Extract raw comment text, if possible.
   if (SR.getBegin() == SR.getEnd() || getRawText(SourceMgr).empty()) {
-    Kind = CK_Invalid;
+    Kind = RCK_Invalid;
     return;
   }
 
@@ -78,7 +78,7 @@ RawComment::RawComment(const SourceManager &SourceMgr, SourceRange SR,
     IsAlmostTrailingComment = RawText.startswith("//<") ||
                                  RawText.startswith("/*<");
   } else {
-    Kind = CK_Merged;
+    Kind = RCK_Merged;
     IsTrailingComment = mergedCommentIsTrailingComment(RawText);
   }
 }

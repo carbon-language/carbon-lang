@@ -21,17 +21,17 @@ class ASTReader;
 class RawComment {
 public:
   enum CommentKind {
-    CK_Invalid,      ///< Invalid comment
-    CK_OrdinaryBCPL, ///< Any normal BCPL comments
-    CK_OrdinaryC,    ///< Any normal C comment
-    CK_BCPLSlash,    ///< \code /// stuff \endcode
-    CK_BCPLExcl,     ///< \code //! stuff \endcode
-    CK_JavaDoc,      ///< \code /** stuff */ \endcode
-    CK_Qt,           ///< \code /*! stuff */ \endcode, also used by HeaderDoc
-    CK_Merged        ///< Two or more documentation comments merged together
+    RCK_Invalid,      ///< Invalid comment
+    RCK_OrdinaryBCPL, ///< Any normal BCPL comments
+    RCK_OrdinaryC,    ///< Any normal C comment
+    RCK_BCPLSlash,    ///< \code /// stuff \endcode
+    RCK_BCPLExcl,     ///< \code //! stuff \endcode
+    RCK_JavaDoc,      ///< \code /** stuff */ \endcode
+    RCK_Qt,           ///< \code /*! stuff */ \endcode, also used by HeaderDoc
+    RCK_Merged        ///< Two or more documentation comments merged together
   };
 
-  RawComment() : Kind(CK_Invalid), IsAlmostTrailingComment(false) { }
+  RawComment() : Kind(RCK_Invalid), IsAlmostTrailingComment(false) { }
 
   RawComment(const SourceManager &SourceMgr, SourceRange SR,
              bool Merged = false);
@@ -41,11 +41,11 @@ public:
   }
 
   bool isInvalid() const LLVM_READONLY {
-    return Kind == CK_Invalid;
+    return Kind == RCK_Invalid;
   }
 
   bool isMerged() const LLVM_READONLY {
-    return Kind == CK_Merged;
+    return Kind == RCK_Merged;
   }
 
   /// Returns true if it is a comment that should be put after a member:
@@ -67,7 +67,7 @@ public:
 
   /// Returns true if this comment is not a documentation comment.
   bool isOrdinary() const LLVM_READONLY {
-    return (Kind == CK_OrdinaryBCPL) || (Kind == CK_OrdinaryC);
+    return (Kind == RCK_OrdinaryBCPL) || (Kind == RCK_OrdinaryC);
   }
 
   /// Returns true if this comment any kind of a documentation comment.
