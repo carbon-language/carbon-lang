@@ -2934,7 +2934,12 @@ ObjCRuntime Clang::AddObjCRuntimeArgs(const ArgList &args,
   // -fgnu-runtime
   } else {
     assert(runtimeArg->getOption().matches(options::OPT_fgnu_runtime));
-    runtime = ObjCRuntime(ObjCRuntime::GCC, VersionTuple());
+    // Legacy behaviour is to target the gnustep runtime if we are i
+    // non-fragile mode or the GCC runtime in fragile mode.
+    if (isNonFragile)
+      runtime = ObjCRuntime(ObjCRuntime::GNUstep, VersionTuple());
+    else
+      runtime = ObjCRuntime(ObjCRuntime::GCC, VersionTuple());
   }
 
   cmdArgs.push_back(args.MakeArgString(

@@ -116,11 +116,8 @@ public:
     case MacOSX: return getVersion() >= VersionTuple(10, 7);
     case iOS: return getVersion() >= VersionTuple(5);
 
-    // This is really a lie, because some implementations and versions
-    // of the runtime do not support ARC.  Probably -fgnu-runtime
-    // should imply a "maximal" runtime or something?
-    case GCC: return true;
-    case GNUstep: return true;
+    case GCC: return false;
+    case GNUstep: return getVersion() >= VersionTuple(1, 6);
     }
     llvm_unreachable("bad kind");
   }

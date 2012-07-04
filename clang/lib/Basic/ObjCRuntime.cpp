@@ -54,6 +54,7 @@ bool ObjCRuntime::tryParse(StringRef input) {
   // Everything prior to that must be a valid string name.
   Kind kind;
   StringRef runtimeName = input.substr(0, dash);
+  Version = VersionTuple(0);
   if (runtimeName == "macosx") {
     kind = ObjCRuntime::MacOSX;
   } else if (runtimeName == "macosx-fragile") {
@@ -61,6 +62,9 @@ bool ObjCRuntime::tryParse(StringRef input) {
   } else if (runtimeName == "ios") {
     kind = ObjCRuntime::iOS;
   } else if (runtimeName == "gnustep") {
+    // If no version is specified then default to the most recent one that we
+    // know about.
+    Version = VersionTuple(1, 6);
     kind = ObjCRuntime::GNUstep;
   } else if (runtimeName == "gcc") {
     kind = ObjCRuntime::GCC;
@@ -69,7 +73,6 @@ bool ObjCRuntime::tryParse(StringRef input) {
   }
   TheKind = kind;
   
-  Version = VersionTuple(0);
   if (dash != StringRef::npos) {
     StringRef verString = input.substr(dash + 1);
     if (Version.tryParse(verString)) 
