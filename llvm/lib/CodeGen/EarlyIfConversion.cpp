@@ -52,21 +52,21 @@ typedef SmallSetVector<MachineBasicBlock*, 8> BlockSetVector;
 //===----------------------------------------------------------------------===//
 //
 // The SSAIfConv class performs if-conversion on SSA form machine code after
-// determining if it is possible. The class contains no heuristics, external
+// determining if it is possible. The class contains no heuristics; external
 // code should be used to determine when if-conversion is a good idea.
 //
-// SSAIfConv con convert both triangles and diamonds:
+// SSAIfConv can convert both triangles and diamonds:
 //
 //   Triangle: Head              Diamond: Head
-//              | \                       /  \
-//              |  \                     /    \
+//              | \                       /  \_
+//              |  \                     /    |
 //              |  [TF]BB              FBB    TBB
 //              |  /                     \    /
 //              | /                       \  /
 //             Tail                       Tail
 //
 // Instructions in the conditional blocks TBB and/or FBB are spliced into the
-// Head block, and phis in the Tail black are converted to select instruction.
+// Head block, and phis in the Tail block are converted to select instructions.
 //
 namespace {
 class SSAIfConv {
