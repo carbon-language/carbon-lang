@@ -82,12 +82,6 @@ namespace {
 // TODO(glider): the mz_* functions should be united with the Linux wrappers,
 // as they are basically copied from there.
 size_t mz_size(malloc_zone_t* zone, const void* ptr) {
-  // Fast path: check whether this pointer belongs to the original malloc zone.
-  // We cannot just call malloc_zone_from_ptr(), because it in turn
-  // calls our mz_size().
-  if (system_malloc_zone) {
-    if ((system_malloc_zone->size)(system_malloc_zone, ptr)) return 0;
-  }
   return asan_mz_size(ptr);
 }
 
@@ -151,14 +145,6 @@ void print_zone_for_ptr(void *ptr) {
 
 void ALWAYS_INLINE free_common(void *context, void *ptr) {
   if (!ptr) return;
-  malloc_zone_t *orig_zone = malloc_zone_from_ptr(ptr);
-  // For some reason Chromium calls mz_free() for pointers that belong to
-  // DefaultPurgeableMallocZone instead of asan_zone. We might want to
-  // fix this someday.
-  if (orig_zone == system_purgeable_zone) {
-    system_purgeable_zone->free(system_purgeable_zone, ptr);
-    return;
-  }
   if (!FLAG_mac_ignore_invalid_free || asan_mz_size(ptr)) {
     GET_STACK_TRACE_HERE_FOR_FREE(ptr);
     asan_free(ptr, &stack);
