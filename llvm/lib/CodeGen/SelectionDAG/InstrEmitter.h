@@ -105,12 +105,6 @@ public:
   /// (which do not go into the machine instrs.)
   static unsigned CountResults(SDNode *Node);
 
-  /// CountOperands - The inputs to target nodes have any actual inputs first,
-  /// followed by an optional chain operand, then flag operands.  Compute
-  /// the number of actual operands that will go into the resulting
-  /// MachineInstr.
-  static unsigned CountOperands(SDNode *Node);
-
   /// EmitDbgValue - Generate machine instruction for a dbg_value node.
   ///
   MachineInstr *EmitDbgValue(SDDbgValue *SD,

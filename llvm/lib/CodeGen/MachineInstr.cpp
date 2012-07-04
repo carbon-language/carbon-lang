@@ -660,7 +660,9 @@ void MachineInstr::addOperand(const MachineOperand &Op) {
 
   // OpNo now points as the desired insertion point.  Unless this is a variadic
   // instruction, only implicit regs are allowed beyond MCID->getNumOperands().
-  assert((isImpReg || MCID->isVariadic() || OpNo < MCID->getNumOperands()) &&
+  // RegMask operands go between the explicit and implicit operands.
+  assert((isImpReg || Op.isRegMask() || MCID->isVariadic() ||
+          OpNo < MCID->getNumOperands()) &&
          "Trying to add an operand to a machine instr that is already done!");
 
   // All operands from OpNo have been removed from RegInfo.  If the Operands
