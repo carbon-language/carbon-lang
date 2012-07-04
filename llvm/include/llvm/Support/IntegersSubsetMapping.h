@@ -74,7 +74,6 @@ protected:
   
   CaseItems Items;
   bool Sorted;
-  bool SingleNumbersOnly;
   
   bool isIntersected(CaseItemIt& LItem, CaseItemIt& RItem) {
     return LItem->first.getHigh() >= RItem->first.getLow();
@@ -246,48 +245,6 @@ protected:
     bool isLOpened() { return State == L_OPENED; }
     bool isROpened() { return State == R_OPENED; }
   };
-  
-  void diff_single_numbers(self *LExclude, self *Intersection, self *RExclude,
-                               const self& RHS) {
-    
-    CaseItemConstIt L = Items.begin(), R = RHS.Items.begin();
-    CaseItemConstIt el = Items.end(), er = RHS.Items.end();
-    while (L != el && R != er) {
-      const Cluster &LCluster = *L;
-      const RangeEx &LRange = LCluster.first;
-      const Cluster &RCluster = *R;
-      const RangeEx &RRange = RCluster.first;
-      
-      if (LRange.getLow() < RRange.getLow()) {
-        if (LExclude)
-          LExclude->add(LRange.getLow(), LCluster.second);
-        ++L;
-      } else if (LRange.getLow() > RRange.getLow()) {
-        if (RExclude)
-          RExclude->add(RRange.getLow(), RCluster.second);
-        ++R;
-      } else {
-        if (Intersection)
-          Intersection->add(LRange.getLow(), LCluster.second);
-        ++L;
-        ++R;
-      }
-    }
-    
-    if (L != Items.end()) {
-      if (LExclude)
-        do {
-            LExclude->add(L->first, L->second);
-            ++L;
-        } while (L != Items.end());
-    } else if (R != RHS.Items.end()) {
-      if (RExclude)
-        do {
-          RExclude->add(R->first, R->second);
-          ++R;
-        } while (R != RHS.Items.end());
-    }
-  }  
 
 public:
   
@@ -303,7 +260,6 @@ public:
   
   IntegersSubsetMapping() {
     Sorted = false;
-    SingleNumbersOnly = true;
   }
   
   bool verify() {
@@ -401,8 +357,7 @@ public:
   }   
   void add(const RangeEx &R, SuccessorClass *S = 0) {
     Items.push_back(std::make_pair(R, S));
-    if (!R.isSingleNumber())
-      SingleNumbersOnly = false;
+    Sorted = false;
   }  
   
   /// Adds all ranges and values from given ranges set to the current
@@ -416,8 +371,6 @@ public:
   
   void add(self& RHS) {
     Items.insert(Items.end(), RHS.Items.begin(), RHS.Items.end());
-    if (!RHS.SingleNumbersOnly)
-      SingleNumbersOnly = false;
   }
   
   void add(self& RHS, SuccessorClass *S) {
@@ -468,16 +421,10 @@ public:
   void diff(self *LExclude, self *Intersection, self *RExclude,
                              const self& RHS) {
     
-    if (SingleNumbersOnly && RHS.SingleNumbersOnly) {
-      diff_single_numbers(LExclude, Intersection, RExclude, RHS);
-      return;
-    }
-    
     DiffStateMachine Machine(LExclude, Intersection, RExclude);
     
     CaseItemConstIt L = Items.begin(), R = RHS.Items.begin();
-    CaseItemConstIt el = Items.end(), er = RHS.Items.end();
-    while (L != el && R != er) {
+    while (L != Items.end() && R != RHS.Items.end()) {
       const Cluster &LCluster = *L;
       const RangeEx &LRange = LCluster.first;
       const Cluster &RCluster = *R;
@@ -497,35 +444,6 @@ public:
         continue;
       }
 
-      if (LRange.isSingleNumber() && RRange.isSingleNumber()) {
-        Machine.onLROpen(LRange.getLow(), LCluster.second, RCluster.second);
-        Machine.onLRClose(LRange.getLow());
-        ++L;
-        ++R;
-        continue;
-      }
-      
-      if (LRange.isSingleNumber()) {
-        Machine.onLOpen(LRange.getLow(), LCluster.second);
-        Machine.onLClose(LRange.getLow());
-        ++L;
-        while(L != Items.end() && L->first.getHigh() < RRange.getHigh()) {
-          Machine.onLOpen(LRange.getLow(), LCluster.second);
-          Machine.onLClose(LRange.getLow());
-          ++L;
-        }
-        continue;
-      } else if (RRange.isSingleNumber()) {
-        Machine.onROpen(R->first.getLow(), R->second);
-        Machine.onRClose(R->first.getHigh());
-        ++R;
-        while(R != RHS.Items.end() && R->first.getHigh() < LRange.getHigh()) {
-          Machine.onROpen(R->first.getLow(), R->second);
-          Machine.onRClose(R->first.getHigh());
-          ++R;
-        }
-        continue;
-      } else
       if (LRange.getLow() < RRange.getLow()) {
         // May be opened in previous iteration.
         if (!Machine.isLOpened())
