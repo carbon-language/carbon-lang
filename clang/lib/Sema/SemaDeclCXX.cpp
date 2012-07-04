@@ -6801,7 +6801,7 @@ void Sema::DefineImplicitDefaultConstructor(SourceLocation CurrentLocation,
   }
 
   SourceLocation Loc = Constructor->getLocation();
-  Constructor->setBody(new (Context) CompoundStmt(Context, 0, 0, Loc, Loc));
+  Constructor->setBody(new (Context) CompoundStmt(Loc));
 
   Constructor->setUsed();
   MarkVTableUsed(CurrentLocation, ClassDecl);
@@ -7162,7 +7162,7 @@ void Sema::DefineImplicitDestructor(SourceLocation CurrentLocation,
   }
 
   SourceLocation Loc = Destructor->getLocation();
-  Destructor->setBody(new (Context) CompoundStmt(Context, 0, 0, Loc, Loc));
+  Destructor->setBody(new (Context) CompoundStmt(Loc));
   Destructor->setImplicitlyDefined(true);
   Destructor->setUsed();
   MarkVTableUsed(CurrentLocation, ClassDecl);
@@ -8905,8 +8905,7 @@ void Sema::DefineImplicitLambdaToFunctionPointerConversion(
   // will fill in the actual details.
   Invoke->setUsed();
   Invoke->setReferenced();
-  Invoke->setBody(new (Context) CompoundStmt(Context, 0, 0, Conv->getLocation(),
-                                             Conv->getLocation()));
+  Invoke->setBody(new (Context) CompoundStmt(Conv->getLocation()));
   
   if (ASTMutationListener *L = getASTMutationListener()) {
     L->CompletedImplicitDefinition(Conv);

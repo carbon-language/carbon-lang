@@ -244,6 +244,22 @@ SourceLocation Stmt::getLocEnd() const {
   llvm_unreachable("unknown statement kind");
 }
 
+CompoundStmt::CompoundStmt(ASTContext &C, Stmt **StmtStart, unsigned NumStmts,
+                           SourceLocation LB, SourceLocation RB)
+  : Stmt(CompoundStmtClass), LBracLoc(LB), RBracLoc(RB) {
+  CompoundStmtBits.NumStmts = NumStmts;
+  assert(CompoundStmtBits.NumStmts == NumStmts &&
+         "NumStmts doesn't fit in bits of CompoundStmtBits.NumStmts!");
+
+  if (NumStmts == 0) {
+    Body = 0;
+    return;
+  }
+
+  Body = new (C) Stmt*[NumStmts];
+  memcpy(Body, StmtStart, NumStmts * sizeof(*Body));
+}
+
 void CompoundStmt::setStmts(ASTContext &C, Stmt **Stmts, unsigned NumStmts) {
   if (this->Body)
     C.Deallocate(Body);

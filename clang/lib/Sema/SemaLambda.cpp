@@ -947,9 +947,7 @@ ExprResult Sema::BuildBlockForLambdaConversion(SourceLocation CurrentLocation,
 
   // Add a fake function body to the block. IR generation is responsible
   // for filling in the actual body, which cannot be expressed as an AST.
-  Block->setBody(new (Context) CompoundStmt(Context, 0, 0, 
-                                            ConvLocation,
-                                            ConvLocation));
+  Block->setBody(new (Context) CompoundStmt(ConvLocation));
 
   // Create the block literal expression.
   Expr *BuildBlock = new (Context) BlockExpr(Block, Conv->getConversionType());
