@@ -49,6 +49,8 @@ static cl::opt<bool> DisableSSC("disable-ssc", cl::Hidden,
     cl::desc("Disable Stack Slot Coloring"));
 static cl::opt<bool> DisableMachineDCE("disable-machine-dce", cl::Hidden,
     cl::desc("Disable Machine Dead Code Elimination"));
+static cl::opt<bool> EnableEarlyIfConversion("enable-early-ifcvt", cl::Hidden,
+    cl::desc("Enable Early If-conversion"));
 static cl::opt<bool> DisableMachineLICM("disable-machine-licm", cl::Hidden,
     cl::desc("Disable Machine LICM"));
 static cl::opt<bool> DisableMachineCSE("disable-machine-cse", cl::Hidden,
@@ -154,6 +156,9 @@ static AnalysisID overridePass(AnalysisID StandardID, AnalysisID TargetID) {
   if (StandardID == &DeadMachineInstructionElimID)
     return applyDisable(TargetID, DisableMachineDCE);
 
+  if (StandardID == &EarlyIfConverterID)
+    return applyDisable(TargetID, !EnableEarlyIfConversion);
+
   if (StandardID == &MachineLICMID)
     return applyDisable(TargetID, DisableMachineLICM);
 
@@ -227,6 +232,9 @@ TargetPassConfig::TargetPassConfig(TargetMachine *tm, PassManagerBase &pm)
   // Substitute Pseudo Pass IDs for real ones.
   substitutePass(&EarlyTailDuplicateID, &TailDuplicateID);
   substitutePass(&PostRAMachineLICMID, &MachineLICMID);
+
+  // Disable early if-conversion. Targets that are ready can enable it.
+  disablePass(&EarlyIfConverterID);
 
   // Temporarily disable experimental passes.
   substitutePass(&MachineSchedulerID, 0);
@@ -527,6 +535,7 @@ void TargetPassConfig::addMachineSSAOptimization() {
   addPass(&DeadMachineInstructionElimID);
   printAndVerify("After codegen DCE pass");
 
+  addPass(&EarlyIfConverterID);
   addPass(&MachineLICMID);
   addPass(&MachineCSEID);
   addPass(&MachineSinkingID);

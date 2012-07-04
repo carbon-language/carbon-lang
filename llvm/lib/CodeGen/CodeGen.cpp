@@ -23,6 +23,7 @@ void llvm::initializeCodeGen(PassRegistry &Registry) {
   initializeCalculateSpillWeightsPass(Registry);
   initializeCodePlacementOptPass(Registry);
   initializeDeadMachineInstructionElimPass(Registry);
+  initializeEarlyIfConverterPass(Registry);
   initializeExpandPostRAPass(Registry);
   initializeExpandISelPseudosPass(Registry);
   initializeFinalizeMachineBundlesPass(Registry);

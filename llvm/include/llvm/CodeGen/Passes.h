@@ -392,6 +392,10 @@ namespace llvm {
   /// into tails of their predecessors.
   extern char &TailDuplicateID;
 
+  /// EarlyIfConverter - This pass performs if-conversion on SSA form by
+  /// inserting cmov instructions.
+  extern char &EarlyIfConverterID;
+
   /// IfConverter - This pass performs machine code if conversion.
   extern char &IfConverterID;
 

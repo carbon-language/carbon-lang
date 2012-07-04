@@ -11,6 +11,7 @@ add_llvm_library(LLVMCodeGen
   DeadMachineInstructionElim.cpp
   DFAPacketizer.cpp
   DwarfEHPrepare.cpp
+  EarlyIfConversion.cpp
   EdgeBundles.cpp
   ExecutionDepsFix.cpp
   ExpandISelPseudos.cpp

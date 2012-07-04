@@ -100,6 +100,7 @@ void initializeDomPrinterPass(PassRegistry&);
 void initializeDomViewerPass(PassRegistry&);
 void initializeDominanceFrontierPass(PassRegistry&);
 void initializeDominatorTreePass(PassRegistry&);
+void initializeEarlyIfConverterPass(PassRegistry&);
 void initializeEdgeBundlesPass(PassRegistry&);
 void initializeEdgeProfilerPass(PassRegistry&);
 void initializeExpandPostRAPass(PassRegistry&);
