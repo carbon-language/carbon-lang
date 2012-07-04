@@ -1621,6 +1621,11 @@ void
 Process::DisableAllBreakpointSites ()
 {
     m_breakpoint_site_list.SetEnabledForAll (false);
+    size_t num_sites = m_breakpoint_site_list.GetSize();
+    for (size_t i = 0; i < num_sites; i++)
+    {
+        DisableBreakpoint (m_breakpoint_site_list.GetByIndex(i).get());
+    }
 }
 
 Error

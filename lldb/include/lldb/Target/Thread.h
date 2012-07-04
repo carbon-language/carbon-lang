@@ -775,6 +775,13 @@ public:
     {
         return m_destroy_called;
     }
+
+    // When you implement this method, make sure you don't overwrite the m_actual_stop_info if it claims to be
+    // valid.  The stop info may be a "checkpointed and restored" stop info, so if it is still around it is right
+    // even if you have not calculated this yourself, or if it disagrees with what you might have calculated.
+    virtual lldb::StopInfoSP
+    GetPrivateStopReason () = 0;
+
 protected:
 
     friend class ThreadPlan;
@@ -795,12 +802,6 @@ protected:
     DiscardPlan ();
 
     ThreadPlan *GetPreviousPlan (ThreadPlan *plan);
-
-    // When you implement this method, make sure you don't overwrite the m_actual_stop_info if it claims to be
-    // valid.  The stop info may be a "checkpointed and restored" stop info, so if it is still around it is right
-    // even if you have not calculated this yourself, or if it disagrees with what you might have calculated.
-    virtual lldb::StopInfoSP
-    GetPrivateStopReason () = 0;
 
     typedef std::vector<lldb::ThreadPlanSP> plan_stack;
 

@@ -321,6 +321,7 @@ protected:
     MMapMap m_addr_to_mmap_size;
     lldb::BreakpointSP m_thread_create_bp_sp;
     bool m_waiting_for_attach;
+    bool m_destroy_tried_resuming;
     
     bool
     StartAsyncThread ();
