@@ -35,8 +35,7 @@ int main() {
 // CHECK:      WARNING: ThreadSanitizer: data race
 // CHECK-NEXT:   Read of size 1 at {{.*}} by thread 2:
 // CHECK-NEXT:     #0 pthread_mutex_lock {{.*}} ({{.*}})
-// CHECK-NEXT:     #1 Thread2 {{.*}}race_on_mutex.c:19 ({{.*}})
+// CHECK-NEXT:     #1 Thread2 {{.*}}race_on_mutex.c:19{{(:3)?}} ({{.*}})
 // CHECK-NEXT:   Previous write of size 1 at {{.*}} by thread 1:
 // CHECK-NEXT:     #0 pthread_mutex_init {{.*}} ({{.*}})
-// CHECK-NEXT:     #1 Thread1 {{.*}}race_on_mutex.c:10 ({{.*}})
-
+// CHECK-NEXT:     #1 Thread1 {{.*}}race_on_mutex.c:10{{(:3)?}} ({{.*}})
