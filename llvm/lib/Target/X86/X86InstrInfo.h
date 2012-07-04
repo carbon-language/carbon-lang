@@ -219,6 +219,14 @@ public:
                                 MachineBasicBlock *FBB,
                                 const SmallVectorImpl<MachineOperand> &Cond,
                                 DebugLoc DL) const;
+  virtual bool canInsertSelect(const MachineBasicBlock&,
+                               const SmallVectorImpl<MachineOperand> &Cond,
+                               unsigned, unsigned, int&, int&, int&) const;
+  virtual void insertSelect(MachineBasicBlock &MBB,
+                            MachineBasicBlock::iterator MI, DebugLoc DL,
+                            unsigned DstReg,
+                            const SmallVectorImpl<MachineOperand> &Cond,
+                            unsigned TrueReg, unsigned FalseReg) const;
   virtual void copyPhysReg(MachineBasicBlock &MBB,
                            MachineBasicBlock::iterator MI, DebugLoc DL,
                            unsigned DestReg, unsigned SrcReg,

@@ -2295,6 +2295,37 @@ X86::CondCode X86::GetOppositeBranchCondition(X86::CondCode CC) {
   }
 }
 
+/// getCMovFromCond - Return a cmov(rr) opcode for the given condition and
+/// register size in bytes.
+static unsigned getCMovFromCond(X86::CondCode CC, unsigned RegBytes) {
+  static const unsigned Opc[16][3] = {
+    { X86::CMOVA16rr,  X86::CMOVA32rr,  X86::CMOVA64rr  },
+    { X86::CMOVAE16rr, X86::CMOVAE32rr, X86::CMOVAE64rr },
+    { X86::CMOVB16rr,  X86::CMOVB32rr,  X86::CMOVB64rr  },
+    { X86::CMOVBE16rr, X86::CMOVBE32rr, X86::CMOVBE64rr },
+    { X86::CMOVE16rr,  X86::CMOVE32rr,  X86::CMOVE64rr  },
+    { X86::CMOVG16rr,  X86::CMOVG32rr,  X86::CMOVG64rr  },
+    { X86::CMOVGE16rr, X86::CMOVGE32rr, X86::CMOVGE64rr },
+    { X86::CMOVL16rr,  X86::CMOVL32rr,  X86::CMOVL64rr  },
+    { X86::CMOVLE16rr, X86::CMOVLE32rr, X86::CMOVLE64rr },
+    { X86::CMOVNE16rr, X86::CMOVNE32rr, X86::CMOVNE64rr },
+    { X86::CMOVNO16rr, X86::CMOVNO32rr, X86::CMOVNO64rr },
+    { X86::CMOVNP16rr, X86::CMOVNP32rr, X86::CMOVNP64rr },
+    { X86::CMOVNS16rr, X86::CMOVNS32rr, X86::CMOVNS64rr },
+    { X86::CMOVO16rr,  X86::CMOVO32rr,  X86::CMOVO64rr  },
+    { X86::CMOVP16rr,  X86::CMOVP32rr,  X86::CMOVP64rr  },
+    { X86::CMOVS16rr,  X86::CMOVS32rr,  X86::CMOVS64rr  }
+  };
+
+  assert(CC < 16 && "Can only handle standard cond codes");
+  switch(RegBytes) {
+  default: llvm_unreachable("Illegal register size!");
+  case 2: return Opc[CC][0];
+  case 4: return Opc[CC][1];
+  case 8: return Opc[CC][2];
+  }
+}
+
 bool X86InstrInfo::isUnpredicatedTerminator(const MachineInstr *MI) const {
   if (!MI->isTerminator()) return false;
 
@@ -2517,6 +2548,55 @@ X86InstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
     ++Count;
   }
   return Count;
+}
+
+bool X86InstrInfo::
+canInsertSelect(const MachineBasicBlock &MBB,
+                const SmallVectorImpl<MachineOperand> &Cond,
+                unsigned TrueReg, unsigned FalseReg,
+                int &CondCycles, int &TrueCycles, int &FalseCycles) const {
+  // Not all subtargets have cmov instructions.
+  if (!TM.getSubtarget<X86Subtarget>().hasCMov())
+    return false;
+  if (Cond.size() != 1)
+    return false;
+  // We cannot do the composite conditions, at least not in SSA form.
+  if ((X86::CondCode)Cond[0].getImm() > X86::COND_S)
+    return false;
+
+  // Check register classes.
+  const MachineRegisterInfo &MRI = MBB.getParent()->getRegInfo();
+  const TargetRegisterClass *RC =
+    RI.getCommonSubClass(MRI.getRegClass(TrueReg), MRI.getRegClass(FalseReg));
+  if (!RC)
+    return false;
+
+  // We have cmov instructions for 16, 32, and 64 bit general purpose registers.
+  if (X86::GR16RegClass.hasSubClassEq(RC) ||
+      X86::GR32RegClass.hasSubClassEq(RC) ||
+      X86::GR64RegClass.hasSubClassEq(RC)) {
+    // This latency applies to Pentium M, Merom, Wolfdale, Nehalem, and Sandy
+    // Bridge. Probably Ivy Bridge as well.
+    CondCycles = 2;
+    TrueCycles = 2;
+    FalseCycles = 2;
+    return true;
+  }
+
+  // Can't do vectors.
+  return false;
+}
+
+void X86InstrInfo::insertSelect(MachineBasicBlock &MBB,
+                                MachineBasicBlock::iterator I, DebugLoc DL,
+                                unsigned DstReg,
+                                const SmallVectorImpl<MachineOperand> &Cond,
+                                unsigned TrueReg, unsigned FalseReg) const {
+   MachineRegisterInfo &MRI = MBB.getParent()->getRegInfo();
+   assert(Cond.size() == 1 && "Invalid Cond array");
+   unsigned Opc = getCMovFromCond((X86::CondCode)Cond[0].getImm(),
+                                  MRI.getRegClass(DstReg)->getSize());
+   BuildMI(MBB, I, DL, get(Opc), DstReg).addReg(FalseReg).addReg(TrueReg);
 }
 
 /// isHReg - Test if the given register is a physical h register.

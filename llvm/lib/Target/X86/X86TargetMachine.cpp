@@ -140,7 +140,12 @@ public:
 } // namespace
 
 TargetPassConfig *X86TargetMachine::createPassConfig(PassManagerBase &PM) {
-  return new X86PassConfig(this, PM);
+  X86PassConfig *PC = new X86PassConfig(this, PM);
+
+  if (Subtarget.hasCMov())
+    PC->enablePass(&EarlyIfConverterID);
+
+  return PC;
 }
 
 bool X86PassConfig::addInstSelector() {
