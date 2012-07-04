@@ -14,6 +14,7 @@
 #ifndef LLVM_CLANG_TEST_VISITOR_H
 #define LLVM_CLANG_TEST_VISITOR_H
 
+#include "clang/AST/ASTContext.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/RecursiveASTVisitor.h"
 #include "clang/Frontend/FrontendAction.h"
