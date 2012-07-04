@@ -2467,7 +2467,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   if (objcRuntime.isNonFragile()) {
     if (!Args.hasFlag(options::OPT_fobjc_legacy_dispatch,
                       options::OPT_fno_objc_legacy_dispatch,
-                      getToolChain().IsObjCLegacyDispatchDefault())) {
+                      objcRuntime.isLegacyDispatchDefaultForArch(
+                        getToolChain().getTriple().getArch()))) {
       if (getToolChain().UseObjCMixedDispatch())
         CmdArgs.push_back("-fobjc-dispatch-method=mixed");
       else

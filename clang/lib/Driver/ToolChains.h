@@ -329,12 +329,7 @@ public:
     // Non-fragile ABI is default for everything but i386.
     return getTriple().getArch() != llvm::Triple::x86;
   }
-  virtual bool IsObjCLegacyDispatchDefault() const {
-    // This is only used with the non-fragile ABI.
 
-    // Legacy dispatch is used everywhere except on x86_64.
-    return getTriple().getArch() != llvm::Triple::x86_64;
-  }
   virtual bool UseObjCMixedDispatch() const {
     // This is only used with the non-fragile ABI and non-legacy dispatch.
 
@@ -445,14 +440,6 @@ public:
 
   virtual bool IsMathErrnoDefault() const { return false; }
   virtual bool IsObjCNonFragileABIDefault() const { return true; }
-  virtual bool IsObjCLegacyDispatchDefault() const {
-    llvm::Triple::ArchType Arch = getTriple().getArch();
-    if (Arch == llvm::Triple::arm ||
-        Arch == llvm::Triple::x86 ||
-        Arch == llvm::Triple::x86_64)
-     return false;
-    return true;
-  }
 
   virtual Tool &SelectTool(const Compilation &C, const JobAction &JA,
                            const ActionList &Inputs) const;
@@ -464,14 +451,6 @@ public:
 
   virtual bool IsMathErrnoDefault() const { return false; }
   virtual bool IsObjCNonFragileABIDefault() const { return true; }
-  virtual bool IsObjCLegacyDispatchDefault() const {
-    llvm::Triple::ArchType Arch = getTriple().getArch();
-    if (Arch == llvm::Triple::arm ||
-        Arch == llvm::Triple::x86 ||
-        Arch == llvm::Triple::x86_64)
-     return false;
-    return true;
-  }
 
   virtual Tool &SelectTool(const Compilation &C, const JobAction &JA,
                            const ActionList &Inputs) const;
@@ -483,14 +462,6 @@ public:
 
   virtual bool IsMathErrnoDefault() const { return false; }
   virtual bool IsObjCNonFragileABIDefault() const { return true; }
-  virtual bool IsObjCLegacyDispatchDefault() const {
-    llvm::Triple::ArchType Arch = getTriple().getArch();
-    if (Arch == llvm::Triple::arm ||
-        Arch == llvm::Triple::x86 ||
-        Arch == llvm::Triple::x86_64)
-     return false;
-    return true;
-  }
 
   virtual Tool &SelectTool(const Compilation &C, const JobAction &JA,
                            const ActionList &Inputs) const;
