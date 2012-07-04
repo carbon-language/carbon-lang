@@ -433,9 +433,6 @@ void TargetPassConfig::addISelPrepare() {
 /// TODO: We could use a single addPre/Post(ID) hook to allow pass injection
 /// before/after any target-independent pass. But it's currently overkill.
 void TargetPassConfig::addMachinePasses() {
-  // Print the instruction selected machine code...
-  printAndVerify("After Instruction Selection");
-
   // Insert a machine instr printer pass after the specified pass.
   // If -print-machineinstrs specified, print machineinstrs after all passes.
   if (StringRef(PrintMachineInstrs.getValue()).equals(""))
@@ -450,6 +447,9 @@ void TargetPassConfig::addMachinePasses() {
     const char *IID = (char *)(IPI->getTypeInfo());
     insertPass(TID, IID);
   }
+
+  // Print the instruction selected machine code...
+  printAndVerify("After Instruction Selection");
 
   // Expand pseudo-instructions emitted by ISel.
   addPass(&ExpandISelPseudosID);
