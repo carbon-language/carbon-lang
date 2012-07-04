@@ -239,8 +239,8 @@ DWARFCompileUnit::buildAddressRangeTable(DWARFDebugAranges *debug_aranges,
 
 const DWARFDebugInfoEntryMinimal*
 DWARFCompileUnit::getFunctionDIEForAddress(int64_t address) {
-  size_t n = extractDIEsIfNeeded(false);
-  for (size_t i = 0; i != n; i++) {
+  extractDIEsIfNeeded(false);
+  for (size_t i = 0, n = DieArray.size(); i != n; i++) {
     if (DieArray[i].addressRangeContainsAddress(this, address))
       return &DieArray[i];
   }
