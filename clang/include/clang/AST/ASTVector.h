@@ -374,7 +374,7 @@ void ASTVector<T>::grow(ASTContext &C, size_t MinSize) {
     NewCapacity = MinSize;
 
   // Allocate the memory from the ASTContext.
-  T *NewElts = new (C) T[NewCapacity];
+  T *NewElts = new (C, llvm::alignOf<T>()) T[NewCapacity];
 
   // Copy the elements over.
   if (llvm::is_class<T>::value) {
@@ -387,7 +387,7 @@ void ASTVector<T>::grow(ASTContext &C, size_t MinSize) {
     memcpy(NewElts, Begin, CurSize * sizeof(T));
   }
 
-  C.Deallocate(Begin);
+  // ASTContext never frees any memory.
   Begin = NewElts;
   End = NewElts+CurSize;
   Capacity = Begin+NewCapacity;

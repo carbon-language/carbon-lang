@@ -13,6 +13,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "clang/AST/ASTContext.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/BasicValueFactory.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/Store.h"
 

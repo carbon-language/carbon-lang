@@ -555,6 +555,17 @@ void APNumericStorage::setIntValue(ASTContext &C, const llvm::APInt &Val) {
     VAL = 0;
 }
 
+IntegerLiteral::IntegerLiteral(ASTContext &C, const llvm::APInt &V,
+                               QualType type, SourceLocation l)
+  : Expr(IntegerLiteralClass, type, VK_RValue, OK_Ordinary, false, false,
+         false, false),
+    Loc(l) {
+  assert(type->isIntegerType() && "Illegal type in IntegerLiteral");
+  assert(V.getBitWidth() == C.getIntWidth(type) &&
+         "Integer type is not the correct size for constant.");
+  setValue(C, V);
+}
+
 IntegerLiteral *
 IntegerLiteral::Create(ASTContext &C, const llvm::APInt &V,
                        QualType type, SourceLocation l) {
@@ -564,6 +575,23 @@ IntegerLiteral::Create(ASTContext &C, const llvm::APInt &V,
 IntegerLiteral *
 IntegerLiteral::Create(ASTContext &C, EmptyShell Empty) {
   return new (C) IntegerLiteral(Empty);
+}
+
+FloatingLiteral::FloatingLiteral(ASTContext &C, const llvm::APFloat &V,
+                                 bool isexact, QualType Type, SourceLocation L)
+  : Expr(FloatingLiteralClass, Type, VK_RValue, OK_Ordinary, false, false,
+         false, false), Loc(L) {
+  FloatingLiteralBits.IsIEEE =
+    &C.getTargetInfo().getLongDoubleFormat() == &llvm::APFloat::IEEEquad;
+  FloatingLiteralBits.IsExact = isexact;
+  setValue(C, V);
+}
+
+FloatingLiteral::FloatingLiteral(ASTContext &C, EmptyShell Empty)
+  : Expr(FloatingLiteralClass, Empty) {
+  FloatingLiteralBits.IsIEEE =
+    &C.getTargetInfo().getLongDoubleFormat() == &llvm::APFloat::IEEEquad;
+  FloatingLiteralBits.IsExact = false;
 }
 
 FloatingLiteral *

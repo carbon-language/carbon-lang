@@ -17,6 +17,7 @@
 #include "clang/AST/Decl.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/Stmt.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include <deque>
 
 using namespace clang;

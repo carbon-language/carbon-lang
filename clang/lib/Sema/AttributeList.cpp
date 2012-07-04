@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Sema/AttributeList.h"
+#include "clang/AST/ASTContext.h"
 #include "clang/AST/Expr.h"
 #include "clang/Basic/IdentifierTable.h"
 #include "llvm/ADT/StringSwitch.h"

@@ -40,17 +40,17 @@ public:
 
   bool isMemberAccess() const { return IsMember; }
 
-  AccessedEntity(ASTContext &Context,
+  AccessedEntity(PartialDiagnostic::StorageAllocator &Allocator,
                  MemberNonce _,
                  CXXRecordDecl *NamingClass,
                  DeclAccessPair FoundDecl,
                  QualType BaseObjectType)
     : Access(FoundDecl.getAccess()), IsMember(true),
       Target(FoundDecl.getDecl()), NamingClass(NamingClass),
-      BaseObjectType(BaseObjectType), Diag(0, Context.getDiagAllocator()) {
+      BaseObjectType(BaseObjectType), Diag(0, Allocator) {
   }
 
-  AccessedEntity(ASTContext &Context,
+  AccessedEntity(PartialDiagnostic::StorageAllocator &Allocator,
                  BaseNonce _,
                  CXXRecordDecl *BaseClass,
                  CXXRecordDecl *DerivedClass,
@@ -58,7 +58,7 @@ public:
     : Access(Access), IsMember(false),
       Target(BaseClass),
       NamingClass(DerivedClass),
-      Diag(0, Context.getDiagAllocator()) {
+      Diag(0, Allocator) {
   }
 
   bool isQuiet() const { return Diag.getDiagID() == 0; }

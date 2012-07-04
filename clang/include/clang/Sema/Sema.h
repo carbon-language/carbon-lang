@@ -28,6 +28,7 @@
 #include "clang/AST/ExprObjC.h"
 #include "clang/AST/DeclarationName.h"
 #include "clang/AST/ExternalASTSource.h"
+#include "clang/AST/LambdaMangleContext.h"
 #include "clang/AST/TypeLoc.h"
 #include "clang/AST/NSAPI.h"
 #include "clang/Lex/ModuleLoader.h"
@@ -3302,7 +3303,7 @@ public:
   public:
     explicit ImplicitExceptionSpecification(Sema &Self)
       : Self(&Self), ComputedEST(EST_BasicNoexcept) {
-      if (!Self.Context.getLangOpts().CPlusPlus0x)
+      if (!Self.getLangOpts().CPlusPlus0x)
         ComputedEST = EST_DynamicNone;
     }
 

@@ -152,7 +152,8 @@ struct AccessTarget : public AccessedEntity {
                CXXRecordDecl *NamingClass,
                DeclAccessPair FoundDecl,
                QualType BaseObjectType)
-    : AccessedEntity(Context, Member, NamingClass, FoundDecl, BaseObjectType) {
+    : AccessedEntity(Context.getDiagAllocator(), Member, NamingClass,
+                     FoundDecl, BaseObjectType) {
     initialize();
   }
 
@@ -161,7 +162,8 @@ struct AccessTarget : public AccessedEntity {
                CXXRecordDecl *BaseClass,
                CXXRecordDecl *DerivedClass,
                AccessSpecifier Access)
-    : AccessedEntity(Context, Base, BaseClass, DerivedClass, Access) {
+    : AccessedEntity(Context.getDiagAllocator(), Base, BaseClass, DerivedClass,
+                     Access) {
     initialize();
   }
 

@@ -11,7 +11,9 @@
 //  the Itanium C++ ABI mangling numbers for lambda expressions.
 //
 //===----------------------------------------------------------------------===//
+
 #include "clang/AST/LambdaMangleContext.h"
+#include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclCXX.h"
 
 using namespace clang;

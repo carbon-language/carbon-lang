@@ -15,6 +15,7 @@
 #ifndef LLVM_CLANG_GR_SVALBUILDER
 #define LLVM_CLANG_GR_SVALBUILDER
 
+#include "clang/AST/ASTContext.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/ExprObjC.h"

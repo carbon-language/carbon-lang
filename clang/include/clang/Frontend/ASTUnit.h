@@ -19,6 +19,7 @@
 #include "clang/Sema/CodeCompleteConsumer.h"
 #include "clang/Lex/ModuleLoader.h"
 #include "clang/Lex/PreprocessingRecord.h"
+#include "clang/AST/ASTContext.h"
 #include "clang/Basic/LangOptions.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/FileManager.h"

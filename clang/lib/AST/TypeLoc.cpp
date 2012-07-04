@@ -13,6 +13,7 @@
 
 #include "llvm/Support/raw_ostream.h"
 #include "clang/AST/TypeLocVisitor.h"
+#include "clang/AST/ASTContext.h"
 #include "clang/AST/Expr.h"
 #include "llvm/Support/ErrorHandling.h"
 using namespace clang;

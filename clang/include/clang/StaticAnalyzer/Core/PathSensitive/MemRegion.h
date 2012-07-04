@@ -16,6 +16,7 @@
 #ifndef LLVM_CLANG_GR_MEMREGION_H
 #define LLVM_CLANG_GR_MEMREGION_H
 
+#include "clang/AST/ASTContext.h"
 #include "clang/AST/CharUnits.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/ExprObjC.h"

@@ -19,7 +19,6 @@
 #include "clang/AST/PrettyPrinter.h"
 #include "clang/AST/StmtIterator.h"
 #include "clang/AST/DeclGroup.h"
-#include "clang/AST/ASTContext.h"
 #include "clang/AST/Attr.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/Compiler.h"
@@ -37,9 +36,11 @@ namespace clang {
   class ParmVarDecl;
   class QualType;
   class IdentifierInfo;
+  class LabelDecl;
   class SourceManager;
   class StringLiteral;
   class SwitchStmt;
+  class VarDecl;
 
   //===--------------------------------------------------------------------===//
   // ExprIterator - Iterators for iterating over Stmt* arrays that contain

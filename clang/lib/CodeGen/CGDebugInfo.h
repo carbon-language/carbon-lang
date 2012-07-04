@@ -30,6 +30,7 @@ namespace llvm {
 }
 
 namespace clang {
+  class CXXMethodDecl;
   class VarDecl;
   class ObjCInterfaceDecl;
   class ClassTemplateSpecializationDecl;

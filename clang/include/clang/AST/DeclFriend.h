@@ -15,6 +15,7 @@
 #ifndef LLVM_CLANG_AST_DECLFRIEND_H
 #define LLVM_CLANG_AST_DECLFRIEND_H
 
+#include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclCXX.h"
 #include "llvm/Support/Compiler.h"
 

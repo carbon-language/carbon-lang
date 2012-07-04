@@ -41,6 +41,7 @@ class CXXFinalOverriderMap;
 class CXXIndirectPrimaryBaseSet;
 class FriendDecl;
 class LambdaExpr;
+class UsingDecl;
 
 /// \brief Represents any kind of function declaration, whether it is a
 /// concrete function or a function template.
