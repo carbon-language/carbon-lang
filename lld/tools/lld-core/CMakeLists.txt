@@ -13,6 +13,7 @@ target_link_libraries(lld-core
   lldYAML
   lldCore
   LLVMObject
+  LLVMSupport
  )
 
 install(TARGETS lld-core
