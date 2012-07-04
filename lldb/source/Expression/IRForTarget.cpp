@@ -1378,7 +1378,7 @@ IRForTarget::RewritePersistentAlloc (llvm::Instruction *persistent_alloc)
     // What we're going to do here is make believe this was a regular old external
     // variable.  That means we need to make the metadata valid.
     
-    NamedMDNode *named_metadata = m_module->getNamedMetadata("clang.global.decl.ptrs");
+    NamedMDNode *named_metadata = m_module->getOrInsertNamedMetadata("clang.global.decl.ptrs");
     
     llvm::Value* values[2];
     values[0] = persistent_global;
