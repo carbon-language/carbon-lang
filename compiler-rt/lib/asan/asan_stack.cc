@@ -55,7 +55,7 @@ void AsanStackTrace::PrintStack(uptr *addr, uptr size) {
         AddressInfo &info = addr_frames[j];
         AsanPrintf("    #%zu 0x%zx", frame_num, pc);
         if (info.function) {
-          AsanPrintf(" %s", info.function);
+          AsanPrintf(" in %s", info.function);
         }
         if (info.file) {
           AsanPrintf(" %s:%d:%d", info.file, info.line, info.column);
