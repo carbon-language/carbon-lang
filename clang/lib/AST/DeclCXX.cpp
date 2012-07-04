@@ -60,6 +60,14 @@ CXXRecordDecl::DefinitionData::DefinitionData(CXXRecordDecl *D)
     NumVBases(0), Bases(), VBases(), Definition(D), FirstFriend(0) {
 }
 
+CXXBaseSpecifier *CXXRecordDecl::DefinitionData::getBasesSlowCase() const {
+  return Bases.get(Definition->getASTContext().getExternalSource());
+}
+
+CXXBaseSpecifier *CXXRecordDecl::DefinitionData::getVBasesSlowCase() const {
+  return VBases.get(Definition->getASTContext().getExternalSource());
+}
+
 CXXRecordDecl::CXXRecordDecl(Kind K, TagKind TK, DeclContext *DC,
                              SourceLocation StartLoc, SourceLocation IdLoc,
                              IdentifierInfo *Id, CXXRecordDecl *PrevDecl)
