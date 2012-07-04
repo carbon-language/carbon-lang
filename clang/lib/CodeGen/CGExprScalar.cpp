@@ -1555,9 +1555,8 @@ Value *ScalarExprEmitter::VisitOffsetOfExpr(OffsetOfExpr *E) {
       // Compute the offset to the base.
       const RecordType *BaseRT = CurrentType->getAs<RecordType>();
       CXXRecordDecl *BaseRD = cast<CXXRecordDecl>(BaseRT->getDecl());
-      int64_t OffsetInt = RL.getBaseClassOffsetInBits(BaseRD) /
-                          CGF.getContext().getCharWidth();
-      Offset = llvm::ConstantInt::get(ResultType, OffsetInt);
+      CharUnits OffsetInt = RL.getBaseClassOffset(BaseRD);
+      Offset = llvm::ConstantInt::get(ResultType, OffsetInt.getQuantity());
       break;
     }
     }

@@ -1350,7 +1350,8 @@ void X86_64ABIInfo::classify(QualType Ty, uint64_t OffsetBase,
         // single eightbyte, each is classified separately. Each eightbyte gets
         // initialized to class NO_CLASS.
         Class FieldLo, FieldHi;
-        uint64_t Offset = OffsetBase + Layout.getBaseClassOffsetInBits(Base);
+        uint64_t Offset =
+          OffsetBase + getContext().toBits(Layout.getBaseClassOffset(Base));
         classify(i->getType(), Offset, FieldLo, FieldHi);
         Lo = merge(Lo, FieldLo);
         Hi = merge(Hi, FieldHi);
@@ -1589,7 +1590,7 @@ static bool BitsContainNoUserData(QualType Ty, unsigned StartBit,
           cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
 
         // If the base is after the span we care about, ignore it.
-        unsigned BaseOffset = (unsigned)Layout.getBaseClassOffsetInBits(Base);
+        unsigned BaseOffset = Context.toBits(Layout.getBaseClassOffset(Base));
         if (BaseOffset >= EndBit) continue;
 
         unsigned BaseStart = BaseOffset < StartBit ? StartBit-BaseOffset :0;

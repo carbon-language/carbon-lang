@@ -14,7 +14,6 @@
 #ifndef LLVM_CLANG_AST_LAYOUTINFO_H
 #define LLVM_CLANG_AST_LAYOUTINFO_H
 
-#include "clang/AST/ASTContext.h"
 #include "clang/AST/CharUnits.h"
 #include "clang/AST/DeclCXX.h"
 #include "llvm/ADT/DenseMap.h"
@@ -208,26 +207,6 @@ public:
     assert(CXXInfo->VBaseOffsets.count(VBase) && "Did not find base!");
 
     return CXXInfo->VBaseOffsets[VBase].VBaseOffset;
-  }
-
-  /// getBaseClassOffsetInBits - Get the offset, in bits, for the given
-  /// base class.
-  uint64_t getBaseClassOffsetInBits(const CXXRecordDecl *Base) const {
-    assert(CXXInfo && "Record layout does not have C++ specific info!");
-    assert(CXXInfo->BaseOffsets.count(Base) && "Did not find base!");
-
-    return getBaseClassOffset(Base).getQuantity() *
-      Base->getASTContext().getCharWidth();
-  }
-
-  /// getVBaseClassOffsetInBits - Get the offset, in bits, for the given
-  /// base class.
-  uint64_t getVBaseClassOffsetInBits(const CXXRecordDecl *VBase) const {
-    assert(CXXInfo && "Record layout does not have C++ specific info!");
-    assert(CXXInfo->VBaseOffsets.count(VBase) && "Did not find base!");
-
-    return getVBaseClassOffset(VBase).getQuantity() *
-      VBase->getASTContext().getCharWidth();
   }
 
   CharUnits getSizeOfLargestEmptySubobject() const {

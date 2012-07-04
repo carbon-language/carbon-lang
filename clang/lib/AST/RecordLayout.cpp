@@ -81,7 +81,7 @@ ASTRecordLayout::ASTRecordLayout(const ASTContext &Ctx,
                "Primary virtual base must be at offset 0!");
         }
       } else {
-        assert(getBaseClassOffsetInBits(PrimaryBase) == 0 &&
+        assert(getBaseClassOffset(PrimaryBase).isZero() &&
                "Primary base must be at offset 0!");
       }
     }
