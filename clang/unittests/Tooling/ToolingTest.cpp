@@ -104,7 +104,9 @@ TEST(newFrontendActionFactory, CreatesFrontendActionFactoryFromType) {
 }
 
 struct IndependentFrontendActionCreator {
-  FrontendAction *newFrontendAction() { return new SyntaxOnlyAction; }
+  ASTConsumer *newASTConsumer() {
+    return new FindTopLevelDeclConsumer(NULL);
+  }
 };
 
 TEST(newFrontendActionFactory, CreatesFrontendActionFactoryFromFactoryType) {

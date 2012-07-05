@@ -35,6 +35,7 @@
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/LLVM.h"
 #include "clang/Driver/Util.h"
+#include "clang/Frontend/FrontendAction.h"
 #include "clang/Tooling/ArgumentsAdjusters.h"
 #include "clang/Tooling/CompilationDatabase.h"
 #include <string>
@@ -74,18 +75,18 @@ template <typename T>
 FrontendActionFactory *newFrontendActionFactory();
 
 /// \brief Returns a new FrontendActionFactory for any type that provides an
-/// implementation of newFrontendAction().
+/// implementation of newASTConsumer().
 ///
-/// FactoryT must implement: FrontendAction *newFrontendAction().
+/// FactoryT must implement: ASTConsumer *newASTConsumer().
 ///
 /// Example:
-/// struct ProvidesFrontendActions {
-///   FrontendAction *newFrontendAction();
+/// struct ProvidesASTConsumers {
+///   clang::ASTConsumer *newASTConsumer();
 /// } Factory;
 /// FrontendActionFactory *FactoryAdapter =
 ///   newFrontendActionFactory(&Factory);
 template <typename FactoryT>
-FrontendActionFactory *newFrontendActionFactory(FactoryT *ActionFactory);
+FrontendActionFactory *newFrontendActionFactory(FactoryT *ConsumerFactory);
 
 /// \brief Runs (and deletes) the tool on 'Code' with the -fsyntax-only flag.
 ///
@@ -201,21 +202,34 @@ FrontendActionFactory *newFrontendActionFactory() {
 }
 
 template <typename FactoryT>
-FrontendActionFactory *newFrontendActionFactory(FactoryT *ActionFactory) {
+FrontendActionFactory *newFrontendActionFactory(FactoryT *ConsumerFactory) {
   class FrontendActionFactoryAdapter : public FrontendActionFactory {
   public:
-    explicit FrontendActionFactoryAdapter(FactoryT *ActionFactory)
-      : ActionFactory(ActionFactory) {}
+    explicit FrontendActionFactoryAdapter(FactoryT *ConsumerFactory)
+      : ConsumerFactory(ConsumerFactory) {}
 
     virtual clang::FrontendAction *create() {
-      return ActionFactory->newFrontendAction();
+      return new ConsumerFactoryAdaptor(ConsumerFactory);
     }
 
   private:
-    FactoryT *ActionFactory;
+    class ConsumerFactoryAdaptor : public clang::ASTFrontendAction {
+    public:
+      ConsumerFactoryAdaptor(FactoryT *ConsumerFactory)
+        : ConsumerFactory(ConsumerFactory) {}
+
+      clang::ASTConsumer *CreateASTConsumer(clang::CompilerInstance &,
+                                            llvm::StringRef) {
+        return ConsumerFactory->newASTConsumer();
+      }
+
+    private:
+      FactoryT *ConsumerFactory;
+    };
+    FactoryT *ConsumerFactory;
   };
 
-  return new FrontendActionFactoryAdapter(ActionFactory);
+  return new FrontendActionFactoryAdapter(ConsumerFactory);
 }
 
 } // end namespace tooling
