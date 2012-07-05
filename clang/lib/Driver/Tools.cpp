@@ -937,6 +937,12 @@ void Clang::AddMIPSTargetArgs(const ArgList &Args,
   AddTargetFeature(Args, CmdArgs,
                    options::OPT_mips16, options::OPT_mno_mips16,
                    "mips16");
+  AddTargetFeature(Args, CmdArgs,
+                   options::OPT_mdsp, options::OPT_mno_dsp,
+                   "dsp");
+  AddTargetFeature(Args, CmdArgs,
+                   options::OPT_mdspr2, options::OPT_mno_dspr2,
+                   "dspr2");
 }
 
 /// getPPCTargetCPU - Get the (LLVM) name of the PowerPC cpu we are targeting.

@@ -3719,7 +3719,7 @@ public:
         Name == "o32" || Name == "n32" || Name == "n64" || Name == "eabi" ||
         Name == "mips32" || Name == "mips32r2" ||
         Name == "mips64" || Name == "mips64r2" ||
-        Name == "mips16") {
+        Name == "mips16" || Name == "dsp" || Name == "dspr2") {
       Features[Name] = Enabled;
       return true;
     }
