@@ -76,7 +76,6 @@ namespace llvm {
   /// SlotIndex - An opaque wrapper around machine indexes.
   class SlotIndex {
     friend class SlotIndexes;
-    friend struct DenseMapInfo<SlotIndex>;
 
     enum Slot {
       /// Basic block boundary.  Used for live ranges entering and leaving a
@@ -121,25 +120,12 @@ namespace llvm {
       return static_cast<Slot>(lie.getInt());
     }
 
-    static inline unsigned getHashValue(const SlotIndex &v) {
-      void *ptrVal = v.lie.getOpaqueValue();
-      return (unsigned((intptr_t)ptrVal)) ^ (unsigned((intptr_t)ptrVal) >> 9);
-    }
-
   public:
     enum {
       /// The default distance between instructions as returned by distance().
       /// This may vary as instructions are inserted and removed.
       InstrDist = 4 * Slot_Count
     };
-
-    static inline SlotIndex getEmptyKey() {
-      return SlotIndex(0, 1);
-    }
-
-    static inline SlotIndex getTombstoneKey() {
-      return SlotIndex(0, 2);
-    }
 
     /// Construct an invalid index.
     SlotIndex() : lie(0, 0) {}
@@ -291,23 +277,6 @@ namespace llvm {
       return SlotIndex(listEntry()->getPrevNode(), getSlot());
     }
 
-  };
-
-  /// DenseMapInfo specialization for SlotIndex.
-  template <>
-  struct DenseMapInfo<SlotIndex> {
-    static inline SlotIndex getEmptyKey() {
-      return SlotIndex::getEmptyKey();
-    }
-    static inline SlotIndex getTombstoneKey() {
-      return SlotIndex::getTombstoneKey();
-    }
-    static inline unsigned getHashValue(const SlotIndex &v) {
-      return SlotIndex::getHashValue(v);
-    }
-    static inline bool isEqual(const SlotIndex &LHS, const SlotIndex &RHS) {
-      return (LHS == RHS);
-    }
   };
 
   template <> struct isPodLike<SlotIndex> { static const bool value = true; };
