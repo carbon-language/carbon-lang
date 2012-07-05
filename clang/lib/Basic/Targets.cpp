@@ -3599,8 +3599,9 @@ namespace {
 class MipsTargetInfoBase : public TargetInfo {
   static const Builtin::Info BuiltinInfo[];
   std::string CPU;
-  bool SoftFloat;
-  bool SingleFloat;
+  enum MipsFloatABI {
+    HardFloat, SingleFloat, SoftFloat
+  } FloatABI;
 
 protected:
   std::string ABI;
@@ -3611,7 +3612,7 @@ public:
                      const std::string& CPUStr)
     : TargetInfo(triple),
       CPU(CPUStr),
-      SoftFloat(false), SingleFloat(false),
+      FloatABI(HardFloat),
       ABI(ABIStr)
   {}
 
@@ -3628,14 +3629,18 @@ public:
 
   virtual void getArchDefines(const LangOptions &Opts,
                               MacroBuilder &Builder) const {
-    if (SoftFloat && SingleFloat)
-      llvm_unreachable("Invalid float ABI for Mips.");
-    else if (SoftFloat)
-      Builder.defineMacro("__mips_soft_float", Twine(1));
-    else {
+    switch (FloatABI) {
+    default:
+    case HardFloat:
       Builder.defineMacro("__mips_hard_float", Twine(1));
-      if (SingleFloat)
-        Builder.defineMacro("__mips_single_float", Twine(1));
+      break;
+    case SingleFloat:
+      Builder.defineMacro("__mips_hard_float", Twine(1));
+      Builder.defineMacro("__mips_single_float", Twine(1));
+      break;
+    case SoftFloat:
+      Builder.defineMacro("__mips_soft_float", Twine(1));
+      break;
     }
 
     Builder.defineMacro("_MIPS_SZPTR", Twine(getPointerWidth(0)));
@@ -3717,24 +3722,21 @@ public:
   }
 
   virtual void HandleTargetFeatures(std::vector<std::string> &Features) {
-    SoftFloat = false;
-    SingleFloat = false;
+    FloatABI = HardFloat;
 
     for (std::vector<std::string>::iterator it = Features.begin(),
          ie = Features.end(); it != ie; ++it) {
-      if (*it == "+single-float") {
-        SingleFloat = true;
-        break;
-      }
-
-      if (*it == "+soft-float") {
-        SoftFloat = true;
-        // This option is front-end specific.
-        // Do not need to pass it to the backend.
-        Features.erase(it);
-        break;
-      }
+      if (*it == "+single-float")
+        FloatABI = SingleFloat;
+      else if (*it == "+soft-float")
+        FloatABI = SoftFloat;
     }
+
+    // Remove front-end specific option.
+    std::vector<std::string>::iterator it =
+      std::find(Features.begin(), Features.end(), "+soft-float");
+    if (it != Features.end())
+      Features.erase(it);
   }
 };
 
