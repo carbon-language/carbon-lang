@@ -1322,7 +1322,9 @@ Parser::DeclGroupPtrTy Parser::ParseDeclGroup(ParsingDeclSpec &DS,
       // Look at the next token to make sure that this isn't a function
       // declaration.  We have to check this because __attribute__ might be the
       // start of a function definition in GCC-extended K&R C.
-      !isDeclarationAfterDeclarator()) {
+      !isDeclarationAfterDeclarator() && 
+      (!CurParsedObjCImpl || Tok.isNot(tok::l_brace) || 
+       (getLangOpts().CPlusPlus && D.getCXXScopeSpec().isSet()))) {
 
     if (isStartOfFunctionDefinition(D)) {
       if (DS.getStorageClassSpec() == DeclSpec::SCS_typedef) {

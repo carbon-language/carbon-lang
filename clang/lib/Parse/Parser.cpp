@@ -773,9 +773,7 @@ bool Parser::isDeclarationAfterDeclarator() {
     Tok.is(tok::kw_asm) ||          // int X() __asm__ -> not a function def
     Tok.is(tok::kw___attribute) ||  // int X() __attr__ -> not a function def
     (getLangOpts().CPlusPlus &&
-     Tok.is(tok::l_paren)) ||       // int X(0) -> not a function def [C++]
-    (CurParsedObjCImpl && 
-     Tok.is(tok::l_brace));        // C-function  nested in an @implementation
+     Tok.is(tok::l_paren));         // int X(0) -> not a function def [C++]
 }
 
 /// \brief Determine whether the current token, if it occurs after a
