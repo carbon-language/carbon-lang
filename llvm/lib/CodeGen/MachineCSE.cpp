@@ -84,7 +84,7 @@ namespace {
     bool PerformTrivialCoalescing(MachineInstr *MI, MachineBasicBlock *MBB);
     bool isPhysDefTriviallyDead(unsigned Reg,
                                 MachineBasicBlock::const_iterator I,
-                                MachineBasicBlock::const_iterator E) const ;
+                                MachineBasicBlock::const_iterator E) const;
     bool hasLivePhysRegDefUses(const MachineInstr *MI,
                                const MachineBasicBlock *MBB,
                                SmallSet<unsigned,8> &PhysRefs,
@@ -100,8 +100,7 @@ namespace {
     void ExitScope(MachineBasicBlock *MBB);
     bool ProcessBlock(MachineBasicBlock *MBB);
     void ExitScopeIfDone(MachineDomTreeNode *Node,
-                 DenseMap<MachineDomTreeNode*, unsigned> &OpenChildren,
-                 DenseMap<MachineDomTreeNode*, MachineDomTreeNode*> &ParentMap);
+			 DenseMap<MachineDomTreeNode*, unsigned> &OpenChildren);
     bool PerformCSE(MachineDomTreeNode *Node);
   };
 } // end anonymous namespace
@@ -436,7 +435,7 @@ bool MachineCSE::ProcessBlock(MachineBasicBlock *MBB) {
     // used, then it's not safe to replace it with a common subexpression.
     // It's also not safe if the instruction uses physical registers.
     bool CrossMBBPhysDef = false;
-    SmallSet<unsigned,8> PhysRefs;
+    SmallSet<unsigned, 8> PhysRefs;
     SmallVector<unsigned, 2> PhysDefs;
     if (FoundCSE && hasLivePhysRegDefUses(MI, MBB, PhysRefs, PhysDefs)) {
       FoundCSE = false;
@@ -479,6 +478,7 @@ bool MachineCSE::ProcessBlock(MachineBasicBlock *MBB) {
              "Do not CSE physical register defs!");
 
       if (!isProfitableToCSE(NewReg, OldReg, CSMI, MI)) {
+        DEBUG(dbgs() << "*** Not profitable, avoid CSE!\n");
         DoCSE = false;
         break;
       }
@@ -487,6 +487,7 @@ bool MachineCSE::ProcessBlock(MachineBasicBlock *MBB) {
       // within the register class of the new instruction.
       const TargetRegisterClass *OldRC = MRI->getRegClass(OldReg);
       if (!MRI->constrainRegClass(NewReg, OldRC)) {
+        DEBUG(dbgs() << "*** Not the same register class, avoid CSE!\n");
         DoCSE = false;
         break;
       }
@@ -521,7 +522,6 @@ bool MachineCSE::ProcessBlock(MachineBasicBlock *MBB) {
         ++NumCommutes;
       Changed = true;
     } else {
-      DEBUG(dbgs() << "*** Not profitable, avoid CSE!\n");
       VNT.insert(MI, CurrVN++);
       Exps.push_back(MI);
     }
@@ -536,8 +536,7 @@ bool MachineCSE::ProcessBlock(MachineBasicBlock *MBB) {
 /// up the dominator tree to destroy ancestors which are now done.
 void
 MachineCSE::ExitScopeIfDone(MachineDomTreeNode *Node,
-                DenseMap<MachineDomTreeNode*, unsigned> &OpenChildren,
-                DenseMap<MachineDomTreeNode*, MachineDomTreeNode*> &ParentMap) {
+                        DenseMap<MachineDomTreeNode*, unsigned> &OpenChildren) {
   if (OpenChildren[Node])
     return;
 
@@ -545,7 +544,7 @@ MachineCSE::ExitScopeIfDone(MachineDomTreeNode *Node,
   ExitScope(Node->getBlock());
 
   // Now traverse upwards to pop ancestors whose offsprings are all done.
-  while (MachineDomTreeNode *Parent = ParentMap[Node]) {
+  while (MachineDomTreeNode *Parent = Node->getIDom()) {
     unsigned Left = --OpenChildren[Parent];
     if (Left != 0)
       break;
@@ -557,7 +556,6 @@ MachineCSE::ExitScopeIfDone(MachineDomTreeNode *Node,
 bool MachineCSE::PerformCSE(MachineDomTreeNode *Node) {
   SmallVector<MachineDomTreeNode*, 32> Scopes;
   SmallVector<MachineDomTreeNode*, 8> WorkList;
-  DenseMap<MachineDomTreeNode*, MachineDomTreeNode*> ParentMap;
   DenseMap<MachineDomTreeNode*, unsigned> OpenChildren;
 
   CurrVN = 0;
@@ -572,7 +570,6 @@ bool MachineCSE::PerformCSE(MachineDomTreeNode *Node) {
     OpenChildren[Node] = NumChildren;
     for (unsigned i = 0; i != NumChildren; ++i) {
       MachineDomTreeNode *Child = Children[i];
-      ParentMap[Child] = Node;
       WorkList.push_back(Child);
     }
   } while (!WorkList.empty());
@@ -585,7 +582,7 @@ bool MachineCSE::PerformCSE(MachineDomTreeNode *Node) {
     EnterScope(MBB);
     Changed |= ProcessBlock(MBB);
     // If it's a leaf node, it's done. Traverse upwards to pop ancestors.
-    ExitScopeIfDone(Node, OpenChildren, ParentMap);
+    ExitScopeIfDone(Node, OpenChildren);
   }
 
   return Changed;
