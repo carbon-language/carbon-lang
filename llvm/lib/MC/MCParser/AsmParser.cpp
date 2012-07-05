@@ -1167,6 +1167,11 @@ bool AsmParser::ParseStatement() {
 
   // Otherwise, we have a normal instruction or directive.
   if (IDVal[0] == '.' && IDVal != ".") {
+
+    // Target hook for parsing target specific directives.
+    if (!getTargetParser().ParseDirective(ID))
+      return false;
+
     // Assembler features
     if (IDVal == ".set" || IDVal == ".equ")
       return ParseDirectiveSet(IDVal, true);
@@ -1292,9 +1297,6 @@ bool AsmParser::ParseStatement() {
     if (Handler.first)
       return (*Handler.second)(Handler.first, IDVal, IDLoc);
 
-    // Target hook for parsing target specific directives.
-    if (!getTargetParser().ParseDirective(ID))
-      return false;
 
     return Error(IDLoc, "unknown directive");
   }
