@@ -130,7 +130,7 @@ public:
 
   void addFixup(MCFixup Fixup) {
     // Enforce invariant that fixups are in offset order.
-    assert((Fixups.empty() || Fixup.getOffset() > Fixups.back().getOffset()) &&
+    assert((Fixups.empty() || Fixup.getOffset() >= Fixups.back().getOffset()) &&
            "Fixups must be added in order!");
     Fixups.push_back(Fixup);
   }
