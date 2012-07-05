@@ -1302,3 +1302,19 @@ namespace PR12826 {
   constexpr Foo id(Foo x) { return x; }
   constexpr Foo res(id(Foo()));
 }
+
+namespace PR13273 {
+  struct U {
+    int t;
+    U() = default;
+  };
+
+  struct S : U {
+    S() = default;
+  };
+
+  // S's default constructor isn't constexpr, because U's default constructor
+  // doesn't initialize 't', but it's trivial, so value-initialization doesn't
+  // actually call it.
+  static_assert(S{}.t == 0, "");
+}

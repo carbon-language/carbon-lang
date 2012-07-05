@@ -279,5 +279,28 @@ namespace PR12498 {
   {
     c->foo({ nullptr, 1 }); // expected-error{{initialization of incomplete type 'const PR12498::ArrayRef'}}
   }
+}
 
+namespace explicit_default {
+  struct A {
+    explicit A(); // expected-note{{here}}
+  };
+  A a {}; // ok
+  // This is copy-list-initialization, and we choose an explicit constructor
+  // (even though we do so via value-initialization), so the initialization is
+  // ill-formed.
+  A b = {}; // expected-error{{chosen constructor is explicit}}
+}
+
+namespace init_list_default {
+  struct A {
+    A(std::initializer_list<int>);
+  };
+  A a {}; // calls initializer list constructor
+
+  struct B {
+    B();
+    B(std::initializer_list<int>) = delete;
+  };
+  B b {}; // calls default constructor
 }

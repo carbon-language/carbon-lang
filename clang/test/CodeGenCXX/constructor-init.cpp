@@ -131,6 +131,26 @@ namespace rdar9694300 {
   }
 }
 
+// Check that we emit a zero initialization step for list-value-initialization
+// which calls a trivial default constructor.
+namespace PR13273 {
+  struct U {
+    int t;
+    U() = default;
+  };
+
+  struct S : U {
+    S() = default;
+  };
+
+  // CHECK: define {{.*}}@_ZN7PR132731fEv(
+  int f() {
+    // CHECK-NOT: }
+    // CHECK: llvm.memset{{.*}}i8 0
+    return (new S{})->t;
+  }
+}
+
 template<typename T>
 struct X {
   X(const X &);
