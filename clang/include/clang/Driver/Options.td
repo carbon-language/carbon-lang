@@ -846,6 +846,8 @@ def mbmi : Flag<"-mbmi">, Group<m_x86_Features_Group>;
 def mbmi2 : Flag<"-mbmi2">, Group<m_x86_Features_Group>;
 def mpopcnt : Flag<"-mpopcnt">, Group<m_x86_Features_Group>;
 def mfma4 : Flag<"-mfma4">, Group<m_x86_Features_Group>;
+def mips16 : Flag<"-mips16">, Group<m_Group>;
+def mno_mips16 : Flag<"-mno-mips16">, Group<m_Group>;
 def mthumb : Flag<"-mthumb">, Group<m_Group>;
 def mtune_EQ : Joined<"-mtune=">, Group<m_Group>;
 def multi__module : Flag<"-multi_module">;

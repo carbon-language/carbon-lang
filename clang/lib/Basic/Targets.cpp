@@ -3708,7 +3708,8 @@ public:
     if (Name == "soft-float" || Name == "single-float" ||
         Name == "o32" || Name == "n32" || Name == "n64" || Name == "eabi" ||
         Name == "mips32" || Name == "mips32r2" ||
-        Name == "mips64" || Name == "mips64r2") {
+        Name == "mips64" || Name == "mips64r2" ||
+        Name == "mips16") {
       Features[Name] = Enabled;
       return true;
     }

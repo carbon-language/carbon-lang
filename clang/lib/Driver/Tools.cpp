@@ -919,6 +919,15 @@ void Clang::AddMIPSTargetArgs(const ArgList &Args,
     CmdArgs.push_back("-mfloat-abi");
     CmdArgs.push_back("hard");
   }
+
+  if (Arg *A = Args.getLastArg(options::OPT_mips16,
+                               options::OPT_mno_mips16)) {
+    CmdArgs.push_back("-target-feature");
+    if (A->getOption().matches(options::OPT_mips16))
+      CmdArgs.push_back("+mips16");
+    else
+      CmdArgs.push_back("-mips16");
+  }
 }
 
 /// getPPCTargetCPU - Get the (LLVM) name of the PowerPC cpu we are targeting.
