@@ -3599,6 +3599,7 @@ namespace {
 class MipsTargetInfoBase : public TargetInfo {
   static const Builtin::Info BuiltinInfo[];
   std::string CPU;
+  bool IsMips16;
   enum MipsFloatABI {
     HardFloat, SingleFloat, SoftFloat
   } FloatABI;
@@ -3612,6 +3613,7 @@ public:
                      const std::string& CPUStr)
     : TargetInfo(triple),
       CPU(CPUStr),
+      IsMips16(false),
       FloatABI(HardFloat),
       ABI(ABIStr)
   {}
@@ -3642,6 +3644,9 @@ public:
       Builder.defineMacro("__mips_soft_float", Twine(1));
       break;
     }
+
+    if (IsMips16)
+      Builder.defineMacro("__mips16", Twine(1));
 
     Builder.defineMacro("_MIPS_SZPTR", Twine(getPointerWidth(0)));
     Builder.defineMacro("_MIPS_SZINT", Twine(getIntWidth()));
@@ -3722,6 +3727,7 @@ public:
   }
 
   virtual void HandleTargetFeatures(std::vector<std::string> &Features) {
+    IsMips16 = false;
     FloatABI = HardFloat;
 
     for (std::vector<std::string>::iterator it = Features.begin(),
@@ -3730,6 +3736,8 @@ public:
         FloatABI = SingleFloat;
       else if (*it == "+soft-float")
         FloatABI = SoftFloat;
+      else if (*it == "+mips16")
+        IsMips16 = true;
     }
 
     // Remove front-end specific option.
