@@ -31,7 +31,9 @@ extern "C" void __tsan_resume() {
 
 namespace __tsan {
 
+#ifndef TSAN_GO
 THREADLOCAL char cur_thread_placeholder[sizeof(ThreadState)] ALIGNED(64);
+#endif
 static char ctx_placeholder[sizeof(Context)] ALIGNED(64);
 
 static Context *ctx;
@@ -218,7 +220,7 @@ int Finalize(ThreadState *thr) {
   return failed ? flags()->exitcode : 0;
 }
 
-static void TraceSwitch(ThreadState *thr) {
+void TraceSwitch(ThreadState *thr) {
   thr->nomalloc++;
   ScopedInRtl in_rtl;
   Lock l(&thr->trace.mtx);
@@ -229,6 +231,7 @@ static void TraceSwitch(ThreadState *thr) {
   thr->nomalloc--;
 }
 
+#ifndef TSAN_GO
 extern "C" void __tsan_trace_switch() {
   TraceSwitch(cur_thread());
 }
@@ -236,6 +239,7 @@ extern "C" void __tsan_trace_switch() {
 extern "C" void __tsan_report_race() {
   ReportRace(cur_thread());
 }
+#endif
 
 ALWAYS_INLINE
 static Shadow LoadShadow(u64 *p) {
@@ -259,7 +263,11 @@ static inline void HandleRace(ThreadState *thr, u64 *shadow_mem,
   thr->racy_state[0] = cur.raw();
   thr->racy_state[1] = old.raw();
   thr->racy_shadow_addr = shadow_mem;
+#ifndef TSAN_GO
   HACKY_CALL(__tsan_report_race);
+#else
+  ReportRace(thr);
+#endif
 }
 
 static inline bool BothReads(Shadow s, int kAccessIsWrite) {
@@ -477,6 +485,10 @@ void IgnoreCtl(ThreadState *thr, bool write, bool begin) {
     thr->fast_state.ClearIgnoreBit();
 }
 
+bool MD5Hash::operator==(const MD5Hash &other) const {
+  return hash[0] == other.hash[0] && hash[1] == other.hash[1];
+}
+
 #if TSAN_DEBUG
 void build_consistency_debug() {}
 #else
@@ -501,5 +513,7 @@ void build_consistency_shadow8() {}
 
 }  // namespace __tsan
 
+#ifndef TSAN_GO
 // Must be included in this file to make sure everything is inlined.
 #include "tsan_interface_inl.h"
+#endif

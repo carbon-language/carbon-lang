@@ -22,10 +22,13 @@
 // FIXME find out what we need on Windows. __declspec(dllexport) ?
 # define SANITIZER_INTERFACE_ATTRIBUTE
 # define SANITIZER_WEAK_ATTRIBUTE
-#else  // _WIN32
+#elif defined(SANITIZER_GO)
+# define SANITIZER_INTERFACE_ATTRIBUTE
+# define SANITIZER_WEAK_ATTRIBUTE
+#else
 # define SANITIZER_INTERFACE_ATTRIBUTE __attribute__((visibility("default")))
 # define SANITIZER_WEAK_ATTRIBUTE  __attribute__((weak))
-#endif  // _WIN32
+#endif
 
 // __has_feature
 #if !defined(__has_feature)

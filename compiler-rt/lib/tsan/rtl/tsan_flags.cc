@@ -53,7 +53,6 @@ void InitializeFlags(Flags *f, const char *env) {
   f->running_on_valgrind = false;
   f->use_internal_symbolizer = false;
 
-
   // Let a frontend override.
   OverrideFlags(f);
 

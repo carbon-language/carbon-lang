@@ -254,11 +254,13 @@ struct ThreadState {
 };
 
 Context *CTX();
-extern THREADLOCAL char cur_thread_placeholder[];
 
+#ifndef TSAN_GO
+extern THREADLOCAL char cur_thread_placeholder[];
 INLINE ThreadState *cur_thread() {
   return reinterpret_cast<ThreadState *>(&cur_thread_placeholder);
 }
+#endif
 
 enum ThreadStatus {
   ThreadStatusInvalid,   // Non-existent thread, data is invalid.
@@ -457,12 +459,19 @@ void Release(ThreadState *thr, uptr pc, uptr addr);
 #define HACKY_CALL(f) f()
 #endif
 
+void TraceSwitch(ThreadState *thr);
+
 extern "C" void __tsan_trace_switch();
 void ALWAYS_INLINE INLINE TraceAddEvent(ThreadState *thr, u64 epoch,
                                         EventType typ, uptr addr) {
   StatInc(thr, StatEvents);
-  if (UNLIKELY((epoch % kTracePartSize) == 0))
+  if (UNLIKELY((epoch % kTracePartSize) == 0)) {
+#ifndef TSAN_GO
     HACKY_CALL(__tsan_trace_switch);
+#else
+    TraceSwitch(thr);
+#endif
+  }
   Event *evp = &thr->trace.events[epoch % kTraceSize];
   Event ev = (u64)addr | ((u64)typ << 61);
   *evp = ev;

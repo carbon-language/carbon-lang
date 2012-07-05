@@ -83,10 +83,10 @@ int Atexit(void (*function)(void));
 void SortArray(uptr *array, uptr size);
 
 // Math
-inline bool IsPowerOfTwo(uptr x) {
+INLINE bool IsPowerOfTwo(uptr x) {
   return (x & (x - 1)) == 0;
 }
-inline uptr RoundUpTo(uptr size, uptr boundary) {
+INLINE uptr RoundUpTo(uptr size, uptr boundary) {
   CHECK(IsPowerOfTwo(boundary));
   return (size + boundary - 1) & ~(boundary - 1);
 }
@@ -95,14 +95,14 @@ template<class T> T Min(T a, T b) { return a < b ? a : b; }
 template<class T> T Max(T a, T b) { return a > b ? a : b; }
 
 // Char handling
-inline bool IsSpace(int c) {
+INLINE bool IsSpace(int c) {
   return (c == ' ') || (c == '\n') || (c == '\t') ||
          (c == '\f') || (c == '\r') || (c == '\v');
 }
-inline bool IsDigit(int c) {
+INLINE bool IsDigit(int c) {
   return (c >= '0') && (c <= '9');
 }
-inline int ToLower(int c) {
+INLINE int ToLower(int c) {
   return (c >= 'A' && c <= 'Z') ? (c + 'a' - 'A') : c;
 }
 

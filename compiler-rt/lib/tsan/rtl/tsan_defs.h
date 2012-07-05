@@ -28,7 +28,11 @@ const int kTidBits = 13;
 const unsigned kMaxTid = 1 << kTidBits;
 const unsigned kMaxTidInClock = kMaxTid * 2;  // This includes msb 'freed' bit.
 const int kClkBits = 43;
+#ifdef TSAN_GO
+const int kShadowStackSize = 8 * 1024;
+#else
 const int kShadowStackSize = 1024;
+#endif
 
 #ifdef TSAN_SHADOW_COUNT
 # if TSAN_SHADOW_COUNT == 2 \
@@ -119,9 +123,7 @@ T RoundUp(T p, int align) {
 
 struct MD5Hash {
   u64 hash[2];
-  bool operator==(const MD5Hash &other) const {
-    return hash[0] == other.hash[0] && hash[1] == other.hash[1];
-  }
+  bool operator==(const MD5Hash &other) const;
 };
 
 MD5Hash md5_hash(const void *data, uptr size);

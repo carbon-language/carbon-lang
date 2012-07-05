@@ -31,13 +31,18 @@ namespace __sanitizer {
 const u64 kBlockMagic = 0x6A6CB03ABCEBC041ull;
 
 void *InternalAlloc(uptr size) {
+  if (size + sizeof(u64) < size)
+    return 0;
   void *p = LIBC_MALLOC(size + sizeof(u64));
+  if (p == 0)
+    return 0;
   ((u64*)p)[0] = kBlockMagic;
   return (char*)p + sizeof(u64);
 }
 
 void InternalFree(void *addr) {
-  if (!addr) return;
+  if (addr == 0)
+    return;
   addr = (char*)addr - sizeof(u64);
   CHECK_EQ(((u64*)addr)[0], kBlockMagic);
   ((u64*)addr)[0] = 0;

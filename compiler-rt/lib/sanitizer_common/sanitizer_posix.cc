@@ -152,7 +152,11 @@ void Abort() {
 }
 
 int Atexit(void (*function)(void)) {
+#ifndef SANITIZER_GO
   return atexit(function);
+#else
+  return 0;
+#endif
 }
 
 }  // namespace __sanitizer

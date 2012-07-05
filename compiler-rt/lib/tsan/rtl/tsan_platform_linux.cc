@@ -51,8 +51,7 @@ void Die() {
 
 namespace __tsan {
 
-static uptr g_tls_size;
-
+#ifndef TSAN_GO
 ScopedInRtl::ScopedInRtl()
     : thr_(cur_thread()) {
   in_rtl_ = thr_->in_rtl;
@@ -65,6 +64,13 @@ ScopedInRtl::~ScopedInRtl() {
   errno = errno_;
   CHECK_EQ(in_rtl_, thr_->in_rtl);
 }
+#else
+ScopedInRtl::ScopedInRtl() {
+}
+
+ScopedInRtl::~ScopedInRtl() {
+}
+#endif
 
 uptr GetShadowMemoryConsumption() {
   return 0;
@@ -76,6 +82,7 @@ void FlushShadowMemory() {
           MADV_DONTNEED);
 }
 
+#ifndef TSAN_GO
 static void ProtectRange(uptr beg, uptr end) {
   ScopedInRtl in_rtl;
   CHECK_LE(beg, end);
@@ -87,12 +94,9 @@ static void ProtectRange(uptr beg, uptr end) {
     Die();
   }
 }
+#endif
 
 void InitializeShadowMemory() {
-  const uptr kClosedLowBeg  = 0x200000;
-  const uptr kClosedLowEnd  = kLinuxShadowBeg - 1;
-  const uptr kClosedMidBeg = kLinuxShadowEnd + 1;
-  const uptr kClosedMidEnd = kLinuxAppMemBeg - 1;
   uptr shadow = (uptr)MmapFixedNoReserve(kLinuxShadowBeg,
     kLinuxShadowEnd - kLinuxShadowBeg);
   if (shadow != kLinuxShadowBeg) {
@@ -101,21 +105,32 @@ void InitializeShadowMemory() {
                "to link with -pie.\n");
     Die();
   }
+#ifndef TSAN_GO
+  const uptr kClosedLowBeg  = 0x200000;
+  const uptr kClosedLowEnd  = kLinuxShadowBeg - 1;
+  const uptr kClosedMidBeg = kLinuxShadowEnd + 1;
+  const uptr kClosedMidEnd = kLinuxAppMemBeg - 1;
   ProtectRange(kClosedLowBeg, kClosedLowEnd);
   ProtectRange(kClosedMidBeg, kClosedMidEnd);
+#endif
+#ifndef TSAN_GO
   DPrintf("kClosedLow   %zx-%zx (%zuGB)\n",
       kClosedLowBeg, kClosedLowEnd, (kClosedLowEnd - kClosedLowBeg) >> 30);
+#endif
   DPrintf("kLinuxShadow %zx-%zx (%zuGB)\n",
       kLinuxShadowBeg, kLinuxShadowEnd,
       (kLinuxShadowEnd - kLinuxShadowBeg) >> 30);
+#ifndef TSAN_GO
   DPrintf("kClosedMid   %zx-%zx (%zuGB)\n",
       kClosedMidBeg, kClosedMidEnd, (kClosedMidEnd - kClosedMidBeg) >> 30);
+#endif
   DPrintf("kLinuxAppMem %zx-%zx (%zuGB)\n",
       kLinuxAppMemBeg, kLinuxAppMemEnd,
       (kLinuxAppMemEnd - kLinuxAppMemBeg) >> 30);
   DPrintf("stack        %zx\n", (uptr)&shadow);
 }
 
+#ifndef TSAN_GO
 static void CheckPIE() {
   // Ensure that the binary is indeed compiled with -pie.
   ProcessMaps proc_maps;
@@ -132,6 +147,8 @@ static void CheckPIE() {
     }
   }
 }
+
+static uptr g_tls_size;
 
 #ifdef __i386__
 # define INTERNAL_FUNCTION __attribute__((regparm(3), stdcall))
@@ -152,6 +169,7 @@ static int InitTlsSize() {
   get_tls(&tls_size, &tls_align);
   return tls_size;
 }
+#endif  // #ifndef TSAN_GO
 
 const char *InitializePlatform() {
   void *p = 0;
@@ -164,8 +182,10 @@ const char *InitializePlatform() {
     setrlimit(RLIMIT_CORE, (rlimit*)&lim);
   }
 
+#ifndef TSAN_GO
   CheckPIE();
   g_tls_size = (uptr)InitTlsSize();
+#endif
   return getenv("TSAN_OPTIONS");
 }
 
@@ -174,11 +194,16 @@ void FinalizePlatform() {
 }
 
 uptr GetTlsSize() {
+#ifndef TSAN_GO
   return g_tls_size;
+#else
+  return 0;
+#endif
 }
 
 void GetThreadStackAndTls(bool main, uptr *stk_addr, uptr *stk_size,
                           uptr *tls_addr, uptr *tls_size) {
+#ifndef TSAN_GO
   arch_prctl(ARCH_GET_FS, tls_addr);
   *tls_addr -= g_tls_size;
   *tls_size = g_tls_size;
@@ -197,6 +222,13 @@ void GetThreadStackAndTls(bool main, uptr *stk_addr, uptr *stk_size,
       *tls_addr = *stk_addr + *stk_size;
     }
   }
+#else
+  *stk_addr = 0;
+  *stk_size = 0;
+  *tls_addr = 0;
+  *tls_size = 0;
+#endif
 }
+
 
 }  // namespace __tsan
