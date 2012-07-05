@@ -58,6 +58,7 @@ STATISTIC(NumFunctionsAnalyzed, "The # of functions analysed (as top level).");
 STATISTIC(NumBlocksInAnalyzedFunctions,
                      "The # of basic blocks in the analyzed functions.");
 STATISTIC(PercentReachableBlocks, "The % of reachable basic blocks.");
+STATISTIC(MaxCFGSize, "The maximum number of basic blocks in a function.");
 
 //===----------------------------------------------------------------------===//
 // Special PathDiagnosticConsumers.
@@ -488,6 +489,12 @@ void AnalysisConsumer::HandleCode(Decl *D, AnalysisMode Mode,
     return;
 
   DisplayFunction(D, Mode);
+  CFG *DeclCFG = Mgr->getCFG(D);
+  if (DeclCFG) {
+    unsigned CFGSize = DeclCFG->size();
+    MaxCFGSize = MaxCFGSize < CFGSize ? CFGSize : MaxCFGSize;
+  }
+
 
   // Clear the AnalysisManager of old AnalysisDeclContexts.
   Mgr->ClearContexts();
