@@ -2394,7 +2394,6 @@ TargetLowering::SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
     // constant being emitted.
     uint64_t EqVal;
     switch (getBooleanContents(N0.getValueType().isVector())) {
-    default: llvm_unreachable("Unknown boolean contents!");
     case UndefinedBooleanContent:
     case ZeroOrOneBooleanContent:
       EqVal = ISD::isTrueWhenEqual(Cond);
