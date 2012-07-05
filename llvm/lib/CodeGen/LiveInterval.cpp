@@ -196,16 +196,16 @@ void LiveInterval::extendIntervalEndTo(Ranges::iterator I, SlotIndex NewEnd) {
   // If NewEnd was in the middle of an interval, make sure to get its endpoint.
   I->end = std::max(NewEnd, prior(MergeTo)->end);
 
-  // Erase any dead ranges.
-  ranges.erase(llvm::next(I), MergeTo);
-
   // If the newly formed range now touches the range after it and if they have
   // the same value number, merge the two ranges into one range.
-  Ranges::iterator Next = llvm::next(I);
-  if (Next != ranges.end() && Next->start <= I->end && Next->valno == ValNo) {
-    I->end = Next->end;
-    ranges.erase(Next);
+  if (MergeTo != ranges.end() && MergeTo->start <= I->end &&
+      MergeTo->valno == ValNo) {
+    I->end = MergeTo->end;
+    ++MergeTo;
   }
+
+  // Erase any dead ranges.
+  ranges.erase(llvm::next(I), MergeTo);
 }
 
 
