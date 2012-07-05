@@ -146,18 +146,10 @@ static SectionDesc *GetSectionDesc(uptr addr) {
   return 0;
 }
 
-static ReportStack *NewFrame(uptr addr) {
-  ReportStack *ent = (ReportStack*)internal_alloc(MBlockReportStack,
-                                                  sizeof(ReportStack));
-  internal_memset(ent, 0, sizeof(*ent));
-  ent->pc = addr;
-  return ent;
-}
-
-ReportStack *SymbolizeCode(uptr addr) {
+ReportStack *SymbolizeCodeAddr2Line(uptr addr) {
   SectionDesc *s = GetSectionDesc(addr);
   if (s == 0)
-    return NewFrame(addr);
+    return NewReportStackEntry(addr);
   ModuleDesc *m = s->module;
   uptr offset = addr - m->base;
   char addrstr[32];
@@ -175,7 +167,7 @@ ReportStack *SymbolizeCode(uptr addr) {
     Die();
   }
   func.Ptr()[len] = 0;
-  ReportStack *res = NewFrame(addr);
+  ReportStack *res = NewReportStackEntry(addr);
   res->module = internal_strdup(m->name);
   res->offset = offset;
   char *pos = (char*)internal_strchr(func, '\n');
@@ -194,7 +186,7 @@ ReportStack *SymbolizeCode(uptr addr) {
   return res;
 }
 
-ReportStack *SymbolizeData(uptr addr) {
+ReportStack *SymbolizeDataAddr2Line(uptr addr) {
   return 0;
 }
 

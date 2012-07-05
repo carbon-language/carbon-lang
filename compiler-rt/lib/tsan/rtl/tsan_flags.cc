@@ -51,6 +51,7 @@ void InitializeFlags(Flags *f, const char *env) {
   f->flush_memory_ms = 0;
   f->stop_on_start = false;
   f->running_on_valgrind = false;
+  f->use_internal_symbolizer = false;
 
 
   // Let a frontend override.
@@ -72,6 +73,7 @@ void InitializeFlags(Flags *f, const char *env) {
   Flag(env, &f->profile_memory, "profile_memory");
   Flag(env, &f->flush_memory_ms, "flush_memory_ms");
   Flag(env, &f->stop_on_start, "stop_on_start");
+  Flag(env, &f->use_internal_symbolizer, "use_internal_symbolizer");
 }
 
 static const char *GetFlagValue(const char *env, const char *name,

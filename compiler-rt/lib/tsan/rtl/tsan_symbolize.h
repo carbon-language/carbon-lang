@@ -21,6 +21,11 @@ namespace __tsan {
 ReportStack *SymbolizeCode(uptr addr);
 ReportStack *SymbolizeData(uptr addr);
 
+ReportStack *SymbolizeCodeAddr2Line(uptr addr);
+ReportStack *SymbolizeDataAddr2Line(uptr addr);
+
+ReportStack *NewReportStackEntry(uptr addr);
+
 }  // namespace __tsan
 
 #endif  // TSAN_SYMBOLIZE_H
