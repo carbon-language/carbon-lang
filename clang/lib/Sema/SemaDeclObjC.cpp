@@ -2700,7 +2700,8 @@ void Sema::CheckObjCMethodOverrides(ObjCMethodDecl *ObjCMethod,
               isa<ObjCProtocolDecl>(overridden->getDeclContext()));
     
     if (CurrentClass && overridden->getDeclContext() != CurrentClass &&
-        isa<ObjCInterfaceDecl>(overridden->getDeclContext())) {
+        isa<ObjCInterfaceDecl>(overridden->getDeclContext()) &&
+        !overridden->isImplicit() /* not meant for properties */) {
       ObjCMethodDecl::param_iterator ParamI = ObjCMethod->param_begin(),
                                           E = ObjCMethod->param_end();
       ObjCMethodDecl::param_iterator PrevI = overridden->param_begin(),
