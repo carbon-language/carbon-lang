@@ -60,53 +60,44 @@ APInt polly::APInt_from_MPZ (const mpz_t mpz) {
   }
 }
 
-std::string polly::stringFromIslObj(/*__isl_keep*/ isl_map *map) {
-  isl_printer *p = isl_printer_to_str(isl_map_get_ctx(map));
-  isl_printer_print_map(p, map);
+template<typename ISLTy, typename ISL_CTX_GETTER, typename ISL_PRINTER>
+static inline std::string stringFromIslObjInternal(/*__isl_keep*/
+  ISLTy *isl_obj, ISL_CTX_GETTER ctx_getter_fn, ISL_PRINTER printer_fn) {
+  isl_ctx *ctx = ctx_getter_fn(isl_obj);
+  isl_printer *p = isl_printer_to_str(ctx);
+  printer_fn(p, isl_obj);
   char *char_str = isl_printer_get_str(p);
   std::string string(char_str);
   free(char_str);
   isl_printer_free(p);
   return string;
+}
+
+static inline isl_ctx *schedule_get_ctx(/*__isl_keep*/ isl_schedule *schedule) {
+  return isl_union_map_get_ctx(isl_schedule_get_map(schedule));
+}
+
+std::string polly::stringFromIslObj(/*__isl_keep*/ isl_map *map) {
+  return stringFromIslObjInternal(map, isl_map_get_ctx,
+                                  isl_printer_print_map);
 }
 
 std::string polly::stringFromIslObj(/*__isl_keep*/ isl_set *set) {
-  isl_printer *p = isl_printer_to_str(isl_set_get_ctx(set));
-  isl_printer_print_set(p, set);
-  char *char_str = isl_printer_get_str(p);
-  std::string string(char_str);
-  free(char_str);
-  isl_printer_free(p);
-  return string;
+  return stringFromIslObjInternal(set, isl_set_get_ctx,
+                                  isl_printer_print_set);
 }
 
 std::string polly::stringFromIslObj(/*__isl_keep*/ isl_union_map *umap) {
-  isl_printer *p = isl_printer_to_str(isl_union_map_get_ctx(umap));
-  isl_printer_print_union_map(p, umap);
-  char *char_str = isl_printer_get_str(p);
-  std::string string(char_str);
-  free(char_str);
-  isl_printer_free(p);
-  return string;
+  return stringFromIslObjInternal(umap, isl_union_map_get_ctx,
+                                  isl_printer_print_union_map);
 }
 
 std::string polly::stringFromIslObj(/*__isl_keep*/ isl_union_set *uset) {
-  isl_printer *p = isl_printer_to_str(isl_union_set_get_ctx(uset));
-  isl_printer_print_union_set(p, uset);
-  char *char_str = isl_printer_get_str(p);
-  std::string string(char_str);
-  free(char_str);
-  isl_printer_free(p);
-  return string;
+  return stringFromIslObjInternal(uset, isl_union_set_get_ctx,
+                                  isl_printer_print_union_set);
 }
 
 std::string polly::stringFromIslObj(/*__isl_keep*/ isl_schedule *schedule) {
-  isl_ctx *ctx = isl_union_map_get_ctx(isl_schedule_get_map(schedule));
-  isl_printer *p = isl_printer_to_str(ctx);
-  isl_printer_print_schedule(p, schedule);
-  char *char_str = isl_printer_get_str(p);
-  std::string string(char_str);
-  free(char_str);
-  isl_printer_free(p);
-  return string;
+  return stringFromIslObjInternal(schedule, schedule_get_ctx,
+                                  isl_printer_print_schedule);
 }
