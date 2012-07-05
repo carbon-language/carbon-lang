@@ -2395,6 +2395,8 @@ class Foo {
   void test1();
   void test2();
   void test3();
+  void test4();
+  void test5();
 };
 
 
@@ -2416,6 +2418,22 @@ void Foo::test3() {
   rlock.Release();
   a = 1;  // expected-warning {{writing variable 'a' requires locking 'mu_' exclusively}}
 }
+
+void Foo::test4() {
+  ReleasableMutexLock rlock(&mu_);
+  rlock.Release();
+  rlock.Release();  // expected-warning {{unlocking 'mu_' that was not locked}}
+}
+
+void Foo::test5() {
+  ReleasableMutexLock rlock(&mu_);
+  if (c) {
+    rlock.Release();
+  }
+  // no warning on join point for managed lock.
+  rlock.Release();  // expected-warning {{unlocking 'mu_' that was not locked}}
+}
+
 
 } // end namespace ReleasableScopedLock
 
@@ -2457,15 +2475,21 @@ public:
   Mutex mu_;
   int a GUARDED_BY(mu_);
 
-  void foo() EXCLUSIVE_LOCKS_REQUIRED(mu_);
+  void foo1() EXCLUSIVE_LOCKS_REQUIRED(mu_);
+  int  foo2() SHARED_LOCKS_REQUIRED(mu_);
 };
 
 
-void Foo::foo() EXCLUSIVE_LOCKS_REQUIRED(mu_) {
+void Foo::foo1() EXCLUSIVE_LOCKS_REQUIRED(mu_) {
   a = 0;
 }
 
-};
+int Foo::foo2() SHARED_LOCKS_REQUIRED(mu_) {
+  return a;
+}
+
+}
+
 
 
 namespace UnlockBug {
@@ -2485,6 +2509,7 @@ public:
 };
 
 } // end namespace UnlockBug
+
 
 
 namespace FoolishScopedLockableBug {
@@ -2551,6 +2576,7 @@ class Foo {
 
 
 } // end namespace FoolishScopedLockableBug
+
 
 
 namespace TemporaryCleanupExpr {
@@ -2736,6 +2762,174 @@ void Bar::test3() {
 }
 
 }  // end namespace SmartPointerTests
+
+
+
+namespace DuplicateAttributeTest {
+
+class LOCKABLE Foo {
+public:
+  Mutex mu1_;
+  Mutex mu2_;
+  Mutex mu3_;
+  int a GUARDED_BY(mu1_);
+  int b GUARDED_BY(mu2_);
+  int c GUARDED_BY(mu3_);
+
+  void lock()   EXCLUSIVE_LOCK_FUNCTION();
+  void unlock() UNLOCK_FUNCTION();
+
+  void lock1()  EXCLUSIVE_LOCK_FUNCTION(mu1_);
+  void slock1() SHARED_LOCK_FUNCTION(mu1_);
+  void lock3()  EXCLUSIVE_LOCK_FUNCTION(mu1_, mu2_, mu3_);
+  void locklots()
+    EXCLUSIVE_LOCK_FUNCTION(mu1_)
+    EXCLUSIVE_LOCK_FUNCTION(mu2_)
+    EXCLUSIVE_LOCK_FUNCTION(mu1_, mu2_, mu3_);
+
+  void unlock1() UNLOCK_FUNCTION(mu1_);
+  void unlock3() UNLOCK_FUNCTION(mu1_, mu2_, mu3_);
+  void unlocklots()
+    UNLOCK_FUNCTION(mu1_)
+    UNLOCK_FUNCTION(mu2_)
+    UNLOCK_FUNCTION(mu1_, mu2_, mu3_);
+};
+
+
+void Foo::lock()   EXCLUSIVE_LOCK_FUNCTION() { }
+void Foo::unlock() UNLOCK_FUNCTION()         { }
+
+void Foo::lock1()  EXCLUSIVE_LOCK_FUNCTION(mu1_) {
+  mu1_.Lock();
+}
+
+void Foo::slock1() SHARED_LOCK_FUNCTION(mu1_) {
+  mu1_.Lock();
+}
+
+void Foo::lock3()  EXCLUSIVE_LOCK_FUNCTION(mu1_, mu2_, mu3_) {
+  mu1_.Lock();
+  mu2_.Lock();
+  mu3_.Lock();
+}
+
+void Foo::locklots()
+    EXCLUSIVE_LOCK_FUNCTION(mu1_, mu2_)
+    EXCLUSIVE_LOCK_FUNCTION(mu2_, mu3_) {
+  mu1_.Lock();
+  mu2_.Lock();
+  mu3_.Lock();
+}
+
+void Foo::unlock1() UNLOCK_FUNCTION(mu1_) {
+  mu1_.Unlock();
+}
+
+void Foo::unlock3() UNLOCK_FUNCTION(mu1_, mu2_, mu3_) {
+  mu1_.Unlock();
+  mu2_.Unlock();
+  mu3_.Unlock();
+}
+
+void Foo::unlocklots()
+    UNLOCK_FUNCTION(mu1_, mu2_)
+    UNLOCK_FUNCTION(mu2_, mu3_) {
+  mu1_.Unlock();
+  mu2_.Unlock();
+  mu3_.Unlock();
+}
+
+
+void test0() {
+  Foo foo;
+  foo.lock();
+  foo.unlock();
+
+  foo.lock();
+  foo.lock();     // expected-warning {{locking 'foo' that is already locked}}
+  foo.unlock();
+  foo.unlock();   // expected-warning {{unlocking 'foo' that was not locked}}
+}
+
+
+void test1() {
+  Foo foo;
+  foo.lock1();
+  foo.a = 0;
+  foo.unlock1();
+
+  foo.lock1();
+  foo.lock1();    // expected-warning {{locking 'mu1_' that is already locked}}
+  foo.a = 0;
+  foo.unlock1();
+  foo.unlock1();  // expected-warning {{unlocking 'mu1_' that was not locked}}
+}
+
+
+int test2() {
+  Foo foo;
+  foo.slock1();
+  int d1 = foo.a;
+  foo.unlock1();
+
+  foo.slock1();
+  foo.slock1();    // expected-warning {{locking 'mu1_' that is already locked}}
+  int d2 = foo.a;
+  foo.unlock1();
+  foo.unlock1();   // expected-warning {{unlocking 'mu1_' that was not locked}}
+  return d1 + d2;
+}
+
+
+void test3() {
+  Foo foo;
+  foo.lock3();
+  foo.a = 0;
+  foo.b = 0;
+  foo.c = 0;
+  foo.unlock3();
+
+  foo.lock3();
+  foo.lock3(); // \
+    // expected-warning {{locking 'mu1_' that is already locked}} \
+    // expected-warning {{locking 'mu2_' that is already locked}} \
+    // expected-warning {{locking 'mu3_' that is already locked}}
+  foo.a = 0;
+  foo.b = 0;
+  foo.c = 0;
+  foo.unlock3();
+  foo.unlock3(); // \
+    // expected-warning {{unlocking 'mu1_' that was not locked}} \
+    // expected-warning {{unlocking 'mu2_' that was not locked}} \
+    // expected-warning {{unlocking 'mu3_' that was not locked}}
+}
+
+
+void testlots() {
+  Foo foo;
+  foo.locklots();
+  foo.a = 0;
+  foo.b = 0;
+  foo.c = 0;
+  foo.unlocklots();
+
+  foo.locklots();
+  foo.locklots(); // \
+    // expected-warning {{locking 'mu1_' that is already locked}} \
+    // expected-warning {{locking 'mu2_' that is already locked}} \
+    // expected-warning {{locking 'mu3_' that is already locked}}
+  foo.a = 0;
+  foo.b = 0;
+  foo.c = 0;
+  foo.unlocklots();
+  foo.unlocklots(); // \
+    // expected-warning {{unlocking 'mu1_' that was not locked}} \
+    // expected-warning {{unlocking 'mu2_' that was not locked}} \
+    // expected-warning {{unlocking 'mu3_' that was not locked}}
+}
+
+}  // end namespace DuplicateAttributeTest
+
 
 
 
