@@ -78,6 +78,21 @@ INTERCEPTOR(void, free, void *ptr) {
   }
 }
 
+// We can't always replace the default CFAllocator with cf_asan right in
+// ReplaceSystemMalloc(), because it is sometimes called before
+// __CFInitialize(), when the default allocator is invalid and replacing it may
+// crash the program. Instead we wait for the allocator to initialize and jump
+// in just after __CFInitialize(). Nobody is going to allocate memory using
+// CFAllocators before that, so we won't miss anything.
+//
+// See http://code.google.com/p/address-sanitizer/issues/detail?id=87
+// and http://opensource.apple.com/source/CF/CF-550.43/CFRuntime.c
+INTERCEPTOR(void, __CFInitialize) {
+  CHECK(FLAG_replace_cfallocator);
+  REAL(__CFInitialize)();
+  if (cf_asan) CFAllocatorSetDefault(cf_asan);
+}
+
 namespace {
 // TODO(glider): the mz_* functions should be united with the Linux wrappers,
 // as they are basically copied from there.
@@ -300,7 +315,7 @@ boolean_t mi_zone_locked(malloc_zone_t *zone) {
 
 }  // unnamed namespace
 
-extern bool kCFUseCollectableAllocator;  // is GC on?
+extern int __CFRuntimeClassTableSize;
 
 namespace __asan {
 void ReplaceSystemMalloc() {
@@ -377,7 +392,11 @@ void ReplaceSystemMalloc() {
           /*deallocate*/ &cf_free,
           /*preferredSize*/ 0 };
     cf_asan = CFAllocatorCreate(kCFAllocatorUseContext, &asan_context);
-    CFAllocatorSetDefault(cf_asan);
+    // If __CFInitialize() hasn't been called yet, cf_asan will be installed
+    // as the default allocator after __CFInitialize() finishes (see the
+    // interceptor for __CFInitialize() above). Otherwise (if
+    // __CFRuntimeClassTableSize is initialized) install cf_asan right now.
+    if (__CFRuntimeClassTableSize) CFAllocatorSetDefault(cf_asan);
   }
 }
 }  // namespace __asan

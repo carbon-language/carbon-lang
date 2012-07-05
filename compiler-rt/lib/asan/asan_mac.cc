@@ -295,8 +295,6 @@ INTERCEPTOR(void, dispatch_async_f, dispatch_queue_t dq, void *ctxt,
                                 asan_dispatch_call_block_and_release);
 }
 
-DECLARE_REAL_AND_INTERCEPTOR(void, free, void *ptr)
-
 INTERCEPTOR(void, dispatch_sync_f, dispatch_queue_t dq, void *ctxt,
                                    dispatch_function_t func) {
   GET_STACK_TRACE_HERE(kStackTraceMax);
@@ -428,6 +426,12 @@ INTERCEPTOR(CFStringRef, CFStringCreateCopy, CFAllocatorRef alloc,
   }
 }
 
+DECLARE_REAL_AND_INTERCEPTOR(void, free, void *ptr)
+
+extern "C"
+void __CFInitialize();
+DECLARE_REAL_AND_INTERCEPTOR(void, __CFInitialize)
+
 namespace __asan {
 
 void InitializeMacInterceptors() {
@@ -453,6 +457,9 @@ void InitializeMacInterceptors() {
   // Some of the library functions call free() directly, so we have to
   // intercept it.
   CHECK(INTERCEPT_FUNCTION(free));
+  if (FLAG_replace_cfallocator) {
+    CHECK(INTERCEPT_FUNCTION(__CFInitialize));
+  }
 }
 
 }  // namespace __asan
