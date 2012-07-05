@@ -14,6 +14,7 @@
 #ifndef LLVM_CODEGEN_MACHINEOPERAND_H
 #define LLVM_CODEGEN_MACHINEOPERAND_H
 
+#include "llvm/ADT/Hashing.h"
 #include "llvm/Support/DataTypes.h"
 #include <cassert>
 
@@ -502,6 +503,13 @@ public:
   /// isIdenticalTo - Return true if this operand is identical to the specified
   /// operand. Note: This method ignores isKill and isDead properties.
   bool isIdenticalTo(const MachineOperand &Other) const;
+
+  /// \brief MachineOperand hash_value overload.
+  ///
+  /// Note that this includes the same information in the hash that
+  /// isIdenticalTo uses for comparison. It is thus suited for use in hash
+  /// tables which use that function for equality comparisons only.
+  friend hash_code hash_value(const MachineOperand &MO);
 
   /// ChangeToImmediate - Replace this operand with a new immediate operand of
   /// the specified value.  If an operand is known to be an immediate already,

@@ -186,7 +186,8 @@ void MachineOperand::ChangeToRegister(unsigned Reg, bool isDef, bool isImp,
 }
 
 /// isIdenticalTo - Return true if this operand is identical to the specified
-/// operand.
+/// operand. Note that this should stay in sync with the hash_value overload
+/// below.
 bool MachineOperand::isIdenticalTo(const MachineOperand &Other) const {
   if (getType() != Other.getType() ||
       getTargetFlags() != Other.getTargetFlags())
@@ -223,6 +224,46 @@ bool MachineOperand::isIdenticalTo(const MachineOperand &Other) const {
     return getMCSymbol() == Other.getMCSymbol();
   case MachineOperand::MO_Metadata:
     return getMetadata() == Other.getMetadata();
+  }
+  llvm_unreachable("Invalid machine operand type");
+}
+
+// Note: this must stay exactly in sync with isIdenticalTo above.
+hash_code llvm::hash_value(const MachineOperand &MO) {
+  switch (MO.getType()) {
+  case MachineOperand::MO_Register:
+    return hash_combine(MO.getType(), MO.getTargetFlags(), MO.getReg(),
+                        MO.getSubReg(), MO.isDef());
+  case MachineOperand::MO_Immediate:
+    return hash_combine(MO.getType(), MO.getTargetFlags(), MO.getImm());
+  case MachineOperand::MO_CImmediate:
+    return hash_combine(MO.getType(), MO.getTargetFlags(), MO.getCImm());
+  case MachineOperand::MO_FPImmediate:
+    return hash_combine(MO.getType(), MO.getTargetFlags(), MO.getFPImm());
+  case MachineOperand::MO_MachineBasicBlock:
+    return hash_combine(MO.getType(), MO.getTargetFlags(), MO.getMBB());
+  case MachineOperand::MO_FrameIndex:
+    return hash_combine(MO.getType(), MO.getTargetFlags(), MO.getIndex());
+  case MachineOperand::MO_ConstantPoolIndex:
+    return hash_combine(MO.getType(), MO.getTargetFlags(), MO.getIndex(),
+                        MO.getOffset());
+  case MachineOperand::MO_JumpTableIndex:
+    return hash_combine(MO.getType(), MO.getTargetFlags(), MO.getIndex());
+  case MachineOperand::MO_ExternalSymbol:
+    return hash_combine(MO.getType(), MO.getTargetFlags(), MO.getOffset(),
+                        MO.getSymbolName());
+  case MachineOperand::MO_GlobalAddress:
+    return hash_combine(MO.getType(), MO.getTargetFlags(), MO.getGlobal(),
+                        MO.getOffset());
+  case MachineOperand::MO_BlockAddress:
+    return hash_combine(MO.getType(), MO.getTargetFlags(),
+                        MO.getBlockAddress());
+  case MachineOperand::MO_RegisterMask:
+    return hash_combine(MO.getType(), MO.getTargetFlags(), MO.getRegMask());
+  case MachineOperand::MO_Metadata:
+    return hash_combine(MO.getType(), MO.getTargetFlags(), MO.getMetadata());
+  case MachineOperand::MO_MCSymbol:
+    return hash_combine(MO.getType(), MO.getTargetFlags(), MO.getMCSymbol());
   }
   llvm_unreachable("Invalid machine operand type");
 }
@@ -1854,57 +1895,16 @@ void MachineInstr::setPhysRegsDeadExcept(ArrayRef<unsigned> UsedRegs,
 unsigned
 MachineInstrExpressionTrait::getHashValue(const MachineInstr* const &MI) {
   // Build up a buffer of hash code components.
-  //
-  // FIXME: This is a total hack. We should have a hash_value overload for
-  // MachineOperand, but currently that doesn't work because there are many
-  // different ideas of "equality" and thus different sets of information that
-  // contribute to the hash code. This one happens to want to take a specific
-  // subset. And it's still not clear that this routine uses the *correct*
-  // subset of information when computing the hash code. The goal is to use the
-  // same inputs for the hash code here that MachineInstr::isIdenticalTo uses to
-  // test for equality when passed the 'IgnoreVRegDefs' filter flag. It would
-  // be very useful to factor the selection of relevant inputs out of the two
-  // functions and into a common routine, but it's not clear how that can be
-  // done.
   SmallVector<size_t, 8> HashComponents;
   HashComponents.reserve(MI->getNumOperands() + 1);
   HashComponents.push_back(MI->getOpcode());
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = MI->getOperand(i);
-    switch (MO.getType()) {
-    default: break;
-    case MachineOperand::MO_Register:
-      if (MO.isDef() && TargetRegisterInfo::isVirtualRegister(MO.getReg()))
-        continue;  // Skip virtual register defs.
-      HashComponents.push_back(hash_combine(MO.getType(), MO.getReg()));
-      break;
-    case MachineOperand::MO_Immediate:
-      HashComponents.push_back(hash_combine(MO.getType(), MO.getImm()));
-      break;
-    case MachineOperand::MO_FrameIndex:
-    case MachineOperand::MO_JumpTableIndex:
-      HashComponents.push_back(hash_combine(MO.getType(), MO.getIndex()));
-      break;
-    case MachineOperand::MO_ConstantPoolIndex:
-      HashComponents.push_back(hash_combine(MO.getType(), MO.getIndex(),
-                                            MO.getOffset()));
-      break;
-    case MachineOperand::MO_MachineBasicBlock:
-      HashComponents.push_back(hash_combine(MO.getType(), MO.getMBB()));
-      break;
-    case MachineOperand::MO_GlobalAddress:
-      HashComponents.push_back(hash_combine(MO.getType(), MO.getGlobal(),
-                                            MO.getOffset()));
-      break;
-    case MachineOperand::MO_BlockAddress:
-      HashComponents.push_back(hash_combine(MO.getType(),
-                                            MO.getBlockAddress(),
-                                            MO.getOffset()));
-      break;
-    case MachineOperand::MO_MCSymbol:
-      HashComponents.push_back(hash_combine(MO.getType(), MO.getMCSymbol()));
-      break;
-    }
+    if (MO.isReg() && MO.isDef() &&
+        TargetRegisterInfo::isVirtualRegister(MO.getReg()))
+      continue;  // Skip virtual register defs.
+
+    HashComponents.push_back(hash_value(MO));
   }
   return hash_combine_range(HashComponents.begin(), HashComponents.end());
 }
