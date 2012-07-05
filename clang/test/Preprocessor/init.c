@@ -888,6 +888,20 @@
 // RUN:   | FileCheck -check-prefix NOMIPS16 %s
 // NOMIPS16-NOT:#define __mips16 1
 //
+// RUN: %clang_cc1 -target-feature +dsp \
+// RUN:   -E -dM -triple=mips-none-none < /dev/null \
+// RUN:   | FileCheck -check-prefix MIPS-DSP %s
+// MIPS-DSP:#define __mips_dsp 1
+// MIPS-DSP:#define __mips_dsp_rev 1
+// MIPS-DSP-NOT:#define __mips_dspr2 1
+//
+// RUN: %clang_cc1 -target-feature +dspr2 \
+// RUN:   -E -dM -triple=mips-none-none < /dev/null \
+// RUN:   | FileCheck -check-prefix MIPS-DSPR2 %s
+// MIPS-DSPR2:#define __mips_dsp 1
+// MIPS-DSPR2:#define __mips_dsp_rev 2
+// MIPS-DSPR2:#define __mips_dspr2 1
+//
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=msp430-none-none < /dev/null | FileCheck -check-prefix MSP430 %s
 //
 // MSP430:#define MSP430 1

@@ -3603,6 +3603,9 @@ class MipsTargetInfoBase : public TargetInfo {
   enum MipsFloatABI {
     HardFloat, SingleFloat, SoftFloat
   } FloatABI;
+  enum DspRevEnum {
+    NoDSP, DSP1, DSP2
+  } DspRev;
 
 protected:
   std::string ABI;
@@ -3615,6 +3618,7 @@ public:
       CPU(CPUStr),
       IsMips16(false),
       FloatABI(HardFloat),
+      DspRev(NoDSP),
       ABI(ABIStr)
   {}
 
@@ -3647,6 +3651,20 @@ public:
 
     if (IsMips16)
       Builder.defineMacro("__mips16", Twine(1));
+
+    switch (DspRev) {
+    default:
+      break;
+    case DSP1:
+      Builder.defineMacro("__mips_dsp_rev", Twine(1));
+      Builder.defineMacro("__mips_dsp", Twine(1));
+      break;
+    case DSP2:
+      Builder.defineMacro("__mips_dsp_rev", Twine(2));
+      Builder.defineMacro("__mips_dspr2", Twine(1));
+      Builder.defineMacro("__mips_dsp", Twine(1));
+      break;
+    }
 
     Builder.defineMacro("_MIPS_SZPTR", Twine(getPointerWidth(0)));
     Builder.defineMacro("_MIPS_SZINT", Twine(getIntWidth()));
@@ -3729,6 +3747,7 @@ public:
   virtual void HandleTargetFeatures(std::vector<std::string> &Features) {
     IsMips16 = false;
     FloatABI = HardFloat;
+    DspRev = NoDSP;
 
     for (std::vector<std::string>::iterator it = Features.begin(),
          ie = Features.end(); it != ie; ++it) {
@@ -3738,6 +3757,10 @@ public:
         FloatABI = SoftFloat;
       else if (*it == "+mips16")
         IsMips16 = true;
+      else if (*it == "+dsp")
+        DspRev = std::max(DspRev, DSP1);
+      else if (*it == "+dspr2")
+        DspRev = std::max(DspRev, DSP2);
     }
 
     // Remove front-end specific option.
