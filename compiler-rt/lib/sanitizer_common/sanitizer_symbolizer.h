@@ -56,6 +56,10 @@ uptr SymbolizeCode(uptr address, AddressInfo *frames, uptr max_frames);
 struct DWARFSection {
   const char *data;
   uptr size;
+  DWARFSection() {
+    data = 0;
+    size = 0;
+  }
 };
 // Returns true on success.
 bool FindDWARFSection(uptr object_file_addr, const char *section_name,
