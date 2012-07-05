@@ -18,24 +18,23 @@
 #include "MipsInstrInfo.h"
 #include "InstPrinter/MipsInstPrinter.h"
 #include "MCTargetDesc/MipsBaseInfo.h"
-#include "llvm/BasicBlock.h"
-#include "llvm/DebugInfo.h"
-#include "llvm/Instructions.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/Twine.h"
-#include "llvm/CodeGen/MachineFunctionPass.h"
+#include "llvm/BasicBlock.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
+#include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineMemOperand.h"
+#include "llvm/InlineAsm.h"
 #include "llvm/Instructions.h"
-#include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCInst.h"
+#include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
-#include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/TargetRegistry.h"
 #include "llvm/Target/Mangler.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
@@ -334,8 +333,43 @@ bool MipsAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNum,
         O << "$0";
       return false;
     }
+    // This will be shared with other cases in succeeding checkins
+    case 'D': {
+      // Second part of a double word register operand
+      if (OpNum == 0)
+        return true;
+      const MachineOperand &FlagsOP = MI->getOperand(OpNum - 1);
+      if (!FlagsOP.isImm())
+        return true;
+      unsigned Flags = FlagsOP.getImm();
+      unsigned NumVals = InlineAsm::getNumOperandRegisters(Flags);
+      if (NumVals != 2) {
+        if (!Subtarget->isGP32bit() && NumVals == 1 && MO.isReg()) {
+          // In 64 bit mode long longs are always just a single reg
+          unsigned Reg = MO.getReg();
+          O << '$' << MipsInstPrinter::getRegisterName(Reg);
+          return false;
+        }
+        return true;
+      }
+      unsigned RegOp;
+      switch(ExtraCode[0]) {
+      // This will have other cases in succeeding checkins
+      case 'D':
+        RegOp = (!Subtarget->isGP32bit()) ? OpNum : OpNum + 1;
+        break;
+      }
+      if (RegOp >= MI->getNumOperands())
+        return true;
+      const MachineOperand &MO = MI->getOperand(RegOp);
+      if (!MO.isReg())
+        return true;
+      unsigned Reg = MO.getReg();
+      O << '$' << MipsInstPrinter::getRegisterName(Reg);
+      return false;
     }
-  }
+    } // switch
+  } // if ExtraCode
 
   printOperand(MI, OpNum, O);
   return false;
