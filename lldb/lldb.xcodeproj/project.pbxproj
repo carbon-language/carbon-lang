@@ -4944,7 +4944,7 @@
 					"RC_BUILDIT=${RC_BUILDIT}0",
 				);
 				INSTALL_PATH = "/$(CONFIGURATION)/LLDB.framework/XPCServices";
-				IS_APPLE_CODE_SIGNED = "(anchor apple or (anchor apple generic and certificate leaf[field.1.2.840.113635.100.6.1.9]))";
+				IS_APPLE_CODE_SIGNED = "(anchor apple or (anchor apple generic and certificate leaf[field.1.2.840.113635.100.6.1.9]) or (anchor apple generic and certificate leaf[field.1.2.840.113635.100.6.1.9.1]))";
 				MACH_O_TYPE = mh_execute;
 				PRODUCT_NAME = "com.apple.lldb.$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
@@ -4973,7 +4973,7 @@
 					"RC_BUILDIT=${RC_BUILDIT}0",
 				);
 				INSTALL_PATH = "/$(CONFIGURATION)/LLDB.framework/XPCServices";
-				IS_APPLE_CODE_SIGNED = "(anchor apple or (anchor apple generic and certificate leaf[field.1.2.840.113635.100.6.1.9]))";
+				IS_APPLE_CODE_SIGNED = "(anchor apple or (anchor apple generic and certificate leaf[field.1.2.840.113635.100.6.1.9]) or (anchor apple generic and certificate leaf[field.1.2.840.113635.100.6.1.9.1]))";
 				MACH_O_TYPE = mh_execute;
 				PRODUCT_NAME = "com.apple.lldb.$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
@@ -5000,7 +5000,7 @@
 					"RC_BUILDIT=${RC_BUILDIT}0",
 				);
 				INSTALL_PATH = "$(LLDB_FRAMEWORK_INSTALL_DIR)/LLDB.framework/XPCServices";
-				IS_APPLE_CODE_SIGNED = "(anchor apple or (anchor apple generic and certificate leaf[field.1.2.840.113635.100.6.1.9]))";
+				IS_APPLE_CODE_SIGNED = "(anchor apple or (anchor apple generic and certificate leaf[field.1.2.840.113635.100.6.1.9]) or (anchor apple generic and certificate leaf[field.1.2.840.113635.100.6.1.9.1]))";
 				MACH_O_TYPE = mh_execute;
 				PRODUCT_NAME = "com.apple.lldb.$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
@@ -5035,7 +5035,7 @@
 					"RC_BUILDIT=${RC_BUILDIT}0",
 				);
 				INSTALL_PATH = "/$(CONFIGURATION)/LLDB.framework/XPCServices";
-				IS_APPLE_CODE_SIGNED = "(anchor apple or (anchor apple generic and certificate leaf[field.1.2.840.113635.100.6.1.9]))";
+				IS_APPLE_CODE_SIGNED = "(anchor apple or (anchor apple generic and certificate leaf[field.1.2.840.113635.100.6.1.9]) or (anchor apple generic and certificate leaf[field.1.2.840.113635.100.6.1.9.1]))";
 				MACH_O_TYPE = mh_execute;
 				PRODUCT_NAME = "com.apple.lldb.$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
@@ -5065,7 +5065,7 @@
 					"RC_BUILDIT=${RC_BUILDIT}0",
 				);
 				INSTALL_PATH = "/$(CONFIGURATION)/LLDB.framework/XPCServices";
-				IS_APPLE_CODE_SIGNED = "(anchor apple or (anchor apple generic and certificate leaf[field.1.2.840.113635.100.6.1.9]))";
+				IS_APPLE_CODE_SIGNED = "(anchor apple or (anchor apple generic and certificate leaf[field.1.2.840.113635.100.6.1.9]) or (anchor apple generic and certificate leaf[field.1.2.840.113635.100.6.1.9.1]))";
 				MACH_O_TYPE = mh_execute;
 				PRODUCT_NAME = "com.apple.lldb.$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
@@ -5093,7 +5093,7 @@
 					"RC_BUILDIT=${RC_BUILDIT}0",
 				);
 				INSTALL_PATH = "$(LLDB_FRAMEWORK_INSTALL_DIR)/LLDB.framework/XPCServices";
-				IS_APPLE_CODE_SIGNED = "(anchor apple or (anchor apple generic and certificate leaf[field.1.2.840.113635.100.6.1.9]))";
+				IS_APPLE_CODE_SIGNED = "(anchor apple or (anchor apple generic and certificate leaf[field.1.2.840.113635.100.6.1.9]) or (anchor apple generic and certificate leaf[field.1.2.840.113635.100.6.1.9.1]))";
 				MACH_O_TYPE = mh_execute;
 				PRODUCT_NAME = "com.apple.lldb.$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
