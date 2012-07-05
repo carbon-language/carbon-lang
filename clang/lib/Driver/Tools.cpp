@@ -880,6 +880,20 @@ static StringRef getMipsFloatABI(const Driver &D, const ArgList &Args) {
   return FloatABI;
 }
 
+static void AddTargetFeature(const ArgList &Args,
+                             ArgStringList &CmdArgs,
+                             OptSpecifier OnOpt,
+                             OptSpecifier OffOpt,
+                             StringRef FeatureName) {
+  if (Arg *A = Args.getLastArg(OnOpt, OffOpt)) {
+    CmdArgs.push_back("-target-feature");
+    if (A->getOption().matches(OnOpt))
+      CmdArgs.push_back(Args.MakeArgString("+" + FeatureName));
+    else
+      CmdArgs.push_back(Args.MakeArgString("-" + FeatureName));
+  }
+}
+
 void Clang::AddMIPSTargetArgs(const ArgList &Args,
                              ArgStringList &CmdArgs) const {
   const Driver &D = getToolChain().getDriver();
@@ -920,14 +934,9 @@ void Clang::AddMIPSTargetArgs(const ArgList &Args,
     CmdArgs.push_back("hard");
   }
 
-  if (Arg *A = Args.getLastArg(options::OPT_mips16,
-                               options::OPT_mno_mips16)) {
-    CmdArgs.push_back("-target-feature");
-    if (A->getOption().matches(options::OPT_mips16))
-      CmdArgs.push_back("+mips16");
-    else
-      CmdArgs.push_back("-mips16");
-  }
+  AddTargetFeature(Args, CmdArgs,
+                   options::OPT_mips16, options::OPT_mno_mips16,
+                   "mips16");
 }
 
 /// getPPCTargetCPU - Get the (LLVM) name of the PowerPC cpu we are targeting.
