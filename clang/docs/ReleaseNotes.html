@@ -218,7 +218,21 @@ model can be used.
 <h3 id="objcchanges">Objective-C Language Changes in Clang</h3>
 <!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
 
-<p>...</p>
+<ul>
+  <li>
+    <p>It is now an error to compare against the addresses of Objective-C
+       literals. This is usually a simple mistake (using <code>==</code> instead
+       of <code>-isEqual:</code>), and the result depends on the implementation
+       of the various literals, none of which are guaranteed to be uniqued or
+       always newly-allocated.</p>
+    <p>In the past, we allowed comparisons against literal strings
+       (<code>@"..."</code>), since they are currently uniqued across
+       translation units at link time. This is an implementation detail and
+       should not be relied upon. If you are using such code, please use global
+       string constants instead (<code>NSString * const MyConst = @"..."</code>)
+       or use <code>-isEqual:</code>.</p>
+  </li>
+</ul>
 
 <!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
 <h3 id="apichanges">Internal API Changes</h3>
