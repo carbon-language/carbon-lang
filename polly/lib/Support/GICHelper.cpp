@@ -17,6 +17,7 @@
 #include "isl/map.h"
 #include "isl/union_map.h"
 #include "isl/schedule.h"
+#include "isl/aff.h"
 
 using namespace llvm;
 
@@ -101,3 +102,23 @@ std::string polly::stringFromIslObj(/*__isl_keep*/ isl_schedule *schedule) {
   return stringFromIslObjInternal(schedule, schedule_get_ctx,
                                   isl_printer_print_schedule);
 }
+
+std::string polly::stringFromIslObj(/*__isl_keep*/ isl_multi_aff *maff) {
+  return stringFromIslObjInternal(maff, isl_multi_aff_get_ctx,
+                                  isl_printer_print_multi_aff);
+}
+
+std::string polly::stringFromIslObj(/*__isl_keep*/ isl_pw_multi_aff *pma) {
+  return stringFromIslObjInternal(pma, isl_pw_multi_aff_get_ctx,
+                                  isl_printer_print_pw_multi_aff);
+}
+
+std::string polly::stringFromIslObj(/*__isl_keep*/ isl_aff *aff) {
+  return stringFromIslObjInternal(aff, isl_aff_get_ctx, isl_printer_print_aff);
+}
+
+std::string polly::stringFromIslObj(/*__isl_keep*/ isl_pw_aff *pwaff) {
+  return stringFromIslObjInternal(pwaff, isl_pw_aff_get_ctx,
+                                  isl_printer_print_pw_aff);
+}
+

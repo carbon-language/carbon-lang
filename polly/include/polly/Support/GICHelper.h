@@ -22,6 +22,10 @@ struct isl_union_map;
 struct isl_set;
 struct isl_union_set;
 struct isl_schedule;
+struct isl_multi_aff;
+struct isl_pw_multi_aff;
+struct isl_aff;
+struct isl_pw_aff;
 
 namespace polly {
 
@@ -43,6 +47,10 @@ std::string stringFromIslObj(/*__isl_keep*/ isl_union_map *umap);
 std::string stringFromIslObj(/*__isl_keep*/ isl_set *set);
 std::string stringFromIslObj(/*__isl_keep*/ isl_union_set *uset);
 std::string stringFromIslObj(/*__isl_keep*/ isl_schedule *schedule);
+std::string stringFromIslObj(/*__isl_keep*/ isl_multi_aff *maff);
+std::string stringFromIslObj(/*__isl_keep*/ isl_pw_multi_aff *pma);
+std::string stringFromIslObj(/*__isl_keep*/ isl_aff *aff);
+std::string stringFromIslObj(/*__isl_keep*/ isl_pw_aff *pwaff);
 
 //@}
 } //end namespace polly
