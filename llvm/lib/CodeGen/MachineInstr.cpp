@@ -1882,19 +1882,24 @@ MachineInstrExpressionTrait::getHashValue(const MachineInstr* const &MI) {
       HashComponents.push_back(hash_combine(MO.getType(), MO.getImm()));
       break;
     case MachineOperand::MO_FrameIndex:
-    case MachineOperand::MO_ConstantPoolIndex:
     case MachineOperand::MO_JumpTableIndex:
       HashComponents.push_back(hash_combine(MO.getType(), MO.getIndex()));
+      break;
+    case MachineOperand::MO_ConstantPoolIndex:
+      HashComponents.push_back(hash_combine(MO.getType(), MO.getIndex(),
+                                            MO.getOffset()));
       break;
     case MachineOperand::MO_MachineBasicBlock:
       HashComponents.push_back(hash_combine(MO.getType(), MO.getMBB()));
       break;
     case MachineOperand::MO_GlobalAddress:
-      HashComponents.push_back(hash_combine(MO.getType(), MO.getGlobal()));
+      HashComponents.push_back(hash_combine(MO.getType(), MO.getGlobal(),
+                                            MO.getOffset()));
       break;
     case MachineOperand::MO_BlockAddress:
       HashComponents.push_back(hash_combine(MO.getType(),
-                                            MO.getBlockAddress()));
+                                            MO.getBlockAddress(),
+                                            MO.getOffset()));
       break;
     case MachineOperand::MO_MCSymbol:
       HashComponents.push_back(hash_combine(MO.getType(), MO.getMCSymbol()));
