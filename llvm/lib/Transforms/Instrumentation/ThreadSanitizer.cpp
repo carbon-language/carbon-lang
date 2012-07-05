@@ -319,7 +319,12 @@ bool ThreadSanitizer::instrumentLoadOrStore(Instruction *I) {
   if (Idx < 0)
     return false;
   if (IsWrite && isVtableAccess(I)) {
+    DEBUG(dbgs() << "  VPTR : " << *I << "\n");
     Value *StoredValue = cast<StoreInst>(I)->getValueOperand();
+    // StoredValue does not necessary have a pointer type.
+    if (isa<IntegerType>(StoredValue->getType()))
+      StoredValue = IRB.CreateIntToPtr(StoredValue, IRB.getInt8PtrTy());
+    // Call TsanVptrUpdate.
     IRB.CreateCall2(TsanVptrUpdate,
                     IRB.CreatePointerCast(Addr, IRB.getInt8PtrTy()),
                     IRB.CreatePointerCast(StoredValue, IRB.getInt8PtrTy()));
