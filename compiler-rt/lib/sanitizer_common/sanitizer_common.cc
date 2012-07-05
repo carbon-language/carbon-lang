@@ -13,10 +13,7 @@
 
 #include "sanitizer_common.h"
 #include "sanitizer_libc.h"
-
-// Should not add dependency on libstdc++,
-// since most of the stuff here is inlinable.
-#include <algorithm>
+#include <stdlib.h>
 
 namespace __sanitizer {
 
@@ -60,8 +57,19 @@ uptr ReadFileToBuffer(const char *file_name, char **buff,
   return read_len;
 }
 
+static int comp(const void *p1, const void *p2) {
+  uptr v1 = *(uptr*)p1;
+  uptr v2 = *(uptr*)p2;
+  if (v1 < v2)
+    return -1;
+  else if (v1 > v2)
+    return 1;
+  else
+    return 0;
+}
+
 void SortArray(uptr *array, uptr size) {
-  std::sort(array, array + size);
+  qsort(array, size, sizeof(array[0]), &comp);
 }
 
 }  // namespace __sanitizer
