@@ -2390,21 +2390,29 @@ TargetLowering::SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
   }
 
   if (N0 == N1) {
+    // The sext(setcc()) => setcc() optimization relies on the appropriate
+    // constant being emitted.
+    uint64_t EqVal;
+    switch (getBooleanContents(N0.getValueType().isVector())) {
+    default: llvm_unreachable("Unknown boolean contents!");
+    case UndefinedBooleanContent:
+    case ZeroOrOneBooleanContent:
+      EqVal = ISD::isTrueWhenEqual(Cond);
+      break;
+    case ZeroOrNegativeOneBooleanContent:
+      EqVal = ISD::isTrueWhenEqual(Cond) ? -1 : 0;
+      break;
+    }
+
     // We can always fold X == X for integer setcc's.
     if (N0.getValueType().isInteger()) {
-      switch (getBooleanContents(N0.getValueType().isVector())) {
-      case UndefinedBooleanContent: 
-      case ZeroOrOneBooleanContent: 
-        return DAG.getConstant(ISD::isTrueWhenEqual(Cond), VT);
-      case ZeroOrNegativeOneBooleanContent:
-        return DAG.getConstant(ISD::isTrueWhenEqual(Cond) ? -1 : 0, VT);
-      }
+      return DAG.getConstant(EqVal, VT);
     }
     unsigned UOF = ISD::getUnorderedFlavor(Cond);
     if (UOF == 2)   // FP operators that are undefined on NaNs.
-      return DAG.getConstant(ISD::isTrueWhenEqual(Cond), VT);
+      return DAG.getConstant(EqVal, VT);
     if (UOF == unsigned(ISD::isTrueWhenEqual(Cond)))
-      return DAG.getConstant(UOF, VT);
+      return DAG.getConstant(EqVal, VT);
     // Otherwise, we can't fold it.  However, we can simplify it to SETUO/SETO
     // if it is not already.
     ISD::CondCode NewCond = UOF == 0 ? ISD::SETO : ISD::SETUO;
