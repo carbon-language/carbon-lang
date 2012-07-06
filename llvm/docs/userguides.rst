@@ -6,6 +6,7 @@ User Guides
 .. toctree::
    :hidden:
 
+   CMake
    CommandGuide/index
    DeveloperPolicy
    GettingStartedVS
@@ -19,7 +20,7 @@ User Guides
    Everything from unpacking and compilation of the distribution to execution
    of some tools.
     
-* `LLVM CMake guide <CMake.html>`_
+* :ref:`cmake`
 
    An addendum to the main Getting Started guide for those using the `CMake
    build system <http://www.cmake.org>`_.
