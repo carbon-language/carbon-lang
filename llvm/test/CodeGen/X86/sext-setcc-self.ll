@@ -1,8 +1,4 @@
-; RUN: llc -march=x86 -mcpu=nehalem < %s | FileCheck %s
-
-; FIXME: The failure cannot be reproduced with, ... why?
-; llc -mtriple=i686-win32 -mcpu=nehalem
-; XFAIL: cygwin,mingw32,win32
+; RUN: llc -march=x86-64 -mcpu=nehalem -asm-verbose=false < %s | FileCheck %s
 
 define <4 x i32> @test_ueq(<4 x float> %in) {
 entry:
