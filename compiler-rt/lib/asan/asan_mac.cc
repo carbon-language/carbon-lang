@@ -16,6 +16,7 @@
 
 #include "asan_interceptors.h"
 #include "asan_internal.h"
+#include "asan_mac.h"
 #include "asan_mapping.h"
 #include "asan_stack.h"
 #include "asan_thread.h"
@@ -51,14 +52,7 @@ void GetPcSpBp(void *context, uptr *pc, uptr *sp, uptr *bp) {
 # endif  // __WORDSIZE
 }
 
-enum {
-  MACOS_VERSION_UNKNOWN = 0,
-  MACOS_VERSION_LEOPARD,
-  MACOS_VERSION_SNOW_LEOPARD,
-  MACOS_VERSION_LION
-};
-
-static int GetMacosVersion() {
+int GetMacosVersion() {
   int mib[2] = { CTL_KERN, KERN_OSRELEASE };
   char version[100];
   uptr len = 0, maxlen = sizeof(version) / sizeof(version[0]);

@@ -16,12 +16,14 @@
 
 #include <AvailabilityMacros.h>
 #include <CoreFoundation/CFBase.h>
+#include <dlfcn.h>
 #include <malloc/malloc.h>
 #include <setjmp.h>
 
 #include "asan_allocator.h"
 #include "asan_interceptors.h"
 #include "asan_internal.h"
+#include "asan_mac.h"
 #include "asan_stack.h"
 
 // Similar code is used in Google Perftools,
@@ -394,9 +396,16 @@ void ReplaceSystemMalloc() {
     cf_asan = CFAllocatorCreate(kCFAllocatorUseContext, &asan_context);
     // If __CFInitialize() hasn't been called yet, cf_asan will be installed
     // as the default allocator after __CFInitialize() finishes (see the
-    // interceptor for __CFInitialize() above). Otherwise (if
-    // __CFRuntimeClassTableSize is initialized) install cf_asan right now.
-    if (__CFRuntimeClassTableSize) CFAllocatorSetDefault(cf_asan);
+    // interceptor for __CFInitialize() above). Otherwise install cf_asan right
+    // now. On Snow Leopard we can check for __CFRuntimeClassTableSize, but on
+    // Lion it is private, so we can't.
+    if (GetMacosVersion() == MACOS_VERSION_SNOW_LEOPARD) {
+      int *cf_rcts = (int*)dlsym(RTLD_SELF, "__CFRuntimeClassTableSize");
+      if (cf_rcts && *cf_rcts) CFAllocatorSetDefault(cf_asan);
+    } else {
+      // FIXME: how can we check __CFInitialize() has been called already?
+      CFAllocatorSetDefault(cf_asan);
+    }
   }
 }
 }  // namespace __asan
