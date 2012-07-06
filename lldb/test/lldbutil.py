@@ -82,7 +82,7 @@ def bytearray_to_int(bytes, bytesize):
     import struct
 
     if bytesize == 1:
-        return ba[0]
+        return bytes[0]
 
     # Little endian followed by a format character.
     template = "<%c"
