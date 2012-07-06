@@ -95,11 +95,11 @@ void isdoxy19(int, int);
 /** But there are other blocks that are part of the comment, too.  IS_DOXYGEN_END */
 void isdoxy20(int);
 
-void isdoxy21(int); ///< This is a member comment.  isdoxy21 IS_DOXYGEN_SINGLE
+void notdoxy21(int); ///< This is a member comment.  isdoxy21 IS_DOXYGEN_NOT_ATTACHED
 
-void isdoxy22(int); /*!< This is a member comment.  isdoxy22 IS_DOXYGEN_SINGLE */
+void notdoxy22(int); /*!< This is a member comment.  isdoxy22 IS_DOXYGEN_NOT_ATTACHED */
 
-void isdoxy23(int); /**< This is a member comment.  isdoxy23 IS_DOXYGEN_SINGLE */
+void notdoxy23(int); /**< This is a member comment.  isdoxy23 IS_DOXYGEN_NOT_ATTACHED */
 
 void notdoxy24(int); // NOT_DOXYGEN
 
@@ -248,9 +248,6 @@ void isdoxy47(int);
 // CHECK: annotate-comments.cpp:80:5: FunctionDecl=isdoxy18:{{.*}} isdoxy18 IS_DOXYGEN_START{{.*}} IS_DOXYGEN_END
 // CHECK: annotate-comments.cpp:90:6: FunctionDecl=isdoxy19:{{.*}} isdoxy19 IS_DOXYGEN_START{{.*}} IS_DOXYGEN_END
 // CHECK: annotate-comments.cpp:96:6: FunctionDecl=isdoxy20:{{.*}} isdoxy20 IS_DOXYGEN_START{{.*}} IS_DOXYGEN_END
-// CHECK: annotate-comments.cpp:98:6: FunctionDecl=isdoxy21:{{.*}} isdoxy21 IS_DOXYGEN_SINGLE
-// CHECK: annotate-comments.cpp:100:6: FunctionDecl=isdoxy22:{{.*}} isdoxy22 IS_DOXYGEN_SINGLE
-// CHECK: annotate-comments.cpp:102:6: FunctionDecl=isdoxy23:{{.*}} isdoxy23 IS_DOXYGEN_SINGLE
 // CHECK: annotate-comments.cpp:107:8: StructDecl=isdoxy25:{{.*}} IS_DOXYGEN_SINGLE
 // CHECK: annotate-comments.cpp:112:7: FieldDecl=isdoxy26:{{.*}} IS_DOXYGEN_SINGLE
 // CHECK: annotate-comments.cpp:116:7: FieldDecl=isdoxy27:{{.*}} IS_DOXYGEN_SINGLE
