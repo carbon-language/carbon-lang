@@ -15,6 +15,7 @@
 #include "lldb/API/SBBroadcaster.h"
 #include "lldb/API/SBFileSpec.h"
 #include "lldb/API/SBFileSpecList.h"
+#include "lldb/API/SBSymbolContextList.h"
 #include "lldb/API/SBType.h"
 #include "lldb/API/SBWatchpoint.h"
 
