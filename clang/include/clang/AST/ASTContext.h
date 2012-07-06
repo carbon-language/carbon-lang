@@ -440,7 +440,7 @@ public:
 
 public:
   void addComment(const RawComment &RC) {
-    Comments.addComment(RC);
+    Comments.addComment(RC, BumpAlloc);
   }
 
   /// \brief Return the documentation comment attached to a given declaration.

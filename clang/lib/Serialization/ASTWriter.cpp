@@ -2245,16 +2245,16 @@ void ASTWriter::WriteFileDeclIDsMap() {
 
 void ASTWriter::WriteComments() {
   Stream.EnterSubblock(COMMENTS_BLOCK_ID, 3);
-  ArrayRef<RawComment> RawComments = Context->Comments.getComments();
+  ArrayRef<RawComment *> RawComments = Context->Comments.getComments();
   RecordData Record;
-  for (ArrayRef<RawComment>::iterator I = RawComments.begin(),
-                                      E = RawComments.end();
+  for (ArrayRef<RawComment *>::iterator I = RawComments.begin(),
+                                        E = RawComments.end();
        I != E; ++I) {
     Record.clear();
-    AddSourceRange(I->getSourceRange(), Record);
-    Record.push_back(I->getKind());
-    Record.push_back(I->isTrailingComment());
-    Record.push_back(I->isAlmostTrailingComment());
+    AddSourceRange((*I)->getSourceRange(), Record);
+    Record.push_back((*I)->getKind());
+    Record.push_back((*I)->isTrailingComment());
+    Record.push_back((*I)->isAlmostTrailingComment());
     Stream.EmitRecord(COMMENTS_RAW_COMMENT, Record);
   }
   Stream.ExitBlock();

@@ -6284,7 +6284,7 @@ void ASTReader::ClearSwitchCaseIDs() {
 }
 
 void ASTReader::ReadComments() {
-  std::vector<RawComment> Comments;
+  std::vector<RawComment *> Comments;
   for (SmallVectorImpl<std::pair<llvm::BitstreamCursor,
                                  serialization::ModuleFile *> >::iterator
        I = CommentsCursors.begin(),
@@ -6325,8 +6325,9 @@ void ASTReader::ReadComments() {
             (RawComment::CommentKind) Record[Idx++];
         bool IsTrailingComment = Record[Idx++];
         bool IsAlmostTrailingComment = Record[Idx++];
-        Comments.push_back(RawComment(SR, Kind, IsTrailingComment,
-                                      IsAlmostTrailingComment));
+        Comments.push_back(new (Context) RawComment(SR, Kind,
+                                                    IsTrailingComment,
+                                                    IsAlmostTrailingComment));
         break;
       }
       }

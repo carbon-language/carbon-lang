@@ -72,7 +72,7 @@ const RawComment *ASTContext::getRawCommentForDeclNoCache(const Decl *D) const {
   if (isa<ParmVarDecl>(D))
     return NULL;
 
-  ArrayRef<RawComment> RawComments = Comments.getComments();
+  ArrayRef<RawComment *> RawComments = Comments.getComments();
 
   // If there are no comments anywhere, we won't find anything.
   if (RawComments.empty())
@@ -85,10 +85,11 @@ const RawComment *ASTContext::getRawCommentForDeclNoCache(const Decl *D) const {
     return NULL;
 
   // Find the comment that occurs just after this declaration.
-  ArrayRef<RawComment>::iterator Comment
+  RawComment CommentAtDeclLoc(SourceMgr, SourceRange(DeclLoc));
+  ArrayRef<RawComment *>::iterator Comment
       = std::lower_bound(RawComments.begin(),
                          RawComments.end(),
-                         RawComment(SourceMgr, SourceRange(DeclLoc)),
+                         &CommentAtDeclLoc,
                          BeforeThanCompare<RawComment>(SourceMgr));
 
   // Decompose the location for the declaration and find the beginning of the
@@ -97,17 +98,17 @@ const RawComment *ASTContext::getRawCommentForDeclNoCache(const Decl *D) const {
 
   // First check whether we have a trailing comment.
   if (Comment != RawComments.end() &&
-      Comment->isDocumentation() && Comment->isTrailingComment() &&
+      (*Comment)->isDocumentation() && (*Comment)->isTrailingComment() &&
       !isa<TagDecl>(D) && !isa<NamespaceDecl>(D)) {
     std::pair<FileID, unsigned> CommentBeginDecomp
-      = SourceMgr.getDecomposedLoc(Comment->getSourceRange().getBegin());
+      = SourceMgr.getDecomposedLoc((*Comment)->getSourceRange().getBegin());
     // Check that Doxygen trailing comment comes after the declaration, starts
     // on the same line and in the same file as the declaration.
     if (DeclLocDecomp.first == CommentBeginDecomp.first &&
         SourceMgr.getLineNumber(DeclLocDecomp.first, DeclLocDecomp.second)
           == SourceMgr.getLineNumber(CommentBeginDecomp.first,
                                      CommentBeginDecomp.second)) {
-      return &*Comment;
+      return *Comment;
     }
   }
 
@@ -118,12 +119,12 @@ const RawComment *ASTContext::getRawCommentForDeclNoCache(const Decl *D) const {
   --Comment;
 
   // Check that we actually have a non-member Doxygen comment.
-  if (!Comment->isDocumentation() || Comment->isTrailingComment())
+  if (!(*Comment)->isDocumentation() || (*Comment)->isTrailingComment())
     return NULL;
 
   // Decompose the end of the comment.
   std::pair<FileID, unsigned> CommentEndDecomp
-    = SourceMgr.getDecomposedLoc(Comment->getSourceRange().getEnd());
+    = SourceMgr.getDecomposedLoc((*Comment)->getSourceRange().getEnd());
 
   // If the comment and the declaration aren't in the same file, then they
   // aren't related.
@@ -146,7 +147,7 @@ const RawComment *ASTContext::getRawCommentForDeclNoCache(const Decl *D) const {
   if (Text.find_first_of(",;{}#") != StringRef::npos)
     return NULL;
 
-  return &*Comment;
+  return *Comment;
 }
 
 const RawComment *ASTContext::getRawCommentForDecl(const Decl *D) const {
