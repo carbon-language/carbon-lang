@@ -1422,6 +1422,12 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
         DIVariable DV(Variables.getElement(i));
         if (!DV || !DV.Verify() || !ProcessedVars.insert(DV))
           continue;
+        // Check that DbgVariable for DV wasn't created earlier, when
+        // findAbstractVariable() was called for inlined instance of DV.
+        LLVMContext &Ctx = DV->getContext();
+        DIVariable CleanDV = cleanseInlinedVariable(DV, Ctx);
+        if (AbstractVariables.lookup(CleanDV))
+          continue;
         if (LexicalScope *Scope = LScopes.findAbstractScope(DV.getContext()))
           addScopeVariable(Scope, new DbgVariable(DV, NULL));
       }
