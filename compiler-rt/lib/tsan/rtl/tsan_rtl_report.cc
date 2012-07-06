@@ -43,6 +43,7 @@ bool WEAK OnReport(const ReportDesc *rep, bool suppressed) {
 }
 
 static void StackStripMain(ReportStack *stack) {
+#ifndef TSAN_GO
   ReportStack *last_frame = 0;
   ReportStack *last_frame2 = 0;
   const char *prefix = "__interceptor_";
@@ -82,6 +83,7 @@ static void StackStripMain(ReportStack *stack) {
     // due to our fault.
     TsanPrintf("Bottom stack frame of stack %zx is missed\n", stack->pc);
   }
+#endif
 }
 
 static ReportStack *SymbolizeStack(const StackTrace& trace) {

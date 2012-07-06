@@ -27,6 +27,8 @@ ReportDesc::ReportDesc()
 ReportDesc::~ReportDesc() {
 }
 
+#ifndef TSAN_GO
+
 static void PrintHeader(ReportType typ) {
   TsanPrintf("WARNING: ThreadSanitizer: ");
 
@@ -124,5 +126,32 @@ void PrintReport(const ReportDesc *rep) {
 
   TsanPrintf("==================\n");
 }
+
+#else
+
+static void PrintStack(const ReportStack *ent) {
+  for (int i = 0; ent; ent = ent->next, i++) {
+    TsanPrintf("  %s()\n      %s:%d +%p\n",
+        ent->func, ent->file, ent->line, (void*)ent->pc);
+  }
+}
+
+static void PrintMop(const ReportMop *mop, bool first) {
+  TsanPrintf("%s by goroutine %d:\n",
+      (first ? (mop->write ? "Write" : "Read")
+             : (mop->write ? "Previous write" : "Previous read")),
+      mop->tid);
+  PrintStack(mop->stack);
+}
+
+void PrintReport(const ReportDesc *rep) {
+  TsanPrintf("==================\n");
+  TsanPrintf("WARNING: DATA RACE at %p\n", (void*)rep->mops[0]->addr);
+  for (uptr i = 0; i < rep->mops.Size(); i++)
+    PrintMop(rep->mops[i], i == 0);
+  TsanPrintf("==================\n");
+}
+
+#endif
 
 }  // namespace __tsan

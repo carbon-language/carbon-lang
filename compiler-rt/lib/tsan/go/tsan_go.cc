@@ -37,12 +37,38 @@ bool IsExpectedReport(uptr addr, uptr size) {
 void internal_start_thread(void(*func)(void*), void *arg) {
 }
 
-ReportStack *SymbolizeCodeAddr2Line(uptr addr) {
-  return NewReportStackEntry(addr);
+extern "C" int goCallbackCommentPc(uptr pc, char **img, char **rtn,
+                                   char **filename, int *lineno);
+extern "C" void __libc_free(void *p);
+
+ReportStack *SymbolizeCode(uptr addr) {
+  ReportStack *s = NewReportStackEntry(addr);
+  char *img, *rtn, *filename;
+  int lineno;
+  if (goCallbackCommentPc(addr, &img, &rtn, &filename, &lineno)) {
+    s->module = internal_strdup(img);
+    s->offset = addr;
+    s->func = internal_strdup(rtn);
+    s->file = internal_strdup(filename);
+    s->line = lineno;
+    s->col = 0;
+    __libc_free(img);
+    __libc_free(rtn);
+    __libc_free(filename);
+  }
+  return s;
 }
 
-ReportStack *SymbolizeDataAddr2Line(uptr addr) {
+ReportStack *SymbolizeData(uptr addr) {
   return 0;
+}
+
+ReportStack *NewReportStackEntry(uptr addr) {
+  ReportStack *ent = (ReportStack*)internal_alloc(MBlockReportStack,
+                                                  sizeof(ReportStack));
+  internal_memset(ent, 0, sizeof(*ent));
+  ent->pc = addr;
+  return ent;
 }
 
 void *internal_alloc(MBlockType typ, uptr sz) {

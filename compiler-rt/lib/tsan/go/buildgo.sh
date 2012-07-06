@@ -16,7 +16,6 @@ SRCS="
 	../rtl/tsan_rtl_thread.cc
 	../rtl/tsan_stat.cc
 	../rtl/tsan_suppressions.cc
-	../rtl/tsan_symbolize.cc
 	../rtl/tsan_sync.cc
 	../../sanitizer_common/sanitizer_allocator.cc
 	../../sanitizer_common/sanitizer_common.cc
@@ -46,4 +45,7 @@ gcc gotsan.cc -S -o tmp.s $CFLAGS
 cat tmp.s $ASMS > gotsan.s
 echo as gotsan.s -o gotsan.syso
 as gotsan.s -o gotsan.syso
+
+gcc test.c gotsan.syso -lpthread -o test
+./test
 
