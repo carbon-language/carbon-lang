@@ -8,23 +8,25 @@ declare void @__cxa_call_unexpected(i8*)
 declare i64 @llvm.objectsize.i64(i8*, i1) nounwind readonly
 
 ; CHECK: @f1
-define i64 @f1() {
+define i64 @f1(i8 **%esc) {
   %call = call i8* @malloc(i32 4)
+  store i8* %call, i8** %esc
   %size = call i64 @llvm.objectsize.i64(i8* %call, i1 false)
-; CHECK-NEXT: ret i64 4
+; CHECK: ret i64 4
   ret i64 %size
 }
 
 
 ; CHECK: @f2
-define i64 @f2() nounwind uwtable ssp {
+define i64 @f2(i8** %esc) nounwind uwtable ssp {
 entry:
-; CHECK: invoke void @llvm.donothing()
+; CHECK: invoke noalias i8* @_Znwm(i64 13)
   %call = invoke noalias i8* @_Znwm(i64 13)
           to label %invoke.cont unwind label %lpad
 
 invoke.cont:
 ; CHECK: ret i64 13
+  store i8* %call, i8** %esc
   %0 = tail call i64 @llvm.objectsize.i64(i8* %call, i1 false)
   ret i64 %0
 

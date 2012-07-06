@@ -1137,11 +1137,28 @@ static bool IsOnlyNullComparedAndFreed(Value *V, SmallVectorImpl<WeakVH> &Users,
       }
     }
     if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(U)) {
-      if (II->getIntrinsicID() == Intrinsic::lifetime_start ||
-          II->getIntrinsicID() == Intrinsic::lifetime_end) {
+      switch (II->getIntrinsicID()) {
+      default: return false;
+      case Intrinsic::memmove:
+      case Intrinsic::memcpy:
+      case Intrinsic::memset: {
+        MemIntrinsic *MI = cast<MemIntrinsic>(II);
+        if (MI->isVolatile() || MI->getRawDest() != V)
+          return false;
+      }
+      // fall through
+      case Intrinsic::objectsize:
+      case Intrinsic::lifetime_start:
+      case Intrinsic::lifetime_end:
         Users.push_back(II);
         continue;
       }
+    }
+    if (StoreInst *SI = dyn_cast<StoreInst>(U)) {
+      if (SI->isVolatile() || SI->getPointerOperand() != V)
+        return false;
+      Users.push_back(SI);
+      continue;
     }
     return false;
   }
@@ -1164,6 +1181,12 @@ Instruction *InstCombiner::visitMalloc(Instruction &MI) {
                                              C->isFalseWhenEqual()));
       } else if (isa<BitCastInst>(I) || isa<GetElementPtrInst>(I)) {
         ReplaceInstUsesWith(*I, UndefValue::get(I->getType()));
+      } else if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(I)) {
+        if (II->getIntrinsicID() == Intrinsic::objectsize) {
+          ConstantInt *CI = cast<ConstantInt>(II->getArgOperand(1));
+          uint64_t DontKnow = CI->isZero() ? -1ULL : 0;
+          ReplaceInstUsesWith(*I, ConstantInt::get(I->getType(), DontKnow));
+        }
       }
       EraseInstFromFunction(*I);
     }

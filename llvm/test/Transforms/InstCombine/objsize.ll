@@ -121,7 +121,7 @@ entry:
 ; rdar://7782496
 @s = external global i8*
 
-define void @test5(i32 %n) nounwind ssp {
+define i8* @test5(i32 %n) nounwind ssp {
 ; CHECK: @test5
 entry:
   %0 = tail call noalias i8* @malloc(i32 20) nounwind
@@ -130,7 +130,7 @@ entry:
 ; CHECK-NOT: @llvm.objectsize
 ; CHECK: @llvm.memcpy.p0i8.p0i8.i32(i8* %0, i8* %1, i32 10, i32 1, i1 false)
   %3 = tail call i8* @__memcpy_chk(i8* %0, i8* %2, i32 10, i32 %1) nounwind
-  ret void
+  ret i8* %0
 }
 
 define void @test6(i32 %n) nounwind ssp {
@@ -149,22 +149,24 @@ declare i8* @__memset_chk(i8*, i32, i32, i32) nounwind
 
 declare noalias i8* @malloc(i32) nounwind
 
-define i32 @test7() {
+define i32 @test7(i8** %esc) {
 ; CHECK: @test7
   %alloc = call noalias i8* @malloc(i32 48) nounwind
+  store i8* %alloc, i8** %esc
   %gep = getelementptr inbounds i8* %alloc, i32 16
   %objsize = call i32 @llvm.objectsize.i32(i8* %gep, i1 false) nounwind readonly
-; CHECK-NEXT: ret i32 32
+; CHECK: ret i32 32
   ret i32 %objsize
 }
 
 declare noalias i8* @calloc(i32, i32) nounwind
 
-define i32 @test8() {
+define i32 @test8(i8** %esc) {
 ; CHECK: @test8
   %alloc = call noalias i8* @calloc(i32 5, i32 7) nounwind
+  store i8* %alloc, i8** %esc
   %gep = getelementptr inbounds i8* %alloc, i32 5
   %objsize = call i32 @llvm.objectsize.i32(i8* %gep, i1 false) nounwind readonly
-; CHECK-NEXT: ret i32 30
+; CHECK: ret i32 30
   ret i32 %objsize
 }

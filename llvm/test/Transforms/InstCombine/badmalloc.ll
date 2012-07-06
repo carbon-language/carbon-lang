@@ -16,5 +16,26 @@ define i1 @test1() {
   ret i1 %B
 
 ; CHECK: @test1
-; CHECK: ret i1 %B
+; CHECK: ret i1 false
+}
+
+; CHECK: @test2
+define noalias i8* @test2() nounwind {
+entry:
+; CHECK: @malloc
+  %A = call noalias i8* @malloc(i64 4) nounwind
+; CHECK: icmp eq
+  %tobool = icmp eq i8* %A, null
+; CHECK: br i1
+  br i1 %tobool, label %return, label %if.end
+
+if.end:
+; CHECK: store
+  store i8 7, i8* %A
+  br label %return
+
+return:
+; CHECK: phi
+  %retval.0 = phi i8* [ %A, %if.end ], [ null, %entry ]
+  ret i8* %retval.0
 }
