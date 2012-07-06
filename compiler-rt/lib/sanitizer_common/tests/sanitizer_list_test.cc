@@ -66,7 +66,7 @@ TEST(SanitizerCommon, IntrusiveList) {
 
   List l;
   l.clear();
-  
+
   ListItem *x = &items[0];
   ListItem *y = &items[1];
   ListItem *z = &items[2];
@@ -98,7 +98,7 @@ TEST(SanitizerCommon, IntrusiveList) {
   CHECK_EQ(l.front(), z);
   CHECK_EQ(l.back(), x);
   l.CheckConsistency();
-  
+
   l.pop_front();
   CHECK_EQ(l.size(), 2);
   CHECK_EQ(l.front(), y);

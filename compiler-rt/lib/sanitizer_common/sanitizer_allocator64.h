@@ -20,6 +20,7 @@
 #include "sanitizer_common.h"
 #include "sanitizer_internal_defs.h"
 #include "sanitizer_libc.h"
+#include "sanitizer_list.h"
 #include "sanitizer_mutex.h"
 
 namespace __sanitizer {
@@ -148,16 +149,18 @@ class SizeClassAllocator64 {
   // or with one element if its size is greater.
   static const uptr kPopulateSize = 1 << 18;
 
-  struct LifoListNode {
-    LifoListNode *next;
+  struct ListNode {
+    ListNode *next;
   };
+
+  typedef IntrusiveList<ListNode> FreeList;
 
   struct RegionInfo {
     SpinMutex mutex;
-    LifoListNode *free_list;
+    FreeList free_list;
     uptr allocated_user;  // Bytes allocated for user memory.
     uptr allocated_meta;  // Bytes allocated for metadata.
-    char padding[kCacheLineSize - 4 * sizeof(uptr)];
+    char padding[kCacheLineSize - 3 * sizeof(uptr) - sizeof(FreeList)];
   };
   COMPILER_CHECK(sizeof(RegionInfo) == kCacheLineSize);
 
@@ -175,17 +178,6 @@ class SizeClassAllocator64 {
     return &regions[-1 - class_id];
   }
 
-  void PushLifoList(LifoListNode **list, LifoListNode *node) {
-    node->next = *list;
-    *list = node;
-  }
-
-  LifoListNode *PopLifoList(LifoListNode **list) {
-    LifoListNode *res = *list;
-    *list = res->next;
-    return res;
-  }
-
   uptr GetChunkIdx(uptr chunk, uptr class_id) {
     u32 offset = chunk % kRegionSize;
     // Here we divide by a non-constant. This is costly.
@@ -194,42 +186,42 @@ class SizeClassAllocator64 {
     return offset / (u32)SizeClassMap::Size(class_id);
   }
 
-  LifoListNode *PopulateFreeList(uptr class_id, RegionInfo *region) {
+  void PopulateFreeList(uptr class_id, RegionInfo *region) {
     uptr size = SizeClassMap::Size(class_id);
     uptr beg_idx = region->allocated_user;
     uptr end_idx = beg_idx + kPopulateSize;
-    LifoListNode *res = 0;
+    region->free_list.clear();
     uptr region_beg = kSpaceBeg + kRegionSize * class_id;
     uptr idx = beg_idx;
     uptr i = 0;
     do {  // do-while loop because we need to put at least one item.
       uptr p = region_beg + idx;
-      PushLifoList(&res, reinterpret_cast<LifoListNode*>(p));
+      region->free_list.push_front(reinterpret_cast<ListNode*>(p));
       idx += size;
       i++;
     } while (idx < end_idx);
     region->allocated_user += idx - beg_idx;
     region->allocated_meta += i * kMetadataSize;
     CHECK_LT(region->allocated_user + region->allocated_meta, kRegionSize);
-    return res;
   }
 
   void *AllocateBySizeClass(uptr class_id) {
     CHECK_LT(class_id, kNumClasses);
     RegionInfo *region = GetRegionInfo(class_id);
     SpinMutexLock l(&region->mutex);
-    if (!region->free_list) {
-      region->free_list = PopulateFreeList(class_id, region);
+    if (region->free_list.empty()) {
+      PopulateFreeList(class_id, region);
     }
-    CHECK_NE(region->free_list, 0);
-    LifoListNode *node = PopLifoList(&region->free_list);
+    CHECK(!region->free_list.empty());
+    ListNode *node = region->free_list.front();
+    region->free_list.pop_front();
     return reinterpret_cast<void*>(node);
   }
 
   void DeallocateBySizeClass(void *p, uptr class_id) {
     RegionInfo *region = GetRegionInfo(class_id);
     SpinMutexLock l(&region->mutex);
-    PushLifoList(&region->free_list, reinterpret_cast<LifoListNode*>(p));
+    region->free_list.push_front(reinterpret_cast<ListNode*>(p));
   }
 };
 
