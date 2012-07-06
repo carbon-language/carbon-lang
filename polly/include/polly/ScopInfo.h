@@ -102,6 +102,8 @@ private:
   void setBaseName();
   ScopStmt *statement;
 
+  const Instruction *Inst;
+
   /// Updated access relation read from JSCOP file.
   isl_map *newAccessRelation;
 public:
@@ -110,7 +112,7 @@ public:
   // @param Access     The memory access.
   // @param Statement  The statement that contains the access.
   // @param SE         The ScalarEvolution analysis.
-  MemoryAccess(const IRAccess &Access, ScopStmt *Statement);
+  MemoryAccess(const IRAccess &Access, const Instruction *AccInst, ScopStmt *Statement);
 
   // @brief Create a memory access that reads a complete memory object.
   //
@@ -134,6 +136,10 @@ public:
 
   const std::string &getBaseName() const {
     return BaseName;
+  }
+
+  const Instruction *getAccessInstruction() const {
+    return Inst;
   }
 
   /// @brief Get the new access function imported from JSCOP file

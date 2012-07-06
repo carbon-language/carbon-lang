@@ -276,7 +276,8 @@ isl_basic_map *MemoryAccess::createBasicAccessMap(ScopStmt *Statement) {
     isl_basic_set_universe(Space));
 }
 
-MemoryAccess::MemoryAccess(const IRAccess &Access, ScopStmt *Statement) {
+MemoryAccess::MemoryAccess(const IRAccess &Access, const Instruction *AccInst,
+                           ScopStmt *Statement) : Inst(AccInst) {
   newAccessRelation = NULL;
   Type = Access.isRead() ? Read : Write;
   statement = Statement;
@@ -487,7 +488,7 @@ void ScopStmt::buildAccesses(TempScop &tempScop, const Region &CurRegion) {
 
   for (AccFuncSetType::const_iterator I = AccFuncs->begin(),
        E = AccFuncs->end(); I != E; ++I) {
-    MemAccs.push_back(new MemoryAccess(I->first, this));
+    MemAccs.push_back(new MemoryAccess(I->first, I->second, this));
     InstructionToAccess[I->second] = MemAccs.back();
   }
 }
