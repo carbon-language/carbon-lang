@@ -58,6 +58,27 @@ struct __hash_node
     value_type __value_;
 };
 
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+__is_power2(size_t __bc)
+{
+    return __bc > 2 && !(__bc & (__bc - 1));
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+size_t
+__constrain_hash(size_t __h, size_t __bc)
+{
+    return !(__bc & (__bc - 1)) ? __h & (__bc - 1) : __h % __bc;
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+size_t
+__next_pow2(size_t __n)
+{
+    return size_t(1) << (std::numeric_limits<size_t>::digits - __clz(__n-1));
+}
+
 template <class _Tp, class _Hash, class _Equal, class _Alloc> class __hash_table;
 template <class _ConstNodePtr> class __hash_const_iterator;
 template <class _HashIterator> class __hash_map_iterator;
@@ -240,7 +261,7 @@ public:
     __hash_local_iterator& operator++()
     {
         __node_ = __node_->__next_;
-        if (__node_ != nullptr && __node_->__hash_ % __bucket_count_ != __bucket_)
+        if (__node_ != nullptr && __constrain_hash(__node_->__hash_, __bucket_count_) != __bucket_)
             __node_ = nullptr;
         return *this;
     }
@@ -330,7 +351,7 @@ public:
     __hash_const_local_iterator& operator++()
     {
         __node_ = __node_->__next_;
-        if (__node_ != nullptr && __node_->__hash_ % __bucket_count_ != __bucket_)
+        if (__node_ != nullptr && __constrain_hash(__node_->__hash_, __bucket_count_) != __bucket_)
             __node_ = nullptr;
         return *this;
     }
@@ -637,7 +658,7 @@ public:
     template <class _Key>
         _LIBCPP_INLINE_VISIBILITY
         size_type bucket(const _Key& __k) const
-            {return hash_function()(__k) % bucket_count();}
+            {return __constrain_hash(hash_function()(__k), bucket_count());}
 
     template <class _Key>
         iterator       find(const _Key& __x);
@@ -871,7 +892,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__hash_table(__hash_table&& __u)
 {
     if (size() > 0)
     {
-        __bucket_list_[__p1_.first().__next_->__hash_ % bucket_count()] =
+        __bucket_list_[__constrain_hash(__p1_.first().__next_->__hash_, bucket_count())] =
             static_cast<__node_pointer>(_VSTD::addressof(__p1_.first()));
         __u.__p1_.first().__next_ = nullptr;
         __u.size() = 0;
@@ -895,7 +916,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__hash_table(__hash_table&& __u,
         {
             __p1_.first().__next_ = __u.__p1_.first().__next_;
             __u.__p1_.first().__next_ = nullptr;
-            __bucket_list_[__p1_.first().__next_->__hash_ % bucket_count()] =
+            __bucket_list_[__constrain_hash(__p1_.first().__next_->__hash_, bucket_count())] =
                 static_cast<__node_pointer>(_VSTD::addressof(__p1_.first()));
             size() = __u.size();
             __u.size() = 0;
@@ -992,7 +1013,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__move_assign(
     __p1_.first().__next_ = __u.__p1_.first().__next_;
     if (size() > 0)
     {
-        __bucket_list_[__p1_.first().__next_->__hash_ % bucket_count()] =
+        __bucket_list_[__constrain_hash(__p1_.first().__next_->__hash_, bucket_count())] =
             static_cast<__node_pointer>(_VSTD::addressof(__p1_.first()));
         __u.__p1_.first().__next_ = nullptr;
         __u.size() = 0;
@@ -1190,12 +1211,12 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__node_insert_unique(__node_pointer __
     size_t __chash;
     if (__bc != 0)
     {
-        __chash = __nd->__hash_ % __bc;
+        __chash = __constrain_hash(__nd->__hash_, __bc);
         __ndptr = __bucket_list_[__chash];
         if (__ndptr != nullptr)
         {
             for (__ndptr = __ndptr->__next_; __ndptr != nullptr &&
-                                             __ndptr->__hash_ % __bc == __chash;
+                                             __constrain_hash(__ndptr->__hash_, __bc) == __chash;
                                                      __ndptr = __ndptr->__next_)
             {
                 if (key_eq()(__ndptr->__value_, __nd->__value_))
@@ -1206,10 +1227,10 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__node_insert_unique(__node_pointer __
     {
         if (size()+1 > __bc * max_load_factor() || __bc == 0)
         {
-            rehash(_VSTD::max<size_type>(2 * __bc + 1,
+            rehash(_VSTD::max<size_type>(2 * __bc + !__is_power2(__bc),
                            size_type(ceil(float(size() + 1) / max_load_factor()))));
             __bc = bucket_count();
-            __chash = __nd->__hash_ % __bc;
+            __chash = __constrain_hash(__nd->__hash_, __bc);
         }
         // insert_after __bucket_list_[__chash], or __first_node if bucket is null
         __node_pointer __pn = __bucket_list_[__chash];
@@ -1221,7 +1242,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__node_insert_unique(__node_pointer __
             // fix up __bucket_list_
             __bucket_list_[__chash] = __pn;
             if (__nd->__next_ != nullptr)
-                __bucket_list_[__nd->__next_->__hash_ % __bc] = __nd;
+                __bucket_list_[__constrain_hash(__nd->__next_->__hash_, __bc)] = __nd;
         }
         else
         {
@@ -1245,11 +1266,11 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__node_insert_multi(__node_pointer __c
     size_type __bc = bucket_count();
     if (size()+1 > __bc * max_load_factor() || __bc == 0)
     {
-        rehash(_VSTD::max<size_type>(2 * __bc + 1,
+        rehash(_VSTD::max<size_type>(2 * __bc + !__is_power2(__bc),
                        size_type(ceil(float(size() + 1) / max_load_factor()))));
         __bc = bucket_count();
     }
-    size_t __chash = __cp->__hash_ % __bc;
+    size_t __chash = __constrain_hash(__cp->__hash_, __bc);
     __node_pointer __pn = __bucket_list_[__chash];
     if (__pn == nullptr)
     {
@@ -1259,12 +1280,12 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__node_insert_multi(__node_pointer __c
         // fix up __bucket_list_
         __bucket_list_[__chash] = __pn;
         if (__cp->__next_ != nullptr)
-            __bucket_list_[__cp->__next_->__hash_ % __bc] = __cp;
+            __bucket_list_[__constrain_hash(__cp->__next_->__hash_, __bc)] = __cp;
     }
     else
     {
         for (bool __found = false; __pn->__next_ != nullptr &&
-                                   __pn->__next_->__hash_ % __bc == __chash;
+                                   __constrain_hash(__pn->__next_->__hash_, __bc) == __chash;
                                                            __pn = __pn->__next_)
         {
             //      __found    key_eq()     action
@@ -1285,7 +1306,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__node_insert_multi(__node_pointer __c
         __pn->__next_ = __cp;
         if (__cp->__next_ != nullptr)
         {
-            size_t __nhash = __cp->__next_->__hash_ % __bc;
+            size_t __nhash = __constrain_hash(__cp->__next_->__hash_, __bc);
             if (__nhash != __chash)
                 __bucket_list_[__nhash] = __cp;
         }
@@ -1306,11 +1327,11 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__node_insert_multi(
         size_type __bc = bucket_count();
         if (size()+1 > __bc * max_load_factor() || __bc == 0)
         {
-            rehash(_VSTD::max<size_type>(2 * __bc + 1,
+            rehash(_VSTD::max<size_type>(2 * __bc + !__is_power2(__bc),
                            size_type(ceil(float(size() + 1) / max_load_factor()))));
             __bc = bucket_count();
         }
-        size_t __chash = __cp->__hash_ % __bc;
+        size_t __chash = __constrain_hash(__cp->__hash_, __bc);
         __node_pointer __pp = __bucket_list_[__chash];
         while (__pp->__next_ != __np)
             __pp = __pp->__next_;
@@ -1333,12 +1354,12 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__insert_unique(const value_type& __x)
     size_t __chash;
     if (__bc != 0)
     {
-        __chash = __hash % __bc;
+        __chash = __constrain_hash(__hash, __bc);
         __nd = __bucket_list_[__chash];
         if (__nd != nullptr)
         {
             for (__nd = __nd->__next_; __nd != nullptr &&
-                                       __nd->__hash_ % __bc == __chash;
+                                       __constrain_hash(__nd->__hash_, __bc) == __chash;
                                                            __nd = __nd->__next_)
             {
                 if (key_eq()(__nd->__value_, __x))
@@ -1350,10 +1371,10 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__insert_unique(const value_type& __x)
         __node_holder __h = __construct_node(__x, __hash);
         if (size()+1 > __bc * max_load_factor() || __bc == 0)
         {
-            rehash(_VSTD::max<size_type>(2 * __bc + 1,
+            rehash(_VSTD::max<size_type>(2 * __bc + !__is_power2(__bc),
                            size_type(ceil(float(size() + 1) / max_load_factor()))));
             __bc = bucket_count();
-            __chash = __hash % __bc;
+            __chash = __constrain_hash(__hash, __bc);
         }
         // insert_after __bucket_list_[__chash], or __first_node if bucket is null
         __node_pointer __pn = __bucket_list_[__chash];
@@ -1365,7 +1386,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__insert_unique(const value_type& __x)
             // fix up __bucket_list_
             __bucket_list_[__chash] = __pn;
             if (__h->__next_ != nullptr)
-                __bucket_list_[__h->__next_->__hash_ % __bc] = __h.get();
+                __bucket_list_[__constrain_hash(__h->__next_->__hash_, __bc)] = __h.get();
         }
         else
         {
@@ -1489,16 +1510,20 @@ template <class _Tp, class _Hash, class _Equal, class _Alloc>
 void
 __hash_table<_Tp, _Hash, _Equal, _Alloc>::rehash(size_type __n)
 {
-    __n = __next_prime(_VSTD::max<size_type>(__n, size() > 0));
+    if (__n == 1)
+        __n = 2;
+    else if (__n & (__n - 1))
+        __n = __next_prime(__n);
     size_type __bc = bucket_count();
     if (__n > __bc)
         __rehash(__n);
-    else
+    else if (__n < __bc)
     {
         __n = _VSTD::max<size_type>
               (
                   __n,
-                  __next_prime(size_t(ceil(float(size()) / max_load_factor())))
+                  __is_power2(__bc) ? __next_pow2(size_t(ceil(float(size()) / max_load_factor()))) :
+                                      __next_prime(size_t(ceil(float(size()) / max_load_factor())))
               );
         if (__n < __bc)
             __rehash(__n);
@@ -1521,13 +1546,13 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__rehash(size_type __nbc)
         __node_pointer __cp = __pp->__next_;
         if (__cp != nullptr)
         {
-            size_type __chash = __cp->__hash_ % __nbc;
+            size_type __chash = __constrain_hash(__cp->__hash_, __nbc);
             __bucket_list_[__chash] = __pp;
             size_type __phash = __chash;
             for (__pp = __cp, __cp = __cp->__next_; __cp != nullptr;
                                                            __cp = __pp->__next_)
             {
-                __chash = __cp->__hash_ % __nbc;
+                __chash = __constrain_hash(__cp->__hash_, __nbc);
                 if (__chash == __phash)
                     __pp = __cp;
                 else
@@ -1565,12 +1590,12 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::find(const _Key& __k)
     size_type __bc = bucket_count();
     if (__bc != 0)
     {
-        size_t __chash = __hash % __bc;
+        size_t __chash = __constrain_hash(__hash, __bc);
         __node_pointer __nd = __bucket_list_[__chash];
         if (__nd != nullptr)
         {
             for (__nd = __nd->__next_; __nd != nullptr &&
-                                       __nd->__hash_ % __bc == __chash;
+                                       __constrain_hash(__nd->__hash_, __bc) == __chash;
                                                            __nd = __nd->__next_)
             {
                 if (key_eq()(__nd->__value_, __k))
@@ -1590,12 +1615,12 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::find(const _Key& __k) const
     size_type __bc = bucket_count();
     if (__bc != 0)
     {
-        size_t __chash = __hash % __bc;
+        size_t __chash = __constrain_hash(__hash, __bc);
         __node_const_pointer __nd = __bucket_list_[__chash];
         if (__nd != nullptr)
         {
             for (__nd = __nd->__next_; __nd != nullptr &&
-                                           __nd->__hash_ % __bc == __chash;
+                                           __constrain_hash(__nd->__hash_, __bc) == __chash;
                                                            __nd = __nd->__next_)
             {
                 if (key_eq()(__nd->__value_, __k))
@@ -1734,7 +1759,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::remove(const_iterator __p) _NOEXCEPT
     // current node
     __node_pointer __cn = const_cast<__node_pointer>(__p.__node_);
     size_type __bc = bucket_count();
-    size_t __chash = __cn->__hash_ % __bc;
+    size_t __chash = __constrain_hash(__cn->__hash_, __bc);
     // find previous node
     __node_pointer __pn = __bucket_list_[__chash];
     for (; __pn->__next_ != __cn; __pn = __pn->__next_)
@@ -1742,15 +1767,15 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::remove(const_iterator __p) _NOEXCEPT
     // Fix up __bucket_list_
         // if __pn is not in same bucket (before begin is not in same bucket) &&
         //    if __cn->__next_ is not in same bucket (nullptr is not in same bucket)
-    if (__pn == _VSTD::addressof(__p1_.first()) || __pn->__hash_ % __bc != __chash)
+    if (__pn == _VSTD::addressof(__p1_.first()) || __constrain_hash(__pn->__hash_, __bc) != __chash)
     {
-        if (__cn->__next_ == nullptr || __cn->__next_->__hash_ % __bc != __chash)
+        if (__cn->__next_ == nullptr || __constrain_hash(__cn->__next_->__hash_, __bc) != __chash)
             __bucket_list_[__chash] = nullptr;
     }
         // if __cn->__next_ is not in same bucket (nullptr is in same bucket)
     if (__cn->__next_ != nullptr)
     {
-        size_t __nhash = __cn->__next_->__hash_ % __bc;
+        size_t __nhash = __constrain_hash(__cn->__next_->__hash_, __bc);
         if (__nhash != __chash)
             __bucket_list_[__nhash] = __pn;
     }
@@ -1881,10 +1906,10 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::swap(__hash_table& __u)
     __p2_.swap(__u.__p2_);
     __p3_.swap(__u.__p3_);
     if (size() > 0)
-        __bucket_list_[__p1_.first().__next_->__hash_ % bucket_count()] =
+        __bucket_list_[__constrain_hash(__p1_.first().__next_->__hash_, bucket_count())] =
             static_cast<__node_pointer>(_VSTD::addressof(__p1_.first()));
     if (__u.size() > 0)
-        __u.__bucket_list_[__u.__p1_.first().__next_->__hash_ % __u.bucket_count()] =
+        __u.__bucket_list_[__constrain_hash(__u.__p1_.first().__next_->__hash_, __u.bucket_count())] =
             static_cast<__node_pointer>(_VSTD::addressof(__u.__p1_.first()));
 }
 
@@ -1898,7 +1923,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::bucket_size(size_type __n) const
     if (__np != nullptr)
     {
         for (__np = __np->__next_; __np != nullptr &&
-                                   __np->__hash_ % __bc == __n;
+                                   __constrain_hash(__np->__hash_, __bc) == __n;
                                                     __np = __np->__next_, ++__r)
             ;
     }

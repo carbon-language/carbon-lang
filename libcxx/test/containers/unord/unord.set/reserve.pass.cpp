@@ -52,7 +52,7 @@ int main()
         assert(c.bucket_count() >= 2);
         test(c);
         c.reserve(31);
-        assert(c.bucket_count() == 17);
+        assert(c.bucket_count() >= 16);
         test(c);
     }
 }
