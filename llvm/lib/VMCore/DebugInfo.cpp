@@ -998,8 +998,6 @@ void DIDescriptor::print(raw_ostream &OS) const {
 
   if (this->isSubrange()) {
     DISubrange(DbgNode).printInternal(OS);
-  } else if (this->isScope()) {
-    DIScope(DbgNode).printInternal(OS);
   } else if (this->isCompileUnit()) {
     DICompileUnit(DbgNode).printInternal(OS);
   } else if (this->isFile()) {
@@ -1020,6 +1018,8 @@ void DIDescriptor::print(raw_ostream &OS) const {
     DIVariable(DbgNode).printInternal(OS);
   } else if (this->isObjCProperty()) {
     DIObjCProperty(DbgNode).printInternal(OS);
+  } else if (this->isScope()) {
+    DIScope(DbgNode).printInternal(OS);
   }
 }
 
