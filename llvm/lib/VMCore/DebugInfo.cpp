@@ -112,16 +112,16 @@ Function *DIDescriptor::getFunctionField(unsigned Elt) const {
 }
 
 unsigned DIVariable::getNumAddrElements() const {
-  if (getVersion() <= llvm::LLVMDebugVersion8)
+  if (getVersion() <= LLVMDebugVersion8)
     return DbgNode->getNumOperands()-6;
-  if (getVersion() == llvm::LLVMDebugVersion9)
+  if (getVersion() == LLVMDebugVersion9)
     return DbgNode->getNumOperands()-7;
   return DbgNode->getNumOperands()-8;
 }
 
 /// getInlinedAt - If this variable is inlined then return inline location.
 MDNode *DIVariable::getInlinedAt() const {
-  if (getVersion() <= llvm::LLVMDebugVersion9)
+  if (getVersion() <= LLVMDebugVersion9)
     return NULL;
   return dyn_cast_or_null<MDNode>(DbgNode->getOperand(7));
 }
@@ -734,7 +734,7 @@ DIVariable llvm::cleanseInlinedVariable(MDNode *DV, LLVMContext &VMContext) {
   // Insert inlined scope as 7th element.
   for (unsigned i = 0, e = DV->getNumOperands(); i != e; ++i)
     i == 7 ? 
-      Elts.push_back(llvm::Constant::getNullValue(Type::getInt32Ty(VMContext))):
+      Elts.push_back(Constant::getNullValue(Type::getInt32Ty(VMContext))):
       Elts.push_back(DV->getOperand(i));
   return DIVariable(MDNode::get(VMContext, Elts));
 }
