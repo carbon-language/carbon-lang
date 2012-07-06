@@ -388,11 +388,11 @@ DIType DIBuilder::createObjCIVar(StringRef Name,
 /// createObjCProperty - Create debugging information entry for Objective-C
 /// property.
 DIObjCProperty DIBuilder::createObjCProperty(StringRef Name,
-					     DIFile File, unsigned LineNumber,
+                                             DIFile File, unsigned LineNumber,
                                              StringRef GetterName,
                                              StringRef SetterName, 
                                              unsigned PropertyAttributes,
-					     DIType Ty) {
+                                             DIType Ty) {
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_APPLE_property),
     MDString::get(VMContext, Name),
@@ -404,33 +404,6 @@ DIObjCProperty DIBuilder::createObjCProperty(StringRef Name,
     Ty
   };
   return DIObjCProperty(MDNode::get(VMContext, Elts));
-}
-
-/// createClassType - Create debugging information entry for a class.
-DIType DIBuilder::createClassType(DIDescriptor Context, StringRef Name,
-                                  DIFile File, unsigned LineNumber,
-                                  uint64_t SizeInBits, uint64_t AlignInBits,
-                                  uint64_t OffsetInBits, unsigned Flags,
-                                  DIType DerivedFrom, DIArray Elements,
-                                  MDNode *VTableHolder, MDNode *TemplateParams) {
- // TAG_class_type is encoded in DICompositeType format.
-  Value *Elts[] = {
-    GetTagConstant(VMContext, dwarf::DW_TAG_class_type),
-    getNonCompileUnitScope(Context),
-    MDString::get(VMContext, Name),
-    File,
-    ConstantInt::get(Type::getInt32Ty(VMContext), LineNumber),
-    ConstantInt::get(Type::getInt64Ty(VMContext), SizeInBits),
-    ConstantInt::get(Type::getInt64Ty(VMContext), AlignInBits),
-    ConstantInt::get(Type::getInt32Ty(VMContext), OffsetInBits),
-    ConstantInt::get(Type::getInt32Ty(VMContext), Flags),
-    DerivedFrom,
-    Elements,
-    ConstantInt::get(Type::getInt32Ty(VMContext), 0),
-    VTableHolder,
-    TemplateParams
-  };
-  return DIType(MDNode::get(VMContext, Elts));
 }
 
 /// createTemplateTypeParameter - Create debugging information for template
@@ -469,6 +442,34 @@ DIBuilder::createTemplateValueParameter(DIDescriptor Context, StringRef Name,
     ConstantInt::get(Type::getInt32Ty(VMContext), ColumnNo)
   };
   return DITemplateValueParameter(MDNode::get(VMContext, Elts));
+}
+
+/// createClassType - Create debugging information entry for a class.
+DIType DIBuilder::createClassType(DIDescriptor Context, StringRef Name,
+                                  DIFile File, unsigned LineNumber,
+                                  uint64_t SizeInBits, uint64_t AlignInBits,
+                                  uint64_t OffsetInBits, unsigned Flags,
+                                  DIType DerivedFrom, DIArray Elements,
+                                  MDNode *VTableHolder,
+                                  MDNode *TemplateParams) {
+ // TAG_class_type is encoded in DICompositeType format.
+  Value *Elts[] = {
+    GetTagConstant(VMContext, dwarf::DW_TAG_class_type),
+    getNonCompileUnitScope(Context),
+    MDString::get(VMContext, Name),
+    File,
+    ConstantInt::get(Type::getInt32Ty(VMContext), LineNumber),
+    ConstantInt::get(Type::getInt64Ty(VMContext), SizeInBits),
+    ConstantInt::get(Type::getInt64Ty(VMContext), AlignInBits),
+    ConstantInt::get(Type::getInt32Ty(VMContext), OffsetInBits),
+    ConstantInt::get(Type::getInt32Ty(VMContext), Flags),
+    DerivedFrom,
+    Elements,
+    ConstantInt::get(Type::getInt32Ty(VMContext), 0),
+    VTableHolder,
+    TemplateParams
+  };
+  return DIType(MDNode::get(VMContext, Elts));
 }
 
 /// createStructType - Create debugging information entry for a struct.
