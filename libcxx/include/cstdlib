@@ -138,11 +138,11 @@ using ::quick_exit;
 
 // MSVC already has the correct prototype in <stdlib.h.h> #ifdef __cplusplus
 #if !defined(_MSC_VER) && !defined(__sun__)
-inline _LIBCPP_INLINE_VISIBILITY long      abs(     long __x) {return  labs(__x);}
-inline _LIBCPP_INLINE_VISIBILITY long long abs(long long __x) {return llabs(__x);}
+inline _LIBCPP_INLINE_VISIBILITY long      abs(     long __x) _NOEXCEPT {return  labs(__x);}
+inline _LIBCPP_INLINE_VISIBILITY long long abs(long long __x) _NOEXCEPT {return llabs(__x);}
 
-inline _LIBCPP_INLINE_VISIBILITY  ldiv_t div(     long __x,      long __y) {return  ldiv(__x, __y);}
-inline _LIBCPP_INLINE_VISIBILITY lldiv_t div(long long __x, long long __y) {return lldiv(__x, __y);}
+inline _LIBCPP_INLINE_VISIBILITY  ldiv_t div(     long __x,      long __y) _NOEXCEPT {return  ldiv(__x, __y);}
+inline _LIBCPP_INLINE_VISIBILITY lldiv_t div(long long __x, long long __y) _NOEXCEPT {return lldiv(__x, __y);}
 #endif // _MSC_VER
 
 _LIBCPP_END_NAMESPACE_STD
