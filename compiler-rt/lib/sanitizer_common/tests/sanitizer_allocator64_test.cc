@@ -14,9 +14,14 @@
 #include <algorithm>
 #include <vector>
 
-TEST(SanitizerCommon, DefaultSizeClassMap) {
-  typedef DefaultSizeClassMap SCMap;
+static const uptr kAllocatorSpace = 0x600000000000ULL;
+static const uptr kAllocatorSize = 0x10000000000;  // 1T.
 
+typedef DefaultSizeClassMap SCMap;
+typedef
+  SizeClassAllocator64<kAllocatorSpace, kAllocatorSize, 16, SCMap> Allocator;
+
+TEST(SanitizerCommon, DefaultSizeClassMap) {
 #if 0
   for (uptr i = 0; i < SCMap::kNumClasses; i++) {
     // printf("% 3ld: % 5ld (%4lx);   ", i, SCMap::Size(i), SCMap::Size(i));
@@ -47,14 +52,7 @@ TEST(SanitizerCommon, DefaultSizeClassMap) {
   }
 }
 
-static const uptr kAllocatorSpace = 0x600000000000ULL;
-static const uptr kAllocatorSize = 0x10000000000;  // 1T.
-
 TEST(SanitizerCommon, SizeClassAllocator64) {
-  typedef DefaultSizeClassMap SCMap;
-  typedef SizeClassAllocator64<kAllocatorSpace, kAllocatorSize,
-                               16, SCMap> Allocator;
-
   Allocator a;
   a.Init();
 
@@ -101,9 +99,6 @@ TEST(SanitizerCommon, SizeClassAllocator64) {
 
 
 TEST(SanitizerCommon, SizeClassAllocator64MetadataStress) {
-  typedef DefaultSizeClassMap SCMap;
-  typedef SizeClassAllocator64<kAllocatorSpace, kAllocatorSize,
-          16, SCMap> Allocator;
   Allocator a;
   a.Init();
   static volatile void *sink;
@@ -128,9 +123,6 @@ TEST(SanitizerCommon, SizeClassAllocator64MetadataStress) {
 }
 
 void FailInAssertionOnOOM() {
-  typedef DefaultSizeClassMap SCMap;
-  typedef SizeClassAllocator64<kAllocatorSpace, kAllocatorSize,
-          16, SCMap> Allocator;
   Allocator a;
   a.Init();
   const uptr size = 1 << 20;
@@ -188,9 +180,7 @@ TEST(SanitizerCommon, LargeMmapAllocator) {
 }
 
 TEST(SanitizerCommon, CombinedAllocator) {
-  typedef DefaultSizeClassMap SCMap;
-  typedef SizeClassAllocator64<kAllocatorSpace, kAllocatorSize,
-          16, SCMap> PrimaryAllocator;
+  typedef Allocator PrimaryAllocator;
   typedef LargeMmapAllocator SecondaryAllocator;
   typedef CombinedAllocator<PrimaryAllocator, SecondaryAllocator> Allocator;
 
@@ -223,5 +213,39 @@ TEST(SanitizerCommon, CombinedAllocator) {
     }
     allocated.clear();
   }
+  a.TestOnlyUnmap();
+}
+
+typedef SizeClassAllocatorLocalCache<Allocator::kNumClasses, Allocator>
+  AllocatorCache;
+static THREADLOCAL AllocatorCache static_allocator_cache;
+
+TEST(SanitizerCommon, SizeClassAllocatorLocalCache) {
+  static_allocator_cache.Init();
+
+  Allocator a;
+  AllocatorCache cache;
+
+  a.Init();
+  cache.Init();
+
+  const uptr kNumAllocs = 10000;
+  const int kNumIter = 100;
+  uptr saved_total = 0;
+  for (int i = 0; i < kNumIter; i++) {
+    void *allocated[kNumAllocs];
+    for (uptr i = 0; i < kNumAllocs; i++) {
+      allocated[i] = cache.Allocate(&a, 0);
+    }
+    for (uptr i = 0; i < kNumAllocs; i++) {
+      cache.Deallocate(&a, 0, allocated[i]);
+    }
+    cache.Drain(&a);
+    uptr total_allocated = a.TotalMemoryUsed();
+    if (saved_total)
+      CHECK_EQ(saved_total, total_allocated);
+    saved_total = total_allocated;
+  }
+
   a.TestOnlyUnmap();
 }

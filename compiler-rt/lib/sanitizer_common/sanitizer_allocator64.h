@@ -79,6 +79,13 @@ class DefaultSizeClassMap {
   }
 };
 
+struct AllocatorListNode {
+  AllocatorListNode *next;
+};
+
+typedef IntrusiveList<AllocatorListNode> AllocatorFreeList;
+
+
 // Space: a portion of address space of kSpaceSize bytes starting at
 // a fixed address (kSpaceBeg). Both constants are powers of two and
 // kSpaceBeg is kSpaceSize-aligned.
@@ -114,6 +121,30 @@ class SizeClassAllocator64 {
     CHECK(PointerIsMine(p));
     DeallocateBySizeClass(p, GetSizeClass(p));
   }
+
+  // Allocate several chunks of the given class_id.
+  void BulkAllocate(uptr class_id, AllocatorFreeList *free_list) {
+    CHECK_LT(class_id, kNumClasses);
+    RegionInfo *region = GetRegionInfo(class_id);
+    SpinMutexLock l(&region->mutex);
+    if (region->free_list.empty()) {
+      PopulateFreeList(class_id, region);
+    }
+    CHECK(!region->free_list.empty());
+    // Just take as many chunks as we have in the free list now.
+    // FIXME: this might be too much.
+    free_list->append_front(&region->free_list);
+    CHECK(region->free_list.empty());
+  }
+
+  // Swallow the entire free_list for the given class_id.
+  void BulkDeallocate(uptr class_id, AllocatorFreeList *free_list) {
+    CHECK_LT(class_id, kNumClasses);
+    RegionInfo *region = GetRegionInfo(class_id);
+    SpinMutexLock l(&region->mutex);
+    region->free_list.append_front(free_list);
+  }
+
   bool PointerIsMine(void *p) {
     return reinterpret_cast<uptr>(p) / kSpaceSize == kSpaceBeg / kSpaceSize;
   }
@@ -140,8 +171,9 @@ class SizeClassAllocator64 {
     UnmapOrDie(reinterpret_cast<void*>(AllocBeg()), AllocSize());
   }
 
- private:
   static const uptr kNumClasses = 256;  // Power of two <= 256
+
+ private:
   COMPILER_CHECK(kNumClasses <= SizeClassMap::kNumClasses);
   static const uptr kRegionSize = kSpaceSize / kNumClasses;
   COMPILER_CHECK((kRegionSize >> 32) > 0);  // kRegionSize must be >= 2^32.
@@ -149,18 +181,12 @@ class SizeClassAllocator64 {
   // or with one element if its size is greater.
   static const uptr kPopulateSize = 1 << 18;
 
-  struct ListNode {
-    ListNode *next;
-  };
-
-  typedef IntrusiveList<ListNode> FreeList;
-
   struct RegionInfo {
     SpinMutex mutex;
-    FreeList free_list;
+    AllocatorFreeList free_list;
     uptr allocated_user;  // Bytes allocated for user memory.
     uptr allocated_meta;  // Bytes allocated for metadata.
-    char padding[kCacheLineSize - 3 * sizeof(uptr) - sizeof(FreeList)];
+    char padding[kCacheLineSize - 3 * sizeof(uptr) - sizeof(AllocatorFreeList)];
   };
   COMPILER_CHECK(sizeof(RegionInfo) == kCacheLineSize);
 
@@ -196,7 +222,7 @@ class SizeClassAllocator64 {
     uptr i = 0;
     do {  // do-while loop because we need to put at least one item.
       uptr p = region_beg + idx;
-      region->free_list.push_front(reinterpret_cast<ListNode*>(p));
+      region->free_list.push_front(reinterpret_cast<AllocatorListNode*>(p));
       idx += size;
       i++;
     } while (idx < end_idx);
@@ -213,7 +239,7 @@ class SizeClassAllocator64 {
       PopulateFreeList(class_id, region);
     }
     CHECK(!region->free_list.empty());
-    ListNode *node = region->free_list.front();
+    AllocatorListNode *node = region->free_list.front();
     region->free_list.pop_front();
     return reinterpret_cast<void*>(node);
   }
@@ -221,8 +247,45 @@ class SizeClassAllocator64 {
   void DeallocateBySizeClass(void *p, uptr class_id) {
     RegionInfo *region = GetRegionInfo(class_id);
     SpinMutexLock l(&region->mutex);
-    region->free_list.push_front(reinterpret_cast<ListNode*>(p));
+    region->free_list.push_front(reinterpret_cast<AllocatorListNode*>(p));
   }
+};
+
+// Objects of this type should be used as local caches for SizeClassAllocator64.
+// Since the typical use of this class is to have one object per thread in TLS,
+// is has to be POD.
+template<const uptr kNumClasses, class SizeClassAllocator>
+struct SizeClassAllocatorLocalCache {
+  // Don't need to call Init if the object is a global (i.e. zero-initialized).
+  void Init() {
+    internal_memset(this, 0, sizeof(*this));
+  }
+
+  void *Allocate(SizeClassAllocator *allocator, uptr class_id) {
+    CHECK_LT(class_id, kNumClasses);
+    AllocatorFreeList *free_list = &free_lists_[class_id];
+    if (free_list->empty())
+      allocator->BulkAllocate(class_id, free_list);
+    CHECK(!free_list->empty());
+    void *res = free_list->front();
+    free_list->pop_front();
+    return res;
+  }
+
+  void Deallocate(SizeClassAllocator *allocator, uptr class_id, void *p) {
+    CHECK_LT(class_id, kNumClasses);
+    free_lists_[class_id].push_front(reinterpret_cast<AllocatorListNode*>(p));
+  }
+
+  void Drain(SizeClassAllocator *allocator) {
+    for (uptr i = 0; i < kNumClasses; i++) {
+      allocator->BulkDeallocate(i, &free_lists_[i]);
+      CHECK(free_lists_[i].empty());
+    }
+  }
+
+  // private:
+  AllocatorFreeList free_lists_[kNumClasses];
 };
 
 // This class can (de)allocate only large chunks of memory using mmap/unmap.
