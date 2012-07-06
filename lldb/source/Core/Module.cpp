@@ -693,10 +693,6 @@ Module::FindTypes (const SymbolContext& sc,
             types.RemoveMismatchedTypes (type_scope, type_basename, exact_match);
             num_matches = types.GetSize();
         }
-        else
-        {
-            types.Clear();
-        }
     }
     else
     {
