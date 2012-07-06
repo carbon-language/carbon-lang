@@ -3455,8 +3455,9 @@ provide a name for it (probably based on the name of the translation unit).</p>
 <hr>
 
 <ul>
-  <li><tt><a href="#Function">Function</a> *getFunction(const std::string
-  &amp;Name, const <a href="#FunctionType">FunctionType</a> *Ty)</tt>
+
+  <li><tt><a href="#Function">Function</a> *getFunction(StringRef Name) const
+    </tt>
 
     <p>Look up the specified function in the <tt>Module</tt> <a
     href="#SymbolTable"><tt>SymbolTable</tt></a>. If it does not exist, return
