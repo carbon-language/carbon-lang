@@ -13,6 +13,14 @@
 #error offsetof not defined
 #endif
 
+struct A
+{
+    int x;
+};
+
 int main()
 {
+#if (__has_feature(cxx_noexcept))
+    static_assert(noexcept(offsetof(A, x)), "");
+#endif
 }
