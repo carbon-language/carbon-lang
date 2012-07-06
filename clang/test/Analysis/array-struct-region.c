@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,experimental.core,debug.ExprInspection -analyzer-store=region -analyzer-constraints=basic -verify %s
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,experimental.core,debug.ExprInspection -analyzer-store=region -analyzer-constraints=range -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,experimental.core,debug.ExprInspection -analyzer-store=region -analyzer-constraints=basic -analyzer-ipa=all -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,experimental.core,debug.ExprInspection -analyzer-store=region -analyzer-constraints=range -analyzer-ipa=all -verify %s
 
 void clang_analyzer_eval(int);
 
@@ -55,5 +55,40 @@ void struct_as_array() {
   p[0].y = 5;
   clang_analyzer_eval(a.y == 5); // expected-warning{{TRUE}}
   clang_analyzer_eval(p->y == 5); // expected-warning{{TRUE}}
+}
+
+
+// PR13264 / <rdar://problem/11802440>
+struct point { int x; int y; };
+struct circle { struct point o; int r; };
+struct circle get_circle() {
+  struct circle result;
+  result.r = 5;
+  result.o = (struct point){0, 0};
+  return result;
+}
+
+void struct_in_struct() {
+  struct circle c;
+  c = get_circle();
+  // This used to think c.r was undefined because c.o is a LazyCompoundVal.
+  clang_analyzer_eval(c.r == 5); // expected-warning{{TRUE}}
+}
+
+// We also test with floats because we don't model floats right now,
+// and the original bug report used a float.
+struct circle_f { struct point o; float r; };
+struct circle_f get_circle_f() {
+  struct circle_f result;
+  result.r = 5.0;
+  result.o = (struct point){0, 0};
+  return result;
+}
+
+float struct_in_struct_f() {
+  struct circle_f c;
+  c = get_circle_f();
+
+  return c.r; // no-warning
 }
 
