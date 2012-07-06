@@ -185,7 +185,7 @@ public:
 /// A command with word-like arguments that is considered inline content.
 class InlineCommandComment : public InlineContentComment {
 public:
-    struct Argument {
+  struct Argument {
     SourceRange Range;
     StringRef Text;
 
