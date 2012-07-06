@@ -21,6 +21,7 @@ add_dependencies(clangSerialization
   ClangDiagnosticLex
   ClangDiagnosticSema
   ClangDiagnosticSerialization
+  ClangCommentNodes
   ClangDeclNodes
   ClangStmtNodes
   )

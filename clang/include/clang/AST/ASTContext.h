@@ -20,6 +20,7 @@
 #include "clang/Basic/OperatorKinds.h"
 #include "clang/Basic/PartialDiagnostic.h"
 #include "clang/Basic/VersionTuple.h"
+#include "clang/AST/Comment.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/LambdaMangleContext.h"
 #include "clang/AST/NestedNameSpecifier.h"
@@ -424,10 +425,14 @@ public:
   /// \brief True if comments are already loaded from ExternalASTSource.
   mutable bool CommentsLoaded;
 
-  /// \brief Mapping from declarations to their comments (stored within
-  /// Comments list), once we have already looked up the comment associated
-  /// with a given declaration.
-  mutable llvm::DenseMap<const Decl *, const RawComment *> DeclComments;
+  typedef std::pair<const RawComment *, comments::FullComment *>
+      RawAndParsedComment;
+
+  /// \brief Mapping from declarations to their comments.
+  ///
+  /// Raw comments are owned by Comments list.  This mapping is populated
+  /// lazily.
+  mutable llvm::DenseMap<const Decl *, RawAndParsedComment> DeclComments;
 
   /// \brief Return the documentation comment attached to a given declaration,
   /// without looking into cache.
@@ -441,6 +446,10 @@ public:
   /// \brief Return the documentation comment attached to a given declaration.
   /// Returns NULL if no comment is attached.
   const RawComment *getRawCommentForDecl(const Decl *D) const;
+
+  /// Return parsed documentation comment attached to a given declaration.
+  /// Returns NULL if no comment is attached.
+  comments::FullComment *getCommentForDecl(const Decl *D) const;
 
   /// \brief Retrieve the attributes for the given declaration.
   AttrVec& getDeclAttrs(const Decl *D);

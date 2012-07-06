@@ -22,6 +22,7 @@ add_dependencies(clangAnalysis
   ClangAttrClasses
   ClangAttrList
   ClangDiagnosticAnalysis
+  ClangCommentNodes
   ClangDeclNodes
   ClangStmtNodes
   )

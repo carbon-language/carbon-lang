@@ -74,6 +74,7 @@ add_dependencies(clangStaticAnalyzerCheckers
   clangStaticAnalyzerCore
   ClangAttrClasses
   ClangAttrList
+  ClangCommentNodes
   ClangDeclNodes
   ClangStmtNodes
   ClangSACheckers

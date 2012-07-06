@@ -43,6 +43,7 @@ add_clang_library(clangStaticAnalyzerCore
 add_dependencies(clangStaticAnalyzerCore
   ClangAttrClasses
   ClangAttrList
+  ClangCommentNodes
   ClangDeclNodes
   ClangStmtNodes
   )

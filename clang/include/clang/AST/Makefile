@@ -1,6 +1,6 @@
 CLANG_LEVEL := ../../..
 TD_SRC_DIR = $(PROJ_SRC_DIR)/../Basic
-BUILT_SOURCES = Attrs.inc AttrImpl.inc StmtNodes.inc DeclNodes.inc
+BUILT_SOURCES = Attrs.inc AttrImpl.inc StmtNodes.inc DeclNodes.inc CommentNodes.inc
 
 TABLEGEN_INC_FILES_COMMON = 1
 
@@ -27,3 +27,9 @@ $(ObjDir)/DeclNodes.inc.tmp : $(TD_SRC_DIR)/DeclNodes.td $(CLANG_TBLGEN) \
                               $(ObjDir)/.dir
 	$(Echo) "Building Clang declaration node tables with tblgen"
 	$(Verb) $(ClangTableGen) -gen-clang-decl-nodes -o $(call SYSPATH, $@) $<
+
+$(ObjDir)/CommentNodes.inc.tmp : $(TD_SRC_DIR)/CommentNodes.td $(CLANG_TBLGEN) \
+                              $(ObjDir)/.dir
+	$(Echo) "Building Clang comment node tables with tblgen"
+	$(Verb) $(ClangTableGen) -gen-clang-comment-nodes -o $(call SYSPATH, $@) $<
+

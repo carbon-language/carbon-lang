@@ -359,6 +359,23 @@ TEST_F(CommentLexerTest, DoxygenCommand6) {
   ASSERT_EQ(tok::newline,     Toks[7].getKind());
 }
 
+TEST_F(CommentLexerTest, DoxygenCommand7) {
+  const char *Source = "// \\c\n";
+  std::vector<Token> Toks;
+
+  lexString(Source, Toks);
+
+  ASSERT_EQ(3U, Toks.size());
+
+  ASSERT_EQ(tok::text,      Toks[0].getKind());
+  ASSERT_EQ(StringRef(" "), Toks[0].getText());
+
+  ASSERT_EQ(tok::command,   Toks[1].getKind());
+  ASSERT_EQ(StringRef("c"), Toks[1].getCommandName());
+
+  ASSERT_EQ(tok::newline,   Toks[2].getKind());
+}
+
 // Empty verbatim block.
 TEST_F(CommentLexerTest, VerbatimBlock1) {
   const char *Sources[] = {
@@ -389,31 +406,45 @@ TEST_F(CommentLexerTest, VerbatimBlock1) {
 
 // Empty verbatim block without an end command.
 TEST_F(CommentLexerTest, VerbatimBlock2) {
-  const char *Sources[] = {
-    "/// \\verbatim\n//",
-    "/** \\verbatim*/"
-  };
+  const char *Source = "/// \\verbatim";
 
-  for (size_t i = 0, e = array_lengthof(Sources); i != e; i++) {
-    std::vector<Token> Toks;
+  std::vector<Token> Toks;
 
-    lexString(Sources[i], Toks);
+  lexString(Source, Toks);
 
-    ASSERT_EQ(4U, Toks.size());
+  ASSERT_EQ(3U, Toks.size());
 
-    ASSERT_EQ(tok::text,                 Toks[0].getKind());
-    ASSERT_EQ(StringRef(" "),            Toks[0].getText());
+  ASSERT_EQ(tok::text,                 Toks[0].getKind());
+  ASSERT_EQ(StringRef(" "),            Toks[0].getText());
 
-    ASSERT_EQ(tok::verbatim_block_begin, Toks[1].getKind());
-    ASSERT_EQ(StringRef("verbatim"),     Toks[1].getVerbatimBlockName());
+  ASSERT_EQ(tok::verbatim_block_begin, Toks[1].getKind());
+  ASSERT_EQ(StringRef("verbatim"),     Toks[1].getVerbatimBlockName());
 
-    ASSERT_EQ(tok::newline,              Toks[2].getKind());
-    ASSERT_EQ(tok::newline,              Toks[3].getKind());
-  }
+  ASSERT_EQ(tok::newline,              Toks[2].getKind());
+}
+
+// Empty verbatim block without an end command.
+TEST_F(CommentLexerTest, VerbatimBlock3) {
+  const char *Source = "/** \\verbatim*/";
+
+  std::vector<Token> Toks;
+
+  lexString(Source, Toks);
+
+  ASSERT_EQ(4U, Toks.size());
+
+  ASSERT_EQ(tok::text,                 Toks[0].getKind());
+  ASSERT_EQ(StringRef(" "),            Toks[0].getText());
+
+  ASSERT_EQ(tok::verbatim_block_begin, Toks[1].getKind());
+  ASSERT_EQ(StringRef("verbatim"),     Toks[1].getVerbatimBlockName());
+
+  ASSERT_EQ(tok::newline,              Toks[2].getKind());
+  ASSERT_EQ(tok::newline,              Toks[3].getKind());
 }
 
 // Single-line verbatim block.
-TEST_F(CommentLexerTest, VerbatimBlock3) {
+TEST_F(CommentLexerTest, VerbatimBlock4) {
   const char *Sources[] = {
     "/// Meow \\verbatim aaa \\endverbatim\n//",
     "/** Meow \\verbatim aaa \\endverbatim*/"
@@ -444,7 +475,7 @@ TEST_F(CommentLexerTest, VerbatimBlock3) {
 }
 
 // Single-line verbatim block without an end command.
-TEST_F(CommentLexerTest, VerbatimBlock4) {
+TEST_F(CommentLexerTest, VerbatimBlock5) {
   const char *Sources[] = {
     "/// Meow \\verbatim aaa \n//",
     "/** Meow \\verbatim aaa */"
@@ -471,8 +502,96 @@ TEST_F(CommentLexerTest, VerbatimBlock4) {
   }
 }
 
+TEST_F(CommentLexerTest, VerbatimBlock6) {
+  const char *Source =
+    "// \\verbatim\n"
+    "// Aaa\n"
+    "//\n"
+    "// Bbb\n"
+    "// \\endverbatim\n";
+
+  std::vector<Token> Toks;
+
+  lexString(Source, Toks);
+
+  ASSERT_EQ(11U, Toks.size());
+
+  ASSERT_EQ(tok::text,                 Toks[0].getKind());
+  ASSERT_EQ(StringRef(" "),            Toks[0].getText());
+
+  ASSERT_EQ(tok::verbatim_block_begin, Toks[1].getKind());
+  ASSERT_EQ(StringRef("verbatim"),     Toks[1].getVerbatimBlockName());
+
+  ASSERT_EQ(tok::newline,              Toks[2].getKind());
+
+  ASSERT_EQ(tok::verbatim_block_line,  Toks[3].getKind());
+  ASSERT_EQ(StringRef(" Aaa"),         Toks[3].getVerbatimBlockText());
+
+  ASSERT_EQ(tok::newline,              Toks[4].getKind());
+
+  ASSERT_EQ(tok::newline,              Toks[5].getKind());
+
+  ASSERT_EQ(tok::verbatim_block_line,  Toks[6].getKind());
+  ASSERT_EQ(StringRef(" Bbb"),         Toks[6].getVerbatimBlockText());
+
+  ASSERT_EQ(tok::newline,              Toks[7].getKind());
+
+  ASSERT_EQ(tok::verbatim_block_line,  Toks[8].getKind());
+  ASSERT_EQ(StringRef(" "),            Toks[8].getVerbatimBlockText());
+
+  ASSERT_EQ(tok::verbatim_block_end,   Toks[9].getKind());
+  ASSERT_EQ(StringRef("endverbatim"),  Toks[9].getVerbatimBlockName());
+
+  ASSERT_EQ(tok::newline,              Toks[10].getKind());
+}
+
+TEST_F(CommentLexerTest, VerbatimBlock7) {
+  const char *Source =
+    "/* \\verbatim\n"
+    " * Aaa\n"
+    " *\n"
+    " * Bbb\n"
+    " * \\endverbatim\n"
+    " */";
+
+  std::vector<Token> Toks;
+
+  lexString(Source, Toks);
+
+  ASSERT_EQ(11U, Toks.size());
+
+  ASSERT_EQ(tok::text,                 Toks[0].getKind());
+  ASSERT_EQ(StringRef(" "),            Toks[0].getText());
+
+  ASSERT_EQ(tok::verbatim_block_begin, Toks[1].getKind());
+  ASSERT_EQ(StringRef("verbatim"),     Toks[1].getVerbatimBlockName());
+
+  ASSERT_EQ(tok::verbatim_block_line,  Toks[2].getKind());
+  ASSERT_EQ(StringRef(" Aaa"),         Toks[2].getVerbatimBlockText());
+
+  ASSERT_EQ(tok::verbatim_block_line,  Toks[3].getKind());
+  ASSERT_EQ(StringRef(""),             Toks[3].getVerbatimBlockText());
+
+  ASSERT_EQ(tok::verbatim_block_line,  Toks[4].getKind());
+  ASSERT_EQ(StringRef(" Bbb"),         Toks[4].getVerbatimBlockText());
+
+  ASSERT_EQ(tok::verbatim_block_line,  Toks[5].getKind());
+  ASSERT_EQ(StringRef(" "),            Toks[5].getVerbatimBlockText());
+
+  ASSERT_EQ(tok::verbatim_block_end,   Toks[6].getKind());
+  ASSERT_EQ(StringRef("endverbatim"),  Toks[6].getVerbatimBlockName());
+
+  ASSERT_EQ(tok::newline,              Toks[7].getKind());
+
+  ASSERT_EQ(tok::text,                 Toks[8].getKind());
+  ASSERT_EQ(StringRef(" "),            Toks[8].getText());
+
+  ASSERT_EQ(tok::newline,              Toks[9].getKind());
+  ASSERT_EQ(tok::newline,              Toks[10].getKind());
+}
+
 // Complex test for verbatim blocks.
-TEST_F(CommentLexerTest, VerbatimBlock5) {
+TEST_F(CommentLexerTest, VerbatimBlock8) {
   const char *Source =
     "/* Meow \\verbatim aaa\\$\\@\n"
     "bbb \\endverbati\r"
@@ -492,13 +611,13 @@ TEST_F(CommentLexerTest, VerbatimBlock5) {
   ASSERT_EQ(StringRef("verbatim"),     Toks[1].getVerbatimBlockName());
 
   ASSERT_EQ(tok::verbatim_block_line,  Toks[2].getKind());
-  ASSERT_EQ(StringRef(" aaa\\$\\@\n"), Toks[2].getVerbatimBlockText());
+  ASSERT_EQ(StringRef(" aaa\\$\\@"),   Toks[2].getVerbatimBlockText());
 
   ASSERT_EQ(tok::verbatim_block_line,  Toks[3].getKind());
-  ASSERT_EQ(StringRef("bbb \\endverbati\r"), Toks[3].getVerbatimBlockText());
+  ASSERT_EQ(StringRef("bbb \\endverbati"), Toks[3].getVerbatimBlockText());
 
   ASSERT_EQ(tok::verbatim_block_line,  Toks[4].getKind());
-  ASSERT_EQ(StringRef("ccc\r\n"),      Toks[4].getVerbatimBlockText());
+  ASSERT_EQ(StringRef("ccc"),          Toks[4].getVerbatimBlockText());
 
   ASSERT_EQ(tok::verbatim_block_line,  Toks[5].getKind());
   ASSERT_EQ(StringRef("ddd "),         Toks[5].getVerbatimBlockText());
@@ -513,7 +632,7 @@ TEST_F(CommentLexerTest, VerbatimBlock5) {
   ASSERT_EQ(StringRef("verbatim"),     Toks[8].getVerbatimBlockName());
 
   ASSERT_EQ(tok::verbatim_block_line,  Toks[9].getKind());
-  ASSERT_EQ(StringRef(" eee\n"),       Toks[9].getVerbatimBlockText());
+  ASSERT_EQ(StringRef(" eee"),         Toks[9].getVerbatimBlockText());
 
   ASSERT_EQ(tok::verbatim_block_end,   Toks[10].getKind());
   ASSERT_EQ(StringRef("endverbatim"),  Toks[10].getVerbatimBlockName());
@@ -526,7 +645,7 @@ TEST_F(CommentLexerTest, VerbatimBlock5) {
 }
 
 // LaTeX verbatim blocks.
-TEST_F(CommentLexerTest, VerbatimBlock6) {
+TEST_F(CommentLexerTest, VerbatimBlock9) {
   const char *Source =
     "/// \\f$ Aaa \\f$ \\f[ Bbb \\f] \\f{ Ccc \\f}";
   std::vector<Token> Toks;
@@ -968,8 +1087,25 @@ TEST_F(CommentLexerTest, HTML12) {
 }
 
 TEST_F(CommentLexerTest, HTML13) {
+  const char *Source = "// </tag";
+
+  std::vector<Token> Toks;
+
+  lexString(Source, Toks);
+
+  ASSERT_EQ(3U, Toks.size());
+
+  ASSERT_EQ(tok::text,           Toks[0].getKind());
+  ASSERT_EQ(StringRef(" "),      Toks[0].getText());
+
+  ASSERT_EQ(tok::html_tag_close, Toks[1].getKind());
+  ASSERT_EQ(StringRef("tag"),    Toks[1].getHTMLTagCloseName());
+
+  ASSERT_EQ(tok::newline,        Toks[2].getKind());
+}
+
+TEST_F(CommentLexerTest, HTML14) {
   const char *Sources[] = {
-    "// </tag",
     "// </tag>",
     "// </ tag>",
     "// </ tag >"
@@ -980,7 +1116,7 @@ TEST_F(CommentLexerTest, HTML13) {
 
     lexString(Sources[i], Toks);
 
-    ASSERT_EQ(3U, Toks.size());
+    ASSERT_EQ(4U, Toks.size());
 
     ASSERT_EQ(tok::text,           Toks[0].getKind());
     ASSERT_EQ(StringRef(" "),      Toks[0].getText());
@@ -988,7 +1124,9 @@ TEST_F(CommentLexerTest, HTML13) {
     ASSERT_EQ(tok::html_tag_close, Toks[1].getKind());
     ASSERT_EQ(StringRef("tag"),    Toks[1].getHTMLTagCloseName());
 
-    ASSERT_EQ(tok::newline,        Toks[2].getKind());
+    ASSERT_EQ(tok::html_greater,   Toks[2].getKind());
+
+    ASSERT_EQ(tok::newline,        Toks[3].getKind());
   }
 }
 

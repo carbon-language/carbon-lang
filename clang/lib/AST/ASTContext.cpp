@@ -13,6 +13,9 @@
 
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/CharUnits.h"
+#include "clang/AST/CommentLexer.h"
+#include "clang/AST/CommentSema.h"
+#include "clang/AST/CommentParser.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/DeclTemplate.h"
@@ -149,16 +152,45 @@ const RawComment *ASTContext::getRawCommentForDeclNoCache(const Decl *D) const {
 const RawComment *ASTContext::getRawCommentForDecl(const Decl *D) const {
   // Check whether we have cached a comment string for this declaration
   // already.
-  llvm::DenseMap<const Decl *, const RawComment *>::iterator Pos
+  llvm::DenseMap<const Decl *, RawAndParsedComment>::iterator Pos
       = DeclComments.find(D);
-  if (Pos != DeclComments.end())
-      return Pos->second;
+  if (Pos != DeclComments.end()) {
+    RawAndParsedComment C = Pos->second;
+    return C.first;
+  }
 
   const RawComment *RC = getRawCommentForDeclNoCache(D);
   // If we found a comment, it should be a documentation comment.
   assert(!RC || RC->isDocumentation());
-  DeclComments[D] = RC;
+  DeclComments[D] = RawAndParsedComment(RC, NULL);
   return RC;
+}
+
+comments::FullComment *ASTContext::getCommentForDecl(const Decl *D) const {
+  llvm::DenseMap<const Decl *, RawAndParsedComment>::iterator Pos
+      = DeclComments.find(D);
+  const RawComment *RC;
+  if (Pos != DeclComments.end()) {
+    RawAndParsedComment C = Pos->second;
+    if (comments::FullComment *FC = C.second)
+      return FC;
+    RC = C.first;
+  } else
+    RC = getRawCommentForDecl(D);
+
+  if (!RC)
+    return NULL;
+
+  const StringRef RawText = RC->getRawText(SourceMgr);
+  comments::Lexer L(RC->getSourceRange().getBegin(), comments::CommentOptions(),
+                    RawText.begin(), RawText.end());
+
+  comments::Sema S(this->BumpAlloc);
+  comments::Parser P(L, S, this->BumpAlloc);
+
+  comments::FullComment *FC = P.parseFullComment();
+  DeclComments[D].second = FC;
+  return FC;
 }
 
 void 

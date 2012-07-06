@@ -17,6 +17,7 @@ add_clang_library(clangRewrite
 add_dependencies(clangRewrite
   ClangAttrClasses
   ClangAttrList
+  ClangCommentNodes
   ClangDeclNodes
   ClangStmtNodes
   )

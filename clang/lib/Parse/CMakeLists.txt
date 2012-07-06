@@ -17,6 +17,7 @@ add_clang_library(clangParse
 add_dependencies(clangParse
   ClangAttrClasses
   ClangAttrList
+  ClangCommentNodes
   ClangDeclNodes
   ClangDiagnosticParse
   ClangStmtNodes
