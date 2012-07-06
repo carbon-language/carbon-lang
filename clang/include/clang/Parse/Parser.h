@@ -1045,6 +1045,7 @@ private:
                                           ParsingDeclSpec *DS = 0);
   bool isDeclarationAfterDeclarator();
   bool isStartOfFunctionDefinition(const ParsingDeclarator &Declarator);
+  bool isStartOfDelayParsedFunctionDefinition(const ParsingDeclarator &Declarator);
   DeclGroupPtrTy ParseDeclarationOrFunctionDefinition(
                                                   ParsedAttributesWithRange &attrs,
                                                   ParsingDeclSpec *DS = 0,

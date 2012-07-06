@@ -797,6 +797,27 @@ bool Parser::isStartOfFunctionDefinition(const ParsingDeclarator &Declarator) {
          Tok.is(tok::kw_try);          // X() try { ... }
 }
 
+/// \brief Determine whether the current token, if it occurs after a
+/// a function declarator, indicates the start of a function definition
+/// inside an objective-C class implementation and thus can be delay parsed. 
+bool Parser::isStartOfDelayParsedFunctionDefinition(
+                                       const ParsingDeclarator &Declarator) {
+  if (!CurParsedObjCImpl ||
+      !Declarator.isFunctionDeclarator())
+    return false;
+  if (Tok.is(tok::l_brace))   // int X() {}
+    return true;
+
+  // Handle K&R C argument lists: int X(f) int f; {}
+  if (!getLangOpts().CPlusPlus &&
+      Declarator.getFunctionTypeInfo().isKNRPrototype()) 
+    return isDeclarationSpecifier();
+  
+  return getLangOpts().CPlusPlus &&
+           (Tok.is(tok::colon) ||         // X() : Base() {} (used for ctors)
+            Tok.is(tok::kw_try));          // X() try { ... }
+}
+
 /// ParseDeclarationOrFunctionDefinition - Parse either a function-definition or
 /// a declaration.  We can't tell which we have until we read up to the
 /// compound-statement in function-definition. TemplateParams, if
