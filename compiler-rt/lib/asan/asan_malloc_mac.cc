@@ -397,13 +397,10 @@ void ReplaceSystemMalloc() {
     // If __CFInitialize() hasn't been called yet, cf_asan will be installed
     // as the default allocator after __CFInitialize() finishes (see the
     // interceptor for __CFInitialize() above). Otherwise install cf_asan right
-    // now. On Snow Leopard we can check for __CFRuntimeClassTableSize, but on
-    // Lion it is private, so we can't.
-    if (GetMacosVersion() == MACOS_VERSION_SNOW_LEOPARD) {
-      int *cf_rcts = (int*)dlsym(RTLD_SELF, "__CFRuntimeClassTableSize");
-      if (cf_rcts && *cf_rcts) CFAllocatorSetDefault(cf_asan);
-    } else {
-      // FIXME: how can we check __CFInitialize() has been called already?
+    // now. On both Snow Leopard and Lion __CFInitialize() calls
+    // __CFAllocatorInitialize(), which initializes the _base._cfisa field of
+    // the default allocators we check here.
+    if (((CFRuntimeBase*)kCFAllocatorSystemDefault)->_cfisa) {
       CFAllocatorSetDefault(cf_asan);
     }
   }

@@ -379,28 +379,6 @@ INTERCEPTOR(int, pthread_workqueue_additem_np, pthread_workqueue_t workq,
                                             gencountp);
 }
 
-// CF_RC_BITS, the layout of CFRuntimeBase and __CFStrIsConstant are internal
-// and subject to change in further CoreFoundation versions. Apple does not
-// guarantee any binary compatibility from release to release.
-
-// See http://opensource.apple.com/source/CF/CF-635.15/CFInternal.h
-#if defined(__BIG_ENDIAN__)
-#define CF_RC_BITS 0
-#endif
-
-#if defined(__LITTLE_ENDIAN__)
-#define CF_RC_BITS 3
-#endif
-
-// See http://opensource.apple.com/source/CF/CF-635.15/CFRuntime.h
-typedef struct __CFRuntimeBase {
-  uptr _cfisa;
-  u8 _cfinfo[4];
-#if __LP64__
-  u32 _rc;
-#endif
-} CFRuntimeBase;
-
 // See http://opensource.apple.com/source/CF/CF-635.15/CFString.c
 int __CFStrIsConstant(CFStringRef str) {
   CFRuntimeBase *base = (CFRuntimeBase*)str;

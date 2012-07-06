@@ -14,6 +14,28 @@
 #ifndef ASAN_MAC_H
 #define ASAN_MAC_H
 
+// CF_RC_BITS, the layout of CFRuntimeBase and __CFStrIsConstant are internal
+// and subject to change in further CoreFoundation versions. Apple does not
+// guarantee any binary compatibility from release to release.
+
+// See http://opensource.apple.com/source/CF/CF-635.15/CFInternal.h
+#if defined(__BIG_ENDIAN__)
+#define CF_RC_BITS 0
+#endif
+
+#if defined(__LITTLE_ENDIAN__)
+#define CF_RC_BITS 3
+#endif
+
+// See http://opensource.apple.com/source/CF/CF-635.15/CFRuntime.h
+typedef struct __CFRuntimeBase {
+  uptr _cfisa;
+  u8 _cfinfo[4];
+#if __LP64__
+  u32 _rc;
+#endif
+} CFRuntimeBase;
+
 enum {
   MACOS_VERSION_UNKNOWN = 0,
   MACOS_VERSION_LEOPARD,
