@@ -189,8 +189,8 @@ public:
   ///
   void setAlignment(unsigned A) { Alignment = A; }
 
-  /// EnsureAlignment - Make sure the function is at least 1 << A bytes aligned.
-  void EnsureAlignment(unsigned A) {
+  /// ensureAlignment - Make sure the function is at least 1 << A bytes aligned.
+  void ensureAlignment(unsigned A) {
     if (Alignment < A) Alignment = A;
   }
 
