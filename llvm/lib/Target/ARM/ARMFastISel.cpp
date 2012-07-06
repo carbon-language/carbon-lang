@@ -193,18 +193,21 @@ class ARMFastISel : public FastISel {
 
     // Call handling routines.
   private:
-    CCAssignFn *CCAssignFnForCall(CallingConv::ID CC, bool Return);
+    CCAssignFn *CCAssignFnForCall(CallingConv::ID CC,
+                                  bool Return,
+                                  bool isVarArg);
     bool ProcessCallArgs(SmallVectorImpl<Value*> &Args,
                          SmallVectorImpl<unsigned> &ArgRegs,
                          SmallVectorImpl<MVT> &ArgVTs,
                          SmallVectorImpl<ISD::ArgFlagsTy> &ArgFlags,
                          SmallVectorImpl<unsigned> &RegArgs,
                          CallingConv::ID CC,
-                         unsigned &NumBytes);
+                         unsigned &NumBytes,
+                         bool isVarArg);
     unsigned getLibcallReg(const Twine &Name);
     bool FinishCall(MVT RetVT, SmallVectorImpl<unsigned> &UsedRegs,
                     const Instruction *I, CallingConv::ID CC,
-                    unsigned &NumBytes);
+                    unsigned &NumBytes, bool isVarArg);
     bool ARMEmitLibcall(const Instruction *I, RTLIB::Libcall Call);
 
     // OptionalDef handling routines.
@@ -1810,7 +1813,9 @@ bool ARMFastISel::SelectBinaryFPOp(const Instruction *I, unsigned ISDOpcode) {
 // This is largely taken directly from CCAssignFnForNode - we don't support
 // varargs in FastISel so that part has been removed.
 // TODO: We may not support all of this.
-CCAssignFn *ARMFastISel::CCAssignFnForCall(CallingConv::ID CC, bool Return) {
+CCAssignFn *ARMFastISel::CCAssignFnForCall(CallingConv::ID CC,
+                                           bool Return,
+                                           bool isVarArg) {
   switch (CC) {
   default:
     llvm_unreachable("Unsupported calling convention");
@@ -1823,14 +1828,15 @@ CCAssignFn *ARMFastISel::CCAssignFnForCall(CallingConv::ID CC, bool Return) {
     // Use target triple & subtarget features to do actual dispatch.
     if (Subtarget->isAAPCS_ABI()) {
       if (Subtarget->hasVFP2() &&
-          TM.Options.FloatABIType == FloatABI::Hard)
+          TM.Options.FloatABIType == FloatABI::Hard && !isVarArg)
         return (Return ? RetCC_ARM_AAPCS_VFP: CC_ARM_AAPCS_VFP);
       else
         return (Return ? RetCC_ARM_AAPCS: CC_ARM_AAPCS);
     } else
         return (Return ? RetCC_ARM_APCS: CC_ARM_APCS);
   case CallingConv::ARM_AAPCS_VFP:
-    return (Return ? RetCC_ARM_AAPCS_VFP: CC_ARM_AAPCS_VFP);
+    if (!isVarArg)
+      return (Return ? RetCC_ARM_AAPCS_VFP: CC_ARM_AAPCS_VFP);
   case CallingConv::ARM_AAPCS:
     return (Return ? RetCC_ARM_AAPCS: CC_ARM_AAPCS);
   case CallingConv::ARM_APCS:
@@ -1844,10 +1850,12 @@ bool ARMFastISel::ProcessCallArgs(SmallVectorImpl<Value*> &Args,
                                   SmallVectorImpl<ISD::ArgFlagsTy> &ArgFlags,
                                   SmallVectorImpl<unsigned> &RegArgs,
                                   CallingConv::ID CC,
-                                  unsigned &NumBytes) {
+                                  unsigned &NumBytes,
+                                  bool isVarArg) {
   SmallVector<CCValAssign, 16> ArgLocs;
-  CCState CCInfo(CC, false, *FuncInfo.MF, TM, ArgLocs, *Context);
-  CCInfo.AnalyzeCallOperands(ArgVTs, ArgFlags, CCAssignFnForCall(CC, false));
+  CCState CCInfo(CC, isVarArg, *FuncInfo.MF, TM, ArgLocs, *Context);
+  CCInfo.AnalyzeCallOperands(ArgVTs, ArgFlags,
+                             CCAssignFnForCall(CC, false, isVarArg));
 
   // Check that we can handle all of the arguments. If we can't, then bail out
   // now before we add code to the MBB.
@@ -1979,7 +1987,7 @@ bool ARMFastISel::ProcessCallArgs(SmallVectorImpl<Value*> &Args,
 
 bool ARMFastISel::FinishCall(MVT RetVT, SmallVectorImpl<unsigned> &UsedRegs,
                              const Instruction *I, CallingConv::ID CC,
-                             unsigned &NumBytes) {
+                             unsigned &NumBytes, bool isVarArg) {
   // Issue CALLSEQ_END
   unsigned AdjStackUp = TII.getCallFrameDestroyOpcode();
   AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
@@ -1989,8 +1997,8 @@ bool ARMFastISel::FinishCall(MVT RetVT, SmallVectorImpl<unsigned> &UsedRegs,
   // Now the return value.
   if (RetVT != MVT::isVoid) {
     SmallVector<CCValAssign, 16> RVLocs;
-    CCState CCInfo(CC, false, *FuncInfo.MF, TM, RVLocs, *Context);
-    CCInfo.AnalyzeCallResult(RetVT, CCAssignFnForCall(CC, true));
+    CCState CCInfo(CC, isVarArg, *FuncInfo.MF, TM, RVLocs, *Context);
+    CCInfo.AnalyzeCallResult(RetVT, CCAssignFnForCall(CC, true, isVarArg));
 
     // Copy all of the result registers out of their specified physreg.
     if (RVLocs.size() == 2 && RetVT == MVT::f64) {
@@ -2039,9 +2047,6 @@ bool ARMFastISel::SelectRet(const Instruction *I) {
   if (!FuncInfo.CanLowerReturn)
     return false;
 
-  if (F.isVarArg())
-    return false;
-
   CallingConv::ID CC = F.getCallingConv();
   if (Ret->getNumOperands() > 0) {
     SmallVector<ISD::OutputArg, 4> Outs;
@@ -2051,7 +2056,8 @@ bool ARMFastISel::SelectRet(const Instruction *I) {
     // Analyze operands of the call, assigning locations to each operand.
     SmallVector<CCValAssign, 16> ValLocs;
     CCState CCInfo(CC, F.isVarArg(), *FuncInfo.MF, TM, ValLocs,I->getContext());
-    CCInfo.AnalyzeReturn(Outs, CCAssignFnForCall(CC, true /* is Ret */));
+    CCInfo.AnalyzeReturn(Outs, CCAssignFnForCall(CC, true /* is Ret */,
+                                                 F.isVarArg()));
 
     const Value *RV = Ret->getOperand(0);
     unsigned Reg = getRegForValue(RV);
@@ -2143,7 +2149,7 @@ bool ARMFastISel::ARMEmitLibcall(const Instruction *I, RTLIB::Libcall Call) {
   if (RetVT != MVT::isVoid && RetVT != MVT::i32) {
     SmallVector<CCValAssign, 16> RVLocs;
     CCState CCInfo(CC, false, *FuncInfo.MF, TM, RVLocs, *Context);
-    CCInfo.AnalyzeCallResult(RetVT, CCAssignFnForCall(CC, true));
+    CCInfo.AnalyzeCallResult(RetVT, CCAssignFnForCall(CC, true, false));
     if (RVLocs.size() >= 2 && RetVT != MVT::f64)
       return false;
   }
@@ -2179,7 +2185,8 @@ bool ARMFastISel::ARMEmitLibcall(const Instruction *I, RTLIB::Libcall Call) {
   // Handle the arguments now that we've gotten them.
   SmallVector<unsigned, 4> RegArgs;
   unsigned NumBytes;
-  if (!ProcessCallArgs(Args, ArgRegs, ArgVTs, ArgFlags, RegArgs, CC, NumBytes))
+  if (!ProcessCallArgs(Args, ArgRegs, ArgVTs, ArgFlags,
+                       RegArgs, CC, NumBytes, false))
     return false;
 
   unsigned CalleeReg = 0;
@@ -2218,7 +2225,7 @@ bool ARMFastISel::ARMEmitLibcall(const Instruction *I, RTLIB::Libcall Call) {
 
   // Finish off the call including any return values.
   SmallVector<unsigned, 4> UsedRegs;
-  if (!FinishCall(RetVT, UsedRegs, I, CC, NumBytes)) return false;
+  if (!FinishCall(RetVT, UsedRegs, I, CC, NumBytes, false)) return false;
 
   // Set all unused physreg defs as dead.
   static_cast<MachineInstr *>(MIB)->setPhysRegsDeadExcept(UsedRegs, TRI);
@@ -2240,11 +2247,9 @@ bool ARMFastISel::SelectCall(const Instruction *I,
 
   // TODO: Avoid some calling conventions?
 
-  // Let SDISel handle vararg functions.
   PointerType *PT = cast<PointerType>(CS.getCalledValue()->getType());
   FunctionType *FTy = cast<FunctionType>(PT->getElementType());
-  if (FTy->isVarArg())
-    return false;
+  bool isVarArg = FTy->isVarArg();
 
   // Handle *simple* calls for now.
   Type *RetTy = I->getType();
@@ -2259,8 +2264,8 @@ bool ARMFastISel::SelectCall(const Instruction *I,
   if (RetVT != MVT::isVoid && RetVT != MVT::i1 && RetVT != MVT::i8 &&
       RetVT != MVT::i16 && RetVT != MVT::i32) {
     SmallVector<CCValAssign, 16> RVLocs;
-    CCState CCInfo(CC, false, *FuncInfo.MF, TM, RVLocs, *Context);
-    CCInfo.AnalyzeCallResult(RetVT, CCAssignFnForCall(CC, true));
+    CCState CCInfo(CC, isVarArg, *FuncInfo.MF, TM, RVLocs, *Context);
+    CCInfo.AnalyzeCallResult(RetVT, CCAssignFnForCall(CC, true, isVarArg));
     if (RVLocs.size() >= 2 && RetVT != MVT::f64)
       return false;
   }
@@ -2318,7 +2323,8 @@ bool ARMFastISel::SelectCall(const Instruction *I,
   // Handle the arguments now that we've gotten them.
   SmallVector<unsigned, 4> RegArgs;
   unsigned NumBytes;
-  if (!ProcessCallArgs(Args, ArgRegs, ArgVTs, ArgFlags, RegArgs, CC, NumBytes))
+  if (!ProcessCallArgs(Args, ArgRegs, ArgVTs, ArgFlags,
+                       RegArgs, CC, NumBytes, isVarArg))
     return false;
 
   bool UseReg = false;
@@ -2370,7 +2376,8 @@ bool ARMFastISel::SelectCall(const Instruction *I,
 
   // Finish off the call including any return values.
   SmallVector<unsigned, 4> UsedRegs;
-  if (!FinishCall(RetVT, UsedRegs, I, CC, NumBytes)) return false;
+  if (!FinishCall(RetVT, UsedRegs, I, CC, NumBytes, isVarArg))
+    return false;
 
   // Set all unused physreg defs as dead.
   static_cast<MachineInstr *>(MIB)->setPhysRegsDeadExcept(UsedRegs, TRI);
