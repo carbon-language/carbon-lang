@@ -117,3 +117,11 @@ define i64* @life() nounwind {
   ret i64* %a3
 }
 
+declare void @llvm.donothing() readnone
+
+; CHECK: donada
+define void @donada() nounwind {
+entry:
+  call void @llvm.donothing()
+  ret void
+}

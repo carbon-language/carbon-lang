@@ -573,7 +573,10 @@ bool FastISel::SelectCall(const User *I) {
     // At -O0 we don't care about the lifetime intrinsics.
   case Intrinsic::lifetime_start:
   case Intrinsic::lifetime_end:
+    // The donothing intrinsic does, well, nothing.
+  case Intrinsic::donothing:
     return true;
+
   case Intrinsic::dbg_declare: {
     const DbgDeclareInst *DI = cast<DbgDeclareInst>(Call);
     if (!DIVariable(DI->getVariable()).Verify() ||
