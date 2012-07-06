@@ -22,7 +22,7 @@ struct ThreadStatePlaceholder {
   uptr opaque[sizeof(ThreadState) / sizeof(uptr) + kCacheLineSize];
 };
 
-static ThreadStatePlaceholder *threads;
+static ThreadState *goroutines[kMaxTid];
 
 void InitializeInterceptors() {
 }
@@ -139,11 +139,15 @@ enum Tsan1EventType {
 	LAST_EVENT          // Should not appear.
 };
 
+static void AllocGoroutine(int tid) {
+  goroutines[tid] = (ThreadState*)internal_alloc(MBlockThreadContex,
+      sizeof(ThreadState));
+  internal_memset(goroutines[tid], 0, sizeof(ThreadState));
+}
+
 void __tsan_init() {
-  threads = (ThreadStatePlaceholder*)internal_alloc(MBlockThreadContex,
-      kMaxTid * sizeof(ThreadStatePlaceholder));
-  //!!! internal_memset(threads, 0, kMaxTid * sizeof(ThreadStatePlaceholder));
-  ThreadState *thr = (ThreadState*)&threads[0];
+  AllocGoroutine(0);
+  ThreadState *thr = goroutines[0];
   thr->in_rtl++;
   Initialize(thr);
   thr->in_rtl--;
@@ -151,7 +155,7 @@ void __tsan_init() {
 
 void __tsan_fini() {
   // FIXME: Not necessary thread 0.
-  ThreadState *thr = (ThreadState*)&threads[0];
+  ThreadState *thr = goroutines[0];
   thr->in_rtl++;
   int res = Finalize(thr);
   thr->in_rtl--;
@@ -159,9 +163,7 @@ void __tsan_fini() {
 }
 
 void __tsan_event(int typ, int tid, void *pc, void *addr, int info) {
-  //if (typ != READ && typ != WRITE && typ != SBLOCK_ENTER)
-  //  Printf("typ=%d tid=%d pc=%p addr=%p info=%d\n", typ, tid, pc, addr, info);
-  ThreadState *thr = (ThreadState*)&threads[tid];
+  ThreadState *thr = goroutines[tid];
   switch (typ) {
   case READ:
     MemoryAccess(thr, (uptr)pc, (uptr)addr, 0, false);
@@ -195,23 +197,22 @@ void __tsan_event(int typ, int tid, void *pc, void *addr, int info) {
   case FREE:
     break;
   case THR_START: {
-    //Printf("typ=%d tid=%d pc=%p addr=%p info=%d\n", typ, tid, pc, addr, info);
     if (tid == 0)
       return;
-    ThreadState *parent = (ThreadState*)&threads[info];
+    ThreadState *parent = goroutines[info];
+    AllocGoroutine(tid);
+    thr = goroutines[tid];
     thr->in_rtl++;
     parent->in_rtl++;
     int tid2 = ThreadCreate(parent, (uptr)pc, 0, true);
-    CHECK_EQ(tid2, tid);
     ThreadStart(thr, tid2);
     parent->in_rtl--;
     thr->in_rtl--;
     break;
   }
   default:
-    thr->in_rtl++;
-    Printf("Event: typ=%d thr=%d\n", typ, tid);
-    thr->in_rtl--;
+    Printf("Unknown event type %d\n", typ);
+    Die();
   }
 }
 

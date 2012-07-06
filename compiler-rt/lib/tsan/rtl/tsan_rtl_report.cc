@@ -43,7 +43,6 @@ bool WEAK OnReport(const ReportDesc *rep, bool suppressed) {
 }
 
 static void StackStripMain(ReportStack *stack) {
-#ifndef TSAN_GO
   ReportStack *last_frame = 0;
   ReportStack *last_frame2 = 0;
   const char *prefix = "__interceptor_";
@@ -65,6 +64,7 @@ static void StackStripMain(ReportStack *stack) {
   if (last_frame2 == 0)
     return;
   const char *last = last_frame->func;
+#ifndef TSAN_GO
   const char *last2 = last_frame2->func;
   // Strip frame above 'main'
   if (last2 && 0 == internal_strcmp(last2, "main")) {
@@ -83,6 +83,9 @@ static void StackStripMain(ReportStack *stack) {
     // due to our fault.
     TsanPrintf("Bottom stack frame of stack %zx is missed\n", stack->pc);
   }
+#else
+  if (last && 0 == internal_strcmp(last, "schedunlock"))
+    last_frame2->next = 0;
 #endif
 }
 

@@ -43,7 +43,8 @@ static const uptr kLinuxAppMemMsk = 0x7c0000000000ULL;
 #define MemToShadow(addr) \
     (((addr) & ~(kLinuxAppMemMsk | (kShadowCell - 1))) * kShadowCnt)
 #else
-#define MemToShadow(addr) (((addr) * kShadowCnt) | kLinuxShadowMsk)
+#define MemToShadow(addr) \
+    ((((addr) & ~(kShadowCell - 1)) * kShadowCnt) | kLinuxShadowMsk)
 #endif
 
 static const uptr kLinuxShadowBeg = MemToShadow(kLinuxAppMemBeg);
