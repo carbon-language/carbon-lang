@@ -227,7 +227,8 @@ class __tuple_leaf
 
     __tuple_leaf& operator=(const __tuple_leaf&);
 public:
-    _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR __tuple_leaf() : value()
+    _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR __tuple_leaf()
+             _NOEXCEPT_(is_nothrow_default_constructible<_Hp>::value) : value()
        {static_assert(!is_reference<_Hp>::value,
               "Attempted to default construct a reference element in a tuple");}
 
@@ -347,7 +348,8 @@ class __tuple_leaf<_Ip, _Hp, true>
 
     __tuple_leaf& operator=(const __tuple_leaf&);
 public:
-    _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR __tuple_leaf() {}
+    _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR __tuple_leaf()
+             _NOEXCEPT_(is_nothrow_default_constructible<_Hp>::value) {}
 
     template <class _Alloc>
         _LIBCPP_INLINE_VISIBILITY
@@ -437,7 +439,8 @@ struct __tuple_impl<__tuple_indices<_Indx...>, _Tp...>
     : public __tuple_leaf<_Indx, _Tp>...
 {
     _LIBCPP_INLINE_VISIBILITY
-    _LIBCPP_CONSTEXPR __tuple_impl() {}
+    _LIBCPP_CONSTEXPR __tuple_impl()
+        _NOEXCEPT_(__all<is_nothrow_default_constructible<_Tp>::value...>::value) {}
 
     template <size_t ..._Uf, class ..._Tf,
               size_t ..._Ul, class ..._Tl, class ..._Up>
@@ -535,7 +538,8 @@ class _LIBCPP_VISIBLE tuple
 public:
 
     _LIBCPP_INLINE_VISIBILITY
-    _LIBCPP_CONSTEXPR tuple() {}
+    _LIBCPP_CONSTEXPR tuple()
+        _NOEXCEPT_(__all<is_nothrow_default_constructible<_Tp>::value...>::value) {}
 
     _LIBCPP_INLINE_VISIBILITY
     explicit tuple(const _Tp& ... __t)
@@ -693,7 +697,7 @@ class _LIBCPP_VISIBLE tuple<>
 {
 public:
     _LIBCPP_INLINE_VISIBILITY
-    _LIBCPP_CONSTEXPR tuple() {}
+    _LIBCPP_CONSTEXPR tuple() _NOEXCEPT {}
     template <class _Alloc>
     _LIBCPP_INLINE_VISIBILITY
         tuple(allocator_arg_t, const _Alloc&) {}
