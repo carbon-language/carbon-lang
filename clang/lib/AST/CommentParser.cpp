@@ -33,7 +33,6 @@ ParamCommandComment *Parser::parseParamCommandArgs(
                                 /* IsDirection = */ true);
 
   if (Retokenizer.lexWord(Arg))
-    StringRef ArgText = Arg.getText();
     PC = S.actOnParamCommandArg(PC,
                                 Arg.getLocation(),
                                 Arg.getEndLocation(),
