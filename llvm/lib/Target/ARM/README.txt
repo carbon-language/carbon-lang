@@ -710,3 +710,24 @@ targets, e.g., PPC, that share this behavior, it would be best to implement
 this in a target-independent way: we should probably fold that (when using
 "undefined at zero" semantics) to set the "defined at zero" bit and have
 the code generator expand out the right code.
+
+
+//===---------------------------------------------------------------------===//
+
+Clean up the test/MC/ARM files to have more robust register choices.
+
+R0 should not be used as a register operand in the assembler tests as it's then
+not possible to distinguish between a correct encoding and a missing operand
+encoding, as zero is the default value for the binary encoder.
+e.g.,
+    add r0, r0  // bad
+    add r3, r5  // good
+
+Register operands should be distinct. That is, when the encoding does not
+require two syntactical operands to refer to the same register, two different
+registers should be used in the test so as to catch errors where the
+operands are swapped in the encoding.
+e.g.,
+    subs.w r1, r1, r1 // bad
+    subs.w r1, r2, r3 // good
+
