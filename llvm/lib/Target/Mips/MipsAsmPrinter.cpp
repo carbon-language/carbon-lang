@@ -333,7 +333,6 @@ bool MipsAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNum,
         O << "$0";
       return false;
     }
-    // This will be shared with other cases in succeeding checkins
     case 'D': {
       // Second part of a double word register operand
       if (OpNum == 0)
@@ -343,9 +342,10 @@ bool MipsAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNum,
         return true;
       unsigned Flags = FlagsOP.getImm();
       unsigned NumVals = InlineAsm::getNumOperandRegisters(Flags);
+      // Number of registers represented by this operand. We are looking
+      // for 2 for 32 bit mode and 1 for 64 bit mode.
       if (NumVals != 2) {
-        if (!Subtarget->isGP32bit() && NumVals == 1 && MO.isReg()) {
-          // In 64 bit mode long longs are always just a single reg
+        if (Subtarget->isGP64bit() && NumVals == 1 && MO.isReg()) {
           unsigned Reg = MO.getReg();
           O << '$' << MipsInstPrinter::getRegisterName(Reg);
           return false;
@@ -354,7 +354,6 @@ bool MipsAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNum,
       }
       unsigned RegOp;
       switch(ExtraCode[0]) {
-      // This will have other cases in succeeding checkins
       case 'D':
         RegOp = (!Subtarget->isGP32bit()) ? OpNum : OpNum + 1;
         break;
@@ -368,8 +367,8 @@ bool MipsAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNum,
       O << '$' << MipsInstPrinter::getRegisterName(Reg);
       return false;
     }
-    } // switch
-  } // if ExtraCode
+    }
+  }
 
   printOperand(MI, OpNum, O);
   return false;
