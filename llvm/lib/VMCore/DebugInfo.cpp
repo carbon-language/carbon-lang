@@ -1081,12 +1081,7 @@ void DICompositeType::printInternal(raw_ostream &OS) const {
 }
 
 void DISubprogram::printInternal(raw_ostream &OS) const {
-  StringRef Res = getName();
-  if (!Res.empty())
-    OS << " [" << Res << ']';
-
   // TODO : Print context
-
   OS << " [line " << getLineNumber() << ']';
 
   if (isLocalToUnit())
@@ -1097,6 +1092,10 @@ void DISubprogram::printInternal(raw_ostream &OS) const {
 
   if (getScopeLineNumber() != getLineNumber())
     OS << " [scope " << getScopeLineNumber() << "]";
+
+  StringRef Res = getName();
+  if (!Res.empty())
+    OS << " [" << Res << ']';
 }
 
 void DIGlobalVariable::printInternal(raw_ostream &OS) const {
