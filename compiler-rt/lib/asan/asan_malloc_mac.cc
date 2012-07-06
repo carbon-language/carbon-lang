@@ -98,7 +98,7 @@ INTERCEPTOR(void, __CFInitialize) {
   CHECK(FLAG_replace_cfallocator);
   CHECK(asan_inited);
   REAL(__CFInitialize)();
-  ReplaceCFAllocator();
+  if (!cf_asan) ReplaceCFAllocator();
 }
 
 namespace {
