@@ -1805,6 +1805,24 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       !TrappingMath)
     CmdArgs.push_back("-menable-unsafe-fp-math");
 
+
+  // Validate and pass through -fp-contract option. 
+  if (Arg *A = Args.getLastArg(options::OPT_ffast_math,
+                               options::OPT_ffp_contract)) {
+    if (A->getOption().getID() == options::OPT_ffp_contract) {
+      StringRef Val = A->getValue(Args);
+      if (Val == "fast" || Val == "on" || Val == "off") {
+        CmdArgs.push_back(Args.MakeArgString("-ffp-contract=" + Val));
+      } else {
+        D.Diag(diag::err_drv_unsupported_option_argument)
+          << A->getOption().getName() << Val;
+      }
+    } else { // A is OPT_ffast_math
+      // If fast-math is set then set the fp-contract mode to fast.
+      CmdArgs.push_back(Args.MakeArgString("-ffp-contract=fast"));
+    }
+  }
+
   // We separately look for the '-ffast-math' flag, and if we find it, tell the
   // frontend to provide the appropriate preprocessor macros. This is distinct
   // from enabling any optimizations as it induces a language change which must

@@ -351,6 +351,19 @@ bool EmitAssemblyHelper::AddEmitPasses(BackendAction Action,
     Options.FloatABIType = llvm::FloatABI::Default;
   }
 
+  // Set FP fusion mode.
+  switch (LangOpts.getFPContractMode()) {
+  case LangOptions::FPC_Off:
+    Options.AllowFPOpFusion = llvm::FPOpFusion::Strict;
+    break;
+  case LangOptions::FPC_On:
+    Options.AllowFPOpFusion = llvm::FPOpFusion::Standard;
+    break;
+  case LangOptions::FPC_Fast:
+    Options.AllowFPOpFusion = llvm::FPOpFusion::Fast;
+    break;              
+  }
+
   Options.LessPreciseFPMADOption = CodeGenOpts.LessPreciseFPMAD;
   Options.NoInfsFPMath = CodeGenOpts.NoInfsFPMath;
   Options.NoNaNsFPMath = CodeGenOpts.NoNaNsFPMath;

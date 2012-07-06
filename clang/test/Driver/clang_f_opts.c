@@ -29,3 +29,9 @@
 // RUN: %clang -### -c -Wdeprecated %s 2>&1 | FileCheck -check-prefix=DEPRECATED-OFF-CHECK %s
 // DEPRECATED-ON-CHECK: -fdeprecated-macro
 // DEPRECATED-OFF-CHECK-NOT: -fdeprecated-macro
+
+// RUN: %clang -### -S -ffp-contract=fast %s 2>&1 | FileCheck -check-prefix=FP-CONTRACT-FAST-CHECK %s
+// RUN: %clang -### -S -ffast-math %s 2>&1 | FileCheck -check-prefix=FP-CONTRACT-FAST-CHECK %s
+// RUN: %clang -### -S -ffp-contract=off %s 2>&1 | FileCheck -check-prefix=FP-CONTRACT-OFF-CHECK %s
+// FP-CONTRACT-FAST-CHECK: -ffp-contract=fast
+// FP-CONTRACT-OFF-CHECK: -ffp-contract=off

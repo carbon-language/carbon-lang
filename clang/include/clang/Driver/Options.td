@@ -410,6 +410,9 @@ def fhonor_infinites : Flag<"-fhonor-infinites">, Alias<fhonor_infinities>;
 def fno_honor_infinites : Flag<"-fno-honor-infinites">, Alias<fno_honor_infinities>;
 def ftrapping_math : Flag<"-ftrapping-math">, Group<f_Group>;
 def fno_trapping_math : Flag<"-fno-trapping-math">, Group<f_Group>;
+def ffp_contract : Joined<"-ffp-contract=">, Group<f_Group>,
+  Flags<[CC1Option]>, HelpText<"Form fused FP ops (e.g. FMAs): fast (everywhere)"
+  " | on (according to FP_CONTRACT pragma, default) | off (never fuse)">;
 
 def ffor_scope : Flag<"-ffor-scope">, Group<f_Group>;
 def fno_for_scope : Flag<"-fno-for-scope">, Group<f_Group>;

@@ -759,6 +759,11 @@ static void LangOptsToArgs(const LangOptions &Opts, ToArgsList &Res) {
       Res.push_back("-ftrapv-handler", Opts.OverflowHandler);
     break;
   }
+  switch (Opts.getFPContractMode()) {
+  case LangOptions::FPC_Off:  Res.push_back("-ffp-contract=off"); break;
+  case LangOptions::FPC_On:   Res.push_back("-ffp-contract=on"); break;
+  case LangOptions::FPC_Fast: Res.push_back("-ffp-contract=fast"); break;
+  }
   if (Opts.HeinousExtensions)
     Res.push_back("-fheinous-gnu-extensions");
   // Optimize is implicit.
@@ -1974,6 +1979,18 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
   else
     Diags.Report(diag::err_drv_invalid_value)
       << Args.getLastArg(OPT_fvisibility)->getAsString(Args) << Vis;
+
+  if (Arg *A = Args.getLastArg(OPT_ffp_contract)) {
+    StringRef Val = A->getValue(Args);
+    if (Val == "fast")
+      Opts.setFPContractMode(LangOptions::FPC_Fast);
+    else if (Val == "on")
+      Opts.setFPContractMode(LangOptions::FPC_On);
+    else if (Val == "off")
+      Opts.setFPContractMode(LangOptions::FPC_Off);
+    else
+      Diags.Report(diag::err_drv_invalid_value) << A->getAsString(Args) << Val;
+  }
 
   if (Args.hasArg(OPT_fvisibility_inlines_hidden))
     Opts.InlineVisibilityHidden = 1;
