@@ -754,6 +754,8 @@ namespace llvm {
   };
 
   class DIObjCProperty : public DIDescriptor {
+    friend class DIDescriptor;
+    void printInternal(raw_ostream &OS) const;
   public:
     explicit DIObjCProperty(const MDNode *N) : DIDescriptor(N) { }
 

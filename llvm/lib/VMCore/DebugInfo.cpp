@@ -1018,6 +1018,8 @@ void DIDescriptor::print(raw_ostream &OS) const {
     DIGlobalVariable(DbgNode).printInternal(OS);
   } else if (this->isVariable()) {
     DIVariable(DbgNode).printInternal(OS);
+  } else if (this->isObjCProperty()) {
+    DIObjCProperty(DbgNode).printInternal(OS);
   }
 }
 
@@ -1119,6 +1121,15 @@ void DIVariable::printInternal(raw_ostream &OS) const {
     OS << " [" << Res << ']';
 
   OS << " [line " << getLineNumber() << ']';
+}
+
+void DIObjCProperty::printInternal(raw_ostream &OS) const {
+  StringRef Name = getObjCPropertyName();
+  if (!Name.empty())
+    OS << " [" << Name << ']';
+
+  OS << " [line " << getLineNumber()
+     << ", properties " << getUnsignedField(6) << ']';
 }
 
 static void printDebugLoc(DebugLoc DL, raw_ostream &CommentOS,
