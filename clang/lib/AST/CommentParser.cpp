@@ -390,6 +390,7 @@ BlockContentComment *Parser::parseBlockContent() {
   case tok::html_greater:
     llvm_unreachable("should not see this token");
   }
+  llvm_unreachable("bogus token kind");
 }
 
 FullComment *Parser::parseFullComment() {
@@ -410,5 +411,3 @@ FullComment *Parser::parseFullComment() {
 
 } // end namespace comments
 } // end namespace clang
-
-

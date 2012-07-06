@@ -69,6 +69,7 @@ Comment::child_iterator Comment::child_begin() const {
 #undef COMMENT
 #undef ABSTRACT_COMMENT
   }
+  llvm_unreachable("Unknown comment kind!");
 }
 
 Comment::child_iterator Comment::child_end() const {
@@ -82,9 +83,9 @@ Comment::child_iterator Comment::child_end() const {
 #undef COMMENT
 #undef ABSTRACT_COMMENT
   }
+  llvm_unreachable("Unknown comment kind!");
 }
 
 
 } // end namespace comments
 } // end namespace clang
-
