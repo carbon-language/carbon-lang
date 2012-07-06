@@ -366,6 +366,9 @@ public:
   }
 };
 
+/// \brief Represents the memory allocation call in a C++ new-expression.
+///
+/// This is a call to "operator new".
 class CXXAllocatorCall : public AnyFunctionCall {
   const CXXNewExpr *E;
 
@@ -425,12 +428,22 @@ public:
 
   const ObjCMessageExpr *getOriginExpr() const { return Msg; }
 
+  /// \brief Returns the value of the receiver at the time of this call.
   SVal getReceiverSVal() const;
 
+  /// \brief Returns the expression for the receiver of this message if it is
+  /// an instance message.
+  ///
+  /// Returns NULL otherwise.
+  /// \sa ObjCMessageExpr::getInstanceReceiver()
   const Expr *getInstanceReceiverExpr() const {
     return Msg->getInstanceReceiver();
   }
 
+  /// \brief Get the interface for the receiver.
+  ///
+  /// This works whether this is an instance message or a class message.
+  /// However, it currently just uses the static type of the receiver.
   const ObjCInterfaceDecl *getReceiverInterface() const {
     return Msg->getReceiverInterface();
   }
@@ -483,6 +496,10 @@ public:
     return EntireRange;
   }
 
+  /// \brief Return the property reference part of this access.
+  ///
+  /// In the expression "obj.prop += 1", the property reference expression is
+  /// "obj.prop".
   const ObjCPropertyRefExpr *getPropertyExpr() const {
     return PropE;
   }
