@@ -9,6 +9,7 @@ function(add_clang_unittest test_dirname)
   add_unittest(ClangUnitTests ${test_dirname} ${ARGN})
 endfunction()
 
+add_subdirectory(ASTMatchers)
 add_subdirectory(Basic)
 add_subdirectory(Lex)
 add_subdirectory(Frontend)
