@@ -162,7 +162,8 @@ const RawComment *ASTContext::getRawCommentForDecl(const Decl *D) const {
   const RawComment *RC = getRawCommentForDeclNoCache(D);
   // If we found a comment, it should be a documentation comment.
   assert(!RC || RC->isDocumentation());
-  DeclComments[D] = RawAndParsedComment(RC, (comments::FullComment *)NULL);
+  DeclComments[D] =
+      RawAndParsedComment(RC, static_cast<comments::FullComment *>(NULL));
   return RC;
 }
 
