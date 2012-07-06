@@ -372,6 +372,21 @@ public:
                              const MachineInstr *DefMI, unsigned DefIdx,
                              const MachineInstr *UseMI, unsigned UseIdx) const;
 
+  /// analyzeCompare - For a comparison instruction, return the source registers
+  /// in SrcReg and SrcReg2 if having two register operands, and the value it
+  /// compares against in CmpValue. Return true if the comparison instruction
+  /// can be analyzed.
+  virtual bool analyzeCompare(const MachineInstr *MI, unsigned &SrcReg,
+                              unsigned &SrcReg2,
+                              int &CmpMask, int &CmpValue) const;
+
+  /// optimizeCompareInstr - Check if there exists an earlier instruction that
+  /// operates on the same source operands and sets flags in the same way as
+  /// Compare; remove Compare if possible.
+  virtual bool optimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg,
+                                    unsigned SrcReg2, int CmpMask, int CmpValue,
+                                    const MachineRegisterInfo *MRI) const;
+
 private:
   MachineInstr * convertToThreeAddressWithLEA(unsigned MIOpc,
                                               MachineFunction::iterator &MFI,

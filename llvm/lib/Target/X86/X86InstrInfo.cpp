@@ -2865,6 +2865,291 @@ void X86InstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
   NewMIs.push_back(MIB);
 }
 
+bool X86InstrInfo::
+analyzeCompare(const MachineInstr *MI, unsigned &SrcReg, unsigned &SrcReg2,
+               int &CmpMask, int &CmpValue) const {
+  switch (MI->getOpcode()) {
+  default: break;
+  case X86::CMP64ri32:
+  case X86::CMP64ri8:
+  case X86::CMP32ri:
+  case X86::CMP32ri8:
+  case X86::CMP16ri:
+  case X86::CMP16ri8:
+  case X86::CMP8ri:
+    SrcReg = MI->getOperand(0).getReg();
+    SrcReg2 = 0;
+    CmpMask = ~0;
+    CmpValue = MI->getOperand(1).getImm();
+    return true;
+  case X86::CMP64rr:
+  case X86::CMP32rr:
+  case X86::CMP16rr:
+  case X86::CMP8rr:
+    SrcReg = MI->getOperand(0).getReg();
+    SrcReg2 = MI->getOperand(1).getReg();
+    CmpMask = ~0;
+    CmpValue = 0;
+    return true;
+  }
+  return false;
+}
+
+/// getSwappedConditionForSET - assume the flags are set by MI(a,b), return
+/// the opcode if we modify the instructions such that flags are
+/// set by MI(b,a).
+static unsigned getSwappedConditionForSET(unsigned SETOpc) {
+  switch (SETOpc) {
+  default: return 0;
+  case X86::SETEr:  return X86::SETEr;
+  case X86::SETEm:  return X86::SETEm;
+  case X86::SETNEr: return X86::SETNEr;
+  case X86::SETNEm: return X86::SETNEm;
+  case X86::SETLr:  return X86::SETGr;
+  case X86::SETLm:  return X86::SETGm;
+  case X86::SETLEr: return X86::SETGEr;
+  case X86::SETLEm: return X86::SETGEm;
+  case X86::SETGr:  return X86::SETLr;
+  case X86::SETGm:  return X86::SETLm;
+  case X86::SETGEr: return X86::SETLEr;
+  case X86::SETGEm: return X86::SETLEm;
+  case X86::SETBr:  return X86::SETAr;
+  case X86::SETBm:  return X86::SETAm;
+  case X86::SETBEr: return X86::SETAEr;
+  case X86::SETBEm: return X86::SETAEm;
+  case X86::SETAr:  return X86::SETBr;
+  case X86::SETAm:  return X86::SETBm;
+  case X86::SETAEr: return X86::SETBEr;
+  case X86::SETAEm: return X86::SETBEm;
+  }
+}
+
+/// getSwappedConditionForBranch - assume the flags are set by MI(a,b), return
+/// the opcode if we modify the instructions such that flags are
+/// set by MI(b,a).
+static unsigned getSwappedConditionForBranch(unsigned BranchOpc) {
+  switch (BranchOpc) {
+  default: return 0;
+  case X86::JE_4:  return X86::JE_4;
+  case X86::JNE_4: return X86::JNE_4;
+  case X86::JL_4:  return X86::JG_4;
+  case X86::JLE_4: return X86::JGE_4;
+  case X86::JG_4:  return X86::JL_4;
+  case X86::JGE_4: return X86::JLE_4;
+  case X86::JB_4:  return X86::JA_4;
+  case X86::JBE_4: return X86::JAE_4;
+  case X86::JA_4:  return X86::JB_4;
+  case X86::JAE_4: return X86::JBE_4;
+  }
+}
+
+/// getSwappedConditionForCMov - assume the flags are set by MI(a,b), return
+/// the opcode if we modify the instructions such that flags are
+/// set by MI(b,a).
+static unsigned getSwappedConditionForCMov(unsigned CMovOpc) {
+  switch (CMovOpc) {
+  default: return 0;
+  case X86::CMOVE16rm:  return X86::CMOVE16rm;
+  case X86::CMOVE16rr:  return X86::CMOVE16rr;
+  case X86::CMOVE32rm:  return X86::CMOVE32rm;
+  case X86::CMOVE32rr:  return X86::CMOVE32rr;
+  case X86::CMOVE64rm:  return X86::CMOVE64rm;
+  case X86::CMOVE64rr:  return X86::CMOVE64rr;
+  case X86::CMOVNE16rm: return X86::CMOVNE16rm;
+  case X86::CMOVNE16rr: return X86::CMOVNE16rr;
+  case X86::CMOVNE32rm: return X86::CMOVNE32rm;
+  case X86::CMOVNE32rr: return X86::CMOVNE32rr;
+  case X86::CMOVNE64rm: return X86::CMOVNE64rm;
+  case X86::CMOVNE64rr: return X86::CMOVNE64rr;
+
+  case X86::CMOVL16rm:  return X86::CMOVG16rm;
+  case X86::CMOVL16rr:  return X86::CMOVG16rr;
+  case X86::CMOVL32rm:  return X86::CMOVG32rm;
+  case X86::CMOVL32rr:  return X86::CMOVG32rr;
+  case X86::CMOVL64rm:  return X86::CMOVG64rm;
+  case X86::CMOVL64rr:  return X86::CMOVG64rr;
+  case X86::CMOVLE16rm: return X86::CMOVGE16rm;
+  case X86::CMOVLE16rr: return X86::CMOVGE16rr;
+  case X86::CMOVLE32rm: return X86::CMOVGE32rm;
+  case X86::CMOVLE32rr: return X86::CMOVGE32rr;
+  case X86::CMOVLE64rm: return X86::CMOVGE64rm;
+  case X86::CMOVLE64rr: return X86::CMOVGE64rr;
+
+  case X86::CMOVG16rm:  return X86::CMOVL16rm;
+  case X86::CMOVG16rr:  return X86::CMOVL16rr;
+  case X86::CMOVG32rm:  return X86::CMOVL32rm;
+  case X86::CMOVG32rr:  return X86::CMOVL32rr;
+  case X86::CMOVG64rm:  return X86::CMOVL64rm;
+  case X86::CMOVG64rr:  return X86::CMOVL64rr;
+  case X86::CMOVGE16rm: return X86::CMOVLE16rm;
+  case X86::CMOVGE16rr: return X86::CMOVLE16rr;
+  case X86::CMOVGE32rm: return X86::CMOVLE32rm;
+  case X86::CMOVGE32rr: return X86::CMOVLE32rr;
+  case X86::CMOVGE64rm: return X86::CMOVLE64rm;
+  case X86::CMOVGE64rr: return X86::CMOVLE64rr;
+
+  case X86::CMOVB16rm:  return X86::CMOVA16rm;
+  case X86::CMOVB16rr:  return X86::CMOVA16rr;
+  case X86::CMOVB32rm:  return X86::CMOVA32rm;
+  case X86::CMOVB32rr:  return X86::CMOVA32rr;
+  case X86::CMOVB64rm:  return X86::CMOVA64rm;
+  case X86::CMOVB64rr:  return X86::CMOVA64rr;
+  case X86::CMOVBE16rm: return X86::CMOVAE16rm;
+  case X86::CMOVBE16rr: return X86::CMOVAE16rr;
+  case X86::CMOVBE32rm: return X86::CMOVAE32rm;
+  case X86::CMOVBE32rr: return X86::CMOVAE32rr;
+  case X86::CMOVBE64rm: return X86::CMOVAE64rm;
+  case X86::CMOVBE64rr: return X86::CMOVAE64rr;
+
+  case X86::CMOVA16rm:  return X86::CMOVB16rm;
+  case X86::CMOVA16rr:  return X86::CMOVB16rr;
+  case X86::CMOVA32rm:  return X86::CMOVB32rm;
+  case X86::CMOVA32rr:  return X86::CMOVB32rr;
+  case X86::CMOVA64rm:  return X86::CMOVB64rm;
+  case X86::CMOVA64rr:  return X86::CMOVB64rr;
+  case X86::CMOVAE16rm: return X86::CMOVBE16rm;
+  case X86::CMOVAE16rr: return X86::CMOVBE16rr;
+  case X86::CMOVAE32rm: return X86::CMOVBE32rm;
+  case X86::CMOVAE32rr: return X86::CMOVBE32rr;
+  case X86::CMOVAE64rm: return X86::CMOVBE64rm;
+  case X86::CMOVAE64rr: return X86::CMOVBE64rr;
+  }
+}
+
+/// isRedundantFlagInstr - check whether the first instruction, whose only
+/// purpose is to update flags, can be made redundant.
+/// CMPrr can be made redundant by SUBrr if the operands are the same.
+/// This function can be extended later on.
+/// SrcReg, SrcRegs: register operands for FlagI.
+/// ImmValue: immediate for FlagI if it takes an immediate.
+inline static bool isRedundantFlagInstr(MachineInstr *FlagI, unsigned SrcReg,
+                                        unsigned SrcReg2, int ImmValue,
+                                        MachineInstr *OI) {
+  if (((FlagI->getOpcode() == X86::CMP64rr &&
+        OI->getOpcode() == X86::SUB64rr) ||
+       (FlagI->getOpcode() == X86::CMP32rr &&
+        OI->getOpcode() == X86::SUB32rr)||
+       (FlagI->getOpcode() == X86::CMP16rr &&
+        OI->getOpcode() == X86::SUB16rr)||
+       (FlagI->getOpcode() == X86::CMP8rr &&
+        OI->getOpcode() == X86::SUB8rr)) &&
+      ((OI->getOperand(1).getReg() == SrcReg &&
+        OI->getOperand(2).getReg() == SrcReg2) ||
+       (OI->getOperand(1).getReg() == SrcReg2 &&
+        OI->getOperand(2).getReg() == SrcReg)))
+    return true;
+
+  if (((FlagI->getOpcode() == X86::CMP64ri32 &&
+        OI->getOpcode() == X86::SUB64ri32) ||
+       (FlagI->getOpcode() == X86::CMP64ri8 &&
+        OI->getOpcode() == X86::SUB64ri8) ||
+       (FlagI->getOpcode() == X86::CMP32ri &&
+        OI->getOpcode() == X86::SUB32ri) ||
+       (FlagI->getOpcode() == X86::CMP32ri8 &&
+        OI->getOpcode() == X86::SUB32ri8) ||
+       (FlagI->getOpcode() == X86::CMP16ri &&
+        OI->getOpcode() == X86::SUB16ri) ||
+       (FlagI->getOpcode() == X86::CMP16ri8 &&
+        OI->getOpcode() == X86::SUB16ri8) ||
+       (FlagI->getOpcode() == X86::CMP8ri &&
+        OI->getOpcode() == X86::SUB8ri)) &&
+      OI->getOperand(1).getReg() == SrcReg &&
+      OI->getOperand(2).getImm() == ImmValue)
+    return true;
+  return false;
+}
+
+/// optimizeCompareInstr - Check if there exists an earlier instruction that
+/// operates on the same source operands and sets flags in the same way as
+/// Compare; remove Compare if possible.
+bool X86InstrInfo::
+optimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg, unsigned SrcReg2,
+                     int CmpMask, int CmpValue,
+                     const MachineRegisterInfo *MRI) const {
+  // Get the unique definition of SrcReg.
+  MachineInstr *MI = MRI->getUniqueVRegDef(SrcReg);
+  if (!MI) return false;
+
+  // CmpInstr is the first instruction of the BB.
+  MachineBasicBlock::iterator I = CmpInstr, Def = MI;
+
+  // We are searching for an earlier instruction that can make CmpInstr
+  // redundant and that instruction will be saved in Sub.
+  MachineInstr *Sub = NULL;
+  const TargetRegisterInfo *TRI = &getRegisterInfo();
+  
+  // We iterate backward, starting from the instruction before CmpInstr and
+  // stop when reaching the definition of a source register or done with the BB.
+  // RI points to the instruction before CmpInstr.
+  // If the definition is in this basic block, RE points to the definition;
+  // otherwise, RE is the rend of the basic block.
+  MachineBasicBlock::reverse_iterator
+      RI = MachineBasicBlock::reverse_iterator(I),
+      RE = CmpInstr->getParent() == MI->getParent() ?
+           MachineBasicBlock::reverse_iterator(++Def) /* points to MI */ :
+           CmpInstr->getParent()->rend();
+  for (; RI != RE; ++RI) {
+    MachineInstr *Instr = &*RI;
+    // Check whether CmpInstr can be made redundant by the current instruction.
+    if (isRedundantFlagInstr(CmpInstr, SrcReg, SrcReg2, CmpValue, Instr)) {
+      Sub = Instr;
+      break;
+    }
+
+    if (Instr->modifiesRegister(X86::EFLAGS, TRI) ||
+        Instr->readsRegister(X86::EFLAGS, TRI))
+      // This instruction modifies or uses EFLAGS.
+      // We can't remove CmpInstr.
+      return false;
+  }
+
+  // Return false if no candidates exist.
+  if (!Sub)
+    return false;
+
+  // Scan forward from the instruction after CmpInstr for uses of EFLAGS.
+  SmallVector<std::pair<MachineInstr*, unsigned /*NewOpc*/>, 4> OpsToUpdate;
+  MachineBasicBlock::iterator E = CmpInstr->getParent()->end();
+  for (++I; I != E; ++I) {
+    const MachineInstr &Instr = *I;
+    if (Instr.modifiesRegister(X86::EFLAGS, TRI))
+      // It is safe to remove CmpInstr if EFLAGS is updated again.
+      break;
+
+    if (!Instr.readsRegister(X86::EFLAGS, TRI))
+      continue;
+
+    // EFLAGS is used by this instruction.
+    if (SrcReg2 != 0 && Sub->getOperand(1).getReg() == SrcReg2 &&
+        Sub->getOperand(2).getReg() == SrcReg) {
+
+      // If we have SUB(r1, r2) and CMP(r2, r1), the condition code needs
+      // to be changed from r2 > r1 to r1 < r2, from r2 < r1 to r1 > r2, etc.
+      unsigned NewOpc = getSwappedConditionForSET(Instr.getOpcode());
+      if (!NewOpc) NewOpc = getSwappedConditionForBranch(Instr.getOpcode());
+      if (!NewOpc) NewOpc = getSwappedConditionForCMov(Instr.getOpcode());
+      if (!NewOpc) return false;
+
+      // Push the MachineInstr to OpsToUpdate.
+      // If it is safe to remove CmpInstr, the condition code of these
+      // instructions will be modified.
+      OpsToUpdate.push_back(std::make_pair(&*I, NewOpc));
+    }
+  }
+
+  // Make sure Sub instruction defines EFLAGS.
+  assert(Sub->getNumOperands() >= 4 && Sub->getOperand(3).isReg() &&
+         Sub->getOperand(3).getReg() == X86::EFLAGS &&
+         "EFLAGS should be the 4th operand of SUBrr or SUBri.");
+  Sub->getOperand(3).setIsDef(true);
+  CmpInstr->eraseFromParent();
+
+  // Modify the condition code of instructions in OpsToUpdate.
+  for (unsigned i = 0, e = OpsToUpdate.size(); i < e; i++)
+    OpsToUpdate[i].first->setDesc(get(OpsToUpdate[i].second));
+  return true;
+}
+
 /// Expand2AddrUndef - Expand a single-def pseudo instruction to a two-addr
 /// instruction with two undef reads of the register being defined.  This is
 /// used for mapping:
