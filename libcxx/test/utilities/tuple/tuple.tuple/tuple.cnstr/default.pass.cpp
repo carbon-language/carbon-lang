@@ -46,4 +46,18 @@ int main()
         assert(std::get<2>(t) == "");
         assert(std::get<3>(t) == DefaultOnly());
     }
+#ifndef _LIBCPP_HAS_NO_CONSTEXPR
+    {
+        constexpr std::tuple<> t;
+    }
+    {
+        constexpr std::tuple<int> t;
+        assert(std::get<0>(t) == 0);
+    }
+    {
+        constexpr std::tuple<int, char*> t;
+        assert(std::get<0>(t) == 0);
+        assert(std::get<1>(t) == nullptr);
+    }
+#endif
 }

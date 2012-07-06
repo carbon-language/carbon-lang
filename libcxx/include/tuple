@@ -227,7 +227,7 @@ class __tuple_leaf
 
     __tuple_leaf& operator=(const __tuple_leaf&);
 public:
-    _LIBCPP_INLINE_VISIBILITY __tuple_leaf() : value()
+    _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR __tuple_leaf() : value()
        {static_assert(!is_reference<_Hp>::value,
               "Attempted to default construct a reference element in a tuple");}
 
@@ -347,7 +347,7 @@ class __tuple_leaf<_Ip, _Hp, true>
 
     __tuple_leaf& operator=(const __tuple_leaf&);
 public:
-    _LIBCPP_INLINE_VISIBILITY __tuple_leaf() {}
+    _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR __tuple_leaf() {}
 
     template <class _Alloc>
         _LIBCPP_INLINE_VISIBILITY
@@ -436,6 +436,9 @@ template<size_t ..._Indx, class ..._Tp>
 struct __tuple_impl<__tuple_indices<_Indx...>, _Tp...>
     : public __tuple_leaf<_Indx, _Tp>...
 {
+    _LIBCPP_INLINE_VISIBILITY
+    _LIBCPP_CONSTEXPR __tuple_impl() {}
+
     template <size_t ..._Uf, class ..._Tf,
               size_t ..._Ul, class ..._Tl, class ..._Up>
         _LIBCPP_INLINE_VISIBILITY
@@ -530,6 +533,9 @@ class _LIBCPP_VISIBLE tuple
     template <size_t _Jp, class ..._Up> friend
         typename tuple_element<_Jp, tuple<_Up...> >::type&& get(tuple<_Up...>&&) _NOEXCEPT;
 public:
+
+    _LIBCPP_INLINE_VISIBILITY
+    _LIBCPP_CONSTEXPR tuple() {}
 
     _LIBCPP_INLINE_VISIBILITY
     explicit tuple(const _Tp& ... __t)
@@ -687,7 +693,7 @@ class _LIBCPP_VISIBLE tuple<>
 {
 public:
     _LIBCPP_INLINE_VISIBILITY
-    tuple() {}
+    _LIBCPP_CONSTEXPR tuple() {}
     template <class _Alloc>
     _LIBCPP_INLINE_VISIBILITY
         tuple(allocator_arg_t, const _Alloc&) {}
