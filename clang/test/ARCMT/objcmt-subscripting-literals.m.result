@@ -211,3 +211,13 @@ void test2() {
   o = [mutcunaval objectAtIndex:4];
   [mutcunaval replaceObjectAtIndex:2 withObject:@"val"];
 }
+
+@interface NSLocale : NSObject
++ (id)systemLocale;
++ (id)currentLocale;
+- (id)objectForKey:(id)key;
+@end
+
+void test3(id key) {
+  id o = [[NSLocale currentLocale] objectForKey:key];
+}

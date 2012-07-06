@@ -94,8 +94,73 @@ bool edit::rewriteObjCRedundantCallWithLiteral(const ObjCMessageExpr *Msg,
 // rewriteToObjCSubscriptSyntax.
 //===----------------------------------------------------------------------===//
 
-static bool canRewriteToSubscriptSyntax(const ObjCInterfaceDecl *IFace,
+/// \brief Check for classes that accept 'objectForKey:' (or the other selectors
+/// that the migrator handles) but return their instances as 'id', resulting
+/// in the compiler resolving 'objectForKey:' as the method from NSDictionary.
+///
+/// When checking if we can convert to subscripting syntax, check whether
+/// the receiver is a result of a class method from a hardcoded list of
+/// such classes. In such a case return the specific class as the interface
+/// of the receiver.
+///
+/// FIXME: Remove this when these classes start using 'instancetype'.
+static const ObjCInterfaceDecl *
+maybeAdjustInterfaceForSubscriptingCheck(const ObjCInterfaceDecl *IFace,
+                                         const Expr *Receiver,
+                                         ASTContext &Ctx) {
+  assert(IFace && Receiver);
+
+  // If the receiver has type 'id'...
+  if (!Ctx.isObjCIdType(Receiver->getType().getUnqualifiedType()))
+    return IFace;
+
+  const ObjCMessageExpr *
+    InnerMsg = dyn_cast<ObjCMessageExpr>(Receiver->IgnoreParenCasts());
+  if (!InnerMsg)
+    return IFace;
+
+  QualType ClassRec;
+  switch (InnerMsg->getReceiverKind()) {
+  case ObjCMessageExpr::Instance:
+  case ObjCMessageExpr::SuperInstance:
+    return IFace;
+
+  case ObjCMessageExpr::Class:
+    ClassRec = InnerMsg->getClassReceiver();
+    break;
+  case ObjCMessageExpr::SuperClass:
+    ClassRec = InnerMsg->getSuperType();
+    break;
+  }
+
+  if (ClassRec.isNull())
+    return IFace;
+
+  // ...and it is the result of a class message...
+
+  const ObjCObjectType *ObjTy = ClassRec->getAs<ObjCObjectType>();
+  if (!ObjTy)
+    return IFace;
+  const ObjCInterfaceDecl *OID = ObjTy->getInterface();
+
+  // ...and the receiving class is NSMapTable or NSLocale, return that
+  // class as the receiving interface.
+  if (OID->getName() == "NSMapTable" ||
+      OID->getName() == "NSLocale")
+    return OID;
+
+  return IFace;
+}
+
+static bool canRewriteToSubscriptSyntax(const ObjCInterfaceDecl *&IFace,
+                                        const ObjCMessageExpr *Msg,
+                                        ASTContext &Ctx,
                                         Selector subscriptSel) {
+  const Expr *Rec = Msg->getInstanceReceiver();
+  if (!Rec)
+    return false;
+  IFace = maybeAdjustInterfaceForSubscriptingCheck(IFace, Rec, Ctx);
+
   if (const ObjCMethodDecl *MD = IFace->lookupInstanceMethod(subscriptSel)) {
     if (!MD->isUnavailable())
       return true;
@@ -138,7 +203,7 @@ static bool rewriteToArraySubscriptGet(const ObjCInterfaceDecl *IFace,
                                        const ObjCMessageExpr *Msg,
                                        const NSAPI &NS,
                                        Commit &commit) {
-  if (!canRewriteToSubscriptSyntax(IFace,
+  if (!canRewriteToSubscriptSyntax(IFace, Msg, NS.getASTContext(),
                                    NS.getObjectAtIndexedSubscriptSelector()))
     return false;
   return rewriteToSubscriptGetCommon(Msg, commit);
@@ -148,7 +213,7 @@ static bool rewriteToDictionarySubscriptGet(const ObjCInterfaceDecl *IFace,
                                             const ObjCMessageExpr *Msg,
                                             const NSAPI &NS,
                                             Commit &commit) {
-  if (!canRewriteToSubscriptSyntax(IFace,
+  if (!canRewriteToSubscriptSyntax(IFace, Msg, NS.getASTContext(),
                                   NS.getObjectForKeyedSubscriptSelector()))
     return false;
   return rewriteToSubscriptGetCommon(Msg, commit);
@@ -158,7 +223,7 @@ static bool rewriteToArraySubscriptSet(const ObjCInterfaceDecl *IFace,
                                        const ObjCMessageExpr *Msg,
                                        const NSAPI &NS,
                                        Commit &commit) {
-  if (!canRewriteToSubscriptSyntax(IFace,
+  if (!canRewriteToSubscriptSyntax(IFace, Msg, NS.getASTContext(),
                                    NS.getSetObjectAtIndexedSubscriptSelector()))
     return false;
 
@@ -192,7 +257,7 @@ static bool rewriteToDictionarySubscriptSet(const ObjCInterfaceDecl *IFace,
                                             const ObjCMessageExpr *Msg,
                                             const NSAPI &NS,
                                             Commit &commit) {
-  if (!canRewriteToSubscriptSyntax(IFace,
+  if (!canRewriteToSubscriptSyntax(IFace, Msg, NS.getASTContext(),
                                    NS.getSetObjectForKeyedSubscriptSelector()))
     return false;
 
