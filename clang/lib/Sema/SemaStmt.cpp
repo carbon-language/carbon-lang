@@ -1634,6 +1634,11 @@ static ExprResult BuildForRangeBeginEndCall(Sema &SemaRef, Scope *S,
 
 }
 
+static bool ObjCEnumerationCollection(Expr *Collection) {
+  return !Collection->isTypeDependent()
+          && Collection->getType()->getAs<ObjCObjectPointerType>() != 0;
+}
+
 /// ActOnCXXForRangeStmt - Check and build a C++0x for-range statement.
 ///
 /// C++0x [stmt.ranged]:
@@ -1658,6 +1663,10 @@ Sema::ActOnCXXForRangeStmt(SourceLocation ForLoc, SourceLocation LParenLoc,
                            SourceLocation RParenLoc) {
   if (!First || !Range)
     return StmtError();
+  
+  if (ObjCEnumerationCollection(Range))
+    return ActOnObjCForCollectionStmt(ForLoc, LParenLoc, First, Range,
+                                      RParenLoc);
 
   DeclStmt *DS = dyn_cast<DeclStmt>(First);
   assert(DS && "first part of for range not a decl stmt");
@@ -1928,6 +1937,9 @@ StmtResult Sema::FinishCXXForRangeStmt(Stmt *S, Stmt *B) {
   if (!S || !B)
     return StmtError();
 
+  if (isa<ObjCForCollectionStmt>(S))
+    return FinishObjCForCollectionStmt(S, B);
+  
   CXXForRangeStmt *ForStmt = cast<CXXForRangeStmt>(S);
   ForStmt->setBody(B);
 
