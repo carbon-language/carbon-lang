@@ -167,6 +167,9 @@ bool SSAIfConv::canSpeculateInstrs(MachineBasicBlock *MBB) {
   }
 
   unsigned InstrCount = 0;
+
+  // Check all instructions, except the terminators. It is assumed that
+  // terminators never have side effects or define any used register values.
   for (MachineBasicBlock::iterator I = MBB->begin(),
        E = MBB->getFirstTerminator(); I != E; ++I) {
     if (I->isDebugValue())
@@ -569,11 +572,15 @@ bool EarlyIfConverter::runOnMachineFunction(MachineFunction &MF) {
   bool Changed = false;
   IfConv.runOnMachineFunction(MF);
 
+  // Initially visit blocks in layout order. The tryConvertIf() function may
+  // erase blocks, but never the head block passed as MFI.
   for (MachineFunction::iterator MFI = MF.begin(), MFE = MF.end(); MFI != MFE;
        ++MFI)
     if (tryConvertIf(MFI))
       Changed = true;
 
+  // Revisit blocks identified by tryConvertIf() as candidates for nested
+  // if-conversion.
   DEBUG(dbgs() << "Revisiting " << WorkList.size() << " blocks.\n");
   while (!WorkList.empty())
     tryConvertIf(WorkList.pop_back_val());
