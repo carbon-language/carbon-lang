@@ -152,6 +152,8 @@ class SizeClassAllocator64 {
     return (reinterpret_cast<uptr>(p) / kRegionSize) % kNumClasses;
   }
 
+  uptr ClassID(uptr size) { return SizeClassMap::ClassID(size); }
+
   void *GetMetaData(void *p) {
     uptr class_id = GetSizeClass(p);
     uptr chunk_idx = GetChunkIdx(reinterpret_cast<uptr>(p), class_id);
@@ -384,8 +386,10 @@ class LargeMmapAllocator {
 // internal allocators:
 // PrimaryAllocator is efficient, but may not allocate some sizes (alignments).
 //  When allocating 2^x bytes it should return 2^x aligned chunk.
+// PrimaryAllocator is used via a local AllocatorCache.
 // SecondaryAllocator can allocate anything, but is not efficient.
-template <class PrimaryAllocator, class SecondaryAllocator>
+template <class PrimaryAllocator, class AllocatorCache,
+         class SecondaryAllocator>
 class CombinedAllocator {
  public:
   void Init() {
@@ -393,13 +397,13 @@ class CombinedAllocator {
     secondary_.Init();
   }
 
-  void *Allocate(uptr size, uptr alignment) {
+  void *Allocate(AllocatorCache *cache, uptr size, uptr alignment) {
     CHECK_GT(size, 0);
     if (alignment > 8)
       size = RoundUpTo(size, alignment);
     void *res;
     if (primary_.CanAllocate(size, alignment))
-      res = primary_.Allocate(size, alignment);
+      res = cache->Allocate(&primary_, primary_.ClassID(size));
     else
       res = secondary_.Allocate(size, alignment);
     if (alignment > 8)
@@ -407,9 +411,9 @@ class CombinedAllocator {
     return res;
   }
 
-  void Deallocate(void *p) {
+  void Deallocate(AllocatorCache *cache, void *p) {
     if (primary_.PointerIsMine(p))
-      primary_.Deallocate(p);
+      cache->Deallocate(&primary_, primary_.GetSizeClass(p), p);
     else
       secondary_.Deallocate(p);
   }
@@ -431,6 +435,10 @@ class CombinedAllocator {
   }
 
   void TestOnlyUnmap() { primary_.TestOnlyUnmap(); }
+
+  void SwallowCache(AllocatorCache *cache) {
+    cache->Drain(&primary_);
+  }
 
  private:
   PrimaryAllocator primary_;

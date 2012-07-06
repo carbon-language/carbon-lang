@@ -24,9 +24,10 @@ typedef IntrusiveList<ListItem> List;
 // Check that IntrusiveList can be made thread-local.
 static THREADLOCAL List static_list;
 
-static void SetList(List *l, ListItem *x, ListItem *y = 0, ListItem *z = 0) {
+static void SetList(List *l, ListItem *x = 0,
+                    ListItem *y = 0, ListItem *z = 0) {
   l->clear();
-  l->push_back(x);
+  if (x) l->push_back(x);
   if (y) l->push_back(y);
   if (z) l->push_back(z);
 }
@@ -144,6 +145,12 @@ TEST(SanitizerCommon, IntrusiveList) {
   SetList(&l2, a, b, c);
   l1.append_back(&l2);
   CheckList(&l1, x, y, z, a, b, c);
+  CHECK(l2.empty());
+
+  SetList(&l1, x, y);
+  SetList(&l2);
+  l1.append_front(&l2);
+  CheckList(&l1, x, y);
   CHECK(l2.empty());
 }
 

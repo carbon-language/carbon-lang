@@ -74,8 +74,8 @@ struct IntrusiveList {
     CHECK_NE(this, l);
     if (empty()) {
       *this = *l;
-    } else {
-      l->last_ = first_;
+    } else if (!l->empty()) {
+      l->last_->next = first_;
       first_ = l->first_;
       size_ += l->size();
     }
