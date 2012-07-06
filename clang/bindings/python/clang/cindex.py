@@ -2140,9 +2140,7 @@ class CompileCommand(object):
         Get an iterable object providing each argument in the
         command line for the compiler invocation as a _CXString.
 
-        Invariants :
-          - the first argument is the compiler executable
-          - the last argument is the file being compiled
+        Invariant : the first argument is the compiler executable
         """
         length = CompileCommand_getNumArgs(self.cmd)
         for i in xrange(length):
