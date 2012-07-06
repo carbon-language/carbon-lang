@@ -3481,7 +3481,8 @@ def warn_arc_non_pod_class_with_object_member : Warning<
   "to make it ABI-compatible">, InGroup<AutomaticReferenceCountingABI>,
   DefaultIgnore;
 def warn_arc_retained_assign : Warning<
-  "assigning retained object to %select{weak|unsafe_unretained}0 variable"
+  "assigning retained object to %select{weak|unsafe_unretained}0 "
+  "%select{property|variable}1"
   "; object will be released after assignment">,
   InGroup<ARCUnsafeRetainedAssign>;
 def warn_arc_retained_property_assign : Warning<

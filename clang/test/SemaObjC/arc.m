@@ -696,3 +696,24 @@ void _NSCalcBeze(NSColor* color, NSColor* bezelColors[]); // expected-error {{mu
 }
 @end
 
+// rdar://11814185
+@interface Radar11814185
+@property (nonatomic, weak)  Radar11814185* picker1;
++ alloc;
+- init;
+@end
+
+@implementation Radar11814185
+
+@synthesize picker1;
+
+- (void)viewDidLoad
+{
+    picker1 = [[Radar11814185 alloc] init]; // expected-warning {{assigning retained object to weak variable; object will be released after assignment}}
+    self.picker1 = [[Radar11814185 alloc] init]; // expected-warning {{assigning retained object to weak property; object will be released after assignment}}
+}
+
++ alloc { return 0; }
+- init { return 0; }
+@end
+
