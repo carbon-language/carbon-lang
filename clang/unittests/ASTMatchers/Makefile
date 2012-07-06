@@ -8,12 +8,11 @@
 ##===----------------------------------------------------------------------===##
 
 CLANG_LEVEL = ../..
-PARALLEL_DIRS = Dynamic
 
 TESTNAME = ASTMatchers
 LINK_COMPONENTS := support mc
 USEDLIBS = clangEdit.a clangTooling.a clangFrontend.a clangSerialization.a clangDriver.a \
            clangRewrite.a clangParse.a clangSema.a clangAnalysis.a \
-					 clangAST.a clangASTMatchers.a clangLex.a clangBasic.a
+           clangAST.a clangASTMatchers.a clangLex.a clangBasic.a
 
 include $(CLANG_LEVEL)/unittests/Makefile

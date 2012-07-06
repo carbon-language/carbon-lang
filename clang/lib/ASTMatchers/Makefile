@@ -10,6 +10,4 @@
 CLANG_LEVEL := ../..
 LIBRARYNAME := clangASTMatchers
 
-PARALLEL_DIRS = Dynamic
-
 include $(CLANG_LEVEL)/Makefile
