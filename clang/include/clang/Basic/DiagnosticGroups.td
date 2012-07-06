@@ -380,6 +380,9 @@ def ThreadSafety : DiagGroup<"thread-safety",
 // DefaultIgnore in addition to putting it here.
 def : DiagGroup<"all", [Most, Parentheses, Switch]>;
 
+// Warnings enabled by -pedantic.  This is magically filled in by TableGen.
+def Pedantic : DiagGroup<"pedantic">;
+
 // Aliases.
 def : DiagGroup<"", [Extra]>;                   // -W = -Wextra
 def : DiagGroup<"endif-labels", [ExtraTokens]>; // -Wendif-labels=-Wendif-tokens

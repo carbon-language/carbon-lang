@@ -17,66 +17,7 @@ This test serves two purposes:
 
 The list of warnings below should NEVER grow.  It should gradually shrink to 0.
 
-CHECK: Warnings without flags (229):
-CHECK-NEXT:   ext_anonymous_struct_union_qualified
-CHECK-NEXT:   ext_binary_literal
-CHECK-NEXT:   ext_cast_fn_obj
-CHECK-NEXT:   ext_delete_void_ptr_operand
-CHECK-NEXT:   ext_designated_init
-CHECK-NEXT:   ext_duplicate_declspec
-CHECK-NEXT:   ext_ellipsis_exception_spec
-CHECK-NEXT:   ext_enum_friend
-CHECK-NEXT:   ext_enum_value_not_int
-CHECK-NEXT:   ext_enumerator_list_comma
-CHECK-NEXT:   ext_expected_semi_decl_list
-CHECK-NEXT:   ext_explicit_instantiation_without_qualified_id
-CHECK-NEXT:   ext_explicit_specialization_storage_class
-CHECK-NEXT:   ext_forward_ref_enum
-CHECK-NEXT:   ext_freestanding_complex
-CHECK-NEXT:   ext_hexconstant_invalid
-CHECK-NEXT:   ext_ident_list_in_param
-CHECK-NEXT:   ext_imaginary_constant
-CHECK-NEXT:   ext_implicit_lib_function_decl
-CHECK-NEXT:   ext_in_class_initializer_non_constant
-CHECK-NEXT:   ext_integer_complement_complex
-CHECK-NEXT:   ext_integer_complex
-CHECK-NEXT:   ext_integer_increment_complex
-CHECK-NEXT:   ext_invalid_sign_spec
-CHECK-NEXT:   ext_missing_declspec
-CHECK-NEXT:   ext_missing_whitespace_after_macro_name
-CHECK-NEXT:   ext_new_paren_array_nonconst
-CHECK-NEXT:   ext_nonstandard_escape
-CHECK-NEXT:   ext_param_not_declared
-CHECK-NEXT:   ext_plain_complex
-CHECK-NEXT:   ext_pp_bad_vaargs_use
-CHECK-NEXT:   ext_pp_comma_expr
-CHECK-NEXT:   ext_pp_ident_directive
-CHECK-NEXT:   ext_pp_include_next_directive
-CHECK-NEXT:   ext_pp_line_too_big
-CHECK-NEXT:   ext_pp_macro_redef
-CHECK-NEXT:   ext_pp_warning_directive
-CHECK-NEXT:   ext_return_has_void_expr
-CHECK-NEXT:   ext_subscript_non_lvalue
-CHECK-NEXT:   ext_template_arg_extra_parens
-CHECK-NEXT:   ext_thread_before
-CHECK-NEXT:   ext_typecheck_addrof_void
-CHECK-NEXT:   ext_typecheck_cast_nonscalar
-CHECK-NEXT:   ext_typecheck_cast_to_union
-CHECK-NEXT:   ext_typecheck_comparison_of_distinct_pointers
-CHECK-NEXT:   ext_typecheck_comparison_of_distinct_pointers_nonstandard
-CHECK-NEXT:   ext_typecheck_comparison_of_fptr_to_void
-CHECK-NEXT:   ext_typecheck_comparison_of_pointer_integer
-CHECK-NEXT:   ext_typecheck_cond_incompatible_operands
-CHECK-NEXT:   ext_typecheck_cond_incompatible_operands_nonstandard
-CHECK-NEXT:   ext_typecheck_cond_one_void
-CHECK-NEXT:   ext_typecheck_convert_pointer_void_func
-CHECK-NEXT:   ext_typecheck_ordered_comparison_of_function_pointers
-CHECK-NEXT:   ext_typecheck_ordered_comparison_of_pointer_and_zero
-CHECK-NEXT:   ext_typecheck_ordered_comparison_of_pointer_integer
-CHECK-NEXT:   ext_typecheck_zero_array_size
-CHECK-NEXT:   ext_unknown_escape
-CHECK-NEXT:   ext_using_undefined_std
-CHECK-NEXT:   ext_vla_folded_to_constant
+CHECK: Warnings without flags (158):
 CHECK-NEXT:   pp_include_next_absolute_path
 CHECK-NEXT:   pp_include_next_in_primary
 CHECK-NEXT:   pp_invalid_string_literal
@@ -138,9 +79,6 @@ CHECK-NEXT:   warn_enum_too_large
 CHECK-NEXT:   warn_enum_value_overflow
 CHECK-NEXT:   warn_enumerator_too_large
 CHECK-NEXT:   warn_exception_caught_by_earlier_handler
-CHECK-NEXT:   warn_excess_initializers
-CHECK-NEXT:   warn_excess_initializers_in_char_array_initializer
-CHECK-NEXT:   warn_expected_qualified_after_typename
 CHECK-NEXT:   warn_extraneous_char_constant
 CHECK-NEXT:   warn_fe_cc_log_diagnostics_failure
 CHECK-NEXT:   warn_fe_cc_print_header_failure
@@ -149,23 +87,17 @@ CHECK-NEXT:   warn_file_asm_volatile
 CHECK-NEXT:   warn_function_attribute_wrong_type
 CHECK-NEXT:   warn_gc_attribute_weak_on_local
 CHECK-NEXT:   warn_gnu_inline_attribute_requires_inline
-CHECK-NEXT:   warn_hex_escape_too_large
 CHECK-NEXT:   warn_ignoring_ftabstop_value
-CHECK-NEXT:   warn_illegal_constant_array_size
 CHECK-NEXT:   warn_implements_nscopying
 CHECK-NEXT:   warn_incompatible_qualified_id
-CHECK-NEXT:   warn_initializer_string_for_char_array_too_long
 CHECK-NEXT:   warn_inline_namespace_reopened_noninline
 CHECK-NEXT:   warn_integer_too_large
 CHECK-NEXT:   warn_integer_too_large_for_signed
 CHECK-NEXT:   warn_invalid_asm_cast_lvalue
-CHECK-NEXT:   warn_many_braces_around_scalar_init
 CHECK-NEXT:   warn_maynot_respond
 CHECK-NEXT:   warn_member_extra_qualification
 CHECK-NEXT:   warn_method_param_redefinition
-CHECK-NEXT:   warn_mismatched_exception_spec
 CHECK-NEXT:   warn_missing_case_for_condition
-CHECK-NEXT:   warn_missing_dependent_template_keyword
 CHECK-NEXT:   warn_missing_exception_specification
 CHECK-NEXT:   warn_missing_whitespace_after_macro_name
 CHECK-NEXT:   warn_multiple_method_decl
@@ -177,10 +109,8 @@ CHECK-NEXT:   warn_ns_attribute_wrong_return_type
 CHECK-NEXT:   warn_objc_object_attribute_wrong_type
 CHECK-NEXT:   warn_objc_property_copy_missing_on_block
 CHECK-NEXT:   warn_objc_protocol_qualifier_missing_id
-CHECK-NEXT:   warn_octal_escape_too_large
 CHECK-NEXT:   warn_odr_tag_type_inconsistent
 CHECK-NEXT:   warn_on_superclass_use
-CHECK-NEXT:   warn_param_default_argument_redefinition
 CHECK-NEXT:   warn_partial_specs_not_deducible
 CHECK-NEXT:   warn_pointer_attribute_wrong_type
 CHECK-NEXT:   warn_pp_convert_lhs_to_positive
@@ -228,7 +158,6 @@ CHECK-NEXT:   warn_second_parameter_of_va_start_not_last_named_argument
 CHECK-NEXT:   warn_second_parameter_to_va_arg_never_compatible
 CHECK-NEXT:   warn_standalone_specifier
 CHECK-NEXT:   warn_static_inline_explicit_inst_ignored
-CHECK-NEXT:   warn_static_non_static
 CHECK-NEXT:   warn_template_export_unsupported
 CHECK-NEXT:   warn_template_spec_extra_headers
 CHECK-NEXT:   warn_tentative_incomplete_array
@@ -247,3 +176,4 @@ CHECK-NEXT:   warn_unknown_method_family
 CHECK-NEXT:   warn_use_out_of_scope_declaration
 CHECK-NEXT:   warn_weak_identifier_undeclared
 CHECK-NEXT:   warn_weak_import
+

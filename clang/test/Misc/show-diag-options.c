@@ -23,5 +23,5 @@ void test(int x, int y) {
   // OPTION_ERROR_CATEGORY: {{.*}}: error: {{[a-z ]+}} [-Werror,-Wparentheses,Semantic Issue]
 
   // Leverage the fact that all these '//'s get warned about in C89 pedantic.
-  // OPTION_PEDANTIC: {{.*}}: warning: {{[/a-z ]+}} [-pedantic,-Wcomment]
+  // OPTION_PEDANTIC: {{.*}}: warning: {{[/a-z ]+}} [-Wcomment]
 }

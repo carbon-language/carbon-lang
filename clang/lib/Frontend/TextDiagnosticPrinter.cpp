@@ -79,16 +79,6 @@ static void printDiagnosticOptions(raw_ostream &OS,
       Started = true;
     }
 
-    // If the diagnostic is an extension diagnostic and not enabled by default
-    // then it must have been turned on with -pedantic.
-    bool EnabledByDefault;
-    if (DiagnosticIDs::isBuiltinExtensionDiag(Info.getID(),
-                                              EnabledByDefault) &&
-        !EnabledByDefault) {
-      OS << (Started ? "," : " [") << "-pedantic";
-      Started = true;
-    }
-
     StringRef Opt = DiagnosticIDs::getWarningOptionForDiag(Info.getID());
     if (!Opt.empty()) {
       OS << (Started ? "," : " [") << "-W" << Opt;
