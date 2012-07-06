@@ -479,7 +479,7 @@ public:
       return false;
     }
 
-    char *TextPtr = new (Allocator) char[Length + 1];
+    char *TextPtr = Allocator.Allocate<char>(Length + 1);
 
     memcpy(TextPtr, WordText.c_str(), Length + 1);
     StringRef Text = StringRef(TextPtr, Length);
@@ -525,7 +525,7 @@ public:
     }
 
     const unsigned Length = WordText.size();
-    char *TextPtr = new (Allocator) char[Length + 1];
+    char *TextPtr = Allocator.Allocate<char>(Length + 1);
 
     memcpy(TextPtr, WordText.c_str(), Length + 1);
     StringRef Text = StringRef(TextPtr, Length);

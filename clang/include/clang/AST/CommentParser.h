@@ -34,8 +34,8 @@ class Parser {
   ArrayRef<T> copyArray(ArrayRef<T> Source) {
     size_t Size = Source.size();
     if (Size != 0) {
-      T *Mem = new (Allocator) T[Size];
-      std::copy(Source.begin(), Source.end(), Mem);
+      T *Mem = Allocator.Allocate<T>(Size);
+      std::uninitialized_copy(Source.begin(), Source.end(), Mem);
       return llvm::makeArrayRef(Mem, Size);
     } else
       return llvm::makeArrayRef(static_cast<T *>(NULL), 0);
