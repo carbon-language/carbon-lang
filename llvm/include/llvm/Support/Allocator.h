@@ -239,4 +239,21 @@ inline void *operator new(size_t Size, llvm::BumpPtrAllocator &Allocator) {
 
 inline void operator delete(void *, llvm::BumpPtrAllocator &) {}
 
+inline void *operator new[](size_t Size, llvm::BumpPtrAllocator &Allocator) {
+  struct S {
+    char c;
+    union {
+      double D;
+      long double LD;
+      long long L;
+      void *P;
+    } x;
+  };
+  return Allocator.Allocate(Size, std::min((size_t)llvm::NextPowerOf2(Size),
+                                           offsetof(S, x)));
+}
+
+inline void operator delete[](void *Ptr, llvm::BumpPtrAllocator &C, size_t) {
+}
+
 #endif // LLVM_SUPPORT_ALLOCATOR_H
