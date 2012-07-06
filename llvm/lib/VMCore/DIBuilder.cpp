@@ -163,7 +163,7 @@ DIType DIBuilder::createNullPtrType(StringRef Name) {
     ConstantInt::get(Type::getInt64Ty(VMContext), 0), // Align
     ConstantInt::get(Type::getInt64Ty(VMContext), 0), // Offset
     ConstantInt::get(Type::getInt32Ty(VMContext), 0), // Flags;
-    ConstantInt::get(Type::getInt32Ty(VMContext), 0), // Encoding
+    ConstantInt::get(Type::getInt32Ty(VMContext), 0)  // Encoding
   };
   return DIType(MDNode::get(VMContext, Elts));
 }
@@ -492,7 +492,7 @@ DIType DIBuilder::createStructType(DIDescriptor Context, StringRef Name,
     NULL,
     Elements,
     ConstantInt::get(Type::getInt32Ty(VMContext), RunTimeLang),
-    Constant::getNullValue(Type::getInt32Ty(VMContext)),
+    Constant::getNullValue(Type::getInt32Ty(VMContext))
   };
   return DIType(MDNode::get(VMContext, Elts));
 }
@@ -517,7 +517,7 @@ DIType DIBuilder::createUnionType(DIDescriptor Scope, StringRef Name,
     NULL,
     Elements,
     ConstantInt::get(Type::getInt32Ty(VMContext), RunTimeLang),
-    Constant::getNullValue(Type::getInt32Ty(VMContext)),
+    Constant::getNullValue(Type::getInt32Ty(VMContext))
   };
   return DIType(MDNode::get(VMContext, Elts));
 }
@@ -538,7 +538,7 @@ DIType DIBuilder::createSubroutineType(DIFile File, DIArray ParameterTypes) {
     NULL,
     ParameterTypes,
     ConstantInt::get(Type::getInt32Ty(VMContext), 0),
-    Constant::getNullValue(Type::getInt32Ty(VMContext)),
+    Constant::getNullValue(Type::getInt32Ty(VMContext))
   };
   return DIType(MDNode::get(VMContext, Elts));
 }
@@ -565,7 +565,7 @@ DIType DIBuilder::createEnumerationType(DIDescriptor Scope, StringRef Name,
     ClassType,
     Elements,
     ConstantInt::get(Type::getInt32Ty(VMContext), 0),
-    Constant::getNullValue(Type::getInt32Ty(VMContext)),
+    Constant::getNullValue(Type::getInt32Ty(VMContext))
   };
   MDNode *Node = MDNode::get(VMContext, Elts);
   AllEnumTypes.push_back(Node);
@@ -589,7 +589,7 @@ DIType DIBuilder::createArrayType(uint64_t Size, uint64_t AlignInBits,
     Ty,
     Subscripts,
     ConstantInt::get(Type::getInt32Ty(VMContext), 0),
-    Constant::getNullValue(Type::getInt32Ty(VMContext)),
+    Constant::getNullValue(Type::getInt32Ty(VMContext))
   };
   return DIType(MDNode::get(VMContext, Elts));
 }
@@ -611,7 +611,7 @@ DIType DIBuilder::createVectorType(uint64_t Size, uint64_t AlignInBits,
     Ty,
     Subscripts,
     ConstantInt::get(Type::getInt32Ty(VMContext), 0),
-    Constant::getNullValue(Type::getInt32Ty(VMContext)),
+    Constant::getNullValue(Type::getInt32Ty(VMContext))
   };
   return DIType(MDNode::get(VMContext, Elts));
 }
@@ -787,7 +787,7 @@ DIVariable DIBuilder::createLocalVariable(unsigned Tag, DIDescriptor Scope,
     ConstantInt::get(Type::getInt32Ty(VMContext), (LineNo | (ArgNo << 24))),
     Ty,
     ConstantInt::get(Type::getInt32Ty(VMContext), Flags),
-    Constant::getNullValue(Type::getInt32Ty(VMContext)),
+    Constant::getNullValue(Type::getInt32Ty(VMContext))
   };
   MDNode *Node = MDNode::get(VMContext, Elts);
   if (AlwaysPreserve) {
