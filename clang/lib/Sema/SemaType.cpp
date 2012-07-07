@@ -1249,6 +1249,11 @@ QualType Sema::BuildArrayType(QualType T, ArrayType::ArraySizeModifier ASM,
     //   type, the (possibly cv-qualified) type void, a function type or an
     //   abstract class type.
     //
+    // C++ [dcl.array]p3:
+    //   When several "array of" specifications are adjacent, [...] only the
+    //   first of the constant expressions that specify the bounds of the arrays
+    //   may be omitted.
+    //
     // Note: function types are handled in the common path with C.
     if (T->isReferenceType()) {
       Diag(Loc, diag::err_illegal_decl_array_of_references)
@@ -1256,7 +1261,7 @@ QualType Sema::BuildArrayType(QualType T, ArrayType::ArraySizeModifier ASM,
       return QualType();
     }
 
-    if (T->isVoidType()) {
+    if (T->isVoidType() || T->isIncompleteArrayType()) {
       Diag(Loc, diag::err_illegal_decl_array_incomplete_type) << T;
       return QualType();
     }

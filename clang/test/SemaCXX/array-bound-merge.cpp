@@ -7,3 +7,5 @@ extern int b[10];
 int b[];
 extern int c[1];
 int c[] = {1,2}; // expected-error {{excess elements in array initializer}}
+
+int d[1][]; // expected-error {{array has incomplete element type 'int []'}}
