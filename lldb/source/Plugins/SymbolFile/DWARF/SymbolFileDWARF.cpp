@@ -4995,6 +4995,18 @@ SymbolFileDWARF::CopyUniqueClassMethodTypes (Type *class_type,
     
     if (src_size && dst_size)
     {
+        if (src_size != dst_size)
+        {
+            if (log)
+                log->Printf("warning: tried to unique class DIE 0x%8.8x to 0x%8.8x, but they didn't have the same size (src=%d, dst=%d)",
+                            src_class_die->GetOffset(),
+                            dst_class_die->GetOffset(),
+                            src_size,
+                            dst_size);
+            
+            return false;
+        }
+            
         uint32_t idx;
         for (idx = 0; idx < src_size; ++idx)
         {
