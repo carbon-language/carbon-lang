@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "CodeGenTarget.h"
+#include "CodeGenSchedule.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/MC/MCInstrItineraries.h"
 #include "llvm/Support/Debug.h"
@@ -27,15 +28,12 @@ namespace {
 class SubtargetEmitter {
 
   RecordKeeper &Records;
+  CodeGenSchedModels &SchedModels;
   std::string Target;
-  bool HasItineraries;
 
   void Enumeration(raw_ostream &OS, const char *ClassName, bool isBits);
   unsigned FeatureKeyValues(raw_ostream &OS);
   unsigned CPUKeyValues(raw_ostream &OS);
-  unsigned CollectAllItinClasses(raw_ostream &OS,
-                                 std::map<std::string,unsigned> &ItinClassesMap,
-                                 std::vector<Record*> &ItinClassList);
   void FormItineraryStageString(const std::string &Names,
                                 Record *ItinData, std::string &ItinString,
                                 unsigned &NStages);
@@ -44,22 +42,23 @@ class SubtargetEmitter {
   void FormItineraryBypassString(const std::string &Names,
                                  Record *ItinData,
                                  std::string &ItinString, unsigned NOperandCycles);
-  void EmitStageAndOperandCycleData(raw_ostream &OS, unsigned NItinClasses,
-                     std::map<std::string, unsigned> &ItinClassesMap,
-                     std::vector<Record*> &ItinClassList,
-                     std::vector<std::vector<InstrItinerary> > &ProcList);
-  void EmitItineraryProp(raw_ostream &OS, const Record *R, const char *Name,
+  void EmitStageAndOperandCycleData(raw_ostream &OS,
+                                    std::vector<std::vector<InstrItinerary> >
+                                      &ProcItinLists);
+  void EmitItineraries(raw_ostream &OS,
+                       std::vector<std::vector<InstrItinerary> >
+                         &ProcItinLists);
+  void EmitProcessorProp(raw_ostream &OS, const Record *R, const char *Name,
                          char Separator);
-  void EmitProcessorData(raw_ostream &OS,
-                         std::vector<Record*> &ItinClassList,
-                         std::vector<std::vector<InstrItinerary> > &ProcList);
+  void EmitProcessorModels(raw_ostream &OS);
   void EmitProcessorLookup(raw_ostream &OS);
-  void EmitData(raw_ostream &OS);
+  void EmitSchedModel(raw_ostream &OS);
   void ParseFeaturesFunction(raw_ostream &OS, unsigned NumFeatures,
                              unsigned NumProcs);
 
 public:
-  SubtargetEmitter(RecordKeeper &R) : Records(R), HasItineraries(false) {}
+  SubtargetEmitter(RecordKeeper &R, CodeGenTarget &TGT):
+    Records(R), SchedModels(TGT.getSchedModels()), Target(TGT.getName()) {}
 
   void run(raw_ostream &o);
 
@@ -243,28 +242,6 @@ unsigned SubtargetEmitter::CPUKeyValues(raw_ostream &OS) {
 }
 
 //
-// CollectAllItinClasses - Gathers and enumerates all the itinerary classes.
-// Returns itinerary class count.
-//
-unsigned SubtargetEmitter::
-CollectAllItinClasses(raw_ostream &OS,
-                      std::map<std::string, unsigned> &ItinClassesMap,
-                      std::vector<Record*> &ItinClassList) {
-  // For each itinerary class
-  unsigned N = ItinClassList.size();
-  for (unsigned i = 0; i < N; i++) {
-    // Next itinerary class
-    const Record *ItinClass = ItinClassList[i];
-    // Get name of itinerary class
-    // Assign itinerary class a unique number
-    ItinClassesMap[ItinClass->getName()] = i;
-  }
-
-  // Return itinerary class count
-  return N;
-}
-
-//
 // FormItineraryStageString - Compose a string containing the stage
 // data initialization for the specified itinerary.  N is the number
 // of stages.
@@ -350,32 +327,25 @@ void SubtargetEmitter::FormItineraryBypassString(const std::string &Name,
 }
 
 //
-// EmitStageAndOperandCycleData - Generate unique itinerary stages and
-// operand cycle tables.  Record itineraries for processors.
+// EmitStageAndOperandCycleData - Generate unique itinerary stages and operand
+// cycle tables. Create a list of InstrItinerary objects (ProcItinLists) indexed
+// by CodeGenSchedClass::Index.
 //
-void SubtargetEmitter::EmitStageAndOperandCycleData(raw_ostream &OS,
-       unsigned NItinClasses,
-       std::map<std::string, unsigned> &ItinClassesMap,
-       std::vector<Record*> &ItinClassList,
-       std::vector<std::vector<InstrItinerary> > &ProcList) {
-  // Gather processor iteraries
-  std::vector<Record*> ProcItinList =
-                       Records.getAllDerivedDefinitions("ProcessorItineraries");
-
-  // If just no itinerary then don't bother
-  if (ProcItinList.size() < 2) return;
+void SubtargetEmitter::
+EmitStageAndOperandCycleData(raw_ostream &OS,
+                             std::vector<std::vector<InstrItinerary> >
+                               &ProcItinLists) {
 
   // Emit functional units for all the itineraries.
-  for (unsigned i = 0, N = ProcItinList.size(); i < N; ++i) {
-    // Next record
-    Record *Proc = ProcItinList[i];
+  for (CodeGenSchedModels::ProcIter PI = SchedModels.procModelBegin(),
+         PE = SchedModels.procModelEnd(); PI != PE; ++PI) {
 
-    std::vector<Record*> FUs = Proc->getValueAsListOfDefs("FU");
+    std::vector<Record*> FUs = PI->ItinsDef->getValueAsListOfDefs("FU");
     if (FUs.empty())
       continue;
 
-    const std::string &Name = Proc->getName();
-    OS << "\n// Functional units for itineraries \"" << Name << "\"\n"
+    const std::string &Name = PI->ItinsDef->getName();
+    OS << "\n// Functional units for \"" << Name << "\"\n"
        << "namespace " << Name << "FU {\n";
 
     for (unsigned j = 0, FUN = FUs.size(); j < FUN; ++j)
@@ -384,7 +354,7 @@ void SubtargetEmitter::EmitStageAndOperandCycleData(raw_ostream &OS,
 
     OS << "}\n";
 
-    std::vector<Record*> BPs = Proc->getValueAsListOfDefs("BP");
+    std::vector<Record*> BPs = PI->ItinsDef->getValueAsListOfDefs("BP");
     if (BPs.size()) {
       OS << "\n// Pipeline forwarding pathes for itineraries \"" << Name
          << "\"\n" << "namespace " << Name << "Bypass {\n";
@@ -411,49 +381,56 @@ void SubtargetEmitter::EmitStageAndOperandCycleData(raw_ostream &OS,
   // Begin pipeline bypass table
   std::string BypassTable = "extern const unsigned " + Target +
     "ForwardingPaths[] = {\n";
-  BypassTable += "  0, // No itinerary\n";
+  BypassTable += " 0, // No itinerary\n";
 
+  // For each Itinerary across all processors, add a unique entry to the stages,
+  // operand cycles, and pipepine bypess tables. Then add the new Itinerary
+  // object with computed offsets to the ProcItinLists result.
   unsigned StageCount = 1, OperandCycleCount = 1;
   std::map<std::string, unsigned> ItinStageMap, ItinOperandMap;
-  for (unsigned i = 0, N = ProcItinList.size(); i < N; i++) {
-    // Next record
-    Record *Proc = ProcItinList[i];
+  for (CodeGenSchedModels::ProcIter PI = SchedModels.procModelBegin(),
+         PE = SchedModels.procModelEnd(); PI != PE; ++PI) {
+    const CodeGenProcModel &ProcModel = *PI;
 
-    // Get processor itinerary name
-    const std::string &Name = Proc->getName();
+    // Add process itinerary to the list.
+    ProcItinLists.resize(ProcItinLists.size()+1);
 
-    // Get itinerary data list
-    std::vector<Record*> ItinDataList = Proc->getValueAsListOfDefs("IID");
-    std::vector<InstrItinerary> ItinList;
-
-    // Add an empty itinerary.
-    if (ItinDataList.empty()) {
-      ProcList.push_back(ItinList);
+    // If this processor defines no itineraries, then leave the itinerary list
+    // empty.
+    std::vector<InstrItinerary> &ItinList = ProcItinLists.back();
+    if (ProcModel.ItinDefList.empty())
       continue;
-    }
 
-    // Expand processor itinerary to cover all itinerary classes
-    ItinList.resize(NItinClasses);
+    // Reserve index==0 for NoItinerary.
+    ItinList.resize(SchedModels.numItineraryClasses()+1);
+
+    const std::string &Name = ProcModel.ItinsDef->getName();
 
     // For each itinerary data
-    for (unsigned j = 0, M = ItinDataList.size(); j < M; j++) {
+    for (unsigned SchedClassIdx = 0,
+           SchedClassEnd = ProcModel.ItinDefList.size();
+         SchedClassIdx < SchedClassEnd; ++SchedClassIdx) {
+
       // Next itinerary data
-      Record *ItinData = ItinDataList[j];
+      Record *ItinData = ProcModel.ItinDefList[SchedClassIdx];
 
       // Get string and stage count
       std::string ItinStageString;
-      unsigned NStages;
-      FormItineraryStageString(Name, ItinData, ItinStageString, NStages);
+      unsigned NStages = 0;
+      if (ItinData)
+        FormItineraryStageString(Name, ItinData, ItinStageString, NStages);
 
       // Get string and operand cycle count
       std::string ItinOperandCycleString;
-      unsigned NOperandCycles;
-      FormItineraryOperandCycleString(ItinData, ItinOperandCycleString,
-                                      NOperandCycles);
-
+      unsigned NOperandCycles = 0;
       std::string ItinBypassString;
-      FormItineraryBypassString(Name, ItinData, ItinBypassString,
-                                NOperandCycles);
+      if (ItinData) {
+        FormItineraryOperandCycleString(ItinData, ItinOperandCycleString,
+                                        NOperandCycles);
+
+        FormItineraryBypassString(Name, ItinData, ItinBypassString,
+                                  NOperandCycles);
+      }
 
       // Check to see if stage already exists and create if it doesn't
       unsigned FindStage = 0;
@@ -493,33 +470,26 @@ void SubtargetEmitter::EmitStageAndOperandCycleData(raw_ostream &OS,
         }
       }
 
-      // Locate where to inject into processor itinerary table
-      const std::string &Name = ItinData->getValueAsDef("TheClass")->getName();
-      unsigned Find = ItinClassesMap[Name];
-
       // Set up itinerary as location and location + stage count
-      int NumUOps = ItinData->getValueAsInt("NumMicroOps");
+      int NumUOps = ItinData ? ItinData->getValueAsInt("NumMicroOps") : 0;
       InstrItinerary Intinerary = { NumUOps, FindStage, FindStage + NStages,
                                     FindOperandCycle,
                                     FindOperandCycle + NOperandCycles};
 
       // Inject - empty slots will be 0, 0
-      ItinList[Find] = Intinerary;
+      ItinList[SchedClassIdx] = Intinerary;
     }
-
-    // Add process itinerary to list
-    ProcList.push_back(ItinList);
   }
 
   // Closing stage
-  StageTable += "  { 0, 0, 0, llvm::InstrStage::Required } // End itinerary\n";
+  StageTable += "  { 0, 0, 0, llvm::InstrStage::Required } // End stages\n";
   StageTable += "};\n";
 
   // Closing operand cycles
-  OperandCycleTable += "  0 // End itinerary\n";
+  OperandCycleTable += "  0 // End operand cycles\n";
   OperandCycleTable += "};\n";
 
-  BypassTable += "  0 // End itinerary\n";
+  BypassTable += " 0 // End bypass tables\n";
   BypassTable += "};\n";
 
   // Emit tables.
@@ -528,89 +498,91 @@ void SubtargetEmitter::EmitStageAndOperandCycleData(raw_ostream &OS,
   OS << BypassTable;
 }
 
-void SubtargetEmitter::EmitItineraryProp(raw_ostream &OS, const Record *R,
+//
+// EmitProcessorData - Generate data for processor itineraries that were
+// computed during EmitStageAndOperandCycleData(). ProcItinLists lists all
+// Itineraries for each processor. The Itinerary lists are indexed on
+// CodeGenSchedClass::Index.
+//
+void SubtargetEmitter::
+EmitItineraries(raw_ostream &OS,
+                std::vector<std::vector<InstrItinerary> > &ProcItinLists) {
+
+  // For each processor's machine model
+  std::vector<std::vector<InstrItinerary> >::iterator
+      ProcItinListsIter = ProcItinLists.begin();
+  for (CodeGenSchedModels::ProcIter PI = SchedModels.procModelBegin(),
+         PE = SchedModels.procModelEnd(); PI != PE; ++PI) {
+    Record *ItinsDef = PI->ItinsDef;
+
+    // Get processor itinerary name
+    const std::string &Name = ItinsDef->getName();
+
+    // Get the itinerary list for the processor.
+    assert(ProcItinListsIter != ProcItinLists.end() && "bad iterator");
+    std::vector<InstrItinerary> &ItinList = *ProcItinListsIter++;
+
+    OS << "\n";
+    OS << "static const llvm::InstrItinerary ";
+    if (ItinList.empty()) {
+      OS << '*' << Name << " = 0;\n";
+      continue;
+    }
+
+    // Begin processor itinerary table
+    OS << Name << "[] = {\n";
+
+    // For each itinerary class in CodeGenSchedClass::Index order.
+    for (unsigned j = 0, M = ItinList.size(); j < M; ++j) {
+      InstrItinerary &Intinerary = ItinList[j];
+
+      // Emit Itinerary in the form of
+      // { firstStage, lastStage, firstCycle, lastCycle } // index
+      OS << "  { " <<
+        Intinerary.NumMicroOps << ", " <<
+        Intinerary.FirstStage << ", " <<
+        Intinerary.LastStage << ", " <<
+        Intinerary.FirstOperandCycle << ", " <<
+        Intinerary.LastOperandCycle << " }" <<
+        ", // " << j << " " << SchedModels.getSchedClass(j).Name << "\n";
+    }
+    // End processor itinerary table
+    OS << "  { 0, ~0U, ~0U, ~0U, ~0U } // end marker\n";
+    OS << "};\n";
+  }
+}
+
+// Emit either the the value defined in the TableGen Record, or the default
+// value defined in the C++ header. The Record is null if the processor does not
+// define a model.
+void SubtargetEmitter::EmitProcessorProp(raw_ostream &OS, const Record *R,
                                          const char *Name, char Separator) {
   OS << "  ";
-  int V = R->getValueAsInt(Name);
+  int V = R ? R->getValueAsInt(Name) : -1;
   if (V >= 0)
     OS << V << Separator << " // " << Name;
   else
-    OS << "InstrItineraryProps::Default" << Name << Separator;
+    OS << "MCSchedModel::Default" << Name << Separator;
   OS << '\n';
 }
 
-//
-// EmitProcessorData - Generate data for processor itineraries.
-//
-void SubtargetEmitter::
-EmitProcessorData(raw_ostream &OS,
-                  std::vector<Record*> &ItinClassList,
-                  std::vector<std::vector<InstrItinerary> > &ProcList) {
-
-  // Get an iterator for processor itinerary stages
-  std::vector<std::vector<InstrItinerary> >::iterator
-      ProcListIter = ProcList.begin();
-
-  // For each processor itinerary
-  std::vector<Record*> Itins =
-                       Records.getAllDerivedDefinitions("ProcessorItineraries");
-  for (unsigned i = 0, N = Itins.size(); i < N; i++) {
-    // Next record
-    Record *Itin = Itins[i];
-
-    // Get processor itinerary name
-    const std::string &Name = Itin->getName();
-
+void SubtargetEmitter::EmitProcessorModels(raw_ostream &OS) {
+  // For each processor model.
+  for (CodeGenSchedModels::ProcIter PI = SchedModels.procModelBegin(),
+         PE = SchedModels.procModelEnd(); PI != PE; ++PI) {
     // Skip default
     // Begin processor itinerary properties
     OS << "\n";
-    OS << "static const llvm::InstrItineraryProps " << Name << "Props(\n";
-    EmitItineraryProp(OS, Itin, "IssueWidth", ',');
-    EmitItineraryProp(OS, Itin, "MinLatency", ',');
-    EmitItineraryProp(OS, Itin, "LoadLatency", ',');
-    EmitItineraryProp(OS, Itin, "HighLatency", ' ');
-    OS << ");\n";
-
-    // For each itinerary class
-    std::vector<InstrItinerary> &ItinList = *ProcListIter++;
-    if (!ItinList.empty()) {
-      assert(ItinList.size() == ItinClassList.size() && "bad itinerary");
-
-      // Begin processor itinerary table
-      OS << "\n";
-      OS << "static const llvm::InstrItinerary " << Name << "Entries"
-         << "[] = {\n";
-
-      for (unsigned j = 0, M = ItinList.size(); j < M; ++j) {
-        InstrItinerary &Intinerary = ItinList[j];
-
-        // Emit in the form of
-        // { firstStage, lastStage, firstCycle, lastCycle } // index
-        if (Intinerary.FirstStage == 0) {
-          OS << "  { 1, 0, 0, 0, 0 }";
-        } else {
-          OS << "  { " <<
-            Intinerary.NumMicroOps << ", " <<
-            Intinerary.FirstStage << ", " <<
-            Intinerary.LastStage << ", " <<
-            Intinerary.FirstOperandCycle << ", " <<
-            Intinerary.LastOperandCycle << " }";
-        }
-        OS << ", // " << j << " " << ItinClassList[j]->getName() << "\n";
-      }
-      // End processor itinerary table
-      OS << "  { 1, ~0U, ~0U, ~0U, ~0U } // end marker\n";
-      OS << "};\n";
-    }
-    OS << '\n';
-    OS << "static const llvm::InstrItinerarySubtargetValue "
-       << Name << " = {\n";
-    OS << "  &" << Name << "Props,\n";
-    if (ItinList.empty())
-      OS << "  0\n";
+    OS << "static const llvm::MCSchedModel " << PI->ModelName << "(\n";
+    EmitProcessorProp(OS, PI->ModelDef, "IssueWidth", ',');
+    EmitProcessorProp(OS, PI->ModelDef, "MinLatency", ',');
+    EmitProcessorProp(OS, PI->ModelDef, "LoadLatency", ',');
+    EmitProcessorProp(OS, PI->ModelDef, "HighLatency", ',');
+    if (SchedModels.hasItineraryClasses())
+      OS << "  " << PI->ItinsDef->getName();
     else
-      OS << "  " << Name << "Entries\n";
-    OS << "};\n";
+      OS << "  0";
+    OS << ");\n";
   }
 }
 
@@ -627,7 +599,7 @@ void SubtargetEmitter::EmitProcessorLookup(raw_ostream &OS) {
   OS << "\n";
   OS << "// Sorted (by key) array of itineraries for CPU subtype.\n"
      << "extern const llvm::SubtargetInfoKV "
-     << Target << "ProcItinKV[] = {\n";
+     << Target << "ProcSchedKV[] = {\n";
 
   // For each processor
   for (unsigned i = 0, N = ProcessorList.size(); i < N;) {
@@ -635,13 +607,13 @@ void SubtargetEmitter::EmitProcessorLookup(raw_ostream &OS) {
     Record *Processor = ProcessorList[i];
 
     const std::string &Name = Processor->getValueAsString("Name");
-    const std::string &ProcItin =
-      Processor->getValueAsDef("ProcItin")->getName();
+    const std::string &ProcModelName =
+      SchedModels.getProcModel(Processor).ModelName;
 
     // Emit as { "cpu", procinit },
     OS << "  { "
        << "\"" << Name << "\", "
-       << "(void *)&" << ProcItin;
+       << "(void *)&" << ProcModelName;
 
     OS << " }";
 
@@ -656,31 +628,19 @@ void SubtargetEmitter::EmitProcessorLookup(raw_ostream &OS) {
 }
 
 //
-// EmitData - Emits all stages and itineries, folding common patterns.
+// EmitSchedModel - Emits all scheduling model tables, folding common patterns.
 //
-void SubtargetEmitter::EmitData(raw_ostream &OS) {
-  std::map<std::string, unsigned> ItinClassesMap;
-  // Gather and sort all itinerary classes
-  std::vector<Record*> ItinClassList =
-    Records.getAllDerivedDefinitions("InstrItinClass");
-  std::sort(ItinClassList.begin(), ItinClassList.end(), LessRecord());
-
-  // Enumerate all the itinerary classes
-  unsigned NItinClasses = CollectAllItinClasses(OS, ItinClassesMap,
-                                                ItinClassList);
-  // Make sure the rest is worth the effort
-  HasItineraries = NItinClasses != 1;   // Ignore NoItinerary.
-
-  if (HasItineraries) {
-    std::vector<std::vector<InstrItinerary> > ProcList;
+void SubtargetEmitter::EmitSchedModel(raw_ostream &OS) {
+  if (SchedModels.hasItineraryClasses()) {
+    std::vector<std::vector<InstrItinerary> > ProcItinLists;
     // Emit the stage data
-    EmitStageAndOperandCycleData(OS, NItinClasses, ItinClassesMap,
-                                 ItinClassList, ProcList);
-    // Emit the processor itinerary data
-    EmitProcessorData(OS, ItinClassList, ProcList);
-    // Emit the processor lookup data
-    EmitProcessorLookup(OS);
+    EmitStageAndOperandCycleData(OS, ProcItinLists);
+    EmitItineraries(OS, ProcItinLists);
   }
+  // Emit the processor machine model
+  EmitProcessorModels(OS);
+  // Emit the processor lookup data
+  EmitProcessorLookup(OS);
 }
 
 //
@@ -734,8 +694,6 @@ void SubtargetEmitter::ParseFeaturesFunction(raw_ostream &OS,
 // SubtargetEmitter::run - Main subtarget enumeration emitter.
 //
 void SubtargetEmitter::run(raw_ostream &OS) {
-  Target = CodeGenTarget(Records).getName();
-
   emitSourceFileHeader("Subtarget Enumeration Source Fragment", OS);
 
   OS << "\n#ifdef GET_SUBTARGETINFO_ENUM\n";
@@ -757,7 +715,7 @@ void SubtargetEmitter::run(raw_ostream &OS) {
   OS << "\n";
   unsigned NumProcs = CPUKeyValues(OS);
   OS << "\n";
-  EmitData(OS);
+  EmitSchedModel(OS);
   OS << "\n";
 #if 0
   OS << "}\n";
@@ -776,8 +734,8 @@ void SubtargetEmitter::run(raw_ostream &OS) {
     OS << Target << "SubTypeKV, ";
   else
     OS << "0, ";
-  if (HasItineraries) {
-    OS << Target << "ProcItinKV, "
+  if (SchedModels.hasItineraryClasses()) {
+    OS << Target << "ProcSchedKV, "
        << Target << "Stages, "
        << Target << "OperandCycles, "
        << Target << "ForwardingPaths, ";
@@ -822,8 +780,8 @@ void SubtargetEmitter::run(raw_ostream &OS) {
   OS << "namespace llvm {\n";
   OS << "extern const llvm::SubtargetFeatureKV " << Target << "FeatureKV[];\n";
   OS << "extern const llvm::SubtargetFeatureKV " << Target << "SubTypeKV[];\n";
-  if (HasItineraries) {
-    OS << "extern const llvm::SubtargetInfoKV " << Target << "ProcItinKV[];\n";
+  if (SchedModels.hasItineraryClasses()) {
+    OS << "extern const llvm::SubtargetInfoKV " << Target << "ProcSchedKV[];\n";
     OS << "extern const llvm::InstrStage " << Target << "Stages[];\n";
     OS << "extern const unsigned " << Target << "OperandCycles[];\n";
     OS << "extern const unsigned " << Target << "ForwardingPaths[];\n";
@@ -841,8 +799,8 @@ void SubtargetEmitter::run(raw_ostream &OS) {
     OS << Target << "SubTypeKV, ";
   else
     OS << "0, ";
-  if (HasItineraries) {
-    OS << Target << "ProcItinKV, "
+  if (SchedModels.hasItineraryClasses()) {
+    OS << Target << "ProcSchedKV, "
        << Target << "Stages, "
        << Target << "OperandCycles, "
        << Target << "ForwardingPaths, ";
@@ -857,7 +815,8 @@ void SubtargetEmitter::run(raw_ostream &OS) {
 namespace llvm {
 
 void EmitSubtarget(RecordKeeper &RK, raw_ostream &OS) {
-  SubtargetEmitter(RK).run(OS);
+  CodeGenTarget CGTarget(RK);
+  SubtargetEmitter(RK, CGTarget).run(OS);
 }
 
 } // End llvm namespace

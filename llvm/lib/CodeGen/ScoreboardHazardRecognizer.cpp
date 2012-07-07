@@ -72,10 +72,12 @@ ScoreboardHazardRecognizer(const InstrItineraryData *II,
   ReservedScoreboard.reset(ScoreboardDepth);
   RequiredScoreboard.reset(ScoreboardDepth);
 
+  // If MaxLookAhead is not set above, then we are not enabled.
   if (!isEnabled())
     DEBUG(dbgs() << "Disabled scoreboard hazard recognizer\n");
   else {
-    IssueWidth = ItinData->Props.IssueWidth;
+    // A nonempty itinerary must have a SchedModel.
+    IssueWidth = ItinData->SchedModel->IssueWidth;
     DEBUG(dbgs() << "Using scoreboard hazard recognizer: Depth = "
           << ScoreboardDepth << '\n');
   }

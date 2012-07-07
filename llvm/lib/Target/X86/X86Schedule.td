@@ -470,14 +470,12 @@ def IIC_NOP : InstrItinClass;
 // latencies. Since these latencies are not used for pipeline hazards,
 // they do not need to be exact.
 //
-// This set of instruction itineraries should contain no reference to
-// InstrStages. When an iterary has no stages, the scheduler can
-// bypass the logic needed for checking pipeline stage hazards.
-def GenericItineraries : MultiIssueItineraries<
-  4, // IssueWidth
-  0, // MinLatency
-  4, // LoadLatency (expected, may be overriden by OperandCycles)
- 10, // HighLatency (expected, may be overriden by OperandCycles)
- [], [], []>; // no FuncUnits, Bypasses, or InstrItinData.
+// The GenericModel contains no instruciton itineraries.
+def GenericModel : SchedMachineModel {
+  let IssueWidth = 4;
+  let MinLatency = 0;
+  let LoadLatency = 4;
+  let HighLatency = 10;
+}
 
 include "X86ScheduleAtom.td"

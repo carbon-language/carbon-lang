@@ -22,11 +22,7 @@ def A8_NLSPipe : FuncUnit; // NEON LS pipe
 //
 // Dual issue pipeline represented by A8_Pipe0 | A8_Pipe1
 //
-def CortexA8Itineraries : MultiIssueItineraries<
-  2,  // IssueWidth
-  -1, // MinLatency - OperandCycles are interpreted as MinLatency.
-  2,  // LoadLatency - overriden by OperandCycles.
-  10, // HighLatency - currently unused.
+def CortexA8Itineraries : ProcessorItineraries<
   [A8_Pipe0, A8_Pipe1, A8_LSPipe, A8_NPipe, A8_NLSPipe],
   [], [
   // Two fully-pipelined integer ALU pipelines
@@ -1061,3 +1057,18 @@ def CortexA8Itineraries : MultiIssueItineraries<
                                InstrStage<1, [A8_NPipe], 0>,
                             InstrStage<2, [A8_NLSPipe]>], [4, 1, 2, 2, 3, 3, 1]>
 ]>;
+
+// ===---------------------------------------------------------------------===//
+// This following definitions describe the simple machine model which
+// will replace itineraries.
+
+// Cortex-A8 machine model for scheduling and other instruction cost heuristics.
+def CortexA8Model : SchedMachineModel {
+  let IssueWidth = 2; // 2 micro-ops are dispatched per cycle.
+  let MinLatency = -1; // OperandCycles are interpreted as MinLatency.
+  let LoadLatency = 2; // Optimistic load latency assuming bypass.
+                       // This is overriden by OperandCycles if the
+                       // Itineraries are queried instead.
+
+  let Itineraries = CortexA8Itineraries;
+}

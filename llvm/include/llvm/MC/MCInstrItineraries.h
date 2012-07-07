@@ -16,6 +16,7 @@
 #ifndef LLVM_MC_MCINSTRITINERARIES_H
 #define LLVM_MC_MCINSTRITINERARIES_H
 
+#include "llvm/MC/MCSchedule.h"
 #include <algorithm>
 
 namespace llvm {
@@ -104,81 +105,12 @@ struct InstrItinerary {
 
 
 //===----------------------------------------------------------------------===//
-/// Instruction itinerary properties - These properties provide general
-/// information about the microarchitecture to the scheduler.
-///
-struct InstrItineraryProps {
-  // IssueWidth is the maximum number of instructions that may be scheduled in
-  // the same per-cycle group.
-  unsigned IssueWidth;
-  static const unsigned DefaultIssueWidth = 1;
-
-  // MinLatency is the minimum latency between a register write
-  // followed by a data dependent read. This determines which
-  // instructions may be scheduled in the same per-cycle group. This
-  // is distinct from *expected* latency, which determines the likely
-  // critical path but does not guarantee a pipeline
-  // hazard. MinLatency can always be overridden by the number of
-  // InstrStage cycles.
-  //
-  // (-1) Standard in-order processor.
-  //      Use InstrItinerary OperandCycles as MinLatency.
-  //      If no OperandCycles exist, then use the cycle of the last InstrStage.
-  //
-  //  (0) Out-of-order processor, or in-order with bundled dependencies.
-  //      RAW dependencies may be dispatched in the same cycle.
-  //      Optional InstrItinerary OperandCycles provides expected latency.
-  //
-  // (>0) In-order processor with variable latencies.
-  //      Use the greater of this value or the cycle of the last InstrStage.
-  //      Optional InstrItinerary OperandCycles provides expected latency.
-  //      TODO: can't yet specify both min and expected latency per operand.
-  int MinLatency;
-  static const unsigned DefaultMinLatency = -1;
-
-  // LoadLatency is the expected latency of load instructions.
-  //
-  // If MinLatency >= 0, this may be overriden for individual load opcodes by
-  // InstrItinerary OperandCycles.
-  unsigned LoadLatency;
-  static const unsigned DefaultLoadLatency = 4;
-
-  // HighLatency is the expected latency of "very high latency" operations.
-  // See TargetInstrInfo::isHighLatencyDef().
-  // By default, this is set to an arbitrarily high number of cycles
-  // likely to have some impact on scheduling heuristics.
-  // If MinLatency >= 0, this may be overriden by InstrItinData OperandCycles.
-  unsigned HighLatency;
-  static const unsigned DefaultHighLatency = 10;
-
-  // Default's must be specified as static const literals so that tablegenerated
-  // target code can use it in static initializers. The defaults need to be
-  // initialized in this default ctor because some clients directly instantiate
-  // InstrItineraryData instead of using a generated itinerary.
-  InstrItineraryProps(): IssueWidth(DefaultMinLatency),
-                         MinLatency(DefaultMinLatency),
-                         LoadLatency(DefaultLoadLatency),
-                         HighLatency(DefaultHighLatency) {}
-
-  InstrItineraryProps(unsigned iw, int ml, unsigned ll, unsigned hl):
-    IssueWidth(iw), MinLatency(ml), LoadLatency(ll), HighLatency(hl) {}
-};
-
-//===----------------------------------------------------------------------===//
-/// Encapsulate all subtarget specific information for scheduling for use with
-/// SubtargetInfoKV.
-struct InstrItinerarySubtargetValue {
-  const InstrItineraryProps *Props;
-  const InstrItinerary *Itineraries;
-};
-
-//===----------------------------------------------------------------------===//
 /// Instruction itinerary Data - Itinerary data supplied by a subtarget to be
 /// used by a target.
 ///
 class InstrItineraryData {
 public:
-  InstrItineraryProps Props;
+  const MCSchedModel   *SchedModel;     ///< Basic machine properties.
   const InstrStage     *Stages;         ///< Array of stages selected
   const unsigned       *OperandCycles;  ///< Array of operand cycles selected
   const unsigned       *Forwardings;    ///< Array of pipeline forwarding pathes
@@ -186,13 +118,14 @@ public:
 
   /// Ctors.
   ///
-  InstrItineraryData() : Stages(0), OperandCycles(0), Forwardings(0),
-                         Itineraries(0) {}
+  InstrItineraryData() : SchedModel(&MCSchedModel::DefaultSchedModel),
+                         Stages(0), OperandCycles(0),
+                         Forwardings(0), Itineraries(0) {}
 
-  InstrItineraryData(const InstrItineraryProps *P, const InstrStage *S,
-                     const unsigned *OS, const unsigned *F,
-                     const InstrItinerary *I)
-    : Props(*P), Stages(S), OperandCycles(OS), Forwardings(F), Itineraries(I) {}
+  InstrItineraryData(const MCSchedModel *SM, const InstrStage *S,
+                     const unsigned *OS, const unsigned *F)
+    : SchedModel(SM), Stages(S), OperandCycles(OS), Forwardings(F),
+      Itineraries(SchedModel->InstrItineraries) {}
 
   /// isEmpty - Returns true if there are no itineraries.
   ///
@@ -232,13 +165,9 @@ public:
   /// then it defaults to one cycle.
   unsigned getStageLatency(unsigned ItinClassIndx) const {
     // If the target doesn't provide itinerary information, use a simple
-    // non-zero default value for all instructions.  Some target's provide a
-    // dummy (Generic) itinerary which should be handled as if it's itinerary is
-    // empty. We identify this by looking for a reference to stage zero (invalid
-    // stage). This is different from beginStage == endStage != 0, which could
-    // be used for zero-latency pseudo ops.
-    if (isEmpty() || Itineraries[ItinClassIndx].FirstStage == 0)
-      return (Props.MinLatency < 0) ? 1 : Props.MinLatency;
+    // non-zero default value for all instructions.
+    if (isEmpty())
+      return SchedModel->MinLatency < 0 ? 1 : SchedModel->MinLatency;
 
     // Calculate the maximum completion time for any stage.
     unsigned Latency = 0, StartCycle = 0;

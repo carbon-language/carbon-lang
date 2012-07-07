@@ -573,9 +573,9 @@ TargetInstrInfoImpl::getNumMicroOps(const InstrItineraryData *ItinData,
 unsigned TargetInstrInfo::defaultDefLatency(const InstrItineraryData *ItinData,
                                             const MachineInstr *DefMI) const {
   if (DefMI->mayLoad())
-    return ItinData->Props.LoadLatency;
+    return ItinData->SchedModel->LoadLatency;
   if (isHighLatencyDef(DefMI->getOpcode()))
-    return ItinData->Props.HighLatency;
+    return ItinData->SchedModel->HighLatency;
   return 1;
 }
 
@@ -629,7 +629,7 @@ static int computeDefOperandLatency(
   if (FindMin) {
     // If MinLatency is valid, call getInstrLatency. This uses Stage latency if
     // it exists before defaulting to MinLatency.
-    if (ItinData->Props.MinLatency >= 0)
+    if (ItinData->SchedModel->MinLatency >= 0)
       return TII->getInstrLatency(ItinData, DefMI);
 
     // If MinLatency is invalid, OperandLatency is interpreted as MinLatency.

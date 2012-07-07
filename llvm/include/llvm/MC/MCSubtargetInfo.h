@@ -30,9 +30,9 @@ class MCSubtargetInfo {
   std::string TargetTriple;            // Target triple
   const SubtargetFeatureKV *ProcFeatures;  // Processor feature list
   const SubtargetFeatureKV *ProcDesc;  // Processor descriptions
-  const SubtargetInfoKV *ProcItins;    // Scheduling itineraries
-  const InstrStage *Stages;            // Instruction stages
-  const unsigned *OperandCycles;       // Operand cycles
+  const SubtargetInfoKV *ProcSchedModel; // Scheduler machine model
+  const InstrStage *Stages;            // Instruction itinerary stages
+  const unsigned *OperandCycles;       // Itinerary operand cycles
   const unsigned *ForwardingPaths;     // Forwarding paths
   unsigned NumFeatures;                // Number of processor features
   unsigned NumProcs;                   // Number of processors
@@ -42,7 +42,8 @@ public:
   void InitMCSubtargetInfo(StringRef TT, StringRef CPU, StringRef FS,
                            const SubtargetFeatureKV *PF,
                            const SubtargetFeatureKV *PD,
-                           const SubtargetInfoKV *PI, const InstrStage *IS,
+                           const SubtargetInfoKV *ProcSched,
+                           const InstrStage *IS,
                            const unsigned *OC, const unsigned *FP,
                            unsigned NF, unsigned NP);
 
@@ -68,6 +69,10 @@ public:
   /// ToggleFeature - Toggle a feature and returns the re-computed feature
   /// bits. This version will also change all implied bits.
   uint64_t ToggleFeature(StringRef FS);
+
+  /// getSchedModelForCPU - Get the machine model of a CPU.
+  ///
+  MCSchedModel *getSchedModelForCPU(StringRef CPU) const;
 
   /// getInstrItineraryForCPU - Get scheduling itinerary of a CPU.
   ///

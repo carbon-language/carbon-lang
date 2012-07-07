@@ -26,6 +26,7 @@
 namespace llvm {
 
 struct CodeGenRegister;
+class CodeGenSchedModels;
 class CodeGenTarget;
 
 // SelectionDAG node properties.
@@ -72,9 +73,12 @@ class CodeGenTarget {
   void ReadInstructions() const;
   void ReadLegalValueTypes() const;
 
+  mutable CodeGenSchedModels *SchedModels;
+
   mutable std::vector<const CodeGenInstruction*> InstrsByEnum;
 public:
   CodeGenTarget(RecordKeeper &Records);
+  ~CodeGenTarget();
 
   Record *getTargetRecord() const { return TargetRec; }
   const std::string &getName() const;
@@ -96,7 +100,7 @@ public:
   ///
   Record *getAsmParserVariant(unsigned i) const;
 
-  /// getAsmParserVariantCount - Return the AssmblyParserVariant definition 
+  /// getAsmParserVariantCount - Return the AssmblyParserVariant definition
   /// available for this target.
   ///
   unsigned getAsmParserVariantCount() const;
@@ -138,6 +142,8 @@ public:
       if (LegalVTs[i] == VT) return true;
     return false;
   }
+
+  CodeGenSchedModels &getSchedModels() const;
 
 private:
   DenseMap<const Record*, CodeGenInstruction*> &getInstructions() const {

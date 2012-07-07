@@ -318,7 +318,7 @@ void ResourcePriorityQueue::reserveResources(SUnit *SU) {
 
   // If packet is now full, reset the state so in the next cycle
   // we start fresh.
-  if (Packet.size() >= InstrItins->Props.IssueWidth) {
+  if (Packet.size() >= InstrItins->SchedModel->IssueWidth) {
     ResourcesModel->clearResources();
     Packet.clear();
   }

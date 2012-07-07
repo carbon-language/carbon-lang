@@ -131,10 +131,10 @@ def ProcIntelAtom : SubtargetFeature<"atom", "X86ProcFamily", "IntelAtom",
                     "Intel Atom processors">;
 
 class Proc<string Name, list<SubtargetFeature> Features>
- : Processor<Name, GenericItineraries, Features>;
+ : ProcessorModel<Name, GenericModel, Features>;
 
 class AtomProc<string Name, list<SubtargetFeature> Features>
- : Processor<Name, AtomItineraries, Features>;
+ : ProcessorModel<Name, AtomModel, Features>;
 
 def : Proc<"generic",         []>;
 def : Proc<"i386",            []>;

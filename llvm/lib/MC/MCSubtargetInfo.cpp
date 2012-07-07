@@ -17,11 +17,13 @@
 
 using namespace llvm;
 
+MCSchedModel MCSchedModel::DefaultSchedModel; // For unknown processors.
+
 void
 MCSubtargetInfo::InitMCSubtargetInfo(StringRef TT, StringRef CPU, StringRef FS,
                                      const SubtargetFeatureKV *PF,
                                      const SubtargetFeatureKV *PD,
-                                     const SubtargetInfoKV *PI,
+                                     const SubtargetInfoKV *ProcSched,
                                      const InstrStage *IS,
                                      const unsigned *OC,
                                      const unsigned *FP,
@@ -29,7 +31,7 @@ MCSubtargetInfo::InitMCSubtargetInfo(StringRef TT, StringRef CPU, StringRef FS,
   TargetTriple = TT;
   ProcFeatures = PF;
   ProcDesc = PD;
-  ProcItins = PI;
+  ProcSchedModel = ProcSched;
   Stages = IS;
   OperandCycles = OC;
   ForwardingPaths = FP;
@@ -68,14 +70,14 @@ uint64_t MCSubtargetInfo::ToggleFeature(StringRef FS) {
 }
 
 
-InstrItineraryData
-MCSubtargetInfo::getInstrItineraryForCPU(StringRef CPU) const {
-  assert(ProcItins && "Instruction itineraries information not available!");
+MCSchedModel *
+MCSubtargetInfo::getSchedModelForCPU(StringRef CPU) const {
+  assert(ProcSchedModel && "Processor machine model not available!");
 
 #ifndef NDEBUG
   for (size_t i = 1; i < NumProcs; i++) {
-    assert(strcmp(ProcItins[i - 1].Key, ProcItins[i].Key) < 0 &&
-           "Itineraries table is not sorted");
+    assert(strcmp(ProcSchedModel[i - 1].Key, ProcSchedModel[i].Key) < 0 &&
+           "Processor machine model table is not sorted");
   }
 #endif
 
@@ -83,16 +85,19 @@ MCSubtargetInfo::getInstrItineraryForCPU(StringRef CPU) const {
   SubtargetInfoKV KV;
   KV.Key = CPU.data();
   const SubtargetInfoKV *Found =
-    std::lower_bound(ProcItins, ProcItins+NumProcs, KV);
-  if (Found == ProcItins+NumProcs || StringRef(Found->Key) != CPU) {
+    std::lower_bound(ProcSchedModel, ProcSchedModel+NumProcs, KV);
+  if (Found == ProcSchedModel+NumProcs || StringRef(Found->Key) != CPU) {
     errs() << "'" << CPU
            << "' is not a recognized processor for this target"
            << " (ignoring processor)\n";
-    return InstrItineraryData();
+    return &MCSchedModel::DefaultSchedModel;
   }
+  assert(Found->Value && "Missing processor SchedModel value");
+  return (MCSchedModel *)Found->Value;
+}
 
-  InstrItinerarySubtargetValue *V =
-    (InstrItinerarySubtargetValue *)Found->Value;
-  return InstrItineraryData(V->Props, Stages, OperandCycles, ForwardingPaths,
-                            V->Itineraries);
+InstrItineraryData
+MCSubtargetInfo::getInstrItineraryForCPU(StringRef CPU) const {
+  MCSchedModel *SchedModel = getSchedModelForCPU(CPU);
+  return InstrItineraryData(SchedModel, Stages, OperandCycles, ForwardingPaths);
 }

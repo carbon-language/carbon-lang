@@ -933,12 +933,24 @@ class Processor<string n, ProcessorItineraries pi, list<SubtargetFeature> f> {
   //
   string Name = n;
 
+  // SchedModel - The machine model for scheduling and instruction cost.
+  //
+  SchedMachineModel SchedModel = NoSchedModel;
+
   // ProcItin - The scheduling information for the target processor.
   //
   ProcessorItineraries ProcItin = pi;
 
   // Features - list of
   list<SubtargetFeature> Features = f;
+}
+
+// ProcessorModel allows subtargets to specify the more general
+// SchedMachineModel instead if a ProcessorItinerary. Subtargets will
+// gradually move to this newer form.
+class ProcessorModel<string n, SchedMachineModel m, list<SubtargetFeature> f>
+  : Processor<n, NoItineraries, f> {
+  let SchedModel = m;
 }
 
 //===----------------------------------------------------------------------===//

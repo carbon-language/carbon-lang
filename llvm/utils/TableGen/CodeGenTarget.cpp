@@ -16,6 +16,7 @@
 
 #include "CodeGenTarget.h"
 #include "CodeGenIntrinsics.h"
+#include "CodeGenSchedule.h"
 #include "llvm/TableGen/Record.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/STLExtras.h"
@@ -112,7 +113,7 @@ std::string llvm::getQualifiedName(const Record *R) {
 /// getTarget - Return the current instance of the Target class.
 ///
 CodeGenTarget::CodeGenTarget(RecordKeeper &records)
-  : Records(records), RegBank(0) {
+  : Records(records), RegBank(0), SchedModels(0) {
   std::vector<Record*> Targets = Records.getAllDerivedDefinitions("Target");
   if (Targets.size() == 0)
     throw std::string("ERROR: No 'Target' subclasses defined!");
@@ -121,6 +122,10 @@ CodeGenTarget::CodeGenTarget(RecordKeeper &records)
   TargetRec = Targets[0];
 }
 
+CodeGenTarget::~CodeGenTarget() {
+  delete RegBank;
+  delete SchedModels;
+}
 
 const std::string &CodeGenTarget::getName() const {
   return TargetRec->getName();
@@ -235,6 +240,11 @@ void CodeGenTarget::ReadLegalValueTypes() const {
                         LegalValueTypes.end());
 }
 
+CodeGenSchedModels &CodeGenTarget::getSchedModels() const {
+  if (!SchedModels)
+    SchedModels = new CodeGenSchedModels(Records, *this);
+  return *SchedModels;
+}
 
 void CodeGenTarget::ReadInstructions() const {
   std::vector<Record*> Insts = Records.getAllDerivedDefinitions("Instruction");
