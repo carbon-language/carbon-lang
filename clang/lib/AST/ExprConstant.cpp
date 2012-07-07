@@ -3867,8 +3867,24 @@ bool ArrayExprEvaluator::VisitInitListExpr(const InitListExpr *E) {
 
   bool Success = true;
 
+  assert((!Result.isArray() || Result.getArrayInitializedElts() == 0) &&
+         "zero-initialized array shouldn't have any initialized elts");
+  APValue Filler;
+  if (Result.isArray() && Result.hasArrayFiller())
+    Filler = Result.getArrayFiller();
+
   Result = APValue(APValue::UninitArray(), E->getNumInits(),
                    CAT->getSize().getZExtValue());
+
+  // If the array was previously zero-initialized, preserve the
+  // zero-initialized values.
+  if (!Filler.isUninit()) {
+    for (unsigned I = 0, E = Result.getArrayInitializedElts(); I != E; ++I)
+      Result.getArrayInitializedElt(I) = Filler;
+    if (Result.hasArrayFiller())
+      Result.getArrayFiller() = Filler;
+  }
+
   LValue Subobject = This;
   Subobject.addArray(Info, E, CAT);
   unsigned Index = 0;
@@ -3899,11 +3915,24 @@ bool ArrayExprEvaluator::VisitCXXConstructExpr(const CXXConstructExpr *E) {
   if (!CAT)
     return Error(E);
 
-  bool HadZeroInit = !Result.isUninit();
-  if (!HadZeroInit)
-    Result = APValue(APValue::UninitArray(), 0, CAT->getSize().getZExtValue());
-  if (!Result.hasArrayFiller())
-    return true;
+  // FIXME: The Subobject here isn't necessarily right. This rarely matters,
+  // but sometimes does:
+  //   struct S { constexpr S() : p(&p) {} void *p; };
+  //   S s[10];
+  LValue Subobject = This;
+
+  APValue *Value = &Result;
+  bool HadZeroInit = true;
+  while (CAT) {
+    Subobject.addArray(Info, E, CAT);
+    HadZeroInit &= !Value->isUninit();
+    if (!HadZeroInit)
+      *Value = APValue(APValue::UninitArray(), 0, CAT->getSize().getZExtValue());
+    if (!Value->hasArrayFiller())
+      return true;
+    CAT = Info.Ctx.getAsConstantArrayType(CAT->getElementType());
+    Value = &Value->getArrayFiller();
+  }
 
   const CXXConstructorDecl *FD = E->getConstructor();
 
@@ -3913,17 +3942,15 @@ bool ArrayExprEvaluator::VisitCXXConstructExpr(const CXXConstructExpr *E) {
       return true;
 
     if (ZeroInit) {
-      LValue Subobject = This;
-      Subobject.addArray(Info, E, CAT);
       ImplicitValueInitExpr VIE(CAT->getElementType());
-      return EvaluateInPlace(Result.getArrayFiller(), Info, Subobject, &VIE);
+      return EvaluateInPlace(*Value, Info, Subobject, &VIE);
     }
 
     const CXXRecordDecl *RD = FD->getParent();
     if (RD->isUnion())
-      Result.getArrayFiller() = APValue((FieldDecl*)0);
+      *Value = APValue((FieldDecl*)0);
     else
-      Result.getArrayFiller() =
+      *Value =
           APValue(APValue::UninitStruct(), RD->getNumBases(),
                   std::distance(RD->field_begin(), RD->field_end()));
     return true;
@@ -3935,23 +3962,16 @@ bool ArrayExprEvaluator::VisitCXXConstructExpr(const CXXConstructExpr *E) {
   if (!CheckConstexprFunction(Info, E->getExprLoc(), FD, Definition))
     return false;
 
-  // FIXME: The Subobject here isn't necessarily right. This rarely matters,
-  // but sometimes does:
-  //   struct S { constexpr S() : p(&p) {} void *p; };
-  //   S s[10];
-  LValue Subobject = This;
-  Subobject.addArray(Info, E, CAT);
-
   if (ZeroInit && !HadZeroInit) {
     ImplicitValueInitExpr VIE(CAT->getElementType());
-    if (!EvaluateInPlace(Result.getArrayFiller(), Info, Subobject, &VIE))
+    if (!EvaluateInPlace(*Value, Info, Subobject, &VIE))
       return false;
   }
 
   llvm::ArrayRef<const Expr*> Args(E->getArgs(), E->getNumArgs());
   return HandleConstructorCall(E->getExprLoc(), Subobject, Args,
                                cast<CXXConstructorDecl>(Definition),
-                               Info, Result.getArrayFiller());
+                               Info, *Value);
 }
 
 //===----------------------------------------------------------------------===//

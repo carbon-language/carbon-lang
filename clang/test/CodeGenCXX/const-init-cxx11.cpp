@@ -121,6 +121,13 @@ namespace Array {
   };
   // CHECK: @_ZN5Array1eE = constant {{.*}} { [4 x i8] c"foo\00", [4 x i8] c"x\00\00\00" }
   extern constexpr E e = E();
+
+  // PR13290
+  struct F { constexpr F() : n(4) {} int n; };
+  // CHECK: @_ZN5Array2f1E = global {{.*}} zeroinitializer
+  F f1[1][1][0] = { };
+  // CHECK: @_ZN5Array2f2E = global {{.* i32 4 .* i32 4 .* i32 4 .* i32 4 .* i32 4 .* i32 4 .* i32 4 .* i32 4}}
+  F f2[2][2][2] = { };
 }
 
 namespace MemberPtr {

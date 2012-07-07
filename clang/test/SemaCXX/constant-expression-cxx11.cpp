@@ -494,6 +494,19 @@ struct ArrayRVal {
 };
 static_assert(ArrayRVal().elems[3].f() == 0, "");
 
+constexpr int selfref[2][2][2] = {
+  selfref[1][1][1] + 1, selfref[0][0][0] + 1,
+  selfref[1][0][1] + 1, selfref[0][1][0] + 1,
+  selfref[1][0][0] + 1, selfref[0][1][1] + 1 };
+static_assert(selfref[0][0][0] == 1, "");
+static_assert(selfref[0][0][1] == 2, "");
+static_assert(selfref[0][1][0] == 1, "");
+static_assert(selfref[0][1][1] == 2, "");
+static_assert(selfref[1][0][0] == 1, "");
+static_assert(selfref[1][0][1] == 3, "");
+static_assert(selfref[1][1][0] == 0, "");
+static_assert(selfref[1][1][1] == 0, "");
+
 }
 
 namespace DependentValues {
