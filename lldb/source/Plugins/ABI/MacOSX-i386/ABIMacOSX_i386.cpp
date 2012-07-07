@@ -272,6 +272,8 @@ ABIMacOSX_i386::PrepareTrivialCall (Thread &thread,
     // the actual register it pertains to is not important, just the size needs 
     // to be correct. Here we use "eax"...
     const RegisterInfo *reg_info_32 = reg_ctx->GetRegisterInfoByName("eax");
+    if (!reg_info_32)
+        return false; // TODO this should actually never happen
 
     // Make room for the argument(s) on the stack
 
