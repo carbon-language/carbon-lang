@@ -38,7 +38,11 @@ class _LIBCPP_VISIBLE mutex
 
 public:
     _LIBCPP_INLINE_VISIBILITY
+#ifndef _LIBCPP_HAS_NO_CONSTEXPR
+     constexpr mutex() : __m_ PTHREAD_MUTEX_INITIALIZER {}
+#else
      mutex() {__m_ = (pthread_mutex_t)PTHREAD_MUTEX_INITIALIZER;}
+#endif
      ~mutex();
 
 private:
@@ -297,7 +301,11 @@ class _LIBCPP_VISIBLE condition_variable
     pthread_cond_t __cv_;
 public:
     _LIBCPP_INLINE_VISIBILITY
+#ifndef _LIBCPP_HAS_NO_CONSTEXPR
+    constexpr condition_variable() : __cv_ PTHREAD_COND_INITIALIZER {}
+#else
     condition_variable() {__cv_ = (pthread_cond_t)PTHREAD_COND_INITIALIZER;}
+#endif
     ~condition_variable();
 
 private:
