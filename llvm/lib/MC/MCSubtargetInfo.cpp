@@ -32,7 +32,7 @@ MCSubtargetInfo::InitMCSubtargetInfo(StringRef TT, StringRef CPU, StringRef FS,
   ProcItins = PI;
   Stages = IS;
   OperandCycles = OC;
-  ForwardingPathes = FP;
+  ForwardingPaths = FP;
   NumFeatures = NF;
   NumProcs = NP;
 
@@ -93,6 +93,6 @@ MCSubtargetInfo::getInstrItineraryForCPU(StringRef CPU) const {
 
   InstrItinerarySubtargetValue *V =
     (InstrItinerarySubtargetValue *)Found->Value;
-  return InstrItineraryData(V->Props, Stages, OperandCycles, ForwardingPathes,
+  return InstrItineraryData(V->Props, Stages, OperandCycles, ForwardingPaths,
                             V->Itineraries);
 }

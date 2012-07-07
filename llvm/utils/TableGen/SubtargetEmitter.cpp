@@ -410,7 +410,7 @@ void SubtargetEmitter::EmitStageAndOperandCycleData(raw_ostream &OS,
 
   // Begin pipeline bypass table
   std::string BypassTable = "extern const unsigned " + Target +
-    "ForwardingPathes[] = {\n";
+    "ForwardingPaths[] = {\n";
   BypassTable += "  0, // No itinerary\n";
 
   unsigned StageCount = 1, OperandCycleCount = 1;
@@ -780,7 +780,7 @@ void SubtargetEmitter::run(raw_ostream &OS) {
     OS << Target << "ProcItinKV, "
        << Target << "Stages, "
        << Target << "OperandCycles, "
-       << Target << "ForwardingPathes, ";
+       << Target << "ForwardingPaths, ";
   } else
     OS << "0, 0, 0, 0, ";
   OS << NumFeatures << ", " << NumProcs << ");\n}\n\n";
@@ -826,7 +826,7 @@ void SubtargetEmitter::run(raw_ostream &OS) {
     OS << "extern const llvm::SubtargetInfoKV " << Target << "ProcItinKV[];\n";
     OS << "extern const llvm::InstrStage " << Target << "Stages[];\n";
     OS << "extern const unsigned " << Target << "OperandCycles[];\n";
-    OS << "extern const unsigned " << Target << "ForwardingPathes[];\n";
+    OS << "extern const unsigned " << Target << "ForwardingPaths[];\n";
   }
 
   OS << ClassName << "::" << ClassName << "(StringRef TT, StringRef CPU, "
@@ -845,7 +845,7 @@ void SubtargetEmitter::run(raw_ostream &OS) {
     OS << Target << "ProcItinKV, "
        << Target << "Stages, "
        << Target << "OperandCycles, "
-       << Target << "ForwardingPathes, ";
+       << Target << "ForwardingPaths, ";
   } else
     OS << "0, 0, 0, 0, ";
   OS << NumFeatures << ", " << NumProcs << ");\n}\n\n";

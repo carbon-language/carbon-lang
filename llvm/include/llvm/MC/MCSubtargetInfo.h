@@ -33,7 +33,7 @@ class MCSubtargetInfo {
   const SubtargetInfoKV *ProcItins;    // Scheduling itineraries
   const InstrStage *Stages;            // Instruction stages
   const unsigned *OperandCycles;       // Operand cycles
-  const unsigned *ForwardingPathes;    // Forwarding pathes
+  const unsigned *ForwardingPaths;     // Forwarding paths
   unsigned NumFeatures;                // Number of processor features
   unsigned NumProcs;                   // Number of processors
   uint64_t FeatureBits;                // Feature bits for current CPU + FS
