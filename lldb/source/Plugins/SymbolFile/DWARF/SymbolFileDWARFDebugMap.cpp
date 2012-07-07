@@ -280,6 +280,9 @@ SymbolFileDWARFDebugMap::GetSymbolFileByCompUnitInfo (CompileUnitInfo *comp_unit
                 // it will have the remapped sections that we do below.
                 SymbolFileDWARF *oso_symfile = (SymbolFileDWARF *)comp_unit_info->oso_symbol_vendor->GetSymbolFile();
                 
+                if (!oso_symfile)
+                    return NULL;
+                
                 if (oso_symfile->GetNumCompileUnits() != 1)
                 {
                     oso_symfile->GetObjectFile()->GetModule()->ReportError ("DWARF for object file '%s' contains multiple translation units!",
