@@ -152,7 +152,7 @@ Section::GetLoadBaseAddress (Target *target) const
         }
         else
         {
-            load_base_addr = target->GetSectionLoadList().GetSectionLoadAddress (this);
+            load_base_addr = target->GetSectionLoadList().GetSectionLoadAddress (const_cast<Section *>(this)->shared_from_this());
         }
     }
 

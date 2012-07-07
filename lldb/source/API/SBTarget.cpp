@@ -2137,7 +2137,7 @@ SBTarget::SetSectionLoadAddress (lldb::SBSection section,
                 }
                 else
                 {
-                    target_sp->GetSectionLoadList().SetSectionLoadAddress (section_sp.get(), section_base_addr);
+                    target_sp->GetSectionLoadList().SetSectionLoadAddress (section_sp, section_base_addr);
                 }
             }
         }
@@ -2163,7 +2163,7 @@ SBTarget::ClearSectionLoadAddress (lldb::SBSection section)
         }
         else
         {
-            target_sp->GetSectionLoadList().SetSectionUnloaded (section.GetSP().get());
+            target_sp->GetSectionLoadList().SetSectionUnloaded (section.GetSP());
         }
     }
     else
@@ -2233,7 +2233,7 @@ SBTarget::ClearModuleLoadAddress (lldb::SBModule module)
                     {
                         SectionSP section_sp (section_list->GetSectionAtIndex(sect_idx));
                         if (section_sp)
-                            target_sp->GetSectionLoadList().SetSectionUnloaded (section_sp.get());
+                            target_sp->GetSectionLoadList().SetSectionUnloaded (section_sp);
                     }
                 }
                 else

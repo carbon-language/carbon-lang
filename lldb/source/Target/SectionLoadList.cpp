@@ -41,14 +41,14 @@ SectionLoadList::Clear ()
 }
 
 addr_t
-SectionLoadList::GetSectionLoadAddress (const Section *section) const
+SectionLoadList::GetSectionLoadAddress (const lldb::SectionSP &section) const
 {
     // TODO: add support for the same section having multiple load addresses
     addr_t section_load_addr = LLDB_INVALID_ADDRESS;
     if (section)
     {
         Mutex::Locker locker(m_mutex);
-        sect_to_addr_collection::const_iterator pos = m_sect_to_addr.find (section);
+        sect_to_addr_collection::const_iterator pos = m_sect_to_addr.find (section.get());
         
         if (pos != m_sect_to_addr.end())
             section_load_addr = pos->second;
@@ -57,7 +57,7 @@ SectionLoadList::GetSectionLoadAddress (const Section *section) const
 }
 
 bool
-SectionLoadList::SetSectionLoadAddress (const Section *section, addr_t load_addr, bool warn_multiple)
+SectionLoadList::SetSectionLoadAddress (const lldb::SectionSP &section, addr_t load_addr, bool warn_multiple)
 {
     LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_DYNAMIC_LOADER | LIBLLDB_LOG_VERBOSE));
 
@@ -66,7 +66,7 @@ SectionLoadList::SetSectionLoadAddress (const Section *section, addr_t load_addr
         const FileSpec &module_file_spec (section->GetModule()->GetFileSpec());
         log->Printf ("SectionLoadList::%s (section = %p (%s%s%s.%s), load_addr = 0x%16.16llx)",
                      __FUNCTION__,
-                     section,
+                     section.get(),
                      module_file_spec.GetDirectory().AsCString(),
                      module_file_spec.GetDirectory() ? "/" : "",
                      module_file_spec.GetFilename().AsCString(),
@@ -79,7 +79,7 @@ SectionLoadList::SetSectionLoadAddress (const Section *section, addr_t load_addr
 
     // Fill in the section -> load_addr map
     Mutex::Locker locker(m_mutex);
-    sect_to_addr_collection::iterator sta_pos = m_sect_to_addr.find(section);
+    sect_to_addr_collection::iterator sta_pos = m_sect_to_addr.find(section.get());
     if (sta_pos != m_sect_to_addr.end())
     {
         if (load_addr == sta_pos->second)
@@ -88,7 +88,7 @@ SectionLoadList::SetSectionLoadAddress (const Section *section, addr_t load_addr
             sta_pos->second = load_addr;
     }
     else
-        m_sect_to_addr[section] = load_addr;
+        m_sect_to_addr[section.get()] = load_addr;
 
     // Fill in the load_addr -> section map
     addr_to_sect_collection::iterator ats_pos = m_addr_to_sect.find(load_addr);
@@ -126,59 +126,62 @@ SectionLoadList::SetSectionLoadAddress (const Section *section, addr_t load_addr
 }
 
 size_t
-SectionLoadList::SetSectionUnloaded (const Section *section)
+SectionLoadList::SetSectionUnloaded (const lldb::SectionSP &section_sp)
 {
-    LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_DYNAMIC_LOADER | LIBLLDB_LOG_VERBOSE));
-
-    if (log)
-    {
-        const FileSpec &module_file_spec (section->GetModule()->GetFileSpec());
-        log->Printf ("SectionLoadList::%s (section = %p (%s%s%s.%s))",
-                     __FUNCTION__,
-                     section,
-                     module_file_spec.GetDirectory().AsCString(),
-                     module_file_spec.GetDirectory() ? "/" : "",
-                     module_file_spec.GetFilename().AsCString(),
-                     section->GetName().AsCString());
-    }
-
     size_t unload_count = 0;
-    Mutex::Locker locker(m_mutex);
-    
-    sect_to_addr_collection::iterator sta_pos = m_sect_to_addr.find(section);
-    if (sta_pos != m_sect_to_addr.end())
-    {
-        addr_t load_addr = sta_pos->second;
-        m_sect_to_addr.erase (sta_pos);
 
-        addr_to_sect_collection::iterator ats_pos = m_addr_to_sect.find(load_addr);
-        if (ats_pos != m_addr_to_sect.end())
-            m_addr_to_sect.erase (ats_pos);
+    if (section_sp)
+    {
+        LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_DYNAMIC_LOADER | LIBLLDB_LOG_VERBOSE));
+
+        if (log)
+        {
+            const FileSpec &module_file_spec (section_sp->GetModule()->GetFileSpec());
+            log->Printf ("SectionLoadList::%s (section = %p (%s%s%s.%s))",
+                         __FUNCTION__,
+                         section_sp.get(),
+                         module_file_spec.GetDirectory().AsCString(),
+                         module_file_spec.GetDirectory() ? "/" : "",
+                         module_file_spec.GetFilename().AsCString(),
+                         section_sp->GetName().AsCString());
+        }
+
+        Mutex::Locker locker(m_mutex);
+        
+        sect_to_addr_collection::iterator sta_pos = m_sect_to_addr.find(section_sp.get());
+        if (sta_pos != m_sect_to_addr.end())
+        {
+            addr_t load_addr = sta_pos->second;
+            m_sect_to_addr.erase (sta_pos);
+
+            addr_to_sect_collection::iterator ats_pos = m_addr_to_sect.find(load_addr);
+            if (ats_pos != m_addr_to_sect.end())
+                m_addr_to_sect.erase (ats_pos);
+        }
     }
-    
     return unload_count;
 }
 
 bool
-SectionLoadList::SetSectionUnloaded (const Section *section, addr_t load_addr)
+SectionLoadList::SetSectionUnloaded (const lldb::SectionSP &section_sp, addr_t load_addr)
 {
     LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_DYNAMIC_LOADER | LIBLLDB_LOG_VERBOSE));
 
     if (log)
     {
-        const FileSpec &module_file_spec (section->GetModule()->GetFileSpec());
+        const FileSpec &module_file_spec (section_sp->GetModule()->GetFileSpec());
         log->Printf ("SectionLoadList::%s (section = %p (%s%s%s.%s), load_addr = 0x%16.16llx)",
                      __FUNCTION__,
-                     section,
+                     section_sp.get(),
                      module_file_spec.GetDirectory().AsCString(),
                      module_file_spec.GetDirectory() ? "/" : "",
                      module_file_spec.GetFilename().AsCString(),
-                     section->GetName().AsCString(),
+                     section_sp->GetName().AsCString(),
                      load_addr);
     }
     bool erased = false;
     Mutex::Locker locker(m_mutex);
-    sect_to_addr_collection::iterator sta_pos = m_sect_to_addr.find(section);
+    sect_to_addr_collection::iterator sta_pos = m_sect_to_addr.find(section_sp.get());
     if (sta_pos != m_sect_to_addr.end())
     {
         erased = true;
@@ -247,7 +250,7 @@ SectionLoadList::Dump (Stream &s, Target *target)
     addr_to_sect_collection::const_iterator pos, end;
     for (pos = m_addr_to_sect.begin(), end = m_addr_to_sect.end(); pos != end; ++pos)
     {
-        s.Printf("addr = 0x%16.16llx, section = %p: ", pos->first, pos->second);
+        s.Printf("addr = 0x%16.16llx, section = %p: ", pos->first, pos->second.get());
         pos->second->Dump (&s, target, 0);
     }
 }

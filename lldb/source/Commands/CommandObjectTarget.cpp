@@ -2651,7 +2651,7 @@ protected:
                                                     }
                                                     else
                                                     {
-                                                        if (target->GetSectionLoadList().SetSectionLoadAddress (section_sp.get(), load_addr))
+                                                        if (target->GetSectionLoadList().SetSectionLoadAddress (section_sp, load_addr))
                                                             changed = true;
                                                         result.AppendMessageWithFormat("section '%s' loaded at 0x%llx\n", sect_name, load_addr);
                                                     }

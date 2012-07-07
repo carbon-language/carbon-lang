@@ -252,13 +252,13 @@ DynamicLoaderDarwinKernel::OSKextLoadedKextSummary::LoadImageUsingMemoryModule (
                         uint32_t num_sections_loaded = 0;
                         for (sect_idx=0; sect_idx<num_ondisk_sections; ++sect_idx)
                         {
-                            const Section *ondisk_section = ondisk_section_list->GetSectionAtIndex(sect_idx).get();
-                            if (ondisk_section)
+                            SectionSP ondisk_section_sp(ondisk_section_list->GetSectionAtIndex(sect_idx));
+                            if (ondisk_section_sp)
                             {
-                                const Section *memory_section = memory_section_list->FindSectionByName(ondisk_section->GetName()).get();
+                                const Section *memory_section = memory_section_list->FindSectionByName(ondisk_section_sp->GetName()).get();
                                 if (memory_section)
                                 {
-                                    target.GetSectionLoadList().SetSectionLoadAddress (ondisk_section, memory_section->GetFileAddress());
+                                    target.GetSectionLoadList().SetSectionLoadAddress (ondisk_section_sp, memory_section->GetFileAddress());
                                     ++num_sections_loaded;
                                 }
                             }

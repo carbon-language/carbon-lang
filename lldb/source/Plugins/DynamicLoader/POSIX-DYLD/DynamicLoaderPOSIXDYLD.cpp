@@ -172,9 +172,9 @@ DynamicLoaderPOSIXDYLD::UpdateLoadedSections(ModuleSP module, addr_t base_addr)
 
     for (unsigned i = 0; i < num_sections; ++i)
     {
-        Section *section = sections->GetSectionAtIndex(i).get();
-        lldb::addr_t new_load_addr = section->GetFileAddress() + base_addr;
-        lldb::addr_t old_load_addr = load_list.GetSectionLoadAddress(section);
+        SectionSP section_sp (sections->GetSectionAtIndex(i));
+        lldb::addr_t new_load_addr = section_sp->GetFileAddress() + base_addr;
+        lldb::addr_t old_load_addr = load_list.GetSectionLoadAddress(section_sp);
 
         // If the file address of the section is zero then this is not an
         // allocatable/loadable section (property of ELF sh_addr).  Skip it.
@@ -183,7 +183,7 @@ DynamicLoaderPOSIXDYLD::UpdateLoadedSections(ModuleSP module, addr_t base_addr)
 
         if (old_load_addr == LLDB_INVALID_ADDRESS ||
             old_load_addr != new_load_addr)
-            load_list.SetSectionLoadAddress(section, new_load_addr);
+            load_list.SetSectionLoadAddress(section_sp, new_load_addr);
     }
 }
 

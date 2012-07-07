@@ -126,10 +126,10 @@ DynamicLoaderStatic::LoadAllImagesAtFileAddresses ()
                         // Iterate through the object file sections to find the
                         // first section that starts of file offset zero and that
                         // has bytes in the file...
-                        Section *section = section_list->GetSectionAtIndex (sect_idx).get();
-                        if (section)
+                        SectionSP section_sp (section_list->GetSectionAtIndex (sect_idx));
+                        if (section_sp)
                         {
-                            if (m_process->GetTarget().GetSectionLoadList().SetSectionLoadAddress (section, section->GetFileAddress()))
+                            if (m_process->GetTarget().GetSectionLoadList().SetSectionLoadAddress (section_sp, section_sp->GetFileAddress()))
                                 changed = true;
                         }
                     }
