@@ -687,41 +687,27 @@ void InitListChecker::CheckListElementTypes(const InitializedEntity &Entity,
   } else if (DeclType->isVectorType()) {
     CheckVectorType(Entity, IList, DeclType, Index,
                     StructuredList, StructuredIndex);
-  } else if (DeclType->isAggregateType()) {
-    if (DeclType->isRecordType()) {
-      RecordDecl *RD = DeclType->getAs<RecordType>()->getDecl();
-      CheckStructUnionTypes(Entity, IList, DeclType, RD->field_begin(),
-                            SubobjectIsDesignatorContext, Index,
-                            StructuredList, StructuredIndex,
-                            TopLevelObject);
-    } else if (DeclType->isArrayType()) {
-      llvm::APSInt Zero(
-                      SemaRef.Context.getTypeSize(SemaRef.Context.getSizeType()),
-                      false);
-      CheckArrayType(Entity, IList, DeclType, Zero,
-                     SubobjectIsDesignatorContext, Index,
-                     StructuredList, StructuredIndex);
-    } else
-      llvm_unreachable("Aggregate that isn't a structure or array?!");
+  } else if (DeclType->isRecordType()) {
+    assert(DeclType->isAggregateType() &&
+           "non-aggregate records should be handed in CheckSubElementType");
+    RecordDecl *RD = DeclType->getAs<RecordType>()->getDecl();
+    CheckStructUnionTypes(Entity, IList, DeclType, RD->field_begin(),
+                          SubobjectIsDesignatorContext, Index,
+                          StructuredList, StructuredIndex,
+                          TopLevelObject);
+  } else if (DeclType->isArrayType()) {
+    llvm::APSInt Zero(
+                    SemaRef.Context.getTypeSize(SemaRef.Context.getSizeType()),
+                    false);
+    CheckArrayType(Entity, IList, DeclType, Zero,
+                   SubobjectIsDesignatorContext, Index,
+                   StructuredList, StructuredIndex);
   } else if (DeclType->isVoidType() || DeclType->isFunctionType()) {
     // This type is invalid, issue a diagnostic.
     ++Index;
     if (!VerifyOnly)
       SemaRef.Diag(IList->getLocStart(), diag::err_illegal_initializer_type)
         << DeclType;
-    hadError = true;
-  } else if (DeclType->isRecordType()) {
-    // C++ [dcl.init]p14:
-    //   [...] If the class is an aggregate (8.5.1), and the initializer
-    //   is a brace-enclosed list, see 8.5.1.
-    //
-    // Note: 8.5.1 is handled below; here, we diagnose the case where
-    // we have an initializer list and a destination type that is not
-    // an aggregate.
-    // FIXME: In C++0x, this is yet another form of initialization.
-    if (!VerifyOnly)
-      SemaRef.Diag(IList->getLocStart(), diag::err_init_non_aggr_init_list)
-        << DeclType << IList->getSourceRange();
     hadError = true;
   } else if (DeclType->isReferenceType()) {
     CheckReferenceType(Entity, IList, DeclType, Index,
@@ -747,18 +733,25 @@ void InitListChecker::CheckSubElementType(const InitializedEntity &Entity,
                                           unsigned &StructuredIndex) {
   Expr *expr = IList->getInit(Index);
   if (InitListExpr *SubInitList = dyn_cast<InitListExpr>(expr)) {
-    unsigned newIndex = 0;
-    unsigned newStructuredIndex = 0;
-    InitListExpr *newStructuredList
-      = getStructuredSubobjectInit(IList, Index, ElemType,
-                                   StructuredList, StructuredIndex,
-                                   SubInitList->getSourceRange());
-    CheckExplicitInitList(Entity, SubInitList, ElemType, newIndex,
-                          newStructuredList, newStructuredIndex);
-    ++StructuredIndex;
-    ++Index;
-    return;
-  } else if (ElemType->isScalarType()) {
+    if (!ElemType->isRecordType() || ElemType->isAggregateType()) {
+      unsigned newIndex = 0;
+      unsigned newStructuredIndex = 0;
+      InitListExpr *newStructuredList
+        = getStructuredSubobjectInit(IList, Index, ElemType,
+                                     StructuredList, StructuredIndex,
+                                     SubInitList->getSourceRange());
+      CheckExplicitInitList(Entity, SubInitList, ElemType, newIndex,
+                            newStructuredList, newStructuredIndex);
+      ++StructuredIndex;
+      ++Index;
+      return;
+    }
+    assert(SemaRef.getLangOpts().CPlusPlus &&
+           "non-aggregate records are only possible in C++");
+    // C++ initialization is handled later.
+  }
+
+  if (ElemType->isScalarType()) {
     return CheckScalarType(Entity, IList, ElemType, Index,
                            StructuredList, StructuredIndex);
   } else if (ElemType->isReferenceType()) {

@@ -87,3 +87,32 @@ namespace array_explicit_conversion {
     (void)test4{{{1}}}; // expected-note {{in instantiation of template class 'array_explicit_conversion::A<-1>' requested here}}
   }
 }
+
+namespace sub_constructor {
+  struct DefaultConstructor { // expected-note 2 {{not viable}}
+    DefaultConstructor(); // expected-note  {{not viable}}
+    int x;
+  };
+  struct NoDefaultConstructor1 { // expected-note 2 {{not viable}}
+    NoDefaultConstructor1(int); // expected-note {{not viable}}
+    int x;
+  };
+  struct NoDefaultConstructor2 {  // expected-note 4 {{not viable}}
+    NoDefaultConstructor2(int,int); // expected-note 2 {{not viable}}
+    int x;
+  };
+
+  struct Aggr {
+    DefaultConstructor a;
+    NoDefaultConstructor1 b;
+    NoDefaultConstructor2 c;
+  };
+
+  Aggr ok1 { {}, {0} , {0,0} };
+  Aggr ok2 = { {}, {0} , {0,0} };
+  Aggr too_many { {0} , {0} , {0,0} }; // expected-error {{no matching constructor for initialization}}
+  Aggr too_few { {} , {0} , {0} }; // expected-error {{no matching constructor for initialization}}
+  Aggr invalid { {} , {&ok1} , {0,0} }; // expected-error {{no matching constructor for initialization}}
+  NoDefaultConstructor2 array_ok[] = { {0,0} , {0,1} };
+  NoDefaultConstructor2 array_error[] = { {0,0} , {0} }; // expected-error {{no matching constructor for initialization}}
+}

@@ -15,7 +15,7 @@ struct NonAggregate {
 };
 NonAggregate non_aggregate_test = { 1, 2 }; // expected-error{{non-aggregate type 'NonAggregate' cannot be initialized with an initializer list}}
 
-NonAggregate non_aggregate_test2[2] = { { 1, 2 }, { 3, 4 } }; // expected-error 2 {{initialization of non-aggregate type 'NonAggregate' with an initializer list}}
+NonAggregate non_aggregate_test2[2] = { { 1, 2 }, { 3, 4 } }; // expected-error 2 {{non-aggregate type 'NonAggregate' cannot be initialized with an initializer list}}
 
 
 // C++ [dcl.init.aggr]p3

@@ -1318,3 +1318,15 @@ namespace PR13273 {
   // actually call it.
   static_assert(S{}.t == 0, "");
 }
+
+namespace PR12670 {
+  struct S {
+    constexpr S(int a0) : m(a0) {}
+    constexpr S() : m(6) {}
+    int m;
+  };
+  constexpr S x[3] = { {4}, 5 };
+  static_assert(x[0].m == 4, "");
+  static_assert(x[1].m == 5, "");
+  static_assert(x[2].m == 6, "");
+}
