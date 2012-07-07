@@ -18,7 +18,7 @@ template <std::size_t N>
 void test_default_ctor()
 {
     {
-    std::bitset<N> v1;
+    _LIBCPP_CONSTEXPR std::bitset<N> v1;
     assert(v1.size() == N);
     for (std::size_t i = 0; i < N; ++i)
         assert(v1[i] == false);

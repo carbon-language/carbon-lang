@@ -131,13 +131,14 @@ public:
     __bit_const_reference(const __bit_reference<_Cp>& __x) _NOEXCEPT
         : __seg_(__x.__seg_), __mask_(__x.__mask_) {}
 
-    _LIBCPP_INLINE_VISIBILITY operator bool() const _NOEXCEPT
+    _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR operator bool() const _NOEXCEPT
         {return static_cast<bool>(*__seg_ & __mask_);}
 
     _LIBCPP_INLINE_VISIBILITY __bit_iterator<_Cp, true> operator&() const _NOEXCEPT
         {return __bit_iterator<_Cp, true>(__seg_, static_cast<unsigned>(__ctz(__mask_)));}
 private:
     _LIBCPP_INLINE_VISIBILITY
+    _LIBCPP_CONSTEXPR
     __bit_const_reference(__storage_pointer __s, __storage_type __m) _NOEXCEPT
         : __seg_(__s), __mask_(__m) {}
 

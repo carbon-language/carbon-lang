@@ -18,7 +18,7 @@ template <std::size_t N>
 void test_val_ctor()
 {
     {
-    std::bitset<N> v(0xAAAAAAAAAAAAAAAAULL);
+    _LIBCPP_CONSTEXPR std::bitset<N> v(0xAAAAAAAAAAAAAAAAULL);
     assert(v.size() == N);
     unsigned M = std::min<std::size_t>(N, 64);
     for (std::size_t i = 0; i < M; ++i)
