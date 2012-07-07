@@ -180,6 +180,7 @@ protected:
 
 private:
     friend class ValueObject;
+    friend class ValueObjectConstResult;
     ValueObjectDynamicValue (ValueObject &parent, lldb::DynamicValueType use_dynamic);
 
     //------------------------------------------------------------------

@@ -13,6 +13,7 @@
 #include "lldb/Core/ValueObjectConstResultChild.h"
 #include "lldb/Core/DataExtractor.h"
 #include "lldb/Core/Module.h"
+#include "lldb/Core/ValueObjectDynamicValue.h"
 #include "lldb/Core/ValueObjectList.h"
 
 #include "lldb/Symbol/ClangASTType.h"
@@ -375,3 +376,24 @@ ValueObjectConstResult::GetPointeeData (DataExtractor& data,
 {
     return m_impl.GetPointeeData(data, item_idx, item_count);
 }
+
+lldb::ValueObjectSP
+ValueObjectConstResult::GetDynamicValue (lldb::DynamicValueType use_dynamic)
+{
+    // Always recalculate dynamic values for const results as the memory that
+    // they might point to might have changed at any time.
+    if (use_dynamic != eNoDynamicValues)
+    {
+        if (!IsDynamic())
+        {
+            ExecutionContext exe_ctx (GetExecutionContextRef());
+            Process *process = exe_ctx.GetProcessPtr();
+            if (process && process->IsPossibleDynamicValue(*this))
+                m_dynamic_value = new ValueObjectDynamicValue (*this, use_dynamic);
+        }
+        if (m_dynamic_value)
+            return m_dynamic_value->GetSP();
+    }
+    return ValueObjectSP();
+}
+

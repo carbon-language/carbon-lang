@@ -77,6 +77,41 @@ def load_dylib():
     if lldb.target.FindModule(libheap_dylib_spec):
         return None # success, 'libheap.dylib' already loaded
     return 'error: failed to load "%s"' % libheap_dylib_path
+
+def get_member_types_for_offset(value_type, offset, member_list):
+    member = value_type.GetFieldAtIndex(0)
+    search_bases = False
+    if member:
+        if member.GetOffsetInBytes() <= offset:
+            for field_idx in range (value_type.GetNumberOfFields()):
+                member = value_type.GetFieldAtIndex(field_idx)
+                member_byte_offset = member.GetOffsetInBytes()
+                member_end_byte_offset = member_byte_offset + member.type.size
+                if member_byte_offset <= offset and offset < member_end_byte_offset:
+                    member_list.append(member)
+                    get_member_types_for_offset (member.type, offset - member_byte_offset, member_list)
+                    return
+        else:
+            search_bases = True
+    else:
+        search_bases = True
+    if search_bases:
+        for field_idx in range (value_type.GetNumberOfDirectBaseClasses()):
+            member = value_type.GetDirectBaseClassAtIndex(field_idx)
+            member_byte_offset = member.GetOffsetInBytes()
+            member_end_byte_offset = member_byte_offset + member.type.size
+            if member_byte_offset <= offset and offset < member_end_byte_offset:
+                member_list.append(member)
+                get_member_types_for_offset (member.type, offset - member_byte_offset, member_list)
+                return
+        for field_idx in range (value_type.GetNumberOfVirtualBaseClasses()):
+            member = value_type.GetVirtualBaseClassAtIndex(field_idx)
+            member_byte_offset = member.GetOffsetInBytes()
+            member_end_byte_offset = member_byte_offset + member.type.size
+            if member_byte_offset <= offset and offset < member_end_byte_offset:
+                member_list.append(member)
+                get_member_types_for_offset (member.type, offset - member_byte_offset, member_list)
+                return
     
 def add_common_options(parser):
     parser.add_option('-v', '--verbose', action='store_true', dest='verbose', help='display verbose debug info', default=False)
@@ -179,15 +214,13 @@ def heap_search(options, arg_str):
                     break
                 malloc_size = int(match_entry.size)
                 offset = int(match_entry.offset)
+                match_addr = malloc_addr + offset
                 dynamic_value = match_entry.addr.sbvalue.GetDynamicValue(lldb.eDynamicCanRunTarget)
-                # If the type is still 'void *' then we weren't able to figure
-                # out a dynamic type for the malloc_addr
-                type_name = dynamic_value.type.name
                 description = '[%u] %s: addr = 0x%x' % (i, arg_str_description, malloc_addr)
                 if offset != 0:
                     description += ' + %u' % (offset)
                 description += ', size = %u' % (malloc_size)
-                if type_name == 'void *':
+                if dynamic_value.type.name == 'void *':
                     if options.type == 'pointer' and malloc_size == 4096:
                         error = lldb.SBError()
                         data = bytearray(lldb.process.ReadMemory(malloc_addr, 16, error))
@@ -195,50 +228,32 @@ def heap_search(options, arg_str):
                             description += ', type = (AUTORELEASE!)'
                     print description
                 else:
-                    description += ', type = %s' % (type_name)
                     derefed_dynamic_value = dynamic_value.deref
-                    ivar_member = None
-                    if derefed_dynamic_value:
+                    if derefed_dynamic_value:                        
                         derefed_dynamic_type = derefed_dynamic_value.type
-                        member = derefed_dynamic_type.GetFieldAtIndex(0)
-                        search_bases = False
-                        if member:
-                            if member.GetOffsetInBytes() <= offset:
-                                for field_idx in range (derefed_dynamic_type.GetNumberOfFields()):
-                                    member = derefed_dynamic_type.GetFieldAtIndex(field_idx)
-                                    member_byte_offset = member.GetOffsetInBytes()
-                                    if member_byte_offset == offset:
-                                        ivar_member = member
-                                        break
-                            else:
-                                search_bases = True
-                        else:
-                            search_bases = True
-
-                        if not ivar_member and search_bases:
-                            for field_idx in range (derefed_dynamic_type.GetNumberOfDirectBaseClasses()):
-                                member = derefed_dynamic_type.GetDirectBaseClassAtIndex(field_idx)
-                                member_byte_offset = member.GetOffsetInBytes()
-                                if member_byte_offset == offset:
-                                    ivar_member = member
-                                    break
-                            if not ivar_member:
-                                for field_idx in range (derefed_dynamic_type.GetNumberOfVirtualBaseClasses()):
-                                    member = derefed_dynamic_type.GetVirtualBaseClassAtIndex(field_idx)
-                                    member_byte_offset = member.GetOffsetInBytes()
-                                    if member_byte_offset == offset:
-                                        ivar_member = member
-                                        break
-                    if ivar_member:
-                        description +=', ivar = %s' % (ivar_member.name)
-
-                    print description
-                    if derefed_dynamic_value:
-                        print derefed_dynamic_value
-                    if options.print_object_description:
-                        desc = dynamic_value.GetObjectDescription()
-                        if desc:
-                            print '  (%s) 0x%x %s\n' % (type_name, malloc_addr, desc)
+                        derefed_dynamic_type_size = derefed_dynamic_type.size
+                        derefed_dynamic_type_name = derefed_dynamic_type.name
+                        description += ', type = %s <%u>' % (derefed_dynamic_type_name, derefed_dynamic_type_size)
+                        if offset < derefed_dynamic_type_size:
+                            member_list = list();
+                            get_member_types_for_offset (derefed_dynamic_type, offset, member_list)
+                            if member_list:
+                                member_path = ''
+                                for member in member_list:
+                                    member_name = member.name
+                                    if member_name: 
+                                        if member_path:
+                                            member_path += '.'
+                                        member_path += member_name
+                                if member_path:
+                                    description += ', ivar = %s' % (member_path)
+                            print description
+                            if derefed_dynamic_value:
+                                print derefed_dynamic_value
+                            if options.print_object_description:
+                                desc = dynamic_value.GetObjectDescription()
+                                if desc:
+                                    print '  (%s) 0x%x %s\n' % (type_name, malloc_addr, desc)
                 if options.memory:
                     memory_format = options.format
                     if not memory_format:

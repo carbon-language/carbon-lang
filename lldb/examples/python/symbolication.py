@@ -408,31 +408,30 @@ class Symbolicator:
             image = self.find_image_containing_load_addr (load_addr)
             if image:
                 image.add_module (self.target)
-                symbolicated_address = Address(self.target, load_addr)
-                if symbolicated_address.symbolicate (verbose):
-            
-                    if symbolicated_address.so_addr:
-                        symbolicated_addresses = list()
-                        symbolicated_addresses.append(symbolicated_address)
-                        # See if we were able to reconstruct anything?
-                        while 1:
-                            inlined_parent_so_addr = lldb.SBAddress()
-                            inlined_parent_sym_ctx = symbolicated_address.sym_ctx.GetParentOfInlinedScope (symbolicated_address.so_addr, inlined_parent_so_addr)
-                            if not inlined_parent_sym_ctx:
-                                break
-                            if not inlined_parent_so_addr:
-                                break
+            symbolicated_address = Address(self.target, load_addr)
+            if symbolicated_address.symbolicate (verbose):
+                if symbolicated_address.so_addr:
+                    symbolicated_addresses = list()
+                    symbolicated_addresses.append(symbolicated_address)
+                    # See if we were able to reconstruct anything?
+                    while 1:
+                        inlined_parent_so_addr = lldb.SBAddress()
+                        inlined_parent_sym_ctx = symbolicated_address.sym_ctx.GetParentOfInlinedScope (symbolicated_address.so_addr, inlined_parent_so_addr)
+                        if not inlined_parent_sym_ctx:
+                            break
+                        if not inlined_parent_so_addr:
+                            break
 
-                            symbolicated_address = Address(self.target, inlined_parent_so_addr.GetLoadAddress(self.target))
-                            symbolicated_address.sym_ctx = inlined_parent_sym_ctx
-                            symbolicated_address.so_addr = inlined_parent_so_addr
-                            symbolicated_address.symbolicate (verbose)
-                
-                            # push the new frame onto the new frame stack
-                            symbolicated_addresses.append (symbolicated_address)
+                        symbolicated_address = Address(self.target, inlined_parent_so_addr.GetLoadAddress(self.target))
+                        symbolicated_address.sym_ctx = inlined_parent_sym_ctx
+                        symbolicated_address.so_addr = inlined_parent_so_addr
+                        symbolicated_address.symbolicate (verbose)
             
-                        if symbolicated_addresses:
-                            return symbolicated_addresses
+                        # push the new frame onto the new frame stack
+                        symbolicated_addresses.append (symbolicated_address)
+        
+                    if symbolicated_addresses:
+                        return symbolicated_addresses
         else:
             print 'error: no target in Symbolicator'
         return None

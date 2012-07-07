@@ -823,7 +823,7 @@ public:
     virtual lldb::ValueObjectSP
     GetSyntheticChildAtOffset(uint32_t offset, const ClangASTType& type, bool can_create);
     
-    lldb::ValueObjectSP
+    virtual lldb::ValueObjectSP
     GetDynamicValue (lldb::DynamicValueType valueType);
     
     virtual lldb::ValueObjectSP
