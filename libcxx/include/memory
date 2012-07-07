@@ -2467,7 +2467,11 @@ struct __same_or_less_cv_qualified<_Ptr1, _Ptr2, true>
 template <class _Tp>
 struct _LIBCPP_VISIBLE default_delete
 {
-    _LIBCPP_INLINE_VISIBILITY default_delete() _NOEXCEPT {}
+#ifndef _LIBCPP_HAS_NO_DEFAULTED_FUNCTIONS
+    _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR default_delete() _NOEXCEPT = default;
+#else
+    _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR default_delete() _NOEXCEPT {}
+#endif
     template <class _Up>
         _LIBCPP_INLINE_VISIBILITY default_delete(const default_delete<_Up>&,
              typename enable_if<is_convertible<_Up*, _Tp*>::value>::type* = 0) _NOEXCEPT {}
@@ -2482,7 +2486,11 @@ template <class _Tp>
 struct _LIBCPP_VISIBLE default_delete<_Tp[]>
 {
 public:
-    _LIBCPP_INLINE_VISIBILITY default_delete() _NOEXCEPT {}
+#ifndef _LIBCPP_HAS_NO_DEFAULTED_FUNCTIONS
+    _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR default_delete() _NOEXCEPT = default;
+#else
+    _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR default_delete() _NOEXCEPT {}
+#endif
     template <class _Up>
         _LIBCPP_INLINE_VISIBILITY default_delete(const default_delete<_Up[]>&,
              typename enable_if<__same_or_less_cv_qualified<_Up*, _Tp*>::value>::type* = 0) _NOEXCEPT {}
@@ -2520,13 +2528,13 @@ private:
     typedef       typename remove_reference<deleter_type>::type& _Dp_reference;
     typedef const typename remove_reference<deleter_type>::type& _Dp_const_reference;
 public:
-    _LIBCPP_INLINE_VISIBILITY unique_ptr() _NOEXCEPT
+    _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR unique_ptr() _NOEXCEPT
         : __ptr_(pointer())
         {
             static_assert(!is_pointer<deleter_type>::value,
                 "unique_ptr constructed with null function pointer deleter");
         }
-    _LIBCPP_INLINE_VISIBILITY unique_ptr(nullptr_t) _NOEXCEPT
+    _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR unique_ptr(nullptr_t) _NOEXCEPT
         : __ptr_(pointer())
         {
             static_assert(!is_pointer<deleter_type>::value,
@@ -2699,13 +2707,13 @@ private:
     typedef       typename remove_reference<deleter_type>::type& _Dp_reference;
     typedef const typename remove_reference<deleter_type>::type& _Dp_const_reference;
 public:
-    _LIBCPP_INLINE_VISIBILITY unique_ptr() _NOEXCEPT
+    _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR unique_ptr() _NOEXCEPT
         : __ptr_(pointer())
         {
             static_assert(!is_pointer<deleter_type>::value,
                 "unique_ptr constructed with null function pointer deleter");
         }
-    _LIBCPP_INLINE_VISIBILITY unique_ptr(nullptr_t) _NOEXCEPT
+    _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR unique_ptr(nullptr_t) _NOEXCEPT
         : __ptr_(pointer())
         {
             static_assert(!is_pointer<deleter_type>::value,
@@ -2955,7 +2963,7 @@ operator>=(const unique_ptr<_T1, _D1>& __x, const unique_ptr<_T2, _D2>& __y) {re
 template <class _T1, class _D1>
 inline _LIBCPP_INLINE_VISIBILITY
 bool
-operator==(const unique_ptr<_T1, _D1>& __x, nullptr_t)
+operator==(const unique_ptr<_T1, _D1>& __x, nullptr_t) _NOEXCEPT
 {
     return !__x;
 }
@@ -2963,7 +2971,7 @@ operator==(const unique_ptr<_T1, _D1>& __x, nullptr_t)
 template <class _T1, class _D1>
 inline _LIBCPP_INLINE_VISIBILITY
 bool
-operator==(nullptr_t, const unique_ptr<_T1, _D1>& __x)
+operator==(nullptr_t, const unique_ptr<_T1, _D1>& __x) _NOEXCEPT
 {
     return !__x;
 }
@@ -2971,7 +2979,7 @@ operator==(nullptr_t, const unique_ptr<_T1, _D1>& __x)
 template <class _T1, class _D1>
 inline _LIBCPP_INLINE_VISIBILITY
 bool
-operator!=(const unique_ptr<_T1, _D1>& __x, nullptr_t)
+operator!=(const unique_ptr<_T1, _D1>& __x, nullptr_t) _NOEXCEPT
 {
     return static_cast<bool>(__x);
 }
@@ -2979,7 +2987,7 @@ operator!=(const unique_ptr<_T1, _D1>& __x, nullptr_t)
 template <class _T1, class _D1>
 inline _LIBCPP_INLINE_VISIBILITY
 bool
-operator!=(nullptr_t, const unique_ptr<_T1, _D1>& __x)
+operator!=(nullptr_t, const unique_ptr<_T1, _D1>& __x) _NOEXCEPT
 {
     return static_cast<bool>(__x);
 }
@@ -3736,8 +3744,8 @@ private:
 
     struct __nat {int __for_bool_;};
 public:
-    shared_ptr() _NOEXCEPT;
-    shared_ptr(nullptr_t) _NOEXCEPT;
+    _LIBCPP_CONSTEXPR shared_ptr() _NOEXCEPT;
+    _LIBCPP_CONSTEXPR shared_ptr(nullptr_t) _NOEXCEPT;
     template<class _Yp,
              class = typename enable_if
                      <
@@ -3997,6 +4005,7 @@ private:
 
 template<class _Tp>
 inline _LIBCPP_INLINE_VISIBILITY
+_LIBCPP_CONSTEXPR
 shared_ptr<_Tp>::shared_ptr() _NOEXCEPT
     : __ptr_(0),
       __cntrl_(0)
@@ -4005,6 +4014,7 @@ shared_ptr<_Tp>::shared_ptr() _NOEXCEPT
 
 template<class _Tp>
 inline _LIBCPP_INLINE_VISIBILITY
+_LIBCPP_CONSTEXPR
 shared_ptr<_Tp>::shared_ptr(nullptr_t) _NOEXCEPT
     : __ptr_(0),
       __cntrl_(0)
@@ -4895,7 +4905,7 @@ private:
     __shared_weak_count* __cntrl_;
 
 public:
-    weak_ptr() _NOEXCEPT;
+    _LIBCPP_CONSTEXPR weak_ptr() _NOEXCEPT;
     template<class _Yp> weak_ptr(shared_ptr<_Yp> const& __r,
                    typename enable_if<is_convertible<_Yp*, _Tp*>::value, __nat*>::type = 0)
                         _NOEXCEPT;
@@ -4967,6 +4977,7 @@ public:
 
 template<class _Tp>
 inline _LIBCPP_INLINE_VISIBILITY
+_LIBCPP_CONSTEXPR
 weak_ptr<_Tp>::weak_ptr() _NOEXCEPT
     : __ptr_(0),
       __cntrl_(0)
@@ -5197,7 +5208,7 @@ class _LIBCPP_VISIBLE enable_shared_from_this
 {
     mutable weak_ptr<_Tp> __weak_this_;
 protected:
-    _LIBCPP_INLINE_VISIBILITY
+    _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR
     enable_shared_from_this() _NOEXCEPT {}
     _LIBCPP_INLINE_VISIBILITY
     enable_shared_from_this(enable_shared_from_this const&) _NOEXCEPT {}

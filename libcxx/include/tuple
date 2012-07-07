@@ -130,7 +130,11 @@ _LIBCPP_BEGIN_NAMESPACE_STD
 
 struct _LIBCPP_VISIBLE allocator_arg_t { };
 
+#if defined(_LIBCPP_HAS_NO_CONSTEXPR) || defined(_LIBCPP_BUILDING_MEMORY)
 extern const allocator_arg_t allocator_arg;
+#else
+constexpr allocator_arg_t allocator_arg = allocator_arg_t();
+#endif
 
 // uses_allocator
 

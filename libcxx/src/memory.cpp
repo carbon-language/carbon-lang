@@ -7,6 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define _LIBCPP_BUILDING_MEMORY
 #include "memory"
 
 _LIBCPP_BEGIN_NAMESPACE_STD
