@@ -3107,22 +3107,28 @@ optimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg, unsigned SrcReg2,
   if (!Sub)
     return false;
 
+  bool IsSwapped = (SrcReg2 != 0 && Sub->getOperand(1).getReg() == SrcReg2 &&
+                    Sub->getOperand(2).getReg() == SrcReg);
+
   // Scan forward from the instruction after CmpInstr for uses of EFLAGS.
+  // It is safe to remove CmpInstr if EFLAGS is redefined or killed.
+  // If we are done with the basic block, we need to check whether EFLAGS is
+  // live-out.
+  bool IsSafe = false;
   SmallVector<std::pair<MachineInstr*, unsigned /*NewOpc*/>, 4> OpsToUpdate;
   MachineBasicBlock::iterator E = CmpInstr->getParent()->end();
   for (++I; I != E; ++I) {
     const MachineInstr &Instr = *I;
-    if (Instr.modifiesRegister(X86::EFLAGS, TRI))
+    if (Instr.modifiesRegister(X86::EFLAGS, TRI)) {
       // It is safe to remove CmpInstr if EFLAGS is updated again.
+      IsSafe = true;
       break;
-
+    }
     if (!Instr.readsRegister(X86::EFLAGS, TRI))
       continue;
 
     // EFLAGS is used by this instruction.
-    if (SrcReg2 != 0 && Sub->getOperand(1).getReg() == SrcReg2 &&
-        Sub->getOperand(2).getReg() == SrcReg) {
-
+    if (IsSwapped) {
       // If we have SUB(r1, r2) and CMP(r2, r1), the condition code needs
       // to be changed from r2 > r1 to r1 < r2, from r2 < r1 to r1 > r2, etc.
       unsigned NewOpc = getSwappedConditionForSET(Instr.getOpcode());
@@ -3135,6 +3141,20 @@ optimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg, unsigned SrcReg2,
       // instructions will be modified.
       OpsToUpdate.push_back(std::make_pair(&*I, NewOpc));
     }
+    if (Instr.killsRegister(X86::EFLAGS, TRI)) {
+      IsSafe = true;
+      break;
+    }
+  }
+
+  // If EFLAGS is not killed nor re-defined, we should check whether it is
+  // live-out. If it is live-out, do not optimize.
+  if (IsSwapped && !IsSafe) {
+    MachineBasicBlock *MBB = CmpInstr->getParent();
+    for (MachineBasicBlock::succ_iterator SI = MBB->succ_begin(),
+             SE = MBB->succ_end(); SI != SE; ++SI)
+      if ((*SI)->isLiveIn(X86::EFLAGS))
+        return false;
   }
 
   // Make sure Sub instruction defines EFLAGS.
