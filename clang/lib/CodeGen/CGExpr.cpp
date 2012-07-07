@@ -2717,7 +2717,7 @@ RValue CodeGenFunction::EmitCall(QualType CalleeType, llvm::Value *Callee,
   EmitCallArgs(Args, dyn_cast<FunctionProtoType>(FnType), ArgBeg, ArgEnd);
 
   const CGFunctionInfo &FnInfo =
-    CGM.getTypes().arrangeFunctionCall(Args, FnType);
+    CGM.getTypes().arrangeFreeFunctionCall(Args, FnType);
 
   // C99 6.5.2.2p6:
   //   If the expression that denotes the called function has a type
@@ -3107,7 +3107,7 @@ RValue CodeGenFunction::EmitAtomicExpr(AtomicExpr *E, llvm::Value *Dest) {
              getContext().IntTy);
 
     const CGFunctionInfo &FuncInfo =
-        CGM.getTypes().arrangeFunctionCall(RetTy, Args,
+        CGM.getTypes().arrangeFreeFunctionCall(RetTy, Args,
             FunctionType::ExtInfo(), RequiredArgs::All);
     llvm::FunctionType *FTy = CGM.getTypes().GetFunctionType(FuncInfo);
     llvm::Constant *Func = CGM.CreateRuntimeFunction(FTy, LibCallName);

@@ -474,11 +474,11 @@ llvm::Type *CodeGenTypes::ConvertType(QualType T) {
     // build it.
     const CGFunctionInfo *FI;
     if (const FunctionProtoType *FPT = dyn_cast<FunctionProtoType>(FT)) {
-      FI = &arrangeFunctionType(
+      FI = &arrangeFreeFunctionType(
                    CanQual<FunctionProtoType>::CreateUnsafe(QualType(FPT, 0)));
     } else {
       const FunctionNoProtoType *FNPT = cast<FunctionNoProtoType>(FT);
-      FI = &arrangeFunctionType(
+      FI = &arrangeFreeFunctionType(
                 CanQual<FunctionNoProtoType>::CreateUnsafe(QualType(FNPT, 0)));
     }
     

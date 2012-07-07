@@ -1310,8 +1310,8 @@ CodeGenFunction::EmitSynthesizedCXXCopyCtorCall(const CXXConstructorDecl *D,
     EmitCallArg(Args, *Arg, ArgType);
   }
   
-  EmitCall(CGM.getTypes().arrangeFunctionCall(Args, FPT), Callee,
-           ReturnValueSlot(), Args, D);
+  EmitCall(CGM.getTypes().arrangeCXXMethodCall(Args, FPT, RequiredArgs::All),
+           Callee, ReturnValueSlot(), Args, D);
 }
 
 void
@@ -1744,38 +1744,42 @@ CodeGenFunction::EmitCXXOperatorMemberCallee(const CXXOperatorCallExpr *E,
   return CGM.GetAddrOfFunction(MD, fnType);
 }
 
-void CodeGenFunction::EmitForwardingCallToLambda(const CXXRecordDecl *Lambda,
-                                                 CallArgList &CallArgs) {
+void CodeGenFunction::EmitForwardingCallToLambda(const CXXRecordDecl *lambda,
+                                                 CallArgList &callArgs) {
   // Lookup the call operator
-  DeclarationName Name
+  DeclarationName operatorName
     = getContext().DeclarationNames.getCXXOperatorName(OO_Call);
-  DeclContext::lookup_const_result Calls = Lambda->lookup(Name);
-  CXXMethodDecl *CallOperator = cast<CXXMethodDecl>(*Calls.first++);
-  const FunctionProtoType *FPT =
-      CallOperator->getType()->getAs<FunctionProtoType>();
-  QualType ResultType = FPT->getResultType();
+  CXXMethodDecl *callOperator =
+    cast<CXXMethodDecl>(*lambda->lookup(operatorName).first);
 
   // Get the address of the call operator.
-  GlobalDecl GD(CallOperator);
-  const CGFunctionInfo &CalleeFnInfo =
-    CGM.getTypes().arrangeFunctionCall(ResultType, CallArgs, FPT->getExtInfo(),
-                                       RequiredArgs::forPrototypePlus(FPT, 1));
-  llvm::Type *Ty = CGM.getTypes().GetFunctionType(CalleeFnInfo);
-  llvm::Value *Callee = CGM.GetAddrOfFunction(GD, Ty);
+  const CGFunctionInfo &calleeFnInfo =
+    CGM.getTypes().arrangeCXXMethodDeclaration(callOperator);
+  llvm::Value *callee =
+    CGM.GetAddrOfFunction(GlobalDecl(callOperator),
+                          CGM.getTypes().GetFunctionType(calleeFnInfo));
 
-  // Determine whether we have a return value slot to use.
-  ReturnValueSlot Slot;
-  if (!ResultType->isVoidType() &&
-      CurFnInfo->getReturnInfo().getKind() == ABIArgInfo::Indirect &&
-      hasAggregateLLVMType(CurFnInfo->getReturnType()))
-    Slot = ReturnValueSlot(ReturnValue, ResultType.isVolatileQualified());
+  // Prepare the return slot.
+  const FunctionProtoType *FPT =
+    callOperator->getType()->castAs<FunctionProtoType>();
+  QualType resultType = FPT->getResultType();
+  ReturnValueSlot returnSlot;
+  if (!resultType->isVoidType() &&
+      calleeFnInfo.getReturnInfo().getKind() == ABIArgInfo::Indirect &&
+      hasAggregateLLVMType(calleeFnInfo.getReturnType()))
+    returnSlot = ReturnValueSlot(ReturnValue, resultType.isVolatileQualified());
+
+  // We don't need to separately arrange the call arguments because
+  // the call can't be variadic anyway --- it's impossible to forward
+  // variadic arguments.
   
   // Now emit our call.
-  RValue RV = EmitCall(CalleeFnInfo, Callee, Slot, CallArgs, CallOperator);
+  RValue RV = EmitCall(calleeFnInfo, callee, returnSlot,
+                       callArgs, callOperator);
 
-  // Forward the returned value
-  if (!ResultType->isVoidType() && Slot.isNull())
-    EmitReturnOfRValue(RV, ResultType);
+  // If necessary, copy the returned value into the slot.
+  if (!resultType->isVoidType() && returnSlot.isNull())
+    EmitReturnOfRValue(RV, resultType);
 }
 
 void CodeGenFunction::EmitLambdaBlockInvokeBody() {

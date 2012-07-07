@@ -50,9 +50,7 @@ RValue CodeGenFunction::EmitCXXMemberCall(const CXXMethodDecl *MD,
   // And the rest of the call args.
   EmitCallArgs(Args, FPT, ArgBeg, ArgEnd);
 
-  return EmitCall(CGM.getTypes().arrangeFunctionCall(FPT->getResultType(), Args,
-                                                     FPT->getExtInfo(),
-                                                     required),
+  return EmitCall(CGM.getTypes().arrangeCXXMethodCall(Args, FPT, required),
                   Callee, ReturnValue, Args, MD);
 }
 
@@ -343,10 +341,12 @@ CodeGenFunction::EmitCXXMemberPointerCallExpr(const CXXMemberCallExpr *E,
 
   // Push the this ptr.
   Args.add(RValue::get(This), ThisType);
+
+  RequiredArgs required = RequiredArgs::forPrototypePlus(FPT, 1);
   
   // And the rest of the call args
   EmitCallArgs(Args, FPT, E->arg_begin(), E->arg_end());
-  return EmitCall(CGM.getTypes().arrangeFunctionCall(Args, FPT), Callee, 
+  return EmitCall(CGM.getTypes().arrangeCXXMethodCall(Args, FPT, required), Callee, 
                   ReturnValue, Args);
 }
 
@@ -1029,7 +1029,7 @@ namespace {
         DeleteArgs.add(getPlacementArgs()[I], *AI++);
 
       // Call 'operator delete'.
-      CGF.EmitCall(CGF.CGM.getTypes().arrangeFunctionCall(DeleteArgs, FPT),
+      CGF.EmitCall(CGF.CGM.getTypes().arrangeFreeFunctionCall(DeleteArgs, FPT),
                    CGF.CGM.GetAddrOfFunction(OperatorDelete),
                    ReturnValueSlot(), DeleteArgs, OperatorDelete);
     }
@@ -1090,7 +1090,7 @@ namespace {
       }
 
       // Call 'operator delete'.
-      CGF.EmitCall(CGF.CGM.getTypes().arrangeFunctionCall(DeleteArgs, FPT),
+      CGF.EmitCall(CGF.CGM.getTypes().arrangeFreeFunctionCall(DeleteArgs, FPT),
                    CGF.CGM.GetAddrOfFunction(OperatorDelete),
                    ReturnValueSlot(), DeleteArgs, OperatorDelete);
     }
@@ -1205,8 +1205,8 @@ llvm::Value *CodeGenFunction::EmitCXXNewExpr(const CXXNewExpr *E) {
     // TODO: kill any unnecessary computations done for the size
     // argument.
   } else {
-    RV = EmitCall(CGM.getTypes().arrangeFunctionCall(allocatorArgs,
-                                                     allocatorType),
+    RV = EmitCall(CGM.getTypes().arrangeFreeFunctionCall(allocatorArgs,
+                                                         allocatorType),
                   CGM.GetAddrOfFunction(allocator), ReturnValueSlot(),
                   allocatorArgs, allocator);
   }
@@ -1329,7 +1329,7 @@ void CodeGenFunction::EmitDeleteCall(const FunctionDecl *DeleteFD,
     DeleteArgs.add(RValue::get(Size), SizeTy);
 
   // Emit the call to delete.
-  EmitCall(CGM.getTypes().arrangeFunctionCall(DeleteArgs, DeleteFTy),
+  EmitCall(CGM.getTypes().arrangeFreeFunctionCall(DeleteArgs, DeleteFTy),
            CGM.GetAddrOfFunction(DeleteFD), ReturnValueSlot(), 
            DeleteArgs, DeleteFD);
 }
@@ -1485,7 +1485,7 @@ namespace {
       }
 
       // Emit the call to delete.
-      CGF.EmitCall(CGF.getTypes().arrangeFunctionCall(Args, DeleteFTy),
+      CGF.EmitCall(CGF.getTypes().arrangeFreeFunctionCall(Args, DeleteFTy),
                    CGF.CGM.GetAddrOfFunction(OperatorDelete),
                    ReturnValueSlot(), Args, OperatorDelete);
     }
