@@ -177,3 +177,8 @@ CHECK-NEXT:   warn_use_out_of_scope_declaration
 CHECK-NEXT:   warn_weak_identifier_undeclared
 CHECK-NEXT:   warn_weak_import
 
+The list of warnings in -Wpedenatic should NEVER grow.
+
+CHECK: Number in -Wpedantic (not covered by other -W flags): 71
+
+
