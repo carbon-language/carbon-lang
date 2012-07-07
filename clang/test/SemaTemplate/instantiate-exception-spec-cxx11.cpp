@@ -131,3 +131,17 @@ template<typename T> struct Derived : Base {
 
 Derived<Exc1> d1; // ok
 Derived<Exc2> d2; // expected-note {{in instantiation of}}
+
+// If the vtable for a derived class is used, the exception specification of
+// any member function which ends up in that vtable is needed, even if it was
+// declared in a base class.
+namespace PR12763 {
+  template<bool *B> struct T {
+    virtual void f() noexcept (*B); // expected-error {{constant expression}} expected-note {{read of non-const}}
+  };
+  bool b; // expected-note {{here}}
+  struct X : public T<&b> {
+    virtual void g();
+  };
+  void X::g() {} // expected-note {{in instantiation of}}
+}
