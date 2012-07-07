@@ -155,18 +155,18 @@ Record *CodeGenTarget::getAsmParser() const {
 /// this target.
 ///
 Record *CodeGenTarget::getAsmParserVariant(unsigned i) const {
-  std::vector<Record*> LI = 
+  std::vector<Record*> LI =
     TargetRec->getValueAsListOfDefs("AssemblyParserVariants");
   if (i >= LI.size())
     throw "Target does not have an AsmParserVariant #" + utostr(i) + "!";
   return LI[i];
 }
 
-/// getAsmParserVariantCount - Return the AssmblyParserVariant definition 
+/// getAsmParserVariantCount - Return the AssmblyParserVariant definition
 /// available for this target.
 ///
 unsigned CodeGenTarget::getAsmParserVariantCount() const {
-  std::vector<Record*> LI = 
+  std::vector<Record*> LI =
     TargetRec->getValueAsListOfDefs("AssemblyParserVariants");
   return LI.size();
 }
