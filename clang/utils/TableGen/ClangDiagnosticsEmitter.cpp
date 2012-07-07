@@ -11,9 +11,11 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/ADT/PointerUnion.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringMap.h"
+#include "llvm/ADT/Optional.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/TableGen/Record.h"
@@ -78,7 +80,7 @@ static std::string getDiagnosticCategory(const Record *R,
                                                    DiagGroupParents);
     if (!CatName.empty()) return CatName;
   }
-  
+
   // If the diagnostic itself has a category, get it.
   return R->getValueAsString("CategoryName");
 }
@@ -160,6 +162,180 @@ static void groupDiagnostics(const std::vector<Record*> &Diags,
 }
 
 //===----------------------------------------------------------------------===//
+// Infer members of -Wpedantic.
+//===----------------------------------------------------------------------===//
+
+typedef std::vector<const Record *> RecordVec;
+typedef llvm::DenseSet<const Record *> RecordSet;
+typedef llvm::PointerUnion<RecordVec*, RecordSet*> VecOrSet;
+
+namespace {
+class InferPedantic {
+  typedef llvm::DenseMap<const Record*,
+                         std::pair<unsigned, llvm::Optional<unsigned> > > GMap;
+
+  DiagGroupParentMap &DiagGroupParents;
+  const std::vector<Record*> &Diags;
+  const std::vector<Record*> DiagGroups;
+  std::map<std::string, GroupInfo> &DiagsInGroup;
+  llvm::DenseSet<const Record*> DiagsSet;
+  GMap GroupCount;
+public:
+  InferPedantic(DiagGroupParentMap &DiagGroupParents,
+                const std::vector<Record*> &Diags,
+                const std::vector<Record*> &DiagGroups,
+                std::map<std::string, GroupInfo> &DiagsInGroup)
+  : DiagGroupParents(DiagGroupParents),
+  Diags(Diags),
+  DiagGroups(DiagGroups),
+  DiagsInGroup(DiagsInGroup) {}
+
+  /// Compute the set of diagnostics and groups that are immediately
+  /// in -Wpedantic.
+  void compute(VecOrSet DiagsInPedantic,
+               VecOrSet GroupsInPedantic);
+
+private:
+  /// Determine whether a group is a subgroup of another group.
+  bool isSubGroupOfGroup(const Record *Group,
+                         llvm::StringRef RootGroupName);
+
+  /// Determine if the diagnostic is an extension.
+  bool isExtension(const Record *Diag);
+
+  /// Increment the count for a group, and transitively marked
+  /// parent groups when appropriate.
+  void markGroup(const Record *Group);
+
+  /// Return true if the diagnostic is in a pedantic group.
+  bool groupInPedantic(const Record *Group, bool increment = false);
+};
+} // end anonymous namespace
+
+bool InferPedantic::isSubGroupOfGroup(const Record *Group,
+                                      llvm::StringRef GName) {
+
+  const std::string &GroupName = Group->getValueAsString("GroupName");
+  if (GName == GroupName)
+    return true;
+
+  const std::vector<Record*> &Parents = DiagGroupParents.getParents(Group);
+  for (unsigned i = 0, e = Parents.size(); i != e; ++i)
+    if (isSubGroupOfGroup(Parents[i], GName))
+      return true;
+
+  return false;
+}
+
+/// Determine if the diagnostic is an extension.
+bool InferPedantic::isExtension(const Record *Diag) {
+  const std::string &ClsName = Diag->getValueAsDef("Class")->getName();
+  return ClsName == "CLASS_EXTENSION";
+}
+
+bool InferPedantic::groupInPedantic(const Record *Group, bool increment) {
+  GMap::mapped_type &V = GroupCount[Group];
+  // Lazily compute the threshold value for the group count.
+  if (!V.second.hasValue()) {
+    const GroupInfo &GI = DiagsInGroup[Group->getValueAsString("GroupName")];
+    V.second = GI.SubGroups.size() + GI.DiagsInGroup.size();
+  }
+
+  if (increment)
+    ++V.first;
+
+  // Consider a group in -Wpendatic IFF if has at least one diagnostic
+  // or subgroup AND all of those diagnostics and subgroups are covered
+  // by -Wpedantic via our computation.
+  return V.first != 0 && V.first == V.second.getValue();
+}
+
+void InferPedantic::markGroup(const Record *Group) {
+  // If all the diagnostics and subgroups have been marked as being
+  // covered by -Wpedantic, increment the count of parent groups.  Once the
+  // group's count is equal to the number of subgroups and diagnostics in
+  // that group, we can safely add this group to -Wpedantic.
+  if (groupInPedantic(Group, /* increment */ true)) {
+    const std::vector<Record*> &Parents = DiagGroupParents.getParents(Group);
+    for (unsigned i = 0, e = Parents.size(); i != e; ++i)
+      markGroup(Parents[i]);
+  }
+}
+
+void InferPedantic::compute(VecOrSet DiagsInPedantic,
+                            VecOrSet GroupsInPedantic) {
+  // All extensions are implicitly in the "pedantic" group.  For those that
+  // aren't explicitly included in -Wpedantic, mark them for consideration
+  // to be included in -Wpedantic directly.
+  for (unsigned i = 0, e = Diags.size(); i != e; ++i) {
+    Record *R = Diags[i];
+    if (isExtension(R)) {
+      DiagsSet.insert(R);
+      if (DefInit *Group = dynamic_cast<DefInit*>(R->getValueInit("Group"))) {
+        const Record *GroupRec = Group->getDef();
+        if (!isSubGroupOfGroup(GroupRec, "pedantic")) {
+          markGroup(GroupRec);
+        }
+      }
+    }
+  }
+
+  // Compute the set of diagnostics that are directly in -Wpedantic.  We
+  // march through Diags a second time to ensure the results are emitted
+  // in deterministic order.
+  for (unsigned i = 0, e = Diags.size(); i != e; ++i) {
+    Record *R = Diags[i];
+    if (!DiagsSet.count(R))
+      continue;
+    // Check if the group is implicitly in -Wpedantic.  If so,
+    // the diagnostic should not be directly included in the -Wpedantic
+    // diagnostic group.
+    if (DefInit *Group = dynamic_cast<DefInit*>(R->getValueInit("Group")))
+      if (groupInPedantic(Group->getDef()))
+        continue;
+
+    // The diagnostic is not included in a group that is (transitively) in
+    // -Wpedantic.  Include it in -Wpedantic directly.
+    if (RecordVec *V = DiagsInPedantic.dyn_cast<RecordVec*>())
+      V->push_back(R);
+    else {
+      DiagsInPedantic.get<RecordSet*>()->insert(R);
+    }
+  }
+
+  if (!GroupsInPedantic)
+    return;
+
+  // Compute the set of groups that are directly in -Wpedantic.  We
+  // march through the groups to ensure the results are emitted
+  /// in a deterministc order.
+  for (unsigned i = 0, ei = DiagGroups.size(); i != ei; ++i) {
+    Record *Group = DiagGroups[i];
+    if (!groupInPedantic(Group))
+      continue;
+
+    unsigned ParentsInPedantic = 0;
+    const std::vector<Record*> &Parents = DiagGroupParents.getParents(Group);
+    for (unsigned j = 0, ej = Parents.size(); j != ej; ++j) {
+      if (groupInPedantic(Parents[j]))
+        ++ParentsInPedantic;
+    }
+    // If all the parents are in -Wpedantic, this means that this diagnostic
+    // group will be indirectly included by -Wpedantic already.  In that
+    // case, do not add it directly to -Wpedantic.  If the group has no
+    // parents, obviously it should go into -Wpedantic.
+    if (Parents.size() > 0 && ParentsInPedantic == Parents.size())
+      continue;
+
+    if (RecordVec *V = GroupsInPedantic.dyn_cast<RecordVec*>())
+      V->push_back(Group);
+    else {
+      GroupsInPedantic.get<RecordSet*>()->insert(Group);
+    }
+  }
+}
+
+//===----------------------------------------------------------------------===//
 // Warning Tables (.inc file) generation.
 //===----------------------------------------------------------------------===//
 
@@ -190,6 +366,11 @@ void EmitClangDiagsDefs(RecordKeeper &Records, raw_ostream &OS,
   DiagCategoryIDMap CategoryIDs(Records);
   DiagGroupParentMap DGParentMap(Records);
 
+  // Compute the set of diagnostics that are in -Wpedantic.
+  RecordSet DiagsInPedantic;
+  InferPedantic inferPedantic(DGParentMap, Diags, DiagGroups, DiagsInGroup);
+  inferPedantic.compute(&DiagsInPedantic, (RecordVec*)0);
+
   for (unsigned i = 0, e = Diags.size(); i != e; ++i) {
     const Record &R = *Diags[i];
     // Filter by component.
@@ -210,6 +391,11 @@ void EmitClangDiagsDefs(RecordKeeper &Records, raw_ostream &OS,
       std::map<std::string, GroupInfo>::iterator I =
           DiagsInGroup.find(DI->getDef()->getValueAsString("GroupName"));
       assert(I != DiagsInGroup.end());
+      OS << ", " << I->second.IDNo;
+    } else if (DiagsInPedantic.count(&R)) {
+      std::map<std::string, GroupInfo>::iterator I =
+        DiagsInGroup.find("pedantic");
+      assert(I != DiagsInGroup.end() && "pedantic group not defined");
       OS << ", " << I->second.IDNo;
     } else {
       OS << ", 0";
@@ -262,12 +448,12 @@ static std::string getDiagCategoryEnum(llvm::StringRef name) {
     enumName += isalnum(*I) ? *I : '_';
   return enumName.str();
 }
-
+  
 namespace clang {
 void EmitClangDiagGroups(RecordKeeper &Records, raw_ostream &OS) {
   // Compute a mapping from a DiagGroup to all of its parents.
   DiagGroupParentMap DGParentMap(Records);
-  
+
   std::vector<Record*> Diags =
     Records.getAllDerivedDefinitions("Diagnostic");
   
@@ -276,7 +462,15 @@ void EmitClangDiagGroups(RecordKeeper &Records, raw_ostream &OS) {
 
   std::map<std::string, GroupInfo> DiagsInGroup;
   groupDiagnostics(Diags, DiagGroups, DiagsInGroup);
-  
+
+  // All extensions are implicitly in the "pedantic" group.  Record the
+  // implicit set of groups in the "pedantic" group, and use this information
+  // later when emitting the group information for Pedantic.
+  RecordVec DiagsInPedantic;
+  RecordVec GroupsInPedantic;
+  InferPedantic inferPedantic(DGParentMap, Diags, DiagGroups, DiagsInGroup);
+  inferPedantic.compute(&DiagsInPedantic, &GroupsInPedantic);
+
   // Walk through the groups emitting an array for each diagnostic of the diags
   // that are mapped to.
   OS << "\n#ifdef GET_DIAG_ARRAYS\n";
@@ -284,17 +478,23 @@ void EmitClangDiagGroups(RecordKeeper &Records, raw_ostream &OS) {
   for (std::map<std::string, GroupInfo>::iterator
        I = DiagsInGroup.begin(), E = DiagsInGroup.end(); I != E; ++I) {
     MaxLen = std::max(MaxLen, (unsigned)I->first.size());
-    
+    const bool IsPedantic = I->first == "pedantic";
+
     std::vector<const Record*> &V = I->second.DiagsInGroup;
-    if (!V.empty()) {
+    if (!V.empty() || (IsPedantic && !DiagsInPedantic.empty())) {
       OS << "static const short DiagArray" << I->second.IDNo << "[] = { ";
       for (unsigned i = 0, e = V.size(); i != e; ++i)
         OS << "diag::" << V[i]->getName() << ", ";
+      // Emit the diagnostics implicitly in "pedantic".
+      if (IsPedantic) {
+        for (unsigned i = 0, e = DiagsInPedantic.size(); i != e; ++i)
+          OS << "diag::" << DiagsInPedantic[i]->getName() << ", ";
+      }
       OS << "-1 };\n";
     }
     
     const std::vector<std::string> &SubGroups = I->second.SubGroups;
-    if (!SubGroups.empty()) {
+    if (!SubGroups.empty() || (IsPedantic && !GroupsInPedantic.empty())) {
       OS << "static const short DiagSubGroup" << I->second.IDNo << "[] = { ";
       for (unsigned i = 0, e = SubGroups.size(); i != e; ++i) {
         std::map<std::string, GroupInfo>::iterator RI =
@@ -302,6 +502,18 @@ void EmitClangDiagGroups(RecordKeeper &Records, raw_ostream &OS) {
         assert(RI != DiagsInGroup.end() && "Referenced without existing?");
         OS << RI->second.IDNo << ", ";
       }
+      // Emit the groups implicitly in "pedantic".
+      if (IsPedantic) {
+        for (unsigned i = 0, e = GroupsInPedantic.size(); i != e; ++i) {
+          const std::string &GroupName =
+            GroupsInPedantic[i]->getValueAsString("GroupName");
+          std::map<std::string, GroupInfo>::iterator RI =
+            DiagsInGroup.find(GroupName);
+          assert(RI != DiagsInGroup.end() && "Referenced without existing?");
+          OS << RI->second.IDNo << ", ";
+        }
+      }
+
       OS << "-1 };\n";
     }
   }
@@ -321,15 +533,22 @@ void EmitClangDiagGroups(RecordKeeper &Records, raw_ostream &OS) {
       throw "Invalid character in diagnostic group '" + I->first + "'";
     OS.write_escaped(I->first) << "\","
                                << std::string(MaxLen-I->first.size()+1, ' ');
-    
+
+    // Special handling for 'pedantic'.
+    const bool IsPedantic = I->first == "pedantic";
+
     // Diagnostics in the group.
-    if (I->second.DiagsInGroup.empty())
+    const bool hasDiags = !I->second.DiagsInGroup.empty() ||
+                          (IsPedantic && !DiagsInPedantic.empty());
+    if (!hasDiags)
       OS << "0, ";
     else
       OS << "DiagArray" << I->second.IDNo << ", ";
     
     // Subgroups.
-    if (I->second.SubGroups.empty())
+    const bool hasSubGroups = !I->second.SubGroups.empty() ||
+                              (IsPedantic && !GroupsInPedantic.empty());
+    if (!hasSubGroups)
       OS << 0;
     else
       OS << "DiagSubGroup" << I->second.IDNo;
