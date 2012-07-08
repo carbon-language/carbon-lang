@@ -1990,6 +1990,8 @@ QualType Sema::CheckTemplateIdType(TemplateName Name,
       TemplateArgLists.addOuterTemplateArguments(0, 0);
 
     InstantiatingTemplate Inst(*this, TemplateLoc, Template);
+    if (Inst)
+      return QualType();
     CanonType = SubstType(Pattern->getUnderlyingType(),
                           TemplateArgLists, AliasTemplate->getLocation(),
                           AliasTemplate->getDeclName());
@@ -2550,6 +2552,8 @@ SubstDefaultTemplateArgument(Sema &SemaRef,
                                      Template, Converted.data(),
                                      Converted.size(),
                                      SourceRange(TemplateLoc, RAngleLoc));
+    if (Inst)
+      return 0;
 
     Sema::ContextRAII SavedContext(SemaRef, Template->getDeclContext());
     ArgType = SemaRef.SubstType(ArgType, AllTemplateArgs,
@@ -2599,6 +2603,8 @@ SubstDefaultTemplateArgument(Sema &SemaRef,
                                    Template, Converted.data(),
                                    Converted.size(),
                                    SourceRange(TemplateLoc, RAngleLoc));
+  if (Inst)
+    return ExprError();
 
   Sema::ContextRAII SavedContext(SemaRef, Template->getDeclContext());
   EnterExpressionEvaluationContext Unevaluated(SemaRef, Sema::Unevaluated);
@@ -2648,6 +2654,8 @@ SubstDefaultTemplateArgument(Sema &SemaRef,
                                    Template, Converted.data(),
                                    Converted.size(),
                                    SourceRange(TemplateLoc, RAngleLoc));
+  if (Inst)
+    return TemplateName();
 
   Sema::ContextRAII SavedContext(SemaRef, Template->getDeclContext());
   // Substitute into the nested-name-specifier first, 
@@ -2781,6 +2789,8 @@ bool Sema::CheckTemplateArgument(NamedDecl *Param,
       InstantiatingTemplate Inst(*this, TemplateLoc, Template,
                                  NTTP, Converted.data(), Converted.size(),
                                  SourceRange(TemplateLoc, RAngleLoc));
+      if (Inst)
+        return true;
 
       TemplateArgumentList TemplateArgs(TemplateArgumentList::OnStack,
                                         Converted.data(), Converted.size());
@@ -2913,6 +2923,8 @@ bool Sema::CheckTemplateArgument(NamedDecl *Param,
     InstantiatingTemplate Inst(*this, TemplateLoc, Template,
                                TempParm, Converted.data(), Converted.size(),
                                SourceRange(TemplateLoc, RAngleLoc));
+    if (Inst)
+      return true;
 
     TemplateArgumentList TemplateArgs(TemplateArgumentList::OnStack,
                                       Converted.data(), Converted.size());
@@ -3144,6 +3156,8 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
     InstantiatingTemplate Instantiating(*this, RAngleLoc, Template, *Param,
                                         Converted.data(), Converted.size(),
                                         SourceRange(TemplateLoc, RAngleLoc));
+    if (Instantiating)
+      return true;
 
     // Check the default template argument.
     if (CheckTemplateArgument(*Param, Arg, Template, TemplateLoc,
