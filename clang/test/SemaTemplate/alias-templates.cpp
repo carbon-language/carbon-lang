@@ -100,3 +100,12 @@ namespace PR11848 {
   Hidden1<Hide> h1;  // expected-note{{in instantiation of template class 'PR11848::Hidden1<PR11848::Hide>' requested here}}
   Hidden2<Hide, double, char> h2(1, 2);
 }
+
+namespace PR13243 {
+  template<typename A> struct X {};
+  template<int I> struct C {};
+  template<int I> using Ci = C<I>;
+
+  template<typename A, int I> void f(X<A>, Ci<I>) {}
+  template void f(X<int>, C<0>);
+}

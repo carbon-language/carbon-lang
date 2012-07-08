@@ -137,8 +137,17 @@ DeduceTemplateArguments(Sema &S,
 /// of a non-type template parameter, return the declaration of that
 /// non-type template parameter.
 static NonTypeTemplateParmDecl *getDeducedParameterFromExpr(Expr *E) {
-  if (ImplicitCastExpr *IC = dyn_cast<ImplicitCastExpr>(E))
-    E = IC->getSubExpr();
+  // If we are within an alias template, the expression may have undergone
+  // any number of parameter substitutions already.
+  while (1) {
+    if (ImplicitCastExpr *IC = dyn_cast<ImplicitCastExpr>(E))
+      E = IC->getSubExpr();
+    else if (SubstNonTypeTemplateParmExpr *Subst =
+               dyn_cast<SubstNonTypeTemplateParmExpr>(E))
+      E = Subst->getReplacement();
+    else
+      break;
+  }
 
   if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E))
     return dyn_cast<NonTypeTemplateParmDecl>(DRE->getDecl());
