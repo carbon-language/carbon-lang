@@ -24,7 +24,6 @@ class SMLoc {
   const char *Ptr;
 public:
   SMLoc() : Ptr(0) {}
-  SMLoc(const SMLoc &RHS) : Ptr(RHS.Ptr) {}
 
   bool isValid() const { return Ptr != 0; }
 

@@ -46,14 +46,9 @@ class Attributes {
   Attributes() : Bits(0) { }
   explicit Attributes(uint64_t Val) : Bits(Val) { }
   /*implicit*/ Attributes(Attribute::AttrConst Val) : Bits(Val.v) { }
-  Attributes(const Attributes &Attrs) : Bits(Attrs.Bits) { }
   // This is a "safe bool() operator".
   operator const void *() const { return Bits ? this : 0; }
   bool isEmptyOrSingleton() const { return (Bits & (Bits - 1)) == 0; }
-  Attributes &operator = (const Attributes &Attrs) {
-    Bits = Attrs.Bits;
-    return *this;
-  }
   bool operator == (const Attributes &Attrs) const {
     return Bits == Attrs.Bits;
   }
