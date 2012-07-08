@@ -465,7 +465,7 @@ public:
   iterator erase(iterator I) {
     iterator N = I;
     // Shift all elts down one.
-    std::copy(I+1, this->end(), I);
+    this->move(I+1, this->end(), I);
     // Drop the last elt.
     this->pop_back();
     return(N);
@@ -474,7 +474,7 @@ public:
   iterator erase(iterator S, iterator E) {
     iterator N = S;
     // Shift all elts down.
-    iterator I = std::copy(E, this->end(), S);
+    iterator I = this->move(E, this->end(), S);
     // Drop the last elts.
     this->destroy_range(I, this->end());
     this->setEnd(I);
@@ -572,11 +572,11 @@ public:
     // Otherwise, we're inserting more elements than exist already, and we're
     // not inserting at the end.
 
-    // Copy over the elements that we're about to overwrite.
+    // Move over the elements that we're about to overwrite.
     T *OldEnd = this->end();
     this->setEnd(this->end() + NumToInsert);
     size_t NumOverwritten = OldEnd-I;
-    this->uninitialized_copy(I, OldEnd, this->end()-NumOverwritten);
+    this->uninitialized_move(I, OldEnd, this->end()-NumOverwritten);
 
     // Replace the overwritten part.
     std::fill_n(I, NumOverwritten, Elt);
@@ -622,11 +622,11 @@ public:
     // Otherwise, we're inserting more elements than exist already, and we're
     // not inserting at the end.
 
-    // Copy over the elements that we're about to overwrite.
+    // Move over the elements that we're about to overwrite.
     T *OldEnd = this->end();
     this->setEnd(this->end() + NumToInsert);
     size_t NumOverwritten = OldEnd-I;
-    this->uninitialized_copy(I, OldEnd, this->end()-NumOverwritten);
+    this->uninitialized_move(I, OldEnd, this->end()-NumOverwritten);
 
     // Replace the overwritten part.
     for (T *J = I; NumOverwritten > 0; --NumOverwritten) {
