@@ -49,3 +49,40 @@ void p3example() {
   same<__typeof(u), const int> uHasTypeConstInt;
   same<__typeof(y), double> yHasTypeDouble;
 }
+
+#if __cplusplus >= 201103L
+namespace PR13293 {
+  // Ensure that dependent declarators have their deduction delayed.
+  int f(char);
+  double f(short);
+  template<typename T> struct S {
+    static constexpr auto (*p)(T) = &f;
+  };
+
+  constexpr int (*f1)(char) = &f;
+  constexpr double (*f2)(short) = &f;
+  static_assert(S<char>::p == f1, "");
+  static_assert(S<short>::p == f2, "");
+
+  struct K { int n; };
+  template<typename T> struct U {
+    static constexpr auto (T::*p) = &K::n;
+  };
+  static_assert(U<K>::p == &K::n, "");
+
+  template<typename T>
+  using X = auto(int) -> auto(*)(T) -> auto(*)(char) -> long;
+  X<double> x;
+  template<typename T> struct V {
+    //static constexpr auto (*p)(int) -> auto(*)(T) -> auto(*)(char) = &x; // ill-formed
+    static constexpr auto (*(*(*p)(int))(T))(char) = &x; // ok
+  };
+  V<double> v;
+
+  int *g(double);
+  template<typename T> void h() {
+    new (auto(*)(T)) (&g);
+  }
+  template void h<double>();
+}
+#endif

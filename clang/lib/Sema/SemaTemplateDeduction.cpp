@@ -3464,6 +3464,41 @@ namespace {
       return E;
     }
   };
+
+  /// Determine whether the specified type (which contains an 'auto' type
+  /// specifier) is dependent. This is not trivial, because the 'auto' specifier
+  /// itself claims to be type-dependent.
+  bool isDependentAutoType(QualType Ty) {
+    while (1) {
+      QualType Pointee = Ty->getPointeeType();
+      if (!Pointee.isNull()) {
+        Ty = Pointee;
+      } else if (const MemberPointerType *MPT = Ty->getAs<MemberPointerType>()){
+        if (MPT->getClass()->isDependentType())
+          return true;
+        Ty = MPT->getPointeeType();
+      } else if (const FunctionProtoType *FPT = Ty->getAs<FunctionProtoType>()){
+        for (FunctionProtoType::arg_type_iterator I = FPT->arg_type_begin(),
+                                                  E = FPT->arg_type_end();
+             I != E; ++I)
+          if ((*I)->isDependentType())
+            return true;
+        Ty = FPT->getResultType();
+      } else if (Ty->isDependentSizedArrayType()) {
+        return true;
+      } else if (const ArrayType *AT = Ty->getAsArrayTypeUnsafe()) {
+        Ty = AT->getElementType();
+      } else if (Ty->getAs<DependentSizedExtVectorType>()) {
+        return true;
+      } else if (const VectorType *VT = Ty->getAs<VectorType>()) {
+        Ty = VT->getElementType();
+      } else {
+        break;
+      }
+    }
+    assert(Ty->getAs<AutoType>() && "didn't find 'auto' in auto type");
+    return false;
+  }
 }
 
 /// \brief Deduce the type for an auto type-specifier (C++0x [dcl.spec.auto]p6)
@@ -3486,7 +3521,7 @@ Sema::DeduceAutoType(TypeSourceInfo *Type, Expr *&Init,
     Init = result.take();
   }
 
-  if (Init->isTypeDependent()) {
+  if (Init->isTypeDependent() || isDependentAutoType(Type->getType())) {
     Result = Type;
     return DAR_Succeeded;
   }
@@ -3517,10 +3552,10 @@ Sema::DeduceAutoType(TypeSourceInfo *Type, Expr *&Init,
 
   TemplateDeductionInfo Info(Context, Loc);
 
-  InitListExpr * InitList = dyn_cast<InitListExpr>(Init);
+  InitListExpr *InitList = dyn_cast<InitListExpr>(Init);
   if (InitList) {
     for (unsigned i = 0, e = InitList->getNumInits(); i < e; ++i) {
-      if (DeduceTemplateArgumentByListElement(*this, &TemplateParams, 
+      if (DeduceTemplateArgumentByListElement(*this, &TemplateParams,
                                               TemplArg,
                                               InitList->getInit(i),
                                               Info, Deduced, TDF))
@@ -3531,7 +3566,7 @@ Sema::DeduceAutoType(TypeSourceInfo *Type, Expr *&Init,
                                                   FuncParam, InitType, Init,
                                                   TDF))
       return DAR_Failed;
-    
+
     if (DeduceTemplateArgumentsByTypeMatch(*this, &TemplateParams, FuncParam,
                                            InitType, Info, Deduced, TDF))
       return DAR_Failed;
