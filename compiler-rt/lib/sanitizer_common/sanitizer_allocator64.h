@@ -389,7 +389,7 @@ class LargeMmapAllocator {
 // PrimaryAllocator is used via a local AllocatorCache.
 // SecondaryAllocator can allocate anything, but is not efficient.
 template <class PrimaryAllocator, class AllocatorCache,
-         class SecondaryAllocator>
+          class SecondaryAllocator>  // NOLINT
 class CombinedAllocator {
  public:
   void Init() {
