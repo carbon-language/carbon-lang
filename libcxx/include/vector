@@ -1681,8 +1681,9 @@ vector<_Tp, _Allocator>::emplace(const_iterator __position, _Args&&... __args)
         }
         else
         {
+            value_type __tmp(_VSTD::forward<_Args>(__args)...);
             __move_range(__p, this->__end_, __p + 1);
-            *__p = value_type(_VSTD::forward<_Args>(__args)...);
+            *__p = _VSTD::move(__tmp);
         }
     }
     else
