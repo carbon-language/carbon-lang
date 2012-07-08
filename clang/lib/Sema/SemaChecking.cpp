@@ -287,6 +287,13 @@ Sema::CheckBuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
         if (CheckARMBuiltinFunctionCall(BuiltinID, TheCall))
           return ExprError();
         break;
+      case llvm::Triple::mips:
+      case llvm::Triple::mipsel:
+      case llvm::Triple::mips64:
+      case llvm::Triple::mips64el:
+        if (CheckMipsBuiltinFunctionCall(BuiltinID, TheCall))
+          return ExprError();
+        break;
       default:
         break;
     }
@@ -421,6 +428,33 @@ bool Sema::CheckARMBuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
       << l << u+l << TheCall->getArg(i)->getSourceRange();
 
   // FIXME: VFP Intrinsics should error if VFP not present.
+  return false;
+}
+
+bool Sema::CheckMipsBuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
+  unsigned i = 0, l = 0, u = 0;
+  switch (BuiltinID) {
+  default: return false;
+  case Mips::BI__builtin_mips_wrdsp: i = 1; l = 0; u = 63; break;
+  case Mips::BI__builtin_mips_rddsp: i = 0; l = 0; u = 63; break;
+  };
+
+  // We can't check the value of a dependent argument.
+  if (TheCall->getArg(i)->isTypeDependent() ||
+      TheCall->getArg(i)->isValueDependent())
+    return false;
+
+  // Check that the immediate argument is actually a constant.
+  llvm::APSInt Result;
+  if (SemaBuiltinConstantArg(TheCall, i, Result))
+    return true;
+
+  // Range check against the upper/lower values for this instruction.
+  unsigned Val = Result.getZExtValue();
+  if (Val < l || Val > u)
+    return Diag(TheCall->getLocStart(), diag::err_argument_invalid_range)
+      << l << u << TheCall->getArg(i)->getSourceRange();
+
   return false;
 }
 
