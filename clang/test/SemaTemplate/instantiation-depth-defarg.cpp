@@ -1,13 +1,11 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -ftemplate-depth 512 -ftemplate-backtrace-limit 4 %s
-
-// XFAIL: mingw32
+// RUN: %clang_cc1 -fsyntax-only -verify -ftemplate-depth 256 -ftemplate-backtrace-limit 4 %s
 
 template<int N> struct S {
   typedef typename S<N-1>::type type;
   static int f(int n = S<N-1>::f()); // \
-// expected-error{{recursive template instantiation exceeded maximum depth of 512}} \
+// expected-error{{recursive template instantiation exceeded maximum depth of 256}} \
 // expected-note 3 {{instantiation of default function argument}} \
-// expected-note {{skipping 509 contexts in backtrace}} \
+// expected-note {{skipping 253 contexts in backtrace}} \
 // expected-note {{use -ftemplate-depth=N to increase recursive template instantiation depth}}
 
 };
