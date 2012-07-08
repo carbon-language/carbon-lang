@@ -1,5 +1,7 @@
 // RUN: %clang_cc1 -fsyntax-only -verify -ftemplate-depth 512 -ftemplate-backtrace-limit 4 %s
 
+// XFAIL: mingw32
+
 template<int N> struct S {
   typedef typename S<N-1>::type type;
   static int f(int n = S<N-1>::f()); // \
