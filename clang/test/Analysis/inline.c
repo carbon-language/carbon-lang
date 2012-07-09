@@ -1,4 +1,6 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core -analyzer-ipa=inlining -analyzer-store region -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,debug.ExprInspection -analyzer-ipa=inlining -analyzer-store region -verify %s
+
+void clang_analyzer_eval(int);
 
 int test1_f1() {
   int y = 1;
@@ -89,4 +91,15 @@ int test_rdar10977037() {
   return test_rdar10977037_aux_2(v); // expected-warning {{Passed-by-value struct argument contains uninitialized data}}
 }
 
+
+// Test inlining a forward-declared function.
+// This regressed when CallEvent was first introduced.
+int plus1(int x);
+void test() {
+  clang_analyzer_eval(plus1(2) == 3); // expected-warning{{TRUE}}
+}
+
+int plus1(int x) {
+  return x + 1;
+}
 

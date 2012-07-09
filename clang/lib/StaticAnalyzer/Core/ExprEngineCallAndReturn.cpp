@@ -274,7 +274,10 @@ bool ExprEngine::inlineCall(ExplodedNodeSet &Dst,
   const StackFrameContext *CallerSFC =
     Pred->getLocationContext()->getCurrentStackFrame();
 
-  const Decl *D = Call.getDecl();
+  const Decl *D = Call.getDefinition();
+  if (!D)
+    return false;
+
   const LocationContext *ParentOfCallee = 0;
 
   switch (Call.getKind()) {
@@ -298,9 +301,7 @@ bool ExprEngine::inlineCall(ExplodedNodeSet &Dst,
     return false;
   case CE_Block: {
     const BlockDataRegion *BR = cast<BlockCall>(Call).getBlockRegion();
-    if (!BR)
-      return false;
-    D = BR->getDecl();
+    assert(BR && "If we have the block definition we should have its region");
     AnalysisDeclContext *BlockCtx = AMgr.getAnalysisDeclContext(D);
     ParentOfCallee = BlockCtx->getBlockInvocationContext(CallerSFC,
                                                          cast<BlockDecl>(D),
@@ -313,8 +314,8 @@ bool ExprEngine::inlineCall(ExplodedNodeSet &Dst,
     // that a particular method will be called at runtime.
     return false;
   }
-  
-  if (!D || !shouldInlineDecl(D, Pred))
+
+  if (!shouldInlineDecl(D, Pred))
     return false;
   
   if (!ParentOfCallee)

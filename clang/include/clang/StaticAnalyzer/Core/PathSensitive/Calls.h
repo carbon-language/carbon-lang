@@ -80,6 +80,12 @@ public:
   /// called. May be null.
   virtual const Decl *getDecl() const = 0;
 
+  /// \brief Returns the definition of the function or method that will be
+  /// called. May be null.
+  ///
+  /// This is used when deciding how to inline the call.
+  virtual const Decl *getDefinition() const { return getDecl(); }
+
   /// \brief Returns the expression whose value will be the result of this call.
   /// May be null.
   virtual const Expr *getOriginExpr() const = 0;
@@ -193,6 +199,14 @@ protected:
 
 public:
   virtual const FunctionDecl *getDecl() const = 0;
+
+  const Decl *getDefinition() const {
+    const FunctionDecl *FD = getDecl();
+    // Note that hasBody() will fill FD with the definition FunctionDecl.
+    if (FD && FD->hasBody(FD))
+      return FD;
+    return 0;
+  }
 
   bool argumentsMayEscape() const;
 
@@ -325,6 +339,10 @@ public:
     return BR->getDecl();
   }
 
+  const Decl *getDefinition() const {
+    return getBlockDecl();
+  }
+
   static bool classof(const CallEvent *CA) {
     return CA->getKind() == CE_Block;
   }
@@ -450,6 +468,16 @@ public:
 
   SourceRange getReceiverSourceRange() const {
     return Msg->getReceiverRange();
+  }
+
+  const Decl *getDefinition() const {
+    const ObjCMethodDecl *MD = getDecl();
+    for (Decl::redecl_iterator I = MD->redecls_begin(), E = MD->redecls_end();
+         I != E; ++I) {
+      if (cast<ObjCMethodDecl>(*I)->isThisDeclarationADefinition())
+        return *I;
+    }
+    return 0;
   }
 
   static bool classof(const CallEvent *CA) {
