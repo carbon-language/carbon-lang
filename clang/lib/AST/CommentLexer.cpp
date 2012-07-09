@@ -147,6 +147,11 @@ const char *skipNewline(const char *BufferPtr, const char *BufferEnd) {
   return BufferPtr;
 }
 
+bool isHTMLIdentifierStartingCharacter(char C) {
+  return (C >= 'a' && C <= 'z') ||
+         (C >= 'A' && C <= 'Z');
+}
+
 bool isHTMLIdentifierCharacter(char C) {
   return (C >= 'a' && C <= 'z') ||
          (C >= 'A' && C <= 'Z') ||
@@ -357,7 +362,7 @@ void Lexer::lexCommentText(Token &T) {
           return;
         }
         const char C = *TokenPtr;
-        if (isHTMLIdentifierCharacter(C))
+        if (isHTMLIdentifierStartingCharacter(C))
           setupAndLexHTMLOpenTag(T);
         else if (C == '/')
           setupAndLexHTMLCloseTag(T);
@@ -383,7 +388,7 @@ void Lexer::lexCommentText(Token &T) {
           TokenPtr++;
           if (TokenPtr == CommentEnd)
             break;
-          char C = *TokenPtr;
+          const char C = *TokenPtr;
           if(C == '\n' || C == '\r' ||
              C == '\\' || C == '@' || C == '<')
             break;
@@ -492,7 +497,8 @@ void Lexer::lexVerbatimLineText(Token &T) {
 }
 
 void Lexer::setupAndLexHTMLOpenTag(Token &T) {
-  assert(BufferPtr[0] == '<' && isHTMLIdentifierCharacter(BufferPtr[1]));
+  assert(BufferPtr[0] == '<' &&
+         isHTMLIdentifierStartingCharacter(BufferPtr[1]));
   const char *TagNameEnd = skipHTMLIdentifier(BufferPtr + 2, CommentEnd);
 
   StringRef Name(BufferPtr + 1, TagNameEnd - (BufferPtr + 1));
@@ -501,12 +507,9 @@ void Lexer::setupAndLexHTMLOpenTag(Token &T) {
 
   BufferPtr = skipWhitespace(BufferPtr, CommentEnd);
 
-  if (BufferPtr != CommentEnd && *BufferPtr == '>') {
-    BufferPtr++;
-    return;
-  }
-
-  if (BufferPtr != CommentEnd && isHTMLIdentifierCharacter(*BufferPtr))
+  const char C = *BufferPtr;
+  if (BufferPtr != CommentEnd &&
+      (C == '>' || isHTMLIdentifierStartingCharacter(C)))
     State = LS_HTMLOpenTag;
 }
 
@@ -541,7 +544,8 @@ void Lexer::lexHTMLOpenTag(Token &T) {
     case '>':
       TokenPtr++;
       formTokenWithChars(T, TokenPtr, tok::html_greater);
-      break;
+      State = LS_Normal;
+      return;
     }
   }
 
@@ -554,7 +558,7 @@ void Lexer::lexHTMLOpenTag(Token &T) {
   }
 
   C = *BufferPtr;
-  if (!isHTMLIdentifierCharacter(C) &&
+  if (!isHTMLIdentifierStartingCharacter(C) &&
       C != '=' && C != '\"' && C != '\'' && C != '>') {
     State = LS_Normal;
     return;
@@ -656,8 +660,9 @@ again:
       EndWhitespace++;
 
     // Turn any whitespace between comments (and there is only whitespace
-    // between them) into a newline.  We have two newlines between C comments
-    // in total (first one was synthesized after a comment).
+    // between them -- guaranteed by comment extraction) into a newline.  We
+    // have two newlines between C comments in total (first one was synthesized
+    // after a comment).
     formTokenWithChars(T, EndWhitespace, tok::newline);
 
     CommentState = LCS_BeforeComment;
