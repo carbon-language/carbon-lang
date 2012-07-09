@@ -11,16 +11,13 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "sanitizer_common/sanitizer_flags.h"
 #include "sanitizer_common/sanitizer_libc.h"
 #include "tsan_flags.h"
 #include "tsan_rtl.h"
 #include "tsan_mman.h"
 
 namespace __tsan {
-
-static void Flag(const char *env, bool *flag, const char *name);
-static void Flag(const char *env, int *flag, const char *name);
-static void Flag(const char *env, const char **flag, const char *name);
 
 Flags *flags() {
   return &CTX()->flags;
@@ -57,92 +54,22 @@ void InitializeFlags(Flags *f, const char *env) {
   OverrideFlags(f);
 
   // Override from command line.
-  Flag(env, &f->enable_annotations, "enable_annotations");
-  Flag(env, &f->suppress_equal_stacks, "suppress_equal_stacks");
-  Flag(env, &f->suppress_equal_addresses, "suppress_equal_addresses");
-  Flag(env, &f->report_thread_leaks, "report_thread_leaks");
-  Flag(env, &f->report_signal_unsafe, "report_signal_unsafe");
-  Flag(env, &f->force_seq_cst_atomics, "force_seq_cst_atomics");
-  Flag(env, &f->strip_path_prefix, "strip_path_prefix");
-  Flag(env, &f->suppressions, "suppressions");
-  Flag(env, &f->exitcode, "exitcode");
-  Flag(env, &f->log_fileno, "log_fileno");
-  Flag(env, &f->atexit_sleep_ms, "atexit_sleep_ms");
-  Flag(env, &f->verbosity, "verbosity");
-  Flag(env, &f->profile_memory, "profile_memory");
-  Flag(env, &f->flush_memory_ms, "flush_memory_ms");
-  Flag(env, &f->stop_on_start, "stop_on_start");
-  Flag(env, &f->use_internal_symbolizer, "use_internal_symbolizer");
-}
-
-static const char *GetFlagValue(const char *env, const char *name,
-                                const char **end) {
-  if (env == 0)
-    return *end = 0;
-  const char *pos = internal_strstr(env, name);
-  if (pos == 0)
-    return *end = 0;
-  pos += internal_strlen(name);
-  if (pos[0] != '=')
-    return *end = pos;
-  pos += 1;
-  if (pos[0] == '"') {
-    pos += 1;
-    *end = internal_strchr(pos, '"');
-  } else if (pos[0] == '\'') {
-    pos += 1;
-    *end = internal_strchr(pos, '\'');
-  } else {
-    *end = internal_strchr(pos, ' ');
-  }
-  if (*end == 0)
-    *end = pos + internal_strlen(pos);
-  return pos;
-}
-
-static void Flag(const char *env, bool *flag, const char *name) {
-  const char *end = 0;
-  const char *val = GetFlagValue(env, name, &end);
-  if (val == 0)
-    return;
-  int len = end - val;
-  if (len == 1 && val[0] == '0')
-    *flag = false;
-  else if (len == 1 && val[0] == '1')
-    *flag = true;
-}
-
-static void Flag(const char *env, int *flag, const char *name) {
-  const char *end = 0;
-  const char *val = GetFlagValue(env, name, &end);
-  if (val == 0)
-    return;
-  bool minus = false;
-  if (val != end && val[0] == '-') {
-    minus = true;
-    val += 1;
-  }
-  int v = 0;
-  for (; val != end; val++) {
-    if (val[0] < '0' || val[0] > '9')
-      break;
-    v = v * 10 + val[0] - '0';
-  }
-  if (minus)
-    v = -v;
-  *flag = v;
-}
-
-static void Flag(const char *env, const char **flag, const char *name) {
-  const char *end = 0;
-  const char *val = GetFlagValue(env, name, &end);
-  if (val == 0)
-    return;
-  int len = end - val;
-  char *f = (char*)internal_alloc(MBlockFlag, len + 1);
-  internal_memcpy(f, val, len);
-  f[len] = 0;
-  *flag = f;
+  ParseFlag(env, &f->enable_annotations, "enable_annotations");
+  ParseFlag(env, &f->suppress_equal_stacks, "suppress_equal_stacks");
+  ParseFlag(env, &f->suppress_equal_addresses, "suppress_equal_addresses");
+  ParseFlag(env, &f->report_thread_leaks, "report_thread_leaks");
+  ParseFlag(env, &f->report_signal_unsafe, "report_signal_unsafe");
+  ParseFlag(env, &f->force_seq_cst_atomics, "force_seq_cst_atomics");
+  ParseFlag(env, &f->strip_path_prefix, "strip_path_prefix");
+  ParseFlag(env, &f->suppressions, "suppressions");
+  ParseFlag(env, &f->exitcode, "exitcode");
+  ParseFlag(env, &f->log_fileno, "log_fileno");
+  ParseFlag(env, &f->atexit_sleep_ms, "atexit_sleep_ms");
+  ParseFlag(env, &f->verbosity, "verbosity");
+  ParseFlag(env, &f->profile_memory, "profile_memory");
+  ParseFlag(env, &f->flush_memory_ms, "flush_memory_ms");
+  ParseFlag(env, &f->stop_on_start, "stop_on_start");
+  ParseFlag(env, &f->use_internal_symbolizer, "use_internal_symbolizer");
 }
 
 }  // namespace __tsan

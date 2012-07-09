@@ -43,7 +43,7 @@ $(LIBTSAN): libtsan
 libtsan:
 	$(MAKE) -C rtl -f Makefile.old DEBUG=$(DEBUG)
 
-%.o: %.cc $(UNIT_TEST_HDR)
+%.o: %.cc $(UNIT_TEST_HDR) libtsan
 	$(CXX) $(CXXFLAGS) $(CFLAGS) $(INCLUDES) -o $@ -c $<
 
 tsan_test: $(UNIT_TEST_OBJ) $(RTL_TEST_OBJ) \
