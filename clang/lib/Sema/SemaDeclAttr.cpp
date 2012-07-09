@@ -2355,11 +2355,14 @@ static void handleWeakImportAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   D->addAttr(::new (S.Context) WeakImportAttr(Attr.getRange(), S.Context));
 }
 
-static void handleReqdWorkGroupSize(Sema &S, Decl *D,
-                                    const AttributeList &Attr) {
+// Handles reqd_work_group_size and work_group_size_hint.
+static void handleWorkGroupSize(Sema &S, Decl *D,
+				const AttributeList &Attr) {
+  assert(Attr.getKind() == AttributeList::AT_ReqdWorkGroupSize 
+      || Attr.getKind() == AttributeList::AT_WorkGroupSizeHint);
+
   // Attribute has 3 arguments.
-  if (!checkAttributeNumArgs(S, Attr, 3))
-    return;
+  if (!checkAttributeNumArgs(S, Attr, 3)) return;
 
   unsigned WGSize[3];
   for (unsigned i = 0; i < 3; ++i) {
@@ -2368,14 +2371,42 @@ static void handleReqdWorkGroupSize(Sema &S, Decl *D,
     if (E->isTypeDependent() || E->isValueDependent() ||
         !E->isIntegerConstantExpr(ArgNum, S.Context)) {
       S.Diag(Attr.getLoc(), diag::err_attribute_argument_not_int)
-        << "reqd_work_group_size" << E->getSourceRange();
+        << Attr.getName()->getName() << E->getSourceRange();
       return;
     }
     WGSize[i] = (unsigned) ArgNum.getZExtValue();
   }
-  D->addAttr(::new (S.Context) ReqdWorkGroupSizeAttr(Attr.getRange(), S.Context,
-                                                     WGSize[0], WGSize[1],
-                                                     WGSize[2]));
+
+  if (Attr.getKind() == AttributeList::AT_ReqdWorkGroupSize
+    && D->hasAttr<ReqdWorkGroupSizeAttr>()) {
+      ReqdWorkGroupSizeAttr *A = D->getAttr<ReqdWorkGroupSizeAttr>();
+      if (!(A->getXDim() == WGSize[0] &&
+            A->getYDim() == WGSize[1] &&
+            A->getZDim() == WGSize[2])) {
+        S.Diag(Attr.getLoc(), diag::warn_duplicate_attribute) <<
+          Attr.getName();
+      }
+  }
+
+  if (Attr.getKind() == AttributeList::AT_WorkGroupSizeHint
+    && D->hasAttr<WorkGroupSizeHintAttr>()) {
+      WorkGroupSizeHintAttr *A = D->getAttr<WorkGroupSizeHintAttr>();
+      if (!(A->getXDim() == WGSize[0] &&
+            A->getYDim() == WGSize[1] &&
+            A->getZDim() == WGSize[2])) {
+        S.Diag(Attr.getLoc(), diag::warn_duplicate_attribute) <<
+          Attr.getName();
+      }
+  }
+
+  if (Attr.getKind() == AttributeList::AT_ReqdWorkGroupSize)
+    D->addAttr(::new (S.Context)
+                 ReqdWorkGroupSizeAttr(Attr.getRange(), S.Context,
+                                       WGSize[0], WGSize[1], WGSize[2]));
+  else
+    D->addAttr(::new (S.Context)
+                 WorkGroupSizeHintAttr(Attr.getRange(), S.Context,
+                                       WGSize[0], WGSize[1], WGSize[2]));
 }
 
 SectionAttr *Sema::mergeSectionAttr(Decl *D, SourceRange Range,
@@ -4043,8 +4074,9 @@ static void ProcessInheritableDeclAttr(Sema &S, Scope *scope, Decl *D,
   case AttributeList::AT_CFReturnsRetained:
     handleNSReturnsRetainedAttr(S, D, Attr); break;
 
+  case AttributeList::AT_WorkGroupSizeHint:
   case AttributeList::AT_ReqdWorkGroupSize:
-    handleReqdWorkGroupSize(S, D, Attr); break;
+    handleWorkGroupSize(S, D, Attr); break;
 
   case AttributeList::AT_InitPriority: 
       handleInitPriorityAttr(S, D, Attr); break;

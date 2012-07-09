@@ -578,6 +578,13 @@ def ReqdWorkGroupSize : InheritableAttr {
               UnsignedArgument<"ZDim">];
 }
 
+def WorkGroupSizeHint :  InheritableAttr {
+  let Spellings = [GNU<"work_group_size_hint">];
+  let Args = [UnsignedArgument<"XDim">, 
+              UnsignedArgument<"YDim">,
+              UnsignedArgument<"ZDim">];
+}
+
 def InitPriority : InheritableAttr {
   let Spellings = [GNU<"init_priority">];
   let Args = [UnsignedArgument<"Priority">];
