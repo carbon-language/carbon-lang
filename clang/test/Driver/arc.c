@@ -8,10 +8,10 @@
 // Just to test clang is working.
 # foo
 
-// CHECK: error: -fobjc-arc is not supported with fragile abi
+// CHECK: error: -fobjc-arc is not supported with legacy abi
 // CHECK-NOT: invalid preprocessing directive
 
-// NOTOBJC-NOT: error: -fobjc-arc is not supported with fragile abi
+// NOTOBJC-NOT: error: -fobjc-arc is not supported with legacy abi
 // NOTOBJC: invalid preprocessing directive
 
 // UNSUPPORTED: error: -fobjc-arc is not supported on current deployment target

@@ -92,7 +92,7 @@ def err_drv_invalid_arch_for_deployment_target : Error<
 def err_drv_objc_gc_arr : Error<
   "cannot specify both '-fobjc-arc' and '%0'">;
 def err_arc_nonfragile_abi : Error<
-  "-fobjc-arc is not supported with fragile abi">;
+  "-fobjc-arc is not supported with legacy abi">;
 def err_arc_unsupported : Error<
   "-fobjc-arc is not supported on current deployment target">;
 def err_drv_mg_requires_m_or_mm : Error<

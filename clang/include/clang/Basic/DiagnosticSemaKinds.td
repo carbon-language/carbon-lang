@@ -3734,17 +3734,17 @@ def warn_sizeof_array_param : Warning<
   InGroup<SizeofArrayArgument>;
 
 def err_sizeof_nonfragile_interface : Error<
-  "invalid application of '%select{alignof|sizeof}1' to interface %0 in "
-  "non-fragile ABI">;
+  "application of '%select{alignof|sizeof}1' to interface %0 is "
+  "not supported on this architecture and platform">;
 def err_atdef_nonfragile_interface : Error<
-  "invalid application of @defs in non-fragile ABI">;
+  "use of @defs is not supported on this architecture and platform">;
 def err_subscript_nonfragile_interface : Error<
-  "subscript requires size of interface %0, which is not constant in "
-  "non-fragile ABI">;
+  "subscript requires size of interface %0, which is not constant for "
+  "this architecture and platform">;
 
 def err_arithmetic_nonfragile_interface : Error<
-  "arithmetic on pointer to interface %0, which is not a constant size in "
-  "non-fragile ABI">;
+  "arithmetic on pointer to interface %0, which is not a constant size for "
+  "this architecture and platform">;
 
 
 def ext_subscript_non_lvalue : Extension<
