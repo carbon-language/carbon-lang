@@ -7300,8 +7300,8 @@ processInstruction(MCInst &Inst,
     if ((isARMLowRegister(Inst.getOperand(1).getReg()) &&
          isARMLowRegister(Inst.getOperand(2).getReg())) &&
         Inst.getOperand(0).getReg() == Inst.getOperand(1).getReg() &&
-        (!inITBlock() && Inst.getOperand(5).getReg() == ARM::CPSR ||
-         inITBlock() && Inst.getOperand(5).getReg() != ARM::CPSR) && 
+        ((!inITBlock() && Inst.getOperand(5).getReg() == ARM::CPSR) ||
+         (inITBlock() && Inst.getOperand(5).getReg() != ARM::CPSR)) && 
         (!static_cast<ARMOperand*>(Operands[3])->isToken() ||
          !static_cast<ARMOperand*>(Operands[3])->getToken().equals_lower(".w"))) {
       unsigned NewOpc;
@@ -7339,8 +7339,8 @@ processInstruction(MCInst &Inst,
          isARMLowRegister(Inst.getOperand(2).getReg())) &&
         (Inst.getOperand(0).getReg() == Inst.getOperand(1).getReg() ||
          Inst.getOperand(0).getReg() == Inst.getOperand(2).getReg()) &&
-        (!inITBlock() && Inst.getOperand(5).getReg() == ARM::CPSR ||
-         inITBlock() && Inst.getOperand(5).getReg() != ARM::CPSR) && 
+        ((!inITBlock() && Inst.getOperand(5).getReg() == ARM::CPSR) ||
+         (inITBlock() && Inst.getOperand(5).getReg() != ARM::CPSR)) && 
         (!static_cast<ARMOperand*>(Operands[3])->isToken() ||
          !static_cast<ARMOperand*>(Operands[3])->getToken().equals_lower(".w"))) {
       unsigned NewOpc;
