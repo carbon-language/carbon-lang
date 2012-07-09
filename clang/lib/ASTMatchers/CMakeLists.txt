@@ -12,5 +12,6 @@ add_dependencies(clangASTMatchers
   ClangAttrList
   ClangCommentNodes
   ClangDeclNodes
+  ClangDiagnosticCommon
   ClangStmtNodes
   )
