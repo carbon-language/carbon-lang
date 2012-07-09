@@ -81,7 +81,6 @@ static void ParseFlagsFromString(Flags *f, const char *str) {
   CHECK(IsPowerOfTwo(f->redzone));
 
   ParseFlag(str, &f->debug, "debug");
-  ParseFlag(str, &f->poison_shadow, "poison_shadow");
   ParseFlag(str, &f->report_globals, "report_globals");
   ParseFlag(str, &f->malloc_context_size, "malloc_context_size");
   CHECK(f->malloc_context_size <= kMallocContextSize);
@@ -115,7 +114,6 @@ void InitializeFlags(Flags *f, const char *env) {
   f->verbosity = 0;
   f->redzone = (ASAN_LOW_MEMORY) ? 64 : 128;  // power of two, >= 32.
   f->debug = 0;
-  f->poison_shadow = true;
   f->report_globals = 1;
   f->malloc_context_size = kMallocContextSize;
   f->replace_str = true;

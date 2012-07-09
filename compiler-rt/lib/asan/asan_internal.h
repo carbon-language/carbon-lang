@@ -142,7 +142,6 @@ struct Flags {
   int  verbosity;
   int redzone;
   int  debug;
-  bool poison_shadow;
   int  report_globals;
   int malloc_context_size;
   bool replace_str;
