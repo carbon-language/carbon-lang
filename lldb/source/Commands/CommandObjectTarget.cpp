@@ -474,6 +474,13 @@ protected:
         if (argc > 0)
         {
             const uint32_t num_targets = target_list.GetNumTargets();
+            // Bail out if don't have any targets.
+            if (num_targets == 0) {
+                result.AppendError("no targets to delete");
+                result.SetStatus(eReturnStatusFailed);
+                success = false;
+            }
+
             for (uint32_t arg_idx = 0; success && arg_idx < argc; ++arg_idx)
             {
                 const char *target_idx_arg = args.GetArgumentAtIndex(arg_idx);
@@ -489,9 +496,14 @@ protected:
                             continue;
                         }
                     }
-                    result.AppendErrorWithFormat ("target index %u is out of range, valid target indexes are 0 - %u\n", 
-                                                  target_idx,
-                                                  num_targets - 1);
+                    if (num_targets > 1)
+                        result.AppendErrorWithFormat ("target index %u is out of range, valid target indexes are 0 - %u\n",
+                                                      target_idx,
+                                                      num_targets - 1);
+                    else
+                        result.AppendErrorWithFormat("target index %u is out of range, the only valid index is 0\n",
+                                                    target_idx);
+
                     result.SetStatus (eReturnStatusFailed);
                     success = false;
                 }
