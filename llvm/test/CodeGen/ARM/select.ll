@@ -113,3 +113,29 @@ entry:
   call void bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to void (i8*, i8*, [2 x i32], i32, float)*)(i8* undef, i8* undef, [2 x i32] %tmp493, i32 0, float 1.000000e+00) optsize
   ret void
 }
+
+; CHECK: f10
+define float @f10(i32 %a, i32 %b) nounwind uwtable readnone ssp {
+; CHECK-NOT: floatsisf
+  %1 = icmp eq i32 %a, %b
+  %2 = zext i1 %1 to i32
+  %3 = sitofp i32 %2 to float
+  ret float %3
+}
+
+; CHECK: f11
+define float @f11(i32 %a, i32 %b) nounwind uwtable readnone ssp {
+; CHECK-NOT: floatsisf
+  %1 = icmp eq i32 %a, %b
+  %2 = sitofp i1 %1 to float
+  ret float %2
+}
+
+; CHECK: f12
+define float @f12(i32 %a, i32 %b) nounwind uwtable readnone ssp {
+; CHECK-NOT: floatunsisf
+  %1 = icmp eq i32 %a, %b
+  %2 = uitofp i1 %1 to float
+  ret float %2
+}
+

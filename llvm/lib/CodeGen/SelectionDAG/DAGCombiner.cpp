@@ -5974,6 +5974,30 @@ SDValue DAGCombiner::visitSINT_TO_FP(SDNode *N) {
       return DAG.getNode(ISD::UINT_TO_FP, N->getDebugLoc(), VT, N0);
   }
 
+  // fold (sint_to_fp (setcc x, y, cc)) -> (select_cc x, y, -1.0, 0.0,, cc)
+  if (N0.getOpcode() == ISD::SETCC && !VT.isVector() &&
+      (!LegalOperations ||
+       TLI.isOperationLegalOrCustom(llvm::ISD::ConstantFP, VT))) {
+    SDValue Ops[] =
+      { N0.getOperand(0), N0.getOperand(1),
+        DAG.getConstantFP(-1.0, VT) , DAG.getConstantFP(0.0, VT),
+        N0.getOperand(2) };
+    return DAG.getNode(ISD::SELECT_CC, N->getDebugLoc(), VT, Ops, 5);
+  }
+
+  // fold (sint_to_fp (zext (setcc x, y, cc))) ->
+  //      (select_cc x, y, 1.0, 0.0,, cc)
+  if (N0.getOpcode() == ISD::ZERO_EXTEND &&
+      N0.getOperand(0).getOpcode() == ISD::SETCC &&!VT.isVector() &&
+      (!LegalOperations ||
+       TLI.isOperationLegalOrCustom(llvm::ISD::ConstantFP, VT))) {
+    SDValue Ops[] =
+      { N0.getOperand(0).getOperand(0), N0.getOperand(0).getOperand(1),
+        DAG.getConstantFP(1.0, VT) , DAG.getConstantFP(0.0, VT),
+        N0.getOperand(0).getOperand(2) };
+    return DAG.getNode(ISD::SELECT_CC, N->getDebugLoc(), VT, Ops, 5);
+  }
+
   return SDValue();
 }
 
@@ -5998,6 +6022,18 @@ SDValue DAGCombiner::visitUINT_TO_FP(SDNode *N) {
     if (DAG.SignBitIsZero(N0))
       return DAG.getNode(ISD::SINT_TO_FP, N->getDebugLoc(), VT, N0);
   }
+
+  // fold (uint_to_fp (setcc x, y, cc)) -> (select_cc x, y, -1.0, 0.0,, cc)
+  if (N0.getOpcode() == ISD::SETCC && !VT.isVector() &&
+      (!LegalOperations ||
+       TLI.isOperationLegalOrCustom(llvm::ISD::ConstantFP, VT))) {
+    SDValue Ops[] =
+      { N0.getOperand(0), N0.getOperand(1),
+        DAG.getConstantFP(1.0, VT),  DAG.getConstantFP(0.0, VT),
+        N0.getOperand(2) };
+    return DAG.getNode(ISD::SELECT_CC, N->getDebugLoc(), VT, Ops, 5);
+  }
+
 
   return SDValue();
 }
