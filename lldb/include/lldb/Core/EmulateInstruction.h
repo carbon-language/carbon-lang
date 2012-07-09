@@ -62,10 +62,10 @@
 /// the typical prologue opcodes, you can then generate CFI using a 
 /// class that will soon be available.
 /// 
-/// Implmenting all of the instructions that affect the PC can then
+/// Implementing all of the instructions that affect the PC can then
 /// allow single step prediction support.
 ///
-/// Implmenting all of the instructions allows for emulation of opcodes
+/// Implementing all of the instructions allows for emulation of opcodes
 /// for breakpoint traps and will pave the way for "thread centric"
 /// debugging. The current debugging model is "process centric" where
 /// all threads must be stopped when any thread is stopped; when
