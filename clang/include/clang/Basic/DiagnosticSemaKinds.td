@@ -5524,7 +5524,8 @@ def err_invalid_conversion_between_ext_vectors : Error<
   "invalid conversion between ext-vector type %0 and %1">;
 
 def warn_duplicate_attribute : Warning<
-  "attribute %0 is already applied with different parameters">;
+  "attribute %0 is already applied with different parameters">,
+  InGroup<IgnoredAttributes>;
 
 // Type
 def ext_invalid_sign_spec : Extension<"'%0' cannot be signed or unsigned">;
