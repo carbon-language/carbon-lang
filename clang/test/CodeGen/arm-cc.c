@@ -1,3 +1,4 @@
+// REQUIRES: arm-registered-target
 // RUN: %clang_cc1 -triple armv7-apple-darwin9 -target-abi apcs-gnu -emit-llvm -w -o - %s | FileCheck -check-prefix=DARWIN-APCS %s
 // RUN: %clang_cc1 -triple armv7-apple-darwin9 -target-abi aapcs  -emit-llvm -w -o - %s | FileCheck -check-prefix=DARWIN-AAPCS %s
 // RUN: %clang_cc1 -triple arm-none-linux-gnueabi -target-abi apcs-gnu -emit-llvm -w -o - %s | FileCheck -check-prefix=LINUX-APCS %s

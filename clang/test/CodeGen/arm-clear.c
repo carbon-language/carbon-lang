@@ -1,3 +1,4 @@
+// REQUIRES: arm-registered-target
 // RUN: %clang_cc1 -triple armv7-apple-darwin9 -emit-llvm -w -o - %s | FileCheck %s
 
 void clear0(void *ptr) {

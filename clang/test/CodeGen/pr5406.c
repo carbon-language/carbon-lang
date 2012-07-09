@@ -1,3 +1,4 @@
+// REQUIRES: arm-registered-target
 // RUN: %clang_cc1 %s -emit-llvm -triple arm-apple-darwin -o - | FileCheck %s
 // PR 5406
 

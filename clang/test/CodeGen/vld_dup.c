@@ -1,3 +1,4 @@
+// REQUIRES: arm-registered-target
 // RUN: %clang_cc1 -triple armv7a-linux-gnueabi \
 // RUN:   -target-cpu cortex-a8 \
 // RUN:   -emit-llvm -O0 -o - %s | FileCheck %s

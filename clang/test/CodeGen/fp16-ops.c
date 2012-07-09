@@ -1,3 +1,4 @@
+// REQUIRES: arm-registered-target
 // RUN: %clang_cc1 -emit-llvm -o - -triple arm-none-linux-gnueabi %s | FileCheck %s
 typedef unsigned cond_t;
 

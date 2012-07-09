@@ -1,3 +1,4 @@
+// REQUIRES: mips-registered-target
 // RUN: %clang_cc1 -triple mips-unknown-linux-gnu -emit-llvm -o %t %s
 // RUN: not grep __builtin %t
 

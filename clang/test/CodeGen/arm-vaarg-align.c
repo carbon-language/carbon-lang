@@ -1,3 +1,4 @@
+// REQUIRES: arm-registered-target
 // RUN: %clang_cc1 -triple arm -target-abi aapcs %s -emit-llvm -o - | FileCheck -check-prefix=AAPCS %s
 // RUN: %clang_cc1 -triple arm -target-abi apcs-gnu %s -emit-llvm -o - | FileCheck -check-prefix=APCS-GNU %s
 /* 

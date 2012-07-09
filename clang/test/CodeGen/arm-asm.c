@@ -1,3 +1,4 @@
+// REQUIRES: arm-registered-target
 // RUN: %clang_cc1 -triple thumb %s -emit-llvm -o - | FileCheck %s
 int t1() {
     static float k = 1.0f;

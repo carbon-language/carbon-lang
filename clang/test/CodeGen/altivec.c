@@ -1,3 +1,4 @@
+// REQUIRES: ppc32-registered-target
 // RUN: %clang_cc1 -faltivec -triple powerpc-unknown-unknown -emit-llvm %s -o - | FileCheck %s
 
 // Check initialization

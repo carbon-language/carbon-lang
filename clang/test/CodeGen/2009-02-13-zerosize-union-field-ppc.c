@@ -1,3 +1,4 @@
+// REQUIRES: ppc32-registered-target
 // RUN: %clang_cc1 %s -triple powerpc-pc-linux -emit-llvm -o - | grep {i32 32} | count 3
 // XFAIL: *
 //  Every printf has 'i32 0' for the GEP of the string; no point counting those.

@@ -1,3 +1,4 @@
+// REQUIRES: arm-registered-target
 // RUN: %clang_cc1 -triple thumbv7-apple-darwin9 \
 // RUN:   -target-abi aapcs \
 // RUN:   -target-cpu cortex-a8 \

@@ -1,3 +1,4 @@
+// REQUIRES: arm-registered-target
 // RUN: %clang_cc1 -S -triple armv7-apple-darwin %s -emit-llvm -o - | FileCheck %s
 
 typedef struct _zend_ini_entry zend_ini_entry;

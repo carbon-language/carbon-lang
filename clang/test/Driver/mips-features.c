@@ -1,3 +1,5 @@
+// REQUIRES: mips-registered-target
+//
 // Check handling MIPS specific features options.
 //
 // -mips16
