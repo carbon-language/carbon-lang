@@ -538,10 +538,10 @@ ABIMacOSX_arm::CreateFunctionEntryUnwindPlan (UnwindPlan &unwind_plan)
 
     UnwindPlan::Row row;
     
-    // Our previous Call Frame Address is the stack pointer
+    // Our Call Frame Address is the stack pointer value
     row.SetCFARegister (sp_reg_num);
     
-    // Our previous PC is in the LR
+    // The previous PC is in the LR
     row.SetRegisterLocationToRegister(pc_reg_num, lr_reg_num, true);
     unwind_plan.AppendRow (row);
     
@@ -554,36 +554,15 @@ ABIMacOSX_arm::CreateFunctionEntryUnwindPlan (UnwindPlan &unwind_plan)
 bool
 ABIMacOSX_arm::CreateDefaultUnwindPlan (UnwindPlan &unwind_plan)
 {
-    uint32_t reg_kind = unwind_plan.GetRegisterKind();
-    uint32_t fp_reg_num = LLDB_INVALID_REGNUM;
-    uint32_t sp_reg_num = LLDB_INVALID_REGNUM;
-    uint32_t pc_reg_num = LLDB_INVALID_REGNUM;
-    
-    switch (reg_kind)
-    {
-        case eRegisterKindDWARF:
-        case eRegisterKindGCC:
-            fp_reg_num = dwarf_r7; // apple uses r7 for all frames. Normal arm uses r11
-            sp_reg_num = dwarf_sp;
-            pc_reg_num = dwarf_pc;
-            break;
-            
-        case eRegisterKindGeneric:
-            fp_reg_num = LLDB_REGNUM_GENERIC_FP;
-            sp_reg_num = LLDB_REGNUM_GENERIC_SP;
-            pc_reg_num = LLDB_REGNUM_GENERIC_PC;
-            break;
-    }
-    
-    if (fp_reg_num == LLDB_INVALID_REGNUM ||
-        sp_reg_num == LLDB_INVALID_REGNUM ||
-        pc_reg_num == LLDB_INVALID_REGNUM)
-        return false;
+    uint32_t fp_reg_num = dwarf_r7; // apple uses r7 for all frames. Normal arm uses r11;
+    uint32_t sp_reg_num = dwarf_sp;
+    uint32_t pc_reg_num = dwarf_pc;
     
     UnwindPlan::Row row;    
     const int32_t ptr_size = 4;
     
-    unwind_plan.SetRegisterKind (eRegisterKindGeneric);
+    unwind_plan.Clear ();
+    unwind_plan.SetRegisterKind (eRegisterKindDWARF);
     row.SetCFARegister (fp_reg_num);
     row.SetCFAOffset (2 * ptr_size);
     row.SetOffset (0);
@@ -601,7 +580,7 @@ ABIMacOSX_arm::RegisterIsVolatile (const RegisterInfo *reg_info)
 {
     if (reg_info)
     {
-        // Volatile registers include: ebx, ebp, esi, edi, esp, eip
+        // Volatile registers include: r0, r1, r2, r3, r9, r12, r13
         const char *name = reg_info->name;
         if (name[0] == 'r')
         {

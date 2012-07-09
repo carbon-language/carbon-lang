@@ -820,47 +820,15 @@ ABIMacOSX_i386::CreateFunctionEntryUnwindPlan (UnwindPlan &unwind_plan)
 bool
 ABIMacOSX_i386::CreateDefaultUnwindPlan (UnwindPlan &unwind_plan)
 {
-    uint32_t reg_kind = unwind_plan.GetRegisterKind();
-    uint32_t fp_reg_num = LLDB_INVALID_REGNUM;
-    uint32_t sp_reg_num = LLDB_INVALID_REGNUM;
-    uint32_t pc_reg_num = LLDB_INVALID_REGNUM;
+    uint32_t fp_reg_num = dwarf_ebp;
+    uint32_t sp_reg_num = dwarf_esp;
+    uint32_t pc_reg_num = dwarf_eip;
     
-    switch (reg_kind)
-    {
-        case eRegisterKindDWARF:
-            fp_reg_num = dwarf_ebp;
-            sp_reg_num = dwarf_esp;
-            pc_reg_num = dwarf_eip;
-            break;
-            
-        case eRegisterKindGCC:
-            fp_reg_num = gcc_ebp;
-            sp_reg_num = gcc_esp;
-            pc_reg_num = gcc_eip;
-            break;
-            
-        case eRegisterKindGDB:
-            fp_reg_num = gdb_ebp;
-            sp_reg_num = gdb_esp;
-            pc_reg_num = gdb_eip;
-            break;
-            
-        case eRegisterKindGeneric:
-            fp_reg_num = LLDB_REGNUM_GENERIC_FP;
-            sp_reg_num = LLDB_REGNUM_GENERIC_SP;
-            pc_reg_num = LLDB_REGNUM_GENERIC_PC;
-            break;
-    }
-    
-    if (fp_reg_num == LLDB_INVALID_REGNUM ||
-        sp_reg_num == LLDB_INVALID_REGNUM ||
-        pc_reg_num == LLDB_INVALID_REGNUM)
-        return false;
-
     UnwindPlan::Row row;    
     const int32_t ptr_size = 4;
 
-    unwind_plan.SetRegisterKind (eRegisterKindGeneric);
+    unwind_plan.Clear ();
+    unwind_plan.SetRegisterKind (eRegisterKindDWARF);
     row.SetCFARegister (fp_reg_num);
     row.SetCFAOffset (2 * ptr_size);
     row.SetOffset (0);

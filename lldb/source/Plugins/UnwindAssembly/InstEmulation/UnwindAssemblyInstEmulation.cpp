@@ -30,7 +30,7 @@ using namespace lldb_private;
 
 
 //-----------------------------------------------------------------------------------------------
-//  UnwindAssemblyParser_x86 method definitions 
+//  UnwindAssemblyInstEmulation method definitions 
 //-----------------------------------------------------------------------------------------------
 
 bool
@@ -71,9 +71,6 @@ UnwindAssemblyInstEmulation::GetNonCallSiteUnwindPlanFromAssembly (AddressRange&
             const uint32_t addr_byte_size = m_arch.GetAddressByteSize();
             const bool show_address = true;
             const bool show_bytes = true;
-            // Initialize the CFA with a known value. In the 32 bit case
-            // it will be 0x80000000, and in the 64 bit case 0x8000000000000000.
-            // We use the address byte size to be safe for any future addresss sizes
             m_inst_emulator_ap->GetRegisterInfo (unwind_plan.GetRegisterKind(), 
                                                  unwind_plan.GetInitialCFARegister(), 
                                                  m_cfa_reg_info);
@@ -82,6 +79,9 @@ UnwindAssemblyInstEmulation::GetNonCallSiteUnwindPlanFromAssembly (AddressRange&
             m_register_values.clear();
             m_pushed_regs.clear();
 
+            // Initialize the CFA with a known value. In the 32 bit case
+            // it will be 0x80000000, and in the 64 bit case 0x8000000000000000.
+            // We use the address byte size to be safe for any future addresss sizes
             m_initial_sp = (1ull << ((addr_byte_size * 8) - 1));
             RegisterValue cfa_reg_value;
             cfa_reg_value.SetUInt (m_initial_sp, m_cfa_reg_info.byte_size);
