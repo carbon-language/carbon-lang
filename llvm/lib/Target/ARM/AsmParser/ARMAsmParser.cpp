@@ -7287,6 +7287,86 @@ processInstruction(MCInst &Inst,
     ITState.FirstCond = true;
     break;
   }
+  case ARM::t2LSLrr:
+  case ARM::t2LSRrr:
+  case ARM::t2ASRrr:
+  case ARM::t2SBCrr:
+  case ARM::t2RORrr:
+  case ARM::t2BICrr:
+  {
+    // Assemblers should use the narrow encodings of these instructions when permissable.
+    if ((isARMLowRegister(Inst.getOperand(1).getReg()) &&
+         isARMLowRegister(Inst.getOperand(2).getReg())) &&
+        Inst.getOperand(0).getReg() == Inst.getOperand(1).getReg() &&
+        (!inITBlock() && Inst.getOperand(5).getReg() == ARM::CPSR ||
+         inITBlock() && Inst.getOperand(5).getReg() != ARM::CPSR) && 
+        (!static_cast<ARMOperand*>(Operands[3])->isToken() ||
+         !static_cast<ARMOperand*>(Operands[3])->getToken().equals_lower(".w"))) {
+      unsigned NewOpc;
+      switch (Inst.getOpcode()) {
+        default: llvm_unreachable("unexpected opcode");
+        case ARM::t2LSLrr: NewOpc = ARM::tLSLrr; break;
+        case ARM::t2LSRrr: NewOpc = ARM::tLSRrr; break;
+        case ARM::t2ASRrr: NewOpc = ARM::tASRrr; break;
+        case ARM::t2SBCrr: NewOpc = ARM::tSBC; break;
+        case ARM::t2RORrr: NewOpc = ARM::tROR; break;
+        case ARM::t2BICrr: NewOpc = ARM::tBIC; break;
+      }
+      MCInst TmpInst;
+      TmpInst.setOpcode(NewOpc);
+      TmpInst.addOperand(Inst.getOperand(0));
+      TmpInst.addOperand(Inst.getOperand(5));
+      TmpInst.addOperand(Inst.getOperand(1));
+      TmpInst.addOperand(Inst.getOperand(2));
+      TmpInst.addOperand(Inst.getOperand(3));
+      TmpInst.addOperand(Inst.getOperand(4));
+      Inst = TmpInst;
+      return true;
+    }
+    return false;
+  }
+  case ARM::t2ANDrr:
+  case ARM::t2EORrr:
+  case ARM::t2ADCrr:
+  case ARM::t2ORRrr:
+  {
+    // Assemblers should use the narrow encodings of these instructions when permissable.
+    // These instructions are special in that they are commutable, so shorter encodings
+    // are available more often.
+    if ((isARMLowRegister(Inst.getOperand(1).getReg()) &&
+         isARMLowRegister(Inst.getOperand(2).getReg())) &&
+        (Inst.getOperand(0).getReg() == Inst.getOperand(1).getReg() ||
+         Inst.getOperand(0).getReg() == Inst.getOperand(2).getReg()) &&
+        (!inITBlock() && Inst.getOperand(5).getReg() == ARM::CPSR ||
+         inITBlock() && Inst.getOperand(5).getReg() != ARM::CPSR) && 
+        (!static_cast<ARMOperand*>(Operands[3])->isToken() ||
+         !static_cast<ARMOperand*>(Operands[3])->getToken().equals_lower(".w"))) {
+      unsigned NewOpc;
+      switch (Inst.getOpcode()) {
+        default: llvm_unreachable("unexpected opcode");
+        case ARM::t2ADCrr: NewOpc = ARM::tADC; break;
+        case ARM::t2ANDrr: NewOpc = ARM::tAND; break;
+        case ARM::t2EORrr: NewOpc = ARM::tEOR; break;
+        case ARM::t2ORRrr: NewOpc = ARM::tORR; break;
+      }
+      MCInst TmpInst;
+      TmpInst.setOpcode(NewOpc);
+      TmpInst.addOperand(Inst.getOperand(0));
+      TmpInst.addOperand(Inst.getOperand(5));
+      if (Inst.getOperand(0).getReg() == Inst.getOperand(1).getReg()) {
+        TmpInst.addOperand(Inst.getOperand(1));
+        TmpInst.addOperand(Inst.getOperand(2));
+      } else {
+        TmpInst.addOperand(Inst.getOperand(2));
+        TmpInst.addOperand(Inst.getOperand(1));
+      }
+      TmpInst.addOperand(Inst.getOperand(3));
+      TmpInst.addOperand(Inst.getOperand(4));
+      Inst = TmpInst;
+      return true;
+    }
+    return false;
+  }
   }
   return false;
 }
