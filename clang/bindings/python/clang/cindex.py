@@ -2162,7 +2162,7 @@ class CompileCommands(object):
 
     def __getitem__(self, i):
         cc = CompileCommands_getCommand(self.ccmds, i)
-        if cc is None:
+        if not cc:
             raise IndexError
         return CompileCommand(cc, self)
 

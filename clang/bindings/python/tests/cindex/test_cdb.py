@@ -61,6 +61,14 @@ def test_2_compilecommand():
         for arg, exp in zip(cmds[i].arguments, expected[i]['line']):
             assert arg.spelling == exp
 
+def test_compilecommand_iterator_stops():
+    """Check that iterator stops after the correct number of elements"""
+    cdb = CompilationDatabase.fromDirectory(kInputsDir)
+    count = 0
+    for cmd in cdb.getCompileCommands('/home/john.doe/MyProject/project2.cpp'):
+        count += 1
+        assert count <= 2
+
 def test_compilationDB_references():
     """Ensure CompilationsCommands are independent of the database"""
     cdb = CompilationDatabase.fromDirectory(kInputsDir)
