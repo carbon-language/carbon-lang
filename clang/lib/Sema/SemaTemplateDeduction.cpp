@@ -4166,9 +4166,17 @@ MarkUsedTemplateParameters(ASTContext &Ctx,
   if (const PackExpansionExpr *Expansion = dyn_cast<PackExpansionExpr>(E))
     E = Expansion->getPattern();
 
-  // Skip through any implicit casts we added while type-checking.
-  while (const ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(E))
-    E = ICE->getSubExpr();
+  // Skip through any implicit casts we added while type-checking, and any
+  // substitutions performed by template alias expansion.
+  while (1) {
+    if (const ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(E))
+      E = ICE->getSubExpr();
+    else if (const SubstNonTypeTemplateParmExpr *Subst =
+               dyn_cast<SubstNonTypeTemplateParmExpr>(E))
+      E = Subst->getReplacement();
+    else
+      break;
+  }
 
   // FIXME: if !OnlyDeduced, we have to walk the whole subexpression to
   // find other occurrences of template parameters.

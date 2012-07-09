@@ -109,3 +109,22 @@ namespace PR13243 {
   template<typename A, int I> void f(X<A>, Ci<I>) {}
   template void f(X<int>, C<0>);
 }
+
+namespace PR13136 {
+  template <typename T, T... Numbers>
+  struct NumberTuple { };
+
+  template <unsigned int... Numbers>
+  using MyNumberTuple = NumberTuple<unsigned int, Numbers...>;
+
+  template <typename U, unsigned int... Numbers>
+  void foo(U&&, MyNumberTuple<Numbers...>);
+
+  template <typename U, unsigned int... Numbers>
+  void bar(U&&, NumberTuple<unsigned int, Numbers...>);
+
+  int main() {
+    foo(1, NumberTuple<unsigned int, 0, 1>());
+    bar(1, NumberTuple<unsigned int, 0, 1>());
+  }
+}

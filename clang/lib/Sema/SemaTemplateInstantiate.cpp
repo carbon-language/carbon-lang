@@ -851,7 +851,7 @@ namespace {
   private:
     ExprResult transformNonTypeTemplateParmRef(NonTypeTemplateParmDecl *parm,
                                                SourceLocation loc,
-                                               const TemplateArgument &arg);
+                                               TemplateArgument arg);
   };
 }
 
@@ -1140,9 +1140,17 @@ TemplateInstantiator::TransformTemplateParmRefExpr(DeclRefExpr *E,
 ExprResult TemplateInstantiator::transformNonTypeTemplateParmRef(
                                                  NonTypeTemplateParmDecl *parm,
                                                  SourceLocation loc,
-                                                 const TemplateArgument &arg) {
+                                                 TemplateArgument arg) {
   ExprResult result;
   QualType type;
+
+  // If the argument is a pack expansion, the parameter must actually be a
+  // parameter pack, and we should substitute the pattern itself, producing
+  // an expression which contains an unexpanded parameter pack.
+  if (arg.isPackExpansion()) {
+    assert(parm->isParameterPack() && "pack expansion for non-pack");
+    arg = arg.getPackExpansionPattern();
+  }
 
   // The template argument itself might be an expression, in which
   // case we just return that expression.
