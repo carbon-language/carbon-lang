@@ -1607,10 +1607,11 @@ def err_invalid_collection_element : Error<
 def err_box_literal_collection : Error<
   "%select{string|character|boolean|numeric}0 literal must be prefixed by '@' "
   "in a collection">;
-def err_objc_literal_comparison : Error<
+def warn_objc_literal_comparison : Warning<
   "direct comparison of %select{a string literal|an array literal|"
-  "a dictionary literal|a numeric literal|a boxed expression|}0 is not "
-  "allowed%select{|; use -isEqual: instead}1">;
+  "a dictionary literal|a numeric literal|a boxed expression|}0 has "
+  "undefined behavior%select{|; use -isEqual: instead}1">,
+  InGroup<DiagGroup<"objc-literal-compare">>;
 def err_attr_tlsmodel_arg : Error<"tls_model must be \"global-dynamic\", "
   "\"local-dynamic\", \"initial-exec\" or \"local-exec\"">;
 

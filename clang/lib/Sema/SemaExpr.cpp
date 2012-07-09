@@ -6739,7 +6739,7 @@ static DiagnosticBuilder diagnoseObjCLiteralComparison(Sema &S,
     llvm_unreachable("Unknown Objective-C object literal kind");
   }
 
-  return S.Diag(Loc, diag::err_objc_literal_comparison)
+  return S.Diag(Loc, diag::warn_objc_literal_comparison)
            << LiteralKind << CanFix << Literal->getSourceRange();
 }
 
@@ -6747,6 +6747,14 @@ static ExprResult fixObjCLiteralComparison(Sema &S, SourceLocation OpLoc,
                                            ExprResult &LHS,
                                            ExprResult &RHS,
                                            BinaryOperatorKind Op) {
+  // Check early to see if the warning's on.
+  // If it's off, we should /not/ be auto-applying the accompanying fixit.
+  DiagnosticsEngine::Level Level =
+    S.getDiagnostics().getDiagnosticLevel(diag::warn_objc_literal_comparison,
+                                          OpLoc);
+  if (Level == DiagnosticsEngine::Ignored)
+    return ExprEmpty();
+
   assert((Op == BO_EQ || Op == BO_NE) && "Cannot fix other operations.");
 
   // Get the LHS object's interface type.
@@ -8228,12 +8236,14 @@ ExprResult Sema::CreateBuiltinBinOp(SourceLocation OpLoc,
     break;
   case BO_EQ:
   case BO_NE:
-    if (isObjCObjectLiteral(LHS) || isObjCObjectLiteral(RHS)) {
-      ExprResult IsEqualCall = fixObjCLiteralComparison(*this, OpLoc,
-                                                        LHS, RHS, Opc);
-      if (IsEqualCall.isUsable())
-        return IsEqualCall;
-      // Otherwise, fall back to the normal diagnostic in CheckCompareOperands.
+    if (getLangOpts().ObjC1) {
+      if (isObjCObjectLiteral(LHS) || isObjCObjectLiteral(RHS)) {
+        ExprResult IsEqualCall = fixObjCLiteralComparison(*this, OpLoc,
+                                                          LHS, RHS, Opc);
+        if (IsEqualCall.isUsable())
+          return IsEqualCall;
+        // Otherwise, fall back to the normal warning in CheckCompareOperands.
+      }
     }
     ResultTy = CheckCompareOperands(LHS, RHS, OpLoc, Opc, false);
     break;

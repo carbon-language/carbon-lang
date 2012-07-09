@@ -46,9 +46,9 @@ void fixes() {
 }
 
 void testComparisons(id obj) {
-  if (obj == @"abc") return; // expected-error{{direct comparison of a string literal is not allowed; use -isEqual: instead}}
-  if (obj != @"def") return; // expected-error{{direct comparison of a string literal is not allowed; use -isEqual: instead}}
-  if (@"ghi" == obj) return; // expected-error{{direct comparison of a string literal is not allowed; use -isEqual: instead}}
+  if (obj == @"abc") return; // expected-warning{{direct comparison of a string literal has undefined behavior; use -isEqual: instead}}
+  if (obj != @"def") return; // expected-warning{{direct comparison of a string literal has undefined behavior; use -isEqual: instead}}
+  if (@"ghi" == obj) return; // expected-warning{{direct comparison of a string literal has undefined behavior; use -isEqual: instead}}
 
   // CHECK: void testComparisons(id obj) {
   // Make sure these three substitutions aren't matching the CHECK lines.
@@ -56,11 +56,11 @@ void testComparisons(id obj) {
   // CHECK-NEXT: if (![obj isEqual: @"def"]) return;
   // CHECK-NEXT: if ([@"ghi" isEqual: obj]) return;
 
-  if (@[] == obj) return; // expected-error{{direct comparison of an array literal is not allowed; use -isEqual: instead}}
-  if (@{} == obj) return; // expected-error{{direct comparison of a dictionary literal is not allowed; use -isEqual: instead}}
-  if (@12 == obj) return; // expected-error{{direct comparison of a numeric literal is not allowed; use -isEqual: instead}}
-  if (@1.0 == obj) return; // expected-error{{direct comparison of a numeric literal is not allowed; use -isEqual: instead}}
-  if (@__objc_yes == obj) return; // expected-error{{direct comparison of a numeric literal is not allowed; use -isEqual: instead}}
-  if (@(1+1) == obj) return; // expected-error{{direct comparison of a boxed expression is not allowed; use -isEqual: instead}}
+  if (@[] == obj) return; // expected-warning{{direct comparison of an array literal has undefined behavior; use -isEqual: instead}}
+  if (@{} == obj) return; // expected-warning{{direct comparison of a dictionary literal has undefined behavior; use -isEqual: instead}}
+  if (@12 == obj) return; // expected-warning{{direct comparison of a numeric literal has undefined behavior; use -isEqual: instead}}
+  if (@1.0 == obj) return; // expected-warning{{direct comparison of a numeric literal has undefined behavior; use -isEqual: instead}}
+  if (@__objc_yes == obj) return; // expected-warning{{direct comparison of a numeric literal has undefined behavior; use -isEqual: instead}}
+  if (@(1+1) == obj) return; // expected-warning{{direct comparison of a boxed expression has undefined behavior; use -isEqual: instead}}
 }
 
