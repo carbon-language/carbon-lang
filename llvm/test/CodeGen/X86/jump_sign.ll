@@ -120,6 +120,23 @@ if.then:
 if.else:
   ret i32 %sub
 }
+define i32 @l3(i32 %a, i32 %b) nounwind {
+entry:
+; CHECK: l3:
+; CHECK: sub
+; CHECK-NOT: cmp
+; CHECK: jge
+  %cmp = icmp sgt i32 %b, %a
+  %sub = sub nsw i32 %a, %b
+  br i1 %cmp, label %if.then, label %if.else
+
+if.then:
+  ret i32 %sub
+
+if.else:
+  %add = add nsw i32 %sub, 1
+  ret i32 %add
+}
 ; rdar://11540023
 define i32 @n(i32 %x, i32 %y) nounwind {
 entry:
