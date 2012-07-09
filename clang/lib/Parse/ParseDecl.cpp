@@ -1270,15 +1270,33 @@ void Parser::SkipMalformedDecl() {
 
     case tok::kw_inline:
       // 'inline namespace' at the start of a line is almost certainly
-      // a good place to pick back up parsing.
-      if (Tok.isAtStartOfLine() && NextToken().is(tok::kw_namespace))
+      // a good place to pick back up parsing, except in an Objective-C
+      // @interface context.
+      if (Tok.isAtStartOfLine() && NextToken().is(tok::kw_namespace) &&
+          (!ParsingInObjCContainer || CurParsedObjCImpl))
         return;
       break;
 
     case tok::kw_namespace:
       // 'namespace' at the start of a line is almost certainly a good
-      // place to pick back up parsing.
-      if (Tok.isAtStartOfLine())
+      // place to pick back up parsing, except in an Objective-C
+      // @interface context.
+      if (Tok.isAtStartOfLine() &&
+          (!ParsingInObjCContainer || CurParsedObjCImpl))
+        return;
+      break;
+
+    case tok::at:
+      // @end is very much like } in Objective-C contexts.
+      if (NextToken().isObjCAtKeyword(tok::objc_end) &&
+          ParsingInObjCContainer)
+        return;
+      break;
+
+    case tok::minus:
+    case tok::plus:
+      // - and + probably start new method declarations in Objective-C contexts.
+      if (Tok.isAtStartOfLine() && ParsingInObjCContainer)
         return;
       break;
 

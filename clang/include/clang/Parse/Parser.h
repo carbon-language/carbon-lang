@@ -23,6 +23,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/PrettyStackTrace.h"
+#include "llvm/Support/SaveAndRestore.h"
 #include <stack>
 
 namespace clang {
@@ -83,6 +84,7 @@ class Parser : public CodeCompletionHandler {
   friend class ColonProtectionRAIIObject;
   friend class InMessageExpressionRAIIObject;
   friend class PoisonSEHIdentifiersRAIIObject;
+  friend class ObjCDeclContextSwitch;
   friend class ParenBraceBracketBalancer;
   friend class BalancedDelimiterTracker;
 
@@ -202,6 +204,13 @@ class Parser : public CodeCompletionHandler {
   SmallVector<TemplateIdAnnotation *, 16> TemplateIds;
 
   IdentifierInfo *getSEHExceptKeyword();
+
+  /// True if we are within an Objective-C container while parsing C-like decls.
+  ///
+  /// This is necessary because Sema thinks we have left the container
+  /// to parse the C-like decls, meaning Actions.getObjCDeclContext() will
+  /// be NULL.
+  bool ParsingInObjCContainer;
 
   bool SkipFunctionBodies;
 
@@ -556,9 +565,11 @@ private:
   class ObjCDeclContextSwitch {
     Parser &P;
     Decl *DC;
+    SaveAndRestore<bool> WithinObjCContainer;
   public:
-    explicit ObjCDeclContextSwitch(Parser &p) : P(p),
-               DC(p.getObjCDeclContext()) {
+    explicit ObjCDeclContextSwitch(Parser &p)
+      : P(p), DC(p.getObjCDeclContext()),
+        WithinObjCContainer(P.ParsingInObjCContainer, DC != 0) {
       if (DC)
         P.Actions.ActOnObjCTemporaryExitContainerContext(cast<DeclContext>(DC));
     }
