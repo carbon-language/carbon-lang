@@ -196,6 +196,27 @@
 @ CHECK: vmov r0, r1, d16            @ encoding: [0x30,0x0b,0x51,0xec]
         vmov    r0, r1, d16
 
+@ Between two single precision registers and two core registers
+        vmov s3, s4, r1, r2
+        vmov s2, s3, r1, r2
+        vmov r1, r2, s3, s4
+        vmov r1, r2, s2, s3
+@ CHECK: vmov s3, s4, r1, r2      @ encoding: [0x31,0x1a,0x42,0xec]
+@ CHECK: vmov s2, s3, r1, r2      @ encoding: [0x11,0x1a,0x42,0xec]
+@ CHECK: vmov r1, r2, s3, s4      @ encoding: [0x31,0x1a,0x52,0xec]
+@ CHECK: vmov r1, r2, s2, s3      @ encoding: [0x11,0x1a,0x52,0xec]
+
+@ Between one double precision register and two core registers
+        vmov d15, r1, r2 
+        vmov d16, r1, r2
+        vmov r1, r2, d15
+        vmov r1, r2, d16
+@ CHECK: vmov d15, r1, r2         @ encoding: [0x1f,0x1b,0x42,0xec]
+@ CHECK: vmov d16, r1, r2         @ encoding: [0x30,0x1b,0x42,0xec]
+@ CHECK: vmov r1, r2, d15         @ encoding: [0x1f,0x1b,0x52,0xec]
+@ CHECK: vmov r1, r2, d16         @ encoding: [0x30,0x1b,0x52,0xec]
+
+
 @ CHECK: vldr d17, [r0]           @ encoding: [0x00,0x1b,0xd0,0xed]
 @ CHECK: vldr s0, [lr]            @ encoding: [0x00,0x0a,0x9e,0xed]
 @ CHECK: vldr d0, [lr]            @ encoding: [0x00,0x0b,0x9e,0xed]
