@@ -2094,8 +2094,23 @@ ExprResult Parser::ParseObjCAtExpression(SourceLocation AtLoc) {
       return ParsePostfixExpressionSuffix(ParseObjCProtocolExpression(AtLoc));
     case tok::objc_selector:
       return ParsePostfixExpressionSuffix(ParseObjCSelectorExpression(AtLoc));
-    default:
-      return ExprError(Diag(AtLoc, diag::err_unexpected_at));
+      default: {
+        const char *str = 0;
+        if (GetLookAheadToken(1).is(tok::l_brace)) {
+          char ch = Tok.getIdentifierInfo()->getNameStart()[0];
+          str =  
+            ch == 't' ? "try" 
+                      : (ch == 'f' ? "finally" 
+                                   : (ch == 'a' ? "autoreleasepool" : 0));
+        }
+        if (str) {
+          SourceLocation kwLoc = Tok.getLocation();
+          return ExprError(Diag(AtLoc, diag::err_unexpected_at) << 
+                             FixItHint::CreateReplacement(kwLoc, str));
+        }
+        else
+          return ExprError(Diag(AtLoc, diag::err_unexpected_at));
+      }
     }
   }
 }
