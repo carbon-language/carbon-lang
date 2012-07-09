@@ -273,6 +273,23 @@ const char *LabelStmt::getName() const {
   return getDecl()->getIdentifier()->getNameStart();
 }
 
+AttributedStmt *AttributedStmt::Create(ASTContext &C, SourceLocation Loc,
+                                       ArrayRef<const Attr*> Attrs,
+                                       Stmt *SubStmt) {
+  void *Mem = C.Allocate(sizeof(AttributedStmt) +
+                         sizeof(Attr*) * (Attrs.size() - 1),
+                         llvm::alignOf<AttributedStmt>());
+  return new (Mem) AttributedStmt(Loc, Attrs, SubStmt);
+}
+
+AttributedStmt *AttributedStmt::CreateEmpty(ASTContext &C, unsigned NumAttrs) {
+  assert(NumAttrs > 0 && "NumAttrs should be greater than zero");
+  void *Mem = C.Allocate(sizeof(AttributedStmt) +
+                         sizeof(Attr*) * (NumAttrs - 1),
+                         llvm::alignOf<AttributedStmt>());
+  return new (Mem) AttributedStmt(EmptyShell(), NumAttrs);
+}
+
 // This is defined here to avoid polluting Stmt.h with importing Expr.h
 SourceRange ReturnStmt::getSourceRange() const {
   if (RetExpr)

@@ -797,24 +797,32 @@ public:
 class AttributedStmt : public Stmt {
   Stmt *SubStmt;
   SourceLocation AttrLoc;
-  AttrVec Attrs;
-  // TODO: It can be done as Attr *Attrs[1]; and variable size array as in
-  // StringLiteral
+  unsigned NumAttrs;
+  const Attr *Attrs[1];
 
   friend class ASTStmtReader;
 
-public:
-  AttributedStmt(SourceLocation loc, const AttrVec &attrs, Stmt *substmt)
-    : Stmt(AttributedStmtClass), SubStmt(substmt), AttrLoc(loc), Attrs(attrs) {
+  AttributedStmt(SourceLocation Loc, ArrayRef<const Attr*> Attrs, Stmt *SubStmt)
+    : Stmt(AttributedStmtClass), SubStmt(SubStmt), AttrLoc(Loc),
+      NumAttrs(Attrs.size()) {
+    memcpy(this->Attrs, Attrs.data(), Attrs.size() * sizeof(Attr*));
   }
 
-  // \brief Build an empty attributed statement.
-  explicit AttributedStmt(EmptyShell Empty)
-    : Stmt(AttributedStmtClass, Empty) {
+  explicit AttributedStmt(EmptyShell Empty, unsigned NumAttrs)
+    : Stmt(AttributedStmtClass, Empty), NumAttrs(NumAttrs) {
+    memset(Attrs, 0, NumAttrs * sizeof(Attr*));
   }
+
+public:
+  static AttributedStmt *Create(ASTContext &C, SourceLocation Loc,
+                                ArrayRef<const Attr*> Attrs, Stmt *SubStmt);
+  // \brief Build an empty attributed statement.
+  static AttributedStmt *CreateEmpty(ASTContext &C, unsigned NumAttrs);
 
   SourceLocation getAttrLoc() const { return AttrLoc; }
-  const AttrVec &getAttrs() const { return Attrs; }
+  ArrayRef<const Attr*> getAttrs() const {
+    return ArrayRef<const Attr*>(Attrs, NumAttrs);
+  }
   Stmt *getSubStmt() { return SubStmt; }
   const Stmt *getSubStmt() const { return SubStmt; }
 

@@ -3086,10 +3086,12 @@ void ASTWriter::WriteMergedDecls() {
 //===----------------------------------------------------------------------===//
 
 /// \brief Write a record containing the given attributes.
-void ASTWriter::WriteAttributes(const AttrVec &Attrs, RecordDataImpl &Record) {
+void ASTWriter::WriteAttributes(ArrayRef<const Attr*> Attrs,
+                                RecordDataImpl &Record) {
   Record.push_back(Attrs.size());
-  for (AttrVec::const_iterator i = Attrs.begin(), e = Attrs.end(); i != e; ++i){
-    const Attr * A = *i;
+  for (ArrayRef<const Attr *>::iterator i = Attrs.begin(),
+                                        e = Attrs.end(); i != e; ++i){
+    const Attr *A = *i;
     Record.push_back(A->getKind()); // FIXME: stable encoding, target attrs
     AddSourceRange(A->getRange(), Record);
 

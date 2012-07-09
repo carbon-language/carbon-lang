@@ -370,12 +370,10 @@ Sema::ActOnLabelStmt(SourceLocation IdentLoc, LabelDecl *TheDecl,
 }
 
 StmtResult Sema::ActOnAttributedStmt(SourceLocation AttrLoc,
-                                     const AttrVec &Attrs,
+                                     ArrayRef<const Attr*> Attrs,
                                      Stmt *SubStmt) {
-  // Fill in the declaration and return it. Variable length will require to
-  // change this to AttributedStmt::Create(Context, ....);
-  // and probably using ArrayRef
-  AttributedStmt *LS = new (Context) AttributedStmt(AttrLoc, Attrs, SubStmt);
+  // Fill in the declaration and return it.
+  AttributedStmt *LS = AttributedStmt::Create(Context, AttrLoc, Attrs, SubStmt);
   return Owned(LS);
 }
 

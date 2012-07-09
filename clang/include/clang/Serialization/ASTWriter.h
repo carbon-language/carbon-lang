@@ -427,7 +427,7 @@ private:
   void WriteReferencedSelectorsPool(Sema &SemaRef);
   void WriteIdentifierTable(Preprocessor &PP, IdentifierResolver &IdResolver,
                             bool IsModule);
-  void WriteAttributes(const AttrVec &Attrs, RecordDataImpl &Record);
+  void WriteAttributes(ArrayRef<const Attr*> Attrs, RecordDataImpl &Record);
   void ResolveDeclUpdatesBlocks();
   void WriteDeclUpdatesBlocks();
   void WriteDeclReplacementsBlock();

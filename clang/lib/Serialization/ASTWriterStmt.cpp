@@ -109,6 +109,7 @@ void ASTStmtWriter::VisitLabelStmt(LabelStmt *S) {
 
 void ASTStmtWriter::VisitAttributedStmt(AttributedStmt *S) {
   VisitStmt(S);
+  Record.push_back(S->getAttrs().size());
   Writer.WriteAttributes(S->getAttrs(), Record);
   Writer.AddStmt(S->getSubStmt());
   Writer.AddSourceLocation(S->getAttrLoc(), Record);
