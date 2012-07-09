@@ -88,12 +88,12 @@ bool DescribeAddrIfMyRedZone(const Global &g, uptr addr) {
 
 
 bool DescribeAddrIfGlobal(uptr addr) {
-  if (!FLAG_report_globals) return false;
+  if (!flags()->report_globals) return false;
   ScopedLock lock(&mu_for_globals);
   bool res = false;
   for (ListOfGlobals *l = list_of_globals; l; l = l->next) {
     const Global &g = *l->g;
-    if (FLAG_report_globals >= 2)
+    if (flags()->report_globals >= 2)
       AsanPrintf("Search Global: beg=%p size=%zu name=%s\n",
                  (void*)g.beg, g.size, (char*)g.name);
     res |= DescribeAddrIfMyRedZone(g, addr);
@@ -106,7 +106,7 @@ bool DescribeAddrIfGlobal(uptr addr) {
 // so we store the globals in a map.
 static void RegisterGlobal(const Global *g) {
   CHECK(asan_inited);
-  CHECK(FLAG_report_globals);
+  CHECK(flags()->report_globals);
   CHECK(AddrIsInMem(g->beg));
   CHECK(AddrIsAlignedByGranularity(g->beg));
   CHECK(AddrIsAlignedByGranularity(g->size_with_redzone));
@@ -116,14 +116,14 @@ static void RegisterGlobal(const Global *g) {
   l->g = g;
   l->next = list_of_globals;
   list_of_globals = l;
-  if (FLAG_report_globals >= 2)
+  if (flags()->report_globals >= 2)
     Report("Added Global: beg=%p size=%zu name=%s\n",
            (void*)g->beg, g->size, g->name);
 }
 
 static void UnregisterGlobal(const Global *g) {
   CHECK(asan_inited);
-  CHECK(FLAG_report_globals);
+  CHECK(flags()->report_globals);
   CHECK(AddrIsInMem(g->beg));
   CHECK(AddrIsAlignedByGranularity(g->beg));
   CHECK(AddrIsAlignedByGranularity(g->size_with_redzone));
@@ -141,7 +141,7 @@ using namespace __asan;  // NOLINT
 // Register one global with a default redzone.
 void __asan_register_global(uptr addr, uptr size,
                             const char *name) {
-  if (!FLAG_report_globals) return;
+  if (!flags()->report_globals) return;
   ScopedLock lock(&mu_for_globals);
   Global *g = (Global *)allocator_for_globals.Allocate(sizeof(Global));
   g->beg = addr;
@@ -153,7 +153,7 @@ void __asan_register_global(uptr addr, uptr size,
 
 // Register an array of globals.
 void __asan_register_globals(__asan_global *globals, uptr n) {
-  if (!FLAG_report_globals) return;
+  if (!flags()->report_globals) return;
   ScopedLock lock(&mu_for_globals);
   for (uptr i = 0; i < n; i++) {
     RegisterGlobal(&globals[i]);
@@ -163,7 +163,7 @@ void __asan_register_globals(__asan_global *globals, uptr n) {
 // Unregister an array of globals.
 // We must do it when a shared objects gets dlclosed.
 void __asan_unregister_globals(__asan_global *globals, uptr n) {
-  if (!FLAG_report_globals) return;
+  if (!flags()->report_globals) return;
   ScopedLock lock(&mu_for_globals);
   for (uptr i = 0; i < n; i++) {
     UnregisterGlobal(&globals[i]);

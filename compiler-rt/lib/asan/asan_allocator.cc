@@ -42,7 +42,7 @@
 
 namespace __asan {
 
-#define  REDZONE FLAG_redzone
+#define  REDZONE (flags()->redzone)
 static const uptr kMinAllocSize = REDZONE * 2;
 static const u64 kMaxAvailableRam = 128ULL << 30;  // 128G
 static const uptr kMaxThreadLocalQuarantine = 1 << 20;  // 1M
@@ -134,7 +134,7 @@ static u8 *MmapNewPagesAndPoisonShadow(uptr size) {
   CHECK(IsAligned(size, kPageSize));
   u8 *res = (u8*)MmapOrDie(size, __FUNCTION__);
   PoisonShadow((uptr)res, size, kAsanHeapLeftRedzoneMagic);
-  if (FLAG_debug) {
+  if (flags()->debug) {
     Printf("ASAN_MMAP: [%p, %p)\n", res, res + size);
   }
   return res;
@@ -186,7 +186,7 @@ struct AsanChunk: public ChunkBase {
     return (u32*)((uptr)this + sizeof(ChunkBase));
   }
   u32 *compressed_free_stack() {
-    return (u32*)((uptr)this + Max(REDZONE, (uptr)sizeof(ChunkBase)));
+    return (u32*)((uptr)this + Max((uptr)REDZONE, (uptr)sizeof(ChunkBase)));
   }
 
   // The left redzone after the ChunkBase is given to the alloc stack trace.
@@ -339,12 +339,12 @@ class MallocInfo {
 
   void SwallowThreadLocalMallocStorage(AsanThreadLocalMallocStorage *x,
                                        bool eat_free_lists) {
-    CHECK(FLAG_quarantine_size > 0);
+    CHECK(flags()->quarantine_size > 0);
     ScopedLock lock(&mu_);
     AsanChunkFifoList *q = &x->quarantine_;
     if (q->size() > 0) {
       quarantine_.PushList(q);
-      while (quarantine_.size() > FLAG_quarantine_size) {
+      while (quarantine_.size() > flags()->quarantine_size) {
         QuarantinePop();
       }
     }
@@ -644,7 +644,7 @@ static u8 *Allocate(uptr alignment, uptr size, AsanStackTrace *stack) {
   CHECK(size_to_allocate >= needed_size);
   CHECK(IsAligned(size_to_allocate, REDZONE));
 
-  if (FLAG_v >= 3) {
+  if (flags()->verbosity >= 3) {
     Printf("Allocate align: %zu size: %zu class: %u real: %zu\n",
          alignment, size, size_class, size_to_allocate);
   }
@@ -704,7 +704,7 @@ static u8 *Allocate(uptr alignment, uptr size, AsanStackTrace *stack) {
     PoisonHeapPartialRightRedzone(addr + rounded_size - REDZONE,
                                   size & (REDZONE - 1));
   }
-  if (size <= FLAG_max_malloc_fill_size) {
+  if (size <= flags()->max_malloc_fill_size) {
     REAL(memset)((void*)addr, 0, rounded_size);
   }
   return (u8*)addr;
@@ -714,7 +714,7 @@ static void Deallocate(u8 *ptr, AsanStackTrace *stack) {
   if (!ptr) return;
   CHECK(stack);
 
-  if (FLAG_debug) {
+  if (flags()->debug) {
     CHECK(malloc_info.FindPageGroup((uptr)ptr));
   }
 
@@ -882,7 +882,7 @@ uptr asan_malloc_usable_size(void *ptr, AsanStackTrace *stack) {
   CHECK(stack);
   if (ptr == 0) return 0;
   uptr usable_size = malloc_info.AllocationSize((uptr)ptr);
-  if (FLAG_check_malloc_usable_size && (usable_size == 0)) {
+  if (flags()->check_malloc_usable_size && (usable_size == 0)) {
     AsanReport("ERROR: AddressSanitizer attempting to call "
                "malloc_usable_size() for pointer which is "
                "not owned: %p\n", ptr);
@@ -1055,7 +1055,7 @@ void FakeStack::OnFree(uptr ptr, uptr size, uptr real_stack) {
 using namespace __asan;  // NOLINT
 
 uptr __asan_stack_malloc(uptr size, uptr real_stack) {
-  if (!FLAG_use_fake_stack) return real_stack;
+  if (!flags()->use_fake_stack) return real_stack;
   AsanThread *t = asanThreadRegistry().GetCurrent();
   if (!t) {
     // TSD is gone, use the real stack.
@@ -1067,7 +1067,7 @@ uptr __asan_stack_malloc(uptr size, uptr real_stack) {
 }
 
 void __asan_stack_free(uptr ptr, uptr size, uptr real_stack) {
-  if (!FLAG_use_fake_stack) return;
+  if (!flags()->use_fake_stack) return;
   if (ptr != real_stack) {
     FakeStack::OnFree(ptr, size, real_stack);
   }

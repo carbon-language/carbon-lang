@@ -45,7 +45,7 @@ void AsanStackTrace::PrintStack(uptr *addr, uptr size) {
     uptr pc = addr[i];
     AddressInfo addr_frames[64];
     uptr addr_frames_num = 0;
-    if (FLAG_symbolize) {
+    if (flags()->symbolize) {
       bool last_frame = (i == size - 1) || !addr[i + 1];
       addr_frames_num = SymbolizeCode(pc - !last_frame, addr_frames,
                                       ASAN_ARRAY_SIZE(addr_frames));

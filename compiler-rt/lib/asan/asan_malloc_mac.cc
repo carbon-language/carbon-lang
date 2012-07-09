@@ -65,7 +65,7 @@ INTERCEPTOR(void, free, void *ptr) {
     malloc_zone_free(zone, ptr);
 #endif
   } else {
-    if (FLAG_replace_cfallocator) {
+    if (flags()->replace_cfallocator) {
       // Make sure we're not hitting the previous page. This may be incorrect
       // if ASan's malloc returns an address ending with 0xFF8, which will be
       // then padded to a page boundary with a CFAllocatorRef.
@@ -95,7 +95,7 @@ namespace __asan {
 // See http://code.google.com/p/address-sanitizer/issues/detail?id=87
 // and http://opensource.apple.com/source/CF/CF-550.43/CFRuntime.c
 INTERCEPTOR(void, __CFInitialize) {
-  CHECK(FLAG_replace_cfallocator);
+  CHECK(flags()->replace_cfallocator);
   CHECK(asan_inited);
   REAL(__CFInitialize)();
   if (!cf_asan) ReplaceCFAllocator();
@@ -169,7 +169,7 @@ void print_zone_for_ptr(void *ptr) {
 
 void ALWAYS_INLINE free_common(void *context, void *ptr) {
   if (!ptr) return;
-  if (!FLAG_mac_ignore_invalid_free || asan_mz_size(ptr)) {
+  if (!flags()->mac_ignore_invalid_free || asan_mz_size(ptr)) {
     GET_STACK_TRACE_HERE_FOR_FREE(ptr);
     asan_free(ptr, &stack);
   } else {
@@ -403,7 +403,7 @@ void ReplaceSystemMalloc() {
   // Make sure the default allocator was replaced.
   CHECK(malloc_default_zone() == &asan_zone);
 
-  if (FLAG_replace_cfallocator) {
+  if (flags()->replace_cfallocator) {
     // If __CFInitialize() hasn't been called yet, cf_asan will be created and
     // installed as the default allocator after __CFInitialize() finishes (see
     // the interceptor for __CFInitialize() above). Otherwise install cf_asan

@@ -42,7 +42,7 @@ AsanThread *AsanThread::Create(u32 parent_tid, thread_callback_t start_routine,
 
 void AsanThreadSummary::TSDDtor(void *tsd) {
   AsanThreadSummary *summary = (AsanThreadSummary*)tsd;
-  if (FLAG_v >= 1) {
+  if (flags()->verbosity >= 1) {
     Report("T%d TSDDtor\n", summary->tid());
   }
   if (summary->thread()) {
@@ -51,7 +51,7 @@ void AsanThreadSummary::TSDDtor(void *tsd) {
 }
 
 void AsanThread::Destroy() {
-  if (FLAG_v >= 1) {
+  if (flags()->verbosity >= 1) {
     Report("T%d exited\n", tid());
   }
 
@@ -71,7 +71,7 @@ void AsanThread::Init() {
   CHECK(AddrIsInMem(stack_bottom_));
   CHECK(AddrIsInMem(stack_top_));
   ClearShadowForThreadStack();
-  if (FLAG_v >= 1) {
+  if (flags()->verbosity >= 1) {
     int local = 0;
     Report("T%d: stack [%p,%p) size 0x%zx; local=%p\n",
            tid(), (void*)stack_bottom_, (void*)stack_top_,
@@ -82,7 +82,7 @@ void AsanThread::Init() {
 
 thread_return_t AsanThread::ThreadStart() {
   Init();
-  if (FLAG_use_sigaltstack) SetAlternateSignalStack();
+  if (flags()->use_sigaltstack) SetAlternateSignalStack();
 
   if (!start_routine_) {
     // start_routine_ == 0 if we're on the main thread or on one of the
@@ -94,7 +94,7 @@ thread_return_t AsanThread::ThreadStart() {
 
   thread_return_t res = start_routine_(arg_);
   malloc_storage().CommitBack();
-  if (FLAG_use_sigaltstack) UnsetAlternateSignalStack();
+  if (flags()->use_sigaltstack) UnsetAlternateSignalStack();
 
   this->Destroy();
 

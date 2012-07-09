@@ -69,7 +69,7 @@ void GetPcSpBp(void *context, uptr *pc, uptr *sp, uptr *bp) {
 }
 
 bool AsanInterceptsSignal(int signum) {
-  return signum == SIGSEGV && FLAG_handle_segv;
+  return signum == SIGSEGV && flags()->handle_segv;
 }
 
 AsanLock::AsanLock(LinkerInitialized) {

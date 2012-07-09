@@ -321,7 +321,7 @@ INTERCEPTOR(void*, memcpy, void *to, const void *from, uptr size) {
     return REAL(memcpy)(to, from, size);
   }
   ENSURE_ASAN_INITED();
-  if (FLAG_replace_intrin) {
+  if (flags()->replace_intrin) {
     if (to != from) {
       // We do not treat memcpy with to==from as a bug.
       // See http://llvm.org/bugs/show_bug.cgi?id=11763.
@@ -338,7 +338,7 @@ INTERCEPTOR(void*, memmove, void *to, const void *from, uptr size) {
     return REAL(memmove)(to, from, size);
   }
   ENSURE_ASAN_INITED();
-  if (FLAG_replace_intrin) {
+  if (flags()->replace_intrin) {
     ASAN_WRITE_RANGE(from, size);
     ASAN_READ_RANGE(to, size);
   }
@@ -351,7 +351,7 @@ INTERCEPTOR(void*, memset, void *block, int c, uptr size) {
     return REAL(memset)(block, c, size);
   }
   ENSURE_ASAN_INITED();
-  if (FLAG_replace_intrin) {
+  if (flags()->replace_intrin) {
     ASAN_WRITE_RANGE(block, size);
   }
   return REAL(memset)(block, c, size);
@@ -360,7 +360,7 @@ INTERCEPTOR(void*, memset, void *block, int c, uptr size) {
 INTERCEPTOR(char*, strchr, const char *str, int c) {
   ENSURE_ASAN_INITED();
   char *result = REAL(strchr)(str, c);
-  if (FLAG_replace_str) {
+  if (flags()->replace_str) {
     uptr bytes_read = (result ? result - str : REAL(strlen)(str)) + 1;
     ASAN_READ_RANGE(str, bytes_read);
   }
@@ -390,7 +390,7 @@ INTERCEPTOR(int, strcasecmp, const char *s1, const char *s2) {
 
 INTERCEPTOR(char*, strcat, char *to, const char *from) {  // NOLINT
   ENSURE_ASAN_INITED();
-  if (FLAG_replace_str) {
+  if (flags()->replace_str) {
     uptr from_length = REAL(strlen)(from);
     ASAN_READ_RANGE(from, from_length + 1);
     if (from_length > 0) {
@@ -405,7 +405,7 @@ INTERCEPTOR(char*, strcat, char *to, const char *from) {  // NOLINT
 
 INTERCEPTOR(char*, strncat, char *to, const char *from, uptr size) {
   ENSURE_ASAN_INITED();
-  if (FLAG_replace_str && size > 0) {
+  if (flags()->replace_str && size > 0) {
     uptr from_length = MaybeRealStrnlen(from, size);
     ASAN_READ_RANGE(from, Min(size, from_length + 1));
     uptr to_length = REAL(strlen)(to);
@@ -442,7 +442,7 @@ INTERCEPTOR(char*, strcpy, char *to, const char *from) {  // NOLINT
     return REAL(strcpy)(to, from);  // NOLINT
   }
   ENSURE_ASAN_INITED();
-  if (FLAG_replace_str) {
+  if (flags()->replace_str) {
     uptr from_size = REAL(strlen)(from) + 1;
     CHECK_RANGES_OVERLAP("strcpy", to, from_size, from, from_size);
     ASAN_READ_RANGE(from, from_size);
@@ -453,7 +453,7 @@ INTERCEPTOR(char*, strcpy, char *to, const char *from) {  // NOLINT
 
 INTERCEPTOR(char*, strdup, const char *s) {
   ENSURE_ASAN_INITED();
-  if (FLAG_replace_str) {
+  if (flags()->replace_str) {
     uptr length = REAL(strlen)(s);
     ASAN_READ_RANGE(s, length + 1);
   }
@@ -468,7 +468,7 @@ INTERCEPTOR(uptr, strlen, const char *s) {
   }
   ENSURE_ASAN_INITED();
   uptr length = REAL(strlen)(s);
-  if (FLAG_replace_str) {
+  if (flags()->replace_str) {
     ASAN_READ_RANGE(s, length + 1);
   }
   return length;
@@ -508,7 +508,7 @@ INTERCEPTOR(int, strncmp, const char *s1, const char *s2, uptr size) {
 
 INTERCEPTOR(char*, strncpy, char *to, const char *from, uptr size) {
   ENSURE_ASAN_INITED();
-  if (FLAG_replace_str) {
+  if (flags()->replace_str) {
     uptr from_size = Min(size, MaybeRealStrnlen(from, size) + 1);
     CHECK_RANGES_OVERLAP("strncpy", to, from_size, from, from_size);
     ASAN_READ_RANGE(from, from_size);
@@ -521,7 +521,7 @@ INTERCEPTOR(char*, strncpy, char *to, const char *from, uptr size) {
 INTERCEPTOR(uptr, strnlen, const char *s, uptr maxlen) {
   ENSURE_ASAN_INITED();
   uptr length = REAL(strnlen)(s, maxlen);
-  if (FLAG_replace_str) {
+  if (flags()->replace_str) {
     ASAN_READ_RANGE(s, Min(length + 1, maxlen));
   }
   return length;
@@ -548,7 +548,7 @@ static inline void FixRealStrtolEndptr(const char *nptr, char **endptr) {
 INTERCEPTOR(long, strtol, const char *nptr,  // NOLINT
             char **endptr, int base) {
   ENSURE_ASAN_INITED();
-  if (!FLAG_replace_str) {
+  if (!flags()->replace_str) {
     return REAL(strtol)(nptr, endptr, base);
   }
   char *real_endptr;
@@ -565,7 +565,7 @@ INTERCEPTOR(long, strtol, const char *nptr,  // NOLINT
 
 INTERCEPTOR(int, atoi, const char *nptr) {
   ENSURE_ASAN_INITED();
-  if (!FLAG_replace_str) {
+  if (!flags()->replace_str) {
     return REAL(atoi)(nptr);
   }
   char *real_endptr;
@@ -581,7 +581,7 @@ INTERCEPTOR(int, atoi, const char *nptr) {
 
 INTERCEPTOR(long, atol, const char *nptr) {  // NOLINT
   ENSURE_ASAN_INITED();
-  if (!FLAG_replace_str) {
+  if (!flags()->replace_str) {
     return REAL(atol)(nptr);
   }
   char *real_endptr;
@@ -595,7 +595,7 @@ INTERCEPTOR(long, atol, const char *nptr) {  // NOLINT
 INTERCEPTOR(long long, strtoll, const char *nptr,  // NOLINT
             char **endptr, int base) {
   ENSURE_ASAN_INITED();
-  if (!FLAG_replace_str) {
+  if (!flags()->replace_str) {
     return REAL(strtoll)(nptr, endptr, base);
   }
   char *real_endptr;
@@ -615,7 +615,7 @@ INTERCEPTOR(long long, strtoll, const char *nptr,  // NOLINT
 
 INTERCEPTOR(long long, atoll, const char *nptr) {  // NOLINT
   ENSURE_ASAN_INITED();
-  if (!FLAG_replace_str) {
+  if (!flags()->replace_str) {
     return REAL(atoll)(nptr);
   }
   char *real_endptr;
@@ -627,7 +627,7 @@ INTERCEPTOR(long long, atoll, const char *nptr) {  // NOLINT
 #endif  // ASAN_INTERCEPT_ATOLL_AND_STRTOLL
 
 #define ASAN_INTERCEPT_FUNC(name) do { \
-      if (!INTERCEPT_FUNCTION(name) && FLAG_v > 0) \
+      if (!INTERCEPT_FUNCTION(name) && flags()->verbosity > 0) \
         Report("AddressSanitizer: failed to intercept '" #name "'\n"); \
     } while (0)
 
@@ -731,7 +731,7 @@ void InitializeAsanInterceptors() {
   InitializeMacInterceptors();
 #endif
 
-  if (FLAG_v > 0) {
+  if (flags()->verbosity > 0) {
     Report("AddressSanitizer: libc interceptors initialized\n");
   }
 }

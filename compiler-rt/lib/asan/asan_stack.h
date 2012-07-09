@@ -90,10 +90,10 @@ struct AsanStackTrace {
       AsanStackTrace::GetCurrentPc(), GET_CURRENT_FRAME())
 
 #define GET_STACK_TRACE_HERE_FOR_MALLOC                             \
-  GET_STACK_TRACE_HERE(FLAG_malloc_context_size)
+  GET_STACK_TRACE_HERE(flags()->malloc_context_size)
 
 #define GET_STACK_TRACE_HERE_FOR_FREE(ptr)                          \
-  GET_STACK_TRACE_HERE(FLAG_malloc_context_size)
+  GET_STACK_TRACE_HERE(flags()->malloc_context_size)
 
 #define PRINT_CURRENT_STACK()                    \
   {                                              \

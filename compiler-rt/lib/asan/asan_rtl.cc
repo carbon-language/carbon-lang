@@ -22,6 +22,7 @@
 #include "asan_thread.h"
 #include "asan_thread_registry.h"
 #include "sanitizer_common/sanitizer_atomic.h"
+#include "sanitizer_common/sanitizer_flags.h"
 #include "sanitizer_common/sanitizer_libc.h"
 
 namespace __sanitizer {
@@ -33,17 +34,17 @@ void Die() {
     // Don't die twice - run a busy loop.
     while (1) { }
   }
-  if (FLAG_sleep_before_dying) {
-    Report("Sleeping for %zd second(s)\n", FLAG_sleep_before_dying);
-    SleepForSeconds(FLAG_sleep_before_dying);
+  if (flags()->sleep_before_dying) {
+    Report("Sleeping for %zd second(s)\n", flags()->sleep_before_dying);
+    SleepForSeconds(flags()->sleep_before_dying);
   }
-  if (FLAG_unmap_shadow_on_exit)
+  if (flags()->unmap_shadow_on_exit)
     UnmapOrDie((void*)kLowShadowBeg, kHighShadowEnd - kLowShadowBeg);
   if (death_callback)
     death_callback();
-  if (FLAG_abort_on_error)
+  if (flags()->abort_on_error)
     Abort();
-  Exit(FLAG_exitcode);
+  Exit(flags()->exitcode);
 }
 
 void CheckFailed(const char *file, int line, const char *cond, u64 v1, u64 v2) {
@@ -60,31 +61,97 @@ namespace __asan {
 // -------------------------- Flags ------------------------- {{{1
 static const uptr kMallocContextSize = 30;
 
-uptr  FLAG_malloc_context_size = kMallocContextSize;
-uptr  FLAG_max_malloc_fill_size = 0;
-s64 FLAG_v = 0;
-uptr  FLAG_redzone = (ASAN_LOW_MEMORY) ? 64 : 128;  // power of two, >= 32
-uptr  FLAG_quarantine_size = (ASAN_LOW_MEMORY) ? 1UL << 24 : 1UL << 28;
-static s64    FLAG_atexit = 0;
-bool    FLAG_poison_shadow = 1;
-s64 FLAG_report_globals = 1;
-bool    FLAG_handle_segv = ASAN_NEEDS_SEGV;
-bool    FLAG_use_sigaltstack = 0;
-bool    FLAG_symbolize = 0;
-s64 FLAG_demangle = 1;
-s64 FLAG_debug = 0;
-bool    FLAG_replace_cfallocator = 1;  // Used on Mac only.
-bool    FLAG_mac_ignore_invalid_free = 0;  // Used on Mac only.
-bool    FLAG_replace_str = 1;
-bool    FLAG_replace_intrin = 1;
-bool    FLAG_use_fake_stack = 1;
-s64 FLAG_exitcode = ASAN_DEFAULT_FAILURE_EXITCODE;
-bool    FLAG_allow_user_poisoning = 1;
-s64 FLAG_sleep_before_dying = 0;
-bool    FLAG_abort_on_error = 0;
-bool    FLAG_unmap_shadow_on_exit = 0;
-bool    FLAG_disable_core = __WORDSIZE == 64;
-bool    FLAG_check_malloc_usable_size = 1;
+static Flags asan_flags;
+
+Flags *flags() {
+  return &asan_flags;
+}
+
+// Can be overriden in frontend.
+void WEAK OverrideFlags(Flags *f) {
+  (void)f;
+}
+
+static void ParseFlagsFromString(Flags *f, const char *str) {
+  ParseFlag(str, &f->quarantine_size, "quarantine_size");
+  ParseFlag(str, &f->symbolize, "symbolize");
+  ParseFlag(str, &f->verbosity, "verbosity");
+  ParseFlag(str, &f->redzone, "redzone");
+  CHECK(f->redzone >= 16);
+  CHECK(IsPowerOfTwo(f->redzone));
+
+  ParseFlag(str, &f->debug, "debug");
+  ParseFlag(str, &f->poison_shadow, "poison_shadow");
+  ParseFlag(str, &f->report_globals, "report_globals");
+  ParseFlag(str, &f->malloc_context_size, "malloc_context_size");
+  CHECK(f->malloc_context_size <= kMallocContextSize);
+
+  ParseFlag(str, &f->replace_str, "replace_str");
+  ParseFlag(str, &f->replace_intrin, "replace_intrin");
+  ParseFlag(str, &f->replace_cfallocator, "replace_cfallocator");
+  ParseFlag(str, &f->mac_ignore_invalid_free, "mac_ignore_invalid_free");
+  ParseFlag(str, &f->use_fake_stack, "use_fake_stack");
+  ParseFlag(str, &f->max_malloc_fill_size, "max_malloc_fill_size");
+  ParseFlag(str, &f->exitcode, "exitcode");
+  ParseFlag(str, &f->allow_user_poisoning, "allow_user_poisoning");
+  ParseFlag(str, &f->sleep_before_dying, "sleep_before_dying");
+  ParseFlag(str, &f->handle_segv, "handle_segv");
+  ParseFlag(str, &f->use_sigaltstack, "use_sigaltstack");
+  // Allow the users to work around the bug in Nvidia drivers prior to 295.*.
+  ParseFlag(str, &f->check_malloc_usable_size, "check_malloc_usable_size");
+  ParseFlag(str, &f->unmap_shadow_on_exit, "unmap_shadow_on_exit");
+  ParseFlag(str, &f->abort_on_error, "abort_on_error");
+  ParseFlag(str, &f->atexit, "atexit");
+  // By default, disable core dumper on 64-bit --
+  // it makes little sense to dump 16T+ core.
+  ParseFlag(str, &f->disable_core, "disable_core");
+}
+
+void InitializeFlags(Flags *f, const char *env) {
+  internal_memset(f, 0, sizeof(*f));
+
+  f->quarantine_size = (ASAN_LOW_MEMORY) ? 1UL << 24 : 1UL << 28;
+  f->symbolize = false;
+  f->verbosity = 0;
+  f->redzone = (ASAN_LOW_MEMORY) ? 64 : 128;  // power of two, >= 32.
+  f->debug = 0;
+  f->poison_shadow = true;
+  f->report_globals = 1;
+  f->malloc_context_size = kMallocContextSize;
+  f->replace_str = true;
+  f->replace_intrin = true;
+  f->replace_cfallocator = true;  // Used on Mac only.
+  f->mac_ignore_invalid_free = false;  // Used on Mac only.
+  f->use_fake_stack = true;
+  f->max_malloc_fill_size = 0;
+  f->exitcode = ASAN_DEFAULT_FAILURE_EXITCODE;
+  f->allow_user_poisoning = true;
+  f->sleep_before_dying = 0;
+  f->handle_segv = ASAN_NEEDS_SEGV;
+  f->use_sigaltstack = false;
+  f->check_malloc_usable_size = true;
+  f->unmap_shadow_on_exit = false;
+  f->abort_on_error = false;
+  f->atexit = false;
+  f->disable_core = (__WORDSIZE == 64);
+
+  // Let a frontend override.
+  OverrideFlags(f);
+
+  // Override from user-specified string.
+#if !defined(_WIN32)
+  if (__asan_default_options) {
+    ParseFlagsFromString(f, __asan_default_options);
+    if (flags()->verbosity) {
+      Report("Using the defaults from __asan_default_options: %s\n",
+             __asan_default_options);
+    }
+  }
+#endif
+
+  // Override from command line.
+  ParseFlagsFromString(f, env);
+}
 
 // -------------------------- Globals --------------------- {{{1
 int asan_inited;
@@ -264,44 +331,6 @@ static NOINLINE void force_interface_symbols() {
 }
 
 // -------------------------- Init ------------------- {{{1
-static void IntFlagValue(const char *flags, const char *flag,
-                         s64 *out_val) {
-  if (!flags) return;
-  const char *str = internal_strstr(flags, flag);
-  if (!str) return;
-  *out_val = internal_atoll(str + internal_strlen(flag));
-}
-
-static void BoolFlagValue(const char *flags, const char *flag,
-                          bool *out_val) {
-  if (!flags) return;
-  const char *str = internal_strstr(flags, flag);
-  if (!str) return;
-  const char *suffix = str + internal_strlen(flag);
-  if (!internal_atoll(str + internal_strlen(flag))) {
-    if (suffix[0] == '0') {
-      *out_val = false;
-      return;
-    }
-  } else {
-    *out_val = true;
-    return;
-  }
-  switch (suffix[0]) {
-    case 'y':
-    case 't': {
-      *out_val = true;
-      break;
-    }
-    case 'n':
-    case 'f': {
-      *out_val = false;
-      break;
-    }
-    default: return;
-  }
-}
-
 static void asan_atexit() {
   AsanPrintf("AddressSanitizer exit stats:\n");
   __asan_print_accumulated_stats();
@@ -313,8 +342,8 @@ static void asan_atexit() {
 using namespace __asan;  // NOLINT
 
 int __asan_set_error_exit_code(int exit_code) {
-  int old = FLAG_exitcode;
-  FLAG_exitcode = exit_code;
+  int old = flags()->exitcode;
+  flags()->exitcode = exit_code;
   return old;
 }
 
@@ -403,7 +432,7 @@ void __asan_report_error(uptr pc, uptr bp, uptr sp,
              access_size ? (is_write ? "WRITE" : "READ") : "ACCESS",
              access_size, (void*)addr, curr_tid);
 
-  if (FLAG_debug) {
+  if (flags()->debug) {
     PrintBytes("PC: ", (uptr*)pc);
   }
 
@@ -437,48 +466,6 @@ void __asan_report_error(uptr pc, uptr bp, uptr sp,
   Die();
 }
 
-static void ParseAsanOptions(const char *options) {
-  IntFlagValue(options, "malloc_context_size=",
-               (s64*)&FLAG_malloc_context_size);
-  CHECK(FLAG_malloc_context_size <= kMallocContextSize);
-
-  IntFlagValue(options, "max_malloc_fill_size=",
-               (s64*)&FLAG_max_malloc_fill_size);
-
-  IntFlagValue(options, "verbosity=", &FLAG_v);
-
-  IntFlagValue(options, "redzone=", (s64*)&FLAG_redzone);
-  CHECK(FLAG_redzone >= 16);
-  CHECK(IsPowerOfTwo(FLAG_redzone));
-  IntFlagValue(options, "quarantine_size=", (s64*)&FLAG_quarantine_size);
-
-  IntFlagValue(options, "atexit=", &FLAG_atexit);
-  BoolFlagValue(options, "poison_shadow=", &FLAG_poison_shadow);
-  IntFlagValue(options, "report_globals=", &FLAG_report_globals);
-  BoolFlagValue(options, "handle_segv=", &FLAG_handle_segv);
-  BoolFlagValue(options, "use_sigaltstack=", &FLAG_use_sigaltstack);
-  BoolFlagValue(options, "symbolize=", &FLAG_symbolize);
-  IntFlagValue(options, "demangle=", &FLAG_demangle);
-  IntFlagValue(options, "debug=", &FLAG_debug);
-  BoolFlagValue(options, "replace_cfallocator=", &FLAG_replace_cfallocator);
-  BoolFlagValue(options, "mac_ignore_invalid_free=",
-                &FLAG_mac_ignore_invalid_free);
-  BoolFlagValue(options, "replace_str=", &FLAG_replace_str);
-  BoolFlagValue(options, "replace_intrin=", &FLAG_replace_intrin);
-  BoolFlagValue(options, "use_fake_stack=", &FLAG_use_fake_stack);
-  IntFlagValue(options, "exitcode=", &FLAG_exitcode);
-  BoolFlagValue(options, "allow_user_poisoning=", &FLAG_allow_user_poisoning);
-  IntFlagValue(options, "sleep_before_dying=", &FLAG_sleep_before_dying);
-  BoolFlagValue(options, "abort_on_error=", &FLAG_abort_on_error);
-  BoolFlagValue(options, "unmap_shadow_on_exit=", &FLAG_unmap_shadow_on_exit);
-  // By default, disable core dumper on 64-bit --
-  // it makes little sense to dump 16T+ core.
-  BoolFlagValue(options, "disable_core=", &FLAG_disable_core);
-
-  // Allow the users to work around the bug in Nvidia drivers prior to 295.*.
-  BoolFlagValue(options, "check_malloc_usable_size=",
-                &FLAG_check_malloc_usable_size);
-}
 
 void __asan_init() {
   if (asan_inited) return;
@@ -487,24 +474,15 @@ void __asan_init() {
   // Make sure we are not statically linked.
   AsanDoesNotSupportStaticLinkage();
 
-#if !defined(_WIN32)
-  if (__asan_default_options) {
-    ParseAsanOptions(__asan_default_options);
-    if (FLAG_v) {
-      Report("Using the defaults from __asan_default_options: %s\n",
-             __asan_default_options);
-    }
-  }
-#endif
-  // flags
+  // Initialize flags.
   const char *options = GetEnv("ASAN_OPTIONS");
-  ParseAsanOptions(options);
+  InitializeFlags(flags(), options);
 
-  if (FLAG_v && options) {
+  if (flags()->verbosity && options) {
     Report("Parsed ASAN_OPTIONS: %s\n", options);
   }
 
-  if (FLAG_atexit) {
+  if (flags()->atexit) {
     Atexit(asan_atexit);
   }
 
@@ -514,7 +492,7 @@ void __asan_init() {
   ReplaceSystemMalloc();
   ReplaceOperatorsNewAndDelete();
 
-  if (FLAG_v) {
+  if (flags()->verbosity) {
     Printf("|| `[%p, %p]` || HighMem    ||\n",
            (void*)kHighMemBeg, (void*)kHighMemEnd);
     Printf("|| `[%p, %p]` || HighShadow ||\n",
@@ -530,8 +508,8 @@ void __asan_init() {
            (void*)MEM_TO_SHADOW(kLowShadowEnd),
            (void*)MEM_TO_SHADOW(kHighShadowBeg),
            (void*)MEM_TO_SHADOW(kHighShadowEnd));
-    Printf("red_zone=%zu\n", (uptr)FLAG_redzone);
-    Printf("malloc_context_size=%zu\n", (uptr)FLAG_malloc_context_size);
+    Printf("red_zone=%zu\n", (uptr)flags()->redzone);
+    Printf("malloc_context_size=%zu\n", (uptr)flags()->malloc_context_size);
 
     Printf("SHADOW_SCALE: %zx\n", (uptr)SHADOW_SCALE);
     Printf("SHADOW_GRANULARITY: %zx\n", (uptr)SHADOW_GRANULARITY);
@@ -539,7 +517,7 @@ void __asan_init() {
     CHECK(SHADOW_SCALE >= 3 && SHADOW_SCALE <= 7);
   }
 
-  if (FLAG_disable_core) {
+  if (flags()->disable_core) {
     DisableCoreDumper();
   }
 
@@ -574,7 +552,7 @@ void __asan_init() {
   asanThreadRegistry().GetMain()->ThreadStart();
   force_interface_symbols();  // no-op.
 
-  if (FLAG_v) {
+  if (flags()->verbosity) {
     Report("AddressSanitizer Init done\n");
   }
 }

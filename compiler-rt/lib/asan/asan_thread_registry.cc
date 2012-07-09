@@ -88,7 +88,7 @@ AsanThread *AsanThreadRegistry::GetCurrent() {
 
 void AsanThreadRegistry::SetCurrent(AsanThread *t) {
   CHECK(t->summary());
-  if (FLAG_v >= 2) {
+  if (flags()->verbosity >= 2) {
     Report("SetCurrent: %p for thread %p\n",
            t->summary(), (void*)GetThreadSelf());
   }

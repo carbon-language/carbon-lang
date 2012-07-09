@@ -89,7 +89,7 @@ void *AsanDoesNotSupportStaticLinkage() {
 }
 
 bool AsanInterceptsSignal(int signum) {
-  return (signum == SIGSEGV || signum == SIGBUS) && FLAG_handle_segv;
+  return (signum == SIGSEGV || signum == SIGBUS) && flags()->handle_segv;
 }
 
 AsanLock::AsanLock(LinkerInitialized) {
@@ -149,7 +149,7 @@ mach_error_t __interception_allocate_island(void **ptr,
     if (island_allocator_pos != (void*)kIslandBeg) {
       return KERN_NO_SPACE;
     }
-    if (FLAG_v) {
+    if (flags()->verbosity) {
       Report("Mapped pages %p--%p for branch islands.\n",
              (void*)kIslandBeg, (void*)kIslandEnd);
     }
@@ -158,7 +158,7 @@ mach_error_t __interception_allocate_island(void **ptr,
   };
   *ptr = island_allocator_pos;
   island_allocator_pos = (char*)island_allocator_pos + kPageSize;
-  if (FLAG_v) {
+  if (flags()->verbosity) {
     Report("Branch island allocated at %p\n", *ptr);
   }
   return err_none;
@@ -241,7 +241,7 @@ extern "C"
 void asan_dispatch_call_block_and_release(void *block) {
   GET_STACK_TRACE_HERE(kStackTraceMax);
   asan_block_context_t *context = (asan_block_context_t*)block;
-  if (FLAG_v >= 2) {
+  if (flags()->verbosity >= 2) {
     Report("asan_dispatch_call_block_and_release(): "
            "context: %p, pthread_self: %p\n",
            block, pthread_self());
@@ -280,7 +280,7 @@ INTERCEPTOR(void, dispatch_async_f, dispatch_queue_t dq, void *ctxt,
                                     dispatch_function_t func) {
   GET_STACK_TRACE_HERE(kStackTraceMax);
   asan_block_context_t *asan_ctxt = alloc_asan_context(ctxt, func, &stack);
-  if (FLAG_v >= 2) {
+  if (flags()->verbosity >= 2) {
     Report("dispatch_async_f(): context: %p, pthread_self: %p\n",
         asan_ctxt, pthread_self());
     PRINT_CURRENT_STACK();
@@ -293,7 +293,7 @@ INTERCEPTOR(void, dispatch_sync_f, dispatch_queue_t dq, void *ctxt,
                                    dispatch_function_t func) {
   GET_STACK_TRACE_HERE(kStackTraceMax);
   asan_block_context_t *asan_ctxt = alloc_asan_context(ctxt, func, &stack);
-  if (FLAG_v >= 2) {
+  if (flags()->verbosity >= 2) {
     Report("dispatch_sync_f(): context: %p, pthread_self: %p\n",
         asan_ctxt, pthread_self());
     PRINT_CURRENT_STACK();
@@ -307,7 +307,7 @@ INTERCEPTOR(void, dispatch_after_f, dispatch_time_t when,
                                     dispatch_function_t func) {
   GET_STACK_TRACE_HERE(kStackTraceMax);
   asan_block_context_t *asan_ctxt = alloc_asan_context(ctxt, func, &stack);
-  if (FLAG_v >= 2) {
+  if (flags()->verbosity >= 2) {
     Report("dispatch_after_f: %p\n", asan_ctxt);
     PRINT_CURRENT_STACK();
   }
@@ -319,7 +319,7 @@ INTERCEPTOR(void, dispatch_barrier_async_f, dispatch_queue_t dq, void *ctxt,
                                             dispatch_function_t func) {
   GET_STACK_TRACE_HERE(kStackTraceMax);
   asan_block_context_t *asan_ctxt = alloc_asan_context(ctxt, func, &stack);
-  if (FLAG_v >= 2) {
+  if (flags()->verbosity >= 2) {
     Report("dispatch_barrier_async_f(): context: %p, pthread_self: %p\n",
            asan_ctxt, pthread_self());
     PRINT_CURRENT_STACK();
@@ -333,7 +333,7 @@ INTERCEPTOR(void, dispatch_group_async_f, dispatch_group_t group,
                                           dispatch_function_t func) {
   GET_STACK_TRACE_HERE(kStackTraceMax);
   asan_block_context_t *asan_ctxt = alloc_asan_context(ctxt, func, &stack);
-  if (FLAG_v >= 2) {
+  if (flags()->verbosity >= 2) {
     Report("dispatch_group_async_f(): context: %p, pthread_self: %p\n",
            asan_ctxt, pthread_self());
     PRINT_CURRENT_STACK();
@@ -350,7 +350,7 @@ INTERCEPTOR(void, dispatch_group_async_f, dispatch_group_t group,
 // libdispatch API.
 extern "C"
 void *wrap_workitem_func(void *arg) {
-  if (FLAG_v >= 2) {
+  if (flags()->verbosity >= 2) {
     Report("wrap_workitem_func: %p, pthread_self: %p\n", arg, pthread_self());
   }
   asan_block_context_t *ctxt = (asan_block_context_t*)arg;
@@ -370,7 +370,7 @@ INTERCEPTOR(int, pthread_workqueue_additem_np, pthread_workqueue_t workq,
   asan_ctxt->block = workitem_arg;
   asan_ctxt->func = (dispatch_function_t)workitem_func;
   asan_ctxt->parent_tid = asanThreadRegistry().GetCurrentTidOrInvalid();
-  if (FLAG_v >= 2) {
+  if (flags()->verbosity >= 2) {
     Report("pthread_workqueue_additem_np: %p\n", asan_ctxt);
     PRINT_CURRENT_STACK();
   }
@@ -415,7 +415,7 @@ void InitializeMacInterceptors() {
   // We don't need to intercept pthread_workqueue_additem_np() to support the
   // libdispatch API, but it helps us to debug the unsupported functions. Let's
   // intercept it only during verbose runs.
-  if (FLAG_v >= 2) {
+  if (flags()->verbosity >= 2) {
     CHECK(INTERCEPT_FUNCTION(pthread_workqueue_additem_np));
   }
   // Normally CFStringCreateCopy should not copy constant CF strings.
@@ -429,7 +429,7 @@ void InitializeMacInterceptors() {
   // Some of the library functions call free() directly, so we have to
   // intercept it.
   CHECK(INTERCEPT_FUNCTION(free));
-  if (FLAG_replace_cfallocator) {
+  if (flags()->replace_cfallocator) {
     CHECK(INTERCEPT_FUNCTION(__CFInitialize));
   }
 }
