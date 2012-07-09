@@ -17,7 +17,7 @@ This test serves two purposes:
 
 The list of warnings below should NEVER grow.  It should gradually shrink to 0.
 
-CHECK: Warnings without flags (158):
+CHECK: Warnings without flags (159):
 CHECK-NEXT:   pp_include_next_absolute_path
 CHECK-NEXT:   pp_include_next_in_primary
 CHECK-NEXT:   pp_invalid_string_literal
@@ -74,6 +74,7 @@ CHECK-NEXT:   warn_drv_objc_gc_unsupported
 CHECK-NEXT:   warn_drv_pch_not_first_include
 CHECK-NEXT:   warn_drv_preprocessed_input_file_unused
 CHECK-NEXT:   warn_dup_category_def
+CHECK-NEXT:   warn_duplicate_attribute
 CHECK-NEXT:   warn_duplicate_protocol_def
 CHECK-NEXT:   warn_enum_too_large
 CHECK-NEXT:   warn_enum_value_overflow
