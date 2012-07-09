@@ -641,7 +641,7 @@ static int computeDefOperandLatency(
     return TII->defaultDefLatency(ItinData, DefMI);
 
   // ...operand lookup required
-return -1;
+  return -1;
 }
 
 /// computeOperandLatency - Compute and return the latency of the given data
