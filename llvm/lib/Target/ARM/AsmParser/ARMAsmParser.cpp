@@ -7294,7 +7294,7 @@ processInstruction(MCInst &Inst,
   case ARM::t2RORrr:
   case ARM::t2BICrr:
   {
-    // Assemblers should use the narrow encodings of these instructions when permissable.
+    // Assemblers should use the narrow encodings of these instructions when permissible.
     if ((isARMLowRegister(Inst.getOperand(1).getReg()) &&
          isARMLowRegister(Inst.getOperand(2).getReg())) &&
         Inst.getOperand(0).getReg() == Inst.getOperand(1).getReg() &&
@@ -7330,7 +7330,7 @@ processInstruction(MCInst &Inst,
   case ARM::t2ADCrr:
   case ARM::t2ORRrr:
   {
-    // Assemblers should use the narrow encodings of these instructions when permissable.
+    // Assemblers should use the narrow encodings of these instructions when permissible.
     // These instructions are special in that they are commutable, so shorter encodings
     // are available more often.
     if ((isARMLowRegister(Inst.getOperand(1).getReg()) &&
