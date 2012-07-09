@@ -165,6 +165,7 @@ void ASTStmtReader::VisitAttributedStmt(AttributedStmt *S) {
   uint64_t NumAttrs = Record[Idx++];
   AttrVec Attrs;
   Reader.ReadAttributes(F, Attrs, Record, Idx);
+  (void)NumAttrs;
   assert(NumAttrs == S->NumAttrs);
   assert(NumAttrs == Attrs.size());
   std::copy(Attrs.begin(), Attrs.end(), S->Attrs);
