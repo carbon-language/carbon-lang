@@ -880,7 +880,7 @@ static IntrinsicInst *FindInitTrampoline(Value *Callee) {
 //
 Instruction *InstCombiner::visitCallSite(CallSite CS) {
   if (isAllocLikeFn(CS.getInstruction()))
-    return visitMalloc(*CS.getInstruction());
+    return visitAllocSite(*CS.getInstruction());
 
   bool Changed = false;
 

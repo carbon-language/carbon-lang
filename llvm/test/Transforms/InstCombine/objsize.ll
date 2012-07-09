@@ -106,7 +106,7 @@ bb12:
 
 %struct.data = type { [100 x i32], [100 x i32], [1024 x i8] }
 
-define i32 @test4() nounwind ssp {
+define i32 @test4(i8** %esc) nounwind ssp {
 ; CHECK: @test4
 entry:
   %0 = alloca %struct.data, align 8
@@ -115,6 +115,7 @@ entry:
 ; CHECK-NOT: @llvm.objectsize
 ; CHECK: @llvm.memset.p0i8.i32(i8* %1, i8 0, i32 1824, i32 8, i1 false)
   %3 = call i8* @__memset_chk(i8* %1, i32 0, i32 1824, i32 %2) nounwind
+  store i8* %1, i8** %esc
   ret i32 0
 }
 
