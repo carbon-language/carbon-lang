@@ -336,9 +336,15 @@ EmitStageAndOperandCycleData(raw_ostream &OS,
                              std::vector<std::vector<InstrItinerary> >
                                &ProcItinLists) {
 
+  // Multiple processor models may share an itinerary record. Emit it once.
+  SmallPtrSet<Record*, 8> ItinsDefSet;
+
   // Emit functional units for all the itineraries.
   for (CodeGenSchedModels::ProcIter PI = SchedModels.procModelBegin(),
          PE = SchedModels.procModelEnd(); PI != PE; ++PI) {
+
+    if (!ItinsDefSet.insert(PI->ItinsDef))
+      continue;
 
     std::vector<Record*> FUs = PI->ItinsDef->getValueAsListOfDefs("FU");
     if (FUs.empty())
@@ -508,12 +514,18 @@ void SubtargetEmitter::
 EmitItineraries(raw_ostream &OS,
                 std::vector<std::vector<InstrItinerary> > &ProcItinLists) {
 
+  // Multiple processor models may share an itinerary record. Emit it once.
+  SmallPtrSet<Record*, 8> ItinsDefSet;
+
   // For each processor's machine model
   std::vector<std::vector<InstrItinerary> >::iterator
       ProcItinListsIter = ProcItinLists.begin();
   for (CodeGenSchedModels::ProcIter PI = SchedModels.procModelBegin(),
          PE = SchedModels.procModelEnd(); PI != PE; ++PI) {
+
     Record *ItinsDef = PI->ItinsDef;
+    if (!ItinsDefSet.insert(ItinsDef))
+      continue;
 
     // Get processor itinerary name
     const std::string &Name = ItinsDef->getName();
