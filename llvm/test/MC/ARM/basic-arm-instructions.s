@@ -206,6 +206,11 @@ Lforward:
 @ CHECK: sub	r0, r0, #4              @ encoding: [0x04,0x00,0x40,0xe2]
 @ CHECK: sub	r4, r5, #21             @ encoding: [0x15,0x40,0x45,0xe2]
 
+    @ Test right shift by 32, which is encoded as 0
+    add r3, r1, r2, lsr #32
+    add r3, r1, r2, asr #32
+@ CHECK: add	r3, r1, r2, lsr #32     @ encoding: [0x22,0x30,0x81,0xe0]
+@ CHECK: add	r3, r1, r2, asr #32     @ encoding: [0x42,0x30,0x81,0xe0]
 
 @------------------------------------------------------------------------------
 @ AND
@@ -264,6 +269,12 @@ Lforward:
 @ CHECK: and	r6, r6, r7, asr r2      @ encoding: [0x57,0x62,0x06,0xe0]
 @ CHECK: and	r6, r6, r7, ror r2      @ encoding: [0x77,0x62,0x06,0xe0]
 @ CHECK: and	r10, r10, r1, rrx       @ encoding: [0x61,0xa0,0x0a,0xe0]
+
+    @ Test right shift by 32, which is encoded as 0
+    and r3, r1, r2, lsr #32
+    and r3, r1, r2, asr #32
+@ CHECK: and	r3, r1, r2, lsr #32     @ encoding: [0x22,0x30,0x01,0xe0]
+@ CHECK: and	r3, r1, r2, asr #32     @ encoding: [0x42,0x30,0x01,0xe0]
 
 @------------------------------------------------------------------------------
 @ ASR
@@ -367,6 +378,12 @@ Lforward:
 @ CHECK: bic	r6, r6, r7, asr r2      @ encoding: [0x57,0x62,0xc6,0xe1]
 @ CHECK: bic	r6, r6, r7, ror r2      @ encoding: [0x77,0x62,0xc6,0xe1]
 @ CHECK: bic	r10, r10, r1, rrx       @ encoding: [0x61,0xa0,0xca,0xe1]
+
+    @ Test right shift by 32, which is encoded as 0
+    bic r3, r1, r2, lsr #32
+    bic r3, r1, r2, asr #32
+@ CHECK: bic	r3, r1, r2, lsr #32     @ encoding: [0x22,0x30,0xc1,0xe1]
+@ CHECK: bic	r3, r1, r2, asr #32     @ encoding: [0x42,0x30,0xc1,0xe1]
 
 @------------------------------------------------------------------------------
 @ BKPT
@@ -664,6 +681,11 @@ Lforward:
 @ CHECK: eor	r6, r6, r7, ror r9      @ encoding: [0x77,0x69,0x26,0xe0]
 @ CHECK: eor	r4, r4, r5, rrx         @ encoding: [0x65,0x40,0x24,0xe0]
 
+    @ Test right shift by 32, which is encoded as 0
+    eor r3, r1, r2, lsr #32
+    eor r3, r1, r2, asr #32
+@ CHECK: eor	r3, r1, r2, lsr #32     @ encoding: [0x22,0x30,0x21,0xe0]
+@ CHECK: eor	r3, r1, r2, asr #32     @ encoding: [0x42,0x30,0x21,0xe0]
 
 @------------------------------------------------------------------------------
 @ ISB
@@ -1210,6 +1232,12 @@ Lforward:
 @ CHECK: orrne	r6, r6, r7, asr r9      @ encoding: [0x57,0x69,0x86,0x11]
 @ CHECK: orrslt	r6, r6, r7, ror r9      @ encoding: [0x77,0x69,0x96,0xb1]
 @ CHECK: orrsgt	r4, r4, r5, rrx         @ encoding: [0x65,0x40,0x94,0xc1]
+
+    @ Test right shift by 32, which is encoded as 0
+    orr r3, r1, r2, lsr #32
+    orr r3, r1, r2, asr #32
+@ CHECK: orr	r3, r1, r2, lsr #32     @ encoding: [0x22,0x30,0x81,0xe1]
+@ CHECK: orr	r3, r1, r2, asr #32     @ encoding: [0x42,0x30,0x81,0xe1]
 
 @------------------------------------------------------------------------------
 @ PKH
@@ -2216,6 +2244,11 @@ Lforward:
 @ CHECK: sub	r6, r6, r7, asr r9      @ encoding: [0x57,0x69,0x46,0xe0]
 @ CHECK: sub	r6, r6, r7, ror r9      @ encoding: [0x77,0x69,0x46,0xe0]
 
+    @ Test right shift by 32, which is encoded as 0
+    sub r3, r1, r2, lsr #32
+    sub r3, r1, r2, asr #32
+@ CHECK: sub	r3, r1, r2, lsr #32     @ encoding: [0x22,0x30,0x41,0xe0]
+@ CHECK: sub	r3, r1, r2, asr #32     @ encoding: [0x42,0x30,0x41,0xe0]
 
 @------------------------------------------------------------------------------
 @ SVC

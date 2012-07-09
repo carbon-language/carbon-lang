@@ -7247,7 +7247,9 @@ processInstruction(MCInst &Inst,
     case ARM::ADDrsi: newOpc = ARM::ADDrr; break;
     }
     // If the shift is by zero, use the non-shifted instruction definition.
-    if (ARM_AM::getSORegOffset(Inst.getOperand(3).getImm()) == 0) {
+    // The exception is for right shifts, where 0 == 32
+    if (ARM_AM::getSORegOffset(Inst.getOperand(3).getImm()) == 0 &&
+        !(SOpc == ARM_AM::lsr || SOpc == ARM_AM::asr)) {
       MCInst TmpInst;
       TmpInst.setOpcode(newOpc);
       TmpInst.addOperand(Inst.getOperand(0));
