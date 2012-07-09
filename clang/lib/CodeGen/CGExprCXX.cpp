@@ -1533,18 +1533,7 @@ static void EmitArrayDelete(CodeGenFunction &CGF,
 }
 
 void CodeGenFunction::EmitCXXDeleteExpr(const CXXDeleteExpr *E) {
-  
-  // Get at the argument before we performed the implicit conversion
-  // to void*.
   const Expr *Arg = E->getArgument();
-  while (const ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(Arg)) {
-    if (ICE->getCastKind() != CK_UserDefinedConversion &&
-        ICE->getType()->isVoidPointerType())
-      Arg = ICE->getSubExpr();
-    else
-      break;
-  }
-
   llvm::Value *Ptr = EmitScalarExpr(Arg);
 
   // Null check the pointer.
