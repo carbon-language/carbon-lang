@@ -16,7 +16,6 @@
 // Mips profiles and nodes
 //===----------------------------------------------------------------------===//
 
-def SDT_MipsRet          : SDTypeProfile<0, 1, [SDTCisInt<0>]>;
 def SDT_MipsJmpLink      : SDTypeProfile<0, 1, [SDTCisVT<0, iPTR>]>;
 def SDT_MipsCMov         : SDTypeProfile<1, 4, [SDTCisSameAs<0, 1>,
                                                 SDTCisSameAs<1, 2>,
@@ -71,8 +70,7 @@ def MipsTprelLo    : SDNode<"MipsISD::TprelLo", SDTIntUnaryOp>;
 def MipsThreadPointer: SDNode<"MipsISD::ThreadPointer", SDT_MipsThreadPointer>;
 
 // Return
-def MipsRet : SDNode<"MipsISD::Ret", SDT_MipsRet, [SDNPHasChain,
-                     SDNPOptInGlue]>;
+def MipsRet : SDNode<"MipsISD::Ret", SDTNone, [SDNPHasChain, SDNPOptInGlue]>;
 
 // These are target-independent nodes, but have target-specific formats.
 def callseq_start : SDNode<"ISD::CALLSEQ_START", SDT_MipsCallSeqStart,
@@ -625,18 +623,31 @@ class UncondBranch<bits<6> op, string instr_asm>:
   let Defs = [AT];
 }
 
-let isBranch=1, isTerminator=1, isBarrier=1, rd=0, hasDelaySlot = 1,
-    isIndirectBranch = 1 in
-class JumpFR<bits<6> op, bits<6> func, string instr_asm, RegisterClass RC>:
-  FR<op, func, (outs), (ins RC:$rs),
-     !strconcat(instr_asm, "\t$rs"), [(brind RC:$rs)], IIBranch> {
+// Base class for indirect branch and return instruction classes.
+let isTerminator=1, isBarrier=1, hasDelaySlot = 1 in
+class JumpFR<RegisterClass RC, list<dag> pattern>:
+  FR<0, 0x8, (outs), (ins RC:$rs), "jr\t$rs", pattern, IIBranch> {
   let rt = 0;
   let rd = 0;
   let shamt = 0;
 }
 
+// Indirect branch
+class IndirectBranch<RegisterClass RC>: JumpFR<RC, [(brind RC:$rs)]> {
+  let isBranch = 1;
+  let isIndirectBranch = 1;
+}
+
+// Return instruction
+class RetBase<RegisterClass RC>: JumpFR<RC, []> {
+  let isReturn = 1;
+  let isCodeGenOnly = 1;
+  let hasCtrlDep = 1;
+  let hasExtraSrcRegAllocReq = 1;
+}
+
 // Jump and Link (Call)
-let isCall=1, hasDelaySlot=1 in {
+let isCall=1, hasDelaySlot=1, Defs = [RA] in {
   class JumpLink<bits<6> op, string instr_asm>:
     FJ<op, (outs), (ins calltarget:$target, variable_ops),
        !strconcat(instr_asm, "\t$target"), [(MipsJmpLink imm:$target)],
@@ -838,6 +849,10 @@ class SCBase<bits<6> Opc, string opstring, RegisterClass RC, Operand Mem> :
 // Pseudo instructions
 //===----------------------------------------------------------------------===//
 
+// Return RA.
+let isReturn=1, isTerminator=1, hasDelaySlot=1, isBarrier=1, hasCtrlDep=1 in
+def RetRA : MipsPseudo<(outs), (ins), "", [(MipsRet)]>;
+
 // As stack alignment is always done with addiu, we need a 16-bit immediate
 let Defs = [SP], Uses = [SP] in {
 def ADJCALLSTACKDOWN : MipsPseudo<(outs), (ins uimm16:$amt),
@@ -981,7 +996,7 @@ def SC_P8 : SCBase<0x38, "sc", CPURegs, mem64>,
 
 /// Jump and Branch Instructions
 def J       : JumpFJ<0x02, "j">;
-def JR      : JumpFR<0x00, 0x08, "jr", CPURegs>;
+def JR      : IndirectBranch<CPURegs>;
 def B       : UncondBranch<0x04, "b">;
 def BEQ     : CBranch<0x04, "beq", seteq, CPURegs>;
 def BNE     : CBranch<0x05, "bne", setne, CPURegs>;
@@ -995,10 +1010,7 @@ def JALR : JumpLinkReg<0x00, 0x09, "jalr", CPURegs>;
 def BGEZAL  : BranchLink<"bgezal", 0x11, CPURegs>;
 def BLTZAL  : BranchLink<"bltzal", 0x10, CPURegs>;
 
-let isReturn=1, isTerminator=1, hasDelaySlot=1, isCodeGenOnly=1,
-    isBarrier=1, hasCtrlDep=1, rd=0, rt=0, shamt=0 in
-  def RET : FR <0x00, 0x08, (outs), (ins CPURegs:$target),
-                "jr\t$target", [(MipsRet CPURegs:$target)], IIBranch>;
+def RET : RetBase<CPURegs>;
 
 /// Multiply and Divide Instructions.
 def MULT    : Mult32<0x18, "mult", IIImul>;

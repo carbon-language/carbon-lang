@@ -233,6 +233,13 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
     .addMemOperand(MMO);
 }
 
+void MipsInstrInfo::ExpandRetRA(MachineBasicBlock &MBB,
+                                MachineBasicBlock::iterator I,
+                                unsigned Opc) const {
+  BuildMI(MBB, I, I->getDebugLoc(), TM.getInstrInfo()->get(Opc))
+    .addReg(Mips::RA);
+}
+
 void MipsInstrInfo::ExpandExtractElementF64(MachineBasicBlock &MBB,
                                           MachineBasicBlock::iterator I) const {
   const TargetInstrInfo *TII = TM.getInstrInfo();
@@ -272,6 +279,12 @@ bool MipsInstrInfo::expandPostRAPseudo(MachineBasicBlock::iterator MI) const {
   switch(MI->getDesc().getOpcode()) {
   default:
     return false;
+  case Mips::RetRA:
+    ExpandRetRA(MBB, MI, Mips::RET);
+    break;
+  case Mips::RetRA16:
+    ExpandRetRA(MBB, MI, Mips::RET16);
+    break;
   case Mips::BuildPairF64:
     ExpandBuildPairF64(MBB, MI);
     break;

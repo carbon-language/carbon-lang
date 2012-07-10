@@ -15,6 +15,11 @@ class Mips16Pat<dag pattern, dag result> : Pat<pattern, result> {
   let Predicates = [InMips16Mode];
 }
 
+// Mips16 pseudos
+let isReturn=1, isTerminator=1, hasDelaySlot=1, isBarrier=1, hasCtrlDep=1,
+    hasExtraSrcRegAllocReq = 1 in
+def RetRA16 : MipsPseudo16<(outs), (ins), "", [(MipsRet)]>;
+
 def LI16E      : FEXT_RI16<0b01101, (outs CPU16Regs:$rx),
                            (ins uimm16:$amt),
                            !strconcat("li", "\t$rx, $amt"),
@@ -22,9 +27,8 @@ def LI16E      : FEXT_RI16<0b01101, (outs CPU16Regs:$rx),
 
 let isReturn=1, isTerminator=1, hasDelaySlot=1, isCodeGenOnly=1,
     isBarrier=1, hasCtrlDep=1, rx=0, nd=0, l=0, ra=0  in
-def RET16 : FRR16_JALRC 
-            < (outs), (ins CPURAReg:$target),
-              "jr\t$target", [(MipsRet CPURAReg:$target)], IIBranch>;
+def RET16 : FRR16_JALRC<(outs), (ins CPURAReg:$target), "jr\t$target", [],
+                        IIBranch>;
 
 // As stack alignment is always done with addiu, we need a 16-bit immediate
 let Defs = [SP], Uses = [SP] in {

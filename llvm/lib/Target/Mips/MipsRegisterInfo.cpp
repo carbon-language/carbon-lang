@@ -83,13 +83,11 @@ MipsRegisterInfo::getCallPreservedMask(CallingConv::ID) const {
 BitVector MipsRegisterInfo::
 getReservedRegs(const MachineFunction &MF) const {
   static const uint16_t ReservedCPURegs[] = {
-    Mips::ZERO, Mips::AT, Mips::K0, Mips::K1,
-    Mips::SP, Mips::RA
+    Mips::ZERO, Mips::AT, Mips::K0, Mips::K1, Mips::SP
   };
 
   static const uint16_t ReservedCPU64Regs[] = {
-    Mips::ZERO_64, Mips::AT_64, Mips::K0_64, Mips::K1_64,
-    Mips::SP_64, Mips::RA_64
+    Mips::ZERO_64, Mips::AT_64, Mips::K0_64, Mips::K1_64, Mips::SP_64
   };
 
   BitVector Reserved(getNumRegs());
@@ -126,6 +124,12 @@ getReservedRegs(const MachineFunction &MF) const {
   // Reserve hardware registers.
   Reserved.set(Mips::HWR29);
   Reserved.set(Mips::HWR29_64);
+
+  // Reserve RA if in mips16 mode.
+  if (Subtarget.inMips16Mode()) {
+    Reserved.set(Mips::RA);
+    Reserved.set(Mips::RA_64);
+  }
 
   return Reserved;
 }

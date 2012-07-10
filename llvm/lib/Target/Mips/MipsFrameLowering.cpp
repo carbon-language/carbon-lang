@@ -261,16 +261,28 @@ processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
   // Mark $fp and $ra as used or unused.
   if (hasFP(MF))
     MRI.setPhysRegUsed(FP);
+}
 
-  // The register allocator might determine $ra is used after seeing
-  // instruction "jr $ra", but we do not want PrologEpilogInserter to insert
-  // instructions to save/restore $ra unless there is a function call.
-  // To correct this, $ra is explicitly marked unused if there is no
-  // function call.
-  if (MF.getFrameInfo()->hasCalls())
-    MRI.setPhysRegUsed(Mips::RA);
-  else {
-    MRI.setPhysRegUnused(Mips::RA);
-    MRI.setPhysRegUnused(Mips::RA_64);
+bool MipsFrameLowering::
+spillCalleeSavedRegisters(MachineBasicBlock &MBB,
+                          MachineBasicBlock::iterator MI,
+                          const std::vector<CalleeSavedInfo> &CSI,
+                          const TargetRegisterInfo *TRI) const {
+  MachineFunction *MF = MBB.getParent();
+  MachineBasicBlock *EntryBlock = MF->begin();
+  const TargetInstrInfo &TII = *MF->getTarget().getInstrInfo();
+
+  for (unsigned i = 0, e = CSI.size(); i != e; ++i) {
+    // Add the callee-saved register as live-in.
+    // It's killed at the spill.
+    EntryBlock->addLiveIn(CSI[i].getReg());
+
+    // Insert the spill to the stack frame.
+    unsigned Reg = CSI[i].getReg();
+    const TargetRegisterClass *RC = TRI->getMinimalPhysRegClass(Reg);
+    TII.storeRegToStackSlot(*EntryBlock, MI, Reg, true,
+                            CSI[i].getFrameIdx(), RC, TRI);
   }
+
+  return true;
 }

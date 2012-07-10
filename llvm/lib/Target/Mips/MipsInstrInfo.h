@@ -63,6 +63,8 @@ public:
   virtual unsigned RemoveBranch(MachineBasicBlock &MBB) const;
 
 private:
+  void ExpandRetRA(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
+                   unsigned Opc) const;
   void BuildCondBr(MachineBasicBlock &MBB, MachineBasicBlock *TBB, DebugLoc DL,
                    const SmallVectorImpl<MachineOperand>& Cond) const;
   void ExpandExtractElementF64(MachineBasicBlock &MBB,
