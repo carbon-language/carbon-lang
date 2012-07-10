@@ -57,8 +57,7 @@ void DivZeroChecker::checkPreStmt(const BinaryOperator *B,
       Op != BO_RemAssign)
     return;
 
-  if (!B->getRHS()->getType()->isIntegerType() ||
-      !B->getRHS()->getType()->isScalarType())
+  if (!B->getRHS()->getType()->isScalarType())
     return;
 
   SVal Denom = C.getState()->getSVal(B->getRHS(), C.getLocationContext());
