@@ -3911,10 +3911,6 @@ bool ArrayExprEvaluator::VisitInitListExpr(const InitListExpr *E) {
 }
 
 bool ArrayExprEvaluator::VisitCXXConstructExpr(const CXXConstructExpr *E) {
-  const ConstantArrayType *CAT = Info.Ctx.getAsConstantArrayType(E->getType());
-  if (!CAT)
-    return Error(E);
-
   // FIXME: The Subobject here isn't necessarily right. This rarely matters,
   // but sometimes does:
   //   struct S { constexpr S() : p(&p) {} void *p; };
@@ -3923,16 +3919,21 @@ bool ArrayExprEvaluator::VisitCXXConstructExpr(const CXXConstructExpr *E) {
 
   APValue *Value = &Result;
   bool HadZeroInit = true;
-  while (CAT) {
+  QualType ElemTy = E->getType();
+  while (const ConstantArrayType *CAT =
+           Info.Ctx.getAsConstantArrayType(ElemTy)) {
     Subobject.addArray(Info, E, CAT);
     HadZeroInit &= !Value->isUninit();
     if (!HadZeroInit)
       *Value = APValue(APValue::UninitArray(), 0, CAT->getSize().getZExtValue());
     if (!Value->hasArrayFiller())
       return true;
-    CAT = Info.Ctx.getAsConstantArrayType(CAT->getElementType());
     Value = &Value->getArrayFiller();
+    ElemTy = CAT->getElementType();
   }
+
+  if (!ElemTy->isRecordType())
+    return Error(E);
 
   const CXXConstructorDecl *FD = E->getConstructor();
 
@@ -3942,7 +3943,7 @@ bool ArrayExprEvaluator::VisitCXXConstructExpr(const CXXConstructExpr *E) {
       return true;
 
     if (ZeroInit) {
-      ImplicitValueInitExpr VIE(CAT->getElementType());
+      ImplicitValueInitExpr VIE(ElemTy);
       return EvaluateInPlace(*Value, Info, Subobject, &VIE);
     }
 
@@ -3963,7 +3964,7 @@ bool ArrayExprEvaluator::VisitCXXConstructExpr(const CXXConstructExpr *E) {
     return false;
 
   if (ZeroInit && !HadZeroInit) {
-    ImplicitValueInitExpr VIE(CAT->getElementType());
+    ImplicitValueInitExpr VIE(ElemTy);
     if (!EvaluateInPlace(*Value, Info, Subobject, &VIE))
       return false;
   }

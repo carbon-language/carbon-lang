@@ -507,6 +507,14 @@ static_assert(selfref[1][0][1] == 3, "");
 static_assert(selfref[1][1][0] == 0, "");
 static_assert(selfref[1][1][1] == 0, "");
 
+struct TrivialDefCtor { int n; };
+typedef TrivialDefCtor TDCArray[2][2];
+static_assert(TDCArray{}[1][1].n == 0, "");
+
+struct NonAggregateTDC : TrivialDefCtor {};
+typedef NonAggregateTDC NATDCArray[2][2];
+static_assert(NATDCArray{}[1][1].n == 0, "");
+
 }
 
 namespace DependentValues {
