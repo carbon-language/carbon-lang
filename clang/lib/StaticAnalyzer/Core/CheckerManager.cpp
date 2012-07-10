@@ -237,15 +237,7 @@ namespace {
 
     void runChecker(CheckerManager::CheckCallFunc checkFn,
                     NodeBuilder &Bldr, ExplodedNode *Pred) {
-      // FIXME: This will be wrong as soon as we handle any calls without
-      // associated statements.
-      ProgramPoint::Kind K = IsPreVisit ? ProgramPoint::PreStmtKind
-                                        : ProgramPoint::PostStmtKind;
-      assert(Call.getOriginExpr() && "Calls without stmts not yet handled");
-      const ProgramPoint &L =
-        ProgramPoint::getProgramPoint(Call.getOriginExpr(),
-                                      K, Pred->getLocationContext(),
-                                      checkFn.Checker);
+      const ProgramPoint &L = Call.getProgramPoint(IsPreVisit, checkFn.Checker);
       CheckerContext C(Bldr, Eng, Pred, L);
 
       checkFn(Call, C);

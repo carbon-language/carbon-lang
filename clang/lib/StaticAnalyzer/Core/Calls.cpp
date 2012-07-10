@@ -14,6 +14,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/StaticAnalyzer/Core/PathSensitive/Calls.h"
+#include "clang/Analysis/ProgramPoint.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/StringExtras.h"
 
@@ -194,6 +195,24 @@ ProgramStateRef CallEvent::invalidateRegions(unsigned BlockCount,
   return Result->invalidateRegions(RegionsToInvalidate, getOriginExpr(),
                                    BlockCount, LCtx, /*Symbols=*/0, this);
 }
+
+ProgramPoint CallEvent::getProgramPoint(bool IsPreVisit,
+                                        const ProgramPointTag *Tag) const {
+  if (const Expr *E = getOriginExpr()) {
+    if (IsPreVisit)
+      return PreStmt(E, LCtx, Tag);
+    return PostStmt(E, LCtx, Tag);
+  }
+
+  const Decl *D = getDecl();
+  assert(D && "Cannot get a program point without a statement or decl");  
+
+  SourceLocation Loc = getSourceRange().getBegin();
+  if (IsPreVisit)
+    return PreImplicitCall(D, Loc, LCtx, Tag);
+  return PostImplicitCall(D, Loc, LCtx, Tag);
+}
+
 
 bool CallEvent::mayBeInlined(const Stmt *S) {
   return isa<CallExpr>(S);

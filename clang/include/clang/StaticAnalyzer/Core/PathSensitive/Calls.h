@@ -24,6 +24,9 @@
 #include "clang/StaticAnalyzer/Core/PathSensitive/SVals.h"
 
 namespace clang {
+class ProgramPoint;
+class ProgramPointTag;
+
 namespace ento {
 
 enum CallEventKind {
@@ -154,6 +157,10 @@ public:
   virtual bool argumentsMayEscape() const {
     return hasNonZeroCallbackArg();
   }
+
+  /// \brief Returns an appropriate ProgramPoint for this call.
+  ProgramPoint getProgramPoint(bool IsPreVisit,
+                               const ProgramPointTag *Tag = 0) const;
 
   /// \brief Returns a new state with all argument regions invalidated.
   ///

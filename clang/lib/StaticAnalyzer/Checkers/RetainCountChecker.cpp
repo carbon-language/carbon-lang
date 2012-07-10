@@ -1928,7 +1928,8 @@ PathDiagnosticPiece *CFRefReportVisitor::VisitNode(const ExplodedNode *N,
                                                    const ExplodedNode *PrevN,
                                                    BugReporterContext &BRC,
                                                    BugReport &BR) {
-
+  // FIXME: We will eventually need to handle non-statement-based events
+  // (__attribute__((cleanup))).
   if (!isa<StmtPoint>(N->getLocation()))
     return NULL;
 

@@ -71,6 +71,7 @@ bool ExplodedGraph::shouldCollect(const ExplodedNode *node) {
   // (8) The PostStmt is for a non-consumed Stmt or Expr.
   // (9) The successor is not a CallExpr StmtPoint (so that we would be able to
   //     find it when retrying a call with no inlining).
+  // FIXME: It may be safe to reclaim PreCall and PostCall nodes as well.
 
   // Conditions 1 and 2.
   if (node->pred_size() != 1 || node->succ_size() != 1)
@@ -86,9 +87,7 @@ bool ExplodedGraph::shouldCollect(const ExplodedNode *node) {
 
   // Condition 3.
   ProgramPoint progPoint = node->getLocation();
-  if (!isa<PostStmt>(progPoint) ||
-      (isa<CallEnter>(progPoint) ||
-       isa<CallExitBegin>(progPoint) || isa<CallExitEnd>(progPoint)))
+  if (!isa<PostStmt>(progPoint))
     return false;
 
   // Condition 4.

@@ -984,6 +984,7 @@ bool ExprEngine::replayWithoutInlining(ExplodedNode *N,
   const StackFrameContext *CallerSF = CalleeSF->getParent()->getCurrentStackFrame();
   assert(CalleeSF && CallerSF);
   ExplodedNode *BeforeProcessingCall = 0;
+  const Stmt *CE = CalleeSF->getCallSite();
 
   // Find the first node before we started processing the call expression.
   while (N) {
@@ -995,11 +996,13 @@ bool ExprEngine::replayWithoutInlining(ExplodedNode *N,
     if (L.getLocationContext()->getCurrentStackFrame() != CallerSF)
       continue;
     // We reached the caller. Find the node right before we started
-    // processing the CallExpr.
+    // processing the call.
     if (L.isPurgeKind())
       continue;
+    if (isa<PreImplicitCall>(&L))
+      continue;
     if (const StmtPoint *SP = dyn_cast<StmtPoint>(&L))
-      if (SP->getStmt() == CalleeSF->getCallSite())
+      if (SP->getStmt() == CE)
         continue;
     break;
   }
@@ -1010,7 +1013,7 @@ bool ExprEngine::replayWithoutInlining(ExplodedNode *N,
   // TODO: Clean up the unneeded nodes.
 
   // Build an Epsilon node from which we will restart the analyzes.
-  const Stmt *CE = CalleeSF->getCallSite();
+  // Note that CE is permitted to be NULL!
   ProgramPoint NewNodeLoc =
                EpsilonPoint(BeforeProcessingCall->getLocationContext(), CE);
   // Add the special flag to GDM to signal retrying with no inlining.
@@ -1872,6 +1875,16 @@ struct DOTGraphTraits<ExplodedNode*> :
     return "";
   }
 
+  static void printLocation(llvm::raw_ostream &Out, SourceLocation SLoc) {
+    if (SLoc.isFileID()) {
+      Out << "\\lline="
+        << GraphPrintSourceManager->getExpansionLineNumber(SLoc)
+        << " col="
+        << GraphPrintSourceManager->getExpansionColumnNumber(SLoc)
+        << "\\l";
+    }
+  }
+
   static std::string getNodeLabel(const ExplodedNode *N, void*){
 
     std::string sbuf;
@@ -1921,22 +1934,34 @@ struct DOTGraphTraits<ExplodedNode*> :
         Out << "Epsilon Point";
         break;
 
+      case ProgramPoint::PreImplicitCallKind: {
+        ImplicitCallPoint *PC = cast<ImplicitCallPoint>(&Loc);
+        Out << "PreCall: ";
+
+        // FIXME: Get proper printing options.
+        PC->getDecl()->print(Out, LangOptions());
+        printLocation(Out, PC->getLocation());
+        break;
+      }
+
+      case ProgramPoint::PostImplicitCallKind: {
+        ImplicitCallPoint *PC = cast<ImplicitCallPoint>(&Loc);
+        Out << "PostCall: ";
+
+        // FIXME: Get proper printing options.
+        PC->getDecl()->print(Out, LangOptions());
+        printLocation(Out, PC->getLocation());
+        break;
+      }
+
       default: {
         if (StmtPoint *L = dyn_cast<StmtPoint>(&Loc)) {
           const Stmt *S = L->getStmt();
-          SourceLocation SLoc = S->getLocStart();
 
           Out << S->getStmtClassName() << ' ' << (void*) S << ' ';
           LangOptions LO; // FIXME.
           S->printPretty(Out, 0, PrintingPolicy(LO));
-
-          if (SLoc.isFileID()) {
-            Out << "\\lline="
-              << GraphPrintSourceManager->getExpansionLineNumber(SLoc)
-              << " col="
-              << GraphPrintSourceManager->getExpansionColumnNumber(SLoc)
-              << "\\l";
-          }
+          printLocation(Out, S->getLocStart());
 
           if (isa<PreStmt>(Loc))
             Out << "\\lPreStmt\\l;";

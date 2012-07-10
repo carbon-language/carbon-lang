@@ -346,11 +346,11 @@ static ProgramStateRef getInlineFailedState(ExplodedNode *&N,
   void *ReplayState = N->getState()->get<ReplayWithoutInlining>();
   if (!ReplayState)
     return 0;
-  const Stmt *ReplayCallE = reinterpret_cast<const Stmt *>(ReplayState);
-  if (CallE == ReplayCallE) {
-    return N->getState()->remove<ReplayWithoutInlining>();
-  }
-  return 0;
+
+  assert(ReplayState == (const void*)CallE && "Backtracked to the wrong call.");
+  (void)CallE;
+
+  return N->getState()->remove<ReplayWithoutInlining>();
 }
 
 void ExprEngine::VisitCallExpr(const CallExpr *CE, ExplodedNode *Pred,
@@ -421,13 +421,13 @@ void ExprEngine::evalCall(ExplodedNodeSet &Dst, ExplodedNode *Pred,
 void ExprEngine::defaultEvalCall(ExplodedNodeSet &Dst, ExplodedNode *Pred,
                                  const CallEvent &Call) {
   // Try to inline the call.
-  ProgramStateRef state = 0;
+  // The origin expression here is just used as a kind of checksum;
+  // for CallEvents that do not have origin expressions, this should still be
+  // safe.
   const Expr *E = Call.getOriginExpr();
-  if (E) {
-    state = getInlineFailedState(Pred, E);
-    if (state == 0 && inlineCall(Dst, Call, Pred))
-      return;
-  }
+  ProgramStateRef state = getInlineFailedState(Pred, E);
+  if (state == 0 && inlineCall(Dst, Call, Pred))
+    return;
 
   // If we can't inline it, handle the return value and invalidate the regions.
   StmtNodeBuilder Bldr(Pred, Dst, *currentBuilderContext);

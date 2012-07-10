@@ -1535,6 +1535,9 @@ MallocChecker::MallocBugVisitor::VisitNode(const ExplodedNode *N,
   if (!S)
     return 0;
 
+  // FIXME: We will eventually need to handle non-statement-based events
+  // (__attribute__((cleanup))).
+
   // Find out if this is an interesting point and what is the kind.
   if (Mode == Normal) {
     if (isAllocated(RS, RSPrev, S)) {

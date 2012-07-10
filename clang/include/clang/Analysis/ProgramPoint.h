@@ -55,17 +55,21 @@ public:
               CallExitEndKind,
               MinPostStmtKind = PostStmtKind,
               MaxPostStmtKind = CallExitEndKind,
+              PreImplicitCallKind,
+              PostImplicitCallKind,
+              MinImplicitCallKind = PreImplicitCallKind,
+              MaxImplicitCallKind = PostImplicitCallKind,
               EpsilonKind};
 
 private:
-  llvm::PointerIntPair<const void *, 2, unsigned> Data1;
+  const void *Data1;
   llvm::PointerIntPair<const void *, 2, unsigned> Data2;
 
   // The LocationContext could be NULL to allow ProgramPoint to be used in
   // context insensitive analysis.
   llvm::PointerIntPair<const LocationContext *, 2, unsigned> L;
 
-  const ProgramPointTag *Tag;
+  llvm::PointerIntPair<const ProgramPointTag *, 2, unsigned> Tag;
 
   ProgramPoint();
   
@@ -74,10 +78,10 @@ protected:
                Kind k,
                const LocationContext *l,
                const ProgramPointTag *tag = 0)
-    : Data1(P, ((unsigned) k) & 0x3),
-      Data2(0, (((unsigned) k) >> 2) & 0x3),
-      L(l, (((unsigned) k) >> 4) & 0x3),
-      Tag(tag) {
+    : Data1(P),
+      Data2(0, (((unsigned) k) >> 0) & 0x3),
+      L(l, (((unsigned) k) >> 2) & 0x3),
+      Tag(tag, (((unsigned) k) >> 4) & 0x3) {
         assert(getKind() == k);
         assert(getLocationContext() == l);
         assert(getData1() == P);
@@ -88,13 +92,13 @@ protected:
                Kind k,
                const LocationContext *l,
                const ProgramPointTag *tag = 0)
-    : Data1(P1, ((unsigned) k) & 0x3),
-      Data2(P2, (((unsigned) k) >> 2) & 0x3),
-      L(l, (((unsigned) k) >> 4) & 0x3),
-      Tag(tag) {}
+    : Data1(P1),
+      Data2(P2, (((unsigned) k) >> 0) & 0x3),
+      L(l, (((unsigned) k) >> 2) & 0x3),
+      Tag(tag, (((unsigned) k) >> 4) & 0x3) {}
 
 protected:
-  const void *getData1() const { return Data1.getPointer(); }
+  const void *getData1() const { return Data1; }
   const void *getData2() const { return Data2.getPointer(); }
   void setData2(const void *d) { Data2.setPointer(d); }
 
@@ -107,11 +111,11 @@ public:
   }
 
   Kind getKind() const {
-    unsigned x = L.getInt();
+    unsigned x = Tag.getInt();
+    x <<= 2;
+    x |= L.getInt();
     x <<= 2;
     x |= Data2.getInt();
-    x <<= 2;
-    x |= Data1.getInt();
     return (Kind) x;
   }
 
@@ -123,7 +127,7 @@ public:
             K == PreStmtPurgeDeadSymbolsKind);
   }
 
-  const ProgramPointTag *getTag() const { return Tag; }
+  const ProgramPointTag *getTag() const { return Tag.getPointer(); }
 
   const LocationContext *getLocationContext() const {
     return L.getPointer();
@@ -157,7 +161,7 @@ public:
     ID.AddPointer(getData1());
     ID.AddPointer(getData2());
     ID.AddPointer(getLocationContext());
-    ID.AddPointer(Tag);
+    ID.AddPointer(getTag());
   }
 
   static ProgramPoint getProgramPoint(const Stmt *S, ProgramPoint::Kind K,
@@ -405,6 +409,54 @@ public:
 
   static bool classof(const ProgramPoint *Location) {
     return Location->getKind() == PostInitializerKind;
+  }
+};
+
+/// Represents an implicit call event.
+///
+/// The nearest statement is provided for diagnostic purposes.
+class ImplicitCallPoint : public ProgramPoint {
+public:
+  ImplicitCallPoint(const Decl *D, SourceLocation Loc, Kind K,
+                    const LocationContext *L, const ProgramPointTag *Tag)
+    : ProgramPoint(Loc.getPtrEncoding(), D, K, L, Tag) {}
+
+  const Decl *getDecl() const { return static_cast<const Decl *>(getData2()); }
+  SourceLocation getLocation() const {
+    return SourceLocation::getFromPtrEncoding(getData1());
+  }
+
+  static bool classof(const ProgramPoint *Location) {
+    return Location->getKind() >= MinImplicitCallKind &&
+           Location->getKind() <= MaxImplicitCallKind;
+  }
+};
+
+/// Represents a program point just before an implicit call event.
+///
+/// Explicit calls will appear as PreStmt program points.
+class PreImplicitCall : public ImplicitCallPoint {
+public:
+  PreImplicitCall(const Decl *D, SourceLocation Loc,
+                  const LocationContext *L, const ProgramPointTag *Tag = 0)
+    : ImplicitCallPoint(D, Loc, PreImplicitCallKind, L, Tag) {}
+
+  static bool classof(const ProgramPoint *Location) {
+    return Location->getKind() == PreImplicitCallKind;
+  }
+};
+
+/// Represents a program point just after an implicit call event.
+///
+/// Explicit calls will appear as PostStmt program points.
+class PostImplicitCall : public ImplicitCallPoint {
+public:
+  PostImplicitCall(const Decl *D, SourceLocation Loc,
+                   const LocationContext *L, const ProgramPointTag *Tag = 0)
+    : ImplicitCallPoint(D, Loc, PostImplicitCallKind, L, Tag) {}
+
+  static bool classof(const ProgramPoint *Location) {
+    return Location->getKind() == PostImplicitCallKind;
   }
 };
 
