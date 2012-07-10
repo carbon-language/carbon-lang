@@ -2397,8 +2397,8 @@ CommandInterpreter::GetScriptInterpreter ()
     // this is a bulletproof recipe for disaster!
     // this needs to be a function-level static because multiple Debugger instances living in the same process
     // still need to be isolated and not try to initialize Python concurrently
-    static Mutex *interpreter_mutex = new Mutex(Mutex::eMutexTypeRecursive);
-    Mutex::Locker interpreter_lock(*interpreter_mutex);
+    static Mutex g_interpreter_mutex(Mutex::eMutexTypeRecursive);
+    Mutex::Locker interpreter_lock(g_interpreter_mutex);
     
     if (m_script_interpreter_ap.get() != NULL)
         return m_script_interpreter_ap.get();
