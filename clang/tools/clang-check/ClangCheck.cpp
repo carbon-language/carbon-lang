@@ -58,8 +58,9 @@ int main(int argc, const char **argv) {
   if (!Compilations) {
     std::string ErrorMessage;
     if (!BuildPath.empty()) {
-      Compilations.reset(CompilationDatabase::loadFromDirectory(BuildPath,
-                                                                ErrorMessage));
+      Compilations.reset(
+         CompilationDatabase::autoDetectFromDirectory(BuildPath, ErrorMessage));
+
     } else {
       Compilations.reset(CompilationDatabase::autoDetectFromSource(
           SourcePaths[0], ErrorMessage));

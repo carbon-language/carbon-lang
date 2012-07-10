@@ -122,21 +122,45 @@ CompilationDatabase::loadFromDirectory(StringRef BuildDirectory,
   return Database.take();
 }
 
+static CompilationDatabase *
+findCompilationDatabaseFromDirectory(StringRef Directory) {
+  while (!Directory.empty()) {
+    std::string LoadErrorMessage;
+
+    if (CompilationDatabase *DB =
+           CompilationDatabase::loadFromDirectory(Directory, LoadErrorMessage))
+      return DB;
+
+    Directory = llvm::sys::path::parent_path(Directory);
+  }
+  return NULL;
+}
+
 CompilationDatabase *
 CompilationDatabase::autoDetectFromSource(StringRef SourceFile,
                                           std::string &ErrorMessage) {
   llvm::SmallString<1024> AbsolutePath(getAbsolutePath(SourceFile));
   StringRef Directory = llvm::sys::path::parent_path(AbsolutePath);
-  while (!Directory.empty()) {
-    std::string LoadErrorMessage;
-    if (CompilationDatabase *DB = loadFromDirectory(Directory,
-                                                    LoadErrorMessage))
-      return DB;
-    Directory = llvm::sys::path::parent_path(Directory);
-  }
-  ErrorMessage = ("Could not auto-detect compilation database for file \"" +
-                  SourceFile + "\"").str();
-  return NULL;
+
+  CompilationDatabase *DB = findCompilationDatabaseFromDirectory(Directory);
+
+  if (!DB)
+    ErrorMessage = ("Could not auto-detect compilation database for file \"" +
+                   SourceFile + "\"").str();
+  return DB;
+}
+
+CompilationDatabase *
+CompilationDatabase::autoDetectFromDirectory(StringRef SourceDir,
+                                             std::string &ErrorMessage) {
+  llvm::SmallString<1024> AbsolutePath(getAbsolutePath(SourceDir));
+
+  CompilationDatabase *DB = findCompilationDatabaseFromDirectory(AbsolutePath);
+
+  if (!DB)
+    ErrorMessage = ("Could not auto-detect compilation database from directory \"" +
+                   SourceDir + "\"").str();
+  return DB;
 }
 
 FixedCompilationDatabase *
