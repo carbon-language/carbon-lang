@@ -37,6 +37,7 @@ enum CallEventKind {
   CE_BEG_SIMPLE_CALLS = CE_Function,
   CE_END_SIMPLE_CALLS = CE_Block,
   CE_CXXConstructor,
+  CE_CXXDestructor,
   CE_CXXAllocator,
   CE_BEG_FUNCTION_CALLS = CE_Function,
   CE_END_FUNCTION_CALLS = CE_CXXAllocator,
@@ -159,7 +160,7 @@ public:
   }
 
   /// \brief Returns an appropriate ProgramPoint for this call.
-  ProgramPoint getProgramPoint(bool IsPreVisit,
+  ProgramPoint getProgramPoint(bool IsPreVisit = false,
                                const ProgramPointTag *Tag = 0) const;
 
   /// \brief Returns a new state with all argument regions invalidated.
@@ -388,6 +389,36 @@ public:
 
   static bool classof(const CallEvent *CA) {
     return CA->getKind() == CE_CXXConstructor;
+  }
+};
+
+/// \brief Represents an implicit call to a C++ destructor.
+///
+/// This can occur at the end of a scope (for automatic objects), at the end
+/// of a full-expression (for temporaries), or as part of a delete.
+class CXXDestructorCall : public AnyFunctionCall {
+  const CXXDestructorDecl *DD;
+  const MemRegion *Target;
+  SourceLocation Loc;
+
+protected:
+  void addExtraInvalidatedRegions(RegionList &Regions) const;
+
+public:
+  CXXDestructorCall(const CXXDestructorDecl *dd, const Stmt *Trigger,
+                    const MemRegion *target, ProgramStateRef St,
+                    const LocationContext *LCtx)
+    : AnyFunctionCall(St, LCtx, CE_CXXDestructor), DD(dd), Target(target),
+      Loc(Trigger->getLocEnd()) {}
+
+  const Expr *getOriginExpr() const { return 0; }
+  SourceRange getSourceRange() const { return Loc; }
+
+  const CXXDestructorDecl *getDecl() const { return DD; }
+  unsigned getNumArgs() const { return 0; }
+
+  static bool classof(const CallEvent *CA) {
+    return CA->getKind() == CE_CXXDestructor;
   }
 };
 

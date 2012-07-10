@@ -292,7 +292,8 @@ bool ExprEngine::inlineCall(ExplodedNodeSet &Dst,
     // enterStackFrame as well.
     return false;
   case CE_CXXConstructor:
-    // Do not inline constructors until we can model destructors.
+  case CE_CXXDestructor:
+    // Do not inline constructors until we can really model destructors.
     // This is unfortunate, but basically necessary for smart pointers and such.
     return false;
   case CE_CXXAllocator:
@@ -430,7 +431,7 @@ void ExprEngine::defaultEvalCall(ExplodedNodeSet &Dst, ExplodedNode *Pred,
     return;
 
   // If we can't inline it, handle the return value and invalidate the regions.
-  StmtNodeBuilder Bldr(Pred, Dst, *currentBuilderContext);
+  NodeBuilder Bldr(Pred, Dst, *currentBuilderContext);
 
   // Invalidate any regions touched by the call.
   unsigned Count = currentBuilderContext->getCurrentBlockCount();
@@ -439,16 +440,17 @@ void ExprEngine::defaultEvalCall(ExplodedNodeSet &Dst, ExplodedNode *Pred,
   state = Call.invalidateRegions(Count, state);
 
   // Conjure a symbol value to use as the result.
-  assert(Call.getOriginExpr() && "Must have an expression to bind the result");
-  QualType ResultTy = Call.getResultType();
-  SValBuilder &SVB = getSValBuilder();
-  const LocationContext *LCtx = Pred->getLocationContext();
-  SVal RetVal = SVB.getConjuredSymbolVal(0, Call.getOriginExpr(), LCtx,
-                                         ResultTy, Count);
+  if (E) {
+    QualType ResultTy = Call.getResultType();
+    SValBuilder &SVB = getSValBuilder();
+    const LocationContext *LCtx = Pred->getLocationContext();
+    SVal RetVal = SVB.getConjuredSymbolVal(0, E, LCtx, ResultTy, Count);
+
+    state = state->BindExpr(E, LCtx, RetVal);
+  }
 
   // And make the result node.
-  state = state->BindExpr(Call.getOriginExpr(), LCtx, RetVal);
-  Bldr.generateNode(Call.getOriginExpr(), Pred, state);
+  Bldr.generateNode(Call.getProgramPoint(), state, Pred);
 }
 
 void ExprEngine::VisitReturnStmt(const ReturnStmt *RS, ExplodedNode *Pred,

@@ -372,6 +372,12 @@ void CXXConstructorCall::addExtraInvalidatedRegions(RegionList &Regions) const {
 }
 
 
+void CXXDestructorCall::addExtraInvalidatedRegions(RegionList &Regions) const {
+  if (Target)
+    Regions.push_back(Target);
+}
+
+
 CallEvent::param_iterator ObjCMethodCall::param_begin() const {
   const ObjCMethodDecl *D = getDecl();
   if (!D)
