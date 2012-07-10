@@ -137,7 +137,7 @@ void ExprEngine::processCallExit(ExplodedNode *CEBNode) {
     if (const ReturnStmt *RS = dyn_cast_or_null<ReturnStmt>(LastSt)) {
       const LocationContext *LCtx = CEBNode->getLocationContext();
       SVal V = state->getSVal(RS, LCtx);
-      state = state->BindExpr(CE, callerCtx, V);
+      state = state->BindExpr(CE, calleeCtx->getParent(), V);
     }
 
     // Bind the constructed object value to CXXConstructExpr.
@@ -147,17 +147,9 @@ void ExprEngine::processCallExit(ExplodedNode *CEBNode) {
       SVal ThisV = state->getSVal(This);
 
       // Always bind the region to the CXXConstructExpr.
-      state = state->BindExpr(CCE, CEBNode->getLocationContext(), ThisV);
+      state = state->BindExpr(CCE, calleeCtx->getParent(), ThisV);
     }
   }
-
-  static SimpleProgramPointTag retValBindTag("ExprEngine : Bind Return Value");
-  PostStmt Loc(LastSt, calleeCtx, &retValBindTag);
-  bool isNew;
-  ExplodedNode *BindedRetNode = G.getNode(Loc, state, false, &isNew);
-  BindedRetNode->addPredecessor(CEBNode, G);
-  if (!isNew)
-    return;
 
   // Step 3: BindedRetNode -> CleanedNodes
   // If we can find a statement and a block in the inlined function, run remove
@@ -166,6 +158,14 @@ void ExprEngine::processCallExit(ExplodedNode *CEBNode) {
   // they occurred.
   ExplodedNodeSet CleanedNodes;
   if (LastSt && Blk) {
+    static SimpleProgramPointTag retValBind("ExprEngine : Bind Return Value");
+    PostStmt Loc(LastSt, calleeCtx, &retValBind);
+    bool isNew;
+    ExplodedNode *BindedRetNode = G.getNode(Loc, state, false, &isNew);
+    BindedRetNode->addPredecessor(CEBNode, G);
+    if (!isNew)
+      return;
+
     NodeBuilderContext Ctx(getCoreEngine(), Blk, BindedRetNode);
     currentBuilderContext = &Ctx;
     // Here, we call the Symbol Reaper with 0 statement and caller location
@@ -186,7 +186,8 @@ void ExprEngine::processCallExit(ExplodedNode *CEBNode) {
     // CleanedNodes -> CEENode
     CallExitEnd Loc(calleeCtx, callerCtx);
     bool isNew;
-    ExplodedNode *CEENode = G.getNode(Loc, (*I)->getState(), false, &isNew);
+    ProgramStateRef CEEState = (*I == CEBNode) ? state : (*I)->getState();
+    ExplodedNode *CEENode = G.getNode(Loc, CEEState, false, &isNew);
     CEENode->addPredecessor(*I, G);
     if (!isNew)
       return;
@@ -201,8 +202,12 @@ void ExprEngine::processCallExit(ExplodedNode *CEBNode) {
     SaveAndRestore<unsigned> CBISave(currentStmtIdx, calleeCtx->getIndex());
 
     // FIXME: This needs to call PostCall.
+    // FIXME: If/when we inline Objective-C messages, this also needs to call
+    // PostObjCMessage.
     if (CE)
       getCheckerManager().runCheckersForPostStmt(Dst, CEENode, CE, *this, true);
+    else
+      Dst.Add(CEENode);
 
     // Enqueue the next element in the block.
     for (ExplodedNodeSet::iterator PSI = Dst.begin(), PSE = Dst.end();

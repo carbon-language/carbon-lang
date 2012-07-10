@@ -375,6 +375,7 @@ void ExprEngine::ProcessInitializer(const CFGInitializer Init,
 
     const FieldDecl *FD = BMI->getAnyMember();
 
+    // FIXME: This does not work for initializers that call constructors.
     SVal FieldLoc = state->getLValue(FD, thisVal);
     SVal InitVal = state->getSVal(BMI->getInit(), Pred->getLocationContext());
     state = state->bindLoc(FieldLoc, InitVal);
@@ -458,7 +459,27 @@ void ExprEngine::ProcessTemporaryDtor(const CFGTemporaryDtor D,
                                       ExplodedNode *Pred,
                                       ExplodedNodeSet &Dst) {}
 
-void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred, 
+static const VarDecl *findDirectConstruction(const DeclStmt *DS,
+                                             const Expr *Init) {
+  for (DeclStmt::const_decl_iterator I = DS->decl_begin(), E = DS->decl_end();
+       I != E; ++I) {
+    const VarDecl *Var = dyn_cast<VarDecl>(*I);
+    if (!Var)
+      continue;
+    if (Var->getInit() != Init)
+      continue;
+    // FIXME: We need to decide how copy-elision should work here.
+    if (!Var->isDirectInit())
+      break;
+    if (Var->getType()->isReferenceType())
+      break;
+    return Var;
+  }
+
+  return 0;
+}
+
+void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
                        ExplodedNodeSet &DstTop) {
   PrettyStackTraceLoc CrashInfo(getContext().getSourceManager(),
                                 S->getLocStart(),
@@ -724,10 +745,18 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
     case Stmt::CXXTemporaryObjectExprClass:
     case Stmt::CXXConstructExprClass: {
       const CXXConstructExpr *C = cast<CXXConstructExpr>(S);
-      // For block-level CXXConstructExpr, we don't have a destination region.
-      // Let VisitCXXConstructExpr() create one.
+      const MemRegion *Target = 0;
+
+      const LocationContext *LCtx = Pred->getLocationContext();
+      const ParentMap &PM = LCtx->getParentMap();
+      if (const DeclStmt *DS = dyn_cast_or_null<DeclStmt>(PM.getParent(C)))
+        if (const VarDecl *Var = findDirectConstruction(DS, C))
+          Target = Pred->getState()->getLValue(Var, LCtx).getAsRegion();
+      // If we don't have a destination region, VisitCXXConstructExpr() will
+      // create one.
+      
       Bldr.takeNodes(Pred);
-      VisitCXXConstructExpr(C, 0, Pred, Dst);
+      VisitCXXConstructExpr(C, Target, Pred, Dst);
       Bldr.addNodes(Dst);
       break;
     }

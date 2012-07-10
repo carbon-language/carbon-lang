@@ -47,7 +47,7 @@ StoreRef StoreManager::enterStackFrame(Store OldStore,
   // FIXME: We will eventually want to generalize this to handle other non-
   // parameter arguments besides 'this' (such as 'self' for ObjC methods).
   SVal ThisVal = Call.getCXXThisVal();
-  if (!ThisVal.isUndef()) {
+  if (isa<DefinedSVal>(ThisVal)) {
     const CXXMethodDecl *MD = cast<CXXMethodDecl>(Call.getDecl());
     loc::MemRegionVal ThisRegion = svalBuilder.getCXXThis(MD, LCtx);
     Store = Bind(Store.getStore(), ThisRegion, ThisVal);

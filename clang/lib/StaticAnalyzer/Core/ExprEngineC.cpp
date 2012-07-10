@@ -454,30 +454,37 @@ void ExprEngine::VisitDeclStmt(const DeclStmt *DS, ExplodedNode *Pred,
     
     if (const Expr *InitEx = VD->getInit()) {
       SVal InitVal = state->getSVal(InitEx, Pred->getLocationContext());
-      
-      // We bound the temp obj region to the CXXConstructExpr. Now recover
-      // the lazy compound value when the variable is not a reference.
-      if (AMgr.getLangOpts().CPlusPlus && VD->getType()->isRecordType() && 
-          !VD->getType()->isReferenceType() && isa<loc::MemRegionVal>(InitVal)){
-        InitVal = state->getSVal(cast<loc::MemRegionVal>(InitVal).getRegion());
-        assert(isa<nonloc::LazyCompoundVal>(InitVal));
-      }
-      
-      // Recover some path-sensitivity if a scalar value evaluated to
-      // UnknownVal.
-      if (InitVal.isUnknown()) {
-	QualType Ty = InitEx->getType();
-	if (InitEx->isGLValue()) {
-	  Ty = getContext().getPointerType(Ty);
-	}
 
-        InitVal = svalBuilder.getConjuredSymbolVal(NULL, InitEx, LC, Ty,
-                                 currentBuilderContext->getCurrentBlockCount());
+      if (InitVal == state->getLValue(VD, LC)) {
+        // We constructed the object directly in the variable.
+        // No need to bind anything.
+        B.generateNode(DS, N, state);
+      } else {
+        // We bound the temp obj region to the CXXConstructExpr. Now recover
+        // the lazy compound value when the variable is not a reference.
+        // FIXME: This is probably not correct for most constructors!
+        if (AMgr.getLangOpts().CPlusPlus && VD->getType()->isRecordType() && 
+            !VD->getType()->isReferenceType() && isa<loc::MemRegionVal>(InitVal)){
+          InitVal = state->getSVal(cast<loc::MemRegionVal>(InitVal).getRegion());
+          assert(isa<nonloc::LazyCompoundVal>(InitVal));
+        }
+        
+        // Recover some path-sensitivity if a scalar value evaluated to
+        // UnknownVal.
+        if (InitVal.isUnknown()) {
+          QualType Ty = InitEx->getType();
+          if (InitEx->isGLValue()) {
+            Ty = getContext().getPointerType(Ty);
+          }
+
+          InitVal = svalBuilder.getConjuredSymbolVal(NULL, InitEx, LC, Ty,
+                                   currentBuilderContext->getCurrentBlockCount());
+        }
+        B.takeNodes(N);
+        ExplodedNodeSet Dst2;
+        evalBind(Dst2, DS, N, state->getLValue(VD, LC), InitVal, true);
+        B.addNodes(Dst2);
       }
-      B.takeNodes(N);
-      ExplodedNodeSet Dst2;
-      evalBind(Dst2, DS, N, state->getLValue(VD, LC), InitVal, true);
-      B.addNodes(Dst2);
     }
     else {
       B.generateNode(DS, N,state->bindDeclWithNoInit(state->getRegion(VD, LC)));
