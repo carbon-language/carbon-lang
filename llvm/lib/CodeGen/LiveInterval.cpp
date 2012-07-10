@@ -579,7 +579,8 @@ void LiveInterval::mergeIntervalRanges(const LiveInterval &RHS,
 
   // And finally insert any trailing end of RHS (if we have one).
   for (; RI != RE; ++RI)
-    if (ranges.back().valno == LHSValNo && RI->start <= ranges.back().end) {
+    if (!ranges.empty() &&
+        ranges.back().valno == LHSValNo && RI->start <= ranges.back().end) {
       ranges.back().end = std::max(ranges.back().end, RI->end);
     } else {
       ranges.push_back(*RI);
