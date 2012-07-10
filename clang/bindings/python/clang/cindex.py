@@ -2132,7 +2132,7 @@ class CompileCommand(object):
     @property
     def directory(self):
         """Get the working directory for this CompileCommand"""
-        return CompileCommand_getDirectory(self.cmd).spelling
+        return CompileCommand_getDirectory(self.cmd)
 
     @property
     def arguments(self):
@@ -2603,6 +2603,7 @@ CompileCommands_getCommand.restype = c_object_p
 CompileCommand_getDirectory = lib.clang_CompileCommand_getDirectory
 CompileCommand_getDirectory.argtypes = [c_object_p]
 CompileCommand_getDirectory.restype = _CXString
+CompileCommand_getDirectory.errcheck = _CXString.from_result
 
 CompileCommand_getNumArgs = lib.clang_CompileCommand_getNumArgs
 CompileCommand_getNumArgs.argtypes = [c_object_p]
@@ -2611,6 +2612,7 @@ CompileCommand_getNumArgs.restype = c_uint
 CompileCommand_getArg = lib.clang_CompileCommand_getArg
 CompileCommand_getArg.argtypes = [c_object_p, c_uint]
 CompileCommand_getArg.restype = _CXString
+CompileCommand_getArg.errcheck = _CXString.from_result
 
 __all__ = [
     'CodeCompletionResults',

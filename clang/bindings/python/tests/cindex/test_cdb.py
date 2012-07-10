@@ -41,7 +41,7 @@ def test_1_compilecommand():
     expected = [ 'clang++', '-o', 'project.o', '-c',
                  '/home/john.doe/MyProject/project.cpp']
     for arg, exp in zip(cmds[0].arguments, expected):
-        assert arg.spelling == exp
+        assert arg == exp
 
 def test_2_compilecommand():
     """Check file with 2 compile commands"""
@@ -59,7 +59,7 @@ def test_2_compilecommand():
     for i in range(len(cmds)):
         assert cmds[i].directory == expected[i]['wd']
         for arg, exp in zip(cmds[i].arguments, expected[i]['line']):
-            assert arg.spelling == exp
+            assert arg == exp
 
 def test_compilecommand_iterator_stops():
     """Check that iterator stops after the correct number of elements"""
