@@ -112,7 +112,7 @@ public:
 
   size_t size() const { return UniqueFiles.size(); }
 
-  friend class FileManager;
+  void erase(const FileEntry *Entry) { UniqueFiles.erase(Entry->getName()); }
 };
 
 //===----------------------------------------------------------------------===//
@@ -155,7 +155,7 @@ public:
 
   size_t size() const { return UniqueFiles.size(); }
 
-  friend class FileManager;
+  void erase(const FileEntry *Entry) { UniqueFiles.erase(*Entry); }
 };
 
 #endif
@@ -563,16 +563,15 @@ bool FileManager::getNoncachedStatValue(StringRef Path,
   return ::stat(FilePath.c_str(), &StatBuf) != 0;
 }
 
-void FileManager::InvalidateCache(const FileEntry* Entry) {
-  if (!Entry)
-    return;
+void FileManager::invalidateCache(const FileEntry *Entry) {
+  assert(Entry && "Cannot invalidate a NULL FileEntry");
 
   SeenFileEntries.erase(Entry->getName());
-#ifdef LLVM_ON_WIN32
-  UniqueRealFiles.UniqueFiles.erase(Entry->getName());
-#else
-  UniqueRealFiles.UniqueFiles.erase(*Entry);
-#endif
+
+  // FileEntry invalidation should not block future optimizations in the file
+  // caches. Possible alternatives are cache truncation (invalidate last N) or
+  // invalidation of the whole cache.
+  UniqueRealFiles.erase(Entry);
 }
 
 
