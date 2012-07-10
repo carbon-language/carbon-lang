@@ -84,8 +84,8 @@ public:
   BoundNodesTree();
 
   /// \brief Create a BoundNodesTree from pre-filled maps of bindings.
-  BoundNodesTree(const std::map<std::string, const clang::Decl*>& DeclBindings,
-                 const std::map<std::string, const clang::Stmt*>& StmtBindings,
+  BoundNodesTree(const std::map<std::string, const Decl*>& DeclBindings,
+                 const std::map<std::string, const Stmt*>& StmtBindings,
                  const std::vector<BoundNodesTree> RecursiveBindings);
 
   /// \brief Adds all bound nodes to bound_nodes_builder.
@@ -99,8 +99,8 @@ public:
 private:
   void visitMatchesRecursively(
       Visitor* ResultVistior,
-      std::map<std::string, const clang::Decl*> DeclBindings,
-      std::map<std::string, const clang::Stmt*> StmtBindings);
+      std::map<std::string, const Decl*> DeclBindings,
+      std::map<std::string, const Stmt*> StmtBindings);
 
   template <typename T>
   void copyBindingsTo(const T& bindings, BoundNodesTreeBuilder* Builder) const;
@@ -108,8 +108,8 @@ private:
   // FIXME: Find out whether we want to use different data structures here -
   // first benchmarks indicate that it doesn't matter though.
 
-  std::map<std::string, const clang::Decl*> DeclBindings;
-  std::map<std::string, const clang::Stmt*> StmtBindings;
+  std::map<std::string, const Decl*> DeclBindings;
+  std::map<std::string, const Stmt*> StmtBindings;
 
   std::vector<BoundNodesTree> RecursiveBindings;
 };
@@ -126,10 +126,8 @@ public:
   ///
   /// FIXME: Add overloads for all AST base types.
   /// @{
-  void setBinding(const std::pair<const std::string,
-                                  const clang::Decl*>& binding);
-  void setBinding(const std::pair<const std::string,
-                                  const clang::Stmt*>& binding);
+  void setBinding(const std::string &Id, const Decl *Node);
+  void setBinding(const std::string &Id, const Stmt *Node);
   /// @}
 
   /// \brief Adds a branch in the tree.
@@ -142,8 +140,8 @@ private:
   BoundNodesTreeBuilder(const BoundNodesTreeBuilder&);  // DO NOT IMPLEMENT
   void operator=(const BoundNodesTreeBuilder&);  // DO NOT IMPLEMENT
 
-  std::map<std::string, const clang::Decl*> DeclBindings;
-  std::map<std::string, const clang::Stmt*> StmtBindings;
+  std::map<std::string, const Decl*> DeclBindings;
+  std::map<std::string, const Stmt*> StmtBindings;
 
   std::vector<BoundNodesTree> RecursiveBindings;
 };
@@ -262,10 +260,10 @@ inline Matcher<T> makeMatcher(MatcherInterface<T> *Implementation) {
 template <typename T, typename DeclMatcherT>
 class HasDeclarationMatcher : public MatcherInterface<T> {
   TOOLING_COMPILE_ASSERT((llvm::is_same< DeclMatcherT,
-                                         Matcher<clang::Decl> >::value),
+                                         Matcher<Decl> >::value),
                           instantiated_with_wrong_types);
 public:
-  explicit HasDeclarationMatcher(const Matcher<clang::Decl> &InnerMatcher)
+  explicit HasDeclarationMatcher(const Matcher<Decl> &InnerMatcher)
       : InnerMatcher(InnerMatcher) {}
 
   virtual bool matches(const T &Node,
@@ -277,34 +275,36 @@ public:
 private:
   /// \brief Extracts the CXXRecordDecl of a QualType and returns whether the
   /// inner matcher matches on it.
-  bool matchesSpecialized(const clang::QualType &Node, ASTMatchFinder *Finder,
+  bool matchesSpecialized(const QualType &Node, ASTMatchFinder *Finder,
                           BoundNodesTreeBuilder *Builder) const {
     /// FIXME: Add other ways to convert...
-    clang::CXXRecordDecl *NodeAsRecordDecl = Node->getAsCXXRecordDecl();
+    if (Node.isNull())
+      return false;
+    CXXRecordDecl *NodeAsRecordDecl = Node->getAsCXXRecordDecl();
     return NodeAsRecordDecl != NULL &&
       InnerMatcher.matches(*NodeAsRecordDecl, Finder, Builder);
   }
 
   /// \brief Extracts the Decl of the callee of a CallExpr and returns whether
   /// the inner matcher matches on it.
-  bool matchesSpecialized(const clang::CallExpr &Node, ASTMatchFinder *Finder,
+  bool matchesSpecialized(const CallExpr &Node, ASTMatchFinder *Finder,
                           BoundNodesTreeBuilder *Builder) const {
-    const clang::Decl *NodeAsDecl = Node.getCalleeDecl();
+    const Decl *NodeAsDecl = Node.getCalleeDecl();
     return NodeAsDecl != NULL &&
       InnerMatcher.matches(*NodeAsDecl, Finder, Builder);
   }
 
   /// \brief Extracts the Decl of the constructor call and returns whether the
   /// inner matcher matches on it.
-  bool matchesSpecialized(const clang::CXXConstructExpr &Node,
+  bool matchesSpecialized(const CXXConstructExpr &Node,
                           ASTMatchFinder *Finder,
                           BoundNodesTreeBuilder *Builder) const {
-    const clang::Decl *NodeAsDecl = Node.getConstructor();
+    const Decl *NodeAsDecl = Node.getConstructor();
     return NodeAsDecl != NULL &&
       InnerMatcher.matches(*NodeAsDecl, Finder, Builder);
   }
 
-  const Matcher<clang::Decl> InnerMatcher;
+  const Matcher<Decl> InnerMatcher;
 };
 
 /// \brief IsBaseType<T>::value is true if T is a "base" type in the AST
@@ -312,10 +312,10 @@ private:
 template <typename T>
 struct IsBaseType {
   static const bool value =
-      (llvm::is_same<T, clang::Decl>::value ||
-       llvm::is_same<T, clang::Stmt>::value ||
-       llvm::is_same<T, clang::QualType>::value ||
-       llvm::is_same<T, clang::CXXCtorInitializer>::value);
+      (llvm::is_same<T, Decl>::value ||
+       llvm::is_same<T, Stmt>::value ||
+       llvm::is_same<T, QualType>::value ||
+       llvm::is_same<T, CXXCtorInitializer>::value);
 };
 template <typename T>
 const bool IsBaseType<T>::value;
@@ -326,19 +326,19 @@ class UntypedBaseMatcher : public llvm::RefCountedBaseVPTR {
 public:
   virtual ~UntypedBaseMatcher() {}
 
-  virtual bool matches(const clang::Decl &DeclNode, ASTMatchFinder *Finder,
+  virtual bool matches(const Decl &DeclNode, ASTMatchFinder *Finder,
                        BoundNodesTreeBuilder *Builder) const {
     return false;
   }
-  virtual bool matches(const clang::QualType &TypeNode, ASTMatchFinder *Finder,
+  virtual bool matches(const QualType &TypeNode, ASTMatchFinder *Finder,
                        BoundNodesTreeBuilder *Builder) const {
     return false;
   }
-  virtual bool matches(const clang::Stmt &StmtNode, ASTMatchFinder *Finder,
+  virtual bool matches(const Stmt &StmtNode, ASTMatchFinder *Finder,
                        BoundNodesTreeBuilder *Builder) const {
     return false;
   }
-  virtual bool matches(const clang::CXXCtorInitializer &CtorInitNode,
+  virtual bool matches(const CXXCtorInitializer &CtorInitNode,
                        ASTMatchFinder *Finder,
                        BoundNodesTreeBuilder *Builder) const {
     return false;
@@ -414,26 +414,26 @@ public:
   /// from a base type with the given name.
   ///
   /// A class is considered to be also derived from itself.
-  virtual bool classIsDerivedFrom(const clang::CXXRecordDecl *Declaration,
+  virtual bool classIsDerivedFrom(const CXXRecordDecl *Declaration,
                                   StringRef BaseName) const = 0;
 
   // FIXME: Implement for other base nodes.
-  virtual bool matchesChildOf(const clang::Decl &DeclNode,
+  virtual bool matchesChildOf(const Decl &DeclNode,
                               const UntypedBaseMatcher &BaseMatcher,
                               BoundNodesTreeBuilder *Builder,
                               TraversalKind Traverse,
                               BindKind Bind) = 0;
-  virtual bool matchesChildOf(const clang::Stmt &StmtNode,
+  virtual bool matchesChildOf(const Stmt &StmtNode,
                               const UntypedBaseMatcher &BaseMatcher,
                               BoundNodesTreeBuilder *Builder,
                               TraversalKind Traverse,
                               BindKind Bind) = 0;
 
-  virtual bool matchesDescendantOf(const clang::Decl &DeclNode,
+  virtual bool matchesDescendantOf(const Decl &DeclNode,
                                    const UntypedBaseMatcher &BaseMatcher,
                                    BoundNodesTreeBuilder *Builder,
                                    BindKind Bind) = 0;
-  virtual bool matchesDescendantOf(const clang::Stmt &StmtNode,
+  virtual bool matchesDescendantOf(const Stmt &StmtNode,
                                    const UntypedBaseMatcher &BaseMatcher,
                                    BoundNodesTreeBuilder *Builder,
                                    BindKind Bind) = 0;
@@ -566,17 +566,17 @@ private:
   const Matcher<To> InnerMatcher;
 };
 
-/// \brief Enables the user to pass a Matcher<clang::CXXMemberCallExpr> to
+/// \brief Enables the user to pass a Matcher<CXXMemberCallExpr> to
 /// Call().
 ///
 /// FIXME: Alternatives are using more specific methods than Call, like
 /// MemberCall, or not using VariadicFunction for Call and overloading it.
 template <>
 template <>
-inline Matcher<clang::CXXMemberCallExpr>::
-operator Matcher<clang::CallExpr>() const {
+inline Matcher<CXXMemberCallExpr>::
+operator Matcher<CallExpr>() const {
   return makeMatcher(
-    new DynCastMatcher<clang::CallExpr, clang::CXXMemberCallExpr>(*this));
+    new DynCastMatcher<CallExpr, CXXMemberCallExpr>(*this));
 }
 
 /// \brief Matcher<T> that wraps an inner Matcher<T> and binds the matched node
@@ -594,7 +594,7 @@ public:
                        BoundNodesTreeBuilder *Builder) const {
     bool Result = InnerMatcher.matches(Node, Finder, Builder);
     if (Result) {
-      Builder->setBinding(std::pair<const std::string, const T*>(ID, &Node));
+      Builder->setBinding(ID, &Node);
     }
     return Result;
   }
@@ -795,11 +795,11 @@ private:
 /// the value the ValueEqualsMatcher was constructed with.
 template <typename T, typename ValueT>
 class ValueEqualsMatcher : public SingleNodeMatcherInterface<T> {
-  TOOLING_COMPILE_ASSERT((llvm::is_base_of<clang::CharacterLiteral, T>::value ||
-                         llvm::is_base_of<clang::CXXBoolLiteralExpr,
+  TOOLING_COMPILE_ASSERT((llvm::is_base_of<CharacterLiteral, T>::value ||
+                         llvm::is_base_of<CXXBoolLiteralExpr,
                                           T>::value ||
-                         llvm::is_base_of<clang::FloatingLiteral, T>::value ||
-                         llvm::is_base_of<clang::IntegerLiteral, T>::value),
+                         llvm::is_base_of<FloatingLiteral, T>::value ||
+                         llvm::is_base_of<IntegerLiteral, T>::value),
                          the_node_must_have_a_getValue_method);
 public:
   explicit ValueEqualsMatcher(const ValueT &ExpectedValue)
@@ -816,9 +816,9 @@ private:
 template <typename T>
 class IsDefinitionMatcher : public SingleNodeMatcherInterface<T> {
   TOOLING_COMPILE_ASSERT(
-    (llvm::is_base_of<clang::TagDecl, T>::value) ||
-    (llvm::is_base_of<clang::VarDecl, T>::value) ||
-    (llvm::is_base_of<clang::FunctionDecl, T>::value),
+    (llvm::is_base_of<TagDecl, T>::value) ||
+    (llvm::is_base_of<VarDecl, T>::value) ||
+    (llvm::is_base_of<FunctionDecl, T>::value),
     is_definition_requires_isThisDeclarationADefinition_method);
 public:
   virtual bool matchesNode(const T &Node) const {
@@ -830,32 +830,32 @@ public:
 /// CXXRecordDecl nodes.
 template <typename T>
 class IsTemplateInstantiationMatcher : public MatcherInterface<T> {
-  TOOLING_COMPILE_ASSERT((llvm::is_base_of<clang::FunctionDecl, T>::value) ||
-                         (llvm::is_base_of<clang::VarDecl, T>::value) ||
-                         (llvm::is_base_of<clang::CXXRecordDecl, T>::value),
+  TOOLING_COMPILE_ASSERT((llvm::is_base_of<FunctionDecl, T>::value) ||
+                         (llvm::is_base_of<VarDecl, T>::value) ||
+                         (llvm::is_base_of<CXXRecordDecl, T>::value),
                          requires_getTemplateSpecializationKind_method);
  public:
   virtual bool matches(const T& Node,
                        ASTMatchFinder* Finder,
                        BoundNodesTreeBuilder* Builder) const {
     return (Node.getTemplateSpecializationKind() ==
-                clang::TSK_ImplicitInstantiation ||
+                TSK_ImplicitInstantiation ||
             Node.getTemplateSpecializationKind() ==
-                clang::TSK_ExplicitInstantiationDefinition);
+                TSK_ExplicitInstantiationDefinition);
   }
 };
 
-class IsArrowMatcher : public SingleNodeMatcherInterface<clang::MemberExpr> {
+class IsArrowMatcher : public SingleNodeMatcherInterface<MemberExpr> {
 public:
-  virtual bool matchesNode(const clang::MemberExpr &Node) const {
+  virtual bool matchesNode(const MemberExpr &Node) const {
     return Node.isArrow();
   }
 };
 
 class IsConstQualifiedMatcher
-    : public SingleNodeMatcherInterface<clang::QualType> {
+    : public SingleNodeMatcherInterface<QualType> {
  public:
-  virtual bool matchesNode(const clang::QualType& Node) const {
+  virtual bool matchesNode(const QualType& Node) const {
     return Node.isConstQualified();
   }
 };
@@ -867,11 +867,11 @@ class IsConstQualifiedMatcher
 ///
 /// For example:
 ///   const VariadicDynCastAllOfMatcher<
-///       clang::Decl, clang::CXXRecordDecl> record;
-/// Creates a functor record(...) that creates a Matcher<clang::Decl> given
-/// a variable number of arguments of type Matcher<clang::CXXRecordDecl>.
-/// The returned matcher matches if the given clang::Decl can by dynamically
-/// casted to clang::CXXRecordDecl and all given matchers match.
+///       Decl, CXXRecordDecl> record;
+/// Creates a functor record(...) that creates a Matcher<Decl> given
+/// a variable number of arguments of type Matcher<CXXRecordDecl>.
+/// The returned matcher matches if the given Decl can by dynamically
+/// casted to CXXRecordDecl and all given matchers match.
 template <typename SourceT, typename TargetT>
 class VariadicDynCastAllOfMatcher
     : public llvm::VariadicFunction<
