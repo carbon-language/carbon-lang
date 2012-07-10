@@ -115,20 +115,13 @@ bool runToolOnCode(clang::FrontendAction *ToolAction, const Twine &Code,
   return Invocation.run();
 }
 
-/// \brief Returns the absolute path of 'File', by prepending it with
-/// 'BaseDirectory' if 'File' is not absolute.
-///
-/// Otherwise returns 'File'.
-/// If 'File' starts with "./", the returned path will not contain the "./".
-/// Otherwise, the returned path will contain the literal path-concatenation of
-/// 'BaseDirectory' and 'File'.
-///
-/// \param File Either an absolute or relative path.
-/// \param BaseDirectory An absolute path.
-static std::string getAbsolutePath(
-    StringRef File, StringRef BaseDirectory) {
+std::string getAbsolutePath(StringRef File) {
+  llvm::SmallString<1024> BaseDirectory;
+  if (const char *PWD = ::getenv("PWD"))
+    BaseDirectory = PWD;
+  else
+    llvm::sys::fs::current_path(BaseDirectory);
   SmallString<1024> PathStorage;
-  assert(llvm::sys::path::is_absolute(BaseDirectory));
   if (llvm::sys::path::is_absolute(File)) {
     llvm::sys::path::native(File, PathStorage);
     return PathStorage.str();
@@ -240,14 +233,8 @@ ClangTool::ClangTool(const CompilationDatabase &Compilations,
                      ArrayRef<std::string> SourcePaths)
     : Files((FileSystemOptions())),
       ArgsAdjuster(new ClangSyntaxOnlyAdjuster()) {
-  llvm::SmallString<1024> BaseDirectory;
-  if (const char *PWD = ::getenv("PWD"))
-    BaseDirectory = PWD;
-  else
-    llvm::sys::fs::current_path(BaseDirectory);
   for (unsigned I = 0, E = SourcePaths.size(); I != E; ++I) {
-    llvm::SmallString<1024> File(getAbsolutePath(
-        SourcePaths[I], BaseDirectory));
+    llvm::SmallString<1024> File(getAbsolutePath(SourcePaths[I]));
 
     std::vector<CompileCommand> CompileCommandsForFile =
       Compilations.getCompileCommands(File.str());

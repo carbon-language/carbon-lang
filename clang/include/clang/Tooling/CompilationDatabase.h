@@ -81,6 +81,13 @@ public:
   static CompilationDatabase *loadFromDirectory(StringRef BuildDirectory,
                                                 std::string &ErrorMessage);
 
+  /// \brief Tries to detect a compilation database location and load it.
+  ///
+  /// Looks for a compilation database in all parent paths by calling
+  /// loadFromDirectory.
+  static CompilationDatabase *autoDetectFromSource(StringRef SourceFile,
+                                                   std::string &ErrorMessage);
+
   /// \brief Returns all compile commands in which the specified file was
   /// compiled.
   ///
@@ -215,4 +222,3 @@ private:
 } // end namespace clang
 
 #endif // LLVM_CLANG_TOOLING_COMPILATION_DATABASE_H
-

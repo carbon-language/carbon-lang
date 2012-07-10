@@ -42,8 +42,9 @@ using namespace clang::tooling;
 using namespace llvm;
 
 cl::opt<std::string> BuildPath(
-  cl::Positional,
-  cl::desc("<build-path>"));
+  "p",
+  cl::desc("<build-path>"),
+  cl::Optional);
 
 cl::list<std::string> SourcePaths(
   cl::Positional,
@@ -56,8 +57,13 @@ int main(int argc, const char **argv) {
   cl::ParseCommandLineOptions(argc, argv);
   if (!Compilations) {
     std::string ErrorMessage;
-    Compilations.reset(CompilationDatabase::loadFromDirectory(BuildPath,
-                                                              ErrorMessage));
+    if (!BuildPath.empty()) {
+      Compilations.reset(CompilationDatabase::loadFromDirectory(BuildPath,
+                                                                ErrorMessage));
+    } else {
+      Compilations.reset(CompilationDatabase::autoDetectFromSource(
+          SourcePaths[0], ErrorMessage));
+    }
     if (!Compilations)
       llvm::report_fatal_error(ErrorMessage);
   }

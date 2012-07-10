@@ -232,6 +232,22 @@ FrontendActionFactory *newFrontendActionFactory(FactoryT *ConsumerFactory) {
   return new FrontendActionFactoryAdapter(ConsumerFactory);
 }
 
+/// \brief Returns the absolute path of \c File, by prepending it with
+/// the current directory if \c File is not absolute.
+///
+/// Otherwise returns \c File.
+/// If 'File' starts with "./", the returned path will not contain the "./".
+/// Otherwise, the returned path will contain the literal path-concatenation of
+/// the current directory and \c File.
+///
+/// The difference to llvm::sys::fs::make_absolute is that we prefer
+/// ::getenv("PWD") if available.
+/// FIXME: Make this functionality available from llvm::sys::fs and delete
+///        this function.
+///
+/// \param File Either an absolute or relative path.
+std::string getAbsolutePath(StringRef File);
+
 } // end namespace tooling
 } // end namespace clang
 
