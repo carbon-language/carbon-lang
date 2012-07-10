@@ -84,8 +84,8 @@ namespace {
 class StandardDirective : public Directive {
 public:
   StandardDirective(SourceLocation DirectiveLoc, SourceLocation DiagnosticLoc,
-                    StringRef Text, unsigned Count)
-    : Directive(DirectiveLoc, DiagnosticLoc, Text, Count) { }
+                    StringRef Text, unsigned Min, unsigned Max)
+    : Directive(DirectiveLoc, DiagnosticLoc, Text, Min, Max) { }
 
   virtual bool isValid(std::string &Error) {
     // all strings are considered valid; even empty ones
@@ -102,8 +102,8 @@ public:
 class RegexDirective : public Directive {
 public:
   RegexDirective(SourceLocation DirectiveLoc, SourceLocation DiagnosticLoc,
-                 StringRef Text, unsigned Count)
-    : Directive(DirectiveLoc, DiagnosticLoc, Text, Count), Regex(Text) { }
+                 StringRef Text, unsigned Min, unsigned Max)
+    : Directive(DirectiveLoc, DiagnosticLoc, Text, Min, Max), Regex(Text) { }
 
   virtual bool isValid(std::string &Error) {
     if (Regex.isValid(Error))
@@ -264,11 +264,29 @@ static void ParseDirective(const char *CommentStart, unsigned CommentLen,
     PH.SkipWhitespace();
 
     // Next optional token: positive integer or a '+'.
-    unsigned Count = 1;
-    if (PH.Next(Count))
+    unsigned Min = 1;
+    unsigned Max = 1;
+    if (PH.Next(Min)) {
       PH.Advance();
-    else if (PH.Next("+")) {
-      Count = Directive::OneOrMoreCount;
+      // A positive integer can be followed by a '+' meaning min
+      // or more, or by a '-' meaning a range from min to max.
+      if (PH.Next("+")) {
+        Max = Directive::MaxCount;
+        PH.Advance();
+      } else if (PH.Next("-")) {
+        PH.Advance();
+        if (!PH.Next(Max) || Max < Min) {
+          Diags.Report(Pos.getLocWithOffset(PH.C-PH.Begin),
+                       diag::err_verify_invalid_range) << KindStr;
+          continue;
+        }
+        PH.Advance();
+      } else {
+        Max = Min;
+      }
+    } else if (PH.Next("+")) {
+      // '+' on its own means "1 or more".
+      Max = Directive::MaxCount;
       PH.Advance();
     }
 
@@ -308,7 +326,8 @@ static void ParseDirective(const char *CommentStart, unsigned CommentLen,
       Text.assign(ContentBegin, ContentEnd);
 
     // Construct new directive.
-    Directive *D = Directive::create(RegexKind, Pos, ExpectedLoc, Text, Count);
+    Directive *D = Directive::create(RegexKind, Pos, ExpectedLoc, Text,
+                                     Min, Max);
     std::string Error;
     if (D->isValid(Error))
       DL->push_back(D);
@@ -411,9 +430,8 @@ static unsigned CheckLists(DiagnosticsEngine &Diags, SourceManager &SourceMgr,
   for (DirectiveList::iterator I = Left.begin(), E = Left.end(); I != E; ++I) {
     Directive& D = **I;
     unsigned LineNo1 = SourceMgr.getPresumedLineNumber(D.DiagnosticLoc);
-    bool FoundOnce = false;
 
-    for (unsigned i = 0; i < D.Count; ++i) {
+    for (unsigned i = 0; i < D.Max; ++i) {
       DiagList::iterator II, IE;
       for (II = Right.begin(), IE = Right.end(); II != IE; ++II) {
         unsigned LineNo2 = SourceMgr.getPresumedLineNumber(II->first);
@@ -425,18 +443,12 @@ static unsigned CheckLists(DiagnosticsEngine &Diags, SourceManager &SourceMgr,
           break;
       }
       if (II == IE) {
-        if (D.Count == D.OneOrMoreCount) {
-          if (!FoundOnce)
-            LeftOnly.push_back(*I);
-          // We are only interested in at least one match, so exit the loop.
-          break;
-        }
         // Not found.
+        if (i >= D.Min) break;
         LeftOnly.push_back(*I);
       } else {
         // Found. The same cannot be found twice.
         Right.erase(II);
-        FoundOnce = true;
       }
     }
   }
@@ -527,8 +539,8 @@ VerifyDiagnosticConsumer::clone(DiagnosticsEngine &Diags) const {
 
 Directive *Directive::create(bool RegexKind, SourceLocation DirectiveLoc,
                              SourceLocation DiagnosticLoc, StringRef Text,
-                             unsigned Count) {
+                             unsigned Min, unsigned Max) {
   if (RegexKind)
-    return new RegexDirective(DirectiveLoc, DiagnosticLoc, Text, Count);
-  return new StandardDirective(DirectiveLoc, DiagnosticLoc, Text, Count);
+    return new RegexDirective(DirectiveLoc, DiagnosticLoc, Text, Min, Max);
+  return new StandardDirective(DirectiveLoc, DiagnosticLoc, Text, Min, Max);
 }

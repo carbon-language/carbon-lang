@@ -65,6 +65,8 @@ def warn_fe_serialized_diag_failure : Warning<
 
 def err_verify_missing_line : Error<
     "missing or invalid line number following '@' in expected %0">;
+def err_verify_invalid_range : Error<
+    "invalid range following '-' in expected %0">;
 def err_verify_missing_start : Error<
     "cannot find start ('{{') of expected %0">;
 def err_verify_missing_end : Error<
