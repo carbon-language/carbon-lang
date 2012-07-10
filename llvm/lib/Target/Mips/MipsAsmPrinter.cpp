@@ -333,8 +333,9 @@ bool MipsAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNum,
         O << "$0";
       return false;
     }
-    case 'D': {
-      // Second part of a double word register operand
+    case 'D': // Second part of a double word register operand
+    case 'L': // Low order register of a double word register operand
+    {
       if (OpNum == 0)
         return true;
       const MachineOperand &FlagsOP = MI->getOperand(OpNum - 1);
@@ -353,19 +354,26 @@ bool MipsAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNum,
         return true;
       }
       unsigned RegOp;
-      switch(ExtraCode[0]) {
-      case 'D':
-        RegOp = (!Subtarget->isGP32bit()) ? OpNum : OpNum + 1;
-        break;
+      if (Subtarget->isGP64bit())
+        RegOp = OpNum;
+      else {
+        // Endianess reverses which register holds the high or low value
+        switch(ExtraCode[0]) {
+        case 'D':
+          RegOp = (Subtarget->isLittle()) ? OpNum : OpNum+1;
+          break;
+        case 'L':
+          RegOp = (Subtarget->isLittle()) ? OpNum+1 : OpNum;
+        }
+        if (RegOp >= MI->getNumOperands())
+          return true;
+        const MachineOperand &MO = MI->getOperand(RegOp);
+        if (!MO.isReg())
+          return true;
+        unsigned Reg = MO.getReg();
+        O << '$' << MipsInstPrinter::getRegisterName(Reg);
+        return false;
       }
-      if (RegOp >= MI->getNumOperands())
-        return true;
-      const MachineOperand &MO = MI->getOperand(RegOp);
-      if (!MO.isReg())
-        return true;
-      unsigned Reg = MO.getReg();
-      O << '$' << MipsInstPrinter::getRegisterName(Reg);
-      return false;
     }
     }
   }

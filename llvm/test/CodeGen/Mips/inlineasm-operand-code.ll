@@ -56,7 +56,7 @@ entry:
 ;LITTLE:    lw $[[SECOND:[0-9]+]], 4(${{[0-9]+}})
 ;LITTLE-NEXT: lw $[[FIRST:[0-9]+]], 0(${{[0-9]+}})
 ;LITTLE:	#APP
-;LITTLE:    or	${{[0-9]+}},$[[SECOND]],${{[0-9]+}}
+;LITTLE:    or	${{[0-9]+}},$[[FIRST]],${{[0-9]+}}
 ;LITTLE:    #NO_APP
 
 ; D, in big endian the source reg will also be 4 bytes into the long long
@@ -76,6 +76,16 @@ entry:
   %7 = load i64* getelementptr inbounds (%union.u_tag* @uval, i32 0, i32 0), align 8
   %trunc1 = trunc i64 %7 to i32
   tail call i32 asm sideeffect "or $0,${1:D},$2", "=r,r,r"(i64 %7, i32 %trunc1) nounwind
+
+; L, in little endian the source reg will be 4 bytes into the long long
+;LITTLE:	#APP
+;LITTLE:	     or	${{[0-9]+}},$[[SECOND]],${{[0-9]+}}
+;LITTLE:	#NO_APP
+; L, in big endian the source reg will be 0 bytes into the long long
+;BIG:	#APP
+;BIG:	     or	${{[0-9]+}},$[[FIRST]],${{[0-9]+}}
+;BIG:	#NO_APP
+  tail call i32 asm sideeffect "or $0,${1:L},$2", "=r,r,r"(i64 %7, i32 %trunc1) nounwind
 
   ret i32 0
 }
