@@ -12,6 +12,8 @@
 
 #include "clang/Basic/Diagnostic.h"
 #include "llvm/ADT/OwningPtr.h"
+#include "llvm/ADT/STLExtras.h"
+#include <climits>
 
 namespace clang {
 
@@ -68,13 +70,62 @@ class TextDiagnosticBuffer;
 ///
 class VerifyDiagnosticConsumer: public DiagnosticConsumer {
 public:
+  /// Directive - Abstract class representing a parsed verify directive.
+  ///
+  class Directive {
+  public:
+    static Directive *create(bool RegexKind, const SourceLocation &Location,
+                             StringRef Text, unsigned Count);
+  public:
+    /// Constant representing one or more matches aka regex "+".
+    static const unsigned OneOrMoreCount = UINT_MAX;
+
+    SourceLocation Location;
+    const std::string Text;
+    unsigned Count;
+
+    virtual ~Directive() { }
+
+    // Returns true if directive text is valid.
+    // Otherwise returns false and populates E.
+    virtual bool isValid(std::string &Error) = 0;
+
+    // Returns true on match.
+    virtual bool match(StringRef S) = 0;
+
+  protected:
+    Directive(const SourceLocation &Location, StringRef Text,
+              unsigned Count)
+      : Location(Location), Text(Text), Count(Count) { }
+
+  private:
+    Directive(const Directive&); // DO NOT IMPLEMENT
+    void operator=(const Directive&); // DO NOT IMPLEMENT
+  };
+
+  typedef std::vector<Directive*> DirectiveList;
+
+  /// ExpectedData - owns directive objects and deletes on destructor.
+  ///
+  struct ExpectedData {
+    DirectiveList Errors;
+    DirectiveList Warnings;
+    DirectiveList Notes;
+
+    ~ExpectedData() {
+      llvm::DeleteContainerPointers(Errors);
+      llvm::DeleteContainerPointers(Warnings);
+      llvm::DeleteContainerPointers(Notes);
+    }
+  };
+
+private:
   DiagnosticsEngine &Diags;
   DiagnosticConsumer *PrimaryClient;
   bool OwnsPrimaryClient;
   OwningPtr<TextDiagnosticBuffer> Buffer;
   Preprocessor *CurrentPreprocessor;
-
-private:
+  ExpectedData ED;
   FileID FirstErrorFID; // FileID of first diagnostic
   void CheckDiagnostics();
 

@@ -18,9 +18,11 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/Regex.h"
 #include "llvm/Support/raw_ostream.h"
-#include <climits>
 
 using namespace clang;
+typedef VerifyDiagnosticConsumer::Directive Directive;
+typedef VerifyDiagnosticConsumer::DirectiveList DirectiveList;
+typedef VerifyDiagnosticConsumer::ExpectedData ExpectedData;
 
 VerifyDiagnosticConsumer::VerifyDiagnosticConsumer(DiagnosticsEngine &_Diags)
   : Diags(_Diags), PrimaryClient(Diags.getClient()),
@@ -77,44 +79,11 @@ typedef TextDiagnosticBuffer::const_iterator const_diag_iterator;
 
 namespace {
 
-/// Directive - Abstract class representing a parsed verify directive.
-///
-class Directive {
-public:
-  static Directive* Create(bool RegexKind, const SourceLocation &Location,
-                           const std::string &Text, unsigned Count);
-public:
-  /// Constant representing one or more matches aka regex "+".
-  static const unsigned OneOrMoreCount =  UINT_MAX;
-
-  SourceLocation Location;
-  const std::string Text;
-  unsigned Count;
-
-  virtual ~Directive() { }
-
-  // Returns true if directive text is valid.
-  // Otherwise returns false and populates E.
-  virtual bool isValid(std::string &Error) = 0;
-
-  // Returns true on match.
-  virtual bool Match(const std::string &S) = 0;
-
-protected:
-  Directive(const SourceLocation &Location, const std::string &Text,
-            unsigned Count)
-    : Location(Location), Text(Text), Count(Count) { }
-
-private:
-  Directive(const Directive&); // DO NOT IMPLEMENT
-  void operator=(const Directive&); // DO NOT IMPLEMENT
-};
-
 /// StandardDirective - Directive with string matching.
 ///
 class StandardDirective : public Directive {
 public:
-  StandardDirective(const SourceLocation &Location, const std::string &Text,
+  StandardDirective(const SourceLocation &Location, StringRef Text,
                     unsigned Count)
     : Directive(Location, Text, Count) { }
 
@@ -123,8 +92,8 @@ public:
     return true;
   }
 
-  virtual bool Match(const std::string &S) {
-    return S.find(Text) != std::string::npos;
+  virtual bool match(StringRef S) {
+    return S.find(Text) != StringRef::npos;
   }
 };
 
@@ -132,7 +101,7 @@ public:
 ///
 class RegexDirective : public Directive {
 public:
-  RegexDirective(const SourceLocation &Location, const std::string &Text,
+  RegexDirective(const SourceLocation &Location, StringRef Text,
                  unsigned Count)
     : Directive(Location, Text, Count), Regex(Text) { }
 
@@ -142,32 +111,13 @@ public:
     return false;
   }
 
-  virtual bool Match(const std::string &S) {
+  virtual bool match(StringRef S) {
     return Regex.match(S);
   }
 
 private:
   llvm::Regex Regex;
 };
-
-typedef std::vector<Directive*> DirectiveList;
-
-/// ExpectedData - owns directive objects and deletes on destructor.
-///
-struct ExpectedData {
-  DirectiveList Errors;
-  DirectiveList Warnings;
-  DirectiveList Notes;
-
-  ~ExpectedData() {
-    DirectiveList* Lists[] = { &Errors, &Warnings, &Notes, 0 };
-    for (DirectiveList **PL = Lists; *PL; ++PL) {
-      DirectiveList * const L = *PL;
-      for (DirectiveList::iterator I = L->begin(), E = L->end(); I != E; ++I)
-        delete *I;
-    }
-  }
-};  
 
 class ParseHelper
 {
@@ -241,8 +191,8 @@ private:
 /// diagnostics. If so, then put them in the appropriate directive list.
 ///
 static void ParseDirective(const char *CommentStart, unsigned CommentLen,
-                           ExpectedData &ED, Preprocessor &PP,
-                           SourceLocation Pos) {
+                           ExpectedData &ED, SourceManager &SM,
+                           SourceLocation Pos, DiagnosticsEngine &Diags) {
   // A single comment may contain multiple directives.
   for (ParseHelper PH(CommentStart, CommentStart+CommentLen); !PH.Done();) {
     // search for token: expected
@@ -295,8 +245,8 @@ static void ParseDirective(const char *CommentStart, unsigned CommentLen,
 
     // next token: {{
     if (!PH.Next("{{")) {
-      PP.Diag(Pos.getLocWithOffset(PH.C-PH.Begin),
-              diag::err_verify_missing_start) << KindStr;
+      Diags.Report(Pos.getLocWithOffset(PH.C-PH.Begin),
+                   diag::err_verify_missing_start) << KindStr;
       continue;
     }
     PH.Advance();
@@ -304,8 +254,8 @@ static void ParseDirective(const char *CommentStart, unsigned CommentLen,
 
     // search for token: }}
     if (!PH.Search("}}")) {
-      PP.Diag(Pos.getLocWithOffset(PH.C-PH.Begin),
-              diag::err_verify_missing_end) << KindStr;
+      Diags.Report(Pos.getLocWithOffset(PH.C-PH.Begin),
+                   diag::err_verify_missing_end) << KindStr;
       continue;
     }
     const char* const ContentEnd = PH.P; // mark content end
@@ -326,13 +276,13 @@ static void ParseDirective(const char *CommentStart, unsigned CommentLen,
       Text.assign(ContentBegin, ContentEnd);
 
     // construct new directive
-    Directive *D = Directive::Create(RegexKind, Pos, Text, Count);
+    Directive *D = Directive::create(RegexKind, Pos, Text, Count);
     std::string Error;
     if (D->isValid(Error))
       DL->push_back(D);
     else {
-      PP.Diag(Pos.getLocWithOffset(ContentBegin-PH.Begin),
-              diag::err_verify_invalid_content)
+      Diags.Report(Pos.getLocWithOffset(ContentBegin-PH.Begin),
+                   diag::err_verify_invalid_content)
         << KindStr << Error;
     }
   }
@@ -363,7 +313,8 @@ static void FindExpectedDiags(Preprocessor &PP, ExpectedData &ED, FileID FID) {
     if (Comment.empty()) continue;
 
     // Find all expected errors/warnings/notes.
-    ParseDirective(&Comment[0], Comment.size(), ED, PP, Tok.getLocation());
+    ParseDirective(&Comment[0], Comment.size(), ED, SM, Tok.getLocation(),
+                   PP.getDiagnostics());
   };
 }
 
@@ -439,7 +390,7 @@ static unsigned CheckLists(DiagnosticsEngine &Diags, SourceManager &SourceMgr,
           continue;
 
         const std::string &RightText = II->second;
-        if (D.Match(RightText))
+        if (D.match(RightText))
           break;
       }
       if (II == IE) {
@@ -495,8 +446,6 @@ static unsigned CheckResults(DiagnosticsEngine &Diags, SourceManager &SourceMgr,
 }
 
 void VerifyDiagnosticConsumer::CheckDiagnostics() {
-  ExpectedData ED;
-
   // Ensure any diagnostics go to the primary client.
   bool OwnsCurClient = Diags.ownsClient();
   DiagnosticConsumer *CurClient = Diags.takeClient();
@@ -549,8 +498,8 @@ VerifyDiagnosticConsumer::clone(DiagnosticsEngine &Diags) const {
   return new VerifyDiagnosticConsumer(Diags);
 }
 
-Directive* Directive::Create(bool RegexKind, const SourceLocation &Location,
-                             const std::string &Text, unsigned Count) {
+Directive *Directive::create(bool RegexKind, const SourceLocation &Location,
+                             StringRef Text, unsigned Count) {
   if (RegexKind)
     return new RegexDirective(Location, Text, Count);
   return new StandardDirective(Location, Text, Count);
