@@ -567,8 +567,8 @@ def VMOVRRS  : AVConv3I<0b11000101, 0b1010,
   bits<4> Rt2;
 
   // Encode instruction operands.
-  let Inst{3-0}   = src1{3-0};
-  let Inst{5}     = src1{4};
+  let Inst{3-0}   = src1{4-1};
+  let Inst{5}     = src1{0};
   let Inst{15-12} = Rt;
   let Inst{19-16} = Rt2;
 
@@ -617,8 +617,8 @@ def VMOVSRR : AVConv5I<0b11000100, 0b1010,
   bits<4> src2;
 
   // Encode instruction operands.
-  let Inst{3-0}   = dst1{3-0};
-  let Inst{5}     = dst1{4};
+  let Inst{3-0}   = dst1{4-1};
+  let Inst{5}     = dst1{0};
   let Inst{15-12} = src1;
   let Inst{19-16} = src2;
 

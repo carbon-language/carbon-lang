@@ -4198,9 +4198,9 @@ static DecodeStatus DecodeVMOVSRR(MCInst &Inst, unsigned Insn,
   DecodeStatus S = MCDisassembler::Success;
   unsigned Rt  = fieldFromInstruction32(Insn, 12, 4);
   unsigned Rt2 = fieldFromInstruction32(Insn, 16, 4);
-  unsigned Rm  = fieldFromInstruction32(Insn,  0, 4);
+  unsigned Rm  = fieldFromInstruction32(Insn,  5, 1);
   unsigned pred = fieldFromInstruction32(Insn, 28, 4);
-  Rm |= fieldFromInstruction32(Insn, 5, 1) << 4;
+  Rm |= fieldFromInstruction32(Insn, 0, 4) << 1;
 
   if (Rt == 0xF || Rt2 == 0xF || Rm == 0x1F)
     S = MCDisassembler::SoftFail;
@@ -4224,9 +4224,9 @@ static DecodeStatus DecodeVMOVRRS(MCInst &Inst, unsigned Insn,
   DecodeStatus S = MCDisassembler::Success;
   unsigned Rt  = fieldFromInstruction32(Insn, 12, 4);
   unsigned Rt2 = fieldFromInstruction32(Insn, 16, 4);
-  unsigned Rm  = fieldFromInstruction32(Insn,  0, 4);
+  unsigned Rm  = fieldFromInstruction32(Insn,  5, 1);
   unsigned pred = fieldFromInstruction32(Insn, 28, 4);
-  Rm |= fieldFromInstruction32(Insn, 5, 1) << 4;
+  Rm |= fieldFromInstruction32(Insn, 0, 4) << 1;
 
   if (Rt == 0xF || Rt2 == 0xF || Rm == 0x1F)
     S = MCDisassembler::SoftFail;
