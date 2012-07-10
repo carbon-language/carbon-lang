@@ -119,11 +119,29 @@ ItaniumABILanguageRuntime::GetDynamicTypeAndAddress (ValueObject &in_value,
                         const bool exact_match = true;
                         TypeList class_types;
                         
-                        uint32_t num_matches = target->GetImages().FindTypes (sc,
-                                                                              ConstString(class_name),
-                                                                              exact_match,
-                                                                              UINT32_MAX,
-                                                                              class_types);
+                        uint32_t num_matches = 0;
+                        // First look in the module that the vtable symbol came from
+                        // and look for a single exact match.
+                        if (sc.module_sp)
+                        {
+                            num_matches = sc.module_sp->FindTypes (sc,
+                                                                   ConstString(class_name),
+                                                                   exact_match,
+                                                                   1,
+                                                                   class_types);
+                        }
+                        
+                        // If we didn't find a symbol, then move on to the entire
+                        // module list in the target and get as many unique matches
+                        // as possible
+                        if (num_matches == 0)
+                        {
+                            num_matches = target->GetImages().FindTypes (sc,
+                                                                         ConstString(class_name),
+                                                                         exact_match,
+                                                                         UINT32_MAX,
+                                                                         class_types);
+                        }
                         
                         lldb::TypeSP type_sp;
                         if (num_matches == 0)
