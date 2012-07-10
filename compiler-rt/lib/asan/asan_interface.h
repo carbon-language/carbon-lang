@@ -154,10 +154,6 @@ extern "C" {
   // Prints accumulated stats to stderr. Used for debugging.
   void __asan_print_accumulated_stats()
       SANITIZER_INTERFACE_ATTRIBUTE;
-#if !defined(_WIN32)
-  // We do not need to redefine the defaults right now on Windows.
-  char *__asan_default_options SANITIZER_WEAK_ATTRIBUTE;
-#endif
 }  // namespace
 
 #endif  // ASAN_INTERFACE_H

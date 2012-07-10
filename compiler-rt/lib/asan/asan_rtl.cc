@@ -67,11 +67,6 @@ Flags *flags() {
   return &asan_flags;
 }
 
-// Can be overriden in frontend.
-void WEAK OverrideFlags(Flags *f) {
-  (void)f;
-}
-
 static void ParseFlagsFromString(Flags *f, const char *str) {
   ParseFlag(str, &f->quarantine_size, "quarantine_size");
   ParseFlag(str, &f->symbolize, "symbolize");
@@ -96,13 +91,10 @@ static void ParseFlagsFromString(Flags *f, const char *str) {
   ParseFlag(str, &f->sleep_before_dying, "sleep_before_dying");
   ParseFlag(str, &f->handle_segv, "handle_segv");
   ParseFlag(str, &f->use_sigaltstack, "use_sigaltstack");
-  // Allow the users to work around the bug in Nvidia drivers prior to 295.*.
   ParseFlag(str, &f->check_malloc_usable_size, "check_malloc_usable_size");
   ParseFlag(str, &f->unmap_shadow_on_exit, "unmap_shadow_on_exit");
   ParseFlag(str, &f->abort_on_error, "abort_on_error");
   ParseFlag(str, &f->atexit, "atexit");
-  // By default, disable core dumper on 64-bit --
-  // it makes little sense to dump 16T+ core.
   ParseFlag(str, &f->disable_core, "disable_core");
 }
 
@@ -112,14 +104,14 @@ void InitializeFlags(Flags *f, const char *env) {
   f->quarantine_size = (ASAN_LOW_MEMORY) ? 1UL << 24 : 1UL << 28;
   f->symbolize = false;
   f->verbosity = 0;
-  f->redzone = (ASAN_LOW_MEMORY) ? 64 : 128;  // power of two, >= 32.
-  f->debug = 0;
+  f->redzone = (ASAN_LOW_MEMORY) ? 64 : 128;
+  f->debug = false;
   f->report_globals = 1;
   f->malloc_context_size = kMallocContextSize;
   f->replace_str = true;
   f->replace_intrin = true;
-  f->replace_cfallocator = true;  // Used on Mac only.
-  f->mac_ignore_invalid_free = false;  // Used on Mac only.
+  f->replace_cfallocator = true;
+  f->mac_ignore_invalid_free = false;
   f->use_fake_stack = true;
   f->max_malloc_fill_size = 0;
   f->exitcode = ASAN_DEFAULT_FAILURE_EXITCODE;
@@ -132,9 +124,6 @@ void InitializeFlags(Flags *f, const char *env) {
   f->abort_on_error = false;
   f->atexit = false;
   f->disable_core = (__WORDSIZE == 64);
-
-  // Let a frontend override.
-  OverrideFlags(f);
 
   // Override from user-specified string.
 #if !defined(_WIN32)

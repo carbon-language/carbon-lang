@@ -14,6 +14,7 @@
 #ifndef ASAN_INTERNAL_H
 #define ASAN_INTERNAL_H
 
+#include "asan_flags.h"
 #include "sanitizer_common/sanitizer_common.h"
 #include "sanitizer_common/sanitizer_internal_defs.h"
 #include "sanitizer_common/sanitizer_libc.h"
@@ -135,34 +136,6 @@ bool PlatformHasDifferentMemcpyAndMemmove();
 #else
 # define PLATFORM_HAS_DIFFERENT_MEMCPY_AND_MEMMOVE true
 #endif  // __APPLE__
-
-struct Flags {
-  int quarantine_size;
-  bool symbolize;
-  int  verbosity;
-  int redzone;
-  int  debug;
-  int  report_globals;
-  int malloc_context_size;
-  bool replace_str;
-  bool replace_intrin;
-  bool replace_cfallocator;
-  bool mac_ignore_invalid_free;
-  bool use_fake_stack;
-  int max_malloc_fill_size;
-  int  exitcode;
-  bool allow_user_poisoning;
-  int  sleep_before_dying;
-  bool handle_segv;
-  bool use_sigaltstack;
-  bool check_malloc_usable_size;
-  bool unmap_shadow_on_exit;
-  bool abort_on_error;
-  bool atexit;
-  bool disable_core;
-};
-Flags *flags();
-void InitializeFlags(Flags *f, const char *env);
 
 extern int asan_inited;
 // Used to avoid infinite recursion in __asan_init().
