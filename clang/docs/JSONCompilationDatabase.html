@@ -71,7 +71,9 @@ command objects for the same file, for example if the same source file is
 compiled with different configurations.</li>
 <li><b>command:</b> The compile command executed. After JSON unescaping, this must
 be a valid command to rerun the exact compilation step for the translation unit in
-the environment the build system uses.</li>
+the environment the build system uses. Parameters use shell quoting and shell escaping
+of quotes, with '"' and '\' being the only special characters. Shell expansion is
+not supported.</li>
 </ul>
 </p>
 
