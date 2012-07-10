@@ -328,6 +328,12 @@ object[key] = newValue;
 
 <p>Programs can use object subscripting with Objective-C object pointers of type <code>id</code>. Normal dynamic message send rules apply; the compiler must see <i>some</i> declaration of the subscripting methods, and will pick the declaration seen first.</p>
 
+<h2>Caveats</h2>
+
+<p>Objects created using the literal or boxed expression syntax are not guaranteed to be uniqued by the runtime, but nor are they guaranteed to be newly-allocated. As such, the result of performing direct comparisons against the location of an object literal (using <code>==</code>, <code>!=</code>, <code>&lt;</code>, <code>&lt;=</code>, <code>&gt;</code>, or <code>&gt;=</code>) is not well-defined. This is usually a simple mistake in code that intended to call the <code>isEqual:</code> method (or the <code>compare:</code> method).</p>
+
+<p>This caveat applies to compile-time string literals as well. Historically, string literals (using the <code>@"..."</code> syntax) have been uniqued across translation units during linking. This is an implementation detail of the compiler and should not be relied upon. If you are using such code, please use global string constants instead (<code>NSString * const MyConst = @"..."</code>) or use <code>isEqual:</code>.</p>
+
 <h2>Grammar Additions</h2>
 
 <p>To support the new syntax described above, the Objective-C <code>@</code>-expression grammar has the following new productions:</p>
