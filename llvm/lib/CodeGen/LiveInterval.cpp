@@ -450,14 +450,13 @@ void LiveInterval::join(LiveInterval &Other,
     valnos.resize(NumNewVals);  // shrinkify
 
   // Okay, now insert the RHS live ranges into the LHS.
-  iterator InsertPos = begin();
   unsigned RangeNo = 0;
   for (iterator I = Other.begin(), E = Other.end(); I != E; ++I, ++RangeNo) {
     // Map the valno in the other live range to the current live range.
     I->valno = NewVNInfo[OtherAssignments[RangeNo]];
     assert(I->valno && "Adding a dead range?");
-    InsertPos = addRangeFrom(*I, InsertPos);
   }
+  mergeIntervalRanges(Other);
 
   verify();
 }
@@ -467,8 +466,8 @@ void LiveInterval::join(LiveInterval &Other,
 /// This is a helper routine implementing an efficient merge of another
 /// LiveIntervals ranges into the current interval.
 ///
-/// \param LHSValNo Set as the new value number for every range from RHS which
-///                 is merged into the LHS.
+/// \param LHSValNo If non-NULL, set as the new value number for every range
+///                 from RHS which is merged into the LHS.
 /// \param RHSValNo If non-NULL, then only ranges in RHS whose original value
 ///                 number maches this value number will be merged into LHS.
 void LiveInterval::mergeIntervalRanges(const LiveInterval &RHS,
@@ -477,9 +476,10 @@ void LiveInterval::mergeIntervalRanges(const LiveInterval &RHS,
   if (RHS.empty())
     return;
 
-  // Ensure we're starting with valid ranges.
+  // Ensure we're starting with a valid range. Note that we don't verify RHS
+  // because it may have had its value numbers adjusted in preparation for
+  // merging.
   verify();
-  RHS.verify();
 
   // The strategy for merging these efficiently is as follows:
   //
@@ -529,7 +529,8 @@ void LiveInterval::mergeIntervalRanges(const LiveInterval &RHS,
     if (*RI < R) {
       R = *RI;
       ++RI;
-      R.valno = LHSValNo;
+      if (LHSValNo)
+        R.valno = LHSValNo;
     } else {
       ++LI;
     }
@@ -578,14 +579,16 @@ void LiveInterval::mergeIntervalRanges(const LiveInterval &RHS,
     ranges.insert(LI, NRI, NRE);
 
   // And finally insert any trailing end of RHS (if we have one).
-  for (; RI != RE; ++RI)
+  for (; RI != RE; ++RI) {
+    LiveRange R = *RI;
+    if (LHSValNo)
+      R.valno = LHSValNo;
     if (!ranges.empty() &&
-        ranges.back().valno == LHSValNo && RI->start <= ranges.back().end) {
-      ranges.back().end = std::max(ranges.back().end, RI->end);
-    } else {
-      ranges.push_back(*RI);
-      ranges.back().valno = LHSValNo;
-    }
+        ranges.back().valno == R.valno && R.start <= ranges.back().end)
+      ranges.back().end = std::max(ranges.back().end, R.end);
+    else
+      ranges.push_back(R);
+  }
 
   // Ensure we finished with a valid new sequence of ranges.
   verify();
