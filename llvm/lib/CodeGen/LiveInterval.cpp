@@ -381,6 +381,8 @@ void LiveInterval::join(LiveInterval &Other,
                         const int *RHSValNoAssignments,
                         SmallVector<VNInfo*, 16> &NewVNInfo,
                         MachineRegisterInfo *MRI) {
+  verify();
+
   // Determine if any of our live range values are mapped.  This is uncommon, so
   // we want to avoid the interval scan if not.
   bool MustMapCurValNos = false;
@@ -456,6 +458,8 @@ void LiveInterval::join(LiveInterval &Other,
     assert(I->valno && "Adding a dead range?");
     InsertPos = addRangeFrom(*I, InsertPos);
   }
+
+  verify();
 }
 
 /// MergeRangesInAsValue - Merge all of the intervals in RHS into this live
@@ -464,6 +468,9 @@ void LiveInterval::join(LiveInterval &Other,
 /// the overlapping LiveRanges have the specified value number.
 void LiveInterval::MergeRangesInAsValue(const LiveInterval &RHS,
                                         VNInfo *LHSValNo) {
+  verify();
+  RHS.verify();
+
   // TODO: Make this more efficient.
   iterator InsertPos = begin();
   for (const_iterator I = RHS.begin(), E = RHS.end(); I != E; ++I) {
@@ -472,6 +479,8 @@ void LiveInterval::MergeRangesInAsValue(const LiveInterval &RHS,
     Tmp.valno = LHSValNo;
     InsertPos = addRangeFrom(Tmp, InsertPos);
   }
+
+  verify();
 }
 
 
@@ -483,6 +492,9 @@ void LiveInterval::MergeRangesInAsValue(const LiveInterval &RHS,
 void LiveInterval::MergeValueInAsValue(
                                     const LiveInterval &RHS,
                                     const VNInfo *RHSValNo, VNInfo *LHSValNo) {
+  verify();
+  RHS.verify();
+
   // TODO: Make this more efficient.
   iterator InsertPos = begin();
   for (const_iterator I = RHS.begin(), E = RHS.end(); I != E; ++I) {
@@ -493,6 +505,8 @@ void LiveInterval::MergeValueInAsValue(
     Tmp.valno = LHSValNo;
     InsertPos = addRangeFrom(Tmp, InsertPos);
   }
+
+  verify();
 }
 
 
@@ -575,6 +589,8 @@ void LiveInterval::Copy(const LiveInterval &RHS,
     const LiveRange &LR = RHS.ranges[i];
     addRange(LiveRange(LR.start, LR.end, getValNumInfo(LR.valno->id)));
   }
+
+  verify();
 }
 
 unsigned LiveInterval::getSize() const {
@@ -628,6 +644,23 @@ void LiveInterval::print(raw_ostream &OS) const {
 void LiveInterval::dump() const {
   dbgs() << *this << "\n";
 }
+
+#ifndef NDEBUG
+void LiveInterval::verify() const {
+  for (const_iterator I = begin(), E = end(); I != E; ++I) {
+    assert(I->start.isValid());
+    assert(I->end.isValid());
+    assert(I->start < I->end);
+    assert(I->valno != 0);
+    assert(I->valno == valnos[I->valno->id]);
+    if (llvm::next(I) != E) {
+      assert(I->end <= llvm::next(I)->start);
+      if (I->end == llvm::next(I)->start)
+        assert(I->valno != llvm::next(I)->valno);
+    }
+  }
+}
+#endif
 
 
 void LiveRange::print(raw_ostream &os) const {

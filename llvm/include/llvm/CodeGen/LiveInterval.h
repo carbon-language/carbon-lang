@@ -489,6 +489,15 @@ namespace llvm {
     void print(raw_ostream &OS) const;
     void dump() const;
 
+    /// \brief Walk the interval and assert if any invariants fail to hold.
+    ///
+    /// Note that this is a no-op when asserts are disabled.
+#ifdef NDEBUG
+    void verify() const {}
+#else
+    void verify() const;
+#endif
+
   private:
 
     Ranges::iterator addRangeFrom(LiveRange LR, Ranges::iterator From);
