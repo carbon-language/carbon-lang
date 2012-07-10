@@ -1109,6 +1109,23 @@ void ThreadSafetyAnalyzer::getMutexIDs(MutexIDList &Mtxs, AttrType *Attr,
 }
 
 
+bool getStaticBooleanValue(Expr* E, bool& TCond) {
+  if (isa<CXXNullPtrLiteralExpr>(E) || isa<GNUNullExpr>(E)) {
+    TCond = false;
+    return true;
+  } else if (CXXBoolLiteralExpr *BLE = dyn_cast<CXXBoolLiteralExpr>(E)) {
+    TCond = BLE->getValue();
+    return true;
+  } else if (IntegerLiteral *ILE = dyn_cast<IntegerLiteral>(E)) {
+    TCond = ILE->getValue().getBoolValue();
+    return true;
+  } else if (ImplicitCastExpr *CE = dyn_cast<ImplicitCastExpr>(E)) {
+    return getStaticBooleanValue(CE->getSubExpr(), TCond);
+  }
+  return false;
+}
+
+
 // If Cond can be traced back to a function call, return the call expression.
 // The negate variable should be called with false, and will be set to true
 // if the function call is negated, e.g. if (!mu.tryLock(...))
@@ -1120,6 +1137,9 @@ const CallExpr* ThreadSafetyAnalyzer::getTrylockCallExpr(const Stmt *Cond,
 
   if (const CallExpr *CallExp = dyn_cast<CallExpr>(Cond)) {
     return CallExp;
+  }
+  else if (const ParenExpr *PE = dyn_cast<ParenExpr>(Cond)) {
+    return getTrylockCallExpr(PE->getSubExpr(), C, Negate);
   }
   else if (const ImplicitCastExpr *CE = dyn_cast<ImplicitCastExpr>(Cond)) {
     return getTrylockCallExpr(CE->getSubExpr(), C, Negate);
@@ -1133,9 +1153,28 @@ const CallExpr* ThreadSafetyAnalyzer::getTrylockCallExpr(const Stmt *Cond,
       Negate = !Negate;
       return getTrylockCallExpr(UOP->getSubExpr(), C, Negate);
     }
+    return 0;
+  }
+  else if (const BinaryOperator *BOP = dyn_cast<BinaryOperator>(Cond)) {
+    if (BOP->getOpcode() == BO_EQ || BOP->getOpcode() == BO_NE) {
+      if (BOP->getOpcode() == BO_NE)
+        Negate = !Negate;
+
+      bool TCond = false;
+      if (getStaticBooleanValue(BOP->getRHS(), TCond)) {
+        if (!TCond) Negate = !Negate;
+        return getTrylockCallExpr(BOP->getLHS(), C, Negate);
+      }
+      else if (getStaticBooleanValue(BOP->getLHS(), TCond)) {
+        if (!TCond) Negate = !Negate;
+        return getTrylockCallExpr(BOP->getRHS(), C, Negate);
+      }
+      return 0;
+    }
+    return 0;
   }
   // FIXME -- handle && and || as well.
-  return NULL;
+  return 0;
 }
 
 

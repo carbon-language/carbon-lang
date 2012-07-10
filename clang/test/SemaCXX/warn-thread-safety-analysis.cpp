@@ -1,5 +1,7 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -Wthread-safety %s
-// RUN: %clang_cc1 -fsyntax-only -verify -Wthread-safety -std=c++11 -Wc++98-compat %s
+// RUN: %clang_cc1 -fsyntax-only -verify -Wthread-safety -std=c++11 %s
+
+// FIXME: should also run  %clang_cc1 -fsyntax-only -verify -Wthread-safety -std=c++11 -Wc++98-compat %s
+// FIXME: should also run  %clang_cc1 -fsyntax-only -verify -Wthread-safety %s
 
 #define LOCKABLE            __attribute__ ((lockable))
 #define SCOPED_LOCKABLE     __attribute__ ((scoped_lockable))
@@ -2932,5 +2934,128 @@ void testlots() {
 
 
 
+namespace TryLockEqTest {
+
+class Foo {
+  Mutex mu_;
+  int a GUARDED_BY(mu_);
+  bool c;
+
+  int    tryLockMutexI() EXCLUSIVE_TRYLOCK_FUNCTION(1, mu_);
+  Mutex* tryLockMutexP() EXCLUSIVE_TRYLOCK_FUNCTION(1, mu_);
+  void unlock() UNLOCK_FUNCTION(mu_);
+
+  void test1();
+  void test2();
+};
+
+
+void Foo::test1() {
+  if (tryLockMutexP() == 0) {
+    a = 0;  // expected-warning {{writing variable 'a' requires locking 'mu_' exclusively}}
+    return;
+  }
+  a = 0;
+  unlock();
+
+  if (tryLockMutexP() != 0) {
+    a = 0;
+    unlock();
+  }
+
+  if (0 != tryLockMutexP()) {
+    a = 0;
+    unlock();
+  }
+
+  if (!(tryLockMutexP() == 0)) {
+    a = 0;
+    unlock();
+  }
+
+  if (tryLockMutexI() == 0) {
+    a = 0;   // expected-warning {{writing variable 'a' requires locking 'mu_' exclusively}}
+    return;
+  }
+  a = 0;
+  unlock();
+
+  if (0 == tryLockMutexI()) {
+    a = 0;   // expected-warning {{writing variable 'a' requires locking 'mu_' exclusively}}
+    return;
+  }
+  a = 0;
+  unlock();
+
+  if (tryLockMutexI() == 1) {
+    a = 0;
+    unlock();
+  }
+
+  if (mu_.TryLock() == false) {
+    a = 0;   // expected-warning {{writing variable 'a' requires locking 'mu_' exclusively}}
+    return;
+  }
+  a = 0;
+  unlock();
+
+  if (mu_.TryLock() == true) {
+    a = 0;
+    unlock();
+  }
+  else {
+    a = 0;  // expected-warning {{writing variable 'a' requires locking 'mu_' exclusively}}
+  }
+
+#if __has_feature(cxx_nullptr)
+  if (tryLockMutexP() == nullptr) {
+    a = 0;  // expected-warning {{writing variable 'a' requires locking 'mu_' exclusively}}
+    return;
+  }
+  a = 0;
+  unlock();
+#endif
+}
+
+
+void Foo::test2() {
+/* FIXME: these tests depend on changes to the CFG.
+ *
+  if (mu_.TryLock() && c) {
+    a = 0;
+    unlock();
+  }
+  else return;
+
+  if (c && mu_.TryLock()) {
+    a = 0;
+    unlock();
+  }
+  else return;
+
+  if (!(mu_.TryLock() && c))
+    return;
+  a = 0;
+  unlock();
+
+  if (!(c && mu_.TryLock()))
+    return;
+  a = 0;
+  unlock();
+
+  if (!(mu_.TryLock() == 0) && c) {
+    a = 0;
+    unlock();
+  }
+
+  if (!mu_.TryLock() || c)
+    return;
+  a = 0;
+  unlock();
+*/
+}
+
+
+} // end namespace TryLockEqTest
 
 
