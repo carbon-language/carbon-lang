@@ -6,3 +6,5 @@
 
 // CHECK: C++ requires
 invalid;
+
+// REQUIRES: shell

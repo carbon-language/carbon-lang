@@ -44,7 +44,12 @@ TEST(NameableDeclaration, MatchesVariousDecls) {
 
 TEST(DeclarationMatcher, MatchClass) {
   DeclarationMatcher ClassMatcher(record());
+#if !defined(_MSC_VER)
   EXPECT_FALSE(matches("", ClassMatcher));
+#else
+  // Matches class type_info.
+  EXPECT_TRUE(matches("", ClassMatcher));
+#endif
 
   DeclarationMatcher ClassX = record(record(hasName("X")));
   EXPECT_TRUE(matches("class X;", ClassX));
@@ -839,12 +844,15 @@ TEST(Function, MatchesFunctionDeclarations) {
   EXPECT_TRUE(matches("void f() { f(); }", CallFunctionF));
   EXPECT_TRUE(notMatches("void f() { }", CallFunctionF));
 
+#if !defined(_MSC_VER)
+  // FIXME: Make this work for MSVC.
   // Dependent contexts, but a non-dependent call.
   EXPECT_TRUE(matches("void f(); template <int N> void g() { f(); }",
                       CallFunctionF));
   EXPECT_TRUE(
       matches("void f(); template <int N> struct S { void g() { f(); } };",
               CallFunctionF));
+#endif
 
   // Depedent calls don't match.
   EXPECT_TRUE(
