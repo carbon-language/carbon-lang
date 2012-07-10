@@ -254,7 +254,7 @@ void clang::FormatASTNodeDiagnosticArgument(
   switch (Kind) {
     default: llvm_unreachable("unknown ArgumentKind");
     case DiagnosticsEngine::ak_qualtype_pair: {
-      const TemplateDiffTypes &TDT = *reinterpret_cast<TemplateDiffTypes*>(Val);
+      TemplateDiffTypes &TDT = *reinterpret_cast<TemplateDiffTypes*>(Val);
       QualType FromType =
           QualType::getFromOpaquePtr(reinterpret_cast<void*>(TDT.FromType));
       QualType ToType =
@@ -264,6 +264,7 @@ void clang::FormatASTNodeDiagnosticArgument(
                                  TDT.PrintFromType, TDT.ElideType,
                                  TDT.ShowColors, S)) {
         NeedQuotes = !TDT.PrintTree;
+        TDT.TemplateDiffUsed = true;
         break;
       }
 

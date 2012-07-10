@@ -1286,6 +1286,8 @@ struct TemplateDiffTypes {
   unsigned PrintFromType : 1;
   unsigned ElideType : 1;
   unsigned ShowColors : 1;
+  // The printer sets this variable to true if the template diff was used.
+  unsigned TemplateDiffUsed : 1;
 };
 
 /// Special character that the diagnostic printer will use to toggle the bold
