@@ -310,6 +310,24 @@ const FunctionDecl *SimpleCall::getDecl() const {
   return getSVal(CE->getCallee()).getAsFunctionDecl();
 }
 
+void CallEvent::dump(raw_ostream &Out) const {
+  ASTContext &Ctx = State->getStateManager().getContext();
+  if (const Expr *E = getOriginExpr()) {
+    E->printPretty(Out, Ctx, 0, Ctx.getLangOpts());
+    Out << "\n";
+    return;
+  }
+
+  if (const Decl *D = getDecl()) {
+    Out << "Call to ";
+    D->print(Out, Ctx.getLangOpts());
+    return;
+  }
+
+  // FIXME: a string representation of the kind would be nice.
+  Out << "Unknown call (type " << getKind() << ")";
+}
+
 
 SVal CXXMemberCall::getCXXThisVal() const {
   const Expr *Base = getOriginExpr()->getImplicitObjectArgument();

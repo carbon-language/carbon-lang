@@ -483,6 +483,10 @@ def TraversalDumper : Checker<"DumpTraversal">,
   HelpText<"Print branch conditions as they are traversed by the engine">,
   DescFile<"TraversalChecker.cpp">;
 
+def CallDumper : Checker<"DumpCalls">,
+  HelpText<"Print calls as they are traversed by the engine">,
+  DescFile<"TraversalChecker.cpp">;
+
 def AnalyzerStatsChecker : Checker<"Stats">,
   HelpText<"Emit warnings with analyzer statistics">,
   DescFile<"AnalyzerStatsChecker.cpp">;

@@ -216,6 +216,10 @@ public:
     return llvm::map_iterator(param_end(), get_type_fun(&ParmVarDecl::getType));
   }
 
+  // For debugging purposes only
+  virtual void dump(raw_ostream &Out) const;
+  LLVM_ATTRIBUTE_USED void dump() const { dump(llvm::errs()); }
+
   static bool classof(const CallEvent *) { return true; }
 };
 

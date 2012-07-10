@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This checker prints branch statements to llvm::outs as they are encountered.
-// This lets us see exactly how the ExprEngine is traversing the graph.
+// These checkers print various aspects of the ExprEngine's traversal of the CFG
+// as it builds the ExplodedGraph.
 //
 //===----------------------------------------------------------------------===//
 #include "ClangSACheckers.h"
@@ -16,6 +16,7 @@
 #include "clang/AST/StmtObjC.h"
 #include "clang/StaticAnalyzer/Core/Checker.h"
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/Calls.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
 
 using namespace clang;
@@ -54,4 +55,30 @@ void TraversalDumper::checkEndPath(CheckerContext &C) const {
 
 void ento::registerTraversalDumper(CheckerManager &mgr) {
   mgr.registerChecker<TraversalDumper>();
+}
+
+//------------------------------------------------------------------------------
+
+namespace {
+class CallDumper : public Checker< check::PreCall > {
+public:
+  void checkPreCall(const CallEvent &Call, CheckerContext &C) const;
+};
+}
+
+void CallDumper::checkPreCall(const CallEvent &Call, CheckerContext &C) const {
+  unsigned Indentation = 0;
+  for (const LocationContext *LC = C.getLocationContext()->getParent();
+       LC != 0; LC = LC->getParent())
+    ++Indentation;
+
+  // It is mildly evil to print directly to llvm::outs() rather than emitting
+  // warnings, but this ensures things do not get filtered out by the rest of
+  // the static analyzer machinery.
+  llvm::outs().indent(Indentation);
+  Call.dump(llvm::outs());
+}
+
+void ento::registerCallDumper(CheckerManager &mgr) {
+  mgr.registerChecker<CallDumper>();
 }
