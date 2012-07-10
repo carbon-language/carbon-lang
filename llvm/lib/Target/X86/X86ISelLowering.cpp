@@ -14425,7 +14425,8 @@ static SDValue PerformXorCombine(SDNode *N, SelectionDAG &DAG,
 
 /// PerformLOADCombine - Do target-specific dag combines on LOAD nodes.
 static SDValue PerformLOADCombine(SDNode *N, SelectionDAG &DAG,
-                                   const X86Subtarget *Subtarget) {
+                                  TargetLowering::DAGCombinerInfo &DCI,
+                                  const X86Subtarget *Subtarget) {
   LoadSDNode *Ld = cast<LoadSDNode>(N);
   EVT RegVT = Ld->getValueType(0);
   EVT MemVT = Ld->getMemoryVT();
@@ -14447,47 +14448,73 @@ static SDValue PerformLOADCombine(SDNode *N, SelectionDAG &DAG,
     unsigned RegSz = RegVT.getSizeInBits();
     unsigned MemSz = MemVT.getSizeInBits();
     assert(RegSz > MemSz && "Register size must be greater than the mem size");
-    // All sizes must be a power of two
-    if (!isPowerOf2_32(RegSz * MemSz * NumElems)) return SDValue();
 
-    // Attempt to load the original value using a single load op.
-    // Find a scalar type which is equal to the loaded word size.
+    // All sizes must be a power of two.
+    if (!isPowerOf2_32(RegSz * MemSz * NumElems))
+      return SDValue();
+
+    // Attempt to load the original value using scalar loads.
+    // Find the largest scalar type that divides the total loaded size.
     MVT SclrLoadTy = MVT::i8;
     for (unsigned tp = MVT::FIRST_INTEGER_VALUETYPE;
          tp < MVT::LAST_INTEGER_VALUETYPE; ++tp) {
       MVT Tp = (MVT::SimpleValueType)tp;
-      if (TLI.isTypeLegal(Tp) &&  Tp.getSizeInBits() == MemSz) {
+      if (TLI.isTypeLegal(Tp) && ((MemSz % Tp.getSizeInBits()) == 0)) {
         SclrLoadTy = Tp;
-        break;
       }
     }
 
-    // Proceed if a load word is found.
-    if (SclrLoadTy.getSizeInBits() != MemSz) return SDValue();
+    // Calculate the number of scalar loads that we need to perform
+    // in order to load our vector from memory.
+    unsigned NumLoads = MemSz / SclrLoadTy.getSizeInBits();
 
+    // Represent our vector as a sequence of elements which are the
+    // largest scalar that we can load.
     EVT LoadUnitVecVT = EVT::getVectorVT(*DAG.getContext(), SclrLoadTy,
       RegSz/SclrLoadTy.getSizeInBits());
 
+    // Represent the data using the same element type that is stored in
+    // memory. In practice, we ''widen'' MemVT.
     EVT WideVecVT = EVT::getVectorVT(*DAG.getContext(), MemVT.getScalarType(),
                                   RegSz/MemVT.getScalarType().getSizeInBits());
-    // Can't shuffle using an illegal type.
-    if (!TLI.isTypeLegal(WideVecVT)) return SDValue();
 
-    // Perform a single load.
-    SDValue ScalarLoad = DAG.getLoad(SclrLoadTy, dl, Ld->getChain(),
-                                  Ld->getBasePtr(),
-                                  Ld->getPointerInfo(), Ld->isVolatile(),
-                                  Ld->isNonTemporal(), Ld->isInvariant(),
-                                  Ld->getAlignment());
+    assert(WideVecVT.getSizeInBits() == LoadUnitVecVT.getSizeInBits() &&
+      "Invalid vector type");
 
-    // Insert the word loaded into a vector.
-    SDValue ScalarInVector = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl,
-      LoadUnitVecVT, ScalarLoad);
+    // We can't shuffle using an illegal type.
+    if (!TLI.isTypeLegal(WideVecVT))
+      return SDValue();
+
+    SmallVector<SDValue, 8> Chains;
+    SDValue Ptr = Ld->getBasePtr();
+    SDValue Increment = DAG.getConstant(SclrLoadTy.getSizeInBits()/8,
+                                        TLI.getPointerTy());
+    SDValue Res = DAG.getUNDEF(LoadUnitVecVT);
+
+    for (unsigned i = 0; i < NumLoads; ++i) {
+      // Perform a single load.
+      SDValue ScalarLoad = DAG.getLoad(SclrLoadTy, dl, Ld->getChain(),
+                                       Ptr, Ld->getPointerInfo(),
+                                       Ld->isVolatile(), Ld->isNonTemporal(),
+                                       Ld->isInvariant(), Ld->getAlignment());
+      Chains.push_back(ScalarLoad.getValue(1));
+      // Create the first element type using SCALAR_TO_VECTOR in order to avoid
+      // another round of DAGCombining.
+      if (i == 0)
+        Res = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, LoadUnitVecVT, ScalarLoad);
+      else
+        Res = DAG.getNode(ISD::INSERT_VECTOR_ELT, dl, LoadUnitVecVT, Res,
+                          ScalarLoad, DAG.getIntPtrConstant(i));
+
+      Ptr = DAG.getNode(ISD::ADD, dl, Ptr.getValueType(), Ptr, Increment);
+    }
+
+    SDValue TF = DAG.getNode(ISD::TokenFactor, dl, MVT::Other, &Chains[0],
+                               Chains.size());
 
     // Bitcast the loaded value to a vector of the original element type, in
     // the size of the target vector type.
-    SDValue SlicedVec = DAG.getNode(ISD::BITCAST, dl, WideVecVT,
-                                    ScalarInVector);
+    SDValue SlicedVec = DAG.getNode(ISD::BITCAST, dl, WideVecVT, Res);
     unsigned SizeRatio = RegSz/MemSz;
 
     // Redistribute the loaded elements into the different locations.
@@ -14503,8 +14530,7 @@ static SDValue PerformLOADCombine(SDNode *N, SelectionDAG &DAG,
     Shuff = DAG.getNode(ISD::BITCAST, dl, RegVT, Shuff);
     // Replace the original load with the new sequence
     // and return the new chain.
-    DAG.ReplaceAllUsesOfValueWith(SDValue(N, 0), Shuff);
-    return SDValue(ScalarLoad.getNode(), 1);
+    return DCI.CombineTo(N, Shuff, TF, true);
   }
 
   return SDValue();
@@ -14574,8 +14600,9 @@ static SDValue PerformSTORECombine(SDNode *N, SelectionDAG &DAG,
     for (unsigned i = 0; i != NumElems; ++i)
       ShuffleVec[i] = i * SizeRatio;
 
-    // Can't shuffle using an illegal type
-    if (!TLI.isTypeLegal(WideVecVT)) return SDValue();
+    // Can't shuffle using an illegal type.
+    if (!TLI.isTypeLegal(WideVecVT))
+      return SDValue();
 
     SDValue Shuff = DAG.getVectorShuffle(WideVecVT, dl, WideVec,
                                          DAG.getUNDEF(WideVecVT),
@@ -15308,7 +15335,7 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
   case ISD::AND:            return PerformAndCombine(N, DAG, DCI, Subtarget);
   case ISD::OR:             return PerformOrCombine(N, DAG, DCI, Subtarget);
   case ISD::XOR:            return PerformXorCombine(N, DAG, DCI, Subtarget);
-  case ISD::LOAD:           return PerformLOADCombine(N, DAG, Subtarget);
+  case ISD::LOAD:           return PerformLOADCombine(N, DAG, DCI, Subtarget);
   case ISD::STORE:          return PerformSTORECombine(N, DAG, Subtarget);
   case ISD::UINT_TO_FP:     return PerformUINT_TO_FPCombine(N, DAG);
   case ISD::SINT_TO_FP:     return PerformSINT_TO_FPCombine(N, DAG, this);

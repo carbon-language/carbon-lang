@@ -2340,7 +2340,7 @@ SDValue DAGCombiner::SimplifyBinOpWithSameOpcodeHands(SDNode *N) {
   // We also handle SCALAR_TO_VECTOR because xor/or/and operations are cheaper
   // on scalars.
   if ((N0.getOpcode() == ISD::BITCAST || N0.getOpcode() == ISD::SCALAR_TO_VECTOR)
-      && Level == AfterLegalizeVectorOps) {
+      && Level == AfterLegalizeTypes) {
     SDValue In0 = N0.getOperand(0);
     SDValue In1 = N1.getOperand(0);
     EVT In0Ty = In0.getValueType();

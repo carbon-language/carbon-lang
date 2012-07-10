@@ -10,8 +10,7 @@ define void @blackDespeckle_wrapper(i8** %args_list, i64* %gtid, i64 %xend) {
 entry:
 ; CHECK: cfi_def_cfa_offset
 ; CHECK-NOT: set
-; CHECK: movzwl
-; CHECK: movzwl
+; CHECK: punpcklwd
 ; CHECK: pshufd
 ; CHECK: pshufb
   %shr.i = ashr <4 x i32> zeroinitializer, <i32 3, i32 3, i32 3, i32 3> ; <<4 x i32>> [#uses=1]

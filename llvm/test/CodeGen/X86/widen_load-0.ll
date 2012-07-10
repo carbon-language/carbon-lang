@@ -1,18 +1,12 @@
 ; RUN: llc < %s -o - -mtriple=x86_64-linux -mcpu=corei7 | FileCheck %s
-; RUN: llc < %s -o - -mtriple=x86_64-win32 -mcpu=corei7 | FileCheck %s -check-prefix=WIN64
 ; PR4891
 
 ; Both loads should happen before either store.
 
-; CHECK: movd  ({{.*}}), {{.*}}
-; CHECK: movd  ({{.*}}), {{.*}}
-; CHECK: movd  {{.*}}, ({{.*}})
-; CHECK: movd  {{.*}}, ({{.*}})
-
-; WIN64: movd  ({{.*}}), {{.*}}
-; WIN64: movd  ({{.*}}), {{.*}}
-; WIN64: movd  {{.*}}, ({{.*}})
-; WIN64: movd  {{.*}}, ({{.*}})
+; CHECK: movl  ({{.*}}), {{.*}}
+; CHECK: movl  ({{.*}}), {{.*}}
+; CHECK: movl  {{.*}}, ({{.*}})
+; CHECK: movl  {{.*}}, ({{.*}})
 
 define void @short2_int_swap(<2 x i16>* nocapture %b, i32* nocapture %c) nounwind {
 entry:
