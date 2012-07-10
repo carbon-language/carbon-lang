@@ -925,7 +925,7 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
       .addReg(StackPtr)
       .setMIFlag(MachineInstr::FrameSetup);
 
-    MFI->setBasePtrStackAdjustment(NumBytes);
+    X86FI->setBasePtrStackAdjustment(NumBytes);
   }
 
   if (( (!HasFP && NumBytes) || PushedRegs) && needsFrameMoves) {
@@ -1051,7 +1051,7 @@ void X86FrameLowering::emitEpilogue(MachineFunction &MF,
             StackPtr).addReg(BasePtr);
 
     // When restoring from the BP we must use a cached SP adjustment.
-    NumBytes = MFI->getBasePtrStackAdjustment();
+    NumBytes = X86FI->getBasePtrStackAdjustment();
   }
 
   // If dynamic alloca is used, then reset esp to point to the last callee-saved
