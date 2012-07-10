@@ -19,10 +19,12 @@
 #define DEBUG_TYPE "early-ifcvt"
 #include "llvm/Function.h"
 #include "llvm/ADT/BitVector.h"
+#include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SparseSet.h"
 #include "llvm/CodeGen/MachineBranchProbabilityInfo.h"
+#include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
@@ -74,6 +76,7 @@ class SSAIfConv {
   const TargetRegisterInfo *TRI;
   MachineRegisterInfo *MRI;
 
+public:
   /// The block containing the conditional branch.
   MachineBasicBlock *Head;
 
@@ -90,9 +93,6 @@ class SSAIfConv {
   /// equal to Tail.
   bool isTriangle() const { return TBB == Tail || FBB == Tail; }
 
-  /// The branch condition determined by AnalyzeBranch.
-  SmallVector<MachineOperand, 4> Cond;
-
   /// Information about each phi in the Tail block.
   struct PHIInfo {
     MachineInstr *PHI;
@@ -105,6 +105,10 @@ class SSAIfConv {
   };
 
   SmallVector<PHIInfo, 8> PHIs;
+
+private:
+  /// The branch condition determined by AnalyzeBranch.
+  SmallVector<MachineOperand, 4> Cond;
 
   /// Instructions in Head that define values used by the conditional blocks.
   /// The hoisted instructions must be inserted after these instructions.
@@ -144,8 +148,8 @@ public:
   bool canConvertIf(MachineBasicBlock *MBB);
 
   /// convertIf - If-convert the last block passed to canConvertIf(), assuming
-  /// it is possible. Remove any erased blocks from WorkList
-  void convertIf(BlockSetVector &WorkList);
+  /// it is possible. Add any erased blocks to RemovedBlocks.
+  void convertIf(SmallVectorImpl<MachineBasicBlock*> &RemovedBlocks);
 };
 } // end anonymous namespace
 
@@ -425,18 +429,12 @@ bool SSAIfConv::canConvertIf(MachineBasicBlock *MBB) {
 }
 
 
-static void eraseBlock(BlockSetVector &WorkList, MachineBasicBlock *MBB) {
-  WorkList.remove(MBB);
-  MBB->eraseFromParent();
-}
-
-
 /// convertIf - Execute the if conversion after canConvertIf has determined the
 /// feasibility.
 ///
-/// Any basic blocks erased will also be removed from WorkList.
+/// Any basic blocks erased will be added to RemovedBlocks.
 ///
-void SSAIfConv::convertIf(BlockSetVector &WorkList) {
+void SSAIfConv::convertIf(SmallVectorImpl<MachineBasicBlock*> &RemovedBlocks) {
   assert(Head && Tail && TBB && FBB && "Call canConvertIf first.");
 
   // Move all instructions into Head, except for the terminators.
@@ -475,10 +473,14 @@ void SSAIfConv::convertIf(BlockSetVector &WorkList) {
 
   // Erase the now empty conditional blocks. It is likely that Head can fall
   // through to Tail, and we can join the two blocks.
-  if (TBB != Tail)
-    eraseBlock(WorkList, TBB);
-  if (FBB != Tail)
-    eraseBlock(WorkList, FBB);
+  if (TBB != Tail) {
+    RemovedBlocks.push_back(TBB);
+    TBB->eraseFromParent();
+  }
+  if (FBB != Tail) {
+    RemovedBlocks.push_back(FBB);
+    FBB->eraseFromParent();
+  }
 
   assert(Head->succ_empty() && "Additional head successors?");
   if (Head->isLayoutSuccessor(Tail)) {
@@ -488,8 +490,8 @@ void SSAIfConv::convertIf(BlockSetVector &WorkList) {
     Head->splice(Head->end(), Tail,
                      Tail->begin(), Tail->end());
     Head->transferSuccessorsAndUpdatePHIs(Tail);
-    eraseBlock(WorkList, Tail);
-
+    RemovedBlocks.push_back(Tail);
+    Tail->eraseFromParent();
   } else {
     // We need a branch to Tail, let code placement work it out later.
     DEBUG(dbgs() << "Converting to unconditional branch.\n");
@@ -510,10 +512,8 @@ class EarlyIfConverter : public MachineFunctionPass {
   const TargetInstrInfo *TII;
   const TargetRegisterInfo *TRI;
   MachineRegisterInfo *MRI;
+  MachineDominatorTree *DomTree;
   SSAIfConv IfConv;
-
-  // Worklist of head blocks to try for if-conversion.
-  BlockSetVector WorkList;
 
 public:
   static char ID;
@@ -523,6 +523,7 @@ public:
 
 private:
   bool tryConvertIf(MachineBasicBlock*);
+  void updateDomTree(ArrayRef<MachineBasicBlock*> Removed);
 };
 } // end anonymous namespace
 
@@ -532,34 +533,47 @@ char &llvm::EarlyIfConverterID = EarlyIfConverter::ID;
 INITIALIZE_PASS_BEGIN(EarlyIfConverter,
                       "early-ifcvt", "Early If Converter", false, false)
 INITIALIZE_PASS_DEPENDENCY(MachineBranchProbabilityInfo)
+INITIALIZE_PASS_DEPENDENCY(MachineDominatorTree)
 INITIALIZE_PASS_END(EarlyIfConverter,
                       "early-ifcvt", "Early If Converter", false, false)
 
 void EarlyIfConverter::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<MachineBranchProbabilityInfo>();
+  AU.addRequired<MachineDominatorTree>();
+  AU.addPreserved<MachineDominatorTree>();
   MachineFunctionPass::getAnalysisUsage(AU);
 }
 
-/// Attempt repeated if-conversion on MBB, return true if successful.
-/// Update WorkList with new opportunities.
-///
-bool EarlyIfConverter::tryConvertIf(MachineBasicBlock *MBB) {
-  if (!IfConv.canConvertIf(MBB))
-    return false;
-
-  // Repeatedly if-convert MBB, joining Head and Tail may expose more
-  // opportunities.
-  do IfConv.convertIf(WorkList);
-  while (IfConv.canConvertIf(MBB));
-
-  // It is possible that MBB is now itself a conditional block that can be
-  // if-converted.
-  if (MBB->pred_size() == 1 && MBB->succ_size() == 1)
-    WorkList.insert(MBB->pred_begin()[0]);
-  WorkList.remove(MBB);
-  return true;
+/// Update the dominator tree after if-conversion erased some blocks.
+void EarlyIfConverter::updateDomTree(ArrayRef<MachineBasicBlock*> Removed) {
+  // convertIf can remove TBB, FBB, and Tail can be merged into Head.
+  // TBB and FBB should not dominate any blocks.
+  // Tail children should be transferred to Head.
+  MachineDomTreeNode *HeadNode = DomTree->getNode(IfConv.Head);
+  for (unsigned i = 0, e = Removed.size(); i != e; ++i) {
+    MachineDomTreeNode *Node = DomTree->getNode(Removed[i]);
+    assert(Node != HeadNode && "Cannot erase the head node");
+    while (Node->getNumChildren()) {
+      assert(Node->getBlock() == IfConv.Tail && "Unexpected children");
+      DomTree->changeImmediateDominator(Node->getChildren().back(), HeadNode);
+    }
+    DomTree->eraseNode(Removed[i]);
+  }
 }
 
+/// Attempt repeated if-conversion on MBB, return true if successful.
+///
+bool EarlyIfConverter::tryConvertIf(MachineBasicBlock *MBB) {
+  bool Changed = false;
+  while (IfConv.canConvertIf(MBB)) {
+    // If-convert MBB and update analyses.
+    SmallVector<MachineBasicBlock*, 4> RemovedBlocks;
+    IfConv.convertIf(RemovedBlocks);
+    Changed = true;
+    updateDomTree(RemovedBlocks);
+  }
+  return Changed;
+}
 
 bool EarlyIfConverter::runOnMachineFunction(MachineFunction &MF) {
   DEBUG(dbgs() << "********** EARLY IF-CONVERSION **********\n"
@@ -568,22 +582,19 @@ bool EarlyIfConverter::runOnMachineFunction(MachineFunction &MF) {
   TII = MF.getTarget().getInstrInfo();
   TRI = MF.getTarget().getRegisterInfo();
   MRI = &MF.getRegInfo();
+  DomTree = &getAnalysis<MachineDominatorTree>();
 
   bool Changed = false;
   IfConv.runOnMachineFunction(MF);
 
-  // Initially visit blocks in layout order. The tryConvertIf() function may
-  // erase blocks, but never the head block passed as MFI.
-  for (MachineFunction::iterator MFI = MF.begin(), MFE = MF.end(); MFI != MFE;
-       ++MFI)
-    if (tryConvertIf(MFI))
+  // Visit blocks in dominator tree post-order. The post-order enables nested
+  // if-conversion in a single pass. The tryConvertIf() function may erase
+  // blocks, but only blocks dominated by the head block. This makes it safe to
+  // update the dominator tree while the post-order iterator is still active.
+  for (po_iterator<MachineDominatorTree*>
+       I = po_begin(DomTree), E = po_end(DomTree); I != E; ++I)
+    if (tryConvertIf(I->getBlock()))
       Changed = true;
-
-  // Revisit blocks identified by tryConvertIf() as candidates for nested
-  // if-conversion.
-  DEBUG(dbgs() << "Revisiting " << WorkList.size() << " blocks.\n");
-  while (!WorkList.empty())
-    tryConvertIf(WorkList.pop_back_val());
 
   MF.verify(this, "After early if-conversion");
   return Changed;
