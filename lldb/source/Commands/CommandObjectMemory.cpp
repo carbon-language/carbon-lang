@@ -398,19 +398,52 @@ protected:
             uint32_t reference_count = 0;
             uint32_t pointer_count = 0;
             size_t idx;
-            static const char *g_keywords[] = { "const", "volatile", "restrict", "struct", "class", "union"};
-            static size_t g_num_keywords = sizeof(g_keywords)/sizeof(const char *);
+            
+#define ALL_KEYWORDS        \
+    KEYWORD("const")        \
+    KEYWORD("volatile")     \
+    KEYWORD("restrict")     \
+    KEYWORD("struct")       \
+    KEYWORD("class")        \
+    KEYWORD("union")
+            
+#define KEYWORD(s) s,
+            static const char *g_keywords[] =
+            {
+                ALL_KEYWORDS
+            };
+#undef KEYWORD
+
+#define KEYWORD(s) (sizeof(s) - 1),
+            static const int g_keyword_lengths[] =
+            {
+                ALL_KEYWORDS
+            };
+#undef KEYWORD
+            
+#undef ALL_KEYWORDS
+            
+            static size_t g_num_keywords = sizeof(g_keywords) / sizeof(const char *);
             std::string type_str(view_as_type_cstr);
             
             // Remove all instances of g_keywords that are followed by spaces
             for (size_t i = 0; i < g_num_keywords; ++i)
             {
                 const char *keyword = g_keywords[i];
-                int keyword_len = ::strlen (keyword);
-                while ((idx = type_str.find (keyword)) != std::string::npos)
+                int keyword_len = g_keyword_lengths[i];
+                
+                idx = 0;
+                while ((idx = type_str.find (keyword, idx)) != std::string::npos)
                 {
                     if (type_str[idx + keyword_len] == ' ' || type_str[idx + keyword_len] == '\t')
+                    {
                         type_str.erase(idx, keyword_len+1);
+                        idx = 0;
+                    }
+                    else
+                    {
+                        idx += keyword_len;
+                    }
                 }
             }
             bool done = type_str.empty();
