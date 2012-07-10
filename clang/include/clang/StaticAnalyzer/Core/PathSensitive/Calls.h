@@ -73,10 +73,6 @@ protected:
   /// result of this call.
   virtual void addExtraInvalidatedRegions(RegionList &Regions) const {}
 
-  typedef const ParmVarDecl * const *param_iterator;
-  virtual param_iterator param_begin() const = 0;
-  virtual param_iterator param_end() const = 0;
-
   virtual QualType getDeclaredResultType() const { return QualType(); }
 
 public:
@@ -147,6 +143,10 @@ public:
   /// \brief Returns the result type, adjusted for references.
   QualType getResultType() const;
 
+  /// \brief Returns the value of the implicit 'this' object, or UndefinedVal if
+  /// this is not a C++ member function call.
+  virtual SVal getCXXThisVal() const { return UndefinedVal(); }
+
   /// \brief Returns true if any of the arguments appear to represent callbacks.
   bool hasNonZeroCallbackArg() const;
 
@@ -174,18 +174,44 @@ public:
   /// inlining.
   static bool mayBeInlined(const Stmt *S);
 
-  // Iterator access to parameter types.
+  // Iterator access to formal parameters and their types.
 private:
   typedef std::const_mem_fun_t<QualType, ParmVarDecl> get_type_fun;
   
 public:
+  typedef const ParmVarDecl * const *param_iterator;
+
+  /// Returns an iterator over the call's formal parameters.
+  ///
+  /// If UseDefinitionParams is set, this will return the parameter decls
+  /// used in the callee's definition (suitable for inlining). Most of the
+  /// time it is better to use the decl found by name lookup, which likely
+  /// carries more annotations.
+  ///
+  /// Remember that the number of formal parameters may not match the number
+  /// of arguments for all calls. However, the first parameter will always
+  /// correspond with the argument value returned by \c getArgSVal(0).
+  ///
+  /// If the call has no accessible declaration (or definition, if
+  /// \p UseDefinitionParams is set), \c param_begin() will be equal to
+  /// \c param_end().
+  virtual param_iterator param_begin(bool UseDefinitionParams = false) const = 0;
+  /// \sa param_begin()
+  virtual param_iterator param_end(bool UseDefinitionParams = false) const = 0;
+
   typedef llvm::mapped_iterator<param_iterator, get_type_fun>
     param_type_iterator;
 
+  /// Returns an iterator over the types of the call's formal parameters.
+  ///
+  /// This uses the callee decl found by default name lookup rather than the
+  /// definition because it represents a public interface, and probably has
+  /// more annotations.
   param_type_iterator param_type_begin() const {
     return llvm::map_iterator(param_begin(),
                               get_type_fun(&ParmVarDecl::getType));
   }
+  /// \sa param_type_begin()
   param_type_iterator param_type_end() const {
     return llvm::map_iterator(param_end(), get_type_fun(&ParmVarDecl::getType));
   }
@@ -200,8 +226,8 @@ protected:
   AnyFunctionCall(ProgramStateRef St, const LocationContext *LCtx, Kind K)
     : CallEvent(St, LCtx, K) {}
 
-  param_iterator param_begin() const;
-  param_iterator param_end() const;
+  param_iterator param_begin(bool UseDefinitionParams = false) const;
+  param_iterator param_end(bool UseDefinitionParams = false) const;
 
   QualType getDeclaredResultType() const;
 
@@ -282,6 +308,8 @@ public:
     return cast<CXXMemberCallExpr>(SimpleCall::getOriginExpr());
   }
 
+  SVal getCXXThisVal() const;
+
   static bool classof(const CallEvent *CA) {
     return CA->getKind() == CE_CXXMember;
   }
@@ -309,6 +337,8 @@ public:
     return getOriginExpr()->getArg(Index + 1);
   }
 
+  SVal getCXXThisVal() const;
+
   static bool classof(const CallEvent *CA) {
     return CA->getKind() == CE_CXXMemberOperator;
   }
@@ -321,8 +351,8 @@ class BlockCall : public SimpleCall {
 protected:
   void addExtraInvalidatedRegions(RegionList &Regions) const;
 
-  param_iterator param_begin() const;
-  param_iterator param_end() const;
+  param_iterator param_begin(bool UseDefinitionParams = false) const;
+  param_iterator param_end(bool UseDefinitionParams = false) const;
 
   QualType getDeclaredResultType() const;
 
@@ -387,6 +417,8 @@ public:
     return CE->getArg(Index);
   }
 
+  SVal getCXXThisVal() const;
+
   static bool classof(const CallEvent *CA) {
     return CA->getKind() == CE_CXXConstructor;
   }
@@ -416,6 +448,8 @@ public:
 
   const CXXDestructorDecl *getDecl() const { return DD; }
   unsigned getNumArgs() const { return 0; }
+
+  SVal getCXXThisVal() const;
 
   static bool classof(const CallEvent *CA) {
     return CA->getKind() == CE_CXXDestructor;
@@ -465,8 +499,8 @@ protected:
 
   void addExtraInvalidatedRegions(RegionList &Regions) const;
 
-  param_iterator param_begin() const;
-  param_iterator param_end() const;
+  param_iterator param_begin(bool UseDefinitionParams = false) const;
+  param_iterator param_end(bool UseDefinitionParams = false) const;
 
   QualType getDeclaredResultType() const;
 

@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,experimental.core,debug.ExprInspection -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,experimental.core,debug.ExprInspection -analyzer-ipa=inlining -verify %s
 void clang_analyzer_eval(bool);
 
 struct X0 { };
@@ -28,6 +28,5 @@ struct IntComparable {
 };
 
 void testMemberOperator(IntComparable B) {
-  // FIXME: Change this to TRUE when we re-enable inlining.
-  clang_analyzer_eval(B == 0); // expected-warning{{UNKNOWN}}
+  clang_analyzer_eval(B == 0); // expected-warning{{TRUE}}
 }

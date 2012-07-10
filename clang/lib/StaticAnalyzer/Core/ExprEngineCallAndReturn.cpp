@@ -55,11 +55,7 @@ void ExprEngine::processCallEnter(CallEnter CE, ExplodedNode *Pred) {
   // Construct an edge representing the starting location in the callee.
   BlockEdge Loc(Entry, Succ, calleeCtx);
 
-  // Construct a new state which contains the mapping from actual to
-  // formal arguments.
-  const LocationContext *callerCtx = Pred->getLocationContext();
-  ProgramStateRef state = Pred->getState()->enterStackFrame(callerCtx,
-                                                            calleeCtx);
+  ProgramStateRef state = Pred->getState();
   
   // Construct a new node and add it to the worklist.
   bool isNew;
@@ -287,14 +283,9 @@ bool ExprEngine::inlineCall(ExplodedNodeSet &Dst,
   switch (Call.getKind()) {
   case CE_Function:
   case CE_CXXMember:
+  case CE_CXXMemberOperator:
     // These are always at least possible to inline.
     break;
-  case CE_CXXMemberOperator:
-    // FIXME: This should be possible to inline, but
-    // RegionStore::enterStackFrame isn't smart enough to handle the first
-    // argument being 'this'. The correct solution is to use CallEvent in
-    // enterStackFrame as well.
-    return false;
   case CE_CXXConstructor:
   case CE_CXXDestructor:
     // Do not inline constructors until we can really model destructors.
@@ -337,8 +328,13 @@ bool ExprEngine::inlineCall(ExplodedNodeSet &Dst,
                              currentStmtIdx);
   
   CallEnter Loc(CallE, CalleeSFC, Pred->getLocationContext());
+
+  // Construct a new state which contains the mapping from actual to
+  // formal arguments.
+  ProgramStateRef State = Pred->getState()->enterStackFrame(Call, CalleeSFC);
+
   bool isNew;
-  if (ExplodedNode *N = G.getNode(Loc, Pred->getState(), false, &isNew)) {
+  if (ExplodedNode *N = G.getNode(Loc, State, false, &isNew)) {
     N->addPredecessor(Pred, G);
     if (isNew)
       Engine.getWorkList()->enqueue(N);

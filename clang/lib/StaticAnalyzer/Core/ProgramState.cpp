@@ -203,11 +203,11 @@ ProgramStateRef ProgramState::unbindLoc(Loc LV) const {
 }
 
 ProgramStateRef 
-ProgramState::enterStackFrame(const LocationContext *callerCtx,
-                              const StackFrameContext *calleeCtx) const {
-  const StoreRef &new_store =
-    getStateManager().StoreMgr->enterStackFrame(this, callerCtx, calleeCtx);
-  return makeWithStore(new_store);
+ProgramState::enterStackFrame(const CallEvent &Call,
+                              const StackFrameContext *CalleeCtx) const {
+  const StoreRef &NewStore =
+    getStateManager().StoreMgr->enterStackFrame(getStore(), Call, CalleeCtx);
+  return makeWithStore(NewStore);
 }
 
 SVal ProgramState::getSValAsScalarOrLoc(const MemRegion *R) const {

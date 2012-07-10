@@ -219,20 +219,22 @@ bool CallEvent::mayBeInlined(const Stmt *S) {
 }
 
 
-CallEvent::param_iterator AnyFunctionCall::param_begin() const {
-  const FunctionDecl *D = getDecl();
+CallEvent::param_iterator
+AnyFunctionCall::param_begin(bool UseDefinitionParams) const {
+  const Decl *D = UseDefinitionParams ? getDefinition() : getDecl();
   if (!D)
     return 0;
 
-  return D->param_begin();
+  return cast<FunctionDecl>(D)->param_begin();
 }
 
-CallEvent::param_iterator AnyFunctionCall::param_end() const {
-  const FunctionDecl *D = getDecl();
+CallEvent::param_iterator
+AnyFunctionCall::param_end(bool UseDefinitionParams) const {
+  const Decl *D = UseDefinitionParams ? getDefinition() : getDecl();
   if (!D)
     return 0;
 
-  return D->param_end();
+  return cast<FunctionDecl>(D)->param_end();
 }
 
 QualType AnyFunctionCall::getDeclaredResultType() const {
@@ -309,23 +311,31 @@ const FunctionDecl *SimpleCall::getDecl() const {
 }
 
 
-void CXXMemberCall::addExtraInvalidatedRegions(RegionList &Regions) const {
+SVal CXXMemberCall::getCXXThisVal() const {
   const Expr *Base = getOriginExpr()->getImplicitObjectArgument();
 
   // FIXME: Will eventually need to cope with member pointers.  This is
   // a limitation in getImplicitObjectArgument().
   if (!Base)
-    return;
-    
-  if (const MemRegion *R = getSVal(Base).getAsRegion())
+    return UnknownVal();
+
+  return getSVal(Base);
+}
+
+void CXXMemberCall::addExtraInvalidatedRegions(RegionList &Regions) const {    
+  if (const MemRegion *R = getCXXThisVal().getAsRegion())
     Regions.push_back(R);
 }
 
 
+SVal CXXMemberOperatorCall::getCXXThisVal() const {
+  const Expr *Base = getOriginExpr()->getArg(0);
+  return getSVal(Base);
+}
+
 void
 CXXMemberOperatorCall::addExtraInvalidatedRegions(RegionList &Regions) const {
-  const Expr *Base = getOriginExpr()->getArg(0);
-  if (const MemRegion *R = getSVal(Base).getAsRegion())
+  if (const MemRegion *R = getCXXThisVal().getAsRegion())
     Regions.push_back(R);
 }
 
@@ -337,14 +347,22 @@ const BlockDataRegion *BlockCall::getBlockRegion() const {
   return dyn_cast_or_null<BlockDataRegion>(DataReg);
 }
 
-CallEvent::param_iterator BlockCall::param_begin() const {
+CallEvent::param_iterator
+BlockCall::param_begin(bool UseDefinitionParams) const {
+  // Blocks don't have distinct declarations and definitions.
+  (void)UseDefinitionParams;
+
   const BlockDecl *D = getBlockDecl();
   if (!D)
     return 0;
   return D->param_begin();
 }
 
-CallEvent::param_iterator BlockCall::param_end() const {
+CallEvent::param_iterator
+BlockCall::param_end(bool UseDefinitionParams) const {
+  // Blocks don't have distinct declarations and definitions.
+  (void)UseDefinitionParams;
+
   const BlockDecl *D = getBlockDecl();
   if (!D)
     return 0;
@@ -366,11 +384,23 @@ QualType BlockCall::getDeclaredResultType() const {
 }
 
 
+SVal CXXConstructorCall::getCXXThisVal() const {
+  if (Target)
+    return loc::MemRegionVal(Target);
+  return UnknownVal();
+}
+
 void CXXConstructorCall::addExtraInvalidatedRegions(RegionList &Regions) const {
   if (Target)
     Regions.push_back(Target);
 }
 
+
+SVal CXXDestructorCall::getCXXThisVal() const {
+  if (Target)
+    return loc::MemRegionVal(Target);
+  return UnknownVal();
+}
 
 void CXXDestructorCall::addExtraInvalidatedRegions(RegionList &Regions) const {
   if (Target)
@@ -378,20 +408,22 @@ void CXXDestructorCall::addExtraInvalidatedRegions(RegionList &Regions) const {
 }
 
 
-CallEvent::param_iterator ObjCMethodCall::param_begin() const {
-  const ObjCMethodDecl *D = getDecl();
+CallEvent::param_iterator
+ObjCMethodCall::param_begin(bool UseDefinitionParams) const {
+  const Decl *D = UseDefinitionParams ? getDefinition() : getDecl();
   if (!D)
     return 0;
 
-  return D->param_begin();
+  return cast<ObjCMethodDecl>(D)->param_begin();
 }
 
-CallEvent::param_iterator ObjCMethodCall::param_end() const {
-  const ObjCMethodDecl *D = getDecl();
+CallEvent::param_iterator
+ObjCMethodCall::param_end(bool UseDefinitionParams) const {
+  const Decl *D = UseDefinitionParams ? getDefinition() : getDecl();
   if (!D)
     return 0;
 
-  return D->param_end();
+  return cast<ObjCMethodDecl>(D)->param_end();
 }
 
 void

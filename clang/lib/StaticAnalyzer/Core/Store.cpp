@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/StaticAnalyzer/Core/PathSensitive/Store.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/Calls.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ProgramState.h"
 #include "clang/AST/CharUnits.h"
 #include "clang/AST/DeclObjC.h"
@@ -23,10 +24,36 @@ StoreManager::StoreManager(ProgramStateManager &stateMgr)
   : svalBuilder(stateMgr.getSValBuilder()), StateMgr(stateMgr),
     MRMgr(svalBuilder.getRegionManager()), Ctx(stateMgr.getContext()) {}
 
-StoreRef StoreManager::enterStackFrame(ProgramStateRef state,
-                                       const LocationContext *callerCtx,
-                                       const StackFrameContext *calleeCtx) {
-  return StoreRef(state->getStore(), *this);
+StoreRef StoreManager::enterStackFrame(Store OldStore,
+                                       const CallEvent &Call,
+                                       const StackFrameContext *LCtx) {
+  StoreRef Store = StoreRef(OldStore, *this);
+
+  unsigned Idx = 0;
+  for (CallEvent::param_iterator I = Call.param_begin(/*UseDefinition=*/true),
+                                 E = Call.param_end(/*UseDefinition=*/true);
+       I != E; ++I, ++Idx) {
+    const ParmVarDecl *Decl = *I;
+    assert(Decl && "Formal parameter has no decl?");
+
+    SVal ArgVal = Call.getArgSVal(Idx);
+    if (!ArgVal.isUnknown()) {
+      Store = Bind(Store.getStore(),
+                   svalBuilder.makeLoc(MRMgr.getVarRegion(Decl, LCtx)),
+                   ArgVal);
+    }
+  }
+
+  // FIXME: We will eventually want to generalize this to handle other non-
+  // parameter arguments besides 'this' (such as 'self' for ObjC methods).
+  SVal ThisVal = Call.getCXXThisVal();
+  if (!ThisVal.isUndef()) {
+    const CXXMethodDecl *MD = cast<CXXMethodDecl>(Call.getDecl());
+    loc::MemRegionVal ThisRegion = svalBuilder.getCXXThis(MD, LCtx);
+    Store = Bind(Store.getStore(), ThisRegion, ThisVal);
+  }
+
+  return Store;
 }
 
 const MemRegion *StoreManager::MakeElementRegion(const MemRegion *Base,
