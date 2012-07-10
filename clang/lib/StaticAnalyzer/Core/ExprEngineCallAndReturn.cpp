@@ -134,23 +134,25 @@ void ExprEngine::processCallExit(ExplodedNode *CEBNode) {
   const CFGBlock *Blk = 0;
   llvm::tie(LastSt, Blk) = getLastStmt(CEBNode);
 
-  // Step 2: generate node with binded return value: CEBNode -> BindedRetNode.
+  // Step 2: generate node with bound return value: CEBNode -> BindedRetNode.
 
   // If the callee returns an expression, bind its value to CallExpr.
-  if (const ReturnStmt *RS = dyn_cast_or_null<ReturnStmt>(LastSt)) {
-    const LocationContext *LCtx = CEBNode->getLocationContext();
-    SVal V = state->getSVal(RS, LCtx);
-    state = state->BindExpr(CE, callerCtx, V);
-  }
+  if (CE) {
+    if (const ReturnStmt *RS = dyn_cast_or_null<ReturnStmt>(LastSt)) {
+      const LocationContext *LCtx = CEBNode->getLocationContext();
+      SVal V = state->getSVal(RS, LCtx);
+      state = state->BindExpr(CE, callerCtx, V);
+    }
 
-  // Bind the constructed object value to CXXConstructExpr.
-  if (const CXXConstructExpr *CCE = dyn_cast<CXXConstructExpr>(CE)) {
-    loc::MemRegionVal This =
-      svalBuilder.getCXXThis(CCE->getConstructor()->getParent(), calleeCtx);
-    SVal ThisV = state->getSVal(This);
+    // Bind the constructed object value to CXXConstructExpr.
+    if (const CXXConstructExpr *CCE = dyn_cast<CXXConstructExpr>(CE)) {
+      loc::MemRegionVal This =
+        svalBuilder.getCXXThis(CCE->getConstructor()->getParent(), calleeCtx);
+      SVal ThisV = state->getSVal(This);
 
-    // Always bind the region to the CXXConstructExpr.
-    state = state->BindExpr(CCE, CEBNode->getLocationContext(), ThisV);
+      // Always bind the region to the CXXConstructExpr.
+      state = state->BindExpr(CCE, CEBNode->getLocationContext(), ThisV);
+    }
   }
 
   static SimpleProgramPointTag retValBindTag("ExprEngine : Bind Return Value");
@@ -186,7 +188,7 @@ void ExprEngine::processCallExit(ExplodedNode *CEBNode) {
 
     // Step 4: Generate the CallExit and leave the callee's context.
     // CleanedNodes -> CEENode
-    CallExitEnd Loc(CE, callerCtx);
+    CallExitEnd Loc(calleeCtx, callerCtx);
     bool isNew;
     ExplodedNode *CEENode = G.getNode(Loc, (*I)->getState(), false, &isNew);
     CEENode->addPredecessor(*I, G);
@@ -202,7 +204,9 @@ void ExprEngine::processCallExit(ExplodedNode *CEBNode) {
         &Ctx);
     SaveAndRestore<unsigned> CBISave(currentStmtIdx, calleeCtx->getIndex());
 
-    getCheckerManager().runCheckersForPostStmt(Dst, CEENode, CE, *this, true);
+    // FIXME: This needs to call PostCall.
+    if (CE)
+      getCheckerManager().runCheckersForPostStmt(Dst, CEENode, CE, *this, true);
 
     // Enqueue the next element in the block.
     for (ExplodedNodeSet::iterator PSI = Dst.begin(), PSE = Dst.end();
@@ -322,8 +326,8 @@ bool ExprEngine::inlineCall(ExplodedNodeSet &Dst,
   if (!ParentOfCallee)
     ParentOfCallee = CallerSFC;
 
+  // This may be NULL, but that's fine.
   const Expr *CallE = Call.getOriginExpr();
-  assert(CallE && "It is not yet possible to have calls without statements");
 
   // Construct a new stack frame for the callee.
   AnalysisDeclContext *CalleeADC = AMgr.getAnalysisDeclContext(D);

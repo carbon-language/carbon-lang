@@ -265,7 +265,8 @@ void CoreEngine::dispatchWorkItem(ExplodedNode* Pred, ProgramPoint Loc,
     }
     default:
       assert(isa<PostStmt>(Loc) ||
-             isa<PostInitializer>(Loc));
+             isa<PostInitializer>(Loc) ||
+             isa<CallExitEnd>(Loc));
       HandlePostStmt(WU.getBlock(), WU.getIndex(), Pred);
       break;
   }
@@ -539,10 +540,9 @@ ExplodedNode *CoreEngine::generateCallExitBeginNode(ExplodedNode *N) {
   // Create a CallExitBegin node and enqueue it.
   const StackFrameContext *LocCtx
                          = cast<StackFrameContext>(N->getLocationContext());
-  const Stmt *CE = LocCtx->getCallSite();
 
   // Use the the callee location context.
-  CallExitBegin Loc(CE, LocCtx);
+  CallExitBegin Loc(LocCtx);
 
   bool isNew;
   ExplodedNode *Node = G->getNode(Loc, N->getState(), false, &isNew);

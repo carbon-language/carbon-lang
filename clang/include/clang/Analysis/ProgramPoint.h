@@ -49,12 +49,12 @@ public:
               PostStoreKind,
               PostConditionKind,
               PostLValueKind,
+              MinPostStmtKind = PostStmtKind,
+              MaxPostStmtKind = PostLValueKind,
               PostInitializerKind,
               CallEnterKind,
               CallExitBeginKind,
               CallExitEndKind,
-              MinPostStmtKind = PostStmtKind,
-              MaxPostStmtKind = CallExitEndKind,
               PreImplicitCallKind,
               PostImplicitCallKind,
               MinImplicitCallKind = PreImplicitCallKind,
@@ -461,11 +461,11 @@ public:
 };
 
 /// Represents a point when we begin processing an inlined call.
-class CallEnter : public StmtPoint {
+class CallEnter : public ProgramPoint {
 public:
   CallEnter(const Stmt *stmt, const StackFrameContext *calleeCtx, 
             const LocationContext *callerCtx)
-    : StmtPoint(stmt, calleeCtx, CallEnterKind, callerCtx, 0) {}
+    : ProgramPoint(stmt, calleeCtx, CallEnterKind, callerCtx, 0) {}
 
   const Stmt *getCallExpr() const {
     return static_cast<const Stmt *>(getData1());
@@ -489,11 +489,11 @@ public:
 /// - Bind the return value
 /// - Run Remove dead bindings (to clean up the dead symbols from the callee).
 /// - CallExitEnd
-class CallExitBegin : public StmtPoint {
+class CallExitBegin : public ProgramPoint {
 public:
   // CallExitBegin uses the callee's location context.
-  CallExitBegin(const Stmt *S, const LocationContext *L)
-    : StmtPoint(S, 0, CallExitBeginKind, L, 0) {}
+  CallExitBegin(const StackFrameContext *L)
+    : ProgramPoint(0, CallExitBeginKind, L, 0) {}
 
   static bool classof(const ProgramPoint *Location) {
     return Location->getKind() == CallExitBeginKind;
@@ -502,11 +502,16 @@ public:
 
 /// Represents a point when we finish the call exit sequence (for inlined call).
 /// \sa CallExitBegin
-class CallExitEnd : public StmtPoint {
+class CallExitEnd : public ProgramPoint {
 public:
   // CallExitEnd uses the caller's location context.
-  CallExitEnd(const Stmt *S, const LocationContext *L)
-    : StmtPoint(S, 0, CallExitEndKind, L, 0) {}
+  CallExitEnd(const StackFrameContext *CalleeCtx,
+              const LocationContext *CallerCtx)
+    : ProgramPoint(CalleeCtx, CallExitEndKind, CallerCtx, 0) {}
+
+  const StackFrameContext *getCalleeContext() const {
+    return static_cast<const StackFrameContext *>(getData1());
+  }
 
   static bool classof(const ProgramPoint *Location) {
     return Location->getKind() == CallExitEndKind;

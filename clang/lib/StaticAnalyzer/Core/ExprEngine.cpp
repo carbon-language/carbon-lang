@@ -1001,6 +1001,8 @@ bool ExprEngine::replayWithoutInlining(ExplodedNode *N,
       continue;
     if (isa<PreImplicitCall>(&L))
       continue;
+    if (isa<CallEnter>(&L))
+      continue;
     if (const StmtPoint *SP = dyn_cast<StmtPoint>(&L))
       if (SP->getStmt() == CE)
         continue;

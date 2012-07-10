@@ -339,6 +339,9 @@ PathDiagnosticLocation
   else if (const PostStmt *PS = dyn_cast<PostStmt>(&P)) {
     S = PS->getStmt();
   }
+  else if (const CallExitEnd *CEE = dyn_cast<CallExitEnd>(&P)) {
+    S = CEE->getCalleeContext()->getCallSite();
+  }
 
   return PathDiagnosticLocation(S, SMng, P.getLocationContext());
 }
@@ -501,6 +504,10 @@ static PathDiagnosticLocation getLastStmtLoc(const ExplodedNode *N,
     ProgramPoint PP = N->getLocation();
     if (const StmtPoint *SP = dyn_cast<StmtPoint>(&PP))
       return PathDiagnosticLocation(SP->getStmt(), SM, PP.getLocationContext());
+    // FIXME: Handle implicit calls.
+    if (const CallExitEnd *CEE = dyn_cast<CallExitEnd>(&PP))
+      if (const Stmt *CallSite = CEE->getCalleeContext()->getCallSite())
+        return PathDiagnosticLocation(CallSite, SM, PP.getLocationContext());
     if (N->pred_empty())
       break;
     N = *N->pred_begin();
@@ -670,7 +677,8 @@ std::string StackHintGeneratorForSymbol::getMessage(const ExplodedNode *N){
   const CallExitEnd *CExit = dyn_cast<CallExitEnd>(&P);
   assert(CExit && "Stack Hints should be constructed at CallExitEnd points.");
 
-  const CallExpr *CE = dyn_cast_or_null<CallExpr>(CExit->getStmt());
+  const Stmt *CallSite = CExit->getCalleeContext()->getCallSite();
+  const CallExpr *CE = dyn_cast_or_null<CallExpr>(CallSite);
   if (!CE)
     return "";
 

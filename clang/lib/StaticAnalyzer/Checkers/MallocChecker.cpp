@@ -972,8 +972,10 @@ MallocChecker::getAllocationSite(const ExplodedNode *N, SymbolRef Sym,
 
   ProgramPoint P = AllocNode->getLocation();
   const Stmt *AllocationStmt = 0;
-  if (isa<StmtPoint>(P))
-    AllocationStmt = cast<StmtPoint>(P).getStmt();
+  if (CallExitEnd *Exit = dyn_cast<CallExitEnd>(&P))
+    AllocationStmt = Exit->getCalleeContext()->getCallSite();
+  else if (StmtPoint *SP = dyn_cast<StmtPoint>(&P))
+    AllocationStmt = SP->getStmt();
 
   return LeakInfo(AllocationStmt, ReferenceRegion);
 }
@@ -1524,12 +1526,14 @@ MallocChecker::MallocBugVisitor::VisitNode(const ExplodedNode *N,
 
   // Retrieve the associated statement.
   ProgramPoint ProgLoc = N->getLocation();
-  if (isa<StmtPoint>(ProgLoc))
-    S = cast<StmtPoint>(ProgLoc).getStmt();
+  if (StmtPoint *SP = dyn_cast<StmtPoint>(&ProgLoc))
+    S = SP->getStmt();
+  else if (CallExitEnd *Exit = dyn_cast<CallExitEnd>(&ProgLoc))
+    S = Exit->getCalleeContext()->getCallSite();
   // If an assumption was made on a branch, it should be caught
   // here by looking at the state transition.
-  if (isa<BlockEdge>(ProgLoc)) {
-    const CFGBlock *srcBlk = cast<BlockEdge>(ProgLoc).getSrc();
+  else if (BlockEdge *Edge = dyn_cast<BlockEdge>(&ProgLoc)) {
+    const CFGBlock *srcBlk = Edge->getSrc();
     S = srcBlk->getTerminator();
   }
   if (!S)

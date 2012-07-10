@@ -48,6 +48,10 @@ static inline const Stmt *GetStmt(const ProgramPoint &P) {
     return SP->getStmt();
   else if (const BlockEdge *BE = dyn_cast<BlockEdge>(&P))
     return BE->getSrc()->getTerminator();
+  else if (const CallEnter *CE = dyn_cast<CallEnter>(&P))
+    return CE->getCallExpr();
+  else if (const CallExitEnd *CEE = dyn_cast<CallExitEnd>(&P))
+    return CEE->getCalleeContext()->getCallSite();
 
   return 0;
 }
@@ -1102,11 +1106,10 @@ static void reversePropagateInterestingSymbols(BugReport &R,
                                                const LocationContext *CalleeCtx,
                                                const LocationContext *CallerCtx)
 {
-  // FIXME: Handle CXXConstructExpr.
-  // FIXME: Handle calls to blocks.
+  // FIXME: Handle non-CallExpr-based CallEvents.
   const StackFrameContext *Callee = CalleeCtx->getCurrentStackFrame();
   const Stmt *CallSite = Callee->getCallSite();
-  if (const CallExpr *CE = dyn_cast<CallExpr>(CallSite)) {
+  if (const CallExpr *CE = dyn_cast_or_null<CallExpr>(CallSite)) {
     if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(CalleeCtx->getDecl())) {
       FunctionDecl::param_const_iterator PI = FD->param_begin(), 
                                          PE = FD->param_end();
@@ -1149,17 +1152,24 @@ static void GenerateExtensivePathDiagnostic(PathDiagnostic& PD,
       
       if (const CallExitEnd *CE = dyn_cast<CallExitEnd>(&P)) {
         const StackFrameContext *LCtx =
-        CE->getLocationContext()->getCurrentStackFrame();
-        PathDiagnosticLocation Loc(CE->getStmt(),
-                                   PDB.getSourceManager(),
-                                   LCtx);
-        EB.addEdge(Loc, true);
-        EB.flushLocations();
-        PathDiagnosticCallPiece *C =
-          PathDiagnosticCallPiece::construct(N, *CE, SM);
-        PD.getActivePath().push_front(C);
-        PD.pushActivePath(&C->path);
-        CallStack.push_back(StackDiagPair(C, N));
+          CE->getLocationContext()->getCurrentStackFrame();
+        // FIXME: This needs to handle implicit calls.
+        if (const Stmt *S = CE->getCalleeContext()->getCallSite()) {
+          if (const Expr *Ex = dyn_cast<Expr>(S))
+            reversePropagateIntererstingSymbols(*PDB.getBugReport(), IE,
+                                                N->getState().getPtr(), Ex,
+                                                N->getLocationContext());
+          PathDiagnosticLocation Loc(S,
+                                     PDB.getSourceManager(),
+                                     LCtx);
+          EB.addEdge(Loc, true);
+          EB.flushLocations();
+          PathDiagnosticCallPiece *C =
+            PathDiagnosticCallPiece::construct(N, *CE, SM);
+          PD.getActivePath().push_front(C);
+          PD.pushActivePath(&C->path);
+          CallStack.push_back(StackDiagPair(C, N));
+        }
         break;
       }
       
@@ -1191,8 +1201,12 @@ static void GenerateExtensivePathDiagnostic(PathDiagnostic& PD,
           const Decl * Caller = CE->getLocationContext()->getDecl();
           C = PathDiagnosticCallPiece::construct(PD.getActivePath(), Caller);
         }
-        C->setCallee(*CE, SM);
-        EB.addContext(CE->getCallExpr());
+
+        // FIXME: We still need a location for implicit calls.
+        if (CE->getCallExpr()) {
+          C->setCallee(*CE, SM);
+          EB.addContext(CE->getCallExpr());
+        }
 
         if (!CallStack.empty()) {
           assert(CallStack.back().first == C);
