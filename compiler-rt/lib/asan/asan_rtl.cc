@@ -59,7 +59,7 @@ void CheckFailed(const char *file, int line, const char *cond, u64 v1, u64 v2) {
 namespace __asan {
 
 // -------------------------- Flags ------------------------- {{{1
-static const uptr kMallocContextSize = 30;
+static const int kMallocContextSize = 30;
 
 static Flags asan_flags;
 

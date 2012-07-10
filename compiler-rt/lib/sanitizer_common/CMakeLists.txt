@@ -4,6 +4,7 @@
 set(SANITIZER_SOURCES
   sanitizer_allocator.cc
   sanitizer_common.cc
+  sanitizer_flags.cc
   sanitizer_libc.cc
   sanitizer_linux.cc
   sanitizer_mac.cc
