@@ -44,6 +44,15 @@ class TextDiagnosticBuffer;
 /// You can place as many diagnostics on one line as you wish. To make the code
 /// more readable, you can use slash-newline to separate out the diagnostics.
 ///
+/// Alternatively, it is possible to specify the line on which the diagnostic
+/// should appear by appending "@<line>" to "expected-<type>", for example:
+///
+///   #warning some text
+///   // expected-warning@10 {{some text}}
+///
+/// The line number may be absolute (as above), or relative to the current
+/// line by prefixing the number with either '+' or '-'.
+///
 /// The simple syntax above allows each specification to match exactly one
 /// error.  You can use the extended syntax to customize this. The extended
 /// syntax is "expected-<type> <n> {{diag text}}", where \<type> is one of
@@ -74,13 +83,15 @@ public:
   ///
   class Directive {
   public:
-    static Directive *create(bool RegexKind, const SourceLocation &Location,
+    static Directive *create(bool RegexKind, SourceLocation DirectiveLoc,
+                             SourceLocation DiagnosticLoc,
                              StringRef Text, unsigned Count);
   public:
     /// Constant representing one or more matches aka regex "+".
     static const unsigned OneOrMoreCount = UINT_MAX;
 
-    SourceLocation Location;
+    SourceLocation DirectiveLoc;
+    SourceLocation DiagnosticLoc;
     const std::string Text;
     unsigned Count;
 
@@ -94,9 +105,10 @@ public:
     virtual bool match(StringRef S) = 0;
 
   protected:
-    Directive(const SourceLocation &Location, StringRef Text,
-              unsigned Count)
-      : Location(Location), Text(Text), Count(Count) { }
+    Directive(SourceLocation DirectiveLoc, SourceLocation DiagnosticLoc,
+              StringRef Text, unsigned Count)
+      : DirectiveLoc(DirectiveLoc), DiagnosticLoc(DiagnosticLoc),
+        Text(Text), Count(Count) { }
 
   private:
     Directive(const Directive&); // DO NOT IMPLEMENT

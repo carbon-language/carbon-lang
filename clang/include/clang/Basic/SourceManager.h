@@ -36,6 +36,7 @@
 #define LLVM_CLANG_SOURCEMANAGER_H
 
 #include "clang/Basic/LLVM.h"
+#include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceLocation.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/DataTypes.h"
@@ -895,6 +896,13 @@ public:
       return LastFileIDLookup;
 
     return getFileIDSlow(SLocOffset);
+  }
+
+  /// \brief Return the filename of the file containing a SourceLocation.
+  StringRef getFilename(SourceLocation SpellingLoc) const {
+    if (const FileEntry *F = getFileEntryForID(getFileID(SpellingLoc)))
+      return F->getName();
+    return StringRef();
   }
 
   /// \brief Return the source location corresponding to the first byte of
