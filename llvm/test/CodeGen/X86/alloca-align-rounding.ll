@@ -15,5 +15,6 @@ define void @foo2(i64 %h) {
   call void @bar(<2 x i64>* %p)
   ret void
 ; CHECK: foo2
+; CHECK: andq $-32, %rsp
 ; CHECK: andq $-32, %rax
 }

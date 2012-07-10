@@ -650,6 +650,7 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
   unsigned SlotSize = RegInfo->getSlotSize();
   unsigned FramePtr = RegInfo->getFrameRegister(MF);
   unsigned StackPtr = RegInfo->getStackRegister();
+  unsigned BasePtr = RegInfo->getBaseRegister();
   DebugLoc DL;
 
   // If we're forcing a stack realignment we can't rely on just the frame
@@ -913,6 +914,20 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
     emitSPUpdate(MBB, MBBI, StackPtr, -(int64_t)NumBytes, Is64Bit,
                  UseLEA, TII, *RegInfo);
 
+  // If we need a base pointer, set it up here. It's whatever the value
+  // of the stack pointer is at this point. Any variable size objects
+  // will be allocated after this, so we can still use the base pointer
+  // to reference locals.
+  if (RegInfo->hasBasePointer(MF)) {
+    // Update the frame pointer with the current stack pointer.
+    unsigned Opc = Is64Bit ? X86::MOV64rr : X86::MOV32rr;
+    BuildMI(MBB, MBBI, DL, TII.get(Opc), BasePtr)
+      .addReg(StackPtr)
+      .setMIFlag(MachineInstr::FrameSetup);
+
+    MFI->setBasePtrStackAdjustment(NumBytes);
+  }
+
   if (( (!HasFP && NumBytes) || PushedRegs) && needsFrameMoves) {
     // Mark end of stack pointer adjustment.
     MCSymbol *Label = MMI.getContext().CreateTempSymbol();
@@ -960,6 +975,7 @@ void X86FrameLowering::emitEpilogue(MachineFunction &MF,
   unsigned SlotSize = RegInfo->getSlotSize();
   unsigned FramePtr = RegInfo->getFrameRegister(MF);
   unsigned StackPtr = RegInfo->getStackRegister();
+  unsigned BasePtr = RegInfo->getBaseRegister();
 
   switch (RetOpcode) {
   default:
@@ -1028,6 +1044,15 @@ void X86FrameLowering::emitEpilogue(MachineFunction &MF,
   // instruction, merge the two instructions.
   if (NumBytes || MFI->hasVarSizedObjects())
     mergeSPUpdatesUp(MBB, MBBI, StackPtr, &NumBytes);
+
+  // Restore the SP from the BP, if necessary.
+  if (RegInfo->hasBasePointer(MF)) {
+    BuildMI(MBB, MBBI, DL, TII.get(Is64Bit ? X86::MOV64rr : X86::MOV32rr),
+            StackPtr).addReg(BasePtr);
+
+    // When restoring from the BP we must use a cached SP adjustment.
+    NumBytes = MFI->getBasePtrStackAdjustment();
+  }
 
   // If dynamic alloca is used, then reset esp to point to the last callee-saved
   // slot before popping them off! Same applies for the case, when stack was
@@ -1147,7 +1172,16 @@ int X86FrameLowering::getFrameIndexOffset(const MachineFunction &MF, int FI) con
   int Offset = MFI->getObjectOffset(FI) - getOffsetOfLocalArea();
   uint64_t StackSize = MFI->getStackSize();
 
-  if (RegInfo->needsStackRealignment(MF)) {
+  if (RegInfo->hasBasePointer(MF)) {
+    assert (hasFP(MF) && "VLAs and dynamic stack realign, but no FP?!");
+    if (FI < 0) {
+      // Skip the saved EBP.
+      return Offset + RegInfo->getSlotSize();
+    } else {
+      assert((-(Offset + StackSize)) % MFI->getObjectAlignment(FI) == 0);
+      return Offset + StackSize;
+    }
+  } else if (RegInfo->needsStackRealignment(MF)) {
     if (FI < 0) {
       // Skip the saved EBP.
       return Offset + RegInfo->getSlotSize();
@@ -1178,9 +1212,14 @@ int X86FrameLowering::getFrameIndexReference(const MachineFunction &MF, int FI,
   const X86RegisterInfo *RegInfo =
       static_cast<const X86RegisterInfo*>(MF.getTarget().getRegisterInfo());
   // We can't calculate offset from frame pointer if the stack is realigned,
-  // so enforce usage of stack pointer.
-  FrameReg = (RegInfo->needsStackRealignment(MF)) ? 
-    RegInfo->getStackRegister() : RegInfo->getFrameRegister(MF);
+  // so enforce usage of stack/base pointer.  The base pointer is used when we
+  // have dynamic allocas in addition to dynamic realignment.
+  if (RegInfo->hasBasePointer(MF))
+    FrameReg = RegInfo->getBaseRegister();
+  else if (RegInfo->needsStackRealignment(MF))
+    FrameReg = RegInfo->getStackRegister();
+  else
+    FrameReg = RegInfo->getFrameRegister(MF);
   return getFrameIndexOffset(MF, FI);
 }
 
@@ -1317,6 +1356,10 @@ X86FrameLowering::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
            "Slot for EBP register must be last in order to be found!");
     (void)FrameIdx;
   }
+
+  // Spill the BasePtr if it's used.
+  if (RegInfo->hasBasePointer(MF))
+    MF.getRegInfo().setPhysRegUsed(RegInfo->getBaseRegister());
 }
 
 static bool

@@ -17,10 +17,15 @@ entry:
 
 define i64 @g(i32 %i) nounwind {
 ; CHECK: g:
-; CHECK:      pushl
+; CHECK:      pushl  %ebp
 ; CHECK-NEXT: movl   %esp, %ebp
+; CHECK-NEXT: andl   $-32, %esp
 ; CHECK-NEXT: pushl
-; CHECK-NEXT: subl   $20, %esp
+; CHECK-NEXT: pushl
+; CHECK-NEXT: subl   $24, %esp
+;
+; Now setup the base pointer (%ebx).
+; CHECK-NEXT: movl   %esp, %ebx
 ; CHECK-NOT:         {{[^ ,]*}}, %esp
 ;
 ; The next adjustment of the stack is due to the alloca.
@@ -41,12 +46,18 @@ define i64 @g(i32 %i) nounwind {
 ; CHECK-NEXT: addl   $32, %esp
 ; CHECK-NOT:         {{[^ ,]*}}, %esp
 ;
-; Finally we nede to restore %esp from %ebp, the alloca prevents us from
-; restoring it directly.
+; Restore %esp from %ebx (base pointer) so we can pop the callee-saved
+; registers.  This is the state prior to the allocation of VLAs.
 ; CHECK-NOT:  popl
-; CHECK:      leal   -4(%ebp), %esp
+; CHECK:      movl   %ebx, %esp
+; CHECK-NEXT: addl   $24, %esp
 ; CHECK-NEXT: popl
 ; CHECK-NEXT: popl
+;
+; Finally we need to restore %esp from %ebp due to dynamic stack
+; realignment.
+; CHECK-NEXT: movl   %ebp, %esp
+; CHECK-NEXT: popl   %ebp
 ; CHECK-NEXT: ret
 
 entry:

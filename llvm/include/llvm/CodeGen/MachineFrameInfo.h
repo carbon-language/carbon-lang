@@ -215,6 +215,10 @@ class MachineFrameInfo {
   /// just allocate them normally.
   bool UseLocalStackAllocationBlock;
 
+  /// After the stack pointer has been restore from the base pointer we
+  /// use a cached adjusment.  Currently only used for x86.
+  int64_t BPAdj;
+
 public:
     explicit MachineFrameInfo(const TargetFrameLowering &tfi) : TFI(tfi) {
     StackSize = NumFixedObjects = OffsetAdjustment = MaxAlignment = 0;
@@ -230,6 +234,7 @@ public:
     LocalFrameSize = 0;
     LocalFrameMaxAlign = 0;
     UseLocalStackAllocationBlock = false;
+    BPAdj = 0;
   }
 
   /// hasStackObjects - Return true if there are any stack objects in this
@@ -537,6 +542,16 @@ public:
   bool isCalleeSavedInfoValid() const { return CSIValid; }
 
   void setCalleeSavedInfoValid(bool v) { CSIValid = v; }
+
+  /// setBasePtrStackAdjustment - If we're restoring the stack pointer from the
+  /// base pointer, due to dynamic stack realignment + VLAs, we cache the
+  /// number of bytes initially allocated for the stack frame.  In obscure
+  /// cases (e.g., tail calls with byval argument and no stack protector), the
+  /// stack gets adjusted outside of the prolog, but these shouldn't be 
+  /// considered when restoring from the base pointer.  Currently, this is only
+  /// needed for x86.
+  void setBasePtrStackAdjustment(int64_t adj) { BPAdj = adj; }
+  int64_t getBasePtrStackAdjustment() const { return BPAdj; }
 
   /// getPristineRegs - Return a set of physical registers that are pristine on
   /// entry to the MBB.
