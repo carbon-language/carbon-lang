@@ -27,6 +27,7 @@
 #include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
+#include "llvm/CodeGen/MachineLoopInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/Target/TargetInstrInfo.h"
@@ -513,6 +514,7 @@ class EarlyIfConverter : public MachineFunctionPass {
   const TargetRegisterInfo *TRI;
   MachineRegisterInfo *MRI;
   MachineDominatorTree *DomTree;
+  MachineLoopInfo *Loops;
   SSAIfConv IfConv;
 
 public:
@@ -524,6 +526,7 @@ public:
 private:
   bool tryConvertIf(MachineBasicBlock*);
   void updateDomTree(ArrayRef<MachineBasicBlock*> Removed);
+  void updateLoops(ArrayRef<MachineBasicBlock*> Removed);
 };
 } // end anonymous namespace
 
@@ -541,6 +544,8 @@ void EarlyIfConverter::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<MachineBranchProbabilityInfo>();
   AU.addRequired<MachineDominatorTree>();
   AU.addPreserved<MachineDominatorTree>();
+  AU.addRequired<MachineLoopInfo>();
+  AU.addPreserved<MachineLoopInfo>();
   MachineFunctionPass::getAnalysisUsage(AU);
 }
 
@@ -561,6 +566,16 @@ void EarlyIfConverter::updateDomTree(ArrayRef<MachineBasicBlock*> Removed) {
   }
 }
 
+/// Update LoopInfo after if-conversion.
+void EarlyIfConverter::updateLoops(ArrayRef<MachineBasicBlock*> Removed) {
+  if (!Loops)
+    return;
+  // If-conversion doesn't change loop structure, and it doesn't mess with back
+  // edges, so updating LoopInfo is simply removing the dead blocks.
+  for (unsigned i = 0, e = Removed.size(); i != e; ++i)
+    Loops->removeBlock(Removed[i]);
+}
+
 /// Attempt repeated if-conversion on MBB, return true if successful.
 ///
 bool EarlyIfConverter::tryConvertIf(MachineBasicBlock *MBB) {
@@ -571,6 +586,7 @@ bool EarlyIfConverter::tryConvertIf(MachineBasicBlock *MBB) {
     IfConv.convertIf(RemovedBlocks);
     Changed = true;
     updateDomTree(RemovedBlocks);
+    updateLoops(RemovedBlocks);
   }
   return Changed;
 }
@@ -583,6 +599,7 @@ bool EarlyIfConverter::runOnMachineFunction(MachineFunction &MF) {
   TRI = MF.getTarget().getRegisterInfo();
   MRI = &MF.getRegInfo();
   DomTree = &getAnalysis<MachineDominatorTree>();
+  Loops = getAnalysisIfAvailable<MachineLoopInfo>();
 
   bool Changed = false;
   IfConv.runOnMachineFunction(MF);
