@@ -453,8 +453,7 @@ the user the ability to automatically fix the problem.</p>
 <li>Since they are automatically applied if <code>-Xclang -fixit</code>
 is passed to the driver, they should only be used when it's very likely they
 match the user's intent.</li>
-<li>Clang must recover from the error or warning as if the fix-it had been
-applied.</li>
+<li>Clang must recover from errors as if the fix-it had been applied.</li>
 </ul>
 
 <p>If a fix-it can't obey these rules, put the fix-it on a note. Fix-its on
