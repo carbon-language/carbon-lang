@@ -16,6 +16,7 @@
 namespace clang {
 namespace ast_matchers {
 
+#if GTEST_HAS_DEATH_TEST
 TEST(HasNameDeathTest, DiesOnEmptyName) {
   ASSERT_DEBUG_DEATH({
     DeclarationMatcher HasEmptyName = record(hasName(""));
@@ -29,6 +30,7 @@ TEST(IsDerivedFromDeathTest, DiesOnEmptyBaseName) {
     EXPECT_TRUE(notMatches("class X {};", IsDerivedFromEmpty));
   }, "");
 }
+#endif
 
 TEST(NameableDeclaration, MatchesVariousDecls) {
   DeclarationMatcher NamedX = nameableDeclaration(hasName("X"));
