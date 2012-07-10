@@ -387,16 +387,15 @@ bool MallocChecker::isAllocationFunction(const FunctionDecl *FD,
   if (!FD)
     return false;
 
-  IdentifierInfo *FunI = FD->getIdentifier();
-  if (!FunI)
-    return false;
+  if (FD->getKind() == Decl::Function) {
+    IdentifierInfo *FunI = FD->getIdentifier();
+    initIdentifierInfo(C);
 
-  initIdentifierInfo(C);
-
-  if (FunI == II_malloc || FunI == II_realloc ||
-      FunI == II_reallocf || FunI == II_calloc || FunI == II_valloc ||
-      FunI == II_strdup || FunI == II_strndup)
-    return true;
+    if (FunI == II_malloc || FunI == II_realloc ||
+        FunI == II_reallocf || FunI == II_calloc || FunI == II_valloc ||
+        FunI == II_strdup || FunI == II_strndup)
+      return true;
+  }
 
   if (Filter.CMallocOptimistic && FD->hasAttrs())
     for (specific_attr_iterator<OwnershipAttr>
@@ -412,14 +411,13 @@ bool MallocChecker::isFreeFunction(const FunctionDecl *FD, ASTContext &C) const 
   if (!FD)
     return false;
 
-  IdentifierInfo *FunI = FD->getIdentifier();
-  if (!FunI)
-    return false;
+  if (FD->getKind() == Decl::Function) {
+    IdentifierInfo *FunI = FD->getIdentifier();
+    initIdentifierInfo(C);
 
-  initIdentifierInfo(C);
-
-  if (FunI == II_free || FunI == II_realloc || FunI == II_reallocf)
-    return true;
+    if (FunI == II_free || FunI == II_realloc || FunI == II_reallocf)
+      return true;
+  }
 
   if (Filter.CMallocOptimistic && FD->hasAttrs())
     for (specific_attr_iterator<OwnershipAttr>
@@ -437,29 +435,32 @@ void MallocChecker::checkPostStmt(const CallExpr *CE, CheckerContext &C) const {
   if (!FD)
     return;
 
-  initIdentifierInfo(C.getASTContext());
-  IdentifierInfo *FunI = FD->getIdentifier();
-  if (!FunI)
-    return;
-
   ProgramStateRef State = C.getState();
-  if (FunI == II_malloc || FunI == II_valloc) {
-    if (CE->getNumArgs() < 1)
-      return;
-    State = MallocMemAux(C, CE, CE->getArg(0), UndefinedVal(), State);
-  } else if (FunI == II_realloc) {
-    State = ReallocMem(C, CE, false);
-  } else if (FunI == II_reallocf) {
-    State = ReallocMem(C, CE, true);
-  } else if (FunI == II_calloc) {
-    State = CallocMem(C, CE);
-  } else if (FunI == II_free) {
-    State = FreeMemAux(C, CE, C.getState(), 0, false);
-  } else if (FunI == II_strdup) {
-    State = MallocUpdateRefState(C, CE, State);
-  } else if (FunI == II_strndup) {
-    State = MallocUpdateRefState(C, CE, State);
-  } else if (Filter.CMallocOptimistic) {
+
+  if (FD->getKind() == Decl::Function) {
+    initIdentifierInfo(C.getASTContext());
+    IdentifierInfo *FunI = FD->getIdentifier();
+
+    if (FunI == II_malloc || FunI == II_valloc) {
+      if (CE->getNumArgs() < 1)
+        return;
+      State = MallocMemAux(C, CE, CE->getArg(0), UndefinedVal(), State);
+    } else if (FunI == II_realloc) {
+      State = ReallocMem(C, CE, false);
+    } else if (FunI == II_reallocf) {
+      State = ReallocMem(C, CE, true);
+    } else if (FunI == II_calloc) {
+      State = CallocMem(C, CE);
+    } else if (FunI == II_free) {
+      State = FreeMemAux(C, CE, State, 0, false);
+    } else if (FunI == II_strdup) {
+      State = MallocUpdateRefState(C, CE, State);
+    } else if (FunI == II_strndup) {
+      State = MallocUpdateRefState(C, CE, State);
+    }
+  }
+
+  if (Filter.CMallocOptimistic) {
     // Check all the attributes, if there are any.
     // There can be multiple of these attributes.
     if (FD->hasAttrs())

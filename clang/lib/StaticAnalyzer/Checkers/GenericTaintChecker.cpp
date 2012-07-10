@@ -299,6 +299,9 @@ void GenericTaintChecker::addSourcesPre(const CallExpr *CE,
                                         CheckerContext &C) const {
   ProgramStateRef State = 0;
   const FunctionDecl *FDecl = C.getCalleeDecl(CE);
+  if (!FDecl || FDecl->getKind() != Decl::Function)
+    return;
+
   StringRef Name = C.getCalleeName(FDecl);
   if (Name.empty())
     return;
@@ -372,7 +375,11 @@ void GenericTaintChecker::addSourcesPost(const CallExpr *CE,
                                          CheckerContext &C) const {
   // Define the attack surface.
   // Set the evaluation function by switching on the callee name.
-  StringRef Name = C.getCalleeName(CE);
+  const FunctionDecl *FDecl = C.getCalleeDecl(CE);
+  if (!FDecl || FDecl->getKind() != Decl::Function)
+    return;
+
+  StringRef Name = C.getCalleeName(FDecl);
   if (Name.empty())
     return;
   FnCheck evalFunction = llvm::StringSwitch<FnCheck>(Name)
@@ -406,6 +413,9 @@ bool GenericTaintChecker::checkPre(const CallExpr *CE, CheckerContext &C) const{
     return true;
 
   const FunctionDecl *FDecl = C.getCalleeDecl(CE);
+  if (!FDecl || FDecl->getKind() != Decl::Function)
+    return false;
+
   StringRef Name = C.getCalleeName(FDecl);
   if (Name.empty())
     return false;

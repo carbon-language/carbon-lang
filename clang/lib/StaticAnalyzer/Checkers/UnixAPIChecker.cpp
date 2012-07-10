@@ -325,7 +325,11 @@ void UnixAPIChecker::CheckVallocZero(CheckerContext &C,
 
 void UnixAPIChecker::checkPreStmt(const CallExpr *CE,
                                   CheckerContext &C) const {
-  StringRef FName = C.getCalleeName(CE);
+  const FunctionDecl *FD = C.getCalleeDecl(CE);
+  if (!FD || FD->getKind() != Decl::Function)
+    return;
+
+  StringRef FName = C.getCalleeName(FD);
   if (FName.empty())
     return;
 

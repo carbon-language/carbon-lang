@@ -116,7 +116,7 @@ namespace ento {
 
 bool StreamChecker::evalCall(const CallExpr *CE, CheckerContext &C) const {
   const FunctionDecl *FD = C.getCalleeDecl(CE);
-  if (!FD)
+  if (!FD || FD->getKind() != Decl::Function)
     return false;
 
   ASTContext &Ctx = C.getASTContext();
