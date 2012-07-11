@@ -384,7 +384,7 @@ unsigned Sema::correctTypoInParmVarReference(
                                     const ParmVarDecl * const *ParamVars,
                                     unsigned NumParams) {
   const unsigned MaxEditDistance = (Typo.size() + 2) / 3;
-  unsigned BestPVDIndex = NULL;
+  unsigned BestPVDIndex = 0;
   unsigned BestEditDistance = MaxEditDistance + 1;
   for (unsigned i = 0; i != NumParams; ++i) {
     const IdentifierInfo *II = ParamVars[i]->getIdentifier();
