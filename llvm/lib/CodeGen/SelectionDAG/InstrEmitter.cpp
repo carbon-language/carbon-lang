@@ -479,7 +479,8 @@ void InstrEmitter::EmitSubregNode(SDNode *Node,
     unsigned SrcReg, DstReg, DefSubIdx;
     if (DefMI &&
         TII->isCoalescableExtInstr(*DefMI, SrcReg, DstReg, DefSubIdx) &&
-        SubIdx == DefSubIdx) {
+        SubIdx == DefSubIdx &&
+        TRC == MRI->getRegClass(SrcReg)) {
       // Optimize these:
       // r1025 = s/zext r1024, 4
       // r1026 = extract_subreg r1025, 4
