@@ -252,6 +252,33 @@ void CodeGenFunction::EmitMCountInstrumentation() {
   Builder.CreateCall(MCountFn);
 }
 
+// OpenCL v1.2 s5.6.4.6 allows the compiler to store kernel argument
+// information in the program executable. The argument information stored
+// includes the argument name, its type, the address and access qualifiers used.
+// FIXME: Add type, address, and access qualifiers.
+static void GenOpenCLArgMetadata(const FunctionDecl *FD, llvm::Function *Fn,
+                                 CodeGenModule &CGM,llvm::LLVMContext &Context,
+                                 llvm::SmallVector <llvm::Value*, 5> &kernelMDArgs) {
+  
+  // Create MDNodes that represents the kernel arg metadata.
+  // Each MDNode is a list in the form of "key", N number of values which is
+  // the same number of values as their are kernel arguments.
+  
+  // MDNode for the kernel argument names.
+  SmallVector<llvm::Value*, 8> argNames;
+  argNames.push_back(llvm::MDString::get(Context, "kernel_arg_name"));
+  
+  for (unsigned i = 0, e = FD->getNumParams(); i != e; ++i) {
+    const ParmVarDecl *parm = FD->getParamDecl(i);
+    
+    // Get argument name.
+    argNames.push_back(llvm::MDString::get(Context, parm->getName()));
+    
+  }
+  // Add MDNode to the list of all metadata.
+  kernelMDArgs.push_back(llvm::MDNode::get(Context, argNames));
+}
+
 void CodeGenFunction::EmitOpenCLKernelMetadata(const FunctionDecl *FD, 
                                                llvm::Function *Fn)
 {
@@ -263,6 +290,9 @@ void CodeGenFunction::EmitOpenCLKernelMetadata(const FunctionDecl *FD,
   llvm::SmallVector <llvm::Value*, 5> kernelMDArgs;
   kernelMDArgs.push_back(Fn);
 
+  if (CGM.getCodeGenOpts().EmitOpenCLArgMetadata)
+    GenOpenCLArgMetadata(FD, Fn, CGM, Context, kernelMDArgs);
+  
   if (FD->hasAttr<WorkGroupSizeHintAttr>()) {
     llvm::SmallVector <llvm::Value*, 5> attrMDArgs;
     attrMDArgs.push_back(llvm::MDString::get(Context, "work_group_size_hint"));
