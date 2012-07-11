@@ -11,12 +11,12 @@
 extern float y;
 extern int *ip, x;
 
-float z; // expected-note{{previous}}
+float z;
 
-int z2 = 17; // expected-note{{previous}}
+int z2 = 17;
 
 #define MAKE_HAPPY(X) X##Happy
-int MAKE_HAPPY(Very); // expected-note{{previous definition is here}}
+int MAKE_HAPPY(Very);
 
 #define A_MACRO_IN_THE_PCH 492
 #define FUNCLIKE_MACRO(X, Y) X ## Y
@@ -32,9 +32,9 @@ int UNIQUE(a);  // a1
 
 int *ip2 = &x;
 float *fp = &ip; // expected-warning{{incompatible pointer types}}
-double z; // expected-error{{redefinition}}
-int z2 = 18; // expected-error{{redefinition}}
-double VeryHappy; // expected-error{{redefinition}}
+double z; // expected-error{{redefinition}} expected-note@14{{previous}}
+int z2 = 18; // expected-error{{redefinition}} expected-note@16{{previous}}
+double VeryHappy; // expected-error{{redefinition}} expected-note@19{{previous definition is here}}
 
 int Q = A_MACRO_IN_THE_PCH;
 

@@ -11,7 +11,10 @@
 #define LLVM_CLANG_FRONTEND_VERIFYDIAGNOSTICSCLIENT_H
 
 #include "clang/Basic/Diagnostic.h"
+#include "clang/Lex/Preprocessor.h"
+#include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/OwningPtr.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/STLExtras.h"
 #include <climits>
 
@@ -19,6 +22,7 @@ namespace clang {
 
 class DiagnosticsEngine;
 class TextDiagnosticBuffer;
+class FileEntry;
 
 /// VerifyDiagnosticConsumer - Create a diagnostic client which will use
 /// markers in the input source to check that all the emitted diagnostics match
@@ -104,7 +108,8 @@ class TextDiagnosticBuffer;
 ///   // expected-error-re {{variable has has type 'struct (.*)'}}
 ///   // expected-error-re {{variable has has type 'struct[[:space:]](.*)'}}
 ///
-class VerifyDiagnosticConsumer: public DiagnosticConsumer {
+class VerifyDiagnosticConsumer: public DiagnosticConsumer,
+                                public CommentHandler {
 public:
   /// Directive - Abstract class representing a parsed verify directive.
   ///
@@ -162,13 +167,17 @@ public:
   };
 
 private:
+  typedef llvm::DenseSet<FileID> FilesWithDiagnosticsSet;
+  typedef llvm::SmallPtrSet<const FileEntry *, 4> FilesWithDirectivesSet;
+
   DiagnosticsEngine &Diags;
   DiagnosticConsumer *PrimaryClient;
   bool OwnsPrimaryClient;
   OwningPtr<TextDiagnosticBuffer> Buffer;
-  Preprocessor *CurrentPreprocessor;
+  const Preprocessor *CurrentPreprocessor;
+  FilesWithDiagnosticsSet FilesWithDiagnostics;
+  FilesWithDirectivesSet FilesWithDirectives;
   ExpectedData ED;
-  FileID FirstErrorFID; // FileID of first diagnostic
   void CheckDiagnostics();
 
 public:
@@ -182,6 +191,8 @@ public:
                                const Preprocessor *PP);
 
   virtual void EndSourceFile();
+
+  virtual bool HandleComment(Preprocessor &PP, SourceRange Comment);
 
   virtual void HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
                                 const Diagnostic &Info);

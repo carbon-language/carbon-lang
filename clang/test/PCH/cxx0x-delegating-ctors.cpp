@@ -8,13 +8,17 @@
 #ifndef PASS1
 #define PASS1
 struct foo {
-  foo(int) : foo() { } // expected-note{{it delegates to}}
+  foo(int) : foo() { }
   foo();
-  foo(bool) : foo('c') { } // expected-note{{it delegates to}}
-  foo(char) : foo(true) { } // expected-error{{creates a delegation cycle}} \
-                            // expected-note{{which delegates to}}
+  foo(bool) : foo('c') { }
+  foo(char) : foo(true) { }
 };
 #else
 foo::foo() : foo(1) { } // expected-error{{creates a delegation cycle}} \
                         // expected-note{{which delegates to}}
+
+// expected-note@11{{it delegates to}}
+// expected-note@13{{it delegates to}}
+// expected-error@14{{creates a delegation cycle}}
+// expected-note@14{{which delegates to}}
 #endif

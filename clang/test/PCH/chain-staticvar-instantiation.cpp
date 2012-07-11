@@ -36,7 +36,8 @@ int g2 = NS::TS<int, 2>::value;
 #else
 //===----------------------------------------------------------------------===//
 
-#warning reached main file // expected-warning {{reached main file}}
+// expected-warning@+1 {{reached main file}}
+#warning reached main file
 
 int g3 = NS::TS<int, 2>::value;
 

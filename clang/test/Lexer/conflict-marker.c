@@ -3,8 +3,8 @@
 // Test that we recover gracefully from conflict markers left in input files.
 // PR5238
 
-// diff3 style
-<<<<<<< .mine      // expected-error {{version control conflict marker in file}}
+// diff3 style  expected-error@+1 {{version control conflict marker in file}}
+<<<<<<< .mine
 int x = 4;
 |||||||
 int x = 123;
@@ -12,15 +12,15 @@ int x = 123;
 float x = 17;
 >>>>>>> .r91107
 
-// normal style.
-<<<<<<< .mine     // expected-error {{version control conflict marker in file}}
+// normal style  expected-error@+1 {{version control conflict marker in file}}
+<<<<<<< .mine
 typedef int y;
 =======
 typedef struct foo *y;
 >>>>>>> .r91107
 
-// Perforce style.
->>>> ORIGINAL conflict-marker.c#6 // expected-error {{version control conflict marker in file}}
+// Perforce style  expected-error@+1 {{version control conflict marker in file}}
+>>>> ORIGINAL conflict-marker.c#6
 int z = 1;
 ==== THEIRS conflict-marker.c#7
 int z = 0;

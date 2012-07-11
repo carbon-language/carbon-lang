@@ -7,7 +7,7 @@
 
 template<typename T> struct S {
   enum class E {
-    e = T() // expected-error {{conversion from 'double' to 'int'}}
+    e = T()
   };
 };
 
@@ -20,7 +20,7 @@ template struct S<char>;
 
 int k1 = (int)S<int>::E::e;
 int k2 = (int)decltype(b)::e;
-int k3 = (int)decltype(c)::e; // expected-note {{here}}
+int k3 = (int)decltype(c)::e; // expected-error@10 {{conversion from 'double' to 'int'}} expected-note {{here}}
 int k4 = (int)S<char>::E::e;
 
 #endif

@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "clang/Basic/FileManager.h"
 #include "clang/Frontend/VerifyDiagnosticConsumer.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
 #include "clang/Frontend/TextDiagnosticBuffer.h"
@@ -43,15 +44,15 @@ VerifyDiagnosticConsumer::~VerifyDiagnosticConsumer() {
 
 void VerifyDiagnosticConsumer::BeginSourceFile(const LangOptions &LangOpts,
                                                const Preprocessor *PP) {
-  // FIXME: Const hack, we screw up the preprocessor but in practice its ok
-  // because it doesn't get reused. It would be better if we could make a copy
-  // though.
-  CurrentPreprocessor = const_cast<Preprocessor*>(PP);
+  CurrentPreprocessor = PP;
+  if (PP) const_cast<Preprocessor*>(PP)->addCommentHandler(this);
 
   PrimaryClient->BeginSourceFile(LangOpts, PP);
 }
 
 void VerifyDiagnosticConsumer::EndSourceFile() {
+  if (CurrentPreprocessor)
+    const_cast<Preprocessor*>(CurrentPreprocessor)->removeCommentHandler(this);
   CheckDiagnostics();
 
   PrimaryClient->EndSourceFile();
@@ -61,9 +62,9 @@ void VerifyDiagnosticConsumer::EndSourceFile() {
 
 void VerifyDiagnosticConsumer::HandleDiagnostic(
       DiagnosticsEngine::Level DiagLevel, const Diagnostic &Info) {
-  if (FirstErrorFID.isInvalid() && Info.hasSourceManager()) {
+  if (Info.hasSourceManager()) {
     const SourceManager &SM = Info.getSourceManager();
-    FirstErrorFID = SM.getFileID(Info.getLocation());
+    FilesWithDiagnostics.insert(SM.getFileID(Info.getLocation()));
   }
   // Send the diagnostic to the buffer, we will check it once we reach the end
   // of the source file (or are destructed).
@@ -122,8 +123,8 @@ private:
 class ParseHelper
 {
 public:
-  ParseHelper(const char *Begin, const char *End)
-    : Begin(Begin), End(End), C(Begin), P(Begin), PEnd(NULL) { }
+  ParseHelper(StringRef S)
+    : Begin(S.begin()), End(S.end()), C(Begin), P(Begin), PEnd(NULL) { }
 
   // Return true if string literal is next.
   bool Next(StringRef S) {
@@ -190,11 +191,12 @@ private:
 /// ParseDirective - Go through the comment and see if it indicates expected
 /// diagnostics. If so, then put them in the appropriate directive list.
 ///
-static void ParseDirective(const char *CommentStart, unsigned CommentLen,
-                           ExpectedData &ED, SourceManager &SM,
+/// Returns true if any valid directives were found.
+static bool ParseDirective(StringRef S, ExpectedData &ED, SourceManager &SM,
                            SourceLocation Pos, DiagnosticsEngine &Diags) {
   // A single comment may contain multiple directives.
-  for (ParseHelper PH(CommentStart, CommentStart+CommentLen); !PH.Done();) {
+  bool FoundDirective = false;
+  for (ParseHelper PH(S); !PH.Done();) {
     // Search for token: expected
     if (!PH.Search("expected"))
       break;
@@ -329,19 +331,77 @@ static void ParseDirective(const char *CommentStart, unsigned CommentLen,
     Directive *D = Directive::create(RegexKind, Pos, ExpectedLoc, Text,
                                      Min, Max);
     std::string Error;
-    if (D->isValid(Error))
+    if (D->isValid(Error)) {
       DL->push_back(D);
-    else {
+      FoundDirective = true;
+    } else {
       Diags.Report(Pos.getLocWithOffset(ContentBegin-PH.Begin),
                    diag::err_verify_invalid_content)
         << KindStr << Error;
     }
   }
+
+  return FoundDirective;
+}
+
+/// HandleComment - Hook into the preprocessor and extract comments containing
+///  expected errors and warnings.
+bool VerifyDiagnosticConsumer::HandleComment(Preprocessor &PP,
+                                             SourceRange Comment) {
+  SourceManager &SM = PP.getSourceManager();
+  SourceLocation CommentBegin = Comment.getBegin();
+
+  const char *CommentRaw = SM.getCharacterData(CommentBegin);
+  StringRef C(CommentRaw, SM.getCharacterData(Comment.getEnd()) - CommentRaw);
+
+  if (C.empty())
+    return false;
+
+  // Fold any "\<EOL>" sequences
+  size_t loc = C.find('\\');
+  if (loc == StringRef::npos) {
+    if (ParseDirective(C, ED, SM, CommentBegin, PP.getDiagnostics()))
+      if (const FileEntry *E = SM.getFileEntryForID(SM.getFileID(CommentBegin)))
+        FilesWithDirectives.insert(E);
+    return false;
+  }
+
+  std::string C2;
+  C2.reserve(C.size());
+
+  for (size_t last = 0;; loc = C.find('\\', last)) {
+    if (loc == StringRef::npos || loc == C.size()) {
+      C2 += C.substr(last);
+      break;
+    }
+    C2 += C.substr(last, loc-last);
+    last = loc + 1;
+
+    if (C[last] == '\n' || C[last] == '\r') {
+      ++last;
+
+      // Escape \r\n  or \n\r, but not \n\n.
+      if (last < C.size())
+        if (C[last] == '\n' || C[last] == '\r')
+          if (C[last] != C[last-1])
+            ++last;
+    } else {
+      // This was just a normal backslash.
+      C2 += '\\';
+    }
+  }
+
+  if (!C2.empty())
+    if (ParseDirective(C2, ED, SM, CommentBegin, PP.getDiagnostics()))
+      if (const FileEntry *E = SM.getFileEntryForID(SM.getFileID(CommentBegin)))
+        FilesWithDirectives.insert(E);
+  return false;
 }
 
 /// FindExpectedDiags - Lex the main source file to find all of the
 //   expected errors and warnings.
-static void FindExpectedDiags(Preprocessor &PP, ExpectedData &ED, FileID FID) {
+static void FindExpectedDiags(const Preprocessor &PP, ExpectedData &ED,
+                              FileID FID) {
   // Create a raw lexer to pull all the comments out of FID.
   if (FID.isInvalid())
     return;
@@ -364,8 +424,7 @@ static void FindExpectedDiags(Preprocessor &PP, ExpectedData &ED, FileID FID) {
     if (Comment.empty()) continue;
 
     // Find all expected errors/warnings/notes.
-    ParseDirective(&Comment[0], Comment.size(), ED, SM, Tok.getLocation(),
-                   PP.getDiagnostics());
+    ParseDirective(Comment, ED, SM, Tok.getLocation(), PP.getDiagnostics());
   };
 }
 
@@ -497,18 +556,21 @@ void VerifyDiagnosticConsumer::CheckDiagnostics() {
   // markers. If not then any diagnostics are unexpected.
   if (CurrentPreprocessor) {
     SourceManager &SM = CurrentPreprocessor->getSourceManager();
-    // Extract expected-error strings from main file.
-    FindExpectedDiags(*CurrentPreprocessor, ED, SM.getMainFileID());
-    // Only check for expectations in other diagnostic locations
-    // if they are not the main file (via ID or FileEntry) - the main
-    // file has already been looked at, and its expectations must not
-    // be added twice.
-    if (!FirstErrorFID.isInvalid() && FirstErrorFID != SM.getMainFileID()
-        && (!SM.getFileEntryForID(FirstErrorFID)
-            || (SM.getFileEntryForID(FirstErrorFID) !=
-                SM.getFileEntryForID(SM.getMainFileID())))) {
-      FindExpectedDiags(*CurrentPreprocessor, ED, FirstErrorFID);
-      FirstErrorFID = FileID();
+    // Only check for expectations in other diagnostic locations not
+    // captured during normal parsing.
+    // FIXME: This check is currently necessary while synthesized files may
+    // not have their expected-* directives captured during parsing.  These
+    // cases should be fixed and the following loop replaced with one which
+    // checks only during a debug build and asserts on a mismatch.
+    for (FilesWithDiagnosticsSet::iterator I = FilesWithDiagnostics.begin(),
+                                         End = FilesWithDiagnostics.end();
+            I != End; ++I) {
+      const FileEntry *E = SM.getFileEntryForID(*I);
+      if (!E || !FilesWithDirectives.count(E)) {
+        if (E)
+          FilesWithDirectives.insert(E);
+        FindExpectedDiags(*CurrentPreprocessor, ED, *I);
+      }
     }
 
     // Check that the expected diagnostics occurred.

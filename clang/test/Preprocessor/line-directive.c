@@ -33,8 +33,11 @@
 
 // These are checked by the RUN line.
 #line 92 "blonk.c"
-#error ABC  // expected-error {{#error ABC}}
-#error DEF  // expected-error {{#error DEF}}
+#error ABC
+#error DEF
+// expected-error@-2 {{ABC}}
+#line 150
+// expected-error@-3 {{DEF}}
 
 
 // Verify that linemarker diddling of the system header flag works.

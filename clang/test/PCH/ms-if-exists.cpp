@@ -11,7 +11,7 @@ void f(T t) {
   }
 
   __if_not_exists(T::bar) {
-    int *i = t; // expected-error{{no viable conversion from 'HasFoo' to 'int *'}}
+    int *i = t;
     { }
   }
 }
@@ -25,5 +25,6 @@ struct HasBar {
 };
 
 template void f(HasFoo); // expected-note{{in instantiation of function template specialization 'f<HasFoo>' requested here}}
+                         // expected-error@14{{no viable conversion from 'HasFoo' to 'int *'}}
 template void f(HasBar);
 #endif

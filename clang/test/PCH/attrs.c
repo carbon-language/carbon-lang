@@ -8,10 +8,11 @@
 #ifndef HEADER
 #define HEADER
 
-int f(int) __attribute__((visibility("default"), overloadable)); // expected-note{{previous overload}}
+int f(int) __attribute__((visibility("default"), overloadable));
 
 #else
 
 double f(double); // expected-error{{overloadable}}
+                  // expected-note@11{{previous overload}}
 
 #endif

@@ -12,11 +12,12 @@
 #elif !defined(HEADER2)
 #define HEADER2
 
-@interface I // expected-note {{previous}}
+@interface I
 @end
 
 #else
 
 typedef int I; // expected-error {{redefinition}}
+               // expected-note@15 {{previous}}
 
 #endif

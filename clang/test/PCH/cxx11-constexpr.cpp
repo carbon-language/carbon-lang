@@ -6,11 +6,11 @@
 #define HEADER_INCLUDED
 
 struct B {
-  B(); // expected-note {{here}}
+  B();
   constexpr B(char) {}
 };
 
-struct C { // expected-note {{not an aggregate and has no constexpr constructors}}
+struct C {
   B b;
   double d = 0.0;
 };
@@ -24,6 +24,8 @@ struct D : B {
 
 static_assert(D(4).k == 9, "");
 constexpr int f(C c) { return 0; } // expected-error {{not a literal type}}
+// expected-note@13 {{not an aggregate and has no constexpr constructors}}
 constexpr B b; // expected-error {{constant expression}} expected-note {{non-constexpr}}
+               // expected-note@9 {{here}}
 
 #endif

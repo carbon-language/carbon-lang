@@ -5,7 +5,8 @@
 #error bar
 
 //??/
-#error qux // expected-error {{qux}}
+#error qux
+// expected-error@-1 {{qux}}
 
 // Trailing whitespace!
 //\ 
