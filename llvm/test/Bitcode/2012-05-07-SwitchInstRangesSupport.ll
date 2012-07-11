@@ -6,7 +6,7 @@
 ; RUN: llvm-dis %t.bc -o - | tail -n +2 > %t.ll
 ; RUN: llvm-as %t.ll -o %t2.bc
 ; RUN: llvm-dis %t2.bc -o - | tail -n +2 > %t2.ll
-; RUN: diff %t.ll %t2.ll | not grep .*
+; RUN: llvm-diff %t.ll %t2.ll
 
 define void @test() {
   %mem = alloca i32
