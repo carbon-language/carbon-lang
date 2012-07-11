@@ -353,10 +353,9 @@ bool MipsAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNum,
         }
         return true;
       }
-      unsigned RegOp;
-      if (Subtarget->isGP64bit())
-        RegOp = OpNum;
-      else {
+
+      unsigned RegOp = OpNum;
+      if (!Subtarget->isGP64bit()){
         // Endianess reverses which register holds the high or low value
         switch(ExtraCode[0]) {
         case 'D':
