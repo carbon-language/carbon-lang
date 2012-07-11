@@ -3110,6 +3110,7 @@ optimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg, unsigned SrcReg2,
       RE = CmpInstr->getParent() == MI->getParent() ?
            MachineBasicBlock::reverse_iterator(++Def) /* points to MI */ :
            CmpInstr->getParent()->rend();
+  MachineInstr *Movr0Inst = 0;
   for (; RI != RE; ++RI) {
     MachineInstr *Instr = &*RI;
     // Check whether CmpInstr can be made redundant by the current instruction.
@@ -3119,10 +3120,24 @@ optimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg, unsigned SrcReg2,
     }
 
     if (Instr->modifiesRegister(X86::EFLAGS, TRI) ||
-        Instr->readsRegister(X86::EFLAGS, TRI))
+        Instr->readsRegister(X86::EFLAGS, TRI)) {
       // This instruction modifies or uses EFLAGS.
+
+      // MOV32r0 etc. are implemented with xor which clobbers condition code.
+      // They are safe to move up, if the definition to EFLAGS is dead and
+      // earlier instructions do not read or write EFLAGS.
+      if (!Movr0Inst && (Instr->getOpcode() == X86::MOV8r0 ||
+           Instr->getOpcode() == X86::MOV16r0 ||
+           Instr->getOpcode() == X86::MOV32r0 ||
+           Instr->getOpcode() == X86::MOV64r0) &&
+          Instr->registerDefIsDead(X86::EFLAGS, TRI)) {
+        Movr0Inst = Instr;
+        continue;
+      }
+
       // We can't remove CmpInstr.
       return false;
+    }
   }
 
   // Return false if no candidates exist.
@@ -3202,6 +3217,12 @@ optimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg, unsigned SrcReg2,
              SE = MBB->succ_end(); SI != SE; ++SI)
       if ((*SI)->isLiveIn(X86::EFLAGS))
         return false;
+  }
+
+  // Move Movr0Inst to the place right before Sub.
+  if (Movr0Inst) {
+    Sub->getParent()->remove(Movr0Inst);
+    Sub->getParent()->insert(MachineBasicBlock::iterator(Sub), Movr0Inst);
   }
 
   // Make sure Sub instruction defines EFLAGS.

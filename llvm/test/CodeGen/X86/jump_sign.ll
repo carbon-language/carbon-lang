@@ -137,6 +137,18 @@ if.else:
   %add = add nsw i32 %sub, 1
   ret i32 %add
 }
+; rdar://11830760
+; When Movr0 is between sub and cmp, we need to move "Movr0" before sub.
+define i32 @l4(i32 %a, i32 %b) nounwind {
+entry:
+; CHECK: l4:
+; CHECK: sub
+; CHECK-NOT: cmp
+  %cmp = icmp sgt i32 %b, %a
+  %sub = sub i32 %a, %b
+  %.sub = select i1 %cmp, i32 0, i32 %sub
+  ret i32 %.sub
+}
 ; rdar://11540023
 define i32 @n(i32 %x, i32 %y) nounwind {
 entry:
