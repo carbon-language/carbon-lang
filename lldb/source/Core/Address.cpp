@@ -354,9 +354,10 @@ Address::SetOpcodeLoadAddress (lldb::addr_t load_addr, Target *target)
 bool
 Address::Dump (Stream *s, ExecutionContextScope *exe_scope, DumpStyle style, DumpStyle fallback_style, uint32_t addr_size) const
 {
-    // If the section was NULL, only load address is going to work.
+    // If the section was NULL, only load address is going to work unless we are
+    // trying to deref a pointer
     SectionSP section_sp (GetSection());
-    if (!section_sp)
+    if (!section_sp && style != DumpStyleResolvedPointerDescription)
         style = DumpStyleLoadAddress;
 
     ExecutionContext exe_ctx (exe_scope);
@@ -723,6 +724,37 @@ Address::Dump (Stream *s, ExecutionContextScope *exe_scope, DumpStyle style, Dum
         }
         else
         {
+            if (fallback_style != DumpStyleInvalid)
+                return Dump (s, exe_scope, fallback_style, DumpStyleInvalid, addr_size);
+            return false;
+        }
+        break;
+    case DumpStyleResolvedPointerDescription:
+        {
+            Process *process = exe_ctx.GetProcessPtr();
+            if (process)
+            {
+                addr_t load_addr = GetLoadAddress (target);
+                if (load_addr != LLDB_INVALID_ADDRESS)
+                {
+                    Error memory_error;
+                    addr_t dereferenced_load_addr = process->ReadPointerFromMemory(load_addr, memory_error);
+                    if (dereferenced_load_addr != LLDB_INVALID_ADDRESS)
+                    {
+                        Address dereferenced_addr;
+                        if (dereferenced_addr.SetLoadAddress(dereferenced_load_addr, target))
+                        {
+                            StreamString strm;
+                            if (dereferenced_addr.Dump (&strm, exe_scope, DumpStyleResolvedDescription, DumpStyleInvalid, addr_size))
+                            {
+                                s->Address (dereferenced_load_addr, addr_size, " -> ", " ");
+                                s->Write(strm.GetData(), strm.GetSize());
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
             if (fallback_style != DumpStyleInvalid)
                 return Dump (s, exe_scope, fallback_style, DumpStyleInvalid, addr_size);
             return false;

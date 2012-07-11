@@ -1737,14 +1737,21 @@ DataExtractor::Dump (Stream *s,
                 {
                     TargetSP target_sp (exe_scope->CalculateTarget());
                     lldb_private::Address so_addr;
-                    if (target_sp && target_sp->GetSectionLoadList().ResolveLoadAddress(addr, so_addr))
+                    if (target_sp)
                     {
-                        s->PutChar(' ');
-                        so_addr.Dump (s, 
-                                      exe_scope, 
-                                      Address::DumpStyleResolvedDescription, 
-                                      Address::DumpStyleModuleWithFileAddress);
-                        break;
+                        if (target_sp->GetSectionLoadList().ResolveLoadAddress(addr, so_addr))
+                        {
+                            s->PutChar(' ');
+                            so_addr.Dump (s,
+                                          exe_scope,
+                                          Address::DumpStyleResolvedDescription,
+                                          Address::DumpStyleModuleWithFileAddress);
+                        }
+                        else
+                        {
+                            so_addr.SetOffset(addr);
+                            so_addr.Dump (s, exe_scope, Address::DumpStyleResolvedPointerDescription);
+                        }
                     }
                 }
             }

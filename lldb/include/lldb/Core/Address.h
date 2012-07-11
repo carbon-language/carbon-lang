@@ -86,8 +86,10 @@ public:
                                         ///< and file and line), to information about what the pointer points to
                                         ///< if the address is in a section (section of pointers, c strings, etc).
         DumpStyleResolvedDescriptionNoModule,
-        DumpStyleDetailedSymbolContext  ///< Detailed symbol context information for an address for all symbol
+        DumpStyleDetailedSymbolContext, ///< Detailed symbol context information for an address for all symbol
                                         ///< context members.
+        DumpStyleResolvedPointerDescription ///< Dereference a pointer at the current address and then lookup the
+                                             ///< dereferenced address using DumpStyleResolvedDescription
     } DumpStyle;
 
     //------------------------------------------------------------------
