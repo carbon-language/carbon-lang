@@ -11,13 +11,14 @@
 //  clang::SyntaxOnlyAction over a number of translation units.
 //
 //  Usage:
-//  clang-check <cmake-output-dir> <file1> <file2> ...
+//  clang-check [-p <cmake-output-dir>] <file1> <file2> ...
 //
 //  Where <cmake-output-dir> is a CMake build directory in which a file named
 //  compile_commands.json exists (enable -DCMAKE_EXPORT_COMPILE_COMMANDS in
-//  CMake to get this output).
+//  CMake to get this output). If not provided, clang-check will search for this
+//  file in all of <file1>'s parent directories.
 //
-//  <file1> ... specify the paths of files in the CMake source tree. This  path
+//  <file1> ... specify the paths of files in the CMake source tree. This path
 //  is looked up in the compile command database. If the path of a file is
 //  absolute, it needs to point into CMake's source tree. If the path is
 //  relative, the current working directory needs to be in the CMake source
@@ -29,7 +30,7 @@
 //  For example, to use clang-check on all files in a subtree of the source
 //  tree, use:
 //
-//    /path/in/subtree $ find . -name '*.cpp'| xargs clang-check /path/to/source
+//    /path/in/subtree $ find . -name '*.cpp'| xargs clang-check
 //
 //===----------------------------------------------------------------------===//
 
@@ -60,7 +61,6 @@ int main(int argc, const char **argv) {
     if (!BuildPath.empty()) {
       Compilations.reset(
          CompilationDatabase::autoDetectFromDirectory(BuildPath, ErrorMessage));
-
     } else {
       Compilations.reset(CompilationDatabase::autoDetectFromSource(
           SourcePaths[0], ErrorMessage));
