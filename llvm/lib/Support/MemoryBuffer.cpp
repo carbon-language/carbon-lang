@@ -313,16 +313,6 @@ error_code MemoryBuffer::getOpenFile(int FD, const char *Filename,
                                                       RealMapOffset)) {
       result.reset(GetNamedBuffer<MemoryBufferMMapFile>(
           StringRef(Pages + Delta, MapSize), Filename, RequiresNullTerminator));
-
-      if (RequiresNullTerminator && result->getBufferEnd()[0] != '\0') {
-        // There could be a racing issue that resulted in the file being larger
-        // than the FileSize passed by the caller. We already have an assertion
-        // for this in MemoryBuffer::init() but have a runtime guarantee that
-        // the buffer will be null-terminated here, so do a copy that adds a
-        // null-terminator.
-        result.reset(MemoryBuffer::getMemBufferCopy(result->getBuffer(),
-                                                    Filename));
-      }
       return error_code::success();
     }
   }
