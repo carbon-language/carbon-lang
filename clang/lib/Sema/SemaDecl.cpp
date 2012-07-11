@@ -8931,6 +8931,10 @@ void Sema::ActOnTagFinishDefinition(Scope *S, Decl *TagD,
   if (isa<CXXRecordDecl>(Tag))
     FieldCollector->FinishClass();
 
+  // If there's a #pragma GCC visibility in scope, and this isn't a subclass,
+  // set the visibility of this record.
+  AddPushedVisibilityAttribute(Tag);
+
   // Exit this scope of this tag's definition.
   PopDeclContext();
                                           
@@ -10059,12 +10063,6 @@ void Sema::ActOnFields(Scope* S,
 
   if (Attr)
     ProcessDeclAttributeList(S, Record, Attr);
-
-  // If there's a #pragma GCC visibility in scope, and this isn't a subclass,
-  // set the visibility of this record.
-  if (Record && !Record->getDeclContext()->isRecord() &&
-      !isa<ClassTemplateSpecializationDecl>(Record))
-    AddPushedVisibilityAttribute(Record);
 }
 
 /// \brief Determine whether the given integral value is representable within
