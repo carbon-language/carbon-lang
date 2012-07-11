@@ -44,13 +44,13 @@
 #include <string>
 #include <vector>
 
+namespace clang {
+namespace ast_matchers {
+
 /// FIXME: Move into the llvm support library.
 template <bool> struct CompileAssert {};
 #define TOOLING_COMPILE_ASSERT(Expr, Msg) \
   typedef CompileAssert<(bool(Expr))> Msg[bool(Expr) ? 1 : -1]
-
-namespace clang {
-namespace ast_matchers {
 
 class BoundNodes;
 
