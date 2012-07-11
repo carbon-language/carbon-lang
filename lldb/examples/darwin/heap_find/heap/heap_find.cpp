@@ -416,6 +416,33 @@ find_pointer_in_heap (const void * addr)
     return g_matches.data();
 }
 
+//----------------------------------------------------------------------
+// find_pointer_in_memory
+//
+// Finds a pointer value inside one or more currently valid malloc
+// blocks.
+//----------------------------------------------------------------------
+malloc_match *
+find_pointer_in_memory (uint64_t memory_addr, uint64_t memory_size, const void * addr)
+{
+    g_matches.clear();
+    // Setup "info" to look for a malloc block that contains data
+    // that is the a pointer 
+    range_contains_data_callback_info_t data_info;
+    data_info.type = eDataTypeContainsData;      // Check each block for data
+    g_lookup_addr = addr;
+    data_info.data.buffer = (uint8_t *)&addr;    // What data? The pointer value passed in
+    data_info.data.size = sizeof(addr);          // How many bytes? The byte size of a pointer
+    data_info.data.align = sizeof(addr);         // Align to a pointer byte size
+    data_info.match_count = 0;                   // Initialize the match count to zero
+    data_info.done = false;                      // Set done to false so searching doesn't stop
+    range_info_callback (mach_task_self(), &data_info, stack_logging_type_generic, memory_addr, memory_size);
+    if (g_matches.empty())
+        return NULL;
+    malloc_match match = { NULL, 0, 0 };
+    g_matches.push_back(match);
+    return g_matches.data();
+}
 
 //----------------------------------------------------------------------
 // find_cstring_in_heap
