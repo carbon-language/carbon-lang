@@ -65,19 +65,45 @@
 #endif
 
 // Try badly formed expressions.
-// FIXME: I don't quite know how to avoid preprocessor side effects.
-// Use FileCheck?
-// It also assert due to unterminated #if's.
+// FIXME: We can recover better in almost all of these cases. (PR13335)
+
+// expected-error@+1 {{missing '(' after '__has_include'}} expected-error@+1 {{expected end of line}}
+#if __has_include "stdint.h")
+#endif
+
+// expected-error@+1 {{expected "FILENAME" or <FILENAME>}} expected-error@+1 {{token is not a valid binary operator in a preprocessor subexpression}}
+#if __has_include(stdint.h)
+#endif
+
+// expected-error@+1 {{expected "FILENAME" or <FILENAME>}}
+#if __has_include()
+#endif
+
+// expected-error@+1 {{missing '(' after '__has_include'}}
+#if __has_include)
+#endif
+
+// expected-error@+1 {{missing '(' after '__has_include'}} expected-error@+1 {{token is not a valid binary operator in a preprocessor subexpression}}
+#if __has_include<stdint.h>)
+#endif
+
+// expected-error@+1 {{expected "FILENAME" or <FILENAME>}} expected-warning@+1 {{missing terminating '"' character}}
+#if __has_include("stdint.h)
+#endif
+
+// expected-error@+1 {{expected "FILENAME" or <FILENAME>}} expected-warning@+1 {{missing terminating '"' character}} expected-error@+1 {{token is not a valid binary operator in a preprocessor subexpression}}
+#if __has_include(stdint.h")
+#endif
+
+// expected-error@+1 {{expected "FILENAME" or <FILENAME>}} expected-error@+1 {{token is not a valid binary operator in a preprocessor subexpression}}
+#if __has_include(stdint.h>)
+#endif
+
+
+// FIXME: These test cases cause the compiler to crash. (PR13334)
 //#if __has_include("stdint.h"
-//#if __has_include "stdint.h")
-//#if __has_include(stdint.h)
-//#if __has_include()
 //#if __has_include(
-//#if __has_include)
 //#if __has_include
 //#if __has_include(<stdint.h>
-//#if __has_include<stdint.h>)
-//#if __has_include("stdint.h)
-//#if __has_include(stdint.h")
 //#if __has_include(<stdint.h)
-//#if __has_include(stdint.h>)
+
