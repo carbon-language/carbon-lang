@@ -1296,10 +1296,9 @@ StackFrame::HasCachedData () const
 bool
 StackFrame::GetStatus (Stream& strm,
                        bool show_frame_info,
-                       bool show_source,
-                       uint32_t source_lines_before,
-                       uint32_t source_lines_after)
+                       bool show_source)
 {
+    
     if (show_frame_info)
     {
         strm.Indent();
@@ -1312,56 +1311,62 @@ StackFrame::GetStatus (Stream& strm,
         bool have_source = false;
         DebuggerInstanceSettings::StopDisassemblyType disasm_display = DebuggerInstanceSettings::eStopDisassemblyTypeNever;
         Target *target = exe_ctx.GetTargetPtr();
-        if (target && (source_lines_before || source_lines_after))
+        if (target)
         {
-            GetSymbolContext(eSymbolContextCompUnit | eSymbolContextLineEntry);
+            Debugger &debugger = target->GetDebugger();
+            const uint32_t source_lines_before = debugger.GetStopSourceLineCount(true);
+            const uint32_t source_lines_after = debugger.GetStopSourceLineCount(false);
+            disasm_display = debugger.GetStopDisassemblyDisplay ();
 
-            if (m_sc.comp_unit && m_sc.line_entry.IsValid())
+            if (source_lines_before > 0 || source_lines_after > 0)
             {
-                if (target->GetSourceManager().DisplaySourceLinesWithLineNumbers (m_sc.line_entry.file,
-                                                                                  m_sc.line_entry.line,
-                                                                                  source_lines_before,
-                                                                                  source_lines_after,
-                                                                                  "->",
-                                                                                  &strm))
+                GetSymbolContext(eSymbolContextCompUnit | eSymbolContextLineEntry);
+
+                if (m_sc.comp_unit && m_sc.line_entry.IsValid())
                 {
-                    have_source = true;
+                    if (target->GetSourceManager().DisplaySourceLinesWithLineNumbers (m_sc.line_entry.file,
+                                                                                      m_sc.line_entry.line,
+                                                                                      source_lines_before,
+                                                                                      source_lines_after,
+                                                                                      "->",
+                                                                                      &strm))
+                    {
+                        have_source = true;
+                    }
                 }
             }
-            disasm_display = target->GetDebugger().GetStopDisassemblyDisplay ();
-        }
-        
-        switch (disasm_display)
-        {
-        case DebuggerInstanceSettings::eStopDisassemblyTypeNever:
-            break;
-
-        case DebuggerInstanceSettings::eStopDisassemblyTypeNoSource:
-            if (have_source)
+            switch (disasm_display)
+            {
+            case DebuggerInstanceSettings::eStopDisassemblyTypeNever:
                 break;
-            // Fall through to next case
-        case DebuggerInstanceSettings::eStopDisassemblyTypeAlways:
-            if (target)
-            {
-                const uint32_t disasm_lines = target->GetDebugger().GetDisassemblyLineCount();
-                if (disasm_lines > 0)
+                
+            case DebuggerInstanceSettings::eStopDisassemblyTypeNoSource:
+                if (have_source)
+                    break;
+                // Fall through to next case
+            case DebuggerInstanceSettings::eStopDisassemblyTypeAlways:
+                if (target)
                 {
-                    const ArchSpec &target_arch = target->GetArchitecture();
-                    AddressRange pc_range;
-                    pc_range.GetBaseAddress() = GetFrameCodeAddress();
-                    pc_range.SetByteSize(disasm_lines * target_arch.GetMaximumOpcodeByteSize());
-                    Disassembler::Disassemble (target->GetDebugger(),
-                                               target_arch,
-                                               NULL,
-                                               exe_ctx,
-                                               pc_range,
-                                               disasm_lines,
-                                               0,
-                                               Disassembler::eOptionMarkPCAddress,
-                                               strm);
+                    const uint32_t disasm_lines = debugger.GetDisassemblyLineCount();
+                    if (disasm_lines > 0)
+                    {
+                        const ArchSpec &target_arch = target->GetArchitecture();
+                        AddressRange pc_range;
+                        pc_range.GetBaseAddress() = GetFrameCodeAddress();
+                        pc_range.SetByteSize(disasm_lines * target_arch.GetMaximumOpcodeByteSize());
+                        Disassembler::Disassemble (target->GetDebugger(),
+                                                   target_arch,
+                                                   NULL,
+                                                   exe_ctx,
+                                                   pc_range,
+                                                   disasm_lines,
+                                                   0,
+                                                   Disassembler::eOptionMarkPCAddress,
+                                                   strm);
+                    }
                 }
+                break;
             }
-            break;
         }
     }
     return true;

@@ -167,9 +167,7 @@ public:
     bool
     GetStatus (Stream &strm,
                bool show_frame_info,
-               bool show_source,
-               uint32_t source_lines_before,
-               uint32_t source_lines_after);
+               bool show_source);
     
 protected:
     friend class StackFrameList;

@@ -282,14 +282,7 @@ protected:
 
                     bool show_frame_info = true;
                     bool show_source = !already_shown;
-                    Debugger &debugger = m_interpreter.GetDebugger();
-                    const uint32_t source_lines_before = debugger.GetStopSourceLineCount(true);
-                    const uint32_t source_lines_after = debugger.GetStopSourceLineCount(false);
-                    if (frame->GetStatus (result.GetOutputStream(),
-                                          show_frame_info,
-                                          show_source,
-                                          source_lines_before,
-                                          source_lines_after))
+                    if (frame->GetStatus (result.GetOutputStream(), show_frame_info, show_source))
                     {
                         result.SetStatus (eReturnStatusSuccessFinishResult);
                         return result.Succeeded();

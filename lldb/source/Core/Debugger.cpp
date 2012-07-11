@@ -2630,7 +2630,7 @@ DebuggerInstanceSettings::UpdateInstanceSettingsVariable (const ConstString &var
         if (new_value != UINT32_MAX)
             m_stop_source_before_count = new_value;
         else
-            err.SetErrorStringWithFormat("invalid unsigned string value '%s' for the '%s' setting", value, StopSourceContextAfterName ().GetCString());
+            err.SetErrorStringWithFormat("invalid unsigned string value '%s' for the '%s' setting", value, StopSourceContextBeforeName ().GetCString());
     }
     else if (var_name == StopSourceContextAfterName ())
     {
@@ -2638,7 +2638,7 @@ DebuggerInstanceSettings::UpdateInstanceSettingsVariable (const ConstString &var
         if (new_value != UINT32_MAX)
             m_stop_source_after_count = new_value;
         else
-            err.SetErrorStringWithFormat("invalid unsigned string value '%s' for the '%s' setting", value, StopSourceContextBeforeName ().GetCString());
+            err.SetErrorStringWithFormat("invalid unsigned string value '%s' for the '%s' setting", value, StopSourceContextAfterName ().GetCString());
     }
     else if (var_name == StopDisassemblyCountName ())
     {
@@ -2703,13 +2703,13 @@ DebuggerInstanceSettings::GetInstanceSettingsValue (const SettingEntry &entry,
     else if (var_name == StopSourceContextAfterName ())
     {
         StreamString strm;
-        strm.Printf ("%u", m_stop_source_before_count);
+        strm.Printf ("%u", m_stop_source_after_count);
         value.AppendString (strm.GetData());
     }
     else if (var_name == StopSourceContextBeforeName ())
     {
         StreamString strm;
-        strm.Printf ("%u", m_stop_source_after_count);
+        strm.Printf ("%u", m_stop_source_before_count);
         value.AppendString (strm.GetData());
     }
     else if (var_name == StopDisassemblyCountName ())

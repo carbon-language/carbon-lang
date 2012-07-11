@@ -1321,16 +1321,12 @@ Thread::GetStatus (Stream &strm, uint32_t start_frame, uint32_t num_frames, uint
         strm.IndentMore();
         
         const bool show_frame_info = true;
-        const uint32_t source_lines_before = 3;
-        const uint32_t source_lines_after = 3;
         strm.IndentMore ();
         num_frames_shown = GetStackFrameList ()->GetStatus (strm,
                                                             start_frame, 
                                                             num_frames, 
                                                             show_frame_info, 
-                                                            num_frames_with_source,
-                                                            source_lines_before,
-                                                            source_lines_after);
+                                                            num_frames_with_source);
         strm.IndentLess();
         strm.IndentLess();
     }
@@ -1342,17 +1338,13 @@ Thread::GetStackFrameStatus (Stream& strm,
                              uint32_t first_frame,
                              uint32_t num_frames,
                              bool show_frame_info,
-                             uint32_t num_frames_with_source,
-                             uint32_t source_lines_before,
-                             uint32_t source_lines_after)
+                             uint32_t num_frames_with_source)
 {
     return GetStackFrameList()->GetStatus (strm,
                                            first_frame,
                                            num_frames,
                                            show_frame_info,
-                                           num_frames_with_source,
-                                           source_lines_before,
-                                           source_lines_after);
+                                           num_frames_with_source);
 }
 
 bool
