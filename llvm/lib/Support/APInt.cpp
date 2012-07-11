@@ -1446,7 +1446,7 @@ APInt::mu APInt::magicu(unsigned LeadingZeros) const {
   APInt signedMin = APInt::getSignedMinValue(d.getBitWidth());
   APInt signedMax = APInt::getSignedMaxValue(d.getBitWidth());
 
-  nc = allOnes - (-d).urem(d);
+  nc = allOnes - (allOnes - d).urem(d);
   p = d.getBitWidth() - 1;  // initialize p
   q1 = signedMin.udiv(nc);  // initialize q1 = 2p/nc
   r1 = signedMin - q1*nc;   // initialize r1 = rem(2p,nc)
