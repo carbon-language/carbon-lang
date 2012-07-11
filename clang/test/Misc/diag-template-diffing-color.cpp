@@ -1,6 +1,6 @@
 // RUN: %clang_cc1 -fsyntax-only -fcolor-diagnostics %s 2>&1 | FileCheck %s
 // RUN: %clang_cc1 -fsyntax-only -fcolor-diagnostics -fdiagnostics-show-template-tree %s 2>&1 | FileCheck %s -check-prefix=TREE
-// XFAIL: mingw32,win32
+// REQUIRES: ansi-escape-sequences
 template<typename> struct foo {};
 void func(foo<int>);
 int main() {
