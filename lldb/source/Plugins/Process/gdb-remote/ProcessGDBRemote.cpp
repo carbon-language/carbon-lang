@@ -1423,17 +1423,18 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
                                 // If the breakpoint is for this thread, then we'll report the hit, but if it is for another thread,
                                 // we can just report no reason.  We don't need to worry about stepping over the breakpoint here, that
                                 // will be taken care of when the thread resumes and notices that there's a breakpoint under the pc.
+                                handled = true;
                                 if (bp_site_sp->ValidForThisThread (gdb_thread))
                                 {
                                     gdb_thread->SetStopInfo (StopInfo::CreateStopReasonWithBreakpointSiteID (*thread_sp, bp_site_sp->GetID()));
-                                    handled = true;
+                                }
+                                else
+                                {
+                                    StopInfoSP invalid_stop_info_sp;
+                                    gdb_thread->SetStopInfo (invalid_stop_info_sp);
                                 }
                             }
                             
-                            if (!handled)
-                            {
-                                gdb_thread->SetStopInfo (StopInfo::CreateStopReasonToTrace (*thread_sp));
-                            }
                         }
                         else if (reason.compare("trap") == 0)
                         {
@@ -1459,8 +1460,10 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
                         {
                             // Currently we are going to assume SIGTRAP means we are either
                             // hitting a breakpoint or hardware single stepping. 
+                            handled = true;
                             addr_t pc = gdb_thread->GetRegisterContext()->GetPC();
                             lldb::BreakpointSiteSP bp_site_sp = gdb_thread->GetProcess()->GetBreakpointSiteList().FindByAddress(pc);
+                            
                             if (bp_site_sp)
                             {
                                 // If the breakpoint is for this thread, then we'll report the hit, but if it is for another thread,
@@ -1469,15 +1472,18 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
                                 if (bp_site_sp->ValidForThisThread (gdb_thread))
                                 {
                                     gdb_thread->SetStopInfo (StopInfo::CreateStopReasonWithBreakpointSiteID (*thread_sp, bp_site_sp->GetID()));
-                                    handled = true;
+                                }
+                                else
+                                {
+                                    StopInfoSP invalid_stop_info_sp;
+                                    gdb_thread->SetStopInfo (invalid_stop_info_sp);
                                 }
                             }
-                            if (!handled)
+                            else
                             {
                                 // TODO: check for breakpoint or trap opcode in case there is a hard 
                                 // coded software trap
                                 gdb_thread->SetStopInfo (StopInfo::CreateStopReasonToTrace (*thread_sp));
-                                handled = true;
                             }
                         }
                         if (!handled)
