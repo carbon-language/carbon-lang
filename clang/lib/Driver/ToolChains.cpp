@@ -1905,6 +1905,11 @@ static std::string getMultiarchTriple(const llvm::Triple TargetTriple,
     // common linux triples that don't quite match the Clang triple for both
     // 32-bit and 64-bit targets. Multiarch fixes its install triples to these
     // regardless of what the actual target triple is.
+  case llvm::Triple::arm:
+  case llvm::Triple::thumb:
+    if (llvm::sys::fs::exists(SysRoot + "/lib/arm-linux-gnueabi"))
+      return "arm-linux-gnueabi";
+    return TargetTriple.str();
   case llvm::Triple::x86:
     if (llvm::sys::fs::exists(SysRoot + "/lib/i386-linux-gnu"))
       return "i386-linux-gnu";
