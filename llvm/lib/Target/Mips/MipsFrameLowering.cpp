@@ -273,14 +273,21 @@ spillCalleeSavedRegisters(MachineBasicBlock &MBB,
   const TargetInstrInfo &TII = *MF->getTarget().getInstrInfo();
 
   for (unsigned i = 0, e = CSI.size(); i != e; ++i) {
-    // Add the callee-saved register as live-in.
-    // It's killed at the spill.
-    EntryBlock->addLiveIn(CSI[i].getReg());
+    // Add the callee-saved register as live-in. Do not add if the register is
+    // RA and return address is taken, because it has already been added in
+    // method MipsTargetLowering::LowerRETURNADDR.
+    // It's killed at the spill, unless the register is RA and return address
+    // is taken.
+    unsigned Reg = CSI[i].getReg();
+    bool IsRAAndRetAddrIsTaken = (Reg == Mips::RA || Reg == Mips::RA_64)
+        && MF->getFrameInfo()->isReturnAddressTaken();
+    if (!IsRAAndRetAddrIsTaken)
+      EntryBlock->addLiveIn(Reg);
 
     // Insert the spill to the stack frame.
-    unsigned Reg = CSI[i].getReg();
+    bool IsKill = !IsRAAndRetAddrIsTaken;
     const TargetRegisterClass *RC = TRI->getMinimalPhysRegClass(Reg);
-    TII.storeRegToStackSlot(*EntryBlock, MI, Reg, true,
+    TII.storeRegToStackSlot(*EntryBlock, MI, Reg, IsKill,
                             CSI[i].getFrameIdx(), RC, TRI);
   }
 
