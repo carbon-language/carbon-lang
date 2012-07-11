@@ -14,6 +14,7 @@
 #ifndef LLVM_CLANG_AST_COMMENT_SEMA_H
 #define LLVM_CLANG_AST_COMMENT_SEMA_H
 
+#include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/SourceLocation.h"
 #include "clang/AST/Comment.h"
 #include "llvm/ADT/ArrayRef.h"
@@ -21,13 +22,37 @@
 #include "llvm/Support/Allocator.h"
 
 namespace clang {
+class Decl;
+class FunctionDecl;
+class ParmVarDecl;
+class SourceMgr;
+
 namespace comments {
 
 class Sema {
+  /// Allocator for AST nodes.
   llvm::BumpPtrAllocator &Allocator;
 
+  /// Source manager for the comment being parsed.
+  const SourceManager &SourceMgr;
+
+  DiagnosticsEngine &Diags;
+
+  const Decl *ThisDecl;
+
+  DiagnosticBuilder Diag(SourceLocation Loc, unsigned DiagID) {
+    return Diags.Report(Loc, DiagID);
+  }
+
+  /// A stack of HTML tags that are currently open (not matched with closing
+  /// tags).
+  SmallVector<HTMLOpenTagComment *, 8> HTMLOpenTags;
+
 public:
-  Sema(llvm::BumpPtrAllocator &Allocator);
+  Sema(llvm::BumpPtrAllocator &Allocator, const SourceManager &SourceMgr,
+       DiagnosticsEngine &Diags);
+
+  void setDecl(const Decl *D);
 
   ParagraphComment *actOnParagraphComment(
       ArrayRef<InlineContentComment *> Content);
@@ -47,11 +72,17 @@ public:
                                               SourceLocation LocEnd,
                                               StringRef Name);
 
-  ParamCommandComment *actOnParamCommandArg(ParamCommandComment *Command,
+  ParamCommandComment *actOnParamCommandDirectionArg(
+                                            ParamCommandComment *Command,
                                             SourceLocation ArgLocBegin,
                                             SourceLocation ArgLocEnd,
-                                            StringRef Arg,
-                                            bool IsDirection);
+                                            StringRef Arg);
+
+  ParamCommandComment *actOnParamCommandParamNameArg(
+                                            ParamCommandComment *Command,
+                                            SourceLocation ArgLocBegin,
+                                            SourceLocation ArgLocEnd,
+                                            StringRef Arg);
 
   ParamCommandComment *actOnParamCommandFinish(ParamCommandComment *Command,
                                                ParagraphComment *Paragraph);
@@ -98,13 +129,27 @@ public:
   HTMLOpenTagComment *actOnHTMLOpenTagFinish(
                               HTMLOpenTagComment *Tag,
                               ArrayRef<HTMLOpenTagComment::Attribute> Attrs,
-                              SourceLocation GreaterLoc);
+                              SourceLocation GreaterLoc,
+                              bool IsSelfClosing);
 
   HTMLCloseTagComment *actOnHTMLCloseTag(SourceLocation LocBegin,
                                          SourceLocation LocEnd,
                                          StringRef TagName);
 
   FullComment *actOnFullComment(ArrayRef<BlockContentComment *> Blocks);
+
+  void checkBlockCommandEmptyParagraph(BlockCommandComment *Command);
+
+  /// Returns index of a function parameter with a given name.
+  unsigned resolveParmVarReference(StringRef Name,
+                                   const ParmVarDecl * const *ParamVars,
+                                   unsigned NumParams);
+
+  /// Returns index of a function parameter with the name closest to a given
+  /// typo.
+  unsigned correctTypoInParmVarReference(StringRef Typo,
+                                         const ParmVarDecl * const *ParamVars,
+                                         unsigned NumParams);
 
   bool isBlockCommand(StringRef Name);
   bool isParamCommand(StringRef Name);

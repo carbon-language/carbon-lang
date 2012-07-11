@@ -1142,6 +1142,60 @@ TEST_F(CommentLexerTest, HTML14) {
 }
 
 TEST_F(CommentLexerTest, HTML15) {
+  const char *Sources[] = {
+    "// <tag/>",
+    "// <tag />"
+  };
+
+  for (size_t i = 0, e = array_lengthof(Sources); i != e; i++) {
+    std::vector<Token> Toks;
+
+    lexString(Sources[i], Toks);
+
+    ASSERT_EQ(4U, Toks.size());
+
+    ASSERT_EQ(tok::text,               Toks[0].getKind());
+    ASSERT_EQ(StringRef(" "),          Toks[0].getText());
+
+    ASSERT_EQ(tok::html_tag_open,      Toks[1].getKind());
+    ASSERT_EQ(StringRef("tag"),        Toks[1].getHTMLTagOpenName());
+
+    ASSERT_EQ(tok::html_slash_greater, Toks[2].getKind());
+
+    ASSERT_EQ(tok::newline,            Toks[3].getKind());
+  }
+}
+
+TEST_F(CommentLexerTest, HTML16) {
+  const char *Sources[] = {
+    "// <tag/ Aaa",
+    "// <tag / Aaa"
+  };
+
+  for (size_t i = 0, e = array_lengthof(Sources); i != e; i++) {
+    std::vector<Token> Toks;
+
+    lexString(Sources[i], Toks);
+
+    ASSERT_EQ(5U, Toks.size());
+
+    ASSERT_EQ(tok::text,               Toks[0].getKind());
+    ASSERT_EQ(StringRef(" "),          Toks[0].getText());
+
+    ASSERT_EQ(tok::html_tag_open,      Toks[1].getKind());
+    ASSERT_EQ(StringRef("tag"),        Toks[1].getHTMLTagOpenName());
+
+    ASSERT_EQ(tok::text,               Toks[2].getKind());
+    ASSERT_EQ(StringRef("/"),          Toks[2].getText());
+
+    ASSERT_EQ(tok::text,               Toks[3].getKind());
+    ASSERT_EQ(StringRef(" Aaa"),       Toks[3].getText());
+
+    ASSERT_EQ(tok::newline,            Toks[4].getKind());
+  }
+}
+
+TEST_F(CommentLexerTest, HTML17) {
   const char *Source = "// </";
 
   std::vector<Token> Toks;
@@ -1159,8 +1213,7 @@ TEST_F(CommentLexerTest, HTML15) {
   ASSERT_EQ(tok::newline,        Toks[2].getKind());
 }
 
-
-TEST_F(CommentLexerTest, HTML16) {
+TEST_F(CommentLexerTest, HTML18) {
   const char *Source = "// </@";
 
   std::vector<Token> Toks;
@@ -1181,7 +1234,7 @@ TEST_F(CommentLexerTest, HTML16) {
   ASSERT_EQ(tok::newline,        Toks[3].getKind());
 }
 
-TEST_F(CommentLexerTest, HTML17) {
+TEST_F(CommentLexerTest, HTML19) {
   const char *Source = "// </tag";
 
   std::vector<Token> Toks;
@@ -1199,7 +1252,7 @@ TEST_F(CommentLexerTest, HTML17) {
   ASSERT_EQ(tok::newline,        Toks[2].getKind());
 }
 
-TEST_F(CommentLexerTest, HTML18) {
+TEST_F(CommentLexerTest, HTML20) {
   const char *Sources[] = {
     "// </tag>",
     "// </ tag>",

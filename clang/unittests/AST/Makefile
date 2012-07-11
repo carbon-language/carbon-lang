@@ -10,6 +10,6 @@
 CLANG_LEVEL = ../..
 TESTNAME = AST
 LINK_COMPONENTS := support mc
-USEDLIBS = clangAST.a clangBasic.a
+USEDLIBS = clangAST.a clangLex.a clangBasic.a
 
 include $(CLANG_LEVEL)/unittests/Makefile

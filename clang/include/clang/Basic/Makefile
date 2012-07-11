@@ -1,6 +1,7 @@
 CLANG_LEVEL := ../../..
 BUILT_SOURCES = \
 	DiagnosticAnalysisKinds.inc DiagnosticASTKinds.inc \
+	DiagnosticCommentKinds.inc \
 	DiagnosticCommonKinds.inc DiagnosticDriverKinds.inc \
 	DiagnosticFrontendKinds.inc DiagnosticLexKinds.inc \
 	DiagnosticParseKinds.inc DiagnosticSemaKinds.inc \

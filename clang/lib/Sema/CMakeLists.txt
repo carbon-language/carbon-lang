@@ -46,6 +46,7 @@ add_dependencies(clangSema
   ClangARMNeon
   ClangAttrClasses
   ClangAttrList
+  ClangDiagnosticComment
   ClangDiagnosticSema
   ClangCommentNodes
   ClangDeclNodes

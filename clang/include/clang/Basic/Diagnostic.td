@@ -88,6 +88,7 @@ class AccessControl { bit AccessControl = 1; }
 // Definitions for Diagnostics.
 include "DiagnosticASTKinds.td"
 include "DiagnosticAnalysisKinds.td"
+include "DiagnosticCommentKinds.td"
 include "DiagnosticCommonKinds.td"
 include "DiagnosticDriverKinds.td"
 include "DiagnosticFrontendKinds.td"

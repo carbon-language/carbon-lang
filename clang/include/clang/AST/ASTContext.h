@@ -392,6 +392,11 @@ public:
   
   SourceManager& getSourceManager() { return SourceMgr; }
   const SourceManager& getSourceManager() const { return SourceMgr; }
+
+  llvm::BumpPtrAllocator &getAllocator() const {
+    return BumpAlloc;
+  }
+
   void *Allocate(unsigned Size, unsigned Align = 8) const {
     return BumpAlloc.Allocate(Size, Align);
   }
@@ -436,9 +441,13 @@ public:
 
   /// \brief Return the documentation comment attached to a given declaration,
   /// without looking into cache.
-  const RawComment *getRawCommentForDeclNoCache(const Decl *D) const;
+  RawComment *getRawCommentForDeclNoCache(const Decl *D) const;
 
 public:
+  RawCommentList &getRawCommentList() {
+    return Comments;
+  }
+
   void addComment(const RawComment &RC) {
     Comments.addComment(RC, BumpAlloc);
   }

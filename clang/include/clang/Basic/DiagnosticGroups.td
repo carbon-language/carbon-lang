@@ -57,7 +57,9 @@ def DeprecatedImplementations :DiagGroup<"deprecated-implementations">;
 def : DiagGroup<"disabled-optimization">;
 def : DiagGroup<"discard-qual">;
 def : DiagGroup<"div-by-zero">;
-def Doxygen : DiagGroup<"doxygen">;
+def DocumentationHTML : DiagGroup<"documentation-html">;
+def DocumentationPedantic : DiagGroup<"documentation-pedantic">;
+def Documentation : DiagGroup<"documentation", [DocumentationHTML]>;
 def EmptyBody : DiagGroup<"empty-body">;
 def ExtraTokens : DiagGroup<"extra-tokens">;
 

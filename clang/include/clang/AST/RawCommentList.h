@@ -48,6 +48,14 @@ public:
     return Kind == RCK_Merged;
   }
 
+  bool isAttached() const LLVM_READONLY {
+    return IsAttached;
+  }
+
+  void setAttached() {
+    IsAttached = true;
+  }
+
   /// Returns true if it is a comment that should be put after a member:
   /// \code ///< stuff \endcode
   /// \code //!< stuff \endcode
@@ -110,6 +118,9 @@ private:
 
   unsigned Kind : 3;
 
+  /// True if comment is attached to a declaration in ASTContext.
+  bool IsAttached : 1;
+
   bool IsTrailingComment : 1;
   bool IsAlmostTrailingComment : 1;
 
@@ -122,7 +133,7 @@ private:
   RawComment(SourceRange SR, CommentKind K, bool IsTrailingComment,
              bool IsAlmostTrailingComment) :
     Range(SR), RawTextValid(false), BriefTextValid(false), Kind(K),
-    IsTrailingComment(IsTrailingComment),
+    IsAttached(false), IsTrailingComment(IsTrailingComment),
     IsAlmostTrailingComment(IsAlmostTrailingComment),
     BeginLineValid(false), EndLineValid(false)
   { }

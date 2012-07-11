@@ -509,7 +509,7 @@ void Lexer::setupAndLexHTMLOpenTag(Token &T) {
 
   const char C = *BufferPtr;
   if (BufferPtr != CommentEnd &&
-      (C == '>' || isHTMLIdentifierStartingCharacter(C)))
+      (C == '>' || C == '/' || isHTMLIdentifierStartingCharacter(C)))
     State = LS_HTMLOpenTag;
 }
 
@@ -544,6 +544,18 @@ void Lexer::lexHTMLOpenTag(Token &T) {
     case '>':
       TokenPtr++;
       formTokenWithChars(T, TokenPtr, tok::html_greater);
+      State = LS_Normal;
+      return;
+    case '/':
+      TokenPtr++;
+      if (TokenPtr != CommentEnd && *TokenPtr == '>') {
+        TokenPtr++;
+        formTokenWithChars(T, TokenPtr, tok::html_slash_greater);
+      } else {
+        StringRef Text(BufferPtr, TokenPtr - BufferPtr);
+        formTokenWithChars(T, TokenPtr, tok::text);
+        T.setText(Text);
+      }
       State = LS_Normal;
       return;
     }

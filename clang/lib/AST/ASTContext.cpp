@@ -56,7 +56,7 @@ enum FloatingRank {
   HalfRank, FloatRank, DoubleRank, LongDoubleRank
 };
 
-const RawComment *ASTContext::getRawCommentForDeclNoCache(const Decl *D) const {
+RawComment *ASTContext::getRawCommentForDeclNoCache(const Decl *D) const {
   if (!CommentsLoaded && ExternalSource) {
     ExternalSource->ReadComments();
     CommentsLoaded = true;
@@ -160,11 +160,13 @@ const RawComment *ASTContext::getRawCommentForDecl(const Decl *D) const {
     return C.first;
   }
 
-  const RawComment *RC = getRawCommentForDeclNoCache(D);
+  RawComment *RC = getRawCommentForDeclNoCache(D);
   // If we found a comment, it should be a documentation comment.
   assert(!RC || RC->isDocumentation());
   DeclComments[D] =
       RawAndParsedComment(RC, static_cast<comments::FullComment *>(NULL));
+  if (RC)
+    RC->setAttached();
   return RC;
 }
 
@@ -187,8 +189,10 @@ comments::FullComment *ASTContext::getCommentForDecl(const Decl *D) const {
   comments::Lexer L(RC->getSourceRange().getBegin(), comments::CommentOptions(),
                     RawText.begin(), RawText.end());
 
-  comments::Sema S(this->BumpAlloc);
-  comments::Parser P(L, S, this->BumpAlloc);
+  comments::Sema S(getAllocator(), getSourceManager(), getDiagnostics());
+  S.setDecl(D);
+  comments::Parser P(L, S, getAllocator(), getSourceManager(),
+                     getDiagnostics());
 
   comments::FullComment *FC = P.parseFullComment();
   DeclComments[D].second = FC;

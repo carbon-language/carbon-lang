@@ -21,6 +21,7 @@
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/CXXInheritance.h"
+#include "clang/AST/CommentDiagnostic.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/DeclTemplate.h"
@@ -2702,6 +2703,8 @@ Decl *Sema::ParsedFreeStandingDeclSpec(Scope *S, AccessSpecifier AS,
       }
     }
   }
+
+  ActOnDocumentableDecl(TagD);
 
   return TagD;
 }
@@ -7104,9 +7107,55 @@ Sema::BuildDeclaratorGroup(Decl **Group, unsigned NumDecls,
     }
   }
 
+  ActOnDocumentableDecls(Group, NumDecls);
+
   return DeclGroupPtrTy::make(DeclGroupRef::Create(Context, Group, NumDecls));
 }
 
+void Sema::ActOnDocumentableDecl(Decl *D) {
+  ActOnDocumentableDecls(&D, 1);
+}
+
+void Sema::ActOnDocumentableDecls(Decl **Group, unsigned NumDecls) {
+  // Don't parse the comment if Doxygen diagnostics are ignored.
+  if (NumDecls == 0 || !Group[0])
+   return;
+
+  if (Diags.getDiagnosticLevel(diag::warn_doc_param_not_found,
+                               Group[0]->getLocation())
+        == DiagnosticsEngine::Ignored)
+    return;
+
+  if (NumDecls >= 2) {
+    // This is a decl group.  Normally it will contain only declarations
+    // procuded from declarator list.  But in case we have any definitions or
+    // additional declaration references:
+    //   'typedef struct S {} S;'
+    //   'typedef struct S *S;'
+    //   'struct S *pS;'
+    // FinalizeDeclaratorGroup adds these as separate declarations.
+    Decl *MaybeTagDecl = Group[0];
+    if (MaybeTagDecl && isa<TagDecl>(MaybeTagDecl)) {
+      Group++;
+      NumDecls--;
+    }
+  }
+
+  // See if there are any new comments that are not attached to a decl.
+  ArrayRef<RawComment *> Comments = Context.getRawCommentList().getComments();
+  if (!Comments.empty() &&
+      !Comments.back()->isAttached()) {
+    // There is at least one comment that not attached to a decl.
+    // Maybe it should be attached to one of these decls?
+    //
+    // Note that this way we pick up not only comments that precede the
+    // declaration, but also comments that *follow* the declaration -- thanks to
+    // the lookahead in the lexer: we've consumed the semicolon and looked
+    // ahead through comments.
+    for (unsigned i = 0; i != NumDecls; ++i)
+      Context.getCommentForDecl(Group[i]);
+  }
+}
 
 /// ActOnParamDeclarator - Called from Parser::ParseFunctionDeclarator()
 /// to introduce parameters into function prototype scope.
@@ -8868,6 +8917,8 @@ void Sema::ActOnTagStartDefinition(Scope *S, Decl *TagD) {
   
   // Enter the tag context.
   PushDeclContext(S, Tag);
+
+  ActOnDocumentableDecl(TagD);
 }
 
 Decl *Sema::ActOnObjCContainerStartDefinition(Decl *IDecl) {
@@ -8877,6 +8928,7 @@ Decl *Sema::ActOnObjCContainerStartDefinition(Decl *IDecl) {
   assert(getContainingDC(OCD) == CurContext &&
       "The next DeclContext should be lexically contained in the current one.");
   CurContext = OCD;
+  ActOnDocumentableDecl(IDecl);
   return IDecl;
 }
 
@@ -10338,6 +10390,8 @@ Decl *Sema::ActOnEnumConstant(Scope *S, Decl *theEnumDecl, Decl *lastEnumConst,
     New->setAccess(TheEnumDecl->getAccess());
     PushOnScopeChains(New, S);
   }
+
+  ActOnDocumentableDecl(New);
 
   return New;
 }

@@ -57,8 +57,8 @@ FullComment *CommentParserTest::parseString(const char *Source) {
   comments::Lexer L(Begin, CommentOptions(),
                     Source, Source + strlen(Source));
 
-  comments::Sema S(Allocator);
-  comments::Parser P(L, S, Allocator);
+  comments::Sema S(Allocator, SourceMgr, Diags);
+  comments::Parser P(L, S, Allocator, SourceMgr, Diags);
   comments::FullComment *FC = P.parseFullComment();
 
   if (DEBUG) {
@@ -292,6 +292,25 @@ struct NoArgs {};
   return ::testing::AssertionSuccess();
 }
 
+struct SelfClosing {};
+
+::testing::AssertionResult HasHTMLOpenTagAt(const Comment *C,
+                                            size_t Idx,
+                                            HTMLOpenTagComment *&HOT,
+                                            StringRef TagName,
+                                            SelfClosing) {
+  ::testing::AssertionResult AR = HasHTMLOpenTagAt(C, Idx, HOT, TagName);
+  if (!AR)
+    return AR;
+
+  if (!HOT->isSelfClosing())
+    return ::testing::AssertionFailure()
+        << "HTMLOpenTagComment is not self-closing";
+
+  return ::testing::AssertionSuccess();
+}
+
+
 struct NoAttrs {};
 
 ::testing::AssertionResult HasHTMLOpenTagAt(const Comment *C,
@@ -302,6 +321,10 @@ struct NoAttrs {};
   ::testing::AssertionResult AR = HasHTMLOpenTagAt(C, Idx, HOT, TagName);
   if (!AR)
     return AR;
+
+  if (HOT->isSelfClosing())
+    return ::testing::AssertionFailure()
+        << "HTMLOpenTagComment is self-closing";
 
   if (HOT->getAttrCount() != 0)
     return ::testing::AssertionFailure()
@@ -320,6 +343,10 @@ struct NoAttrs {};
   ::testing::AssertionResult AR = HasHTMLOpenTagAt(C, Idx, HOT, TagName);
   if (!AR)
     return AR;
+
+  if (HOT->isSelfClosing())
+    return ::testing::AssertionFailure()
+        << "HTMLOpenTagComment is self-closing";
 
   if (HOT->getAttrCount() != 1)
     return ::testing::AssertionFailure()
@@ -837,6 +864,28 @@ TEST_F(CommentParserTest, HTML1) {
 
 TEST_F(CommentParserTest, HTML2) {
   const char *Sources[] = {
+    "// <br/>",
+    "// <br />"
+  };
+
+  for (size_t i = 0, e = array_lengthof(Sources); i != e; i++) {
+    FullComment *FC = parseString(Sources[i]);
+    ASSERT_TRUE(HasChildCount(FC, 1));
+
+    {
+      ParagraphComment *PC;
+      HTMLOpenTagComment *HOT;
+      ASSERT_TRUE(GetChildAt(FC, 0, PC));
+
+      ASSERT_TRUE(HasChildCount(PC, 2));
+        ASSERT_TRUE(HasTextAt(PC, 0, " "));
+        ASSERT_TRUE(HasHTMLOpenTagAt(PC, 1, HOT, "br", SelfClosing()));
+    }
+  }
+}
+
+TEST_F(CommentParserTest, HTML3) {
+  const char *Sources[] = {
     "// <a href",
     "// <a href ",
     "// <a href>",
@@ -859,7 +908,7 @@ TEST_F(CommentParserTest, HTML2) {
   }
 }
 
-TEST_F(CommentParserTest, HTML3) {
+TEST_F(CommentParserTest, HTML4) {
   const char *Sources[] = {
     "// <a href=\"bbb\"",
     "// <a href=\"bbb\">",
@@ -881,7 +930,7 @@ TEST_F(CommentParserTest, HTML3) {
   }
 }
 
-TEST_F(CommentParserTest, HTML4) {
+TEST_F(CommentParserTest, HTML5) {
   const char *Sources[] = {
     "// </a",
     "// </a>",
@@ -904,7 +953,7 @@ TEST_F(CommentParserTest, HTML4) {
   }
 }
 
-TEST_F(CommentParserTest, HTML5) {
+TEST_F(CommentParserTest, HTML6) {
   const char *Source =
     "// <pre>\n"
     "// Aaa\n"

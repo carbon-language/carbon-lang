@@ -2952,7 +2952,9 @@ Decl *Sema::ActOnMethodDeclaration(
     if (InferRelatedResultType)
       ObjCMethod->SetRelatedResultType();
   }
-    
+
+  ActOnDocumentableDecl(ObjCMethod);
+
   return ObjCMethod;
 }
 

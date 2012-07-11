@@ -61,7 +61,7 @@ bool mergedCommentIsTrailingComment(StringRef Comment) {
 RawComment::RawComment(const SourceManager &SourceMgr, SourceRange SR,
                        bool Merged) :
     Range(SR), RawTextValid(false), BriefTextValid(false),
-    IsAlmostTrailingComment(false),
+    IsAttached(false), IsAlmostTrailingComment(false),
     BeginLineValid(false), EndLineValid(false) {
   // Extract raw comment text, if possible.
   if (SR.getBegin() == SR.getEnd() || getRawText(SourceMgr).empty()) {

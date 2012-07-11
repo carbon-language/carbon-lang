@@ -5422,6 +5422,8 @@ Decl *Sema::ActOnStartNamespaceDef(Scope *NamespcScope,
     }
   }
 
+  ActOnDocumentableDecl(Namespc);
+
   // Although we could have an invalid decl (i.e. the namespace name is a
   // redefinition), push it as current DeclContext and try to continue parsing.
   // FIXME: We should be able to push Namespc here, so that the each DeclContext

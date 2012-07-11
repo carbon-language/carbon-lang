@@ -50,6 +50,16 @@ protected:
   };
   enum { NumInlineContentCommentBitfields = 9 };
 
+  class HTMLOpenTagCommentBitfields {
+    friend class HTMLOpenTagComment;
+
+    unsigned : NumInlineContentCommentBitfields;
+
+    /// True if this tag is self-closing (e. g., <br />).  This is based on tag
+    /// spelling in comment (plain <br> would not set this flag).
+    unsigned IsSelfClosing : 1;
+  };
+
   class ParamCommandCommentBitfields {
     friend class ParamCommandComment;
 
@@ -66,6 +76,7 @@ protected:
   union {
     CommentBitfields CommentBits;
     InlineContentCommentBitfields InlineContentCommentBits;
+    HTMLOpenTagCommentBitfields HTMLOpenTagCommentBits;
     ParamCommandCommentBitfields ParamCommandCommentBits;
   };
 
@@ -107,8 +118,6 @@ public:
 
   static bool classof(const Comment *) { return true; }
 
-  typedef Comment * const *child_iterator;
-
   SourceRange getSourceRange() const LLVM_READONLY { return Range; }
 
   SourceLocation getLocStart() const LLVM_READONLY {
@@ -121,8 +130,12 @@ public:
 
   SourceLocation getLocation() const LLVM_READONLY { return Loc; }
 
+  typedef Comment * const *child_iterator;
+
   child_iterator child_begin() const;
   child_iterator child_end() const;
+
+  // TODO: const child iterator
 
   unsigned child_count() const {
     return child_end() - child_begin();
@@ -180,6 +193,8 @@ public:
   child_iterator child_end() const { return NULL; }
 
   StringRef getText() const LLVM_READONLY { return Text; }
+
+  bool isWhitespace() const;
 };
 
 /// A command with word-like arguments that is considered inline content.
@@ -325,8 +340,9 @@ public:
                      LocBegin, LocBegin.getLocWithOffset(1 + TagName.size()),
                      TagName,
                      LocBegin.getLocWithOffset(1),
-                     LocBegin.getLocWithOffset(1 + TagName.size()))
-  { }
+                     LocBegin.getLocWithOffset(1 + TagName.size())) {
+    HTMLOpenTagCommentBits.IsSelfClosing = false;
+  }
 
   static bool classof(const Comment *C) {
     return C->getCommentKind() == HTMLOpenTagCommentKind;
@@ -361,6 +377,14 @@ public:
 
   void setGreaterLoc(SourceLocation GreaterLoc) {
     Range.setEnd(GreaterLoc);
+  }
+
+  bool isSelfClosing() const {
+    return HTMLOpenTagCommentBits.IsSelfClosing;
+  }
+
+  void setSelfClosing() {
+    HTMLOpenTagCommentBits.IsSelfClosing = true;
   }
 };
 
@@ -438,6 +462,8 @@ public:
   child_iterator child_end() const {
     return reinterpret_cast<child_iterator>(Content.end());
   }
+
+  bool isWhitespace() const;
 };
 
 /// A command that has zero or more word-like arguments (number of word-like
@@ -520,6 +546,11 @@ public:
 
   void setArgs(llvm::ArrayRef<Argument> A) {
     Args = A;
+    if (Args.size() > 0) {
+      SourceLocation NewLocEnd = Args.back().Range.getEnd();
+      if (NewLocEnd.isValid())
+        setSourceRange(SourceRange(getLocStart(), NewLocEnd));
+    }
   }
 
   ParagraphComment *getParagraph() const LLVM_READONLY {
@@ -536,18 +567,18 @@ public:
 
 /// Doxygen \\param command.
 class ParamCommandComment : public BlockCommandComment {
-public:
-  enum PassDirection {
-    In,
-    Out,
-    InOut
-  };
+private:
+  /// Parameter index in the function declaration.
+  unsigned ParamIndex;
 
 public:
+  enum { InvalidParamIndex = ~0U };
+
   ParamCommandComment(SourceLocation LocBegin,
                       SourceLocation LocEnd,
                       StringRef Name) :
-      BlockCommandComment(ParamCommandCommentKind, LocBegin, LocEnd, Name) {
+      BlockCommandComment(ParamCommandCommentKind, LocBegin, LocEnd, Name),
+      ParamIndex(InvalidParamIndex) {
     ParamCommandCommentBits.Direction = In;
     ParamCommandCommentBits.IsDirectionExplicit = false;
   }
@@ -557,6 +588,14 @@ public:
   }
 
   static bool classof(const ParamCommandComment *) { return true; }
+
+  enum PassDirection {
+    In,
+    Out,
+    InOut
+  };
+
+  static const char *getDirectionAsString(PassDirection D);
 
   PassDirection getDirection() const LLVM_READONLY {
     return static_cast<PassDirection>(ParamCommandCommentBits.Direction);
@@ -581,6 +620,19 @@ public:
 
   SourceRange getParamNameRange() const {
     return Args[0].Range;
+  }
+
+  bool isParamIndexValid() const LLVM_READONLY {
+    return ParamIndex != InvalidParamIndex;
+  }
+
+  unsigned getParamIndex() const LLVM_READONLY {
+    return ParamIndex;
+  }
+
+  void setParamIndex(unsigned Index) {
+    ParamIndex = Index;
+    assert(isParamIndexValid());
   }
 };
 

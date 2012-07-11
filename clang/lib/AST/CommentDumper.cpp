@@ -121,6 +121,8 @@ void CommentDumper::visitHTMLOpenTagComment(const HTMLOpenTagComment *C) {
       OS << " \"" << Attr.Name << "=\"" << Attr.Value << "\"";
     }
   }
+  if (C->isSelfClosing())
+    OS << " SelfClosing";
 }
 
 void CommentDumper::visitHTMLCloseTagComment(const HTMLCloseTagComment *C) {
@@ -142,17 +144,7 @@ void CommentDumper::visitBlockCommandComment(const BlockCommandComment *C) {
 void CommentDumper::visitParamCommandComment(const ParamCommandComment *C) {
   dumpComment(C);
 
-  switch (C->getDirection()) {
-  case ParamCommandComment::In:
-    OS << " [in]";
-    break;
-  case ParamCommandComment::Out:
-    OS << " [out]";
-    break;
-  case ParamCommandComment::InOut:
-    OS << " [in,out]";
-    break;
-  }
+  OS << " " << ParamCommandComment::getDirectionAsString(C->getDirection());
 
   if (C->isDirectionExplicit())
     OS << " explicitly";

@@ -43,6 +43,7 @@ enum TokenKind {
   html_equals,        // =
   html_quoted_string, // "blah\"blah" or 'blah\'blah'
   html_greater,       // >
+  html_slash_greater, // />
   html_tag_close      // </tag
 };
 } // end namespace tok

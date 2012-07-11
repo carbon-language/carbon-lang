@@ -14,12 +14,15 @@
 #ifndef LLVM_CLANG_AST_COMMENT_PARSER_H
 #define LLVM_CLANG_AST_COMMENT_PARSER_H
 
+#include "clang/Basic/Diagnostic.h"
 #include "clang/AST/CommentLexer.h"
 #include "clang/AST/Comment.h"
 #include "clang/AST/CommentSema.h"
 #include "llvm/Support/Allocator.h"
 
 namespace clang {
+class SourceManager;
+
 namespace comments {
 
 /// Doxygen comment parser.
@@ -28,7 +31,11 @@ class Parser {
 
   Sema &S;
 
+  /// Allocator for anything that goes into AST nodes.
   llvm::BumpPtrAllocator &Allocator;
+
+  /// Source manager for the comment being parsed.
+  const SourceManager &SourceMgr;
 
   template<typename T>
   ArrayRef<T> copyArray(ArrayRef<T> Source) {
@@ -39,6 +46,12 @@ class Parser {
       return llvm::makeArrayRef(Mem, Size);
     } else
       return llvm::makeArrayRef(static_cast<T *>(NULL), 0);
+  }
+
+  DiagnosticsEngine &Diags;
+
+  DiagnosticBuilder Diag(SourceLocation Loc, unsigned DiagID) {
+    return Diags.Report(Loc, DiagID);
   }
 
   /// Current lookahead token.  We can safely assume that all tokens are from
@@ -79,7 +92,8 @@ class Parser {
   }
 
 public:
-  Parser(Lexer &L, Sema &S, llvm::BumpPtrAllocator &Allocator);
+  Parser(Lexer &L, Sema &S, llvm::BumpPtrAllocator &Allocator,
+         const SourceManager &SourceMgr, DiagnosticsEngine &Diags);
 
   /// Parse arguments for \\param command.
   ParamCommandComment *parseParamCommandArgs(
