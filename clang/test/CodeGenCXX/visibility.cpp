@@ -974,3 +974,16 @@ namespace test52 {
   // CHECK: define internal void @_ZN6test523zedILPNS_12_GLOBAL__N_13fooE0EEEvv
   // CHECK-HIDDEN: define internal void @_ZN6test523zedILPNS_12_GLOBAL__N_13fooE0EEEvv
 }
+
+namespace test53 {
+  template<typename _Tp > struct vector   {
+    static void       _M_fill_insert();
+  };
+#pragma GCC visibility push(hidden)
+  void foo() {
+    vector<unsigned>::_M_fill_insert();
+  }
+#pragma GCC visibility pop
+  // CHECK: declare void @_ZN6test536vectorIjE14_M_fill_insertEv
+  // CHECK-HIDDEN: declare void @_ZN6test536vectorIjE14_M_fill_insertEv
+}

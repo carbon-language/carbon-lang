@@ -10062,7 +10062,8 @@ void Sema::ActOnFields(Scope* S,
 
   // If there's a #pragma GCC visibility in scope, and this isn't a subclass,
   // set the visibility of this record.
-  if (Record && !Record->getDeclContext()->isRecord())
+  if (Record && !Record->getDeclContext()->isRecord() &&
+      !isa<ClassTemplateSpecializationDecl>(Record))
     AddPushedVisibilityAttribute(Record);
 }
 
