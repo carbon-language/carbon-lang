@@ -5975,7 +5975,8 @@ SDValue DAGCombiner::visitSINT_TO_FP(SDNode *N) {
   }
 
   // fold (sint_to_fp (setcc x, y, cc)) -> (select_cc x, y, -1.0, 0.0,, cc)
-  if (N0.getOpcode() == ISD::SETCC && !VT.isVector() &&
+  if (N0.getOpcode() == ISD::SETCC && N0.getValueType() == MVT::i1 &&
+      !VT.isVector() &&
       (!LegalOperations ||
        TLI.isOperationLegalOrCustom(llvm::ISD::ConstantFP, VT))) {
     SDValue Ops[] =
