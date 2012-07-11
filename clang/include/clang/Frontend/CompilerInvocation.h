@@ -132,16 +132,6 @@ public:
   void toArgs(std::vector<std::string> &Res) const;
 
   /// \brief Set language defaults for the given input language and
-  /// language standard in this CompilerInvocation.
-  ///
-  /// \param IK - The input language.
-  /// \param LangStd - The input language standard.
-  void setLangDefaults(InputKind IK,
-                  LangStandard::Kind LangStd = LangStandard::lang_unspecified) {
-    setLangDefaults(*getLangOpts(), IK, LangStd);
-  }
-
-  /// \brief Set language defaults for the given input language and
   /// language standard in the given LangOptions object.
   ///
   /// \param Opts - The LangOptions object to set up.
