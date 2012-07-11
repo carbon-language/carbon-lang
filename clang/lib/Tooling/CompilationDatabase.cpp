@@ -18,6 +18,10 @@
 #include "llvm/Support/Path.h"
 #include "llvm/Support/system_error.h"
 
+#ifdef USE_CUSTOM_COMPILATION_DATABASE
+#include "CustomCompilationDatabase.h"
+#endif
+
 namespace clang {
 namespace tooling {
 
@@ -124,6 +128,11 @@ CompilationDatabase::loadFromDirectory(StringRef BuildDirectory,
 
 static CompilationDatabase *
 findCompilationDatabaseFromDirectory(StringRef Directory) {
+#ifdef USE_CUSTOM_COMPILATION_DATABASE
+  if (CompilationDatabase *DB =
+      ::findCompilationDatabaseForDirectory(Directory))
+    return DB;
+#endif
   while (!Directory.empty()) {
     std::string LoadErrorMessage;
 
