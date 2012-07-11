@@ -1,7 +1,7 @@
 ; RUN: llc -march=x86 -mattr=+sse42 < %s | FileCheck %s
 ; CHECK: paddd
-; CHECK: pextrd
-; CHECK: movd
+; CHECK: movl
+; CHECK: movlpd
 
 ; bitcast a v4i16 to v2i32
 

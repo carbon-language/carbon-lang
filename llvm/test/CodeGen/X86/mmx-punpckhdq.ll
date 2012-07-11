@@ -3,7 +3,7 @@
 
 define void @bork(<1 x i64>* %x) {
 ; CHECK: bork
-; CHECK: pextrd
+; CHECK: movlpd
 entry:
 	%tmp2 = load <1 x i64>* %x		; <<1 x i64>> [#uses=1]
 	%tmp6 = bitcast <1 x i64> %tmp2 to <2 x i32>		; <<2 x i32>> [#uses=1]

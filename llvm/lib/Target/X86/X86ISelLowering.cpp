@@ -14464,6 +14464,11 @@ static SDValue PerformLOADCombine(SDNode *N, SelectionDAG &DAG,
       }
     }
 
+    // On 32bit systems, we can't save 64bit integers. Try bitcasting to F64.
+    if (TLI.isTypeLegal(MVT::f64) && SclrLoadTy.getSizeInBits() < 64 &&
+        (64 <= MemSz))
+      SclrLoadTy = MVT::f64;
+
     // Calculate the number of scalar loads that we need to perform
     // in order to load our vector from memory.
     unsigned NumLoads = MemSz / SclrLoadTy.getSizeInBits();
@@ -14615,13 +14620,18 @@ static SDValue PerformSTORECombine(SDNode *N, SelectionDAG &DAG,
     for (unsigned tp = MVT::FIRST_INTEGER_VALUETYPE;
          tp < MVT::LAST_INTEGER_VALUETYPE; ++tp) {
       MVT Tp = (MVT::SimpleValueType)tp;
-      if (TLI.isTypeLegal(Tp) && StoreType.getSizeInBits() < NumElems * ToSz)
+      if (TLI.isTypeLegal(Tp) && Tp.getSizeInBits() <= NumElems * ToSz)
         StoreType = Tp;
     }
 
+    // On 32bit systems, we can't save 64bit integers. Try bitcasting to F64.
+    if (TLI.isTypeLegal(MVT::f64) && StoreType.getSizeInBits() < 64 &&
+        (64 <= NumElems * ToSz))
+      StoreType = MVT::f64;
+
     // Bitcast the original vector into a vector of store-size units
     EVT StoreVecVT = EVT::getVectorVT(*DAG.getContext(),
-            StoreType, VT.getSizeInBits()/EVT(StoreType).getSizeInBits());
+            StoreType, VT.getSizeInBits()/StoreType.getSizeInBits());
     assert(StoreVecVT.getSizeInBits() == VT.getSizeInBits());
     SDValue ShuffWide = DAG.getNode(ISD::BITCAST, dl, StoreVecVT, Shuff);
     SmallVector<SDValue, 8> Chains;

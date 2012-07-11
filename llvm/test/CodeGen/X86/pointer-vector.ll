@@ -105,8 +105,7 @@ define <2 x i32*> @BITCAST1(<2 x i8*>* %p) nounwind {
 entry:
   %G = load <2 x i8*>* %p
 ;CHECK: movl
-;CHECK: movd
-;CHECK: pinsrd
+;CHECK: movsd
   %T = bitcast <2 x i8*> %G to <2 x i32*>
 ;CHECK: ret
   ret <2 x i32*> %T
