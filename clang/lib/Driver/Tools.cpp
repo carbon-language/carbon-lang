@@ -2124,8 +2124,11 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     // eventually we want to do all the standard defaulting here instead of
     // splitting it between the driver and clang -cc1.
     if (!types::isCXX(InputType))
-        Args.AddAllArgsTranslated(CmdArgs, options::OPT_std_default_EQ,
-                                  "-std=", /*Joined=*/true);
+      Args.AddAllArgsTranslated(CmdArgs, options::OPT_std_default_EQ,
+                                "-std=", /*Joined=*/true);
+    else if (getToolChain().getTriple().getOS() == llvm::Triple::Win32)
+      CmdArgs.push_back("-std=c++11");
+
     Args.AddLastArg(CmdArgs, options::OPT_trigraphs);
   }
 
