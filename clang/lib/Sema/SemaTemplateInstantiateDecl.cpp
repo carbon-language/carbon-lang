@@ -552,12 +552,11 @@ Decl *TemplateDeclInstantiator::VisitStaticAssertDecl(StaticAssertDecl *D) {
   if (InstantiatedAssertExpr.isInvalid())
     return 0;
 
-  ExprResult Message(D->getMessage());
-  D->getMessage();
-  return SemaRef.ActOnStaticAssertDeclaration(D->getLocation(),
+  return SemaRef.BuildStaticAssertDeclaration(D->getLocation(),
                                               InstantiatedAssertExpr.get(),
-                                              Message.get(),
-                                              D->getRParenLoc());
+                                              D->getMessage(),
+                                              D->getRParenLoc(),
+                                              D->isFailed());
 }
 
 Decl *TemplateDeclInstantiator::VisitEnumDecl(EnumDecl *D) {

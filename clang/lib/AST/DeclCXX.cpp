@@ -2005,15 +2005,17 @@ StaticAssertDecl *StaticAssertDecl::Create(ASTContext &C, DeclContext *DC,
                                            SourceLocation StaticAssertLoc,
                                            Expr *AssertExpr,
                                            StringLiteral *Message,
-                                           SourceLocation RParenLoc) {
+                                           SourceLocation RParenLoc,
+                                           bool Failed) {
   return new (C) StaticAssertDecl(DC, StaticAssertLoc, AssertExpr, Message,
-                                  RParenLoc);
+                                  RParenLoc, Failed);
 }
 
 StaticAssertDecl *StaticAssertDecl::CreateDeserialized(ASTContext &C, 
                                                        unsigned ID) {
   void *Mem = AllocateDeserializedDecl(C, ID, sizeof(StaticAssertDecl));
-  return new (Mem) StaticAssertDecl(0, SourceLocation(), 0, 0,SourceLocation());
+  return new (Mem) StaticAssertDecl(0, SourceLocation(), 0, 0,
+                                    SourceLocation(), false);
 }
 
 static const char *getAccessName(AccessSpecifier AS) {

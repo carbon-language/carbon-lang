@@ -9736,37 +9736,49 @@ Decl *Sema::ActOnExceptionDeclarator(Scope *S, Declarator &D) {
 
 Decl *Sema::ActOnStaticAssertDeclaration(SourceLocation StaticAssertLoc,
                                          Expr *AssertExpr,
-                                         Expr *AssertMessageExpr_,
+                                         Expr *AssertMessageExpr,
                                          SourceLocation RParenLoc) {
-  StringLiteral *AssertMessage = cast<StringLiteral>(AssertMessageExpr_);
+  StringLiteral *AssertMessage = cast<StringLiteral>(AssertMessageExpr);
 
-  if (!AssertExpr->isTypeDependent() && !AssertExpr->isValueDependent()) {
+  if (DiagnoseUnexpandedParameterPack(AssertExpr, UPPC_StaticAssertExpression))
+    return 0;
+
+  return BuildStaticAssertDeclaration(StaticAssertLoc, AssertExpr,
+                                      AssertMessage, RParenLoc, false);
+}
+
+Decl *Sema::BuildStaticAssertDeclaration(SourceLocation StaticAssertLoc,
+                                         Expr *AssertExpr,
+                                         StringLiteral *AssertMessage,
+                                         SourceLocation RParenLoc,
+                                         bool Failed) {
+  if (!AssertExpr->isTypeDependent() && !AssertExpr->isValueDependent() &&
+      !Failed) {
     // In a static_assert-declaration, the constant-expression shall be a
     // constant expression that can be contextually converted to bool.
     ExprResult Converted = PerformContextuallyConvertToBool(AssertExpr);
     if (Converted.isInvalid())
-      return 0;
+      Failed = true;
 
     llvm::APSInt Cond;
-    if (VerifyIntegerConstantExpression(Converted.get(), &Cond,
+    if (!Failed && VerifyIntegerConstantExpression(Converted.get(), &Cond,
           diag::err_static_assert_expression_is_not_constant,
           /*AllowFold=*/false).isInvalid())
-      return 0;
+      Failed = true;
 
-    if (!Cond) {
+    if (!Failed && !Cond) {
       llvm::SmallString<256> MsgBuffer;
       llvm::raw_svector_ostream Msg(MsgBuffer);
       AssertMessage->printPretty(Msg, Context, 0, getPrintingPolicy());
       Diag(StaticAssertLoc, diag::err_static_assert_failed)
         << Msg.str() << AssertExpr->getSourceRange();
+      Failed = true;
     }
   }
 
-  if (DiagnoseUnexpandedParameterPack(AssertExpr, UPPC_StaticAssertExpression))
-    return 0;
-
   Decl *Decl = StaticAssertDecl::Create(Context, CurContext, StaticAssertLoc,
-                                        AssertExpr, AssertMessage, RParenLoc);
+                                        AssertExpr, AssertMessage, RParenLoc,
+                                        Failed);
 
   CurContext->addDecl(Decl);
   return Decl;

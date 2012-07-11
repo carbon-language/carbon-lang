@@ -1904,7 +1904,7 @@ Sema::InstantiateClass(SourceLocation PointOfInstantiation,
       continue;
 
     if ((*Member)->isInvalidDecl()) {
-      Instantiation->setInvalidDecl(); 
+      Instantiation->setInvalidDecl();
       continue;
     }
 
@@ -1927,6 +1927,13 @@ Sema::InstantiateClass(SourceLocation PointOfInstantiation,
           assert(MSInfo && "no spec info for member enum specialization");
           MSInfo->setTemplateSpecializationKind(TSK_ImplicitInstantiation);
           MSInfo->setPointOfInstantiation(PointOfInstantiation);
+        }
+      } else if (StaticAssertDecl *SA = dyn_cast<StaticAssertDecl>(NewMember)) {
+        if (SA->isFailed()) {
+          // A static_assert failed. Bail out; instantiating this
+          // class is probably not meaningful.
+          Instantiation->setInvalidDecl();
+          break;
         }
       }
 

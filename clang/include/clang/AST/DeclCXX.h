@@ -2892,31 +2892,33 @@ public:
 /// \brief Represents a C++11 static_assert declaration.
 class StaticAssertDecl : public Decl {
   virtual void anchor();
-  Expr *AssertExpr;
+  llvm::PointerIntPair<Expr *, 1, bool> AssertExprAndFailed;
   StringLiteral *Message;
   SourceLocation RParenLoc;
 
   StaticAssertDecl(DeclContext *DC, SourceLocation StaticAssertLoc,
-                   Expr *assertexpr, StringLiteral *message,
-                   SourceLocation RParenLoc)
-  : Decl(StaticAssert, DC, StaticAssertLoc), AssertExpr(assertexpr),
-    Message(message), RParenLoc(RParenLoc) { }
+                   Expr *AssertExpr, StringLiteral *Message,
+                   SourceLocation RParenLoc, bool Failed)
+    : Decl(StaticAssert, DC, StaticAssertLoc),
+      AssertExprAndFailed(AssertExpr, Failed), Message(Message),
+      RParenLoc(RParenLoc) { }
 
 public:
   static StaticAssertDecl *Create(ASTContext &C, DeclContext *DC,
                                   SourceLocation StaticAssertLoc,
                                   Expr *AssertExpr, StringLiteral *Message,
-                                  SourceLocation RParenLoc);
+                                  SourceLocation RParenLoc, bool Failed);
   static StaticAssertDecl *CreateDeserialized(ASTContext &C, unsigned ID);
   
-  Expr *getAssertExpr() { return AssertExpr; }
-  const Expr *getAssertExpr() const { return AssertExpr; }
+  Expr *getAssertExpr() { return AssertExprAndFailed.getPointer(); }
+  const Expr *getAssertExpr() const { return AssertExprAndFailed.getPointer(); }
 
   StringLiteral *getMessage() { return Message; }
   const StringLiteral *getMessage() const { return Message; }
 
+  bool isFailed() const { return AssertExprAndFailed.getInt(); }
+
   SourceLocation getRParenLoc() const { return RParenLoc; }
-  void setRParenLoc(SourceLocation L) { RParenLoc = L; }
 
   SourceRange getSourceRange() const LLVM_READONLY {
     return SourceRange(getLocation(), getRParenLoc());

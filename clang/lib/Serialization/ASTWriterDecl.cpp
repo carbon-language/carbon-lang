@@ -1222,6 +1222,7 @@ void ASTDeclWriter::VisitTypeAliasTemplateDecl(TypeAliasTemplateDecl *D) {
 void ASTDeclWriter::VisitStaticAssertDecl(StaticAssertDecl *D) {
   VisitDecl(D);
   Writer.AddStmt(D->getAssertExpr());
+  Record.push_back(D->isFailed());
   Writer.AddStmt(D->getMessage());
   Writer.AddSourceLocation(D->getRParenLoc(), Record);
   Code = serialization::DECL_STATIC_ASSERT;

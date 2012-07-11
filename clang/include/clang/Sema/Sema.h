@@ -4306,6 +4306,11 @@ public:
                                      Expr *AssertExpr,
                                      Expr *AssertMessageExpr,
                                      SourceLocation RParenLoc);
+  Decl *BuildStaticAssertDeclaration(SourceLocation StaticAssertLoc,
+                                     Expr *AssertExpr,
+                                     StringLiteral *AssertMessageExpr,
+                                     SourceLocation RParenLoc,
+                                     bool Failed);
 
   FriendDecl *CheckFriendTypeDecl(SourceLocation Loc,
                                   SourceLocation FriendLoc,

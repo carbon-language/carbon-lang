@@ -1501,7 +1501,8 @@ void ASTDeclReader::VisitTypeAliasTemplateDecl(TypeAliasTemplateDecl *D) {
 
 void ASTDeclReader::VisitStaticAssertDecl(StaticAssertDecl *D) {
   VisitDecl(D);
-  D->AssertExpr = Reader.ReadExpr(F);
+  D->AssertExprAndFailed.setPointer(Reader.ReadExpr(F));
+  D->AssertExprAndFailed.setInt(Record[Idx++]);
   D->Message = cast<StringLiteral>(Reader.ReadExpr(F));
   D->RParenLoc = ReadSourceLocation(Record, Idx);
 }

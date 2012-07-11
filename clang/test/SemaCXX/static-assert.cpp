@@ -34,3 +34,17 @@ static_assert(false, u"\U000317FF"); // expected-error {{static_assert failed u"
 static_assert(false, u8"Ω"); // expected-error {{static_assert failed u8"\316\251"}}
 static_assert(false, L"\u1234"); // expected-error {{static_assert failed L"\x1234"}}
 static_assert(false, L"\x1ff" "0\x123" "fx\xfffff" "goop"); // expected-error {{static_assert failed L"\x1FF""0\x123""fx\xFFFFFgoop"}}
+
+template<typename T> struct AlwaysFails {
+  // Only give one error here.
+  static_assert(false, ""); // expected-error {{static_assert failed}}
+};
+AlwaysFails<int> alwaysFails;
+
+template<typename T> struct StaticAssertProtected {
+  static_assert(__is_literal(T), ""); // expected-error {{static_assert failed}}
+  static constexpr T t = {}; // no error here
+};
+struct X { ~X(); };
+StaticAssertProtected<int> sap1;
+StaticAssertProtected<X> sap2; // expected-note {{instantiation}}
