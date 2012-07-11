@@ -1,4 +1,4 @@
-.. _cmake:
+.. _building-with-cmake:
 
 ========================
 Building LLVM with CMake

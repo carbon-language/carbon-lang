@@ -20,7 +20,7 @@ User Guides
    Everything from unpacking and compilation of the distribution to execution
    of some tools.
     
-* :ref:`cmake`
+* :ref:`building-with-cmake`
 
    An addendum to the main Getting Started guide for those using the `CMake
    build system <http://www.cmake.org>`_.
