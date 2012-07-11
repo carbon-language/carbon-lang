@@ -2017,7 +2017,7 @@ optimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg, unsigned SrcReg2,
         else
           switch (CC) {
           default:
-            // CPSR can be used mutliple times, we should continue.
+            // CPSR can be used multiple times, we should continue.
             break;
           case ARMCC::VS:
           case ARMCC::VC:
