@@ -1693,7 +1693,6 @@ bool X86FastISel::DoSelectCall(const Instruction *I, const char *MemIntName) {
 
     // Promote the value if needed.
     switch (VA.getLocInfo()) {
-    default: return false;
     case CCValAssign::Full: break;
     case CCValAssign::SExt: {
       assert(VA.getLocVT().isInteger() && !VA.getLocVT().isVector() &&
@@ -1737,6 +1736,14 @@ bool X86FastISel::DoSelectCall(const Instruction *I, const char *MemIntName) {
       ArgVT = VA.getLocVT();
       break;
     }
+    case CCValAssign::VExt: 
+      // VExt has not been implemented, so this should be impossible to reach
+      // for now.  However, fallback to Selection DAG isel once implemented.
+      return false;
+    case CCValAssign::Indirect:
+      // FIXME: Indirect doesn't need extending, but fast-isel doesn't fully
+      // support this.
+      return false;
     }
 
     if (VA.isRegLoc()) {
