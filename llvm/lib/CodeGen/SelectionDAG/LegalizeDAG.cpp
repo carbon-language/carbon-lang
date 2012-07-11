@@ -1127,8 +1127,6 @@ void SelectionDAGLegalize::LegalizeOp(SDNode *Node) {
   if (Node->getOpcode() == ISD::TargetConstant) // Allow illegal target nodes.
     return;
 
-  DebugLoc dl = Node->getDebugLoc();
-
   for (unsigned i = 0, e = Node->getNumValues(); i != e; ++i)
     assert(TLI.getTypeAction(*DAG.getContext(), Node->getValueType(i)) ==
              TargetLowering::TypeLegal &&
