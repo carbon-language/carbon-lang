@@ -1693,7 +1693,7 @@ bool X86FastISel::DoSelectCall(const Instruction *I, const char *MemIntName) {
 
     // Promote the value if needed.
     switch (VA.getLocInfo()) {
-    default: llvm_unreachable("Unknown loc info!");
+    default: return false;
     case CCValAssign::Full: break;
     case CCValAssign::SExt: {
       assert(VA.getLocVT().isInteger() && !VA.getLocVT().isVector() &&
