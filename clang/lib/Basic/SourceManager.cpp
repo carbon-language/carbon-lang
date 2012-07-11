@@ -97,7 +97,10 @@ const llvm::MemoryBuffer *ContentCache::getBuffer(DiagnosticsEngine &Diag,
   }    
 
   std::string ErrorStr;
-  Buffer.setPointer(SM.getFileManager().getBufferForFile(ContentsEntry, &ErrorStr));
+  bool isVolatile = SM.userFilesAreVolatile() && !IsSystemFile;
+  Buffer.setPointer(SM.getFileManager().getBufferForFile(ContentsEntry,
+                                                         &ErrorStr,
+                                                         isVolatile));
 
   // If we were unable to open the file, then we are in an inconsistent
   // situation where the content cache referenced a file which no longer
@@ -367,8 +370,10 @@ LineTableInfo &SourceManager::getLineTable() {
 // Private 'Create' methods.
 //===----------------------------------------------------------------------===//
 
-SourceManager::SourceManager(DiagnosticsEngine &Diag, FileManager &FileMgr)
+SourceManager::SourceManager(DiagnosticsEngine &Diag, FileManager &FileMgr,
+                             bool UserFilesAreVolatile)
   : Diag(Diag), FileMgr(FileMgr), OverridenFilesKeepOriginalName(true),
+    UserFilesAreVolatile(UserFilesAreVolatile),
     ExternalSLocEntries(0), LineTable(0), NumLinearScans(0),
     NumBinaryProbes(0), FakeBufferForRecovery(0),
     FakeContentCacheForRecovery(0) {
@@ -426,7 +431,8 @@ void SourceManager::clearIDTables() {
 /// getOrCreateContentCache - Create or return a cached ContentCache for the
 /// specified file.
 const ContentCache *
-SourceManager::getOrCreateContentCache(const FileEntry *FileEnt) {
+SourceManager::getOrCreateContentCache(const FileEntry *FileEnt,
+                                       bool isSystemFile) {
   assert(FileEnt && "Didn't specify a file entry to use?");
 
   // Do we already have information about this file?
@@ -454,6 +460,8 @@ SourceManager::getOrCreateContentCache(const FileEntry *FileEnt) {
   } else {
     new (Entry) ContentCache(FileEnt);
   }
+
+  Entry->IsSystemFile = isSystemFile;
 
   return Entry;
 }

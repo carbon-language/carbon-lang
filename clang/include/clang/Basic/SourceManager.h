@@ -128,14 +128,20 @@ namespace SrcMgr {
     /// When true, the original entry may be a virtual file that does not
     /// exist.
     unsigned BufferOverridden : 1;
+
+    /// \brief True if this content cache was initially created for a source
+    /// file considered as a system one.
+    unsigned IsSystemFile : 1;
     
     ContentCache(const FileEntry *Ent = 0)
       : Buffer(0, false), OrigEntry(Ent), ContentsEntry(Ent),
-        SourceLineCache(0), NumLines(0), BufferOverridden(false) {}
+        SourceLineCache(0), NumLines(0), BufferOverridden(false),
+        IsSystemFile(false) {}
     
     ContentCache(const FileEntry *Ent, const FileEntry *contentEnt)
       : Buffer(0, false), OrigEntry(Ent), ContentsEntry(contentEnt),
-        SourceLineCache(0), NumLines(0), BufferOverridden(false) {}
+        SourceLineCache(0), NumLines(0), BufferOverridden(false),
+        IsSystemFile(false) {}
     
     ~ContentCache();
     
@@ -143,7 +149,8 @@ namespace SrcMgr {
     /// a non-NULL Buffer or SourceLineCache.  Ownership of allocated memory
     /// is not transferred, so this is a logical error.
     ContentCache(const ContentCache &RHS)
-      : Buffer(0, false), SourceLineCache(0), BufferOverridden(false)
+      : Buffer(0, false), SourceLineCache(0), BufferOverridden(false),
+        IsSystemFile(false)
     {
       OrigEntry = RHS.OrigEntry;
       ContentsEntry = RHS.ContentsEntry;
@@ -534,6 +541,10 @@ class SourceManager : public RefCountedBase<SourceManager> {
   /// files, should report the original file name. Defaults to true.
   bool OverridenFilesKeepOriginalName;
 
+  /// \brief True if non-system source files should be treated as volatile
+  /// (likely to change while trying to use them). Defaults to false.
+  bool UserFilesAreVolatile;
+
   struct OverriddenFilesInfoTy {
     /// \brief Files that have been overriden with the contents from another
     /// file.
@@ -639,7 +650,8 @@ class SourceManager : public RefCountedBase<SourceManager> {
   explicit SourceManager(const SourceManager&);
   void operator=(const SourceManager&);
 public:
-  SourceManager(DiagnosticsEngine &Diag, FileManager &FileMgr);
+  SourceManager(DiagnosticsEngine &Diag, FileManager &FileMgr,
+                bool UserFilesAreVolatile = false);
   ~SourceManager();
 
   void clearIDTables();
@@ -653,6 +665,10 @@ public:
   void setOverridenFilesKeepOriginalName(bool value) {
     OverridenFilesKeepOriginalName = value;
   }
+
+  /// \brief True if non-system source files should be treated as volatile
+  /// (likely to change while trying to use them).
+  bool userFilesAreVolatile() const { return UserFilesAreVolatile; }
 
   /// \brief Create the FileID for a memory buffer that will represent the
   /// FileID for the main source.
@@ -706,7 +722,9 @@ public:
   FileID createFileID(const FileEntry *SourceFile, SourceLocation IncludePos,
                       SrcMgr::CharacteristicKind FileCharacter,
                       int LoadedID = 0, unsigned LoadedOffset = 0) {
-    const SrcMgr::ContentCache *IR = getOrCreateContentCache(SourceFile);
+    const SrcMgr::ContentCache *
+      IR = getOrCreateContentCache(SourceFile,
+                              /*isSystemFile=*/FileCharacter != SrcMgr::C_User);
     assert(IR && "getOrCreateContentCache() cannot return NULL");
     return createFileID(IR, IncludePos, FileCharacter, LoadedID, LoadedOffset);
   }
@@ -1519,7 +1537,8 @@ private:
                       int LoadedID, unsigned LoadedOffset);
 
   const SrcMgr::ContentCache *
-    getOrCreateContentCache(const FileEntry *SourceFile);
+    getOrCreateContentCache(const FileEntry *SourceFile,
+                            bool isSystemFile = false);
 
   /// \brief Create a new ContentCache for the specified  memory buffer.
   const SrcMgr::ContentCache*

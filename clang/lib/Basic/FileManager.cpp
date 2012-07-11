@@ -488,15 +488,21 @@ void FileManager::FixupRelativePath(SmallVectorImpl<char> &path) const {
 }
 
 llvm::MemoryBuffer *FileManager::
-getBufferForFile(const FileEntry *Entry, std::string *ErrorStr) {
+getBufferForFile(const FileEntry *Entry, std::string *ErrorStr,
+                 bool isVolatile) {
   OwningPtr<llvm::MemoryBuffer> Result;
   llvm::error_code ec;
+
+  uint64_t FileSize = Entry->getSize();
+  // If there's a high enough chance that the file have changed since we
+  // got its size, force a stat before opening it.
+  if (isVolatile)
+    FileSize = -1;
 
   const char *Filename = Entry->getName();
   // If the file is already open, use the open file descriptor.
   if (Entry->FD != -1) {
-    ec = llvm::MemoryBuffer::getOpenFile(Entry->FD, Filename, Result,
-                                         Entry->getSize());
+    ec = llvm::MemoryBuffer::getOpenFile(Entry->FD, Filename, Result, FileSize);
     if (ErrorStr)
       *ErrorStr = ec.message();
 
@@ -508,7 +514,7 @@ getBufferForFile(const FileEntry *Entry, std::string *ErrorStr) {
   // Otherwise, open the file.
 
   if (FileSystemOpts.WorkingDir.empty()) {
-    ec = llvm::MemoryBuffer::getFile(Filename, Result, Entry->getSize());
+    ec = llvm::MemoryBuffer::getFile(Filename, Result, FileSize);
     if (ec && ErrorStr)
       *ErrorStr = ec.message();
     return Result.take();
@@ -516,7 +522,7 @@ getBufferForFile(const FileEntry *Entry, std::string *ErrorStr) {
 
   SmallString<128> FilePath(Entry->getName());
   FixupRelativePath(FilePath);
-  ec = llvm::MemoryBuffer::getFile(FilePath.str(), Result, Entry->getSize());
+  ec = llvm::MemoryBuffer::getFile(FilePath.str(), Result, FileSize);
   if (ec && ErrorStr)
     *ErrorStr = ec.message();
   return Result.take();

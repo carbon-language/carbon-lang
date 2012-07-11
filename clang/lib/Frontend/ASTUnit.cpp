@@ -215,7 +215,7 @@ ASTUnit::ASTUnit(bool _MainFileIsAST)
     PreambleRebuildCounter(0), SavedMainFileBuffer(0), PreambleBuffer(0),
     NumWarningsInPreamble(0),
     ShouldCacheCodeCompletionResults(false),
-    IncludeBriefCommentsInCodeCompletion(false),
+    IncludeBriefCommentsInCodeCompletion(false), UserFilesAreVolatile(false),
     CompletionCacheTopLevelHashValue(0),
     PreambleTopLevelHashValue(0),
     CurrentTopLevelHashValue(0),
@@ -658,7 +658,8 @@ ASTUnit *ASTUnit::LoadFromASTFile(const std::string &Filename,
                                   RemappedFile *RemappedFiles,
                                   unsigned NumRemappedFiles,
                                   bool CaptureDiagnostics,
-                                  bool AllowPCHWithCompilerErrors) {
+                                  bool AllowPCHWithCompilerErrors,
+                                  bool UserFilesAreVolatile) {
   OwningPtr<ASTUnit> AST(new ASTUnit(true));
 
   // Recover resources if we crash before exiting this method.
@@ -674,8 +675,10 @@ ASTUnit *ASTUnit::LoadFromASTFile(const std::string &Filename,
   AST->CaptureDiagnostics = CaptureDiagnostics;
   AST->Diagnostics = Diags;
   AST->FileMgr = new FileManager(FileSystemOpts);
+  AST->UserFilesAreVolatile = UserFilesAreVolatile;
   AST->SourceMgr = new SourceManager(AST->getDiagnostics(),
-                                     AST->getFileManager());
+                                     AST->getFileManager(),
+                                     UserFilesAreVolatile);
   AST->HeaderInfo.reset(new HeaderSearch(AST->getFileManager(),
                                          AST->getDiagnostics(),
                                          AST->ASTFileLangOpts,
@@ -1077,7 +1080,8 @@ bool ASTUnit::Parse(llvm::MemoryBuffer *OverrideMainBuffer) {
   LangOpts = &Clang->getLangOpts();
   FileSystemOpts = Clang->getFileSystemOpts();
   FileMgr = new FileManager(FileSystemOpts);
-  SourceMgr = new SourceManager(getDiagnostics(), *FileMgr);
+  SourceMgr = new SourceManager(getDiagnostics(), *FileMgr,
+                                UserFilesAreVolatile);
   TheSema.reset();
   Ctx = 0;
   PP = 0;
@@ -1665,7 +1669,8 @@ StringRef ASTUnit::getMainFileName() const {
 
 ASTUnit *ASTUnit::create(CompilerInvocation *CI,
                          IntrusiveRefCntPtr<DiagnosticsEngine> Diags,
-                         bool CaptureDiagnostics) {
+                         bool CaptureDiagnostics,
+                         bool UserFilesAreVolatile) {
   OwningPtr<ASTUnit> AST;
   AST.reset(new ASTUnit(false));
   ConfigureDiags(Diags, 0, 0, *AST, CaptureDiagnostics);
@@ -1673,7 +1678,9 @@ ASTUnit *ASTUnit::create(CompilerInvocation *CI,
   AST->Invocation = CI;
   AST->FileSystemOpts = CI->getFileSystemOpts();
   AST->FileMgr = new FileManager(AST->FileSystemOpts);
-  AST->SourceMgr = new SourceManager(AST->getDiagnostics(), *AST->FileMgr);
+  AST->UserFilesAreVolatile = UserFilesAreVolatile;
+  AST->SourceMgr = new SourceManager(AST->getDiagnostics(), *AST->FileMgr,
+                                     UserFilesAreVolatile);
 
   return AST.take();
 }
@@ -1689,6 +1696,7 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocationAction(CompilerInvocation *CI,
                                              bool PrecompilePreamble,
                                              bool CacheCodeCompletionResults,
                                     bool IncludeBriefCommentsInCodeCompletion,
+                                             bool UserFilesAreVolatile,
                                              OwningPtr<ASTUnit> *ErrAST) {
   assert(CI && "A CompilerInvocation is required");
 
@@ -1696,7 +1704,7 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocationAction(CompilerInvocation *CI,
   ASTUnit *AST = Unit;
   if (!AST) {
     // Create the AST unit.
-    OwnAST.reset(create(CI, Diags, CaptureDiagnostics));
+    OwnAST.reset(create(CI, Diags, CaptureDiagnostics, UserFilesAreVolatile));
     AST = OwnAST.get();
   }
   
@@ -1859,7 +1867,8 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocation(CompilerInvocation *CI,
                                              bool PrecompilePreamble,
                                              TranslationUnitKind TUKind,
                                              bool CacheCodeCompletionResults,
-                                    bool IncludeBriefCommentsInCodeCompletion) {
+                                    bool IncludeBriefCommentsInCodeCompletion,
+                                             bool UserFilesAreVolatile) {
   // Create the AST unit.
   OwningPtr<ASTUnit> AST;
   AST.reset(new ASTUnit(false));
@@ -1872,6 +1881,7 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocation(CompilerInvocation *CI,
   AST->IncludeBriefCommentsInCodeCompletion
     = IncludeBriefCommentsInCodeCompletion;
   AST->Invocation = CI;
+  AST->UserFilesAreVolatile = UserFilesAreVolatile;
   
   // Recover resources if we crash before exiting this method.
   llvm::CrashRecoveryContextCleanupRegistrar<ASTUnit>
@@ -1898,6 +1908,7 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
                                       bool IncludeBriefCommentsInCodeCompletion,
                                       bool AllowPCHWithCompilerErrors,
                                       bool SkipFunctionBodies,
+                                      bool UserFilesAreVolatile,
                                       OwningPtr<ASTUnit> *ErrAST) {
   if (!Diags.getPtr()) {
     // No diagnostics engine was provided, so create our own diagnostics object
@@ -1957,6 +1968,7 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
   AST->ShouldCacheCodeCompletionResults = CacheCodeCompletionResults;
   AST->IncludeBriefCommentsInCodeCompletion
     = IncludeBriefCommentsInCodeCompletion;
+  AST->UserFilesAreVolatile = UserFilesAreVolatile;
   AST->NumStoredDiagnosticsFromDriver = StoredDiagnostics.size();
   AST->StoredDiagnostics.swap(StoredDiagnostics);
   AST->Invocation = CI;
