@@ -2135,10 +2135,6 @@ void CGDebugInfo::EmitLexicalBlockStart(CGBuilderTy &Builder, SourceLocation Loc
 /// region - end of a DW_TAG_lexical_block.
 void CGDebugInfo::EmitLexicalBlockEnd(CGBuilderTy &Builder, SourceLocation Loc) {
   assert(!LexicalBlockStack.empty() && "Region stack mismatch, stack empty!");
-
-  // Provide an entry in the line table for the end of the block.
-  EmitLocation(Builder, Loc);
-
   LexicalBlockStack.pop_back();
 }
 
