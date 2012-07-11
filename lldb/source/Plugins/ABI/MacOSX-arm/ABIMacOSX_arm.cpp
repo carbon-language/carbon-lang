@@ -555,7 +555,6 @@ bool
 ABIMacOSX_arm::CreateDefaultUnwindPlan (UnwindPlan &unwind_plan)
 {
     uint32_t fp_reg_num = dwarf_r7; // apple uses r7 for all frames. Normal arm uses r11;
-    uint32_t sp_reg_num = dwarf_sp;
     uint32_t pc_reg_num = dwarf_pc;
     
     UnwindPlan::Row row;    
