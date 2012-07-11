@@ -382,17 +382,34 @@ void DiagnosticsEngine::Report(const StoredDiagnostic &storedDiag) {
   CurDiagID = ~0U;
 }
 
-bool DiagnosticsEngine::EmitCurrentDiagnostic() {
-  // Process the diagnostic, sending the accumulated information to the
-  // DiagnosticConsumer.
-  bool Emitted = ProcessDiag();
+bool DiagnosticsEngine::EmitCurrentDiagnostic(bool Force) {
+  assert(getClient() && "DiagnosticClient not set!");
+
+  bool Emitted;
+  if (Force) {
+    Diagnostic Info(this);
+
+    // Figure out the diagnostic level of this message.
+    DiagnosticIDs::Level DiagLevel
+      = Diags->getDiagnosticLevel(Info.getID(), Info.getLocation(), *this);
+
+    Emitted = (DiagLevel != DiagnosticIDs::Ignored);
+    if (Emitted) {
+      // Emit the diagnostic regardless of suppression level.
+      Diags->EmitDiag(*this, DiagLevel);
+    }
+  } else {
+    // Process the diagnostic, sending the accumulated information to the
+    // DiagnosticConsumer.
+    Emitted = ProcessDiag();
+  }
 
   // Clear out the current diagnostic object.
   unsigned DiagID = CurDiagID;
   Clear();
 
   // If there was a delayed diagnostic, emit it now.
-  if (DelayedDiagID && DelayedDiagID != DiagID)
+  if (!Force && DelayedDiagID && DelayedDiagID != DiagID)
     ReportDelayed();
 
   return Emitted;

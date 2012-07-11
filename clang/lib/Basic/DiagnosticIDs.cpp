@@ -357,7 +357,7 @@ DiagnosticIDs::getDiagnosticLevel(unsigned DiagID, SourceLocation Loc,
     return CustomDiagInfo->getLevel(DiagID);
 
   unsigned DiagClass = getBuiltinDiagClass(DiagID);
-  assert(DiagClass != CLASS_NOTE && "Cannot get diagnostic level of a note!");
+  if (DiagClass == CLASS_NOTE) return DiagnosticIDs::Note;
   return getDiagnosticLevel(DiagID, DiagClass, Loc, Diag);
 }
 
@@ -583,24 +583,9 @@ bool DiagnosticIDs::ProcessDiag(DiagnosticsEngine &Diag) const {
   assert(Diag.getClient() && "DiagnosticClient not set!");
 
   // Figure out the diagnostic level of this message.
-  DiagnosticIDs::Level DiagLevel;
   unsigned DiagID = Info.getID();
-
-  if (DiagID >= diag::DIAG_UPPER_LIMIT) {
-    // Handle custom diagnostics, which cannot be mapped.
-    DiagLevel = CustomDiagInfo->getLevel(DiagID);
-  } else {
-    // Get the class of the diagnostic.  If this is a NOTE, map it onto whatever
-    // the diagnostic level was for the previous diagnostic so that it is
-    // filtered the same as the previous diagnostic.
-    unsigned DiagClass = getBuiltinDiagClass(DiagID);
-    if (DiagClass == CLASS_NOTE) {
-      DiagLevel = DiagnosticIDs::Note;
-    } else {
-      DiagLevel = getDiagnosticLevel(DiagID, DiagClass, Info.getLocation(),
-                                     Diag);
-    }
-  }
+  DiagnosticIDs::Level DiagLevel
+    = getDiagnosticLevel(DiagID, Info.getLocation(), Diag);
 
   if (DiagLevel != DiagnosticIDs::Note) {
     // Record that a fatal error occurred only when we see a second
@@ -658,6 +643,14 @@ bool DiagnosticIDs::ProcessDiag(DiagnosticsEngine &Diag) const {
   }
 
   // Finally, report it.
+  EmitDiag(Diag, DiagLevel);
+  return true;
+}
+
+void DiagnosticIDs::EmitDiag(DiagnosticsEngine &Diag, Level DiagLevel) const {
+  Diagnostic Info(&Diag);
+  assert(DiagLevel != DiagnosticIDs::Ignored && "Cannot emit ignored diagnostics!");
+
   Diag.Client->HandleDiagnostic((DiagnosticsEngine::Level)DiagLevel, Info);
   if (Diag.Client->IncludeInDiagnosticCounts()) {
     if (DiagLevel == DiagnosticIDs::Warning)
@@ -665,8 +658,6 @@ bool DiagnosticIDs::ProcessDiag(DiagnosticsEngine &Diag) const {
   }
 
   Diag.CurDiagID = ~0U;
-
-  return true;
 }
 
 bool DiagnosticIDs::isUnrecoverable(unsigned DiagID) const {

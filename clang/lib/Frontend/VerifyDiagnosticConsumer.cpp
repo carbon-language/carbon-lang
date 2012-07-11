@@ -387,7 +387,7 @@ static unsigned PrintUnexpected(DiagnosticsEngine &Diags, SourceManager *SourceM
     OS << ": " << I->second;
   }
 
-  Diags.Report(diag::err_verify_inconsistent_diags)
+  Diags.Report(diag::err_verify_inconsistent_diags).setForceEmit()
     << Kind << /*Unexpected=*/true << OS.str();
   return std::distance(diag_begin, diag_end);
 }
@@ -411,7 +411,7 @@ static unsigned PrintExpected(DiagnosticsEngine &Diags, SourceManager &SourceMgr
     OS << ": " << D.Text;
   }
 
-  Diags.Report(diag::err_verify_inconsistent_diags)
+  Diags.Report(diag::err_verify_inconsistent_diags).setForceEmit()
     << Kind << /*Unexpected=*/false << OS.str();
   return DL.size();
 }

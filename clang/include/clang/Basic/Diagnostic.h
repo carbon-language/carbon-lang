@@ -763,7 +763,9 @@ protected:
   friend class Sema;
 
   /// \brief Emit the current diagnostic and clear the diagnostic state.
-  bool EmitCurrentDiagnostic();
+  ///
+  /// \param Force Emit the diagnostic regardless of suppression settings.
+  bool EmitCurrentDiagnostic(bool Force = false);
 
   unsigned getCurrentDiagID() const { return CurDiagID; }
 
@@ -833,14 +835,20 @@ class DiagnosticBuilder {
   // Emit() would end up with if we used that as our status variable.
   mutable bool IsActive;
 
+  /// \brief Flag indicating that this diagnostic is being emitted via a
+  /// call to ForceEmit.
+  mutable bool IsForceEmit;
+
   void operator=(const DiagnosticBuilder&); // DO NOT IMPLEMENT
   friend class DiagnosticsEngine;
   
   DiagnosticBuilder()
-    : DiagObj(0), NumArgs(0), NumRanges(0), NumFixits(0), IsActive(false) { }
+    : DiagObj(0), NumArgs(0), NumRanges(0), NumFixits(0), IsActive(false),
+      IsForceEmit(false) { }
 
   explicit DiagnosticBuilder(DiagnosticsEngine *diagObj)
-    : DiagObj(diagObj), NumArgs(0), NumRanges(0), NumFixits(0), IsActive(true) {
+    : DiagObj(diagObj), NumArgs(0), NumRanges(0), NumFixits(0), IsActive(true),
+      IsForceEmit(false) {
     assert(diagObj && "DiagnosticBuilder requires a valid DiagnosticsEngine!");
   }
 
@@ -857,6 +865,7 @@ protected:
   void Clear() const {
     DiagObj = 0;
     IsActive = false;
+    IsForceEmit = false;
   }
 
   /// \brief Determine whether this diagnostic is still active.
@@ -879,7 +888,7 @@ protected:
     FlushCounts();
 
     // Process the diagnostic.
-    bool Result = DiagObj->EmitCurrentDiagnostic();
+    bool Result = DiagObj->EmitCurrentDiagnostic(IsForceEmit);
 
     // This diagnostic is dead.
     Clear();
@@ -893,6 +902,7 @@ public:
   DiagnosticBuilder(const DiagnosticBuilder &D) {
     DiagObj = D.DiagObj;
     IsActive = D.IsActive;
+    IsForceEmit = D.IsForceEmit;
     D.Clear();
     NumArgs = D.NumArgs;
     NumRanges = D.NumRanges;
@@ -909,6 +919,12 @@ public:
     Emit();
   }
   
+  /// \brief Forces the diagnostic to be emitted.
+  const DiagnosticBuilder &setForceEmit() const {
+    IsForceEmit = true;
+    return *this;
+  }
+
   /// \brief Conversion of DiagnosticBuilder to bool always returns \c true.
   ///
   /// This allows is to be used in boolean error contexts (where \c true is

@@ -268,6 +268,10 @@ private:
   /// suppressed.
   bool ProcessDiag(DiagnosticsEngine &Diag) const;
 
+  /// \brief Used to emit a diagnostic that is finally fully formed,
+  /// ignoring suppression.
+  void EmitDiag(DiagnosticsEngine &Diag, Level DiagLevel) const;
+
   /// \brief Whether the diagnostic may leave the AST in a state where some
   /// invariants can break.
   bool isUnrecoverable(unsigned DiagID) const;
