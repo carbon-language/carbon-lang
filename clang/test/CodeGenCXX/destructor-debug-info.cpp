@@ -1,6 +1,5 @@
-// RUN: %clang_cc1 -g -S -emit-llvm -o %t %s
-// RUN: grep "i32 20, i32 3, metadata" %t | count 1
-// Check there is a line number entry for line 20 where b1 is destructed.
+// RUN: %clang_cc1 -g -S -emit-llvm %s -o - | FileCheck %s
+
 class A { int a; };
 class B {
 public:
@@ -19,3 +18,5 @@ void foo() {
     fn (b1);
   }
 }
+// Check there is a line number entry for line 19 where b1 is destructed.
+// CHECK: i32 19, i32 3, metadata
