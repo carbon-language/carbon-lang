@@ -10,6 +10,10 @@
 
 #include "exception"
 
+#ifndef __has_include
+#define __has_include(inc) 0
+#endif
+
 #if __APPLE__
   #include <cxxabi.h>
 
@@ -23,14 +27,16 @@
     #define __terminate_handler  __cxxabiapple::__cxa_terminate_handler
     #define __unexpected_handler __cxxabiapple::__cxa_unexpected_handler
   #endif  // _LIBCPPABI_VERSION
-#elif defined(LIBCXXRT)
+#elif defined(LIBCXXRT) || __has_include(<cxxabi.h>)
   #include <cxxabi.h>
   using namespace __cxxabiv1;
-  #define HAVE_DEPENDENT_EH_ABI 1
-#else  // __APPLE__
+  #if defined(LIBCXXRT) || defined(_LIBCPPABI_VERSION)
+    #define HAVE_DEPENDENT_EH_ABI 1
+  #endif
+#else  // __has_include(<cxxabi.h>)
   static std::terminate_handler  __terminate_handler;
   static std::unexpected_handler __unexpected_handler;
-#endif  // __APPLE__
+#endif // __has_include(<cxxabi.h>)
 
 namespace std
 {
@@ -96,12 +102,9 @@ terminate() _NOEXCEPT
 #ifndef LIBCXXRT
 bool uncaught_exception() _NOEXCEPT
 {
-#if __APPLE__
+#if __APPLE__ || defined(_LIBCPPABI_VERSION)
     // on Darwin, there is a helper function so __cxa_get_globals is private
     return __cxa_uncaught_exception();
-#elif LIBCXXRT
-    __cxa_eh_globals * globals = __cxa_get_globals();
-    return (globals->uncaughtExceptions != 0);
 #else  // __APPLE__
     #warning uncaught_exception not yet implemented
     ::abort();
