@@ -304,7 +304,11 @@ Listener::FindNextEventInternal
         // it so it should be okay to get the next event off the queue here - and it might
         // be useful to do that in the "DoOnRemoval".
         lock.Unlock();
-        event_sp->DoOnRemoval();
+        
+        // Don't call DoOnRemoval if you aren't removing the event...
+        if (remove)
+            event_sp->DoOnRemoval();
+            
         return true;
     }
 
