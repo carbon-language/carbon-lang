@@ -112,7 +112,13 @@ public:
 
   size_t size() const { return UniqueFiles.size(); }
 
-  void erase(const FileEntry *Entry) { UniqueFiles.erase(Entry->getName()); }
+  void erase(const FileEntry *Entry) {
+    std::string FullPath(GetFullPath(Entry->getName()));
+
+    // Lowercase string because Windows filesystem is case insensitive.
+    FullPath = StringRef(FullPath).lower();
+    UniqueFiles.erase(FullPath);
+  }
 };
 
 //===----------------------------------------------------------------------===//
