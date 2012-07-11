@@ -1743,27 +1743,7 @@ FindModulesByName (Target *target,
     
     const size_t initial_size = module_list.GetSize ();
 
-    size_t num_matches = 0;
-    
-    if (target)
-    {
-        num_matches = target->GetImages().FindModules (module_spec, module_list);
-    
-        // Not found in our module list for our target, check the main
-        // shared module list in case it is a extra file used somewhere
-        // else
-        if (num_matches == 0)
-        {
-            module_spec.GetArchitecture() = target->GetArchitecture();
-            num_matches = ModuleList::FindSharedModules (module_spec, module_list);
-        }
-    }
-    else
-    {
-        num_matches = ModuleList::FindSharedModules (module_spec,module_list);
-    }
-    
-    if (check_global_list && num_matches == 0)
+    if (check_global_list)
     {
         // Check the global list
         Mutex::Locker locker(Module::GetAllocationModuleCollectionMutex());
@@ -1783,6 +1763,27 @@ FindModulesByName (Target *target,
             }
         }
     }
+    else
+    {
+        if (target)
+        {
+            const size_t num_matches = target->GetImages().FindModules (module_spec, module_list);
+        
+            // Not found in our module list for our target, check the main
+            // shared module list in case it is a extra file used somewhere
+            // else
+            if (num_matches == 0)
+            {
+                module_spec.GetArchitecture() = target->GetArchitecture();
+                ModuleList::FindSharedModules (module_spec, module_list);
+            }
+        }
+        else
+        {
+            ModuleList::FindSharedModules (module_spec,module_list);
+        }
+    }
+    
     return module_list.GetSize () - initial_size;
 }
 
