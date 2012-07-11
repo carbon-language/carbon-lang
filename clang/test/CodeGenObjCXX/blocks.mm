@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -x objective-c++ -fblocks -triple x86_64-apple-darwin -fobjc-runtime=macosx-fragile-10.5 %s -verify -emit-llvm -o %t
+// RUN: %clang_cc1 -x objective-c++ -fblocks -triple x86_64-apple-darwin -fobjc-runtime=macosx-fragile-10.5 %s -verify -std=c++11 -emit-llvm -o %t
 // rdar://8979379
 
 @interface A
@@ -30,7 +30,7 @@ void foo(id <NSObject>(^objectCreationBlock)(void)) {
 
 // Test4
 struct S {
-  S *(^a)() = ^{ // expected-warning {{C++11}}
+  S *(^a)() = ^{
     return this;
   };
 };
@@ -40,7 +40,22 @@ S s;
 struct X {
   void f() {
     ^ {
-      struct Nested { Nested *ptr = this; }; // expected-warning {{C++11}}
+      struct Nested { Nested *ptr = this; };
     } ();
   };
 };
+
+// Regression test for PR13314
+class FooClass { };
+void fun() {
+  FooClass foovar;
+  ^() {  // expected-warning {{expression result unused}}
+    return foovar;
+  };
+}
+void gun() {
+  FooClass foovar;
+  [=]() {  // expected-warning {{expression result unused}}
+    return foovar;
+  };
+}

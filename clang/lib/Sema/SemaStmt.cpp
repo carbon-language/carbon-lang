@@ -2035,7 +2035,7 @@ const VarDecl *Sema::getCopyElisionCandidate(QualType ReturnType,
   // ... the expression is the name of a non-volatile automatic object
   // (other than a function or catch-clause parameter)) ...
   const DeclRefExpr *DR = dyn_cast<DeclRefExpr>(E->IgnoreParens());
-  if (!DR)
+  if (!DR || DR->refersToEnclosingLocal())
     return 0;
   const VarDecl *VD = dyn_cast<VarDecl>(DR->getDecl());
   if (!VD)
