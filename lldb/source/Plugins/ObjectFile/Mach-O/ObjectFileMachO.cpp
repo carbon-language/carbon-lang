@@ -3236,8 +3236,21 @@ ObjectFileMachO::GetUUID (lldb_private::UUID* uuid)
             if (load_cmd.cmd == LoadCommandUUID)
             {
                 const uint8_t *uuid_bytes = m_data.PeekData(offset, 16);
+                
                 if (uuid_bytes)
                 {
+                    // OpenCL on Mac OS X uses the same UUID for each of its object files.
+                    // We pretend these object files have no UUID to prevent crashing.
+                    
+                    const uint8_t opencl_uuid[] = { 0x8c, 0x8e, 0xb3, 0x9b,
+                                                    0x3b, 0xa8,
+                                                    0x4b, 0x16,
+                                                    0xb6, 0xa4,
+                                                    0x27, 0x63, 0xbb, 0x14, 0xf0, 0x0d };
+                    
+                    if (!memcmp(uuid_bytes, opencl_uuid, 16))
+                        return false;
+                    
                     uuid->SetBytes (uuid_bytes);
                     return true;
                 }
