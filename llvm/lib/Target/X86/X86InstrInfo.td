@@ -139,7 +139,8 @@ def X86setcc_c : SDNode<"X86ISD::SETCC_CARRY", SDTX86SetCC_C>;
 
 def X86sahf    : SDNode<"X86ISD::SAHF",     SDTX86sahf>;
 
-def X86rdrand  : SDNode<"X86ISD::RDRAND",     SDTX86rdrand>;
+def X86rdrand  : SDNode<"X86ISD::RDRAND",   SDTX86rdrand,
+                        [SDNPHasChain, SDNPSideEffect]>;
 
 def X86cas : SDNode<"X86ISD::LCMPXCHG_DAG", SDTX86cas,
                         [SDNPHasChain, SDNPInGlue, SDNPOutGlue, SDNPMayStore,

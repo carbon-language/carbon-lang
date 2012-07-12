@@ -9823,8 +9823,8 @@ X86TargetLowering::LowerINTRINSIC_W_CHAIN(SDValue Op, SelectionDAG &DAG) const {
   case Intrinsic::x86_rdrand_32:
   case Intrinsic::x86_rdrand_64: {
     // Emit the node with the right value type.
-    SDValue Result = DAG.getNode(X86ISD::RDRAND, dl,
-                                 DAG.getVTList(Op->getValueType(0), MVT::Glue));
+    SDVTList VTs = DAG.getVTList(Op->getValueType(0), MVT::Glue, MVT::Other);
+    SDValue Result = DAG.getNode(X86ISD::RDRAND, dl, VTs, Op.getOperand(0));
 
     // If the value returned by RDRAND was valid (CF=1), return 1. Otherwise
     // return the value from Rand, which is always 0, casted to i32.
@@ -9838,7 +9838,7 @@ X86TargetLowering::LowerINTRINSIC_W_CHAIN(SDValue Op, SelectionDAG &DAG) const {
 
     // Return { result, isValid, chain }.
     return DAG.getNode(ISD::MERGE_VALUES, dl, Op->getVTList(), Result, isValid,
-                       Op.getOperand(0));
+                       SDValue(Result.getNode(), 2));
   }
   }
 }
