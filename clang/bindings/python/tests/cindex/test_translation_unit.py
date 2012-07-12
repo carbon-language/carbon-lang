@@ -1,3 +1,6 @@
+import gc
+import os
+
 from clang.cindex import CursorKind
 from clang.cindex import Cursor
 from clang.cindex import File
@@ -8,7 +11,6 @@ from clang.cindex import TranslationUnitSaveError
 from clang.cindex import TranslationUnit
 from .util import get_cursor
 from .util import get_tu
-import os
 
 kInputsDir = os.path.join(os.path.dirname(__file__), 'INPUTS')
 
@@ -217,3 +219,23 @@ def test_get_source_range():
     assert r.end.offset == 5
     assert r.start.file.name == 't.c'
     assert r.end.file.name == 't.c'
+
+def test_get_tokens_gc():
+    """Ensures get_tokens() works properly with garbage collection."""
+
+    tu = get_tu('int foo();')
+    r = tu.get_extent('t.c', (0, 10))
+    tokens = list(tu.get_tokens(extent=r))
+
+    assert tokens[0].spelling == 'int'
+    gc.collect()
+    assert tokens[0].spelling == 'int'
+
+    del tokens[1]
+    gc.collect()
+    assert tokens[0].spelling == 'int'
+
+    # May trigger segfault if we don't do our job properly.
+    del tokens
+    gc.collect()
+    gc.collect() # Just in case.

@@ -65,6 +65,8 @@ call is efficient.
 from ctypes import *
 import collections
 
+import clang.enumerations
+
 def get_cindex_library():
     # FIXME: It's probably not the case that the library is actually found in
     # this location. We need a better system of identifying and loading the
@@ -366,6 +368,98 @@ class FixIt(object):
 
     def __repr__(self):
         return "<FixIt range %r, value %r>" % (self.range, self.value)
+
+class TokenGroup(object):
+    """Helper class to facilitate token management.
+
+    Tokens are allocated from libclang in chunks. They must be disposed of as a
+    collective group.
+
+    One purpose of this class is for instances to represent groups of allocated
+    tokens. Each token in a group contains a reference back to an instance of
+    this class. When all tokens from a group are garbage collected, it allows
+    this class to be garbage collected. When this class is garbage collected,
+    it calls the libclang destructor which invalidates all tokens in the group.
+
+    You should not instantiate this class outside of this module.
+    """
+    def __init__(self, tu, memory, count):
+        self._tu = tu
+        self._memory = memory
+        self._count = count
+
+    def __del__(self):
+        lib.clang_disposeTokens(self._tu, self._memory, self._count)
+
+    @staticmethod
+    def get_tokens(tu, extent):
+        """Helper method to return all tokens in an extent.
+
+        This functionality is needed multiple places in this module. We define
+        it here because it seems like a logical place.
+        """
+        tokens_memory = POINTER(Token)()
+        tokens_count = c_uint()
+
+        lib.clang_tokenize(tu, extent, byref(tokens_memory),
+                byref(tokens_count))
+
+        count = int(tokens_count.value)
+
+        # If we get no tokens, no memory was allocated. Be sure not to return
+        # anything and potentially call a destructor on nothing.
+        if count < 1:
+            return
+
+        tokens_array = cast(tokens_memory, POINTER(Token * count)).contents
+
+        token_group = TokenGroup(tu, tokens_memory, tokens_count)
+
+        for i in xrange(0, count):
+            token = Token()
+            token.int_data = tokens_array[i].int_data
+            token.ptr_data = tokens_array[i].ptr_data
+            token._tu = tu
+            token._group = token_group
+
+            yield token
+
+class TokenKind(object):
+    """Describes a specific type of a Token."""
+
+    _value_map = {} # int -> TokenKind
+
+    def __init__(self, value, name):
+        """Create a new TokenKind instance from a numeric value and a name."""
+        self.value = value
+        self.name = name
+
+    def __repr__(self):
+        return 'TokenKind.%s' % (self.name,)
+
+    @staticmethod
+    def from_value(value):
+        """Obtain a registered TokenKind instance from its value."""
+        result = TokenKind._value_map.get(value, None)
+
+        if result is None:
+            raise ValueError('Unknown TokenKind: %d' % value)
+
+        return result
+
+    @staticmethod
+    def register(value, name):
+        """Register a new TokenKind enumeration.
+
+        This should only be called at module load time by code within this
+        package.
+        """
+        if value in TokenKind._value_map:
+            raise ValueError('TokenKind already registered: %d' % value)
+
+        kind = TokenKind(value, name)
+        TokenKind._value_map[value] = kind
+        setattr(TokenKind, name, kind)
 
 ### Cursor Kinds ###
 
@@ -1180,6 +1274,14 @@ class Cursor(Structure):
         lib.clang_visitChildren(self, callbacks['cursor_visit'](visitor),
             children)
         return iter(children)
+
+    def get_tokens(self):
+        """Obtain Token instances formulating that compose this Cursor.
+
+        This is a generator for Token instances. It returns all tokens which
+        occupy the extent this cursor occupies.
+        """
+        return TokenGroup.get_tokens(self._tu, self.extent)
 
     @staticmethod
     def from_result(res, fn, args):
@@ -2058,6 +2160,19 @@ class TranslationUnit(ClangObject):
             return CodeCompletionResults(ptr)
         return None
 
+    def get_tokens(self, locations=None, extent=None):
+        """Obtain tokens in this translation unit.
+
+        This is a generator for Token instances. The caller specifies a range
+        of source code to obtain tokens for. The range can be specified as a
+        2-tuple of SourceLocation or as a SourceRange. If both are defined,
+        behavior is undefined.
+        """
+        if locations is not None:
+            extent = SourceRange(start=locations[0], end=locations[1])
+
+        return TokenGroup.get_tokens(self, extent)
+
 class File(ClangObject):
     """
     The File class represents a particular source file that is part of a
@@ -2226,6 +2341,52 @@ class CompilationDatabase(ClangObject):
         """
         return lib.clang_CompilationDatabase_getCompileCommands(self, filename)
 
+class Token(Structure):
+    """Represents a single token from the preprocessor.
+
+    Tokens are effectively segments of source code. Source code is first parsed
+    into tokens before being converted into the AST and Cursors.
+
+    Tokens are obtained from parsed TranslationUnit instances. You currently
+    can't create tokens manually.
+    """
+    _fields_ = [
+        ('int_data', c_uint * 4),
+        ('ptr_data', c_void_p)
+    ]
+
+    @property
+    def spelling(self):
+        """The spelling of this token.
+
+        This is the textual representation of the token in source.
+        """
+        return lib.clang_getTokenSpelling(self._tu, self)
+
+    @property
+    def kind(self):
+        """Obtain the TokenKind of the current token."""
+        return TokenKind.from_value(lib.clang_getTokenKind(self))
+
+    @property
+    def location(self):
+        """The SourceLocation this Token occurs at."""
+        return lib.clang_getTokenLocation(self._tu, self)
+
+    @property
+    def extent(self):
+        """The SourceRange this Token occupies."""
+        return lib.clang_getTokenExtent(self._tu, self)
+
+    @property
+    def cursor(self):
+        """The Cursor this Token corresponds to."""
+        cursor = Cursor()
+
+        lib.clang_annotateTokens(self._tu, byref(self), 1, byref(cursor))
+
+        return cursor
+
 # Now comes the plumbing to hook up the C library.
 
 # Register callback types in common container.
@@ -2240,8 +2401,8 @@ def register_functions(lib):
     to call out to the shared library.
     """
     # Functions are registered in strictly alphabetical order.
-    #lib.clang_annotateTokens.argtype = [TranslationUnit, POINTER(Token),
-    #                                    c_uint, POINTER(Cursor)]
+    lib.clang_annotateTokens.argtype = [TranslationUnit, POINTER(Token),
+                                        c_uint, POINTER(Cursor)]
 
     lib.clang_CompilationDatabase_dispose.argtypes = [c_object_p]
 
@@ -2309,7 +2470,7 @@ def register_functions(lib):
 
     lib.clang_disposeString.argtypes = [_CXString]
 
-    #lib.clang_disposeTokens.argtype = [TranslationUnit, POINTER(Token), c_uint]
+    lib.clang_disposeTokens.argtype = [TranslationUnit, POINTER(Token), c_uint]
 
     lib.clang_disposeTranslationUnit.argtypes = [TranslationUnit]
 
@@ -2543,19 +2704,18 @@ def register_functions(lib):
     lib.clang_getTemplateCursorKind.argtypes = [Cursor]
     lib.clang_getTemplateCursorKind.restype = c_uint
 
-    #lib.clang_getTokenExtent.argtypes = [TranslationUnit, Token]
-    #lib.clang_getTokenExtent.restype = SourceRange
+    lib.clang_getTokenExtent.argtypes = [TranslationUnit, Token]
+    lib.clang_getTokenExtent.restype = SourceRange
 
-    #lib.clang_getTokenKind.argtypes = [Token]
-    #lib.clang_getTokenKind.restype = c_uint
-    #lib.clang_getTokenKind.errcheck = TokenKind.from_result
+    lib.clang_getTokenKind.argtypes = [Token]
+    lib.clang_getTokenKind.restype = c_uint
 
-    #lib.clang_getTokenLocation.argtype = [TranslationUnit, Token]
-    #lib.clang_getTokenLocation.restype = SourceLocation
+    lib.clang_getTokenLocation.argtype = [TranslationUnit, Token]
+    lib.clang_getTokenLocation.restype = SourceLocation
 
-    #lib.clang_getTokenSpelling.argtype = [TranslationUnit, Token]
-    #lib.clang_getTokenSpelling.restype = _CXString
-    #lib.clang_getTokenSpelling.errcheck = _CXString.from_result
+    lib.clang_getTokenSpelling.argtype = [TranslationUnit, Token]
+    lib.clang_getTokenSpelling.restype = _CXString
+    lib.clang_getTokenSpelling.errcheck = _CXString.from_result
 
     lib.clang_getTranslationUnitCursor.argtypes = [TranslationUnit]
     lib.clang_getTranslationUnitCursor.restype = Cursor
@@ -2646,14 +2806,20 @@ def register_functions(lib):
         c_uint]
     lib.clang_saveTranslationUnit.restype = c_int
 
-    #lib.clang_tokenize.argtypes = [TranslationUnit, SourceRange,
-    #    POINTER(POINTER(Token)), POINTER(c_uint)]
+    lib.clang_tokenize.argtypes = [TranslationUnit, SourceRange,
+        POINTER(POINTER(Token)), POINTER(c_uint)]
 
     lib.clang_visitChildren.argtypes = [Cursor, callbacks['cursor_visit'],
         py_object]
     lib.clang_visitChildren.restype = c_uint
 
 register_functions(lib)
+
+def register_enumerations():
+    for name, value in clang.enumerations.TokenKinds:
+        TokenKind.register(value, name)
+
+register_enumerations()
 
 __all__ = [
     'CodeCompletionResults',
@@ -2668,6 +2834,8 @@ __all__ = [
     'Index',
     'SourceLocation',
     'SourceRange',
+    'TokenKind',
+    'Token',
     'TranslationUnitLoadError',
     'TranslationUnit',
     'TypeKind',
