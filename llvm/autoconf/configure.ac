@@ -645,7 +645,7 @@ case "$enableval" in
   *) AC_MSG_ERROR([Invalid setting for --enable-timestamps. Use "yes" or "no"]) ;;
 esac
 AC_DEFINE_UNQUOTED([ENABLE_TIMESTAMPS],$ENABLE_TIMESTAMPS,
-                   [Define if timestamp information (e.g., __DATE___) is allowed])
+                   [Define if timestamp information (e.g., __DATE__) is allowed])
 
 dnl Allow specific targets to be specified for building (or not)
 TARGETS_TO_BUILD=""
