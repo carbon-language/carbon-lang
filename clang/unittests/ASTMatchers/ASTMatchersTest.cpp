@@ -276,6 +276,18 @@ TEST(DeclarationMatcher, ClassIsDerived) {
                                        isDerivedFrom("Base2")))))));
 }
 
+TEST(AllOf, AllOverloadsWork) {
+  const char Program[] =
+      "struct T { }; int f(int, T*); void g(int x) { T t; f(x, &t); }";
+  EXPECT_TRUE(matches(Program,
+      call(allOf(callee(function(hasName("f"))),
+                 hasArgument(0, declarationReference(to(variable())))))));
+  EXPECT_TRUE(matches(Program,
+      call(allOf(callee(function(hasName("f"))),
+                 hasArgument(0, declarationReference(to(variable()))),
+                 hasArgument(1, hasType(pointsTo(record(hasName("T")))))))));
+}
+
 TEST(DeclarationMatcher, MatchAnyOf) {
   DeclarationMatcher YOrZDerivedFromX =
       record(anyOf(hasName("Y"), allOf(isDerivedFrom("X"), hasName("Z"))));
@@ -896,6 +908,20 @@ TEST(MemberExpression, MatchesStaticVariable) {
               memberExpression()));
   EXPECT_TRUE(notMatches("class Y { void x() { Y::y; } static int y; };",
               memberExpression()));
+}
+
+TEST(IsInteger, MatchesIntegers) {
+  EXPECT_TRUE(matches("int i = 0;", variable(hasType(isInteger()))));
+  EXPECT_TRUE(matches("long long i = 0; void f(long long) { }; void g() {f(i);}",
+                      call(hasArgument(0, declarationReference(
+                          to(variable(hasType(isInteger()))))))));
+}
+
+TEST(IsInteger, ReportsNoFalsePositives) {
+  EXPECT_TRUE(notMatches("int *i;", variable(hasType(isInteger()))));
+  EXPECT_TRUE(notMatches("struct T {}; T t; void f(T *) { }; void g() {f(&t);}",
+                      call(hasArgument(0, declarationReference(
+                          to(variable(hasType(isInteger()))))))));
 }
 
 TEST(IsArrow, MatchesMemberVariablesViaArrow) {
@@ -1747,6 +1773,20 @@ TEST(For, FindsForLoops) {
   EXPECT_TRUE(matches("void f() { if(true) for(;;); }", forStmt()));
 }
 
+TEST(For, ForLoopInternals) {
+  EXPECT_TRUE(matches("void f(){ int i; for (; i < 3 ; ); }",
+                      forStmt(hasCondition(anything()))));
+  EXPECT_TRUE(matches("void f() { for (int i = 0; ;); }",
+                      forStmt(hasLoopInit(anything()))));
+}
+
+TEST(For, NegativeForLoopInternals) {
+  EXPECT_TRUE(notMatches("void f(){ for (int i = 0; ; ++i); }",
+                         forStmt(hasCondition(expression()))));
+  EXPECT_TRUE(notMatches("void f() {int i; for (; i < 4; ++i) {} }",
+                         forStmt(hasLoopInit(anything()))));
+}
+
 TEST(For, ReportsNoFalsePositives) {
   EXPECT_TRUE(notMatches("void f() { ; }", forStmt()));
   EXPECT_TRUE(notMatches("void f() { if(true); }", forStmt()));
@@ -1767,13 +1807,15 @@ TEST(CompoundStatement, DoesNotMatchEmptyStruct) {
               compoundStatement()));
 }
 
-TEST(HasBody, FindsBodyOfForLoop) {
-  StatementMatcher HasCompoundStatementBody =
-      forStmt(hasBody(compoundStatement()));
+TEST(HasBody, FindsBodyOfForWhileDoLoops) {
   EXPECT_TRUE(matches("void f() { for(;;) {} }",
-              HasCompoundStatementBody));
+              forStmt(hasBody(compoundStatement()))));
   EXPECT_TRUE(notMatches("void f() { for(;;); }",
-              HasCompoundStatementBody));
+              forStmt(hasBody(compoundStatement()))));
+  EXPECT_TRUE(matches("void f() { while(true) {} }",
+              whileStmt(hasBody(compoundStatement()))));
+  EXPECT_TRUE(matches("void f() { do {} while(true); }",
+              doStmt(hasBody(compoundStatement()))));
 }
 
 TEST(HasAnySubstatement, MatchesForTopLevelCompoundStatement) {

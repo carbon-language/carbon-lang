@@ -471,6 +471,31 @@ const internal::VariadicDynCastAllOfMatcher<Stmt, IfStmt> ifStmt;
 const internal::VariadicDynCastAllOfMatcher<
   Stmt, ForStmt> forStmt;
 
+/// \brief Matches the increment statement of a for loop.
+///
+/// Example:
+///     forStmt(hasIncrement(unaryOperator(hasOperatorName("++"))))
+/// matches '++x' in
+///     for (x; x < N; ++x) { }
+AST_MATCHER_P(ForStmt, hasIncrement, internal::Matcher<Stmt>,
+              InnerMatcher) {
+  const Stmt *const Increment = Node.getInc();
+  return (Increment != NULL &&
+          InnerMatcher.matches(*Increment, Finder, Builder));
+}
+
+/// \brief Matches the initialization statement of a for loop.
+///
+/// Example:
+///     forStmt(hasLoopInit(declarationStatement()))
+/// matches 'int x = 0' in
+///     for (int x = 0; x < N; ++x) { }
+AST_MATCHER_P(ForStmt, hasLoopInit, internal::Matcher<Stmt>,
+              InnerMatcher) {
+  const Stmt *const Init = Node.getInit();
+  return (Init != NULL && InnerMatcher.matches(*Init, Finder, Builder));
+}
+
 /// \brief Matches while statements.
 ///
 /// Given
@@ -702,7 +727,7 @@ template<typename C1, typename C2, typename C3>
 internal::PolymorphicMatcherWithParam2<internal::AllOfMatcher, C1,
     internal::PolymorphicMatcherWithParam2<internal::AllOfMatcher, C2, C3> >
 allOf(const C1& P1, const C2& P2, const C3& P3) {
-  return AllOf(P1, AllOf(P2, P3));
+  return allOf(P1, allOf(P2, P3));
 }
 /// @}
 
@@ -1334,8 +1359,8 @@ AST_MATCHER_P(FunctionDecl, returns, internal::Matcher<QualType>, Matcher) {
   return Matcher.matches(Node.getResultType(), Finder, Builder);
 }
 
-/// \brief Matches the condition expression of an if statement or conditional
-/// operator.
+/// \brief Matches the condition expression of an if statement, for loop,
+/// or conditional operator.
 ///
 /// Example matches true (matcher = hasCondition(boolLiteral(equals(true))))
 ///   if (true) {}
@@ -1343,8 +1368,11 @@ AST_POLYMORPHIC_MATCHER_P(hasCondition, internal::Matcher<Expr>,
                           InnerMatcher) {
   TOOLING_COMPILE_ASSERT(
     (llvm::is_base_of<IfStmt, NodeType>::value) ||
+    (llvm::is_base_of<ForStmt, NodeType>::value) ||
+    (llvm::is_base_of<WhileStmt, NodeType>::value) ||
+    (llvm::is_base_of<DoStmt, NodeType>::value) ||
     (llvm::is_base_of<ConditionalOperator, NodeType>::value),
-    has_condition_requires_if_statement_or_conditional_operator);
+    has_condition_requires_if_statement_conditional_operator_or_loop);
   const Expr *const Condition = Node.getCond();
   return (Condition != NULL &&
           InnerMatcher.matches(*Condition, Finder, Builder));
@@ -1393,7 +1421,8 @@ AST_MATCHER_P(ArraySubscriptExpr, hasBase,
   return false;
 }
 
-/// \brief Matches a 'for' statement that has a given body.
+/// \brief Matches a 'for', 'while', or 'do while' statement that has
+/// a given body.
 ///
 /// Given
 ///   for (;;) {}
@@ -1401,8 +1430,13 @@ AST_MATCHER_P(ArraySubscriptExpr, hasBase,
 ///   matches 'for (;;) {}'
 /// with compoundStatement()
 ///   matching '{}'
-AST_MATCHER_P(ForStmt, hasBody, internal::Matcher<Stmt>,
-              InnerMatcher) {
+AST_POLYMORPHIC_MATCHER_P(hasBody, internal::Matcher<Stmt>,
+                          InnerMatcher) {
+  TOOLING_COMPILE_ASSERT(
+      (llvm::is_base_of<DoStmt, NodeType>::value) ||
+      (llvm::is_base_of<ForStmt, NodeType>::value) ||
+      (llvm::is_base_of<WhileStmt, NodeType>::value),
+      has_body_requires_for_while_or_do_statement);
   const Stmt *const Statement = Node.getBody();
   return (Statement != NULL &&
           InnerMatcher.matches(*Statement, Finder, Builder));
@@ -1612,6 +1646,18 @@ AST_MATCHER_P(CXXMethodDecl, ofClass,
 ///   matches this->x, x, y.x, a, this->b
 inline internal::Matcher<MemberExpr> isArrow() {
   return makeMatcher(new internal::IsArrowMatcher());
+}
+
+/// \brief Matches QualType nodes that are of integer type.
+///
+/// Given
+///   void a(int);
+///   void b(long);
+///   void c(double);
+/// function(hasAnyParameter(hasType(isInteger())))
+/// matches "a(int)", "b(long)", but not "c(double)".
+AST_MATCHER(QualType, isInteger) {
+    return Node->isIntegerType();
 }
 
 /// \brief Matches QualType nodes that are const-qualified, i.e., that
