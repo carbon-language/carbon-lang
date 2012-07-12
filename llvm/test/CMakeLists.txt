@@ -13,7 +13,9 @@ add_lit_testsuite(check-llvm "Running the LLVM regression tests"
          llvm_unit_site_config=${CMAKE_CURRENT_BINARY_DIR}/Unit/lit.site.cfg
   DEPENDS UnitTests
           BugpointPasses LLVMHello
-          llc lli llvm-ar llvm-as llvm-dis llvm-extract llvm-dwarfdump
+          llc lli llvm-ar llvm-as
+          llvm-diff
+          llvm-dis llvm-extract llvm-dwarfdump
           llvm-link llvm-mc llvm-nm llvm-objdump llvm-readobj
           macho-dump opt
           FileCheck count not
