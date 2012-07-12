@@ -40,6 +40,13 @@ static bool ShrinkDemandedConstant(Instruction *I, unsigned OpNo,
 
   // This instruction is producing bits that are not demanded. Shrink the RHS.
   Demanded &= OpC->getValue();
+  if (I->getOpcode() == Instruction::Add) {
+    // However, if the instruction is an add then the constant may be negated
+    // when the opcode is changed to sub. Check if the transformation is really
+    // shrinking the constant.
+    if (Demanded.abs().getActiveBits() > OpC->getValue().abs().getActiveBits())
+      return false;
+  }
   I->setOperand(OpNo, ConstantInt::get(OpC->getType(), Demanded));
   return true;
 }
