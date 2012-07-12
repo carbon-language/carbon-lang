@@ -45,6 +45,9 @@ int test_html9(int);
  */
 int test_html10(int);
 
+// expected-warning@+1 {{HTML closing tag 'br' is forbidden}}
+/// <br></br>
+int test_html11(int);
 
 /// <blockquote>Meow</blockquote>
 int test_html_nesting1(int);

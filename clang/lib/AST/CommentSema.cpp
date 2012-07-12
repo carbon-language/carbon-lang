@@ -289,7 +289,7 @@ HTMLOpenTagComment *Sema::actOnHTMLOpenTagFinish(
   Tag->setGreaterLoc(GreaterLoc);
   if (IsSelfClosing)
     Tag->setSelfClosing();
-  else
+  else if (!isHTMLCloseTagForbidden(Tag->getTagName()))
     HTMLOpenTags.push_back(Tag);
   return Tag;
 }
@@ -299,6 +299,12 @@ HTMLCloseTagComment *Sema::actOnHTMLCloseTag(SourceLocation LocBegin,
                                              StringRef TagName) {
   HTMLCloseTagComment *HCT =
       new (Allocator) HTMLCloseTagComment(LocBegin, LocEnd, TagName);
+  if (isHTMLCloseTagForbidden(TagName)) {
+    Diag(HCT->getLocation(), diag::warn_doc_html_close_forbidden)
+      << TagName << HCT->getSourceRange();
+    return HCT;
+  }
+
   bool FoundOpen = false;
   for (SmallVectorImpl<HTMLOpenTagComment *>::const_reverse_iterator
        I = HTMLOpenTags.rbegin(), E = HTMLOpenTags.rend();
@@ -321,7 +327,7 @@ HTMLCloseTagComment *Sema::actOnHTMLCloseTag(SourceLocation LocBegin,
     if (LastNotClosedTagName == TagName)
       break;
 
-    if (!HTMLOpenTagNeedsClosing(LastNotClosedTagName))
+    if (isHTMLCloseTagOptional(LastNotClosedTagName))
       continue;
 
     bool OpenLineInvalid;
@@ -448,12 +454,29 @@ bool Sema::isInlineCommand(StringRef Name) {
       .Default(false);
 }
 
-bool Sema::HTMLOpenTagNeedsClosing(StringRef Name) {
+bool Sema::isHTMLCloseTagOptional(StringRef Name) {
   return llvm::StringSwitch<bool>(Name)
-      .Case("br", false)
-      .Case("hr", false)
-      .Case("li", false)
-      .Default(true);
+      .Case("p", true)
+      .Case("li", true)
+      .Case("dt", true)
+      .Case("dd", true)
+      .Case("tr", true)
+      .Case("th", true)
+      .Case("td", true)
+      .Case("thead", true)
+      .Case("tfoot", true)
+      .Case("tbody", true)
+      .Case("colgroup", true)
+      .Default(false);
+}
+
+bool Sema::isHTMLCloseTagForbidden(StringRef Name) {
+  return llvm::StringSwitch<bool>(Name)
+      .Case("br", true)
+      .Case("hr", true)
+      .Case("img", true)
+      .Case("col", true)
+      .Default(false);
 }
 
 } // end namespace comments

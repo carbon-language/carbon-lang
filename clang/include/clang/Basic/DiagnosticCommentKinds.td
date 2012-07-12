@@ -26,6 +26,10 @@ def note_doc_html_tag_started_here : Note<
 
 // HTML semantic errors
 
+def warn_doc_html_close_forbidden : Warning<
+  "HTML closing tag '%0' is forbidden">,
+  InGroup<DocumentationHTML>, DefaultIgnore;
+
 def warn_doc_html_close_unbalanced : Warning<
   "HTML closing tag does not match any opening tag">,
   InGroup<DocumentationHTML>, DefaultIgnore;

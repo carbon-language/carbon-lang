@@ -156,7 +156,9 @@ public:
   unsigned getBlockCommandNumArgs(StringRef Name);
 
   bool isInlineCommand(StringRef Name);
-  bool HTMLOpenTagNeedsClosing(StringRef Name);
+
+  bool isHTMLCloseTagOptional(StringRef Name);
+  bool isHTMLCloseTagForbidden(StringRef Name);
 };
 
 } // end namespace comments
