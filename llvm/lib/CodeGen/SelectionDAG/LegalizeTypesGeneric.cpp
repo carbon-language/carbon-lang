@@ -168,12 +168,22 @@ void DAGTypeLegalizer::ExpandRes_EXTRACT_VECTOR_ELT(SDNode *N, SDValue &Lo,
                                                     SDValue &Hi) {
   SDValue OldVec = N->getOperand(0);
   unsigned OldElts = OldVec.getValueType().getVectorNumElements();
+  EVT OldEltVT = OldVec.getValueType().getVectorElementType();
   DebugLoc dl = N->getDebugLoc();
 
   // Convert to a vector of the expanded element type, for example
   // <3 x i64> -> <6 x i32>.
   EVT OldVT = N->getValueType(0);
   EVT NewVT = TLI.getTypeToTransformTo(*DAG.getContext(), OldVT);
+
+  if (OldVT != OldEltVT) {
+    // The result of EXTRACT_VECTOR_ELT may be larger than the element type of
+    // the input vector.  If so, extend the elements of the input vector to the
+    // same bitwidth as the result before expanding.
+    assert(OldEltVT.bitsLT(OldVT) && "Result type smaller then element type!");
+    EVT NVecVT = EVT::getVectorVT(*DAG.getContext(), OldVT, OldElts);
+    OldVec = DAG.getNode(ISD::ANY_EXTEND, dl, NVecVT, N->getOperand(0));
+  }
 
   SDValue NewVec = DAG.getNode(ISD::BITCAST, dl,
                                EVT::getVectorVT(*DAG.getContext(),
