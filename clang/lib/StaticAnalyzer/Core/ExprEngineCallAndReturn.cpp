@@ -230,10 +230,6 @@ static unsigned getNumberStackFrames(const LocationContext *LCtx) {
 
 // Determine if we should inline the call.
 bool ExprEngine::shouldInlineDecl(const Decl *D, ExplodedNode *Pred) {
-  // FIXME: default constructors don't have bodies.
-  if (!D->hasBody())
-    return false;
-
   AnalysisDeclContext *CalleeADC = AMgr.getAnalysisDeclContext(D);
   const CFG *CalleeCFG = CalleeADC->getCFG();
 
@@ -276,13 +272,13 @@ bool ExprEngine::inlineCall(ExplodedNodeSet &Dst,
   if (!getAnalysisManager().shouldInlineCall())
     return false;
 
-  const StackFrameContext *CallerSFC =
-    Pred->getLocationContext()->getCurrentStackFrame();
-
-  const Decl *D = Call.getDefinition();
-  if (!D)
+  bool IsDynamicDispatch;
+  const Decl *D = Call.getDefinition(IsDynamicDispatch);
+  if (!D || IsDynamicDispatch)
     return false;
 
+  const LocationContext *CurLC = Pred->getLocationContext();
+  const StackFrameContext *CallerSFC = CurLC->getCurrentStackFrame();
   const LocationContext *ParentOfCallee = 0;
 
   switch (Call.getKind()) {
@@ -313,7 +309,7 @@ bool ExprEngine::inlineCall(ExplodedNodeSet &Dst,
   case CE_ObjCPropertyAccess:
     // These always use dynamic dispatch; enabling inlining means assuming
     // that a particular method will be called at runtime.
-    return false;
+    llvm_unreachable("Dynamic dispatch should be handled above.");
   }
 
   if (!shouldInlineDecl(D, Pred))
@@ -332,7 +328,7 @@ bool ExprEngine::inlineCall(ExplodedNodeSet &Dst,
                              currentBuilderContext->getBlock(),
                              currentStmtIdx);
   
-  CallEnter Loc(CallE, CalleeSFC, Pred->getLocationContext());
+  CallEnter Loc(CallE, CalleeSFC, CurLC);
 
   // Construct a new state which contains the mapping from actual to
   // formal arguments.

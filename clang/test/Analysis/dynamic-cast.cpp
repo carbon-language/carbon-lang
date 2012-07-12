@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple i386-apple-darwin10 -analyze -analyzer-checker=core -verify %s
+// RUN: %clang_cc1 -triple i386-apple-darwin10 -analyze -analyzer-checker=core -analyzer-ipa=none -verify %s
 
 class A {
 public:
@@ -196,6 +196,9 @@ int testDynCastMostLikelyWillFail(C *c) {
   } else {
       res = 0;
   }
+
+  // Note: IPA is turned off for this test because the code below shows how the
+  // dynamic_cast could succeed.
   return *res; // expected-warning{{Dereference of null pointer}}
 }
 

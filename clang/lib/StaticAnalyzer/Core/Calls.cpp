@@ -221,7 +221,9 @@ bool CallEvent::mayBeInlined(const Stmt *S) {
 
 CallEvent::param_iterator
 AnyFunctionCall::param_begin(bool UseDefinitionParams) const {
-  const Decl *D = UseDefinitionParams ? getDefinition() : getDecl();
+  bool IgnoredDynamicDispatch;
+  const Decl *D = UseDefinitionParams ? getDefinition(IgnoredDynamicDispatch)
+                                      : getDecl();
   if (!D)
     return 0;
 
@@ -230,7 +232,9 @@ AnyFunctionCall::param_begin(bool UseDefinitionParams) const {
 
 CallEvent::param_iterator
 AnyFunctionCall::param_end(bool UseDefinitionParams) const {
-  const Decl *D = UseDefinitionParams ? getDefinition() : getDecl();
+  bool IgnoredDynamicDispatch;
+  const Decl *D = UseDefinitionParams ? getDefinition(IgnoredDynamicDispatch)
+                                      : getDecl();
   if (!D)
     return 0;
 
@@ -329,6 +333,56 @@ void CallEvent::dump(raw_ostream &Out) const {
 }
 
 
+void CXXInstanceCall::addExtraInvalidatedRegions(RegionList &Regions) const {
+  if (const MemRegion *R = getCXXThisVal().getAsRegion())
+    Regions.push_back(R);
+}
+
+static const CXXMethodDecl *devirtualize(const CXXMethodDecl *MD, SVal ThisVal){
+  const MemRegion *R = ThisVal.getAsRegion();
+  if (!R)
+    return 0;
+
+  const TypedValueRegion *TR = dyn_cast<TypedValueRegion>(R->StripCasts());
+  if (!TR)
+    return 0;
+
+  const CXXRecordDecl *RD = TR->getValueType()->getAsCXXRecordDecl();
+  if (!RD)
+    return 0;
+
+  RD = RD->getDefinition();
+  if (!RD)
+    return 0;
+
+  const CXXMethodDecl *Result = MD->getCorrespondingMethodInClass(RD);
+  const FunctionDecl *Definition;
+  if (!Result->hasBody(Definition))
+    return 0;
+
+  return cast<CXXMethodDecl>(Definition);
+}
+
+
+const Decl *CXXInstanceCall::getDefinition(bool &IsDynamicDispatch) const {
+  const Decl *D = SimpleCall::getDefinition(IsDynamicDispatch);
+  if (!D)
+    return 0;
+
+  const CXXMethodDecl *MD = cast<CXXMethodDecl>(D);
+  if (!MD->isVirtual())
+    return MD;
+
+  // If the method is virtual, see if we can find the actual implementation
+  // based on context-sensitivity.
+  if (const CXXMethodDecl *Devirtualized = devirtualize(MD, getCXXThisVal()))
+    return Devirtualized;
+
+  IsDynamicDispatch = true;
+  return MD;
+}
+
+
 SVal CXXMemberCall::getCXXThisVal() const {
   const Expr *Base = getOriginExpr()->getImplicitObjectArgument();
 
@@ -340,21 +394,10 @@ SVal CXXMemberCall::getCXXThisVal() const {
   return getSVal(Base);
 }
 
-void CXXMemberCall::addExtraInvalidatedRegions(RegionList &Regions) const {    
-  if (const MemRegion *R = getCXXThisVal().getAsRegion())
-    Regions.push_back(R);
-}
-
 
 SVal CXXMemberOperatorCall::getCXXThisVal() const {
   const Expr *Base = getOriginExpr()->getArg(0);
   return getSVal(Base);
-}
-
-void
-CXXMemberOperatorCall::addExtraInvalidatedRegions(RegionList &Regions) const {
-  if (const MemRegion *R = getCXXThisVal().getAsRegion())
-    Regions.push_back(R);
 }
 
 
@@ -425,10 +468,30 @@ void CXXDestructorCall::addExtraInvalidatedRegions(RegionList &Regions) const {
     Regions.push_back(Target);
 }
 
+const Decl *CXXDestructorCall::getDefinition(bool &IsDynamicDispatch) const {
+  const Decl *D = AnyFunctionCall::getDefinition(IsDynamicDispatch);
+  if (!D)
+    return 0;
+
+  const CXXMethodDecl *MD = cast<CXXMethodDecl>(D);
+  if (!MD->isVirtual())
+    return MD;
+
+  // If the method is virtual, see if we can find the actual implementation
+  // based on context-sensitivity.
+  if (const CXXMethodDecl *Devirtualized = devirtualize(MD, getCXXThisVal()))
+    return Devirtualized;
+
+  IsDynamicDispatch = true;
+  return MD;
+}
+
 
 CallEvent::param_iterator
 ObjCMethodCall::param_begin(bool UseDefinitionParams) const {
-  const Decl *D = UseDefinitionParams ? getDefinition() : getDecl();
+  bool IgnoredDynamicDispatch;
+  const Decl *D = UseDefinitionParams ? getDefinition(IgnoredDynamicDispatch)
+                                      : getDecl();
   if (!D)
     return 0;
 
@@ -437,7 +500,9 @@ ObjCMethodCall::param_begin(bool UseDefinitionParams) const {
 
 CallEvent::param_iterator
 ObjCMethodCall::param_end(bool UseDefinitionParams) const {
-  const Decl *D = UseDefinitionParams ? getDefinition() : getDecl();
+  bool IgnoredDynamicDispatch;
+  const Decl *D = UseDefinitionParams ? getDefinition(IgnoredDynamicDispatch)
+                                      : getDecl();
   if (!D)
     return 0;
 

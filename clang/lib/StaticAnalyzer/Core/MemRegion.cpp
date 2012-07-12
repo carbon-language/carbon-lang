@@ -954,21 +954,21 @@ const MemRegion *MemRegion::getBaseRegion() const {
 const MemRegion *MemRegion::StripCasts() const {
   const MemRegion *R = this;
   while (true) {
-    if (const ElementRegion *ER = dyn_cast<ElementRegion>(R)) {
-      // FIXME: generalize.  Essentially we want to strip away ElementRegions
-      // that were layered on a symbolic region because of casts.  We only
-      // want to strip away ElementRegions, however, where the index is 0.
-      SVal index = ER->getIndex();
-      if (nonloc::ConcreteInt *CI = dyn_cast<nonloc::ConcreteInt>(&index)) {
-        if (CI->getValue().getSExtValue() == 0) {
-          R = ER->getSuperRegion();
-          continue;
-        }
-      }
+    switch (R->getKind()) {
+    case ElementRegionKind: {
+      const ElementRegion *ER = cast<ElementRegion>(R);
+      if (!ER->getIndex().isZeroConstant())
+        return R;
+      R = ER->getSuperRegion();
+      break;
     }
-    break;
+    case CXXBaseObjectRegionKind:
+      R = cast<CXXBaseObjectRegion>(R)->getSuperRegion();
+      break;
+    default:
+      return R;
+    }
   }
-  return R;
 }
 
 // FIXME: Merge with the implementation of the same method in Store.cpp

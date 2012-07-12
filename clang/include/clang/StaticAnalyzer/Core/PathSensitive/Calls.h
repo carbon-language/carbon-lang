@@ -33,6 +33,8 @@ enum CallEventKind {
   CE_Function,
   CE_CXXMember,
   CE_CXXMemberOperator,
+  CE_BEG_CXX_INSTANCE_CALLS = CE_CXXMember,
+  CE_END_CXX_INSTANCE_CALLS = CE_CXXMemberOperator,
   CE_Block,
   CE_BEG_SIMPLE_CALLS = CE_Function,
   CE_END_SIMPLE_CALLS = CE_Block,
@@ -84,7 +86,15 @@ public:
   /// called. May be null.
   ///
   /// This is used when deciding how to inline the call.
-  virtual const Decl *getDefinition() const { return getDecl(); }
+  ///
+  /// \param IsDynamicDispatch True if the definition returned may not be the
+  ///   definition that is actually invoked at runtime. Note that if we have
+  ///   sufficient type information to devirtualize a dynamic method call,
+  ///   we will (and \p IsDynamicDispatch will be set to \c false).
+  virtual const Decl *getDefinition(bool &IsDynamicDispatch) const {
+    IsDynamicDispatch = false;
+    return getDecl();
+  }
 
   /// \brief Returns the expression whose value will be the result of this call.
   /// May be null.
@@ -238,7 +248,8 @@ protected:
 public:
   virtual const FunctionDecl *getDecl() const = 0;
 
-  const Decl *getDefinition() const {
+  const Decl *getDefinition(bool &IsDynamicDispatch) const {
+    IsDynamicDispatch = false;
     const FunctionDecl *FD = getDecl();
     // Note that hasBody() will fill FD with the definition FunctionDecl.
     if (FD && FD->hasBody(FD))
@@ -296,17 +307,35 @@ public:
   }
 };
 
-/// \brief Represents a non-static C++ member function call.
-///
-/// Example: \c obj.fun()
-class CXXMemberCall : public SimpleCall {
+/// \brief Represents a non-static C++ member function call, no matter how
+/// it is written.
+class CXXInstanceCall : public SimpleCall {
 protected:
   void addExtraInvalidatedRegions(RegionList &Regions) const;
 
+  CXXInstanceCall(const CallExpr *CE, ProgramStateRef St,
+                  const LocationContext *LCtx, Kind K)
+    : SimpleCall(CE, St, LCtx, K) {}
+
+public:
+  SVal getCXXThisVal() const = 0;
+
+  const Decl *getDefinition(bool &IsDynamicDispatch) const;
+
+  static bool classof(const CallEvent *CA) {
+    return CA->getKind() >= CE_BEG_CXX_INSTANCE_CALLS &&
+           CA->getKind() <= CE_END_CXX_INSTANCE_CALLS;
+  }
+};
+
+/// \brief Represents a non-static C++ member function call.
+///
+/// Example: \c obj.fun()
+class CXXMemberCall : public CXXInstanceCall {
 public:
   CXXMemberCall(const CXXMemberCallExpr *CE, ProgramStateRef St,
-               const LocationContext *LCtx)
-    : SimpleCall(CE, St, LCtx, CE_CXXMember) {}
+                const LocationContext *LCtx)
+    : CXXInstanceCall(CE, St, LCtx, CE_CXXMember) {}
 
   const CXXMemberCallExpr *getOriginExpr() const {
     return cast<CXXMemberCallExpr>(SimpleCall::getOriginExpr());
@@ -323,14 +352,11 @@ public:
 /// implemented as a non-static member function.
 ///
 /// Example: <tt>iter + 1</tt>
-class CXXMemberOperatorCall : public SimpleCall {
-protected:
-  void addExtraInvalidatedRegions(RegionList &Regions) const;
-
+class CXXMemberOperatorCall : public CXXInstanceCall {
 public:
   CXXMemberOperatorCall(const CXXOperatorCallExpr *CE, ProgramStateRef St,
                         const LocationContext *LCtx)
-    : SimpleCall(CE, St, LCtx, CE_CXXMemberOperator) {}
+    : CXXInstanceCall(CE, St, LCtx, CE_CXXMemberOperator) {}
 
   const CXXOperatorCallExpr *getOriginExpr() const {
     return cast<CXXOperatorCallExpr>(SimpleCall::getOriginExpr());
@@ -381,7 +407,8 @@ public:
     return BR->getDecl();
   }
 
-  const Decl *getDefinition() const {
+  const Decl *getDefinition(bool &IsDynamicDispatch) const {
+    IsDynamicDispatch = false;
     return getBlockDecl();
   }
 
@@ -454,6 +481,7 @@ public:
   unsigned getNumArgs() const { return 0; }
 
   SVal getCXXThisVal() const;
+  const Decl *getDefinition(bool &IsDynamicDispatch) const;
 
   static bool classof(const CallEvent *CA) {
     return CA->getKind() == CE_CXXDestructor;
@@ -546,7 +574,9 @@ public:
     return Msg->getReceiverRange();
   }
 
-  const Decl *getDefinition() const {
+  const Decl *getDefinition(bool &IsDynamicDispatch) const {
+    IsDynamicDispatch = true;
+    
     const ObjCMethodDecl *MD = getDecl();
     for (Decl::redecl_iterator I = MD->redecls_begin(), E = MD->redecls_end();
          I != E; ++I) {
