@@ -10,6 +10,6 @@ void test1() {
   (&foo)☃>bar = 42;
 // CHECK: error: expected ';' after expression
 // Make sure we emit the fixit right in front of the snowman.
-// CHECK: {{^        \^$}}
-// CHECK: {{^        ;$}}
+// CHECK: {{^        \^}}
+// CHECK: {{^        ;}}
 }
