@@ -490,6 +490,20 @@ UnwindAssemblyInstEmulation::WriteRegister (EmulateInstruction *instruction,
                 {
                     m_curr_row.SetRegisterLocationToSame (reg_num, must_replace);
                 }
+                // if we just restored the caller's reg value in the reg we were using for the frame pointer,
+                // change the CFA to be in terms of the stack pointer again.
+                if (m_fp_is_cfa && reg_num == m_cfa_reg_info.kinds[m_unwind_plan_ptr->GetRegisterKind()])
+                {
+                    m_fp_is_cfa = false;
+                    m_inst_emulator_ap->GetRegisterInfo (m_unwind_plan_ptr->GetRegisterKind(), 
+                                                         m_unwind_plan_ptr->GetInitialCFARegister(), 
+                                                         m_cfa_reg_info);
+                    m_curr_row.SetCFARegister(m_cfa_reg_info.kinds[m_unwind_plan_ptr->GetRegisterKind()]);
+                    if (log && log->GetVerbose())
+                    {
+                        log->Printf("UnwindAssemblyInstEmulation::WriteRegister - CFA is expressed in terms of %s again", m_cfa_reg_info.name);
+                    }
+                }
             }
             break;
 
