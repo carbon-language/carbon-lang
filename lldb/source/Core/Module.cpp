@@ -134,7 +134,8 @@ Module::Module (const ModuleSpec &module_spec) :
     m_did_parse_uuid (false),
     m_did_init_ast (false),
     m_is_dynamic_loader_module (false),
-    m_was_modified (false)
+    m_file_has_changed (false),
+    m_first_file_changed_log (false)
 {
     // Scope for locker below...
     {
@@ -176,7 +177,8 @@ Module::Module(const FileSpec& file_spec,
     m_did_parse_uuid (false),
     m_did_init_ast (false),
     m_is_dynamic_loader_module (false),
-    m_was_modified (false)
+    m_file_has_changed (false),
+    m_first_file_changed_log (false)
 {
     // Scope for locker below...
     {
@@ -803,32 +805,44 @@ Module::ReportError (const char *format, ...)
     }
 }
 
+bool
+Module::FileHasChanged () const
+{
+    if (m_file_has_changed == false)
+        m_file_has_changed = (m_file.GetModificationTime() != m_mod_time);
+    return m_file_has_changed;
+}
+
 void
 Module::ReportErrorIfModifyDetected (const char *format, ...)
 {
-    if (!GetModified(true) && GetModified(false))
+    if (m_first_file_changed_log == false)
     {
-        if (format)
+        if (FileHasChanged ())
         {
-            StreamString strm;
-            strm.PutCString("error: the object file ");
-            GetDescription(&strm, lldb::eDescriptionLevelFull);
-            strm.PutCString (" has been modified\n");
-            
-            va_list args;
-            va_start (args, format);
-            strm.PrintfVarArg(format, args);
-            va_end (args);
-            
-            const int format_len = strlen(format);
-            if (format_len > 0)
+            m_first_file_changed_log = true;
+            if (format)
             {
-                const char last_char = format[format_len-1];
-                if (last_char != '\n' || last_char != '\r')
-                    strm.EOL();
+                StreamString strm;
+                strm.PutCString("error: the object file ");
+                GetDescription(&strm, lldb::eDescriptionLevelFull);
+                strm.PutCString (" has been modified\n");
+                
+                va_list args;
+                va_start (args, format);
+                strm.PrintfVarArg(format, args);
+                va_end (args);
+                
+                const int format_len = strlen(format);
+                if (format_len > 0)
+                {
+                    const char last_char = format[format_len-1];
+                    if (last_char != '\n' || last_char != '\r')
+                        strm.EOL();
+                }
+                strm.PutCString("The debug session should be aborted as the original debug information has been overwritten.\n");
+                Host::SystemLog (Host::eSystemLogError, "%s", strm.GetString().c_str());
             }
-            strm.PutCString("The debug session should be aborted as the original debug information has been overwritten.\n");
-            Host::SystemLog (Host::eSystemLogError, "%s", strm.GetString().c_str());
         }
     }
 }
@@ -892,26 +906,6 @@ Module::LogMessageVerboseBacktrace (Log *log, const char *format, ...)
         log->PutCString(log_message.GetString().c_str());
     }
 }
-
-bool
-Module::GetModified (bool use_cached_only)
-{
-    if (m_was_modified == false && use_cached_only == false)
-    {
-        TimeValue curr_mod_time (m_file.GetModificationTime());
-        m_was_modified = curr_mod_time != m_mod_time;
-    }
-    return m_was_modified;
-}
-
-bool
-Module::SetModified (bool b)
-{
-    const bool prev_value = m_was_modified;
-    m_was_modified = b;
-    return prev_value;
-}
-
 
 void
 Module::Dump(Stream *s)

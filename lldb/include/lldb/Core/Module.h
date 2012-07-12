@@ -1030,11 +1030,13 @@ public:
     void
     ReportErrorIfModifyDetected (const char *format, ...) __attribute__ ((format (printf, 2, 3)));
 
+    //------------------------------------------------------------------
+    // Return true if the file backing this module has changed since the
+    // module was originally created  since we saved the intial file
+    // modification time when the module first gets created.
+    //------------------------------------------------------------------
     bool
-    GetModified (bool use_cached_only);
-    
-    bool
-    SetModified (bool b);
+    FileHasChanged () const;
 
     //------------------------------------------------------------------
     // SymbolVendor, SymbolFile and ObjectFile member objects should
@@ -1124,8 +1126,9 @@ protected:
                                 m_did_load_symbol_vendor:1,
                                 m_did_parse_uuid:1,
                                 m_did_init_ast:1,
-                                m_is_dynamic_loader_module:1,
-                                m_was_modified:1;   /// See if the module was modified after it was initially opened.
+                                m_is_dynamic_loader_module:1;
+    mutable bool                m_file_has_changed:1,
+                                m_first_file_changed_log:1;   /// See if the module was modified after it was initially opened.
     
     //------------------------------------------------------------------
     /// Resolve a file or load virtual address.

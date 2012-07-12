@@ -2127,8 +2127,6 @@ DWARFDebugInfoEntry::GetAbbreviationDeclarationPtr (SymbolFileDWARF* dwarf2Data,
         if (abbrev_decl->Code() == abbrev_code)
             return abbrev_decl;
         
-        // Only log if we are the one to figure out that the module was modified
-        // which is indicated by SetModified() returning false.
         dwarf2Data->GetObjectFile()->GetModule()->ReportErrorIfModifyDetected ("0x%8.8x: the DWARF debug information has been modified (abbrev code was %u, and is now %u)", 
                                                                                GetOffset(),
                                                                                (uint32_t)abbrev_decl->Code(),
