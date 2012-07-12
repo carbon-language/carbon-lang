@@ -72,17 +72,21 @@ int main(int argc, const char **argv) {
   if (!Compilations) {
     // In case the user did not specify the compile command line via positional
     // command line arguments after "--", try to load the compile commands from
-    // a database in the specified build directory.
+    // a database in the specified build directory or auto-detect it from a
+    // source file.
     std::string ErrorMessage;
-    Compilations.reset(CompilationDatabase::loadFromDirectory(BuildPath,
-                                                              ErrorMessage));
-
+    if (!BuildPath.empty()) {
+      Compilations.reset(
+         CompilationDatabase::autoDetectFromDirectory(BuildPath, ErrorMessage));
+    } else {
+      Compilations.reset(CompilationDatabase::autoDetectFromSource(
+          SourcePaths[0], ErrorMessage));
+    }
     // If there is still no valid compile command database, we don't know how
     // to run the tool.
     if (!Compilations)
       llvm::report_fatal_error(ErrorMessage);
   }
-...
 }
 </pre>
 </p>
@@ -113,37 +117,43 @@ the files "a.cc" and "b.cc" one would write:
 <p>Now we combine the two previous steps into our first real tool. This example
 tool is also checked into the clang tree at tools/clang-check/ClangCheck.cpp.
 <pre>
-  #include "llvm/Support/CommandLine.h"
-  #include "clang/Frontend/FrontendActions.h"
-  #include "clang/Tooling/CompilationDatabase.h"
-  #include "clang/Tooling/Tooling.h"
+#include "llvm/Support/CommandLine.h"
+#include "clang/Frontend/FrontendActions.h"
+#include "clang/Tooling/CompilationDatabase.h"
+#include "clang/Tooling/Tooling.h"
 
-  using namespace clang::tooling;
-  using namespace llvm;
+using namespace clang::tooling;
+using namespace llvm;
 
-  cl::opt&lt;std::string> BuildPath(
-    cl::Positional,
-    cl::desc("&lt;build-path>"));
+cl::opt&lt;std::string> BuildPath(
+  "p",
+  cl::desc("&lt;build-path>"),
+  cl::Optional);
 
-  cl::list&lt;std::string> SourcePaths(
-    cl::Positional,
-    cl::desc("&lt;source0> [... &lt;sourceN>]"),
-    cl::OneOrMore);
+cl::list&lt;std::string> SourcePaths(
+  cl::Positional,
+  cl::desc("&lt;source0> [... &lt;sourceN>]"),
+  cl::OneOrMore);
 
-  int main(int argc, const char **argv) {
-    llvm::OwningPtr&lt;CompilationDatabase> Compilations(
-      FixedCompilationDatabase::loadFromCommandLine(argc, argv));
-    cl::ParseCommandLineOptions(argc, argv);
-    if (!Compilations) {
-      std::string ErrorMessage;
-      Compilations.reset(CompilationDatabase::loadFromDirectory(BuildPath,
-                                                                ErrorMessage));
-      if (!Compilations)
-        llvm::report_fatal_error(ErrorMessage);
+int main(int argc, const char **argv) {
+  llvm::OwningPtr&lt;CompilationDatabase> Compilations(
+    FixedCompilationDatabase::loadFromCommandLine(argc, argv));
+  cl::ParseCommandLineOptions(argc, argv);
+  if (!Compilations) {
+    std::string ErrorMessage;
+    if (!BuildPath.empty()) {
+      Compilations.reset(
+         CompilationDatabase::autoDetectFromDirectory(BuildPath, ErrorMessage));
+    } else {
+      Compilations.reset(CompilationDatabase::autoDetectFromSource(
+          SourcePaths[0], ErrorMessage));
     }
-    ClangTool Tool(*Compilations, SourcePaths);
-    return Tool.run(newFrontendActionFactory&lt;clang::SyntaxOnlyAction>());
+    if (!Compilations)
+      llvm::report_fatal_error(ErrorMessage);
   }
+  ClangTool Tool(*Compilations, SourcePaths);
+  return Tool.run(newFrontendActionFactory&lt;clang::SyntaxOnlyAction>());
+}
 </pre>
 </p>
 
@@ -155,7 +165,7 @@ all the needed parameters after a "--" separator:
 <pre>
   $ cd /path/to/source/llvm
   $ export BD=/path/to/build/llvm
-  $ $BD/bin/clang-check . tools/clang/tools/clang-check/ClangCheck.cpp -- \
+  $ $BD/bin/clang-check tools/clang/tools/clang-check/ClangCheck.cpp -- \
     clang++ -D__STDC_CONSTANT_MACROS -D__STDC_LIMIT_MACROS \
     -Itools/clang/include -I$BD/include -Iinclude -Itools/clang/lib/Headers -c
 </pre>
@@ -176,9 +186,20 @@ as first argument and some source files as further positional arguments:
 <pre>
   $ cd /path/to/source/llvm
   $ export BD=/path/to/build/llvm
-  $ $BD/bin/clang-check $BD tools/clang/tools/clang-check/ClangCheck.cpp
+  $ $BD/bin/clang-check -p $BD tools/clang/tools/clang-check/ClangCheck.cpp
 </pre>
 </p>
+
+<h3 id="builtin">Builtin includes.</h3>
+<p>Clang tools need their builtin headers and search for them the same way clang
+does. Thus, the default location to look for builtin headers is in a path
+$(dirname /path/to/tool)/../lib/clang/3.2/include relative to the tool
+binary. This works out-of-the-box for tools running from llvm's toplevel
+binary directory after building clang-headers, or if the tool is running
+from the binary directory of a clang install next to the clang binary.</p>
+
+<p>Tips: if your tool fails to find stddef.h or similar headers, call
+the tool with -v and look at the search paths it looks through.</p>
 
 <h3 id="linking">Linking.</h3>
 <p>Please note that this presents the linking requirements at the time of this
