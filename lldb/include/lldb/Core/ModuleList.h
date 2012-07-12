@@ -75,6 +75,19 @@ public:
     void
     Append (const lldb::ModuleSP &module_sp);
 
+    //------------------------------------------------------------------
+    /// Append a module to the module list and remove any equivalent
+    /// modules. Equivalent modules are ones whose file, platform file
+    /// and architecture matches.
+    ///
+    /// Replaces the module to the collection.
+    ///
+    /// @param[in] module_sp
+    ///     A shared pointer to a module to replace in this collection.
+    //------------------------------------------------------------------
+    void
+    ReplaceEquivalent (const lldb::ModuleSP &module_sp);
+
     bool
     AppendIfNeeded (const lldb::ModuleSP &module_sp);
 

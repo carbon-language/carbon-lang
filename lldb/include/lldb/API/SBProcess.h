@@ -216,7 +216,7 @@ protected:
     void
     SetSP (const lldb::ProcessSP &process_sp);
 
-    lldb::ProcessSP m_opaque_sp;
+    lldb::ProcessWP m_opaque_wp;
 };
 
 }  // namespace lldb

@@ -296,10 +296,10 @@ public:
         return m_debugger;
     }
     
-    ExecutionContext &
+    ExecutionContext
     GetExecutionContext()
     {
-        return m_exe_ctx;
+        return m_exe_ctx_ref.Lock();
     }
     
     void
@@ -464,7 +464,7 @@ private:
     PreprocessCommand (std::string &command);
 
     Debugger &m_debugger;                       // The debugger session that this interpreter is associated with
-    ExecutionContext m_exe_ctx;                 // The current execution context to use when handling commands
+    ExecutionContextRef m_exe_ctx_ref;          // The current execution context to use when handling commands
     bool m_synchronous_execution;
     bool m_skip_lldbinit_files;
     bool m_skip_app_init_files;

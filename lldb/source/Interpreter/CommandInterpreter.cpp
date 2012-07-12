@@ -1143,7 +1143,8 @@ CommandInterpreter::PreprocessCommand (std::string &command)
             {
                 std::string expr_str (command, expr_content_start, end_backtick - expr_content_start);
                 
-                Target *target = m_exe_ctx.GetTargetPtr();
+                ExecutionContext exe_ctx(GetExecutionContext());
+                Target *target = exe_ctx.GetTargetPtr();
                 // Get a dummy target to allow for calculator mode while processing backticks.
                 // This also helps break the infinite loop caused when target is null.
                 if (!target)
@@ -1155,7 +1156,7 @@ CommandInterpreter::PreprocessCommand (std::string &command)
                     const bool keep_in_memory = false;
                     ValueObjectSP expr_result_valobj_sp;
                     ExecutionResults expr_result = target->EvaluateExpression (expr_str.c_str(), 
-                                                                               m_exe_ctx.GetFramePtr(), 
+                                                                               exe_ctx.GetFramePtr(), 
                                                                                eExecutionPolicyOnlyWhenNeeded,
                                                                                coerce_to_id,
                                                                                unwind_on_error, 
@@ -2228,7 +2229,8 @@ CommandInterpreter::GetPlatform (bool prefer_target_platform)
     PlatformSP platform_sp;
     if (prefer_target_platform)
     {
-        Target *target = m_exe_ctx.GetTargetPtr();
+        ExecutionContext exe_ctx(GetExecutionContext());
+        Target *target = exe_ctx.GetTargetPtr();
         if (target)
             platform_sp = target->GetPlatform();
     }
@@ -2618,39 +2620,14 @@ CommandInterpreter::FindCommandsForApropos (const char *search_word, StringList 
 void
 CommandInterpreter::UpdateExecutionContext (ExecutionContext *override_context)
 {
-    m_exe_ctx.Clear();
-    
     if (override_context != NULL)
     {
-        m_exe_ctx = *override_context;
+        m_exe_ctx_ref = *override_context;
     }
     else
     {
-        TargetSP target_sp (m_debugger.GetSelectedTarget());
-        if (target_sp)
-        {
-            m_exe_ctx.SetTargetSP (target_sp);
-            ProcessSP process_sp (target_sp->GetProcessSP());
-            m_exe_ctx.SetProcessSP (process_sp);
-            if (process_sp && process_sp->IsAlive() && !process_sp->IsRunning())
-            {
-                ThreadSP thread_sp (process_sp->GetThreadList().GetSelectedThread());
-                if (thread_sp)
-                {
-                    m_exe_ctx.SetThreadSP (thread_sp);
-                    StackFrameSP frame_sp (thread_sp->GetSelectedFrame());
-                    if (!frame_sp)
-                    {
-                        frame_sp = thread_sp->GetStackFrameAtIndex (0);
-                        // If we didn't have a selected frame select one here.
-                        if (frame_sp)
-                            thread_sp->SetSelectedFrame(frame_sp.get());
-                    }
-                    if (frame_sp)
-                        m_exe_ctx.SetFrameSP (frame_sp);
-                }
-            }
-        }
+        const bool adopt_selected = true;
+        m_exe_ctx_ref.SetTargetPtr (m_debugger.GetSelectedTarget().get(), adopt_selected);
     }
 }
 

@@ -39,7 +39,7 @@ using namespace lldb_private;
 
 
 SBProcess::SBProcess () :
-    m_opaque_sp()
+    m_opaque_wp()
 {
 }
 
@@ -49,13 +49,13 @@ SBProcess::SBProcess () :
 //----------------------------------------------------------------------
 
 SBProcess::SBProcess (const SBProcess& rhs) :
-    m_opaque_sp (rhs.m_opaque_sp)
+    m_opaque_wp (rhs.m_opaque_wp)
 {
 }
 
 
 SBProcess::SBProcess (const lldb::ProcessSP &process_sp) :
-    m_opaque_sp (process_sp)
+    m_opaque_wp (process_sp)
 {
 }
 
@@ -63,7 +63,7 @@ const SBProcess&
 SBProcess::operator = (const SBProcess& rhs)
 {
     if (this != &rhs)
-        m_opaque_sp = rhs.m_opaque_sp;
+        m_opaque_wp = rhs.m_opaque_wp;
     return *this;
 }
 
@@ -83,26 +83,26 @@ SBProcess::GetBroadcasterClassName ()
 lldb::ProcessSP
 SBProcess::GetSP() const
 {
-    return m_opaque_sp;
+    return m_opaque_wp.lock();
 }
 
 void
 SBProcess::SetSP (const ProcessSP &process_sp)
 {
-    m_opaque_sp = process_sp;
+    m_opaque_wp = process_sp;
 }
 
 void
 SBProcess::Clear ()
 {
-    m_opaque_sp.reset();
+    m_opaque_wp.reset();
 }
 
 
 bool
 SBProcess::IsValid() const
 {
-    return m_opaque_sp.get() != NULL;
+    return m_opaque_wp.lock().get() != NULL;
 }
 
 bool
@@ -119,7 +119,7 @@ SBProcess::RemoteLaunch (char const **argv,
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log) {
         log->Printf ("SBProcess(%p)::RemoteLaunch (argv=%p, envp=%p, stdin=%s, stdout=%s, stderr=%s, working-dir=%s, launch_flags=0x%x, stop_at_entry=%i, &error (%p))...",
-                     m_opaque_sp.get(), 
+                     m_opaque_wp.lock().get(),
                      argv, 
                      envp, 
                      stdin_path ? stdin_path : "NULL", 

@@ -77,6 +77,32 @@ ModuleList::Append (const ModuleSP &module_sp)
     }
 }
 
+void
+ModuleList::ReplaceEquivalent (const ModuleSP &module_sp)
+{
+    if (module_sp)
+    {
+        Mutex::Locker locker(m_modules_mutex);
+
+        // First remove any equivalent modules. Equivalent modules are modules
+        // whose path, platform path and architecture match.
+        ModuleSpec equivalent_module_spec (module_sp->GetFileSpec(), module_sp->GetArchitecture());
+        equivalent_module_spec.GetPlatformFileSpec() = module_sp->GetPlatformFileSpec();
+
+        size_t idx = 0;
+        while (idx < m_modules.size())
+        {
+            ModuleSP module_sp (m_modules[idx]);
+            if (module_sp->MatchesModuleSpec (equivalent_module_spec))
+                m_modules.erase(m_modules.begin() + idx);
+            else
+                ++idx;
+        }
+        // Now add the new module to the list
+        m_modules.push_back(module_sp);
+    }
+}
+
 bool
 ModuleList::AppendIfNeeded (const ModuleSP &module_sp)
 {
@@ -323,7 +349,7 @@ ModuleList::FindSymbolsWithNameAndType (const ConstString &name,
     return sc_list.GetSize() - initial_size;
 }
 
-    size_t
+size_t
 ModuleList::FindSymbolsMatchingRegExAndType (const RegularExpression &regex, 
                                              lldb::SymbolType symbol_type, 
                                              SymbolContextList &sc_list,
@@ -727,7 +753,7 @@ ModuleList::GetSharedModule
                     if (did_create_ptr)
                         *did_create_ptr = true;
                     
-                    shared_module_list.Append(module_sp);
+                    shared_module_list.ReplaceEquivalent(module_sp);
                     return error;
                 }
             }
@@ -819,7 +845,7 @@ ModuleList::GetSharedModule
                 if (did_create_ptr)
                     *did_create_ptr = true;
 
-                shared_module_list.Append(module_sp);
+                shared_module_list.ReplaceEquivalent(module_sp);
             }
             else
             {
