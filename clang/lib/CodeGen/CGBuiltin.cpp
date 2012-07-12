@@ -2447,6 +2447,27 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
     llvm::Function *F = CGM.getIntrinsic(ID);
     return Builder.CreateCall(F, Ops, name);
   }
+  case X86::BI__builtin_ia32_rdrand16_step:
+  case X86::BI__builtin_ia32_rdrand32_step:
+  case X86::BI__builtin_ia32_rdrand64_step: {
+    Intrinsic::ID ID;
+    switch (BuiltinID) {
+    default: llvm_unreachable("Unsupported intrinsic!");
+    case X86::BI__builtin_ia32_rdrand16_step:
+      ID = Intrinsic::x86_rdrand_16;
+      break;
+    case X86::BI__builtin_ia32_rdrand32_step:
+      ID = Intrinsic::x86_rdrand_32;
+      break;
+    case X86::BI__builtin_ia32_rdrand64_step:
+      ID = Intrinsic::x86_rdrand_64;
+      break;
+    }
+
+    Value *Call = Builder.CreateCall(CGM.getIntrinsic(ID));
+    Builder.CreateStore(Builder.CreateExtractValue(Call, 0), Ops[0]);
+    return Builder.CreateExtractValue(Call, 1);
+  }
   }
 }
 
