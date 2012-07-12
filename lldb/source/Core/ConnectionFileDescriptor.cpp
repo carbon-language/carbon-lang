@@ -21,6 +21,7 @@
 #include <sys/types.h>
 #include <string.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 // C++ Includes
 // Other libraries and framework includes
@@ -74,6 +75,8 @@ ConnectionFileDescriptor::ConnectionFileDescriptor () :
     m_udp_send_sockaddr (),
     m_should_close_fd (false), 
     m_socket_timeout_usec(0),
+    m_command_fd_send(-1),
+    m_command_fd_receive(-1),
     m_mutex (Mutex::eMutexTypeRecursive)
 {
     LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION |  LIBLLDB_LOG_OBJECT));
@@ -90,6 +93,8 @@ ConnectionFileDescriptor::ConnectionFileDescriptor (int fd, bool owns_fd) :
     m_udp_send_sockaddr (),
     m_should_close_fd (owns_fd),
     m_socket_timeout_usec(0),
+    m_command_fd_send(-1),
+    m_command_fd_receive(-1),
     m_mutex (Mutex::eMutexTypeRecursive)
 {
     LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION |  LIBLLDB_LOG_OBJECT));
@@ -104,6 +109,46 @@ ConnectionFileDescriptor::~ConnectionFileDescriptor ()
     if (log)
         log->Printf ("%p ConnectionFileDescriptor::~ConnectionFileDescriptor ()", this);
     Disconnect (NULL);
+    CloseCommandFileDescriptor ();
+}
+
+void
+ConnectionFileDescriptor::InitializeCommandFileDescriptor ()
+{
+    CloseCommandFileDescriptor();
+    
+    LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION |  LIBLLDB_LOG_OBJECT));
+    // Make the command file descriptor here:
+    int filedes[2];
+    int result = pipe (filedes);
+    if (result != 0)
+    {
+        if (log)
+            log->Printf ("%p ConnectionFileDescriptor::ConnectionFileDescriptor () - could not make pipe: %s",
+                         this,
+                         strerror(errno));
+    }
+    else
+    {
+        m_command_fd_receive = filedes[0];
+        m_command_fd_send    = filedes[1];
+    }
+}
+
+void
+ConnectionFileDescriptor::CloseCommandFileDescriptor ()
+{
+    if (m_command_fd_receive != -1)
+    {
+        close (m_command_fd_receive);
+        m_command_fd_receive = -1;
+    }
+    
+    if (m_command_fd_send != -1)
+    {
+        close (m_command_fd_send);
+        m_command_fd_send = -1;
+    }
 }
 
 bool
@@ -120,6 +165,8 @@ ConnectionFileDescriptor::Connect (const char *s, Error *error_ptr)
     if (log)
         log->Printf ("%p ConnectionFileDescriptor::Connect (url = '%s')", this, s);
 
+    InitializeCommandFileDescriptor();
+    
     if (s && s[0])
     {
         char *end = NULL;
@@ -157,7 +204,7 @@ ConnectionFileDescriptor::Connect (const char *s, Error *error_ptr)
             if (success)
             {
                 // We have what looks to be a valid file descriptor, but we 
-                // should make it is. We currently are doing this by trying to
+                // should make sure it is. We currently are doing this by trying to
                 // get the flags from the file descriptor and making sure it 
                 // isn't a bad fd.
                 errno = 0;
@@ -239,31 +286,43 @@ ConnectionFileDescriptor::Disconnect (Error *error_ptr)
     LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION));
     if (log)
         log->Printf ("%p ConnectionFileDescriptor::Disconnect ()", this);
-    if (m_should_close_fd == false)
-    {
-        m_fd_send = m_fd_recv = -1;
-        return eConnectionStatusSuccess;
-    }
+
     ConnectionStatus status = eConnectionStatusSuccess;
+
     if (m_fd_send >= 0 || m_fd_recv >= 0)
     {
-        if (m_fd_send == m_fd_recv)
+        if (m_should_close_fd == false)
         {
-            // Both file descriptors are the same, only close one
-            m_fd_recv = -1;
-            status = Close (m_fd_send, error_ptr);
+            m_fd_send = m_fd_recv = -1;
         }
         else
         {
-            // File descriptors are the different, close both if needed
-            if (m_fd_send >= 0)
-                status = Close (m_fd_send, error_ptr);
-            if (m_fd_recv >= 0)
+            if (m_fd_send == m_fd_recv)
             {
-                ConnectionStatus recv_status = Close (m_fd_recv, error_ptr);
-                if (status == eConnectionStatusSuccess)
-                    status = recv_status;
+                // Both file descriptors are the same, only close one
+                m_fd_recv = -1;
+                status = Close (m_fd_send, error_ptr);
             }
+            else
+            {
+                // File descriptors are the different, close both if needed
+                if (m_fd_send >= 0)
+                    status = Close (m_fd_send, error_ptr);
+                if (m_fd_recv >= 0)
+                {
+                    ConnectionStatus recv_status = Close (m_fd_recv, error_ptr);
+                    if (status == eConnectionStatusSuccess)
+                        status = recv_status;
+                }
+            }
+        }
+        
+        // Now write a byte to the command pipe to wake our Reader if it is stuck in read.
+        if (m_command_fd_send != -1 )
+        {
+            write (m_command_fd_send, "q", 1);
+            close (m_command_fd_send);
+            m_command_fd_send = -1;
         }
     }
     return status;
@@ -283,42 +342,13 @@ ConnectionFileDescriptor::Read (void *dst,
 
     ssize_t bytes_read = 0;
 
-    switch (m_fd_recv_type)
+    status = BytesAvailable (timeout_usec, error_ptr);
+    if (status == eConnectionStatusSuccess)
     {
-    case eFDTypeFile:       // Other FD requireing read/write
-        status = BytesAvailable (timeout_usec, error_ptr);
-        if (status == eConnectionStatusSuccess)
+        do
         {
-            do
-            {
-                bytes_read = ::read (m_fd_recv, dst, dst_len);
-            } while (bytes_read < 0 && errno == EINTR);
-        }
-        break;
-
-    case eFDTypeSocket:     // Socket requiring send/recv
-        if (SetSocketReceiveTimeout (timeout_usec))
-        {
-            status = eConnectionStatusSuccess;
-            do
-            {
-                bytes_read = ::recv (m_fd_recv, dst, dst_len, 0);
-            } while (bytes_read < 0 && errno == EINTR);
-        }
-        break;
-
-    case eFDTypeSocketUDP:  // Unconnected UDP socket requiring sendto/recvfrom
-        if (SetSocketReceiveTimeout (timeout_usec))
-        {
-            status = eConnectionStatusSuccess;
-            SocketAddress from (m_udp_send_sockaddr);
-            socklen_t from_len = m_udp_send_sockaddr.GetLength();
-            do
-            {
-                bytes_read = ::recvfrom (m_fd_recv, dst, dst_len, 0, (struct sockaddr *)&from, &from_len);
-            } while (bytes_read < 0 && errno == EINTR);
-        }
-        break;
+            bytes_read = ::read (m_fd_recv, dst, dst_len);
+        } while (bytes_read < 0 && errno == EINTR);
     }
 
     if (status != eConnectionStatusSuccess)
@@ -546,7 +576,9 @@ ConnectionFileDescriptor::BytesAvailable (uint32_t timeout_usec, Error *error_pt
         fd_set read_fds;
         FD_ZERO (&read_fds);
         FD_SET (m_fd_recv, &read_fds);
-        int nfds = m_fd_recv + 1;
+        if (m_command_fd_receive != -1)
+            FD_SET (m_command_fd_receive, &read_fds);
+        int nfds = (m_fd_recv > m_command_fd_receive ? m_fd_recv : m_command_fd_receive) + 1;
         
         Error error;
 
@@ -594,7 +626,26 @@ ConnectionFileDescriptor::BytesAvailable (uint32_t timeout_usec, Error *error_pt
         }
         else if (num_set_fds > 0)
         {
-            return eConnectionStatusSuccess;
+            if (m_command_fd_receive != -1 && FD_ISSET(m_command_fd_receive, &read_fds))
+            {
+                // We got a command to exit.  Read the data from that pipe:
+                char buffer[16];
+                ssize_t bytes_read;
+                
+                do
+                {
+                    bytes_read = ::read (m_command_fd_receive, buffer, sizeof(buffer));
+                } while (bytes_read < 0 && errno == EINTR);
+                assert (bytes_read == 1 && buffer[0] == 'q');
+                
+                if (log)
+                    log->Printf("%p ConnectionFileDescriptor::BytesAvailable() got data: %*s from the command channel.",
+                                this, (int) bytes_read, buffer);
+                
+                return eConnectionStatusEndOfFile;
+            }
+            else
+                return eConnectionStatusSuccess;
         }
     }
 
