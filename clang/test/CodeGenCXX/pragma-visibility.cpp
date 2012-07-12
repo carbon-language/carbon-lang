@@ -17,14 +17,6 @@ int x2::y = 10;
 #pragma GCC visibility pop
 
 #pragma GCC visibility push(hidden)
-struct x3 {
-  static int y;
-} __attribute((visibility("default")));
-int x3::y = 10;
-// CHECK: @_ZN2x31yE = global
-#pragma GCC visibility pop
-
-#pragma GCC visibility push(hidden)
 template<class T> struct x4 {
   static int y;
 };

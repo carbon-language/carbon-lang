@@ -4700,6 +4700,14 @@ void Sema::ActOnFinishCXXMemberSpecification(Scope* S, SourceLocation RLoc,
 
   AdjustDeclIfTemplate(TagDecl);
 
+  for (const AttributeList* l = AttrList; l; l = l->getNext()) {
+    if (l->getKind() != AttributeList::AT_Visibility)
+      continue;
+    l->setInvalid();
+    Diag(l->getLoc(), diag::warn_attribute_after_definition_ignored) <<
+      l->getName();
+  }
+
   ActOnFields(S, RLoc, TagDecl, llvm::makeArrayRef(
               // strict aliasing violation!
               reinterpret_cast<Decl**>(FieldCollector->getCurFields()),
