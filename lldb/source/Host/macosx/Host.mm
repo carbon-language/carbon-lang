@@ -60,12 +60,11 @@
 
 #include <objc/objc-auto.h>
 
-#if defined(__arm__)
-#include <UIKit/UIKit.h>
-#else
-#include <ApplicationServices/ApplicationServices.h>
+#include <CoreFoundation/CoreFoundation.h>
+#include <Foundation/Foundation.h>
+
+#if !defined(__arm__)
 #include <Carbon/Carbon.h>
-#include <Security/Security.h>
 #endif
 
 #ifndef _POSIX_SPAWN_DISABLE_ASLR
@@ -931,6 +930,9 @@ Host::GetOSKernelDescription (std::string &s)
     return false;
 }
     
+#include <libxml/parser.h>
+#include <libxml/tree.h>
+
 bool
 Host::GetOSVersion 
 (
@@ -939,51 +941,60 @@ Host::GetOSVersion
     uint32_t &update
 )
 {
+    static const char *version_plist_file = "/System/Library/CoreServices/SystemVersion.plist";
+    char buffer[256];
+    const char *product_version_str = NULL;
     
-#if defined (__arm__)
-    major = UINT32_MAX;
-    minor = UINT32_MAX;
-    update = UINT32_MAX;
-
-    NSString *system_version_nstr = [[UIDevice currentDevice] systemVersion];
-    if (system_version_nstr)
+    CFCReleaser<CFURLRef> plist_url(CFURLCreateFromFileSystemRepresentation(kCFAllocatorDefault,
+                                                                            (UInt8 *) version_plist_file,
+                                                                            strlen (version_plist_file), NO));
+    if (plist_url.get())
     {
-        const char *system_version_cstr = system_version_nstr.UTF8String;
-        Args::StringToVersion(system_version_cstr, major, minor, update);
+        CFCReleaser<CFPropertyListRef> property_list;
+        CFCReleaser<CFStringRef>       error_string;
+        CFCReleaser<CFDataRef>         resource_data;
+        Boolean                        status;
+        SInt32                         error_code;
+ 
+        // Read the XML file.
+        status = CFURLCreateDataAndPropertiesFromResource (kCFAllocatorDefault,
+                                                           plist_url.get(),
+                                                           resource_data.ptr_address(),
+                                                           NULL,
+                                                           NULL,
+                                                           &error_code);
+           // Reconstitute the dictionary using the XML data.
+        property_list = CFPropertyListCreateFromXMLData (kCFAllocatorDefault,
+                                                          resource_data.get(),
+                                                          kCFPropertyListImmutable,
+                                                          error_string.ptr_address());
+        if (CFGetTypeID(property_list.get()) == CFDictionaryGetTypeID())
+        {
+            CFDictionaryRef property_dict = (CFDictionaryRef) property_list.get();
+            CFStringRef product_version_key = CFSTR("ProductVersion");
+            CFPropertyListRef product_version_value;
+            product_version_value = CFDictionaryGetValue(property_dict, product_version_key);
+            if (product_version_value && CFGetTypeID(product_version_value) == CFStringGetTypeID())
+            {
+                CFStringRef product_version_cfstr = (CFStringRef) product_version_value;
+                product_version_str = CFStringGetCStringPtr(product_version_cfstr, kCFStringEncodingUTF8);
+                if (product_version_str == NULL) {
+                    if (CFStringGetCString(product_version_cfstr, buffer, 256, kCFStringEncodingUTF8))
+                        product_version_str = buffer;
+                }
+            }
+        }
     }
-    return major != UINT32_MAX;    
-#else
-    SInt32 version;
     
-    OSErr err = ::Gestalt (gestaltSystemVersion, &version);
-    if (err != noErr) 
-        return false;
 
-    if (version < 0x1040)
+    if (product_version_str)
     {
-        major = ((version & 0xF000) >> 12) * 10 + ((version & 0x0F00) >> 8);
-        minor = (version & 0x00F0) >> 4;
-        update = (version & 0x000F);
+        Args::StringToVersion(product_version_str, major, minor, update);
+        return true;
     }
     else
-    {
-        if (::Gestalt (gestaltSystemVersionMajor, &version) != noErr)
-            return false;
-        major = version;
+        return false;
 
-        if (::Gestalt (gestaltSystemVersionMinor, &version) == noErr)
-            minor = version;
-        else
-            minor = 0;
-
-        if (::Gestalt (gestaltSystemVersionBugFix, &version) == noErr)
-            update = version;
-        else
-            update = 0;
-    }
-    
-    return true;
-#endif
 }
 
 static bool
@@ -1456,6 +1467,9 @@ LaunchProcessXPC (const char *exe_path, ProcessLaunchInfo &launch_info, ::pid_t 
         }
     }
     
+    return error;
+#else
+    Error error;
     return error;
 #endif
 }
