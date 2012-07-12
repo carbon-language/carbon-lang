@@ -45,7 +45,7 @@ void llvm::sys::Memory::InvalidateInstructionCache(const void *Addr,
 
 #  if (defined(__POWERPC__) || defined (__ppc__) || \
      defined(_POWER) || defined(_ARCH_PPC)) || defined(__arm__)
-  sys_icache_invalidate(Addr, Len);
+  sys_icache_invalidate(const_cast<void *>(Addr), Len);
 #  endif
 
 #else
@@ -67,11 +67,12 @@ void llvm::sys::Memory::InvalidateInstructionCache(const void *Addr,
   asm volatile("isync");
 #  elif defined(__arm__) && defined(__GNUC__)
   // FIXME: Can we safely always call this for __GNUC__ everywhere?
-  char *Start = (char*) Addr;
-  char *End = Start + Len;
-  __clear_cache(Start, End);
+  const char *Start = static_cast<const char *>(Addr);
+  const char *End = Start + Len;
+  __clear_cache(const_cast<char *>(Start), const_cast<char *>(End));
 #  elif defined(__mips__)
-  cacheflush((char*)Addr, Len, BCACHE);
+  const char *Start = static_cast<const char *>(Addr);
+  cacheflush(const_cast<char *>(Start), Len, BCACHE);
 #  endif
 
 #endif  // end apple
