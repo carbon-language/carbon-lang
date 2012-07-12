@@ -39,7 +39,7 @@ public:
     return 1;
   }
 
-  CallingConv getDefaultMethodCallConv() const {
+  CallingConv getDefaultMethodCallConv(bool isVariadic) const {
     return CC_C;
   }
 

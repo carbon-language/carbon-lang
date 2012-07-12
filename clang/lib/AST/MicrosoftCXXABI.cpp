@@ -29,8 +29,8 @@ public:
 
   unsigned getMemberPointerSize(const MemberPointerType *MPT) const;
 
-  CallingConv getDefaultMethodCallConv() const {
-    if (Context.getTargetInfo().getTriple().getArch() == llvm::Triple::x86)
+  CallingConv getDefaultMethodCallConv(bool isVariadic) const {
+    if (!isVariadic && Context.getTargetInfo().getTriple().getArch() == llvm::Triple::x86)
       return CC_X86ThisCall;
     else
       return CC_C;

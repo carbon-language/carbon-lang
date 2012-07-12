@@ -1159,8 +1159,16 @@ void MicrosoftCXXNameMangler::mangleCallingConvention(const FunctionType *T,
   // that they could be in a DLL and somebody from another module could call
   // them.)
   CallingConv CC = T->getCallConv();
-  if (CC == CC_Default)
-    CC = IsInstMethod ? getASTContext().getDefaultMethodCallConv() : CC_C;
+  if (CC == CC_Default) {
+    if (IsInstMethod) {
+      const FunctionProtoType *FPT =
+        T->getCanonicalTypeUnqualified().getAs<FunctionProtoType>();
+      bool isVariadic = FPT->isVariadic();
+      CC = getASTContext().getDefaultCXXMethodCallConv(isVariadic);
+    } else {
+      CC = CC_C;
+    }
+  }
   switch (CC) {
     default:
       llvm_unreachable("Unsupported CC for mangling");

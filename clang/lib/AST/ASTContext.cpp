@@ -7098,9 +7098,15 @@ bool ASTContext::DeclMustBeEmitted(const Decl *D) {
   return true;
 }
 
-CallingConv ASTContext::getDefaultMethodCallConv() {
+CallingConv ASTContext::getDefaultCXXMethodCallConv(bool isVariadic) {
   // Pass through to the C++ ABI object
-  return ABI->getDefaultMethodCallConv();
+  return ABI->getDefaultMethodCallConv(isVariadic);
+}
+
+CallingConv ASTContext::getCanonicalCallConv(CallingConv CC) const {
+  if (CC == CC_C && !LangOpts.MRTD && getTargetInfo().getCXXABI() != CXXABI_Microsoft)
+    return CC_Default;
+  return CC;
 }
 
 bool ASTContext::isNearlyEmpty(const CXXRecordDecl *RD) const {

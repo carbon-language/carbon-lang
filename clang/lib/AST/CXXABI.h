@@ -32,7 +32,7 @@ public:
   virtual unsigned getMemberPointerSize(const MemberPointerType *MPT) const = 0;
 
   /// Returns the default calling convention for C++ methods.
-  virtual CallingConv getDefaultMethodCallConv() const = 0;
+  virtual CallingConv getDefaultMethodCallConv(bool isVariadic) const = 0;
 
   // Returns whether the given class is nearly empty, with just virtual pointers
   // and no data except possibly virtual bases.

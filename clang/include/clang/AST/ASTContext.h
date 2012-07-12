@@ -1501,15 +1501,11 @@ public:
 
   /// \brief Retrieves the default calling convention to use for
   /// C++ instance methods.
-  CallingConv getDefaultMethodCallConv();
+  CallingConv getDefaultCXXMethodCallConv(bool isVariadic);
 
   /// \brief Retrieves the canonical representation of the given
   /// calling convention.
-  CallingConv getCanonicalCallConv(CallingConv CC) const {
-    if (!LangOpts.MRTD && CC == CC_C)
-      return CC_Default;
-    return CC;
-  }
+  CallingConv getCanonicalCallConv(CallingConv CC) const;
 
   /// \brief Determines whether two calling conventions name the same
   /// calling convention.

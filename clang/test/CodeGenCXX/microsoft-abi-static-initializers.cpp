@@ -6,12 +6,12 @@ struct S {
 } s;
 
 // CHECK: define internal void [[INIT_s:@.*global_var.*]] nounwind
-// CHECK: call void @"\01??0S@@QAE@XZ"
+// CHECK: call x86_thiscallcc void @"\01??0S@@QAE@XZ"
 // CHECK: call i32 @atexit(void ()* @"__dtor_\01?s@@3US@@A")
 // CHECK: ret void
 
 // CHECK: define internal void @"__dtor_\01?s@@3US@@A"() nounwind {
-// CHECK: call void @"\01??1S@@QAE@XZ"
+// CHECK: call x86_thiscallcc void @"\01??1S@@QAE@XZ"
 // CHECK: ret void
 
 // Force WeakODRLinkage by using templates
@@ -34,16 +34,16 @@ void force_usage() {
 }
 
 // CHECK: define internal void [[INIT_foo:@.*global_var.*]] nounwind
-// CHECK: call void @"\01??0A@@QAE@XZ"
+// CHECK: call x86_thiscallcc void @"\01??0A@@QAE@XZ"
 // CHECK: call i32 @atexit(void ()* [[FOO_DTOR:@"__dtor_.*foo@.*]])
 // CHECK: ret void
 
-// CHECK: define linkonce_odr void @"\01??0A@@QAE@XZ"
+// CHECK: define linkonce_odr x86_thiscallcc void @"\01??0A@@QAE@XZ"
 
-// CHECK: define linkonce_odr void @"\01??1A@@QAE@XZ"
+// CHECK: define linkonce_odr x86_thiscallcc void @"\01??1A@@QAE@XZ"
 
 // CHECK: define internal void [[FOO_DTOR]]
-// CHECK: call void @"\01??1A@@QAE@XZ"{{.*}}foo
+// CHECK: call x86_thiscallcc void @"\01??1A@@QAE@XZ"{{.*}}foo
 // CHECK: ret void
 
 // CHECK: define internal void @_GLOBAL__I_a() nounwind {
