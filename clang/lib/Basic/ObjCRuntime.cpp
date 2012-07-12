@@ -32,6 +32,7 @@ raw_ostream &clang::operator<<(raw_ostream &out, const ObjCRuntime &value) {
   case ObjCRuntime::iOS: out << "ios"; break;
   case ObjCRuntime::GNUstep: out << "gnustep"; break;
   case ObjCRuntime::GCC: out << "gcc"; break;
+  case ObjCRuntime::ObjFW: out << "objfw"; break;
   }
   if (value.getVersion() > VersionTuple(0)) {
     out << '-' << value.getVersion();
@@ -68,6 +69,8 @@ bool ObjCRuntime::tryParse(StringRef input) {
     kind = ObjCRuntime::GNUstep;
   } else if (runtimeName == "gcc") {
     kind = ObjCRuntime::GCC;
+  } else if (runtimeName == "objfw") {
+    kind = ObjCRuntime::ObjFW;
   } else {
     return true;
   }

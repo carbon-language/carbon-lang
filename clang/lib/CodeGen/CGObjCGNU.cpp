@@ -99,8 +99,8 @@ class LazyRuntimeFunction {
 
 
 /// GNU Objective-C runtime code generation.  This class implements the parts of
-/// Objective-C support that are specific to the GNU family of runtimes (GCC and
-/// GNUstep).
+/// Objective-C support that are specific to the GNU family of runtimes (GCC,
+/// GNUstep and ObjFW).
 class CGObjCGNU : public CGObjCRuntime {
 protected:
   /// The LLVM module into which output is inserted
@@ -397,11 +397,11 @@ private:
       const ObjCIvarDecl *Ivar);
   /// Emits a reference to a class.  This allows the linker to object if there
   /// is no class of the matching name.
+protected:
   void EmitClassRef(const std::string &className);
   /// Emits a pointer to the named class
-  llvm::Value *GetClassNamed(CGBuilderTy &Builder, const std::string &Name,
-                             bool isWeak);
-protected:
+  virtual llvm::Value *GetClassNamed(CGBuilderTy &Builder,
+                                     const std::string &Name, bool isWeak);
   /// Looks up the method for sending a message to the specified object.  This
   /// mechanism differs between the GCC and GNU runtimes, so this method must be
   /// overridden in subclasses.
@@ -653,6 +653,30 @@ class CGObjCGNUstep : public CGObjCGNU {
     }
 };
 
+/// Class used when targeting the ObjFW runtime.
+class CGObjCObjFW: public CGObjCGCC {
+  virtual llvm::Value *GetClassNamed(CGBuilderTy &Builder,
+                                     const std::string &Name, bool isWeak) {
+    if (isWeak)
+      return CGObjCGNU::GetClassNamed(Builder, Name, isWeak);
+
+    EmitClassRef(Name);
+
+    std::string SymbolName = "_OBJC_CLASS_" + Name;
+
+    llvm::GlobalVariable *ClassSymbol = TheModule.getGlobalVariable(SymbolName);
+
+    if (!ClassSymbol)
+      ClassSymbol = new llvm::GlobalVariable(TheModule, LongTy, false,
+                                             llvm::GlobalValue::ExternalLinkage,
+                                             0, SymbolName);
+
+    return ClassSymbol;
+  }
+
+public:
+  CGObjCObjFW(CodeGenModule &Mod): CGObjCGCC(Mod) {}
+};
 } // end anonymous namespace
 
 
@@ -2671,6 +2695,9 @@ clang::CodeGen::CreateGNUObjCRuntime(CodeGenModule &CGM) {
 
   case ObjCRuntime::GCC:
     return new CGObjCGCC(CGM);
+
+  case ObjCRuntime::ObjFW:
+    return new CGObjCObjFW(CGM);
 
   case ObjCRuntime::FragileMacOSX:
   case ObjCRuntime::MacOSX:

@@ -46,7 +46,10 @@ public:
     GCC,
 
     /// 'gnustep' is the modern non-fragile GNUstep runtime.
-   GNUstep 
+    GNUstep,
+
+    /// 'objfw' is the Objective-C runtime included in ObjFW
+    ObjFW
   };
 
 private:
@@ -76,6 +79,7 @@ public:
     case GCC: return false;
     case MacOSX: return true;
     case GNUstep: return true;
+    case ObjFW: return false;
     case iOS: return true;
     }
     llvm_unreachable("bad kind");
@@ -109,6 +113,7 @@ public:
       return false;
     case GCC:
     case GNUstep:
+    case ObjFW:
       return true;
     }
     llvm_unreachable("bad kind");
@@ -134,6 +139,7 @@ public:
 
     case GCC: return false;
     case GNUstep: return getVersion() >= VersionTuple(1, 6);
+    case ObjFW: return false; // XXX: this will change soon
     }
     llvm_unreachable("bad kind");
   }
@@ -159,6 +165,7 @@ public:
     // should imply a "maximal" runtime or something?
     case GCC: return true;
     case GNUstep: return true;
+    case ObjFW: return true;
     }
     llvm_unreachable("bad kind");
   }
@@ -174,6 +181,7 @@ public:
     case iOS: return getVersion() >= VersionTuple(5);
     case GCC: return false;
     case GNUstep: return false;
+    case ObjFW: return false;
     }
     llvm_unreachable("bad kind");
   }
@@ -186,6 +194,7 @@ public:
     case FragileMacOSX: return false;
     case GCC: return true;
     case GNUstep: return true;
+    case ObjFW: return true;
     }
     llvm_unreachable("bad kind");
   }
@@ -197,6 +206,7 @@ public:
     case FragileMacOSX: return false;
     case GCC: return true;
     case GNUstep: return true;
+    case ObjFW: return true;
     }
     llvm_unreachable("bad kind");
   }
