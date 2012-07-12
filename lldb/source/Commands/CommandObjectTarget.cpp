@@ -34,10 +34,12 @@
 #include "lldb/Interpreter/OptionGroupUInt64.h"
 #include "lldb/Interpreter/OptionGroupUUID.h"
 #include "lldb/Interpreter/OptionGroupValueObjectDisplay.h"
+#include "lldb/Symbol/FuncUnwinders.h"
 #include "lldb/Symbol/LineTable.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Symbol/SymbolFile.h"
 #include "lldb/Symbol/SymbolVendor.h"
+#include "lldb/Symbol/UnwindPlan.h"
 #include "lldb/Symbol/VariableList.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/StackFrame.h"
@@ -3206,7 +3208,241 @@ CommandObjectTargetModulesList::CommandOptions::g_option_table[] =
     { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
 
+#pragma mark CommandObjectTargetModulesShowUnwind
 
+//----------------------------------------------------------------------
+// Lookup unwind information in images
+//----------------------------------------------------------------------
+
+class CommandObjectTargetModulesShowUnwind : public CommandObjectParsed
+{
+public:
+
+    enum
+    {
+        eLookupTypeInvalid = -1,
+        eLookupTypeAddress = 0,
+        eLookupTypeSymbol,
+        eLookupTypeFunction,
+        eLookupTypeFunctionOrSymbol,
+        kNumLookupTypes
+    };
+
+    class CommandOptions : public Options
+    {
+    public:
+
+        CommandOptions (CommandInterpreter &interpreter) :
+        Options(interpreter),
+        m_type(eLookupTypeInvalid),
+        m_str(),
+        m_addr(LLDB_INVALID_ADDRESS)
+        {
+        }
+
+        virtual
+        ~CommandOptions ()
+        {
+        }
+
+        virtual Error
+        SetOptionValue (uint32_t option_idx, const char *option_arg)
+        {
+            Error error;
+
+            char short_option = (char) m_getopt_table[option_idx].val;
+
+            switch (short_option)
+            {
+                case 'a':
+                    m_type = eLookupTypeAddress;
+                    m_addr = Args::StringToUInt64(option_arg, LLDB_INVALID_ADDRESS);
+                    if (m_addr == LLDB_INVALID_ADDRESS)
+                        error.SetErrorStringWithFormat ("invalid address string '%s'", option_arg);
+                    break;
+
+                case 'n':
+                    m_str = option_arg;
+                    m_type = eLookupTypeFunctionOrSymbol;
+                    break;
+            }
+
+            return error;
+        }
+
+        void
+        OptionParsingStarting ()
+        {
+            m_type = eLookupTypeInvalid;
+            m_str.clear();
+            m_addr = LLDB_INVALID_ADDRESS;
+        }
+
+        const OptionDefinition*
+        GetDefinitions ()
+        {
+            return g_option_table;
+        }
+
+        // Options table: Required for subclasses of Options.
+
+        static OptionDefinition g_option_table[];
+
+        // Instance variables to hold the values for command options.
+
+        int             m_type;         // Should be a eLookupTypeXXX enum after parsing options
+        std::string     m_str;          // Holds name lookup
+        lldb::addr_t    m_addr;         // Holds the address to lookup
+    };
+    
+    CommandObjectTargetModulesShowUnwind (CommandInterpreter &interpreter) :
+        CommandObjectParsed (interpreter,
+                             "target modules show-unwind",
+                             "Show synthesized unwind instructions for a function.",
+                             NULL),
+        m_options (interpreter)
+    {
+    }
+    
+    virtual
+    ~CommandObjectTargetModulesShowUnwind ()
+    {
+    }
+    
+    virtual
+    Options *
+    GetOptions ()
+    {
+        return &m_options;
+    }
+
+protected:
+    bool
+    DoExecute (Args& command,
+             CommandReturnObject &result)
+    {
+        Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
+        if (!target)
+        {
+            result.AppendError ("invalid target, create a debug target using the 'target create' command");
+            result.SetStatus (eReturnStatusFailed);
+            return false;
+        }
+
+        ExecutionContext exe_ctx = m_interpreter.GetDebugger().GetSelectedExecutionContext();
+        Process *process = exe_ctx.GetProcessPtr();
+        ABI *abi = NULL;
+        if (process)
+          abi = process->GetABI().get();
+
+        if (process == NULL)
+        {
+            result.AppendError ("You must have a process running to use this command.");
+            result.SetStatus (eReturnStatusFailed);
+            return false;
+        }
+
+        ThreadList threads(process->GetThreadList());
+        if (threads.GetSize() == 0)
+        {
+            result.AppendError ("The process must be paused to use this command.");
+            result.SetStatus (eReturnStatusFailed);
+            return false;
+        }
+
+        ThreadSP thread(threads.GetThreadAtIndex(0));
+        if (thread.get() == NULL)
+        {
+            result.AppendError ("The process must be paused to use this command.");
+            result.SetStatus (eReturnStatusFailed);
+            return false;
+        }
+
+        if (m_options.m_type == eLookupTypeFunctionOrSymbol)
+        {
+            SymbolContextList sc_list;
+            uint32_t num_matches;
+            ConstString function_name (m_options.m_str.c_str());
+            num_matches = target->GetImages().FindFunctions (function_name, eFunctionNameTypeAuto, true, false, true, sc_list);
+            for (uint32_t idx = 0; idx < num_matches; idx++)
+            {
+                SymbolContext sc;
+                sc_list.GetContextAtIndex(idx, sc);
+                if (sc.symbol == NULL && sc.function == NULL)
+                    continue;
+                if (sc.module_sp.get() == NULL || sc.module_sp->GetObjectFile() == NULL)
+                    continue;
+                AddressRange range;
+                if (!sc.GetAddressRange (eSymbolContextFunction | eSymbolContextSymbol, 0, false, range))
+                    continue;
+                if (!range.GetBaseAddress().IsValid())
+                    continue;
+                ConstString funcname(sc.GetFunctionName());
+                if (funcname.IsEmpty())
+                    continue;
+                addr_t start_addr = range.GetBaseAddress().GetLoadAddress(target);
+                if (abi)
+                    start_addr = abi->FixCodeAddress(start_addr);
+
+                FuncUnwindersSP func_unwinders_sp (sc.module_sp->GetObjectFile()->GetUnwindTable().GetUncachedFuncUnwindersContainingAddress(start_addr, sc));
+                if (func_unwinders_sp.get() == NULL)
+                    continue;
+
+                Address first_non_prologue_insn (func_unwinders_sp->GetFirstNonPrologueInsn(*target));
+                if (first_non_prologue_insn.IsValid())
+                {
+                    result.GetOutputStream().Printf("First non-prologue instruction is at address 0x%llx or offset %lld into the function.\n", first_non_prologue_insn.GetLoadAddress(target), first_non_prologue_insn.GetLoadAddress(target) - start_addr);
+                    result.GetOutputStream().Printf ("\n");
+                }
+
+                UnwindPlanSP non_callsite_unwind_plan = func_unwinders_sp->GetUnwindPlanAtNonCallSite(*thread.get());
+                if (non_callsite_unwind_plan.get())
+                {
+                    result.GetOutputStream().Printf("Asynchronous (not restricted to call-sites) UnwindPlan for %s`%s (start addr 0x%llx):\n", sc.module_sp->GetPlatformFileSpec().GetFilename().AsCString(), funcname.AsCString(), start_addr);
+                    non_callsite_unwind_plan->Dump(result.GetOutputStream(), thread.get(), LLDB_INVALID_ADDRESS);
+                    result.GetOutputStream().Printf ("\n");
+                }
+
+                UnwindPlanSP callsite_unwind_plan = func_unwinders_sp->GetUnwindPlanAtCallSite(-1);
+                if (callsite_unwind_plan.get())
+                {
+                    result.GetOutputStream().Printf("Synchronous (restricted to call-sites) UnwindPlan for %s`%s (start addr 0x%llx):\n", sc.module_sp->GetPlatformFileSpec().GetFilename().AsCString(), funcname.AsCString(), start_addr);
+                    callsite_unwind_plan->Dump(result.GetOutputStream(), thread.get(), LLDB_INVALID_ADDRESS);
+                    result.GetOutputStream().Printf ("\n");
+                }
+
+                UnwindPlanSP arch_default_unwind_plan = func_unwinders_sp->GetUnwindPlanArchitectureDefault(*thread.get());
+                if (arch_default_unwind_plan.get())
+                {
+                    result.GetOutputStream().Printf("Architecture default UnwindPlan for %s`%s (start addr 0x%llx):\n", sc.module_sp->GetPlatformFileSpec().GetFilename().AsCString(), funcname.AsCString(), start_addr);
+                    arch_default_unwind_plan->Dump(result.GetOutputStream(), thread.get(), LLDB_INVALID_ADDRESS);
+                    result.GetOutputStream().Printf ("\n");
+                }
+
+                UnwindPlanSP fast_unwind_plan = func_unwinders_sp->GetUnwindPlanFastUnwind(*thread.get());
+                if (fast_unwind_plan.get())
+                {
+                    result.GetOutputStream().Printf("Fast UnwindPlan for %s`%s (start addr 0x%llx):\n", sc.module_sp->GetPlatformFileSpec().GetFilename().AsCString(), funcname.AsCString(), start_addr);
+                    fast_unwind_plan->Dump(result.GetOutputStream(), thread.get(), LLDB_INVALID_ADDRESS);
+                    result.GetOutputStream().Printf ("\n");
+                }
+
+
+                result.GetOutputStream().Printf ("\n");
+            }
+        }
+        return result.Succeeded();
+    }
+
+    CommandOptions m_options;
+};
+
+OptionDefinition
+CommandObjectTargetModulesShowUnwind::CommandOptions::g_option_table[] =
+{
+    { LLDB_OPT_SET_1,   true,  "name",       'n', required_argument, NULL, 0, eArgTypeFunctionName, "Lookup a function or symbol by name in one or more target modules."},
+    { 0,                false, NULL,           0, 0,                 NULL, 0, eArgTypeNone, NULL }
+};
 
 //----------------------------------------------------------------------
 // Lookup information in images
@@ -3721,6 +3957,7 @@ public:
         LoadSubCommand ("list",         CommandObjectSP (new CommandObjectTargetModulesList (interpreter)));
         LoadSubCommand ("lookup",       CommandObjectSP (new CommandObjectTargetModulesLookup (interpreter)));
         LoadSubCommand ("search-paths", CommandObjectSP (new CommandObjectTargetModulesImageSearchPaths (interpreter)));
+        LoadSubCommand ("show-unwind",  CommandObjectSP (new CommandObjectTargetModulesShowUnwind (interpreter)));
 
     }
     virtual

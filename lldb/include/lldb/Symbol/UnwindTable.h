@@ -33,6 +33,15 @@ public:
     lldb::FuncUnwindersSP
     GetFuncUnwindersContainingAddress (const Address& addr, SymbolContext &sc);
 
+// Normally when we create a new FuncUnwinders object we track it in this UnwindTable so it can
+// be reused later.  But for the target modules show-unwind we want to create brand new 
+// UnwindPlans for the function of interest - so ignore any existing FuncUnwinders for that
+// function and don't add this new one to our UnwindTable.
+// This FuncUnwinders object does have a reference to the UnwindTable but the lifetime of this
+// uncached FuncUnwinders is expected to be short so in practice this will not be a problem.
+    lldb::FuncUnwindersSP
+    GetUncachedFuncUnwindersContainingAddress (const Address& addr, SymbolContext &sc);
+
 private:
     void
     Dump (Stream &s);

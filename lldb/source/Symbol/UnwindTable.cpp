@@ -107,6 +107,31 @@ UnwindTable::GetFuncUnwindersContainingAddress (const Address& addr, SymbolConte
     return func_unwinder_sp;
 }
 
+// Ignore any existing FuncUnwinders for this function, create a new one and don't add it to the
+// UnwindTable.  This is intended for use by target modules show-unwind where we want to create 
+// new UnwindPlans, not re-use existing ones.
+
+FuncUnwindersSP
+UnwindTable::GetUncachedFuncUnwindersContainingAddress (const Address& addr, SymbolContext &sc)
+{
+    FuncUnwindersSP no_unwind_found;
+    Initialize();
+
+    AddressRange range;
+    if (!sc.GetAddressRange(eSymbolContextFunction | eSymbolContextSymbol, 0, false, range) || !range.GetBaseAddress().IsValid())
+    {
+        // Does the eh_frame unwind info has a function bounds for this addr?
+        if (m_eh_frame == NULL || !m_eh_frame->GetAddressRange (addr, range))
+        {
+            return no_unwind_found;
+        }
+    }
+
+    FuncUnwindersSP func_unwinder_sp(new FuncUnwinders(*this, m_assembly_profiler, range));
+    return func_unwinder_sp;
+}
+
+
 void
 UnwindTable::Dump (Stream &s)
 {
