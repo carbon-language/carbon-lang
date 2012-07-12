@@ -1176,6 +1176,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
 
   // We want to custom lower some of our intrinsics.
   setOperationAction(ISD::INTRINSIC_WO_CHAIN, MVT::Other, Custom);
+  setOperationAction(ISD::INTRINSIC_W_CHAIN, MVT::Other, Custom);
 
 
   // Only custom-lower 64-bit SADDO and friends on 64-bit because we don't
@@ -9810,6 +9811,38 @@ X86TargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) const 
   }
 }
 
+SDValue
+X86TargetLowering::LowerINTRINSIC_W_CHAIN(SDValue Op, SelectionDAG &DAG) const {
+  DebugLoc dl = Op.getDebugLoc();
+  unsigned IntNo = cast<ConstantSDNode>(Op.getOperand(1))->getZExtValue();
+  switch (IntNo) {
+  default: return SDValue();    // Don't custom lower most intrinsics.
+
+  // RDRAND intrinsics.
+  case Intrinsic::x86_rdrand_16:
+  case Intrinsic::x86_rdrand_32:
+  case Intrinsic::x86_rdrand_64: {
+    // Emit the node with the right value type.
+    SDValue Result = DAG.getNode(X86ISD::RDRAND, dl,
+                                 DAG.getVTList(Op->getValueType(0), MVT::Glue));
+
+    // If the value returned by RDRAND was valid (CF=1), return 1. Otherwise
+    // return the value from Rand, which is always 0, casted to i32.
+    SDValue Ops[] = { DAG.getZExtOrTrunc(Result, dl, Op->getValueType(1)),
+                      DAG.getConstant(1, Op->getValueType(1)),
+                      DAG.getConstant(X86::COND_B, MVT::i32),
+                      SDValue(Result.getNode(), 1) };
+    SDValue isValid = DAG.getNode(X86ISD::CMOV, dl,
+                                  DAG.getVTList(Op->getValueType(1), MVT::Glue),
+                                  Ops, 4);
+
+    // Return { result, isValid, chain }.
+    return DAG.getNode(ISD::MERGE_VALUES, dl, Op->getVTList(), Result, isValid,
+                       Op.getOperand(0));
+  }
+  }
+}
+
 SDValue X86TargetLowering::LowerRETURNADDR(SDValue Op,
                                            SelectionDAG &DAG) const {
   MachineFrameInfo *MFI = DAG.getMachineFunction().getFrameInfo();
@@ -10894,6 +10927,7 @@ SDValue X86TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::VAARG:              return LowerVAARG(Op, DAG);
   case ISD::VACOPY:             return LowerVACOPY(Op, DAG);
   case ISD::INTRINSIC_WO_CHAIN: return LowerINTRINSIC_WO_CHAIN(Op, DAG);
+  case ISD::INTRINSIC_W_CHAIN:  return LowerINTRINSIC_W_CHAIN(Op, DAG);
   case ISD::RETURNADDR:         return LowerRETURNADDR(Op, DAG);
   case ISD::FRAMEADDR:          return LowerFRAMEADDR(Op, DAG);
   case ISD::FRAME_TO_ARGS_OFFSET:
@@ -11228,6 +11262,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::SEG_ALLOCA:         return "X86ISD::SEG_ALLOCA";
   case X86ISD::WIN_FTOL:           return "X86ISD::WIN_FTOL";
   case X86ISD::SAHF:               return "X86ISD::SAHF";
+  case X86ISD::RDRAND:             return "X86ISD::RDRAND";
   }
 }
 

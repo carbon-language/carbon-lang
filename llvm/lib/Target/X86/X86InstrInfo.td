@@ -65,6 +65,8 @@ def SDTX86SetCC_C : SDTypeProfile<1, 2,
 
 def SDTX86sahf : SDTypeProfile<1, 1, [SDTCisVT<0, i32>, SDTCisVT<1, i8>]>;
 
+def SDTX86rdrand : SDTypeProfile<2, 0, [SDTCisInt<0>, SDTCisVT<1, i32>]>;
+
 def SDTX86cas : SDTypeProfile<0, 3, [SDTCisPtrTy<0>, SDTCisInt<1>,
                                      SDTCisVT<2, i8>]>;
 def SDTX86caspair : SDTypeProfile<0, 1, [SDTCisPtrTy<0>]>;
@@ -136,6 +138,8 @@ def X86setcc   : SDNode<"X86ISD::SETCC",    SDTX86SetCC>;
 def X86setcc_c : SDNode<"X86ISD::SETCC_CARRY", SDTX86SetCC_C>;
 
 def X86sahf    : SDNode<"X86ISD::SAHF",     SDTX86sahf>;
+
+def X86rdrand  : SDNode<"X86ISD::RDRAND",     SDTX86rdrand>;
 
 def X86cas : SDNode<"X86ISD::LCMPXCHG_DAG", SDTX86cas,
                         [SDNPHasChain, SDNPInGlue, SDNPOutGlue, SDNPMayStore,
@@ -1466,11 +1470,14 @@ let Predicates = [HasMOVBE] in {
 //
 let Predicates = [HasRDRAND], Defs = [EFLAGS] in {
   def RDRAND16r : I<0xC7, MRM6r, (outs GR16:$dst), (ins),
-                    "rdrand{w}\t$dst", []>, OpSize, TB;
+                    "rdrand{w}\t$dst",
+                    [(set GR16:$dst, EFLAGS, (X86rdrand))]>, OpSize, TB;
   def RDRAND32r : I<0xC7, MRM6r, (outs GR32:$dst), (ins),
-                    "rdrand{l}\t$dst", []>, TB;
+                    "rdrand{l}\t$dst",
+                    [(set GR32:$dst, EFLAGS, (X86rdrand))]>, TB;
   def RDRAND64r : RI<0xC7, MRM6r, (outs GR64:$dst), (ins),
-                     "rdrand{q}\t$dst", []>, TB;
+                     "rdrand{q}\t$dst",
+                     [(set GR64:$dst, EFLAGS, (X86rdrand))]>, TB;
 }
 
 //===----------------------------------------------------------------------===//

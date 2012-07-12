@@ -2536,3 +2536,14 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
               Intrinsic<[llvm_v8i16_ty], [llvm_v8f32_ty, llvm_i32_ty],
                         [IntrNoMem]>;
 }
+
+//===----------------------------------------------------------------------===//
+// RDRAND intrinsics. Return a random value and whether it is valid.
+
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  // These are declared side-effecting so they don't get eliminated by CSE or
+  // LICM.
+  def int_x86_rdrand_16 : Intrinsic<[llvm_i16_ty, llvm_i32_ty], [], []>;
+  def int_x86_rdrand_32 : Intrinsic<[llvm_i32_ty, llvm_i32_ty], [], []>;
+  def int_x86_rdrand_64 : Intrinsic<[llvm_i64_ty, llvm_i32_ty], [], []>;
+}
