@@ -1,8 +1,9 @@
 // RUN: %clang_cc1 -triple x86_64-unknown-unknown -target-feature +rdrnd -emit-llvm -S -emit-llvm -o - %s | FileCheck %s
-#include <immintrin.h>
 
 // Don't include mm_malloc.h, it's system specific.
 #define __MM_MALLOC_H
+
+#include <immintrin.h>
 
 int rdrand16(unsigned short *p) {
   return _rdrand16_step(p);
