@@ -18,6 +18,7 @@
 #include "lldb/Core/AddressRange.h"
 #include "lldb/Core/VMRange.h"
 #include "lldb/Core/dwarf.h"
+#include "lldb/Host/Mutex.h"
 #include "lldb/Symbol/UnwindPlan.h"
 #include "lldb/Symbol/ObjectFile.h"
 
@@ -128,6 +129,7 @@ private:
 
     std::vector<FDEEntry>       m_fde_index;
     bool                        m_fde_index_initialized;  // only scan the section for FDEs once
+    Mutex                       m_fde_index_mutex;        // and isolate the thread that does it
 
     bool                        m_is_eh_frame;
 

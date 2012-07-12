@@ -293,9 +293,14 @@ DWARFCallFrameInfo::GetFDEIndex ()
 {
     if (m_section_sp.get() == NULL || m_section_sp->IsEncrypted())
         return;
+    
     if (m_fde_index_initialized)
         return;
-
+    
+    Mutex::Locker locker(m_fde_index_mutex);
+    
+    if (m_fde_index_initialized) // if two threads hit the locker
+        return;
 
     dw_offset_t offset = 0;
     if (m_cfi_data_initialized == false)
