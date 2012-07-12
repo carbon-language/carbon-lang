@@ -702,8 +702,10 @@ llvm::Optional<Visibility> NamedDecl::getExplicitVisibility() const {
   // specialization of a class template, check for visibility
   // on the pattern.
   if (const ClassTemplateSpecializationDecl *spec
-        = dyn_cast<ClassTemplateSpecializationDecl>(this))
-    return getVisibilityOf(spec->getSpecializedTemplate()->getTemplatedDecl());
+      = dyn_cast<ClassTemplateSpecializationDecl>(this)) {
+    ClassTemplateDecl *TD = spec->getSpecializedTemplate()->getCanonicalDecl();
+    return getVisibilityOf(TD->getTemplatedDecl());
+  }
 
   // If this is a member class of a specialization of a class template
   // and the corresponding decl has explicit visibility, use that.
