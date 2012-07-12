@@ -33,5 +33,7 @@ int main()
         assert(ws == L"\x40003");
         ws = myconv.from_bytes(bs.data(), bs.data() + bs.size());
         assert(ws == L"\x40003");
+        ws = myconv.from_bytes("");
+        assert(ws.size() == 0);
     }
 }

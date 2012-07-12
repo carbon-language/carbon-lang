@@ -33,5 +33,7 @@ int main()
         assert(bs == "\xF1\x80\x80\x83");
         bs = myconv.to_bytes(ws.data(), ws.data() + ws.size());
         assert(bs == "\xF1\x80\x80\x83");
+        bs = myconv.to_bytes(L"");
+        assert(bs.size() == 0);
     }
 }

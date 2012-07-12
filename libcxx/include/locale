@@ -3920,7 +3920,8 @@ wstring_convert<_Codecvt, _Elem, _Wide_alloc, _Byte_alloc>::
     if (__cvtptr_ != nullptr)
     {
         wide_string __ws(2*(__frm_end - __frm), _Elem());
-        __ws.resize(__ws.capacity());
+        if (__frm != __frm_end)
+            __ws.resize(__ws.capacity());
         codecvt_base::result __r = codecvt_base::ok;
         state_type __st = __cvtstate_;
         if (__frm != __frm_end)
@@ -3980,7 +3981,8 @@ wstring_convert<_Codecvt, _Elem, _Wide_alloc, _Byte_alloc>::
     if (__cvtptr_ != nullptr)
     {
         byte_string __bs(2*(__frm_end - __frm), char());
-        __bs.resize(__bs.capacity());
+        if (__frm != __frm_end)
+            __bs.resize(__bs.capacity());
         codecvt_base::result __r = codecvt_base::ok;
         state_type __st = __cvtstate_;
         if (__frm != __frm_end)
