@@ -509,7 +509,7 @@ public:
       } else
         Error = true;
     }
-    char C;
+    char C = '\0';
     while (!Error && !isEnd()) {
       C = peek();
       WordText.push_back(C);
