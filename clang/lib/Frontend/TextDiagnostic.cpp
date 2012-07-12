@@ -1160,8 +1160,13 @@ std::string TextDiagnostic::buildFixItInsertionLine(
         unsigned LastColumnModified
           = HintColNo + I->CodeToInsert.size();
 
-        if (LastColumnModified <= static_cast<unsigned>(map.bytes()))
+        if (LastColumnModified <= static_cast<unsigned>(map.bytes())) {
+          // If we're right in the middle of a multibyte character skip to
+          // the end of it.
+          while (map.byteToColumn(LastColumnModified) == -1)
+            ++LastColumnModified;
           LastColumnModified = map.byteToColumn(LastColumnModified);
+        }
 
         if (LastColumnModified > FixItInsertionLine.size())
           FixItInsertionLine.resize(LastColumnModified, ' ');
