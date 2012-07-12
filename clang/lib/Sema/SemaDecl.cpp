@@ -8919,6 +8919,10 @@ void Sema::ActOnTagStartDefinition(Scope *S, Decl *TagD) {
   PushDeclContext(S, Tag);
 
   ActOnDocumentableDecl(TagD);
+
+  // If there's a #pragma GCC visibility in scope, set the visibility of this
+  // record.
+  AddPushedVisibilityAttribute(Tag);
 }
 
 Decl *Sema::ActOnObjCContainerStartDefinition(Decl *IDecl) {
@@ -8982,10 +8986,6 @@ void Sema::ActOnTagFinishDefinition(Scope *S, Decl *TagD,
 
   if (isa<CXXRecordDecl>(Tag))
     FieldCollector->FinishClass();
-
-  // If there's a #pragma GCC visibility in scope, and this isn't a subclass,
-  // set the visibility of this record.
-  AddPushedVisibilityAttribute(Tag);
 
   // Exit this scope of this tag's definition.
   PopDeclContext();
