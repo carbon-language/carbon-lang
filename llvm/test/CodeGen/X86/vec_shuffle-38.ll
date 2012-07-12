@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86-64 | FileCheck %s
+; RUN: llc < %s -march=x86-64 -mcpu=corei7 | FileCheck %s
 
 define <2 x double> @ld(<2 x double> %p) nounwind optsize ssp {
 ; CHECK: unpcklpd

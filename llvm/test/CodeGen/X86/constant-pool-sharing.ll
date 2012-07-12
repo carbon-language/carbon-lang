@@ -1,5 +1,5 @@
-; RUN: llc < %s -mtriple=x86_64-linux | FileCheck %s
-; RUN: llc < %s -mtriple=x86_64-win32 | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-linux -mcpu=corei7 | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-win32 -mcpu=corei7 | FileCheck %s
 
 ; llc should share constant pool entries between this integer vector
 ; and this floating-point vector since they have the same encoding.

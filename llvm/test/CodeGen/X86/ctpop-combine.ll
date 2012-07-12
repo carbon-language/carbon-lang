@@ -1,4 +1,4 @@
-; RUN: llc -march=x86-64 < %s | FileCheck %s
+; RUN: llc -march=x86-64 -mcpu=corei7 < %s | FileCheck %s
 
 declare i64 @llvm.ctpop.i64(i64) nounwind readnone
 
