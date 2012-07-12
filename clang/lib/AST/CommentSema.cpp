@@ -390,7 +390,8 @@ unsigned Sema::correctTypoInParmVarReference(
     const IdentifierInfo *II = ParamVars[i]->getIdentifier();
     if (II) {
       StringRef Name = II->getName();
-      unsigned MinPossibleEditDistance = abs(Name.size() - Typo.size());
+      unsigned MinPossibleEditDistance =
+        abs((int)Name.size() - (int)Typo.size());
       if (MinPossibleEditDistance > 0 &&
           Typo.size() / MinPossibleEditDistance < 3)
         continue;
