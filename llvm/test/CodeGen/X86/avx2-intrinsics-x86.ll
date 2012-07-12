@@ -1136,3 +1136,22 @@ define <4 x i32> @test_x86_avx2_gather_q_d_256(<4 x i32> %a0, i8* %a1,
 }
 declare <4 x i32> @llvm.x86.avx2.gather.q.d.256(<4 x i32>, i8*,
                       <4 x i64>, <4 x i32>, i8) nounwind readonly
+
+; PR13298
+define <8 x float>  @test_gather_mask(<8 x float> %a0, float* %a,
+                                      <8 x i32> %idx, <8 x float> %mask,
+                                      float* nocapture %out) {
+; CHECK: test_gather_mask
+; CHECK: vmovdqa %ymm2, [[DEST:%.*]]
+; CHECK: vgatherdps [[DEST]]
+;; gather with mask
+  %a_i8 = bitcast float* %a to i8*
+  %res = call <8 x float> @llvm.x86.avx2.gather.d.ps.256(<8 x float> %a0,
+                           i8* %a_i8, <8 x i32> %idx, <8 x float> %mask, i8 4) ;
+
+;; for debugging, we'll just dump out the mask
+  %out_ptr = bitcast float * %out to <8 x float> *
+  store <8 x float> %mask, <8 x float> * %out_ptr, align 4
+
+  ret <8 x float> %res
+}

@@ -1966,14 +1966,22 @@ SDNode *X86DAGToDAGISel::SelectGather(SDNode *Node, unsigned Opc) {
   if (!Scale)
     return 0;
 
+  SDVTList VTs = CurDAG->getVTList(VSrc.getValueType(), VSrc.getValueType(),
+                                   MVT::Other);
+
   // Memory Operands: Base, Scale, Index, Disp, Segment
   SDValue Disp = CurDAG->getTargetConstant(0, MVT::i32);
   SDValue Segment = CurDAG->getRegister(0, MVT::i32);
   const SDValue Ops[] = { VSrc, Base, getI8Imm(Scale->getSExtValue()), VIdx,
                           Disp, Segment, VMask, Chain};
   SDNode *ResNode = CurDAG->getMachineNode(Opc, Node->getDebugLoc(),
-                                           VSrc.getValueType(), MVT::Other,
-                                           Ops, array_lengthof(Ops));
+                                           VTs, Ops, array_lengthof(Ops));
+  // Node has 2 outputs: VDst and MVT::Other.
+  // ResNode has 3 outputs: VDst, VMask_wb, and MVT::Other.
+  // We replace VDst of Node with VDst of ResNode, and Other of Node with Other
+  // of ResNode.
+  ReplaceUses(SDValue(Node, 0), SDValue(ResNode, 0));
+  ReplaceUses(SDValue(Node, 1), SDValue(ResNode, 2));
   return ResNode;
 }
 
@@ -2034,7 +2042,8 @@ SDNode *X86DAGToDAGISel::Select(SDNode *Node) {
       }
       SDNode *RetVal = SelectGather(Node, Opc);
       if (RetVal)
-        return RetVal;
+        // We already called ReplaceUses inside SelectGather.
+        return NULL;
       break;
     }
     }

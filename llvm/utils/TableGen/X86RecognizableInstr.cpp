@@ -277,8 +277,8 @@ RecognizableInstr::RecognizableInstr(DisassemblerTables &tables,
 }
   
 void RecognizableInstr::processInstr(DisassemblerTables &tables,
-	const CodeGenInstruction &insn,
-                                   InstrUID uid)
+                                     const CodeGenInstruction &insn,
+                                     InstrUID uid)
 {
   // Ignore "asm parser only" instructions.
   if (insn.TheDef->getValueAsBit("isAsmParserOnly"))
@@ -508,13 +508,13 @@ bool RecognizableInstr::has256BitOperands() const {
   return false;
 }
   
-void RecognizableInstr::handleOperand(
-  bool optional,
-  unsigned &operandIndex,
-  unsigned &physicalOperandIndex,
-  unsigned &numPhysicalOperands,
-  unsigned *operandMapping,
-  OperandEncoding (*encodingFromString)(const std::string&, bool hasOpSizePrefix)) {
+void RecognizableInstr::handleOperand(bool optional, unsigned &operandIndex,
+                                      unsigned &physicalOperandIndex,
+                                      unsigned &numPhysicalOperands,
+                                      const unsigned *operandMapping,
+                                      OperandEncoding (*encodingFromString)
+                                        (const std::string&,
+                                         bool hasOpSizePrefix)) {
   if (optional) {
     if (physicalOperandIndex >= numPhysicalOperands)
       return;
@@ -563,7 +563,6 @@ void RecognizableInstr::emitInstructionSpecifier(DisassemblerTables &tables) {
     
   const std::vector<CGIOperandList::OperandInfo> &OperandList = *Operands;
   
-  unsigned operandIndex;
   unsigned numOperands = OperandList.size();
   unsigned numPhysicalOperands = 0;
   
@@ -575,12 +574,13 @@ void RecognizableInstr::emitInstructionSpecifier(DisassemblerTables &tables) {
   
   assert(numOperands <= X86_MAX_OPERANDS && "X86_MAX_OPERANDS is not large enough");
   
-  for (operandIndex = 0; operandIndex < numOperands; ++operandIndex) {
+  for (unsigned operandIndex = 0; operandIndex < numOperands; ++operandIndex) {
     if (OperandList[operandIndex].Constraints.size()) {
       const CGIOperandList::ConstraintInfo &Constraint =
         OperandList[operandIndex].Constraints[0];
       if (Constraint.isTied()) {
-        operandMapping[operandIndex] = Constraint.getTiedOperand();
+        operandMapping[operandIndex] = operandIndex;
+        operandMapping[Constraint.getTiedOperand()] = operandIndex;
       } else {
         ++numPhysicalOperands;
         operandMapping[operandIndex] = operandIndex;
@@ -621,7 +621,7 @@ void RecognizableInstr::emitInstructionSpecifier(DisassemblerTables &tables) {
                 class##EncodingFromString);
   
   // operandIndex should always be < numOperands
-  operandIndex = 0;
+  unsigned operandIndex = 0;
   // physicalOperandIndex should always be < numPhysicalOperands
   unsigned physicalOperandIndex = 0;
     

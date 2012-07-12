@@ -204,7 +204,7 @@ private:
                      unsigned &operandIndex,
                      unsigned &physicalOperandIndex,
                      unsigned &numPhysicalOperands,
-                     unsigned *operandMapping,
+                     const unsigned *operandMapping,
                      OperandEncoding (*encodingFromString)
                        (const std::string&,
                         bool hasOpSizePrefix));
