@@ -1532,7 +1532,16 @@ LaunchProcessPosixSpawn (const char *exe_path, ProcessLaunchInfo &launch_info, :
     if (working_dir)
     {
         // No more thread specific current working directory
-        __pthread_chdir (working_dir);
+        if (__pthread_chdir (working_dir) < 0) {
+            if (errno == ENOENT) {
+                error.SetErrorStringWithFormat("No such file or directory: %s", working_dir);
+            } else if (errno == ENOTDIR) {
+                error.SetErrorStringWithFormat("Path doesn't name a directory: %s", working_dir);
+            } else {
+                error.SetErrorStringWithFormat("An unknown error occurred when changing directory for process execution.");
+            }
+            return error;
+        }
     }
     
     const size_t num_file_actions = launch_info.GetNumFileActions ();
