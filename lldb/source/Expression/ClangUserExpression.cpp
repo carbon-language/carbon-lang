@@ -110,7 +110,7 @@ ClangUserExpression::ScanContext(ExecutionContext &exe_ctx, Error &err)
     if (frame == NULL)
         return;
     
-    SymbolContext sym_ctx = frame->GetSymbolContext(lldb::eSymbolContextFunction);
+    SymbolContext sym_ctx = frame->GetSymbolContext(lldb::eSymbolContextFunction | lldb::eSymbolContextBlock);
     
     if (!sym_ctx.function)
         return;
