@@ -45,13 +45,13 @@ class NSTaggedNumber_SummaryProvider:
 		# unfortunately, the original type information appears to be lost
 		# so we try to at least recover the proper magnitude of the data
 		if self.info_bits == 0:
-			return '(char)' + str(self.data % 256)
+			return '(char)' + str(ord(ctypes.c_char(chr(self.data % 256)).value))
 		if self.info_bits == 4:
-			return '(short)' + str(self.data % (256*256))
+			return '(short)' + str(ctypes.c_short(self.data % (256*256)).value)
 		if self.info_bits == 8:
-			return '(int)' + str(self.data % (256*256*256*256))
+			return '(int)' + str(ctypes.c_int(self.data % (256*256*256*256)).value)
 		if self.info_bits == 12:
-			return '(long)' + str(self.data)
+			return '(long)' + str(ctypes.c_long(self.data).value)
 		else:
 			return 'absurd value:(info=' + str(self.info_bits) + ", value = " + str(self.data) + ')'
 
@@ -106,13 +106,13 @@ class NSUntaggedNumber_SummaryProvider:
 								data_offset,
 								self.sys_params.types_cache.char)
 			statistics.metric_hit('code_notrun',self.valobj)
-			return '(char)' + str(data_vo.GetValueAsUnsigned(0))
+			return '(char)' + str(ord(ctypes.c_char(chr(data_vo.GetValueAsUnsigned(0))).value))
 		elif data_type == 0B0010:
 			data_vo = self.valobj.CreateChildAtOffset("data",
 								data_offset,
 								self.sys_params.types_cache.short)
 			statistics.metric_hit('code_notrun',self.valobj)
-			return '(short)' + str(data_vo.GetValueAsUnsigned(0) % (256*256))
+			return '(short)' + str(ctypes.c_short(data_vo.GetValueAsUnsigned(0) % (256*256)).value)
 		# IF tagged pointers are possible on 32bit+v2 runtime
 		# (of which the only existing instance should be iOS)
 		# then values of this type might be tagged
@@ -121,7 +121,7 @@ class NSUntaggedNumber_SummaryProvider:
 								data_offset,
 								self.sys_params.types_cache.int)
 			statistics.metric_hit('code_notrun',self.valobj)
-			return '(int)' + str(data_vo.GetValueAsUnsigned(0) % (256*256*256*256))
+			return '(int)' + str(ctypes.c_int(data_vo.GetValueAsUnsigned(0)% (256*256*256*256)).value)
 		# apparently, on is_64_bit architectures, these are the only values that will ever
 		# be represented by a non tagged pointers
 		elif data_type == 0B10001:
@@ -130,7 +130,7 @@ class NSUntaggedNumber_SummaryProvider:
 								data_offset,
 								self.sys_params.types_cache.longlong)
 			statistics.metric_hit('code_notrun',self.valobj)
-			return '(long)' + str(data_vo.GetValueAsUnsigned(0))
+			return '(long)' + str(ctypes.c_long(data_vo.GetValueAsUnsigned(0)).value)
 		elif data_type == 0B0100:
 			if self.sys_params.is_64_bit:
 				data_offset = data_offset + self.sys_params.pointer_size
@@ -138,7 +138,7 @@ class NSUntaggedNumber_SummaryProvider:
 								data_offset,
 								self.sys_params.types_cache.longlong)
 			statistics.metric_hit('code_notrun',self.valobj)
-			return '(long)' + str(data_vo.GetValueAsUnsigned(0))
+			return '(long)' + str(ctypes.c_long(data_vo.GetValueAsUnsigned(0)).value)
 		elif data_type == 0B0101:
 			data_vo = self.valobj.CreateChildAtOffset("data",
 								data_offset,
@@ -216,7 +216,9 @@ def NSNumber_SummaryProvider (valobj,dict):
 			return provider.message()
 		try:
 			summary = provider.value();
-		except:
+		except Exception as foo:
+			print foo
+#		except:
 			summary = None
 		logger >> "got summary " + str(summary)
 		if summary == None:

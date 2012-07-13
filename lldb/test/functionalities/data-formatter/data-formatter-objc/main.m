@@ -153,6 +153,10 @@ int main (int argc, const char * argv[])
 	    NSNumber* num8_Y = [NSNumber numberWithBool:YES];
 	    NSNumber* num8_N = [NSNumber numberWithBool:NO];
 	    NSNumber* num9 = [NSNumber numberWithShort:0x1E8480];
+	    NSNumber* num_at1 = @12;
+	    NSNumber* num_at2 = @-12;
+	    NSNumber* num_at3 = @12.5;
+	    NSNumber* num_at4 = @-12.5;
 
 	    NSString *str0 = [num6 stringValue];
 

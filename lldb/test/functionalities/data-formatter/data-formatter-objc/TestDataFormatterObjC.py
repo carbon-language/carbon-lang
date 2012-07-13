@@ -227,14 +227,21 @@ class ObjCDataFormatterTestCase(TestBase):
                     substrs = ['(NSNumber *) num1 = ',' (int)5',
                     '(NSNumber *) num2 = ',' (float)3.1',
                     '(NSNumber *) num3 = ',' (double)3.14',
-                    '(NSNumber *) num4 = ',' (long)18446744073709551614',
+                    '(NSNumber *) num4 = ',' (long)-2',
                     '(NSNumber *) num5 = ',' (char)65',
                     '(NSNumber *) num6 = ',' (long)255',
                     '(NSNumber *) num7 = ','2000000',
                     '(NSNumber *) num8_Y = ',' @"1"',
                     '(NSNumber *) num8_N = ',' @"0"',
-                    '(NSNumber *) num9 = ',' (short)33920'])
+                    '(NSNumber *) num9 = ',' (short)-31616'])
 
+        self.expect('frame variable num_at1 num_at2 num_at3 num_at4',
+                    substrs = ['(NSNumber *) num_at1 = ',' (int)12',
+                    '(NSNumber *) num_at2 = ',' (int)-12',
+                    '(NSNumber *) num_at3 = ',' (double)12.5',
+                    '(NSNumber *) num_at4 = ',' (double)-12.5'])
+
+        
         self.expect('frame variable str0 str1 str2 str3 str4 str5 str6 str8 str9 str10 str11 label1 label2 processName str12',
                     substrs = ['(NSString *) str1 = ',' @"A rather short ASCII NSString object is here"',
                     '(NSString *) str0 = ',' @"255"',
