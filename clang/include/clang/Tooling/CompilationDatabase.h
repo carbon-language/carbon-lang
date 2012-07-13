@@ -106,6 +106,9 @@ public:
   /// lines for a.cc and b.cc and only the first command line for t.cc.
   virtual std::vector<CompileCommand> getCompileCommands(
     StringRef FilePath) const = 0;
+
+  /// \brief Returns the list of all files available in the compilation database.
+  virtual std::vector<std::string> getAllFiles() const = 0;
 };
 
 /// \brief A compilation database that returns a single compile command line.
@@ -155,6 +158,11 @@ public:
   virtual std::vector<CompileCommand> getCompileCommands(
     StringRef FilePath) const;
 
+  /// \brief Returns the list of all files available in the compilation database.
+  ///
+  /// Note: This is always an empty list for the fixed compilation database.
+  virtual std::vector<std::string> getAllFiles() const;
+
 private:
   /// This is built up to contain a single entry vector to be returned from
   /// getCompileCommands after adding the positional argument.
@@ -200,6 +208,11 @@ public:
   /// source directory which does not have symlinks resolved.
   virtual std::vector<CompileCommand> getCompileCommands(
     StringRef FilePath) const;
+
+  /// \brief Returns the list of all files available in the compilation database.
+  ///
+  /// These are the 'file' entries of the JSON objects.
+  virtual std::vector<std::string> getAllFiles() const;
 
 private:
   /// \brief Constructs a JSON compilation database on a memory buffer.

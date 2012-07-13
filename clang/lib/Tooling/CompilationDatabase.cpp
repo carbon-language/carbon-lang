@@ -199,6 +199,11 @@ FixedCompilationDatabase::getCompileCommands(StringRef FilePath) const {
   return Result;
 }
 
+std::vector<std::string>
+FixedCompilationDatabase::getAllFiles() const {
+  return std::vector<std::string>();
+}
+
 JSONCompilationDatabase *
 JSONCompilationDatabase::loadFromFile(StringRef FilePath,
                                       std::string &ErrorMessage) {
@@ -247,6 +252,21 @@ JSONCompilationDatabase::getCompileCommands(StringRef FilePath) const {
       unescapeCommandLine(CommandsRef[I].second->getValue(CommandStorage))));
   }
   return Commands;
+}
+
+std::vector<std::string>
+JSONCompilationDatabase::getAllFiles() const {
+  std::vector<std::string> Result;
+
+  llvm::StringMap< std::vector<CompileCommandRef> >::const_iterator
+    CommandsRefI = IndexByFile.begin();
+  const llvm::StringMap< std::vector<CompileCommandRef> >::const_iterator
+    CommandsRefEnd = IndexByFile.end();
+  for (; CommandsRefI != CommandsRefEnd; ++CommandsRefI) {
+    Result.push_back(CommandsRefI->first().str());
+  }
+
+  return Result;
 }
 
 bool JSONCompilationDatabase::parse(std::string &ErrorMessage) {
