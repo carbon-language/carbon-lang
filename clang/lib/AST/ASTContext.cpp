@@ -1047,6 +1047,10 @@ ASTContext::getTypeInfoImpl(const Type *T) const {
       Align = llvm::NextPowerOf2(Align);
       Width = llvm::RoundUpToAlignment(Width, Align);
     }
+    // Adjust the alignment based on the target max.
+    uint64_t TargetVectorAlign = Target->getMaxVectorAlign();
+    if (TargetVectorAlign && TargetVectorAlign < Align)
+      Align = TargetVectorAlign;
     break;
   }
 

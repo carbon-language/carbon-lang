@@ -80,6 +80,7 @@ protected:
   unsigned char LongLongWidth, LongLongAlign;
   unsigned char SuitableAlign;
   unsigned char MaxAtomicPromoteWidth, MaxAtomicInlineWidth;
+  unsigned short MaxVectorAlign;
   const char *DescriptionString;
   const char *UserLabelPrefix;
   const char *MCountName;
@@ -307,6 +308,9 @@ public:
   /// \brief Return the maximum width lock-free atomic operation which can be
   /// inlined given the supported features of the given target.
   unsigned getMaxAtomicInlineWidth() const { return MaxAtomicInlineWidth; }
+
+  /// \brief Return the maximum vector alignment supported for the given target.
+  unsigned getMaxVectorAlign() const { return MaxVectorAlign; }
 
   /// \brief Return the size of intmax_t and uintmax_t for this target, in bits.
   unsigned getIntMaxTWidth() const {
