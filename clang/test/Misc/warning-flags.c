@@ -17,7 +17,7 @@ This test serves two purposes:
 
 The list of warnings below should NEVER grow.  It should gradually shrink to 0.
 
-CHECK: Warnings without flags (159):
+CHECK: Warnings without flags (131):
 CHECK-NEXT:   pp_include_next_absolute_path
 CHECK-NEXT:   pp_include_next_in_primary
 CHECK-NEXT:   pp_invalid_string_literal
@@ -30,22 +30,6 @@ CHECK-NEXT:   w_asm_qualifier_ignored
 CHECK-NEXT:   warn_accessor_property_type_mismatch
 CHECK-NEXT:   warn_anon_bitfield_width_exceeds_type_size
 CHECK-NEXT:   warn_asm_label_on_auto_decl
-CHECK-NEXT:   warn_attribute_ibaction
-CHECK-NEXT:   warn_attribute_iboutlet
-CHECK-NEXT:   warn_attribute_ignored
-CHECK-NEXT:   warn_attribute_ignored_for_field_of_type
-CHECK-NEXT:   warn_attribute_malloc_pointer_only
-CHECK-NEXT:   warn_attribute_nonnull_no_pointers
-CHECK-NEXT:   warn_attribute_precede_definition
-CHECK-NEXT:   warn_attribute_sentinel_named_arguments
-CHECK-NEXT:   warn_attribute_sentinel_not_variadic
-CHECK-NEXT:   warn_attribute_type_not_supported
-CHECK-NEXT:   warn_attribute_unknown_visibility
-CHECK-NEXT:   warn_attribute_void_function_method
-CHECK-NEXT:   warn_attribute_weak_import_invalid_on_definition
-CHECK-NEXT:   warn_attribute_weak_on_field
-CHECK-NEXT:   warn_attribute_weak_on_local
-CHECK-NEXT:   warn_attribute_wrong_decl_type
 CHECK-NEXT:   warn_bitfield_width_exceeds_type_size
 CHECK-NEXT:   warn_bool_switch_condition
 CHECK-NEXT:   warn_braces_around_scalar_init
@@ -74,7 +58,6 @@ CHECK-NEXT:   warn_drv_objc_gc_unsupported
 CHECK-NEXT:   warn_drv_pch_not_first_include
 CHECK-NEXT:   warn_drv_preprocessed_input_file_unused
 CHECK-NEXT:   warn_dup_category_def
-CHECK-NEXT:   warn_duplicate_attribute
 CHECK-NEXT:   warn_duplicate_protocol_def
 CHECK-NEXT:   warn_enum_too_large
 CHECK-NEXT:   warn_enum_value_overflow
@@ -85,9 +68,6 @@ CHECK-NEXT:   warn_fe_cc_log_diagnostics_failure
 CHECK-NEXT:   warn_fe_cc_print_header_failure
 CHECK-NEXT:   warn_fe_macro_contains_embedded_newline
 CHECK-NEXT:   warn_file_asm_volatile
-CHECK-NEXT:   warn_function_attribute_wrong_type
-CHECK-NEXT:   warn_gc_attribute_weak_on_local
-CHECK-NEXT:   warn_gnu_inline_attribute_requires_inline
 CHECK-NEXT:   warn_ignoring_ftabstop_value
 CHECK-NEXT:   warn_implements_nscopying
 CHECK-NEXT:   warn_incompatible_qualified_id
@@ -105,15 +85,11 @@ CHECK-NEXT:   warn_multiple_method_decl
 CHECK-NEXT:   warn_no_constructor_for_refconst
 CHECK-NEXT:   warn_nonnull_pointers_only
 CHECK-NEXT:   warn_not_compound_assign
-CHECK-NEXT:   warn_ns_attribute_wrong_parameter_type
-CHECK-NEXT:   warn_ns_attribute_wrong_return_type
-CHECK-NEXT:   warn_objc_object_attribute_wrong_type
 CHECK-NEXT:   warn_objc_property_copy_missing_on_block
 CHECK-NEXT:   warn_objc_protocol_qualifier_missing_id
 CHECK-NEXT:   warn_odr_tag_type_inconsistent
 CHECK-NEXT:   warn_on_superclass_use
 CHECK-NEXT:   warn_partial_specs_not_deducible
-CHECK-NEXT:   warn_pointer_attribute_wrong_type
 CHECK-NEXT:   warn_pp_convert_lhs_to_positive
 CHECK-NEXT:   warn_pp_convert_rhs_to_positive
 CHECK-NEXT:   warn_pp_expr_overflow
@@ -162,10 +138,6 @@ CHECK-NEXT:   warn_static_inline_explicit_inst_ignored
 CHECK-NEXT:   warn_template_export_unsupported
 CHECK-NEXT:   warn_template_spec_extra_headers
 CHECK-NEXT:   warn_tentative_incomplete_array
-CHECK-NEXT:   warn_transparent_union_attribute_field_size_align
-CHECK-NEXT:   warn_transparent_union_attribute_floating
-CHECK-NEXT:   warn_transparent_union_attribute_not_definition
-CHECK-NEXT:   warn_transparent_union_attribute_zero_fields
 CHECK-NEXT:   warn_typecheck_function_qualifiers
 CHECK-NEXT:   warn_unavailable_fwdclass_message
 CHECK-NEXT:   warn_undef_interface

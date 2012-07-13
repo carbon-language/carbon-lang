@@ -1636,7 +1636,8 @@ def err_attribute_aligned_greater_than_8192 : Error<
   "requested alignment must be 8192 bytes or smaller">;
 def warn_redeclaration_without_attribute_prev_attribute_ignored : Warning<
   "'%0' redeclared without %1 attribute: previous %1 ignored">;
-def warn_attribute_ignored : Warning<"%0 attribute ignored">;
+def warn_attribute_ignored : Warning<"%0 attribute ignored">,
+  InGroup<IgnoredAttributes>;
 def warn_attribute_after_definition_ignored : Warning<
   "attribute %0 after definition is ignored">,
    InGroup<IgnoredAttributes>;
@@ -1651,25 +1652,31 @@ def warn_attribute_invalid_on_stmt : Warning<
 def warn_declspec_attribute_ignored : Warning<
   "attribute %0 is ignored, place it after \"%select{class|struct|union|enum}1\" to apply attribute to type declaration">, InGroup<IgnoredAttributes>;
 def warn_attribute_precede_definition : Warning<
-  "attribute declaration must precede definition">;
+  "attribute declaration must precede definition">,
+  InGroup<IgnoredAttributes>;
 def warn_attribute_void_function_method : Warning<
   "attribute %0 cannot be applied to "
-  "%select{functions|Objective-C method}1 without return value">;
+  "%select{functions|Objective-C method}1 without return value">,
+  InGroup<IgnoredAttributes>;
 def warn_attribute_weak_on_field : Warning<
-  "__weak attribute cannot be specified on a field declaration">;
+  "__weak attribute cannot be specified on a field declaration">,
+  InGroup<IgnoredAttributes>;
 def warn_gc_attribute_weak_on_local : Warning<
-  "Objective-C GC does not allow weak variables on the stack">;
+  "Objective-C GC does not allow weak variables on the stack">,
+  InGroup<IgnoredAttributes>;
 def warn_nsobject_attribute : Warning<
   "__attribute ((NSObject)) may be put on a typedef only, "
   "attribute is ignored">, InGroup<NSobjectAttribute>;
 def warn_attribute_weak_on_local : Warning<
-  "__weak attribute cannot be specified on an automatic variable">;
+  "__weak attribute cannot be specified on an automatic variable">,
+  InGroup<IgnoredAttributes>;
 def warn_weak_identifier_undeclared : Warning<
   "weak identifier %0 never declared">;
 def err_attribute_weak_static : Error<
   "weak declaration cannot have internal linkage">;
 def warn_attribute_weak_import_invalid_on_definition : Warning<
-  "'weak_import' attribute cannot be specified on a definition">;
+  "'weak_import' attribute cannot be specified on a definition">,
+  InGroup<IgnoredAttributes>;
 def err_attribute_weakref_not_static : Error<
   "weakref declaration must have internal linkage">;
 def err_attribute_weakref_not_global_context : Error<
@@ -1684,7 +1691,8 @@ def warn_attribute_wrong_decl_type : Warning<
   "functions, methods and blocks|functions, methods, and parameters|"
   "classes|variables|methods|variables, functions and labels|"
   "fields and global variables|structs|"
-  "variables, functions and tag types|thread-local variables}1">;
+  "variables, functions and tag types|thread-local variables}1">,
+  InGroup<IgnoredAttributes>;
 def err_attribute_wrong_decl_type : Error<
   "%0 attribute only applies to %select{functions|unions|"
   "variables and functions|functions and methods|parameters|"
@@ -1692,14 +1700,18 @@ def err_attribute_wrong_decl_type : Error<
   "classes|variables|methods|variables, functions and labels|"
   "fields and global variables|structs|thread-local variables}1">;
 def warn_function_attribute_wrong_type : Warning<
-  "'%0' only applies to function types; type here is %1">;
+  "'%0' only applies to function types; type here is %1">,
+  InGroup<IgnoredAttributes>;
 def warn_pointer_attribute_wrong_type : Warning<
-  "'%0' only applies to pointer types; type here is %1">;
+  "'%0' only applies to pointer types; type here is %1">,
+  InGroup<IgnoredAttributes>;
 def warn_objc_object_attribute_wrong_type : Warning<
-  "'%0' only applies to objective-c object or block pointer types; type here is %1">;
+  "'%0' only applies to objective-c object or block pointer types; type here is %1">,
+  InGroup<IgnoredAttributes>;
 def warn_gnu_inline_attribute_requires_inline : Warning<
   "'gnu_inline' attribute requires function to be marked 'inline',"
-  " attribute ignored">;
+  " attribute ignored">,
+  InGroup<IgnoredAttributes>;
 def err_attribute_vecreturn_only_vector_member : Error<
   "the vecreturn attribute can only be used on a class or structure with one member, which must be a vector">;
 def err_attribute_vecreturn_only_pod_record : Error<
@@ -1880,25 +1892,32 @@ def warn_cast_align : Warning<
   InGroup<CastAlign>, DefaultIgnore;
 
 def warn_attribute_ignored_for_field_of_type : Warning<
-  "%0 attribute ignored for field of type %1">;
+  "%0 attribute ignored for field of type %1">,
+  InGroup<IgnoredAttributes>;
 def warn_transparent_union_attribute_field_size_align : Warning<
   "%select{alignment|size}0 of field %1 (%2 bits) does not match the "
   "%select{alignment|size}0 of the first field in transparent union; "
-  "transparent_union attribute ignored">;
+  "transparent_union attribute ignored">,
+  InGroup<IgnoredAttributes>;
 def note_transparent_union_first_field_size_align : Note<
   "%select{alignment|size}0 of first field is %1 bits">;
 def warn_transparent_union_attribute_not_definition : Warning<
   "transparent_union attribute can only be applied to a union definition; "
-  "attribute ignored">;
+  "attribute ignored">,
+  InGroup<IgnoredAttributes>;
 def warn_transparent_union_attribute_floating : Warning<
   "first field of a transparent union cannot have %select{floating point|"
-  "vector}0 type %1; transparent_union attribute ignored">;
+  "vector}0 type %1; transparent_union attribute ignored">,
+  InGroup<IgnoredAttributes>;
 def warn_transparent_union_attribute_zero_fields : Warning<
   "transparent union definition must contain at least one field; "
-  "transparent_union attribute ignored">;
+  "transparent_union attribute ignored">,
+  InGroup<IgnoredAttributes>;
 def warn_attribute_type_not_supported : Warning<
-  "'%0' attribute argument not supported: %1">;
-def warn_attribute_unknown_visibility : Warning<"unknown visibility '%0'">;
+  "'%0' attribute argument not supported: %1">,
+  InGroup<IgnoredAttributes>;
+def warn_attribute_unknown_visibility : Warning<"unknown visibility '%0'">,
+  InGroup<IgnoredAttributes>;
 def warn_attribute_protected_visibility :
   Warning<"target does not support 'protected' visibility; using 'default'">,
   InGroup<DiagGroup<"unsupported-visibility">>;
@@ -1913,13 +1932,17 @@ def err_mode_wrong_type : Error<
 def err_attr_wrong_decl : Error<
   "'%0' attribute invalid on this declaration, requires typedef or value">;
 def warn_attribute_nonnull_no_pointers : Warning<
-  "'nonnull' attribute applied to function with no pointer arguments">;
+  "'nonnull' attribute applied to function with no pointer arguments">,
+  InGroup<IgnoredAttributes>;
 def warn_attribute_malloc_pointer_only : Warning<
-  "'malloc' attribute only applies to functions returning a pointer type">;
+  "'malloc' attribute only applies to functions returning a pointer type">,
+  InGroup<IgnoredAttributes>;
 def warn_attribute_sentinel_named_arguments : Warning<
-  "'sentinel' attribute requires named arguments">;
+  "'sentinel' attribute requires named arguments">,
+  InGroup<IgnoredAttributes>;
 def warn_attribute_sentinel_not_variadic : Warning<
-  "'sentinel' attribute only supported for variadic %select{functions|blocks}0">;
+  "'sentinel' attribute only supported for variadic %select{functions|blocks}0">,
+  InGroup<IgnoredAttributes>;
 def err_attribute_sentinel_less_than_zero : Error<
   "'sentinel' parameter 1 less than zero">;
 def err_attribute_sentinel_not_zero_or_one : Error<
@@ -1941,9 +1964,11 @@ def err_attribute_regparm_invalid_number : Error<
 
 // Clang-Specific Attributes
 def warn_attribute_iboutlet : Warning<
-  "%0 attribute can only be applied to instance variables or properties">;
+  "%0 attribute can only be applied to instance variables or properties">,
+  InGroup<IgnoredAttributes>;
 def warn_attribute_ibaction: Warning<
-  "ibaction attribute can only be applied to Objective-C instance methods">;
+  "ibaction attribute can only be applied to Objective-C instance methods">,
+  InGroup<IgnoredAttributes>;
 def err_iboutletcollection_type : Error<
   "invalid type %0 as argument of iboutletcollection attribute">;
 def warn_iboutlet_object_type : Warning<
@@ -1961,10 +1986,12 @@ def err_attribute_overloadable_no_prototype : Error<
   "'overloadable' function %0 must have a prototype">;
 def warn_ns_attribute_wrong_return_type : Warning<
   "%0 attribute only applies to %select{functions|methods}1 that "
-  "return %select{an Objective-C object|a pointer|a non-retainable pointer}2">;
+  "return %select{an Objective-C object|a pointer|a non-retainable pointer}2">,
+  InGroup<IgnoredAttributes>;
 def warn_ns_attribute_wrong_parameter_type : Warning<
   "%0 attribute only applies to %select{Objective-C object|pointer}1 "
-  "parameters">;
+  "parameters">,
+  InGroup<IgnoredAttributes>;
 def err_ns_bridged_not_interface : Error<
   "parameter of 'ns_bridged' attribute does not name an Objective-C class">;
 
@@ -5529,7 +5556,8 @@ def err_invalid_conversion_between_ext_vectors : Error<
   "invalid conversion between ext-vector type %0 and %1">;
 
 def warn_duplicate_attribute : Warning<
-  "attribute %0 is already applied with different parameters">;
+  "attribute %0 is already applied with different parameters">,
+  InGroup<IgnoredAttributes>;
 
 // Type
 def ext_invalid_sign_spec : Extension<"'%0' cannot be signed or unsigned">;
