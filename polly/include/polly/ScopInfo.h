@@ -125,6 +125,9 @@ public:
   /// @brief Is this a read memory access?
   bool isRead() const { return Type == MemoryAccess::Read; }
 
+  /// @brief Is this a write memory access?
+  bool isWrite() const { return Type == MemoryAccess::Write; }
+
   isl_map *getAccessRelation() const;
 
   /// @brief Get an isl string representing this access function.
