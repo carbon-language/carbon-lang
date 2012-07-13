@@ -4825,7 +4825,7 @@ defm VCLS     : N2VInt_QHS<0b11, 0b11, 0b00, 0b01000, 0,
 //   VCLZ     : Vector Count Leading Zeros
 defm VCLZ     : N2VInt_QHS<0b11, 0b11, 0b00, 0b01001, 0,
                            IIC_VCNTiD, IIC_VCNTiQ, "vclz", "i",
-                           int_arm_neon_vclz>;
+                           ctlz>;
 //   VCNT     : Vector Count One Bits
 def  VCNTd    : N2VDInt<0b11, 0b11, 0b00, 0b00, 0b01010, 0,
                         IIC_VCNTiD, "vcnt", "8",

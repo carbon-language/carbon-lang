@@ -52,6 +52,22 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
 
   switch (Name[0]) {
   default: break;
+  case 'a': {
+    if (Name.startswith("arm.neon.vclz")) {
+      Type* args[2] = {
+        F->arg_begin()->getType(), 
+        Type::getInt1Ty(F->getContext())
+      };
+      // Can't use Intrinsic::getDeclaration here as it adds a ".i1" to
+      // the end of the name. Change name from llvm.arm.neon.vclz.* to
+      //  llvm.ctlz.*
+      FunctionType* fType = FunctionType::get(F->getReturnType(), args, false);
+      NewFn = Function::Create(fType, F->getLinkage(), 
+                               "llvm.ctlz." + Name.substr(14), F->getParent());
+      return true;
+    }
+    break;
+  }
   case 'c': {
     if (Name.startswith("ctlz.") && F->arg_size() == 1) {
       F->setName(Name + ".old");
@@ -294,6 +310,15 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
                                                Builder.getFalse(), Name));
     CI->eraseFromParent();
     return;
+
+  case Intrinsic::arm_neon_vclz: {
+    // Change name from llvm.arm.neon.vclz.* to llvm.ctlz.*
+    CI->replaceAllUsesWith(Builder.CreateCall2(NewFn, CI->getArgOperand(0),
+                                               Builder.getFalse(), 
+                                               "llvm.ctlz." + Name.substr(14)));
+    CI->eraseFromParent();
+    return;
+  }
 
   case Intrinsic::x86_xop_vfrcz_ss:
   case Intrinsic::x86_xop_vfrcz_sd:
