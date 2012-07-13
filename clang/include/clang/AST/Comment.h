@@ -664,8 +664,8 @@ public:
   }
 };
 
-/// Verbatim block (e. g., preformatted code).  Verbatim block has an opening
-/// and a closing command and contains multiple lines of text
+/// A verbatim block command (e. g., preformatted code).  Verbatim block has an
+/// opening and a closing command and contains multiple lines of text
 /// (VerbatimBlockLineComment nodes).
 class VerbatimBlockComment : public BlockCommandComment {
 protected:
@@ -717,8 +717,9 @@ public:
   }
 };
 
-/// Verbatim line.  Verbatim line has an opening command and a single line of
-/// text (up to the newline after the opening command).
+/// A verbatim line command.  Verbatim line has an opening command, a single
+/// line of text (up to the newline after the opening command) and has no
+/// closing command.
 class VerbatimLineComment : public BlockCommandComment {
 protected:
   StringRef Text;
