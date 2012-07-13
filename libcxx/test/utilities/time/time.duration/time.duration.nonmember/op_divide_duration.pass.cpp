@@ -12,6 +12,7 @@
 // duration
 
 // template <class Rep1, class Period1, class Rep2, class Period2>
+//   constexpr
 //   typename common_type<Rep1, Rep2>::type
 //   operator/(const duration<Rep1, Period1>& lhs, const duration<Rep2, Period2>& rhs);
 
@@ -40,4 +41,26 @@ int main()
     std::chrono::duration<double, std::ratio<3, 5> > s2(5);
     assert(s1 / s2 == 20./3);
     }
+#ifndef _LIBCPP_HAS_NO_CONSTEXPR
+    {
+    constexpr std::chrono::nanoseconds ns1(15);
+    constexpr std::chrono::nanoseconds ns2(5);
+    static_assert(ns1 / ns2 == 3, "");
+    }
+    {
+    constexpr std::chrono::microseconds us1(15);
+    constexpr std::chrono::nanoseconds ns2(5);
+    static_assert(us1 / ns2 == 3000, "");
+    }
+    {
+    constexpr std::chrono::duration<int, std::ratio<2, 3> > s1(30);
+    constexpr std::chrono::duration<int, std::ratio<3, 5> > s2(5);
+    static_assert(s1 / s2 == 6, "");
+    }
+    {
+    constexpr std::chrono::duration<int, std::ratio<2, 3> > s1(30);
+    constexpr std::chrono::duration<double, std::ratio<3, 5> > s2(5);
+    static_assert(s1 / s2 == 20./3, "");
+    }
+#endif
 }

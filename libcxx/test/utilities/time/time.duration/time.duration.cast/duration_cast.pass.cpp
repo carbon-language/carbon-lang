@@ -12,6 +12,7 @@
 // duration
 
 // template <class ToDuration, class Rep, class Period>
+//   constexpr
 //   ToDuration
 //   duration_cast(const duration<Rep, Period>& d);
 
@@ -23,9 +24,11 @@ template <class ToDuration, class FromDuration>
 void
 test(const FromDuration& f, const ToDuration& d)
 {
+    {
     typedef decltype(std::chrono::duration_cast<ToDuration>(f)) R;
     static_assert((std::is_same<R, ToDuration>::value), "");
     assert(std::chrono::duration_cast<ToDuration>(f) == d);
+    }
 }
 
 int main()
@@ -40,4 +43,10 @@ int main()
          std::chrono::duration<double, std::ratio<3600> >(7265./3600));
     test(std::chrono::duration<int, std::ratio<2, 3> >(9),
          std::chrono::duration<int, std::ratio<3, 5> >(10));
+#ifndef _LIBCPP_HAS_NO_CONSTEXPR
+    {
+    constexpr std::chrono::hours h = std::chrono::duration_cast<std::chrono::hours>(std::chrono::milliseconds(7265000));
+    static_assert(h.count() == 2, "");
+    }
+#endif
 }

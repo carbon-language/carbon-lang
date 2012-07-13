@@ -25,6 +25,10 @@ test(R r)
 {
     D d(r);
     assert(d.count() == r);
+#ifndef _LIBCPP_HAS_NO_CONSTEXPR
+    constexpr D d2(R(2));
+    static_assert(d2.count() == 2, "");
+#endif
 }
 
 int main()

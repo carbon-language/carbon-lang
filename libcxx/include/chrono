@@ -20,6 +20,7 @@ namespace chrono
 {
 
 template <class ToDuration, class Rep, class Period>
+constexpr
 ToDuration
 duration_cast(const duration<Rep, Period>& fd);
 
@@ -29,9 +30,9 @@ template <class Rep>
 struct duration_values
 {
 public:
-    static Rep zero();
-    static Rep max();
-    static Rep min();
+    static constexpr Rep zero();
+    static constexpr Rep max();
+    static constexpr Rep min();
 };
 
 // duration
@@ -46,9 +47,9 @@ public:
     typedef Rep rep;
     typedef Period period;
 
-    duration() = default;
+    constexpr duration() = default;
     template <class Rep2>
-        explicit duration(const Rep2& r,
+        constexpr explicit duration(const Rep2& r,
             typename enable_if
             <
                is_convertible<Rep2, rep>::value &&
@@ -58,7 +59,7 @@ public:
 
     // conversions
     template <class Rep2, class Period2>
-        duration(const duration<Rep2, Period2>& d,
+        constexpr duration(const duration<Rep2, Period2>& d,
             typename enable_if
             <
                 treat_as_floating_point<rep>::value ||
@@ -67,12 +68,12 @@ public:
 
     // observer
 
-    rep count() const;
+    constexpr rep count() const;
 
     // arithmetic
 
-    duration  operator+() const;
-    duration  operator-() const;
+    constexpr duration  operator+() const;
+    constexpr duration  operator-() const;
     duration& operator++();
     duration  operator++(int);
     duration& operator--();
@@ -86,9 +87,9 @@ public:
 
     // special values
 
-    static duration zero();
-    static duration min();
-    static duration max();
+    static constexpr duration zero();
+    static constexpr duration min();
+    static constexpr duration max();
 };
 
 typedef duration<long long,         nano> nanoseconds;
@@ -145,36 +146,48 @@ namespace chrono {
 
 // duration arithmetic
 template <class Rep1, class Period1, class Rep2, class Period2>
+  constexpr
   typename common_type<duration<Rep1, Period1>, duration<Rep2, Period2>>::type
   operator+(const duration<Rep1, Period1>& lhs, const duration<Rep2, Period2>& rhs);
 template <class Rep1, class Period1, class Rep2, class Period2>
+  constexpr
   typename common_type<duration<Rep1, Period1>, duration<Rep2, Period2>>::type
   operator-(const duration<Rep1, Period1>& lhs, const duration<Rep2, Period2>& rhs);
 template <class Rep1, class Period, class Rep2>
+  constexpr
   duration<typename common_type<Rep1, Rep2>::type, Period>
   operator*(const duration<Rep1, Period>& d, const Rep2& s);
 template <class Rep1, class Period, class Rep2>
+  constexpr
   duration<typename common_type<Rep1, Rep2>::type, Period>
   operator*(const Rep1& s, const duration<Rep2, Period>& d);
 template <class Rep1, class Period, class Rep2>
+  constexpr
   duration<typename common_type<Rep1, Rep2>::type, Period>
   operator/(const duration<Rep1, Period>& d, const Rep2& s);
 template <class Rep1, class Period1, class Rep2, class Period2>
+  constexpr
   typename common_type<Rep1, Rep2>::type
   operator/(const duration<Rep1, Period1>& lhs, const duration<Rep2, Period2>& rhs);
 
 // duration comparisons
 template <class Rep1, class Period1, class Rep2, class Period2>
+   constexpr
    bool operator==(const duration<Rep1, Period1>& lhs, const duration<Rep2, Period2>& rhs);
 template <class Rep1, class Period1, class Rep2, class Period2>
+   constexpr
    bool operator!=(const duration<Rep1, Period1>& lhs, const duration<Rep2, Period2>& rhs);
 template <class Rep1, class Period1, class Rep2, class Period2>
+   constexpr
    bool operator< (const duration<Rep1, Period1>& lhs, const duration<Rep2, Period2>& rhs);
 template <class Rep1, class Period1, class Rep2, class Period2>
+   constexpr
    bool operator<=(const duration<Rep1, Period1>& lhs, const duration<Rep2, Period2>& rhs);
 template <class Rep1, class Period1, class Rep2, class Period2>
+   constexpr
    bool operator> (const duration<Rep1, Period1>& lhs, const duration<Rep2, Period2>& rhs);
 template <class Rep1, class Period1, class Rep2, class Period2>
+   constexpr
    bool operator>=(const duration<Rep1, Period1>& lhs, const duration<Rep2, Period2>& rhs);
 
 // duration_cast
@@ -306,7 +319,7 @@ struct __duration_cast;
 template <class _FromDuration, class _ToDuration, class _Period>
 struct __duration_cast<_FromDuration, _ToDuration, _Period, true, true>
 {
-    _LIBCPP_INLINE_VISIBILITY
+    _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR
     _ToDuration operator()(const _FromDuration& __fd) const
     {
         return _ToDuration(static_cast<typename _ToDuration::rep>(__fd.count()));
@@ -316,7 +329,7 @@ struct __duration_cast<_FromDuration, _ToDuration, _Period, true, true>
 template <class _FromDuration, class _ToDuration, class _Period>
 struct __duration_cast<_FromDuration, _ToDuration, _Period, true, false>
 {
-    _LIBCPP_INLINE_VISIBILITY
+    _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR
     _ToDuration operator()(const _FromDuration& __fd) const
     {
         typedef typename common_type<typename _ToDuration::rep, typename _FromDuration::rep, intmax_t>::type _Ct;
@@ -328,7 +341,7 @@ struct __duration_cast<_FromDuration, _ToDuration, _Period, true, false>
 template <class _FromDuration, class _ToDuration, class _Period>
 struct __duration_cast<_FromDuration, _ToDuration, _Period, false, true>
 {
-    _LIBCPP_INLINE_VISIBILITY
+    _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR
     _ToDuration operator()(const _FromDuration& __fd) const
     {
         typedef typename common_type<typename _ToDuration::rep, typename _FromDuration::rep, intmax_t>::type _Ct;
@@ -340,7 +353,7 @@ struct __duration_cast<_FromDuration, _ToDuration, _Period, false, true>
 template <class _FromDuration, class _ToDuration, class _Period>
 struct __duration_cast<_FromDuration, _ToDuration, _Period, false, false>
 {
-    _LIBCPP_INLINE_VISIBILITY
+    _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR
     _ToDuration operator()(const _FromDuration& __fd) const
     {
         typedef typename common_type<typename _ToDuration::rep, typename _FromDuration::rep, intmax_t>::type _Ct;
@@ -352,6 +365,7 @@ struct __duration_cast<_FromDuration, _ToDuration, _Period, false, false>
 
 template <class _ToDuration, class _Rep, class _Period>
 inline _LIBCPP_INLINE_VISIBILITY
+_LIBCPP_CONSTEXPR
 typename enable_if
 <
     __is_duration<_ToDuration>::value,
@@ -369,9 +383,9 @@ template <class _Rep>
 struct _LIBCPP_VISIBLE duration_values
 {
 public:
-    _LIBCPP_INLINE_VISIBILITY static _Rep zero() {return _Rep(0);}
-    _LIBCPP_INLINE_VISIBILITY static _Rep max()  {return numeric_limits<_Rep>::max();}
-    _LIBCPP_INLINE_VISIBILITY static _Rep min()  {return numeric_limits<_Rep>::lowest();}
+    _LIBCPP_INLINE_VISIBILITY static _LIBCPP_CONSTEXPR _Rep zero() {return _Rep(0);}
+    _LIBCPP_INLINE_VISIBILITY static _LIBCPP_CONSTEXPR _Rep max()  {return numeric_limits<_Rep>::max();}
+    _LIBCPP_INLINE_VISIBILITY static _LIBCPP_CONSTEXPR _Rep min()  {return numeric_limits<_Rep>::lowest();}
 };
 
 // duration
@@ -389,9 +403,9 @@ private:
     rep __rep_;
 public:
 
-    _LIBCPP_INLINE_VISIBILITY duration() {} // = default;
+    _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR duration() {} // = default;
     template <class _Rep2>
-        _LIBCPP_INLINE_VISIBILITY
+        _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR
         explicit duration(const _Rep2& __r,
             typename enable_if
             <
@@ -403,7 +417,7 @@ public:
 
     // conversions
     template <class _Rep2, class _Period2>
-        _LIBCPP_INLINE_VISIBILITY
+        _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR
         duration(const duration<_Rep2, _Period2>& __d,
             typename enable_if
             <
@@ -415,12 +429,12 @@ public:
 
     // observer
 
-    _LIBCPP_INLINE_VISIBILITY rep count() const {return __rep_;}
+    _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR rep count() const {return __rep_;}
 
     // arithmetic
 
-    _LIBCPP_INLINE_VISIBILITY duration  operator+() const {return *this;}
-    _LIBCPP_INLINE_VISIBILITY duration  operator-() const {return duration(-__rep_);}
+    _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR duration  operator+() const {return *this;}
+    _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR duration  operator-() const {return duration(-__rep_);}
     _LIBCPP_INLINE_VISIBILITY duration& operator++()      {++__rep_; return *this;}
     _LIBCPP_INLINE_VISIBILITY duration  operator++(int)   {return duration(__rep_++);}
     _LIBCPP_INLINE_VISIBILITY duration& operator--()      {--__rep_; return *this;}
@@ -436,9 +450,9 @@ public:
 
     // special values
 
-    _LIBCPP_INLINE_VISIBILITY static duration zero() {return duration(duration_values<rep>::zero());}
-    _LIBCPP_INLINE_VISIBILITY static duration min()  {return duration(duration_values<rep>::min());}
-    _LIBCPP_INLINE_VISIBILITY static duration max()  {return duration(duration_values<rep>::max());}
+    _LIBCPP_INLINE_VISIBILITY static _LIBCPP_CONSTEXPR duration zero() {return duration(duration_values<rep>::zero());}
+    _LIBCPP_INLINE_VISIBILITY static _LIBCPP_CONSTEXPR duration min()  {return duration(duration_values<rep>::min());}
+    _LIBCPP_INLINE_VISIBILITY static _LIBCPP_CONSTEXPR duration max()  {return duration(duration_values<rep>::max());}
 };
 
 typedef duration<long long,         nano> nanoseconds;
@@ -453,7 +467,7 @@ typedef duration<     long, ratio<3600> > hours;
 template <class _LhsDuration, class _RhsDuration>
 struct __duration_eq
 {
-    _LIBCPP_INLINE_VISIBILITY
+    _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR
     bool operator()(const _LhsDuration& __lhs, const _RhsDuration& __rhs)
         {
             typedef typename common_type<_LhsDuration, _RhsDuration>::type _Ct;
@@ -464,13 +478,14 @@ struct __duration_eq
 template <class _LhsDuration>
 struct __duration_eq<_LhsDuration, _LhsDuration>
 {
-    _LIBCPP_INLINE_VISIBILITY
+    _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR
     bool operator()(const _LhsDuration& __lhs, const _LhsDuration& __rhs)
         {return __lhs.count() == __rhs.count();}
 };
 
 template <class _Rep1, class _Period1, class _Rep2, class _Period2>
 inline _LIBCPP_INLINE_VISIBILITY
+_LIBCPP_CONSTEXPR
 bool
 operator==(const duration<_Rep1, _Period1>& __lhs, const duration<_Rep2, _Period2>& __rhs)
 {
@@ -481,6 +496,7 @@ operator==(const duration<_Rep1, _Period1>& __lhs, const duration<_Rep2, _Period
 
 template <class _Rep1, class _Period1, class _Rep2, class _Period2>
 inline _LIBCPP_INLINE_VISIBILITY
+_LIBCPP_CONSTEXPR
 bool
 operator!=(const duration<_Rep1, _Period1>& __lhs, const duration<_Rep2, _Period2>& __rhs)
 {
@@ -492,7 +508,7 @@ operator!=(const duration<_Rep1, _Period1>& __lhs, const duration<_Rep2, _Period
 template <class _LhsDuration, class _RhsDuration>
 struct __duration_lt
 {
-    _LIBCPP_INLINE_VISIBILITY
+    _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR
     bool operator()(const _LhsDuration& __lhs, const _RhsDuration& __rhs)
         {
             typedef typename common_type<_LhsDuration, _RhsDuration>::type _Ct;
@@ -503,13 +519,14 @@ struct __duration_lt
 template <class _LhsDuration>
 struct __duration_lt<_LhsDuration, _LhsDuration>
 {
-    _LIBCPP_INLINE_VISIBILITY
+    _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR
     bool operator()(const _LhsDuration& __lhs, const _LhsDuration& __rhs)
         {return __lhs.count() < __rhs.count();}
 };
 
 template <class _Rep1, class _Period1, class _Rep2, class _Period2>
 inline _LIBCPP_INLINE_VISIBILITY
+_LIBCPP_CONSTEXPR
 bool
 operator< (const duration<_Rep1, _Period1>& __lhs, const duration<_Rep2, _Period2>& __rhs)
 {
@@ -520,6 +537,7 @@ operator< (const duration<_Rep1, _Period1>& __lhs, const duration<_Rep2, _Period
 
 template <class _Rep1, class _Period1, class _Rep2, class _Period2>
 inline _LIBCPP_INLINE_VISIBILITY
+_LIBCPP_CONSTEXPR
 bool
 operator> (const duration<_Rep1, _Period1>& __lhs, const duration<_Rep2, _Period2>& __rhs)
 {
@@ -530,6 +548,7 @@ operator> (const duration<_Rep1, _Period1>& __lhs, const duration<_Rep2, _Period
 
 template <class _Rep1, class _Period1, class _Rep2, class _Period2>
 inline _LIBCPP_INLINE_VISIBILITY
+_LIBCPP_CONSTEXPR
 bool
 operator<=(const duration<_Rep1, _Period1>& __lhs, const duration<_Rep2, _Period2>& __rhs)
 {
@@ -540,6 +559,7 @@ operator<=(const duration<_Rep1, _Period1>& __lhs, const duration<_Rep2, _Period
 
 template <class _Rep1, class _Period1, class _Rep2, class _Period2>
 inline _LIBCPP_INLINE_VISIBILITY
+_LIBCPP_CONSTEXPR
 bool
 operator>=(const duration<_Rep1, _Period1>& __lhs, const duration<_Rep2, _Period2>& __rhs)
 {
@@ -550,30 +570,31 @@ operator>=(const duration<_Rep1, _Period1>& __lhs, const duration<_Rep2, _Period
 
 template <class _Rep1, class _Period1, class _Rep2, class _Period2>
 inline _LIBCPP_INLINE_VISIBILITY
+_LIBCPP_CONSTEXPR
 typename common_type<duration<_Rep1, _Period1>, duration<_Rep2, _Period2> >::type
 operator+(const duration<_Rep1, _Period1>& __lhs, const duration<_Rep2, _Period2>& __rhs)
 {
-    typename common_type<duration<_Rep1, _Period1>, duration<_Rep2, _Period2> >::type __r = __lhs;
-    __r += __rhs;
-    return __r;
+    typedef typename common_type<duration<_Rep1, _Period1>, duration<_Rep2, _Period2> >::type _Cd;
+    return _Cd(_Cd(__lhs).count() + _Cd(__rhs).count());
 }
 
 // Duration -
 
 template <class _Rep1, class _Period1, class _Rep2, class _Period2>
 inline _LIBCPP_INLINE_VISIBILITY
+_LIBCPP_CONSTEXPR
 typename common_type<duration<_Rep1, _Period1>, duration<_Rep2, _Period2> >::type
 operator-(const duration<_Rep1, _Period1>& __lhs, const duration<_Rep2, _Period2>& __rhs)
 {
-    typename common_type<duration<_Rep1, _Period1>, duration<_Rep2, _Period2> >::type __r = __lhs;
-    __r -= __rhs;
-    return __r;
+    typedef typename common_type<duration<_Rep1, _Period1>, duration<_Rep2, _Period2> >::type _Cd;
+    return _Cd(_Cd(__lhs).count() - _Cd(__rhs).count());
 }
 
 // Duration *
 
 template <class _Rep1, class _Period, class _Rep2>
 inline _LIBCPP_INLINE_VISIBILITY
+_LIBCPP_CONSTEXPR
 typename enable_if
 <
     is_convertible<_Rep2, typename common_type<_Rep1, _Rep2>::type>::value,
@@ -582,13 +603,13 @@ typename enable_if
 operator*(const duration<_Rep1, _Period>& __d, const _Rep2& __s)
 {
     typedef typename common_type<_Rep1, _Rep2>::type _Cr;
-    duration<_Cr, _Period> __r = __d;
-    __r *= static_cast<_Cr>(__s);
-    return __r;
+    typedef duration<_Cr, _Period> _Cd;
+    return _Cd(_Cd(__d).count() * static_cast<_Cr>(__s));
 }
 
 template <class _Rep1, class _Period, class _Rep2>
 inline _LIBCPP_INLINE_VISIBILITY
+_LIBCPP_CONSTEXPR
 typename enable_if
 <
     is_convertible<_Rep1, typename common_type<_Rep1, _Rep2>::type>::value,
@@ -627,17 +648,18 @@ struct __duration_divide_result<duration<_Rep1, _Period>, _Rep2, false>
 
 template <class _Rep1, class _Period, class _Rep2>
 inline _LIBCPP_INLINE_VISIBILITY
+_LIBCPP_CONSTEXPR
 typename __duration_divide_result<duration<_Rep1, _Period>, _Rep2>::type
 operator/(const duration<_Rep1, _Period>& __d, const _Rep2& __s)
 {
     typedef typename common_type<_Rep1, _Rep2>::type _Cr;
-    duration<_Cr, _Period> __r = __d;
-    __r /= static_cast<_Cr>(__s);
-    return __r;
+    typedef duration<_Cr, _Period> _Cd;
+    return _Cd(_Cd(__d).count() / static_cast<_Cr>(__s));
 }
 
 template <class _Rep1, class _Period1, class _Rep2, class _Period2>
 inline _LIBCPP_INLINE_VISIBILITY
+_LIBCPP_CONSTEXPR
 typename common_type<_Rep1, _Rep2>::type
 operator/(const duration<_Rep1, _Period1>& __lhs, const duration<_Rep2, _Period2>& __rhs)
 {
@@ -649,23 +671,24 @@ operator/(const duration<_Rep1, _Period1>& __lhs, const duration<_Rep2, _Period2
 
 template <class _Rep1, class _Period, class _Rep2>
 inline _LIBCPP_INLINE_VISIBILITY
+_LIBCPP_CONSTEXPR
 typename __duration_divide_result<duration<_Rep1, _Period>, _Rep2>::type
 operator%(const duration<_Rep1, _Period>& __d, const _Rep2& __s)
 {
     typedef typename common_type<_Rep1, _Rep2>::type _Cr;
-    duration<_Cr, _Period> __r = __d;
-    __r %= static_cast<_Cr>(__s);
-    return __r;
+    typedef duration<_Cr, _Period> _Cd;
+    return _Cd(_Cd(__d).count() % static_cast<_Cr>(__s));
 }
 
 template <class _Rep1, class _Period1, class _Rep2, class _Period2>
 inline _LIBCPP_INLINE_VISIBILITY
+_LIBCPP_CONSTEXPR
 typename common_type<duration<_Rep1, _Period1>, duration<_Rep2, _Period2> >::type
 operator%(const duration<_Rep1, _Period1>& __lhs, const duration<_Rep2, _Period2>& __rhs)
 {
-    typename common_type<duration<_Rep1, _Period1>, duration<_Rep2, _Period2> >::type __r = __lhs;
-    __r %= __rhs;
-    return __r;
+    typedef typename common_type<_Rep1, _Rep2>::type _Cr;
+    typedef typename common_type<duration<_Rep1, _Period1>, duration<_Rep2, _Period2> >::type _Cd;
+    return _Cd(static_cast<_Cr>(_Cd(__lhs).count()) % static_cast<_Cr>(_Cd(__rhs).count()));
 }
 
 //////////////////////////////////////////////////////////
@@ -710,8 +733,8 @@ public:
 
     // special values
 
-    _LIBCPP_INLINE_VISIBILITY static time_point min() {return time_point(duration::min());}
-    _LIBCPP_INLINE_VISIBILITY static time_point max() {return time_point(duration::max());}
+    _LIBCPP_INLINE_VISIBILITY static _LIBCPP_CONSTEXPR time_point min() {return time_point(duration::min());}
+    _LIBCPP_INLINE_VISIBILITY static _LIBCPP_CONSTEXPR time_point max() {return time_point(duration::max());}
 };
 
 } // chrono

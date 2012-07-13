@@ -21,7 +21,16 @@
 
 int main()
 {
+    {
     std::chrono::duration<int> i(3);
-    std::chrono::duration<int> d = i;
-    assert(d.count() == 3);
+    std::chrono::duration<double, std::milli> d = i;
+    assert(d.count() == 3000);
+    }
+#ifndef _LIBCPP_HAS_NO_CONSTEXPR
+    {
+    constexpr std::chrono::duration<int> i(3);
+    constexpr std::chrono::duration<double, std::milli> d = i;
+    static_assert(d.count() == 3000, "");
+    }
+#endif
 }
