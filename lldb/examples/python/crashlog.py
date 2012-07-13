@@ -631,6 +631,7 @@ def SymbolicateCrashLog(crash_log, options):
             continue
         print "%s" % thread
         #prev_frame_index = -1
+        display_frame_idx = -1
         for frame_idx, frame in enumerate(thread.frames):
             disassemble = (this_thread_crashed or options.disassemble_all_threads) and frame_idx < options.disassemble_depth;
             if frame_idx == 0:
@@ -642,13 +643,15 @@ def SymbolicateCrashLog(crash_log, options):
             if symbolicated_frame_addresses:
                 symbolicated_frame_address_idx = 0
                 for symbolicated_frame_address in symbolicated_frame_addresses:
+                    display_frame_idx += 1
                     print '[%3u] %s' % (frame_idx, symbolicated_frame_address)
-                    if options.source_context:
+                    if (options.source_all or thread.did_crash()) and display_frame_idx < options.source_frames and options.source_context:
+                        source_context = options.source_context
                         line_entry = symbolicated_frame_address.get_symbol_context().line_entry
                         if line_entry.IsValid():
                             strm = lldb.SBStream()
                             if line_entry:
-                                lldb.debugger.GetSourceManager().DisplaySourceLinesWithLineNumbers(line_entry.file, line_entry.line, options.source_context, options.source_context, "->", strm)
+                                lldb.debugger.GetSourceManager().DisplaySourceLinesWithLineNumbers(line_entry.file, line_entry.line, source_context, source_context, "->", strm)
                             source_text = strm.GetData()
                             if source_text:
                                 # Indent the source a bit
@@ -679,17 +682,19 @@ def SymbolicateCrashLog(crash_log, options):
 def CreateSymbolicateCrashLogOptions(command_name, description, add_interactive_options):
     usage = "usage: %prog [options] <FILE> [FILE ...]"
     option_parser = optparse.OptionParser(description=description, prog='crashlog',usage=usage)
-    option_parser.add_option('-v', '--verbose', action='store_true', dest='verbose', help='display verbose debug info', default=False)
-    option_parser.add_option('-g', '--debug', action='store_true', dest='debug', help='display verbose debug logging', default=False)
-    option_parser.add_option('-a', '--load-all', action='store_true', dest='load_all_images', help='load all executable images, not just the images found in the crashed stack frames', default=False)
-    option_parser.add_option('--images', action='store_true', dest='dump_image_list', help='show image list', default=False)
-    option_parser.add_option('--debug-delay', type='int', dest='debug_delay', metavar='NSEC', help='pause for NSEC seconds for debugger', default=0)
-    option_parser.add_option('-c', '--crashed-only', action='store_true', dest='crashed_only', help='only symbolicate the crashed thread', default=False)
-    option_parser.add_option('-d', '--disasm-depth', type='int', dest='disassemble_depth', help='set the depth in stack frames that should be disassembled (default is 1)', default=1)
-    option_parser.add_option('-D', '--disasm-all', action='store_true', dest='disassemble_all_threads', help='enabled disassembly of frames on all threads (not just the crashed thread)', default=False)
-    option_parser.add_option('-B', '--disasm-before', type='int', dest='disassemble_before', help='the number of instructions to disassemble before the frame PC', default=4)
-    option_parser.add_option('-A', '--disasm-after', type='int', dest='disassemble_after', help='the number of instructions to disassemble after the frame PC', default=4)
-    option_parser.add_option('-C', '--source-context', type='int', metavar='NLINES', dest='source_context', help='show NLINES source lines of source context', default=0)
+    option_parser.add_option('--verbose'       , '-v', action='store_true', dest='verbose', help='display verbose debug info', default=False)
+    option_parser.add_option('--debug'         , '-g', action='store_true', dest='debug', help='display verbose debug logging', default=False)
+    option_parser.add_option('--load-all'      , '-a', action='store_true', dest='load_all_images', help='load all executable images, not just the images found in the crashed stack frames', default=False)
+    option_parser.add_option('--images'        ,       action='store_true', dest='dump_image_list', help='show image list', default=False)
+    option_parser.add_option('--debug-delay'   ,       type='int', dest='debug_delay', metavar='NSEC', help='pause for NSEC seconds for debugger', default=0)
+    option_parser.add_option('--crashed-only'  , '-c', action='store_true', dest='crashed_only', help='only symbolicate the crashed thread', default=False)
+    option_parser.add_option('--disasm-depth'  , '-d', type='int', dest='disassemble_depth', help='set the depth in stack frames that should be disassembled (default is 1)', default=1)
+    option_parser.add_option('--disasm-all'    , '-D',  action='store_true', dest='disassemble_all_threads', help='enabled disassembly of frames on all threads (not just the crashed thread)', default=False)
+    option_parser.add_option('--disasm-before' , '-B', type='int', dest='disassemble_before', help='the number of instructions to disassemble before the frame PC', default=4)
+    option_parser.add_option('--disasm-after'  , '-A', type='int', dest='disassemble_after', help='the number of instructions to disassemble after the frame PC', default=4)
+    option_parser.add_option('--source-context', '-C', type='int', metavar='NLINES', dest='source_context', help='show NLINES source lines of source context (default = 4)', default=4)
+    option_parser.add_option('--source-frames' ,       type='int', metavar='NFRAMES', dest='source_frames', help='show source for NFRAMES (default = 4)', default=4)
+    option_parser.add_option('--source-all'    ,       action='store_true', dest='source_all', help='show source for all threads, not just the crashed thread', default=False)
     if add_interactive_options:
         option_parser.add_option('-i', '--interactive', action='store_true', help='parse all crash logs and enter interactive mode', default=False)
     return option_parser
