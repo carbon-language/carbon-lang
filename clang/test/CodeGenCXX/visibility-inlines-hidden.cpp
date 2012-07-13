@@ -108,3 +108,21 @@ namespace PR11642 {
   template class Foo<int>;
   // CHECK: define weak_odr i32 @_ZN7PR116423FooIiE3fooEi
 }
+
+// Test that clang implements the new gcc behaviour for inline functions.
+// GCC PR30066.
+namespace test3 {
+  inline void foo(void) {
+  }
+  template<typename T>
+  inline void zed() {
+  }
+  template void zed<float>();
+  void bar(void) {
+    foo();
+    zed<int>();
+  }
+  // CHECK: define weak_odr void @_ZN5test33zedIfEEvv
+  // CHECK: define linkonce_odr hidden void @_ZN5test33fooEv
+  // CHECK: define linkonce_odr hidden void @_ZN5test33zedIiEEvv
+}

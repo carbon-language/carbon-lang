@@ -168,6 +168,35 @@ shouldConsiderTemplateVis(const ClassTemplateSpecializationDecl *d) {
   return !d->hasAttr<VisibilityAttr>() || d->isExplicitSpecialization();
 }
 
+static bool useInlineVisibilityHidden(const NamedDecl *D) {
+  // FIXME: we should warn if -fvisibility-inlines-hidden is used with c.
+  ASTContext &Context = D->getASTContext();
+  if (!Context.getLangOpts().CPlusPlus)
+    return false;
+
+  const FunctionDecl *FD = dyn_cast<FunctionDecl>(D);
+  if (!FD)
+    return false;
+
+  TemplateSpecializationKind TSK = TSK_Undeclared;
+  if (FunctionTemplateSpecializationInfo *spec
+      = FD->getTemplateSpecializationInfo()) {
+    TSK = spec->getTemplateSpecializationKind();
+  } else if (MemberSpecializationInfo *MSI =
+             FD->getMemberSpecializationInfo()) {
+    TSK = MSI->getTemplateSpecializationKind();
+  }
+
+  const FunctionDecl *Def = 0;
+  // InlineVisibilityHidden only applies to definitions, and
+  // isInlined() only gives meaningful answers on definitions
+  // anyway.
+  return TSK != TSK_ExplicitInstantiationDeclaration &&
+    TSK != TSK_ExplicitInstantiationDefinition &&
+    FD->getASTContext().getLangOpts().InlineVisibilityHidden &&
+    FD->hasBody(Def) && Def->isInlined();
+}
+
 static LinkageInfo getLVForNamespaceScopeDecl(const NamedDecl *D,
                                               bool OnlyTemplate) {
   assert(D->getDeclContext()->getRedeclContext()->isFileContext() &&
@@ -266,8 +295,13 @@ static LinkageInfo getLVForNamespaceScopeDecl(const NamedDecl *D,
     }
   }
 
-  if (!OnlyTemplate)
+  if (!OnlyTemplate) {
     LV.mergeVisibility(Context.getLangOpts().getVisibilityMode());
+    // If we're paying attention to global visibility, apply
+    // -finline-visibility-hidden if this is an inline method.
+    if (!LV.visibilityExplicit() && useInlineVisibilityHidden(D))
+      LV.mergeVisibility(HiddenVisibility, true);
+  }
 
   // C++ [basic.link]p4:
 
@@ -473,40 +507,19 @@ static LinkageInfo getLVForClassMember(const NamedDecl *D, bool OnlyTemplate) {
   if (!OnlyTemplate) {
     if (llvm::Optional<Visibility> Vis = D->getExplicitVisibility())
       LV.mergeVisibility(*Vis, true);
+    // If we're paying attention to global visibility, apply
+    // -finline-visibility-hidden if this is an inline method.
+    //
+    // Note that we do this before merging information about
+    // the class visibility.
+    if (!LV.visibilityExplicit() && useInlineVisibilityHidden(D))
+      LV.mergeVisibility(HiddenVisibility, true);
   }
 
   // If this class member has an explicit visibility attribute, the only
   // thing that can change its visibility is the template arguments, so
   // only look for them when processing the the class.
   bool ClassOnlyTemplate =  LV.visibilityExplicit() ? true : OnlyTemplate;
-
-  // If we're paying attention to global visibility, apply
-  // -finline-visibility-hidden if this is an inline method.
-  //
-  // Note that we do this before merging information about
-  // the class visibility.
-  if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(D)) {
-    TemplateSpecializationKind TSK = TSK_Undeclared;
-    if (FunctionTemplateSpecializationInfo *spec
-        = MD->getTemplateSpecializationInfo()) {
-      TSK = spec->getTemplateSpecializationKind();
-    } else if (MemberSpecializationInfo *MSI =
-               MD->getMemberSpecializationInfo()) {
-      TSK = MSI->getTemplateSpecializationKind();
-    }
-
-    const FunctionDecl *Def = 0;
-    // InlineVisibilityHidden only applies to definitions, and
-    // isInlined() only gives meaningful answers on definitions
-    // anyway.
-    if (TSK != TSK_ExplicitInstantiationDeclaration &&
-        TSK != TSK_ExplicitInstantiationDefinition &&
-        !OnlyTemplate &&
-        !LV.visibilityExplicit() &&
-        MD->getASTContext().getLangOpts().InlineVisibilityHidden &&
-        MD->hasBody(Def) && Def->isInlined())
-      LV.mergeVisibility(HiddenVisibility, true);
-  }
 
   // If this member has an visibility attribute, ClassF will exclude
   // attributes on the class or command line options, keeping only information
