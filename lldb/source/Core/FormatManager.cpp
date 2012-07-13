@@ -834,6 +834,17 @@ FormatManager::LoadSystemFormatters()
     sys_category_sp->GetSummaryNavigator()->Add(ConstString("char *"), string_format);
     sys_category_sp->GetSummaryNavigator()->Add(ConstString("const char *"), string_format);
     sys_category_sp->GetRegexSummaryNavigator()->Add(any_size_char_arr, string_array_format);
+    
+    lldb::TypeSummaryImplSP ostype_summary(new StringSummaryFormat(TypeSummaryImpl::Flags().SetCascades(false)
+                                                                   .SetSkipPointers(true)
+                                                                   .SetSkipReferences(true)
+                                                                   .SetDontShowChildren(true)
+                                                                   .SetDontShowValue(false)
+                                                                   .SetShowMembersOneLiner(false)
+                                                                   .SetHideItemNames(false),
+                                                                   "${var%O}"));
+    
+    sys_category_sp->GetSummaryNavigator()->Add(ConstString("OSType"), ostype_summary);
 }
 
 static void
