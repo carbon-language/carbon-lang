@@ -2981,6 +2981,7 @@ void SelectionDAGISel::CannotYetSelect(SDNode *N) {
       N->getOpcode() != ISD::INTRINSIC_WO_CHAIN &&
       N->getOpcode() != ISD::INTRINSIC_VOID) {
     N->printrFull(Msg, CurDAG);
+    Msg << "\nIn function: " << MF->getFunction()->getName();
   } else {
     bool HasInputChain = N->getOperand(0).getValueType() == MVT::Other;
     unsigned iid =
