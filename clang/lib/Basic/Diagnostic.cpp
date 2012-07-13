@@ -844,8 +844,9 @@ FormatDiagnostic(const char *DiagStr, const char *DiagEnd,
       const char *ArgumentEnd = Argument + ArgumentLen;
       const char *Pipe = ScanFormat(Argument, ArgumentEnd, '|');
 
-      // Print the tree.
-      if (getDiags()->PrintTemplateTree) {
+      // Print the tree.  If this diagnostic already has a tree, skip the
+      // second tree.
+      if (getDiags()->PrintTemplateTree && Tree.empty()) {
         TDT.PrintFromType = true;
         TDT.PrintTree = true;
         getDiags()->ConvertArgToString(Kind, val,
