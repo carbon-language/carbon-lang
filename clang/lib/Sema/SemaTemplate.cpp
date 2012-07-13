@@ -1134,6 +1134,9 @@ Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
     NewTemplate->setInvalidDecl();
     NewClass->setInvalidDecl();
   }
+  if (PrevClassTemplate)
+    mergeDeclAttributes(NewClass, PrevClassTemplate->getTemplatedDecl());
+
   return NewTemplate;
 }
 
