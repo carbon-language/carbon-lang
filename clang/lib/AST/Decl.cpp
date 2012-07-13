@@ -170,8 +170,8 @@ shouldConsiderTemplateVis(const ClassTemplateSpecializationDecl *d) {
 
 static bool useInlineVisibilityHidden(const NamedDecl *D) {
   // FIXME: we should warn if -fvisibility-inlines-hidden is used with c.
-  ASTContext &Context = D->getASTContext();
-  if (!Context.getLangOpts().CPlusPlus)
+  const LangOptions &Opts = D->getASTContext().getLangOpts();
+  if (!Opts.CPlusPlus || !Opts.InlineVisibilityHidden)
     return false;
 
   const FunctionDecl *FD = dyn_cast<FunctionDecl>(D);
@@ -193,7 +193,6 @@ static bool useInlineVisibilityHidden(const NamedDecl *D) {
   // anyway.
   return TSK != TSK_ExplicitInstantiationDeclaration &&
     TSK != TSK_ExplicitInstantiationDefinition &&
-    FD->getASTContext().getLangOpts().InlineVisibilityHidden &&
     FD->hasBody(Def) && Def->isInlined();
 }
 
