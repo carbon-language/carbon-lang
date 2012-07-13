@@ -245,7 +245,8 @@ SymbolVendorMacOSX::CreateInstance (const lldb::ModuleSP &module_sp)
                                                                                 const char *node_content = (const char *)::xmlNodeGetContent(value_node);
                                                                                 if (node_content)
                                                                                 {
-                                                                                    strncpy(DBGSourcePath, node_content, sizeof(DBGSourcePath));
+                                                                                    FileSpec resolved_source_path(node_content, true);
+                                                                                    resolved_source_path.GetPath(DBGSourcePath, sizeof(DBGSourcePath));
                                                                                 }
                                                                             }
                                                                             key_node = value_node;

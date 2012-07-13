@@ -388,6 +388,11 @@ LocateMacOSXFilesUsingDebugSymbols
                                     char build_src_path[PATH_MAX];
                                     ::CFStringGetFileSystemRepresentation (actual_src_cfpath, actual_src_path, sizeof(actual_src_path));
                                     ::CFStringGetFileSystemRepresentation (build_src_cfpath, build_src_path, sizeof(build_src_path));
+                                    if (actual_src_path[0] == '~')
+                                    {
+                                        FileSpec resolved_source_path(actual_src_path, true);
+                                        resolved_source_path.GetPath(actual_src_path, sizeof(actual_src_path));
+                                    }
                                     module_spec.GetSourceMappingList().Append (ConstString(build_src_path), ConstString(actual_src_path), true);
                                 }
                             }
