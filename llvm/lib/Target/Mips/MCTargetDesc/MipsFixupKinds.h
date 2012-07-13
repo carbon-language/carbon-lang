@@ -107,6 +107,9 @@ namespace Mips {
     // resulting in - R_MIPS_GOT_OFST
     fixup_Mips_GOT_OFST,
 
+    // resulting in - R_MIPS_GOT_DISP
+    fixup_Mips_GOT_DISP,
+
     // Marker
     LastTargetFixupKind,
     NumTargetFixupKinds = LastTargetFixupKind - FirstTargetFixupKind

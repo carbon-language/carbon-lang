@@ -156,6 +156,9 @@ unsigned MipsELFObjectWriter::GetRelocType(const MCValue &Target,
   case Mips::fixup_Mips_GOT_OFST:
     Type = ELF::R_MIPS_GOT_OFST;
     break;
+  case Mips::fixup_Mips_GOT_DISP:
+    Type = ELF::R_MIPS_GOT_DISP;
+    break;
   case Mips::fixup_Mips_GPOFF_HI:
     Type = setRType((unsigned)ELF::R_MIPS_GPREL16, Type);
     Type = setRType2((unsigned)ELF::R_MIPS_SUB, Type);

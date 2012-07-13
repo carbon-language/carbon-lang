@@ -40,6 +40,7 @@ static unsigned adjustFixupValue(unsigned Kind, uint64_t Value) {
   case Mips::fixup_Mips_GPOFF_LO:
   case Mips::fixup_Mips_GOT_PAGE:
   case Mips::fixup_Mips_GOT_OFST:
+  case Mips::fixup_Mips_GOT_DISP:
     break;
   case Mips::fixup_Mips_PC16:
     // So far we are only using this type for branches.
@@ -166,7 +167,8 @@ public:
       { "fixup_Mips_GPOFF_HI",     0,     16,   0 },
       { "fixup_Mips_GPOFF_LO",     0,     16,   0 },
       { "fixup_Mips_GOT_PAGE",     0,     16,   0 },
-      { "fixup_Mips_GOT_OFST",     0,     16,   0 }
+      { "fixup_Mips_GOT_OFST",     0,     16,   0 },
+      { "fixup_Mips_GOT_DISP",     0,     16,   0 }
     };
 
     if (Kind < FirstTargetFixupKind)
