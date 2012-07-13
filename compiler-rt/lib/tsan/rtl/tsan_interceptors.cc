@@ -476,7 +476,7 @@ TSAN_INTERCEPTOR(char*, strcpy, char *dst, const char *src) {  // NOLINT
 
 TSAN_INTERCEPTOR(char*, strncpy, char *dst, char *src, uptr n) {
   SCOPED_TSAN_INTERCEPTOR(strncpy, dst, src, n);
-  uptr srclen = internal_strlen(src);
+  uptr srclen = internal_strnlen(src, n);
   MemoryAccessRange(thr, pc, (uptr)dst, n, true);
   MemoryAccessRange(thr, pc, (uptr)src, min(srclen + 1, n), false);
   return REAL(strncpy)(dst, src, n);
