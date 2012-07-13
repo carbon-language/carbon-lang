@@ -155,38 +155,38 @@ InlineCommandComment *Parser::parseInlineCommand() {
   return IC;
 }
 
-HTMLOpenTagComment *Parser::parseHTMLOpenTag() {
-  assert(Tok.is(tok::html_tag_open));
-  HTMLOpenTagComment *HOT =
-      S.actOnHTMLOpenTagStart(Tok.getLocation(),
-                              Tok.getHTMLTagOpenName());
+HTMLStartTagComment *Parser::parseHTMLStartTag() {
+  assert(Tok.is(tok::html_start_tag));
+  HTMLStartTagComment *HST =
+      S.actOnHTMLStartTagStart(Tok.getLocation(),
+                               Tok.getHTMLTagStartName());
   consumeToken();
 
-  SmallVector<HTMLOpenTagComment::Attribute, 2> Attrs;
+  SmallVector<HTMLStartTagComment::Attribute, 2> Attrs;
   while (true) {
     switch (Tok.getKind()) {
     case tok::html_ident: {
       Token Ident = Tok;
       consumeToken();
       if (Tok.isNot(tok::html_equals)) {
-        Attrs.push_back(HTMLOpenTagComment::Attribute(Ident.getLocation(),
-                                                      Ident.getHTMLIdent()));
+        Attrs.push_back(HTMLStartTagComment::Attribute(Ident.getLocation(),
+                                                       Ident.getHTMLIdent()));
         continue;
       }
       Token Equals = Tok;
       consumeToken();
       if (Tok.isNot(tok::html_quoted_string)) {
         Diag(Tok.getLocation(),
-             diag::warn_doc_html_open_tag_expected_quoted_string)
+             diag::warn_doc_html_start_tag_expected_quoted_string)
           << SourceRange(Equals.getLocation());
-        Attrs.push_back(HTMLOpenTagComment::Attribute(Ident.getLocation(),
-                                                      Ident.getHTMLIdent()));
+        Attrs.push_back(HTMLStartTagComment::Attribute(Ident.getLocation(),
+                                                       Ident.getHTMLIdent()));
         while (Tok.is(tok::html_equals) ||
                Tok.is(tok::html_quoted_string))
           consumeToken();
         continue;
       }
-      Attrs.push_back(HTMLOpenTagComment::Attribute(
+      Attrs.push_back(HTMLStartTagComment::Attribute(
                               Ident.getLocation(),
                               Ident.getHTMLIdent(),
                               Equals.getLocation(),
@@ -198,25 +198,25 @@ HTMLOpenTagComment *Parser::parseHTMLOpenTag() {
     }
 
     case tok::html_greater:
-      HOT = S.actOnHTMLOpenTagFinish(HOT,
-                                     copyArray(llvm::makeArrayRef(Attrs)),
-                                     Tok.getLocation(),
-                                     /* IsSelfClosing = */ false);
+      HST = S.actOnHTMLStartTagFinish(HST,
+                                      copyArray(llvm::makeArrayRef(Attrs)),
+                                      Tok.getLocation(),
+                                      /* IsSelfClosing = */ false);
       consumeToken();
-      return HOT;
+      return HST;
 
     case tok::html_slash_greater:
-      HOT = S.actOnHTMLOpenTagFinish(HOT,
-                                     copyArray(llvm::makeArrayRef(Attrs)),
-                                     Tok.getLocation(),
-                                     /* IsSelfClosing = */ true);
+      HST = S.actOnHTMLStartTagFinish(HST,
+                                      copyArray(llvm::makeArrayRef(Attrs)),
+                                      Tok.getLocation(),
+                                      /* IsSelfClosing = */ true);
       consumeToken();
-      return HOT;
+      return HST;
 
     case tok::html_equals:
     case tok::html_quoted_string:
       Diag(Tok.getLocation(),
-           diag::warn_doc_html_open_tag_expected_ident_or_greater);
+           diag::warn_doc_html_start_tag_expected_ident_or_greater);
       while (Tok.is(tok::html_equals) ||
              Tok.is(tok::html_quoted_string))
         consumeToken();
@@ -225,20 +225,20 @@ HTMLOpenTagComment *Parser::parseHTMLOpenTag() {
           Tok.is(tok::html_slash_greater))
         continue;
 
-      return S.actOnHTMLOpenTagFinish(HOT,
+      return S.actOnHTMLStartTagFinish(HST,
+                                       copyArray(llvm::makeArrayRef(Attrs)),
+                                       SourceLocation(),
+                                       /* IsSelfClosing = */ false);
+
+    default:
+      // Not a token from an HTML start tag.  Thus HTML tag prematurely ended.
+      HST = S.actOnHTMLStartTagFinish(HST,
                                       copyArray(llvm::makeArrayRef(Attrs)),
                                       SourceLocation(),
                                       /* IsSelfClosing = */ false);
-
-    default:
-      // Not a token from an HTML open tag.  Thus HTML tag prematurely ended.
-      HOT = S.actOnHTMLOpenTagFinish(HOT,
-                                     copyArray(llvm::makeArrayRef(Attrs)),
-                                     SourceLocation(),
-                                     /* IsSelfClosing = */ false);
       bool StartLineInvalid;
       const unsigned StartLine = SourceMgr.getPresumedLineNumber(
-                                                  HOT->getLocation(),
+                                                  HST->getLocation(),
                                                   &StartLineInvalid);
       bool EndLineInvalid;
       const unsigned EndLine = SourceMgr.getPresumedLineNumber(
@@ -246,22 +246,22 @@ HTMLOpenTagComment *Parser::parseHTMLOpenTag() {
                                                   &EndLineInvalid);
       if (StartLineInvalid || EndLineInvalid || StartLine == EndLine)
         Diag(Tok.getLocation(),
-             diag::warn_doc_html_open_tag_expected_ident_or_greater)
-          << HOT->getSourceRange();
+             diag::warn_doc_html_start_tag_expected_ident_or_greater)
+          << HST->getSourceRange();
       else {
         Diag(Tok.getLocation(),
-             diag::warn_doc_html_open_tag_expected_ident_or_greater);
-        Diag(HOT->getLocation(), diag::note_doc_html_tag_started_here)
-          << HOT->getSourceRange();
+             diag::warn_doc_html_start_tag_expected_ident_or_greater);
+        Diag(HST->getLocation(), diag::note_doc_html_tag_started_here)
+          << HST->getSourceRange();
       }
-      return HOT;
+      return HST;
     }
   }
 }
 
-HTMLCloseTagComment *Parser::parseHTMLCloseTag() {
-  assert(Tok.is(tok::html_tag_close));
-  Token TokTagOpen = Tok;
+HTMLEndTagComment *Parser::parseHTMLEndTag() {
+  assert(Tok.is(tok::html_end_tag));
+  Token TokEndTag = Tok;
   consumeToken();
   SourceLocation Loc;
   if (Tok.is(tok::html_greater)) {
@@ -269,9 +269,9 @@ HTMLCloseTagComment *Parser::parseHTMLCloseTag() {
     consumeToken();
   }
 
-  return S.actOnHTMLCloseTag(TokTagOpen.getLocation(),
-                             Loc,
-                             TokTagOpen.getHTMLTagCloseName());
+  return S.actOnHTMLEndTag(TokEndTag.getLocation(),
+                           Loc,
+                           TokEndTag.getHTMLTagEndName());
 }
 
 BlockContentComment *Parser::parseParagraphOrBlockCommand() {
@@ -315,12 +315,12 @@ BlockContentComment *Parser::parseParagraphOrBlockCommand() {
     }
 
     // Don't deal with HTML tag soup now.
-    case tok::html_tag_open:
-      Content.push_back(parseHTMLOpenTag());
+    case tok::html_start_tag:
+      Content.push_back(parseHTMLStartTag());
       continue;
 
-    case tok::html_tag_close:
-      Content.push_back(parseHTMLCloseTag());
+    case tok::html_end_tag:
+      Content.push_back(parseHTMLEndTag());
       continue;
 
     case tok::text:
@@ -418,8 +418,8 @@ BlockContentComment *Parser::parseBlockContent() {
   switch (Tok.getKind()) {
   case tok::text:
   case tok::command:
-  case tok::html_tag_open:
-  case tok::html_tag_close:
+  case tok::html_start_tag:
+  case tok::html_end_tag:
     return parseParagraphOrBlockCommand();
 
   case tok::verbatim_block_begin:

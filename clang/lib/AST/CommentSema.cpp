@@ -273,40 +273,38 @@ VerbatimLineComment *Sema::actOnVerbatimLine(SourceLocation LocBegin,
                               Text);
 }
 
-HTMLOpenTagComment *Sema::actOnHTMLOpenTagStart(SourceLocation LocBegin,
-                                                StringRef TagName) {
-  HTMLOpenTagComment *HOT =
-      new (Allocator) HTMLOpenTagComment(LocBegin, TagName);
-  return HOT;
+HTMLStartTagComment *Sema::actOnHTMLStartTagStart(SourceLocation LocBegin,
+                                                  StringRef TagName) {
+  return new (Allocator) HTMLStartTagComment(LocBegin, TagName);
 }
 
-HTMLOpenTagComment *Sema::actOnHTMLOpenTagFinish(
-                              HTMLOpenTagComment *Tag,
-                              ArrayRef<HTMLOpenTagComment::Attribute> Attrs,
+HTMLStartTagComment *Sema::actOnHTMLStartTagFinish(
+                              HTMLStartTagComment *Tag,
+                              ArrayRef<HTMLStartTagComment::Attribute> Attrs,
                               SourceLocation GreaterLoc,
                               bool IsSelfClosing) {
   Tag->setAttrs(Attrs);
   Tag->setGreaterLoc(GreaterLoc);
   if (IsSelfClosing)
     Tag->setSelfClosing();
-  else if (!isHTMLCloseTagForbidden(Tag->getTagName()))
+  else if (!isHTMLEndTagForbidden(Tag->getTagName()))
     HTMLOpenTags.push_back(Tag);
   return Tag;
 }
 
-HTMLCloseTagComment *Sema::actOnHTMLCloseTag(SourceLocation LocBegin,
-                                             SourceLocation LocEnd,
-                                             StringRef TagName) {
-  HTMLCloseTagComment *HCT =
-      new (Allocator) HTMLCloseTagComment(LocBegin, LocEnd, TagName);
-  if (isHTMLCloseTagForbidden(TagName)) {
-    Diag(HCT->getLocation(), diag::warn_doc_html_close_forbidden)
-      << TagName << HCT->getSourceRange();
-    return HCT;
+HTMLEndTagComment *Sema::actOnHTMLEndTag(SourceLocation LocBegin,
+                                         SourceLocation LocEnd,
+                                         StringRef TagName) {
+  HTMLEndTagComment *HET =
+      new (Allocator) HTMLEndTagComment(LocBegin, LocEnd, TagName);
+  if (isHTMLEndTagForbidden(TagName)) {
+    Diag(HET->getLocation(), diag::warn_doc_html_end_forbidden)
+      << TagName << HET->getSourceRange();
+    return HET;
   }
 
   bool FoundOpen = false;
-  for (SmallVectorImpl<HTMLOpenTagComment *>::const_reverse_iterator
+  for (SmallVectorImpl<HTMLStartTagComment *>::const_reverse_iterator
        I = HTMLOpenTags.rbegin(), E = HTMLOpenTags.rend();
        I != E; ++I) {
     if ((*I)->getTagName() == TagName) {
@@ -315,44 +313,44 @@ HTMLCloseTagComment *Sema::actOnHTMLCloseTag(SourceLocation LocBegin,
     }
   }
   if (!FoundOpen) {
-    Diag(HCT->getLocation(), diag::warn_doc_html_close_unbalanced)
-      << HCT->getSourceRange();
-    return HCT;
+    Diag(HET->getLocation(), diag::warn_doc_html_end_unbalanced)
+      << HET->getSourceRange();
+    return HET;
   }
 
   while (!HTMLOpenTags.empty()) {
-    const HTMLOpenTagComment *HOT = HTMLOpenTags.back();
+    const HTMLStartTagComment *HST = HTMLOpenTags.back();
     HTMLOpenTags.pop_back();
-    StringRef LastNotClosedTagName = HOT->getTagName();
+    StringRef LastNotClosedTagName = HST->getTagName();
     if (LastNotClosedTagName == TagName)
       break;
 
-    if (isHTMLCloseTagOptional(LastNotClosedTagName))
+    if (isHTMLEndTagOptional(LastNotClosedTagName))
       continue;
 
     bool OpenLineInvalid;
     const unsigned OpenLine = SourceMgr.getPresumedLineNumber(
-                                                HOT->getLocation(),
+                                                HST->getLocation(),
                                                 &OpenLineInvalid);
     bool CloseLineInvalid;
     const unsigned CloseLine = SourceMgr.getPresumedLineNumber(
-                                                HCT->getLocation(),
+                                                HET->getLocation(),
                                                 &CloseLineInvalid);
 
     if (OpenLineInvalid || CloseLineInvalid || OpenLine == CloseLine)
-      Diag(HOT->getLocation(), diag::warn_doc_html_open_close_mismatch)
-        << HOT->getTagName() << HCT->getTagName()
-        << HOT->getSourceRange() << HCT->getSourceRange();
+      Diag(HST->getLocation(), diag::warn_doc_html_start_end_mismatch)
+        << HST->getTagName() << HET->getTagName()
+        << HST->getSourceRange() << HET->getSourceRange();
     else {
-      Diag(HOT->getLocation(), diag::warn_doc_html_open_close_mismatch)
-        << HOT->getTagName() << HCT->getTagName()
-        << HOT->getSourceRange();
-      Diag(HCT->getLocation(), diag::note_doc_html_closing_tag)
-        << HCT->getSourceRange();
+      Diag(HST->getLocation(), diag::warn_doc_html_start_end_mismatch)
+        << HST->getTagName() << HET->getTagName()
+        << HST->getSourceRange();
+      Diag(HET->getLocation(), diag::note_doc_html_end_tag)
+        << HET->getSourceRange();
     }
   }
 
-  return HCT;
+  return HET;
 }
 
 FullComment *Sema::actOnFullComment(
@@ -454,7 +452,7 @@ bool Sema::isInlineCommand(StringRef Name) {
       .Default(false);
 }
 
-bool Sema::isHTMLCloseTagOptional(StringRef Name) {
+bool Sema::isHTMLEndTagOptional(StringRef Name) {
   return llvm::StringSwitch<bool>(Name)
       .Case("p", true)
       .Case("li", true)
@@ -470,7 +468,7 @@ bool Sema::isHTMLCloseTagOptional(StringRef Name) {
       .Default(false);
 }
 
-bool Sema::isHTMLCloseTagForbidden(StringRef Name) {
+bool Sema::isHTMLEndTagForbidden(StringRef Name) {
   return llvm::StringSwitch<bool>(Name)
       .Case("br", true)
       .Case("hr", true)

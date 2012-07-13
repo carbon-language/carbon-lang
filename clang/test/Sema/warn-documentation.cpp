@@ -9,43 +9,43 @@ int test_html1(int);
 int test_html2(int);
 
 // expected-warning@+2 {{expected quoted string after equals sign}}
-// expected-warning@+1 {{HTML opening tag prematurely ended, expected attribute name or '>'}}
+// expected-warning@+1 {{HTML start tag prematurely ended, expected attribute name or '>'}}
 /// <a href= blah
 int test_html3(int);
 
-// expected-warning@+1 {{HTML opening tag prematurely ended, expected attribute name or '>'}}
+// expected-warning@+1 {{HTML start tag prematurely ended, expected attribute name or '>'}}
 /// <a =>
 int test_html4(int);
 
-// expected-warning@+1 {{HTML opening tag prematurely ended, expected attribute name or '>'}}
+// expected-warning@+1 {{HTML start tag prematurely ended, expected attribute name or '>'}}
 /// <a "aaa">
 int test_html5(int);
 
-// expected-warning@+1 {{HTML opening tag prematurely ended, expected attribute name or '>'}}
+// expected-warning@+1 {{HTML start tag prematurely ended, expected attribute name or '>'}}
 /// <a a="b" =>
 int test_html6(int);
 
-// expected-warning@+1 {{HTML opening tag prematurely ended, expected attribute name or '>'}}
+// expected-warning@+1 {{HTML start tag prematurely ended, expected attribute name or '>'}}
 /// <a a="b" "aaa">
 int test_html7(int);
 
-// expected-warning@+1 {{HTML opening tag prematurely ended, expected attribute name or '>'}}
+// expected-warning@+1 {{HTML start tag prematurely ended, expected attribute name or '>'}}
 /// <a a="b" =
 int test_html8(int);
 
-// expected-warning@+2 {{HTML opening tag prematurely ended, expected attribute name or '>'}} expected-note@+1 {{HTML tag started here}}
+// expected-warning@+2 {{HTML start tag prematurely ended, expected attribute name or '>'}} expected-note@+1 {{HTML tag started here}}
 /** Aaa bbb<ccc ddd eee
  * fff ggg.
  */
 int test_html9(int);
 
-// expected-warning@+1 {{HTML opening tag prematurely ended, expected attribute name or '>'}}
+// expected-warning@+1 {{HTML start tag prematurely ended, expected attribute name or '>'}}
 /** Aaa bbb<ccc ddd eee 42%
  * fff ggg.
  */
 int test_html10(int);
 
-// expected-warning@+1 {{HTML closing tag 'br' is forbidden}}
+// expected-warning@+1 {{HTML end tag 'br' is forbidden}}
 /// <br></br>
 int test_html11(int);
 
@@ -63,17 +63,17 @@ int test_html_nesting3(int);
 /// Bbb</p>
 int test_html_nesting4(int);
 
-// expected-warning@+1 {{HTML closing tag does not match any opening tag}}
+// expected-warning@+1 {{HTML end tag does not match any start tag}}
 /// <b><i>Meow</a>
 int test_html_nesting5(int);
 
-// expected-warning@+2 {{HTML opening tag 'i' closed by 'b'}}
-// expected-warning@+1 {{HTML closing tag does not match any opening tag}}
+// expected-warning@+2 {{HTML start tag 'i' closed by 'b'}}
+// expected-warning@+1 {{HTML end tag does not match any start tag}}
 /// <b><i>Meow</b></b>
 int test_html_nesting6(int);
 
-// expected-warning@+2 {{HTML opening tag 'i' closed by 'b'}}
-// expected-warning@+1 {{HTML closing tag does not match any opening tag}}
+// expected-warning@+2 {{HTML start tag 'i' closed by 'b'}}
+// expected-warning@+1 {{HTML end tag does not match any start tag}}
 /// <b><i>Meow</b></i>
 int test_html_nesting7(int);
 

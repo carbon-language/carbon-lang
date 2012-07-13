@@ -43,8 +43,8 @@ public:
   // Inline content.
   void visitTextComment(const TextComment *C);
   void visitInlineCommandComment(const InlineCommandComment *C);
-  void visitHTMLOpenTagComment(const HTMLOpenTagComment *C);
-  void visitHTMLCloseTagComment(const HTMLCloseTagComment *C);
+  void visitHTMLStartTagComment(const HTMLStartTagComment *C);
+  void visitHTMLEndTagComment(const HTMLEndTagComment *C);
 
   // Block content.
   void visitParagraphComment(const ParagraphComment *C);
@@ -110,14 +110,14 @@ void CommentDumper::visitInlineCommandComment(const InlineCommandComment *C) {
     OS << " Arg[" << i << "]=\"" << C->getArgText(i) << "\"";
 }
 
-void CommentDumper::visitHTMLOpenTagComment(const HTMLOpenTagComment *C) {
+void CommentDumper::visitHTMLStartTagComment(const HTMLStartTagComment *C) {
   dumpComment(C);
 
   OS << " Name=\"" << C->getTagName() << "\"";
   if (C->getAttrCount() != 0) {
     OS << " Attrs: ";
     for (unsigned i = 0, e = C->getAttrCount(); i != e; ++i) {
-      const HTMLOpenTagComment::Attribute &Attr = C->getAttr(i);
+      const HTMLStartTagComment::Attribute &Attr = C->getAttr(i);
       OS << " \"" << Attr.Name << "=\"" << Attr.Value << "\"";
     }
   }
@@ -125,7 +125,7 @@ void CommentDumper::visitHTMLOpenTagComment(const HTMLOpenTagComment *C) {
     OS << " SelfClosing";
 }
 
-void CommentDumper::visitHTMLCloseTagComment(const HTMLCloseTagComment *C) {
+void CommentDumper::visitHTMLEndTagComment(const HTMLEndTagComment *C) {
   dumpComment(C);
 
   OS << " Name=\"" << C->getTagName() << "\"";

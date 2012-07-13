@@ -13,12 +13,12 @@ let CategoryName = "Documentation Issue" in {
 // HTML parsing errors.  These are under -Wdocumentation to make sure the user
 // knows that we didn't parse something as he might expect.
 
-def warn_doc_html_open_tag_expected_quoted_string : Warning<
+def warn_doc_html_start_tag_expected_quoted_string : Warning<
   "expected quoted string after equals sign">,
   InGroup<Documentation>, DefaultIgnore;
 
-def warn_doc_html_open_tag_expected_ident_or_greater : Warning<
-  "HTML opening tag prematurely ended, expected attribute name or '>'">,
+def warn_doc_html_start_tag_expected_ident_or_greater : Warning<
+  "HTML start tag prematurely ended, expected attribute name or '>'">,
   InGroup<Documentation>, DefaultIgnore;
 
 def note_doc_html_tag_started_here : Note<
@@ -26,20 +26,20 @@ def note_doc_html_tag_started_here : Note<
 
 // HTML semantic errors
 
-def warn_doc_html_close_forbidden : Warning<
-  "HTML closing tag '%0' is forbidden">,
+def warn_doc_html_end_forbidden : Warning<
+  "HTML end tag '%0' is forbidden">,
   InGroup<DocumentationHTML>, DefaultIgnore;
 
-def warn_doc_html_close_unbalanced : Warning<
-  "HTML closing tag does not match any opening tag">,
+def warn_doc_html_end_unbalanced : Warning<
+  "HTML end tag does not match any start tag">,
   InGroup<DocumentationHTML>, DefaultIgnore;
 
-def warn_doc_html_open_close_mismatch : Warning<
-  "HTML opening tag '%0' closed by '%1'">,
+def warn_doc_html_start_end_mismatch : Warning<
+  "HTML start tag '%0' closed by '%1'">,
   InGroup<DocumentationHTML>, DefaultIgnore;
 
-def note_doc_html_closing_tag : Note<
-  "closing tag">;
+def note_doc_html_end_tag : Note<
+  "end tag">;
 
 // Commands
 

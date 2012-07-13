@@ -50,8 +50,8 @@ protected:
   };
   enum { NumInlineContentCommentBitfields = 9 };
 
-  class HTMLOpenTagCommentBitfields {
-    friend class HTMLOpenTagComment;
+  class HTMLStartTagCommentBitfields {
+    friend class HTMLStartTagComment;
 
     unsigned : NumInlineContentCommentBitfields;
 
@@ -76,7 +76,7 @@ protected:
   union {
     CommentBitfields CommentBits;
     InlineContentCommentBitfields InlineContentCommentBits;
-    HTMLOpenTagCommentBitfields HTMLOpenTagCommentBits;
+    HTMLStartTagCommentBitfields HTMLStartTagCommentBits;
     ParamCommandCommentBitfields ParamCommandCommentBits;
   };
 
@@ -293,7 +293,7 @@ public:
 };
 
 /// An opening HTML tag with attributes.
-class HTMLOpenTagComment : public HTMLTagComment {
+class HTMLStartTagComment : public HTMLTagComment {
 public:
   class Attribute {
   public:
@@ -334,21 +334,21 @@ private:
   ArrayRef<Attribute> Attributes;
 
 public:
-  HTMLOpenTagComment(SourceLocation LocBegin,
-                     StringRef TagName) :
-      HTMLTagComment(HTMLOpenTagCommentKind,
+  HTMLStartTagComment(SourceLocation LocBegin,
+                      StringRef TagName) :
+      HTMLTagComment(HTMLStartTagCommentKind,
                      LocBegin, LocBegin.getLocWithOffset(1 + TagName.size()),
                      TagName,
                      LocBegin.getLocWithOffset(1),
                      LocBegin.getLocWithOffset(1 + TagName.size())) {
-    HTMLOpenTagCommentBits.IsSelfClosing = false;
+    HTMLStartTagCommentBits.IsSelfClosing = false;
   }
 
   static bool classof(const Comment *C) {
-    return C->getCommentKind() == HTMLOpenTagCommentKind;
+    return C->getCommentKind() == HTMLStartTagCommentKind;
   }
 
-  static bool classof(const HTMLOpenTagComment *) { return true; }
+  static bool classof(const HTMLStartTagComment *) { return true; }
 
   child_iterator child_begin() const { return NULL; }
 
@@ -380,21 +380,21 @@ public:
   }
 
   bool isSelfClosing() const {
-    return HTMLOpenTagCommentBits.IsSelfClosing;
+    return HTMLStartTagCommentBits.IsSelfClosing;
   }
 
   void setSelfClosing() {
-    HTMLOpenTagCommentBits.IsSelfClosing = true;
+    HTMLStartTagCommentBits.IsSelfClosing = true;
   }
 };
 
 /// A closing HTML tag.
-class HTMLCloseTagComment : public HTMLTagComment {
+class HTMLEndTagComment : public HTMLTagComment {
 public:
-  HTMLCloseTagComment(SourceLocation LocBegin,
-                      SourceLocation LocEnd,
-                      StringRef TagName) :
-      HTMLTagComment(HTMLCloseTagCommentKind,
+  HTMLEndTagComment(SourceLocation LocBegin,
+                    SourceLocation LocEnd,
+                    StringRef TagName) :
+      HTMLTagComment(HTMLEndTagCommentKind,
                      LocBegin, LocEnd,
                      TagName,
                      LocBegin.getLocWithOffset(2),
@@ -402,10 +402,10 @@ public:
   { }
 
   static bool classof(const Comment *C) {
-    return C->getCommentKind() == HTMLCloseTagCommentKind;
+    return C->getCommentKind() == HTMLEndTagCommentKind;
   }
 
-  static bool classof(const HTMLCloseTagComment *) { return true; }
+  static bool classof(const HTMLEndTagComment *) { return true; }
 
   child_iterator child_begin() const { return NULL; }
 

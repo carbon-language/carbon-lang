@@ -275,18 +275,18 @@ struct NoArgs {};
   return ::testing::AssertionSuccess();
 }
 
-::testing::AssertionResult HasHTMLOpenTagAt(const Comment *C,
-                                            size_t Idx,
-                                            HTMLOpenTagComment *&HOT,
-                                            StringRef TagName) {
-  ::testing::AssertionResult AR = GetChildAt(C, Idx, HOT);
+::testing::AssertionResult HasHTMLStartTagAt(const Comment *C,
+                                             size_t Idx,
+                                             HTMLStartTagComment *&HST,
+                                             StringRef TagName) {
+  ::testing::AssertionResult AR = GetChildAt(C, Idx, HST);
   if (!AR)
     return AR;
 
-  StringRef ActualTagName = HOT->getTagName();
+  StringRef ActualTagName = HST->getTagName();
   if (ActualTagName != TagName)
     return ::testing::AssertionFailure()
-        << "HTMLOpenTagComment has name \"" << ActualTagName.str() << "\", "
+        << "HTMLStartTagComment has name \"" << ActualTagName.str() << "\", "
            "expected \"" << TagName.str() << "\"";
 
   return ::testing::AssertionSuccess();
@@ -294,18 +294,18 @@ struct NoArgs {};
 
 struct SelfClosing {};
 
-::testing::AssertionResult HasHTMLOpenTagAt(const Comment *C,
-                                            size_t Idx,
-                                            HTMLOpenTagComment *&HOT,
-                                            StringRef TagName,
-                                            SelfClosing) {
-  ::testing::AssertionResult AR = HasHTMLOpenTagAt(C, Idx, HOT, TagName);
+::testing::AssertionResult HasHTMLStartTagAt(const Comment *C,
+                                             size_t Idx,
+                                             HTMLStartTagComment *&HST,
+                                             StringRef TagName,
+                                             SelfClosing) {
+  ::testing::AssertionResult AR = HasHTMLStartTagAt(C, Idx, HST, TagName);
   if (!AR)
     return AR;
 
-  if (!HOT->isSelfClosing())
+  if (!HST->isSelfClosing())
     return ::testing::AssertionFailure()
-        << "HTMLOpenTagComment is not self-closing";
+        << "HTMLStartTagComment is not self-closing";
 
   return ::testing::AssertionSuccess();
 }
@@ -313,73 +313,73 @@ struct SelfClosing {};
 
 struct NoAttrs {};
 
-::testing::AssertionResult HasHTMLOpenTagAt(const Comment *C,
-                                            size_t Idx,
-                                            HTMLOpenTagComment *&HOT,
-                                            StringRef TagName,
-                                            NoAttrs) {
-  ::testing::AssertionResult AR = HasHTMLOpenTagAt(C, Idx, HOT, TagName);
+::testing::AssertionResult HasHTMLStartTagAt(const Comment *C,
+                                             size_t Idx,
+                                             HTMLStartTagComment *&HST,
+                                             StringRef TagName,
+                                             NoAttrs) {
+  ::testing::AssertionResult AR = HasHTMLStartTagAt(C, Idx, HST, TagName);
   if (!AR)
     return AR;
 
-  if (HOT->isSelfClosing())
+  if (HST->isSelfClosing())
     return ::testing::AssertionFailure()
-        << "HTMLOpenTagComment is self-closing";
+        << "HTMLStartTagComment is self-closing";
 
-  if (HOT->getAttrCount() != 0)
+  if (HST->getAttrCount() != 0)
     return ::testing::AssertionFailure()
-        << "HTMLOpenTagComment has " << HOT->getAttrCount() << " attr(s), "
+        << "HTMLStartTagComment has " << HST->getAttrCount() << " attr(s), "
            "expected 0";
 
   return ::testing::AssertionSuccess();
 }
 
-::testing::AssertionResult HasHTMLOpenTagAt(const Comment *C,
-                                            size_t Idx,
-                                            HTMLOpenTagComment *&HOT,
-                                            StringRef TagName,
-                                            StringRef AttrName,
-                                            StringRef AttrValue) {
-  ::testing::AssertionResult AR = HasHTMLOpenTagAt(C, Idx, HOT, TagName);
+::testing::AssertionResult HasHTMLStartTagAt(const Comment *C,
+                                             size_t Idx,
+                                             HTMLStartTagComment *&HST,
+                                             StringRef TagName,
+                                             StringRef AttrName,
+                                             StringRef AttrValue) {
+  ::testing::AssertionResult AR = HasHTMLStartTagAt(C, Idx, HST, TagName);
   if (!AR)
     return AR;
 
-  if (HOT->isSelfClosing())
+  if (HST->isSelfClosing())
     return ::testing::AssertionFailure()
-        << "HTMLOpenTagComment is self-closing";
+        << "HTMLStartTagComment is self-closing";
 
-  if (HOT->getAttrCount() != 1)
+  if (HST->getAttrCount() != 1)
     return ::testing::AssertionFailure()
-        << "HTMLOpenTagComment has " << HOT->getAttrCount() << " attr(s), "
+        << "HTMLStartTagComment has " << HST->getAttrCount() << " attr(s), "
            "expected 1";
 
-  StringRef ActualName = HOT->getAttr(0).Name;
+  StringRef ActualName = HST->getAttr(0).Name;
   if (ActualName != AttrName)
     return ::testing::AssertionFailure()
-        << "HTMLOpenTagComment has attr \"" << ActualName.str() << "\", "
+        << "HTMLStartTagComment has attr \"" << ActualName.str() << "\", "
            "expected \"" << AttrName.str() << "\"";
 
-  StringRef ActualValue = HOT->getAttr(0).Value;
+  StringRef ActualValue = HST->getAttr(0).Value;
   if (ActualValue != AttrValue)
     return ::testing::AssertionFailure()
-        << "HTMLOpenTagComment has attr value \"" << ActualValue.str() << "\", "
+        << "HTMLStartTagComment has attr value \"" << ActualValue.str() << "\", "
            "expected \"" << AttrValue.str() << "\"";
 
   return ::testing::AssertionSuccess();
 }
 
-::testing::AssertionResult HasHTMLCloseTagAt(const Comment *C,
-                                             size_t Idx,
-                                             HTMLCloseTagComment *&HCT,
-                                             StringRef TagName) {
-  ::testing::AssertionResult AR = GetChildAt(C, Idx, HCT);
+::testing::AssertionResult HasHTMLEndTagAt(const Comment *C,
+                                           size_t Idx,
+                                           HTMLEndTagComment *&HET,
+                                           StringRef TagName) {
+  ::testing::AssertionResult AR = GetChildAt(C, Idx, HET);
   if (!AR)
     return AR;
 
-  StringRef ActualTagName = HCT->getTagName();
+  StringRef ActualTagName = HET->getTagName();
   if (ActualTagName != TagName)
     return ::testing::AssertionFailure()
-        << "HTMLCloseTagComment has name \"" << ActualTagName.str() << "\", "
+        << "HTMLEndTagComment has name \"" << ActualTagName.str() << "\", "
            "expected \"" << TagName.str() << "\"";
 
   return ::testing::AssertionSuccess();
@@ -852,12 +852,12 @@ TEST_F(CommentParserTest, HTML1) {
 
     {
       ParagraphComment *PC;
-      HTMLOpenTagComment *HOT;
+      HTMLStartTagComment *HST;
       ASSERT_TRUE(GetChildAt(FC, 0, PC));
 
       ASSERT_TRUE(HasChildCount(PC, 2));
         ASSERT_TRUE(HasTextAt(PC, 0, " "));
-        ASSERT_TRUE(HasHTMLOpenTagAt(PC, 1, HOT, "a", NoAttrs()));
+        ASSERT_TRUE(HasHTMLStartTagAt(PC, 1, HST, "a", NoAttrs()));
     }
   }
 }
@@ -874,12 +874,12 @@ TEST_F(CommentParserTest, HTML2) {
 
     {
       ParagraphComment *PC;
-      HTMLOpenTagComment *HOT;
+      HTMLStartTagComment *HST;
       ASSERT_TRUE(GetChildAt(FC, 0, PC));
 
       ASSERT_TRUE(HasChildCount(PC, 2));
         ASSERT_TRUE(HasTextAt(PC, 0, " "));
-        ASSERT_TRUE(HasHTMLOpenTagAt(PC, 1, HOT, "br", SelfClosing()));
+        ASSERT_TRUE(HasHTMLStartTagAt(PC, 1, HST, "br", SelfClosing()));
     }
   }
 }
@@ -898,12 +898,12 @@ TEST_F(CommentParserTest, HTML3) {
 
     {
       ParagraphComment *PC;
-      HTMLOpenTagComment *HOT;
+      HTMLStartTagComment *HST;
       ASSERT_TRUE(GetChildAt(FC, 0, PC));
 
       ASSERT_TRUE(HasChildCount(PC, 2));
         ASSERT_TRUE(HasTextAt(PC, 0, " "));
-        ASSERT_TRUE(HasHTMLOpenTagAt(PC, 1, HOT, "a", "href", ""));
+        ASSERT_TRUE(HasHTMLStartTagAt(PC, 1, HST, "a", "href", ""));
     }
   }
 }
@@ -920,12 +920,12 @@ TEST_F(CommentParserTest, HTML4) {
 
     {
       ParagraphComment *PC;
-      HTMLOpenTagComment *HOT;
+      HTMLStartTagComment *HST;
       ASSERT_TRUE(GetChildAt(FC, 0, PC));
 
       ASSERT_TRUE(HasChildCount(PC, 2));
         ASSERT_TRUE(HasTextAt(PC, 0, " "));
-        ASSERT_TRUE(HasHTMLOpenTagAt(PC, 1, HOT, "a", "href", "bbb"));
+        ASSERT_TRUE(HasHTMLStartTagAt(PC, 1, HST, "a", "href", "bbb"));
     }
   }
 }
@@ -943,12 +943,12 @@ TEST_F(CommentParserTest, HTML5) {
 
     {
       ParagraphComment *PC;
-      HTMLCloseTagComment *HCT;
+      HTMLEndTagComment *HET;
       ASSERT_TRUE(GetChildAt(FC, 0, PC));
 
       ASSERT_TRUE(HasChildCount(PC, 2));
         ASSERT_TRUE(HasTextAt(PC, 0, " "));
-        ASSERT_TRUE(HasHTMLCloseTagAt(PC, 1, HCT, "a"));
+        ASSERT_TRUE(HasHTMLEndTagAt(PC, 1, HET, "a"));
     }
   }
 }
@@ -965,17 +965,17 @@ TEST_F(CommentParserTest, HTML6) {
 
   {
     ParagraphComment *PC;
-    HTMLOpenTagComment *HOT;
-    HTMLCloseTagComment *HCT;
+    HTMLStartTagComment *HST;
+    HTMLEndTagComment *HET;
     ASSERT_TRUE(GetChildAt(FC, 0, PC));
 
     ASSERT_TRUE(HasChildCount(PC, 6));
       ASSERT_TRUE(HasTextAt(PC, 0, " "));
-      ASSERT_TRUE(HasHTMLOpenTagAt(PC, 1, HOT, "pre", NoAttrs()));
+      ASSERT_TRUE(HasHTMLStartTagAt(PC, 1, HST, "pre", NoAttrs()));
       ASSERT_TRUE(HasTextWithNewlineAt(PC, 2, " Aaa"));
       ASSERT_TRUE(HasTextWithNewlineAt(PC, 3, " Bbb"));
       ASSERT_TRUE(HasTextAt(PC, 4, " "));
-      ASSERT_TRUE(HasHTMLCloseTagAt(PC, 5, HCT, "pre"));
+      ASSERT_TRUE(HasHTMLEndTagAt(PC, 5, HET, "pre"));
   }
 }
 

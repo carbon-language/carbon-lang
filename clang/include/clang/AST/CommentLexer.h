@@ -38,13 +38,13 @@ enum TokenKind {
   verbatim_block_end,
   verbatim_line_name,
   verbatim_line_text,
-  html_tag_open,      // <tag
+  html_start_tag,     // <tag
   html_ident,         // attr
   html_equals,        // =
   html_quoted_string, // "blah\"blah" or 'blah\'blah'
   html_greater,       // >
   html_slash_greater, // />
-  html_tag_close      // </tag
+  html_end_tag        // </tag
 };
 } // end namespace tok
 
@@ -158,13 +158,13 @@ public:
     TextLen1 = Text.size();
   }
 
-  StringRef getHTMLTagOpenName() const LLVM_READONLY {
-    assert(is(tok::html_tag_open));
+  StringRef getHTMLTagStartName() const LLVM_READONLY {
+    assert(is(tok::html_start_tag));
     return StringRef(TextPtr1, TextLen1);
   }
 
-  void setHTMLTagOpenName(StringRef Name) {
-    assert(is(tok::html_tag_open));
+  void setHTMLTagStartName(StringRef Name) {
+    assert(is(tok::html_start_tag));
     TextPtr1 = Name.data();
     TextLen1 = Name.size();
   }
@@ -191,13 +191,13 @@ public:
     TextLen1 = Str.size();
   }
 
-  StringRef getHTMLTagCloseName() const LLVM_READONLY {
-    assert(is(tok::html_tag_close));
+  StringRef getHTMLTagEndName() const LLVM_READONLY {
+    assert(is(tok::html_end_tag));
     return StringRef(TextPtr1, TextLen1);
   }
 
-  void setHTMLTagCloseName(StringRef Name) {
-    assert(is(tok::html_tag_close));
+  void setHTMLTagEndName(StringRef Name) {
+    assert(is(tok::html_end_tag));
     TextPtr1 = Name.data();
     TextLen1 = Name.size();
   }
@@ -249,10 +249,10 @@ private:
     LS_VerbatimLineText,
 
     /// Finished lexing \verbatim <TAG \endverbatim part, lexing tag attributes.
-    LS_HTMLOpenTag,
+    LS_HTMLStartTag,
 
     /// Finished lexing \verbatim </TAG \endverbatim part, lexing '>'.
-    LS_HTMLCloseTag
+    LS_HTMLEndTag
   };
 
   /// Current lexing mode.
@@ -328,13 +328,13 @@ private:
 
   void lexVerbatimLineText(Token &T);
 
-  void setupAndLexHTMLOpenTag(Token &T);
+  void setupAndLexHTMLStartTag(Token &T);
 
-  void lexHTMLOpenTag(Token &T);
+  void lexHTMLStartTag(Token &T);
 
-  void setupAndLexHTMLCloseTag(Token &T);
+  void setupAndLexHTMLEndTag(Token &T);
 
-  void lexHTMLCloseTag(Token &T);
+  void lexHTMLEndTag(Token &T);
 
 public:
   Lexer(SourceLocation FileLoc, const CommentOptions &CommOpts,

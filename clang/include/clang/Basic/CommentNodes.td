@@ -10,8 +10,8 @@ def InlineContentComment : Comment<1>;
   def TextComment : DComment<InlineContentComment>;
   def InlineCommandComment : DComment<InlineContentComment>;
   def HTMLTagComment : DComment<InlineContentComment, 1>;
-    def HTMLOpenTagComment : DComment<HTMLTagComment>;
-    def HTMLCloseTagComment : DComment<HTMLTagComment>;
+    def HTMLStartTagComment : DComment<HTMLTagComment>;
+    def HTMLEndTagComment : DComment<HTMLTagComment>;
 
 def BlockContentComment : Comment<1>;
   def ParagraphComment : DComment<BlockContentComment>;

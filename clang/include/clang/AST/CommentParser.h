@@ -108,8 +108,8 @@ public:
   BlockCommandComment *parseBlockCommand();
   InlineCommandComment *parseInlineCommand();
 
-  HTMLOpenTagComment *parseHTMLOpenTag();
-  HTMLCloseTagComment *parseHTMLCloseTag();
+  HTMLStartTagComment *parseHTMLStartTag();
+  HTMLEndTagComment *parseHTMLEndTag();
 
   BlockContentComment *parseParagraphOrBlockCommand();
 
