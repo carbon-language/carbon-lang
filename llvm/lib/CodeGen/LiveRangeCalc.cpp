@@ -95,7 +95,7 @@ void LiveRangeCalc::extendToUses(LiveInterval *LI, unsigned Reg) {
           Idx = Idx.getRegSlot(true);
       }
     }
-    extend(LI, Idx);
+    extend(LI, Idx, Reg);
   }
 }
 
@@ -129,7 +129,8 @@ void LiveRangeCalc::updateLiveIns(VNInfo *OverrideVNI) {
 
 
 void LiveRangeCalc::extend(LiveInterval *LI,
-                           SlotIndex Kill) {
+                           SlotIndex Kill,
+                           unsigned PhysReg) {
   assert(LI && "Missing live range");
   assert(Kill.isValid() && "Invalid SlotIndex");
   assert(Indexes && "Missing SlotIndexes");
@@ -146,7 +147,7 @@ void LiveRangeCalc::extend(LiveInterval *LI,
   // multiple values, and we may need to create even more phi-defs to preserve
   // VNInfo SSA form.  Perform a search for all predecessor blocks where we
   // know the dominating VNInfo.
-  VNInfo *VNI = findReachingDefs(LI, KillMBB, Kill);
+  VNInfo *VNI = findReachingDefs(LI, KillMBB, Kill, PhysReg);
 
   // When there were multiple different values, we may need new PHIs.
   if (!VNI)
@@ -169,7 +170,8 @@ void LiveRangeCalc::calculateValues() {
 
 VNInfo *LiveRangeCalc::findReachingDefs(LiveInterval *LI,
                                         MachineBasicBlock *KillMBB,
-                                        SlotIndex Kill) {
+                                        SlotIndex Kill,
+                                        unsigned PhysReg) {
   // Blocks where LI should be live-in.
   SmallVector<MachineBasicBlock*, 16> WorkList(1, KillMBB);
 
@@ -180,7 +182,22 @@ VNInfo *LiveRangeCalc::findReachingDefs(LiveInterval *LI,
   // Using Seen as a visited set, perform a BFS for all reaching defs.
   for (unsigned i = 0; i != WorkList.size(); ++i) {
     MachineBasicBlock *MBB = WorkList[i];
-    assert(!MBB->pred_empty() && "Value live-in to entry block?");
+
+#ifndef NDEBUG
+    if (MBB->pred_empty()) {
+      MBB->getParent()->verify();
+      llvm_unreachable("Use not jointly dominated by defs.");
+    }
+
+    if (TargetRegisterInfo::isPhysicalRegister(PhysReg) &&
+        !MBB->isLiveIn(PhysReg)) {
+      MBB->getParent()->verify();
+      errs() << "The register needs to be live in to BB#" << MBB->getNumber()
+             << ", but is missing from the live-in list.\n";
+      llvm_unreachable("Invalid global physical register");
+    }
+#endif
+
     for (MachineBasicBlock::pred_iterator PI = MBB->pred_begin(),
            PE = MBB->pred_end(); PI != PE; ++PI) {
        MachineBasicBlock *Pred = *PI;

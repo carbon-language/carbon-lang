@@ -105,9 +105,12 @@ class LiveRangeCalc {
   /// to be live-in are added to LiveIn.  If a unique reaching def is found,
   /// its value is returned, if Kill is jointly dominated by multiple values,
   /// NULL is returned.
+  ///
+  /// PhysReg, when set, is used to verify live-in lists on basic blocks.
   VNInfo *findReachingDefs(LiveInterval *LI,
                            MachineBasicBlock *KillMBB,
-                           SlotIndex Kill);
+                           SlotIndex Kill,
+                           unsigned PhysReg);
 
   /// updateSSA - Compute the values that will be live in to all requested
   /// blocks in LiveIn.  Create PHI-def values as required to preserve SSA form.
@@ -157,7 +160,9 @@ public:
   /// Kill is not dominated by a single existing value, PHI-defs are inserted
   /// as required to preserve SSA form.  If Kill is known to be dominated by a
   /// single existing value, Alloc may be null.
-  void extend(LiveInterval *LI, SlotIndex Kill);
+  ///
+  /// PhysReg, when set, is used to verify live-in lists on basic blocks.
+  void extend(LiveInterval *LI, SlotIndex Kill, unsigned PhysReg = 0);
 
   /// createDeadDefs - Create a dead def in LI for every def operand of Reg.
   /// Each instruction defining Reg gets a new VNInfo with a corresponding
