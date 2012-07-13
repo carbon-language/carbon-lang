@@ -24,6 +24,10 @@
 namespace llvm {
   class TargetLowering;
 
+  /// Return true if the given expression is safe to expand in the sense that
+  /// all materialized values are safe to speculate.
+  bool isSafeToExpand(const SCEV *S);
+
   /// SCEVExpander - This class uses information about analyze scalars to
   /// rewrite expressions in canonical form.
   ///
