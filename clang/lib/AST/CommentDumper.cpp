@@ -106,7 +106,7 @@ void CommentDumper::visitTextComment(const TextComment *C) {
 void CommentDumper::visitInlineCommandComment(const InlineCommandComment *C) {
   dumpComment(C);
 
-  for (unsigned i = 0, e = C->getArgCount(); i != e; ++i)
+  for (unsigned i = 0, e = C->getNumArgs(); i != e; ++i)
     OS << " Arg[" << i << "]=\"" << C->getArgText(i) << "\"";
 }
 
@@ -114,9 +114,9 @@ void CommentDumper::visitHTMLStartTagComment(const HTMLStartTagComment *C) {
   dumpComment(C);
 
   OS << " Name=\"" << C->getTagName() << "\"";
-  if (C->getAttrCount() != 0) {
+  if (C->getNumAttrs() != 0) {
     OS << " Attrs: ";
-    for (unsigned i = 0, e = C->getAttrCount(); i != e; ++i) {
+    for (unsigned i = 0, e = C->getNumAttrs(); i != e; ++i) {
       const HTMLStartTagComment::Attribute &Attr = C->getAttr(i);
       OS << " \"" << Attr.Name << "=\"" << Attr.Value << "\"";
     }

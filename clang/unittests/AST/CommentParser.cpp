@@ -244,9 +244,9 @@ struct NoArgs {};
   if (!AR)
     return AR;
 
-  if (ICC->getArgCount() != 0)
+  if (ICC->getNumArgs() != 0)
     return ::testing::AssertionFailure()
-        << "InlineCommandComment has " << ICC->getArgCount() << " arg(s), "
+        << "InlineCommandComment has " << ICC->getNumArgs() << " arg(s), "
            "expected 0";
 
   return ::testing::AssertionSuccess();
@@ -261,9 +261,9 @@ struct NoArgs {};
   if (!AR)
     return AR;
 
-  if (ICC->getArgCount() != 1)
+  if (ICC->getNumArgs() != 1)
     return ::testing::AssertionFailure()
-        << "InlineCommandComment has " << ICC->getArgCount() << " arg(s), "
+        << "InlineCommandComment has " << ICC->getNumArgs() << " arg(s), "
            "expected 1";
 
   StringRef ActualArg = ICC->getArgText(0);
@@ -326,9 +326,9 @@ struct NoAttrs {};
     return ::testing::AssertionFailure()
         << "HTMLStartTagComment is self-closing";
 
-  if (HST->getAttrCount() != 0)
+  if (HST->getNumAttrs() != 0)
     return ::testing::AssertionFailure()
-        << "HTMLStartTagComment has " << HST->getAttrCount() << " attr(s), "
+        << "HTMLStartTagComment has " << HST->getNumAttrs() << " attr(s), "
            "expected 0";
 
   return ::testing::AssertionSuccess();
@@ -348,9 +348,9 @@ struct NoAttrs {};
     return ::testing::AssertionFailure()
         << "HTMLStartTagComment is self-closing";
 
-  if (HST->getAttrCount() != 1)
+  if (HST->getNumAttrs() != 1)
     return ::testing::AssertionFailure()
-        << "HTMLStartTagComment has " << HST->getAttrCount() << " attr(s), "
+        << "HTMLStartTagComment has " << HST->getNumAttrs() << " attr(s), "
            "expected 1";
 
   StringRef ActualName = HST->getAttr(0).Name;
@@ -413,9 +413,9 @@ struct NoLines {};
   if (!AR)
     return AR;
 
-  if (VBC->getLineCount() != 0)
+  if (VBC->getNumLines() != 0)
     return ::testing::AssertionFailure()
-        << "VerbatimBlockComment has " << VBC->getLineCount() << " lines(s), "
+        << "VerbatimBlockComment has " << VBC->getNumLines() << " lines(s), "
            "expected 0";
 
   return ::testing::AssertionSuccess();
@@ -430,9 +430,9 @@ struct NoLines {};
   if (!AR)
     return AR;
 
-  if (VBC->getLineCount() != 1)
+  if (VBC->getNumLines() != 1)
     return ::testing::AssertionFailure()
-        << "VerbatimBlockComment has " << VBC->getLineCount() << " lines(s), "
+        << "VerbatimBlockComment has " << VBC->getNumLines() << " lines(s), "
            "expected 1";
 
   StringRef ActualLine0 = VBC->getText(0);
@@ -454,9 +454,9 @@ struct NoLines {};
   if (!AR)
     return AR;
 
-  if (VBC->getLineCount() != 2)
+  if (VBC->getNumLines() != 2)
     return ::testing::AssertionFailure()
-        << "VerbatimBlockComment has " << VBC->getLineCount() << " lines(s), "
+        << "VerbatimBlockComment has " << VBC->getNumLines() << " lines(s), "
            "expected 2";
 
   StringRef ActualLine0 = VBC->getText(0);
@@ -1110,7 +1110,7 @@ TEST_F(CommentParserTest, VerbatimBlock6) {
   {
     VerbatimBlockComment *VBC;
     ASSERT_TRUE(HasVerbatimBlockAt(FC, 1, VBC, "verbatim"));
-    ASSERT_EQ(4U, VBC->getLineCount());
+    ASSERT_EQ(4U, VBC->getNumLines());
     ASSERT_EQ(" Aaa", VBC->getText(0));
     ASSERT_EQ("",     VBC->getText(1));
     ASSERT_EQ(" Bbb", VBC->getText(2));

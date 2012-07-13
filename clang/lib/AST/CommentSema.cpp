@@ -130,7 +130,7 @@ ParamCommandComment *Sema::actOnParamCommandParamNameArg(
                                                 SourceLocation ArgLocEnd,
                                                 StringRef Arg) {
   // Parser will not feed us more arguments than needed.
-  assert(Command->getArgCount() == 0);
+  assert(Command->getNumArgs() == 0);
 
   if (!Command->isDirectionExplicit()) {
     // User didn't provide a direction argument.
@@ -362,8 +362,8 @@ void Sema::checkBlockCommandEmptyParagraph(BlockCommandComment *Command) {
   ParagraphComment *Paragraph = Command->getParagraph();
   if (Paragraph->isWhitespace()) {
     SourceLocation DiagLoc;
-    if (Command->getArgCount() > 0)
-      DiagLoc = Command->getArgRange(Command->getArgCount() - 1).getEnd();
+    if (Command->getNumArgs() > 0)
+      DiagLoc = Command->getArgRange(Command->getNumArgs() - 1).getEnd();
     if (!DiagLoc.isValid())
       DiagLoc = Command->getCommandNameRange().getEnd();
     Diag(DiagLoc, diag::warn_doc_block_command_empty_paragraph)

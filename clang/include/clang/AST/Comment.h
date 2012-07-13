@@ -242,7 +242,7 @@ public:
                        getLocEnd());
   }
 
-  unsigned getArgCount() const {
+  unsigned getNumArgs() const {
     return Args.size();
   }
 
@@ -354,7 +354,7 @@ public:
 
   child_iterator child_end() const { return NULL; }
 
-  unsigned getAttrCount() const {
+  unsigned getNumAttrs() const {
     return Attributes.size();
   }
 
@@ -532,7 +532,7 @@ public:
                        getLocStart().getLocWithOffset(1 + Name.size()));
   }
 
-  unsigned getArgCount() const {
+  unsigned getNumArgs() const {
     return Args.size();
   }
 
@@ -611,7 +611,7 @@ public:
   }
 
   bool hasParamName() const {
-    return getArgCount() > 0;
+    return getNumArgs() > 0;
   }
 
   StringRef getParamName() const {
@@ -708,7 +708,7 @@ public:
     return CloseName;
   }
 
-  unsigned getLineCount() const {
+  unsigned getNumLines() const {
     return Lines.size();
   }
 
