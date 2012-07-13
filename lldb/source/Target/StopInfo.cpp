@@ -461,6 +461,36 @@ public:
         if (wp_sp)
         {
             ExecutionContext exe_ctx (m_thread.GetStackFrameAtIndex(0));
+            {
+                // check if this process is running on an architecture where watchpoints trigger
+				// before the associated instruction runs. if so, disable the WP, single-step and then
+				// re-enable the watchpoint
+                Process* process = exe_ctx.GetProcessPtr();
+                if (process)
+                {
+                    uint32_t num; bool wp_triggers_after;
+                    if (process->GetWatchpointSupportInfo(num, wp_triggers_after).Success())
+                    {
+                        if (!wp_triggers_after)
+                        {
+                            process->DisableWatchpoint(wp_sp.get());
+                            
+                            ThreadPlan *new_plan = m_thread.QueueThreadPlanForStepSingleInstruction(false, // step-over
+                                                                                                    false, // abort_other_plans
+                                                                                                    true); // stop_other_threads
+                            new_plan->SetIsMasterPlan (true);
+                            new_plan->SetOkayToDiscard (false);
+                            process->GetThreadList().SetSelectedThreadByID (m_thread.GetID());
+                            process->Resume ();
+                            process->WaitForProcessToStop (NULL);
+                            process->GetThreadList().SetSelectedThreadByID (m_thread.GetID());
+                            MakeStopInfoValid(); // make sure we do not fail to stop because of the single-step taken above
+                            
+                            process->EnableWatchpoint(wp_sp.get());
+                        }
+                    }
+                }
+            }
             StoppointCallbackContext context (event_ptr, exe_ctx, false);
             bool stop_requested = wp_sp->InvokeCallback (&context);
             // Also make sure that the callback hasn't continued the target.  

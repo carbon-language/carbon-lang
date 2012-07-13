@@ -161,13 +161,14 @@ protected:
     // N.B. running to evaluate a user expression does not count. 
     bool HasTargetRunSinceMe ();
 
-private:
-    friend class Thread;
-    
-    // MakeStopInfoValid is necessary to allow saved stop infos to resurrect themselves as valid.  It should
-    // only need to be called by Thread::RestoreThreadStateFromCheckpoint.
+    // MakeStopInfoValid is necessary to allow saved stop infos to resurrect themselves as valid.
+    // It should only be used by Thread::RestoreThreadStateFromCheckpoint and to make sure the one-step
+    // needed for before-the-fact watchpoints does not prevent us from stopping
     void
     MakeStopInfoValid ();
+    
+private:
+    friend class Thread;
     
     DISALLOW_COPY_AND_ASSIGN (StopInfo);
 };

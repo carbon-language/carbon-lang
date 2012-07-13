@@ -209,6 +209,12 @@ public:
     lldb_private::Error
     GetWatchpointSupportInfo (uint32_t &num); 
 
+    lldb_private::Error
+    GetWatchpointSupportInfo (uint32_t &num, bool& after);
+    
+    lldb_private::Error
+    GetWatchpointsTriggerAfterInstruction (bool &after);
+
     const lldb_private::ArchSpec &
     GetHostArchitecture ();
     
@@ -358,6 +364,7 @@ protected:
     lldb_private::LazyBool m_supports_alloc_dealloc_memory;
     lldb_private::LazyBool m_supports_memory_region_info;
     lldb_private::LazyBool m_supports_watchpoint_support_info;
+    lldb_private::LazyBool m_watchpoints_trigger_after_instruction;
 
     bool
         m_supports_qProcessInfoPID:1,

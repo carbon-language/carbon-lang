@@ -3587,10 +3587,13 @@ RNBRemote::HandlePacket_qHostInfo (const char *p)
     if (cputype == CPU_TYPE_ARM)
     {
         strm << "ostype:ios;";
+        // On armv7 we use "synchronous" watchpoints which means the exception is delivered before the instruction executes.
+        strm << "watchpoint_exceptions_received:before;";
     }
     else
     {
         strm << "ostype:macosx;";
+        strm << "watchpoint_exceptions_received:after;";
     }
 //    char ostype[64];
 //    len = sizeof(ostype);

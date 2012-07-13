@@ -2015,6 +2015,13 @@ ProcessGDBRemote::GetWatchpointSupportInfo (uint32_t &num)
 }
 
 Error
+ProcessGDBRemote::GetWatchpointSupportInfo (uint32_t &num, bool& after)
+{
+    Error error (m_gdb_comm.GetWatchpointSupportInfo (num, after));
+    return error;
+}
+
+Error
 ProcessGDBRemote::DoDeallocateMemory (lldb::addr_t addr)
 {
     Error error; 

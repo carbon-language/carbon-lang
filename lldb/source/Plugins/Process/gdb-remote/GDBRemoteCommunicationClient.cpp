@@ -49,6 +49,7 @@ GDBRemoteCommunicationClient::GDBRemoteCommunicationClient(bool is_platform) :
     m_supports_alloc_dealloc_memory (eLazyBoolCalculate),
     m_supports_memory_region_info  (eLazyBoolCalculate),
     m_supports_watchpoint_support_info  (eLazyBoolCalculate),
+    m_watchpoints_trigger_after_instruction(eLazyBoolCalculate),
     m_supports_qProcessInfoPID (true),
     m_supports_qfProcessInfo (true),
     m_supports_qUserName (true),
@@ -1019,6 +1020,17 @@ GDBRemoteCommunicationClient::GetHostInfo (bool force)
                         if (m_os_version_major != UINT32_MAX)
                             ++num_keys_decoded;
                     }
+                    else if (name.compare("watchpoint_exceptions_received") == 0)
+                    {
+                        ++num_keys_decoded;
+                        if (strcmp(value.c_str(),"before") == 0)
+                            m_watchpoints_trigger_after_instruction = eLazyBoolNo;
+                        else if (strcmp(value.c_str(),"after") == 0)
+                            m_watchpoints_trigger_after_instruction = eLazyBoolYes;
+                        else
+                            --num_keys_decoded;
+                    }
+
                 }
                 
                 if (num_keys_decoded > 0)
@@ -1350,6 +1362,30 @@ GDBRemoteCommunicationClient::GetWatchpointSupportInfo (uint32_t &num)
     }
     return error;
 
+}
+
+lldb_private::Error
+GDBRemoteCommunicationClient::GetWatchpointSupportInfo (uint32_t &num, bool& after)
+{
+    Error error(GetWatchpointSupportInfo(num));
+    if (error.Success())
+        error = GetWatchpointsTriggerAfterInstruction(after);
+    return error;
+}
+
+lldb_private::Error
+GDBRemoteCommunicationClient::GetWatchpointsTriggerAfterInstruction (bool &after)
+{
+    Error error;
+    
+    // we assume watchpoints will happen after running the relevant opcode
+    // and we only want to override this behavior if we have explicitly
+    // received a qHostInfo telling us otherwise
+    if (m_qHostInfo_is_valid != eLazyBoolYes)
+        after = true;
+    else
+        after = (m_watchpoints_trigger_after_instruction != eLazyBoolNo);
+    return error;
 }
 
 int

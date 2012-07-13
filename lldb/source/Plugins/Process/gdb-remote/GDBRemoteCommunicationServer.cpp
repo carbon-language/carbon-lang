@@ -223,6 +223,11 @@ GDBRemoteCommunicationServer::Handle_qHostInfo (StringExtractorGDBRemote &packet
     if (sub != LLDB_INVALID_CPUTYPE)
         response.Printf ("cpusubtype:%u;", sub);
     
+    if (cpu == CPU_TYPE_ARM)
+        response.Printf("watchpoint_exceptions_received:before;");   // On armv7 we use "synchronous" watchpoints which means the exception is delivered before the instruction executes.
+    else
+        response.Printf("watchpoint_exceptions_received:after;");
+    
     switch (lldb::endian::InlHostByteOrder())
     {
     case eByteOrderBig:     response.PutCString ("endian:big;"); break;

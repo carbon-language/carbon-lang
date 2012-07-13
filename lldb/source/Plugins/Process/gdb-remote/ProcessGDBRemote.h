@@ -207,6 +207,9 @@ public:
     virtual lldb_private::Error
     GetWatchpointSupportInfo (uint32_t &num);
     
+    virtual lldb_private::Error
+    GetWatchpointSupportInfo (uint32_t &num, bool& after);
+    
     virtual bool
     StartNoticingNewThreads();    
 
