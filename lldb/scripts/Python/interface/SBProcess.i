@@ -127,12 +127,30 @@ public:
     uint32_t
     GetNumThreads ();
 
+    %feature("autodoc", "
+    Returns the INDEX'th thread from the list of current threads.  The index
+    of a thread is only valid for the current stop.  For a persistent thread
+    identifier use either the thread ID or the IndexID.  See help on SBThread
+    for more details.
+    ") GetThreadAtIndex;
     lldb::SBThread
     GetThreadAtIndex (size_t index);
 
+    %feature("autodoc", "
+    Returns the thread with the given thread ID.
+    ") GetThreadByID;
     lldb::SBThread
     GetThreadByID (lldb::tid_t sb_thread_id);
+    
+    %feature("autodoc", "
+    Returns the thread with the given thread IndexID.
+    ") GetThreadByIndexID;
+    lldb::SBThread
+    GetThreadByIndexID (uint32_t index_id);
 
+    %feature("autodoc", "
+    Returns the currently selected thread.
+    ") GetSelectedThread;
     lldb::SBThread
     GetSelectedThread () const;
 
@@ -142,6 +160,9 @@ public:
     bool
     SetSelectedThreadByID (uint32_t tid);
 
+    bool
+    SetSelectedThreadByIndexID (uint32_t index_id);
+    
     //------------------------------------------------------------------
     // Stepping related functions
     //------------------------------------------------------------------

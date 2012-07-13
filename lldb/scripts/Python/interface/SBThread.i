@@ -12,6 +12,12 @@ namespace lldb {
 %feature("docstring",
 "Represents a thread of execution. SBProcess contains SBThread(s).
 
+SBThreads can be referred to by their ID, which maps to the system specific thread
+identifier, or by IndexID.  The ID may or may not be unique depending on whether the
+system reuses its thread identifiers.  The IndexID is a monotonically increasing identifier
+that will always uniquely reference a particular thread, and when that thread goes
+away it will not be reused.
+
 SBThread supports frame iteration. For example (from test/python_api/
 lldbutil/iter/TestLLDBIterator.py),
 

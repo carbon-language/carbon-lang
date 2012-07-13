@@ -105,6 +105,9 @@ public:
     GetThreadByID (lldb::tid_t sb_thread_id);
 
     lldb::SBThread
+    GetThreadByIndexID (uint32_t index_id);
+
+    lldb::SBThread
     GetSelectedThread () const;
 
     bool
@@ -112,6 +115,9 @@ public:
 
     bool
     SetSelectedThreadByID (uint32_t tid);
+    
+    bool
+    SetSelectedThreadByIndexID (uint32_t index_id);
 
     //------------------------------------------------------------------
     // Stepping related functions
