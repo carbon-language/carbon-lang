@@ -420,7 +420,7 @@ let isCall = 1,
   Defs = [LR], Uses = [SP] in {
   // Also used for Thumb2
   def tBL  : TIx2<0b11110, 0b11, 1,
-                  (outs), (ins pred:$p, t_bltarget:$func, variable_ops), IIC_Br,
+                  (outs), (ins pred:$p, t_bltarget:$func), IIC_Br,
                   "bl${p}\t$func",
                   [(ARMtcall tglobaladdr:$func)]>,
              Requires<[IsThumb]> {
@@ -434,7 +434,7 @@ let isCall = 1,
 
   // ARMv5T and above, also used for Thumb2
   def tBLXi : TIx2<0b11110, 0b11, 0,
-                 (outs), (ins pred:$p, t_blxtarget:$func, variable_ops), IIC_Br,
+                 (outs), (ins pred:$p, t_blxtarget:$func), IIC_Br,
                    "blx${p}\t$func",
                    [(ARMcall tglobaladdr:$func)]>,
               Requires<[IsThumb, HasV5T]> {
@@ -448,7 +448,7 @@ let isCall = 1,
   }
 
   // Also used for Thumb2
-  def tBLXr : TI<(outs), (ins pred:$p, GPR:$func, variable_ops), IIC_Br,
+  def tBLXr : TI<(outs), (ins pred:$p, GPR:$func), IIC_Br,
                   "blx${p}\t$func",
                   [(ARMtcall GPR:$func)]>,
               Requires<[IsThumb, HasV5T]>,
@@ -459,7 +459,7 @@ let isCall = 1,
   }
 
   // ARMv4T
-  def tBX_CALL : tPseudoInst<(outs), (ins tGPR:$func, variable_ops),
+  def tBX_CALL : tPseudoInst<(outs), (ins tGPR:$func),
                   4, IIC_Br,
                   [(ARMcall_nolink tGPR:$func)]>,
             Requires<[IsThumb, IsThumb1Only]>;
@@ -506,7 +506,7 @@ let isBranch = 1, isTerminator = 1 in
 let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in {
   // IOS versions.
   let Uses = [SP] in {
-    def tTAILJMPr : tPseudoExpand<(outs), (ins tcGPR:$dst, variable_ops),
+    def tTAILJMPr : tPseudoExpand<(outs), (ins tcGPR:$dst),
                      4, IIC_Br, [],
                      (tBX GPR:$dst, (ops 14, zero_reg))>,
                      Requires<[IsThumb]>;
@@ -516,7 +516,7 @@ let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in {
   // Non-IOS version:
   let Uses = [SP] in {
     def tTAILJMPdND : tPseudoExpand<(outs),
-                   (ins t_brtarget:$dst, pred:$p, variable_ops),
+                   (ins t_brtarget:$dst, pred:$p),
                    4, IIC_Br, [],
                    (tB t_brtarget:$dst, pred:$p)>,
                  Requires<[IsThumb, IsNotIOS]>;

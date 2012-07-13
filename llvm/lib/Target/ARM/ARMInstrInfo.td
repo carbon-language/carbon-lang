@@ -1840,7 +1840,7 @@ let isCall = 1,
   // at least be a pseudo instruction expanding to the predicated version
   // at MC lowering time.
   Defs = [LR], Uses = [SP] in {
-  def BL  : ABXI<0b1011, (outs), (ins bl_target:$func, variable_ops),
+  def BL  : ABXI<0b1011, (outs), (ins bl_target:$func),
                 IIC_Br, "bl\t$func",
                 [(ARMcall tglobaladdr:$func)]>,
             Requires<[IsARM]> {
@@ -1850,7 +1850,7 @@ let isCall = 1,
     let DecoderMethod = "DecodeBranchImmInstruction";
   }
 
-  def BL_pred : ABI<0b1011, (outs), (ins bl_target:$func, variable_ops),
+  def BL_pred : ABI<0b1011, (outs), (ins bl_target:$func),
                    IIC_Br, "bl", "\t$func",
                    [(ARMcall_pred tglobaladdr:$func)]>,
                 Requires<[IsARM]> {
@@ -1860,7 +1860,7 @@ let isCall = 1,
   }
 
   // ARMv5T and above
-  def BLX : AXI<(outs), (ins GPR:$func, variable_ops), BrMiscFrm,
+  def BLX : AXI<(outs), (ins GPR:$func), BrMiscFrm,
                 IIC_Br, "blx\t$func",
                 [(ARMcall GPR:$func)]>,
             Requires<[IsARM, HasV5T]> {
@@ -1869,7 +1869,7 @@ let isCall = 1,
     let Inst{3-0}  = func;
   }
 
-  def BLX_pred : AI<(outs), (ins GPR:$func, variable_ops), BrMiscFrm,
+  def BLX_pred : AI<(outs), (ins GPR:$func), BrMiscFrm,
                     IIC_Br, "blx", "\t$func",
                     [(ARMcall_pred GPR:$func)]>,
                  Requires<[IsARM, HasV5T]> {
@@ -1880,19 +1880,18 @@ let isCall = 1,
 
   // ARMv4T
   // Note: Restrict $func to the tGPR regclass to prevent it being in LR.
-  def BX_CALL : ARMPseudoInst<(outs), (ins tGPR:$func, variable_ops),
+  def BX_CALL : ARMPseudoInst<(outs), (ins tGPR:$func),
                    8, IIC_Br, [(ARMcall_nolink tGPR:$func)]>,
                    Requires<[IsARM, HasV4T]>;
 
   // ARMv4
-  def BMOVPCRX_CALL : ARMPseudoInst<(outs), (ins tGPR:$func, variable_ops),
+  def BMOVPCRX_CALL : ARMPseudoInst<(outs), (ins tGPR:$func),
                    8, IIC_Br, [(ARMcall_nolink tGPR:$func)]>,
                    Requires<[IsARM, NoV4T]>;
 
   // mov lr, pc; b if callee is marked noreturn to avoid confusing the
   // return stack predictor.
-  def BMOVPCB_CALL : ARMPseudoInst<(outs),
-                                   (ins bl_target:$func, variable_ops),
+  def BMOVPCB_CALL : ARMPseudoInst<(outs), (ins bl_target:$func),
                                8, IIC_Br, [(ARMcall_nolink tglobaladdr:$func)]>,
                       Requires<[IsARM]>;
 }
@@ -1962,18 +1961,16 @@ def BXJ : ABI<0b0001, (outs), (ins GPR:$func), NoItinerary, "bxj", "\t$func",
 // Tail calls.
 
 let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1, Uses = [SP] in {
-  def TCRETURNdi : PseudoInst<(outs), (ins i32imm:$dst, variable_ops),
-                              IIC_Br, []>;
+  def TCRETURNdi : PseudoInst<(outs), (ins i32imm:$dst), IIC_Br, []>;
 
-  def TCRETURNri : PseudoInst<(outs), (ins tcGPR:$dst, variable_ops),
-                              IIC_Br, []>;
+  def TCRETURNri : PseudoInst<(outs), (ins tcGPR:$dst), IIC_Br, []>;
 
-  def TAILJMPd : ARMPseudoExpand<(outs), (ins br_target:$dst, variable_ops),
+  def TAILJMPd : ARMPseudoExpand<(outs), (ins br_target:$dst),
                                  4, IIC_Br, [],
                                  (Bcc br_target:$dst, (ops 14, zero_reg))>,
                                  Requires<[IsARM]>;
 
-  def TAILJMPr : ARMPseudoExpand<(outs), (ins tcGPR:$dst, variable_ops),
+  def TAILJMPr : ARMPseudoExpand<(outs), (ins tcGPR:$dst),
                                  4, IIC_Br, [],
                                  (BX GPR:$dst)>,
                                  Requires<[IsARM]>;

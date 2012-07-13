@@ -3353,7 +3353,7 @@ let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in {
   // IOS version.
   let Uses = [SP] in
   def tTAILJMPd: tPseudoExpand<(outs),
-                   (ins uncondbrtarget:$dst, pred:$p, variable_ops),
+                   (ins uncondbrtarget:$dst, pred:$p),
                    4, IIC_Br, [],
                    (t2B uncondbrtarget:$dst, pred:$p)>,
                  Requires<[IsThumb2, IsIOS]>;
@@ -3363,7 +3363,7 @@ let isCall = 1, Defs = [LR], Uses = [SP] in {
   // mov lr, pc; b if callee is marked noreturn to avoid confusing the
   // return stack predictor.
   def t2BMOVPCB_CALL : tPseudoInst<(outs),
-                                   (ins t_bltarget:$func, variable_ops),
+                                   (ins t_bltarget:$func),
                                6, IIC_Br, [(ARMcall_nolink tglobaladdr:$func)]>,
                         Requires<[IsThumb]>;
 }
