@@ -23,6 +23,7 @@
 #include "clang/AST/ASTConsumer.h"
 using namespace clang;
 
+namespace {
 /// \brief A comment handler that passes comments found by the preprocessor
 /// to the parser action.
 class ActionCommentHandler : public CommentHandler {
@@ -36,6 +37,7 @@ public:
     return false;
   }
 };
+} // end anonymous namespace
 
 IdentifierInfo *Parser::getSEHExceptKeyword() {
   // __except is accepted as a (contextual) keyword 
