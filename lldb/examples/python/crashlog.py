@@ -64,6 +64,7 @@ class CrashLog(symbolication.Symbolicator):
         def __init__(self, index):
             self.index = index
             self.frames = list()
+            self.idents = list()
             self.registers = dict()
             self.reason = None
             self.queue = None
@@ -79,6 +80,10 @@ class CrashLog(symbolication.Symbolicator):
                 for reg in self.registers.keys():
                     print "%s    %-5s = %#16.16x" % (prefix, reg, self.registers[reg])
         
+        def add_ident(self, ident):
+            if not ident in self.idents:
+                self.idents.append(ident)
+            
         def did_crash(self):
             return self.reason != None
         
@@ -280,6 +285,7 @@ class CrashLog(symbolication.Symbolicator):
                 frame_match = self.frame_regex.search(line)
                 if frame_match:
                     ident = frame_match.group(2)
+                    thread.add_ident(ident)
                     if not ident in self.idents:
                         self.idents.append(ident)
                     thread.frames.append (CrashLog.Frame(int(frame_match.group(1)), int(frame_match.group(3), 0), frame_match.group(4)))
@@ -589,13 +595,24 @@ def SymbolicateCrashLog(crash_log, options):
             images_to_load.append(image)
     else:
         # Only load the images found in stack frames for the crashed threads
-        for ident in crash_log.idents:
-            images = crash_log.find_images_with_identifier (ident)
-            if images:
-                for image in images:
-                    images_to_load.append(image)
-            else:
-                print 'error: can\'t find image for identifier "%s"' % ident
+        if options.crashed_only:
+            for thread in crash_log.threads:
+                if thread.did_crash():
+                    for ident in thread.idents:
+                        images = crash_log.find_images_with_identifier (ident)
+                        if images:
+                            for image in images:
+                                images_to_load.append(image)
+                        else:
+                            print 'error: can\'t find image for identifier "%s"' % ident
+        else:
+            for ident in crash_log.idents:
+                images = crash_log.find_images_with_identifier (ident)
+                if images:
+                    for image in images:
+                        images_to_load.append(image)
+                else:
+                    print 'error: can\'t find image for identifier "%s"' % ident
 
     for image in images_to_load:
         if image in loaded_images:
@@ -626,7 +643,18 @@ def SymbolicateCrashLog(crash_log, options):
                 symbolicated_frame_address_idx = 0
                 for symbolicated_frame_address in symbolicated_frame_addresses:
                     print '[%3u] %s' % (frame_idx, symbolicated_frame_address)
-                
+                    if options.source_context:
+                        line_entry = symbolicated_frame_address.get_symbol_context().line_entry
+                        if line_entry.IsValid():
+                            strm = lldb.SBStream()
+                            if line_entry:
+                                lldb.debugger.GetSourceManager().DisplaySourceLinesWithLineNumbers(line_entry.file, line_entry.line, options.source_context, options.source_context, "->", strm)
+                            source_text = strm.GetData()
+                            if source_text:
+                                # Indent the source a bit
+                                indent_str = '    '
+                                join_str = '\n' + indent_str
+                                print '%s%s' % (indent_str, join_str.join(source_text.split('\n')))
                     if symbolicated_frame_address_idx == 0:
                         if disassemble:
                             instructions = symbolicated_frame_address.get_instructions()
@@ -661,6 +689,7 @@ def CreateSymbolicateCrashLogOptions(command_name, description, add_interactive_
     option_parser.add_option('-D', '--disasm-all', action='store_true', dest='disassemble_all_threads', help='enabled disassembly of frames on all threads (not just the crashed thread)', default=False)
     option_parser.add_option('-B', '--disasm-before', type='int', dest='disassemble_before', help='the number of instructions to disassemble before the frame PC', default=4)
     option_parser.add_option('-A', '--disasm-after', type='int', dest='disassemble_after', help='the number of instructions to disassemble after the frame PC', default=4)
+    option_parser.add_option('-C', '--source-context', type='int', metavar='NLINES', dest='source_context', help='show NLINES source lines of source context', default=0)
     if add_interactive_options:
         option_parser.add_option('-i', '--interactive', action='store_true', help='parse all crash logs and enter interactive mode', default=False)
     return option_parser
