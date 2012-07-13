@@ -77,6 +77,20 @@ Index: include/clang/Sema/Sema.h
    ExprResult BuildObjCSubscriptExpression(SourceLocation RB, Expr *BaseExpr,
                                            Expr *IndexExpr,
                                            ObjCMethodDecl *getterMethod,
+Index: include/clang/AST/ASTImporter.h
+===================================================================
+--- include/clang/AST/ASTImporter.h	(revision 152265)
++++ include/clang/AST/ASTImporter.h	(working copy)
+@@ -271,7 +271,8 @@
+     
+     /// \brief Determine whether the given types are structurally
+     /// equivalent.
+-    bool IsStructurallyEquivalent(QualType From, QualType To);    
++    bool IsStructurallyEquivalent(QualType From, QualType To,
++                                  bool Complain = true);
+   };
+ }
+ 
 Index: include/clang/AST/Type.h
 ===================================================================
 --- include/clang/AST/Type.h	(revision 152265)
@@ -1261,6 +1275,166 @@ Index: lib/AST/DeclObjC.cpp
      if ((MethodDecl = ClassDecl->getMethod(Sel, isInstance)))
        return MethodDecl;
  
+Index: lib/AST/ASTImporter.cpp
+===================================================================
+--- lib/AST/ASTImporter.cpp	(revision 152265)
++++ lib/AST/ASTImporter.cpp	(working copy)
+@@ -119,7 +119,8 @@
+     bool ImportTemplateArguments(const TemplateArgument *FromArgs,
+                                  unsigned NumFromArgs,
+                                SmallVectorImpl<TemplateArgument> &ToArgs);
+-    bool IsStructuralMatch(RecordDecl *FromRecord, RecordDecl *ToRecord);
++    bool IsStructuralMatch(RecordDecl *FromRecord, RecordDecl *ToRecord,
++                           bool Complain = true);
+     bool IsStructuralMatch(EnumDecl *FromEnum, EnumDecl *ToRecord);
+     bool IsStructuralMatch(ClassTemplateDecl *From, ClassTemplateDecl *To);
+     Decl *VisitDecl(Decl *D);
+@@ -201,12 +202,16 @@
+     /// \brief Whether we're being strict about the spelling of types when 
+     /// unifying two types.
+     bool StrictTypeSpelling;
+-    
++
++    /// \brief Whether to complain about failures.
++    bool Complain;
++
+     StructuralEquivalenceContext(ASTContext &C1, ASTContext &C2,
+                llvm::DenseSet<std::pair<Decl *, Decl *> > &NonEquivalentDecls,
+-                                 bool StrictTypeSpelling = false)
++                                 bool StrictTypeSpelling = false,
++                                 bool Complain = true)
+       : C1(C1), C2(C2), NonEquivalentDecls(NonEquivalentDecls),
+-        StrictTypeSpelling(StrictTypeSpelling) { }
++        StrictTypeSpelling(StrictTypeSpelling), Complain(Complain) { }
+ 
+     /// \brief Determine whether the two declarations are structurally
+     /// equivalent.
+@@ -223,10 +228,16 @@
+     
+   public:
+     DiagnosticBuilder Diag1(SourceLocation Loc, unsigned DiagID) {
++      if (!Complain)
++        return DiagnosticBuilder(DiagnosticBuilder::Suppress);
++
+       return C1.getDiagnostics().Report(Loc, DiagID);
+     }
+ 
+     DiagnosticBuilder Diag2(SourceLocation Loc, unsigned DiagID) {
++      if (!Complain)
++        return DiagnosticBuilder(DiagnosticBuilder::Suppress);
++      
+       return C2.getDiagnostics().Report(Loc, DiagID);
+     }
+   };
+@@ -2050,10 +2061,12 @@
+ }
+ 
+ bool ASTNodeImporter::IsStructuralMatch(RecordDecl *FromRecord, 
+-                                        RecordDecl *ToRecord) {
++                                        RecordDecl *ToRecord,
++                                        bool Complain) {
+   StructuralEquivalenceContext Ctx(Importer.getFromContext(),
+                                    Importer.getToContext(),
+-                                   Importer.getNonEquivalentDecls());
++                                   Importer.getNonEquivalentDecls(),
++                                   false, Complain);
+   return Ctx.IsStructurallyEquivalent(FromRecord, ToRecord);
+ }
+ 
+@@ -2333,7 +2346,7 @@
+ 
+   // We may already have a record of the same name; try to find and match it.
+   RecordDecl *AdoptDecl = 0;
+-  if (!DC->isFunctionOrMethod() && SearchName) {
++  if (!DC->isFunctionOrMethod()) {
+     SmallVector<NamedDecl *, 4> ConflictingDecls;
+     llvm::SmallVector<NamedDecl *, 2> FoundDecls;
+     DC->localUncachedLookup(SearchName, FoundDecls);
+@@ -2349,26 +2362,32 @@
+       
+       if (RecordDecl *FoundRecord = dyn_cast<RecordDecl>(Found)) {
+         if (RecordDecl *FoundDef = FoundRecord->getDefinition()) {
+-          if (!D->isCompleteDefinition() || IsStructuralMatch(D, FoundDef)) {
++          if ((SearchName && !D->isCompleteDefinition()) ||
++              (D->isCompleteDefinition() &&
++               D->isAnonymousStructOrUnion()
++                 == FoundDef->isAnonymousStructOrUnion() &&
++               IsStructuralMatch(D, FoundDef, SearchName))) {
+             // The record types structurally match, or the "from" translation
+             // unit only had a forward declaration anyway; call it the same
+             // function.
+             // FIXME: For C++, we should also merge methods here.
+             return Importer.Imported(D, FoundDef);
+           }
+-        } else {
++        } else if (!D->isCompleteDefinition()) {
+           // We have a forward declaration of this type, so adopt that forward
+           // declaration rather than building a new one.
+           AdoptDecl = FoundRecord;
+           continue;
+-        }          
++        } else if (!SearchName) {
++          continue;
++        }
+       }
+       
+       ConflictingDecls.push_back(FoundDecls[I]);
+     }
+     
+-    if (!ConflictingDecls.empty()) {
+-      Name = Importer.HandleNameConflict(Name, DC, IDNS,
++    if (!ConflictingDecls.empty() && SearchName) {
++      Name = Importer.HandleNameConflict(SearchName, DC, IDNS,
+                                          ConflictingDecls.data(), 
+                                          ConflictingDecls.size());
+     }
+@@ -2393,6 +2412,8 @@
+     D2->setQualifierInfo(Importer.Import(D->getQualifierLoc()));
+     D2->setLexicalDeclContext(LexicalDC);
+     LexicalDC->addDeclInternal(D2);
++    if (D->isAnonymousStructOrUnion())
++      D2->setAnonymousStructOrUnion(true);
+   }
+   
+   Importer.Imported(D, D2);
+@@ -2631,12 +2652,17 @@
+   DC->localUncachedLookup(Name, FoundDecls);
+   for (unsigned I = 0, N = FoundDecls.size(); I != N; ++I) {
+     if (FieldDecl *FoundField = dyn_cast<FieldDecl>(FoundDecls[I])) {
+-      if (Importer.IsStructurallyEquivalent(D->getType(), 
+-                                            FoundField->getType())) {
++      if (Importer.IsStructurallyEquivalent(D->getType(),
++                                            FoundField->getType(),
++                                            Name)) {
+         Importer.Imported(D, FoundField);
+         return FoundField;
+       }
+-      
++
++      // If there are more anonymous fields to check, continue.
++      if (!Name && I < N-1)
++        continue;
++
+       Importer.ToDiag(Loc, diag::err_odr_field_type_inconsistent)
+         << Name << D->getType() << FoundField->getType();
+       Importer.ToDiag(FoundField->getLocation(), diag::note_odr_value_here)
+@@ -4662,12 +4688,14 @@
+   return To;
+ }
+ 
+-bool ASTImporter::IsStructurallyEquivalent(QualType From, QualType To) {
++bool ASTImporter::IsStructurallyEquivalent(QualType From, QualType To,
++                                           bool Complain) {
+   llvm::DenseMap<const Type *, const Type *>::iterator Pos
+    = ImportedTypes.find(From.getTypePtr());
+   if (Pos != ImportedTypes.end() && ToContext.hasSameType(Import(From), To))
+     return true;
+       
+-  StructuralEquivalenceContext Ctx(FromContext, ToContext, NonEquivalentDecls);
++  StructuralEquivalenceContext Ctx(FromContext, ToContext, NonEquivalentDecls,
++                                   false, Complain);
+   return Ctx.IsStructurallyEquivalent(From, To);
+ }
 Index: lib/AST/NSAPI.cpp
 ===================================================================
 --- lib/AST/NSAPI.cpp	(revision 152265)
@@ -1454,6 +1628,27 @@ Index: lib/AST/StmtPrinter.cpp
  }
  
  void StmtPrinter::VisitObjCArrayLiteral(ObjCArrayLiteral *E) {
+Index: lib/AST/DeclBase.cpp
+===================================================================
+--- lib/AST/DeclBase.cpp	(revision 152265)
++++ lib/AST/DeclBase.cpp	(working copy)
+@@ -1153,14 +1153,14 @@
+   
+   // If there's no external storage, just perform a normal lookup and copy
+   // the results.
+-  if (!hasExternalVisibleStorage() && !hasExternalLexicalStorage()) {
++  if (!hasExternalVisibleStorage() && !hasExternalLexicalStorage() && Name) {
+     lookup_result LookupResults = lookup(Name);
+     Results.insert(Results.end(), LookupResults.first, LookupResults.second);
+     return;
+   }
+ 
+   // If we have a lookup table, check there first. Maybe we'll get lucky.
+-  if (LookupPtr) {
++  if (LookupPtr && Name) {
+     StoredDeclsMap::iterator Pos = LookupPtr->find(Name);
+     if (Pos != LookupPtr->end()) {
+       Results.insert(Results.end(), 
 Index: lib/AST/StmtProfile.cpp
 ===================================================================
 --- lib/AST/StmtProfile.cpp	(revision 152265)

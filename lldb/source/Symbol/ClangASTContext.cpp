@@ -1156,9 +1156,6 @@ ClangASTContext::CreateRecordType (DeclContext *decl_ctx, AccessType access_type
     if (decl)
         SetMetadata(ast, (uintptr_t)decl, metadata);
     
-    if (!name)
-        decl->setAnonymousStructOrUnion(true);
-
     if (decl_ctx)
     {
         if (access_type != eAccessNone)
@@ -1961,8 +1958,18 @@ ClangASTContext::AddFieldToRecordType
                                                   false,      // Mutable
                                                   false);     // HasInit
             
-            if (!name)
-                field->setImplicit();
+            if (!name) {
+                // Determine whether this field corresponds to an anonymous
+                // struct or union.
+                if (const TagType *TagT = field->getType()->getAs<TagType>()) {
+                  if (RecordDecl *Rec = dyn_cast<RecordDecl>(TagT->getDecl()))
+                    if (!Rec->getDeclName()) {
+                      Rec->setAnonymousStructOrUnion(true);
+                      field->setImplicit();
+
+                    }
+                }
+            }
 
             field->setAccess (ConvertAccessTypeToAccessSpecifier (access));
 
