@@ -913,6 +913,16 @@ generator will always lower the builtin to a call to the specified function
 regardless of whether the target ISA has a trap instruction. This option is
 useful for environments (e.g. deeply embedded) where a trap cannot be properly
 handled, or when some custom behavior is desired.</dd>
+
+<dt id="opt_ftls-model"><b>-ftls-model=[model]</b>: Select which TLS model to
+use.</dt>
+<dd>Valid values are: <tt>global-dynamic</tt>, <tt>local-dynamic</tt>,
+<tt>initial-exec</tt> and <tt>local-exec</tt>. The default value is
+<tt>global-dynamic</tt>. The compiler may use a different model if the selected
+model is not supported by the target, or if a more efficient model can be used.
+The TLS model can be overridden per variable using the <tt>tls_model</tt>
+attribute.
+</dd>
 </dl>
 
 <!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
