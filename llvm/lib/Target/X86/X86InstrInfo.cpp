@@ -2376,7 +2376,7 @@ X86::CondCode X86::GetOppositeBranchCondition(X86::CondCode CC) {
 /// getSwappedCondition - assume the flags are set by MI(a,b), return
 /// the condition code if we modify the instructions such that flags are
 /// set by MI(b,a).
-X86::CondCode getSwappedCondition(X86::CondCode CC) {
+static X86::CondCode getSwappedCondition(X86::CondCode CC) {
   switch (CC) {
   default: return X86::COND_INVALID;
   case X86::COND_E:  return X86::COND_E;

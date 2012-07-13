@@ -1550,7 +1550,7 @@ static APInt MultiplyAndLosePrecision(APInt &A, APInt &B, APInt &C, APInt &D,
 /// checkCSEInPredecessor - Return true if the given instruction is available
 /// in its predecessor block. If yes, the instruction will be removed.
 ///
-bool checkCSEInPredecessor(Instruction *Inst, BasicBlock *PB) {
+static bool checkCSEInPredecessor(Instruction *Inst, BasicBlock *PB) {
   if (!isa<BinaryOperator>(Inst) && !isa<CmpInst>(Inst))
     return false;
   for (BasicBlock::iterator I = PB->begin(), E = PB->end(); I != E; I++) {
