@@ -16,6 +16,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/PackedVector.h"
 #include "llvm/ADT/DenseMap.h"
+#include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
 #include "clang/Analysis/CFG.h"
 #include "clang/Analysis/AnalysisContext.h"
@@ -24,6 +25,8 @@
 #include "llvm/Support/SaveAndRestore.h"
 
 using namespace clang;
+
+#define DEBUG_LOGGING 0
 
 static bool isTrackedVar(const VarDecl *vd, const DeclContext *dc) {
   if (vd->isLocalVarDecl() && !vd->hasGlobalStorage() &&
@@ -221,23 +224,14 @@ BVPair &CFGBlockValues::getValueVectors(const clang::CFGBlock *block,
   return vals[idx];
 }
 
-#if 0
+#if DEBUG_LOGGING
 static void printVector(const CFGBlock *block, ValueVector &bv,
                         unsigned num) {
-  
   llvm::errs() << block->getBlockID() << " :";
   for (unsigned i = 0; i < bv.size(); ++i) {
     llvm::errs() << ' ' << bv[i];
   }
   llvm::errs() << " : " << num << '\n';
-}
-
-static void printVector(const char *name, ValueVector const &bv) {
-  llvm::errs() << name << " : ";
-  for (unsigned i = 0; i < bv.size(); ++i) {
-    llvm::errs() << ' ' << bv[i];
-  }
-  llvm::errs() << "\n";
 }
 #endif
 
@@ -259,7 +253,7 @@ bool CFGBlockValues::updateValueVectorWithScratch(const CFGBlock *block) {
   bool changed = (dst != scratch);
   if (changed)
     dst = scratch;
-#if 0
+#if DEBUG_LOGGING
   printVector(block, scratch, 0);
 #endif
   return changed;
@@ -272,7 +266,7 @@ bool CFGBlockValues::updateValueVectors(const CFGBlock *block,
                  *newVals.second != *vals.second;
   *vals.first = *newVals.first;
   *vals.second = *newVals.second;
-#if 0
+#if DEBUG_LOGGING
   printVector(block, *vals.first, 1);
   printVector(block, *vals.second, 2);
 #endif
@@ -463,7 +457,18 @@ public:
           // This block initializes the variable.
           continue;
 
-        if (++SuccsVisited[Pred->getBlockID()] == Pred->succ_size())
+        unsigned &SV = SuccsVisited[Pred->getBlockID()];
+        if (!SV) {
+          // When visiting the first successor of a block, mark all NULL
+          // successors as having been visited.
+          for (CFGBlock::const_succ_iterator SI = Pred->succ_begin(),
+                                             SE = Pred->succ_end();
+               SI != SE; ++SI)
+            if (!*SI)
+              ++SV;
+        }
+
+        if (++SV == Pred->succ_size())
           // All paths from this block lead to the use and don't initialize the
           // variable.
           Queue.push_back(Pred);
@@ -831,7 +836,7 @@ void clang::runUninitializedVariablesAnalysis(
   vals.computeSetOfDeclarations(dc);
   if (vals.hasNoDeclarations())
     return;
-#if 0
+#if DEBUG_LOGGING
   cfg.dump(dc.getParentASTContext().getLangOpts(), true);
 #endif
 

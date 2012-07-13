@@ -356,16 +356,32 @@ int test_no_false_positive_2() {
 }
 
 
-
-
-
+// FIXME: In this case, the variable is used uninitialized whenever the
+// function's entry block is reached. Produce a diagnostic saying that
+// the variable is uninitialized the first time it is used.
 void test_null_pred_succ() {
-  int x; // expected-note {{variable}}
-  if (0) // expected-warning {{whenever}} expected-note {{remove}}
+  int x;
+  if (0)
     foo: x = 0;
-  if (x) // expected-note {{uninitialized use}}
+  if (x)
     goto foo;
 }
 
-// CHECK: fix-it:"{{.*}}":{364:3-365:5}:""
-// CHECK: fix-it:"{{.*}}":{363:8-363:8}:" = 0"
+
+
+
+void foo();
+int PR13360(bool b) {
+  int x; // expected-note {{variable}}
+  if (b) { // expected-warning {{variable 'x' is used uninitialized whenever 'if' condition is true}} expected-note {{remove}}
+    do {
+      foo();
+    } while (0);
+  } else {
+    x = 1;
+  }
+  return x; // expected-note {{uninitialized use occurs here}}
+}
+
+// CHECK: fix-it:"{{.*}}":{376:3-380:10}:""
+// CHECK: fix-it:"{{.*}}":{375:8-375:8}:" = 0"
