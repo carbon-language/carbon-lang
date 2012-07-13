@@ -242,13 +242,12 @@ ThreadPlanStepInRange::FrameMatchesAvoidRegexp ()
         
     if (avoid_regexp_to_use != NULL)
     {
-        SymbolContext sc = frame->GetSymbolContext(eSymbolContextSymbol);
+        SymbolContext sc = frame->GetSymbolContext(eSymbolContextFunction|eSymbolContextBlock|eSymbolContextSymbol);
         if (sc.symbol != NULL)
         {
-            const char *unnamed_symbol = "<UNKNOWN>";
-            const char *sym_name = sc.symbol->GetMangled().GetName().AsCString(unnamed_symbol);
-            if (strcmp (sym_name, unnamed_symbol) != 0)
-               return avoid_regexp_to_use->Execute(sym_name);
+            const char *frame_function_name = sc.GetFunctionName().GetCString();
+            if (frame_function_name)
+               return avoid_regexp_to_use->Execute(frame_function_name);
         }
     }
     return false;
