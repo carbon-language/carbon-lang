@@ -2063,22 +2063,27 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD, Scope *S) {
           Diag(Old->getLocation(), PrevDiag) << Old << Old->getType();
           return true;
         }
-      
+
         // C++ [class.mem]p1:
         //   [...] A member shall not be declared twice in the
         //   member-specification, except that a nested class or member
         //   class template can be declared and then later defined.
-        unsigned NewDiag;
-        if (isa<CXXConstructorDecl>(OldMethod))
-          NewDiag = diag::err_constructor_redeclared;
-        else if (isa<CXXDestructorDecl>(NewMethod))
-          NewDiag = diag::err_destructor_redeclared;
-        else if (isa<CXXConversionDecl>(NewMethod))
-          NewDiag = diag::err_conv_function_redeclared;
-        else
-          NewDiag = diag::err_member_redeclared;
+        if (ActiveTemplateInstantiations.empty()) {
+          unsigned NewDiag;
+          if (isa<CXXConstructorDecl>(OldMethod))
+            NewDiag = diag::err_constructor_redeclared;
+          else if (isa<CXXDestructorDecl>(NewMethod))
+            NewDiag = diag::err_destructor_redeclared;
+          else if (isa<CXXConversionDecl>(NewMethod))
+            NewDiag = diag::err_conv_function_redeclared;
+          else
+            NewDiag = diag::err_member_redeclared;
 
-        Diag(New->getLocation(), NewDiag);
+          Diag(New->getLocation(), NewDiag);
+        } else {
+          Diag(New->getLocation(), diag::err_member_redeclared_in_instantiation)
+            << New << New->getType();
+        }
         Diag(Old->getLocation(), PrevDiag) << Old << Old->getType();
 
       // Complain if this is an explicit declaration of a special

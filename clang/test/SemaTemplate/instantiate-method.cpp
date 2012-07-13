@@ -173,5 +173,12 @@ namespace PR7022 {
     typedef X2<> X2_type;
     X2_type c;
   }
+}
 
+namespace SameSignatureAfterInstantiation {
+  template<typename T> struct S {
+    void f(T *); // expected-note {{previous}}
+    void f(const T*); // expected-error {{multiple overloads of 'f' instantiate to the same signature 'void (const int *)'}}
+  };
+  S<const int> s; // expected-note {{instantiation}}
 }
