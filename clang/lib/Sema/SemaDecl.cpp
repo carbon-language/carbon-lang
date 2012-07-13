@@ -8932,7 +8932,6 @@ Decl *Sema::ActOnObjCContainerStartDefinition(Decl *IDecl) {
   assert(getContainingDC(OCD) == CurContext &&
       "The next DeclContext should be lexically contained in the current one.");
   CurContext = OCD;
-  ActOnDocumentableDecl(IDecl);
   return IDecl;
 }
 

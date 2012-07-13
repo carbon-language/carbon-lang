@@ -149,6 +149,7 @@ Decl *Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
         if (getLangOpts().ObjCAutoRefCount)
           checkARCPropertyDecl(*this, cast<ObjCPropertyDecl>(Res));
       }
+      ActOnDocumentableDecl(Res);
       return Res;
     }
   
@@ -169,6 +170,7 @@ Decl *Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
   if (getLangOpts().ObjCAutoRefCount)
     checkARCPropertyDecl(*this, Res);
 
+  ActOnDocumentableDecl(Res);
   return Res;
 }
 
