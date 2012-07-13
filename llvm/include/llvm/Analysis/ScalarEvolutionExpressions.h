@@ -493,6 +493,73 @@ namespace llvm {
       llvm_unreachable("Invalid use of SCEVCouldNotCompute!");
     }
   };
+
+  /// Visit all nodes in the expression tree using worklist traversal.
+  ///
+  /// Visitor implements:
+  ///   // return true to follow this node.
+  ///   bool follow(const SCEV *S);
+  ///   // return true to terminate the search.
+  ///   bool isDone();
+  template<typename SV>
+  class SCEVTraversal {
+    SV &Visitor;
+    SmallVector<const SCEV *, 8> Worklist;
+
+    void push(const SCEV *S) {
+      if (Visitor.follow(S))
+        Worklist.push_back(S);
+    }
+  public:
+    SCEVTraversal(SV& V): Visitor(V) {}
+
+    void visitAll(const SCEV *Root) {
+      push(Root);
+      while (!Worklist.empty() && !Visitor.isDone()) {
+        const SCEV *S = Worklist.pop_back_val();
+
+        switch (S->getSCEVType()) {
+        case scConstant:
+        case scUnknown:
+          break;
+        case scTruncate:
+        case scZeroExtend:
+        case scSignExtend:
+          push(cast<SCEVCastExpr>(S)->getOperand());
+          break;
+        case scAddExpr:
+        case scMulExpr:
+        case scSMaxExpr:
+        case scUMaxExpr:
+        case scAddRecExpr: {
+          const SCEVNAryExpr *NAry = cast<SCEVNAryExpr>(S);
+          for (SCEVNAryExpr::op_iterator I = NAry->op_begin(),
+                 E = NAry->op_end(); I != E; ++I) {
+            push(*I);
+          }
+          break;
+        }
+        case scUDivExpr: {
+          const SCEVUDivExpr *UDiv = cast<SCEVUDivExpr>(S);
+          push(UDiv->getLHS());
+          push(UDiv->getRHS());
+          break;
+        }
+        case scCouldNotCompute:
+          llvm_unreachable("Attempt to use a SCEVCouldNotCompute object!");
+        default:
+          llvm_unreachable("Unknown SCEV kind!");
+        }
+      }
+    }
+  };
+
+  /// Use SCEVTraversal to visit all nodes in the givien expression tree.
+  template<typename SV>
+  void visitAll(const SCEV *Root, SV& Visitor) {
+    SCEVTraversal<SV> T(Visitor);
+    T.visitAll(Root);
+  }
 }
 
 #endif
