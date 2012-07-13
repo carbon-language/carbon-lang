@@ -1102,6 +1102,8 @@ Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
   if (Attr)
     ProcessDeclAttributeList(S, NewClass, Attr);
 
+  AddPushedVisibilityAttribute(NewClass);
+
   if (TUK != TUK_Friend)
     PushOnScopeChains(NewTemplate, S);
   else {
