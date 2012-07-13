@@ -15,5 +15,4 @@ add_polly_library(PollyCodeGen
   ${ISL_CODEGEN_FILES}
   LoopGenerators.cpp
   Utils.cpp
-  PTXGenerator.cpp
 )
