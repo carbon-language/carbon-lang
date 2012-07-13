@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple x86_64-apple-darwin -emit-llvm %s -o - | FileCheck %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin -emit-llvm %s -o - 2>&1 | FileCheck %s
 
 #define strcpy(dest, src) \
   ((__builtin_object_size(dest, 0) != -1ULL) \
@@ -127,6 +127,7 @@ void test16() {
   strcpy(gp += 1, "Hi there");
 }
 
+// CHECK: @test17
 void test17() {
   // CHECK: store i32 -1
   gi = __builtin_object_size(gp++, 0);
@@ -136,4 +137,12 @@ void test17() {
   gi = __builtin_object_size(gp++, 2);
   // CHECK: store i32 0
   gi = __builtin_object_size(gp++, 3);
+}
+
+// CHECK: @test18
+unsigned test18(int cond) {
+  int a[4], b[4];
+  // CHECK: phi i32*
+  // CHECK: call i64 @llvm.objectsize.i64
+  return __builtin_object_size(cond ? a : b, 0);
 }

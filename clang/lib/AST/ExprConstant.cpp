@@ -2323,6 +2323,9 @@ public:
     { return Visit(E->getLHS()) || Visit(E->getRHS()); }
   bool VisitChooseExpr(const ChooseExpr *E)
     { return Visit(E->getChosenSubExpr(Ctx)); }
+  bool VisitAbstractConditionalOperator(const AbstractConditionalOperator *E)
+    { return Visit(E->getCond()) || Visit(E->getTrueExpr())
+      || Visit(E->getFalseExpr()); }
   bool VisitCastExpr(const CastExpr *E) { return Visit(E->getSubExpr()); }
   bool VisitBinAssign(const BinaryOperator *E) { return true; }
   bool VisitCompoundAssignOperator(const BinaryOperator *E) { return true; }
