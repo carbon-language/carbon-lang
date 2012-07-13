@@ -44,7 +44,7 @@ def ADJCALLSTACKUP16   : MipsPseudo16<(outs), (ins uimm16:$amt1, uimm16:$amt2),
 // Jump and Link (Call)
 let isCall=1, hasDelaySlot=1, nd=0, l=0, ra=0 in
 def JumpLinkReg16:
-    FRR16_JALRC<(outs), (ins CPU16Regs:$rs, variable_ops),
+    FRR16_JALRC<(outs), (ins CPU16Regs:$rs),
                 "jalr \t$rs", [(MipsJmpLink CPU16Regs:$rs)], IIBranch>;
 
 // Small immediates

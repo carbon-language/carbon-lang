@@ -3421,14 +3421,14 @@ let isCall = 1,
   // Branch relative and set link: Used if we actually know that the target
   // is within [-32768, 32767] bytes of the target
   def BRSL:
-    BranchSetLink<0b011001100, (outs), (ins relcalltarget:$func, variable_ops),
+    BranchSetLink<0b011001100, (outs), (ins relcalltarget:$func),
       "brsl\t$$lr, $func",
       [(SPUcall (SPUpcrel tglobaladdr:$func, 0))]>;
 
   // Branch absolute and set link: Used if we actually know that the target
   // is an absolute address
   def BRASL:
-    BranchSetLink<0b011001100, (outs), (ins calltarget:$func, variable_ops),
+    BranchSetLink<0b011001100, (outs), (ins calltarget:$func),
       "brasl\t$$lr, $func",
       [(SPUcall (SPUaform tglobaladdr:$func, 0))]>;
 

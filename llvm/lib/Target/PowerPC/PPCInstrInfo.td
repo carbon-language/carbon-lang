@@ -452,15 +452,15 @@ let isCall = 1, PPC970_Unit = 7, Defs = [LR] in {
   // Convenient aliases for call instructions
   let Uses = [RM] in {
     def BL_Darwin  : IForm<18, 0, 1,
-                           (outs), (ins calltarget:$func, variable_ops), 
+                           (outs), (ins calltarget:$func), 
                            "bl $func", BrB, []>;  // See Pat patterns below.
     def BLA_Darwin : IForm<18, 1, 1, 
-                          (outs), (ins aaddr:$func, variable_ops),
+                          (outs), (ins aaddr:$func),
                           "bla $func", BrB, [(PPCcall_Darwin (i32 imm:$func))]>;
   }
   let Uses = [CTR, RM] in {
     def BCTRL_Darwin : XLForm_2_ext<19, 528, 20, 0, 1, 
-                                  (outs), (ins variable_ops),
+                                  (outs), (ins),
                                   "bctrl", BrB,
                                   [(PPCbctrl_Darwin)]>, Requires<[In32BitMode]>;
   }
@@ -471,16 +471,16 @@ let isCall = 1, PPC970_Unit = 7, Defs = [LR] in {
   // Convenient aliases for call instructions
   let Uses = [RM] in {
     def BL_SVR4  : IForm<18, 0, 1,
-                        (outs), (ins calltarget:$func, variable_ops), 
+                        (outs), (ins calltarget:$func), 
                         "bl $func", BrB, []>;  // See Pat patterns below.
     def BLA_SVR4 : IForm<18, 1, 1,
-                        (outs), (ins aaddr:$func, variable_ops),
+                        (outs), (ins aaddr:$func),
                         "bla $func", BrB,
                         [(PPCcall_SVR4 (i32 imm:$func))]>;
   }
   let Uses = [CTR, RM] in {
     def BCTRL_SVR4 : XLForm_2_ext<19, 528, 20, 0, 1,
-                                (outs), (ins variable_ops),
+                                (outs), (ins),
                                 "bctrl", BrB,
                                 [(PPCbctrl_SVR4)]>, Requires<[In32BitMode]>;
   }
@@ -489,18 +489,18 @@ let isCall = 1, PPC970_Unit = 7, Defs = [LR] in {
 
 let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1, Uses = [RM] in
 def TCRETURNdi :Pseudo< (outs),
-                        (ins calltarget:$dst, i32imm:$offset, variable_ops),
+                        (ins calltarget:$dst, i32imm:$offset),
                  "#TC_RETURNd $dst $offset",
                  []>;
 
 
 let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1, Uses = [RM] in
-def TCRETURNai :Pseudo<(outs), (ins aaddr:$func, i32imm:$offset, variable_ops),
+def TCRETURNai :Pseudo<(outs), (ins aaddr:$func, i32imm:$offset),
                  "#TC_RETURNa $func $offset",
                  [(PPCtc_return (i32 imm:$func), imm:$offset)]>;
 
 let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1, Uses = [RM] in
-def TCRETURNri : Pseudo<(outs), (ins CTRRC:$dst, i32imm:$offset, variable_ops),
+def TCRETURNri : Pseudo<(outs), (ins CTRRC:$dst, i32imm:$offset),
                  "#TC_RETURNr $dst $offset",
                  []>;
 

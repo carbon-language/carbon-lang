@@ -210,13 +210,13 @@ let isCall = 1 in
   let Defs = [R12W, R13W, R14W, R15W, SRW],
       Uses = [SPW] in {
     def CALLi     : II16i<0x0,
-                          (outs), (ins i16imm:$dst, variable_ops),
+                          (outs), (ins i16imm:$dst),
                           "call\t$dst", [(MSP430call imm:$dst)]>;
     def CALLr     : II16r<0x0,
-                          (outs), (ins GR16:$dst, variable_ops),
+                          (outs), (ins GR16:$dst),
                           "call\t$dst", [(MSP430call GR16:$dst)]>;
     def CALLm     : II16m<0x0,
-                          (outs), (ins memsrc:$dst, variable_ops),
+                          (outs), (ins memsrc:$dst),
                           "call\t${dst:mem}", [(MSP430call (load addr:$dst))]>;
   }
 

@@ -5156,7 +5156,7 @@ let isReturn = 1, isTerminator = 1, isBarrier = 1, isPredicable = 1,
 let isCall = 1, isBarrier = 1, isReturn = 1, isTerminator = 1,
   Defs = [R29, R30, R31, PC] in {
   def RESTORE_DEALLOC_RET_JMP_V4 : JInst<(outs),
-                                   (ins calltarget:$dst, variable_ops),
+                                   (ins calltarget:$dst),
              "jump $dst // Restore_and_dealloc_return",
              []>,
              Requires<[HasV4T]>;
@@ -5166,7 +5166,7 @@ let isCall = 1, isBarrier = 1, isReturn = 1, isTerminator = 1,
 let isCall = 1, isBarrier = 1,
   Defs = [R29, R30, R31, PC] in {
   def RESTORE_DEALLOC_BEFORE_TAILCALL_V4 : JInst<(outs),
-                                           (ins calltarget:$dst, variable_ops),
+                                           (ins calltarget:$dst),
              "call $dst // Restore_and_dealloc_before_tailcall",
              []>,
              Requires<[HasV4T]>;
@@ -5176,7 +5176,7 @@ let isCall = 1, isBarrier = 1,
 let isCall = 1, isBarrier = 1,
   Uses = [R29, R31] in {
   def SAVE_REGISTERS_CALL_V4 : JInst<(outs),
-                               (ins calltarget:$dst, variable_ops),
+                               (ins calltarget:$dst),
              "call $dst // Save_calle_saved_registers",
              []>,
              Requires<[HasV4T]>;

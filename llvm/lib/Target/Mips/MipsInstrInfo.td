@@ -649,7 +649,7 @@ class RetBase<RegisterClass RC>: JumpFR<RC, []> {
 // Jump and Link (Call)
 let isCall=1, hasDelaySlot=1, Defs = [RA] in {
   class JumpLink<bits<6> op, string instr_asm>:
-    FJ<op, (outs), (ins calltarget:$target, variable_ops),
+    FJ<op, (outs), (ins calltarget:$target),
        !strconcat(instr_asm, "\t$target"), [(MipsJmpLink imm:$target)],
        IIBranch> {
        let DecoderMethod = "DecodeJumpTarget";
@@ -657,7 +657,7 @@ let isCall=1, hasDelaySlot=1, Defs = [RA] in {
 
   class JumpLinkReg<bits<6> op, bits<6> func, string instr_asm,
                     RegisterClass RC>:
-    FR<op, func, (outs), (ins RC:$rs, variable_ops),
+    FR<op, func, (outs), (ins RC:$rs),
        !strconcat(instr_asm, "\t$rs"), [(MipsJmpLink RC:$rs)], IIBranch> {
     let rt = 0;
     let rd = 31;
@@ -665,7 +665,7 @@ let isCall=1, hasDelaySlot=1, Defs = [RA] in {
   }
 
   class BranchLink<string instr_asm, bits<5> _rt, RegisterClass RC>:
-    FI<0x1, (outs), (ins RC:$rs, brtarget:$imm16, variable_ops),
+    FI<0x1, (outs), (ins RC:$rs, brtarget:$imm16),
        !strconcat(instr_asm, "\t$rs, $imm16"), [], IIBranch> {
     let rt = _rt;
   }

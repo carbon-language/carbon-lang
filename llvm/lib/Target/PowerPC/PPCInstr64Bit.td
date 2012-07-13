@@ -68,15 +68,15 @@ let isCall = 1, PPC970_Unit = 7, Defs = [LR8] in {
   // Convenient aliases for call instructions
   let Uses = [RM] in {
     def BL8_Darwin  : IForm<18, 0, 1,
-                            (outs), (ins calltarget:$func, variable_ops), 
+                            (outs), (ins calltarget:$func),
                             "bl $func", BrB, []>;  // See Pat patterns below.
     def BLA8_Darwin : IForm<18, 1, 1,
-                          (outs), (ins aaddr:$func, variable_ops),
+                          (outs), (ins aaddr:$func),
                           "bla $func", BrB, [(PPCcall_Darwin (i64 imm:$func))]>;
   }
   let Uses = [CTR8, RM] in {
     def BCTRL8_Darwin : XLForm_2_ext<19, 528, 20, 0, 1, 
-                                  (outs), (ins variable_ops),
+                                  (outs), (ins),
                                   "bctrl", BrB,
                                   [(PPCbctrl_Darwin)]>, Requires<[In64BitMode]>;
   }
@@ -88,27 +88,27 @@ let isCall = 1, PPC970_Unit = 7, Defs = [LR8] in {
   // Convenient aliases for call instructions
   let Uses = [RM] in {
     def BL8_ELF  : IForm<18, 0, 1,
-                         (outs), (ins calltarget:$func, variable_ops), 
+                         (outs), (ins calltarget:$func),
                          "bl $func", BrB, []>;  // See Pat patterns below.
 
     let isCodeGenOnly = 1 in
     def BL8_NOP_ELF  : IForm_and_DForm_4_zero<18, 0, 1, 24,
-                             (outs), (ins calltarget:$func, variable_ops), 
+                             (outs), (ins calltarget:$func),
                              "bl $func\n\tnop", BrB, []>;
 
     def BLA8_ELF : IForm<18, 1, 1,
-                         (outs), (ins aaddr:$func, variable_ops),
+                         (outs), (ins aaddr:$func),
                          "bla $func", BrB, [(PPCcall_SVR4 (i64 imm:$func))]>;
 
     let isCodeGenOnly = 1 in
     def BLA8_NOP_ELF : IForm_and_DForm_4_zero<18, 1, 1, 24,
-                             (outs), (ins aaddr:$func, variable_ops),
+                             (outs), (ins aaddr:$func),
                              "bla $func\n\tnop", BrB,
                              [(PPCcall_nop_SVR4 (i64 imm:$func))]>;
   }
   let Uses = [X11, CTR8, RM] in {
     def BCTRL8_ELF : XLForm_2_ext<19, 528, 20, 0, 1,
-                               (outs), (ins variable_ops),
+                               (outs), (ins),
                                "bctrl", BrB,
                                [(PPCbctrl_SVR4)]>, Requires<[In64BitMode]>;
   }
@@ -180,17 +180,17 @@ def STDCX : XForm_1<31, 214, (outs), (ins G8RC:$rS, memrr:$dst),
 
 let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1, Uses = [RM] in
 def TCRETURNdi8 :Pseudo< (outs),
-                        (ins calltarget:$dst, i32imm:$offset, variable_ops),
+                        (ins calltarget:$dst, i32imm:$offset),
                  "#TC_RETURNd8 $dst $offset",
                  []>;
 
 let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1, Uses = [RM] in
-def TCRETURNai8 :Pseudo<(outs), (ins aaddr:$func, i32imm:$offset, variable_ops),
+def TCRETURNai8 :Pseudo<(outs), (ins aaddr:$func, i32imm:$offset),
                  "#TC_RETURNa8 $func $offset",
                  [(PPCtc_return (i64 imm:$func), imm:$offset)]>;
 
 let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1, Uses = [RM] in
-def TCRETURNri8 : Pseudo<(outs), (ins CTRRC8:$dst, i32imm:$offset, variable_ops),
+def TCRETURNri8 : Pseudo<(outs), (ins CTRRC8:$dst, i32imm:$offset),
                  "#TC_RETURNr8 $dst $offset",
                  []>;
 

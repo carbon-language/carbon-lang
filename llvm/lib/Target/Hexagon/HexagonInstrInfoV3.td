@@ -19,7 +19,7 @@
 let isCall = 1, neverHasSideEffects = 1,
   Defs = [D0, D1, D2, D3, D4, D5, D6, D7, R28, R31,
                 P0, P1, P2, P3, LC0, LC1, SA0, SA1] in {
-  def CALLv3 : JInst<(outs), (ins calltarget:$dst, variable_ops),
+  def CALLv3 : JInst<(outs), (ins calltarget:$dst),
              "call $dst", []>, Requires<[HasV3T]>;
 }
 
@@ -35,7 +35,7 @@ let isCall = 1, neverHasSideEffects = 1,
 let isCall = 1, neverHasSideEffects = 1,
   Defs = [D0, D1, D2, D3, D4, D5, D6, D7, R28, R31,
                 P0, P1, P2, P3, LC0, LC1, SA0, SA1] in {
-  def CALLRv3 : JRInst<(outs), (ins IntRegs:$dst, variable_ops),
+  def CALLRv3 : JRInst<(outs), (ins IntRegs:$dst),
               "callr $dst",
               []>, Requires<[HasV3TOnly]>;
  }

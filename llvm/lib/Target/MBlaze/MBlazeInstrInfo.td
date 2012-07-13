@@ -295,7 +295,7 @@ class BranchI<bits<6> op, bits<5> br, string instr_asm> :
 // Branch and Link Instructions
 //===----------------------------------------------------------------------===//
 class BranchL<bits<6> op, bits<5> br, bits<11> flags, string instr_asm> :
-              TA<op, flags, (outs), (ins GPR:$link, GPR:$target, variable_ops),
+              TA<op, flags, (outs), (ins GPR:$link, GPR:$target),
                  !strconcat(instr_asm, "   $link, $target"),
                  [], IIC_BRl> {
   let ra = br;
@@ -303,7 +303,7 @@ class BranchL<bits<6> op, bits<5> br, bits<11> flags, string instr_asm> :
 }
 
 class BranchLI<bits<6> op, bits<5> br, string instr_asm> :
-               TB<op, (outs), (ins GPR:$link, calltarget:$target, variable_ops),
+               TB<op, (outs), (ins GPR:$link, calltarget:$target),
                   !strconcat(instr_asm, "   $link, $target"),
                   [], IIC_BRl> {
   let ra = br;
