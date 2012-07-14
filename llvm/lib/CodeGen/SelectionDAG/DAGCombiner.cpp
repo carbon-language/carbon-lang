@@ -7816,6 +7816,17 @@ SDValue DAGCombiner::visitCONCAT_VECTORS(SDNode *N) {
   if (N->getNumOperands() == 1)
     return N->getOperand(0);
 
+  // Check if all of the operands are undefs.
+  bool AllUndef = true;
+  for (unsigned i = 0; i < N->getNumOperands(); ++i)
+    if (N->getOperand(i).getOpcode() != ISD::UNDEF) {
+      AllUndef = false;
+      break;
+    }
+
+  if (AllUndef)
+    return DAG.getUNDEF(N->getValueType(0));
+
   return SDValue();
 }
 
