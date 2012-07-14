@@ -343,6 +343,7 @@ private:
   CFGBlock *VisitIndirectGotoStmt(IndirectGotoStmt *I);
   CFGBlock *VisitLabelStmt(LabelStmt *L);
   CFGBlock *VisitLambdaExpr(LambdaExpr *E, AddStmtChoice asc);
+  CFGBlock *VisitLogicalOperator(BinaryOperator *B);
   CFGBlock *VisitMemberExpr(MemberExpr *M, AddStmtChoice asc);
   CFGBlock *VisitObjCAtCatchStmt(ObjCAtCatchStmt *S);
   CFGBlock *VisitObjCAtSynchronizedStmt(ObjCAtSynchronizedStmt *S);
@@ -1162,54 +1163,58 @@ CFGBlock *CFGBuilder::VisitUnaryOperator(UnaryOperator *U,
   return Visit(U->getSubExpr(), AddStmtChoice());
 }
 
-CFGBlock *CFGBuilder::VisitBinaryOperator(BinaryOperator *B,
-                                          AddStmtChoice asc) {
-  if (B->isLogicalOp()) { // && or ||
-    CFGBlock *ConfluenceBlock = Block ? Block : createBlock();
-    appendStmt(ConfluenceBlock, B);
+CFGBlock *CFGBuilder::VisitLogicalOperator(BinaryOperator *B) {
+  CFGBlock *ConfluenceBlock = Block ? Block : createBlock();
+  appendStmt(ConfluenceBlock, B);
 
+  if (badCFG)
+    return 0;
+
+  // create the block evaluating the LHS
+  CFGBlock *LHSBlock = createBlock(false);
+  LHSBlock->setTerminator(B);
+
+  // create the block evaluating the RHS
+  Succ = ConfluenceBlock;
+  Block = NULL;
+  CFGBlock *RHSBlock = addStmt(B->getRHS());
+
+  if (RHSBlock) {
     if (badCFG)
       return 0;
-
-    // create the block evaluating the LHS
-    CFGBlock *LHSBlock = createBlock(false);
-    LHSBlock->setTerminator(B);
-
-    // create the block evaluating the RHS
-    Succ = ConfluenceBlock;
-    Block = NULL;
-    CFGBlock *RHSBlock = addStmt(B->getRHS());
-
-    if (RHSBlock) {
-      if (badCFG)
-        return 0;
-    } else {
-      // Create an empty block for cases where the RHS doesn't require
-      // any explicit statements in the CFG.
-      RHSBlock = createBlock();
-    }
-
-    // Generate the blocks for evaluating the LHS.
-    Block = LHSBlock;
-    CFGBlock *EntryLHSBlock = addStmt(B->getLHS());
-
-    // See if this is a known constant.
-    TryResult KnownVal = tryEvaluateBool(B->getLHS());
-    if (KnownVal.isKnown() && (B->getOpcode() == BO_LOr))
-      KnownVal.negate();
-
-    // Now link the LHSBlock with RHSBlock.
-    if (B->getOpcode() == BO_LOr) {
-      addSuccessor(LHSBlock, KnownVal.isTrue() ? NULL : ConfluenceBlock);
-      addSuccessor(LHSBlock, KnownVal.isFalse() ? NULL : RHSBlock);
-    } else {
-      assert(B->getOpcode() == BO_LAnd);
-      addSuccessor(LHSBlock, KnownVal.isFalse() ? NULL : RHSBlock);
-      addSuccessor(LHSBlock, KnownVal.isTrue() ? NULL : ConfluenceBlock);
-    }
-
-    return EntryLHSBlock;
+  } else {
+    // Create an empty block for cases where the RHS doesn't require
+    // any explicit statements in the CFG.
+    RHSBlock = createBlock();
   }
+
+  // Generate the blocks for evaluating the LHS.
+  Block = LHSBlock;
+  CFGBlock *EntryLHSBlock = addStmt(B->getLHS());
+
+  // See if this is a known constant.
+  TryResult KnownVal = tryEvaluateBool(B->getLHS());
+  if (KnownVal.isKnown() && (B->getOpcode() == BO_LOr))
+    KnownVal.negate();
+
+  // Now link the LHSBlock with RHSBlock.
+  if (B->getOpcode() == BO_LOr) {
+    addSuccessor(LHSBlock, KnownVal.isTrue() ? NULL : ConfluenceBlock);
+    addSuccessor(LHSBlock, KnownVal.isFalse() ? NULL : RHSBlock);
+  } else {
+    assert(B->getOpcode() == BO_LAnd);
+    addSuccessor(LHSBlock, KnownVal.isFalse() ? NULL : RHSBlock);
+    addSuccessor(LHSBlock, KnownVal.isTrue() ? NULL : ConfluenceBlock);
+  }
+
+  return EntryLHSBlock;
+}
+
+CFGBlock *CFGBuilder::VisitBinaryOperator(BinaryOperator *B,
+                                          AddStmtChoice asc) {
+   // && or ||
+  if (B->isLogicalOp())
+    return VisitLogicalOperator(B);
 
   if (B->getOpcode() == BO_Comma) { // ,
     autoCreateBlock();
