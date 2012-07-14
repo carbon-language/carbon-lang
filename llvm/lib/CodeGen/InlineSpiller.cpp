@@ -1081,6 +1081,10 @@ void InlineSpiller::insertReload(LiveInterval &NewLI,
                            MRI.getRegClass(NewLI.reg), &TRI);
   --MI; // Point to load instruction.
   SlotIndex LoadIdx = LIS.InsertMachineInstrInMaps(MI).getRegSlot();
+  // Some (out-of-tree) targets have EC reload instructions.
+  if (MachineOperand *MO = MI->findRegisterDefOperand(NewLI.reg))
+    if (MO->isEarlyClobber())
+      LoadIdx = LoadIdx.getRegSlot(true);
   DEBUG(dbgs() << "\treload:  " << LoadIdx << '\t' << *MI);
   VNInfo *LoadVNI = NewLI.getNextValue(LoadIdx, LIS.getVNInfoAllocator());
   NewLI.addRange(LiveRange(LoadIdx, Idx, LoadVNI));
