@@ -487,7 +487,7 @@ def err_dup_implementation_class : Error<"reimplementation of class %0">;
 def err_dup_implementation_category : Error<
   "reimplementation of category %1 for class %0">;
 def err_conflicting_ivar_type : Error<
-  "instance variable %0 has conflicting type: %1 vs %2">;
+  "instance variable %0 has conflicting type%diff{: $ vs $|}1,2">;
 def err_duplicate_ivar_declaration : Error<
   "instance variable is already declared">;
 def warn_on_superclass_use : Warning<
@@ -506,12 +506,12 @@ def note_required_for_protocol_at :
 
 def warn_conflicting_overriding_ret_types : Warning<
   "conflicting return type in "
-  "declaration of %0: %1 vs %2">,
+  "declaration of %0%diff{: $ vs $|}1,2">,
   InGroup<OverridingMethodMismatch>, DefaultIgnore;
 
 def warn_conflicting_ret_types : Warning<
   "conflicting return type in "
-  "implementation of %0: %1 vs %2">;
+  "implementation of %0%diff{: $ vs $|}1,2">;
 
 def warn_conflicting_overriding_ret_type_modifiers : Warning<
   "conflicting distributed object modifiers on return type "
@@ -535,12 +535,12 @@ def warn_non_covariant_ret_types : Warning<
 
 def warn_conflicting_overriding_param_types : Warning<
   "conflicting parameter types in "
-  "declaration of %0: %1 vs %2">,
+  "declaration of %0%diff{: $ vs $|}1,2">,
   InGroup<OverridingMethodMismatch>, DefaultIgnore;
 
 def warn_conflicting_param_types : Warning<
   "conflicting parameter types in "
-  "implementation of %0: %1 vs %2">;
+  "implementation of %0%diff{: $ vs $|}1,2">;
 def warn_conflicting_param_modifiers : Warning<
   "conflicting distributed object modifiers on parameter type "
   "in implementation of %0">,
@@ -1059,8 +1059,9 @@ def ext_anonymous_struct_union_qualified : Extension<
   "anonymous %select{struct|union}0 cannot be '%select{const|volatile|"
   "restrict}1'">;
 def err_different_return_type_for_overriding_virtual_function : Error<
-  "virtual function %0 has a different return type (%1) than the "
-  "function it overrides (which has return type %2)">;
+  "virtual function %0 has a different return type "
+  "%diff{($) than the function it overrides (which has return type $)|"
+  "than the function it overrides}1,2">;
 def note_overridden_virtual_function : Note<
   "overridden virtual function is here">;
 
@@ -1138,12 +1139,13 @@ def err_destructor_template : Error<
 def err_init_conversion_failed : Error<
   "cannot initialize %select{a variable|a parameter|return object|an "
   "exception object|a member subobject|an array element|a new value|a value|a "
-  "base class|a constructor delegation|a vector element}0 of type %1 with an "
-  "%select{rvalue|lvalue}2 of type %3"
-  "%select{|: different classes (%5 vs %6)"
+  "base class|a constructor delegation|a vector element}0 "
+  "%diff{of type $ with an %select{rvalue|lvalue}2 of type $|"
+  "with an %select{rvalue|lvalue} of incompatible type}1,3"
+  "%select{|: different classes%diff{ ($ vs $)|}5,6"
   "|: different number of parameters (%5 vs %6)"
-  "|: type mismatch at %ordinal5 parameter (%6 vs %7)"
-  "|: different return type (%5 vs %6)"
+  "|: type mismatch at %ordinal5 parameter%diff{ ($ vs $)|}6,7"
+  "|: different return type%diff{ ($ vs $)|}5,6"
   "|: different qualifiers ("
   "%select{none|const|restrict|const and restrict|volatile|const and volatile|"
   "volatile and restrict|const, volatile, and restrict}5 vs "
@@ -1159,11 +1161,12 @@ def err_lvalue_reference_bind_to_temporary : Error<
   "%select{non-const|volatile}0 lvalue reference %diff{to type $ cannot bind "
   "to a temporary of type $|cannot bind to incompatible temporary}1,2">;
 def err_lvalue_reference_bind_to_unrelated : Error<
-  "%select{non-const|volatile}0 lvalue reference %diff{to type $ cannot bind "
-  "to a value of unrelated type $|cannot bind to a value of unrelated type}1,2">;
+  "%select{non-const|volatile}0 lvalue reference "
+  "%diff{to type $ cannot bind to a value of unrelated type $|"
+  "cannot bind to a value of unrelated type}1,2">;
 def err_reference_bind_drops_quals : Error<
-  "binding of reference %diff{to type $ to a value of type $ drops "
-  "qualifiers|drops qualifiers}0,1">;
+  "binding of reference %diff{to type $ to a value of type $ drops qualifiers|"
+  "drops qualifiers}0,1">;
 def err_reference_bind_failed : Error<
   "reference %diff{to type $ could not bind to an %select{rvalue|lvalue}1 of "
   "type $|could not bind to %select{rvalue|lvalue}1 of incompatible type}0,2">;
@@ -1954,8 +1957,8 @@ def err_attribute_cleanup_arg_not_function : Error<
 def err_attribute_cleanup_func_must_take_one_arg : Error<
   "'cleanup' function %0 must take 1 parameter">;
 def err_attribute_cleanup_func_arg_incompatible_type : Error<
-  "'cleanup' function %0 parameter has type %1 which is incompatible with "
-  "type %2">;
+  "'cleanup' function %0 parameter has "
+  "%diff{type $ which is incompatible with type $|incompatible type}1,2">;
 def err_attribute_regparm_wrong_platform : Error<
   "'regparm' is not valid on this platform">;
 def err_attribute_regparm_invalid_number : Error<
@@ -2054,8 +2057,9 @@ def note_default_argument_declared_here : Note<
   "default argument declared here">;
 
 def ext_param_promoted_not_compatible_with_prototype : ExtWarn<
-  "promoted type %0 of K&R function parameter is not compatible with the "
-  "parameter type %1 declared in a previous prototype">,
+  "%diff{promoted type $ of K&R function parameter is not compatible with the "
+  "parameter type $|promoted type of K&R function parameter is not compatible "
+  "with parameter type}0,1 declared in a previous prototype">,
   InGroup<KNRPromotedParameter>;
 
 
@@ -2090,10 +2094,11 @@ def note_ovl_candidate : Note<"candidate "
     "is the implicit copy assignment operator|"
     "is the implicit move assignment operator|"
     "is an inherited constructor}0%1"
-    "%select{| has different class (expected %3 but has %4)"
+    "%select{| has different class%diff{ (expected $ but has $)|}3,4"
     "| has different number of parameters (expected %3 but has %4)"
-    "| has type mismatch at %ordinal3 parameter (expected %4 but has %5)"
-    "| has different return type (%3 expected but has %4)"
+    "| has type mismatch at %ordinal3 parameter"
+    "%diff{ (expected $ but has $)|}4,5"
+    "| has different return type%diff{ ($ expected but has $)|}3,4"
     "| has different qualifiers (expected "
     "%select{none|const|restrict|const and restrict|volatile|const and volatile"
     "|volatile and restrict|const, volatile, and restrict}3 but found "
@@ -2107,7 +2112,7 @@ def note_ovl_candidate_incomplete_deduction : Note<"candidate template ignored: 
     "couldn't infer template argument %0">;
 def note_ovl_candidate_inconsistent_deduction : Note<
     "candidate template ignored: deduced conflicting %select{types|values|"
-    "templates}0 for parameter %1 (%2 vs. %3)">;
+    "templates}0 for parameter %1%diff{ ($ vs. $)|}2,3">;
 def note_ovl_candidate_explicit_arg_mismatch_named : Note<
     "candidate template ignored: invalid explicitly-specified argument "
     "for template parameter %0">;
@@ -2174,7 +2179,8 @@ def note_ovl_candidate_bad_conv_incomplete : Note<"candidate "
     "function (the implicit copy assignment operator)|"
     "function (the implicit move assignment operator)|"
     "constructor (inherited)}0%1 "
-    "not viable: cannot convert argument of incomplete type %2 to %3">;
+    "not viable: cannot convert argument of incomplete type "
+    "%diff{$ to $|to parameter type}2,3">;
 def note_ovl_candidate_bad_list_argument : Note<"candidate "
     "%select{function|function|constructor|"
     "function |function |constructor |"
@@ -2220,7 +2226,8 @@ def note_ovl_candidate_bad_arc_conv : Note<"candidate "
     "function (the implicit copy assignment operator)|"
     "function (the implicit move assignment operator)|"
     "constructor (inherited)}0%1"
-    " not viable: cannot implicitly convert argument of type %2 to %3 for "
+    " not viable: cannot implicitly convert argument "
+    "%diff{of type $ to $|type to parameter type}2,3 for "
     "%select{%ordinal5 argument|object argument}4 under ARC">;
 def note_ovl_candidate_bad_lvalue : Note<"candidate "
     "%select{function|function|constructor|"
@@ -2314,7 +2321,7 @@ def note_ovl_candidate_bad_target : Note<
     " %select{__device__|__global__|__host__|__host__ __device__}2 function">;
 
 def note_ambiguous_type_conversion: Note<
-    "because of ambiguity in conversion of %0 to %1">;
+    "because of ambiguity in conversion %diff{of $ to $|between types}0,1">;
 def note_ovl_builtin_binary_candidate : Note<
     "built-in candidate %0">;
 def note_ovl_builtin_unary_candidate : Note<
@@ -2516,7 +2523,7 @@ def err_template_arg_wrongtype_null_constant : Error<
  "of type %1">;
 def err_deduced_non_type_template_arg_type_mismatch : Error<
   "deduced non-type template argument does not have the same type as the "
-  "its corresponding template parameter (%0 vs %1)">;
+  "its corresponding template parameter%diff{ ($ vs $)|}0,1">;
 def err_template_arg_not_convertible : Error<
   "non-type template argument of type %0 cannot be converted to a value "
   "of type %1">;
@@ -2527,11 +2534,13 @@ def warn_template_arg_too_large : Warning<
   "non-type template argument value '%0' truncated to '%1' for "
   "template parameter of type %2">, InGroup<Conversion>, DefaultIgnore;
 def err_template_arg_no_ref_bind : Error<
-  "non-type template parameter of reference type %0 cannot bind to template "
-  "argument of type %1">;
+  "non-type template parameter of reference type "
+  "%diff{$ cannot bind to template argument of type $"
+  "|cannot bind to template of incompatible argument type}0,1">;
 def err_template_arg_ref_bind_ignores_quals : Error<
-  "reference binding of non-type template parameter of type %0 to template "
-  "argument of type %1 ignores qualifiers">;
+  "reference binding of non-type template parameter "
+  "%diff{of type $ to template argument of type $|to template argument}0,1 "
+  "ignores qualifiers">;
 def err_template_arg_not_decl_ref : Error<
   "non-type template argument does not refer to any declaration">;
 def err_template_arg_not_object_or_func_form : Error<
@@ -3109,7 +3118,8 @@ def warn_forward_class_redefinition : Warning<
   "redefinition of forward class %0 of a typedef name of an object type is ignored">,
   InGroup<DiagGroup<"objc-forward-class-redefinition">>;
 def err_redefinition_different_typedef : Error<
-  "%select{typedef|type alias|type alias template}0 redefinition with different types (%1 vs %2)">;
+  "%select{typedef|type alias|type alias template}0 "
+  "redefinition with different types%diff{ ($ vs $)|}1,2">;
 def err_tag_reference_non_tag : Error<
   "elaborated type refers to %select{a non-tag type|a typedef|a type alias|a template|a type alias template}0">;
 def err_tag_reference_conflict : Error<
@@ -3858,8 +3868,8 @@ def note_member_def_close_const_match : Note<
   "member declaration does not match because "
   "it %select{is|is not}0 const qualified">;
 def note_member_def_close_param_match : Note<
-  "type of %ordinal0 parameter of member declaration does not match "
-  "definition (%1 vs %2)">;
+  "type of %ordinal0 parameter of member declaration does not match definition"
+  "%diff{ ($ vs $)|}1,2">;
 def err_typecheck_ivar_variable_size : Error<
   "instance variables must have a constant size">;
 def err_ivar_reference_type : Error<
@@ -3891,12 +3901,15 @@ def err_array_init_not_init_list : Error<
   "array initializer must be an initializer "
   "list%select{| or string literal}0">;
 def err_array_init_different_type : Error<
-  "cannot initialize array of type %0 with array of type %1">;
+  "cannot initialize array %diff{of type $ with array of type $|"
+  "with different type of array}0,1">;
 def err_array_init_non_constant_array : Error<
-  "cannot initialize array of type %0 with non-constant array of type %1">;
+  "cannot initialize array %diff{of type $ with non-constant array of type $|"
+  "with different type of array}0,1">;
 def ext_array_init_copy : Extension<
-  "initialization of an array of type %0 from a compound literal of type %1 is "
-  "a GNU extension">, InGroup<GNU>;
+  "initialization of an array "
+  "%diff{of type $ from a compound literal of type $|"
+  "from a compound literal}0,1 is a GNU extension">, InGroup<GNU>;
 // This is intentionally not disabled by -Wno-gnu.
 def ext_array_init_parens : ExtWarn<
   "parenthesized initialization of a member array is a GNU extension">,
@@ -3947,7 +3960,8 @@ def err_objc_object_assignment : Error<
 def err_typecheck_invalid_operands : Error<
   "invalid operands to binary expression (%0 and %1)">;
 def err_typecheck_sub_ptr_compatible : Error<
-  "%0 and %1 are not pointers to compatible types">;
+  "%diff{$ and $ are not pointers to compatible types|"
+  "pointers to incompatible types}0,1">;
 def ext_typecheck_ordered_comparison_of_pointer_integer : ExtWarn<
   "ordered comparison between pointer and integer (%0 and %1)">;
 def ext_typecheck_ordered_comparison_of_pointer_and_zero : Extension<
@@ -3963,13 +3977,14 @@ def ext_typecheck_comparison_of_pointer_integer : ExtWarn<
 def err_typecheck_comparison_of_pointer_integer : Error<
   "comparison between pointer and integer (%0 and %1)">;
 def ext_typecheck_comparison_of_distinct_pointers : ExtWarn<
-  "comparison of distinct pointer types (%0 and %1)">;
+  "comparison of distinct pointer types%diff{ ($ and $)|}0,1">;
 def ext_typecheck_cond_incompatible_operands : ExtWarn<
   "incompatible operand types (%0 and %1)">;
 def err_cond_voidptr_arc : Error <
-  "operands to conditional of types %0 and %1 are incompatible in ARC mode">;
+  "operands to conditional of types%diff{ $ and $|}0,1 are incompatible "
+  "in ARC mode">;
 def err_typecheck_comparison_of_distinct_pointers : Error<
-  "comparison of distinct pointer types (%0 and %1)">;
+  "comparison of distinct pointer types%diff{ ($ and $)|}0,1">;
 def ext_typecheck_comparison_of_distinct_pointers_nonstandard : ExtWarn<
   "comparison of distinct pointer types (%0 and %1) uses non-standard "
   "composite pointer type %2">;
@@ -3986,7 +4001,8 @@ def warn_runsigned_always_true_comparison : Warning<
   "comparison of %0 unsigned%select{| enum}2 expression is always %1">,
   InGroup<TautologicalCompare>;
 def warn_comparison_of_mixed_enum_types : Warning<
-  "comparison of two values with different enumeration types (%0 and %1)">,
+  "comparison of two values with different enumeration types"
+  "%diff{ ($ and $)|}0,1">,
   InGroup<DiagGroup<"enum-compare">>;
 def warn_null_in_arithmetic_operation : Warning<
   "use of NULL in arithmetic operation">,
@@ -4389,11 +4405,12 @@ def err_conditional_void_nonvoid : Error<
   "%select{left|right}1 operand to ? is void, but %select{right|left}1 operand "
   "is of type %0">;
 def err_conditional_ambiguous : Error<
-  "conditional expression is ambiguous; %0 can be converted to %1 "
-  "and vice versa">;
+  "conditional expression is ambiguous; "
+  "%diff{$ can be converted to $ and vice versa|"
+  "types can be convert to each other}0,1">;
 def err_conditional_ambiguous_ovl : Error<
-  "conditional expression is ambiguous; %0 and %1 can be converted to several "
-  "common types">;
+  "conditional expression is ambiguous; %diff{$ and $|types}0,1 "
+  "can be converted to several common types">;
 
 def err_throw_incomplete : Error<
   "cannot throw object of incomplete type %0">;
@@ -4472,8 +4489,10 @@ def ext_pseudo_dtor_on_void : ExtWarn<
   "pseudo-destructors on type void are a Microsoft extension">,
   InGroup<Microsoft>;
 def err_pseudo_dtor_type_mismatch : Error<
-  "the type of object expression (%0) does not match the type being destroyed "
-  "(%1) in pseudo-destructor expression">;
+  "the type of object expression "
+  "%diff{($) does not match the type being destroyed ($)|"
+  "does not match the type being destroyed}0,1 "
+  "in pseudo-destructor expression">;
 def err_pseudo_dtor_call_with_args : Error<
   "call to pseudo-destructor cannot have any arguments">;
 def err_dtor_expr_without_call : Error<
@@ -4490,11 +4509,12 @@ def err_type_defined_in_condition : Error<
 def err_typecheck_bool_condition : Error<
   "value of type %0 is not contextually convertible to 'bool'">;
 def err_typecheck_ambiguous_condition : Error<
-  "conversion from %0 to %1 is ambiguous">;
+  "conversion %diff{from $ to $|between types}0,1 is ambiguous">;
 def err_typecheck_nonviable_condition : Error<
-  "no viable conversion from %0 to %1">;
+  "no viable conversion%diff{ from $ to $|}0,1">;
 def err_typecheck_deleted_function : Error<
-  "conversion function from %0 to %1 invokes a deleted function">;
+  "conversion function %diff{from $ to $|between types}0,1 "
+  "invokes a deleted function">;
   
 def err_expected_class_or_namespace : Error<"expected a class or namespace">;
 def err_expected_class : Error<"%0 is not a class%select{ or namespace|, "
@@ -4541,42 +4561,66 @@ def note_equality_comparison_silence : Note<
 // In most of these diagnostics the %2 is a value from the
 // Sema::AssignmentAction enumeration
 def err_typecheck_convert_incompatible : Error<
-  "%select{assigning to|passing|returning|converting|initializing|sending|casting}2"
-  " %0 "
-  "%select{from incompatible type|to parameter of incompatible type|"
-  "from a function with incompatible result type|to incompatible type|"
-  "with an expression of incompatible type|to parameter of incompatible type|"
-  "to incompatible type}2 %1"
+  "%select{%diff{assigning to $ from incompatible type $|"
+  "assigning to type from incompatible type}0,1"
+  "|%diff{passing $ to parameter of incompatible type $|"
+  "passing type to parameter of incompatible type}0,1"
+  "|%diff{returning $ from a function with incompatible result type $|"
+  "returning type from a function with incompatible result type}0,1"
+  "|%diff{converting $ to incompatible type $|"
+  "converting type to incompatible type}"
+  "|%diff{initializing $ with an expression of incompatible type $|"
+  "initializing type with an expression of incompatible type}0,1"
+  "|%diff{sending $ to parameter of incompatible type $|"
+  "sending type to parameter of incompatible type}0,1"
+  "|%diff{casting $ to incompatible type $|"
+  "casting type to incompatible type}0,1}2"
   "%select{|; dereference with *|"
   "; take the address with &|"
   "; remove *|"
   "; remove &}3"
-  "%select{|: different classes (%5 vs %6)"
+  "%select{|: different classes%diff{ ($ vs $)|}5,6"
   "|: different number of parameters (%5 vs %6)"
-  "|: type mismatch at %ordinal5 parameter (%6 vs %7)"
-  "|: different return type (%5 vs %6)"
+  "|: type mismatch at %ordinal5 parameter%diff{ ($ vs $)|}6,7"
+  "|: different return type%diff{ ($ vs $)|}5,6"
   "|: different qualifiers ("
   "%select{none|const|restrict|const and restrict|volatile|const and volatile|"
   "volatile and restrict|const, volatile, and restrict}5 vs "
   "%select{none|const|restrict|const and restrict|volatile|const and volatile|"
   "volatile and restrict|const, volatile, and restrict}6)}4">;
 def err_typecheck_missing_return_type_incompatible : Error<
-  "return type %0 must match previous return type %1 when %select{block "
+  "%diff{return type $ must match previous return type $|"
+  "return type must match previous return type}0,1 when %select{block "
   "literal|lambda expression}2 has unspecified explicit return type">;
 
 def warn_incompatible_qualified_id : Warning<
-  "%select{assigning to|passing|returning|converting|initializing|sending|casting}2"
-  " %0 "
-  "%select{from incompatible type|to parameter of incompatible type|"
-  "from a function with incompatible result type|to incompatible type|"
-  "with an expression of incompatible type|to parameter of incompatible type|"
-  "to incompatible type}2 %1">;
+  "%select{%diff{assigning to $ from incompatible type $|"
+  "assigning to type from incompatible type}0,1"
+  "|%diff{passing $ to parameter of incompatible type $|"
+  "passing type to parameter of incompatible type}0,1"
+  "|%diff{returning $ from a function with incompatible result type $|"
+  "returning type from a function with incompatible result type}0,1"
+  "|%diff{converting $ to incompatible type $|"
+  "converting type to incompatible type}"
+  "|%diff{initializing $ with an expression of incompatible type $|"
+  "initializing type with an expression of incompatible type}0,1"
+  "|%diff{sending $ to parameter of incompatible type $|"
+  "sending type to parameter of incompatible type}0,1"
+  "|%diff{casting $ to incompatible type $|"
+  "casting type to incompatible type}0,1}2">;
 def ext_typecheck_convert_pointer_int : ExtWarn<
   "incompatible pointer to integer conversion "
-  "%select{assigning to|passing|returning|converting|initializing|sending|casting}2"
-  " %0 "
-  "%select{from|to parameter of type|from a function with result type|to type|"
-  "with an expression of type|to parameter of type|to type}2 %1"
+  "%select{%diff{assigning to $ from $|assigning to different types}0,1"
+  "|%diff{passing $ to parameter of type $|"
+  "passing to parameter of different type}0,1"
+  "|%diff{returning $ from a function with result type $|"
+  "returning from function with different return type}0,1"
+  "|%diff{converting $ to type $|converting between types}0,1"
+  "|%diff{initializing $ with an expression of type $|"
+  "initializing with expression of different type}0,1"
+  "|%diff{sending $ to parameter of type $|"
+  "sending to parameter of different type}0,1"
+  "|%diff{casting $ to type $|casting between types}0,1}2"
   "%select{|; dereference with *|"
   "; take the address with &|"
   "; remove *|"
@@ -4584,92 +4628,163 @@ def ext_typecheck_convert_pointer_int : ExtWarn<
   InGroup<IntConversion>;
 def ext_typecheck_convert_int_pointer : ExtWarn<
   "incompatible integer to pointer conversion "
-  "%select{assigning to|passing|returning|converting|initializing|sending|casting}2"
-  " %0 "
-  "%select{from|to parameter of type|from a function with result type|to type|"
-  "with an expression of type|to parameter of type|to type}2 %1"
+  "%select{%diff{assigning to $ from $|assigning to different types}0,1"
+  "|%diff{passing $ to parameter of type $|"
+  "passing to parameter of different type}0,1"
+  "|%diff{returning $ from a function with result type $|"
+  "returning from function with different return type}0,1"
+  "|%diff{converting $ to type $|converting between types}0,1"
+  "|%diff{initializing $ with an expression of type $|"
+  "initializing with expression of different type}0,1"
+  "|%diff{sending $ to parameter of type $|"
+  "sending to parameter of different type}0,1"
+  "|%diff{casting $ to type $|casting between types}0,1}2"
   "%select{|; dereference with *|"
   "; take the address with &|"
   "; remove *|"
   "; remove &}3">,
   InGroup<IntConversion>;
 def ext_typecheck_convert_pointer_void_func : Extension<
-  "%select{assigning to|passing|returning|converting|initializing|sending|casting}2"
-  " %0 "
-  "%select{from|to parameter of type|from a function with result type|to type|"
-  "with an expression of type|to parameter of type|to type}2 %1 "
-  "converts between void pointer and function pointer">;
+  "%select{%diff{assigning to $ from $|assigning to different types}0,1"
+  "|%diff{passing $ to parameter of type $|"
+  "passing to parameter of different type}0,1"
+  "|%diff{returning $ from a function with result type $|"
+  "returning from function with different return type}0,1"
+  "|%diff{converting $ to type $|converting between types}0,1"
+  "|%diff{initializing $ with an expression of type $|"
+  "initializing with expression of different type}0,1"
+  "|%diff{sending $ to parameter of type $|"
+  "sending to parameter of different type}0,1"
+  "|%diff{casting $ to type $|casting between types}0,1}2"
+  " converts between void pointer and function pointer">;
 def ext_typecheck_convert_incompatible_pointer_sign : ExtWarn<
-  "%select{assigning to|passing|returning|converting|initializing|sending|casting}2"
-  " %0 "
-  "%select{from|to parameter of type|from a function with result type|to type|"
-  "with an expression of type|to parameter of type|to type}2 %1 "
-  "converts between pointers to integer types with different sign">,
+  "%select{%diff{assigning to $ from $|assigning to different types}0,1"
+  "|%diff{passing $ to parameter of type $|"
+  "passing to parameter of different type}0,1"
+  "|%diff{returning $ from a function with result type $|"
+  "returning from function with different return type}0,1"
+  "|%diff{converting $ to type $|converting between types}0,1"
+  "|%diff{initializing $ with an expression of type $|"
+  "initializing with expression of different type}0,1"
+  "|%diff{sending $ to parameter of type $|"
+  "sending to parameter of different type}0,1"
+  "|%diff{casting $ to type $|casting between types}0,1}2"
+  " converts between pointers to integer types with different sign">,
   InGroup<DiagGroup<"pointer-sign">>;
 def ext_typecheck_convert_incompatible_pointer : ExtWarn<
   "incompatible pointer types "
-  "%select{assigning to|passing|returning|converting|initializing|sending|casting}2"
-  " %0 "
-  "%select{from|to parameter of type|from a function with result type|to type|"
-  "with an expression of type|to parameter of type|to type}2 %1"
+  "%select{%diff{assigning to $ from $|assigning to different types}0,1"
+  "|%diff{passing $ to parameter of type $|"
+  "passing to parameter of different type}0,1"
+  "|%diff{returning $ from a function with result type $|"
+  "returning from function with different return type}0,1"
+  "|%diff{converting $ to type $|converting between types}0,1"
+  "|%diff{initializing $ with an expression of type $|"
+  "initializing with expression of different type}0,1"
+  "|%diff{sending $ to parameter of type $|"
+  "sending to parameter of different type}0,1"
+  "|%diff{casting $ to type $|casting between types}0,1}2"
   "%select{|; dereference with *|"
   "; take the address with &|"
   "; remove *|"
   "; remove &}3">,
   InGroup<IncompatiblePointerTypes>;
 def ext_typecheck_convert_discards_qualifiers : ExtWarn<
-  "%select{assigning to|passing|returning|converting|initializing|sending|casting}2"
-  " %0 "
-  "%select{from|to parameter of type|from a function with result type|to type|"
-  "with an expression of type|to parameter of type|to type}2 %1 discards "
-  "qualifiers">,
+  "%select{%diff{assigning to $ from $|assigning to different types}0,1"
+  "|%diff{passing $ to parameter of type $|"
+  "passing to parameter of different type}0,1"
+  "|%diff{returning $ from a function with result type $|"
+  "returning from function with different return type}0,1"
+  "|%diff{converting $ to type $|converting between types}0,1"
+  "|%diff{initializing $ with an expression of type $|"
+  "initializing with expression of different type}0,1"
+  "|%diff{sending $ to parameter of type $|"
+  "sending to parameter of different type}0,1"
+  "|%diff{casting $ to type $|casting between types}0,1}2"
+  " discards qualifiers">,
   InGroup<IncompatiblePointerTypes>;
 def ext_nested_pointer_qualifier_mismatch : ExtWarn<
-  "%select{assigning to|passing|returning|converting|initializing|sending|casting}2"
-  " %0 "
-  "%select{from|to parameter of type|from a function with result type|to type|"
-  "with an expression of type|to parameter of type|to type}2 %1 discards "
-  "qualifiers in nested pointer types">,
+  "%select{%diff{assigning to $ from $|assigning to different types}0,1"
+  "|%diff{passing $ to parameter of type $|"
+  "passing to parameter of different type}0,1"
+  "|%diff{returning $ from a function with result type $|"
+  "returning from function with different return type}0,1"
+  "|%diff{converting $ to type $|converting between types}0,1"
+  "|%diff{initializing $ with an expression of type $|"
+  "initializing with expression of different type}0,1"
+  "|%diff{sending $ to parameter of type $|"
+  "sending to parameter of different type}0,1"
+  "|%diff{casting $ to type $|casting between types}0,1}2"
+  " discards qualifiers in nested pointer types">,
   InGroup<IncompatiblePointerTypes>;
 def warn_incompatible_vectors : Warning<
   "incompatible vector types "
-  "%select{assigning to|passing|returning|converting|initializing|sending|casting}2"
-  " %0 "
-  "%select{from|to parameter of type|from a function with result type|to type|"
-  "with an expression of type|to parameter of type|to type}2 %1">,
+  "%select{%diff{assigning to $ from $|assigning to different types}0,1"
+  "|%diff{passing $ to parameter of type $|"
+  "passing to parameter of different type}0,1"
+  "|%diff{returning $ from a function with result type $|"
+  "returning from function with different return type}0,1"
+  "|%diff{converting $ to type $|converting between types}0,1"
+  "|%diff{initializing $ with an expression of type $|"
+  "initializing with expression of different type}0,1"
+  "|%diff{sending $ to parameter of type $|"
+  "sending to parameter of different type}0,1"
+  "|%diff{casting $ to type $|casting between types}0,1}2">,
   InGroup<VectorConversion>, DefaultIgnore;
 def err_int_to_block_pointer : Error<
   "invalid block pointer conversion "
-  "%select{assigning to|passing|returning|converting|initializing|sending|casting}2"
-  " %0 "
-  "%select{from|to parameter of type|from a function with result type|to type|"
-  "with an expression of type|to parameter of type|to type}2 %1">;
+  "%select{%diff{assigning to $ from $|assigning to different types}0,1"
+  "|%diff{passing $ to parameter of type $|"
+  "passing to parameter of different type}0,1"
+  "|%diff{returning $ from a function with result type $|"
+  "returning from function with different return type}0,1"
+  "|%diff{converting $ to type $|converting between types}0,1"
+  "|%diff{initializing $ with an expression of type $|"
+  "initializing with expression of different type}0,1"
+  "|%diff{sending $ to parameter of type $|"
+  "sending to parameter of different type}0,1"
+  "|%diff{casting $ to type $|casting between types}0,1}2">;
 def err_typecheck_convert_incompatible_block_pointer : Error<
   "incompatible block pointer types "
-  "%select{assigning to|passing|returning|converting|initializing|sending|casting}2"
-  " %0 "
-  "%select{from|to parameter of type|from a function with result type|to type|"
-  "with an expression of type|to parameter of type|to type}2 %1">;
+  "%select{%diff{assigning to $ from $|assigning to different types}0,1"
+  "|%diff{passing $ to parameter of type $|"
+  "passing to parameter of different type}0,1"
+  "|%diff{returning $ from a function with result type $|"
+  "returning from function with different return type}0,1"
+  "|%diff{converting $ to type $|converting between types}0,1"
+  "|%diff{initializing $ with an expression of type $|"
+  "initializing with expression of different type}0,1"
+  "|%diff{sending $ to parameter of type $|"
+  "sending to parameter of different type}0,1"
+  "|%diff{casting $ to type $|casting between types}0,1}2">;
 def err_typecheck_incompatible_address_space : Error<
-  "%select{assigning %1 to %0"
-  "|passing %0 to parameter of type %1"
-  "|returning %0 from a function with result type %1"
-  "|converting %0 to type %1"
-  "|initializing %0 with an expression of type %1"
-  "|sending %0 to parameter of type %1"
-  "|casting %0 to type %1}2"
+  "%select{%diff{assigning $ to $|assigning to different types}1,0"
+  "|%diff{passing $ to parameter of type $|"
+  "passing to parameter of different type}0,1"
+  "|%diff{returning $ from a function with result type $|"
+  "returning from function with different return type}0,1"
+  "|%diff{converting $ to type $|converting between types}0,1"
+  "|%diff{initializing $ with an expression of type $|"
+  "initializing with expression of different type}0,1"
+  "|%diff{sending $ to parameter of type $|"
+  "sending to parameter of different type}0,1"
+  "|%diff{casting $ to type $|casting between types}0,1}2"
   " changes address space of pointer">;
 def err_typecheck_incompatible_ownership : Error<
-  "%select{assigning %1 to %0"
-  "|passing %0 to parameter of type %1"
-  "|returning %0 from a function with result type %1"
-  "|converting %0 to type %1"
-  "|initializing %0 with an expression of type %1"
-  "|sending %0 to parameter of type %1"
-  "|casting %0 to type %1}2"
+  "%select{%diff{assigning $ to $|assigning to different types}1,0"
+  "|%diff{passing $ to parameter of type $|"
+  "passing to parameter of different type}0,1"
+  "|%diff{returning $ from a function with result type $|"
+  "returning from function with different return type}0,1"
+  "|%diff{converting $ to type $|converting between types}0,1"
+  "|%diff{initializing $ with an expression of type $|"
+  "initializing with expression of different type}0,1"
+  "|%diff{sending $ to parameter of type $|"
+  "sending to parameter of different type}0,1"
+  "|%diff{casting $ to type $|casting between types}0,1}2"
   " changes retain/release properties of pointer">;
 def err_typecheck_comparison_of_distinct_blocks : Error<
-  "comparison of distinct block types (%0 and %1)">;
+  "comparison of distinct block types%diff{ ($ and $)|}0,1">;
 
 def err_typecheck_array_not_modifiable_lvalue : Error<
   "array type %0 is not assignable">;
@@ -4791,7 +4906,8 @@ def warn_cxx98_compat_pass_non_pod_arg_to_vararg : Warning<
   InGroup<CXX98Compat>, DefaultIgnore;
 
 def err_typecheck_call_invalid_ordered_compare : Error<
-  "ordered compare requires two args of floating point type (%0 and %1)">;
+  "ordered compare requires two args of floating point type"
+  "%diff{ ($ and $)|}0,1">;
 def err_typecheck_call_invalid_unary_fp : Error<
   "floating point classification requires argument of floating point type "
   "(passed in %0)">;
@@ -4815,17 +4931,18 @@ def err_cast_pointer_to_non_pointer_int : Error<
 def err_typecheck_expect_scalar_operand : Error<
   "operand of type %0 where arithmetic or pointer type is required">;
 def err_typecheck_cond_incompatible_operands : Error<
-  "incompatible operand types (%0 and %1)">;
+  "incompatible operand types%diff{ ($ and $)|}0,1">;
 def ext_typecheck_cond_incompatible_operands_nonstandard : ExtWarn<
-  "incompatible operand types (%0 and %1) use non-standard composite pointer "
-  "type %2">;
+  "incompatible operand types%diff{ ($ and $)|}0,1 use non-standard composite "
+  "pointer type %2">;
 def err_cast_selector_expr : Error<
   "cannot type cast @selector expression">;
 def warn_typecheck_cond_incompatible_pointers : ExtWarn<
-  "pointer type mismatch (%0 and %1)">,
+  "pointer type mismatch%diff{ ($ and $)|}0,1">,
   InGroup<DiagGroup<"pointer-type-mismatch">>;
 def warn_typecheck_cond_pointer_integer_mismatch : ExtWarn<
-  "pointer/integer type mismatch in conditional expression (%0 and %1)">,
+  "pointer/integer type mismatch in conditional expression"
+  "%diff{ ($ and $)|}0,1">,
   InGroup<DiagGroup<"conditional-type-mismatch">>;
 def err_typecheck_choose_expr_requires_constant : Error<
   "'__builtin_choose_expr' requires a constant expression">;
@@ -4883,7 +5000,8 @@ let CategoryName = "Inline Assembly Issue" in {
   def err_asm_invalid_type_in_input : Error<
     "invalid type %0 in asm input for constraint '%1'">;
   def err_asm_tying_incompatible_types : Error<
-    "unsupported inline asm: input with type %0 matching output with type %1">;
+    "unsupported inline asm: input with type "
+    "%diff{$ matching output with type $|}0,1">;
   def err_asm_unknown_register_name : Error<"unknown register name '%0' in asm">;
   def warn_asm_label_on_auto_decl : Warning<
     "ignored asm label '%0' on automatic variable">;
@@ -4903,7 +5021,8 @@ let CategoryName = "Inline Assembly Issue" in {
 let CategoryName = "Semantic Issue" in {
 
 def err_invalid_conversion_between_vectors : Error<
-  "invalid conversion between vector type %0 and %1 of different size">;
+  "invalid conversion between vector type%diff{ $ and $|}0,1 of different "
+  "size">;
 def err_invalid_conversion_between_vector_and_integer : Error<
   "invalid conversion between vector type %0 and integer type %1 "
   "of different size">;
@@ -5611,8 +5730,10 @@ def warn_attribute_method_def : Warning<
   "attributes on method implementation and its declaration must match">,
   InGroup<DiagGroup<"mismatched-method-attributes">>;
 def ext_typecheck_base_super : Warning<
-  "method parameter type %0 does not match "
-  "super class method parameter type %1">, InGroup<SuperSubClassMismatch>, DefaultIgnore;
+  "method parameter type "
+  "%diff{$ does not match super class method parameter type $|"
+  "does not match super class method parameter type}0,1">,
+   InGroup<SuperSubClassMismatch>, DefaultIgnore;
 def warn_missing_method_return_type : Warning<
   "method has no return type specified; defaults to 'id'">,
   InGroup<MissingMethodReturnType>, DefaultIgnore;
@@ -5704,8 +5825,9 @@ def err_static_function_scope : Error<
 let CategoryName = "Related Result Type Issue" in {
 // Objective-C related result type compatibility
 def warn_related_result_type_compatibility_class : Warning<
-  "method is expected to return an instance of its class type %0, but "
-  "is declared to return %1">;
+  "method is expected to return an instance of its class type "
+  "%diff{$, but is declared to return $|"
+  ", but is declared to return different type}0,1">;
 def warn_related_result_type_compatibility_protocol : Warning<
   "protocol method is expected to return an instance of the implementing "
   "class, but is declared to return %0">;
