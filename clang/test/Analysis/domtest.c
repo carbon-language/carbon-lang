@@ -1,4 +1,6 @@
-// RUN: %clang -cc1 -analyze -analyzer-checker=debug.DumpDominators %s 2>&1 | FileCheck %s
+// RUN: rm -f %t
+// RUN: %clang -cc1 -analyze -analyzer-checker=debug.DumpDominators %s > %t 2>&1
+// RUN: FileCheck --input-file=%t %s
 
 // Test the DominatorsTree implementation with various control flows
 int test1()
@@ -24,13 +26,13 @@ int test1()
 
 // CHECK: Immediate dominance tree (Node#,IDom#):
 // CHECK: (0,1)
-// CHECK: (1,2)
-// CHECK: (2,8)
-// CHECK: (3,4)
-// CHECK: (4,7)
-// CHECK: (5,7)
+// CHECK: (1,7)
+// CHECK: (2,3)
+// CHECK: (3,6)
+// CHECK: (4,6)
+// CHECK: (5,6)
 // CHECK: (6,7)
-// CHECK: (7,2)
+// CHECK: (7,8)
 // CHECK: (8,9)
 // CHECK: (9,9)
 
@@ -55,9 +57,9 @@ int test2()
 // CHECK: Immediate dominance tree (Node#,IDom#):
 // CHECK: (0,1)
 // CHECK: (1,6)
-// CHECK: (2,6)
+// CHECK: (2,3)
 // CHECK: (3,4)
-// CHECK: (4,2)
+// CHECK: (4,6)
 // CHECK: (5,6)
 // CHECK: (6,7)
 // CHECK: (7,7)
@@ -83,11 +85,11 @@ int test3()
 // CHECK: Immediate dominance tree (Node#,IDom#):
 // CHECK: (0,1)
 // CHECK: (1,7)
-// CHECK: (2,7)
+// CHECK: (2,5)
 // CHECK: (3,4)
-// CHECK: (4,2)
+// CHECK: (4,5)
 // CHECK: (5,6)
-// CHECK: (6,4)
+// CHECK: (6,7)
 // CHECK: (7,8)
 // CHECK: (8,8)
 
@@ -108,16 +110,16 @@ int test4()
 
 // CHECK: Immediate dominance tree (Node#,IDom#):
 // CHECK: (0,1)
-// CHECK: (1,2)
-// CHECK: (2,11)
-// CHECK: (3,10)
-// CHECK: (4,10)
-// CHECK: (5,6)
-// CHECK: (6,4)
-// CHECK: (7,10)
+// CHECK: (1,10)
+// CHECK: (2,9)
+// CHECK: (3,4)
+// CHECK: (4,5)
+// CHECK: (5,9)
+// CHECK: (6,7)
+// CHECK: (7,8)
 // CHECK: (8,9)
-// CHECK: (9,7)
-// CHECK: (10,2)
+// CHECK: (9,10)
+// CHECK: (10,11)
 // CHECK: (11,12)
 // CHECK: (12,12)
 
@@ -162,4 +164,5 @@ int test5()
 // CHECK: (9,10)
 // CHECK: (10,11)
 // CHECK: (11,11)
+
 

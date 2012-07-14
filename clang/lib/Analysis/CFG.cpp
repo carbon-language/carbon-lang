@@ -344,6 +344,10 @@ private:
   CFGBlock *VisitLabelStmt(LabelStmt *L);
   CFGBlock *VisitLambdaExpr(LambdaExpr *E, AddStmtChoice asc);
   CFGBlock *VisitLogicalOperator(BinaryOperator *B);
+  std::pair<CFGBlock *, CFGBlock *> VisitLogicalOperator(BinaryOperator *B,
+                                                         Stmt *Term,
+                                                         CFGBlock *TrueBlock,
+                                                         CFGBlock *FalseBlock);
   CFGBlock *VisitMemberExpr(MemberExpr *M, AddStmtChoice asc);
   CFGBlock *VisitObjCAtCatchStmt(ObjCAtCatchStmt *S);
   CFGBlock *VisitObjCAtSynchronizedStmt(ObjCAtSynchronizedStmt *S);
@@ -1170,45 +1174,97 @@ CFGBlock *CFGBuilder::VisitLogicalOperator(BinaryOperator *B) {
   if (badCFG)
     return 0;
 
-  // create the block evaluating the LHS
+  return VisitLogicalOperator(B, 0, ConfluenceBlock, ConfluenceBlock).first;
+}
+
+std::pair<CFGBlock*, CFGBlock*>
+CFGBuilder::VisitLogicalOperator(BinaryOperator *B,
+                                 Stmt *Term,
+                                 CFGBlock *TrueBlock,
+                                 CFGBlock *FalseBlock) {
+
+  // Introspect the RHS.  If it is a nested logical operation, we recursively
+  // build the CFG using this function.  Otherwise, resort to default
+  // CFG construction behavior.
+  Expr *RHS = B->getRHS()->IgnoreParens();
+  CFGBlock *RHSBlock, *ExitBlock;
+
+  do {
+    if (BinaryOperator *B_RHS = dyn_cast<BinaryOperator>(RHS))
+      if (B_RHS->isLogicalOp()) {
+        llvm::tie(RHSBlock, ExitBlock) =
+          VisitLogicalOperator(B_RHS, Term, TrueBlock, FalseBlock);
+        break;
+      }
+
+    // The RHS is not a nested logical operation.  Don't push the terminator
+    // down further, but instead visit RHS and construct the respective
+    // pieces of the CFG, and link up the RHSBlock with the terminator
+    // we have been provided.
+    ExitBlock = RHSBlock = createBlock(false);
+
+    if (!Term) {
+      assert(TrueBlock == FalseBlock);
+      addSuccessor(RHSBlock, TrueBlock);
+    }
+    else {
+      RHSBlock->setTerminator(Term);
+      TryResult KnownVal = tryEvaluateBool(RHS);
+      addSuccessor(RHSBlock, KnownVal.isFalse() ? NULL : TrueBlock);
+      addSuccessor(RHSBlock, KnownVal.isTrue() ? NULL : FalseBlock);
+    }
+
+    Block = RHSBlock;
+    RHSBlock = addStmt(RHS);
+  }
+  while (false);
+
+  if (badCFG)
+    return std::make_pair((CFGBlock*)0, (CFGBlock*)0);
+
+  // Generate the blocks for evaluating the LHS.
+  Expr *LHS = B->getLHS()->IgnoreParens();
+
+  if (BinaryOperator *B_LHS = dyn_cast<BinaryOperator>(LHS))
+    if (B_LHS->isLogicalOp()) {
+      if (B->getOpcode() == BO_LOr)
+        FalseBlock = RHSBlock;
+      else
+        TrueBlock = RHSBlock;
+
+      // For the LHS, treat 'B' as the terminator that we want to sink
+      // into the nested branch.  The RHS always gets the top-most
+      // terminator.
+      return VisitLogicalOperator(B_LHS, B, TrueBlock, FalseBlock);
+    }
+
+  // Create the block evaluating the LHS.
+  // This contains the '&&' or '||' as the terminator.
   CFGBlock *LHSBlock = createBlock(false);
   LHSBlock->setTerminator(B);
 
-  // create the block evaluating the RHS
-  Succ = ConfluenceBlock;
-  Block = NULL;
-  CFGBlock *RHSBlock = addStmt(B->getRHS());
-
-  if (RHSBlock) {
-    if (badCFG)
-      return 0;
-  } else {
-    // Create an empty block for cases where the RHS doesn't require
-    // any explicit statements in the CFG.
-    RHSBlock = createBlock();
-  }
-
-  // Generate the blocks for evaluating the LHS.
   Block = LHSBlock;
-  CFGBlock *EntryLHSBlock = addStmt(B->getLHS());
+  CFGBlock *EntryLHSBlock = addStmt(LHS);
+
+  if (badCFG)
+    return std::make_pair((CFGBlock*)0, (CFGBlock*)0);
 
   // See if this is a known constant.
-  TryResult KnownVal = tryEvaluateBool(B->getLHS());
-  if (KnownVal.isKnown() && (B->getOpcode() == BO_LOr))
-    KnownVal.negate();
+  TryResult KnownVal = tryEvaluateBool(LHS);
 
   // Now link the LHSBlock with RHSBlock.
   if (B->getOpcode() == BO_LOr) {
-    addSuccessor(LHSBlock, KnownVal.isTrue() ? NULL : ConfluenceBlock);
-    addSuccessor(LHSBlock, KnownVal.isFalse() ? NULL : RHSBlock);
+    addSuccessor(LHSBlock, KnownVal.isFalse() ? NULL : TrueBlock);
+    addSuccessor(LHSBlock, KnownVal.isTrue() ? NULL : RHSBlock);
   } else {
     assert(B->getOpcode() == BO_LAnd);
     addSuccessor(LHSBlock, KnownVal.isFalse() ? NULL : RHSBlock);
-    addSuccessor(LHSBlock, KnownVal.isTrue() ? NULL : ConfluenceBlock);
+    addSuccessor(LHSBlock, KnownVal.isTrue() ? NULL : FalseBlock);
   }
 
-  return EntryLHSBlock;
+  return std::make_pair(EntryLHSBlock, ExitBlock);
 }
+
 
 CFGBlock *CFGBuilder::VisitBinaryOperator(BinaryOperator *B,
                                           AddStmtChoice asc) {
@@ -1646,6 +1702,18 @@ CFGBlock *CFGBuilder::VisitIfStmt(IfStmt *I) {
     }
   }
 
+  // Specially handle "if (expr1 || ...)" and "if (expr1 && ...)" by
+  // having these handle the actual control-flow jump.  Note that
+  // if we introduce a condition variable, e.g. "if (int x = exp1 || exp2)"
+  // we resort to the old control-flow behavior.  This special handling
+  // removes infeasible paths from the control-flow graph by having the
+  // control-flow transfer of '&&' or '||' go directly into the then/else
+  // blocks directly.
+  if (!I->getConditionVariable())
+    if (BinaryOperator *Cond = dyn_cast<BinaryOperator>(I->getCond()))
+      if (Cond->isLogicalOp())
+        return VisitLogicalOperator(Cond, I, ThenBlock, ElseBlock).first;
+
   // Now create a new block containing the if statement.
   Block = createBlock(false);
 
@@ -1796,75 +1864,26 @@ CFGBlock *CFGBuilder::VisitForStmt(ForStmt *F) {
   SaveAndRestore<JumpTarget> save_break(BreakJumpTarget);
   BreakJumpTarget = JumpTarget(LoopSuccessor, ScopePos);
 
-  // Because of short-circuit evaluation, the condition of the loop can span
-  // multiple basic blocks.  Thus we need the "Entry" and "Exit" blocks that
-  // evaluate the condition.
-  CFGBlock *ExitConditionBlock = createBlock(false);
-  CFGBlock *EntryConditionBlock = ExitConditionBlock;
-
-  // Set the terminator for the "exit" condition block.
-  ExitConditionBlock->setTerminator(F);
-
-  // Now add the actual condition to the condition block.  Because the condition
-  // itself may contain control-flow, new blocks may be created.
-  if (Stmt *C = F->getCond()) {
-    Block = ExitConditionBlock;
-    EntryConditionBlock = addStmt(C);
-    if (badCFG)
-      return 0;
-    assert(Block == EntryConditionBlock ||
-           (Block == 0 && EntryConditionBlock == Succ));
-
-    // If this block contains a condition variable, add both the condition
-    // variable and initializer to the CFG.
-    if (VarDecl *VD = F->getConditionVariable()) {
-      if (Expr *Init = VD->getInit()) {
-        autoCreateBlock();
-        appendStmt(Block, F->getConditionVariableDeclStmt());
-        EntryConditionBlock = addStmt(Init);
-        assert(Block == EntryConditionBlock);
-      }
-    }
-
-    if (Block) {
-      if (badCFG)
-        return 0;
-    }
-  }
-
-  // The condition block is the implicit successor for the loop body as well as
-  // any code above the loop.
-  Succ = EntryConditionBlock;
-
-  // See if this is a known constant.
-  TryResult KnownVal(true);
-
-  if (F->getCond())
-    KnownVal = tryEvaluateBool(F->getCond());
+  CFGBlock *BodyBlock = 0, *TransitionBlock = 0;
 
   // Now create the loop body.
   {
     assert(F->getBody());
 
-   // Save the current values for Block, Succ, and continue targets.
-   SaveAndRestore<CFGBlock*> save_Block(Block), save_Succ(Succ);
-   SaveAndRestore<JumpTarget> save_continue(ContinueJumpTarget);
+    // Save the current values for Block, Succ, continue and break targets.
+    SaveAndRestore<CFGBlock*> save_Block(Block), save_Succ(Succ);
+    SaveAndRestore<JumpTarget> save_continue(ContinueJumpTarget);
 
-    // Create a new block to contain the (bottom) of the loop body.
-    Block = NULL;
-    
-    // Loop body should end with destructor of Condition variable (if any).
-    addAutomaticObjDtors(ScopePos, LoopBeginScopePos, F);
+    // Create an empty block to represent the transition block for looping back
+    // to the head of the loop.  If we have increment code, it will
+    // go in this block as well.
+    Block = Succ = TransitionBlock = createBlock(false);
+    TransitionBlock->setLoopTarget(F);
 
     if (Stmt *I = F->getInc()) {
       // Generate increment code in its own basic block.  This is the target of
       // continue statements.
       Succ = addStmt(I);
-    } else {
-      // No increment code.  Create a special, empty, block that is used as the
-      // target block for "looping back" to the start of the loop.
-      assert(Succ == EntryConditionBlock);
-      Succ = Block ? Block : createBlock();
     }
 
     // Finish up the increment (or empty) block if it hasn't been already.
@@ -1875,11 +1894,13 @@ CFGBlock *CFGBuilder::VisitForStmt(ForStmt *F) {
       Block = 0;
     }
 
-    ContinueJumpTarget = JumpTarget(Succ, ContinueScopePos);
+   // The starting block for the loop increment is the block that should
+   // represent the 'loop target' for looping back to the start of the loop.
+   ContinueJumpTarget = JumpTarget(Succ, ContinueScopePos);
+   ContinueJumpTarget.block->setLoopTarget(F);
 
-    // The starting block for the loop increment is the block that should
-    // represent the 'loop target' for looping back to the start of the loop.
-    ContinueJumpTarget.block->setLoopTarget(F);
+    // Loop body should end with destructor of Condition variable (if any).
+    addAutomaticObjDtors(ScopePos, LoopBeginScopePos, F);
 
     // If body is not a compound statement create implicit scope
     // and add destructors.
@@ -1888,20 +1909,78 @@ CFGBlock *CFGBuilder::VisitForStmt(ForStmt *F) {
 
     // Now populate the body block, and in the process create new blocks as we
     // walk the body of the loop.
-    CFGBlock *BodyBlock = addStmt(F->getBody());
+    BodyBlock = addStmt(F->getBody());
 
-    if (!BodyBlock)
-      BodyBlock = ContinueJumpTarget.block;//can happen for "for (...;...;...);"
+    if (!BodyBlock) {
+      // In the case of "for (...;...;...);" we can have a null BodyBlock.
+      // Use the continue jump target as the proxy for the body.
+      BodyBlock = ContinueJumpTarget.block;
+    }
     else if (badCFG)
       return 0;
-
-    // This new body block is a successor to our "exit" condition block.
-    addSuccessor(ExitConditionBlock, KnownVal.isFalse() ? NULL : BodyBlock);
   }
+  
+  // Because of short-circuit evaluation, the condition of the loop can span
+  // multiple basic blocks.  Thus we need the "Entry" and "Exit" blocks that
+  // evaluate the condition.
+  CFGBlock *EntryConditionBlock = 0, *ExitConditionBlock = 0;
 
-  // Link up the condition block with the code that follows the loop.  (the
-  // false branch).
-  addSuccessor(ExitConditionBlock, KnownVal.isTrue() ? NULL : LoopSuccessor);
+  do {
+    Expr *C = F->getCond();
+
+    // Specially handle logical operators, which have a slightly
+    // more optimal CFG representation.
+    if (BinaryOperator *Cond = dyn_cast_or_null<BinaryOperator>(C))
+      if (Cond->isLogicalOp()) {
+        llvm::tie(EntryConditionBlock, ExitConditionBlock) =
+          VisitLogicalOperator(Cond, F, BodyBlock, LoopSuccessor);
+        break;
+      }
+
+    // The default case when not handling logical operators.
+    EntryConditionBlock = ExitConditionBlock = createBlock(false);
+    ExitConditionBlock->setTerminator(F);
+
+    // See if this is a known constant.
+    TryResult KnownVal(true);
+
+    if (C) {
+      // Now add the actual condition to the condition block.
+      // Because the condition itself may contain control-flow, new blocks may
+      // be created.  Thus we update "Succ" after adding the condition.
+      Block = ExitConditionBlock;
+      EntryConditionBlock = addStmt(C);
+
+      // If this block contains a condition variable, add both the condition
+      // variable and initializer to the CFG.
+      if (VarDecl *VD = F->getConditionVariable()) {
+        if (Expr *Init = VD->getInit()) {
+          autoCreateBlock();
+          appendStmt(Block, F->getConditionVariableDeclStmt());
+          EntryConditionBlock = addStmt(Init);
+          assert(Block == EntryConditionBlock);
+        }
+      }
+
+      if (Block && badCFG)
+        return 0;
+
+      KnownVal = tryEvaluateBool(C);
+    }
+
+    // Add the loop body entry as a successor to the condition.
+    addSuccessor(ExitConditionBlock, KnownVal.isFalse() ? NULL : BodyBlock);
+    // Link up the condition block with the code that follows the loop.  (the
+    // false branch).
+    addSuccessor(ExitConditionBlock, KnownVal.isTrue() ? NULL : LoopSuccessor);
+
+  } while (false);
+
+  // Link up the loop-back block to the entry condition block.
+  addSuccessor(TransitionBlock, EntryConditionBlock);
+  
+  // The condition block is the implicit successor for any code above the loop.
+  Succ = EntryConditionBlock;
 
   // If the loop contains initialization, create a new block for those
   // statements.  This block can also contain statements that precede the loop.
@@ -2109,73 +2188,29 @@ CFGBlock *CFGBuilder::VisitWhileStmt(WhileStmt *W) {
       return 0;
     LoopSuccessor = Block;
     Block = 0;
-  } else
+  } else {
     LoopSuccessor = Succ;
-
-  // Because of short-circuit evaluation, the condition of the loop can span
-  // multiple basic blocks.  Thus we need the "Entry" and "Exit" blocks that
-  // evaluate the condition.
-  CFGBlock *ExitConditionBlock = createBlock(false);
-  CFGBlock *EntryConditionBlock = ExitConditionBlock;
-
-  // Set the terminator for the "exit" condition block.
-  ExitConditionBlock->setTerminator(W);
-
-  // Now add the actual condition to the condition block.  Because the condition
-  // itself may contain control-flow, new blocks may be created.  Thus we update
-  // "Succ" after adding the condition.
-  if (Stmt *C = W->getCond()) {
-    Block = ExitConditionBlock;
-    EntryConditionBlock = addStmt(C);
-    // The condition might finish the current 'Block'.
-    Block = EntryConditionBlock;
-
-    // If this block contains a condition variable, add both the condition
-    // variable and initializer to the CFG.
-    if (VarDecl *VD = W->getConditionVariable()) {
-      if (Expr *Init = VD->getInit()) {
-        autoCreateBlock();
-        appendStmt(Block, W->getConditionVariableDeclStmt());        
-        EntryConditionBlock = addStmt(Init);
-        assert(Block == EntryConditionBlock);
-      }
-    }
-
-    if (Block) {
-      if (badCFG)
-        return 0;
-    }
   }
 
-  // The condition block is the implicit successor for the loop body as well as
-  // any code above the loop.
-  Succ = EntryConditionBlock;
-
-  // See if this is a known constant.
-  const TryResult& KnownVal = tryEvaluateBool(W->getCond());
+  CFGBlock *BodyBlock = 0, *TransitionBlock = 0;
 
   // Process the loop body.
   {
     assert(W->getBody());
 
-    // Save the current values for Block, Succ, and continue and break targets
+    // Save the current values for Block, Succ, continue and break targets.
     SaveAndRestore<CFGBlock*> save_Block(Block), save_Succ(Succ);
     SaveAndRestore<JumpTarget> save_continue(ContinueJumpTarget),
-        save_break(BreakJumpTarget);
+                               save_break(BreakJumpTarget);
 
     // Create an empty block to represent the transition block for looping back
     // to the head of the loop.
-    Block = 0;
-    assert(Succ == EntryConditionBlock);
-    Succ = createBlock();
-    Succ->setLoopTarget(W);
+    Succ = TransitionBlock = createBlock(false);
+    TransitionBlock->setLoopTarget(W);
     ContinueJumpTarget = JumpTarget(Succ, LoopBeginScopePos);
 
     // All breaks should go to the code following the loop.
     BreakJumpTarget = JumpTarget(LoopSuccessor, ScopePos);
-
-    // NULL out Block to force lazy instantiation of blocks for the body.
-    Block = NULL;
 
     // Loop body should end with destructor of Condition variable (if any).
     addAutomaticObjDtors(ScopePos, LoopBeginScopePos, W);
@@ -2186,22 +2221,69 @@ CFGBlock *CFGBuilder::VisitWhileStmt(WhileStmt *W) {
       addLocalScopeAndDtors(W->getBody());
 
     // Create the body.  The returned block is the entry to the loop body.
-    CFGBlock *BodyBlock = addStmt(W->getBody());
+    BodyBlock = addStmt(W->getBody());
 
     if (!BodyBlock)
       BodyBlock = ContinueJumpTarget.block; // can happen for "while(...) ;"
-    else if (Block) {
-      if (badCFG)
-        return 0;
+    else if (Block && badCFG)
+      return 0;
+  }
+
+  // Because of short-circuit evaluation, the condition of the loop can span
+  // multiple basic blocks.  Thus we need the "Entry" and "Exit" blocks that
+  // evaluate the condition.
+  CFGBlock *EntryConditionBlock = 0, *ExitConditionBlock = 0;
+
+  do {
+    Expr *C = W->getCond();
+
+    // Specially handle logical operators, which have a slightly
+    // more optimal CFG representation.
+    if (BinaryOperator *Cond = dyn_cast<BinaryOperator>(C))
+      if (Cond->isLogicalOp()) {
+        llvm::tie(EntryConditionBlock, ExitConditionBlock) =
+          VisitLogicalOperator(Cond, W, BodyBlock,
+                               LoopSuccessor);
+        break;
+      }
+
+    // The default case when not handling logical operators.
+    EntryConditionBlock = ExitConditionBlock = createBlock(false);
+    ExitConditionBlock->setTerminator(W);
+
+    // Now add the actual condition to the condition block.
+    // Because the condition itself may contain control-flow, new blocks may
+    // be created.  Thus we update "Succ" after adding the condition.
+    Block = ExitConditionBlock;
+    Block = EntryConditionBlock = addStmt(C);
+
+    // If this block contains a condition variable, add both the condition
+    // variable and initializer to the CFG.
+    if (VarDecl *VD = W->getConditionVariable()) {
+      if (Expr *Init = VD->getInit()) {
+        autoCreateBlock();
+        appendStmt(Block, W->getConditionVariableDeclStmt());
+        EntryConditionBlock = addStmt(Init);
+        assert(Block == EntryConditionBlock);
+      }
     }
+
+    if (Block && badCFG)
+      return 0;
+
+    // See if this is a known constant.
+    const TryResult& KnownVal = tryEvaluateBool(C);
 
     // Add the loop body entry as a successor to the condition.
     addSuccessor(ExitConditionBlock, KnownVal.isFalse() ? NULL : BodyBlock);
-  }
+    // Link up the condition block with the code that follows the loop.  (the
+    // false branch).
+    addSuccessor(ExitConditionBlock, KnownVal.isTrue() ? NULL : LoopSuccessor);
 
-  // Link up the condition block with the code that follows the loop.  (the
-  // false branch).
-  addSuccessor(ExitConditionBlock, KnownVal.isTrue() ? NULL : LoopSuccessor);
+  } while(false);
+
+  // Link up the loop-back block to the entry condition block.
+  addSuccessor(TransitionBlock, EntryConditionBlock);
 
   // There can be no more statements in the condition block since we loop back
   // to this block.  NULL out Block to force lazy creation of another block.

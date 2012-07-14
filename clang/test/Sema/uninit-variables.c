@@ -152,15 +152,15 @@ int test19() {
 
 int test20() {
   int z; // expected-note{{initialize the variable 'z' to silence this warning}}
-  if ((test19_aux1() + test19_aux2() && test19_aux1()) || test19_aux3(&z))
-    return z; // expected-warning{{variable 'z' may be uninitialized when used here}}
+  if ((test19_aux1() + test19_aux2() && test19_aux1()) || test19_aux3(&z)) // expected-warning {{variable 'z' is used uninitialized whenever '||' condition is true}} expected-note {{remove the '||' if its condition is always false}}
+    return z; // expected-note {{uninitialized use occurs here}}
   return 0;
 }
 
 int test21(int x, int y) {
   int z; // expected-note{{initialize the variable 'z' to silence this warning}}
-  if ((x && y) || test19_aux3(&z) || test19_aux2())
-    return z; // expected-warning{{variable 'z' may be uninitialized when used here}}
+  if ((x && y) || test19_aux3(&z) || test19_aux2()) // expected-warning {{variable 'z' is used uninitialized whenever '||' condition is true}} expected-note {{remove the '||' if its condition is always false}}
+    return z; // expected-note {{uninitialized use occurs here}}
   return 0;
 }
 

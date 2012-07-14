@@ -499,48 +499,43 @@ void ExprEngine::VisitLogicalExpr(const BinaryOperator* B, ExplodedNode *Pred,
 
   StmtNodeBuilder Bldr(Pred, Dst, *currentBuilderContext);
   ProgramStateRef state = Pred->getState();
-  const LocationContext *LCtx = Pred->getLocationContext();
-  SVal X = state->getSVal(B, LCtx);
-  assert(X.isUndef());
-  
-  const Expr *Ex = (const Expr*) cast<UndefinedVal>(X).getData();
-  assert(Ex);
-  
-  if (Ex == B->getRHS()) {
-    X = state->getSVal(Ex, LCtx);
-    
-    // Handle undefined values.
-    if (X.isUndef()) {
-      Bldr.generateNode(B, Pred, state->BindExpr(B, LCtx, X));
-      return;
-    }
-    
-    DefinedOrUnknownSVal XD = cast<DefinedOrUnknownSVal>(X);
-    
-    // We took the RHS.  Because the value of the '&&' or '||' expression must
-    // evaluate to 0 or 1, we must assume the value of the RHS evaluates to 0
-    // or 1.  Alternatively, we could take a lazy approach, and calculate this
-    // value later when necessary.  We don't have the machinery in place for
-    // this right now, and since most logical expressions are used for branches,
-    // the payoff is not likely to be large.  Instead, we do eager evaluation.
-    if (ProgramStateRef newState = state->assume(XD, true))
-      Bldr.generateNode(B, Pred,
-               newState->BindExpr(B, LCtx,
-                                  svalBuilder.makeIntVal(1U, B->getType())));
-    
-    if (ProgramStateRef newState = state->assume(XD, false))
-      Bldr.generateNode(B, Pred,
-               newState->BindExpr(B, LCtx,
-                                  svalBuilder.makeIntVal(0U, B->getType())));
+
+  ExplodedNode *N = Pred;
+  while (!isa<BlockEntrance>(N->getLocation())) {
+    ProgramPoint P = N->getLocation();
+    assert(isa<PreStmt>(P)|| isa<PreStmtPurgeDeadSymbols>(P));
+    (void) P;
+    assert(N->pred_size() == 1);
+    N = *N->pred_begin();
+  }
+  assert(N->pred_size() == 1);
+  N = *N->pred_begin();
+  BlockEdge BE = cast<BlockEdge>(N->getLocation());
+  SVal X;
+
+  // Determine the value of the expression by introspecting how we
+  // got this location in the CFG.  This requires looking at the previous
+  // block we were in and what kind of control-flow transfer was involved.
+  const CFGBlock *SrcBlock = BE.getSrc();
+  // The only terminator (if there is one) that makes sense is a logical op.
+  CFGTerminator T = SrcBlock->getTerminator();
+  if (const BinaryOperator *Term = cast_or_null<BinaryOperator>(T.getStmt())) {
+    assert(Term->isLogicalOp());
+    assert(SrcBlock->succ_size() == 2);
+    // Did we take the true or false branch?
+    unsigned constant = (*SrcBlock->succ_begin() == BE.getDst()) ? 1 : 0;
+    X = svalBuilder.makeIntVal(constant, B->getType());
   }
   else {
-    // We took the LHS expression.  Depending on whether we are '&&' or
-    // '||' we know what the value of the expression is via properties of
-    // the short-circuiting.
-    X = svalBuilder.makeIntVal(B->getOpcode() == BO_LAnd ? 0U : 1U,
-                               B->getType());
-    Bldr.generateNode(B, Pred, state->BindExpr(B, LCtx, X));
+    // If there is no terminator, by construction the last statement
+    // in SrcBlock is the value of the enclosing expression.
+    assert(!SrcBlock->empty());
+    CFGStmt Elem = cast<CFGStmt>(*SrcBlock->rbegin());
+    const Stmt *S = Elem.getStmt();
+    X = N->getState()->getSVal(S, Pred->getLocationContext());
   }
+
+  Bldr.generateNode(B, Pred, state->BindExpr(B, Pred->getLocationContext(), X));
 }
 
 void ExprEngine::VisitInitListExpr(const InitListExpr *IE,

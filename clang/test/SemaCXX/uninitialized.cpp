@@ -25,7 +25,7 @@ int l = k ? l : l;  // expected-warning 2{{variable 'l' is uninitialized when us
 int m = 1 + (k ? m : m);  // expected-warning 2{{variable 'm' is uninitialized when used within its own initialization}}
 int n = -n;  // expected-warning {{variable 'n' is uninitialized when used within its own initialization}}
 
-void test () {
+void test_stuff () {
   int a = a; // no-warning: used to signal intended lack of initialization.
   int b = b + 1; // expected-warning {{variable 'b' is uninitialized when used within its own initialization}}
   int c = (c + c); // expected-warning {{variable 'c' is uninitialized when used within its own initialization}}

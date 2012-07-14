@@ -1208,6 +1208,45 @@ static SVal RecoverCastedSymbol(ProgramStateManager& StateMgr,
   return state->getSVal(Ex, LCtx);
 }
 
+static const Stmt *ResolveCondition(const Stmt *Condition,
+                                    const CFGBlock *B) {
+  if (const Expr *Ex = dyn_cast<Expr>(Condition))
+    Condition = Ex->IgnoreParens();
+
+  const BinaryOperator *BO = dyn_cast<BinaryOperator>(Condition);
+  if (!BO || !BO->isLogicalOp())
+    return Condition;
+
+  // For logical operations, we still have the case where some branches
+  // use the traditional "merge" approach and others sink the branch
+  // directly into the basic blocks representing the logical operation.
+  // We need to distinguish between those two cases here.
+
+  // The invariants are still shifting, but it is possible that the
+  // last element in a CFGBlock is not a CFGStmt.  Look for the last
+  // CFGStmt as the value of the condition.
+  CFGBlock::const_reverse_iterator I = B->rbegin(), E = B->rend();
+  for (; I != E; ++I) {
+    CFGElement Elem = *I;
+    CFGStmt *CS = dyn_cast<CFGStmt>(&Elem);
+    if (!CS)
+      continue;
+    if (CS->getStmt() != Condition)
+      break;
+    return Condition;
+  }
+
+  assert(I != E);
+
+  while (Condition) {
+    BO = dyn_cast<BinaryOperator>(Condition);
+    if (!BO || !BO->isLogicalOp())
+      return Condition;
+    Condition = BO->getRHS()->IgnoreParens();
+  }
+  llvm_unreachable("could not resolve condition");
+}
+
 void ExprEngine::processBranch(const Stmt *Condition, const Stmt *Term,
                                NodeBuilderContext& BldCtx,
                                ExplodedNode *Pred,
@@ -1224,6 +1263,12 @@ void ExprEngine::processBranch(const Stmt *Condition, const Stmt *Term,
     return;
   }
 
+
+  // Resolve the condition in the precense of nested '||' and '&&'.
+  if (const Expr *Ex = dyn_cast<Expr>(Condition))
+    Condition = Ex->IgnoreParens();
+
+  Condition = ResolveCondition(Condition, BldCtx.getBlock());
   PrettyStackTraceLoc CrashInfo(getContext().getSourceManager(),
                                 Condition->getLocStart(),
                                 "Error evaluating branch");

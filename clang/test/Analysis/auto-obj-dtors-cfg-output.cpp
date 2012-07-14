@@ -416,121 +416,121 @@ void test_catch_copy() {
 // CHECK:  [B6 (ENTRY)]
 // CHECK:    Succs (1): B5
 // CHECK:  [B1]
-// CHECK:    1: [B2.4].~A() (Implicit destructor)
+// CHECK:    1: [B4.4].~A() (Implicit destructor)
 // CHECK:    2: [B5.2].~A() (Implicit destructor)
-// CHECK:    Preds (1): B2
+// CHECK:    Preds (1): B4
 // CHECK:    Succs (1): B0
 // CHECK:  [B2]
-// CHECK:    1: a
-// CHECK:    2: [B2.1] (ImplicitCastExpr, NoOp, const class A)
-// CHECK:    3: [B2.2] (CXXConstructExpr, class A)
-// CHECK:    4: A b = a;
-// CHECK:    5: b
-// CHECK:    6: [B2.5] (ImplicitCastExpr, NoOp, const class A)
-// CHECK:    7: [B2.6].operator int
-// CHECK:    8: [B2.7]()
-// CHECK:    9: [B2.8] (ImplicitCastExpr, UserDefinedConversion, int)
-// CHECK:   10: [B2.9] (ImplicitCastExpr, IntegralToBoolean, _Bool)
-// CHECK:    T: while [B2.10]
-// CHECK:    Preds (2): B3 B5
-// CHECK:    Succs (2): B4 B1
+// CHECK:    Preds (1): B3
+// CHECK:    Succs (1): B4
 // CHECK:  [B3]
+// CHECK:    1:  (CXXConstructExpr, class A)
+// CHECK:    2: A c;
+// CHECK:    3: [B3.2].~A() (Implicit destructor)
+// CHECK:    4: [B4.4].~A() (Implicit destructor)
 // CHECK:    Preds (1): B4
 // CHECK:    Succs (1): B2
 // CHECK:  [B4]
-// CHECK:    1:  (CXXConstructExpr, class A)
-// CHECK:    2: A c;
-// CHECK:    3: [B4.2].~A() (Implicit destructor)
-// CHECK:    4: [B2.4].~A() (Implicit destructor)
-// CHECK:    Preds (1): B2
-// CHECK:    Succs (1): B3
+// CHECK:    1: a
+// CHECK:    2: [B4.1] (ImplicitCastExpr, NoOp, const class A)
+// CHECK:    3: [B4.2] (CXXConstructExpr, class A)
+// CHECK:    4: A b = a;
+// CHECK:    5: b
+// CHECK:    6: [B4.5] (ImplicitCastExpr, NoOp, const class A)
+// CHECK:    7: [B4.6].operator int
+// CHECK:    8: [B4.7]()
+// CHECK:    9: [B4.8] (ImplicitCastExpr, UserDefinedConversion, int)
+// CHECK:   10: [B4.9] (ImplicitCastExpr, IntegralToBoolean, _Bool)
+// CHECK:    T: while [B4.10]
+// CHECK:    Preds (2): B2 B5
+// CHECK:    Succs (2): B3 B1
 // CHECK:  [B5]
 // CHECK:    1:  (CXXConstructExpr, class A)
 // CHECK:    2: A a;
 // CHECK:    Preds (1): B6
-// CHECK:    Succs (1): B2
+// CHECK:    Succs (1): B4
 // CHECK:  [B0 (EXIT)]
 // CHECK:    Preds (1): B1
 // CHECK:  [B12 (ENTRY)]
 // CHECK:    Succs (1): B11
 // CHECK:  [B1]
-// CHECK:    1: [B2.4].~A() (Implicit destructor)
+// CHECK:    1: [B10.4].~A() (Implicit destructor)
 // CHECK:    2:  (CXXConstructExpr, class A)
 // CHECK:    3: A e;
 // CHECK:    4: [B1.3].~A() (Implicit destructor)
 // CHECK:    5: [B11.2].~A() (Implicit destructor)
-// CHECK:    Preds (2): B9 B2
+// CHECK:    Preds (2): B8 B10
 // CHECK:    Succs (1): B0
 // CHECK:  [B2]
-// CHECK:    1: a
-// CHECK:    2: [B2.1] (ImplicitCastExpr, NoOp, const class A)
-// CHECK:    3: [B2.2] (CXXConstructExpr, class A)
-// CHECK:    4: A b = a;
-// CHECK:    5: b
-// CHECK:    6: [B2.5] (ImplicitCastExpr, NoOp, const class A)
-// CHECK:    7: [B2.6].operator int
-// CHECK:    8: [B2.7]()
-// CHECK:    9: [B2.8] (ImplicitCastExpr, UserDefinedConversion, int)
-// CHECK:   10: [B2.9] (ImplicitCastExpr, IntegralToBoolean, _Bool)
-// CHECK:    T: while [B2.10]
-// CHECK:    Preds (2): B3 B11
-// CHECK:    Succs (2): B10 B1
+// CHECK:    Preds (2): B3 B6
+// CHECK:    Succs (1): B10
 // CHECK:  [B3]
-// CHECK:    Preds (2): B4 B7
-// CHECK:    Succs (1): B2
-// CHECK:  [B4]
 // CHECK:    1:  (CXXConstructExpr, class A)
 // CHECK:    2: A d;
-// CHECK:    3: [B4.2].~A() (Implicit destructor)
-// CHECK:    4: [B10.2].~A() (Implicit destructor)
-// CHECK:    5: [B2.4].~A() (Implicit destructor)
-// CHECK:    Preds (1): B6
-// CHECK:    Succs (1): B3
-// CHECK:  [B5]
+// CHECK:    3: [B3.2].~A() (Implicit destructor)
+// CHECK:    4: [B9.2].~A() (Implicit destructor)
+// CHECK:    5: [B10.4].~A() (Implicit destructor)
+// CHECK:    Preds (1): B5
+// CHECK:    Succs (1): B2
+// CHECK:  [B4]
 // CHECK:    1: return;
-// CHECK:    2: [B10.2].~A() (Implicit destructor)
-// CHECK:    3: [B2.4].~A() (Implicit destructor)
+// CHECK:    2: [B9.2].~A() (Implicit destructor)
+// CHECK:    3: [B10.4].~A() (Implicit destructor)
 // CHECK:    4: [B11.2].~A() (Implicit destructor)
-// CHECK:    Preds (1): B6
+// CHECK:    Preds (1): B5
 // CHECK:    Succs (1): B0
+// CHECK:  [B5]
+// CHECK:    1: UV
+// CHECK:    2: [B5.1] (ImplicitCastExpr, LValueToRValue, _Bool)
+// CHECK:    T: if [B5.2]
+// CHECK:    Preds (1): B7
+// CHECK:    Succs (2): B4 B3
 // CHECK:  [B6]
-// CHECK:    1: UV
-// CHECK:    2: [B6.1] (ImplicitCastExpr, LValueToRValue, _Bool)
-// CHECK:    T: if [B6.2]
-// CHECK:    Preds (1): B8
-// CHECK:    Succs (2): B5 B4
-// CHECK:  [B7]
-// CHECK:    1: [B10.2].~A() (Implicit destructor)
-// CHECK:    2: [B2.4].~A() (Implicit destructor)
+// CHECK:    1: [B9.2].~A() (Implicit destructor)
+// CHECK:    2: [B10.4].~A() (Implicit destructor)
 // CHECK:    T: continue;
-// CHECK:    Preds (1): B8
-// CHECK:    Succs (1): B3
-// CHECK:  [B8]
+// CHECK:    Preds (1): B7
+// CHECK:    Succs (1): B2
+// CHECK:  [B7]
 // CHECK:    1: UV
-// CHECK:    2: [B8.1] (ImplicitCastExpr, LValueToRValue, _Bool)
-// CHECK:    T: if [B8.2]
-// CHECK:    Preds (1): B10
-// CHECK:    Succs (2): B7 B6
-// CHECK:  [B9]
-// CHECK:    1: [B10.2].~A() (Implicit destructor)
+// CHECK:    2: [B7.1] (ImplicitCastExpr, LValueToRValue, _Bool)
+// CHECK:    T: if [B7.2]
+// CHECK:    Preds (1): B9
+// CHECK:    Succs (2): B6 B5
+// CHECK:  [B8]
+// CHECK:    1: [B9.2].~A() (Implicit destructor)
 // CHECK:    T: break;
-// CHECK:    Preds (1): B10
+// CHECK:    Preds (1): B9
 // CHECK:    Succs (1): B1
-// CHECK:  [B10]
+// CHECK:  [B9]
 // CHECK:    1:  (CXXConstructExpr, class A)
 // CHECK:    2: A c;
 // CHECK:    3: UV
-// CHECK:    4: [B10.3] (ImplicitCastExpr, LValueToRValue, _Bool)
-// CHECK:    T: if [B10.4]
-// CHECK:    Preds (1): B2
-// CHECK:    Succs (2): B9 B8
+// CHECK:    4: [B9.3] (ImplicitCastExpr, LValueToRValue, _Bool)
+// CHECK:    T: if [B9.4]
+// CHECK:    Preds (1): B10
+// CHECK:    Succs (2): B8 B7
+// CHECK:  [B10]
+// CHECK:    1: a
+// CHECK:    2: [B10.1] (ImplicitCastExpr, NoOp, const class A)
+// CHECK:    3: [B10.2] (CXXConstructExpr, class A)
+// CHECK:    4: A b = a;
+// CHECK:    5: b
+// CHECK:    6: [B10.5] (ImplicitCastExpr, NoOp, const class A)
+// CHECK:    7: [B10.6].operator int
+// CHECK:    8: [B10.7]()
+// CHECK:    9: [B10.8] (ImplicitCastExpr, UserDefinedConversion, int)
+// CHECK:   10: [B10.9] (ImplicitCastExpr, IntegralToBoolean, _Bool)
+// CHECK:    T: while [B10.10]
+// CHECK:    Preds (2): B2 B11
+// CHECK:    Succs (2): B9 B1
 // CHECK:  [B11]
 // CHECK:    1:  (CXXConstructExpr, class A)
 // CHECK:    2: A a;
 // CHECK:    Preds (1): B12
-// CHECK:    Succs (1): B2
+// CHECK:    Succs (1): B10
 // CHECK:  [B0 (EXIT)]
-// CHECK:    Preds (2): B1 B5
+// CHECK:    Preds (2): B1 B4
 // CHECK:  [B4 (ENTRY)]
 // CHECK:    Succs (1): B2
 // CHECK:  [B1]
@@ -717,124 +717,124 @@ void test_catch_copy() {
 // CHECK:  [B6 (ENTRY)]
 // CHECK:    Succs (1): B5
 // CHECK:  [B1]
-// CHECK:    1: [B2.4].~A() (Implicit destructor)
+// CHECK:    1: [B4.4].~A() (Implicit destructor)
 // CHECK:    2: [B5.2].~A() (Implicit destructor)
-// CHECK:    Preds (1): B2
+// CHECK:    Preds (1): B4
 // CHECK:    Succs (1): B0
 // CHECK:  [B2]
-// CHECK:    1: a
-// CHECK:    2: [B2.1] (ImplicitCastExpr, NoOp, const class A)
-// CHECK:    3: [B2.2] (CXXConstructExpr, class A)
-// CHECK:    4: A b = a;
-// CHECK:    5: b
-// CHECK:    6: [B2.5] (ImplicitCastExpr, NoOp, const class A)
-// CHECK:    7: [B2.6].operator int
-// CHECK:    8: [B2.7]()
-// CHECK:    9: [B2.8] (ImplicitCastExpr, UserDefinedConversion, int)
-// CHECK:   10: [B2.9] (ImplicitCastExpr, IntegralToBoolean, _Bool)
-// CHECK:    T: for (...; [B2.10]; )
-// CHECK:    Preds (2): B3 B5
-// CHECK:    Succs (2): B4 B1
+// CHECK:    Preds (1): B3
+// CHECK:    Succs (1): B4
 // CHECK:  [B3]
-// CHECK:    1: [B2.4].~A() (Implicit destructor)
+// CHECK:    1:  (CXXConstructExpr, class A)
+// CHECK:    2: A c;
+// CHECK:    3: [B3.2].~A() (Implicit destructor)
+// CHECK:    4: [B4.4].~A() (Implicit destructor)
 // CHECK:    Preds (1): B4
 // CHECK:    Succs (1): B2
 // CHECK:  [B4]
-// CHECK:    1:  (CXXConstructExpr, class A)
-// CHECK:    2: A c;
-// CHECK:    3: [B4.2].~A() (Implicit destructor)
-// CHECK:    Preds (1): B2
-// CHECK:    Succs (1): B3
+// CHECK:    1: a
+// CHECK:    2: [B4.1] (ImplicitCastExpr, NoOp, const class A)
+// CHECK:    3: [B4.2] (CXXConstructExpr, class A)
+// CHECK:    4: A b = a;
+// CHECK:    5: b
+// CHECK:    6: [B4.5] (ImplicitCastExpr, NoOp, const class A)
+// CHECK:    7: [B4.6].operator int
+// CHECK:    8: [B4.7]()
+// CHECK:    9: [B4.8] (ImplicitCastExpr, UserDefinedConversion, int)
+// CHECK:   10: [B4.9] (ImplicitCastExpr, IntegralToBoolean, _Bool)
+// CHECK:    T: for (...; [B4.10]; )
+// CHECK:    Preds (2): B2 B5
+// CHECK:    Succs (2): B3 B1
 // CHECK:  [B5]
 // CHECK:    1:  (CXXConstructExpr, class A)
 // CHECK:    2: A a;
 // CHECK:    Preds (1): B6
-// CHECK:    Succs (1): B2
+// CHECK:    Succs (1): B4
 // CHECK:  [B0 (EXIT)]
 // CHECK:    Preds (1): B1
 // CHECK:  [B12 (ENTRY)]
 // CHECK:    Succs (1): B11
 // CHECK:  [B1]
-// CHECK:    1: [B2.4].~A() (Implicit destructor)
+// CHECK:    1: [B10.4].~A() (Implicit destructor)
 // CHECK:    2: [B11.4].~A() (Implicit destructor)
 // CHECK:    3:  (CXXConstructExpr, class A)
 // CHECK:    4: A f;
 // CHECK:    5: [B1.4].~A() (Implicit destructor)
 // CHECK:    6: [B11.2].~A() (Implicit destructor)
-// CHECK:    Preds (2): B9 B2
+// CHECK:    Preds (2): B8 B10
 // CHECK:    Succs (1): B0
 // CHECK:  [B2]
-// CHECK:    1: b
-// CHECK:    2: [B2.1] (ImplicitCastExpr, NoOp, const class A)
-// CHECK:    3: [B2.2] (CXXConstructExpr, class A)
-// CHECK:    4: A c = b;
-// CHECK:    5: c
-// CHECK:    6: [B2.5] (ImplicitCastExpr, NoOp, const class A)
-// CHECK:    7: [B2.6].operator int
-// CHECK:    8: [B2.7]()
-// CHECK:    9: [B2.8] (ImplicitCastExpr, UserDefinedConversion, int)
-// CHECK:   10: [B2.9] (ImplicitCastExpr, IntegralToBoolean, _Bool)
-// CHECK:    T: for (...; [B2.10]; )
-// CHECK:    Preds (2): B3 B11
-// CHECK:    Succs (2): B10 B1
+// CHECK:    Preds (2): B3 B6
+// CHECK:    Succs (1): B10
 // CHECK:  [B3]
-// CHECK:    1: [B2.4].~A() (Implicit destructor)
-// CHECK:    Preds (2): B4 B7
-// CHECK:    Succs (1): B2
-// CHECK:  [B4]
 // CHECK:    1:  (CXXConstructExpr, class A)
 // CHECK:    2: A e;
-// CHECK:    3: [B4.2].~A() (Implicit destructor)
-// CHECK:    4: [B10.2].~A() (Implicit destructor)
-// CHECK:    Preds (1): B6
-// CHECK:    Succs (1): B3
-// CHECK:  [B5]
+// CHECK:    3: [B3.2].~A() (Implicit destructor)
+// CHECK:    4: [B9.2].~A() (Implicit destructor)
+// CHECK:    5: [B10.4].~A() (Implicit destructor)
+// CHECK:    Preds (1): B5
+// CHECK:    Succs (1): B2
+// CHECK:  [B4]
 // CHECK:    1: return;
-// CHECK:    2: [B10.2].~A() (Implicit destructor)
-// CHECK:    3: [B2.4].~A() (Implicit destructor)
+// CHECK:    2: [B9.2].~A() (Implicit destructor)
+// CHECK:    3: [B10.4].~A() (Implicit destructor)
 // CHECK:    4: [B11.4].~A() (Implicit destructor)
 // CHECK:    5: [B11.2].~A() (Implicit destructor)
-// CHECK:    Preds (1): B6
+// CHECK:    Preds (1): B5
 // CHECK:    Succs (1): B0
+// CHECK:  [B5]
+// CHECK:    1: UV
+// CHECK:    2: [B5.1] (ImplicitCastExpr, LValueToRValue, _Bool)
+// CHECK:    T: if [B5.2]
+// CHECK:    Preds (1): B7
+// CHECK:    Succs (2): B4 B3
 // CHECK:  [B6]
-// CHECK:    1: UV
-// CHECK:    2: [B6.1] (ImplicitCastExpr, LValueToRValue, _Bool)
-// CHECK:    T: if [B6.2]
-// CHECK:    Preds (1): B8
-// CHECK:    Succs (2): B5 B4
-// CHECK:  [B7]
-// CHECK:    1: [B10.2].~A() (Implicit destructor)
+// CHECK:    1: [B9.2].~A() (Implicit destructor)
 // CHECK:    T: continue;
-// CHECK:    Preds (1): B8
-// CHECK:    Succs (1): B3
-// CHECK:  [B8]
+// CHECK:    Preds (1): B7
+// CHECK:    Succs (1): B2
+// CHECK:  [B7]
 // CHECK:    1: UV
-// CHECK:    2: [B8.1] (ImplicitCastExpr, LValueToRValue, _Bool)
-// CHECK:    T: if [B8.2]
-// CHECK:    Preds (1): B10
-// CHECK:    Succs (2): B7 B6
-// CHECK:  [B9]
-// CHECK:    1: [B10.2].~A() (Implicit destructor)
+// CHECK:    2: [B7.1] (ImplicitCastExpr, LValueToRValue, _Bool)
+// CHECK:    T: if [B7.2]
+// CHECK:    Preds (1): B9
+// CHECK:    Succs (2): B6 B5
+// CHECK:  [B8]
+// CHECK:    1: [B9.2].~A() (Implicit destructor)
 // CHECK:    T: break;
-// CHECK:    Preds (1): B10
+// CHECK:    Preds (1): B9
 // CHECK:    Succs (1): B1
-// CHECK:  [B10]
+// CHECK:  [B9]
 // CHECK:    1:  (CXXConstructExpr, class A)
 // CHECK:    2: A d;
 // CHECK:    3: UV
-// CHECK:    4: [B10.3] (ImplicitCastExpr, LValueToRValue, _Bool)
-// CHECK:    T: if [B10.4]
-// CHECK:    Preds (1): B2
-// CHECK:    Succs (2): B9 B8
+// CHECK:    4: [B9.3] (ImplicitCastExpr, LValueToRValue, _Bool)
+// CHECK:    T: if [B9.4]
+// CHECK:    Preds (1): B10
+// CHECK:    Succs (2): B8 B7
+// CHECK:  [B10]
+// CHECK:    1: b
+// CHECK:    2: [B10.1] (ImplicitCastExpr, NoOp, const class A)
+// CHECK:    3: [B10.2] (CXXConstructExpr, class A)
+// CHECK:    4: A c = b;
+// CHECK:    5: c
+// CHECK:    6: [B10.5] (ImplicitCastExpr, NoOp, const class A)
+// CHECK:    7: [B10.6].operator int
+// CHECK:    8: [B10.7]()
+// CHECK:    9: [B10.8] (ImplicitCastExpr, UserDefinedConversion, int)
+// CHECK:   10: [B10.9] (ImplicitCastExpr, IntegralToBoolean, _Bool)
+// CHECK:    T: for (...; [B10.10]; )
+// CHECK:    Preds (2): B2 B11
+// CHECK:    Succs (2): B9 B1
 // CHECK:  [B11]
 // CHECK:    1:  (CXXConstructExpr, class A)
 // CHECK:    2: A a;
 // CHECK:    3:  (CXXConstructExpr, class A)
 // CHECK:    4: A b;
 // CHECK:    Preds (1): B12
-// CHECK:    Succs (1): B2
+// CHECK:    Succs (1): B10
 // CHECK:  [B0 (EXIT)]
-// CHECK:    Preds (2): B1 B5
+// CHECK:    Preds (2): B1 B4
 // CHECK:  [B3 (ENTRY)]
 // CHECK:    Succs (1): B0
 // CHECK:  [B1]
@@ -862,3 +862,4 @@ void test_catch_copy() {
 // CHECK:    Succs (1): B0
 // CHECK:  [B0 (EXIT)]
 // CHECK:    Preds (3): B2 B1 B3
+
