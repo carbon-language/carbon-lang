@@ -9458,7 +9458,13 @@ static SDValue getTargetVShiftNode(unsigned Opc, DebugLoc dl, EVT VT,
   ShOps[2] = DAG.getUNDEF(MVT::i32);
   ShOps[3] = DAG.getUNDEF(MVT::i32);
   ShAmt = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v4i32, &ShOps[0], 4);
-  ShAmt = DAG.getNode(ISD::BITCAST, dl, VT, ShAmt);
+
+  // The return type has to be a 128-bit type with the same element
+  // type as the input type.
+  MVT EltVT = VT.getVectorElementType().getSimpleVT();
+  EVT ShVT = MVT::getVectorVT(EltVT, 128/EltVT.getSizeInBits());
+
+  ShAmt = DAG.getNode(ISD::BITCAST, dl, ShVT, ShAmt);
   return DAG.getNode(Opc, dl, VT, SrcOp, ShAmt);
 }
 
