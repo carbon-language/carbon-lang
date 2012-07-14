@@ -985,10 +985,10 @@ ABISysV_x86_64::CreateFunctionEntryUnwindPlan (UnwindPlan &unwind_plan)
         pc_reg_num == LLDB_INVALID_REGNUM)
         return false;
 
-    UnwindPlan::Row row;
-    row.SetCFARegister (sp_reg_num);
-    row.SetCFAOffset (8);
-    row.SetRegisterLocationToAtCFAPlusOffset(pc_reg_num, -8, false);    
+    UnwindPlan::RowSP row(new UnwindPlan::Row);
+    row->SetCFARegister (sp_reg_num);
+    row->SetCFAOffset (8);
+    row->SetRegisterLocationToAtCFAPlusOffset(pc_reg_num, -8, false);
     unwind_plan.AppendRow (row);
     unwind_plan.SetSourceName ("x86_64 at-func-entry default");
     return true;
@@ -1029,16 +1029,16 @@ ABISysV_x86_64::CreateDefaultUnwindPlan (UnwindPlan &unwind_plan)
         pc_reg_num == LLDB_INVALID_REGNUM)
         return false;
 
-    UnwindPlan::Row row;
+    UnwindPlan::RowSP row(new UnwindPlan::Row);
 
     const int32_t ptr_size = 8;
-    row.SetCFARegister (LLDB_REGNUM_GENERIC_FP);
-    row.SetCFAOffset (2 * ptr_size);
-    row.SetOffset (0);
+    row->SetCFARegister (LLDB_REGNUM_GENERIC_FP);
+    row->SetCFAOffset (2 * ptr_size);
+    row->SetOffset (0);
     
-    row.SetRegisterLocationToAtCFAPlusOffset(fp_reg_num, ptr_size * -2, true);
-    row.SetRegisterLocationToAtCFAPlusOffset(pc_reg_num, ptr_size * -1, true);
-    row.SetRegisterLocationToAtCFAPlusOffset(sp_reg_num, ptr_size *  0, true);
+    row->SetRegisterLocationToAtCFAPlusOffset(fp_reg_num, ptr_size * -2, true);
+    row->SetRegisterLocationToAtCFAPlusOffset(pc_reg_num, ptr_size * -1, true);
+    row->SetRegisterLocationToAtCFAPlusOffset(sp_reg_num, ptr_size *  0, true);
 
     unwind_plan.AppendRow (row);
     unwind_plan.SetSourceName ("x86_64 default unwind plan");

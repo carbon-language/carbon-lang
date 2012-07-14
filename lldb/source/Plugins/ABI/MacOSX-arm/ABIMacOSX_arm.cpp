@@ -536,13 +536,13 @@ ABIMacOSX_arm::CreateFunctionEntryUnwindPlan (UnwindPlan &unwind_plan)
         pc_reg_num == LLDB_INVALID_REGNUM)
         return false;
 
-    UnwindPlan::Row row;
+    UnwindPlan::RowSP row(new UnwindPlan::Row);
     
     // Our Call Frame Address is the stack pointer value
-    row.SetCFARegister (sp_reg_num);
+    row->SetCFARegister (sp_reg_num);
     
     // The previous PC is in the LR
-    row.SetRegisterLocationToRegister(pc_reg_num, lr_reg_num, true);
+    row->SetRegisterLocationToRegister(pc_reg_num, lr_reg_num, true);
     unwind_plan.AppendRow (row);
     
     // All other registers are the same.
@@ -557,17 +557,17 @@ ABIMacOSX_arm::CreateDefaultUnwindPlan (UnwindPlan &unwind_plan)
     uint32_t fp_reg_num = dwarf_r7; // apple uses r7 for all frames. Normal arm uses r11;
     uint32_t pc_reg_num = dwarf_pc;
     
-    UnwindPlan::Row row;    
+    UnwindPlan::RowSP row(new UnwindPlan::Row);
     const int32_t ptr_size = 4;
     
     unwind_plan.Clear ();
     unwind_plan.SetRegisterKind (eRegisterKindDWARF);
-    row.SetCFARegister (fp_reg_num);
-    row.SetCFAOffset (2 * ptr_size);
-    row.SetOffset (0);
+    row->SetCFARegister (fp_reg_num);
+    row->SetCFAOffset (2 * ptr_size);
+    row->SetOffset (0);
     
-    row.SetRegisterLocationToAtCFAPlusOffset(fp_reg_num, ptr_size * -2, true);
-    row.SetRegisterLocationToAtCFAPlusOffset(pc_reg_num, ptr_size * -1, true);
+    row->SetRegisterLocationToAtCFAPlusOffset(fp_reg_num, ptr_size * -2, true);
+    row->SetRegisterLocationToAtCFAPlusOffset(pc_reg_num, ptr_size * -1, true);
     
     unwind_plan.AppendRow (row);
     unwind_plan.SetSourceName ("arm-apple-ios default unwind plan");

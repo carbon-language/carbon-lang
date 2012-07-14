@@ -403,7 +403,9 @@ DWARFCallFrameInfo::FDEToUnwindPlan (dw_offset_t offset, Address startaddr, Unwi
     int32_t data_align = cie->data_align;
 
     unwind_plan.SetPlanValidAddressRange (range);
-    UnwindPlan::Row row = cie->initial_row;
+    UnwindPlan::Row *cie_initial_row = new UnwindPlan::Row;
+    *cie_initial_row = cie->initial_row;
+    UnwindPlan::RowSP row(cie_initial_row);
 
     unwind_plan.SetRegisterKind (m_reg_kind);
 
@@ -426,7 +428,7 @@ DWARFCallFrameInfo::FDEToUnwindPlan (dw_offset_t offset, Address startaddr, Unwi
                         // value and adding (delta * code_align). All other
                         // values in the new row are initially identical to the current row.
                         unwind_plan.AppendRow(row);
-                        row.SlideOffset(extended_opcode * code_align);
+                        row->SlideOffset(extended_opcode * code_align);
                     }
                     break;
 
@@ -440,7 +442,7 @@ DWARFCallFrameInfo::FDEToUnwindPlan (dw_offset_t offset, Address startaddr, Unwi
                         reg_num = extended_opcode;
                         op_offset = (int32_t)m_cfi_data.GetULEB128(&offset) * data_align;
                         reg_location.SetAtCFAPlusOffset(op_offset);
-                        row.SetRegisterInfo (reg_num, reg_location);
+                        row->SetRegisterInfo (reg_num, reg_location);
                     }
                     break;
 
@@ -455,8 +457,8 @@ DWARFCallFrameInfo::FDEToUnwindPlan (dw_offset_t offset, Address startaddr, Unwi
                         // by the register index in that state, so we need to convert our
                         // GCC register number from the EH frame info, to a register index
 
-                        if (unwind_plan.IsValidRowIndex(0) && unwind_plan.GetRowAtIndex(0).GetRegisterInfo(reg_num, reg_location))
-                            row.SetRegisterInfo (reg_num, reg_location);
+                        if (unwind_plan.IsValidRowIndex(0) && unwind_plan.GetRowAtIndex(0)->GetRegisterInfo(reg_num, reg_location))
+                            row->SetRegisterInfo (reg_num, reg_location);
                     }
                     break;
             }
@@ -476,7 +478,7 @@ DWARFCallFrameInfo::FDEToUnwindPlan (dw_offset_t offset, Address startaddr, Unwi
                         // are initially identical to the current row. The new location value
                         // should always be greater than the current one.
                         unwind_plan.AppendRow(row);
-                        row.SetOffset(m_cfi_data.GetPointer(&offset) - startaddr.GetFileAddress());
+                        row->SetOffset(m_cfi_data.GetPointer(&offset) - startaddr.GetFileAddress());
                     }
                     break;
 
@@ -486,7 +488,7 @@ DWARFCallFrameInfo::FDEToUnwindPlan (dw_offset_t offset, Address startaddr, Unwi
                         // This instruction is identical to DW_CFA_advance_loc except for the
                         // encoding and size of the delta argument.
                         unwind_plan.AppendRow(row);
-                        row.SlideOffset (m_cfi_data.GetU8(&offset) * code_align);
+                        row->SlideOffset (m_cfi_data.GetU8(&offset) * code_align);
                     }
                     break;
 
@@ -496,7 +498,7 @@ DWARFCallFrameInfo::FDEToUnwindPlan (dw_offset_t offset, Address startaddr, Unwi
                         // This instruction is identical to DW_CFA_advance_loc except for the
                         // encoding and size of the delta argument.
                         unwind_plan.AppendRow(row);
-                        row.SlideOffset (m_cfi_data.GetU16(&offset) * code_align);
+                        row->SlideOffset (m_cfi_data.GetU16(&offset) * code_align);
                     }
                     break;
 
@@ -506,7 +508,7 @@ DWARFCallFrameInfo::FDEToUnwindPlan (dw_offset_t offset, Address startaddr, Unwi
                         // This instruction is identical to DW_CFA_advance_loc except for the
                         // encoding and size of the delta argument.
                         unwind_plan.AppendRow(row);
-                        row.SlideOffset (m_cfi_data.GetU32(&offset) * code_align);
+                        row->SlideOffset (m_cfi_data.GetU32(&offset) * code_align);
                     }
                     break;
 
@@ -518,7 +520,7 @@ DWARFCallFrameInfo::FDEToUnwindPlan (dw_offset_t offset, Address startaddr, Unwi
                         reg_num = (uint32_t)m_cfi_data.GetULEB128(&offset);
                         op_offset = (int32_t)m_cfi_data.GetULEB128(&offset) * data_align;
                         reg_location.SetAtCFAPlusOffset(op_offset);
-                        row.SetRegisterInfo (reg_num, reg_location);
+                        row->SetRegisterInfo (reg_num, reg_location);
                     }
                     break;
 
@@ -528,8 +530,8 @@ DWARFCallFrameInfo::FDEToUnwindPlan (dw_offset_t offset, Address startaddr, Unwi
                         // number. This instruction is identical to DW_CFA_restore except for
                         // the encoding and size of the register argument.
                         reg_num = (uint32_t)m_cfi_data.GetULEB128(&offset);
-                        if (unwind_plan.IsValidRowIndex(0) && unwind_plan.GetRowAtIndex(0).GetRegisterInfo(reg_num, reg_location))
-                            row.SetRegisterInfo (reg_num, reg_location);
+                        if (unwind_plan.IsValidRowIndex(0) && unwind_plan.GetRowAtIndex(0)->GetRegisterInfo(reg_num, reg_location))
+                            row->SetRegisterInfo (reg_num, reg_location);
                     }
                     break;
 
@@ -540,7 +542,7 @@ DWARFCallFrameInfo::FDEToUnwindPlan (dw_offset_t offset, Address startaddr, Unwi
                         // register to undefined.
                         reg_num = (uint32_t)m_cfi_data.GetULEB128(&offset);
                         reg_location.SetUndefined();
-                        row.SetRegisterInfo (reg_num, reg_location);
+                        row->SetRegisterInfo (reg_num, reg_location);
                     }
                     break;
 
@@ -551,7 +553,7 @@ DWARFCallFrameInfo::FDEToUnwindPlan (dw_offset_t offset, Address startaddr, Unwi
                         // register to same value.
                         reg_num = (uint32_t)m_cfi_data.GetULEB128(&offset);
                         reg_location.SetSame();
-                        row.SetRegisterInfo (reg_num, reg_location);
+                        row->SetRegisterInfo (reg_num, reg_location);
                     }
                     break;
 
@@ -564,7 +566,7 @@ DWARFCallFrameInfo::FDEToUnwindPlan (dw_offset_t offset, Address startaddr, Unwi
                         reg_num = (uint32_t)m_cfi_data.GetULEB128(&offset);
                         uint32_t other_reg_num = (uint32_t)m_cfi_data.GetULEB128(&offset);
                         reg_location.SetInRegister(other_reg_num);
-                        row.SetRegisterInfo (reg_num, reg_location);
+                        row->SetRegisterInfo (reg_num, reg_location);
                     }
                     break;
 
@@ -600,8 +602,8 @@ DWARFCallFrameInfo::FDEToUnwindPlan (dw_offset_t offset, Address startaddr, Unwi
                         // register and offset.
                         reg_num = (uint32_t)m_cfi_data.GetULEB128(&offset);
                         op_offset = (int32_t)m_cfi_data.GetULEB128(&offset);
-                        row.SetCFARegister (reg_num);
-                        row.SetCFAOffset (op_offset);
+                        row->SetCFARegister (reg_num);
+                        row->SetCFAOffset (op_offset);
                     }
                     break;
 
@@ -611,7 +613,7 @@ DWARFCallFrameInfo::FDEToUnwindPlan (dw_offset_t offset, Address startaddr, Unwi
                         // number. The required action is to define the current CFA rule to
                         // use the provided register (but to keep the old offset).
                         reg_num = (uint32_t)m_cfi_data.GetULEB128(&offset);
-                        row.SetCFARegister (reg_num);
+                        row->SetCFARegister (reg_num);
                     }
                     break;
 
@@ -622,7 +624,7 @@ DWARFCallFrameInfo::FDEToUnwindPlan (dw_offset_t offset, Address startaddr, Unwi
                         // the current CFA rule to use the provided offset (but
                         // to keep the old register).
                         op_offset = (int32_t)m_cfi_data.GetULEB128(&offset);
-                        row.SetCFAOffset (op_offset);
+                        row->SetCFAOffset (op_offset);
                     }
                     break;
 
@@ -648,7 +650,7 @@ DWARFCallFrameInfo::FDEToUnwindPlan (dw_offset_t offset, Address startaddr, Unwi
                         const uint8_t *block_data = (uint8_t *)m_cfi_data.GetData(&offset, block_len);
 
                         reg_location.SetAtDWARFExpression(block_data, block_len);
-                        row.SetRegisterInfo (reg_num, reg_location);
+                        row->SetRegisterInfo (reg_num, reg_location);
                     }
                     break;
 
@@ -661,7 +663,7 @@ DWARFCallFrameInfo::FDEToUnwindPlan (dw_offset_t offset, Address startaddr, Unwi
                         reg_num = (uint32_t)m_cfi_data.GetULEB128(&offset);
                         op_offset = (int32_t)m_cfi_data.GetSLEB128(&offset) * data_align;
                         reg_location.SetAtCFAPlusOffset(op_offset);
-                        row.SetRegisterInfo (reg_num, reg_location);
+                        row->SetRegisterInfo (reg_num, reg_location);
                     }
                     break;
 
@@ -673,8 +675,8 @@ DWARFCallFrameInfo::FDEToUnwindPlan (dw_offset_t offset, Address startaddr, Unwi
                         // that the second operand is signed and factored.
                         reg_num = (uint32_t)m_cfi_data.GetULEB128(&offset);
                         op_offset = (int32_t)m_cfi_data.GetSLEB128(&offset) * data_align;
-                        row.SetCFARegister (reg_num);
-                        row.SetCFAOffset (op_offset);
+                        row->SetCFARegister (reg_num);
+                        row->SetCFAOffset (op_offset);
                     }
                     break;
 
@@ -684,7 +686,7 @@ DWARFCallFrameInfo::FDEToUnwindPlan (dw_offset_t offset, Address startaddr, Unwi
                         // offset. This instruction is identical to  DW_CFA_def_cfa_offset
                         // except that the operand is signed and factored.
                         op_offset = (int32_t)m_cfi_data.GetSLEB128(&offset) * data_align;
-                        row.SetCFAOffset (op_offset);
+                        row->SetCFAOffset (op_offset);
                     }
                     break;
 
@@ -741,7 +743,7 @@ DWARFCallFrameInfo::FDEToUnwindPlan (dw_offset_t offset, Address startaddr, Unwi
 //                      }
 //#endif
                         reg_location.SetIsDWARFExpression(block_data, block_len);
-                        row.SetRegisterInfo (reg_num, reg_location);
+                        row->SetRegisterInfo (reg_num, reg_location);
                     }
                     break;
 

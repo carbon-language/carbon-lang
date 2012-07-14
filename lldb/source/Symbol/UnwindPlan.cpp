@@ -296,35 +296,35 @@ UnwindPlan::Row::SetCFARegister (uint32_t reg_num)
 }
 
 void
-UnwindPlan::AppendRow (const UnwindPlan::Row &row)
+UnwindPlan::AppendRow (UnwindPlan::RowSP row)
 {
-    if (m_row_list.empty() || m_row_list.back().GetOffset() != row.GetOffset())
+    if (m_row_list.empty() || m_row_list.back()->GetOffset() != row->GetOffset())
         m_row_list.push_back(row);
     else
         m_row_list.back() = row;
 }
 
-const UnwindPlan::Row *
+UnwindPlan::RowSP
 UnwindPlan::GetRowForFunctionOffset (int offset) const
 {
-    const UnwindPlan::Row *row_ptr = NULL;
+    RowSP row;
     if (!m_row_list.empty())
     {
         if (offset == -1)
-            row_ptr = &m_row_list.back();
+            row = m_row_list.back();
         else
         {
             collection::const_iterator pos, end = m_row_list.end();
             for (pos = m_row_list.begin(); pos != end; ++pos)
             {
-                if (pos->GetOffset() <= offset)
-                    row_ptr = &*pos;
+                if ((*pos)->GetOffset() <= offset)
+                    row = *pos;
                 else
                     break;
             }
         }
     }
-    return row_ptr;
+    return row;
 }
 
 bool
@@ -333,7 +333,7 @@ UnwindPlan::IsValidRowIndex (uint32_t idx) const
     return idx < m_row_list.size();
 }
 
-const UnwindPlan::Row&
+const UnwindPlan::RowSP
 UnwindPlan::GetRowAtIndex (uint32_t idx) const
 {
     // You must call IsValidRowIndex(idx) first before calling this!!!
@@ -341,7 +341,7 @@ UnwindPlan::GetRowAtIndex (uint32_t idx) const
     return m_row_list[idx];
 }
 
-const UnwindPlan::Row&
+const UnwindPlan::RowSP
 UnwindPlan::GetLastRow () const
 {
     // You must call GetRowCount() first to make sure there is at least one row
@@ -410,7 +410,7 @@ UnwindPlan::Dump (Stream& s, Thread *thread, lldb::addr_t base_addr) const
     for (pos = begin; pos != end; ++pos)
     {
         s.Printf ("row[%u]: ", (uint32_t)std::distance (begin, pos));
-        pos->Dump(s, this, thread, base_addr);
+        (*pos)->Dump(s, this, thread, base_addr);
     }
 }
 

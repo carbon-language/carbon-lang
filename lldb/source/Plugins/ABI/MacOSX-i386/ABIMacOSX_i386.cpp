@@ -808,10 +808,10 @@ ABIMacOSX_i386::CreateFunctionEntryUnwindPlan (UnwindPlan &unwind_plan)
         pc_reg_num == LLDB_INVALID_REGNUM)
         return false;
 
-    UnwindPlan::Row row;
-    row.SetCFARegister (sp_reg_num);
-    row.SetCFAOffset (4);
-    row.SetRegisterLocationToAtCFAPlusOffset(pc_reg_num, -4, false);    
+    UnwindPlan::RowSP row(new UnwindPlan::Row);
+    row->SetCFARegister (sp_reg_num);
+    row->SetCFAOffset (4);
+    row->SetRegisterLocationToAtCFAPlusOffset(pc_reg_num, -4, false);
     unwind_plan.AppendRow (row);
     unwind_plan.SetSourceName ("i386 at-func-entry default");
     return true;
@@ -824,18 +824,18 @@ ABIMacOSX_i386::CreateDefaultUnwindPlan (UnwindPlan &unwind_plan)
     uint32_t sp_reg_num = dwarf_esp;
     uint32_t pc_reg_num = dwarf_eip;
     
-    UnwindPlan::Row row;    
+    UnwindPlan::RowSP row(new UnwindPlan::Row);
     const int32_t ptr_size = 4;
 
     unwind_plan.Clear ();
     unwind_plan.SetRegisterKind (eRegisterKindDWARF);
-    row.SetCFARegister (fp_reg_num);
-    row.SetCFAOffset (2 * ptr_size);
-    row.SetOffset (0);
+    row->SetCFARegister (fp_reg_num);
+    row->SetCFAOffset (2 * ptr_size);
+    row->SetOffset (0);
     
-    row.SetRegisterLocationToAtCFAPlusOffset(fp_reg_num, ptr_size * -2, true);
-    row.SetRegisterLocationToAtCFAPlusOffset(pc_reg_num, ptr_size * -1, true);
-    row.SetRegisterLocationToAtCFAPlusOffset(sp_reg_num, ptr_size *  0, true);
+    row->SetRegisterLocationToAtCFAPlusOffset(fp_reg_num, ptr_size * -2, true);
+    row->SetRegisterLocationToAtCFAPlusOffset(pc_reg_num, ptr_size * -1, true);
+    row->SetRegisterLocationToAtCFAPlusOffset(sp_reg_num, ptr_size *  0, true);
 
     unwind_plan.AppendRow (row);
     unwind_plan.SetSourceName ("i386 default unwind plan");

@@ -240,6 +240,15 @@ public:
     public:
         Row ();
     
+        Row (const UnwindPlan::Row& rhs) : 
+            m_offset(rhs.m_offset), m_cfa_reg_num(rhs.m_cfa_reg_num), m_cfa_offset(rhs.m_cfa_offset)
+        {
+            for (collection::const_iterator idx = rhs.m_register_locations.begin(); idx != rhs.m_register_locations.end(); ++idx)
+            {
+                m_register_locations[idx->first] = idx->second;
+            }
+        }
+
         bool
         GetRegisterInfo (uint32_t reg_num, RegisterLocation& register_location) const;
     
@@ -360,6 +369,8 @@ public:
 
 public:
 
+    typedef STD_SHARED_PTR(Row) RowSP;
+
     UnwindPlan (lldb::RegisterKind reg_kind) : 
         m_row_list (), 
         m_plan_valid_address_range (), 
@@ -376,13 +387,13 @@ public:
     Dump (Stream& s, Thread* thread, lldb::addr_t base_addr) const;
 
     void 
-    AppendRow (const Row& row);
+    AppendRow (RowSP row);
 
     // Returns a pointer to the best row for the given offset into the function's instructions.
     // If offset is -1 it indicates that the function start is unknown - the final row in the UnwindPlan is returned.
     // In practice, the UnwindPlan for a function with no known start address will be the architectural default
     // UnwindPlan which will only have one row.
-    const Row*
+    UnwindPlan::RowSP
     GetRowForFunctionOffset (int offset) const;
 
     lldb::RegisterKind
@@ -402,7 +413,7 @@ public:
     {
         if (m_row_list.empty())
             return LLDB_INVALID_REGNUM;
-        return m_row_list.front().GetCFARegister();
+        return m_row_list.front()->GetCFARegister();
     }
 
     // This UnwindPlan may not be valid at every address of the function span.  
@@ -423,10 +434,10 @@ public:
     bool
     IsValidRowIndex (uint32_t idx) const;
 
-    const UnwindPlan::Row&
+    const UnwindPlan::RowSP
     GetRowAtIndex (uint32_t idx) const;
 
-    const UnwindPlan::Row&
+    const UnwindPlan::RowSP
     GetLastRow () const;
 
     lldb_private::ConstString
@@ -453,7 +464,7 @@ public:
 private:
 
     
-    typedef std::vector<Row> collection;
+    typedef std::vector<RowSP> collection;
     collection m_row_list;
     AddressRange m_plan_valid_address_range;
     lldb::RegisterKind m_register_kind;   // The RegisterKind these register numbers are in terms of - will need to be

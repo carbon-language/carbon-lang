@@ -161,7 +161,7 @@ private:
     lldb_private::AddressRange* m_range_ptr; 
     lldb_private::Thread* m_thread_ptr;
     lldb_private::UnwindPlan* m_unwind_plan_ptr;
-    lldb_private::UnwindPlan::Row m_curr_row;
+    lldb_private::UnwindPlan::RowSP m_curr_row;
     typedef std::map<uint64_t, uint64_t> PushedRegisterToAddrMap;
     uint64_t m_initial_sp;
     lldb_private::RegisterInfo m_cfa_reg_info;

@@ -86,23 +86,29 @@ UnwindAssemblyInstEmulation::GetNonCallSiteUnwindPlanFromAssembly (AddressRange&
             RegisterValue cfa_reg_value;
             cfa_reg_value.SetUInt (m_initial_sp, m_cfa_reg_info.byte_size);
             SetRegisterValue (m_cfa_reg_info, cfa_reg_value);
-                
+
             const InstructionList &inst_list = disasm_sp->GetInstructionList ();
             const size_t num_instructions = inst_list.GetSize();
+
+            UnwindPlan::RowSP prologue_completed_row;
+
             if (num_instructions > 0)
             {
                 Instruction *inst = inst_list.GetInstructionAtIndex (0).get();
                 const addr_t base_addr = inst->GetAddress().GetFileAddress();
                 // Initialize the current row with the one row that was created
                 // from the CreateFunctionEntryUnwind call above...
-                m_curr_row = unwind_plan.GetLastRow();
+                UnwindPlan::RowSP last_row = unwind_plan.GetLastRow();
+                UnwindPlan::Row *newrow = new UnwindPlan::Row;
+                if (last_row.get())
+                    *newrow = *last_row.get();
+                m_curr_row.reset(newrow);
 
                 for (size_t idx=0; idx<num_instructions; ++idx)
                 {
                     inst = inst_list.GetInstructionAtIndex (idx).get();
                     if (inst)
                     {
-
                         if (log && log->GetVerbose ())
                         {
                             StreamString strm;
@@ -120,9 +126,13 @@ UnwindAssemblyInstEmulation::GetNonCallSiteUnwindPlanFromAssembly (AddressRange&
                         {
                             // Be sure to not edit the offset unless our row has changed
                             // so that the "!=" call above doesn't trigger every time
-                            m_curr_row.SetOffset (inst->GetAddress().GetFileAddress() + inst->GetOpcode().GetByteSize() - base_addr);
+                            m_curr_row->SetOffset (inst->GetAddress().GetFileAddress() + inst->GetOpcode().GetByteSize() - base_addr);
                             // Append the new row
                             unwind_plan.AppendRow (m_curr_row);
+
+                            UnwindPlan::Row *newrow = new UnwindPlan::Row;
+                            *newrow = *m_curr_row.get();
+                            m_curr_row.reset(newrow);
                         }
                     }
                 }
@@ -362,7 +372,7 @@ UnwindAssemblyInstEmulation::WriteMemory (EmulateInstruction *instruction,
                     {
                         m_pushed_regs[reg_num] = addr;
                         const int32_t offset = addr - m_initial_sp;
-                        m_curr_row.SetRegisterLocationToAtCFAPlusOffset (reg_num, offset, cant_replace);
+                        m_curr_row->SetRegisterLocationToAtCFAPlusOffset (reg_num, offset, cant_replace);
                         if (is_return_address_reg)
                         {
                             // This push was pushing the return address register,
@@ -372,7 +382,7 @@ UnwindAssemblyInstEmulation::WriteMemory (EmulateInstruction *instruction,
                             {
                                 uint32_t pc_reg_num = pc_reg_info.kinds[unwind_reg_kind];
                                 if (pc_reg_num != LLDB_INVALID_REGNUM)
-                                    m_curr_row.SetRegisterLocationToAtCFAPlusOffset (pc_reg_num, offset, can_replace);
+                                    m_curr_row->SetRegisterLocationToAtCFAPlusOffset (pc_reg_num, offset, can_replace);
                             }
                         }
                     }
@@ -488,7 +498,7 @@ UnwindAssemblyInstEmulation::WriteRegister (EmulateInstruction *instruction,
                 const uint32_t reg_num = reg_info->kinds[m_unwind_plan_ptr->GetRegisterKind()];
                 if (reg_num != LLDB_INVALID_REGNUM)
                 {
-                    m_curr_row.SetRegisterLocationToSame (reg_num, must_replace);
+                    m_curr_row->SetRegisterLocationToSame (reg_num, must_replace);
                 }
             }
             break;
@@ -500,8 +510,8 @@ UnwindAssemblyInstEmulation::WriteRegister (EmulateInstruction *instruction,
                 m_cfa_reg_info = *reg_info;
                 const uint32_t cfa_reg_num = reg_info->kinds[m_unwind_plan_ptr->GetRegisterKind()];
                 assert (cfa_reg_num != LLDB_INVALID_REGNUM);
-                m_curr_row.SetCFARegister(cfa_reg_num);
-                m_curr_row.SetCFAOffset(m_initial_sp - reg_value.GetAsUInt64());
+                m_curr_row->SetCFARegister(cfa_reg_num);
+                m_curr_row->SetCFAOffset(m_initial_sp - reg_value.GetAsUInt64());
             }
             break;
 
@@ -510,7 +520,7 @@ UnwindAssemblyInstEmulation::WriteRegister (EmulateInstruction *instruction,
             // subsequent adjustments to the stack pointer.
             if (!m_fp_is_cfa)
             {
-                m_curr_row.SetCFAOffset (m_initial_sp - reg_value.GetAsUInt64());
+                m_curr_row->SetCFAOffset (m_initial_sp - reg_value.GetAsUInt64());
             }
             break;
     }
