@@ -13,6 +13,8 @@
 #include "lldb/Core/Module.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Interpreter/Args.h"
+#include "lldb/Symbol/Block.h"
+#include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Symbol/CompileUnit.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Symbol/Symbol.h"
@@ -535,7 +537,61 @@ SymbolContext::GetParentOfInlinedScope (const Address &curr_frame_pc,
     return false;
 }
 
-ConstString 
+Block *
+SymbolContext::GetFunctionBlock ()
+{
+    if (function)
+    {
+        if (block)
+        {
+            // If this symbol context has a block, check to see if this block
+            // is itself, or is contained within a block with inlined function
+            // information. If so, then the inlined block is the block that
+            // defines the function.
+            Block *inlined_block = block->GetContainingInlinedBlock();
+            if (inlined_block)
+                return inlined_block;
+
+            // The block in this symbol context is not inside an inlined
+            // block, so the block that defines the function is the function's
+            // top level block, which is returned below.
+        }
+
+        // There is no block information in this symbol context, so we must
+        // assume that the block that is desired is the top level block of
+        // the function itself.
+        return &function->GetBlock(true);
+    }
+    return NULL;
+}
+
+bool
+SymbolContext::GetFunctionMethodInfo (lldb::LanguageType &language,
+                                      bool &is_instance_method,
+                                      ConstString &language_object_name)
+
+
+{
+    Block *function_block = GetFunctionBlock ();
+    if (function_block)
+    {
+        clang::DeclContext *decl_context = function_block->GetClangDeclContext();
+        
+        if (decl_context)
+        {
+            return ClangASTContext::GetClassMethodInfoForDeclContext (decl_context,
+                                                                      language,
+                                                                      is_instance_method,
+                                                                      language_object_name);
+        }
+    }
+    language = eLanguageTypeUnknown;
+    is_instance_method = false;
+    language_object_name.Clear();
+    return false;
+}
+
+ConstString
 SymbolContext::GetFunctionName (Mangled::NamePreference preference)
 {
     if (function)

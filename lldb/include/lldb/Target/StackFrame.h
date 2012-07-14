@@ -36,7 +36,8 @@ public:
         eExpressionPathOptionCheckPtrVsMember       = (1u << 0),
         eExpressionPathOptionsNoFragileObjcIvar     = (1u << 1),
         eExpressionPathOptionsNoSyntheticChildren   = (1u << 2),
-        eExpressionPathOptionsNoSyntheticArrayRange = (1u << 3)
+        eExpressionPathOptionsNoSyntheticArrayRange = (1u << 3),
+        eExpressionPathOptionsAllowDirectIVarAccess = (1u << 4)
     };
     //------------------------------------------------------------------
     // Constructors and Destructors

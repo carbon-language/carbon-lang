@@ -987,48 +987,6 @@ ScanBracketedRange (const char* var_name_begin,
     return true;
 }
 
-
-static ValueObjectSP
-ExpandExpressionPath (ValueObject* valobj,
-                      StackFrame* frame,
-                      bool* do_deref_pointer,
-                      const char* var_name_begin,
-                      const char* var_name_final,
-                      Error& error)
-{
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
-    StreamString sstring;
-    VariableSP var_sp;
-    
-    if (*do_deref_pointer)
-    {
-        if (log)
-            log->Printf("been told to deref_pointer by caller");
-        sstring.PutChar('*');
-    }
-    else if (valobj->IsDereferenceOfParent() && ClangASTContext::IsPointerType(valobj->GetParent()->GetClangType()) && !valobj->IsArrayItemForPointer())
-    {
-        if (log)
-            log->Printf("decided to deref_pointer myself");
-        sstring.PutChar('*');
-        *do_deref_pointer = true;
-    }
-
-    valobj->GetExpressionPath(sstring, true, ValueObject::eGetExpressionPathFormatHonorPointers);
-    if (log)
-        log->Printf("expression path to expand in phase 0: %s",sstring.GetData());
-    sstring.PutRawBytes(var_name_begin+3, var_name_final-var_name_begin-3);
-    if (log)
-        log->Printf("expression path to expand in phase 1: %s",sstring.GetData());
-    std::string name = std::string(sstring.GetData());
-    ValueObjectSP target = frame->GetValueForVariableExpressionPath (name.c_str(),
-                                                                     eNoDynamicValues, 
-                                                                     0,
-                                                                     var_sp,
-                                                                     error);
-    return target;
-}
-
 static ValueObjectSP
 ExpandIndexedExpression (ValueObject* valobj,
                          uint32_t index,

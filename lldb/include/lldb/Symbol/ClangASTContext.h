@@ -237,6 +237,12 @@ public:
         return GetTranslationUnitDecl (getASTContext());
     }
     
+    static bool
+    GetClassMethodInfoForDeclContext (clang::DeclContext *decl_ctx,
+                                      lldb::LanguageType &language,
+                                      bool &is_instance_method,
+                                      ConstString &language_object_name);
+    
     static lldb::clang_type_t
     CopyType(clang::ASTContext *dest_context, 
              clang::ASTContext *source_context,

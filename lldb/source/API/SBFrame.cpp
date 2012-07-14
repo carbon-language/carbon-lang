@@ -534,7 +534,7 @@ SBFrame::GetValueForVariablePath (const char *var_path, DynamicValueType use_dyn
             Error error;
             ValueObjectSP value_sp (frame->GetValueForVariableExpressionPath (var_path, 
                                                                               use_dynamic,
-                                                                              StackFrame::eExpressionPathOptionCheckPtrVsMember,
+                                                                              StackFrame::eExpressionPathOptionCheckPtrVsMember | StackFrame::eExpressionPathOptionsAllowDirectIVarAccess,
                                                                               var_sp,
                                                                               error));
             sb_value.SetSP(value_sp);

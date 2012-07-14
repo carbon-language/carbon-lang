@@ -1015,7 +1015,8 @@ protected:
 
         // Things have checked out ok...
         Error error;
-        uint32_t expr_path_options = StackFrame::eExpressionPathOptionCheckPtrVsMember;
+        uint32_t expr_path_options = StackFrame::eExpressionPathOptionCheckPtrVsMember |
+                                     StackFrame::eExpressionPathOptionsAllowDirectIVarAccess;
         valobj_sp = frame->GetValueForVariableExpressionPath (command.GetArgumentAtIndex(0), 
                                                               eNoDynamicValues, 
                                                               expr_path_options,

@@ -483,7 +483,8 @@ protected:
                     else // No regex, either exact variable names or variable expressions.
                     {
                         Error error;
-                        uint32_t expr_path_options = StackFrame::eExpressionPathOptionCheckPtrVsMember;
+                        uint32_t expr_path_options = StackFrame::eExpressionPathOptionCheckPtrVsMember |
+                                                     StackFrame::eExpressionPathOptionsAllowDirectIVarAccess;
                         lldb::VariableSP var_sp;
                         valobj_sp = frame->GetValueForVariableExpressionPath (name_cstr, 
                                                                               m_varobj_options.use_dynamic, 

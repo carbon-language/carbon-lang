@@ -220,6 +220,56 @@ public:
     uint32_t
     GetResolvedMask () const;
 
+    
+    //------------------------------------------------------------------
+    /// Find a block that defines the function represented by this
+    /// symbol context.
+    ///
+    /// If this symbol context points to a block that is an inlined
+    /// function, or is contained within an inlined function, the block
+    /// that defines the inlined function is returned.
+    ///
+    /// If this symbol context has no block in it, or the block is not
+    /// itself an inlined function block or contained within one, we
+    /// return the top level function block.
+    ///
+    /// This is a handy function to call when you want to get the block
+    /// whose variable list will include the arguments for the function
+    /// that is represented by this symbol context (whether the function
+    /// is an inline function or not).
+    ///
+    /// @return
+    ///     The block object pointer that defines the function that is
+    ///     represented by this symbol context object, NULL otherwise.
+    //------------------------------------------------------------------
+    Block *
+    GetFunctionBlock ();
+
+    
+    //------------------------------------------------------------------
+    /// If this symbol context represents a function that is a method,
+    /// return true and provide information about the method.
+    ///
+    /// @param[out] language
+    ///     If \b true is returned, the language for the method.
+    ///
+    /// @param[out] is_instance_method
+    ///     If \b true is returned, \b true if this is a instance method,
+    ///     \b false if this is a static/class function.
+    ///
+    /// @param[out] language_object_name
+    ///     If \b true is returned, the name of the artificial variable
+    ///     for the language ("this" for C++, "self" for ObjC).
+    ///
+    /// @return
+    ///     \b True if this symbol context represents a function that
+    ///     is a method of a class, \b false otherwise.
+    //------------------------------------------------------------------
+    bool
+    GetFunctionMethodInfo (lldb::LanguageType &language,
+                           bool &is_instance_method,
+                           ConstString &language_object_name);
+
     //------------------------------------------------------------------
     /// Find a name of the innermost function for the symbol context.
     ///

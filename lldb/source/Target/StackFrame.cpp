@@ -513,7 +513,7 @@ StackFrame::GetInScopeVariableList (bool get_file_globals)
 
 
 ValueObjectSP
-StackFrame::GetValueForVariableExpressionPath (const char *var_expr_cstr, 
+StackFrame::GetValueForVariableExpressionPath (const char *var_expr_cstr,
                                                DynamicValueType use_dynamic,
                                                uint32_t options, 
                                                VariableSP &var_sp,
@@ -562,13 +562,42 @@ StackFrame::GetValueForVariableExpressionPath (const char *var_expr_cstr,
                 name_const_string.SetCStringWithLength (var_path.c_str(), separator_idx);
 
             var_sp = variable_list->FindVariable(name_const_string);
+            
+            bool synthetically_added_instance_object = false;
+
+            if (var_sp)
+            {
+                var_path.erase (0, name_const_string.GetLength ());
+            }
+            else if (options & eExpressionPathOptionsAllowDirectIVarAccess)
+            {
+                // Check for direct ivars access which helps us with implicit
+                // access to ivars with the "this->" or "self->"
+                GetSymbolContext(eSymbolContextFunction|eSymbolContextBlock);
+                lldb::LanguageType method_language = eLanguageTypeUnknown;
+                bool is_instance_method = false;
+                ConstString method_object_name;
+                if (m_sc.GetFunctionMethodInfo (method_language, is_instance_method, method_object_name))
+                {
+                    if (is_instance_method && method_object_name)
+                    {
+                        var_sp = variable_list->FindVariable(method_object_name);
+                        if (var_sp)
+                        {
+                            separator_idx = 0;
+                            var_path.insert(0, "->");
+                            synthetically_added_instance_object = true;
+                        }
+                    }
+                }
+            }
+
             if (var_sp)
             {
                 valobj_sp = GetValueObjectForFrameVariable (var_sp, use_dynamic);
                 if (!valobj_sp)
                     return valobj_sp;
                     
-                var_path.erase (0, name_const_string.GetLength ());
                 // We are dumping at least one child
                 while (separator_idx != std::string::npos)
                 {
@@ -651,23 +680,35 @@ StackFrame::GetValueForVariableExpressionPath (const char *var_expr_cstr,
                                 if (no_synth_child || !child_valobj_sp)
                                 {
                                     // No child member with name "child_name"
-                                    valobj_sp->GetExpressionPath (var_expr_path_strm, false);
-                                    if (child_name)
+                                    if (synthetically_added_instance_object)
                                     {
-                                        error.SetErrorStringWithFormat ("\"%s\" is not a member of \"(%s) %s\"", 
-                                                                        child_name.GetCString(), 
-                                                                        valobj_sp->GetTypeName().AsCString("<invalid type>"),
-                                                                        var_expr_path_strm.GetString().c_str());
+                                        // We added a "this->" or "self->" to the beginning of the expression
+                                        // and this is the first pointer ivar access, so just return the normal
+                                        // error
+                                        error.SetErrorStringWithFormat("no variable or instance variable named '%s' found in this frame",
+                                                                       name_const_string.GetCString());
                                     }
                                     else
                                     {
-                                        error.SetErrorStringWithFormat ("incomplete expression path after \"%s\" in \"%s\"",
-                                                                        var_expr_path_strm.GetString().c_str(),
-                                                                        var_expr_cstr);
+                                        valobj_sp->GetExpressionPath (var_expr_path_strm, false);
+                                        if (child_name)
+                                        {
+                                            error.SetErrorStringWithFormat ("\"%s\" is not a member of \"(%s) %s\"", 
+                                                                            child_name.GetCString(), 
+                                                                            valobj_sp->GetTypeName().AsCString("<invalid type>"),
+                                                                            var_expr_path_strm.GetString().c_str());
+                                        }
+                                        else
+                                        {
+                                            error.SetErrorStringWithFormat ("incomplete expression path after \"%s\" in \"%s\"",
+                                                                            var_expr_path_strm.GetString().c_str(),
+                                                                            var_expr_cstr);
+                                        }
                                     }
                                     return ValueObjectSP();
                                 }
                             }
+                            synthetically_added_instance_object = false;
                             // Remove the child name from the path
                             var_path.erase(0, child_name.GetLength());
                             if (use_dynamic != eNoDynamicValues)

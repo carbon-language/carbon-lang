@@ -115,13 +115,14 @@ ClangUserExpression::ScanContext(ExecutionContext &exe_ctx, Error &err)
     if (!sym_ctx.function)
         return;
     
-    clang::DeclContext *decl_context;
+    // Find the block that defines the function represented by "sym_ctx"
+    Block *function_block = sym_ctx.GetFunctionBlock();
     
-    if (sym_ctx.block && sym_ctx.block->GetInlinedFunctionInfo())
-        decl_context = sym_ctx.block->GetClangDeclContextForInlinedFunction();
-    else
-        decl_context = sym_ctx.function->GetClangDeclContext();
-        
+    if (!function_block)
+        return;
+
+    clang::DeclContext *decl_context = function_block->GetClangDeclContext();
+
     if (!decl_context)
         return;
             
@@ -131,24 +132,22 @@ ClangUserExpression::ScanContext(ExecutionContext &exe_ctx, Error &err)
         {
             if (m_enforce_valid_object)
             {
-                VariableList *vars = frame->GetVariableList(false);
+                lldb::VariableListSP variable_list_sp (function_block->GetBlockVariableList (true));
                 
                 const char *thisErrorString = "Stopped in a C++ method, but 'this' isn't available; pretending we are in a generic context";
                 
-                if (!vars)
+                if (!variable_list_sp)
                 {
-                    err.SetErrorToGenericError();
                     err.SetErrorString(thisErrorString);
                     return;
                 }
                 
-                lldb::VariableSP this_var = vars->FindVariable(ConstString("this"));
+                lldb::VariableSP this_var_sp (variable_list_sp->FindVariable(ConstString("this")));
                 
-                if (!this_var ||
-                    !this_var->IsInScope(frame) || 
-                    !this_var->LocationIsValidForFrame (frame))
+                if (!this_var_sp ||
+                    !this_var_sp->IsInScope(frame) || 
+                    !this_var_sp->LocationIsValidForFrame (frame))
                 {
-                    err.SetErrorToGenericError();
                     err.SetErrorString(thisErrorString);
                     return;
                 }
@@ -164,24 +163,22 @@ ClangUserExpression::ScanContext(ExecutionContext &exe_ctx, Error &err)
         {
             if (m_enforce_valid_object)
             {
-                VariableList *vars = frame->GetVariableList(false);
+                lldb::VariableListSP variable_list_sp (function_block->GetBlockVariableList (true));
                 
                 const char *selfErrorString = "Stopped in an Objective-C method, but 'self' isn't available; pretending we are in a generic context";
                 
-                if (!vars)
+                if (!variable_list_sp)
                 {
-                    err.SetErrorToGenericError();
                     err.SetErrorString(selfErrorString);
                     return;
                 }
                 
-                lldb::VariableSP self_var = vars->FindVariable(ConstString("self"));
+                lldb::VariableSP self_variable_sp = variable_list_sp->FindVariable(ConstString("self"));
                 
-                if (!self_var || 
-                    !self_var->IsInScope(frame) || 
-                    !self_var->LocationIsValidForFrame (frame))
+                if (!self_variable_sp || 
+                    !self_variable_sp->IsInScope(frame) || 
+                    !self_variable_sp->LocationIsValidForFrame (frame))
                 {
-                    err.SetErrorToGenericError();
                     err.SetErrorString(selfErrorString);
                     return;
                 }

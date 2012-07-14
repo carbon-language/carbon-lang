@@ -6330,3 +6330,49 @@ ClangASTContext::GetAsDeclContext (clang::ObjCMethodDecl *objc_method_decl)
     return llvm::dyn_cast<clang::DeclContext>(objc_method_decl);
 }
 
+
+bool
+ClangASTContext::GetClassMethodInfoForDeclContext (clang::DeclContext *decl_ctx,
+                                                   lldb::LanguageType &language,
+                                                   bool &is_instance_method,
+                                                   ConstString &language_object_name)
+{
+    language_object_name.Clear();
+    language = eLanguageTypeUnknown;
+    is_instance_method = false;
+
+    if (decl_ctx)
+    {
+        if (clang::CXXMethodDecl *method_decl = llvm::dyn_cast<clang::CXXMethodDecl>(decl_ctx))
+        {
+            if (method_decl->isStatic())
+            {
+                is_instance_method = false;
+            }
+            else
+            {
+                language_object_name.SetCString("this");
+                is_instance_method = true;
+            }
+            language = eLanguageTypeC_plus_plus;
+            return true;
+        }
+        else if (clang::ObjCMethodDecl *method_decl = llvm::dyn_cast<clang::ObjCMethodDecl>(decl_ctx))
+        {
+            // Both static and instance methods have a "self" object in objective C
+            language_object_name.SetCString("self");
+            if (method_decl->isInstanceMethod())
+            {
+                is_instance_method = true;
+            }
+            else
+            {
+                is_instance_method = false;
+            }
+            language = eLanguageTypeObjC;
+            return true;
+        }
+    }
+    return false;
+}
+

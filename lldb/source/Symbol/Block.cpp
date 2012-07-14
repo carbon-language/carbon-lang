@@ -542,7 +542,7 @@ Block::AppendVariables
 }
 
 clang::DeclContext *
-Block::GetClangDeclContextForInlinedFunction()
+Block::GetClangDeclContext()
 {
     SymbolContext sc;
     

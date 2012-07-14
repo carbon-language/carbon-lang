@@ -263,6 +263,22 @@ public:
     }
 
     //------------------------------------------------------------------
+    /// Get the variable list for this block only.
+    ///
+    /// @param[in] can_create
+    ///     If \b true, the variables can be parsed if they already
+    ///     haven't been, else the current state of the block will be
+    ///     returned. 
+    ///
+    /// @return
+    ///     A variable list shared pointer that contains all variables
+    ///     for this block.
+    //------------------------------------------------------------------
+    lldb::VariableListSP
+    GetBlockVariableList (bool can_create);
+
+
+    //------------------------------------------------------------------
     /// Get the variable list for this block and optionally all child
     /// blocks if \a get_child_variables is \b true.
     ///
@@ -278,7 +294,7 @@ public:
     ///     point.
     ///
     /// @param[in] add_inline_child_block_variables
-    ///     If this is \b false, no child variables of child blocks 
+    ///     If this is \b false, no child variables of child blocks
     ///     that are inlined functions will be gotten. If \b true then
     ///     all child variables will be added regardless of whether they
     ///     come from inlined functions or not.
@@ -287,10 +303,6 @@ public:
     ///     A variable list shared pointer that contains all variables
     ///     for this block.
     //------------------------------------------------------------------
-    lldb::VariableListSP
-    GetBlockVariableList (bool can_create);
-
-
     uint32_t
     AppendBlockVariables (bool can_create,
                           bool get_child_block_variables,
@@ -345,7 +357,7 @@ public:
     }
     
     clang::DeclContext *
-    GetClangDeclContextForInlinedFunction();
+    GetClangDeclContext();
 
     //------------------------------------------------------------------
     /// Get the memory cost of this object.

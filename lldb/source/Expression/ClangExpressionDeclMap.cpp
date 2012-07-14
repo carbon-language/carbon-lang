@@ -2443,12 +2443,13 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
             if (!sym_ctx.function)
                 return;
             
-            clang::DeclContext *decl_context;
-            
-            if (sym_ctx.block && sym_ctx.block->GetInlinedFunctionInfo())
-                decl_context = sym_ctx.block->GetClangDeclContextForInlinedFunction();
-            else
-                decl_context = sym_ctx.function->GetClangDeclContext();
+            // Get the block that defines the function
+            Block *function_block = sym_ctx.GetFunctionBlock();
+
+            if (!function_block)
+                return;
+
+            clang::DeclContext *decl_context = function_block->GetClangDeclContext();
             
             if (!decl_context)
                 return;
@@ -2501,12 +2502,13 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
             if (!sym_ctx.function)
                 return;
             
-            clang::DeclContext *decl_context;
+            // Get the block that defines the function
+            Block *function_block = sym_ctx.GetFunctionBlock();
             
-            if (sym_ctx.block && sym_ctx.block->GetInlinedFunctionInfo())
-                decl_context = sym_ctx.block->GetClangDeclContextForInlinedFunction();
-            else
-                decl_context = sym_ctx.function->GetClangDeclContext();
+            if (!function_block)
+                return;
+            
+            clang::DeclContext *decl_context = function_block->GetClangDeclContext();
             
             if (!decl_context)
                 return;
