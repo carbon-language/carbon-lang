@@ -343,7 +343,6 @@ private:
   CFGBlock *VisitIndirectGotoStmt(IndirectGotoStmt *I);
   CFGBlock *VisitLabelStmt(LabelStmt *L);
   CFGBlock *VisitLambdaExpr(LambdaExpr *E, AddStmtChoice asc);
-  CFGBlock *VisitLambdaExpr(LambdaExpr *L);
   CFGBlock *VisitMemberExpr(MemberExpr *M, AddStmtChoice asc);
   CFGBlock *VisitObjCAtCatchStmt(ObjCAtCatchStmt *S);
   CFGBlock *VisitObjCAtSynchronizedStmt(ObjCAtSynchronizedStmt *S);
