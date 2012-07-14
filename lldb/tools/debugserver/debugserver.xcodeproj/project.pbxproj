@@ -480,7 +480,7 @@
 					i386,
 				);
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 188;
+				CURRENT_PROJECT_VERSION = 189;
 				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
@@ -501,7 +501,7 @@
 					armv7s,
 				);
 				"ARCHS[sdk=macosx*]" = "$(ARCHS_STANDARD_64_BIT)";
-				CURRENT_PROJECT_VERSION = 188;
+				CURRENT_PROJECT_VERSION = 189;
 				DEAD_CODE_STRIPPING = YES;
 				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
@@ -527,7 +527,7 @@
 					x86_64,
 					i386,
 				);
-				CURRENT_PROJECT_VERSION = 188;
+				CURRENT_PROJECT_VERSION = 189;
 				DEAD_CODE_STRIPPING = YES;
 				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
@@ -546,7 +546,7 @@
 			buildSettings = {
 				"CODE_SIGN_ENTITLEMENTS[sdk=iphoneos*]" = "source/debugserver-entitlements.plist";
 				COPY_PHASE_STRIP = YES;
-				CURRENT_PROJECT_VERSION = 188;
+				CURRENT_PROJECT_VERSION = 189;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				FRAMEWORK_SEARCH_PATHS = $SDKROOT/System/Library/PrivateFrameworks;
 				"FRAMEWORK_SEARCH_PATHS[sdk=iphoneos*][arch=*]" = (
@@ -599,7 +599,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "-";
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = lldb_codesign;
 				COPY_PHASE_STRIP = YES;
-				CURRENT_PROJECT_VERSION = 188;
+				CURRENT_PROJECT_VERSION = 189;
 				FRAMEWORK_SEARCH_PATHS = $SDKROOT/System/Library/PrivateFrameworks;
 				"FRAMEWORK_SEARCH_PATHS[sdk=iphoneos*][arch=*]" = (
 					"$(SDKROOT)/System/Library/PrivateFrameworks",
@@ -651,7 +651,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "-";
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = lldb_codesign;
 				COPY_PHASE_STRIP = YES;
-				CURRENT_PROJECT_VERSION = 188;
+				CURRENT_PROJECT_VERSION = 189;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				FRAMEWORK_SEARCH_PATHS = $SDKROOT/System/Library/PrivateFrameworks;
 				"FRAMEWORK_SEARCH_PATHS[sdk=iphoneos*][arch=*]" = (
