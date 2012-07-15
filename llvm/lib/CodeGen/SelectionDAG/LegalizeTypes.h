@@ -516,6 +516,7 @@ private:
   SDValue ScalarizeVecRes_InregOp(SDNode *N);
 
   SDValue ScalarizeVecRes_BITCAST(SDNode *N);
+  SDValue ScalarizeVecRes_BUILD_VECTOR(SDNode *N);
   SDValue ScalarizeVecRes_CONVERT_RNDSAT(SDNode *N);
   SDValue ScalarizeVecRes_EXTRACT_SUBVECTOR(SDNode *N);
   SDValue ScalarizeVecRes_FP_ROUND(SDNode *N);

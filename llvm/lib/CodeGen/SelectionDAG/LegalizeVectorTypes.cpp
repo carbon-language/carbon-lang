@@ -48,7 +48,7 @@ void DAGTypeLegalizer::ScalarizeVectorResult(SDNode *N, unsigned ResNo) {
 
   case ISD::MERGE_VALUES:      R = ScalarizeVecRes_MERGE_VALUES(N, ResNo);break;
   case ISD::BITCAST:           R = ScalarizeVecRes_BITCAST(N); break;
-  case ISD::BUILD_VECTOR:      R = N->getOperand(0); break;
+  case ISD::BUILD_VECTOR:      R = ScalarizeVecRes_BUILD_VECTOR(N); break;
   case ISD::CONVERT_RNDSAT:    R = ScalarizeVecRes_CONVERT_RNDSAT(N); break;
   case ISD::EXTRACT_SUBVECTOR: R = ScalarizeVecRes_EXTRACT_SUBVECTOR(N); break;
   case ISD::FP_ROUND:          R = ScalarizeVecRes_FP_ROUND(N); break;
@@ -150,6 +150,14 @@ SDValue DAGTypeLegalizer::ScalarizeVecRes_BITCAST(SDNode *N) {
   EVT NewVT = N->getValueType(0).getVectorElementType();
   return DAG.getNode(ISD::BITCAST, N->getDebugLoc(),
                      NewVT, N->getOperand(0));
+}
+
+SDValue DAGTypeLegalizer::ScalarizeVecRes_BUILD_VECTOR(SDNode *N) {
+  EVT EltVT = N->getValueType(0).getVectorElementType();
+  SDValue InOp = N->getOperand(0);
+  if (InOp.getValueType() != EltVT)
+    return DAG.getNode(ISD::TRUNCATE, N->getDebugLoc(), EltVT, InOp);
+  return InOp;
 }
 
 SDValue DAGTypeLegalizer::ScalarizeVecRes_CONVERT_RNDSAT(SDNode *N) {
