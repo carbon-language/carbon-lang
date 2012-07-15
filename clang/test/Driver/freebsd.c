@@ -28,3 +28,11 @@
 // RUN:   --sysroot=%S/Inputs/multiarch_freebsd64_tree -print-search-dirs 2>&1 \
 // RUN:   | FileCheck --check-prefix=CHECK-LIB32PATHS %s
 // CHECK-LIB32PATHS: libraries: ={{.*:?}}/usr/lib32
+//
+// Check that the new linker flags are passed to FreeBSD
+// RUN: %clang -no-canonical-prefixes -target x86_64-pc-freebsd8 -m32 %s \
+// RUN:   --sysroot=%S/Inputs/multiarch_freebsd64_tree -### 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-LDFLAGS %s
+// CHECK-LDFLAGS: --hash-style=both
+// CHECK-LDFLAGS: --enable-new-dtags
+
