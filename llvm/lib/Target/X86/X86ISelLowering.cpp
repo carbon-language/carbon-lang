@@ -9433,12 +9433,15 @@ static SDValue getTargetVShiftNode(unsigned Opc, DebugLoc dl, EVT VT,
   assert(ShAmt.getValueType() == MVT::i32 && "ShAmt is not i32");
 
   if (isa<ConstantSDNode>(ShAmt)) {
+    // Constant may be a TargetConstant. Use a regular constant.
+    uint32_t ShiftAmt = cast<ConstantSDNode>(ShAmt)->getZExtValue();
     switch (Opc) {
       default: llvm_unreachable("Unknown target vector shift node");
       case X86ISD::VSHLI:
       case X86ISD::VSRLI:
       case X86ISD::VSRAI:
-        return DAG.getNode(Opc, dl, VT, SrcOp, ShAmt);
+        return DAG.getNode(Opc, dl, VT, SrcOp,
+                           DAG.getConstant(ShiftAmt, MVT::i32));
     }
   }
 
