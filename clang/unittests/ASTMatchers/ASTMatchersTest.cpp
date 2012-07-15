@@ -291,7 +291,6 @@ TEST(AllOf, AllOverloadsWork) {
 TEST(DeclarationMatcher, MatchAnyOf) {
   DeclarationMatcher YOrZDerivedFromX =
       record(anyOf(hasName("Y"), allOf(isDerivedFrom("X"), hasName("Z"))));
-
   EXPECT_TRUE(
       matches("class X {}; class Z : public X {};", YOrZDerivedFromX));
   EXPECT_TRUE(matches("class Y {};", YOrZDerivedFromX));
@@ -299,10 +298,14 @@ TEST(DeclarationMatcher, MatchAnyOf) {
       notMatches("class X {}; class W : public X {};", YOrZDerivedFromX));
   EXPECT_TRUE(notMatches("class Z {};", YOrZDerivedFromX));
 
+  DeclarationMatcher XOrYOrZOrU =
+      record(anyOf(hasName("X"), hasName("Y"), hasName("Z"), hasName("U")));
+  EXPECT_TRUE(matches("class X {};", XOrYOrZOrU));
+  EXPECT_TRUE(notMatches("class V {};", XOrYOrZOrU));
+
   DeclarationMatcher XOrYOrZOrUOrV =
       record(anyOf(hasName("X"), hasName("Y"), hasName("Z"), hasName("U"),
-                  hasName("V")));
-
+                   hasName("V")));
   EXPECT_TRUE(matches("class X {};", XOrYOrZOrUOrV));
   EXPECT_TRUE(matches("class Y {};", XOrYOrZOrUOrV));
   EXPECT_TRUE(matches("class Z {};", XOrYOrZOrUOrV));

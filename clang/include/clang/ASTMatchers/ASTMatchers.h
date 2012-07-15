@@ -702,7 +702,7 @@ internal::PolymorphicMatcherWithParam2<internal::AnyOfMatcher, C1,
         internal::PolymorphicMatcherWithParam2<internal::AnyOfMatcher,
                                                C3, C4> > >
 anyOf(const C1 &P1, const C2 &P2, const C3 &P3, const C4 &P4) {
-  return AnyOf(P1, AnyOf(P2, AnyOf(P3, P4)));
+  return anyOf(P1, anyOf(P2, anyOf(P3, P4)));
 }
 template<typename C1, typename C2, typename C3, typename C4, typename C5>
 internal::PolymorphicMatcherWithParam2<internal::AnyOfMatcher, C1,
