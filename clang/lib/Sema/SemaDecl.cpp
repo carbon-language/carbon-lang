@@ -1754,12 +1754,12 @@ bool Sema::mergeDeclAttribute(Decl *D, InheritableAttr *Attr) {
   return false;
 }
 
-static const Decl *getDefinition(Decl *D) {
-  if (TagDecl *TD = dyn_cast<TagDecl>(D))
+static const Decl *getDefinition(const Decl *D) {
+  if (const TagDecl *TD = dyn_cast<TagDecl>(D))
     return TD->getDefinition();
-  if (VarDecl *VD = dyn_cast<VarDecl>(D))
+  if (const VarDecl *VD = dyn_cast<VarDecl>(D))
     return VD->getDefinition();
-  if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
+  if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
     const FunctionDecl* Def;
     if (FD->hasBody(Def))
       return Def;
