@@ -25,7 +25,7 @@
 #include "clang/Frontend/CodeGenOptions.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/LLVMContext.h"
-#include "llvm/Support/MDBuilder.h"
+#include "llvm/MDBuilder.h"
 #include "llvm/Target/TargetData.h"
 using namespace clang;
 using namespace CodeGen;
