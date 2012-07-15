@@ -539,6 +539,8 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
     { X86::VSQRTPSr_Int,    X86::VSQRTPSm_Int,        TB_ALIGN_16 },
     { X86::VUCOMISDrr,      X86::VUCOMISDrm,          0 },
     { X86::VUCOMISSrr,      X86::VUCOMISSrm,          0 },
+    { X86::VBROADCASTSSrr,  X86::VBROADCASTSSrm,      TB_NO_REVERSE },
+
     // AVX 256-bit foldable instructions
     { X86::VMOVAPDYrr,      X86::VMOVAPDYrm,          TB_ALIGN_32 },
     { X86::VMOVAPSYrr,      X86::VMOVAPSYrm,          TB_ALIGN_32 },
@@ -547,6 +549,7 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
     { X86::VMOVUPSYrr,      X86::VMOVUPSYrm,          0 },
     { X86::VPERMILPDYri,    X86::VPERMILPDYmi,        TB_ALIGN_32 },
     { X86::VPERMILPSYri,    X86::VPERMILPSYmi,        TB_ALIGN_32 },
+
     // AVX2 foldable instructions
     { X86::VPABSBrr256,     X86::VPABSBrm256,         TB_ALIGN_32 },
     { X86::VPABSDrr256,     X86::VPABSDrm256,         TB_ALIGN_32 },
@@ -562,6 +565,8 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
     { X86::VSQRTPDYr_Int,   X86::VSQRTPDYm_Int,       TB_ALIGN_32 },
     { X86::VSQRTPSYr,       X86::VSQRTPSYm,           TB_ALIGN_32 },
     { X86::VSQRTPSYr_Int,   X86::VSQRTPSYm_Int,       TB_ALIGN_32 },
+    { X86::VBROADCASTSSYrr, X86::VBROADCASTSSYrm,     TB_NO_REVERSE },
+    { X86::VBROADCASTSDYrr, X86::VBROADCASTSDYrm,     TB_NO_REVERSE },
   };
 
   for (unsigned i = 0, e = array_lengthof(OpTbl1); i != e; ++i) {
