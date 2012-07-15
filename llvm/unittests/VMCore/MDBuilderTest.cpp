@@ -1,4 +1,4 @@
-//===- llvm/unittests/Support/MDBuilderTest.cpp - MDBuilder unit tests ----===//
+//===- llvm/unittests/MDBuilderTest.cpp - MDBuilder unit tests ------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -8,8 +8,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/IRBuilder.h"
+#include "llvm/MDBuilder.h"
 #include "llvm/Operator.h"
-#include "llvm/Support/MDBuilder.h"
 
 #include "gtest/gtest.h"
 

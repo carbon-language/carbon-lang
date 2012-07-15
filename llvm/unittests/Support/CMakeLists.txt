@@ -17,7 +17,6 @@ add_llvm_unittest(SupportTests
   LeakDetectorTest.cpp
   ManagedStatic.cpp
   MathExtrasTest.cpp
-  MDBuilderTest.cpp
   Path.cpp
   raw_ostream_test.cpp
   RegexTest.cpp

@@ -8,6 +8,7 @@ set(VMCoreSources
   ConstantsTest.cpp
   DominatorTreeTest.cpp
   InstructionsTest.cpp
+  MDBuilderTest.cpp
   MetadataTest.cpp
   PassManagerTest.cpp
   ValueMapTest.cpp
