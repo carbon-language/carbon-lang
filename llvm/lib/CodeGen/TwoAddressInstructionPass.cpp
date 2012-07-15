@@ -483,32 +483,6 @@ static bool isTwoAddrUse(MachineInstr &MI, unsigned Reg, unsigned &DstReg) {
   return false;
 }
 
-/// findLocalKill - Look for an instruction below MI in the MBB that kills the
-/// specified register. Returns null if there are any other Reg use between the
-/// instructions.
-static
-MachineInstr *findLocalKill(unsigned Reg, MachineBasicBlock *MBB,
-                            MachineInstr *MI, MachineRegisterInfo *MRI,
-                            DenseMap<MachineInstr*, unsigned> &DistanceMap) {
-  MachineInstr *KillMI = 0;
-  for (MachineRegisterInfo::use_nodbg_iterator
-         UI = MRI->use_nodbg_begin(Reg),
-         UE = MRI->use_nodbg_end(); UI != UE; ++UI) {
-    MachineInstr *UseMI = &*UI;
-    if (UseMI == MI || UseMI->getParent() != MBB)
-      continue;
-    if (DistanceMap.count(UseMI))
-      continue;
-    if (!UI.getOperand().isKill())
-      return 0;
-    if (KillMI)
-      return 0;  // -O0 kill markers cannot be trusted?
-    KillMI = UseMI;
-  }
-
-  return KillMI;
-}
-
 /// findOnlyInterestingUse - Given a register, if has a single in-basic block
 /// use, return the use instruction if it's a copy or a two-address use.
 static
@@ -905,14 +879,19 @@ TwoAddressInstructionPass::RescheduleMIBelowKill(MachineBasicBlock *MBB,
                                      MachineBasicBlock::iterator &mi,
                                      MachineBasicBlock::iterator &nmi,
                                      unsigned Reg) {
+  // Bail immediately if we don't have LV available. We use it to find kills
+  // efficiently.
+  if (!LV)
+    return false;
+
   MachineInstr *MI = &*mi;
   DenseMap<MachineInstr*, unsigned>::iterator DI = DistanceMap.find(MI);
   if (DI == DistanceMap.end())
     // Must be created from unfolded load. Don't waste time trying this.
     return false;
 
-  MachineInstr *KillMI = findLocalKill(Reg, MBB, mi, MRI, DistanceMap);
-  if (!KillMI || KillMI->isCopy() || KillMI->isCopyLike())
+  MachineInstr *KillMI = LV->getVarInfo(Reg).findKill(MBB);
+  if (!KillMI || MI == KillMI || KillMI->isCopy() || KillMI->isCopyLike())
     // Don't mess with copies, they may be coalesced later.
     return false;
 
@@ -999,6 +978,12 @@ TwoAddressInstructionPass::RescheduleMIBelowKill(MachineBasicBlock *MBB,
             ((MO.isKill() && Uses.count(MOReg)) || Kills.count(MOReg)))
           // Don't want to extend other live ranges and update kills.
           return false;
+        if (MOReg == Reg && !MO.isKill())
+          // We can't schedule across a use of the register in question.
+          return false;
+        // Ensure that if this is register in question, its the kill we expect.
+        assert((MOReg != Reg || OtherMI == KillMI) &&
+               "Found multiple kills of a register in a basic block");
       }
     }
   }
@@ -1012,19 +997,9 @@ TwoAddressInstructionPass::RescheduleMIBelowKill(MachineBasicBlock *MBB,
   MBB->splice(KillPos, MBB, From, To);
   DistanceMap.erase(DI);
 
-  if (LV) {
-    // Update live variables
-    LV->removeVirtualRegisterKilled(Reg, KillMI);
-    LV->addVirtualRegisterKilled(Reg, MI);
-  } else {
-    for (unsigned i = 0, e = KillMI->getNumOperands(); i != e; ++i) {
-      MachineOperand &MO = KillMI->getOperand(i);
-      if (!MO.isReg() || !MO.isUse() || MO.getReg() != Reg)
-        continue;
-      MO.setIsKill(false);
-    }
-    MI->addRegisterKilled(Reg, 0);
-  }
+  // Update live variables
+  LV->removeVirtualRegisterKilled(Reg, KillMI);
+  LV->addVirtualRegisterKilled(Reg, MI);
 
   return true;
 }
@@ -1061,14 +1036,19 @@ TwoAddressInstructionPass::RescheduleKillAboveMI(MachineBasicBlock *MBB,
                                      MachineBasicBlock::iterator &mi,
                                      MachineBasicBlock::iterator &nmi,
                                      unsigned Reg) {
+  // Bail immediately if we don't have LV available. We use it to find kills
+  // efficiently.
+  if (!LV)
+    return false;
+
   MachineInstr *MI = &*mi;
   DenseMap<MachineInstr*, unsigned>::iterator DI = DistanceMap.find(MI);
   if (DI == DistanceMap.end())
     // Must be created from unfolded load. Don't waste time trying this.
     return false;
 
-  MachineInstr *KillMI = findLocalKill(Reg, MBB, mi, MRI, DistanceMap);
-  if (!KillMI || KillMI->isCopy() || KillMI->isCopyLike())
+  MachineInstr *KillMI = LV->getVarInfo(Reg).findKill(MBB);
+  if (!KillMI || MI == KillMI || KillMI->isCopy() || KillMI->isCopyLike())
     // Don't mess with copies, they may be coalesced later.
     return false;
 
@@ -1093,6 +1073,8 @@ TwoAddressInstructionPass::RescheduleKillAboveMI(MachineBasicBlock *MBB,
       if (!MOReg)
         continue;
       if (isDefTooClose(MOReg, DI->second, MI, MBB))
+        return false;
+      if (MOReg == Reg && !MO.isKill())
         return false;
       Uses.insert(MOReg);
       if (MO.isKill() && MOReg != Reg)
@@ -1135,6 +1117,9 @@ TwoAddressInstructionPass::RescheduleKillAboveMI(MachineBasicBlock *MBB,
         if (Kills.count(MOReg))
           // Don't want to extend other live ranges and update kills.
           return false;
+        if (OtherMI != MI && MOReg == Reg && !MO.isKill())
+          // We can't schedule across a use of the register in question.
+          return false;
       } else {
         OtherDefs.push_back(MOReg);
       }
@@ -1165,19 +1150,10 @@ TwoAddressInstructionPass::RescheduleKillAboveMI(MachineBasicBlock *MBB,
   nmi = llvm::prior(InsertPos); // Backtrack so we process the moved instr.
   DistanceMap.erase(DI);
 
-  if (LV) {
-    // Update live variables
-    LV->removeVirtualRegisterKilled(Reg, KillMI);
-    LV->addVirtualRegisterKilled(Reg, MI);
-  } else {
-    for (unsigned i = 0, e = KillMI->getNumOperands(); i != e; ++i) {
-      MachineOperand &MO = KillMI->getOperand(i);
-      if (!MO.isReg() || !MO.isUse() || MO.getReg() != Reg)
-        continue;
-      MO.setIsKill(false);
-    }
-    MI->addRegisterKilled(Reg, 0);
-  }
+  // Update live variables
+  LV->removeVirtualRegisterKilled(Reg, KillMI);
+  LV->addVirtualRegisterKilled(Reg, MI);
+
   return true;
 }
 
