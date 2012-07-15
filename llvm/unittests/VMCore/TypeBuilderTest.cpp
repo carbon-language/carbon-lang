@@ -1,4 +1,4 @@
-//===- llvm/unittest/Support/TypeBuilderTest.cpp - TypeBuilder tests -----===//
+//===- llvm/unittest/TypeBuilderTest.cpp - TypeBuilder tests --------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Support/TypeBuilder.h"
+#include "llvm/TypeBuilder.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/ADT/ArrayRef.h"
 

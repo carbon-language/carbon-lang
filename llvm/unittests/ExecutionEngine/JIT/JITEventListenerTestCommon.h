@@ -15,12 +15,12 @@
 #include "llvm/IRBuilder.h"
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
+#include "llvm/TypeBuilder.h"
 #include "llvm/CodeGen/MachineCodeInfo.h"
 #include "llvm/ExecutionEngine/JIT.h"
 #include "llvm/ExecutionEngine/JITEventListener.h"
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/TargetSelect.h"
-#include "llvm/Support/TypeBuilder.h"
 #include "llvm/Config/config.h"
 
 #include "gtest/gtest.h"

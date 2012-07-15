@@ -12,10 +12,10 @@
 #include "llvm/LLVMContext.h"
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
+#include "llvm/TypeBuilder.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/CodeGen/MachineCodeInfo.h"
 #include "llvm/ExecutionEngine/JIT.h"
-#include "llvm/Support/TypeBuilder.h"
 #include "llvm/Support/TargetSelect.h"
 #include "gtest/gtest.h"
 #include <vector>

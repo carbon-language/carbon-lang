@@ -11,6 +11,7 @@ set(VMCoreSources
   MDBuilderTest.cpp
   MetadataTest.cpp
   PassManagerTest.cpp
+  TypeBuilderTest.cpp
   ValueMapTest.cpp
   VerifierTest.cpp
   )
