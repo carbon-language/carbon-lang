@@ -7598,6 +7598,11 @@ SDValue DAGCombiner::visitBUILD_VECTOR(SDNode *N) {
   unsigned NumInScalars = N->getNumOperands();
   DebugLoc dl = N->getDebugLoc();
   EVT VT = N->getValueType(0);
+
+  // A vector built entirely of undefs is undef.
+  if (ISD::allOperandsUndef(N))
+    return DAG.getUNDEF(VT);
+
   // Check to see if this is a BUILD_VECTOR of a bunch of values
   // which come from any_extend or zero_extend nodes. If so, we can create
   // a new BUILD_VECTOR using bit-casts which may enable other BUILD_VECTOR
@@ -7605,12 +7610,11 @@ SDValue DAGCombiner::visitBUILD_VECTOR(SDNode *N) {
   // using shuffles.
   EVT SourceType = MVT::Other;
   bool AllAnyExt = true;
-  bool AllUndef = true;
+
   for (unsigned i = 0; i != NumInScalars; ++i) {
     SDValue In = N->getOperand(i);
     // Ignore undef inputs.
     if (In.getOpcode() == ISD::UNDEF) continue;
-    AllUndef = false;
 
     bool AnyExt  = In.getOpcode() == ISD::ANY_EXTEND;
     bool ZeroExt = In.getOpcode() == ISD::ZERO_EXTEND;
@@ -7637,9 +7641,6 @@ SDValue DAGCombiner::visitBUILD_VECTOR(SDNode *N) {
     // Check if all of the extends are ANY_EXTENDs.
     AllAnyExt &= AnyExt;
   }
-
-  if (AllUndef)
-    return DAG.getUNDEF(VT);
 
   // In order to have valid types, all of the inputs must be extended from the
   // same source type and all of the inputs must be any or zero extend.
@@ -7817,14 +7818,7 @@ SDValue DAGCombiner::visitCONCAT_VECTORS(SDNode *N) {
     return N->getOperand(0);
 
   // Check if all of the operands are undefs.
-  bool AllUndef = true;
-  for (unsigned i = 0; i < N->getNumOperands(); ++i)
-    if (N->getOperand(i).getOpcode() != ISD::UNDEF) {
-      AllUndef = false;
-      break;
-    }
-
-  if (AllUndef)
+  if (ISD::allOperandsUndef(N))
     return DAG.getUNDEF(N->getValueType(0));
 
   return SDValue();
