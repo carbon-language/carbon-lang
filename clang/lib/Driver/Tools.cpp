@@ -4996,6 +4996,8 @@ void freebsd::Link::ConstructJob(Compilation &C, const JobAction &JA,
                                  const char *LinkingOutput) const {
   const Driver &D = getToolChain().getDriver();
   ArgStringList CmdArgs;
+  CmdArgs.push_back("--hash-style=both");
+  CmdArgs.push_back("--enable-new-dtags");
 
   if (!D.SysRoot.empty())
     CmdArgs.push_back(Args.MakeArgString("--sysroot=" + D.SysRoot));
