@@ -1862,8 +1862,7 @@ TemplateSpecializationType(TemplateName T,
          Canon.isNull()? T.isDependent() 
                        : Canon->isInstantiationDependentType(),
          false,
-         Canon.isNull()? T.containsUnexpandedParameterPack()
-                       : Canon->containsUnexpandedParameterPack()),
+         T.containsUnexpandedParameterPack()),
     Template(T), NumArgs(NumArgs), TypeAlias(!AliasedType.isNull()) {
   assert(!T.getAsDependentTemplateName() && 
          "Use DependentTemplateSpecializationType for dependent template-name");
@@ -1888,6 +1887,8 @@ TemplateSpecializationType(TemplateName T,
     // arguments is. Given:
     //   template<typename T> using U = int;
     // U<T> is always non-dependent, irrespective of the type T.
+    // However, U<Ts> contains an unexpanded parameter pack, even though
+    // its expansion (and thus its desugared type) doesn't.
     if (Canon.isNull() && Args[Arg].isDependent())
       setDependent();
     else if (Args[Arg].isInstantiationDependent())
@@ -1896,7 +1897,7 @@ TemplateSpecializationType(TemplateName T,
     if (Args[Arg].getKind() == TemplateArgument::Type &&
         Args[Arg].getAsType()->isVariablyModifiedType())
       setVariablyModified();
-    if (Canon.isNull() && Args[Arg].containsUnexpandedParameterPack())
+    if (Args[Arg].containsUnexpandedParameterPack())
       setContainsUnexpandedParameterPack();
 
     new (&TemplateArgs[Arg]) TemplateArgument(Args[Arg]);
