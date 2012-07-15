@@ -3,7 +3,9 @@
 declare x86_fastcallcc i64 @barrier()
 
 ;CHECK: bcast_fold
-;CHECK: vbroadcastss    -24(%ebp), %ymm0 # 16-byte Folded Reload
+;CHECK: vmovaps %xmm{{[0-9]+}}, [[SPILLED:[^\)]+\)]]
+;CHECK: barrier
+;CHECK: vbroadcastss [[SPILLED]], %ymm0
 ;CHECK: ret
 define <8 x float> @bcast_fold( float* %A) {
 BB:
