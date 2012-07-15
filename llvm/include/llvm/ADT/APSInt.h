@@ -250,6 +250,33 @@ public:
                            : APInt::getSignedMinValue(numBits), Unsigned);
   }
 
+  /// \brief Determine if two APSInts have the same value, zero- or
+  /// sign-extending as needed.  
+  static bool isSameValue(const APSInt &I1, const APSInt &I2) {
+    if (I1.getBitWidth() == I2.getBitWidth() && I1.isSigned() == I2.isSigned())
+      return I1 == I2;
+
+    // Check for a bit-width mismatch.
+    if (I1.getBitWidth() > I2.getBitWidth())
+      return isSameValue(I1, I2.extend(I1.getBitWidth()));
+    else if (I2.getBitWidth() > I1.getBitWidth())
+      return isSameValue(I1.extend(I2.getBitWidth()), I2);
+
+    // We have a signedness mismatch. Turn the signed value into an unsigned
+    // value.
+    if (I1.isSigned()) {
+      if (I1.isNegative())
+        return false;
+
+      return APSInt(I1, true) == I2;
+    }
+
+    if (I2.isNegative())
+      return false;
+
+    return I1 == APSInt(I2, true);
+  }
+
   /// Profile - Used to insert APSInt objects, or objects that contain APSInt
   ///  objects, into FoldingSets.
   void Profile(FoldingSetNodeID& ID) const;
