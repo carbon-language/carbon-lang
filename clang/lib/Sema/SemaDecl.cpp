@@ -10435,7 +10435,7 @@ static void CheckForUniqueEnumValues(Sema &S, Decl **Elements,
       continue;
     }
 
-    if (FirstVal != ECD->getInitVal())
+    if (!llvm::APSInt::isSameValue(FirstVal, ECD->getInitVal()))
       return;
   }
 

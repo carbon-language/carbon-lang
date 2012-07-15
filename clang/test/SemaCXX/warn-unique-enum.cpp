@@ -19,3 +19,9 @@ enum H { H1 = 4, H_MAX = H1, H_MIN = H1 };
 enum I { I1 = H1, I2 = 4 };
 enum J { J1 = 4, J2 = I2 };
 enum K { K1, K2, K3, K4 };
+
+// Don't crash or warn on this one.
+// rdar://11875995
+enum L {
+  L1 = 0x8000000000000000ULL, L2 = 0x0000000000000001ULL
+};
