@@ -46,5 +46,7 @@ add_llvm_target(AMDGPUCodeGen
   SIRegisterInfo.cpp
   )
 
+add_dependencies(LLVMAMDGPUCodeGen intrinsics_gen)
+
 add_subdirectory(TargetInfo)
 add_subdirectory(MCTargetDesc)
