@@ -19,6 +19,7 @@ SRCS="
 	../rtl/tsan_sync.cc
 	../../sanitizer_common/sanitizer_allocator.cc
 	../../sanitizer_common/sanitizer_common.cc
+	../../sanitizer_common/sanitizer_flags.cc
 	../../sanitizer_common/sanitizer_libc.cc
 	../../sanitizer_common/sanitizer_linux.cc
 	../../sanitizer_common/sanitizer_posix.cc
@@ -33,15 +34,15 @@ for F in $SRCS; do
 	cat $F >> gotsan.cc
 done
 
-CFLAGS=" -I../rtl -I../.. -I../../sanitizer_common -fPIC -g -Wall -Werror -ffreestanding -fno-exceptions -DTSAN_GO -DSANITIZER_GO -DTSAN_SHADOW_COUNT=4"
+FLAGS=" -I../rtl -I../.. -I../../sanitizer_common -fPIC -g -Wall -Werror -ffreestanding -fno-exceptions -DTSAN_GO -DSANITIZER_GO -DTSAN_SHADOW_COUNT=4"
 if [ "$DEBUG" == "" ]; then
-	CFLAGS+=" -DTSAN_DEBUG=0 -O3 -fomit-frame-pointer"
+	FLAGS+=" -DTSAN_DEBUG=0 -O3 -fomit-frame-pointer"
 else
-	CFLAGS+=" -DTSAN_DEBUG=1 -g"
+	FLAGS+=" -DTSAN_DEBUG=1 -g"
 fi
 
-echo gcc gotsan.cc -S -o tmp.s $CFLAGS
-gcc gotsan.cc -S -o tmp.s $CFLAGS
+echo gcc gotsan.cc -S -o tmp.s $FLAGS $CFLAGS
+gcc gotsan.cc -S -o tmp.s $FLAGS $CFLAGS
 cat tmp.s $ASMS > gotsan.s
 echo as gotsan.s -o gotsan.syso
 as gotsan.s -o gotsan.syso
