@@ -3630,8 +3630,6 @@ do {
 /// Issue a warning if these are no self-comparisons, as they are not likely
 /// to do what the programmer intended.
 void Sema::CheckFloatComparison(SourceLocation Loc, Expr* LHS, Expr *RHS) {
-  bool EmitWarning = true;
-
   Expr* LeftExprSansParen = LHS->IgnoreParenImpCasts();
   Expr* RightExprSansParen = RHS->IgnoreParenImpCasts();
 
@@ -3640,7 +3638,7 @@ void Sema::CheckFloatComparison(SourceLocation Loc, Expr* LHS, Expr *RHS) {
   if (DeclRefExpr* DRL = dyn_cast<DeclRefExpr>(LeftExprSansParen))
     if (DeclRefExpr* DRR = dyn_cast<DeclRefExpr>(RightExprSansParen))
       if (DRL->getDecl() == DRR->getDecl())
-        EmitWarning = false;
+        return;
 
 
   // Special case: check for comparisons against literals that can be exactly
@@ -3648,32 +3646,26 @@ void Sema::CheckFloatComparison(SourceLocation Loc, Expr* LHS, Expr *RHS) {
   //  is a heuristic: often comparison against such literals are used to
   //  detect if a value in a variable has not changed.  This clearly can
   //  lead to false negatives.
-  if (EmitWarning) {
-    if (FloatingLiteral* FLL = dyn_cast<FloatingLiteral>(LeftExprSansParen)) {
-      if (FLL->isExact())
-        EmitWarning = false;
-    } else
-      if (FloatingLiteral* FLR = dyn_cast<FloatingLiteral>(RightExprSansParen)){
-        if (FLR->isExact())
-          EmitWarning = false;
-    }
-  }
+  if (FloatingLiteral* FLL = dyn_cast<FloatingLiteral>(LeftExprSansParen)) {
+    if (FLL->isExact())
+      return;
+  } else
+    if (FloatingLiteral* FLR = dyn_cast<FloatingLiteral>(RightExprSansParen))
+      if (FLR->isExact())
+        return;
 
   // Check for comparisons with builtin types.
-  if (EmitWarning)
-    if (CallExpr* CL = dyn_cast<CallExpr>(LeftExprSansParen))
-      if (CL->isBuiltinCall())
-        EmitWarning = false;
+  if (CallExpr* CL = dyn_cast<CallExpr>(LeftExprSansParen))
+    if (CL->isBuiltinCall())
+      return;
 
-  if (EmitWarning)
-    if (CallExpr* CR = dyn_cast<CallExpr>(RightExprSansParen))
-      if (CR->isBuiltinCall())
-        EmitWarning = false;
+  if (CallExpr* CR = dyn_cast<CallExpr>(RightExprSansParen))
+    if (CR->isBuiltinCall())
+      return;
 
   // Emit the diagnostic.
-  if (EmitWarning)
-    Diag(Loc, diag::warn_floatingpoint_eq)
-      << LHS->getSourceRange() << RHS->getSourceRange();
+  Diag(Loc, diag::warn_floatingpoint_eq)
+    << LHS->getSourceRange() << RHS->getSourceRange();
 }
 
 //===--- CHECK: Integer mixed-sign comparisons (-Wsign-compare) --------===//
