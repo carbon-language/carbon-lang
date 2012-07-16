@@ -8,7 +8,7 @@ add_clang_library(clangTooling
   ArgumentsAdjusters.cpp
   )
 
-add_dependencies(clangEdit
+add_dependencies(clangTooling
   ClangDiagnosticCommon
 )
 
