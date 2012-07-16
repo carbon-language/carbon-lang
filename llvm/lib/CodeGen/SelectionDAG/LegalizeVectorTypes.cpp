@@ -155,7 +155,9 @@ SDValue DAGTypeLegalizer::ScalarizeVecRes_BITCAST(SDNode *N) {
 SDValue DAGTypeLegalizer::ScalarizeVecRes_BUILD_VECTOR(SDNode *N) {
   EVT EltVT = N->getValueType(0).getVectorElementType();
   SDValue InOp = N->getOperand(0);
-  if (InOp.getValueType() != EltVT)
+  // The BUILD_VECTOR operands may be of wider element types and
+  // we may need to truncate them back to the requested return type.
+  if (EltVT.isInteger())
     return DAG.getNode(ISD::TRUNCATE, N->getDebugLoc(), EltVT, InOp);
   return InOp;
 }
