@@ -89,5 +89,5 @@ AMDILIntrinsicInfo::getDeclaration(Module *M, unsigned IntrID,
   //Silence a warning
   AttrListPtr List = getAttributes((AMDGPUIntrinsic::ID)IntrID);
   (void)List;
-  assert(!"Not implemented");
+  llvm_unreachable("Not implemented");
 }
