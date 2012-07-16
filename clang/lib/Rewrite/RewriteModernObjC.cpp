@@ -5959,7 +5959,11 @@ void RewriteModernObjC::Initialize(ASTContext &context) {
     Preamble += "#define __block\n";
     Preamble += "#define __weak\n";
   }
-  Preamble += "\nextern \"C\" void * memset(void *b, int c, unsigned long len);\n";
+  Preamble += "\n#if defined(_MSC_VER)\n";
+  Preamble += "#include <string.h>\n";
+  Preamble += "#else\n";
+  Preamble += "extern \"C\" void * memset(void *b, int c, unsigned long len);\n";
+  Preamble += "#endif\n";
   
   // Declarations required for modern objective-c array and dictionary literals.
   Preamble += "\n#include <stdarg.h>\n";
