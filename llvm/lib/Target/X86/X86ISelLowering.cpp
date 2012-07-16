@@ -3059,6 +3059,50 @@ static unsigned TranslateX86CC(ISD::CondCode SetCCOpcode, bool isFP,
         RHS = DAG.getConstant(0, RHS.getValueType());
         return X86::COND_LE;
       }
+      if (SetCCOpcode == ISD::SETULT || SetCCOpcode == ISD::SETUGE) {
+        unsigned TrailZeros = RHSC->getAPIntValue().countTrailingZeros();
+        if (TrailZeros >= 32) {
+          // The constant doesn't fit in cmp immediate field. Right shift LHS by
+          // the # of trailing zeros and truncate it to 32-bit. Then compare
+          // against shifted RHS.
+          assert(LHS.getValueType() == MVT::i64 && "Expecting a 64-bit cmp!");
+          DebugLoc dl = LHS.getDebugLoc();
+          LHS = DAG.getNode(ISD::TRUNCATE, dl, MVT::i32,
+                            DAG.getNode(ISD::SRL, dl, MVT::i64, LHS,
+                                        DAG.getConstant(TrailZeros, MVT::i8)));
+          uint64_t C = RHSC->getZExtValue() >> TrailZeros;
+
+          if (SetCCOpcode == ISD::SETULT) {
+            // X < 0x300000000 -> (X >> 32) < 3
+            // X < 0x100000000 -> (X >> 32) == 0
+            // X < 0x200000000 -> (X >> 33) == 0
+            if (C == 1) {
+              RHS = DAG.getConstant(0, MVT::i32);
+              return X86::COND_E;
+            }
+            RHS = DAG.getConstant(C, MVT::i32);
+            return X86::COND_B;
+          } else /* SetCCOpcode == ISD::SETUGE */ {
+            // X >= 0x100000000 -> (X >> 32) >= 1
+            RHS = DAG.getConstant(C, MVT::i32);
+            return X86::COND_AE;
+          }
+        }
+      }
+      if (SetCCOpcode == ISD::SETUGT) {
+        unsigned TrailOnes = RHSC->getAPIntValue().countTrailingOnes();
+        if (TrailOnes >= 32 && !RHSC->isAllOnesValue()) {
+          assert(LHS.getValueType() == MVT::i64 && "Expecting a 64-bit cmp!");
+          DebugLoc dl = LHS.getDebugLoc();
+          LHS = DAG.getNode(ISD::TRUNCATE, dl, MVT::i32,
+                            DAG.getNode(ISD::SRL, dl, MVT::i64, LHS,
+                                        DAG.getConstant(TrailOnes, MVT::i8)));
+          uint64_t C = (RHSC->getZExtValue()+1) >> TrailOnes;
+          // X >  0x0ffffffff -> (X >> 32) >= 1
+          RHS = DAG.getConstant(C, MVT::i32);
+          return X86::COND_AE;
+        }
+      }
     }
 
     switch (SetCCOpcode) {

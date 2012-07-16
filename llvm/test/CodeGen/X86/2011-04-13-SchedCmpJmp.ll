@@ -12,9 +12,9 @@ declare hidden fastcc void @_ZN3JSCL23returnToThrowTrampolineEPNS_12JSGlobalData
 
 ; Avoid hoisting the test above loads or copies
 ; CHECK: %entry
-; CHECK: cmpq
+; CHECK: test
 ; CHECK-NOT: mov
-; CHECK: jb
+; CHECK: je
 define i32 @cti_op_eq(i8** nocapture %args) nounwind ssp {
 entry:
   %0 = load i8** null, align 8
