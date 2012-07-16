@@ -520,7 +520,8 @@ public:
                                                                       wp_sp->GetConditionText(),
                                                                       NULL,
                                                                       result_value_sp,
-                                                                      error);
+                                                                      error,
+                                                                      500000);
                 if (result_code == eExecutionCompleted)
                 {
                     if (result_value_sp)

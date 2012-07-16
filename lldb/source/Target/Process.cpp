@@ -4228,10 +4228,26 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                 
                 if (single_thread_timeout_usec != 0)
                 {
+                    // we have a > 0 timeout, let us set it so that we stop after the deadline
                     real_timeout = TimeValue::Now();
                     real_timeout.OffsetWithMicroSeconds(single_thread_timeout_usec);
                         
                     timeout_ptr = &real_timeout;
+                }
+                else if (first_timeout)
+                {
+                    // if we are willing to wait "forever" we still need to have an initial timeout
+                    // this timeout is going to induce all threads to run when hit. we do this so that
+                    // we can avoid ending locked up because of multithreaded contention issues
+                    real_timeout = TimeValue::Now();
+                    real_timeout.OffsetWithNanoSeconds(500000000UL);
+                    timeout_ptr = &real_timeout;
+                }
+                else
+                {
+                    timeout_ptr = NULL; // if we are in a no-timeout scenario, then we only need a fake timeout the first time through
+                    // at this point in the code, all threads will be running so we are willing to wait forever, and do not
+                    // need a timeout
                 }
             }
             else

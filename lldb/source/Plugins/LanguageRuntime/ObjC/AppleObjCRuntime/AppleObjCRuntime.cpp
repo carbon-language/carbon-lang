@@ -142,7 +142,7 @@ AppleObjCRuntime::GetObjectDescription (Stream &strm, Value &value, ExecutionCon
                                                      &wrapper_struct_addr, 
                                                      error_stream, 
                                                      stop_others, 
-                                                     100000, 
+                                                     0 /* no timeout */,
                                                      try_all_threads, 
                                                      unwind_on_error, 
                                                      ret);

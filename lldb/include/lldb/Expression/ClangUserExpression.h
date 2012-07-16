@@ -132,6 +132,10 @@ public:
     ///     A pointer to direct at the persistent variable in which the
     ///     expression's result is stored.
     ///
+    /// @param[in] single_thread_timeout_usec
+    ///     The amount of time (in usec) that we are willing to wait for this
+    ///     expression to complete, before assuming that we are blocked and giving up
+    ///
     /// @return
     ///     A Process::Execution results value.
     //------------------------------------------------------------------
@@ -140,7 +144,8 @@ public:
              ExecutionContext &exe_ctx,
              bool discard_on_error,
              ClangUserExpressionSP &shared_ptr_to_me,
-             lldb::ClangExpressionVariableSP &result);
+             lldb::ClangExpressionVariableSP &result,
+             uint32_t single_thread_timeout_usec = 500000);
              
     ThreadPlan *
     GetThreadPlanToExecuteJITExpression (Stream &error_stream,
@@ -309,6 +314,10 @@ public:
     /// @param[in/out] result_valobj_sp
     ///      If execution is successful, the result valobj is placed here.
     ///
+    /// @param[in] single_thread_timeout_usec
+    ///     The amount of time (in usec) that we are willing to wait for this
+    ///     expression to complete, before assuming that we are blocked and giving up
+    ///
     /// @result
     ///      A Process::ExecutionResults value.  eExecutionCompleted for success.
     //------------------------------------------------------------------
@@ -320,7 +329,8 @@ public:
               bool discard_on_error,
               const char *expr_cstr,
               const char *expr_prefix,
-              lldb::ValueObjectSP &result_valobj_sp);
+              lldb::ValueObjectSP &result_valobj_sp,
+              uint32_t single_thread_timeout_usec = 500000);
               
     static ExecutionResults
     EvaluateWithError (ExecutionContext &exe_ctx,
@@ -331,7 +341,8 @@ public:
                        const char *expr_cstr,
                        const char *expr_prefix,
                        lldb::ValueObjectSP &result_valobj_sp,
-                       Error &error);
+                       Error &error,
+                       uint32_t single_thread_timeout_usec = 500000);
     
     static const Error::ValueType kNoResult = 0x1001; ///< ValueObject::GetError() returns this if there is no result from the expression.
 private:

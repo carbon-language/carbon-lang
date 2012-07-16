@@ -1162,7 +1162,8 @@ CommandInterpreter::PreprocessCommand (std::string &command)
                                                                                unwind_on_error, 
                                                                                keep_in_memory, 
                                                                                eNoDynamicValues, 
-                                                                               expr_result_valobj_sp);
+                                                                               expr_result_valobj_sp,
+                                                                               0 /* no timeout */);
                     if (expr_result == eExecutionCompleted)
                     {
                         Scalar scalar;

@@ -1652,7 +1652,8 @@ Target::EvaluateExpression
     bool unwind_on_error,
     bool keep_in_memory,
     lldb::DynamicValueType use_dynamic,
-    lldb::ValueObjectSP &result_valobj_sp
+    lldb::ValueObjectSP &result_valobj_sp,
+    uint32_t single_thread_timeout_usec
 )
 {
     ExecutionResults execution_results = eExecutionSetupError;
@@ -1781,7 +1782,8 @@ Target::EvaluateExpression
                                                                unwind_on_error,
                                                                expr_cstr, 
                                                                prefix, 
-                                                               result_valobj_sp);
+                                                               result_valobj_sp,
+                                                               single_thread_timeout_usec);
         }
     }
     

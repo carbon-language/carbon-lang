@@ -305,7 +305,8 @@ CommandObjectExpression::EvaluateExpression
                                                   m_command_options.unwind_on_error,
                                                   keep_in_memory, 
                                                   use_dynamic, 
-                                                  result_valobj_sp);
+                                                  result_valobj_sp,
+                                                  0 /* no timeout */);
         
         if (exe_results == eExecutionInterrupted && !m_command_options.unwind_on_error)
         {

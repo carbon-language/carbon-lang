@@ -1206,7 +1206,8 @@ protected:
                                                                    unwind_on_error, 
                                                                    keep_in_memory, 
                                                                    eNoDynamicValues, 
-                                                                   valobj_sp);
+                                                                   valobj_sp,
+                                                                   0 /* no timeout */);
         if (expr_result != eExecutionCompleted) {
             result.GetErrorStream().Printf("error: expression evaluation of address to watch failed\n");
             result.GetErrorStream().Printf("expression evaluated: %s\n", expr_str.c_str());
