@@ -1829,22 +1829,6 @@ static void emitValidateOperandClass(AsmMatcherInfo &Info,
      << "             MCTargetAsmParser::Match_Success :\n"
      << "             MCTargetAsmParser::Match_InvalidOperand;\n\n";
 
-  // Check for register operands, including sub-classes.
-  OS << "  if (Operand.isReg()) {\n";
-  OS << "    MatchClassKind OpKind;\n";
-  OS << "    switch (Operand.getReg()) {\n";
-  OS << "    default: OpKind = InvalidMatchClass; break;\n";
-  for (std::map<Record*, ClassInfo*>::iterator
-         it = Info.RegisterClasses.begin(), ie = Info.RegisterClasses.end();
-       it != ie; ++it)
-    OS << "    case " << Info.Target.getName() << "::"
-       << it->first->getName() << ": OpKind = " << it->second->Name
-       << "; break;\n";
-  OS << "    }\n";
-  OS << "    return isSubclass(OpKind, Kind) ? "
-     << "MCTargetAsmParser::Match_Success :\n                             "
-     << "         MCTargetAsmParser::Match_InvalidOperand;\n  }\n\n";
-
   // Check the user classes. We don't care what order since we're only
   // actually matching against one of them.
   for (std::vector<ClassInfo*>::iterator it = Info.Classes.begin(),
@@ -1863,6 +1847,22 @@ static void emitValidateOperandClass(AsmMatcherInfo &Info,
          << CI.DiagnosticType << ";\n";
     OS << "  }\n\n";
   }
+
+  // Check for register operands, including sub-classes.
+  OS << "  if (Operand.isReg()) {\n";
+  OS << "    MatchClassKind OpKind;\n";
+  OS << "    switch (Operand.getReg()) {\n";
+  OS << "    default: OpKind = InvalidMatchClass; break;\n";
+  for (std::map<Record*, ClassInfo*>::iterator
+         it = Info.RegisterClasses.begin(), ie = Info.RegisterClasses.end();
+       it != ie; ++it)
+    OS << "    case " << Info.Target.getName() << "::"
+       << it->first->getName() << ": OpKind = " << it->second->Name
+       << "; break;\n";
+  OS << "    }\n";
+  OS << "    return isSubclass(OpKind, Kind) ? "
+     << "MCTargetAsmParser::Match_Success :\n                             "
+     << "         MCTargetAsmParser::Match_InvalidOperand;\n  }\n\n";
 
   // Generic fallthrough match failure case for operands that don't have
   // specialized diagnostic types.
