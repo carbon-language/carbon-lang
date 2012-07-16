@@ -324,10 +324,6 @@ bool ScopDetection::isValidInstruction(Instruction &Inst,
   }
 
   if (!Inst.mayWriteToMemory() && !Inst.mayReadFromMemory()) {
-    // Handle cast instruction.
-    if (isa<IntToPtrInst>(Inst) || isa<BitCastInst>(Inst))
-      INVALID(Other, "Cast instruction: " << Inst);
-
     if (isa<AllocaInst>(Inst))
       INVALID(Other, "Alloca instruction: " << Inst);
 
