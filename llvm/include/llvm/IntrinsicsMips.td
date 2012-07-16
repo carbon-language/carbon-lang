@@ -119,7 +119,9 @@ def int_mips_preceu_ph_qbra: GCCBuiltin<"__builtin_mips_preceu_ph_qbra">,
 //===----------------------------------------------------------------------===//
 // Shift
 
-def int_mips_shll_qb: GCCBuiltin<"__builtin_mips_shll_qb">,
+def int_mips_shll_qb:
+  Intrinsic<[llvm_v4i8_ty], [llvm_v4i8_ty, llvm_i32_ty], [IntrNoMem]>;
+def int_mips_shll_qb_v:
   Intrinsic<[llvm_v4i8_ty], [llvm_v4i8_ty, llvm_i32_ty], [IntrNoMem]>;
 def int_mips_shrl_qb: GCCBuiltin<"__builtin_mips_shrl_qb">,
   Intrinsic<[llvm_v4i8_ty], [llvm_v4i8_ty, llvm_i32_ty], [IntrNoMem]>;
