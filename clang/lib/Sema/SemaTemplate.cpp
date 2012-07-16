@@ -2554,8 +2554,7 @@ SubstDefaultTemplateArgument(Sema &SemaRef,
       = SemaRef.getTemplateInstantiationArgs(Template, &TemplateArgs);
 
     Sema::InstantiatingTemplate Inst(SemaRef, TemplateLoc,
-                                     Template, Converted.data(),
-                                     Converted.size(),
+                                     Template, Converted,
                                      SourceRange(TemplateLoc, RAngleLoc));
     if (Inst)
       return 0;
@@ -2605,8 +2604,7 @@ SubstDefaultTemplateArgument(Sema &SemaRef,
     = SemaRef.getTemplateInstantiationArgs(Template, &TemplateArgs);
 
   Sema::InstantiatingTemplate Inst(SemaRef, TemplateLoc,
-                                   Template, Converted.data(),
-                                   Converted.size(),
+                                   Template, Converted,
                                    SourceRange(TemplateLoc, RAngleLoc));
   if (Inst)
     return ExprError();
@@ -2656,8 +2654,7 @@ SubstDefaultTemplateArgument(Sema &SemaRef,
     = SemaRef.getTemplateInstantiationArgs(Template, &TemplateArgs);
 
   Sema::InstantiatingTemplate Inst(SemaRef, TemplateLoc,
-                                   Template, Converted.data(),
-                                   Converted.size(),
+                                   Template, Converted,
                                    SourceRange(TemplateLoc, RAngleLoc));
   if (Inst)
     return TemplateName();
@@ -2792,7 +2789,7 @@ bool Sema::CheckTemplateArgument(NamedDecl *Param,
         !Template->getDeclContext()->isDependentContext()) {
       // Do substitution on the type of the non-type template parameter.
       InstantiatingTemplate Inst(*this, TemplateLoc, Template,
-                                 NTTP, Converted.data(), Converted.size(),
+                                 NTTP, Converted,
                                  SourceRange(TemplateLoc, RAngleLoc));
       if (Inst)
         return true;
@@ -2926,7 +2923,7 @@ bool Sema::CheckTemplateArgument(NamedDecl *Param,
     // Set up a template instantiation context.
     LocalInstantiationScope Scope(*this);
     InstantiatingTemplate Inst(*this, TemplateLoc, Template,
-                               TempParm, Converted.data(), Converted.size(),
+                               TempParm, Converted,
                                SourceRange(TemplateLoc, RAngleLoc));
     if (Inst)
       return true;
@@ -3158,8 +3155,8 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
 
     // Introduce an instantiation record that describes where we are using
     // the default template argument.
-    InstantiatingTemplate Instantiating(*this, RAngleLoc, Template, *Param,
-                                        Converted.data(), Converted.size(),
+    InstantiatingTemplate Instantiating(*this, RAngleLoc, Template,
+                                        *Param, Converted,
                                         SourceRange(TemplateLoc, RAngleLoc));
     if (Instantiating)
       return true;

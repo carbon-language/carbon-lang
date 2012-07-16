@@ -5626,16 +5626,14 @@ public:
     /// template-id.
     InstantiatingTemplate(Sema &SemaRef, SourceLocation PointOfInstantiation,
                           TemplateDecl *Template,
-                          const TemplateArgument *TemplateArgs,
-                          unsigned NumTemplateArgs,
+                          ArrayRef<TemplateArgument> TemplateArgs,
                           SourceRange InstantiationRange = SourceRange());
 
     /// \brief Note that we are instantiating a default argument in a
     /// template-id.
     InstantiatingTemplate(Sema &SemaRef, SourceLocation PointOfInstantiation,
                           FunctionTemplateDecl *FunctionTemplate,
-                          const TemplateArgument *TemplateArgs,
-                          unsigned NumTemplateArgs,
+                          ArrayRef<TemplateArgument> TemplateArgs,
                           ActiveTemplateInstantiation::InstantiationKind Kind,
                           sema::TemplateDeductionInfo &DeductionInfo,
                           SourceRange InstantiationRange = SourceRange());
@@ -5645,15 +5643,13 @@ public:
     /// specialization.
     InstantiatingTemplate(Sema &SemaRef, SourceLocation PointOfInstantiation,
                           ClassTemplatePartialSpecializationDecl *PartialSpec,
-                          const TemplateArgument *TemplateArgs,
-                          unsigned NumTemplateArgs,
+                          ArrayRef<TemplateArgument> TemplateArgs,
                           sema::TemplateDeductionInfo &DeductionInfo,
                           SourceRange InstantiationRange = SourceRange());
 
     InstantiatingTemplate(Sema &SemaRef, SourceLocation PointOfInstantiation,
                           ParmVarDecl *Param,
-                          const TemplateArgument *TemplateArgs,
-                          unsigned NumTemplateArgs,
+                          ArrayRef<TemplateArgument> TemplateArgs,
                           SourceRange InstantiationRange = SourceRange());
 
     /// \brief Note that we are substituting prior template arguments into a
@@ -5661,15 +5657,13 @@ public:
     InstantiatingTemplate(Sema &SemaRef, SourceLocation PointOfInstantiation,
                           NamedDecl *Template,
                           NonTypeTemplateParmDecl *Param,
-                          const TemplateArgument *TemplateArgs,
-                          unsigned NumTemplateArgs,
+                          ArrayRef<TemplateArgument> TemplateArgs,
                           SourceRange InstantiationRange);
 
     InstantiatingTemplate(Sema &SemaRef, SourceLocation PointOfInstantiation,
                           NamedDecl *Template,
                           TemplateTemplateParmDecl *Param,
-                          const TemplateArgument *TemplateArgs,
-                          unsigned NumTemplateArgs,
+                          ArrayRef<TemplateArgument> TemplateArgs,
                           SourceRange InstantiationRange);
 
     /// \brief Note that we are checking the default template argument
@@ -5677,8 +5671,7 @@ public:
     InstantiatingTemplate(Sema &SemaRef, SourceLocation PointOfInstantiation,
                           TemplateDecl *Template,
                           NamedDecl *Param,
-                          const TemplateArgument *TemplateArgs,
-                          unsigned NumTemplateArgs,
+                          ArrayRef<TemplateArgument> TemplateArgs,
                           SourceRange InstantiationRange);
 
 

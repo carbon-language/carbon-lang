@@ -30,3 +30,22 @@ struct G : A<T>, // expected-error{{implicit instantiation of undefined template
 void h() {
   (void)sizeof(G<int>); // expected-note{{in instantiation of template class 'G<int>' requested here}}
 }
+
+namespace PR13365 {
+  template <class T> class ResultTy { // expected-warning {{does not declare any constructor}}
+    T t; // expected-note {{reference member 't' will never be initialized}}
+  };
+
+  template <class T1, class T2>
+    typename ResultTy<T2>::error Deduce( void (T1::*member)(T2) ) {} // \
+    // expected-note {{instantiation of template class 'PR13365::ResultTy<int &>'}} \
+    // expected-note {{substituting deduced template arguments into function template 'Deduce' [with T1 = PR13365::Cls, T2 = int &]}} \
+    // expected-note {{substitution failure [with T1 = PR13365::Cls, T2 = int &]}}
+
+  struct Cls {
+    void method(int&);
+  };
+  void test() {
+    Deduce(&Cls::method); // expected-error {{no matching function}}
+  }
+}

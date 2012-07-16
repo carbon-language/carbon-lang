@@ -3381,8 +3381,9 @@ ExprResult Sema::BuildCXXDefaultArgExpr(SourceLocation CallLoc,
 
     std::pair<const TemplateArgument *, unsigned> Innermost
       = ArgList.getInnermost();
-    InstantiatingTemplate Inst(*this, CallLoc, Param, Innermost.first,
-                               Innermost.second);
+    InstantiatingTemplate Inst(*this, CallLoc, Param,
+                               ArrayRef<TemplateArgument>(Innermost.first,
+                                                          Innermost.second));
     if (Inst)
       return ExprError();
 
