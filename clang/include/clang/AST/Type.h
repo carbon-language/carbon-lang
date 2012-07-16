@@ -4105,7 +4105,7 @@ class PackExpansionType : public Type, public llvm::FoldingSetNode {
 
   PackExpansionType(QualType Pattern, QualType Canon,
                     llvm::Optional<unsigned> NumExpansions)
-    : Type(PackExpansion, Canon, /*Dependent=*/true,
+    : Type(PackExpansion, Canon, /*Dependent=*/Pattern->isDependentType(),
            /*InstantiationDependent=*/true,
            /*VariableModified=*/Pattern->isVariablyModifiedType(),
            /*ContainsUnexpandedParameterPack=*/false),

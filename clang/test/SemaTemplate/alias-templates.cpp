@@ -125,17 +125,17 @@ namespace Core22036 {
   void h(...);
   template<typename T> using Y = X;
   template<typename T, typename ...Ts> struct S {
+    // An expression can contain an unexpanded pack without being type or
+    // value dependent. This is true even if the expression's type is a pack
+    // expansion type.
     void f1(Y<T> a) { h(g(a)); } // expected-error {{undeclared identifier 'g'}}
-    // FIXME: We should reject this too: 'as' has non-dependent type 'X', so
-    //        ADL should be performed at the point of definition of the
-    //        template.
-    void f2(Y<Ts>...as) { h(g(as)...); }
+    void f2(Y<Ts>...as) { h(g(as)...); } // expected-error {{undeclared identifier 'g'}}
+    void f3(Y<Ts>...as) { g(as...); } // ok
+    void f4(Ts ...ts) { h(g(sizeof(ts))...); } // expected-error {{undeclared identifier 'g'}}
+    // FIXME: We can reject this, since it has no valid instantiations because
+    // 'g' never has any associated namespaces.
+    void f5(Ts ...ts) { g(sizeof(ts)...); } // ok
   };
-  int g(X);
-  void test() {
-    S<int, int>().f1({});
-    S<int, int>().f2({});
-  }
 }
 
 namespace PR13243 {
