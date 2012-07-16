@@ -75,7 +75,11 @@ def main():
     print "(+) Using the Clang bundled with Xcode"
     path = options.default
   
-  xcode_path = subprocess.check_output(["xcode-select", "-print-path"])
+  try:
+    xcode_path = subprocess.check_output(["xcode-select", "-print-path"])
+  except AttributeError:
+    # Fall back to the default install location when using Python < 2.7.0
+    xcode_path = "/Developer"
   if (re.search("Xcode.app", xcode_path)):
     # Cut off the 'Developer' dir, as the xcspec lies in another part
     # of the Xcode.app subtree.
