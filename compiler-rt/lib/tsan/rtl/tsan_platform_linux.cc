@@ -12,6 +12,8 @@
 // Linux-specific code.
 //===----------------------------------------------------------------------===//
 
+#ifdef __linux__
+
 #include "sanitizer_common/sanitizer_common.h"
 #include "sanitizer_common/sanitizer_libc.h"
 #include "sanitizer_common/sanitizer_procmaps.h"
@@ -232,3 +234,5 @@ void GetThreadStackAndTls(bool main, uptr *stk_addr, uptr *stk_size,
 
 
 }  // namespace __tsan
+
+#endif  // #ifdef __linux__
