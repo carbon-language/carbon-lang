@@ -510,7 +510,8 @@ public:
   }
 
   static bool classof(const Comment *C) {
-    return C->getCommentKind() == BlockCommandCommentKind;
+    return C->getCommentKind() >= FirstBlockCommandCommentConstant &&
+           C->getCommentKind() <= LastBlockCommandCommentConstant;
   }
 
   static bool classof(const BlockCommandComment *) { return true; }
