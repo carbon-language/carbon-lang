@@ -1,5 +1,7 @@
-; RUN: llc < %s -mcpu=generic -march=x86 | not grep lea
-; RUN: llc < %s -mcpu=generic -march=x86 | grep "movl	%ebp"
+; RUN: llc < %s -mcpu=generic -march=x86 | FileCheck %s
+
+; CHECK-NOT: lea{{.*}}(%esp)
+; CHECK: {{(mov.* %ebp, %esp)|(lea.*\(%ebp\), %esp)}}
 
 declare void @bar(<2 x i64>* %n)
 

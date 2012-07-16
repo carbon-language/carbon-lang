@@ -2,7 +2,6 @@
 ; CHECK: incl
 ; CHECK: incl
 ; CHECK: incl
-; CHECK: addl
 
 ; Widen a v3i16 to v8i16 to do a vector add
 
