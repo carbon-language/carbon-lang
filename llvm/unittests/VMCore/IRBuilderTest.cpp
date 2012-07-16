@@ -27,7 +27,7 @@ protected:
     M.reset(new Module("MyModule", getGlobalContext()));
     FunctionType *FTy = FunctionType::get(Type::getVoidTy(getGlobalContext()),
                                           /*isVarArg=*/false);
-    Function *F = Function::Create(FTy, Function::ExternalLinkage, "", M.get());
+    F = Function::Create(FTy, Function::ExternalLinkage, "", M.get());
     BB = BasicBlock::Create(getGlobalContext(), "", F);
   }
 
@@ -37,6 +37,7 @@ protected:
   }
 
   OwningPtr<Module> M;
+  Function *F;
   BasicBlock *BB;
 };
 
@@ -69,6 +70,19 @@ TEST_F(IRBuilderTest, Lifetime) {
   EXPECT_EQ(II_Start1->getIntrinsicID(), Intrinsic::lifetime_start);
   ASSERT_TRUE(II_End1 != NULL);
   EXPECT_EQ(II_End1->getIntrinsicID(), Intrinsic::lifetime_end);
+}
+
+TEST_F(IRBuilderTest, CreateCondBr) {
+  IRBuilder<> Builder(BB);
+  BasicBlock *TBB = BasicBlock::Create(getGlobalContext(), "", F);
+  BasicBlock *FBB = BasicBlock::Create(getGlobalContext(), "", F);
+
+  BranchInst *BI = Builder.CreateCondBr(Builder.getTrue(), TBB, FBB);
+  TerminatorInst *TI = BB->getTerminator();
+  EXPECT_EQ(BI, TI);
+  EXPECT_EQ(2u, TI->getNumSuccessors());
+  EXPECT_EQ(TBB, TI->getSuccessor(0));
+  EXPECT_EQ(FBB, TI->getSuccessor(1));
 }
 
 }
