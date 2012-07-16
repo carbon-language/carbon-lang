@@ -382,6 +382,14 @@ TEST_F(ConstantRangeTest, Multiply) {
   EXPECT_EQ(Some.multiply(Wrap), Full);
   EXPECT_EQ(Wrap.multiply(Wrap), Full);
 
+  ConstantRange Zero(APInt(16, 0));
+  EXPECT_EQ(Zero.multiply(Full), Zero);
+  EXPECT_EQ(Zero.multiply(Some), Zero);
+  EXPECT_EQ(Zero.multiply(Wrap), Zero);
+  EXPECT_EQ(Full.multiply(Zero), Zero);
+  EXPECT_EQ(Some.multiply(Zero), Zero);
+  EXPECT_EQ(Wrap.multiply(Zero), Zero);
+
   // http://llvm.org/PR4545
   EXPECT_EQ(ConstantRange(APInt(4, 1), APInt(4, 6)).multiply(
                 ConstantRange(APInt(4, 6), APInt(4, 2))),

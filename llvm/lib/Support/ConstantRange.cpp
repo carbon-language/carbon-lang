@@ -537,6 +537,12 @@ ConstantRange::multiply(const ConstantRange &Other) const {
 
   if (isEmptySet() || Other.isEmptySet())
     return ConstantRange(getBitWidth(), /*isFullSet=*/false);
+
+  // If any of the operands is zero, then the result is also zero.
+  if ((getSingleElement() && *getSingleElement() == 0) ||
+      (Other.getSingleElement() && *Other.getSingleElement() == 0))
+    return ConstantRange(APInt(getBitWidth(), 0));
+
   if (isFullSet() || Other.isFullSet())
     return ConstantRange(getBitWidth(), /*isFullSet=*/true);
 
