@@ -4,4 +4,4 @@ add_llvm_library(LLVMAMDGPUInfo
   AMDGPUTargetInfo.cpp
   )
 
-add_dependencies(LLVMAMDGPUInfo AMDGPUCommonTableGen intrinsics_gen)
+add_dependencies(LLVMAMDGPUInfo AMDGPUCodeGenTable_gen)
