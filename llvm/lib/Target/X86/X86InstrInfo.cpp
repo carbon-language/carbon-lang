@@ -2016,6 +2016,13 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
                         .addReg(Dest, RegState::Define |
                                 getDeadRegState(isDead)),
                         Src, isKill, Src2, isKill2);
+
+      // Preserve undefness of the operands.
+      bool isUndef = MI->getOperand(1).isUndef();
+      bool isUndef2 = MI->getOperand(2).isUndef();
+      NewMI->getOperand(1).setIsUndef(isUndef);
+      NewMI->getOperand(3).setIsUndef(isUndef2);
+
       if (LV && isKill2)
         LV->replaceKillInstruction(Src2, MI, NewMI);
       break;
