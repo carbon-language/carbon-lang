@@ -936,8 +936,6 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
     BuildMI(MBB, MBBI, DL, TII.get(Opc), BasePtr)
       .addReg(StackPtr)
       .setMIFlag(MachineInstr::FrameSetup);
-
-    X86FI->setBasePtrStackAdjustment(NumBytes);
   }
 
   if (( (!HasFP && NumBytes) || PushedRegs) && needsFrameMoves) {
