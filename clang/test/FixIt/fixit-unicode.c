@@ -1,6 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only %s 2>&1 | FileCheck -strict-whitespace %s
 // RUN: %clang_cc1 -fsyntax-only -fdiagnostics-parseable-fixits %s 2>&1 | FileCheck -check-prefix=CHECK-MACHINE %s
-// XFAIL: win32
 
 struct Foo {
   int bar;
@@ -24,9 +23,11 @@ void test2() {
   printf("∆: %d", 1L);
 // CHECK: warning: format specifies type 'int' but the argument has type 'long'
 // Don't crash emitting a fixit after the delta.
-//     CHECK-NEXT:  printf("∆: %d", 1L);
-// CHECK-NEXT: {{^             ~~   \^~}}
-// CHECK-NEXT: {{^             %ld}}
+// CHECK:  printf("
+// CHECK: : %d", 1L);
+// Unfortunately, we can't actually check the location of the printed fixit,
+// because different systems will render the delta differently (either as a
+// character, or as <U+2206>.) The fixit should line up with the %d regardless.
 
 // CHECK-MACHINE: fix-it:"{{.*}}fixit-unicode.c":{23:16-23:18}:"%ld"
 }
