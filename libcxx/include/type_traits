@@ -2853,7 +2853,7 @@ __invoke(_Fp&& __f, _Args&& ...__args)
 
 template <class _Fp, class ..._Args>
 struct __invokable_imp
-    : private __check_complete<_Fp, _Args...>
+    : private __check_complete<_Fp>
 {
     typedef decltype(
             __invoke(_VSTD::declval<_Fp>(), _VSTD::declval<_Args>()...)
