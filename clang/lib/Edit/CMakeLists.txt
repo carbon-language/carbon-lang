@@ -4,6 +4,10 @@ add_clang_library(clangEdit
   RewriteObjCFoundationAPI.cpp
   )
 
+add_dependencies(clangEdit
+  ClangDiagnosticCommon
+)
+
 target_link_libraries(clangEdit
   clangBasic
   clangAST
