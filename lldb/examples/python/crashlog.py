@@ -405,12 +405,18 @@ class Interactive(cmd.Cmd):
         except:
             return
 
-        for idx_str in args:
-            idx = int(idx_str)
-            if idx < len(self.crash_logs):
-                SymbolicateCrashLog (self.crash_logs[idx], options)
-            else:
-                print 'error: crash log index %u is out of range' % (idx)
+        if args:
+            # We have arguments, they must valid be crash log file indexes
+            for idx_str in args:
+                idx = int(idx_str)
+                if idx < len(self.crash_logs):
+                    SymbolicateCrashLog (self.crash_logs[idx], options)
+                else:
+                    print 'error: crash log index %u is out of range' % (idx)
+        else:
+            # No arguments, symbolicate all crash logs using the options provided
+            for idx in range(len(self.crash_logs)):
+                SymbolicateCrashLog (self.crash_logs[idx], options)                
     
     def do_list(self, line=None):
         '''Dump a list of all crash logs that are currently loaded.
@@ -421,12 +427,9 @@ class Interactive(cmd.Cmd):
             print '[%u] = %s' % (crash_log_idx, crash_log.path)
 
     def do_image(self, line):
-        '''Dump information about an image in the crash log given an image basename.
-        
-        USAGE: image <basename>'''
+        '''Dump information about one or more binary images in the crash log given an image basename, or all images if no arguments are provided.'''
         usage = "usage: %prog [options] <PATH> [PATH ...]"
-        description='''Dump information about one or more images in all crash logs. The <PATH>
-        can be a full path or a image basename.'''
+        description='''Dump information about one or more images in all crash logs. The <PATH> can be a full path, image basename, or partial path. Searches are done in this order.'''
         command_args = shlex.split(line)
         if not self.image_option_parser:
             self.image_option_parser = optparse.OptionParser(description=description, prog='image',usage=usage)
@@ -439,23 +442,23 @@ class Interactive(cmd.Cmd):
         if args:
             for image_path in args:
                 fullpath_search = image_path[0] == '/'
-                for crash_log in self.crash_logs:
+                for (crash_log_idx, crash_log) in enumerate(self.crash_logs):
                     matches_found = 0
                     for (image_idx, image) in enumerate(crash_log.images):
                         if fullpath_search:
                             if image.get_resolved_path() == image_path:
                                 matches_found += 1
-                                print image
+                                print '[%u] ' % (crash_log_idx), image
                         else:
                             image_basename = image.get_resolved_path_basename()
                             if image_basename == image_path:
                                 matches_found += 1
-                                print image
+                                print '[%u] ' % (crash_log_idx), image
                     if matches_found == 0:
                         for (image_idx, image) in enumerate(crash_log.images):
                             resolved_image_path = image.get_resolved_path()
                             if resolved_image_path and string.find(image.get_resolved_path(), image_path) >= 0:
-                                print image
+                                print '[%u] ' % (crash_log_idx), image
         else:
             for crash_log in self.crash_logs:
                 for (image_idx, image) in enumerate(crash_log.images):
