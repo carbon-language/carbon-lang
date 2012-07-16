@@ -192,6 +192,7 @@ void __tsan_event(int typ, int tid, void *pc, void *addr, int info) {
   case MALLOC:
     thr->in_rtl++;
     MemoryResetRange(thr, (uptr)pc, (uptr)addr, (uptr)info);
+    MemoryAccessRange(thr, (uptr)pc, (uptr)addr, (uptr)info, true);
     thr->in_rtl--;
     break;
   case FREE:
