@@ -13,7 +13,6 @@
 
 #include "sanitizer_common.h"
 #include "sanitizer_libc.h"
-#include <stdlib.h>
 
 namespace __sanitizer {
 
@@ -57,19 +56,45 @@ uptr ReadFileToBuffer(const char *file_name, char **buff,
   return read_len;
 }
 
-static int comp(const void *p1, const void *p2) {
-  uptr v1 = *(uptr*)p1;
-  uptr v2 = *(uptr*)p2;
-  if (v1 < v2)
-    return -1;
-  else if (v1 > v2)
-    return 1;
-  else
-    return 0;
-}
-
+// We don't want to use std::sort to avoid including <algorithm>, as
+// we may end up with two implementation of std::sort - one in instrumented
+// code, and the other in runtime.
+// qsort() from stdlib won't work as it calls malloc(), which results
+// in deadlock in ASan allocator.
+// We re-implement in-place sorting w/o recursion as straightforward heapsort.
 void SortArray(uptr *array, uptr size) {
-  qsort(array, size, sizeof(array[0]), &comp);
+  if (size < 2)
+    return;
+  // Stage 1: insert elements to the heap.
+  for (uptr i = 1; i < size; i++) {
+    uptr j, p;
+    for (j = i; j > 0; j = p) {
+      p = (j - 1) / 2;
+      if (array[j] > array[p])
+        Swap(array[j], array[p]);
+      else
+        break;
+    }
+  }
+  // Stage 2: swap largest element with the last one,
+  // and sink the new top.
+  for (uptr i = size - 1; i > 0; i--) {
+    Swap(array[0], array[i]);
+    uptr j, max_ind;
+    for (j = 0; j < i; j = max_ind) {
+      uptr left = 2 * j + 1;
+      uptr right = 2 * j + 2;
+      max_ind = j;
+      if (left < i && array[left] > array[max_ind])
+        max_ind = left;
+      if (right < i && array[right] > array[max_ind])
+        max_ind = right;
+      if (max_ind != j)
+        Swap(array[j], array[max_ind]);
+      else
+        break;
+    }
+  }
 }
 
 }  // namespace __sanitizer

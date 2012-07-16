@@ -90,9 +90,15 @@ INLINE uptr RoundUpTo(uptr size, uptr boundary) {
   CHECK(IsPowerOfTwo(boundary));
   return (size + boundary - 1) & ~(boundary - 1);
 }
-// Don't use std::min and std::max, to minimize dependency on libstdc++.
+// Don't use std::min, std::max or std::swap, to minimize dependency
+// on libstdc++.
 template<class T> T Min(T a, T b) { return a < b ? a : b; }
 template<class T> T Max(T a, T b) { return a > b ? a : b; }
+template<class T> void Swap(T& a, T& b) {
+  T tmp = a;
+  a = b;
+  b = tmp;
+}
 
 // Char handling
 INLINE bool IsSpace(int c) {
