@@ -97,12 +97,12 @@ bool R600KernelParameters::IsOpenCLKernel(const Function* Fun) {
   Module *Mod = const_cast<Function*>(Fun)->getParent();
   NamedMDNode * MD = Mod->getOrInsertNamedMetadata("opencl.kernels");
 
-  if (!MD or !MD->getNumOperands()) {
+  if (!MD || !MD->getNumOperands()) {
     return false;
   }
 
   for (int i = 0; i < int(MD->getNumOperands()); i++) {
-    if (!MD->getOperand(i) or !MD->getOperand(i)->getOperand(0)) {
+    if (!MD->getOperand(i) || !MD->getOperand(i)->getOperand(0)) {
       continue;
     }
 
@@ -145,7 +145,7 @@ bool R600KernelParameters::IsIndirect(Value *Val, std::set<Value*> &Visited) {
   }
 
   if (isa<IntegerType>(Val->getType())) {
-    assert(0 and "Internal error");
+    assert(0 && "Internal error");
     return false;
   }
 
@@ -187,7 +187,7 @@ void R600KernelParameters::AddParam(Argument *Arg) {
   P.OffsetInDW = getListSize();
   P.SizeInDW = CalculateArgumentSize(Arg);
 
-  if (isa<PointerType>(Arg->getType()) and Arg->hasByValAttr()) {
+  if (isa<PointerType>(Arg->getType()) && Arg->hasByValAttr()) {
     std::set<Value*> Visited;
     P.IsIndirect = IsIndirect(P.Val, Visited);
   }
@@ -198,7 +198,7 @@ void R600KernelParameters::AddParam(Argument *Arg) {
 int R600KernelParameters::CalculateArgumentSize(Argument *Arg) {
   Type* T = Arg->getType();
 
-  if (Arg->hasByValAttr() and dyn_cast<PointerType>(T)) {
+  if (Arg->hasByValAttr() && dyn_cast<PointerType>(T)) {
     T = dyn_cast<PointerType>(T)->getElementType();
   }
 
@@ -254,7 +254,7 @@ void R600KernelParameters::Propagate(Value* V, const Twine& Name, bool IsIndirec
     Addrspace = AMDILAS::PARAM_D_ADDRESS;
   }
 
-  if (GEP and GEP->getType()->getAddressSpace() != Addrspace) {
+  if (GEP && GEP->getType()->getAddressSpace() != Addrspace) {
     Value *Op = GEP->getPointerOperand();
 
     if (dyn_cast<PointerType>(Op->getType())->getAddressSpace() != Addrspace) {
@@ -330,7 +330,7 @@ Value* R600KernelParameters::ConstantRead(Function *Fun, Param &P) {
   Type * ArgType = P.Val->getType();
   PointerType * ArgPtrType = dyn_cast<PointerType>(P.Val->getType());
 
-  if (ArgPtrType and Arg->hasByValAttr()) {
+  if (ArgPtrType && Arg->hasByValAttr()) {
     Value* ParamAddrSpacePtr = ConstantPointerNull::get(
                                     PointerType::get(Type::getInt32Ty(*Context),
                                     Addrspace));
@@ -364,7 +364,7 @@ Value* R600KernelParameters::handleSpecial(Function* Fun, Param& P) {
 
   assert(!Name.empty());
 
-  if (Name == "image2d_t" or Name == "image3d_t") {
+  if (Name == "image2d_t" || Name == "image3d_t") {
     int LastID = std::max(getLastSpecialID("image2d_t"),
                      getLastSpecialID("image3d_t"));
 
