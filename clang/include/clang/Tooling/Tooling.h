@@ -86,7 +86,8 @@ FrontendActionFactory *newFrontendActionFactory();
 /// FrontendActionFactory *FactoryAdapter =
 ///   newFrontendActionFactory(&Factory);
 template <typename FactoryT>
-FrontendActionFactory *newFrontendActionFactory(FactoryT *ConsumerFactory);
+inline FrontendActionFactory *newFrontendActionFactory(
+    FactoryT *ConsumerFactory);
 
 /// \brief Runs (and deletes) the tool on 'Code' with the -fsyntax-only flag.
 ///
@@ -202,7 +203,8 @@ FrontendActionFactory *newFrontendActionFactory() {
 }
 
 template <typename FactoryT>
-FrontendActionFactory *newFrontendActionFactory(FactoryT *ConsumerFactory) {
+inline FrontendActionFactory *newFrontendActionFactory(
+    FactoryT *ConsumerFactory) {
   class FrontendActionFactoryAdapter : public FrontendActionFactory {
   public:
     explicit FrontendActionFactoryAdapter(FactoryT *ConsumerFactory)

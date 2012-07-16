@@ -4,6 +4,7 @@ set(LLVM_USED_LIBS clangBasic clangAST)
 add_clang_library(clangASTMatchers
   ASTMatchFinder.cpp
   ASTMatchersInternal.cpp
+  RefactoringCallbacks.cpp
   )
 
 add_dependencies(clangASTMatchers
