@@ -21,11 +21,11 @@
 #include "llvm/Constants.h"
 #include "llvm/Function.h"
 #include "llvm/Intrinsics.h"
+#include "llvm/IRBuilder.h"
 #include "llvm/Metadata.h"
 #include "llvm/Module.h"
+#include "llvm/TypeBuilder.h"
 #include "llvm/Target/TargetData.h"
-#include "llvm/Support/IRBuilder.h"
-#include "llvm/Support/TypeBuilder.h"
 
 #include <map>
 #include <set>
