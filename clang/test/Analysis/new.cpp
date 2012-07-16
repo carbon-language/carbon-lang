@@ -1,8 +1,8 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,unix.Malloc,debug.ExprInspection -analyzer-store region -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,unix.Malloc,debug.ExprInspection -analyzer-store region -std=c++11 -verify %s
 
 void clang_analyzer_eval(bool);
 
-typedef typeof(sizeof(int)) size_t;
+typedef __typeof__(sizeof(int)) size_t;
 extern "C" void *malloc(size_t);
 
 int someGlobal;
@@ -59,23 +59,42 @@ void *testCustomNewMalloc() {
   return y;
 }
 
+void testScalarInitialization() {
+  int *n = new int(3);
+  clang_analyzer_eval(*n == 3); // expected-warning{{TRUE}}
+
+  new (n) int();
+  clang_analyzer_eval(*n == 0); // expected-warning{{TRUE}}
+
+  new (n) int{3};
+  clang_analyzer_eval(*n == 3); // expected-warning{{TRUE}}
+
+  new (n) int{};
+  clang_analyzer_eval(*n == 0); // expected-warning{{TRUE}}
+}
+
 
 //--------------------------------
 // Incorrectly-modelled behavior
 //--------------------------------
 
-void testZeroInitialization() {
+int testNoInitialization() {
   int *n = new int;
 
   // Should warn that *n is uninitialized.
   if (*n) { // no-warning
+    return 0;
   }
+  return 1;
 }
 
-void testValueInitialization() {
-  int *n = new int(3);
+int testNoInitializationPlacement() {
+  int n;
+  new (&n) int;
 
-  // Should be TRUE (and have no uninitialized variable warning)
-  clang_analyzer_eval(*n == 3); // expected-warning{{UNKNOWN}}
+  // Should warn that n is uninitialized.
+  if (n) { // no-warning
+    return 0;
+  }
+  return 1;
 }
-
