@@ -114,11 +114,15 @@ TEST_F(ConstantRangeTest, SingleElement) {
 }
 
 TEST_F(ConstantRangeTest, GetSetSize) {
-  EXPECT_EQ(Full.getSetSize(), APInt(16, 0));
-  EXPECT_EQ(Empty.getSetSize(), APInt(16, 0));
-  EXPECT_EQ(One.getSetSize(), APInt(16, 1));
-  EXPECT_EQ(Some.getSetSize(), APInt(16, 0xaa0));
-  EXPECT_EQ(Wrap.getSetSize(), APInt(16, 0x10000 - 0xaa0));
+  EXPECT_EQ(Full.getSetSize(), APInt(17, 65536));
+  EXPECT_EQ(Empty.getSetSize(), APInt(17, 0));
+  EXPECT_EQ(One.getSetSize(), APInt(17, 1));
+  EXPECT_EQ(Some.getSetSize(), APInt(17, 0xaa0));
+
+  ConstantRange Wrap(APInt(4, 7), APInt(4, 3));
+  ConstantRange Wrap2(APInt(4, 8), APInt(4, 7));
+  EXPECT_EQ(Wrap.getSetSize(), APInt(5, 12));
+  EXPECT_EQ(Wrap2.getSetSize(), APInt(5, 15));
 }
 
 TEST_F(ConstantRangeTest, GetMinsAndMaxes) {
