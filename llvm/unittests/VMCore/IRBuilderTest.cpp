@@ -12,6 +12,7 @@
 #include "llvm/IRBuilder.h"
 #include "llvm/IntrinsicInst.h"
 #include "llvm/LLVMContext.h"
+#include "llvm/MDBuilder.h"
 #include "llvm/Module.h"
 #include "llvm/ADT/OwningPtr.h"
 
@@ -83,6 +84,16 @@ TEST_F(IRBuilderTest, CreateCondBr) {
   EXPECT_EQ(2u, TI->getNumSuccessors());
   EXPECT_EQ(TBB, TI->getSuccessor(0));
   EXPECT_EQ(FBB, TI->getSuccessor(1));
+
+  BI->eraseFromParent();
+  MDNode *Weights = MDBuilder(getGlobalContext()).createBranchWeights(42, 13);
+  BI = Builder.CreateCondBr(Builder.getTrue(), TBB, FBB, Weights);
+  TI = BB->getTerminator();
+  EXPECT_EQ(BI, TI);
+  EXPECT_EQ(2u, TI->getNumSuccessors());
+  EXPECT_EQ(TBB, TI->getSuccessor(0));
+  EXPECT_EQ(FBB, TI->getSuccessor(1));
+  EXPECT_EQ(Weights, TI->getMetadata(LLVMContext::MD_prof));
 }
 
 }

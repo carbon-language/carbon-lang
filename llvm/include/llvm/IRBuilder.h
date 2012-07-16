@@ -411,6 +411,17 @@ public:
   // Instruction creation methods: Terminators
   //===--------------------------------------------------------------------===//
 
+private:
+  /// \brief Helper to add branch weight metadata onto an instruction.
+  /// \returns The annotated instruction.
+  template <typename InstTy>
+  InstTy *addBranchWeights(InstTy *I, MDNode *Weights) {
+    if (Weights)
+      I->setMetadata(LLVMContext::MD_prof, Weights);
+    return I;
+  }
+
+public:
   /// CreateRetVoid - Create a 'ret void' instruction.
   ReturnInst *CreateRetVoid() {
     return Insert(ReturnInst::Create(Context));
@@ -444,15 +455,19 @@ public:
 
   /// CreateCondBr - Create a conditional 'br Cond, TrueDest, FalseDest'
   /// instruction.
-  BranchInst *CreateCondBr(Value *Cond, BasicBlock *True, BasicBlock *False) {
-    return Insert(BranchInst::Create(True, False, Cond));
+  BranchInst *CreateCondBr(Value *Cond, BasicBlock *True, BasicBlock *False,
+                           MDNode *BranchWeights = 0) {
+    return Insert(addBranchWeights(BranchInst::Create(True, False, Cond),
+                                   BranchWeights));
   }
 
   /// CreateSwitch - Create a switch instruction with the specified value,
   /// default dest, and with a hint for the number of cases that will be added
   /// (for efficient allocation).
-  SwitchInst *CreateSwitch(Value *V, BasicBlock *Dest, unsigned NumCases = 10) {
-    return Insert(SwitchInst::Create(V, Dest, NumCases));
+  SwitchInst *CreateSwitch(Value *V, BasicBlock *Dest, unsigned NumCases = 10,
+                           MDNode *BranchWeights = 0) {
+    return Insert(addBranchWeights(SwitchInst::Create(V, Dest, NumCases),
+                                   BranchWeights));
   }
 
   /// CreateIndirectBr - Create an indirect branch instruction with the
