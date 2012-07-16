@@ -961,7 +961,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK-tokens: Punctuation: ">" [105:51 - 105:52] CallExpr=StringSwitch:87:12
 // CHECK-tokens: Punctuation: "(" [105:53 - 105:54] CallExpr=StringSwitch:87:12
 // CHECK-tokens: Identifier: "AttrName" [105:54 - 105:62] DeclRefExpr=AttrName:101:19
-// CHECK-tokens: Punctuation: ")" [105:62 - 105:63] CXXFunctionalCastExpr=
+// CHECK-tokens: Punctuation: ")" [105:62 - 105:63] CallExpr=StringSwitch:87:12
 // CHECK-tokens: Punctuation: "." [106:5 - 106:6] MemberRefExpr=Case:88:42
 // CHECK-tokens: Identifier: "Case" [106:6 - 106:10] MemberRefExpr=Case:88:42
 // CHECK-tokens: Punctuation: "(" [106:10 - 106:11] CallExpr=Case:88:42
@@ -2081,7 +2081,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK: 106:6: MemberRefExpr=Case:88:42 SingleRefName=[106:6 - 106:10] RefName=[106:6 - 106:10] Extent=[105:10 - 106:10]
 // CHECK: 105:10: CXXFunctionalCastExpr= Extent=[105:10 - 105:63]
 // CHECK: 105:16: TemplateRef=StringSwitch:83:47 Extent=[105:16 - 105:28]
-// CHECK: 105:10: CallExpr=StringSwitch:87:12 Extent=[105:10 - 105:62]
+// CHECK: 105:10: CallExpr=StringSwitch:87:12 Extent=[105:10 - 105:63]
 // CHECK: 105:54: CallExpr=StringRef:38:7 Extent=[105:54 - 105:62]
 // CHECK: 105:54: UnexposedExpr=AttrName:101:19 Extent=[105:54 - 105:62]
 // CHECK: 105:54: DeclRefExpr=AttrName:101:19 Extent=[105:54 - 105:62]
@@ -2240,4 +2240,3 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK: 183:25: DeclRefExpr=AT_thiscall:27:44 Extent=[183:25 - 183:36]
 // CHECK: 184:11: StringLiteral= Extent=[184:11 - 184:21]
 // CHECK: 184:23: DeclRefExpr=AT_pascal:26:38 Extent=[184:23 - 184:32]
-

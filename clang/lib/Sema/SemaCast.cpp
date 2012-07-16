@@ -2102,6 +2102,9 @@ ExprResult Sema::BuildCXXFunctionalCastExpr(TypeSourceInfo *CastTypeInfo,
   Op.CheckCXXCStyleCast(/*FunctionalStyle=*/true, /*ListInit=*/false);
   if (Op.SrcExpr.isInvalid())
     return ExprError();
+  
+  if (CXXConstructExpr *ConstructExpr = dyn_cast<CXXConstructExpr>(Op.SrcExpr.get()))
+    ConstructExpr->setParenRange(SourceRange(LPLoc, RPLoc));
 
   return Op.complete(CXXFunctionalCastExpr::Create(Context, Op.ResultType,
                          Op.ValueKind, CastTypeInfo, Op.DestRange.getBegin(),

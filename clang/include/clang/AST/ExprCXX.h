@@ -1001,6 +1001,7 @@ public:
 
   SourceRange getSourceRange() const LLVM_READONLY;
   SourceRange getParenRange() const { return ParenRange; }
+  void setParenRange(SourceRange Range) { ParenRange = Range; }
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == CXXConstructExprClass ||
