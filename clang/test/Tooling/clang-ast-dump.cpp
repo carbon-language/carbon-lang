@@ -1,5 +1,4 @@
-// RUN: clang-ast-dump "%t/test.cpp" -f test_namespace::TheClass::theMethod -- -c 2>&1|FileCheck %s
-// FIXME: Make the above easier.
+// RUN: clang-ast-dump "%s" -f test_namespace::TheClass::theMethod -- -c 2>&1|FileCheck %s
 
 // CHECK: <CXXMethod ptr="0x{{[0-9a-f]+}}" name="theMethod" prototype="true">
 // CHECK:  <ParmVar ptr="0x{{[0-9a-f]+}}" name="x" initstyle="c">
