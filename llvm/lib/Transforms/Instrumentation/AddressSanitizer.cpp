@@ -180,7 +180,6 @@ struct AddressSanitizer : public ModulePass {
                    Value *ShadowBase, bool DoPoison);
   bool LooksLikeCodeInBug11395(Instruction *I);
 
-  Module      *CurrentModule;
   LLVMContext *C;
   TargetData *TD;
   uint64_t MappingOffset;
@@ -193,6 +192,10 @@ struct AddressSanitizer : public ModulePass {
   Function *AsanInitFunction;
   Instruction *CtorInsertBefore;
   OwningPtr<FunctionBlackList> BL;
+  // Accesses sizes are powers of two: 1, 2, 4, 8, 16.
+  static const size_t kNumberOfAccessSizes = 5;
+  // This array is indexed by AccessIsWrite and log2(AccessSize).
+  Function *AsanErrorCallback[2][kNumberOfAccessSizes];
 };
 }  // namespace
 
@@ -361,12 +364,10 @@ Function *AddressSanitizer::checkInterfaceFunction(Constant *FuncOrBitcast) {
 
 Instruction *AddressSanitizer::generateCrashCode(
     IRBuilder<> &IRB, Value *Addr, bool IsWrite, uint32_t TypeSize) {
-  // IsWrite and TypeSize are encoded in the function name.
-  std::string FunctionName = std::string(kAsanReportErrorTemplate) +
-      (IsWrite ? "store" : "load") + itostr(TypeSize / 8);
-  Value *ReportWarningFunc = CurrentModule->getOrInsertFunction(
-      FunctionName, IRB.getVoidTy(), IntptrTy, NULL);
-  CallInst *Call = IRB.CreateCall(ReportWarningFunc, Addr);
+  size_t AccessSizeIndex = CountTrailingZeros_32(TypeSize / 8);
+  assert(AccessSizeIndex < kNumberOfAccessSizes);
+  CallInst *Call = IRB.CreateCall(AsanErrorCallback[IsWrite][AccessSizeIndex],
+                                  Addr);
   Call->setDoesNotReturn();
   return Call;
 }
@@ -581,7 +582,6 @@ bool AddressSanitizer::runOnModule(Module &M) {
     return false;
   BL.reset(new FunctionBlackList(ClBlackListFile));
 
-  CurrentModule = &M;
   C = &(M.getContext());
   LongSize = TD->getPointerSizeInBits();
   IntptrTy = Type::getIntNTy(*C, LongSize);
@@ -599,6 +599,18 @@ bool AddressSanitizer::runOnModule(Module &M) {
       M.getOrInsertFunction(kAsanInitName, IRB.getVoidTy(), NULL));
   AsanInitFunction->setLinkage(Function::ExternalLinkage);
   IRB.CreateCall(AsanInitFunction);
+
+  // Create __asan_report* callbacks.
+  for (size_t AccessIsWrite = 0; AccessIsWrite <= 1; AccessIsWrite++) {
+    for (size_t AccessSizeIndex = 0; AccessSizeIndex < kNumberOfAccessSizes;
+         AccessSizeIndex++) {
+      // IsWrite and TypeSize are encoded in the function name.
+      std::string FunctionName = std::string(kAsanReportErrorTemplate) +
+          (AccessIsWrite ? "store" : "load") + itostr(1 << AccessSizeIndex);
+      AsanErrorCallback[AccessIsWrite][AccessSizeIndex] = cast<Function>(
+        M.getOrInsertFunction(FunctionName, IRB.getVoidTy(), IntptrTy, NULL));
+    }
+  }
 
   llvm::Triple targetTriple(M.getTargetTriple());
   bool isAndroid = targetTriple.getEnvironment() == llvm::Triple::ANDROIDEABI;
