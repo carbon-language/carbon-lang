@@ -586,7 +586,7 @@ RNBRemote::CommDataReceived(const std::string& new_data)
                 case '$':
                     // Look for a standard gdb packet?
                     end_idx = data.find('#',  idx + 1);
-                    if (end_idx == std::string::npos || end_idx + 2 > data_size)
+                    if (end_idx == std::string::npos || end_idx + 3 > data_size)
                     {
                         end_idx = std::string::npos;
                     }
@@ -594,7 +594,7 @@ RNBRemote::CommDataReceived(const std::string& new_data)
                     {
                         // Add two for the checksum bytes and 1 to point to the
                         // byte just past the end of this packet
-                        end_idx += 2 + 1;
+                        end_idx += 3;
                     }
                     break;
 
