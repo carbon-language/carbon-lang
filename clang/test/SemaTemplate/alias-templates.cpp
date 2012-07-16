@@ -73,19 +73,38 @@ namespace PR11848 {
   template<typename T> using U = int;
 
   template<typename T, typename ...Ts>
-  void f(U<T> i, U<Ts> ...is) { // expected-error {{type 'U<Ts>' (aka 'int') of function parameter pack does not contain any unexpanded parameter packs}}
-    return i + f<Ts...>(is...); // expected-error {{pack expansion does not contain any unexpanded parameter packs}}
+  void f1(U<T> i, U<Ts> ...is) { // expected-note 2{{couldn't infer template argument 'T'}}
+    return i + f1<Ts...>(is...);
+  }
+
+  // FIXME: This note is technically correct, but could be better. We
+  // should really say that we couldn't infer template argument 'Ts'.
+  template<typename ...Ts>
+  void f2(U<Ts> ...is) { } // expected-note {{requires 0 arguments, but 1 was provided}}
+
+  template<typename...> struct type_tuple {};
+  template<typename ...Ts>
+  void f3(type_tuple<Ts...>, U<Ts> ...is) {} // expected-note {{requires 4 arguments, but 3 were provided}}
+
+  void g() {
+    f1(U<void>()); // expected-error {{no match}}
+    f1(1, 2, 3, 4, 5); // expected-error {{no match}}
+    f2(); // ok
+    f2(1); // expected-error {{no match}}
+    f3(type_tuple<>());
+    f3(type_tuple<void, void, void>(), 1, 2); // expected-error {{no match}}
+    f3(type_tuple<void, void, void>(), 1, 2, 3);
   }
 
   template<typename ...Ts>
   struct S {
-    S(U<Ts>...ts); // expected-error {{does not contain any unexpanded parameter packs}}
+    S(U<Ts>...ts);
   };
 
   template<typename T>
   struct Hidden1 {
     template<typename ...Ts>
-    Hidden1(typename T::template U<Ts> ...ts); // expected-error{{type 'typename Hide::U<Ts>' (aka 'int') of function parameter pack does not contain any unexpanded parameter packs}}
+    Hidden1(typename T::template U<Ts> ...ts);
   };
 
   template<typename T, typename ...Ts>
@@ -97,8 +116,26 @@ namespace PR11848 {
     template<typename T> using U = int;
   };
 
-  Hidden1<Hide> h1;  // expected-note{{in instantiation of template class 'PR11848::Hidden1<PR11848::Hide>' requested here}}
+  Hidden1<Hide> h1;
   Hidden2<Hide, double, char> h2(1, 2);
+}
+
+namespace Core22036 {
+  struct X {};
+  void h(...);
+  template<typename T> using Y = X;
+  template<typename T, typename ...Ts> struct S {
+    void f1(Y<T> a) { h(g(a)); } // expected-error {{undeclared identifier 'g'}}
+    // FIXME: We should reject this too: 'as' has non-dependent type 'X', so
+    //        ADL should be performed at the point of definition of the
+    //        template.
+    void f2(Y<Ts>...as) { h(g(as)...); }
+  };
+  int g(X);
+  void test() {
+    S<int, int>().f1({});
+    S<int, int>().f2({});
+  }
 }
 
 namespace PR13243 {
@@ -126,5 +163,6 @@ namespace PR13136 {
   int main() {
     foo(1, NumberTuple<unsigned int, 0, 1>());
     bar(1, NumberTuple<unsigned int, 0, 1>());
+    return 0;
   }
 }

@@ -2892,10 +2892,17 @@ QualType ASTContext::getPackExpansionType(QualType Pattern,
 
   QualType Canon;
   if (!Pattern.isCanonical()) {
-    Canon = getPackExpansionType(getCanonicalType(Pattern), NumExpansions);
+    Canon = getCanonicalType(Pattern);
+    // The canonical type might not contain an unexpanded parameter pack, if it
+    // contains an alias template specialization which ignores one of its
+    // parameters.
+    if (Canon->containsUnexpandedParameterPack()) {
+      Canon = getPackExpansionType(getCanonicalType(Pattern), NumExpansions);
 
-    // Find the insert position again.
-    PackExpansionTypes.FindNodeOrInsertPos(ID, InsertPos);
+      // Find the insert position again, in case we inserted an element into
+      // PackExpansionTypes and invalidated our insert position.
+      PackExpansionTypes.FindNodeOrInsertPos(ID, InsertPos);
+    }
   }
 
   T = new (*this) PackExpansionType(Pattern, Canon, NumExpansions);
