@@ -210,6 +210,12 @@ void __tsan_event(int typ, int tid, void *pc, void *addr, int info) {
     thr->in_rtl--;
     break;
   }
+  case THR_END: {
+    thr->in_rtl++;
+    ThreadFinish(thr);
+    thr->in_rtl--;
+    break;
+  }
   default:
     Printf("Unknown event type %d\n", typ);
     Die();
