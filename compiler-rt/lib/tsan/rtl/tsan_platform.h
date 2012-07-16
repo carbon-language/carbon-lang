@@ -12,9 +12,8 @@
 // Platform-specific code.
 //===----------------------------------------------------------------------===//
 
-#ifndef TSAN_LINUX_H
-#define TSAN_LINUX_H
-#ifdef __linux__
+#ifndef TSAN_PLATFORM_H
+#define TSAN_PLATFORM_H
 
 #include "tsan_rtl.h"
 
@@ -99,5 +98,4 @@ void GetThreadStackAndTls(bool main, uptr *stk_addr, uptr *stk_size,
 # error "Only 64-bit is supported"
 #endif
 
-#endif  // __linux__
-#endif  // TSAN_LINUX_H
+#endif  // TSAN_PLATFORM_H

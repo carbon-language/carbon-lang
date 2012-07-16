@@ -1,13 +1,21 @@
 #!/bin/bash
 set -e
 
+if [ "`uname -a | grep Linux`" != "" ]; then
+	LINUX=1
+elif [ "`uname -a | grep Darwin`" != "" ]; then
+	MAC=1
+else
+	echo Unknown platform
+	exit 1
+fi
+
 SRCS="
 	tsan_go.cc
 	../rtl/tsan_clock.cc
 	../rtl/tsan_flags.cc
 	../rtl/tsan_md5.cc
 	../rtl/tsan_mutex.cc
-	../rtl/tsan_platform_linux.cc
 	../rtl/tsan_printf.cc
 	../rtl/tsan_report.cc
 	../rtl/tsan_rtl.cc
@@ -21,11 +29,22 @@ SRCS="
 	../../sanitizer_common/sanitizer_common.cc
 	../../sanitizer_common/sanitizer_flags.cc
 	../../sanitizer_common/sanitizer_libc.cc
-	../../sanitizer_common/sanitizer_linux.cc
 	../../sanitizer_common/sanitizer_posix.cc
 	../../sanitizer_common/sanitizer_printf.cc
 	../../sanitizer_common/sanitizer_symbolizer.cc
 "
+
+if [ "$LINUX" != "" ]; then
+	SRCS+="
+		../rtl/tsan_platform_linux.cc
+		../../sanitizer_common/sanitizer_linux.cc
+	"
+elif [ "$MAC" != "" ]; then
+        SRCS+="
+                ../rtl/tsan_platform_mac.cc
+                ../../sanitizer_common/sanitizer_mac.cc
+        "
+fi
 
 #ASMS="../rtl/tsan_rtl_amd64.S"
 
@@ -34,11 +53,15 @@ for F in $SRCS; do
 	cat $F >> gotsan.cc
 done
 
-FLAGS=" -I../rtl -I../.. -I../../sanitizer_common -fPIC -g -Wall -Werror -ffreestanding -fno-exceptions -DTSAN_GO -DSANITIZER_GO -DTSAN_SHADOW_COUNT=4"
+FLAGS=" -I../rtl -I../.. -I../../sanitizer_common -fPIC -g -Wall -Werror -fno-exceptions -DTSAN_GO -DSANITIZER_GO -DTSAN_SHADOW_COUNT=4"
 if [ "$DEBUG" == "" ]; then
 	FLAGS+=" -DTSAN_DEBUG=0 -O3 -fomit-frame-pointer"
 else
 	FLAGS+=" -DTSAN_DEBUG=1 -g"
+fi
+
+if [ "$LINUX" != "" ]; then
+	FLAGS+=" -ffreestanding"
 fi
 
 echo gcc gotsan.cc -S -o tmp.s $FLAGS $CFLAGS

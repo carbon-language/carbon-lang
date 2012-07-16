@@ -39,7 +39,7 @@ void internal_start_thread(void(*func)(void*), void *arg) {
 
 extern "C" int goCallbackCommentPc(uptr pc, char **img, char **rtn,
                                    char **filename, int *lineno);
-extern "C" void __libc_free(void *p);
+extern "C" void free(void *p);
 
 ReportStack *SymbolizeCode(uptr addr) {
   ReportStack *s = NewReportStackEntry(addr);
@@ -52,9 +52,9 @@ ReportStack *SymbolizeCode(uptr addr) {
     s->file = internal_strdup(filename);
     s->line = lineno;
     s->col = 0;
-    __libc_free(img);
-    __libc_free(rtn);
-    __libc_free(filename);
+    free(img);
+    free(rtn);
+    free(filename);
   }
   return s;
 }
