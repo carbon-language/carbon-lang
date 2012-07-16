@@ -26,6 +26,7 @@
 #include "llvm/Module.h"
 #include "llvm/TypeBuilder.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/Support/raw_ostream.h"
 
 #include <map>
 #include <set>
