@@ -1,4 +1,6 @@
-// RUN: clang-ast-dump "%s" -f test_namespace::TheClass::theMethod -- -c 2>&1|FileCheck %s
+// RUN: rm -f %t
+// RUN: clang-ast-dump "%s" -f test_namespace::TheClass::theMethod -- -c > %t 2>&1
+// RUN: FileCheck --input-file=%t %s
 
 // CHECK: <CXXMethod ptr="0x{{[0-9a-f]+}}" name="theMethod" prototype="true">
 // CHECK:  <ParmVar ptr="0x{{[0-9a-f]+}}" name="x" initstyle="c">
@@ -16,6 +18,3 @@ public:
 };
 
 }
-
-// FIXME: This is incompatible to -fms-compatibility.
-// XFAIL: win32
