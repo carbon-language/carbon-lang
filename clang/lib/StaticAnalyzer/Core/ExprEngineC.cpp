@@ -520,6 +520,7 @@ void ExprEngine::VisitLogicalExpr(const BinaryOperator* B, ExplodedNode *Pred,
   // The only terminator (if there is one) that makes sense is a logical op.
   CFGTerminator T = SrcBlock->getTerminator();
   if (const BinaryOperator *Term = cast_or_null<BinaryOperator>(T.getStmt())) {
+    (void) Term;
     assert(Term->isLogicalOp());
     assert(SrcBlock->succ_size() == 2);
     // Did we take the true or false branch?
