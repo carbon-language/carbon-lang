@@ -230,17 +230,17 @@ static GlobalVariable *createPrivateGlobalForString(Module &M, StringRef Str) {
 // Returns the ThenBlock's terminator.
 static BranchInst *splitBlockAndInsertIfThen(Value *Cmp) {
   Instruction *SplitBefore = cast<Instruction>(Cmp)->getNextNode();
-
-  // Create three basic blocks, with the middle block empty, by splitting twice.
   BasicBlock *Head = SplitBefore->getParent();
-  BasicBlock *Then = Head->splitBasicBlock(SplitBefore);
-  BasicBlock *Tail = Then->splitBasicBlock(SplitBefore);
-
+  BasicBlock *Tail = Head->splitBasicBlock(SplitBefore);
   TerminatorInst *HeadOldTerm = Head->getTerminator();
-  IRBuilder<>(HeadOldTerm).CreateCondBr(Cmp, Then, Tail);
-  HeadOldTerm->eraseFromParent();
+  LLVMContext &C = Head->getParent()->getParent()->getContext();
+  BasicBlock *ThenBlock = BasicBlock::Create(C, "", Head->getParent());
+  BranchInst *HeadNewTerm =
+    BranchInst::Create(/*ifTrue*/ThenBlock, /*ifFalse*/Tail, Cmp);
+  ReplaceInstWithInst(HeadOldTerm, HeadNewTerm);
 
-  return cast<BranchInst>(Then->getTerminator());
+  BranchInst *CheckTerm = BranchInst::Create(Tail, ThenBlock);
+  return CheckTerm;
 }
 
 Value *AddressSanitizer::memToShadow(Value *Shadow, IRBuilder<> &IRB) {
@@ -387,28 +387,28 @@ void AddressSanitizer::instrumentAddress(Instruction *OrigIns,
   Value *Cmp = IRB.CreateICmpNE(ShadowValue, CmpVal);
 
   Instruction *CheckTerm = splitBlockAndInsertIfThen(Cmp);
-  IRB.SetInsertPoint(CheckTerm);
+  IRBuilder<> IRB2(CheckTerm);
 
   size_t Granularity = 1 << MappingScale;
   if (TypeSize < 8 * Granularity) {
     // Addr & (Granularity - 1)
-    Value *LastAccessedByte = IRB.CreateAnd(
+    Value *LastAccessedByte = IRB2.CreateAnd(
         AddrLong, ConstantInt::get(IntptrTy, Granularity - 1));
     // (Addr & (Granularity - 1)) + size - 1
     if (TypeSize / 8 > 1)
-      LastAccessedByte = IRB.CreateAdd(
+      LastAccessedByte = IRB2.CreateAdd(
           LastAccessedByte, ConstantInt::get(IntptrTy, TypeSize / 8 - 1));
     // (uint8_t) ((Addr & (Granularity-1)) + size - 1)
-    LastAccessedByte = IRB.CreateIntCast(
+    LastAccessedByte = IRB2.CreateIntCast(
         LastAccessedByte, IRB.getInt8Ty(), false);
     // ((uint8_t) ((Addr & (Granularity-1)) + size - 1)) >= ShadowValue
-    Value *Cmp2 = IRB.CreateICmpSGE(LastAccessedByte, ShadowValue);
+    Value *Cmp2 = IRB2.CreateICmpSGE(LastAccessedByte, ShadowValue);
 
     CheckTerm = splitBlockAndInsertIfThen(Cmp2);
-    IRB.SetInsertPoint(CheckTerm);
   }
 
-  Instruction *Crash = generateCrashCode(IRB, AddrLong, IsWrite, TypeSize);
+  IRBuilder<> IRB1(CheckTerm);
+  Instruction *Crash = generateCrashCode(IRB1, AddrLong, IsWrite, TypeSize);
   Crash->setDebugLoc(OrigIns->getDebugLoc());
   ReplaceInstWithInst(CheckTerm, new UnreachableInst(*C));
 }
