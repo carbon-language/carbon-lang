@@ -85,20 +85,19 @@ entry:
 ; CHECK: _t4
 ; CHECK: pushq %rbp
 ; CHECK: movq %rsp, %rbp
-; CHECK: andq $-32, %rsp
 ; CHECK: pushq %r14
 ; CHECK: pushq %rbx
-; CHECK: subq $[[STACKADJ:[0-9]+]], %rsp
+; CHECK: andq $-32, %rsp
+; CHECK: subq ${{[0-9]+}}, %rsp
 ; CHECK: movq %rsp, %rbx
 ;
 ; CHECK: leaq {{[0-9]*}}(%rbx), %rdi
 ; CHECK: leaq {{[0-9]*}}(%rbx), %rdx
 ; CHECK: callq   _t4_helper
 ;
-; CHECK: addq $[[STACKADJ]], %rsp
+; CHECK: leaq -16(%rbp), %rsp
 ; CHECK: popq %rbx
 ; CHECK: popq %r14
-; CHECK: movq %rbp, %rsp
 ; CHECK: popq %rbp
 }
 
@@ -176,19 +175,17 @@ entry:
 ; CHECK: _t7
 ; CHECK:     pushq %rbp
 ; CHECK:     movq %rsp, %rbp
-; CHECK:     andq $-32, %rsp
 ; CHECK:     pushq %rbx
-; CHECK:     subq $[[ADJ:[0-9]+]], %rsp
+; CHECK:     andq $-32, %rsp
+; CHECK:     subq ${{[0-9]+}}, %rsp
 ; CHECK:     movq %rsp, %rbx
 
 ; Stack adjustment for byval
 ; CHECK:     subq {{.*}}, %rsp
 ; CHECK:     callq _bar
 ; CHECK-NOT: addq {{.*}}, %rsp
-; CHECK:     movq %rbx, %rsp
-; CHECK:     addq $[[ADJ]], %rsp
+; CHECK:     leaq -8(%rbp), %rsp
 ; CHECK:     popq %rbx
-; CHECK:     movq %rbp, %rsp
 ; CHECK:     popq %rbp
 }
 
@@ -229,14 +226,12 @@ entry:
 ; FORCE-ALIGN: _t9
 ; FORCE-ALIGN: pushq %rbp
 ; FORCE-ALIGN: movq %rsp, %rbp
-; FORCE-ALIGN: andq $-32, %rsp
 ; FORCE-ALIGN: pushq %rbx
-; FORCE-ALIGN: subq $24, %rsp
+; FORCE-ALIGN: andq $-32, %rsp
+; FORCE-ALIGN: subq $32, %rsp
 ; FORCE-ALIGN: movq %rsp, %rbx
 
-; FORCE-ALIGN: movq %rbx, %rsp
-; FORCE-ALIGN: addq $24, %rsp
+; FORCE-ALIGN: leaq -8(%rbp), %rsp
 ; FORCE-ALIGN: popq %rbx
-; FORCE-ALIGN: movq %rbp, %rsp
 ; FORCE-ALIGN: popq %rbp
 }

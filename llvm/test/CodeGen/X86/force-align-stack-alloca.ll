@@ -19,10 +19,10 @@ define i64 @g(i32 %i) nounwind {
 ; CHECK: g:
 ; CHECK:      pushl  %ebp
 ; CHECK-NEXT: movl   %esp, %ebp
+; CHECK-NEXT: pushl
+; CHECK-NEXT: pushl
 ; CHECK-NEXT: andl   $-32, %esp
-; CHECK-NEXT: pushl
-; CHECK-NEXT: pushl
-; CHECK-NEXT: subl   $24, %esp
+; CHECK-NEXT: subl   $32, %esp
 ;
 ; Now setup the base pointer (%ebx).
 ; CHECK-NEXT: movl   %esp, %ebx
@@ -46,17 +46,13 @@ define i64 @g(i32 %i) nounwind {
 ; CHECK-NEXT: addl   $32, %esp
 ; CHECK-NOT:         {{[^ ,]*}}, %esp
 ;
-; Restore %esp from %ebx (base pointer) so we can pop the callee-saved
-; registers.  This is the state prior to the allocation of VLAs.
+; Restore %esp from %ebp (frame pointer) and subtract the size of
+; zone with callee-saved registers to pop them.
+; This is the state prior to stack realignment and the allocation of VLAs.
 ; CHECK-NOT:  popl
-; CHECK:      movl   %ebx, %esp
-; CHECK-NEXT: addl   $24, %esp
+; CHECK:      leal   -8(%ebp), %esp
 ; CHECK-NEXT: popl
 ; CHECK-NEXT: popl
-;
-; Finally we need to restore %esp from %ebp due to dynamic stack
-; realignment.
-; CHECK-NEXT: movl   %ebp, %esp
 ; CHECK-NEXT: popl   %ebp
 ; CHECK-NEXT: ret
 
