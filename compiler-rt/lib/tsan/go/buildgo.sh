@@ -3,8 +3,10 @@ set -e
 
 if [ "`uname -a | grep Linux`" != "" ]; then
 	LINUX=1
+	SUFFIX="linux_amd64"
 elif [ "`uname -a | grep Darwin`" != "" ]; then
 	MAC=1
+	SUFFIX="darwin_amd64"
 else
 	echo Unknown platform
 	exit 1
@@ -67,9 +69,9 @@ fi
 echo gcc gotsan.cc -S -o tmp.s $FLAGS $CFLAGS
 gcc gotsan.cc -S -o tmp.s $FLAGS $CFLAGS
 cat tmp.s $ASMS > gotsan.s
-echo as gotsan.s -o gotsan.syso
-as gotsan.s -o gotsan.syso
+echo as gotsan.s -o gotsan_$SUFFIX.syso
+as gotsan.s -o gotsan_$SUFFIX.syso
 
-gcc test.c gotsan.syso -lpthread -o test
+gcc test.c gotsan_$SUFFIX.syso -lpthread -o test
 ./test
 
