@@ -2423,7 +2423,7 @@ void Sema::InstantiateExceptionSpec(SourceLocation PointOfInstantiation,
 bool
 TemplateDeclInstantiator::InitFunctionInstantiation(FunctionDecl *New,
                                                     FunctionDecl *Tmpl) {
-  if (Tmpl->isDeletedAsWritten())
+  if (Tmpl->isDeleted())
     New->setDeletedAsWritten();
 
   // If we are performing substituting explicitly-specified template arguments

@@ -59,10 +59,9 @@ DelDtor dd; // expected-error {{attempt to use a deleted function}}
 template<typename> void test2() = delete;
 template void test2<int>();
 
-// test3 really shouldn't have behavior that differs from test2 above
-template<typename> void test3() = delete; // expected-note {{explicit instantiation refers here}}
+template<typename> void test3() = delete;
 template<typename> void test3();
-template void test3<int>(); // expected-error {{explicit instantiation of undefined function template 'test3'}}
+template void test3<int>();
 
 void test4() {} // expected-note {{previous definition is here}}
 void test4() = delete; // expected-error {{redefinition of 'test4'}}
