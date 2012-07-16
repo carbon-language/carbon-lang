@@ -36,6 +36,7 @@ enum MBlockType {
   MBlockScopedBuf,
   MBlockString,
   MBlockStackTrace,
+  MBlockShadowStack,
   MBlockSync,
   MBlockClock,
   MBlockThreadContex,

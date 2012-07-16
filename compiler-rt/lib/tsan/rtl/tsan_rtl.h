@@ -228,7 +228,14 @@ struct ThreadState {
   u64 *racy_shadow_addr;
   u64 racy_state[2];
   Trace trace;
+#ifndef TSAN_GO
+  // C/C++ uses embed shadow stack of fixed size.
   uptr shadow_stack[kShadowStackSize];
+#else
+  // Go uses satellite shadow stack with dynamic size.
+  uptr *shadow_stack;
+  uptr *shadow_stack_end;
+#endif
   ThreadClock clock;
   u64 stat[StatCnt];
   const int tid;

@@ -173,6 +173,14 @@ void ThreadStart(ThreadState *thr, int tid) {
   tctx->epoch1 = (u64)-1;
   new(thr) ThreadState(CTX(), tid, tctx->epoch0, stk_addr, stk_size,
                        tls_addr, tls_size);
+#ifdef TSAN_GO
+  // Setup dynamic shadow stack.
+  const int kInitStackSize = 8;
+  thr->shadow_stack = (uptr*)internal_alloc(MBlockShadowStack,
+      kInitStackSize * sizeof(uptr));
+  thr->shadow_stack_pos = thr->shadow_stack;
+  thr->shadow_stack_end = thr->shadow_stack + kInitStackSize;
+#endif
   tctx->thr = thr;
   thr->fast_synch_epoch = tctx->epoch0;
   thr->clock.set(tid, tctx->epoch0);

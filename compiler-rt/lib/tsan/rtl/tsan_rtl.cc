@@ -451,14 +451,28 @@ void MemoryRangeFreed(ThreadState *thr, uptr pc, uptr addr, uptr size) {
 void FuncEntry(ThreadState *thr, uptr pc) {
   DCHECK_EQ(thr->in_rtl, 0);
   StatInc(thr, StatFuncEnter);
-  DPrintf2("#%d: tsan::FuncEntry %p\n", (int)thr->fast_state.tid(), (void*)pc);
+  DPrintf2("#%d: FuncEntry %p\n", (int)thr->fast_state.tid(), (void*)pc);
   thr->fast_state.IncrementEpoch();
   TraceAddEvent(thr, thr->fast_state.epoch(), EventTypeFuncEnter, pc);
 
   // Shadow stack maintenance can be replaced with
   // stack unwinding during trace switch (which presumably must be faster).
   DCHECK_GE(thr->shadow_stack_pos, &thr->shadow_stack[0]);
+#ifndef TSAN_GO
   DCHECK_LT(thr->shadow_stack_pos, &thr->shadow_stack[kShadowStackSize]);
+#else
+  if (thr->shadow_stack_pos == thr->shadow_stack_end) {
+    const int sz = thr->shadow_stack_end - thr->shadow_stack;
+    const int newsz = 2 * sz;
+    uptr *newstack = (uptr*)internal_alloc(MBlockShadowStack,
+        newsz * sizeof(uptr));
+    internal_memcpy(newstack, thr->shadow_stack, sz * sizeof(uptr));
+    internal_free(thr->shadow_stack);
+    thr->shadow_stack = newstack;
+    thr->shadow_stack_pos = newstack + sz;
+    thr->shadow_stack_end = newstack + newsz;
+  }
+#endif
   thr->shadow_stack_pos[0] = pc;
   thr->shadow_stack_pos++;
 }
@@ -466,12 +480,14 @@ void FuncEntry(ThreadState *thr, uptr pc) {
 void FuncExit(ThreadState *thr) {
   DCHECK_EQ(thr->in_rtl, 0);
   StatInc(thr, StatFuncExit);
-  DPrintf2("#%d: tsan::FuncExit\n", (int)thr->fast_state.tid());
+  DPrintf2("#%d: FuncExit\n", (int)thr->fast_state.tid());
   thr->fast_state.IncrementEpoch();
   TraceAddEvent(thr, thr->fast_state.epoch(), EventTypeFuncExit, 0);
 
   DCHECK_GT(thr->shadow_stack_pos, &thr->shadow_stack[0]);
+#ifndef TSAN_GO
   DCHECK_LT(thr->shadow_stack_pos, &thr->shadow_stack[kShadowStackSize]);
+#endif
   thr->shadow_stack_pos--;
 }
 
