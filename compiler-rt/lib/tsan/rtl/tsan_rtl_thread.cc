@@ -20,7 +20,11 @@
 
 namespace __tsan {
 
+#ifndef TSAN_GO
 const int kThreadQuarantineSize = 16;
+#else
+const int kThreadQuarantineSize = 64;
+#endif
 
 static void MaybeReportThreadLeak(ThreadContext *tctx) {
   if (tctx->detached)
