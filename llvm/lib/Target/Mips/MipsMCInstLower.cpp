@@ -158,3 +158,32 @@ void MipsMCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
       OutMI.addOperand(MCOp);
   }
 }
+
+// If the D<shift> instruction has a shift amount that is greater
+// than 31 (checked in calling routine), lower it to a D<shift>32 instruction
+void MipsMCInstLower::LowerLargeShift(const MachineInstr *MI,
+                                      MCInst& Inst,
+                                      int64_t Shift) {
+  // rt
+  Inst.addOperand(LowerOperand(MI->getOperand(0)));
+  // rd
+  Inst.addOperand(LowerOperand(MI->getOperand(1)));
+  // saminus32
+  Inst.addOperand(MCOperand::CreateImm(Shift));
+
+  switch (MI->getOpcode()) {
+  default:
+    // Calling function is not synchronized
+    llvm_unreachable("Unexpected shift instruction");
+    break;
+  case Mips::DSLL:
+    Inst.setOpcode(Mips::DSLL32);
+    break;
+  case Mips::DSRL:
+    Inst.setOpcode(Mips::DSRL32);
+    break;
+  case Mips::DSRA:
+    Inst.setOpcode(Mips::DSRA32);
+    break;
+  }
+}

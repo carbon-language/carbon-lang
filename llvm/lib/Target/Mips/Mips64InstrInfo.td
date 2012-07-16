@@ -109,6 +109,11 @@ def DSRA     : shift_rotate_imm64<0x3b, 0x00, "dsra", sra>;
 def DSLLV    : shift_rotate_reg<0x14, 0x00, "dsllv", shl, CPU64Regs>;
 def DSRLV    : shift_rotate_reg<0x16, 0x00, "dsrlv", srl, CPU64Regs>;
 def DSRAV    : shift_rotate_reg<0x17, 0x00, "dsrav", sra, CPU64Regs>;
+let Pattern = []<dag> in {
+def DSLL32   : shift_rotate_imm64<0x3c, 0x00, "dsll32", shl>;
+def DSRL32   : shift_rotate_imm64<0x3e, 0x00, "dsrl32", srl>;
+def DSRA32   : shift_rotate_imm64<0x3f, 0x00, "dsra32", sra>;
+}
 }
 // Rotate Instructions
 let Predicates = [HasMips64r2, HasStandardEncoding],

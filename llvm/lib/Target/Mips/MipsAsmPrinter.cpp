@@ -13,9 +13,10 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "mips-asm-printer"
-#include "MipsAsmPrinter.h"
 #include "Mips.h"
+#include "MipsAsmPrinter.h"
 #include "MipsInstrInfo.h"
+#include "MipsMCInstLower.h"
 #include "InstPrinter/MipsInstPrinter.h"
 #include "MCTargetDesc/MipsBaseInfo.h"
 #include "llvm/ADT/SmallString.h"
@@ -56,6 +57,25 @@ void MipsAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     PrintDebugValueComment(MI, OS);
     return;
   }
+
+  // Direct object specific instruction lowering
+  if (!OutStreamer.hasRawTextSupport())
+    switch (MI->getOpcode()) {
+    case Mips::DSLL:
+    case Mips::DSRL:
+    case Mips::DSRA:
+      assert(MI->getNumOperands() == 3 &&
+             "Invalid no. of machine operands for shift!");
+      assert(MI->getOperand(2).isImm());
+      int64_t Shift = MI->getOperand(2).getImm();
+      if (Shift > 31) {
+        MCInst TmpInst0;
+        MCInstLowering.LowerLargeShift(MI, TmpInst0, Shift - 32);
+        OutStreamer.EmitInstruction(TmpInst0);
+        return;
+      }
+      break;
+    }
 
   MachineBasicBlock::const_instr_iterator I = MI;
   MachineBasicBlock::const_instr_iterator E = MI->getParent()->instr_end();
