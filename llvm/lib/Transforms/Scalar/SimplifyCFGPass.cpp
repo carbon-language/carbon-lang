@@ -165,6 +165,7 @@ static bool MarkAliveBlocks(BasicBlock *BB,
         if (II->use_empty() && II->onlyReadsMemory()) {
           // jump to the normal destination branch.
           BranchInst::Create(II->getNormalDest(), II);
+          II->getUnwindDest()->removePredecessor(II->getParent());
           II->eraseFromParent();
         } else
           ChangeToCall(II);
