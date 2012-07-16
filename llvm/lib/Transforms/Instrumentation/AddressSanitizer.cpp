@@ -146,10 +146,9 @@ namespace {
 
 /// An object of this type is created while instrumenting every function.
 struct AsanFunctionContext {
-  AsanFunctionContext() {
-    memset(this, 0, sizeof(*this));
-  }
+  AsanFunctionContext(Function &Function) : F(Function), CrashBlock() { }
 
+  Function &F;
   // These are initially zero. If we require at least one call to
   // __asan_report_{read,write}{1,2,4,8,16}, an appropriate BB is created.
   BasicBlock *CrashBlock[2][kNumberOfAccessSizes];
@@ -166,7 +165,7 @@ struct AddressSanitizer : public ModulePass {
   Value *createSlowPathCmp(IRBuilder<> &IRB, Value *AddrLong,
                            Value *ShadowValue, uint32_t TypeSize);
   Instruction *generateCrashCode(BasicBlock *BB, Value *Addr,
-                                 bool IsWrite, uint32_t TypeSize);
+                                 bool IsWrite, size_t AccessSizeIndex);
   bool instrumentMemIntrinsic(AsanFunctionContext &AFC, MemIntrinsic *MI);
   void instrumentMemIntrinsicParam(AsanFunctionContext &AFC,
                                    Instruction *OrigIns, Value *Addr,
@@ -232,6 +231,12 @@ const char *AddressSanitizer::getPassName() const {
   return "AddressSanitizer";
 }
 
+static size_t TypeSizeToSizeIndex(uint32_t TypeSize) {
+  size_t Res = CountTrailingZeros_32(TypeSize / 8);
+  assert(Res < kNumberOfAccessSizes);
+  return Res;
+}
+
 // Create a constant for Str so that we can pass it to the run-time lib.
 static GlobalVariable *createPrivateGlobalForString(Module &M, StringRef Str) {
   Constant *StrConst = ConstantDataArray::getString(M.getContext(), Str);
@@ -251,14 +256,14 @@ static GlobalVariable *createPrivateGlobalForString(Module &M, StringRef Str) {
 //   Tail
 //
 // If ThenBlock is zero, a new block is created and its terminator is returned.
-// Otherwize NULL is returned.
+// Otherwize 0 is returned.
 static BranchInst *splitBlockAndInsertIfThen(Value *Cmp,
                                              BasicBlock *ThenBlock = 0) {
   Instruction *SplitBefore = cast<Instruction>(Cmp)->getNextNode();
   BasicBlock *Head = SplitBefore->getParent();
   BasicBlock *Tail = Head->splitBasicBlock(SplitBefore);
   TerminatorInst *HeadOldTerm = Head->getTerminator();
-  BranchInst *CheckTerm = NULL;
+  BranchInst *CheckTerm = 0;
   if (!ThenBlock) {
     LLVMContext &C = Head->getParent()->getParent()->getContext();
     ThenBlock = BasicBlock::Create(C, "", Head->getParent());
@@ -306,7 +311,7 @@ bool AddressSanitizer::instrumentMemIntrinsic(AsanFunctionContext &AFC,
                                               MemIntrinsic *MI) {
   Value *Dst = MI->getDest();
   MemTransferInst *MemTran = dyn_cast<MemTransferInst>(MI);
-  Value *Src = MemTran ? MemTran->getSource() : NULL;
+  Value *Src = MemTran ? MemTran->getSource() : 0;
   Value *Length = MI->getLength();
 
   Constant *ConstLength = dyn_cast<Constant>(Length);
@@ -390,17 +395,15 @@ Function *AddressSanitizer::checkInterfaceFunction(Constant *FuncOrBitcast) {
 }
 
 Instruction *AddressSanitizer::generateCrashCode(
-    BasicBlock *BB, Value *Addr, bool IsWrite, uint32_t TypeSize) {
+    BasicBlock *BB, Value *Addr, bool IsWrite, size_t AccessSizeIndex) {
   IRBuilder<> IRB(BB->getFirstNonPHI());
-  size_t AccessSizeIndex = CountTrailingZeros_32(TypeSize / 8);
-  assert(AccessSizeIndex < kNumberOfAccessSizes);
   CallInst *Call = IRB.CreateCall(AsanErrorCallback[IsWrite][AccessSizeIndex],
                                   Addr);
   Call->setDoesNotReturn();
   return Call;
 }
 
-Value * AddressSanitizer::createSlowPathCmp(IRBuilder<> &IRB, Value *AddrLong,
+Value *AddressSanitizer::createSlowPathCmp(IRBuilder<> &IRB, Value *AddrLong,
                                             Value *ShadowValue,
                                             uint32_t TypeSize) {
   size_t Granularity = 1 << MappingScale;
@@ -434,15 +437,22 @@ void AddressSanitizer::instrumentAddress(AsanFunctionContext &AFC,
 
   Value *Cmp = IRB.CreateICmpNE(ShadowValue, CmpVal);
 
-  BasicBlock *CrashBlock = NULL;
+  BasicBlock *CrashBlock = 0;
   if (ClMergeCallbacks) {
-    llvm_unreachable("unimplemented yet");
+    BasicBlock **Cached =
+        &AFC.CrashBlock[IsWrite][TypeSizeToSizeIndex(TypeSize)];
+    if (!*Cached) {
+      BasicBlock *BB = BasicBlock::Create(*C, "crash_bb", &AFC.F);
+      new UnreachableInst(*C, BB);
+      *Cached = BB;
+    }
+    CrashBlock = *Cached;
   } else {
-    CrashBlock = BasicBlock::Create(*C, "crash_bb",
-                                    OrigIns->getParent()->getParent());
+    CrashBlock = BasicBlock::Create(*C, "crash_bb", &AFC.F);
     new UnreachableInst(*C, CrashBlock);
+    size_t AccessSizeIndex = TypeSizeToSizeIndex(TypeSize);
     Instruction *Crash =
-        generateCrashCode(CrashBlock, AddrLong, IsWrite, TypeSize);
+        generateCrashCode(CrashBlock, AddrLong, IsWrite, AccessSizeIndex);
     Crash->setDebugLoc(OrigIns->getDebugLoc());
   }
 
@@ -776,7 +786,7 @@ bool AddressSanitizer::handleFunction(Module &M, Function &F) {
     }
   }
 
-  AsanFunctionContext AFC;
+  AsanFunctionContext AFC(F);
 
   // Instrument.
   int NumInstrumented = 0;
@@ -790,6 +800,18 @@ bool AddressSanitizer::handleFunction(Module &M, Function &F) {
         instrumentMemIntrinsic(AFC, cast<MemIntrinsic>(Inst));
     }
     NumInstrumented++;
+  }
+
+  if (NumInstrumented) {
+    for (size_t IsWrite = 0; IsWrite <= 1; IsWrite++) {
+      for (size_t AccessSizeIndex = 0; AccessSizeIndex < kNumberOfAccessSizes;
+           AccessSizeIndex++) {
+        BasicBlock *BB = AFC.CrashBlock[IsWrite][AccessSizeIndex];
+        if (!BB) continue;
+        generateCrashCode(BB, ConstantInt::get(IntptrTy, 0),
+                          IsWrite, AccessSizeIndex);
+      }
+    }
   }
 
   DEBUG(dbgs() << F);
