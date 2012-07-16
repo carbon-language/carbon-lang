@@ -1141,7 +1141,7 @@ def err_init_conversion_failed : Error<
   "exception object|a member subobject|an array element|a new value|a value|a "
   "base class|a constructor delegation|a vector element}0 "
   "%diff{of type $ with an %select{rvalue|lvalue}2 of type $|"
-  "with an %select{rvalue|lvalue} of incompatible type}1,3"
+  "with an %select{rvalue|lvalue}2 of incompatible type}1,3"
   "%select{|: different classes%diff{ ($ vs $)|}5,6"
   "|: different number of parameters (%5 vs %6)"
   "|: type mismatch at %ordinal5 parameter%diff{ ($ vs $)|}6,7"
