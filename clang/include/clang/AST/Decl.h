@@ -2316,7 +2316,10 @@ protected:
     : NamedDecl(DK, DC, L, Id), TypeForDecl(0), LocStart(StartL) {}
 
 public:
-  // Low-level accessor
+  // Low-level accessor. If you just want the type defined by this node,
+  // check out ASTContext::getTypeDeclType or one of
+  // ASTContext::getTypedefType, ASTContext::getRecordType, etc. if you
+  // already know the specific kind of node this is.
   const Type *getTypeForDecl() const { return TypeForDecl; }
   void setTypeForDecl(const Type *TD) { TypeForDecl = TD; }
 
