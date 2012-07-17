@@ -38,16 +38,8 @@ SourceRange CallEvent::getArgSourceRange(unsigned Index) const {
 QualType CallEvent::getResultType() const {
   QualType ResultTy = getDeclaredResultType();
 
-  if (const Expr *E = getOriginExpr()) {
-    if (ResultTy.isNull())
-      ResultTy = E->getType();
-
-    // FIXME: This is copied from CallOrObjCMessage, but it seems suspicious.
-    if (E->isGLValue()) {
-      ASTContext &Ctx = State->getStateManager().getContext();
-      ResultTy = Ctx.getPointerType(ResultTy);
-    }
-  }
+  if (ResultTy.isNull())
+    ResultTy = getOriginExpr()->getType();
 
   return ResultTy;
 }
