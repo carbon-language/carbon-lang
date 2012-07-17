@@ -490,5 +490,13 @@ int main(int argc_, const char **argv_) {
   
   llvm::llvm_shutdown();
 
+#ifdef _WIN32
+  // Exit status should not be negative on Win32, unless abnormal termination.
+  // Once abnormal termiation was caught, negative status should not be
+  // propagated.
+  if (Res < 0)
+    Res = 1;
+#endif
+
   return Res;
 }

@@ -4,7 +4,7 @@
 // RUN: cat %t/crash-report-*.c | FileCheck --check-prefix=CHECKSRC %s
 // RUN: cat %t/crash-report-*.sh | FileCheck --check-prefix=CHECKSH %s
 // REQUIRES: crash-recovery
-// XFAIL: mingw32,win32
+// REQUIRES: shell
 
 #pragma clang __debug parser_crash
 // CHECK: Preprocessed source(s) and associated run script(s) are located at:
