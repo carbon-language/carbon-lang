@@ -130,7 +130,7 @@ static CompilationDatabase *
 findCompilationDatabaseFromDirectory(StringRef Directory) {
 #ifdef USE_CUSTOM_COMPILATION_DATABASE
   if (CompilationDatabase *DB =
-      ::findCompilationDatabaseForDirectory(Directory))
+      ::clang::tooling::findCompilationDatabaseForDirectory(Directory))
     return DB;
 #endif
   while (!Directory.empty()) {

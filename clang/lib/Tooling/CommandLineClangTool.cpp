@@ -25,6 +25,10 @@
 #include "clang/Tooling/CommandLineClangTool.h"
 #include "clang/Tooling/Tooling.h"
 
+#ifdef USE_CUSTOM_TOOL_INIT
+#include "CustomToolInit.h"
+#endif
+
 using namespace clang::tooling;
 using namespace llvm;
 
@@ -58,6 +62,9 @@ CommandLineClangTool::CommandLineClangTool() :
 }
 
 void CommandLineClangTool::initialize(int argc, const char **argv) {
+#ifdef USE_CUSTOM_TOOL_INIT
+  customToolInit(argc, argv);
+#endif
   Compilations.reset(FixedCompilationDatabase::loadFromCommandLine(argc, argv));
   cl::ParseCommandLineOptions(argc, argv);
   if (!Compilations) {
