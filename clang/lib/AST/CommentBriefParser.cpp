@@ -42,17 +42,12 @@ void cleanupBrief(std::string &S) {
 
 bool isBlockCommand(StringRef Name) {
   return llvm::StringSwitch<bool>(Name)
-      .Case("brief", true)
-      .Case("short", true)
-      .Case("result", true)
-      .Case("return", true)
-      .Case("returns", true)
-      .Case("author", true)
-      .Case("authors", true)
+      .Cases("brief", "short", true)
+      .Cases("result", "return", "returns", true)
+      .Cases("author", "authors", true)
       .Case("pre", true)
       .Case("post", true)
-      .Case("param", true)
-      .Case("arg", true)
+      .Cases("param", "arg", true)
       .Default(false);
 }
 } // unnamed namespace
