@@ -33,18 +33,18 @@
 #include "clang/Tooling/Refactoring.h"
 
 namespace clang {
-namespace ast_matchers {
+namespace tooling {
 
 /// \brief Base class for RefactoringCallbacks.
 ///
 /// Collects \c tooling::Replacements while running.
-class RefactoringCallback : public MatchFinder::MatchCallback {
+class RefactoringCallback : public ast_matchers::MatchFinder::MatchCallback {
 public:
   RefactoringCallback();
-  tooling::Replacements &getReplacements();
+  Replacements &getReplacements();
 
 protected:
-  tooling::Replacements Replace;
+  Replacements Replace;
 };
 
 /// \brief Replace the text of the statement bound to \c FromId with the text in
@@ -52,7 +52,7 @@ protected:
 class ReplaceStmtWithText : public RefactoringCallback {
 public:
   ReplaceStmtWithText(StringRef FromId, StringRef ToText);
-  virtual void run(const MatchFinder::MatchResult &Result);
+  virtual void run(const ast_matchers::MatchFinder::MatchResult &Result);
 
 private:
   std::string FromId;
@@ -64,7 +64,7 @@ private:
 class ReplaceStmtWithStmt : public RefactoringCallback {
 public:
   ReplaceStmtWithStmt(StringRef FromId, StringRef ToId);
-  virtual void run(const MatchFinder::MatchResult &Result);
+  virtual void run(const ast_matchers::MatchFinder::MatchResult &Result);
 
 private:
   std::string FromId;
@@ -77,14 +77,14 @@ private:
 class ReplaceIfStmtWithItsBody : public RefactoringCallback {
 public:
   ReplaceIfStmtWithItsBody(StringRef Id, bool PickTrueBranch);
-  virtual void run(const MatchFinder::MatchResult &Result);
+  virtual void run(const ast_matchers::MatchFinder::MatchResult &Result);
 
 private:
   std::string Id;
   const bool PickTrueBranch;
 };
 
-} // end namespace ast_matchers
+} // end namespace tooling
 } // end namespace clang
 
 #endif // LLVM_CLANG_TOOLING_REFACTORING_CALLBACKS_H

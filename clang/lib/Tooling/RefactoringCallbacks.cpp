@@ -13,22 +13,22 @@
 #include "clang/Tooling/RefactoringCallbacks.h"
 
 namespace clang {
-namespace ast_matchers {
+namespace tooling {
 
 RefactoringCallback::RefactoringCallback() {}
 tooling::Replacements &RefactoringCallback::getReplacements() {
   return Replace;
 }
 
-static tooling::Replacement replaceStmtWithText(SourceManager &Sources,
-                                                const Stmt &From,
-                                                StringRef Text) {
+static Replacement replaceStmtWithText(SourceManager &Sources,
+                                       const Stmt &From,
+                                       StringRef Text) {
   return tooling::Replacement(Sources, CharSourceRange::getTokenRange(
       From.getSourceRange()), Text);
 }
-static tooling::Replacement replaceStmtWithStmt(SourceManager &Sources,
-                                                const Stmt &From,
-                                                const Stmt &To) {
+static Replacement replaceStmtWithStmt(SourceManager &Sources,
+                                       const Stmt &From,
+                                       const Stmt &To) {
   return replaceStmtWithText(Sources, From, Lexer::getSourceText(
       CharSourceRange::getTokenRange(To.getSourceRange()),
       Sources, LangOptions()));
@@ -37,7 +37,8 @@ static tooling::Replacement replaceStmtWithStmt(SourceManager &Sources,
 ReplaceStmtWithText::ReplaceStmtWithText(StringRef FromId, StringRef ToText)
     : FromId(FromId), ToText(ToText) {}
 
-void ReplaceStmtWithText::run(const MatchFinder::MatchResult &Result) {
+void ReplaceStmtWithText::run(
+    const ast_matchers::MatchFinder::MatchResult &Result) {
   if (const Stmt *FromMatch = Result.Nodes.getStmtAs<Stmt>(FromId)) {
     Replace.insert(tooling::Replacement(
         *Result.SourceManager,
@@ -49,7 +50,8 @@ void ReplaceStmtWithText::run(const MatchFinder::MatchResult &Result) {
 ReplaceStmtWithStmt::ReplaceStmtWithStmt(StringRef FromId, StringRef ToId)
     : FromId(FromId), ToId(ToId) {}
 
-void ReplaceStmtWithStmt::run(const MatchFinder::MatchResult &Result) {
+void ReplaceStmtWithStmt::run(
+    const ast_matchers::MatchFinder::MatchResult &Result) {
   const Stmt *FromMatch = Result.Nodes.getStmtAs<Stmt>(FromId);
   const Stmt *ToMatch = Result.Nodes.getStmtAs<Stmt>(ToId);
   if (FromMatch && ToMatch)
@@ -61,7 +63,8 @@ ReplaceIfStmtWithItsBody::ReplaceIfStmtWithItsBody(StringRef Id,
                                                    bool PickTrueBranch)
     : Id(Id), PickTrueBranch(PickTrueBranch) {}
 
-void ReplaceIfStmtWithItsBody::run(const MatchFinder::MatchResult &Result) {
+void ReplaceIfStmtWithItsBody::run(
+    const ast_matchers::MatchFinder::MatchResult &Result) {
   if (const IfStmt *Node = Result.Nodes.getStmtAs<IfStmt>(Id)) {
     const Stmt *Body = PickTrueBranch ? Node->getThen() : Node->getElse();
     if (Body) {
@@ -74,5 +77,5 @@ void ReplaceIfStmtWithItsBody::run(const MatchFinder::MatchResult &Result) {
   }
 }
 
-} // end namespace ast_matchers
+} // end namespace tooling
 } // end namespace clang
