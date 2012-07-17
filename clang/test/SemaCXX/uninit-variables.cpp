@@ -141,3 +141,9 @@ void test_bitcasts_2() {
   int y = (float &)x; // expected-warning {{uninitialized when used here}}
 }
 
+void consume_const_ref(const int &n);
+int test_const_ref() {
+  int n; // expected-note {{variable}}
+  consume_const_ref(n);
+  return n; // expected-warning {{uninitialized when used here}}
+}

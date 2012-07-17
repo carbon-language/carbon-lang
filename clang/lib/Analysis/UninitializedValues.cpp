@@ -328,7 +328,7 @@ const CFGBlock *DataflowWorklist::dequeue() {
 }
 
 //------------------------------------------------------------------------====//
-// Transfer function for uninitialized values analysis.
+// Classification of DeclRefExprs as use or initialization.
 //====------------------------------------------------------------------------//
 
 namespace {
@@ -336,55 +336,187 @@ class FindVarResult {
   const VarDecl *vd;
   const DeclRefExpr *dr;
 public:
-  FindVarResult(VarDecl *vd, DeclRefExpr *dr) : vd(vd), dr(dr) {}
-  
+  FindVarResult(const VarDecl *vd, const DeclRefExpr *dr) : vd(vd), dr(dr) {}
+
   const DeclRefExpr *getDeclRefExpr() const { return dr; }
   const VarDecl *getDecl() const { return vd; }
 };
-  
+
+static const Expr *stripCasts(ASTContext &C, const Expr *Ex) {
+  while (Ex) {
+    Ex = Ex->IgnoreParenNoopCasts(C);
+    if (const CastExpr *CE = dyn_cast<CastExpr>(Ex)) {
+      if (CE->getCastKind() == CK_LValueBitCast) {
+        Ex = CE->getSubExpr();
+        continue;
+      }
+    }
+    break;
+  }
+  return Ex;
+}
+
+/// If E is an expression comprising a reference to a single variable, find that
+/// variable.
+static FindVarResult findVar(const Expr *E, const DeclContext *DC) {
+  if (const DeclRefExpr *DRE =
+        dyn_cast<DeclRefExpr>(stripCasts(DC->getParentASTContext(), E)))
+    if (const VarDecl *VD = dyn_cast<VarDecl>(DRE->getDecl()))
+      if (isTrackedVar(VD, DC))
+        return FindVarResult(VD, DRE);
+  return FindVarResult(0, 0);
+}
+
+/// \brief Classify each DeclRefExpr as an initialization or a use. Any
+/// DeclRefExpr which isn't explicitly classified will be assumed to have
+/// escaped the analysis and will be treated as an initialization.
+class ClassifyRefs : public StmtVisitor<ClassifyRefs> {
+public:
+  enum Class {
+    Init,
+    Use,
+    SelfInit,
+    Ignore
+  };
+
+private:
+  const DeclContext *DC;
+  llvm::DenseMap<const DeclRefExpr*, Class> Classification;
+
+  bool isTrackedVar(const VarDecl *VD) const {
+    return ::isTrackedVar(VD, DC);
+  }
+
+  void classify(const Expr *E, Class C);
+
+public:
+  ClassifyRefs(AnalysisDeclContext &AC) : DC(cast<DeclContext>(AC.getDecl())) {}
+
+  void VisitDeclStmt(DeclStmt *DS);
+  void VisitUnaryOperator(UnaryOperator *UO);
+  void VisitBinaryOperator(BinaryOperator *BO);
+  void VisitCallExpr(CallExpr *CE);
+  void VisitCastExpr(CastExpr *CE);
+
+  void operator()(Stmt *S) { Visit(S); }
+
+  Class get(const DeclRefExpr *DRE) const {
+    llvm::DenseMap<const DeclRefExpr*, Class>::const_iterator I
+        = Classification.find(DRE);
+    if (I != Classification.end())
+      return I->second;
+
+    const VarDecl *VD = dyn_cast<VarDecl>(DRE->getDecl());
+    if (!VD || !isTrackedVar(VD))
+      return Ignore;
+
+    return Init;
+  }
+};
+}
+
+static const DeclRefExpr *getSelfInitExpr(VarDecl *VD) {
+  if (Expr *Init = VD->getInit()) {
+    const DeclRefExpr *DRE
+      = dyn_cast<DeclRefExpr>(stripCasts(VD->getASTContext(), Init));
+    if (DRE && DRE->getDecl() == VD)
+      return DRE;
+  }
+  return 0;
+}
+
+void ClassifyRefs::classify(const Expr *E, Class C) {
+  FindVarResult Var = findVar(E, DC);
+  if (const DeclRefExpr *DRE = Var.getDeclRefExpr())
+    Classification[DRE] = std::max(Classification[DRE], C);
+}
+
+void ClassifyRefs::VisitDeclStmt(DeclStmt *DS) {
+  for (DeclStmt::decl_iterator DI = DS->decl_begin(), DE = DS->decl_end();
+       DI != DE; ++DI) {
+    VarDecl *VD = dyn_cast<VarDecl>(*DI);
+    if (VD && isTrackedVar(VD))
+      if (const DeclRefExpr *DRE = getSelfInitExpr(VD))
+        Classification[DRE] = SelfInit;
+  }
+}
+
+void ClassifyRefs::VisitBinaryOperator(BinaryOperator *BO) {
+  // Ignore the evaluation of a DeclRefExpr on the LHS of an assignment. If this
+  // is not a compound-assignment, we will treat it as initializing the variable
+  // when TransferFunctions visits it. A compound-assignment does not affect
+  // whether a variable is uninitialized, and there's no point counting it as a
+  // use.
+  if (BO->isAssignmentOp())
+    classify(BO->getLHS(), Ignore);
+}
+
+void ClassifyRefs::VisitUnaryOperator(UnaryOperator *UO) {
+  // Increment and decrement are uses despite there being no lvalue-to-rvalue
+  // conversion.
+  if (UO->isIncrementDecrementOp())
+    classify(UO->getSubExpr(), Use);
+}
+
+void ClassifyRefs::VisitCallExpr(CallExpr *CE) {
+  // If a value is passed by const reference to a function, we should not assume
+  // that it is initialized by the call, and we conservatively do not assume
+  // that it is used.
+  for (CallExpr::arg_iterator I = CE->arg_begin(), E = CE->arg_end();
+       I != E; ++I)
+    if ((*I)->getType().isConstQualified() && (*I)->isGLValue())
+      classify(*I, Ignore);
+}
+
+void ClassifyRefs::VisitCastExpr(CastExpr *CE) {
+  if (CE->getCastKind() == CK_LValueToRValue)
+    classify(CE->getSubExpr(), Use);
+  else if (CStyleCastExpr *CSE = dyn_cast<CStyleCastExpr>(CE)) {
+    if (CSE->getType()->isVoidType()) {
+      // Squelch any detected load of an uninitialized value if
+      // we cast it to void.
+      // e.g. (void) x;
+      classify(CSE->getSubExpr(), Ignore);
+    }
+  }
+}
+
+//------------------------------------------------------------------------====//
+// Transfer function for uninitialized values analysis.
+//====------------------------------------------------------------------------//
+
+namespace {
 class TransferFunctions : public StmtVisitor<TransferFunctions> {
   CFGBlockValues &vals;
   const CFG &cfg;
   const CFGBlock *block;
   AnalysisDeclContext &ac;
+  const ClassifyRefs &classification;
   UninitVariablesHandler *handler;
-  
-  /// The last DeclRefExpr seen when analyzing a block.  Used to
-  /// cheat when detecting cases when the address of a variable is taken.
-  DeclRefExpr *lastDR;
-  
-  /// The last lvalue-to-rvalue conversion of a variable whose value
-  /// was uninitialized.  Normally this results in a warning, but it is
-  /// possible to either silence the warning in some cases, or we
-  /// propagate the uninitialized value.
-  CastExpr *lastLoad;
-  
-  /// For some expressions, we want to ignore any post-processing after
-  /// visitation.
-  bool skipProcessUses;
-  
+
 public:
   TransferFunctions(CFGBlockValues &vals, const CFG &cfg,
                     const CFGBlock *block, AnalysisDeclContext &ac,
+                    const ClassifyRefs &classification,
                     UninitVariablesHandler *handler)
-    : vals(vals), cfg(cfg), block(block), ac(ac), handler(handler),
-      lastDR(0), lastLoad(0),
-      skipProcessUses(false) {}
-  
+    : vals(vals), cfg(cfg), block(block), ac(ac),
+      classification(classification), handler(handler) {}
+
   void reportUse(const Expr *ex, const VarDecl *vd);
 
+  void VisitObjCForCollectionStmt(ObjCForCollectionStmt *FS);
   void VisitBlockExpr(BlockExpr *be);
   void VisitCallExpr(CallExpr *ce);
   void VisitDeclStmt(DeclStmt *ds);
   void VisitDeclRefExpr(DeclRefExpr *dr);
-  void VisitUnaryOperator(UnaryOperator *uo);
   void VisitBinaryOperator(BinaryOperator *bo);
-  void VisitCastExpr(CastExpr *ce);
-  void VisitObjCForCollectionStmt(ObjCForCollectionStmt *fs);
-  void Visit(Stmt *s);
 
   bool isTrackedVar(const VarDecl *vd) {
     return ::isTrackedVar(vd, cast<DeclContext>(ac.getDecl()));
+  }
+
+  FindVarResult findVar(const Expr *ex) {
+    return ::findVar(ex, cast<DeclContext>(ac.getDecl()));
   }
 
   UninitUse getUninitUse(const Expr *ex, const VarDecl *vd, Value v) {
@@ -517,25 +649,7 @@ public:
 
     return Use;
   }
-
-  FindVarResult findBlockVarDecl(Expr *ex);
-  
-  void ProcessUses(Stmt *s = 0);
 };
-}
-
-static const Expr *stripCasts(ASTContext &C, const Expr *Ex) {
-  while (Ex) {
-    Ex = Ex->IgnoreParenNoopCasts(C);
-    if (const CastExpr *CE = dyn_cast<CastExpr>(Ex)) {
-      if (CE->getCastKind() == CK_LValueBitCast) {
-        Ex = CE->getSubExpr();
-        continue;
-      }
-    }
-    break;
-  }
-  return Ex;
 }
 
 void TransferFunctions::reportUse(const Expr *ex, const VarDecl *vd) {
@@ -546,31 +660,13 @@ void TransferFunctions::reportUse(const Expr *ex, const VarDecl *vd) {
     handler->handleUseOfUninitVariable(vd, getUninitUse(ex, vd, v));
 }
 
-FindVarResult TransferFunctions::findBlockVarDecl(Expr *ex) {
-  if (DeclRefExpr *dr = dyn_cast<DeclRefExpr>(ex->IgnoreParenCasts()))
-    if (VarDecl *vd = dyn_cast<VarDecl>(dr->getDecl()))
-      if (isTrackedVar(vd))
-        return FindVarResult(vd, dr);  
-  return FindVarResult(0, 0);
-}
-
-void TransferFunctions::VisitObjCForCollectionStmt(ObjCForCollectionStmt *fs) {
+void TransferFunctions::VisitObjCForCollectionStmt(ObjCForCollectionStmt *FS) {
   // This represents an initialization of the 'element' value.
-  Stmt *element = fs->getElement();
-  const VarDecl *vd = 0;
-  
-  if (DeclStmt *ds = dyn_cast<DeclStmt>(element)) {
-    vd = cast<VarDecl>(ds->getSingleDecl());
-    if (!isTrackedVar(vd))
-      vd = 0;
-  } else {
-    // Initialize the value of the reference variable.
-    const FindVarResult &res = findBlockVarDecl(cast<Expr>(element));
-    vd = res.getDecl();
+  if (DeclStmt *DS = dyn_cast<DeclStmt>(FS->getElement())) {
+    const VarDecl *VD = cast<VarDecl>(DS->getSingleDecl());
+    if (isTrackedVar(VD))
+      vals[VD] = Initialized;
   }
-  
-  if (vd)
-    vals[vd] = Initialized;
 }
 
 void TransferFunctions::VisitBlockExpr(BlockExpr *be) {
@@ -600,170 +696,64 @@ void TransferFunctions::VisitCallExpr(CallExpr *ce) {
 }
 
 void TransferFunctions::VisitDeclRefExpr(DeclRefExpr *dr) {
-  // Record the last DeclRefExpr seen.  This is an lvalue computation.
-  // We use this value to later detect if a variable "escapes" the analysis.
-  if (const VarDecl *vd = dyn_cast<VarDecl>(dr->getDecl()))
-    if (isTrackedVar(vd)) {
-      ProcessUses();
-      lastDR = dr;
-    }
+  switch (classification.get(dr)) {
+  case ClassifyRefs::Ignore:
+    break;
+  case ClassifyRefs::Use:
+    reportUse(dr, cast<VarDecl>(dr->getDecl()));
+    break;
+  case ClassifyRefs::Init:
+    vals[cast<VarDecl>(dr->getDecl())] = Initialized;
+    break;
+  case ClassifyRefs::SelfInit:
+    if (handler)
+      handler->handleSelfInit(cast<VarDecl>(dr->getDecl()));
+    break;
+  }
 }
 
-void TransferFunctions::VisitDeclStmt(DeclStmt *ds) {
-  for (DeclStmt::decl_iterator DI = ds->decl_begin(), DE = ds->decl_end();
+void TransferFunctions::VisitBinaryOperator(BinaryOperator *BO) {
+  if (BO->getOpcode() == BO_Assign) {
+    FindVarResult Var = findVar(BO->getLHS());
+    if (const VarDecl *VD = Var.getDecl())
+      vals[VD] = Initialized;
+  }
+}
+
+void TransferFunctions::VisitDeclStmt(DeclStmt *DS) {
+  for (DeclStmt::decl_iterator DI = DS->decl_begin(), DE = DS->decl_end();
        DI != DE; ++DI) {
-    if (VarDecl *vd = dyn_cast<VarDecl>(*DI)) {
-      if (isTrackedVar(vd)) {
-        if (Expr *init = vd->getInit()) {
-          // If the initializer consists solely of a reference to itself, we
-          // explicitly mark the variable as uninitialized. This allows code
-          // like the following:
-          //
-          //   int x = x;
-          //
-          // to deliberately leave a variable uninitialized. Different analysis
-          // clients can detect this pattern and adjust their reporting
-          // appropriately, but we need to continue to analyze subsequent uses
-          // of the variable.
-          if (init == lastLoad) {
-            const DeclRefExpr *DR
-              = cast<DeclRefExpr>(stripCasts(ac.getASTContext(),
-                                             lastLoad->getSubExpr()));
-            if (DR->getDecl() == vd) {
-              // int x = x;
-              // Propagate uninitialized value, but don't immediately report
-              // a problem.
-              vals[vd] = Uninitialized;
-              lastLoad = 0;
-              lastDR = 0;
-              if (handler)
-                handler->handleSelfInit(vd);
-              return;
-            }
-          }
-
-          // All other cases: treat the new variable as initialized.
-          // This is a minor optimization to reduce the propagation
-          // of the analysis, since we will have already reported
-          // the use of the uninitialized value (which visiting the
-          // initializer).
-          vals[vd] = Initialized;
-        } else {
-          // No initializer: the variable is now uninitialized. This matters
-          // for cases like:
-          //   while (...) {
-          //     int n;
-          //     use(n);
-          //     n = 0;
-          //   }
-          // FIXME: Mark the variable as uninitialized whenever its scope is
-          // left, since its scope could be re-entered by a jump over the
-          // declaration.
-          vals[vd] = Uninitialized;
-        }
+    VarDecl *VD = dyn_cast<VarDecl>(*DI);
+    if (VD && isTrackedVar(VD)) {
+      if (getSelfInitExpr(VD)) {
+        // If the initializer consists solely of a reference to itself, we
+        // explicitly mark the variable as uninitialized. This allows code
+        // like the following:
+        //
+        //   int x = x;
+        //
+        // to deliberately leave a variable uninitialized. Different analysis
+        // clients can detect this pattern and adjust their reporting
+        // appropriately, but we need to continue to analyze subsequent uses
+        // of the variable.
+        vals[VD] = Uninitialized;
+      } else if (VD->getInit()) {
+        // Treat the new variable as initialized.
+        vals[VD] = Initialized;
+      } else {
+        // No initializer: the variable is now uninitialized. This matters
+        // for cases like:
+        //   while (...) {
+        //     int n;
+        //     use(n);
+        //     n = 0;
+        //   }
+        // FIXME: Mark the variable as uninitialized whenever its scope is
+        // left, since its scope could be re-entered by a jump over the
+        // declaration.
+        vals[VD] = Uninitialized;
       }
     }
-  }
-}
-
-void TransferFunctions::VisitBinaryOperator(clang::BinaryOperator *bo) {
-  if (bo->isAssignmentOp()) {
-    const FindVarResult &res = findBlockVarDecl(bo->getLHS());
-    if (const VarDecl *vd = res.getDecl()) {
-      if (bo->getOpcode() != BO_Assign)
-        reportUse(res.getDeclRefExpr(), vd);
-      else
-        vals[vd] = Initialized;
-    }
-  }
-}
-
-void TransferFunctions::VisitUnaryOperator(clang::UnaryOperator *uo) {
-  switch (uo->getOpcode()) {
-    case clang::UO_PostDec:
-    case clang::UO_PostInc:
-    case clang::UO_PreDec:
-    case clang::UO_PreInc: {
-      const FindVarResult &res = findBlockVarDecl(uo->getSubExpr());
-      if (const VarDecl *vd = res.getDecl()) {
-        assert(res.getDeclRefExpr() == lastDR);
-        // We null out lastDR to indicate we have fully processed it
-        // and we don't want the auto-value setting in Visit().
-        lastDR = 0;
-        reportUse(res.getDeclRefExpr(), vd);
-      }
-      break;
-    }
-    default:
-      break;
-  }
-}
-
-void TransferFunctions::VisitCastExpr(clang::CastExpr *ce) {
-  if (ce->getCastKind() == CK_LValueToRValue) {
-    const FindVarResult &res = findBlockVarDecl(ce->getSubExpr());
-    if (res.getDecl()) {
-      assert(res.getDeclRefExpr() == lastDR);
-      lastLoad = ce;
-    }
-  }
-  else if (ce->getCastKind() == CK_NoOp ||
-           ce->getCastKind() == CK_LValueBitCast) {
-    skipProcessUses = true;
-  }
-  else if (CStyleCastExpr *cse = dyn_cast<CStyleCastExpr>(ce)) {
-    if (cse->getType()->isVoidType()) {
-      // e.g. (void) x;
-      if (lastLoad == cse->getSubExpr()) {
-        // Squelch any detected load of an uninitialized value if
-        // we cast it to void.
-        lastLoad = 0;
-        lastDR = 0;
-      }
-    }
-  }
-}
-
-void TransferFunctions::Visit(clang::Stmt *s) {
-  skipProcessUses = false;
-  StmtVisitor<TransferFunctions>::Visit(s);
-  if (!skipProcessUses)
-    ProcessUses(s);
-}
-
-void TransferFunctions::ProcessUses(Stmt *s) {
-  // This method is typically called after visiting a CFGElement statement
-  // in the CFG.  We delay processing of reporting many loads of uninitialized
-  // values until here.
-  if (lastLoad) {
-    // If we just visited the lvalue-to-rvalue cast, there is nothing
-    // left to do.
-    if (lastLoad == s)
-      return;
-
-    const DeclRefExpr *DR =
-      cast<DeclRefExpr>(stripCasts(ac.getASTContext(),
-                                   lastLoad->getSubExpr()));
-    const VarDecl *VD = cast<VarDecl>(DR->getDecl());
-
-    // If we reach here, we may have seen a load of an uninitialized value
-    // and it hasn't been casted to void or otherwise handled.  In this
-    // situation, report the incident.
-    reportUse(DR, VD);
-
-    lastLoad = 0;
-
-    if (DR == lastDR) {
-      lastDR = 0;
-      return;
-    }
-  }
-
-  // Any other uses of 'lastDR' involve taking an lvalue of variable.
-  // In this case, it "escapes" the analysis.
-  if (lastDR && lastDR != s) {
-    vals[cast<VarDecl>(lastDR->getDecl())] = Initialized;
-    lastDR = 0;
   }
 }
 
@@ -773,6 +763,7 @@ void TransferFunctions::ProcessUses(Stmt *s) {
 
 static bool runOnBlock(const CFGBlock *block, const CFG &cfg,
                        AnalysisDeclContext &ac, CFGBlockValues &vals,
+                       const ClassifyRefs &classification,
                        llvm::BitVector &wasAnalyzed,
                        UninitVariablesHandler *handler = 0) {
   
@@ -815,14 +806,13 @@ static bool runOnBlock(const CFGBlock *block, const CFG &cfg,
     }
   }
   // Apply the transfer function.
-  TransferFunctions tf(vals, cfg, block, ac, handler);
+  TransferFunctions tf(vals, cfg, block, ac, classification, handler);
   for (CFGBlock::const_iterator I = block->begin(), E = block->end(); 
        I != E; ++I) {
     if (const CFGStmt *cs = dyn_cast<CFGStmt>(&*I)) {
       tf.Visit(const_cast<Stmt*>(cs->getStmt()));
     }
   }
-  tf.ProcessUses();
   return vals.updateValueVectorWithScratch(block);
 }
 
@@ -841,6 +831,10 @@ void clang::runUninitializedVariablesAnalysis(
 #endif
 
   stats.NumVariablesAnalyzed = vals.getNumEntries();
+
+  // Precompute which expressions are uses and which are initializations.
+  ClassifyRefs classification(ac);
+  cfg.VisitBlockStmts(classification);
 
   // Mark all variables uninitialized at the entry.
   const CFGBlock &entry = cfg.getEntry();
@@ -864,7 +858,8 @@ void clang::runUninitializedVariablesAnalysis(
 
   while (const CFGBlock *block = worklist.dequeue()) {
     // Did the block change?
-    bool changed = runOnBlock(block, cfg, ac, vals, wasAnalyzed);
+    bool changed = runOnBlock(block, cfg, ac, vals,
+                              classification, wasAnalyzed);
     ++stats.NumBlockVisits;
     if (changed || !previouslyVisited[block->getBlockID()])
       worklist.enqueueSuccessors(block);    
@@ -875,7 +870,7 @@ void clang::runUninitializedVariablesAnalysis(
   for (CFG::const_iterator BI = cfg.begin(), BE = cfg.end(); BI != BE; ++BI) {
     const CFGBlock *block = *BI;
     if (wasAnalyzed[block->getBlockID()]) {
-      runOnBlock(block, cfg, ac, vals, wasAnalyzed, &handler);
+      runOnBlock(block, cfg, ac, vals, classification, wasAnalyzed, &handler);
       ++stats.NumBlockVisits;
     }
   }
