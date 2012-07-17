@@ -187,9 +187,10 @@ introduces the language selection and other high level options like -c, -g, etc.
 <p><b>-Werror=foo</b>: Turn warning "foo" into an error.</p>
 <p><b>-Wno-error=foo</b>: Turn warning "foo" into an warning even if -Werror is
    specified.</p>
-<p><b>-Wfoo</b>: Enable warning foo</p>
-<p><b>-Wno-foo</b>: Disable warning foo</p>
+<p><b>-Wfoo</b>: Enable warning "foo".</p>
+<p><b>-Wno-foo</b>: Disable warning "foo".</p>
 <p><b>-w</b>: Disable all warnings.</p>
+<p><b>-Weverything</b>: <a href="#diagnostics_enable_everything">Enable <b>all</b> warnings.</a></p>
 <p><b>-pedantic</b>: Warn on language extensions.</p>
 <p><b>-pedantic-errors</b>: Error on language extensions.</p>
 <p><b>-Wsystem-headers</b>: Enable warnings from system headers.</p>
@@ -428,7 +429,7 @@ care if your source contains multibyte characters.</p>
 
 <dt id="opt_fno-elide-type">
 <b>-fno-elide-type</b>:
-Turns off elision in template type printing.</td>
+Turns off elision in template type printing.</dt>
 <dd><p>The default for template type printing is to elide as many template
 arguments as possible, removing those which are the same in both template types,
 leaving only the differences.  Adding this flag will print all the template
@@ -447,7 +448,7 @@ t.cc:4:5: <span class="note">note</span>: candidate function not viable: no know
 
 <dt id="opt_fdiagnostics-show-template-tree">
 <b>-fdiagnostics-show-template-tree</b>:
-Template type diffing prints a text tree.</td>
+Template type diffing prints a text tree.</dt>
 <dd><p>For diffing large templated types, this option will cause Clang to
 display the templates as an indented text tree, one argument per line, with
 differences marked inline.  This is compatible with -fno-elide-type.</p>
@@ -496,9 +497,6 @@ the end of preprocessor directives.  For example:
 
 <p>These extra tokens are not strictly conforming, and are usually best handled
 by commenting them out.</p>
-
-<p>This option is also enabled by <a href="">-Wfoo</a>, <a href="">-Wbar</a>,
- and <a href="">-Wbaz</a>.</p>
 </dd>
 
 <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
@@ -662,7 +660,7 @@ mapping of category names to category id's can be obtained by running '<tt>clang
 <h4 id="diagnostics_commandline">Controlling Diagnostics via Command Line
  Flags</h4>
 
-<p>-W flags, -pedantic, etc</p>
+<p>TODO: -W flags, -pedantic, etc</p>
 
 <h4 id="diagnostics_pragmas">Controlling Diagnostics via Pragmas</h4>
 
@@ -764,7 +762,6 @@ by the user via changes to the source code. See the avaliable
 the analyzer's 
 <a href= "http://clang-analyzer.llvm.org/faq.html#exclude_code" >FAQ page</a> for 
 more information.
-</ul>
 
 <!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
 <h3 id="precompiledheaders">Precompiled Headers</h3>
@@ -1037,9 +1034,18 @@ interest in these features yet, so it's hard to say when they will be
 implemented.</li>
 
 <li>clang does not support nested functions; this is a complex feature which
-is infrequently used, so it is unlikely to be implemented anytime soon.</li>
+is infrequently used, so it is unlikely to be implemented anytime soon. In C++11
+it can be emulated by assigning lambda functions to local variables, e.g:
+<pre>
+  auto const local_function = [&](int parameter) {
+    // Do something
+  };
+  ...
+  local_function(1);
+</pre>
+</li>
 
-<li>clang does not support global register variables, this is unlikely
+<li>clang does not support global register variables; this is unlikely
 to be implemented soon because it requires additional LLVM backend support.
 </li>
 
@@ -1055,7 +1061,7 @@ in 4.3, the glibc headers will not try to use this extension with clang at
 the moment.</li>
 
 <li>clang does not support the gcc extension for forward-declaring function
-parameters; this has not showed up in any real-world code yet, though, so it
+parameters; this has not shown up in any real-world code yet, though, so it
 might never be implemented.</li>
 
 </ul>
