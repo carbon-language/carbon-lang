@@ -295,6 +295,23 @@ UnwindPlan::Row::SetCFARegister (uint32_t reg_num)
     m_cfa_reg_num = reg_num;
 }
 
+bool
+UnwindPlan::Row::operator == (const UnwindPlan::Row& rhs) const
+{
+    if (m_offset != rhs.m_offset || m_cfa_reg_num != rhs.m_cfa_reg_num || m_cfa_offset != rhs.m_cfa_offset)
+        return false;
+    if (m_register_locations.size() != rhs.m_register_locations.size())
+        return false;
+    for (collection::const_iterator idx = m_register_locations.begin(); idx != m_register_locations.end(); ++idx)
+    {
+        collection::const_iterator lhs_pos = m_register_locations.find(idx->first);
+        collection::const_iterator rhs_pos = rhs.m_register_locations.find(idx->first);
+        if (lhs_pos->second != rhs_pos->second)
+            return false;
+    }
+    return true;
+}
+
 void
 UnwindPlan::AppendRow (UnwindPlan::RowSP row)
 {

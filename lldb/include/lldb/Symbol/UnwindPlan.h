@@ -250,6 +250,9 @@ public:
         }
 
         bool
+        operator == (const Row &rhs) const;
+
+        bool
         GetRegisterInfo (uint32_t reg_num, RegisterLocation& register_location) const;
     
         void
@@ -337,34 +340,12 @@ public:
         void
         Dump (Stream& s, const UnwindPlan* unwind_plan, Thread* thread, lldb::addr_t base_addr) const;
 
-        bool
-        operator == (const Row &rhs) const
-        {
-            if (m_offset == rhs.m_offset && 
-                m_cfa_reg_num != rhs.m_cfa_reg_num &&
-                m_cfa_offset != rhs.m_cfa_offset)
-                return m_register_locations == rhs.m_register_locations;
-            return false;
-        }
-
-        bool
-        operator != (const Row &rhs) const
-        {
-            if (m_offset != rhs.m_offset ||
-                m_cfa_reg_num != rhs.m_cfa_reg_num ||
-                m_cfa_offset != rhs.m_cfa_offset)
-                return true;
-            
-            return m_register_locations != rhs.m_register_locations;
-        }
-
     protected:
         typedef std::map<uint32_t, RegisterLocation> collection;
         lldb::addr_t m_offset;      // Offset into the function for this row
         uint32_t m_cfa_reg_num;     // The Call Frame Address register number
         int32_t  m_cfa_offset;      // The offset from the CFA for this row
         collection m_register_locations;
-
     }; // class Row
 
 public:

@@ -90,22 +90,38 @@ UnwindAssemblyInstEmulation::GetNonCallSiteUnwindPlanFromAssembly (AddressRange&
             const InstructionList &inst_list = disasm_sp->GetInstructionList ();
             const size_t num_instructions = inst_list.GetSize();
 
-            UnwindPlan::RowSP prologue_completed_row;
-
             if (num_instructions > 0)
             {
                 Instruction *inst = inst_list.GetInstructionAtIndex (0).get();
                 const addr_t base_addr = inst->GetAddress().GetFileAddress();
-                // Initialize the current row with the one row that was created
-                // from the CreateFunctionEntryUnwind call above...
+
+                // Make a copy of the current instruction Row and save it in m_curr_row
+                // so we can add updates as we process the instructions.  
                 UnwindPlan::RowSP last_row = unwind_plan.GetLastRow();
                 UnwindPlan::Row *newrow = new UnwindPlan::Row;
                 if (last_row.get())
                     *newrow = *last_row.get();
                 m_curr_row.reset(newrow);
 
+                // Once we've seen the initial prologue instructions complete, save a
+                // copy of the CFI at that point into prologue_completed_row for possible
+                // use later.
+                int instructions_since_last_prologue_insn = 0;     // # of insns since last CFI was update
+                bool prologue_complete = false;                    // true if we have finished prologue setup
+                bool reinstate_prologue_next_instruction = false;  // Next iteration, re-install the prologue row of CFI
+                UnwindPlan::RowSP prologue_completed_row;          // copy of prologue row of CFI
+
+                // cache the pc register number (in whatever register numbering this UnwindPlan uses) for
+                // quick reference during instruction parsing.
+                uint32_t pc_reg_num = LLDB_INVALID_REGNUM;
+                RegisterInfo pc_reg_info;
+                if (m_inst_emulator_ap->GetRegisterInfo (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, pc_reg_info))
+                    pc_reg_num = pc_reg_info.kinds[unwind_plan.GetRegisterKind()];
+
+
                 for (size_t idx=0; idx<num_instructions; ++idx)
                 {
+                    m_curr_row_modified = false;
                     inst = inst_list.GetInstructionAtIndex (idx).get();
                     if (inst)
                     {
@@ -121,18 +137,70 @@ UnwindAssemblyInstEmulation::GetNonCallSiteUnwindPlanFromAssembly (AddressRange&
                                                             exe_ctx.GetTargetPtr());
 
                         m_inst_emulator_ap->EvaluateInstruction (eEmulateInstructionOptionIgnoreConditions);
-                        
-                        if (unwind_plan.GetLastRow() != m_curr_row)
+
+                        // Were there any changes to the CFI while evaluating this instruction?
+                        if (m_curr_row_modified)
                         {
-                            // Be sure to not edit the offset unless our row has changed
-                            // so that the "!=" call above doesn't trigger every time
+                            reinstate_prologue_next_instruction = false;
                             m_curr_row->SetOffset (inst->GetAddress().GetFileAddress() + inst->GetOpcode().GetByteSize() - base_addr);
                             // Append the new row
                             unwind_plan.AppendRow (m_curr_row);
 
+                            // Allocate a new Row for m_curr_row, copy the current state into it
                             UnwindPlan::Row *newrow = new UnwindPlan::Row;
                             *newrow = *m_curr_row.get();
                             m_curr_row.reset(newrow);
+
+                            instructions_since_last_prologue_insn = 0;
+
+                            // If the caller's pc is "same", we've just executed an epilogue and we return to the caller
+                            // after this instruction completes executing.
+                            // If there are any instructions past this, there must have been flow control over this
+                            // epilogue so we'll reinstate the original prologue setup instructions.
+                            UnwindPlan::Row::RegisterLocation pc_regloc;
+                            if (prologue_complete
+                                && pc_reg_num != LLDB_INVALID_REGNUM 
+                                && m_curr_row->GetRegisterInfo (pc_reg_num, pc_regloc)
+                                && pc_regloc.IsSame())
+                            {
+                                if (log && log->GetVerbose())
+                                    log->Printf("UnwindAssemblyInstEmulation::GetNonCallSiteUnwindPlanFromAssembly -- pc is <same>, restore prologue instructions.");
+                                reinstate_prologue_next_instruction = true;
+                            }
+                        }
+                        else
+                        {
+                            // If the previous instruction was a return-to-caller (epilogue), and we're still executing
+                            // instructions in this function, there must be a code path that jumps over that epilogue.
+                            // Reinstate the frame setup from the prologue.
+                            if (reinstate_prologue_next_instruction)
+                            {
+                                if (log && log->GetVerbose())
+                                    log->Printf("UnwindAssemblyInstEmulation::GetNonCallSiteUnwindPlanFromAssembly -- Reinstating prologue instruction set");
+                                UnwindPlan::Row *newrow = new UnwindPlan::Row;
+                                *newrow = *prologue_completed_row.get();
+                                m_curr_row.reset(newrow);
+                                m_curr_row->SetOffset (inst->GetAddress().GetFileAddress() + inst->GetOpcode().GetByteSize() - base_addr);
+                                unwind_plan.AppendRow(m_curr_row);
+
+                                newrow = new UnwindPlan::Row;
+                                *newrow = *m_curr_row.get();
+                                m_curr_row.reset(newrow);
+
+                                reinstate_prologue_next_instruction = false;
+                            }
+
+                            // If we haven't seen any prologue instructions for a while (4 instructions in a row),
+                            // the function prologue has probably completed.  Save a copy of that Row.
+                            if (prologue_complete == false && instructions_since_last_prologue_insn++ > 3)
+                            {
+                                prologue_complete = true;
+                                UnwindPlan::Row *newrow = new UnwindPlan::Row;
+                                *newrow = *m_curr_row.get();
+                                prologue_completed_row.reset(newrow);
+                                if (log && log->GetVerbose())
+                                    log->Printf("UnwindAssemblyInstEmulation::GetNonCallSiteUnwindPlanFromAssembly -- prologue has been set up, saving a copy.");
+                            }
                         }
                     }
                 }
@@ -373,6 +441,7 @@ UnwindAssemblyInstEmulation::WriteMemory (EmulateInstruction *instruction,
                         m_pushed_regs[reg_num] = addr;
                         const int32_t offset = addr - m_initial_sp;
                         m_curr_row->SetRegisterLocationToAtCFAPlusOffset (reg_num, offset, cant_replace);
+                        m_curr_row_modified = true;
                         if (is_return_address_reg)
                         {
                             // This push was pushing the return address register,
@@ -382,7 +451,10 @@ UnwindAssemblyInstEmulation::WriteMemory (EmulateInstruction *instruction,
                             {
                                 uint32_t pc_reg_num = pc_reg_info.kinds[unwind_reg_kind];
                                 if (pc_reg_num != LLDB_INVALID_REGNUM)
+                                {
                                     m_curr_row->SetRegisterLocationToAtCFAPlusOffset (pc_reg_num, offset, can_replace);
+                                    m_curr_row_modified = true;
+                                }
                             }
                         }
                     }
@@ -489,6 +561,7 @@ UnwindAssemblyInstEmulation::WriteRegister (EmulateInstruction *instruction,
 //                    m_curr_row.SetRegisterLocationToUndefined (reg_num, 
 //                                                               can_replace_only_if_unspecified, 
 //                                                               can_replace_only_if_unspecified);
+//                    m_curr_row_modified = true;
 //                }
 //            }
             break;
@@ -499,6 +572,7 @@ UnwindAssemblyInstEmulation::WriteRegister (EmulateInstruction *instruction,
                 if (reg_num != LLDB_INVALID_REGNUM)
                 {
                     m_curr_row->SetRegisterLocationToSame (reg_num, must_replace);
+                    m_curr_row_modified = true;
                 }
             }
             break;
@@ -512,6 +586,7 @@ UnwindAssemblyInstEmulation::WriteRegister (EmulateInstruction *instruction,
                 assert (cfa_reg_num != LLDB_INVALID_REGNUM);
                 m_curr_row->SetCFARegister(cfa_reg_num);
                 m_curr_row->SetCFAOffset(m_initial_sp - reg_value.GetAsUInt64());
+                m_curr_row_modified = true;
             }
             break;
 
@@ -521,6 +596,7 @@ UnwindAssemblyInstEmulation::WriteRegister (EmulateInstruction *instruction,
             if (!m_fp_is_cfa)
             {
                 m_curr_row->SetCFAOffset (m_initial_sp - reg_value.GetAsUInt64());
+                m_curr_row_modified = true;
             }
             break;
     }
