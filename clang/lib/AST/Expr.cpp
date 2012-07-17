@@ -40,6 +40,9 @@ const CXXRecordDecl *Expr::getBestDynamicClassType() const {
   if (const PointerType *PTy = DerivedType->getAs<PointerType>())
     DerivedType = PTy->getPointeeType();
 
+  if (DerivedType->isDependentType())
+    return NULL;
+
   const RecordType *Ty = DerivedType->castAs<RecordType>();
   Decl *D = Ty->getDecl();
   return cast<CXXRecordDecl>(D);
