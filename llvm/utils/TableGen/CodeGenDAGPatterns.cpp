@@ -2520,6 +2520,37 @@ static void InferFromPattern(const CodeGenInstruction &Inst,
     IsVariadic = true;  // Can warn if we want.
 }
 
+/// hasNullFragReference - Return true if the DAG has any reference to the
+/// null_frag operator.
+static bool hasNullFragReference(DagInit *DI) {
+  DefInit *OpDef = dynamic_cast<DefInit*>(DI->getOperator());
+  if (!OpDef) return false;
+  Record *Operator = OpDef->getDef();
+
+  // If this is the null fragment, return true.
+  if (Operator->getName() == "null_frag") return true;
+  // If any of the arguments reference the null fragment, return true.
+  for (unsigned i = 0, e = DI->getNumArgs(); i != e; ++i) {
+    DagInit *Arg = dynamic_cast<DagInit*>(DI->getArg(i));
+    if (Arg && hasNullFragReference(Arg))
+      return true;
+  }
+
+  return false;
+}
+
+/// hasNullFragReference - Return true if any DAG in the list references
+/// the null_frag operator.
+static bool hasNullFragReference(ListInit *LI) {
+  for (unsigned i = 0, e = LI->getSize(); i != e; ++i) {
+    DagInit *DI = dynamic_cast<DagInit*>(LI->getElement(i));
+    assert(DI && "non-dag in an instruction Pattern list?!");
+    if (hasNullFragReference(DI))
+      return true;
+  }
+  return false;
+}
+
 /// ParseInstructions - Parse all of the instructions, inlining and resolving
 /// any fragments involved.  This populates the Instructions list with fully
 /// resolved instructions.
@@ -2534,8 +2565,11 @@ void CodeGenDAGPatterns::ParseInstructions() {
 
     // If there is no pattern, only collect minimal information about the
     // instruction for its operand list.  We have to assume that there is one
-    // result, as we have no detailed info.
-    if (!LI || LI->getSize() == 0) {
+    // result, as we have no detailed info. A pattern which references the
+    // null_frag operator is as-if no pattern were specified. Normally this
+    // is from a multiclass expansion w/ a SDPatternOperator passed in as
+    // null_frag.
+    if (!LI || LI->getSize() == 0 || hasNullFragReference(LI)) {
       std::vector<Record*> Results;
       std::vector<Record*> Operands;
 

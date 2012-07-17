@@ -595,6 +595,13 @@ def not  : PatFrag<(ops node:$in), (xor node:$in, -1)>;
 def vnot : PatFrag<(ops node:$in), (xor node:$in, immAllOnesV)>;
 def ineg : PatFrag<(ops node:$in), (sub 0, node:$in)>;
 
+// null_frag - The null pattern operator is used in multiclass instantiations
+// which accept an SDPatternOperator for use in matching patterns for internal
+// definitions. When expanding a pattern, if the null fragment is referenced
+// in the expansion, the pattern is discarded and it is as-if '[]' had been
+// specified. This allows multiclasses to have the isel patterns be optional.
+def null_frag : SDPatternOperator;
+
 // load fragments.
 def unindexedload : PatFrag<(ops node:$ptr), (ld node:$ptr), [{
   return cast<LoadSDNode>(N)->getAddressingMode() == ISD::UNINDEXED;
