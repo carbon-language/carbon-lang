@@ -6742,10 +6742,24 @@ static bool hasIsEqualMethod(Sema &S, const Expr *LHS, const Expr *RHS) {
 static void diagnoseObjCLiteralComparison(Sema &S, SourceLocation Loc,
                                           ExprResult &LHS, ExprResult &RHS,
                                           BinaryOperator::Opcode Opc){
-  Expr *Literal = (isObjCObjectLiteral(LHS) ? LHS : RHS).get();
+  Expr *Literal;
+  Expr *Other;
+  if (isObjCObjectLiteral(LHS)) {
+    Literal = LHS.get();
+    Other = RHS.get();
+  } else {
+    Literal = RHS.get();
+    Other = LHS.get();
+  }
+
+  // Don't warn on comparisons against nil.
+  Other = Other->IgnoreParenCasts();
+  if (Other->isNullPointerConstant(S.getASTContext(),
+                                   Expr::NPC_ValueDependentIsNotNull))
+    return;
 
   // This should be kept in sync with warn_objc_literal_comparison.
-  // LK_String should always be last, since it has its own flag.
+  // LK_String should always be last, since it has its own warning flag.
   enum {
     LK_Array,
     LK_Dictionary,

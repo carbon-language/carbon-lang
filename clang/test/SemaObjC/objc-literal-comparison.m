@@ -1,8 +1,10 @@
-// RUN: %clang_cc1 -fsyntax-only -Wno-everything -Wobjc-literal-compare -verify %s
+// RUN: %clang_cc1 -fsyntax-only -Wno-everything -Wobjc-literal-compare "-Dnil=((id)0)" -verify %s
+// RUN: %clang_cc1 -fsyntax-only -Wno-everything -Wobjc-literal-compare "-Dnil=(id)0" -verify %s
+// RUN: %clang_cc1 -fsyntax-only -Wno-everything -Wobjc-literal-compare "-Dnil=0" -verify %s
 
 // (test the warning flag as well)
 
-typedef unsigned char BOOL;
+typedef signed char BOOL;
 
 @interface BaseObject
 + (instancetype)new;
@@ -78,4 +80,17 @@ void testWarningFlags(id obj) {
 }
 
 #pragma clang diagnostic pop
+
+
+void testNilComparison() {
+  // Don't warn when comparing to nil in a macro.
+#define RETURN_IF_NIL(x) if (x == nil || nil == x) return
+  RETURN_IF_NIL(@"");
+  RETURN_IF_NIL(@1);
+  RETURN_IF_NIL(@1.0);
+  RETURN_IF_NIL(@[]);
+  RETURN_IF_NIL(@{});
+  RETURN_IF_NIL(@__objc_yes);
+  RETURN_IF_NIL(@(1+1));
+}
 
