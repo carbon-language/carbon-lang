@@ -2867,8 +2867,9 @@ i32 (i32) asm "bswap $0", "=r,r"
 </pre>
 
 <p>Inline assembler expressions may <b>only</b> be used as the callee operand of
-   a <a href="#i_call"><tt>call</tt> instruction</a>.  Thus, typically we
-   have:</p>
+   a <a href="#i_call"><tt>call</tt></a> or an
+   <a href="#i_invoke"><tt>invoke</tt></a> instruction.
+   Thus, typically we have:</p>
 
 <pre class="doc_code">
 %X = call i32 asm "<a href="#int_bswap">bswap</a> $0", "=r,r"(i32 %Y)
