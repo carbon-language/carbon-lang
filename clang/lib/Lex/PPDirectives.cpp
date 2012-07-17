@@ -1390,9 +1390,28 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
   }
   
   if (File == 0) {
-    if (!SuppressIncludeNotFoundError)
-      Diag(FilenameTok, diag::err_pp_file_not_found) << Filename;
-    return;
+    if (!SuppressIncludeNotFoundError) {
+      // If the file could not be located and it was included via angle 
+      // brackets, we can attempt a lookup as though it were a quoted path to
+      // provide the user with a possible fixit.
+      if (isAngled) {
+        File = LookupFile(Filename, false, LookupFrom, CurDir, 
+                          Callbacks ? &SearchPath : 0, 
+                          Callbacks ? &RelativePath : 0, 
+                          getLangOpts().Modules ? &SuggestedModule : 0);
+        if (File) {
+          SourceRange Range(FilenameTok.getLocation(), CharEnd);
+          Diag(FilenameTok, diag::err_pp_file_not_found_not_fatal) << 
+            Filename << 
+            FixItHint::CreateReplacement(Range, "\"" + Filename.str() + "\"");
+        }
+      }
+      // If the file is still not found, just go with the vanilla diagnostic
+      if (!File)
+        Diag(FilenameTok, diag::err_pp_file_not_found) << Filename;
+    }
+    if (!File)
+      return;
   }
 
   // If we are supposed to import a module rather than including the header,
