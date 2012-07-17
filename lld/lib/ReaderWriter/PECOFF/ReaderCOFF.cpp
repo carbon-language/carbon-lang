@@ -35,7 +35,7 @@ public:
     , Value(V)
   {}
 
-  virtual const class File& file() const {
+  virtual const class File &file() const {
     return OwningFile;
   }
 
@@ -60,7 +60,7 @@ public:
     , Name(N)
   {}
 
-  virtual const class File& file() const {
+  virtual const class File &file() const {
     return OwningFile;
   }
 
@@ -91,7 +91,7 @@ public:
     , Data(D)
   {}
 
-  virtual const class File& file() const {
+  virtual const class File &file() const {
     return OwningFile;
   }
 
@@ -186,11 +186,11 @@ public:
   }
 
 private:
-  virtual const Reference* derefIterator(const void* iter) const {
+  virtual const Reference *derefIterator(const void *iter) const {
     return nullptr;
   }
 
-  virtual void incrementIterator(const void*& iter) const {
+  virtual void incrementIterator(const void *&iter) const {
 
   }
 
@@ -382,7 +382,7 @@ private:
 
 namespace lld {
 
-Reader* createReaderPECOFF(const ReaderOptionsPECOFF &options) {
+Reader *createReaderPECOFF(const ReaderOptionsPECOFF &options) {
   return new ReaderCOFF(options);
 }
 
