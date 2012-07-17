@@ -9,8 +9,9 @@ int foo(int i) {
 	} 
 	else
 	{
-//CHECK: store i32 %add
-//CHECK-NOT:  br label %{{[a-zA-Z0-9\.]+}}, !dbg 
+          // CHECK: add nsw
+          // CHECK-NEXT: store i32 %{{[a-zA-Z0-9]+}}
+          // CHECK-NOT:  br label %{{[a-zA-Z0-9\.]+}}, !dbg 
 		j = bar() + 2;
 	}
 	return j;
