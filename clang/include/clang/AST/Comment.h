@@ -48,12 +48,12 @@ protected:
     /// (There is no separate AST node for a newline.)
     unsigned HasTrailingNewline : 1;
   };
-  enum { NumInlineContentCommentBitfields = 9 };
+  enum { NumInlineContentCommentBits = 9 };
 
   class HTMLStartTagCommentBitfields {
     friend class HTMLStartTagComment;
 
-    unsigned : NumInlineContentCommentBitfields;
+    unsigned : NumInlineContentCommentBits;
 
     /// True if this tag is self-closing (e. g., <br />).  This is based on tag
     /// spelling in comment (plain <br> would not set this flag).
@@ -71,7 +71,7 @@ protected:
     /// True if direction was specified explicitly in the comment.
     unsigned IsDirectionExplicit : 1;
   };
-  enum { NumParamCommandCommentBitfields = 11 };
+  enum { NumParamCommandCommentBits = 11 };
 
   union {
     CommentBitfields CommentBits;
