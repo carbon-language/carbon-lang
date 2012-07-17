@@ -1001,6 +1001,7 @@ TwoAddressInstructionPass::RescheduleMIBelowKill(MachineBasicBlock *MBB,
   LV->removeVirtualRegisterKilled(Reg, KillMI);
   LV->addVirtualRegisterKilled(Reg, MI);
 
+  DEBUG(dbgs() << "\trescheduled below kill: " << *KillMI);
   return true;
 }
 
@@ -1154,6 +1155,7 @@ TwoAddressInstructionPass::RescheduleKillAboveMI(MachineBasicBlock *MBB,
   LV->removeVirtualRegisterKilled(Reg, KillMI);
   LV->addVirtualRegisterKilled(Reg, MI);
 
+  DEBUG(dbgs() << "\trescheduled kill: " << *KillMI);
   return true;
 }
 
@@ -1185,7 +1187,8 @@ TryInstructionTransform(MachineBasicBlock::iterator &mi,
   if (!regBKilled && MI.getOperand(DstIdx).isDead() &&
       DeleteUnusedInstr(mi, nmi, mbbi, Dist)) {
     ++NumDeletes;
-    return true; // Done with this instruction.
+    DEBUG(dbgs() << "\tdeleted unused instruction.\n");
+    return true; // Done with this instruction."
   }
 
   if (TargetRegisterInfo::isVirtualRegister(regA))
