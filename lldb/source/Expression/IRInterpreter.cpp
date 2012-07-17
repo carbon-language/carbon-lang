@@ -634,7 +634,7 @@ public:
             lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
 
             lldb_private::Value resolved_value;
-            lldb_private::ClangExpressionVariable::FlagType flags;
+            lldb_private::ClangExpressionVariable::FlagType flags = 0;
             
             if (global_value)
             {            

@@ -161,7 +161,7 @@ ClangASTImporter::CompleteDecl (clang::Decl *decl)
             CompleteObjCInterfaceDecl(interface_decl);
         }
     }
-    else if (ObjCProtocolDecl *protocol_decl = dyn_cast<ObjCProtocolDecl>(protocol_decl)) 
+    else if (ObjCProtocolDecl *protocol_decl = dyn_cast<ObjCProtocolDecl>(decl)) 
     {
         if (!protocol_decl->getDefinition())
             protocol_decl->startDefinition();

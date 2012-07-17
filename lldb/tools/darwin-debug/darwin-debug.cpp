@@ -164,6 +164,7 @@ posix_spawn_for_debug
 
 int main (int argc, char *const *argv, char *const *envp, const char **apple)
 {
+#if defined (DEBUG_LLDB_LAUNCHER)
     const char *program_name = strrchr(apple[0], '/');
     
     if (program_name)
@@ -171,7 +172,6 @@ int main (int argc, char *const *argv, char *const *envp, const char **apple)
     else
         program_name = apple[0];
     
-#if defined (DEBUG_LLDB_LAUNCHER)
     printf("%s called with:\n", program_name);
     for (int i=0; i<argc; ++i)
         printf("argv[%u] = '%s'\n", i, argv[i]);

@@ -754,20 +754,19 @@ SBTarget::Launch (SBLaunchInfo &sb_launch_info, SBError& error)
             const bool synchronous_execution = target_sp->GetDebugger().GetAsyncExecution () == false;
             if (error.Success())
             {
-                StateType state = eStateInvalid;
                 if (launch_info.GetFlags().Test(eLaunchFlagStopAtEntry))
                 {
                     // If we are doing synchronous mode, then wait for the initial
                     // stop to happen, else, return and let the caller watch for
                     // the stop
                     if (synchronous_execution)
-                         state = process_sp->WaitForProcessToStop (NULL);
+                         process_sp->WaitForProcessToStop (NULL);
                     // We we are stopping at the entry point, we can return now!
                     return sb_process;
                 }
                 
                 // Make sure we are stopped at the entry
-                state = process_sp->WaitForProcessToStop (NULL);
+                StateType state = process_sp->WaitForProcessToStop (NULL);
                 if (state == eStateStopped)
                 {
                     // resume the process to skip the entry point

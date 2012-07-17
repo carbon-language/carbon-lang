@@ -173,16 +173,13 @@ UserSettingsController::RegisterChild (const UserSettingsControllerSP &child)
 
     // Verify child is not already in m_children.
     size_t num_children = m_children.size();
-    bool found = false;
     for (size_t i = 0; i < num_children; ++i)
-      {
-	if (m_children[i].get() == child.get())
-    	    found = true;
-      }
-
+    {
+        if (m_children[i].get() == child.get())
+            return;
+    }
     // Add child to m_children.
-    if (! found)
-        m_children.push_back (child);
+    m_children.push_back (child);
 }
 
 const ConstString &
@@ -494,14 +491,12 @@ UserSettingsController::SetVariable (const char *full_dot_name,
                 UserSettingsControllerSP child;
                 ConstString child_prefix (names.GetArgumentAtIndex (0));
                 int num_children = GetNumChildren();
-                bool found = false;
-                for (int i = 0; i < num_children && !found; ++i)
+                for (int i = 0; i < num_children; ++i)
                 {
                     child = GetChildAtIndex (i);
                     ConstString current_prefix = child->GetLevelName();
                     if (current_prefix == child_prefix)
                     {
-                        found = true;
                         std::string new_name;
                         for (int j = 0; j < names.GetArgumentCount(); ++j)
                         {
@@ -513,12 +508,9 @@ UserSettingsController::SetVariable (const char *full_dot_name,
                                                    index_value);
                     }
                 }
-                if (!found)
-                {
-                    err.SetErrorStringWithFormat ("unable to find variable '%s', cannot assign value", 
-                                                  full_dot_name);
-                    return err;
-                }
+                err.SetErrorStringWithFormat ("unable to find variable '%s', cannot assign value",
+                                              full_dot_name);
+                return err;
             }
         }
     }
@@ -576,12 +568,10 @@ UserSettingsController::GetVariable
     if (names.GetArgumentCount() > 1)
     {
         ConstString child_prefix (names.GetArgumentAtIndex (0));
-        bool found = false;
-        for (int i = 0; i < m_children.size() && !found; ++i)
+        for (int i = 0; i < m_children.size(); ++i)
         {
             if (child_prefix == m_children[i]->GetLevelName())
             {
-                found = true;
                 child = m_children[i];
                 std::string new_name;
                 for (int j = 0; j < names.GetArgumentCount(); ++j)
@@ -594,60 +584,57 @@ UserSettingsController::GetVariable
             }
         }
 
-        if (!found)
+        // Cannot be handled by a child, because name did not match any child prefixes.
+        // Cannot be a class-wide variable because there are too many name pieces.
+
+        if (instance_entry != NULL)
         {
-            // Cannot be handled by a child, because name did not match any child prefixes.
-            // Cannot be a class-wide variable because there are too many name pieces.
+            var_type = instance_entry->var_type;
+            ConstString instance_name (names.GetArgumentAtIndex (0));
+            InstanceSettings *current_settings = FindSettingsForInstance (instance_name);
 
-            if (instance_entry != NULL)
+            if (current_settings != NULL)
             {
-                var_type = instance_entry->var_type;
-                ConstString instance_name (names.GetArgumentAtIndex (0));
-                InstanceSettings *current_settings = FindSettingsForInstance (instance_name);
+                current_settings->GetInstanceSettingsValue (*instance_entry, const_var_name, value, &err);
+            }
+            else
+            {
+                // Look for instance name setting in pending settings.
 
-                if (current_settings != NULL)
+                std::string inst_name_str = instance_name.GetCString();
+                std::map<std::string, InstanceSettingsSP>::iterator pos;
+
+                pos = m_pending_settings.find (inst_name_str);
+                if (pos != m_pending_settings.end())
                 {
-                    current_settings->GetInstanceSettingsValue (*instance_entry, const_var_name, value, &err);
+                    InstanceSettingsSP settings_sp = pos->second;
+                    settings_sp->GetInstanceSettingsValue (*instance_entry, const_var_name,  value, &err);
                 }
-                else
+                else 
                 {
-                    // Look for instance name setting in pending settings.
-
-                    std::string inst_name_str = instance_name.GetCString();
-                    std::map<std::string, InstanceSettingsSP>::iterator pos;
-
-                    pos = m_pending_settings.find (inst_name_str);
-                    if (pos != m_pending_settings.end())
+                    if (m_settings.level_name.GetLength() > 0)
                     {
-                        InstanceSettingsSP settings_sp = pos->second;
-                        settings_sp->GetInstanceSettingsValue (*instance_entry, const_var_name,  value, &err);
+                        // No valid instance name; assume they want the default settings.
+                        m_default_settings->GetInstanceSettingsValue (*instance_entry, const_var_name, value, &err);
                     }
-                    else 
+                    else
                     {
-                        if (m_settings.level_name.GetLength() > 0)
-                        {
-                            // No valid instance name; assume they want the default settings.
-                            m_default_settings->GetInstanceSettingsValue (*instance_entry, const_var_name, value, &err);
-                        }
+                        // We're at the Debugger level;  use the debugger's instance settings.
+                        StreamString tmp_name;
+                        if (debugger_instance_name[0] != '[')
+                            tmp_name.Printf ("[%s]", debugger_instance_name);
                         else
-                        {
-                            // We're at the Debugger level;  use the debugger's instance settings.
-                            StreamString tmp_name;
-                            if (debugger_instance_name[0] != '[')
-                                tmp_name.Printf ("[%s]", debugger_instance_name);
-                            else
-                                tmp_name.Printf ("%s", debugger_instance_name);
-                            ConstString dbg_name (debugger_instance_name);
-                            InstanceSettings *dbg_settings = FindSettingsForInstance (dbg_name);
-                            if (dbg_settings)
-                                dbg_settings->GetInstanceSettingsValue (*instance_entry, const_var_name, value, &err);
-                        }
+                            tmp_name.Printf ("%s", debugger_instance_name);
+                        ConstString dbg_name (debugger_instance_name);
+                        InstanceSettings *dbg_settings = FindSettingsForInstance (dbg_name);
+                        if (dbg_settings)
+                            dbg_settings->GetInstanceSettingsValue (*instance_entry, const_var_name, value, &err);
                     }
                 }
             }
-            else
-                err.SetErrorString ("invalid variable name");
         }
+        else
+            err.SetErrorString ("invalid variable name");
     }
     else
     {
@@ -1194,14 +1181,11 @@ UserSettingsController::FindSettingsDescriptions (CommandInterpreter &interprete
     else if (num_pieces == 1)
     {
         ConstString var_name (names.GetArgumentAtIndex (0));
-        bool is_global = false;
 
         const SettingEntry *setting_entry = usc_sp->GetGlobalEntry (var_name);
 
         if (setting_entry == NULL)
             setting_entry = usc_sp->GetInstanceEntry (var_name);
-        else
-            is_global = true;
 
         // Check to see if it is a global or instance variable name.
         if (setting_entry != NULL)
@@ -1773,21 +1757,18 @@ UserSettingsController::CompleteSettingsNames (const UserSettingsControllerSP& u
         else
         {
             // 'next_name' must be a child name.  Find the correct child and pass the remaining piece to be resolved.
-            bool found = false;
             int num_children = my_usc_sp->GetNumChildren();
             ConstString child_level (next_name.c_str());
             for (int i = 0; i < num_children; ++i)
             {
                 if (my_usc_sp->GetChildAtIndex (i)->GetLevelName() == child_level)
                 {
-                    found = true;
                     return UserSettingsController::CompleteSettingsNames (my_usc_sp->GetChildAtIndex (i),
                                                                           partial_setting_name_pieces,
                                                                           word_complete, matches);
                 }
             }
-            if (!found)
-                return 0;
+            return 0;
         }
     }
     else if (num_name_pieces == 1)

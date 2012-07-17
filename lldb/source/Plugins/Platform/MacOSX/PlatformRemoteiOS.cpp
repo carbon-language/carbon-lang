@@ -99,6 +99,7 @@ PlatformRemoteiOS::CreateInstance (bool force, const ArchSpec *arch)
                 {
                     case llvm::Triple::Apple:
                         create = true;
+                        break;
 
                     case llvm::Triple::UnknownArch:
                         create = !arch->TripleVendorWasSpecified();

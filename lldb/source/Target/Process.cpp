@@ -3179,11 +3179,11 @@ Process::ShouldBroadcastEvent (Event *event_ptr)
                     // break at main.cpp:58, run and hit the breakpoints on
                     // multiple threads, then somehow during the stepping over
                     // of all breakpoints no run gets reported.
-                    return_value = true;
 
                     // This is a transition from stop to run.
                     switch (m_thread_list.ShouldReportRun (event_ptr))
                     {
+                        default:
                         case eVoteYes:
                         case eVoteNoOpinion:
                             return_value = true;
@@ -4258,7 +4258,6 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
             }
             
             // Now wait for the process to stop again:
-            stop_state = lldb::eStateInvalid;
             event_sp.reset();
 
             if (log)

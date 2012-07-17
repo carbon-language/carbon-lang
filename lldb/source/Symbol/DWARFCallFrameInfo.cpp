@@ -398,7 +398,6 @@ DWARFCallFrameInfo::FDEToUnwindPlan (dw_offset_t offset, Address startaddr, Unwi
 
     uint32_t reg_num = 0;
     int32_t op_offset = 0;
-    uint32_t tmp_uval32;
     uint32_t code_align = cie->code_align;
     int32_t data_align = cie->data_align;
 
@@ -750,7 +749,6 @@ DWARFCallFrameInfo::FDEToUnwindPlan (dw_offset_t offset, Address startaddr, Unwi
                 case DW_CFA_val_offset          :   // 0x14
                 case DW_CFA_val_offset_sf       :   // 0x15
                 default:
-                    tmp_uval32 = extended_opcode;
                     break;
             }
         }

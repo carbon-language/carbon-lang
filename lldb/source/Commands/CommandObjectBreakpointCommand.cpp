@@ -864,7 +864,6 @@ CommandObjectBreakpointCommand::CommandObjectBreakpointCommand (CommandInterpret
                             "A set of commands for adding, removing and examining bits of code to be executed when the breakpoint is hit (breakpoint 'commmands').",
                             "command <sub-command> [<sub-command-options>] <breakpoint-id>")
 {
-    bool status;
     CommandObjectSP add_command_object (new CommandObjectBreakpointCommandAdd (interpreter));
     CommandObjectSP delete_command_object (new CommandObjectBreakpointCommandDelete (interpreter));
     CommandObjectSP list_command_object (new CommandObjectBreakpointCommandList (interpreter));
@@ -873,9 +872,9 @@ CommandObjectBreakpointCommand::CommandObjectBreakpointCommand (CommandInterpret
     delete_command_object->SetCommandName ("breakpoint command delete");
     list_command_object->SetCommandName ("breakpoint command list");
 
-    status = LoadSubCommand ("add",    add_command_object);
-    status = LoadSubCommand ("delete", delete_command_object);
-    status = LoadSubCommand ("list",   list_command_object);
+    LoadSubCommand ("add",    add_command_object);
+    LoadSubCommand ("delete", delete_command_object);
+    LoadSubCommand ("list",   list_command_object);
 }
 
 CommandObjectBreakpointCommand::~CommandObjectBreakpointCommand ()

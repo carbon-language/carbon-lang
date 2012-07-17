@@ -1824,13 +1824,13 @@ GDBRemoteCommunicationClient::LaunchGDBserverAndGetPort ()
         std::string name;
         std::string value;
         uint16_t port = 0;
-        lldb::pid_t pid = LLDB_INVALID_PROCESS_ID;
+        //lldb::pid_t pid = LLDB_INVALID_PROCESS_ID;
         while (response.GetNameColonValue(name, value))
         {
             if (name.size() == 4 && name.compare("port") == 0)
                 port = Args::StringToUInt32(value.c_str(), 0, 0);
-            if (name.size() == 3 && name.compare("pid") == 0)
-                pid = Args::StringToUInt32(value.c_str(), LLDB_INVALID_PROCESS_ID, 0);
+//            if (name.size() == 3 && name.compare("pid") == 0)
+//                pid = Args::StringToUInt32(value.c_str(), LLDB_INVALID_PROCESS_ID, 0);
         }
         return port;
     }

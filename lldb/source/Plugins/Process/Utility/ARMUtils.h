@@ -25,10 +25,10 @@ static inline uint32_t Align(uint32_t val, uint32_t alignment)
 
 static inline uint32_t DecodeImmShift(const uint32_t type, const uint32_t imm5, ARM_ShifterType &shift_t)
 {
-    switch (type) {
+    switch (type)
+    {
     default:
         //assert(0 && "Invalid shift type");
-        return UINT32_MAX;
     case 0:
         shift_t = SRType_LSL;
         return imm5;
@@ -50,6 +50,9 @@ static inline uint32_t DecodeImmShift(const uint32_t type, const uint32_t imm5, 
             return imm5;
         }
     }
+    shift_t = SRType_Invalid;
+    return UINT32_MAX;
+
 }
 
 // A8.6.35 CMP (register) -- Encoding T3
@@ -322,6 +325,7 @@ static inline uint32_t ThumbExpandImm_C(uint32_t opcode, uint32_t carry_in, uint
     if (bits(imm12, 11, 10) == 0)
     {
         switch (bits(imm12, 9, 8)) {
+        default: // Keep static analyzer happy with a default case
         case 0:
             imm32 = abcdefgh;
             break;

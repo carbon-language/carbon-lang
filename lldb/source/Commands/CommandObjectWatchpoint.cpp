@@ -1295,8 +1295,6 @@ CommandObjectMultiwordWatchpoint::CommandObjectMultiwordWatchpoint(CommandInterp
                             "A set of commands for operating on watchpoints.",
                             "watchpoint <command> [<command-options>]")
 {
-    bool status;
-
     CommandObjectSP list_command_object (new CommandObjectWatchpointList (interpreter));
     CommandObjectSP enable_command_object (new CommandObjectWatchpointEnable (interpreter));
     CommandObjectSP disable_command_object (new CommandObjectWatchpointDisable (interpreter));
@@ -1313,13 +1311,13 @@ CommandObjectMultiwordWatchpoint::CommandObjectMultiwordWatchpoint(CommandInterp
     modify_command_object->SetCommandName("watchpoint modify");
     set_command_object->SetCommandName("watchpoint set");
 
-    status = LoadSubCommand ("list",       list_command_object);
-    status = LoadSubCommand ("enable",     enable_command_object);
-    status = LoadSubCommand ("disable",    disable_command_object);
-    status = LoadSubCommand ("delete",     delete_command_object);
-    status = LoadSubCommand ("ignore",     ignore_command_object);
-    status = LoadSubCommand ("modify",     modify_command_object);
-    status = LoadSubCommand ("set",        set_command_object);
+    LoadSubCommand ("list",       list_command_object);
+    LoadSubCommand ("enable",     enable_command_object);
+    LoadSubCommand ("disable",    disable_command_object);
+    LoadSubCommand ("delete",     delete_command_object);
+    LoadSubCommand ("ignore",     ignore_command_object);
+    LoadSubCommand ("modify",     modify_command_object);
+    LoadSubCommand ("set",        set_command_object);
 }
 
 CommandObjectMultiwordWatchpoint::~CommandObjectMultiwordWatchpoint()

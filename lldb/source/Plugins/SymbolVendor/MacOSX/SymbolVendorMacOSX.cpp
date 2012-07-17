@@ -225,31 +225,37 @@ SymbolVendorMacOSX::CreateInstance (const lldb::ModuleSP &module_sp)
                                                                             xmlNode *value_node = key_node->next;
                                                                             while (value_node && value_node->type != XML_ELEMENT_NODE)
                                                                                 value_node = value_node->next;
-                                                                            if (strcmp((const char *)value_node->name, "string") == 0)
+                                                                            if (value_node && value_node->name)
                                                                             {
-                                                                                const char *node_content = (const char *)::xmlNodeGetContent(value_node);
-                                                                                if (node_content)
+                                                                                if (strcmp((const char *)value_node->name, "string") == 0)
                                                                                 {
-                                                                                    strncpy(DBGBuildSourcePath, node_content, sizeof(DBGBuildSourcePath));
+                                                                                    const char *node_content = (const char *)::xmlNodeGetContent(value_node);
+                                                                                    if (node_content)
+                                                                                    {
+                                                                                        strncpy(DBGBuildSourcePath, node_content, sizeof(DBGBuildSourcePath));
+                                                                                    }
                                                                                 }
+                                                                                key_node = value_node;
                                                                             }
-                                                                            key_node = value_node;
                                                                         }
                                                                         else if (strcmp(key_name, "DBGSourcePath") == 0)
                                                                         {
                                                                             xmlNode *value_node = key_node->next;
                                                                             while (value_node && value_node->type != XML_ELEMENT_NODE)
                                                                                 value_node = value_node->next;
-                                                                            if (strcmp((const char *)value_node->name, "string") == 0)
+                                                                            if (value_node && value_node->name)
                                                                             {
-                                                                                const char *node_content = (const char *)::xmlNodeGetContent(value_node);
-                                                                                if (node_content)
+                                                                                if (strcmp((const char *)value_node->name, "string") == 0)
                                                                                 {
-                                                                                    FileSpec resolved_source_path(node_content, true);
-                                                                                    resolved_source_path.GetPath(DBGSourcePath, sizeof(DBGSourcePath));
+                                                                                    const char *node_content = (const char *)::xmlNodeGetContent(value_node);
+                                                                                    if (node_content)
+                                                                                    {
+                                                                                        FileSpec resolved_source_path(node_content, true);
+                                                                                        resolved_source_path.GetPath(DBGSourcePath, sizeof(DBGSourcePath));
+                                                                                    }
                                                                                 }
+                                                                                key_node = value_node;
                                                                             }
-                                                                            key_node = value_node;
                                                                         }
                                                                     }
                                                                 }

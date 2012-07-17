@@ -1038,7 +1038,7 @@ SBFrame::EvaluateExpression (const char *expr, lldb::DynamicValueType fetch_dyna
     
     LogSP expr_log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
 
-    ExecutionResults exe_results;
+    ExecutionResults exe_results = eExecutionSetupError;
     SBValue expr_result;
     ValueObjectSP expr_value_sp;
 

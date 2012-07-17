@@ -722,7 +722,7 @@ Driver::ParseArgs (int argc, const char *argv[], FILE *out_fh, bool &exit)
     {
         // Skip any options we consumed with getopt_long
         argc -= optind;
-        argv += optind;
+        //argv += optind; // Commented out to keep static analyzer happy
 
         if (argc > 0)
             ::fprintf (out_fh, "Warning: program arguments are ignored when attaching.\n");

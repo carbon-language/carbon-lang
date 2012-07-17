@@ -564,7 +564,7 @@ EmulateInstructionARM::EmulatePOP (const uint32_t opcode, const ARMEncoding enco
             // In ARMv5T and above, this is an interworking branch.
             if (!LoadWritePC(context, data))
                 return false;
-            addr += addr_byte_size;
+            //addr += addr_byte_size;
         }
         
         context.type = EmulateInstruction::eContextAdjustStackPointer;
@@ -1295,13 +1295,12 @@ EmulateInstructionARM::EmulateADDSPImm (const uint32_t opcode, const ARMEncoding
             return false;
         uint32_t imm32; // the immediate operand
         uint32_t d;
-        bool setflags;
+        //bool setflags = false; // Add this back if/when support eEncodingT3 eEncodingA1
         switch (encoding) 
         {
             case eEncodingT1:
                 // d = UInt(Rd); setflags = FALSE; imm32 = ZeroExtend(imm8:'00', 32);
                 d = Bits32 (opcode, 10, 8);
-                setflags = false;
                 imm32 = (Bits32 (opcode, 7, 0) << 2);
                   
                 break;
@@ -1309,7 +1308,6 @@ EmulateInstructionARM::EmulateADDSPImm (const uint32_t opcode, const ARMEncoding
             case eEncodingT2:
                 // d = 13; setflags = FALSE; imm32 = ZeroExtend(imm7:'00', 32);
                 d = 13;
-                setflags = false;
                 imm32 = ThumbImm7Scaled(opcode); // imm32 = ZeroExtend(imm7:'00', 32)
                   
                 break;
@@ -1335,6 +1333,15 @@ EmulateInstructionARM::EmulateADDSPImm (const uint32_t opcode, const ARMEncoding
         {
             if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + d, addr))
                 return false;
+            
+            // Add this back if/when support eEncodingT3 eEncodingA1
+            //if (setflags)
+            //{
+            //    APSR.N = result<31>;
+            //    APSR.Z = IsZeroBit(result);
+            //    APSR.C = carry;
+            //    APSR.V = overflow;
+            //}
         }
     }
     return true;
@@ -5395,6 +5402,7 @@ EmulateInstructionARM::EmulateADR (const uint32_t opcode, const ARMEncoding enco
         case eEncodingT1:
             Rd = Bits32(opcode, 10, 8);
             imm32 = ThumbImm8Scaled(opcode); // imm32 = ZeroExtend(imm8:'00', 32)
+            add = true;
             break;
         case eEncodingT2:
         case eEncodingT3:
@@ -11505,6 +11513,10 @@ EmulateInstructionARM::EmulateVLD1Single (const uint32_t opcode, const ARMEncodi
                     else
                         alignment = 4;
                 }
+                else
+                {
+                    return false;
+                }
                 // d = UInt(D:Vd); n = UInt(Rn); m = UInt(Rm);
                 d = (Bit32 (opcode, 22) << 4) | Bits32 (opcode, 15, 12);
                 n = Bits32 (opcode, 19, 16);
@@ -11840,6 +11852,10 @@ EmulateInstructionARM::EmulateVST1Single (const uint32_t opcode, ARMEncoding enc
                         alignment = 1;
                     else
                         alignment = 4;
+                }
+                else
+                {
+                    return false;
                 }
                 // d = UInt(D:Vd); n = UInt(Rn); m = UInt(Rm);
                 d = (Bit32 (opcode, 22) << 4) | Bits32 (opcode, 15, 12);

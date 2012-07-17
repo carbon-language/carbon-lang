@@ -122,7 +122,6 @@ catch_mach_exception_raise_state_identity
     mach_msg_type_number_t *new_stateCnt
 )
 {
-    kern_return_t kret;
     if (DNBLogCheckLogBit(LOG_EXCEPTIONS))
     {
         DNBLogThreaded("::%s ( exc_port = 0x%4.4x, thd_port = 0x%4.4x, tsk_port = 0x%4.4x, exc_type = %d ( %s ), exc_data[%d] = { 0x%llx, 0x%llx })",
@@ -135,8 +134,8 @@ catch_mach_exception_raise_state_identity
             (uint64_t)(exc_data_count > 0 ? exc_data[0] : 0xBADDBADD),
             (uint64_t)(exc_data_count > 1 ? exc_data[1] : 0xBADDBADD));
     }
-    kret = mach_port_deallocate (mach_task_self (), task_port);
-    kret = mach_port_deallocate (mach_task_self (), thread_port);
+    mach_port_deallocate (mach_task_self (), task_port);
+    mach_port_deallocate (mach_task_self (), thread_port);
 
     return KERN_FAILURE;
 }
@@ -229,7 +228,7 @@ MachException::Data::GetStopInfo(struct DNBThreadStopInfo *stop_info) const
         if (desc < end_desc)
         {
             const char *sig_str = SysSignal::Name(soft_signal);
-            desc += snprintf(desc, end_desc - desc, " EXC_SOFT_SIGNAL( %i ( %s ))", soft_signal, sig_str ? sig_str : "unknown signal");
+            snprintf(desc, end_desc - desc, " EXC_SOFT_SIGNAL( %i ( %s ))", soft_signal, sig_str ? sig_str : "unknown signal");
         }
     }
     else

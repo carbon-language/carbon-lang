@@ -1214,9 +1214,9 @@ DNBPrintf (nub_process_t pid, nub_thread_t tid, nub_addr_t base_addr, FILE *file
         case '%':
             {
                 f++;    // Skip the '%' character
-                int min_field_width = 0;
-                int precision = 0;
-                uint32_t flags = 0;
+//                int min_field_width = 0;
+//                int precision = 0;
+                //uint32_t flags = 0;
                 uint32_t length_modifiers = 0;
                 uint32_t byte_size = 0;
                 uint32_t actual_byte_size = 0;
@@ -1233,12 +1233,12 @@ DNBPrintf (nub_process_t pid, nub_thread_t tid, nub_addr_t base_addr, FILE *file
                 // Decode any flags
                 switch (*f)
                 {
-                case '#': fprintf_format += *f++; flags |= alternate_form;            break;
-                case '0': fprintf_format += *f++; flags |= zero_padding;            break;
-                case '-': fprintf_format += *f++; flags |= negative_field_width;    break;
-                case ' ': fprintf_format += *f++; flags |= blank_space;                break;
-                case '+': fprintf_format += *f++; flags |= show_sign;                break;
-                case ',': fprintf_format += *f++; flags |= show_thousands_separator;break;
+                case '#': fprintf_format += *f++; break; //flags |= alternate_form;          break;
+                case '0': fprintf_format += *f++; break; //flags |= zero_padding;            break;
+                case '-': fprintf_format += *f++; break; //flags |= negative_field_width;    break;
+                case ' ': fprintf_format += *f++; break; //flags |= blank_space;             break;
+                case '+': fprintf_format += *f++; break; //flags |= show_sign;               break;
+                case ',': fprintf_format += *f++; break; //flags |= show_thousands_separator;break;
                 case '{':
                 case '[':
                     {
@@ -1330,7 +1330,8 @@ DNBPrintf (nub_process_t pid, nub_thread_t tid, nub_addr_t base_addr, FILE *file
                 // Check for a minimum field width
                 if (isdigit(*f))
                 {
-                    min_field_width = strtoul(f, &end, 10);
+                    //min_field_width = strtoul(f, &end, 10);
+                    strtoul(f, &end, 10);
                     if (end > f)
                     {
                         fprintf_format.append(f, end - f);
@@ -1346,7 +1347,8 @@ DNBPrintf (nub_process_t pid, nub_thread_t tid, nub_addr_t base_addr, FILE *file
                     if (isdigit(*f))
                     {
                         fprintf_format += '.';
-                        precision = strtoul(f, &end, 10);
+                        //precision = strtoul(f, &end, 10);
+                        strtoul(f, &end, 10);
                         if (end > f)
                         {
                             fprintf_format.append(f, end - f);
@@ -1453,7 +1455,7 @@ DNBPrintf (nub_process_t pid, nub_thread_t tid, nub_addr_t base_addr, FILE *file
                             byte_size = sizeof(char);
                         else if (length_modifiers & length_mod_h)
                             byte_size = sizeof(short);
-                        if (length_modifiers & length_mod_ll)
+                        else if (length_modifiers & length_mod_ll)
                             byte_size = sizeof(long long);
                         else if (length_modifiers & length_mod_l)
                             byte_size = sizeof(long);

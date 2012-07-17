@@ -151,7 +151,7 @@ InputReader::HandleRawBytes (const char *bytes, size_t bytes_len)
             {
                 if (end_token && end_token == p)
                 {
-                    p += m_end_token.size();
+                    m_end_token.size();
                     SetIsDone(true);
                     break;
                 }

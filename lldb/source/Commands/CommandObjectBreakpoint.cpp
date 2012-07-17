@@ -373,13 +373,7 @@ protected:
 
         Breakpoint *bp = NULL;
         FileSpec module_spec;
-        bool use_module = false;
-        int num_modules = m_options.m_modules.GetSize();
-        
         const bool internal = false;
-
-        if ((num_modules > 0) && (break_type != eSetTypeAddress))
-            use_module = true;
 
         switch (break_type)
         {
@@ -1673,8 +1667,6 @@ CommandObjectMultiwordBreakpoint::CommandObjectMultiwordBreakpoint (CommandInter
                             "A set of commands for operating on breakpoints. Also see _regexp-break.",
                             "breakpoint <command> [<command-options>]")
 {
-    bool status;
-
     CommandObjectSP list_command_object (new CommandObjectBreakpointList (interpreter));
     CommandObjectSP enable_command_object (new CommandObjectBreakpointEnable (interpreter));
     CommandObjectSP disable_command_object (new CommandObjectBreakpointDisable (interpreter));
@@ -1693,14 +1685,14 @@ CommandObjectMultiwordBreakpoint::CommandObjectMultiwordBreakpoint (CommandInter
     command_command_object->SetCommandName ("breakpoint command");
     modify_command_object->SetCommandName ("breakpoint modify");
 
-    status = LoadSubCommand ("list",       list_command_object);
-    status = LoadSubCommand ("enable",     enable_command_object);
-    status = LoadSubCommand ("disable",    disable_command_object);
-    status = LoadSubCommand ("clear",      clear_command_object);
-    status = LoadSubCommand ("delete",     delete_command_object);
-    status = LoadSubCommand ("set",        set_command_object);
-    status = LoadSubCommand ("command",    command_command_object);
-    status = LoadSubCommand ("modify",     modify_command_object);
+    LoadSubCommand ("list",       list_command_object);
+    LoadSubCommand ("enable",     enable_command_object);
+    LoadSubCommand ("disable",    disable_command_object);
+    LoadSubCommand ("clear",      clear_command_object);
+    LoadSubCommand ("delete",     delete_command_object);
+    LoadSubCommand ("set",        set_command_object);
+    LoadSubCommand ("command",    command_command_object);
+    LoadSubCommand ("modify",     modify_command_object);
 }
 
 CommandObjectMultiwordBreakpoint::~CommandObjectMultiwordBreakpoint ()

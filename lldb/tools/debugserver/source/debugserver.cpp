@@ -1141,6 +1141,7 @@ main (int argc, char *argv[])
 
     int listen_port = INT32_MAX;
     char str[PATH_MAX];
+    str[0] = '\0';
 
     if (g_lockdown_opt == 0 && g_applist_opt == 0)
     {

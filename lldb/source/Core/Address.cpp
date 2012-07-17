@@ -431,14 +431,6 @@ Address::Dump (Stream *s, ExecutionContextScope *exe_scope, DumpStyle style, Dum
     case DumpStyleResolvedDescriptionNoModule:
         if (IsSectionOffset())
         {
-            AddressType addr_type = eAddressTypeLoad;
-            addr_t addr = GetLoadAddress (target);
-            if (addr == LLDB_INVALID_ADDRESS)
-            {
-                addr = GetFileAddress();
-                addr_type = eAddressTypeFile;
-            }
-
             uint32_t pointer_size = 4;
             ModuleSP module_sp (GetModule());
             if (target)

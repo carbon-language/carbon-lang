@@ -184,7 +184,7 @@ RegisterContextLLDB::InitializeZerothFrame()
     
     UnwindPlan::RowSP active_row;
     int cfa_offset = 0;
-    int row_register_kind;
+    int row_register_kind = -1;
     if (m_full_unwind_plan_sp && m_full_unwind_plan_sp->PlanValidAtAddress (m_current_pc))
     {
         active_row = m_full_unwind_plan_sp->GetRowForFunctionOffset (m_current_offset);
@@ -507,7 +507,7 @@ RegisterContextLLDB::InitializeNonZerothFrame()
 
     UnwindPlan::RowSP active_row;
     int cfa_offset = 0;
-    int row_register_kind;
+    int row_register_kind = -1;
 
     // Try to get by with just the fast UnwindPlan if possible - the full UnwindPlan may be expensive to get
     // (e.g. if we have to parse the entire eh_frame section of an ObjectFile for the first time.)
@@ -670,8 +670,8 @@ RegisterContextLLDB::GetFastUnwindPlanForFrame ()
                 const char *has_fast = "";
                 if (m_fast_unwind_plan_sp)
                     has_fast = ", and has a fast UnwindPlan";
-                log->Printf("%*sFrame %u frame has a fast UnwindPlan",
-                            m_frame_number < 100 ? m_frame_number : 100, "", m_frame_number);
+                log->Printf("%*sFrame %u frame%s",
+                            m_frame_number < 100 ? m_frame_number : 100, "", m_frame_number, has_fast);
             }
             m_frame_type = eNormalFrame;
             return unwind_plan_sp;

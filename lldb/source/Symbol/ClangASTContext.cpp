@@ -2420,7 +2420,7 @@ ClangASTContext::AddObjCClassProperty
         {
             ObjCInterfaceDecl *class_interface_decl = objc_class_type->getInterface();
             
-            clang_type_t property_opaque_type_to_access;
+            clang_type_t property_opaque_type_to_access = NULL;
             
             if (property_opaque_type)
                 property_opaque_type_to_access = property_opaque_type;

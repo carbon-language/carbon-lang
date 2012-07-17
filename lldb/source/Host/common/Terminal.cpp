@@ -161,16 +161,15 @@ TerminalState::Save (int fd, bool save_process_group)
 bool
 TerminalState::Restore () const
 {
-    int result = 0;
     if (IsValid())
     {
         const int fd = m_tty.GetFileDescriptor();
         if (TFlagsIsValid())
-            result = fcntl (fd, F_SETFL, m_tflags);
+            fcntl (fd, F_SETFL, m_tflags);
 
 #ifdef LLDB_CONFIG_TERMIOS_SUPPORTED
         if (TTYStateIsValid())
-            result = tcsetattr (fd, TCSANOW, m_termios_ap.get());
+            tcsetattr (fd, TCSANOW, m_termios_ap.get());
 #endif // #ifdef LLDB_CONFIG_TERMIOS_SUPPORTED
 
         if (ProcessGroupIsValid())
@@ -179,7 +178,7 @@ TerminalState::Restore () const
             void (*saved_sigttou_callback) (int) = NULL;
             saved_sigttou_callback = (void (*)(int)) signal (SIGTTOU, SIG_IGN);
             // Set the process group
-            result = tcsetpgrp (fd, m_process_group);
+            tcsetpgrp (fd, m_process_group);
             // Restore the original signal handler.
             signal (SIGTTOU, saved_sigttou_callback);
         }

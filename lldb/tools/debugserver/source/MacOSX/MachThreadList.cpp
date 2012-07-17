@@ -470,9 +470,9 @@ MachThreadList::DisableHardwareBreakpoint (const DNBBreakpoint* bp) const
 uint32_t
 MachThreadList::EnableHardwareWatchpoint (const DNBBreakpoint* wp) const
 {
+    uint32_t hw_index = INVALID_NUB_HW_INDEX;
     if (wp != NULL)
     {
-        uint32_t hw_index;
         PTHREAD_MUTEX_LOCKER (locker, m_threads_mutex);
         const uint32_t num_threads = m_threads.size();
         for (uint32_t idx = 0; idx < num_threads; ++idx)
@@ -492,9 +492,8 @@ MachThreadList::EnableHardwareWatchpoint (const DNBBreakpoint* wp) const
         // Use an arbitrary thread to signal the completion of our transaction.
         if (num_threads)
             m_threads[0]->HardwareWatchpointStateChanged();
-        return hw_index;
     }
-    return INVALID_NUB_HW_INDEX;
+    return hw_index;
 }
 
 bool

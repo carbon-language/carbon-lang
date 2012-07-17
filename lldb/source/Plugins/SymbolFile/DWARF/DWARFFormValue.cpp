@@ -186,83 +186,83 @@ DWARFFormValue::SkipValue(const DataExtractor& debug_info_data, uint32_t* offset
 bool
 DWARFFormValue::SkipValue(dw_form_t form, const DataExtractor& debug_info_data, uint32_t* offset_ptr, const DWARFCompileUnit* cu)
 {
-    bool indirect = false;
-    do
+    switch (form)
     {
-        indirect = false;
-        switch (form)
+    // Blocks if inlined data that have a length field and the data bytes
+    // inlined in the .debug_info
+    case DW_FORM_exprloc:
+    case DW_FORM_block:  { dw_uleb128_t size = debug_info_data.GetULEB128(offset_ptr); *offset_ptr += size; } return true;
+    case DW_FORM_block1: { dw_uleb128_t size = debug_info_data.GetU8(offset_ptr);      *offset_ptr += size; } return true;
+    case DW_FORM_block2: { dw_uleb128_t size = debug_info_data.GetU16(offset_ptr);     *offset_ptr += size; } return true;
+    case DW_FORM_block4: { dw_uleb128_t size = debug_info_data.GetU32(offset_ptr);     *offset_ptr += size; } return true;
+
+    // Inlined NULL terminated C-strings
+    case DW_FORM_string:
+        debug_info_data.GetCStr(offset_ptr);
+        return true;
+
+    // Compile unit address sized values
+    case DW_FORM_addr:
+    case DW_FORM_ref_addr:
+        *offset_ptr += DWARFCompileUnit::GetAddressByteSize(cu);
+        return true;
+
+    // 0 bytes values (implied from DW_FORM)
+    case DW_FORM_flag_present:
+        return true;
+
+    // 1 byte values
+    case DW_FORM_data1:
+    case DW_FORM_flag:
+    case DW_FORM_ref1:
+        *offset_ptr += 1;
+        return true;
+
+    // 2 byte values
+    case DW_FORM_data2:
+    case DW_FORM_ref2:
+        *offset_ptr += 2;
+        return true;
+
+    // 32 bit for DWARF 32, 64 for DWARF 64
+    case DW_FORM_sec_offset:
+        *offset_ptr += 4;
+        return true;
+
+    // 4 byte values
+    case DW_FORM_strp:
+    case DW_FORM_data4:
+    case DW_FORM_ref4:
+        *offset_ptr += 4;
+        return true;
+
+    // 8 byte values
+    case DW_FORM_data8:
+    case DW_FORM_ref8:
+    case DW_FORM_ref_sig8:
+        *offset_ptr += 8;
+        return true;
+
+    // signed or unsigned LEB 128 values
+    case DW_FORM_sdata:
+    case DW_FORM_udata:
+    case DW_FORM_ref_udata:
+        debug_info_data.Skip_LEB128(offset_ptr);
+        return true;
+
+    case DW_FORM_indirect:
         {
-        // Blocks if inlined data that have a length field and the data bytes
-        // inlined in the .debug_info
-        case DW_FORM_exprloc:
-        case DW_FORM_block:  { dw_uleb128_t size = debug_info_data.GetULEB128(offset_ptr); *offset_ptr += size; } return true;
-        case DW_FORM_block1: { dw_uleb128_t size = debug_info_data.GetU8(offset_ptr);      *offset_ptr += size; } return true;
-        case DW_FORM_block2: { dw_uleb128_t size = debug_info_data.GetU16(offset_ptr);     *offset_ptr += size; } return true;
-        case DW_FORM_block4: { dw_uleb128_t size = debug_info_data.GetU32(offset_ptr);     *offset_ptr += size; } return true;
-
-        // Inlined NULL terminated C-strings
-        case DW_FORM_string:
-            debug_info_data.GetCStr(offset_ptr);
-            return true;
-
-        // Compile unit address sized values
-        case DW_FORM_addr:
-        case DW_FORM_ref_addr:
-            *offset_ptr += DWARFCompileUnit::GetAddressByteSize(cu);
-            return true;
-
-        // 0 bytes values (implied from DW_FORM)
-        case DW_FORM_flag_present:
-            return true;
-
-        // 1 byte values
-        case DW_FORM_data1:
-        case DW_FORM_flag:
-        case DW_FORM_ref1:
-            *offset_ptr += 1;
-            return true;
-
-        // 2 byte values
-        case DW_FORM_data2:
-        case DW_FORM_ref2:
-            *offset_ptr += 2;
-            return true;
-
-        // 32 bit for DWARF 32, 64 for DWARF 64
-        case DW_FORM_sec_offset:
-            *offset_ptr += 4;
-            return true;
-
-        // 4 byte values
-        case DW_FORM_strp:
-        case DW_FORM_data4:
-        case DW_FORM_ref4:
-            *offset_ptr += 4;
-            return true;
-
-        // 8 byte values
-        case DW_FORM_data8:
-        case DW_FORM_ref8:
-        case DW_FORM_ref_sig8:
-            *offset_ptr += 8;
-            return true;
-
-        // signed or unsigned LEB 128 values
-        case DW_FORM_sdata:
-        case DW_FORM_udata:
-        case DW_FORM_ref_udata:
-            debug_info_data.Skip_LEB128(offset_ptr);
-            return true;
-
-        case DW_FORM_indirect:
-            indirect = true;
-            form = debug_info_data.GetULEB128(offset_ptr);
-            break;
-        default:
-            return false;
+            dw_form_t indirect_form = debug_info_data.GetULEB128(offset_ptr);
+            return DWARFFormValue::SkipValue (indirect_form,
+                                              debug_info_data,
+                                              offset_ptr,
+                                              cu);
         }
-    } while (indirect);
-    return true;
+
+    default:
+        break;
+    }
+    return false;
 }
 
 

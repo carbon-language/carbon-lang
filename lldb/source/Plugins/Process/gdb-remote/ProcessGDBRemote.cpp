@@ -229,8 +229,7 @@ ProcessGDBRemote::BuildDynamicRegisterInfo (bool force)
     m_register_info.Clear();
     uint32_t reg_offset = 0;
     uint32_t reg_num = 0;
-    StringExtractorGDBRemote::ResponseType response_type;
-    for (response_type = StringExtractorGDBRemote::eResponse; 
+    for (StringExtractorGDBRemote::ResponseType response_type = StringExtractorGDBRemote::eResponse;
          response_type == StringExtractorGDBRemote::eResponse; 
          ++reg_num)
     {
@@ -376,7 +375,6 @@ ProcessGDBRemote::BuildDynamicRegisterInfo (bool force)
         }
         else
         {
-            response_type = StringExtractorGDBRemote::eError;
             break;
         }
     }
@@ -1271,7 +1269,6 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
             uint32_t exc_type = 0;
             std::vector<addr_t> exc_data;
             addr_t thread_dispatch_qaddr = LLDB_INVALID_ADDRESS;
-            uint32_t exc_data_count = 0;
             ThreadSP thread_sp;
 
             while (stop_packet.GetNameColonValue(name, value))
@@ -1280,11 +1277,6 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
                 {
                     // exception type in big endian hex
                     exc_type = Args::StringToUInt32 (value.c_str(), 0, 16);
-                }
-                else if (name.compare("mecount") == 0)
-                {
-                    // exception count in big endian hex
-                    exc_data_count = Args::StringToUInt32 (value.c_str(), 0, 16);
                 }
                 else if (name.compare("medata") == 0)
                 {

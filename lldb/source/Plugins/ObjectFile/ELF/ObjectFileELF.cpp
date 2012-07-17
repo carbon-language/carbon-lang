@@ -877,14 +877,11 @@ ObjectFileELF::ParseDynamicSymbols()
     DataExtractor dynsym_data;
     if (ReadSectionData(dynsym, dynsym_data))
     {
-
         const unsigned section_size = dynsym_data.GetByteSize();
-        unsigned offset = 0;
         unsigned cursor = 0;
 
         while (cursor < section_size)
         {
-            offset = cursor;
             if (!symbol.Parse(dynsym_data, &cursor))
                 break;
 

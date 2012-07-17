@@ -2933,13 +2933,8 @@ struct lldb_copy_dyld_cache_local_symbols_entry
                             func_start_entry->data = true;
                             
                             addr_t symbol_file_addr = func_start_entry->addr;
-                            uint32_t symbol_flags = 0;
                             if (is_arm)
-                            {
-                                if (symbol_file_addr & 1)
-                                    symbol_flags = MACHO_NLIST_ARM_SYMBOL_IS_THUMB;
                                 symbol_file_addr &= 0xfffffffffffffffeull;
-                            }
 
                             const FunctionStarts::Entry *next_func_start_entry = function_starts.FindNextEntry (func_start_entry);
                             const addr_t section_end_file_addr = section_file_addr + symbol_section->GetByteSize();

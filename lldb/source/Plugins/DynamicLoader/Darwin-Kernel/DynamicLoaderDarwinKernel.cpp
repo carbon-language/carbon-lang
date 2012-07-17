@@ -208,7 +208,6 @@ DynamicLoaderDarwinKernel::OSKextLoadedKextSummary::LoadImageUsingMemoryModule (
 
     if (!module_sp)
     {
-        bool uuid_is_valid = uuid.IsValid();
         if (uuid_is_valid)
         {
             ModuleList &target_images = target.GetImages();

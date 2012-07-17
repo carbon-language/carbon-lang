@@ -2537,7 +2537,6 @@ CommandInterpreter::OutputHelpText (Stream &strm,
     text_strm.Printf ("%-*s %s %s",  max_word_len, word_text, separator, help_text);
     
     const uint32_t max_columns = m_debugger.GetTerminalWidth();
-    bool first_line = true;
     
     size_t len = text_strm.GetSize();
     const char *text = text_strm.GetData();
@@ -2548,7 +2547,6 @@ CommandInterpreter::OutputHelpText (Stream &strm,
     {
         if ((text[i] == ' ' && ::strchr((text+i+1), ' ') && chars_left < ::strchr((text+i+1), ' ')-(text+i)) || text[i] == '\n')
         {
-            first_line = false;
             chars_left = max_columns - indent_size;
             strm.EOL();
             strm.Indent();

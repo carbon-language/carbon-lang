@@ -461,11 +461,16 @@ private:
         case eMsgSend_stret:
             target_object = call_inst->getArgOperand(1);
             selector = call_inst->getArgOperand(2);
+            break;
         case eMsgSendSuper:
         case eMsgSendSuper_stret:
             return true;
         }
-                
+            
+        // These objects should always be valid according to Sean Calannan
+        assert (target_object);
+        assert (selector);
+
         // Insert an instruction to cast the receiver id to int8_t*
         
         BitCastInst *bit_cast = new BitCastInst(target_object,

@@ -618,9 +618,8 @@ DWARFCompileUnit::Index (const uint32_t cu_idx,
         DWARFDebugInfoEntry::Attributes attributes;
         const char *name = NULL;
         const char *mangled_cstr = NULL;
-        bool is_variable = false;
         bool is_declaration = false;
-        bool is_artificial = false;
+        //bool is_artificial = false;
         bool has_address = false;
         bool has_location = false;
         bool is_global_or_static_variable = false;
@@ -629,8 +628,6 @@ DWARFCompileUnit::Index (const uint32_t cu_idx,
         const size_t num_attributes = die.GetAttributes(m_dwarf2Data, this, fixed_form_sizes, attributes);
         if (num_attributes > 0)
         {
-            is_variable = tag == DW_TAG_variable;
-
             for (uint32_t i=0; i<num_attributes; ++i)
             {
                 dw_attr_t attr = attributes.AttributeAtIndex(i);
@@ -647,10 +644,10 @@ DWARFCompileUnit::Index (const uint32_t cu_idx,
                         is_declaration = form_value.Unsigned() != 0;
                     break;
 
-                case DW_AT_artificial:
-                    if (attributes.ExtractFormValueAtIndex(m_dwarf2Data, i, form_value))
-                        is_artificial = form_value.Unsigned() != 0;
-                    break;
+//                case DW_AT_artificial:
+//                    if (attributes.ExtractFormValueAtIndex(m_dwarf2Data, i, form_value))
+//                        is_artificial = form_value.Unsigned() != 0;
+//                    break;
 
                 case DW_AT_MIPS_linkage_name:
                     if (attributes.ExtractFormValueAtIndex(m_dwarf2Data, i, form_value))
@@ -798,7 +795,7 @@ DWARFCompileUnit::Index (const uint32_t cu_idx,
                     // as our name. If it starts with '_', then it is ok, else compare
                     // the string to make sure it isn't the same and we don't end up
                     // with duplicate entries
-                    if (name != mangled_cstr && ((mangled_cstr[0] == '_') || (::strcmp(name, mangled_cstr) != 0)))
+                    if (name != mangled_cstr && ((mangled_cstr[0] == '_') || (name && ::strcmp(name, mangled_cstr) != 0)))
                     {
                         Mangled mangled (mangled_cstr, true);
                         func_fullnames.Insert (mangled.GetMangledName(), die.GetOffset());

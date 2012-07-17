@@ -186,11 +186,21 @@ SearchFilter::DoModuleIteration (const lldb::ModuleSP& module_sp, Searcher &sear
 Searcher::CallbackReturn
 SearchFilter::DoModuleIteration (const SymbolContext &context, Searcher &searcher)
 {
-    Searcher::CallbackReturn shouldContinue;
-
     if (searcher.GetDepth () >= Searcher::eDepthModule)
     {
-        if (!context.module_sp)
+        if (context.module_sp)
+        {
+            if (searcher.GetDepth () == Searcher::eDepthModule)
+            {
+                SymbolContext matchingContext(context.module_sp.get());
+                searcher.SearchCallback (*this, matchingContext, NULL, false);
+            }
+            else
+            {
+                return DoCUIteration(context.module_sp, context, searcher);
+            }
+        }
+        else
         {
             ModuleList &target_images = m_target_sp->GetImages();
             Mutex::Locker modules_locker(target_images.GetMutex());
@@ -208,14 +218,14 @@ SearchFilter::DoModuleIteration (const SymbolContext &context, Searcher &searche
                 {
                     SymbolContext matchingContext(m_target_sp, module_sp);
 
-                    shouldContinue = searcher.SearchCallback (*this, matchingContext, NULL, false);
+                    Searcher::CallbackReturn shouldContinue = searcher.SearchCallback (*this, matchingContext, NULL, false);
                     if (shouldContinue == Searcher::eCallbackReturnStop
                         || shouldContinue == Searcher::eCallbackReturnPop)
                         return shouldContinue;
                 }
                 else
                 {
-                    shouldContinue = DoCUIteration(module_sp, context, searcher);
+                    Searcher::CallbackReturn shouldContinue = DoCUIteration(module_sp, context, searcher);
                     if (shouldContinue == Searcher::eCallbackReturnStop)
                         return shouldContinue;
                     else if (shouldContinue == Searcher::eCallbackReturnPop)
@@ -223,20 +233,6 @@ SearchFilter::DoModuleIteration (const SymbolContext &context, Searcher &searche
                 }
             }
         }
-        else
-        {
-            if (searcher.GetDepth () == Searcher::eDepthModule)
-            {
-                SymbolContext matchingContext(context.module_sp.get());
-
-                shouldContinue = searcher.SearchCallback (*this, matchingContext, NULL, false);
-            }
-            else
-            {
-                return DoCUIteration(context.module_sp, context, searcher);
-            }
-        }
-
     }
     return Searcher::eCallbackReturnContinue;
 }

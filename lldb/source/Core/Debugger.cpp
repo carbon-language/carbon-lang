@@ -1336,10 +1336,10 @@ Debugger::FormatPrompt
                                         }
                                         else if (is_pointer) // if pointer, value is the address stored
                                         {
-                                            var_success = target->DumpPrintableRepresentation(s,
-                                                                                             val_obj_display,
-                                                                                             custom_format,
-                                                                                             ValueObject::ePrintableRepresentationSpecialCasesDisable);
+                                            target->DumpPrintableRepresentation (s,
+                                                                                 val_obj_display,
+                                                                                 custom_format,
+                                                                                 ValueObject::ePrintableRepresentationSpecialCasesDisable);
                                         }
                                         else
                                         {

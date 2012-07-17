@@ -114,7 +114,11 @@ public:
     {
         if (m_pool)
         {
-            [m_pool release];
+            if (objc_collectingEnabled())
+                [m_pool drain];
+            else
+                [m_pool release];
+
             m_pool = nil;
         }
     }
@@ -232,6 +236,8 @@ Host::LaunchApplication (const FileSpec &app_file_spec)
 
     ::pid_t pid = LLDB_INVALID_PROCESS_ID;
     error = ::GetProcessPID(&psn, &pid);
+    if (error != noErr)
+        return LLDB_INVALID_PROCESS_ID;
     return pid;
 #endif
 }
@@ -292,164 +298,164 @@ WaitForProcessToSIGSTOP (const lldb::pid_t pid, const int timeout_in_seconds)
 }
 #if !defined(__arm__)
 
-static lldb::pid_t
-LaunchInNewTerminalWithCommandFile 
-(
-    const char **argv, 
-    const char **envp,
-    const char *working_dir,
-    const ArchSpec *arch_spec,
-    bool stop_at_entry,
-    bool disable_aslr
-)
-{
-    if (!argv || !argv[0])
-        return LLDB_INVALID_PROCESS_ID;
-
-    OSStatus error = 0;
-    
-    FileSpec program (argv[0], false);
-    
-    
-    std::string unix_socket_name;
-
-    char temp_file_path[PATH_MAX];
-    const char *tmpdir = ::getenv ("TMPDIR");
-    if (tmpdir == NULL)
-        tmpdir = "/tmp/";
-    ::snprintf (temp_file_path, sizeof(temp_file_path), "%s%s-XXXXXX", tmpdir, program.GetFilename().AsCString());
-    
-    if (::mktemp (temp_file_path) == NULL)
-        return LLDB_INVALID_PROCESS_ID;
-
-    unix_socket_name.assign (temp_file_path);
-
-    ::strlcat (temp_file_path, ".command", sizeof (temp_file_path));
-
-    StreamFile command_file;
-    command_file.GetFile().Open (temp_file_path, 
-                                 File::eOpenOptionWrite | File::eOpenOptionCanCreate,
-                                 File::ePermissionsDefault);
-    
-    if (!command_file.GetFile().IsValid())
-        return LLDB_INVALID_PROCESS_ID;
-    
-    FileSpec darwin_debug_file_spec;
-    if (!Host::GetLLDBPath (ePathTypeSupportExecutableDir, darwin_debug_file_spec))
-        return LLDB_INVALID_PROCESS_ID;
-    darwin_debug_file_spec.GetFilename().SetCString("darwin-debug");
-        
-    if (!darwin_debug_file_spec.Exists())
-        return LLDB_INVALID_PROCESS_ID;
-    
-    char launcher_path[PATH_MAX];
-    darwin_debug_file_spec.GetPath(launcher_path, sizeof(launcher_path));
-    command_file.Printf("\"%s\" ", launcher_path);
-    
-    command_file.Printf("--unix-socket=%s ", unix_socket_name.c_str());
-    
-    if (arch_spec && arch_spec->IsValid())
-    {
-        command_file.Printf("--arch=%s ", arch_spec->GetArchitectureName());
-    }
-
-    if (disable_aslr)
-    {
-        command_file.PutCString("--disable-aslr ");
-    }
-        
-    command_file.PutCString("-- ");
-
-    if (argv)
-    {
-        for (size_t i=0; argv[i] != NULL; ++i)
-        {
-            command_file.Printf("\"%s\" ", argv[i]);
-        }
-    }
-    command_file.PutCString("\necho Process exited with status $?\n");
-    command_file.GetFile().Close();
-    if (::chmod (temp_file_path, S_IRWXU | S_IRWXG) != 0)
-        return LLDB_INVALID_PROCESS_ID;
-            
-    CFCMutableDictionary cf_env_dict;
-    
-    const bool can_create = true;
-    if (envp)
-    {
-        for (size_t i=0; envp[i] != NULL; ++i)
-        {
-            const char *env_entry = envp[i];            
-            const char *equal_pos = strchr(env_entry, '=');
-            if (equal_pos)
-            {
-                std::string env_key (env_entry, equal_pos);
-                std::string env_val (equal_pos + 1);
-                CFCString cf_env_key (env_key.c_str(), kCFStringEncodingUTF8);
-                CFCString cf_env_val (env_val.c_str(), kCFStringEncodingUTF8);
-                cf_env_dict.AddValue (cf_env_key.get(), cf_env_val.get(), can_create);
-            }
-        }
-    }
-    
-    LSApplicationParameters app_params;
-    ::memset (&app_params, 0, sizeof (app_params));
-    app_params.flags = kLSLaunchDontAddToRecents | kLSLaunchAsync;
-    app_params.argv = NULL;
-    app_params.environment = (CFDictionaryRef)cf_env_dict.get();
-
-    CFCReleaser<CFURLRef> command_file_url (::CFURLCreateFromFileSystemRepresentation (NULL, 
-                                                                                       (const UInt8 *)temp_file_path, 
-                                                                                       strlen(temp_file_path),
-                                                                                       false));
-    
-    CFCMutableArray urls;
-    
-    // Terminal.app will open the ".command" file we have created
-    // and run our process inside it which will wait at the entry point
-    // for us to attach.
-    urls.AppendValue(command_file_url.get());
-
-
-    lldb::pid_t pid = LLDB_INVALID_PROCESS_ID;
-
-    Error lldb_error;
-    // Sleep and wait a bit for debugserver to start to listen...
-    char connect_url[128];
-    ::snprintf (connect_url, sizeof(connect_url), "unix-accept://%s", unix_socket_name.c_str());
-
-    // Spawn a new thread to accept incoming connection on the connect_url
-    // so we can grab the pid from the inferior
-    lldb::thread_t accept_thread = Host::ThreadCreate (unix_socket_name.c_str(),
-                                                       AcceptPIDFromInferior,
-                                                       connect_url,
-                                                       &lldb_error);
-    
-    ProcessSerialNumber psn;
-    error = LSOpenURLsWithRole(urls.get(), kLSRolesShell, NULL, &app_params, &psn, 1);
-    if (error == noErr)
-    {
-        thread_result_t accept_thread_result = NULL;
-        if (Host::ThreadJoin (accept_thread, &accept_thread_result, &lldb_error))
-        {
-            if (accept_thread_result)
-            {
-                pid = (intptr_t)accept_thread_result;
-            
-                // Wait for process to be stopped the the entry point by watching
-                // for the process status to be set to SSTOP which indicates it it
-                // SIGSTOP'ed at the entry point
-                WaitForProcessToSIGSTOP (pid, 5);
-            }
-        }
-    }
-    else
-    {
-        Host::ThreadCancel (accept_thread, &lldb_error);
-    }
-
-    return pid;
-}
+//static lldb::pid_t
+//LaunchInNewTerminalWithCommandFile 
+//(
+//    const char **argv, 
+//    const char **envp,
+//    const char *working_dir,
+//    const ArchSpec *arch_spec,
+//    bool stop_at_entry,
+//    bool disable_aslr
+//)
+//{
+//    if (!argv || !argv[0])
+//        return LLDB_INVALID_PROCESS_ID;
+//
+//    OSStatus error = 0;
+//    
+//    FileSpec program (argv[0], false);
+//    
+//    
+//    std::string unix_socket_name;
+//
+//    char temp_file_path[PATH_MAX];
+//    const char *tmpdir = ::getenv ("TMPDIR");
+//    if (tmpdir == NULL)
+//        tmpdir = "/tmp/";
+//    ::snprintf (temp_file_path, sizeof(temp_file_path), "%s%s-XXXXXX", tmpdir, program.GetFilename().AsCString());
+//    
+//    if (::mktemp (temp_file_path) == NULL)
+//        return LLDB_INVALID_PROCESS_ID;
+//
+//    unix_socket_name.assign (temp_file_path);
+//
+//    ::strlcat (temp_file_path, ".command", sizeof (temp_file_path));
+//
+//    StreamFile command_file;
+//    command_file.GetFile().Open (temp_file_path, 
+//                                 File::eOpenOptionWrite | File::eOpenOptionCanCreate,
+//                                 File::ePermissionsDefault);
+//    
+//    if (!command_file.GetFile().IsValid())
+//        return LLDB_INVALID_PROCESS_ID;
+//    
+//    FileSpec darwin_debug_file_spec;
+//    if (!Host::GetLLDBPath (ePathTypeSupportExecutableDir, darwin_debug_file_spec))
+//        return LLDB_INVALID_PROCESS_ID;
+//    darwin_debug_file_spec.GetFilename().SetCString("darwin-debug");
+//        
+//    if (!darwin_debug_file_spec.Exists())
+//        return LLDB_INVALID_PROCESS_ID;
+//    
+//    char launcher_path[PATH_MAX];
+//    darwin_debug_file_spec.GetPath(launcher_path, sizeof(launcher_path));
+//    command_file.Printf("\"%s\" ", launcher_path);
+//    
+//    command_file.Printf("--unix-socket=%s ", unix_socket_name.c_str());
+//    
+//    if (arch_spec && arch_spec->IsValid())
+//    {
+//        command_file.Printf("--arch=%s ", arch_spec->GetArchitectureName());
+//    }
+//
+//    if (disable_aslr)
+//    {
+//        command_file.PutCString("--disable-aslr ");
+//    }
+//        
+//    command_file.PutCString("-- ");
+//
+//    if (argv)
+//    {
+//        for (size_t i=0; argv[i] != NULL; ++i)
+//        {
+//            command_file.Printf("\"%s\" ", argv[i]);
+//        }
+//    }
+//    command_file.PutCString("\necho Process exited with status $?\n");
+//    command_file.GetFile().Close();
+//    if (::chmod (temp_file_path, S_IRWXU | S_IRWXG) != 0)
+//        return LLDB_INVALID_PROCESS_ID;
+//            
+//    CFCMutableDictionary cf_env_dict;
+//    
+//    const bool can_create = true;
+//    if (envp)
+//    {
+//        for (size_t i=0; envp[i] != NULL; ++i)
+//        {
+//            const char *env_entry = envp[i];            
+//            const char *equal_pos = strchr(env_entry, '=');
+//            if (equal_pos)
+//            {
+//                std::string env_key (env_entry, equal_pos);
+//                std::string env_val (equal_pos + 1);
+//                CFCString cf_env_key (env_key.c_str(), kCFStringEncodingUTF8);
+//                CFCString cf_env_val (env_val.c_str(), kCFStringEncodingUTF8);
+//                cf_env_dict.AddValue (cf_env_key.get(), cf_env_val.get(), can_create);
+//            }
+//        }
+//    }
+//    
+//    LSApplicationParameters app_params;
+//    ::memset (&app_params, 0, sizeof (app_params));
+//    app_params.flags = kLSLaunchDontAddToRecents | kLSLaunchAsync;
+//    app_params.argv = NULL;
+//    app_params.environment = (CFDictionaryRef)cf_env_dict.get();
+//
+//    CFCReleaser<CFURLRef> command_file_url (::CFURLCreateFromFileSystemRepresentation (NULL, 
+//                                                                                       (const UInt8 *)temp_file_path, 
+//                                                                                       strlen(temp_file_path),
+//                                                                                       false));
+//    
+//    CFCMutableArray urls;
+//    
+//    // Terminal.app will open the ".command" file we have created
+//    // and run our process inside it which will wait at the entry point
+//    // for us to attach.
+//    urls.AppendValue(command_file_url.get());
+//
+//
+//    lldb::pid_t pid = LLDB_INVALID_PROCESS_ID;
+//
+//    Error lldb_error;
+//    // Sleep and wait a bit for debugserver to start to listen...
+//    char connect_url[128];
+//    ::snprintf (connect_url, sizeof(connect_url), "unix-accept://%s", unix_socket_name.c_str());
+//
+//    // Spawn a new thread to accept incoming connection on the connect_url
+//    // so we can grab the pid from the inferior
+//    lldb::thread_t accept_thread = Host::ThreadCreate (unix_socket_name.c_str(),
+//                                                       AcceptPIDFromInferior,
+//                                                       connect_url,
+//                                                       &lldb_error);
+//    
+//    ProcessSerialNumber psn;
+//    error = LSOpenURLsWithRole(urls.get(), kLSRolesShell, NULL, &app_params, &psn, 1);
+//    if (error == noErr)
+//    {
+//        thread_result_t accept_thread_result = NULL;
+//        if (Host::ThreadJoin (accept_thread, &accept_thread_result, &lldb_error))
+//        {
+//            if (accept_thread_result)
+//            {
+//                pid = (intptr_t)accept_thread_result;
+//            
+//                // Wait for process to be stopped the the entry point by watching
+//                // for the process status to be set to SSTOP which indicates it it
+//                // SIGSTOP'ed at the entry point
+//                WaitForProcessToSIGSTOP (pid, 5);
+//            }
+//        }
+//    }
+//    else
+//    {
+//        Host::ThreadCancel (accept_thread, &lldb_error);
+//    }
+//
+//    return pid;
+//}
 
 const char *applscript_in_new_tty = 
 "tell application \"Terminal\"\n"
@@ -953,34 +959,35 @@ Host::GetOSVersion
         CFCReleaser<CFPropertyListRef> property_list;
         CFCReleaser<CFStringRef>       error_string;
         CFCReleaser<CFDataRef>         resource_data;
-        Boolean                        status;
         SInt32                         error_code;
  
         // Read the XML file.
-        status = CFURLCreateDataAndPropertiesFromResource (kCFAllocatorDefault,
-                                                           plist_url.get(),
-                                                           resource_data.ptr_address(),
-                                                           NULL,
-                                                           NULL,
-                                                           &error_code);
-           // Reconstitute the dictionary using the XML data.
-        property_list = CFPropertyListCreateFromXMLData (kCFAllocatorDefault,
-                                                          resource_data.get(),
-                                                          kCFPropertyListImmutable,
-                                                          error_string.ptr_address());
-        if (CFGetTypeID(property_list.get()) == CFDictionaryGetTypeID())
+        if (CFURLCreateDataAndPropertiesFromResource (kCFAllocatorDefault,
+                                                      plist_url.get(),
+                                                      resource_data.ptr_address(),
+                                                      NULL,
+                                                      NULL,
+                                                      &error_code))
         {
-            CFDictionaryRef property_dict = (CFDictionaryRef) property_list.get();
-            CFStringRef product_version_key = CFSTR("ProductVersion");
-            CFPropertyListRef product_version_value;
-            product_version_value = CFDictionaryGetValue(property_dict, product_version_key);
-            if (product_version_value && CFGetTypeID(product_version_value) == CFStringGetTypeID())
+               // Reconstitute the dictionary using the XML data.
+            property_list = CFPropertyListCreateFromXMLData (kCFAllocatorDefault,
+                                                              resource_data.get(),
+                                                              kCFPropertyListImmutable,
+                                                              error_string.ptr_address());
+            if (CFGetTypeID(property_list.get()) == CFDictionaryGetTypeID())
             {
-                CFStringRef product_version_cfstr = (CFStringRef) product_version_value;
-                product_version_str = CFStringGetCStringPtr(product_version_cfstr, kCFStringEncodingUTF8);
-                if (product_version_str == NULL) {
-                    if (CFStringGetCString(product_version_cfstr, buffer, 256, kCFStringEncodingUTF8))
-                        product_version_str = buffer;
+                CFDictionaryRef property_dict = (CFDictionaryRef) property_list.get();
+                CFStringRef product_version_key = CFSTR("ProductVersion");
+                CFPropertyListRef product_version_value;
+                product_version_value = CFDictionaryGetValue(property_dict, product_version_key);
+                if (product_version_value && CFGetTypeID(product_version_value) == CFStringGetTypeID())
+                {
+                    CFStringRef product_version_cfstr = (CFStringRef) product_version_value;
+                    product_version_str = CFStringGetCStringPtr(product_version_cfstr, kCFStringEncodingUTF8);
+                    if (product_version_str == NULL) {
+                        if (CFStringGetCString(product_version_cfstr, buffer, 256, kCFStringEncodingUTF8))
+                            product_version_str = buffer;
+                    }
                 }
             }
         }
@@ -1067,7 +1074,6 @@ GetMacOSXProcessArgs (const ProcessInstanceInfoMatch *match_info_ptr,
         {
             DataExtractor data (arg_data, arg_data_size, lldb::endian::InlHostByteOrder(), sizeof(void *));
             uint32_t offset = 0;
-            uint32_t start_offset;
             uint32_t argc = data.GetU32 (&offset);
             const char *cstr;
             
@@ -1093,7 +1099,6 @@ GetMacOSXProcessArgs (const ProcessInstanceInfoMatch *match_info_ptr,
                     Args &proc_args = process_info.GetArguments();
                     for (int i=0; i<argc; ++i)
                     {
-                        start_offset = offset;
                         cstr = data.GetCStr(&offset);
                         if (cstr)
                             proc_args.AppendArgument(cstr);
@@ -1825,7 +1830,7 @@ Host::StartMonitoringChildProcess (Host::MonitorChildProcessCallback callback,
                 if (callback)
                     cancel = callback (callback_baton, pid, exited, signal, exit_status);
                 
-                if (exited)
+                if (exited || cancel)
                 {
                     ::dispatch_source_cancel(source);
                 }

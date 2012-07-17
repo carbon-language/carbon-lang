@@ -105,7 +105,6 @@ DWARFDebugPubnames::GeneratePubnames(SymbolFileDWARF* dwarf2Data)
                 const char *name = NULL;
                 const char *mangled = NULL;
                 bool add_die = false;
-                bool is_variable = false;
                 const size_t num_attributes = die->GetAttributes(dwarf2Data, cu, fixed_form_sizes, attributes);
                 if (num_attributes > 0)
                 {
@@ -113,8 +112,6 @@ DWARFDebugPubnames::GeneratePubnames(SymbolFileDWARF* dwarf2Data)
 
                     dw_tag_t tag = die->Tag();
                     
-                    is_variable = tag == DW_TAG_variable;
-
                     for (i=0; i<num_attributes; ++i)
                     {
                         dw_attr_t attr = attributes.AttributeAtIndex(i);
