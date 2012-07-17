@@ -144,6 +144,14 @@ static cl::opt<int> ClDebugMax("asan-debug-max", cl::desc("Debug man inst"),
 
 namespace {
 
+/// When the crash callbacks are merged, they receive some amount of arguments
+/// that are merged in a PHI node. This struct represents arguments from one
+/// call site.
+struct CrashArg {
+  Value *Arg1;
+  Value *Arg2;
+};
+
 /// An object of this type is created while instrumenting every function.
 struct AsanFunctionContext {
   AsanFunctionContext(Function &Function) : F(Function), CrashBlock() { }
@@ -152,6 +160,8 @@ struct AsanFunctionContext {
   // These are initially zero. If we require at least one call to
   // __asan_report_{read,write}{1,2,4,8,16}, an appropriate BB is created.
   BasicBlock *CrashBlock[2][kNumberOfAccessSizes];
+  typedef  SmallVector<CrashArg, 8> CrashArgsVec;
+  CrashArgsVec CrashArgs[2][kNumberOfAccessSizes];
 };
 
 /// AddressSanitizer: instrument the code in module to find memory bugs.
@@ -164,7 +174,7 @@ struct AddressSanitizer : public ModulePass {
                          Value *Addr, uint32_t TypeSize, bool IsWrite);
   Value *createSlowPathCmp(IRBuilder<> &IRB, Value *AddrLong,
                            Value *ShadowValue, uint32_t TypeSize);
-  Instruction *generateCrashCode(BasicBlock *BB, Value *Addr,
+  Instruction *generateCrashCode(BasicBlock *BB, Value *Addr, Value *PC,
                                  bool IsWrite, size_t AccessSizeIndex);
   bool instrumentMemIntrinsic(AsanFunctionContext &AFC, MemIntrinsic *MI);
   void instrumentMemIntrinsicParam(AsanFunctionContext &AFC,
@@ -395,10 +405,15 @@ Function *AddressSanitizer::checkInterfaceFunction(Constant *FuncOrBitcast) {
 }
 
 Instruction *AddressSanitizer::generateCrashCode(
-    BasicBlock *BB, Value *Addr, bool IsWrite, size_t AccessSizeIndex) {
+    BasicBlock *BB, Value *Addr, Value *PC,
+    bool IsWrite, size_t AccessSizeIndex) {
   IRBuilder<> IRB(BB->getFirstNonPHI());
-  CallInst *Call = IRB.CreateCall(AsanErrorCallback[IsWrite][AccessSizeIndex],
-                                  Addr);
+  CallInst *Call;
+  if (PC)
+    Call = IRB.CreateCall2(AsanErrorCallback[IsWrite][AccessSizeIndex],
+                           Addr, PC);
+  else
+    Call = IRB.CreateCall(AsanErrorCallback[IsWrite][AccessSizeIndex], Addr);
   Call->setDoesNotReturn();
   return Call;
 }
@@ -439,20 +454,30 @@ void AddressSanitizer::instrumentAddress(AsanFunctionContext &AFC,
 
   BasicBlock *CrashBlock = 0;
   if (ClMergeCallbacks) {
-    BasicBlock **Cached =
-        &AFC.CrashBlock[IsWrite][TypeSizeToSizeIndex(TypeSize)];
+    size_t AccessSizeIndex = TypeSizeToSizeIndex(TypeSize);
+    BasicBlock **Cached = &AFC.CrashBlock[IsWrite][AccessSizeIndex];
     if (!*Cached) {
-      BasicBlock *BB = BasicBlock::Create(*C, "crash_bb", &AFC.F);
+      std::string BBName("crash_bb-");
+      BBName += (IsWrite ? "w-" : "r-") + itostr(1 << AccessSizeIndex);
+      BasicBlock *BB = BasicBlock::Create(*C, BBName, &AFC.F);
       new UnreachableInst(*C, BB);
       *Cached = BB;
     }
     CrashBlock = *Cached;
+    // We need to pass the PC as the second parameter to __asan_report_*.
+    // There are few problems:
+    //  - Some architectures (e.g. x86_32) don't have a cheap way to get the PC.
+    //  - LLVM doesn't have the appropriate intrinsic.
+    // For now, put a random number into the PC, just to allow experiments.
+    Value *PC = ConstantInt::get(IntptrTy, rand());
+    CrashArg Arg = {AddrLong, PC};
+    AFC.CrashArgs[IsWrite][AccessSizeIndex].push_back(Arg);
   } else {
     CrashBlock = BasicBlock::Create(*C, "crash_bb", &AFC.F);
     new UnreachableInst(*C, CrashBlock);
     size_t AccessSizeIndex = TypeSizeToSizeIndex(TypeSize);
     Instruction *Crash =
-        generateCrashCode(CrashBlock, AddrLong, IsWrite, AccessSizeIndex);
+        generateCrashCode(CrashBlock, AddrLong, 0, IsWrite, AccessSizeIndex);
     Crash->setDebugLoc(OrigIns->getDebugLoc());
   }
 
@@ -660,8 +685,14 @@ bool AddressSanitizer::runOnModule(Module &M) {
       // IsWrite and TypeSize are encoded in the function name.
       std::string FunctionName = std::string(kAsanReportErrorTemplate) +
           (AccessIsWrite ? "store" : "load") + itostr(1 << AccessSizeIndex);
-      AsanErrorCallback[AccessIsWrite][AccessSizeIndex] = cast<Function>(
-        M.getOrInsertFunction(FunctionName, IRB.getVoidTy(), IntptrTy, NULL));
+      // If we are merging crash callbacks, they have two parameters.
+      if (ClMergeCallbacks)
+        AsanErrorCallback[AccessIsWrite][AccessSizeIndex] = cast<Function>(
+          M.getOrInsertFunction(FunctionName, IRB.getVoidTy(), IntptrTy,
+                                IntptrTy, NULL));
+      else
+        AsanErrorCallback[AccessIsWrite][AccessSizeIndex] = cast<Function>(
+          M.getOrInsertFunction(FunctionName, IRB.getVoidTy(), IntptrTy, NULL));
     }
   }
 
@@ -802,14 +833,29 @@ bool AddressSanitizer::handleFunction(Module &M, Function &F) {
     NumInstrumented++;
   }
 
+  // Create PHI nodes and crash callbacks if we are merging crash callbacks.
   if (NumInstrumented) {
     for (size_t IsWrite = 0; IsWrite <= 1; IsWrite++) {
       for (size_t AccessSizeIndex = 0; AccessSizeIndex < kNumberOfAccessSizes;
            AccessSizeIndex++) {
         BasicBlock *BB = AFC.CrashBlock[IsWrite][AccessSizeIndex];
         if (!BB) continue;
-        generateCrashCode(BB, ConstantInt::get(IntptrTy, 0),
-                          IsWrite, AccessSizeIndex);
+        assert(ClMergeCallbacks);
+        AsanFunctionContext::CrashArgsVec &Args =
+            AFC.CrashArgs[IsWrite][AccessSizeIndex];
+        IRBuilder<> IRB(BB->getFirstNonPHI());
+        size_t n = Args.size();
+        PHINode *PN1 = IRB.CreatePHI(IntptrTy, n);
+        PHINode *PN2 = IRB.CreatePHI(IntptrTy, n);
+        // We need to match crash parameters and the predecessors.
+        for (pred_iterator PI = pred_begin(BB), PE = pred_end(BB);
+             PI != PE; ++PI) {
+          n--;
+          PN1->addIncoming(Args[n].Arg1, *PI);
+          PN2->addIncoming(Args[n].Arg2, *PI);
+        }
+        assert(n == 0);
+        generateCrashCode(BB, PN1, PN2, IsWrite, AccessSizeIndex);
       }
     }
   }
