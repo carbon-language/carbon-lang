@@ -436,3 +436,8 @@ def ObjCRedundantAPIUse : DiagGroup<"objc-redundant-api-use", [
 def ObjCCocoaAPI : DiagGroup<"objc-cocoa-api", [
     ObjCRedundantAPIUse
   ]>;
+
+def ObjCStringComparison : DiagGroup<"objc-string-compare">;
+def ObjCLiteralComparison : DiagGroup<"objc-literal-compare", [
+    ObjCStringComparison
+  ]>;

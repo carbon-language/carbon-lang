@@ -6744,19 +6744,28 @@ static void diagnoseObjCLiteralComparison(Sema &S, SourceLocation Loc,
                                           BinaryOperator::Opcode Opc){
   Expr *Literal = (isObjCObjectLiteral(LHS) ? LHS : RHS).get();
 
-  unsigned LiteralKind;
+  // This should be kept in sync with warn_objc_literal_comparison.
+  // LK_String should always be last, since it has its own flag.
+  enum {
+    LK_Array,
+    LK_Dictionary,
+    LK_Numeric,
+    LK_Boxed,
+    LK_String
+  } LiteralKind;
+
   switch (Literal->getStmtClass()) {
   case Stmt::ObjCStringLiteralClass:
     // "string literal"
-    LiteralKind = 0;
+    LiteralKind = LK_String;
     break;
   case Stmt::ObjCArrayLiteralClass:
     // "array literal"
-    LiteralKind = 1;
+    LiteralKind = LK_Array;
     break;
   case Stmt::ObjCDictionaryLiteralClass:
     // "dictionary literal"
-    LiteralKind = 2;
+    LiteralKind = LK_Dictionary;
     break;
   case Stmt::ObjCBoxedExprClass: {
     Expr *Inner = cast<ObjCBoxedExpr>(Literal)->getSubExpr();
@@ -6767,20 +6776,20 @@ static void diagnoseObjCLiteralComparison(Sema &S, SourceLocation Loc,
     case Stmt::ObjCBoolLiteralExprClass:
     case Stmt::CXXBoolLiteralExprClass:
       // "numeric literal"
-      LiteralKind = 3;
+      LiteralKind = LK_Numeric;
       break;
     case Stmt::ImplicitCastExprClass: {
       CastKind CK = cast<CastExpr>(Inner)->getCastKind();
       // Boolean literals can be represented by implicit casts.
       if (CK == CK_IntegralToBoolean || CK == CK_IntegralCast) {
-        LiteralKind = 3;
+        LiteralKind = LK_Numeric;
         break;
       }
       // FALLTHROUGH
     }
     default:
       // "boxed expression"
-      LiteralKind = 4;
+      LiteralKind = LK_Boxed;
       break;
     }
     break;
@@ -6789,8 +6798,12 @@ static void diagnoseObjCLiteralComparison(Sema &S, SourceLocation Loc,
     llvm_unreachable("Unknown Objective-C object literal kind");
   }
 
-  S.Diag(Loc, diag::warn_objc_literal_comparison)
-    << LiteralKind << Literal->getSourceRange();
+  if (LiteralKind == LK_String)
+    S.Diag(Loc, diag::warn_objc_string_literal_comparison)
+      << Literal->getSourceRange();
+  else
+    S.Diag(Loc, diag::warn_objc_literal_comparison)
+      << LiteralKind << Literal->getSourceRange();
 
   if (BinaryOperator::isEqualityOp(Opc) &&
       hasIsEqualMethod(S, LHS.get(), RHS.get())) {

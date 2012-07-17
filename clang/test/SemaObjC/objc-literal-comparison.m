@@ -1,4 +1,6 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -Wno-everything -Wobjc-literal-compare -verify %s
+
+// (test the warning flag as well)
 
 typedef unsigned char BOOL;
 
@@ -62,4 +64,18 @@ void testComparisonsWithoutFixits() {
   if (@"" <= @"") return; // expected-warning{{direct comparison of a string literal has undefined behavior}}
   if (@"" >= @"") return; // expected-warning{{direct comparison of a string literal has undefined behavior}}
 }
+
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wobjc-string-compare"
+
+void testWarningFlags(id obj) {
+  if (obj == @"") return; // no-warning
+  if (@"" == obj) return; // no-warning
+
+  if (obj == @1) return; // expected-warning{{direct comparison of a numeric literal has undefined behavior}} expected-note{{use 'isEqual:' instead}}
+  if (@1 == obj) return; // expected-warning{{direct comparison of a numeric literal has undefined behavior}} expected-note{{use 'isEqual:' instead}}
+}
+
+#pragma clang diagnostic pop
 
