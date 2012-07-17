@@ -5710,8 +5710,6 @@ CXString clang_Cursor_getRawCommentText(CXCursor C) {
   return createCXString(RawText, false);
 }
 
-} // end: extern "C"
-
 CXString clang_Cursor_getBriefCommentText(CXCursor C) {
   if (!clang_isDeclaration(C.kind))
     return createCXString((const char *) NULL);
@@ -5730,6 +5728,8 @@ CXString clang_Cursor_getBriefCommentText(CXCursor C) {
 
   return createCXString((const char *) NULL);
 }
+
+} // end: extern "C"
 
 //===----------------------------------------------------------------------===//
 // C++ AST instrospection.
