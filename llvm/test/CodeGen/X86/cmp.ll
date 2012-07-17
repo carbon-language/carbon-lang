@@ -91,7 +91,7 @@ F:
 }
 
 ; rdar://11866926
-define i32 @test7(i64 %res) nounwind uwtable readnone ssp {
+define i32 @test7(i64 %res) nounwind {
 entry:
 ; CHECK: test7:
 ; CHECK-NOT: movabsq
@@ -103,7 +103,7 @@ entry:
   ret i32 %lnot.ext
 }
 
-define i32 @test8(i64 %res) nounwind uwtable readnone ssp {
+define i32 @test8(i64 %res) nounwind {
 entry:
 ; CHECK: test8:
 ; CHECK-NOT: movabsq
@@ -114,7 +114,7 @@ entry:
   ret i32 %lnot.ext
 }
 
-define i32 @test9(i64 %res) nounwind uwtable readnone ssp {
+define i32 @test9(i64 %res) nounwind {
 entry:
 ; CHECK: test9:
 ; CHECK-NOT: movabsq
@@ -126,7 +126,7 @@ entry:
   ret i32 %lnot.ext
 }
 
-define i32 @test10(i64 %res) nounwind uwtable readnone ssp {
+define i32 @test10(i64 %res) nounwind {
 entry:
 ; CHECK: test10:
 ; CHECK-NOT: movabsq
@@ -138,3 +138,16 @@ entry:
   ret i32 %lnot.ext
 }
 
+; rdar://9758774
+define i32 @test11(i64 %l) nounwind {
+entry:
+; CHECK: test11:
+; CHECK-NOT: movabsq
+; CHECK-NOT: andq
+; CHECK: shrq $47, %rdi
+; CHECK: cmpq $1, %rdi
+  %shr.mask = and i64 %l, -140737488355328
+  %cmp = icmp eq i64 %shr.mask, 140737488355328
+  %conv = zext i1 %cmp to i32
+  ret i32 %conv
+}

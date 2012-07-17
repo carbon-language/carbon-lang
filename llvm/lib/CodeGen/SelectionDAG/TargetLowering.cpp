@@ -2322,6 +2322,27 @@ TargetLowering::SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
           }
         }
       }
+
+    if (!isLegalICmpImmediate(C1.getSExtValue())) {
+      // (X & -256) == 256 -> (X >> 8) == 1
+      if ((Cond == ISD::SETEQ || Cond == ISD::SETNE) &&
+          N0.getOpcode() == ISD::AND && N0.hasOneUse()) {
+        if (ConstantSDNode *AndRHS =
+            dyn_cast<ConstantSDNode>(N0.getOperand(1))) {
+          const APInt &AndRHSC = AndRHS->getAPIntValue();
+          if ((-AndRHSC).isPowerOf2() && (AndRHSC & C1) == C1) {
+            unsigned ShiftBits = AndRHSC.countTrailingZeros();
+            EVT ShiftTy = DCI.isBeforeLegalize() ?
+              getPointerTy() : getShiftAmountTy(N0.getValueType());
+            EVT CmpTy = N0.getValueType();
+            SDValue Shift = DAG.getNode(ISD::SRL, dl, CmpTy, N0.getOperand(0),
+                                        DAG.getConstant(ShiftBits, ShiftTy));
+            SDValue CmpRHS = DAG.getConstant(C1.lshr(ShiftBits), CmpTy);
+            return DAG.getSetCC(dl, VT, Shift, CmpRHS, Cond);
+          }
+        }
+      }
+    }
   }
 
   if (isa<ConstantFPSDNode>(N0.getNode())) {

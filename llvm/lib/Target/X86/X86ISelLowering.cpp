@@ -11384,6 +11384,14 @@ bool X86TargetLowering::isTruncateFree(Type *Ty1, Type *Ty2) const {
   return true;
 }
 
+bool X86TargetLowering::isLegalICmpImmediate(int64_t Imm) const {
+  return Imm == (int32_t)Imm;
+}
+
+bool X86TargetLowering::isLegalAddImmediate(int64_t Imm) const {
+  return Imm == (int32_t)Imm;
+}
+
 bool X86TargetLowering::isTruncateFree(EVT VT1, EVT VT2) const {
   if (!VT1.isInteger() || !VT2.isInteger())
     return false;

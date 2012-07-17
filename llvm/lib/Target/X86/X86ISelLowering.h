@@ -568,6 +568,18 @@ namespace llvm {
     /// by AM is legal for this target, for a load/store of the specified type.
     virtual bool isLegalAddressingMode(const AddrMode &AM, Type *Ty)const;
 
+    /// isLegalICmpImmediate - Return true if the specified immediate is legal
+    /// icmp immediate, that is the target has icmp instructions which can
+    /// compare a register against the immediate without having to materialize
+    /// the immediate into a register.
+    virtual bool isLegalICmpImmediate(int64_t Imm) const;
+
+    /// isLegalAddImmediate - Return true if the specified immediate is legal
+    /// add immediate, that is the target has add instructions which can
+    /// add a register and the immediate without having to materialize
+    /// the immediate into a register.
+    virtual bool isLegalAddImmediate(int64_t Imm) const;
+
     /// isTruncateFree - Return true if it's free to truncate a value of
     /// type Ty1 to type Ty2. e.g. On x86 it's free to truncate a i32 value in
     /// register EAX to i16 by referencing its sub-register AX.
