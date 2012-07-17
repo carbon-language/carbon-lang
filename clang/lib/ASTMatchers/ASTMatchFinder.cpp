@@ -27,15 +27,6 @@ namespace ast_matchers {
 namespace internal {
 namespace {
 
-// Returns the value that 'AMap' maps 'Key' to, or NULL if 'Key' is
-// not in 'AMap'.
-template <typename Map>
-static const typename Map::mapped_type *
-find(const Map &AMap, const typename Map::key_type &Key) {
-  typename Map::const_iterator It = AMap.find(Key);
-  return It == AMap.end() ? NULL : &It->second;
-}
-
 // We use memoization to avoid running the same matcher on the same
 // AST node twice.  This pair is the key for looking up match
 // result.  It consists of an ID of the MatcherInterface (for
@@ -244,8 +235,7 @@ public:
     const Type *TypeNode = DeclNode->getUnderlyingType().getTypePtr();
     const Type *CanonicalType =  // root of the typedef tree
         ActiveASTContext->getCanonicalType(TypeNode);
-    TypeToUnqualifiedAliases[CanonicalType].insert(
-        DeclNode->getName().str());
+    TypeAliases[CanonicalType].insert(DeclNode);
     return true;
   }
 
@@ -289,7 +279,8 @@ public:
   }
 
   virtual bool classIsDerivedFrom(const CXXRecordDecl *Declaration,
-                                  StringRef BaseName) const;
+                                  const Matcher<NamedDecl> &Base,
+                                  BoundNodesTreeBuilder *Builder);
 
   // Implements ASTMatchFinder::MatchesChildOf.
   virtual bool matchesChildOf(const Decl &DeclNode,
@@ -347,16 +338,20 @@ private:
     MatchFinder::MatchCallback* Callback;
   };
 
-  // Returns true if 'TypeNode' is also known by the name 'Name'.  In other
-  // words, there is a type (including typedef) with the name 'Name'
-  // that is equal to 'TypeNode'.
-  bool typeHasAlias(const Type *TypeNode,
-                    StringRef Name) const {
+  // Returns true if 'TypeNode' has an alias that matches the given matcher.
+  bool typeHasMatchingAlias(const Type *TypeNode,
+                            const Matcher<NamedDecl> Matcher,
+                            BoundNodesTreeBuilder *Builder) {
     const Type *const CanonicalType =
       ActiveASTContext->getCanonicalType(TypeNode);
-    const std::set<std::string> *UnqualifiedAlias =
-      find(TypeToUnqualifiedAliases, CanonicalType);
-    return UnqualifiedAlias != NULL && UnqualifiedAlias->count(Name) > 0;
+    const std::set<const TypedefDecl*> &Aliases = TypeAliases[CanonicalType];
+    for (std::set<const TypedefDecl*>::const_iterator
+           It = Aliases.begin(), End = Aliases.end();
+         It != End; ++It) {
+      if (Matcher.matches(**It, this, Builder))
+        return true;
+    }
+    return false;
   }
 
   // Matches all registered matchers on the given node and calls the
@@ -380,9 +375,8 @@ private:
                MatchFinder::MatchCallback*> > *const Triggers;
   ASTContext *ActiveASTContext;
 
-  // Maps a canonical type to the names of its typedefs.
-  llvm::DenseMap<const Type*, std::set<std::string> >
-    TypeToUnqualifiedAliases;
+  // Maps a canonical type to its TypedefDecls.
+  llvm::DenseMap<const Type*, std::set<const TypedefDecl*> > TypeAliases;
 
   // Maps (matcher, node) -> the match result for memoization.
   typedef llvm::DenseMap<UntypedMatchInput, MemoizedMatchResult> MemoizationMap;
@@ -392,39 +386,36 @@ private:
 // Returns true if the given class is directly or indirectly derived
 // from a base type with the given name.  A class is considered to be
 // also derived from itself.
-bool
-MatchASTVisitor::classIsDerivedFrom(const CXXRecordDecl *Declaration,
-                                    StringRef BaseName) const {
-  if (Declaration->getName() == BaseName) {
+bool MatchASTVisitor::classIsDerivedFrom(const CXXRecordDecl *Declaration,
+                                         const Matcher<NamedDecl> &Base,
+                                         BoundNodesTreeBuilder *Builder) {
+  if (Base.matches(*Declaration, this, Builder))
     return true;
-  }
-  if (!Declaration->hasDefinition()) {
+  if (!Declaration->hasDefinition())
     return false;
-  }
   typedef CXXRecordDecl::base_class_const_iterator BaseIterator;
   for (BaseIterator It = Declaration->bases_begin(),
                     End = Declaration->bases_end(); It != End; ++It) {
     const Type *TypeNode = It->getType().getTypePtr();
 
-    if (typeHasAlias(TypeNode, BaseName))
+    if (typeHasMatchingAlias(TypeNode, Base, Builder))
       return true;
 
     // Type::getAs<...>() drills through typedefs.
     if (TypeNode->getAs<DependentNameType>() != NULL ||
-        TypeNode->getAs<TemplateTypeParmType>() != NULL) {
+        TypeNode->getAs<TemplateTypeParmType>() != NULL)
       // Dependent names and template TypeNode parameters will be matched when
       // the template is instantiated.
       continue;
-    }
     CXXRecordDecl *ClassDecl = NULL;
     TemplateSpecializationType const *TemplateType =
       TypeNode->getAs<TemplateSpecializationType>();
     if (TemplateType != NULL) {
-      if (TemplateType->getTemplateName().isDependent()) {
+      if (TemplateType->getTemplateName().isDependent())
         // Dependent template specializations will be matched when the
         // template is instantiated.
         continue;
-      }
+
       // For template specialization types which are specializing a template
       // declaration which is an explicit or partial specialization of another
       // template declaration, getAsCXXRecordDecl() returns the corresponding
@@ -448,9 +439,8 @@ MatchASTVisitor::classIsDerivedFrom(const CXXRecordDecl *Declaration,
     }
     assert(ClassDecl != NULL);
     assert(ClassDecl != Declaration);
-    if (classIsDerivedFrom(ClassDecl, BaseName)) {
+    if (classIsDerivedFrom(ClassDecl, Base, Builder))
       return true;
-    }
   }
   return false;
 }

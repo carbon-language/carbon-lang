@@ -245,7 +245,7 @@ TEST(DeclarationMatcher, ClassIsDerived) {
       variable(
           hasName("z_char"),
           hasInitializer(hasType(record(isDerivedFrom("Base1"),
-                                       isDerivedFrom("Base2")))))));
+                                        isDerivedFrom("Base2")))))));
 
   const char *RecursiveTemplateTwoParameters =
       "class Base1 {}; class Base2 {};"
@@ -273,7 +273,17 @@ TEST(DeclarationMatcher, ClassIsDerived) {
       variable(
           hasName("z_char"),
           hasInitializer(hasType(record(isDerivedFrom("Base1"),
-                                       isDerivedFrom("Base2")))))));
+                                        isDerivedFrom("Base2")))))));
+  EXPECT_TRUE(matches(
+      "namespace ns { class X {}; class Y : public X {}; }",
+      record(isDerivedFrom("::ns::X"))));
+  EXPECT_TRUE(notMatches(
+      "class X {}; class Y : public X {};",
+      record(isDerivedFrom("::ns::X"))));
+
+  EXPECT_TRUE(matches(
+      "class X {}; class Y : public X {};",
+      record(isDerivedFrom(id("test", record(hasName("X")))))));
 }
 
 TEST(AllOf, AllOverloadsWork) {
