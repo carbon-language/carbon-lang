@@ -9,7 +9,7 @@
 //
 // This file is a part of ThreadSanitizer (TSan), a race detector.
 //
-// Linux-specific code.
+// Mac-specific code.
 //===----------------------------------------------------------------------===//
 
 #ifdef __APPLE__
