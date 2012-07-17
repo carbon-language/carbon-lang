@@ -569,15 +569,14 @@ CodeGenVTables::CreateVTableInitializer(const CXXRecordDecl *RD,
 
       if (cast<CXXMethodDecl>(GD.getDecl())->isPure()) {
         // We have a pure virtual member function.
-        if (!PureVirtualFn ) {
-            llvm::FunctionType *Ty = 
-                llvm::FunctionType::get(CGM.VoidTy, /*isVarArg=*/false);
-            StringRef PureCallName = CGM.getCXXABI().GetPureVirtualCallName();
-            PureVirtualFn = CGM.CreateRuntimeFunction(Ty, PureCallName);
-            PureVirtualFn = llvm::ConstantExpr::getBitCast(PureVirtualFn,
-                                                        CGM.Int8PtrTy);
+        if (!PureVirtualFn) {
+          llvm::FunctionType *Ty = 
+            llvm::FunctionType::get(CGM.VoidTy, /*isVarArg=*/false);
+          StringRef PureCallName = CGM.getCXXABI().GetPureVirtualCallName();
+          PureVirtualFn = CGM.CreateRuntimeFunction(Ty, PureCallName);
+          PureVirtualFn = llvm::ConstantExpr::getBitCast(PureVirtualFn,
+                                                         CGM.Int8PtrTy);
         }
-
         Init = PureVirtualFn;
       } else {
         // Check if we should use a thunk.
