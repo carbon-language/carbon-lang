@@ -212,14 +212,14 @@ ipo_iterator<T> ipo_end(T G){
   return ipo_iterator<T>::end(G);
 }
 
-//Provide global definitions of external inverse postorder iterators...
+// Provide global definitions of external inverse postorder iterators...
 template <class T,
           class SetType = std::set<typename GraphTraits<T>::NodeType*> >
 struct ipo_ext_iterator : public ipo_iterator<T, SetType, true> {
   ipo_ext_iterator(const ipo_iterator<T, SetType, true> &V) :
-    ipo_iterator<T, SetType, true>(&V) {}
+    ipo_iterator<T, SetType, true>(V) {}
   ipo_ext_iterator(const po_iterator<Inverse<T>, SetType, true> &V) :
-    ipo_iterator<T, SetType, true>(&V) {}
+    ipo_iterator<T, SetType, true>(V) {}
 };
 
 template <class T, class SetType>
