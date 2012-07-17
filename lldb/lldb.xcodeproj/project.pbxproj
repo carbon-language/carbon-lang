@@ -3380,7 +3380,7 @@
 		08FB7793FE84155DC02AAC07 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0430;
+				LastUpgradeCheck = 0450;
 			};
 			buildConfigurationList = 1DEB91EF08733DB70010E9CD /* Build configuration list for PBXProject "lldb" */;
 			compatibilityVersion = "Xcode 3.2";
@@ -4193,6 +4193,7 @@
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_LINK_OBJC_RUNTIME = NO;
 				CLANG_OBJC_RUNTIME = NO;
+				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 162;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 162;
@@ -4251,6 +4252,7 @@
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_LINK_OBJC_RUNTIME = NO;
 				CLANG_OBJC_RUNTIME = NO;
+				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 162;
 				DEAD_CODE_STRIPPING = YES;
 				DYLIB_COMPATIBILITY_VERSION = 1;
@@ -4310,6 +4312,7 @@
 			buildSettings = {
 				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 162;
 				DEBUGGING_SYMBOLS = YES;
 				GCC_DYNAMIC_NO_PIC = NO;
@@ -4335,6 +4338,7 @@
 			buildSettings = {
 				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = YES;
 				CURRENT_PROJECT_VERSION = 162;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
@@ -4352,6 +4356,7 @@
 			buildSettings = {
 				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = YES;
 				CURRENT_PROJECT_VERSION = 162;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
@@ -4367,6 +4372,7 @@
 		2689FFD513353D7A00698AC0 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 162;
 				DYLIB_CURRENT_VERSION = 162;
 				EXECUTABLE_EXTENSION = a;
@@ -4397,6 +4403,7 @@
 		2689FFD613353D7A00698AC0 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 162;
 				DYLIB_CURRENT_VERSION = 162;
 				EXECUTABLE_EXTENSION = a;
@@ -4427,6 +4434,7 @@
 		2689FFD713353D7A00698AC0 /* BuildAndIntegration */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 162;
 				DYLIB_CURRENT_VERSION = 162;
 				EXECUTABLE_EXTENSION = a;
@@ -4557,6 +4565,7 @@
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_LINK_OBJC_RUNTIME = NO;
 				CLANG_OBJC_RUNTIME = NO;
+				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = YES;
 				CURRENT_PROJECT_VERSION = 162;
 				DEAD_CODE_STRIPPING = YES;
@@ -4616,6 +4625,7 @@
 		26CEF3AA14FD58BF007286B2 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -4623,6 +4633,7 @@
 		26CEF3AB14FD58BF007286B2 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
@@ -4630,6 +4641,7 @@
 		26CEF3AC14FD58BF007286B2 /* BuildAndIntegration */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = BuildAndIntegration;
@@ -4637,6 +4649,7 @@
 		26CEF3B314FD592B007286B2 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -4644,6 +4657,7 @@
 		26CEF3B414FD592B007286B2 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
@@ -4651,6 +4665,7 @@
 		26CEF3B514FD592B007286B2 /* BuildAndIntegration */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = BuildAndIntegration;
@@ -4658,6 +4673,7 @@
 		26CEF3BE14FD596A007286B2 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -4665,6 +4681,7 @@
 		26CEF3BF14FD596A007286B2 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
@@ -4672,6 +4689,7 @@
 		26CEF3C014FD596A007286B2 /* BuildAndIntegration */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = BuildAndIntegration;
@@ -4928,6 +4946,7 @@
 				CLANG_LINK_OBJC_RUNTIME = NO;
 				CLANG_OBJC_RUNTIME = NO;
 				CODE_SIGN_IDENTITY = "-";
+				COMBINE_HIDPI_IMAGES = YES;
 				DEPLOYMENT_LOCATION = YES;
 				DSTROOT = "$(SYMROOT)";
 				GCC_DYNAMIC_NO_PIC = NO;
@@ -4962,6 +4981,7 @@
 				CLANG_LINK_OBJC_RUNTIME = NO;
 				CLANG_OBJC_RUNTIME = NO;
 				CODE_SIGN_IDENTITY = "-";
+				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = YES;
 				DEPLOYMENT_LOCATION = YES;
 				DSTROOT = "$(SYMROOT)";
@@ -4991,6 +5011,7 @@
 				CLANG_LINK_OBJC_RUNTIME = NO;
 				CLANG_OBJC_RUNTIME = NO;
 				CODE_SIGN_IDENTITY = "-";
+				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = YES;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
@@ -5019,6 +5040,7 @@
 				CLANG_OBJC_RUNTIME = NO;
 				CODE_SIGN_ENTITLEMENTS = source/Host/macosx/launcherXPCService/LauncherXPCService.entitlements;
 				CODE_SIGN_IDENTITY = "-";
+				COMBINE_HIDPI_IMAGES = YES;
 				DEPLOYMENT_LOCATION = YES;
 				DSTROOT = "$(SYMROOT)";
 				GCC_DYNAMIC_NO_PIC = NO;
@@ -5054,6 +5076,7 @@
 				CLANG_OBJC_RUNTIME = NO;
 				CODE_SIGN_ENTITLEMENTS = source/Host/macosx/launcherXPCService/LauncherXPCService.entitlements;
 				CODE_SIGN_IDENTITY = "-";
+				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = YES;
 				DEPLOYMENT_LOCATION = YES;
 				DSTROOT = "$(SYMROOT)";
@@ -5084,6 +5107,7 @@
 				CLANG_OBJC_RUNTIME = NO;
 				CODE_SIGN_ENTITLEMENTS = source/Host/macosx/launcherXPCService/LauncherXPCService.entitlements;
 				CODE_SIGN_IDENTITY = "-";
+				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = YES;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
