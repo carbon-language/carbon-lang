@@ -193,6 +193,9 @@ public:
   virtual void EmitReturnFromThunk(CodeGenFunction &CGF,
                                    RValue RV, QualType ResultType);
 
+  /// Gets the pure virtual member call function.
+  virtual StringRef GetPureVirtualCallName() = 0;
+
   /**************************** Array cookies ******************************/
 
   /// Returns the extra size required in order to store the array
