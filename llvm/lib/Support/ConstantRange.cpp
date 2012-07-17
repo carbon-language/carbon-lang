@@ -146,14 +146,13 @@ APInt ConstantRange::getSetSize() const {
   if (isEmptySet())
     return APInt(getBitWidth()+1, 0);
 
-  if (isFullSet())
-    return APInt::getMaxValue(getBitWidth()).zext(getBitWidth()+1) + 1;
-
-  if (isWrappedSet()) {
-    APInt Result = Upper + (APInt::getMaxValue(getBitWidth()) - Lower + 1);
-    return Result.zext(getBitWidth()+1);
+  if (isFullSet()) {
+    APInt Size(getBitWidth()+1, 0);
+    Size.setBit(getBitWidth());
+    return Size;
   }
 
+  // This is also correct for wrapped sets.
   return (Upper - Lower).zext(getBitWidth()+1);
 }
 
