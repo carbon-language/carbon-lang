@@ -588,7 +588,6 @@ SDValue DAGTypeLegalizer::PromoteIntRes_TRUNCATE(SDNode *N) {
     unsigned NumElts = InVT.getVectorNumElements();
     assert(NumElts == NVT.getVectorNumElements() &&
            "Dst and Src must have the same number of elements");
-    EVT EltVT = InVT.getScalarType();
     assert(isPowerOf2_32(NumElts) &&
            "Promoted vector type must be a power of two");
 
