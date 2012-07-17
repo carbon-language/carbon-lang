@@ -52,3 +52,23 @@ namespace n __attribute((visibility("default")))  {
   // CHECK: define hidden void @_ZN1n1gEv
 #pragma GCC visibility pop
 }
+
+namespace test2 {
+#pragma GCC visibility push(default)
+#pragma GCC visibility push(hidden)
+  struct foo { // foo is hidden
+  };
+#pragma GCC visibility pop
+  struct foo; // declaration is ok, we ignore the default in the stack
+  template<typename T>
+  struct bar { // bar is default
+    static void f(){}
+  };
+#pragma GCC visibility pop
+  void zed() {
+    bar<foo>::f();
+    bar<int>::f();
+  }
+  // CHECK: define linkonce_odr hidden void @_ZN5test23barINS_3fooEE1fEv
+  // CHECK: define linkonce_odr void @_ZN5test23barIiE1fEv
+}

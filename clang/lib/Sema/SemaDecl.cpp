@@ -8880,10 +8880,6 @@ CreateNewDecl:
   if (Attr)
     ProcessDeclAttributeList(S, New, Attr);
 
-  // If there's a #pragma GCC visibility in scope, set the visibility of this
-  // record.
-  AddPushedVisibilityAttribute(New);
-
   // If we're declaring or defining a tag in function prototype scope
   // in C, note that this type can only be used within the function.
   if (Name && S->isFunctionPrototypeScope() && !getLangOpts().CPlusPlus)
@@ -8945,6 +8941,10 @@ CreateNewDecl:
 
   if (PrevDecl)
     mergeDeclAttributes(New, PrevDecl);
+
+  // If there's a #pragma GCC visibility in scope, set the visibility of this
+  // record.
+  AddPushedVisibilityAttribute(New);
 
   OwnedDecl = true;
   return New;
