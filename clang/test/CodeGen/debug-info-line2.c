@@ -6,11 +6,11 @@ int foo(int i) {
 	int j = 0;
 	if (i) {
 		j = bar();
-//CHECK: store i32
-//CHECK-NOT:  br label %{{%[a-zA-Z0-9\.]+}}, !dbg 
 	} 
 	else
 	{
+//CHECK: store i32 %add
+//CHECK-NOT:  br label %{{[a-zA-Z0-9\.]+}}, !dbg 
 		j = bar() + 2;
 	}
 	return j;
