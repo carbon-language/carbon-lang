@@ -9617,7 +9617,10 @@ bool Sema::DiagnoseAssignmentResult(AssignConvertType ConvTy,
   bool MayHaveFunctionDiff = false;
 
   switch (ConvTy) {
-  case Compatible: return false;
+  case Compatible:
+      DiagnoseAssignmentEnum(DstType, SrcType, SrcExpr);
+      return false;
+
   case PointerToInt:
     DiagKind = diag::ext_typecheck_convert_pointer_int;
     ConvHints.tryToFixConversion(SrcExpr, SrcType, DstType, *this);

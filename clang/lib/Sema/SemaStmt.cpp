@@ -1059,6 +1059,55 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, Stmt *Switch,
   return Owned(SS);
 }
 
+void
+Sema::DiagnoseAssignmentEnum(QualType DstType, QualType SrcType,
+                             Expr *SrcExpr) {
+  unsigned DIAG = diag::warn_not_in_enum_assignement;
+  if (Diags.getDiagnosticLevel(DIAG, SrcExpr->getExprLoc()) 
+      == DiagnosticsEngine::Ignored)
+    return;
+  
+  if (const EnumType *ET = DstType->getAs<EnumType>())
+    if (!Context.hasSameType(SrcType, DstType) &&
+        SrcType->isIntegerType()) {
+      if (!SrcExpr->isTypeDependent() && !SrcExpr->isValueDependent() &&
+          SrcExpr->isIntegerConstantExpr(Context)) {
+        // Get the bitwidth of the enum value before promotions.
+        unsigned DstWith = Context.getIntWidth(DstType);
+        bool DstIsSigned = DstType->isSignedIntegerOrEnumerationType();
+
+        llvm::APSInt RhsVal = SrcExpr->EvaluateKnownConstInt(Context);
+        const EnumDecl *ED = ET->getDecl();
+        typedef SmallVector<std::pair<llvm::APSInt, EnumConstantDecl*>, 64>
+        EnumValsTy;
+        EnumValsTy EnumVals;
+        
+        // Gather all enum values, set their type and sort them,
+        // allowing easier comparison with rhs constant.
+        for (EnumDecl::enumerator_iterator EDI = ED->enumerator_begin();
+             EDI != ED->enumerator_end(); ++EDI) {
+          llvm::APSInt Val = EDI->getInitVal();
+          AdjustAPSInt(Val, DstWith, DstIsSigned);
+          EnumVals.push_back(std::make_pair(Val, *EDI));
+        }
+        if (EnumVals.empty())
+          return;
+        std::stable_sort(EnumVals.begin(), EnumVals.end(), CmpEnumVals);
+        EnumValsTy::iterator EIend =
+        std::unique(EnumVals.begin(), EnumVals.end(), EqEnumVals);
+        
+        // See which case values aren't in enum.
+        EnumValsTy::const_iterator EI = EnumVals.begin();
+        while (EI != EIend && EI->first < RhsVal)
+          EI++;
+        if (EI == EIend || EI->first != RhsVal) {
+          Diag(SrcExpr->getExprLoc(), diag::warn_not_in_enum_assignement)
+          << DstType;
+        }
+      }
+    }
+}
+
 StmtResult
 Sema::ActOnWhileStmt(SourceLocation WhileLoc, FullExprArg Cond,
                      Decl *CondVar, Stmt *Body) {
