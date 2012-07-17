@@ -4465,34 +4465,28 @@ static void AddObjCExpressionResults(ResultBuilder &Results, bool NeedAt) {
   Builder.AddTextChunk("\"");
   Results.AddResult(Result(Builder.TakeString()));
 
-  // @[ objects, ... ]
+  // @[objects, ...]
   Builder.AddResultTypeChunk("NSArray *");
   Builder.AddTypedTextChunk(OBJC_AT_KEYWORD_NAME(NeedAt,"["));
-  Builder.AddChunk(CodeCompletionString::CK_HorizontalSpace);
   Builder.AddPlaceholderChunk("objects, ...");
-  Builder.AddChunk(CodeCompletionString::CK_HorizontalSpace);
   Builder.AddChunk(CodeCompletionString::CK_RightBracket);
   Results.AddResult(Result(Builder.TakeString()));
 
-  // @{ key : object, ... }
+  // @{key : object, ...}
   Builder.AddResultTypeChunk("NSDictionary *");
   Builder.AddTypedTextChunk(OBJC_AT_KEYWORD_NAME(NeedAt,"{"));
-  Builder.AddChunk(CodeCompletionString::CK_HorizontalSpace);
   Builder.AddPlaceholderChunk("key");
   Builder.AddChunk(CodeCompletionString::CK_HorizontalSpace);
   Builder.AddChunk(CodeCompletionString::CK_Colon);
   Builder.AddChunk(CodeCompletionString::CK_HorizontalSpace);
   Builder.AddPlaceholderChunk("object, ...");
-  Builder.AddChunk(CodeCompletionString::CK_HorizontalSpace);
   Builder.AddChunk(CodeCompletionString::CK_RightBrace);
   Results.AddResult(Result(Builder.TakeString()));
 
-  // @( expression )
+  // @(expression)
   Builder.AddResultTypeChunk("id");
   Builder.AddTypedTextChunk(OBJC_AT_KEYWORD_NAME(NeedAt, "("));
-  Builder.AddChunk(CodeCompletionString::CK_HorizontalSpace);
   Builder.AddPlaceholderChunk("expression");
-  Builder.AddChunk(CodeCompletionString::CK_HorizontalSpace);
   Builder.AddChunk(CodeCompletionString::CK_RightParen);
   Results.AddResult(Result(Builder.TakeString()));
 }
