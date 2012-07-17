@@ -322,10 +322,8 @@ entry:
 
 define i32 @icmp_ult_immed04_i32(i32 %arg1, i32 %val1, i32 %val2) nounwind {
 ; CHECK:      icmp_ult_immed04_i32:
-; CHECK:        ila
-; CHECK:        ceq
-; CHECK:        clgt
-; CHECK:        nor
+; CHECK:        rotmi
+; CHECK:        ceqi
 ; CHECK:        selb $3, $5, $4, $3
 
 entry:

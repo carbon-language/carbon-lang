@@ -96,7 +96,7 @@ entry:
 ; CHECK: test7:
 ; CHECK-NOT: movabsq
 ; CHECK: shrq $32, %rdi
-; CHECK: testl %edi, %edi
+; CHECK: testq %rdi, %rdi
 ; CHECK: sete
   %lnot = icmp ult i64 %res, 4294967296
   %lnot.ext = zext i1 %lnot to i32
@@ -108,7 +108,7 @@ entry:
 ; CHECK: test8:
 ; CHECK-NOT: movabsq
 ; CHECK: shrq $32, %rdi
-; CHECK: cmpl $3, %edi
+; CHECK: cmpq $3, %rdi
   %lnot = icmp ult i64 %res, 12884901888
   %lnot.ext = zext i1 %lnot to i32
   ret i32 %lnot.ext
@@ -119,7 +119,7 @@ entry:
 ; CHECK: test9:
 ; CHECK-NOT: movabsq
 ; CHECK: shrq $33, %rdi
-; CHECK: testl %edi, %edi
+; CHECK: testq %rdi, %rdi
 ; CHECK: sete
   %lnot = icmp ult i64 %res, 8589934592
   %lnot.ext = zext i1 %lnot to i32
@@ -131,8 +131,8 @@ entry:
 ; CHECK: test10:
 ; CHECK-NOT: movabsq
 ; CHECK: shrq $32, %rdi
-; CHECK: cmpl $1, %edi
-; CHECK: setae
+; CHECK: testq %rdi, %rdi
+; CHECK: setne
   %lnot = icmp uge i64 %res, 4294967296
   %lnot.ext = zext i1 %lnot to i32
   ret i32 %lnot.ext
