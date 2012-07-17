@@ -2323,7 +2323,8 @@ TargetLowering::SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
         }
       }
 
-    if (!isLegalICmpImmediate(C1.getSExtValue())) {
+    if (C1.getMinSignedBits() <= 64 &&
+        !isLegalICmpImmediate(C1.getSExtValue())) {
       // (X & -256) == 256 -> (X >> 8) == 1
       if ((Cond == ISD::SETEQ || Cond == ISD::SETNE) &&
           N0.getOpcode() == ISD::AND && N0.hasOneUse()) {
