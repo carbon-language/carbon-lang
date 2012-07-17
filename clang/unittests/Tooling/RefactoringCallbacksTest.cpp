@@ -9,9 +9,9 @@
 
 #include "clang/ASTMatchers/ASTMatchers.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
-#include "clang/ASTMatchers/RefactoringCallbacks.h"
-#include "../Tooling/RewriterTestContext.h"
+#include "clang/Tooling/RefactoringCallbacks.h"
 #include "gtest/gtest.h"
+#include "RewriterTestContext.h"
 
 namespace clang {
 namespace ast_matchers {

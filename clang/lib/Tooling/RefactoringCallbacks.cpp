@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 #include "clang/Lex/Lexer.h"
-#include "clang/ASTMatchers/RefactoringCallbacks.h"
+#include "clang/Tooling/RefactoringCallbacks.h"
 
 namespace clang {
 namespace ast_matchers {

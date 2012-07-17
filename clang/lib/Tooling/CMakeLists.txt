@@ -6,6 +6,7 @@ add_clang_library(clangTooling
   Refactoring.cpp
   Tooling.cpp
   ArgumentsAdjusters.cpp
+  RefactoringCallbacks.cpp
   )
 
 add_dependencies(clangTooling
@@ -16,5 +17,6 @@ target_link_libraries(clangTooling
   clangBasic
   clangFrontend
   clangAST
+  clangASTMatchers
   clangRewrite
   )

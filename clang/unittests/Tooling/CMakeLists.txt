@@ -5,6 +5,7 @@ add_clang_unittest(ToolingTests
   RecursiveASTVisitorTest.cpp
   RefactoringTest.cpp
   RewriterTest.cpp
+  RefactoringCallbacksTest.cpp
   )
 
 target_link_libraries(ToolingTests
