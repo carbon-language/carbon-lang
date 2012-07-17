@@ -1613,8 +1613,9 @@ def err_box_literal_collection : Error<
 def warn_objc_literal_comparison : Warning<
   "direct comparison of %select{a string literal|an array literal|"
   "a dictionary literal|a numeric literal|a boxed expression|}0 has "
-  "undefined behavior%select{|; use -isEqual: instead}1">,
-  InGroup<DiagGroup<"objc-literal-compare">>;
+  "undefined behavior">, InGroup<DiagGroup<"objc-literal-compare">>;
+def note_objc_literal_comparison_isequal : Note<
+  "use 'isEqual:' instead">;
 def err_attr_tlsmodel_arg : Error<"tls_model must be \"global-dynamic\", "
   "\"local-dynamic\", \"initial-exec\" or \"local-exec\"">;
 
