@@ -1061,3 +1061,19 @@ namespace test57 {
   // CHECK: declare hidden void @_ZN6test573fooIiE3zedEv
   // CHECK-HIDDEN: declare hidden void @_ZN6test573fooIiE3zedEv
 }
+
+namespace test58 {
+#pragma GCC visibility push(hidden)
+  struct foo;
+  template<typename T>
+  struct __attribute__((visibility("default"))) bar {
+    static void zed() {
+    }
+  };
+  void bah() {
+    bar<foo>::zed();
+  }
+#pragma GCC visibility pop
+  // CHECK: define linkonce_odr hidden void @_ZN6test583barINS_3fooEE3zedEv
+  // CHECK-HIDDEN: define linkonce_odr hidden void @_ZN6test583barINS_3fooEE3zedEv
+}
