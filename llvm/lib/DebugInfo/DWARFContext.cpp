@@ -155,8 +155,10 @@ DILineInfo DWARFContext::getLineInfoForAddress(uint64_t address,
   if (specifier.needs(DILineInfoSpecifier::FunctionName)) {
     const DWARFDebugInfoEntryMinimal *function_die =
         cu->getFunctionDIEForAddress(address);
-    if (function_die)
-      functionName = function_die->getSubprogramName(cu);
+    if (function_die) {
+      if (const char *name = function_die->getSubprogramName(cu))
+        functionName = name;
+    }
   }
   if (specifier.needs(DILineInfoSpecifier::FileLineInfo)) {
     // Get the line table for this compile unit.

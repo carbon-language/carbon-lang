@@ -8,6 +8,8 @@ RUN: llvm-dwarfdump %p/Inputs/dwarfdump-test2.elf-x86-64 \
 RUN:   --address=0x4004b8 --functions | FileCheck %s -check-prefix MANY_CU_1
 RUN: llvm-dwarfdump %p/Inputs/dwarfdump-test2.elf-x86-64 \
 RUN:   --address=0x4004c4 --functions | FileCheck %s -check-prefix MANY_CU_2
+RUN: llvm-dwarfdump %p/Inputs/dwarfdump-test3.elf-x86-64 \
+RUN:   --address=0x538 --functions | FileCheck %s -check-prefix ABS_ORIGIN_1
 
 MAIN: main
 MAIN-NEXT: dwarfdump-test.cc:16:10
@@ -23,3 +25,6 @@ MANY_CU_1-NEXT: a.cc:2:0
 
 MANY_CU_2: main
 MANY_CU_2-NEXT: main.cc:4:0
+
+ABS_ORIGIN_1: C
+ABS_ORIGIN_1-NEXT: def.cc:3:0
