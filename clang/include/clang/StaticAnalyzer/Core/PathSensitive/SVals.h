@@ -326,16 +326,22 @@ class LocAsInteger : public NonLoc {
 public:
 
   Loc getLoc() const {
-    return cast<Loc>(((std::pair<SVal, uintptr_t>*) Data)->first);
+    const std::pair<SVal, uintptr_t> *D =
+      static_cast<const std::pair<SVal, unsigned> *>(Data);
+    return cast<Loc>(D->first);
   }
 
   const Loc& getPersistentLoc() const {
-    const SVal& V = ((std::pair<SVal, uintptr_t>*) Data)->first;
+    const std::pair<SVal, uintptr_t> *D =
+      static_cast<const std::pair<SVal, unsigned> *>(Data);
+    const SVal& V = D->first;
     return cast<Loc>(V);
   }
 
   unsigned getNumBits() const {
-    return ((std::pair<SVal, unsigned>*) Data)->second;
+    const std::pair<SVal, uintptr_t> *D =
+      static_cast<const std::pair<SVal, unsigned> *>(Data);
+    return D->second;
   }
 
   // Implement isa<T> support.
