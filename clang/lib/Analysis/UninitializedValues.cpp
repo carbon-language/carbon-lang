@@ -447,7 +447,9 @@ void ClassifyRefs::VisitBinaryOperator(BinaryOperator *BO) {
   // when TransferFunctions visits it. A compound-assignment does not affect
   // whether a variable is uninitialized, and there's no point counting it as a
   // use.
-  if (BO->isAssignmentOp())
+  if (BO->isCompoundAssignmentOp())
+    classify(BO->getLHS(), Use);
+  else if (BO->getOpcode() == BO_Assign)
     classify(BO->getLHS(), Ignore);
 }
 

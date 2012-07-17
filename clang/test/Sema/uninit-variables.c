@@ -33,8 +33,8 @@ int test5() {
 
 int test6() {
   int x; // expected-note{{initialize the variable 'x' to silence this warning}}
-  x += 2;
-  return x; // expected-warning{{variable 'x' is uninitialized when used here}}
+  x += 2; // expected-warning{{variable 'x' is uninitialized when used here}}
+  return x;
 }
 
 int test7(int y) {
@@ -489,12 +489,17 @@ int returns_twice() {
 int compound_assign(int *arr, int n) {
   int sum; // expected-note {{initialize}}
   for (int i = 0; i < n; ++i)
-    sum += arr[i];
-  return sum / n; // expected-warning {{variable 'sum' is uninitialized}}
+    sum += arr[i]; // expected-warning {{variable 'sum' is uninitialized}}
+  return sum / n;
 }
 
-void compound_assign_2(int n) {
-  volatile int ignore;
-  for (int j = 0; j < n; ++j)
-    ignore += test1(); // ok
+int compound_assign_2() {
+  int x; // expected-note {{initialize}}
+  return x += 1; // expected-warning {{variable 'x' is uninitialized}}
+}
+
+int compound_assign_3() {
+  int x; // expected-note {{initialize}}
+  x *= 0; // expected-warning {{variable 'x' is uninitialized}}
+  return x;
 }

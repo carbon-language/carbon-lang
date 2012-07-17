@@ -1220,6 +1220,7 @@ AnalysisBasedWarnings::IssueWarnings(sema::AnalysisBasedWarnings::Policy P,
   else {
     AC.getCFGBuildOptions()
       .setAlwaysAdd(Stmt::BinaryOperatorClass)
+      .setAlwaysAdd(Stmt::CompoundAssignOperatorClass)
       .setAlwaysAdd(Stmt::BlockExprClass)
       .setAlwaysAdd(Stmt::CStyleCastExprClass)
       .setAlwaysAdd(Stmt::DeclRefExprClass)
