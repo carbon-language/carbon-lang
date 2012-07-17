@@ -112,9 +112,11 @@ protected:
     SocketAddress m_udp_send_sockaddr;
     bool m_should_close_fd; // True if this class should close the file descriptor when it goes away.
     uint32_t m_socket_timeout_usec;
-    int m_command_fd_send;        // A pipe that we select on the reading end of along with
-    int m_command_fd_receive;     // m_fd_recv so we can force ourselves out of the select.
-    Mutex m_mutex;
+    int m_command_fd_send;       // A pipe that we select on the reading end of along with
+    int m_command_fd_receive;    // m_fd_recv so we can force ourselves out of the select.
+    Mutex m_mutex;          
+    bool m_shutting_down;        // This marks that we are shutting down so if we get woken up from BytesAvailable
+                                 // to disconnect, we won't try to read again.
     
     static in_port_t
     GetSocketPort (int fd);
