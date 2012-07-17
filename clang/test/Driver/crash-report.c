@@ -1,7 +1,8 @@
-// RUN: rm -f %T/crash-report-*.c %T/crash-report-*.sh
-// RUN: TMP=%T %clang -fsyntax-only %s -DFOO=BAR 2>&1 | FileCheck %s
-// RUN: FileCheck --check-prefix=CHECKSRC %s < %T/crash-report-*.c
-// RUN: FileCheck --check-prefix=CHECKSH %s < %T/crash-report-*.sh
+// RUN: rm -rf %t
+// RUN: mkdir %t
+// RUN: TMPDIR=%t TEMP=%t TMP=%t %clang -fsyntax-only %s -DFOO=BAR 2>&1 | FileCheck %s
+// RUN: cat %t/crash-report-*.c | FileCheck --check-prefix=CHECKSRC %s
+// RUN: cat %t/crash-report-*.sh | FileCheck --check-prefix=CHECKSH %s
 // REQUIRES: crash-recovery
 // XFAIL: mingw32,win32
 
