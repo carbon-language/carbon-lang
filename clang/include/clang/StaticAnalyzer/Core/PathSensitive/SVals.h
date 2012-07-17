@@ -327,20 +327,20 @@ public:
 
   Loc getLoc() const {
     const std::pair<SVal, uintptr_t> *D =
-      static_cast<const std::pair<SVal, unsigned> *>(Data);
+      static_cast<const std::pair<SVal, uintptr_t> *>(Data);
     return cast<Loc>(D->first);
   }
 
   const Loc& getPersistentLoc() const {
     const std::pair<SVal, uintptr_t> *D =
-      static_cast<const std::pair<SVal, unsigned> *>(Data);
+      static_cast<const std::pair<SVal, uintptr_t> *>(Data);
     const SVal& V = D->first;
     return cast<Loc>(V);
   }
 
   unsigned getNumBits() const {
     const std::pair<SVal, uintptr_t> *D =
-      static_cast<const std::pair<SVal, unsigned> *>(Data);
+      static_cast<const std::pair<SVal, uintptr_t> *>(Data);
     return D->second;
   }
 
