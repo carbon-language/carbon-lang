@@ -2908,6 +2908,11 @@ void CodeGenDAGPatterns::ParsePatterns() {
   for (unsigned i = 0, e = Patterns.size(); i != e; ++i) {
     Record *CurPattern = Patterns[i];
     DagInit *Tree = CurPattern->getValueAsDag("PatternToMatch");
+
+    // If the pattern references the null_frag, there's nothing to do.
+    if (hasNullFragReference(Tree))
+      continue;
+
     TreePattern *Pattern = new TreePattern(CurPattern, Tree, true, *this);
 
     // Inline pattern fragments into it.
