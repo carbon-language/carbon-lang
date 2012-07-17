@@ -131,3 +131,6 @@ EVAL_EXPR(49, &x < &x - 100 ? 1 : -1) // expected-error {{must have a constant s
 
 extern struct Test50S Test50;
 EVAL_EXPR(50, &Test50 < (struct Test50S*)((unsigned)&Test50 + 10)) // expected-error {{must have a constant size}}
+
+// <rdar://problem/11874571>
+EVAL_EXPR(51, 0 != (float)1e99)

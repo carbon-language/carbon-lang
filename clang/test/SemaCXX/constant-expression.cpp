@@ -115,7 +115,7 @@ int array2[recurse2]; // expected-warning {{variable length array}} expected-war
 namespace FloatConvert {
   typedef int a[(int)42.3];
   typedef int a[(int)42.997];
-  typedef int b[(int)4e10]; // expected-warning {{variable length}} expected-error {{variable length}}
+  typedef int b[(int)4e10]; // expected-warning {{variable length}} expected-warning {{size of static array must be an integer constant expression}}
 }
 
 // PR12626
