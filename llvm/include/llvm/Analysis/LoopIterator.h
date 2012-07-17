@@ -109,6 +109,16 @@ public:
   }
 };
 
+/// Specialize po_iterator_storage to record postorder numbers.
+template<> class po_iterator_storage<LoopBlocksTraversal, true> {
+  LoopBlocksTraversal &LBT;
+public:
+  po_iterator_storage(LoopBlocksTraversal &lbs) : LBT(lbs) {}
+  // These functions are defined below.
+  bool insertEdge(BasicBlock *From, BasicBlock *To);
+  void finishPostorder(BasicBlock *BB);
+};
+
 /// Traverse the blocks in a loop using a depth-first search.
 class LoopBlocksTraversal {
 public:
@@ -155,31 +165,17 @@ public:
     DFS.PostBlocks.push_back(BB);
     DFS.PostNumbers[BB] = DFS.PostBlocks.size();
   }
-
-  //===----------------------------------------------------------------------
-  // Implement part of the std::set interface for the purpose of driving the
-  // generic po_iterator.
-
-  /// Return true if the block is outside the loop or has already been visited.
-  /// Sorry if this is counterintuitive.
-  bool count(BasicBlock *BB) const {
-    return !DFS.L->contains(LI->getLoopFor(BB)) || DFS.PostNumbers.count(BB);
-  }
-
-  /// If this block is contained in the loop and has not been visited, return
-  /// true and assign a preorder number. This is a proxy for visitPreorder
-  /// called by POIterator.
-  bool insert(BasicBlock *BB) {
-    return visitPreorder(BB);
-  }
 };
 
-/// Specialize DFSetTraits to record postorder numbers.
-template<> struct DFSetTraits<LoopBlocksTraversal> {
-  static void finishPostorder(BasicBlock *BB, LoopBlocksTraversal& LBT) {
-    LBT.finishPostorder(BB);
-  }
-};
+inline bool po_iterator_storage<LoopBlocksTraversal, true>::
+insertEdge(BasicBlock *From, BasicBlock *To) {
+  return LBT.visitPreorder(To);
+}
+
+inline void po_iterator_storage<LoopBlocksTraversal, true>::
+finishPostorder(BasicBlock *BB) {
+  LBT.finishPostorder(BB);
+}
 
 } // End namespace llvm
 

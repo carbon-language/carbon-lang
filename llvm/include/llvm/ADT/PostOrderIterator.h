@@ -23,26 +23,65 @@
 
 namespace llvm {
 
-template<class SetType, bool External>   // Non-external set
+// The po_iterator_storage template provides access to the set of already
+// visited nodes during the po_iterator's depth-first traversal.
+//
+// The default implementation simply contains a set of visited nodes, while
+// the Extended=true version uses a reference to an external set.
+//
+// It is possible to prune the depth-first traversal in several ways:
+//
+// - When providing an external set that already contains some graph nodes,
+//   those nodes won't be visited again. This is useful for restarting a
+//   post-order traversal on a graph with nodes that aren't dominated by a
+//   single node.
+//
+// - By providing a custom SetType class, unwanted graph nodes can be excluded
+//   by having the insert() function return false. This could for example
+//   confine a CFG traversal to blocks in a specific loop.
+//
+// - Finally, by specializing the po_iterator_storage template itself, graph
+//   edges can be pruned by returning false in the insertEdge() function. This
+//   could be used to remove loop back-edges from the CFG seen by po_iterator.
+//
+// A specialized po_iterator_storage class can observe both the pre-order and
+// the post-order. The insertEdge() function is called in a pre-order, while
+// the finishPostorder() function is called just before the po_iterator moves
+// on to the next node.
+
+/// Default po_iterator_storage implementation with an internal set object.
+template<class SetType, bool External>
 class po_iterator_storage {
-public:
   SetType Visited;
+public:
+  // Return true if edge destination should be visited.
+  template<typename NodeType>
+  bool insertEdge(NodeType *From, NodeType *To) {
+    return Visited.insert(To);
+  }
+
+  // Called after all children of BB have been visited.
+  template<typename NodeType>
+  void finishPostorder(NodeType *BB) {}
 };
 
-/// DFSetTraits - Allow the SetType used to record depth-first search results to
-/// optionally record node postorder.
-template<class SetType>
-struct DFSetTraits {
-  static void finishPostorder(
-    typename SetType::iterator::value_type, SetType &) {}
-};
-
+/// Specialization of po_iterator_storage that references an external set.
 template<class SetType>
 class po_iterator_storage<SetType, true> {
+  SetType &Visited;
 public:
   po_iterator_storage(SetType &VSet) : Visited(VSet) {}
   po_iterator_storage(const po_iterator_storage &S) : Visited(S.Visited) {}
-  SetType &Visited;
+
+  // Return true if edge destination should be visited, called with From = 0 for
+  // the root node.
+  // Graph edges can be pruned by specializing this function.
+  template<class NodeType>
+  bool insertEdge(NodeType *From, NodeType *To) { return Visited.insert(To); }
+
+  // Called after all children of BB have been visited.
+  template<class NodeType>
+  void finishPostorder(NodeType *BB) {}
 };
 
 template<class GraphT,
@@ -64,14 +103,15 @@ class po_iterator : public std::iterator<std::forward_iterator_tag,
   void traverseChild() {
     while (VisitStack.back().second != GT::child_end(VisitStack.back().first)) {
       NodeType *BB = *VisitStack.back().second++;
-      if (this->Visited.insert(BB)) {  // If the block is not visited...
+      if (this->insertEdge(VisitStack.back().first, BB)) {
+        // If the block is not visited...
         VisitStack.push_back(std::make_pair(BB, GT::child_begin(BB)));
       }
     }
   }
 
   inline po_iterator(NodeType *BB) {
-    this->Visited.insert(BB);
+    this->insertEdge((NodeType*)0, BB);
     VisitStack.push_back(std::make_pair(BB, GT::child_begin(BB)));
     traverseChild();
   }
@@ -79,7 +119,7 @@ class po_iterator : public std::iterator<std::forward_iterator_tag,
 
   inline po_iterator(NodeType *BB, SetType &S) :
     po_iterator_storage<SetType, ExtStorage>(S) {
-    if (this->Visited.insert(BB)) {
+    if (this->insertEdge((NodeType*)0, BB)) {
       VisitStack.push_back(std::make_pair(BB, GT::child_begin(BB)));
       traverseChild();
     }
@@ -117,8 +157,7 @@ public:
   inline NodeType *operator->() const { return operator*(); }
 
   inline _Self& operator++() {   // Preincrement
-    DFSetTraits<SetType>::finishPostorder(VisitStack.back().first,
-                                          this->Visited);
+    this->finishPostorder(VisitStack.back().first);
     VisitStack.pop_back();
     if (!VisitStack.empty())
       traverseChild();
