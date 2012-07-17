@@ -43,6 +43,7 @@ void cleanupBrief(std::string &S) {
 bool isBlockCommand(StringRef Name) {
   return llvm::StringSwitch<bool>(Name)
       .Case("brief", true)
+      .Case("short", true)
       .Case("result", true)
       .Case("return", true)
       .Case("returns", true)
@@ -71,7 +72,7 @@ std::string BriefParser::Parse() {
 
     if (Tok.is(tok::command)) {
       StringRef Name = Tok.getCommandName();
-      if (Name == "brief") {
+      if (Name == "brief" || Name == "short") {
         Paragraph.clear();
         InBrief = true;
         ConsumeToken();

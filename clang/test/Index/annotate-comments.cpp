@@ -194,14 +194,24 @@ void isdoxy44(void);
 /// Ggg. IS_DOXYGEN_END
 void isdoxy45(void);
 
+/// IS_DOXYGEN_START Aaa bbb
+/// ccc.
+///
+/// \short
+/// Ddd eee.
+/// Fff.
+///
+/// Ggg. IS_DOXYGEN_END
+void isdoxy46(void);
+
 /// IS_DOXYGEN_NOT_ATTACHED
 #define FOO
-void notdoxy46(void);
+void notdoxy47(void);
 
 /// IS_DOXYGEN_START Aaa bbb
 /// \param ccc
 /// \returns ddd IS_DOXYGEN_END
-void isdoxy47(int);
+void isdoxy48(int);
 
 #endif
 
@@ -267,5 +277,6 @@ void isdoxy47(int);
 
 // CHECK: annotate-comments.cpp:185:6: FunctionDecl=isdoxy44:{{.*}} BriefComment=[IS_DOXYGEN_START Aaa bbb ccc.]
 // CHECK: annotate-comments.cpp:195:6: FunctionDecl=isdoxy45:{{.*}} BriefComment=[Ddd eee. Fff.]
-// CHECK: annotate-comments.cpp:204:6: FunctionDecl=isdoxy47:{{.*}} BriefComment=[IS_DOXYGEN_START Aaa bbb]
+// CHECK: annotate-comments.cpp:205:6: FunctionDecl=isdoxy46:{{.*}} BriefComment=[Ddd eee. Fff.]
+// CHECK: annotate-comments.cpp:214:6: FunctionDecl=isdoxy48:{{.*}} BriefComment=[IS_DOXYGEN_START Aaa bbb]
 
