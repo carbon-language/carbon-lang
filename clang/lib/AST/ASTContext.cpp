@@ -97,12 +97,30 @@ RawComment *ASTContext::getRawCommentForDeclNoCache(const Decl *D) const {
     return NULL;
 
   // Find the comment that occurs just after this declaration.
-  RawComment CommentAtDeclLoc(SourceMgr, SourceRange(DeclLoc));
-  ArrayRef<RawComment *>::iterator Comment
-      = std::lower_bound(RawComments.begin(),
-                         RawComments.end(),
-                         &CommentAtDeclLoc,
-                         BeforeThanCompare<RawComment>(SourceMgr));
+  ArrayRef<RawComment *>::iterator Comment;
+  {
+    // When searching for comments during parsing, the comment we are looking
+    // for is usually among the last two comments we parsed -- check them
+    // first.
+    RawComment CommentAtDeclLoc(SourceMgr, SourceRange(DeclLoc));
+    BeforeThanCompare<RawComment> Compare(SourceMgr);
+    ArrayRef<RawComment *>::iterator MaybeBeforeDecl = RawComments.end() - 1;
+    bool Found = Compare(*MaybeBeforeDecl, &CommentAtDeclLoc);
+    if (!Found && RawComments.size() >= 2) {
+      MaybeBeforeDecl--;
+      Found = Compare(*MaybeBeforeDecl, &CommentAtDeclLoc);
+    }
+
+    if (Found) {
+      Comment = MaybeBeforeDecl + 1;
+      assert(Comment == std::lower_bound(RawComments.begin(), RawComments.end(),
+                                         &CommentAtDeclLoc, Compare));
+    } else {
+      // Slow path.
+      Comment = std::lower_bound(RawComments.begin(), RawComments.end(),
+                                 &CommentAtDeclLoc, Compare);
+    }
+  }
 
   // Decompose the location for the declaration and find the beginning of the
   // file buffer.
