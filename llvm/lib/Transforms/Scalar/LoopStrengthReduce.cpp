@@ -3006,42 +3006,63 @@ LSRInstance::CollectLoopInvariantFixupsAndFormulae() {
 
 /// CollectSubexprs - Split S into subexpressions which can be pulled out into
 /// separate registers. If C is non-null, multiply each subexpression by C.
-static void CollectSubexprs(const SCEV *S, const SCEVConstant *C,
-                            SmallVectorImpl<const SCEV *> &Ops,
-                            const Loop *L,
-                            ScalarEvolution &SE) {
+static const SCEV *CollectSubexprs(const SCEV *S, const SCEVConstant *C,
+                                   SmallVectorImpl<const SCEV *> &Ops,
+                                   const Loop *L,
+                                   ScalarEvolution &SE,
+                                   unsigned Depth = 0) {
+  // Arbitrarily cap recursion to protect compile time.
+  if (Depth >= 3)
+    return S;
+
   if (const SCEVAddExpr *Add = dyn_cast<SCEVAddExpr>(S)) {
     // Break out add operands.
     for (SCEVAddExpr::op_iterator I = Add->op_begin(), E = Add->op_end();
-         I != E; ++I)
-      CollectSubexprs(*I, C, Ops, L, SE);
-    return;
+         I != E; ++I) {
+      const SCEV *Remainder = CollectSubexprs(*I, C, Ops, L, SE, Depth+1);
+      if (Remainder)
+        Ops.push_back(C ? SE.getMulExpr(C, Remainder) : Remainder);
+    }
+    return NULL;
   } else if (const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(S)) {
     // Split a non-zero base out of an addrec.
-    if (!AR->getStart()->isZero()) {
-      CollectSubexprs(SE.getAddRecExpr(SE.getConstant(AR->getType(), 0),
-                                       AR->getStepRecurrence(SE),
-                                       AR->getLoop(),
-                                       //FIXME: AR->getNoWrapFlags(SCEV::FlagNW)
-                                       SCEV::FlagAnyWrap),
-                      C, Ops, L, SE);
-      CollectSubexprs(AR->getStart(), C, Ops, L, SE);
-      return;
+    if (AR->getStart()->isZero())
+      return S;
+
+    const SCEV *Remainder = CollectSubexprs(AR->getStart(),
+                                            C, Ops, L, SE, Depth+1);
+    // Split the non-zero AddRec unless it is part of a nested recurrence that
+    // does not pertain to this loop.
+    if (AR->getLoop() == L || !isa<SCEVAddRecExpr>(Remainder)) {
+      if (Remainder) {
+        Ops.push_back(C ? SE.getMulExpr(C, Remainder) : Remainder);
+        Remainder = NULL;
+      }
+    }
+    if (Remainder != AR->getStart()) {
+      if (!Remainder)
+        Remainder = SE.getConstant(AR->getType(), 0);
+      return SE.getAddRecExpr(Remainder,
+                              AR->getStepRecurrence(SE),
+                              AR->getLoop(),
+                              //FIXME: AR->getNoWrapFlags(SCEV::FlagNW)
+                              SCEV::FlagAnyWrap);
     }
   } else if (const SCEVMulExpr *Mul = dyn_cast<SCEVMulExpr>(S)) {
     // Break (C * (a + b + c)) into C*a + C*b + C*c.
-    if (Mul->getNumOperands() == 2)
-      if (const SCEVConstant *Op0 =
-            dyn_cast<SCEVConstant>(Mul->getOperand(0))) {
-        CollectSubexprs(Mul->getOperand(1),
-                        C ? cast<SCEVConstant>(SE.getMulExpr(C, Op0)) : Op0,
-                        Ops, L, SE);
-        return;
-      }
+    if (Mul->getNumOperands() != 2)
+      return S;
+    if (const SCEVConstant *Op0 =
+        dyn_cast<SCEVConstant>(Mul->getOperand(0))) {
+      C = C ? cast<SCEVConstant>(SE.getMulExpr(C, Op0)) : Op0;
+      const SCEV *Remainder =
+        CollectSubexprs(Mul->getOperand(1), C, Ops, L, SE, Depth+1);
+      if (Remainder)
+        Ops.push_back(SE.getMulExpr(C, Remainder));
+      return NULL;
+    }
   }
-
-  // Otherwise use the value itself, optionally with a scale applied.
-  Ops.push_back(C ? SE.getMulExpr(C, S) : S);
+  return S;
 }
 
 /// GenerateReassociations - Split out subexpressions from adds and the bases of
@@ -3056,7 +3077,9 @@ void LSRInstance::GenerateReassociations(LSRUse &LU, unsigned LUIdx,
     const SCEV *BaseReg = Base.BaseRegs[i];
 
     SmallVector<const SCEV *, 8> AddOps;
-    CollectSubexprs(BaseReg, 0, AddOps, L, SE);
+    const SCEV *Remainder = CollectSubexprs(BaseReg, 0, AddOps, L, SE);
+    if (Remainder)
+      AddOps.push_back(Remainder);
 
     if (AddOps.size() == 1) continue;
 
