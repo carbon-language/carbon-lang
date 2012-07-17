@@ -1196,23 +1196,25 @@ void DeclContext::localUncachedLookup(DeclarationName Name,
   
   // If there's no external storage, just perform a normal lookup and copy
   // the results.
-  if (!hasExternalVisibleStorage() && !hasExternalLexicalStorage()) {
+  if (!hasExternalVisibleStorage() && !hasExternalLexicalStorage() && Name) {
     lookup_result LookupResults = lookup(Name);
     Results.insert(Results.end(), LookupResults.first, LookupResults.second);
     return;
   }
 
   // If we have a lookup table, check there first. Maybe we'll get lucky.
-  if (StoredDeclsMap *Map = LookupPtr.getPointer()) {
-    StoredDeclsMap::iterator Pos = Map->find(Name);
-    if (Pos != Map->end()) {
-      Results.insert(Results.end(),
-                     Pos->second.getLookupResult().first,
-                     Pos->second.getLookupResult().second);
-      return;
+  if (Name) {
+    if (StoredDeclsMap *Map = LookupPtr.getPointer()) {
+      StoredDeclsMap::iterator Pos = Map->find(Name);
+      if (Pos != Map->end()) {
+        Results.insert(Results.end(),
+                       Pos->second.getLookupResult().first,
+                       Pos->second.getLookupResult().second);
+        return;
+      }
     }
   }
-  
+
   // Slow case: grovel through the declarations in our chain looking for 
   // matches.
   for (Decl *D = FirstDecl; D; D = D->getNextDeclInContext()) {

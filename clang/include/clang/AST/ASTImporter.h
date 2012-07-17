@@ -271,7 +271,8 @@ namespace clang {
     
     /// \brief Determine whether the given types are structurally
     /// equivalent.
-    bool IsStructurallyEquivalent(QualType From, QualType To);    
+    bool IsStructurallyEquivalent(QualType From, QualType To,
+                                  bool Complain = true);
   };
 }
 
