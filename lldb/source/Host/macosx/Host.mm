@@ -114,11 +114,7 @@ public:
     {
         if (m_pool)
         {
-            if (objc_collectingEnabled())
-                [m_pool drain];
-            else
-                [m_pool release];
-
+            [m_pool drain];
             m_pool = nil;
         }
     }
