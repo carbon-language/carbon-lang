@@ -11345,6 +11345,7 @@ bool X86TargetLowering::isLegalICmpImmediate(int64_t Imm) const {
 }
 
 bool X86TargetLowering::isLegalAddImmediate(int64_t Imm) const {
+  // Can also use sub to handle negated immediates.
   return Imm == (int32_t)Imm;
 }
 
