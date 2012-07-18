@@ -1409,7 +1409,7 @@ FindLoopCounter(Loop *L, const SCEV *BECount,
       // If two IVs both count from zero or both count from nonzero then the
       // narrower is likely a dead phi that has been widened. Use the wider phi
       // to allow the other to be eliminated.
-      if (PhiWidth <= SE->getTypeSizeInBits(BestPhi->getType()))
+      else if (PhiWidth <= SE->getTypeSizeInBits(BestPhi->getType()))
         continue;
     }
     BestPhi = Phi;
