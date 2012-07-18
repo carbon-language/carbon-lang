@@ -1833,7 +1833,7 @@ void SelectionDAGBuilder::visitInvoke(const InvokeInst &I) {
     visitInlineAsm(&I);
   else if (Fn && Fn->isIntrinsic()) {
     assert(Fn->getIntrinsicID() == Intrinsic::donothing);
-    return; // ignore invokes to @llvm.donothing
+    // Ignore invokes to @llvm.donothing: jump directly to the next BB.
   } else
     LowerCallTo(&I, getValue(Callee), false, LandingPad);
 
