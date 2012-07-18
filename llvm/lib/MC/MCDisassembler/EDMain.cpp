@@ -4,7 +4,7 @@
 //
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements the enhanced disassembler's public C API.
@@ -34,9 +34,9 @@ int EDGetDisassembler(EDDisassemblerRef *disassembler,
     Syntax = EDDisassembler::kEDAssemblySyntaxARMUAL;
     break;
   }
-  
+
   EDDisassemblerRef ret = EDDisassembler::getDisassembler(triple, Syntax);
-  
+
   if (!ret)
     return -1;
   *disassembler = ret;
@@ -70,18 +70,18 @@ unsigned int EDCreateInsts(EDInstRef *insts,
                            uint64_t address,
                            void *arg) {
   unsigned int index;
-  
+
   for (index = 0; index < count; ++index) {
     EDInst *inst = ((EDDisassembler*)disassembler)->createInst(byteReader,
                                                                address, arg);
-    
+
     if (!inst)
       return index;
-    
+
     insts[index] = inst;
     address += inst->byteSize();
   }
-  
+
   return count;
 }
 
@@ -165,14 +165,14 @@ int EDTokenIsRegister(EDTokenRef token) {
 int EDTokenIsNegativeLiteral(EDTokenRef token) {
   if (((EDToken*)token)->type() != EDToken::kTokenLiteral)
     return -1;
-  
+
   return ((EDToken*)token)->literalSign();
 }
 
 int EDLiteralTokenAbsoluteValue(uint64_t *value, EDTokenRef token) {
   if (((EDToken*)token)->type() != EDToken::kTokenLiteral)
     return -1;
-  
+
   return ((EDToken*)token)->literalAbsoluteValue(*value);
 }
 
@@ -180,7 +180,7 @@ int EDRegisterTokenValue(unsigned *registerID,
                          EDTokenRef token) {
   if (((EDToken*)token)->type() != EDToken::kTokenRegister)
     return -1;
-  
+
   return ((EDToken*)token)->registerID(*registerID);
 }
 
@@ -231,7 +231,7 @@ struct ByteReaderWrapper {
   EDByteBlock_t byteBlock;
 };
 
-static int readerWrapperCallback(uint8_t *byte, 
+static int readerWrapperCallback(uint8_t *byte,
                           uint64_t address,
                           void *arg) {
   struct ByteReaderWrapper *wrapper = (struct ByteReaderWrapper *)arg;
@@ -245,13 +245,9 @@ unsigned int EDBlockCreateInsts(EDInstRef *insts,
                                 uint64_t address) {
   struct ByteReaderWrapper wrapper;
   wrapper.byteBlock = byteBlock;
-  
-  return EDCreateInsts(insts,
-                       count,
-                       disassembler, 
-                       readerWrapperCallback, 
-                       address, 
-                       (void*)&wrapper);
+
+  return EDCreateInsts(insts, count, disassembler, readerWrapperCallback,
+                       address, (void*)&wrapper);
 }
 
 int EDBlockEvaluateOperand(uint64_t *result, EDOperandRef operand,
