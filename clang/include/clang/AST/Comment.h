@@ -115,6 +115,7 @@ public:
 
   LLVM_ATTRIBUTE_USED void dump() const;
   LLVM_ATTRIBUTE_USED void dump(SourceManager &SM) const;
+  void dump(llvm::raw_ostream &OS, SourceManager *SM) const;
 
   static bool classof(const Comment *) { return true; }
 

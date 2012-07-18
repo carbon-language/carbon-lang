@@ -181,14 +181,8 @@ void CommentDumper::visitFullComment(const FullComment *C) {
 
 } // unnamed namespace
 
-void Comment::dump() const {
-  CommentDumper D(llvm::errs(), NULL);
-  D.dumpSubtree(this);
-  llvm::errs() << '\n';
-}
-
-void Comment::dump(SourceManager &SM) const {
-  CommentDumper D(llvm::errs(), &SM);
+void Comment::dump(llvm::raw_ostream &OS, SourceManager *SM) const {
+  CommentDumper D(llvm::errs(), SM);
   D.dumpSubtree(this);
   llvm::errs() << '\n';
 }
