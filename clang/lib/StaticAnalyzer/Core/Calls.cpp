@@ -115,7 +115,7 @@ ProgramStateRef CallEvent::invalidateRegions(unsigned BlockCount,
   ProgramStateRef Result = (Orig ? Orig : getState());
 
   SmallVector<const MemRegion *, 8> RegionsToInvalidate;
-  addExtraInvalidatedRegions(RegionsToInvalidate);
+  getExtraInvalidatedRegions(RegionsToInvalidate);
 
   // Indexes of arguments whose values will be preserved by the call.
   llvm::SmallSet<unsigned, 1> PreserveArgs;
@@ -327,7 +327,7 @@ void CallEvent::dump(raw_ostream &Out) const {
 }
 
 
-void CXXInstanceCall::addExtraInvalidatedRegions(RegionList &Regions) const {
+void CXXInstanceCall::getExtraInvalidatedRegions(RegionList &Regions) const {
   if (const MemRegion *R = getCXXThisVal().getAsRegion())
     Regions.push_back(R);
 }
@@ -420,7 +420,7 @@ BlockCall::param_end(bool UseDefinitionParams) const {
   return D->param_end();
 }
 
-void BlockCall::addExtraInvalidatedRegions(RegionList &Regions) const {
+void BlockCall::getExtraInvalidatedRegions(RegionList &Regions) const {
   // FIXME: This also needs to invalidate captured globals.
   if (const MemRegion *R = getBlockRegion())
     Regions.push_back(R);
@@ -441,7 +441,7 @@ SVal CXXConstructorCall::getCXXThisVal() const {
   return UnknownVal();
 }
 
-void CXXConstructorCall::addExtraInvalidatedRegions(RegionList &Regions) const {
+void CXXConstructorCall::getExtraInvalidatedRegions(RegionList &Regions) const {
   if (Data)
     Regions.push_back(static_cast<const MemRegion *>(Data));
 }
@@ -453,7 +453,7 @@ SVal CXXDestructorCall::getCXXThisVal() const {
   return UnknownVal();
 }
 
-void CXXDestructorCall::addExtraInvalidatedRegions(RegionList &Regions) const {
+void CXXDestructorCall::getExtraInvalidatedRegions(RegionList &Regions) const {
   if (Data)
     Regions.push_back(static_cast<const MemRegion *>(Data));
 }
@@ -500,7 +500,7 @@ ObjCMethodCall::param_end(bool UseDefinitionParams) const {
 }
 
 void
-ObjCMethodCall::addExtraInvalidatedRegions(RegionList &Regions) const {
+ObjCMethodCall::getExtraInvalidatedRegions(RegionList &Regions) const {
   if (const MemRegion *R = getReceiverSVal().getAsRegion())
     Regions.push_back(R);
 }

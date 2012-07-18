@@ -109,7 +109,7 @@ protected:
 
   /// \brief Used to specify non-argument regions that will be invalidated as a
   /// result of this call.
-  void addExtraInvalidatedRegions(RegionList &Regions) const;
+  void getExtraInvalidatedRegions(RegionList &Regions) const;
 
   QualType getDeclaredResultType() const;
 
@@ -281,7 +281,7 @@ protected:
     : CallEvent(D, St, LCtx, K) {}
 
   // Most function calls have no extra invalidated regions.
-  void addExtraInvalidatedRegions(RegionList &Regions) const {}
+  void getExtraInvalidatedRegions(RegionList &Regions) const {}
 
   QualType getDeclaredResultType() const;
 
@@ -367,7 +367,7 @@ class CXXInstanceCall : public SimpleCall {
   friend class CallEvent;
 
 protected:
-  void addExtraInvalidatedRegions(RegionList &Regions) const;
+  void getExtraInvalidatedRegions(RegionList &Regions) const;
 
   CXXInstanceCall(const CallExpr *CE, ProgramStateRef St,
                   const LocationContext *LCtx, Kind K)
@@ -435,7 +435,7 @@ class BlockCall : public SimpleCall {
   friend class CallEvent;
 
 protected:
-  void addExtraInvalidatedRegions(RegionList &Regions) const;
+  void getExtraInvalidatedRegions(RegionList &Regions) const;
 
   QualType getDeclaredResultType() const;
 
@@ -482,7 +482,7 @@ class CXXConstructorCall : public AnyFunctionCall {
   friend class CallEvent;
 
 protected:
-  void addExtraInvalidatedRegions(RegionList &Regions) const;
+  void getExtraInvalidatedRegions(RegionList &Regions) const;
 
 public:
   /// Represents a constructor call to a new or unknown region.
@@ -532,7 +532,7 @@ class CXXDestructorCall : public AnyFunctionCall {
   friend class CallEvent;
 
 protected:
-  void addExtraInvalidatedRegions(RegionList &Regions) const;
+  void getExtraInvalidatedRegions(RegionList &Regions) const;
 
 public:
   /// Creates an implicit destructor.
@@ -610,7 +610,7 @@ protected:
                  const LocationContext *LCtx, Kind K)
     : CallEvent(Msg, St, LCtx, K) {}
 
-  void addExtraInvalidatedRegions(RegionList &Regions) const;
+  void getExtraInvalidatedRegions(RegionList &Regions) const;
 
   QualType getDeclaredResultType() const;
 
@@ -792,8 +792,8 @@ public:
     return cast<ObjCPropertyAccess>(this)->fn(arg); \
   }
 
-inline void CallEvent::addExtraInvalidatedRegions(RegionList &Regions) const {
-  DISPATCH_ARG(addExtraInvalidatedRegions, Regions);
+inline void CallEvent::getExtraInvalidatedRegions(RegionList &Regions) const {
+  DISPATCH_ARG(getExtraInvalidatedRegions, Regions);
 }
 
 inline QualType CallEvent::getDeclaredResultType() const {
