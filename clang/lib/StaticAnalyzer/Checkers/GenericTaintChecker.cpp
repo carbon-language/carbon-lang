@@ -559,7 +559,6 @@ ProgramStateRef GenericTaintChecker::postScanf(const CallExpr *CE,
   if (CE->getNumArgs() < 2)
     return State;
 
-  SVal x = State->getSVal(CE->getArg(1), C.getLocationContext());
   // All arguments except for the very first one should get taint.
   for (unsigned int i = 1; i < CE->getNumArgs(); ++i) {
     // The arguments are pointer arguments. The data they are pointing at is

@@ -68,7 +68,6 @@ protected:
 
 public:
   explicit SVal() : Data(0), Kind(0) {}
-  ~SVal() {}
 
   /// BufferTy - A temporary buffer to hold a set of SVals.
   typedef SmallVector<SVal,5> BufferTy;
