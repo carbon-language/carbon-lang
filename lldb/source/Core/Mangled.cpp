@@ -21,6 +21,14 @@
 
 using namespace lldb_private;
 
+static inline bool
+cstring_is_mangled (const char *s)
+{
+    if (s)
+        return s[0] == '_' && s[1] == 'Z';
+    return false;
+}
+
 #pragma mark Mangled
 //----------------------------------------------------------------------
 // Default constructor
@@ -43,6 +51,38 @@ Mangled::Mangled (const char *s, bool mangled) :
     {
         SetValue(s, mangled);
     }
+}
+
+//----------------------------------------------------------------------
+// Constructor with an optional string and a boolean indicating if it is
+// the mangled version.
+//----------------------------------------------------------------------
+Mangled::Mangled (const ConstString &s, bool mangled) :
+    m_mangled(),
+    m_demangled()
+{
+    if (s)
+        SetValue(s, mangled);
+}
+
+//----------------------------------------------------------------------
+// Constructor with an optional string where we try and auto detect if
+// the name is mangled or not by inspecting the string value
+//----------------------------------------------------------------------
+Mangled::Mangled (const char *s) :
+    m_mangled(),
+    m_demangled()
+{
+    if (s && s[0])
+        SetValue(ConstString(s));
+}
+
+Mangled::Mangled (const ConstString &s) :
+m_mangled(),
+m_demangled()
+{
+    if (s)
+        SetValue(s);
 }
 
 //----------------------------------------------------------------------
@@ -129,6 +169,53 @@ Mangled::SetValue (const char *s, bool mangled)
     }
 }
 
+void
+Mangled::SetValue (const ConstString &s, bool mangled)
+{
+    if (s)
+    {
+        if (mangled)
+        {
+            m_demangled.Clear();
+            m_mangled = s;
+        }
+        else
+        {
+            m_demangled = s;
+            m_mangled.Clear();
+        }
+    }
+    else
+    {
+        m_demangled.Clear();
+        m_mangled.Clear();
+    }
+}
+
+void
+Mangled::SetValue (const ConstString &name)
+{
+    if (name)
+    {
+        if (cstring_is_mangled(name.GetCString()))
+        {
+            m_demangled.Clear();
+            m_mangled = name;
+        }
+        else
+        {
+            m_demangled = name;
+            m_mangled.Clear();
+        }
+    }
+    else
+    {
+        m_demangled.Clear();
+        m_mangled.Clear();
+    }
+}
+
+
 //----------------------------------------------------------------------
 // Generate the demangled name on demand using this accessor. Code in
 // this class will need to use this accessor if it wishes to decode
@@ -148,17 +235,15 @@ Mangled::GetDemangledName () const
                             "Mangled::GetDemangledName (m_mangled = %s)",
                             m_mangled.GetCString());
 
-        // We already know mangled is valid from the above check,
-        // lets just make sure it isn't empty...
-        const char * mangled = m_mangled.AsCString();
-        // Don't bother running anything that doesn't start with _Z through the demangler
-        if (mangled[0] == '_' && mangled[1] == 'Z')
+        // Don't bother running anything that isn't mangled
+        const char *mangled_cstr = m_mangled.GetCString();
+        if (cstring_is_mangled(mangled_cstr))
         {
             if (!m_mangled.GetMangledCounterpart(m_demangled))
             {
                 // We didn't already mangle this name, demangle it and if all goes well
                 // add it to our map.
-                char *demangled_name = abi::__cxa_demangle (mangled, NULL, NULL, NULL);
+                char *demangled_name = abi::__cxa_demangle (mangled_cstr, NULL, NULL, NULL);
 
                 if (demangled_name)
                 {

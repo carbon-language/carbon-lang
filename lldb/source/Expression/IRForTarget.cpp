@@ -229,7 +229,7 @@ IRForTarget::GetFunctionAddress (llvm::Function *fun,
     {
         if (!m_decl_map->GetFunctionInfo (fun_decl, fun_addr)) 
         {
-            lldb_private::ConstString alternate_mangling_const_str;
+            lldb_private::ConstString altnernate_name;
             bool found_it = m_decl_map->GetFunctionAddress (name, fun_addr);
             if (!found_it)
             {
@@ -240,27 +240,35 @@ IRForTarget::GetFunctionAddress (llvm::Function *fun,
                 {
                     std::string alternate_mangling("_ZNKSs");
                     alternate_mangling.append (name_cstr + strlen("_ZNKSbIcE"));
-                    alternate_mangling_const_str.SetCString(alternate_mangling.c_str());
-                    found_it = m_decl_map->GetFunctionAddress (alternate_mangling_const_str, fun_addr);
+                    altnernate_name.SetCString(alternate_mangling.c_str());
+                    found_it = m_decl_map->GetFunctionAddress (altnernate_name, fun_addr);
                 }
             }
             
             if (!found_it)
             {
+                lldb_private::Mangled mangled_name(name);
+                lldb_private::Mangled alt_mangled_name(altnernate_name);
                 if (log)
                 {
-                    if (alternate_mangling_const_str)
-                        log->Printf("Function \"%s\" (alternate name \"%s\") has no address", name.GetCString(), alternate_mangling_const_str.GetCString());
+                    if (alt_mangled_name)
+                        log->Printf("Function \"%s\" (alternate name \"%s\") has no address",
+                                    mangled_name.GetName().GetCString(),
+                                    alt_mangled_name.GetName().GetCString());
                     else
-                        log->Printf("Function \"%s\" had no address", name.GetCString());
+                        log->Printf("Function \"%s\" had no address",
+                                    mangled_name.GetName().GetCString());
                 }
                 
                 if (m_error_stream)
                 {
-                    if (alternate_mangling_const_str)
-                        m_error_stream->Printf("error: call to a function '%s' (alternate name '%s') that is not present in the target\n", name.GetCString(), alternate_mangling_const_str.GetCString());
+                    if (alt_mangled_name)
+                        m_error_stream->Printf("error: call to a function '%s' (alternate name '%s') that is not present in the target\n",
+                                               mangled_name.GetName().GetCString(),
+                                               alt_mangled_name.GetName().GetCString());
                     else
-                        m_error_stream->Printf("error: call to a function '%s' that is not present in the target\n", name.GetCString());
+                        m_error_stream->Printf("error: call to a function '%s' that is not present in the target\n",
+                                               mangled_name.GetName().GetCString());
                 }
                 return false;
             }

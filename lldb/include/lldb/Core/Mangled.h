@@ -300,6 +300,46 @@ public:
     Mangled (const char *name, bool is_mangled);
 
     //----------------------------------------------------------------------
+    /// Construct with name.
+    ///
+    /// Constructor with an optional string and a boolean indicating if it is
+    /// the mangled version.
+    ///
+    /// @param[in] name
+    ///     The already const name to copy into this object.
+    ///
+    /// @param[in] is_mangled
+    ///     If \b true then \a name is a mangled name, if \b false then
+    ///     \a name is demangled.
+    //----------------------------------------------------------------------
+    explicit
+    Mangled (const ConstString &name, bool is_mangled);
+
+    //----------------------------------------------------------------------
+    /// Construct with name.
+    ///
+    /// Constructor with an optional string and auto-detect if \a name is
+    /// mangled or not.
+    ///
+    /// @param[in] name
+    ///     The already const name to copy into this object.
+    //----------------------------------------------------------------------
+    explicit
+    Mangled (const char *name);
+
+    //----------------------------------------------------------------------
+    /// Construct with name.
+    ///
+    /// Constructor with an optional string and auto-detect if \a name is
+    /// mangled or not.
+    ///
+    /// @param[in] name
+    ///     The already const name to copy into this object.
+    //----------------------------------------------------------------------
+    explicit
+    Mangled (const ConstString &name);
+
+    //----------------------------------------------------------------------
     /// Destructor
     ///
     /// Releases its ref counts on the mangled and demangled strings that
@@ -512,6 +552,34 @@ public:
     //----------------------------------------------------------------------
     void
     SetValue (const char *name, bool is_mangled);
+
+    //----------------------------------------------------------------------
+    /// Set the string value in this object.
+    ///
+    /// If \a is_mangled is \b true, then the mangled named is set to \a
+    /// name, else the demangled name is set to \a name.
+    ///
+    /// @param[in] name
+    ///     The already const version of the name for this object.
+    ///
+    /// @param[in] is_mangled
+    ///     If \b true then \a name is a mangled name, if \b false then
+    ///     \a name is demangled.
+    //----------------------------------------------------------------------
+    void
+    SetValue (const ConstString &name, bool is_mangled);
+
+    //----------------------------------------------------------------------
+    /// Set the string value in this object.
+    ///
+    /// This version auto detects if the string is mangled by inspecting the
+    /// string value and looking for common mangling prefixes.
+    ///
+    /// @param[in] name
+    ///     The already const version of the name for this object.
+    //----------------------------------------------------------------------
+    void
+    SetValue (const ConstString &name);
 
 private:
     //----------------------------------------------------------------------
