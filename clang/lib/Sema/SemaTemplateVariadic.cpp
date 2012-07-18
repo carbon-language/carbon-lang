@@ -597,12 +597,13 @@ bool Sema::CheckParameterPacksForExpansion(SourceLocation EllipsisLoc,
   return false;
 }
 
-unsigned Sema::getNumArgumentsInExpansion(QualType T, 
+llvm::Optional<unsigned> Sema::getNumArgumentsInExpansion(QualType T,
                           const MultiLevelTemplateArgumentList &TemplateArgs) {
   QualType Pattern = cast<PackExpansionType>(T)->getPattern();
   SmallVector<UnexpandedParameterPack, 2> Unexpanded;
   CollectUnexpandedParameterPacksVisitor(Unexpanded).TraverseType(Pattern);
 
+  llvm::Optional<unsigned> Result;
   for (unsigned I = 0, N = Unexpanded.size(); I != N; ++I) {
     // Compute the depth and index for this parameter pack.
     unsigned Depth;
@@ -621,9 +622,14 @@ unsigned Sema::getNumArgumentsInExpansion(QualType T,
         llvm::PointerUnion<Decl *, DeclArgumentPack *> *Instantiation
           = CurrentInstantiationScope->findInstantiationOf(
                                         Unexpanded[I].first.get<NamedDecl *>());
-        if (Instantiation->is<DeclArgumentPack *>())
-          return Instantiation->get<DeclArgumentPack *>()->size();
-        
+        if (Instantiation->is<Decl*>())
+          // The pattern refers to an unexpanded pack. We're not ready to expand
+          // this pack yet.
+          return llvm::Optional<unsigned>();
+
+        unsigned Size = Instantiation->get<DeclArgumentPack *>()->size();
+        assert((!Result || *Result == Size) && "inconsistent pack sizes");
+        Result = Size;
         continue;
       }
       
@@ -631,13 +637,17 @@ unsigned Sema::getNumArgumentsInExpansion(QualType T,
     }
     if (Depth >= TemplateArgs.getNumLevels() ||
         !TemplateArgs.hasTemplateArgument(Depth, Index))
-      continue;
+      // The pattern refers to an unknown template argument. We're not ready to
+      // expand this pack yet.
+      return llvm::Optional<unsigned>();
     
     // Determine the size of the argument pack.
-    return TemplateArgs(Depth, Index).pack_size();
+    unsigned Size = TemplateArgs(Depth, Index).pack_size();
+    assert((!Result || *Result == Size) && "inconsistent pack sizes");
+    Result = Size;
   }
   
-  llvm_unreachable("No unexpanded parameter packs in type expansion.");
+  return Result;
 }
 
 bool Sema::containsUnexpandedParameterPacks(Declarator &D) {
