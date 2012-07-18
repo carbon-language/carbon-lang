@@ -100,7 +100,7 @@ Comment::child_iterator Comment::child_end() const {
   llvm_unreachable("Unknown comment kind!");
 }
 
-bool TextComment::isWhitespace() const {
+bool TextComment::isWhitespaceNoCache() const {
   for (StringRef::const_iterator I = Text.begin(), E = Text.end();
        I != E; ++I) {
     const char C = *I;
@@ -111,7 +111,7 @@ bool TextComment::isWhitespace() const {
   return true;
 }
 
-bool ParagraphComment::isWhitespace() const {
+bool ParagraphComment::isWhitespaceNoCache() const {
   for (child_iterator I = child_begin(), E = child_end(); I != E; ++I) {
     if (const TextComment *TC = dyn_cast<TextComment>(*I)) {
       if (!TC->isWhitespace())
