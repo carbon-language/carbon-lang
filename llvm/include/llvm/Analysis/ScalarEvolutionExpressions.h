@@ -15,6 +15,7 @@
 #define LLVM_ANALYSIS_SCALAREVOLUTION_EXPRESSIONS_H
 
 #include "llvm/Analysis/ScalarEvolution.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Support/ErrorHandling.h"
 
 namespace llvm {
@@ -505,9 +506,10 @@ namespace llvm {
   class SCEVTraversal {
     SV &Visitor;
     SmallVector<const SCEV *, 8> Worklist;
+    SmallPtrSet<const SCEV *, 8> Visited;
 
     void push(const SCEV *S) {
-      if (Visitor.follow(S))
+      if (Visited.insert(S) && Visitor.follow(S))
         Worklist.push_back(S);
     }
   public:
