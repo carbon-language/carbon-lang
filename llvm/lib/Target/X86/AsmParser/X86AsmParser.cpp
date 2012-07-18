@@ -667,11 +667,11 @@ X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned SegReg,
         // Handle '[' Scale*IndexReg ']'
         Parser.Lex();
         SMLoc IdxRegLoc = Parser.getTok().getLoc();
-	if (ParseRegister(IndexReg, IdxRegLoc, End))
-	  return ErrorOperand(IdxRegLoc, "Expected register");
+        if (ParseRegister(IndexReg, IdxRegLoc, End))
+          return ErrorOperand(IdxRegLoc, "Expected register");
         Scale = Val;
       } else
-        return ErrorOperand(Loc, "Unepxeted token");
+        return ErrorOperand(Loc, "Unexpected token");
   }
 
   if (getLexer().is(AsmToken::Plus) || getLexer().is(AsmToken::Minus)) {
@@ -684,8 +684,8 @@ X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned SegReg,
       if (getLexer().is(AsmToken::Star)) {
         Parser.Lex();
         SMLoc IdxRegLoc = Parser.getTok().getLoc();
-	if (ParseRegister(IndexReg, IdxRegLoc, End))
-	  return ErrorOperand(IdxRegLoc, "Expected register");
+        if (ParseRegister(IndexReg, IdxRegLoc, End))
+          return ErrorOperand(IdxRegLoc, "Expected register");
         Scale = Val;
       } else if (getLexer().is(AsmToken::RBrac)) {
         const MCExpr *ValExpr = MCConstantExpr::Create(Val, getContext());
