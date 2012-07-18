@@ -1,9 +1,5 @@
 // RUN: %clang_cc1 -triple x86_64-apple-darwin10 -analyze -analyzer-checker=core,osx.coreFoundation.CFRetainRelease,osx.cocoa.ClassRelease,osx.cocoa.RetainCount -analyzer-store=region -analyzer-output=text -verify %s
 
-// This actually still works after the pseudo-object refactor, it just
-// uses messages that say 'method' instead of 'property'.  Ted wanted
-// this xfailed and filed as a bug.  rdar://problem/10402993
-
 /***
 This file is for testing the path-sensitive notes for retain/release errors.
 Its goal is to have simple branch coverage of any path-based diagnostics,
@@ -28,6 +24,9 @@ GC-specific notes should go in retain-release-path-notes-gc.m.
 @interface Foo : NSObject
 - (id)methodWithValue;
 @property(retain) id propertyValue;
+
+- (id)objectAtIndexedSubscript:(unsigned)index;
+- (id)objectForKeyedSubscript:(id)key;
 @end
 
 typedef struct CFType *CFTypeRef;
@@ -116,6 +115,16 @@ CFTypeRef CFGetRuleViolation () {
 @implementation Foo (FundamentalMemoryManagementRules)
 - (id)copyViolation {
   id result = self.propertyValue; // expected-note{{Property returns an Objective-C object with a +0 retain count}}
+  return result; // expected-warning{{Object with a +0 retain count returned to caller where a +1 (owning) retain count is expected}} expected-note{{Object returned to caller with a +0 retain count}} expected-note{{Object with a +0 retain count returned to caller where a +1 (owning) retain count is expected}}
+}
+
+- (id)copyViolationIndexedSubscript {
+  id result = self[0]; // expected-note{{Subscript returns an Objective-C object with a +0 retain count}}
+  return result; // expected-warning{{Object with a +0 retain count returned to caller where a +1 (owning) retain count is expected}} expected-note{{Object returned to caller with a +0 retain count}} expected-note{{Object with a +0 retain count returned to caller where a +1 (owning) retain count is expected}}
+}
+
+- (id)copyViolationKeyedSubscript {
+  id result = self[self]; // expected-note{{Subscript returns an Objective-C object with a +0 retain count}}
   return result; // expected-warning{{Object with a +0 retain count returned to caller where a +1 (owning) retain count is expected}} expected-note{{Object returned to caller with a +0 retain count}} expected-note{{Object with a +0 retain count returned to caller where a +1 (owning) retain count is expected}}
 }
 

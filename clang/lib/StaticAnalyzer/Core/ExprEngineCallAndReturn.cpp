@@ -306,7 +306,6 @@ bool ExprEngine::inlineCall(ExplodedNodeSet &Dst,
     break;
   }
   case CE_ObjCMessage:
-  case CE_ObjCPropertyAccess:
     // These always use dynamic dispatch; enabling inlining means assuming
     // that a particular method will be called at runtime.
     llvm_unreachable("Dynamic dispatch should be handled above.");

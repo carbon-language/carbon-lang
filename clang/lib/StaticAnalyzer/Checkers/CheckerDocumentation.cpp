@@ -81,8 +81,7 @@ public:
   ///
   /// This will be called before the analyzer core processes the method call.
   /// This is called for any action which produces an Objective-C message send,
-  /// including explicit message syntax and property access. See the subclasses
-  /// of ObjCMethodCall for more details.
+  /// including explicit message syntax and property access.
   ///
   /// check::PreObjCMessage
   void checkPreObjCMessage(const ObjCMethodCall &M, CheckerContext &C) const {}

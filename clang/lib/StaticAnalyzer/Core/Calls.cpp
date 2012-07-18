@@ -518,7 +518,7 @@ SVal ObjCMethodCall::getReceiverSVal() const {
   if (!isInstanceMessage())
     return UnknownVal();
     
-  if (const Expr *Base = getInstanceReceiverExpr())
+  if (const Expr *Base = getOriginExpr()->getInstanceReceiver())
     return getSVal(Base);
 
   // An instance message with no expression means we are sending to super.
@@ -529,10 +529,67 @@ SVal ObjCMethodCall::getReceiverSVal() const {
   return getState()->getSVal(getState()->getRegion(SelfDecl, LCtx));
 }
 
-SourceRange ObjCPropertyAccess::getSourceRange() const {
-  const ParentMap &PM = getLocationContext()->getParentMap();
-  const ObjCMessageExpr *ME = getOriginExpr();
-  const PseudoObjectExpr *PO = cast<PseudoObjectExpr>(PM.getParent(ME));
-  return PO->getSourceRange();
+SourceRange ObjCMethodCall::getSourceRange() const {
+  switch (getMessageKind()) {
+  case OCM_Message:
+    return getOriginExpr()->getSourceRange();
+  case OCM_PropertyAccess:
+  case OCM_Subscript:
+    return getContainingPseudoObjectExpr()->getSourceRange();
+  }
+}
+
+typedef llvm::PointerIntPair<const PseudoObjectExpr *, 2> ObjCMessageDataTy;
+
+const PseudoObjectExpr *ObjCMethodCall::getContainingPseudoObjectExpr() const {
+  assert(Data != 0 && "Lazy lookup not yet performed.");
+  assert(getMessageKind() != OCM_Message && "Explicit message send.");
+  return ObjCMessageDataTy::getFromOpaqueValue(Data).getPointer();
+}
+
+ObjCMessageKind ObjCMethodCall::getMessageKind() const {
+  if (Data == 0) {
+    ParentMap &PM = getLocationContext()->getParentMap();
+    const Stmt *S = PM.getParent(getOriginExpr());
+    if (const PseudoObjectExpr *POE = dyn_cast_or_null<PseudoObjectExpr>(S)) {
+      const Expr *Syntactic = POE->getSyntacticForm();
+
+      // This handles the funny case of assigning to the result of a getter.
+      // This can happen if the getter returns a non-const reference.
+      if (const BinaryOperator *BO = dyn_cast<BinaryOperator>(Syntactic))
+        Syntactic = BO->getLHS();
+
+      ObjCMessageKind K;
+      switch (Syntactic->getStmtClass()) {
+      case Stmt::ObjCPropertyRefExprClass:
+        K = OCM_PropertyAccess;
+        break;
+      case Stmt::ObjCSubscriptRefExprClass:
+        K = OCM_Subscript;
+        break;
+      default:
+        // FIXME: Can this ever happen?
+        K = OCM_Message;
+        break;
+      }
+
+      if (K != OCM_Message) {
+        const_cast<ObjCMethodCall *>(this)->Data
+          = ObjCMessageDataTy(POE, K).getOpaqueValue();
+        assert(getMessageKind() == K);
+        return K;
+      }
+    }
+    
+    const_cast<ObjCMethodCall *>(this)->Data
+      = ObjCMessageDataTy(0, 1).getOpaqueValue();
+    assert(getMessageKind() == OCM_Message);
+    return OCM_Message;
+  }
+
+  ObjCMessageDataTy Info = ObjCMessageDataTy::getFromOpaqueValue(Data);
+  if (!Info.getPointer())
+    return OCM_Message;
+  return static_cast<ObjCMessageKind>(Info.getInt());
 }
 

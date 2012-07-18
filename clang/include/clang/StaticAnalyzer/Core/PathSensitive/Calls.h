@@ -44,10 +44,7 @@ enum CallEventKind {
   CE_CXXAllocator,
   CE_BEG_FUNCTION_CALLS = CE_Function,
   CE_END_FUNCTION_CALLS = CE_CXXAllocator,
-  CE_ObjCMessage,
-  CE_ObjCPropertyAccess,
-  CE_BEG_OBJC_CALLS = CE_ObjCMessage,
-  CE_END_OBJC_CALLS = CE_ObjCPropertyAccess
+  CE_ObjCMessage
 };
 
 
@@ -601,40 +598,41 @@ public:
   }
 };
 
+/// \brief Represents the ways an Objective-C message send can occur.
+//
+// Note to maintainers: OCM_Message should always be last, since it does not
+// need to fit in the Data field's low bits.
+enum ObjCMessageKind {
+  OCM_PropertyAccess,
+  OCM_Subscript,
+  OCM_Message
+};
+
 /// \brief Represents any expression that calls an Objective-C method.
+///
+/// This includes all of the kinds listed in ObjCMessageKind.
 class ObjCMethodCall : public CallEvent {
   friend class CallEvent;
 
-protected:
-  ObjCMethodCall(const ObjCMessageExpr *Msg, ProgramStateRef St,
-                 const LocationContext *LCtx, Kind K)
-    : CallEvent(Msg, St, LCtx, K) {}
+  const PseudoObjectExpr *getContainingPseudoObjectExpr() const;
 
+protected:
   void getExtraInvalidatedRegions(RegionList &Regions) const;
 
   QualType getDeclaredResultType() const;
 
 public:
+  ObjCMethodCall(const ObjCMessageExpr *Msg, ProgramStateRef St,
+                 const LocationContext *LCtx)
+    : CallEvent(Msg, St, LCtx, CE_ObjCMessage) {
+    Data = 0;
+  }
+
   const ObjCMessageExpr *getOriginExpr() const {
     return cast<ObjCMessageExpr>(CallEvent::getOriginExpr());
   }
-
-  Selector getSelector() const {
-    return getOriginExpr()->getSelector();
-  }
-  bool isInstanceMessage() const {
-    return getOriginExpr()->isInstanceMessage();
-  }
-  ObjCMethodFamily getMethodFamily() const {
-    return getOriginExpr()->getMethodFamily();
-  }
-
   const ObjCMethodDecl *getDecl() const {
     return getOriginExpr()->getMethodDecl();
-  }
-
-  SourceRange getSourceRange() const {
-    return getOriginExpr()->getSourceRange();
   }
   unsigned getNumArgs() const {
     return getOriginExpr()->getNumArgs();
@@ -643,17 +641,20 @@ public:
     return getOriginExpr()->getArg(Index);
   }
 
+  bool isInstanceMessage() const {
+    return getOriginExpr()->isInstanceMessage();
+  }
+  ObjCMethodFamily getMethodFamily() const {
+    return getOriginExpr()->getMethodFamily();
+  }
+  Selector getSelector() const {
+    return getOriginExpr()->getSelector();
+  }
+
+  SourceRange getSourceRange() const;
+
   /// \brief Returns the value of the receiver at the time of this call.
   SVal getReceiverSVal() const;
-
-  /// \brief Returns the expression for the receiver of this message if it is
-  /// an instance message.
-  ///
-  /// Returns NULL otherwise.
-  /// \sa ObjCMessageExpr::getInstanceReceiver()
-  const Expr *getInstanceReceiverExpr() const {
-    return getOriginExpr()->getInstanceReceiver();
-  }
 
   /// \brief Get the interface for the receiver.
   ///
@@ -663,14 +664,27 @@ public:
     return getOriginExpr()->getReceiverInterface();
   }
 
-  SourceRange getReceiverSourceRange() const {
-    return getOriginExpr()->getReceiverRange();
+  ObjCMessageKind getMessageKind() const;
+
+  bool isSetter() const {
+    switch (getMessageKind()) {
+    case OCM_Message:
+      llvm_unreachable("This is not a pseudo-object access!");
+    case OCM_PropertyAccess:
+      return getNumArgs() > 0;
+    case OCM_Subscript:
+      return getNumArgs() > 1;
+    }
+    llvm_unreachable("Unknown message kind");
   }
 
   const Decl *getDefinition(bool &IsDynamicDispatch) const {
     IsDynamicDispatch = true;
     
     const ObjCMethodDecl *MD = getDecl();
+    if (!MD)
+      return 0;
+
     for (Decl::redecl_iterator I = MD->redecls_begin(), E = MD->redecls_end();
          I != E; ++I) {
       if (cast<ObjCMethodDecl>(*I)->isThisDeclarationADefinition())
@@ -690,59 +704,11 @@ public:
     return getArgExpr(Index)->getSourceRange();
   }
 
-
   param_iterator param_begin(bool UseDefinitionParams = false) const;
   param_iterator param_end(bool UseDefinitionParams = false) const;
 
   static bool classof(const CallEvent *CA) {
-    return CA->getKind() >= CE_BEG_OBJC_CALLS &&
-           CA->getKind() <= CE_END_OBJC_CALLS;
-  }
-};
-
-/// \brief Represents an explicit message send to an Objective-C object.
-///
-/// Example: [obj descriptionWithLocale:locale];
-class ObjCMessageSend : public ObjCMethodCall {
-public:
-  ObjCMessageSend(const ObjCMessageExpr *Msg, ProgramStateRef St,
-                  const LocationContext *LCtx)
-    : ObjCMethodCall(Msg, St, LCtx, CE_ObjCMessage) {}
-
-  static bool classof(const CallEvent *CA) {
     return CA->getKind() == CE_ObjCMessage;
-  }
-};
-
-/// \brief Represents an Objective-C property getter or setter invocation.
-///
-/// Example: obj.prop += 1;
-class ObjCPropertyAccess : public ObjCMethodCall {
-public:
-  ObjCPropertyAccess(const ObjCPropertyRefExpr *PE, SourceRange range,
-                     const ObjCMessageExpr *Msg, const ProgramStateRef St,
-                     const LocationContext *LCtx)
-    : ObjCMethodCall(Msg, St, LCtx, CE_ObjCPropertyAccess) {
-    Data = PE;
-  }
-
-  /// \brief Returns true if this property access is calling the setter method.
-  bool isSetter() const {
-    return getNumArgs() > 0;
-  }
-
-  SourceRange getSourceRange() const;
-
-  /// \brief Return the property reference part of this access.
-  ///
-  /// In the expression "obj.prop += 1", the property reference expression is
-  /// "obj.prop".
-  const ObjCPropertyRefExpr *getPropertyExpr() const {
-    return static_cast<const ObjCPropertyRefExpr *>(Data);
-  }
-
-  static bool classof(const CallEvent *CA) {
-    return CA->getKind() == CE_ObjCPropertyAccess;
   }
 };
 
@@ -765,9 +731,7 @@ public:
   case CE_CXXAllocator: \
     return cast<CXXAllocatorCall>(this)->fn(); \
   case CE_ObjCMessage: \
-    return cast<ObjCMessageSend>(this)->fn(); \
-  case CE_ObjCPropertyAccess: \
-    return cast<ObjCPropertyAccess>(this)->fn(); \
+    return cast<ObjCMethodCall>(this)->fn(); \
   }
 
 #define DISPATCH_ARG(fn, arg) \
@@ -787,9 +751,7 @@ public:
   case CE_CXXAllocator: \
     return cast<CXXAllocatorCall>(this)->fn(arg); \
   case CE_ObjCMessage: \
-    return cast<ObjCMessageSend>(this)->fn(arg); \
-  case CE_ObjCPropertyAccess: \
-    return cast<ObjCPropertyAccess>(this)->fn(arg); \
+    return cast<ObjCMethodCall>(this)->fn(arg); \
   }
 
 inline void CallEvent::getExtraInvalidatedRegions(RegionList &Regions) const {

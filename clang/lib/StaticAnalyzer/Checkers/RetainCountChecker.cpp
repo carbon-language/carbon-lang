@@ -952,8 +952,7 @@ RetainSummaryManager::getSummary(const CallEvent &Call,
   case CE_CXXAllocator:
     // FIXME: These calls are currently unsupported.
     return getPersistentStopSummary();
-  case CE_ObjCMessage:
-  case CE_ObjCPropertyAccess: {
+  case CE_ObjCMessage: {
     const ObjCMethodCall &Msg = cast<ObjCMethodCall>(Call);
     if (Msg.isInstanceMessage())
       Summ = getInstanceMethodSummary(Msg, State);
@@ -1911,20 +1910,6 @@ static bool isNumericLiteralExpression(const Expr *E) {
          isa<CXXBoolLiteralExpr>(E);
 }
 
-static bool isPropertyAccess(const Stmt *S, ParentMap &PM) {
-  unsigned maxDepth = 4;
-  while (S && maxDepth) {
-    if (const PseudoObjectExpr *PO = dyn_cast<PseudoObjectExpr>(S)) {
-      if (!isa<ObjCMessageExpr>(PO->getSyntacticForm()))
-        return true;
-      return false;
-    }
-    S = PM.getParent(S);
-    --maxDepth;
-  }
-  return false;
-}
-
 PathDiagnosticPiece *CFRefReportVisitor::VisitNode(const ExplodedNode *N,
                                                    const ExplodedNode *PrevN,
                                                    BugReporterContext &BRC,
@@ -1989,10 +1974,19 @@ PathDiagnosticPiece *CFRefReportVisitor::VisitNode(const ExplodedNode *N,
           os << "function call";
       }
       else {
-        assert(isa<ObjCMessageExpr>(S));      
-        // The message expression may have between written directly or as
-        // a property access.  Lazily determine which case we are looking at.
-        os << (isPropertyAccess(S, N->getParentMap()) ? "Property" : "Method");
+        assert(isa<ObjCMessageExpr>(S));
+        ObjCMethodCall Call(cast<ObjCMessageExpr>(S), CurrSt, LCtx);
+        switch (Call.getMessageKind()) {
+        case OCM_Message:
+          os << "Method";
+          break;
+        case OCM_PropertyAccess:
+          os << "Property";
+          break;
+        case OCM_Subscript:
+          os << "Subscript";
+          break;
+        }
       }
 
       if (CurrV.getObjKind() == RetEffect::CF) {
@@ -2824,7 +2818,7 @@ void RetainCountChecker::checkSummary(const RetainSummary &Summ,
           state = updateSymbol(state, Sym, *T, Summ.getReceiverEffect(),
                                hasErr, C);
           if (hasErr) {
-            ErrorRange = MsgInvocation->getReceiverSourceRange();
+            ErrorRange = MsgInvocation->getOriginExpr()->getReceiverRange();
             ErrorSym = Sym;
           }
         }
