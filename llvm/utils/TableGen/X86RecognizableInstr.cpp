@@ -62,11 +62,11 @@ namespace X86Local {
     MRM0m = 24, MRM1m = 25, MRM2m = 26, MRM3m = 27,
     MRM4m = 28, MRM5m = 29, MRM6m = 30, MRM7m = 31,
     MRMInitReg  = 32,
+    RawFrmImm8  = 43,
+    RawFrmImm16 = 44,
 #define MAP(from, to) MRM_##from = to,
     MRM_MAPPING
 #undef MAP
-    RawFrmImm8  = 43,
-    RawFrmImm16 = 44,
     lastMRM
   };
   
