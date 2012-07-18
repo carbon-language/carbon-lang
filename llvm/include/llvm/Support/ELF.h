@@ -827,6 +827,8 @@ enum {
   SHT_GROUP         = 17, // Section group.
   SHT_SYMTAB_SHNDX  = 18, // Indices for SHN_XINDEX entries.
   SHT_LOOS          = 0x60000000, // Lowest operating system-specific type.
+  SHT_GNU_ATTRIBUTES= 0x6ffffff5, // Object attributes.
+  SHT_GNU_HASH      = 0x6ffffff6, // GNU-style hash table.
   SHT_GNU_verdef    = 0x6ffffffd, // GNU version definitions.
   SHT_GNU_verneed   = 0x6ffffffe, // GNU version references.
   SHT_GNU_versym    = 0x6fffffff, // GNU symbol versions table.
@@ -1108,6 +1110,9 @@ enum {
   PT_SUNW_EH_FRAME = 0x6474e550,
   PT_SUNW_UNWIND   = 0x6464e550,
 
+  PT_GNU_STACK  = 0x6474e551, // Indicates stack executability.
+  PT_GNU_RELRO  = 0x6474e552, // Read-only after relocation.
+
   PT_HIOS    = 0x6fffffff, // Highest operating system-specific pt entry type.
   PT_LOPROC  = 0x70000000, // Lowest processor-specific program hdr entry type.
   PT_HIPROC  = 0x7fffffff  // Highest processor-specific program hdr entry type.
@@ -1186,7 +1191,16 @@ enum {
   DT_LOOS         = 0x60000000, // Start of environment specific tags.
   DT_HIOS         = 0x6FFFFFFF, // End of environment specific tags.
   DT_LOPROC       = 0x70000000, // Start of processor specific tags.
-  DT_HIPROC       = 0x7FFFFFFF  // End of processor specific tags.
+  DT_HIPROC       = 0x7FFFFFFF, // End of processor specific tags.
+
+  DT_RELACOUNT    = 0x6FFFFFF9, // ELF32_Rela count.
+  DT_RELCOUNT     = 0x6FFFFFFA, // ELF32_Rel count.
+
+  DT_FLAGS_1      = 0X6FFFFFFB, // Flags_1.
+  DT_VERDEF       = 0X6FFFFFFC, // The address of the version definition table.
+  DT_VERDEFNUM    = 0X6FFFFFFD, // The number of entries in DT_VERDEF.
+  DT_VERNEED      = 0X6FFFFFFE, // The address of the version Dependency table.
+  DT_VERNEEDNUM   = 0X6FFFFFFF  // The number of entries in DT_VERNEED.
 };
 
 // DT_FLAGS values.
@@ -1196,6 +1210,27 @@ enum {
   DF_TEXTREL    = 0x04, // Relocations may modify a non-writable segment.
   DF_BIND_NOW   = 0x08, // Process all relocations on load.
   DF_STATIC_TLS = 0x10  // Reject attempts to load dynamically.
+};
+
+// State flags selectable in the `d_un.d_val' element of the DT_FLAGS_1 entry.
+enum {
+  DF_1_NOW        = 0x00000001, // Set RTLD_NOW for this object.
+  DF_1_GLOBAL     = 0x00000002, // Set RTLD_GLOBAL for this object.
+  DF_1_GROUP      = 0x00000004, // Set RTLD_GROUP for this object.
+  DF_1_NODELETE   = 0x00000008, // Set RTLD_NODELETE for this object.
+  DF_1_LOADFLTR   = 0x00000010, // Trigger filtee loading at runtime.
+  DF_1_INITFIRST  = 0x00000020, // Set RTLD_INITFIRST for this object.
+  DF_1_NOOPEN     = 0x00000040, // Set RTLD_NOOPEN for this object.
+  DF_1_ORIGIN     = 0x00000080, // $ORIGIN must be handled.
+  DF_1_DIRECT     = 0x00000100, // Direct binding enabled.
+  DF_1_TRANS      = 0x00000200,
+  DF_1_INTERPOSE  = 0x00000400, // Object is used to interpose.
+  DF_1_NODEFLIB   = 0x00000800, // Ignore default lib search path.
+  DF_1_NODUMP     = 0x00001000, // Object can't be dldump'ed.
+  DF_1_CONFALT    = 0x00002000, // Configuration alternative created.
+  DF_1_ENDFILTEE  = 0x00004000, // Filtee terminates filters search.
+  DF_1_DISPRELDNE = 0x00008000, // Disp reloc applied at build time.
+  DF_1_DISPRELPND = 0x00010000  // Disp reloc applied at run-time.
 };
 
 // ElfXX_VerDef structure version (GNU versioning)
