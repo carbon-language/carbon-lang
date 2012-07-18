@@ -593,6 +593,26 @@ void PMTopLevelManager::schedulePass(Pass *P) {
       Pass *AnalysisPass = findAnalysisPass(*I);
       if (!AnalysisPass) {
         const PassInfo *PI = PassRegistry::getPassRegistry()->getPassInfo(*I);
+
+        if (PI == NULL) {
+          // Pass P is not in the global PassRegistry
+          dbgs() << "Pass '"  << P->getPassName() << "' is not initialized." << "\n";
+          dbgs() << "Verify if there is a pass dependency cycle." << "\n";
+          dbgs() << "Required Passes:" << "\n";
+          for (AnalysisUsage::VectorType::const_iterator I2 = RequiredSet.begin(),
+                 E = RequiredSet.end(); I2 != E && I2 != I; ++I2) {
+            Pass *AnalysisPass2 = findAnalysisPass(*I2);
+            if (AnalysisPass2) {
+              dbgs() << "\t" << AnalysisPass2->getPassName() << "\n";
+            }
+            else {
+              dbgs() << "\t"   << "Error: Required pass not found! Possible causes:"  << "\n";
+              dbgs() << "\t\t" << "- Pass misconfiguration (e.g.: missing macros)"    << "\n";
+              dbgs() << "\t\t" << "- Corruption of the global PassRegistry"           << "\n";
+            }
+          }
+        }
+
         assert(PI && "Expected required passes to be initialized");
         AnalysisPass = PI->createPass();
         if (P->getPotentialPassManagerType () ==
