@@ -2436,6 +2436,16 @@ CheckOriginalCallArgDeduction(Sema &S, Sema::OriginalCallArg OriginalArg,
     
     Qualifiers AQuals = A.getQualifiers();
     Qualifiers DeducedAQuals = DeducedA.getQualifiers();
+
+    // Under Objective-C++ ARC, the deduced type may have implicitly been
+    // given strong lifetime. If so, update the original qualifiers to
+    // include this strong lifetime.
+    if (S.getLangOpts().ObjCAutoRefCount &&
+        DeducedAQuals.getObjCLifetime() == Qualifiers::OCL_Strong &&
+        AQuals.getObjCLifetime() == Qualifiers::OCL_None) {
+      AQuals.setObjCLifetime(Qualifiers::OCL_Strong);
+    }
+
     if (AQuals == DeducedAQuals) {
       // Qualifiers match; there's nothing to do.
     } else if (!DeducedAQuals.compatiblyIncludes(AQuals)) {
