@@ -7781,11 +7781,12 @@ def : Pat<(v4i32 (X86VBroadcast (loadi32 addr:$src))),
   def : Pat<(v4f64 (X86VBroadcast FR64:$src)),
             (VINSERTF128rr (INSERT_SUBREG (v4f64 (IMPLICIT_DEF)),
               (VPSHUFDri
-                (INSERT_SUBREG (v2f64 (IMPLICIT_DEF)), FR64:$src, sub_sd), 0),
-                  sub_xmm),
+                (INSERT_SUBREG (v2f64 (IMPLICIT_DEF)), FR64:$src, sub_sd),
+                0x44),
+              sub_xmm),
               (VPSHUFDri
                 (INSERT_SUBREG (v2f64 (IMPLICIT_DEF)), FR64:$src, sub_sd),
-              0), 1)>;
+                0x44), 1)>;
 
   def : Pat<(v4i32 (X86VBroadcast GR32:$src)),
             (VPSHUFDri
@@ -7801,11 +7802,12 @@ def : Pat<(v4i32 (X86VBroadcast (loadi32 addr:$src))),
   def : Pat<(v4i64 (X86VBroadcast GR64:$src)),
             (VINSERTF128rr (INSERT_SUBREG (v4i64 (IMPLICIT_DEF)),
               (VPSHUFDri
-                (INSERT_SUBREG (v2i64 (IMPLICIT_DEF)), GR64:$src, sub_sd), 0),
-                  sub_xmm),
+                (INSERT_SUBREG (v2i64 (IMPLICIT_DEF)), GR64:$src, sub_sd),
+                0x44),
+              sub_xmm),
               (VPSHUFDri
                 (INSERT_SUBREG (v2i64 (IMPLICIT_DEF)), GR64:$src, sub_sd),
-              0), 1)>;
+                0x44), 1)>;
   }
 }
 
