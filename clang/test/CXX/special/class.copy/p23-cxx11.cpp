@@ -132,3 +132,17 @@ template struct CopyAssign<E3>; // expected-note {{here}}
 template struct MoveAssign<E4>; // expected-note {{here}}
 template struct CopyAssign<E5>; // expected-note {{here}}
 template struct MoveAssign<E6>; // expected-note {{here}}
+
+namespace PR13381 {
+  struct S {
+    S &operator=(const S&);
+    S &operator=(const volatile S&) = delete; // expected-note{{deleted here}}
+  };
+  struct T {
+    volatile S s; // expected-note{{field 's' has a deleted copy assignment}}
+  };
+  void g() {
+    T t;
+    t = T(); // expected-error{{implicitly-deleted copy assignment}}
+  }
+}
