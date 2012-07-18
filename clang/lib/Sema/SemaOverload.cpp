@@ -735,9 +735,12 @@ OverloadCandidate::DeductionFailureInfo::getSecondArg() {
 }
 
 void OverloadCandidateSet::clear() {
-  for (iterator i = begin(), e = end(); i != e; ++i)
+  for (iterator i = begin(), e = end(); i != e; ++i) {
     for (unsigned ii = 0, ie = i->NumConversions; ii != ie; ++ii)
       i->Conversions[ii].~ImplicitConversionSequence();
+    if (!i->Viable && i->FailureKind == ovl_fail_bad_deduction)
+      i->DeductionFailure.Destroy();
+  }
   NumInlineSequences = 0;
   Candidates.clear();
   Functions.clear();
