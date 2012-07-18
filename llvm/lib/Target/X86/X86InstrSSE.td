@@ -8036,10 +8036,10 @@ defm VPSRAVD : avx2_var_shift<0x46, "vpsravd", sra, v4i32, v8i32>;
 
 //===----------------------------------------------------------------------===//
 // VGATHER - GATHER Operations
-multiclass avx2_gather<bits<8> opc, string OpcodeStr,
-                       RegisterClass RC256, X86MemOperand memop256> {
+multiclass avx2_gather<bits<8> opc, string OpcodeStr, RegisterClass RC256,
+                       X86MemOperand memop128, X86MemOperand memop256> {
   def rm  : AVX28I<opc, MRMSrcMem, (outs VR128:$dst, VR128:$mask_wb),
-            (ins VR128:$src1, v128mem:$src2, VR128:$mask),
+            (ins VR128:$src1, memop128:$src2, VR128:$mask),
             !strconcat(OpcodeStr,
               "\t{$mask, $src2, $dst|$dst, $src2, $mask}"),
             []>, VEX_4VOp3;
@@ -8051,12 +8051,12 @@ multiclass avx2_gather<bits<8> opc, string OpcodeStr,
 }
 
 let Constraints = "$src1 = $dst, $mask = $mask_wb" in {
-  defm VGATHERDPD : avx2_gather<0x92, "vgatherdpd", VR256, v128mem>, VEX_W;
-  defm VGATHERQPD : avx2_gather<0x93, "vgatherqpd", VR256, v256mem>, VEX_W;
-  defm VGATHERDPS : avx2_gather<0x92, "vgatherdps", VR256, v256mem>;
-  defm VGATHERQPS : avx2_gather<0x93, "vgatherqps", VR128, v256mem>;
-  defm VPGATHERDQ : avx2_gather<0x90, "vpgatherdq", VR256, v128mem>, VEX_W;
-  defm VPGATHERQQ : avx2_gather<0x91, "vpgatherqq", VR256, v256mem>, VEX_W;
-  defm VPGATHERDD : avx2_gather<0x90, "vpgatherdd", VR256, v256mem>;
-  defm VPGATHERQD : avx2_gather<0x91, "vpgatherqd", VR128, v256mem>;
+  defm VGATHERDPD : avx2_gather<0x92, "vgatherdpd", VR256, vx64mem, vx64mem>, VEX_W;
+  defm VGATHERQPD : avx2_gather<0x93, "vgatherqpd", VR256, vx64mem, vy64mem>, VEX_W;
+  defm VGATHERDPS : avx2_gather<0x92, "vgatherdps", VR256, vx32mem, vy32mem>;
+  defm VGATHERQPS : avx2_gather<0x93, "vgatherqps", VR128, vx32mem, vy32mem>;
+  defm VPGATHERDQ : avx2_gather<0x90, "vpgatherdq", VR256, vx64mem, vx64mem>, VEX_W;
+  defm VPGATHERQQ : avx2_gather<0x91, "vpgatherqq", VR256, vx64mem, vy64mem>, VEX_W;
+  defm VPGATHERDD : avx2_gather<0x90, "vpgatherdd", VR256, vx32mem, vy32mem>;
+  defm VPGATHERQD : avx2_gather<0x91, "vpgatherqd", VR128, vx32mem, vy32mem>;
 }

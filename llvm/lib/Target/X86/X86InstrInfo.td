@@ -292,6 +292,20 @@ def X86Mem256AsmOperand : AsmOperandClass {
   let Name = "Mem256"; let PredicateMethod = "isMem256";
 }
 
+// Gather mem operands
+def X86MemVX32Operand : AsmOperandClass {
+  let Name = "MemVX32"; let PredicateMethod = "isMemVX32";
+}
+def X86MemVY32Operand : AsmOperandClass {
+  let Name = "MemVY32"; let PredicateMethod = "isMemVY32";
+}
+def X86MemVX64Operand : AsmOperandClass {
+  let Name = "MemVX64"; let PredicateMethod = "isMemVX64";
+}
+def X86MemVY64Operand : AsmOperandClass {
+  let Name = "MemVY64"; let PredicateMethod = "isMemVY64";
+}
+
 def X86AbsMemAsmOperand : AsmOperandClass {
   let Name = "AbsMem";
   let SuperClasses = [X86MemAsmOperand];
@@ -330,12 +344,20 @@ def f128mem : X86MemOperand<"printf128mem"> {
   let ParserMatchClass = X86Mem128AsmOperand; }
 def f256mem : X86MemOperand<"printf256mem">{ 
   let ParserMatchClass = X86Mem256AsmOperand; }
-def v128mem : X86MemOperand<"printf128mem"> {
+
+// Gather mem operands
+def vx32mem : X86MemOperand<"printi32mem">{
   let MIOperandInfo = (ops ptr_rc, i8imm, VR128, i32imm, i8imm);
-  let ParserMatchClass = X86Mem128AsmOperand; }
-def v256mem : X86MemOperand<"printf256mem"> {
+  let ParserMatchClass = X86MemVX32Operand; }
+def vy32mem : X86MemOperand<"printi32mem">{
   let MIOperandInfo = (ops ptr_rc, i8imm, VR256, i32imm, i8imm);
-  let ParserMatchClass = X86Mem256AsmOperand; }
+  let ParserMatchClass = X86MemVY32Operand; }
+def vx64mem : X86MemOperand<"printi64mem">{
+  let MIOperandInfo = (ops ptr_rc, i8imm, VR128, i32imm, i8imm);
+  let ParserMatchClass = X86MemVX64Operand; }
+def vy64mem : X86MemOperand<"printi64mem">{
+  let MIOperandInfo = (ops ptr_rc, i8imm, VR256, i32imm, i8imm);
+  let ParserMatchClass = X86MemVY64Operand; }
 }
 
 // A version of i8mem for use on x86-64 that uses GR64_NOREX instead of

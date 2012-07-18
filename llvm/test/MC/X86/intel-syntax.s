@@ -63,4 +63,6 @@ _main:
         mov     ECX, DWORD PTR [4*ECX + _fnan]
 // CHECK:       movq    %fs:320, %rax
         mov     RAX, QWORD PTR FS:[320]
+// CHECK:       vpgatherdd %xmm8, (%r15,%xmm9,2), %xmm1
+        vpgatherdd XMM10, DWORD PTR [R15 + 2*XMM9], XMM8
 	ret

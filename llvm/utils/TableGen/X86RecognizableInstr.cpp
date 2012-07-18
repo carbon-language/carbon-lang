@@ -1106,8 +1106,6 @@ OperandType RecognizableInstr::typeFromString(const std::string &s,
   TYPE("VR128",               TYPE_XMM128)
   TYPE("f128mem",             TYPE_M128)
   TYPE("f256mem",             TYPE_M256)
-  TYPE("v128mem",             TYPE_M128)
-  TYPE("v256mem",             TYPE_M256)
   TYPE("FR64",                TYPE_XMM64)
   TYPE("f64mem",              TYPE_M64FP)
   TYPE("sdmem",               TYPE_M64FP)
@@ -1146,6 +1144,10 @@ OperandType RecognizableInstr::typeFromString(const std::string &s,
   TYPE("GR16_NOAX",           TYPE_Rv)
   TYPE("GR32_NOAX",           TYPE_Rv)
   TYPE("GR64_NOAX",           TYPE_R64)
+  TYPE("vx32mem",             TYPE_M32)
+  TYPE("vy32mem",             TYPE_M32)
+  TYPE("vx64mem",             TYPE_M64)
+  TYPE("vy64mem",             TYPE_M64)
   errs() << "Unhandled type string " << s << "\n";
   llvm_unreachable("Unhandled type string");
 }
@@ -1237,8 +1239,6 @@ OperandEncoding RecognizableInstr::memoryEncodingFromString
   ENCODING("sdmem",           ENCODING_RM)
   ENCODING("f128mem",         ENCODING_RM)
   ENCODING("f256mem",         ENCODING_RM)
-  ENCODING("v128mem",         ENCODING_RM)
-  ENCODING("v256mem",         ENCODING_RM)
   ENCODING("f64mem",          ENCODING_RM)
   ENCODING("f32mem",          ENCODING_RM)
   ENCODING("i128mem",         ENCODING_RM)
@@ -1251,6 +1251,10 @@ OperandEncoding RecognizableInstr::memoryEncodingFromString
   ENCODING("opaque48mem",     ENCODING_RM)
   ENCODING("opaque80mem",     ENCODING_RM)
   ENCODING("opaque512mem",    ENCODING_RM)
+  ENCODING("vx32mem",         ENCODING_RM)
+  ENCODING("vy32mem",         ENCODING_RM)
+  ENCODING("vx64mem",         ENCODING_RM)
+  ENCODING("vy64mem",         ENCODING_RM)
   errs() << "Unhandled memory encoding " << s << "\n";
   llvm_unreachable("Unhandled memory encoding");
 }
