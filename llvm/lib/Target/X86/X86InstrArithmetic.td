@@ -1156,7 +1156,7 @@ defm CMP : ArithBinOp_F<0x38, 0x3A, 0x3C, "cmp", MRM7r, MRM7m, X86cmp, 0, 0>;
 def X86testpat : PatFrag<(ops node:$lhs, node:$rhs),
                          (X86cmp (and_su node:$lhs, node:$rhs), 0)>;
 
-let Defs = [EFLAGS] in {
+let isCompare = 1, Defs = [EFLAGS] in {
   let isCommutable = 1 in {
     def TEST8rr  : BinOpRR_F<0x84, "test", Xi8 , X86testpat, MRMSrcReg>;
     def TEST16rr : BinOpRR_F<0x84, "test", Xi16, X86testpat, MRMSrcReg>;

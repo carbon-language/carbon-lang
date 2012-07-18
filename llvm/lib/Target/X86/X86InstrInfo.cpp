@@ -3046,6 +3046,17 @@ analyzeCompare(const MachineInstr *MI, unsigned &SrcReg, unsigned &SrcReg2,
     CmpMask = ~0;
     CmpValue = 0;
     return true;
+  case X86::TEST8rr:
+  case X86::TEST16rr:
+  case X86::TEST32rr:
+  case X86::TEST64rr:
+    SrcReg = MI->getOperand(0).getReg();
+    if (MI->getOperand(1).getReg() != SrcReg) return false;
+    // Compare against zero.
+    SrcReg2 = 0;
+    CmpMask = ~0;
+    CmpValue = 0;
+    return true;
   }
   return false;
 }
@@ -3093,6 +3104,40 @@ inline static bool isRedundantFlagInstr(MachineInstr *FlagI, unsigned SrcReg,
   return false;
 }
 
+/// isDefConvertible - check whether the definition can be converted
+/// to remove a comparison against zero.
+inline static bool isDefConvertible(MachineInstr *MI) {
+  switch (MI->getOpcode()) {
+  default: return false;
+  case X86::SUB64ri32: case X86::SUB64ri8: case X86::SUB32ri:
+  case X86::SUB32ri8:  case X86::SUB16ri:  case X86::SUB16ri8:
+  case X86::SUB8ri:    case X86::SUB64rr:  case X86::SUB32rr:
+  case X86::SUB16rr:   case X86::SUB8rr:   case X86::SUB64rm:
+  case X86::SUB32rm:   case X86::SUB16rm:  case X86::SUB8rm:
+  case X86::ADD64ri32: case X86::ADD64ri8: case X86::ADD32ri:
+  case X86::ADD32ri8:  case X86::ADD16ri:  case X86::ADD16ri8:
+  case X86::ADD8ri:    case X86::ADD64rr:  case X86::ADD32rr:
+  case X86::ADD16rr:   case X86::ADD8rr:   case X86::ADD64rm:
+  case X86::ADD32rm:   case X86::ADD16rm:  case X86::ADD8rm:
+  case X86::AND64ri32: case X86::AND64ri8: case X86::AND32ri:
+  case X86::AND32ri8:  case X86::AND16ri:  case X86::AND16ri8:
+  case X86::AND8ri:    case X86::AND64rr:  case X86::AND32rr:
+  case X86::AND16rr:   case X86::AND8rr:   case X86::AND64rm:
+  case X86::AND32rm:   case X86::AND16rm:  case X86::AND8rm:
+  case X86::XOR64ri32: case X86::XOR64ri8: case X86::XOR32ri:
+  case X86::XOR32ri8:  case X86::XOR16ri:  case X86::XOR16ri8:
+  case X86::XOR8ri:    case X86::XOR64rr:  case X86::XOR32rr:
+  case X86::XOR16rr:   case X86::XOR8rr:   case X86::XOR64rm:
+  case X86::XOR32rm:   case X86::XOR16rm:  case X86::XOR8rm:
+  case X86::OR64ri32:  case X86::OR64ri8:  case X86::OR32ri:
+  case X86::OR32ri8:   case X86::OR16ri:   case X86::OR16ri8:
+  case X86::OR8ri:     case X86::OR64rr:   case X86::OR32rr:
+  case X86::OR16rr:    case X86::OR8rr:    case X86::OR64rm:
+  case X86::OR32rm:    case X86::OR16rm:   case X86::OR8rm:
+    return true;
+  }
+}
+
 /// optimizeCompareInstr - Check if there exists an earlier instruction that
 /// operates on the same source operands and sets flags in the same way as
 /// Compare; remove Compare if possible.
@@ -3106,6 +3151,13 @@ optimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg, unsigned SrcReg2,
 
   // CmpInstr is the first instruction of the BB.
   MachineBasicBlock::iterator I = CmpInstr, Def = MI;
+
+  // If we are comparing against zero, check whether we can use MI to update
+  // EFLAGS. If MI is not in the same BB as CmpInstr, do not optimize.
+  bool IsCmpZero = (SrcReg2 == 0 && CmpValue == 0);
+  if (IsCmpZero && (MI->getParent() != CmpInstr->getParent() ||
+      !isDefConvertible(MI)))
+    return false;
 
   // We are searching for an earlier instruction that can make CmpInstr
   // redundant and that instruction will be saved in Sub.
@@ -3126,7 +3178,8 @@ optimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg, unsigned SrcReg2,
   for (; RI != RE; ++RI) {
     MachineInstr *Instr = &*RI;
     // Check whether CmpInstr can be made redundant by the current instruction.
-    if (isRedundantFlagInstr(CmpInstr, SrcReg, SrcReg2, CmpValue, Instr)) {
+    if (!IsCmpZero &&
+        isRedundantFlagInstr(CmpInstr, SrcReg, SrcReg2, CmpValue, Instr)) {
       Sub = Instr;
       break;
     }
@@ -3153,7 +3206,7 @@ optimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg, unsigned SrcReg2,
   }
 
   // Return false if no candidates exist.
-  if (!Sub)
+  if (!IsCmpZero && !Sub)
     return false;
 
   bool IsSwapped = (SrcReg2 != 0 && Sub->getOperand(1).getReg() == SrcReg2 &&
@@ -3177,13 +3230,10 @@ optimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg, unsigned SrcReg2,
       continue;
 
     // EFLAGS is used by this instruction.
-    if (IsSwapped) {
-      // If we have SUB(r1, r2) and CMP(r2, r1), the condition code needs
-      // to be changed from r2 > r1 to r1 < r2, from r2 < r1 to r1 > r2, etc.
-      // We decode the condition code from opcode, swap the condition code,
-      // and synthesize the new opcode.
-      bool OpcIsSET = false;
-      X86::CondCode OldCC;
+    X86::CondCode OldCC;
+    bool OpcIsSET = false;
+    if (IsCmpZero || IsSwapped) {
+      // We decode the condition code from opcode.
       if (Instr.isBranch())
         OldCC = getCondFromBranchOpc(Instr.getOpcode());
       else {
@@ -3194,6 +3244,22 @@ optimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg, unsigned SrcReg2,
           OldCC = getCondFromCMovOpc(Instr.getOpcode());
       }
       if (OldCC == X86::COND_INVALID) return false;
+    }
+    if (IsCmpZero) {
+      switch (OldCC) {
+      default: break;
+      case X86::COND_A: case X86::COND_AE:
+      case X86::COND_B: case X86::COND_BE:
+      case X86::COND_G: case X86::COND_GE:
+      case X86::COND_L: case X86::COND_LE:
+      case X86::COND_O: case X86::COND_NO:
+        // CF and OF are used, we can't perform this optimization.
+        return false;
+      }
+    } else if (IsSwapped) {
+      // If we have SUB(r1, r2) and CMP(r2, r1), the condition code needs
+      // to be changed from r2 > r1 to r1 < r2, from r2 < r1 to r1 > r2, etc.
+      // We swap the condition code and synthesize the new opcode.
       X86::CondCode NewCC = getSwappedCondition(OldCC);
       if (NewCC == X86::COND_INVALID) return false;
 
@@ -3223,7 +3289,7 @@ optimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg, unsigned SrcReg2,
 
   // If EFLAGS is not killed nor re-defined, we should check whether it is
   // live-out. If it is live-out, do not optimize.
-  if (IsSwapped && !IsSafe) {
+  if ((IsCmpZero || IsSwapped) && !IsSafe) {
     MachineBasicBlock *MBB = CmpInstr->getParent();
     for (MachineBasicBlock::succ_iterator SI = MBB->succ_begin(),
              SE = MBB->succ_end(); SI != SE; ++SI)
@@ -3231,6 +3297,8 @@ optimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg, unsigned SrcReg2,
         return false;
   }
 
+  // The instruction to be updated is either Sub or MI.
+  Sub = IsCmpZero ? MI : Sub;
   // Move Movr0Inst to the place right before Sub.
   if (Movr0Inst) {
     Sub->getParent()->remove(Movr0Inst);
@@ -3238,10 +3306,11 @@ optimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg, unsigned SrcReg2,
   }
 
   // Make sure Sub instruction defines EFLAGS.
-  assert(Sub->getNumOperands() >= 4 && Sub->getOperand(3).isReg() &&
-         Sub->getOperand(3).getReg() == X86::EFLAGS &&
-         "EFLAGS should be the 4th operand of SUBrr or SUBri.");
-  Sub->getOperand(3).setIsDef(true);
+  assert(Sub->getNumOperands() >= 2 &&
+         Sub->getOperand(Sub->getNumOperands()-1).isReg() &&
+         Sub->getOperand(Sub->getNumOperands()-1).getReg() == X86::EFLAGS &&
+         "EFLAGS should be the last operand of SUB, ADD, OR, XOR, AND");
+  Sub->getOperand(Sub->getNumOperands()-1).setIsDef(true);
   CmpInstr->eraseFromParent();
 
   // Modify the condition code of instructions in OpsToUpdate.

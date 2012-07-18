@@ -202,3 +202,14 @@ if.then.i103:                                     ; preds = %if.then44
 if.else.i104:                                     ; preds = %if.then44
   ret void
 }
+; rdar://11855129
+define i32 @p(i32 %a, i32 %b) nounwind {
+entry:
+; CHECK: p:
+; CHECK-NOT: test
+; CHECK: cmovs
+  %add = add nsw i32 %b, %a
+  %cmp = icmp sgt i32 %add, 0
+  %add. = select i1 %cmp, i32 %add, i32 0
+  ret i32 %add.
+}
