@@ -372,8 +372,7 @@ VerbatimBlockComment *Parser::parseVerbatimBlock() {
       }
     } else {
       // Empty line, just a tok::newline.
-      Line = S.actOnVerbatimBlockLine(Tok.getLocation(),
-                                      "");
+      Line = S.actOnVerbatimBlockLine(Tok.getLocation(), "");
       consumeToken();
     }
     Lines.push_back(Line);
