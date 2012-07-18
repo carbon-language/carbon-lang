@@ -6162,9 +6162,6 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                         {
                             std::vector<uint64_t> element_orders;
                             ParseChildArrayInfo(sc, dwarf_cu, die, first_index, element_orders, byte_stride, bit_stride);
-                            // We have an array that claims to have no members, lets give it at least one member...
-                            if (element_orders.empty())
-                                element_orders.push_back (1);
                             if (byte_stride == 0 && bit_stride == 0)
                                 byte_stride = element_type->GetByteSize();
                             clang_type_t array_element_type = element_type->GetClangForwardType();
