@@ -1215,21 +1215,26 @@ static PHINode *getLoopPhiForCounter(Value *IncV, Loop *L, DominatorTree *DT) {
   return 0;
 }
 
-/// needsLFTR - LinearFunctionTestReplace policy. Return true unless we can show
-/// that the current exit test is already sufficiently canonical.
-static bool needsLFTR(Loop *L, DominatorTree *DT) {
+/// Return the compare guarding the loop latch, or NULL for unrecognized tests.
+static ICmpInst *getLoopTest(Loop *L) {
   assert(L->getExitingBlock() && "expected loop exit");
 
   BasicBlock *LatchBlock = L->getLoopLatch();
   // Don't bother with LFTR if the loop is not properly simplified.
   if (!LatchBlock)
-    return false;
+    return 0;
 
   BranchInst *BI = dyn_cast<BranchInst>(L->getExitingBlock()->getTerminator());
   assert(BI && "expected exit branch");
 
+  return dyn_cast<ICmpInst>(BI->getCondition());
+}
+
+/// needsLFTR - LinearFunctionTestReplace policy. Return true unless we can show
+/// that the current exit test is already sufficiently canonical.
+static bool needsLFTR(Loop *L, DominatorTree *DT) {
   // Do LFTR to simplify the exit condition to an ICMP.
-  ICmpInst *Cond = dyn_cast<ICmpInst>(BI->getCondition());
+  ICmpInst *Cond = getLoopTest(L);
   if (!Cond)
     return true;
 
@@ -1259,6 +1264,48 @@ static bool needsLFTR(Loop *L, DominatorTree *DT) {
   return Phi != getLoopPhiForCounter(IncV, L, DT);
 }
 
+/// Recursive helper for hasConcreteDef(). Unfortunately, this currently boils
+/// down to checking that all operands are constant and listing instructions
+/// that may hide undef.
+static bool hasConcreteDefImpl(Value *V, SmallPtrSet<Value*, 8> &Visited,
+                               unsigned Depth) {
+  if (isa<Constant>(V))
+    return !isa<UndefValue>(V);
+
+  if (Depth >= 6)
+    return false;
+
+  // Conservatively handle non-constant non-instructions. For example, Arguments
+  // may be undef.
+  Instruction *I = dyn_cast<Instruction>(V);
+  if (!I)
+    return false;
+
+  // Load and return values may be undef.
+  if(I->mayReadFromMemory() || isa<CallInst>(I) || isa<InvokeInst>(I))
+    return false;
+
+  // Optimistically handle other instructions.
+  for (User::op_iterator OI = I->op_begin(), E = I->op_end(); OI != E; ++OI) {
+    if (!Visited.insert(*OI))
+      continue;
+    if (!hasConcreteDefImpl(*OI, Visited, Depth+1))
+      return false;
+  }
+  return true;
+}
+
+/// Return true if the given value is concrete. We must prove that undef can
+/// never reach it.
+///
+/// TODO: If we decide that this is a good approach to checking for undef, we
+/// may factor it into a common location.
+static bool hasConcreteDef(Value *V) {
+  SmallPtrSet<Value*, 8> Visited;
+  Visited.insert(V);
+  return hasConcreteDefImpl(V, Visited, 0);
+}
+
 /// AlmostDeadIV - Return true if this IV has any uses other than the (soon to
 /// be rewritten) loop exit test.
 static bool AlmostDeadIV(PHINode *Phi, BasicBlock *LatchBlock, Value *Cond) {
@@ -1282,6 +1329,8 @@ static bool AlmostDeadIV(PHINode *Phi, BasicBlock *LatchBlock, Value *Cond) {
 /// BECount may be an i8* pointer type. The pointer difference is already
 /// valid count without scaling the address stride, so it remains a pointer
 /// expression as far as SCEV is concerned.
+///
+/// Currently only valid for LFTR. See the comments on hasConcreteDef below.
 ///
 /// FIXME: Accept -1 stride and set IVLimit = IVInit - BECount
 ///
@@ -1331,6 +1380,19 @@ FindLoopCounter(Loop *L, const SCEV *BECount,
     if (getLoopPhiForCounter(IncV, L, DT) != Phi)
       continue;
 
+    // Avoid reusing a potentially undef value to compute other values that may
+    // have originally had a concrete definition.
+    if (!hasConcreteDef(Phi)) {
+      // We explicitly allow unknown phis as long as they are already used by
+      // the loop test. In this case we assume that performing LFTR could not
+      // increase the number of undef users.
+      if (ICmpInst *Cond = getLoopTest(L)) {
+        if (Phi != getLoopPhiForCounter(Cond->getOperand(0), L, DT)
+            && Phi != getLoopPhiForCounter(Cond->getOperand(1), L, DT)) {
+          continue;
+        }
+      }
+    }
     const SCEV *Init = AR->getStart();
 
     if (BestPhi && !AlmostDeadIV(BestPhi, LatchBlock, Cond)) {

@@ -153,6 +153,9 @@ return:
 ; Remove %i which is only used by the exit test.
 ; Verify that SCEV can still compute a backedge count from the sign
 ; extended %n, used for pointer comparison by LFTR.
+;
+; TODO: Fix for PR13371 currently makes this impossible. See
+; IndVarSimplify.cpp hasConcreteDef(). We may want to change to undef rules.
 define void @geplftr(i8* %base, i32 %x, i32 %y, i32 %n) nounwind {
 entry:
   %x.ext = sext i32 %x to i64
@@ -162,13 +165,13 @@ entry:
   %lim = add i32 %x, %n
   %cmp.ph = icmp ult i32 %x, %lim
   br i1 %cmp.ph, label %loop, label %exit
-
+; CHECK: @geplftr
 ; CHECK: loop:
 ; CHECK: phi i8*
-; CHECK-NOT: phi
+; DISABLE-NOT: phi      // This check is currently disabled
 ; CHECK: getelementptr
 ; CHECK: store
-; CHECK: icmp ne i8*
+; DISABLE: icmp ne i8*  // This check is currently disabled
 ; CHECK: br i1
 loop:
   %i = phi i32 [ %x, %entry ], [ %inc, %loop ]
@@ -187,7 +190,7 @@ exit:
 define void @nevertaken() nounwind uwtable ssp {
 entry:
   br label %loop
-
+; CHECK: @nevertaken
 ; CHECK: loop:
 ; CHECK-NOT: phi
 ; CHECK-NOT: add
