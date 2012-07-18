@@ -201,6 +201,10 @@ const char *skipWhitespace(const char *BufferPtr, const char *BufferEnd) {
   return BufferEnd;
 }
 
+bool isWhitespace(const char *BufferPtr, const char *BufferEnd) {
+  return skipWhitespace(BufferPtr, BufferEnd) == BufferEnd;
+}
+
 bool isCommandNameCharacter(char C) {
   return (C >= 'a' && C <= 'z') ||
          (C >= 'A' && C <= 'Z') ||
@@ -429,6 +433,7 @@ void Lexer::setupAndLexVerbatimBlock(Token &T,
 }
 
 void Lexer::lexVerbatimBlockFirstLine(Token &T) {
+again:
   assert(BufferPtr < CommentEnd);
 
   // FIXME: It would be better to scan the text once, finding either the block
@@ -458,6 +463,11 @@ void Lexer::lexVerbatimBlockFirstLine(Token &T) {
     // There is some text, followed by end command.  Extract text first.
     TextEnd = BufferPtr + Pos;
     NextLine = TextEnd;
+    // If there is only whitespace before end command, skip whitespace.
+    if (isWhitespace(BufferPtr, TextEnd)) {
+      BufferPtr = TextEnd;
+      goto again;
+    }
   }
 
   StringRef Text(BufferPtr, TextEnd - BufferPtr);

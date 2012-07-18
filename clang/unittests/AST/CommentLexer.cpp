@@ -514,7 +514,7 @@ TEST_F(CommentLexerTest, VerbatimBlock6) {
 
   lexString(Source, Toks);
 
-  ASSERT_EQ(11U, Toks.size());
+  ASSERT_EQ(10U, Toks.size());
 
   ASSERT_EQ(tok::text,                 Toks[0].getKind());
   ASSERT_EQ(StringRef(" "),            Toks[0].getText());
@@ -536,13 +536,10 @@ TEST_F(CommentLexerTest, VerbatimBlock6) {
 
   ASSERT_EQ(tok::newline,              Toks[7].getKind());
 
-  ASSERT_EQ(tok::verbatim_block_line,  Toks[8].getKind());
-  ASSERT_EQ(StringRef(" "),            Toks[8].getVerbatimBlockText());
+  ASSERT_EQ(tok::verbatim_block_end,   Toks[8].getKind());
+  ASSERT_EQ(StringRef("endverbatim"),  Toks[8].getVerbatimBlockName());
 
-  ASSERT_EQ(tok::verbatim_block_end,   Toks[9].getKind());
-  ASSERT_EQ(StringRef("endverbatim"),  Toks[9].getVerbatimBlockName());
-
-  ASSERT_EQ(tok::newline,              Toks[10].getKind());
+  ASSERT_EQ(tok::newline,              Toks[9].getKind());
 }
 
 TEST_F(CommentLexerTest, VerbatimBlock7) {
@@ -558,7 +555,7 @@ TEST_F(CommentLexerTest, VerbatimBlock7) {
 
   lexString(Source, Toks);
 
-  ASSERT_EQ(11U, Toks.size());
+  ASSERT_EQ(10U, Toks.size());
 
   ASSERT_EQ(tok::text,                 Toks[0].getKind());
   ASSERT_EQ(StringRef(" "),            Toks[0].getText());
@@ -575,19 +572,16 @@ TEST_F(CommentLexerTest, VerbatimBlock7) {
   ASSERT_EQ(tok::verbatim_block_line,  Toks[4].getKind());
   ASSERT_EQ(StringRef(" Bbb"),         Toks[4].getVerbatimBlockText());
 
-  ASSERT_EQ(tok::verbatim_block_line,  Toks[5].getKind());
-  ASSERT_EQ(StringRef(" "),            Toks[5].getVerbatimBlockText());
+  ASSERT_EQ(tok::verbatim_block_end,   Toks[5].getKind());
+  ASSERT_EQ(StringRef("endverbatim"),  Toks[5].getVerbatimBlockName());
 
-  ASSERT_EQ(tok::verbatim_block_end,   Toks[6].getKind());
-  ASSERT_EQ(StringRef("endverbatim"),  Toks[6].getVerbatimBlockName());
+  ASSERT_EQ(tok::newline,              Toks[6].getKind());
 
-  ASSERT_EQ(tok::newline,              Toks[7].getKind());
+  ASSERT_EQ(tok::text,                 Toks[7].getKind());
+  ASSERT_EQ(StringRef(" "),            Toks[7].getText());
 
-  ASSERT_EQ(tok::text,                 Toks[8].getKind());
-  ASSERT_EQ(StringRef(" "),            Toks[8].getText());
-
+  ASSERT_EQ(tok::newline,              Toks[8].getKind());
   ASSERT_EQ(tok::newline,              Toks[9].getKind());
-  ASSERT_EQ(tok::newline,              Toks[10].getKind());
 }
 
 // Complex test for verbatim blocks.

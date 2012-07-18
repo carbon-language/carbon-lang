@@ -1077,12 +1077,43 @@ TEST_F(CommentParserTest, VerbatimBlock5) {
     }
     {
       VerbatimBlockComment *VBC;
-      ASSERT_TRUE(HasVerbatimBlockAt(FC, 1, VBC, "verbatim", " Aaa", " "));
+      ASSERT_TRUE(HasVerbatimBlockAt(FC, 1, VBC, "verbatim", " Aaa"));
     }
   }
 }
 
 TEST_F(CommentParserTest, VerbatimBlock6) {
+  const char *Sources[] = {
+    "// \\verbatim\n"
+    "// Aaa\n"
+    "// Bbb\n"
+    "// \\endverbatim\n",
+
+    "/* \\verbatim\n"
+    " * Aaa\n"
+    " * Bbb\n"
+    " * \\endverbatim*/"
+  };
+
+  for (size_t i = 0, e = array_lengthof(Sources); i != e; i++) {
+    FullComment *FC = parseString(Sources[i]);
+    ASSERT_TRUE(HasChildCount(FC, 2));
+
+    {
+      ParagraphComment *PC;
+      ASSERT_TRUE(GetChildAt(FC, 0, PC));
+
+      ASSERT_TRUE(HasChildCount(PC, 1));
+        ASSERT_TRUE(HasTextAt(PC, 0, " "));
+    }
+    {
+      VerbatimBlockComment *VBC;
+      ASSERT_TRUE(HasVerbatimBlockAt(FC, 1, VBC, "verbatim", " Aaa", " Bbb"));
+    }
+  }
+}
+
+TEST_F(CommentParserTest, VerbatimBlock7) {
   const char *Sources[] = {
     "// \\verbatim\n"
     "// Aaa\n"
@@ -1097,25 +1128,24 @@ TEST_F(CommentParserTest, VerbatimBlock6) {
     " * \\endverbatim*/"
   };
   for (size_t i = 0, e = array_lengthof(Sources); i != e; i++) {
-  FullComment *FC = parseString(Sources[i]);
-  ASSERT_TRUE(HasChildCount(FC, 2));
+    FullComment *FC = parseString(Sources[i]);
+    ASSERT_TRUE(HasChildCount(FC, 2));
 
-  {
-    ParagraphComment *PC;
-    ASSERT_TRUE(GetChildAt(FC, 0, PC));
+    {
+      ParagraphComment *PC;
+      ASSERT_TRUE(GetChildAt(FC, 0, PC));
 
-    ASSERT_TRUE(HasChildCount(PC, 1));
-      ASSERT_TRUE(HasTextAt(PC, 0, " "));
-  }
-  {
-    VerbatimBlockComment *VBC;
-    ASSERT_TRUE(HasVerbatimBlockAt(FC, 1, VBC, "verbatim"));
-    ASSERT_EQ(4U, VBC->getNumLines());
-    ASSERT_EQ(" Aaa", VBC->getText(0));
-    ASSERT_EQ("",     VBC->getText(1));
-    ASSERT_EQ(" Bbb", VBC->getText(2));
-    ASSERT_EQ(" ",    VBC->getText(3));
-  }
+      ASSERT_TRUE(HasChildCount(PC, 1));
+        ASSERT_TRUE(HasTextAt(PC, 0, " "));
+    }
+    {
+      VerbatimBlockComment *VBC;
+      ASSERT_TRUE(HasVerbatimBlockAt(FC, 1, VBC, "verbatim"));
+      ASSERT_EQ(3U, VBC->getNumLines());
+      ASSERT_EQ(" Aaa", VBC->getText(0));
+      ASSERT_EQ("",     VBC->getText(1));
+      ASSERT_EQ(" Bbb", VBC->getText(2));
+    }
   }
 }
 
