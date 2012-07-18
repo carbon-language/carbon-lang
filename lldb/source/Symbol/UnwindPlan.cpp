@@ -300,25 +300,16 @@ UnwindPlan::Row::operator == (const UnwindPlan::Row& rhs) const
 {
     if (m_offset != rhs.m_offset || m_cfa_reg_num != rhs.m_cfa_reg_num || m_cfa_offset != rhs.m_cfa_offset)
         return false;
-    if (m_register_locations.size() != rhs.m_register_locations.size())
-        return false;
-    for (collection::const_iterator idx = m_register_locations.begin(); idx != m_register_locations.end(); ++idx)
-    {
-        collection::const_iterator lhs_pos = m_register_locations.find(idx->first);
-        collection::const_iterator rhs_pos = rhs.m_register_locations.find(idx->first);
-        if (lhs_pos->second != rhs_pos->second)
-            return false;
-    }
-    return true;
+    return m_register_locations == rhs.m_register_locations;
 }
 
 void
-UnwindPlan::AppendRow (UnwindPlan::RowSP row)
+UnwindPlan::AppendRow (const UnwindPlan::RowSP &row_sp)
 {
-    if (m_row_list.empty() || m_row_list.back()->GetOffset() != row->GetOffset())
-        m_row_list.push_back(row);
+    if (m_row_list.empty() || m_row_list.back()->GetOffset() != row_sp->GetOffset())
+        m_row_list.push_back(row_sp);
     else
-        m_row_list.back() = row;
+        m_row_list.back() = row_sp;
 }
 
 UnwindPlan::RowSP

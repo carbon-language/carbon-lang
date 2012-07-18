@@ -241,12 +241,11 @@ public:
         Row ();
     
         Row (const UnwindPlan::Row& rhs) : 
-            m_offset(rhs.m_offset), m_cfa_reg_num(rhs.m_cfa_reg_num), m_cfa_offset(rhs.m_cfa_offset)
+            m_offset             (rhs.m_offset),
+            m_cfa_reg_num        (rhs.m_cfa_reg_num),
+            m_cfa_offset         (rhs.m_cfa_offset),
+            m_register_locations (rhs.m_register_locations)
         {
-            for (collection::const_iterator idx = rhs.m_register_locations.begin(); idx != rhs.m_register_locations.end(); ++idx)
-            {
-                m_register_locations[idx->first] = idx->second;
-            }
         }
 
         bool
@@ -326,13 +325,6 @@ public:
         {
             m_cfa_offset = offset;
         }
-    
-        // Return the number of registers we have locations for
-        int
-        GetRegisterCount () const
-        {
-            return m_register_locations.size();
-        }
 
         void
         Clear ();
@@ -368,7 +360,7 @@ public:
     Dump (Stream& s, Thread* thread, lldb::addr_t base_addr) const;
 
     void 
-    AppendRow (RowSP row);
+    AppendRow (const RowSP& row_sp);
 
     // Returns a pointer to the best row for the given offset into the function's instructions.
     // If offset is -1 it indicates that the function start is unknown - the final row in the UnwindPlan is returned.
