@@ -355,6 +355,7 @@ bool MipsAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNum,
     }
     case 'D': // Second part of a double word register operand
     case 'L': // Low order register of a double word register operand
+    case 'M': // High order register of a double word register operand
     {
       if (OpNum == 0)
         return true;
@@ -377,12 +378,16 @@ bool MipsAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNum,
       unsigned RegOp = OpNum;
       if (!Subtarget->isGP64bit()){
         // Endianess reverses which register holds the high or low value
+        // between M and L.
         switch(ExtraCode[0]) {
-        case 'D':
-          RegOp = (Subtarget->isLittle()) ? OpNum : OpNum+1;
+        case 'M':
+          RegOp = (Subtarget->isLittle()) ? OpNum + 1 : OpNum;
           break;
         case 'L':
-          RegOp = (Subtarget->isLittle()) ? OpNum+1 : OpNum;
+          RegOp = (Subtarget->isLittle()) ? OpNum : OpNum + 1;
+          break;
+        case 'D': // Always the second part
+          RegOp = OpNum + 1;
         }
         if (RegOp >= MI->getNumOperands())
           return true;
