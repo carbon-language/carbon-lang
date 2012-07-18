@@ -15,25 +15,12 @@
 
 #include "clang/StaticAnalyzer/Core/PathSensitive/Calls.h"
 #include "clang/Analysis/ProgramPoint.h"
+#include "clang/AST/ParentMap.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/StringExtras.h"
 
 using namespace clang;
 using namespace ento;
-
-SVal CallEvent::getArgSVal(unsigned Index) const {
-  const Expr *ArgE = getArgExpr(Index);
-  if (!ArgE)
-    return UnknownVal();
-  return getSVal(ArgE);
-}
-
-SourceRange CallEvent::getArgSourceRange(unsigned Index) const {
-  const Expr *ArgE = getArgExpr(Index);
-  if (!ArgE)
-    return SourceRange();
-  return ArgE->getSourceRange();
-}
 
 QualType CallEvent::getResultType() const {
   QualType ResultTy = getDeclaredResultType();
@@ -125,7 +112,7 @@ static void findPtrToConstParams(llvm::SmallSet<unsigned, 1> &PreserveArgs,
 
 ProgramStateRef CallEvent::invalidateRegions(unsigned BlockCount,
                                               ProgramStateRef Orig) const {
-  ProgramStateRef Result = (Orig ? Orig : State);
+  ProgramStateRef Result = (Orig ? Orig : getState());
 
   SmallVector<const MemRegion *, 8> RegionsToInvalidate;
   addExtraInvalidatedRegions(RegionsToInvalidate);
@@ -185,15 +172,16 @@ ProgramStateRef CallEvent::invalidateRegions(unsigned BlockCount,
   // NOTE: Even if RegionsToInvalidate is empty, we may still invalidate
   //  global variables.
   return Result->invalidateRegions(RegionsToInvalidate, getOriginExpr(),
-                                   BlockCount, LCtx, /*Symbols=*/0, this);
+                                   BlockCount, getLocationContext(),
+                                   /*Symbols=*/0, this);
 }
 
 ProgramPoint CallEvent::getProgramPoint(bool IsPreVisit,
                                         const ProgramPointTag *Tag) const {
   if (const Expr *E = getOriginExpr()) {
     if (IsPreVisit)
-      return PreStmt(E, LCtx, Tag);
-    return PostStmt(E, LCtx, Tag);
+      return PreStmt(E, getLocationContext(), Tag);
+    return PostStmt(E, getLocationContext(), Tag);
   }
 
   const Decl *D = getDecl();
@@ -201,8 +189,8 @@ ProgramPoint CallEvent::getProgramPoint(bool IsPreVisit,
 
   SourceLocation Loc = getSourceRange().getBegin();
   if (IsPreVisit)
-    return PreImplicitCall(D, Loc, LCtx, Tag);
-  return PostImplicitCall(D, Loc, LCtx, Tag);
+    return PreImplicitCall(D, Loc, getLocationContext(), Tag);
+  return PostImplicitCall(D, Loc, getLocationContext(), Tag);
 }
 
 
@@ -242,7 +230,7 @@ QualType AnyFunctionCall::getDeclaredResultType() const {
 }
 
 bool AnyFunctionCall::argumentsMayEscape() const {
-  if (CallEvent::argumentsMayEscape())
+  if (hasNonZeroCallbackArg())
     return true;
 
   const FunctionDecl *D = getDecl();
@@ -297,17 +285,31 @@ bool AnyFunctionCall::argumentsMayEscape() const {
   return false;
 }
 
+SVal AnyFunctionCall::getArgSVal(unsigned Index) const {
+  const Expr *ArgE = getArgExpr(Index);
+  if (!ArgE)
+    return UnknownVal();
+  return getSVal(ArgE);
+}
+
+SourceRange AnyFunctionCall::getArgSourceRange(unsigned Index) const {
+  const Expr *ArgE = getArgExpr(Index);
+  if (!ArgE)
+    return SourceRange();
+  return ArgE->getSourceRange();
+}
+
 
 const FunctionDecl *SimpleCall::getDecl() const {
-  const FunctionDecl *D = CE->getDirectCallee();
+  const FunctionDecl *D = getOriginExpr()->getDirectCallee();
   if (D)
     return D;
 
-  return getSVal(CE->getCallee()).getAsFunctionDecl();
+  return getSVal(getOriginExpr()->getCallee()).getAsFunctionDecl();
 }
 
 void CallEvent::dump(raw_ostream &Out) const {
-  ASTContext &Ctx = State->getStateManager().getContext();
+  ASTContext &Ctx = getState()->getStateManager().getContext();
   if (const Expr *E = getOriginExpr()) {
     E->printPretty(Out, Ctx, 0, Ctx.getLangOpts());
     Out << "\n";
@@ -340,10 +342,6 @@ static const CXXMethodDecl *devirtualize(const CXXMethodDecl *MD, SVal ThisVal){
     return 0;
 
   const CXXRecordDecl *RD = TR->getValueType()->getAsCXXRecordDecl();
-  if (!RD)
-    return 0;
-
-  RD = RD->getDefinition();
   if (!RD)
     return 0;
 
@@ -438,26 +436,26 @@ QualType BlockCall::getDeclaredResultType() const {
 
 
 SVal CXXConstructorCall::getCXXThisVal() const {
-  if (Target)
-    return loc::MemRegionVal(Target);
+  if (Data)
+    return loc::MemRegionVal(static_cast<const MemRegion *>(Data));
   return UnknownVal();
 }
 
 void CXXConstructorCall::addExtraInvalidatedRegions(RegionList &Regions) const {
-  if (Target)
-    Regions.push_back(Target);
+  if (Data)
+    Regions.push_back(static_cast<const MemRegion *>(Data));
 }
 
 
 SVal CXXDestructorCall::getCXXThisVal() const {
-  if (Target)
-    return loc::MemRegionVal(Target);
+  if (Data)
+    return loc::MemRegionVal(static_cast<const MemRegion *>(Data));
   return UnknownVal();
 }
 
 void CXXDestructorCall::addExtraInvalidatedRegions(RegionList &Regions) const {
-  if (Target)
-    Regions.push_back(Target);
+  if (Data)
+    Regions.push_back(static_cast<const MemRegion *>(Data));
 }
 
 const Decl *CXXDestructorCall::getDefinition(bool &IsDynamicDispatch) const {
@@ -520,14 +518,21 @@ SVal ObjCMethodCall::getReceiverSVal() const {
   if (!isInstanceMessage())
     return UnknownVal();
     
-  const Expr *Base = Msg->getInstanceReceiver();
-  if (Base)
+  if (const Expr *Base = getInstanceReceiverExpr())
     return getSVal(Base);
 
   // An instance message with no expression means we are sending to super.
   // In this case the object reference is the same as 'self'.
+  const LocationContext *LCtx = getLocationContext();
   const ImplicitParamDecl *SelfDecl = LCtx->getSelfDecl();
   assert(SelfDecl && "No message receiver Expr, but not in an ObjC method");
-  return State->getSVal(State->getRegion(SelfDecl, LCtx));
+  return getState()->getSVal(getState()->getRegion(SelfDecl, LCtx));
+}
+
+SourceRange ObjCPropertyAccess::getSourceRange() const {
+  const ParentMap &PM = getLocationContext()->getParentMap();
+  const ObjCMessageExpr *ME = getOriginExpr();
+  const PseudoObjectExpr *PO = cast<PseudoObjectExpr>(PM.getParent(ME));
+  return PO->getSourceRange();
 }
 
