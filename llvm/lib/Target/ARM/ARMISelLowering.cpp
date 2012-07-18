@@ -6859,7 +6859,7 @@ ARMTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     RSBBB->addSuccessor(SinkBB);
 
     // insert a cmp at the end of BB
-    AddDefaultPred(BuildMI(BB, dl, 
+    AddDefaultPred(BuildMI(BB, dl,
                            TII->get(isThumb2 ? ARM::t2CMPri : ARM::CMPri))
                    .addReg(ABSSrcReg).addImm(0));
 
@@ -7678,7 +7678,7 @@ static SDValue PerformSTORECombine(SDNode *N,
   if (St->isVolatile())
     return SDValue();
 
-  // Optimize trunc store (of multiple scalars) to shuffle and store.  First, 
+  // Optimize trunc store (of multiple scalars) to shuffle and store.  First,
   // pack all of the elements in one place.  Next, store to memory in fewer
   // chunks.
   SDValue StVal = St->getValue();
