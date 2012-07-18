@@ -776,13 +776,12 @@ void CFGBuilder::addAutomaticObjDtors(LocalScope::const_iterator B,
     // If this destructor is marked as a no-return destructor, we need to
     // create a new block for the destructor which does not have as a successor
     // anything built thus far: control won't flow out of this block.
-    QualType Ty;
-    if ((*I)->getType()->isReferenceType()) {
+    QualType Ty = (*I)->getType();
+    if (Ty->isReferenceType()) {
       Ty = getReferenceInitTemporaryType(*Context, (*I)->getInit());
-    } else {
-      Ty = Context->getBaseElementType((*I)->getType());
     }
-    
+    Ty = Context->getBaseElementType(Ty);
+
     const CXXDestructorDecl *Dtor = Ty->getAsCXXRecordDecl()->getDestructor();
     if (cast<FunctionType>(Dtor->getType())->getNoReturnAttr())
       Block = createNoReturnBlock();
