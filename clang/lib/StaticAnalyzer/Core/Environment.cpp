@@ -96,8 +96,6 @@ SVal Environment::getSVal(const EnvironmentEntry &Entry,
       case Stmt::CXXBindTemporaryExprClass:
         E = cast<CXXBindTemporaryExpr>(E)->getSubExpr();
         continue;
-      case Stmt::ObjCPropertyRefExprClass:
-        return loc::ObjCPropRef(cast<ObjCPropertyRefExpr>(E));
       case Stmt::ObjCStringLiteralClass: {
         MemRegionManager &MRMgr = svalBuilder.getRegionManager();
         const ObjCStringLiteral *SL = cast<ObjCStringLiteral>(E);

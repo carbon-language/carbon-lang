@@ -560,6 +560,10 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
     case Expr::MSDependentExistsStmtClass:
       llvm_unreachable("Stmt should not be in analyzer evaluation loop");
 
+    case Stmt::ObjCSubscriptRefExprClass:
+    case Stmt::ObjCPropertyRefExprClass:
+      llvm_unreachable("These are handled by PseudoObjectExpr");
+
     case Stmt::GNUNullExprClass: {
       // GNU __null is a pointer-width integer, not an actual pointer.
       ProgramStateRef state = Pred->getState();
@@ -573,14 +577,6 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
       Bldr.takeNodes(Pred);
       VisitObjCAtSynchronizedStmt(cast<ObjCAtSynchronizedStmt>(S), Pred, Dst);
       Bldr.addNodes(Dst);
-      break;
-
-    // FIXME.
-    case Stmt::ObjCSubscriptRefExprClass:
-      break;
-      
-    case Stmt::ObjCPropertyRefExprClass:
-      // Implicitly handled by Environment::getSVal().
       break;
 
     case Stmt::ExprWithCleanupsClass:
@@ -1699,10 +1695,6 @@ void ExprEngine::evalStore(ExplodedNodeSet &Dst, const Expr *AssignE,
   // ProgramPoint if it is non-NULL, and LocationE otherwise.
   const Expr *StoreE = AssignE ? AssignE : LocationE;
 
-  if (isa<loc::ObjCPropRef>(location)) {
-    assert(false);
-  }
-
   // Evaluate the location (checks for bad dereferences).
   ExplodedNodeSet Tmp;
   evalLocation(Tmp, AssignE, LocationE, Pred, state, location, tag, false);
@@ -1727,7 +1719,6 @@ void ExprEngine::evalLoad(ExplodedNodeSet &Dst,
                           QualType LoadTy)
 {
   assert(!isa<NonLoc>(location) && "location cannot be a NonLoc.");
-  assert(!isa<loc::ObjCPropRef>(location));
 
   // Are we loading from a region?  This actually results in two loads; one
   // to fetch the address of the referenced value and one to fetch the
