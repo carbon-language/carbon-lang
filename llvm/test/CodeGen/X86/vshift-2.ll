@@ -16,7 +16,7 @@ define void @shift1b(<2 x i64> %val, <2 x i64>* %dst, i64 %amt) nounwind {
 entry:
 ; CHECK: shift1b:
 ; CHECK: movd
-; CHECK-NEXT: psrlq
+; CHECK: psrlq
   %0 = insertelement <2 x i64> undef, i64 %amt, i32 0
   %1 = insertelement <2 x i64> %0, i64 %amt, i32 1
   %lshr = lshr <2 x i64> %val, %1
@@ -37,7 +37,7 @@ define void @shift2b(<4 x i32> %val, <4 x i32>* %dst, i32 %amt) nounwind {
 entry:
 ; CHECK: shift2b:
 ; CHECK: movd
-; CHECK-NEXT: psrld
+; CHECK: psrld
   %0 = insertelement <4 x i32> undef, i32 %amt, i32 0
   %1 = insertelement <4 x i32> %0, i32 %amt, i32 1
   %2 = insertelement <4 x i32> %1, i32 %amt, i32 2
@@ -63,7 +63,7 @@ entry:
 ; CHECK: shift3b:
 ; CHECK: movzwl
 ; CHECK: movd
-; CHECK-NEXT: psrlw
+; CHECK: psrlw
   %0 = insertelement <8 x i16> undef, i16 %amt, i32 0
   %1 = insertelement <8 x i16> %0, i16 %amt, i32 1
   %2 = insertelement <8 x i16> %0, i16 %amt, i32 2

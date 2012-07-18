@@ -28,7 +28,7 @@ define void @shift2b(<4 x i32> %val, <4 x i32>* %dst, i32 %amt) nounwind {
 entry:
 ; CHECK: shift2b:
 ; CHECK: movd
-; CHECK-NEXT: psrad
+; CHECK: psrad
   %0 = insertelement <4 x i32> undef, i32 %amt, i32 0
   %1 = insertelement <4 x i32> %0, i32 %amt, i32 1
   %2 = insertelement <4 x i32> %1, i32 %amt, i32 2
@@ -52,7 +52,7 @@ entry:
 ; CHECK: shift3b:
 ; CHECK: movzwl
 ; CHECK: movd
-; CHECK-NEXT: psraw
+; CHECK: psraw
   %0 = insertelement <8 x i16> undef, i16 %amt, i32 0
   %1 = insertelement <8 x i16> %0, i16 %amt, i32 1
   %2 = insertelement <8 x i16> %0, i16 %amt, i32 2

@@ -1,15 +1,15 @@
-; RUN: llc < %s -mcpu=atom -mtriple=i686-linux  | FileCheck -check-prefix=atom %s
+; RUN: llc < %s -mcpu=atom -mtriple=i686-linux  | FileCheck -check-prefix=ATOM %s
 ; RUN: llc < %s -mcpu=core2 -mtriple=i686-linux | FileCheck %s
 
 declare void @use_arr(i8*)
 declare void @many_params(i32, i32, i32, i32, i32, i32)
 
 define void @test1() nounwind {
-; atom: test1:
-; atom: leal -1052(%esp), %esp
-; atom-NOT: sub
-; atom: call
-; atom: leal 1052(%esp), %esp
+; ATOM: test1:
+; ATOM: leal -1052(%esp), %esp
+; ATOM-NOT: sub
+; ATOM: call
+; ATOM: leal 1052(%esp), %esp
 
 ; CHECK: test1:
 ; CHECK: subl
@@ -22,10 +22,10 @@ define void @test1() nounwind {
 }
 
 define void @test2() nounwind {
-; atom: test2:
-; atom: leal -28(%esp), %esp
-; atom: call
-; atom: leal 28(%esp), %esp
+; ATOM: test2:
+; ATOM: leal -28(%esp), %esp
+; ATOM: call
+; ATOM: leal 28(%esp), %esp
 
 ; CHECK: test2:
 ; CHECK-NOT: lea
@@ -34,9 +34,9 @@ define void @test2() nounwind {
 }
 
 define void @test3() nounwind {
-; atom: test3:
-; atom: leal -8(%esp), %esp
-; atom: leal 8(%esp), %esp
+; ATOM: test3:
+; ATOM: leal -8(%esp), %esp
+; ATOM: leal 8(%esp), %esp
 
 ; CHECK: test3:
 ; CHECK-NOT: lea

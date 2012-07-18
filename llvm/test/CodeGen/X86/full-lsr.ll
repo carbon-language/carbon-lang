@@ -1,9 +1,17 @@
-; RUN: llc < %s -march=x86 >%t
-
-; RUN: grep "addl	\$4," %t | count 3
-; RUN: not grep ",%" %t
+; RUN: llc < %s -march=x86 -mcpu=generic | FileCheck %s
+; RUN: llc < %s -march=x86 -mcpu=atom | FileCheck -check-prefix=ATOM %s
 
 define void @foo(float* nocapture %A, float* nocapture %B, float* nocapture %C, i32 %N) nounwind {
+; ATOM: foo
+; ATOM: addl
+; ATOM: leal
+; ATOM: leal
+
+; CHECK: foo
+; CHECK: addl
+; CHECK: addl
+; CEHCK: addl
+
 entry:
 	%0 = icmp sgt i32 %N, 0		; <i1> [#uses=1]
 	br i1 %0, label %bb, label %return

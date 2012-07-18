@@ -254,7 +254,8 @@ void X86Subtarget::AutoDetectSubtargetFeatures() {
 
     // Set processor type. Currently only Atom is detected.
     if (Family == 6 &&
-        (Model == 28 || Model == 38 || Model == 39)) {
+        (Model == 28 || Model == 38 || Model == 39
+         /*|| Model == 53 || Model == 54*/)) {
       X86ProcFamily = IntelAtom;
 
       UseLeaForSP = true;

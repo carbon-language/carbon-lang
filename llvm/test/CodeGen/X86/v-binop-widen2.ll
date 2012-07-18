@@ -1,9 +1,16 @@
-; RUN: llc -march=x86 -mattr=+sse < %s | FileCheck %s
+; RUN: llc -march=x86 -mcpu=generic -mattr=+sse < %s | FileCheck %s
+; RUN: llc -march=x86 -mcpu=atom -mattr=+sse < %s | FileCheck -check-prefix=ATOM %s
 
 %vec = type <6 x float>
 ; CHECK: divss
 ; CHECK: divss
 ; CHECK: divps
+
+; Scheduler causes a different instruction order to be produced on Intel Atom
+; ATOM: divps
+; ATOM: divss
+; ATOM: divss
+
 define %vec @vecdiv( %vec %p1, %vec %p2)
 {
   %result = fdiv %vec %p1, %p2
