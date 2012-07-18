@@ -4829,10 +4829,10 @@ defm VCLZ     : N2VInt_QHS<0b11, 0b11, 0b00, 0b01001, 0,
 //   VCNT     : Vector Count One Bits
 def  VCNTd    : N2VDInt<0b11, 0b11, 0b00, 0b00, 0b01010, 0,
                         IIC_VCNTiD, "vcnt", "8",
-                        v8i8, v8i8, int_arm_neon_vcnt>;
+                        v8i8, v8i8, ctpop>;
 def  VCNTq    : N2VQInt<0b11, 0b11, 0b00, 0b00, 0b01010, 0,
                         IIC_VCNTiQ, "vcnt", "8",
-                        v16i8, v16i8, int_arm_neon_vcnt>;
+                        v16i8, v16i8, ctpop>;
 
 // Vector Swap
 def  VSWPd    : N2VX<0b11, 0b11, 0b00, 0b10, 0b00000, 0, 0,

@@ -66,6 +66,11 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
                                "llvm.ctlz." + Name.substr(14), F->getParent());
       return true;
     }
+    if (Name.startswith("arm.neon.vcnt")) {
+      NewFn = Intrinsic::getDeclaration(F->getParent(), Intrinsic::ctpop,
+                                        F->arg_begin()->getType());
+      return true;
+    }
     break;
   }
   case 'c': {
@@ -314,8 +319,13 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
   case Intrinsic::arm_neon_vclz: {
     // Change name from llvm.arm.neon.vclz.* to llvm.ctlz.*
     CI->replaceAllUsesWith(Builder.CreateCall2(NewFn, CI->getArgOperand(0),
-                                               Builder.getFalse(), 
+                                               Builder.getFalse(),
                                                "llvm.ctlz." + Name.substr(14)));
+    CI->eraseFromParent();
+    return;
+  }
+  case Intrinsic::ctpop: {
+    CI->replaceAllUsesWith(Builder.CreateCall(NewFn, CI->getArgOperand(0)));
     CI->eraseFromParent();
     return;
   }
