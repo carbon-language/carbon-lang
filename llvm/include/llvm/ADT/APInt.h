@@ -1123,7 +1123,7 @@ public:
     else {
       // Set all the bits in all the words.
       for (unsigned i = 0; i < getNumWords(); ++i)
-	pVal[i] = -1ULL;
+        pVal[i] = -1ULL;
     }
     // Clear the unused ones
     clearUnusedBits();
