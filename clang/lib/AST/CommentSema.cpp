@@ -417,7 +417,7 @@ unsigned Sema::correctTypoInParmVarReference(
 // TODO: tablegen
 bool Sema::isBlockCommand(StringRef Name) {
   return llvm::StringSwitch<bool>(Name)
-      .Case("brief", true)
+      .Cases("brief", "short", true)
       .Case("result", true)
       .Case("return", true)
       .Case("returns", true)
@@ -437,7 +437,7 @@ bool Sema::isParamCommand(StringRef Name) {
 
 unsigned Sema::getBlockCommandNumArgs(StringRef Name) {
   return llvm::StringSwitch<unsigned>(Name)
-      .Case("brief", 0)
+      .Cases("brief", "short", 0)
       .Case("pre", 0)
       .Case("post", 0)
       .Case("author", 0)
