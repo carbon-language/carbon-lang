@@ -42,6 +42,30 @@ containing the c-string literal "hello world".  The Atom "main" has two
 references. One is the call site for the call to printf, and the other is a
 reference for the instruction that loads the address of the c-string literal.
 
+There are only four different types of atoms:
+
+	* DefinedAtom
+		95% of all atoms.  This is a chunk of code or data
+		
+	* UndefinedAtom 
+	   This is a place holder in object files for a reference to some atom
+	   outside the translation unit.During core linking it is usually replaced
+	   by (coalesced into) another Atom.
+	   
+	* SharedLibraryAtom
+		If a required symbol name turns out to be defined in a dynamic shared 
+		library (and not some object file).  A SharedLibraryAtom is the 
+		placeholder Atom used to represent that fact.
+		
+		It is similar to an UndefinedAtom, but it also tracks information 
+		about the associated shared library.
+		
+	* AbsoluteAtom
+		This is for embedded support where some stuff is implemented in ROM at
+		some fixed address.  This atom has no content.  It is just an address
+		that the Writer needs to fixup any references to point to.
+
+
 File Model
 ----------
 
