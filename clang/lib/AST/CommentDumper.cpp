@@ -106,6 +106,7 @@ void CommentDumper::visitTextComment(const TextComment *C) {
 void CommentDumper::visitInlineCommandComment(const InlineCommandComment *C) {
   dumpComment(C);
 
+  OS << " Name=\"" << C->getCommandName() << "\"";
   for (unsigned i = 0, e = C->getNumArgs(); i != e; ++i)
     OS << " Arg[" << i << "]=\"" << C->getArgText(i) << "\"";
 }
