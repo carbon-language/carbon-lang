@@ -17,7 +17,7 @@ GTEST_INCLUDE=-I$(GTEST_ROOT)/include
 GTEST_BUILD_DIR=$(GTEST_ROOT)/build
 GTEST_LIB=$(GTEST_BUILD_DIR)/gtest-all.o
 
-SANITIZER_COMMON_TESTS_SRC=$(wildcard ../sanitizer_common/tests/*.cc)
+SANITIZER_COMMON_TESTS_SRC=$(wildcard ../sanitizer_common/tests/*_test.cc)
 SANITIZER_COMMON_TESTS_OBJ=$(patsubst %.cc,%.o,$(SANITIZER_COMMON_TESTS_SRC))
 RTL_TEST_SRC=$(wildcard rtl_tests/*.cc)
 RTL_TEST_OBJ=$(patsubst %.cc,%.o,$(RTL_TEST_SRC))
@@ -43,7 +43,7 @@ $(LIBTSAN): libtsan
 libtsan:
 	$(MAKE) -C rtl -f Makefile.old DEBUG=$(DEBUG)
 
-%.o: %.cc $(UNIT_TEST_HDR) libtsan
+%.o: %.cc $(UNIT_TEST_HDR) $(LIBTSAN)
 	$(CXX) $(CXXFLAGS) $(CFLAGS) $(INCLUDES) -o $@ -c $<
 
 tsan_test: $(UNIT_TEST_OBJ) $(RTL_TEST_OBJ) \

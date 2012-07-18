@@ -74,6 +74,7 @@ TEST(SanitizerCommon, SizeClassAllocator64) {
         void *x = a.Allocate(size, 1);
         allocated.push_back(x);
         CHECK(a.PointerIsMine(x));
+        CHECK_GE(a.GetActuallyAllocatedSize(x), size);
         uptr class_id = a.GetSizeClass(x);
         CHECK_EQ(class_id, SCMap::ClassID(size));
         uptr *metadata = reinterpret_cast<uptr*>(a.GetMetaData(x));
@@ -164,6 +165,7 @@ TEST(SanitizerCommon, LargeMmapAllocator) {
   // Allocate some more, also add metadata.
   for (int i = 0; i < kNumAllocs; i++) {
     void *x = a.Allocate(size, 1);
+    CHECK_GE(a.GetActuallyAllocatedSize(x), size);
     uptr *meta = reinterpret_cast<uptr*>(a.GetMetaData(x));
     *meta = i;
     allocated[i] = x;

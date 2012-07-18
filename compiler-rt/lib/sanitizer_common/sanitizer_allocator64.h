@@ -152,6 +152,11 @@ class SizeClassAllocator64 {
     return (reinterpret_cast<uptr>(p) / kRegionSize) % kNumClasses;
   }
 
+  uptr GetActuallyAllocatedSize(void *p) {
+    CHECK(PointerIsMine(p));
+    return SizeClassMap::Size(GetSizeClass(p));
+  }
+
   uptr ClassID(uptr size) { return SizeClassMap::ClassID(size); }
 
   void *GetMetaData(void *p) {
@@ -354,6 +359,10 @@ class LargeMmapAllocator {
     return false;
   }
 
+  uptr GetActuallyAllocatedSize(void *p) {
+    return RoundUpMapSize(GetHeader(p)->size) - kPageSize;
+  }
+
   // At least kPageSize/2 metadata bytes is available.
   void *GetMetaData(void *p) {
     return GetHeader(p) + 1;
@@ -397,7 +406,9 @@ class CombinedAllocator {
     secondary_.Init();
   }
 
-  void *Allocate(AllocatorCache *cache, uptr size, uptr alignment) {
+  void *Allocate(AllocatorCache *cache, uptr size, uptr alignment,
+                 bool cleared = false) {
+    if (size == 0) return 0;
     CHECK_GT(size, 0);
     if (alignment > 8)
       size = RoundUpTo(size, alignment);
@@ -408,14 +419,35 @@ class CombinedAllocator {
       res = secondary_.Allocate(size, alignment);
     if (alignment > 8)
       CHECK_EQ(reinterpret_cast<uptr>(res) & (alignment - 1), 0);
+    if (cleared)
+      internal_memset(res, 0, size);
     return res;
   }
 
   void Deallocate(AllocatorCache *cache, void *p) {
+    if (!p) return;
     if (primary_.PointerIsMine(p))
       cache->Deallocate(&primary_, primary_.GetSizeClass(p), p);
     else
       secondary_.Deallocate(p);
+  }
+
+  void *Reallocate(AllocatorCache *cache, void *p, uptr new_size,
+                   uptr alignment) {
+    if (!p)
+      return Allocate(cache, new_size, alignment);
+    if (!new_size) {
+      Deallocate(cache, p);
+      return 0;
+    }
+    CHECK(PointerIsMine(p));
+    uptr old_size = GetActuallyAllocatedSize(p);
+    uptr memcpy_size = Min(new_size, old_size);
+    void *new_p = Allocate(cache, new_size, alignment);
+    if (new_p)
+      internal_memcpy(new_p, p, memcpy_size);
+    Deallocate(cache, p);
+    return new_p;
   }
 
   bool PointerIsMine(void *p) {
@@ -428,6 +460,12 @@ class CombinedAllocator {
     if (primary_.PointerIsMine(p))
       return primary_.GetMetaData(p);
     return secondary_.GetMetaData(p);
+  }
+
+  uptr GetActuallyAllocatedSize(void *p) {
+    if (primary_.PointerIsMine(p))
+      return primary_.GetActuallyAllocatedSize(p);
+    return secondary_.GetActuallyAllocatedSize(p);
   }
 
   uptr TotalMemoryUsed() {
