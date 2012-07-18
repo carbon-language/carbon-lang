@@ -39,3 +39,27 @@ struct IC1 {
 // we cannot currently compute the set of thrown types.
 static_assert(noexcept(IC0()), "IC0() does not throw");
 static_assert(!noexcept(IC1()), "IC1() throws");
+
+namespace PR13381 {
+  struct NoThrowMove {
+    NoThrowMove(const NoThrowMove &);
+    NoThrowMove(NoThrowMove &&) noexcept;
+    NoThrowMove &operator=(const NoThrowMove &);
+    NoThrowMove &operator=(NoThrowMove &&) noexcept;
+  };
+  struct NoThrowMoveOnly {
+    NoThrowMoveOnly(NoThrowMoveOnly &&) noexcept;
+    NoThrowMoveOnly &operator=(NoThrowMoveOnly &&) noexcept;
+  };
+  struct X {
+    const NoThrowMove a;
+    NoThrowMoveOnly b;
+
+    static X val();
+    static X &ref();
+  };
+  // These both perform a move, but that copy might throw, because it calls
+  // NoThrowMove's copy constructor (because PR13381::a is const).
+  static_assert(!noexcept(X(X::val())), "");
+  static_assert(!noexcept(X::ref() = X::val()), "");
+}

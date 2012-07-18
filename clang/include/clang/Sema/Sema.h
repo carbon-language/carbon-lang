@@ -2124,9 +2124,10 @@ public:
                                                unsigned Quals);
   CXXMethodDecl *LookupCopyingAssignment(CXXRecordDecl *Class, unsigned Quals,
                                          bool RValueThis, unsigned ThisQuals);
-  CXXConstructorDecl *LookupMovingConstructor(CXXRecordDecl *Class);
-  CXXMethodDecl *LookupMovingAssignment(CXXRecordDecl *Class, bool RValueThis,
-                                        unsigned ThisQuals);
+  CXXConstructorDecl *LookupMovingConstructor(CXXRecordDecl *Class,
+                                              unsigned Quals);
+  CXXMethodDecl *LookupMovingAssignment(CXXRecordDecl *Class, unsigned Quals,
+                                        bool RValueThis, unsigned ThisQuals);
   CXXDestructorDecl *LookupDestructor(CXXRecordDecl *Class);
 
   LiteralOperatorLookupResult LookupLiteralOperator(Scope *S, LookupResult &R,

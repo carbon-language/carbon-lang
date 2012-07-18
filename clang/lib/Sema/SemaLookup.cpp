@@ -2432,10 +2432,11 @@ CXXConstructorDecl *Sema::LookupCopyingConstructor(CXXRecordDecl *Class,
 }
 
 /// \brief Look up the moving constructor for the given class.
-CXXConstructorDecl *Sema::LookupMovingConstructor(CXXRecordDecl *Class) {
+CXXConstructorDecl *Sema::LookupMovingConstructor(CXXRecordDecl *Class,
+                                                  unsigned Quals) {
   SpecialMemberOverloadResult *Result =
-    LookupSpecialMember(Class, CXXMoveConstructor, false,
-                        false, false, false, false);
+    LookupSpecialMember(Class, CXXMoveConstructor, Quals & Qualifiers::Const,
+                        Quals & Qualifiers::Volatile, false, false, false);
 
   return cast_or_null<CXXConstructorDecl>(Result->getMethod());
 }
@@ -2476,12 +2477,14 @@ CXXMethodDecl *Sema::LookupCopyingAssignment(CXXRecordDecl *Class,
 
 /// \brief Look up the moving assignment operator for the given class.
 CXXMethodDecl *Sema::LookupMovingAssignment(CXXRecordDecl *Class,
+                                            unsigned Quals,
                                             bool RValueThis,
                                             unsigned ThisQuals) {
   assert(!(ThisQuals & ~(Qualifiers::Const | Qualifiers::Volatile)) &&
          "non-const, non-volatile qualifiers for copy assignment this");
   SpecialMemberOverloadResult *Result =
-    LookupSpecialMember(Class, CXXMoveAssignment, false, false, RValueThis,
+    LookupSpecialMember(Class, CXXMoveAssignment, Quals & Qualifiers::Const,
+                        Quals & Qualifiers::Volatile, RValueThis,
                         ThisQuals & Qualifiers::Const,
                         ThisQuals & Qualifiers::Volatile);
 

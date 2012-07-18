@@ -7559,7 +7559,9 @@ Sema::ComputeDefaultedCopyAssignmentExceptionSpecAndConst(
     QualType FieldType = Context.getBaseElementType(Field->getType());
     if (CXXRecordDecl *FieldClassDecl = FieldType->getAsCXXRecordDecl()) {
       if (CXXMethodDecl *CopyAssign =
-          LookupCopyingAssignment(FieldClassDecl, ArgQuals, false, 0))
+          LookupCopyingAssignment(FieldClassDecl,
+                                  ArgQuals | FieldType.getCVRQualifiers(),
+                                  false, 0))
         ExceptSpec.CalledDecl(Field->getLocation(), CopyAssign);
     }
   }
@@ -7966,7 +7968,7 @@ Sema::ComputeDefaultedMoveAssignmentExceptionSpec(CXXRecordDecl *ClassDecl) {
     CXXRecordDecl *BaseClassDecl
       = cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
     if (CXXMethodDecl *MoveAssign = LookupMovingAssignment(BaseClassDecl,
-                                                           false, 0))
+                                                           0, false, 0))
       ExceptSpec.CalledDecl(Base->getLocStart(), MoveAssign);
   }
 
@@ -7976,7 +7978,7 @@ Sema::ComputeDefaultedMoveAssignmentExceptionSpec(CXXRecordDecl *ClassDecl) {
     CXXRecordDecl *BaseClassDecl
       = cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
     if (CXXMethodDecl *MoveAssign = LookupMovingAssignment(BaseClassDecl,
-                                                           false, 0))
+                                                           0, false, 0))
       ExceptSpec.CalledDecl(Base->getLocStart(), MoveAssign);
   }
 
@@ -7986,8 +7988,10 @@ Sema::ComputeDefaultedMoveAssignmentExceptionSpec(CXXRecordDecl *ClassDecl) {
        ++Field) {
     QualType FieldType = Context.getBaseElementType(Field->getType());
     if (CXXRecordDecl *FieldClassDecl = FieldType->getAsCXXRecordDecl()) {
-      if (CXXMethodDecl *MoveAssign = LookupMovingAssignment(FieldClassDecl,
-                                                             false, 0))
+      if (CXXMethodDecl *MoveAssign =
+              LookupMovingAssignment(FieldClassDecl,
+                                     FieldType.getCVRQualifiers(),
+                                     false, 0))
         ExceptSpec.CalledDecl(Field->getLocation(), MoveAssign);
     }
   }
@@ -8580,7 +8584,8 @@ Sema::ComputeDefaultedCopyCtorExceptionSpecAndConst(CXXRecordDecl *ClassDecl) {
     QualType FieldType = Context.getBaseElementType(Field->getType());
     if (CXXRecordDecl *FieldClassDecl = FieldType->getAsCXXRecordDecl()) {
       if (CXXConstructorDecl *CopyConstructor =
-        LookupCopyingConstructor(FieldClassDecl, Quals))
+              LookupCopyingConstructor(FieldClassDecl,
+                                       Quals | FieldType.getCVRQualifiers()))
       ExceptSpec.CalledDecl(Field->getLocation(), CopyConstructor);
     }
   }
@@ -8708,7 +8713,8 @@ Sema::ComputeDefaultedMoveCtorExceptionSpec(CXXRecordDecl *ClassDecl) {
     
     if (const RecordType *BaseType = B->getType()->getAs<RecordType>()) {
       CXXRecordDecl *BaseClassDecl = cast<CXXRecordDecl>(BaseType->getDecl());
-      CXXConstructorDecl *Constructor = LookupMovingConstructor(BaseClassDecl);
+      CXXConstructorDecl *Constructor =
+          LookupMovingConstructor(BaseClassDecl, 0);
       // If this is a deleted function, add it anyway. This might be conformant
       // with the standard. This might not. I'm not sure. It might not matter.
       if (Constructor)
@@ -8722,7 +8728,8 @@ Sema::ComputeDefaultedMoveCtorExceptionSpec(CXXRecordDecl *ClassDecl) {
        B != BEnd; ++B) {
     if (const RecordType *BaseType = B->getType()->getAs<RecordType>()) {
       CXXRecordDecl *BaseClassDecl = cast<CXXRecordDecl>(BaseType->getDecl());
-      CXXConstructorDecl *Constructor = LookupMovingConstructor(BaseClassDecl);
+      CXXConstructorDecl *Constructor =
+          LookupMovingConstructor(BaseClassDecl, 0);
       // If this is a deleted function, add it anyway. This might be conformant
       // with the standard. This might not. I'm not sure. It might not matter.
       if (Constructor)
@@ -8734,10 +8741,10 @@ Sema::ComputeDefaultedMoveCtorExceptionSpec(CXXRecordDecl *ClassDecl) {
   for (RecordDecl::field_iterator F = ClassDecl->field_begin(),
                                FEnd = ClassDecl->field_end();
        F != FEnd; ++F) {
-    if (const RecordType *RecordTy
-              = Context.getBaseElementType(F->getType())->getAs<RecordType>()) {
-      CXXRecordDecl *FieldRecDecl = cast<CXXRecordDecl>(RecordTy->getDecl());
-      CXXConstructorDecl *Constructor = LookupMovingConstructor(FieldRecDecl);
+    QualType FieldType = Context.getBaseElementType(F->getType());
+    if (CXXRecordDecl *FieldRecDecl = FieldType->getAsCXXRecordDecl()) {
+      CXXConstructorDecl *Constructor =
+          LookupMovingConstructor(FieldRecDecl, FieldType.getCVRQualifiers());
       // If this is a deleted function, add it anyway. This might be conformant
       // with the standard. This might not. I'm not sure. It might not matter.
       // In particular, the problem is that this function never gets called. It
