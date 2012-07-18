@@ -100,7 +100,7 @@ InlineFunctionInfo::InlineFunctionInfo
     const Declaration *call_decl_ptr
 ) :
     FunctionInfo(name, decl_ptr),
-    m_mangled(mangled, true),
+    m_mangled(ConstString(mangled), true),
     m_call_decl (call_decl_ptr)
 {
 }
@@ -233,7 +233,7 @@ Function::Function
     m_comp_unit (comp_unit),
     m_type_uid (type_uid),
     m_type (type),
-    m_mangled (mangled, true),
+    m_mangled (ConstString(mangled), true),
     m_block (func_uid),
     m_range (range),
     m_frame_base (),

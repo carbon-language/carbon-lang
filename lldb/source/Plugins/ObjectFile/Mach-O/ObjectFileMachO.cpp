@@ -2520,7 +2520,7 @@ struct lldb_copy_dyld_cache_local_symbols_entry
                             {
                                 // We have two consecutive N_SO entries where the first contains a directory
                                 // and the second contains a full path.
-                                sym[sym_idx - 1].GetMangled().SetValue(symbol_name, false);
+                                sym[sym_idx - 1].GetMangled().SetValue(ConstString(symbol_name), false);
                                 m_nlist_idx_to_sym_idx[nlist_idx] = sym_idx - 1;
                                 add_nlist = false;
                             }
@@ -2542,7 +2542,7 @@ struct lldb_copy_dyld_cache_local_symbols_entry
                                 if (*full_so_path.rbegin() != '/')
                                     full_so_path += '/';
                                 full_so_path += symbol_name;
-                                sym[sym_idx - 1].GetMangled().SetValue(full_so_path.c_str(), false);
+                                sym[sym_idx - 1].GetMangled().SetValue(ConstString(full_so_path.c_str()), false);
                                 add_nlist = false;
                                 m_nlist_idx_to_sym_idx[nlist_idx] = sym_idx - 1;
                             }
@@ -2846,8 +2846,8 @@ struct lldb_copy_dyld_cache_local_symbols_entry
 
                 if (symbol_name_non_abi_mangled)
                 {
-                    sym[sym_idx].GetMangled().SetMangledName (symbol_name_non_abi_mangled);
-                    sym[sym_idx].GetMangled().SetDemangledName (symbol_name);
+                    sym[sym_idx].GetMangled().SetMangledName (ConstString(symbol_name_non_abi_mangled));
+                    sym[sym_idx].GetMangled().SetDemangledName (ConstString(symbol_name));
                 }
                 else
                 {
@@ -2859,7 +2859,7 @@ struct lldb_copy_dyld_cache_local_symbols_entry
 
                     if (symbol_name)
                     {
-                        sym[sym_idx].GetMangled().SetValue(symbol_name, symbol_name_is_mangled);
+                        sym[sym_idx].GetMangled().SetValue(ConstString(symbol_name), symbol_name_is_mangled);
                     }
                 }
 
@@ -3065,7 +3065,7 @@ struct lldb_copy_dyld_cache_local_symbols_entry
                                           ++synthetic_function_symbol_idx,
                                           module_sp->GetFileSpec().GetFilename().GetCString());
                                 sym[sym_idx].SetID (synthetic_sym_id++);
-                                sym[sym_idx].GetMangled().SetDemangledName(synthetic_function_symbol);
+                                sym[sym_idx].GetMangled().SetDemangledName(ConstString(synthetic_function_symbol));
                                 sym[sym_idx].SetType (eSymbolTypeCode);
                                 sym[sym_idx].SetIsSynthetic (true);
                                 sym[sym_idx].GetAddress() = symbol_addr;

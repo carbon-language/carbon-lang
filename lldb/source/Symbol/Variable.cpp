@@ -46,7 +46,7 @@ Variable::Variable
 ) :
     UserID(uid),
     m_name(name),
-    m_mangled (mangled, true),
+    m_mangled (ConstString(mangled), true),
     m_symfile_type_sp(symfile_type_sp),
     m_scope(scope),
     m_owner_scope(context),

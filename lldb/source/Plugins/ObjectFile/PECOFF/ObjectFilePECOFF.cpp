@@ -544,7 +544,7 @@ ObjectFilePECOFF::GetSymtab()
                     symbol.storage  = symtab_data.GetU8  (&offset);
                     symbol.naux     = symtab_data.GetU8  (&offset);		
                     Address symbol_addr(sect_list->GetSectionAtIndex(symbol.sect-1), symbol.value);
-                    symbols[i].GetMangled ().SetValue (symbol_name.c_str(), symbol_name[0]=='_' && symbol_name[1] == 'Z');
+                    symbols[i].GetMangled ().SetValue (ConstString(symbol_name.c_str()));
                     symbols[i].GetAddress() = symbol_addr;
 
                     if (symbol.naux > 0)

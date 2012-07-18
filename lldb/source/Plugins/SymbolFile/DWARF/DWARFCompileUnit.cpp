@@ -797,7 +797,7 @@ DWARFCompileUnit::Index (const uint32_t cu_idx,
                     // with duplicate entries
                     if (name != mangled_cstr && ((mangled_cstr[0] == '_') || (name && ::strcmp(name, mangled_cstr) != 0)))
                     {
-                        Mangled mangled (mangled_cstr, true);
+                        Mangled mangled (ConstString(mangled_cstr), true);
                         func_fullnames.Insert (mangled.GetMangledName(), die.GetOffset());
                         if (mangled.GetDemangledName())
                             func_fullnames.Insert (mangled.GetDemangledName(), die.GetOffset());
@@ -819,7 +819,7 @@ DWARFCompileUnit::Index (const uint32_t cu_idx,
                     // with duplicate entries
                     if (name != mangled_cstr && ((mangled_cstr[0] == '_') || (::strcmp(name, mangled_cstr) != 0)))
                     {
-                        Mangled mangled (mangled_cstr, true);
+                        Mangled mangled (ConstString(mangled_cstr), true);
                         func_fullnames.Insert (mangled.GetMangledName(), die.GetOffset());
                         if (mangled.GetDemangledName())
                             func_fullnames.Insert (mangled.GetDemangledName(), die.GetOffset());
@@ -864,7 +864,7 @@ DWARFCompileUnit::Index (const uint32_t cu_idx,
                 // with duplicate entries
                 if (mangled_cstr && name != mangled_cstr && ((mangled_cstr[0] == '_') || (::strcmp(name, mangled_cstr) != 0)))
                 {
-                    Mangled mangled (mangled_cstr, true);
+                    Mangled mangled (ConstString(mangled_cstr), true);
                     globals.Insert (mangled.GetMangledName(), die.GetOffset());
                     if (mangled.GetDemangledName())
                         globals.Insert (mangled.GetDemangledName(), die.GetOffset());

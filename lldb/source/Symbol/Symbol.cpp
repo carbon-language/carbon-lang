@@ -54,7 +54,7 @@ Symbol::Symbol
 ) :
     SymbolContextScope (),
     m_uid (symID),
-    m_mangled (name, name_is_mangled),
+    m_mangled (ConstString(name), name_is_mangled),
     m_type_data (0),
     m_type_data_resolved (false),
     m_is_synthetic (is_artificial),
@@ -84,7 +84,7 @@ Symbol::Symbol
 ) :
     SymbolContextScope (),
     m_uid (symID),
-    m_mangled (name, name_is_mangled),
+    m_mangled (ConstString(name), name_is_mangled),
     m_type_data (0),
     m_type_data_resolved (false),
     m_is_synthetic (is_artificial),
