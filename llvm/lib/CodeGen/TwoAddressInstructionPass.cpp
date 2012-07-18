@@ -1451,27 +1451,33 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
         TiedOperands[regB].push_back(std::make_pair(SrcIdx, DstIdx));
       }
 
+      // If the instruction has a single pair of tied operands, try some
+      // transformations that may either eliminate the tied operands or
+      // improve the opportunities for coalescing away the register copy.
+      if (TiedOperands.size() == 1) {
+        SmallVector<std::pair<unsigned, unsigned>, 4> &TiedPairs
+          = TiedOperands.begin()->second;
+        if (TiedPairs.size() == 1) {
+          unsigned SrcIdx = TiedPairs[0].first;
+          unsigned DstIdx = TiedPairs[0].second;
+          unsigned SrcReg = mi->getOperand(SrcIdx).getReg();
+          unsigned DstReg = mi->getOperand(DstIdx).getReg();
+          if (SrcReg != DstReg &&
+              TryInstructionTransform(mi, nmi, mbbi, SrcIdx, DstIdx, Dist,
+                                      Processed)) {
+            // The tied operands have been eliminated or shifted further down the
+            // block to ease elimination. Continue processing with 'nmi'.
+            TiedOperands.clear();
+            mi = nmi;
+            continue;
+          }
+        }
+      }
+
       // Now iterate over the information collected above.
       for (TiedOperandMap::iterator OI = TiedOperands.begin(),
              OE = TiedOperands.end(); OI != OE; ++OI) {
         SmallVector<std::pair<unsigned, unsigned>, 4> &TiedPairs = OI->second;
-
-        // If the instruction has a single pair of tied operands, try some
-        // transformations that may either eliminate the tied operands or
-        // improve the opportunities for coalescing away the register copy.
-        if (TiedOperands.size() == 1 && TiedPairs.size() == 1) {
-          unsigned SrcIdx = TiedPairs[0].first;
-          unsigned DstIdx = TiedPairs[0].second;
-
-          // If the registers are already equal, nothing needs to be done.
-          if (mi->getOperand(SrcIdx).getReg() ==
-              mi->getOperand(DstIdx).getReg())
-            break; // Done with this instruction.
-
-          if (TryInstructionTransform(mi, nmi, mbbi, SrcIdx, DstIdx, Dist,
-                                      Processed))
-            break; // The tied operands have been eliminated.
-        }
 
         bool IsEarlyClobber = false;
         bool RemovedKillFlag = false;
@@ -1593,12 +1599,16 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
           }
         }
 
-        // Schedule the source copy / remat inserted to form two-address
-        // instruction. FIXME: Does it matter the distance map may not be
-        // accurate after it's scheduled?
-        TII->scheduleTwoAddrSource(prior(mi), mi, *TRI);
+        // We didn't change anything if there was a single tied pair, and that
+        // pair didn't require copies.
+        if (AllUsesCopied || TiedPairs.size() > 1) {
+          MadeChange = true;
 
-        MadeChange = true;
+          // Schedule the source copy / remat inserted to form two-address
+          // instruction. FIXME: Does it matter the distance map may not be
+          // accurate after it's scheduled?
+          TII->scheduleTwoAddrSource(prior(mi), mi, *TRI);
+        }
 
         DEBUG(dbgs() << "\t\trewrite to:\t" << *mi);
       }
