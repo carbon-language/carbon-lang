@@ -378,9 +378,6 @@ public:
   void VisitCXXThisExpr(const CXXThisExpr *TE, ExplodedNode *Pred, 
                         ExplodedNodeSet & Dst);
 
-  void VisitCXXTemporaryObjectExpr(const CXXTemporaryObjectExpr *expr,
-                                   ExplodedNode *Pred, ExplodedNodeSet &Dst);
-
   void VisitCXXConstructExpr(const CXXConstructExpr *E, const MemRegion *Dest,
                              ExplodedNode *Pred, ExplodedNodeSet &Dst);
 
