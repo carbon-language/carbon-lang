@@ -81,7 +81,7 @@ void *memalign() { assert(0); }
 
 int posix_memalign(void **memptr, size_t alignment, size_t size) {
   *memptr = allocator.Allocate(&cache, size, alignment);
-  CHECK(((uptr)*memptr & (alignment - 1)) == 0);
+  CHECK_EQ(((uptr)*memptr & (alignment - 1)), 0);
   return 0;
 }
 
@@ -95,6 +95,5 @@ void *pvalloc(size_t size) {
   if (size == 0) size = kPageSize;
   return allocator.Allocate(&cache, size, kPageSize);
 }
-
 }
 #endif
