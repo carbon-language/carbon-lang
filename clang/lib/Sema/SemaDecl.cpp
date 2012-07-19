@@ -10406,15 +10406,21 @@ Decl *Sema::ActOnEnumConstant(Scope *S, Decl *theEnumDecl, Decl *lastEnumConst,
     }
   }
 
-  // C++ [class.mem]p13:
-  //   If T is the name of a class, then each of the following shall have a 
-  //   name different from T:
-  //     - every enumerator of every member of class T that is an enumerated 
-  //       type
+  // C++ [class.mem]p15:
+  // If T is the name of a class, then each of the following shall have a name 
+  // different from T:
+  // - every enumerator of every member of class T that is an unscoped 
+  // enumerated type
+  //
+  // C++ [dcl.enum]p10:
+  // Each enum-name and each unscoped enumerator is declared in the scope that 
+  // immediately contains the enum-specifier. Each scoped enumerator is declared 
+  // in the scope of the enumeration.
   if (CXXRecordDecl *Record
                       = dyn_cast<CXXRecordDecl>(
                              TheEnumDecl->getDeclContext()->getRedeclContext()))
-    if (Record->getIdentifier() && Record->getIdentifier() == Id)
+    if (!TheEnumDecl->isScoped() && 
+        Record->getIdentifier() && Record->getIdentifier() == Id)
       Diag(IdLoc, diag::err_member_name_of_class) << Id;
   
   EnumConstantDecl *New =

@@ -245,3 +245,10 @@ namespace test10 {
   int m = g<int>();
   int n = g<short>(); // expected-note {{here}}
 }
+
+namespace pr13128 {
+  // This should compile cleanly
+  class C {
+    enum class E { C };
+  };
+}
