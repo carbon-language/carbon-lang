@@ -837,6 +837,8 @@ void MachineVerifier::checkLiveness(const MachineOperand *MO, unsigned MONum) {
         // Reserved registers may be used even when 'dead'.
         if (!isReserved(Reg))
           report("Using an undefined physical register", MO, MONum);
+      } else if (MRI->def_empty(Reg)) {
+        report("Reading virtual register without a def", MO, MONum);
       } else {
         BBInfo &MInfo = MBBInfoMap[MI->getParent()];
         // We don't know which virtual registers are live in, so only complain
