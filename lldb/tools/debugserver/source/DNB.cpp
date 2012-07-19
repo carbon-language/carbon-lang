@@ -440,10 +440,11 @@ GetAllInfosMatchingName(const char *full_process_name, std::vector<struct kinfo_
         const char *process_name;
         process_name = strrchr (full_process_name, '/');
         if (process_name == NULL)
-          process_name = full_process_name;
+            process_name = full_process_name;
         else
-          process_name++;
+            process_name++;
 
+        const int process_name_len = strlen(process_name);
         std::vector<struct kinfo_proc> proc_infos;
         const size_t num_proc_infos = GetAllInfos(proc_infos);
         if (num_proc_infos > 0)
@@ -457,10 +458,50 @@ GetAllInfosMatchingName(const char *full_process_name, std::vector<struct kinfo_
 
                 // Check for process by name. We only check the first MAXCOMLEN
                 // chars as that is all that kp_proc.p_comm holds.
-                if (::strncasecmp(proc_infos[i].kp_proc.p_comm, process_name, MAXCOMLEN) == 0)
+                if (::strncasecmp(process_name, proc_infos[i].kp_proc.p_comm, MAXCOMLEN) == 0)
                 {
-                    // We found a matching process, add it to our list
-                    matching_proc_infos.push_back(proc_infos[i]);
+                    if (process_name_len > MAXCOMLEN)
+                    {
+                        // We found a matching process name whose first MAXCOMLEN
+                        // characters match, but there is more to the name than
+                        // this. We need to get the full process name. 
+
+                        int proc_args_mib[3] = { CTL_KERN, KERN_PROCARGS2, proc_infos[i].kp_proc.p_pid };
+                        
+                        // Get PATH_MAX for argv[0] plus 4 bytes for the argc
+                        char arg_data[PATH_MAX+4];
+                        size_t arg_data_size = sizeof(arg_data);
+                         // Skip the 4 byte argc integer value to get to argv[0]
+                        const char *argv0 = arg_data + 4;
+                        if (::sysctl (proc_args_mib, 3, arg_data, &arg_data_size , NULL, 0) == 0)
+                        {
+                            const char *argv_basename = strrchr(argv0, '/');
+                            if (argv_basename)
+                            {
+                                // Skip the '/'
+                                ++argv_basename;
+                            }
+                            else
+                            {
+                                // We didn't find a directory delimiter in the process argv[0], just use what was in there
+                                argv_basename = argv0;
+                            }
+
+                            if (argv_basename)
+                            {
+                                if (::strncasecmp(process_name, argv_basename, PATH_MAX) == 0)
+                                {
+                                    matching_proc_infos.push_back(proc_infos[i]);
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        // We found a matching process, add it to our list
+
+                        matching_proc_infos.push_back(proc_infos[i]);
+                    }
                 }
             }
         }
