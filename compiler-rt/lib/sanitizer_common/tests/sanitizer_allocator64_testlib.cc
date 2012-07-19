@@ -57,6 +57,7 @@ void NORETURN CheckFailed(const char *file, int line, const char *cond,
 #if 1
 extern "C" {
 void *malloc(size_t size) {
+  Init();
   assert(inited);
   return allocator.Allocate(&cache, size, 8);
 }
@@ -77,8 +78,23 @@ void *realloc(void *p, size_t new_size) {
 }
 
 void *memalign() { assert(0); }
-int posix_memalign() { assert(0); }
-void *valloc() { assert(0); }
-void *pvalloc() { assert(0); }
+
+int posix_memalign(void **memptr, size_t alignment, size_t size) {
+  *memptr = allocator.Allocate(&cache, size, alignment);
+  CHECK(((uptr)*memptr & (alignment - 1)) == 0);
+  return 0;
+}
+
+void *valloc(size_t size) {
+  assert(inited);
+  return allocator.Allocate(&cache, size, kPageSize);
+}
+
+void *pvalloc(size_t size) {
+  assert(inited);
+  if (size == 0) size = kPageSize;
+  return allocator.Allocate(&cache, size, kPageSize);
+}
+
 }
 #endif
