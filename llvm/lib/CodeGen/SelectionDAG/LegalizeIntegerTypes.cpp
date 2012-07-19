@@ -2269,9 +2269,9 @@ void DAGTypeLegalizer::ExpandIntRes_XMULO(SDNode *N,
     // A divide for UMULO will be faster than a function call. Select to
     // make sure we aren't using 0.
     SDValue isZero = DAG.getSetCC(dl, TLI.getSetCCResultType(VT),
-				  RHS, DAG.getConstant(0, VT), ISD::SETNE);
+                                  RHS, DAG.getConstant(0, VT), ISD::SETNE);
     SDValue NotZero = DAG.getNode(ISD::SELECT, dl, VT, isZero,
-				  DAG.getConstant(1, VT), RHS);
+                                  DAG.getConstant(1, VT), RHS);
     SDValue DIV = DAG.getNode(ISD::UDIV, DL, LHS.getValueType(), MUL, NotZero);
     SDValue Overflow;
     Overflow = DAG.getSetCC(DL, N->getValueType(1), DIV, LHS, ISD::SETNE);
@@ -2292,8 +2292,8 @@ void DAGTypeLegalizer::ExpandIntRes_XMULO(SDNode *N,
   SDValue Temp = DAG.CreateStackTemporary(PtrVT);
   // Temporary for the overflow value, default it to zero.
   SDValue Chain = DAG.getStore(DAG.getEntryNode(), dl,
-			       DAG.getConstant(0, PtrVT), Temp,
-			       MachinePointerInfo(), false, false, 0);
+                               DAG.getConstant(0, PtrVT), Temp,
+                               MachinePointerInfo(), false, false, 0);
 
   TargetLowering::ArgListTy Args;
   TargetLowering::ArgListEntry Entry;
@@ -2317,15 +2317,15 @@ void DAGTypeLegalizer::ExpandIntRes_XMULO(SDNode *N,
   SDValue Func = DAG.getExternalSymbol(TLI.getLibcallName(LC), PtrVT);
   TargetLowering::
   CallLoweringInfo CLI(Chain, RetTy, true, false, false, false,
-		    0, TLI.getLibcallCallingConv(LC),
-                    /*isTailCall=*/false,
-		    /*doesNotReturn=*/false, /*isReturnValueUsed=*/true,
-                    Func, Args, DAG, dl);
+                       0, TLI.getLibcallCallingConv(LC),
+                       /*isTailCall=*/false,
+                       /*doesNotReturn=*/false, /*isReturnValueUsed=*/true,
+                       Func, Args, DAG, dl);
   std::pair<SDValue, SDValue> CallInfo = TLI.LowerCallTo(CLI);
 
   SplitInteger(CallInfo.first, Lo, Hi);
   SDValue Temp2 = DAG.getLoad(PtrVT, dl, CallInfo.second, Temp,
-			      MachinePointerInfo(), false, false, false, 0);
+                              MachinePointerInfo(), false, false, false, 0);
   SDValue Ofl = DAG.getSetCC(dl, N->getValueType(1), Temp2,
                              DAG.getConstant(0, PtrVT),
                              ISD::SETNE);

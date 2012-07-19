@@ -1639,7 +1639,7 @@ SDValue DAGCombiner::visitSUB(SDNode *N) {
   if (N1.getOpcode() == ISD::ADD && N0C && N1C1) {
     SDValue NewC = DAG.getConstant((N0C->getAPIntValue() - N1C1->getAPIntValue()), VT);
     return DAG.getNode(ISD::SUB, N->getDebugLoc(), VT, NewC,
-		       N1.getOperand(0));
+                       N1.getOperand(0));
   }
   // fold ((A+(B+or-C))-B) -> A+or-C
   if (N0.getOpcode() == ISD::ADD &&

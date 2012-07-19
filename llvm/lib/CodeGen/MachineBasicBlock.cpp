@@ -673,7 +673,7 @@ MachineBasicBlock::SplitCriticalEdge(MachineBasicBlock *Succ, Pass *P) {
 
   // Inherit live-ins from the successor
   for (MachineBasicBlock::livein_iterator I = Succ->livein_begin(),
-	 E = Succ->livein_end(); I != E; ++I)
+         E = Succ->livein_end(); I != E; ++I)
     NMBB->addLiveIn(*I);
 
   // Update LiveVariables.

@@ -93,8 +93,9 @@ getELFKindForNamedSection(StringRef Name, SectionKind K) {
   // N.B.: The defaults used in here are no the same ones used in MC.
   // We follow gcc, MC follows gas. For example, given ".section .eh_frame",
   // both gas and MC will produce a section with no flags. Given
-  // section(".eh_frame") gcc will produce
-  // .section	.eh_frame,"a",@progbits
+  // section(".eh_frame") gcc will produce:
+  //
+  //   .section   .eh_frame,"a",@progbits
   if (Name.empty() || Name[0] != '.') return K;
 
   // Some lame default implementation based on some magic section names.

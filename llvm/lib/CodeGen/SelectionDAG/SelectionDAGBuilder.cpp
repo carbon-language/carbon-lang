@@ -5207,9 +5207,9 @@ void SelectionDAGBuilder::LowerCallTo(ImmutableCallSite CS, SDValue Callee,
                 Outs, TLI);
 
   bool CanLowerReturn = TLI.CanLowerReturn(CS.getCallingConv(),
-					   DAG.getMachineFunction(),
-					   FTy->isVarArg(), Outs,
-					   FTy->getContext());
+                                           DAG.getMachineFunction(),
+                                           FTy->isVarArg(), Outs,
+                                           FTy->getContext());
 
   SDValue DemoteStackSlot;
   int DemoteStackIdx = -100;
@@ -5976,11 +5976,11 @@ void SelectionDAGBuilder::visitInlineAsm(ImmutableCallSite CS) {
       SDISelAsmOperandInfo &Input = ConstraintOperands[OpInfo.MatchingInput];
 
       if (OpInfo.ConstraintVT != Input.ConstraintVT) {
-	std::pair<unsigned, const TargetRegisterClass*> MatchRC =
-	  TLI.getRegForInlineAsmConstraint(OpInfo.ConstraintCode,
+        std::pair<unsigned, const TargetRegisterClass*> MatchRC =
+          TLI.getRegForInlineAsmConstraint(OpInfo.ConstraintCode,
                                            OpInfo.ConstraintVT);
-	std::pair<unsigned, const TargetRegisterClass*> InputRC =
-	  TLI.getRegForInlineAsmConstraint(Input.ConstraintCode,
+        std::pair<unsigned, const TargetRegisterClass*> InputRC =
+          TLI.getRegForInlineAsmConstraint(Input.ConstraintCode,
                                            Input.ConstraintVT);
         if ((OpInfo.ConstraintVT.isInteger() !=
              Input.ConstraintVT.isInteger()) ||
@@ -6770,7 +6770,7 @@ void SelectionDAGISel::LowerArguments(const BasicBlock *LLVMBB) {
 
     // Note down frame index.
     if (FrameIndexSDNode *FI =
-	dyn_cast<FrameIndexSDNode>(ArgValues[0].getNode()))
+        dyn_cast<FrameIndexSDNode>(ArgValues[0].getNode()))
       FuncInfo->setArgumentFrameIndex(I, FI->getIndex());
 
     SDValue Res = DAG.getMergeValues(&ArgValues[0], NumValues,

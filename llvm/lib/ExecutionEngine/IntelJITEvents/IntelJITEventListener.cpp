@@ -138,7 +138,7 @@ void IntelJITEventListener::NotifyFunctionEmitted(
       // the first instruction that has one
       if (FunctionMessage.source_file_name == 0) {
         MDNode *scope = I->Loc.getScope(
-					Details.MF->getFunction()->getContext());
+          Details.MF->getFunction()->getContext());
         FunctionMessage.source_file_name = const_cast<char*>(
                                                   Filenames.getFullPath(scope));
       }
@@ -152,7 +152,7 @@ void IntelJITEventListener::NotifyFunctionEmitted(
   }
 
   Wrapper.iJIT_NotifyEvent(iJVM_EVENT_TYPE_METHOD_LOAD_FINISHED,
-													 &FunctionMessage);
+                           &FunctionMessage);
   MethodIDs[FnStart] = FunctionMessage.method_id;
 }
 

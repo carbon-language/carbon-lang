@@ -1057,8 +1057,8 @@ void MachineVerifier::visitMachineFunctionAfter() {
          I = MInfo.vregsRequired.begin(), E = MInfo.vregsRequired.end(); I != E;
          ++I)
       if (MInfo.regsKilled.count(*I)) {
-	report("Virtual register killed in block, but needed live out.", MFI);
-	*OS << "Virtual register " << PrintReg(*I)
+        report("Virtual register killed in block, but needed live out.", MFI);
+        *OS << "Virtual register " << PrintReg(*I)
             << " is used after the block.\n";
       }
   }

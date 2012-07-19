@@ -100,7 +100,7 @@ namespace {
     void ExitScope(MachineBasicBlock *MBB);
     bool ProcessBlock(MachineBasicBlock *MBB);
     void ExitScopeIfDone(MachineDomTreeNode *Node,
-			 DenseMap<MachineDomTreeNode*, unsigned> &OpenChildren);
+                         DenseMap<MachineDomTreeNode*, unsigned> &OpenChildren);
     bool PerformCSE(MachineDomTreeNode *Node);
   };
 } // end anonymous namespace

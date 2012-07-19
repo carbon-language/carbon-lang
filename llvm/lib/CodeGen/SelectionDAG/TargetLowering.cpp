@@ -3033,10 +3033,12 @@ TargetLowering::AsmOperandInfoVector TargetLowering::ParseConstraints(
       AsmOperandInfo &Input = ConstraintOperands[OpInfo.MatchingInput];
 
       if (OpInfo.ConstraintVT != Input.ConstraintVT) {
-	std::pair<unsigned, const TargetRegisterClass*> MatchRC =
-	  getRegForInlineAsmConstraint(OpInfo.ConstraintCode, OpInfo.ConstraintVT);
-	std::pair<unsigned, const TargetRegisterClass*> InputRC =
-	  getRegForInlineAsmConstraint(Input.ConstraintCode, Input.ConstraintVT);
+        std::pair<unsigned, const TargetRegisterClass*> MatchRC =
+          getRegForInlineAsmConstraint(OpInfo.ConstraintCode,
+                                       OpInfo.ConstraintVT);
+        std::pair<unsigned, const TargetRegisterClass*> InputRC =
+          getRegForInlineAsmConstraint(Input.ConstraintCode,
+                                       Input.ConstraintVT);
         if ((OpInfo.ConstraintVT.isInteger() !=
              Input.ConstraintVT.isInteger()) ||
             (MatchRC.second != InputRC.second)) {

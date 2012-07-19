@@ -2998,7 +2998,7 @@ bool GenericAsmParser::ParseDirectiveCFISameValue(StringRef IDVal,
 /// ParseDirectiveCFIRestore
 /// ::= .cfi_restore register
 bool GenericAsmParser::ParseDirectiveCFIRestore(StringRef IDVal,
-						SMLoc DirectiveLoc) {
+                                                SMLoc DirectiveLoc) {
   int64_t Register = 0;
   if (ParseRegisterOrRegisterNumber(Register, DirectiveLoc))
     return true;
@@ -3011,7 +3011,7 @@ bool GenericAsmParser::ParseDirectiveCFIRestore(StringRef IDVal,
 /// ParseDirectiveCFIEscape
 /// ::= .cfi_escape expression[,...]
 bool GenericAsmParser::ParseDirectiveCFIEscape(StringRef IDVal,
-					       SMLoc DirectiveLoc) {
+                                               SMLoc DirectiveLoc) {
   std::string Values;
   int64_t CurrValue;
   if (getParser().ParseAbsoluteExpression(CurrValue))
