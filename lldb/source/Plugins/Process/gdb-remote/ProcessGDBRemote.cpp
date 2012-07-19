@@ -11,6 +11,7 @@
 #include <errno.h>
 #include <spawn.h>
 #include <stdlib.h>
+#include <netinet/in.h>
 #include <sys/mman.h>       // for mmap
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -80,6 +81,18 @@ using namespace lldb_private;
 
 static bool rand_initialized = false;
 
+// TODO Randomly assigning a port is unsafe.  We should get an unused
+// ephemeral port from the kernel and make sure we reserve it before passing
+// it to debugserver.
+
+#if defined (__APPLE__)
+#define LOW_PORT    (IPPORT_RESERVED)
+#define HIGH_PORT   (IPPORT_HIFIRSTAUTO)
+#else
+#define LOW_PORT    (1024u)
+#define HIGH_PORT   (49151u)
+#endif
+
 static inline uint16_t
 get_random_port ()
 {
@@ -90,7 +103,7 @@ get_random_port ()
         rand_initialized = true;
         srand(seed);
     }
-    return (rand() % (UINT16_MAX - 1000u)) + 1000u;
+    return (rand() % (HIGH_PORT - LOW_PORT)) + LOW_PORT;
 }
 
 
