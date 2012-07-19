@@ -57,7 +57,7 @@ CAMLprim value llvm_add_scalar_repl_aggregation_ssa(LLVMPassManagerRef PM) {
 
 /* [<Llvm.PassManager.any] Llvm.PassManager.t -> int -> unit */
 CAMLprim value llvm_add_scalar_repl_aggregation_with_threshold(value threshold,
-							       LLVMPassManagerRef PM) {
+                                                               LLVMPassManagerRef PM) {
   LLVMAddScalarReplAggregatesPassWithThreshold(PM, Int_val(threshold));
   return Val_unit;
 }
