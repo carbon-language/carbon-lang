@@ -732,7 +732,8 @@ public:
     return cast<CXXAllocatorCall>(this)->fn(); \
   case CE_ObjCMessage: \
     return cast<ObjCMethodCall>(this)->fn(); \
-  }
+  } \
+  llvm_unreachable("unknown CallEvent kind");
 
 #define DISPATCH_ARG(fn, arg) \
   switch (getKind()) { \
@@ -752,7 +753,8 @@ public:
     return cast<CXXAllocatorCall>(this)->fn(arg); \
   case CE_ObjCMessage: \
     return cast<ObjCMethodCall>(this)->fn(arg); \
-  }
+  } \
+  llvm_unreachable("unknown CallEvent kind");
 
 inline void CallEvent::getExtraInvalidatedRegions(RegionList &Regions) const {
   DISPATCH_ARG(getExtraInvalidatedRegions, Regions);
