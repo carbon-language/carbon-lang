@@ -266,8 +266,7 @@ bool ExprEngine::shouldInlineDecl(const Decl *D, ExplodedNode *Pred) {
   return true;
 }
 
-bool ExprEngine::inlineCall(ExplodedNodeSet &Dst,
-                            const CallEvent &Call,
+bool ExprEngine::inlineCall(const CallEvent &Call,
                             ExplodedNode *Pred) {
   if (!getAnalysisManager().shouldInlineCall())
     return false;
@@ -342,16 +341,16 @@ bool ExprEngine::inlineCall(ExplodedNodeSet &Dst,
   return true;
 }
 
-static ProgramStateRef getInlineFailedState(ExplodedNode *&N,
+static ProgramStateRef getInlineFailedState(ProgramStateRef State,
                                             const Stmt *CallE) {
-  void *ReplayState = N->getState()->get<ReplayWithoutInlining>();
+  void *ReplayState = State->get<ReplayWithoutInlining>();
   if (!ReplayState)
     return 0;
 
   assert(ReplayState == (const void*)CallE && "Backtracked to the wrong call.");
   (void)CallE;
 
-  return N->getState()->remove<ReplayWithoutInlining>();
+  return State->remove<ReplayWithoutInlining>();
 }
 
 void ExprEngine::VisitCallExpr(const CallExpr *CE, ExplodedNode *Pred,
@@ -419,38 +418,69 @@ void ExprEngine::evalCall(ExplodedNodeSet &Dst, ExplodedNode *Pred,
                                              Call, *this);
 }
 
-void ExprEngine::defaultEvalCall(ExplodedNodeSet &Dst, ExplodedNode *Pred,
+ProgramStateRef ExprEngine::bindReturnValue(const CallEvent &Call,
+                                            const LocationContext *LCtx,
+                                            ProgramStateRef State) {
+  const Expr *E = Call.getOriginExpr();
+  if (!E)
+    return State;
+
+  // Some method families have known return values.
+  if (const ObjCMethodCall *Msg = dyn_cast<ObjCMethodCall>(&Call)) {
+    switch (Msg->getMethodFamily()) {
+    default:
+      break;
+    case OMF_autorelease:
+    case OMF_retain:
+    case OMF_self: {
+      // These methods return their receivers.
+      return State->BindExpr(E, LCtx, Msg->getReceiverSVal());
+      break;
+    }
+    }
+  }
+
+  // Conjure a symbol if the return value is unknown.
+  QualType ResultTy = Call.getResultType();
+  SValBuilder &SVB = getSValBuilder();
+  unsigned Count = currentBuilderContext->getCurrentBlockCount();
+  SVal R = SVB.getConjuredSymbolVal(0, E, LCtx, ResultTy, Count);
+  return State->BindExpr(E, LCtx, R);
+}
+
+void ExprEngine::defaultEvalCall(NodeBuilder &Bldr, ExplodedNode *Pred,
                                  const CallEvent &Call) {
+  ProgramStateRef State = 0;
+  const Expr *E = Call.getOriginExpr();
+
   // Try to inline the call.
   // The origin expression here is just used as a kind of checksum;
   // for CallEvents that do not have origin expressions, this should still be
   // safe.
-  const Expr *E = Call.getOriginExpr();
-  ProgramStateRef state = getInlineFailedState(Pred, E);
-  if (state == 0 && inlineCall(Dst, Call, Pred))
-    return;
+  if (!isa<ObjCMethodCall>(Call)) {
+    State = getInlineFailedState(Pred->getState(), E);
+    if (State == 0 && inlineCall(Call, Pred)) {
+      // If we inlined the call, the successor has been manually added onto
+      // the work list and we should not consider it for subsequent call
+      // handling steps.
+      Bldr.takeNodes(Pred);
+      return;
+    }
+  }
 
   // If we can't inline it, handle the return value and invalidate the regions.
-  NodeBuilder Bldr(Pred, Dst, *currentBuilderContext);
+  if (State == 0)
+    State = Pred->getState();
 
   // Invalidate any regions touched by the call.
   unsigned Count = currentBuilderContext->getCurrentBlockCount();
-  if (state == 0)
-    state = Pred->getState();
-  state = Call.invalidateRegions(Count, state);
+  State = Call.invalidateRegions(Count, State);
 
-  // Conjure a symbol value to use as the result.
-  if (E) {
-    QualType ResultTy = Call.getResultType();
-    SValBuilder &SVB = getSValBuilder();
-    const LocationContext *LCtx = Pred->getLocationContext();
-    SVal RetVal = SVB.getConjuredSymbolVal(0, E, LCtx, ResultTy, Count);
-
-    state = state->BindExpr(E, LCtx, RetVal);
-  }
+  // Construct and bind the return value.
+  State = bindReturnValue(Call, Pred->getLocationContext(), State);
 
   // And make the result node.
-  Bldr.generateNode(Call.getProgramPoint(), state, Pred);
+  Bldr.generateNode(Call.getProgramPoint(), State, Pred);
 }
 
 void ExprEngine::VisitReturnStmt(const ReturnStmt *RS, ExplodedNode *Pred,

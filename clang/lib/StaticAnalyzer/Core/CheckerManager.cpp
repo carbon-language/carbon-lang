@@ -568,8 +568,10 @@ void CheckerManager::runCheckersForEvalCall(ExplodedNodeSet &Dst,
     }
     
     // If none of the checkers evaluated the call, ask ExprEngine to handle it.
-    if (!anyEvaluated)
-      Eng.defaultEvalCall(Dst, Pred, Call);
+    if (!anyEvaluated) {
+      NodeBuilder B(Pred, Dst, Eng.getBuilderContext());
+      Eng.defaultEvalCall(B, Pred, Call);
+    }
   }
 }
 

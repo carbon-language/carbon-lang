@@ -158,9 +158,7 @@ void ExprEngine::VisitObjCMessage(const ObjCMethodCall &msg,
 
   for (ExplodedNodeSet::iterator DI = dstGenericPrevisit.begin(),
        DE = dstGenericPrevisit.end(); DI != DE; ++DI) {
-    
     ExplodedNode *Pred = *DI;
-    bool RaisesException = false;
     
     if (msg.isInstanceMessage()) {
       SVal recVal = msg.getReceiverSVal();
@@ -182,13 +180,19 @@ void ExprEngine::VisitObjCMessage(const ObjCMethodCall &msg,
         
         // Check if the "raise" message was sent.
         assert(notNilState);
-        if (msg.getSelector() == RaiseSel)
-          RaisesException = true;
+        if (msg.getSelector() == RaiseSel) {
+          // If we raise an exception, for now treat it as a sink.
+          // Eventually we will want to handle exceptions properly.
+          Bldr.generateNode(currentStmt, Pred, Pred->getState(), true);
+          continue;
+        }
         
-        // If we raise an exception, for now treat it as a sink.
-        // Eventually we will want to handle exceptions properly.
-        // Dispatch to plug-in transfer function.
-        evalObjCMessage(Bldr, msg, Pred, notNilState, RaisesException);
+        // Generate a transition to non-Nil state.
+        if (notNilState != state)
+          Pred = Bldr.generateNode(currentStmt, Pred, notNilState);
+
+        // Evaluate the call.
+        defaultEvalCall(Bldr, Pred, msg);
       }
     } else {
       // Check for special class methods.
@@ -222,19 +226,25 @@ void ExprEngine::VisitObjCMessage(const ObjCMethodCall &msg,
           }
           
           Selector S = msg.getSelector();
+          bool RaisesException = false;
           for (unsigned i = 0; i < NUM_RAISE_SELECTORS; ++i) {
             if (S == NSExceptionInstanceRaiseSelectors[i]) {
               RaisesException = true;
               break;
             }
           }
+          if (RaisesException) {
+            // If we raise an exception, for now treat it as a sink.
+            // Eventually we will want to handle exceptions properly.
+            Bldr.generateNode(currentStmt, Pred, Pred->getState(), true);
+            continue;
+          }
+
         }
       }
 
-      // If we raise an exception, for now treat it as a sink.
-      // Eventually we will want to handle exceptions properly.
-      // Dispatch to plug-in transfer function.
-      evalObjCMessage(Bldr, msg, Pred, Pred->getState(), RaisesException);
+      // Evaluate the call.
+      defaultEvalCall(Bldr, Pred, msg);
     }
   }
   
@@ -246,48 +256,3 @@ void ExprEngine::VisitObjCMessage(const ObjCMethodCall &msg,
   getCheckerManager().runCheckersForPostObjCMessage(Dst, dstPostvisit,
                                                     msg, *this);
 }
-
-void ExprEngine::evalObjCMessage(StmtNodeBuilder &Bldr,
-                                 const ObjCMethodCall &msg,
-                                 ExplodedNode *Pred,
-                                 ProgramStateRef state,
-                                 bool GenSink) {
-  // First handle the return value.
-  SVal ReturnValue = UnknownVal();
-
-  // Some method families have known return values.
-  switch (msg.getMethodFamily()) {
-  default:
-    break;
-  case OMF_autorelease:
-  case OMF_retain:
-  case OMF_self: {
-    // These methods return their receivers.
-    ReturnValue = msg.getReceiverSVal();
-    break;
-  }
-  }
-
-  const LocationContext *LCtx = Pred->getLocationContext();
-  unsigned BlockCount = currentBuilderContext->getCurrentBlockCount();
-
-  // If we failed to figure out the return value, use a conjured value instead.
-  if (ReturnValue.isUnknown()) {
-    SValBuilder &SVB = getSValBuilder();
-    QualType ResultTy = msg.getResultType();
-    const Expr *CurrentE = cast<Expr>(currentStmt);
-    ReturnValue = SVB.getConjuredSymbolVal(NULL, CurrentE, LCtx, ResultTy,
-                                           BlockCount);
-  }
-
-  // Bind the return value.
-  state = state->BindExpr(currentStmt, LCtx, ReturnValue);
-
-  // Invalidate the arguments (and the receiver)
-  state = msg.invalidateRegions(BlockCount, state);
-
-  // And create the new node.
-  Bldr.generateNode(currentStmt, Pred, state, GenSink);
-  assert(Bldr.hasGeneratedNodes());
-}
-
