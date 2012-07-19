@@ -105,8 +105,11 @@ def symbolize_atos(line):
       load_addr = "0x0"
     if DEBUG:
       print "atos -o %s -arch %s -l %s" % (binary, arch, load_addr)
-    pipes[binary] = subprocess.Popen(["atos", "-o", binary, "-arch", arch, "-l", load_addr],
-                         stdin=subprocess.PIPE, stdout=subprocess.PIPE,)
+    cmd = ["atos", "-o", binary, "-arch", arch, "-l", load_addr]
+    pipes[binary] = subprocess.Popen(cmd,
+                                     stdin=subprocess.PIPE,
+                                     stdout=subprocess.PIPE,
+                                     stderr=subprocess.PIPE)
     p = pipes[binary]
     if filetype == "DYLIB":
       print >>p.stdin, "%s" % offset
