@@ -461,6 +461,11 @@ void Darwin::AddDeploymentTarget(DerivedArgList &Args) const {
             Major < 10 && Minor < 100 && Micro < 100) {
           TargetSimulatorVersionFromDefines = VersionTuple(Major, Minor, Micro);
         }
+        // When using the define to indicate the simulator, we force
+        // 10.6 macosx target.
+        const Option *O = Opts.getOption(options::OPT_mmacosx_version_min_EQ);
+        OSXVersion = Args.MakeJoinedArg(0, O, "10.6");
+        Args.append(OSXVersion);
         break;
       }
     }
