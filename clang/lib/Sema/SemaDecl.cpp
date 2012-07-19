@@ -9802,6 +9802,23 @@ void Sema::ActOnFields(Scope* S,
   if (EnclosingDecl->isInvalidDecl())
     return;
 
+  // If this is an Objective-C @implementation or category and we have
+  // new fields here we should reset the layout of the interface since
+  // it will now change.
+  if (!Fields.empty() && isa<ObjCContainerDecl>(EnclosingDecl)) {
+    ObjCContainerDecl *DC = cast<ObjCContainerDecl>(EnclosingDecl);
+    switch (DC->getKind()) {
+    default: break;
+    case Decl::ObjCCategory:
+      Context.ResetObjCLayout(cast<ObjCCategoryDecl>(DC)->getClassInterface());
+      break;
+    case Decl::ObjCImplementation:
+      Context.
+        ResetObjCLayout(cast<ObjCImplementationDecl>(DC)->getClassInterface());
+      break;
+    }
+  }
+  
   RecordDecl *Record = dyn_cast<RecordDecl>(EnclosingDecl);
 
   // Start counting up the number of named members; make sure to include
