@@ -1,4 +1,4 @@
-//===-- lldb-enumerations.h -------------------------------------*- C++ -*-===//
+//===-- lldb-private-enumerations.h -----------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
