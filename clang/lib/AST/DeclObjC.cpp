@@ -922,16 +922,10 @@ ObjCIvarDecl *ObjCIvarDecl::Create(ASTContext &C, ObjCContainerDecl *DC,
     // decl contexts, the previously built IvarList must be rebuilt.
     ObjCInterfaceDecl *ID = dyn_cast<ObjCInterfaceDecl>(DC);
     if (!ID) {
-      if (ObjCImplementationDecl *IM = dyn_cast<ObjCImplementationDecl>(DC)) {
+      if (ObjCImplementationDecl *IM = dyn_cast<ObjCImplementationDecl>(DC))
         ID = IM->getClassInterface();
-        if (BW)
-          IM->setHasSynthBitfield(true);
-      } else {
-        ObjCCategoryDecl *CD = cast<ObjCCategoryDecl>(DC);
-        ID = CD->getClassInterface();
-        if (BW)
-          CD->setHasSynthBitfield(true);
-      }
+      else
+        ID = cast<ObjCCategoryDecl>(DC)->getClassInterface();
     }
     ID->setIvarList(0);
   }
