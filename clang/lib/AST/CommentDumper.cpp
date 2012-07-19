@@ -140,6 +140,8 @@ void CommentDumper::visitBlockCommandComment(const BlockCommandComment *C) {
   dumpComment(C);
 
   OS << " Name=\"" << C->getCommandName() << "\"";
+  for (unsigned i = 0, e = C->getNumArgs(); i != e; ++i)
+    OS << " Arg[" << i << "]=\"" << C->getArgText(i) << "\"";
 }
 
 void CommentDumper::visitParamCommandComment(const ParamCommandComment *C) {
