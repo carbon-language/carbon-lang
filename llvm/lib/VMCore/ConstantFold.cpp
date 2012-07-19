@@ -724,12 +724,12 @@ Constant *llvm::ConstantFoldSelectInstruction(Constant *Cond,
   if (ConstantExpr *TrueVal = dyn_cast<ConstantExpr>(V1)) {
     if (TrueVal->getOpcode() == Instruction::Select)
       if (TrueVal->getOperand(0) == Cond)
-	return ConstantExpr::getSelect(Cond, TrueVal->getOperand(1), V2);
+        return ConstantExpr::getSelect(Cond, TrueVal->getOperand(1), V2);
   }
   if (ConstantExpr *FalseVal = dyn_cast<ConstantExpr>(V2)) {
     if (FalseVal->getOpcode() == Instruction::Select)
       if (FalseVal->getOperand(0) == Cond)
-	return ConstantExpr::getSelect(Cond, V1, FalseVal->getOperand(2));
+        return ConstantExpr::getSelect(Cond, V1, FalseVal->getOperand(2));
   }
 
   return 0;

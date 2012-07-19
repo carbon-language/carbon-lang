@@ -743,7 +743,7 @@ bool X86FastISel::X86SelectRet(const Instruction *I) {
     // Analyze operands of the call, assigning locations to each operand.
     SmallVector<CCValAssign, 16> ValLocs;
     CCState CCInfo(CC, F.isVarArg(), *FuncInfo.MF, TM, ValLocs,
-		   I->getContext());
+                   I->getContext());
     CCInfo.AnalyzeReturn(Outs, RetCC_X86);
 
     const Value *RV = Ret->getOperand(0);
@@ -1552,8 +1552,8 @@ bool X86FastISel::DoSelectCall(const Instruction *I, const char *MemIntName) {
   GetReturnInfo(I->getType(), CS.getAttributes().getRetAttributes(),
                 Outs, TLI);
   bool CanLowerReturn = TLI.CanLowerReturn(CS.getCallingConv(),
-					   *FuncInfo.MF, FTy->isVarArg(),
-					   Outs, FTy->getContext());
+                                           *FuncInfo.MF, FTy->isVarArg(),
+                                           Outs, FTy->getContext());
   if (!CanLowerReturn)
     return false;
 
@@ -1667,7 +1667,7 @@ bool X86FastISel::DoSelectCall(const Instruction *I, const char *MemIntName) {
   // Analyze operands of the call, assigning locations to each operand.
   SmallVector<CCValAssign, 16> ArgLocs;
   CCState CCInfo(CC, isVarArg, *FuncInfo.MF, TM, ArgLocs,
-		 I->getParent()->getContext());
+                 I->getParent()->getContext());
 
   // Allocate shadow area for Win64
   if (Subtarget->isTargetWin64())
@@ -1898,7 +1898,7 @@ bool X86FastISel::DoSelectCall(const Instruction *I, const char *MemIntName) {
   SmallVector<unsigned, 4> UsedRegs;
   SmallVector<CCValAssign, 16> RVLocs;
   CCState CCRetInfo(CC, false, *FuncInfo.MF, TM, RVLocs,
-		    I->getParent()->getContext());
+                    I->getParent()->getContext());
   unsigned ResultReg = FuncInfo.CreateRegs(I->getType());
   CCRetInfo.AnalyzeCallResult(Ins, RetCC_X86);
   for (unsigned i = 0; i != RVLocs.size(); ++i) {

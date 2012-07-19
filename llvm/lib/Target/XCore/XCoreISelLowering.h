@@ -151,7 +151,7 @@ namespace llvm {
     // Inline asm support
     std::pair<unsigned, const TargetRegisterClass*>
     getRegForInlineAsmConstraint(const std::string &Constraint,
-				 EVT VT) const;
+                                 EVT VT) const;
 
     // Expand specifics
     SDValue TryExpandADDWithMul(SDNode *Op, SelectionDAG &DAG) const;
@@ -186,7 +186,7 @@ namespace llvm {
 
     virtual bool
       CanLowerReturn(CallingConv::ID CallConv, MachineFunction &MF,
-		     bool isVarArg,
+                     bool isVarArg,
                      const SmallVectorImpl<ISD::OutputArg> &ArgsFlags,
                      LLVMContext &Context) const;
   };

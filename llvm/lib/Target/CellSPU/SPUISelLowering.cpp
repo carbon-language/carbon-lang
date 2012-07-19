@@ -1135,7 +1135,7 @@ SPUTargetLowering::LowerFormalArguments(SDValue Chain,
 
   SmallVector<CCValAssign, 16> ArgLocs;
   CCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(),
-		 getTargetMachine(), ArgLocs, *DAG.getContext());
+                 getTargetMachine(), ArgLocs, *DAG.getContext());
   // FIXME: allow for other calling conventions
   CCInfo.AnalyzeFormalArguments(Ins, CCC_SPU);
 
@@ -1287,7 +1287,7 @@ SPUTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
 
   SmallVector<CCValAssign, 16> ArgLocs;
   CCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(),
-		 getTargetMachine(), ArgLocs, *DAG.getContext());
+                 getTargetMachine(), ArgLocs, *DAG.getContext());
   // FIXME: allow for other calling conventions
   CCInfo.AnalyzeCallOperands(Outs, CCC_SPU);
 
@@ -1448,7 +1448,7 @@ SPUTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   // Now handle the return value(s)
   SmallVector<CCValAssign, 16> RVLocs;
   CCState CCRetInfo(CallConv, isVarArg, DAG.getMachineFunction(),
-		    getTargetMachine(), RVLocs, *DAG.getContext());
+                    getTargetMachine(), RVLocs, *DAG.getContext());
   CCRetInfo.AnalyzeCallResult(Ins, CCC_SPU);
 
 
@@ -1475,7 +1475,7 @@ SPUTargetLowering::LowerReturn(SDValue Chain,
 
   SmallVector<CCValAssign, 16> RVLocs;
   CCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(),
-		 getTargetMachine(), RVLocs, *DAG.getContext());
+                 getTargetMachine(), RVLocs, *DAG.getContext());
   CCInfo.AnalyzeReturn(Outs, RetCC_SPU);
 
   // If this is the first return lowered for this function, add the regs to the

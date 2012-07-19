@@ -90,7 +90,7 @@ SparcTargetLowering::LowerReturn(SDValue Chain,
 
   // CCState - Info about the registers and stack slot.
   CCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(),
-		 DAG.getTarget(), RVLocs, *DAG.getContext());
+                 DAG.getTarget(), RVLocs, *DAG.getContext());
 
   // Analize return values.
   CCInfo.AnalyzeReturn(Outs, RetCC_Sparc32);
@@ -160,7 +160,7 @@ SparcTargetLowering::LowerFormalArguments(SDValue Chain,
   // Assign locations to all of the incoming arguments.
   SmallVector<CCValAssign, 16> ArgLocs;
   CCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(),
-		 getTargetMachine(), ArgLocs, *DAG.getContext());
+                 getTargetMachine(), ArgLocs, *DAG.getContext());
   CCInfo.AnalyzeFormalArguments(Ins, CC_Sparc32);
 
   const unsigned StackOffset = 92;
@@ -364,7 +364,7 @@ SparcTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   // Analyze operands of the call, assigning locations to each operand.
   SmallVector<CCValAssign, 16> ArgLocs;
   CCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(),
-		 DAG.getTarget(), ArgLocs, *DAG.getContext());
+                 DAG.getTarget(), ArgLocs, *DAG.getContext());
   CCInfo.AnalyzeCallOperands(Outs, CC_Sparc32);
 
   // Get the size of the outgoing arguments stack space requirement.
@@ -595,7 +595,7 @@ SparcTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   // Assign locations to each value returned by this call.
   SmallVector<CCValAssign, 16> RVLocs;
   CCState RVInfo(CallConv, isVarArg, DAG.getMachineFunction(),
-		 DAG.getTarget(), RVLocs, *DAG.getContext());
+                 DAG.getTarget(), RVLocs, *DAG.getContext());
 
   RVInfo.AnalyzeCallResult(Ins, RetCC_Sparc32);
 

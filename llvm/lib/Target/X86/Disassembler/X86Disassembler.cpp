@@ -356,15 +356,15 @@ static void translateImmediate(MCInst &mcInst, uint64_t immediate,
       // Special case those X86 instructions that use the imm8 as a set of
       // bits, bit count, etc. and are not sign-extend.
       if (Opcode != X86::BLENDPSrri && Opcode != X86::BLENDPDrri &&
-	  Opcode != X86::PBLENDWrri && Opcode != X86::MPSADBWrri &&
-	  Opcode != X86::DPPSrri && Opcode != X86::DPPDrri &&
-	  Opcode != X86::INSERTPSrr && Opcode != X86::VBLENDPSYrri &&
-	  Opcode != X86::VBLENDPSYrmi && Opcode != X86::VBLENDPDYrri &&
-	  Opcode != X86::VBLENDPDYrmi && Opcode != X86::VPBLENDWrri &&
-	  Opcode != X86::VMPSADBWrri && Opcode != X86::VDPPSYrri &&
-	  Opcode != X86::VDPPSYrmi && Opcode != X86::VDPPDrri &&
-	  Opcode != X86::VINSERTPSrr)
-	type = TYPE_MOFFS8;
+          Opcode != X86::PBLENDWrri && Opcode != X86::MPSADBWrri &&
+          Opcode != X86::DPPSrri && Opcode != X86::DPPDrri &&
+          Opcode != X86::INSERTPSrr && Opcode != X86::VBLENDPSYrri &&
+          Opcode != X86::VBLENDPSYrmi && Opcode != X86::VBLENDPDYrri &&
+          Opcode != X86::VBLENDPDYrmi && Opcode != X86::VPBLENDWrri &&
+          Opcode != X86::VMPSADBWrri && Opcode != X86::VDPPSYrri &&
+          Opcode != X86::VDPPSYrmi && Opcode != X86::VDPPDrri &&
+          Opcode != X86::VINSERTPSrr)
+        type = TYPE_MOFFS8;
       break;
     case ENCODING_IW:
       type = TYPE_MOFFS16;

@@ -302,7 +302,7 @@ def nontemporalstore : PatFrag<(ops node:$val, node:$ptr),
 }]>;
 
 def alignednontemporalstore : PatFrag<(ops node:$val, node:$ptr),
-			           (st node:$val, node:$ptr), [{
+                                    (st node:$val, node:$ptr), [{
   if (StoreSDNode *ST = dyn_cast<StoreSDNode>(N))
     return ST->isNonTemporal() && !ST->isTruncatingStore() &&
            ST->getAddressingMode() == ISD::UNINDEXED &&
@@ -311,7 +311,7 @@ def alignednontemporalstore : PatFrag<(ops node:$val, node:$ptr),
 }]>;
 
 def unalignednontemporalstore : PatFrag<(ops node:$val, node:$ptr),
-			           (st node:$val, node:$ptr), [{
+                                      (st node:$val, node:$ptr), [{
   if (StoreSDNode *ST = dyn_cast<StoreSDNode>(N))
     return ST->isNonTemporal() &&
            ST->getAlignment() < 16;

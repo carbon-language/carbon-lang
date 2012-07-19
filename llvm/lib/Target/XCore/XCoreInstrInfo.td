@@ -948,10 +948,10 @@ def ENDIN_l2r : _FL2R<(outs GRRegs:$dst), (ins GRRegs:$src),
 // dgetreg
 def MSYNC_1r : _F1R<(outs), (ins GRRegs:$i),
                     "msync res[$i]",
-		    [(int_xcore_msync GRRegs:$i)]>;
+                    [(int_xcore_msync GRRegs:$i)]>;
 def MJOIN_1r : _F1R<(outs), (ins GRRegs:$i),
                     "mjoin res[$i]",
-		    [(int_xcore_mjoin GRRegs:$i)]>;
+                    [(int_xcore_mjoin GRRegs:$i)]>;
 
 let isBranch=1, isIndirectBranch=1, isTerminator=1, isBarrier = 1 in
 def BAU_1r : _F1R<(outs), (ins GRRegs:$addr),
@@ -1036,7 +1036,7 @@ def GETET_0R : _F0R<(outs), (ins),
 
 def SSYNC_0r : _F0R<(outs), (ins),
                     "ssync",
-		    [(int_xcore_ssync)]>;
+                    [(int_xcore_ssync)]>;
 
 let isBranch=1, isIndirectBranch=1, isTerminator=1, isBarrier = 1,
     hasSideEffects = 1 in

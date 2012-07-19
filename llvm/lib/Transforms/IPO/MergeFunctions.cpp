@@ -389,7 +389,7 @@ bool FunctionComparator::enumerate(const Value *V1, const Value *V2) {
     if (!C2) return false;
     // TODO: constant expressions with GEP or references to F1 or F2.
     if (C1->isNullValue() && C2->isNullValue() &&
-	isEquivalentType(C1->getType(), C2->getType()))
+        isEquivalentType(C1->getType(), C2->getType()))
       return true;
     // Try bitcasting C2 to C1's type. If the bitcast is legal and returns C1
     // then they must have equal bit patterns.
