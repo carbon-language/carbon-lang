@@ -116,7 +116,8 @@ bool ParagraphComment::isWhitespaceNoCache() const {
     if (const TextComment *TC = dyn_cast<TextComment>(*I)) {
       if (!TC->isWhitespace())
         return false;
-    }
+    } else
+      return false;
   }
   return true;
 }

@@ -104,6 +104,9 @@ int test_block_command4(int);
 /// \brief Aaa
 int test_block_command5(int);
 
+/// \brief \c Aaa
+int test_block_command6(int);
+
 // expected-warning@+1 {{'\param' command used in a comment that is not attached to a function declaration}}
 /// \param a Blah blah.
 int test_param1;
