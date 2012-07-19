@@ -150,20 +150,8 @@ void DebugLoc::dump(const LLVMContext &Ctx) const {
 // DenseMap specialization
 //===----------------------------------------------------------------------===//
 
-DebugLoc DenseMapInfo<DebugLoc>::getEmptyKey() {
-  return DebugLoc::getEmptyKey();
-}
-
-DebugLoc DenseMapInfo<DebugLoc>::getTombstoneKey() {
-  return DebugLoc::getTombstoneKey();
-}
-
 unsigned DenseMapInfo<DebugLoc>::getHashValue(const DebugLoc &Key) {
   return static_cast<unsigned>(hash_combine(Key.LineCol, Key.ScopeIdx));
-}
-
-bool DenseMapInfo<DebugLoc>::isEqual(const DebugLoc &LHS, const DebugLoc &RHS) {
-  return LHS == RHS;
 }
 
 //===----------------------------------------------------------------------===//

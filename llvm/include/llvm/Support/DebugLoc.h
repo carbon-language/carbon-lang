@@ -15,9 +15,8 @@
 #ifndef LLVM_SUPPORT_DEBUGLOC_H
 #define LLVM_SUPPORT_DEBUGLOC_H
 
-#include "llvm/ADT/DenseMapInfo.h"
-
 namespace llvm {
+  template <typename T> struct DenseMapInfo;
   class MDNode;
   class LLVMContext;
   
@@ -103,10 +102,10 @@ namespace llvm {
 
   template <>
   struct DenseMapInfo<DebugLoc> {
-    static DebugLoc getEmptyKey();
-    static DebugLoc getTombstoneKey();
+    static DebugLoc getEmptyKey() { return DebugLoc::getEmptyKey(); }
+    static DebugLoc getTombstoneKey() { return DebugLoc::getTombstoneKey(); }
     static unsigned getHashValue(const DebugLoc &Key);
-    static bool isEqual(const DebugLoc &LHS, const DebugLoc &RHS);
+    static bool isEqual(DebugLoc LHS, DebugLoc RHS) { return LHS == RHS; }
   };
 } // end namespace llvm
 
