@@ -166,6 +166,7 @@ const char *GetEnv(const char *name) {
 // ------------------ sanitizer_symbolizer.h
 typedef ElfW(Ehdr) Elf_Ehdr;
 typedef ElfW(Shdr) Elf_Shdr;
+typedef ElfW(Phdr) Elf_Phdr;
 
 bool FindDWARFSection(uptr object_file_addr, const char *section_name,
                       DWARFSection *section) {
@@ -219,12 +220,16 @@ static int dl_iterate_phdr_cb(dl_phdr_info *info, size_t size, void *arg) {
   if (module_name == 0 || module_name[0] == '\0')
     return 0;
   void *mem = &data->modules[data->current_n];
-  ModuleDIContext *cur_module = new(mem) ModuleDIContext(module_name);
+  ModuleDIContext *cur_module = new(mem) ModuleDIContext(module_name,
+                                                         info->dlpi_addr);
   data->current_n++;
   for (int i = 0; i < info->dlpi_phnum; i++) {
-    uptr cur_beg = info->dlpi_addr + info->dlpi_phdr[i].p_vaddr;
-    uptr cur_end = cur_beg + info->dlpi_phdr[i].p_memsz;
-    cur_module->addAddressRange(cur_beg, cur_end);
+    const Elf_Phdr *phdr = &info->dlpi_phdr[i];
+    if (phdr->p_type == PT_LOAD) {
+      uptr cur_beg = info->dlpi_addr + phdr->p_vaddr;
+      uptr cur_end = cur_beg + phdr->p_memsz;
+      cur_module->addAddressRange(cur_beg, cur_end);
+    }
   }
   InternalFree(module_name);
   return 0;

@@ -68,7 +68,7 @@ bool IsFullNameOfDWARFSection(const char *full_name, const char *short_name);
 
 class ModuleDIContext {
  public:
-  explicit ModuleDIContext(const char *module_name);
+  ModuleDIContext(const char *module_name, uptr base_address);
   void addAddressRange(uptr beg, uptr end);
   bool containsAddress(uptr address) const;
   void getAddressInfo(AddressInfo *info);
@@ -85,7 +85,7 @@ class ModuleDIContext {
   char *full_name_;
   char *short_name_;
   uptr base_address_;
-  static const uptr kMaxNumberOfAddressRanges = 16;
+  static const uptr kMaxNumberOfAddressRanges = 8;
   AddressRange ranges_[kMaxNumberOfAddressRanges];
   uptr n_ranges_;
   uptr mapped_addr_;

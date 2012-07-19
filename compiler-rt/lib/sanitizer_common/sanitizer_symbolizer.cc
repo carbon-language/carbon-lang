@@ -38,7 +38,7 @@ void AddressInfo::Clear() {
   internal_memset(this, 0, sizeof(AddressInfo));
 }
 
-ModuleDIContext::ModuleDIContext(const char *module_name) {
+ModuleDIContext::ModuleDIContext(const char *module_name, uptr base_address) {
   full_name_ = internal_strdup(module_name);
   short_name_ = internal_strrchr(module_name, '/');
   if (short_name_ == 0) {
@@ -46,7 +46,7 @@ ModuleDIContext::ModuleDIContext(const char *module_name) {
   } else {
     short_name_++;
   }
-  base_address_ = (uptr)-1;
+  base_address_ = base_address;
   n_ranges_ = 0;
   mapped_addr_ = 0;
   mapped_size_ = 0;
@@ -56,7 +56,6 @@ void ModuleDIContext::addAddressRange(uptr beg, uptr end) {
   CHECK_LT(n_ranges_, kMaxNumberOfAddressRanges);
   ranges_[n_ranges_].beg = beg;
   ranges_[n_ranges_].end = end;
-  base_address_ = Min(base_address_, beg);
   n_ranges_++;
 }
 
@@ -130,7 +129,7 @@ class Symbolizer {
     }
     return 0;
   }
-  static const uptr kMaxNumberOfModuleContexts = 256;
+  static const uptr kMaxNumberOfModuleContexts = 4096;
   // Array of module debug info contexts is leaked.
   ModuleDIContext *modules_;
   uptr n_modules_;
