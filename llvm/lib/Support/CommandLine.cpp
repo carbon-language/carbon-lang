@@ -219,10 +219,10 @@ static Option *LookupNearestOption(StringRef Arg,
       if (!Best || Distance < BestDistance) {
         Best = O;
         BestDistance = Distance;
-	if (RHS.empty() || !PermitValue)
-	  NearestString = OptionNames[i];
-	else
-	  NearestString = std::string(OptionNames[i]) + "=" + RHS.str();
+        if (RHS.empty() || !PermitValue)
+          NearestString = OptionNames[i];
+        else
+          NearestString = std::string(OptionNames[i]) + "=" + RHS.str();
       }
     }
   }
