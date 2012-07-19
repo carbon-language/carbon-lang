@@ -27,10 +27,23 @@ ASAN_USE_EXTERNAL_SYMBOLIZER(const void *pc, char *out, int out_size);
 namespace __asan {
 
 // ----------------------- AsanStackTrace ----------------------------- {{{1
+// PCs in stack traces are actually the return addresses, that is,
+// addresses of the next instructions after the call. That's why we
+// decrement them.
+static uptr patch_pc(uptr pc) {
+#ifdef __arm__
+  // Cancel Thumb bit.
+  pc = pc & (~1);
+#endif
+  return pc - 1;
+}
+
 #if defined(ASAN_USE_EXTERNAL_SYMBOLIZER)
 void AsanStackTrace::PrintStack(uptr *addr, uptr size) {
   for (uptr i = 0; i < size && addr[i]; i++) {
     uptr pc = addr[i];
+    if (i < size - 1 && addr[i + 1])
+      pc = patch_pc(pc);
     char buff[4096];
     ASAN_USE_EXTERNAL_SYMBOLIZER((void*)pc, buff, sizeof(buff));
     AsanPrintf("  #%zu 0x%zx %s\n", i, pc, buff);
@@ -43,11 +56,12 @@ void AsanStackTrace::PrintStack(uptr *addr, uptr size) {
   uptr frame_num = 0;
   for (uptr i = 0; i < size && addr[i]; i++) {
     uptr pc = addr[i];
+    if (i < size - 1 && addr[i + 1])
+      pc = patch_pc(pc);
     AddressInfo addr_frames[64];
     uptr addr_frames_num = 0;
     if (flags()->symbolize) {
-      bool last_frame = (i == size - 1) || !addr[i + 1];
-      addr_frames_num = SymbolizeCode(pc - !last_frame, addr_frames,
+      addr_frames_num = SymbolizeCode(pc, addr_frames,
                                       ASAN_ARRAY_SIZE(addr_frames));
     }
     if (addr_frames_num > 0) {

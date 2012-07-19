@@ -17,22 +17,6 @@ pipes = {}
 filetypes = {}
 DEBUG=False
 
-def patch_address(frameno, addr_s):
-  ''' Subtracts 1 or 2 from the top frame's address.
-  Top frame is normally the return address from asan_report*
-  call, which is not expected to return at all. Because of that, this
-  address often belongs to the next source code line, or even to a different
-  function. '''
-  if frameno == '0':
-    addr = int(addr_s, 16)
-    if os.uname()[4].startswith('arm'):
-      # Cancel the Thumb bit
-      addr = addr & (~1)
-    addr -= 1
-    return hex(addr)
-  return addr_s
-
-
 def fix_filename(file_name):
   for path_to_cut in sys.argv[1:]:
     file_name = re.sub(".*" + path_to_cut, "", file_name)
@@ -49,7 +33,6 @@ def symbolize_addr2line(line):
     frameno = match.group(2)
     binary = match.group(3)
     addr = match.group(4)
-    addr = patch_address(frameno, addr)
     if not pipes.has_key(binary):
       pipes[binary] = subprocess.Popen(["addr2line", "-f", "-e", binary],
                          stdin=subprocess.PIPE, stdout=subprocess.PIPE)
@@ -90,7 +73,7 @@ def symbolize_atos(line):
     orig_addr = match.group(3)
     binary = match.group(4)
     offset = match.group(5)
-    addr = patch_address(frameno, orig_addr)
+    addr = orig_addr
     load_addr = hex(int(orig_addr, 16) - int(offset, 16))
     filetype = get_macho_filetype(binary)
 

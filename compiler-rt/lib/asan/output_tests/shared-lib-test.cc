@@ -39,4 +39,4 @@ int main(int argc, char *argv[]) {
 // Check-Common: {{.*ERROR: AddressSanitizer global-buffer-overflow}}
 // Check-Common: {{READ of size 4 at 0x.* thread T0}}
 // Check-Common: {{    #0 0x.*}}
-// Check-Common: {{    #1 0x.* in main .*shared-lib-test.cc:3[567]}}
+// Check-Common: {{    #1 0x.* in main .*shared-lib-test.cc:35}}

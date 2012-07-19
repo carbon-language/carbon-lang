@@ -13,12 +13,12 @@ int main() {
 // Check-Common: {{freed by thread T0 here:}}
 
 // Check-Linux: {{    #0 0x.* in .*free}}
-// Check-Linux: {{    #1 0x.* in main .*use-after-free.cc:[45]}}
+// Check-Linux: {{    #1 0x.* in main .*use-after-free.cc:4}}
 
 // Check-Darwin: {{    #0 0x.* in .*mz_free.*}}
 // We override free() on Darwin, thus no malloc_zone_free
 // Check-Darwin: {{    #1 0x.* in wrap_free}}
-// Check-Darwin: {{    #2 0x.* in main .*use-after-free.cc:[45]}}
+// Check-Darwin: {{    #2 0x.* in main .*use-after-free.cc:4}}
 
 // Check-Common: {{previously allocated by thread T0 here:}}
 

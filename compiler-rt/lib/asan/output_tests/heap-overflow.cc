@@ -14,9 +14,9 @@ int main(int argc, char **argv) {
 // Check-Common: {{allocated by thread T0 here:}}
 
 // Check-Linux: {{    #0 0x.* in .*malloc}}
-// Check-Linux: {{    #1 0x.* in main .*heap-overflow.cc:[45]}}
+// Check-Linux: {{    #1 0x.* in main .*heap-overflow.cc:4}}
 
 // Check-Darwin: {{    #0 0x.* in .*mz_malloc.*}}
 // Check-Darwin: {{    #1 0x.* in malloc_zone_malloc.*}}
 // Check-Darwin: {{    #2 0x.* in malloc.*}}
-// Check-Darwin: {{    #3 0x.* in main heap-overflow.cc:[45]}}
+// Check-Darwin: {{    #3 0x.* in main heap-overflow.cc:4}}

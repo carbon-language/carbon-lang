@@ -41,7 +41,7 @@ int main(int argc, char **argv) {
 // Check-Linux:  {{    #0 0x.* in LargeFunction.*large_func_test.cc:15}}
 // Check-Darwin: {{    #0 0x.* in .*LargeFunction.*large_func_test.cc:15}}
 
-// Check-Common: {{    #1 0x.* in main .*large_func_test.cc:3[012]}}
+// Check-Common: {{    #1 0x.* in main .*large_func_test.cc:31}}
 // Check-Common: {{0x.* is located 44 bytes to the right of 400-byte region}}
 // Check-Common: {{allocated by thread T0 here:}}
 // Check-Common: {{    #0 0x.* in operator new.*}}
