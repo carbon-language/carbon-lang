@@ -27,7 +27,7 @@ int main() {
 	NSDictionary *dict = @{ @"name":@666 };
         dict[@"name"] = @666;
 
-        dict["name"] = @666; // expected-error {{indexing expression is invalid because subscript type 'char *' is not an objective-C pointer}}
+        dict["name"] = @666; // expected-error {{indexing expression is invalid because subscript type 'char *' is not an Objective-C pointer}}
 
 	return 0;
 }

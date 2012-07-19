@@ -19,6 +19,6 @@ struct Bar {
 
 - (void)baz {
     bar.x = 0;
-    [self bar].x = 10; // expected-error {{assigning to 'readonly' return result of an objective-c message not allowed}}
+    [self bar].x = 10; // expected-error {{assigning to 'readonly' return result of an Objective-C message not allowed}}
 }
 @end

@@ -218,12 +218,12 @@ void test_nonBuiltinCFStrings() {
 @end
 
 void testInvalidFormatArgument(NSDictionary *dict) {
-  NSLog(@"no specifiers", dict[CFSTR("abc")]); // expected-error{{indexing expression is invalid because subscript type 'CFStringRef' (aka 'const struct __CFString *') is not an integral or objective-C pointer type}}
-  NSLog(@"%@", dict[CFSTR("abc")]); // expected-error{{indexing expression is invalid because subscript type 'CFStringRef' (aka 'const struct __CFString *') is not an integral or objective-C pointer type}}
-  NSLog(@"%@ %@", dict[CFSTR("abc")]); // expected-error{{indexing expression is invalid because subscript type 'CFStringRef' (aka 'const struct __CFString *') is not an integral or objective-C pointer type}}
+  NSLog(@"no specifiers", dict[CFSTR("abc")]); // expected-error{{indexing expression is invalid because subscript type 'CFStringRef' (aka 'const struct __CFString *') is not an integral or Objective-C pointer type}}
+  NSLog(@"%@", dict[CFSTR("abc")]); // expected-error{{indexing expression is invalid because subscript type 'CFStringRef' (aka 'const struct __CFString *') is not an integral or Objective-C pointer type}}
+  NSLog(@"%@ %@", dict[CFSTR("abc")]); // expected-error{{indexing expression is invalid because subscript type 'CFStringRef' (aka 'const struct __CFString *') is not an integral or Objective-C pointer type}}
 
-  [Foo fooWithFormat:@"no specifiers", dict[CFSTR("abc")]]; // expected-error{{indexing expression is invalid because subscript type 'CFStringRef' (aka 'const struct __CFString *') is not an integral or objective-C pointer type}}
-  [Foo fooWithFormat:@"%@", dict[CFSTR("abc")]]; // expected-error{{indexing expression is invalid because subscript type 'CFStringRef' (aka 'const struct __CFString *') is not an integral or objective-C pointer type}}
-  [Foo fooWithFormat:@"%@ %@", dict[CFSTR("abc")]]; // expected-error{{indexing expression is invalid because subscript type 'CFStringRef' (aka 'const struct __CFString *') is not an integral or objective-C pointer type}} expected-warning{{more '%' conversions than data arguments}}
+  [Foo fooWithFormat:@"no specifiers", dict[CFSTR("abc")]]; // expected-error{{indexing expression is invalid because subscript type 'CFStringRef' (aka 'const struct __CFString *') is not an integral or Objective-C pointer type}}
+  [Foo fooWithFormat:@"%@", dict[CFSTR("abc")]]; // expected-error{{indexing expression is invalid because subscript type 'CFStringRef' (aka 'const struct __CFString *') is not an integral or Objective-C pointer type}}
+  [Foo fooWithFormat:@"%@ %@", dict[CFSTR("abc")]]; // expected-error{{indexing expression is invalid because subscript type 'CFStringRef' (aka 'const struct __CFString *') is not an integral or Objective-C pointer type}} expected-warning{{more '%' conversions than data arguments}}
 }
 

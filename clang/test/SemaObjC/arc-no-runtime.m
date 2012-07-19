@@ -3,7 +3,7 @@
 // rdar://problem/9150784
 void test(void) {
   __weak id x; // expected-error {{the current deployment target does not support automated __weak references}}
-  __weak void *v; // expected-warning {{'__weak' only applies to objective-c object or block pointer types}}
+  __weak void *v; // expected-warning {{'__weak' only applies to Objective-C object or block pointer types}}
 }
 
 @interface A

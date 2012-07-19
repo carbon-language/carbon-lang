@@ -32,8 +32,8 @@ template void test_dictionary_subscripts(NSMutableDictionary*, id, int); // expe
 
 template<typename T, typename U, typename O>
 void test_array_subscripts(T base, U index, O obj) {
-  base[index] = obj; // expected-error {{indexing expression is invalid because subscript type 'double' is not an integral or objective-C pointer type}}
-  obj = base[index]; // expected-error {{indexing expression is invalid because subscript type 'double' is not an integral or objective-C pointer type}}
+  base[index] = obj; // expected-error {{indexing expression is invalid because subscript type 'double' is not an integral or Objective-C pointer type}}
+  obj = base[index]; // expected-error {{indexing expression is invalid because subscript type 'double' is not an integral or Objective-C pointer type}}
 }
 
 template void  test_array_subscripts(NSMutableArray *, int, id);

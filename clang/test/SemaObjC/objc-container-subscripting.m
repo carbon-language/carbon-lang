@@ -14,15 +14,15 @@ int main() {
   NSMutableArray<P> * array;
   id  oldObject = array[10]; // expected-error {{method index parameter type 'double' is not integral type}}
   array[3] = 0; // expected-error {{method index parameter type 'void *' is not integral type}} \
-                // expected-error {{cannot assign to this array because assigning method's 2nd parameter of type 'id *' is not an objective-C pointer type}}
+                // expected-error {{cannot assign to this array because assigning method's 2nd parameter of type 'id *' is not an Objective-C pointer type}}
 
   I* iarray;
   iarray[3] = 0; // expected-error {{expected method to write array element not found on object of type 'I *'}}
   I* p = iarray[4]; // expected-error {{expected method to read array element not found on object of type 'I *'}}
 
-  oldObject = array[10]++; // expected-error {{illegal operation on objective-c container subscripting}}
-  oldObject = array[10]--; // expected-error {{illegal operation on objective-c container subscripting}}
-  oldObject = --array[10]; // expected-error {{illegal operation on objective-c container subscripting}}
+  oldObject = array[10]++; // expected-error {{illegal operation on Objective-C container subscripting}}
+  oldObject = array[10]--; // expected-error {{illegal operation on Objective-C container subscripting}}
+  oldObject = --array[10]; // expected-error {{illegal operation on Objective-C container subscripting}}
 }
 
 @interface NSMutableDictionary

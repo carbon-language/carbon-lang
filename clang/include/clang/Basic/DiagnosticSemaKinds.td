@@ -1714,7 +1714,7 @@ def warn_pointer_attribute_wrong_type : Warning<
   "'%0' only applies to pointer types; type here is %1">,
   InGroup<IgnoredAttributes>;
 def warn_objc_object_attribute_wrong_type : Warning<
-  "'%0' only applies to objective-c object or block pointer types; type here is %1">,
+  "'%0' only applies to Objective-C object or block pointer types; type here is %1">,
   InGroup<IgnoredAttributes>;
 def warn_gnu_inline_attribute_requires_inline : Warning<
   "'gnu_inline' attribute requires function to be marked 'inline',"
@@ -3388,7 +3388,7 @@ def note_protected_by___block : Note<
 def note_protected_by_objc_ownership : Note<
   "jump bypasses initialization of retaining variable">;
 def note_enters_block_captures_cxx_obj : Note<
-  "jump enters lifetime of block which captures a destructible c++ object">;
+  "jump enters lifetime of block which captures a destructible C++ object">;
 def note_enters_block_captures_strong : Note<
   "jump enters lifetime of block which strongly captures a variable">;
 def note_enters_block_captures_weak : Note<
@@ -3417,7 +3417,7 @@ def note_exits_objc_autoreleasepool : Note<
 def note_exits_objc_ownership : Note<
   "jump exits scope of retaining variable">;
 def note_exits_block_captures_cxx_obj : Note<
-  "jump exits lifetime of block which captures a destructible c++ object">;
+  "jump exits lifetime of block which captures a destructible C++ object">;
 def note_exits_block_captures_strong : Note<
   "jump exits lifetime of block which strongly captures a variable">;
 def note_exits_block_captures_weak : Note<
@@ -3653,7 +3653,7 @@ def err_illegal_decl_array_of_functions : Error<
 def err_illegal_decl_array_incomplete_type : Error<
   "array has incomplete element type %0">;
 def err_illegal_message_expr_incomplete_type : Error<
-  "objective-c message has incomplete result type %0">;
+  "Objective-C message has incomplete result type %0">;
 def err_illegal_decl_array_of_references : Error<
   "'%0' declared as array of references of type %1">;
 def err_decl_negative_array_size : Error<
@@ -4080,8 +4080,8 @@ def err_objc_subscript_key_type : Error<
 def err_objc_subscript_dic_object_type : Error<
   "method object parameter type %0 is not object type">;
 def err_objc_subscript_object_type : Error<
-  "cannot assign to this %select{dictionary|array}1 because assigning method's 2nd parameter"
-  " of type %0 is not an objective-C pointer type">;
+  "cannot assign to this %select{dictionary|array}1 because assigning method's "
+  "2nd parameter of type %0 is not an Objective-C pointer type">;
 def err_objc_subscript_base_type : Error<
   "%select{dictionary|array}1 subscript base type %0 is not an Objective-C object">;
 def err_objc_multiple_subscript_type_conversion : Error<
@@ -4089,17 +4089,17 @@ def err_objc_multiple_subscript_type_conversion : Error<
   "multiple type conversion functions">;
 def err_objc_subscript_type_conversion : Error<
   "indexing expression is invalid because subscript type %0 is not an integral"
-  " or objective-C pointer type">;
+  " or Objective-C pointer type">;
 def err_objc_subscript_pointer : Error<
   "indexing expression is invalid because subscript type %0 is not an"
-  " objective-C pointer">;
+  " Objective-C pointer">;
 def err_objc_indexing_method_result_type : Error<
   "method for accessing %select{dictionary|array}1 element must have Objective-C"
   " object return type instead of %0">;
 def err_objc_index_incomplete_class_type : Error<
-  "objective-C index expression has incomplete class type %0">;
+  "Objective-C index expression has incomplete class type %0">;
 def err_illegal_container_subscripting_op : Error<
-  "illegal operation on objective-c container subscripting">;
+  "illegal operation on Objective-C container subscripting">;
 def err_property_not_found_forward_class : Error<
   "property %0 cannot be found in forward class object %1">;
 def err_property_not_as_forward_class : Error<
@@ -4117,7 +4117,7 @@ def ext_gnu_ptr_func_arith : Extension<
   "type%select{|s}2 %1%select{| and %3}2 is a GNU extension">,
   InGroup<PointerArith>;
 def error_readonly_message_assignment : Error<
-  "assigning to 'readonly' return result of an objective-c message not allowed">;
+  "assigning to 'readonly' return result of an Objective-C message not allowed">;
 def ext_integer_increment_complex : Extension<
   "ISO C does not support '++'/'--' on complex integer type %0">;
 def ext_integer_complement_complex : Extension<
@@ -4197,7 +4197,7 @@ def warn_objc_pointer_cxx_catch_fragile : Warning<
   "can not catch an exception thrown with @throw in C++ in the non-unified "
   "exception model">, InGroup<ObjCNonUnifiedException>;
 def err_objc_object_catch : Error<
-  "can't catch an Objective C object by value">;
+  "can't catch an Objective-C object by value">;
 def err_incomplete_type_objc_at_encode : Error<
   "'@encode' of incomplete type %0">;
 

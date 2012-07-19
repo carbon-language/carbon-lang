@@ -103,7 +103,7 @@ def err_drv_unknown_objc_runtime : Error<
   "unknown or ill-formed Objective-C runtime '%0'">;
 
 def warn_c_kext : Warning<
-  "ignoring -fapple-kext which is valid for c++ and objective-c++ only">;
+  "ignoring -fapple-kext which is valid for C++ and Objective-C++ only">;
 def warn_drv_input_file_unused : Warning<
   "%0: '%1' input unused when '%2' is present">;
 def warn_drv_preprocessed_input_file_unused : Warning<
