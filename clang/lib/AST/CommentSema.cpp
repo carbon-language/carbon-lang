@@ -447,8 +447,9 @@ unsigned Sema::getBlockCommandNumArgs(StringRef Name) {
 
 bool Sema::isInlineCommand(StringRef Name) {
   return llvm::StringSwitch<bool>(Name)
-      .Case("c", true)
-      .Case("em", true)
+      .Case("b", true)
+      .Cases("c", "p", true)
+      .Cases("a", "e", "em", true)
       .Default(false);
 }
 
