@@ -3,17 +3,18 @@ target datalayout = "e-p:32:32:32-i1:8:32-i8:8:32-i16:16:32-i32:32:32-i64:32:64-
 target triple = "thumbv7-apple-ios0.0.0"
 
 ; This test case would clobber the outgoing call arguments by writing to the
-; emergency spill slot at [sp, #4] without adjusting the stack pointer first.
+; emergency spill slots at [sp, #4] or [sp, #8] without adjusting the stack
+; pointer first.
 
 ; CHECK: main
 ; CHECK: vmov.f64
 ; Adjust SP for the large call
 ; CHECK: sub sp,
-; CHECK: mov [[FR:r[0-9]+]], sp
-; Store to call frame + #4
-; CHECK: str{{.*\[}}[[FR]], #4]
+; Store to call frame + #8
+; CHECK: vstr{{.*\[}}sp, #8]
 ; Don't clobber that store until the call.
 ; CHECK-NOT: [sp, #4]
+; CHECK-NOT: [sp, #8]
 ; CHECK: variadic
 
 define i32 @main() ssp {
