@@ -36,7 +36,7 @@
   <!--*********************************************************************-->
 
   <p>libc++ is a new implementation of the C++ standard library, targeting
-     C++0X.</p>
+     C++11.</p>
 
   <p>All of the code in libc++ is <a
      href="http://llvm.org/docs/DeveloperPolicy.html#license">dual licensed</a>
@@ -47,7 +47,7 @@
   <!--=====================================================================-->
 
     <ul>
-        <li>Correctness as defined by the (currently draft) C++0X standard.</li>
+        <li>Correctness as defined by the C++11 standard.</li>
         <li>Fast execution.</li>
         <li>Minimal memory use.</li>
         <li>Fast compile times.</li>
@@ -88,7 +88,7 @@
 
   <li><p>STLport and the Apache libstdcxx library are two other popular
       candidates, but both lack C++'0x support.  Our experience (and the
-      experience of libstdc++ developers) is that adding support for C++0x (in
+      experience of libstdc++ developers) is that adding support for C++11 (in
       particular rvalue references and move-only types) requires changes to
       almost every class and function, essentially amounting to a rewrite.
       Faced with a rewrite, we decided to start from scratch and evaluate every
@@ -104,7 +104,7 @@
   <!--=====================================================================-->
 
    <p>libc++ is known to work on the following platforms, using g++-4.2 and
-      clang (lack of C++0X language support disables some functionality).</p>
+      clang (lack of C++11 language support disables some functionality).</p>
 
     <ul>
      <li>Mac OS X i386</li>
@@ -188,7 +188,7 @@
 
   <ul>
     <li><code>clang++ -stdlib=libc++ test.cpp</code></li>
-    <li><code>clang++ -std=c++0x -stdlib=libc++ test.cpp</code></li>
+    <li><code>clang++ -std=c++11 -stdlib=libc++ test.cpp</code></li>
   </ul>
 
   <p>To run the libc++ test suit (recommended):</p>
@@ -201,7 +201,7 @@
            math.h and inttypes.h, add "-U__STRICT_ANSI__" and
            "-D__STDC_FORMAT_MACROS" to the command line with:
            <blockquote>
-             <pre>export OPTIONS="-std=c++0x -stdlib=libc++ -U__STRICT_ANSI__ -D__STDC_FORMAT_MACROS"</pre>
+             <pre>export OPTIONS="-std=c++11 -stdlib=libc++ -U__STRICT_ANSI__ -D__STDC_FORMAT_MACROS"</pre>
            </blockquote></li>
        <li>People porting libc++ to other OSes will likely have to
            define similar macros.</li>
