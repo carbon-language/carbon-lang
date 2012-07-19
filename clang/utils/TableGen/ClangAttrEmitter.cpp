@@ -18,7 +18,6 @@
 #include "llvm/TableGen/TableGenBackend.h"
 #include <algorithm>
 #include <cctype>
-#include <set>
 
 using namespace llvm;
 
