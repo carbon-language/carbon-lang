@@ -172,7 +172,7 @@ public:
 
       // If we should include the address of the node in the label, do so now.
       if (DTraits.hasNodeAddressLabel(Node, G))
-        O << "|" << (void*)Node;
+        O << "|" << static_cast<const void*>(Node);
     }
 
     std::string edgeSourceLabels;
@@ -192,7 +192,7 @@ public:
 
       // If we should include the address of the node in the label, do so now.
       if (DTraits.hasNodeAddressLabel(Node, G))
-        O << "|" << (void*)Node;
+        O << "|" << static_cast<const void*>(Node);
     }
 
     if (DTraits.hasEdgeDestLabels()) {

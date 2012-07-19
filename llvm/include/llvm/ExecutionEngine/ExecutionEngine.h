@@ -354,7 +354,7 @@ public:
   /// variable, possibly emitting it to memory if needed.  This is used by the
   /// Emitter.
   virtual void *getOrEmitGlobalVariable(const GlobalVariable *GV) {
-    return getPointerToGlobal((GlobalValue*)GV);
+    return getPointerToGlobal((const GlobalValue *)GV);
   }
 
   /// Registers a listener to be called back on various events within

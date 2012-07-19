@@ -942,7 +942,7 @@ void SelectionDAGBuilder::visit(unsigned Opcode, const User &I) {
   default: llvm_unreachable("Unknown instruction type encountered!");
     // Build the switch statement using the Instruction.def file.
 #define HANDLE_INST(NUM, OPCODE, CLASS) \
-    case Instruction::OPCODE: visit##OPCODE((CLASS&)I); break;
+    case Instruction::OPCODE: visit##OPCODE((const CLASS&)I); break;
 #include "llvm/Instruction.def"
   }
 
