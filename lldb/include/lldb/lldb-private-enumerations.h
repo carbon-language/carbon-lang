@@ -106,7 +106,7 @@ typedef enum SortOrder
 
 
 //----------------------------------------------------------------------
-// Used in conjunction with Host::GetLLDBResource () to find files that
+// Used in conjunction with Host::GetLLDBPath () to find files that
 // are related to 
 //----------------------------------------------------------------------
 typedef enum PathType
