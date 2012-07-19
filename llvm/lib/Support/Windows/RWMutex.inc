@@ -67,9 +67,9 @@ static bool loadSRW() {
                                                "ReleaseSRWLockShared");
       ::FreeLibrary(hLib);
 
-	  if (fpInitializeSRWLock != NULL) {
-	    sHasSRW = true;
-	  }
+      if (fpInitializeSRWLock != NULL) {
+        sHasSRW = true;
+      }
     }
   }
   return sHasSRW;

@@ -336,11 +336,11 @@ SPUInstrInfo::RemoveBranch(MachineBasicBlock &MBB) const {
 static MachineBasicBlock::iterator findHBRPosition(MachineBasicBlock &MBB)
 {
    MachineBasicBlock::iterator J = MBB.end();
-	for( int i=0; i<8; i++) {
-		if( J == MBB.begin() ) return J;
-		J--;
-	}
-	return J;
+   for( int i=0; i<8; i++) {
+     if( J == MBB.begin() ) return J;
+     J--;
+   }
+   return J;
 }
 
 unsigned
@@ -356,7 +356,7 @@ SPUInstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
   MachineInstrBuilder MIB;
   //TODO: make a more accurate algorithm.
   bool haveHBR = MBB.size()>8;
-  
+
   removeHBR(MBB);
   MCSymbol *branchLabel = MBB.getParent()->getContext().CreateTempSymbol();
   // Add a label just before the branch
@@ -378,7 +378,7 @@ SPUInstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
         MIB = BuildMI( MBB, findHBRPosition(MBB), DL, get(SPU::HBRA));
         MIB.addSym(branchLabel);
         MIB.addMBB(TBB);
-      }	
+      }
     } else {
       // Conditional branch
       MIB = BuildMI(&MBB, DL, get(Cond[0].getImm()));
@@ -388,7 +388,7 @@ SPUInstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
         MIB = BuildMI(MBB, findHBRPosition(MBB), DL, get(SPU::HBRA));
         MIB.addSym(branchLabel);
         MIB.addMBB(TBB);
-      }	
+      }
 
       DEBUG(errs() << "Inserted one-way cond branch:   ");
       DEBUG((*MIB).dump());
@@ -406,7 +406,7 @@ SPUInstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
       MIB = BuildMI( MBB, findHBRPosition(MBB), DL, get(SPU::HBRA));
       MIB.addSym(branchLabel);
       MIB.addMBB(FBB);
-    }	
+    }
 
     DEBUG(errs() << "Inserted conditional branch:    ");
     DEBUG((*MIB).dump());

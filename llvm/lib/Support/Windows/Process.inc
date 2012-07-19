@@ -133,7 +133,7 @@ bool Process::StandardErrIsDisplayed() {
 }
 
 bool Process::FileDescriptorIsDisplayed(int fd) {
-  DWORD Mode;	// Unused
+  DWORD Mode;  // Unused
   return (GetConsoleMode((HANDLE)_get_osfhandle(fd), &Mode) != 0);
 }
 
