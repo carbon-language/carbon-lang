@@ -97,7 +97,8 @@ static void DumpInput(const StringRef &Filename) {
     dictx->dump(outs());
   } else {
     // Print line info for the specified address.
-    int spec_flags = DILineInfoSpecifier::FileLineInfo;
+    int spec_flags = DILineInfoSpecifier::FileLineInfo |
+                     DILineInfoSpecifier::AbsoluteFilePath;
     if (PrintFunctions)
       spec_flags |= DILineInfoSpecifier::FunctionName;
     DILineInfo dli = dictx->getLineInfoForAddress(Address, spec_flags);

@@ -12,7 +12,6 @@
 
 #include "llvm/Support/DataExtractor.h"
 #include <map>
-#include <string>
 #include <vector>
 
 namespace llvm {
@@ -22,9 +21,9 @@ class raw_ostream;
 class DWARFDebugLine {
 public:
   struct FileNameEntry {
-    FileNameEntry() : DirIdx(0), ModTime(0), Length(0) {}
+    FileNameEntry() : Name(0), DirIdx(0), ModTime(0), Length(0) {}
 
-    std::string Name;
+    const char *Name;
     uint64_t DirIdx;
     uint64_t ModTime;
     uint64_t Length;
@@ -56,7 +55,7 @@ public:
     // The number assigned to the first special opcode.
     uint8_t OpcodeBase;
     std::vector<uint8_t> StandardOpcodeLengths;
-    std::vector<std::string> IncludeDirectories;
+    std::vector<const char*> IncludeDirectories;
     std::vector<FileNameEntry> FileNames;
 
     // Length of the prologue in bytes.

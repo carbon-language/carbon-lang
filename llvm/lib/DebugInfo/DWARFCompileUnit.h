@@ -78,6 +78,8 @@ public:
     return &DieArray[0];
   }
 
+  const char *getCompilationDir();
+
   /// setDIERelations - We read in all of the DIE entries into our flat list
   /// of DIE entries and now we need to go back through all of them and set the
   /// parent, sibling and child pointers for quick DIE navigation.

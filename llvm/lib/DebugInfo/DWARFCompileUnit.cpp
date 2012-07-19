@@ -97,6 +97,13 @@ void DWARFCompileUnit::dump(raw_ostream &OS) {
   getCompileUnitDIE(false)->dump(OS, this, -1U);
 }
 
+const char *DWARFCompileUnit::getCompilationDir() {
+  extractDIEsIfNeeded(true);
+  if (DieArray.empty())
+    return 0;
+  return DieArray[0].getAttributeValueAsString(this, DW_AT_comp_dir, 0);
+}
+
 void DWARFCompileUnit::setDIERelations() {
   if (DieArray.empty())
     return;
