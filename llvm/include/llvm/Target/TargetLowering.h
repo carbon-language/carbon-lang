@@ -1318,7 +1318,7 @@ public:
   /// registers.  If false is returned, an sret-demotion is performed.
   ///
   virtual bool CanLowerReturn(CallingConv::ID /*CallConv*/,
-			      MachineFunction &/*MF*/, bool /*isVarArg*/,
+                              MachineFunction &/*MF*/, bool /*isVarArg*/,
                const SmallVectorImpl<ISD::OutputArg> &/*Outs*/,
                LLVMContext &/*Context*/) const
   {

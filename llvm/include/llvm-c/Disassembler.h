@@ -109,9 +109,9 @@ struct LLVMOpInfo1 {
  */
 typedef const char *(*LLVMSymbolLookupCallback)(void *DisInfo,
                                                 uint64_t ReferenceValue,
-						uint64_t *ReferenceType,
-						uint64_t ReferencePC,
-						const char **ReferenceName);
+                                                uint64_t *ReferenceType,
+                                                uint64_t ReferencePC,
+                                                const char **ReferenceName);
 /**
  * The reference types on input and output.
  */
