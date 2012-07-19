@@ -63,8 +63,8 @@ public:
   bool readFunctionTag() {
     StringRef Tag = Buffer->getBuffer().slice(Cursor, Cursor+4);
     if (Tag.empty() || 
-	Tag[0] != '\0' || Tag[1] != '\0' ||
-	Tag[2] != '\0' || Tag[3] != '\1') {
+        Tag[0] != '\0' || Tag[1] != '\0' ||
+        Tag[2] != '\0' || Tag[3] != '\1') {
       return false;
     }
     Cursor += 4;
@@ -76,8 +76,8 @@ public:
   bool readBlockTag() {
     StringRef Tag = Buffer->getBuffer().slice(Cursor, Cursor+4);
     if (Tag.empty() || 
-	Tag[0] != '\0' || Tag[1] != '\0' ||
-	Tag[2] != '\x41' || Tag[3] != '\x01') {
+        Tag[0] != '\0' || Tag[1] != '\0' ||
+        Tag[2] != '\x41' || Tag[3] != '\x01') {
       return false;
     }
     Cursor += 4;
@@ -89,8 +89,8 @@ public:
   bool readEdgeTag() {
     StringRef Tag = Buffer->getBuffer().slice(Cursor, Cursor+4);
     if (Tag.empty() || 
-	Tag[0] != '\0' || Tag[1] != '\0' ||
-	Tag[2] != '\x43' || Tag[3] != '\x01') {
+        Tag[0] != '\0' || Tag[1] != '\0' ||
+        Tag[2] != '\x43' || Tag[3] != '\x01') {
       return false;
     }
     Cursor += 4;
@@ -102,8 +102,8 @@ public:
   bool readLineTag() {
     StringRef Tag = Buffer->getBuffer().slice(Cursor, Cursor+4);
     if (Tag.empty() || 
-	Tag[0] != '\0' || Tag[1] != '\0' ||
-	Tag[2] != '\x45' || Tag[3] != '\x01') {
+        Tag[0] != '\0' || Tag[1] != '\0' ||
+        Tag[2] != '\x45' || Tag[3] != '\x01') {
       return false;
     }
     Cursor += 4;
@@ -115,8 +115,8 @@ public:
   bool readArcTag() {
     StringRef Tag = Buffer->getBuffer().slice(Cursor, Cursor+4);
     if (Tag.empty() || 
-	Tag[0] != '\0' || Tag[1] != '\0' ||
-	Tag[2] != '\xa1' || Tag[3] != '\1') {
+        Tag[0] != '\0' || Tag[1] != '\0' ||
+        Tag[2] != '\xa1' || Tag[3] != '\1') {
       return false;
     }
     Cursor += 4;

@@ -174,50 +174,50 @@ namespace llvm {
 
       RebaseTypePointer                     = 1u, // REBASE_TYPE_POINTER
       RebaseTypeTextAbsolute32              = 2u, // REBASE_TYPE_TEXT_ABSOLUTE32
-      RebaseTypeTextPCRelative32	    = 3u, // REBASE_TYPE_TEXT_PCREL32
+      RebaseTypeTextPCRelative32            = 3u, // REBASE_TYPE_TEXT_PCREL32
 
       RebaseOpcodeMask                          = 0xF0u, // REBASE_OPCODE_MASK
       RebaseImmediateMask                       = 0x0Fu, // REBASE_IMMEDIATE_MASK
       RebaseOpcodeDone                          = 0x00u, // REBASE_OPCODE_DONE
       RebaseOpcodeSetTypeImmediate              = 0x10u, // REBASE_OPCODE_SET_TYPE_IMM
-      RebaseOpcodeSetSegmentAndOffsetULEB	= 0x20u, // REBASE_OPCODE_SET_SEGMENT_AND_OFFSET_ULEB
+      RebaseOpcodeSetSegmentAndOffsetULEB       = 0x20u, // REBASE_OPCODE_SET_SEGMENT_AND_OFFSET_ULEB
       RebaseOpcodeAddAddressULEB                = 0x30u, // REBASE_OPCODE_ADD_ADDR_ULEB
-      RebaseOpcodeAddAddressImmediateScaled	= 0x40u, // REBASE_OPCODE_ADD_ADDR_IMM_SCALED
-      RebaseOpcodeDoRebaseImmediateTimes	= 0x50u, // REBASE_OPCODE_DO_REBASE_IMM_TIMES
+      RebaseOpcodeAddAddressImmediateScaled     = 0x40u, // REBASE_OPCODE_ADD_ADDR_IMM_SCALED
+      RebaseOpcodeDoRebaseImmediateTimes        = 0x50u, // REBASE_OPCODE_DO_REBASE_IMM_TIMES
       RebaseOpcodeDoRebaseULEBTimes             = 0x60u, // REBASE_OPCODE_DO_REBASE_ULEB_TIMES
       RebaseOpcodeDoRebaseAddAddressULEB        = 0x70u, // REBASE_OPCODE_DO_REBASE_ADD_ADDR_ULEB
       RebaseOpcodeDoRebaseULEBTimesSkippingULEB = 0x80u, // REBASE_OPCODE_DO_REBASE_ULEB_TIMES_SKIPPING_ULEB
 
 
       BindTypePointer           = 1u, // BIND_TYPE_POINTER
-      BindTypeTextAbsolute32	= 2u, // BIND_TYPE_TEXT_ABSOLUTE32
-      BindTypeTextPCRelative32	= 3u, // BIND_TYPE_TEXT_PCREL32
+      BindTypeTextAbsolute32    = 2u, // BIND_TYPE_TEXT_ABSOLUTE32
+      BindTypeTextPCRelative32  = 3u, // BIND_TYPE_TEXT_PCREL32
 
       BindSpecialDylibSelf            =  0u, // BIND_SPECIAL_DYLIB_SELF
       BindSpecialDylibMainExecutable  = -1u, // BIND_SPECIAL_DYLIB_MAIN_EXECUTABLE
       BindSpecialDylibFlatLookup      = -2u, // BIND_SPECIAL_DYLIB_FLAT_LOOKUP
 
       BindSymbolFlagsWeakImport         = 0x1u, // BIND_SYMBOL_FLAGS_WEAK_IMPORT
-      BindSymbolFlagsNonWeakDefinition	= 0x8u, // BIND_SYMBOL_FLAGS_NON_WEAK_DEFINITION
+      BindSymbolFlagsNonWeakDefinition  = 0x8u, // BIND_SYMBOL_FLAGS_NON_WEAK_DEFINITION
 
       BindOpcodeMask                            = 0xF0u, // BIND_OPCODE_MASK
       BindImmediateMask                         = 0x0Fu, // BIND_IMMEDIATE_MASK
       BindOpcodeDone                            = 0x00u, // BIND_OPCODE_DONE
       BindOpcodeSetDylibOrdinalImmediate        = 0x10u, // BIND_OPCODE_SET_DYLIB_ORDINAL_IMM
       BindOpcodeSetDylibOrdinalULEB             = 0x20u, // BIND_OPCODE_SET_DYLIB_ORDINAL_ULEB
-      BindOpcodeSetDylibSpecialImmediate	= 0x30u, // BIND_OPCODE_SET_DYLIB_SPECIAL_IMM
-      BindOpcodeSetSymbolTrailingFlagsImmediate	= 0x40u, // BIND_OPCODE_SET_SYMBOL_TRAILING_FLAGS_IMM
-      BindOpcodeSetTypeImmediate		= 0x50u, // BIND_OPCODE_SET_TYPE_IMM
+      BindOpcodeSetDylibSpecialImmediate        = 0x30u, // BIND_OPCODE_SET_DYLIB_SPECIAL_IMM
+      BindOpcodeSetSymbolTrailingFlagsImmediate = 0x40u, // BIND_OPCODE_SET_SYMBOL_TRAILING_FLAGS_IMM
+      BindOpcodeSetTypeImmediate                = 0x50u, // BIND_OPCODE_SET_TYPE_IMM
       BindOpcodeSetAppendSLEB                   = 0x60u, // BIND_OPCODE_SET_ADDEND_SLEB
       BindOpcodeSetSegmentAndOffsetULEB         = 0x70u, // BIND_OPCODE_SET_SEGMENT_AND_OFFSET_ULEB
       BindOpcodeAddAddressULEB                  = 0x80u, // BIND_OPCODE_ADD_ADDR_ULEB
       BindOpcodeDoBind                          = 0x90u, // BIND_OPCODE_DO_BIND
-      BindOpcodeDoBindAddAddressULEB		= 0xA0u, // BIND_OPCODE_DO_BIND_ADD_ADDR_ULEB
-      BindOpcodeDoBindAddAddressImmediateScaled	= 0xB0u, // BIND_OPCODE_DO_BIND_ADD_ADDR_IMM_SCALED
+      BindOpcodeDoBindAddAddressULEB            = 0xA0u, // BIND_OPCODE_DO_BIND_ADD_ADDR_ULEB
+      BindOpcodeDoBindAddAddressImmediateScaled = 0xB0u, // BIND_OPCODE_DO_BIND_ADD_ADDR_IMM_SCALED
       BindOpcodeDoBindULEBTimesSkippingULEB     = 0xC0u, // BIND_OPCODE_DO_BIND_ULEB_TIMES_SKIPPING_ULEB
 
       ExportSymbolFlagsKindMask           = 0x03u, // EXPORT_SYMBOL_FLAGS_KIND_MASK
-      ExportSymbolFlagsKindRegular	  = 0x00u, // EXPORT_SYMBOL_FLAGS_KIND_REGULAR
+      ExportSymbolFlagsKindRegular        = 0x00u, // EXPORT_SYMBOL_FLAGS_KIND_REGULAR
       ExportSymbolFlagsKindThreadLocal    = 0x01u, // EXPORT_SYMBOL_FLAGS_KIND_THREAD_LOCAL
       ExportSymbolFlagsWeakDefinition     = 0x04u, // EXPORT_SYMBOL_FLAGS_WEAK_DEFINITION
       ExportSymbolFlagsIndirectDefinition = 0x08u, // EXPORT_SYMBOL_FLAGS_INDIRECT_DEFINITION
@@ -227,7 +227,7 @@ namespace llvm {
       // Constant masks for the "n_type" field in llvm::MachO::nlist and
       // llvm::MachO::nlist_64
       NlistMaskStab             = 0xe0, // N_STAB
-      NlistMaskPrivateExternal	= 0x10, // N_PEXT
+      NlistMaskPrivateExternal  = 0x10, // N_PEXT
       NlistMaskType             = 0x0e, // N_TYPE
       NlistMaskExternal         = 0x01, // N_EXT
 
@@ -249,35 +249,35 @@ namespace llvm {
 
       // Constant values for the "n_type" field in llvm::MachO::nlist and
       // llvm::MachO::nlist_64 when "(n_type & NlistMaskStab) != 0"
-      StabGlobalSymbol          = 0x20u,  // N_GSYM	
-      StabFunctionName          = 0x22u,  // N_FNAME	
-      StabFunction              = 0x24u,  // N_FUN	
-      StabStaticSymbol          = 0x26u,  // N_STSYM	
-      StabLocalCommon           = 0x28u,  // N_LCSYM	
+      StabGlobalSymbol          = 0x20u,  // N_GSYM
+      StabFunctionName          = 0x22u,  // N_FNAME
+      StabFunction              = 0x24u,  // N_FUN
+      StabStaticSymbol          = 0x26u,  // N_STSYM
+      StabLocalCommon           = 0x28u,  // N_LCSYM
       StabBeginSymbol           = 0x2Eu,  // N_BNSYM
-      StabSourceFileOptions     = 0x3Cu,  // N_OPT	
-      StabRegisterSymbol        = 0x40u,  // N_RSYM	
-      StabSourceLine            = 0x44u,  // N_SLINE	
+      StabSourceFileOptions     = 0x3Cu,  // N_OPT
+      StabRegisterSymbol        = 0x40u,  // N_RSYM
+      StabSourceLine            = 0x44u,  // N_SLINE
       StabEndSymbol             = 0x4Eu,  // N_ENSYM
-      StabStructureType         = 0x60u,  // N_SSYM	
-      StabSourceFileName        = 0x64u,  // N_SO	
-      StabObjectFileName        = 0x66u,  // N_OSO	
-      StabLocalSymbol           = 0x80u,  // N_LSYM	
-      StabBeginIncludeFileName  = 0x82u,  // N_BINCL	
-      StabIncludeFileName       = 0x84u,  // N_SOL	
+      StabStructureType         = 0x60u,  // N_SSYM
+      StabSourceFileName        = 0x64u,  // N_SO
+      StabObjectFileName        = 0x66u,  // N_OSO
+      StabLocalSymbol           = 0x80u,  // N_LSYM
+      StabBeginIncludeFileName  = 0x82u,  // N_BINCL
+      StabIncludeFileName       = 0x84u,  // N_SOL
       StabCompilerParameters    = 0x86u,  // N_PARAMS
       StabCompilerVersion       = 0x88u,  // N_VERSION
       StabCompilerOptLevel      = 0x8Au,  // N_OLEVEL
-      StabParameter             = 0xA0u,  // N_PSYM	
-      StabEndIncludeFile        = 0xA2u,  // N_EINCL	
-      StabAlternateEntry        = 0xA4u,  // N_ENTRY	
-      StabLeftBracket           = 0xC0u,  // N_LBRAC	
-      StabDeletedIncludeFile    = 0xC2u,  // N_EXCL	
-      StabRightBracket          = 0xE0u,  // N_RBRAC	
-      StabBeginCommon           = 0xE2u,  // N_BCOMM	
-      StabEndCommon             = 0xE4u,  // N_ECOMM	
-      StabEndCommonLocal        = 0xE8u,  // N_ECOML	
-      StabLength                = 0xFEu   // N_LENG	
+      StabParameter             = 0xA0u,  // N_PSYM
+      StabEndIncludeFile        = 0xA2u,  // N_EINCL
+      StabAlternateEntry        = 0xA4u,  // N_ENTRY
+      StabLeftBracket           = 0xC0u,  // N_LBRAC
+      StabDeletedIncludeFile    = 0xC2u,  // N_EXCL
+      StabRightBracket          = 0xE0u,  // N_RBRAC
+      StabBeginCommon           = 0xE2u,  // N_BCOMM
+      StabEndCommon             = 0xE4u,  // N_ECOMM
+      StabEndCommonLocal        = 0xE8u,  // N_ECOML
+      StabLength                = 0xFEu   // N_LENG
 
     };
 
@@ -490,12 +490,12 @@ namespace llvm {
       uint32_t nextrel;
       uint32_t locreloff;
       uint32_t nlocrel;
-    };	
+    };
 
     struct dylib_table_of_contents {
       uint32_t symbol_index;
       uint32_t module_index;
-    };	
+    };
 
     struct dylib_module {
       uint32_t module_name;
@@ -511,7 +511,7 @@ namespace llvm {
       uint32_t ninit_nterm;
       uint32_t objc_module_info_addr;
       uint32_t objc_module_info_size;
-    };	
+    };
 
     struct dylib_module_64 {
       uint32_t module_name;

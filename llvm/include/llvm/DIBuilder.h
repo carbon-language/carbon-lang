@@ -218,11 +218,11 @@ namespace llvm {
     /// @param PropertyAttributes Objective C property attributes.
     /// @param Ty           Type.
     DIObjCProperty createObjCProperty(StringRef Name,
-				      DIFile File, unsigned LineNumber,
-				      StringRef GetterName,
-				      StringRef SetterName,
-				      unsigned PropertyAttributes,
-				      DIType Ty);
+                                      DIFile File, unsigned LineNumber,
+                                      StringRef GetterName,
+                                      StringRef SetterName,
+                                      unsigned PropertyAttributes,
+                                      DIType Ty);
       
     /// createClassType - Create debugging information entry for a class.
     /// @param Scope        Scope in which this class is defined.
