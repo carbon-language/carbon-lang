@@ -1823,12 +1823,15 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     }
   }
 
-  // We separately look for the '-ffast-math' flag, and if we find it, tell the
-  // frontend to provide the appropriate preprocessor macros. This is distinct
-  // from enabling any optimizations as it induces a language change which must
-  // survive serialization and deserialization, etc.
+  // We separately look for the '-ffast-math' and '-ffinite-math-only' flags,
+  // and if we find them, tell the frontend to provide the appropriate
+  // preprocessor macros. This is distinct from enabling any optimizations as
+  // these options induce language changes which must survive serialization
+  // and deserialization, etc.
   if (Args.hasArg(options::OPT_ffast_math))
     CmdArgs.push_back("-ffast-math");
+  if (Args.hasArg(options::OPT_ffinite_math_only))
+    CmdArgs.push_back("-ffinite-math-only");
 
   // Decide whether to use verbose asm. Verbose assembly is the default on
   // toolchains which have the integrated assembler on by default.

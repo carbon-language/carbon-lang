@@ -527,9 +527,10 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
   if (const char *Prefix = TI.getUserLabelPrefix())
     Builder.defineMacro("__USER_LABEL_PREFIX__", Prefix);
 
-  // Build configuration options.  FIXME: these should be controlled by
-  // command line options or something.
-  Builder.defineMacro("__FINITE_MATH_ONLY__", "0");
+  if (LangOpts.FastMath || LangOpts.FiniteMathOnly)
+    Builder.defineMacro("__FINITE_MATH_ONLY__", "1");
+  else
+    Builder.defineMacro("__FINITE_MATH_ONLY__", "0");
 
   if (LangOpts.GNUInline)
     Builder.defineMacro("__GNUC_GNU_INLINE__");

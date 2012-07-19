@@ -2100,6 +2100,7 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
   Opts.NoInlineDefine = !Opt || Args.hasArg(OPT_fno_inline);
 
   Opts.FastMath = Args.hasArg(OPT_ffast_math);
+  Opts.FiniteMathOnly = Args.hasArg(OPT_ffinite_math_only);
 
   unsigned SSP = Args.getLastArgIntValue(OPT_stack_protector, 0, Diags);
   switch (SSP) {

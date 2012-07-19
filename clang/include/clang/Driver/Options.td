@@ -400,7 +400,7 @@ def fassociative_math : Flag<"-fassociative-math">, Group<f_Group>;
 def fno_associative_math : Flag<"-fno-associative-math">, Group<f_Group>;
 def freciprocal_math : Flag<"-freciprocal-math">, Group<f_Group>;
 def fno_reciprocal_math : Flag<"-fno-reciprocal-math">, Group<f_Group>;
-def ffinite_math_only : Flag<"-ffinite-math-only">, Group<f_Group>;
+def ffinite_math_only : Flag<"-ffinite-math-only">, Group<f_Group>, Flags<[CC1Option]>;
 def fno_finite_math_only : Flag<"-fno-finite-math-only">, Group<f_Group>;
 def fsigned_zeros : Flag<"-fsigned-zeros">, Group<f_Group>;
 def fno_signed_zeros : Flag<"-fno-signed-zeros">, Group<f_Group>;
