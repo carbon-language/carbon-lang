@@ -1,6 +1,6 @@
-; RUN: llc < %s -march=x86 -mtriple=i386-linux-gnu -relocation-model=pic -enable-pie \
+; RUN: llc < %s -march=x86 -mcpu=generic -mtriple=i386-linux-gnu -relocation-model=pic -enable-pie \
 ; RUN:   | FileCheck -check-prefix=X32 %s
-; RUN: llc < %s -march=x86-64 -mtriple=x86_64-linux-gnu -relocation-model=pic -enable-pie \
+; RUN: llc < %s -march=x86-64 -mcpu=generic -mtriple=x86_64-linux-gnu -relocation-model=pic -enable-pie \
 ; RUN:   | FileCheck -check-prefix=X64 %s
 
 @i = thread_local global i32 15

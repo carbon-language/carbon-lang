@@ -10,7 +10,7 @@ declare x86_thiscallcc void @_ZNK1C6MediumEv(%struct.M* noalias sret %agg.result
 
 define void @testv() nounwind {
 ; CHECK: testv:
-; CHECK: leal
+; CHECK: leal 16(%esp), %esi
 ; CHECK-NEXT: movl	%esi, (%esp)
 ; CHECK-NEXT: calll _ZN1CC1Ev
 ; CHECK: leal 8(%esp), %eax
@@ -29,7 +29,7 @@ entry:
 
 define void @test2v() nounwind {
 ; CHECK: test2v:
-; CHECK: leal
+; CHECK: leal 16(%esp), %esi
 ; CHECK-NEXT: movl	%esi, (%esp)
 ; CHECK-NEXT: calll _ZN1CC1Ev
 ; CHECK: leal 8(%esp), %eax

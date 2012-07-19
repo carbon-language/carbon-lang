@@ -1,4 +1,5 @@
-; RUN: llc -march=x86-64 -mtriple=x86_64-unknown-linux-gnu -relocation-model=static -asm-verbose=false < %s | FileCheck %s
+; RUN: llc -march=x86-64 -mcpu=generic -mtriple=x86_64-unknown-linux-gnu -relocation-model=static -asm-verbose=false < %s | FileCheck %s
+; RUN: llc -march=x86-64 -mcpu=atom -mtriple=x86_64-unknown-linux-gnu -relocation-model=static -asm-verbose=false < %s | FileCheck -check-prefix=ATOM %s
 
 ; CHECK: xorl  %eax, %eax
 ; CHECK: movsd .LCPI0_0(%rip), %xmm0
@@ -8,6 +9,15 @@
 ; CHECK-NEXT: mulsd
 ; CHECK-NEXT: movsd
 ; CHECK-NEXT: incq %rax
+
+; ATOM: movsd .LCPI0_0(%rip), %xmm0
+; ATOM: xorl  %eax, %eax
+; ATOM: align
+; ATOM-NEXT: BB0_2:
+; ATOM-NEXT: movsd A(,%rax,8)
+; ATOM-NEXT: mulsd
+; ATOM-NEXT: movsd
+; ATOM-NEXT: incq %rax
 
 @A = external global [0 x double]
 

@@ -1,4 +1,5 @@
-; RUN: llc < %s -fast-isel -mtriple=i386-apple-darwin | FileCheck %s
+; RUN: llc < %s -fast-isel -mtriple=i386-apple-darwin -mcpu=generic | FileCheck %s
+; RUN: llc < %s -fast-isel -mtriple=i386-apple-darwin -mcpu=atom | FileCheck -check-prefix=ATOM %s
 
 @src = external global i32
 
@@ -18,6 +19,13 @@ entry:
 ; CHECK: 	movl	%eax, (%ecx)
 ; CHECK: 	ret
 
+; ATOM:	loadgv:
+; ATOM:		movl    L_src$non_lazy_ptr, %ecx
+; ATOM:         movl    (%ecx), %eax
+; ATOM:         addl    (%ecx), %eax
+; ATOM:         movl    %eax, (%ecx)
+; ATOM:         ret
+
 }
 
 %stuff = type { i32 (...)** }
@@ -30,5 +38,9 @@ entry:
 ; CHECK: _t:
 ; CHECK:	movl	$0, %eax
 ; CHECK:	movl	L_LotsStuff$non_lazy_ptr, %ecx
+
+; ATOM: _t:
+; ATOM:         movl    L_LotsStuff$non_lazy_ptr, %ecx
+; ATOM:         movl    $0, %eax
 
 }

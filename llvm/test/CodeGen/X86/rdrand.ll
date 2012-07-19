@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86-64 -mattr=+rdrand | FileCheck %s
+; RUN: llc < %s -march=x86-64 -mcpu=core-avx-i -mattr=+rdrand | FileCheck %s
 declare {i16, i32} @llvm.x86.rdrand.16()
 declare {i32, i32} @llvm.x86.rdrand.32()
 declare {i64, i32} @llvm.x86.rdrand.64()
