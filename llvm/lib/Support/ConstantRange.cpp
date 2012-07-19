@@ -457,10 +457,53 @@ ConstantRange ConstantRange::signExtend(uint32_t DstTySize) const {
 /// truncated to the specified type.
 ConstantRange ConstantRange::truncate(uint32_t DstTySize) const {
   assert(getBitWidth() > DstTySize && "Not a value truncation");
-  if (isFullSet() || getSetSize().getActiveBits() > DstTySize)
+  if (isEmptySet())
+    return ConstantRange(DstTySize, /*isFullSet=*/false);
+  if (isFullSet())
     return ConstantRange(DstTySize, /*isFullSet=*/true);
 
-  return ConstantRange(Lower.trunc(DstTySize), Upper.trunc(DstTySize));
+  APInt MaxValue = APInt::getMaxValue(DstTySize).zext(getBitWidth());
+  APInt MaxBitValue(getBitWidth(), 0);
+  MaxBitValue.setBit(DstTySize);
+
+  APInt LowerDiv(Lower), UpperDiv(Upper);
+  ConstantRange Union(DstTySize, /*isFullSet=*/false);
+
+  // Analyze wrapped sets in their two parts: [0, Upper) \/ [Lower, MaxValue]
+  // We use the non-wrapped set code to analyze the [Lower, MaxValue) part, and
+  // then we do the union with [MaxValue, Upper)
+  if (isWrappedSet()) {
+    // if Upper is greater than Max Value, it covers the whole truncated range.
+    if (Upper.uge(MaxValue))
+      return ConstantRange(DstTySize, /*isFullSet=*/true);
+
+    Union = ConstantRange(APInt::getMaxValue(DstTySize),Upper.trunc(DstTySize));
+    UpperDiv = APInt::getMaxValue(getBitWidth());
+
+    // Union covers the MaxValue case, so return if the remaining range is just
+    // MaxValue.
+    if (LowerDiv == UpperDiv)
+      return Union;
+  }
+
+  // Chop off the most significant bits that are past the destination bitwidth.
+  if (LowerDiv.uge(MaxValue)) {
+    APInt Div(getBitWidth(), 0);
+    APInt::udivrem(LowerDiv, MaxBitValue, Div, LowerDiv);
+    UpperDiv = UpperDiv - MaxBitValue * Div;
+  }
+
+  if (UpperDiv.ule(MaxValue))
+    return ConstantRange(LowerDiv.trunc(DstTySize),
+                         UpperDiv.trunc(DstTySize)).unionWith(Union);
+
+  // The truncated value wrapps around. Check if we can do better than fullset.
+  APInt UpperModulo = UpperDiv - MaxBitValue;
+  if (UpperModulo.ult(LowerDiv))
+    return ConstantRange(LowerDiv.trunc(DstTySize),
+                         UpperModulo.trunc(DstTySize)).unionWith(Union);
+
+  return ConstantRange(DstTySize, /*isFullSet=*/true);
 }
 
 /// zextOrTrunc - make this range have the bit width given by \p DstTySize. The
@@ -536,14 +579,6 @@ ConstantRange::multiply(const ConstantRange &Other) const {
 
   if (isEmptySet() || Other.isEmptySet())
     return ConstantRange(getBitWidth(), /*isFullSet=*/false);
-
-  // If any of the operands is zero, then the result is also zero.
-  if ((getSingleElement() && *getSingleElement() == 0) ||
-      (Other.getSingleElement() && *Other.getSingleElement() == 0))
-    return ConstantRange(APInt(getBitWidth(), 0));
-
-  if (isFullSet() || Other.isFullSet())
-    return ConstantRange(getBitWidth(), /*isFullSet=*/true);
 
   APInt this_min = getUnsignedMin().zext(getBitWidth() * 2);
   APInt this_max = getUnsignedMax().zext(getBitWidth() * 2);
