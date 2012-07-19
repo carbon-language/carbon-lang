@@ -26,7 +26,7 @@ foo somefunc2() {} // expected-error {{interface type 'foo' cannot be returned b
 // rdar://6780761
 void f0(foo *a0) {
   extern void g0(int x, ...);
-  g0(1, *(foo*)a0);  // expected-error {{cannot pass object with interface type 'foo' by-value through variadic function}}
+  g0(1, *(foo*)a0);  // expected-error {{cannot pass object with interface type 'foo' by value through variadic function}}
 }
 
 // rdar://8421082

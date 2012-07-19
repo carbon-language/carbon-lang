@@ -6455,7 +6455,7 @@ public:
                               bool AllowExplicit = false);
 
   // DefaultVariadicArgumentPromotion - Like DefaultArgumentPromotion, but
-  // will return ExprError() if the resulting type is not a POD type.
+  // will create a runtime trap if the resulting type is not a POD type.
   ExprResult DefaultVariadicArgumentPromotion(Expr *E, VariadicCallType CT,
                                               FunctionDecl *FDecl);
 
@@ -7117,20 +7117,23 @@ private:
                                                unsigned format_idx,
                                                unsigned firstDataArg,
                                                FormatStringType Type,
+                                               VariadicCallType CallType,
                                                bool inFunctionCall = true);
 
   void CheckFormatString(const StringLiteral *FExpr, const Expr *OrigFormatExpr,
                          Expr **Args, unsigned NumArgs, bool HasVAListArg,
                          unsigned format_idx, unsigned firstDataArg,
-                         FormatStringType Type, bool inFunctionCall);
+                         FormatStringType Type, bool inFunctionCall,
+                         VariadicCallType CallType);
 
-  bool CheckFormatArguments(const FormatAttr *Format, CallExpr *TheCall);
   bool CheckFormatArguments(const FormatAttr *Format, Expr **Args,
                             unsigned NumArgs, bool IsCXXMember,
+                            VariadicCallType CallType,
                             SourceLocation Loc, SourceRange Range);
   bool CheckFormatArguments(Expr **Args, unsigned NumArgs,
                             bool HasVAListArg, unsigned format_idx,
                             unsigned firstDataArg, FormatStringType Type,
+                            VariadicCallType CallType,
                             SourceLocation Loc, SourceRange range);
 
   void CheckNonNullArguments(const NonNullAttr *NonNull,

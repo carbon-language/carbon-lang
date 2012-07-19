@@ -14,5 +14,5 @@ void test_block() {
   HasNoCStr hncs(str);
   int n = 4;
   block(n, "%s %d", str, n); // no-warning
-  block(n, "%s %s", hncs, n); // expected-warning{{cannot pass non-POD object of type 'HasNoCStr' to variadic function; expected type from format string was 'char *'}} expected-warning{{format specifies type 'char *' but the argument has type 'int'}}
+  block(n, "%s %s", hncs, n); // expected-warning{{cannot pass non-POD object of type 'HasNoCStr' to variadic block; expected type from format string was 'char *'}} expected-warning{{format specifies type 'char *' but the argument has type 'int'}}
 }

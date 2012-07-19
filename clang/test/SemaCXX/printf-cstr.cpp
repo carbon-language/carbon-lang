@@ -49,5 +49,5 @@ void constructor_test() {
   const char str[] = "test";
   HasCStr hcs(str);
   Printf p("%s %d %s", str, 10, 10); // expected-warning {{format specifies type 'char *' but the argument has type 'int'}}
-  Printf q("%s %d", hcs, 10); // expected-warning {{cannot pass non-POD object of type 'HasCStr' to variadic function; expected type from format string was 'char *'}} expected-note{{did you mean to call the c_str() method?}}
+  Printf q("%s %d", hcs, 10); // expected-warning {{cannot pass non-POD object of type 'HasCStr' to variadic constructor; expected type from format string was 'char *'}} expected-note{{did you mean to call the c_str() method?}}
 }

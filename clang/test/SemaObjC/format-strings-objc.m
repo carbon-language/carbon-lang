@@ -227,3 +227,11 @@ void testInvalidFormatArgument(NSDictionary *dict) {
   [Foo fooWithFormat:@"%@ %@", dict[CFSTR("abc")]]; // expected-error{{indexing expression is invalid because subscript type 'CFStringRef' (aka 'const struct __CFString *') is not an integral or Objective-C pointer type}} expected-warning{{more '%' conversions than data arguments}}
 }
 
+
+// <rdar://problem/11825593>
+void testByValueObjectInFormat(Foo *obj) {
+  printf("%d %d %d", 1L, *obj, 1L); // expected-error {{cannot pass object with interface type 'Foo' by value to variadic function; expected type from format string was 'int'}} expected-warning 2 {{format specifies type 'int' but the argument has type 'long'}}
+
+  [Bar log2:@"%d", *obj]; // expected-error {{cannot pass object with interface type 'Foo' by value to variadic method; expected type from format string was 'int'}}
+}
+

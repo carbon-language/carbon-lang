@@ -4891,16 +4891,19 @@ def err_ref_bad_target : Error<
   "reference to %select{__device__|__global__|__host__|__host__ __device__}0 "
   "function %1 in %select{__device__|__global__|__host__|__host__ __device__}2 function">;
 
-
-def err_cannot_pass_objc_interface_to_vararg : Error<
-  "cannot pass object with interface type %0 by-value through variadic "
-  "%select{function|block|method}1">;
-
 def warn_non_pod_vararg_with_format_string : Warning<
   "cannot pass %select{non-POD|non-trivial}0 object of type %1 to variadic "
-  "function; expected type from format string was %2">,
-  InGroup<DiagGroup<"non-pod-varargs">>, DefaultError;
+  "%select{function|block|method|constructor}2; expected type from format "
+  "string was %3">, InGroup<DiagGroup<"non-pod-varargs">>, DefaultError;
+// The arguments to this diagnostic should match the warning above.
+def err_cannot_pass_objc_interface_to_vararg_format : Error<
+  "cannot pass object with interface type %1 by value to variadic "
+  "%select{function|block|method|constructor}2; expected type from format "
+  "string was %3">;
 
+def err_cannot_pass_objc_interface_to_vararg : Error<
+  "cannot pass object with interface type %0 by value through variadic "
+  "%select{function|block|method|constructor}1">;
 def warn_cannot_pass_non_pod_arg_to_vararg : Warning<
   "cannot pass object of %select{non-POD|non-trivial}0 type %1 through variadic"
   " %select{function|block|method|constructor}2; call will abort at runtime">,

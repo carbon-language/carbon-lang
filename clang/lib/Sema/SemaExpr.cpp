@@ -602,14 +602,20 @@ ExprResult Sema::DefaultArgumentPromotion(Expr *E) {
 /// Incomplete types are considered POD, since this check can be performed
 /// when we're in an unevaluated context.
 Sema::VarArgKind Sema::isValidVarArgType(const QualType &Ty) {
-  if (Ty->isIncompleteType() || Ty.isCXX98PODType(Context))
+  if (Ty->isIncompleteType()) {
+    if (Ty->isObjCObjectType())
+      return VAK_Invalid;
     return VAK_Valid;
+  }
+
+  if (Ty.isCXX98PODType(Context))
+    return VAK_Valid;
+
   // C++0x [expr.call]p7:
   //   Passing a potentially-evaluated argument of class type (Clause 9) 
   //   having a non-trivial copy constructor, a non-trivial move constructor,
   //   or a non-trivial destructor, with no corresponding parameter, 
   //   is conditionally-supported with implementation-defined semantics.
-
   if (getLangOpts().CPlusPlus0x && !Ty->isDependentType())
     if (CXXRecordDecl *Record = Ty->getAsCXXRecordDecl())
       if (Record->hasTrivialCopyConstructor() &&
@@ -635,18 +641,23 @@ bool Sema::variadicArgumentPODCheck(const Expr *E, VariadicCallType CT) {
         PDiag(diag::warn_cxx98_compat_pass_non_pod_arg_to_vararg)
         << E->getType() << CT);
     break;
-  case VAK_Invalid:
+  case VAK_Invalid: {
+    if (Ty->isObjCObjectType())
+      return DiagRuntimeBehavior(E->getLocStart(), 0,
+                          PDiag(diag::err_cannot_pass_objc_interface_to_vararg)
+                            << Ty << CT);
+
     return DiagRuntimeBehavior(E->getLocStart(), 0,
                    PDiag(diag::warn_cannot_pass_non_pod_arg_to_vararg)
                    << getLangOpts().CPlusPlus0x << Ty << CT);
+  }
   }
   // c++ rules are enforced elsewhere.
   return false;
 }
 
 /// DefaultVariadicArgumentPromotion - Like DefaultArgumentPromotion, but
-/// will warn if the resulting type is not a POD type, and rejects ObjC
-/// interfaces passed by value.
+/// will create a trap if the resulting type is not a POD type.
 ExprResult Sema::DefaultVariadicArgumentPromotion(Expr *E, VariadicCallType CT,
                                                   FunctionDecl *FDecl) {
   if (const BuiltinType *PlaceholderTy = E->getType()->getAsPlaceholderType()) {
@@ -669,12 +680,6 @@ ExprResult Sema::DefaultVariadicArgumentPromotion(Expr *E, VariadicCallType CT,
   if (ExprRes.isInvalid())
     return ExprError();
   E = ExprRes.take();
-
-  if (E->getType()->isObjCObjectType() &&
-    DiagRuntimeBehavior(E->getLocStart(), 0,
-                        PDiag(diag::err_cannot_pass_objc_interface_to_vararg)
-                          << E->getType() << CT))
-    return ExprError();
 
   // Diagnostics regarding non-POD argument types are
   // emitted along with format string checking in Sema::CheckFunctionCall().
