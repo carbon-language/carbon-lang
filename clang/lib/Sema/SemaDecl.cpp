@@ -10411,11 +10411,6 @@ Decl *Sema::ActOnEnumConstant(Scope *S, Decl *theEnumDecl, Decl *lastEnumConst,
   // different from T:
   // - every enumerator of every member of class T that is an unscoped 
   // enumerated type
-  //
-  // C++ [dcl.enum]p10:
-  // Each enum-name and each unscoped enumerator is declared in the scope that 
-  // immediately contains the enum-specifier. Each scoped enumerator is declared 
-  // in the scope of the enumeration.
   if (CXXRecordDecl *Record
                       = dyn_cast<CXXRecordDecl>(
                              TheEnumDecl->getDeclContext()->getRedeclContext()))
