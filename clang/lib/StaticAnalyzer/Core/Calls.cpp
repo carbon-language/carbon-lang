@@ -537,6 +537,7 @@ SourceRange ObjCMethodCall::getSourceRange() const {
   case OCM_Subscript:
     return getContainingPseudoObjectExpr()->getSourceRange();
   }
+  llvm_unreachable("unknown message kind");
 }
 
 typedef llvm::PointerIntPair<const PseudoObjectExpr *, 2> ObjCMessageDataTy;
@@ -592,4 +593,3 @@ ObjCMessageKind ObjCMethodCall::getMessageKind() const {
     return OCM_Message;
   return static_cast<ObjCMessageKind>(Info.getInt());
 }
-
