@@ -24,6 +24,9 @@ public:
  return static_cast<ImplClass*>(this)->visit ## NAME(static_cast<PTR(CLASS)>(C))
 
   RetTy visit(PTR(Comment) C) {
+    if (!C)
+      return RetTy();
+
     switch (C->getCommentKind()) {
     default: llvm_unreachable("Unknown comment kind!");
 #define ABSTRACT_COMMENT(COMMENT)

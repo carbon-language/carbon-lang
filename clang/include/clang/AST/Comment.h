@@ -613,6 +613,10 @@ public:
     return Paragraph;
   }
 
+  bool hasNonWhitespaceParagraph() const {
+    return Paragraph && !Paragraph->isWhitespace();
+  }
+
   void setParagraph(ParagraphComment *PC) {
     Paragraph = PC;
     SourceLocation NewLocEnd = PC->getLocEnd();

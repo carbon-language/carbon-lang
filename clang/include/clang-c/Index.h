@@ -2037,6 +2037,13 @@ typedef struct {
 } CXCursor;
 
 /**
+ * \brief A comment AST node.
+ */
+typedef struct {
+  const void *Data;
+} CXComment;
+
+/**
  * \defgroup CINDEX_CURSOR_MANIP Cursor manipulations
  *
  * @{
@@ -3170,10 +3177,400 @@ CINDEX_LINKAGE CXSourceRange clang_Cursor_getCommentRange(CXCursor C);
 CINDEX_LINKAGE CXString clang_Cursor_getRawCommentText(CXCursor C);
 
 /**
- * \brief Given a cursor that represents a declaration, return the associated
- * \\brief paragraph; otherwise return the first paragraph.
+ * \brief Given a cursor that represents a documentable entity (e.g.,
+ * declaration), return the associated \\brief paragraph; otherwise return the
+ * first paragraph.
  */
 CINDEX_LINKAGE CXString clang_Cursor_getBriefCommentText(CXCursor C);
+
+/**
+ * \brief Given a cursor that represents a documentable entity (e.g.,
+ * declaration), return the associated parsed comment as a
+ * \c CXComment_FullComment AST node.
+ */
+CINDEX_LINKAGE CXComment clang_Cursor_getParsedComment(CXCursor C);
+
+/**
+ * @}
+ */
+
+/**
+ * \defgroup CINDEX_COMMENT Comment AST introspection
+ *
+ * The routines in this group provide access to information in the
+ * documentation comment ASTs.
+ *
+ * @{
+ */
+
+/**
+ * \brief Describes the type of the comment AST node (\c CXComment).  A comment
+ * node can be considered block content (e. g., paragraph), inline content
+ * (plain text) or neither (the root AST node).
+ */
+enum CXCommentKind {
+  /**
+   * \brief Null comment.  No AST node is constructed at the requested location
+   * because there is no text or a syntax error.
+   */
+  CXComment_Null = 0,
+
+  /**
+   * \brief Plain text.  Inline content.
+   */
+  CXComment_Text = 1,
+
+  /**
+   * \brief A command with word-like arguments that is considered inline content.
+   *
+   * For example: \\c command.
+   */
+  CXComment_InlineCommand = 2,
+
+  /**
+   * \brief HTML start tag with attributes (name-value pairs).  Considered
+   * inline content.
+   *
+   * For example:
+   * \verbatim
+   * <br> <br /> <a href="http://example.org/">
+   * \endverbatim
+   */
+  CXComment_HTMLStartTag = 3,
+
+  /**
+   * \brief HTML end tag.  Considered inline content.
+   *
+   * For example:
+   * \verbatim
+   * </a>
+   * \endverbatim
+   */
+  CXComment_HTMLEndTag = 4,
+
+  /**
+   * \brief A paragraph, contains inline comment.  The paragraph itself is
+   * block content.
+   */
+  CXComment_Paragraph = 5,
+
+  /**
+   * \brief A command that has zero or more word-like arguments (number of
+   * word-like arguments depends on command name) and a paragraph as an
+   * argument.  Block command is block content.
+   *
+   * Paragraph argument is also a child of the block command.
+   *
+   * For example: \\brief has 0 word-like arguments and a paragraph argument.
+   *
+   * AST nodes of special kinds that parser knows about (e. g., \\param
+   * command) have their own node kinds.
+   */
+  CXComment_BlockCommand = 6,
+
+  /**
+   * \brief A \\param or \\arg command that describes the function parameter
+   * (name, passing direction, description).
+   *
+   * \brief For example: \\param [in] ParamName description.
+   */
+  CXComment_ParamCommand = 7,
+
+  /**
+   * \brief A verbatim block command (e. g., preformatted code).  Verbatim
+   * block has an opening and a closing command and contains multiple lines of
+   * text (\c CXComment_VerbatimBlockLine child nodes).
+   *
+   * For example:
+   * \\verbatim
+   * aaa
+   * \\endverbatim
+   */
+  CXComment_VerbatimBlockCommand = 8,
+
+  /**
+   * \brief A line of text that is contained within a
+   * CXComment_VerbatimBlockCommand node.
+   */
+  CXComment_VerbatimBlockLine = 9,
+
+  /**
+   * \brief A verbatim line command.  Verbatim line has an opening command,
+   * a single line of text (up to the newline after the opening command) and
+   * has no closing command.
+   */
+  CXComment_VerbatimLine = 10,
+
+  /**
+   * \brief A full comment attached to a declaration, contains block content.
+   */
+  CXComment_FullComment = 11
+};
+
+/**
+ * \brief Describes parameter passing direction for \\param or \\arg command.
+ */
+enum CXCommentParamPassDirection {
+  /**
+   * \brief The parameter is an input parameter.
+   */
+  CXCommentParamPassDirection_In,
+
+  /**
+   * \brief The parameter is an output parameter.
+   */
+  CXCommentParamPassDirection_Out,
+
+  /**
+   * \brief The parameter is an input and output parameter.
+   */
+  CXCommentParamPassDirection_InOut
+};
+
+/**
+ * \param Comment AST node of any kind.
+ *
+ * \returns the type of the AST node.
+ */
+CINDEX_LINKAGE enum CXCommentKind clang_Comment_getKind(CXComment Comment);
+
+/**
+ * \param Comment AST node of any kind.
+ *
+ * \returns number of children of the AST node.
+ */
+CINDEX_LINKAGE unsigned clang_Comment_getNumChildren(CXComment Comment);
+
+/**
+ * \param Comment AST node of any kind.
+ *
+ * \param ArgIdx argument index (zero-based).
+ *
+ * \returns the specified child of the AST node.
+ */
+CINDEX_LINKAGE
+CXComment clang_Comment_getChild(CXComment Comment, unsigned ChildIdx);
+
+/**
+ * \brief A \c CXComment_Paragraph node is considered whitespace if it contains
+ * only \c CXComment_Text nodes that are empty or whitespace.
+ *
+ * Other AST nodes (except \c CXComment_Paragraph and \c CXComment_Text) are
+ * never considered whitespace.
+ *
+ * \returns non-zero if \c Comment is whitespace.
+ */
+CINDEX_LINKAGE unsigned clang_Comment_isWhitespace(CXComment Comment);
+
+/**
+ * \returns non-zero if \c Comment is inline content and has a newline
+ * immediately following it in the comment text.  Newlines between paragraphs
+ * do not count.
+ */
+CINDEX_LINKAGE
+unsigned clang_InlineContentComment_hasTrailingNewline(CXComment Comment);
+
+/**
+ * \param Comment a \c CXComment_Text AST node.
+ *
+ * \returns text contained in the AST node.
+ */
+CINDEX_LINKAGE CXString clang_TextComment_getText(CXComment Comment);
+
+/**
+ * \param Comment a \c CXComment_InlineCommand AST node.
+ *
+ * \returns name of the inline command.
+ */
+CINDEX_LINKAGE
+CXString clang_InlineCommandComment_getCommandName(CXComment Comment);
+
+/**
+ * \param Comment a \c CXComment_InlineCommand AST node.
+ *
+ * \returns number of command arguments.
+ */
+CINDEX_LINKAGE
+unsigned clang_InlineCommandComment_getNumArgs(CXComment Comment);
+
+/**
+ * \param Comment a \c CXComment_InlineCommand AST node.
+ *
+ * \param ArgIdx argument index (zero-based).
+ *
+ * \returns text of the specified argument.
+ */
+CINDEX_LINKAGE
+CXString clang_InlineCommandComment_getArgText(CXComment Comment,
+                                               unsigned ArgIdx);
+
+/**
+ * \param Comment a \c CXComment_HTMLStartTag or \c CXComment_HTMLEndTag AST
+ * node.
+ *
+ * \returns HTML tag name.
+ */
+CINDEX_LINKAGE CXString clang_HTMLTagComment_getTagName(CXComment Comment);
+
+/**
+ * \param Comment a \c CXComment_HTMLStartTag AST node.
+ *
+ * \returns non-zero if tag is self-closing (for example, &lt;br /&gt;).
+ */
+CINDEX_LINKAGE
+unsigned clang_HTMLStartTagComment_isSelfClosing(CXComment Comment);
+
+/**
+ * \param Comment a \c CXComment_HTMLStartTag AST node.
+ *
+ * \returns number of attributes (name-value pairs) attached to the start tag.
+ */
+CINDEX_LINKAGE unsigned clang_HTMLStartTag_getNumAttrs(CXComment Comment);
+
+/**
+ * \param Comment a \c CXComment_HTMLStartTag AST node.
+ *
+ * \param AttrIdx attribute index (zero-based).
+ *
+ * \returns name of the specified attribute.
+ */
+CINDEX_LINKAGE
+CXString clang_HTMLStartTag_getAttrName(CXComment Comment, unsigned AttrIdx);
+
+/**
+ * \param Comment a \c CXComment_HTMLStartTag AST node.
+ *
+ * \param AttrIdx attribute index (zero-based).
+ *
+ * \returns value of the specified attribute.
+ */
+CINDEX_LINKAGE
+CXString clang_HTMLStartTag_getAttrValue(CXComment Comment, unsigned AttrIdx);
+
+/**
+ * \param Comment a \c CXComment_BlockCommand AST node.
+ *
+ * \returns name of the block command.
+ */
+CINDEX_LINKAGE
+CXString clang_BlockCommandComment_getCommandName(CXComment Comment);
+
+/**
+ * \param Comment a \c CXComment_BlockCommand AST node.
+ *
+ * \returns number of word-like arguments.
+ */
+CINDEX_LINKAGE
+unsigned clang_BlockCommandComment_getNumArgs(CXComment Comment);
+
+/**
+ * \param Comment a \c CXComment_BlockCommand AST node.
+ *
+ * \param ArgIdx argument index (zero-based).
+ *
+ * \returns text of the specified word-like argument.
+ */
+CINDEX_LINKAGE
+CXString clang_BlockCommandComment_getArgText(CXComment Comment,
+                                              unsigned ArgIdx);
+
+/**
+ * \param Comment a \c CXComment_BlockCommand or
+ * \c CXComment_VerbatimBlockCommand AST node.
+ *
+ * \returns paragraph argument of the block command.
+ */
+CINDEX_LINKAGE
+CXComment clang_BlockCommandComment_getParagraph(CXComment Comment);
+
+/**
+ * \param Comment a \c CXComment_ParamCommand AST node.
+ *
+ * \returns parameter name.
+ */
+CINDEX_LINKAGE
+CXString clang_ParamCommandComment_getParamName(CXComment Comment);
+
+/**
+ * \param Comment a \c CXComment_ParamCommand AST node.
+ *
+ * \returns non-zero if the parameter that this AST node represents was found
+ * in the function prototype and \c clang_ParamCommandComment_getParamIndex
+ * function will return a meaningful value.
+ */
+CINDEX_LINKAGE
+unsigned clang_ParamCommandComment_isParamIndexValid(CXComment Comment);
+
+/**
+ * \param Comment a \c CXComment_ParamCommand AST node.
+ *
+ * \returns zero-based parameter index in function prototype.
+ */
+CINDEX_LINKAGE
+unsigned clang_ParamCommandComment_getParamIndex(CXComment Comment);
+
+/**
+ * \param Comment a \c CXComment_ParamCommand AST node.
+ *
+ * \returns non-zero if parameter passing direction was specified explicitly in
+ * the comment.
+ */
+CINDEX_LINKAGE
+unsigned clang_ParamCommandComment_isDirectionExplicit(CXComment Comment);
+
+/**
+ * \param Comment a \c CXComment_ParamCommand AST node.
+ *
+ * \returns parameter passing direction.
+ */
+CINDEX_LINKAGE
+enum CXCommentParamPassDirection clang_ParamCommandComment_getDirection(
+                                                            CXComment Comment);
+
+/**
+ * \param Comment a \c CXComment_VerbatimBlockLine AST node.
+ *
+ * \returns text contained in the AST node.
+ */
+CINDEX_LINKAGE
+CXString clang_VerbatimBlockLineComment_getText(CXComment Comment);
+
+/**
+ * \param Comment a \c CXComment_VerbatimLine AST node.
+ *
+ * \returns text contained in the AST node.
+ */
+CINDEX_LINKAGE CXString clang_VerbatimLineComment_getText(CXComment Comment);
+
+/**
+ * \brief Convert an HTML tag AST node to string.
+ *
+ * \param Comment a \c CXComment_HTMLStartTag or \c CXComment_HTMLEndTag AST
+ * node.
+ *
+ * \returns string containing an HTML tag.
+ */
+CINDEX_LINKAGE CXString clang_HTMLTagComment_getAsString(CXComment Comment);
+
+/**
+ * \brief Convert a given full parsed comment to an HTML fragment.
+ *
+ * Specific details of HTML layout are subject to change.  Don't try to parse
+ * this HTML back into an AST, use other APIs instead.
+ *
+ * Currently the following CSS classes are used:
+ * \li "para-brief" for \\brief paragraph and equivalent commands;
+ * \li "para-returns" for \\returns paragraph and equivalent commands;
+ * \li "word-returns" for the "Returns" word in \\returns paragraph.
+ *
+ * Argument list is rendered as \<dl\> list with arguments sorted in function
+ * prototype order.
+ *
+ * \param Comment a \c CXComment_FullComment AST node.
+ *
+ * \returns string containing an HTML fragment.
+ */
+CINDEX_LINKAGE CXString clang_FullComment_getAsHTML(CXComment Comment);
 
 /**
  * @}

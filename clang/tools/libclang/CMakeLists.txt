@@ -15,6 +15,7 @@ set(SOURCES
   CIndexUSRs.cpp
   CIndexer.cpp
   CIndexer.h
+  CXComment.cpp
   CXCursor.cpp
   CXCursor.h
   CXCompilationDatabase.cpp
