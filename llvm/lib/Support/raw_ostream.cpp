@@ -651,6 +651,10 @@ bool raw_fd_ostream::is_displayed() const {
   return sys::Process::FileDescriptorIsDisplayed(FD);
 }
 
+bool raw_fd_ostream::has_colors() const {
+  return sys::Process::FileDescriptorHasColors(FD);
+}
+
 //===----------------------------------------------------------------------===//
 //  outs(), errs(), nulls()
 //===----------------------------------------------------------------------===//
