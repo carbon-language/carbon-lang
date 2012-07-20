@@ -256,12 +256,15 @@ struct CommentASTDumpingContext {
 
 static void DumpCXCommentInternal(struct CommentASTDumpingContext *Ctx,
                                   CXComment Comment) {
+  unsigned i;
+  unsigned e;
+  enum CXCommentKind Kind = clang_Comment_getKind(Comment);
+
   Ctx->IndentLevel++;
-  for (unsigned i = 0, e = Ctx->IndentLevel; i != e; ++i)
+  for (i = 0, e = Ctx->IndentLevel; i != e; ++i)
     printf("  ");
 
   printf("(");
-  enum CXCommentKind Kind = clang_Comment_getKind(Comment);
   switch (Kind) {
   case CXComment_Null:
     printf("CXComment_Null");
@@ -280,7 +283,7 @@ static void DumpCXCommentInternal(struct CommentASTDumpingContext *Ctx,
     PrintCXStringWithPrefixAndDispose(
         "CommandName",
         clang_InlineCommandComment_getCommandName(Comment));
-    for (unsigned i = 0, e = clang_InlineCommandComment_getNumArgs(Comment);
+    for (i = 0, e = clang_InlineCommandComment_getNumArgs(Comment);
          i != e; ++i) {
       printf(" Arg[%u]=", i);
       PrintCXStringAndDispose(
@@ -289,15 +292,16 @@ static void DumpCXCommentInternal(struct CommentASTDumpingContext *Ctx,
     if (clang_InlineContentComment_hasTrailingNewline(Comment))
       printf(" HasTrailingNewline");
     break;
-  case CXComment_HTMLStartTag:
+  case CXComment_HTMLStartTag: {
+    unsigned NumAttrs;
     printf("CXComment_HTMLStartTag");
     PrintCXStringWithPrefixAndDispose(
         "Name",
         clang_HTMLTagComment_getTagName(Comment));
-    const unsigned NumAttrs = clang_HTMLStartTag_getNumAttrs(Comment);
+    NumAttrs = clang_HTMLStartTag_getNumAttrs(Comment);
     if (NumAttrs != 0) {
       printf(" Attrs:");
-      for (unsigned i = 0; i != NumAttrs; ++i) {
+      for (i = 0; i != NumAttrs; ++i) {
         printf(" ");
         PrintCXStringAndDispose(clang_HTMLStartTag_getAttrName(Comment, i));
         printf("=");
@@ -309,6 +313,7 @@ static void DumpCXCommentInternal(struct CommentASTDumpingContext *Ctx,
     if (clang_InlineContentComment_hasTrailingNewline(Comment))
       printf(" HasTrailingNewline");
     break;
+  }
   case CXComment_HTMLEndTag:
     printf("CXComment_HTMLEndTag");
     PrintCXStringWithPrefixAndDispose(
@@ -327,7 +332,7 @@ static void DumpCXCommentInternal(struct CommentASTDumpingContext *Ctx,
     PrintCXStringWithPrefixAndDispose(
         "CommandName",
         clang_BlockCommandComment_getCommandName(Comment));
-    for (unsigned i = 0, e = clang_BlockCommandComment_getNumArgs(Comment);
+    for (i = 0, e = clang_BlockCommandComment_getNumArgs(Comment);
          i != e; ++i) {
       printf(" Arg[%u]=", i);
       PrintCXStringAndDispose(
@@ -383,7 +388,8 @@ static void DumpCXCommentInternal(struct CommentASTDumpingContext *Ctx,
   }
   if (Kind != CXComment_Null) {
     const unsigned NumChildren = clang_Comment_getNumChildren(Comment);
-    for (unsigned i = 0; i != NumChildren; ++i) {
+    unsigned i;
+    for (i = 0; i != NumChildren; ++i) {
       printf("\n// %s: ", FileCheckPrefix);
       DumpCXCommentInternal(Ctx, clang_Comment_getChild(Comment, i));
     }
