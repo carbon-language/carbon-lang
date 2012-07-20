@@ -670,6 +670,8 @@ bool JumpThreading::ProcessBlock(BasicBlock *BB) {
   } else if (SwitchInst *SI = dyn_cast<SwitchInst>(Terminator)) {
     Condition = SI->getCondition();
   } else if (IndirectBrInst *IB = dyn_cast<IndirectBrInst>(Terminator)) {
+    // Can't thread indirect branch with no successors.
+    if (IB->getNumSuccessors() == 0) return false;
     Condition = IB->getAddress()->stripPointerCasts();
     Preference = WantBlockAddress;
   } else {
