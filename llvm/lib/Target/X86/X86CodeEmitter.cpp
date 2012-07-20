@@ -927,6 +927,8 @@ void Emitter<CodeEmitter>::emitVEXOpcodePrefix(uint64_t TSFlags,
   for (unsigned i = 0; i != MI.getNumOperands(); ++i) {
     if (!MI.getOperand(i).isReg())
       continue;
+    if (MI.getOperand(i).isImplicit())
+      continue;
     unsigned SrcReg = MI.getOperand(i).getReg();
     if (SrcReg >= X86::YMM0 && SrcReg <= X86::YMM15)
       VEX_L = 1;
