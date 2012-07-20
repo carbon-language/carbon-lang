@@ -564,7 +564,8 @@ class Operand<ValueType ty> : DAGOperand {
   AsmOperandClass ParserMatchClass = ImmAsmOperand;
 }
 
-class RegisterOperand<RegisterClass regclass, string pm = "printOperand"> {
+class RegisterOperand<RegisterClass regclass, string pm = "printOperand">
+  : DAGOperand {
   // RegClass - The register class of the operand.
   RegisterClass RegClass = regclass;
   // PrintMethod - The target method to call to print register operands of
