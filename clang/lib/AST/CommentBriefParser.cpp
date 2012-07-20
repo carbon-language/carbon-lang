@@ -120,8 +120,7 @@ std::string BriefParser::Parse() {
   return ReturnsParagraph;
 }
 
-BriefParser::BriefParser(Lexer &L) : L(L)
-{
+BriefParser::BriefParser(Lexer &L) : L(L) {
   // Get lookahead token.
   ConsumeToken();
 }
