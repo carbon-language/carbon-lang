@@ -217,7 +217,7 @@ public:
     void discard(unsigned long long z);
 
     // property functions
-    const Engine& base() const;
+    const Engine& base() const noexcept;
 };
 
 template<class Engine, size_t p, size_t r>
@@ -269,7 +269,7 @@ public:
     result_type operator()(); void discard(unsigned long long z);
 
     // property functions
-    const Engine& base() const;
+    const Engine& base() const noexcept;
 };
 
 template<class Engine, size_t w, class UIntType>
@@ -323,7 +323,7 @@ public:
     void discard(unsigned long long z);
 
     // property functions
-    const Engine& base() const;
+    const Engine& base() const noexcept;
 };
 
 template<class Engine, size_t k>
@@ -392,7 +392,7 @@ public:
     result_type operator()();
 
     // property functions
-    double entropy() const;
+    double entropy() const noexcept;
 
     // no copy functions
     random_device(const random_device& ) = delete;
@@ -2788,7 +2788,7 @@ public:
 
     // property functions
     _LIBCPP_INLINE_VISIBILITY
-    const _Engine& base() const {return __e_;}
+    const _Engine& base() const _NOEXCEPT {return __e_;}
 
     template<class _Eng, size_t _Pp, size_t _Rp>
     friend
@@ -2993,7 +2993,7 @@ public:
 
     // property functions
     _LIBCPP_INLINE_VISIBILITY
-    const _Engine& base() const {return __e_;}
+    const _Engine& base() const _NOEXCEPT {return __e_;}
 
     template<class _Eng, size_t _Wp, class _UI>
     friend
@@ -3222,7 +3222,7 @@ public:
 
     // property functions
     _LIBCPP_INLINE_VISIBILITY
-    const _Engine& base() const {return __e_;}
+    const _Engine& base() const _NOEXCEPT {return __e_;}
 
 private:
     template<class _Eng, size_t _Kp>
@@ -3399,7 +3399,7 @@ public:
     result_type operator()();
 
     // property functions
-    double entropy() const;
+    double entropy() const _NOEXCEPT;
 
 private:
     // no copy functions

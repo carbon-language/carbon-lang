@@ -40,7 +40,7 @@ random_device::operator()()
 }
 
 double
-random_device::entropy() const
+random_device::entropy() const _NOEXCEPT
 {
     return 0;
 }
