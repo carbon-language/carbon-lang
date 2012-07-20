@@ -243,8 +243,8 @@ SMDiagnostic::SMDiagnostic(const SourceMgr &sm, SMLoc L, const std::string &FN,
 
 void SMDiagnostic::print(const char *ProgName, raw_ostream &S,
                          bool ShowColors) const {
-  // Display colors only if OS goes to a tty.
-  ShowColors &= S.is_displayed();
+  // Display colors only if OS supports colors.
+  ShowColors &= S.has_colors();
 
   if (ShowColors)
     S.changeColor(raw_ostream::SAVEDCOLOR, true);
