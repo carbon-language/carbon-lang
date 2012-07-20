@@ -177,6 +177,19 @@ bool LiveRangeEdit::foldAsLoad(LiveInterval *LI,
   if (!DefMI || !UseMI)
     return false;
 
+  // Since we're moving the DefMI load, make sure we're not extending any live
+  // ranges.
+  if (!allUsesAvailableAt(DefMI,
+                          LIS.getInstructionIndex(DefMI),
+                          LIS.getInstructionIndex(UseMI)))
+    return false;
+
+  // We also need to make sure it is safe to move the load.
+  // Assume there are stores between DefMI and UseMI.
+  bool SawStore = true;
+  if (!DefMI->isSafeToMove(&TII, 0, SawStore))
+    return false;
+
   DEBUG(dbgs() << "Try to fold single def: " << *DefMI
                << "       into single use: " << *UseMI);
 
