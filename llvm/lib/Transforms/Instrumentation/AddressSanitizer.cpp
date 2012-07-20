@@ -18,6 +18,7 @@
 #include "FunctionBlackList.h"
 #include "llvm/Function.h"
 #include "llvm/IRBuilder.h"
+#include "llvm/InlineAsm.h"
 #include "llvm/IntrinsicInst.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
@@ -224,6 +225,7 @@ struct AddressSanitizer : public ModulePass {
   OwningPtr<FunctionBlackList> BL;
   // This array is indexed by AccessIsWrite and log2(AccessSize).
   Function *AsanErrorCallback[2][kNumberOfAccessSizes];
+  InlineAsm *EmptyAsm;
 };
 
 }  // namespace
@@ -276,7 +278,7 @@ static BranchInst *splitBlockAndInsertIfThen(Value *Cmp,
   BranchInst *CheckTerm = 0;
   if (!ThenBlock) {
     LLVMContext &C = Head->getParent()->getParent()->getContext();
-    ThenBlock = BasicBlock::Create(C, "", Head->getParent());
+    ThenBlock = BasicBlock::Create(C, "", Head->getParent(), Tail);
     CheckTerm = BranchInst::Create(Tail, ThenBlock);
   }
   BranchInst *HeadNewTerm =
@@ -414,7 +416,10 @@ Instruction *AddressSanitizer::generateCrashCode(
                            Addr, PC);
   else
     Call = IRB.CreateCall(AsanErrorCallback[IsWrite][AccessSizeIndex], Addr);
-  Call->setDoesNotReturn();
+  // We don't do Call->setDoesNotReturn() because the BB already has
+  // UnreachableInst at the end.
+  // This EmptyAsm is required to avoid callback merge.
+  IRB.CreateCall(EmptyAsm);
   return Call;
 }
 
@@ -483,10 +488,13 @@ void AddressSanitizer::instrumentAddress(AsanFunctionContext &AFC,
 
   size_t Granularity = 1 << MappingScale;
   if (TypeSize < 8 * Granularity) {
-    Instruction *CheckTerm = splitBlockAndInsertIfThen(Cmp);
+    BranchInst *CheckTerm = splitBlockAndInsertIfThen(Cmp);
+    assert(CheckTerm->isUnconditional());
+    BasicBlock *NextBB = CheckTerm->getSuccessor(0);
     IRB.SetInsertPoint(CheckTerm);
     Value *Cmp2 = createSlowPathCmp(IRB, AddrLong, ShadowValue, TypeSize);
-    splitBlockAndInsertIfThen(Cmp2, CrashBlock);
+    BranchInst *NewTerm = BranchInst::Create(CrashBlock, NextBB, Cmp2);
+    ReplaceInstWithInst(CheckTerm, NewTerm);
   } else {
     splitBlockAndInsertIfThen(Cmp, CrashBlock);
   }
@@ -695,6 +703,10 @@ bool AddressSanitizer::runOnModule(Module &M) {
           M.getOrInsertFunction(FunctionName, IRB.getVoidTy(), IntptrTy, NULL));
     }
   }
+  // We insert an empty inline asm after __asan_report* to avoid callback merge.
+  EmptyAsm = InlineAsm::get(FunctionType::get(IRB.getVoidTy(), false),
+                            StringRef(""), StringRef(""),
+                            /*hasSideEffects=*/true);
 
   llvm::Triple targetTriple(M.getTargetTriple());
   bool isAndroid = targetTriple.getEnvironment() == llvm::Triple::ANDROIDEABI;
