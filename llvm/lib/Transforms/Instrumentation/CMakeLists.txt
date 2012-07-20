@@ -1,5 +1,6 @@
 add_llvm_library(LLVMInstrumentation
   AddressSanitizer.cpp
+  BoundsChecking.cpp
   EdgeProfiling.cpp
   FunctionBlackList.cpp
   GCOVProfiling.cpp
