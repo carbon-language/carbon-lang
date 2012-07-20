@@ -1340,9 +1340,12 @@ Parser::DeclGroupPtrTy Parser::ParseDeclGroup(ParsingDeclSpec &DS,
       // Look at the next token to make sure that this isn't a function
       // declaration.  We have to check this because __attribute__ might be the
       // start of a function definition in GCC-extended K&R C.
+      // FIXME. Delayed parsing not done for c/c++ functions nested in namespace
       !isDeclarationAfterDeclarator() && 
       (!CurParsedObjCImpl || Tok.isNot(tok::l_brace) || 
-       (getLangOpts().CPlusPlus && D.getCXXScopeSpec().isSet()))) {
+       (getLangOpts().CPlusPlus && 
+        (D.getCXXScopeSpec().isSet() || 
+         !Actions.CurContext->isTranslationUnit())))) {
 
     if (isStartOfFunctionDefinition(D)) {
       if (DS.getStorageClassSpec() == DeclSpec::SCS_typedef) {

@@ -41,4 +41,8 @@ int x{17};
 
 X::X() = default;
 void X::SortWithCollator() {}
+// pr13418
+namespace {
+     int CurrentTabId() {return 0;}
+}
 @end
