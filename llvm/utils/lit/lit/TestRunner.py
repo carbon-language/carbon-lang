@@ -24,11 +24,15 @@ kUseCloseFDs = not kIsWindows
 kAvoidDevNull = kIsWindows
 
 def executeCommand(command, cwd=None, env=None):
+    # Close extra file handles on UNIX (on Windows this cannot be done while
+    # also redirecting input).
+    close_fds = not kIsWindows
+
     p = subprocess.Popen(command, cwd=cwd,
                          stdin=subprocess.PIPE,
                          stdout=subprocess.PIPE,
                          stderr=subprocess.PIPE,
-                         env=env)
+                         env=env, close_fds=close_fds)
     out,err = p.communicate()
     exitCode = p.wait()
 
