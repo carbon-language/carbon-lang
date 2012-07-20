@@ -79,7 +79,7 @@ void f()
     }
     else
     {
-        assert(t1 - t0 - Clock::duration(250) < Clock::duration(2));
+        assert(t1 - t0 - Clock::duration(250) < Clock::duration(5));
         assert(test2 == 0);
         assert(!r);
     }
