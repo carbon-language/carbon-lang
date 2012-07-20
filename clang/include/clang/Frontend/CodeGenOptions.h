@@ -57,7 +57,7 @@ public:
   unsigned CXAAtExit         : 1; ///< Use __cxa_atexit for calling destructors.
   unsigned CXXCtorDtorAliases: 1; ///< Emit complete ctors/dtors as linker
                                   ///< aliases to base ctors when possible.
-  unsigned DataSections      : 1; ///< Set when -fdata-sections is enabled
+  unsigned DataSections      : 1; ///< Set when -fdata-sections is enabled.
   unsigned DisableFPElim     : 1; ///< Set when -fomit-frame-pointer is enabled.
   unsigned DisableLLVMOpts   : 1; ///< Don't run any optimizations, for use in
                                   ///< getting .bc files that correspond to the
@@ -71,19 +71,19 @@ public:
                                   ///< subroutine.
   unsigned EmitGcovArcs      : 1; ///< Emit coverage data files, aka. GCDA.
   unsigned EmitGcovNotes     : 1; ///< Emit coverage "notes" files, aka GCNO.
-  unsigned EmitOpenCLArgMetadata : 1; /// Emit OpenCL kernel arg metadata.
+  unsigned EmitOpenCLArgMetadata : 1; ///< Emit OpenCL kernel arg metadata.
   unsigned EmitMicrosoftInlineAsm : 1; ///< Enable emission of MS-style inline
                                        ///< assembly.
   unsigned ForbidGuardVariables : 1; ///< Issue errors if C++ guard variables
-                                     ///< are required
-  unsigned FunctionSections  : 1; ///< Set when -ffunction-sections is enabled
+                                     ///< are required.
+  unsigned FunctionSections  : 1; ///< Set when -ffunction-sections is enabled.
   unsigned HiddenWeakTemplateVTables : 1; ///< Emit weak vtables and RTTI for
                                   ///< template classes with hidden visibility
   unsigned HiddenWeakVTables : 1; ///< Emit weak vtables, RTTI, and thunks with
                                   ///< hidden visibility.
   unsigned InstrumentFunctions : 1; ///< Set when -finstrument-functions is
                                     ///< enabled.
-  unsigned InstrumentForProfiling : 1; ///< Set when -pg is enabled
+  unsigned InstrumentForProfiling : 1; ///< Set when -pg is enabled.
   unsigned LessPreciseFPMAD  : 1; ///< Enable less precise MAD instructions to
                                   ///< be generated.
   unsigned MergeAllConstants : 1; ///< Merge identical constants.
@@ -98,7 +98,7 @@ public:
   unsigned NoInline          : 1; ///< Set when -fno-inline is enabled. Disables
                                   ///< use of the inline keyword.
   unsigned NoNaNsFPMath      : 1; ///< Assume FP arguments, results not NaN.
-  unsigned NoZeroInitializedInBSS : 1; ///< -fno-zero-initialized-in-bss
+  unsigned NoZeroInitializedInBSS : 1; ///< -fno-zero-initialized-in-bss.
   unsigned ObjCDispatchMethod : 2; ///< Method of Objective-C dispatch to use.
   unsigned OmitLeafFramePointer : 1; ///< Set when -momit-leaf-frame-pointer is
                                      ///< enabled.
@@ -112,7 +112,7 @@ public:
   unsigned StrictEnums       : 1; ///< Optimize based on strict enum definition.
   unsigned TimePasses        : 1; ///< Set when -ftime-report is enabled.
   unsigned UnitAtATime       : 1; ///< Unused. For mirroring GCC optimization
-                                  /// selection.
+                                  ///< selection.
   unsigned UnrollLoops       : 1; ///< Control whether loops are unrolled.
   unsigned UnsafeFPMath      : 1; ///< Allow unsafe floating point optzns.
   unsigned UnwindTables      : 1; ///< Emit unwind tables.
