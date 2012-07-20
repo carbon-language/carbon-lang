@@ -479,6 +479,32 @@ Index: lib/Target/ARM/Disassembler/ARMDisassembler.cpp
    return MCDisassembler::Success;
  }
  
+Index: lib/Target/X86/Disassembler/X86Disassembler.cpp
+===================================================================
+--- lib/Target/X86/Disassembler/X86Disassembler.cpp	(revision 152265)
++++ lib/Target/X86/Disassembler/X86Disassembler.cpp	(working copy)
+@@ -322,7 +322,12 @@
+ 
+   OperandType type = (OperandType)operand.type;
+ 
++  bool isBranch = false;
++  uint64_t pcrel = 0;
+   if (type == TYPE_RELv) {
++    isBranch = true;
++    pcrel = insn.startLocation +
++            insn.displacementOffset + insn.displacementSize;
+     switch (insn.displacementSize) {
+     default:
+       break;
+@@ -373,8 +378,6 @@
+     }
+   }
+ 
+-  bool isBranch = false;
+-  uint64_t pcrel = 0;
+   switch (type) {
+   case TYPE_XMM128:
+     mcInst.addOperand(MCOperand::CreateReg(X86::XMM0 + (immediate >> 4)));
 Index: lib/Target/X86/Disassembler/X86DisassemblerDecoder.c
 ===================================================================
 --- lib/Target/X86/Disassembler/X86DisassemblerDecoder.c	(revision 152265)
