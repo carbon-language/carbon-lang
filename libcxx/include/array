@@ -55,7 +55,7 @@ struct array
     // capacity:
     constexpr size_type size() const noexcept;
     constexpr size_type max_size() const noexcept;
-    bool empty() const noexcept;
+    constexpr bool empty() const noexcept;
 
     // element access:
     reference operator[](size_type n);
@@ -173,11 +173,11 @@ struct _LIBCPP_VISIBLE array
 
     // capacity:
     _LIBCPP_INLINE_VISIBILITY
-    /*constexpr*/ size_type size() const _NOEXCEPT {return _Size;}
+    _LIBCPP_CONSTEXPR size_type size() const _NOEXCEPT {return _Size;}
     _LIBCPP_INLINE_VISIBILITY
-    /*constexpr*/ size_type max_size() const _NOEXCEPT {return _Size;}
+    _LIBCPP_CONSTEXPR size_type max_size() const _NOEXCEPT {return _Size;}
     _LIBCPP_INLINE_VISIBILITY
-    bool empty() const _NOEXCEPT {return _Size == 0;}
+    _LIBCPP_CONSTEXPR bool empty() const _NOEXCEPT {return _Size == 0;}
 
     // element access:
     _LIBCPP_INLINE_VISIBILITY reference operator[](size_type __n)             {return __elems_[__n];}

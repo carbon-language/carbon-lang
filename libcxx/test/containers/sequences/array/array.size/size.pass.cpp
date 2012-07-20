@@ -28,4 +28,18 @@ int main()
         C c = {};
         assert(c.size() == 0);
     }
+#ifndef _LIBCPP_HAS_NO_CONSTEXPR
+    {
+        typedef double T;
+        typedef std::array<T, 3> C;
+        constexpr C c = {1, 2, 3.5};
+        static_assert(c.size() == 3, "");
+    }
+    {
+        typedef double T;
+        typedef std::array<T, 0> C;
+        constexpr C c = {};
+        static_assert(c.size() == 0, "");
+    }
+#endif
 }
