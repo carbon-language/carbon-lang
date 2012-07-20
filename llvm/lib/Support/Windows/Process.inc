@@ -153,13 +153,17 @@ unsigned Process::StandardErrColumns() {
   return Columns;
 }
 
-// It always has colors.
-bool Process::StandardErrHasColors() {
-  return StandardErrIsDisplayed();
+// The terminal always has colors.
+bool FileDescriptorHasColors(int fd) {
+  return FileDescriptorIsDisplayed(fd);
 }
 
 bool Process::StandardOutHasColors() {
-  return StandardOutIsDisplayed();
+  return FileDescriptorHasColors(1);
+}
+
+bool Process::StandardErrHasColors() {
+  return FileDescriptorHasColors(2);
 }
 
 namespace {

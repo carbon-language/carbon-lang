@@ -249,16 +249,18 @@ static bool terminalHasColors() {
   return false;
 }
 
+bool Process::FileDescriptorHasColors(int fd) {
+  // A file descriptor has colors if it is displayed and the terminal has
+  // colors.
+  return FileDescriptorIsDisplayed(fd) && terminalHasColors();
+}
+
 bool Process::StandardOutHasColors() {
-  if (!StandardOutIsDisplayed())
-    return false;
-  return terminalHasColors();
+  return FileDescriptorHasColors(STDOUT_FILENO);
 }
 
 bool Process::StandardErrHasColors() {
-  if (!StandardErrIsDisplayed())
-    return false;
-  return terminalHasColors();
+  return FileDescriptorHasColors(STDERR_FILENO);
 }
 
 bool Process::ColorNeedsFlush() {
