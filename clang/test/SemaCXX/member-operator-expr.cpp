@@ -27,3 +27,8 @@ void test2() {
   x->operator float(); // expected-error{{no member named 'operator float'}}
   x->operator; // expected-error{{expected a type}}
 }
+
+namespace pr13157 {
+  class A { public: void operator()(int x, int y = 2, ...) {} };
+  void f() { A()(1); }
+}
