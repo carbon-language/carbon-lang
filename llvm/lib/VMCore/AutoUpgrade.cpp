@@ -300,7 +300,8 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
     return;
   }
 
-  StringRef Name = CI->getName();
+  std::string Name = CI->getName().str();
+  CI->setName(Name + ".old");
 
   switch (NewFn->getIntrinsicID()) {
   default:
@@ -310,7 +311,6 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
   case Intrinsic::cttz:
     assert(CI->getNumArgOperands() == 1 &&
            "Mismatch between function args and call args");
-    CI->setName(Name + ".old");
     CI->replaceAllUsesWith(Builder.CreateCall2(NewFn, CI->getArgOperand(0),
                                                Builder.getFalse(), Name));
     CI->eraseFromParent();
