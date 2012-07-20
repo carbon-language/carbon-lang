@@ -1,6 +1,4 @@
-// RUN: rm -f %t
-// RUN: clang-ast-dump "%s" -f test_namespace::TheClass::theMethod -- -c > %t 2>&1
-// RUN: FileCheck --input-file=%t %s
+// RUN: clang-ast-dump "%s" -f test_namespace::TheClass::theMethod -- -c 2>&1 | FileCheck %s
 
 // FIXME: Does this run regardless of +Asserts?
 // REQUIRES: asserts
