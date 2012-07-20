@@ -209,3 +209,13 @@ union S {
   unsigned char Data[8];
 };
 }  // namespace anonymous_structs_unions
+
+namespace pr13413 {
+class A {
+  A() : p_(__null), b_(false), a_(this), p2_(nullptr) {}
+  void* p_;  // expected-warning{{private field 'p_' is not used}}
+  bool b_;  // expected-warning{{private field 'b_' is not used}}
+  A* a_;  // expected-warning{{private field 'a_' is not used}}
+  void* p2_;  // expected-warning{{private field 'p2_' is not used}}
+};
+}

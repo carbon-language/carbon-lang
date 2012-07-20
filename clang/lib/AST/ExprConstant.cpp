@@ -2340,6 +2340,12 @@ public:
     return Visit(E->getSubExpr());
   }
   bool VisitUnaryOperator(const UnaryOperator *E) { return Visit(E->getSubExpr()); }
+  bool VisitGNUNullExpr(const GNUNullExpr *E) { return false; }
+  bool VisitCXXBoolLiteralExpr(const CXXBoolLiteralExpr *E) { return false; }
+  bool VisitCXXThisExpr(const CXXThisExpr *E) { return false; }
+  bool VisitCXXNullPtrLiteralExpr(const CXXNullPtrLiteralExpr *E) {
+    return false;
+  }
     
   // Has side effects if any element does.
   bool VisitInitListExpr(const InitListExpr *E) {

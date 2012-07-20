@@ -16,7 +16,7 @@ struct foo {
             [NSString string];
         }
     }
-    ~foo(){ s; }
+    ~foo(){  }
 private:
     foo(foo const &);
     foo &operator=(foo const &);
