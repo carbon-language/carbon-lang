@@ -9,7 +9,7 @@
 
 // <complex>
 
-// complex(const T& re = T(), const T& im = T());
+// constexpr complex(const T& re = T(), const T& im = T());
 
 #include <complex>
 #include <cassert>
@@ -38,6 +38,28 @@ test()
     assert(c.real() == 10.5);
     assert(c.imag() == -9.5);
     }
+#ifndef _LIBCPP_HAS_NO_CONSTEXPR
+    {
+    constexpr std::complex<T> c;
+    static_assert(c.real() == 0, "");
+    static_assert(c.imag() == 0, "");
+    }
+    {
+    constexpr std::complex<T> c = 7.5;
+    static_assert(c.real() == 7.5, "");
+    static_assert(c.imag() == 0, "");
+    }
+    {
+    constexpr std::complex<T> c(8.5);
+    static_assert(c.real() == 8.5, "");
+    static_assert(c.imag() == 0, "");
+    }
+    {
+    constexpr std::complex<T> c(10.5, -9.5);
+    static_assert(c.real() == 10.5, "");
+    static_assert(c.imag() == -9.5, "");
+    }
+#endif
 }
 
 int main()
