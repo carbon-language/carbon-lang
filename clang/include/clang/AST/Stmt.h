@@ -500,6 +500,14 @@ public:
   decl_iterator decl_end() { return DG.end(); }
   const_decl_iterator decl_begin() const { return DG.begin(); }
   const_decl_iterator decl_end() const { return DG.end(); }
+
+  typedef std::reverse_iterator<decl_iterator> reverse_decl_iterator;
+  reverse_decl_iterator decl_rbegin() {
+    return reverse_decl_iterator(decl_end());
+  }
+  reverse_decl_iterator decl_rend() {
+    return reverse_decl_iterator(decl_begin());
+  }
 };
 
 /// NullStmt - This is the null statement ";": C99 6.8.3p3.

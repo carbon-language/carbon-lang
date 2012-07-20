@@ -1527,11 +1527,10 @@ CFGBlock *CFGBuilder::VisitDeclStmt(DeclStmt *DS) {
 
   CFGBlock *B = 0;
 
-  // FIXME: Add a reverse iterator for DeclStmt to avoid this extra copy.
-  typedef SmallVector<Decl*,10> BufTy;
-  BufTy Buf(DS->decl_begin(), DS->decl_end());
-
-  for (BufTy::reverse_iterator I = Buf.rbegin(), E = Buf.rend(); I != E; ++I) {
+  // Build an individual DeclStmt for each decl.
+  for (DeclStmt::reverse_decl_iterator I = DS->decl_rbegin(),
+                                       E = DS->decl_rend();
+       I != E; ++I) {
     // Get the alignment of the new DeclStmt, padding out to >=8 bytes.
     unsigned A = llvm::AlignOf<DeclStmt>::Alignment < 8
                ? 8 : llvm::AlignOf<DeclStmt>::Alignment;
