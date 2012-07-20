@@ -36,5 +36,5 @@
 // FP-CONTRACT-FAST-CHECK: -ffp-contract=fast
 // FP-CONTRACT-OFF-CHECK: -ffp-contract=off
 
-// RUN: %clang -fms-extensions -fms-inline-asm %s -### 2>&1 | FileCheck -check-prefix=CHECK-OPTIONS3 %s
-// CHECK-OPTIONS3: -fms-inline-asm
+// RUN: %clang -fms-extensions -fenable-experimental-ms-inline-asm %s -### 2>&1 | FileCheck -check-prefix=CHECK-OPTIONS3 %s
+// CHECK-OPTIONS3: -fenable-experimental-ms-inline-asm
