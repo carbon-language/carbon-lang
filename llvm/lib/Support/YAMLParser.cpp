@@ -489,9 +489,6 @@ private:
   /// @brief Can the next token be the start of a simple key?
   bool IsSimpleKeyAllowed;
 
-  /// @brief Is the next token required to start a simple key?
-  bool IsSimpleKeyRequired;
-
   /// @brief True if an error has occurred.
   bool Failed;
 
@@ -704,7 +701,6 @@ Scanner::Scanner(StringRef Input, SourceMgr &sm)
   , FlowLevel(0)
   , IsStartOfStream(true)
   , IsSimpleKeyAllowed(true)
-  , IsSimpleKeyRequired(false)
   , Failed(false) {
   InputBuffer = MemoryBuffer::getMemBuffer(Input, "YAML");
   SM.AddNewSourceBuffer(InputBuffer, SMLoc());

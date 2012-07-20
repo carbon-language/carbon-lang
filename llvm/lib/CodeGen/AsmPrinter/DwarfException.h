@@ -175,17 +175,6 @@ public:
 };
 
 class ARMException : public DwarfException {
-  /// shouldEmitTable - Per-function flag to indicate if EH tables should
-  /// be emitted.
-  bool shouldEmitTable;
-
-  /// shouldEmitMoves - Per-function flag to indicate if frame moves info
-  /// should be emitted.
-  bool shouldEmitMoves;
-
-  /// shouldEmitTableModule - Per-module flag to indicate if EH tables
-  /// should be emitted.
-  bool shouldEmitTableModule;
 public:
   //===--------------------------------------------------------------------===//
   // Main entry points.

@@ -84,7 +84,7 @@ const unsigned ProfileInfoLoader::Uncounted = ~0U;
 //
 ProfileInfoLoader::ProfileInfoLoader(const char *ToolName,
                                      const std::string &Filename)
-  : Filename(Filename), Warned(false) {
+  : Filename(Filename) {
   FILE *F = fopen(Filename.c_str(), "rb");
   if (F == 0) {
     errs() << ToolName << ": Error opening '" << Filename << "': ";

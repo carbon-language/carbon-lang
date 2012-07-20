@@ -46,7 +46,6 @@ STATISTIC(NumDead,       "Number of trivially dead stack accesses eliminated");
 
 namespace {
   class StackSlotColoring : public MachineFunctionPass {
-    bool ColorWithRegs;
     LiveStacks* LS;
     MachineFrameInfo *MFI;
     const TargetInstrInfo  *TII;
@@ -82,7 +81,7 @@ namespace {
   public:
     static char ID; // Pass identification
     StackSlotColoring() :
-      MachineFunctionPass(ID), ColorWithRegs(false), NextColor(-1) {
+      MachineFunctionPass(ID), NextColor(-1) {
         initializeStackSlotColoringPass(*PassRegistry::getPassRegistry());
       }
 

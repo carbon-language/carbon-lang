@@ -44,9 +44,7 @@ EnableARMEHABIDescriptors("arm-enable-ehabi-descriptors", cl::Hidden,
 
 
 ARMException::ARMException(AsmPrinter *A)
-  : DwarfException(A),
-    shouldEmitTable(false), shouldEmitMoves(false), shouldEmitTableModule(false)
-    {}
+  : DwarfException(A) {}
 
 ARMException::~ARMException() {}
 
