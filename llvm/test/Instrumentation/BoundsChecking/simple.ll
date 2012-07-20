@@ -116,3 +116,13 @@ define void @f11(i128* byval %x) nounwind {
   %3 = load i8* %2, align 4
   ret void
 }
+
+; CHECK: @f12
+define i64 @f12(i64 %x, i64 %y) nounwind {
+  %1 = tail call i8* @calloc(i64 1, i64 %x)
+; CHECK: mul i64 %y, 8
+  %2 = bitcast i8* %1 to i64*
+  %3 = getelementptr inbounds i64* %2, i64 %y
+  %4 = load i64* %3, align 8
+  ret i64 %4
+}

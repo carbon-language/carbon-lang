@@ -168,15 +168,18 @@ static inline unsigned getKnownAlignment(Value *V, const TargetData *TD = 0) {
 /// EmitGEPOffset - Given a getelementptr instruction/constantexpr, emit the
 /// code necessary to compute the offset from the base pointer (without adding
 /// in the base pointer).  Return the result as a signed integer of intptr size.
+/// When NoAssumptions is true, no assumptions about index computation not
+/// overflowing is made.
 template<typename IRBuilderTy>
-Value *EmitGEPOffset(IRBuilderTy *Builder, const TargetData &TD, User *GEP) {
+Value *EmitGEPOffset(IRBuilderTy *Builder, const TargetData &TD, User *GEP,
+                     bool NoAssumptions = false) {
   gep_type_iterator GTI = gep_type_begin(GEP);
   Type *IntPtrTy = TD.getIntPtrType(GEP->getContext());
   Value *Result = Constant::getNullValue(IntPtrTy);
 
   // If the GEP is inbounds, we know that none of the addressing operations will
   // overflow in an unsigned sense.
-  bool isInBounds = cast<GEPOperator>(GEP)->isInBounds();
+  bool isInBounds = cast<GEPOperator>(GEP)->isInBounds() && !NoAssumptions;
 
   // Build a mask for high order bits.
   unsigned IntPtrWidth = TD.getPointerSizeInBits();
