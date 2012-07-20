@@ -2623,7 +2623,8 @@ static bool isHomogeneousAggregate(QualType Ty, const Type *&Base,
     // double, or 64-bit or 128-bit vectors.
     if (const BuiltinType *BT = Ty->getAs<BuiltinType>()) {
       if (BT->getKind() != BuiltinType::Float && 
-          BT->getKind() != BuiltinType::Double)
+          BT->getKind() != BuiltinType::Double &&
+          BT->getKind() != BuiltinType::LongDouble)
         return false;
     } else if (const VectorType *VT = Ty->getAs<VectorType>()) {
       unsigned VecSize = Context.getTypeSize(VT);
