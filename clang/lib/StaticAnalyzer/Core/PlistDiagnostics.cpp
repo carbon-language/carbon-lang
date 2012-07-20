@@ -31,7 +31,6 @@ namespace {
     const std::string OutputFile;
     const LangOptions &LangOpts;
     OwningPtr<PathDiagnosticConsumer> SubPD;
-    bool flushed;
     const bool SupportsCrossFileDiagnostics;
   public:
     PlistDiagnostics(const std::string& prefix, const LangOptions &LangOpts,
@@ -61,7 +60,7 @@ PlistDiagnostics::PlistDiagnostics(const std::string& output,
                                    const LangOptions &LO,
                                    bool supportsMultipleFiles,
                                    PathDiagnosticConsumer *subPD)
-  : OutputFile(output), LangOpts(LO), SubPD(subPD), flushed(false),
+  : OutputFile(output), LangOpts(LO), SubPD(subPD),
     SupportsCrossFileDiagnostics(supportsMultipleFiles) {}
 
 PathDiagnosticConsumer*
