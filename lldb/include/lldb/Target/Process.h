@@ -836,6 +836,7 @@ public:
         m_plugin_name (),
         m_resume_count (0),
         m_wait_for_launch (false),
+        m_ignore_existing (true),
         m_continue_once_attached (false)
     {
     }
@@ -845,6 +846,7 @@ public:
         m_plugin_name (),
         m_resume_count (0),
         m_wait_for_launch (false),
+        m_ignore_existing (true),
         m_continue_once_attached (false)
     {
         ProcessInfo::operator= (launch_info);
@@ -862,6 +864,18 @@ public:
     SetWaitForLaunch (bool b)
     {
         m_wait_for_launch = b;
+    }
+
+    bool
+    GetIgnoreExisting () const
+    {
+        return m_ignore_existing;
+    }
+    
+    void
+    SetIgnoreExisting (bool b)
+    {
+        m_ignore_existing = b;
     }
 
     bool
@@ -912,6 +926,8 @@ public:
         m_plugin_name.clear();
         m_resume_count = 0;
         m_wait_for_launch = false;
+        m_ignore_existing = true;
+        m_continue_once_attached = false;
     }
 
     bool
@@ -929,6 +945,7 @@ protected:
     std::string m_plugin_name;
     uint32_t m_resume_count; // How many times do we resume after launching
     bool m_wait_for_launch;
+    bool m_ignore_existing;
     bool m_continue_once_attached; // Supports the use-case scenario of immediately continuing the process once attached.
 };
 

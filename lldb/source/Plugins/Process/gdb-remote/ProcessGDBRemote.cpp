@@ -742,6 +742,7 @@ ProcessGDBRemote::ConnectToDebugserver (const char *connect_url)
     m_gdb_comm.GetListThreadsInStopReplySupported ();
     m_gdb_comm.GetHostInfo ();
     m_gdb_comm.GetVContSupported ('c');
+    m_gdb_comm.GetVAttachOrWaitSupported();
     
     size_t num_cmds = GetExtraStartupCommands().GetArgumentCount();
     for (size_t idx = 0; idx < num_cmds; idx++)
@@ -929,7 +930,19 @@ ProcessGDBRemote::DoAttachToProcessWithName (const char *process_name, bool wait
             StreamString packet;
             
             if (wait_for_launch)
-                packet.PutCString("vAttachWait");
+            {
+                if (!m_gdb_comm.GetVAttachOrWaitSupported())
+                {
+                    packet.PutCString ("vAttachWait");
+                }
+                else
+                {
+                    if (attach_info.GetIgnoreExisting())
+                        packet.PutCString("vAttachWait");
+                    else
+                        packet.PutCString ("vAttachOrWait");
+                }
+            }
             else
                 packet.PutCString("vAttachName");
             packet.PutChar(';');

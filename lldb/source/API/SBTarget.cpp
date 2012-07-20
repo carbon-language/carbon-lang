@@ -369,6 +369,18 @@ SBAttachInfo::SetWaitForLaunch (bool b)
     m_opaque_sp->SetWaitForLaunch (b);
 }
 
+bool
+SBAttachInfo::GetIgnoreExisting ()
+{
+    return m_opaque_sp->GetIgnoreExisting();
+}
+
+void
+SBAttachInfo::SetIgnoreExisting (bool b)
+{
+    m_opaque_sp->SetIgnoreExisting (b);
+}
+
 uint32_t
 SBAttachInfo::GetUserID()
 {

@@ -63,6 +63,7 @@ public:
         thread_alive_p,                 // 'T'
         vattach,                        // 'vAttach;pid'
         vattachwait,                    // 'vAttachWait:XX...' where XX is one or more hex encoded process name ASCII bytes
+        vattachorwait,                  // 'vAttachOrWait:XX...' where XX is one or more hex encoded process name ASCII bytes
         vattachname,                    // 'vAttachName:XX...' where XX is one or more hex encoded process name ASCII bytes
         vcont,                          // 'vCont'
         vcont_list_actions,             // 'vCont?'
@@ -91,6 +92,7 @@ public:
         query_register_info,            // 'qRegisterInfo'
         query_shlib_notify_info_addr,   // 'qShlibInfoAddr'
         query_step_packet_supported,    // 'qStepPacketSupported'
+        query_vattachorwait_supported,  // 'qVAttachOrWaitSupported'
         query_host_info,                // 'qHostInfo'
         pass_signals_to_inferior,       // 'QPassSignals'
         start_noack_mode,               // 'QStartNoAckMode'
@@ -164,6 +166,7 @@ public:
     rnb_err_t HandlePacket_qRegisterInfo (const char *p);
     rnb_err_t HandlePacket_qShlibInfoAddr (const char *p);
     rnb_err_t HandlePacket_qStepPacketSupported (const char *p);
+    rnb_err_t HandlePacket_qVAttachOrWaitSupported (const char *p);
     rnb_err_t HandlePacket_qThreadInfo (const char *p);
     rnb_err_t HandlePacket_qThreadExtraInfo (const char *p);
     rnb_err_t HandlePacket_qThreadStopInfo (const char *p);

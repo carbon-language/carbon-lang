@@ -499,7 +499,6 @@ GetAllInfosMatchingName(const char *full_process_name, std::vector<struct kinfo_
                     else
                     {
                         // We found a matching process, add it to our list
-
                         matching_proc_infos.push_back(proc_infos[i]);
                     }
                 }
@@ -513,6 +512,7 @@ GetAllInfosMatchingName(const char *full_process_name, std::vector<struct kinfo_
 nub_process_t
 DNBProcessAttachWait (const char *waitfor_process_name, 
                       nub_launch_flavor_t launch_flavor,
+                      bool ignore_existing,
                       struct timespec *timeout_abstime, 
                       useconds_t waitfor_interval,
                       char *err_str, 
@@ -536,7 +536,12 @@ DNBProcessAttachWait (const char *waitfor_process_name,
     }
 
     if (attach_token == NULL)
-        num_exclude_proc_infos = GetAllInfosMatchingName (waitfor_process_name, exclude_proc_infos);
+    {
+        if (ignore_existing)
+            num_exclude_proc_infos = GetAllInfosMatchingName (waitfor_process_name, exclude_proc_infos);
+        else
+            num_exclude_proc_infos = 0;
+    }
 
     DNBLogThreadedIf (LOG_PROCESS, "Waiting for '%s' to appear...\n", waitfor_process_name);
 

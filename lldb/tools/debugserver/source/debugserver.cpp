@@ -105,7 +105,7 @@ RNBRunLoopGetStartModeFromRemote (RNBRemote* remote)
                 err = remote->HandleReceivedPacket (&type);
 
                 // check if we tried to attach to a process
-                if (type == RNBRemote::vattach || type == RNBRemote::vattachwait)
+                if (type == RNBRemote::vattach || type == RNBRemote::vattachwait || type == RNBRemote::vattachorwait)
                 {
                     if (err == rnb_success)
                         return eRNBRunLoopModeInferiorExecuting;
@@ -1319,8 +1319,8 @@ main (int argc, char *argv[])
                     }
 
                     ctx.SetLaunchFlavor(launch_flavor);
-
-                    nub_process_t pid = DNBProcessAttachWait (waitfor_pid_name.c_str(), launch_flavor, timeout_ptr, waitfor_interval, err_str, sizeof(err_str));
+                    bool ignore_existing = false;
+                    nub_process_t pid = DNBProcessAttachWait (waitfor_pid_name.c_str(), launch_flavor, ignore_existing, timeout_ptr, waitfor_interval, err_str, sizeof(err_str));
                     g_pid = pid;
 
                     if (pid == INVALID_NUB_PROCESS)

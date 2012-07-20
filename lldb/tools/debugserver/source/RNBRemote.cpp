@@ -141,6 +141,7 @@ RNBRemote::CreatePacketTable  ()
     t.push_back (Packet (thread_alive_p,                &RNBRemote::HandlePacket_T,             NULL, "T", "Is thread alive"));
     t.push_back (Packet (vattach,                       &RNBRemote::HandlePacket_v,             NULL, "vAttach", "Attach to a new process"));
     t.push_back (Packet (vattachwait,                   &RNBRemote::HandlePacket_v,             NULL, "vAttachWait", "Wait for a process to start up then attach to it"));
+    t.push_back (Packet (vattachorwait,                 &RNBRemote::HandlePacket_v,             NULL, "vAttachOrWait", "Attach to the process or if it doesn't exist, wait for the process to start up then attach to it"));
     t.push_back (Packet (vattachname,                   &RNBRemote::HandlePacket_v,             NULL, "vAttachName", "Attach to an existing process by name"));
     t.push_back (Packet (vcont_list_actions,            &RNBRemote::HandlePacket_v,             NULL, "vCont;", "Verbose resume with thread actions"));
     t.push_back (Packet (vcont_list_actions,            &RNBRemote::HandlePacket_v,             NULL, "vCont?", "List valid continue-with-thread-actions actions"));
@@ -169,6 +170,7 @@ RNBRemote::CreatePacketTable  ()
     t.push_back (Packet (query_register_info,           &RNBRemote::HandlePacket_qRegisterInfo, NULL, "qRegisterInfo", "Dynamically discover remote register context information."));
     t.push_back (Packet (query_shlib_notify_info_addr,  &RNBRemote::HandlePacket_qShlibInfoAddr,NULL, "qShlibInfoAddr", "Returns the address that contains info needed for getting shared library notifications"));
     t.push_back (Packet (query_step_packet_supported,   &RNBRemote::HandlePacket_qStepPacketSupported,NULL, "qStepPacketSupported", "Replys with OK if the 's' packet is supported."));
+    t.push_back (Packet (query_vattachorwait_supported, &RNBRemote::HandlePacket_qVAttachOrWaitSupported,NULL, "qVAttachOrWaitSupported", "Replys with OK if the 'vAttachOrWait' packet is supported."));
     t.push_back (Packet (query_host_info,               &RNBRemote::HandlePacket_qHostInfo,     NULL, "qHostInfo", "Replies with multiple 'key:value;' tuples appended to each other."));
 //  t.push_back (Packet (query_symbol_lookup,           &RNBRemote::HandlePacket_UNIMPLEMENTED, NULL, "qSymbol", "Notify that host debugger is ready to do symbol lookups"));
     t.push_back (Packet (start_noack_mode,              &RNBRemote::HandlePacket_QStartNoAckMode        , NULL, "QStartNoAckMode", "Request that " DEBUGSERVER_PROGRAM_NAME " stop acking remote protocol packets"));
@@ -1298,6 +1300,13 @@ RNBRemote::HandlePacket_qStepPacketSupported (const char *p)
     // packet, yet some older versions do not. We need a way to tell if this
     // packet is supported so we can disable software single stepping in gdb
     // for remote targets (so the "s" packet will get used).
+    return SendPacket("OK");
+}
+
+rnb_err_t
+RNBRemote::HandlePacket_qVAttachOrWaitSupported (const char *p)
+{
+    // We support attachOrWait meaning attach if the process exists, otherwise wait to attach.
     return SendPacket("OK");
 }
 
@@ -2678,6 +2687,31 @@ RNBRemote::HandlePacket_DeallocateMemory (const char *p)
     return SendPacket ("E54");
 }
 
+static bool
+GetProcessNameFrom_vAttach (const char *&p, std::string &attach_name)
+{
+    bool return_val = true;
+    while (*p != '\0')
+    {
+        char smallbuf[3];
+        smallbuf[0] = *p;
+        smallbuf[1] = *(p + 1);
+        smallbuf[2] = '\0';
+
+        errno = 0;
+        int ch = strtoul (smallbuf, NULL, 16);
+        if (errno != 0 && ch == 0)
+        {
+            return_val = false;
+            break;
+        }
+
+        attach_name.push_back(ch);
+        p += 2;
+    }
+    return return_val;
+}
+
 /*
  vAttach;pid
 
@@ -2781,51 +2815,37 @@ RNBRemote::HandlePacket_v (const char *p)
     {
         nub_process_t attach_pid = INVALID_NUB_PROCESS;
         char err_str[1024]={'\0'};
+        
         if (strstr (p, "vAttachWait;") == p)
         {
             p += strlen("vAttachWait;");
             std::string attach_name;
-            while (*p != '\0')
+            if (!GetProcessNameFrom_vAttach(p, attach_name))
             {
-                char smallbuf[3];
-                smallbuf[0] = *p;
-                smallbuf[1] = *(p + 1);
-                smallbuf[2] = '\0';
-
-                errno = 0;
-                int ch = strtoul (smallbuf, NULL, 16);
-                if (errno != 0 && ch == 0)
-                {
-                    return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "non-hex char in arg on 'vAttachWait' pkt");
-                }
-
-                attach_name.push_back(ch);
-                p += 2;
+                return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "non-hex char in arg on 'vAttachWait' pkt");
             }
+            const bool ignore_existing = true;
+            attach_pid = DNBProcessAttachWait(attach_name.c_str (), m_ctx.LaunchFlavor(), ignore_existing, NULL, 1000, err_str, sizeof(err_str), RNBRemoteShouldCancelCallback);
 
-            attach_pid = DNBProcessAttachWait(attach_name.c_str (), m_ctx.LaunchFlavor(), NULL, 1000, err_str, sizeof(err_str), RNBRemoteShouldCancelCallback);
-
+        }
+        else if (strstr (p, "vAttachOrWait;") == p)
+        {
+            p += strlen("vAttachOrWait;");
+            std::string attach_name;
+            if (!GetProcessNameFrom_vAttach(p, attach_name))
+            {
+                return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "non-hex char in arg on 'vAttachOrWait' pkt");
+            }
+            const bool ignore_existing = false;
+            attach_pid = DNBProcessAttachWait(attach_name.c_str (), m_ctx.LaunchFlavor(), ignore_existing, NULL, 1000, err_str, sizeof(err_str), RNBRemoteShouldCancelCallback);
         }
         else if (strstr (p, "vAttachName;") == p)
         {
             p += strlen("vAttachName;");
             std::string attach_name;
-            while (*p != '\0')
+            if (!GetProcessNameFrom_vAttach(p, attach_name))
             {
-                char smallbuf[3];
-                smallbuf[0] = *p;
-                smallbuf[1] = *(p + 1);
-                smallbuf[2] = '\0';
-
-                errno = 0;
-                int ch = strtoul (smallbuf, NULL, 16);
-                if (errno != 0 && ch == 0)
-                {
-                    return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "non-hex char in arg on 'vAttachWait' pkt");
-                }
-
-                attach_name.push_back(ch);
-                p += 2;
+                return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "non-hex char in arg on 'vAttachName' pkt");
             }
 
             attach_pid = DNBProcessAttachByName (attach_name.c_str(), NULL, err_str, sizeof(err_str));
@@ -2845,7 +2865,9 @@ RNBRemote::HandlePacket_v (const char *p)
             }
         }
         else
+        {
             return HandlePacket_UNIMPLEMENTED(p);
+        }
 
 
         if (attach_pid != INVALID_NUB_PROCESS)

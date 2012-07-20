@@ -152,6 +152,12 @@ public:
     void
     SetWaitForLaunch (bool b);
     
+    bool
+    GetIgnoreExisting ();
+    
+    void
+    SetIgnoreExisting (bool b);
+    
     uint32_t
     GetResumeCount ();
     

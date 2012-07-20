@@ -221,6 +221,9 @@ public:
     bool
     GetVContSupported (char flavor);
 
+    bool
+    GetVAttachOrWaitSupported ();
+    
     void
     ResetDiscoverableSettings();
 
@@ -365,7 +368,8 @@ protected:
     lldb_private::LazyBool m_supports_memory_region_info;
     lldb_private::LazyBool m_supports_watchpoint_support_info;
     lldb_private::LazyBool m_watchpoints_trigger_after_instruction;
-
+    lldb_private::LazyBool m_attach_or_wait_reply;
+    
     bool
         m_supports_qProcessInfoPID:1,
         m_supports_qfProcessInfo:1,

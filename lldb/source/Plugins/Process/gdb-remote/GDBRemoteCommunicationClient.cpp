@@ -50,6 +50,7 @@ GDBRemoteCommunicationClient::GDBRemoteCommunicationClient(bool is_platform) :
     m_supports_memory_region_info  (eLazyBoolCalculate),
     m_supports_watchpoint_support_info  (eLazyBoolCalculate),
     m_watchpoints_trigger_after_instruction(eLazyBoolCalculate),
+    m_attach_or_wait_reply(eLazyBoolCalculate),
     m_supports_qProcessInfoPID (true),
     m_supports_qfProcessInfo (true),
     m_supports_qUserName (true),
@@ -131,6 +132,26 @@ GDBRemoteCommunicationClient::GetListThreadsInStopReplySupported ()
                 m_supports_threads_in_stop_reply = eLazyBoolYes;
         }
     }
+}
+
+bool
+GDBRemoteCommunicationClient::GetVAttachOrWaitSupported ()
+{
+    if (m_attach_or_wait_reply == eLazyBoolCalculate)
+    {
+        m_attach_or_wait_reply = eLazyBoolNo;
+        
+        StringExtractorGDBRemote response;
+        if (SendPacketAndWaitForResponse("qVAttachOrWaitSupported", response, false))
+        {
+            if (response.IsOKResponse())
+                m_attach_or_wait_reply = eLazyBoolYes;
+        }
+    }
+    if (m_attach_or_wait_reply == eLazyBoolYes)
+        return true;
+    else
+        return false;
 }
 
 
