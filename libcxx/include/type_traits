@@ -2717,37 +2717,37 @@ struct __check_complete<_Tp&&>
 
 template <class _Rp, class ..._Param>
 struct __check_complete<_Rp (*)(_Param...)>
-    : private __check_complete<_Param...>
+    : private __check_complete<_Rp>
 {
 };
 
 template <class _Rp, class ..._Param>
 struct __check_complete<_Rp (_Param...)>
-    : private __check_complete<_Param...>
+    : private __check_complete<_Rp>
 {
 };
 
 template <class _Rp, class _Class, class ..._Param>
 struct __check_complete<_Rp (_Class::*)(_Param...)>
-    : private __check_complete<_Class, _Param...>
+    : private __check_complete<_Class>
 {
 };
 
 template <class _Rp, class _Class, class ..._Param>
 struct __check_complete<_Rp (_Class::*)(_Param...) const>
-    : private __check_complete<_Class, _Param...>
+    : private __check_complete<_Class>
 {
 };
 
 template <class _Rp, class _Class, class ..._Param>
 struct __check_complete<_Rp (_Class::*)(_Param...) volatile>
-    : private __check_complete<_Class, _Param...>
+    : private __check_complete<_Class>
 {
 };
 
 template <class _Rp, class _Class, class ..._Param>
 struct __check_complete<_Rp (_Class::*)(_Param...) const volatile>
-    : private __check_complete<_Class, _Param...>
+    : private __check_complete<_Class>
 {
 };
 
@@ -2755,49 +2755,49 @@ struct __check_complete<_Rp (_Class::*)(_Param...) const volatile>
 
 template <class _Rp, class _Class, class ..._Param>
 struct __check_complete<_Rp (_Class::*)(_Param...) &>
-    : private __check_complete<_Class, _Param...>
+    : private __check_complete<_Class>
 {
 };
 
 template <class _Rp, class _Class, class ..._Param>
 struct __check_complete<_Rp (_Class::*)(_Param...) const&>
-    : private __check_complete<_Class, _Param...>
+    : private __check_complete<_Class>
 {
 };
 
 template <class _Rp, class _Class, class ..._Param>
 struct __check_complete<_Rp (_Class::*)(_Param...) volatile&>
-    : private __check_complete<_Class, _Param...>
+    : private __check_complete<_Class>
 {
 };
 
 template <class _Rp, class _Class, class ..._Param>
 struct __check_complete<_Rp (_Class::*)(_Param...) const volatile&>
-    : private __check_complete<_Class, _Param...>
+    : private __check_complete<_Class>
 {
 };
 
 template <class _Rp, class _Class, class ..._Param>
 struct __check_complete<_Rp (_Class::*)(_Param...) &&>
-    : private __check_complete<_Class, _Param...>
+    : private __check_complete<_Class>
 {
 };
 
 template <class _Rp, class _Class, class ..._Param>
 struct __check_complete<_Rp (_Class::*)(_Param...) const&&>
-    : private __check_complete<_Class, _Param...>
+    : private __check_complete<_Class>
 {
 };
 
 template <class _Rp, class _Class, class ..._Param>
 struct __check_complete<_Rp (_Class::*)(_Param...) volatile&&>
-    : private __check_complete<_Class, _Param...>
+    : private __check_complete<_Class>
 {
 };
 
 template <class _Rp, class _Class, class ..._Param>
 struct __check_complete<_Rp (_Class::*)(_Param...) const volatile&&>
-    : private __check_complete<_Class, _Param...>
+    : private __check_complete<_Class>
 {
 };
 

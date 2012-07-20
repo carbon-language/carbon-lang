@@ -1113,7 +1113,8 @@ class _LIBCPP_VISIBLE function<_Rp(_ArgTypes...)>
         _LIBCPP_INLINE_VISIBILITY
         static bool __not_null(const function<_Rp(_Ap...)>& __p) {return __p;}
 
-    template <class _Fp, bool = __invokable<_Fp&, _ArgTypes...>::value>
+    template <class _Fp, bool = !is_same<_Fp, function>::value &&
+                                __invokable<_Fp&, _ArgTypes...>::value>
         struct __callable;
     template <class _Fp>
         struct __callable<_Fp, true>
