@@ -338,8 +338,6 @@ def rewrite_macros : Flag<"-rewrite-macros">,
   HelpText<"Expand macros without full preprocessing">;
 def migrate : Flag<"-migrate">,
   HelpText<"Migrate source code">;
-def emit_ms_asm : Flag<"-enable-ms-asm">,
-  HelpText<"Enable MS-style inline assembly">;
 }
 
 def mt_migrate_directory : Separate<"-mt-migrate-directory">,
