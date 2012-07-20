@@ -39,6 +39,8 @@ target_link_libraries(clang
 
 set_target_properties(clang PROPERTIES VERSION ${CLANG_EXECUTABLE_VERSION})
 
+add_dependencies(clang clang-headers)
+
 if(UNIX)
   set(CLANGXX_LINK_OR_COPY create_symlink)
 # Create a relative symlink
