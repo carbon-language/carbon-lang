@@ -1124,7 +1124,7 @@ std::string TextDiagnostic::buildFixItInsertionLine(
   std::string FixItInsertionLine;
   if (Hints.empty() || !DiagOpts.ShowFixits)
     return FixItInsertionLine;
-  unsigned PrevHintEndCol = 0;
+  unsigned PrevHintEnd = 0;
 
   for (ArrayRef<FixItHint>::iterator I = Hints.begin(), E = Hints.end();
        I != E; ++I) {
@@ -1136,15 +1136,11 @@ std::string TextDiagnostic::buildFixItInsertionLine(
       if (LineNo == SM.getLineNumber(HintLocInfo.first, HintLocInfo.second)) {
         // Insert the new code into the line just below the code
         // that the user wrote.
-        // Note: When modifying this function, be very careful about what is a
-        // "column" (printed width, platform-dependent) and what is a
-        // "byte offset" (SourceManager "column").
-        unsigned HintByteOffset
+        unsigned HintColNo
           = SM.getColumnNumber(HintLocInfo.first, HintLocInfo.second) - 1;
-
-        // The hint must start inside the source or right at the end
-        assert(HintByteOffset < static_cast<unsigned>(map.bytes())+1);
-        unsigned HintCol = map.byteToColumn(HintByteOffset);
+        // hint must start inside the source or right at the end
+        assert(HintColNo<static_cast<unsigned>(map.bytes())+1);
+        HintColNo = map.byteToColumn(HintColNo);
 
         // If we inserted a long previous hint, push this one forwards, and add
         // an extra space to show that this is not part of the previous
@@ -1153,27 +1149,32 @@ std::string TextDiagnostic::buildFixItInsertionLine(
         //
         // Note that if this hint is located immediately after the previous
         // hint, no space will be added, since the location is more important.
-        if (HintCol < PrevHintEndCol)
-          HintCol = PrevHintEndCol + 1;
+        if (HintColNo < PrevHintEnd)
+          HintColNo = PrevHintEnd + 1;
 
-        // FIXME: This function handles multibyte characters in the source, but
-        // not in the fixits. This assertion is intended to catch unintended
-        // use of multibyte characters in fixits. If we decide to do this, we'll
-        // have to track separate byte widths for the source and fixit lines.
-        assert((size_t)llvm::sys::locale::columnWidth(I->CodeToInsert) ==
-               I->CodeToInsert.size());
+        // FIXME: if the fixit includes tabs or other characters that do not
+        //  take up a single column per byte when displayed then
+        //  I->CodeToInsert.size() is not a column number and we're mixing
+        //  units (columns + bytes). We should get printable versions
+        //  of each fixit before using them.
+        unsigned LastColumnModified
+          = HintColNo + I->CodeToInsert.size();
 
-        // This relies on one byte per column in our fixit hints.
-        // This should NOT use HintByteOffset, because the source might have
-        // Unicode characters in earlier columns.
-        unsigned LastColumnModified = HintCol + I->CodeToInsert.size();
+        if (LastColumnModified <= static_cast<unsigned>(map.bytes())) {
+          // If we're right in the middle of a multibyte character skip to
+          // the end of it.
+          while (map.byteToColumn(LastColumnModified) == -1)
+            ++LastColumnModified;
+          LastColumnModified = map.byteToColumn(LastColumnModified);
+        }
+
         if (LastColumnModified > FixItInsertionLine.size())
           FixItInsertionLine.resize(LastColumnModified, ' ');
-
+        assert(HintColNo+I->CodeToInsert.size() <= FixItInsertionLine.size());
         std::copy(I->CodeToInsert.begin(), I->CodeToInsert.end(),
-                  FixItInsertionLine.begin() + HintCol);
+                  FixItInsertionLine.begin() + HintColNo);
 
-        PrevHintEndCol = LastColumnModified;
+        PrevHintEnd = LastColumnModified;
       } else {
         FixItInsertionLine.clear();
         break;
