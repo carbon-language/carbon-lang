@@ -423,28 +423,71 @@ bool PHIElimination::SplitPHIEdges(MachineFunction &MF,
   if (MBB.empty() || !MBB.front().isPHI() || MBB.isLandingPad())
     return false;   // Quick exit for basic blocks without PHIs.
 
+  const MachineLoop *CurLoop = MLI ? MLI->getLoopFor(&MBB) : 0;
+  bool IsLoopHeader = CurLoop && &MBB == CurLoop->getHeader();
+
   bool Changed = false;
   for (MachineBasicBlock::iterator BBI = MBB.begin(), BBE = MBB.end();
        BBI != BBE && BBI->isPHI(); ++BBI) {
     for (unsigned i = 1, e = BBI->getNumOperands(); i != e; i += 2) {
       unsigned Reg = BBI->getOperand(i).getReg();
       MachineBasicBlock *PreMBB = BBI->getOperand(i+1).getMBB();
-      // We break edges when registers are live out from the predecessor block
-      // (not considering PHI nodes). If the register is live in to this block
-      // anyway, we would gain nothing from splitting.
+      // Is there a critical edge from PreMBB to MBB?
+      if (PreMBB->succ_size() == 1)
+        continue;
+
       // Avoid splitting backedges of loops. It would introduce small
       // out-of-line blocks into the loop which is very bad for code placement.
-      if (PreMBB != &MBB &&
-          !LV.isLiveIn(Reg, MBB) && LV.isLiveOut(Reg, *PreMBB)) {
-        if (!MLI ||
-            !(MLI->getLoopFor(PreMBB) == MLI->getLoopFor(&MBB) &&
-              MLI->isLoopHeader(&MBB))) {
-          if (PreMBB->SplitCriticalEdge(&MBB, this)) {
-            Changed = true;
-            ++NumCriticalEdgesSplit;
-          }
-        }
+      if (PreMBB == &MBB)
+        continue;
+      const MachineLoop *PreLoop = MLI ? MLI->getLoopFor(PreMBB) : 0;
+      if (IsLoopHeader && PreLoop == CurLoop)
+        continue;
+
+      // LV doesn't consider a phi use live-out, so isLiveOut only returns true
+      // when the source register is live-out for some other reason than a phi
+      // use. That means the copy we will insert in PreMBB won't be a kill, and
+      // there is a risk it may not be coalesced away.
+      //
+      // If the copy would be a kill, there is no need to split the edge.
+      if (!LV.isLiveOut(Reg, *PreMBB))
+        continue;
+
+      DEBUG(dbgs() << PrintReg(Reg) << " live-out before critical edge BB#"
+                   << PreMBB->getNumber() << " -> BB#" << MBB.getNumber()
+                   << ": " << *BBI);
+
+      // If Reg is not live-in to MBB, it means it must be live-in to some
+      // other PreMBB successor, and we can avoid the interference by splitting
+      // the edge.
+      //
+      // If Reg *is* live-in to MBB, the interference is inevitable and a copy
+      // is likely to be left after coalescing. If we are looking at a loop
+      // exiting edge, split it so we won't insert code in the loop, otherwise
+      // don't bother.
+      bool ShouldSplit = !LV.isLiveIn(Reg, MBB);
+
+      // Check for a loop exiting edge.
+      if (!ShouldSplit && CurLoop != PreLoop) {
+        DEBUG({
+          dbgs() << "Split wouldn't help, maybe avoid loop copies?\n";
+          if (PreLoop) dbgs() << "PreLoop: " << *PreLoop;
+          if (CurLoop) dbgs() << "CurLoop: " << *CurLoop;
+        });
+        // This edge could be entering a loop, exiting a loop, or it could be
+        // both: Jumping directly form one loop to the header of a sibling
+        // loop.
+        // Split unless this edge is entering CurLoop from an outer loop.
+        ShouldSplit = PreLoop && !PreLoop->contains(CurLoop);
       }
+      if (!ShouldSplit)
+        continue;
+      if (!PreMBB->SplitCriticalEdge(&MBB, this)) {
+        DEBUG(dbgs() << "Failed to split ciritcal edge.\n");
+        continue;
+      }
+      Changed = true;
+      ++NumCriticalEdgesSplit;
     }
   }
   return Changed;
