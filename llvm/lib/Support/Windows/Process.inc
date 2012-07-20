@@ -154,7 +154,7 @@ unsigned Process::StandardErrColumns() {
 }
 
 // The terminal always has colors.
-bool FileDescriptorHasColors(int fd) {
+bool Process::FileDescriptorHasColors(int fd) {
   return FileDescriptorIsDisplayed(fd);
 }
 
