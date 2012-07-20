@@ -263,10 +263,10 @@ public:
     typedef basic_streambuf<charT,traits> streambuf_type;
     typedef basic_istream<charT,traits>   istream_type;
 
-    istreambuf_iterator() throw();
-    istreambuf_iterator(istream_type& s) throw();
-    istreambuf_iterator(streambuf_type* s) throw();
-    istreambuf_iterator(a-private-type) throw();
+    istreambuf_iterator() noexcept;
+    istreambuf_iterator(istream_type& s) noexcept;
+    istreambuf_iterator(streambuf_type* s) noexcept;
+    istreambuf_iterator(a-private-type) noexcept;
 
     charT                operator*() const;
     pointer operator->() const;
@@ -293,13 +293,13 @@ public:
     typedef basic_streambuf<charT,traits> streambuf_type;
     typedef basic_ostream<charT,traits>   ostream_type;
 
-    ostreambuf_iterator(ostream_type& s) throw();
-    ostreambuf_iterator(streambuf_type* s) throw();
+    ostreambuf_iterator(ostream_type& s) noexcept;
+    ostreambuf_iterator(streambuf_type* s) noexcept;
     ostreambuf_iterator& operator=(charT c);
     ostreambuf_iterator& operator*();
     ostreambuf_iterator& operator++();
     ostreambuf_iterator& operator++(int);
-    bool failed() const throw();
+    bool failed() const noexcept;
 };
 
 template <class C> auto begin(C& c) -> decltype(c.begin());
@@ -815,12 +815,12 @@ private:
             __sbuf_ = 0;
     }
 public:
-    _LIBCPP_INLINE_VISIBILITY istreambuf_iterator() throw() : __sbuf_(0) {}
-    _LIBCPP_INLINE_VISIBILITY istreambuf_iterator(istream_type& __s) throw()
+    _LIBCPP_INLINE_VISIBILITY istreambuf_iterator() _NOEXCEPT : __sbuf_(0) {}
+    _LIBCPP_INLINE_VISIBILITY istreambuf_iterator(istream_type& __s) _NOEXCEPT
         : __sbuf_(__s.rdbuf()) {__test_for_eof();}
-    _LIBCPP_INLINE_VISIBILITY istreambuf_iterator(streambuf_type* __s) throw()
+    _LIBCPP_INLINE_VISIBILITY istreambuf_iterator(streambuf_type* __s) _NOEXCEPT
         : __sbuf_(__s) {__test_for_eof();}
-    _LIBCPP_INLINE_VISIBILITY istreambuf_iterator(const __proxy& __p) throw()
+    _LIBCPP_INLINE_VISIBILITY istreambuf_iterator(const __proxy& __p) _NOEXCEPT
         : __sbuf_(__p.__sbuf_) {}
 
     _LIBCPP_INLINE_VISIBILITY char_type  operator*() const
@@ -867,9 +867,9 @@ public:
 private:
     streambuf_type* __sbuf_;
 public:
-    _LIBCPP_INLINE_VISIBILITY ostreambuf_iterator(ostream_type& __s) throw()
+    _LIBCPP_INLINE_VISIBILITY ostreambuf_iterator(ostream_type& __s) _NOEXCEPT
         : __sbuf_(__s.rdbuf()) {}
-    _LIBCPP_INLINE_VISIBILITY ostreambuf_iterator(streambuf_type* __s) throw()
+    _LIBCPP_INLINE_VISIBILITY ostreambuf_iterator(streambuf_type* __s) _NOEXCEPT
         : __sbuf_(__s) {}
     _LIBCPP_INLINE_VISIBILITY ostreambuf_iterator& operator=(_CharT __c)
         {
@@ -880,7 +880,7 @@ public:
     _LIBCPP_INLINE_VISIBILITY ostreambuf_iterator& operator*()     {return *this;}
     _LIBCPP_INLINE_VISIBILITY ostreambuf_iterator& operator++()    {return *this;}
     _LIBCPP_INLINE_VISIBILITY ostreambuf_iterator& operator++(int) {return *this;}
-    _LIBCPP_INLINE_VISIBILITY bool failed() const throw() {return __sbuf_ == 0;}
+    _LIBCPP_INLINE_VISIBILITY bool failed() const _NOEXCEPT {return __sbuf_ == 0;}
 };
 
 template <class _Iter>

@@ -38,7 +38,7 @@ struct find_members
     void test()
     {
         this->container = 0;
-        this->iter == this->iter;
+        (void)(this->iter == this->iter);
     }
 };
 
