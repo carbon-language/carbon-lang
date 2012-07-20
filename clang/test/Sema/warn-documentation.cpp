@@ -276,3 +276,9 @@ namespace test_attach24 {
   }
 }
 
+// PR13411, reduced.  We used to crash on this.
+/**
+ * @code Aaa.
+ */
+void test_nocrash1(int);
+

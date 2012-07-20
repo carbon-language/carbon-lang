@@ -378,11 +378,16 @@ VerbatimBlockComment *Parser::parseVerbatimBlock() {
     Lines.push_back(Line);
   }
 
-  assert(Tok.is(tok::verbatim_block_end));
-  VB = S.actOnVerbatimBlockFinish(VB, Tok.getLocation(),
-                                  Tok.getVerbatimBlockName(),
-                                  copyArray(llvm::makeArrayRef(Lines)));
-  consumeToken();
+  if (Tok.is(tok::verbatim_block_end)) {
+    VB = S.actOnVerbatimBlockFinish(VB, Tok.getLocation(),
+                                    Tok.getVerbatimBlockName(),
+                                    copyArray(llvm::makeArrayRef(Lines)));
+    consumeToken();
+  } else {
+    // Unterminated \\verbatim block
+    VB = S.actOnVerbatimBlockFinish(VB, SourceLocation(), "",
+                                    copyArray(llvm::makeArrayRef(Lines)));
+  }
 
   return VB;
 }

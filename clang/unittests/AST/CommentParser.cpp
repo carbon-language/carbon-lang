@@ -388,7 +388,8 @@ struct NoAttrs {};
 ::testing::AssertionResult HasVerbatimBlockAt(const Comment *C,
                                               size_t Idx,
                                               VerbatimBlockComment *&VBC,
-                                              StringRef Name) {
+                                              StringRef Name,
+                                              StringRef CloseName) {
   ::testing::AssertionResult AR = GetChildAt(C, Idx, VBC);
   if (!AR)
     return AR;
@@ -399,17 +400,27 @@ struct NoAttrs {};
         << "VerbatimBlockComment has name \"" << ActualName.str() << "\", "
            "expected \"" << Name.str() << "\"";
 
+  StringRef ActualCloseName = VBC->getCloseName();
+  if (ActualCloseName != CloseName)
+    return ::testing::AssertionFailure()
+        << "VerbatimBlockComment has closing command name \""
+        << ActualCloseName.str() << "\", "
+           "expected \"" << CloseName.str() << "\"";
+
   return ::testing::AssertionSuccess();
 }
 
 struct NoLines {};
+struct Lines {};
 
 ::testing::AssertionResult HasVerbatimBlockAt(const Comment *C,
                                               size_t Idx,
                                               VerbatimBlockComment *&VBC,
                                               StringRef Name,
+                                              StringRef CloseName,
                                               NoLines) {
-  ::testing::AssertionResult AR = HasVerbatimBlockAt(C, Idx, VBC, Name);
+  ::testing::AssertionResult AR = HasVerbatimBlockAt(C, Idx, VBC, Name,
+                                                     CloseName);
   if (!AR)
     return AR;
 
@@ -425,8 +436,11 @@ struct NoLines {};
                                               size_t Idx,
                                               VerbatimBlockComment *&VBC,
                                               StringRef Name,
+                                              StringRef CloseName,
+                                              Lines,
                                               StringRef Line0) {
-  ::testing::AssertionResult AR = HasVerbatimBlockAt(C, Idx, VBC, Name);
+  ::testing::AssertionResult AR = HasVerbatimBlockAt(C, Idx, VBC, Name,
+                                                     CloseName);
   if (!AR)
     return AR;
 
@@ -448,9 +462,12 @@ struct NoLines {};
                                               size_t Idx,
                                               VerbatimBlockComment *&VBC,
                                               StringRef Name,
+                                              StringRef CloseName,
+                                              Lines,
                                               StringRef Line0,
                                               StringRef Line1) {
-  ::testing::AssertionResult AR = HasVerbatimBlockAt(C, Idx, VBC, Name);
+  ::testing::AssertionResult AR = HasVerbatimBlockAt(C, Idx, VBC, Name,
+                                                     CloseName);
   if (!AR)
     return AR;
 
@@ -994,7 +1011,8 @@ TEST_F(CommentParserTest, VerbatimBlock1) {
   }
   {
     VerbatimBlockComment *VCC;
-    ASSERT_TRUE(HasVerbatimBlockAt(FC, 1, VCC, "verbatim", NoLines()));
+    ASSERT_TRUE(HasVerbatimBlockAt(FC, 1, VCC, "verbatim", "endverbatim",
+                                   NoLines()));
   }
 }
 
@@ -1013,11 +1031,32 @@ TEST_F(CommentParserTest, VerbatimBlock2) {
   }
   {
     VerbatimBlockComment *VBC;
-    ASSERT_TRUE(HasVerbatimBlockAt(FC, 1, VBC, "verbatim", " Aaa "));
+    ASSERT_TRUE(HasVerbatimBlockAt(FC, 1, VBC, "verbatim", "endverbatim",
+                                   Lines(), " Aaa "));
   }
 }
 
 TEST_F(CommentParserTest, VerbatimBlock3) {
+  const char *Source = "// \\verbatim Aaa\n";
+
+  FullComment *FC = parseString(Source);
+  ASSERT_TRUE(HasChildCount(FC, 2));
+
+  {
+    ParagraphComment *PC;
+    ASSERT_TRUE(GetChildAt(FC, 0, PC));
+
+    ASSERT_TRUE(HasChildCount(PC, 1));
+      ASSERT_TRUE(HasTextAt(PC, 0, " "));
+  }
+  {
+    VerbatimBlockComment *VBC;
+    ASSERT_TRUE(HasVerbatimBlockAt(FC, 1, VBC, "verbatim", "",
+                                   Lines(), " Aaa"));
+  }
+}
+
+TEST_F(CommentParserTest, VerbatimBlock4) {
   const char *Source =
     "//\\verbatim\n"
     "//\\endverbatim\n";
@@ -1027,11 +1066,12 @@ TEST_F(CommentParserTest, VerbatimBlock3) {
 
   {
     VerbatimBlockComment *VBC;
-    ASSERT_TRUE(HasVerbatimBlockAt(FC, 0, VBC, "verbatim", NoLines()));
+    ASSERT_TRUE(HasVerbatimBlockAt(FC, 0, VBC, "verbatim", "endverbatim",
+                                   NoLines()));
   }
 }
 
-TEST_F(CommentParserTest, VerbatimBlock4) {
+TEST_F(CommentParserTest, VerbatimBlock5) {
   const char *Sources[] = {
     "//\\verbatim\n"
     "// Aaa\n"
@@ -1048,12 +1088,13 @@ TEST_F(CommentParserTest, VerbatimBlock4) {
 
     {
       VerbatimBlockComment *VBC;
-      ASSERT_TRUE(HasVerbatimBlockAt(FC, 0, VBC, "verbatim", " Aaa"));
+      ASSERT_TRUE(HasVerbatimBlockAt(FC, 0, VBC, "verbatim", "endverbatim",
+                                     Lines(), " Aaa"));
     }
   }
 }
 
-TEST_F(CommentParserTest, VerbatimBlock5) {
+TEST_F(CommentParserTest, VerbatimBlock6) {
   const char *Sources[] = {
     "// \\verbatim\n"
     "// Aaa\n"
@@ -1077,12 +1118,13 @@ TEST_F(CommentParserTest, VerbatimBlock5) {
     }
     {
       VerbatimBlockComment *VBC;
-      ASSERT_TRUE(HasVerbatimBlockAt(FC, 1, VBC, "verbatim", " Aaa"));
+      ASSERT_TRUE(HasVerbatimBlockAt(FC, 1, VBC, "verbatim", "endverbatim",
+                                     Lines(), " Aaa"));
     }
   }
 }
 
-TEST_F(CommentParserTest, VerbatimBlock6) {
+TEST_F(CommentParserTest, VerbatimBlock7) {
   const char *Sources[] = {
     "// \\verbatim\n"
     "// Aaa\n"
@@ -1108,12 +1150,13 @@ TEST_F(CommentParserTest, VerbatimBlock6) {
     }
     {
       VerbatimBlockComment *VBC;
-      ASSERT_TRUE(HasVerbatimBlockAt(FC, 1, VBC, "verbatim", " Aaa", " Bbb"));
+      ASSERT_TRUE(HasVerbatimBlockAt(FC, 1, VBC, "verbatim", "endverbatim",
+                                     Lines(), " Aaa", " Bbb"));
     }
   }
 }
 
-TEST_F(CommentParserTest, VerbatimBlock7) {
+TEST_F(CommentParserTest, VerbatimBlock8) {
   const char *Sources[] = {
     "// \\verbatim\n"
     "// Aaa\n"
@@ -1140,7 +1183,7 @@ TEST_F(CommentParserTest, VerbatimBlock7) {
     }
     {
       VerbatimBlockComment *VBC;
-      ASSERT_TRUE(HasVerbatimBlockAt(FC, 1, VBC, "verbatim"));
+      ASSERT_TRUE(HasVerbatimBlockAt(FC, 1, VBC, "verbatim", "endverbatim"));
       ASSERT_EQ(3U, VBC->getNumLines());
       ASSERT_EQ(" Aaa", VBC->getText(0));
       ASSERT_EQ("",     VBC->getText(1));
