@@ -52,7 +52,7 @@ thread::detach()
 }
 
 unsigned
-thread::hardware_concurrency()
+thread::hardware_concurrency() _NOEXCEPT
 {
 #if defined(CTL_HW) && defined(HW_NCPU)
     unsigned n;
