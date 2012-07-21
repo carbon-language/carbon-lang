@@ -1818,6 +1818,51 @@ IRForTarget::HandleObjCClass(Value *classlist_reference)
 }
 
 bool
+IRForTarget::RemoveCXAAtExit (BasicBlock &basic_block)
+{
+    BasicBlock::iterator ii;
+    
+    std::vector<CallInst *> calls_to_remove;
+    
+    for (ii = basic_block.begin();
+         ii != basic_block.end();
+         ++ii)
+    {
+        Instruction &inst = *ii;
+        
+        CallInst *call = dyn_cast<CallInst>(&inst);
+        
+        // MaybeHandleCallArguments handles error reporting; we are silent here
+        if (!call)
+            continue;
+        
+        bool remove = false;
+    
+        llvm::Function *func = call->getCalledFunction();
+        
+        if (func && func->getName() == "__cxa_atexit")
+            remove = true;
+        
+        llvm::Value *val = call->getCalledValue();
+        
+        if (val && val->getName() == "__cxa_atexit")
+            remove = true;
+        
+        if (remove)
+            calls_to_remove.push_back(call);
+    }
+    
+    for (std::vector<CallInst *>::iterator ci = calls_to_remove.begin(), ce = calls_to_remove.end();
+         ci != ce;
+         ++ci)
+    {
+        (*ci)->eraseFromParent();
+    }
+    
+    return true;
+}
+
+bool
 IRForTarget::ResolveCalls(BasicBlock &basic_block)
 {        
     /////////////////////////////////////////////////////////////////////////
@@ -2682,6 +2727,16 @@ IRForTarget::runOnModule (Module &llvm_module)
             
             // RewritePersistentAllocs() reports its own errors, so we don't do so here
             
+            return false;
+        }
+        
+        if (!RemoveCXAAtExit(*bbi))
+        {
+            if (log)
+                log->Printf("RemoveCXAAtExit() failed");
+            
+            // RemoveCXAAtExit() reports its own errors, so we don't do so here
+
             return false;
         }
     }
