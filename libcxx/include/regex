@@ -147,7 +147,7 @@ public:
     explicit basic_regex(const charT* p, flag_type f = regex_constants::ECMAScript);
     basic_regex(const charT* p, size_t len, flag_type f);
     basic_regex(const basic_regex&);
-    basic_regex(basic_regex&&);
+    basic_regex(basic_regex&&) noexcept;
     template <class ST, class SA>
         explicit basic_regex(const basic_string<charT, ST, SA>& p,
                              flag_type f = regex_constants::ECMAScript);
@@ -159,7 +159,7 @@ public:
     ~basic_regex();
 
     basic_regex& operator=(const basic_regex&);
-    basic_regex& operator=(basic_regex&&);
+    basic_regex& operator=(basic_regex&&) noexcept;
     basic_regex& operator=(const charT* ptr);
     basic_regex& operator=(initializer_list<charT> il);
     template <class ST, class SA>
@@ -167,7 +167,7 @@ public:
 
     // assign:
     basic_regex& assign(const basic_regex& that);
-    basic_regex& assign(basic_regex&& that);
+    basic_regex& assign(basic_regex&& that) noexcept;
     basic_regex& assign(const charT* ptr, flag_type f = regex_constants::ECMAScript);
     basic_regex& assign(const charT* p, size_t len, flag_type f);
     template <class string_traits, class A>
@@ -449,7 +449,7 @@ public:
     // construct/copy/destroy:
     explicit match_results(const Allocator& a = Allocator());
     match_results(const match_results& m);
-    match_results(match_results&& m);
+    match_results(match_results&& m) noexcept;
     match_results& operator=(const match_results& m);
     match_results& operator=(match_results&& m);
     ~match_results();
@@ -760,7 +760,7 @@ enum syntax_option_type
 };
 
 inline _LIBCPP_INLINE_VISIBILITY
-/*constexpr*/
+_LIBCPP_CONSTEXPR
 syntax_option_type
 operator~(syntax_option_type __x)
 {
@@ -768,7 +768,7 @@ operator~(syntax_option_type __x)
 }
 
 inline _LIBCPP_INLINE_VISIBILITY
-/*constexpr*/
+_LIBCPP_CONSTEXPR
 syntax_option_type
 operator&(syntax_option_type __x, syntax_option_type __y)
 {
@@ -776,7 +776,7 @@ operator&(syntax_option_type __x, syntax_option_type __y)
 }
 
 inline _LIBCPP_INLINE_VISIBILITY
-/*constexpr*/
+_LIBCPP_CONSTEXPR
 syntax_option_type
 operator|(syntax_option_type __x, syntax_option_type __y)
 {
@@ -784,7 +784,7 @@ operator|(syntax_option_type __x, syntax_option_type __y)
 }
 
 inline _LIBCPP_INLINE_VISIBILITY
-/*constexpr*/
+_LIBCPP_CONSTEXPR
 syntax_option_type
 operator^(syntax_option_type __x, syntax_option_type __y)
 {
@@ -792,7 +792,6 @@ operator^(syntax_option_type __x, syntax_option_type __y)
 }
 
 inline _LIBCPP_INLINE_VISIBILITY
-/*constexpr*/
 syntax_option_type&
 operator&=(syntax_option_type& __x, syntax_option_type __y)
 {
@@ -801,7 +800,6 @@ operator&=(syntax_option_type& __x, syntax_option_type __y)
 }
 
 inline _LIBCPP_INLINE_VISIBILITY
-/*constexpr*/
 syntax_option_type&
 operator|=(syntax_option_type& __x, syntax_option_type __y)
 {
@@ -810,7 +808,6 @@ operator|=(syntax_option_type& __x, syntax_option_type __y)
 }
 
 inline _LIBCPP_INLINE_VISIBILITY
-/*constexpr*/
 syntax_option_type&
 operator^=(syntax_option_type& __x, syntax_option_type __y)
 {
@@ -839,7 +836,7 @@ enum match_flag_type
 };
 
 inline _LIBCPP_INLINE_VISIBILITY
-/*constexpr*/
+_LIBCPP_CONSTEXPR
 match_flag_type
 operator~(match_flag_type __x)
 {
@@ -847,7 +844,7 @@ operator~(match_flag_type __x)
 }
 
 inline _LIBCPP_INLINE_VISIBILITY
-/*constexpr*/
+_LIBCPP_CONSTEXPR
 match_flag_type
 operator&(match_flag_type __x, match_flag_type __y)
 {
@@ -855,7 +852,7 @@ operator&(match_flag_type __x, match_flag_type __y)
 }
 
 inline _LIBCPP_INLINE_VISIBILITY
-/*constexpr*/
+_LIBCPP_CONSTEXPR
 match_flag_type
 operator|(match_flag_type __x, match_flag_type __y)
 {
@@ -863,7 +860,7 @@ operator|(match_flag_type __x, match_flag_type __y)
 }
 
 inline _LIBCPP_INLINE_VISIBILITY
-/*constexpr*/
+_LIBCPP_CONSTEXPR
 match_flag_type
 operator^(match_flag_type __x, match_flag_type __y)
 {
@@ -871,7 +868,6 @@ operator^(match_flag_type __x, match_flag_type __y)
 }
 
 inline _LIBCPP_INLINE_VISIBILITY
-/*constexpr*/
 match_flag_type&
 operator&=(match_flag_type& __x, match_flag_type __y)
 {
@@ -880,7 +876,6 @@ operator&=(match_flag_type& __x, match_flag_type __y)
 }
 
 inline _LIBCPP_INLINE_VISIBILITY
-/*constexpr*/
 match_flag_type&
 operator|=(match_flag_type& __x, match_flag_type __y)
 {
@@ -889,7 +884,6 @@ operator|=(match_flag_type& __x, match_flag_type __y)
 }
 
 inline _LIBCPP_INLINE_VISIBILITY
-/*constexpr*/
 match_flag_type&
 operator^=(match_flag_type& __x, match_flag_type __y)
 {
@@ -2439,16 +2433,16 @@ private:
 
 public:
     // constants:
-    static const/*expr*/ regex_constants::syntax_option_type icase = regex_constants::icase;
-    static const/*expr*/ regex_constants::syntax_option_type nosubs = regex_constants::nosubs;
-    static const/*expr*/ regex_constants::syntax_option_type optimize = regex_constants::optimize;
-    static const/*expr*/ regex_constants::syntax_option_type collate = regex_constants::collate;
-    static const/*expr*/ regex_constants::syntax_option_type ECMAScript = regex_constants::ECMAScript;
-    static const/*expr*/ regex_constants::syntax_option_type basic = regex_constants::basic;
-    static const/*expr*/ regex_constants::syntax_option_type extended = regex_constants::extended;
-    static const/*expr*/ regex_constants::syntax_option_type awk = regex_constants::awk;
-    static const/*expr*/ regex_constants::syntax_option_type grep = regex_constants::grep;
-    static const/*expr*/ regex_constants::syntax_option_type egrep = regex_constants::egrep;
+    static const regex_constants::syntax_option_type icase = regex_constants::icase;
+    static const regex_constants::syntax_option_type nosubs = regex_constants::nosubs;
+    static const regex_constants::syntax_option_type optimize = regex_constants::optimize;
+    static const regex_constants::syntax_option_type collate = regex_constants::collate;
+    static const regex_constants::syntax_option_type ECMAScript = regex_constants::ECMAScript;
+    static const regex_constants::syntax_option_type basic = regex_constants::basic;
+    static const regex_constants::syntax_option_type extended = regex_constants::extended;
+    static const regex_constants::syntax_option_type awk = regex_constants::awk;
+    static const regex_constants::syntax_option_type grep = regex_constants::grep;
+    static const regex_constants::syntax_option_type egrep = regex_constants::egrep;
 
     // construct/copy/destroy:
     _LIBCPP_INLINE_VISIBILITY
@@ -2512,6 +2506,11 @@ public:
     _LIBCPP_INLINE_VISIBILITY
     basic_regex& assign(const basic_regex& __that)
         {return *this = __that;}
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    _LIBCPP_INLINE_VISIBILITY
+    basic_regex& assign(basic_regex&& __that) _NOEXCEPT
+        {return *this = _VSTD::move(__that);}
+#endif
     _LIBCPP_INLINE_VISIBILITY
     basic_regex& assign(const value_type* __p, flag_type __f = regex_constants::ECMAScript)
         {return assign(__p, __p + __traits_.length(__p), __f);}
@@ -4740,7 +4739,7 @@ public:
     bool matched;
 
     _LIBCPP_INLINE_VISIBILITY
-    /*constexpr*/ sub_match() : matched() {}
+    _LIBCPP_CONSTEXPR sub_match() : matched() {}
 
     _LIBCPP_INLINE_VISIBILITY
     difference_type length() const
