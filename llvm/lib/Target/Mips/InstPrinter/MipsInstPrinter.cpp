@@ -126,6 +126,8 @@ static void printExpr(const MCExpr *Expr, raw_ostream &OS) {
   case MCSymbolRefExpr::VK_Mips_GOT_DISP:  OS << "%got_disp("; break;
   case MCSymbolRefExpr::VK_Mips_GOT_PAGE:  OS << "%got_page("; break;
   case MCSymbolRefExpr::VK_Mips_GOT_OFST:  OS << "%got_ofst("; break;
+  case MCSymbolRefExpr::VK_Mips_HIGHER:    OS << "%higher("; break;
+  case MCSymbolRefExpr::VK_Mips_HIGHEST:   OS << "%highest("; break;
   }
 
   OS << SRE->getSymbol();

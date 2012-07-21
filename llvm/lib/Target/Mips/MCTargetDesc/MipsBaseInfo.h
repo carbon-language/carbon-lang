@@ -79,7 +79,10 @@ namespace MipsII {
     MO_GPOFF_LO,
     MO_GOT_DISP,
     MO_GOT_PAGE,
-    MO_GOT_OFST
+    MO_GOT_OFST,
+
+    MO_HIGHER,
+    MO_HIGHEST
   };
 
   enum {
