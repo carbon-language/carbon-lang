@@ -196,7 +196,9 @@ public:
     VK_Mips_GPOFF_LO,
     VK_Mips_GOT_DISP,
     VK_Mips_GOT_PAGE,
-    VK_Mips_GOT_OFST
+    VK_Mips_GOT_OFST,
+    VK_Mips_HIGHER,
+    VK_Mips_HIGHEST
   };
 
 private:

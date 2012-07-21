@@ -222,6 +222,8 @@ StringRef MCSymbolRefExpr::getVariantKindName(VariantKind Kind) {
   case VK_Mips_GOT_DISP: return "GOT_DISP";
   case VK_Mips_GOT_PAGE: return "GOT_PAGE";
   case VK_Mips_GOT_OFST: return "GOT_OFST";
+  case VK_Mips_HIGHER:   return "HIGHER";
+  case VK_Mips_HIGHEST:  return "HIGHEST";
   }
   llvm_unreachable("Invalid variant kind");
 }
