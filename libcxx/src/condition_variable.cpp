@@ -20,13 +20,13 @@ condition_variable::~condition_variable()
 }
 
 void
-condition_variable::notify_one()
+condition_variable::notify_one() _NOEXCEPT
 {
     pthread_cond_signal(&__cv_);
 }
 
 void
-condition_variable::notify_all()
+condition_variable::notify_all() _NOEXCEPT
 {
     pthread_cond_broadcast(&__cv_);
 }

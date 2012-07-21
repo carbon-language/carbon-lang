@@ -28,8 +28,8 @@ public:
     condition_variable(const condition_variable&) = delete;
     condition_variable& operator=(const condition_variable&) = delete;
 
-    void notify_one();
-    void notify_all();
+    void notify_one() noexcept;
+    void notify_all() noexcept;
 
     void wait(unique_lock<mutex>& lock);
     template <class Predicate>
@@ -72,8 +72,8 @@ public:
     condition_variable_any(const condition_variable_any&) = delete;
     condition_variable_any& operator=(const condition_variable_any&) = delete;
 
-    void notify_one();
-    void notify_all();
+    void notify_one() noexcept;
+    void notify_all() noexcept;
 
     template <class Lock>
         void wait(Lock& lock);
@@ -124,8 +124,8 @@ class _LIBCPP_VISIBLE condition_variable_any
 public:
     condition_variable_any();
 
-    void notify_one();
-    void notify_all();
+    void notify_one() _NOEXCEPT;
+    void notify_all() _NOEXCEPT;
 
     template <class _Lock>
         void wait(_Lock& __lock);
@@ -161,7 +161,7 @@ condition_variable_any::condition_variable_any()
 
 inline _LIBCPP_INLINE_VISIBILITY
 void
-condition_variable_any::notify_one()
+condition_variable_any::notify_one() _NOEXCEPT
 {
     {lock_guard<mutex> _(*__mut_);}
     __cv_.notify_one();
@@ -169,7 +169,7 @@ condition_variable_any::notify_one()
 
 inline _LIBCPP_INLINE_VISIBILITY
 void
-condition_variable_any::notify_all()
+condition_variable_any::notify_all() _NOEXCEPT
 {
     {lock_guard<mutex> _(*__mut_);}
     __cv_.notify_all();

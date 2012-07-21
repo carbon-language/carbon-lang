@@ -316,8 +316,8 @@ private:
     condition_variable& operator=(const condition_variable&); // = delete;
 
 public:
-    void notify_one();
-    void notify_all();
+    void notify_one() _NOEXCEPT;
+    void notify_all() _NOEXCEPT;
 
     void wait(unique_lock<mutex>& __lk);
     template <class _Predicate>
