@@ -40,10 +40,10 @@ enum class future_status
 };
 
 template <> struct is_error_code_enum<future_errc> : public true_type { };
-error_code make_error_code(future_errc e);
-error_condition make_error_condition(future_errc e);
+error_code make_error_code(future_errc e) noexcept;
+error_condition make_error_condition(future_errc e) noexcept;
 
-const error_category& future_category();
+const error_category& future_category() noexcept;
 
 class future_error
     : public logic_error
@@ -51,8 +51,8 @@ class future_error
 public:
     future_error(error_code ec);  // exposition only
 
-    const error_code& code() const throw();
-    const char*       what() const throw();
+    const error_code& code() const noexcept;
+    const char*       what() const noexcept;
 };
 
 template <class R>
@@ -62,14 +62,14 @@ public:
     promise();
     template <class Allocator>
         promise(allocator_arg_t, const Allocator& a);
-    promise(promise&& rhs);
+    promise(promise&& rhs) noexcept;
     promise(const promise& rhs) = delete;
     ~promise();
 
     // assignment
-    promise& operator=(promise&& rhs);
+    promise& operator=(promise&& rhs) noexcept;
     promise& operator=(const promise& rhs) = delete;
-    void swap(promise& other);
+    void swap(promise& other) noexcept;
 
     // retrieving the result
     future<R> get_future();
@@ -92,14 +92,14 @@ public:
     promise();
     template <class Allocator>
         promise(allocator_arg_t, const Allocator& a);
-    promise(promise&& rhs);
+    promise(promise&& rhs) noexcept;
     promise(const promise& rhs) = delete;
     ~promise();
 
     // assignment
-    promise& operator=(promise&& rhs);
+    promise& operator=(promise&& rhs) noexcept;
     promise& operator=(const promise& rhs) = delete;
-    void swap(promise& other);
+    void swap(promise& other) noexcept;
 
     // retrieving the result
     future<R&> get_future();
@@ -120,14 +120,14 @@ public:
     promise();
     template <class Allocator>
         promise(allocator_arg_t, const Allocator& a);
-    promise(promise&& rhs);
+    promise(promise&& rhs) noexcept;
     promise(const promise& rhs) = delete;
     ~promise();
 
     // assignment
-    promise& operator=(promise&& rhs);
+    promise& operator=(promise&& rhs) noexcept;
     promise& operator=(const promise& rhs) = delete;
-    void swap(promise& other);
+    void swap(promise& other) noexcept;
 
     // retrieving the result
     future<void> get_future();
@@ -141,7 +141,7 @@ public:
     void set_exception_at_thread_exit(exception_ptr p);
 };
 
-template <class R> void swap(promise<R>& x, promise<R>& y);
+template <class R> void swap(promise<R>& x, promise<R>& y) noexcept;
 
 template <class R, class Alloc>
     struct uses_allocator<promise<R>, Alloc> : public true_type {};
@@ -150,19 +150,19 @@ template <class R>
 class future
 {
 public:
-    future();
-    future(future&&);
+    future() noexcept;
+    future(future&&) noexcept;
     future(const future& rhs) = delete;
     ~future();
     future& operator=(const future& rhs) = delete;
-    future& operator=(future&&);
-    shared_future<R> share() &&;
+    future& operator=(future&&) noexcept;
+    shared_future<R> share();
 
     // retrieving the value
     R get();
 
     // functions to check state
-    bool valid() const;
+    bool valid() const noexcept;
 
     void wait() const;
     template <class Rep, class Period>
@@ -177,19 +177,19 @@ template <class R>
 class future<R&>
 {
 public:
-    future();
-    future(future&&);
+    future() noexcept;
+    future(future&&) noexcept;
     future(const future& rhs) = delete;
     ~future();
     future& operator=(const future& rhs) = delete;
-    future& operator=(future&&);
-    shared_future<R&> share() &&;
+    future& operator=(future&&) noexcept;
+    shared_future<R&> share();
 
     // retrieving the value
     R& get();
 
     // functions to check state
-    bool valid() const;
+    bool valid() const noexcept;
 
     void wait() const;
     template <class Rep, class Period>
@@ -204,19 +204,19 @@ template <>
 class future<void>
 {
 public:
-    future();
-    future(future&&);
+    future() noexcept;
+    future(future&&) noexcept;
     future(const future& rhs) = delete;
     ~future();
     future& operator=(const future& rhs) = delete;
-    future& operator=(future&&);
-    shared_future<void> share() &&;
+    future& operator=(future&&) noexcept;
+    shared_future<void> share();
 
     // retrieving the value
     void get();
 
     // functions to check state
-    bool valid() const;
+    bool valid() const noexcept;
 
     void wait() const;
     template <class Rep, class Period>
@@ -231,19 +231,19 @@ template <class R>
 class shared_future
 {
 public:
-    shared_future();
+    shared_future() noexcept;
     shared_future(const shared_future& rhs);
-    shared_future(future<R>&&);
-    shared_future(shared_future&& rhs);
+    shared_future(future<R>&&) noexcept;
+    shared_future(shared_future&& rhs) noexcept;
     ~shared_future();
     shared_future& operator=(const shared_future& rhs);
-    shared_future& operator=(shared_future&& rhs);
+    shared_future& operator=(shared_future&& rhs) noexcept;
 
     // retrieving the value
     const R& get() const;
 
     // functions to check state
-    bool valid() const;
+    bool valid() const noexcept;
 
     void wait() const;
     template <class Rep, class Period>
@@ -258,19 +258,19 @@ template <class R>
 class shared_future<R&>
 {
 public:
-    shared_future();
+    shared_future() noexcept;
     shared_future(const shared_future& rhs);
-    shared_future(future<R&>&&);
-    shared_future(shared_future&& rhs);
+    shared_future(future<R&>&&) noexcept;
+    shared_future(shared_future&& rhs) noexcept;
     ~shared_future();
     shared_future& operator=(const shared_future& rhs);
-    shared_future& operator=(shared_future&& rhs);
+    shared_future& operator=(shared_future&& rhs) noexcept;
 
     // retrieving the value
     R& get() const;
 
     // functions to check state
-    bool valid() const;
+    bool valid() const noexcept;
 
     void wait() const;
     template <class Rep, class Period>
@@ -285,19 +285,19 @@ template <>
 class shared_future<void>
 {
 public:
-    shared_future();
+    shared_future() noexcept;
     shared_future(const shared_future& rhs);
-    shared_future(future<void>&&);
-    shared_future(shared_future&& rhs);
+    shared_future(future<void>&&) noexcept;
+    shared_future(shared_future&& rhs) noexcept;
     ~shared_future();
     shared_future& operator=(const shared_future& rhs);
-    shared_future& operator=(shared_future&& rhs);
+    shared_future& operator=(shared_future&& rhs) noexcept;
 
     // retrieving the value
     void get() const;
 
     // functions to check state
-    bool valid() const;
+    bool valid() const noexcept;
 
     void wait() const;
     template <class Rep, class Period>
@@ -325,7 +325,7 @@ public:
     typedef R result_type;
 
     // construction and destruction
-    packaged_task();
+    packaged_task() noexcept;
     template <class F>
         explicit packaged_task(F&& f);
     template <class F, class Allocator>
@@ -337,11 +337,11 @@ public:
     packaged_task& operator=(packaged_task&) = delete;
 
     // move support
-    packaged_task(packaged_task&& other);
-    packaged_task& operator=(packaged_task&& other);
-    void swap(packaged_task& other);
+    packaged_task(packaged_task&& other) noexcept;
+    packaged_task& operator=(packaged_task&& other) noexcept;
+    void swap(packaged_task& other) noexcept;
 
-    bool valid() const;
+    bool valid() const noexcept;
 
     // result retrieval
     future<R> get_future();
@@ -354,7 +354,7 @@ public:
 };
 
 template <class R>
-  void swap(packaged_task<R(ArgTypes...)&, packaged_task<R(ArgTypes...)>&);
+  void swap(packaged_task<R(ArgTypes...)&, packaged_task<R(ArgTypes...)>&) noexcept;
 
 template <class R, class Alloc> struct uses_allocator<packaged_task<R>, Alloc>;
 
@@ -413,18 +413,18 @@ _LIBCPP_DECLARE_STRONG_ENUM(future_status)
 _LIBCPP_DECLARE_STRONG_ENUM_EPILOG(future_status)
 
 _LIBCPP_VISIBLE
-const error_category& future_category();
+const error_category& future_category() _NOEXCEPT;
 
 inline _LIBCPP_INLINE_VISIBILITY
 error_code
-make_error_code(future_errc __e)
+make_error_code(future_errc __e) _NOEXCEPT
 {
     return error_code(static_cast<int>(__e), future_category());
 }
 
 inline _LIBCPP_INLINE_VISIBILITY
 error_condition
-make_error_condition(future_errc __e)
+make_error_condition(future_errc __e) _NOEXCEPT
 {
     return error_condition(static_cast<int>(__e), future_category());
 }
@@ -437,7 +437,7 @@ public:
     future_error(error_code __ec);
 
     _LIBCPP_INLINE_VISIBILITY
-    const error_code& code() const throw() {return __ec_;}
+    const error_code& code() const _NOEXCEPT {return __ec_;}
 
     virtual ~future_error() _NOEXCEPT;
 };
@@ -1009,15 +1009,15 @@ class _LIBCPP_VISIBLE future
 
 public:
     _LIBCPP_INLINE_VISIBILITY
-    future() : __state_(nullptr) {}
+    future() _NOEXCEPT : __state_(nullptr) {}
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     _LIBCPP_INLINE_VISIBILITY
-    future(future&& __rhs)
+    future(future&& __rhs) _NOEXCEPT
         : __state_(__rhs.__state_) {__rhs.__state_ = nullptr;}
     future(const future&) = delete;
     future& operator=(const future&) = delete;
     _LIBCPP_INLINE_VISIBILITY
-    future& operator=(future&& __rhs)
+    future& operator=(future&& __rhs) _NOEXCEPT
         {
             future(std::move(__rhs)).swap(*this);
             return *this;
@@ -1035,11 +1035,11 @@ public:
     _Rp get();
 
     _LIBCPP_INLINE_VISIBILITY
-    void swap(future& __rhs) {_VSTD::swap(__state_, __rhs.__state_);}
+    void swap(future& __rhs) _NOEXCEPT {_VSTD::swap(__state_, __rhs.__state_);}
 
     // functions to check state
     _LIBCPP_INLINE_VISIBILITY
-    bool valid() const {return __state_ != nullptr;}
+    bool valid() const _NOEXCEPT {return __state_ != nullptr;}
 
     _LIBCPP_INLINE_VISIBILITY
     void wait() const {__state_->wait();}
@@ -1113,15 +1113,15 @@ class _LIBCPP_VISIBLE future<_Rp&>
 
 public:
     _LIBCPP_INLINE_VISIBILITY
-    future() : __state_(nullptr) {}
+    future() _NOEXCEPT : __state_(nullptr) {}
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     _LIBCPP_INLINE_VISIBILITY
-    future(future&& __rhs)
+    future(future&& __rhs) _NOEXCEPT
         : __state_(__rhs.__state_) {__rhs.__state_ = nullptr;}
     future(const future&) = delete;
     future& operator=(const future&) = delete;
     _LIBCPP_INLINE_VISIBILITY
-    future& operator=(future&& __rhs)
+    future& operator=(future&& __rhs) _NOEXCEPT
         {
             future(std::move(__rhs)).swap(*this);
             return *this;
@@ -1139,11 +1139,11 @@ public:
     _Rp& get();
 
     _LIBCPP_INLINE_VISIBILITY
-    void swap(future& __rhs) {_VSTD::swap(__state_, __rhs.__state_);}
+    void swap(future& __rhs) _NOEXCEPT {_VSTD::swap(__state_, __rhs.__state_);}
 
     // functions to check state
     _LIBCPP_INLINE_VISIBILITY
-    bool valid() const {return __state_ != nullptr;}
+    bool valid() const _NOEXCEPT {return __state_ != nullptr;}
 
     _LIBCPP_INLINE_VISIBILITY
     void wait() const {__state_->wait();}
@@ -1212,15 +1212,15 @@ class _LIBCPP_VISIBLE future<void>
 
 public:
     _LIBCPP_INLINE_VISIBILITY
-    future() : __state_(nullptr) {}
+    future() _NOEXCEPT : __state_(nullptr) {}
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     _LIBCPP_INLINE_VISIBILITY
-    future(future&& __rhs)
+    future(future&& __rhs) _NOEXCEPT
         : __state_(__rhs.__state_) {__rhs.__state_ = nullptr;}
     future(const future&) = delete;
     future& operator=(const future&) = delete;
     _LIBCPP_INLINE_VISIBILITY
-    future& operator=(future&& __rhs)
+    future& operator=(future&& __rhs) _NOEXCEPT
         {
             future(std::move(__rhs)).swap(*this);
             return *this;
@@ -1238,11 +1238,11 @@ public:
     void get();
 
     _LIBCPP_INLINE_VISIBILITY
-    void swap(future& __rhs) {_VSTD::swap(__state_, __rhs.__state_);}
+    void swap(future& __rhs) _NOEXCEPT {_VSTD::swap(__state_, __rhs.__state_);}
 
     // functions to check state
     _LIBCPP_INLINE_VISIBILITY
-    bool valid() const {return __state_ != nullptr;}
+    bool valid() const _NOEXCEPT {return __state_ != nullptr;}
 
     _LIBCPP_INLINE_VISIBILITY
     void wait() const {__state_->wait();}
@@ -1261,7 +1261,7 @@ public:
 template <class _Rp>
 inline _LIBCPP_INLINE_VISIBILITY
 void
-swap(future<_Rp>& __x, future<_Rp>& __y)
+swap(future<_Rp>& __x, future<_Rp>& __y) _NOEXCEPT
 {
     __x.swap(__y);
 }
@@ -1276,7 +1276,7 @@ class _LIBCPP_VISIBLE promise
     __assoc_state<_Rp>* __state_;
 
     _LIBCPP_INLINE_VISIBILITY
-    explicit promise(nullptr_t) : __state_(nullptr) {}
+    explicit promise(nullptr_t) _NOEXCEPT : __state_(nullptr) {}
 
     template <class> friend class packaged_task;
 public:
@@ -1285,7 +1285,7 @@ public:
         promise(allocator_arg_t, const _Alloc& __a);
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     _LIBCPP_INLINE_VISIBILITY
-    promise(promise&& __rhs)
+    promise(promise&& __rhs) _NOEXCEPT
         : __state_(__rhs.__state_) {__rhs.__state_ = nullptr;}
     promise(const promise& __rhs) = delete;
 #else  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
@@ -1298,7 +1298,7 @@ public:
     // assignment
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     _LIBCPP_INLINE_VISIBILITY
-    promise& operator=(promise&& __rhs)
+    promise& operator=(promise&& __rhs) _NOEXCEPT
         {
             promise(std::move(__rhs)).swap(*this);
             return *this;
@@ -1310,7 +1310,7 @@ private:
 public:
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     _LIBCPP_INLINE_VISIBILITY
-    void swap(promise& __rhs) {_VSTD::swap(__state_, __rhs.__state_);}
+    void swap(promise& __rhs) _NOEXCEPT {_VSTD::swap(__state_, __rhs.__state_);}
 
     // retrieving the result
     future<_Rp> get_future();
@@ -1454,7 +1454,7 @@ class _LIBCPP_VISIBLE promise<_Rp&>
     __assoc_state<_Rp&>* __state_;
 
     _LIBCPP_INLINE_VISIBILITY
-    explicit promise(nullptr_t) : __state_(nullptr) {}
+    explicit promise(nullptr_t) _NOEXCEPT : __state_(nullptr) {}
 
     template <class> friend class packaged_task;
 
@@ -1464,7 +1464,7 @@ public:
         promise(allocator_arg_t, const _Allocator& __a);
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     _LIBCPP_INLINE_VISIBILITY
-    promise(promise&& __rhs)
+    promise(promise&& __rhs) _NOEXCEPT
         : __state_(__rhs.__state_) {__rhs.__state_ = nullptr;}
     promise(const promise& __rhs) = delete;
 #else  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
@@ -1477,7 +1477,7 @@ public:
     // assignment
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     _LIBCPP_INLINE_VISIBILITY
-    promise& operator=(promise&& __rhs)
+    promise& operator=(promise&& __rhs) _NOEXCEPT
         {
             promise(std::move(__rhs)).swap(*this);
             return *this;
@@ -1489,7 +1489,7 @@ private:
 public:
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     _LIBCPP_INLINE_VISIBILITY
-    void swap(promise& __rhs) {_VSTD::swap(__state_, __rhs.__state_);}
+    void swap(promise& __rhs) _NOEXCEPT {_VSTD::swap(__state_, __rhs.__state_);}
 
     // retrieving the result
     future<_Rp&> get_future();
@@ -1597,7 +1597,7 @@ class _LIBCPP_VISIBLE promise<void>
     __assoc_sub_state* __state_;
 
     _LIBCPP_INLINE_VISIBILITY
-    explicit promise(nullptr_t) : __state_(nullptr) {}
+    explicit promise(nullptr_t) _NOEXCEPT : __state_(nullptr) {}
 
     template <class> friend class packaged_task;
 
@@ -1607,7 +1607,7 @@ public:
         promise(allocator_arg_t, const _Allocator& __a);
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     _LIBCPP_INLINE_VISIBILITY
-    promise(promise&& __rhs)
+    promise(promise&& __rhs) _NOEXCEPT
         : __state_(__rhs.__state_) {__rhs.__state_ = nullptr;}
     promise(const promise& __rhs) = delete;
 #else  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
@@ -1620,7 +1620,7 @@ public:
     // assignment
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     _LIBCPP_INLINE_VISIBILITY
-    promise& operator=(promise&& __rhs)
+    promise& operator=(promise&& __rhs) _NOEXCEPT
         {
             promise(std::move(__rhs)).swap(*this);
             return *this;
@@ -1632,7 +1632,7 @@ private:
 public:
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     _LIBCPP_INLINE_VISIBILITY
-    void swap(promise& __rhs) {_VSTD::swap(__state_, __rhs.__state_);}
+    void swap(promise& __rhs) _NOEXCEPT {_VSTD::swap(__state_, __rhs.__state_);}
 
     // retrieving the result
     future<void> get_future();
@@ -1660,7 +1660,7 @@ promise<void>::promise(allocator_arg_t, const _Alloc& __a0)
 template <class _Rp>
 inline _LIBCPP_INLINE_VISIBILITY
 void
-swap(promise<_Rp>& __x, promise<_Rp>& __y)
+swap(promise<_Rp>& __x, promise<_Rp>& __y) _NOEXCEPT
 {
     __x.swap(__y);
 }
@@ -1685,7 +1685,7 @@ public:
     __packaged_task_base() {}
     _LIBCPP_INLINE_VISIBILITY
     virtual ~__packaged_task_base() {}
-    virtual void __move_to(__packaged_task_base*) = 0;
+    virtual void __move_to(__packaged_task_base*) _NOEXCEPT = 0;
     virtual void destroy() = 0;
     virtual void destroy_deallocate() = 0;
     virtual _Rp operator()(_ArgTypes&& ...) = 0;
@@ -1709,7 +1709,7 @@ public:
     _LIBCPP_INLINE_VISIBILITY
     __packaged_task_func(_Fp&& __f, const _Alloc& __a)
         : __f_(_VSTD::move(__f), __a) {}
-    virtual void __move_to(__packaged_task_base<_Rp(_ArgTypes...)>*);
+    virtual void __move_to(__packaged_task_base<_Rp(_ArgTypes...)>*) _NOEXCEPT;
     virtual void destroy();
     virtual void destroy_deallocate();
     virtual _Rp operator()(_ArgTypes&& ... __args);
@@ -1718,7 +1718,7 @@ public:
 template<class _Fp, class _Alloc, class _Rp, class ..._ArgTypes>
 void
 __packaged_task_func<_Fp, _Alloc, _Rp(_ArgTypes...)>::__move_to(
-                              __packaged_task_base<_Rp(_ArgTypes...)>* __p)
+                              __packaged_task_base<_Rp(_ArgTypes...)>* __p) _NOEXCEPT
 {
     ::new (__p) __packaged_task_func(_VSTD::move(__f_.first()), _VSTD::move(__f_.second()));
 }
@@ -1761,27 +1761,27 @@ public:
 
     // construct/copy/destroy:
     _LIBCPP_INLINE_VISIBILITY
-    __packaged_task_function() : __f_(nullptr) {}
+    __packaged_task_function() _NOEXCEPT : __f_(nullptr) {}
     template<class _Fp>
       __packaged_task_function(_Fp&& __f);
     template<class _Fp, class _Alloc>
       __packaged_task_function(allocator_arg_t, const _Alloc& __a, _Fp&& __f);
 
-    __packaged_task_function(__packaged_task_function&&);
-    __packaged_task_function& operator=(__packaged_task_function&&);
+    __packaged_task_function(__packaged_task_function&&) _NOEXCEPT;
+    __packaged_task_function& operator=(__packaged_task_function&&) _NOEXCEPT;
 
     __packaged_task_function(const __packaged_task_function&) =  delete;
     __packaged_task_function& operator=(const __packaged_task_function&) =  delete;
 
     ~__packaged_task_function();
 
-    void swap(__packaged_task_function&);
+    void swap(__packaged_task_function&) _NOEXCEPT;
 
     _Rp operator()(_ArgTypes...) const;
 };
 
 template<class _Rp, class ..._ArgTypes>
-__packaged_task_function<_Rp(_ArgTypes...)>::__packaged_task_function(__packaged_task_function&& __f)
+__packaged_task_function<_Rp(_ArgTypes...)>::__packaged_task_function(__packaged_task_function&& __f) _NOEXCEPT
 {
     if (__f.__f_ == nullptr)
         __f_ = nullptr;
@@ -1853,7 +1853,7 @@ __packaged_task_function<_Rp(_ArgTypes...)>::__packaged_task_function(
 
 template<class _Rp, class ..._ArgTypes>
 __packaged_task_function<_Rp(_ArgTypes...)>&
-__packaged_task_function<_Rp(_ArgTypes...)>::operator=(__packaged_task_function&& __f)
+__packaged_task_function<_Rp(_ArgTypes...)>::operator=(__packaged_task_function&& __f) _NOEXCEPT
 {
     if (__f_ == (__base*)&__buf_)
         __f_->destroy();
@@ -1885,7 +1885,7 @@ __packaged_task_function<_Rp(_ArgTypes...)>::~__packaged_task_function()
 
 template<class _Rp, class ..._ArgTypes>
 void
-__packaged_task_function<_Rp(_ArgTypes...)>::swap(__packaged_task_function& __f)
+__packaged_task_function<_Rp(_ArgTypes...)>::swap(__packaged_task_function& __f) _NOEXCEPT
 {
     if (__f_ == (__base*)&__buf_ && __f.__f_ == (__base*)&__f.__buf_)
     {
@@ -1941,7 +1941,7 @@ private:
 public:
     // construction and destruction
     _LIBCPP_INLINE_VISIBILITY
-    packaged_task() : __p_(nullptr) {}
+    packaged_task() _NOEXCEPT : __p_(nullptr) {}
     template <class _Fp>
         _LIBCPP_INLINE_VISIBILITY
         explicit packaged_task(_Fp&& __f) : __f_(_VSTD::forward<_Fp>(__f)) {}
@@ -1958,24 +1958,24 @@ public:
 
     // move support
     _LIBCPP_INLINE_VISIBILITY
-    packaged_task(packaged_task&& __other)
+    packaged_task(packaged_task&& __other) _NOEXCEPT
         : __f_(_VSTD::move(__other.__f_)), __p_(_VSTD::move(__other.__p_)) {}
     _LIBCPP_INLINE_VISIBILITY
-    packaged_task& operator=(packaged_task&& __other)
+    packaged_task& operator=(packaged_task&& __other) _NOEXCEPT
     {
         __f_ = _VSTD::move(__other.__f_);
         __p_ = _VSTD::move(__other.__p_);
         return *this;
     }
     _LIBCPP_INLINE_VISIBILITY
-    void swap(packaged_task& __other)
+    void swap(packaged_task& __other) _NOEXCEPT
     {
         __f_.swap(__other.__f_);
         __p_.swap(__other.__p_);
     }
 
     _LIBCPP_INLINE_VISIBILITY
-    bool valid() const {return __p_.__state_ != nullptr;}
+    bool valid() const _NOEXCEPT {return __p_.__state_ != nullptr;}
 
     // result retrieval
     _LIBCPP_INLINE_VISIBILITY
@@ -2056,7 +2056,7 @@ private:
 public:
     // construction and destruction
     _LIBCPP_INLINE_VISIBILITY
-    packaged_task() : __p_(nullptr) {}
+    packaged_task() _NOEXCEPT : __p_(nullptr) {}
     template <class _Fp>
         _LIBCPP_INLINE_VISIBILITY
         explicit packaged_task(_Fp&& __f) : __f_(_VSTD::forward<_Fp>(__f)) {}
@@ -2073,24 +2073,24 @@ public:
 
     // move support
     _LIBCPP_INLINE_VISIBILITY
-    packaged_task(packaged_task&& __other)
+    packaged_task(packaged_task&& __other) _NOEXCEPT
         : __f_(_VSTD::move(__other.__f_)), __p_(_VSTD::move(__other.__p_)) {}
     _LIBCPP_INLINE_VISIBILITY
-    packaged_task& operator=(packaged_task&& __other)
+    packaged_task& operator=(packaged_task&& __other) _NOEXCEPT
     {
         __f_ = _VSTD::move(__other.__f_);
         __p_ = _VSTD::move(__other.__p_);
         return *this;
     }
     _LIBCPP_INLINE_VISIBILITY
-    void swap(packaged_task& __other)
+    void swap(packaged_task& __other) _NOEXCEPT
     {
         __f_.swap(__other.__f_);
         __p_.swap(__other.__p_);
     }
 
     _LIBCPP_INLINE_VISIBILITY
-    bool valid() const {return __p_.__state_ != nullptr;}
+    bool valid() const _NOEXCEPT {return __p_.__state_ != nullptr;}
 
     // result retrieval
     _LIBCPP_INLINE_VISIBILITY
@@ -2163,7 +2163,7 @@ packaged_task<void(_ArgTypes...)>::reset()
 template <class _Callable>
 inline _LIBCPP_INLINE_VISIBILITY
 void
-swap(packaged_task<_Callable>& __x, packaged_task<_Callable>& __y)
+swap(packaged_task<_Callable>& __x, packaged_task<_Callable>& __y) _NOEXCEPT
 {
     __x.swap(__y);
 }
@@ -2264,23 +2264,23 @@ class _LIBCPP_VISIBLE shared_future
 
 public:
     _LIBCPP_INLINE_VISIBILITY
-    shared_future() : __state_(nullptr) {}
+    shared_future() _NOEXCEPT : __state_(nullptr) {}
     _LIBCPP_INLINE_VISIBILITY
     shared_future(const shared_future& __rhs) : __state_(__rhs.__state_)
         {if (__state_) __state_->__add_shared();}
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     _LIBCPP_INLINE_VISIBILITY
-    shared_future(future<_Rp>&& __f) : __state_(__f.__state_)
+    shared_future(future<_Rp>&& __f) _NOEXCEPT : __state_(__f.__state_)
         {__f.__state_ = nullptr;}
     _LIBCPP_INLINE_VISIBILITY
-    shared_future(shared_future&& __rhs) : __state_(__rhs.__state_)
+    shared_future(shared_future&& __rhs) _NOEXCEPT : __state_(__rhs.__state_)
         {__rhs.__state_ = nullptr;}
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     ~shared_future();
     shared_future& operator=(const shared_future& __rhs);
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     _LIBCPP_INLINE_VISIBILITY
-    shared_future& operator=(shared_future&& __rhs)
+    shared_future& operator=(shared_future&& __rhs) _NOEXCEPT
         {
             shared_future(std::move(__rhs)).swap(*this);
             return *this;
@@ -2292,11 +2292,11 @@ public:
     const _Rp& get() const {return __state_->copy();}
 
     _LIBCPP_INLINE_VISIBILITY
-    void swap(shared_future& __rhs) {_VSTD::swap(__state_, __rhs.__state_);}
+    void swap(shared_future& __rhs) _NOEXCEPT {_VSTD::swap(__state_, __rhs.__state_);}
 
     // functions to check state
     _LIBCPP_INLINE_VISIBILITY
-    bool valid() const {return __state_ != nullptr;}
+    bool valid() const _NOEXCEPT {return __state_ != nullptr;}
 
     _LIBCPP_INLINE_VISIBILITY
     void wait() const {__state_->wait();}
@@ -2338,23 +2338,23 @@ class _LIBCPP_VISIBLE shared_future<_Rp&>
 
 public:
     _LIBCPP_INLINE_VISIBILITY
-    shared_future() : __state_(nullptr) {}
+    shared_future() _NOEXCEPT : __state_(nullptr) {}
     _LIBCPP_INLINE_VISIBILITY
     shared_future(const shared_future& __rhs) : __state_(__rhs.__state_)
         {if (__state_) __state_->__add_shared();}
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     _LIBCPP_INLINE_VISIBILITY
-    shared_future(future<_Rp&>&& __f) : __state_(__f.__state_)
+    shared_future(future<_Rp&>&& __f) _NOEXCEPT : __state_(__f.__state_)
         {__f.__state_ = nullptr;}
     _LIBCPP_INLINE_VISIBILITY
-    shared_future(shared_future&& __rhs) : __state_(__rhs.__state_)
+    shared_future(shared_future&& __rhs) _NOEXCEPT : __state_(__rhs.__state_)
         {__rhs.__state_ = nullptr;}
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     ~shared_future();
     shared_future& operator=(const shared_future& __rhs);
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     _LIBCPP_INLINE_VISIBILITY
-    shared_future& operator=(shared_future&& __rhs)
+    shared_future& operator=(shared_future&& __rhs) _NOEXCEPT
         {
             shared_future(std::move(__rhs)).swap(*this);
             return *this;
@@ -2366,11 +2366,11 @@ public:
     _Rp& get() const {return __state_->copy();}
 
     _LIBCPP_INLINE_VISIBILITY
-    void swap(shared_future& __rhs) {_VSTD::swap(__state_, __rhs.__state_);}
+    void swap(shared_future& __rhs) _NOEXCEPT {_VSTD::swap(__state_, __rhs.__state_);}
 
     // functions to check state
     _LIBCPP_INLINE_VISIBILITY
-    bool valid() const {return __state_ != nullptr;}
+    bool valid() const _NOEXCEPT {return __state_ != nullptr;}
 
     _LIBCPP_INLINE_VISIBILITY
     void wait() const {__state_->wait();}
@@ -2412,23 +2412,23 @@ class _LIBCPP_VISIBLE shared_future<void>
 
 public:
     _LIBCPP_INLINE_VISIBILITY
-    shared_future() : __state_(nullptr) {}
+    shared_future() _NOEXCEPT : __state_(nullptr) {}
     _LIBCPP_INLINE_VISIBILITY
     shared_future(const shared_future& __rhs) : __state_(__rhs.__state_)
         {if (__state_) __state_->__add_shared();}
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     _LIBCPP_INLINE_VISIBILITY
-    shared_future(future<void>&& __f) : __state_(__f.__state_)
+    shared_future(future<void>&& __f) _NOEXCEPT : __state_(__f.__state_)
         {__f.__state_ = nullptr;}
     _LIBCPP_INLINE_VISIBILITY
-    shared_future(shared_future&& __rhs) : __state_(__rhs.__state_)
+    shared_future(shared_future&& __rhs) _NOEXCEPT : __state_(__rhs.__state_)
         {__rhs.__state_ = nullptr;}
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     ~shared_future();
     shared_future& operator=(const shared_future& __rhs);
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     _LIBCPP_INLINE_VISIBILITY
-    shared_future& operator=(shared_future&& __rhs)
+    shared_future& operator=(shared_future&& __rhs) _NOEXCEPT
         {
             shared_future(std::move(__rhs)).swap(*this);
             return *this;
@@ -2440,11 +2440,11 @@ public:
     void get() const {__state_->copy();}
 
     _LIBCPP_INLINE_VISIBILITY
-    void swap(shared_future& __rhs) {_VSTD::swap(__state_, __rhs.__state_);}
+    void swap(shared_future& __rhs) _NOEXCEPT {_VSTD::swap(__state_, __rhs.__state_);}
 
     // functions to check state
     _LIBCPP_INLINE_VISIBILITY
-    bool valid() const {return __state_ != nullptr;}
+    bool valid() const _NOEXCEPT {return __state_ != nullptr;}
 
     _LIBCPP_INLINE_VISIBILITY
     void wait() const {__state_->wait();}
@@ -2463,7 +2463,7 @@ public:
 template <class _Rp>
 inline _LIBCPP_INLINE_VISIBILITY
 void
-swap(shared_future<_Rp>& __x, shared_future<_Rp>& __y)
+swap(shared_future<_Rp>& __x, shared_future<_Rp>& __y) _NOEXCEPT
 {
     __x.swap(__y);
 }

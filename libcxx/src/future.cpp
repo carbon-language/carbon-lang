@@ -47,7 +47,7 @@ __future_error_category::message(int ev) const
 }
 
 const error_category&
-future_category()
+future_category() _NOEXCEPT
 {
     static __future_error_category __f;
     return __f;
