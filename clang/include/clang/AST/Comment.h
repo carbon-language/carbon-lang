@@ -72,6 +72,7 @@ protected:
     /// spelling in comment (plain <br> would not set this flag).
     unsigned IsSelfClosing : 1;
   };
+  enum { NumHTMLStartTagCommentBits = NumInlineContentCommentBits + 1 };
 
   class ParagraphCommentBitfields {
     friend class ParagraphComment;
