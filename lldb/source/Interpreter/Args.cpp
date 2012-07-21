@@ -230,7 +230,18 @@ Args::SetCommandString (const char *command)
                             break;
 
                         default:
-                            arg_pos = arg_end + 2;
+                            if (quote_char == '\0')
+                            {
+                                arg.append (arg_piece_start, arg_end - arg_piece_start);
+                                if (arg_end + 1 != '\0')
+                                {
+                                    arg.append (arg_end + 1, 1);
+                                    arg_pos = arg_end + 2;
+                                    arg_piece_start = arg_pos;
+                                }
+                            }
+                            else
+                                arg_pos = arg_end + 2;
                             break;
                     }
                     break;
