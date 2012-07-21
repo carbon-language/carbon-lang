@@ -333,8 +333,8 @@ public:
     ~packaged_task();
 
     // no copy
-    packaged_task(packaged_task&) = delete;
-    packaged_task& operator=(packaged_task&) = delete;
+    packaged_task(const packaged_task&) = delete;
+    packaged_task& operator=(const packaged_task&) = delete;
 
     // move support
     packaged_task(packaged_task&& other) noexcept;
@@ -1953,8 +1953,8 @@ public:
     // ~packaged_task() = default;
 
     // no copy
-    packaged_task(packaged_task&) = delete;
-    packaged_task& operator=(packaged_task&) = delete;
+    packaged_task(const packaged_task&) = delete;
+    packaged_task& operator=(const packaged_task&) = delete;
 
     // move support
     _LIBCPP_INLINE_VISIBILITY
@@ -2068,8 +2068,8 @@ public:
     // ~packaged_task() = default;
 
     // no copy
-    packaged_task(packaged_task&) = delete;
-    packaged_task& operator=(packaged_task&) = delete;
+    packaged_task(const packaged_task&) = delete;
+    packaged_task& operator=(const packaged_task&) = delete;
 
     // move support
     _LIBCPP_INLINE_VISIBILITY
