@@ -128,21 +128,18 @@ void MipsDAGToDAGISel::InitGlobalBaseReg(MachineFunction &MF) {
   const MipsInstrInfo *MII = TM.getInstrInfo();
   const TargetInstrInfo &TII = *MF.getTarget().getInstrInfo();
   DebugLoc DL = I != MBB.end() ? I->getDebugLoc() : DebugLoc();
-  unsigned V0, V1, V2, GlobalBaseReg = MipsFI->getGlobalBaseReg();
-  int FI = 0;
+  unsigned V0, V1, GlobalBaseReg = MipsFI->getGlobalBaseReg();
+  int FI = 0; 
 
-  FI= MipsFI->initGlobalRegFI();
+  if (!Subtarget.inMips16Mode())
+    FI= MipsFI->initGlobalRegFI();
 
   const TargetRegisterClass *RC = Subtarget.isABI_N64() ?
     (const TargetRegisterClass*)&Mips::CPU64RegsRegClass :
     (const TargetRegisterClass*)&Mips::CPURegsRegClass;
 
-  if (Subtarget.inMips16Mode())
-    RC=(const TargetRegisterClass*)&Mips::CPU16RegsRegClass;
-
   V0 = RegInfo.createVirtualRegister(RC);
   V1 = RegInfo.createVirtualRegister(RC);
-  V2 = RegInfo.createVirtualRegister(RC);
 
   if (Subtarget.isABI_N64()) {
     MF.getRegInfo().addLiveIn(Mips::T9_64);
@@ -163,21 +160,6 @@ void MipsDAGToDAGISel::InitGlobalBaseReg(MachineFunction &MF) {
     return;
   }
 
-  if (Subtarget.inMips16Mode()) {
-    BuildMI(MBB, I, DL, TII.get(Mips::LiRxImmX16), V0)
-        .addExternalSymbol("_gp_disp", MipsII::MO_ABS_HI);
-    BuildMI(MBB, I, DL, TII.get(Mips::AddiuRxPcImmX16),
-            V1)
-        .addExternalSymbol("_gp_disp", MipsII::MO_ABS_LO);
-    BuildMI(MBB, I, DL, TII.get(Mips::SllX16),
-            V2 ).addReg(V0).addImm(16);
-    BuildMI(MBB, I, DL, TII.get(Mips::AdduRxRyRz16), GlobalBaseReg)
-      .addReg(V1).addReg(V2);
-
-
-    return;
-  }
-
   if (MF.getTarget().getRelocationModel() == Reloc::Static) {
     // Set global register to __gnu_local_gp.
     //
@@ -187,6 +169,8 @@ void MipsDAGToDAGISel::InitGlobalBaseReg(MachineFunction &MF) {
       .addExternalSymbol("__gnu_local_gp", MipsII::MO_ABS_HI);
     BuildMI(MBB, I, DL, TII.get(Mips::ADDiu), GlobalBaseReg).addReg(V0)
       .addExternalSymbol("__gnu_local_gp", MipsII::MO_ABS_LO);
+    MII->storeRegToStackSlot(MBB, I, GlobalBaseReg, false, FI, RC,
+                             TargetRegInfo);
     return;
   }
 
@@ -210,10 +194,8 @@ void MipsDAGToDAGISel::InitGlobalBaseReg(MachineFunction &MF) {
 
   assert(Subtarget.isABI_O32());
 
-
-  //if (Subtarget.inMips16Mode())
-  //  return; // no need to load GP. It can be calculated anywhere
-
+  if (Subtarget.inMips16Mode())
+    return; // no need to load GP. It can be calculated anywhere
 
 
   // For O32 ABI, the following instruction sequence is emitted to initialize

@@ -2645,7 +2645,6 @@ MipsTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   SmallVector<ISD::InputArg, 32> &Ins   = CLI.Ins;
   SDValue InChain                       = CLI.Chain;
   SDValue Callee                        = CLI.Callee;
-  SDValue CalleeSave                    = CLI.Callee;
   bool &isTailCall                      = CLI.IsTailCall;
   CallingConv::ID CallConv              = CLI.CallConv;
   bool isVarArg                         = CLI.IsVarArg;
@@ -2902,7 +2901,7 @@ MipsTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Glue);
   SmallVector<SDValue, 8> Ops;
   Ops.push_back(Chain);
-  Ops.push_back(Subtarget->inMips16Mode()? CalleeSave: Callee);
+  Ops.push_back(Callee);
 
   // Add argument registers to the end of the list so that they are
   // known live into the call.
@@ -2910,8 +2909,6 @@ MipsTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
     Ops.push_back(DAG.getRegister(RegsToPass[i].first,
                                   RegsToPass[i].second.getValueType()));
 
-  if (Subtarget->inMips16Mode())
-    Ops.push_back(Callee);
   // Add a register mask operand representing the call-preserved registers.
   const TargetRegisterInfo *TRI = getTargetMachine().getRegisterInfo();
   const uint32_t *Mask = TRI->getCallPreservedMask(CallConv);
