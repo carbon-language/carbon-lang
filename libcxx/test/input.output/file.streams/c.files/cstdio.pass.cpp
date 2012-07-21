@@ -78,6 +78,9 @@
 
 #include <cstdarg>
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wformat-zero-length"
+
 int main()
 {
     std::FILE* fp = 0;

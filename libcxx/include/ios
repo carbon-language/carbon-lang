@@ -29,43 +29,43 @@ public:
     class failure;
 
     typedef T1 fmtflags;
-    static const fmtflags boolalpha;
-    static const fmtflags dec;
-    static const fmtflags fixed;
-    static const fmtflags hex;
-    static const fmtflags internal;
-    static const fmtflags left;
-    static const fmtflags oct;
-    static const fmtflags right;
-    static const fmtflags scientific;
-    static const fmtflags showbase;
-    static const fmtflags showpoint;
-    static const fmtflags showpos;
-    static const fmtflags skipws;
-    static const fmtflags unitbuf;
-    static const fmtflags uppercase;
-    static const fmtflags adjustfield;
-    static const fmtflags basefield;
-    static const fmtflags floatfield;
+    static constexpr fmtflags boolalpha;
+    static constexpr fmtflags dec;
+    static constexpr fmtflags fixed;
+    static constexpr fmtflags hex;
+    static constexpr fmtflags internal;
+    static constexpr fmtflags left;
+    static constexpr fmtflags oct;
+    static constexpr fmtflags right;
+    static constexpr fmtflags scientific;
+    static constexpr fmtflags showbase;
+    static constexpr fmtflags showpoint;
+    static constexpr fmtflags showpos;
+    static constexpr fmtflags skipws;
+    static constexpr fmtflags unitbuf;
+    static constexpr fmtflags uppercase;
+    static constexpr fmtflags adjustfield;
+    static constexpr fmtflags basefield;
+    static constexpr fmtflags floatfield;
 
     typedef T2 iostate;
-    static const iostate badbit;
-    static const iostate eofbit;
-    static const iostate failbit;
-    static const iostate goodbit;
+    static constexpr iostate badbit;
+    static constexpr iostate eofbit;
+    static constexpr iostate failbit;
+    static constexpr iostate goodbit;
 
     typedef T3 openmode;
-    static const openmode app;
-    static const openmode ate;
-    static const openmode binary;
-    static const openmode in;
-    static const openmode out;
-    static const openmode trunc;
+    static constexpr openmode app;
+    static constexpr openmode ate;
+    static constexpr openmode binary;
+    static constexpr openmode in;
+    static constexpr openmode out;
+    static constexpr openmode trunc;
 
     typedef T4 seekdir;
-    static const seekdir beg;
-    static const seekdir cur;
-    static const seekdir end;
+    static constexpr seekdir beg;
+    static constexpr seekdir cur;
+    static constexpr seekdir end;
 
     class Init;
 
@@ -160,7 +160,7 @@ protected:
     basic_ios();
     void init(basic_streambuf<charT,traits>* sb);
     void move(basic_ios& rhs);
-    void swap(basic_ios& rhs);
+    void swap(basic_ios& rhs) noexcept;
     void set_rdbuf(basic_streambuf<charT, traits>* sb);
 };
 
@@ -342,7 +342,7 @@ protected:
     void __call_callbacks(event);
     void copyfmt(const ios_base&);
     void move(ios_base&);
-    void swap(ios_base&);
+    void swap(ios_base&) _NOEXCEPT;
 
     _LIBCPP_ALWAYS_INLINE
     void set_rdbuf(void* __sb)
@@ -632,7 +632,7 @@ protected:
     void move(basic_ios&& __rhs) {move(__rhs);}
 #endif
     _LIBCPP_INLINE_VISIBILITY 
-    void swap(basic_ios& __rhs);
+    void swap(basic_ios& __rhs) _NOEXCEPT;
     _LIBCPP_INLINE_VISIBILITY 
     void set_rdbuf(basic_streambuf<char_type, traits_type>* __sb);
 private:
@@ -774,7 +774,7 @@ basic_ios<_CharT, _Traits>::move(basic_ios& __rhs)
 template <class _CharT, class _Traits>
 inline _LIBCPP_INLINE_VISIBILITY
 void
-basic_ios<_CharT, _Traits>::swap(basic_ios& __rhs)
+basic_ios<_CharT, _Traits>::swap(basic_ios& __rhs) _NOEXCEPT
 {
     ios_base::swap(__rhs);
     _VSTD::swap(__tie_, __rhs.__tie_);

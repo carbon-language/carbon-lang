@@ -401,7 +401,7 @@ ios_base::move(ios_base& rhs)
 }
 
 void
-ios_base::swap(ios_base& rhs)
+ios_base::swap(ios_base& rhs) _NOEXCEPT
 {
     _VSTD::swap(__fmtflags_, rhs.__fmtflags_);
     _VSTD::swap(__precision_, rhs.__precision_);
