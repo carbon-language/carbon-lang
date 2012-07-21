@@ -29,7 +29,7 @@ public:
     valarray(const value_type& x, size_t n);
     valarray(const value_type* px, size_t n);
     valarray(const valarray& v);
-    valarray(valarray&& v);
+    valarray(valarray&& v) noexcept;
     valarray(const slice_array<value_type>& sa);
     valarray(const gslice_array<value_type>& ga);
     valarray(const mask_array<value_type>& ma);
@@ -39,7 +39,7 @@ public:
 
     // assignment:
     valarray& operator=(const valarray& v);
-    valarray& operator=(valarray&& v);
+    valarray& operator=(valarray&& v) noexcept;
     valarray& operator=(initializer_list<value_type> il);
     valarray& operator=(const value_type& x);
     valarray& operator=(const slice_array<value_type>& sa);
@@ -91,7 +91,7 @@ public:
     valarray& operator>>=(const valarray& v);
 
     // member functions:
-    void swap(valarray& v);
+    void swap(valarray& v) noexcept;
 
     size_t size() const;
 
@@ -231,7 +231,7 @@ public:
     indirect_array() = delete;
 };
 
-template<class T> void swap(valarray<T>& x, valarray<T>& y);
+template<class T> void swap(valarray<T>& x, valarray<T>& y) noexcept;
 
 template<class T> valarray<T> operator* (const valarray<T>& x, const valarray<T>& y);
 template<class T> valarray<T> operator* (const valarray<T>& x, const T& y);
@@ -801,7 +801,7 @@ public:
     valarray(const value_type* __p, size_t __n);
     valarray(const valarray& __v);
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
-    valarray(valarray&& __v);
+    valarray(valarray&& __v) _NOEXCEPT;
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 #ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
     valarray(initializer_list<value_type> __il);
@@ -815,7 +815,7 @@ public:
     // assignment:
     valarray& operator=(const valarray& __v);
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
-    valarray& operator=(valarray&& __v);
+    valarray& operator=(valarray&& __v) _NOEXCEPT;
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 #ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
     valarray& operator=(initializer_list<value_type>);
@@ -956,7 +956,7 @@ public:
     operator>>= (const _Expr& __v);
 
     // member functions:
-    void swap(valarray& __v);
+    void swap(valarray& __v) _NOEXCEPT;
 
     _LIBCPP_INLINE_VISIBILITY
     size_t size() const {return static_cast<size_t>(__end_ - __begin_);}
@@ -2709,7 +2709,7 @@ valarray<_Tp>::valarray(const valarray& __v)
 
 template <class _Tp>
 inline _LIBCPP_INLINE_VISIBILITY
-valarray<_Tp>::valarray(valarray&& __v)
+valarray<_Tp>::valarray(valarray&& __v) _NOEXCEPT
     : __begin_(__v.__begin_),
       __end_(__v.__end_)
 {
@@ -2886,7 +2886,7 @@ valarray<_Tp>::operator=(const valarray& __v)
 template <class _Tp>
 inline _LIBCPP_INLINE_VISIBILITY
 valarray<_Tp>&
-valarray<_Tp>::operator=(valarray&& __v)
+valarray<_Tp>::operator=(valarray&& __v) _NOEXCEPT
 {
     resize(0);
     __begin_ = __v.__begin_;
@@ -3446,7 +3446,7 @@ valarray<_Tp>::operator>>=(const _Expr& __v)
 template <class _Tp>
 inline _LIBCPP_INLINE_VISIBILITY
 void
-valarray<_Tp>::swap(valarray& __v)
+valarray<_Tp>::swap(valarray& __v) _NOEXCEPT
 {
     _VSTD::swap(__begin_, __v.__begin_);
     _VSTD::swap(__end_, __v.__end_);
@@ -3613,7 +3613,7 @@ valarray<_Tp>::resize(size_t __n, value_type __x)
 template<class _Tp>
 inline _LIBCPP_INLINE_VISIBILITY
 void
-swap(valarray<_Tp>& __x, valarray<_Tp>& __y)
+swap(valarray<_Tp>& __x, valarray<_Tp>& __y) _NOEXCEPT
 {
     __x.swap(__y);
 }
