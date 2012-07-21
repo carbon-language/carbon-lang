@@ -3563,8 +3563,12 @@ CINDEX_LINKAGE CXString clang_HTMLTagComment_getAsString(CXComment Comment);
  * \li "para-returns" for \\returns paragraph and equivalent commands;
  * \li "word-returns" for the "Returns" word in \\returns paragraph.
  *
- * Argument list is rendered as \<dl\> list with arguments sorted in function
- * prototype order.
+ * Function argument documentation is rendered as a \<dl\> list with arguments
+ * sorted in function prototype order.  CSS classes used:
+ * \li "param-name-index-NUMBER" for parameter name (\<dt\>);
+ * \li "param-descr-index-NUMBER" for parameter description (\<dd\>);
+ * \li "param-name-index-invalid" and "param-descr-index-invalid" are used if
+ * parameter index is invalid.
  *
  * \param Comment a \c CXComment_FullComment AST node.
  *

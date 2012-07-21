@@ -18,6 +18,7 @@
 #include "clang/AST/CommentVisitor.h"
 
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/raw_ostream.h"
 
 using namespace clang;
 using namespace clang::cxstring;
@@ -304,7 +305,8 @@ public:
 class CommentASTToHTMLConverter :
     public ConstCommentVisitor<CommentASTToHTMLConverter> {
 public:
-  CommentASTToHTMLConverter() { }
+  /// \param Str accumulator for HTML.
+  CommentASTToHTMLConverter(SmallVectorImpl<char> &Str) : Result(Str) { }
 
   // Inline content.
   void visitTextComment(const TextComment *C);
@@ -330,13 +332,9 @@ public:
 
   void appendToResultWithHTMLEscaping(StringRef S);
 
-  StringRef getAsHTML() const {
-    return Result;
-  }
-
 private:
-  /// Accumulator for converted HTML.
-  std::string Result;
+  /// Output stream for HTML.
+  llvm::raw_svector_ostream Result;
 };
 } // end unnamed namespace
 
@@ -355,64 +353,50 @@ void CommentASTToHTMLConverter::visitInlineCommandComment(
   if (CommandName == "b") {
     if (!HasArg0)
       return;
-    Result += "<b>";
-    Result += Arg0;
-    Result += "</b>";
+    Result << "<b>" << Arg0 << "</b>";
     return;
   }
   if (CommandName == "c" || CommandName == "p") {
     if (!HasArg0)
       return;
-    Result += "<tt>";
-    Result += Arg0;
-    Result += "</tt>";
+    Result << "<tt>" << Arg0 << "</tt>";
     return;
   }
   if (CommandName == "a" || CommandName == "e" || CommandName == "em") {
     if (!HasArg0)
       return;
-    Result += "<em>";
-    Result += Arg0;
-    Result += "</em>";
+    Result << "<em>" << Arg0 << "</em>";
     return;
   }
 
   // We don't recognize this command, so just print its arguments.
-  for (unsigned i = 0, e = C->getNumArgs(); i != e; ++i) {
-    Result += C->getArgText(i);
-    Result += " ";
-  }
+  for (unsigned i = 0, e = C->getNumArgs(); i != e; ++i)
+    Result << C->getArgText(i) << " ";
 }
 
 void CommentASTToHTMLConverter::visitHTMLStartTagComment(
                                   const HTMLStartTagComment *C) {
-  Result += "<";
-  Result += C->getTagName();
+  Result << "<" << C->getTagName();
 
   if (C->getNumAttrs() != 0) {
     for (unsigned i = 0, e = C->getNumAttrs(); i != e; i++) {
-      Result += " ";
+      Result << " ";
       const HTMLStartTagComment::Attribute &Attr = C->getAttr(i);
-      Result += Attr.Name;
-      if (!Attr.Value.empty()) {
-        Result += "=\"";
-        Result += Attr.Value;
-        Result += " \"";
-      }
+      Result << Attr.Name;
+      if (!Attr.Value.empty())
+        Result << "=\"" << Attr.Value << "\"";
     }
   }
 
   if (!C->isSelfClosing())
-    Result += ">";
+    Result << ">";
   else
-    Result += "/>";
+    Result << "/>";
 }
 
 void CommentASTToHTMLConverter::visitHTMLEndTagComment(
                                   const HTMLEndTagComment *C) {
-  Result += "</";
-  Result += C->getTagName();
-  Result += ">";
+  Result << "</" << C->getTagName() << ">";
 }
 
 void CommentASTToHTMLConverter::visitParagraphComment(
@@ -420,28 +404,28 @@ void CommentASTToHTMLConverter::visitParagraphComment(
   if (C->isWhitespace())
     return;
 
-  Result += "<p>";
+  Result << "<p>";
   for (Comment::child_iterator I = C->child_begin(), E = C->child_end();
        I != E; ++I) {
     visit(*I);
   }
-  Result += "</p>";
+  Result << "</p>";
 }
 
 void CommentASTToHTMLConverter::visitBlockCommandComment(
                                   const BlockCommandComment *C) {
   StringRef CommandName = C->getCommandName();
   if (CommandName == "brief" || CommandName == "short") {
-    Result += "<p class=\"para-brief\">";
+    Result << "<p class=\"para-brief\">";
     visitNonStandaloneParagraphComment(C->getParagraph());
-    Result += "</p>";
+    Result << "</p>";
     return;
   }
   if (CommandName == "returns" || CommandName == "return") {
-    Result += "<p class=\"para-returns\">";
-    Result += "<span class=\"word-returns\">Returns</span> ";
+    Result << "<p class=\"para-returns\">"
+              "<span class=\"word-returns\">Returns</span> ";
     visitNonStandaloneParagraphComment(C->getParagraph());
-    Result += "</p>";
+    Result << "</p>";
     return;
   }
   // We don't know anything about this command.  Just render the paragraph.
@@ -450,12 +434,24 @@ void CommentASTToHTMLConverter::visitBlockCommandComment(
 
 void CommentASTToHTMLConverter::visitParamCommandComment(
                                   const ParamCommandComment *C) {
-  Result += "<dt>";
-  Result += C->getParamName();
-  Result += "</dt>";
-  Result += "<dd>";
+  if (C->isParamIndexValid()) {
+    Result << "<dt class=\"param-name-index-"
+           << C->getParamIndex()
+           << "\">";
+  } else
+    Result << "<dt class=\"param-name-index-invalid\">";
+
+  Result << C->getParamName() << "</dt>";
+
+  if (C->isParamIndexValid()) {
+    Result << "<dd class=\"param-descr-index-"
+           << C->getParamIndex()
+           << "\">";
+  } else
+    Result << "<dd class=\"param-descr-index-invalid\">";
+
   visitNonStandaloneParagraphComment(C->getParagraph());
-  Result += "</dd>";
+  Result << "</dd>";
 }
 
 void CommentASTToHTMLConverter::visitVerbatimBlockComment(
@@ -464,13 +460,13 @@ void CommentASTToHTMLConverter::visitVerbatimBlockComment(
   if (NumLines == 0)
     return;
 
-  Result += "<pre>";
+  Result << "<pre>";
   for (unsigned i = 0; i != NumLines; ++i) {
     appendToResultWithHTMLEscaping(C->getText(i));
     if (i + 1 != NumLines)
-      Result.append("\n");
+      Result << '\n';
   }
-  Result += "</pre>";
+  Result << "</pre>";
 }
 
 void CommentASTToHTMLConverter::visitVerbatimBlockLineComment(
@@ -480,9 +476,9 @@ void CommentASTToHTMLConverter::visitVerbatimBlockLineComment(
 
 void CommentASTToHTMLConverter::visitVerbatimLineComment(
                                   const VerbatimLineComment *C) {
-  Result += "<pre>";
+  Result << "<pre>";
   appendToResultWithHTMLEscaping(C->getText());
-  Result += "</pre>";
+  Result << "</pre>";
 }
 
 void CommentASTToHTMLConverter::visitFullComment(const FullComment *C) {
@@ -566,9 +562,9 @@ void CommentASTToHTMLConverter::visitFullComment(const FullComment *C) {
   if (Brief)
     visit(Brief);
   else if (FirstParagraph) {
-    Result += "<p class=\"para-brief\">";
+    Result << "<p class=\"para-brief\">";
     visitNonStandaloneParagraphComment(FirstParagraph);
-    Result += "</p>";
+    Result << "</p>";
     FirstParagraphIsBrief = true;
   }
 
@@ -580,14 +576,16 @@ void CommentASTToHTMLConverter::visitFullComment(const FullComment *C) {
   }
 
   if (Params.size() != 0) {
-    Result += "<dl>";
+    Result << "<dl>";
     for (unsigned i = 0, e = Params.size(); i != e; ++i)
       visit(Params[i]);
-    Result += "</dl>";
+    Result << "</dl>";
   }
 
   if (Returns)
     visit(Returns);
+
+  Result.flush();
 }
 
 void CommentASTToHTMLConverter::visitNonStandaloneParagraphComment(
@@ -602,30 +600,29 @@ void CommentASTToHTMLConverter::visitNonStandaloneParagraphComment(
 }
 
 void CommentASTToHTMLConverter::appendToResultWithHTMLEscaping(StringRef S) {
-  Result.reserve(Result.size() + S.size());
   for (StringRef::iterator I = S.begin(), E = S.end(); I != E; ++I) {
     const char C = *I;
     switch (C) {
       case '&':
-        Result.append("&amp;");
+        Result << "&amp;";
         break;
       case '<':
-        Result.append("&lt;");
+        Result << "&lt;";
         break;
       case '>':
-        Result.append("&gt;");
+        Result << "&gt;";
         break;
       case '"':
-        Result.append("&quot;");
+        Result << "&quot;";
         break;
       case '\'':
-        Result.append("&#39;");
+        Result << "&#39;";
         break;
       case '/':
-        Result.append("&#47;");
+        Result << "&#47;";
         break;
       default:
-        Result.push_back(C);
+        Result << C;
         break;
     }
   }
@@ -638,9 +635,10 @@ CXString clang_HTMLTagComment_getAsString(CXComment CXC) {
   if (!HTC)
     return createCXString((const char *) 0);
 
-  CommentASTToHTMLConverter Converter;
+  SmallString<128> HTML;
+  CommentASTToHTMLConverter Converter(HTML);
   Converter.visit(HTC);
-  return createCXString(Converter.getAsHTML());
+  return createCXString(HTML.str(), /* DupString = */ true);
 }
 
 CXString clang_FullComment_getAsHTML(CXComment CXC) {
@@ -648,9 +646,10 @@ CXString clang_FullComment_getAsHTML(CXComment CXC) {
   if (!FC)
     return createCXString((const char *) 0);
 
-  CommentASTToHTMLConverter Converter;
+  SmallString<1024> HTML;
+  CommentASTToHTMLConverter Converter(HTML);
   Converter.visit(FC);
-  return createCXString(Converter.getAsHTML());
+  return createCXString(HTML.str(), /* DupString = */ true);
 }
 
 } // end extern "C"
