@@ -39,9 +39,9 @@ class _LIBCPP_VISIBLE mutex
 public:
     _LIBCPP_INLINE_VISIBILITY
 #ifndef _LIBCPP_HAS_NO_CONSTEXPR
-     constexpr mutex() : __m_ PTHREAD_MUTEX_INITIALIZER {}
+     constexpr mutex() _NOEXCEPT : __m_ PTHREAD_MUTEX_INITIALIZER {}
 #else
-     mutex() {__m_ = (pthread_mutex_t)PTHREAD_MUTEX_INITIALIZER;}
+     mutex() _NOEXCEPT {__m_ = (pthread_mutex_t)PTHREAD_MUTEX_INITIALIZER;}
 #endif
      ~mutex();
 
@@ -51,8 +51,8 @@ private:
 
 public:
     void lock();
-    bool try_lock();
-    void unlock();
+    bool try_lock() _NOEXCEPT;
+    void unlock() _NOEXCEPT;
 
     typedef pthread_mutex_t* native_handle_type;
     _LIBCPP_INLINE_VISIBILITY native_handle_type native_handle() {return &__m_;}
@@ -62,17 +62,19 @@ struct _LIBCPP_VISIBLE defer_lock_t {};
 struct _LIBCPP_VISIBLE try_to_lock_t {};
 struct _LIBCPP_VISIBLE adopt_lock_t {};
 
-//constexpr
-extern const
-defer_lock_t  defer_lock;
+#if defined(_LIBCPP_HAS_NO_CONSTEXPR) || defined(_LIBCPP_BUILDING_MUTEX)
 
-//constexpr
-extern const
-try_to_lock_t try_to_lock;
+extern const defer_lock_t  defer_lock;
+extern const try_to_lock_t try_to_lock;
+extern const adopt_lock_t  adopt_lock;
 
-//constexpr
-extern const
-adopt_lock_t  adopt_lock;
+#else
+
+constexpr defer_lock_t  defer_lock  = defer_lock_t();
+constexpr try_to_lock_t try_to_lock = try_to_lock_t();
+constexpr adopt_lock_t  adopt_lock  = adopt_lock_t();
+
+#endif
 
 template <class _Mutex>
 class _LIBCPP_VISIBLE lock_guard
@@ -110,12 +112,12 @@ private:
 
 public:
     _LIBCPP_INLINE_VISIBILITY
-    unique_lock() : __m_(nullptr), __owns_(false) {}
+    unique_lock() _NOEXCEPT : __m_(nullptr), __owns_(false) {}
     _LIBCPP_INLINE_VISIBILITY
     explicit unique_lock(mutex_type& __m)
         : __m_(&__m), __owns_(true) {__m_->lock();}
     _LIBCPP_INLINE_VISIBILITY
-    unique_lock(mutex_type& __m, defer_lock_t)
+    unique_lock(mutex_type& __m, defer_lock_t) _NOEXCEPT
         : __m_(&__m), __owns_(false) {}
     _LIBCPP_INLINE_VISIBILITY
     unique_lock(mutex_type& __m, try_to_lock_t)
@@ -145,11 +147,11 @@ private:
 public:
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     _LIBCPP_INLINE_VISIBILITY
-    unique_lock(unique_lock&& __u)
+    unique_lock(unique_lock&& __u) _NOEXCEPT
         : __m_(__u.__m_), __owns_(__u.__owns_)
         {__u.__m_ = nullptr; __u.__owns_ = false;}
     _LIBCPP_INLINE_VISIBILITY
-    unique_lock& operator=(unique_lock&& __u)
+    unique_lock& operator=(unique_lock&& __u) _NOEXCEPT
         {
             if (__owns_)
                 __m_->unlock();
@@ -194,13 +196,13 @@ public:
     void unlock();
 
     _LIBCPP_INLINE_VISIBILITY
-    void swap(unique_lock& __u)
+    void swap(unique_lock& __u) _NOEXCEPT
     {
         _VSTD::swap(__m_, __u.__m_);
         _VSTD::swap(__owns_, __u.__owns_);
     }
     _LIBCPP_INLINE_VISIBILITY
-    mutex_type* release()
+    mutex_type* release() _NOEXCEPT
     {
         mutex_type* __m = __m_;
         __m_ = nullptr;
@@ -209,12 +211,12 @@ public:
     }
 
     _LIBCPP_INLINE_VISIBILITY
-    bool owns_lock() const {return __owns_;}
+    bool owns_lock() const _NOEXCEPT {return __owns_;}
     _LIBCPP_INLINE_VISIBILITY
     _LIBCPP_EXPLICIT
-        operator bool () const {return __owns_;}
+        operator bool () const _NOEXCEPT {return __owns_;}
     _LIBCPP_INLINE_VISIBILITY
-    mutex_type* mutex() const {return __m_;}
+    mutex_type* mutex() const _NOEXCEPT {return __m_;}
 };
 
 template <class _Mutex>
@@ -280,7 +282,8 @@ unique_lock<_Mutex>::unlock()
 template <class _Mutex>
 inline _LIBCPP_INLINE_VISIBILITY
 void
-swap(unique_lock<_Mutex>& __x, unique_lock<_Mutex>& __y) {__x.swap(__y);}
+swap(unique_lock<_Mutex>& __x, unique_lock<_Mutex>& __y) _NOEXCEPT
+    {__x.swap(__y);}
 
 struct _LIBCPP_VISIBLE cv_status
 {

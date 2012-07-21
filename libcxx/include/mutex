@@ -20,7 +20,7 @@ namespace std
 class mutex
 {
 public:
-     mutex();
+     constexpr mutex() noexcept;
      ~mutex();
 
     mutex(const mutex&) = delete;
@@ -44,7 +44,7 @@ public:
     recursive_mutex& operator=(const recursive_mutex&) = delete;
 
     void lock();
-    bool try_lock();
+    bool try_lock() noexcept;
     void unlock();
 
     typedef pthread_mutex_t* native_handle_type;
@@ -79,7 +79,7 @@ public:
     recursive_timed_mutex& operator=(const recursive_timed_mutex&) = delete;
 
     void lock();
-    bool try_lock();
+    bool try_lock() noexcept;
     template <class Rep, class Period>
         bool try_lock_for(const chrono::duration<Rep, Period>& rel_time);
     template <class Clock, class Duration>
@@ -114,9 +114,9 @@ class unique_lock
 {
 public:
     typedef Mutex mutex_type;
-    unique_lock();
+    unique_lock() noexcept;
     explicit unique_lock(mutex_type& m);
-    unique_lock(mutex_type& m, defer_lock_t);
+    unique_lock(mutex_type& m, defer_lock_t) noexcept;
     unique_lock(mutex_type& m, try_to_lock_t);
     unique_lock(mutex_type& m, adopt_lock_t);
     template <class Clock, class Duration>
@@ -128,8 +128,8 @@ public:
     unique_lock(unique_lock const&) = delete;
     unique_lock& operator=(unique_lock const&) = delete;
 
-    unique_lock(unique_lock&& u);
-    unique_lock& operator=(unique_lock&& u);
+    unique_lock(unique_lock&& u) noexcept;
+    unique_lock& operator=(unique_lock&& u) noexcept;
 
     void lock();
     bool try_lock();
@@ -141,16 +141,16 @@ public:
 
     void unlock();
 
-    void swap(unique_lock& u);
-    mutex_type* release();
+    void swap(unique_lock& u) noexcept;
+    mutex_type* release() noexcept;
 
-    bool owns_lock() const;
-    explicit operator bool () const;
-    mutex_type* mutex() const;
+    bool owns_lock() const noexcept;
+    explicit operator bool () const noexcept;
+    mutex_type* mutex() const noexcept;
 };
 
 template <class Mutex>
-  void swap(unique_lock<Mutex>& x, unique_lock<Mutex>& y);
+  void swap(unique_lock<Mutex>& x, unique_lock<Mutex>& y) noexcept;
 
 template <class L1, class L2, class... L3>
   int try_lock(L1&, L2&, L3&...);
@@ -159,7 +159,7 @@ template <class L1, class L2, class... L3>
 
 struct once_flag
 {
-    constexpr once_flag();
+    constexpr once_flag() noexcept;
 
     once_flag(const once_flag&) = delete;
     once_flag& operator=(const once_flag&) = delete;
@@ -201,8 +201,8 @@ private:
 
 public:
     void lock();
-    bool try_lock();
-    void unlock();
+    bool try_lock() _NOEXCEPT;
+    void unlock()  _NOEXCEPT;
 
     typedef pthread_mutex_t* native_handle_type;
     _LIBCPP_INLINE_VISIBILITY
@@ -224,14 +224,14 @@ private:
 
 public:
     void lock();
-    bool try_lock();
+    bool try_lock() _NOEXCEPT;
     template <class _Rep, class _Period>
         _LIBCPP_INLINE_VISIBILITY
         bool try_lock_for(const chrono::duration<_Rep, _Period>& __d)
             {return try_lock_until(chrono::steady_clock::now() + __d);}
     template <class _Clock, class _Duration>
         bool try_lock_until(const chrono::time_point<_Clock, _Duration>& __t);
-    void unlock();
+    void unlock() _NOEXCEPT;
 };
 
 template <class _Clock, class _Duration>
@@ -267,14 +267,14 @@ private:
 
 public:
     void lock();
-    bool try_lock();
+    bool try_lock() _NOEXCEPT;
     template <class _Rep, class _Period>
         _LIBCPP_INLINE_VISIBILITY
         bool try_lock_for(const chrono::duration<_Rep, _Period>& __d)
             {return try_lock_until(chrono::steady_clock::now() + __d);}
     template <class _Clock, class _Duration>
         bool try_lock_until(const chrono::time_point<_Clock, _Duration>& __t);
-    void unlock();
+    void unlock() _NOEXCEPT;
 };
 
 template <class _Clock, class _Duration>
@@ -442,8 +442,8 @@ template<class _Callable>
 struct _LIBCPP_VISIBLE once_flag
 {
     _LIBCPP_INLINE_VISIBILITY
-    // constexpr
-        once_flag() {}
+    _LIBCPP_CONSTEXPR
+        once_flag() _NOEXCEPT : __state_(0) {}
 
 private:
     once_flag(const once_flag&); // = delete;

@@ -11,11 +11,18 @@
 
 // struct once_flag;
 
-// constexpr once_flag();
+// constexpr once_flag() noexcept;
 
 #include <mutex>
 
 int main()
 {
+    {
     std::once_flag f;
+    }
+#ifndef _LIBCPP_HAS_NO_CONSTEXPR
+    {
+    constexpr std::once_flag f;
+    }
+#endif
 }
