@@ -1334,10 +1334,12 @@ bool Parser::TryAnnotateTypeOrScopeToken(bool EnteringContext, bool NeedType) {
                                        0, /*IsTypename*/true))
       return true;
     if (!SS.isSet()) {
-      if (Tok.is(tok::identifier) || Tok.is(tok::annot_template_id)) {
+      if (Tok.is(tok::identifier) || Tok.is(tok::annot_template_id) ||
+          Tok.is(tok::annot_decltype)) {
         // Attempt to recover by skipping the invalid 'typename'
-        if (!TryAnnotateTypeOrScopeToken(EnteringContext, NeedType) &&
-            Tok.isAnnotation()) {
+        if (Tok.is(tok::annot_decltype) ||
+            (!TryAnnotateTypeOrScopeToken(EnteringContext, NeedType) &&
+            Tok.isAnnotation())) {
           unsigned DiagID = diag::err_expected_qualified_after_typename;
           // MS compatibility: MSVC permits using known types with typename.
           // e.g. "typedef typename T* pointer_type"
