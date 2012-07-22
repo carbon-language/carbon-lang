@@ -40,6 +40,9 @@
 /* Has gcc/MSVC atomic intrinsics */
 #undef LLVM_HAS_ATOMICS
 
+/* Host triple LLVM will be executed on */
+#undef LLVM_HOSTTRIPLE
+
 /* Installation directory for include files */
 #undef LLVM_INCLUDEDIR
 

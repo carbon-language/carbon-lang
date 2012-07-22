@@ -295,6 +295,7 @@ get_host_triple(LLVM_HOST_TRIPLE)
 # By default, we target the host, but this can be overridden at CMake
 # invocation time.
 set(LLVM_DEFAULT_TARGET_TRIPLE "${LLVM_HOST_TRIPLE}")
+set(LLVM_HOSTTRIPLE "${LLVM_HOST_TRIPLE}")
 set(TARGET_TRIPLE "${LLVM_DEFAULT_TARGET_TRIPLE}")
 
 # Determine the native architecture.
