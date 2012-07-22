@@ -103,7 +103,8 @@ namespace {
     KEYOPENCL = 0x200,
     KEYC11 = 0x400,
     KEYARC = 0x800,
-    KEYALL = 0x0fff
+    KEYALL = 0x0fff,
+    KEYNOMS = 0x1000
   };
 }
 
@@ -136,6 +137,9 @@ static void AddKeyword(StringRef Keyword,
   else if (LangOpts.ObjC2 && (Flags & KEYARC)) AddResult = 2;
   else if (LangOpts.CPlusPlus && (Flags & KEYCXX0X)) AddResult = 3;
 
+  // Don't add this keyword under MicrosoftMode.
+  if (LangOpts.MicrosoftMode && (Flags & KEYNOMS))
+     return;
   // Don't add this keyword if disabled in this language.
   if (AddResult == 0) return;
 

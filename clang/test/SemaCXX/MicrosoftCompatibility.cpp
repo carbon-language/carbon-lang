@@ -1,6 +1,8 @@
 // RUN: %clang_cc1 %s -triple i686-pc-win32 -fsyntax-only -std=c++11 -Wmicrosoft -verify -fms-compatibility -fexceptions -fcxx-exceptions
 
 
+typedef unsigned short char16_t;
+typedef unsigned int char32_t;
 
 namespace ms_conversion_rules {
 

@@ -211,6 +211,8 @@ PUNCTUATOR(greatergreatergreater, ">>>")
 //   KEYCXX0X - This is a C++ keyword introduced to C++ in C++0x
 //   KEYGNU   - This is a keyword if GNU extensions are enabled
 //   KEYMS    - This is a keyword if Microsoft extensions are enabled
+//   KEYNOMS  - This is a keyword that must never be enabled under
+//              Microsoft mode
 //   KEYOPENCL  - This is a keyword in OpenCL
 //   KEYALTIVEC - This is a keyword in AltiVec
 //   KEYBORLAND - This is a keyword if Borland extensions are enabled
@@ -311,8 +313,8 @@ CXX_KEYWORD_OPERATOR(xor_eq  , caretequal)
 // C++0x keywords
 KEYWORD(alignas                     , KEYCXX0X)
 KEYWORD(alignof                     , KEYCXX0X)
-KEYWORD(char16_t                    , KEYCXX0X)
-KEYWORD(char32_t                    , KEYCXX0X)
+KEYWORD(char16_t                    , KEYCXX0X|KEYNOMS)
+KEYWORD(char32_t                    , KEYCXX0X|KEYNOMS)
 KEYWORD(constexpr                   , KEYCXX0X)
 KEYWORD(decltype                    , KEYCXX0X)
 KEYWORD(noexcept                    , KEYCXX0X)
