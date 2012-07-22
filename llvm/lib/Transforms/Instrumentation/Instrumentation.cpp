@@ -20,11 +20,12 @@ using namespace llvm;
 /// initializeInstrumentation - Initialize all passes in the TransformUtils
 /// library.
 void llvm::initializeInstrumentation(PassRegistry &Registry) {
+  initializeAddressSanitizerPass(Registry);
+  initializeBoundsCheckingPass(Registry);
   initializeEdgeProfilerPass(Registry);
+  initializeGCOVProfilerPass(Registry);
   initializeOptimalEdgeProfilerPass(Registry);
   initializePathProfilerPass(Registry);
-  initializeGCOVProfilerPass(Registry);
-  initializeAddressSanitizerPass(Registry);
   initializeThreadSanitizerPass(Registry);
 }
 
