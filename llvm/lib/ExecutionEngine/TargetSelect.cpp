@@ -26,7 +26,7 @@
 using namespace llvm;
 
 TargetMachine *EngineBuilder::selectTarget() {
-  Triple TT(M->getTargetTriple());
+  Triple TT(LLVM_HOSTTRIPLE);
   return selectTarget(TT, MArch, MCPU, MAttrs);
 }
 
