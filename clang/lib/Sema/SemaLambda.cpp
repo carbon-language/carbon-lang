@@ -54,9 +54,7 @@ CXXMethodDecl *Sema::startLambdaDefinition(CXXRecordDecl *Class,
                  SourceRange IntroducerRange,
                  TypeSourceInfo *MethodType,
                  SourceLocation EndLoc,
-                 llvm::ArrayRef<ParmVarDecl *> Params,
-                 llvm::Optional<unsigned> ManglingNumber,
-                 Decl *ContextDecl) {
+                 llvm::ArrayRef<ParmVarDecl *> Params) {
   // C++11 [expr.prim.lambda]p5:
   //   The closure type for a lambda-expression has a public inline function 
   //   call operator (13.5.4) whose parameters and return type are described by
@@ -98,64 +96,76 @@ CXXMethodDecl *Sema::startLambdaDefinition(CXXRecordDecl *Class,
          P != PEnd; ++P)
       (*P)->setOwningFunction(Method);
   }
-  
-  // If we don't already have a mangling number for this lambda expression,
-  // allocate one now.
-  if (!ManglingNumber) {
-    ContextDecl = ExprEvalContexts.back().LambdaContextDecl;
-    
-    enum ContextKind {
-      Normal,
-      DefaultArgument,
-      DataMember,
-      StaticDataMember
-    } Kind = Normal;
-    
-    // Default arguments of member function parameters that appear in a class
-    // definition, as well as the initializers of data members, receive special
-    // treatment. Identify them.
-    if (ContextDecl) {
-      if (ParmVarDecl *Param = dyn_cast<ParmVarDecl>(ContextDecl)) {
-        if (const DeclContext *LexicalDC
-            = Param->getDeclContext()->getLexicalParent())
-          if (LexicalDC->isRecord())
-            Kind = DefaultArgument;
-      } else if (VarDecl *Var = dyn_cast<VarDecl>(ContextDecl)) {
-        if (Var->getDeclContext()->isRecord())
-          Kind = StaticDataMember;
-      } else if (isa<FieldDecl>(ContextDecl)) {
-        Kind = DataMember;
-      }
-    }        
-    
-    switch (Kind) {
-      case Normal:
-        if (CurContext->isDependentContext() || isInInlineFunction(CurContext))
-          ManglingNumber = Context.getLambdaManglingNumber(Method);
-        else
-          ManglingNumber = 0;
-        
-        // There is no special context for this lambda.
-        ContextDecl = 0;        
-        break;
-        
-      case StaticDataMember:
-        if (!CurContext->isDependentContext()) {
-          ManglingNumber = 0;
-          ContextDecl = 0;
-          break;
-        }
-        // Fall through to assign a mangling number.
-        
-      case DataMember:
-      case DefaultArgument:
-        ManglingNumber = ExprEvalContexts.back().getLambdaMangleContext()
-                           .getManglingNumber(Method);
-        break;
+
+  // Allocate a mangling number for this lambda expression, if the ABI
+  // requires one.
+  Decl *ContextDecl = ExprEvalContexts.back().LambdaContextDecl;
+
+  enum ContextKind {
+    Normal,
+    DefaultArgument,
+    DataMember,
+    StaticDataMember
+  } Kind = Normal;
+
+  // Default arguments of member function parameters that appear in a class
+  // definition, as well as the initializers of data members, receive special
+  // treatment. Identify them.
+  if (ContextDecl) {
+    if (ParmVarDecl *Param = dyn_cast<ParmVarDecl>(ContextDecl)) {
+      if (const DeclContext *LexicalDC
+          = Param->getDeclContext()->getLexicalParent())
+        if (LexicalDC->isRecord())
+          Kind = DefaultArgument;
+    } else if (VarDecl *Var = dyn_cast<VarDecl>(ContextDecl)) {
+      if (Var->getDeclContext()->isRecord())
+        Kind = StaticDataMember;
+    } else if (isa<FieldDecl>(ContextDecl)) {
+      Kind = DataMember;
     }
   }
 
-  Class->setLambdaMangling(*ManglingNumber, ContextDecl);
+  // Itanium ABI [5.1.7]:
+  //   In the following contexts [...] the one-definition rule requires closure
+  //   types in different translation units to "correspond":
+  bool IsInNonspecializedTemplate =
+    !ActiveTemplateInstantiations.empty() || CurContext->isDependentContext();
+  unsigned ManglingNumber;
+  switch (Kind) {
+  case Normal:
+    //  -- the bodies of non-exported nonspecialized template functions
+    //  -- the bodies of inline functions
+    if ((IsInNonspecializedTemplate &&
+         !(ContextDecl && isa<ParmVarDecl>(ContextDecl))) ||
+        isInInlineFunction(CurContext))
+      ManglingNumber = Context.getLambdaManglingNumber(Method);
+    else
+      ManglingNumber = 0;
+
+    // There is no special context for this lambda.
+    ContextDecl = 0;
+    break;
+
+  case StaticDataMember:
+    //  -- the initializers of nonspecialized static members of template classes
+    if (!IsInNonspecializedTemplate) {
+      ManglingNumber = 0;
+      ContextDecl = 0;
+      break;
+    }
+    // Fall through to assign a mangling number.
+
+  case DataMember:
+    //  -- the in-class initializers of class members
+  case DefaultArgument:
+    //  -- default arguments appearing in class definitions
+    ManglingNumber = ExprEvalContexts.back().getLambdaMangleContext()
+                       .getManglingNumber(Method);
+    break;
+  }
+
+  Class->setLambdaMangling(ManglingNumber, ContextDecl);
+
   return Method;
 }
 

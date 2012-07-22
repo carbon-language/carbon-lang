@@ -3380,6 +3380,9 @@ ExprResult Sema::BuildCXXDefaultArgExpr(SourceLocation CallLoc,
   if (Param->hasUninstantiatedDefaultArg()) {
     Expr *UninstExpr = Param->getUninstantiatedDefaultArg();
 
+    EnterExpressionEvaluationContext EvalContext(*this, PotentiallyEvaluated,
+                                                 Param);
+
     // Instantiate the expression.
     MultiLevelTemplateArgumentList ArgList
       = getTemplateInstantiationArgs(FD, 0, /*RelativeToPrimary=*/true);

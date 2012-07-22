@@ -1,5 +1,10 @@
 // RUN: %clang_cc1 -std=c++11 -triple x86_64-apple-macosx10.7.0 -emit-llvm -o - %s | FileCheck %s
 
+// CHECK: @_ZZNK7PR12917IJiiEE1nMUlvE_clEvE1n = linkonce_odr global i32 0
+// CHECK: @_ZZN7PR12917IJicdEEC1EicdEd_N1nE = linkonce_odr global i32 0
+// CHECK: @_ZZN7PR12917IJicdEEC1EicdEd0_N1nE = linkonce_odr global i32 0
+// CHECK: @_ZZN7PR12917IJicdEEC1EicdEd1_N1nE = linkonce_odr global i32 0
+
 // CHECK: define linkonce_odr void @_Z11inline_funci
 inline void inline_func(int n) {
   // CHECK: call i32 @_ZZ11inline_funciENKUlvE_clEv
@@ -78,10 +83,10 @@ struct ST {
 
 // CHECK: define void @_Z7test_ST2STIdE
 void test_ST(ST<double> st) {
-  // CHECK: call double @_ZZN2ST1fET_S0_Ed0_NKUlvE_clEv
-  // CHECK-NEXT: call double @_ZZN2ST1fET_S0_Ed0_NKUlvE0_clEv
+  // CHECK: call double @_ZZN2STIdE1fEddEd0_NKUlvE_clEv
+  // CHECK-NEXT: call double @_ZZN2STIdE1fEddEd0_NKUlvE0_clEv
   // CHECK-NEXT: fadd double
-  // CHECK-NEXT: call double @_ZZN2ST1fET_S0_Ed_NKUlvE_clEv
+  // CHECK-NEXT: call double @_ZZN2STIdE1fEddEd_NKUlvE_clEv
   // CHECK-NEXT: call void @_ZN2STIdE1fEdd
   st.f();
 
@@ -89,11 +94,11 @@ void test_ST(ST<double> st) {
 }
 
 // Check the linkage of the lambda call operators used in test_ST.
-// CHECK: define linkonce_odr double @_ZZN2ST1fET_S0_Ed0_NKUlvE_clEv
+// CHECK: define linkonce_odr double @_ZZN2STIdE1fEddEd0_NKUlvE_clEv
 // CHECK: ret double 1
-// CHECK: define linkonce_odr double @_ZZN2ST1fET_S0_Ed0_NKUlvE0_clEv
+// CHECK: define linkonce_odr double @_ZZN2STIdE1fEddEd0_NKUlvE0_clEv
 // CHECK: ret double 2
-// CHECK: define linkonce_odr double @_ZZN2ST1fET_S0_Ed_NKUlvE_clEv
+// CHECK: define linkonce_odr double @_ZZN2STIdE1fEddEd_NKUlvE_clEv
 // CHECK: ret double 3
 
 template<typename T> 
@@ -149,6 +154,24 @@ void use_func_template() {
   // CHECK: call i32 @"_ZZ13func_templateIiEvT_ENKS_IiE3$_3clEv"
   func_template<int>();
 }
+
+
+template<typename...T> struct PR12917 {
+  PR12917(T ...t = []{ static int n = 0; return ++n; }());
+
+  static int n[3];
+};
+template<typename...T> int PR12917<T...>::n[3] = {
+  []{ static int n = 0; return ++n; }()
+};
+
+// CHECK: call i32 @_ZZN7PR12917IJicdEEC1EicdEd1_NKUlvE_clEv(
+// CHECK: call i32 @_ZZN7PR12917IJicdEEC1EicdEd0_NKUlvE_clEv(
+// CHECK: call i32 @_ZZN7PR12917IJicdEEC1EicdEd_NKUlvE_clEv(
+// CHECK: call void @_ZN7PR12917IJicdEEC1Eicd(
+PR12917<int, char, double> pr12917;
+int *pr12917_p = PR12917<int, int>::n;
+
 
 // CHECK: define linkonce_odr void @_Z1fIZZNK23TestNestedInstantiationclEvENKUlvE_clEvEUlvE_EvT_
 

@@ -341,9 +341,9 @@ Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D) {
     // We already have an initializer in the class.
   } else if (D->getInit()) {
     if (Var->isStaticDataMember() && !D->isOutOfLine())
-      SemaRef.PushExpressionEvaluationContext(Sema::ConstantEvaluated);
+      SemaRef.PushExpressionEvaluationContext(Sema::ConstantEvaluated, D);
     else
-      SemaRef.PushExpressionEvaluationContext(Sema::PotentiallyEvaluated);
+      SemaRef.PushExpressionEvaluationContext(Sema::PotentiallyEvaluated, D);
 
     // Instantiate the initializer.
     ExprResult Init = SemaRef.SubstInitializer(D->getInit(), TemplateArgs,

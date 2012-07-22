@@ -7904,15 +7904,11 @@ TreeTransform<Derived>::TransformLambdaExpr(LambdaExpr *E) {
     Invalid = true;  
 
   // Build the call operator.
-  // Note: Once a lambda mangling number and context declaration have been
-  // assigned, they never change.
-  unsigned ManglingNumber = E->getLambdaClass()->getLambdaManglingNumber();
-  Decl *ContextDecl = E->getLambdaClass()->getLambdaContextDecl();  
   CXXMethodDecl *CallOperator
     = getSema().startLambdaDefinition(Class, E->getIntroducerRange(),
-                                      MethodTy, 
+                                      MethodTy,
                                       E->getCallOperator()->getLocEnd(),
-                                      Params, ManglingNumber, ContextDecl);
+                                      Params);
   getDerived().transformAttrs(E->getCallOperator(), CallOperator);
   
   // FIXME: Instantiation-specific.
