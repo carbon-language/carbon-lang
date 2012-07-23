@@ -114,7 +114,7 @@ void MipsFrameLowering::emitPrologue(MachineFunction &MF) const {
   unsigned StackAlign = getStackAlignment();
   uint64_t StackSize = RoundUpToAlignment(MFI->getStackSize(), StackAlign);
 
-  if (MipsFI->globalBaseRegSet()) 
+  if (MipsFI->globalBaseRegSet())
     StackSize += MFI->getObjectOffset(MipsFI->getGlobalRegFI()) + StackAlign;
   else
     StackSize += RoundUpToAlignment(MipsFI->getMaxCallFrameSize(), StackAlign);
@@ -130,8 +130,13 @@ void MipsFrameLowering::emitPrologue(MachineFunction &MF) const {
   MachineLocation DstML, SrcML;
 
   // Adjust stack.
-  if (isInt<16>(-StackSize)) // addi sp, sp, (-stacksize)
-    BuildMI(MBB, MBBI, dl, TII.get(ADDiu), SP).addReg(SP).addImm(-StackSize);
+  if (isInt<16>(-StackSize)) {// addi sp, sp, (-stacksize)
+    if (STI.inMips16Mode())
+      BuildMI(MBB, MBBI, dl,
+              TII.get(Mips::SaveRaF16)).addImm(StackSize); // cleanup
+    else
+      BuildMI(MBB, MBBI, dl, TII.get(ADDiu), SP).addReg(SP).addImm(-StackSize);
+  }
   else { // Expand immediate that doesn't fit in 16-bit.
     unsigned ATReg = STI.isABI_N64() ? Mips::AT_64 : Mips::AT;
 
@@ -237,8 +242,14 @@ void MipsFrameLowering::emitEpilogue(MachineFunction &MF,
     return;
 
   // Adjust stack.
-  if (isInt<16>(StackSize)) // addi sp, sp, (-stacksize)
-    BuildMI(MBB, MBBI, dl, TII.get(ADDiu), SP).addReg(SP).addImm(StackSize);
+  if (isInt<16>(StackSize)) { // addi sp, sp, (-stacksize)
+    if (STI.inMips16Mode())
+      // assumes stacksize multiple of 8
+      BuildMI(MBB, MBBI, dl,
+              TII.get(Mips::RestoreRaF16)).addImm(StackSize);
+    else
+      BuildMI(MBB, MBBI, dl, TII.get(ADDiu), SP).addReg(SP).addImm(StackSize);
+  }
   else { // Expand immediate that doesn't fit in 16-bit.
     unsigned ATReg = STI.isABI_N64() ? Mips::AT_64 : Mips::AT;
 

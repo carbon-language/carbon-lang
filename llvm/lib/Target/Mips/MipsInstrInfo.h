@@ -27,7 +27,7 @@ namespace llvm {
 
 class MipsInstrInfo : public MipsGenInstrInfo {
   MipsTargetMachine &TM;
-  bool IsN64;
+  bool IsN64; bool InMips16Mode;
   const MipsRegisterInfo RI;
   unsigned UncondBrOpc;
 public:
@@ -65,6 +65,9 @@ public:
 private:
   void ExpandRetRA(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                    unsigned Opc) const;
+  void ExpandRetRA16(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
+                   unsigned Opc) const;
+
   void BuildCondBr(MachineBasicBlock &MBB, MachineBasicBlock *TBB, DebugLoc DL,
                    const SmallVectorImpl<MachineOperand>& Cond) const;
   void ExpandExtractElementF64(MachineBasicBlock &MBB,

@@ -529,14 +529,16 @@ class FEXT_RRI16<bits<5> _op, dag outs, dag ins, string asmstr,
                  list<dag> pattern, InstrItinClass itin>:
   MipsInst16_EXTEND<outs, ins, asmstr, pattern, itin, FrmEXT_RRI16>
 {
+  bits<5> op;
   bits<16> imm16;
   bits<3> rx;
   bits<3> ry;
 
+  let op=_op;
 
   let Inst{26-21} = imm16{10-5};
   let Inst{20-16} = imm16{15-11};
-  let Inst{15-11} = _op;
+  let Inst{15-11} = op;
   let Inst{10-8} = rx;
   let Inst{7-5} = ry;
   let Inst{4-0} = imm16{4-0};

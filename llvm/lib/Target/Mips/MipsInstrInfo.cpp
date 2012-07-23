@@ -30,6 +30,7 @@ using namespace llvm;
 MipsInstrInfo::MipsInstrInfo(MipsTargetMachine &tm)
   : MipsGenInstrInfo(Mips::ADJCALLSTACKDOWN, Mips::ADJCALLSTACKUP),
     TM(tm), IsN64(TM.getSubtarget<MipsSubtarget>().isABI_N64()),
+    InMips16Mode(TM.getSubtarget<MipsSubtarget>().inMips16Mode()),
     RI(*TM.getSubtargetImpl(), *this),
     UncondBrOpc(TM.getRelocationModel() == Reloc::PIC_ ? Mips::B : Mips::J) {}
 
@@ -107,8 +108,13 @@ copyPhysReg(MachineBasicBlock &MBB,
   unsigned Opc = 0, ZeroReg = 0;
 
   if (Mips::CPURegsRegClass.contains(DestReg)) { // Copy to CPU Reg.
-    if (Mips::CPURegsRegClass.contains(SrcReg))
-      Opc = Mips::ADDu, ZeroReg = Mips::ZERO;
+    if (Mips::CPURegsRegClass.contains(SrcReg)) {
+      if (InMips16Mode)
+        Opc=Mips::Mov32R16;
+      else {
+        Opc = Mips::ADDu, ZeroReg = Mips::ZERO;
+      }
+    }
     else if (Mips::CCRRegClass.contains(SrcReg))
       Opc = Mips::CFC1;
     else if (Mips::FGR32RegClass.contains(SrcReg))
@@ -240,6 +246,12 @@ void MipsInstrInfo::ExpandRetRA(MachineBasicBlock &MBB,
     .addReg(Mips::RA);
 }
 
+void MipsInstrInfo::ExpandRetRA16(MachineBasicBlock &MBB,
+                                MachineBasicBlock::iterator I,
+                                unsigned Opc) const {
+  BuildMI(MBB, I, I->getDebugLoc(), TM.getInstrInfo()->get(Opc));
+}
+
 void MipsInstrInfo::ExpandExtractElementF64(MachineBasicBlock &MBB,
                                           MachineBasicBlock::iterator I) const {
   const TargetInstrInfo *TII = TM.getInstrInfo();
@@ -283,7 +295,7 @@ bool MipsInstrInfo::expandPostRAPseudo(MachineBasicBlock::iterator MI) const {
     ExpandRetRA(MBB, MI, Mips::RET);
     break;
   case Mips::RetRA16:
-    ExpandRetRA(MBB, MI, Mips::RET16);
+    ExpandRetRA16(MBB, MI, Mips::JrRa16);
     break;
   case Mips::BuildPairF64:
     ExpandBuildPairF64(MBB, MI);
