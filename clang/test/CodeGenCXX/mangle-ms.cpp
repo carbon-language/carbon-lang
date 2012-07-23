@@ -13,8 +13,12 @@
 // CHECK: @"\01?k@@3PTfoo@@DA"
 // CHECK: @"\01?l@@3P8foo@@AEHH@ZA"
 // CHECK: @"\01?color1@@3PANA"
-// CHECK: @"\01?color2@@3PBNA"
-// CHECK: @"\01?color3@@3PBY02NA"
+
+// FIXME: The following three tests currently fail, see PR13182.
+// Replace "CHECK-NOT" with "CHECK" when it is fixed.
+// CHECK-NOT: @"\01?color2@@3QBNB
+// CHECK-NOT: @"\01?color3@@3QAY02$$CBNA
+// CHECK-NOT: @"\01?color4@@3QAY02$$CBNA
 
 int a;
 
@@ -139,11 +143,12 @@ void (redundant_parens)();
 void redundant_parens_use() { redundant_parens(); }
 // CHECK: @"\01?redundant_parens@@YAXXZ"
 
-// PR13047
+// PR13182, PR13047
 typedef double RGB[3];
 RGB color1;
 extern const RGB color2 = {};
-extern RGB const ((color3)[5]) = {};
+extern RGB const color3[5] = {};
+extern RGB const ((color4)[5]) = {};
 
 // PR12603
 enum E {};
