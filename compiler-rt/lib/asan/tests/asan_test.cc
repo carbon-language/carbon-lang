@@ -34,12 +34,6 @@
 #include <CoreFoundation/CFString.h>
 #endif  // __APPLE__
 
-#ifdef __APPLE__
-static bool APPLE = true;
-#else
-static bool APPLE = false;
-#endif
-
 #if ASAN_HAS_EXCEPTIONS
 # define ASAN_THROW(x) throw (x)
 #else
