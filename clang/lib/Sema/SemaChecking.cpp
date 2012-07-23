@@ -4259,7 +4259,7 @@ static bool AnalyzeBitFieldAssignment(Sema &S, FieldDecl *Bitfield, Expr *Init,
 
   // Check whether the stored value is equal to the original value.
   TruncatedValue = TruncatedValue.extend(OriginalWidth);
-  if (Value == TruncatedValue)
+  if (llvm::APSInt::isSameValue(Value, TruncatedValue))
     return false;
 
   // Special-case bitfields of width 1: booleans are naturally 0/1, and

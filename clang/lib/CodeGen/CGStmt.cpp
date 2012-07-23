@@ -1104,7 +1104,7 @@ static CSFC_Result CollectStatementsForCase(const Stmt *S,
 /// for a switch on constant.  See the comment above CollectStatementsForCase
 /// for more details.
 static bool FindCaseStatementsForValue(const SwitchStmt &S,
-                                       const llvm::APInt &ConstantCondValue,
+                                       const llvm::APSInt &ConstantCondValue,
                                 SmallVectorImpl<const Stmt*> &ResultStmts,
                                        ASTContext &C) {
   // First step, find the switch case that is being branched to.  We can do this
@@ -1168,7 +1168,7 @@ void CodeGenFunction::EmitSwitchStmt(const SwitchStmt &S) {
 
   // See if we can constant fold the condition of the switch and therefore only
   // emit the live case statement (if any) of the switch.
-  llvm::APInt ConstantCondValue;
+  llvm::APSInt ConstantCondValue;
   if (ConstantFoldsToSimpleInteger(S.getCond(), ConstantCondValue)) {
     SmallVector<const Stmt*, 4> CaseStmts;
     if (FindCaseStatementsForValue(S, ConstantCondValue, CaseStmts,

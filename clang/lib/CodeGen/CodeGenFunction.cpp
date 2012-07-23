@@ -606,7 +606,7 @@ bool CodeGenFunction::containsBreak(const Stmt *S) {
 /// constant folds return true and set the boolean result in Result.
 bool CodeGenFunction::ConstantFoldsToSimpleInteger(const Expr *Cond,
                                                    bool &ResultBool) {
-  llvm::APInt ResultInt;
+  llvm::APSInt ResultInt;
   if (!ConstantFoldsToSimpleInteger(Cond, ResultInt))
     return false;
   
@@ -618,7 +618,7 @@ bool CodeGenFunction::ConstantFoldsToSimpleInteger(const Expr *Cond,
 /// to a constant, or if it does but contains a label, return false.  If it
 /// constant folds return true and set the folded value.
 bool CodeGenFunction::
-ConstantFoldsToSimpleInteger(const Expr *Cond, llvm::APInt &ResultInt) {
+ConstantFoldsToSimpleInteger(const Expr *Cond, llvm::APSInt &ResultInt) {
   // FIXME: Rename and handle conversion of other evaluatable things
   // to bool.
   llvm::APSInt Int;
