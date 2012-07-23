@@ -434,11 +434,11 @@ class X86_32ABIInfo : public ABIInfo {
   /// \brief Return the alignment to use for the given type on the stack.
   unsigned getTypeStackAlignInBytes(QualType Ty, unsigned Align) const;
 
-public:
-
-  ABIArgInfo classifyReturnType(QualType RetTy, 
+  ABIArgInfo classifyReturnType(QualType RetTy,
                                 unsigned callingConvention) const;
   ABIArgInfo classifyArgumentType(QualType RetTy) const;
+
+public:
 
   virtual void computeInfo(CGFunctionInfo &FI) const {
     FI.getReturnInfo() = classifyReturnType(FI.getReturnType(), 
