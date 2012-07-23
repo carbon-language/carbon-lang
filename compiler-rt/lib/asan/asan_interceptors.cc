@@ -115,7 +115,7 @@ namespace __asan {
 // Instruments read/write access to a single byte in memory.
 // On error calls __asan_report_error, which aborts the program.
 #define ACCESS_ADDRESS(address, isWrite)   do {         \
-  if (AddressIsPoisoned(address)) {                     \
+  if (!AddrIsInMem(address) || AddressIsPoisoned(address)) {                \
     GET_CURRENT_PC_BP_SP;                               \
     __asan_report_error(pc, bp, sp, address, isWrite, /* access_size */ 1); \
   } \
