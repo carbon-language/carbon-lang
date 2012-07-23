@@ -16,9 +16,9 @@
 
 // FIXME: The following three tests currently fail, see PR13182.
 // Replace "CHECK-NOT" with "CHECK" when it is fixed.
-// CHECK-NOT: @"\01?color2@@3QBNB
-// CHECK-NOT: @"\01?color3@@3QAY02$$CBNA
-// CHECK-NOT: @"\01?color4@@3QAY02$$CBNA
+// CHECK-NOT: @"\01?color2@@3QBNB"
+// CHECK-NOT: @"\01?color3@@3QAY02$$CBNA"
+// CHECK-NOT: @"\01?color4@@3QAY02$$CBNA"
 
 int a;
 
