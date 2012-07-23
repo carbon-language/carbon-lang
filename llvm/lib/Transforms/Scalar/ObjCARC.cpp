@@ -2829,7 +2829,10 @@ ObjCARCOpt::VisitInstructionTopDown(Instruction *Inst,
     }
 
     S.IncrementNestCount();
-    return NestingDetected;
+
+    // A retain can be a potential use; procede to the generic checking
+    // code below.
+    break;
   }
   case IC_Release: {
     Arg = GetObjCArg(Inst);

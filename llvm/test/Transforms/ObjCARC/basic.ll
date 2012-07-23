@@ -1871,6 +1871,30 @@ return:                                           ; preds = %if.then, %entry
   ret i8* %retval
 }
 
+; An objc_retain can serve as a may-use for a different pointer.
+; rdar://11931823
+
+; CHECK: define void @test66(
+; CHECK:   %tmp7 = tail call i8* @objc_retain(i8* %cond) nounwind
+; CHECK:   tail call void @objc_release(i8* %cond) nounwind
+; CHECK: }
+define void @test66(i8* %tmp5, i8* %bar, i1 %tobool, i1 %tobool1, i8* %call) {
+entry:
+  br i1 %tobool, label %cond.true, label %cond.end
+
+cond.true:
+  br label %cond.end
+
+cond.end:                                         ; preds = %cond.true, %entry
+  %cond = phi i8* [ %tmp5, %cond.true ], [ %call, %entry ]
+  %tmp7 = tail call i8* @objc_retain(i8* %cond) nounwind
+  tail call void @objc_release(i8* %call) nounwind
+  %tmp8 = select i1 %tobool1, i8* %cond, i8* %bar
+  %tmp9 = tail call i8* @objc_retain(i8* %tmp8) nounwind
+  tail call void @objc_release(i8* %cond) nounwind
+  ret void
+}
+
 declare void @bar(i32 ()*)
 
 ; A few real-world testcases.
