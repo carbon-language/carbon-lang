@@ -430,80 +430,119 @@ enum ThreadAttributeDeclKind {
   ThreadExpectedClassOrStruct
 };
 
-static void handleGuardedVarAttr(Sema &S, Decl *D, const AttributeList &Attr,
-                                 bool pointer = false) {
+static bool checkGuardedVarAttrCommon(Sema &S, Decl *D, 
+                                      const AttributeList &Attr) {
   assert(!Attr.isInvalid());
 
   if (!checkAttributeNumArgs(S, Attr, 0))
-    return;
+    return false;
 
   // D must be either a member field or global (potentially shared) variable.
   if (!mayBeSharedVariable(D)) {
     S.Diag(Attr.getLoc(), diag::warn_thread_attribute_wrong_decl_type)
       << Attr.getName() << ThreadExpectedFieldOrGlobalVar;
-    return;
+    return false;
   }
 
-  if (pointer && !threadSafetyCheckIsPointer(S, D, Attr))
-    return;
-
-  if (pointer)
-    D->addAttr(::new (S.Context) PtGuardedVarAttr(Attr.getRange(), S.Context));
-  else
-    D->addAttr(::new (S.Context) GuardedVarAttr(Attr.getRange(), S.Context));
+  return true;
 }
 
-static void handleGuardedByAttr(Sema &S, Decl *D, const AttributeList &Attr,
-                                bool pointer = false) {
+static void handleGuardedVarAttr(Sema &S, Decl *D, const AttributeList &Attr) {
+  if (!checkGuardedVarAttrCommon(S, D, Attr))
+    return;
+  
+  D->addAttr(::new (S.Context) GuardedVarAttr(Attr.getRange(), S.Context));
+}
+
+static void handlePtGuardedVarAttr(Sema &S, Decl *D, 
+                           const AttributeList &Attr) {
+  if (!checkGuardedVarAttrCommon(S, D, Attr))
+    return;
+
+  if (!threadSafetyCheckIsPointer(S, D, Attr))
+    return;
+
+  D->addAttr(::new (S.Context) PtGuardedVarAttr(Attr.getRange(), S.Context));
+}
+
+static bool checkGuardedByAttrCommon(Sema &S, Decl *D, 
+                                     const AttributeList &Attr, 
+                                     Expr* &Arg) {
   assert(!Attr.isInvalid());
 
   if (!checkAttributeNumArgs(S, Attr, 1))
-    return;
+    return false;
 
   // D must be either a member field or global (potentially shared) variable.
   if (!mayBeSharedVariable(D)) {
     S.Diag(Attr.getLoc(), diag::warn_thread_attribute_wrong_decl_type)
       << Attr.getName() << ThreadExpectedFieldOrGlobalVar;
-    return;
+    return false;
   }
-
-  if (pointer && !threadSafetyCheckIsPointer(S, D, Attr))
-    return;
 
   SmallVector<Expr*, 1> Args;
   // check that all arguments are lockable objects
   checkAttrArgsAreLockableObjs(S, D, Attr, Args);
   unsigned Size = Args.size();
   if (Size != 1)
-    return;
-  Expr *Arg = Args[0];
+    return false;
+    
+  Arg = Args[0];
 
-  if (pointer)
-    D->addAttr(::new (S.Context) PtGuardedByAttr(Attr.getRange(),
-                                                 S.Context, Arg));
-  else
-    D->addAttr(::new (S.Context) GuardedByAttr(Attr.getRange(), S.Context, Arg));
+  return true;
 }
 
+static void handleGuardedByAttr(Sema &S, Decl *D, const AttributeList &Attr) {
+  Expr *Arg = 0;
+  if (!checkGuardedByAttrCommon(S, D, Attr, Arg))
+    return;
 
-static void handleLockableAttr(Sema &S, Decl *D, const AttributeList &Attr,
-                               bool scoped = false) {
+  D->addAttr(::new (S.Context) GuardedByAttr(Attr.getRange(), S.Context, Arg));
+}
+
+static void handlePtGuardedByAttr(Sema &S, Decl *D, 
+                                  const AttributeList &Attr) {
+  Expr *Arg = 0;
+  if (!checkGuardedByAttrCommon(S, D, Attr, Arg))
+    return;
+
+  if (!threadSafetyCheckIsPointer(S, D, Attr))
+    return;
+
+  D->addAttr(::new (S.Context) PtGuardedByAttr(Attr.getRange(),
+                                               S.Context, Arg));
+}
+
+static bool checkLockableAttrCommon(Sema &S, Decl *D, 
+                                    const AttributeList &Attr) {
   assert(!Attr.isInvalid());
 
   if (!checkAttributeNumArgs(S, Attr, 0))
-    return;
+    return false;
 
   // FIXME: Lockable structs for C code.
   if (!isa<CXXRecordDecl>(D)) {
     S.Diag(Attr.getLoc(), diag::warn_thread_attribute_wrong_decl_type)
       << Attr.getName() << ThreadExpectedClassOrStruct;
-    return;
+    return false;
   }
 
-  if (scoped)
-    D->addAttr(::new (S.Context) ScopedLockableAttr(Attr.getRange(), S.Context));
-  else
-    D->addAttr(::new (S.Context) LockableAttr(Attr.getRange(), S.Context));
+  return true;
+}
+
+static void handleLockableAttr(Sema &S, Decl *D, const AttributeList &Attr) {
+  if (!checkLockableAttrCommon(S, D, Attr))
+    return;
+
+  D->addAttr(::new (S.Context) LockableAttr(Attr.getRange(), S.Context));
+}
+
+static void handleScopedLockableAttr(Sema &S, Decl *D, 
+                             const AttributeList &Attr) {
+  if (!checkLockableAttrCommon(S, D, Attr))
+    return;
+
+  D->addAttr(::new (S.Context) ScopedLockableAttr(Attr.getRange(), S.Context));
 }
 
 static void handleNoThreadSafetyAttr(Sema &S, Decl *D,
@@ -540,19 +579,20 @@ static void handleNoAddressSafetyAttr(Sema &S, Decl *D,
                                                           S.Context));
 }
 
-static void handleAcquireOrderAttr(Sema &S, Decl *D, const AttributeList &Attr,
-                                   bool before) {
+static bool checkAcquireOrderAttrCommon(Sema &S, Decl *D, 
+                                        const AttributeList &Attr, 
+                                        SmallVector<Expr*, 1> &Args) {
   assert(!Attr.isInvalid());
 
   if (!checkAttributeAtLeastNumArgs(S, Attr, 1))
-    return;
+    return false;
 
   // D must be either a member field or global (potentially shared) variable.
   ValueDecl *VD = dyn_cast<ValueDecl>(D);
   if (!VD || !mayBeSharedVariable(D)) {
     S.Diag(Attr.getLoc(), diag::warn_thread_attribute_wrong_decl_type)
       << Attr.getName() << ThreadExpectedFieldOrGlobalVar;
-    return;
+    return false;
   }
 
   // Check that this attribute only applies to lockable types.
@@ -561,29 +601,44 @@ static void handleAcquireOrderAttr(Sema &S, Decl *D, const AttributeList &Attr,
     const RecordType *RT = getRecordType(QT);
     if (!RT || !RT->getDecl()->getAttr<LockableAttr>()) {
       S.Diag(Attr.getLoc(), diag::warn_thread_attribute_decl_not_lockable)
-              << Attr.getName();
-      return;
+        << Attr.getName();
+      return false;
     }
   }
 
-  SmallVector<Expr*, 1> Args;
   // Check that all arguments are lockable objects.
   checkAttrArgsAreLockableObjs(S, D, Attr, Args);
-  unsigned Size = Args.size();
-  if (Size == 0)
-    return;
-  Expr **StartArg = &Args[0];
-
-  if (before)
-    D->addAttr(::new (S.Context) AcquiredBeforeAttr(Attr.getRange(), S.Context,
-                                                    StartArg, Size));
-  else
-    D->addAttr(::new (S.Context) AcquiredAfterAttr(Attr.getRange(), S.Context,
-                                                   StartArg, Size));
+  if (Args.size() == 0)
+    return false;
+    
+  return true;
 }
 
-static void handleLockFunAttr(Sema &S, Decl *D, const AttributeList &Attr,
-                              bool exclusive = false) {
+static void handleAcquiredAfterAttr(Sema &S, Decl *D, 
+                                    const AttributeList &Attr) {
+  SmallVector<Expr*, 1> Args;
+  if (!checkAcquireOrderAttrCommon(S, D, Attr, Args))
+    return;
+
+  Expr **StartArg = &Args[0];
+  D->addAttr(::new (S.Context) AcquiredAfterAttr(Attr.getRange(), S.Context,
+	                                         StartArg, Args.size()));
+}
+
+static void handleAcquiredBeforeAttr(Sema &S, Decl *D, 
+                                     const AttributeList &Attr) {
+  SmallVector<Expr*, 1> Args;
+  if (!checkAcquireOrderAttrCommon(S, D, Attr, Args))
+    return;
+
+  Expr **StartArg = &Args[0];
+  D->addAttr(::new (S.Context) AcquiredBeforeAttr(Attr.getRange(), S.Context,
+			                          StartArg, Args.size()));
+}
+
+static bool checkLockFunAttrCommon(Sema &S, Decl *D, 
+                                   const AttributeList &Attr, 
+                                   SmallVector<Expr*, 1> &Args) {
   assert(!Attr.isInvalid());
 
   // zero or more arguments ok
@@ -592,91 +647,141 @@ static void handleLockFunAttr(Sema &S, Decl *D, const AttributeList &Attr,
   if (!isa<FunctionDecl>(D) && !isa<FunctionTemplateDecl>(D)) {
     S.Diag(Attr.getLoc(), diag::warn_thread_attribute_wrong_decl_type)
       << Attr.getName() << ThreadExpectedFunctionOrMethod;
-    return;
+    return false;
   }
 
   // check that all arguments are lockable objects
-  SmallVector<Expr*, 1> Args;
   checkAttrArgsAreLockableObjs(S, D, Attr, Args, 0, /*ParamIdxOk=*/true);
-  unsigned Size = Args.size();
-  Expr **StartArg = Size == 0 ? 0 : &Args[0];
 
-  if (exclusive)
-    D->addAttr(::new (S.Context) ExclusiveLockFunctionAttr(Attr.getRange(),
-                                                           S.Context, StartArg,
-                                                           Size));
-  else
-    D->addAttr(::new (S.Context) SharedLockFunctionAttr(Attr.getRange(),
-                                                        S.Context, StartArg,
-                                                        Size));
+  return true;
 }
 
-static void handleTrylockFunAttr(Sema &S, Decl *D, const AttributeList &Attr,
-                                 bool exclusive = false) {
+static void handleSharedLockFunctionAttr(Sema &S, Decl *D, 
+                                         const AttributeList &Attr) {
+  SmallVector<Expr*, 1> Args;
+  if (!checkLockFunAttrCommon(S, D, Attr, Args))
+    return;
+
+  unsigned Size = Args.size();
+  Expr **StartArg = Size == 0 ? 0 : &Args[0];
+  D->addAttr(::new (S.Context) SharedLockFunctionAttr(Attr.getRange(),
+                                                      S.Context, 
+                                                      StartArg, Size));
+}
+
+static void handleExclusiveLockFunctionAttr(Sema &S, Decl *D, 
+                                            const AttributeList &Attr) {
+  SmallVector<Expr*, 1> Args;
+  if (!checkLockFunAttrCommon(S, D, Attr, Args))
+    return;
+
+  unsigned Size = Args.size();
+  Expr **StartArg = Size == 0 ? 0 : &Args[0];
+  D->addAttr(::new (S.Context) ExclusiveLockFunctionAttr(Attr.getRange(),
+                                                         S.Context, 
+                                                         StartArg, Size));
+}
+
+static bool checkTryLockFunAttrCommon(Sema &S, Decl *D, 
+                                      const AttributeList &Attr, 
+                                      SmallVector<Expr*, 2> &Args) {
   assert(!Attr.isInvalid());
 
   if (!checkAttributeAtLeastNumArgs(S, Attr, 1))
-    return;
+    return false;
 
   if (!isa<FunctionDecl>(D) && !isa<FunctionTemplateDecl>(D)) {
     S.Diag(Attr.getLoc(), diag::warn_thread_attribute_wrong_decl_type)
       << Attr.getName() << ThreadExpectedFunctionOrMethod;
-    return;
+    return false;
   }
 
   if (!isIntOrBool(Attr.getArg(0))) {
     S.Diag(Attr.getLoc(), diag::err_attribute_first_argument_not_int_or_bool)
-        << Attr.getName();
-    return;
+      << Attr.getName();
+    return false;
   }
 
-  SmallVector<Expr*, 2> Args;
   // check that all arguments are lockable objects
   checkAttrArgsAreLockableObjs(S, D, Attr, Args, 1);
-  unsigned Size = Args.size();
-  Expr **StartArg = Size == 0 ? 0 : &Args[0];
 
-  if (exclusive)
-    D->addAttr(::new (S.Context) ExclusiveTrylockFunctionAttr(Attr.getRange(),
-                                                              S.Context,
-                                                              Attr.getArg(0),
-                                                              StartArg, Size));
-  else
-    D->addAttr(::new (S.Context) SharedTrylockFunctionAttr(Attr.getRange(),
-                                                           S.Context,
-                                                           Attr.getArg(0),
-                                                           StartArg, Size));
+  return true;
 }
 
-static void handleLocksRequiredAttr(Sema &S, Decl *D, const AttributeList &Attr,
-                                    bool exclusive = false) {
+static void handleSharedTrylockFunctionAttr(Sema &S, Decl *D, 
+                                            const AttributeList &Attr) {
+  SmallVector<Expr*, 2> Args;
+  if (!checkTryLockFunAttrCommon(S, D, Attr, Args))
+    return;
+
+  unsigned Size = Args.size();
+  Expr **StartArg = Size == 0 ? 0 : &Args[0];
+  D->addAttr(::new (S.Context) SharedTrylockFunctionAttr(Attr.getRange(),
+                                                         S.Context, 
+                                                         Attr.getArg(0), 
+                                                         StartArg, Size));
+}
+
+static void handleExclusiveTrylockFunctionAttr(Sema &S, Decl *D, 
+                                               const AttributeList &Attr) {
+  SmallVector<Expr*, 2> Args;
+  if (!checkTryLockFunAttrCommon(S, D, Attr, Args))
+    return;
+
+  unsigned Size = Args.size();
+  Expr **StartArg = Size == 0 ? 0 : &Args[0];
+  D->addAttr(::new (S.Context) ExclusiveTrylockFunctionAttr(Attr.getRange(),
+                                                            S.Context, 
+                                                            Attr.getArg(0), 
+                                                            StartArg, Size));
+}
+
+static bool checkLocksRequiredCommon(Sema &S, Decl *D, 
+                                     const AttributeList &Attr, 
+                                     SmallVector<Expr*, 1> &Args) {
   assert(!Attr.isInvalid());
 
   if (!checkAttributeAtLeastNumArgs(S, Attr, 1))
-    return;
+    return false;
 
   if (!isa<FunctionDecl>(D) && !isa<FunctionTemplateDecl>(D)) {
     S.Diag(Attr.getLoc(), diag::warn_thread_attribute_wrong_decl_type)
       << Attr.getName() << ThreadExpectedFunctionOrMethod;
-    return;
+    return false;
   }
 
   // check that all arguments are lockable objects
-  SmallVector<Expr*, 1> Args;
   checkAttrArgsAreLockableObjs(S, D, Attr, Args);
-  unsigned Size = Args.size();
-  if (Size == 0)
-    return;
-  Expr **StartArg = &Args[0];
+  if (Args.size() == 0)
+    return false;
+   
+  return true;
+}
 
-  if (exclusive)
-    D->addAttr(::new (S.Context) ExclusiveLocksRequiredAttr(Attr.getRange(),
-                                                            S.Context, StartArg,
-                                                            Size));
-  else
-    D->addAttr(::new (S.Context) SharedLocksRequiredAttr(Attr.getRange(),
-                                                         S.Context, StartArg,
-                                                         Size));
+static void handleExclusiveLocksRequiredAttr(Sema &S, Decl *D, 
+                                             const AttributeList &Attr) {
+  SmallVector<Expr*, 1> Args;
+  if (!checkLocksRequiredCommon(S, D, Attr, Args))
+    return;
+
+  Expr **StartArg = &Args[0];
+  D->addAttr(::new (S.Context) ExclusiveLocksRequiredAttr(Attr.getRange(),
+			                                  S.Context, 
+                                                          StartArg, 
+                                                          Args.size()));
+}
+
+static void handleSharedLocksRequiredAttr(Sema &S, Decl *D, 
+                                          const AttributeList &Attr) {
+  SmallVector<Expr*, 1> Args;
+  if (!checkLocksRequiredCommon(S, D, Attr, Args))
+    return;
+
+  Expr **StartArg = &Args[0];
+  D->addAttr(::new (S.Context) SharedLocksRequiredAttr(Attr.getRange(),
+			                               S.Context, 
+                                                       StartArg, 
+                                                       Args.size()));
 }
 
 static void handleUnlockFunAttr(Sema &S, Decl *D,
@@ -4168,10 +4273,10 @@ static void ProcessInheritableDeclAttr(Sema &S, Scope *scope, Decl *D,
     handleGuardedVarAttr(S, D, Attr);
     break;
   case AttributeList::AT_PtGuardedVar:
-    handleGuardedVarAttr(S, D, Attr, /*pointer = */true);
+    handlePtGuardedVarAttr(S, D, Attr);
     break;
   case AttributeList::AT_ScopedLockable:
-    handleLockableAttr(S, D, Attr, /*scoped = */true);
+    handleScopedLockableAttr(S, D, Attr);
     break;
   case AttributeList::AT_NoAddressSafetyAnalysis:
     handleNoAddressSafetyAttr(S, D, Attr);
@@ -4186,16 +4291,16 @@ static void ProcessInheritableDeclAttr(Sema &S, Scope *scope, Decl *D,
     handleGuardedByAttr(S, D, Attr);
     break;
   case AttributeList::AT_PtGuardedBy:
-    handleGuardedByAttr(S, D, Attr, /*pointer = */true);
+    handlePtGuardedByAttr(S, D, Attr);
     break;
   case AttributeList::AT_ExclusiveLockFunction:
-    handleLockFunAttr(S, D, Attr, /*exclusive = */true);
+    handleExclusiveLockFunctionAttr(S, D, Attr);
     break;
   case AttributeList::AT_ExclusiveLocksRequired:
-    handleLocksRequiredAttr(S, D, Attr, /*exclusive = */true);
+    handleExclusiveLocksRequiredAttr(S, D, Attr);
     break;
   case AttributeList::AT_ExclusiveTrylockFunction:
-    handleTrylockFunAttr(S, D, Attr, /*exclusive = */true);
+    handleExclusiveTrylockFunctionAttr(S, D, Attr);
     break;
   case AttributeList::AT_LockReturned:
     handleLockReturnedAttr(S, D, Attr);
@@ -4204,22 +4309,22 @@ static void ProcessInheritableDeclAttr(Sema &S, Scope *scope, Decl *D,
     handleLocksExcludedAttr(S, D, Attr);
     break;
   case AttributeList::AT_SharedLockFunction:
-    handleLockFunAttr(S, D, Attr);
+    handleSharedLockFunctionAttr(S, D, Attr);
     break;
   case AttributeList::AT_SharedLocksRequired:
-    handleLocksRequiredAttr(S, D, Attr);
+    handleSharedLocksRequiredAttr(S, D, Attr);
     break;
   case AttributeList::AT_SharedTrylockFunction:
-    handleTrylockFunAttr(S, D, Attr);
+    handleSharedTrylockFunctionAttr(S, D, Attr);
     break;
   case AttributeList::AT_UnlockFunction:
     handleUnlockFunAttr(S, D, Attr);
     break;
   case AttributeList::AT_AcquiredBefore:
-    handleAcquireOrderAttr(S, D, Attr, /*before = */true);
+    handleAcquiredBeforeAttr(S, D, Attr);
     break;
   case AttributeList::AT_AcquiredAfter:
-    handleAcquireOrderAttr(S, D, Attr, /*before = */false);
+    handleAcquiredAfterAttr(S, D, Attr);
     break;
 
   default:
