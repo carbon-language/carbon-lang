@@ -596,16 +596,16 @@ private:
   /// to the semicolon, consumes that extra token.
   bool ExpectAndConsumeSemi(unsigned DiagID);
 
-  /// \brief The kind of extra semi diagnostic to emit. 
+  /// \brief The kind of extra semi diagnostic to emit.
   enum ExtraSemiKind {
     OutsideFunction = 0,
     InsideStruct = 1,
     InstanceVariableList = 2,
-    AfterDefinition = 3
+    AfterMemberFunctionDefinition = 3
   };
 
   /// \brief Consume any extra semi-colons until the end of the line.
-  void ConsumeExtraSemi(ExtraSemiKind Kind, const char* DiagMsg = "");
+  void ConsumeExtraSemi(ExtraSemiKind Kind, unsigned TST = TST_unspecified);
 
   //===--------------------------------------------------------------------===//
   // Scope manipulation

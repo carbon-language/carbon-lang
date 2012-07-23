@@ -12,11 +12,15 @@ protected:
   int : 1, : 2;
 
 public:
+  void m0() {}; // ok, one extra ';' is permitted
+  void m1() {}
+  ; // ok, one extra ';' is permitted
   void m() {
     int l = 2;
-  }; // expected-warning{{extra ';' after function definition}}
+  };; // expected-warning{{extra ';' after member function definition}}
 
   template<typename T> void mt(T) { }
+  ;
   ; // expected-warning{{extra ';' inside a class}}
 
   virtual int vf() const volatile = 0;

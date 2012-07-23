@@ -2876,8 +2876,7 @@ void Parser::ParseStructUnionBody(SourceLocation RecordLoc,
 
     // Check for extraneous top-level semicolon.
     if (Tok.is(tok::semi)) {
-      ConsumeExtraSemi(InsideStruct,
-                       DeclSpec::getSpecifierName((DeclSpec::TST)TagType));
+      ConsumeExtraSemi(InsideStruct, TagType);
       continue;
     }
 
@@ -3373,8 +3372,9 @@ void Parser::ParseEnumBody(SourceLocation StartLoc, Decl *EnumDecl) {
 
     if (Tok.isNot(tok::identifier)) {
       if (!getLangOpts().C99 && !getLangOpts().CPlusPlus0x)
-        Diag(CommaLoc, diag::ext_enumerator_list_comma)
-          << getLangOpts().CPlusPlus
+        Diag(CommaLoc, getLangOpts().CPlusPlus ?
+               diag::ext_enumerator_list_comma_cxx :
+               diag::ext_enumerator_list_comma_c)
           << FixItHint::CreateRemoval(CommaLoc);
       else if (getLangOpts().CPlusPlus0x)
         Diag(CommaLoc, diag::warn_cxx98_compat_enumerator_list_comma)

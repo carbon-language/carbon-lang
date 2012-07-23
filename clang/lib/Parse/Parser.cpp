@@ -220,31 +220,40 @@ bool Parser::ExpectAndConsumeSemi(unsigned DiagID) {
   return ExpectAndConsume(tok::semi, DiagID);
 }
 
-void Parser::ConsumeExtraSemi(ExtraSemiKind Kind, const char* DiagMsg) {
+void Parser::ConsumeExtraSemi(ExtraSemiKind Kind, unsigned TST) {
   if (!Tok.is(tok::semi)) return;
 
-  // AfterDefinition should only warn when placed on the same line as the
-  // definition.  Otherwise, defer to another semi warning.
-  if (Kind == AfterDefinition && Tok.isAtStartOfLine()) return;
-
+  bool HadMultipleSemis = false;
   SourceLocation StartLoc = Tok.getLocation();
   SourceLocation EndLoc = Tok.getLocation();
   ConsumeToken();
 
   while ((Tok.is(tok::semi) && !Tok.isAtStartOfLine())) {
+    HadMultipleSemis = true;
     EndLoc = Tok.getLocation();
     ConsumeToken();
   }
 
-  if (Kind == OutsideFunction && getLangOpts().CPlusPlus0x) {
-    Diag(StartLoc, diag::warn_cxx98_compat_top_level_semi)
-        << FixItHint::CreateRemoval(SourceRange(StartLoc, EndLoc));
+  // C++11 allows extra semicolons at namespace scope, but not in any of the
+  // other contexts.
+  if (Kind == OutsideFunction && getLangOpts().CPlusPlus) {
+    if (getLangOpts().CPlusPlus0x)
+      Diag(StartLoc, diag::warn_cxx98_compat_top_level_semi)
+          << FixItHint::CreateRemoval(SourceRange(StartLoc, EndLoc));
+    else
+      Diag(StartLoc, diag::ext_extra_semi_cxx11)
+          << FixItHint::CreateRemoval(SourceRange(StartLoc, EndLoc));
     return;
   }
 
-  Diag(StartLoc, diag::ext_extra_semi)
-      << Kind << DiagMsg << FixItHint::CreateRemoval(SourceRange(StartLoc,
-                                                                 EndLoc));
+  if (Kind != AfterMemberFunctionDefinition || HadMultipleSemis)
+    Diag(StartLoc, diag::ext_extra_semi)
+        << Kind << DeclSpec::getSpecifierName((DeclSpec::TST)TST)
+        << FixItHint::CreateRemoval(SourceRange(StartLoc, EndLoc));
+  else
+    // A single semicolon is valid after a member function definition.
+    Diag(StartLoc, diag::warn_extra_semi_after_mem_fn_def)
+      << FixItHint::CreateRemoval(SourceRange(StartLoc, EndLoc));
 }
 
 //===----------------------------------------------------------------------===//

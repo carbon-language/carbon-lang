@@ -62,6 +62,8 @@ def DocumentationPedantic : DiagGroup<"documentation-pedantic">;
 def Documentation : DiagGroup<"documentation", [DocumentationHTML]>;
 def EmptyBody : DiagGroup<"empty-body">;
 def ExtraTokens : DiagGroup<"extra-tokens">;
+def CXX11ExtraSemi : DiagGroup<"c++11-extra-semi">;
+def ExtraSemi : DiagGroup<"extra-semi", [CXX11ExtraSemi]>;
 
 def FormatExtraArgs : DiagGroup<"format-extra-args">;
 def FormatZeroLength : DiagGroup<"format-zero-length">;
@@ -404,7 +406,7 @@ def NonGCC : DiagGroup<"non-gcc",
 
 // A warning group for warnings about using C++11 features as extensions in
 // earlier C++ versions.
-def CXX11 : DiagGroup<"c++11-extensions">;
+def CXX11 : DiagGroup<"c++11-extensions", [CXX11ExtraSemi]>;
 def : DiagGroup<"c++0x-extensions", [CXX11]>;
 def DelegatingCtorCycles :
   DiagGroup<"delegating-ctor-cycles">;

@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -verify -fsyntax-only -triple i386-linux %s
+// RUN: %clang_cc1 -verify -fsyntax-only -triple i386-linux -pedantic %s
 
 int x(*g); // expected-error {{use of undeclared identifier 'g'}}
 
@@ -44,7 +44,7 @@ class asm_class_test {
   void foo() __asm__("baz");
 };
 
-enum { fooenum = 1 };
+enum { fooenum = 1, }; // expected-warning {{commas at the end of enumerator lists are a C++11 extension}}
 
 struct a {
   int Type : fooenum;
@@ -125,5 +125,3 @@ test6a { ;// expected-error {{C++ requires a type specifier for all declarations
      // expected-error {{expected ';' after top level declarator}}
   
   int test6b;
-  
-  
