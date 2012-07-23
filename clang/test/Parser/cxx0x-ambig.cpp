@@ -85,7 +85,7 @@ namespace trailing_return {
 
   struct S {
     S(int);
-    S *operator()() const;
+    S *operator()(...) const;
     int n;
   };
 
@@ -94,7 +94,9 @@ namespace trailing_return {
       // This parses as a function declaration, but DR1223 makes the presence of
       // 'auto' be used for disambiguation.
       S(a)()->n; // ok, expression; expected-warning{{expression result unused}}
+      S(a)(int())->n; // ok, expression; expected-warning{{expression result unused}}
       auto(a)()->n; // ok, function declaration
+      auto(b)(int())->n; // ok, function declaration
       using T = decltype(a);
       using T = auto() -> n;
     }
