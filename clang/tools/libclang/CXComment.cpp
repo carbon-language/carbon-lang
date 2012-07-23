@@ -240,7 +240,7 @@ CXComment clang_BlockCommandComment_getParagraph(CXComment CXC) {
 
 CXString clang_ParamCommandComment_getParamName(CXComment CXC) {
   const ParamCommandComment *PCC = getASTNodeAs<ParamCommandComment>(CXC);
-  if (!PCC)
+  if (!PCC || !PCC->hasParamName())
     return createCXString((const char *) 0);
 
   return createCXString(PCC->getParamName(), /*DupString=*/ false);
