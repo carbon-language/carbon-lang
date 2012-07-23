@@ -49,7 +49,7 @@ if (!$my_debugger) {
 my $debugger_options = "-q -batch -n -x";
 
 # run debugger and capture output.
-system("$my_debugger $debugger_options $debugger_script_file $executable_file >& $output_file");
+system("$my_debugger $debugger_options $debugger_script_file $executable_file > $output_file 2>&1");
 
 # validate output.
 system("FileCheck", "-input-file", "$output_file", "$testcase_file");
