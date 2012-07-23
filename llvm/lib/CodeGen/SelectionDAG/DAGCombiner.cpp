@@ -6002,29 +6002,36 @@ SDValue DAGCombiner::visitSINT_TO_FP(SDNode *N) {
       return DAG.getNode(ISD::UINT_TO_FP, N->getDebugLoc(), VT, N0);
   }
 
-  // fold (sint_to_fp (setcc x, y, cc)) -> (select_cc x, y, -1.0, 0.0,, cc)
-  if (N0.getOpcode() == ISD::SETCC && N0.getValueType() == MVT::i1 &&
-      !VT.isVector() &&
-      (!LegalOperations ||
-       TLI.isOperationLegalOrCustom(llvm::ISD::ConstantFP, VT))) {
-    SDValue Ops[] =
-      { N0.getOperand(0), N0.getOperand(1),
-        DAG.getConstantFP(-1.0, VT) , DAG.getConstantFP(0.0, VT),
-        N0.getOperand(2) };
-    return DAG.getNode(ISD::SELECT_CC, N->getDebugLoc(), VT, Ops, 5);
-  }
+  // The next optimizations are desireable only if SELECT_CC can be lowered.
+  // Check against MVT::Other for SELECT_CC, which is a workaround for targets
+  // having to say they don't support SELECT_CC on every type the DAG knows
+  // about, since there is no way to mark an opcode illegal at all value types
+  // (See also visitSELECT)
+  if (TLI.isOperationLegalOrCustom(ISD::SELECT_CC, MVT::Other)) {
+    // fold (sint_to_fp (setcc x, y, cc)) -> (select_cc x, y, -1.0, 0.0,, cc)
+    if (N0.getOpcode() == ISD::SETCC && N0.getValueType() == MVT::i1 &&
+        !VT.isVector() &&
+        (!LegalOperations ||
+         TLI.isOperationLegalOrCustom(llvm::ISD::ConstantFP, VT))) {
+      SDValue Ops[] =
+        { N0.getOperand(0), N0.getOperand(1),
+          DAG.getConstantFP(-1.0, VT) , DAG.getConstantFP(0.0, VT),
+          N0.getOperand(2) };
+      return DAG.getNode(ISD::SELECT_CC, N->getDebugLoc(), VT, Ops, 5);
+    }
 
-  // fold (sint_to_fp (zext (setcc x, y, cc))) ->
-  //      (select_cc x, y, 1.0, 0.0,, cc)
-  if (N0.getOpcode() == ISD::ZERO_EXTEND &&
-      N0.getOperand(0).getOpcode() == ISD::SETCC &&!VT.isVector() &&
-      (!LegalOperations ||
-       TLI.isOperationLegalOrCustom(llvm::ISD::ConstantFP, VT))) {
-    SDValue Ops[] =
-      { N0.getOperand(0).getOperand(0), N0.getOperand(0).getOperand(1),
-        DAG.getConstantFP(1.0, VT) , DAG.getConstantFP(0.0, VT),
-        N0.getOperand(0).getOperand(2) };
-    return DAG.getNode(ISD::SELECT_CC, N->getDebugLoc(), VT, Ops, 5);
+    // fold (sint_to_fp (zext (setcc x, y, cc))) ->
+    //      (select_cc x, y, 1.0, 0.0,, cc)
+    if (N0.getOpcode() == ISD::ZERO_EXTEND &&
+        N0.getOperand(0).getOpcode() == ISD::SETCC &&!VT.isVector() &&
+        (!LegalOperations ||
+         TLI.isOperationLegalOrCustom(llvm::ISD::ConstantFP, VT))) {
+      SDValue Ops[] =
+        { N0.getOperand(0).getOperand(0), N0.getOperand(0).getOperand(1),
+          DAG.getConstantFP(1.0, VT) , DAG.getConstantFP(0.0, VT),
+          N0.getOperand(0).getOperand(2) };
+      return DAG.getNode(ISD::SELECT_CC, N->getDebugLoc(), VT, Ops, 5);
+    }
   }
 
   return SDValue();
@@ -6052,17 +6059,24 @@ SDValue DAGCombiner::visitUINT_TO_FP(SDNode *N) {
       return DAG.getNode(ISD::SINT_TO_FP, N->getDebugLoc(), VT, N0);
   }
 
-  // fold (uint_to_fp (setcc x, y, cc)) -> (select_cc x, y, -1.0, 0.0,, cc)
-  if (N0.getOpcode() == ISD::SETCC && !VT.isVector() &&
-      (!LegalOperations ||
-       TLI.isOperationLegalOrCustom(llvm::ISD::ConstantFP, VT))) {
-    SDValue Ops[] =
-      { N0.getOperand(0), N0.getOperand(1),
-        DAG.getConstantFP(1.0, VT),  DAG.getConstantFP(0.0, VT),
-        N0.getOperand(2) };
-    return DAG.getNode(ISD::SELECT_CC, N->getDebugLoc(), VT, Ops, 5);
-  }
+  // The next optimizations are desireable only if SELECT_CC can be lowered.
+  // Check against MVT::Other for SELECT_CC, which is a workaround for targets
+  // having to say they don't support SELECT_CC on every type the DAG knows
+  // about, since there is no way to mark an opcode illegal at all value types
+  // (See also visitSELECT)
+  if (TLI.isOperationLegalOrCustom(ISD::SELECT_CC, MVT::Other)) {
+    // fold (uint_to_fp (setcc x, y, cc)) -> (select_cc x, y, -1.0, 0.0,, cc)
 
+    if (N0.getOpcode() == ISD::SETCC && !VT.isVector() &&
+        (!LegalOperations ||
+         TLI.isOperationLegalOrCustom(llvm::ISD::ConstantFP, VT))) {
+      SDValue Ops[] =
+        { N0.getOperand(0), N0.getOperand(1),
+          DAG.getConstantFP(1.0, VT),  DAG.getConstantFP(0.0, VT),
+          N0.getOperand(2) };
+      return DAG.getNode(ISD::SELECT_CC, N->getDebugLoc(), VT, Ops, 5);
+    }
+  }
 
   return SDValue();
 }
