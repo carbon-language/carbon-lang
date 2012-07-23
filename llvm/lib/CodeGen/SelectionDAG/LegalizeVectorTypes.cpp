@@ -457,7 +457,7 @@ void DAGTypeLegalizer::SplitVectorResult(SDNode *N, unsigned ResNo) {
         N->dump(&DAG);
         dbgs() << "\n");
   SDValue Lo, Hi;
-  
+
   // See if the target wants to custom expand this node.
   if (CustomLowerNode(N, N->getValueType(ResNo), true))
     return;
@@ -1244,15 +1244,15 @@ SDValue DAGTypeLegalizer::SplitVecOp_FP_ROUND(SDNode *N) {
   DebugLoc DL = N->getDebugLoc();
   GetSplitVector(N->getOperand(0), Lo, Hi);
   EVT InVT = Lo.getValueType();
-  
+
   EVT OutVT = EVT::getVectorVT(*DAG.getContext(), ResVT.getVectorElementType(),
                                InVT.getVectorNumElements());
-  
+
   Lo = DAG.getNode(ISD::FP_ROUND, DL, OutVT, Lo, N->getOperand(1));
   Hi = DAG.getNode(ISD::FP_ROUND, DL, OutVT, Hi, N->getOperand(1));
-  
+
   return DAG.getNode(ISD::CONCAT_VECTORS, DL, ResVT, Lo, Hi);
-}  
+}
 
 
 
@@ -1796,8 +1796,8 @@ SDValue DAGTypeLegalizer::WidenVecRes_CONCAT_VECTORS(SDNode *N) {
     if (InputWidened)
       InOp = GetWidenedVector(InOp);
     for (unsigned j=0; j < NumInElts; ++j)
-        Ops[Idx++] = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, EltVT, InOp,
-                                 DAG.getIntPtrConstant(j));
+      Ops[Idx++] = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, EltVT, InOp,
+                               DAG.getIntPtrConstant(j));
   }
   SDValue UndefVal = DAG.getUNDEF(EltVT);
   for (; Idx < WidenNumElts; ++Idx)
@@ -1857,7 +1857,7 @@ SDValue DAGTypeLegalizer::WidenVecRes_CONVERT_RNDSAT(SDNode *N) {
       InOp = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, InWidenVT, InOp,
                          DAG.getIntPtrConstant(0));
       return DAG.getConvertRndSat(WidenVT, dl, InOp, DTyOp, STyOp, RndOp,
-                                SatOp, CvtCode);
+                                  SatOp, CvtCode);
     }
   }
 
@@ -1873,7 +1873,7 @@ SDValue DAGTypeLegalizer::WidenVecRes_CONVERT_RNDSAT(SDNode *N) {
     SDValue ExtVal = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, InEltVT, InOp,
                                  DAG.getIntPtrConstant(i));
     Ops[i] = DAG.getConvertRndSat(WidenVT, dl, ExtVal, DTyOp, STyOp, RndOp,
-                                        SatOp, CvtCode);
+                                  SatOp, CvtCode);
   }
 
   SDValue UndefVal = DAG.getUNDEF(EltVT);
@@ -1977,7 +1977,7 @@ SDValue DAGTypeLegalizer::WidenVecRes_SELECT(SDNode *N) {
       Cond1 = GetWidenedVector(Cond1);
 
     if (Cond1.getValueType() != CondWidenVT)
-       Cond1 = ModifyToType(Cond1, CondWidenVT);
+      Cond1 = ModifyToType(Cond1, CondWidenVT);
   }
 
   SDValue InOp1 = GetWidenedVector(N->getOperand(1));
@@ -2243,7 +2243,7 @@ SDValue DAGTypeLegalizer::WidenVecOp_SETCC(SDNode *N) {
   SDValue CC = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl,
                            ResVT, WideSETCC, DAG.getIntPtrConstant(0));
 
-  return PromoteTargetBoolean(CC, N->getValueType(0)); 
+  return PromoteTargetBoolean(CC, N->getValueType(0));
 }
 
 
@@ -2412,10 +2412,8 @@ SDValue DAGTypeLegalizer::GenWidenVectorLoads(SmallVector<SDValue, 16> &LdChain,
       NewVT = FindMemType(DAG, TLI, LdWidth, WidenVT, LdAlign, WidthDiff);
       NewVTWidth = NewVT.getSizeInBits();
       L = DAG.getLoad(NewVT, dl, Chain, BasePtr,
-                               LD->getPointerInfo().getWithOffset(Offset),
-                               isVolatile,
-                               isNonTemporal, isInvariant,
-                               MinAlign(Align, Increment));
+                      LD->getPointerInfo().getWithOffset(Offset), isVolatile,
+                      isNonTemporal, isInvariant, MinAlign(Align, Increment));
       LdChain.push_back(L.getValue(1));
       if (L->getValueType(0).isVector()) {
         SmallVector<SDValue, 16> Loads;
@@ -2604,7 +2602,7 @@ void DAGTypeLegalizer::GenWidenVectorStores(SmallVector<SDValue, 16>& StChain,
         Offset += Increment;
         BasePtr = DAG.getNode(ISD::ADD, dl, BasePtr.getValueType(), BasePtr,
                               DAG.getIntPtrConstant(Increment));
-      } while (StWidth != 0  && StWidth >= NewVTWidth);
+      } while (StWidth != 0 && StWidth >= NewVTWidth);
       // Restore index back to be relative to the original widen element type
       Idx = Idx * NewVTWidth / ValEltWidth;
     }
