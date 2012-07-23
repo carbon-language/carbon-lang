@@ -2774,7 +2774,7 @@ BuildImplicitMemberInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
       FieldBaseElementType->isObjCRetainableType() &&
       FieldBaseElementType.getObjCLifetime() != Qualifiers::OCL_None &&
       FieldBaseElementType.getObjCLifetime() != Qualifiers::OCL_ExplicitNone) {
-    // Instant objects:
+    // ARC:
     //   Default-initialize Objective-C pointers to NULL.
     CXXMemberInit
       = new (SemaRef.Context) CXXCtorInitializer(SemaRef.Context, Field, 

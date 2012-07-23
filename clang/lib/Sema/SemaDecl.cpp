@@ -10026,7 +10026,7 @@ void Sema::ActOnFields(Scope* S,
           // However, here we check whether this particular class is only 
           // non-POD because of the presence of an Objective-C pointer member. 
           // If so, objects of this type cannot be shared between code compiled 
-          // with instant objects and code compiled with manual retain/release.
+          // with ARC and code compiled with manual retain/release.
           if (getLangOpts().ObjCAutoRefCount &&
               CXXRecord->hasObjectMember() && 
               CXXRecord->getLinkage() == ExternalLinkage) {
