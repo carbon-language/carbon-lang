@@ -673,14 +673,10 @@ TEST_F(CommentParserTest, Paragraph4) {
 
 TEST_F(CommentParserTest, ParamCommand1) {
   const char *Source =
-    "// \\param aaa\n"
-    "// \\param [in] aaa\n"
-    "// \\param [out] aaa\n"
-    "// \\param [in,out] aaa\n"
-    "// \\param [in, out] aaa\n";
+    "// \\param aaa Bbb\n";
 
   FullComment *FC = parseString(Source);
-  ASSERT_TRUE(HasChildCount(FC, 6));
+  ASSERT_TRUE(HasChildCount(FC, 2));
 
   ASSERT_TRUE(HasParagraphCommentAt(FC, 0, " "));
   {
@@ -691,53 +687,74 @@ TEST_F(CommentParserTest, ParamCommand1) {
                                   /* IsDirectionExplicit = */ false,
                                   "aaa", PC));
     ASSERT_TRUE(HasChildCount(PCC, 1));
-    ASSERT_TRUE(HasChildCount(PC, 1));
-      ASSERT_TRUE(HasTextAt(PC, 0, " "));
+    ASSERT_TRUE(HasParagraphCommentAt(PCC, 0, " Bbb"));
   }
+}
+
+TEST_F(CommentParserTest, ParamCommand2) {
+  const char *Source =
+    "// \\param [in] aaa Bbb\n";
+
+  FullComment *FC = parseString(Source);
+  ASSERT_TRUE(HasChildCount(FC, 2));
+
+  ASSERT_TRUE(HasParagraphCommentAt(FC, 0, " "));
   {
     ParamCommandComment *PCC;
     ParagraphComment *PC;
-    ASSERT_TRUE(HasParamCommandAt(FC, 2, PCC, "param",
+    ASSERT_TRUE(HasParamCommandAt(FC, 1, PCC, "param",
                                   ParamCommandComment::In,
                                   /* IsDirectionExplicit = */ true,
                                   "aaa", PC));
     ASSERT_TRUE(HasChildCount(PCC, 1));
-    ASSERT_TRUE(HasChildCount(PC, 1));
-      ASSERT_TRUE(HasTextAt(PC, 0, " "));
+    ASSERT_TRUE(HasParagraphCommentAt(PCC, 0, " Bbb"));
   }
+}
+
+TEST_F(CommentParserTest, ParamCommand3) {
+  const char *Source =
+    "// \\param [out] aaa Bbb\n";
+
+  FullComment *FC = parseString(Source);
+  ASSERT_TRUE(HasChildCount(FC, 2));
+
+  ASSERT_TRUE(HasParagraphCommentAt(FC, 0, " "));
   {
     ParamCommandComment *PCC;
     ParagraphComment *PC;
-    ASSERT_TRUE(HasParamCommandAt(FC, 3, PCC, "param",
+    ASSERT_TRUE(HasParamCommandAt(FC, 1, PCC, "param",
                                   ParamCommandComment::Out,
                                   /* IsDirectionExplicit = */ true,
                                   "aaa", PC));
     ASSERT_TRUE(HasChildCount(PCC, 1));
-    ASSERT_TRUE(HasChildCount(PC, 1));
-      ASSERT_TRUE(HasTextAt(PC, 0, " "));
-  }
-  {
-    ParamCommandComment *PCC;
-    ParagraphComment *PC;
-    ASSERT_TRUE(HasParamCommandAt(FC, 4, PCC, "param",
-                                  ParamCommandComment::InOut,
-                                  /* IsDirectionExplicit = */ true,
-                                  "aaa", PC));
-    ASSERT_TRUE(HasChildCount(PCC, 1));
-    ASSERT_TRUE(HasChildCount(PC, 1));
-      ASSERT_TRUE(HasTextAt(PC, 0, " "));
-  }
-  {
-    ParamCommandComment *PCC;
-    ParagraphComment *PC;
-    ASSERT_TRUE(HasParamCommandAt(FC, 5, PCC, "param",
-                                  ParamCommandComment::InOut,
-                                  /* IsDirectionExplicit = */ true,
-                                  "aaa", PC));
-    ASSERT_TRUE(HasChildCount(PCC, 1));
-    ASSERT_TRUE(HasChildCount(PC, 0));
+    ASSERT_TRUE(HasParagraphCommentAt(PCC, 0, " Bbb"));
   }
 }
+
+TEST_F(CommentParserTest, ParamCommand4) {
+  const char *Sources[] = {
+    "// \\param [in,out] aaa Bbb\n",
+    "// \\param [in, out] aaa Bbb\n"
+  };
+
+  for (size_t i = 0, e = array_lengthof(Sources); i != e; i++) {
+    FullComment *FC = parseString(Sources[i]);
+    ASSERT_TRUE(HasChildCount(FC, 2));
+
+    ASSERT_TRUE(HasParagraphCommentAt(FC, 0, " "));
+    {
+      ParamCommandComment *PCC;
+      ParagraphComment *PC;
+      ASSERT_TRUE(HasParamCommandAt(FC, 1, PCC, "param",
+                                    ParamCommandComment::InOut,
+                                    /* IsDirectionExplicit = */ true,
+                                    "aaa", PC));
+      ASSERT_TRUE(HasChildCount(PCC, 1));
+      ASSERT_TRUE(HasParagraphCommentAt(PCC, 0, " Bbb"));
+    }
+  }
+}
+
 
 TEST_F(CommentParserTest, InlineCommand1) {
   const char *Source = "// \\c";
