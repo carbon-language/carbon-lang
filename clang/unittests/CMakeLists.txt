@@ -10,6 +10,7 @@ function(add_clang_unittest test_dirname)
 endfunction()
 
 add_subdirectory(ASTMatchers)
+add_subdirectory(AST)
 add_subdirectory(Basic)
 add_subdirectory(Lex)
 add_subdirectory(Frontend)
