@@ -193,6 +193,10 @@ TEST_F(ConstantRangeTest, ZExt) {
   EXPECT_EQ(ZSome, ConstantRange(Some.getLower().zext(20),
                                  Some.getUpper().zext(20)));
   EXPECT_EQ(ZWrap, ConstantRange(APInt(20, 0), APInt(20, 0x10000)));
+
+  // zext([5, 0), 3->7) = [5, 8)
+  ConstantRange FiveZero(APInt(3, 5), APInt(3, 0));
+  EXPECT_EQ(FiveZero.zeroExtend(7), ConstantRange(APInt(7, 5), APInt(7, 8)));
 }
 
 TEST_F(ConstantRangeTest, SExt) {

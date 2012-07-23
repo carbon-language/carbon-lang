@@ -427,9 +427,13 @@ ConstantRange ConstantRange::zeroExtend(uint32_t DstTySize) const {
 
   unsigned SrcTySize = getBitWidth();
   assert(SrcTySize < DstTySize && "Not a value extension");
-  if (isFullSet() || isWrappedSet())
+  if (isFullSet() || isWrappedSet()) {
     // Change into [0, 1 << src bit width)
-    return ConstantRange(APInt(DstTySize,0), APInt(DstTySize,1).shl(SrcTySize));
+    APInt LowerExt(DstTySize, 0);
+    if (!Upper) // special case: [X, 0) -- not really wrapping around
+      LowerExt = Lower.zext(DstTySize);
+    return ConstantRange(LowerExt, APInt(DstTySize, 1).shl(SrcTySize));
+  }
 
   return ConstantRange(Lower.zext(DstTySize), Upper.zext(DstTySize));
 }
