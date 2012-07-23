@@ -1581,7 +1581,8 @@ void Reassociate::OptimizeInst(Instruction *I) {
 
   // If this is an interior node of a reassociable tree, ignore it until we
   // get to the root of the tree, to avoid N^2 analysis.
-  if (BO->hasOneUse() && BO->use_back()->getOpcode() == BO->getOpcode())
+  unsigned Opcode = BO->getOpcode();
+  if (BO->hasOneUse() && BO->use_back()->getOpcode() == Opcode)
     return;
 
   // If this is an add tree that is used by a sub instruction, ignore it
