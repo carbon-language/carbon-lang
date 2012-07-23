@@ -135,6 +135,19 @@ public:
     assert(IsUnsigned == RHS.IsUnsigned && "Signedness mismatch!");
     return IsUnsigned ? uge(RHS) : sge(RHS);
   }
+  inline bool operator==(const APSInt& RHS) const {
+    assert(IsUnsigned == RHS.IsUnsigned && "Signedness mismatch!");
+    return eq(RHS);
+  }
+  inline bool operator==(int64_t RHS) const {
+    return isSameValue(*this, APSInt(APInt(64, RHS), true));
+  }
+  inline bool operator!=(const APSInt& RHS) const {
+    return !((*this) == RHS);
+  }
+  inline bool operator!=(int64_t RHS) const {
+    return !((*this) == RHS);
+  }
 
   // The remaining operators just wrap the logic of APInt, but retain the
   // signedness information.
@@ -282,11 +295,17 @@ public:
   void Profile(FoldingSetNodeID& ID) const;
 };
 
+inline bool operator==(int64_t V1, const APSInt& V2) {
+  return V2 == V1;
+}
+inline bool operator!=(int64_t V1, const APSInt& V2) {
+  return V2 != V1;
+}
+
 inline raw_ostream &operator<<(raw_ostream &OS, const APSInt &I) {
   I.print(OS, I.isSigned());
   return OS;
 }
-
 
 } // end namespace llvm
 
